@@ -4,7 +4,7 @@ cedo#define USE_PDSYEVR 1
 #else
 #define INTGR4 integer*4
 #endif
-C     $Id: scalapack.F,v 1.10 2006-04-28 21:50:27 edo Exp $
+C     $Id: scalapack.F,v 1.11 2006-10-13 16:15:17 d3g293 Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
 *                                                                          *
@@ -191,6 +191,14 @@ c
 c***  transforms a GA to SL format
 c***  reference: Dongarra et al, 'A look at scalable dense lin. alg. libs'
 c
+c   g_a         - handle for Global Array that is being converted SL format
+c   dim1, dim2  - dimensions of Global Array
+c   nbr         - number of block rows?
+c   nbc         - number of block columns?
+c   s_a         - local array holding SL formatted data
+c   lda4        - leading dimension of s_a
+c   np          - number of rows held by processor
+c   nq          - number of columns held by processor
       implicit none
 #include "scalapack.fh"
       INTGR4  nbr, nbc, lda4, np, nq, dim1, dim2
@@ -290,6 +298,14 @@ c
 c***  transforms a GA to SL format
 c***  reference: Dongarra et al, 'A look at scalable dense lin. alg. libs'
 c
+c   g_a         - handle for Global Array that is being converted SL format
+c   dim1, dim2  - dimensions of Global Array
+c   nbr         - number of block rows?
+c   nbc         - number of block columns?
+c   s_a         - local array holding SL formatted data
+c   lda4        - leading dimension of s_a
+c   np          - number of rows held by processor
+c   nq          - number of columns held by processor
       implicit none
 #include "scalapack.fh"
       INTGR4  nbr, nbc, lda4, np, nq, dim1, dim2
