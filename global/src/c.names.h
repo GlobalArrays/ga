@@ -163,6 +163,7 @@
 #define  ga_set_irreg_flag_        GA_SET_IRREG_FLAG
 #define  ga_set_ghost_corner_flag_ GA_SET_GHOST_CORNER_FLAG
 #define  ga_set_block_cyclic_      GA_SET_BLOCK_CYCLIC
+#define  ga_set_block_proc_grid_   GA_SET_BLOCK_PROC_GRID
 #define  ga_get_dimension_         GA_GET_DIMENSION
 #define  ga_allocate_              GA_ALLOCATE
 #define  ga_pgroup_create_         GA_PGROUP_CREATE
@@ -407,6 +408,7 @@
 #define  ga_set_irreg_flag_        ga_set_irreg_flag__
 #define  ga_set_ghost_corner_flag_ ga_set_ghost_corner_flag__
 #define  ga_set_block_cyclic_      ga_set_block_cyclic__
+#define  ga_set_block_proc_grid_   ga_set_block_proc_grid__
 #define  ga_get_dimension_         ga_get_dimension__
 #define  ga_allocate_              ga_allocate__
 #define  ga_pgroup_create_         ga_pgroup_create__ 

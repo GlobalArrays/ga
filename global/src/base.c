@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.144 2006-09-26 14:56:55 d3g293 Exp $ */
+/* $Id: base.c,v 1.145 2006-10-19 19:48:32 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1101,6 +1101,7 @@ Integer ga_create_handle_()
   GA[ga_handle].corner_flag = -1;
   GA[ga_handle].cache = NULL;
   GA[ga_handle].block_flag = 0;
+  GA[ga_handle].block_sl_flag = 0;
   GA[ga_handle].block_total = -1;
   GA_POP_NAME;
   return g_a;
@@ -1283,6 +1284,30 @@ Integer FATR ga_get_dimension_(Integer *g_a)
 
 /*\ Use block-cyclic data distribution for array
 \*/
+void FATR ga_set_block_proc_grid_(Integer *g_a, Integer *block)
+{
+  Integer i, tot;
+  Integer ga_handle = *g_a + GA_OFFSET;
+  GA_PUSH_NAME("ga_set_block_proc_grid");
+  if (GA[ga_handle].actv == 1)
+    ga_error("Cannot set block processor grid on array that has been allocated",0);
+  if (!(GA[ga_handle].ndim > 0))
+    ga_error("Cannot set block processor grid if array size not set",0);
+  GA[ga_handle].block_sl_flag = 1;
+  tot = 1;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    if (block[i] < 1)
+      ga_error("Processor grid dimensions must all be greater than zero",0);
+    GA[ga_handle].nblock[i] = block[i];
+    tot *= block[i];
+  }
+  if (tot != GAnproc)
+    ga_error("Number of processors in processor grid must equal available processors",0);
+  GA_POP_NAME;
+}
+
+/*\ Use block-cyclic data distribution for array
+\*/
 void FATR ga_set_block_cyclic_(Integer *g_a, Integer *dims)
 {
   Integer i, jsize;
@@ -1325,7 +1350,7 @@ logical FATR ga_allocate_( Integer *g_a)
   Integer pe[MAXDIM], *pmap[MAXDIM], *map;
   Integer blk[MAXDIM];
   Integer grp_me=GAme, grp_nproc=GAnproc;
-  Integer block_size = 0;
+  Integer block_size;
 #ifdef GA_USE_VAMPIR
   vampir_begin(GA_ALLOCATE,__FILE__,__LINE__);
 #endif
@@ -1447,18 +1472,39 @@ logical FATR ga_allocate_( Integer *g_a)
     }
     GA[ga_handle].mapc[maplen] = -1;
   } else if (GA[ga_handle].block_flag == 1) {
-    /* Block-cyclic data distribution has been specified. Figure out how
-       much memory is needed by each processor to store blocks */
-    Integer nblocks = GA[ga_handle].block_total;
-    Integer tsize, j;
-    Integer lo[MAXDIM];
-    for (i=GAme; i<nblocks; i +=GAnproc) {
-      ga_ownsM(ga_handle,i,lo,hi);
-      tsize = 1;
-      for (j=0; j<ndim; j++) {
-        tsize *= (hi[j] - lo[j] + 1);
+    if (GA[ga_handle].block_sl_flag == 0) {
+      /* Regular block-cyclic data distribution has been specified. Figure
+         out how much memory is needed by each processor to store blocks */
+      Integer nblocks = GA[ga_handle].block_total;
+      Integer tsize, j;
+      Integer lo[MAXDIM];
+      block_size = 0;
+      for (i=GAme; i<nblocks; i +=GAnproc) {
+        ga_ownsM(ga_handle,i,lo,hi);
+        tsize = 1;
+        for (j=0; j<ndim; j++) {
+          tsize *= (hi[j] - lo[j] + 1);
+        }
+        block_size += tsize;
       }
-      block_size += tsize;
+    } else {
+      /* ScaLAPACK block-cyclic data distribution has been specified. Figure
+         out how much memory is needed by each processor to store blocks */
+      Integer j, jtot, skip, imin, imax;
+      Integer index[MAXDIM];
+      gam_find_proc_indices(ga_handle,GAme,index);
+      block_size = 1;
+      for (i=0; i<ndim; i++) {
+        skip = GA[ga_handle].nblock[i];
+        jtot = 0;
+        for (j=index[i]; j<GA[ga_handle].num_blocks[i]; j += skip) {
+          imin = j*GA[ga_handle].block_dims[i] + 1;
+          imax = (j+1)*GA[ga_handle].block_dims[i];
+          if (imax > GA[ga_handle].dims[i]) imax = GA[ga_handle].dims[i];
+          jtot += (imax-imin+1);
+        }
+        block_size *= jtot;
+      }
     }
   }
 
@@ -3017,7 +3063,7 @@ logical FATR nga_locate_region_( Integer *g_a,
       np       [output] total number of processors containing a portion
                         of the patch
 
-      If a block cyclic data distribution, then this function returns a list of
+      For a block cyclic data distribution, this function returns a list of
       blocks that cover the region along with the lower and upper indices of
       each block.
 */

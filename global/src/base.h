@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.39 2006-10-13 19:51:10 d3g293 Exp $ */
+/*$Id: base.h,v 1.40 2006-10-19 19:48:32 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -63,6 +63,8 @@ typedef struct {
        double *cache;               /* store for frequently accessed ptrs   */
        int corner_flag;             /* flag for updating corner ghost cells */
        int block_flag;              /* flag to indicate block-cyclic data   */
+       int block_sl_flag;           /* flag to indicate block-cyclic data   */
+                                    /* using ScaLAPACK format               */
        C_Integer block_dims[MAXDIM];/* array of block dimensions            */
        C_Integer num_blocks[MAXDIM];/* number of blocks in each dimension   */
        C_Integer block_total;       /* total number of blocks in array      */
@@ -146,6 +148,18 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
   }                                                                            \
 }
 
+/* this macro finds the ScaLAPACK indices for a given processor */
+#define gam_find_proc_indices(ga_handle,proc,index) {                          \
+  Integer _itmp, _i;                                                           \
+  Integer _ndim = GA[ga_handle].ndim;                                          \
+  _itmp = proc;                                                                \
+  index[0] = _itmp%GA[ga_handle].nblock[0];                                    \
+  for (_i=1; _i<_ndim; _i++) {                                                 \
+    _itmp = (_itmp-index[_i-1])/GA[ga_handle].nblock[_i-1];                    \
+    index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
+  }                                                                            \
+}
+
 /* this macro finds cordinates of the chunk of array owned by processor proc */
 #define ga_ownsM(ga_handle, proc, lo, hi)                                      \
 {                                                                              \
@@ -166,13 +180,28 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
   }                                                                            \
 }
 
-/* this macro finds the block corresponding to a given set of indices */
+/* this macro finds the block index corresponding to a given set of indices */
 #define gam_find_block_from_indices(ga_handle,nblock,index) {                  \
   int _ndim = GA[ga_handle].ndim;                                              \
   int _i;                                                                      \
-  nblock = index[0];                                                           \
-  for (_i=1; _i<_ndim; _i++) {                                                \
-    nblock  = nblock*GA[ga_handle].num_blocks[_i-1]+index[_i];                 \
+  nblock = index[_ndim-1];                                                     \
+  for (_i=_ndim-2; _i >= 0; _i--) {                                            \
+    nblock  = nblock*GA[ga_handle].num_blocks[_i]+index[_i];                   \
+  }                                                                            \
+}
+
+/* this macro finds the proc that owns a given set block indices
+   using the ScaLAPACK data distribution */
+#define gam_find_proc_from_sl_indices(ga_handle,proc,index) {                  \
+  int _ndim = GA[ga_handle].ndim;                                              \
+  int _i;                                                                      \
+  Integer _index2[MAXDIM];                                                     \
+  for (_i=0; _i<_ndim; _i++) {                                                 \
+    _index2[_i] = index[_i]%GA[ga_handle].nblock[_i];                          \
+  }                                                                            \
+  proc = _index2[_ndim-1];                                                     \
+  for (_i=_ndim-2; _i >= 0; _i--) {                                            \
+    proc = proc*GA[ga_handle].nblock[_i]+_index2[_i];                          \
   }                                                                            \
 }
 /* this macro computes the strides on both the remote and local
@@ -182,7 +211,7 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 #define gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc){\
   int _i;                                                            \
   stride_rem[0]= stride_loc[0] = (int)size;                          \
-  __CRAYX1_PRAGMA("_CRI novector");                                         \
+  __CRAYX1_PRAGMA("_CRI novector");                                  \
   for(_i=0;_i<ndim-1;_i++){                                          \
     stride_rem[_i] *= (int)ldrem[_i];                                \
     stride_loc[_i] *= (int)ld[_i];                                   \

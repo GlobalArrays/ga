@@ -295,6 +295,7 @@ extern void ga_set_irreg_distr(Integer *g_a, Integer map[], Integer nblock[]);
 extern void ga_set_irreg_flag(Integer *g_a, logical flag);
 extern void ga_set_ghost_corner_flag(Integer *g_a, logical flag);
 extern void ga_set_block_cyclic(Integer *g_a, Integer dims[]);
+extern void ga_set_block_proc_grid(Integer *g_a, Integer block[]);
 extern Integer nga_get_dimension(Integer *g_a);
 extern logical ga_allocate(Integer *g_a);
 extern Integer ga_pgroup_create(Integer list[], Integer *count);
