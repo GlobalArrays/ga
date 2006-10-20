@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.143 2006-09-29 20:38:44 vinod Exp $
+# $Id: makefile.h,v 1.144 2006-10-20 18:54:09 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -62,10 +62,16 @@ ifdef USE_FULL_WARNINGS
    WALL = -Wall
 endif
 #
-#........................ SUN and Fujitsu Sparc/solaris ........................
+#.............. SUN sparc/x86/x64 Solaris and Fujitsu Sparc/solaris ............
 #
 ifeq ($(TARGET),SOLARIS)
           M4 = /usr/ccs/bin/m4
+ _SUN_PROC = $(shell /bin/uname -p)
+ ifeq ($(_SUN_PROC),i386)
+       _XARCH = -xarch=sse2
+ else
+       _XARCH =
+ endif
  ifeq ($(_CC),mpifcc)
        _CC = fcc
  endif
@@ -73,11 +79,11 @@ ifeq ($(TARGET),SOLARIS)
        _FC = frt
  endif
  ifeq ($(_CC),cc)
-     COPT_REN = -dalign
+     COPT_REN = -dalign $(_XARCH)
  endif
  ifeq ($(_FC),f77)
       FLD_REN = -xs
-     FOPT_REN = -dalign
+     FOPT_REN = -dalign $(_XARCH)
  endif
  ifeq ($(_FC),frt)
      FOPT_REN = -fw -Kfast -KV8PFMADD
@@ -96,6 +102,12 @@ endif
 #    64-bit version
 ifeq ($(TARGET),SOLARIS64)
         M4 = /usr/ccs/bin/m4
+ _SUN_PROC = $(shell /bin/uname -p)
+ ifeq ($(_SUN_PROC),i386)
+       _XARCH = -xarch=amd64
+ else
+       _XARCH = -xarch=v9
+ endif
   ifeq ($(_CC),mpifcc)
        _CC = fcc
   endif
@@ -106,7 +118,7 @@ ifeq ($(TARGET),SOLARIS64)
      COPT_REN = -Kfast -KV9FMADD
      GLOB_DEFINES += -DSPARC64_GP
   else
-     COPT_REN = -xarch=v9 -dalign
+     COPT_REN = $(_XARCH) -dalign
      ifdef USE_INTEGER4
      else
         COPT_REN += -DNO_REAL_32
@@ -122,7 +134,7 @@ ifeq ($(TARGET),SOLARIS64)
      endif
      CMAIN = -Dmain=MAIN__
   else
-     FOPT_REN = -xarch=v9 -dalign
+     FOPT_REN = $(_XARCH) -dalign
      ifdef USE_INTEGER4
      else
 # No 32-bit reals because of a bug in older Sun Workshop compilers

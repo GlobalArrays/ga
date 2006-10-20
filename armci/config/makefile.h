@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.123 2006-09-12 20:51:26 andriy Exp $
+#$Id: makefile.h,v 1.124 2006-10-20 18:51:49 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -364,8 +364,14 @@ ifeq ($(TARGET),HITACHI)
    EXTRA_OBJ += sr8k.o
 endif
 
-#---------------------------- Sun or Fujitsu Sparc/Solaris ----------------
+#------------- Sun sparc/x86/x64 Solaris or Fujitsu Sparc/Solaris --------------
 ifeq ($(TARGET),SOLARIS)
+  _SUN_PROC = $(shell /bin/uname -p)
+  ifeq ($(_SUN_PROC),i386)
+       _XARCH = -xarch=sse2
+  else
+       _XARCH =
+  endif
   ifeq ($(_CC),mpifcc)
        _CC = fcc
   endif
@@ -373,10 +379,10 @@ ifeq ($(TARGET),SOLARIS)
        _FC = frt
   endif
   ifeq ($(_FC),f77)
-      FOPT_REN = -dalign
+      FOPT_REN = -dalign $(_XARCH)
   endif
   ifeq ($(_CC),cc)
-      COPT_REN = -dalign
+      COPT_REN = -dalign $(_XARCH)
   endif
   ifeq ($(_FC),frt)
       FOPT_REN = -fw -Kfast -KV8PFMADD
@@ -390,6 +396,12 @@ endif
 # 64-bit
 ifeq ($(TARGET),SOLARIS64)
 #
+  _SUN_PROC = $(shell /bin/uname -p)
+  ifeq ($(_SUN_PROC),i386)
+       _XARCH = -xarch=amd64
+  else
+       _XARCH = -xarch=v9
+  endif
   ifeq ($(_CC),mpifcc)
        _CC = fcc
   endif
@@ -399,13 +411,13 @@ ifeq ($(TARGET),SOLARIS64)
   ifeq ($(_FC),frt)
      FOPT_REN = -fw -Kfast -KV9FMADD
   else
-     FOPT_REN = -dalign -xarch=v9
+     FOPT_REN = -dalign $(_XARCH)
   endif
   ifeq ($(_CC),fcc)
      COPT_REN = -Kfast -KV9FMADD -x0
      GLOB_DEFINES += -DSPARC64_GP
   else
-     COPT_REN = -dalign -xarch=v9
+     COPT_REN = -dalign $(_XARCH)
   endif
 #
  GLOB_DEFINES += -DSOLARIS
