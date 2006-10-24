@@ -357,7 +357,9 @@ extern logical FATR nga_locate_region_( Integer *g_a,
 extern Integer FATR nga_locate_num_blocks_( Integer *g_a,
                                             Integer *lo,
                                             Integer *hi);
-extern Integer FATR nga_total_blocks_( Integer *g_a );
+extern Integer FATR ga_total_blocks_( Integer *g_a );
+extern void FATR ga_get_proc_index_( Integer *g_a, Integer *iproc, Integer *index );
+extern void FATR ga_get_block_info_( Integer *g_a, Integer *num_blocks, Integer *block_dims );
 
 extern void nga_access_ptr(Integer* g_a, Integer lo[], Integer hi[],
                            void* ptr, Integer ld[]);
@@ -370,6 +372,8 @@ extern void FATR nga_access_(Integer* g_a, Integer lo[], Integer hi[],
                              Integer* index, Integer ld[]);
 extern void FATR nga_access_block_(Integer* g_a, Integer* idx, Integer* index, Integer ld[]);
 extern void nga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer ld[]);
+extern void FATR nga_access_block_(Integer* g_a, Integer subscript[], Integer* index, Integer ld[]);
+extern void nga_access_block_ptr(Integer* g_a, Integer subscript[], void* ptr, Integer ld[]);
 extern void ga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Integer *len);
 extern void FATR nga_access_ghosts_(Integer* g_a, Integer dims[],
                              Integer* index, Integer ld[]);
@@ -405,6 +409,8 @@ extern void FATR nga_periodic_acc_(Integer *g_a, Integer *lo, Integer *hi,
                                    void *buf, Integer *ld, void *alpha);
 extern void FATR nga_proc_topology_(Integer* g_a, Integer* proc,
     Integer* subscr);
+
+extern void FATR ga_topology_(Integer* g_a, Integer* dims);
 
 extern void nga_copy_patch(char *trans,
                            Integer *g_a, Integer *alo, Integer *ahi,

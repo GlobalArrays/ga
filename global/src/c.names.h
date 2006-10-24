@@ -142,6 +142,7 @@
 #define  nga_access_ghosts_        NGA_ACCESS_GHOSTS
 #define  nga_access_ghost_element_ NGA_ACCESS_GHOST_ELEMENT
 #define  nga_access_block_         NGA_ACCESS_BLOCK
+#define  nga_access_block_grid_    NGA_ACCESS_BLOCK_GRID
 #define  nga_add_patch_            NGA_ADD_PATCH
 #define  nga_copy_patch_           NGA_COPY_PATCH
 #define  nga_create_               NGA_CREATE
@@ -183,6 +184,8 @@
 #define  nga_locate_region_        NGA_LOCATE_REGION
 #define  nga_locate_num_blocks_    NGA_LOCATE_NUM_BLOCKS
 #define  ga_total_blocks_          GA_TOTAL_BLOCKS
+#define  ga_get_proc_index_        GA_GET_PROC_INDEX
+#define  ga_get_block_info_        GA_GET_BLOCK_INFO
 #define  nga_matmul_patch_         NGA_MATMUL_PATCH
 #define  nga_periodic_acc_         NGA_PERIODIC_ACC
 #define  nga_periodic_get_         NGA_PERIODIC_GET
@@ -387,6 +390,7 @@
 #define  nga_access_ghosts_        nga_access_ghosts__      
 #define  nga_access_ghost_element_ nga_access_ghost_element__      
 #define  nga_access_block_         nga_access_block__             
+#define  nga_access_block_grid_    nga_access_block_grid__             
 #define  nga_add_patch_            nga_add_patch__          
 #define  nga_copy_patch_           nga_copy_patch__         
 #define  nga_create_               nga_create__             
@@ -427,6 +431,8 @@
 #define  nga_locate_               nga_locate__             
 #define  nga_locate_num_blocks_    nga_locate_num_blocks__
 #define  ga_total_blocks_          ga_total_blocks__
+#define  ga_get_proc_index_        ga_get_proc_index__
+#define  ga_get_block_info_        ga_get_block_info__
 #define  nga_locate_region_        nga_locate_region__     
 #define  nga_matmul_patch_         nga_matmul_patch__     
 #define  nga_periodic_acc_         nga_periodic_acc__    

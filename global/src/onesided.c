@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.74 2006-10-19 19:48:32 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.75 2006-10-24 20:51:36 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -1902,10 +1902,112 @@ void nga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer *ld)
   GA_POP_NAME;
 }
 
+/*\ RETURN A POINTER TO BEGINNING OF LOCAL DATA BLOCK
+\*/
+void nga_access_block_grid_ptr(Integer* g_a, Integer *index, void* ptr, Integer *ld)
+            /* g_a: array handle [input]
+             * index: subscript of a particular block  [input]
+             * ptr: pointer to data in block [output]
+             * ld:  array of strides for block data [output]
+             */
+{
+  char *lptr;
+  Integer  handle = GA_OFFSET + *g_a;
+  Integer  i, j, p_handle, nblocks, offset, factor, inode;
+  Integer ndim;
+  C_Integer *num_blocks, *block_dims;
+  int *proc_grid;
+  Integer *dims;
+  Integer last, lo, hi, count;
+  Integer proc_index[MAXDIM];
+  Integer lld[MAXDIM], block_count[MAXDIM], loc_block_dims[MAXDIM];
+  Integer ldims[MAXDIM];
+
+  GA_PUSH_NAME("nga_access_block_grid_ptr");
+  p_handle = GA[handle].p_handle;
+  if (!GA[handle].block_sl_flag) {
+    ga_error("Array is not using ScaLAPACK data distribution",0);
+  }
+  proc_grid = GA[handle].nblock;
+  num_blocks = GA[handle].num_blocks;
+  block_dims = GA[handle].block_dims;
+  dims = GA[handle].dims;
+  ndim = GA[handle].ndim;
+  for (i=0; i<ndim; i++) {
+    if (index[i] < 0 || index[i] >= num_blocks[i])
+      ga_error("block index outside allowed values",index[i]);
+  }
+
+  /* find out what processor block is located on */
+  gam_find_proc_from_sl_indices(handle, inode, index);
+
+  /* get proc indices of processor that owns block */
+  gam_find_proc_indices(handle,inode,proc_index)
+  last = ndim-1;
+ 
+  /* Find dimensions of requested block */
+  for (i=0; i<last; i++)  {
+    lo = index[i]*block_dims[i]+1;
+    hi = (index[i]+1)*block_dims[i];
+    if (hi > dims[i]) hi = dims[i]; 
+    ld[i] = (hi - lo + 1);
+  }
+ 
+  /* Find dimensions of local block grid stored on processor inode
+     and store results in loc_block_dims. Also find the local grid
+     index of block relative to local block grid and store result
+     in block_count.
+     Find physical dimensions of locally held data and store in 
+     lld and set values in ldim, which is used to evaluate the
+     offset for the requested block. */
+  for (i=0; i<ndim; i++) {
+    block_count[i] = 0;
+    loc_block_dims[i] = 0;
+    lld[i] = 0;
+    lo = 0;
+    hi = -1;
+    for (j=proc_index[i]; j<num_blocks[i]; j += proc_grid[i]) {
+      lo = j*block_dims[i] + 1;
+      hi = (j+1)*block_dims[i];
+      if (hi > dims[i]) hi = dims[i]; 
+      if (i<last) lld[i] += (hi - lo +1);
+      if (j<index[i]) block_count[i]++;
+      loc_block_dims[i]++;
+    }
+    if (index[i] < num_blocks[i] - 1 || i == 0) {
+      ldims[i] = block_dims[i];
+    } else {
+      lo = index[i]*block_dims[i] + 1;
+      hi = (index[i]+1)*block_dims[i];
+      if (hi > dims[i]) hi = dims[i];
+      ldims[i] = hi - lo + 1;
+    }
+  }
+
+  /* Evaluate offset for requested block */
+  offset = 0;
+  for (i=0; i<ndim; i++) {
+    factor = 1;
+    for (j=0; j<ndim; j++) {
+      if (j<i) {
+        factor *= lld[j];
+      } else {
+        factor *= ldims[j];
+      }
+    }
+    offset += block_count[i]*factor;
+  }
+
+  lptr = GA[handle].ptr[inode]+offset*GA[handle].elemsize;
+
+  *(char**)ptr = lptr; 
+  GA_POP_NAME;
+}
+
 /*\ RETURN A POINTER TO BEGINNING OF LOCAL DATA ON A PROCESSOR CONTAINING
  *  BLOCK-CYCLIC DATA
 \*/
-void ga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Integer *len)
+void nga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Integer *len)
             /* g_a:  array handle [input]
              * proc: processor for data [input]
              * ptr:  pointer to data start of data on processor [output]
@@ -2053,6 +2155,82 @@ unsigned long    lref=0, lptr;
      ga_error("block index outside allowed values",iblock);
 
    nga_access_block_ptr(g_a,&iblock,&ptr,ld);
+   /*
+    * return patch address as the distance elements from the reference address
+    *
+    * .in Fortran we need only the index to the type array: dbl_mb or int_mb
+    *  that are elements of COMMON in the the mafdecls.h include file
+    * .in C we need both the index and the pointer
+    */
+
+   elemsize = (unsigned long)GA[handle].elemsize;
+
+   /* compute index and check if it is correct */
+   switch (ga_type_c2f(GA[handle].type)){
+     case MT_F_DBL:
+        *index = (Integer) ((DoublePrecision*)ptr - DBL_MB);
+        lref = (unsigned long)DBL_MB;
+        break;
+
+     case MT_F_DCPL:
+        *index = (Integer) ((DoubleComplex*)ptr - DCPL_MB);
+        lref = (unsigned long)DCPL_MB;
+        break;
+
+     case MT_F_INT:
+        *index = (Integer) ((Integer*)ptr - INT_MB);
+        lref = (unsigned long)INT_MB;
+        break;
+
+     case MT_F_REAL:
+        *index = (Integer) ((float*)ptr - FLT_MB);
+        lref = (unsigned long)FLT_MB;
+        break;        
+   }
+
+#ifdef BYTE_ADDRESSABLE_MEMORY
+   /* check the allignment */
+   lptr = (unsigned long)ptr;
+   if( lptr%elemsize != lref%elemsize ){ 
+       printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
+                                                    lref,lref%elemsize);
+       ga_error("nga_access: MA addressing problem: base address misallignment",
+                 handle);
+   }
+#endif
+
+   /* adjust index for Fortran addressing */
+   (*index) ++ ;
+   FLUSH_CACHE;
+
+   GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+   vampir_end(NGA_ACCESS_BLOCK,__FILE__,__LINE__);
+#endif
+}
+
+/*\ PROVIDE ACCESS TO AN INDIVIDUAL DATA BLOCK OF A GLOBAL ARRAY
+\*/
+void FATR nga_access_block_grid_(Integer* g_a, Integer* subscript,
+                                 Integer *index, Integer *ld)
+{
+char     *ptr;
+Integer  handle = GA_OFFSET + *g_a;
+Integer  i,ndim,p_handle;
+unsigned long    elemsize;
+unsigned long    lref=0, lptr;
+
+#ifdef GA_USE_VAMPIR
+   vampir_begin(NGA_ACCESS_BLOCK,__FILE__,__LINE__);
+#endif
+   GA_PUSH_NAME("nga_access_block_grid");
+   p_handle = GA[handle].p_handle;
+   ndim = GA[handle].ndim;
+   for (i=0; i<ndim; i++) 
+     if (subscript[i]<0 || subscript[i] >= GA[handle].num_blocks[i]) 
+       ga_error("index outside allowed values",subscript[i]);
+
+   nga_access_block_grid_ptr(g_a,subscript,&ptr,ld);
    /*
     * return patch address as the distance elements from the reference address
     *

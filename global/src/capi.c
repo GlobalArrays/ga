@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.93 2006-10-19 19:48:32 d3g293 Exp $ */
+/* $Id: capi.c,v 1.94 2006-10-24 20:51:36 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -405,6 +405,33 @@ void GA_Set_block_cyclic(int g_a, int dims[])
     ndim = ga_get_dimension_(&aa);
     COPYC2F(dims,_ga_dims, ndim);
     ga_set_block_cyclic_(&aa, _ga_dims);
+}
+
+int GA_Total_blocks(int g_a)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    return (int)ga_total_blocks_(&aa);
+}
+
+void GA_Get_proc_index(int g_a, int iproc, int index[])
+{
+     Integer aa, proc, ndim;
+     aa = (Integer)g_a;
+     proc = (Integer)iproc;
+     ndim = ga_get_dimension_(&aa);
+     ga_get_proc_index_(&aa, &proc, _ga_work);
+     COPYF2C(_ga_work,index, ndim);
+}
+
+void GA_Get_block_info(int g_a, int num_blocks[], int block_dims[])
+{
+     Integer aa, ndim;
+     aa = (Integer)g_a;
+     ndim = ga_get_dimension_(&aa);
+     ga_get_block_info_(&aa, _ga_work, _ga_lo);
+     COPYF2C(_ga_work,num_blocks, ndim);
+     COPYF2C(_ga_lo,block_dims, ndim);
 }
 
 void GA_Set_block_proc_grid(int g_a, int block[])
@@ -932,7 +959,7 @@ void NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[])
      COPYF2C(_ga_work,ld, ndim-1);
 }
 
-void NGA_Access_block_ptr(int g_a, int idx, void *ptr, int ld[])
+void NGA_Access_block(int g_a, int idx, void *ptr, int ld[])
 {
      Integer a=(Integer)g_a;
      Integer ndim = ga_ndim_(&a);
@@ -941,12 +968,21 @@ void NGA_Access_block_ptr(int g_a, int idx, void *ptr, int ld[])
      COPYF2C(_ga_work,ld, ndim-1);
 }
 
-void NGA_Access_segment_ptr(int g_a, int proc, void *ptr, int *len)
+void NGA_Access_block_grid(int g_a, int index[], void *ptr, int ld[])
+{
+     Integer a=(Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+     COPYF2C(_ga_lo,index, ndim);
+     nga_access_block_grid_ptr(&a,_ga_lo,ptr,_ga_work);
+     COPYF2C(_ga_work,ld, ndim-1);
+}
+
+void NGA_Access_segment(int g_a, int proc, void *ptr, int *len)
 {
      Integer a=(Integer)g_a;
      Integer iblock = (Integer)proc;
      Integer ilen = (Integer)len;
-     nga_access_block_ptr(&a,&iblock,ptr,&ilen);
+     nga_access_block_segment_ptr(&a,&iblock,ptr,&ilen);
      *len = (int)ilen;
 }
 
@@ -1089,6 +1125,13 @@ void NGA_Proc_topology(int g_a, int proc, int coord[])
      COPY(int,_ga_work, coord,ndim);  
 }
 
+void GA_Topology(int g_a, int dims[])
+{
+     Integer a=(Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+     ga_topology_(&a, _ga_work);
+     COPY(int,_ga_work, dims ,ndim);  
+}
 
 void GA_Check_handle(int g_a, char* string)
 {

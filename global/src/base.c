@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.145 2006-10-19 19:48:32 d3g293 Exp $ */
+/* $Id: base.c,v 1.146 2006-10-24 20:51:36 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2794,7 +2794,7 @@ void FATR ga_fill_(Integer *g_a, void* val)
         ga_error("type not supported",GA[handle].type);
     }
   } else {
-    ga_access_block_segment_ptr(g_a,&GAme,&ptr,&elems);
+    nga_access_block_segment_ptr(g_a,&GAme,&ptr,&elems);
     switch (GA[handle].type){
       case C_DCPL: 
         for(i=0; i<elems;i++)((DoubleComplex*)ptr)[i]=*(DoubleComplex*)val;
@@ -2959,11 +2959,7 @@ void ga_inquire_name(g_a, array_name)
    *array_name = GA[GA_OFFSET + *g_a].name;
 }
 
-
-
-
-
-/*\ RETURN COORDINATES OF ARRAY BLOCK HELD BY A PROCESSOR
+/*\ RETURN PROCESSOR COORDINATES
 \*/
 void FATR nga_proc_topology_(Integer* g_a, Integer* proc, Integer* subscript)
 {
@@ -2978,6 +2974,18 @@ Integer d, index, ndim, ga_handle = GA_OFFSET + *g_a;
        subscript[d] = index% GA[ga_handle].nblock[d];
        index  /= GA[ga_handle].nblock[d];  
    }
+}
+
+/*\ RETURN DIMENSIONS OF PROCESSOR GRID
+\*/
+void FATR ga_topology_(Integer *g_a, Integer *dims)
+{
+  Integer i, ndim, ga_handle = GA_OFFSET + *g_a;
+  ga_check_handleM(g_a, "ga_topology");
+  ndim = GA[ga_handle].ndim;
+  for (i=0; i<ndim; i++) {
+    dims[i] = GA[ga_handle].nblock[i];
+  }
 }
 
 
@@ -4304,6 +4312,44 @@ Integer FATR ga_total_blocks_(Integer *g_a)
 {
   Integer ga_handle = GA_OFFSET + *g_a;
   return GA[ga_handle].block_total;
+}
+
+/*\ RETURN TRUE IF GA USES SCALAPACK DATA DISTRIBUTION
+\*/
+logical FATR ga_scalapack_distribution_(Integer *g_a)
+{
+  Integer ga_handle = GA_OFFSET + *g_a;
+  return (logical)GA[ga_handle].block_sl_flag;
+}
+
+/*\ RETURN THE INDEX OF PROCESSOR BASED ON THE BLOCK PARTITION ASSOCIATED
+ *  WITH A PARTICULAR GLOBAL ARRAY
+\*/
+void FATR ga_get_proc_index_(Integer *g_a, Integer *iproc, Integer *index)
+{
+  Integer ga_handle = GA_OFFSET + *g_a;
+  Integer proc = *iproc;
+  if (!GA[ga_handle].block_sl_flag)
+    ga_error("Global array does not use ScaLAPACK data distribution",0);
+  gam_find_proc_indices(ga_handle, proc, index);
+  return;
+}
+
+/*\ RETURN PROC GRID DIMENSIONS AND BLOCK DIMENSIONS FOR A PARTICULAR
+ *  GLOBAL ARRAY
+\*/
+void FATR ga_get_block_info_(Integer *g_a, Integer *num_blocks, Integer *block_dims)
+{
+  Integer ga_handle = GA_OFFSET + *g_a;
+  Integer i, ndim;
+  if (!GA[ga_handle].block_sl_flag)
+    ga_error("Global array does not use ScaLAPACK data distribution",0);
+  ndim = GA[ga_handle].ndim; 
+  for (i=0; i<ndim; i++) {
+    num_blocks[i] = GA[ga_handle].num_blocks[i];
+    block_dims[i] = GA[ga_handle].block_dims[i];
+  }
+  return;
 }
 
 #ifdef DO_CKPT

@@ -111,7 +111,7 @@ void FATR ga_zero_(Integer *g_a)
       nga_release_update_(g_a, lo, hi);
     } 
   } else {
-    ga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
+    nga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
     switch (type){
       int *ia;
       double *da;
@@ -222,6 +222,7 @@ Integer dimsb[MAXDIM],i;
 Integer nseg;
 Integer a_grp, b_grp, anproc, bnproc;
 Integer num_blocks_a, num_blocks_b;
+Integer blocks[MAXDIM], block_dims[MAXDIM];
 void *ptr_a, *ptr_b;
 int local_sync_begin,local_sync_end,use_put;
 
@@ -282,11 +283,42 @@ int local_sync_begin,local_sync_end,use_put;
            nga_put_(g_b, lo, hi, ptr_a, ld);
          }
        } else {
-         for (i=me_a; i<num_blocks_a; i += anproc) {
-           nga_distribution_(g_a, &i, lo, hi);
-           if (lo[0]>0) {
-             nga_access_block_ptr(g_a, &i, &ptr_a, ld);
-             nga_put_(g_b, lo, hi, ptr_a, ld);
+         if (!ga_scalapack_distribution_(g_a)) {
+           for (i=me_a; i<num_blocks_a; i += anproc) {
+             nga_distribution_(g_a, &i, lo, hi);
+             if (lo[0]>0) {
+               nga_access_block_ptr(g_a, &i, &ptr_a, ld);
+               nga_put_(g_b, lo, hi, ptr_a, ld);
+             }
+           }
+         } else {
+           Integer proc_index[MAXDIM], index[MAXDIM];
+           Integer topology[MAXDIM], chk;
+           ga_get_proc_index_(g_a, &me_a, proc_index);
+           ga_get_proc_index_(g_a, &me_a, index);
+           ga_get_block_info_(g_a, blocks, block_dims);
+           ga_topology_(g_a, topology);
+           while (index[ndim-1] < blocks[ndim-1]) {
+             /* find bounding coordinates of block */
+             chk = 1;
+             for (i = 0; i < ndim; i++) {
+               lo[i] = index[i]*block_dims[i]+1;
+               hi[i] = (index[i] + 1)*block_dims[i];
+               if (hi[i] > dims[i]) hi[i] = dims[i];
+               if (hi[i] < lo[i]) chk = 0;
+             }
+             if (chk) {
+               nga_access_block_grid_ptr(g_a, index, &ptr_a, ld);
+               nga_put_(g_b, lo, hi, ptr_a, ld);
+             }
+             /* increment index to get next block on processor */
+             index[0] += topology[0];
+             for (i = 0; i < ndim; i++) {
+               if (index[i] >= blocks[i] && i<ndim-1) {
+                 index[i] = proc_index[i];
+                 index[i+1] += topology[i+1];
+               }
+             }
            }
          }
        }
@@ -298,11 +330,42 @@ int local_sync_begin,local_sync_end,use_put;
            nga_get_(g_a, lo, hi, ptr_b, ld);
          }
        } else {
-         for (i=me_b; i<num_blocks_b; i += bnproc) {
-           nga_distribution_(g_b, &i, lo, hi);
-           if (lo[0]>0) {
-             nga_access_block_ptr(g_b, &i, &ptr_b, ld);
-             nga_get_(g_a, lo, hi, ptr_b, ld);
+         if (!ga_scalapack_distribution_(g_a)) {
+           for (i=me_b; i<num_blocks_b; i += bnproc) {
+             nga_distribution_(g_b, &i, lo, hi);
+             if (lo[0]>0) {
+               nga_access_block_ptr(g_b, &i, &ptr_b, ld);
+               nga_get_(g_a, lo, hi, ptr_b, ld);
+             }
+           }
+         } else {
+           Integer proc_index[MAXDIM], index[MAXDIM];
+           Integer topology[MAXDIM], chk;
+           ga_get_proc_index_(g_b, &me_b, proc_index);
+           ga_get_proc_index_(g_b, &me_b, index);
+           ga_get_block_info_(g_b, blocks, block_dims);
+           ga_topology_(g_b, topology);
+           while (index[ndim-1] < blocks[ndim-1]) {
+             /* find bounding coordinates of block */
+             chk = 1;
+             for (i = 0; i < ndim; i++) {
+               lo[i] = index[i]*block_dims[i]+1;
+               hi[i] = (index[i] + 1)*block_dims[i];
+               if (hi[i] > dims[i]) hi[i] = dims[i];
+               if (hi[i] < lo[i]) chk = 0;
+             }
+             if (chk) {
+               nga_access_block_grid_ptr(g_b, index, &ptr_b, ld);
+               nga_get_(g_a, lo, hi, ptr_b, ld);
+             }
+             /* increment index to get next block on processor */
+             index[0] += topology[0];
+             for (i = 0; i < ndim; i++) {
+               if (index[i] >= blocks[i] && i<ndim-1) {
+                 index[i] = proc_index[i];
+                 index[i+1] += topology[i+1];
+               }
+             }
            }
          }
        }
@@ -700,7 +763,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
       nga_release_update_(g_a, lo, hi);
     }
   } else {
-    ga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
+    nga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
     switch (type){
       int *ia;
       double *da;
