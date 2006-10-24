@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.75 2006-10-24 20:51:36 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.76 2006-10-24 22:44:16 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -2027,18 +2027,9 @@ void nga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Intege
   if (index < 0 || index >= GAnproc)
     ga_error("processor index outside allowed values",index);
 
-  offset = 0;
-  for (i=index; i<nblocks; i += GAnproc) {
-    ga_ownsM(handle,i,lo,hi); 
-    tsum = 1;
-    for (j=0; j<ndim; j++) {
-      tsum *= (hi[j]-lo[j]+1);
-    }
-    offset += tsum;
-  }
   lptr = GA[handle].ptr[index];
 
-  *len = offset;
+  *len = GA[handle].size/GA[handle].elemsize;
   *(char**)ptr = lptr; 
   GA_POP_NAME;
 }
