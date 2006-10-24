@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.73 2006-10-12 17:34:47 vinod Exp $ */
+/* $Id: request.c,v 1.74 2006-10-24 20:43:57 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -1088,7 +1088,7 @@ int armci_rem_get(int proc,
 # ifdef OPENIB
     bufsize +=(sizeof(uint32_t)+sizeof(uint32_t));
 # else
-    bufsize +=(sizeof(uint32_t)+sizeof(uint32_t));
+    bufsize +=(sizeof(VAPI_lkey_t)+sizeof(VAPI_rkey_t));
 # endif
 #endif
 
@@ -1114,8 +1114,13 @@ int armci_rem_get(int proc,
        pointer and stride info - server will put data directly there */
     ADDBUF(buf,void*,dst_ptr);
 #ifdef VAPI
+#ifdef OPENIB
     ADDBUF(buf,uint32_t,((ARMCI_MEMHDL_T *)mhloc)->rkey);
     ADDBUF(buf,uint32_t,((ARMCI_MEMHDL_T *)mhrem)->lkey);
+#else
+    ADDBUF(buf,VAPI_rkey_t,((ARMCI_MEMHDL_T *)mhloc)->rkey);
+    ADDBUF(buf,VAPI_lkey_t,((ARMCI_MEMHDL_T *)mhrem)->lkey);
+#endif
 #endif
     for(i=0;i<stride_levels;i++)((int*)buf)[i] = dst_stride_arr[i];
                                        buf += stride_levels*sizeof(int);
