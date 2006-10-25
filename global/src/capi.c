@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.94 2006-10-24 20:51:36 d3g293 Exp $ */
+/* $Id: capi.c,v 1.95 2006-10-25 15:11:14 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -434,13 +434,14 @@ void GA_Get_block_info(int g_a, int num_blocks[], int block_dims[])
      COPYF2C(_ga_lo,block_dims, ndim);
 }
 
-void GA_Set_block_proc_grid(int g_a, int block[])
+void GA_Set_block_cyclic_proc_grid(int g_a, int block[], int proc_grid[])
 {
     Integer aa, ndim;
     aa = (Integer)g_a;
     ndim = ga_get_dimension_(&aa);
     COPYC2F(block,_ga_dims, ndim);
-    ga_set_block_proc_grid_(&aa, _ga_dims);
+    COPYC2F(proc_grid,_ga_lo, ndim);
+    ga_set_block_cyclic_proc_grid_(&aa, _ga_dims, _ga_lo);
 }
 
 int GA_Get_pgroup(int g_a)

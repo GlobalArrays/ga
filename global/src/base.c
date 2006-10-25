@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.146 2006-10-24 20:51:36 d3g293 Exp $ */
+/* $Id: base.c,v 1.147 2006-10-25 15:11:13 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1284,30 +1284,6 @@ Integer FATR ga_get_dimension_(Integer *g_a)
 
 /*\ Use block-cyclic data distribution for array
 \*/
-void FATR ga_set_block_proc_grid_(Integer *g_a, Integer *block)
-{
-  Integer i, tot;
-  Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_block_proc_grid");
-  if (GA[ga_handle].actv == 1)
-    ga_error("Cannot set block processor grid on array that has been allocated",0);
-  if (!(GA[ga_handle].ndim > 0))
-    ga_error("Cannot set block processor grid if array size not set",0);
-  GA[ga_handle].block_sl_flag = 1;
-  tot = 1;
-  for (i=0; i<GA[ga_handle].ndim; i++) {
-    if (block[i] < 1)
-      ga_error("Processor grid dimensions must all be greater than zero",0);
-    GA[ga_handle].nblock[i] = block[i];
-    tot *= block[i];
-  }
-  if (tot != GAnproc)
-    ga_error("Number of processors in processor grid must equal available processors",0);
-  GA_POP_NAME;
-}
-
-/*\ Use block-cyclic data distribution for array
-\*/
 void FATR ga_set_block_cyclic_(Integer *g_a, Integer *dims)
 {
   Integer i, jsize;
@@ -1320,6 +1296,50 @@ void FATR ga_set_block_cyclic_(Integer *g_a, Integer *dims)
   if (GA[ga_handle].block_flag == 1)
     ga_error("Cannot reset block-cyclic data distribution on array that has been set",0);
   GA[ga_handle].block_flag = 1;
+  GA[ga_handle].block_sl_flag = 0;
+  /* evaluate number of blocks in each dimension */
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    if (dims[i] < 1)
+      ga_error("Block dimensions must all be greater than zero",0);
+    GA[ga_handle].block_dims[i] = dims[i];
+    jsize = GA[ga_handle].dims[i]/dims[i];
+    if (GA[ga_handle].dims[i]%dims[i] != 0) jsize++;
+    GA[ga_handle].num_blocks[i] = jsize;
+  }
+  jsize = 1;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    jsize *= GA[ga_handle].num_blocks[i];
+  }
+  GA[ga_handle].block_total = jsize;
+  GA_POP_NAME;
+}
+
+/*\ Use block-cyclic data distribution with ScaLAPACK proc grid for array
+\*/
+void FATR ga_set_block_cyclic_proc_grid_(Integer *g_a, Integer *dims, Integer *proc_grid)
+{
+  Integer i, jsize, tot;
+  Integer ga_handle = *g_a + GA_OFFSET;
+  GA_PUSH_NAME("ga_set_block_cyclic_proc_grid");
+  if (GA[ga_handle].actv == 1)
+    ga_error("Cannot set block-cyclic data distribution on array that has been allocated",0);
+  if (!(GA[ga_handle].ndim > 0))
+    ga_error("Cannot set block-cyclic data distribution if array size not set",0);
+  if (GA[ga_handle].block_flag == 1)
+    ga_error("Cannot reset block-cyclic data distribution on array that has been set",0);
+  GA[ga_handle].block_flag = 1;
+  GA[ga_handle].block_sl_flag = 1;
+  /* Check to make sure processor grid is compatible with total number of processors */
+  tot = 1;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    if (proc_grid[i] < 1)
+      ga_error("Processor grid dimensions must all be greater than zero",0);
+    GA[ga_handle].nblock[i] = proc_grid[i];
+    tot *= proc_grid[i];
+  }
+  if (tot != GAnproc)
+    ga_error("Number of processors in processor grid must equal available processors",0);
+  /* evaluate number of blocks in each dimension */
   for (i=0; i<GA[ga_handle].ndim; i++) {
     if (dims[i] < 1)
       ga_error("Block dimensions must all be greater than zero",0);
