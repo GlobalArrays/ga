@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.147 2006-10-25 15:11:13 d3g293 Exp $ */
+/* $Id: base.c,v 1.148 2006-10-25 20:07:35 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2834,7 +2834,7 @@ void FATR ga_fill_(Integer *g_a, void* val)
       default:
         ga_error("type not supported",GA[handle].type);
     }
-    ga_release_block_segment_(g_a,&GAme);
+    nga_release_block_segment_(g_a,&GAme);
   }
 
   if(local_sync_end)ga_pgroup_sync_(&grp_id);

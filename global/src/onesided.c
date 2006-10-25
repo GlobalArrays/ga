@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.76 2006-10-24 22:44:16 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.77 2006-10-25 20:07:35 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -2331,23 +2331,32 @@ void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi)
 void FATR nga_release_block_(Integer *g_a, Integer *iblock)
 {}
 
-/*\ RELEASE ACCESS & UPDATE A BLOCK IN BLOCK-CYCLIC GLOBAL ARRAY
+/*\ RELEASE & UPDATE ACCESS TO A BLOCK IN BLOCK-CYCLIC GLOBAL ARRAY
 \*/
 void FATR nga_release_update_block_(Integer *g_a, Integer *iblock)
 {}
 
+/*\ RELEASE ACCESS TO A BLOCK IN BLOCK-CYCLIC GLOBAL ARRAY WITH PROC GRID
+ *  (SCALAPACK) LAYOUT
+\*/
+void FATR nga_release_block_grid_(Integer *g_a, Integer *index)
+{}
+
+/*\ RELEASE ACCESS & UPDATE A BLOCK IN BLOCK-CYCLIC GLOBAL ARRAY WITH
+ *  PROC GRID (SCALAPACK) LAYOUT
+\*/
+void FATR nga_release_update_block_grid_(Integer *g_a, Integer *index)
+{}
+
 /*\ RELEASE ACCESS TO SEGMENT IN BLOCK-CYCLIC GLOBAL ARRAY
 \*/
-void FATR ga_release_block_segment_(Integer *g_a, Integer *iproc)
+void FATR nga_release_block_segment_(Integer *g_a, Integer *iproc)
 {}
 
 /*\ RELEASE ACCESS & UPDATE A BLOCK IN BLOCK-CYCLIC GLOBAL ARRAY
 \*/
-void FATR ga_release_update_block_segment_(Integer *g_a, Integer *iproc)
+void FATR nga_release_update_block_segment_(Integer *g_a, Integer *iproc)
 {}
-
-
-
 
 void ga_scatter_acc_local(Integer g_a, Void *v,Integer *i,Integer *j,
                           Integer nv, void* alpha, Integer proc) 
