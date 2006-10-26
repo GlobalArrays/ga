@@ -1095,56 +1095,136 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     } else {
       Integer lo[MAXDIM], hi[MAXDIM];
       Integer offset, jtot, last;
-      for (i=me; i<num_blocks_a; i += nproc) {
-        nga_distribution_(&g_A, &i, loA, hiA);
-        /* make copies of loA and hiA since ngai_patch_intersect destroys
-           original versions */
-        for (j=0; j<andim; j++) {
-          lo[j] = loA[j];
-          hi[j] = hiA[j];
+      /* simple block cyclic data distribution */
+      if (!ga_scalapack_distribution_(g_a)) {
+        for (i=me; i<num_blocks_a; i += nproc) {
+          nga_distribution_(&g_A, &i, loA, hiA);
+          /* make copies of loA and hiA since ngai_patch_intersect destroys
+             original versions */
+          for (j=0; j<andim; j++) {
+            lo[j] = loA[j];
+            hi[j] = hiA[j];
+          }
+          if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
+            nga_access_block_ptr(&g_A, &i, &A_ptr, ldA);
+            nga_access_block_ptr(&g_B, &i, &B_ptr, ldB);
+
+            /* evaluate offsets for system */
+            offset = 0;
+            last = andim-1;
+            jtot = 1;
+            for (j=0; j<last; j++) {
+              offset += (loA[j] - lo[j])*jtot;
+              jtot = ldA[j];
+            }
+            offset += (loA[last]-lo[last])*jtot;
+
+            /* offset pointers by correct amount */
+            switch (atype){
+              case C_INT:
+                A_ptr = (void*)((int*)(A_ptr) + offset);
+                B_ptr = (void*)((int*)(B_ptr) + offset);
+                break;                                     
+              case C_DCPL:
+                A_ptr = (void*)((DoubleComplex*)(A_ptr) + offset);
+                B_ptr = (void*)((DoubleComplex*)(B_ptr) + offset);
+                break;                                     
+              case  C_DBL:
+                A_ptr = (void*)((double*)(A_ptr) + offset);
+                B_ptr = (void*)((double*)(B_ptr) + offset);
+                break;                                     
+              case  C_FLOAT:
+                A_ptr = (void*)((float*)(A_ptr) + offset);
+                B_ptr = (void*)((float*)(B_ptr) + offset);
+                break;                                     
+              case C_LONG:
+                A_ptr = (void*)((long*)(A_ptr) + offset);
+                B_ptr = (void*)((long*)(B_ptr) + offset);
+                break;                                     
+            }
+            ngai_dot_local_patch(atype, andim, loA, hiA, ldA, A_ptr, B_ptr,
+                &alen, retval);
+            /* release access to the data */
+            nga_release_block_(&g_A, &i);
+            nga_release_block_(&g_B, &i);
+          }
         }
-        if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
-          nga_access_block_ptr(&g_A, &i, &A_ptr, ldA);
-          nga_access_block_ptr(&g_B, &i, &B_ptr, ldB);
-
-          /* evaluate offsets for system */
-          offset = 0;
-          last = andim-1;
-          jtot = 1;
-          for (j=0; j<last; j++) {
-            offset += (loA[j] - lo[j])*jtot;
-            jtot = ldA[j];
+      } else {
+        /* Uses scalapack block-cyclic data distribution */
+        Integer proc_index[MAXDIM], index[MAXDIM];
+        Integer topology[MAXDIM], chk;
+        Integer blocks[MAXDIM], block_dims[MAXDIM];
+        ga_get_proc_index_(g_a, &me, proc_index);
+        ga_get_proc_index_(g_a, &me, index);
+        ga_get_block_info_(g_a, blocks, block_dims);
+        ga_topology_(g_a, topology);
+        while (index[andim-1] < blocks[andim-1]) {
+          /* find bounding coordinates of block */
+          chk = 1;
+          for (i = 0; i < andim; i++) {
+            loA[i] = index[i]*block_dims[i]+1;
+            hiA[i] = (index[i] + 1)*block_dims[i];
+            if (hiA[i] > adims[i]) hiA[i] = adims[i];
+            if (hiA[i] < loA[i]) chk = 0;
           }
-          offset += (loA[last]-lo[last])*jtot;
-
-          /* offset pointers by correct amount */
-          switch (atype){
-            case C_INT:
-              A_ptr = (void*)((int*)(A_ptr) + offset);
-              B_ptr = (void*)((int*)(B_ptr) + offset);
-              break;                                     
-            case C_DCPL:
-              A_ptr = (void*)((DoubleComplex*)(A_ptr) + offset);
-              B_ptr = (void*)((DoubleComplex*)(B_ptr) + offset);
-              break;                                     
-            case  C_DBL:
-              A_ptr = (void*)((double*)(A_ptr) + offset);
-              B_ptr = (void*)((double*)(B_ptr) + offset);
-              break;                                     
-            case  C_FLOAT:
-              A_ptr = (void*)((float*)(A_ptr) + offset);
-              B_ptr = (void*)((float*)(B_ptr) + offset);
-              break;                                     
-            case C_LONG:
-              A_ptr = (void*)((long*)(A_ptr) + offset);
-              B_ptr = (void*)((long*)(B_ptr) + offset);
-              break;                                     
+          /* make copies of loA and hiA since ngai_patch_intersect destroys
+             original versions */
+          for (j=0; j<andim; j++) {
+            lo[j] = loA[j];
+            hi[j] = hiA[j];
           }
-          ngai_dot_local_patch(atype, andim, loA, hiA, ldA, A_ptr, B_ptr,
-              &alen, retval);
-          /* release access to the data */
-          nga_release_block_(&g_A, &i);
-          nga_release_block_(&g_B, &i);
+          if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
+            nga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
+            nga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
+
+            /* evaluate offsets for system */
+            offset = 0;
+            last = andim-1;
+            jtot = 1;
+            for (j=0; j<last; j++) {
+              offset += (loA[j] - lo[j])*jtot;
+              jtot = ldA[j];
+            }
+            offset += (loA[last]-lo[last])*jtot;
+
+            /* offset pointers by correct amount */
+            switch (atype){
+              case C_INT:
+                A_ptr = (void*)((int*)(A_ptr) + offset);
+                B_ptr = (void*)((int*)(B_ptr) + offset);
+                break;                                     
+              case C_DCPL:
+                A_ptr = (void*)((DoubleComplex*)(A_ptr) + offset);
+                B_ptr = (void*)((DoubleComplex*)(B_ptr) + offset);
+                break;                                     
+              case  C_DBL:
+                A_ptr = (void*)((double*)(A_ptr) + offset);
+                B_ptr = (void*)((double*)(B_ptr) + offset);
+                break;                                     
+              case  C_FLOAT:
+                A_ptr = (void*)((float*)(A_ptr) + offset);
+                B_ptr = (void*)((float*)(B_ptr) + offset);
+                break;                                     
+              case C_LONG:
+                A_ptr = (void*)((long*)(A_ptr) + offset);
+                B_ptr = (void*)((long*)(B_ptr) + offset);
+                break;                                     
+            }
+            ngai_dot_local_patch(atype, andim, loA, hiA, ldA, A_ptr, B_ptr,
+                &alen, retval);
+            /* release access to the data */
+            nga_release_block_grid_(&g_A, index);
+            nga_release_block_grid_(&g_B, index);
+          }
+
+          /* increment index to get next block on processor */
+          index[0] += topology[0];
+          for (i = 0; i < andim; i++) {
+            if (index[i] >= blocks[i] && i<andim-1) {
+              index[i] = proc_index[i];
+              index[i+1] += topology[i+1];
+            }
+          }
         }
       }
     }
