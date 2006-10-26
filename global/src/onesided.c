@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.77 2006-10-25 20:07:35 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.78 2006-10-26 16:19:38 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -505,6 +505,7 @@ void nga_put_common(Integer *g_a,
     Integer idx, i, j, jtot, chk, iproc;
     Integer idx_buf, ldrem[MAXDIM];
     Integer blk_tot = GA[handle].block_total;
+    int check1, check2;
     int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
     char *pbuf, *prem;
 
@@ -535,8 +536,13 @@ void nga_put_common(Integer *g_a,
                 /* check to see if at least one end point of the interval
                  * represented by blo and bhi falls in the interval
                  * represented by lo and hi */
-                if (!((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-                      (bhi[j] >= lo[j] && bhi[j] <= hi[j]))) {
+                check1 = ((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
+                          (bhi[j] >= lo[j] && bhi[j] <= hi[j]));
+                /* check to see if interval represented by lo and hi
+                 * falls entirely within interval represented by blo and bhi */
+                check2 = ((lo[j] >= blo[j] && lo[j] <= bhi[j]) &&
+                          (hi[j] >= blo[j] && hi[j] <= bhi[j]));
+                if (!check1 && !check2) {
                   chk = 0;
                 }
               }
@@ -651,12 +657,16 @@ void nga_put_common(Integer *g_a,
                 /* check to see if at least one end point of the interval
                  * represented by blo and bhi falls in the interval
                  * represented by lo and hi */
-                if (!((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-                      (bhi[j] >= lo[j] && bhi[j] <= hi[j]))) {
+                check1 = ((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
+                          (bhi[j] >= lo[j] && bhi[j] <= hi[j]));
+                /* check to see if interval represented by lo and hi
+                 * falls entirely within interval represented by blo and bhi */
+                check2 = ((lo[j] >= blo[j] && lo[j] <= bhi[j]) &&
+                          (hi[j] >= blo[j] && hi[j] <= bhi[j]));
+                if (!check1 && !check2) {
                   chk = 0;
                 }
               }
-
               if (chk) {
 
                 /* get the patch of block that overlaps requested region */
@@ -1011,6 +1021,7 @@ void FATR nga_get_common(Integer *g_a,
     Integer idx, i, j, jtot, chk, iproc;
     Integer idx_buf, ldrem[MAXDIM];
     Integer blk_tot = GA[handle].block_total;
+    int check1, check2;
     int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
     char *pbuf, *prem;
 
@@ -1041,12 +1052,16 @@ void FATR nga_get_common(Integer *g_a,
                 /* check to see if at least one end point of the interval
                  * represented by blo and bhi falls in the interval
                  * represented by lo and hi */
-                if (!((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-                      (bhi[j] >= lo[j] && bhi[j] <= hi[j]))) {
+                check1 = ((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
+                          (bhi[j] >= lo[j] && bhi[j] <= hi[j]));
+                /* check to see if interval represented by lo and hi
+                 * falls entirely within interval represented by blo and bhi */
+                check2 = ((lo[j] >= blo[j] && lo[j] <= bhi[j]) &&
+                          (hi[j] >= blo[j] && hi[j] <= bhi[j]));
+                if (!check1 && !check2) {
                   chk = 0;
                 }
               }
-
               if (chk) {
                 /* get the patch of block that overlaps requested region */
                 gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
@@ -1158,12 +1173,16 @@ void FATR nga_get_common(Integer *g_a,
                 /* check to see if at least one end point of the interval
                  * represented by blo and bhi falls in the interval
                  * represented by lo and hi */
-                if (!((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-                      (bhi[j] >= lo[j] && bhi[j] <= hi[j]))) {
+                check1 = ((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
+                          (bhi[j] >= lo[j] && bhi[j] <= hi[j]));
+                /* check to see if interval represented by lo and hi
+                 * falls entirely within interval represented by blo and bhi */
+                check2 = ((lo[j] >= blo[j] && lo[j] <= bhi[j]) &&
+                          (hi[j] >= blo[j] && hi[j] <= bhi[j]));
+                if (!check1 && !check2) {
                   chk = 0;
                 }
               }
-
               if (chk) {
                 /* get the patch of block that overlaps requested region */
                 gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
@@ -1490,6 +1509,7 @@ void FATR nga_acc_common(Integer *g_a,
     Integer idx, i, j, jtot, chk, iproc;
     Integer idx_buf, ldrem[MAXDIM];
     Integer blk_tot = GA[handle].block_total;
+    int check1, check2;
     int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
     char *pbuf, *prem;
 
@@ -1520,12 +1540,16 @@ void FATR nga_acc_common(Integer *g_a,
                 /* check to see if at least one end point of the interval
                  * represented by blo and bhi falls in the interval
                  * represented by lo and hi */
-                if (!((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-                      (bhi[j] >= lo[j] && bhi[j] <= hi[j]))) {
+                check1 = ((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
+                          (bhi[j] >= lo[j] && bhi[j] <= hi[j]));
+                /* check to see if interval represented by lo and hi
+                 * falls entirely within interval represented by blo and bhi */
+                check2 = ((lo[j] >= blo[j] && lo[j] <= bhi[j]) &&
+                          (hi[j] >= blo[j] && hi[j] <= bhi[j]));
+                if (!check1 && !check2) {
                   chk = 0;
                 }
               }
-
               if (chk) {
 
                 /* get the patch of block that overlaps requested region */
@@ -1635,12 +1659,16 @@ void FATR nga_acc_common(Integer *g_a,
                 /* check to see if at least one end point of the interval
                  * represented by blo and bhi falls in the interval
                  * represented by lo and hi */
-                if (!((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-                      (bhi[j] >= lo[j] && bhi[j] <= hi[j]))) {
+                check1 = ((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
+                          (bhi[j] >= lo[j] && bhi[j] <= hi[j]));
+                /* check to see if interval represented by lo and hi
+                 * falls entirely within interval represented by blo and bhi */
+                check2 = ((lo[j] >= blo[j] && lo[j] <= bhi[j]) &&
+                          (hi[j] >= blo[j] && hi[j] <= bhi[j]));
+                if (!check1 && !check2) {
                   chk = 0;
                 }
               }
-
               if (chk) {
 
                 /* get the patch of block that overlaps requested region */
