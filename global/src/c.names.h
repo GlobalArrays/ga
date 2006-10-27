@@ -143,6 +143,7 @@
 #define  nga_access_ghost_element_ NGA_ACCESS_GHOST_ELEMENT
 #define  nga_access_block_         NGA_ACCESS_BLOCK
 #define  nga_access_block_grid_    NGA_ACCESS_BLOCK_GRID
+#define  nga_access_block_segment_ NGA_ACCESS_BLOCK_SEGMENT
 #define  nga_add_patch_            NGA_ADD_PATCH
 #define  nga_copy_patch_           NGA_COPY_PATCH
 #define  nga_create_               NGA_CREATE
@@ -393,6 +394,7 @@
 #define  nga_access_ghost_element_ nga_access_ghost_element__      
 #define  nga_access_block_         nga_access_block__             
 #define  nga_access_block_grid_    nga_access_block_grid__             
+#define  nga_access_block_segment_ nga_access_block_segment__             
 #define  nga_add_patch_            nga_add_patch__          
 #define  nga_copy_patch_           nga_copy_patch__         
 #define  nga_create_               nga_create__             

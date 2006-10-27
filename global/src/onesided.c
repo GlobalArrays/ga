@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.78 2006-10-26 16:19:38 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.79 2006-10-27 15:14:20 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -2301,6 +2301,78 @@ unsigned long    lref=0, lptr;
    GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
    vampir_end(NGA_ACCESS_BLOCK,__FILE__,__LINE__);
+#endif
+}
+
+/*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
+\*/
+void FATR nga_access_block_segment_(Integer* g_a, Integer *proc,
+                      Integer* index, Integer *len)
+{
+char     *ptr;
+Integer  handle = GA_OFFSET + *g_a;
+Integer  i,p_handle;
+unsigned long    elemsize;
+unsigned long    lref=0, lptr;
+
+#ifdef GA_USE_VAMPIR
+   vampir_begin(NGA_ACCESS,__FILE__,__LINE__);
+#endif
+   GA_PUSH_NAME("nga_access_block_segment");
+   p_handle = GA[handle].p_handle;
+
+   /*
+    * return patch address as the distance elements from the reference address
+    *
+    * .in Fortran we need only the index to the type array: dbl_mb or int_mb
+    *  that are elements of COMMON in the the mafdecls.h include file
+    * .in C we need both the index and the pointer
+    */
+   nga_access_block_segment_ptr(g_a, proc, &ptr, len);
+
+   elemsize = (unsigned long)GA[handle].elemsize;
+
+   /* compute index and check if it is correct */
+   switch (ga_type_c2f(GA[handle].type)){
+     case MT_F_DBL:
+        *index = (Integer) ((DoublePrecision*)ptr - DBL_MB);
+        lref = (unsigned long)DBL_MB;
+        break;
+
+     case MT_F_DCPL:
+        *index = (Integer) ((DoubleComplex*)ptr - DCPL_MB);
+        lref = (unsigned long)DCPL_MB;
+        break;
+
+     case MT_F_INT:
+        *index = (Integer) ((Integer*)ptr - INT_MB);
+        lref = (unsigned long)INT_MB;
+        break;
+
+     case MT_F_REAL:
+        *index = (Integer) ((float*)ptr - FLT_MB);
+        lref = (unsigned long)FLT_MB;
+        break;        
+   }
+
+#ifdef BYTE_ADDRESSABLE_MEMORY
+   /* check the allignment */
+   lptr = (unsigned long)ptr;
+   if( lptr%elemsize != lref%elemsize ){ 
+       printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
+                                                    lref,lref%elemsize);
+       ga_error("nga_access: MA addressing problem: base address misallignment",
+                 handle);
+   }
+#endif
+
+   /* adjust index for Fortran addressing */
+   (*index) ++ ;
+   FLUSH_CACHE;
+
+   GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+   vampir_end(NGA_ACCESS,__FILE__,__LINE__);
 #endif
 }
 

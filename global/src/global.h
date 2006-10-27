@@ -376,7 +376,8 @@ extern void FATR nga_access_block_(Integer* g_a, Integer* idx, Integer* index, I
 extern void nga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer ld[]);
 extern void FATR nga_access_block_(Integer* g_a, Integer subscript[], Integer* index, Integer ld[]);
 extern void nga_access_block_ptr(Integer* g_a, Integer subscript[], void* ptr, Integer ld[]);
-extern void ga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Integer *len);
+extern void FATR nga_access_block_segment_(Integer* g_a, Integer *proc, Integer *index, Integer *len);
+extern void nga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Integer *len);
 extern void FATR nga_access_ghosts_(Integer* g_a, Integer dims[],
                              Integer* index, Integer ld[]);
 extern void FATR nga_distribution_(Integer *g_a, Integer *proc, 
