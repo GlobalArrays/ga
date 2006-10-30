@@ -1402,7 +1402,7 @@ void *retval;
 /*\
  *  Set all values in patch to value stored in *val
 \*/
-ngai_set_patch_value(Integer type, Integer ndim, Integer *loA, Integer *hiA,
+void ngai_set_patch_value(Integer type, Integer ndim, Integer *loA, Integer *hiA,
                      Integer *ld, void *data_ptr, void *val)
 {
   Integer n1dim, i, j, idx;
@@ -1700,7 +1700,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
 #endif 
 }
 
-ngai_scale_patch_value(Integer type, Integer ndim, Integer *loA, Integer *hiA,
+void ngai_scale_patch_value(Integer type, Integer ndim, Integer *loA, Integer *hiA,
                      Integer *ld, void *src_data_ptr, void *alpha)
 {
   Integer n1dim, i, j, idx;

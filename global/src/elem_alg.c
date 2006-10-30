@@ -531,102 +531,119 @@ None
 
 */
 
+/*\ Internal utility function to do operation.
+\*/
+void ngai_do_oper_elem(Integer type, Integer ndim, Integer *loA, Integer *hiA,
+                       Integer *ld, void *scalar, Integer op)
+{
+  Integer i, j;    
+  Integer bvalue[MAXDIM], bunit[MAXDIM], baseld[MAXDIM];
+  void *temp, *data_ptr;
+  Integer idx, n1dim;
+  /* number of n-element of the first dimension */
+  n1dim = 1; for(i=1; i<ndim; i++) n1dim *= (hiA[i] - loA[i] + 1);
+
+  /* calculate the destination indices */
+  bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
+  /* baseld[0] = ld[0]
+   * baseld[1] = ld[0] * ld[1]
+   * baseld[2] = ld[0] * ld[1] * ld[2] ....
+   */
+  baseld[0] = ld[0]; baseld[1] = baseld[0] *ld[1];
+  for(i=2; i<ndim; i++) {
+    bvalue[i] = 0;
+    bunit[i] = bunit[i-1] * (hiA[i-1] - loA[i-1] + 1);
+    baseld[i] = baseld[i-1] * ld[i];
+  }
+
+  for(i=0; i<n1dim; i++) {
+    idx = 0;
+    for(j=1; j<ndim; j++) {
+      idx += bvalue[j] * baseld[j-1];
+      if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+      if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+    }
+
+    switch(type){
+      case C_INT: 
+        temp=((int*)data_ptr)+idx; 
+        break;
+      case C_DCPL: 
+        temp=((DoubleComplex*)data_ptr)+idx; 
+        break;
+      case C_DBL: 
+        temp=((double*)data_ptr)+idx; 
+        break;
+      case C_FLOAT:
+        temp=((float*)data_ptr)+idx;
+        break;
+      case C_LONG:
+        temp=((long *)data_ptr)+idx;
+        break;
+      default: ga_error("wrong data type.",type);	
+
+    }
+
+    switch(op){
+      case OP_ABS:
+        do_abs(temp,hiA[0] -loA[0] +1, type); break;
+        break;
+      case OP_ADD_CONST:
+        do_add_const(temp,hiA[0] -loA[0] +1, type, scalar); 
+        break;
+      case OP_RECIP:
+        do_recip(temp,hiA[0] -loA[0] +1, type); break;
+        break;
+      default: ga_error("bad operation",op);
+    }
+  }
+
+}
+
 static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, Integer op)
 {
 
-    Integer i, j;    
-    Integer ndim, dims[MAXDIM], type;
-    Integer loA[MAXDIM], hiA[MAXDIM], ld[MAXDIM];
-    void *temp, *data_ptr;
-    Integer idx, n1dim;
-    Integer bvalue[MAXDIM], bunit[MAXDIM], baseld[MAXDIM];
-    Integer me= ga_nodeid_();
-    int local_sync_begin,local_sync_end;
-    
-    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    if(local_sync_begin)ga_sync_();
+  Integer i, j;    
+  Integer ndim, dims[MAXDIM], type;
+  Integer loA[MAXDIM], hiA[MAXDIM], ld[MAXDIM];
+  void *temp, *data_ptr;
+  Integer me= ga_nodeid_();
+  Integer num_blocks, nproc;
+  int local_sync_begin,local_sync_end;
 
-    ga_check_handle(g_a, "gai_oper_elem");
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)ga_sync_();
 
-    GA_PUSH_NAME("gai_oper_elem");
-    
-    nga_inquire_internal_(g_a,  &type, &ndim, dims);
-    
+  ga_check_handle(g_a, "gai_oper_elem");
+
+  GA_PUSH_NAME("gai_oper_elem");
+
+  nga_inquire_internal_(g_a,  &type, &ndim, dims);
+  num_blocks = ga_total_blocks_(g_a);
+
+  if (num_blocks < 0) {
     /* get limits of VISIBLE patch */
     nga_distribution_(g_a, &me, loA, hiA);
-    
+
     /*  determine subset of my local patch to access  */
     /*  Output is in loA and hiA */
     if(ngai_patch_intersect(lo, hi, loA, hiA, ndim)){
-    
-        /* get data_ptr to corner of patch */
-        /* ld are leading dimensions INCLUDING ghost cells */
-        nga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
-        
-        /* number of n-element of the first dimension */
-        n1dim = 1; for(i=1; i<ndim; i++) n1dim *= (hiA[i] - loA[i] + 1);
-        
-        /* calculate the destination indices */
-        bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
-        /* baseld[0] = ld[0]
-         * baseld[1] = ld[0] * ld[1]
-         * baseld[2] = ld[0] * ld[1] * ld[2] ....
-         */
-        baseld[0] = ld[0]; baseld[1] = baseld[0] *ld[1];
-        for(i=2; i<ndim; i++) {
-            bvalue[i] = 0;
-            bunit[i] = bunit[i-1] * (hiA[i-1] - loA[i-1] + 1);
-            baseld[i] = baseld[i-1] * ld[i];
-        }
 
-       for(i=0; i<n1dim; i++) {
-                idx = 0;
-                for(j=1; j<ndim; j++) {
-                    idx += bvalue[j] * baseld[j-1];
-                    if(((i+1) % bunit[j]) == 0) bvalue[j]++;
-                    if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
-                }
+      /* get data_ptr to corner of patch */
+      /* ld are leading dimensions INCLUDING ghost cells */
+      nga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
 
-   		switch(type){
-			case C_INT: 
-		           temp=((int*)data_ptr)+idx; 
-			   break;
-			case C_DCPL: 
-		           temp=((DoubleComplex*)data_ptr)+idx; 
-			    break;
-			case C_DBL: 
-		           temp=((double*)data_ptr)+idx; 
-			    break;
-		        case C_FLOAT:
-                           temp=((float*)data_ptr)+idx;
-                            break;
- 		     	case C_LONG:
-                           temp=((long *)data_ptr)+idx;
-                            break;
-			default: ga_error("wrong data type.",type);	
-	
-               }
+      /* perform operation on all elements in local patch */
+      ngai_do_oper_elem(type, ndim, loA, hiA, ld, scalar, op);
 
-                    switch(op){
-	              case OP_ABS:
-		           do_abs(temp,hiA[0] -loA[0] +1, type); break;
-                           break;
-		      case OP_ADD_CONST:
-		           do_add_const(temp,hiA[0] -loA[0] +1, type, scalar); 
-			   break;
-	              case OP_RECIP:
-		           do_recip(temp,hiA[0] -loA[0] +1, type); break;
-                           break;
-		      default: ga_error("bad operation",op);
-                    }
-        }
-
-        /* release access to the data */
-        nga_release_update_(g_a, loA, hiA);
-     }
-    GA_POP_NAME;
-    if(local_sync_end)ga_sync_();
+      /* release access to the data */
+      nga_release_update_(g_a, loA, hiA);
+    }
+  } else {
+  }
+  GA_POP_NAME;
+  if(local_sync_end)ga_sync_();
 }
 
 
@@ -1219,213 +1236,213 @@ Integer *g_b, *blo, *bhi;    /* patch of g_b */
 Integer *g_c, *clo, *chi;    /* patch of g_c */
 int op; /* operation to be perform between g_a and g_b */
 {
-    Integer i, j;
-    Integer compatible;
-    Integer atype, btype, ctype;
-    Integer andim, adims[MAXDIM], bndim, bdims[MAXDIM], cndim, cdims[MAXDIM];
-    Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
-    Integer loB[MAXDIM], hiB[MAXDIM], ldB[MAXDIM];
-    Integer loC[MAXDIM], hiC[MAXDIM], ldC[MAXDIM];
-    void *A_ptr, *B_ptr, *C_ptr, *tempA, *tempB, *tempC;
-    Integer bvalue[MAXDIM], bunit[MAXDIM], baseldC[MAXDIM];
-    Integer idx, n1dim;
-    Integer atotal, btotal;
-    Integer g_A = *g_a, g_B = *g_b;
-    Integer me= ga_nodeid_(), A_created=0, B_created=0;
-    char *tempname = "temp", notrans='n';
-    int local_sync_begin,local_sync_end;
+  Integer i, j;
+  Integer compatible;
+  Integer atype, btype, ctype;
+  Integer andim, adims[MAXDIM], bndim, bdims[MAXDIM], cndim, cdims[MAXDIM];
+  Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
+  Integer loB[MAXDIM], hiB[MAXDIM], ldB[MAXDIM];
+  Integer loC[MAXDIM], hiC[MAXDIM], ldC[MAXDIM];
+  void *A_ptr, *B_ptr, *C_ptr, *tempA, *tempB, *tempC;
+  Integer bvalue[MAXDIM], bunit[MAXDIM], baseldC[MAXDIM];
+  Integer idx, n1dim;
+  Integer atotal, btotal;
+  Integer g_A = *g_a, g_B = *g_b;
+  Integer me= ga_nodeid_(), A_created=0, B_created=0;
+  char *tempname = "temp", notrans='n';
+  int local_sync_begin,local_sync_end;
 
-    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    if(local_sync_begin)ga_sync_();
-    ga_check_handle(g_a, "gai_elem2_patch_");
-    GA_PUSH_NAME("ngai_elem2_patch_");
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)ga_sync_();
+  ga_check_handle(g_a, "gai_elem2_patch_");
+  GA_PUSH_NAME("ngai_elem2_patch_");
 
-    nga_inquire_internal_(g_a, &atype, &andim, adims);
-    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
-    nga_inquire_internal_(g_c, &ctype, &cndim, cdims);
+  nga_inquire_internal_(g_a, &atype, &andim, adims);
+  nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+  nga_inquire_internal_(g_c, &ctype, &cndim, cdims);
 
-    if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L); 
+  if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L); 
 
-    /* check if patch indices and dims match */
-    for(i=0; i<andim; i++)
-        if(alo[i] <= 0 || ahi[i] > adims[i])
-            ga_error("g_a indices out of range ", *g_a);
-    for(i=0; i<bndim; i++)
-        if(blo[i] <= 0 || bhi[i] > bdims[i])
-            ga_error("g_b indices out of range ", *g_b);
-    for(i=0; i<cndim; i++)
-        if(clo[i] <= 0 || chi[i] > cdims[i])
-            ga_error("g_c indices out of range ", *g_c);
-    
-    /* check if numbers of elements in patches match each other */
-    n1dim = 1; for(i=0; i<cndim; i++) n1dim *= (chi[i] - clo[i] + 1);
-    atotal = 1; for(i=0; i<andim; i++) atotal *= (ahi[i] - alo[i] + 1);
-    btotal = 1; for(i=0; i<bndim; i++) btotal *= (bhi[i] - blo[i] + 1);
- 
-    if((atotal != n1dim) || (btotal != n1dim))
-        ga_error("  capacities of patches do not match ", 0L);
-    
-    /* find out coordinates of patches of g_a, g_b and g_c that I own */
-    nga_distribution_(&g_A, &me, loA, hiA);
+  /* check if patch indices and dims match */
+  for(i=0; i<andim; i++)
+    if(alo[i] <= 0 || ahi[i] > adims[i])
+      ga_error("g_a indices out of range ", *g_a);
+  for(i=0; i<bndim; i++)
+    if(blo[i] <= 0 || bhi[i] > bdims[i])
+      ga_error("g_b indices out of range ", *g_b);
+  for(i=0; i<cndim; i++)
+    if(clo[i] <= 0 || chi[i] > cdims[i])
+      ga_error("g_c indices out of range ", *g_c);
+
+  /* check if numbers of elements in patches match each other */
+  n1dim = 1; for(i=0; i<cndim; i++) n1dim *= (chi[i] - clo[i] + 1);
+  atotal = 1; for(i=0; i<andim; i++) atotal *= (ahi[i] - alo[i] + 1);
+  btotal = 1; for(i=0; i<bndim; i++) btotal *= (bhi[i] - blo[i] + 1);
+
+  if((atotal != n1dim) || (btotal != n1dim))
+    ga_error("  capacities of patches do not match ", 0L);
+
+  /* find out coordinates of patches of g_a, g_b and g_c that I own */
+  nga_distribution_(&g_A, &me, loA, hiA);
+  nga_distribution_(&g_B, &me, loB, hiB);
+  nga_distribution_( g_c, &me, loC, hiC);
+
+  /* test if the local portion of patches matches */
+  if(ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC) &&
+      ngai_comp_patch(andim, alo, ahi, cndim, clo, chi)) compatible = 1;
+  else compatible = 0;
+  ga_igop(GA_TYPE_GSM, &compatible, 1, "*");
+  if(!compatible) {
+    /* either patches or distributions do not match:
+     *        - create a temp array that matches distribution of g_c
+     *        - do C<= A
+     */
+    if(*g_b != *g_c) {
+      nga_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
+      andim = cndim;
+      g_A = *g_c;
+      nga_distribution_(&g_A, &me, loA, hiA);
+    }
+    else {
+      if (!ga_duplicate(g_c, &g_A, tempname))
+        ga_error("ga_dadd_patch: dup failed", 0L);
+      nga_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
+      andim = cndim;
+      A_created = 1;
+      nga_distribution_(&g_A, &me, loA, hiA);
+    }
+  }
+
+  /* test if the local portion of patches matches */
+  if(ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC) &&
+      ngai_comp_patch(bndim, blo, bhi, cndim, clo, chi)) compatible = 1;
+  else compatible = 0;
+  ga_igop(GA_TYPE_GSM, &compatible, 1, "*");
+  if(!compatible) {
+    /* either patches or distributions do not match:
+     *        - create a temp array that matches distribution of g_c
+     *        - copy & reshape patch of g_b into g_B
+     */
+    if (!ga_duplicate(g_c, &g_B, tempname))
+      ga_error("ga_dadd_patch: dup failed", 0L);
+    nga_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
+    bndim = cndim;
+    B_created = 1;
     nga_distribution_(&g_B, &me, loB, hiB);
-    nga_distribution_( g_c, &me, loC, hiC);
-    
-    /* test if the local portion of patches matches */
-    if(ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC) &&
-       ngai_comp_patch(andim, alo, ahi, cndim, clo, chi)) compatible = 1;
-    else compatible = 0;
-    ga_igop(GA_TYPE_GSM, &compatible, 1, "*");
-    if(!compatible) {
-        /* either patches or distributions do not match:
-         *        - create a temp array that matches distribution of g_c
-         *        - do C<= A
-         */
-        if(*g_b != *g_c) {
-            nga_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
-            andim = cndim;
-            g_A = *g_c;
-            nga_distribution_(&g_A, &me, loA, hiA);
-        }
-        else {
-            if (!ga_duplicate(g_c, &g_A, tempname))
-            ga_error("ga_dadd_patch: dup failed", 0L);
-            nga_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
-            andim = cndim;
-            A_created = 1;
-            nga_distribution_(&g_A, &me, loA, hiA);
-        }
+  }        
+
+  if(andim > bndim) cndim = bndim;
+  if(andim < bndim) cndim = andim;
+
+  if(!ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC))
+    ga_error(" A patch mismatch ", g_A); 
+  if(!ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC))
+    ga_error(" B patch mismatch ", g_B);
+
+  /*  determine subsets of my patches to access  */
+  if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
+    nga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
+    nga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
+    nga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
+
+    /* compute "local" operation accoording to op */
+
+    /* number of n-element of the first dimension */
+    n1dim = 1; for(i=1; i<cndim; i++) n1dim *= (hiC[i] - loC[i] + 1);
+
+    /* calculate the destination indices */
+    bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
+    /* baseld[0] = ld[0]
+     * baseld[1] = ld[0] * ld[1]
+     * baseld[2] = ld[0] * ld[1] * ld[2] .....
+     */
+    baseldC[0] = ldC[0]; baseldC[1] = baseldC[0] *ldC[1];
+    for(i=2; i<cndim; i++) {
+      bvalue[i] = 0;
+      bunit[i] = bunit[i-1] * (hiC[i-1] - loC[i-1] + 1);
+      baseldC[i] = baseldC[i-1] * ldC[i];
     }
 
-    /* test if the local portion of patches matches */
-    if(ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC) &&
-       ngai_comp_patch(bndim, blo, bhi, cndim, clo, chi)) compatible = 1;
-    else compatible = 0;
-    ga_igop(GA_TYPE_GSM, &compatible, 1, "*");
-    if(!compatible) {
-        /* either patches or distributions do not match:
-         *        - create a temp array that matches distribution of g_c
-         *        - copy & reshape patch of g_b into g_B
-         */
-        if (!ga_duplicate(g_c, &g_B, tempname))
-            ga_error("ga_dadd_patch: dup failed", 0L);
-         nga_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
-         bndim = cndim;
-         B_created = 1;
-         nga_distribution_(&g_B, &me, loB, hiB);
-    }        
 
-    if(andim > bndim) cndim = bndim;
-    if(andim < bndim) cndim = andim;
-    
-    if(!ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC))
-        ga_error(" A patch mismatch ", g_A); 
-    if(!ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC))
-        ga_error(" B patch mismatch ", g_B);
+    for(i=0; i<n1dim; i++) {
+      idx = 0;
+      for(j=1; j<cndim; j++) {
+        idx += bvalue[j] * baseldC[j-1];
+        if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+        if(bvalue[j] > (hiC[j]-loC[j])) bvalue[j] = 0;
+      }
 
-    /*  determine subsets of my patches to access  */
-    if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
-        nga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
-        nga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
-        nga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
-        
-        /* compute "local" operation accoording to op */
+      switch(atype){
+        case C_DBL:
+          tempA=((double*)A_ptr)+idx;
+          tempB=((double*)B_ptr)+idx;
+          tempC=((double*)C_ptr)+idx;
+          break;
+        case C_DCPL:
+          tempA=((DoubleComplex*)A_ptr)+idx;
+          tempB=((DoubleComplex*)B_ptr)+idx;
+          tempC=((DoubleComplex*)C_ptr)+idx;
+          break;
+        case C_INT:
+          tempA=((int*)A_ptr)+idx;
+          tempB=((int*)B_ptr)+idx;
+          tempC=((int*)C_ptr)+idx;
+          break;
+        case C_FLOAT:
+          tempA=((float*)A_ptr)+idx;
+          tempB=((float*)B_ptr)+idx;
+          tempC=((float*)C_ptr)+idx;
+          break;
+        case C_LONG:
+          tempA=((long *)A_ptr)+idx;
+          tempB=((long *)B_ptr)+idx;
+          tempC=((long *)C_ptr)+idx;
+          break;
 
-        /* number of n-element of the first dimension */
-        n1dim = 1; for(i=1; i<cndim; i++) n1dim *= (hiC[i] - loC[i] + 1);
-
-        /* calculate the destination indices */
-        bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
-        /* baseld[0] = ld[0]
-         * baseld[1] = ld[0] * ld[1]
-         * baseld[2] = ld[0] * ld[1] * ld[2] .....
-         */
-        baseldC[0] = ldC[0]; baseldC[1] = baseldC[0] *ldC[1];
-        for(i=2; i<cndim; i++) {
-            bvalue[i] = 0;
-            bunit[i] = bunit[i-1] * (hiC[i-1] - loC[i-1] + 1);
-            baseldC[i] = baseldC[i-1] * ldC[i];
-        }
-        
-
-         for(i=0; i<n1dim; i++) {
-                    idx = 0;
-                    for(j=1; j<cndim; j++) {
-                        idx += bvalue[j] * baseldC[j-1];
-                        if(((i+1) % bunit[j]) == 0) bvalue[j]++;
-                        if(bvalue[j] > (hiC[j]-loC[j])) bvalue[j] = 0;
-                    }
-
-                    switch(atype){
-                      	case C_DBL:
-                       	tempA=((double*)A_ptr)+idx;
-                        tempB=((double*)B_ptr)+idx;
-                    	tempC=((double*)C_ptr)+idx;
-    			break;
-            		case C_DCPL:
-                    	tempA=((DoubleComplex*)A_ptr)+idx;
-                    	tempB=((DoubleComplex*)B_ptr)+idx;
-                    	tempC=((DoubleComplex*)C_ptr)+idx;
-		        break;
-                        case C_INT:
-                    	tempA=((int*)A_ptr)+idx;
-                    	tempB=((int*)B_ptr)+idx;
-                    	tempC=((int*)C_ptr)+idx;
-		        break;
-			case C_FLOAT:
-                    	tempA=((float*)A_ptr)+idx;
-                    	tempB=((float*)B_ptr)+idx;
-                    	tempC=((float*)C_ptr)+idx;
-			break;
-			case C_LONG:
-                        tempA=((long *)A_ptr)+idx;
-                        tempB=((long *)B_ptr)+idx;
-                        tempC=((long *)C_ptr)+idx;
-                        break;
-
-                       default: ga_error(" wrong data type ",atype);
-                   }   
-                   switch((int)op)
-		     {
-		     case OP_ELEM_MULT:
-		       do_multiply(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
-		       break;
-		     case OP_ELEM_DIV:
-		       do_divide(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
-		       break;
-		     case OP_ELEM_SDIV:
-		       do_step_divide(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
-		       break;
-		     case OP_ELEM_SDIV2:
-		       do_stepb_divide(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
-		       break;
-		     case OP_STEP_MASK:
-		       do_step_mask(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
-		       break;
-		     case  OP_ELEM_MAX:
-		       do_maximum(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
-		       break;
-		     case  OP_ELEM_MIN:
-		       do_minimum(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
-		       break;
-		     default: 
-		       printf("op : OP_ELEM_MULT = %d:%d\n", op, OP_ELEM_MULT);
-			  ga_error(" wrong operation ",op);
-                   }
-        }
-        
-        /* release access to the data */
-        nga_release_       (&g_A, loC, hiC);
-        nga_release_       (&g_B, loC, hiC); 
-        nga_release_update_( g_c, loC, hiC); 
-
+        default: ga_error(" wrong data type ",atype);
+      }   
+      switch((int)op)
+      {
+        case OP_ELEM_MULT:
+          do_multiply(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+          break;
+        case OP_ELEM_DIV:
+          do_divide(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+          break;
+        case OP_ELEM_SDIV:
+          do_step_divide(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+          break;
+        case OP_ELEM_SDIV2:
+          do_stepb_divide(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+          break;
+        case OP_STEP_MASK:
+          do_step_mask(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+          break;
+        case  OP_ELEM_MAX:
+          do_maximum(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+          break;
+        case  OP_ELEM_MIN:
+          do_minimum(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+          break;
+        default: 
+          printf("op : OP_ELEM_MULT = %d:%d\n", op, OP_ELEM_MULT);
+          ga_error(" wrong operation ",op);
+      }
     }
 
-    if(A_created) ga_destroy_(&g_A);
-    if(B_created) ga_destroy_(&g_B);
-    
-    GA_POP_NAME;
-    if(local_sync_end)ga_sync_();
+    /* release access to the data */
+    nga_release_       (&g_A, loC, hiC);
+    nga_release_       (&g_B, loC, hiC); 
+    nga_release_update_( g_c, loC, hiC); 
+
+  }
+
+  if(A_created) ga_destroy_(&g_A);
+  if(B_created) ga_destroy_(&g_B);
+
+  GA_POP_NAME;
+  if(local_sync_end)ga_sync_();
 }
 
 void FATR ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c){
