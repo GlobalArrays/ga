@@ -534,11 +534,11 @@ None
 /*\ Internal utility function to do operation.
 \*/
 void ngai_do_oper_elem(Integer type, Integer ndim, Integer *loA, Integer *hiA,
-                       Integer *ld, void *scalar, Integer op)
+                       Integer *ld, void *data_ptr, void *scalar, Integer op)
 {
   Integer i, j;    
   Integer bvalue[MAXDIM], bunit[MAXDIM], baseld[MAXDIM];
-  void *temp, *data_ptr;
+  void *temp;
   Integer idx, n1dim;
   /* number of n-element of the first dimension */
   n1dim = 1; for(i=1; i<ndim; i++) n1dim *= (hiA[i] - loA[i] + 1);
@@ -586,13 +586,13 @@ void ngai_do_oper_elem(Integer type, Integer ndim, Integer *loA, Integer *hiA,
 
     switch(op){
       case OP_ABS:
-        do_abs(temp,hiA[0] -loA[0] +1, type); break;
+        do_abs(temp ,hiA[0] -loA[0] +1, type); break;
         break;
       case OP_ADD_CONST:
-        do_add_const(temp,hiA[0] -loA[0] +1, type, scalar); 
+        do_add_const(temp ,hiA[0] -loA[0] +1, type, scalar); 
         break;
       case OP_RECIP:
-        do_recip(temp,hiA[0] -loA[0] +1, type); break;
+        do_recip(temp ,hiA[0] -loA[0] +1, type); break;
         break;
       default: ga_error("bad operation",op);
     }
@@ -608,7 +608,7 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
   Integer loA[MAXDIM], hiA[MAXDIM], ld[MAXDIM];
   void *temp, *data_ptr;
   Integer me= ga_nodeid_();
-  Integer num_blocks, nproc;
+  Integer num_blocks;
   int local_sync_begin,local_sync_end;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -635,20 +635,169 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
       nga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
 
       /* perform operation on all elements in local patch */
-      ngai_do_oper_elem(type, ndim, loA, hiA, ld, scalar, op);
+      ngai_do_oper_elem(type, ndim, loA, hiA, ld, data_ptr, scalar, op);
 
       /* release access to the data */
       nga_release_update_(g_a, loA, hiA);
     }
   } else {
+    Integer offset, j, jtmp, chk;
+    Integer loS[MAXDIM];
+    Integer nproc = ga_nnodes_();
+    /* using simple block-cyclic data distribution */
+    if (!ga_scalapack_distribution_(g_a)){
+      for (i=me; i<num_blocks; i += nproc) {
+
+        /* get limits of patch */
+        nga_distribution_(g_a, &i, loA, hiA); 
+
+        /* loA is changed by ngai_patch_intersect, so
+           save a copy */
+        for (j=0; j<ndim; j++) {
+          loS[j] = loA[j];
+        }
+
+        /*  determine subset of my local patch to access  */
+        /*  Output is in loA and hiA */
+        if(ngai_patch_intersect(lo, hi, loA, hiA, ndim)){
+
+          /* get data_ptr to corner of patch */
+          /* ld are leading dimensions for block */
+          nga_access_block_ptr(g_a, &i, &data_ptr, ld);
+
+          /* Check for partial overlap */
+          chk = 1;
+          for (j=0; j<ndim; j++) {
+            if (loS[j] < loA[j]) {
+              chk=0;
+              break;
+            }
+          }
+          if (!chk) {
+            /* Evaluate additional offset for pointer */
+            offset = 0;
+            jtmp = 1;
+            for (j=0; j<ndim-1; j++) {
+              offset += (loA[j]-loS[j])*jtmp;
+              jtmp *= ld[j];
+            }
+            offset += (loA[ndim-1]-loS[ndim-1])*jtmp;
+            switch (type){
+              case C_INT:
+                data_ptr = (void*)((int*)data_ptr + offset);
+                break;
+              case C_DCPL:
+                data_ptr = (void*)((double*)data_ptr + 2*offset);
+                break;
+              case C_DBL:
+                data_ptr = (void*)((double*)data_ptr + offset);
+                break;
+              case C_FLOAT:
+                data_ptr = (void*)((float*)data_ptr + offset);
+                break;
+              case C_LONG:
+                data_ptr = (void*)((long*)data_ptr + offset);
+                break;
+              default: ga_error(" wrong data type ",type);
+            }
+          }
+          /* perform operation on all elements in local patch */
+          ngai_do_oper_elem(type, ndim, loA, hiA, ld, data_ptr, scalar, op);
+
+          /* release access to the data */
+          nga_release_update_block_(g_a, &i);
+        }
+      }
+    } else {
+      /* using scalapack block-cyclic data distribution */
+      Integer proc_index[MAXDIM], index[MAXDIM];
+      Integer topology[MAXDIM];
+      Integer blocks[MAXDIM], block_dims[MAXDIM];
+      ga_get_proc_index_(g_a, &me, proc_index);
+      ga_get_proc_index_(g_a, &me, index);
+      ga_get_block_info_(g_a, blocks, block_dims);
+      ga_topology_(g_a, topology);
+      while (index[ndim-1] < blocks[ndim-1]) {
+        /* find bounding coordinates of block */
+        chk = 1;
+        for (i = 0; i < ndim; i++) {
+          loA[i] = index[i]*block_dims[i]+1;
+          hiA[i] = (index[i] + 1)*block_dims[i];
+          if (hiA[i] > dims[i]) hiA[i] = dims[i];
+          if (hiA[i] < loA[i]) chk = 0;
+        }
+
+        /* loA is changed by ngai_patch_intersect, so
+           save a copy */
+        for (j=0; j<ndim; j++) {
+          loS[j] = loA[j];
+        }
+
+        /*  determine subset of my local patch to access  */
+        /*  Output is in loA and hiA */
+        if(ngai_patch_intersect(lo, hi, loA, hiA, ndim)){
+
+          /* get data_ptr to corner of patch */
+          /* ld are leading dimensions for block */
+          nga_access_block_grid_ptr(g_a, index, &data_ptr, ld);
+
+          /* Check for partial overlap */
+          chk = 1;
+          for (j=0; j<ndim; j++) {
+            if (loS[j] < loA[j]) {
+              chk=0;
+              break;
+            }
+          }
+          if (!chk) {
+            /* Evaluate additional offset for pointer */
+            offset = 0;
+            jtmp = 1;
+            for (j=0; j<ndim-1; j++) {
+              offset += (loA[j]-loS[j])*jtmp;
+              jtmp *= ld[j];
+            }
+            offset += (loA[ndim-1]-loS[ndim-1])*jtmp;
+            switch (type){
+              case C_INT:
+                data_ptr = (void*)((int*)data_ptr + offset);
+                break;
+              case C_DCPL:
+                data_ptr = (void*)((double*)data_ptr + 2*offset);
+                break;
+              case C_DBL:
+                data_ptr = (void*)((double*)data_ptr + offset);
+                break;
+              case C_FLOAT:
+                data_ptr = (void*)((float*)data_ptr + offset);
+                break;
+              case C_LONG:
+                data_ptr = (void*)((long*)data_ptr + offset);
+                break;
+              default: ga_error(" wrong data type ",type);
+            }
+          }
+
+          /* perform operation on all elements in local patch */
+          ngai_do_oper_elem(type, ndim, loA, hiA, ld, data_ptr, scalar, op);
+
+          /* release access to the data */
+          nga_release_update_block_grid_(g_a, index);
+        }
+        /* increment index to get next block on processor */
+        index[0] += topology[0];
+        for (i = 0; i < ndim; i++) {
+          if (index[i] >= blocks[i] && i<ndim-1) {
+            index[i] = proc_index[i];
+            index[i+1] += topology[i+1];
+          }
+        }
+      }
+    }
   }
   GA_POP_NAME;
   if(local_sync_end)ga_sync_();
 }
-
-
-
-
 
 void FATR ga_abs_value_patch_(Integer *g_a, Integer *lo, Integer *hi)
 {
