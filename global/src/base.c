@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.148 2006-10-25 20:07:35 d3g293 Exp $ */
+/* $Id: base.c,v 1.149 2006-11-02 17:24:51 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2505,6 +2505,7 @@ Integer grp_id, grp_me=GAme, grp_nproc=GAnproc;
       if(local_sync_end)ga_pgroup_sync_(&grp_id);
 
 #     ifdef GA_CREATE_INDEF
+      /* This code is incorrect. It needs to fixed if INDEF is ever used */
       if(status){
          Integer one = 1; 
          Integer dim1 =(Integer)GA[ga_handle].dims[1], dim2=(Integer)GA[ga_handle].dims[2];
