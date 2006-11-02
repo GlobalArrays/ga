@@ -118,23 +118,23 @@ void FATR ga_zero_(Integer *g_a)
       float *fa;
       long *la;
       case C_INT:
-      ia = (int*)ptr;
-      for(i=0;i<elems;i++) ia[i]  = 0;
-      break;
+        ia = (int*)ptr;
+        for(i=0;i<elems;i++) ia[i]  = 0;
+        break;
       case C_DCPL:
-      elems *=2;
+        elems *=2;
       case C_DBL:
-      da = (double*)ptr;
-      for(i=0;i<elems;i++) da[i] = 0;
-      break;
+        da = (double*)ptr;
+        for(i=0;i<elems;i++) da[i] = 0;
+        break;
       case C_FLOAT:
-      fa = (float*)ptr;
-      for(i=0;i<elems;i++) fa[i]  = 0;
-      break;
+        fa = (float*)ptr;
+        for(i=0;i<elems;i++) fa[i]  = 0;
+        break;
       case C_LONG:
-      la = (long*)ptr;
-      for(i=0;i<elems;i++) la[i]  = 0;
-      break;                                 
+        la = (long*)ptr;
+        for(i=0;i<elems;i++) la[i]  = 0;
+        break;                                 
       default: ga_error(" wrong data type ",type);
     }
 
