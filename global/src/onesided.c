@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.79 2006-10-27 15:14:20 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.80 2006-11-02 17:26:51 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -2055,6 +2055,8 @@ void nga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Intege
   if (index < 0 || index >= GAnproc)
     ga_error("processor index outside allowed values",index);
 
+  if (index != GAme)
+    ga_error("Only get accurate number of elements for processor making request",0);
   lptr = GA[handle].ptr[index];
 
   *len = GA[handle].size/GA[handle].elemsize;
