@@ -150,7 +150,10 @@ void nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
       }
     } 
   } else {
-    void    *ptr;
+    void *ptr;
+    Integer j, offset, jtot, upper;
+    Integer nproc = ga_nnodes_();
+    Integer iblock = 0;
     nga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
     if (elems > 0) {
       participate =1;
@@ -161,11 +164,63 @@ void nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
       /* release access to the data */
       nga_release_block_segment_(g_a, &me);
 
-      /* determine element subscript in the ndim-array */
-      for(i = 0; i < ndim; i++){
-        int elems = (int)( hi[i]-lo[i]+1);
-        info.subscr[i] = ind%elems + lo[i] ;
-        ind /= elems;
+      /* convert local index back into a global array index */
+      if (!ga_scalapack_distribution_(g_a)) {
+        offset = 0;
+        for (i=me; i<num_blocks; i += nproc) {
+          nga_distribution_(g_a, &i, lo, hi);
+          jtot = 1;
+          for (j=0; j<ndim; j++) {
+            jtot *= (hi[j]-lo[j]+1);
+          }
+          upper = offset + jtot;
+          if (ind >= offset && ind < upper) {
+            break;
+          }  else {
+            offset += jtot;
+          }
+        }
+        /* determine element subscript in the ndim-array */
+        ind -= offset;
+        for(i = 0; i < ndim; i++){
+          int elems = (int)( hi[i]-lo[i]+1);
+          info.subscr[i] = ind%elems + lo[i] ;
+          ind /= elems;
+        }
+      } else {
+        Integer stride[MAXDIM], index[MAXDIM];
+        Integer blocks[MAXDIM], block_dims[MAXDIM];
+        Integer proc_index[MAXDIM], topology[MAXDIM];
+        Integer l_index[MAXDIM];
+        Integer min, max;
+        ga_get_proc_index_(g_a, &me, proc_index);
+        ga_get_block_info_(g_a, blocks, block_dims);
+        ga_topology_(g_a, topology);
+        /* figure out strides for locally held block of data */
+        for (i=0; i<ndim; i++) {
+          stride[i] = 0;
+          for (j=proc_index[i]; j<blocks[i]; j += topology[i]) {
+            min = j*block_dims[i] + 1;
+            max = (j+1)*block_dims[i];
+            if (max > dims[i])
+              max = dims[i];
+            stride[i] += (max - min + 1);
+          }
+        }
+        /* use strides to figure out local index */
+        l_index[0] = ind%stride[0];
+        for (i=1; i<ndim; i++) {
+          ind = (ind-l_index[i-1])/stride[i-1];
+          l_index[i] = ind%stride[i];
+        }
+        /* figure out block index for block holding data element */
+        for (i=0; i<ndim; i++) {
+          index[i] = l_index[i]/block_dims[i];
+        }
+        for (i=0; i<ndim; i++) {
+          lo[i] = (topology[i]*index[i] + proc_index[i])*block_dims[i];
+          info.subscr[i] = l_index[i]%block_dims[i] + lo[i];
+        }
       }
     }
   }
