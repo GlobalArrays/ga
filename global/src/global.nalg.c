@@ -841,7 +841,9 @@ int local_sync_begin,local_sync_end;
    me = ga_pgroup_nodeid_(&a_grp);
    if((ga_compare_distr_(g_a,g_b) == FALSE) ||
       (ga_compare_distr_(g_a,g_c) == FALSE) ||
-       ga_has_ghosts_(g_a) || ga_has_ghosts_(g_b) || ga_has_ghosts_(g_c)) {
+       ga_has_ghosts_(g_a) || ga_has_ghosts_(g_b) || ga_has_ghosts_(g_c) ||
+       ga_total_blocks_(g_a) > 0 || ga_total_blocks_(g_b) > 0 ||
+       ga_total_blocks_(g_c) > 0) {
        /* distributions not identical */
        nga_inquire_internal_(g_a, &type, &andim, adims);
        nga_inquire_internal_(g_b, &type, &bndim, bdims);
