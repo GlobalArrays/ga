@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.88 2006-10-12 17:34:47 vinod Exp $ */
+/* $Id: shmem.c,v 1.89 2007-01-04 01:13:59 manoj Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -672,14 +672,12 @@ int reg, nreg, freg=-1, min_reg, max_reg;
 int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
                          size_t *shmsize)
 {
-    /* manoj: CHECK */
     armci_die("armci_get_shmem_info: Fix Me",0L);
     return 0;
 }
 
 Header *armci_get_shmem_ptr(int shmid, long shmoffset, size_t shmsize) 
 {
-    /* manoj: CHECK */
     armci_die("armci_get_shmem_ptr: Fix Me",0L);
     return NULL;
 }
