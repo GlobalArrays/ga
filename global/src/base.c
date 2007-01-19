@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.149 2006-11-02 17:24:51 d3g293 Exp $ */
+/* $Id: base.c,v 1.150 2007-01-19 22:27:30 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -3671,6 +3671,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
     float f_one = 1.0;
     long l_one = 1;
     double c_one[2];
+    int chk = 1;
     c_one[0] = 1.0;
     c_one[1] = 0.0;
 
@@ -3698,11 +3699,23 @@ void FATR ga_merge_mirrored_(Integer *g_a)
     ga_zero_(&_ga_tmp);
     /* Find data on this processor and accumulate in temporary global array */
     nga_distribution_(g_a,&GAme,lo,hi);
-    nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-    nga_acc_(&_ga_tmp, lo, hi, ptr_a, ld, one);
-    /* copy and data back to original global array */
+
+    /* Check to make sure processor has data */
+    chk = 1;
+    for (i=0; i<ndim; i++) {
+      if (hi[i]<lo[i]) {
+        chk = 0;
+      }
+    }
+    if (chk) {
+      nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+      nga_acc_(&_ga_tmp, lo, hi, ptr_a, ld, one);
+    }
+    /* copy data back to original global array */
     ga_sync_();
-    nga_get_(&_ga_tmp, lo, hi, ptr_a, ld);
+    if (chk) {
+      nga_get_(&_ga_tmp, lo, hi, ptr_a, ld);
+    }
     ga_destroy_(&_ga_tmp);
   }
   if (local_sync_end) ga_sync_();
