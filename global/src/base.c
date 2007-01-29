@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.150 2007-01-19 22:27:30 d3g293 Exp $ */
+/* $Id: base.c,v 1.151 2007-01-29 23:49:28 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -3698,7 +3698,8 @@ void FATR ga_merge_mirrored_(Integer *g_a)
       ga_error("Unable to create work array for merge",GAme);
     ga_zero_(&_ga_tmp);
     /* Find data on this processor and accumulate in temporary global array */
-    nga_distribution_(g_a,&GAme,lo,hi);
+    inode = GAme - zproc;
+    nga_distribution_(g_a,&inode,lo,hi);
 
     /* Check to make sure processor has data */
     chk = 1;
