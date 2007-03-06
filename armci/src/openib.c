@@ -1,4 +1,4 @@
-/* $Id: openib.c,v 1.5 2007-03-06 00:38:00 vinod Exp $
+/* $Id: openib.c,v 1.6 2007-03-06 00:48:06 vinod Exp $
  *
  * File organized as follows
  */
@@ -17,8 +17,6 @@
 #define DEBUG_SERVER 0
 #define DEBUG_CLN 0
 #define TIME_INIT 0
-/* The device name is "InfiniHost0" */
-#  define VAPIDEV_NAME "InfiniHost0"
 #  define INVAL_HNDL 0xFFFFFFFF
 #define RNR_TIMER 12
 
@@ -26,8 +24,6 @@ u_int32_t armci_max_num_sg_ent;
 u_int32_t armci_max_qp_ous_swr;
 u_int32_t armci_max_qp_ous_rwr;
 
-/* ??? VAPI_qp_num_t -> uint32_t ???
- * it seems there is no analog of  VAPI_qp_prop_t in OpenIB */
 typedef struct {
    struct ibv_qp *qp;
 /* VAPI_qp_prop_t qp_prop;         \*mostly for getting scq num*/
@@ -57,23 +53,6 @@ typedef struct {
   int scv;                          /*send completion vector*/
   int rcv;                          /*recv completion vector*/
 } vapi_nic_t;
-#if 0
-typedef struct {
-  VAPI_hca_hndl_t handle;           /*IB nic handle*/
-  VAPI_hca_id_t   hca_id;
-  VAPI_hca_vendor_t vendor;
-  VAPI_hca_cap_t attr;              /*IB nic attributes*/
-  VAPI_pd_hndl_t ptag;              /*protection tag*/
-  VAPI_hca_port_t hca_port;         /*mostly for getting lid*/
-  IB_port_t active_port;
-  VAPI_cq_hndl_t scq;               /*send completion queue*/
-  VAPI_cq_hndl_t rcq;               /*recv completion queue*/
-  IB_lid_t *lid_arr;                /*we need to exchange lids, arr for that*/
-  VAPI_qp_num_t rqpnum;            /*we need to exchng qp nums,arr for that*/
-  EVAPI_compl_handler_hndl_t rcq_eventh;
-  int maxtransfersize;
-} vapi_nic_t;
-#endif
 
 typedef struct {
   armci_vapi_memhndl_t *prem_handle; /*address server to store memory handle*/
@@ -211,34 +190,6 @@ void armci_check_status(int debug, int rc,char *msg)
 }
 
 /*********************FUNCTIONS TO CHECK VAPI RETURN STATUS********************/
-#if 0
-void armci_check_status(int debug, int rc, char *msg)
-{
-    if(rc != VAPI_OK){
-       char buf[100];
-       if(armci_server_terminating){
-         armci_server_transport_cleanup();
-         /* server got interrupted when clients terminate connections */
-         sleep(1);
-         _exit(0);
-       }
-       printf("%d in check FAILURE %s\n",armci_me,msg);fflush(stdout);
-       assert(strlen(msg)<100-20);
-       sprintf(buf,"ARMCI(vapi):failure:%d:%s code %d %d ",rc,msg,
-               _s,_c);
-#     ifdef  PAUSE_ON_ERROR
-       printf("%d(%d): Error from VIPL: %s - pausing\n",
-              armci_me, getpid(), msg);
-       fflush(stdout);
-       pause();
-#     endif
-       armci_die(buf,(int)rc);
-    }else if(debug){
-       printf("%d:ARMCI(vapi): %s successful\n",armci_me,msg);
-       fflush(stdout);
-    }
-}
-#endif
 void armci_vapi_check_return(int debug, int ret, const char *ss)
 {
 #if 0
@@ -1351,17 +1302,6 @@ void armci_server_initial_connection()
 
     armci_vapi_server_stage2 = 1;
 
-#if 0
-    QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
-    qp_attr.qp_state = VAPI_INIT;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
-    qp_attr.pkey_ix  = DEFAULT_PKEY_IX;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_PKEY_IX);
-    qp_attr.port     = CLN_nic->active_port;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_PORT);
-    qp_attr.remote_atomic_flags = VAPI_EN_REM_WRITE | VAPI_EN_REM_READ;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_REMOTE_ATOMIC_FLAGS);
-#else
     qp_attr_mask = IBV_QP_STATE
                  | IBV_QP_PKEY_INDEX
                  | IBV_QP_PORT
@@ -1947,7 +1887,6 @@ int armci_send_req_msg(int proc, void *buf, int bytes)
     request_header_t *msginfo = (request_header_t *)buf;
     struct ibv_send_wr *snd_dscr;
     struct ibv_sge *ssg_lst;
-//double t0,t1;
 
     snd_dscr = BUF_TO_SDESCR((char *)buf);
     ssg_lst  = BUF_TO_SSGLST((char *)buf);
@@ -1975,10 +1914,7 @@ int armci_send_req_msg(int proc, void *buf, int bytes)
                             bytes, &client_memhandle);
 
 
-    //t0 = MPI_Wtime();
     armci_vapi_post_send(1,cluster,snd_dscr,"send_req_msg:post_send");
-    //t1 = MPI_Wtime();
-    //printf("%d:posting took %lf\n",armci_me,1e6*(t1-t0));fflush(stdout);
 
     if(DEBUG_CLN){
        printf("%d:client sent REQ=%d %d bytes serv=%d qp=%ld id =%ld lkey=%d\n",
@@ -2034,7 +1970,6 @@ void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
     int rc = 0;
     sr_descr_t *dirdscr;
     int clus = armci_clus_id(p);
-    //double t0,t1;
     /*ID for the desr that comes from get_next_descr is already set*/
     dirdscr = armci_vapi_get_next_sdescr(nbtag,0);
     if(nbtag)*cptr = dirdscr;
@@ -2046,12 +1981,9 @@ void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
 
     armci_init_vbuf_rrdma(&dirdscr->sdescr,dirdscr->sg_entry,dst_buf,src_buf,
                           len,lochdl,remhdl);
-    //t0 = MPI_Wtime();
     struct ibv_send_wr *bad_wr;
     rc = ibv_post_send((SRV_con+clus)->qp, &(dirdscr->sdescr), &bad_wr);
     armci_check_status(DEBUG_CLN, rc,"armci_client_get_direct");
-    //t1 = MPI_Wtime();
-    //printf("%d:posting took %lf\n",armci_me,1e6*(t1-t0));fflush(stdout);
     if(!nbtag){
        armci_send_complete(&(dirdscr->sdescr),"armci_client_direct_get",1);
     }
