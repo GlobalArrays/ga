@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.17 2006-03-10 18:00:36 vinod Exp $
+C$Id: scf.F,v 1.18 2007-03-23 19:24:36 d3g293 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -18,9 +18,6 @@ c
       call mpi_init(ierr)
 #else
       call pbeginf
-#endif
-#ifdef CHECKPOINT_SCF
-      call ga_set_spare_procs(2);
 #endif
       call ga_initialize()
 c
@@ -44,9 +41,7 @@ c
 c     create and allocate global arrays
 c
       call setarrays
-      write(6,*) 'done with setarrays'
       call ininrm
-      write(6,*) '1-done with setarrays'
 c
 c     create initial guess for density matrix by using single atom
 c     densities
@@ -66,58 +61,8 @@ c
          call makesz(schwmax)
 c     
 c     iterate
-      call iterate(10)
 c     
-      call ga_igop(6, icut1, 1, '+')
-      call ga_igop(7, icut2, 1, '+')
-      call ga_igop(8, icut3, 1, '+')
-      if (me.eq.0) then
-c     
-c     print out timing information
-c     
-         call prnfin(energy)
-         write(6,1) tinit, tonel, ttwoel, tdiag, tdens, tprint,
-     $        nproc
- 1       format(/'   init   onel  twoel   diag   dens   print  ncpu'/
-     $        '  ------ ------ ------ ------ ------ ------ ------'/
-     $        1x, 6f7.2, i7/)
-c     
-c     print out information on # integrals evaulated each iteration
-c     
-         nints = nnbfn*(nnbfn+1)/2
-         nints = nbfn**4
-         frac  = dble(icut3)/dble(nints)
-         write(6,2) icut1, icut2, icut3, nints, frac
- 2       format(/'       No. of integrals screened or computed '
-     $        /'       -------------------------------------'/
-     $        /1x,'   #ij test   #kl test   #compute     #total',
-     $        '  fraction',
-     $        /1x,'  ---------  ---------  ---------  ---------',
-     $        '  --------',
-     $        /1x,4(2x,i9),f9.3)
-         call stats
-      endif
-c     
-      call closearrays
-      call ga_terminate
-#ifdef MPI
-      call mpi_finalize
-#else
-      call pend
-#endif
-c     
-      end
-c
-      subroutine iterate(niter)
-      implicit double precision (a-h, o-z)
-      include 'cscf.h'
-#include "mafdecls.fh"
-#include "global.fh"
-#include "tcgmsg.fh"
-      do 10 iter = 1, niter
-#ifdef CHECKPOINT_SCF
-         call ga_checkpoint_arrays(arraylist,numarrays)
-#endif
+      do 10 iter = 1, mxiter
 c
 c     make the one particle contribution to the fock matrix
 c     and get the partial contribution to the energy
@@ -170,13 +115,51 @@ c
          if (deltad .lt. tol) goto 20
  10   continue
       if(me.eq.0)
-     $     write(6,*) ' SCF failed to converge in ', niter, ' iters'
+     $     write(6,*) ' SCF failed to converge in ', mxiter, ' iters'
 c     
 c     finished ... print out eigenvalues and occupied orbitals
 c     
  20   continue
+      call ga_igop(6, icut1, 1, '+')
+      call ga_igop(7, icut2, 1, '+')
+      call ga_igop(8, icut3, 1, '+')
+      if (me.eq.0) then
+c     
+c     print out timing information
+c     
+         call prnfin(energy)
+         write(6,1) tinit, tonel, ttwoel, tdiag, tdens, tprint,
+     $        nproc
+ 1       format(/'   init   onel  twoel   diag   dens   print  ncpu'/
+     $        '  ------ ------ ------ ------ ------ ------ ------'/
+     $        1x, 6f7.2, i7/)
+c     
+c     print out information on # integrals evaulated each iteration
+c     
+         nints = nnbfn*(nnbfn+1)/2
+         nints = nbfn**4
+         frac  = dble(icut3)/dble(nints)
+         write(6,2) icut1, icut2, icut3, nints, frac
+ 2       format(/'       No. of integrals screened or computed '
+     $        /'       -------------------------------------'/
+     $        /1x,'   #ij test   #kl test   #compute     #total',
+     $        '  fraction',
+     $        /1x,'  ---------  ---------  ---------  ---------',
+     $        '  --------',
+     $        /1x,4(2x,i9),f9.3)
+         call stats
+      endif
+c     
+      call closearrays
+      call ga_terminate
+#ifdef MPI
+      call mpi_finalize
+#else
+      call pend
+#endif
+c     
       end
-
+c
       subroutine makesz(schwmax)
       implicit double precision (a-h, o-z)
       include 'cscf.h'
@@ -971,15 +954,6 @@ c
       call ga_set_data(g_work, two, dims, MT_DBL)
       status = ga_allocate(g_work)
       call ga_zero(g_work)
-#ifdef CHECKPOINT_SCF
-      arraylist(1) = g_counter
-      arraylist(2) = g_dens
-      arraylist(3) = g_schwarz
-      arraylist(4) = g_fock
-      arraylist(5) = g_work
-      write (6,*) arraylist(1),arraylist(2),arraylist(3)
-      call ga_checkpoint_arrays(arraylist,numarrays)
-#endif
 
       g_ident = ga_create_handle()
       call ga_set_data(g_ident, two, dims, MT_DBL)
