@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.18 2007-03-23 19:24:36 d3g293 Exp $
+C$Id: scf.F,v 1.19 2007-04-04 19:28:48 d3g293 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -768,6 +768,12 @@ c
       shift = 0.0d00
       if (tester.gt.0.3d0) then
         shift = 0.3d0
+      else
+        if (nbfn .gt. 60) then
+          shift = 0.1d0
+        else
+          shift = 0.0d0
+        endif
       endif
       if (iter.ge.2.and.shift.ne.0.0d00) then
         call shiftfock(shift)
