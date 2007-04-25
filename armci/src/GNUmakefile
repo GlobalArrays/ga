@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.103 2006-10-12 17:34:47 vinod Exp $
+#$Id: GNUmakefile,v 1.104 2007-04-25 20:09:39 d3p687 Exp $
          FOPT = -O
          COPT = -O
 
@@ -14,8 +14,7 @@ OBJ += faccumulate.o fcopy.o
 endif
 
 # ARMCI can be build with strided opeations implemented using non-blocking calls
-#NB_NONCONT = 1
-
+NB_NONCONT = 1
 
 #default message-passing library for ARMCI is MPI
 ifndef MSG_COMMS
@@ -49,6 +48,10 @@ ifeq ($(TARGET),$(findstring $(TARGET),$(CKPT)))
 ifdef ENABLE_CKPT
      OBJ += armci_chkpt.o armci_storage.o
 endif
+endif
+
+ifeq ($(TARGET),CATAMOUNT)
+     LIB_DEFINES += -DCLUSTER
 endif
 
 ifeq ($(TARGET),HITACHI)

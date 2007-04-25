@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.115 2007-03-06 00:38:00 vinod Exp $ */
+/* $Id: armci.c,v 1.116 2007-04-25 20:09:39 d3p687 Exp $ */
 
 /* DISCLAIMER
  *
@@ -554,15 +554,10 @@ int ARMCI_Init()
     if(armci_me==armci_master) ARMCI_ParentTrapSignals();
     ARMCI_ChildrenTrapSignals();
 
-    /* init K&R memory for CRAY-XT3 */
-#if defined(CRAY_SHMEM) && defined(XT3)
-    armci_cray_shm_init();
-#endif
-
 #if defined(SYSV) || defined(WIN32) || defined(MMAP)
     /* init shared/K&R memory */
     if(ARMCI_Uses_shm() ) {
-#      ifdef SGIALTIX
+#      if defined(SGIALTIX)
           armci_altix_shm_init();
 #      else
           armci_shmem_init();

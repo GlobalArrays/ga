@@ -1,143 +1,20 @@
-/* $Id: memory.c,v 1.56 2006-09-13 23:43:36 andriy Exp $ */
+/* $Id: memory.c,v 1.57 2007-04-25 20:09:40 d3p687 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
 #include "message.h"
 #include "kr_malloc.h"
- 
+
 #define DEBUG_ 0
-#define USE_MALLOC 
+#define USE_MALLOC
 #define USE_SHMEM_
 
-static context_t ctx_localmem;
-
-/* memory allocator called by kr_malloc on CRAY-XT3 */
-#if defined(CRAY_SHMEM) && defined(XT3)
-
+#if defined(CRAY_SHMEM) && defined(CATAMOUNT)
 #include <mpp/shmem.h>
-#include <unistd.h>
- 
-#define SHM_UNIT 1024
-#define DEF_UNITS (64)
-#define MAX_SEGS  512
-
-#define _SHMMAX_CRAY     32*1024  /* 32 MB */
-#define _SHMMAX_CRAY_GRP 512*1024 /* 512 MB */
-
-static  context_t cray_ctx_shmem;
-static  context_t cray_ctx_shmem_grp;
-static  size_t cray_pagesize;
-extern void armci_memoffset_table_newentry(void *ptr, size_t seg_size);
- 
-void *armci_cray_allocate(size_t bytes)
-{
-#if DEBUG_
-    fprintf(stderr, "armci_allocate: __enter__\n");
-#endif
-    
-    void *ptr, *sptr;
- 
-    sptr=ptr= shmalloc(bytes);
-
-#if DEBUG_
-    fprintf(stderr, "shmalloc allocated %d bytes at %p\n", bytes, sptr);
-#endif    
-    
-    if(sptr == NULL) armci_die("armci_cray_allocate: shmalloc failed\n",
-                               armci_me);
-    armci_memoffset_table_newentry(ptr, bytes);
-#if 0
-    if(ptr){  /* touch each page to establish ownership */
-       int i;
-       for(i=0; i< bytes/altix_pagesize; i++){
-          *(double*)ptr=0.;
-          ((char*)ptr) += altix_pagesize;
-       }
-    }
+#include <catamount/data.h>
 #endif
 
-#if DEBUG_
-    fprintf(stderr, "shmalloc allocated %d bytes at %p(2)\n", bytes, sptr);
-    fprintf(stderr, "armci_allocate: __exit__\n");
-#endif
-    return sptr;
-}
- 
-void armci_cray_shm_init()
-{
-#if DEBUG_
-    fprintf(stderr, "armci_cray_shm_init: __enter__\n");
-#endif        
-    cray_pagesize = getpagesize();
-    kr_malloc_init(SHM_UNIT, _SHMMAX_CRAY, 0, 
-                   armci_cray_allocate, 0, &cray_ctx_shmem);
-    kr_malloc_init(SHM_UNIT, _SHMMAX_CRAY_GRP, _SHMMAX_CRAY_GRP, 
-                   armci_cray_allocate, 0, &cray_ctx_shmem_grp);
-    /* allocate a huge segment for groups. When kr_malloc() is called for 
-     the first time for this altix_ctx_shmem_grp context with some minimal
-     size of 8 bytes, a huge segment of size (SHM_UNIT*_SHMMAX_CRAY_GRP) 
-     will be created */
-    {
-       void *ptr;
-       ptr=kr_malloc((size_t)8, &cray_ctx_shmem_grp);
-       if(ptr==NULL) 
-          armci_die("armci_cray_shm_init(): malloc failed", armci_me);
-    }
-#if DEBUG_
-    fprintf(stderr, "armci_cray_shm_init: __exit__\n");
-#endif        
-}   
-
-void armci_cray_shm_malloc(void *ptr_arr[], armci_size_t bytes)
-{
-#if DEBUG_
-    fprintf(stderr, "armci_cray_shm_malloc: __enter__\n");
-#endif
-    
-    long size=bytes;
-    void *ptr;
-    int i;
-    armci_msg_lgop(&size,1,"max");
-    ptr=kr_malloc((size_t)size, &cray_ctx_shmem);
-    bzero(ptr_arr,(armci_nproc)*sizeof(void*));
-    ptr_arr[armci_me] = ptr;
-    if(size!=0 && ptr==NULL)
-       armci_die("armci_cray_shm_malloc(): malloc failed", armci_me);
-    for(i=0; i< armci_nproc; i++) if(i!=armci_me) ptr_arr[i]=ptr;
-
-#if DEBUG_
-    fprintf(stderr, "armci_cray_shm_malloc: __exit__\n");
-#endif
-}
-
-void armci_cray_shm_malloc_group(void *ptr_arr[], armci_size_t bytes, 
-                                  ARMCI_Group *group) {
-#if DEBUG_
-    fprintf(stderr, "armci_cray_shm_malloc_group: __enter__\n");
-#endif
-
-    long size=bytes;
-    void *ptr;
-    int i,grp_me, grp_nproc;
-    armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
-
-    ARMCI_Group_size(group, &grp_nproc);
-    ARMCI_Group_rank(group, &grp_me);
-    armci_msg_group_lgop(&size,1,"max",group);
-    ptr=kr_malloc((size_t)size, &cray_ctx_shmem_grp);
-    if(size!=0 && ptr==NULL)
-       armci_die("armci_altix_shm_malloc_group(): malloc failed for groups. Increase _SHMMAX_ALTIX_GRP", armci_me);
-    bzero(ptr_arr,(grp_nproc)*sizeof(void*));
-    ptr_arr[grp_me] = ptr;
-    for(i=0; i< grp_nproc; i++)
-        if(i!=grp_me) ptr_arr[i] = ptr;
-
-#if DEBUG_
-    fprintf(stderr, "armci_cray_shm_malloc_group: __exit__\n");
-#endif
-}
-#endif
-/* end of CRAY-XT3 memory allocator */
+static context_t ctx_localmem;
 
 #if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI)
 #include "shmem.h"
@@ -162,7 +39,7 @@ void armci_cray_shm_malloc_group(void *ptr_arr[], armci_size_t bytes,
 
 #include <mpp/shmem.h>
 #include <unistd.h>
- 
+
 #define SHM_UNIT 1024
 #define DEF_UNITS (64)
 #define MAX_SEGS  512
@@ -174,11 +51,11 @@ static  context_t altix_ctx_shmem;
 static  context_t altix_ctx_shmem_grp;
 static  size_t altix_pagesize;
 extern void armci_memoffset_table_newentry(void *ptr, size_t seg_size);
- 
+
 void *armci_altix_allocate(size_t bytes)
 {
     void *ptr, *sptr;
- 
+
     sptr=ptr= shmalloc(bytes);
     if(sptr == NULL) armci_die("armci_altix_allocate: shmalloc failed\n",
                                armci_me);
@@ -194,7 +71,7 @@ void *armci_altix_allocate(size_t bytes)
 #endif
     return sptr;
 }
- 
+
 void armci_altix_shm_init()
 {
     altix_pagesize = getpagesize();
@@ -691,9 +568,16 @@ void *reg_malloc(size_t size)
 void armci_krmalloc_init_localmem() {
 #if defined(ALLOW_PIN)
   kr_malloc_init(0, 0, 0, reg_malloc, 0, &ctx_localmem);
-#elif defined(CRAY_SHMEM) && defined(XT3)
-  kr_malloc_init(0, 0, 0, shmalloc, 0, &ctx_localmem);
-#else  
+#elif defined(CRAY_SHMEM) && defined(CATAMOUNT)
+#define SHM_UNIT 1024
+  /* note, 1M is a hack, needs justification and/or better number */
+  int units_avail = (cnos_shmem_size() - 1024 * 1024) / SHM_UNIT;
+#if DEBUG_
+  fprintf(stderr, "%d: armci_krmalloc_init_localmem: sym heap=%llu, units(%d)=%d\n",
+          armci_me, cnos_shmem_size(), SHM_UNIT, units_avail);
+#endif
+  kr_malloc_init(SHM_UNIT, units_avail, units_avail, shmalloc, 0, &ctx_localmem);
+#else
   kr_malloc_init(0, 0, 0, malloc, 0, &ctx_localmem);
 #endif
   ctx_localmem.ctx_type = KR_CTX_LOCALMEM;
@@ -910,15 +794,15 @@ int ARMCI_Uses_shm()
 }
 #ifdef MPI
 
-int ARMCI_Uses_shm_grp(ARMCI_Group *group) 
-{    
+int ARMCI_Uses_shm_grp(ARMCI_Group *group)
+{
     int uses=0, grp_me, grp_nproc, grp_nclus;
     armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
 
     ARMCI_Group_size(group, &grp_nproc);
     ARMCI_Group_rank(group, &grp_me);
     grp_nclus = grp_attr->grp_nclus;
-    
+
 #if (defined(SYSV) || defined(WIN32) || defined(MMAP) ||defined(HITACHI)) && !defined(NO_SHM)
 #   ifdef RMA_NEEDS_SHMEM
       if(grp_nproc >1) uses= 1; /* always unless serial mode */
@@ -952,7 +836,7 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
                       armci_me, grp_me, (int)bytes);
 #ifdef REGION_ALLOC
     armci_region_shm_malloc_grp(ptr_arr, bytes, group);
-#else 
+#else
 #ifdef USE_MALLOC
     if(grp_nproc == 1) {
        ptr = kr_malloc((size_t) bytes, &ctx_localmem);
@@ -964,11 +848,11 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
        return (0);
     }
 #endif
-    
+
     if( ARMCI_Uses_shm_grp(group) ) {
 #      ifdef SGIALTIX
           armci_altix_shm_malloc_group(ptr_arr,bytes,group);
-#      else   
+#      else
           armci_shmem_malloc_group(ptr_arr,bytes,group);
 #      endif
     }
@@ -976,10 +860,10 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
        /* on distributed-memory systems just malloc & collect all addresses */
        ptr = kr_malloc(bytes, &ctx_localmem);
        if(bytes) if(!ptr) armci_die("armci_malloc:malloc 2 failed",bytes);
-       
+
        bzero((char*)ptr_arr,grp_nproc*sizeof(void*));
        ptr_arr[grp_me] = ptr;
-       
+
        /* now combine individual addresses into a single array */
        {
           int ratio = sizeof(void*)/sizeof(int);
@@ -1011,7 +895,7 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
 {
     int grp_me, grp_nproc, grp_master, grp_clus_me;
     armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
-    
+
     if(!ptr)return 1;
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_FREE_GROUP,__FILE__,__LINE__);
@@ -1054,10 +938,9 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
     kr_free(ptr, &ctx_localmem);
 #endif /* ifdef REGION_ALLOC */
 #else /* SGI Altix */
-    if(ARMCI_Uses_shm_grp(group)) 
+    if(ARMCI_Uses_shm_grp(group))
        kr_free(ptr, &altix_ctx_shmem_grp);
     else kr_free(ptr, &ctx_localmem);
-       
 #endif /* SGIALTIX */
 
     ptr = NULL;
