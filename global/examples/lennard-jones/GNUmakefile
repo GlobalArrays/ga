@@ -22,7 +22,7 @@ endif
 ifeq ($(P_FILE),YES)
 	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
 endif
-	$(LINK.f) $(NOPT) $(FLDOPT) -o $@ $< $(LIBS) $(FLIBS);
+	$(LINK.c) $(NOPT) $(CLDOPT) -o $@ $< $(LIBS) $(CLIBS);
 
 %.p:
 	echo "`whoami` `hostname` 4 `pwd`/$(basename $@) /tmp" > $@
