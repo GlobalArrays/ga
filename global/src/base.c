@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.151 2007-01-29 23:49:28 d3g293 Exp $ */
+/* $Id: base.c,v 1.152 2007-10-26 18:31:37 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -4377,8 +4377,6 @@ void FATR ga_get_block_info_(Integer *g_a, Integer *num_blocks, Integer *block_d
 {
   Integer ga_handle = GA_OFFSET + *g_a;
   Integer i, ndim;
-  if (!GA[ga_handle].block_sl_flag)
-    ga_error("Global array does not use ScaLAPACK data distribution",0);
   ndim = GA[ga_handle].ndim; 
   for (i=0; i<ndim; i++) {
     num_blocks[i] = GA[ga_handle].num_blocks[i];
