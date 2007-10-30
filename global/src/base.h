@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.40 2006-10-19 19:48:32 d3g293 Exp $ */
+/*$Id: base.h,v 1.41 2007-10-30 02:04:57 manoj Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -9,6 +9,7 @@ extern int* GA_inv_Proc_list;
 extern int** GA_Update_Flags;
 extern int* GA_Update_Signal;
 extern short int _ga_irreg_flag; 
+extern Integer GA_Debug_flag;
 
 #define FNAM        31              /* length of array names   */
 #define CACHE_SIZE  512             /* size of the cache inside GA DS*/

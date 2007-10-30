@@ -44,6 +44,8 @@ test(int data_type, int ndim) {
   float alpha_flt = 1.0, beta_flt = 0.0;
   DoubleComplex value1_dcpl = {2.0, 2.0}, value2_dcpl = {2.0, 2.0};
   DoubleComplex alpha_dcpl = {1.0, 0.0} , beta_dcpl = {0.0, 0.0}; 
+  SingleComplex value1_scpl = {2.0, 2.0}, value2_scpl = {2.0, 2.0};
+  SingleComplex alpha_scpl = {1.0, 0.0} , beta_scpl = {0.0, 0.0}; 
   void *value1, *value2, *alpha, *beta;
 
   switch (data_type) {
@@ -67,6 +69,13 @@ test(int data_type, int ndim) {
     value1 = (void *)&value1_dcpl;
     value2 = (void *)&value2_dcpl;
     if(me==0) printf("Double Complex:   Testing GA_Zgemm,NGA_Matmul_patch for %d-Dimension", ndim);
+    break;
+  case C_SCPL:
+    alpha  = (void *)&alpha_scpl;
+    beta   = (void *)&beta_scpl;
+    value1 = (void *)&value1_scpl;
+    value2 = (void *)&value2_scpl;
+    if(me==0) printf("Single Complex:   Testing GA_Cgemm,NGA_Matmul_patch for %d-Dimension", ndim);
     break;
   default:
     GA_Error("wrong data type", data_type);
@@ -119,6 +128,10 @@ test(int data_type, int ndim) {
     GA_Zgemm('N', 'N', m, n, k, alpha_dcpl, g_A, g_B, beta_dcpl, g_C);
     beta_dcpl.real = -1.0; 
     break;
+  case C_SCPL:
+    GA_Cgemm('N', 'N', m, n, k, alpha_scpl, g_A, g_B, beta_scpl, g_C);
+    beta_scpl.real = -1.0; 
+    break;
   default:
     GA_Error("wrong data type", data_type);
   }
@@ -150,6 +163,11 @@ test(int data_type, int ndim) {
     if(value1_dcpl.real != 0.0 || value1_dcpl.imag != 0.0)
       GA_Error("GA_Zgemm, NGA_Matmul_patch Failed", 0);
     break;
+  case C_SCPL:
+    value1_scpl = GA_Cdot(g_C, g_C);
+    if(value1_scpl.real != 0.0 || value1_scpl.imag != 0.0)
+      GA_Error("GA_Sgemm, NGA_Matmul_patch Failed", 0);
+    break;
   default:
     GA_Error("wrong data type", data_type);
   }  
@@ -170,6 +188,7 @@ do_work() {
      test(C_FLOAT, i);
      test(C_DBL,   i);
      test(C_DCPL,  i);
+     test(C_SCPL,  i);
      if(me == 0) printf("\n\n");
     GA_Sync();
   }

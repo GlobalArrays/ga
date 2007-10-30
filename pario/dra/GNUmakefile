@@ -18,6 +18,7 @@
 
  LIB_DISTRIB = ../../lib
      LIBRARY = libpario.a
+LIBRARY_SHARED = libpario.so
          OBJ = disk.arrays.o disk.param.o patch.util.o fortran.o env.o capi.o buffers.o
  LIB_TARGETS = *.x *.p
      HEADERS = dra.h dra.fh

@@ -2,7 +2,7 @@
 #define _TYPES_F2C_H_
 
 /*
- * $Id: typesf2c.h,v 1.1 2001-06-28 23:00:45 edo Exp $
+ * $Id: typesf2c.h,v 1.2 2007-10-30 02:05:02 manoj Exp $
  */
 
 #  ifdef WIN32
@@ -11,10 +11,12 @@
 #    define FATR 
 #  endif
 
-#  ifdef  EXT_INT
-    typedef long   Integer;
+#  ifdef  EXT_INT64
+    typedef long long  Integer; /* Using 64-bit integer */
+#  elif defined(EXT_INT)
+    typedef long       Integer;
 #  else
-    typedef int    Integer;
+    typedef int        Integer;
 #  endif
 
 #  ifdef  EXT_DBL
@@ -37,5 +39,10 @@
         DoublePrecision real;
         DoublePrecision imag;
    }DoubleComplex;
+
+   typedef struct{
+        float real;
+        float imag;
+   }SingleComplex;
 
 #endif /* _TYPES_F2C_H_ */

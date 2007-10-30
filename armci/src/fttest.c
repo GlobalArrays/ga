@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 {
     int rc,i,j=0,rid,ret;
     armci_ckpt_ds_t ckptds;
-    ARMCI_Group *grp;
+    ARMCI_Group grp;
     MP_INIT(argc, argv);
     MP_PROCS(&nproc);
     MP_MYID(&me);
@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
     }
     armci_init_checkpoint2();
     ARMCI_Init();
-    grp = ARMCI_Get_world_group();
+    ARMCI_Group_get_world(&grp);
     size = SIZE_;
     rc=ARMCI_Malloc((void **)ptr_arr,size*8);
     printf("ARMCI test program (%d processes)\n",nproc); 
@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
     (void)ARMCI_Ckpt_create_ds(&ckptds,1);
     ckptds.ptr_arr[0]=ptr_arr[me];
     ckptds.sz[0]=SIZE_*8;
-    rid=ARMCI_Ckpt_init(NULL,grp,1,0,&ckptds);
+    rid=ARMCI_Ckpt_init(NULL,&grp,1,0,&ckptds);
     printf("%d: After ARMCI_Ckpt_init(): \n", me);
 
     j=0;

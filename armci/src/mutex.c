@@ -1,4 +1,4 @@
-/* $Id: mutex.c,v 1.24 2003-08-21 07:00:33 d3h325 Exp $ */
+/* $Id: mutex.c,v 1.25 2007-10-30 02:04:55 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "request.h"
@@ -136,7 +136,7 @@ int ARMCI_Destroy_mutexes()
 
 #ifdef LAPI /*fix to if cmpl handler for a pending unlock runs after destroy*/
      for(proc=0;proc<armci_nproc;proc++){
-          for(mutex=0;mutex<mymutexcount;mutex++){
+          for(mutex=0;mutex<glob_mutex[proc].count;mutex++){
             _dummy_server_work_ = 0.; /* must be global to fool the compiler */
             while(!armci_mutex_free(mutex,proc)){
               for(i=0; i<  SPINMAX *factor; i++) _dummy_server_work_ += 1.;

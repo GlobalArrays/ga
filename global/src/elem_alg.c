@@ -156,6 +156,7 @@ static void do_stepboundinfo(void *ptr, int nelem, int type)
 	     if (ia[i]>= GA_INFINITY_I) ia[i] = GA_NEGATIVE_INFINITY_I;
 	   break;
          case C_DCPL: 
+         case C_SCPL: 
 	   /* This operation is not well defined for complex
 	      numbers . This statement added when drop through
 	      behavior changed by adding code for C_FLOAT and C_LONG
@@ -206,6 +207,7 @@ static void do_stepmax(void *ptr, int nelem, int type)
 		if(ia[i]>i_0)ia[i]=-GA_INFINITY_I;
               break;
          case C_DCPL:
+         case C_SCPL:
 	   /* This operation is not well defined for complex
 	      numbers . This statement added when drop through
 	      behavior changed by adding code for C_FLOAT and C_LONG
@@ -237,11 +239,13 @@ static void do_abs(void *ptr, int nelem, int type)
 {
     int i;
     double magi, magr, x1, x2;
+    float smagi, smagr, sx1, sx2;
     switch (type){
          int *ia;
          double *da;
          float *fa;
          DoubleComplex *ca,val;
+         SingleComplex *cfa,cval;
 	 long *la;
 
          case C_INT:
@@ -273,6 +277,32 @@ static void do_abs(void *ptr, int nelem, int type)
 		  ca[i].real = ABS(val.imag)*sqrt(((double)1.0)+(x2*x2));
 		}
 		ca[i].imag=(double)0.0;
+              }
+              break;
+         case C_SCPL:
+              cfa = (SingleComplex *) ptr;
+              for(i=0;i<nelem;i++){
+		cval = cfa[i];
+                /* DJB: This algorithm can lead to overflows when
+		   and underflows when not necessary.
+		cfa[i].real = sqrt(cval.real * cval.real + cval.imag *cval.imag);
+		cfa[i].imag = 0.0;
+		   Better (but slower) is:
+		*/
+		smagi = ABS(cval.imag);
+		smagr = ABS(cval.real);
+		if (ABS(val.real) >= ABS(val.imag)) {
+		  if (cval.real == (float)0.0) {
+		    cfa[i].real = (float)0.0;
+		  } else {
+		    sx2 = cval.imag/cval.real;
+		    cfa[i].real = ABS(cval.real)*sqrt(((float)1.0)+(sx2*sx2));
+		  }
+		} else {
+		  sx2 = cval.real/cval.imag;
+		  cfa[i].real = ABS(cval.imag)*sqrt(((float)1.0)+(sx2*sx2));
+		}
+		cfa[i].imag=(float)0.0;
               }
               break;
   	 case C_DBL:
@@ -315,12 +345,14 @@ static void do_recip(void *ptr, int nelem, int type)
     the INFINITY type returned (the trailing _*).
   */
   double magi, magr, x1, x2, c, d;
+  float smagi, smagr, sx1, sx2, sc, sd;
     int i;
     switch (type){
          int *ia;
          double *da, temp;
          float *fa;
          DoubleComplex *ca,val;
+         SingleComplex *cfa,cval;
          long *la; 
 
          case C_INT:
@@ -388,6 +420,61 @@ static void do_recip(void *ptr, int nelem, int type)
 
 	      }
               break;
+         case C_SCPL:
+              cfa = (SingleComplex *) ptr;
+              for(i=0;i<nelem;i++){
+		/* 
+		  Again, as for absolute value the following
+		  algorithm can lead to unecessary overflow/underflow
+		   
+                  temp = cfa[i].real*cfa[i].real + cfa[i].imag*cfa[i].imag;
+                  if( temp!=0.0){
+                   cfa[i].real =cfa[i].real/temp;
+                   cfa[i].imag =-cfa[i].imag/temp;
+                  }
+                  else{
+ 		     ga_error("zero value at index",i); 
+                     OR
+		       cfa[i].real = GA_INFINITY_D;
+		       cfa[i].imag = GA_INFINITY_D;
+
+                 }
+		 Better (but slower) is: 
+	       */		     
+		sx1 = cfa[i].real;
+		sx2 = cfa[i].imag;
+		/*
+		printf(" do_recip i = %d, x1 = %le, x2 = %le\n",
+		       i,x1,x2);
+		*/
+		smagr = ABS(sx1);
+		smagi = ABS(sx2);
+		/*
+		printf(" do_recip i = %d, magr = %le, magi = %le\n",
+		       i,magr,magi);
+		*/
+		if (smagr >= smagi) {
+		  if (smagr != ((float)0.0)) {
+		    sc = sx2/sx1;
+		    sd = ((float)1.0)/((((float)1.0) + (sc*sc))*sx1);
+		    cfa[i].real = sd;
+		    cfa[i].imag = -sc*sd;
+		  } else {
+		    ga_error("zero value at index",i); 
+		  }
+		} else {
+		  sc = sx1/sx2;
+		  sd = ((float)1.0)/((((float)1.0) + (sc*sc))*sx2);
+		  cfa[i].real = sc*sd;
+		  cfa[i].imag = -sd;
+		}
+                /*
+		printf(" do_recip ca[%d].real = %le, ca[%d].imag = %le\n",
+		       i,ca[i].real,i,ca[i].imag);
+		*/
+
+	      }
+              break;
          case C_DBL:
               da = (double *) ptr;
               for(i=0;i<nelem;i++)
@@ -432,6 +519,7 @@ static void do_add_const(void *ptr, int nelem, int type, void *alpha)
          double *da;
          float *fa;
          DoubleComplex *ca,val;
+         SingleComplex *cfa,cval;
 	 long *la;
 
          case C_INT:
@@ -445,6 +533,14 @@ static void do_add_const(void *ptr, int nelem, int type, void *alpha)
                   val = *(DoubleComplex*)alpha;
                   ca[i].real += val.real;
                   ca[i].imag += val.imag;
+              }
+              break;
+         case C_SCPL:
+              cfa = (SingleComplex *) ptr;
+              for(i=0;i<nelem;i++){
+                  cval = *(SingleComplex*)alpha;
+                  cfa[i].real += cval.real;
+                  cfa[i].imag += cval.imag;
               }
               break;
          case C_DBL:
@@ -487,6 +583,14 @@ void do_fill(void *ptr, int nelem, int type, void *alpha)
               ca = (DoubleComplex *) ptr;
               for(i=0;i<nelem;i++){
                   val = *(DoubleComplex*)alpha;
+                  ca[i].real = val.real;
+                  ca[i].imag = val.imag;
+              }
+              break;
+         case C_SCPL:
+              ca = (SingleComplex *) ptr;
+              for(i=0;i<nelem;i++){
+                  val = *(SingleComplex*)alpha;
                   ca[i].real = val.real;
                   ca[i].imag = val.imag;
               }
@@ -570,6 +674,9 @@ void ngai_do_oper_elem(Integer type, Integer ndim, Integer *loA, Integer *hiA,
         break;
       case C_DCPL: 
         temp=((DoubleComplex*)data_ptr)+idx; 
+        break;
+      case C_SCPL: 
+        temp=((SingleComplex*)data_ptr)+idx; 
         break;
       case C_DBL: 
         temp=((double*)data_ptr)+idx; 
@@ -689,6 +796,9 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
               case C_DCPL:
                 data_ptr = (void*)((double*)data_ptr + 2*offset);
                 break;
+              case C_SCPL:
+                data_ptr = (void*)((float*)data_ptr + 2*offset);
+                break;
               case C_DBL:
                 data_ptr = (void*)((double*)data_ptr + offset);
                 break;
@@ -764,6 +874,9 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
                 break;
               case C_DCPL:
                 data_ptr = (void*)((double*)data_ptr + 2*offset);
+                break;
+              case C_SCPL:
+                data_ptr = (void*)((float*)data_ptr + 2*offset);
                 break;
               case C_DBL:
                 data_ptr = (void*)((double*)data_ptr + offset);
@@ -880,6 +993,16 @@ static void do_multiply(void *pA, void *pB, void *pC, Integer nelems, Integer ty
       ((DoubleComplex*)pC)[i].imag = aReal*bImag+aImag*bReal;
     }
     break;
+  case C_SCPL:
+    for(i = 0; i<nelems; i++) {
+      aReal = ((SingleComplex*)pA)[i].real; 
+      bReal = ((SingleComplex*)pB)[i].real; 
+      aImag = ((SingleComplex*)pA)[i].imag; 
+      bImag = ((SingleComplex*)pB)[i].imag; 
+      ((SingleComplex*)pC)[i].real = aReal*bReal-aImag*bImag;
+      ((SingleComplex*)pC)[i].imag = aReal*bImag+aImag*bReal;
+    }
+    break;
   case C_INT:
     for(i = 0; i<nelems; i++)
       ((int*)pC)[i] = ((int*)pA)[i]* ((int*)pB)[i];
@@ -959,6 +1082,46 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
       }
     }
     break;
+  case C_SCPL:
+    for(i = 0; i<nelems; i++) {
+      aReal = ((SingleComplex*)pA)[i].real;
+      bReal = ((SingleComplex*)pB)[i].real;
+      aImag = ((SingleComplex*)pA)[i].imag;
+      bImag = ((SingleComplex*)pB)[i].imag;
+      /* 
+        The following original algorithm overflows
+	when it need not.
+      temp = bReal*bReal+bImag*bImag;
+      if(temp!=0.0){
+	((SingleComplex*)pC)[i].real
+	  =(aReal*bReal+aImag*bImag)/temp;
+	((SingleComplex*)pC)[i].imag
+	  =(aImag*bReal-aReal*bImag)/temp;
+      }
+      else{
+	ga_error("zero divisor ",temp); 
+      }
+      */
+      if (ABS(bReal) >= ABS(bImag)) {
+	if (bReal != (float)0.0) {
+	  x1 = bImag/bReal;
+          /* So x1 <= 1 */
+	  x2 = ((float)1.0)/(bReal*(((float)1.0)+(x1*x1)));
+	  ((SingleComplex*)pC)[i].real = (aReal + aImag*x1)*x2;
+	  ((SingleComplex*)pC)[i].imag = (aImag - aReal*x1)*x2;
+	}
+	else{
+	  ga_error("zero divisor ",bReal); 
+	}
+      } else {
+	x1 = bReal/bImag;
+        /* So x1 <= 1 */
+	x2 = ((float)1.0)/(bImag*(((float)1.0)+(x1*x1)));
+	((SingleComplex*)pC)[i].real = (aReal*x1 + aImag)*x2;
+	((SingleComplex*)pC)[i].imag = (aImag*x1 - aReal)*x2;
+      }
+    }
+    break;
   case C_INT:
     for(i = 0; i<nelems; i++){
       if(((int*)pB)[i]!=0)
@@ -1032,6 +1195,9 @@ static void do_step_divide(void *pA, void *pB, void *pC, Integer nelems, Integer
     break;
   case C_DCPL:
     ga_error(" do_step_divide called with type C_DCPL",C_DCPL);
+    break;
+  case C_SCPL:
+    ga_error(" do_step_divide called with type C_SCPL",C_SCPL);
     break;
   case C_INT:
     i_0 = (int)0;
@@ -1134,6 +1300,9 @@ static void do_stepb_divide(void *pA, void *pB, void *pC, Integer nelems, Intege
   case C_DCPL:
     ga_error(" do_stepb_divide called with type C_DCPL",C_DCPL);
     break;
+  case C_SCPL:
+    ga_error(" do_stepb_divide called with type C_SCPL",C_SCPL);
+    break;
   case C_INT:
     i_0 = (int)0;
     for(i = 0; i<nelems; i++){
@@ -1216,6 +1385,9 @@ static void do_step_mask(void *pA, void *pB, void *pC, Integer nelems, Integer t
   case C_DCPL:
     ga_error(" do_step_mask called with type C_DCPL",C_DCPL);
     break;
+  case C_SCPL:
+    ga_error(" do_step_mask called with type C_SCPL",C_SCPL);
+    break;
   case C_INT:
     for(i = 0; i<nelems; i++){
       if(((int*)pA)[i]!=(int)0){
@@ -1293,6 +1465,37 @@ static void do_maximum(void *pA, void *pB, void *pC, Integer nelems, Integer typ
       }
     }
     break;
+  case C_SCPL:
+    for(i = 0; i<nelems; i++) {
+      aReal = ((SingleComplex*)pA)[i].real;
+      bReal = ((SingleComplex*)pB)[i].real;
+      aImag = ((SingleComplex*)pA)[i].imag;
+      bImag = ((SingleComplex*)pB)[i].imag;
+      x1    = MAX(ABS(aReal),ABS(aImag));
+      x2    = MAX(ABS(bReal),ABS(bImag));
+      x1    = MAX(x1,x2);
+      if (x1 == (double)0.0) {
+	((SingleComplex*)pC)[i].real=((SingleComplex*)pA)[i].real;
+	((SingleComplex*)pC)[i].imag=((SingleComplex*)pA)[i].imag;
+      } else {
+	x1 = ((double)1.0)/x1;
+	aReal = aReal*x1;
+	aImag = aImag*x1;
+	bReal = bReal*x1;
+	bImag = bImag*x1;
+	temp1 = (aReal*aReal)+(aImag*aImag);
+	temp2 = (bReal*bReal)+(bImag*bImag);
+	if(temp1>temp2){
+	  ((SingleComplex*)pC)[i].real=((SingleComplex*)pA)[i].real;
+	  ((SingleComplex*)pC)[i].imag=((SingleComplex*)pA)[i].imag;
+	}
+	else{
+	  ((SingleComplex*)pC)[i].real=((SingleComplex*)pB)[i].real;
+	  ((SingleComplex*)pC)[i].imag=((SingleComplex*)pB)[i].imag;
+	}
+      }
+    }
+    break;
   case C_INT:
     for(i = 0; i<nelems; i++)
       ((int*)pC)[i] =MAX(((int*)pA)[i],((int*)pB)[i]);
@@ -1358,6 +1561,37 @@ static void do_minimum(void *pA, void *pB, void *pC, Integer nelems, Integer typ
       }
     }
     break;
+  case C_SCPL:
+    for(i = 0; i<nelems; i++) {
+      aReal = ((SingleComplex*)pA)[i].real;
+      bReal = ((SingleComplex*)pB)[i].real;
+      aImag = ((SingleComplex*)pA)[i].imag;
+      bImag = ((SingleComplex*)pB)[i].imag;
+      x1    = MAX(ABS(aReal),ABS(aImag));
+      x2    = MAX(ABS(bReal),ABS(bImag));
+      x1    = MAX(x1,x2);
+      if (x1 == (double)0.0) {
+	((SingleComplex*)pC)[i].real=((SingleComplex*)pA)[i].real;
+	((SingleComplex*)pC)[i].imag=((SingleComplex*)pA)[i].imag;
+      } else {
+	x1 = ((double)1.0)/x1;
+	aReal = aReal*x1;
+	aImag = aImag*x1;
+	bReal = bReal*x1;
+	bImag = bImag*x1;
+	temp1 = aReal*aReal+aImag*aImag;
+	temp2 = bReal*bReal+bImag*bImag;
+	if(temp1<temp2){ 
+	  ((SingleComplex*)pC)[i].real=((SingleComplex*)pA)[i].real; 
+	  ((SingleComplex*)pC)[i].imag=((SingleComplex*)pA)[i].imag; 
+	} 
+	else{ 
+	  ((SingleComplex*)pC)[i].real=((SingleComplex*)pB)[i].real; 
+	  ((SingleComplex*)pC)[i].imag=((SingleComplex*)pB)[i].imag; 
+	}
+      }
+    }
+    break;
   case C_INT:
     for(i = 0; i<nelems; i++)
       ((int*)pC)[i] =MIN(((int*)pA)[i],((int*)pB)[i]);
@@ -1419,6 +1653,11 @@ void ngai_do_elem2_oper(Integer atype, Integer cndim, Integer *loC, Integer *hiC
         tempA=((DoubleComplex*)A_ptr)+idx;
         tempB=((DoubleComplex*)B_ptr)+idx;
         tempC=((DoubleComplex*)C_ptr)+idx;
+        break;
+      case C_SCPL:
+        tempA=((SingleComplex*)A_ptr)+idx;
+        tempB=((SingleComplex*)B_ptr)+idx;
+        tempC=((SingleComplex*)C_ptr)+idx;
         break;
       case C_INT:
         tempA=((int*)A_ptr)+idx;
@@ -1661,7 +1900,7 @@ int op; /* operation to be perform between g_a and g_b */
             jtot = 1;
             for (j=0; j<last; j++) {
               offset += (loC[j] - lod[j])*jtot;
-              jtot = ldC[j];
+              jtot *= ldC[j];
             }
             offset += (loC[last]-lod[last])*jtot;
             switch(ctype) {
@@ -1679,6 +1918,11 @@ int op; /* operation to be perform between g_a and g_b */
                 A_ptr = (void*)((DoubleComplex*)(A_ptr) + offset);
                 B_ptr = (void*)((DoubleComplex*)(B_ptr) + offset);
                 C_ptr = (void*)((DoubleComplex*)(C_ptr) + offset);
+                break;
+              case C_SCPL:
+                A_ptr = (void*)((SingleComplex*)(A_ptr) + offset);
+                B_ptr = (void*)((SingleComplex*)(B_ptr) + offset);
+                C_ptr = (void*)((SingleComplex*)(C_ptr) + offset);
                 break;
               case C_FLOAT:
                 A_ptr = (void*)((float*)(A_ptr) + offset);
@@ -1739,7 +1983,7 @@ int op; /* operation to be perform between g_a and g_b */
             jtot = 1;
             for (j=0; j<last; j++) {
               offset += (loC[j] - lod[j])*jtot;
-              jtot = ldC[j];
+              jtot *= ldC[j];
             }
             offset += (loC[last]-lod[last])*jtot;
             switch(ctype) {
@@ -1757,6 +2001,11 @@ int op; /* operation to be perform between g_a and g_b */
                 A_ptr = (void*)((DoubleComplex*)(A_ptr) + offset);
                 B_ptr = (void*)((DoubleComplex*)(B_ptr) + offset);
                 C_ptr = (void*)((DoubleComplex*)(C_ptr) + offset);
+                break;
+              case C_SCPL:
+                A_ptr = (void*)((SingleComplex*)(A_ptr) + offset);
+                B_ptr = (void*)((SingleComplex*)(B_ptr) + offset);
+                C_ptr = (void*)((SingleComplex*)(C_ptr) + offset);
                 break;
               case C_FLOAT:
                 A_ptr = (void*)((float*)(A_ptr) + offset);
@@ -1999,7 +2248,8 @@ void ngai_do_elem3_patch(Integer atype, Integer andim, Integer *loA, Integer *hi
         tempA=((double*)A_ptr)+idx;
         break;
       case C_DCPL:
-        ga_error(" ngai_elem3_patch_: wrong data type ",atype);                        
+      case C_SCPL:
+        ga_error(" ngai_elem3_patch_: wrong data type ",atype);
         break;
       case C_INT:
         tempA=((int*)A_ptr)+idx;
@@ -2118,6 +2368,9 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
               case C_DCPL:
                 A_ptr = (void*)((double*)A_ptr + 2*offset);
                 break;
+              case C_SCPL:
+                A_ptr = (void*)((float*)A_ptr + 2*offset);
+                break;
               case C_DBL:
                 A_ptr = (void*)((double*)A_ptr + offset);
                 break;
@@ -2191,6 +2444,9 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
                 break;
               case C_DCPL:
                 A_ptr = (void*)((double*)A_ptr + 2*offset);
+                break;
+              case C_SCPL:
+                A_ptr = (void*)((float*)A_ptr + 2*offset);
                 break;
               case C_DBL:
                 A_ptr = (void*)((double*)A_ptr + offset);
@@ -2274,6 +2530,7 @@ void ngai_has_negative_element(Integer atype, Integer andim, Integer *loA, Integ
           if(tempA[j]<(double)0.0) *iretval=1;
         break;
       case C_DCPL:
+      case C_SCPL:
         ga_error(" has_negative_elem: wrong data type ",
             atype);
         break;
@@ -2388,6 +2645,9 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
               case C_DCPL:
                 A_ptr = (void*)((double*)A_ptr + 2*offset);
                 break;
+              case C_SCPL:
+                A_ptr = (void*)((float*)A_ptr + 2*offset);
+                break;
               case C_DBL:
                 A_ptr = (void*)((double*)A_ptr + offset);
                 break;
@@ -2461,6 +2721,9 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
                 break;
               case C_DCPL:
                 A_ptr = (void*)((double*)A_ptr + 2*offset);
+                break;
+              case C_SCPL:
+                A_ptr = (void*)((float*)A_ptr + 2*offset);
                 break;
               case C_DBL:
                 A_ptr = (void*)((double*)A_ptr + offset);
@@ -2652,6 +2915,7 @@ void FATR ga_step_bound_info_patch_(
 	 beta     = &ibeta;
 	 break;
        case C_DCPL:
+       case C_SCPL:
 	 ga_error ("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
 		   xxtype);
 	 break;
@@ -2725,6 +2989,7 @@ void FATR ga_step_bound_info_patch_(
            result1 = (double)(iresult);
            break;
        case C_DCPL:
+       case C_SCPL:
 	 ga_error ("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
 		   xxtype);
 	 break;
@@ -2765,6 +3030,7 @@ void FATR ga_step_bound_info_patch_(
 	 *(int*)wolfemin = ABS(MIN(iresult,iresult2));
 	 break;
        case C_DCPL:
+       case C_SCPL:
 	 ga_error ("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
 		   xxtype);
 	 break;
@@ -2825,6 +3091,7 @@ void FATR ga_step_bound_info_patch_(
            *(int*)boundmin = iresult;
            break;
        case C_DCPL:
+       case C_SCPL:
 	 ga_error ("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
 		   xxtype);
 	 break;
@@ -2854,6 +3121,7 @@ void FATR ga_step_bound_info_patch_(
            *(int*)boundmax = iresult;
            break;
        case C_DCPL:
+       case C_SCPL:
 	 ga_error ("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
 		   xxtype);
 	 break;
@@ -2966,6 +3234,7 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
       sresult = &iresult;
       break;
     case C_DCPL:
+    case C_SCPL:
       ga_error ("Ga_step_max_patch_: unavalable for complex datatype.", 
           atype);
       break;
@@ -2994,6 +3263,7 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
         *(int*)result = GA_INFINITY_I;
         break;
       case C_DCPL:
+      case C_SCPL:
         ga_error ("Ga_step_max_patch_: unavailable for complex datatype.", 
             atype);
         break;
@@ -3038,6 +3308,7 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
         *(int*)result = ABS(iresult);
         break;
       case C_DCPL:
+      case C_SCPL:
         ga_error ("Ga_step_max_patch_: unavailable for complex datatype.", 
             atype);
         break;

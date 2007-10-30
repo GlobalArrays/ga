@@ -5,6 +5,7 @@
 
  LIB_DISTRIB = ../../lib
      LIBRARY = libpario.a
+LIBRARY_SHARED= libpario.so
  LIB_TARGETS = *.x *.p
          OBJ = sf_fortran.o shared.files.o
      HEADERS = sf.h sf.fh

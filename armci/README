@@ -64,13 +64,22 @@
 
       ARMCI_NETWORK environment variable must be used to build ARMCI to
     work properly on clusters with Myrinet (GM), Giganet cLAN (VIA), or
-    Quadrics. This is accomplished by specifying the communication protocol
-    appropriate for such a network. The recognized options for ARMCI_NETWORK
-    are: GM, VIA, QUADRICS, SOCKETS. SOCKETS is the assumed default for
-    clusters connected with Ethernet. This protocol might also work on other
-    networks however, the performance might be sub-optimal and on Myrinet it
-    could even hang (GM does not work with fork and the standard version
-    of ARMCI uses fork).
+    Quadrics (Elan3/Elan4). This is accomplished by specifying the
+    communication protocol appropriate for such a network. The recognized
+    options for ARMCI_NETWORK are:
+          MELLANOX
+          OPENIB (For Infiniband OpenIB)
+          GM (For Myrinet network)
+          ELAN4 (for Quadrics Elan4 network)
+          QUADRICS or ELAN3 (for Elan3)
+          BGMLMPI (FOr IBM BlueGene/L)
+          PORTALS
+          VIA
+          SOCKETS
+    SOCKETS is the assumed default for clusters connected with Ethernet.
+    This protocol might also work on other networks however, the performance
+    might be sub-optimal and on Myrinet it could even hang (GM does not work
+    with fork and the standard version of ARMCI uses fork).
 
       After setting the above variables, a make in ./src builds ARMCI, the
     library after building goes into armci/lib/$TARGET directory. In the 

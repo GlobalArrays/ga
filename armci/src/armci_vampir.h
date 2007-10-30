@@ -35,6 +35,8 @@
 #define ARMCI_USES_SHM        32475
 #define ARMCI_CREATE_MUTEXES  32474
 #define ARMCI_DESTROY_MUTEXES 32473
+#define ARMCI_MALLOC_GROUP    32472
+#define ARMCI_FREE_GROUP      32471
 
 extern void armci_vampir_init();
 

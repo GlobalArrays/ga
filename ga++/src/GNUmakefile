@@ -19,6 +19,7 @@ HEADERS = ga++.h init_term.h GAServices.h GlobalArray.h
 ifndef LIBRARY
   LIBRARY = libga++.a
 endif
+  LIBRARY_SHARED = libga++.so
 
 OBJ = init_term.o GAServices.o GlobalArray.o overload.o
 

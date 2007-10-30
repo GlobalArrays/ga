@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.15 2006-09-13 23:43:36 andriy Exp $ */
+/* $Id: elan4.c,v 1.16 2007-10-30 02:04:54 manoj Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,6 +27,7 @@ extern void * pgs_ds_init (ELAN_STATE *state, void *qMem, void *dsqMem, int max)
 static int _ELAN_SLOTSIZE=700;
 static int server_can_poll=0;
 
+/* TBD: why was VCALLS disabled if NB_NONCONT was defined */
 #ifndef NB_NONCONT
 #define VCALLS 1
 #endif
@@ -117,7 +118,7 @@ while(!elan_poll(elanev[0],0)){
    printf("%d:completed %d\n",armci_me, elan_devent_completed(SETEVAL, elanev[0]));
    sleep(1);
 }
-//elan_wait(elanev[0],0);
+/*elan_wait(elanev[0],0);*/
     _elan_deventDump ("wait",elanev[0]);
 }
 
@@ -126,7 +127,7 @@ void test_dump()
     _elan_deventDump ("after wait",elanev[0]);
 }
 
-//extern ELAN_EVENT *elan_getbflag(void *pgs,u_int destvp, long *retval);
+/*extern ELAN_EVENT *elan_getbflag(void *pgs,u_int destvp, long *retval);*/
 extern ELAN_EVENT *elan_getbflag(void *pgs,u_int destvp, int lo, int hi, int w, long *retval);
 extern void elan_clearbflag(void *pgs, int which);
 extern void elan_deventDump (const char *label, ELAN_EVENT *e);
@@ -177,7 +178,7 @@ int R=0;
 int i;
 char *enval;
   
-    //_ELAN_SLOTSIZE = elan_queueMaxSlotSize(elan_base->state);
+/*_ELAN_SLOTSIZE = elan_queueMaxSlotSize(elan_base->state);*/
     slotsize=_ELAN_SLOTSIZE;
 #ifdef ARMCI_ENABLE_GPC_CALLS
     gpc_req = (gpc_buf_t *)malloc(MAX_GPC_REQ*sizeof(gpc_buf_t)+SIXTYFOUR);
@@ -189,7 +190,7 @@ char *enval;
     if(!(qrx = elan_queueRxInit(elan_base->state, q, nslots, slotsize, R, 0))) 
                armci_die("Failed to initialise elan receive Q",0);
     if(!(qtx = elan_queueTxInit(elan_base->state, q, R, 0)))
-//  if(!(qtx = elan_queueTxInit(elan_base->state, q, R, LIBELAN_QUEUEREUSEBUF)))
+      /*  if(!(qtx = elan_queueTxInit(elan_base->state, q, R, LIBELAN_QUEUEREUSEBUF)))*/
 #else
     if(!(mq  = elan_mainQueueInit( elan_base->state, q, nslots, slotsize, 0)))
 #endif
@@ -212,17 +213,17 @@ char *enval;
     for(i=0;  i<NEVENTS; i++){
         elanev[i]= elan_initEvent(elan_base->state,elan_base->state->rail[_RAIL],evdelan+i,0);
         if(!elanev[i]) armci_die("elan_initEvent failed",i);
-	//print_event_info(elanev[i]);
+	/*print_event_info(elanev[i]); */
     }
     elan_gsync(elan_base->allGroup);
-    //_elan_deventDump ("init",elanev[0]);
+    /*_elan_deventDump ("init",elanev[0]); */
 
 #endif
 
     /* pgs calls */
      qs = elan_gallocElan(elan_base, elan_base->allGroup, ELAN_QUEUE_ALIGN,
 			elan_pgsGlobalMemSize(elan_base->state));
-     //_pgsstate = pgs_init(elan_base->state, q);
+     /*_pgsstate = pgs_init(elan_base->state, q); */
      _pgsstate = pgs_ds_init(elan_base->state, qs, q, MAX_BUFS);
 
     if(armci_me == armci_master) {

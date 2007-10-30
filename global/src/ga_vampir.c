@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.c,v 1.11 2006-08-31 19:07:04 d3m782 Exp $ */
+/* $Id: ga_vampir.c,v 1.12 2007-10-30 02:04:57 manoj Exp $ */
 #include "ga_vampir.h"
 
 void ga_vampir_init() {
@@ -95,6 +95,10 @@ void ga_vampir_init() {
         "GA_MATRIX",__FILE__,__LINE__);
     vampir_symdef(GA_ZDOT_PATCH,             "GA_Zdot_patch",
         "GA_MATRIX",__FILE__,__LINE__);
+    vampir_symdef(GA_CDOT,                   "GA_Cdot",
+        "GA_MATRIX",__FILE__,__LINE__);
+    vampir_symdef(GA_CDOT_PATCH,             "GA_Cdot_patch",
+        "GA_MATRIX",__FILE__,__LINE__);
     vampir_symdef(GA_ZERO,                   "GA_Zero",
         "GA_MATRIX",__FILE__,__LINE__);
     vampir_symdef(GA_ZERO_PATCH,             "GA_Zero_patch",
@@ -137,6 +141,8 @@ void ga_vampir_init() {
     vampir_symdef(NGA_SELECT_ELEM,           "NGA_Select_elem",            "GA",__FILE__,__LINE__);
     vampir_symdef(NGA_ZDOT_PATCH,            "NGA_Zdot_patch",
         "GA_MATRIX",__FILE__,__LINE__);
+    vampir_symdef(NGA_CDOT_PATCH,            "NGA_Cdot_patch",
+        "GA_MATRIX",__FILE__,__LINE__);
     vampir_symdef(NGA_ZERO_PATCH,            "NGA_Zero_patch",
         "GA_MATRIX",__FILE__,__LINE__);
 
@@ -144,6 +150,7 @@ void ga_vampir_init() {
     vampir_symdef(VT_GA_DGEMM,               "GA_Dgemm",                   "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(VT_GA_SGEMM,               "GA_Sgemm",                   "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(VT_GA_ZGEMM,               "GA_Zgemm",                   "GA_linalg",__FILE__,__LINE__);
+    vampir_symdef(VT_GA_CGEMM,               "GA_Cgemm",                   "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(GA_DGEMM_SEQ,              "GA_Dgemm_seq",               "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(GA_DIAG_STD,               "GA_Diag_std",                "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(GA_DIAG,                   "GA_Diag",                    "GA_linalg",__FILE__,__LINE__);

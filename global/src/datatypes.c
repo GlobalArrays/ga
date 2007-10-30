@@ -1,4 +1,4 @@
-/* $Id: datatypes.c,v 1.9 2003-07-09 20:28:28 d3h325 Exp $
+/* $Id: datatypes.c,v 1.10 2007-10-30 02:04:57 manoj Exp $
  * conversion of MA identifiers between C to Fortran data types 
  * Note that ga_type_c2f(MT_F_INT) == MT_F_INT 
  */
@@ -11,7 +11,10 @@ int ctype;
    switch(type){
    case MT_F_INT: 
 #       ifdef EXT_INT 
-		ctype = C_LONG;
+                ctype = C_LONG;
+#          ifdef EXT_INT64
+		ctype = C_LONGLONG;
+#          endif
 #       else
                 ctype = C_INT;
 #       endif
@@ -53,6 +56,9 @@ int ftype;
                 break;
    case C_LONG: 
                 ftype = (sizeof(long) != sizeof(Integer))? -1: MT_F_INT;
+                break;
+   case C_LONGLONG: 
+                ftype = (sizeof(long long) != sizeof(Integer))? -1: MT_F_INT;
                 break;
    case C_FLOAT:
 #       if defined(NO_REAL_32)

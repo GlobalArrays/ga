@@ -1,9 +1,10 @@
-/* $Id: vector.c,v 1.32 2004-07-21 00:29:59 manoj Exp $ */
+/* $Id: vector.c,v 1.33 2007-10-30 02:04:56 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
 #include "memlock.h"
 #include <stdio.h>
+#include <assert.h>
 
 #ifdef GA_USE_VAMPIR
 #include "armci_vampir.h"
@@ -21,7 +22,6 @@ typedef struct {
     double real;
     double imag;
 } dcomplex_t;
-
 
 /*
 void I_ACCUMULATE(void* scale, int elems, void*src, void* dst)
@@ -248,7 +248,8 @@ int armci_copy_vector(int op,            /* operation code */
               )
 {
     int i,s,shmem= SAMECLUSNODE(proc);
-
+    int armci_th_idx = ARMCI_THREAD_IDX;
+    
     if(shmem ){ 
       /* local/shared memory copy */
 
@@ -274,7 +275,7 @@ int armci_copy_vector(int op,            /* operation code */
                        darr[i].src_ptr_array, darr[i].dst_ptr_array); 
 #else
 #         ifdef LAPI
-                SET_COUNTER(ack_cntr,darr[i].ptr_array_len);
+                SET_COUNTER(ack_cntr[armci_th_idx],darr[i].ptr_array_len);
 #         endif
           UPDATE_FENCE_STATE(proc, PUT, darr[i].ptr_array_len);
  
@@ -295,7 +296,7 @@ int armci_copy_vector(int op,            /* operation code */
                        darr[i].src_ptr_array, darr[i].dst_ptr_array); 
 #else
 #         ifdef LAPI
-                SET_COUNTER(get_cntr,darr[i].ptr_array_len);
+                SET_COUNTER(get_cntr[armci_th_idx],darr[i].ptr_array_len);
 #         endif
 
           for( s=0; s< darr[i].ptr_array_len; s++){   
@@ -314,8 +315,8 @@ int armci_copy_vector(int op,            /* operation code */
 #ifdef LAPI
     if(!shmem){
 
-       if(op == GET) CLEAR_COUNTER(get_cntr); /* wait for data arrival */
-       if(op == PUT) CLEAR_COUNTER(ack_cntr); /* data must be copied out*/
+       if(op == GET) CLEAR_COUNTER(get_cntr[armci_th_idx]); /* wait for data arrival */
+       if(op == PUT) CLEAR_COUNTER(ack_cntr[armci_th_idx]); /* data must be copied out*/
     }
 #endif
 
@@ -355,7 +356,7 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
                 int proc  /* remote process(or) ID */
               )
 {
-    int rc, i,direct=1;
+    int rc=0, i,direct=1;
 #if defined(USE_SOCKET_VECTOR_API)
     int totvec=0;
 #endif
@@ -391,6 +392,13 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
     direct=SAMECLUSNODE(proc);
 #endif
 
+#ifdef BGML
+   armci_hdl_t nb_handle;
+   ARMCI_INIT_HANDLE(&nb_handle);
+   ARMCI_NbPutV(darr, len, proc, &nb_handle);
+   ARMCI_Wait(&nb_handle);
+#else
+
     /* use direct protocol for remote access when performance is better */
 #   if defined(LAPI)
       if(!direct)
@@ -411,6 +419,7 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
          rc = armci_pack_vector(PUT, NULL, darr, len, proc,NULL);
     }
 
+#endif
 #ifdef ARMCI_PROFILE
     armci_profile_stop_vector(ARMCI_PROF_PUTV);
 #endif
@@ -431,7 +440,7 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
                 int proc  /* remote process(or) ID */
               )
 {
-    int rc, i,direct=1;
+    int rc=0, i,direct=1;
 #if defined(USE_SOCKET_VECTOR_API)
     int totvec=0;
 #endif
@@ -467,6 +476,13 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
     direct=SAMECLUSNODE(proc);
 #endif
 
+#ifdef BGML
+   armci_hdl_t nb_handle;
+   ARMCI_INIT_HANDLE(&nb_handle);
+   ARMCI_NbGetV(darr, len, proc, &nb_handle);
+   ARMCI_Wait(&nb_handle);
+#else
+
     /* use direct protocol for remote access when performance is better */
 #   if defined(LAPI)
       if(!direct)
@@ -487,6 +503,7 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
        rc = armci_pack_vector(GET, NULL, darr, len, proc,NULL);
     }
 
+#endif
 #ifdef ARMCI_PROFILE
     armci_profile_stop_vector(ARMCI_PROF_GETV);
 #endif
@@ -510,8 +527,7 @@ int ARMCI_AccV( int op,              /* oeration code */
                 int proc             /* remote process(or) ID */
               )
 {
-    int rc, i,direct=1;
-
+    int rc=0, i,direct=1;
 #ifdef GA_USE_VAMPIR
     int tot=0;
     for(i=0;i<len;i++) tot+=darr[i].bytes;
@@ -537,6 +553,12 @@ int ARMCI_AccV( int op,              /* oeration code */
 
     ORDER(op,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
+#ifdef BGML
+   armci_hdl_t nb_handle;
+   ARMCI_INIT_HANDLE(&nb_handle);
+   ARMCI_NbAccV(op, scale, darr, len, proc, &nb_handle);
+   ARMCI_Wait(&nb_handle);
+#else
 
 #   if defined(ACC_COPY) && !defined(ACC_SMP)
        if(armci_me != proc) direct=0;
@@ -547,6 +569,7 @@ int ARMCI_AccV( int op,              /* oeration code */
     else
          rc = armci_pack_vector(op, scale, darr, len, proc,NULL);
 
+#endif
 #ifdef ARMCI_PROFILE
     armci_profile_stop_vector(ARMCI_PROF_ACCV);
 #endif
@@ -571,7 +594,7 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
               )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
-    int rc, i,direct=1;
+    int rc=0, i,direct=1;
 #if defined(USE_SOCKET_VECTOR_API)
     int totvec=0;
 #endif
@@ -621,9 +644,20 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
 	nb_handle = armci_set_implicit_handle(PUT, proc);
     }
 
-    if(direct)
+    if(direct){
+#ifdef BGML
+         nb_handle->count = 0;
+#endif
          rc = armci_copy_vector(PUT, darr, len, proc);
+    }
     else{
+#ifdef BGML
+         nb_handle->count = 1;
+         BGML_Callback_t cb_wait={wait_callback, &nb_handle->count};
+         BGML_giov_t *array=(BGML_giov_t *)darr;
+         BG1S_MemputV(&nb_handle->cmpl_info, proc, len, 
+                      (BGML_giov_t *)darr, 0, &cb_wait, 1);
+#else
 #if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)  
        /*500 is very conservative, the number here should be modified to be 
        based on the size of send/recv buffer*/
@@ -632,6 +666,7 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
        else 
 #endif    
          rc = armci_pack_vector(PUT, NULL, darr, len, proc,nb_handle);
+#endif /* BGML */
     }
 
 #ifdef ARMCI_PROFILE
@@ -648,7 +683,7 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
               )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
-    int rc, i,direct=1;
+    int rc=0, i,direct=1;
 #if defined(USE_SOCKET_VECTOR_API)
     int totvec=0;
 #endif
@@ -671,7 +706,7 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
-    
+
     /* aggregate get */
     if(nb_handle && nb_handle->agg_flag == SET) {
        if(!direct) {
@@ -694,9 +729,19 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
 	nb_handle = armci_set_implicit_handle(GET, proc);
     }
 
-    if(direct) 
-       rc = armci_copy_vector(GET, darr, len, proc);
+    if(direct){ 
+#ifdef BGML
+         nb_handle->count = 0;
+#endif
+         rc = armci_copy_vector(GET, darr, len, proc);
+    }
     else{
+#ifdef BGML
+       nb_handle->count = 1;
+       BGML_Callback_t cb_wait={wait_callback, &nb_handle->count};
+       BG1S_MemgetV(&nb_handle->cmpl_info, proc, len, 
+                (BGML_giov_t *)darr, 0, &cb_wait, 1);
+#else
 #if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API) 
        /*500 is very conservative, the number here should be modified to be 
        based on the size of send/recv buffer*/
@@ -705,6 +750,7 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
        else
 #endif   
        rc = armci_pack_vector(GET, NULL, darr, len, proc,nb_handle);
+#endif /* BGML */
     }
 
 #ifdef ARMCI_PROFILE
@@ -724,7 +770,7 @@ int ARMCI_NbAccV( int op,              /* oeration code */
               )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
-    int rc, i,direct=1;
+    int rc=0, i,direct=1;
 
 #ifdef GA_USE_VAMPIR
     int tot=0;
@@ -732,7 +778,8 @@ int ARMCI_NbAccV( int op,              /* oeration code */
 #endif
 
     if(len<1) return FAIL;
-    for(i=0;i<len;i++){
+    for(i=0;i<len;i++)
+    {
       if(darr[i].src_ptr_array==NULL ||darr[i].dst_ptr_array==NULL)return FAIL2;
       if(darr[i].bytes<1)return FAIL3;
       if(darr[i].ptr_array_len <1) return FAIL4;
@@ -744,10 +791,64 @@ int ARMCI_NbAccV( int op,              /* oeration code */
     armci_profile_start_vector(darr, len, proc, ARMCI_PROF_NBACCV);
 #endif
 
+#ifdef BGML
+    if(nb_handle){
+      nb_handle->tag = GET_NEXT_NBTAG();
+      nb_handle->op  = op;
+      nb_handle->proc= proc;
+      nb_handle->bufid=NB_NONE;
+    }
+    else
+      nb_handle = armci_set_implicit_handle(op, proc);
+    
+    BGML_Dt dt;
+    switch(op)
+      {
+        case ARMCI_ACC_INT:
+          dt=BGML_SIGNED_INT;
+          break;
+        case ARMCI_ACC_LNG:
+#if 1
+          dt=BGML_SIGNED_LONG;
+#else
+          dt=BGML_SIGNED_INT;
+#endif
+          break;
+        case ARMCI_ACC_DBL:
+          dt=BGML_DOUBLE;
+          break;
+        case ARMCI_ACC_CPL:
+          dt=BGML_SINGLE_COMPLEX;
+          break;
+        case ARMCI_ACC_FLT:
+          dt=BGML_FLOAT;
+          break;
+        case ARMCI_ACC_DCP:
+          dt=BGML_DOUBLE_COMPLEX;
+          break;
+        default:
+          armci_die("Unsupported data operation\n",0);
+      }
+
+    nb_handle->count = 1;
+    BGML_Callback_t cb_wait={wait_callback, &nb_handle->count};
+    BG1S_AccumulateV(&nb_handle->cmpl_info, 
+                     proc, 
+                     len, 
+                     (BGML_giov_t *)darr,
+                     scale, 
+                     0,
+                     dt, 
+                     BGML_PROD, 
+                     BGML_SUM, 
+                     &cb_wait, 
+                     1);
+#else    
+
     /* ORDER(op,proc);  ensure ordering */
     UPDATE_FENCE_INFO(proc);
     direct=SAMECLUSNODE(proc);
-
+    
     if(nb_handle){
       nb_handle->tag = GET_NEXT_NBTAG();
       nb_handle->op  = op;
@@ -761,10 +862,13 @@ int ARMCI_NbAccV( int op,              /* oeration code */
        if(armci_me != proc) direct=0;
 #   endif
 
-    if(direct)
+    if(direct){
          rc = armci_acc_vector( op, scale, darr, len, proc);
-    else
+    }
+    else{
          rc = armci_pack_vector(op, scale, darr, len, proc,nb_handle);
+    }
+#endif /* BGML */
 
 #ifdef ARMCI_PROFILE
     armci_profile_stop_vector(ARMCI_PROF_NBACCV);

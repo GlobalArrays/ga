@@ -1,4 +1,4 @@
-/* $Id: groups.c,v 1.4 2004-09-08 00:42:13 manoj Exp $ */
+/* $Id: groups.c,v 1.5 2007-10-30 02:04:54 manoj Exp $ */
 
 
 #include <stdio.h>
@@ -13,9 +13,12 @@
 
 #define DEBUG_ 0
 
+ARMCI_iGroup ARMCI_Default_Proc_Group;
+ARMCI_iGroup ARMCI_World_Proc_Group;
+
 void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm);
 void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group);
-int ARMCI_Group_rank(ARMCI_Group *group, int *rank);
+int  ARMCI_Group_rank(ARMCI_Group *group, int *rank);
 void ARMCI_Group_size(ARMCI_Group *group, int *size);
 
 static void get_group_clus_id(ARMCI_iGroup *igroup, int grp_nproc, 
@@ -174,32 +177,37 @@ void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm) {
     else MPI_Bcast(buffer, len, MPI_BYTE, root, (MPI_Comm)comm);
 }
 
-/* NOTE: To startwith,MPI_COMM_WORLD is parent group for every group created */
-void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group) {
+void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group_out) {
     int i,grp_me;
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
-    MPI_Group group_world;
+    int rv;
+    
+    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group_out;
+    ARMCI_iGroup *igroup_parent = &ARMCI_Default_Proc_Group;
+    MPI_Group *group_parent;
+    MPI_Comm *comm_parent;
+    
     for(i=0; i<n-1;i++) {
        if(pid_list[i] > pid_list[i+1]){
          armci_die("ARMCI_Group_create: Process ids are not sorted ",armci_me);
          break;
        }
     }
-    MPI_Comm_group(MPI_COMM_WORLD, &group_world);
-    MPI_Group_incl(group_world, n, pid_list, &(igroup->igroup));
-    MPI_Comm_create(MPI_COMM_WORLD,(MPI_Group)(igroup->igroup), 
-                    (MPI_Comm*)&(igroup->icomm));
-    MPI_Group_rank((MPI_Group)(igroup->igroup), &grp_me);
-    /* processes belong to this group should cache attributes */
-    if(grp_me != MPI_UNDEFINED) armci_cache_attr(group);
-}
+    
+    /* NOTE: default group is the parent group */
+    group_parent = &(igroup_parent->igroup);
+    comm_parent  = &(igroup_parent->icomm);
 
-/*
-void ARMCI_Comm_group_(ARMCI_Comm comm, ARMCI_Group *group) {
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
-    MPI_Comm_group((MPI_Comm)comm, (MPI_Group*)&(igroup->igroup));
+    rv=MPI_Group_incl(*group_parent, n, pid_list, &(igroup->igroup));
+    if(rv != MPI_SUCCESS) armci_die("MPI_Group_incl: Failed ",armci_me);
+    
+    rv = MPI_Comm_create(*comm_parent, (MPI_Group)(igroup->igroup), 
+                         (MPI_Comm*)&(igroup->icomm));
+    if(rv != MPI_SUCCESS) armci_die("MPI_Comm_create: Failed ",armci_me);
+    
+    /* processes belong to this group should cache attributes */
+    MPI_Group_rank((MPI_Group)(igroup->igroup), &grp_me);
+    if(grp_me != MPI_UNDEFINED) armci_cache_attr(group_out);
 }
-*/
 
 int ARMCI_Group_rank(ARMCI_Group *group, int *rank) {
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
@@ -221,8 +229,47 @@ int ARMCI_Absolute_id(ARMCI_Group *group,int group_rank)
     return(abs_rank);
 }
 
+void ARMCI_Group_set_default(ARMCI_Group *group) 
+{
+    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
+    ARMCI_Default_Proc_Group = *igroup;
+}
+
+void ARMCI_Group_get_default(ARMCI_Group *group_out)
+{
+    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group_out;
+    *igroup = ARMCI_Default_Proc_Group;
+}
+
+void ARMCI_Group_get_world(ARMCI_Group *group_out)
+{
+    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group_out;
+    *igroup = ARMCI_World_Proc_Group;
+}
+
+void armci_group_init() 
+{
+    int grp_me;
+    ARMCI_iGroup *igroup = (ARMCI_iGroup *)&ARMCI_World_Proc_Group;
+    
+    /* save MPI world group and communicatior in ARMCI_World_Proc_Group */
+    igroup->icomm = MPI_COMM_WORLD;
+    MPI_Comm_group(MPI_COMM_WORLD, &(igroup->igroup));
+
+    /* processes belong to this group should cache attributes */
+    MPI_Group_rank((MPI_Group)(igroup->igroup), &grp_me);
+    if(grp_me != MPI_UNDEFINED) 
+    {
+       armci_cache_attr((ARMCI_Group*)&ARMCI_World_Proc_Group);
+    }
+
+    /* Initially, World group is the default group */
+    ARMCI_Default_Proc_Group = ARMCI_World_Proc_Group;
+    
+}
+
 /*
   ISSUES:
-  1. Make sure ARMCI_Comm_free frees the attribute data structures 
+  1. Make sure ARMCI_Group_free frees the attribute data structures 
   2. replace malloc with, kr_malloc using local_context.
 */

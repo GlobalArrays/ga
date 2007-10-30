@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.117 2007-04-25 21:49:11 d3p687 Exp $ */
+/* $Id: armci.c,v 1.118 2007-10-30 02:04:53 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -24,7 +24,8 @@
  */
 
 #define  EXTERN
-#define _GNU_SOURCE
+/*#define  PRINT_BT*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #if defined(CRAY) && !defined(__crayx1)
@@ -48,14 +49,12 @@
 #ifdef ARMCI_PROFILE
 #include "armci_profile.h"
 #endif
-
-#include <unistd.h>
-#include <getopt.h>
-#include <sched.h>
-#include <errno.h>
-#include <string.h>
-#include <ctype.h>
-
+#ifdef BGML
+#include "bgml.h"
+#include <assert.h>
+#include "bgmldefs.h"
+extern void armci_msg_barrier(void);
+#endif
 
 #ifdef CRAY_SHMEM
 #  ifdef XT3
@@ -76,7 +75,7 @@ armci_ireq_t armci_inb_handle[ARMCI_MAX_IMPLICIT];/*implicit non-blocking handle
 #ifndef HITACHI
 double armci_internal_buffer[BUFSIZE_DBL];
 #endif
-#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI) || defined(CATAMOUNT)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI) || defined(CATAMOUNT) || defined(BGML)
 #   include "locks.h"
     lockset_t lockid;
 #endif
@@ -86,127 +85,12 @@ int* armci_prot_switch_fence=NULL;
 int armci_prot_switch_preproc = -1;
 int armci_prot_switch_preop = -1;
 #endif
-/*#define CHANGE_SERVER_AFFINITY*/
-#ifdef CHANGE_SERVER_AFFINITY
-static inline int val_to_char(int v)
-{
-                if (v >= 0 && v < 10)
-                                        return '0' + v;
-                        else if (v >= 10 && v < 16)
-                                                return ('a' - 10) + v;
-                                else
-                                                        return -1;
-}
-static const char *nexttoken(const char *q,  int sep)
-{
-        if (q)
-                q = strchr(q, sep);
-        if (q)
-                q++;
-        return q;
-}
 
-int cstr_to_cpuset(cpu_set_t *mask, const char* str)
-{
-        const char *p, *q;
-        q = str;
-        CPU_ZERO(mask);
-
-        while (p = q, q = nexttoken(q, ','), p) {
-                unsigned int a; /* beginning of range */
-                unsigned int b; /* end of range */
-                unsigned int s; /* stride */
-                const char *c1, *c2;
-
-                if (sscanf(p, "%u", &a) < 1)
-                        return 1;
-                b = a;
-                s = 1;
-
-                c1 = nexttoken(p, '-');
-                c2 = nexttoken(p, ',');
-                if (c1 != NULL && (c2 == NULL || c1 < c2)) {
-                        if (sscanf(c1, "%u", &b) < 1)
-                                return 1;
-                        c1 = nexttoken(c1, ':');
-                        if (c1 != NULL && (c2 == NULL || c1 < c2))
-                                if (sscanf(c1, "%u", &s) < 1) {
-                                        return 1;
-                        }
-                }
-
-                if (!(a <= b))
-                        return 1;
-                while (a <= b) {
-                        CPU_SET(a, mask);
-                        a += s;
-                }
-        }
-
-        return 0;
-}
-
- char * cpuset_to_cstr(cpu_set_t *mask, char *str)
-{
-        int i;
-        char *ptr = str;
-        int entry_made = 0;
-
-        for (i = 0; i < CPU_SETSIZE; i++) {
-                if (CPU_ISSET(i, mask)) {
-                        int j;
-                        int run = 0;
-                        entry_made = 1;
-                        for (j = i + 1; j < CPU_SETSIZE; j++) {
-                                if (CPU_ISSET(j, mask))
-                                        run++;
-                                else
-                                        break;
-                        }
-                        if (!run)
-                                sprintf(ptr, "%d,", i);
-                        else if (run == 1) {
-                                sprintf(ptr, "%d,%d,", i, i + 1);
-                                i++;
-                        } else {
-                                sprintf(ptr, "%d-%d,", i, i + run);
-                                i += run;
-                        }
-                        while (*ptr != 0)
-                                ptr++;
-                }
-        }
-        ptr -= entry_made;
-        *ptr = 0;
-
-        return str;
-}
-
-char * cpuset_to_str(cpu_set_t *mask, char *str)
-{
-        int base;
-        char *ptr = str;
-        char *ret = 0;
-
-        for (base = CPU_SETSIZE - 4; base >= 0; base -= 4) {
-                char val = 0;
-                if (CPU_ISSET(base, mask))
-                        val |= 1;
-                if (CPU_ISSET(base + 1, mask))
-                        val |= 2;
-                if (CPU_ISSET(base + 2, mask))
-                        val |= 4;
-                if (CPU_ISSET(base + 3, mask))
-                        val |= 8;
-                if (!ret && val)
-                        ret = ptr;
-                *ptr++ = val_to_char(val);
-        }
-        *ptr = 0;
-        return ret ? ret : ptr - 1;
-}
+#ifdef BGML
+/*   void armci_allocate_locks(); */
+   void armci_init_memlock();
 #endif
-    
+
 #ifdef LIBELAN_ATOMICS
 ELAN_ATOMIC *a;
 #warning "Enabling new atomics"
@@ -219,6 +103,10 @@ typedef struct{
 }armci_notify_t;
 
 armci_notify_t **_armci_notify_arr;
+
+#ifdef XT3
+int _armci_malloc_local_region;
+#endif
 
 void ARMCI_Cleanup()
 {
@@ -285,7 +173,9 @@ int AR_caught_sigterm;
 
 static void armci_abort(int code)
 {
+#if !defined(BGML)
     armci_perror_msg();
+#endif
     ARMCI_Cleanup();
 #if defined(CRAY) && !defined(__crayx1)
     limit(C_PROC,0,L_CORE,1L); /* MPI_Abort on Cray dumps core!!! - sqeeze it */
@@ -310,6 +200,8 @@ static void armci_abort(int code)
 
 void armci_die(char *msg, int code)
 {
+    void *bt[100];
+
     if(_armci_terminating)return;
     else _armci_terminating=1;
 
@@ -320,12 +212,19 @@ void armci_die(char *msg, int code)
       fprintf(stdout,"%d:%s: %d\n",armci_me, msg, code); fflush(stdout);
       fprintf(stderr,"%d:%s: %d\n",armci_me, msg, code);
     }
+
+#ifdef PRINT_BT
+    backtrace_symbols_fd(bt, backtrace(bt, 100), 2);
+#endif
+
     armci_abort(code);
 }
 
 
 void armci_die2(char *msg, int code1, int code2)
 {
+    void *bt[100];
+
     if(_armci_terminating)return;
     else _armci_terminating=1;
 
@@ -338,7 +237,9 @@ void armci_die2(char *msg, int code1, int code2)
       fflush(stdout);
       fprintf(stderr,"%d:%s: (%d,%d)\n",armci_me,msg,code1,code2);
     }
-
+#ifdef PRINT_BT
+        backtrace_symbols_fd(bt, backtrace(bt, 100), 2);
+#endif
     armci_abort(code1);
 }
 
@@ -402,6 +303,11 @@ void armci_init_memlock()
 
     bzero(memlock_table_array[armci_me],bytes);
 
+#ifdef BGML
+    bgml_init_locks ((void *) memlock_table_array[armci_me]);
+#endif
+
+
 #ifdef MEMLOCK_SHMEM_FLAG    
     /* armci_use_memlock_table is a pointer to local memory variable=1
      * we overwrite the pointer with address of shared memory variable 
@@ -438,20 +344,6 @@ static void armci_check_shmmax()
 }
 #endif
 
-#ifdef MPI
-ARMCI_Group armci_world_group;
-void armci_create_world_group()
-{
-    int i, list[MAX_PROC];
-    for(i=0;i<armci_nproc;i++)list[i] = i;
-    ARMCI_Group_create(armci_nproc,list,&armci_world_group);
-}
-ARMCI_Group *ARMCI_Get_world_group()
-{
-    return(&armci_world_group);
-}
-#endif
-
 void* test_ptr_arr[MAX_PROC];
 extern void armci_region_shm_malloc(void *ptr_arr[], size_t bytes);
 
@@ -478,33 +370,58 @@ void armci_create_ft_group()
 
 int ARMCI_Init()
 {
+    int th_idx;
     if(_armci_initialized>0) return 0;
 #ifdef GA_USE_VAMPIR
     vampir_init(NULL,NULL,__FILE__,__LINE__);
     armci_vampir_init(__FILE__,__LINE__);
     vampir_begin(ARMCI_INIT,__FILE__,__LINE__);
 #endif
+#ifdef BGML
+    BGML_Messager_Init();
+    BG1S_Configuration_t config;
+    config=BG1S_Configure(NULL);
+    config.consistency= BG1S_ConsistencyModel_Weak;
+    BG1S_Configure(&config);
+
+    unsigned long long available = BGML_Messager_available();
+    if (available & BGML_MESSAGER_GI)
+      bgml_barrier = (BGML_Barrier) BGGI_Barrier;
+    else
+      bgml_barrier = (BGML_Barrier) BGTr_Barrier;
+
+#endif
 
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();
     armci_usr_tid = THREAD_ID_SELF(); /*remember the main user thread id */
 
+#if defined(THREAD_SAFE)
+    armci_init_threads();
+    th_idx = ARMCI_THREAD_IDX;
+    if (th_idx)
+        printf("WARNING: ARMCI_Init is called from thread %d, should be 0\n",th_idx);
+#endif
+
 #ifdef _CRAYMPP
     cmpl_proc=-1;
 #endif
 #ifdef LAPI
+#   ifdef AIX
     {
        char *tmp1 = getenv("RT_GRQ"), *tmp2 = getenv("AIXTHREAD_SCOPE");
-       if(tmp1 == NULL || strcmp((const char *)tmp1,"ON"))
-           armci_die("Armci_Init: environment variable RT_GRQ not set. It should be set as RT_GRQ=ON, to restore original thread scheduling LAPI relies upon",0);
-       if(tmp2 == NULL || strcmp((const char *)tmp2,"S"))
-           armci_die("Armci_Init: environment variable AIXTHREAD_SCOPE=S should be set to assure correct operation of LAPI", 0);
+       if(tmp1 == NULL || strcmp((const char *)tmp1,"ON")) 
+	  armci_die("Armci_Init: environment variable RT_GRQ not set. It should be set as RT_GRQ=ON, to restore original thread scheduling LAPI relies upon",0);
+       if(tmp2 == NULL || strcmp((const char *)tmp2,"S")) 
+	  armci_die("Armci_Init: environment variable AIXTHREAD_SCOPE=S should be set to assure correct operation of LAPI", 0);
     }
+#   endif
     armci_init_lapi();
 #endif
 
 #ifdef PORTALS
     armci_init_portals();
+    shmem_init();
 #endif
 
 #ifdef QUADRICS
@@ -545,18 +462,16 @@ int ARMCI_Init()
 #endif
 
     armci_init_clusinfo();
+
 #ifdef MPI
-    armci_create_world_group();
+    armci_group_init();
 #endif
     armci_krmalloc_init_localmem();
 
+#ifndef BLRTS
     /* trap signals to cleanup ARMCI system resources in case of crash */
     if(armci_me==armci_master) ARMCI_ParentTrapSignals();
     ARMCI_ChildrenTrapSignals();
-
-    /* init K&R memory for CRAY-XT3 */
-#if defined(CRAY_SHMEM) && defined(XT3)
-    armci_cray_shm_init();
 #endif
 
 #if defined(SYSV) || defined(WIN32) || defined(MMAP)
@@ -769,6 +684,16 @@ int direct=SAMECLUSNODE(nb_handle->proc);
 #ifdef ARMCI_PROFILE
     armci_profile_start(ARMCI_PROF_WAIT);
 #endif
+
+#ifdef BGML
+    assert(nb_handle->cmpl_info);
+    BGML_Wait(&(nb_handle->count));
+#ifdef ARMCI_PROFILE
+    armci_profile_stop(ARMCI_PROF_WAIT);
+#endif
+    return(success);
+#else
+
     if(direct) {
 #      ifdef ARMCI_PROFILE
        armci_profile_stop(ARMCI_PROF_WAIT);
@@ -806,15 +731,12 @@ int direct=SAMECLUSNODE(nb_handle->proc);
          }
 #       endif
 
-#ifdef PORTALS
-         armci_portals_complete(nb_handle);
-#endif
-
 #     endif
 #     ifdef COMPLETE_HANDLE
        COMPLETE_HANDLE(nb_handle->bufid,nb_handle->tag,(&success));
 #     endif
     }
+#endif
 
 #ifdef ARMCI_PROFILE
     armci_profile_stop(ARMCI_PROF_WAIT);
@@ -832,7 +754,10 @@ armci_ihdl_t armci_set_implicit_handle (int op, int proc) {
   int i=impcount%ARMCI_MAX_IMPLICIT;
   if(hdl_flag[i]=='1')
     ARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
- 
+
+#ifdef BGML
+   armci_inb_handle[i].count=0;
+#endif
   armci_inb_handle[i].tag   = GET_NEXT_NBTAG();
   armci_inb_handle[i].op    = op;
   armci_inb_handle[i].proc  = proc;
@@ -846,6 +771,9 @@ armci_ihdl_t armci_set_implicit_handle (int op, int proc) {
  
 /* wait for all non-blocking operations to finish */
 int ARMCI_WaitAll (void) {
+#ifdef BGML
+  BGML_WaitAll();
+#else
   int i;
   if(impcount) {
     for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
@@ -856,11 +784,15 @@ int ARMCI_WaitAll (void) {
     }
   }
   impcount=0;
+#endif
   return 0;
 }
  
 /* wait for all non-blocking operations to a particular process to finish */
 int ARMCI_WaitProc (int proc) {
+#ifdef BGML
+  BGML_WaitProc(proc);
+#else
   int i;
   if(impcount) {
     for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
@@ -870,6 +802,7 @@ int ARMCI_WaitProc (int proc) {
       }
     }
   }
+#endif
   return 0;
 }
 
@@ -903,7 +836,9 @@ int armci_notify(int proc)
 #else
    armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
    pnotify->sent++;
+# ifdef MEM_FENCE
    if(SAMECLUSNODE(proc)) MEM_FENCE;
+# endif
    ARMCI_Put(&pnotify->sent,&(_armci_notify_arr[proc]+armci_me)->received, 
              sizeof(pnotify->sent),proc);
    return(pnotify->sent);
@@ -922,7 +857,9 @@ int armci_notify_wait(int proc,int *pval)
 #endif
 #ifdef DOELAN4
   if(proc==armci_me){
-    MEM_FENCE;
+#ifdef MEM_FENCE
+       MEM_FENCE;
+#endif
 #ifdef ARMCI_PROFILE
     armci_profile_stop(ARMCI_PROF_NOTIFY);
 #endif
@@ -970,6 +907,9 @@ int ARMCI_Test(armci_hdl_t *usr_hdl)
 {
 armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
 int success=0;
+#ifdef BGML
+   success=(int)nb_handle->count;
+#else
 int direct=SAMECLUSNODE(nb_handle->proc);
    if(direct)return(success);
     if(nb_handle) {
@@ -994,6 +934,7 @@ int direct=SAMECLUSNODE(nb_handle->proc);
        TEST_HANDLE(nb_handle->bufid,nb_handle->tag,(&success));
 #     endif
     }
+#endif
     return(success);
 }
 
@@ -1028,21 +969,21 @@ void ARMCI_Ckpt_finalize(int rid)
 int armci_gpc(int hndl, int proc, void  *hdr, int hlen,  void *data,  int dlen,
               void *rhdr, int rhlen, void *rdata, int rdlen,
               armci_hdl_t* nbh) {
-  armci_ihdl_t nb_handle = (armci_ihdl_t)nbh;
-  armci_giov_t darr[2]; /* = {{&rhdr, &rhdr, 1, rhlen}, {&rdata, &rdata, 1, rdlen}};*/
-  gpc_send_t send;
-  char *ptr;
+armci_ihdl_t nb_handle = (armci_ihdl_t)nbh;
+armci_giov_t darr[2]; /* = {{&rhdr, &rhdr, 1, rhlen}, {&rdata, &rdata, 1, rdlen}};*/
+gpc_send_t send;
+char *ptr;
 
-  /* initialize giov */
-  darr[0].src_ptr_array = &rhdr;
-  darr[0].dst_ptr_array = &rhdr;
-  darr[0].ptr_array_len = 1;
-  darr[0].bytes         = rhlen;
+    /* initialize giov */
+    darr[0].src_ptr_array = &rhdr;
+    darr[0].dst_ptr_array = &rhdr;
+    darr[0].ptr_array_len = 1;
+    darr[0].bytes         = rhlen;
 
-  darr[1].src_ptr_array = &rdata;
-  darr[1].dst_ptr_array = &rdata;
-  darr[1].ptr_array_len = 1;
-  darr[1].bytes         = rdlen;
+    darr[1].src_ptr_array = &rdata;
+    darr[1].dst_ptr_array = &rdata;
+    darr[1].ptr_array_len = 1;
+    darr[1].bytes         = rdlen;
 
   
 /*    if(hlen<0 || hlen>=ARMCI_Gpc_get_hlen()) */
@@ -1054,43 +995,163 @@ int armci_gpc(int hndl, int proc, void  *hdr, int hlen,  void *data,  int dlen,
 /*    if(rdlen<0 || rdlen>=ARMCI_Gpc_get_dlen())  */
 /*      return FAIL2; */
 
-  if(hlen>0 && hdr==NULL) 
-    return FAIL3;
-  if(rhlen>0 && rhdr==NULL) 
-    return FAIL3;
-  if(dlen>0 && data==NULL) 
-    return FAIL3;
-  if(rdlen>0 && rdata==NULL) 
-    return FAIL3;
+    if(hlen>0 && hdr==NULL) 
+      return FAIL3;
+    if(rhlen>0 && rhdr==NULL) 
+      return FAIL3;
+    if(dlen>0 && data==NULL) 
+      return FAIL3;
+    if(rdlen>0 && rdata==NULL) 
+      return FAIL3;
 
-  if(proc<0 || proc >= armci_nproc)
-    return FAIL4;
+    if(proc<0 || proc >= armci_nproc)
+      return FAIL4;
 
-  send.hndl = hndl;
-  send.hlen = hlen;
-  send.dlen = dlen;
-  send.hdr = hdr;
-  send.data = data;
+    send.hndl = hndl;
+    send.hlen = hlen;
+    send.dlen = dlen;
+    send.hdr = hdr;
+    send.data = data;
 
-  if(nb_handle){
-    nb_handle->tag = GET_NEXT_NBTAG();
-    nb_handle->op  = GET;
-    nb_handle->proc= proc;
-    nb_handle->bufid=NB_NONE;
-  }
-  else {
-    ORDER(GET,proc); /*ensure ordering */      
-    nb_handle = NULL;
-  }  
+    if(nb_handle){
+      nb_handle->tag = GET_NEXT_NBTAG();
+      nb_handle->op  = GET;
+      nb_handle->proc= proc;
+      nb_handle->bufid=NB_NONE;
+    }
+    else {
+      ORDER(GET,proc); /*ensure ordering */      
+      nb_handle = NULL;
+    }  
 
-#if defined(GM) || defined(VAPI) || defined(QUADRICS)
-  if(armci_rem_gpc(GET, darr, 2, &send, proc, 1, nb_handle))
+#if defined(LAPI) || defined(GM) || defined(VAPI) || defined(QUADRICS)
+    if(armci_rem_gpc(GET, darr, 2, &send, proc, 1, nb_handle))
 #endif
-    return FAIL2;
-  return 0;
+      return FAIL2;
+    return 0;
 }
 
 int armci_sameclusnode(int proc) {
   return SAMECLUSNODE(proc);
 }
 #endif
+
+void _armci_init_handle(armci_hdl_t *hdl)
+{
+    ((double *)((hdl)->data))[0]=0;
+    ((double *)((hdl)->data))[1]=0;
+}
+
+#ifdef CHANGE_SERVER_AFFINITY
+static inline int val_to_char(int v)
+{
+    if (v >= 0 && v < 10)
+      return '0' + v;
+    else if (v >= 10 && v < 16)
+      return ('a' - 10) + v;
+    else
+      return -1;
+}
+static const char *nexttoken(const char *q, int sep)
+{
+    if (q)
+      q = strchr(q, sep);
+    if (q)
+      q++;
+    return q;
+}
+
+int cstr_to_cpuset(cpu_set_t * mask, const char *str)
+{
+const char     *p, *q;
+q = str;
+    CPU_ZERO(mask);
+
+    while (p = q, q = nexttoken(q, ','), p) {
+    unsigned int    a;	/* beginning of range */
+    unsigned int    b;	/* end of range */
+    unsigned int    s;	/* stride */
+    const char     *c1, *c2;
+      if (sscanf(p, "%u", &a) < 1)
+        return 1;
+      b = a;
+      s = 1;
+      c1 = nexttoken(p, '-');
+      c2 = nexttoken(p, ',');
+      if (c1 != NULL && (c2 == NULL || c1 < c2)) {
+        if (sscanf(c1, "%u", &b) < 1)
+          return 1;
+        c1 = nexttoken(c1, ':');
+        if (c1 != NULL && (c2 == NULL || c1 < c2))
+          if (sscanf(c1, "%u", &s) < 1) {
+            return 1;
+          }
+      }
+      if (!(a <= b))
+        return 1;
+      while (a <= b) {
+        CPU_SET(a, mask);
+        a += s;
+      }
+    }
+    return 0;
+}
+
+char *cpuset_to_cstr(cpu_set_t * mask, char *str)
+{
+int             i;
+char           *ptr = str;
+int             entry_made = 0;
+    for (i = 0; i < CPU_SETSIZE; i++) {
+      if (CPU_ISSET(i, mask)) {
+      int             j;
+      int             run = 0;
+        entry_made = 1;
+        for (j = i + 1; j < CPU_SETSIZE; j++) {
+          if (CPU_ISSET(j, mask))
+            run++;
+          else
+            break;
+        }
+        if (!run)
+          sprintf(ptr, "%d,", i);
+        else if (run == 1) {
+          sprintf(ptr, "%d,%d,", i, i + 1);
+          i++;
+        } else {
+          sprintf(ptr, "%d-%d,", i, i + run);
+          i += run;
+        }
+        while (*ptr != 0)
+          ptr++;
+      }
+    }
+    ptr -= entry_made;
+    *ptr = 0;
+    return str;
+}
+
+char *cpuset_to_str(cpu_set_t * mask, char *str)
+{
+int             base;
+char           *ptr = str;
+char           *ret = 0;
+    for (base = CPU_SETSIZE - 4; base >= 0; base -= 4) {
+    char    val = 0;
+      if (CPU_ISSET(base, mask))
+        val |= 1;
+      if (CPU_ISSET(base + 1, mask))
+        val |= 2;
+      if (CPU_ISSET(base + 2, mask))
+        val |= 4;
+      if (CPU_ISSET(base + 3, mask))
+        val |= 8;
+      if (!ret && val)
+        ret = ptr;
+      *ptr++ = val_to_char(val);
+    }
+    *ptr = 0;
+    return ret ? ret : ptr - 1;
+}
+#endif
+

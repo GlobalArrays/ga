@@ -7,8 +7,8 @@ else
 LAPACK = dgetf2.o  dgetrs.o  dlaswp.o  ilaenv.o   \
          dgetrf.o  dlaset.o  dlacpy.o  lsame.o   xerbla.o
  
-BLAS = dblas.o zaxpy.o xerbla.o lsame.o zgemm.o
-TESTBLAS = testblas.o xerbla.o
+BLAS = dblas.o zaxpy.o zgemm.o cgemm.o
+TESTBLAS = testblas.o
 endif
 
 include ../../config/makefile.h
@@ -20,6 +20,7 @@ else
 endif
 
 LIBRARY = liblinalg.a
+LIBRARY_SHARED = liblinalg.so
 LIB_DISTRIB = ../../lib
 
 include ../../config/makelib.h

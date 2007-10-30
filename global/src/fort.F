@@ -1,9 +1,16 @@
-c $Id: fort.F,v 1.4 2001-05-09 01:02:14 d3h325 Exp $
+c $Id: fort.F,v 1.5 2007-10-30 02:04:57 manoj Exp $
       double complex function ga_zdot(g_a,g_b)
       implicit none
       integer g_a, g_b
       ga_zdot = (0.,0.)
       call gai_zdot(g_a,g_b,ga_zdot)
+      end
+
+      complex function ga_cdot(g_a,g_b)
+      implicit none
+      integer g_a, g_b
+      ga_cdot = (0.,0.)
+      call gai_cdot(g_a,g_b,ga_cdot)
       end
 
 
@@ -19,6 +26,20 @@ c $Id: fort.F,v 1.4 2001-05-09 01:02:14 d3h325 Exp $
       call gai_dot_patch(
      $            g_a, t_a, ailo, aihi, ajlo, ajhi,
      $            g_b, t_b, bilo, bihi, bjlo, bjhi, ga_zdot_patch)
+      end
+
+      complex function ga_cdot_patch(
+     $            g_a, t_a, ailo, aihi, ajlo, ajhi,
+     $            g_b, t_b, bilo, bihi, bjlo, bjhi)
+      implicit none
+      integer  g_a, g_b, ailo, aihi, ajlo, ajhi
+      integer  bilo, bihi, bjlo, bjhi
+      character*1 t_a, t_b
+      external gai_dot_patch
+      ga_cdot_patch = (0.,0.)
+      call gai_dot_patch(
+     $            g_a, t_a, ailo, aihi, ajlo, ajhi,
+     $            g_b, t_b, bilo, bihi, bjlo, bjhi, ga_cdot_patch)
       end
 
 
@@ -103,6 +124,19 @@ c $Id: fort.F,v 1.4 2001-05-09 01:02:14 d3h325 Exp $
       nga_zdot_patch = (0.,0.)
       call ngai_dot_patch(g_a, t_a, alo, ahi, 
      $     g_b, t_b, blo, bhi, nga_zdot_patch)
+      end
+
+      complex function nga_cdot_patch(
+     $            g_a, t_a, alo, ahi,
+     $            g_b, t_b, blo, bhi)
+      implicit none
+      integer  g_a, g_b, alo, ahi
+      integer  blo, bhi
+      character*1 t_a, t_b
+      external ngai_dot_patch
+      nga_cdot_patch = (0.,0.)
+      call ngai_dot_patch(g_a, t_a, alo, ahi, 
+     $     g_b, t_b, blo, bhi, nga_cdot_patch)
       end
 
       double precision function nga_ddot_patch(

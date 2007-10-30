@@ -1,32 +1,12 @@
-/* $Id: gpctest.c,v 1.2 2005-10-04 14:10:43 vinod Exp $ */
+/* $Id: gpctest.c,v 1.3 2007-10-30 02:04:54 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 
-#define RMW
-
-#ifdef WIN32
-#  include <windows.h>
-#  define sleep(x) Sleep(1000*(x))
-#else
+/*#define RMW*/
 #  include <unistd.h>
-#endif
 
 /* ARMCI is impartial to message-passing libs - we handle them with MP macros */
-#if defined(PVM)
-#   include <pvm3.h>
-#   ifdef CRAY
-#     define MPGROUP         (char *)NULL
-#     define MP_INIT(arc,argv)
-#   else
-#     define MPGROUP           "mp_working_group"
-#     define MP_INIT(arc,argv) pvm_init(arc, argv)
-#   endif
-#   define MP_FINALIZE()     pvm_exit()
-#   define MP_BARRIER()      pvm_barrier(MPGROUP,-1)
-#   define MP_MYID(pid)      *(pid)   = pvm_getinst(MPGROUP,pvm_mytid())
-#   define MP_PROCS(pproc)   *(pproc) = (int)pvm_gsize(MPGROUP)
-    void pvm_init(int argc, char *argv[]);
-#elif defined(TCGMSG)
+#ifdef TCGMSG
 #   include <sndrcv.h>
     long tcg_tag =30000;
 #   define MP_BARRIER()      SYNCH_(&tcg_tag)
@@ -47,66 +27,14 @@
 #include "gpc.h"
 
 
-#define BASE 100.
 #define MAXPROC 128
-#define TIMES 100
-
-#ifdef CRAY
-# define ELEMS 800
-#else
 # define ELEMS 200
-#endif
 #define LOOP 100
 
-
-/***************************** macros ************************/
-#define COPY(src, dst, bytes) memcpy((dst),(src),(bytes))
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
-#define ABS(a) (((a) <0) ? -(a) : (a))
 
 /***************************** global data *******************/
 int me, nproc;
 void* work[MAXPROC]; /* work array for propagating addresses */
-
-
-
-#ifdef PVM
-void pvm_init(int argc, char *argv[])
-{
-    int mytid, mygid, ctid[MAXPROC];
-    int np, i;
-
-    mytid = pvm_mytid();
-    if((argc != 2) && (argc != 1)) goto usage;
-    if(argc == 1) np = 1;
-    if(argc == 2)
-        if((np = atoi(argv[1])) < 1) goto usage;
-    if(np > MAXPROC) goto usage;
-
-    mygid = pvm_joingroup(MPGROUP);
-
-    if(np > 1)
-        if (mygid == 0) 
-            i = pvm_spawn(argv[0], argv+1, 0, "", np-1, ctid);
-
-    while(pvm_gsize(MPGROUP) < np) sleep(1);
-
-    /* sync */
-    pvm_barrier(MPGROUP, np);
-    
-    printf("PVM initialization done!\n");
-    
-    return;
-
-usage:
-    fprintf(stderr, "usage: %s <nproc>\n", argv[0]);
-    pvm_exit();
-    exit(-1);
-}
-#endif
-
-
 
 int hswap=0;
 void gpc_swap(int *loc, int *rem, int p)
@@ -118,17 +46,17 @@ int rdsize;
 void *header=rem;
 extern int hswap;
 
-     hlen=sizeof(header);
-     bzero(rheader,100);
-     rhlen = hlen;
+    hlen=sizeof(header);
+    bzero(rheader,100);
+    rhlen = hlen;
 
-     ARMCI_Gpc_init_handle(&nbh);
+    ARMCI_Gpc_init_handle(&nbh);
 
-     if(ARMCI_Gpc_exec(hswap,p, &header, hlen, loc, sizeof(int), rheader, rhlen,
-                       loc, sizeof(int), &nbh))
-        fprintf(stderr,"ARMCI_Gpc_exec failed\n");
+    if(ARMCI_Gpc_exec(hswap,p, &header, hlen, loc, sizeof(int), rheader, rhlen,
+                      loc, sizeof(int), NULL/*&nbh*/))
+       fprintf(stderr,"ARMCI_Gpc_exec failed\n");
 
-     ARMCI_Gpc_wait(&nbh);
+    /*ARMCI_Gpc_wait(&nbh);*/
 }
 
 
@@ -145,18 +73,14 @@ int tmp_swap;
      printf("executing swap handler from=%d to=%d\n"); fflush(stdout);
 #endif
      
-/*       fprintf(stderr, "to:%d from:%d ==> Invoked gpc_swap_handler\n", to, from); */
-
      rem = (int*)ARMCI_Gpc_translate(*(void**)hdr,to,from);
-
      ARMCI_Gpc_lock(to);
      tmp_swap = *rem;
      *rem = *(int*)data;
      ARMCI_Gpc_unlock(to);
-
      *(int*)rdata = tmp_swap;
      *(int*)rhdr  = tmp_swap; /* 2nd copy just for debug purposes */
-     *rhsize = sizeof(int);
+     *rhsize = sizeof(void *);
      *rdsize = sizeof(int);
 
      return GPC_DONE;
@@ -184,27 +108,27 @@ void test_swap()
 
     MP_BARRIER();
     for(i = 0; i< LOOP; i++){
-          val = LOCKED;
-          do{
+      val = LOCKED;
+      do{
 
 #ifdef RMW
-            rc = ARMCI_Rmw(ARMCI_SWAP, &val, arr[0], whatever, 0);
-            if(rc != 0)
-	      ARMCI_Error("test_swap: ARMCI_Rmw failed", 0);
+        rc = ARMCI_Rmw(ARMCI_SWAP, &val, arr[0], whatever, 0);
+        if(rc != 0)
+	  ARMCI_Error("test_swap: ARMCI_Rmw failed", 0);
 #else
-            gpc_swap(&val, arr[0], 0);
+        gpc_swap(&val, arr[0], 0);
 #endif
 
-          }while (val == LOCKED); 
-          val++;
+      }while (val == LOCKED); 
+      val++;
 
 #ifdef RMW
-          rc = ARMCI_Rmw(ARMCI_SWAP, &val, arr[0], whatever, 0);
-	  if(rc != 0)
-	    ARMCI_Error("test_swap: ARMCI_Malloc failed", 0);
+      rc = ARMCI_Rmw(ARMCI_SWAP, &val, arr[0], whatever, 0);
+      if(rc != 0)
+        ARMCI_Error("test_swap: ARMCI_Malloc failed", 0);
 	    
 #else
-          gpc_swap(&val, arr[0], 0);
+      gpc_swap(&val, arr[0], 0);
 #endif
 
     }

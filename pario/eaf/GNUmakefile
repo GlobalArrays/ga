@@ -1,7 +1,8 @@
-#$Id: GNUmakefile,v 1.5 2003-07-09 20:10:20 d3h325 Exp $
+#$Id: GNUmakefile,v 1.6 2007-10-30 02:05:01 manoj Exp $
 
           OBJ = eaf.o eaf_f2c.o
       LIBRARY = libpario.a
+LIBRARY_SHARED= libpario.so
   LIB_DISTRIB = ../../lib
       HEADERS = eaf.fh eaf.h
   LIB_DEFINES = -DEAF_STATS

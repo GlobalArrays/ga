@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.144 2006-10-20 18:54:09 manoj Exp $
+# $Id: makefile.h,v 1.145 2007-10-30 02:04:56 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -25,7 +25,7 @@
            AR = ar
            AS = as
        RANLIB = @echo
-          CPP = /usr/lib/cpp -P
+          CPP = cpp -P
         SHELL = /bin/sh
            MV = /bin/mv
            RM = /bin/rm
@@ -62,6 +62,48 @@ ifdef USE_FULL_WARNINGS
    WALL = -Wall
 endif
 #
+#-------------------------- IBM BlueGene -----------------------------
+ifeq ($(TARGET), BGL)
+ifdef BGCOMPILERS
+	   FC     = $(BGCOMPILERS)/powerpc-bgl-blrts-gnu-g77
+	   CC     = $(BGCOMPILERS)/powerpc-bgl-blrts-gnu-gcc -g
+	   AR     = $(BGCOMPILERS)/powerpc-bgl-blrts-gnu-ar
+	   AS     = $(BGCOMPILERS)/powerpc-bgl-blrts-gnu-as
+	   CPP    = $(BGCOMPILERS)/powerpc-bgl-blrts-gnu-cpp
+	   RANLIB = $(BGCOMPILERS)/powerpc-bgl-blrts-gnu-ranlib
+else
+           FLD    = mpif77
+	   CC     = mpicc
+endif
+	   GLOB_DEFINES+= -DBLRTS -DBGML -DMPI
+	   INCLUDES += -I$(BGDRIVER)/bglsys/include
+	   COPT = -O0
+
+ifeq ($(_FC),blrts_xlf90)
+           XLFDEFINED =1
+           FOPT_REN +=   -qfixed
+endif
+ifeq ($(_FC),blrts_xlf)
+           XLFDEFINED =1
+endif
+
+ifdef XLFDEFINED
+ifdef USE_INTEGER8
+           FOPT_REN += -qintsize=8
+           CDEFS = -DEXT_INT -DEXT_INT64
+endif
+           FOPT_REN += -qEXTNAME
+           GLOB_DEFINES +=  -DEXTNAME
+           EXPLICITF = TRUE
+           FOPT=-O0
+           CPP = gcc -E -nostdinc -undef -P
+           FCONVERT = $(CPP) $(CPP_FLAGS)  $< | sed '/^\#/D'  > $*.f
+else
+
+	   FOPT = -O0 -fno-second-underscore
+endif
+
+endif
 #.............. SUN sparc/x86/x64 Solaris and Fujitsu Sparc/solaris ............
 #
 ifeq ($(TARGET),SOLARIS)
@@ -214,7 +256,7 @@ ifeq ($(TARGET),MACX)
        RANLIB = ranlib
 
 ifneq (,$(findstring mpif,$(_FC)))
-	_FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /xlf/ {print "xlf"; exit }; /Pro Fortran/ {print "absoft"; exit }' )
+	_FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /xlf/ {print "xlf"; exit }; /Pro Fortran/ {print "absoft"; exit }' )
 endif
 ifneq (,$(findstring mpicc,$(_CC)))
          _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ { print "gcc" ; exit  } ' )
@@ -245,11 +287,30 @@ else
    FLIBS += -L/usr/lib/gcc/darwin/default -lgcc
 endif
 endif
+
+#Intel Fortran Compiler
+ifeq ($(_FC),ifort)
+       ifeq ($(FOPT),-O)
+           FOPT = -O3
+           FOPT_REN = -prefetch -w -cm
+       endif
+       GLOB_DEFINES += -DIFCLINUX -DIFCV8
+       FLD_REN += -Vaxlib
+       ifeq ($(LINK.c),$(FC))
+          CLD_REN += -nofor_main
+       endif
+       ifdef USE_INTEGER8
+           FOPT_REN += -i8
+           CDEFS = -DEXT_INT -DEXT_INT64
+       endif   
+endif
+
+#IBM Fortran Compiler
 ifeq ($(_FC),xlf)
-#    echo $_FC
      FOPT_REN +=   -qextname
 GLOB_DEFINES += -DXLFMAC -DEXTNAME
 endif
+
 #absoft compilers
 ifneq ($(_FC),xlf)
 ifneq ($(_FC),g77)
@@ -277,99 +338,140 @@ ifeq ($(TARGET),LINUX)
                  awk ' /sparc/ { print "sparc" }; /i*86/ { print "x86" } ' )
 
 ifneq (,$(findstring mpif,$(_FC)))
-         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { pgfcount++}; END {if(pgfcount)print "pgf77"}; /ifc/ { print "ifc" ; exit }; /ifort/ { print "ifort" ; exit }; / frt / { print "frt" ; exit }' )
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit };/gcc version 4/ { print "gfortran"; exit }; /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /pgf/ { pgfcount++}; END {if(pgfcount)print "pgf77"}; /ifc/ { print "ifc" ; exit }; /ifort/ { print "ifort" ; exit }; / frt / { print "frt" ; exit }' )
 endif
 ifneq (,$(findstring mpicc,$(_CC)))
          _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ {gcccount++}; END {if(gcccount)print "gcc"} ' )
 endif
 #
-#              GNU compilers
+ifeq ($(ARMCI_NETWORK), LAPI)
+   CC  = mpcc
+   FLD = mpfort
+   GLOB_DEFINES+= -DLAPI
+endif
+
+# Shared library object specific flags
+ifdef GA_SHLIB
+   SHLIB_CFLAGS  = -fPIC
+   SHLIB_FFLAGS  = -fPIC
+   SHLIB_LDFLAGS = -shared
+endif
+
+# ======== CPU Specific Options =======
+ifeq ($(_CPU),ppc)
+    FC=xlf
+endif
 ifeq ($(_CPU),x86)
      OPT_ALIGN = -malign-double
 endif
 ifeq ($(_CPU),786)
      OPT_ALIGN = -malign-double
 endif
+
+# ======== Compiler Specific Options ========
+# -------------------------------------
+# GNU compilers
+# -------------------------------------
 ifeq ($(_CC),gcc)
    ifeq ($(COPT),-O)
       COPT = -O2
       COPT_REN += $(WALL) -funroll-loops $(OPT_ALIGN)
    endif
 endif
-   ifneq (,$(findstring icc,$(_CC)))
-       ifeq ($(COPT),-O)
-           COPT = -O3
-           COPT_REN = -prefetch 
-       endif
-   endif
-   ifeq ($(CC),xlc)
-       COPT_REN = -q32  -qlanglvl=extended
-   endif
-#
-#           g77
 ifeq ($(_FC),g77)
    ifeq ($(FOPT),-O)
       FOPT = -O2
       FOPT_REN += $(WALL) -funroll-loops -fomit-frame-pointer $(OPT_ALIGN)
    endif
-else
-#
-#             PGI fortran compiler on intel
-   ifneq (,$(findstring pgf,$(_FC)))
-       CMAIN = -Dmain=MAIN_
-       FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
-       GLOB_DEFINES += -DPGLINUX
-   endif
-   ifneq (,$(findstring ifc,$(_FC)))
-       ifeq ($(FOPT),-O)
-           FOPT = -O3
-           FOPT_REN = -prefetch -w -cm
-       endif
-       GLOB_DEFINES += -DIFCLINUX
-       _IFCV8= $(shell ifc -v  2>&1|egrep "Version "|head -1|awk ' /8\./  {print "Y";exit}; /9./ {print "Y"; exit}')
-       ifeq ($(_IFCV8),Y)
-         GLOB_DEFINES+= -DIFCV8
-       endif	
-       FLD_REN += -Vaxlib
-   endif
-   ifneq (,$(findstring ifort,$(_FC)))
-       ifeq ($(FOPT),-O)
-           FOPT = -O3
-           FOPT_REN = -prefetch -w -cm
-       endif
-       GLOB_DEFINES += -DIFCLINUX
-       _IFCV8= $(shell ifc -v  2>&1|egrep 8|awk ' /8\./  {print "Y"}')
-       ifeq ($(_IFCV8),Y)
-         GLOB_DEFINES+= -DIFCV8
-       endif	
-       FLD_REN += -Vaxlib
-       ifeq ($(LINK.c),$(FC))
-          CLD_REN += -nofor_main
-       endif
-   endif
-   ifeq ($(FC),xlf)
-     FOPT_REN = -q32  -qEXTNAME
-     EXPLICITF = TRUE
-          CPP = /usr/bin/cpp -P -C -traditional
-     GLOB_DEFINES += -DXLFLINUX -DEXTNAME
-     endif
-   endif
-   ifeq ($(_FC),gfortran)
-      GLOB_DEFINES += -DGFORTRAN
-   endif
-
-   # Fujitsu compilers
-   ifeq ($(_CC),mpifcc)
-       _CC = fcc
-   endif
-   ifeq ($(_CC),fcc)
-      COPT = -Kfast
-   endif
-   ifeq ($(_FC),frt)
-      FOPT = -Kfast
-      FOPT_REN += -X9 -Am
+endif
+ifeq ($(_FC),gfortran)
+#   FOPT_REN += -x f77-cpp-input -w
+   FOPT_REN += -fno-second-underscore -ffixed-form -ffixed-line-length-72
+   FLD_REN=
+   GLOB_DEFINES += -DGFORTRAN
+endif
+ifeq ($(_FC),g95)
+   FOPT_REN += -i4
+   FOPT_REN += -fno-second-underscore -ffixed-form -ffixed-line-length-80
+   FLD_REN=
+endif
+# -------------------------------------
+#  PGI fortran compiler on intel
+# -------------------------------------
+ifneq (,$(findstring pgf,$(_FC)))
+   CMAIN = -Dmain=MAIN_
+   FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
+   GLOB_DEFINES += -DPGLINUX
+endif
+# -------------------------------------
+#  Intel compilers
+# -------------------------------------
+ifneq (,$(findstring icc,$(_CC)))
+   ifeq ($(COPT),-O)
+      COPT = -O3
+      COPT_REN = -prefetch 
    endif
 endif
+ifneq (,$(findstring ifort,$(_FC)))
+   ifeq ($(FOPT),-O)
+      FOPT = -O3
+      FOPT_REN = -prefetch -w -cm
+   endif
+   GLOB_DEFINES += -DIFCLINUX
+   _IFCV7= $(shell ifort -V  2>&1 | egrep "Version "|head -1|awk ' /7\./  {print "Y";exit}')
+   ifneq ($(_IFCV7),Y)
+      GLOB_DEFINES+= -DIFCV8
+   endif	
+   FLD_REN += -Vaxlib
+   ifeq ($(LINK.c),$(FC))
+      CLD_REN += -nofor_main
+   endif
+   ifdef USE_INTEGER8
+      FOPT_REN += -i8
+      CDEFS = -DEXT_INT -DEXT_INT64
+   endif
+endif
+ifneq (,$(findstring ifc,$(_FC)))
+   ifeq ($(FOPT),-O)
+      FOPT = -O3
+      FOPT_REN = -prefetch -w -cm
+   endif
+   GLOB_DEFINES += -DIFCLINUX
+   _IFCV7= $(shell ifc -V  2>&1 | egrep "Version "|head -1|awk ' /7\./  {print "Y";exit}')
+   ifneq ($(_IFCV7),Y)
+      GLOB_DEFINES+= -DIFCV8
+   endif	
+   FLD_REN += -Vaxlib
+endif
+# -------------------------------------
+#  IBM compilers
+# -------------------------------------
+ifeq ($(CC),xlc)
+   COPT_REN = -q32  -qlanglvl=extended
+endif
+ifeq ($(FC),xlf)
+   FOPT_REN = -q32  -qEXTNAME
+   EXPLICITF = TRUE
+   CPP = /usr/bin/cpp -P -C -traditional
+   GLOB_DEFINES += -DXLFLINUX -DEXTNAME
+endif
+# -------------------------------------
+#  Fujitsu compilers
+# -------------------------------------
+ifeq ($(_CC),mpifcc)
+   _CC = fcc
+endif
+ifeq ($(_CC),fcc)
+   COPT  = -Kfast
+   CLD   = $(FLD)
+   CMAIN = -Dmain=MAIN__
+endif
+ifeq ($(_FC),frt)
+   FOPT = -Kfast
+   FOPT_REN += -X9 -Am
+endif
+
+endif # End of TARGET=LINUX
 #
 #................................ LINUX64 ....................................
 # Linux 64-bit
@@ -382,32 +484,49 @@ ifeq ($(TARGET),LINUX64)
        RANLIB = echo
 GLOB_DEFINES += -DLINUX 
 ifneq (,$(findstring mpif,$(_FC)))
-         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /efc/ { print "efc" ; exit }; /ifort/ { print "ifort" ; exit }; / frt / { print "frt" ; exit } ' )
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /efc/ { print "efc" ; exit }; /ifort/ { print "ifort" ; exit }; / frt / { print "frt" ; exit } ' )
 endif
-ifdef USE_INTEGER4
-else
-  GLOB_DEFINES += -DEXT_INT
+
+ifneq ($(_FC),g77)
+  ifdef USE_INTEGER4
+  else
+    GLOB_DEFINES += -DEXT_INT
+  endif
 endif
-         _CPU = $(shell uname -m)
+
+# Shared library object specific flags
+ifdef GA_SHLIB
+   SHLIB_CFLAGS  = -fPIC
+   SHLIB_FFLAGS  = -fPIC
+   SHLIB_LDFLAGS = -shared
+endif
+
+_CPU = $(shell uname -m)
+
 #
 #-----------------------------------
-# LINUX 64 CPU Specific Setup: IA64
+# LINUX64 CPU Specific Setup: IA64
 #-----------------------------------
-# IA64, only Intel fortran compiler supported 
 ifeq  ($(_CPU),ia64)
            FC = efc
            CC = gcc
+          CLD = $(CC)
+
+#
+# Compiler Specific Options (LINUX64, ia64)
+# 
+# ======= Intel Compilers =======
 ifeq ($(FC),efc)
-       _IFCV8= $(shell efc -v  2>&1|egrep "Version "|head -1|awk ' /8\./  {print "Y";exit}; /9./ {print "Y"; exit}')
-       ifeq ($(_IFCV8),Y)
+       _IFCV7= $(shell efc -V  2>&1 | egrep "Version "|head -1|awk ' /7\./  {print "Y";exit}')
+       ifneq ($(_IFCV7),Y)
          FC = ifort
          GLOB_DEFINES+= -DIFCV8
        endif	
-     FOPT_REN += -cm -w90 -w95 -align 
+     FOPT_REN += -cm -w90 -w95 -align
 endif
 ifeq ($(FC),ifort)
-       _IFCV8= $(shell ifort -v  2>&1|egrep "Version "|head -1|awk ' /8\./  {print "Y";exit}; /9./ {print "Y"; exit}')
-       ifeq ($(_IFCV8),Y)
+       _IFCV7= $(shell ifort -V  2>&1 | egrep "Version "|head -1|awk ' /7\./  {print "Y";exit}')
+       ifneq ($(_IFCV7),Y)
          GLOB_DEFINES+= -DIFCV8
        endif	
      FOPT_REN += -cm -w90 -w95 -align 
@@ -419,12 +538,24 @@ endif
 ifeq ($(CC),icc)
      COPT_REN += -fno-alias  -ftz
 endif
+
+ifneq (,$(findstring efc,$(_FC)))
+     FLD_REN      += -Vaxlib
+     GLOB_DEFINES += -DIFCLINUX
+endif
+ifneq (,$(findstring ifort,$(_FC)))
+     FLD_REN      += -Vaxlib
+     GLOB_DEFINES += -DIFCLINUX
+endif  
+
+# ======= GNU Compilers =======
 ifeq ($(CC),gcc) 
      COPT=-O3
      COPT_REN += $(WALL)  -funroll-loops 
 endif
 
-# Fujitsu compilers
+
+# ======= Fujitsu compilers =======
 ifeq ($(_CC),mpifcc)
        _CC = fcc
 endif
@@ -432,10 +563,33 @@ ifeq ($(_CC),fcc)
       COPT = -Kfast
 endif
 ifeq ($(_FC),frt)
-      FOPT = -Kfast
+      FOPT      = -Kfast
       FOPT_REN += -X9 -Am
 endif
 
+#
+# Linker Specific Options
+#
+ifeq ($(_FC),g77)
+          CLD = $(FLD)
+      CLD_REN =
+endif
+ifeq ($(_FC),efc) 
+          CLD = $(FLD)
+      CLD_REN =
+endif
+ifeq ($(_FC),ifort) 
+          CLD = $(FLD)
+      CLD_REN = -nofor_main
+endif
+ifeq ($(_FC),frt)
+      CLD     = $(FLD)
+      CMAIN   = -Dmain=MAIN__
+endif
+
+#
+# Using 32-bit integers
+#
 ifneq ($(_FC),g77)
   ifdef USE_INTEGER4
      FOPT_REN += -i4
@@ -453,31 +607,7 @@ ifneq ($(_FC),g77)
   endif
 endif
 
-ifneq (,$(findstring efc,$(_FC)))
-     FLD_REN += -Vaxlib
-     GLOB_DEFINES += -DIFCLINUX
-endif
-ifneq (,$(findstring ifort,$(_FC)))
-     FLD_REN += -Vaxlib
-     GLOB_DEFINES += -DIFCLINUX
-endif  
-ifneq (,$(findstring mpif,$(_FC)))
-         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /efc/ { print "efc" ; exit }; /ifort/ { print "ifort" ; exit }' )
-endif
-          CLD = $(CC)
-ifeq ($(_FC),g77)
-          CLD = $(FLD)
-      CLD_REN =
-endif
-ifeq ($(_FC),efc) 
-          CLD = $(FLD)
-      CLD_REN =
-endif
-ifeq ($(_FC),ifort) 
-          CLD = $(FLD)
-      CLD_REN = -nofor_main
-endif
-endif
+endif # end of LINUX64/ia64 setup
 #-----------------------------------
 # LINUX 64 CPU Specific Setup: Alpha
 #-----------------------------------
@@ -515,8 +645,22 @@ endif
 ifeq  ($(_CPU),x86_64)
            FC = ifort
            CC = gcc
-_FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit };/gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; /PathScale/ { pathf90count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90" ; if(pathf90count)print "pathf90"} ')
 
+  ifeq ($(ARMCI_NETWORK), LAPI)
+     CC  = mpcc
+     FLD = mpfort -m64 
+     COPT_REN = -m64
+     GLOB_DEFINES += -DLAPI -DLAPI64 -DXLCLINUX
+  endif
+
+  ifeq ($(ARMCI_NETWORK), CRAY-SHMEM)
+     CC = cc
+     FC = ftn
+  endif
+
+ifneq (,$(findstring mpif,$(_FC)))
+  _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit };/gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; /PathScale/ { pathf90count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90" ; if(pathf90count)print "pathf90"} ')
+endif
 # As "pathf90 -v" also gives "gcc version" as output, if FC=pathf90, then
 # _FC will be "g77 pathf90". So we need to make sure _FC=pathf90
 ifneq (,$(findstring pathf90,$(_FC)))
@@ -526,7 +670,74 @@ endif
 ifneq (,$(findstring ifort,$(FC)))
     _FC = ifort
 endif
+     
+# ======= GNU Compilers =======
+  ifeq ($(CC),gcc) 
+     COPT=-O2
+     COPT_REN += $(WALL)  -funroll-loops 
+  endif
 
+  ifeq ($(_FC),gfortran)
+     FOPT_REN += -w -fno-second-underscore -ffixed-form -ffixed-line-length-72
+     FLD_REN=
+    ifdef USE_INTEGER4
+       FOPT_REN += -fdefault-integer-4
+    else
+       FOPT_REN += -fdefault-integer-8
+    endif
+  endif
+
+  ifeq ($(_FC),g95)
+     # FOPT_REN += -x f77-cpp-input -w
+     FOPT_REN += -fno-second-underscore -ffixed-form -ffixed-line-length-80
+     FLD_REN=
+    ifdef USE_INTEGER4
+       FOPT_REN += -i4
+    else
+       FOPT_REN += -i8
+    endif
+  endif
+
+# ======= PGI Compilers =======
+  ifeq ($(_FC),pgf90)
+     # CMAIN = -Dmain=MAIN_
+     FOPT_REN += -Mdalign 
+     GLOB_DEFINES += -DPGLINUX
+  endif
+
+  ifeq ($(_FC),pgf77)
+     GLOB_DEFINES += -DPGLINUX
+  endif
+     
+  ifneq (,$(findstring pgf,$(_FC)))
+     CLD_REN += -Mnomain
+  endif
+      
+# ======= PathScale Compilers =======
+  ifeq ($(_FC),pathf90)
+     FOPT_REN += -cpp
+     FOPT_REN +=  -fno-second-underscore
+#     CLD_REN += -static
+#     COPT +=  -static
+  endif
+
+# ======= Intel Compilers =======
+   ifeq ($(_FC),ifort)
+       ifeq ($(FOPT),-O)
+           FOPT_REN +=  -O3 -w -cm -xW -tpp7
+       endif
+       GLOB_DEFINES += -DIFCLINUX
+       _IFCV7= $(shell ifort -V  2>&1 | egrep "Version "|head -1|awk ' /7\./  {print "Y";exit}')
+       ifneq ($(_IFCV7),Y)
+         GLOB_DEFINES+= -DIFCV8
+       endif
+       FLD_REN += -Vaxlib
+       CLD_REN += -nofor_main
+   endif
+
+#
+# Using 32-bit integers
+#
   ifneq ($(_FC),g77)
     ifdef USE_INTEGER4
        FOPT_REN += -i4
@@ -539,67 +750,37 @@ endif
       endif
     endif
   endif
-  ifeq ($(_FC),pgf90)
-#     CMAIN = -Dmain=MAIN_
-     FOPT_REN += -Mdalign 
-     GLOB_DEFINES += -DPGLINUX
-  endif
-  ifeq ($(_FC),pgf77)
-     GLOB_DEFINES += -DPGLINUX
-  endif
-  ifeq ($(_FC),pathf90)
-     FOPT_REN += -cpp
-     FOPT_REN +=  -fno-second-underscore
-#     CLD_REN += -static
-#     COPT +=  -static
-endif
-  ifeq ($(FC),gfortran)
-     _FC=gfortran
-     FOPT_REN += -x f77-cpp-input -w
-     FOPT_REN += -fno-second-underscore -ffixed-form -ffixed-line-length-72
-     FLD = gfortran
-     FLD_REN=
-    ifdef USE_INTEGER4
-       FOPT_REN += -fdefault-integer-4
-    else
-       FOPT_REN += -fdefault-integer-8
-    endif
-  endif
-   ifeq ($(_FC),ifort)
-       ifeq ($(FOPT),-O)
-           FOPT_REN += -quiet  -O3 -w -cm -xW -tpp7
-       endif
-       GLOB_DEFINES += -DIFCLINUX
-       _IFCV8= $(shell ifort -v  2>&1|egrep "Version "|head -1|awk ' /8\./  {print "Y";exit}; /9./ {print "Y"; exit}')
-       ifeq ($(_IFCV8),Y)
-         GLOB_DEFINES+= -DIFCV8
-       endif
-       FLD_REN += -Vaxlib
-       CLD_REN += -nofor_main
-   endif
-  ifeq ($(_FC),gfortran)
-#     FOPT_REN += -x f95-cpp-input
-#     FOPT_REN += -x f77-cpp-input
-  endif
-   GLOB_DEFINES += -DNOUSE_MMAP
+
+  GLOB_DEFINES += -DNOUSE_MMAP
+
 endif
 #
 #-------------------------------------
 # LINUX 64 CPU Specific Setup: power4
 #-------------------------------------
 ifeq  ($(_CPU),ppc64)
-  GLOB_DEFINES += -DNOUSE_MMAP
+  GLOB_DEFINES += -DNOUSE_MMAP -DNEED_MEM_SYNC
   FC=xlf
   CC=gcc
   COPT=-O
-  COPT_REN +=  -funroll-loops 
-  ifeq ($(_CC),xlc)
-     COPT_REN = -q64  -qlanglvl=extended
-     GLOB_DEFINES += -DXLCLINUX
-  else
-     # this for gcc/gcc
-     COPT_REN +=  -m64
+  XLC_OPT = -q64 -qlanglvl=extended -qinline=100 -qstrict -qarch=auto -qtune=auto
+_FC = $(shell $(FC) -v 2>&1 | awk ' /xlf/ { print "xlf"; exit }; /g77 version/ { print "g77"; exit };/gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; /PathScale/ { pathf90count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90" ; if(pathf90count)print "pathf90"} ')
+
+  ifeq ($(ARMCI_NETWORK), LAPI)
+     CC = mpcc
+     FLD = mpfort 
+     GLOB_DEFINES += -DLAPI -DLAPI64 -DXLCLINUX
+     COPT_REN = $(XLC_OPT)
   endif
+    
+  ifeq ($(_CC),xlc)
+     COPT_REN =  $(XLC_OPT)
+     GLOB_DEFINES += -DXLCLINUX
+  endif  
+  ifeq ($(_CC),gcc)
+     COPT_REN +=  -m64 -funroll-loops
+  endif
+
   ifeq ($(_FC),xlf)
      FOPT_REN = -q64  -qEXTNAME
      EXPLICITF = TRUE
@@ -611,7 +792,7 @@ ifeq  ($(_CPU),ppc64)
        FOPT_REN += -qintsize=8
      endif
   endif
-endif
+endif # end of power CPU setup
 
 endif 
 #
@@ -820,10 +1001,21 @@ ifeq ($(TARGET),CRAY-T3E)
 endif
 
 ifeq ($(TARGET),CATAMOUNT)
-           FC = mpif77
-           CC = mpicc
-     FOPT_REN= -O3 -fno-second-underscore
- GLOB_DEFINES = -DXT3
+           FC = ftn
+           CC = cc
+     FOPT_REN = -O3 
+ GLOB_DEFINES+= -DXT3 -DCATAMOUNT
+     ifdef USE_INTEGER4
+     else
+         FOPT_REN     += -i8
+         CDEFS        += -DEXT_INT
+     endif
+     ifeq ($(_FC),ftn)
+        CLD_REN += -Mnomain
+     endif
+     ifneq (,$(findstring pgf,$(_FC)))
+        CLD_REN += -Mnomain
+     endif
 endif
 
 ifeq ($(TARGET),NEC)
@@ -954,6 +1146,12 @@ endif
 #add 2nd underscore under linux/cygwin to match g77 names
 ifdef F2C_TWO_UNDERSCORES
      CDEFS += -DF2C2_
+endif
+
+# shared library flags
+ifdef GA_SHLIB
+     COPT_REN += $(SHLIB_CFLAGS)
+     FOPT_REN += $(SHLIB_FFLAGS)
 endif
 
        DEFINES = $(GLOB_DEFINES) $(LIB_DEFINES)
@@ -1105,7 +1303,12 @@ endif
 # linear algebra, ARMCI, message-passing library, and any lower level libs
 #
 # core libs
-LIBS = -L$(LIB_DISTRIB)/$(TARGET) -lglobal -lma 
+ifdef GA_SHLIB
+  GA_LIBPATH = $(LIB_DISTRIB)/$(TARGET)/shared
+else
+  GA_LIBPATH = $(LIB_DISTRIB)/$(TARGET)
+endif
+LIBS = -L$(GA_LIBPATH) -lglobal -lma 
 #
 #linear algebra
 ifdef USE_SCALAPACK
@@ -1125,8 +1328,19 @@ endif
 LIBS += -larmci
 
 ifndef LIBMPI
+ifneq ($(TARGET), BGL)
    LIBMPI = -lmpi
 endif
+endif
+
+SKIP_LIBMPI = mpifrt mpfort mpif77 mpxlf mpif90
+ifeq ($(notdir $(FC)),mpifrt)
+   LIBMPI = 
+endif   
+ifneq (,$(findstring $(notdir $(FLD)), $(SKIP_LIBMPI)))
+   LIBMPI = 
+endif
+
 ifdef MPI_LIB
    LIBS += -L$(MPI_LIB)
 endif

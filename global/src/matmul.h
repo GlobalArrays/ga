@@ -1,4 +1,4 @@
-/* $Id: matmul.h,v 1.15 2005-12-04 07:18:21 manoj Exp $ */
+/* $Id: matmul.h,v 1.16 2007-10-30 02:04:58 manoj Exp $ */
 #ifndef _MATMUL_H_
 #define _MATMUL_H_
 
@@ -24,19 +24,25 @@
 #      include <fortran.h>
 #      define  DGEMM SGEMM
 #      define  ZGEMM CGEMM
+#      define  CGEMM CGEMM
 #elif defined(WIN32)
 extern void FATR DGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
 		       void*, void*, Integer*, void*, Integer*, void*,
 		       void*, Integer*);
 extern void FATR ZGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
-		       DoubleComplex*, DoubleComplex*, Integer*, DoubleComplex*,
+		       DoubleComplex*, DoubleComplex*, Integer*,DoubleComplex*,
 		       Integer*, DoubleComplex*, DoubleComplex*, Integer*);
+extern void FATR CGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
+		       SingleComplex*, SingleComplex*, Integer*,SingleComplex*,
+		       Integer*, SingleComplex*, SingleComplex*, Integer*);
 #elif defined(F2C2__)
 #      define DGEMM dgemm__
 #      define ZGEMM zgemm__
+#      define CGEMM cgemm__
 #elif defined(HITACHI)
 #      define dgemm_ DGEMM
 #      define zgemm_ ZGEMM
+#      define cgemm_ CGEMM
 #endif
 
 #if defined(CRAY) || defined(WIN32)

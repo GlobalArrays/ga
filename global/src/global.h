@@ -30,11 +30,13 @@ extern "C" {
 #define C_FLOAT MT_C_FLOAT
 #define C_DCPL MT_C_DCPL
 #define C_LONG MT_C_LONGINT
+#define C_LONGLONG MT_C_LONGLONG
 #define C_SCPL MT_C_SCPL
   
 extern void *GA_Getmem(int type, int nelem, int grp_id);
 extern void GA_Freemem(void* ptr);
 extern int GA_Assemble_duplicate(int g_a, char *name, void *ptr);
+extern DoublePrecision FATR ga_wtime_ ARGS_((void));
 extern void    FATR ga_set_memory_limit_ ARGS_((Integer *mem_limit));
 extern logical FATR ga_valid_handle_ ARGS_((Integer *g_a));
 extern void    FATR ga_mask_sync_ ARGS_((Integer *begin, Integer *end));
@@ -89,6 +91,7 @@ extern void FATR ga_get_     ARGS_((Integer*, Integer*, Integer*, Integer*,
 extern void FATR ga_nbget_   ARGS_((Integer*, Integer*, Integer*, Integer*,
       Integer*, Void*, Integer*, Integer* ));
 extern void FATR ga_nbwait_  ARGS_((Integer*));
+extern void FATR ga_nbtest_  ARGS_((Integer*));
 extern void ga_dgop ARGS_((Integer, DoublePrecision*, Integer, char* ));
 extern void ga_gop ARGS_((Integer, void*, Integer, char* ));   
 extern void ga_pgroup_dgop ARGS_((Integer, Integer, DoublePrecision*, Integer, char* ));
@@ -138,6 +141,9 @@ extern float ga_sdot_patch ARGS_((Integer *, char*, Integer *,
 extern DoubleComplex ga_zdot_patch ARGS_((Integer *, char*, Integer *, 
       Integer *, Integer *, Integer *, Integer *, char*, Integer *,
       Integer *, Integer *, Integer *));
+extern SingleComplex ga_cdot_patch ARGS_((Integer *, char*, Integer *, 
+      Integer *, Integer *, Integer *, Integer *, char*, Integer *,
+      Integer *, Integer *, Integer *));
 extern void FATR ga_fill_patch_  ARGS_((Integer *, Integer *, Integer *,
       Integer *, Integer *, Void *));
 extern void FATR ga_scale_patch_  ARGS_((Integer *, Integer *, Integer *,
@@ -173,6 +179,7 @@ extern Integer FATR ga_idot_ ARGS_((Integer *, Integer *));
 extern float FATR ga_fdot_ ARGS_((Integer *, Integer *));            
 extern DoublePrecision FATR ga_ddot_ ARGS_((Integer *, Integer *));
 extern DoubleComplex ga_zdot ARGS_((Integer *, Integer *));
+extern SingleComplex ga_cdot ARGS_((Integer *, Integer *));
 extern void FATR ga_print_patch_ ARGS_((Integer *, Integer *, Integer *,
       Integer *, Integer *, Integer *));
 
@@ -199,6 +206,8 @@ extern void ga_dgemm ARGS_((char *, char *, Integer *, Integer *, Integer *,
       DoublePrecision *, Integer *, Integer *, DoublePrecision *, Integer *));
 extern void ga_zgemm ARGS_((char *, char *, Integer *, Integer *, Integer *,
       DoubleComplex *, Integer *, Integer *, DoubleComplex *, Integer *));
+extern void ga_cgemm ARGS_((char *, char *, Integer *, Integer *, Integer *,
+      SingleComplex *, Integer *, Integer *, SingleComplex *, Integer *));
 extern void ga_sgemm ARGS_((char *, char *, Integer *, Integer *, Integer *,
       float *, Integer *, Integer *, float *, Integer *));
 
@@ -360,6 +369,8 @@ extern Integer FATR nga_locate_num_blocks_( Integer *g_a,
                                             Integer *lo,
                                             Integer *hi);
 extern Integer FATR ga_total_blocks_( Integer *g_a );
+extern void FATR ga_set_debug_( logical *flag );
+extern logical FATR ga_get_debug_();
 extern void FATR ga_get_proc_index_( Integer *g_a, Integer *iproc, Integer *index );
 extern void FATR ga_get_block_info_( Integer *g_a, Integer *num_blocks, Integer *block_dims );
 
@@ -393,6 +404,7 @@ extern void FATR nga_get_(Integer *g_a, Integer *lo, Integer *hi,
 extern void FATR nga_nbget_(Integer *g_a, Integer *lo, Integer *hi, 
                           void *buf, Integer *ld, Integer *nbhdl);
 extern void FATR nga_nbwait_(Integer *nbhdl);
+extern void FATR nga_nbtest_(Integer *nbhdl);
 extern void FATR nga_acc_(Integer *g_a, Integer *lo, Integer *hi,
                           void *buf, Integer *ld, void *alpha);
 extern void FATR nga_nbacc_(Integer *g_a, Integer *lo, Integer *hi,
@@ -432,6 +444,9 @@ extern float nga_fdot_patch(Integer *g_a, char *t_a,
           Integer *bhi);  
 
 extern DoubleComplex nga_zdot_patch(Integer *g_a, char *t_a,
+          Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo,
+          Integer *bhi);
+extern SingleComplex nga_cdot_patch(Integer *g_a, char *t_a,
           Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo,
           Integer *bhi);
 
@@ -529,6 +544,7 @@ extern int GA_Cluster_proc_nodeid(int proc);
 #endif
 
 extern DoubleComplex   *DCPL_MB;
+extern SingleComplex   *SCPL_MB;
 extern DoublePrecision *DBL_MB;
 extern Integer             *INT_MB;
 extern float           *FLT_MB;

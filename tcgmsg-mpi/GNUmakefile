@@ -20,6 +20,7 @@ include ../armci/config/makemp.h
 include ../armci/config/makecoms.h
 
 LIBRARY = libtcgmsg-mpi.a
+LIBRARY_SHARED = libtcgmsg-mpi.so
 LIB_DISTRIB = ../lib
 INCDIR = ../include
 LIB_INCLUDES += -I$(INCDIR) -I../armci/src $(MP_INCLUDES)
@@ -32,6 +33,11 @@ ifeq ($(MACHINE),$(findstring $(MACHINE),$(NEED_MEMALIGN)))
         EXTRA_OBJ= memalign.o
         LIB_DEFINES += -DNEED_MEMALIGN
 endif
+
+ifeq ($(TARGET),CATAMOUNT)
+        LIB_DEFINES+=-DLINUX64 -DLINUX -DEXT_INT -DIFCLINUX -DIFCV8 -DNOUSE_MMAP
+endif
+
 ifeq ($(TARGET),HPUX)
         EXTRA_OBJ += hpuxargs.o
 endif

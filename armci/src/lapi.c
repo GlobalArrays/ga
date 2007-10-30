@@ -6,20 +6,25 @@
 #include "lapidefs.h"
 #include "armcip.h"
 #include "copy.h"
+#ifdef AIX
 #include <sys/atomic_op.h>
+#endif
 
 #define DEBUG_ 0
 #define ERROR(str,val) armci_die((str),(val))
 #define BUF_TO_EVBUF(buf) ((lapi_cmpl_t*)(((char*)buf) - sizeof(lapi_cmpl_t)))
 
 
+#ifdef ARMCI_ENABLE_GPC_CALLS
+    extern gpc_buf_t *gpc_req;
+#endif
 int lapi_max_uhdr_data_sz; /* max  data payload */
 lapi_cmpl_t *cmpl_arr;     /* completion state array, dim=NPROC */
 lapi_cmpl_t  hdr_cntr;     /* AM header buffer counter  */
 lapi_cmpl_t  buf_cntr;     /* AM data buffer counter    */
-lapi_cmpl_t  ack_cntr;     /* ACK counter used in handshaking protocols
+lapi_cmpl_t*  ack_cntr;     /* ACK counter used in handshaking protocols
                               between origin and target */
-lapi_cmpl_t  get_cntr;     /* counter used with lapi_get  */
+lapi_cmpl_t*  get_cntr;     /* counter used with lapi_get  */
 
 int intr_status;
 lapi_info_t     lapi_info;
@@ -55,6 +60,10 @@ int whofrom, msglen;
 request_header_t *msginfo = (request_header_t *)save;
 char *descr= (char*)(msginfo+1), *buf=MessageRcvBuffer;
 int buflen=MSG_BUFLEN;
+#ifdef ARMCI_ENABLE_GPC_CALLS
+  extern pthread_t data_server;
+  data_server = pthread_self();
+#endif
 
    if(DEBUG_)
       fprintf(stderr,"%d:CH:op=%d from=%d datalen=%d dscrlen=%d\n", armci_me,
@@ -113,7 +122,11 @@ int buflen=MSG_BUFLEN;
    }
 
    free(msginfo);
+#ifdef LINUX
+   (void)fetch_and_add(&num_malloc, (long)-1);
+#else
    (void)fetch_and_addlp(&num_malloc, (long)-1);
+#endif
 }
 
 
@@ -125,7 +138,7 @@ void* armci_header_handler(lapi_handle_t *t_hndl, void *uhdr, uint *t_uhdrlen,
 lapi_handle_t hndl = *t_hndl;
 uint uhdrlen = *t_uhdrlen;
 request_header_t *msginfo = (request_header_t *)uhdr;
-
+          
    if(DEBUG_)
         fprintf(stderr,"%d:HH: op=%d from %d\n",armci_me,msginfo->operation,
                 msginfo->from);
@@ -163,7 +176,11 @@ request_header_t *msginfo = (request_header_t *)uhdr;
          }
     }
 
+#ifdef LINUX
+    (void)fetch_and_add(&num_malloc, (long)1);
+#else
     (void)fetch_and_addlp(&num_malloc, (long)1); /* AIX atomic increment */
+#endif
 
     msginfo  = (request_header_t*) malloc(uhdrlen); /* recycle pointer */
     if(!msginfo) ERROR("HH: malloc failed in header handler",num_malloc);
@@ -184,12 +201,20 @@ lapi_cntr_t *pcmpl_cntr, *pcntr = &(BUF_TO_EVBUF(msginfo)->cntr);
 int rc;
 
       msginfo->tag.cntr= pcntr;
-      msginfo->tag.buf = msginfo+1;
+#ifdef ARMCI_ENABLE_GPC_CALLS
+      if(msginfo->operation==GET && msginfo->format==VECTOR && msginfo->ehlen){ 
+        msginfo->tag.buf = (char *)(msginfo+1)+msginfo->dscrlen;
+      }
+      else 
+#endif
+        msginfo->tag.buf = msginfo+1;
 
       if(msginfo->operation==GET || msginfo->operation==LOCK){
 
          SET_COUNTER(*(lapi_cmpl_t*)pcntr,1);/*dataarrive in same buf*/
-
+         /*The GPC case. Note that we don't use the parameter len*/
+         if(msginfo->format==VECTOR && msginfo->ehlen > 0) 
+       msglen += msginfo->datalen;
          if(lapi_max_uhdr_data_sz < msginfo->dscrlen){
 
             msginfo->dscrlen = -msginfo->dscrlen; /* no room for descriptor */
@@ -230,7 +255,7 @@ int rc;
                   UPDATE_FENCE_STATE(msginfo->to, msginfo->operation, 1);
 
       if((rc=LAPI_Amsend(lapi_handle,(uint)msginfo->to,
-			 (void*)armci_header_handler, msginfo, msglen, NULL, 0,
+             (void*)armci_header_handler, msginfo, msglen, NULL, 0,
                          NULL, pcntr, pcmpl_cntr))) armci_die("AM failed",rc);
 
       if(DEBUG_) fprintf(stderr,"%d sending req=%d to %d\n",
@@ -254,7 +279,6 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
 \*/
 void armci_send_data(request_header_t* msginfo, void *data)
 {
-/*     fprintf(stderr,"%d: sending %d bytes (%lf) to %d adr=(%x,%x)\n",armci_me, msginfo->datalen, *(double*)data, msginfo->from, msginfo->tag.buf, MessageSndBuffer);*/
      armci_lapi_send(msginfo->tag, data, msginfo->datalen, msginfo->from);
 }
 
@@ -273,7 +297,13 @@ char* armci_rcv_data(int proc, request_header_t *msginfo)
 {
 lapi_cmpl_t *pcntr=BUF_TO_EVBUF(msginfo);
      CLEAR_COUNTER((*pcntr));
-     return (char*)(msginfo+1);
+#ifdef ARMCI_ENABLE_GPC_CALLS
+     if(msginfo->operation==GET && msginfo->format==VECTOR && msginfo->ehlen){
+       return((char *)(msginfo+1)+msginfo->dscrlen);
+     }
+     else
+#endif
+       return (char*)(msginfo+1);
 }
 
 
@@ -326,7 +356,18 @@ lapi_cmpl_t *pcntr;
     /* allocate memory for completion state array */
     cmpl_arr = (lapi_cmpl_t*)malloc(armci_nproc*sizeof(lapi_cmpl_t));
     if(cmpl_arr==NULL) ERROR("armci_init_lapi:malloc for cmpl_arr failed",0);
-     
+
+    /* allocate memory for ack and get counters, 1 if not thread safe */
+#ifdef THREAD_SAFE
+    ack_cntr = calloc(armci_user_threads.max, sizeof(lapi_cmpl_t));
+    get_cntr = calloc(armci_user_threads.max, sizeof(lapi_cmpl_t));
+#else
+    ack_cntr = calloc(1, sizeof(lapi_cmpl_t));
+    get_cntr = calloc(1, sizeof(lapi_cmpl_t));
+#endif
+    if (!(ack_cntr && get_cntr))
+        ERROR("armci_init_lapi:calloc for ack or get counters failed",0);
+
     /* initialize completion state array */
     for(p = 0; p< armci_nproc; p++){
         rc = LAPI_Setcntr(lapi_handle, &cmpl_arr[p].cntr, 0);
@@ -336,25 +377,33 @@ lapi_cmpl_t *pcntr;
     }
 
      /* initialize ack/buf/hdr counters */
-     rc = LAPI_Setcntr(lapi_handle, &ack_cntr.cntr, 0);
-     if(rc) ERROR("armci_init_lapi: LAPI_Setcntr failed (ack)",rc);
-     ack_cntr.val = 0;
+#ifdef THREAD_SAFE
+#   define N armci_user_threads.max
+#else
+#   define N 1
+#endif
+     for (p = 0; p < N; p++) {
+        rc = LAPI_Setcntr(lapi_handle, &(ack_cntr[p].cntr), 0);
+        if(rc) ERROR("armci_init_lapi: LAPI_Setcntr failed (ack)",rc);
+        ack_cntr[p].val = 0;
+
+        rc = LAPI_Setcntr(lapi_handle, &(get_cntr[p].cntr), 0);
+        if(rc) ERROR("armci_init_lapi: LAPI_Setcntr failed (get)",rc);
+        get_cntr[p].val = 0;
+     }
      rc = LAPI_Setcntr(lapi_handle, &hdr_cntr.cntr, 0);
      if(rc) ERROR("armci_init_lapi: LAPI_Setcntr failed (hdr)",rc);
      hdr_cntr.val = 0;
-     rc = LAPI_Setcntr(lapi_handle, &buf_cntr.cntr, 0); 
+     rc = LAPI_Setcntr(lapi_handle, &buf_cntr.cntr, 0);
      if(rc) ERROR("armci_init_lapi: LAPI_Setcntr failed (buf)",rc);
      buf_cntr.val = 0;
-     rc = LAPI_Setcntr(lapi_handle, &get_cntr.cntr, 0); 
-     if(rc) ERROR("armci_init_lapi: LAPI_Setcntr failed (get)",rc);
-     get_cntr.val = 0;
 #if 0
      pcntr = (lapi_cmpl_t*)MessageSndBuffer;
-     rc = LAPI_Setcntr(lapi_handle, &pcntr->cntr, 0); 
+     rc = LAPI_Setcntr(lapi_handle, &pcntr->cntr, 0);
      if(rc) ERROR("armci_init_lapi: LAPI_Setcntr failed (bufcntr)",rc);
      pcntr->val = 0;
 #endif
-     
+
 
 #if  !defined(LAPI2)
 
@@ -368,12 +417,19 @@ lapi_cmpl_t *pcntr;
 
      /* initialize buffer managment module */
      _armci_buf_init();
+#ifdef ARMCI_ENABLE_GPC_CALLS
+    gpc_req = (gpc_buf_t *)malloc(sizeof(gpc_buf_t)*MAX_GPC_REQ);
+    if(gpc_req==NULL)armci_die("malloc for gpc failed",sizeof(gpc_buf_t));
+    gpc_init();
+#endif
 }
-       
+
 
 void armci_term_lapi()
 {
      free(cmpl_arr);
+     free(ack_cntr);
+     free(get_cntr);
 }
 
 /* primitive pseudo message-passing on top of lapi */ 
@@ -401,7 +457,7 @@ void armci_lapi_send(msg_tag_t tag, void* data, int len, int p)
 /* subroutine versions of macros disabling and enabling interrupts */
 void intr_off_()
 {
-	INTR_OFF;
+    INTR_OFF;
 }
 
 void intr_on_()
@@ -422,9 +478,9 @@ void print_counters_()
 }
 
 
+#ifdef AIX
 
 #define LOCKED 1
-
 void armci_lapi_lock(int *lock)
 {
 atomic_p word_addr = (atomic_p)lock;
@@ -459,8 +515,7 @@ atomic_p word_addr = (atomic_p)lock;
   if(_check_lock(word_addr, LOCKED, 0) == TRUE ) 
       armci_die("somebody else unlocked",0);
 }
-         
-
+#endif
 
 #ifdef LAPI2
 #include "lapi2.c"

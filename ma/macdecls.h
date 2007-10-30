@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.18 2004-12-08 02:42:45 manoj Exp $
+ * $Id: macdecls.h,v 1.19 2007-10-30 02:05:00 manoj Exp $
  */
 
 /* 
@@ -26,6 +26,7 @@ extern "C" {
 #define MT_CHAR     MT_C_CHAR    /* char */
 #define MT_INT      MT_C_INT     /* int */
 #define MT_LONGINT  MT_C_LONGINT /* long int */
+#define MT_LONGLONG  MT_C_LONGLONG /* long long */
 #define MT_REAL     MT_C_FLOAT   /* float */
 #define MT_DBL      MT_C_DBL     /* double */
 #define MT_LDBL     MT_C_LDBL    /* long double */
@@ -157,6 +158,7 @@ extern void ma_set_error_callback();
 extern char			ma_cb_char[];	/* MT_C_CHAR */
 extern int			ma_cb_int[];	/* MT_C_INT */
 extern long			ma_cb_long[];	/* MT_C_LONGINT */
+extern long long		ma_cb_longlong[]; /* MT_C_LONGLONG */
 extern float			ma_cb_float[];	/* MT_C_FLOAT */
 extern double			ma_cb_dbl[];	/* MT_C_DBL */
 extern MA_LongDouble		ma_cb_ldbl[];	/* MT_C_LDBL */

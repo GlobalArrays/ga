@@ -1,4 +1,4 @@
-/* $Id: rmw.c,v 1.24 2006-09-13 23:43:36 andriy Exp $ */
+/* $Id: rmw.c,v 1.25 2007-10-30 02:04:55 manoj Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -75,6 +75,7 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
 #else
     int lock = 0;
 #endif
+
     NATIVE_LOCK(lock,proc);
 
     switch (op) {
@@ -152,8 +153,59 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
 #ifdef REGION_ALLOC
      if(SAMECLUSNODE(proc)) (void)armci_region_fixup(proc,&prem);
 #endif
+#ifdef BGML     
+   BGML_Op oper;
+   BGML_Dt dt;  
+   void *temp;
+   long ltemp;
+   switch(op)   
+   {            
+                
+      case ARMCI_FETCH_AND_ADD:
+      case ARMCI_FETCH_AND_ADD_LONG:
+         dt=BGML_SIGNED_INT;
+         temp=(int *)&extra;
+         oper=BGML_SUM;
+         break;
+#if 0 
+      case ARMCI_FETCH_AND_ADD_LONG:
+         fprintf(stderr,"adding int to longs....\n");
+         dt=BGML_SIGNED_LONG;
+         ltemp=(long)extra;
+         temp=&ltemp;
+         oper=BGML_SUM;
+         break;
+#endif
+      case ARMCI_SWAP:
+      case ARMCI_SWAP_LONG:
+         dt=BGML_SIGNED_INT;
+         oper=BGML_NOOP;
+         temp=(int *)ploc;
+         break;
+#if 0
+      case ARMCI_SWAP_LONG:
+         fprintf(stderr,"long armci_swap\n");
+         dt=BGML_SIGNED_LONG;
+         oper=BGML_NOOP;
+         temp=(long *)ploc;
+         break;
+#endif
+      default:
+         ARMCI_Error("Invalid operation for RMW", op);
+   }
+    
+   /* int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc) */
+   /* assumes ploc will change
+      dstbuf=prem, input=temp(extra), output=ploc
+      val=ploc, arr[0]=prem, 1=extra */
 
-
+    int me=armci_msg_me();
+    BG1S_t request; 
+    unsigned done=1;
+    BGML_Callback_t cb_wait={wait_callback, &done};
+    BG1S_rmw(&request, proc, 0, prem, temp, ploc, oper, dt, &cb_wait, 1);
+    BGML_Wait(&done);
+#else
     switch (op) {
 #   if defined(QUADRICS) || defined(_CRAYMPP) || defined(CATAMOUNT)
       case ARMCI_FETCH_AND_ADD:
@@ -234,6 +286,9 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
 #     if !defined(LAPI64) || defined(RMWBROKEN)
         case ARMCI_SWAP_LONG:
 #     endif
+          /* Within SMPs LAPI_Rmw needs target's address. */
+          if(SAMECLUSNODE(proc)) proc=armci_me;
+           
           if( rc = LAPI_Setcntr(lapi_handle,&req_id,0))
                         armci_die("rmw setcntr failed",rc);
           if( rc = LAPI_Rmw(lapi_handle, opcode, proc, prem,
@@ -252,6 +307,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
 #   endif
       default: armci_die("rmw: operation not supported",op);
     }
+#endif /*bgml*/
 #ifdef GA_USE_VAMPIR
     vampir_end(ARMCI_RMW,__FILE__,__LINE__);
 #endif

@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.60 2005-12-04 07:52:34 manoj Exp $ */
+/* $Id: matmul.c,v 1.61 2007-10-30 02:04:58 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -272,10 +272,12 @@ static void GAI_DGEMM(Integer atype, char *transa, char *transb,
 
     int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
     DoubleComplex ZERO;
+    SingleComplex ZERO_CF;
     
     idim_t=idim; jdim_t=jdim; kdim_t=kdim;
     adim_t=adim; bdim_t=bdim; cdim_t=cdim;
     ZERO.real = 0.; ZERO.imag = 0.;
+    ZERO_CF.real = 0.; ZERO_CF.imag = 0.;
 
 # if (defined(CRAY) || defined(WIN32)) && !defined(GA_C_CORE)
     switch(atype) {
@@ -292,6 +294,10 @@ static void GAI_DGEMM(Integer atype, char *transa, char *transb,
        case C_DCPL:
 	  ZGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
 		(DoubleComplex*)alpha, a, &adim, b, &bdim, &ZERO,c,&cdim);
+	  break;
+       case C_SCPL:
+	  CGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
+		(SingleComplex*)alpha, a, &adim, b, &bdim, &ZERO_CF,c,&cdim);
 	  break;
        default:
 	  ga_error("ga_matmul_patch: wrong data type", atype);
@@ -337,6 +343,23 @@ static void GAI_DGEMM(Integer atype, char *transa, char *transb,
 #     endif
 #   endif
       break;
+       case C_SCPL:
+#   ifdef GA_C_CORE 
+	  xb_cgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+		   (SingleComplex *)alpha, a, &adim_t, b, &bdim_t, 
+		   &ZERO,  c, &cdim_t);
+#   else
+#     if !defined(HAS_BLAS) && defined(EXT_INT)
+	  cgemm_(transa, transb, &idim, &jdim, &kdim,
+		 (SingleComplex*)alpha, a, &adim, b, &bdim, &ZERO_CF, c, 
+		 &cdim, 1, 1);
+#     else
+	  cgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                 (SingleComplex*)alpha, a, &adim_t, b, &bdim_t, &ZERO_CF, c,
+                 &cdim_t, 1, 1);
+#     endif
+#   endif
+      break;
        default:
 	  ga_error("ga_matmul_patch: wrong data type", atype);
     }
@@ -368,8 +391,10 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
     int istart, jstart, kstart, iend, jend, kend;
     short int do_put=UNSET, single_task_flag=UNSET;
     DoubleComplex ONE;
+    SingleComplex ONE_CF;
     float ONE_F = 1.0;
     ONE.real =1.; ONE.imag =0.; 
+    ONE_CF.real =1.; ONE_CF.imag =0.; 
 
     GA_PUSH_NAME("ga_matmul_shmem");
 
@@ -441,6 +466,7 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
 	     if(single_task_flag != SET) {
 		switch(atype) {
 		   case C_FLOAT:
+		   case C_SCPL:
 		      if(do_put==SET) /* i.e.beta == 0.0 */
 			 ga_put_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim);
 		      else
@@ -494,6 +520,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     task_list_t taskListA[MAX_CHUNKS], taskListB[MAX_CHUNKS], state; 
     short int do_put=UNSET, single_task_flag=UNSET, chunks_left=0;
     DoubleComplex ONE, *a, *b, *c;
+    SingleComplex ONE_CF;
     float ONE_F = 1.0;
     int offset=0, gTaskId=0;
 
@@ -506,6 +533,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 #endif
 
     ONE.real =1.; ONE.imag =0.;   
+    ONE_CF.real =1.; ONE_CF.imag =0.;   
     k = *ajhi - *ajlo +1;
     state.lo[0] = -1; /* just for first do-while loop */
 
@@ -633,11 +661,12 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 	     if (single_task_flag != SET) {
 		switch(atype) {
 		   case C_FLOAT:
+		   case C_SCPL:
 		      if(do_put==SET) /* Note:do_put is UNSET, if beta!=0.0*/
 			 ga_put_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim);
 		      else
 			 ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, 
-				 &cdim, &ONE_F);
+				 &cdim, &ONE_CF);
 		      break;
 		   default:
 		      if(do_put==SET) /* i.e.beta ==0.0 */
@@ -689,11 +718,13 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
     task_list_t taskListC; 
     short int compute_flag=0, shiftA=0, shiftB=0;
     DoubleComplex ONE, *a, *b, *c;
+    SingleComplex ONE_CF; 
     float ONE_F = 1.0;
     Integer grp_me, a_grp = ga_get_pgroup_(g_a);
  
     GA_PUSH_NAME("ga_matmul_irreg");
     ONE.real =1.; ONE.imag =0.;
+    ONE_CF.real =1.; ONE_CF.imag =0.;
 #if DEBUG_
     if(me==0) { printf("@@ga_matmul_irreg:m,n,k=%ld %ld %ld\n", *aihi-*ailo+1,
 		       *bjhi-*bjlo+1,*ajhi-*ajlo+1); fflush(stdout); }
@@ -768,6 +799,11 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
 		      for(i=0;i<idim_prev*jdim_prev;i++) *(((float*)c)+i)=0;
 		   else if(atype ==  C_DBL)
 		      for(i=0;i<idim_prev*jdim_prev;i++) *(((double*)c)+i)=0;
+		   else if(atype ==  C_SCPL)
+                     for(i=0;i<idim_prev*jdim_prev;i++) {
+                       ((SingleComplex*)c)[i].real=0;
+                       ((SingleComplex*)c)[i].imag=0;
+                     }
 		   else for(i=0;i<idim_prev*jdim_prev;i++) {
 		           c[i].real=0;c[i].imag=0; }
 		   
@@ -789,9 +825,9 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
 		   j0= *cjlo + taskListC.lo[1];
 		   j1= *cjlo + taskListC.hi[1];
 
-		   if(atype == C_FLOAT)
+		   if(atype == C_FLOAT || atype == C_SCPL)
 		      ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, 
-			      &cdim_prev, &ONE_F);
+			      &cdim_prev, &ONE_CF);
 		   else
 		      ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
 			      &cdim_prev, (DoublePrecision*)&ONE);
@@ -823,6 +859,11 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
 	  for(i=0;i<idim_prev*jdim_prev;i++) *(((float*)c)+i)=0;
        else if(atype ==  C_DBL)
 	  for(i=0;i<idim_prev*jdim_prev;i++) *(((double*)c)+i)=0;
+       else if(atype ==  C_SCPL)
+         for(i=0;i<idim_prev*jdim_prev;i++) {
+           ((SingleComplex*)c)[i].real=0;
+           ((SingleComplex*)c)[i].imag=0;
+         }
        else for(i=0;i<idim_prev*jdim_prev;i++) {
 	  c[i].real=0;c[i].imag=0; }
        
@@ -844,9 +885,9 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
        j0= *cjlo + taskListC.lo[1];
        j1= *cjlo + taskListC.hi[1];
        
-       if(atype == C_FLOAT)
+       if(atype == C_FLOAT || atype == C_SCPL)
 	  ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, 
-		  &cdim_prev, &ONE_F);
+		  &cdim_prev, &ONE_CF);
        else
 	  ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
 		  &cdim_prev, (DoublePrecision*)&ONE);
@@ -908,8 +949,12 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 	     for(i=0; i<m*k; i++) {tmpa[i].real=-1.0; tmpa[i].imag=0.0;}
 	     for(i=0; i<k*n; i++) {tmpb[i].real=-1.0; tmpb[i].imag=0.0;}
 	     break;
-	  default: 
-	     ga_error("ga_matmul_patch: wrong data type", atype);
+	  case C_SCPL:
+	     for(i=0; i<m*k; i++) {((SingleComplex*)tmpa)[i].real=-1.0; ((SingleComplex*)tmpa)[i].imag=0.0;}
+	     for(i=0; i<k*n; i++) {((SingleComplex*)tmpb)[i].real=-1.0; ((SingleComplex*)tmpb)[i].imag=0.0;}
+	     break;
+          default: 
+            ga_error("ga_matmul_patch: wrong data type", atype);
        }
        
        /* get matrix A */
@@ -998,6 +1043,22 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 	       }
 	    }
 	    break;
+
+	  case C_SCPL:
+	    {
+	       SingleComplex abs_value;
+	       for(i=0; i<m*n; i++) {
+		  abs_value.real = ((SingleComplex*)tmpc_orig)[i].real - ((SingleComplex*)tmpc2)[i].real;
+		  abs_value.imag = ((SingleComplex*)tmpc_orig)[i].imag - ((SingleComplex*)tmpc2)[i].imag;
+		  if(abs_value.real>_GA_TOL_ || abs_value.real<-(_GA_TOL_) ||
+		     abs_value.imag>_GA_TOL_ || abs_value.imag<-(_GA_TOL_)) {
+		     printf("Values= %lf, %lf : %lf, %lf\n", ((SingleComplex*)tmpc_orig)[i].real,
+			    ((SingleComplex*)tmpc_orig)[i].imag,((SingleComplex*)tmpc2)[i].real,((SingleComplex*)tmpc2)[i].imag);
+		     ga_error("Matmul (SingleComplex) check failed", 0);
+		  }
+	       }
+	    }
+	    break;
 	    
 	  default:
 	     ga_error("ga_matmul_patch: wrong data type", atype);
@@ -1077,7 +1138,7 @@ void ga_matmul(transa, transb, alpha, beta,
 
     /* check for data-types mismatch */
     if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L);
-    if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT) 
+    if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT && atype!=C_SCPL)
        ga_error(" type error",atype);
    
     /* check if patch indices and dims match */
@@ -1214,6 +1275,9 @@ void ga_matmul(transa, transb, alpha, beta,
        if(atype==C_DCPL){
 	  if((((DoubleComplex*)beta)->real == 0) && 
 	     (((DoubleComplex*)beta)->imag ==0)) need_scaling =0;} 
+       else if(atype==C_SCPL){
+	  if((((SingleComplex*)beta)->real == 0) && 
+	     (((SingleComplex*)beta)->imag ==0)) need_scaling =0;} 
        else if((atype==C_DBL)){
 	  if(*(DoublePrecision *)beta == 0) need_scaling =0;}
        else if( *(float*)beta ==0) need_scaling =0;
@@ -1302,6 +1366,7 @@ Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
 Integer n, m, k, adim, bdim, cdim;
 Integer Ichunk, Kchunk, Jchunk;
 DoubleComplex ONE;
+SingleComplex ONE_CF;
 
 DoublePrecision chunk_cube;
 Integer min_tasks = 10, max_chunk;
@@ -1312,8 +1377,8 @@ Integer get_new_B;
 int local_sync_begin,local_sync_end;
 int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
-   ONE.real =1.;
-   ONE.imag =0.;
+   ONE.real =1.; ONE.imag =0.;
+   ONE_CF.real =1.; ONE_CF.imag =0.;
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -1343,7 +1408,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    VECTORCHECK(rank, dims, cdim1, cdim2, *cilo, *cihi, *cjlo, *cjhi);
 
    if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L);
-   if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT) 
+   if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT && atype != C_SCPL)
      ga_error(" type error",atype);
    
    
@@ -1431,6 +1496,8 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
    if(atype==C_DCPL){if((((DoubleComplex*)beta)->real == 0) &&
 	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0;} 
+   else if(atype==C_SCPL){if((((SingleComplex*)beta)->real == 0) &&
+	       (((SingleComplex*)beta)->imag ==0)) need_scaling =0;} 
    else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0) need_scaling =0;}
    else if( *(float*)beta ==0) need_scaling =0;
 
@@ -1461,6 +1528,11 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	       for (i = 0; i < idim*jdim; i++) *(((float*)c)+i)=0;
 	     else if(atype ==  C_DBL)
 	       for (i = 0; i < idim*jdim; i++) *(((double*)c)+i)=0;
+	     else if(atype ==  C_SCPL)
+	       for (i = 0; i < idim*jdim; i++){
+                 ((SingleComplex*)c)[i].real=0;
+                 ((SingleComplex*)c)[i].imag=0;
+               }
 	     else
 	       for (i = 0; i < idim*jdim; i++){ c[i].real=0;c[i].imag=0;}
 	     
@@ -1513,6 +1585,10 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	       ZGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
 		     (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE,c,&cdim);
 	       break;
+	     case C_SCPL:
+	       CGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
+		     (SingleComplex*)alpha, a, &adim, b, &bdim, &ONE_CF,c,&cdim);
+	       break;
 	     default:
 	       ga_error("ga_matmul_patch: wrong data type", atype);
 	     }
@@ -1551,15 +1627,30 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 		      &cdim, 1, 1);
 #            endif
 	       break;
+	     case C_SCPL:
+#            ifdef GA_C_CORE
+	       {
+		  SingleComplex ZERO;
+		  ZERO.real =0.; ZERO.imag =0.;
+		  xb_cgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			   (SingleComplex *)alpha, a, &adim_t, b, &bdim_t, 
+			   &ZERO,  c, &cdim_t);
+	       }
+#            else
+	       cgemm_(transa, transb, &idim, &jdim, &kdim,
+		      (SingleComplex*)alpha, a, &adim, b, &bdim, &ONE_CF, c, 
+		      &cdim, 1, 1);
+#            endif
+	       break;
 	     default:
 	       ga_error("ga_matmul_patch: wrong data type", atype);
 	     }
 #          endif
 	     
 	     i0= *cilo+ilo; i1= *cilo+ihi;   j0= *cjlo+jlo; j1= *cjlo+jhi;
-	     if(atype == C_FLOAT) 
+	     if(atype == C_FLOAT || atype == C_SCPL) 
 	       ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, 
-		       &cdim, &ONE_F);
+		       &cdim, &ONE_CF);
 	     else
 	       ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
 		       &cdim, (DoublePrecision*)&ONE);
@@ -1687,6 +1778,7 @@ Integer cilo, cihi, cjlo, cjhi;    /* 2d plane of g_c */
 Integer adims[GA_MAX_DIM],bdims[GA_MAX_DIM],cdims[GA_MAX_DIM],tmpld[GA_MAX_DIM];
 Integer *tmplo = adims, *tmphi =bdims; 
 DoubleComplex ONE;
+SingleComplex ONE_CF;
 float ONE_F = 1.0, ZERO_F = 0.0;
 Integer ZERO_I = 0;
 Integer get_new_B;
@@ -1699,8 +1791,8 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
   vampir_begin(NGA_MATMUL_PATCH,__FILE__,__LINE__);
 #endif
 
-   ONE.real =1.;
-   ONE.imag =0.;
+   ONE.real =1.; ONE.imag =0.;
+   ONE_CF.real =1.; ONE_CF.imag =0.;
    
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -1731,7 +1823,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    if(crank<2)  ga_error("rank of C must be at least 2",crank);
 
    if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L);
-   if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT) 
+   if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT && atype != C_SCPL)
      ga_error(" type error",atype);
    
    gai_setup_2d_patch(arank, adims, alo, ahi, &ailo, &aihi, &ajlo, &ajhi, 
@@ -1807,6 +1899,8 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
    if(atype==C_DCPL){if((((DoubleComplex*)beta)->real == 0) &&
 	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0;} 
+   else if(atype==C_SCPL){if((((SingleComplex*)beta)->real == 0) &&
+	       (((SingleComplex*)beta)->imag ==0)) need_scaling =0;} 
    else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0)need_scaling =0;}
    else if( *(float*)beta ==0) need_scaling =0;
 
@@ -1833,7 +1927,12 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	       for (i = 0; i < idim*jdim; i++) *(((float*)c)+i)=0;
 	     else if(atype ==  C_DBL)
 	       for (i = 0; i < idim*jdim; i++) *(((double*)c)+i)=0;
-	     else
+	     else if(atype == C_SCPL)
+	       for (i = 0; i < idim*jdim; i++){
+                 ((SingleComplex*)c)[i].real=0;
+                 ((SingleComplex*)c)[i].imag=0;
+               }
+             else
 	       for (i = 0; i < idim*jdim; i++){ c[i].real=0;c[i].imag=0;}
 	     
 	     if (*transa == 'n' || *transa == 'N'){ 
@@ -1895,6 +1994,10 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
                     ZGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
                           (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE,c,&cdim);
 		    break;
+		  case C_SCPL:
+                    CGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
+                          (SingleComplex*)alpha, a, &adim, b, &bdim, &ONE_CF,c,&cdim);
+		    break;
 		  default:
 		    ga_error("ga_matmul_patch: wrong data type", atype);
 		  }
@@ -1938,6 +2041,22 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 			   &cdim, 1, 1);
 #                 endif
 		    break;
+
+		  case C_SCPL:
+#                 ifdef GA_C_CORE
+		    {
+		       SingleComplex ZERO;
+		       ZERO.real =0.; ZERO.imag =0.;
+		       xb_cgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+				(SingleComplex *)alpha, a, &adim_t, b,&bdim_t,
+				&ZERO,  c, &cdim_t);
+		    }
+#                 else
+		    cgemm_(transa, transb, &idim, &jdim, &kdim,
+			   (SingleComplex*)alpha, a, &adim, b, &bdim, &ONE_CF,
+                           c, &cdim, 1, 1);
+#                 endif
+		    break;
 		  default:
 		    ga_error("ga_matmul_patch: wrong data type", atype);
 		  }
@@ -1952,8 +2071,8 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 		  tmplo[cipos]=i0; tmphi[cipos]=i1;
 		  tmplo[cjpos]=j0; tmphi[cjpos]=j1;
 		  tmpld[cipos]=i1-i0+1;
-		  if(atype == C_FLOAT) 
-		    nga_acc_(g_c,tmplo,tmphi,(float *)c,tmpld, &ONE_F);
+		  if(atype == C_FLOAT || atype == C_SCPL) 
+		    nga_acc_(g_c,tmplo,tmphi,(float *)c,tmpld, &ONE_CF);
 		  else
 		    nga_acc_(g_c,tmplo,tmphi,c,tmpld,(DoublePrecision*)&ONE);
                }

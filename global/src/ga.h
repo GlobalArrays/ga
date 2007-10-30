@@ -1,6 +1,9 @@
+/* $Id: ga.h,v 1.61 2007-10-30 02:04:57 manoj Exp $ */
+
 #ifndef _GA_H_
 #define _GA_H_
 #include <stdio.h>
+#include <inttypes.h>
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -108,6 +111,7 @@ extern int GA_Pgroup_get_world();
 extern int GA_Idot(int g_a, int g_b);
 extern long GA_Ldot(int g_a, int g_b);
 extern double GA_Ddot(int g_a, int g_b); 
+extern SingleComplex GA_Cdot(int g_a, int g_b); 
 extern DoubleComplex GA_Zdot(int g_a, int g_b); 
 extern float GA_Fdot(int g_a, int g_b);
 extern void GA_Scale(int g_a, void *value); 
@@ -163,6 +167,9 @@ extern int GA_Pgroup_nodeid(int grp_id);
 extern int GA_Pgroup_nnodes(int grp_id);
 extern void GA_Dgemm(char ta, char tb, int m, int n, int k, 
                      double alpha, int g_a, int g_b, double beta, int g_c );
+extern void GA_Cgemm(char ta, char tb, int m, int n, int k, 
+                     SingleComplex alpha, int g_a, int g_b, 
+		     SingleComplex beta, int g_c );
 extern void GA_Zgemm(char ta, char tb, int m, int n, int k, 
                      DoubleComplex alpha, int g_a, int g_b, 
 		     DoubleComplex beta, int g_c );
@@ -187,6 +194,8 @@ extern int NGA_Idot_patch(int g_a, char t_a, int alo[], int ahi[],
                           int g_b, char t_b, int blo[], int bhi[]);
 extern double NGA_Ddot_patch(int g_a, char t_a, int alo[], int ahi[],
                              int g_b, char t_b, int blo[], int bhi[]);
+extern SingleComplex NGA_Cdot_patch(int g_a, char t_a, int alo[], int ahi[],
+                                    int g_b, char t_b, int blo[], int bhi[]);
 extern DoubleComplex NGA_Zdot_patch(int g_a, char t_a, int alo[], int ahi[],
                                     int g_b, char t_b, int blo[], int bhi[]);
 extern float NGA_Fdot_patch(int g_a, char t_a, int alo[], int ahi[],
@@ -239,8 +248,6 @@ extern void NGA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
 #define GA_Fence  ga_fence_
 #define GA_Nodeid (int)ga_nodeid_
 #define GA_Nnodes (int)ga_nnodes_
-#define GA_Pgroup_nodeid (int)ga_pgroup_nodeid_
-#define GA_Pgroup_nnodes (int)ga_pgroup_nnodes_
 #define ga_nbhdl_t Integer
 
 extern int GA_Cluster_nnodes();
@@ -249,7 +256,10 @@ extern int GA_Cluster_nprocs(int x);
 extern int GA_Cluster_procid(int x, int y);
 extern void GA_Register_stack_memory(void * (*ext_alloc)(), 
 				     void (*ext_free)());
-
+extern double GA_Wtime();
+extern void GA_Set_debug(int flag);
+extern int GA_Get_debug();
+   
 /* Non-blocking APIs */
 extern void NGA_NbGet(int g_a, int lo[], int hi[], void* buf, int ld[],
 		      ga_nbhdl_t* nbhandle);
@@ -259,7 +269,126 @@ extern void NGA_NbAcc(int g_a,int lo[], int hi[],void* buf,int ld[],void* alpha,
 		      ga_nbhdl_t* nbhandle);
 extern int NGA_NbWait(ga_nbhdl_t* nbhandle);
 extern void NGA_NbGet_ghost_dir(int g_a, int mask[], ga_nbhdl_t* handle);
+extern int NGA_NbTest(ga_nbhdl_t* nbhandle);
 
+/* 64 bit APIs */
+
+extern int NGA_Create64(int type,int ndim,int64_t dims[], char *name, int64_t chunk[]);
+extern int NGA_Create_irreg64(int type,int ndim,int64_t dims[],char *name,
+                            int64_t map[], int64_t block[]);
+extern int NGA_Create_ghosts64(int type,int ndim,int64_t dims[], int64_t width[], char *name, int64_t chunk[]);
+extern int NGA_Create_ghosts_irreg64(int type,int ndim,int64_t dims[], int64_t width[],
+                                   char *name, int64_t map[], int64_t nblock[]);
+extern int NGA_Create_config64(int type,int ndim,int64_t dims[], char *name,
+                             int64_t chunk[], int p_handle);
+extern int NGA_Create_irreg_config64(int type,int ndim,int64_t dims[],char *name,
+                                   int64_t map[], int64_t block[], int p_handle);
+extern int NGA_Create_ghosts_config64(int type,int ndim,int64_t dims[], int64_t width[],
+                                    char *name, int64_t chunk[], int p_handle);
+extern int NGA_Create_ghosts_irreg_config64(int type,int ndim,int64_t dims[], int64_t width[],
+                                          char *name, int64_t map[], int64_t nblock[], int p_handle);
+extern void GA_Set_data64(int g_a, int ndim, int64_t dims[], int type);
+extern void GA_Set_chunk64(int g_a, int64_t chunk[]);
+extern void GA_Set_ghosts64(int g_a, int64_t width[]);
+extern void NGA_Merge_distr_patch64(int g_a, int64_t alo[], int64_t ahi[],
+                                    int g_b, int64_t blo[], int64_t bhi[]);
+extern void GA_Get_mirrored_block64(int g_a, int nblock, int64_t lo[], int64_t hi[]);
+extern void NGA_Access_ghosts64(int g_a, int64_t dims[], void *ptr, int64_t ld[]);
+extern void NGA_Access_ghost_element64(int g_a,  void *ptr, int64_t subscript[], int64_t ld[]);
+extern void NGA_Get64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[]); 
+extern void NGA_Put64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[]); 
+extern void NGA_Strided_put64(int g_a, int64_t lo[], int64_t hi[], int64_t skip[],
+                            void* buf, int64_t  ld[]); 
+extern void NGA_Acc64(int g_a, int64_t lo[], int64_t hi[],void* buf,int64_t ld[],void* alpha);
+extern void NGA_Periodic_get64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[]); 
+extern void NGA_Periodic_put64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[]); 
+extern void NGA_Periodic_acc64(int g_a, int64_t lo[], int64_t hi[],void* buf,int64_t ld[],void* alpha);
+extern long NGA_Read_inc64(int g_a, int64_t subscript[], long inc);
+extern void NGA_Distribution64(int g_a, int iproc, int64_t lo[], int64_t hi[]);
+extern void NGA_Select_elem64(int g_a, char* op, void* val, int64_t* index);
+extern void NGA_Access64(int g_a, int64_t lo[], int64_t hi[], void *ptr, int64_t ld[]);
+extern void NGA_Release64(int g_a, int64_t lo[], int64_t hi[]);
+extern void NGA_Release_update64(int g_a, int64_t lo[], int64_t hi[]);
+extern void NGA_Scatter64(int g_a, void *v, int64_t* subsArray[], int64_t n);
+extern void NGA_Gather64(int g_a, void *v, int64_t* subsArray[], int64_t n);
+extern int NGA_Locate64(int g_a, int64_t subscript[]);
+extern int NGA_Locate_region64(int g_a,int64_t lo[],int64_t hi[],int64_t map[],int procs[]);
+extern void NGA_Inquire64(int g_a, int *type, int *ndim, int64_t dims[]);
+extern void GA_Dgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
+                       double alpha, int g_a, int g_b, double beta, int g_c );
+extern void GA_Zgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
+                       DoubleComplex alpha, int g_a, int g_b, 
+                       DoubleComplex beta, int g_c );
+extern void GA_Cgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
+                       SingleComplex alpha, int g_a, int g_b, 
+                       SingleComplex beta, int g_c );   
+extern void GA_Sgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
+                       float alpha, int g_a, int g_b, 
+                       float beta,  int g_c );
+   
+extern void NGA_Copy_patch64(char trans, int g_a, int64_t alo[], int64_t ahi[],
+                             int g_b, int64_t blo[], int64_t bhi[]);
+extern int NGA_Idot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[],
+                            int g_b, char t_b, int64_t blo[], int64_t bhi[]);
+extern double NGA_Ddot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[],
+                               int g_b, char t_b, int64_t blo[], int64_t bhi[]);
+extern DoubleComplex NGA_Zdot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[],
+                                      int g_b, char t_b, int64_t blo[], int64_t bhi[]);
+extern SingleComplex NGA_Cdot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[],
+                                      int g_b, char t_b, int64_t blo[], int64_t bhi[]);
+extern float NGA_Fdot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[],
+                              int g_b, char t_b, int64_t blo[], int64_t bhi[]);
+extern void NGA_Zero_patch64(int g_a, int64_t lo[], int64_t hi[]);
+extern void NGA_Fill_patch64(int g_a, int64_t lo[], int64_t hi[], void *val);
+extern void NGA_Scale_patch64(int g_a, int64_t lo[], int64_t hi[], void *alpha);
+extern void NGA_Add_patch64(void * alpha, int g_a, int64_t alo[], int64_t ahi[],
+                          void * beta,  int g_b, int64_t blo[], int64_t bhi[],
+                          int g_c, int64_t clo[], int64_t chi[]);
+extern void NGA_Print_patch64(int g_a, int64_t lo[], int64_t hi[], int pretty);
+extern void GA_Matmul_patch64(char transa, char transb, void* alpha, void *beta,
+                            int g_a, int64_t ailo, int64_t aihi, int64_t ajlo, int64_t ajhi,
+                            int g_b, int64_t bilo, int64_t bihi, int64_t bjlo, int64_t bjhi,
+                            int g_c, int64_t cilo, int64_t cihi, int64_t cjlo, int64_t cjhi);
+extern void NGA_Matmul_patch64(char transa, char transb, void* alpha, void *beta,
+			     int g_a, int64_t alo[], int64_t ahi[], 
+			     int g_b, int64_t blo[], int64_t bhi[], 
+			     int g_c, int64_t clo[], int64_t chi[]) ;
+
+extern void GA_Recip_patch64(int g_a,int64_t *lo, int64_t *hi);
+extern void GA_Step_max_patch64(int g_a, int64_t alo[], int64_t  ahi[],
+                                int g_b, int64_t blo[], int64_t  bhi[], void *step);
+extern void GA_Abs_value_patch64(int g_a, int64_t *lo, int64_t *hi);
+extern void GA_Add_constant_patch64(int g,int64_t *lo,int64_t *hi,void *alpha);
+extern void GA_Elem_multiply_patch64(int g_a, int64_t alo[], int64_t ahi[],
+                                     int g_b, int64_t blo[], int64_t bhi[],
+                                     int g_c, int64_t clo[], int64_t chi[]);
+extern void GA_Elem_divide_patch64(int g_a, int64_t alo[], int64_t ahi[],
+                                   int g_b, int64_t blo[], int64_t bhi[],
+                                   int g_c, int64_t  clo[], int64_t chi[]);
+extern void GA_Elem_maximum_patch64(int g_a,int64_t *alo,int64_t *ahi,
+                                    int g_b,int64_t *blo,int64_t *bhi,
+                                    int g_c,int64_t *clo,int64_t *chi);
+extern void GA_Elem_minimum_patch64(int g_a,int64_t *alo,int64_t *ahi,
+                                    int g_b,int64_t *blo,int64_t *bhi,
+                                    int g_c,int64_t *clo,int64_t *chi);
+extern void GA_Median_patch64(int g_a, int64_t *alo, int64_t *ahi,
+                              int g_b, int64_t *blo, int64_t *bhi,
+                              int g_c, int64_t *clo, int64_t *chi,
+                              int g_m, int64_t *mlo, int64_t *mhi);
+extern void GA_Step_bound_info_patch64(int g_xx, int64_t xxlo[], int64_t xxhi[],
+                                       int g_vv, int64_t vvlo[], int64_t vvhi[],
+                                       int g_xxll, int64_t xxlllo[], int64_t xxllhi[],
+                                       int64_t g_xxuu,  int64_t xxuulo[], int64_t xxuuhi[],
+                                       void *boundmin, void *wolfemin, void *boundmax);
+
+/* Non-blocking 64 bit api's */
+extern void NGA_NbGet64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[],
+                      ga_nbhdl_t* nbhandle);
+extern void NGA_NbPut64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[],
+                      ga_nbhdl_t* nbhandle);
+extern void NGA_NbAcc64(int g_a,int64_t lo[],int64_t hi[],void* buf,int64_t ld[],void* alpha,
+                      ga_nbhdl_t* nbhandle);
+extern void NGA_NbGet_ghost_dir64(int g_a, int64_t mask[], ga_nbhdl_t* handle);
 
 #ifdef __cplusplus
 }

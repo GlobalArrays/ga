@@ -1,6 +1,9 @@
-#if defined(LINUX) || defined(CYGWIN)
+#ifndef SPINLOCK_H
+#define SPINLOCK_H
 
-#if defined(PPC) && !defined(XLCLINUX)
+#if defined(LINUX) || defined(CYGWIN) || defined(BGML)
+
+#if defined(PPC) && !defined(XLCLINUX) || defined(BGML)
 #include "tas-ppc.h"
 #define SPINLOCK  
 #define TESTANDSET(x) (! __compare_and_swap((long int *)(x),0,1)) 
@@ -119,14 +122,6 @@ double  lock[DBL_PAD];
 #endif
 #define PAD_LOCK_T pad_lock_t
 
-/* we got problems on IA64/Linux64 with Elan if inlining is used */
-#if defined(__GNUC__) && !defined(QUADRICS)
-#   define INLINE inline 
-#else
-#   define INLINE 
-#endif
-
-
 static INLINE void armci_init_spinlock(LOCK_T *mutex)
 {
   *mutex =0;
@@ -134,6 +129,9 @@ static INLINE void armci_init_spinlock(LOCK_T *mutex)
 
 static INLINE void armci_acquire_spinlock(LOCK_T *mutex)
 {
+#ifdef BGML
+   return;
+#else
 int loop=0, maxloop =10;
 
    while (TESTANDSET(mutex)){
@@ -147,6 +145,7 @@ int loop=0, maxloop =10;
          loop=0;
       }
   }
+#endif
 }
 
 
@@ -160,15 +159,24 @@ int loop=0, maxloop =10;
 #else
 static INLINE void armci_release_spinlock(LOCK_T *mutex)
 {
+#ifdef BGML
+   return;
+#else
 #ifdef MEMORY_BARRIER
   MEMORY_BARRIER ();
 #endif
   *mutex =0;
-#if defined(MACX) && defined(__GNUC__) && defined(__ppc__)
+#if (defined(MACX)||defined(LINUX)) && defined(__GNUC__) && defined(__ppc__)  
   __asm__ __volatile__ ("isync" : : : "memory");
+#endif
 #endif
 }
 
 #endif
 
 #endif
+
+
+
+
+#endif/*SPINLOCK_H*/

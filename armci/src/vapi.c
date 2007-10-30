@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.29 2006-06-05 21:13:13 vinod Exp $ */
+/* $Id: vapi.c,v 1.30 2007-10-30 02:04:56 manoj Exp $ */
 /* 
    File organized as follows
 */
@@ -306,6 +306,54 @@ void armci_vapi_set_mark_buf_send_complete(int id)
     mark_buf_send_complete[id]=0;
 }
 
+int armci_test_network_complete()
+{
+VAPI_ret_t rc=VAPI_CQ_EMPTY;
+VAPI_wc_desc_t pdscr1;
+VAPI_wc_desc_t *pdscr=&pdscr1;
+sr_descr_t *sdscr_arr;
+vapi_nic_t *nic;
+int debug,i;
+    THREAD_LOCK(armci_user_threads.net_lock);
+
+    if(SERVER_CONTEXT){
+       sdscr_arr = armci_vapi_serv_nbsdscr_array;
+       nic=CLN_nic;
+       debug = DEBUG_SERVER;
+    }
+    else{
+       sdscr_arr = armci_vapi_client_nbsdscr_array;
+       nic=SRV_nic;
+       debug = DEBUG_CLN;
+    }
+
+    rc = VAPI_poll_cq(nic->handle, nic->scq, pdscr);
+    if (rc == VAPI_CQ_EMPTY) {
+        THREAD_UNLOCK(armci_user_threads.net_lock);
+        return(-1);
+    }
+    armci_check_status(DEBUG_CLN,rc,"armci_send_complete wait for send");
+    if(debug)printf("%d:completed id %d i=%d\n",armci_me,pdscr->id,i);
+    if(pdscr->id >=DSCRID_FROMBUFS && pdscr->id < DSCRID_FROMBUFS_END){
+      mark_buf_send_complete[pdscr->id]=1;
+      THREAD_UNLOCK(armci_user_threads.net_lock);
+      return(pdscr->id - 1);
+    }
+    else if(pdscr->id >=DSCRID_NBDSCR && pdscr->id < DSCRID_NBDSCR_END){
+      sdscr_arr[pdscr->id-DSCRID_NBDSCR].tag=0;
+      sdscr_arr[pdscr->id-DSCRID_NBDSCR].numofsends=0;
+    }
+    else if(pdscr->id >=DSCRID_SCATGAT && pdscr->id < DSCRID_SCATGAT_END){
+      sdscr_arr[pdscr->id-DSCRID_SCATGAT].numofsends--;
+      if(sdscr_arr[pdscr->id-DSCRID_SCATGAT].numofsends==0)
+        sdscr_arr[pdscr->id-DSCRID_SCATGAT].tag=0;
+    }
+    else if(pdscr->id == (DSCRID_SCATGAT + MAX_PENDING)){
+      /*this was from a blocking call, do nothing*/
+    }
+    THREAD_UNLOCK(armci_user_threads.net_lock);
+    return(-1);
+}
 void armci_send_complete(VAPI_sr_desc_t *snd_dscr, char *from,int numoftimes)
 {
 VAPI_ret_t rc=VAPI_CQ_EMPTY;
@@ -332,7 +380,8 @@ int debug,i;
     }
     for(i=0;i<numoftimes;i++){
     do{
-       while(rc == VAPI_CQ_EMPTY){  
+       while(rc == VAPI_CQ_EMPTY){
+         /*          printf("before VAPI_poll_cq\n"); */
          rc = VAPI_poll_cq(nic->handle, nic->scq, pdscr);
        }  
        if(SERVER_CONTEXT){
@@ -351,8 +400,14 @@ int debug,i;
        else{
          armci_check_status(DEBUG_CLN,rc,"armci_send_complete wait for send");
          if(debug)printf("%d:completed id %d i=%d\n",armci_me,pdscr->id,i);
-         if(pdscr->id >=DSCRID_FROMBUFS && pdscr->id < DSCRID_FROMBUFS_END)
+         if(pdscr->id >=DSCRID_FROMBUFS && pdscr->id < DSCRID_FROMBUFS_END){
            mark_buf_send_complete[pdscr->id]=1;
+           if(snd_dscr->id!=pdscr->id){
+             /*  printf("CALLING complete buf from network complete!!!\n"); */
+             _armci_buf_complete_index((pdscr->id-1),0);
+             _armci_buf_release_index((pdscr->id-1));
+           }
+         }
          else if(pdscr->id >=DSCRID_NBDSCR && pdscr->id < DSCRID_NBDSCR_END){
            sdscr_arr[pdscr->id-DSCRID_NBDSCR].tag=0;
            sdscr_arr[pdscr->id-DSCRID_NBDSCR].numofsends=0;
@@ -1861,7 +1916,7 @@ int total = 0;
     else{
        rc = EVAPI_post_inline_sr(nic->handle,con->qp,snd_dscr);
     } 
-    armci_check_status(DEBUG_INIT, rc, from);
+    armci_check_status(DEBUG_CLN, rc, from);
 }
 
 int armci_send_req_msg(int proc, void *buf, int bytes)
@@ -1870,7 +1925,7 @@ int cluster = armci_clus_id(proc);
 request_header_t *msginfo = (request_header_t *)buf;
 VAPI_sr_desc_t *snd_dscr;
 VAPI_sg_lst_entry_t *ssg_lst; 
-//double t0,t1;
+/*double t0,t1;*/
 
     snd_dscr = BUF_TO_SDESCR((char *)buf);
     ssg_lst  = BUF_TO_SSGLST((char *)buf);
@@ -1898,10 +1953,12 @@ VAPI_sg_lst_entry_t *ssg_lst;
                             bytes, &client_memhandle);
 
 
-    //t0 = MPI_Wtime();
+    /*t0 = MPI_Wtime();*/
     armci_vapi_post_send(1,cluster,snd_dscr,"send_req_msg:post_send");
-    //t1 = MPI_Wtime();
-    //printf("%d:posting took %lf\n",armci_me,1e6*(t1-t0));fflush(stdout);
+    if(snd_dscr->id >= DSCRID_FROMBUFS && snd_dscr->id < DSCRID_FROMBUFS_END)
+        _armci_buf_set_busy_idx(snd_dscr->id-1, 0);
+    /*t1 = MPI_Wtime();*/
+    /*printf("%d:posting took %lf\n",armci_me,1e6*(t1-t0));fflush(stdout); */
 
     if(DEBUG_CLN){
        printf("%d:client sent REQ=%d %d bytes serv=%d qp=%ld id =%ld lkey=%d\n",
@@ -1957,7 +2014,7 @@ void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
 VAPI_ret_t rc=VAPI_CQ_EMPTY;
 sr_descr_t *dirdscr;
 int clus = armci_clus_id(p);
-//double t0,t1;
+/*double t0,t1; */
     /*ID for the desr that comes from get_next_descr is already set*/
     dirdscr = armci_vapi_get_next_sdescr(nbtag,0);
     if(nbtag)*cptr = dirdscr;
@@ -1969,11 +2026,11 @@ int clus = armci_clus_id(p);
 
     armci_init_vbuf_rrdma(&dirdscr->sdescr,dirdscr->sg_entry,dst_buf,src_buf,
                           len,lochdl,remhdl);
-    //t0 = MPI_Wtime();
+    /*t0 = MPI_Wtime();*/
     rc = VAPI_post_sr(SRV_nic->handle,(SRV_con+clus)->qp,&(dirdscr->sdescr));
     armci_check_status(DEBUG_CLN, rc,"armci_client_get_direct");
-    //t1 = MPI_Wtime();
-    //printf("%d:posting took %lf\n",armci_me,1e6*(t1-t0));fflush(stdout);
+    /* t1 = MPI_Wtime(); */
+    /* printf("%d:posting took %lf\n",armci_me,1e6*(t1-t0));fflush(stdout); */
     if(!nbtag){
        armci_send_complete(&(dirdscr->sdescr),"armci_client_direct_get",1);
     }
@@ -2709,7 +2766,7 @@ void armci_direct_rmw(int op, int*ploc, int *prem, int extra, int proc,
   }        
   
   rc = VAPI_post_sr(nic->handle,con->qp, sd);  
-  /*rc = EVAPI_post_inline_sr(nic->handle,con->qp,sd); *//*since bytes = 8*/
+  /*rc = EVAPI_post_inline_sr(nic->handle,con->qp,sd);*/ /* *since bytes = 8*/
   armci_check_status(DEBUG_CLN,rc,"client direct atomic");
 
   if(1){

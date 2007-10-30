@@ -39,6 +39,7 @@
 #define  ga_gather_                GA_GATHER
 #define  ga_get_                   GA_GET
 #define  ga_nbwait_                GA_NBWAIT
+#define  ga_nbtest_                GA_NBTEST
 #define  ga_nbget_                 GA_NBGET
 #define  ga_has_ghosts_            GA_HAS_GHOSTS
 #define  ga_pgroup_get_default_    GA_PGROUP_GET_DEFAULT
@@ -132,6 +133,7 @@
 #define  ga_uses_ma_               GA_USES_MA
 #define  ga_valid_handle_          GA_VALID_HANDLE
 #define  ga_verify_handle_         GA_VERIFY_HANDLE
+#define  ga_cdot_                  GA_CDOT
 #define  ga_zdot_                  GA_ZDOT
 #define  ga_zero_                  GA_ZERO
 #define  gai_dot_                  GAI_DOT
@@ -178,6 +180,7 @@
 #define  nga_gather_               NGA_GATHER
 #define  nga_get_                  NGA_GET
 #define  nga_nbwait_               NGA_NBWAIT
+#define  nga_nbtest_               NGA_NBTEST
 #define  nga_nbget_                NGA_NBGET
 #define  nga_idot_patch_           NGA_IDOT_PATCH
 #define  nga_inquire_              NGA_INQUIRE
@@ -208,6 +211,7 @@
 #define  nga_scatter_              NGA_SCATTER
 #define  nga_scatter_acc_          NGA_SCATTER_ACC
 #define  nga_sdot_patch_           NGA_SDOT_PATCH   
+#define  nga_cdot_patch_           NGA_CDOT_PATCH
 #define  nga_zdot_patch_           NGA_ZDOT_PATCH
 #define  nga_zero_patch_           NGA_ZERO_PATCH
 #define  ngai_dot_patch_           NGAI_DOT_PATCH
@@ -250,6 +254,9 @@
 #define  ga_zgemm_                 GA_ZGEMM
 #define  ga_free_                  GA_FREE
 #define  ga_malloc_                GA_MALLOC
+#define  ga_wtime_                 GA_WTIME
+#define  ga_set_debug_             GA_SET_DEBUG
+#define  ga_get_debug_             GA_GET_DEBUG
 
 #elif defined(F2C2_)
 
@@ -289,6 +296,7 @@
 #define  ga_gather_                ga_gather__              
 #define  ga_get_                   ga_get__                 
 #define  ga_nbwait_                ga_nbwait__                 
+#define  ga_nbtest_                ga_nbtest__                 
 #define  ga_nbget_                 ga_nbget__                 
 #define  ga_has_ghosts_            ga_has_ghosts__          
 #define  ga_pgroup_get_default_    ga_pgroup_get_default__                
@@ -383,6 +391,7 @@
 #define  nga_acc_common_           nga_acc_common__
 #define  ga_valid_handle_          ga_valid_handle__        
 #define  ga_verify_handle_         ga_verify_handle__    
+#define  ga_cdot_                  ga_cdot__                
 #define  ga_zdot_                  ga_zdot__                
 #define  ga_zero_                  ga_zero__                
 #define  gai_dot_                  gai_dot__                
@@ -429,6 +438,7 @@
 #define  nga_gather_               nga_gather__             
 #define  nga_get_                  nga_get__                
 #define  nga_nbwait_               nga_nbwait__                
+#define  nga_nbtest_               nga_nbtest__                
 #define  nga_nbget_                nga_nbget__                
 #define  nga_idot_patch_           nga_idot_patch__         
 #define  nga_inquire_              nga_inquire__            
@@ -460,6 +470,7 @@
 #define  nga_scatter_acc_          nga_scatter_acc__        
 #define  nga_sdot_patch_           nga_sdot_patch__            
 #define  nga_select_elem_          nga_select_elem__
+#define  nga_cdot_patch_           nga_cdot_patch__         
 #define  nga_zdot_patch_           nga_zdot_patch__         
 #define  nga_zero_patch_           nga_zero_patch__         
 #define  ngai_dot_patch_           ngai_dot_patch__         
@@ -501,6 +512,9 @@
 #define  ga_zgemm_                 ga_zgemm__
 #define  ga_free_                  ga_free__
 #define  ga_malloc_                ga_malloc__
+#define  ga_wtime_                ga_wtime__
+#define  ga_set_debug_             ga_set_debug__
+#define  ga_get_debug_             ga_get_debug__
 
 #endif
 

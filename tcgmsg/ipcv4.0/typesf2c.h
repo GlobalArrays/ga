@@ -2,7 +2,7 @@
 #define _TYPES_F2C_H_
 
 /*
- * $Id: typesf2c.h,v 1.1 2001-04-20 00:11:43 edo Exp $
+ * $Id: typesf2c.h,v 1.2 2007-10-30 02:05:02 manoj Exp $
  */
 
 #  ifdef WIN32
@@ -37,5 +37,10 @@
         DoublePrecision real;
         DoublePrecision imag;
    }DoubleComplex;
+
+   typedef struct{
+        float real;
+        float imag;
+   }SingleComplex;
 
 #endif /* _TYPES_F2C_H_ */

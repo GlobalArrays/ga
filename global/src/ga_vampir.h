@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.h,v 1.8 2006-08-31 19:07:04 d3m782 Exp $ */
+/* $Id: ga_vampir.h,v 1.9 2007-10-30 02:04:57 manoj Exp $ */
 #ifndef _GA_VAMPIR_H_
 #define _GA_VAMPIR_H_
 
@@ -123,6 +123,10 @@
 #define VT_GA_SGEMM           32277
 #define VT_GA_ZGEMM           32276
 #define GA_PGROUP_SYNC        32275
+#define GA_CDOT               32274
+#define GA_CDOT_PATCH         32273
+#define NGA_CDOT_PATCH        32272
+#define VT_GA_CGEMM           32271
 #include "ga_vampir.fh"
 
 extern void ga_vampir_init(); 

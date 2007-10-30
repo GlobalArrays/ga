@@ -7,7 +7,7 @@
 #endif
 
       program ga_test
-c $Id: pg2testmatmult.F,v 1.4 2007-04-25 21:49:06 manoj Exp $
+c $Id: pg2testmatmult.F,v 1.5 2007-10-30 02:04:59 manoj Exp $
 c
 c     test ga_dgemm
 c     compile with make FLD_REN="optimized blas" testmatmult.x
@@ -57,7 +57,7 @@ c
       nproc = ga_nnodes()
       if(nproc .ne. 8) then
          write(*,*) 'nproc =', nproc
-         call ga_error('failed: runs only on 8 processors',10)
+         call ga_error('failed: need exactly 8 processors',10)
       endif
       call ga_sync()
       proclist(1) = 0

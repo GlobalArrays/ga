@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.43 2004-08-12 18:28:50 d3h325 Exp $ */
+/* $Id: test.c,v 1.44 2007-10-30 02:04:56 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -33,6 +33,13 @@
 #   define MP_FINALIZE()     PEND_()
 #   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
 #   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
+#elif defined(BGML)
+# include "bgml.h"
+# define MP_BARRIER()      bgml_barrier(3);
+# define MP_FINALIZE()
+# define MP_INIT(arc, argv)
+# define MP_MYID(pid)      *(pid)=BGML_Messager_rank();
+# define MP_PROCS(pproc)   *(pproc)=BGML_Messager_size();
 #else
 #   include <mpi.h>
 #   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
@@ -366,6 +373,12 @@ void scale_patch(double alpha, int ndim, double *patch1, int lo1[], int hi1[], i
 	}	
 }
 
+#define MMAX 100
+/* #define NEWMALLOC */
+#ifdef NEWMALLOC
+armci_meminfo_t meminfo[MMAX][MAXPROC];
+int g_idx=0;
+#endif
 
 void create_array(void *a[], int elem_size, int ndim, int dims[])
 {
@@ -373,10 +386,22 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
 
      assert(ndim<=MAXDIMS);
      for(i=0;i<ndim;i++)bytes*=dims[i];
+#ifdef NEWMALLOC
+     {
+        if(g_idx>=100) ARMCI_Error("increase MMAX", g_idx);
+        ARMCI_Memget(bytes, &meminfo[g_idx][me], 0);
 
+        for(i=0; i<nproc; i++) 
+           armci_msg_brdcst(&meminfo[g_idx][i], sizeof(armci_meminfo_t), i);
+
+        for(i=0; i<nproc; i++) 
+           a[i] = ARMCI_Memat(&meminfo[g_idx][i], 0);
+        g_idx++;
+     }
+#else
      rc = ARMCI_Malloc(a, bytes);
      assert(rc==0);
-     
+#endif
      assert(a[me]);
      
 }
@@ -384,8 +409,9 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
 void destroy_array(void *ptr[])
 {
     MP_BARRIER();
-
+#if 0
     assert(!ARMCI_Free(ptr[me]));
+#endif
 }
 
 
@@ -799,6 +825,11 @@ int lenpergiov;
        printf("\n\tGets OK\n");
     }
     /****************Done Testing NbGetV*********************************/
+    free(pdst);
+    free(psrc);
+    free(getdst);
+    for(i=0;i<nproc*GIOV_ARR_LEN*PTR_ARR_LEN;i++) free( putsrc[i]);
+    free(putsrc);
 }
 
 
@@ -1463,7 +1494,7 @@ void test_rput()
 #define MAXELEMS      6400
 #define NUMAGG        20   /* NUMAGG < MAXELEMS/10 */
 #define MAX_REQUESTS  325 /* MAXELEMS/NUMAGG */
-#define DUMMY         50
+#define COUNT         50
 
 void test_aggregate() {
   
@@ -1496,14 +1527,14 @@ void test_aggregate() {
     /* Testing aggregate put */
     for(i=0; i<nproc; i++) {
 
-      start = 0; end = DUMMY*NUMAGG; 
+      start = 0; end = COUNT*NUMAGG; 
       for(j=start; j<end; j++) {  
 	bytes = sizeof(double);
 	ARMCI_NbPutValueDouble(dsrc[me][j], &ddst_put[i][me*elems[1]+j], i, 
 			       &usr_hdl_put[i]);
       }
       
-      start = end; end = start + DUMMY*NUMAGG;
+      start = end; end = start + COUNT*NUMAGG;
       for(j=start, k=0; j<end; j+=NUMAGG, k++) {
 	src_ptr[k] = (void *)&dsrc[me][j];
 	dst_ptr[k] = (void *)&ddst_put[i][me*elems[1]+j];
@@ -1515,7 +1546,7 @@ void test_aggregate() {
       if((rc=ARMCI_NbPutV(&darr, 1, i, &usr_hdl_put[i])))
 	ARMCI_Error("armci_nbputv failed\n",rc);
 
-      start = end; end = start + DUMMY*NUMAGG;
+      start = end; end = start + COUNT*NUMAGG;
       for(j=start; j<end; j+=NUMAGG) {  
 	bytes = sizeof(double)*NUMAGG;
 	if((rc=ARMCI_NbPutS(&dsrc[me][j], NULL, &ddst_put[i][me*elems[1]+j], NULL, 
@@ -1538,7 +1569,7 @@ void test_aggregate() {
     /* Testing aggregate get */
     for(i=0; i<nproc; i++) {
       
-      start = 0; end = DUMMY*NUMAGG; 
+      start = 0; end = COUNT*NUMAGG; 
       for(j=start, k=0; j<end; j+=NUMAGG, k++) {
 	src_ptr[k] = (void *)&dsrc[i][j];
 	dst_ptr[k] = (void *)&ddst_get[me][i*elems[1]+j];
@@ -1550,7 +1581,7 @@ void test_aggregate() {
       if((rc=ARMCI_NbGetV(&darr, 1, i, &usr_hdl_get[i])))
 	ARMCI_Error("armci_nbgetv failed\n", rc);
 
-      start = end; end = start + DUMMY*NUMAGG;
+      start = end; end = start + COUNT*NUMAGG;
       for(j=start; j<end; j+=NUMAGG) {  
 	bytes = sizeof(double)*NUMAGG;
 	if((rc=ARMCI_NbGetS(&dsrc[i][j], NULL, &ddst_get[me][i*elems[1]+j], NULL, 
@@ -1629,14 +1660,14 @@ void test_implicit() {
 
     for(i=0; i<nproc; i++) {
       
-      start = 0; end = DUMMY*NUMAGG; 
+      start = 0; end = COUNT*NUMAGG; 
       for(j=start; j<end; j++) {  
 	bytes = sizeof(double);
 	ARMCI_NbPutValueDouble(dsrc[me][j], &ddst_put[i][me*elems[1]+j], i, 
 			       NULL);
       }
       
-      start = end; end = start + DUMMY*NUMAGG;
+      start = end; end = start + COUNT*NUMAGG;
       for(j=start, k=0; j<end; j+=NUMAGG, k++) {
 	src_ptr[k] = (void *)&dsrc[me][j];
 	dst_ptr[k] = (void *)&ddst_put[i][me*elems[1]+j];
@@ -1648,7 +1679,7 @@ void test_implicit() {
       if((rc=ARMCI_NbPutV(&darr, 1, i, NULL)))
 	ARMCI_Error("armci_nbputv failed\n",rc);
 
-      start = end; end = start + DUMMY*NUMAGG;
+      start = end; end = start + COUNT*NUMAGG;
       for(j=start; j<end; j+=NUMAGG) {  
 	bytes = sizeof(double)*NUMAGG;
 	if((rc=ARMCI_NbPutS(&dsrc[me][j], NULL, &ddst_put[i][me*elems[1]+j], NULL, 
@@ -1668,7 +1699,7 @@ void test_implicit() {
 
     for(i=0; i<nproc; i++) {
 
-      start = 0; end = DUMMY*NUMAGG; 
+      start = 0; end = COUNT*NUMAGG; 
       for(j=start, k=0; j<end; j+=NUMAGG, k++) {
 	src_ptr[k] = (void *)&dsrc[i][j];
 	dst_ptr[k] = (void *)&ddst_get[me][i*elems[1]+j];
@@ -1680,7 +1711,7 @@ void test_implicit() {
       if((rc=ARMCI_NbGetV(&darr, 1, i, NULL)))
 	ARMCI_Error("armci_nbgetv failed\n", rc);
 
-      start = end; end = start + DUMMY*NUMAGG;
+      start = end; end = start + COUNT*NUMAGG;
       for(j=start; j<end; j+=NUMAGG) {  
 	bytes = sizeof(double)*NUMAGG;
 	if((rc=ARMCI_NbGetS(&dsrc[i][j], NULL, &ddst_get[me][i*elems[1]+j], NULL, 
@@ -1761,7 +1792,6 @@ int main(int argc, char* argv[])
 /*
        if(me==1)armci_die("process 1 committing suicide",1);
 */
-
         if(me==0){
            printf("\nTesting strided gets and puts\n");
            printf("(Only std output for process 0 is printed)\n\n"); 
@@ -1789,7 +1819,6 @@ int main(int argc, char* argv[])
         test_vec_small();
         ARMCI_AllFence();
         MP_BARRIER();
-
 
         if(me==0){
            printf("\nTesting atomic accumulate\n");
@@ -1854,7 +1883,7 @@ int main(int argc, char* argv[])
 	  printf("\nTesting aggregate put/get requests\n");
 	  fflush(stdout);
 	}
-	
+        
 	/** 
 	 * Aggregate put/get requests cannot be tested for\ number of procs 
 	 * greater than 32. (Current implementation of aggregate put/get 
@@ -1893,6 +1922,17 @@ int main(int argc, char* argv[])
 	if(me==0){printf("All tests passed\n"); fflush(stdout);}
     sleep(2);
 
+#ifdef NEWMALLOC
+    {
+      int i,j;
+      for(i=0; i<g_idx; i++) 
+        for(j=0; j<nproc; j++) 
+          ARMCI_Memdt(&meminfo[i][j], 0);
+      for(i=0; i<g_idx; i++) 
+        ARMCI_Memctl(&meminfo[i][me]);
+    }
+#endif
+    
     MP_BARRIER();
     ARMCI_Finalize();
     MP_FINALIZE();

@@ -555,7 +555,7 @@ static void armci_ckpt_write_data(int rid)
        ofs = CURR_FILE_POS(rid);
        addrds->fileoffset = ofs;
        
-       //if(addrds->num_touched_pages!=0) CHECK this...
+       /*if(addrds->num_touched_pages!=0) CHECK this... */
           addrds->num_touched_pages = armci_create_touchedpagearray(addrds->touched_page_arr,addrds->firstpage,addrds->totalpages);
        
        printf("%d: DATA:[i=%d] addrds=%p off=%ld size=%ld (#ofPages=%ld total=%ld pagesize=%d)\n",
@@ -829,7 +829,7 @@ static void armci_recover_data(int rid, char *filename)
        armci_monitor_address_t *addrds =
          &armci_storage_record[rid].user_addr[i];
 
-       // CHECK: beware of malloc'ed memory in addrds */
+       /* CHECK: beware of malloc'ed memory in addrds */
        printf("%d: armci_recover_data(): [i=%d] from=%p size=%ld off=%ld\n",
               armci_me, i, addrds->ptr, addrds->bytes, addrds->fileoffset);
        armci_storage_read_pages(armci_storage_record[rid].fileinfo.fd,

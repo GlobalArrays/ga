@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.23 2004-04-15 05:11:33 vinod Exp $ */
+/* $Id: sockets.c,v 1.24 2007-10-30 02:04:55 manoj Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
@@ -104,7 +104,7 @@ again:
 
 
 /*\ sleep in select until data appears on one of sockets
- *  return number of sockets ready and indicate which ones are in ready array 
+ *  return number of sockets ready and indicate which ones are in ready array
  *  allows <0 values in socklist array (ignores them)
 \*/
 int armci_WaitSock(int *socklist, int num, int *ready)
@@ -122,14 +122,14 @@ again:
   maxsock=0;
   for(sock=0; sock<num; sock++){
      if(socklist[sock] > maxsock)maxsock = socklist[sock];
-     
+
      if(socklist[sock] >0){ /* ignore fd=-1 on the list */
         FD_SET(socklist[sock], &dset);
      }
   }
 
 
-  nready = select(maxsock+1, &dset, (fd_set*)NULL, (fd_set*)NULL, NULL); 
+  nready = select(maxsock+1, &dset, (fd_set*)NULL, (fd_set*)NULL, NULL);
 
     if (nready < 0) {
     if (errno == EINTR){
@@ -139,16 +139,61 @@ again:
       armci_die("armci_WaitSocket: error from select",   sock);
   }
 
-  
+
   for(sock=0; sock<num; sock++){
      ready[sock]=0;
-     if(socklist[sock] < 0) continue; 
+     if(socklist[sock] < 0) continue;
      if(FD_ISSET(socklist[sock],&dset)) ready[sock]=1;
   }
 
   return nready;
 }
-    
+
+/* same as armci_WaitSock with lim nano-seconds timeout */
+int armci_WaitSockLim(int *socklist, int num, int *ready, int lim)
+{
+  struct timeval timelimit;
+  int sock,maxsock=0;
+  fd_set dset;
+  int nready;
+
+  if(num<0) armci_die("armci_WaitSock: num <0",num);
+
+again:
+
+  FD_ZERO(&dset);
+  maxsock=0;
+  for(sock=0; sock<num; sock++){
+     if(socklist[sock] > maxsock)maxsock = socklist[sock];
+
+     if(socklist[sock] >0){ /* ignore fd=-1 on the list */
+        FD_SET(socklist[sock], &dset);
+     }
+  }
+  timelimit.tv_sec = 0;
+  timelimit.tv_usec = lim;
+
+
+  nready = select(maxsock+1, &dset, (fd_set*)NULL, (fd_set*)NULL, &timelimit);
+
+    if (nready < 0) {
+    if (errno == EINTR){
+      fprintf(stderr,"%d:interrupted in select\n",armci_me);
+      goto again;
+    } else
+      armci_die("armci_WaitSocket: error from select",   sock);
+  }
+
+
+  for(sock=0; sock<num; sock++){
+     ready[sock]=0;
+     if(socklist[sock] < 0) continue;
+     if(FD_ISSET(socklist[sock],&dset)) ready[sock]=1;
+  }
+
+  return nready;
+}
+
 
 
 
@@ -791,3 +836,4 @@ againcon:
 
   return sock;
 }
+

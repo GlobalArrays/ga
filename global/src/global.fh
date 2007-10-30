@@ -5,12 +5,15 @@
 !
       integer ga_max_dim
       parameter (ga_max_dim = 7)
+#define GA_VERSION_MAJOR 4
+#define GA_VERSION_MINOR 0
 !
       integer ga_nnodes, ga_nodeid, ga_read_inc
       integer ga_pgroup_nnodes, ga_pgroup_nodeid
       integer ga_spd_invert, ga_solve, ga_llt_solve
       integer ga_inquire_memory, ga_memory_avail
       logical ga_create, ga_destroy, ga_locate, ga_create_irreg
+      logical ga_locate_region
       logical ga_compare_distr, ga_duplicate, ga_uses_ma
       logical ga_memory_limited
       logical ga_create_mutexes
@@ -34,7 +37,10 @@
       double precision ga_ddot, ga_ddot_patch
       double complex   ga_zdot, ga_zdot_patch
       double complex   nga_zdot_patch
-      double precision nga_ddot_patch
+      complex   ga_cdot, ga_cdot_patch
+      complex   nga_cdot_patch
+      double precision nga_ddot_patch, ga_wtime
+      integer ga_idot
       integer nga_idot_patch
       integer ga_pgroup_get_default, ga_pgroup_get_mirror
       integer ga_pgroup_get_world, ga_num_mirrored_seg
@@ -48,17 +54,21 @@
       integer nga_locate_num_blocks
       integer ga_total_blocks
       logical nga_create, nga_locate, nga_create_irreg
+      logical nga_locate_region
       logical nga_create_ghosts_irreg,nga_create_ghosts
       logical nga_create_config, nga_create_irreg_config
       logical nga_create_ghosts_irreg_config, nga_create_ghosts_config
+      logical ga_get_debug
 !
       external ga_create, ga_destroy, ga_ddot, ga_locate
+      external ga_locate_region
       external ga_nnodes, ga_nodeid, ga_read_inc, ga_create_irreg
       external ga_pgroup_nnodes, ga_pgroup_nodeid
       external ga_ddot_patch, ga_compare_distr, ga_duplicate
       external ga_inquire_memory, ga_uses_ma, ga_memory_limited
       external ga_memory_avail
       external ga_zdot, ga_zdot_patch
+      external ga_cdot, ga_cdot_patch
       external ga_create_mutexes
       external ga_destroy_mutexes
       external ga_valid_handle
@@ -82,15 +92,20 @@
       external ga_ndim
       external ga_spd_invert, ga_solve, ga_llt_solve
       external nga_read_inc, nga_create, nga_locate, nga_create_irreg
+      external nga_locate_region
       external nga_create_ghosts_irreg,nga_create_ghosts
       external nga_create_config, nga_create_irreg_config
       external nga_create_ghosts_irreg_config,nga_create_ghosts_config
-      external nga_ddot_patch, nga_zdot_patch, nga_idot_patch
+      external nga_ddot_patch, nga_zdot_patch, nga_cdot_patch
+      external nga_idot_patch, ga_idot
       external ga_sdot, ga_sdot_patch, nga_sdot_patch
       external ga_cluster_nprocs, ga_cluster_nodeid, ga_cluster_nnodes
       external ga_cluster_procid, ga_cluster_proc_nodeid
       external ga_is_mirrored
+      external ga_total_blocks
+      external ga_get_debug
       integer ga_get_pgroup
       external ga_get_pgroup
       logical ga_pgroup_destroy
       external ga_pgroup_destroy
+      external ga_wtime

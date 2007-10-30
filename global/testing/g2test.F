@@ -15,6 +15,16 @@ c vector boxes lack arithmetic precision
 
 #define PRINT_VAL
 c#define NEW_API
+c
+c  Add some control over which tests are performed
+c
+#define TEST_1
+#define TEST_2
+#define TEST_3
+#define TEST_4
+c#define TEST_5
+#define TEST_6
+#define TEST_7
 
       program main
       implicit none
@@ -229,7 +239,7 @@ c      end do
      +    index3, ld3)
       call ga_sync
 
-c      go to 131
+#ifdef TEST_1
       if (me.eq.0) then
         write(6,*)
         write(6,*) 'Testing update 1'
@@ -260,7 +270,9 @@ c      go to 131
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
      +           nmax+2*width(1),has_data,width,corner_flag,1)
       call ga_sync
+#endif
 
+#ifdef TEST_2
       if (me.eq.0) then
         write(6,*)
         write(6,*) 'Testing update 2'
@@ -291,7 +303,9 @@ c      go to 131
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
      +           nmax+2*width(1),has_data,width,corner_flag,2)
       call ga_sync
+#endif
 
+#ifdef TEST_3
       if (me.eq.0) then
         write(6,*)
         write(6,*) 'Testing update 3'
@@ -322,7 +336,9 @@ c      go to 131
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
      +           nmax+2*width(1),has_data,width,corner_flag,3)
       call ga_sync
+#endif
 
+#ifdef TEST_4
       if (me.eq.0) then
         write(6,*)
         write(6,*) 'Testing update 4'
@@ -357,7 +373,9 @@ c
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
      +           nmax+2*width(1),has_data,width,corner_flag,4)
       call ga_sync
+#endif
 
+#ifdef TEST_5
       if (me.eq.0) then
         write(6,*)
         write(6,*) 'Testing update 5'
@@ -394,7 +412,9 @@ c     write(6,*) 'completed ga_update5_ghosts'
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
      +           nmax+2*width(1),has_data,width,corner_flag,5)
       call ga_sync
+#endif
 
+#ifdef TEST_6
       if (me.eq.0) then
         write(6,*)
         write(6,*) 'Testing update 6'
@@ -426,7 +446,9 @@ c     write(6,*) 'completed ga_update5_ghosts'
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
      +           nmax+2*width(1),has_data,width,corner_flag,6)
       call ga_sync
+#endif
 
+#ifdef TEST_7
       if (me.eq.0) then
         write(6,*)
         write(6,*) 'Testing update 7'
@@ -458,6 +480,7 @@ c     write(6,*) 'completed ga_update5_ghosts'
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
      +           nmax+2*width(1),has_data,width,corner_flag,7)
       call ga_sync
+#endif
 
       if (me.eq.0) then
         write(6,*) '*'
@@ -467,6 +490,7 @@ c     write(6,*) 'completed ga_update5_ghosts'
       endif
       call ga_sync
 c
+#ifdef TEST_1
       tmp = t2
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
@@ -482,6 +506,8 @@ c
       if (me.eq.0) then
         write(6,500) tmp/dble(nproc)
       endif
+#endif
+#ifdef TEST_2
       tmp = t5
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
@@ -497,6 +523,8 @@ c
       if (me.eq.0) then
         write(6,500) tmp/dble(nproc)
       endif
+#endif
+#ifdef TEST_3
       tmp = t8
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
@@ -512,6 +540,8 @@ c
       if (me.eq.0) then
         write(6,500) tmp/dble(nproc)
       endif
+#endif
+#ifdef TEST_4
       tmp = t11
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
@@ -527,6 +557,8 @@ c
       if (me.eq.0) then
         write(6,500) tmp/dble(nproc)
       endif
+#endif
+#ifdef TEST_5
       tmp = t14
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
@@ -542,6 +574,8 @@ c
       if (me.eq.0) then
         write(6,500) tmp/dble(nproc)
       endif
+#endif
+#ifdef TEST_6
       tmp = t17
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
@@ -557,6 +591,8 @@ c
       if (me.eq.0) then
         write(6,500) tmp/dble(nproc)
       endif
+#endif
+#ifdef TEST_7
       tmp = t23
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
@@ -572,6 +608,7 @@ c
       if (me.eq.0) then
         write(6,500) tmp/dble(nproc)
       endif
+#endif
       tmp = t20
       call ga_dgop(6,tmp,1,'+')
       if (me.eq.0) then

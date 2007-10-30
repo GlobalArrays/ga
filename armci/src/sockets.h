@@ -28,7 +28,7 @@ extern void armci_ShutdownAll(int socklist[], int num);
 extern void armci_CreateSocketAndBind(int *sock, int *port);
 #define PACKET_SIZE tcp_sendrcv_bufsize 
 #define TIMEOUT_ACCEPT 60
-#define GET_SEND_BUFFER _armci_buf_get
+#define GET_SEND_BUFFER _armci_buf_get_clear_busy
 #define FREE_SEND_BUFFER _armci_buf_release
 
 #ifndef UIO_MAXIOV

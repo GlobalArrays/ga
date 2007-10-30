@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.86 2006-09-19 23:22:40 andriy Exp $ */
+/* $Id: copy.h,v 1.87 2007-10-30 02:04:53 manoj Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -12,7 +12,7 @@
 #endif
 
 #if defined(NOFORT) || defined(HITACHI) || defined(CRAY_T3E)\
-        || defined(CRAY_SHMEM)
+        || defined(CRAY_SHMEM) || defined(BGML)
 #  define MEMCPY
 #endif
 #if defined(LINUX64) && defined(SGIALTIX) && defined(MPI)
@@ -37,8 +37,8 @@
 #   define PTR_ALIGN
 #endif
 
-#if defined(NB_NONCONT) && !defined(CRAY_SHMEM) && !defined(QUADRICS)
-#error NB_NONCONT can only be defined for CRAY-SHMEM and ELAN
+#if defined(NB_NONCONT) && !defined(CRAY_SHMEM) && !defined(QUADRICS) && !defined(PORTALS)
+#error NB_NONCONT is only available on CRAY_SHMEM,QUADRICS and PORTALS
 #endif
 
 #if defined(SHMEM_HANDLE_NOT_SUPPORTED) && !defined(CRAY_SHMEM)
@@ -64,7 +64,11 @@
 #endif
                                                  
 #if  defined(MEMCPY)  && !defined(armci_copy)
+#if defined(BGML)
+#define armci_copy(src, dst, n) BGLML_memcpy((dst), (src), (n))
+#else
 #    define armci_copy(src,dst,n)  memcpy((dst), (src), (n)) 
+#endif
 #endif
 
 #ifdef NEC
@@ -85,6 +89,9 @@
         extern void _armci_ia64_mb();
 #       define MEM_FENCE _armci_ia64_mb();
 #    endif
+#  elif defined(LINUX) && defined(__GNUC__) && defined(__ppc__)
+#    define MEM_FENCE \
+             __asm__ __volatile__ ("isync" : : : "memory");
 #  endif
 #endif
 
@@ -186,27 +193,42 @@
 #   if   defined(QUADRICS)
 
 #       define armcill_nb_put(_dst, _src, _sz, _proc, _hdl)\
-               elan_put(elan_base->state,_src,_dst,(size_t)_sz,_proc)
+               _hdl = elan_put(elan_base->state,_src,_dst,(size_t)_sz,_proc)
 #       define armcill_nb_get(_dst, _src, _sz, _proc, _hdl)\
-               elan_get(elan_base->state,_src,_dst,(size_t)_sz,_proc)
+               _hdl =  elan_get(elan_base->state,_src,_dst,(size_t)_sz,_proc)
 #       define armcill_nb_wait(_hdl)\
                elan_wait(_hdl,100)
 
 #   elif defined(CRAY_SHMEM)
 
-#       define armcill_nb_put(_dst, _src, _sz, _proc, _hdl)\
-               shmem_putmem_nb(_dst, _src, (size_t)_sz, _proc, _hdl)
 #       define armcill_nb_wait(_hdl)\
                shmem_wait_nb(_hdl)
 
 #       if defined (CATAMOUNT)
+
+#           define armcill_nb_put(_dst, _src, _sz, _proc, _hdl)\
+                   shmem_putmem_nb(_dst, _src, (size_t)_sz, _proc, &(_hdl))
 #           define armcill_nb_get(_dst, _src, _sz, _proc, _hdl)\
                    shmem_getmem(_dst, _src, (size_t)_sz, _proc)
 #       else
+
+#           define armcill_nb_put(_dst, _src, _sz, _proc, _hdl)\
+                   _hdl = shmem_putmem_nb(_dst, _src, (size_t)_sz, _proc, &(_hdl))
 #           define armcill_nb_get(_dst, _src, _sz, _proc, _hdl)\
-                   shmem_getmem_nb(_dst, _src, (size_t)_sz, _proc, _hdl)
+                   _hdl = shmem_getmem_nb(_dst, _src, (size_t)_sz, _proc, &(_hdl))
 #       endif
 
+#   elif defined(PORTALS)
+#       define armcill_nb_put(_dst, _src, _sz, _proc, _hdl)\
+               armci_client_direct_send(_proc, _src, _dst, _sz,\
+                                        (void **)(&(_hdl).cmpl_info),\
+                                        (_hdl).tag, mhloc, mhrem)
+#       define armcill_nb_get(_dst, _src, _sz, _proc, _hdl)\
+               armci_client_direct_get(_proc, _src, _dst, _sz,\
+                                       (void**)(&(_hdl).cmpl_info),\
+                                       (_hdl).tag, mhloc, mhrem)
+#       define armcill_nb_wait(_hdl)\
+               armci_client_complete(NULL, (_hdl).proc, (_hdl).tag, NULL, 1)
 #   endif
 
 #else
@@ -268,6 +290,9 @@
 #   if defined(GM) && defined(ACK_FENCE) 
      extern void armci_gm_fence(int p);
 #    define FENCE_NODE(p) armci_gm_fence(p)
+#   elif defined(BGML)
+#   include "bgmldefs.h"
+#   define FENCE_NODE(p) BGML_WaitProc(p)    
 #   else
 #    define FENCE_NODE(p)
 #   endif   
@@ -287,7 +312,7 @@
 
 /********* interface to fortran 1D and 2D memory copy functions ***********/
 /* dcopy2d_u_ uses explicit unrolled loops to depth 4 */
-#if   defined(AIX)
+#if   defined(AIX) || defined(NOUNDERSCORE)
 #     define DCOPY2D	dcopy2d_u
 #     define DCOPY1D	dcopy1d_u
 #elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(DECOSF)
@@ -296,6 +321,9 @@
 #elif defined(CRAY)  || defined(WIN32) || defined(HITACHI)
 #     define DCOPY2D    DCOPY2D_N
 #     define DCOPY1D    DCOPY1D_N
+#elif defined(BGML)
+#     define DCOPY2D dcopy2d_u__
+#     define DCOPY1D dcopy1d_u__
 #else
 #     define DCOPY2D	dcopy2d_u_
 #     define DCOPY1D	dcopy1d_u_
@@ -303,7 +331,7 @@
 void FATR DCOPY2D(int*, int*, void*, int*, void*, int*); 
 void FATR DCOPY1D(void*, void*, int*); 
 
-#if   defined(AIX)
+#if   defined(AIX) || defined(NOUNDERSCORE)
 #     define DCOPY21	dcopy21
 #     define DCOPY12	dcopy12
 #     define DCOPY31	dcopy31
@@ -408,8 +436,8 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
                  armci_copy(src,dst,n);\
               } else {\
               if(LAPI_Put(lapi_handle, (uint)proc, (uint)n, (dst), (src),\
-                 NULL, &ack_cntr.cntr, &cmpl_arr[proc].cntr))\
-                  ARMCI_Error("LAPI_put failed",0); else; }
+                NULL,&(ack_cntr[ARMCI_THREAD_IDX].cntr),&cmpl_arr[proc].cntr))\
+                  ARMCI_Error("LAPI_put failed",0); else;}
 
        /**** this copy is nonblocking and requires fence to complete!!! ****/
 #      define armci_get(src,dst,n,proc) \
@@ -417,7 +445,7 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
                  armci_copy(src,dst,n);\
               } else {\
               if(LAPI_Get(lapi_handle, (uint)proc, (uint)n, (src), (dst), \
-                 NULL, &get_cntr.cntr))\
+                 NULL, &(get_cntr[ARMCI_THREAD_IDX].cntr)))\
                  ARMCI_Error("LAPI_Get failed",0);else;}
 
 #      define ARMCI_NB_PUT(src,dst,n,proc,cmplt)\
@@ -442,7 +470,11 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
 #elif defined(PORTALS)
 #define armci_put ARMCI_Put
 #define armci_get ARMCI_Get
-       
+
+#elif defined(BGML)
+#define armci_get(src, dst, n, p)   ARMCI_Get(src, dst, n, p)
+#define armci_put(src, dst, n, p)   ARMCI_Put(src, dst, n, p)
+
 #else
 
 #      define armci_get(src,dst,n,p)    armci_copy((src),(dst),(n))

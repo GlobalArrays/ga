@@ -47,18 +47,25 @@ void buffer_init(buf_context_t *ctxt, int nbuf, int buf_size, void (*fptr)(char*
 
   /* get buffer memory */
   for (i = 0; i < nbuf; i++) {
-    ctxt->buf[i].buffer = (char*) malloc((buf_size + ALIGN-1) * sizeof(double));
+    ctxt->buf[i].buffer = (char*) malloc((buf_size + ALIGN-1) *sizeof(double));
     
     if (ctxt->buf[i].buffer == NULL) {
       printf("Could not allocate memory for buffers!\n");
       return;
     }
     bzero(ctxt->buf[i].buffer, sizeof(ctxt->buf[i].buffer));
+    
     /* align buffer address */
     diff = ((long)(ctxt->buf[i].buffer)) % (sizeof(double)*ALIGN);
-    ctxt->buf[i].align_off = (int) (sizeof(double)*ALIGN - diff);
-    if(diff)
-      ctxt->buf[i].buffer += ctxt->buf[i].align_off;
+    if(diff) 
+    {
+       ctxt->buf[i].align_off = (int) (sizeof(double)*ALIGN - diff);
+    } else 
+    {
+       ctxt->buf[i].align_off = (int) 0;
+    }
+    ctxt->buf[i].buffer += ctxt->buf[i].align_off;
+      
   }
 #endif
   for (i = 0; i < nbuf; i++) {

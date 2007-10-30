@@ -213,6 +213,10 @@ fill_func (int nelem, int type, void *buf)
       for (i = 0; i < 2 * nelem; i++)
 	((double *) buf)[i] = (double) ifun (i);
       break;
+    case C_SCPL:
+      for (i = 0; i < 2 * nelem; i++)
+	((float *) buf)[i] = (float) ifun (i);
+      break;
     case C_INT:
       for (i = 0; i < nelem; i++)
 	((int *) buf)[i] = ifun (i);
@@ -247,6 +251,10 @@ fill_func2 (int nelem, int type, void *buf)
     case C_DCPL:
       for (i = 0; i < 2 * nelem; i++)
 	((double *) buf)[i] = (double) ifun2 (i);
+      break;
+    case C_SCPL:
+      for (i = 0; i < 2 * nelem; i++)
+	((float *) buf)[i] = (float) ifun2 (i);
       break;
     case C_INT:
       for (i = 0; i < nelem; i++)
@@ -287,6 +295,15 @@ fill_func3 (int nelem, int type, void *buf)
 	    sqrt ((double)
 		  (ifun (i) * ifun (i) + ifun (i + 1) * ifun (i + 1)));
 	  ((double *) buf)[i + 1] = 0.0;
+	}
+      break;
+    case C_SCPL:
+      for (i = 0; i < 2 * nelem - 1; i = i + 2)
+	{
+	  ((float *) buf)[i] =
+	    sqrt ((float)
+		  (ifun (i) * ifun (i) + ifun (i + 1) * ifun (i + 1)));
+	  ((float *) buf)[i + 1] = 0.0;
 	}
       break;
     case C_INT:
@@ -334,6 +351,7 @@ test_fun (int type, int dim, int OP)
   float fval = -2.0;
   long lval = -2;
   DoubleComplex dcval;
+  SingleComplex fcval;
   void *val2;
   void *val4;
   int ival2 = -3;
@@ -351,14 +369,22 @@ test_fun (int type, int dim, int OP)
   DoubleComplex dcval5;
   DoubleComplex dcval6;
   DoubleComplex dcval7;
+  SingleComplex fcval2;
+  SingleComplex fcval3;
+  SingleComplex fcval4;
+  SingleComplex fcval5;
+  SingleComplex fcval6;
+  SingleComplex fcval7;
   void *vresult;
   int ivresult;
   double dvresult;
   float fvresult;
   long lvresult;
   DoubleComplex dcvresult;
+  SingleComplex fcvresult;
   void *bvresult;
   DoubleComplex dcbvresult;
+  SingleComplex fcbvresult;
   int ok = 1;
   int result,result2, result3;
   void *max;
@@ -367,10 +393,13 @@ test_fun (int type, int dim, int OP)
   long lmax;
   double dmax;
   DoubleComplex dcmax;
+  SingleComplex fcmax;
   void *max2;
   DoubleComplex dcmax2;
+  SingleComplex fcmax2;
   void *max3;
   DoubleComplex dcmax3;
+  SingleComplex fcmax3;
 
   void *alpha, *beta;
   int ai = 1, bi = -1;
@@ -378,7 +407,9 @@ test_fun (int type, int dim, int OP)
   float af = 1.0, bf = -1.0;
   double ad = 1.0, bd = -1.0;
   DoubleComplex adc, bdc;
+  SingleComplex afc, bfc;
   double x1, x2, x3, x4;
+  float fx1, fx2, fx3, fx4;
   void    *resultx;
   long    resultl,aresultl;
   double  resultd,aresultd;
@@ -390,8 +421,13 @@ test_fun (int type, int dim, int OP)
   bdc.real = -1.0;
   bdc.imag = 0.0;
 
-  needs_scaled_result = 0;
+  afc.real = 1.0;
+  afc.imag = 0.0;
+  bfc.real = -1.0;
+  bfc.imag = 0.0;
 
+  needs_scaled_result = 0;
+  
   dcval.real = -sin (3.0);
   dcval.imag = -cos (3.0);
   dcval2.real = 2 * sin (3.0);
@@ -406,26 +442,42 @@ test_fun (int type, int dim, int OP)
   dcval6.imag = dcval3.real;
   dcval7.real = dcval4.imag;
   dcval7.imag = dcval4.real;
-
-  proc_cnt = 1;
+  
+  fcval.real = -sin (3.0);
+  fcval.imag = -cos (3.0);
+  fcval2.real = 2 * sin (3.0);
+  fcval2.imag = 2 * cos (3.0);
+  fcval3.real = fcval.real*1.0e200;
+  fcval3.imag = fcval.imag*1.0e200;
+  fcval4.real = fcval2.real*1.0e200;
+  fcval4.imag = fcval2.imag*1.0e200;
+  fcval5.real = 5.0;
+  fcval5.imag = 0.0;
+  fcval6.real = fcval3.imag;
+  fcval6.imag = fcval3.real;
+  fcval7.real = fcval4.imag;
+  fcval7.imag = fcval4.real;
+  
+  
+  proc_cnt=1;
   for (i = 0; i < dim; i++) {
-    dims[i] = N;
-    block_size[i] = BLOCK_SIZE;
-    if (i<dim-1 && proc_cnt < GA_Nnodes()) {
-      proc_grid[i] = 2;
-      proc_cnt *= 2;
-    } else if (proc_cnt >= GA_Nnodes()) {
-      proc_grid[i] = 1;
-    } else {
-      proc_grid[i] = GA_Nnodes()/proc_cnt;
-    }
+     dims[i] = N;
+     block_size[i] = BLOCK_SIZE;
+     if (i<dim-1 && proc_cnt < GA_Nnodes()) {
+        proc_grid[i] = 2;
+        proc_cnt *= 2;
+     } else if (proc_cnt >= GA_Nnodes()) {
+        proc_grid[i] = 1;
+     } else {
+        proc_grid[i] = GA_Nnodes()/proc_cnt;
+     }
   }
 
   for (i = 0; i < dim; i++)
-    {
-      lo[i] = 0;
-      hi[i] = N - 1;
-    }
+  {
+     lo[i] = 0;
+     hi[i] = N - 1;
+  }
 #if BLOCK_CYCLIC
   g_a = GA_Create_handle();
   GA_Set_data(g_a,dim,dims,type);
@@ -530,6 +582,15 @@ test_fun (int type, int dim, int OP)
       vresult = &dcvresult;
       bvresult = &dcbvresult;
       break;
+    case C_SCPL:
+      val = &fcval;
+      val2 = &fcval2;
+      val3 = &fcval3;
+      val4 = &fcval4;
+      val5 = &fcval5;
+      vresult = &fcvresult;
+      bvresult = &fcbvresult;
+      break;
 
     case C_DBL:
       val = &dval;
@@ -573,6 +634,9 @@ test_fun (int type, int dim, int OP)
     {
       double tmp, tmp2;
       DoubleComplex dctemp;
+
+      float  tmpf, tmp2f;
+      SingleComplex fctemp;
     case OP_ABS:
       if (me == 0)
 	printf ("Testing GA_Abs_value...");
@@ -581,6 +645,7 @@ test_fun (int type, int dim, int OP)
       dvresult = ABS (dval);
       fvresult = ABS (fval);
       lvresult = ABS (lval);
+      
       if (ABS(dcval.real) >= ABS(dcval.imag)) {
 	if (dcval.real == (double)0.0) {
 	  dcvresult.real = (double)0.0;
@@ -594,6 +659,7 @@ test_fun (int type, int dim, int OP)
       }
       dcvresult.imag = 0.0;
       NGA_Fill_patch (g_d, lo, hi, vresult);
+      
       if (type == C_DCPL) {
         needs_scaled_result = 1;
 	NGA_Fill_patch(g_f,lo,hi,val3);
@@ -626,6 +692,38 @@ test_fun (int type, int dim, int OP)
 	}
 	NGA_Fill_patch (g_n, lo, hi, bvresult);
       }
+      if (type == C_SCPL) {
+        needs_scaled_result = 1;
+	NGA_Fill_patch(g_f,lo,hi,val3);
+	GA_Abs_value_patch (g_f, lo, hi);
+	if (ABS(fcval3.real) >= ABS(fcval3.imag)) {
+	  if (fcval3.real == (float )0.0) {
+	    fcbvresult.real = (float )0.0;
+	  } else {
+	    fx1 = fcval3.imag/fcval3.real;
+	    fcbvresult.real = ABS(fcval3.real)*sqrt(((float)1.0)+(fx1*fx1));
+	  }
+	} else {
+	  fx1 = fcval3.real/fcval3.imag;
+	  fcbvresult.real = ABS(fcval3.imag)*sqrt(((float)1.0)+(fx1*fx1));
+	}
+	fcbvresult.imag = (float)0.0;
+	NGA_Fill_patch (g_i, lo, hi, bvresult);
+	NGA_Fill_patch(g_k,lo,hi,&dcval6);
+	GA_Abs_value_patch (g_k, lo, hi);
+	if (ABS(fcval6.real) >= ABS(fcval6.imag)) {
+	  if (fcval6.real == (float)0.0) {
+	    fcbvresult.real = (float)0.0;
+	  } else {
+	    fx1 = fcval6.imag/fcval6.real;
+	    fcbvresult.real = ABS(fcval6.real)*sqrt(((float)1.0)+(fx1*fx1));
+	  }
+	} else {
+	  fx1 = fcval6.real/fcval6.imag;
+	  fcbvresult.real = ABS(fcval6.imag)*sqrt(((float)1.0)+(fx1*fx1));
+	}
+	NGA_Fill_patch (g_n, lo, hi, bvresult);
+      }
       break;
     case OP_ADD_CONST:
       if (me == 0)
@@ -637,6 +735,8 @@ test_fun (int type, int dim, int OP)
       lvresult = lval + lval2;
       dcvresult.real = dcval.real + dcval2.real;
       dcvresult.imag = dcval.imag + dcval2.imag;
+      fcvresult.real = fcval.real + fcval2.real;
+      fcvresult.imag = fcval.imag + fcval2.imag;
       NGA_Fill_patch (g_d, lo, hi, vresult);
       break;
     case OP_RECIP:
@@ -647,6 +747,7 @@ test_fun (int type, int dim, int OP)
       dvresult = ((double)1.0) / dval;
       fvresult = ((float)1.0) / fval;
       lvresult = ((long)1) / lval;
+      
       if (ABS(dcval.real) >= ABS(dcval.imag)) {
 	if (dcval.real != (double)0.0) {
 	  tmp = dcval.imag/dcval.real;
@@ -663,6 +764,7 @@ test_fun (int type, int dim, int OP)
 	dcvresult.imag = -tmp2;
       }
       NGA_Fill_patch (g_d, lo, hi, vresult);
+      
       if (type == C_DCPL) {
         needs_scaled_result = 1;
 	NGA_Fill_patch (g_f, lo, hi, val3);
@@ -702,14 +804,51 @@ test_fun (int type, int dim, int OP)
 	}
 	NGA_Fill_patch (g_n, lo, hi, bvresult);
       }
+      if (type == C_SCPL) {
+        needs_scaled_result = 1;
+	NGA_Fill_patch (g_f, lo, hi, val3);
+	GA_Recip_patch (g_f, lo, hi);
+	if (ABS(fcval3.real) >= ABS(fcval3.imag)) {
+	  if (fcval3.real == (float )0.0) {
+	    printf("Error testing GA_Recip, fcval3.real = 0.0\n");
+	  } else {
+	    tmpf = fcval3.imag/fcval3.real;
+	    tmp2f = ((float)1.0)/((((float)1.0)+(tmpf*tmpf))*fcval3.real);
+            fcbvresult.real = tmp2f;
+	    fcbvresult.imag = -tmpf * tmp2f;
+	  }
+	} else {
+	  tmpf = fcval3.real/fcval3.imag;
+	  tmp2f = ((float)1.0)/((((float)1.0)+(tmpf*tmpf))*fcval3.imag);
+	  fcbvresult.real = tmpf * tmp2f;
+	  fcbvresult.imag = -tmp2f;
+	}
+	NGA_Fill_patch (g_i, lo, hi, bvresult);
+	NGA_Fill_patch(g_k,lo,hi,&dcval6);
+	GA_Recip_patch (g_k, lo, hi);
+	if (ABS(fcval6.real) >= ABS(fcval6.imag)) {
+	  if (fcval6.real == (float)0.0) {
+	    printf("Error testing GA_Recip, fcval6.real = 0.0\n");
+	  } else {
+	    tmpf = fcval6.imag/fcval6.real;
+	    tmp2f = ((float)1.0)/((((float)1.0)+(tmpf*tmpf))*fcval6.real);
+            fcbvresult.real = tmp2f;
+	    fcbvresult.imag = -tmpf * tmp2f;
+	  }
+	} else {
+	  tmpf = fcval6.real/fcval6.imag;
+	  tmp2f = ((float)1.0)/((((float)1.0)+(tmpf*tmpf))*fcval6.imag);
+	  fcbvresult.real = tmpf * tmp2f;
+	  fcbvresult.imag = -tmp2f;
+	}
+	NGA_Fill_patch (g_n, lo, hi, bvresult);
+      }
       break;
     case OP_ELEM_MULT:
       if (me == 0)
 	printf ("Testing GA_Elem_multiply...");
-      /*printf("p[%d] filling patch(g_b)\n",me); */
       NGA_Fill_patch (g_b, lo, hi, val2);
       /* g_c is different from g_a or g_b*/
-      /* printf("p[%d] multiply patch\n",me); */
       GA_Elem_multiply_patch (g_a, lo, hi, g_b, lo, hi, g_c, lo, hi);
 
       ivresult = ival * ival2;
@@ -718,9 +857,7 @@ test_fun (int type, int dim, int OP)
       lvresult = lval * lval2;
       dcvresult.real = dcval.real * dcval2.real - dcval.imag * dcval2.imag;
       dcvresult.imag = dcval.real * dcval2.imag + dcval2.real * dcval.imag;
-      /* printf("p[%d] filling patch(g_d)\n",me); */
       NGA_Fill_patch (g_d, lo, hi, vresult);
-      /* printf("p[%d] done...\n",me); */
       break;
     case OP_ELEM_DIV:
       if (me == 0)
@@ -733,6 +870,7 @@ test_fun (int type, int dim, int OP)
       lvresult = lval / lval2;
       dcvresult.real = 0.0;
       dcvresult.imag = 0.0;
+      
       if (ABS(dcval2.real) >= ABS(dcval2.imag)) {
 	if (dcval2.real != (double)0.0) {
 	  tmp = dcval2.imag/dcval2.real;
@@ -749,6 +887,7 @@ test_fun (int type, int dim, int OP)
 	dcvresult.imag = (dcval.imag*tmp - dcval.real)*tmp2;
       }
       NGA_Fill_patch (g_d, lo, hi, vresult);
+      
       if (type == C_DCPL) {
         needs_scaled_result = 1;
 	NGA_Fill_patch (g_f, lo, hi, val3);
@@ -791,6 +930,51 @@ test_fun (int type, int dim, int OP)
 	  tmp2 = ((double)1.0)/(dcval7.imag*(((double)1.0)+(tmp*tmp)));
 	  dcbvresult.real = (dcval6.real*tmp + dcval6.imag)*tmp2;
 	  dcbvresult.imag = (dcval6.imag*tmp - dcval6.real)*tmp2;
+	}
+	NGA_Fill_patch (g_n, lo, hi, bvresult);
+      }
+      if (type == C_SCPL) {
+        needs_scaled_result = 1;
+	NGA_Fill_patch (g_f, lo, hi, val3);
+	NGA_Fill_patch (g_g, lo, hi, val4);
+	GA_Elem_divide_patch (g_f, lo, hi, g_g, lo, hi, g_h, lo, hi);
+	fcbvresult.real = (float)0.0;
+	fcbvresult.imag = (float)0.0;
+	if (ABS(fcval4.real) >= ABS(fcval4.imag)) {
+	  if (fcval4.real != (float)0.0) {
+	    tmpf = fcval4.imag/fcval4.real;
+	    tmp2f = ((float)1.0)/(fcval4.real*(((float)1.0)+(tmpf*tmpf)));
+	    fcbvresult.real = (fcval3.real + fcval3.imag*tmpf)*tmp2f;
+	    fcbvresult.imag = (fcval3.imag - fcval3.real*tmpf)*tmp2f;
+	  } else {
+	    printf("Error in testing GA_Elem_divide fcval4 = 0.0\n");
+	  } 
+	} else {
+	  tmpf = fcval4.real/fcval4.imag;
+	  tmp2f = ((float)1.0)/(fcval4.imag*(((float)1.0)+(tmpf*tmpf)));
+	  fcbvresult.real = (fcval3.real*tmpf + fcval3.imag)*tmp2f;
+	  fcbvresult.imag = (fcval3.imag*tmpf - fcval3.real)*tmp2f;
+	}
+	NGA_Fill_patch (g_i, lo, hi, bvresult);
+	NGA_Fill_patch (g_k, lo, hi, &dcval6);
+	NGA_Fill_patch (g_l, lo, hi, &dcval7);
+	GA_Elem_divide_patch (g_k, lo, hi, g_l, lo, hi, g_m, lo, hi);
+	fcbvresult.real = (float)0.0;
+	fcbvresult.imag = (float)0.0;
+	if (ABS(fcval7.real) >= ABS(fcval7.imag)) {
+	  if (fcval7.real != (float)0.0) {
+	    tmpf = fcval7.imag/fcval7.real;
+	    tmp2f = ((float)1.0)/(fcval7.real*(((float)1.0)+(tmpf*tmpf)));
+	    fcbvresult.real = (fcval6.real + fcval6.imag*tmpf)*tmp2f;
+	    fcbvresult.imag = (fcval6.imag - fcval6.real*tmpf)*tmp2f;
+	  } else {
+	    printf("Error in testing GA_Elem_divide fcval7 = 0.0\n");
+	  } 
+	} else {
+	  tmpf = fcval7.real/fcval7.imag;
+	  tmp2f = ((float)1.0)/(fcval7.imag*(((float)1.0)+(tmpf*tmpf)));
+	  fcbvresult.real = (fcval6.real*tmpf + fcval6.imag)*tmp2f;
+	  fcbvresult.imag = (fcval6.imag*tmpf - fcval6.real)*tmp2f;
 	}
 	NGA_Fill_patch (g_n, lo, hi, bvresult);
       }
@@ -900,49 +1084,49 @@ test_fun (int type, int dim, int OP)
 	}
       }
       NGA_Fill_patch (g_d, lo, hi, vresult);
-      if (type == C_DCPL) {
+      if (type == C_SCPL) {
         needs_scaled_result = 1;
 	NGA_Fill_patch (g_f, lo, hi, val3);
 	NGA_Fill_patch (g_g, lo, hi, val4);
 	GA_Elem_minimum_patch (g_f, lo, hi, g_g, lo, hi, g_h, lo, hi);
-	tmp  = MAX(ABS(dcval3.real),ABS(dcval3.imag));
-	tmp2 = MAX(ABS(dcval4.real),ABS(dcval4.imag));
-	tmp  = MAX(tmp,tmp2);
-	dcvresult.real = dcval3.real;
-	dcvresult.imag = dcval3.imag;
-	if (tmp != 0.0) {
-	  tmp = ((double)1.0)/tmp;
-	  x1 = dcval3.real*tmp;
-	  x2 = dcval3.imag*tmp;
-	  x3 = dcval4.real*tmp;
-	  x4 = dcval4.imag*tmp;
-	  tmp = x1*x1 + x2*x2;
-	  tmp2 = x3*x3 + x4*x4;
-	  if (tmp2 < tmp) {
-	    dcvresult.real = dcval4.real;
-	    dcvresult.imag = dcval4.imag;
+	tmpf  = MAX(ABS(fcval3.real),ABS(fcval3.imag));
+	tmp2f = MAX(ABS(fcval4.real),ABS(fcval4.imag));
+	tmpf  = MAX(tmpf,tmp2f);
+	fcvresult.real = fcval3.real;
+	fcvresult.imag = fcval3.imag;
+	if (tmpf != 0.0) {
+	  tmpf = ((float)1.0)/tmpf;
+	  fx1 = fcval3.real*tmpf;
+	  fx2 = fcval3.imag*tmpf;
+	  fx3 = fcval4.real*tmpf;
+	  fx4 = fcval4.imag*tmpf;
+	  tmpf = fx1*fx1 + fx2*fx2;
+	  tmp2f = fx3*fx3 + fx4*fx4;
+	  if (tmp2f < tmpf) {
+	    fcvresult.real = fcval4.real;
+	    fcvresult.imag = fcval4.imag;
 	  }
 	}
 	NGA_Fill_patch (g_i, lo, hi, vresult);
 	NGA_Fill_patch (g_k, lo, hi, &dcval6);
 	NGA_Fill_patch (g_l, lo, hi, &dcval7);
 	GA_Elem_minimum_patch (g_k, lo, hi, g_l, lo, hi, g_m, lo, hi);
-	tmp  = MAX(ABS(dcval6.real),ABS(dcval6.imag));
-	tmp2 = MAX(ABS(dcval7.real),ABS(dcval7.imag));
-	tmp  = MAX(tmp,tmp2);
-	dcvresult.real = dcval6.real;
-	dcvresult.imag = dcval6.imag;
-	if (tmp != 0.0) {
-	  tmp = ((double)1.0)/tmp;
-	  x1 = dcval6.real*tmp;
-	  x2 = dcval6.imag*tmp;
-	  x3 = dcval7.real*tmp;
-	  x4 = dcval7.imag*tmp;
-	  tmp = x1*x1 + x2*x2;
-	  tmp2 = x3*x3 + x4*x4;
-	  if (tmp2 < tmp) {
-	    dcvresult.real = dcval7.real;
-	    dcvresult.imag = dcval7.imag;
+	tmpf  = MAX(ABS(fcval6.real),ABS(fcval6.imag));
+	tmp2f = MAX(ABS(fcval7.real),ABS(fcval7.imag));
+	tmpf  = MAX(tmpf,tmp2f);
+	fcvresult.real = fcval6.real;
+	fcvresult.imag = fcval6.imag;
+	if (tmpf != 0.0) {
+	  tmpf = ((float)1.0)/tmpf;
+	  fx1 = fcval6.real*tmpf;
+	  fx2 = fcval6.imag*tmpf;
+	  fx3 = fcval7.real*tmpf;
+	  fx4 = fcval7.imag*tmpf;
+	  tmpf = fx1*fx1 + fx2*fx2;
+	  tmp2f = fx3*fx3 + fx4*fx4;
+	  if (tmp2f < tmpf) {
+	    fcvresult.real = fcval7.real;
+	    fcvresult.imag = fcval7.imag;
 	  }
 	}
 	NGA_Fill_patch (g_n, lo, hi, vresult);
@@ -951,7 +1135,7 @@ test_fun (int type, int dim, int OP)
     case OP_STEP_MAX:
       if (me == 0)
 	printf ("Testing GA_Step_max...");
-      if (type != C_DCPL) {
+      if (type != C_DCPL || type != C_SCPL) {
       	/*NGA_Fill_patch (g_b, lo, hi, val2);*/
       	GA_Abs_value_patch (g_b, lo, hi);
       	GA_Step_max_patch (g_b, lo, hi, g_j, lo, hi, resultx);
@@ -974,7 +1158,7 @@ test_fun (int type, int dim, int OP)
     case OP_STEP_BOUND_INFO:
       if (me == 0)
 	printf ("Testing GA_Step_bound_info...");
-      if (type != C_DCPL) {
+      if (type != C_DCPL || type != C_SCPL) {
       	/*NGA_Fill_patch (g_b, lo, hi, val2);*/
       	GA_Abs_value_patch (g_b, lo, hi);
       	GA_Abs_value_patch (g_a, lo, hi);
@@ -1030,6 +1214,11 @@ test_fun (int type, int dim, int OP)
       beta = &bdc;
       break;
 
+    case C_SCPL:
+      alpha = &afc;
+      beta = &bfc;
+      break;
+
     case C_DBL:
       alpha = &ad;
       beta = &bd;
@@ -1082,6 +1271,11 @@ test_fun (int type, int dim, int OP)
       max2 = &dcmax2;
       max3 = &dcmax3;
       break;
+    case C_SCPL:
+      max = &fcmax;
+      max2 = &fcmax2;
+      max3 = &fcmax3;
+      break;
     case C_DBL:
       max = &dmax;
       break;
@@ -1115,6 +1309,7 @@ test_fun (int type, int dim, int OP)
     switch (type)
       {
   	double r, im, tmp;
+  	float rf, imf, tmpf;
       case C_INT:
   	/*      result = (int)(imax - imin);*/
   	result = imax;
@@ -1151,6 +1346,37 @@ test_fun (int type, int dim, int OP)
 	  result = result | result2 | result3;
   	}
   	break;
+      case C_SCPL:
+  	/*
+  	rf = fcmax.real - fcmin.real;
+  	imf = fcmax.imag - fcmin.imag;
+  	*/
+  	rf = fcmax.real;
+  	imf = fcmax.imag;
+  	if ((ABS(rf) + ABS(imf)) == (float)0.0) {
+ 	  result = 0;
+  	} else {
+ 	  result = 1;
+  	}
+  	if (needs_scaled_result == 1) {
+	  result2 = 0;
+ 	  rf = fcmax2.real;
+ 	  imf = fcmax2.imag;
+ 	  if ((ABS(rf) + ABS(imf)) == (float)0.0) {
+ 	    result2 = 0;
+ 	  } else {
+ 	    result2 = 1;
+ 	  }
+ 	  rf = fcmax3.real;
+ 	  imf = fcmax3.imag;
+ 	  if ((ABS(rf) + ABS(imf)) == (float)0.0) {
+ 	    result3 = 0;
+ 	  } else {
+ 	    result3 = 1;
+ 	  }
+	  result = result | result2 | result3;
+  	}
+  	break;
       case C_DBL:
   	if (dmax == (double)0.0) {
  	  result = 0;
@@ -1179,7 +1405,7 @@ test_fun (int type, int dim, int OP)
     /*
       A reduction operation, Step_max or Step_bound_info.
     */
-    if (type == C_DCPL) {
+    if (type == C_DCPL || type == C_SCPL) {
       result = 0;
     } else {
       if (OP == OP_STEP_MAX) {
@@ -1361,7 +1587,7 @@ main (argc, argv)
     GA_Error ("MA_init failed", stack + heap);	/* initialize memory allocator */
 
 
-  /* op = 9;*/
+  /* op = 8;*/
   for (op = 0; op < 9; op++)
     {
       /*for (d = 1; d < 2; d++)*/
@@ -1383,7 +1609,7 @@ main (argc, argv)
 	  ok = test_fun (C_LONG, d, op);
 	  if (op < 7) {
 	    if (me == 0)
-	      printf ("\ndata type: complex\t");
+	      printf ("\ndata type: double complex\t");
 	    ok = test_fun (C_DCPL, d, op);
 	  }
 	}
@@ -1477,6 +1703,22 @@ void FATR nga_vfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
                     for(j=0; j<(hiA[0]-loA[0]+1); j++) {
                         ((DoubleComplex *)data_ptr)[idx+j].real = (double)(idx+j);
                         ((DoubleComplex *)data_ptr)[idx+j].imag = (double)(idx+j);
+                    }
+                }
+                
+                break;
+            case C_SCPL:
+                for(i=0; i<n1dim; i++) {
+                    idx = 0;
+                    for(j=1; j<ndim; j++) {
+                        idx += bvalue[j] * baseld[j-1];
+                        if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+                        if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+                    }
+                    
+                    for(j=0; j<(hiA[0]-loA[0]+1); j++) {
+                        ((SingleComplex *)data_ptr)[idx+j].real = (float)(idx+j);
+                        ((SingleComplex *)data_ptr)[idx+j].imag = (float)(idx+j);
                     }
                 }
                 
@@ -1582,7 +1824,21 @@ void ngai_do_pnfill_patch(Integer type, Integer ndim, Integer *loA, Integer *hiA
           ((DoubleComplex *)data_ptr)[idx+j].imag = (double)(((idx+j)&3)-2);
         }
       }
+      break;
+    case C_SCPL:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseld[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+        }
 
+        for(j=0; j<(hiA[0]-loA[0]+1); j++) {
+          ((SingleComplex *)data_ptr)[idx+j].real = (float)(((idx+j)&3)-2);
+          ((SingleComplex *)data_ptr)[idx+j].imag = (float)(((idx+j)&3)-2);
+        }
+      }
       break;
     case C_DBL:
       for(i=0; i<n1dim; i++) {
@@ -1718,6 +1974,9 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
               case C_DCPL:
                 data_ptr = (void*)((double*)data_ptr + 2*offset);
                 break;
+              case C_SCPL:
+                data_ptr = (void*)((float*)data_ptr + 2*offset);
+                break;
               case C_DBL:
                 data_ptr = (void*)((double*)data_ptr + offset);
                 break;
@@ -1793,6 +2052,9 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
                 break;
               case C_DCPL:
                 data_ptr = (void*)((double*)data_ptr + 2*offset);
+                break;
+              case C_SCPL:
+                data_ptr = (void*)((float*)data_ptr + 2*offset);
                 break;
               case C_DBL:
                 data_ptr = (void*)((double*)data_ptr + offset);

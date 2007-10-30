@@ -33,10 +33,10 @@ typedef struct{
 
 
 extern lapi_cmpl_t *cmpl_arr;	/* completion state array, dim=NPROC */
-extern lapi_cmpl_t  ack_cntr;	/* ACK counter used in handshaking protocols
+extern lapi_cmpl_t *ack_cntr;	/* ACK counter used in handshaking protocols
 				   between origin and target */
 extern lapi_cmpl_t  buf_cntr;	/* AM data buffer counter    */
-extern lapi_cmpl_t  get_cntr;	/* lapi_get counter    */
+extern lapi_cmpl_t *get_cntr;	/* lapi_get counter    */
 extern lapi_cmpl_t  hdr_cntr;	/* AM header buffer counter  */
 extern int intr_status;
 
@@ -85,14 +85,14 @@ extern void armci_lapi_send(msg_tag_t, void*, int, int); /* LAPI send */
 int _val_;\
     if(LAPI_Waitcntr(lapi_handle,&(counter).cntr, (counter).val, &_val_))\
              armci_die("LAPI_Waitcntr failed",-1);\
-    if(_val_ != 0) armci_die2("CLEAR_COUNTER: nonzero in file " ## __FILE__,__LINE__,_val_);\
+    if(_val_ != 0) armci_die("CLEAR_COUNTER: nonzero in file ", _val_);\
     (counter).val = 0;  \
 }
 
 
 #define INIT_COUNTER(counter,_val) {\
      int _rc = LAPI_Setcntr(lapi_handle, &(counter).cntr, 0);\
-     if(_rc)armci_die2("INIT_COUNTER:setcntr failed " ##__FILE__,__LINE__,_rc);\
+     if(_rc)armci_die("INIT_COUNTER:setcntr failed ", _rc);\
      (counter).val = (_val);\
 }
 
@@ -118,7 +118,7 @@ int _val_;\
 #define PENDING_OPER(p) cmpl_arr[(p)].oper
 
 
-#define WAIT_FOR_GETS CLEAR_COUNTER(get_cntr)
-#define WAIT_FOR_PUTS CLEAR_COUNTER(ack_cntr)
+#define WAIT_FOR_GETS CLEAR_COUNTER(get_cntr[ARMCI_THREAD_IDX])
+#define WAIT_FOR_PUTS CLEAR_COUNTER(ack_cntr[ARMCI_THREAD_IDX])
 
 #endif

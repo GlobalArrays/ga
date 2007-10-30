@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.36 2006-10-12 17:34:47 vinod Exp $ */
+/* $Id: clusterinfo.c,v 1.37 2007-10-30 02:04:53 manoj Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -49,9 +49,9 @@
 #elif defined(VIA)
     static char *network_protocol="VIA";
 #elif defined(MELLANOX)
-    static char *network_protocol="Mellanox VAPI";
+    static char *network_protocol="Mellanox Verbs API";
 #elif defined(OPENIB)
-    static char *network_protocol="OpenIB verbs";
+    static char *network_protocol="OpenIB Verbs API";
 #elif defined(DOELAN4)
     static char *network_protocol="Quadrics ELAN-4";
 #elif defined(QUADRICS)
@@ -330,6 +330,7 @@ void armci_init_clusinfo()
   char name[MAX_HOSTNAME], *merged;
   int  len, limit, rc;
   char *tmp;
+  char *enval;
 
   if((tmp =getenv("ARMCI_HOSTNAME")) == NULL){
     limit = MAX_HOSTNAME-1;
@@ -344,8 +345,17 @@ void armci_init_clusinfo()
       printf("%d using %s hostname\n",armci_me, name);
       fflush(stdout);
   }
-  
   len =  strlen(name);
+#ifdef ARMCI_ENABLE_GPC_CALLS
+  /*a simple way to run as many servers as compute processes*/ 
+  enval = getenv("ARMCI_NSERV_EQ_NPROC");
+  if(enval != NULL){
+    sprintf(name+len,"n%d",getpid());
+    len =  strlen(name);
+    printf("\n%s\n",name);
+  }
+#endif
+
 
 #ifdef HOSTNAME_TRUNCATE
   {    

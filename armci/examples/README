@@ -1,3 +1,29 @@
-This directory contains example programs using ARMCI
-At present time, SPLASH-2 LU factorization on top of ARMCI
-is included (lu.c).
+ARMCI EXAMPLES
+
+Introduction:
+  The benchmarks directory has some armci benchmarks
+  
+  The features directory has examples and notes on each of the features
+  listed below
+   1. aggregation
+   2. gpc
+   3. non-blocking
+   4. proc_affinity
+   5. concurrency
+   6. notification
+   7. symmetric_memory
+  This is the best place to start to understand the features 
+
+Compiling:
+  The examples directory assumes armci src to be at examples/../src and
+  armci libraries to be at examples/../lib/OS.
+  To change where armci src is, modify the file examples_config.h
+  Compiling can be done with a make command. A make in a top level 
+  directory makes all sub level directories unless something is chosen 
+  specifically.
+  For eg. a `make` in features make all the features where as a `make gpc`
+  in the features directory makes only gpc examples.
+
+Execution:
+  Any example that expects an input also has a readme in its directory 
+  explaining how to use it

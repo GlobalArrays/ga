@@ -24,6 +24,14 @@
 #   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
 #   define MP_TIMER          TCGTIME_
 #else
+#if defined(BGML)
+#   define MP_BARRIER()      armci_msg_barrier()
+       #   define MP_FINALIZE()     
+       #   define MP_INIT(arc,argv) 
+       #   define MP_MYID(pid)      *(pid)=armci_msg_me()
+       #   define MP_PROCS(pproc)   *(pproc)=armci_msg_nproc()
+       #   define MP_TIMER armci_timer
+#else
 #   include <mpi.h>
 #   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
 #   define MP_FINALIZE()     MPI_Finalize()
@@ -31,5 +39,6 @@
 #   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
 #   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc))
 #   define MP_TIMER          MPI_Wtime
+#endif
 #endif
 

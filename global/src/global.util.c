@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.48 2004-10-20 17:27:20 vinod Exp $*/
+/*$Id: global.util.c,v 1.49 2007-10-30 02:04:58 manoj Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -65,6 +65,7 @@ int ibuf[BUFSIZE];
 DoublePrecision  dbuf[BUFSIZE];
 float fbuf[BUFSIZE]; 
 long lbuf[BUFSIZE]; 
+long long llbuf[BUFSIZE]; 
 char *name;
 
   a_grp = ga_get_pgroup_(g_a);
@@ -85,6 +86,7 @@ char *name;
              name, *ilo, *ihi, *jlo, *jhi, (int)*g_a);
 
      bufsize = (type==C_DCPL)? BUFSIZE/2 : BUFSIZE;
+     bufsize = (type==C_SCPL)? BUFSIZE/2 : BUFSIZE;
 
 
      if (!*pretty) {
@@ -109,6 +111,11 @@ char *name;
                    for(jj=0; jj<(jmax-j+1); jj+=2)
                      fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
                    break;
+              case C_SCPL:
+                   ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
+                   for(jj=0; jj<(jmax-j+1); jj+=2)
+                     fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
+                   break;
               case C_FLOAT:
                    ga_get_(g_a, &i, &i, &j, &jmax, fbuf, &ld);
                    for(jj=0; jj<(jmax-j+1); jj++)
@@ -118,7 +125,12 @@ char *name;
                    ga_get_(g_a, &i, &i, &j, &jmax, lbuf, &ld);
                    for(jj=0; jj<(jmax-j+1); jj++)
                      fprintf(file," %8ld",lbuf[jj]);
-                   break; 
+                   break;
+              case C_LONGLONG:
+                   ga_get_(g_a, &i, &i, &j, &jmax, llbuf, &ld);
+                   for(jj=0; jj<(jmax-j+1); jj++)
+                     fprintf(file," %8lld",llbuf[jj]);
+                   break;
               default: ga_error("ga_print: wrong type",0);
            }
          }
@@ -139,11 +151,17 @@ char *name;
            switch(type){
               case C_INT:
               case C_LONG:  
+              case C_LONGLONG:  
                    for (jj=j; jj<=jmax; jj++) fprintf(file, "%6ld  ", jj);
                    fprintf(file,"\n      ");
                    for (jj=j; jj<=jmax; jj++) fprintf(file," -------");
                    break;
               case C_DCPL:
+                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%20ld    ", jj);
+                   fprintf(file,"\n      ");
+                   for (jj=j; jj<=2*jmax; jj++) fprintf(file," -----------");
+                   break;
+              case C_SCPL:
                    for (jj=j; jj<=jmax; jj++) fprintf(file,"%20ld    ", jj);
                    fprintf(file,"\n      ");
                    for (jj=j; jj<=2*jmax; jj++) fprintf(file," -----------");
@@ -173,6 +191,11 @@ char *name;
                       for(jj=0; jj<(jmax-j+1); jj++)
                         fprintf(file," %8ld",lbuf[jj]);
                       break;
+                 case C_LONGLONG: 
+                      ga_get_(g_a, &i, &i, &j, &jmax,llbuf, &ld);
+                      for(jj=0; jj<(jmax-j+1); jj++)
+                        fprintf(file," %8lld",llbuf[jj]);
+                      break;
                  case C_DBL:
                       ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
                       for(jj=0; jj<(jmax-j+1); jj++)
@@ -184,6 +207,11 @@ char *name;
                         fprintf(file," %11.5f",fbuf[jj]);
                       break;     
                  case C_DCPL:
+	              ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
+	              for(jj=0; jj<(jmax-j+1); jj+=2)
+	                fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
+                      break;
+                 case C_SCPL:
 	              ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
 	              for(jj=0; jj<(jmax-j+1); jj+=2)
 	                fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
@@ -476,8 +504,10 @@ int local_sync_begin,local_sync_end;
         case C_DBL: printf("double"); break;
         case C_INT: printf("integer"); break;
         case C_DCPL: printf("double complex"); break;
+        case C_SCPL: printf("float (single) complex"); break;
         case C_FLOAT: printf("float"); break; 
         case C_LONG: printf("long"); break; 
+        case C_LONGLONG: printf("long long"); break; 
         default: ga_error("ga_print_distribution: type not supported",type);
       }
       printf("\nArray Dimensions:");
@@ -548,6 +578,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
     float fbuf[BUFSIZE], fbuf_2d[BUFSIZE*BUFSIZE];
     Integer lop[MAXDIM], hip[MAXDIM];
     long lbuf[BUFSIZE], lbuf_2d[BUFSIZE*BUFSIZE];
+    long long llbuf[BUFSIZE], llbuf_2d[BUFSIZE*BUFSIZE];
     Integer done, status_2d, status_3d;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     ga_sync_();
@@ -572,6 +603,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
         fprintf(file,"],  handle: %d \n", (int)*g_a);
         
         bufsize = (type==C_DCPL)? BUFSIZE/2 : BUFSIZE;
+        bufsize = (type==C_SCPL)? BUFSIZE/2 : BUFSIZE;
         
         for(i=0; i<ndim; i++) ld[i] = bufsize;
         
@@ -587,7 +619,9 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                     case C_DBL: nga_get_(g_a, lop, hip, dbuf, ld); break;
                     case C_DCPL: nga_get_(g_a, lop, hip, dbuf, ld); break;
                     case C_FLOAT: nga_get_(g_a, lop, hip, fbuf, ld); break; 
+                    case C_SCPL: nga_get_(g_a, lop, hip, fbuf, ld); break;
                     case C_LONG: nga_get_(g_a, lop, hip, lbuf, ld); break; 
+                    case C_LONGLONG: nga_get_(g_a, lop, hip, llbuf, ld);break;
                     default: ga_error("ga_print: wrong type",0);
                 }
                 
@@ -605,6 +639,8 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                     switch(type) {
                         case C_INT: fprintf(file,") = %ld\n", ibuf[i]);break;
                         case C_LONG: fprintf(file,") = %ld\n", lbuf[i]);break;
+                        case C_LONGLONG:
+                           fprintf(file,") = %lld\n", llbuf[i]);break;
                         case C_DBL:
                             if((double)dbuf[i]<100000.0)
                                 fprintf(file,") = %f\n", dbuf[i]);
@@ -618,6 +654,16 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                             else
                                 fprintf(file,") = (%e,%e)\n",
                                         dbuf[i*2],dbuf[i*2+1]);
+                            break;
+                        case C_SCPL:
+                            if(((float)dbuf[i*2]<100000.0) &&
+                               ((float)dbuf[i*2+1]<100000.0))
+                                fprintf(file,") = (%f,%f)\n",
+                                        fbuf[i*2],fbuf[i*2+1]);
+                            else
+                                fprintf(file,") = (%e,%e)\n",
+                                        fbuf[i*2],fbuf[i*2+1]);
+                            break;
                         case C_FLOAT: fprintf(file,") = %f\n", fbuf[i]);break; 
                     }
                 }
@@ -669,6 +715,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                     switch(type) {
                         case C_INT:
                         case C_LONG:
+                        case C_LONGLONG:
                             fprintf(file, "     ");
                             for (i=lop[1]; i<=hip[1]; i++)
                                 fprintf(file, "%7ld  ", i);
@@ -691,6 +738,13 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                             for (i=lop[1]; i<=hip[1]; i++)
                                 fprintf(file," -----------------------");
                             break;
+                        case C_SCPL:
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(file, "%22ld  ", i);
+                            fprintf(file,"\n      ");
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(file," -----------------------");
+                            break;
                         case C_FLOAT:
                             fprintf(file, "     ");
                             for (i=lop[1]; i<=hip[1]; i++)
@@ -698,6 +752,9 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                             fprintf(file,"\n      ");
                             for (i=lop[1]; i<=hip[1]; i++)
                                 fprintf(file," --------");
+                            break;
+                       default:
+                         ga_error("ga_print: wrong type", 0);
                     }
                     
                     fprintf(file,"\n");
@@ -707,10 +764,12 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                 switch(type) {
                     case C_INT: nga_get_(g_a, lop, hip, ibuf_2d, ld); break;
 		    case C_LONG: nga_get_(g_a, lop, hip,lbuf_2d, ld); break;  
+                    case C_LONGLONG: nga_get_(g_a, lop, hip,llbuf_2d,ld);break;
                     case C_DBL: nga_get_(g_a, lop, hip, dbuf_2d, ld); break;
                     case C_DCPL: nga_get_(g_a, lop, hip, dbuf_2d, ld);break;
-                    case C_FLOAT: nga_get_(g_a, lop, hip, fbuf_2d, ld);break;      
-                    default: ga_error("ga_print: wrong type",0);
+                    case C_FLOAT: nga_get_(g_a, lop, hip, fbuf_2d, ld);break;
+                    case C_SCPL: nga_get_(g_a, lop, hip, fbuf_2d, ld);break;  
+                   default: ga_error("ga_print: wrong type",0);
                 }
                 
                 for(i=0; i<(hip[0]-lop[0]+1); i++) {
@@ -727,6 +786,12 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                                 for(j=0; j<(hip[1]-lop[1]+1); j++)
                                     fprintf(file," %8ld",lbuf_2d[j*bufsize+i]);
                             else fprintf(file," %8ld",lbuf_2d[i]);
+                            break;
+                        case C_LONGLONG:
+                            if(ndim > 1)
+                               for(j=0; j<(hip[1]-lop[1]+1); j++)
+                                  fprintf(file," %8lld",llbuf_2d[j*bufsize+i]);
+                            else fprintf(file," %8lld",llbuf_2d[i]);
                             break;
                         case C_DBL:
                             if(ndim > 1)
@@ -768,6 +833,29 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                                 else
                                     fprintf(file," %.5e,%.5e",
                                             dbuf_2d[i*2], dbuf_2d[i*2+1]);
+			    break;
+                        case C_SCPL:
+                            if(ndim > 1)
+                                for(j=0; j<(hip[1]-lop[1]+1); j++)
+                                    if(((float)fbuf_2d[(j*bufsize+i)*2]<100000.0)&&((float)fbuf_2d[(j*bufsize+i)*2+1]<100000.0))
+                                        fprintf(file," %11.5f,%11.5f",
+                                                fbuf_2d[(j*bufsize+i)*2],
+                                                fbuf_2d[(j*bufsize+i)*2+1]);
+                                    else
+                                        fprintf(file," %.5e,%.5e",
+                                                fbuf_2d[(j*bufsize+i)*2],
+                                                fbuf_2d[(j*bufsize+i)*2+1]);
+                            else
+                                if(((float)fbuf_2d[i*2]<100000.0) &&
+                                   ((float)fbuf_2d[i*2+1]<100000.0))
+                                    fprintf(file," %11.5f,%11.5f",
+                                            fbuf_2d[i*2], fbuf_2d[i*2+1]);
+                                else
+                                    fprintf(file," %.5e,%.5e",
+                                            fbuf_2d[i*2], fbuf_2d[i*2+1]);
+                            break;
+                       default:
+                          ga_error("ga_print: wrong data type", 0);
                     }
                     
                     fprintf(file,"\n");
@@ -847,11 +935,17 @@ void FATR ga_summarize_(Integer *verbose)
                 case C_DCPL:
                     fprintf(DEV, "  array %d => double complex ", (int)arr_no);
                     break;
+                case C_SCPL:
+                    fprintf(DEV, "  array %d => float (single) complex ", (int)arr_no);
+                    break;
                 case C_FLOAT:
                     fprintf(DEV, "  array %d => float ",(int)arr_no);
                     break;       
                 case C_LONG:
                     fprintf(DEV, "  array %d => long ",(int)arr_no);
+                    break;   
+                case C_LONGLONG:
+                    fprintf(DEV, "  array %d => long long",(int)arr_no);
                     break;   
                 default: ga_error("ga_print: wrong type",0);
             }
@@ -959,4 +1053,22 @@ Integer FATR ga_cluster_procid_(Integer *node, Integer *loc_proc_id)
         procid = (int)*loc_proc_id;
         return (Integer) armci_domain_glob_proc_id(ARMCI_DOMAIN_SMP, nodeid,
                                                    procid);
+}
+
+#ifdef MPI
+#  include <mpi.h>
+#else
+#  include "sndrcv.h"
+#endif
+/*\ wrapper for wallclock timer. Returns an alapsed time on calling process
+\*/
+DoublePrecision FATR ga_wtime_() 
+{
+    double wtime=0.0;
+#ifdef MPI
+    wtime = MPI_Wtime();
+#else
+    wtime =  TCGTIME_();
+#endif
+    return (DoublePrecision)wtime; 
 }

@@ -1,4 +1,4 @@
-/* $Id: locks.h,v 1.28 2006-09-13 23:43:36 andriy Exp $ */
+/* $Id: locks.h,v 1.29 2007-10-30 02:04:54 manoj Exp $ */
 #ifndef _ARMCI_LOCKS_H_
 #define _ARMCI_LOCKS_H_
 #include <sys/types.h>
@@ -39,13 +39,15 @@
 #endif
 
 
-#if defined(SPINLOCK) || defined(PMUTEXES) || defined(HITACHI)
+#if (defined(SPINLOCK) || defined(PMUTEXES) || defined(HITACHI)) && !defined(BGML)
 #  include "shmem.h"
    typedef struct {
      long off;
      long idlist[SHMIDLEN];
    }lockset_t;
    extern lockset_t lockid;
+#elif defined(BGML)
+   typedef int lockset_t;
 #endif
 
 
@@ -148,7 +150,7 @@ extern void armcill_unlock(int m, int proc);
 #elif defined(CRAY_T3E) || defined(QUADRICS) || defined(__crayx1)\
         || defined(CATAMOUNT) || defined(CRAY_SHMEM)
 #  include <limits.h>
-#  if defined(CRAY) || defined(XT3)
+#  if defined(CRAY) || defined(CATAMOUNT)
 #    include <mpp/shmem.h>
 #  endif
 #if defined(DECOSF) || defined(LINUX64) || defined(__crayx1)\
@@ -164,7 +166,7 @@ extern void armcill_unlock(int m, int proc);
 #  define NAT_UNLOCK(x,p) shmem_swap(armci_lock_var+(x), 0, (p))
 
 
-#elif  defined(SYSV) && defined(LAPI)
+#elif  defined(SYSV) && defined(LAPI) && defined(AIX)
 
 int **_armci_int_mutexes;
 #  define NAT_LOCK(x,p)  armci_lapi_lock(_armci_int_mutexes[armci_master]+(x))
@@ -177,7 +179,7 @@ int **_armci_int_mutexes;
 #  define NAT_LOCK(x,p) armci_die("does not run in parallel",0) 
 #  define NAT_UNLOCK(x,p) armci_die("does not run in parallel",0)  
 
-#elif defined(LAPI)
+#elif defined(LAPI) && !defined (LINUX)
 
 #  include <pthread.h>
    typedef int lockset_t;

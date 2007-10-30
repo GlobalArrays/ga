@@ -65,9 +65,34 @@ void ga_sort_scat_dcpl_(pn, v, i, j, base)
 
   if (*pn < 2) return;
 
+#  undef SWAP  
 #  define SWAP(a,b) { \
     Integer ltmp; \
     DoubleComplex dtmp; \
+    long ia = a - base; \
+    long ib = b - base; \
+    ltmp=*a; *a=*b; *b=ltmp; \
+    dtmp=v[ia]; v[ia]=v[ib]; v[ib]=dtmp; \
+    ltmp=i[ia]; i[ia]=i[ib]; i[ib]=ltmp; \
+    ltmp=j[ia]; j[ia]=j[ib]; j[ib]=ltmp; \
+  }
+  INDEX_SORT(base,pn,SWAP);
+}
+
+void ga_sort_scat_scpl_(pn, v, i, j, base)
+     Integer *pn;
+     SingleComplex *v;
+     Integer *i;
+     Integer *j;
+     Integer *base;
+{
+
+  if (*pn < 2) return;
+
+#  undef SWAP  
+#  define SWAP(a,b) { \
+    Integer ltmp; \
+    SingleComplex dtmp; \
     long ia = a - base; \
     long ib = b - base; \
     ltmp=*a; *a=*b; *b=ltmp; \
@@ -210,6 +235,7 @@ void ga_sort_scat(pn, v, i, j, base, type)
    switch (type){
      case C_DBL:  ga_sort_scat_dbl_(pn, (double*)v, i,j,base);break;
      case C_DCPL: ga_sort_scat_dcpl_(pn, (DoubleComplex*)v, i,j,base); break;
+     case C_SCPL: ga_sort_scat_scpl_(pn, (SingleComplex*)v, i,j,base); break;
      case C_INT:  ga_sort_scat_int_(pn, (int*)v, i, j, base); break;
      case C_FLOAT:  ga_sort_scat_flt_(pn, (float*)v, i, j, base); break; 
      case C_LONG:  ga_sort_scat_long_(pn, (long*)v, i, j, base); break;

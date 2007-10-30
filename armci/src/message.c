@@ -1,5 +1,7 @@
-/* $Id: message.c,v 1.58 2005-03-23 00:01:41 vinod Exp $ */
-#if defined(PVM)
+/* $Id: message.c,v 1.59 2007-10-30 02:04:54 manoj Exp $ */
+#if defined(BGML)
+# include "bgml.h"
+#elif defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
 #   include <sndrcv.h>
@@ -33,6 +35,7 @@
 
 static double *work=NULL;
 static long *lwork = NULL;
+static long long *llwork = NULL;
 static int *iwork = NULL;
 static float *fwork = NULL;
 static int _armci_gop_init=0;   /* tells us if we have a buffers allocated  */
@@ -103,11 +106,40 @@ barrier_struct *_bar_buff;
 void **barr_snd_ptr,**barr_rcv_ptr;
 int _armci_barrier_init=0;
 int _armci_barrier_shmem=0;
+
+
+/*\
+ * Tree generation code
+\*/
+static void _dfs_bintree_parse(int *idlist, int index, int max, int *result)
+{
+int left = (int)2*index+1;
+int right = (int) 2*index+2;
+static int pos=0;
+int r_end,l_end;
+   l_end=pos++;
+   result[pos++]=idlist[index];
+   if(left<max)
+     _dfs_bintree_parse(idlist,left,max,result);
+   r_end=pos++;
+   result[l_end]=r_end;
+   if(right<max)
+     _dfs_bintree_parse(idlist,right,max,result);
+   result[r_end]=pos;
+   result[pos++]=idlist[index];
+}
+static int tree_unique_id=0;
+int armci_msg_generate_tree(int *idlist,int idlen,int *id_tree,int TREE)
+{
+   
+    /*for now everything is binary tree*/
+    _dfs_bintree_parse(idlist,0,idlen,id_tree);
+    return tree_unique_id++;
+}
+
 /*\
  *  *************************************************************
 \*/
-
-
 #ifdef CRAY
 char *mp_group_name = (char *)NULL;
 #else
@@ -119,6 +151,7 @@ static void _allocate_mem_for_work(){
     work = (double *)malloc(sizeof(double)*BUF_SIZE);
     if(!work)armci_die("malloc in _allocate_mem_for_work failed",0);
     lwork = (long *)work; iwork = (int *)work; fwork = (float *)work;
+    llwork = (long long *)work;
 }
 
 
@@ -359,7 +392,9 @@ static void _armci_msg_barrier(){
 #endif /*barrier enabled only for lapi*/
 void armci_msg_barrier()
 {
-#  ifdef MPI
+#ifdef BGML
+  bgml_barrier (3); /* this is always faster than MPI_Barrier() */
+#elif defined(MPI)
      MPI_Barrier(MPI_COMM_WORLD);
 #  elif defined(PVM)
      pvm_barrier(mp_group_name, armci_nproc);
@@ -383,7 +418,9 @@ void armci_msg_barrier()
 
 int armci_msg_me()
 {
-#  ifdef MPI
+#ifdef BGML
+     return(BGML_Messager_rank());
+#  elif defined(MPI)
      int me;
      MPI_Comm_rank(MPI_COMM_WORLD, &me);
      return(me);
@@ -397,7 +434,9 @@ int armci_msg_me()
 
 int armci_msg_nproc()
 {
-#  ifdef MPI
+#ifdef BGML
+   return(BGML_Messager_size());
+#elif defined(MPI)
      int nproc;
      MPI_Comm_size(MPI_COMM_WORLD, &nproc);
      return nproc;
@@ -415,7 +454,10 @@ int armci_msg_nproc()
 #ifndef PVM
 double armci_timer()
 {
-#  ifdef MPI
+#ifdef BGML
+   return BGML_Timer();
+#  elif defined(MPI)
+
      return MPI_Wtime();
 #  else
      return TCGTIME_();
@@ -426,7 +468,9 @@ double armci_timer()
 
 void armci_msg_abort(int code)
 {
-#  ifdef MPI
+#ifdef BGML
+   fprintf(stderr,"ARMCI aborting [%d]\n", code);
+#elif defined(MPI)
 #    ifndef BROKEN_MPI_ABORT
          MPI_Abort(MPI_COMM_WORLD,code);
 #    endif
@@ -487,7 +531,9 @@ void armci_msg_bcast_scope(int scope, void *buf, int len, int root)
     int up, left, right, Root;
 
     if(!buf)armci_die("armci_msg_bcast: NULL pointer", len);
-    
+#ifdef BGML
+        BGTr_Bcast(root, buf, len, 3);
+#else
     armci_msg_bintree(scope, &Root, &up, &left, &right);
 
     if(root !=Root){
@@ -501,6 +547,7 @@ void armci_msg_bcast_scope(int scope, void *buf, int len, int root)
     if(armci_me != Root && up!=-1) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, up);
     if (left > -1)  armci_msg_snd(ARMCI_TAG, buf, len, left);
     if (right > -1) armci_msg_snd(ARMCI_TAG, buf, len, right);
+#endif
 }
 
 
@@ -675,7 +722,9 @@ void armci_msg_brdcst(void* buffer, int len, int root)
 {
    if(!buffer)armci_die("armci_msg_brdcast: NULL pointer", len);
 
-#  ifdef MPI
+#ifdef BGML
+   BGTr_Bcast(root, buffer, len, PCLASS);
+# elif defined(MPI)
       MPI_Bcast(buffer, len, MPI_CHAR, root, MPI_COMM_WORLD);
 #  elif defined(PVM)
       armci_msg_bcast(buffer, len, root);
@@ -694,6 +743,14 @@ void armci_msg_snd(int tag, void* buffer, int len, int to)
       MPI_Send(buffer, len, MPI_CHAR, to, tag, MPI_COMM_WORLD);
 #  elif defined(PVM)
       pvm_psend(pvm_gettid(mp_group_name, to), tag, buffer, len, PVM_BYTE);
+# elif defined(BGML)
+      /* We don't actually used armci_msg_snd in ARMCI. we use optimized 
+       * collectives where
+       * armci_msg_snd is used. If you build Global Arrays, the MPI flag is 
+       * set, so that
+       * will work fine 
+       */
+      armci_die("bgl shouldn't use armci_msg_snd", armci_me);
 #  else
       long ttag=tag, llen=len, tto=to, block=1;
       SND_(&ttag, buffer, &llen, &tto, &block);
@@ -714,6 +771,8 @@ void armci_msg_rcv(int tag, void* buffer, int buflen, int *msglen, int from)
       pvm_precv(pvm_gettid(mp_group_name, from), tag, buffer, buflen, PVM_BYTE,
                 &src, &rtag, &mlen);
       if(msglen)*msglen=mlen;
+#elif defined(BGML)
+            armci_die("bgl shouldn't use armci_msg_rcv", armci_me);
 #  else
       long ttag=tag, llen=buflen, mlen, ffrom=from, sender, block=1;
       RCV_(&ttag, buffer, &llen, &mlen, &ffrom, &sender, &block);
@@ -740,6 +799,8 @@ int armci_msg_rcvany(int tag, void* buffer, int buflen, int *msglen)
       pvm_precv(-1, tag, buffer, buflen, PVM_BYTE, &src, &rtag, &mlen);
       if(msglen)*msglen=mlen;
       return(pvm_getinst(mp_group_name,src));
+# elif defined (BGML)
+      armci_die("bgl shouldn't use armci_msg_rcvany", armci_me);
 #  else
       long ttag=tag, llen=buflen, mlen, ffrom=-1, sender, block=1;
       RCV_(&ttag, buffer, &llen, &mlen, &ffrom, &sender, &block);
@@ -845,6 +906,91 @@ static void ldoop2(int n, char *op, long *x, long* work, long* work2)
     armci_die("ldoop2: unknown operation requested", n);
 }
 
+/*\ reduce operation for long long
+\*/
+static void lldoop(int n, char *op, long long *x, long long* work)
+{
+  if (strncmp(op,"+",1) == 0)
+    while(n--)
+      *x++ += *work++;
+  else if (strncmp(op,"*",1) == 0)
+    while(n--)
+      *x++ *= *work++;
+  else if (strncmp(op,"max",3) == 0)
+    while(n--) {
+      *x = MAX(*x, *work);
+      x++; work++;
+    }
+  else if (strncmp(op,"min",3) == 0)
+    while(n--) {
+      *x = MIN(*x, *work);
+      x++; work++;
+    }
+  else if (strncmp(op,"absmax",6) == 0)
+    while(n--) {
+      register long long x1 = ABS(*x), x2 = ABS(*work);
+      *x = MAX(x1, x2);
+      x++; work++;
+    }
+  else if (strncmp(op,"absmin",6) == 0)
+    while(n--) {
+      register long long x1 = ABS(*x), x2 = ABS(*work);
+      *x = MIN(x1, x2);
+      x++; work++;
+    }
+  else if (strncmp(op,"or",2) == 0)
+    while(n--) {
+      *x |= *work;
+      x++; work++;
+    }
+  else
+    armci_die("lldoop: unknown operation requested", n);
+}
+
+/*\ reduce operation for long long x= op(work,work2)
+\*/
+static void lldoop2(int n, char *op, long long *x, long long* work,
+                    long long* work2)
+{
+  if (strncmp(op,"+",1) == 0)
+    while(n--)
+      *x++ = *work++ + *work2++;
+  else if (strncmp(op,"*",1) == 0)
+    while(n--)
+      *x++ = *work++ *  *work2++;
+  else if (strncmp(op,"max",3) == 0)
+    while(n--) {
+      *x = MAX(*work2, *work);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"min",3) == 0)
+    while(n--) {
+      *x = MIN(*work2, *work);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"absmax",6) == 0)
+    while(n--) {
+      register long long x1 = ABS(*work), x2 = ABS(*work2);
+      *x = MAX(x1, x2);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"absmin",6) == 0)
+    while(n--) {
+      register long long x1 = ABS(*work), x2 = ABS(*work2);
+      *x = MIN(x1, x2);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"or",2) == 0)
+    while(n--) {
+      *x = *work | *work2;
+      x++; work++; work2++;
+    }
+  else
+    armci_die("ldoop2: unknown operation requested", n);
+}
+
+/*\ reduce operation for int 
+\*/
 static void idoop(int n, char *op, int *x, int* work)
 {
   if (strncmp(op,"+",1) == 0)
@@ -925,17 +1071,22 @@ static void idoop2(int n, char *op, int *x, int* work, int* work2)
     armci_die("idoop2: unknown operation requested", n);
 }
 
-
+/*\ reduce operation for double 
+\*/
 static void ddoop(int n, char* op, double* x, double* work)
 {
 #if (defined(CRAY) && !defined(__crayx1)) || defined(WIN32) || defined(HITACHI)
-#elif defined(AIX)
+#elif defined(AIX) || defined(NOUNDERSCORE)
 #   define FORT_DADD fort_dadd
 #   define FORT_DMULT fort_dmult
+#elif defined(BGML)
+#  define FORT_DADD fort_dadd__
+#  define FORT_DMULT fort_dmult__
 #else
 #   define FORT_DADD fort_dadd_
 #   define FORT_DMULT fort_dmult_
 #endif
+
 #ifdef NOFORT
 extern void FORT_DADD(int *, double *, double*);
 extern void FORT_DMULT(int *, double *, double*);
@@ -981,9 +1132,12 @@ extern void FATR FORT_DMULT(int *, double *, double*);
 static void ddoop2(int n, char *op, double *x, double* work, double* work2)
 {
 #if (defined(CRAY) && !defined(__crayx1)) || defined(WIN32) || defined(HITACHI)
-#elif defined(AIX)
+#elif defined(AIX) || defined(NOUNDERSCORE)
 #   define FORT_DADD2 fort_dadd2
 #   define FORT_DMULT2 fort_dmult2
+#elif defined(BGML)
+#   define FORT_DADD2 fort_dadd2__
+#   define FORT_DMULT2 fort_dmult2__
 #else
 #   define FORT_DADD2 fort_dadd2_
 #   define FORT_DMULT2 fort_dmult2_
@@ -1028,6 +1182,8 @@ extern void FATR FORT_DMULT2(int *, double *, double*,double*);
 }
 
 
+/*\ reduce operation for float 
+\*/
 static void fdoop(int n, char* op, float* x, float* work)
 {
   if (strncmp(op,"+",1) == 0)
@@ -1108,12 +1264,46 @@ int ndo, len, lenmes, orign =n, ratio;
 void *origx =x;
     if(!x)armci_die("armci_msg_gop: NULL pointer", n);
     if(work==NULL)_allocate_mem_for_work();
+#ifdef BGML
+   BGML_Dt dt;
+   BGML_Op theop;
 
+   if(n > 0 && (strncmp(op, "+", 1) == 0) && (type==ARMCI_INT || type==ARMCI_DOUBLE))
+   {
+      theop=BGML_SUM;
+      if(type==ARMCI_INT)
+         dt=BGML_SIGNED_INT;
+      else if(type==ARMCI_DOUBLE)
+         dt=BGML_DOUBLE;
+      BGTr_Allreduce(origx, x, n, dt, theop, -1, PCLASS);
+   }
+   else if(n > 0 && (strncmp(op, "max", 3) == 0) && (type==ARMCI_INT || type==ARMCI_DOUBLE))
+   {
+      theop=BGML_MAX;
+      if(type==ARMCI_INT)
+         dt=BGML_SIGNED_INT;
+      else if(type==ARMCI_DOUBLE)
+         dt=BGML_DOUBLE;
+      BGTr_Allreduce(origx, x, n, dt, theop, -1, PCLASS);
+   }
+   else if(n > 0 && (strncmp(op, "min", 3) == 0) && (type==ARMCI_INT || type==ARMCI_DOUBLE))
+   {
+      theop=BGML_MIN;
+      if(type==ARMCI_INT)
+         dt=BGML_SIGNED_INT;
+      else if(type==ARMCI_DOUBLE)
+         dt=BGML_DOUBLE;
+      BGTr_Allreduce(origx, x, n, dt, theop, -1, PCLASS);
+   }
+   else
+#endif
+  {
     armci_msg_bintree(scope, &root, &up, &left, &right);
 
     if(type==ARMCI_INT) size = sizeof(int);
-	else if(type==ARMCI_LONG) size = sizeof(long);
-	     else if(type==ARMCI_FLOAT) size = sizeof(float);
+    else if(type==ARMCI_LONG) size = sizeof(long);
+    else if(type==ARMCI_LONG_LONG) size = sizeof(long long);
+    else if(type==ARMCI_FLOAT) size = sizeof(float);
     else size = sizeof(double);
 
     ratio = sizeof(double)/size;
@@ -1125,6 +1315,7 @@ void *origx =x;
            armci_msg_rcv(tag, lwork, len, &lenmes, left);
            if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
            else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+           else if(type==ARMCI_LONG_LONG) lldoop(ndo, op,(long long*)x,llwork);
 	   else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
            else ddoop(ndo, op, (double*)x, work);
          }
@@ -1133,6 +1324,7 @@ void *origx =x;
            armci_msg_rcv(tag, lwork, len, &lenmes, right);
            if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
            else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+           else if(type==ARMCI_LONG_LONG) lldoop(ndo, op,(long long*)x,llwork);
 	   else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
            else ddoop(ndo, op, (double*)x, work);
          }
@@ -1145,6 +1337,7 @@ void *origx =x;
      /* Now, root broadcasts the result down the binary tree */
      len = orign*size;
      armci_msg_bcast_scope(scope, origx, len, root);
+   }
 }
 
 
@@ -1159,8 +1352,9 @@ int ndo, len, lenmes, ratio;
     armci_msg_bintree(scope, &root, &up, &left, &right);
 
     if(type==ARMCI_INT) size = sizeof(int);
-        else if(type==ARMCI_LONG) size = sizeof(long);
-	     else if(type==ARMCI_FLOAT) size = sizeof(float);
+    else if(type==ARMCI_LONG) size = sizeof(long);
+    else if(type==ARMCI_LONG_LONG) size = sizeof(long long);
+    else if(type==ARMCI_FLOAT) size = sizeof(float);
     else size = sizeof(double);
 
     ratio = sizeof(double)/size;
@@ -1172,6 +1366,7 @@ int ndo, len, lenmes, ratio;
            armci_msg_rcv(tag, lwork, len, &lenmes, left);
            if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
            else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+           else if(type==ARMCI_LONG_LONG) lldoop(ndo, op,(long long*)x,llwork);
 	   else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
            else ddoop(ndo, op, (double*)x, work);
          }
@@ -1180,6 +1375,7 @@ int ndo, len, lenmes, ratio;
            armci_msg_rcv(tag, lwork, len, &lenmes, right);
            if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
            else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+           else if(type==ARMCI_LONG_LONG) lldoop(ndo, op,(long long*)x,llwork);
 	   else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
            else ddoop(ndo, op, (double*)x, work);
          }
@@ -1194,6 +1390,7 @@ static void gop(int type, int ndo, char* op, void *x, void *work)
 {
      if(type==ARMCI_INT) idoop(ndo, op, (int*)x, (int*)work);
      else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, (long*)work);
+     else if(type==ARMCI_LONG_LONG) lldoop(ndo, op, (long long*)x, (long long*)work);
      else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, (float*)work);
      else ddoop(ndo, op, (double*)x, (double*)work);
 }
@@ -1204,19 +1401,22 @@ static void gop2(int type, int ndo, char* op, void *x, void *work, void *work2)
 #if 0
      int size;
      if(type==ARMCI_INT) size = sizeof(int);
-        else if(type==ARMCI_LONG) size = sizeof(long);
-             else if(type==ARMCI_FLOAT) size = sizeof(float);
+     else if(type==ARMCI_LONG) size = sizeof(long);
+     else if(type==ARMCI_LONG_LONG) size = sizeof(long long);
+     else if(type==ARMCI_FLOAT) size = sizeof(float);
      else size = sizeof(double);
 
      armci_copy(work2,x,ndo*size);
 
      if(type==ARMCI_INT) idoop(ndo, op, (int*)x, (int*)work);
      else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, (long*)work);
+     else if(type==ARMCI_LONG_LONG) lldoop(ndo, op, (long long*)x, (long long*)work);
      else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, (float*)work);
      else ddoop(ndo, op, (double*)x, (double*)work);
 #else
      if(type==ARMCI_INT) idoop2(ndo, op, (int*)x, (int*)work, (int*)work2);
      else if(type==ARMCI_LONG)ldoop2(ndo,op,(long*)x,(long*)work,(long*)work2);
+     else if(type==ARMCI_LONG_LONG) lldoop2(ndo,op,(long long*)x,(long long*)work,(long long*)work2);
      else if(type==ARMCI_FLOAT)fdoop2(ndo,op,(float*)x,(float*)work,(float*)work2);
      else ddoop2(ndo, op, (double*)x, (double*)work,(double*)work2);
 #endif
@@ -1240,8 +1440,9 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
     armci_msg_bintree(SCOPE_NODE, &root, &up, &left, &right);
 
     if(type==ARMCI_INT) size = sizeof(int);
-        else if(type==ARMCI_LONG) size = sizeof(long);
-             else if(type==ARMCI_FLOAT) size = sizeof(float); 
+    else if(type==ARMCI_LONG) size = sizeof(long);
+    else if(type==ARMCI_LONG_LONG) size = sizeof(long long);
+    else if(type==ARMCI_FLOAT) size = sizeof(float); 
     else size = sizeof(double);
     ratio = sizeof(double)/size;
     
@@ -1327,8 +1528,9 @@ void _armci_msg_binomial_reduce(void *x, int n, char* op, int type){
     if(work==NULL)_allocate_mem_for_work();
     if(armci_me!=armci_master)return;
     if(type==ARMCI_INT) size = sizeof(int);
-        else if(type==ARMCI_LONG) size = sizeof(long);
-	     else if(type==ARMCI_FLOAT) size = sizeof(float);
+    else if(type==ARMCI_LONG) size = sizeof(long);
+    else if(type==ARMCI_LONG_LONG) size = sizeof(long long);
+    else if(type==ARMCI_FLOAT) size = sizeof(float);
     else size = sizeof(double);
     ratio = sizeof(double)/size;
    
@@ -1354,6 +1556,7 @@ void _armci_msg_binomial_reduce(void *x, int n, char* op, int type){
            armci_msg_rcv(ARMCI_TAG, lwork,len,&lenmes,next_node);
            if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
            else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+           else if(type==ARMCI_LONG_LONG) lldoop(ndo, op,(long long*)x,llwork);
 	   else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
            else ddoop(ndo, op, (double*)x, work);
            /*printf("\n%d: recvd from %d \n",armci_me,next_node);*/
@@ -1399,11 +1602,83 @@ static void armci_msg_gop2(void *x, int n, char* op, int type)
 int size, root=0;
      if(work==NULL)_allocate_mem_for_work();
      if(type==ARMCI_INT) size = sizeof(int);
-        else if(type==ARMCI_LONG) size = sizeof(long);
-	     else if(type==ARMCI_FLOAT) size = sizeof(float);
+     else if(type==ARMCI_LONG) size = sizeof(long);
+    else if(type==ARMCI_LONG_LONG) size = sizeof(long long);
+     else if(type==ARMCI_FLOAT) size = sizeof(float);
      else size = sizeof(double);
+#ifdef BGML /*optimize what we can at the message layer */
+      void *origx=x;
+      BGML_Dt dt;
+      BGML_Op rop;
+
+      if(n>0 && (strncmp(op, "+", 1) == 0))
+      {
+         rop=BGML_SUM;
+         if(type == ARMCI_INT)
+         {
+            dt=BGML_SIGNED_INT;
+            BGTr_Allreduce(origx, x, n, dt, rop, -1, 3);
+         }
+         else if(type == ARMCI_LONG || type == ARMCI_LONG_LONG)
+         {
+            armci_msg_reduce(x, n, op, type);
+            armci_msg_bcast(x, size*n, root);
+/*            dt=BGML_UNSIGNED_LONG; */
+/*            BGTr_Allreduce(origx, x, n, dt, rop, -1, 3);*/
+         }
+         else if(type == ARMCI_DOUBLE)
+         {
+            dt=BGML_DOUBLE;
+            BGTr_Allreduce(origx, x, n, dt, rop, -1, 3);
+         }
+         else if(type == ARMCI_FLOAT)
+         {
+            armci_msg_reduce(x, n, op, type);
+            armci_msg_bcast(x, size*n, root);
+         }
+         else
+         {
+            fprintf(stderr,"Unknown data type\n");
+            exit(1);
+         }
+      }
+
+      else if(n>0 && ((strncmp(op, "max", 3) == 0) || (strncmp(op, "min", 3) ==0 )))
+      {
+         if(strncmp(op, "max", 3) == 0)
+            rop=BGML_MAX;
+         else
+            rop=BGML_MIN;
+
+         if(type == ARMCI_INT)
+            dt=BGML_SIGNED_INT;
+         else if(type == ARMCI_DOUBLE)
+            dt=BGML_DOUBLE;
+         else if(type == ARMCI_FLOAT)
+            dt=BGML_FLOAT;
+         else if(type == ARMCI_LONG)
+            dt=BGML_SIGNED_LONG;
+         else if(type == ARMCI_LONG_LONG)
+         {
+            armci_msg_reduce(x, n, op, type);
+            armci_msg_bcast(x, size*n, root);
+         }
+         else
+         {
+            fprintf(stderr,"Unknown data type\n");
+            exit(1);
+         }
+         if(type != ARMCI_LONG_LONG)
+           BGTr_Allreduce(origx, x, n, dt, rop, -1, 3);
+      }
+
+      else
+#endif
+   { /* brackets needed for final gelse clause of bgml */
+
      armci_msg_reduce(x, n, op, type);
      armci_msg_bcast(x, size*n, root);
+   }
 }
 
 
@@ -1422,6 +1697,12 @@ int selected=0;
         if(*(long*)x > *(long*)work) selected=1;
      }else
         if(*(long*)x < *(long*)work) selected=1;
+     break;
+  case ARMCI_LONG_LONG:
+     if(strncmp(op,"min",3) == 0){ 
+        if(*(long long*)x > *(long long*)work) selected=1;
+     }else
+        if(*(long long*)x < *(long long*)work) selected=1;
      break;
   case ARMCI_FLOAT:
      if(strncmp(op,"min",3) == 0){ 
@@ -1504,6 +1785,9 @@ void armci_msg_igop(int *x, int n, char* op)
 void armci_msg_lgop(long *x, int n, char* op)
 { armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_LONG); }
 
+void armci_msg_llgop(long long *x, int n, char* op)
+{ armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_LONG_LONG); }
+
 void armci_msg_dgop(double *x, int n, char* op)
 { armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_DOUBLE); }
 
@@ -1513,6 +1797,7 @@ void armci_msg_fgop (float *x, int n, char* op)
 #else
 void armci_msg_igop(int *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_INT); }
 void armci_msg_lgop(long *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_LONG); }
+void armci_msg_llgop(long long *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_LONG_LONG); }
 void armci_msg_fgop(float *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_FLOAT); }
 void armci_msg_dgop(double *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_DOUBLE); }
 #endif
@@ -1525,6 +1810,9 @@ void armci_msg_clus_igop(int *x, int n, char* op)
 
 void armci_msg_clus_lgop(long *x, int n, char* op)
 { armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_LONG); }
+
+void armci_msg_clus_llgop(long long *x, int n, char* op)
+{ armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_LONG_LONG); }
 
 void armci_msg_clus_fgop(float *x, int n, char* op)
 { armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_FLOAT); }
@@ -1672,6 +1960,7 @@ armci_msg_group_gop_scope(int scope, void *x, int n, char* op, int type,
  
     if(type==ARMCI_INT) size = sizeof(int);
     else if(type==ARMCI_LONG) size = sizeof(long);
+    else if(type==ARMCI_LONG_LONG) size = sizeof(long long);
     else if(type==ARMCI_FLOAT) size = sizeof(float);
     else size = sizeof(double);
  
@@ -1684,6 +1973,7 @@ armci_msg_group_gop_scope(int scope, void *x, int n, char* op, int type,
 	  armci_msg_rcv(tag, lwork, len, &lenmes, left);
 	  if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
 	  else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+	  else if(type==ARMCI_LONG_LONG) lldoop(ndo, op, (long long*)x,llwork);
 	  else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
 	  else ddoop(ndo, op, (double*)x, work);
        }
@@ -1692,6 +1982,7 @@ armci_msg_group_gop_scope(int scope, void *x, int n, char* op, int type,
 	  armci_msg_rcv(tag, lwork, len, &lenmes, right);
 	  if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
 	  else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+	  else if(type==ARMCI_LONG_LONG) lldoop(ndo, op,(long long*)x, llwork);
 	  else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
 	  else ddoop(ndo, op, (double*)x, work);
        }
@@ -1725,6 +2016,9 @@ void armci_msg_group_igop(int *x, int n, char* op, ARMCI_Group *group)
  
 void armci_msg_group_lgop(long *x, int n, char* op,ARMCI_Group *group)
 { armci_msg_group_gop_scope(SCOPE_ALL,x, n, op, ARMCI_LONG,group); }
+
+void armci_msg_group_llgop(long long *x, int n, char* op,ARMCI_Group *group)
+{ armci_msg_group_gop_scope(SCOPE_ALL,x, n, op, ARMCI_LONG_LONG,group); }
  
 void armci_msg_group_fgop(float *x, int n, char* op,ARMCI_Group *group)
 { armci_msg_group_gop_scope(SCOPE_ALL,x, n, op, ARMCI_FLOAT,group); }

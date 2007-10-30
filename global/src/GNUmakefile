@@ -16,14 +16,14 @@ HEADERS = ga.h global.h global.fh c.names.h
 ifndef LIBRARY
   LIBRARY = libglobal.a
 endif
-
+  LIBRARY_SHARED = libglobal.so
 #---------------------- file list ---------------------------------
 # core of the library
 GA_CORE = base.o onesided.o nbutil.o ghosts.o global.util.o collect.o decomp.o \
             capi.o global.nalg.o global.npatch.o ga_trace.o datatypes.o ga_malloc.o
 
 # extra interfaces
-GA_EXTRA = global.periodic.o sparse.o select.o ghosts.o DP.o hsort.scat.o \
+GA_EXTRA = global.periodic.o sparse.o select.o DP.o hsort.scat.o \
 		ga_solve_seq.o
 ifdef GA_USE_VAMPIR
    GA_EXTRA += ga_vampir.o
@@ -74,9 +74,14 @@ endif
 
 #we USE_MPI requires us to acces MPI headers to handle ga_mpi_communicator
 ifdef USE_MPI
-  MSG_COMMS = MPI
+  ifneq ($(TARGET),BGL)
+   MSG_COMMS = MPI
+  endif
 endif
 ifeq ($(MSG_COMMS),MPI)
+include ../../armci/config/makemp.h
+endif
+ifeq ($(MSG_COMMS),BGMLMPI)
 include ../../armci/config/makemp.h
 endif
 

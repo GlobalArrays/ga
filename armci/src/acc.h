@@ -8,12 +8,18 @@
 
 #  define ATR FATR
 
-#if defined(AIX)
+#if defined(AIX) || defined(NOUNDERSCORE)
 #    define I_ACCUMULATE_2D	i_accumulate_2d_u
 #    define D_ACCUMULATE_2D	d_accumulate_2d_u
 #    define C_ACCUMULATE_2D	c_accumulate_2d_u
 #    define Z_ACCUMULATE_2D	z_accumulate_2d_u
 #    define F_ACCUMULATE_2D	f_accumulate_2d_u
+#elif defined(BGML)
+#    define I_ACCUMULATE_2D     i_accumulate_2d_u__
+#    define D_ACCUMULATE_2D     d_accumulate_2d_u__
+#    define C_ACCUMULATE_2D     c_accumulate_2d_u__
+#    define Z_ACCUMULATE_2D     z_accumulate_2d_u__
+#    define F_ACCUMULATE_2D     f_accumulate_2d_u__
 #elif defined(SGI_)
 #    define I_ACCUMULATE_2D     i_accumulate_2d_u_
 #    define D_ACCUMULATE_2D     d_accumulate_2d_u_
@@ -37,12 +43,18 @@
 #endif
 #endif
 
-#if defined(AIX)
+#if defined(AIX) || defined(NOUNDERSCORE)
 #    define I_ACCUMULATE_1D     i_accumulate_1d  
 #    define D_ACCUMULATE_1D     d_accumulate_1d  
 #    define C_ACCUMULATE_1D     c_accumulate_1d  
 #    define Z_ACCUMULATE_1D     z_accumulate_1d  
 #    define F_ACCUMULATE_1D     f_accumulate_1d  
+#elif defined(BGML)
+#    define I_ACCUMULATE_1D     i_accumulate_1d__
+#    define D_ACCUMULATE_1D     d_accumulate_1d__
+#    define C_ACCUMULATE_1D     c_accumulate_1d__
+#    define Z_ACCUMULATE_1D     z_accumulate_1d__
+#    define F_ACCUMULATE_1D     f_accumulate_1d__
 #elif !defined(CRAY) && !defined(WIN32) && !defined(HITACHI) ||defined(__crayx1)
 #    define I_ACCUMULATE_1D     i_accumulate_1d_ 
 #    define D_ACCUMULATE_1D     d_accumulate_1d_ 

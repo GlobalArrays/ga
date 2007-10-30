@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.152 2007-10-26 18:31:37 d3g293 Exp $ */
+/* $Id: base.c,v 1.153 2007-10-30 02:04:57 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -89,9 +89,11 @@ int GA_World_Proc_Group = -1;
 int GA_Default_Proc_Group = -1;
 int ga_armci_world_group=0;
 int GA_Init_Proc_Group = -2;
+Integer GA_Debug_flag = 0;
 
 /* MA addressing */
 DoubleComplex   *DCPL_MB;           /* double precision complex base address */
+SingleComplex   *SCPL_MB;           /* single precision complex base address */
 DoublePrecision *DBL_MB;            /* double precision base address */
 Integer         *INT_MB;            /* integer base address */
 float           *FLT_MB;            /* float base address */
@@ -178,9 +180,11 @@ Integer GAsizeof(type)
   switch (type) {
      case C_DBL  : return (sizeof(double));
      case C_INT  : return (sizeof(int));
+     case C_SCPL : return (sizeof(SingleComplex));
      case C_DCPL : return (sizeof(DoubleComplex));
      case C_FLOAT : return (sizeof(float));
      case C_LONG : return (sizeof(long));
+     case C_LONGLONG : return (sizeof(long long));
           default   : return 0; 
   }
 }
@@ -297,17 +301,19 @@ static int ma_address_init=0;
 void gai_ma_address_init()
 {
 #ifdef CHECK_MA_ALGN
-Integer  off_dbl, off_int, off_dcpl, off_flt;
+Integer  off_dbl, off_int, off_dcpl, off_flt,off_scpl;
 #endif
      ma_address_init=1;
      INT_MB = (Integer*)MA_get_mbase(MT_F_INT);
      DBL_MB = (DoublePrecision*)MA_get_mbase(MT_F_DBL);
      DCPL_MB= (DoubleComplex*)MA_get_mbase(MT_F_DCPL);
+     SCPL_MB= (SingleComplex*)MA_get_mbase(MT_F_SCPL);
      FLT_MB = (float*)MA_get_mbase(MT_F_REAL);  
 #   ifdef CHECK_MA_ALGN
         off_dbl = 0 != ((long)DBL_MB)%sizeof(DoublePrecision);
         off_int = 0 != ((long)INT_MB)%sizeof(Integer);
         off_dcpl= 0 != ((long)DCPL_MB)%sizeof(DoublePrecision);
+        off_scpl= 0 != ((long)SCPL_MB)%sizeof(float);
         off_flt = 0 != ((long)FLT_MB)%sizeof(float);  
         if(off_dbl)
            ga_error("GA initialize: MA DBL_MB not alligned", (Integer)DBL_MB);
@@ -318,13 +324,16 @@ Integer  off_dbl, off_int, off_dcpl, off_flt;
         if(off_dcpl)
           ga_error("GA initialize: DCPL_MB not alligned", (Integer)DCPL_MB);
 
+        if(off_scpl)
+          ga_error("GA initialize: SCPL_MB not alligned", (Integer)SCPL_MB);
+
         if(off_flt)
            ga_error("GA initialize: FLT_MB not alligned", (Integer)FLT_MB);   
 
 #   endif
 
-    if(DEBUG) printf("%d INT_MB=%p DBL_MB=%p DCPL_MB=%p FLT_MB=%p\n",
-                     (int)GAme, INT_MB,DBL_MB, DCPL_MB, FLT_MB);
+    if(DEBUG) printf("%d INT_MB=%p DBL_MB=%p DCPL_MB=%p FLT_MB=%p SCPL_MB=%p\n",
+                     (int)GAme, INT_MB,DBL_MB, DCPL_MB, FLT_MB, SCPL_MB);
 }
 
 
@@ -582,7 +591,8 @@ void FATR  ga_initialize_ltd_(Integer *mem_limit)
 
 #define gam_checktype(_type)\
        if(_type != C_DBL  && _type != C_INT &&  \
-          _type != C_DCPL && _type != C_FLOAT &&_type != C_LONG)\
+          _type != C_DCPL && _type != C_SCPL && _type != C_FLOAT && \
+          _type != C_LONG &&_type != C_LONGLONG)\
          ga_error("ttype not yet supported ",  _type)
 
 #define gam_checkdim(ndim, dims)\
@@ -790,7 +800,9 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
       case C_FLOAT: size = sizeof(float); break;
       case C_DBL: size = sizeof(double); break;
       case C_LONG: size = sizeof(long); break;
+      case C_LONGLONG: size = sizeof(long long); break;
       case C_INT: size = sizeof(int); break;
+      case C_SCPL: size = 2*sizeof(float); break;
       case C_DCPL: size = 2*sizeof(double); break;
       default: ga_error("type not supported",type);
     }
@@ -855,6 +867,17 @@ void FATR ga_pgroup_set_default_(Integer *grp)
     /* force a hang if default group is not being set correctly */
     if (local_sync_begin || local_sync_end) ga_pgroup_sync_(grp);
     GA_Default_Proc_Group = (int)(*grp);
+
+#ifdef MPI
+    {
+       ARMCI_Group parent_grp;
+       if(GA_Default_Proc_Group > 0)
+          parent_grp = PGRP_LIST[GA_Default_Proc_Group].group;
+       else
+          ARMCI_Group_get_world(&parent_grp);  
+       ARMCI_Group_set_default(&parent_grp);
+    }
+#endif
 }
  
 int FATR ga_pgroup_create_(Integer *list, Integer *count)
@@ -889,64 +912,69 @@ int FATR ga_pgroup_create_(Integer *list, Integer *count)
  
     /* Allocate memory for arrays containg processor maps and initialize
        values */
-  PGRP_LIST[pgrp_handle].map_proc_list
-    = (int*)malloc(GAnproc*sizeof(int)*2);
-  PGRP_LIST[pgrp_handle].inv_map_proc_list
-    = PGRP_LIST[pgrp_handle].map_proc_list + GAnproc;
-  for (i=0; i<GAnproc; i++)
-     PGRP_LIST[pgrp_handle].map_proc_list[i] = -1;
-  for (i=0; i<GAnproc; i++)
-     PGRP_LIST[pgrp_handle].inv_map_proc_list[i] = -1;
- 
-  /* Remap elements in list to absolute processor indices (if necessary)*/
-  if (GA_Default_Proc_Group != -1) {
-     parent = GA_Default_Proc_Group;
-     for (i=0; i<*count; i++) {
-	tmp2_list[i] = (int)PGRP_LIST[parent].inv_map_proc_list[list[i]];
-     }
-  } else {
-     for (i=0; i<*count; i++) {
-	tmp2_list[i] = (int)list[i];
-     }
-  }
-  /* use a simple sort routine to reorder list into assending order */
-  for (j=1; j<*count; j++) {
-     itmp = tmp2_list[j];
-     i = j-1;
-     while(i>=0  && tmp2_list[i] > itmp) {
-	tmp2_list[i+1] = tmp2_list[i];
-	i--;
-     }
-     tmp2_list[i+1] = itmp;
-  }
- 
-  tmp_count = (int)(*count);
-  /* Create proc list maps */
-  for (i=0; i<*count; i++) {
-     j = tmp2_list[i];
-     PGRP_LIST[pgrp_handle].map_proc_list[j] = i;
-     PGRP_LIST[pgrp_handle].inv_map_proc_list[i] = j;
-  }
-  PGRP_LIST[pgrp_handle].actv = 1;
-  PGRP_LIST[pgrp_handle].parent = GA_Default_Proc_Group;
-  PGRP_LIST[pgrp_handle].mirrored = 0;
-  PGRP_LIST[pgrp_handle].map_nproc = tmp_count;
+    PGRP_LIST[pgrp_handle].map_proc_list
+       = (int*)malloc(GAnproc*sizeof(int)*2);
+    PGRP_LIST[pgrp_handle].inv_map_proc_list
+       = PGRP_LIST[pgrp_handle].map_proc_list + GAnproc;
+    for (i=0; i<GAnproc; i++)
+       PGRP_LIST[pgrp_handle].map_proc_list[i] = -1;
+    for (i=0; i<GAnproc; i++)
+       PGRP_LIST[pgrp_handle].inv_map_proc_list[i] = -1;
+    
+    for (i=0; i<*count; i++) {
+       tmp2_list[i] = (int)list[i];
+    }
+    
+    /* use a simple sort routine to reorder list into assending order */
+    for (j=1; j<*count; j++) {
+       itmp = tmp2_list[j];
+       i = j-1;
+       while(i>=0  && tmp2_list[i] > itmp) {
+          tmp2_list[i+1] = tmp2_list[i];
+          i--;
+       }
+       tmp2_list[i+1] = itmp;
+    }
+    
+    /* Remap elements in list to absolute processor indices (if necessary)*/
+    if (GA_Default_Proc_Group != -1) {
+       parent = GA_Default_Proc_Group;
+       for (i=0; i<*count; i++) {
+          tmp_list[i] = (int)PGRP_LIST[parent].inv_map_proc_list[tmp2_list[i]];
+       }
+    } else {
+       for (i=0; i<*count; i++) {
+          tmp_list[i] = (int)tmp2_list[i];
+       }
+    }
+    
+    tmp_count = (int)(*count);
+    /* Create proc list maps */
+    for (i=0; i<*count; i++) {
+       j = tmp_list[i];
+       PGRP_LIST[pgrp_handle].map_proc_list[j] = i;
+       PGRP_LIST[pgrp_handle].inv_map_proc_list[i] = j;
+    }
+    PGRP_LIST[pgrp_handle].actv = 1;
+    PGRP_LIST[pgrp_handle].parent = GA_Default_Proc_Group;
+    PGRP_LIST[pgrp_handle].mirrored = 0;
+    PGRP_LIST[pgrp_handle].map_nproc = tmp_count;
 #ifdef MPI
-  tmpgrp = &PGRP_LIST[pgrp_handle].group;
+    tmpgrp = &PGRP_LIST[pgrp_handle].group;
 #if DO_CKPT
-  if(ga_group_is_for_ft)
-    tmpgrp = ARMCI_Get_ft_group();
-  else
+    if(ga_group_is_for_ft)
+       tmpgrp = ARMCI_Get_ft_group();
+    else
 #endif
-    ARMCI_Group_create(tmp_count, tmp2_list, &PGRP_LIST[pgrp_handle].group);
+       ARMCI_Group_create(tmp_count, tmp2_list, &PGRP_LIST[pgrp_handle].group);
 #endif
- 
- 
-  GA_POP_NAME;
+    
+    
+    GA_POP_NAME;
 #ifdef MPI
-  return pgrp_handle;
+    return pgrp_handle;
 #else
-  return ga_pgroup_get_default_();
+    return ga_pgroup_get_default_();
 #endif
 }
 
@@ -957,8 +985,8 @@ logical FATR ga_pgroup_destroy_(Integer *grp)
   logical ret = TRUE;
   Integer grp_id = *grp;
 
-  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
-
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*
+/
   if (PGRP_LIST[grp_id].actv == 0) {
     ret = FALSE;
   }
@@ -1241,7 +1269,7 @@ void FATR ga_set_ghosts_(Integer *g_a, Integer *width)
 \*/
 void FATR ga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
 {
-  Integer i, maplen;
+  Integer i, j, ichk, maplen;
   Integer ga_handle = *g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_irreg_distr");
   if (GA[ga_handle].actv == 1)
@@ -1251,6 +1279,24 @@ void FATR ga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
   for (i=0; i<GA[ga_handle].ndim; i++)
     if ((C_Integer)nblock[i] > GA[ga_handle].dims[i])
       ga_error("number of blocks must be <= corresponding dimension",i);
+  /* Check to see that mapc array is sensible */
+  maplen = 0;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    ichk = mapc[maplen];
+    if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+      ga_error("Mapc entry outside array dimension limits",ichk);
+    maplen++;
+    for (j=1; j<nblock[i]; j++) {
+      if (mapc[maplen] < ichk) {
+        ga_error("Mapc entries are not properly monotonic",ichk);
+      }
+      ichk = mapc[maplen];
+      if (ichk < 1 || ichk > GA[ga_handle].dims[i])
+        ga_error("Mapc entry outside array dimension limits",ichk);
+      maplen++;
+    }
+  }
+
   maplen = 0;
   for (i=0; i<GA[ga_handle].ndim; i++) {
     maplen += nblock[i];
@@ -1370,7 +1416,7 @@ logical FATR ga_allocate_( Integer *g_a)
   Integer pe[MAXDIM], *pmap[MAXDIM], *map;
   Integer blk[MAXDIM];
   Integer grp_me=GAme, grp_nproc=GAnproc;
-  Integer block_size;
+  Integer block_size = 0;
 #ifdef GA_USE_VAMPIR
   vampir_begin(GA_ALLOCATE,__FILE__,__LINE__);
 #endif
@@ -1849,7 +1895,8 @@ logical status;
  
       ctype = ga_type_f2c((int)(*type));  
       if(ctype != C_DBL  && ctype != C_INT &&  
-         ctype != C_DCPL && ctype != C_FLOAT  && ctype != C_LONG)
+         ctype != C_DCPL && ctype != C_SCPL && ctype != C_FLOAT  &&
+         ctype != C_LONG && ctype != C_LONGLONG)
          ga_error("ga_create_irreg: type not yet supported ",  *type);
       else if( *dim1 <= 0 )
          ga_error("ga_create_irreg: array dimension1 invalid ",  *dim1);
@@ -2177,6 +2224,7 @@ int i, nproc,grp_me=GAme;
       case MT_F_DBL:   base =  (char *) DBL_MB; break;
       case MT_F_INT:   base =  (char *) INT_MB; break;
       case MT_F_DCPL:  base =  (char *) DCPL_MB; break;
+      case MT_F_SCPL:  base =  (char *) SCPL_MB; break;
       case MT_F_REAL:  base =  (char *) FLT_MB; break;  
       default:        base = (char*)0;
     }
@@ -2440,7 +2488,6 @@ Integer grp_id, grp_me=GAme, grp_nproc=GAnproc;
       vampir_begin(GA_DUPLICATE,__FILE__,__LINE__);
 #endif
 
-
       local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
       _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
       grp_id = ga_get_pgroup_(g_a);
@@ -2519,8 +2566,14 @@ Integer grp_id, grp_me=GAme, grp_nproc=GAnproc;
          } else if (GA[ga_handle].type == C_LONG) {
              long bad = LONG_MAX;
              ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
+         } else if (GA[ga_handle].type == C_LONGLONG) {
+             long long bad = LONG_MAX;
+             ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
          } else if (GA[ga_handle].type == C_DCPL) { 
              DoubleComplex bad = {DBL_MAX, DBL_MAX};
+             ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
+         } else if (GA[ga_handle].type == C_SCPL) { 
+             SingleComplex bad = {FLT_MAX, FLT_MAX};
              ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
          } else if (GA[ga_handle].type == C_FLOAT) {
              float bad = FLT_MAX;
@@ -2799,6 +2852,9 @@ void FATR ga_fill_(Integer *g_a, void* val)
       case C_DCPL: 
         for(i=0; i<elems;i++)((DoubleComplex*)ptr)[i]=*(DoubleComplex*)val;
         break;
+      case C_SCPL: 
+        for(i=0; i<elems;i++)((SingleComplex*)ptr)[i]=*(SingleComplex*)val;
+        break;
       case C_DBL:  
         for(i=0; i<elems;i++)((double*)ptr)[i]=*(double*)val;
         break;
@@ -2810,6 +2866,9 @@ void FATR ga_fill_(Integer *g_a, void* val)
         break;     
       case C_LONG:
         for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*)val;
+        break;
+      case C_LONGLONG:
+        for(i=0; i<elems;i++)((long long*)ptr)[i]=*( long long*)val;
         break;
       default:
         ga_error("type not supported",GA[handle].type);
@@ -2820,6 +2879,9 @@ void FATR ga_fill_(Integer *g_a, void* val)
       case C_DCPL: 
         for(i=0; i<elems;i++)((DoubleComplex*)ptr)[i]=*(DoubleComplex*)val;
         break;
+      case C_SCPL: 
+        for(i=0; i<elems;i++)((SingleComplex*)ptr)[i]=*(SingleComplex*)val;
+        break;
       case C_DBL:  
         for(i=0; i<elems;i++)((double*)ptr)[i]=*(double*)val;
         break;
@@ -2831,6 +2893,9 @@ void FATR ga_fill_(Integer *g_a, void* val)
         break;     
       case C_LONG:
         for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*)val;
+        break;
+      case C_LONGLONG:
+        for(i=0; i<elems;i++)((long long*)ptr)[i]=*(long long*)val;
         break;
       default:
         ga_error("type not supported",GA[handle].type);
@@ -3045,22 +3110,50 @@ C_Integer *map= (map_ij);\
 logical FATR nga_locate_(Integer *g_a, Integer* subscript, Integer* owner)
 {
 Integer d, proc, dpos, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
+int use_blocks;
 
    ga_check_handleM(g_a, "nga_locate");
    ndim = GA[ga_handle].ndim;
+   use_blocks = GA[ga_handle].block_flag;
 
-   for(d=0, *owner=-1; d< ndim; d++) 
+   if (!use_blocks) {
+     for(d=0, *owner=-1; d< ndim; d++) 
        if(subscript[d]< 1 || subscript[d]>GA[ga_handle].dims[d]) return FALSE;
 
-   for(d = 0, dpos = 0; d< ndim; d++){
+     for(d = 0, dpos = 0; d< ndim; d++){
        findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d],
-                 GA[ga_handle].scale[d], subscript[d], &proc_s[d]);
+           GA[ga_handle].scale[d], subscript[d], &proc_s[d]);
        dpos += GA[ga_handle].nblock[d];
+     }
+
+     ga_ComputeIndexM(&proc, ndim, proc_s, GA[ga_handle].nblock); 
+
+     *owner = GA_Proc_list ? GA_Proc_list[proc]: proc;
+   } else {
+     if (GA[ga_handle].block_sl_flag == 0) {
+       Integer i, j, chk, lo[MAXDIM], hi[MAXDIM];
+       Integer num_blocks = GA[ga_handle].block_total;
+       for (i=0; i< num_blocks; i++) {
+         nga_distribution_(g_a, &i, lo, hi);
+         chk = 1;
+         for (j=0; j<ndim; j++) {
+           if (subscript[j]<lo[j] || subscript[j] > hi[j]) chk = 0;
+         }
+         if (chk) {
+           *owner = i;
+           break;
+         }
+       }
+     } else {
+       Integer index[MAXDIM];
+       Integer i;
+       for (i=0; i<ndim; i++) {
+         index[i] = (subscript[i]-1)/GA[ga_handle].block_dims[i];
+       }
+       gam_find_block_from_indices(ga_handle, i, index);
+       *owner = i;
+     }
    }
-
-   ga_ComputeIndexM(&proc, ndim, proc_s, GA[ga_handle].nblock); 
-
-   *owner = GA_Proc_list ? GA_Proc_list[proc]: proc;
    
    return TRUE;
 }
@@ -3311,9 +3404,20 @@ int i;
    for(i=0; i <GA[h_a].ndim; i++)
        if(GA[h_a].dims[i] != GA[h_b].dims[i]) return FALSE;
 
-   for(i=0; i <MAPLEN; i++){
-      if(GA[h_a].mapc[i] != GA[h_b].mapc[i]) return FALSE;
-      if(GA[h_a].mapc[i] == -1) break;
+   if (GA[h_a].block_flag != GA[h_b].block_flag) return FALSE;
+   if (GA[h_a].block_sl_flag != GA[h_b].block_sl_flag) return FALSE;
+   if (!GA[h_a].block_flag) {
+     for(i=0; i <MAPLEN; i++){
+       if(GA[h_a].mapc[i] != GA[h_b].mapc[i]) return FALSE;
+       if(GA[h_a].mapc[i] == -1) break;
+     }
+   } else {
+     for (i=0; i<GA[h_a].ndim; i++) {
+       if (GA[h_a].block_dims[i] != GA[h_b].block_dims[i]) return FALSE;
+     }
+     for (i=0; i<GA[h_a].ndim; i++) {
+       if (GA[h_a].nblock[i] != GA[h_b].nblock[i]) return FALSE;
+     }
    }
    return TRUE;
 }
@@ -3463,19 +3567,23 @@ logical FATR ga_locate_region_(g_a, ilo, ihi, jlo, jhi, mapl, np )
 {
    logical status;
    Integer lo[2], hi[2], p;
-   lo[0]=*ilo; lo[1]=*jlo;
-   hi[0]=*ihi; hi[1]=*jhi;
+   if (!GA[GA_OFFSET+(*g_a)].block_flag) {
+     lo[0]=*ilo; lo[1]=*jlo;
+     hi[0]=*ihi; hi[1]=*jhi;
 
-   status = nga_locate_region_(g_a,lo,hi,_ga_map, GA_proclist, np);
+     status = nga_locate_region_(g_a,lo,hi,_ga_map, GA_proclist, np);
 
-   /* need to swap elements (ilo,jlo,ihi,jhi) -> (ilo,ihi,jlo,jhi) */
-   for(p = 0; p< *np; p++){
-     mapl[p][0] = _ga_map[4*p];
-     mapl[p][1] = _ga_map[4*p + 2];
-     mapl[p][2] = _ga_map[4*p + 1];
-     mapl[p][3] = _ga_map[4*p + 3];
-     mapl[p][4] = GA_proclist[p];
-   } 
+     /* need to swap elements (ilo,jlo,ihi,jhi) -> (ilo,ihi,jlo,jhi) */
+     for(p = 0; p< *np; p++){
+       mapl[p][0] = _ga_map[4*p];
+       mapl[p][1] = _ga_map[4*p + 2];
+       mapl[p][2] = _ga_map[4*p + 1];
+       mapl[p][3] = _ga_map[4*p + 3];
+       mapl[p][4] = GA_proclist[p];
+     } 
+   } else {
+     ga_error("Must call nga_locate_region on block-cyclic data distribution",0);
+   }
 
    return status;
 }
@@ -3655,6 +3763,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
         case C_LONG: atype=ARMCI_LONG; break;
         case C_INT: atype=ARMCI_INT; break;
         case C_DCPL: atype=ARMCI_DOUBLE; break;
+        case C_SCPL: atype=ARMCI_FLOAT; break;
         default: ga_error("type not supported",type);
       }
       /* now that gap data has been zeroed, do a global sum on data */
@@ -3664,6 +3773,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
     Integer _ga_tmp;
     Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
     Integer idims[MAXDIM], iwidth[MAXDIM], ichunk[MAXDIM];
+    int chk = 1;
     void *ptr_a;
     void *one;
     double d_one = 1.0;
@@ -3671,9 +3781,12 @@ void FATR ga_merge_mirrored_(Integer *g_a)
     float f_one = 1.0;
     long l_one = 1;
     double c_one[2];
-    int chk = 1;
+    float cf_one[2];
     c_one[0] = 1.0;
     c_one[1] = 0.0;
+
+    cf_one[0] = 1.0;
+    cf_one[1] = 0.0;
 
     /* choose one as scaling factor in accumulate */
     switch (type) {
@@ -3682,6 +3795,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
       case C_LONG: one = &l_one; break;
       case C_INT: one = &i_one; break;
       case C_DCPL: one = &c_one; break;
+      case C_SCPL: one = &cf_one; break;
       default: ga_error("type not supported",type);
     }
     
@@ -3744,6 +3858,7 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
   double d_one;
   Integer type, i_one;
   double z_one[2];
+  float  c_one[2];
   float f_one;
   long l_one;
   void *src_data_ptr;
@@ -3842,6 +3957,10 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
       z_one[0] = 1.0;
       z_one[1] = 0.0;
       one = &z_one;
+    } else if (type == C_SCPL) {
+      c_one[0] = 1.0;
+      c_one[1] = 0.0;
+      one = &c_one;
     } else if (type == C_FLOAT) {
       f_one = 1.0;
       one = &f_one;
@@ -4378,11 +4497,39 @@ void FATR ga_get_block_info_(Integer *g_a, Integer *num_blocks, Integer *block_d
   Integer ga_handle = GA_OFFSET + *g_a;
   Integer i, ndim;
   ndim = GA[ga_handle].ndim; 
-  for (i=0; i<ndim; i++) {
-    num_blocks[i] = GA[ga_handle].num_blocks[i];
-    block_dims[i] = GA[ga_handle].block_dims[i];
+  if (GA[ga_handle].block_sl_flag) {
+    for (i=0; i<ndim; i++) {
+      num_blocks[i] = GA[ga_handle].num_blocks[i];
+      block_dims[i] = GA[ga_handle].block_dims[i];
+    }
+  } else {
+    Integer dim, bsize;
+    for (i=0; i<ndim; i++) {
+      dim = GA[ga_handle].dims[i];
+      bsize = GA[ga_handle].block_dims[i];
+      if (bsize > 0) {
+        if (dim%bsize == 0) {
+          num_blocks[i] = dim/bsize;
+        } else {
+          num_blocks[i] = dim/bsize+1;
+        }
+      } else {
+        num_blocks[i] = 0;
+      }
+      block_dims[i] = GA[ga_handle].block_dims[i];
+    }
   }
   return;
+}
+
+void FATR ga_set_debug_(logical *flag)
+{
+  GA_Debug_flag = (Integer)(*flag);
+}
+
+logical FATR ga_get_debug_()
+{
+  return (logical)GA_Debug_flag;
 }
 
 #ifdef DO_CKPT

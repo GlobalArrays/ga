@@ -1,9 +1,10 @@
-#$Id: GNUmakefile,v 1.5 2003-07-09 20:10:21 d3h325 Exp $
+#$Id: GNUmakefile,v 1.6 2007-10-30 02:05:01 manoj Exp $
 #
 #  Initial version Jace A Mogill (12 June 1996), ANL
 
  LIB_DISTRIB = ../../lib
      LIBRARY = libpario.a
+LIBRARY_SHARED= libpario.so
          OBJ = elio.o stat.o
      HEADERS = chemio.h elio.h
 

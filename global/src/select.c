@@ -17,9 +17,11 @@ int _i;\
 }
 
 typedef struct { 
-        union val_t {double dval; long lval; float fval;}v; 
+        union val_t {double dval; long lval; long long llval; float fval;}v; 
         Integer subscr[MAXDIM];
-        DoubleComplex extra;} elem_info_t;
+        DoubleComplex extra;
+        SingleComplex extra2;      
+} elem_info_t;
 
 void ngai_select_elem(Integer type, char* op, void *ptr, Integer elems, elem_info_t *info,
                       Integer *ind)
@@ -29,8 +31,10 @@ void ngai_select_elem(Integer type, char* op, void *ptr, Integer elems, elem_inf
     int *ia,ival;
     double *da,dval;
     DoubleComplex *ca;
+    SingleComplex *cfa;
     float *fa,fval;
     long *la,lval;
+    long long *lla,llval;
 
     case C_INT:
     ia = (int*)ptr;
@@ -61,6 +65,24 @@ void ngai_select_elem(Integer type, char* op, void *ptr, Integer elems, elem_inf
     info->extra = ((DoubleComplex*)ptr)[*ind]; /* append the actual val */
     break;
 
+    case C_SCPL:
+       cfa = (SingleComplex*)ptr;
+       fval=cfa->real*cfa->real + cfa->imag*cfa->imag;
+       if (strncmp(op,"min",3) == 0)
+          for(i=0;i<elems;i++, cfa+=1 ){
+             float tmp = cfa->real*cfa->real + cfa->imag*cfa->imag;
+             if(fval > tmp){fval = tmp; *ind = i;}
+          }
+       else
+          for(i=0;i<elems;i++, cfa+=1 ){
+             float tmp = cfa->real*cfa->real + cfa->imag*cfa->imag;
+             if(fval < tmp){fval = tmp; *ind = i;}
+          }
+
+       info->v.fval = fval; /* use abs value  for comparison*/
+       info->extra2 = ((SingleComplex*)ptr)[*ind]; /* append the actual val */
+       break;
+                                                               
     case C_DBL:
     da = (double*)ptr;
     dval = *da;
@@ -93,6 +115,17 @@ void ngai_select_elem(Integer type, char* op, void *ptr, Integer elems, elem_inf
       for(i=0;i<elems;i++){ if(lval < la[i]) {lval=la[i];*ind=i; } }
 
     info->v.lval = lval;
+    break;
+    case C_LONGLONG:
+    lla = (long long*)ptr;
+    llval = *lla;
+
+    if (strncmp(op,"min",3) == 0)
+      for(i=0;i<elems;i++){ if(llval > lla[i]) {llval=lla[i];*ind=i; } }
+    else
+      for(i=0;i<elems;i++){ if(llval < lla[i]) {llval=lla[i];*ind=i; } }
+
+    info->v.llval = llval;
     break;
 
     default: ga_error(" wrong data type ",type);
@@ -233,6 +266,10 @@ void nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
     int size = sizeof(double) + sizeof(Integer)*(int)ndim;
     armci_msg_sel(&info,size,op,ARMCI_LONG,participate);
     *(long*)val = info.v.lval;
+  }else if(type==C_LONGLONG){
+    int size = sizeof(double) + sizeof(Integer)*(int)ndim;
+    armci_msg_sel(&info,size,op,ARMCI_LONG_LONG,participate);
+    *(long long*)val = info.v.llval;
   }else if(type==C_DBL){
     int size = sizeof(double) + sizeof(Integer)*(int)ndim;
     armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);
@@ -241,6 +278,10 @@ void nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
     int size = sizeof(double) + sizeof(Integer)*ndim;
     armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);
     *(float*)val = info.v.fval;       
+  }else if(type==C_SCPL){
+    int size = sizeof(info); /* for simplicity we send entire info */
+    armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);
+    *(SingleComplex*)val = info.extra2;
   }else{
     int size = sizeof(info); /* for simplicity we send entire info */
     armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);

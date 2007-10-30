@@ -7,28 +7,35 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include "finclude.h"
+#define VERIFY_RESULT 1
 int na,nz;
 int bvec,dvec,svec,dmvec,m_dvec,amat,xvec,axvec,rvec,qvec,ridx,cidx;
 int me, nproc;
 int myfirstrow=0,mylastrow=0;
 double epsilon=1e-4;
+double time_get=0;
+double *entirexvecptr,*xvecptr,*entiredvecptr,*dvecptr;
 int isvectormirrored=0;
 static int niter;
 void read_and_create(int,char **);
 void computeminverser(double *,double *, double *);
 void computeminverse(double *,double *, int *,int *);
 void finalize_arrays();
-
+extern void matvecmul(double *,int,double *,int,int *,int *);
+extern double *ga_vecptr;
 void conjugate_gradient(int nit,int dopreconditioning)
 {
 int i,one=1,zero=0,negone=-1;
 int lo,hi;
 double d_one=1.0,d_zero=0.0,d_negone=-1.0;
 double delta0=0.0,deltaold=0.0,deltanew=0.0,alpha=0.0,negalpha,beta,dtransposeq;
-double *axvecptr,*qvecptr,*aptr,*dmvecptr,*rvecptr,*dvecptr,*svecptr;
+double *axvecptr,*qvecptr,*aptr,*dmvecptr,*rvecptr,*svecptr,*bvecptr;
 double time0;
 int *mycp,*myrp;
+
+ int j;
+ double sum;
 
     NGA_Distribution(cidx,me,&lo,&hi);
     NGA_Access(cidx,&lo,&hi,&mycp,&zero);
@@ -38,52 +45,80 @@ int *mycp,*myrp;
     NGA_Access(ridx,&lo,&hi,&myrp,&zero);
     NGA_Access(axvec,&lo,&hi,&axvecptr,&zero);
     NGA_Access(qvec,&lo,&hi,&qvecptr,&zero);
+    NGA_Access(rvec,&lo,&hi,&rvecptr,&zero);
+    NGA_Access(bvec,&lo,&hi,&bvecptr,&zero);
 
     if(dopreconditioning){
        NGA_Access(dmvec,&lo,&hi,&dmvecptr,&zero);
-       NGA_Access(rvec,&lo,&hi,&rvecptr,&zero);
-       NGA_Access(dvec,&lo,&hi,&dvecptr,&zero);
        NGA_Access(svec,&lo,&hi,&svecptr,&zero);
+       /* NGA_Distribution(dvec, 0, &lo, &hi);
+	  NGA_Access(dvec, &lo, &hi, &entiredvecptr, &zero); */
     }
-   
-    matvecmul(aptr,xvec,axvecptr,0,myrp,mycp);    /* compute Ax */
-
-    GA_Add(&d_one,bvec,&d_negone,axvec,rvec);     /* r=b-Ax*/
+    printf("\n%d:before matvecmul\n",me);fflush(stdout);
+    /* compute Ax */
+    f_matvecmul(aptr,entirexvecptr,axvecptr,&zero,&myfirstrow,&mylastrow,myrp,mycp);
+    /* r=b-Ax */
+    f_addvec(&d_one,bvecptr,&d_negone,axvecptr,rvecptr,&myfirstrow,&mylastrow); 
 
     if(dopreconditioning){
-      computeminverse(dmvecptr,aptr,myrp,mycp);
-      computeminverser(dmvecptr,rvecptr,dvecptr);
+      f_computeminverse(dmvecptr,aptr,myrp,mycp,&myfirstrow,&mylastrow);
+      f_computeminverser(dmvecptr,rvecptr,dvecptr,&myfirstrow,&mylastrow);
+      NGA_Put(dvec,&lo,&hi,dvecptr,&hi);
+      if (me == 0)
+	printf("Doing preconditioning!\n");
     }
-    else
-      GA_Copy(rvec,dvec);
+    else{
+      if(me==0){
+         na--;
+         NGA_Get(rvec,&zero,&na,entiredvecptr,&na);
+         NGA_Put(dvec,&zero,&na,entiredvecptr,&na);
+         na++;
+      }
+    }
 
     deltanew = GA_Ddot(dvec,rvec);                /* deltanew = r.r_tranpose */
 
     delta0 = deltanew;                            /* delta0 = deltanew */
 
-    if(me==0)printf("\n\tdelta0 is %f",delta0);
-    if(me==0)printf("\n\titer\tbeta\tdelta");
+    if(me==0)printf("\n\tdelta0 is %f\n",delta0);
+    /*if(me==0)printf("\n\titer\tbeta\tdelta");*/
 
-    for(i=0;i<nit && deltanew>(epsilon*epsilon*delta0);i++){
+    for(i=0;i<nit && deltanew>(1e-8*delta0);i++){
+      na--;
+      NGA_Get(dvec, &zero, &na, entiredvecptr, &na);
+      na++;
 
        if(isvectormirrored)
          matvecmul(aptr,m_dvec,qvecptr,1,myrp,mycp);/* q = Ad */
-       else
-         matvecmul(aptr,dvec,qvecptr,0,myrp,mycp);
+       else{
+         f_matvecmul(aptr,entiredvecptr,qvecptr,&zero,&myfirstrow,&mylastrow,myrp,mycp);
 
+	 sum = 0.0;
+	 for (j = 0; j < na; j++)
+	   if (entiredvecptr[j] != 0.0)
+	     sum += entiredvecptr[j];
+
+	 /* if (me == 0)
+	    printf("me: %d, sum: %g\n", me, sum); */
+       }
+
+       NGA_Put(dvec,&lo,&hi,dvecptr,&hi);
        dtransposeq=GA_Ddot(dvec,qvec);            /* compute d_transpose.q */
 
        alpha = deltanew/dtransposeq;              /* deltanew/(d_transpose.q) */
 
-       GA_Add(&d_one,xvec,&alpha,dvec,xvec);      /* x = x+ alpha.d*/
-
-       if(i>0 && i%50==0){
-         matvecmul(aptr,xvec,axvecptr,0,myrp,mycp);/* compute Ax*/
-	 GA_Add(&d_one,bvec,&d_negone,axvec,rvec);/* r=b-Ax*/   
+       if(i>10000 && i%25==0){
+         /* compute Ax*/
+         f_matvecmul(aptr,entirexvecptr,axvecptr,&zero,&myfirstrow,&mylastrow,myrp,mycp);
+         /* x = x+ alpha.d*/ /* r=b-Ax*/
+         f_2addvec(&d_one,xvecptr,&alpha,dvecptr,xvecptr,&d_one,bvecptr,
+                         &d_negone,axvecptr,rvecptr,&myfirstrow,&mylastrow);
        }
        else{
          negalpha = 0.0-alpha;                         
-         GA_Add(&d_one,rvec,&negalpha,qvec,rvec);  /* r = r-alpha.q */ 
+         /* x = x+ alpha.d*/ /* r=r-alpha.q*/
+         f_2addvec(&d_one,xvecptr,&alpha,dvecptr,xvecptr,&d_one,rvecptr,
+                         &negalpha,qvecptr,rvecptr,&myfirstrow,&mylastrow);
        }
 
        if(dopreconditioning)
@@ -99,29 +134,36 @@ int *mycp,*myrp;
        beta = deltanew/deltaold;                   /* beta = deltanew/deltaold*/
 
        if(dopreconditioning)
-         GA_Add(&d_one,svec,&beta,dvec,dvec);      /* d = r + beta.d */
+         f_addvec(&d_one,svecptr,&beta,dvecptr,dvecptr,&myfirstrow,&mylastrow);    /* d = s + beta.d */
        else
-         GA_Add(&d_one,rvec,&beta,dvec,dvec);      /* d = r + beta.d */
+         f_addvec(&d_one,rvecptr,&beta,dvecptr,dvecptr,&myfirstrow,&mylastrow);    /* d = r + beta.d */
 
        if(isvectormirrored)
          GA_Copy(dvec,m_dvec);                     /*copy from distributed */
 
-       if(me==0)printf("\n\t%d\t%0.4f\t%f",(i+1),beta,deltanew);
+       //if(me==0)printf("\n\t%d\t%0.4f\t%f",(i+1),beta,deltanew);
     }
-    if(i < nit && me == 0)printf("\n Done with CG before reaching max iter");
-    niter = nit;
-    /*
+    if(i < nit && me == 0)
+        printf("\n Done with CG before reaching max iter %f",sqrt(deltanew/delta0));
+    niter = i;
+
+#if VERIFY_RESULT
     GA_Zero(qvec);
+    GA_Zero(rvec);
     matvecmul(aptr,xvec,qvecptr,0,myrp,mycp);
     GA_Add(&d_one,qvec,&d_negone,bvec,rvec);
     time0=GA_Ddot(rvec,rvec);
     if(me==0)printf("\n%d:error is %f",me,time0);
-    */
+#endif
+    
 }
 
 void initialize_arrays(int dpc)
 {
 double d_one=1.0;
+double d_ten=10.0;
+double d_zero=0.0;
+int i;
     GA_Zero(dvec);
     GA_Fill(xvec,&d_one);
     GA_Zero(axvec);
@@ -131,6 +173,33 @@ double d_one=1.0;
        GA_Zero(dmvec);
        GA_Zero(svec);
     }
+    for(i=0;i<na;i++)
+            entirexvecptr[i]=1.0;
+}
+
+void **myptrarrx;
+void **myptrarrd;
+static void create_entire_vecs()
+{
+extern int ARMCI_Malloc(void **, size_t);
+int i,lo,hi;
+    myptrarrx = (void **)malloc(sizeof(void)*nproc);
+    myptrarrd = (void **)malloc(sizeof(void)*nproc);
+
+    i=ARMCI_Malloc(myptrarrx,na*sizeof(double));
+    if(i!=0)GA_Error("malloc failed",0);
+    entirexvecptr=myptrarrx[me];
+
+    i=ARMCI_Malloc(myptrarrd,na*sizeof(double));
+    if(i!=0)GA_Error("malloc failed",0);
+    entiredvecptr=myptrarrd[me];
+    
+    NGA_Distribution(ridx,me,&lo,&hi);
+
+    xvecptr=entirexvecptr+lo;
+    dvecptr=entiredvecptr+lo;
+
+    printf("me: %d, entiredvecptr: %p, dvecptr: %p\n", me, entiredvecptr, dvecptr);
 }
 
 int main(argc, argv)
@@ -178,20 +247,25 @@ double d_one=1.0,d_zero=0.0,d_negone=-1.0;
        GA_Error("MA_init failed",stack+heap);  /* initialize memory allocator*/ 
     
     read_and_create(argc,argv);
+    create_entire_vecs();
 
     if(me==0)printf("\nWarmup and initialization run");
     initialize_arrays(dopreconditioning);
     conjugate_gradient(1,dopreconditioning);
-
+    time_get =0.0;
     if(me==0)printf("\n\nStarting Conjugate Gradient ....");
     initialize_arrays(dopreconditioning);
+
     time0=MPI_Wtime();
-    conjugate_gradient(na,dopreconditioning);
+    conjugate_gradient(30000/*2*/,dopreconditioning);
     time1=MPI_Wtime();
 
-    if(me==0)printf("\n%d:time per iteration=%f\n",me,(time1-time0));
+    //GA_Print(xvec);
+    //GA_Print(dvec);
+    
+    if(me==0)printf("\n%d:in %d iterations time to solution=%f-%f\n",me,niter,(time1-time0),time_get);
 
-    finalize_arrays();
+    finalize_arrays(dopreconditioning);
     MPI_Barrier(MPI_COMM_WORLD);
 
     if(me==0)printf("Terminating ..\n");
@@ -201,8 +275,9 @@ double d_one=1.0,d_zero=0.0,d_negone=-1.0;
 }
 
 
-void finalize_arrays()
+void finalize_arrays(int dpc)
 {
+     extern int ARMCI_Free(void*);
      GA_Destroy(bvec);
      GA_Destroy(dvec);
      if(isvectormirrored)
@@ -214,4 +289,10 @@ void finalize_arrays()
      GA_Destroy(qvec);
      GA_Destroy(ridx);
      GA_Destroy(cidx);
+     if(dpc){
+        GA_Destroy(svec);
+        GA_Destroy(dmvec);
+     }
+     ARMCI_Free(myptrarrx[me]);
+     ARMCI_Free(myptrarrd[me]);
 }     

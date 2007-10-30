@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.23 2006-08-31 19:07:04 d3m782 Exp $ */
+/* $Id: collect.c,v 1.24 2007-10-30 02:04:57 manoj Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -101,11 +101,25 @@ void ga_msg_sync_()
 void ga_msg_pgroup_sync_(Integer *grp_id)
 {
     int p_grp = (int)(*grp_id);
-#ifdef MPI
-    armci_msg_group_barrier(&(PGRP_LIST[p_grp].group));
-#else
-    ga_error("ga_msg_pgroup_sync not implemented",0);
-#endif
+    if(p_grp>0) {
+#     ifdef MPI       
+        armci_msg_group_barrier(&(PGRP_LIST[p_grp].group));
+#     else
+        ga_error("ga_msg_pgroup_sync not implemented",0);
+#     endif
+    }
+    else {
+#     ifdef MPI       
+        MPI_Barrier(MPI_COMM_WORLD);
+#     else
+        long type=GA_TYPE_SYN;
+#       ifdef LAPI
+          armci_msg_barrier();
+#       else
+          SYNCH_(&type);
+#       endif
+#    endif
+    }
 }
 
 /*\ GLOBAL OPERATIONS
@@ -345,6 +359,39 @@ void ga_lgop(type, x, n, op)
 	  armci_msg_lgop(x, (int)n, op);
 }
 
+void ga_pgroup_llgop(p_grp,type, x, n, op)
+     Integer p_grp,type, n;
+     long long *x;
+     char *op;
+{
+        int group = (int)p_grp;
+        _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+#if defined(ARMCI_COLLECTIVES) || defined(MPI)
+        if (group > 0) {
+#ifdef MPI
+	  armci_msg_group_llgop(x, (int)n, op,(&(PGRP_LIST[group].group)));
+#endif
+        } else
+	  armci_msg_llgop(x, (int)n, op);
+#else
+            ga_error("Groups not implemented for system",0);
+#endif
+}
+void ga_llgop(type, x, n, op)
+     Integer type, n;
+     long long *x;
+     char *op;
+{
+        Integer p_grp = ga_pgroup_get_default_();
+        _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+#if defined(ARMCI_COLLECTIVES) || defined(MPI)
+        if ((int)p_grp > 0) 
+          ga_pgroup_llgop(p_grp,type,x,n,op);
+        else 
+#endif
+	  armci_msg_llgop(x, (int)n, op);
+}
+
 void ga_pgroup_igop(p_grp, type, x, n, op)
      Integer p_grp, type, n, *x;
      char *op;
@@ -354,18 +401,28 @@ void ga_pgroup_igop(p_grp, type, x, n, op)
             _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 #if defined(ARMCI_COLLECTIVES) || defined(MPI)
 #   ifdef EXT_INT
+#     ifdef EXT_INT64
             if (group > 0) {
-#ifdef MPI
+#       ifdef MPI
+              armci_msg_group_llgop(x, (int)n, op,(&(PGRP_LIST[group].group)));
+#       endif
+            } else {
+              armci_msg_llgop(x, (int)n, op);
+            }
+#     else
+            if (group > 0) {
+#       ifdef MPI
               armci_msg_group_lgop(x, (int)n, op,(&(PGRP_LIST[group].group)));
-#endif
+#       endif
             } else {
               armci_msg_lgop(x, (int)n, op);
             }
+#     endif
 #   else
             if (group > 0) {
-#ifdef MPI
+#       ifdef MPI
               armci_msg_group_igop(x, (int)n, op,(&(PGRP_LIST[group].group)));
-#endif
+#       endif
             } else {
               armci_msg_igop(x, (int)n, op);
             }
@@ -386,7 +443,11 @@ void ga_igop(type, x, n, op)
               ga_pgroup_igop(p_grp,type,x,n,op);
             } else {
 #   ifdef EXT_INT
+#     ifdef EXT_INT64
+            armci_msg_llgop(x, (int)n, op);
+#     else
             armci_msg_lgop(x, (int)n, op);
+#     endif
 #   else
             armci_msg_igop(x, (int)n, op);
 #   endif
@@ -440,11 +501,13 @@ void ga_fgop(type, x, n, op)
 void ga_gop(Integer type, void *x, Integer n, char *op)
 {
     Integer ga_type_gop = GA_TYPE_GOP; 
+    Integer *ix=NULL;
+    DoublePrecision *dx=NULL;
+    float *fx=NULL;
+    long *lx=NULL;
+    long long *llx=NULL;
+    
     switch (type){
-       Integer *ix=NULL;
-       DoublePrecision *dx=NULL;
-       float *fx=NULL;
-       long *lx=NULL;
        case C_INT:
           ix = (Integer*)x;
           ga_igop(ga_type_gop, ix, n, op);
@@ -468,6 +531,11 @@ void ga_gop(Integer type, void *x, Integer n, char *op)
        case C_LONG:
           lx = (long*)x;
           ga_lgop(ga_type_gop, lx, n, op);
+          break;
+
+       case C_LONGLONG:
+          llx = (long long*)x;
+          ga_llgop(ga_type_gop, llx, n, op);
           break;
        default: ga_error(" wrong data type ",type);
     }

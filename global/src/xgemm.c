@@ -107,9 +107,9 @@ xb_sgemm (char *transa, char *transb, int *M, int *N, int *K,
     printf("m=%d, n=%d, k=%d\n", m, n, k);
     printf("alpha=%f, beta=%f\n", alpha_i, beta_i);
     printf("\n");	  
-    //for(i=0; i<m*k; i++)  printf("%.1f ", *A++); printf("\n\n");
-    //for(i=0; i<n*k; i++)  printf("%.1f ", *B++); printf("\n\n");
-    //for(i=0; i<n*k; i++)  printf("%.1f ", *C++); printf("\n");
+    /* for(i=0; i<m*k; i++)  printf("%.1f ", *A++); printf("\n\n"); */
+    /* for(i=0; i<n*k; i++)  printf("%.1f ", *B++); printf("\n\n"); */
+    /* for(i=0; i<n*k; i++)  printf("%.1f ", *C++); printf("\n"); */
 #endif
     
     /* Test for error conditions */
@@ -1240,6 +1240,479 @@ xb_zgemm (char * transa, char *transb, int *M, int *N, int *K,
 		    tmp2[1] =
 			(double) c_elem[0] * beta_i[1] +
 			(double) c_elem[1] * beta_i[0];
+		}
+		tmp1[0] = tmp1[0] + tmp2[0];
+		tmp1[1] = tmp1[1] + tmp2[1];
+		c_i[cij] = tmp1[0];
+		c_i[cij + 1] = tmp1[1];
+	    }
+	}
+
+    }
+
+
+
+}
+
+
+void
+xb_cgemm (char * transa, char *transb, int *M, int *N, int *K,
+	  const void *alpha, const void *a, int *p_lda, const void *b, 
+	  int *p_ldb, const void *beta, void *c, int *p_ldc)
+/* 
+ * Purpose
+ * =======
+ *
+ * This routine computes the matrix product:
+ *
+ *      C   <-  alpha * op(A) * op(B)  +  beta * C .
+ * 
+ * where op(M) represents either M, M transpose, 
+ * or M conjugate transpose.
+ *
+ * Arguments
+ * =========
+ *
+ * order   (input) enum blas_order_type
+ *         Storage  of input matrices A, B, and C.
+ *
+ * transa  (input) enum blas_trans_type
+ *         Operation to be done on matrix A before multiplication.
+ *         Can be no operation, transposition, or conjugate transposition.
+ *
+ * transb  (input) enum blas_trans_type
+ *         Operation to be done on matrix B before multiplication.
+ *         Can be no operation, transposition, or conjugate transposition.
+ * 
+ * m n k   (input) int
+ *         The dimensions of matrices A, B, and C.
+ *         Matrix C is m-by-n matrix.
+ *         Matrix A is m-by-k if A is not transposed, 
+ *                     k-by-m otherwise.
+ *         Matrix B is k-by-n if B is not transposed, 
+ *                     n-by-k otherwise.
+ *      
+ * alpha   (input) const void*
+ *
+ * a       (input) const void*
+ *         matrix A.
+ * 
+ * lda     (input) int
+ *         leading dimension of A.
+ * 
+ * b       (input) const void*
+ *         matrix B
+ *
+ * ldb     (input) int
+ *         leading dimension of B.
+ *
+ * beta    (input) const void*
+ *
+ * c       (input/output) void*
+ *         matrix C
+ *
+ * ldc     (input) int
+ *         leading dimension of C.
+ *
+ */
+{
+
+
+    /* Integer Index Variables */
+    int i, j, h;
+
+    int ai, bj, ci;
+    int aih, bhj, cij;		/* Index into matrices a, b, c during multiply */
+
+    int incai, incaih;		/* Index increments for matrix a */
+    int incbj, incbhj;		/* Index increments for matrix b */
+    int incci, inccij;		/* Index increments for matrix c */
+
+    /* Input Matrices */
+    const float *a_i = (float *) a;
+    const float *b_i = (float *) b;
+
+    /* Output Matrix */
+    float *c_i = (float *) c;
+
+    /* Input Scalars */
+    float *alpha_i = (float *) alpha;
+    float *beta_i = (float *) beta;
+    int m=*M, n=*N, k=*K;
+    int lda=*p_lda, ldb=*p_ldb, ldc=*p_ldc;
+
+    /* Temporary Floating-Point Variables */
+    float a_elem[2];
+    float b_elem[2];
+    float c_elem[2];
+    float prod[2];
+    float sum[2];
+    float tmp1[2];
+    float tmp2[2];
+
+    char order = COLMAJOR; /* For the time being, it is always COLMAJOR.
+			      Eventually, it might change. */
+
+#if MDEBUG
+    printf("In Zgemm\n");
+#endif
+
+    /* Test for error conditions */
+    if (m <= 0 || n <= 0 || k <= 0)
+    {
+	return;
+    }
+
+    if (order == COLMAJOR)
+    {
+
+	if (ldc < m)
+	    return;
+
+	if (*transa == 'n' || *transa == 'N')
+	{
+	    if (lda < m)
+		return;
+	}
+	else
+	{
+	    if (lda < k)
+		return;
+	}
+
+	if (*transb == 'n' || *transb == 'N')
+	{
+	    if (ldb < k)
+		return;
+	}
+	else
+	{
+	    if (ldb < n)
+		return;
+	}
+
+    }
+    else
+    {
+	/* row major */
+	if (ldc < n)
+	    return;
+
+	if (*transa == 'n' || *transa == 'N')
+	{
+	    if (lda < k)
+		return;
+	}
+	else
+	{
+	    if (lda < m)
+		return;
+	}
+
+	if (*transb == 'n' || *transb == 'N')
+	{
+	    if (ldb < n)
+		return;
+	}
+	else
+	{
+	    if (ldb < k)
+		return;
+	}
+    }
+
+    /* Test for no-op */
+    if (alpha_i[0] == 0.0 && alpha_i[1] == 0.0
+	&& (beta_i[0] == 1.0 && beta_i[1] == 0.0))
+    {
+	return;
+    }
+
+    /* Set Index Parameters */
+    if (order == COLMAJOR)
+    {
+	incci = 1;
+	inccij = ldc;
+
+	if (*transa == 'n' || *transa == 'N')
+	{
+	    incai = 1;
+	    incaih = lda;
+	}
+	else
+	{
+	    incai = lda;
+	    incaih = 1;
+	}
+
+	if (*transb == 'n' || *transb == 'N')
+	{
+	    incbj = ldb;
+	    incbhj = 1;
+	}
+	else
+	{
+	    incbj = 1;
+	    incbhj = ldb;
+	}
+
+    }
+    else
+    {
+	/* row major */
+	incci = ldc;
+	inccij = 1;
+
+	if (*transa == 'n' || *transa == 'N')
+	{
+	    incai = lda;
+	    incaih = 1;
+	}
+	else
+	{
+	    incai = 1;
+	    incaih = lda;
+	}
+
+	if (*transb == 'n' || *transb == 'N')
+	{
+	    incbj = 1;
+	    incbhj = ldb;
+	}
+	else
+	{
+	    incbj = ldb;
+	    incbhj = 1;
+	}
+
+    }
+
+
+
+    /* Ajustment to increments */
+    incci *= 2;
+    inccij *= 2;
+    incai *= 2;
+    incaih *= 2;
+    incbj *= 2;
+    incbhj *= 2;
+
+    /* alpha = 0.  In this case, just return beta * C */
+    if (alpha_i[0] == 0.0 && alpha_i[1] == 0.0)
+    {
+
+	ci = 0;
+	for (i = 0; i < m; i++, ci += incci)
+	{
+	    cij = ci;
+	    for (j = 0; j < n; j++, cij += inccij)
+	    {
+		c_elem[0] = c_i[cij];
+		c_elem[1] = c_i[cij + 1];
+		{
+		    tmp1[0] =
+			(float) c_elem[0] * beta_i[0] -
+			(float) c_elem[1] * beta_i[1];
+		    tmp1[1] =
+			(float) c_elem[0] * beta_i[1] +
+			(float) c_elem[1] * beta_i[0];
+		}
+		c_i[cij] = tmp1[0];
+		c_i[cij + 1] = tmp1[1];
+	    }
+	}
+
+    }
+    else if ((alpha_i[0] == 1.0 && alpha_i[1] == 0.0))
+    {
+
+	/* Case alpha == 1. */
+
+	if (beta_i[0] == 0.0 && beta_i[1] == 0.0)
+	{
+	    /* Case alpha == 1, beta == 0.   We compute  C <--- A * B */
+
+	    ci = 0;
+	    ai = 0;
+	    for (i = 0; i < m; i++, ci += incci, ai += incai)
+	    {
+
+		cij = ci;
+		bj = 0;
+
+		for (j = 0; j < n; j++, cij += inccij, bj += incbj)
+		{
+
+		    aih = ai;
+		    bhj = bj;
+
+		    sum[0] = sum[1] = 0.0;
+
+		    for (h = 0; h < k; h++, aih += incaih, bhj += incbhj)
+		    {
+			a_elem[0] = a_i[aih];
+			a_elem[1] = a_i[aih + 1];
+			b_elem[0] = b_i[bhj];
+			b_elem[1] = b_i[bhj + 1];
+			if (*transa == 'c' || *transa == 'C')
+			{
+			  a_elem[1] = -a_elem[1];
+			}
+			if (*transb == 'c' || *transb == 'C')
+			{
+			    b_elem[1] = -b_elem[1];
+			}
+			
+			{
+			    prod[0] =
+				(float) a_elem[0] * b_elem[0] -
+				(float) a_elem[1] * b_elem[1];
+			    prod[1] =
+				(float) a_elem[0] * b_elem[1] +
+				(float) a_elem[1] * b_elem[0];
+			}
+			sum[0] = sum[0] + prod[0];
+			sum[1] = sum[1] + prod[1];
+		    }
+		    tmp1[0] = sum[0];
+		    tmp1[1] = sum[1];
+		    c_i[cij] = tmp1[0];
+		    c_i[cij + 1] = tmp1[1];
+		}
+	    }
+
+	}
+	else
+	{
+	    /* Case alpha == 1, but beta != 0.
+	       We compute   C <--- A * B + beta * C   */
+
+	    ci = 0;
+	    ai = 0;
+	    for (i = 0; i < m; i++, ci += incci, ai += incai)
+	    {
+
+		cij = ci;
+		bj = 0;
+
+		for (j = 0; j < n; j++, cij += inccij, bj += incbj)
+		{
+
+		    aih = ai;
+		    bhj = bj;
+
+		    sum[0] = sum[1] = 0.0;
+
+		    for (h = 0; h < k; h++, aih += incaih, bhj += incbhj)
+		    {
+			a_elem[0] = a_i[aih];
+			a_elem[1] = a_i[aih + 1];
+			b_elem[0] = b_i[bhj];
+			b_elem[1] = b_i[bhj + 1];
+			if (*transa == 'c' || *transa == 'C')
+			{
+			    a_elem[1] = -a_elem[1];
+			}
+			if (*transb == 'c' || *transb == 'C')
+			{
+			    b_elem[1] = -b_elem[1];
+			}
+			{
+			    prod[0] =
+				(float) a_elem[0] * b_elem[0] -
+				(float) a_elem[1] * b_elem[1];
+			    prod[1] =
+				(float) a_elem[0] * b_elem[1] +
+				(float) a_elem[1] * b_elem[0];
+			}
+			sum[0] = sum[0] + prod[0];
+			sum[1] = sum[1] + prod[1];
+		    }
+
+		    c_elem[0] = c_i[cij];
+		    c_elem[1] = c_i[cij + 1];
+		    {
+			tmp2[0] =
+			    (float) c_elem[0] * beta_i[0] -
+			    (float) c_elem[1] * beta_i[1];
+			tmp2[1] =
+			    (float) c_elem[0] * beta_i[1] +
+			    (float) c_elem[1] * beta_i[0];
+		    }
+		    tmp1[0] = sum[0];
+		    tmp1[1] = sum[1];
+		    tmp1[0] = tmp2[0] + tmp1[0];
+		    tmp1[1] = tmp2[1] + tmp1[1];
+		    c_i[cij] = tmp1[0];
+		    c_i[cij + 1] = tmp1[1];
+		}
+	    }
+	}
+
+    }
+    else
+    {
+
+	/* The most general form,   C <-- alpha * A * B + beta * C  */
+	ci = 0;
+	ai = 0;
+	for (i = 0; i < m; i++, ci += incci, ai += incai)
+	{
+
+	    cij = ci;
+	    bj = 0;
+
+	    for (j = 0; j < n; j++, cij += inccij, bj += incbj)
+	    {
+
+		aih = ai;
+		bhj = bj;
+
+		sum[0] = sum[1] = 0.0;
+
+		for (h = 0; h < k; h++, aih += incaih, bhj += incbhj)
+		{
+		    a_elem[0] = a_i[aih];
+		    a_elem[1] = a_i[aih + 1];
+		    b_elem[0] = b_i[bhj];
+		    b_elem[1] = b_i[bhj + 1];
+		    if (*transa == 'c' || *transa == 'C')
+		    {
+			a_elem[1] = -a_elem[1];
+		    }
+		    if (*transb == 'c' || *transb == 'C')
+		    {
+			b_elem[1] = -b_elem[1];
+		    }
+		    {
+			prod[0] =
+			    (float) a_elem[0] * b_elem[0] -
+			    (float) a_elem[1] * b_elem[1];
+			prod[1] =
+			    (float) a_elem[0] * b_elem[1] +
+			    (float) a_elem[1] * b_elem[0];
+		    }
+		    sum[0] = sum[0] + prod[0];
+		    sum[1] = sum[1] + prod[1];
+		}
+
+		{
+		    tmp1[0] =
+			(float) sum[0] * alpha_i[0] -
+			(float) sum[1] * alpha_i[1];
+		    tmp1[1] =
+			(float) sum[0] * alpha_i[1] +
+			(float) sum[1] * alpha_i[0];
+		}
+		c_elem[0] = c_i[cij];
+		c_elem[1] = c_i[cij + 1];
+		{
+		    tmp2[0] =
+			(float) c_elem[0] * beta_i[0] -
+			(float) c_elem[1] * beta_i[1];
+		    tmp2[1] =
+			(float) c_elem[0] * beta_i[1] +
+			(float) c_elem[1] * beta_i[0];
 		}
 		tmp1[0] = tmp1[0] + tmp2[0];
 		tmp1[1] = tmp1[1] + tmp2[1];

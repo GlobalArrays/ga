@@ -142,7 +142,6 @@ int lo,hi,ld;
     mylastrow = alllastrow[me];
 
     
-    /*now create column matrix */
     amat = NGA_Create_irreg(MT_C_DBL, 1, &nz , "A", &nproc,columnmap);
     if(!amat) GA_Error("create failed: A",nz); 
     if(me==0){
@@ -151,6 +150,7 @@ int lo,hi,ld;
       NGA_Put(amat,&lo,&hi,a,&hi);
     }
 
+    /*now create column matrix */
     cidx = NGA_Create_irreg(MT_C_INT, 1, &nz , "COLUMN",&nproc,columnmap);
     if(!cidx) GA_Error("create cidx failed",nz); 
     if(me==0){
@@ -193,11 +193,15 @@ int lo,hi,ld;
     if(!axvec) GA_Error("create Ax failed",na); 
 
     rvec = NGA_Create_irreg(MT_C_DBL, 1, &na , "R", &nproc, allfirstrow);
-    if(!rvec) GA_Error("create q failed",na); 
+    if(!rvec) GA_Error("create r failed",na); 
 
     dvec = GA_Duplicate(rvec,"D");                /* d = r */
-    svec = GA_Duplicate(rvec,"S");
-    dmvec = GA_Duplicate(rvec,"DM");
+
+    svec = NGA_Create_irreg(MT_C_DBL, 1, &na , "S", &nproc, allfirstrow);
+    if(!svec) GA_Error("create s failed",na); 
+
+    dmvec = NGA_Create_irreg(MT_C_DBL, 1, &na , "Dm", &nproc, allfirstrow);
+    if(!dmvec) GA_Error("create dm failed",na); 
 
 #if 0
     dims[0]=1;dims[1]=na;

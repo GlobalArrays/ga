@@ -1,4 +1,4 @@
-/*$Id: armci-vapi.h,v 1.21 2006-10-12 20:44:30 vinod Exp $ */
+/*$Id: armci-vapi.h,v 1.22 2007-10-30 02:04:53 manoj Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 
@@ -167,8 +167,8 @@ void armci_vapi_set_mark_buf_send_complete(int);
 
 
 
-#define LONG_GET_THRESHOLD 20000000
-#define LONG_GET_THRESHOLD_STRIDED 20000000
+#define LONG_GET_THRESHOLD 2147483648
+#define LONG_GET_THRESHOLD_STRIDED 2147483648
 #define ARMCI_VAPI_COMPLETE 1088451863
 #define ARMCI_POST_SCATTER 1000000001
 #define ARMCI_VAPI_CLEAR 0
@@ -177,8 +177,8 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define VAPI_SGPUT_MIN_COLUMN 720
 #endif
 #ifdef OPENIB
-#define VAPI_SGGET_MIN_COLUMN 720
-#define VAPI_SGPUT_MIN_COLUMN 720
+#define VAPI_SGGET_MIN_COLUMN 2147483648
+#define VAPI_SGPUT_MIN_COLUMN 2147483648
 #endif
 #define DSCRID_SCATTERCLIENT 70000
 #define DSCRID_SCATTERCLIENT_END 70000+9999

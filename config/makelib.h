@@ -12,7 +12,11 @@ ifndef LIBDIR
      LIBDIR = .
    endif
 endif
-  
+
+ifdef GA_SHLIB
+	SHLIB_DIR    = $(LIBDIR)/shared
+	OBJ_DIR      = ./obj
+endif
 # makefile in each directory might define error message for undefined 
 # symbols etc.
 # When error message is defined, it should be displayed and then
@@ -44,14 +48,28 @@ else
 endif
 
 FULL_LIBRARY_PATH := $(LIBDIR)/$(LIBRARY)
+FULL_LIBRARY_PATH_SHARED := $(SHLIB_DIR)/$(LIBRARY_SHARED)
 
 OBJECTS := $(OBJ) $(OBJ_OPTIMIZE)
+SHLIB_OBJECTS := $(patsubst %,$(OBJ_DIR)/%,$(OBJECTS))
 
  LIBOBJ := $(patsubst %,$(FULL_LIBRARY_PATH)(%),$(OBJECTS))
  LIBOBJ_OPT := $(patsubst %,$(FULL_LIBRARY_PATH)(%),$(OBJ_OPTIMIZE))
 
-$(FULL_LIBRARY_PATH): $(HEADERS) $(SYMBOL_STAMP).stamp $(LIBOBJ) $(LIBOBJ_OPT)
+$(FULL_LIBRARY_PATH): $(HEADERS) $(SYMBOL_STAMP).stamp $(LIBOBJ) $(LIBOBJ_OPT) $(FULL_LIBRARY_PATH_SHARED)
 	$(RANLIB) $@
+
+$(FULL_LIBRARY_PATH_SHARED): $(OBJ_DIR) $(LIBOBJ) $(LIBOBJ_OPT)
+ifdef GA_SHLIB
+	@for i in $(OBJECTS); do \
+		if [ -f $$i ]; then \
+			cp $$i $(OBJ_DIR); \
+		fi; \
+	done
+ifndef SKIP_SHLIB
+	$(CC) $(SHLIB_LDFLAGS) -o $(SHLIB_DIR)/$(LIBRARY_SHARED) $(SHLIB_OBJECTS);
+endif
+endif
 
 $(SYMBOL_STAMP).stamp:
 	if [ -f *.stamp ]; then\
@@ -62,11 +80,13 @@ ifdef HEADERS
 endif
 	echo "" > $(SYMBOL_STAMP).stamp
 
+ifndef GA_SHLIB
 ifdef OBJ_OPTIMIZE
 ifndef OPTIMIZE
 .PHONY: $(LIBOBJ_OPT)
 $(LIBOBJ_OPT):
 	@$(MAKE) OPTIMIZE="Yes"
+endif
 endif
 endif
 
@@ -86,7 +106,6 @@ subdirs:
 		cd .. ;\
 	done
 endif
-#		$(MAKE)  -C $$dir || exit 1 ;  \
 
 .PHONY: clean
 clean:
@@ -105,7 +124,12 @@ else
 		fi ; \
 	fi ;
 endif
-
+ifdef GA_SHLIB
+	@if [ -f $(SHLIB_DIR)/$(LIBRARY_SHARED) ]; then\
+		$(RM) -f $(SHLIB_DIR)/$(LIBRARY_SHARED); \
+		$(RM) -rf $(OBJ_DIR); \
+	fi;
+endif
 
 .PHONY: realclean
 realclean:      clean
@@ -120,3 +144,8 @@ ifdef SUBDIRS
 	$(MAKESUBDIRS)
 endif
 	-$(RM) -rf *.stamp
+
+ifdef GA_SHLIB
+$(OBJ_DIR):
+	$(MKDIR) -p $@
+endif

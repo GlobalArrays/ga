@@ -1,13 +1,17 @@
-/* $Id: dataserv.c,v 1.30 2004-03-31 14:20:48 vinod Exp $ */
+/* $Id: dataserv.c,v 1.31 2007-10-30 02:04:53 manoj Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "copy.h"
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+
 #define DEBUG_ 0
 #define DEBUG1 0
-#define USE_VECTOR_FORMAT_ 1 
+#define USE_VECTOR_FORMAT_ 1
+
+active_socks_t *_armci_active_socks;
+
 extern int AR_ready_sigchld;
 int *SRV_sock;
 int *AR_port;
@@ -25,7 +29,7 @@ int armci_RecvVectorFromSocket(int sock,armci_giov_t darr[], int len,
     int totaliovs=0,dim1=0,dim2=0;
     struct iovec *saveiov=iov;
     max_iovec = MAX_IOVEC;
- 
+
     for(i=0;i<len;i++)
         totaliovs+=darr[i].ptr_array_len;
     num_xmit = totaliovs/max_iovec;
@@ -36,7 +40,7 @@ int armci_RecvVectorFromSocket(int sock,armci_giov_t darr[], int len,
     for(k=0;k<num_xmit;k++){
        if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
        else iovlength=max_iovec;
-       iov=saveiov; 
+       iov=saveiov;
        for(j=0;j<iovlength;j++){
          if(dim2==0){dim1+=1;dim2=darr[dim1].ptr_array_len;}
          iov[j].iov_base=darr[dim1].dst_ptr_array[darr[dim1].ptr_array_len-dim2];
@@ -52,7 +56,7 @@ int armci_RecvVectorFromSocket(int sock,armci_giov_t darr[], int len,
     }
     return(n);
 }
- 
+
 
 int armci_SendVectorToSocket(int sock,armci_giov_t darr[], int len,
        struct iovec *iov){
@@ -70,7 +74,7 @@ int armci_SendVectorToSocket(int sock,armci_giov_t darr[], int len,
     for(k=0;k<num_xmit;k++){
        if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
        else iovlength=max_iovec;
-       iov=saveiov; 
+       iov=saveiov;
        for(j=0;j<iovlength;j++){
          if(dim2==0){dim1++;dim2=darr[dim1].ptr_array_len;}
          iov[j].iov_base=darr[dim1].src_ptr_array[darr[dim1].ptr_array_len-dim2];
@@ -222,10 +226,41 @@ int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
 }
 
 
+int armci_direct_vector_snd(request_header_t *msginfo , armci_giov_t darr[],
+       int len, int proc)
+{
+    int bufsize=0,bytes=0,s;
 
-int armci_direct_vector(request_header_t *msginfo , armci_giov_t darr[], 
+    for(s=0; s<len; s++){
+        bytes   += darr[s].ptr_array_len * darr[s].bytes;/* data */
+        bufsize += darr[s].ptr_array_len *sizeof(void*)+2*sizeof(int);/*descr*/
+    }
+    bufsize += bytes + sizeof(long) +2*sizeof(double) +8;
+    if(msginfo->operation==GET)
+        bufsize = msginfo->dscrlen+sizeof(request_header_t);
+    if(msginfo->operation==PUT){
+	    msginfo->datalen=0;
+        msginfo->bytes=msginfo->dscrlen;
+        bufsize=msginfo->dscrlen+sizeof(request_header_t);
+    }
+    armci_send_req(proc, msginfo, bufsize);
+    if(msginfo->operation==PUT){
+       bytes=armci_SendVectorToSocket(SRV_sock[armci_clus_id(proc)],darr,len,
+                 (struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) );
+    }
+    return(bytes);
+}
+
+int armci_direct_vector_get(request_header_t *msginfo , armci_giov_t darr[],
+               int len, int proc)
+{
+    return armci_RecvVectorFromSocket(SRV_sock[armci_clus_id(proc)],darr,len,
+                (struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) );
+}
+
+int armci_direct_vector(request_header_t *msginfo , armci_giov_t darr[],
        int len, int proc){
-int bufsize=0,bytes=0,s;    
+int bufsize=0,bytes=0,s;
     for(s=0; s<len; s++){
         bytes   += darr[s].ptr_array_len * darr[s].bytes;/* data */
         bufsize += darr[s].ptr_array_len *sizeof(void*)+2*sizeof(int);/*descr*/
@@ -241,11 +276,11 @@ int bufsize=0,bytes=0,s;
     armci_send_req(proc, msginfo, bufsize);
     if(msginfo->operation==GET){
        bytes=armci_RecvVectorFromSocket(SRV_sock[armci_clus_id(proc)],darr,len,
-                 (struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) );	
+                 (struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) );
     }
     if(msginfo->operation==PUT){
        bytes=armci_SendVectorToSocket(SRV_sock[armci_clus_id(proc)],darr,len,
-                 (struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) ); 
+                 (struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) );
     }
     return(bytes);
 }
@@ -256,9 +291,21 @@ int bufsize=0,bytes=0,s;
 \*/
 int armci_send_req_msg(int proc, void *buf, int bytes)
 {
-int cluster = armci_clus_id(proc);
-    if(armci_WriteToSocket(SRV_sock[cluster], buf, bytes) <0) return 1;
-    else return 0;
+    int cluster = armci_clus_id(proc);
+    request_header_t* msginfo = (request_header_t*)buf;
+    int idx, rc;
+
+    THREAD_LOCK(armci_user_threads.net_lock);
+
+    /* mark sockets as active (only if reply is expected?) */
+    idx = _armci_buf_to_index(msginfo);
+    _armci_active_socks->socks[idx] = SRV_sock[cluster];
+
+    rc = (armci_WriteToSocket(SRV_sock[cluster], buf, bytes) < 0);
+
+    THREAD_UNLOCK(armci_user_threads.net_lock);
+
+    return rc;
 }
 
 
@@ -349,6 +396,9 @@ int stat, bytes;
 
     /* we write header + data descriptor */
     bytes = sizeof(request_header_t) + msginfo->dscrlen;
+
+    THREAD_LOCK(armci_user_threads.net_lock);
+
     stat = armci_WriteToSocket(SRV_sock[cluster], msginfo, bytes);
     if(stat<0)armci_die("armci_send_strided:write failed",stat);
 #if defined(USE_SOCKET_VECTOR_API)
@@ -359,7 +409,9 @@ int stat, bytes;
 #endif
     /* for larger blocks write directly to socket thus avoiding memcopy */
     armci_write_strided_sock(ptr, strides,stride_arr,count,SRV_sock[cluster]);
- 
+
+    THREAD_UNLOCK(armci_user_threads.net_lock);
+
     return 0;
 }
 
@@ -595,15 +647,15 @@ int up=1;
     }
 
     /* server main loop; wait for and service requests until QUIT requested */
-    for(;;){ 
+    for(;;){
       int i, p;
       nready = armci_WaitSock(CLN_sock, armci_nproc, readylist);
 
       for(i = 0; i < armci_nproc; i++){
 
           p = (up) ? i : armci_nproc -1 -i;
-          if(!readylist[p])continue; 
-          
+          if(!readylist[p])continue;
+
           armci_data_server(&p);
 
           nready--;
@@ -615,9 +667,9 @@ int up=1;
 
       if(nready)
         armci_die("armci_dataserv:readylist not consistent with nready",nready);
-    } 
+    }
 }
-   
+
 
 extern int tcp_sendrcv_bufsize;
 void armci_determine_sock_buf_size(){
@@ -626,11 +678,11 @@ void armci_determine_sock_buf_size(){
   tcp_sendrcv_bufsize =(int)pow(2,(22-(int)(log(armci_nclus)/log(2))));
   return;
 }
-/*\ Create Sockets for clients and servers 
+/*\ Create Sockets for clients and servers
 \*/
 void armci_init_connections()
 {
-  int p,master = armci_clus_info[armci_clus_me].master;
+  int i,n,p,master = armci_clus_info[armci_clus_me].master;
   _armci_buf_init();
   /* sockets for communication with data server */
   SRV_sock = (int*) malloc(sizeof(int)*armci_nclus);
@@ -640,13 +692,18 @@ void armci_init_connections()
   AR_port = (int*) calloc(armci_nproc * armci_nclus, sizeof(int));
   if(!AR_port)armci_die("ARMCI cannot allocate AR_port",armci_nproc*armci_nclus);
 
-  /* create sockets for communication with each user process */ 
+  /* create active sockets list select */
+  if (!(_armci_active_socks = malloc(sizeof(active_socks_t))))
+      armci_die("dataserv.c, malloc _armci_active_socks failed",0);
+  for(i=0,n=MAX_BUFS+MAX_SMALL_BUFS;i<n;i++)_armci_active_socks->socks[i]=-1;
+
+  /* create sockets for communication with each user process */
   if(master==armci_me){
      CLN_sock = (int*) malloc(sizeof(int)*armci_nproc);
      if(!CLN_sock)armci_die("ARMCI cannot allocate CLN_sock",armci_nproc);
-     armci_determine_sock_buf_size();  
+     armci_determine_sock_buf_size();
      for(p=0; p< armci_nproc; p++){
-       int off_port = armci_clus_me*armci_nproc; 
+       int off_port = armci_clus_me*armci_nproc;
 #      ifdef SERVER_THREAD
          if(p >=armci_clus_first && p <= armci_clus_last) CLN_sock[p]=-1;
          else

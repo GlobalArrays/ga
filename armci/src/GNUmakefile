@@ -1,21 +1,31 @@
-#$Id: GNUmakefile,v 1.105 2007-04-25 21:49:11 d3p687 Exp $
+#$Id: GNUmakefile,v 1.106 2007-10-30 02:04:53 manoj Exp $
+
          FOPT = -O
          COPT = -O
 
 OBJ= strided.o armci.o memory.o fence.o rmw.o acc.o kr_malloc.o\
- memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o aggregate.o rtinfo.o
+ memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o aggregate.o\
+ rtinfo.o
 
 OBJ_FRAGILE = message.o
 
 #ARMCI can be built without using fortran code when NOFORT is defined
 #NOFORT =1
+#ifdef GA_C_CORE
+#  NOFORT =1
+#endif
 ifndef NOFORT
 OBJ += faccumulate.o fcopy.o
 endif
 
-# ARMCI can be build with strided opeations implemented using non-blocking calls
-#NB_NONCONT = 1
+# ARMCI will use non-blocking calls for strided operations (where appropriate)
+NB_NONCONT = 1
 
+# if enabled procedures are thread safe; one should specify the maximum number
+# of threads (environment ARMCI_MAX_THREADS) and thread library (below)
+# note, supported for the following networks: SOCKETS ELAN4 OPENIB LAPI64
+#THREAD_SAFE     = 1
+#THREAD_LIBRARY  = POSIX_THREADS
 
 #default message-passing library for ARMCI is MPI
 ifndef MSG_COMMS
@@ -30,13 +40,23 @@ ifeq ($(MSG_COMMS),MPI)
   OBJ += groups.o
 endif
 
+ifeq ($(TARGET),BGL) 
+ifeq ($(MSG_COMMS), BGMLMPI)
+  OBJ+= message.o bgml.o
+else
+  OBJ+= bgml.o
+endif
+endif 
+
+
 SYSTEM_V = SUN SOLARIS SOLARIS64 SGI SGI_N32 SGI64 SGITFP 
 SYSTEM_V += HPUX HPUX64 IBM IBM64 DECOSF LINUX LINUX64 INTERIX NEC
 SHMEM    = $(SYSTEM_V) LAPI LAPI64
 CKPT = LINUX LINUX64 MACX
 SHMMMAP  = NEC
 SOCKETS  = $(SYSTEM_V) MACX
-ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP CRAY-SV2  LAPI FUJITSU-VPP FUJITSU-AP
+ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP CRAY-SV2  LAPI FUJITSU-VPP FUJITSU-AP BGML
+NB_NONCONT_NET = CRAY-SHMEM # QUADRICS ELAN4 PORTALS
 #USE_PTHREADS = LINUX SGI_N32 SOLARIS
 #USE_POSIX = IBM
 
@@ -50,6 +70,22 @@ ifdef ENABLE_CKPT
      OBJ += armci_chkpt.o armci_storage.o
 endif
 endif
+
+ifeq ($(TARGET),BGML)
+     LIB_DEFINES += -DNO_SHM -DUSE_MALLOC
+endif
+
+ifeq ($(TARGET),CATAMOUNT)
+     LIB_DEFINES += -DCLUSTER
+     ifndef ARMCI_NETWORK
+        ARMCI_NETWORK = CRAY_SHMEM
+     endif
+endif
+#uncomment 3 lines below to use GPC in armci
+#LIB_DEFINES += -DARMCI_ENABLE_GPC_CALLS
+#OBJ += gpc.o
+#MP_DEFINES += -DARMCI_ENABLE_GPC_CALLS
+#LIB_DEFINES += -DCHANGE_SERVER_AFFINITY
 
 ifeq ($(TARGET),HITACHI)
      LIB_DEFINES += -DMMAP -DCLUSTER
@@ -98,8 +134,15 @@ endif
 
 ifeq ($(ARMCI_NETWORK),PORTALS)
   OBJ += portals.o regions.o
-  LIB_DEFINES += -DPORTALS -DALLOW_PIN
+ifeq ($(TARGET),CATAMOUNT)
+  OBJ += winshmem.o signaltrap.o 
+  LIB_DEFINES += -DCLUSTER -DPORTALS -DALLOW_PIN -DXT3 -DCATAMOUNT
+  LIB_DEFINES += -DNO_SHM
+endif
+ifeq ($(TARGET),LINUX64)
+  LIB_DEFINES += -DPORTALS -DALLOW_PIN -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT
   EXTRA_LIBS += -lpthread
+endif
 endif
 
 ifeq ($(ARMCI_NETWORK),OPENIB)
@@ -114,6 +157,10 @@ ifeq ($(ARMCI_NETWORK),MELLANOX)
   OBJ += regions.o gpc.o
   LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT -DMELLANOX -DVAPI -DALLOW_PIN
   EXTRA_LIBS += -lpthread
+endif
+
+ifeq ($(ARMCI_NETWORK),LAPI)
+  OBJ += lapi.o request.o buffers.o async.o
 endif
 
 ifeq ($(ARMCI_NETWORK),QUADRICS)
@@ -158,7 +205,6 @@ ifeq ($(ARMCI_NETWORK),SOCKETS)
 endif
 
 ifdef NB_NONCONT
-	NB_NONCONT_NET = QUADRICS ELAN4 CRAY-SHMEM
 	ifeq ($(ARMCI_NETWORK),$(findstring $(ARMCI_NETWORK),$(NB_NONCONT_NET)))
 		LIB_DEFINES += -DNB_NONCONT
 		OBJ += noncont.o
@@ -191,8 +237,28 @@ ifdef ENABLE_CKPT
 MP_DEFINES+=-DDO_CKPT 
 endif
 
+ifdef THREAD_SAFE
+    LIB_DEFINES += -DTHREAD_SAFE
+    OBJ += threads.o utils.o
+    THREAD_SAFE_NET = SOCKETS LAPI64 ELAN OPENIB
+    ifeq ($(ARMCI_NETWORK),$(findstring $(ARMCI_NETWORK),$(THREAD_SAFE_NET)))
+        ifeq ($(THREAD_LIBRARY),POSIX_THREADS)
+            LIB_DEFINES	+= -DPOSIX_THREADS -D_REENTRANT
+            MP_DEFINES  += -DTHREAD_SAFE -DPOSIX_THREADS -D_REENTRANT
+            EXTRA_LIBS	+= -lpthread
+        endif
+    endif
+
+    ifneq ($(THREAD_LIBRARY),POSIX_THREADS)
+error:
+	@echo "Error: THREAD LIBS OTHER THAN PTHREADS ARE NOT SUPPORTED !!!"
+	exit 1
+    endif
+endif # end: ifdef THREAD_SAFE
+
 #......................................................................
 LIBRARY = libarmci.a
+LIBRARY_SHARED = libarmci.so
 HARDCLEAN = yes
 
 #add some extra Microsoft VC files to clean if any left 

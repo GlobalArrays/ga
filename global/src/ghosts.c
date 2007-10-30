@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.47 2005-11-03 18:58:34 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.48 2007-10-30 02:04:58 manoj Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -83,16 +83,17 @@ char *lptr;
 Integer  handle = GA_OFFSET + *g_a;
 Integer  i, lo[MAXDIM], hi[MAXDIM];
 Integer ndim = GA[handle].ndim;
+Integer me = ga_nodeid_();
 
    GA_PUSH_NAME("nga_access_ghost_ptr");
 
-   nga_distribution_(g_a, &GAme, lo, hi);
+   nga_distribution_(g_a, &me, lo, hi);
 
    for (i=0; i < ndim; i++) {
      dims[i] = 0;
    }
 
-   gam_LocationWithGhosts(GAme, handle, dims, &lptr, ld);
+   gam_LocationWithGhosts(me, handle, dims, &lptr, ld);
    *(char**)ptr = lptr; 
    for (i=0; i < ndim; i++)
      dims[i] = hi[i] - lo[i] + 1 + 2*(Integer)GA[handle].width[i];
@@ -110,11 +111,12 @@ Integer  handle = GA_OFFSET + *g_a;
 Integer i;
 unsigned long    elemsize;
 unsigned long    lref, lptr;
+Integer me = ga_nodeid_();
    GA_PUSH_NAME("nga_access_ghost_element");
    /* Indices conform to Fortran convention. Shift them down 1 so that
       gam_LocationWithGhosts works. */
    for (i=0; i<GA[handle].ndim; i++) subscript[i]--;
-   gam_LocationWithGhosts(GAme, handle, subscript, &ptr, ld);
+   gam_LocationWithGhosts(me, handle, subscript, &ptr, ld);
    /*
     * return patch address as the distance elements from the reference address
     *
@@ -135,6 +137,11 @@ unsigned long    lref, lptr;
      case MT_F_DCPL:
         *index = (Integer) ((DoubleComplex*)ptr - DCPL_MB);
         lref = (unsigned long)DCPL_MB;
+        break;
+
+     case MT_F_SCPL:
+        *index = (Integer) ((SingleComplex*)ptr - SCPL_MB);
+        lref = (unsigned long)SCPL_MB;
         break;
 
      case MT_F_INT:
@@ -201,6 +208,11 @@ unsigned long    lref, lptr;
         lref = (unsigned long)DCPL_MB;
         break;
 
+     case MT_F_SCPL:
+        *index = (Integer) ((SingleComplex*)ptr - SCPL_MB);
+        lref = (unsigned long)SCPL_MB;
+        break;
+
      case MT_F_INT:
         *index = (Integer) ((Integer*)ptr - INT_MB);
         lref = (unsigned long)INT_MB;
@@ -250,6 +262,8 @@ void FATR ga_update1_ghosts_(Integer *g_a)
   int stride_loc[MAXDIM], stride_rem[MAXDIM], count[MAXDIM];
   char *ptr_loc, *ptr_rem;
   logical hasData = TRUE;
+  Integer me = ga_nodeid_();
+  Integer p_handle;
 
   /* This routine makes use of the shift algorithm to update data in the
    * ghost cells bounding the local block of visible data. The shift
@@ -333,11 +347,12 @@ void FATR ga_update1_ghosts_(Integer *g_a)
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
   corner_flag = GA[handle].corner_flag;
+  p_handle = GA[handle].p_handle;
 
   /* Get pointer to local memory */
-  ptr_loc = GA[handle].ptr[GAme];
+  ptr_loc = GA[handle].ptr[me];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+  nga_distribution_(g_a,&me,lo_loc,hi_loc);
   /* initialize range increments and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
@@ -455,7 +470,7 @@ void FATR ga_update1_ghosts_(Integer *g_a)
 
           /* Get pointer to local data buffer and remote data
              buffer as well as lists of leading dimenstions */
-          gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+          gam_LocationWithGhosts(me, handle, plo_loc, &ptr_loc, ld_loc);
           gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
 
           /* Evaluate strides on local and remote processors */
@@ -469,6 +484,9 @@ void FATR ga_update1_ghosts_(Integer *g_a)
           count[0] *= size;
  
           /* get remote data */
+          if (p_handle >= 0) {
+            proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
+          }
           ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
               (int)(ndim - 1), (int)proc_rem);
         }
@@ -575,7 +593,7 @@ void FATR ga_update1_ghosts_(Integer *g_a)
 
           /* Get pointer to local data buffer and remote data
              buffer as well as lists of leading dimenstions */
-          gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+          gam_LocationWithGhosts(me, handle, plo_loc, &ptr_loc, ld_loc);
           gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
 
           /* Evaluate strides on local and remote processors */
@@ -589,6 +607,9 @@ void FATR ga_update1_ghosts_(Integer *g_a)
           count[0] *= size;
  
           /* get remote data */
+          if (p_handle >= 0) {
+            proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
+          }
           ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
               (int)(ndim - 1), (int)proc_rem);
         }
@@ -648,6 +669,8 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
   logical mask0;
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
   char *ptr_loc, *ptr_rem;
+  Integer me = ga_nodeid_();
+  Integer p_handle;
 
   /* if global array has no ghost cells, just return */
   if (!ga_has_ghosts_(g_a)) {
@@ -656,6 +679,7 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
+  p_handle = GA[handle].p_handle;
   /* initialize ghost cell widths and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
     width[idx] = (Integer)GA[handle].width[idx];
@@ -669,9 +693,9 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
 
   GA_PUSH_NAME("ga_update2_ghosts");
   /* Get pointer to local memory */
-  ptr_loc = GA[handle].ptr[GAme];
+  ptr_loc = GA[handle].ptr[me];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+  nga_distribution_(g_a,&me,lo_loc,hi_loc);
 
   /* evaluate total number of PUT operations that will be required */
   ntot = 1;
@@ -762,7 +786,7 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
     }
     /* Get pointer to local data buffer and remote data
        buffer as well as lists of leading dimenstions */
-    gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+    gam_LocationWithGhosts(me, handle, plo_loc, &ptr_loc, ld_loc);
     gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
 
     /* Evaluate strides on local and remote processors */
@@ -778,6 +802,9 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
     /* put data on remote processor */
     /*ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
           (int)(ndim - 1), (int)proc_rem);*/
+    if (p_handle >= 0) {
+      proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
+    }
     ARMCI_NbPutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
           (int)(ndim - 1), (int)proc_rem, NULL); 
   }
@@ -873,6 +900,8 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
   Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
   char *ptr_loc, *ptr_rem;
+  Integer me = ga_nodeid_();
+  Integer p_handle;
 
   /* This routine makes use of the shift algorithm to update data in the
    * ghost cells bounding the local block of visible data. The shift
@@ -935,6 +964,7 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
+  p_handle = GA[handle].p_handle;
 
   /* initialize range increments and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
@@ -952,9 +982,9 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
   GA_PUSH_NAME("ga_update3_ghosts");
 
   /* Get pointer to local memory */
-  ptr_loc = GA[handle].ptr[GAme];
+  ptr_loc = GA[handle].ptr[me];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+  nga_distribution_(g_a,&me,lo_loc,hi_loc);
 
   /* loop over dimensions for sequential update using shift algorithm */
   for (idx=0; idx < ndim; idx++) {
@@ -1002,7 +1032,7 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
-      gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_loc, &ptr_loc, ld_loc);
       gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
 
       /* Evaluate strides on local and remote processors */
@@ -1016,6 +1046,9 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
       count[0] *= size;
 
       /* Put local data on remote processor */
+      if (p_handle >= 0) {
+        proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
+      }
       ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
           (int)(ndim - 1), (int)proc_rem);
 
@@ -1058,7 +1091,7 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
-      gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_loc, &ptr_loc, ld_loc);
       gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
 
       /* Evaluate strides on local and remote processors */
@@ -1072,6 +1105,9 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
       count[0] *= size;
 
       /* get remote data */
+      if (p_handle >= 0) {
+        proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
+      }
       ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
           (int)(ndim - 1), (int)proc_rem);
     }
@@ -1105,6 +1141,8 @@ logical FATR ga_set_update4_info_(Integer *g_a)
   int corner_flag;
   char **ptr_snd, **ptr_rcv, *cache;
   char *current;
+  Integer me = ga_nodeid_();
+  Integer p_handle;
 
   /* This routine sets the arrays that are used to transfer data using
    * the update4. To perform the update, this routine makes use of several
@@ -1147,6 +1185,7 @@ logical FATR ga_set_update4_info_(Integer *g_a)
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
+  p_handle = GA[handle].p_handle;
   cache_size = 2*sizeof(char *)+3*ndim*sizeof(int)+3*sizeof(Integer);
   cache_size = 2* ndim *((cache_size/8) + 1) + 1;
   GA[handle].cache = (double *)malloc(sizeof(double)*cache_size);
@@ -1157,7 +1196,8 @@ logical FATR ga_set_update4_info_(Integer *g_a)
 #endif
 
   /* initialize range increments and get array dimensions */
-  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+
+  nga_distribution_(g_a,&me,lo_loc,hi_loc);
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
     width[idx] = (Integer)GA[handle].width[idx];
@@ -1169,7 +1209,7 @@ logical FATR ga_set_update4_info_(Integer *g_a)
   }
 
   /* Get indices of processor in virtual grid */
-  nga_proc_topology_(g_a, &GAme, index);
+  nga_proc_topology_(g_a, &me, index);
 
   /* Try to find maximum size of message that will be sent during
    * update operations and use this to allocate memory for message
@@ -1222,6 +1262,9 @@ logical FATR ga_set_update4_info_(Integer *g_a)
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rcv, shi_rcv, *g_a);
       *proc_rem_snd = GA_proclist[0];
+      if (p_handle >= 0) {
+        *proc_rem_snd = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem_snd];
+      }
 
       /* Find processor from which data will be recieved */
       for (i = 0; i < ndim; i++) {
@@ -1254,6 +1297,9 @@ logical FATR ga_set_update4_info_(Integer *g_a)
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rcv, shi_rcv, *g_a);
       *proc_rem_rcv = GA_proclist[0];
+      if (p_handle >= 0) {
+        *proc_rem_rcv = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem_rcv];
+      }
 
       /* Get actual coordinates of chunk of data that will be sent to
        * remote processor as well as coordinates of the array space that
@@ -1281,13 +1327,13 @@ logical FATR ga_set_update4_info_(Integer *g_a)
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
-      gam_LocationWithGhosts(GAme, handle, plo_snd, ptr_snd, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_snd, ptr_snd, ld_loc);
 #if GHOST_PRINT
       printf("p[%d]a 1: plo_snd[0]: %d plo_snd[1]: %d ptr_snd: %d\n",
           GAme, plo_snd[0], plo_snd[1], (Integer)*ptr_snd);
       fflush(stdout);
 #endif
-      gam_LocationWithGhosts(GAme, handle, plo_rcv, ptr_rcv, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_rcv, ptr_rcv, ld_loc);
 #if GHOST_PRINT
       printf("p[%d]a 1: plo_rcv[0]: %d plo_rcv[1]: %d ptr_rcv: %d\n",
           GAme, plo_rcv[0], plo_rcv[1], (Integer)*ptr_rcv);
@@ -1338,6 +1384,9 @@ logical FATR ga_set_update4_info_(Integer *g_a)
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rcv, shi_rcv, *g_a);
       *proc_rem_snd = GA_proclist[0];
+      if (p_handle >= 0) {
+        *proc_rem_snd = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem_snd];
+      }
 
       /* Find processor from which data will be recieved */
       for (i = 0; i < ndim; i++) {
@@ -1370,6 +1419,9 @@ logical FATR ga_set_update4_info_(Integer *g_a)
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rcv, shi_rcv, *g_a);
       *proc_rem_rcv = GA_proclist[0];
+      if (p_handle >= 0) {
+        *proc_rem_rcv = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem_rcv];
+      }
       /* Get actual coordinates of chunk of data that will be sent to
        * remote processor as well as coordinates of the array space that
        * will receive data from remote processor. */
@@ -1396,13 +1448,13 @@ logical FATR ga_set_update4_info_(Integer *g_a)
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
-      gam_LocationWithGhosts(GAme, handle, plo_snd, ptr_snd, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_snd, ptr_snd, ld_loc);
 #if GHOST_PRINT
       printf("p[%d]a 2: plo_snd[0]: %d plo_snd[1]: %d ptr_snd: %d\n",
           GAme, plo_snd[0], plo_snd[1], (Integer)*ptr_snd);
       fflush(stdout);
 #endif
-      gam_LocationWithGhosts(GAme, handle, plo_rcv, ptr_rcv, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_rcv, ptr_rcv, ld_loc);
 #if GHOST_PRINT
       printf("p[%d]a 2: plo_rcv[0]: %d plo_rcv[1]: %d ptr_rcv: %d\n",
           GAme, plo_rcv[0], plo_rcv[1], (Integer)*ptr_rcv);
@@ -1459,6 +1511,8 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
   char **ptr_snd, **ptr_rcv, *cache, *current;
   char send_name[32], rcv_name[32];
   void *snd_ptr, *rcv_ptr, *snd_ptr_orig, *rcv_ptr_orig;
+  Integer me = ga_nodeid_();
+  Integer p_handle;
 
   /* This routine makes use of the shift algorithm to update data in the
    * ghost cells bounding the local block of visible data. The shift
@@ -1488,6 +1542,7 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
   if (!ga_has_ghosts_(g_a)) return TRUE;
 
   ndim = GA[handle].ndim;
+  p_handle = GA[handle].p_handle;
   cache = (char *)GA[handle].cache;
   elemsize = GA[handle].elemsize;
   for (i=0; i<ndim; i++) {
@@ -1498,7 +1553,7 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
   msgcnt = 0;
 
   /* Get indices of processor in virtual grid */
-  nga_proc_topology_(g_a, &GAme, index);
+  nga_proc_topology_(g_a, &me, index);
 
   size = (Integer*)cache;
   current = (char*)(size+1);
@@ -1714,6 +1769,8 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
   char *ptr_snd, *ptr_rcv;
   char send_name[32], rcv_name[32];
   void *snd_ptr, *rcv_ptr, *snd_ptr_orig, *rcv_ptr_orig;
+  Integer me = ga_nodeid_();
+  Integer p_handle;
 
   /* This routine makes use of the shift algorithm to update data in the
    * ghost cells bounding the local block of visible data. The shift
@@ -1773,6 +1830,7 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
+  p_handle = GA[handle].p_handle;
 
   /* initialize range increments and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
@@ -1790,9 +1848,9 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
   msgcnt = 0;
 
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+  nga_distribution_(g_a,&me,lo_loc,hi_loc);
   /* Get indices of processor in virtual grid */
-  nga_proc_topology_(g_a, &GAme, index);
+  nga_proc_topology_(g_a, &me, index);
 
   /* Try to find maximum size of message that will be sent during
    * update operations and use this to allocate memory for message
@@ -1828,6 +1886,9 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rcv, shi_rcv, *g_a);
       proc_rem_snd = GA_proclist[0];
+      if (p_handle >= 0) {
+        proc_rem_snd = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem_snd];
+      }
 
       /* Find processor from which data will be recieved */
       for (i = 0; i < ndim; i++) {
@@ -1860,6 +1921,9 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rcv, shi_rcv, *g_a);
       proc_rem_rcv = GA_proclist[0];
+      if (p_handle >= 0) {
+        proc_rem_rcv = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem_rcv];
+      }
 
       /* Get actual coordinates of chunk of data that will be sent to
        * remote processor as well as coordinates of the array space that
@@ -1887,13 +1951,13 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
-      gam_LocationWithGhosts(GAme, handle, plo_snd, &ptr_snd, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_snd, &ptr_snd, ld_loc);
 #if GHOST_PRINT
       printf("p[%d] 1: plo_snd[0]: %d plo_snd[1]: %d ptr_snd: %d\n",
           GAme, plo_snd[0], plo_snd[1], (Integer)ptr_snd);
       fflush(stdout);
 #endif
-      gam_LocationWithGhosts(GAme, handle, plo_rcv, &ptr_rcv, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_rcv, &ptr_rcv, ld_loc);
 #if GHOST_PRINT
       printf("p[%d] 1: plo_rcv[0]: %d plo_rcv[1]: %d ptr_rcv: %d\n",
           GAme, plo_rcv[0], plo_rcv[1], (Integer)ptr_rcv);
@@ -1992,6 +2056,9 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rcv, shi_rcv, *g_a);
       proc_rem_snd = GA_proclist[0];
+      if (p_handle >= 0) {
+        proc_rem_snd = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem_snd];
+      }
 
       /* Find processor from which data will be recieved */
       for (i = 0; i < ndim; i++) {
@@ -2024,6 +2091,9 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rcv, shi_rcv, *g_a);
       proc_rem_rcv = GA_proclist[0];
+      if (p_handle >= 0) {
+        proc_rem_rcv = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem_rcv];
+      }
       /* Get actual coordinates of chunk of data that will be sent to
        * remote processor as well as coordinates of the array space that
        * will receive data from remote processor. */
@@ -2050,13 +2120,13 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
-      gam_LocationWithGhosts(GAme, handle, plo_snd, &ptr_snd, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_snd, &ptr_snd, ld_loc);
 #if GHOST_PRINT
       printf("p[%d] 2: plo_snd[0]: %d plo_snd[1]: %d ptr_snd: %d\n",
           GAme, plo_snd[0], plo_snd[1], (Integer)ptr_snd);
       fflush(stdout);
 #endif
-      gam_LocationWithGhosts(GAme, handle, plo_rcv, &ptr_rcv, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_rcv, &ptr_rcv, ld_loc);
 #if GHOST_PRINT
       printf("p[%d] 2: plo_rcv[0]: %d plo_rcv[1]: %d ptr_rcv: %d\n",
           GAme, plo_rcv[0], plo_rcv[1], (Integer)ptr_rcv);
@@ -2219,6 +2289,8 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
   int msgcnt;
   char *ptr_loc, *ptr_rem;
+  Integer me = ga_nodeid_();
+  Integer p_handle;
 
   /* This routine makes use of the shift algorithm to update data in the
    * ghost cells bounding the local block of visible data. The shift
@@ -2285,6 +2357,7 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
+  p_handle = GA[handle].p_handle;
 
   /* initialize range increments and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
@@ -2304,7 +2377,7 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[GAme];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+  nga_distribution_(g_a,&me,lo_loc,hi_loc);
 
   /* loop over dimensions for sequential update using shift algorithm */
   msgcnt = 0;
@@ -2354,7 +2427,7 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
-      gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_loc, &ptr_loc, ld_loc);
       gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
 
       /* Evaluate strides on local and remote processors */
@@ -2368,6 +2441,9 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
       count[0] *= size;
 
       /* Put local data on remote processor */
+      if (p_handle >= 0) {
+        proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
+      }
 #if 0
       ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count, ndim- 1, proc_rem);
       /* Send signal to remote processor that data transfer has been completed. */
@@ -2433,6 +2509,9 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
       count[0] *= size;
 
       /* Put local data on remote processor */
+      if (p_handle >= 0) {
+        proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
+      }
 #if 0
       ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count, ndim- 1, proc_rem);
       /* Send signal to remote processor that data transfer has been completed. */
@@ -2482,6 +2561,8 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   logical flag;
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
   char *ptr_loc, *ptr_rem;
+  Integer me = ga_nodeid_();
+  Integer p_handle;
 
   int local_sync_begin,local_sync_end;
 
@@ -2499,6 +2580,7 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
+  p_handle = GA[handle].p_handle;
   /* initialize ghost cell widths and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
     width[idx] = (Integer)GA[handle].width[idx];
@@ -2528,7 +2610,7 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[GAme];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+  nga_distribution_(g_a,&me,lo_loc,hi_loc);
 
   /* evaluate total number of GET operations */
   ntot = 1;
@@ -2616,7 +2698,7 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
     }
     /* Get pointer to local data buffer and remote data
        buffer as well as lists of leading dimenstions */
-    gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+    gam_LocationWithGhosts(me, handle, plo_loc, &ptr_loc, ld_loc);
     gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
 
     /* Evaluate strides on local and remote processors */
@@ -2630,6 +2712,9 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
     count[0] *= size;
  
     /* get data from remote processor */
+    if (p_handle >= 0) {
+      proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
+    }
     ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
           (int)(ndim - 1), (int)proc_rem);
   }
@@ -2657,6 +2742,8 @@ logical ga_update5_ghosts_(Integer *g_a)
   int msgcnt, bytes, corner_flag, proc_rem;
   char *ptr_loc, *ptr_rem,*cache;
   int local_sync_begin,local_sync_end;
+  Integer me = ga_nodeid_();
+  Integer p_handle;
 #ifdef USE_MP_NORTHSOUTH
   char send_name[32], rcv_name[32];
   void *snd_ptr, *rcv_ptr;
@@ -2705,6 +2792,7 @@ logical ga_update5_ghosts_(Integer *g_a)
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
+  p_handle = GA[handle].p_handle;
   for (i=0; i<ndim; i++) {
     width[i] = (Integer)GA[handle].width[i];
   }
@@ -2732,6 +2820,9 @@ logical ga_update5_ghosts_(Integer *g_a)
       proc_rem = (int)(*proc_rem_ptr);
       cache = (char *)(proc_rem_ptr+1);
           
+      if (p_handle >= 0) {
+        proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
+      }
       if(count[0]>1000000){
         /*tries to use armci direct put when possible */
         ARMCI_PutS_flag_dir(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
@@ -2759,6 +2850,9 @@ logical ga_update5_ghosts_(Integer *g_a)
       proc_rem = (int)(*proc_rem_ptr);
       cache = (char *)(proc_rem_ptr+1);
 
+      if (p_handle >= 0) {
+        proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
+      }
       if(count[0]>1000000){
         /*tries to use armci direct put when possible */
         ARMCI_PutS_flag_dir(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
@@ -2786,7 +2880,6 @@ logical ga_update5_ghosts_(Integer *g_a)
         GA_Update_Flags[GAme][msgcnt-2]=0;
       }
     }
-   
   }
 #if 1
   if (!corner_flag) {
@@ -2824,6 +2917,8 @@ logical ga_set_update5_info_(Integer *g_a)
   char **ptr_loc, **ptr_rem,*cache;
   Integer handle = GA_OFFSET + *g_a;
   int scope,cache_size;
+  Integer me = ga_nodeid_();
+  Integer p_handle;
 
   /* This routine sets up the arrays that are used to transfer data
    * using the update5 algorithm. The arrays begining with the character
@@ -2869,6 +2964,7 @@ logical ga_set_update5_info_(Integer *g_a)
   if (!gai_check_ghost_distr(g_a)) return FALSE;
 
   ndim = GA[handle].ndim;
+  p_handle = GA[handle].p_handle;
   size = GA[handle].elemsize;
   cache_size = 2*sizeof(char *)+3*sizeof(int)+sizeof(Integer);
   cache_size = 2*ndim*((cache_size/sizeof(double)) + 1);
@@ -2876,7 +2972,7 @@ logical ga_set_update5_info_(Integer *g_a)
   cache = (char *)GA[handle].cache;
   corner_flag = GA[handle].corner_flag;
 
-  nga_distribution_(g_a,&GAme,lo_loc,hi_loc); 
+  nga_distribution_(g_a,&me,lo_loc,hi_loc); 
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
     width[idx] = (Integer)GA[handle].width[idx];
@@ -2907,6 +3003,9 @@ logical ga_set_update5_info_(Integer *g_a)
             slo_rem, shi_rem, *g_a);
 
         *proc_rem = (Integer)GA_proclist[0];
+        if (p_handle >= 0) {
+          *proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem];
+        }
 
 #ifdef UPDATE_SAMENODE_GHOSTS_FIRST
         if(scope == 0 && ARMCI_Same_node(*proc_rem))
@@ -2938,7 +3037,7 @@ logical ga_set_update5_info_(Integer *g_a)
             phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
           }
         }
-        gam_LocationWithGhosts(GAme, handle, plo_loc, ptr_loc, ld_loc);
+        gam_LocationWithGhosts(me, handle, plo_loc, ptr_loc, ld_loc);
         gam_LocationWithGhosts(*proc_rem, handle, plo_rem, ptr_rem, ld_rem);
  
         /* Evaluate strides on local and remote processors */
@@ -2946,6 +3045,9 @@ logical ga_set_update5_info_(Integer *g_a)
             stride_loc);
         gam_ComputeCount(ndim, plo_rem, phi_rem, count);
         count[0] *= size;
+        if (p_handle >= 0) {
+          *proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem];
+        }
 
         do_negative:
 
@@ -2965,6 +3067,9 @@ logical ga_set_update5_info_(Integer *g_a)
             slo_rem, shi_rem, *g_a);
 
         *proc_rem = (Integer)GA_proclist[0];
+        if (p_handle >= 0) {
+          *proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem];
+        }
 
 #ifdef UPDATE_SAMENODE_GHOSTS_FIRST
         if(scope == 0 && ARMCI_Same_node(*proc_rem))
@@ -3007,6 +3112,9 @@ logical ga_set_update5_info_(Integer *g_a)
 
         gam_ComputeCount(ndim, plo_rem, phi_rem, count);
         count[0] *= size;
+        if (p_handle >= 0) {
+          *proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem];
+        }
 
         if (corner_flag)
           increment[idx] = 2*nwidth;
@@ -3075,6 +3183,8 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   char *ptr_loc, *ptr_rem;
   char send_name[32], rcv_name[32];
   void *snd_ptr, *rcv_ptr, *snd_ptr_orig, *rcv_ptr_orig;
+  Integer me = ga_nodeid_();
+  Integer p_handle, wproc;
 
   /* This routine makes use of the shift algorithm to update data in the
    * ghost cells bounding the local block of visible data. The shift
@@ -3145,6 +3255,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
+  p_handle = GA[handle].p_handle;
 
   /* initialize range increments and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
@@ -3162,11 +3273,11 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   msgcnt = 0;
 
   /* Get pointer to local memory */
-  ptr_loc = GA[handle].ptr[GAme];
+  ptr_loc = GA[handle].ptr[me];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+  nga_distribution_(g_a,&me,lo_loc,hi_loc);
   /* Get indices of processor in virtual grid */
-  nga_proc_topology_(g_a, &GAme, index);
+  nga_proc_topology_(g_a, &me, index);
 
   /* Try to find maximum size of message that will be sent during
    * update operations and use this to allocate memory for message
@@ -3204,7 +3315,11 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rcv, shi_rcv, *g_a);
       /* find out if this processor is on the same node */
-      rprocflag = ARMCI_Same_node(GA_proclist[0]);
+      wproc = GA_proclist[0];
+      if (p_handle >= 0) {
+        wproc = PGRP_LIST[p_handle].inv_map_proc_list[wproc];
+      }
+      rprocflag = ARMCI_Same_node(wproc);
       proc_rem_snd = GA_proclist[0];
 
       /* Find processor from which data will be received */
@@ -3237,7 +3352,11 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
       if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rcv, shi_rcv, *g_a);
-      sprocflag = ARMCI_Same_node(GA_proclist[0]);
+      wproc = GA_proclist[0];
+      if (p_handle >= 0) {
+        wproc = PGRP_LIST[p_handle].inv_map_proc_list[wproc];
+      }
+      sprocflag = ARMCI_Same_node(wproc);
       proc_rem_rcv = GA_proclist[0];
       nga_distribution_(g_a, &proc_rem_rcv, tlo_rem, thi_rem);
 
@@ -3273,8 +3392,8 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
-      gam_LocationWithGhosts(GAme, handle, plo_snd, &ptr_snd, ld_loc);
-      gam_LocationWithGhosts(GAme, handle, plo_rcv, &ptr_rcv, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_snd, &ptr_snd, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_rcv, &ptr_rcv, ld_loc);
       gam_LocationWithGhosts(proc_rem_snd, handle, plo_rem, &ptr_rem, ld_rem);
 
       /* Evaluate strides for send and receive */
@@ -3303,6 +3422,10 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
        * for whether or not there are an odd number of processors along
        * update direction. */
 
+      if (p_handle >= 0) {
+        proc_rem_snd = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem_snd];
+        proc_rem_rcv = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem_rcv];
+      }
       if (GA[handle].nblock[idx]%2 == 0) {
         if (index[idx]%2 != 0 && !rprocflag) {
           armci_msg_snd(msgcnt, snd_ptr, length, proc_rem_snd);
@@ -3381,7 +3504,11 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
       if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rcv, shi_rcv, *g_a);
-      rprocflag = ARMCI_Same_node(GA_proclist[0]);
+      wproc = GA_proclist[0];
+      if (p_handle >= 0) {
+        wproc = PGRP_LIST[p_handle].inv_map_proc_list[wproc];
+      }
+      rprocflag = ARMCI_Same_node(wproc);
       proc_rem_snd = GA_proclist[0];
 
       /* Find processor from which data will be recieved */
@@ -3414,7 +3541,11 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
       if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rcv, shi_rcv, *g_a);
-      sprocflag = ARMCI_Same_node(GA_proclist[0]);
+      wproc = GA_proclist[0];
+      if (p_handle >= 0) {
+        wproc = PGRP_LIST[p_handle].inv_map_proc_list[wproc];
+      }
+      sprocflag = ARMCI_Same_node(wproc);
       proc_rem_rcv = GA_proclist[0];
       nga_distribution_(g_a, &proc_rem_rcv, tlo_rem, thi_rem);
 
@@ -3450,8 +3581,8 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
-      gam_LocationWithGhosts(GAme, handle, plo_snd, &ptr_snd, ld_loc);
-      gam_LocationWithGhosts(GAme, handle, plo_rcv, &ptr_rcv, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_snd, &ptr_snd, ld_loc);
+      gam_LocationWithGhosts(me, handle, plo_rcv, &ptr_rcv, ld_loc);
       gam_LocationWithGhosts(proc_rem_snd, handle, plo_rem, &ptr_rem, ld_rem);
 
       /* Evaluate strides for send and recieve */
@@ -3480,6 +3611,10 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
        * for whether or not there are an odd number of processors along
        * update direction. */
 
+      if (p_handle >= 0) {
+        proc_rem_snd = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem_snd];
+        proc_rem_rcv = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem_rcv];
+      }
       if (GA[handle].nblock[idx]%2 == 0) {
         if (index[idx]%2 != 0 && !rprocflag) {
           armci_msg_snd(msgcnt, snd_ptr, length, proc_rem_snd);
@@ -3585,6 +3720,8 @@ logical FATR ga_update7_ghosts_(Integer *g_a)
   logical mask0;
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
   char *ptr_loc, *ptr_rem;
+  Integer me = ga_nodeid_();
+  Integer p_handle;
 
   /* if global array has no ghost cells, just return */
   if (!ga_has_ghosts_(g_a)) {
@@ -3593,6 +3730,7 @@ logical FATR ga_update7_ghosts_(Integer *g_a)
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
+  p_handle = GA[handle].p_handle;
   /* initialize ghost cell widths and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
     width[idx] = (Integer)GA[handle].width[idx];
@@ -3606,9 +3744,9 @@ logical FATR ga_update7_ghosts_(Integer *g_a)
 
   GA_PUSH_NAME("ga_update7_ghosts");
   /* Get pointer to local memory */
-  ptr_loc = GA[handle].ptr[GAme];
+  ptr_loc = GA[handle].ptr[me];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+  nga_distribution_(g_a,&me,lo_loc,hi_loc);
 
   /* evaluate total number of GET operations that will be required */
   ntot = 1;
@@ -3693,7 +3831,7 @@ logical FATR ga_update7_ghosts_(Integer *g_a)
     }
     /* Get pointer to local data buffer and remote data
        buffer as well as lists of leading dimenstions */
-    gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+    gam_LocationWithGhosts(me, handle, plo_loc, &ptr_loc, ld_loc);
     gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
 
     /* Evaluate strides on local and remote processors */
@@ -3705,7 +3843,10 @@ logical FATR ga_update7_ghosts_(Integer *g_a)
        element size. */
     gam_ComputeCount(ndim, plo_loc, phi_loc, count);
     count[0] *= size;
- 
+
+    if (p_handle >= 0) {
+      proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[proc_rem];
+    }
     /* put data on remote processor */
 /*    ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
           (int)(ndim - 1), (int)proc_rem); */
@@ -3741,8 +3882,11 @@ void FATR nga_nbget_ghost_dir_(Integer *g_a,
   Integer subscript[MAXDIM], ld[MAXDIM];
   Integer i, ndim, dim, width;
   char *ptr_loc;
+  Integer me = ga_nodeid_();
+  Integer p_handle;
   GA_PUSH_NAME("nga_nbget_ghost_dir");
   ndim = GA[handle].ndim;
+  p_handle = GA[handle].p_handle;
   /* check mask to see that it corresponds to a valid direction */
   for (i=0; i<ndim; i++) {
     if (abs(mask[i]) != 0 && abs(mask[i]) != 1)
@@ -3750,7 +3894,7 @@ void FATR nga_nbget_ghost_dir_(Integer *g_a,
   }
 
   /* get range of data on local processor */
-  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+  nga_distribution_(g_a,&me,lo_loc,hi_loc);
 
   /* locate data on remote processor */
   for (i=0; i<ndim; i++) {
@@ -3790,7 +3934,7 @@ void FATR nga_nbget_ghost_dir_(Integer *g_a,
     }
     ld[i] = hi_loc[i]-lo_loc[i]+1+2*GA[handle].width[i];
   }
-  gam_LocationWithGhosts(GAme, handle, subscript, &ptr_loc, ld);
+  gam_LocationWithGhosts(me, handle, subscript, &ptr_loc, ld);
   /* get data */
   nga_get_common(g_a,lo_rem,hi_rem,ptr_loc,ld,nbhandle);  
   GA_POP_NAME;

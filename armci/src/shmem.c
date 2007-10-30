@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.89 2007-01-04 01:13:59 manoj Exp $ */
+/* $Id: shmem.c,v 1.90 2007-10-30 02:04:55 manoj Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -880,10 +880,19 @@ int nreg, reg;
        reg=last_allocated;
        last_allocated = -1;
     } else{
-       for(reg=0,nreg=0;nreg<alloc_regions; nreg++){
-          if(region_list[nreg].addr > addrp )break;
-          reg = nreg;
+       
+       for(reg=-1,nreg=0;nreg<alloc_regions; nreg++)
+       {
+          if(addrp >= region_list[nreg].addr &&
+             addrp < (region_list[nreg].addr + region_list[nreg].sz))
+          {
+             reg = nreg;
+             break;
+          }
        }
+       
+       if(reg == -1)
+          armci_die("find_regions: failed to locate shared region", 0L);
     }
 
     *region = reg;

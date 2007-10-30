@@ -3,7 +3,7 @@ DRA operations with a buffer manager layer, modified by Bilash
 The buffer manager provides functionalities related to buffers
 */
 
-/*$Id: disk.arrays.c,v 1.79 2006-10-12 22:55:10 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.80 2007-10-30 02:05:01 manoj Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -123,7 +123,7 @@ int     Dra_num_serv=DRA_NUM_IOPROCS;
 #define dai_sizeofM(_type) MA_sizeof(_type, 1, MT_C_CHAR)
 
 #define dai_check_typeM(_type)  if (_type != C_DBL && _type != C_INT \
-     && _type != C_LONG && _type != C_DCPL && _type != C_FLOAT) \
+     && _type != C_LONG && _type != C_DCPL && _type != C_FLOAT && _type != C_SCPL) \
                                   dai_error("invalid type ",_type)  
 #define dai_check_handleM(_handle, msg)                                    \
 {\
@@ -1080,6 +1080,7 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
          case C_DBL:  COPY_ ## OPERATION(DBL_MB,double,ds_chunk);break;\
          case C_INT:  COPY_ ## OPERATION(INT_MB, int, ds_chunk); break;\
          case C_DCPL: COPY_ ## OPERATION(DCPL_MB, DoubleComplex, ds_chunk);break;\
+         case C_SCPL: COPY_ ## OPERATION(SCPL_MB, SingleComplex, ds_chunk);break;\
          case C_FLOAT: COPY_ ## OPERATION(FLT_MB, float, ds_chunk);\
          }
 
@@ -1294,6 +1295,10 @@ void nga_move(int op,             /*[input] flag for read or write */
               ((double*)buffer)[2*jtmp] = ((double*)base_addr)[2*itmp];
               ((double*)buffer)[2*jtmp+1] = ((double*)base_addr)[2*itmp+1];
               break;
+            case C_SCPL:
+              ((float*)buffer)[2*jtmp] = ((float*)base_addr)[2*itmp];
+              ((float*)buffer)[2*jtmp+1] = ((float*)base_addr)[2*itmp+1];
+              break;
             case C_FLOAT:
               ((float*)buffer)[jtmp] = ((float*)base_addr)[itmp];
               break;
@@ -1344,6 +1349,10 @@ void nga_move(int op,             /*[input] flag for read or write */
             case C_DCPL:
               ((double*)base_addr)[2*itmp] = ((double*)buffer)[2*jtmp];
               ((double*)base_addr)[2*itmp+1] = ((double*)buffer)[2*jtmp+1];
+              break;
+            case C_SCPL:
+              ((float*)base_addr)[2*itmp] = ((float*)buffer)[2*jtmp];
+              ((float*)base_addr)[2*itmp+1] = ((float*)buffer)[2*jtmp+1];
               break;
             case C_FLOAT:
               ((float*)base_addr)[itmp] = ((float*)buffer)[jtmp];
@@ -2189,14 +2198,14 @@ Integer dra_create(
   reqdims[0] = *reqdim1; reqdims[1] = *reqdim2;
   return (ndra_create(type, &ndim, dims, name, filename, mode, reqdims, d_a));
 
-/*
+#if 0
 Integer handle, elem_size, ctype;
 
-        // convert Fortran to C data type 
+        /* convert Fortran to C data type */
         ctype = (Integer)ga_type_f2c((int)(*type));
         ga_sync_();
 
-        // if we have an error here, it is fatal        
+        /* if we have an error here, it is fatal        */
         dai_check_typeM(ctype);    
         if( *dim1 <= 0 )
               dai_error("dra_create: disk array dimension1 invalid ",  *dim1);
@@ -2205,20 +2214,20 @@ Integer handle, elem_size, ctype;
         if(strlen(filename)>DRA_MAX_FNAME)
               dai_error("dra_create: filename too long", DRA_MAX_FNAME);
 
-	//  Get next free DRA handle 
+	/*  Get next free DRA handle */
        if( (handle = dai_get_handle()) == -1)
            dai_error("dai_create: too many disk arrays ", _max_disk_array);
        *d_a = handle - DRA_OFFSET;
 
-       // determine disk array decomposition  
+       /* determine disk array decomposition  */
         elem_size = dai_sizeofM(ctype);
         dai_chunking( elem_size, *reqdim1, *reqdim2, *dim1, *dim2, 
                     &DRA[handle].chunk[0], &DRA[handle].chunk[1]);
 
-	// determine layout -- by row or column 
+	/* determine layout -- by row or column */
         DRA[handle].layout = COLUMN;
 
-	// complete initialization 
+	/* complete initialization */
         DRA[handle].dims[0] = *dim1;
         DRA[handle].dims[1] = *dim2;
         DRA[handle].ndim = 2;
@@ -2232,7 +2241,7 @@ Integer handle, elem_size, ctype;
 
         dai_write_param(DRA[handle].fname, *d_a);      
         DRA[handle].indep = dai_file_config(filename); 
-        // create file 
+        /* create file */
         if(dai_io_manage(*d_a)){ 
 
            if (INDEPFILES(*d_a) || DRA[handle].numfiles > 1) {
@@ -2241,7 +2250,7 @@ Integer handle, elem_size, ctype;
              DRA[handle].fd = elio_open(dummy_fname,(int)*mode, ELIO_PRIVATE);
            } else {
 
-	     // collective open supported only on Paragon 
+              /* collective open supported only on Paragon */
 #             ifdef PARAGON
                  DRA[handle].fd = elio_gopen(DRA[handle].fname,(int)*mode); 
 #             else
@@ -2261,7 +2270,7 @@ Integer handle, elem_size, ctype;
         ga_sync_();
 
         return(ELIO_OK);
-*/
+#endif
 
 }
      
@@ -3468,6 +3477,9 @@ void FATR dra_print_internals_(Integer *d_a)
         break;
       case C_DCPL:
         printf("  DRA data type is DOUBLE COMPLEX\n");
+        break;
+      case C_SCPL:
+        printf("  DRA data type is SINGLE COMPLEX\n");
         break;
       case C_LONG:
         printf("  DRA data type is LONG INTEGER\n");

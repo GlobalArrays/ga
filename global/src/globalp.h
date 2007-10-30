@@ -51,8 +51,10 @@
 #     define MAX_NPROC      80
 #   elif defined(LINUX64)
 #     define MAX_NPROC    2048
+#   elif defined(BGML)
+#     define MAX_NPROC    2048
 #   else
-#     define MAX_NPROC     128     /* default for everything else */
+#     define MAX_NPROC    2048     /* default for everything else */
 #   endif
 #endif
 
@@ -93,7 +95,9 @@
 #define GAsizeofM(type)  ( (type)==C_DBL? sizeof(double): \
                            (type)==C_INT? sizeof(int): \
                            (type)==C_DCPL? sizeof(DoubleComplex): \
+                           (type)==C_SCPL? sizeof(SingleComplex): \
                            (type)==C_LONG? sizeof(long): \
+                           (type)==C_LONGLONG? sizeof(long long): \
                            (type)==C_FLOAT? sizeof(float):0)
 
 #define NAME_STACK_LEN 10

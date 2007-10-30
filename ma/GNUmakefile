@@ -1,8 +1,9 @@
-# $Id: GNUmakefile,v 1.5 2004-06-03 16:53:50 vinod Exp $
+# $Id: GNUmakefile,v 1.6 2007-10-30 02:05:00 manoj Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
       LIBRARY = libma.a
+LIBRARY_SHARED= libma.so
   LIB_DISTRIB = ../lib
           OBJ = error.o f2c.o ma.o maf.o table.o
       HEADERS = macommon.h matypes.h macdecls.h \
@@ -18,7 +19,9 @@ include ../config/makefile.h
 include ../config/makelib.h
 
 ifdef ARMCI_NETWORK
-  CFLAGS += -DENABLE_USE_ARMCI_MEM_OPTION
+  ifneq ($(TARGET), BGL)
+    CFLAGS += -DENABLE_USE_ARMCI_MEM_OPTION
+  endif
 endif
 
 testf.x:  testf.o $(FULL_LIBRARY_PATH)

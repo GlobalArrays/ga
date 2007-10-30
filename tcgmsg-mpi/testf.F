@@ -1,7 +1,7 @@
       program main
       implicit double precision (a-h,o-z)
 c
-c $Header: /tmp/hpctools/ga/tcgmsg-mpi/testf.F,v 1.1 2001-06-29 00:24:39 edo Exp $
+c $Header: /tmp/hpctools/ga/tcgmsg-mpi/testf.F,v 1.2 2007-10-30 02:05:02 manoj Exp $
 c
 c     FORTRAN program to test message passing routines
 c
@@ -95,8 +95,14 @@ c
       
       do i=1,MAXLEN
          iresult = i*nproc*(nproc-1)/2
-         if (ibuf(i).ne.iresult.or.buf(i).ne.dble(iresult))
-     .      call error('TestGlobals: global sum failed',  i)
+         if (ibuf(i).ne.iresult) then
+            print *,'error',i,ibuf(i),iresult
+            call error('TestGlobals: global sum (igop) failed',  i)
+         endif
+         if (buf(i).ne.dble(iresult)) then
+            print *,'error',i,buf(i),iresult
+            call error('TestGlobals: global sum (dgop) failed',  i)
+         endif
       enddo
       
       if (me.eq.0) write(LOG,*) 'global sums OK'

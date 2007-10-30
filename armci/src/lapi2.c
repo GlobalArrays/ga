@@ -1,4 +1,4 @@
-/* $Id: lapi2.c,v 1.18 2006-09-12 23:21:21 andriy Exp $ */
+/* $Id: lapi2.c,v 1.19 2007-10-30 02:04:54 manoj Exp $ */
 #define DEBUG 0
 #define DSCR_SIZE 4096*8  /*given that bufsize=30000*8,conservative,indeed*/
 
@@ -6,7 +6,7 @@
 int _val_;\
     if(LAPI_Waitcntr(lapi_handle,&((ocmpl_)->cntr), ((ocmpl_)->val), &_val_))\
              armci_die("LAPI_Waitcntr failed",-1);\
-    if(_val_ != 0) armci_die2("CLEAR_COUNTER: nonzero in file " ## __FILE__,__LINE__,_val_);\
+    if(_val_ != 0) armci_die("CLEAR_COUNTER: nonzero in file ", _val_);\
     (ocmpl_)->val = 0;  \
 } 
  
@@ -128,8 +128,8 @@ int offset=0;
     dstv      = (lapi_vec_t *)(bufptr+offset);  offset+=sizeof(lapi_vec_t);
     srcv->info= (void **)(bufptr+offset);       offset+=iovlength*sizeof(void*);
     dstv->info= (void **)(bufptr+offset);       offset+=iovlength*sizeof(void*);
-    srcv->len = (unsigned long *)(bufptr+offset);offset+=iovlength*sizeof(int);
-    dstv->len = (unsigned long *)(bufptr+offset);offset+=iovlength*sizeof(int);
+    srcv->len = (unsigned long *)(bufptr+offset);offset+=iovlength*sizeof(unsigned long);
+    dstv->len = (unsigned long *)(bufptr+offset);offset+=iovlength*sizeof(unsigned long);
 
 
     srcv->vec_type = dstv->vec_type             = LAPI_GEN_IOVECTOR;
@@ -249,9 +249,16 @@ int dsize=3*sizeof(void*);
     }
     else{
        if(op==GET)
-         o_cmpl = &get_cntr;
+#if 0
+	     o_cmpl = &get_cntr;
        else
          o_cmpl = &ack_cntr;
+#else
+	   /* multithreaded lapi uses array of counters (one per thread) */
+	     o_cmpl = get_cntr; /* same as &(get_cntr[0]) */
+       else
+         o_cmpl = ack_cntr; /* same as &(ack_cntr[0]) */
+#endif
     }
     /*CONTIG protocol: used for 1D(contiguous) or if stride is very large in
       a multi strided case*/

@@ -28,8 +28,10 @@
 #define MT_F_SCPL  (MT_BASE + 14)
 #define MT_F_DCPL  (MT_BASE + 15)
 
+#define MT_C_LONGLONG	(MT_BASE + 16)
+
 #define MT_FIRST	MT_C_CHAR
-#define MT_LAST		MT_F_DCPL
+#define MT_LAST		MT_C_LONGLONG
 #define MT_NUMTYPES	(MT_LAST - MT_FIRST + 1)
 
 #if (defined(_CRAY) && !defined(__crayx1))  || defined(WIN32) || defined(HITACHI)

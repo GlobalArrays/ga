@@ -34,7 +34,7 @@ DIAG =
 #
 GA_TRACE = 
 
-SUBDIRS     = src testing trace X examples/boltzmann
+SUBDIRS     = src testing trace X examples
 MAKESUBDIRS = for dir in $(SUBDIRS); do $(MAKE)  -C $$dir $@ || exit 1 ; done
 
 ifndef TARGET 

@@ -1,8 +1,9 @@
+/* $Id: armcip.h,v 1.83 2007-10-30 02:04:53 manoj Exp $ */
 /* armci private header file */
 #ifndef _ARMCI_P_H
 
 #define _ARMCI_P_H
-#include <stdlib.h> 
+#include <stdlib.h>
 #include "armci.h"
 #include "message.h"
 
@@ -18,8 +19,15 @@
 #     define LIBELAN_ATOMICS
 #  endif
 
-#endif 
+#endif
 extern void armci_elan_fence(int p);
+#endif
+
+/* we got problems on IA64/Linux64 with Elan if inlining is used */
+#if defined(__GNUC__) && !defined(QUADRICS)
+#   define INLINE inline
+#else
+#   define INLINE
 #endif
 
 #ifdef WIN32
@@ -30,16 +38,19 @@ extern void armci_elan_fence(int p);
 #endif
 
 #if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM) && !defined(HITACHI) && !defined(CATAMOUNT)
-#define CLUSTER 
+#define CLUSTER
 
 #ifdef SERVER_THREAD
 #  define SERVER_NODE(c) (armci_clus_info[(c)].master);
+#  define NODE_SERVER(c) (c);
 #else
 #  define SOFFSET -10000
 #  define SERVER_NODE(c) ((int)(SOFFSET -armci_clus_info[(c)].master));
+#  define NODE_SERVER(c) ((int)(SOFFSET - c))
 #endif
 
 #endif
+
 
 /*\GPC call stuff
 \*/
@@ -69,7 +80,7 @@ void *ptr;
 } armci_flag_t;
 
 
-#if defined(LAPI) || defined(PTHREADS)
+#if defined(LAPI) || defined(PTHREADS) || defined(POSIX_THREADS)
 # include <pthread.h>
   typedef pthread_t thread_id_t;
 # define  THREAD_ID_SELF pthread_self
@@ -90,12 +101,40 @@ extern thread_id_t armci_usr_tid;
 #endif
 
 #if defined(LAPI) || defined(CLUSTER) || defined(CRAY) || defined(XT3)\
-        || defined(CRAY_SHMEM)
+        || defined(CRAY_SHMEM) || defined(BGML)
 #  include "request.h"
 #endif
 
+/* ------------------------ ARMCI threads support ------------------------- */
+#define ARMCI_THREADS_LIMIT 32
 
-/* min amount of data in strided request to be sent in a single TCP/IP message*/
+#include "utils.h"
+#if defined(THREAD_SAFE)
+typedef struct {
+    int max;                /* max # of threads per proc */
+    int avail;              /* next available position */
+    thread_id_t *ids;       /* list of threads' ids */
+    thread_lock_t lock;     /* general case lock */
+    thread_lock_t buf_lock; /* lock for buffer access */
+    thread_lock_t net_lock; /* lock for network accees */
+} armci_user_threads_t;
+
+extern armci_user_threads_t armci_user_threads;
+
+extern void armci_init_threads();
+extern void armci_finalize_threads();
+extern int armci_thread_idx();
+extern INLINE int armci_register_thread(thread_id_t id);
+
+#define ARMCI_THREAD_IDX armci_thread_idx() /* needs to be optimized */
+
+#else
+#   define ARMCI_THREAD_IDX 0
+#endif
+
+/* ------------------------------------------------------------------------ */
+
+/* min amount of data in strided request to be sent in single TCP/IP message*/
 #ifdef SOCKETS
 #  define TCP_PAYLOAD 128 
 #  define LONG_GET_THRESHOLD  TCP_PAYLOAD  
@@ -238,6 +277,12 @@ extern void armci_init_fence();
 
 #ifdef CLUSTER
    extern char *_armci_fence_arr;
+#ifdef THREAD_SAFE
+#  define FENCE_ARR(p_) (_armci_fence_arr[ARMCI_THREAD_IDX*armci_nproc+p_])
+#else
+#  define FENCE_ARR(p_) (_armci_fence_arr[p_])
+#endif
+
 #  define SAMECLUSNODE(p)\
      ( ((p) <= armci_clus_last) && ((p) >= armci_clus_first) )
 #elif defined(__crayx1)
@@ -254,9 +299,9 @@ extern void armci_init_fence();
 #  define UPDATE_FENCE_INFO(proc_)
 #elif defined(CLUSTER) && !defined(QUADRICS) && !defined(HITACHI)\
         && !defined(CRAY_SHMEM)
-#  define ORDER(op,proc)\
-        if(!SAMECLUSNODE(proc) && op != GET )_armci_fence_arr[proc]=1
-#  define UPDATE_FENCE_INFO(proc_) if(!SAMECLUSNODE(proc_))_armci_fence_arr[proc_]=1
+#  define ORDER(op_,proc_)\
+          if(!SAMECLUSNODE(proc_) && op_ != GET )FENCE_ARR(proc_)=1
+#  define UPDATE_FENCE_INFO(proc_) if(!SAMECLUSNODE(proc_))FENCE_ARR(proc_)=1
 #else
 #  if defined(GM) && defined(ACK_FENCE) 
 #   define ORDER(op,proc)
@@ -277,7 +322,7 @@ typedef struct {
  *  to establish socket communication like on the networks of workstations
  *  SP node names must be distinct within first HOSTNAME_LEN characters
 \*/
-#ifdef LAPI
+#if defined(LAPI) && defined(AIX)
 #  define HOSTNAME_TRUNCATE 
 #  define HOSTNAME_LEN 12
 #else
@@ -368,9 +413,12 @@ extern void armci_global_region_exchange(void *, long);
 
 /* -------------------- ARMCI Groups ---------------------- */
 /* data structure that caches a group's attribute */
+#ifdef BGML
+#define   PCLASS 3
+#endif
 #ifdef MPI
 typedef int ARMCI_Datatype;
- 
+
 extern int ATTR_KEY; /* attribute key */
  
 typedef struct {

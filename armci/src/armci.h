@@ -1,3 +1,4 @@
+/*$id$*/
 /* ARMCI header file */
 #ifndef _ARMCI_H
 #define _ARMCI_H   
@@ -180,6 +181,14 @@ extern void ARMCI_Copy(void *src, void *dst, int n);
 
 #define ARMCI_MAX_STRIDE_LEVEL 8
 
+#ifdef BGML     
+#define ARMCI_CRITICAL_SECTION_ENTER() BGML_CriticalSection_enter();
+#define ARMCI_CRITICAL_SECTION_EXIT()  BGML_CriticalSection_exit();
+#else
+#define ARMCI_CRITICAL_SECTION_ENTER()
+#define ARMCI_CRITICAL_SECTION_EXIT()     
+#endif    
+
 /************ locality information **********************************************/
 typedef int armci_domain_t;
 #define ARMCI_DOMAIN_SMP 0        /* SMP node domain for armci_domain_XXX calls */
@@ -205,17 +214,22 @@ extern char *mp_group_name;
 /*\ the request structure for non-blocking api. 
 \*/
 typedef struct{
+#ifdef BGML 
+    int data[4]; /* tag, bufid, agg_flag, op, proc */
+    double dummy[72]; /* bg1s_t, count, extra */
+#else
     int data[4];
 #if defined(_AIX) 
 #   if defined(__64BIT__)
     double dummy[27]; /*lapi_cntr_t is 200 bytes, using 216 just to be safe*/ 
 #   else
-    double dummy[20]; /*lapi_cntr_t is 148 bytes, using 166 just to be safe*/ 
+    double dummy[24]; /*lapi_cntr_t is 148 bytes, using 166 just to be safe*/ 
 #   endif
 #elif defined(ALLOW_PIN)
     void *dummy[2];/*2 cause itshould be aligned after we cast hdl_t to ihdl_t*/
 #else
     double dummy;
+#endif
 #endif
 } armci_hdl_t;
 
@@ -226,9 +240,13 @@ typedef struct {
     double dummy[8];
 } ARMCI_Group;
  
-void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group);
-int ARMCI_Group_rank(ARMCI_Group *group, int *rank);
+void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group_out);
+int  ARMCI_Group_rank(ARMCI_Group *group, int *rank);
 void ARMCI_Group_size(ARMCI_Group *group, int *size);
+void ARMCI_Group_set_default(ARMCI_Group *group);
+void ARMCI_Group_get_default(ARMCI_Group *group_out);
+void ARMCI_Group_get_world(ARMCI_Group *group_out);
+   
 int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,ARMCI_Group *group);
 int ARMCI_Free_group(void *ptr, ARMCI_Group *group);
 #endif
@@ -335,6 +353,25 @@ extern void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle);
 #define ARMCI_INIT_HANDLE(hdl) do {((double *)((hdl)->data))[0]=0; \
   ((double *)((hdl)->data))[1]=0; }while(0)
 
+/* -------------- ARMCI Non-collective memory allocator ------------- */
+typedef struct armci_meminfo_ds {
+  char    * armci_addr;   /* remote address of the creator which can be
+                               used in ARMCI communication */
+  char     *addr;         /* local address of creator which can be used in
+                               to set SMP memoffset, armci_set_mem_offset() */
+  size_t    size;         /* size of remote pid's segment (bytes) */
+  int       cpid;         /* armci pid of creator  */
+  long      idlist[64];
+} armci_meminfo_t;
+
+extern void ARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg);
+  
+extern void* ARMCI_Memat(armci_meminfo_t *meminfo, int memflg);
+  
+extern void ARMCI_Memdt(armci_meminfo_t *meminfo, int memflg);
+  
+extern void ARMCI_Memctl(armci_meminfo_t *meminfo);
+  
 /* ------------------- ARMCI Checkpointing/Recovery ----------------- */
 #ifdef DO_CKPT
 #define ARMCI_CKPT    0
@@ -350,15 +387,13 @@ int ARMCI_Ckpt_init(char *filename, ARMCI_Group *grp, int savestack, int savehea
 int ARMCI_Ckpt(int rid);
 void ARMCI_Ckpt_finalize(int rid);
 #define ARMCI_Restart_simulate armci_irecover
+# ifdef MPI
+    ARMCI_Group * ARMCI_Get_ft_group();
+# endif
 #endif
+
 /* ------------------------------------------------------------------ */
 
-#ifdef MPI
-ARMCI_Group * ARMCI_Get_world_group();
-#ifdef DO_CKPT
-ARMCI_Group * ARMCI_Get_ft_group();
-#endif
-#endif
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

@@ -55,6 +55,13 @@ ifdef LARGE_FILES
     LIB_DEFINES +=  -D_LARGEFILE64_SOURCE 
     LIB_DEFINES += $(shell getconf XBS5_LP64_OFF64_CFLAGS)
   endif  
+#
+# BGL
+#
+  ifeq ($(TARGET), BGL)
+    LIB_DEFINES += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE \
+                   -D_LARGEFILE64_SOURCE
+  endif
 
   LIB_DEFINES += -DLARGE_FILES
 endif

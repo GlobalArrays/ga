@@ -1,9 +1,10 @@
-/* $Id: strided.c,v 1.117 2006-09-25 21:09:20 andriy Exp $ */
+/* $Id: strided.c,v 1.118 2007-10-30 02:04:56 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
 #include "memlock.h"
 #include <stdio.h>
+#include <assert.h>
 
 #ifdef GA_USE_VAMPIR
 #include "armci_vampir.h"
@@ -30,6 +31,10 @@ else\
 #  endif
 #endif
 
+#ifdef BGML
+#define PREPROCESS_STRIDED(tmp_count)
+#define POSTPROCESS_STRIDED(tmp_count)
+#else
 #define PREPROCESS_STRIDED(tmp_count) {\
  tmp_count=0;\
  if(stride_levels) \
@@ -42,8 +47,8 @@ else\
       src_stride_arr ++;  dst_stride_arr++ ;\
  }\
 }
-
 #define POSTPROCESS_STRIDED(tmp_count) if(tmp_count)seg_count[1]=tmp_count
+#endif
 
 #define SERVER_GET 1
 #define SERVER_NBGET 2
@@ -128,6 +133,8 @@ int armci_iwork[MAX_STRIDE_LEVEL];
 static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, 
                           int bytes, int count, int src_stride, int dst_stride)
 {
+    int armci_th_idx = ARMCI_THREAD_IDX;
+    
 #ifdef LAPI2__
 #  define COUNT 1
 #else
@@ -139,7 +146,7 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
 #else
     int shmem = SAMECLUSNODE(proc);
 #endif
-    
+
     if(shmem) {
         
         /* data is in local/shared memory -- can use memcpy */
@@ -207,7 +214,7 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
             
             UPDATE_FENCE_STATE(proc, PUT, COUNT);
 #ifdef LAPI
-            SET_COUNTER(ack_cntr,COUNT);
+            SET_COUNTER(ack_cntr[armci_th_idx],COUNT);
 #endif
             if(count==1){
                 armci_put(src_ptr, dst_ptr, bytes, proc);
@@ -219,7 +226,7 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
         }else{
             
 #ifdef LAPI
-            SET_COUNTER(get_cntr, COUNT);
+            SET_COUNTER(get_cntr[armci_th_idx], COUNT);
 #endif
             if(count==1){
                 armci_get(src_ptr, dst_ptr, bytes, proc);
@@ -433,7 +440,7 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
     int s2, s3, i,j, unlockit=0;
     int total_of_2D;
     int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
-    
+
 #   if defined(ACC_COPY)
       
 #      ifdef ACC_SMP
@@ -593,6 +600,15 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
     ORDER(PUT,proc); /* ensure ordering */
     PREPROCESS_STRIDED(tmp_count);
 
+#ifdef BGML
+    armci_hdl_t nb_handle;
+    ARMCI_INIT_HANDLE(&nb_handle);
+    ARMCI_NbPutS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count,
+                 stride_levels, proc, &nb_handle);
+    ARMCI_Wait(&nb_handle);
+#else
+
+
 #if !defined(QUADRICS) || defined(PACKPUT)
     direct=SAMECLUSNODE(proc);
 #endif
@@ -657,12 +673,12 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 	  if(proc != armci_me) { WAIT_FOR_PUTS; }
 #         endif
       }
-	else 
+	else
 	  rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
 				 dst_ptr, dst_stride_arr,count,stride_levels, 
 				 0,NULL);
     }
-
+#endif
     POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
     armci_profile_stop_strided(ARMCI_PROF_PUTS);
@@ -921,6 +937,14 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 
     ORDER(GET,proc); /* ensure ordering */
     PREPROCESS_STRIDED(tmp_count);
+#ifdef BGML
+   armci_hdl_t nb_handle;
+   ARMCI_INIT_HANDLE(&nb_handle);
+   ARMCI_NbGetS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count,
+                                stride_levels, proc, &nb_handle);
+   ARMCI_Wait(&nb_handle);
+#else
+
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
@@ -994,6 +1018,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #endif
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
                              dst_stride_arr,count, stride_levels,0,NULL);
+#endif
 
     POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
@@ -1044,12 +1069,20 @@ int ARMCI_AccS( int  optype,            /* operation */
 
     ORDER(optype,proc); /* ensure ordering */
     PREPROCESS_STRIDED(tmp_count);
+#ifdef BGML
+    armci_hdl_t nb_handle;
+    ARMCI_INIT_HANDLE(&nb_handle);
+    ARMCI_NbAccS(optype, scale, src_ptr, src_stride_arr, dst_ptr,
+                 dst_stride_arr, count, stride_levels, proc, &nb_handle);
+    ARMCI_Wait(&nb_handle);
+#else
+
     direct=SAMECLUSNODE(proc);
 
 #   if defined(ACC_COPY) && !defined(ACC_SMP)
        if(armci_me != proc) direct=0;
 #   endif
- 
+
     if(direct)
       rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
                            dst_stride_arr, count, stride_levels,1,NULL);
@@ -1058,7 +1091,7 @@ int ARMCI_AccS( int  optype,            /* operation */
       rc = armci_pack_strided(optype,scale,proc,src_ptr, src_stride_arr,dst_ptr,
                       dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,NULL);
     }
-
+#endif /*bgml*/
     POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
     armci_profile_stop_strided(ARMCI_PROF_ACCS);
@@ -1090,7 +1123,19 @@ int ARMCI_Put(void *src, void* dst, int bytes, int proc)
        armci_client_direct_send(proc, src, dst, bytes,NULL,0,mhloc,mhrem);
     }else
 #endif
+#ifdef BGML
+   unsigned count=1;
+   BGML_Callback_t cb_wait={wait_callback, &count};
+   BG1S_t request;
+   BGML_CriticalSection_enter();
+   BG1S_Memput(&request, proc, src, 0, dst, bytes, &cb_wait, 1);
+   /*BGML_Wait(&count);*/
+   while (count) BGML_Messager_advance();
+   BGML_CriticalSection_exit();
+#else
+
        rc = ARMCI_PutS(src, NULL, dst, NULL, &bytes, 0, proc);
+#endif
 #endif
     
 #ifdef ARMCI_PROFILE
@@ -1120,7 +1165,15 @@ int ARMCI_Get(void *src, void* dst, int bytes, int proc)
        ARMCI_REM_GET(proc, src,NULL,dst,NULL,&bytes, 0, NULL);
     }  else
 # endif
+#ifdef BGML
+   BG1S_t request;
+   unsigned count=1;
+   BGML_Callback_t cb_wait={wait_callback, &count};
+   BG1S_Memget(&request, proc, dst, 0, src, bytes, &cb_wait, 1);
+   BGML_Wait(&count);
+#else
        rc = ARMCI_GetS(src, NULL, dst, NULL, &bytes, 0, proc);
+#endif
 #endif
     
 #ifdef ARMCI_PROFILE
@@ -1380,6 +1433,15 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
       else
         nb_handle = armci_set_implicit_handle(PUT, proc);
     }
+#ifdef BGML
+    nb_handle->count = 1;
+    BGML_Callback_t cb_wait={wait_callback, &nb_handle->count};
+    BG1S_MemputS (&nb_handle->cmpl_info, proc,
+                  src_ptr, src_stride_arr,
+                  dst_ptr, dst_stride_arr,
+                  seg_count, stride_levels,
+                  0, &cb_wait, 1);
+#endif
 
 #if defined(DOELAN4)
     if(!direct) switch(stride_levels) {
@@ -1481,6 +1543,19 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     armci_profile_start_strided(seg_count, stride_levels, proc,
 				ARMCI_PROF_NBGETS);
 #endif
+#ifdef BGML
+   armci_ihdl_t nbh;
+   set_nbhandle(&nbh, usr_hdl, PUT, proc);
+   nbh->count=1;
+   BGML_Callback_t cb_wait={wait_callback, &nbh->count};
+
+   BG1S_MemgetS (&nbh->cmpl_info, proc,
+                 src_ptr, src_stride_arr,
+                 dst_ptr, dst_stride_arr,
+                 seg_count, stride_levels,
+                 0, &cb_wait, 1);
+#else
+
 #if !defined(QUADRICS)
     direct=SAMECLUSNODE(proc);
 #endif
@@ -1586,6 +1661,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
                              dst_stride_arr,count, stride_levels,0,nb_handle);
 
     POSTPROCESS_STRIDED(tmp_count);
+#endif /*bgml*/
 
 #ifdef ARMCI_PROFILE
     armci_profile_stop_strided(ARMCI_PROF_NBGETS);
@@ -1622,6 +1698,50 @@ int ARMCI_NbAccS( int  optype,            /* operation */
     armci_profile_start_strided(seg_count, stride_levels, proc,
 				ARMCI_PROF_NBACCS);
 #endif
+#ifdef BGML
+   armci_ihdl_t nbh;
+   set_nbhandle(&nbh, usr_hdl, PUT, proc);
+   nbh->count=1;
+   BGML_Callback_t cb_wait={wait_callback, &nbh->count};
+
+   BGML_Op oper1=BGML_PROD;
+   BGML_Op oper2=BGML_SUM;
+   BGML_Dt dt;
+   switch(optype)
+     {
+       case ARMCI_ACC_INT:
+       case ARMCI_ACC_LNG:
+         dt=BGML_SIGNED_INT;
+         break;
+#if 0
+       case ARMCI_ACC_LNG:
+         dt=BGML_SIGNED_LONG;
+         break;
+#endif
+       case ARMCI_ACC_DBL:
+         dt=BGML_DOUBLE;
+         break;
+       case ARMCI_ACC_CPL:
+         dt=BGML_SINGLE_COMPLEX;
+         break;
+       case ARMCI_ACC_DCP:
+         dt=BGML_DOUBLE_COMPLEX;
+         break;
+       case ARMCI_ACC_FLT:
+         dt=BGML_FLOAT;
+         break;
+       default:
+         assert(0);
+     }
+
+  BG1S_AccumulateS (&nbh->cmpl_info, proc,
+                    src_ptr, src_stride_arr,
+                    dst_ptr, dst_stride_arr,
+                    seg_count, stride_levels,
+                    scale, 0,
+                    dt, oper1, oper2,
+                    &cb_wait, 1);
+#else
 
     UPDATE_FENCE_INFO(proc);
     PREPROCESS_STRIDED(tmp_count);
@@ -1654,6 +1774,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
     }
 
     POSTPROCESS_STRIDED(tmp_count);
+#endif /*BGML*/
 
 #   ifdef ARMCI_PROFILE
     armci_profile_stop_strided(ARMCI_PROF_NBACCS);
@@ -1663,7 +1784,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
 }
 
 
-#if !defined(ACC_COPY)&&!defined(CRAY_YMP)&&!defined(CYGNUS)&&!defined(CYGWIN)
+#if !defined(ACC_COPY)&&!defined(CRAY_YMP)&&!defined(CYGNUS)&&!defined(CYGWIN) &&!defined(BGML)
 #   define REMOTE_OP
 #endif
 
@@ -1672,6 +1793,19 @@ int ARMCI_NbAccS( int  optype,            /* operation */
              (nb)->op  = (o); (nb)->proc= (p);\
              (nb)->bufid=NB_NONE;}\
              else { (nb)=armci_set_implicit_handle(o, p); (nb)->tag=0; }
+
+void set_nbhandle(armci_ihdl_t *nbh, armci_hdl_t *nb_handle, int op,
+                         int proc)
+{
+   if(nb_handle)
+   {
+      *nbh=(armci_ihdl_t)nb_handle;
+   }
+   else
+   {
+      *nbh=armci_set_implicit_handle(op, proc);
+   }
+}
 
 
 int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
@@ -1701,11 +1835,21 @@ int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
     if(direct) {
       /*armci_wait needs proc to compute direct*/
       INIT_NB_HANDLE(nb_handle,PUT,proc);
+#ifdef BGML
+      nb_handle->count = 0;
+#endif
       armci_copy(src,dst,bytes);
     }else{
+#ifdef BGML
+      INIT_NB_HANDLE(nb_handle,PUT,proc);
+      nb_handle->count = 1;
+      BGML_Callback_t cb_wait={wait_callback, &nb_handle->count};
+      BG1S_Memput(&nb_handle->cmpl_info, proc, src, 0, dst, bytes, &cb_wait, 1);
+#else
 #     ifdef ARMCI_NB_PUT
       /*set tag and op in the nb handle*/
       INIT_NB_HANDLE(nb_handle,PUT,proc);
+
       
       UPDATE_FENCE_STATE(proc, PUT, 1);
       
@@ -1727,6 +1871,7 @@ int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 #       endif
          rc=ARMCI_NbPutS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
 #     endif
+#endif /*BGML*/
     }
 
 #ifdef ARMCI_PROFILE
@@ -1763,8 +1908,18 @@ int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
     if(direct) {
       /*armci_wait needs proc to compute direct*/
       INIT_NB_HANDLE(nb_handle,PUT,proc);
+#ifdef BGML
+      nb_handle->count = 0;
+#endif
       armci_copy(src,dst,bytes);
     }else{
+#ifdef BGML
+      INIT_NB_HANDLE(nb_handle,GET,proc);
+      nb_handle->count = 1;
+      BGML_Callback_t cb_wait={wait_callback, &nb_handle->count};
+      BG1S_Memget(&nb_handle->cmpl_info, proc, dst, 0, src, bytes, &cb_wait, 1);
+#else
+
 #     ifdef ARMCI_NB_GET
       /*set tag and op in the nb handle*/
       INIT_NB_HANDLE(nb_handle,GET,proc);
@@ -1785,6 +1940,7 @@ int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 #       endif
       rc=ARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
 #     endif
+#endif /*BGML*/
     }
 #ifdef ARMCI_PROFILE
     armci_profile_stop_strided(ARMCI_PROF_NBGET);
@@ -1795,28 +1951,50 @@ int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 
 static void _armci_rem_value(int op, void *src, void *dst, int proc, 
 			     int bytes) {  
-  int rc=0;
-    
+    int rc=0;
+    int armci_th_idx = ARMCI_THREAD_IDX;
+
     ORDER(op,proc); /* ensure ordering */
-    
+
 #if defined(REMOTE_OP) && !defined(QUADRICS)
     rc = armci_rem_strided(op, NULL, proc, src, NULL, dst, NULL,
 			   &bytes, 0, NULL, 0, NULL);
     if(rc) armci_die("ARMCI_Value: armci_rem_strided incomplete", FAIL6);
 #else
-    
+
     if(op==PUT) {
       UPDATE_FENCE_STATE(proc, PUT, 1);
 #     ifdef LAPI
-      SET_COUNTER(ack_cntr, 1);
+      SET_COUNTER(ack_cntr[armci_th_idx], 1);
 #     endif
+#if defined(BGML)
+      /* fprintf(stderr,"bytes: %d\n",bytes); */
+      /* this call is blocking, so local count is fine */
+      BG1S_t req;
+      unsigned count=1;
+      BGML_Callback_t cb_wait={wait_callback, &count};
+      BG1S_Memput(&req, proc, src, 0, dst, bytes, &cb_wait, 1);
+      BGML_Wait(&count);
+#else
+
       armci_put(src, dst, bytes, proc);
+#endif
     }
     else {
 #     ifdef LAPI
-      SET_COUNTER(get_cntr, 1);
+      SET_COUNTER(get_cntr[armci_th_idx], 1);
 #     endif
+#if defined(BGML)
+      /* fprintf(stderr,"before memget\n"); */
+   BG1S_t req;
+   unsigned count=1;
+   BGML_Callback_t cb_wait={wait_callback, &count};
+   BG1S_Memget(&req, proc, dst, 0, src, bytes, &cb_wait, 1);
+   BGML_Wait(&count);
+
+#else
       armci_get(src, dst, bytes, proc);
+#endif
     }
     
     /* deal with non-blocking loads and stores */
@@ -1836,6 +2014,7 @@ static void _armci_rem_value(int op, void *src, void *dst, int proc,
 static void _armci_nb_rem_value(int op, void *src, void *dst, int proc, 
 				int bytes, armci_ihdl_t nb_handle) {  
     int rc=0, pv=0;
+    int armci_th_idx = ARMCI_THREAD_IDX;
 
     if(nb_handle && nb_handle->agg_flag == SET) {
       if(op==PUT) pv = 1;
@@ -1865,13 +2044,13 @@ static void _armci_nb_rem_value(int op, void *src, void *dst, int proc,
     if(op==PUT) {
       UPDATE_FENCE_STATE(proc, PUT, 1);
 #     ifdef LAPI
-      SET_COUNTER(ack_cntr, 1);
+      SET_COUNTER(ack_cntr[armci_th_idx], 1);
 #     endif
       armci_put(src, dst, bytes, proc);
     }
     else {
 #     ifdef LAPI
-      SET_COUNTER(get_cntr, 1);
+      SET_COUNTER(get_cntr[armci_th_idx], 1);
 #     endif
       armci_get(src, dst, bytes, proc);
     }

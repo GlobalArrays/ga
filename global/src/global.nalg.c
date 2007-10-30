@@ -86,6 +86,7 @@ void FATR ga_zero_(Integer *g_a)
         double *da;
         float *fa;
         long *la;
+        long long *lla;
         case C_INT:
         ia = (int*)ptr;
         for(i=0;i<elems;i++) ia[i]  = 0;
@@ -96,6 +97,8 @@ void FATR ga_zero_(Integer *g_a)
         da = (double*)ptr;
         for(i=0;i<elems;i++) da[i] = 0;
         break;
+        case C_SCPL:
+        elems *=2;
         case C_FLOAT:
         fa = (float*)ptr;
         for(i=0;i<elems;i++) fa[i]  = 0;
@@ -103,6 +106,10 @@ void FATR ga_zero_(Integer *g_a)
         case C_LONG:
         la = (long*)ptr;
         for(i=0;i<elems;i++) la[i]  = 0;
+        break;                                 
+        case C_LONGLONG:
+        lla = (long long*)ptr;
+        for(i=0;i<elems;i++) lla[i]  = 0;
         break;                                 
         default: ga_error(" wrong data type ",type);
       }
@@ -117,6 +124,7 @@ void FATR ga_zero_(Integer *g_a)
       double *da;
       float *fa;
       long *la;
+      long long *lla;
       case C_INT:
         ia = (int*)ptr;
         for(i=0;i<elems;i++) ia[i]  = 0;
@@ -127,14 +135,20 @@ void FATR ga_zero_(Integer *g_a)
         da = (double*)ptr;
         for(i=0;i<elems;i++) da[i] = 0;
         break;
+      case C_SCPL:
+        elems *=2;
       case C_FLOAT:
         fa = (float*)ptr;
         for(i=0;i<elems;i++) fa[i]  = 0;
         break;
       case C_LONG:
-        la = (long*)ptr;
-        for(i=0;i<elems;i++) la[i]  = 0;
-        break;                                 
+      la = (long*)ptr;
+      for(i=0;i<elems;i++) la[i]  = 0;
+      break;                                 
+      case C_LONGLONG:
+      lla = (long long*)ptr;
+      for(i=0;i<elems;i++) lla[i]  = 0;
+      break;                                 
       default: ga_error(" wrong data type ",type);
     }
 
@@ -429,7 +443,9 @@ Integer  ndim, type, atype, me, elems=0, elemsb=0;
 register Integer i;
 int isum=0;
 long lsum=0;
+long long llsum=0;
 DoubleComplex zsum ={0.,0.};
+SingleComplex csum ={0.,0.};
 float fsum=0.0;
 void *ptr_a, *ptr_b;
 int alen;
@@ -512,6 +528,7 @@ Integer bndim, bdims[MAXDIM];
 	double *da,*db;
         float *fa, *fb;
         long *la,*lb;
+        long long *lla,*llb;
         case C_INT:
            ia = (int*)ptr_a;
            ib = (int*)ptr_b;
@@ -531,6 +548,18 @@ Integer bndim, bdims[MAXDIM];
            }
            *(DoubleComplex*)value = zsum; 
            type = C_DCPL;
+           alen = 2;
+           break;
+
+        case C_SCPL:
+           for(i=0;i<elems;i++){
+               SingleComplex a = ((SingleComplex*)ptr_a)[i];
+               SingleComplex b = ((SingleComplex*)ptr_b)[i];
+               csum.real += a.real*b.real  - b.imag * a.imag;
+               csum.imag += a.imag*b.real  + b.imag * a.real;
+           }
+           *(SingleComplex*)value = csum; 
+           type = C_SCPL;
            alen = 2;
            break;
 
@@ -561,6 +590,15 @@ Integer bndim, bdims[MAXDIM];
            type = C_LONG;
            alen = 1;
            break;               
+        case C_LONGLONG:
+           lla = (long long*)ptr_a;
+           llb = (long long*)ptr_b;
+           for(i=0;i<elems;i++)
+		llsum += lla[i]  * llb[i];
+           *(long long*)value = llsum;
+           type = C_LONGLONG;
+           alen = 1;
+           break;               
         default: ga_error(" wrong data type ",type);
       }
    
@@ -576,7 +614,9 @@ Integer bndim, bdims[MAXDIM];
       case C_DBL: atype=ARMCI_DOUBLE; break;
       case C_INT: atype=ARMCI_INT; break;
       case C_LONG: atype=ARMCI_LONG; break;
+      case C_LONGLONG: atype=ARMCI_LONG_LONG; break;
       case C_DCPL: atype=ARMCI_DOUBLE; break;
+      case C_SCPL: atype=ARMCI_FLOAT; break;
       default: ga_error("gai_dot: type not supported",type);
     }
 
@@ -607,6 +647,9 @@ Integer FATR ga_idot_(g_a, g_b)
 Integer sum,ndim,type;
 #       ifdef EXT_INT 
                 type = C_LONG;
+#          ifdef EXT_INT64
+                type = C_LONGLONG;
+#          endif                
 #       else
                 type = C_INT;
 #       endif
@@ -672,6 +715,26 @@ DoubleComplex sum;
         return sum;
 }
 
+/*\ SingleComplex ga_cdot - C version
+\*/ 
+SingleComplex ga_cdot(Integer *g_a, Integer *g_b)
+{
+SingleComplex sum;
+
+#ifdef GA_USE_VAMPIR
+        vampir_begin(GA_CDOT,__FILE__,__LINE__);
+#endif
+
+        gai_dot(C_SCPL, g_a, g_b, &sum);
+
+#ifdef GA_USE_VAMPIR
+        vampir_end(GA_CDOT,__FILE__,__LINE__);
+#endif
+
+        return sum;
+}
+
+
 #if defined(CRAY) || defined(WIN32) ||defined(HITACHI)
 # define gai_zdot_ GAI_ZDOT
 #elif defined(F2C2_)
@@ -682,6 +745,18 @@ void FATR gai_zdot_(g_a, g_b, retval)
         DoubleComplex *retval;  
 {
      gai_dot(C_DCPL, g_a, g_b, retval);
+}
+
+#if defined(CRAY) || defined(WIN32) ||defined(HITACHI)
+# define gai_cdot_ GAI_CDOT
+#elif defined(F2C2_)
+# define gai_cdot_ gai_cdot__
+#endif
+void FATR gai_cdot_(g_a, g_b, retval)
+        Integer *g_a, *g_b;
+        SingleComplex *retval;  
+{
+     gai_dot(C_SCPL, g_a, g_b, retval);
 }
 
 
@@ -729,7 +804,9 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
         int *ia;
         double *da;
         DoubleComplex *ca, scale;
+        SingleComplex *cfa, cfscale;
         long *la;
+        long long *lla;
         float *fa;
         case C_INT:
         ia = (int*)ptr;
@@ -739,15 +816,28 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
         la = (long*)ptr;
         for(i=0;i<elems;i++) la[i]  *= *(long*)alpha;
         break;
-        case C_DCPL:
-        ca = (DoubleComplex*)ptr;
-        scale= *(DoubleComplex*)alpha;
-        for(i=0;i<elems;i++){
-          DoubleComplex val = ca[i]; 
-          ca[i].real = scale.real*val.real  - val.imag * scale.imag;
-          ca[i].imag = scale.imag*val.real  + val.imag * scale.real;
-        }
+        case C_LONGLONG:
+        lla = (long long*)ptr;
+        for(i=0;i<elems;i++) lla[i]  *= *(long long*)alpha;
         break;
+        case C_DCPL:
+           ca = (DoubleComplex*)ptr;
+           scale= *(DoubleComplex*)alpha;
+           for(i=0;i<elems;i++){
+               DoubleComplex val = ca[i]; 
+               ca[i].real = scale.real*val.real  - val.imag * scale.imag;
+               ca[i].imag = scale.imag*val.real  + val.imag * scale.real;
+           }
+           break;
+        case C_SCPL:
+           cfa = (SingleComplex*)ptr;
+           cfscale= *(SingleComplex*)alpha;
+           for(i=0;i<elems;i++){
+               SingleComplex val = cfa[i]; 
+               cfa[i].real = cfscale.real*val.real  - val.imag * cfscale.imag;
+               cfa[i].imag = cfscale.imag*val.real  + val.imag * cfscale.real;
+           }
+           break;
         case C_DBL:
         da = (double*)ptr;
         for(i=0;i<elems;i++) da[i] *= *(double*)alpha;
@@ -768,7 +858,9 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
       int *ia;
       double *da;
       DoubleComplex *ca, scale;
+      SingleComplex *cfa, cfscale;
       long *la;
+      long long *lla;
       float *fa;
       case C_INT:
       ia = (int*)ptr;
@@ -778,6 +870,10 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
       la = (long*)ptr;
       for(i=0;i<elems;i++) la[i]  *= *(long*)alpha;
       break;
+      case C_LONGLONG:
+      lla = (long long*)ptr;
+      for(i=0;i<elems;i++) lla[i]  *= *(long long*)alpha;
+      break;
       case C_DCPL:
       ca = (DoubleComplex*)ptr;
       scale= *(DoubleComplex*)alpha;
@@ -785,6 +881,15 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
         DoubleComplex val = ca[i]; 
         ca[i].real = scale.real*val.real  - val.imag * scale.imag;
         ca[i].imag = scale.imag*val.real  + val.imag * scale.real;
+      }
+      break;
+      case C_SCPL:
+      cfa = (SingleComplex*)ptr;
+      cfscale= *(SingleComplex*)alpha;
+      for(i=0;i<elems;i++){
+        SingleComplex val = cfa[i]; 
+        cfa[i].real = cfscale.real*val.real  - val.imag * cfscale.imag;
+        cfa[i].imag = cfscale.imag*val.real  + val.imag * cfscale.real;
       }
       break;
       case C_DBL:
@@ -904,6 +1009,7 @@ int local_sync_begin,local_sync_end;
          double *da,*db,*dc;
          float *fa, *fb, *fc;
          long *la,*lb,*lc;
+         long long *lla,*llb,*llc;
          case C_DBL:
                   da = (double*)ptr_a;
                   db = (double*)ptr_b;
@@ -919,6 +1025,20 @@ int local_sync_begin,local_sync_end;
                      DoubleComplex *ac = (DoubleComplex*)ptr_c;
                      DoubleComplex x= *(DoubleComplex*)alpha;
                      DoubleComplex y= *(DoubleComplex*)beta;
+                     /* c = x*a + y*b */
+                     ac[i].real = x.real*a.real - 
+                              x.imag*a.imag + y.real*b.real - y.imag*b.imag;
+                     ac[i].imag = x.real*a.imag + 
+                              x.imag*a.real + y.real*b.imag + y.imag*b.real;
+                  }
+              break;
+         case C_SCPL:
+                  for(i=0; i<elems; i++){
+                     SingleComplex a = ((SingleComplex*)ptr_a)[i];
+                     SingleComplex b = ((SingleComplex*)ptr_b)[i];
+                     SingleComplex *ac = (SingleComplex*)ptr_c;
+                     SingleComplex x= *(SingleComplex*)alpha;
+                     SingleComplex y= *(SingleComplex*)beta;
                      /* c = x*a + y*b */
                      ac[i].real = x.real*a.real - 
                               x.imag*a.imag + y.real*b.real - y.imag*b.imag;
@@ -946,6 +1066,14 @@ int local_sync_begin,local_sync_end;
 		  lc = (long*)ptr_c;
                   for(i=0; i<elems; i++)
                       lc[i] = *(long*)alpha *la[i] + *(long*)beta *lb[i];
+              break;
+         case C_LONGLONG:
+                  lla = (long long*)ptr_a;
+		  llb = (long long*)ptr_b;
+		  llc = (long long*)ptr_c;
+                  for(i=0; i<elems; i++)
+                      llc[i] = ( *(long long*)alpha *lla[i] +
+                                 *(long long*)beta  * llb[i] );
                 
        }
 
@@ -980,6 +1108,10 @@ int i;
             for(i = 0; i< n; i++, ptrb+= stride) 
                *(DoubleComplex*)ptrb= ((DoubleComplex*)ptra)[i];
             break;
+       case C_SCPL:
+            for(i = 0; i< n; i++, ptrb+= stride) 
+               *(SingleComplex*)ptrb= ((SingleComplex*)ptra)[i];
+            break;
        case C_DBL:
             for(i = 0; i< n; i++, ptrb+= stride) 
                *(double*)ptrb= ((double*)ptra)[i];
@@ -992,10 +1124,13 @@ int i;
             for(i = 0; i< n; i++, ptrb+= stride)
                *(long*)ptrb= ((long*)ptra)[i];
             break;                                 
+       case C_LONGLONG:
+            for(i = 0; i< n; i++, ptrb+= stride)
+               *(long long*)ptrb= ((long long*)ptra)[i];
+            break;                                 
        default: ga_error("bad type:",type);
     }
 }
-
 
 
 void FATR ga_transpose_(Integer *g_a, Integer *g_b)
@@ -1005,6 +1140,8 @@ Integer nproc = ga_nnodes_();
 Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
 Integer lo[2],hi[2];
 int local_sync_begin,local_sync_end;
+Integer num_blocks_a;
+char *ptr_tmp, *ptr_a;
 
 #ifdef GA_USE_VAMPIR
     vampir_begin(GA_TRANSPOSE,__FILE__,__LINE__);
@@ -1024,37 +1161,119 @@ int local_sync_begin,local_sync_end;
     if(bndim != 2 || andim != 2) ga_error("dimension must be 2",0);
     if(atype != btype ) ga_error("array type mismatch ", 0L);
 
-    nga_distribution_(g_a, &me, lo, hi);
+    num_blocks_a = ga_total_blocks_(g_a);
 
-    if(lo[0]>0){
-       Integer nelem, ld, lob[2], hib[2], nrow, ncol;
-       char *ptr_tmp, *ptr_a;
-       int i, size=GAsizeofM(atype);
-       
-       nrow   = hi[0] -lo[0]+1;
-       ncol   = hi[1] -lo[1]+1; 
-       nelem  = nrow*ncol;
-       lob[0] = lo[1]; lob[1] = lo[0];
-       hib[0] = hi[1]; hib[1] = hi[0];
-       
-       /* allocate memory for transposing elements locally */
-       ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
+    if (num_blocks_a < 0) {
+      nga_distribution_(g_a, &me, lo, hi);
 
-       /* get access to local data */
-       nga_access_ptr(g_a, lo, hi, &ptr_a, &ld);
-   
-       for(i = 0; i < ncol; i++){
+      if(lo[0]>0){
+        Integer nelem, ld, lob[2], hib[2], nrow, ncol;
+        int i, size=GAsizeofM(atype);
+
+        nrow   = hi[0] -lo[0]+1;
+        ncol   = hi[1] -lo[1]+1; 
+        nelem  = nrow*ncol;
+        lob[0] = lo[1]; lob[1] = lo[0];
+        hib[0] = hi[1]; hib[1] = hi[0];
+
+        /* allocate memory for transposing elements locally */
+        ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
+
+        /* get access to local data */
+        nga_access_ptr(g_a, lo, hi, &ptr_a, &ld);
+
+        for(i = 0; i < ncol; i++){
           char *ptr = ptr_tmp + i*size;
 
           gai_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
           ptr_a += ld*size;
-       }
+        }
 
-       nga_release_(g_a, lo, hi); 
+        nga_release_(g_a, lo, hi); 
 
-       nga_put_(g_b, lob, hib,ptr_tmp ,&ncol);
+        nga_put_(g_b, lob, hib, ptr_tmp ,&ncol);
 
-       ga_free(ptr_tmp);
+        ga_free(ptr_tmp);
+      }
+    } else {
+      Integer idx, lod[MAXDIM], hid[MAXDIM];
+      Integer offset, jtot, last;
+      Integer blocks[MAXDIM], block_dims[MAXDIM];
+      Integer nelem, ld, lob[2], hib[2], nrow, ncol;
+      int i, size=GAsizeofM(atype);
+
+      /* allocate memory for transposing elements locally */
+      ga_get_block_info_(g_a, blocks, block_dims);
+      nelem = block_dims[0]*block_dims[1];
+      ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
+
+      /* Simple block-cyclic data distribution */
+      if (!ga_scalapack_distribution_(g_a)) {
+        for (idx = me; idx < num_blocks_a; idx += nproc) {
+          nga_distribution_(g_a, &idx, lo, hi);
+          nga_access_block_ptr(g_a, &idx, &ptr_a, &ld);
+
+          nrow   = hi[0] -lo[0]+1;
+          ncol   = hi[1] -lo[1]+1; 
+          nelem  = nrow*ncol;
+          lob[0] = lo[1]; lob[1] = lo[0];
+          hib[0] = hi[1]; hib[1] = hi[0];
+          for(i = 0; i < ncol; i++){
+            char *ptr = ptr_tmp + i*size;
+
+            gai_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
+            ptr_a += ld*size;
+          }
+          nga_put_(g_b, lob, hib, ptr_tmp ,&ncol);
+
+          nga_release_update_block_(g_a, &idx);
+        }
+      } else {
+        /* Uses scalapack block-cyclic data distribution */
+        Integer lod[MAXDIM], hid[MAXDIM], chk;
+        Integer proc_index[MAXDIM], index[MAXDIM];
+        Integer topology[MAXDIM];
+
+        ga_get_proc_index_(g_a, &me, proc_index);
+        ga_get_proc_index_(g_a, &me, index);
+        ga_get_block_info_(g_a, blocks, block_dims);
+        ga_topology_(g_a, topology);
+        while (index[andim-1] < blocks[andim-1]) {
+          /* find bounding coordinates of block */
+          chk = 1;
+          for (i = 0; i < andim; i++) {
+            lo[i] = index[i]*block_dims[i]+1;
+            hi[i] = (index[i] + 1)*block_dims[i];
+            if (hi[i] > dims[i]) hi[i] = dims[i];
+            if (hi[i] < lo[i]) chk = 0;
+          }
+          if (chk) {
+            nga_access_block_grid_ptr(g_a, index, &ptr_a, &ld);
+            nrow   = hi[0] -lo[0]+1;
+            ncol   = hi[1] -lo[1]+1; 
+            nelem  = nrow*ncol;
+            lob[0] = lo[1]; lob[1] = lo[0];
+            hib[0] = hi[1]; hib[1] = hi[0];
+            for(i = 0; i < ncol; i++){
+              char *ptr = ptr_tmp + i*size;
+
+              gai_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
+              ptr_a += ld*size;
+            }
+            nga_put_(g_b, lob, hib, ptr_tmp ,&ncol);
+            nga_release_update_block_(g_a, index);
+          }
+          /* increment index to get next block on processor */
+          index[0] += topology[0];
+          for (i = 0; i < andim; i++) {
+            if (index[i] >= blocks[i] && i<andim-1) {
+              index[i] = proc_index[i];
+              index[i+1] += topology[i+1];
+            }
+          }
+        }
+      }
+      ga_free(ptr_tmp);
     }
 
     if(local_sync_end)ga_sync_();
@@ -1065,6 +1284,3 @@ int local_sync_begin,local_sync_end;
 #endif
 
 }
-    
-
-    

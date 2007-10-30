@@ -1026,7 +1026,11 @@ int elio_fsync(Fd_t fd)
     /*   if(ELIO_FSYNC(fd->fd)==-1 || (status != ELIO_OK)) */
 #ifndef WIN32
 #if !defined(__INTERIX) 
+#ifdef CATAMOUNT
+      status = fsync((Fd_t) fd->next);
+#else
     sync();
+#endif
 #endif
 #endif
     if(ELIO_FSYNC(fd->fd)==-1 )

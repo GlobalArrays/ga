@@ -1,143 +1,20 @@
-/* $Id: memory.c,v 1.58 2007-04-25 21:49:11 d3p687 Exp $ */
+/* $Id: memory.c,v 1.59 2007-10-30 02:04:54 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
 #include "message.h"
 #include "kr_malloc.h"
- 
+
 #define DEBUG_ 0
-#define USE_MALLOC 
+#define USE_MALLOC
 #define USE_SHMEM_
 
-static context_t ctx_localmem;
-
-/* memory allocator called by kr_malloc on CRAY-XT3 */
-#if defined(CRAY_SHMEM) && defined(XT3)
-
+#if defined(CRAY_SHMEM) && defined(CATAMOUNT)
 #include <mpp/shmem.h>
-#include <unistd.h>
- 
-#define SHM_UNIT 1024
-#define DEF_UNITS (64)
-#define MAX_SEGS  512
-
-#define _SHMMAX_CRAY     32*1024  /* 32 MB */
-#define _SHMMAX_CRAY_GRP 512*1024 /* 512 MB */
-
-static  context_t cray_ctx_shmem;
-static  context_t cray_ctx_shmem_grp;
-static  size_t cray_pagesize;
-extern void armci_memoffset_table_newentry(void *ptr, size_t seg_size);
- 
-void *armci_cray_allocate(size_t bytes)
-{
-#if DEBUG_
-    fprintf(stderr, "armci_allocate: __enter__\n");
-#endif
-    
-    void *ptr, *sptr;
- 
-    sptr=ptr= shmalloc(bytes);
-
-#if DEBUG_
-    fprintf(stderr, "shmalloc allocated %d bytes at %p\n", bytes, sptr);
-#endif    
-    
-    if(sptr == NULL) armci_die("armci_cray_allocate: shmalloc failed\n",
-                               armci_me);
-    armci_memoffset_table_newentry(ptr, bytes);
-#if 0
-    if(ptr){  /* touch each page to establish ownership */
-       int i;
-       for(i=0; i< bytes/altix_pagesize; i++){
-          *(double*)ptr=0.;
-          ((char*)ptr) += altix_pagesize;
-       }
-    }
+#include <catamount/data.h>
 #endif
 
-#if DEBUG_
-    fprintf(stderr, "shmalloc allocated %d bytes at %p(2)\n", bytes, sptr);
-    fprintf(stderr, "armci_allocate: __exit__\n");
-#endif
-    return sptr;
-}
- 
-void armci_cray_shm_init()
-{
-#if DEBUG_
-    fprintf(stderr, "armci_cray_shm_init: __enter__\n");
-#endif        
-    cray_pagesize = getpagesize();
-    kr_malloc_init(SHM_UNIT, _SHMMAX_CRAY, 0, 
-                   armci_cray_allocate, 0, &cray_ctx_shmem);
-    kr_malloc_init(SHM_UNIT, _SHMMAX_CRAY_GRP, _SHMMAX_CRAY_GRP, 
-                   armci_cray_allocate, 0, &cray_ctx_shmem_grp);
-    /* allocate a huge segment for groups. When kr_malloc() is called for 
-     the first time for this altix_ctx_shmem_grp context with some minimal
-     size of 8 bytes, a huge segment of size (SHM_UNIT*_SHMMAX_CRAY_GRP) 
-     will be created */
-    {
-       void *ptr;
-       ptr=kr_malloc((size_t)8, &cray_ctx_shmem_grp);
-       if(ptr==NULL) 
-          armci_die("armci_cray_shm_init(): malloc failed", armci_me);
-    }
-#if DEBUG_
-    fprintf(stderr, "armci_cray_shm_init: __exit__\n");
-#endif        
-}   
-
-void armci_cray_shm_malloc(void *ptr_arr[], armci_size_t bytes)
-{
-#if DEBUG_
-    fprintf(stderr, "armci_cray_shm_malloc: __enter__\n");
-#endif
-    
-    long size=bytes;
-    void *ptr;
-    int i;
-    armci_msg_lgop(&size,1,"max");
-    ptr=kr_malloc((size_t)size, &cray_ctx_shmem);
-    bzero(ptr_arr,(armci_nproc)*sizeof(void*));
-    ptr_arr[armci_me] = ptr;
-    if(size!=0 && ptr==NULL)
-       armci_die("armci_cray_shm_malloc(): malloc failed", armci_me);
-    for(i=0; i< armci_nproc; i++) if(i!=armci_me) ptr_arr[i]=ptr;
-
-#if DEBUG_
-    fprintf(stderr, "armci_cray_shm_malloc: __exit__\n");
-#endif
-}
-
-void armci_cray_shm_malloc_group(void *ptr_arr[], armci_size_t bytes, 
-                                  ARMCI_Group *group) {
-#if DEBUG_
-    fprintf(stderr, "armci_cray_shm_malloc_group: __enter__\n");
-#endif
-
-    long size=bytes;
-    void *ptr;
-    int i,grp_me, grp_nproc;
-    armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
-
-    ARMCI_Group_size(group, &grp_nproc);
-    ARMCI_Group_rank(group, &grp_me);
-    armci_msg_group_lgop(&size,1,"max",group);
-    ptr=kr_malloc((size_t)size, &cray_ctx_shmem_grp);
-    if(size!=0 && ptr==NULL)
-       armci_die("armci_altix_shm_malloc_group(): malloc failed for groups. Increase _SHMMAX_ALTIX_GRP", armci_me);
-    bzero(ptr_arr,(grp_nproc)*sizeof(void*));
-    ptr_arr[grp_me] = ptr;
-    for(i=0; i< grp_nproc; i++)
-        if(i!=grp_me) ptr_arr[i] = ptr;
-
-#if DEBUG_
-    fprintf(stderr, "armci_cray_shm_malloc_group: __exit__\n");
-#endif
-}
-#endif
-/* end of CRAY-XT3 memory allocator */
+static context_t ctx_localmem;
 
 #if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI)
 #include "shmem.h"
@@ -162,7 +39,7 @@ void armci_cray_shm_malloc_group(void *ptr_arr[], armci_size_t bytes,
 
 #include <mpp/shmem.h>
 #include <unistd.h>
- 
+
 #define SHM_UNIT 1024
 #define DEF_UNITS (64)
 #define MAX_SEGS  512
@@ -174,11 +51,11 @@ static  context_t altix_ctx_shmem;
 static  context_t altix_ctx_shmem_grp;
 static  size_t altix_pagesize;
 extern void armci_memoffset_table_newentry(void *ptr, size_t seg_size);
- 
+
 void *armci_altix_allocate(size_t bytes)
 {
     void *ptr, *sptr;
- 
+
     sptr=ptr= shmalloc(bytes);
     if(sptr == NULL) armci_die("armci_altix_allocate: shmalloc failed\n",
                                armci_me);
@@ -194,7 +71,7 @@ void *armci_altix_allocate(size_t bytes)
 #endif
     return sptr;
 }
- 
+
 void armci_altix_shm_init()
 {
     altix_pagesize = getpagesize();
@@ -455,6 +332,112 @@ void armci_shmem_malloc(void *ptr_arr[], armci_size_t bytes)
 
 }
 
+/********************************************************************
+ * Non-collective Memory Allocation on shared memory systems
+\*/
+void armci_shmem_memget(armci_meminfo_t *meminfo, size_t size) {
+    void *myptr=NULL;
+    void *armci_ptr=NULL; /* legal ARCMIptr used in ARMCI data xfer ops */
+    long idlist[SHMIDLEN];
+    
+    /* can malloc if there is no data server process & has 1 process/node*/
+#ifndef RMA_NEEDS_SHMEM
+    if( armci_clus_info[armci_clus_me].nslave == 1)
+       myptr = kr_malloc(size, &ctx_localmem);
+    else
+#endif
+       myptr = Create_Shared_Region(idlist+1,size,idlist);
+    
+    if(!myptr && size>0 )
+       armci_die("armci_shmem_memget: create failed", (int)(size>>10));
+    
+    if(DEBUG_)
+    {
+       printf("%d: armci_shmem_memget: addr=%p size=%ld %ld %ld \n", armci_me,
+              myptr, size, idlist[0], idlist[1]);
+       fflush(stdout);
+    }
+
+    armci_ptr = myptr;
+    
+#if defined(DATA_SERVER)
+    
+    /* get server reference address to perform
+     * remote address translation for global address space */
+    if(armci_nclus>1)
+    {
+#   ifdef SERVER_THREAD
+
+       /* data server thread runs on master process */
+       if(armci_me != armci_master) {
+          armci_serv_attach_req(idlist, SHMIDLEN*sizeof(long), size,
+                                &armci_ptr, sizeof(void*));
+       }
+       
+#   else
+       /* ask dataserver process to attach to region and get ptr*/
+       {
+          extern int _armci_server_started;
+          if(_armci_server_started) {
+             armci_serv_attach_req(idlist, SHMIDLEN*sizeof(long), size,
+                                   &armci_ptr, sizeof(void*));
+          }
+       }      
+#   endif
+    }
+#endif
+
+    /* fill the meminfo structure */
+    meminfo->armci_addr = armci_ptr;
+    meminfo->addr       = myptr;
+    meminfo->size       = size;
+    meminfo->cpid       = armci_me;
+    bcopy(idlist, meminfo->idlist, SHMIDLEN*sizeof(long));
+
+}
+
+void* armci_shmem_memat(armci_meminfo_t *meminfo) {
+    void *ptr=NULL;
+    long size    = (long)  meminfo->size;
+    long *idlist = (long*) meminfo->idlist;
+  
+    if(SAMECLUSNODE(meminfo->cpid))
+    {
+       /* Attach to the shared memory segment */
+       ptr=(double*)Attach_Shared_Region(idlist+1,size,idlist[0]);
+       if(!ptr)armci_die("ARMCi_Memat: could not attach", (int)(size>>10));
+
+       /* CHECK: now every process in a SMP node needs to find out its offset
+        * w.r.t. master - this offset is necessary to use memlock table
+        */
+       if(size) armci_set_mem_offset(ptr);
+    }
+    else
+    {
+       ptr = meminfo->armci_addr; /* remote address  */
+    }
+
+    return ptr;
+}
+
+void armci_shmem_memctl(armci_meminfo_t *meminfo) {
+
+    /* only the creator can delete the segment */
+    if(meminfo->cpid == armci_me) {
+       void *ptr = meminfo->addr;
+    
+#ifdef RMA_NEEDS_SHMEM
+       Free_Shmem_Ptr(0,0,ptr);
+#else
+       if(armci_clus_info[armci_clus_me].nslave>1)
+          Free_Shmem_Ptr(0,0,ptr);
+       else kr_free(ptr, &ctx_localmem);
+#endif
+    }
+}
+
+/****** End: Non-collective memory allocation on shared memory systems *****/
+
 #ifdef MPI
 /********************************************************************
  * Group Memory Allocation on shared memory systems for ARMCI Groups
@@ -667,6 +650,15 @@ void armci_shmem_malloc(void* ptr_arr[], int bytes)
 {
   armci_die("armci_shmem_malloc should never be called on this system",0);
 }
+void armci_shmem_memget(armci_meminfo_t *meminfo, size_t size) {
+  armci_die("armci_shmem_memget should never be called on this system",0);
+}
+void* armci_shmem_memat(armci_meminfo_t *meminfo) {
+  armci_die("armci_shmem_memat should never be called on this system",0);
+}
+void armci_shmem_memctl(armci_meminfo_t *meminfo) {
+  armci_die("armci_shmem_memctl should never be called on this system",0);  
+}
 # ifdef MPI
   void armci_shmem_malloc_group(void *ptr_arr[], armci_size_t bytes,
                                 ARMCI_Group *group) {
@@ -691,9 +683,16 @@ void *reg_malloc(size_t size)
 void armci_krmalloc_init_localmem() {
 #if defined(ALLOW_PIN)
   kr_malloc_init(0, 0, 0, reg_malloc, 0, &ctx_localmem);
-#elif defined(CRAY_SHMEM) && defined(XT3)
-  kr_malloc_init(0, 0, 0, shmalloc, 0, &ctx_localmem);
-#else  
+#elif defined(CRAY_SHMEM) && defined(CATAMOUNT)
+#define SHM_UNIT 1024
+  /* note, 1M is a hack, needs justification and/or better number */
+  int units_avail = (cnos_shmem_size() - 1024 * 1024) / SHM_UNIT;
+#if DEBUG_
+  fprintf(stderr, "%d: armci_krmalloc_init_localmem: sym heap=%llu, units(%d)=%d\n",
+          armci_me, cnos_shmem_size(), SHM_UNIT, units_avail);
+#endif
+  kr_malloc_init(SHM_UNIT, units_avail, units_avail, shmalloc, 0, &ctx_localmem);
+#else
   kr_malloc_init(0, 0, 0, malloc, 0, &ctx_localmem);
 #endif
   ctx_localmem.ctx_type = KR_CTX_LOCALMEM;
@@ -703,6 +702,14 @@ void armci_krmalloc_init_localmem() {
  * Local Memory Allocation and Free
  */
 void *ARMCI_Malloc_local(armci_size_t bytes) {
+    extern int _armci_malloc_local_region;
+#ifdef XT3
+    /*This is just a temporary way of marking local memory for XT3
+     * A better solution is to recognize this somewhere in regions.c
+     * but that will require a change in the design of regions.c
+     */
+    _armci_malloc_local_region=1;
+#endif
     return (void *)kr_malloc((size_t)bytes, &ctx_localmem);
 }
 
@@ -1067,4 +1074,116 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
     return 0;
 }
 /* ***************** End Group Collective Memory Allocation ******************/
+
+/* ************** Begin Non-Collective Memory Allocation ******************
+ * Prototype similar to SysV shared memory.
+ */
+
+/**
+ * CHECK: On Altix we are forced to use SysV as shmalloc is collective. We
+ * may use a preallocated shmalloc memory, however, it may NOT still solve
+ * our problem...
+ * NOTE: "int memflg" option for future optimiztions.
+ */
+void ARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg) {
+
+    void *myptr=NULL;
+    void *armci_ptr=NULL; /* legal ARCMI ptr used in ARMCI data xfer ops*/
+    size_t size = bytes;
+    
+    if(size<=0) armci_die("ARMCI_Memget: size must be > 0", (int)size);
+    if(meminfo==NULL) armci_die("ARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
+    if(memflg!=0) armci_die("ARMCI_Memget: Invalid memflg", memflg);
+
+    if( !ARMCI_Uses_shm() )
+    {
+       armci_ptr = myptr = kr_malloc(size, &ctx_localmem);
+       if(size) if(!myptr) armci_die("ARMCI_Memget failed", (int)size);
+
+       /* fill the meminfo structure */
+       meminfo->armci_addr = armci_ptr;
+       meminfo->addr       = myptr;
+       meminfo->size       = size;
+       meminfo->cpid       = armci_me;
+       /* meminfo->attr       = NULL; */
+    }
+    else
+    {
+       armci_shmem_memget(meminfo, size);
+    }
+    
+#ifdef ALLOW_PIN 
+#  if 0 /* disabled for now. May not go thru' the fast zero-copy path */
+    if(armci_nclus>1)
+       armci_global_region_exchange(meminfo->addr, (long)size_arr[armci_me]);
+#  endif
+#endif
+    
+    if(DEBUG_){
+       printf("%d: ARMCI_Memget: addresses server=%p myptr=%p bytes=%ld\n",
+              armci_me, meminfo->armci_addr, meminfo->addr, bytes);
+       fflush(stdout);
+    }    
+}
+
+void* ARMCI_Memat(armci_meminfo_t *meminfo, int memflg) {
+    void *ptr=NULL;
+    
+    if(meminfo==NULL) armci_die("ARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
+    if(memflg!=0) armci_die("ARMCI_Memget: Invalid memflg", memflg);
+
+    if(meminfo->cpid==armci_me) { ptr = meminfo->addr; return ptr; }
+
+    if( !ARMCI_Uses_shm())
+    {
+       ptr = meminfo->addr;
+    }
+    else
+    {
+       ptr = armci_shmem_memat(meminfo);
+    }
+    
+    if(DEBUG_)
+    {
+       printf("%d:ARMCI_Memat: attached addr mptr=%p size=%ld\n",
+              armci_me, ptr, meminfo->size); fflush(stdout);
+    }
+    
+    return ptr;
+}
+
+void ARMCI_Memdt(armci_meminfo_t *meminfo, int memflg) {
+  /**
+   * Do nothing. May be we need to have reference counting in future. This
+   * is to avoid the case of dangling pointers when the creator of shm
+   * segment calls Memctl and other processes are still attached to this
+   * segment
+   */
+}
+
+void ARMCI_Memctl(armci_meminfo_t *meminfo) {
+
+    if(meminfo==NULL) armci_die("ARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
+
+    /* only the creator can delete the segment */
+    if(meminfo->cpid == armci_me)
+    {
+       if( !ARMCI_Uses_shm() )
+       {
+          void *ptr = meminfo->addr;
+          kr_free(ptr, &ctx_localmem);
+       }
+       else
+       {
+          armci_shmem_memctl(meminfo);
+       }
+    }
+
+    meminfo->addr       = NULL;
+    meminfo->armci_addr = NULL;
+    /* if(meminfo->attr!=NULL) free(meminfo->attr); */
+}
+
+/* ***************** End Non-Collective Memory Allocation ******************/
+
 #endif

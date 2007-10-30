@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.36 2005-01-24 12:31:38 manoj Exp $
+ * $Id: ma.c,v 1.37 2007-10-30 02:05:00 manoj Exp $
  */
 
 /*
@@ -200,7 +200,8 @@ private Pointer ma_base[] =
     0,				/* MT_F_REAL */
     0,				/* MT_F_DBL */
     0,				/* MT_F_SCPL */
-    0				/* MT_F_DCPL */
+    0,				/* MT_F_DCPL */
+    (Pointer)ma_cb_longlong	/* MT_C_LONGLONG */
 };
 
 /* names of the datatypes */
@@ -221,7 +222,8 @@ private char *ma_datatype[] =
     "real",
     "double precision",
     "single precision complex",
-    "double precision complex"
+    "double precision complex",
+    "long long"
 };
 
 /* numbers of bytes in the datatypes */
@@ -242,7 +244,8 @@ private int ma_sizeof[] =
     0,					/* MT_F_REAL */
     0,					/* MT_F_DBL */
     0,					/* MT_F_SCPL */
-    0					/* MT_F_DCPL */
+    0,					/* MT_F_DCPL */
+    sizeof(long long)			/* MT_C_LONGLONG */
 };
 
 /*
@@ -292,6 +295,7 @@ private Boolean ma_trace = MA_FALSE;
 public char			ma_cb_char[2];	/* MT_C_CHAR */
 public int			ma_cb_int[2];	/* MT_C_INT */
 public long			ma_cb_long[2];	/* MT_C_LONGINT */
+public long long		ma_cb_longlong[2];/* MT_C_LONGLONG */
 public float			ma_cb_float[2];	/* MT_C_FLOAT */
 public double			ma_cb_dbl[2];	/* MT_C_DBL */
 public MA_LongDouble		ma_cb_ldbl[2];	/* MT_C_LDBL */

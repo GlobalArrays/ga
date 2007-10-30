@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.8 2004-03-31 23:42:45 manoj Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.9 2007-10-30 02:05:02 manoj Exp $ */
 #include <stdlib.h>
 #include <mpi.h>
 #ifdef CRAY
@@ -246,25 +246,28 @@ void FATR dgop_(wrap_ptype, x, wrap_pn, op, len_op)
      (void) DGOP_(&ptype, x, &pn, op);
 }
 #if defined(CRAY) || defined(WIN32)
-void FATR igop_(ptype, x, pn, arg)
-     Integer *x;
+void FATR igop_(ptype, xx, pn, arg)
+     Integer *xx;
      Integer *ptype, *pn;
      _fcd arg;
 {
   char *op = _fcdtocp(arg);
   int len_op = _fcdlen(arg);
 #else
-void FATR igop_(ptype, x, pn, op)
-     Integer *x;
+void FATR igop_(ptype, xx, pn, op)
+     Integer *xx;
      Integer *ptype, *pn;
      char *op;
 {
 #endif
 Integer *work   = (Integer *) gop_work;
+Integer *x = (Integer*)xx; /* Integer could be larger than long */
 long nleft  = *pn;
 long buflen = MIN(nleft,IGOP_BUF_SIZE); /* Try to get even sized buffers */
 long nbuf   = (nleft-1) / buflen + 1;
 long n;
+MPI_Datatype dtype = MPI_LONG;
+if (sizeof(Integer)>sizeof(long)) dtype =  MPI_LONG_LONG_INT;
 
 #ifdef ARMCI
      if(!_tcg_initialized){
@@ -286,20 +289,20 @@ long n;
     int ndo = MIN(nleft, buflen);
 
     if (strncmp(op,"+",1) == 0)
-      ierr   = MPI_Reduce(x, work, ndo, TCG_INT, MPI_SUM, root, TCGMSG_Comm);
+      ierr   = MPI_Reduce(x, work, ndo, dtype, MPI_SUM, root, TCGMSG_Comm);
     else if (strncmp(op,"*",1) == 0)
-      ierr   = MPI_Reduce(x, work, ndo, TCG_INT, MPI_PROD, root, TCGMSG_Comm);
+      ierr   = MPI_Reduce(x, work, ndo, dtype, MPI_PROD, root, TCGMSG_Comm);
     else if (strncmp(op,"max",3) == 0 || strncmp(op,"absmax",6) == 0)
-      ierr   = MPI_Reduce(x, work, ndo, TCG_INT, MPI_MAX, root, TCGMSG_Comm);
+      ierr   = MPI_Reduce(x, work, ndo, dtype, MPI_MAX, root, TCGMSG_Comm);
     else if (strncmp(op,"min",3) == 0 || strncmp(op,"absmin",6) == 0)
-      ierr   = MPI_Reduce(x, work, ndo, TCG_INT, MPI_MIN, root, TCGMSG_Comm);
+      ierr   = MPI_Reduce(x, work, ndo, dtype, MPI_MIN, root, TCGMSG_Comm);
     else if (strncmp(op,"or",2) == 0)
-      ierr   = MPI_Reduce(x, work, ndo, TCG_INT, MPI_BOR, root, TCGMSG_Comm);
+      ierr   = MPI_Reduce(x, work, ndo, dtype, MPI_BOR, root, TCGMSG_Comm);
     else
       Error("IGOP: unknown operation requested", (long) *pn);
     tcgmsg_test_statusM("IGOP: MPI_Reduce:", ierr  );
 
-    ierr   = MPI_Bcast(work, ndo, TCG_INT, root, TCGMSG_Comm);
+    ierr   = MPI_Bcast(work, ndo, dtype, root, TCGMSG_Comm);
     tcgmsg_test_statusM("IGOP: MPI_Bcast:", ierr  );
 
     n = ndo;
