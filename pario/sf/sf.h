@@ -24,6 +24,7 @@ extern void sf_errmsg _ARGS_((int code, char *msg));
 #define sf_errmsg_ SF_ERRMSG
 #define sf_open_ SF_OPEN
 #define sf_close_ SF_CLOSE
+#define sf_rwtor_ SF_RWTOR
 #elif defined(F2C2_)
 #define sf_errmsg   sf_errmsg__
 #define sf_write_ sf_write__
@@ -33,5 +34,6 @@ extern void sf_errmsg _ARGS_((int code, char *msg));
 #define sf_destroy_ sf_destroy__
 #define sf_open_ sf_open__
 #define sf_close_ sf_close__
+#define sf_rwtor_ sf_rwtor__
 #endif
 #endif

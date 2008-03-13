@@ -6,7 +6,7 @@
      LIBRARY = libpario.a
 LIBRARY_SHARED= libpario.so
          OBJ = elio.o stat.o
-     HEADERS = chemio.h elio.h
+     HEADERS = chemio.h elio.h ../sf/coms.h
 
 
 INCDIR = ../../include
@@ -30,5 +30,5 @@ include ../../config/makelib.h
 # on platforms with Posix AIO you can choose not to use it by defining NOAIO
 
 
-$(FULL_LIBRARY_PATH)(elio.o):	./elio.h ./eliop.h ./chemio.h
+$(FULL_LIBRARY_PATH)(elio.o):	./elio.h ./eliop.h ./chemio.h ../sf/coms.h
 $(FULL_LIBRARY_PATH)(stat.o):	./elio.h ./eliop.h ./chemio.h

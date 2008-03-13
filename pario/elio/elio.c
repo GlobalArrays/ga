@@ -26,12 +26,20 @@
  * distribute to other US Government contractors.
  */
 
+#ifdef USE_LUSTRE
+#include <lustre/lustre_user.h> // for O_LOV_DELAY_CREATE, LL_IOC_LOV_SETSTRIPE
+#include <linux/lustre_idl.h> // for struct lov_mds_md, LOV_MAGIC
+#include <sys/ioctl.h> // for ioctl
+#endif
+
 #if defined(CRAY_T3E)
 #define FFIO 1
 #endif
 
 
 #include "eliop.h"
+
+#include "coms.h"
 
 #if defined(CRAY) && defined(__crayx1)
 #undef CRAY
@@ -147,7 +155,7 @@ int                   _elio_Errors_Fatal=0; /* sets mode of handling errors */
 
 #define MAX_EXTENT 127
 #ifdef LARGE_FILES
-#define ABSURDLY_LARGE 1e12
+#define ABSURDLY_LARGE 1e14
 #else
 #define ABSURDLY_LARGE (MAX_EXTENT*2147483648.0)
 #endif
@@ -816,6 +824,22 @@ Fd_t  elio_open(const char* fname, int type, int mode)
   int ptype=0, rc;
   char dirname[ELIO_FILENAME_MAX];
 
+  /*
+    Create a file for writing to in lustre with
+    a specified pagesize and stripe.
+    pagesize = 1048576;
+    lustre_stripe_count = 32;
+    are good choices.
+  */
+#ifdef USE_LUSTRE
+  struct lov_mds_md stripecfg;
+  int    lustre_file;
+#endif
+  int  pagesize;
+  int  lustre_stripe_count;
+  pagesize = 1048576;
+  lustre_stripe_count = 32;
+
 #ifdef PABLO
   int pablo_code = PABLO_elio_open;
   PABLO_start( pablo_code );
@@ -857,6 +881,13 @@ Fd_t  elio_open(const char* fname, int type, int mode)
   fd->extent = 0;
   fd->next = NULL;
   
+#ifdef USE_LUSTRE
+  lustre_file = (strncmp(fname,"/dtemp",6) == 0) && (access(fname, F_OK) != 0) && (ME() == 0);
+  if (lustre_file) {
+    ptype = ptype | O_LOV_DELAY_CREATE ;
+  }
+#endif
+
 #if defined(CRAY) && defined(FFIO)
   {
     struct ffsw ffstat;
@@ -906,6 +937,24 @@ Fd_t  elio_open(const char* fname, int type, int mode)
   }
   
   fd->name = strdup(fname);
+
+#ifdef USE_LUSTRE
+    if (lustre_file) {
+      stripecfg.lmm_magic = LOV_MAGIC;
+      stripecfg.lmm_pattern = 0; // Only available option for now.
+      stripecfg.lmm_stripe_size = pagesize; // Stripe size in bytes.
+      stripecfg.lmm_stripe_count  = lustre_stripe_count;
+      if (ioctl((int)fd->fd, LL_IOC_LOV_SETSTRIPE, &stripecfg) < 0) {
+        fprintf(stderr,
+              "fp_create_out_filefp: Error: unable to stripe %s file.\n"
+              "error was %s\n",
+              fname,strerror(errno));
+        fflush(stderr);
+        free(fd);
+        ELIO_ERROR_NULL(OPENFAIL, 0);
+      }
+    } /* end if (luster_file) (is in /dtemp) */
+#endif
 
 #ifdef PABLO
   PABLO_end(pablo_code);

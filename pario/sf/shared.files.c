@@ -100,7 +100,9 @@ Integer hndl;
 #       ifdef  PARAGON
           SF[hndl].fd = elio_gopen(SF[hndl].fname,ELIO_RW);
 #       else
-          SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
+          if (ME() == 0) SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
+          SYNC();
+          if (ME() != 0) SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
 #       endif
 
         if(SF[hndl].fd==NULL) ERROR("sf_create: could not open file",0);
@@ -130,6 +132,26 @@ Integer handle = *s_a+SF_OFFSET;
         sfi_release_handle(s_a);
 
         SYNC();
+
+        return(ELIO_OK);
+}
+
+/*\ close rw file and open as read only
+\*/
+Integer FATR sf_rwtor_(s_a)
+        Integer *s_a;     /* input:SF handle */
+{
+Integer handle = *s_a+SF_OFFSET;
+
+        elio_close(SF[handle].fd);
+#       ifdef  PARAGON
+          SF[handle].fd = elio_gopen(SF[handle].fname,ELIO_RW);
+#       else
+          SF[handle].fd = elio_open(SF[handle].fname,ELIO_R, ELIO_SHARED);
+#       endif
+
+        if(SF[handle].fd==NULL) ERROR("sf_open: could not open file",0);
+        if(SF[handle].fd->fd==-1) ERROR("sf_open: descriptor -1",0);
 
         return(ELIO_OK);
 }
