@@ -10,6 +10,7 @@ LIBRARY_SHARED= libpario.so
 
 
 INCDIR = ../../include
+LIB_INCLUDES = -I$(INCDIR)
 
 ifdef NOAIO
    LIB_DEFINES += -DNOAIO
