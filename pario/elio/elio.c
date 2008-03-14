@@ -39,7 +39,7 @@
 
 #include "eliop.h"
 
-#include "coms.h"
+#include "../sf/coms.h"
 
 #if defined(CRAY) && defined(__crayx1)
 #undef CRAY
