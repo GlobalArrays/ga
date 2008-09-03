@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.3 2007-10-30 02:05:00 manoj Exp $
+#$Id: GNUmakefile,v 1.2.14.2 2007-06-12 22:44:10 manoj Exp $
 
 LIB_DISTRIB = ../lib
 LIBRARY = libpario.a

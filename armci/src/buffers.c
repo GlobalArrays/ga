@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.32 2007-10-30 02:04:53 manoj Exp $    **/
+/* $Id: buffers.c,v 1.29.6.9 2007-07-02 05:16:50 d3p687 Exp $    **/
 
 #define SIXTYFOUR 64
 #define DEBUG_  0
@@ -8,8 +8,11 @@
 /**********************************************************************/
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <assert.h>
 #include "armcip.h"
 #include "request.h"
+
 #ifdef WIN32
 #  include <windows.h>
    typedef unsigned long ssize_t;
@@ -31,8 +34,11 @@
 #ifndef BUF_ALLOCATE
 #   define BUF_ALLOCATE malloc
 #endif
-
+#if defined(PEND_BUFS)
 #define SMALL_BUF_LEN 8192
+#else
+#define SMALL_BUF_LEN 8192
+#endif
 #ifndef MSG_BUFLEN_SMALL
 #define MSG_BUFLEN_SMALL (MSG_BUFLEN >>0)
 #endif
@@ -128,7 +134,7 @@ INLINE BUF_INFO_T *_armci_id_to_bufinfo(int bufid) {
 }
 
 
-#if defined(THREAD_SAFE) || defined(SOCKETS)
+#if 0 && (defined(THREAD_SAFE) || defined(SOCKETS))
 
 
 /*\ we allocate alligned buffer space
@@ -222,8 +228,10 @@ void _armci_buf_complete_index(int idx, int called)
 int count;
 buf_state_t *buf_state = _armci_buf_state->table +idx;
 
+/*  fprintf(stderr, "%d:: entered %s. called=%d\n", armci_me, __FUNCTION__); */
+
     count = buf_state->count;
-    if(DEBUG_ ){
+    if(DEBUG_ ) {
        printf("%d:buf_complete_index:%d op=%d first=%d count=%d called=%d\n",
               armci_me,idx,buf_state->op,buf_state->first,buf_state->count,
               called); 
@@ -231,7 +239,7 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
     }
 
     if(buf_state->first != (unsigned int)idx){ 
-      armci_die2("complete_buf_index:inconsistent index:",idx,buf_state->first);
+      armci_die2("complete_buf_index:Inconsistent index:",idx,buf_state->first);
     }
 
     if(buf_state->async){
@@ -866,8 +874,15 @@ void _armci_buf_complete_index(int idx, int called)
 int count;
 buf_state_t *buf_state = _armci_buf_state->table +idx;
 
+/* printf("%d: buf_complete_index. idx=%d\n", armci_me, idx);*/
+/* fflush(stdout);*/
+
+/*  if(buf_state->op==GET) { */
+/*    printf("%d: %s(): op is get\n",armci_me,__FUNCTION__); */
+/*  } */
+
     count = buf_state->count;
-    if(DEBUG_ ){
+    if(DEBUG_ ) {
        printf("%d:buf_complete_index:%d op=%d first=%d count=%d called=%d\n",
               armci_me,idx,buf_state->op,buf_state->first,buf_state->count,
               called); 
@@ -875,7 +890,7 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
     }
 
     if(buf_state->first != (unsigned int)idx){ 
-      armci_die2("complete_buf_index:inconsistent index:",idx,buf_state->first);
+      armci_die2("complete_buf_index:inconsistent Index:",idx,buf_state->first);
     }
 
     if(buf_state->async){
@@ -891,7 +906,8 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
        if(idx>=MAX_BUFS){
          int relidx;
          relidx = idx-MAX_BUFS; 
-         
+
+/* 	 printf("%d:%s(): Calling clear_send_buf_field\n",armci_me,__FUNCTION__); */
          CLEAR_SEND_BUF_FIELD(_armci_buf_state->smallbuf[relidx].field,buf_state->snd,buf_state->rcv,buf_state->to,buf_state->op);
 
        /*later, we might just need to do this for all operations, not just get*/
@@ -915,6 +931,7 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
 #   endif
 
     /* clear table slots for all the buffers in the set for this request */
+    assert(count==1);
     for(; count; count--, buf_state++) *(int*)buf_state = 0;
 }
 
@@ -959,6 +976,148 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
     return(retval);
 }
 
+/**
+an addition to the below operation to allow for multiple outstanding operations
+per server node
+*/
+#if defined(PEND_BUFS)
+/** Need to implement effective mechanisms to ensure a given number of outstanding operations. The key is to not wait for a recently sent message. Another issue might be priority between the large and small messages. This function will be improved as needed.  X_BUFS+
+ */
+void _armci_buf_ensure_pend_outstanding_op_per_node(void *buf, int node)
+{
+unsigned int i;
+int index =_armci_buf_to_index(buf); 
+int this = _armci_buf_state->table[index].first;
+unsigned int nfirst, nlast;
+void _armci_buf_release_index(int i);
+int buf_pend_count=0;
+ int max_pend_count=IMM_BUF_NUM; 
+
+/* printf("%d: ensure_pend_os_per_node. idx=%d\n", armci_me, index);*/
+/* fflush(stdout);*/
+
+    nfirst=armci_clus_info[node].master;
+    nlast = nfirst+armci_clus_info[node].nslave-1;
+
+    if((_armci_buf_state->table[index].to<(unsigned int) nfirst) || 
+      (_armci_buf_state->table[index].to>(unsigned int) nlast))
+        armci_die2("_armci_buf_ensure_pend_outstanding_op_per_node: bad to",node,
+                        (int)_armci_buf_state->table[index].to);
+
+#if 0
+    for(i=0;i<MAX_BUFS+MAX_SMALL_BUFS;i++){
+      buf_state_t *buf_state = _armci_buf_state->table +i;
+      if((buf_state->to >= nfirst) && (buf_state->to<= (unsigned int) nlast))
+        if((buf_state->first != (unsigned int) this)&&(buf_state->first==(unsigned int) i) && buf_state->op){
+          buf_pend_count++;
+          if(buf_pend_count > IMM_BUF_NUM-1){
+/* 	    printf("%d: client. pend_os_per_node. completing buf index=%d\n", armci_me, i); */
+/* 	    fflush(stdout); */
+            _armci_buf_complete_index(i,0);
+	    _armci_buf_release_index(i);
+/* 	    printf("%d: client. pend_os_per_node. done completing buf index=%d\n", armci_me, i); */
+	    fflush(stdout);
+            buf_pend_count--;
+          }
+        }
+    }
+#else
+    const int smavail=_armci_buf_state->smavail;
+    const int avail = _armci_buf_state->avail;
+    const int startsmall = (smavail-MAX_BUFS-1+MAX_SMALL_BUFS)%MAX_SMALL_BUFS+MAX_BUFS;
+    const int start =(avail-1+MAX_BUFS)%MAX_BUFS;
+    buf_pend_count=0;
+    buf_state_t *bs;
+
+    i = start;
+    bs = &_armci_buf_state->table[i];
+    do {
+      if((bs->to>=nfirst) && (bs->to<=nlast)) {
+	if((bs->first!=this) && (bs->first==i) && bs->op) {
+#if defined(OPENIB) /*SK: not tested on other platforms*/
+	  if(!_armci_buf_test_index(i,1)) {
+	    buf_pend_count++;
+	  }
+#else
+	  buf_pend_count++;
+#endif
+	  if(buf_pend_count > max_pend_count-1) {
+/* 	    printf("%d:%s():complete largebuf %d\n",armci_me,__FUNCTION__,i); */
+	    _armci_buf_complete_index(i,0);
+	    _armci_buf_release_index(i);
+	    buf_pend_count--;
+	  }
+	}
+      }
+      i = (i-1+MAX_BUFS)%MAX_BUFS;
+      bs = &_armci_buf_state->table[i];
+    } while(i != start);
+
+/*     printf("%d: largebuf pend=%d\n",armci_me,buf_pend_count); */
+
+    i = startsmall;
+    bs = &_armci_buf_state->table[i];
+    do {
+      if((bs->to>=nfirst) && (bs->to<=nlast)) {
+	if((bs->first!=this) && (bs->first==i) && bs->op) {
+#if defined(OPENIB) /*SK:not tested on other platforms*/
+	  if(!_armci_buf_test_index(i,1)) {
+	    buf_pend_count++;
+	  }
+#else
+	  buf_pend_count++;
+#endif
+	  if(buf_pend_count > max_pend_count-1) {
+/* 	    printf("%d:%s():complete smallbuf %d\n",armci_me,__FUNCTION__,i); */
+	    _armci_buf_complete_index(i,0);
+	    _armci_buf_release_index(i);
+	    buf_pend_count--;
+	  }
+	}
+      }
+      i = (i-MAX_BUFS-1+MAX_SMALL_BUFS)%MAX_SMALL_BUFS+MAX_BUFS;
+      bs = &_armci_buf_state->table[i];
+    } while(i != startsmall);
+
+
+    buf_pend_count=0;
+    for(i=0; i<MAX_BUFS+MAX_SMALL_BUFS; i++) {
+      if((bs->to>=nfirst) && (bs->to<=nlast)) {
+	if((bs->first!=this) && (bs->first==i) && bs->op) {
+	  buf_pend_count += 1;
+	}
+      }      
+    }
+    assert(buf_pend_count <= max_pend_count);
+#endif
+}
+void _armci_buf_ensure_pend_outstanding_op_per_proc(void *buf, int proc)
+{
+int i;
+int index = _armci_buf_to_index(buf); 
+int this = _armci_buf_state->table[index].first;
+void _armci_buf_release_index(int i);
+int buf_pend_count=0;
+
+    if(_armci_buf_state->table[index].to !=(unsigned int)  proc )
+       armci_die2("_armci_buf_ensure_one_outstanding_op_per_proc: bad to", proc,
+                (int)_armci_buf_state->table[index].to);
+
+    for(i=0;i<MAX_BUFS+MAX_SMALL_BUFS;i++){
+      buf_state_t *buf_state = _armci_buf_state->table +i;
+      if(buf_state->to == (unsigned int) proc) {
+	if((buf_state->first != (unsigned int) this)&&(buf_state->first==(unsigned int) i) && buf_state->op){
+          buf_pend_count++;
+          if(buf_pend_count > IMM_BUF_NUM-1){
+	    _armci_buf_complete_index(i,0);
+	    _armci_buf_release_index(i);
+	    buf_pend_count--;
+          }
+	}
+      }
+    }
+}
+#endif
 
 /*\ make sure that there are no other pending operations to that smp node
  *  this operation is called from platforms specific routine that sends
@@ -973,10 +1132,10 @@ void _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node)
     int index =_armci_buf_to_index(buf); 
     int this = _armci_buf_state->table[index].first;
     int nfirst, nlast;
+    void _armci_buf_release_index(int i);
 
     nfirst=armci_clus_info[node].master;
     nlast = nfirst+armci_clus_info[node].nslave-1;
-
     if((_armci_buf_state->table[index].to<(unsigned int) nfirst) || 
        (_armci_buf_state->table[index].to>(unsigned int) nlast))
         armci_die2("_armci_buf_ensure_one_outstanding_op_per_node: bad to",node,
@@ -984,9 +1143,12 @@ void _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node)
 
     for(i=0;i<MAX_BUFS+MAX_SMALL_BUFS;i++){
         buf_state_t *buf_state = _armci_buf_state->table +i;
-        if((buf_state->to >= nfirst) && (buf_state->to<= (unsigned int) nlast))
-          if((buf_state->first != (unsigned int) this)&&(buf_state->first==(unsigned int) i) && buf_state->op)
-                _armci_buf_complete_index(i,0);
+        if((buf_state->to >= nfirst) && (buf_state->to<= (unsigned int) nlast)) {
+          if((buf_state->first != (unsigned int) this)&&(buf_state->first==(unsigned int) i) && buf_state->op) {
+	    _armci_buf_complete_index(i,0);
+	    _armci_buf_release_index(i);
+	  }
+	}
     }
 }
 
@@ -997,6 +1159,7 @@ void _armci_buf_ensure_one_outstanding_op_per_proc(void *buf, int proc)
     int i;
     int index = _armci_buf_to_index(buf); 
     int this = _armci_buf_state->table[index].first;
+    void _armci_buf_release_index(int i);
 
     if(_armci_buf_state->table[index].to !=(unsigned int)  proc )
        armci_die2("_armci_buf_ensure_one_outstanding_op_per_proc: bad to", proc,
@@ -1004,9 +1167,12 @@ void _armci_buf_ensure_one_outstanding_op_per_proc(void *buf, int proc)
 
     for(i=0;i<MAX_BUFS+MAX_SMALL_BUFS;i++){
         buf_state_t *buf_state = _armci_buf_state->table +i;
-        if(buf_state->to == (unsigned int) proc)
-          if((buf_state->first != (unsigned int) this)&&(buf_state->first==(unsigned int) i) && buf_state->op)
-                _armci_buf_complete_index(i,0);
+        if(buf_state->to == (unsigned int) proc) {
+          if((buf_state->first != (unsigned int) this)&&(buf_state->first==(unsigned int) i) && buf_state->op) {
+	    _armci_buf_complete_index(i,0);
+	    _armci_buf_release_index(i);
+	  }
+	}
     }
 }
 
@@ -1036,17 +1202,34 @@ int i;
 char *_armci_buf_get_small(int size, int operation, int to)
 {
 int avail=_armci_buf_state->smavail,i;
-    if(_armci_buf_state->table[avail].op || 
-       _armci_buf_state->table[avail].first) {
-       
+/*  int ous_in=0,ous_out; */
+/*  for(i=MAX_BUFS; i<MAX_BUFS+MAX_SMALL_BUFS; i++) { */
+/*    if(_armci_buf_state->table[i].first) { */
+/*      assert(_armci_buf_state->table[i].op); */
+/*    } */
+/*    if(_armci_buf_state->table[i].op) { */
+/*      assert(_armci_buf_state->table[i].first==i); */
+/*      ous_in++; */
+/*    } */
+/*  } */
+    if((_armci_buf_state->table[avail].op || 
+       _armci_buf_state->table[avail].first)) {
        for(i=MAX_BUFS;i<MAX_BUFS+MAX_SMALL_BUFS;i++){
           if(!_armci_buf_state->table[i].op &&
              !_armci_buf_state->table[i].first)
             break;
+#if defined(OPENIB) /*not tested on other platforms*/
+	  if(_armci_buf_test_index(i,1)) {
+/* 	    ous_in-=1; */
+	    break;
+	  }
+#endif
        }
        if(i<(MAX_SMALL_BUFS+MAX_BUFS))avail = i;
        else {
+/* 	 printf("%d: no free smallbuf.  complete index %d\n",armci_me,avail); */
           _armci_buf_complete_index(avail,1);
+/* 	  ous_in-=1; */
        }
     }
     _armci_buf_state->table[avail].op = operation;
@@ -1056,21 +1239,41 @@ int avail=_armci_buf_state->smavail,i;
     _armci_buf_state->smallbuf[avail-MAX_BUFS].id.tag=0;
     _armci_buf_state->smallbuf[avail-MAX_BUFS].id.bufid= avail; 
     _armci_buf_state->smallbuf[avail-MAX_BUFS].id.protocol=0;
+    if(DEBUG_ || 0) {
+      printf("%d:buf_get_sm1:size=%d max=%d got %d ptr=%p op=%d to=%d count=%d first=%d\n",
+             armci_me,size,SMALL_BUF_LEN,avail,
+	     _armci_buf_state->smallbuf[avail-MAX_BUFS].buffer,operation,to,
+	     (int)_armci_buf_state->table[avail].count,(int)_armci_buf_state->table[avail].first);
+      fflush(stdout);
+    }
+
 # ifdef BUF_EXTRA_FIELD_T
     INIT_SEND_BUF(_armci_buf_state->smallbuf[avail-MAX_BUFS].field,_armci_buf_state->table[avail].snd,_armci_buf_state->table[avail].rcv);
 #endif
      
     _armci_buf_state->smavail = (avail+1-MAX_BUFS)%MAX_SMALL_BUFS + MAX_BUFS;
 
-    if(DEBUG_ || 0){
-      printf("%d:buf_get_sm:size=%d max=%d got %d ptr=%p op=%d to=%d\n",
+    if(DEBUG_ || 0) {
+      printf("%d:buf_get_sm:size=%d max=%d got %d ptr=%p op=%d to=%d count=%d first=%d\n",
              armci_me,size,SMALL_BUF_LEN,avail,
-            _armci_buf_state->smallbuf[avail-MAX_BUFS].buffer,operation,to);
+	     _armci_buf_state->smallbuf[avail-MAX_BUFS].buffer,operation,to,
+	     _armci_buf_state->table[avail].count,_armci_buf_state->table[avail].first);
       fflush(stdout);
     }
 
-    return(_armci_buf_state->smallbuf[avail-MAX_BUFS].buffer); 
+/*     ous_out=0; */
+/*     for(i=MAX_BUFS; i<MAX_BUFS+MAX_SMALL_BUFS; i++) { */
+/*       if(_armci_buf_state->table[i].first) { */
+/* 	assert(_armci_buf_state->table[i].op); */
+/*       } */
+/*       if(_armci_buf_state->table[i].op) { */
+/* 	assert(_armci_buf_state->table[i].first==i); */
+/* 	ous_out++; */
+/*       } */
+/*     } */
+/*     assert(ous_in+1 == ous_out); */
 
+    return(_armci_buf_state->smallbuf[avail-MAX_BUFS].buffer); 
 }
 
 /*\  call corresponding to GET_SEND_BUF
@@ -1079,6 +1282,7 @@ char *_armci_buf_get(int size, int operation, int to)
 {
 int avail=_armci_buf_state->avail;
 int count=1, i;
+/*  int ous_in, ous_out; */
     /*if small buffer, we go to another routine that gets smallbuf*/
     if(size<SMALL_BUF_LEN) return(_armci_buf_get_small(size,operation,to));
     /* compute number of buffers needed (count) to satisfy the request */
@@ -1087,17 +1291,33 @@ int count=1, i;
        val /= MSG_BUFLEN_SMALL;
        count=(int)val;
        if(size%MSG_BUFLEN_SMALL) count++; 
+       assert(0); /*FOR NOW:Should never require multiple buffers; what else is pack.c for?*/
     }
     /* start from 0 if there is not enough bufs available from here */
     if((avail+count) > MAX_BUFS)avail = 0;
 
+/*     ous_in=0; */
+/*     for(i=0; i<MAX_BUFS; i++) { */
+/*       if(_armci_buf_state->table[i].first) { */
+/* 	assert(_armci_buf_state->table[i].op); */
+/*       } */
+/*       if(_armci_buf_state->table[i].op) { */
+/* 	assert(_armci_buf_state->table[i].first==i); */
+/* 	ous_in++; */
+/*       } */
+/*     } */
+
+
     /* avail should never point to buffer in a middle of a set of used bufs */
     if(_armci_buf_state->table[avail].op && 
       (_armci_buf_state->table[avail].first != (unsigned int) avail)){ sleep(1); 
-              armci_die2("armci_buf_get: inconsistent first", avail,
-                         _armci_buf_state->table[avail].first);
-      }
- 
+      printf("%d: inconsistent first. avail=%d count=%d first=%d size=%d\n",
+	     armci_me, avail, count, _armci_buf_state->table[avail].first, size);
+      armci_die2("armci_buf_get: inconsistent first", avail,
+		 _armci_buf_state->table[avail].first);
+    }
+
+#if 0
     /* we need complete "count" number of buffers */
     for(i=0;i<count;i++){
         int cur = i +avail;
@@ -1105,6 +1325,29 @@ int count=1, i;
            _armci_buf_state->table[cur].first==(unsigned int) cur)
                                    _armci_buf_complete_index(cur,1);
     }
+#else
+    assert(count == 1);
+    if(_armci_buf_state->table[avail].op ||
+       _armci_buf_state->table[avail].first) {
+      for(i=0; i<MAX_BUFS; i++) {
+	if(!_armci_buf_state->table[i].op &&
+	   !_armci_buf_state->table[i].first)
+	  break;
+#if defined(OPENIB)
+	if(_armci_buf_test_index(i,1)) {
+/* 	  ous_in -= 1; */
+	  break;
+	}
+#endif
+      }
+      if(i<MAX_BUFS) avail=i;
+      else {
+/* 	printf("%d: no free large buf. completing index=%d\n",armci_me,avail); */
+	_armci_buf_complete_index(avail,1);
+/* 	ous_in -= 1; */
+      }
+    }    
+#endif
 
     for(i=0; i<count; i++){
        _armci_buf_state->table[avail+i].op = operation;
@@ -1129,7 +1372,7 @@ int count=1, i;
     h++;
 #endif
 
-    if(DEBUG_ || 0){
+    if(DEBUG_ || 0) {
       printf("%d:buf_get:size=%d max=%d got %d ptr=%p count=%d op=%d to=%d\n",
              armci_me,size,MSG_BUFLEN_SMALL,avail,
             _armci_buf_state->buf[avail].buffer, count,operation,to);
@@ -1140,45 +1383,59 @@ int count=1, i;
     _armci_buf_state->avail = avail+count;
     _armci_buf_state->avail %= MAX_BUFS;
 
+/*     ous_out=0; */
+/*     for(i=0; i<MAX_BUFS; i++) { */
+/*       if(_armci_buf_state->table[i].first) { */
+/* 	assert(_armci_buf_state->table[i].op); */
+/*       } */
+/*       if(_armci_buf_state->table[i].op) { */
+/* 	assert(_armci_buf_state->table[i].first==i); */
+/* 	ous_out++; */
+/*       } */
+/*     } */
+/*     assert(ous_in+1 == ous_out); */
     return(_armci_buf_state->buf[avail].buffer); 
 }
 
 
+void _armci_buf_release_index(int index) {
+  int count;
+  buf_state_t *buf_state = _armci_buf_state->table +index;
+  char *_armci_buf_ptr_from_id(int id);  
+
+  if((index >= MAX_BUFS+MAX_SMALL_BUFS)|| (index<0))
+    armci_die2("armci_buf_release: bad index:",index,MAX_BUFS);
+  
+  count =  _armci_buf_state->table[index].count;
+  
+  if(DEBUG_) {
+    printf("%d:_armci_buf_release_index %d ptr=%p count=%d op=%d smavail=%d\n",
+	   armci_me,index,_armci_buf_ptr_from_id(index),count, _armci_buf_state->table[index].op,_armci_buf_state->smavail);
+    fflush(stdout);
+  }
+  
+  /* clear table slots for all the buffers in the set for this request */
+  for(; count; count--, buf_state++) *(int*)buf_state = 0;
+  if(index >= MAX_BUFS){
+    _armci_buf_state->smallbuf[index-MAX_BUFS].id.tag=0;
+#ifndef VAPI
+    _armci_buf_state->smavail = index;
+#endif
+  }
+  else{
+    _armci_buf_state->buf[index].id.tag=0;
+#ifndef VAPI
+    _armci_buf_state->avail = index;
+#endif
+  }
+  /* the current buffer is prime candidate to satisfy next buffer request */
+}
+
 
 /*\ release buffer when it becomes free
 \*/
-void _armci_buf_release(void *buf)
-{
-int  count, index = _armci_buf_to_index(buf);
-buf_state_t *buf_state = _armci_buf_state->table +index;
-   if((index >= MAX_BUFS+MAX_SMALL_BUFS)|| (index<0))
-      armci_die2("armci_buf_release: bad index:",index,MAX_BUFS);
-
-   count =  _armci_buf_state->table[index].count;
-
-   if(DEBUG_){
-     printf("%d:_armci_buf_release %d ptr=%p count=%d op=%d\n",
-            armci_me,index,buf,count, _armci_buf_state->table[index].op);
-     fflush(stdout);
-   }
-
-   /* clear table slots for all the buffers in the set for this request */
-   for(; count; count--, buf_state++) *(int*)buf_state = 0;
-   if(index >= MAX_BUFS){
-      _armci_buf_state->smallbuf[index-MAX_BUFS].id.tag=0;
-#ifndef VAPI
-      _armci_buf_state->smavail = index;
-#endif
-   }
-   else{
-      _armci_buf_state->buf[index].id.tag=0;
-#ifndef VAPI
-      _armci_buf_state->avail = index;
-#endif
-   }
-   
-
-   /* the current buffer is prime candidate to satisfy next buffer request */
+void _armci_buf_release(void *buf) {
+  _armci_buf_release_index(_armci_buf_to_index(buf));
 }
 
 
@@ -1206,6 +1463,7 @@ int i=0;
  
     if(bufid == NB_NONE) *retcode=0;
     else if(bufid == NB_MULTI) {
+#if 0
        for(i=0;i<MAX_BUFS;i++){ 
          if(tag && tag==_armci_buf_state->buf[i].id.tag)
            _armci_buf_complete_index(i,1); 
@@ -1214,6 +1472,27 @@ int i=0;
          if(tag && tag==_armci_buf_state->smallbuf[i].id.tag)
            _armci_buf_complete_index(i+MAX_BUFS,1); 
        }
+#else
+       {
+	 const int smavail=_armci_buf_state->smavail;
+	 const int avail = _armci_buf_state->avail;
+	 const int startsmall = (smavail-MAX_BUFS+1+MAX_SMALL_BUFS)%MAX_SMALL_BUFS+MAX_BUFS;
+	 const int start =(avail+1+MAX_BUFS)%MAX_BUFS;
+	 i = start;
+	 do {
+	   if(tag && tag==_armci_buf_state->buf[i].id.tag)
+	     _armci_buf_complete_index(i,1);
+	   i = (i+1+MAX_BUFS)%MAX_BUFS;
+	 } while(i != start);
+
+	 i = startsmall;
+	 do {
+	   if(tag && tag==_armci_buf_state->smallbuf[i-MAX_BUFS].id.tag)
+	     _armci_buf_complete_index(i,1);
+	   i = (i-MAX_BUFS+1+MAX_SMALL_BUFS)%MAX_SMALL_BUFS+MAX_BUFS;
+	 } while(i != startsmall);
+       }
+#endif
        *retcode=0;
     }
     else {

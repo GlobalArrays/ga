@@ -65,6 +65,36 @@ return sf_create(cname, size_hard_limit, size_soft_limit,
 }
 
 
+#if defined(CRAY) || defined(WIN32)
+Integer FATR SF_CREATE_SUFFIX(fname, size_hard_limit, size_soft_limit, req_size, handle, suffix)
+        _fcd fname;
+        SFsize_t *size_hard_limit, *size_soft_limit, *req_size;
+        Integer *handle;
+        Integer *suffix;
+#else
+#  if defined(F2C2_)
+#    define sf_create_suffix_   sf_create_suffix__
+#  endif
+
+Integer FATR sf_create_suffix_(fname, size_hard_limit, size_soft_limit, req_size, handle, suffix, len)
+        char *fname;
+        SFsize_t *size_hard_limit, *size_soft_limit, *req_size;
+        Integer *handle;
+        Integer *suffix;
+        int len;
+
+#endif
+{
+#if defined(CRAY) || defined(WIN32)
+      f2cstring(_fcdtocp(fname), _fcdlen(fname), cname, MAX_NAME);
+#else
+      f2cstring(fname, len, cname, MAX_NAME);
+#endif
+return sf_create_suffix(cname, size_hard_limit, size_soft_limit,
+                   req_size, handle, suffix);
+}
+
+/*****************************************************************************/
 
 static int string_to_fortchar(char *f, const int flen, const char *buf)
 {

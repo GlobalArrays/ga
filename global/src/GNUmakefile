@@ -46,10 +46,24 @@ ifeq ($(DIAG),PAR)
 else
      GA_LIN_ALG += peigstubs.o
 endif
+
+# use scalapack
+ifdef USE_SCALAPACK
+  ifdef USE_SCALAPACK_I8
+error:
+	@echo Cannot define USE_SCALAPACK and USE_SCALAPACK_I8 together
+	exit 1
+  endif
+endif
 ifdef USE_SCALAPACK
      GA_LIN_ALG += scalapack.o
 else
+  ifdef USE_SCALAPACK_I8
+     GA_LIN_ALG += scalapack.o
+    LIB_DEFINES += -DSCALAPACK_I8
+  else
      GA_LIN_ALG += sclstubs.o
+  endif
 endif
 
 OBJ = $(GA_CORE) $(GA_EXTRA) $(GA_LIN_ALG) 
@@ -71,6 +85,9 @@ endif
     LIB_DEFINES += -DNO_GA_STATS
   endif
   LIB_INCLUDES += -I../../armci/src -I$(INCDIR)
+  ifeq ($(ARMCI_NETWORK), MPI-SPAWN)
+    LIB_DEFINES += -DMPI_SPAWN
+  endif
 
 #we USE_MPI requires us to acces MPI headers to handle ga_mpi_communicator
 ifdef USE_MPI

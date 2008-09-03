@@ -1,4 +1,4 @@
-c $Id: ghosts.F,v 1.2 2007-10-30 02:15:44 manoj Exp $
+c $Id: ghosts.F,v 1.1.2.1 2007-05-07 19:02:02 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10

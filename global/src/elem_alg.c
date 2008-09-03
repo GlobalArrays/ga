@@ -752,7 +752,7 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
     Integer loS[MAXDIM];
     Integer nproc = ga_nnodes_();
     /* using simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)){
+    if (!ga_uses_proc_grid_(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
 
         /* get limits of patch */
@@ -826,7 +826,7 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
       while (index[ndim-1] < blocks[ndim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -1877,7 +1877,7 @@ int op; /* operation to be perform between g_a and g_b */
     } else {
       Integer lod[MAXDIM], hid[MAXDIM], chk;
       Integer offset, last, jtot;
-      if (!ga_scalapack_distribution_(g_c)) {
+      if (!ga_uses_proc_grid_(g_c)) {
         Integer nproc = ga_nnodes_();
         for (idx = me; idx < num_blocks_c; idx += nproc) {
 
@@ -1955,7 +1955,7 @@ int op; /* operation to be perform between g_a and g_b */
         ga_get_proc_index_(g_c, &me, proc_index);
         ga_get_proc_index_(g_c, &me, index);
         ga_get_block_info_(g_c, blocks, block_dims);
-        ga_topology_(g_c, topology);
+        ga_get_proc_grid_(g_c, topology);
         while (index[cndim-1] < blocks[cndim-1]) {
           /* find bounding coordinates of block */
           chk = 1;
@@ -2325,7 +2325,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
     Integer loS[MAXDIM], nproc;
     nproc = ga_nnodes_();
     /* using simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)){
+    if (!ga_uses_proc_grid_(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of patch */
         nga_distribution_(g_a, &i, loA, hiA);
@@ -2399,7 +2399,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
         for (i = 0; i < andim; i++) {
@@ -2602,7 +2602,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
     Integer loS[MAXDIM], nproc;
     nproc = ga_nnodes_();
     /* using simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)){
+    if (!ga_uses_proc_grid_(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of patch */
         nga_distribution_(g_a, &i, loA, hiA);
@@ -2676,7 +2676,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
         for (i = 0; i < andim; i++) {

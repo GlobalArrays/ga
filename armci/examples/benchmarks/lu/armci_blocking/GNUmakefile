@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.2 2007-10-30 02:15:38 manoj Exp $
+#$Id: GNUmakefile,v 1.1.2.1 2007-06-20 17:41:23 vinod Exp $
 include ../../../examples_config.h
 
 #default message-passing library for ARMCI is MPI
@@ -10,6 +10,9 @@ LIB_DISTRIB = $(ARMCI_HOME)/../lib
 #defines communication libs and symbols
 include $(ARMCI_HOME)/../config/makemp.h
 include $(ARMCI_HOME)/../config/makecoms.h
+include $(ARMCI_HOME)/../config/makefile.h
+include $(ARMCI_HOME)/../config/makelib.h
+
 EXTRA_LIBS += $(MP_LIBS) $(COMM_LIBS)
 LIBS += $(EXTRA_LIBS)
 #......................................................................

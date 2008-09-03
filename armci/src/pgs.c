@@ -1,4 +1,4 @@
-/* $Id: pgs.c,v 1.18 2007-10-30 02:04:55 manoj Exp $ 
+/* $Id: pgs.c,v 1.17.2.1 2007-05-04 22:04:32 manoj Exp $ 
  * Note: the general ARMCI copyright does not apply to code included in this file 
  *       Explicit permission is required to copy/modify this code. 
  */
@@ -19,6 +19,7 @@
 #include <elan4/dma.h>
 #include <elan4/registers.h>
 #include "pgs_thread.h"
+#include "armci.h"
 
 #if QSNETLIBS_VERSION_CODE < QSNETLIBS_VERSION(1,18,0)
 #define BINLOAD 1
@@ -27,7 +28,7 @@
 #endif
 
 
-extern void armci_die();
+/* extern void armci_die(); */
 extern int armci_me;
 
 #ifndef offsetof

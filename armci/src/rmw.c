@@ -1,8 +1,11 @@
-/* $Id: rmw.c,v 1.25 2007-10-30 02:04:55 manoj Exp $ */
+/* $Id: rmw.c,v 1.24.2.5 2007-08-29 17:32:47 manoj Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
 #include <stdio.h>
+#if defined(__i386__) || defined(__x86_64__) 
+#  include "atomics-i386.h"
+#endif
 
 #ifdef LIBELAN_ATOMICS 
 
@@ -90,10 +93,18 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
                 armci_put(&_a_ltemp,prem,sizeof(long),proc);
            break;
       case ARMCI_SWAP:
-                armci_get(prem,&_a_temp,sizeof(int),proc);
-                armci_put(ploc,prem,sizeof(int),proc);
-                *(int*)ploc = _a_temp; 
-           break;
+#if (defined(__i386__) || defined(__x86_64__)) && !defined(PORTALS)
+        if(SERVER_CONTEXT || armci_nclus==1){
+	  atomic_exchange(ploc, prem, sizeof(int));
+        }
+        else 
+#endif
+        {
+	  armci_get(prem,&_a_temp,sizeof(int),proc);
+	  armci_put(ploc,prem,sizeof(int),proc);
+	  *(int*)ploc = _a_temp; 
+        }
+	break;
       case ARMCI_SWAP_LONG:
                 armci_get(prem,&_a_ltemp,sizeof(long),proc);
                 armci_put(ploc,prem,sizeof(long),proc);
@@ -123,7 +134,7 @@ int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
 #ifdef LAPI
     int  ival, rc, opcode=SWAP, *parg=ploc;
     lapi_cntr_t req_id;
-#elif defined(_CRAYMPP) || defined(QUADRICS) || defined(CATAMOUNT)
+#elif defined(_CRAYMPP) || defined(QUADRICS) || defined(CRAY_SHMEM)
     int  ival;
     long lval;
 #endif
@@ -143,7 +154,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
 #endif
 
 #if defined(CLUSTER) && !defined(LAPI) && !defined(QUADRICS) &&!defined(CYGWIN)\
-    && !defined(HITACHI) && !defined(CATAMOUNT)
+    && !defined(HITACHI) && !defined(CRAY_SHMEM) && !defined(PORTALS)
      if(!SAMECLUSNODE(proc)){
        armci_rem_rmw(op, ploc, prem,  extra, proc);
        return 0;
@@ -205,9 +216,11 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
     BGML_Callback_t cb_wait={wait_callback, &done};
     BG1S_rmw(&request, proc, 0, prem, temp, ploc, oper, dt, &cb_wait, 1);
     BGML_Wait(&done);
+#elif ARMCIX
+    ARMCIX_Rmw(op, ploc, prem, extra, proc);
 #else
     switch (op) {
-#   if defined(QUADRICS) || defined(_CRAYMPP) || defined(CATAMOUNT)
+#   if defined(QUADRICS) || defined(_CRAYMPP) || defined(CRAY_SHMEM)
       case ARMCI_FETCH_AND_ADD:
 #ifdef SHMEM_FADD
          /* printf(" calling intfdd arg %x %ld \n", prem, *prem); */
@@ -242,7 +255,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
 #ifdef LIBELAN_ATOMICS
           *(long*)ploc = elan_long_swap((long*)prem, *(long*)ploc,  proc); 
 #else
-          *(long*)ploc = shmem_swap((long*)prem, *(long*)ploc,  proc); 
+          *(long*)ploc = shmem_long_swap((long*)prem, *(long*)ploc,  proc); 
 #endif
         break;
 #   elif defined(LAPI)

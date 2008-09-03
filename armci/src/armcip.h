@@ -1,4 +1,4 @@
-/* $Id: armcip.h,v 1.83 2007-10-30 02:04:53 manoj Exp $ */
+/* $Id: armcip.h,v 1.82.2.9 2007-08-29 17:32:31 manoj Exp $ */
 /* armci private header file */
 #ifndef _ARMCI_P_H
 
@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include "armci.h"
 #include "message.h"
+
+/*#define ARMCI_PR_DBG(__ARMCI_ST,__ARMCI_NU) \
+        printf("\n%d:%s:%d:%s:%s:%d",armci_me,__FILE__,__LINE__,__FUNCTION__,__ARMCI_ST,__ARMCI_NU)*/
+#define ARMCI_PR_DBG(__ARMCI_ST,__ARMCI_NU) 
 
 #ifdef QUADRICS
 #include <elan/elan.h>
@@ -50,6 +54,9 @@ extern void armci_elan_fence(int p);
 #endif
 
 #endif
+
+/**Symbol to stamp end of buffers in certain networks*/
+#define ARMCI_STAMP 20080528
 
 
 /*\GPC call stuff
@@ -101,8 +108,12 @@ extern thread_id_t armci_usr_tid;
 #endif
 
 #if defined(LAPI) || defined(CLUSTER) || defined(CRAY) || defined(XT3)\
-        || defined(CRAY_SHMEM) || defined(BGML)
+        || defined(CRAY_SHMEM) || defined(BGML) || defined(DCMF)
 #  include "request.h"
+#endif
+
+#ifdef ARMCIX
+#include "armcix/armcix.h"
 #endif
 
 /* ------------------------ ARMCI threads support ------------------------- */
@@ -135,7 +146,7 @@ extern INLINE int armci_register_thread(thread_id_t id);
 /* ------------------------------------------------------------------------ */
 
 /* min amount of data in strided request to be sent in single TCP/IP message*/
-#ifdef SOCKETS
+#if defined(SOCKETS) || defined(MPI_SPAWN_ZEROCOPY)
 #  define TCP_PAYLOAD 128 
 #  define LONG_GET_THRESHOLD  TCP_PAYLOAD  
 #  define LONG_GET_THRESHOLD_STRIDED LONG_GET_THRESHOLD
@@ -153,9 +164,8 @@ extern INLINE int armci_register_thread(thread_id_t id);
 # include <strings.h>
 #endif
 
-#if defined(CRAY_SHMEM) || defined(CRAY_T3E) || defined(FUJITSU)\
-       || defined(HITACHI) || (defined(QUADRICS) && !defined(ELAN_ACC))\
-       || defined(CATAMOUNT)
+#if defined(XT3) || defined(CRAY_T3E) || defined(FUJITSU)\
+       || defined(HITACHI) || (defined(QUADRICS) && !defined(ELAN_ACC))
 #define ACC_COPY
 #endif
 
@@ -210,13 +220,17 @@ extern int _armci_initialized;
    extern int sr8k_server_ready;
    extern  double *armci_internal_buffer;
 #else
+#if !defined(THREAD_SAFE)
    extern  double armci_internal_buffer[BUFSIZE_DBL];
+#endif
 #endif
 
 extern void armci_shmem_init();
 extern void armci_krmalloc_init_localmem();
+#if 0
 extern void armci_die(char *msg, int code);
 extern void armci_die2(char *msg, int code1, int code2);
+#endif
 extern void armci_write_strided(void *ptr, int stride_levels, 
                                 int stride_arr[], int count[], char *buf);
 extern void armci_read_strided(void *ptr, int stride_levels, 
@@ -270,6 +284,11 @@ extern void armci_init_fence();
 #endif
 #endif
 
+#ifdef MPI_SPAWN
+  extern void armci_create_server_MPIprocess ();
+#endif
+
+
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
@@ -287,6 +306,8 @@ extern void armci_init_fence();
      ( ((p) <= armci_clus_last) && ((p) >= armci_clus_first) )
 #elif defined(__crayx1)
 #  define SAMECLUSNODE(p) 1
+#elif defined(ARMCIX)
+#  define SAMECLUSNODE(p) 0
 #else
 #  define SAMECLUSNODE(p) ((p)==armci_me) 
 #endif
@@ -298,7 +319,7 @@ extern void armci_init_fence();
         else  FENCE_NODE(proc)
 #  define UPDATE_FENCE_INFO(proc_)
 #elif defined(CLUSTER) && !defined(QUADRICS) && !defined(HITACHI)\
-        && !defined(CRAY_SHMEM)
+        && !defined(CRAY_SHMEM) && !defined(PORTALS)
 #  define ORDER(op_,proc_)\
           if(!SAMECLUSNODE(proc_) && op_ != GET )FENCE_ARR(proc_)=1
 #  define UPDATE_FENCE_INFO(proc_) if(!SAMECLUSNODE(proc_))FENCE_ARR(proc_)=1
@@ -389,7 +410,7 @@ extern int armci_agg_save_descriptor(void *src, void *dst, int bytes,
 
 extern void armci_agg_complete(armci_ihdl_t nb_handle, int condition);
 
-extern armci_ihdl_t armci_set_implicit_handle (int op, int proc);
+extern armci_hdl_t *armci_set_implicit_handle (int op, int proc);
 
 extern int armci_getnumcpus(void);
 extern long armci_util_long_getval(long* p);
@@ -420,6 +441,8 @@ extern void armci_global_region_exchange(void *, long);
 typedef int ARMCI_Datatype;
 
 extern int ATTR_KEY; /* attribute key */
+
+/* #define ARMCI_GROUP /\*Generic ARMCI implementation*\/ */
  
 typedef struct {
   armci_clus_t *grp_clus_info;
@@ -427,14 +450,21 @@ typedef struct {
   int grp_nclus;           /* number of cluster nodes */
   int grp_clus_me;         /* my cluster node id */
   int mem_offset;          /* memory offset */
+#ifdef ARMCI_GROUP
+  int nproc;               /* #procs in this group*/
+  int *proc_list;          /* Ids of procs in this group
+			      (w.r.t. MPI_COMM_WORLD)*/
+#endif
 }armci_grp_attr_t;
  
 #include "mpi.h"
  
 typedef MPI_Comm ARMCI_Comm;
 typedef struct {
+#ifndef ARMCI_GROUP
   MPI_Comm icomm;
   MPI_Group igroup;
+#endif
   armci_grp_attr_t grp_attr;
 }ARMCI_iGroup;
  
@@ -469,5 +499,13 @@ extern void armci_icheckpoint_finalize(int rid);
 
 #endif /* ifdef DO_CKPT */
 /* -------------------------------------------------------- */
+
+#ifdef BGML     
+#define ARMCI_CRITICAL_SECTION_ENTER() BGML_CriticalSection_enter();
+#define ARMCI_CRITICAL_SECTION_EXIT()  BGML_CriticalSection_exit();
+#else
+#define ARMCI_CRITICAL_SECTION_ENTER()
+#define ARMCI_CRITICAL_SECTION_EXIT()     
+#endif    
 
 #endif

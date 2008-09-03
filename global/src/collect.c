@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.24 2007-10-30 02:04:57 manoj Exp $ */
+/* $Id: collect.c,v 1.23.2.5 2007-08-03 19:52:28 manoj Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -516,6 +516,11 @@ void ga_gop(Integer type, void *x, Integer n, char *op)
        case C_DCPL:
           dx = (DoublePrecision*)x;
           ga_dgop(ga_type_gop, dx, 2*n, op);
+          break;
+
+       case C_SCPL:
+          fx = (float*)x;
+          ga_fgop(ga_type_gop, fx, 2*n, op);
           break;
 
        case C_DBL:

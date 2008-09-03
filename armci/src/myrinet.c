@@ -291,7 +291,7 @@ static int pin_error(char *port, int bytes, void *ptr,  gm_status_t status)
     return FALSE;
 }
 
-int armci_pin_contig1(void *ptr, int bytes)
+int armci_pin_contig1(void *ptr, size_t bytes)
 {
     gm_status_t status;
 

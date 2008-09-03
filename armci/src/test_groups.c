@@ -132,12 +132,62 @@ int chk_grp_membership(int rank, ARMCI_Group *grp, int *memberlist)
     return 0;
 }
 
+void test_one_group(ARMCI_Group *group, int *pid_list) {
+  int grp_me, grp_size;
+  int i,j,src_proc,dst_proc;
+  double *ddst_put[MAXPROC];
+  double dsrc[ELEMS];
+  int elems[2] = {MAXPROC,ELEMS};
+  int value = -1, bytes, world_me;
+  
+  MP_MYID(&world_me);
+  ARMCI_Group_rank(group, &grp_me);
+  ARMCI_Group_size(group, &grp_size);
+  if(grp_me==0) printf("GROUP SIZE = %d\n", grp_size);
+  printf("%d:group rank = %d\n", me, grp_me);
+
+  src_proc = 0; dst_proc = grp_size-1;
+       
+  bytes = ELEMS*sizeof(double);       
+  ARMCI_Malloc_group((void **)ddst_put, bytes, group);
+       
+  for(i=0; i<ELEMS; i++) dsrc[i]=i*1.001*(grp_me+1); 
+  for(i=0; i<ELEMS; i++) ddst_put[grp_me][i]=-1.0;
+       
+  armci_msg_group_barrier(group);
+       
+  if(grp_me==src_proc) {
+    /* NOTE: make sure to specify absolute ids in ARMCI calls */
+    ARMCI_Put(dsrc, &ddst_put[dst_proc][0], bytes,
+	      ARMCI_Absolute_id(group,dst_proc));
+  }
+       
+  armci_msg_group_barrier(group);
+  /* NOTE: make sure to specify absolute ids in ARMCI calls */
+  ARMCI_Fence(ARMCI_Absolute_id(group,dst_proc));
+  sleep(1);
+       
+       
+  /* Verify*/
+  if(grp_me==dst_proc) {
+    for(j=0; j<ELEMS; j++) {
+      if(ABS(ddst_put[grp_me][j]-j*1.001*(src_proc+1)) > 0.1) {
+	printf("\t%d: ddst_put[%d][%d] = %lf and expected value is %lf\n",
+	       me, grp_me, j, ddst_put[grp_me][j], j*1.001*(src_proc+1));
+	ARMCI_Error("groups: armci put failed...1", 0);
+      }
+    }
+    printf("\n%d(%d): Test O.K. Verified\n", dst_proc, world_me);
+  }
+  armci_msg_group_barrier(group);
+  ARMCI_Free_group(ddst_put[grp_me], group);
+}
+
 
 void test_groups() {
   
     int pid_listA[MAXPROC]  = {0,1,2};
     int pid_listB[MAXPROC] = {1,3};
-    int value = -1, bytes;
     ARMCI_Group groupA, groupB;
 
     MP_BARRIER();
@@ -148,104 +198,97 @@ void test_groups() {
 
     /* ------------------------ GROUP A ------------------------- */ 
     if(chk_grp_membership(me, &groupA, pid_listA)) { /* group A */
-       int grp_me, grp_size;
-       int i,j,src_proc=2,dst_proc=0;
-       double *ddst_put[MAXPROC];
-       double dsrc[ELEMS];
-       int elems[2] = {MAXPROC,ELEMS};
-
-       ARMCI_Group_rank(&groupA, &grp_me);
-       ARMCI_Group_size(&groupA, &grp_size);
-       if(grp_me==0) printf("GROUP SIZE = %d\n", grp_size);
-       printf("%d:group rank = %d\n", me, grp_me);
-       
-       bytes = ELEMS*sizeof(double);       
-       ARMCI_Malloc_group((void **)ddst_put, bytes, &groupA);
-       
-       for(i=0; i<ELEMS; i++) dsrc[i]=i*1.001*(grp_me+1); 
-       for(i=0; i<ELEMS; i++) ddst_put[grp_me][i]=-1.0;
-       
-       armci_msg_group_barrier(&groupA);
-       
-       if(grp_me==src_proc) {
-          /* NOTE: make sure to specify absolute ids in ARMCI calls */
-	  ARMCI_Put(dsrc, &ddst_put[dst_proc][0], bytes,
-                    ARMCI_Absolute_id(&groupA,dst_proc));
-       }
-       
-       armci_msg_group_barrier(&groupA);
-       /* NOTE: make sure to specify absolute ids in ARMCI calls */
-       ARMCI_Fence(ARMCI_Absolute_id(&groupA,dst_proc));
-       sleep(1);
-       
-       
-       /* Verify*/
-       if(grp_me==dst_proc) {
-	  for(j=0; j<ELEMS; j++) {
-	     if(ABS(ddst_put[grp_me][j]-j*1.001*(src_proc+1)) > 0.1) {
-		printf("\t%d: ddst_put[%d][%d] = %lf and expected value is %lf\n",
-                       me, grp_me, j, ddst_put[grp_me][j], j*1.001*(src_proc+1));
-		ARMCI_Error("groups: armci put failed...1", 0);
-	     }
-	  }
-	  printf("\n%d: Test O.K. Verified\n", dst_proc);
-       }
-       armci_msg_group_barrier(&groupA);
-       ARMCI_Free_group(ddst_put[grp_me], &groupA);
+      test_one_group(&groupA, pid_listA);
     }
 
     MP_BARRIER();
     
     /* ------------------------ GROUP B ------------------------- */ 
     if(chk_grp_membership(me, &groupB, pid_listB)) { /* group B */
-       int grp_me, grp_size;
-       int i,j,src_proc=1,dst_proc=0;
-       double *ddst_put[MAXPROC];
-       double dsrc[ELEMS];
-       int elems[2] = {MAXPROC,ELEMS};
-
-       ARMCI_Group_rank(&groupB, &grp_me);
-       ARMCI_Group_size(&groupB, &grp_size);
-       if(grp_me==0) printf("GROUP SIZE = %d\n", grp_size);
-       printf("%d:group rank = %d\n", me, grp_me);
-       
-       bytes = ELEMS*sizeof(double);       
-       ARMCI_Malloc_group((void **)ddst_put, bytes, &groupB);
-       
-       for(i=0; i<ELEMS; i++) dsrc[i]=i*1.001*(grp_me+1); 
-       for(i=0; i<ELEMS; i++) ddst_put[grp_me][i]=0.0;
-       
-       armci_msg_group_barrier(&groupB);
-
-       if(grp_me==src_proc) {
-	  ARMCI_Put(dsrc, &ddst_put[dst_proc][0], bytes,
-                    ARMCI_Absolute_id(&groupB,dst_proc));
-       }
-       
-       armci_msg_group_barrier(&groupB);
-       ARMCI_Fence(ARMCI_Absolute_id(&groupB,dst_proc));
-       sleep(1);
-       
-       /* Verify*/
-       if(grp_me==dst_proc) {
-	  for(j=0; j<ELEMS; j++) {
-	     if(ABS(ddst_put[grp_me][j]-j*1.001*(src_proc+1)) > 0.1) {
-		printf("\t%d: ddst_put[%d][%d] = %lf and expected value is %lf\n",
-                       me, grp_me, j, ddst_put[grp_me][j], j*1.001*(src_proc+1));
-		ARMCI_Error("groups: armci put failed...1", 0);
-	     }
-	  }
-	  printf("\n%d: Test O.K. Verified\n", dst_proc);
-       }
-       armci_msg_group_barrier(&groupB);
-       ARMCI_Free_group(ddst_put[grp_me], &groupB);
+      test_one_group(&groupB, pid_listB);
     }
-
 
     ARMCI_AllFence();
     MP_BARRIER();
     
     if(me==0){printf("O.K.\n"); fflush(stdout);}
+}
+
+/**
+ * Random permutation of 0..n-1 into an array.
+ */
+void random_permute(int *arr, int n) {
+  int i, j;
+  int *vtmp = (int *)malloc(n*sizeof(int));
+  assert(vtmp!=NULL);
+  for(i=0; i<n; ++i) vtmp[i]=-1;
+  for(i=0; i<n; i++) {
+    while(vtmp[j=(rand()%n)] != -1) /*no-op*/;
+    assert(vtmp[j]==-1);
+    vtmp[j]=0;
+    arr[i]=j;
+  }
+}
+
+int int_compare(const void *v1, const void *v2) {
+  int i1=*(int *)v1, i2=*(int *)v2;
+  if(i1<i2) return -1;
+  if(i1>i2) return +1;
+  return 0;
+}
+
+/**
+ * Test routine for non-collective process group management. This test
+ * should not be used with MPI process group implementation.
+ */
+#define GROUP_SIZE 2
+#define MAX_GROUPS (MAXPROC/GROUP_SIZE)
+void test_groups_noncollective() {
+  int *pid_lists[MAX_GROUPS];
+  int pids[MAXPROC];
+  int i, nprocs, world_me, grp_me;
+  ARMCI_Group group;
+  int *my_pid_list, my_grp_size;
+  int ngrps;
+
+  MP_BARRIER();
+  MP_PROCS(&nprocs);
+  MP_MYID(&world_me);
+
+  random_permute(pids, nproc);
+
+  ngrps = nprocs/GROUP_SIZE;
+  
+  for(i=0; i<nprocs/GROUP_SIZE; i++) {
+    pid_lists[i] = pids + (i*GROUP_SIZE);
+  }
+
+  for(i=0; i<nprocs; i++) {
+    if(pids[i] == world_me) {
+      int grp_id = MIN(i/GROUP_SIZE, ngrps-1);
+      my_pid_list = pid_lists[grp_id];
+      if(grp_id == ngrps-1)
+	my_grp_size =  GROUP_SIZE + (nprocs%GROUP_SIZE);
+      else
+	my_grp_size = GROUP_SIZE;
+    }
+  }
+
+  qsort(my_pid_list, my_grp_size, sizeof(int), int_compare);
+  
+  MP_BARRIER();
+  /*now create all these disjoint groups and test them in parallel*/
+  
+  ARMCI_Group_create(my_grp_size, my_pid_list, &group);
+
+  test_one_group(&group, my_pid_list);
+
+  ARMCI_Group_free(&group);
+
+  ARMCI_AllFence();
+  MP_BARRIER();
+  
+  if(world_me==0){printf("O.K.\n"); fflush(stdout);}
 }
 
 
@@ -283,8 +326,17 @@ int main(int argc, char* argv[])
     
     ARMCI_AllFence();
     MP_BARRIER();
-    if(me==0){printf("\nSuccess!!\n"); fflush(stdout);}
+    if(me==0){printf("\n Collective groups: Success!!\n"); fflush(stdout);}
     sleep(2);
+
+#ifdef ARMCI_GROUP
+    test_groups_noncollective();
+
+    ARMCI_AllFence();
+    MP_BARRIER();
+    if(me==0){printf("\n Non-collective groups: Success!!\n"); fflush(stdout);}
+    sleep(2);
+#endif
 	
     MP_BARRIER();
     ARMCI_Finalize();

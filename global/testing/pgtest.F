@@ -2070,7 +2070,7 @@ c
          call ffflush(6)
       endif
 
-      call ga_locate_region(g_a, 1, n, 1,n, map,np)
+      status = ga_locate_region(g_a, 1, n, 1,n, map,np)
       found = 0
       do j=1,n
          do i=1,n

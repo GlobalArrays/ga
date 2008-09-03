@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.59 2007-10-30 02:04:54 manoj Exp $ */
+/* $Id: message.c,v 1.58.6.4 2007-04-24 10:08:26 vinod Exp $ */
 #if defined(BGML)
 # include "bgml.h"
 #elif defined(PVM)
@@ -15,11 +15,13 @@
 #include "armcip.h"
 #include "copy.h"
 #include <stdio.h>
+#include <assert.h>
 #ifdef _POSIX_PRIORITY_SCHEDULING
 #ifndef HITACHI
 #  include <sched.h>
 #endif
 #endif
+#include "armci.h"
 
 #define DEBUG_ 0
 #if defined(SYSV) || defined(MMAP) ||defined (WIN32)
@@ -1841,21 +1843,39 @@ void armci_exchange_address(void *ptr_ar[], int n)
 void armci_msg_group_barrier(ARMCI_Group *group)
 {
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
+#ifdef ARMCI_GROUP
+ {
+   int val=0;
+   armci_msg_group_igop(&val, 1, "+", group);
+ }
+#else
     MPI_Barrier((MPI_Comm)(igroup->icomm));
+#endif
 }
 void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
                            int grp_clus_nproc, ARMCI_Group *mastergroup) {
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)mastergroup;
     int i, *pid_list, root=0;
+#ifdef ARMCI_GROUP
+    ARMCI_Group group;
+    void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Group *group);
+#else
     MPI_Group group_world;
     MPI_Group group;
     MPI_Comm comm;
     void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm);
+#endif
  
     /* create a communicator for the processes with in a node */
     pid_list = (int *)malloc(grp_clus_nproc*sizeof(int));
     for(i=0; i<grp_clus_nproc; i++)  pid_list[i] = grp_master+i;
  
+
+#ifdef ARMCI_GROUP
+    ARMCI_Group_create_child(grp_clus_nproc, pid_list, &group, mastergroup);
+    ARMCI_Bcast_(buf, len, root, &group);
+    ARMCI_Group_free(&group);
+#else
     MPI_Comm_group((MPI_Comm)(igroup->icomm), &group_world);
     MPI_Group_incl(group_world, grp_clus_nproc, pid_list, &group);
  
@@ -1868,6 +1888,7 @@ void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
     free(pid_list);
     MPI_Comm_free(&comm);     /* free the temporary communicator */
     MPI_Group_free(&group);
+#endif
 }
  
 

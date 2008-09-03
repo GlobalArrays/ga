@@ -106,7 +106,7 @@ $(patsubst %,$(FULL_LIBRARY_PATH)(%),$(OBJ))      : tcgmsgP.h
 $(patsubst %,$(FULL_LIBRARY_PATH)(%),evon.o)      : evlog.h
 $(patsubst %,$(FULL_LIBRARY_PATH)(%),evlog.o)     : evlog.h
 $(patsubst %,$(FULL_LIBRARY_PATH)(%),pfilecopy.o) : msgtypesc.h
-$(patsubst %,$(FULL_LIBRARY_PATH)(%),pbeginf.o))  : farg.h
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),pbeginf.o))  : ../tcgmsg/farg.h
 tcgmsgP.h: srftoc.h
 sndrcv.h: msgtypesc.h
 srftoc.h: sndrcv.h

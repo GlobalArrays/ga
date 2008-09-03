@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.44 2007-10-30 02:04:56 manoj Exp $ */
+/* $Id: test.c,v 1.43.6.6 2007-08-30 22:59:27 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -1786,8 +1786,8 @@ int main(int argc, char* argv[])
        fflush(stdout);
        sleep(1);
     }
-    
-    ARMCI_Init();
+
+    ARMCI_Init_args(&argc, &argv);
 
 /*
        if(me==1)armci_die("process 1 committing suicide",1);

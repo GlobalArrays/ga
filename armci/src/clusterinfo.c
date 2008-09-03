@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.37 2007-10-30 02:04:53 manoj Exp $ */
+/* $Id: clusterinfo.c,v 1.36.2.3 2007-06-13 00:46:13 vinod Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -45,25 +45,29 @@
 #endif
 
 #if defined(GM)
-    static char *network_protocol="Myrinet GM";
+    static const char *network_protocol="Myrinet GM";
 #elif defined(VIA)
-    static char *network_protocol="VIA";
+    static const char *network_protocol="VIA";
 #elif defined(MELLANOX)
-    static char *network_protocol="Mellanox Verbs API";
+    static const char *network_protocol="Mellanox Verbs API";
 #elif defined(OPENIB)
-    static char *network_protocol="OpenIB Verbs API";
+    static const char *network_protocol="OpenIB Verbs API";
 #elif defined(DOELAN4)
-    static char *network_protocol="Quadrics ELAN-4";
+    static const char *network_protocol="Quadrics ELAN-4";
 #elif defined(QUADRICS)
-    static char *network_protocol="Quadrics ELAN-3";
+    static const char *network_protocol="Quadrics ELAN-3";
 #elif defined(PM)
-    static char *network_protocol="Score PM";
+    static const char *network_protocol="Score PM";
+#elif defined(PORTALS)
+    static const char *network_protocol="PORTALS";
+#elif defined(MPI_SPAWN)
+    static const char *network_protocol="MPI-SPAWN";
 #else
-    static char *network_protocol="TCP/IP Sockets";
+    static const char *network_protocol="TCP/IP Sockets";
 #endif
     
 
-/*** stores cluster configuration ***/
+/*** stores cluster configuration. Initialized before user threads are created and then read-only ***/
 armci_clus_t *armci_clus_info;
 
 #ifdef HITACHI
@@ -90,7 +94,7 @@ static int altix_gethostname(char *name, int len) {
     sprintf(name,"altix");
     return 0;
 }
-#elif defined(CATAMOUNT)
+#elif defined(XT3) && !defined(PORTALS)
 #define GETHOSTNAME cnos_gethostname
 static int cnos_gethostname(char *name, int len)
 {
@@ -153,7 +157,7 @@ static void process_hostlist(char *names)
           /* we found a new machine name on the list */
           master = s;
           armci_nclus++;
-/*          fprintf(stderr,"new name %s len =%d\n",master, strlen(master));*/
+          /*fprintf(stderr,"new name %s len =%d\n",master, strlen(master));*/
 
         }
       }
@@ -310,7 +314,7 @@ static void print_clus_info()
 int i;
 
   if(PRINT_CLUSTER_INFO && armci_nclus >1 && armci_me ==0){
-#if defined(DATA_SERVER) || defined(SERVER_THREAD)
+#if defined(DATA_SERVER) || defined(SERVER_THREAD) || defined(PORTALS)
      printf("ARMCI configured for %d cluster nodes. Network protocol is '%s'.\n",
             armci_nclus, network_protocol);
 #else

@@ -9,6 +9,9 @@ extern void  _armci_buf_release(void *buf);
 extern int   _armci_buf_to_index(void *buf);
 extern char* _armci_buf_ptr_from_id(int id);
 extern void  _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node);
+#if defined(PEND_BUFS)
+extern void  _armci_buf_ensure_pend_outstanding_op_per_node(void *buf, int node);
+#endif
 extern void _armci_buf_complete_nb_request(int bufid,unsigned int tag, int *retcode);
 extern void _armci_buf_test_nb_request(int bufid,unsigned int tag, int *retcode);
 extern void _armci_buf_set_tag(void *bufptr,unsigned int tag,short int protocol);
@@ -54,9 +57,21 @@ extern INLINE void _armci_buf_set_cmpld_idx(int idx, int state);
 #  include "bgmldefs.h"
 #  define NB_CMPL_T BG1S_t  
     typedef long msg_tag_t;
+#elif defined(ARMCIX)
+#  ifndef ARMCIX_OPAQUE_SIZE
+#    define ARMCIX_OPAQUE_SIZE 8
+#  endif
+   typedef char armcix_opaque_t [ARMCIX_OPAQUE_SIZE];
+#  define NB_CMPL_T armcix_opaque_t
+   typedef long msg_tag_t;
+#elif defined(MPI_SPAWN)
+#  include "mpi2.h"
+   typedef long msg_tag_t;
 #else
    typedef long msg_tag_t;
 #endif
+
+#include "pendbufs.h"
 
 #ifndef CLEAR_HNDL_FIELD 
 #   define CLEAR_HNDL_FIELD(_x) 
@@ -174,7 +189,7 @@ extern INLINE BUF_INFO_T *_armci_id_to_bufinfo(int bufid);
 #define MAX_BUFS  1
 #define MAX_SMALL_BUFS 1
 #else
-#define MAX_BUFS  4
+#define MAX_BUFS 15
 #define MAX_SMALL_BUFS 16
 #endif
 
@@ -326,6 +341,10 @@ extern void armci_WriteStridedToDirect(int proc, request_header_t* msginfo,
 extern void armci_serv_quit();
 extern int armci_send_req_msg_strided(int proc, request_header_t *msginfo,
                           char *ptr, int strides, int stride_arr[],int count[]);
+extern void armci_server_goodbye(request_header_t* msginfo);
+#endif
+#ifdef MPI_SPAWN
+extern void armci_serv_quit();
 extern void armci_server_goodbye(request_header_t* msginfo);
 #endif
 #ifdef HITACHI

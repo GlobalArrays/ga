@@ -39,8 +39,11 @@ class GlobalArray {
    * @param dims[ndim]  - array of dimensions                     [input]
    * @param chunk[ndim] - array of chunks, each element specifies 
    * minimum size that given dimensions should be chunked up into [input]
+   * @param p_handle    - processor group handle                  [input]
    */
   GlobalArray(int type, int ndim, int dims[], char *arrayname, int chunk[]);
+  GlobalArray(int type, int ndim, int dims[], char *arrayname, int chunk[],
+              int p_handle);
   
   /**
    * Creates an array by following the user-specified distribution and 
@@ -62,16 +65,19 @@ class GlobalArray {
    *  </TABLE>
    *
    * This is a collective operation. 
-   * @param arrayname    - a unique character string          [input]
+   * @param arrayname    - a unique character string           [input]
    * @param type  - MA data type (MT_F_DBL,MT_F_INT,MT_F_DCPL) [input]
    * @param ndim  - number of array dimensions                 [input]
-   * @param  dims - array of dimension values                 [input]
+   * @param  dims - array of dimension values                  [input]
    * @param block[ndim] - no. of blocks each dimension is divided into [input]
    * @param maps[s]  - starting index for for each block; the size s is a sum 
-   * all elements of nblock array      [input]
+   * all elements of nblock array                              [input]
+   * @param p_handle - processor group handle                  [input]
    */
   GlobalArray(int type, int ndim, int dims[], char *arrayname, int block[],
 	      int maps[]);
+  GlobalArray(int type, int ndim, int dims[], char *arrayname, int block[],
+	      int maps[], int p_handle);
   
   /**
    * Creates an ndim-dimensional array with a layer of ghost cells around 
@@ -102,9 +108,12 @@ class GlobalArray {
    * @param ghosts       - this is a dummy parameter: added to increase the 
    *                       number of arguments, inorder to avoid the conflicts
    *                       among constructors. (ghosts = 'g' or 'G')
+   * @param p_handle - processor group handle                       [input]
    */
   GlobalArray(int type, int ndim, int dims[], int width[], char *arrayname, 
 	      int chunk[], char ghosts);
+  GlobalArray(int type, int ndim, int dims[], int width[], char *arrayname, 
+	      int chunk[], int p_handle, char ghosts);
   
   
   /**
@@ -142,18 +151,19 @@ class GlobalArray {
    * @param ghosts       - this is a dummy parameter: added to increase the 
    *                       number of arguments, inorder to avoid the conflicts
    *                       among constructors. (ghosts = 'g' or 'G')
-   * @return Returns pointer to GlobalArray object created. Returns
-   * NULL if it fails to create a GA object.
+   * @param p_handle - processor group handle                       [input]
    */
   GlobalArray(int type, int ndim, int dims[], int width[], char *arrayname, 
 	      int block[], int maps[], char ghosts);
+  GlobalArray(int type, int ndim, int dims[], int width[], char *arrayname, 
+	      int block[], int maps[], int p_handle, char ghosts);
   
   /**
    * Creates a new array by applying all the properties of another existing 
    * array.
    * This is a collective operation. 
    * @param arrayname    - a character string                 [input]
-   * @param g_b           - integer handle for reference array [input]
+   * @param g_a           - integer handle for reference array [input]
    */
   GlobalArray(const GlobalArray &g_a, char *arrayname); 
   
@@ -161,11 +171,15 @@ class GlobalArray {
    * Creates a new array by applying all the properties of another existing 
    * array.
    * This is a collective operation. 
-   * @param g_b           - integer handle for reference array [input]
+   * @param g_a           - integer handle for reference array [input]
    */
   GlobalArray(const GlobalArray &g_a);/* copy constructor */
-  
-  /** Creates a 10x10 array of type "double"(default).*/
+
+  /**
+   * Creates a new array with no existing attributes. These must all
+   * be set using the "set" methods.
+   * This is a collective operation. 
+   */
   GlobalArray();
   
   /** Destructor */
@@ -217,6 +231,74 @@ class GlobalArray {
    * @param ld[ndim-1]- leading dimensions for the pacth elements   [output]
    */
   void access(int lo[], int hi[], void *ptr, int ld[]) const;
+
+  /**
+   * Provides access to the specified block of a global array that is using
+   * simple block-cyclic data distribution. Returns array of leading
+   * dimensions ld and a pointer to the first element in the patch. This
+   * routine allows user to access directly, in-place * elements in the
+   * local section of a global array. It useful for writing new GA
+   * operations. A call to ga_access normally follows a previous call to
+   * ga_distribution that returns coordinates of the patch associated with
+   * a processor. You need to make sure that the coordinates of the patch
+   * are valid (test values returned from * ga_distribution). 
+   *
+   * Each call to ga_access_block has to be followed by a call to either 
+   * ga_release_block or ga_release_block_update. You can access in this
+   * fashion only local data. Since the data is shared with other processes,
+   * you need to consider issues of mutual exclusion. This operation is
+   * local. 
+   * 
+   * @param ndim      - number of dimensions of the global array
+   * @param idx       - index of block                              [input]
+   * @param ptr       - points to location of first element in patch[output]
+   * @param ld[ndim-1]- leading dimensions for the pacth elements   [output]
+   */
+  void accessBlock(int idx, void *ptr, int ld[]) const;
+
+  /**
+   * Provides access to the specified block of a global array that is using
+   * SCALAPACK type block-cyclic data distribution. Returns array of leading
+   * dimensions ld and a pointer to the first element in the patch. This
+   * routine allows user to access directly, in-place * elements in the
+   * local section of a global array. It useful for writing new GA
+   * operations. A call to ga_access_block normally follows a previous call to
+   * ga_distribution that returns coordinates of the patch associated with
+   * a processor. You need to make sure that the coordinates of the patch
+   * are valid (test values returned from * ga_distribution). 
+   *
+   * Each call to ga_access_block_grid has to be followed by a call to either 
+   * ga_release_block_grid or ga_release_block_grid_update. You can access in
+   * this fashion only local data. Since the data is shared with other
+   * processes, you need to consider issues of mutual exclusion. This
+   * operation is local. 
+   * 
+   * @param ndim       - number of dimensions of the global array
+   * @param index[ndim]- indices of block in processor grid          [input]
+   * @param ptr        - points to location of first element in patch[output]
+   * @param ld[ndim-1] - leading dimensions for the pacth elements   [output]
+   */
+  void accessBlockGrid(int index[], void *ptr, int ld[]) const;
+
+  /**
+   * Provides access to the local data of a global array that is using
+   * either the simple or SCALAPACK type block-cyclic data distribution.
+   * Returns the length of the local data block and a pointer to the first
+   * element. This routine allows user to access directly, in-place
+   * elements in the local section of a global array. It useful for writing new GA
+   * operations.
+   *
+   * Each call to ga_access_segment has to be followed by a call to either 
+   * ga_release_segment or ga_release_segmentupdate. You can access in
+   * this fashion only local data. Since the data is shared with other
+   * processes, you need to consider issues of mutual exclusion. This
+   * operation is local. 
+   * 
+   * @param proc       - processor ID                                [input]
+   * @param ptr        - points to location of first element         [output]
+   * @param len        - length of locally held data                 [output]
+   */
+  void accessBlockSegment(int index, void *ptr, int ld[]) const;
 
   /**
    * Provides access to the local patch of the  global array. Returns 
@@ -287,6 +369,11 @@ class GlobalArray {
   
  
   /**
+   * Allocate internal memory etc. to create a global array
+   */
+  int allocate() const;
+
+  /**
    * @param string - message string             [input]
    *
    * Check that the global array handle g_a is valid ... if not call 
@@ -352,7 +439,7 @@ class GlobalArray {
 		   char tb, int blo[], int bhi[]) const;
   
   /** Deallocates the array and frees any associated resources. */
-  void destroy() const;
+  void destroy();
   
   /**
    * Performs one of the matrix-matrix operations: 
@@ -501,11 +588,24 @@ class GlobalArray {
    * for buffer array [input]
    */
   void get(int lo[], int hi[], void *buf, int ld[]) const;
+
+  /**
+   * The function retrieves the number of blocks along each coordinate dimension
+   * and the dimensions of the individual blocks for a global array with a
+   * block-cyclic data distribution.
+   *
+   * This is a local operation.
+   *
+   * @param num_blocks[ndim] - array containing number of blocks along each
+   * coordinate direction
+   * @param block_dims[ndim] - array containing block dimensions
+   */
+  void getBlockInfo(int num_blocks[], int block_dims[]);
   
   /**
    * This function returns 1 if the global array has some dimensions for 
    * which the ghost cell width is greater than zero, it returns 0 otherwise. 
-   * This is a collective operation. 
+   * This is a local operation. 
    */
   int hasGhosts() const;
   
@@ -680,6 +780,72 @@ class GlobalArray {
 		   const GlobalArray *g_a, int *alo, int *ahi,
 		   const GlobalArray *g_b, int *blo, int *bhi,
 		   int *clo, int *chi) const;
+
+  /**
+   * This function merges all values in a patch of a mirrored array into
+   * a patch in another global array g_b.
+   *
+   * This is a collective operation.
+   *
+   * @param alo[ndim],ahi[ndim] - patch indices of mirrored array [input]
+   * @param blo[ndim],bhi[ndim] - patch indices of result array   [input]
+   * @param g_a                 - global array containing result  [output]
+   */
+  void mergeDistrPatch(int alo[], int ahi[], GlobalArray *g_a,
+                       int blo[], int bhi[]);
+
+  /**
+   * This function adds together all copies of a mirrored array so that all
+   * copies are the same.
+   *
+   * This is a collective operation.
+   */
+  void mergeMirrored();
+
+  /**
+   * Non-blocking accumalate operation. This is function performs an
+   * accumulate operation and returns a nblocking handle. Completion of the
+   * operation can be forced by calling the nbwait method on the handle.
+   *
+   * This is a onesided operation.
+   *
+   * @param lo[ndim],hi[ndim] - patch coordinates of block             [input]
+   * @param buf               - local buffer containing data           [input]
+   * @param ld[ndim-1]        - array of strides for local data        [input]
+   * @param alpha             - multiplier for data before adding to existing
+   *                            results                                [input]
+   * @param nbhandle          - nonblocking handle                     [output]
+   */
+  void nbAcc(int lo[], int hi[], void *buf, int ld[], void *alpha,
+             int *nbhandle);
+  
+  /**
+   * Non-blocking get operation. This is function gets a data block from a
+   * global array, copies it into a local buffer, and returns a nonblocking
+   * handle. Completion of the operation can be forced by calling the nbwait
+   * method on the handle.
+   *
+   * This is a onesided operation.
+   *
+   * @param lo[ndim],hi[ndim] - patch coordinates of block             [input]
+   * @param buf               - local buffer to receive data           [input]
+   * @param ld[ndim-1]        - array of strides for local data        [input]
+   * @param nbhandle          - nonblocking handle                     [output]
+   */
+  void nbGet(int lo[], int hi[], void *buf, int ld[], int *nbhandle);
+
+  /**
+   * Non-blocking update operation for arrays with ghost cells. Ghost cells
+   * along the coordinates specified in the mask array are updated with
+   * non-blocking get calls. The mask array must contain either 0's or 1's.
+   *
+   * This is a onesided operation.
+   *
+   * @param mask[ndim]        - array with flags for directions that
+   *                            are to be updated                     [input]
+   * @param nbhandle          - nonblocking handle                    [output]
+   */
+  void nbGetGhostDir(int mask[], int *hbhandle);
   
   /**
    * @param nblock[ndim]  - number of partitions for each dimension [output]
@@ -691,11 +857,67 @@ class GlobalArray {
   void nblock(int numblock[]) const;
 
   /**
+   * Non-blocking put operation. This is function puts a data block from a
+   * local array, copies it into a global array, and returns a nonblocking
+   * handle. Completion of the operation can be forced by calling the nbwait
+   * method on the handle.
+   *
+   * This is a onesided operation.
+   *
+   * @param lo[ndim],hi[ndim] - patch coordinates of block             [input]
+   * @param buf               - local buffer that supplies data        [input]
+   * @param ld[ndim-1]        - array of strides for local data        [input]
+   * @param nbhandle          - nonblocking handle                     [output]
+   */
+  void nbPut(int lo[], int hi[], void *buf, int ld[], int *nbhandle);
+
+  /**
    * Returns the number of dimensions in array represented by the handle 
    * g_a. This operation is local. 
    */
   int ndim() const;
   
+  /**
+   * The pack subroutine is designed to compress the values in the source vector
+   * g_src into a smaller destination array g_dest based on the values in an
+   * integer mask array g_mask. The values lo and hi denote the range of
+   * elements that should be compressed and icount is a variable that on output
+   * lists the number of values placed in the compressed array. This operation
+   * is the complement of the ga_unpack operation. An example is shown below
+   *
+   *  g_src->pack(g_dest, g_mask, 1, n, icount)
+   *  g_mask:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
+   *  g_src:    1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+   *  g_dest:   1  7  9 12 15 16
+   *  icount:   6
+   *
+   *  The calling array is the source array. This is a collective operation.
+   *
+   * @param g_dest     - destination array                 [output]
+   * @param g_mask     - mask array                        [input]
+   * @param lo, hi     - coordinate interval to pack       [input]
+   * @param icount     - number of packed elements         [output]
+   */
+  void pack(GlobalArray *g_dest, GlobalArray *g_mask, int lo, int hi, int
+            icount);
+
+  /**
+   * This subroutine enumerates the values of an array between elements lo and
+   * hi starting with the value istart and incrementing each subsequent value by
+   * inc. This operation is only applicable to 1-dimensional arrays. An example
+   * of its use is shown below:
+   *
+   * call g_a->patch_enum(g_a, 1, n, 7, 2)
+   * g_a:  7  9 11 13 15 17 19 21 23 ...
+   *
+   * This is a collective operation.
+   *
+   * @param lo, hi     - coordinate interval to enumerate     [input]
+   * @param istart     - starting value of enumeration        [input]
+   * @param inc        - increment value                      [input]
+   */
+   void patchEnum(int lo, int hi, int istart, int inc);
+
   /**  
    * @param ndim       - number of dimensions of the global array
    * @param lo[ndim]   - array of starting indices for array section [input] 

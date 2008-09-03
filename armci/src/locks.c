@@ -1,4 +1,4 @@
-/* $Id: locks.c,v 1.16 2007-10-30 02:04:54 manoj Exp $ */
+/* $Id: locks.c,v 1.15.6.1 2006-12-14 13:24:36 manoj Exp $ */
 #define _LOCKS_C_
 #include "armcip.h"
 #include "locks.h"
@@ -8,7 +8,9 @@
 #include <stdio.h>
 
 
+#if !defined(armci_die)
 extern void armci_die(char*,int);
+#endif
 
 #if defined(SPINLOCK) || defined(PMUTEXES)
 

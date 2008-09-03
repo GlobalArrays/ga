@@ -1,8 +1,8 @@
-/* $Id: pack.c,v 1.37 2007-10-30 02:04:55 manoj Exp $ */
+/* $Id: pack.c,v 1.36.10.1 2006-12-14 13:24:37 manoj Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
-#if !defined(ACC_COPY) &&!defined(CRAY_YMP) &&!defined(CYGNUS)&&!defined(CYGWIN) &&!defined(BGML)
+#if !defined(ACC_COPY) &&!defined(CRAY_YMP) &&!defined(CYGNUS)&&!defined(CYGWIN) &&!defined(BGML) &&!defined(DCMF)
 #   define REMOTE_OP 
 #endif
 
@@ -326,6 +326,10 @@ int rc=0, nlen, count=0;
 
        /* non-NULL pointer indicates that set was split */
        if(extra.src_ptr_array){
+
+	 if(nb_handle) {
+	   nb_handle->bufid = NB_MULTI; /*can be set multiple times here; but not reset here*/
+	 }
 
           ndarr[nlen-1]=extra; /* set the pointer to remainder of last set */
           nlen--; /* since last set not done in full need to process it again */

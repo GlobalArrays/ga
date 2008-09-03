@@ -1,4 +1,4 @@
-/* $Id: stat.c,v 1.21 2007-10-30 02:05:01 manoj Exp $ */
+/* $Id: stat.c,v 1.20.10.3 2007-08-30 18:19:44 manoj Exp $ */
 
 #include "eliop.h"
 #include "chemio.h"

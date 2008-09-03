@@ -465,7 +465,7 @@ LIBOBJ =  brdcst.o    nodeid.o    setdbg.o                          \
           evon.o      pfilecopy.o $(EXTRA)
 
  INCLUDES = cluster.h  sema.h     signals.h  sndrcvP.h  srftoc.h    \
-            farg.h     shmem.h    sndrcv.h   sockets.h  xdrstuff.h  \
+            ../farg.h     shmem.h    sndrcv.h   sockets.h  xdrstuff.h  \
             msgtypesc.h           evlog.h    defglobals.h
 
 .SUFFIXES:	

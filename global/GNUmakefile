@@ -57,6 +57,9 @@ endif
 ifdef USE_SCALAPACK
    TESTS += testspd.x
 endif
+ifdef USE_SCALAPACK_I8
+   TESTS += testspd.x
+endif
 
 export DIAG TARGET LU_SOLVE GA_TRACE MSG_COMMS
 

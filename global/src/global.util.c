@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.49 2007-10-30 02:04:58 manoj Exp $*/
+/*$Id: global.util.c,v 1.48.6.6 2007-05-18 08:19:23 manoj Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha

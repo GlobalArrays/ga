@@ -5,7 +5,9 @@
 #   define xgemm TEST_DGEMM
 #   define ygemm TEST_ZGEMM
 #endif
-
+      
+c#define BLOCK_CYCLIC
+      
       program ga_test
 c $Id: testmatmult.F,v 1.6 2005-11-23 10:25:18 manoj Exp $
 c
@@ -32,6 +34,7 @@ c
       character*1 transa(ntrans),transb(ntrans),ta,tb
       real *8 tmpa(nummax,nummax), tmpb(nummax,nummax)
       real *8 tmpc(nummax,nummax)
+      integer ndim, dims(2), block_size(2), proc_grid(2)
       logical verify
       data transa/'n','t','n','t'/
       data transb/'n','n','t','t'/
@@ -78,7 +81,8 @@ c      verify = .FALSE.           ! to verify ga_dgemm
             call ga_error('Insufficient memory: check nummax', 0)
          endif
 c     
-c     
+c
+#ifndef BLOCK_CYCLIC
          if (.not.ga_create(MT_DBL,num_m,num_n,'g_c',
      &        0,0,g_c)) then
             call ga_error('failed: create g_c',20)
@@ -91,6 +95,41 @@ c
      &        0,0,g_a)) then
             call ga_error('failed: create g_a',40)
          endif
+#else
+         ndim = 2
+         block_size(1) = 128
+         block_size(2) = 128
+         
+         dims(1) = num_m
+         dims(2) = num_n
+         g_c = ga_create_handle()
+         call ga_set_data(g_c,ndim,dims,MT_DBL)
+         call ga_set_array_name(g_c,'g_c')
+         call ga_set_block_cyclic(g_c,block_size)
+         if(.not.ga_allocate(g_c)) then
+            call ga_error('failed: create g_c',40)
+         endif
+         
+         dims(1) = num_k
+         dims(2) = num_n
+         g_b = ga_create_handle()
+         call ga_set_data(g_b,ndim,dims,MT_DBL)
+         call ga_set_array_name(g_b,'g_b')
+         call ga_set_block_cyclic(g_b,block_size)
+         if(.not.ga_allocate(g_b)) then
+            call ga_error('failed: create g_b',40)
+         endif
+         
+         dims(1) = num_m
+         dims(2) = num_k
+         g_a = ga_create_handle()
+         call ga_set_data(g_a,ndim,dims,MT_DBL)
+         call ga_set_array_name(g_a,'g_a')
+         call ga_set_block_cyclic(g_a,block_size)
+         if(.not.ga_allocate(g_a)) then
+            call ga_error('failed: create g_a',40)
+         endif
+#endif         
 c     
 c     Initialize matrices A and B
 c     call load_ga_from_square(g_a,num_m,h0,num1)

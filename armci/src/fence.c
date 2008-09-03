@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.26 2007-10-30 02:04:54 manoj Exp $ */
+/* $Id: fence.c,v 1.25.4.6 2007-08-30 19:17:02 manoj Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -42,7 +42,7 @@ void armci_update_fence_array(int proc, int inc)
     if (inc)
         FENCE_ARR(proc)++;
     else
-        FENCE_ARR(PROC)--;
+        FENCE_ARR(proc)--;
 }
 #endif
 
@@ -73,6 +73,8 @@ int i;
            /* note, in multi-threaded case it will only clear for current thread */
            bzero(&FENCE_ARR(master),armci_clus_info[cluster].nslave);
      }
+#elif defined(ARMCIX)
+     ARMCIX_Fence (proc);
 #elif defined(BGML)
      BGML_WaitProc(proc);
      MEM_FENCE;
@@ -143,6 +145,8 @@ void ARMCI_AllFence()
 #endif
 #ifdef _CRAYMPP
      if(cmpl_proc != -1) FENCE_NODE(cmpl_proc);
+#elif defined(ARMCIX)
+     ARMCIX_AllFence ();
 #elif defined(BGML)
            BGML_WaitAll();
 #elif defined(LAPI) || defined(CLUSTER)

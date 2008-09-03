@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.59 2007-10-30 02:04:54 manoj Exp $ */
+/* $Id: memory.c,v 1.56.2.3 2007-04-25 23:49:55 d3p687 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -8,14 +8,23 @@
 #define DEBUG_ 0
 #define USE_MALLOC
 #define USE_SHMEM_
+#define SHM_UNIT 1024
 
-#if defined(CRAY_SHMEM) && defined(CATAMOUNT)
-#include <mpp/shmem.h>
-#include <catamount/data.h>
+#if defined(CRAY_SHMEM)
+extern void armci_shmalloc_exchange_address(void **ptr_arr);
+extern void armci_shmalloc_exchange_offsets(context_t *);
+#  if defined(XT3)
+#  include <mpp/shmem.h>
+#    ifdef CATAMOUNT
+#      include <catamount/data.h>
+#    endif
+#  endif
 #endif
 
 static context_t ctx_localmem;
-
+/*
+static context_t ctx_mlocalmem;
+*/
 #if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI)
 #include "shmem.h"
 
@@ -40,7 +49,6 @@ static context_t ctx_localmem;
 #include <mpp/shmem.h>
 #include <unistd.h>
 
-#define SHM_UNIT 1024
 #define DEF_UNITS (64)
 #define MAX_SEGS  512
 
@@ -55,7 +63,7 @@ extern void armci_memoffset_table_newentry(void *ptr, size_t seg_size);
 void *armci_altix_allocate(size_t bytes)
 {
     void *ptr, *sptr;
-
+    ARMCI_PR_DBG("enter",0);
     sptr=ptr= shmalloc(bytes);
     if(sptr == NULL) armci_die("armci_altix_allocate: shmalloc failed\n",
                                armci_me);
@@ -69,11 +77,13 @@ void *armci_altix_allocate(size_t bytes)
        }
     }
 #endif
+    ARMCI_PR_DBG("exit",0);
     return sptr;
 }
 
 void armci_altix_shm_init()
 {
+    ARMCI_PR_DBG("enter",0);
     altix_pagesize = getpagesize();
     kr_malloc_init(SHM_UNIT, _SHMMAX_ALTIX, 0,
                    armci_altix_allocate, 0, &altix_ctx_shmem);
@@ -89,6 +99,7 @@ void armci_altix_shm_init()
        if(ptr==NULL)
            armci_die("armci_altix_shm_init(): malloc failed", armci_me);
     }
+    ARMCI_PR_DBG("exit",0);
 }
 
 void armci_altix_shm_malloc(void *ptr_arr[], armci_size_t bytes)
@@ -96,6 +107,7 @@ void armci_altix_shm_malloc(void *ptr_arr[], armci_size_t bytes)
     long size=bytes;
     void *ptr;
     int i;
+    ARMCI_PR_DBG("enter",0);
     armci_msg_lgop(&size,1,"max");
     ptr=kr_malloc((size_t)size, &altix_ctx_shmem);
     bzero(ptr_arr,(armci_nproc)*sizeof(void*));
@@ -103,6 +115,7 @@ void armci_altix_shm_malloc(void *ptr_arr[], armci_size_t bytes)
     if(size!=0 && ptr==NULL)
        armci_die("armci_altix_shm_malloc(): malloc failed", armci_me);
     for(i=0; i< armci_nproc; i++) if(i!=armci_me) ptr_arr[i]=shmem_ptr(ptr,i);
+    ARMCI_PR_DBG("exit",0);
 }
 
 #ifdef MPI
@@ -112,6 +125,7 @@ void armci_altix_shm_malloc_group(void *ptr_arr[], armci_size_t bytes,
     void *ptr;
     int i,grp_me, grp_nproc;
     armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
+    ARMCI_PR_DBG("enter",0);
 
     ARMCI_Group_size(group, &grp_nproc);
     ARMCI_Group_rank(group, &grp_me);
@@ -122,6 +136,7 @@ void armci_altix_shm_malloc_group(void *ptr_arr[], armci_size_t bytes,
     bzero(ptr_arr,(grp_nproc)*sizeof(void*));
     ptr_arr[grp_me] = ptr;
     for(i=0; i< grp_nproc; i++) if(i!=grp_me) ptr_arr[i]=shmem_ptr(ptr,ARMCI_Absolute_id(group, i));
+    ARMCI_PR_DBG("exit",0);
 }
 #endif
 
@@ -134,6 +149,9 @@ void kr_check_local()
 kr_malloc_print_stats(&ctx_localmem);
 #endif
 kr_malloc_verify(&ctx_localmem);
+#if defined(PORTALS_WITHREG)
+kr_malloc_verify(&ctx_mlocalmem);
+#endif
 }
 
 void  armci_print_ptr(void **ptr_arr, int bytes, int size, void* myptr, int off)
@@ -141,6 +159,7 @@ void  armci_print_ptr(void **ptr_arr, int bytes, int size, void* myptr, int off)
 int i;
 int nproc = armci_clus_info[armci_clus_me].nslave;
 
+    ARMCI_PR_DBG("enter",0);
     for(i=0; i< armci_nproc; i++){
       int j;
       if(armci_me ==i){
@@ -151,7 +170,8 @@ int nproc = armci_clus_info[armci_clus_me].nslave;
         printf("\n"); fflush(stdout);
       }
       armci_msg_barrier();
-   }
+    }
+    ARMCI_PR_DBG("exit",0);
 }
 
 
@@ -159,8 +179,10 @@ int nproc = armci_clus_info[armci_clus_me].nslave;
 \*/
 static void armci_master_exp_attached_ptr(void* ptr)
 {
+    ARMCI_PR_DBG("enter",0);
     if(!ptr) armci_die("armci_master_exp_att_ptr: null ptr",0);
     *(volatile void**)ptr = ptr;
+    ARMCI_PR_DBG("exit",0);
 }
 
 
@@ -175,7 +197,7 @@ void armci_shmem_malloc(void *ptr_arr[], armci_size_t bytes)
     void **ptr_ref_arr;
     int  i,cn, len;
     int  nproc = armci_clus_info[armci_clus_me].nslave;
-
+    ARMCI_PR_DBG("enter",0);
     bzero((char*)ptr_arr,armci_nproc*sizeof(void*));
 
     /* allocate work arrays */
@@ -236,7 +258,7 @@ void armci_shmem_malloc(void *ptr_arr[], armci_size_t bytes)
                  armci_me,myptr, *(void**)myptr,size); fflush(stdout);
        }
     }
-#   ifdef HITACHI
+#   if defined(HITACHI) || defined(PORTALS)
         armci_register_shmem(myptr,size,idlist+1,idlist[0],ptr_ref_arr[armci_clus_me]);
 #   endif
 #   if defined(DATA_SERVER)
@@ -329,6 +351,7 @@ void armci_shmem_malloc(void *ptr_arr[], armci_size_t bytes)
     /* free work arrays */
     free(ptr_ref_arr);
     free(size_arr);
+    ARMCI_PR_DBG("exit",0);
 
 }
 
@@ -454,6 +477,7 @@ void armci_shmem_malloc_group(void *ptr_arr[], armci_size_t bytes,
     /* int  nproc = armci_clus_info[armci_clus_me].nslave; ? change ? */
     int grp_me, grp_nproc, grp_nclus, grp_master, grp_clus_nproc, grp_clus_me;
     armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
+    ARMCI_PR_DBG("enter",0);
 
     /* Get the group info: group size & group rank */
     ARMCI_Group_size(group, &grp_nproc);
@@ -532,8 +556,8 @@ void armci_shmem_malloc_group(void *ptr_arr[], armci_size_t bytes,
                  armci_me,myptr, *(void**)myptr,size); fflush(stdout);
        }
     }
-#   ifdef HITACHI
-    armci_register_shmem(myptr,size,idlist+1,idlist[0],ptr_ref_arr[armci_clus_me]);
+#   if defined(HITACHI) || defined(PORTALS)
+    armci_register_shmem_grp(myptr,size,idlist+1,idlist[0],ptr_ref_arr[armci_clus_me],group);
 #   endif
     
 #   if defined(DATA_SERVER)
@@ -641,6 +665,7 @@ void armci_shmem_malloc_group(void *ptr_arr[], armci_size_t bytes,
     /* free work arrays */
     free(ptr_ref_arr);
     free(size_arr);
+    ARMCI_PR_DBG("exit",0);
 }
 #endif /* ifdef MPI */
 
@@ -672,9 +697,19 @@ void armci_shmem_memctl(armci_meminfo_t *meminfo) {
 #ifdef ALLOW_PIN
 void *reg_malloc(size_t size)
 {
-     char *ptr = malloc(size);
-     armci_region_register_loc(ptr,(long)size);
-     return(ptr);
+#ifdef PORTALS
+char *ptr; 
+extern void *shmalloc(size_t);
+    ARMCI_PR_DBG("enter",0);
+    ptr = malloc(size);
+#else
+char *ptr; 
+    ARMCI_PR_DBG("enter",0);
+    ptr = malloc(size);
+#endif
+    armci_region_register_loc(ptr,size);
+    ARMCI_PR_DBG("exit",0);
+    return(ptr);
 }
 #endif
 
@@ -682,39 +717,60 @@ void *reg_malloc(size_t size)
 /* public constructor to initialize the kr_malloc context */
 void armci_krmalloc_init_localmem() {
 #if defined(ALLOW_PIN)
-  kr_malloc_init(0, 0, 0, reg_malloc, 0, &ctx_localmem);
-#elif defined(CRAY_SHMEM) && defined(CATAMOUNT)
-#define SHM_UNIT 1024
-  /* note, 1M is a hack, needs justification and/or better number */
-  int units_avail = (cnos_shmem_size() - 1024 * 1024) / SHM_UNIT;
-#if DEBUG_
-  fprintf(stderr, "%d: armci_krmalloc_init_localmem: sym heap=%llu, units(%d)=%d\n",
-          armci_me, cnos_shmem_size(), SHM_UNIT, units_avail);
-#endif
-  kr_malloc_init(SHM_UNIT, units_avail, units_avail, shmalloc, 0, &ctx_localmem);
+    kr_malloc_init(0, 0, 0, reg_malloc, 0, &ctx_localmem);
+#  if defined(PORTALS_WITHREG)
+    kr_malloc_init(0, 0, 0, malloc, 0, &ctx_mlocalmem);
+    ctx_mlocalmem.ctx_type = KR_CTX_LOCALMEM;
+#  endif
+#elif defined(CRAY_SHMEM) && defined(XT3)
+#   ifdef CATAMOUNT
+    int units_avail = (cnos_shmem_size() - 1024 * 1024) / SHM_UNIT;
+#   else
+    extern size_t get_xt_heapsize();
+    int units_avail = (get_xt_heapsize() - 1024 * 1024) / SHM_UNIT;
+#   endif
+
+    if(DEBUG_) 
+    {
+       fprintf(stderr,"%d:krmalloc_init_localmem: symheap=%llu,units(%d)=%d\n",
+               armci_me, SHM_UNIT*units_avail, SHM_UNIT, units_avail);
+    }
+    kr_malloc_init(SHM_UNIT, units_avail, units_avail, shmalloc, 0,
+                   &ctx_localmem);
+    armci_shmalloc_exchange_offsets(&ctx_localmem);
 #else
-  kr_malloc_init(0, 0, 0, malloc, 0, &ctx_localmem);
+
+    kr_malloc_init(0, 0, 0, malloc, 0, &ctx_localmem);
+
 #endif
-  ctx_localmem.ctx_type = KR_CTX_LOCALMEM;
+
+    ctx_localmem.ctx_type = KR_CTX_LOCALMEM;
 }
 
 /**
  * Local Memory Allocation and Free
  */
 void *ARMCI_Malloc_local(armci_size_t bytes) {
-    extern int _armci_malloc_local_region;
-#ifdef XT3
-    /*This is just a temporary way of marking local memory for XT3
-     * A better solution is to recognize this somewhere in regions.c
-     * but that will require a change in the design of regions.c
-     */
-    _armci_malloc_local_region=1;
-#endif
+    void *rptr;
+    ARMCI_PR_DBG("enter",0);
+#if defined(PORTALS_WITHREG)
+    rptr=kr_malloc((size_t)bytes, &ctx_mlocalmem);
+    ARMCI_PR_DBG("exit",0);
+    return rptr;
+#else
+    ARMCI_PR_DBG("exit",0);
     return (void *)kr_malloc((size_t)bytes, &ctx_localmem);
+#endif
 }
 
 int ARMCI_Free_local(void *ptr) {
+    ARMCI_PR_DBG("enter",0);
+#if defined(PORTALS_WITHREG)
+    kr_free((char *)ptr, &ctx_mlocalmem);
+#else
     kr_free((char *)ptr, &ctx_localmem);
+#endif
+    ARMCI_PR_DBG("exit",0);
     return 0;
 }
 
@@ -800,16 +856,20 @@ void armci_region_shm_malloc_grp(void *ptr_arr[], size_t bytes, ARMCI_Group *gro
 int ARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 {
     void *ptr;
+    ARMCI_PR_DBG("enter",0);
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_MALLOC,__FILE__,__LINE__);
 #endif
-    if(DEBUG_)
+    if(DEBUG_){ 
        fprintf(stderr,"%d bytes in armci_malloc %d\n",armci_me, (int)bytes);
+       fflush(stderr);
+       armci_msg_barrier();
+    }
 
 #ifdef REGION_ALLOC
     armci_region_shm_malloc(ptr_arr, bytes);
 #else
-#ifdef USE_MALLOC
+#  ifdef USE_MALLOC
     if(armci_nproc == 1) {
       ptr = kr_malloc((size_t) bytes, &ctx_localmem);
       if(bytes) if(!ptr) armci_die("armci_malloc:malloc 1 failed",(int)bytes);
@@ -817,15 +877,16 @@ int ARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 #     ifdef GA_USE_VAMPIR
            vampir_end(ARMCI_MALLOC,__FILE__,__LINE__);
 #     endif
+      ARMCI_PR_DBG("exit",0);
       return (0);
     }
-#endif
+#  endif
 
-#ifdef SGIALTIX
+#  ifdef SGIALTIX
     if( ARMCI_Uses_shm() ) armci_altix_shm_malloc(ptr_arr,bytes);
-#else
+#  else
     if( ARMCI_Uses_shm() ) armci_shmem_malloc(ptr_arr,bytes);
-#endif
+#  endif
     else {
       /* on distributed-memory systems just malloc & collect all addresses */
       ptr = kr_malloc(bytes, &ctx_localmem);
@@ -833,17 +894,23 @@ int ARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 
       bzero((char*)ptr_arr,armci_nproc*sizeof(void*));
       ptr_arr[armci_me] = ptr;
+      
+#  if defined(CRAY_SHMEM)
+      armci_shmalloc_exchange_address(ptr_arr);
+#  else
 
       /* now combine individual addresses into a single array */
       armci_exchange_address(ptr_arr, armci_nproc);
-#     ifdef ALLOW_PIN
-         armci_global_region_exchange(ptr, (long) bytes);
-#     endif
+#  endif
+#  ifdef ALLOW_PIN
+      armci_global_region_exchange(ptr, (long) bytes);
+#  endif
     }
 #endif
 #ifdef GA_USE_VAMPIR
       vampir_end(ARMCI_MALLOC,__FILE__,__LINE__);
 #endif
+    ARMCI_PR_DBG("exit",0);
     return(0);
 }
 
@@ -854,6 +921,7 @@ int ARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 \*/
 int ARMCI_Free(void *ptr)
 {
+    ARMCI_PR_DBG("enter",0);
     if(!ptr)return 1;
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_FREE,__FILE__,__LINE__);
@@ -885,7 +953,7 @@ int ARMCI_Free(void *ptr)
                 return 0;
              }
 #    endif
-     kr_free(ptr, &ctx_localmem);
+	  kr_free(ptr, &ctx_localmem);
 #  endif /* REGION_ALLOC */
 #else
      /* Altix */
@@ -897,6 +965,7 @@ int ARMCI_Free(void *ptr)
 #ifdef GA_USE_VAMPIR
      vampir_end(ARMCI_FREE,__FILE__,__LINE__);
 #endif
+    ARMCI_PR_DBG("exit",0);
      return 0;
 }
 
@@ -920,6 +989,7 @@ int ARMCI_Uses_shm()
 int ARMCI_Uses_shm_grp(ARMCI_Group *group) 
 {    
     int uses=0, grp_me, grp_nproc, grp_nclus;
+    ARMCI_PR_DBG("enter",0);
     armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
 
     ARMCI_Group_size(group, &grp_nproc);
@@ -930,10 +1000,15 @@ int ARMCI_Uses_shm_grp(ARMCI_Group *group)
 #   ifdef RMA_NEEDS_SHMEM
       if(grp_nproc >1) uses= 1; /* always unless serial mode */
 #   else
+#if 0
       if(grp_nproc != grp_nclus)uses= 1; /* only when > 1 node used */
+#else
+      if(armci_nproc != armci_nclus)uses= 1; /* only when > 1 node used */
+#endif
 #   endif
 #endif
     if(DEBUG_) fprintf(stderr,"%d (grp_id=%d):uses shmem %d\n",armci_me, grp_me, uses);
+    ARMCI_PR_DBG("exit",0);
     return uses;
 }
 
@@ -950,6 +1025,7 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
 {
     void *ptr;
     int grp_me, grp_nproc;
+    ARMCI_PR_DBG("enter",0);
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_MALLOC_GROUP,__FILE__,__LINE__);
 #endif
@@ -968,6 +1044,7 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
 #      ifdef GA_USE_VAMPIR
             vampir_end(ARMCI_MALLOC_GROUP,__FILE__,__LINE__);
 #      endif
+       ARMCI_PR_DBG("exit",0);
        return (0);
     }
 #endif
@@ -988,13 +1065,12 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
        ptr_arr[grp_me] = ptr;
        
        /* now combine individual addresses into a single array */
-       {
-          int ratio = sizeof(void*)/sizeof(int);
-          if(DEBUG_) printf("%d (grp_id=%d): exchanging %ld ratio=%d\n",armci_me,
-                            grp_me, (long)ptr_arr[grp_me], ratio);
-          armci_msg_group_gop_scope(SCOPE_ALL, ptr_arr, grp_nproc*ratio,
-                                    "+", ARMCI_INT, group);
-       }
+#if defined(CRAY_SHMEM)
+       armci_shmalloc_exchange_address_grp(ptr_arr, group);
+#else
+       armci_exchange_address_grp(ptr_arr, grp_nproc, group);
+#endif
+      
 #      ifdef ALLOW_PIN
 #         if 0
              /* ????? check ?????? */
@@ -1007,6 +1083,7 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
 #ifdef GA_USE_VAMPIR
     vampir_end(ARMCI_MALLOC_GROUP,__FILE__,__LINE__);
 #endif
+    ARMCI_PR_DBG("exit",0);
     return(0);
 }
 
@@ -1018,6 +1095,7 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
 {
     int grp_me, grp_nproc, grp_master, grp_clus_me;
     armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
+    ARMCI_PR_DBG("enter",0);
     
     if(!ptr)return 1;
 #ifdef GA_USE_VAMPIR
@@ -1055,6 +1133,7 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
 #         ifdef GA_USE_VAMPIR
           vampir_end(ARMCI_FREE_GROUP,__FILE__,__LINE__);
 #         endif
+          ARMCI_PR_DBG("exit",0);
           return 0;
        }
 #   endif
@@ -1071,6 +1150,7 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
 #ifdef GA_USE_VAMPIR
     vampir_end(ARMCI_FREE_GROUP,__FILE__,__LINE__);
 #endif
+    ARMCI_PR_DBG("exit",0);
     return 0;
 }
 /* ***************** End Group Collective Memory Allocation ******************/

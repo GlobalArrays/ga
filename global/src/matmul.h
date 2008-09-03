@@ -1,4 +1,4 @@
-/* $Id: matmul.h,v 1.16 2007-10-30 02:04:58 manoj Exp $ */
+/* $Id: matmul.h,v 1.15.4.1 2006-12-22 13:05:22 manoj Exp $ */
 #ifndef _MATMUL_H_
 #define _MATMUL_H_
 
@@ -80,6 +80,9 @@ extern void FATR  ga_nbget_(Integer *g_a, Integer *ilo, Integer *ihi,
 			    Integer *jlo, Integer *jhi, Void *buf, 
 			    Integer *ld, Integer *nbhdl);
 
+extern logical ngai_patch_intersect(Integer *lo, Integer *hi,
+                                    Integer *lop, Integer *hip, Integer ndim);
+    
 #define VECTORCHECK(rank,dims,dim1,dim2, ilo, ihi, jlo, jhi) \
   if(rank>2)  ga_error("rank is greater than 2",rank); \
   else if(rank==2) {dim1=dims[0]; dim2=dims[1];} \

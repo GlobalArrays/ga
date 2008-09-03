@@ -1,4 +1,4 @@
-$Id: README,v 1.2 2007-10-30 02:15:42 manoj Exp $
+$Id: README,v 1.1.2.1 2007-06-20 17:41:59 vinod Exp $
 Introduction:
   Nonblocking operations initiate a communication call and then return control
   to the application. The user who wishes to exploit nonblocking communication 

@@ -1,4 +1,4 @@
-/*$Id: comdegree.c,v 1.2 2007-10-30 02:15:41 manoj Exp $*/
+/*$Id: comdegree.c,v 1.1.2.1 2007-06-20 17:41:49 vinod Exp $*/
 /*
  *                                Copyright (c) 2006
  *                      Pacific Northwest National Laboratory,

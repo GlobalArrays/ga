@@ -1,4 +1,4 @@
-/* $Id: noncont.c,v 1.4 2007-10-30 02:04:55 manoj Exp $
+/* $Id: noncont.c,v 1.3.2.2 2007-05-04 16:43:35 d3p687 Exp $
  * noncont.c
  *
  * Developed by Andriy Kot <andriy.kot@pnl.gov>
@@ -46,6 +46,7 @@
 
 #if   defined(QUADRICS)
 typedef ELAN_EVENT *HTYPE;
+#define SHMEM_HANDLE_SUPPORTED
 #elif defined(CRAY_SHMEM)
 typedef void *HTYPE;
 #else
@@ -107,7 +108,7 @@ void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
       /* how big a batch of requests can we issue */
       batch = (count - _j )<max_pending ? count - _j : max_pending;
       _j += batch;
-#ifndef SHMEM_HANDLE_NOT_SUPPORTED
+#ifdef SHMEM_HANDLE_SUPPORTED
       for(i=0; i< batch; i++){
         if (CHK_HDL(put_dscr[cur_put])) armcill_nb_wait(put_dscr[cur_put]);
         else pending_put++;
@@ -144,7 +145,7 @@ void armcill_putv(int proc, int bytes, int count, void* src[], void* dst[])
       /* how big a batch of requests can we issue */
       batch = (count - _j )<max_pending ? count - _j : max_pending;
       _j += batch;
-#ifndef SHMEM_HANDLE_NOT_SUPPORTED
+#ifdef SHMEM_HANDLE_SUPPORTED
       for(i=0; i< batch; i++){
         if (CHK_HDL(put_dscr[cur_put])) armcill_nb_wait(put_dscr[cur_put]);
         else pending_put++;
@@ -166,7 +167,7 @@ void armcill_putv(int proc, int bytes, int count, void* src[], void* dst[])
     if(issued != count)
        armci_die2("armcill_putv: mismatch\n", count,issued);
 
-#ifndef SHMEM_HANDLE_NOT_SUPPORTED
+#ifdef SHMEM_HANDLE_SUPPORTED
     for(i=0; i<max_pending; i++) if(CHK_HDL(put_dscr[i])){
         armcill_nb_wait(put_dscr[i]);
         CLR_HDL(put_dscr[i]);
@@ -193,7 +194,7 @@ void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
       /* how big a batch of requests can we issue */
       batch = (count - _j )<max_pending ? count - _j : max_pending;
       _j += batch;
-#ifndef SHMEM_HANDLE_NOT_SUPPORTED
+#ifdef SHMEM_HANDLE_SUPPORTED
       for(i=0; i< batch; i++){
         PRN_DBG_MSG2("inner loop: cur_ptr=%d, tag=%d\n", cur_get, get_dscr[cur_get].tag);
         if (CHK_HDL(get_dscr[cur_get])) armcill_nb_wait(get_dscr[cur_get]);
@@ -233,7 +234,7 @@ void armcill_getv(int proc, int bytes, int count, void* src[], void* dst[])
       /* how big a batch of requests can we issue */
       batch = (count - _j )<max_pending ? count - _j : max_pending;
       _j += batch;
-#ifndef SHMEM_HANDLE_NOT_SUPPORTED
+#ifdef SHMEM_HANDLE_SUPPORTED
       for(i=0; i< batch; i++){
         if (CHK_HDL(get_dscr[cur_get])) armcill_nb_wait(get_dscr[cur_get]);
         else pending_get++;
@@ -255,7 +256,7 @@ void armcill_getv(int proc, int bytes, int count, void* src[], void* dst[])
     if(issued != count)
        armci_die2("armcill_getv: mismatch %d %d \n", count,issued);
 
-#ifndef SHMEM_HANDLE_NOT_SUPPORTED
+#ifdef SHMEM_HANDLE_SUPPORTED
     for(i=0; i<max_pending; i++) if(CHK_HDL(get_dscr[i])){
         armcill_nb_wait(get_dscr[i]);
         CLR_HDL(get_dscr[i]);
@@ -269,7 +270,7 @@ void armcill_getv(int proc, int bytes, int count, void* src[], void* dst[])
 void armcill_wait_get()
 {
     CALL_IN("armcill_wait_get");
-#ifndef SHMEM_HANDLE_NOT_SUPPORTED
+#ifdef SHMEM_HANDLE_SUPPORTED
     int i;
     if(!pending_get)return;
     else pending_get=0;
@@ -287,7 +288,7 @@ void armcill_wait_get()
 void armcill_wait_put()
 {
     CALL_IN("armcill_wait_put");
-#ifndef SHMEM_HANDLE_NOT_SUPPORTED
+#ifdef SHMEM_HANDLE_SUPPORTED
     int i;
     if(!pending_put)return;
     else pending_put=0;

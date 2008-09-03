@@ -1,4 +1,4 @@
-/* $Id: utils.h,v 1.2 2007-10-30 02:15:44 manoj Exp $
+/* $Id: utils.h,v 1.1.2.3 2007-07-02 05:35:31 d3p687 Exp $
  *
  * primitives for transparent handling of multi-threading
  */

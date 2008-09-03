@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.48 2007-10-30 02:04:58 manoj Exp $ */
+/* $Id: ghosts.c,v 1.47.4.2 2007-05-02 16:23:39 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer

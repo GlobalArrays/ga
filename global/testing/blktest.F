@@ -100,7 +100,7 @@ c
 #else
       call ga_set_block_cyclic(g_a, block)
 #endif
-      call ga_allocate(g_a)
+      status = ga_allocate(g_a)
       call ga_zero(g_a)
 c
       g_b = ga_create_handle() 
@@ -111,13 +111,13 @@ c
 #else
       call ga_set_block_cyclic(g_b, block)
 #endif
-      call ga_allocate(g_b)
+      status = ga_allocate(g_b)
       call ga_zero(g_b)
 c
       g_c = ga_create_handle() 
       call ga_set_data(g_c, ndim, dims, MT_F_INT)
       call ga_set_chunk(g_c, chunk)
-      call ga_allocate(g_c)
+      status = ga_allocate(g_c)
       call ga_zero(g_c)
 c
       g_d = ga_create_handle() 
@@ -128,7 +128,7 @@ c
 #else
       call ga_set_block_cyclic(g_d, block)
 #endif
-      call ga_allocate(g_d)
+      status = ga_allocate(g_d)
       call ga_zero(g_d)
 c
       g_e = ga_create_handle() 
@@ -139,7 +139,7 @@ c
 #else
       call ga_set_block_cyclic(g_e, block)
 #endif
-      call ga_allocate(g_e)
+      status = ga_allocate(g_e)
       call ga_zero(g_e)
 c
       g_f = ga_create_handle() 
@@ -150,25 +150,25 @@ c
 #else
       call ga_set_block_cyclic(g_f, block)
 #endif
-      call ga_allocate(g_f)
+      status = ga_allocate(g_f)
       call ga_zero(g_f)
 c
       g_h = ga_create_handle() 
       call ga_set_data(g_h, ndim, dims, MT_F_DBL)
       call ga_set_chunk(g_h, chunk)
-      call ga_allocate(g_h)
+      status = ga_allocate(g_h)
       call ga_zero(g_h)
 c
       g_i = ga_create_handle() 
       call ga_set_data(g_i, ndim, dims, MT_F_DBL)
       call ga_set_chunk(g_i, chunk)
-      call ga_allocate(g_i)
+      status = ga_allocate(g_i)
       call ga_zero(g_i)
 c
       g_j = ga_create_handle() 
       call ga_set_data(g_j, ndim, dims, MT_F_DBL)
       call ga_set_chunk(g_j, chunk)
-      call ga_allocate(g_j)
+      status = ga_allocate(g_j)
       call ga_zero(g_j)
 c
       if(me.eq.0)then
@@ -326,7 +326,7 @@ c
           write(6,200) (a(i,j),j=1,min(nmax,8))
         end do
       endif
-      call nga_locate_region(g_a,tlo,thi,block_map,block_list,nblock)
+      status=nga_locate_region(g_a,tlo,thi,block_map,block_list,nblock)
       nb = nga_locate_num_blocks(g_a,tlo,thi)
       if (me.eq.0) then
         write(6,*)
@@ -1050,12 +1050,12 @@ c
         write(6,302)
       endif
   302 format(' Finished tests')
-      call ga_destroy(g_a)
-      call ga_destroy(g_b)
-      call ga_destroy(g_c)
-      call ga_destroy(g_d)
-      call ga_destroy(g_e)
-      call ga_destroy(g_f)
+      status = ga_destroy(g_a)
+      status = ga_destroy(g_b)
+      status = ga_destroy(g_c)
+      status = ga_destroy(g_d)
+      status = ga_destroy(g_e)
+      status = ga_destroy(g_f)
       call ga_terminate()
 c
 c***  Tidy up after message-passing library

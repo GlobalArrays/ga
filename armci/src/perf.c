@@ -493,7 +493,7 @@ int main(int argc, char **argv)
     }
     
     /* initialize ARMCI */
-    ARMCI_Init();
+    ARMCI_Init_args(&argc, &argv);
 
     if(!me)printf("\n             Performance of Basic Blocking Communication Operations\n");
     MP_BARRIER();

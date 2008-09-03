@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.19 2007-10-30 02:05:00 manoj Exp $
+ * $Id: macdecls.h,v 1.18.6.1 2006-12-14 13:24:53 manoj Exp $
  */
 
 /* 

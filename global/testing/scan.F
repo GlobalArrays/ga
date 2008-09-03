@@ -271,7 +271,11 @@ C
      *        jpack(nelements_max), 
      *        kpack(nelements_max), 
      *        ielm1(nelements_max), 
-     *        ielm4(nen_max*nelements_max)
+     *        ielm2(nen_max*nelements_max),
+     *        ielm3(nen_max*nelements_max),
+     *        ielm4(nen_max*nelements_max),
+     *        ielm5(nen_max*nelements_max)
+      integer itest(nen_max*nelements_max), one
       double precision velm4(nen_max*nelements_max), 
      *                 velm5(nen_max*nelements_max)
 c
@@ -282,7 +286,7 @@ C
       integer nelements, nen
       integer isum, icount, itoff
       double precision result
-      integer i1, i2
+      integer i1, i2, ichk
 C
 c
 c***  check parallel environment
@@ -469,7 +473,22 @@ C
 *     call ga_print(g_icolmat)
 *     call ga_print(g_src2)
 *     call ga_print(g_sbit2)
-      call GA_scan_add(g_src2, g_icolmat,g_sbit2,1,itoff)
+c      if (me.eq.0) then
+c        one = 1
+c        call nga_get(g_src2,one,dims,itest,one)
+c        write(6,'(25i4)') (itest(i),i=1,dims(1))
+c        write(6,*)
+c        call nga_get(g_sbit2,one,dims,itest,one)
+c        write(6,'(25i4)') (itest(i),i=1,dims(1))
+c      endif
+      call ga_sync
+      call GA_scan_add(g_src2, g_icolmat,g_sbit2,1,itoff,0)
+c      if (me.eq.0) then
+c        one = 1
+c        write(6,*)
+c        call nga_get(g_icolmat,one,dims,itest,one)
+c        write(6,'(25i4)') (itest(i),i=1,dims(1))
+c      endif
 C     ***   sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
 C     ***    src2: 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 C     *** icolmat: 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 .....
@@ -495,6 +514,37 @@ C     *** result = sum(velm4 * velm5) = (1+2+3+4+...+nen)*nelements
          print *,"Scan_add failed."
       endif
       call ga_sync()
+      call ga_sync
+      call GA_scan_add(g_src2, g_icolmat,g_sbit2,1,itoff,1)
+C     ***   sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
+C     ***    src2: 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+C     *** icolmat: 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 .....
+c      if (me.eq.0) then
+c        one = 1
+c        write(6,*)
+c        call nga_get(g_icolmat,one,dims,itest,one)
+c        write(6,'(25i4)') (itest(i),i=1,dims(1))
+c      endif
+      call nga_get(g_src2, 1, itoff, ielm2, one)
+      call nga_get(g_sbit2, 1, itoff, ielm3, one)
+      call nga_get(g_icolmat, 1, itoff, ielm4, one)
+      call nga_get(g_icolmat, 1, itoff, ielm5, one)
+      ichk = 1
+      do i = 1, itoff
+        if (ielm3(i).eq.1.or.i.eq.1) then
+          ielm4(i) = 0
+        else
+          ielm4(i) = ielm4(i-1) + ielm2(i-1)
+        endif
+        if (ielm4(i).ne.ielm5(i)) then
+          ichk = 0
+        endif
+      end do
+      if (ichk.eq.1) then
+        print *,"Exclusive scan_add successful."
+      else
+       print *,"Exclusive scan_add failed."
+      endif
 C
       goto 9999
  9999 continue

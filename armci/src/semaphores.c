@@ -11,7 +11,7 @@ void fflush();
 int semget(),semctl();
 #endif
 
-extern void armci_die(char*, int);
+#include "armcip.h"
 
 struct sembuf sops;
 int semaphoreID;

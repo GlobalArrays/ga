@@ -143,7 +143,7 @@ int init=0;
    make_tcgmsg_comm();
    MPI_Barrier(MPI_COMM_WORLD);
    /* printf("%d:ready to go\n",NODEID_()); */
-   install_nxtval();
+   install_nxtval(argc, argv);
 #ifdef GA_USE_VAMPIR
    vampir_end(TCGMSG_PBEGINF,__FILE__,__LINE__);
 #endif

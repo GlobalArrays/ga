@@ -1,4 +1,4 @@
-/* $Id: simple.c,v 1.2 2007-10-30 02:15:40 manoj Exp $ */
+/* $Id: simple.c,v 1.1.2.1 2007-06-20 17:41:40 vinod Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>

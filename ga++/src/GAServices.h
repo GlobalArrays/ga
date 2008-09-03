@@ -208,6 +208,14 @@ class GAServices {
   void brdcst(void *buf, int lenbuf, int root);
 
   /**
+   * Returns the current value of the internal debug flag. This is 0 if
+   * the debug flag is false, 1 if it is true.
+   * This is a local operation.
+   */
+  int getDebug();
+
+
+  /**
    * This functions returns the total number of nodes that the program is 
    * running on. On SMP architectures, this will be less than or equal to 
    * the total number of processors. 
@@ -222,6 +230,14 @@ class GAServices {
    * \n This is a  local operation. 
    */
   int clusterNodeid();
+
+  /**  
+   * This function returns the cluster node ID of the specified process.
+   * On SMP architectures with more than one processor per node, several
+   * processes may return the same node id. 
+   * \n This is a  local operation. 
+   */
+  int clusterProcNodeid(int iproc);
   
   /**
    * This function returns the number of processors available on node inode. 
@@ -409,6 +425,26 @@ class GAServices {
    * is local. 
    */
   int memoryLimited();
+
+  /**
+   * Force completion of a nonblocking operation locally. Waiting on a
+   * nonblocking put or an accumulate operation assures that data was injected
+   * into the network and the user buffer can be now be reused. Completing a get
+   * operation assures data has arrived into the user memory and is ready for
+   * use. Wait operation ensures only local completion. Unlike their blocking
+   * counterparts, the nonblocking operations are not ordered with respect to
+   * the destination. Performance being one reason, the other reason is that by
+   * ensuring ordering we incur additional and possibly unnecessary overhead on
+   * applications that do not require their operations to be ordered. For cases
+   * where ordering is necessary, it can be done by calling a fence operation.
+   * The fence operation is provided to the user to confirm remote completion if
+   * needed.
+   *
+   * This is a local operation.
+   *
+   * @param nbhandle    - nonblocking handle                         [input]
+   */
+  void nbWait(int *nbhandle);
 
   /**
    * Returns the GA process id (0, ..., ga_Nnodes()-1) of the requesting 

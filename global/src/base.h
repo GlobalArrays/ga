@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.41 2007-10-30 02:04:57 manoj Exp $ */
+/*$Id: base.h,v 1.40.2.4 2007/12/18 18:41:27 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -150,6 +150,7 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 }
 
 /* this macro finds the ScaLAPACK indices for a given processor */
+#ifdef COMPACT_SCALAPACK
 #define gam_find_proc_indices(ga_handle,proc,index) {                          \
   Integer _itmp, _i;                                                           \
   Integer _ndim = GA[ga_handle].ndim;                                          \
@@ -160,6 +161,18 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
     index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
   }                                                                            \
 }
+#else
+#define gam_find_proc_indices(ga_handle,proc,index) {                          \
+  Integer _itmp, _i;                                                           \
+  Integer _ndim = GA[ga_handle].ndim;                                          \
+  _itmp = proc;                                                                \
+  index[_ndim-1] = _itmp%GA[ga_handle].nblock[_ndim-1];                        \
+  for (_i=_ndim-2; _i>=0; _i--) {                                              \
+    _itmp = (_itmp-index[_i+1])/GA[ga_handle].nblock[_i+1];                    \
+    index[_i] = _itmp%GA[ga_handle].nblock[_i];                                \
+  }                                                                            \
+}
+#endif
 
 /* this macro finds cordinates of the chunk of array owned by processor proc */
 #define ga_ownsM(ga_handle, proc, lo, hi)                                      \
@@ -193,6 +206,7 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 
 /* this macro finds the proc that owns a given set block indices
    using the ScaLAPACK data distribution */
+#ifdef COMPACT_SCALAPACK
 #define gam_find_proc_from_sl_indices(ga_handle,proc,index) {                  \
   int _ndim = GA[ga_handle].ndim;                                              \
   int _i;                                                                      \
@@ -205,6 +219,20 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
     proc = proc*GA[ga_handle].nblock[_i]+_index2[_i];                          \
   }                                                                            \
 }
+#else
+#define gam_find_proc_from_sl_indices(ga_handle,proc,index) {                  \
+  int _ndim = GA[ga_handle].ndim;                                              \
+  int _i;                                                                      \
+  Integer _index2[MAXDIM];                                                     \
+  for (_i=0; _i<_ndim; _i++) {                                                 \
+    _index2[_i] = index[_i]%GA[ga_handle].nblock[_i];                          \
+  }                                                                            \
+  proc = _index2[0];                                                           \
+  for (_i=1; _i < _ndim; _i++) {                                               \
+    proc = proc*GA[ga_handle].nblock[_i]+_index2[_i];                          \
+  }                                                                            \
+}
+#endif
 /* this macro computes the strides on both the remote and local
    processors that map out the data. ld and ldrem are the physical dimensions
    of the memory on both the local and remote processors. */

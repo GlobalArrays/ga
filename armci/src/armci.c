@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.118 2007-10-30 02:04:53 manoj Exp $ */
+/* $Id: armci.c,v 1.114.2.17 2007-08-30 22:58:18 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -43,6 +43,9 @@
 #include "shmem.h"
 #include "signaltrap.h"
 
+#ifdef ARMCIX
+#include "armcix/armcix.h"
+#endif
 #ifdef GA_USE_VAMPIR
 #include "armci_vampir.h"
 #endif
@@ -64,15 +67,18 @@ extern void armci_msg_barrier(void);
 #  endif
 #endif
 
-/* global variables */
+/* global variables -- Initialized in ARMCI_Init() and never modified*/
 int armci_me, armci_nproc;
 int armci_clus_me, armci_nclus, armci_master;
 int armci_clus_first, armci_clus_last;
 int _armci_initialized=0;
+int _armci_initialized_args=0;
 int _armci_terminating =0;
+int *_armci_argc=NULL;
+char ***_armci_argv=NULL;
 thread_id_t armci_usr_tid;
-armci_ireq_t armci_inb_handle[ARMCI_MAX_IMPLICIT];/*implicit non-blocking handle*/
-#ifndef HITACHI
+
+#if !defined(HITACHI) && !defined(THREAD_SAFE)
 double armci_internal_buffer[BUFSIZE_DBL];
 #endif
 #if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI) || defined(CATAMOUNT) || defined(BGML)
@@ -171,7 +177,7 @@ int AR_caught_sigint;
 int AR_caught_sigterm;
 #endif
 
-static void armci_abort(int code)
+void armci_abort(int code)
 {
 #if !defined(BGML)
     armci_perror_msg();
@@ -198,6 +204,8 @@ static void armci_abort(int code)
 }
 
 
+#if 0
+/*more informative program termination in armci.h*/
 void armci_die(char *msg, int code)
 {
     void *bt[100];
@@ -220,7 +228,6 @@ void armci_die(char *msg, int code)
     armci_abort(code);
 }
 
-
 void armci_die2(char *msg, int code1, int code2)
 {
     void *bt[100];
@@ -242,19 +249,24 @@ void armci_die2(char *msg, int code1, int code2)
 #endif
     armci_abort(code1);
 }
+#endif
 
 
+/*For now, until no code requires a function pointer to ARMCI_Error
+  (used by GA now).*/
 void ARMCI_Error(char *msg, int code)
 {
     armci_die(msg,code);
 }
 
 
+
 void armci_allocate_locks()
 {
     /* note that if ELAN_ACC is defined the scope of locks is limited to SMP */
-#if !defined(CRAY_SHMEM) && (defined(HITACHI) || defined(CATAMOUNT) || \
-    (defined(QUADRICS) && defined(_ELAN_LOCK_H) && !defined(ELAN_ACC)))
+#if !defined(CRAY_SHMEM) && \
+    ( defined(HITACHI) || defined(CATAMOUNT) || defined(PORTALS) || \
+      (defined(QUADRICS) && defined(_ELAN_LOCK_H) && !defined(ELAN_ACC)) )
        armcill_allocate_locks(NUM_LOCKS);
 #elif (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(HITACHI)
        if(armci_nproc == 1)return;
@@ -305,6 +317,8 @@ void armci_init_memlock()
 
 #ifdef BGML
     bgml_init_locks ((void *) memlock_table_array[armci_me]);
+#elif ARMCIX
+    ARMCIX_init_memlock ((memlock_t *) memlock_table_array[armci_me]);
 #endif
 
 
@@ -344,7 +358,6 @@ static void armci_check_shmmax()
 }
 #endif
 
-void* test_ptr_arr[MAX_PROC];
 extern void armci_region_shm_malloc(void *ptr_arr[], size_t bytes);
 
 #ifdef DO_CKPT
@@ -368,8 +381,55 @@ void armci_create_ft_group()
 }
 #endif
 
+int ARMCI_Init_args(int *argc, char ***argv) 
+{
+#ifdef MPI_SPAWN
+    /* If this is data server process, then it should call
+     * armci_mpi2_server_init() instead of ARMCI_Init(). ARMCI_Init() should
+     * only be called by clients */
+    {
+       MPI_Comm parent_comm;
+       MPI_Comm_get_parent(&parent_comm);
+       if (parent_comm != MPI_COMM_NULL) armci_mpi2_server();
+    }
+#endif
+
+    _armci_argc = argc;
+    _armci_argv = argv;
+    _armci_initialized_args=1;
+    ARMCI_Init();
+}
+
+void _armci_test_connections() {
+  int i;
+  int nprocs = armci_msg_nproc();
+  int **bufs = (int **)malloc(nprocs*sizeof(int*));
+  int *val;
+  dassert(1, bufs);
+
+  ARMCI_Malloc(bufs, sizeof(int));
+  dassert(1, bufs[armci_me]);
+  val = ARMCI_Malloc_local(sizeof(int));
+  dassert(1, val);
+
+  for(i=0; i<nprocs; i++) {
+    dassert(1, bufs[i]);
+    ARMCI_Put(val, bufs[i], sizeof(int), i);
+  }
+  ARMCI_AllFence();
+  ARMCI_Barrier();
+  ARMCI_Free(bufs[armci_me]);
+  ARMCI_Free_local(val);
+  free(bufs);
+  if(armci_me==0) {
+    printf("All connections between all procs tested: SUCCESS\n");
+    fflush(stdout);
+  }
+}
+
 int ARMCI_Init()
 {
+  char *uval;
     int th_idx;
     if(_armci_initialized>0) return 0;
 #ifdef GA_USE_VAMPIR
@@ -377,6 +437,22 @@ int ARMCI_Init()
     armci_vampir_init(__FILE__,__LINE__);
     vampir_begin(ARMCI_INIT,__FILE__,__LINE__);
 #endif
+    dassertp(1,sizeof(armci_ireq_t) <= sizeof(armci_hdl_t),
+	     ("nb handle sizes: internal(%d) should be <= external(%d)\n",
+	      sizeof(armci_ireq_t), sizeof(armci_hdl_t)));
+#if defined(MPI)
+    dassertp(1,sizeof(ARMCI_iGroup) <= sizeof(ARMCI_Group),
+	     ("Group handle sizes: internal(%d) should be <= external(%d)\n",
+	      sizeof(ARMCI_iGroup), sizeof(ARMCI_Group)));
+#endif
+#ifdef MPI_SPAWN
+    if(!_armci_initialized_args)
+       armci_die("ARMCI is built w/ ARMCI_NETWORK=MPI-SPAWN. For this network "
+                 "setting, ARMCI must be initialized with ARMCI_Init_args() "
+                 "instead of ARMCI_Init(). Please replace ARMCI_Init() "
+                 " with ARMCI_Init_args(&argc, &argv) as in the API docs", 0L);
+#endif
+    
 #ifdef BGML
     BGML_Messager_Init();
     BG1S_Configuration_t config;
@@ -389,9 +465,10 @@ int ARMCI_Init()
       bgml_barrier = (BGML_Barrier) BGGI_Barrier;
     else
       bgml_barrier = (BGML_Barrier) BGTr_Barrier;
-
 #endif
-
+#ifdef ARMCIX
+    ARMCIX_Init ();
+#endif
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();
     armci_usr_tid = THREAD_ID_SELF(); /*remember the main user thread id */
@@ -421,7 +498,6 @@ int ARMCI_Init()
 
 #ifdef PORTALS
     armci_init_portals();
-    shmem_init();
 #endif
 
 #ifdef QUADRICS
@@ -490,7 +566,10 @@ int ARMCI_Init()
 #endif
 
 #ifdef REGION_ALLOC
-       ARMCI_Malloc(test_ptr_arr,256*1024*1024);
+       {
+	 void* test_ptr_arr = malloc(sizeof(void *)*MAX_PROC);
+	 dassert(1,test_ptr_arr);
+	 ARMCI_Malloc(test_ptr_arr,256*1024*1024);
 #if 0
        {
           int i;
@@ -505,6 +584,8 @@ int ARMCI_Init()
        }
 #endif
        ARMCI_Free(test_ptr_arr[armci_me]);
+       free(test_ptr_arr);
+       }
 #endif
 
 #ifdef MULTI_CTX
@@ -562,7 +643,7 @@ int ARMCI_Init()
 #   if defined(DATA_SERVER) || defined(ELAN_ACC)
        if(armci_nclus >1) armci_start_server();
 #   endif
-#if defined(GM) || defined(VAPI) || defined (PORTALS)
+#if defined(GM) || defined(VAPI)
     /* initialize registration of memory */
     armci_region_init();
 #endif
@@ -586,6 +667,11 @@ int ARMCI_Init()
 #ifdef DO_CKPT
     armci_init_checkpoint(armci_ft_spare_procs);
 #endif
+
+    uval = getenv("ARMCI_TEST_CONNECTIONS"); 
+    if(uval!=NULL) {
+      _armci_test_connections();
+    }
     return 0;
 }
 
@@ -593,6 +679,7 @@ int ARMCI_Init()
 void ARMCI_Finalize()
 {
     _armci_initialized--;
+
     if(_armci_initialized)return;
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_FINALIZE,__FILE__,__LINE__);
@@ -601,7 +688,11 @@ void ARMCI_Finalize()
     armci_profile_terminate();
 #endif
 
-    _armci_terminating =1;;
+    _armci_terminating =1;
+    _armci_initialized_args=0;
+    _armci_argc = NULL;
+    _armci_argv = NULL;
+    
     armci_msg_barrier();
     if(armci_me==armci_master) ARMCI_ParentRestoreSignals();
 
@@ -620,6 +711,9 @@ void ARMCI_Finalize()
 #endif
     ARMCI_Cleanup();
     armci_msg_barrier();
+#ifdef MPI
+    armci_group_finalize();
+#endif
 #ifdef GA_USE_VAMPIR
     vampir_end(ARMCI_FINALIZE,__FILE__,__LINE__);
     vampir_finalize(__FILE__,__LINE__);
@@ -721,7 +815,7 @@ int direct=SAMECLUSNODE(nb_handle->proc);
 #             endif
               return(success);
         }
-#       if defined(LAPI) || defined(ALLOW_PIN)
+#       if defined(LAPI) || defined(ALLOW_PIN) || defined(ARMCIX)
          if(nb_handle->tag!=0 && nb_handle->bufid==NB_NONE){
                ARMCI_NB_WAIT(nb_handle->cmpl_info);
 #              ifdef ARMCI_PROFILE
@@ -747,25 +841,27 @@ int direct=SAMECLUSNODE(nb_handle->proc);
 /** 
  * implicit handle 
  */
+static armci_hdl_t armci_nb_handle[ARMCI_MAX_IMPLICIT];/*implicit non-blocking handle*/
 static char hdl_flag[ARMCI_MAX_IMPLICIT];
 static int impcount=0;
-armci_ihdl_t armci_set_implicit_handle (int op, int proc) {
- 
+armci_hdl_t *armci_set_implicit_handle (int op, int proc) {
+  armci_ihdl_t nbh;
   int i=impcount%ARMCI_MAX_IMPLICIT;
   if(hdl_flag[i]=='1')
-    ARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
+    ARMCI_Wait(&armci_nb_handle[i]);
 
+  nbh = (armci_ihdl_t)&armci_nb_handle[i];
 #ifdef BGML
-   armci_inb_handle[i].count=0;
+   nbh->count=0;
 #endif
-  armci_inb_handle[i].tag   = GET_NEXT_NBTAG();
-  armci_inb_handle[i].op    = op;
-  armci_inb_handle[i].proc  = proc;
-  armci_inb_handle[i].bufid = NB_NONE;
-  armci_inb_handle[i].agg_flag = 0;
+  nbh->tag   = GET_NEXT_NBTAG();
+  nbh->op    = op;
+  nbh->proc  = proc;
+  nbh->bufid = NB_NONE;
+  nbh->agg_flag = 0;
   hdl_flag[i]='1';
   ++impcount;
-  return &armci_inb_handle[i];
+  return &armci_nb_handle[i];
 }
  
  
@@ -773,12 +869,14 @@ armci_ihdl_t armci_set_implicit_handle (int op, int proc) {
 int ARMCI_WaitAll (void) {
 #ifdef BGML
   BGML_WaitAll();
+#elif ARMCIX
+  ARMCIX_WaitAll ();
 #else
   int i;
   if(impcount) {
     for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
       if(hdl_flag[i] == '1') {
-        ARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
+        ARMCI_Wait(&armci_nb_handle[i]);
         hdl_flag[i]='0';
       }
     }
@@ -792,12 +890,15 @@ int ARMCI_WaitAll (void) {
 int ARMCI_WaitProc (int proc) {
 #ifdef BGML
   BGML_WaitProc(proc);
+#elif ARMCIX
+  ARMCIX_WaitProc (proc);
 #else
   int i;
   if(impcount) {
     for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
-      if(hdl_flag[i]=='1' && armci_inb_handle[i].proc==proc) {
-        ARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
+      if(hdl_flag[i]=='1' && 
+	 ((armci_ihdl_t)&armci_nb_handle[i])->proc==proc) {
+        ARMCI_Wait(&armci_nb_handle[i]);
         hdl_flag[i]='0';
       }
     }
@@ -806,9 +907,13 @@ int ARMCI_WaitProc (int proc) {
   return 0;
 }
 
-static unsigned int _armci_nb_tag=0;
 unsigned int _armci_get_next_tag(){
-    return((++_armci_nb_tag));
+  static unsigned int _armci_nb_tag=0;
+  unsigned int rval;
+  THREAD_LOCK(armci_user_threads.lock);
+  rval = ++_armci_nb_tag;
+  THREAD_UNLOCK(armci_user_threads.lock);
+  return rval;
 }
 
 void ARMCI_SET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle) { 
@@ -1155,3 +1260,14 @@ char           *ret = 0;
 }
 #endif
 
+
+int dassertp_fail(const char *cond_string, const char *file, 
+		  const char *func, unsigned int line) {
+  printf("%d:ARMCI DASSERT fail. %s:%s():%d cond:%s\n",
+	 armci_me,file,func,line,cond_string);
+#if defined(PRINT_BT)
+    backtrace_symbols_fd(bt, backtrace(bt, 100), 2);
+#endif
+  armci_abort(0);
+  return 0;
+}

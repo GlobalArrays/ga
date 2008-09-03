@@ -2,7 +2,7 @@
 #define _TYPES_F2C_H_
 
 /*
- * $Id: typesf2c.h,v 1.6 2007-10-30 02:05:00 manoj Exp $
+ * $Id: typesf2c.h,v 1.5.12.2 2006-12-22 13:05:28 manoj Exp $
  */
 
 #  if defined(_WIN32) && !defined(CYGNUS) && !defined(CYGWIN)

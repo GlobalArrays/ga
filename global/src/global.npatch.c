@@ -535,7 +535,7 @@ void nga_copy_patch(char *trans,
       /* Array a is block-cyclic distributed */
       if (num_blocks_a >= 0) {
         /* Uses simple block-cyclic data distribution */
-        if (!ga_scalapack_distribution_(g_a)) {
+        if (!ga_uses_proc_grid_(g_a)) {
           for (i = me_a; i < num_blocks_a; i += anproc) {
             nga_distribution_(g_a, &i, los, his); 
             /* make temporory copies of los, his since ngai_patch_intersection
@@ -593,7 +593,7 @@ void nga_copy_patch(char *trans,
           ga_get_proc_index_(g_a, &me_a, proc_index);
           ga_get_proc_index_(g_a, &me_a, index);
           ga_get_block_info_(g_a, blocks, block_dims);
-          ga_topology_(g_a, topology);
+          ga_get_proc_grid_(g_a, topology);
           while (index[andim-1] < blocks[andim-1]) {
             /* find bounding coordinates of block */
             chk = 1;
@@ -675,7 +675,7 @@ void nga_copy_patch(char *trans,
       /* Array b is block-cyclic distributed */
       if (num_blocks_b >= 0) {
         /* Uses simple block-cyclic data distribution */
-        if (!ga_scalapack_distribution_(g_b)) {
+        if (!ga_uses_proc_grid_(g_b)) {
           for (i = me_b; i < num_blocks_b; i += bnproc) {
             nga_distribution_(g_b, &i, los, his); 
             /* make temporory copies of los, his since ngai_patch_intersection
@@ -733,7 +733,7 @@ void nga_copy_patch(char *trans,
           ga_get_proc_index_(g_b, &me_b, proc_index);
           ga_get_proc_index_(g_b, &me_b, index);
           ga_get_block_info_(g_b, blocks, block_dims);
-          ga_topology_(g_b, topology);
+          ga_get_proc_grid_(g_b, topology);
           while (index[bndim-1] < blocks[bndim-1]) {
             /* find bounding coordinates of block */
             chk = 1;
@@ -814,6 +814,7 @@ void nga_copy_patch(char *trans,
     }
   }
   GA_POP_NAME;
+  ARMCI_AllFence();
   if(local_sync_end) {
     if (anproc <= bnproc) {
       ga_pgroup_sync_(&a_grp);
@@ -1187,7 +1188,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
       Integer lo[MAXDIM], hi[MAXDIM];
       Integer offset, jtot, last;
       /* simple block cyclic data distribution */
-      if (!ga_scalapack_distribution_(g_a)) {
+      if (!ga_uses_proc_grid_(g_a)) {
         for (i=me; i<num_blocks_a; i += nproc) {
           nga_distribution_(&g_A, &i, loA, hiA);
           /* make copies of loA and hiA since ngai_patch_intersect destroys
@@ -1256,7 +1257,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
         ga_get_proc_index_(g_a, &me, proc_index);
         ga_get_proc_index_(g_a, &me, index);
         ga_get_block_info_(g_a, blocks, block_dims);
-        ga_topology_(g_a, topology);
+        ga_get_proc_grid_(g_a, topology);
         while (index[andim-1] < blocks[andim-1]) {
           /* find bounding coordinates of block */
           chk = 1;
@@ -1715,7 +1716,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
     Integer loS[MAXDIM];
     nproc = ga_nnodes_();
     /* using simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)){
+    if (!ga_uses_proc_grid_(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of patch */ 
         nga_distribution_(g_a, &i, loA, hiA);
@@ -1792,7 +1793,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
       while (index[ndim-1] < blocks[ndim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -2070,7 +2071,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
     Integer loS[MAXDIM];
     nproc = ga_nnodes_();
     /* using simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)){
+    if (!ga_uses_proc_grid_(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of VISIBLE patch */
         nga_distribution_(g_a, &i, loA, hiA);
@@ -2147,7 +2148,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
       while (index[ndim-1] < blocks[ndim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -2565,7 +2566,7 @@ DoublePrecision *alpha, *beta;
       Integer idx, lod[MAXDIM], hid[MAXDIM];
       Integer offset, jtot, last;
       /* Simple block-cyclic data disribution */
-      if (!ga_scalapack_distribution_(g_c)) {
+      if (!ga_uses_proc_grid_(g_c)) {
         for (idx = me; idx < num_blocks_c; idx += nproc) {
           nga_distribution_(g_c, &idx, loC, hiC);
           /* make temporary copies of loC and hiC since ngai_patch_intersect
@@ -2646,7 +2647,7 @@ DoublePrecision *alpha, *beta;
         ga_get_proc_index_(g_c, &me, proc_index);
         ga_get_proc_index_(g_c, &me, index);
         ga_get_block_info_(g_c, blocks, block_dims);
-        ga_topology_(g_c, topology);
+        ga_get_proc_grid_(g_c, topology);
         while (index[cndim-1] < blocks[cndim-1]) {
           /* find bounding coordinates of block */
           chk = 1;

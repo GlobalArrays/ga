@@ -19,7 +19,7 @@ void FATR ga_lu_solve_(char *tran, Integer * g_a, Integer * g_b) {
   ga_inquire(g_b, &typeB, &dimB1, &dimB2);
   
   if( (dimA1*dimA2 > _MAX_PROB_SIZE_) || (dimB1*dimB2 > _MAX_PROB_SIZE_) )
-    ga_error("ga_lu_solve:Array size too large. Use scalapack for optimum performance. setenv USE_SCALAPACK=y for ga_lu_solve to use Scalapack interface",0L);
+    ga_error("ga_lu_solve:Array size too large. Use scalapack for optimum performance. setenv USE_SCALAPACK=y or setenv USE_SCALAPACK_I8=y for ga_lu_solve to use Scalapack interface",0L);
 
   ga_lu_solve_seq(tran, g_a, g_b);
 }

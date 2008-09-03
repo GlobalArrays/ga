@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.153 2007-10-30 02:04:57 manoj Exp $ */
+/* $Id: base.c,v 1.149.2.19 2007/12/18 18:42:20 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -129,6 +129,9 @@ int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
 static int ga_group_is_for_ft=0;
 int ga_spare_procs;
 #endif
+
+extern int _ga_initialize_args;
+
 
 /*************************************************************************/
 
@@ -293,6 +296,70 @@ void ga_check_handle(Integer *g_a,char * string)
   ga_check_handleM(g_a,string);
 }
 
+/*\ Get command line arguments if GA in initailzed thru' Fortran interface.
+ *  Also, this args are required only for MPI-SPAWN networks
+\*/
+#ifdef MPI_SPAWN
+#  include "../../tcgmsg/farg.h"
+#  define LEN 255
+int gai_argc;
+char *gai_argv[LEN];
+void gai_get_cmd_args() 
+{
+    /* GA initialized from C programs should skip this */
+    if(_ga_initialize_args) return;
+
+#if !defined(HAS_GETARG)
+    _ga_argc = &ARGC_;
+    _ga_argv = &ARGV_;    
+#else    
+    {
+       
+#if defined(WIN32) || defined(__crayx1)
+       int argc = IARGC() + 1;
+#elif defined(HPUX)
+       int argc = hpargc_();
+#else
+       int argc = iargc_() + 1;
+#endif
+       int i, len, maxlen=LEN;
+       char arg[LEN];
+       
+       for (i=0; i<argc; i++) {
+#      if defined(HPUX64) && defined(EXT_INT)
+          long ii=i, lmax=LEN;
+          len = hpargv_(&ii, arg, &lmax);
+#      elif defined(HPUX)
+          len = hpargv_(&i, arg, &maxlen);
+#      elif defined(WIN32) 
+          short n=(short)i, status;
+          getarg_(&n, arg, maxlen, &status);
+          if(status == -1)Error("getarg failed for argument",i); 
+          len = status;
+#      elif  defined(__crayx1)
+          NTYPE n=(NTYPE)i, status,ilen;
+          getarg_(&n, arg, &ilen, &status,maxlen);
+          if(status )Error("getarg failed for argument",i); 
+          len=(int)ilen;
+#      else
+          getarg_(&i, arg, maxlen);
+          for(len = maxlen-2; len && (arg[len] == ' '); len--);
+          len++;
+#      endif
+          
+          arg[len] = '\0'; /* insert string terminator */
+          /*printf("%10s, len=%d\n", arg, len);  fflush(stdout);*/ 
+          gai_argv[i] = strdup(arg);
+       }
+       
+       gai_argc = argc;
+       _ga_argc = &gai_argc;
+       _ga_argv = &gai_argv;
+    }
+#endif /* HAS_GETARG */
+}
+#endif
+
 
 /*\ Initialize MA-like addressing:
  *  get addressees for the base arrays for double, complex and int types
@@ -355,6 +422,13 @@ int bytes;
     vampir_begin(GA_INITIALIZE,__FILE__,__LINE__);
 #endif
 
+#ifndef MPI_SPAWN
+    ARMCI_Init(); /* initialize GA run-time library */
+#else
+    gai_get_cmd_args();    
+    ARMCI_Init_args(_ga_argc, _ga_argv); /* initialize GA run-time library */
+#endif
+    
     GA_Default_Proc_Group = -1;
     /* zero in pointers in GA array */
     _ga_main_data_structure
@@ -411,7 +485,6 @@ int bytes;
     /* set activity status for all arrays to inactive */
     for(i=0;i<_max_global_array;i++)GA[i].actv=0;
 
-    ARMCI_Init(); /* initialize GA run-time library */
     /* Create proc list for mirrored arrays */
     PGRP_LIST[0].map_proc_list = (int*)malloc(GAnproc*sizeof(int)*2);
     PGRP_LIST[0].inv_map_proc_list = PGRP_LIST[0].map_proc_list + GAnproc;
@@ -865,7 +938,9 @@ void FATR ga_pgroup_set_default_(Integer *grp)
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
  
     /* force a hang if default group is not being set correctly */
+#if 0
     if (local_sync_begin || local_sync_end) ga_pgroup_sync_(grp);
+#endif
     GA_Default_Proc_Group = (int)(*grp);
 
 #ifdef MPI
@@ -985,8 +1060,12 @@ logical FATR ga_pgroup_destroy_(Integer *grp)
   logical ret = TRUE;
   Integer grp_id = *grp;
 
-  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*
-/
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
+
+#ifdef MPI
+       ARMCI_Group_free(&PGRP_LIST[grp_id].group);
+#endif
+  
   if (PGRP_LIST[grp_id].actv == 0) {
     ret = FALSE;
   }
@@ -1642,7 +1721,7 @@ logical FATR ga_allocate_( Integer *g_a)
         ga_error("Could not allocate update information for ghost cells",0);
     }
     /* If array is mirrored, evaluate first and last indices */
-    ngai_get_first_last_indices(g_a);
+    /* ngai_get_first_last_indices(g_a); */
   }
 
   ga_pgroup_sync_(&p_handle);
@@ -2963,13 +3042,13 @@ Integer ndim = ga_ndim_(g_a);
 /*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
  *  Fortran version
 \*/
-void FATR nga_inquire_(Integer *g_a, Integer *type, Integer *ndim,Integer *dims)
+void FATR nga_inquire_(Integer *g_a, Integer *type, Integer *ndim, Integer *dims)
 {
 Integer handle = GA_OFFSET + *g_a,i;
    ga_check_handleM(g_a, "nga_inquire");
    *type       = (Integer)ga_type_c2f(GA[handle].type);
    *ndim       = GA[handle].ndim;
-   for(i=0;i<*ndim;i++)dims[i]=(Integer)GA[handle].dims[i];
+   for(i=0;i<*ndim;i++) dims[i]=(Integer)GA[handle].dims[i];
 }
 
 /*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
@@ -3064,17 +3143,46 @@ Integer d, index, ndim, ga_handle = GA_OFFSET + *g_a;
 
 /*\ RETURN DIMENSIONS OF PROCESSOR GRID
 \*/
-void FATR ga_topology_(Integer *g_a, Integer *dims)
+void FATR ga_get_proc_grid_(Integer *g_a, Integer *dims)
 {
   Integer i, ndim, ga_handle = GA_OFFSET + *g_a;
-  ga_check_handleM(g_a, "ga_topology");
+  ga_check_handleM(g_a, "ga_get_proc_grid");
   ndim = GA[ga_handle].ndim;
   for (i=0; i<ndim; i++) {
     dims[i] = GA[ga_handle].nblock[i];
   }
 }
 
-
+void gai_get_proc_from_block_index_(Integer *g_a, Integer *index, Integer *proc)
+{
+  Integer ga_handle = GA_OFFSET + *g_a;
+  Integer ndim = GA[ga_handle].ndim;
+  Integer i, ld;
+  if (ga_uses_proc_grid_(g_a)) {
+    int *proc_grid = GA[ga_handle].nblock;
+    Integer proc_id[MAXDIM];
+    for (i=0; i<ndim; i++) {
+      proc_id[i] = index[i]%proc_grid[i];
+    }
+    ld = 1;
+    *proc = index[0];
+    for (i=1; i<ndim; i++) {
+      ld *= proc_grid[i];
+      *proc *= ld;
+      *proc += index[i];
+    }
+  } else {
+    C_Integer *block_grid = GA[ga_handle].num_blocks;
+    *proc = index[ndim-1];
+    ld = 1;
+    for (i=ndim-2; i >= 0; i--) {
+       ld *= block_grid[i];
+       *proc *= ld;
+       *proc += index[i];
+    }
+    *proc = *proc%ga_nnodes_();
+  }
+}
 
 
 #define findblock(map_ij,n,scale,elem, block)\
@@ -4470,7 +4578,7 @@ Integer FATR ga_total_blocks_(Integer *g_a)
 
 /*\ RETURN TRUE IF GA USES SCALAPACK DATA DISTRIBUTION
 \*/
-logical FATR ga_scalapack_distribution_(Integer *g_a)
+logical FATR ga_uses_proc_grid_(Integer *g_a)
 {
   Integer ga_handle = GA_OFFSET + *g_a;
   return (logical)GA[ga_handle].block_sl_flag;
@@ -4555,3 +4663,20 @@ int ga_recover_arrays(Integer *gas, int num)
     }
 }
 #endif
+
+#ifdef MPI
+Integer FATR ga_pgroup_absolute_id_(Integer *grp, Integer *pid) 
+{
+  if(*grp == GA_World_Proc_Group) /*a.k.a -1*/
+    return *pid;
+  else
+    return ARMCI_Absolute_id(&PGRP_LIST[*grp].group, *pid);
+}
+#else
+Integer FATR ga_pgroup_absolute_id_(Integer *grp, Integer *pid) 
+{
+    ga_error("ga_pgroup_absolute_id(): Defined only when using MPI groups",0);
+    return -1;
+}
+#endif
+

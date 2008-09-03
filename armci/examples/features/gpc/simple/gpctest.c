@@ -1,4 +1,4 @@
-/* $Id: gpctest.c,v 1.2 2007-10-30 02:15:42 manoj Exp $ */
+/* $Id: gpctest.c,v 1.1.2.1 2007-06-20 17:41:57 vinod Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 

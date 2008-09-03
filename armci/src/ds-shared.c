@@ -4,7 +4,9 @@
 #include "memlock.h"
 #include "copy.h"
 #include "gpc.h"
+#include "iterator.h"
 #include <stdio.h>
+#include <assert.h>
 #ifdef WIN32
 #include <process.h>
 #else
@@ -26,7 +28,9 @@
 
 int _armci_server_started=0;
 
+#if defined(SOCKETS)
 extern active_socks_t *_armci_active_socks;
+#endif
 
 /**************************** pipelining for medium size msg ***********/
 #ifdef PIPE_BUFSIZE
@@ -70,6 +74,7 @@ else
    len = 64*1024-128;
 #endif
 #ifdef MAX_PIPELINE_CHUNKS
+
  if(oldlen/len > MAX_PIPELINE_CHUNKS-1){
   len = oldlen/MAX_PIPELINE_CHUNKS;
   n = len%PIPE_SHORT_ROUNDUP;
@@ -272,9 +277,16 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
                 cluster, proc, bytes, dscrlen, datalen); fflush(stdout);
     }
 
-#ifdef SOCKETS
+#if defined(SOCKETS)
     /* zero-copy optimization for large requests */
     if(count[0] >  TCP_PAYLOAD){
+       if(armci_send_req_msg_strided(proc, msginfo,ptr,strides,
+          stride_arr, count))armci_die("armci_send_strided_req long: failed",0);
+       return; /************** done **************/
+    }
+#elif defined(MPI_SPAWN_ZEROCOPY)
+    /* zero-copy optimization for large requests */
+    if(msginfo->operation==PUT && msginfo->datalen==0 && count[0]>TCP_PAYLOAD){
        if(armci_send_req_msg_strided(proc, msginfo,ptr,strides,
           stride_arr, count))armci_die("armci_send_strided_req long: failed",0);
        return; /************** done **************/
@@ -471,9 +483,8 @@ void armci_rcv_vector_data_hdlr(int bufid)
 \*/
 char *armci_rcv_data(int proc, request_header_t* msginfo)
 {
-    int datalen = msginfo->datalen;
-    char *buf;
-
+int datalen = msginfo->datalen;
+char *buf;
     if(DEBUG_) {
         printf("%d:armci_rcv_data:  bytes= %d \n", armci_me, datalen);
         fflush(stdout);
@@ -489,7 +500,6 @@ char *armci_rcv_data(int proc, request_header_t* msginfo)
         printf("%d:armci_rcv_data: got %d bytes \n",armci_me,datalen);
         fflush(stdout);
     }
-
     return(buf);
 }
 
@@ -642,7 +652,7 @@ void armci_rcv_strided_data(int proc, request_header_t* msginfo, int datalen,
     }
 #endif
 
-#ifdef SOCKETS
+#if defined(SOCKETS) || defined(MPI_SPAWN_ZEROCOPY)
     /* zero-copy optimization for large requests */
     if(count[0] >  TCP_PAYLOAD){
        armci_ReadStridedFromDirect(proc,msginfo,ptr,strides,stride_arr, count);
@@ -655,8 +665,25 @@ void armci_rcv_strided_data(int proc, request_header_t* msginfo, int datalen,
     }
 #endif
 
+#if !defined(GET_STRIDED_COPY_PIPELINED)
     databuf = armci_ReadFromDirect(proc,msginfo,datalen);
     armci_read_strided(ptr, strides, stride_arr, count, databuf);
+#else
+    {
+      int bytes_buf = 0, bytes_usr = 0, seg_off=0;
+      int ctr=0;
+      char *armci_ReadFromDirectSegment(int proc,request_header_t *msginfo,
+					int datalen, int *bytes_buf);
+
+      stride_itr_t sitr = armci_stride_itr_init(ptr,strides,stride_arr,count);
+      do {
+	databuf = armci_ReadFromDirectSegment(proc,msginfo,datalen,&bytes_buf);
+	bytes_usr += armci_read_strided_inc(sitr,&databuf[bytes_usr],bytes_buf-bytes_usr, &seg_off);
+      } while(bytes_buf<datalen);
+      dassert(1,bytes_buf == bytes_usr);
+      armci_stride_itr_destroy(&sitr);
+    }
+#endif
 }
 #endif
 
@@ -672,6 +699,7 @@ request_header_t *msginfo;
 destproc = SERVER_NODE(clus);
 msginfo = (request_header_t *)GET_SEND_BUFFER(bufsize,ACK,destproc);
 
+ bzero(msginfo, sizeof(request_header_t));
     msginfo->dscrlen = 0;
     msginfo->from  = armci_me;
     msginfo->to    = SERVER_NODE(clus);
@@ -692,6 +720,10 @@ msginfo = (request_header_t *)GET_SEND_BUFFER(bufsize,ACK,destproc);
     armci_rcv_hdlr(msginfo);
 #else
     armci_rcv_data(armci_clus_info[clus].master, msginfo);  /* receive ACK */
+#endif
+    assert(*(int*)(msginfo+1) == ACK);
+#ifdef VAPI
+    assert(*(((int *)(msginfo+1))+1) == ARMCI_STAMP);
 #endif
     FREE_SEND_BUFFER(msginfo);
 }
@@ -733,8 +765,13 @@ void armci_send_data(request_header_t* msginfo, void *data)
 
 #if defined(VIA) || defined(GM) || defined(VAPI)
     /* if the data is in the pinned buffer: MessageRcvBuffer */
+#if defined(PEND_BUFS)
+    extern int armci_data_in_serv_buf(void *);
+    if(armci_data_in_serv_buf(data))
+#else
     if((data > (void *)MessageRcvBuffer) &&
        (data < (void *)(MessageRcvBuffer + MSG_BUFLEN)))
+#endif
         /* write the message to the client */
         armci_WriteToDirect(to, msginfo, data);
     else {
@@ -744,7 +781,15 @@ void armci_send_data(request_header_t* msginfo, void *data)
         char *buf = MessageRcvBuffer + sizeof(long);
 #else
         char *buf = MessageRcvBuffer;
+# if defined(PEND_BUFS)
+	fprintf(stderr, "%d:: op=%d len=%d ptr=%p working on unpinned memory. aborting!\n", armci_me, msginfo->operation,msginfo->datalen, data);
+	assert(0);
+	buf = NULL;
+/*         extern char *armci_openib_get_msg_rcv_buf(int); */
+/* 	buf = armci_openib_get_msg_rcv_buf(msginfo->from); */
+# endif
 #endif
+	assert(buf != NULL);
         armci_copy(data, buf, msginfo->datalen);
         armci_WriteToDirect(to, msginfo, buf);
     }
@@ -774,7 +819,7 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo,
     if(DEBUG_){ printf("%d(server): sending datalen = %d to %d %p\n",
                 armci_me, msginfo->datalen, to,ptr); fflush(stdout); }
  
-#if defined(SOCKETS)
+#if defined(SOCKETS) || defined(MPI_SPAWN_ZEROCOPY)
     /* zero-copy optimization for large requests */
     if(count[0] >  TCP_PAYLOAD){
        armci_WriteStridedToDirect(to,msginfo,ptr, strides, stride_arr, count);
@@ -788,9 +833,28 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo,
     }
 #endif
 
+#if defined(GET_NO_SRV_COPY)
+    {
+      ARMCI_MEMHDL_T *mhloc=NULL, *mhrem=NULL;
+/*       printf("%d(s): TRYING to use rdma contig to strided\n",armci_me); */
+/*       fflush(stdout); */
+      if(msginfo->operation==GET && !msginfo->pinned && strides>=0 
+	 && get_armci_region_local_hndl(ptr,armci_clus_id(armci_me),&mhloc)) {
+/* 	printf("%d(s): using rdma contig to strided\n",armci_me); */
+/* 	fflush(stdout); */
+	armci_server_rdma_strided_to_contig(ptr, stride_arr,
+					    count, strides,
+					    msginfo->tag.data_ptr, to,
+					    msginfo);
+	return;
+      }
+      else {
+/* 	printf("%d(s): not taking rdma to contig path. mhloc=%p mhrem=%p\n",armci_me,mhloc,mhrem); */
+      }
+    }
+#endif
     /* for small contiguous blocks copy into a buffer before sending */
     armci_write_strided(ptr, strides, stride_arr, count, bdata);
-
     /* write the message to the client */
     armci_WriteToDirect(to, msginfo, bdata);
 
@@ -813,7 +877,19 @@ void armci_server_ack(request_header_t* msginfo)
 
      if(msginfo->datalen != sizeof(int))
         armci_die("armci_server_ack: bad datalen=",msginfo->datalen);
+#if defined(PEND_BUFS)
+     {
+       /*Send from server known memory -- avoid extra buffers and
+	 copying on server*/ 
+       int *ack1 = (int *)(msginfo+1); /*msginfo is in some server
+					buffer. I can overwrite the descriptor*/
+       *ack1 = ACK;
+       assert(sizeof(request_header_t)+2*sizeof(int)<IMM_BUF_LEN); 
+       armci_send_data(msginfo, ack1);
+     }
+#else
      armci_send_data(msginfo, &ack);
+#endif
 }
 
 
@@ -865,7 +941,7 @@ void armci_data_server(void *mesg)
           }
           armci_server_ipc(msginfo, descr, buffer, buflen);
           break;
-#if defined(SOCKETS) || defined(HITACHI)
+#if defined(SOCKETS) || defined(HITACHI) || defined(MPI_SPAWN)
       case QUIT:   
           if(DEBUG_){ 
              printf("%d(serv):got QUIT request from %d\n",armci_me, from);
@@ -960,19 +1036,23 @@ void armci_start_server()
 {
     armci_init_connections();
 
-    if(armci_me == armci_master) {
-
-#ifdef SERVER_THREAD
-
-     armci_create_server_thread( armci_server_code );
+#ifdef MPI_SPAWN
+    
+    /* For MPI_SPAWN, this should be called by all processes */
+    armci_create_server_MPIprocess( );
+    
 #else
-
-     armci_create_server_process( armci_server_code );
-
-#endif
-
+    
+    if(armci_me == armci_master) {  
+# ifdef SERVER_THREAD
+       armci_create_server_thread( armci_server_code );
+# else
+       armci_create_server_process( armci_server_code );
+# endif
     }
-
+    
+#endif
+    
     armci_client_code();
     _armci_server_started=1;
 }

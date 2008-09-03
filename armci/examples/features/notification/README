@@ -1,4 +1,4 @@
-$Id: README,v 1.2 2007-10-30 02:15:43 manoj Exp $
+$Id: README,v 1.1.2.1 2007-06-20 17:42:07 vinod Exp $
 Introduction:
   A new notification functionality has been introduced in ARMCI primarify for 
   the Co-Array fortran compiler.

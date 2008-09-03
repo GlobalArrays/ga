@@ -1,4 +1,4 @@
-c $Id: fort.F,v 1.5 2007-10-30 02:04:57 manoj Exp $
+c $Id: fort.F,v 1.4.12.1 2006-12-22 13:05:21 manoj Exp $
       double complex function ga_zdot(g_a,g_b)
       implicit none
       integer g_a, g_b

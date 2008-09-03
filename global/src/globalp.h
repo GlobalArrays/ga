@@ -53,6 +53,8 @@
 #     define MAX_NPROC    2048
 #   elif defined(BGML)
 #     define MAX_NPROC    2048
+#   elif defined(BGP)
+#     define MAX_NPROC     8192
 #   else
 #     define MAX_NPROC    2048     /* default for everything else */
 #   endif
@@ -146,6 +148,9 @@ extern char *GA_name_stack[NAME_STACK_LEN];    /* stack for names of GA ops */
 extern int GA_stack_size;
 extern int _ga_sync_begin;
 extern int _ga_sync_end;
+extern int *_ga_argc;
+extern char ***_ga_argv;
+
 
 #define  GA_PUSH_NAME(name) (GA_name_stack[GA_stack_size++] = (name)) 
 #define  GA_POP_NAME        (GA_stack_size--)

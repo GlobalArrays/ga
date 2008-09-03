@@ -16,6 +16,10 @@ else
      SRCDIR = ipcv4.0
 endif
 
+ifeq ($(ARMCI_NETWORK),LAPI)
+     SRCDIR = ipcv5.0
+endif
+
 
 export MACHINE TARGET BINDIR
 

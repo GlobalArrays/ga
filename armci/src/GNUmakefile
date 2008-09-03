@@ -1,11 +1,11 @@
-#$Id: GNUmakefile,v 1.106 2007-10-30 02:04:53 manoj Exp $
+#$Id: GNUmakefile,v 1.103.2.18 2007-08-30 22:31:04 manoj Exp $
 
          FOPT = -O
          COPT = -O
 
 OBJ= strided.o armci.o memory.o fence.o rmw.o acc.o kr_malloc.o\
  memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o aggregate.o\
- rtinfo.o
+ rtinfo.o iterator.o
 
 OBJ_FRAGILE = message.o
 
@@ -18,8 +18,8 @@ ifndef NOFORT
 OBJ += faccumulate.o fcopy.o
 endif
 
-# ARMCI will use non-blocking calls for strided operations (where appropriate)
-NB_NONCONT = 1
+# ARMCI can use non-blocking calls for strided operations (where appropriate)
+#NB_NONCONT = 1
 
 # if enabled procedures are thread safe; one should specify the maximum number
 # of threads (environment ARMCI_MAX_THREADS) and thread library (below)
@@ -42,11 +42,24 @@ endif
 
 ifeq ($(TARGET),BGL) 
 ifeq ($(MSG_COMMS), BGMLMPI)
-  OBJ+= message.o bgml.o
+  OBJ+= message.o bgml.o groups.o
 else
   OBJ+= bgml.o
 endif
 endif 
+
+ifeq ($(TARGET),BGP)
+ifeq ($(MSG_COMMS), DCMFMPI)
+   OBJ += message.o groups.o
+endif
+   OBJ += request.o
+   LIB_DEFINES += -DARMCIX
+   DCMF_VER = dcmf2
+   OBJ += armcix/$(DCMF_VER)/armcix_impl.o armcix/$(DCMF_VER)/armcix_wait.o \
+	  armcix/$(DCMF_VER)/armcix_fence.o armcix/$(DCMF_VER)/armcix_rmw.o \
+	  armcix/$(DCMF_VER)/armcix_get.o armcix/$(DCMF_VER)/armcix_put.o   \
+	  armcix/$(DCMF_VER)/armcix_lock.o armcix/$(DCMF_VER)/armcix_acc.o
+endif
 
 
 SYSTEM_V = SUN SOLARIS SOLARIS64 SGI SGI_N32 SGI64 SGITFP 
@@ -55,8 +68,8 @@ SHMEM    = $(SYSTEM_V) LAPI LAPI64
 CKPT = LINUX LINUX64 MACX
 SHMMMAP  = NEC
 SOCKETS  = $(SYSTEM_V) MACX
-ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP CRAY-SV2  LAPI FUJITSU-VPP FUJITSU-AP BGML
-NB_NONCONT_NET = CRAY-SHMEM # QUADRICS ELAN4 PORTALS
+ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP CRAY-SV2  LAPI FUJITSU-VPP FUJITSU-AP BGML BGP
+NB_NONCONT_NET = CRAY-SHMEM #QUADRICS ELAN4 PORTALS
 #USE_PTHREADS = LINUX SGI_N32 SOLARIS
 #USE_POSIX = IBM
 
@@ -73,6 +86,10 @@ endif
 
 ifeq ($(TARGET),BGML)
      LIB_DEFINES += -DNO_SHM -DUSE_MALLOC
+endif
+
+ifeq ($(TARGET), BGP)
+   LIB_DEFINES += -DNO_SHM
 endif
 
 ifeq ($(TARGET),CATAMOUNT)
@@ -134,21 +151,18 @@ endif
 
 ifeq ($(ARMCI_NETWORK),PORTALS)
   OBJ += portals.o regions.o
-ifeq ($(TARGET),CATAMOUNT)
-  OBJ += winshmem.o signaltrap.o 
-  LIB_DEFINES += -DCLUSTER -DPORTALS -DALLOW_PIN -DXT3 -DCATAMOUNT
-  LIB_DEFINES += -DNO_SHM
-endif
+  OBJ += signaltrap.o 
 ifeq ($(TARGET),LINUX64)
-  LIB_DEFINES += -DPORTALS -DALLOW_PIN -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT
-  EXTRA_LIBS += -lpthread
+  LIB_DEFINES += -DACC_SMP #-DPUT_LOCAL_ONLY_COMPLETION
 endif
+  LIB_DEFINES += -DXT3
+  EXTRA_LIBS += -lpthread
 endif
 
 ifeq ($(ARMCI_NETWORK),OPENIB)
   OBJ += spawn.o  request.o ds-shared.o buffers.o async.o openib.o
-  OBJ += regions.o gpc.o
-  LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT -DOPENIB -DVAPI -DALLOW_PIN
+  OBJ += regions.o gpc.o pendbufs.o
+  LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT -DOPENIB -DVAPI -DALLOW_PIN -DPEND_BUFS
   EXTRA_LIBS += -lpthread
 endif
 
@@ -185,6 +199,23 @@ ifeq ($(ARMCI_NETWORK),ELAN4)
     EXTRA_LIBS += -lpthread
 endif
 
+ifeq ($(ARMCI_NETWORK),MPI-SPAWN)
+# works for ARMCi on top of MPI-2
+    OBJ += request.o ds-shared.o buffers.o mpi2_client.o mpi2_server.o
+    LIB_DEFINES += -DDATA_SERVER
+    MP_DEFINES += -DMPI_SPAWN
+ifdef ARMCI_SPAWN_CRAY_XT
+      MP_DEFINES += -DSPAWN_CRAY_XT
+endif
+    EXTRA_LIBS += -lpthread
+endif
+
+
+ifeq ($(ARMCI_NETWORK), CRAY-SHMEM)
+# works for Cray XT (Shmem network protocol)
+    OBJ += shmalloc.o
+    LIB_DEFINES += -DXT3
+endif
 
 ifdef ARMCI_NETWORK
   LIBRARY_STAMP = $(ARMCI_NETWORK).$(MSG_COMMS)
@@ -256,6 +287,11 @@ error:
     endif
 endif # end: ifdef THREAD_SAFE
 
+ifeq ($(ARMCI_GROUP),YES)
+   MP_DEFINES += -DARMCI_GROUP
+   LIB_DEFINES += -DARMCI_GROUP
+endif
+
 #......................................................................
 LIBRARY = libarmci.a
 LIBRARY_SHARED = libarmci.so
@@ -279,37 +315,50 @@ LIBS += $(EXTRA_LIBS)
 	echo "`whoami` `hostname` 4 `pwd`/$(basename $@) /tmp" > $@
 
 %.x:%.c  $(FULL_LIBRARY_PATH)
-	$(CC) -g -I. $(COPT_REN) $(MP_INCLUDES) $(MP_DEFINES) -o $@ $^ $(LIBS) -lm
+	$(CC) -g -I. $(COPT_REN) $(MP_INCLUDES) $(MP_DEFINES) $(LIB_DEFINES) -o $@ $^ $(LIBS) -lm
 
 ipctest.x: $(FULL_LIBRARY_PATH)
 	$(CC) $(CFLAGS) $(MP_DEFINES) ipctest.c -o $@ $^ $(LIBS)
 
 
-$(FULL_LIBRARY_PATH)(winshmem.o):    ./shmem.h ./kr_malloc.h ./armcip.h
-$(FULL_LIBRARY_PATH)(vector.o):      ./memlock.h ./copy.h ./armcip.h ./acc.h 
-$(FULL_LIBRARY_PATH)(strided.o):     ./memlock.h ./copy.h ./armcip.h ./acc.h 
-$(FULL_LIBRARY_PATH)(shmem.o):       ./shmem.h ./kr_malloc.h ./shmlimit.h ./message.h ./armcip.h
-$(FULL_LIBRARY_PATH)(semaphores.o):  ./semaphores.h 
-$(FULL_LIBRARY_PATH)(rmw.o): 	./locks.h ./copy.h ./armcip.h 
-$(FULL_LIBRARY_PATH)(request.o):     ./request.h ./memlock.h ./copy.h ./armcip.h ./shmem.h
-$(FULL_LIBRARY_PATH)(pack.o):        ./armcip.h ./request.h
-$(FULL_LIBRARY_PATH)(mutex.o):       ./request.h ./copy.h ./armcip.h 
-$(FULL_LIBRARY_PATH)(message.o):     ./message.h ./armcip.h  ./copy.h
-$(FULL_LIBRARY_PATH)(memory.o):      ./shmem.h ./message.h ./armcip.h ./kr_malloc.h
-$(FULL_LIBRARY_PATH)(memlock.o):     ./memlock.h ./locks.h ./copy.h ./armcip.h 
-$(FULL_LIBRARY_PATH)(locks.o):       ./locks.h ./armcip.h 
-$(FULL_LIBRARY_PATH)(lapi.o):        ./copy.h ./armcip.h ./lapidefs.h
-$(FULL_LIBRARY_PATH)(myrinet.o):     ./copy.h ./armcip.h ./request.h
-$(FULL_LIBRARY_PATH)(ipctest.o):     ./shmem.h ./locks.h 
-$(FULL_LIBRARY_PATH)(fence.o):       ./copy.h ./armcip.h ./armci.h 
-$(FULL_LIBRARY_PATH)(ds-shared.o):   ./myrinet.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
-$(FULL_LIBRARY_PATH)(dataserv.o):    ./sockets.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
-$(FULL_LIBRARY_PATH)(dataserv-gm.o): ./myrinet.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
-$(FULL_LIBRARY_PATH)(clusterinfo.o): ./message.h ./armcip.h 
-$(FULL_LIBRARY_PATH)(armci.o):       ./signaltrap.h ./shmem.h ./memlock.h ./locks.h ./lapidefs.h ./copy.h 
-$(FULL_LIBRARY_PATH)(kr_malloc.o): ./kr_malloc.h ./armcip.h ./shmem.h ./locks.h
+# $(FULL_LIBRARY_PATH)(winshmem.o):    ./shmem.h ./kr_malloc.h ./armcip.h
+# $(FULL_LIBRARY_PATH)(vector.o):      ./memlock.h ./copy.h ./armcip.h ./acc.h 
+# $(FULL_LIBRARY_PATH)(strided.o):     ./memlock.h ./copy.h ./armcip.h ./acc.h ./mpi2.h
+# $(FULL_LIBRARY_PATH)(shmem.o):       ./shmem.h ./kr_malloc.h ./shmlimit.h ./message.h ./armcip.h
+# $(FULL_LIBRARY_PATH)(semaphores.o):  ./semaphores.h 
+# $(FULL_LIBRARY_PATH)(rmw.o): 	./locks.h ./copy.h ./armcip.h 
+# $(FULL_LIBRARY_PATH)(request.o):     ./request.h ./memlock.h ./copy.h ./armcip.h ./shmem.h ./mpi2.h
+# $(FULL_LIBRARY_PATH)(pack.o):        ./armcip.h ./request.h
+# $(FULL_LIBRARY_PATH)(mutex.o):       ./request.h ./copy.h ./armcip.h 
+# $(FULL_LIBRARY_PATH)(message.o):     ./message.h ./armcip.h  ./copy.h
+# $(FULL_LIBRARY_PATH)(memory.o):      ./shmem.h ./message.h ./armcip.h ./kr_malloc.h
+# $(FULL_LIBRARY_PATH)(memlock.o):     ./memlock.h ./locks.h ./copy.h ./armcip.h 
+# $(FULL_LIBRARY_PATH)(locks.o):       ./locks.h ./armcip.h 
+# $(FULL_LIBRARY_PATH)(lapi.o):        ./copy.h ./armcip.h ./lapidefs.h
+# $(FULL_LIBRARY_PATH)(myrinet.o):     ./copy.h ./armcip.h ./request.h
+# $(FULL_LIBRARY_PATH)(ipctest.o):     ./shmem.h ./locks.h 
+# $(FULL_LIBRARY_PATH)(fence.o):       ./copy.h ./armcip.h ./armci.h 
+# $(FULL_LIBRARY_PATH)(ds-shared.o):   ./myrinet.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h ./mpi2.h
+# $(FULL_LIBRARY_PATH)(dataserv.o):    ./sockets.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
+# $(FULL_LIBRARY_PATH)(dataserv-gm.o): ./myrinet.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
+# $(FULL_LIBRARY_PATH)(clusterinfo.o): ./message.h ./armcip.h 
+# $(FULL_LIBRARY_PATH)(armci.o):       ./signaltrap.h ./shmem.h ./memlock.h ./locks.h ./lapidefs.h ./copy.h 
+# $(FULL_LIBRARY_PATH)(kr_malloc.o): ./kr_malloc.h ./armcip.h ./shmem.h ./locks.h
+# $(FULL_LIBRARY_PATH)(mpi2_server.o): ./mpi2.h ./kr_malloc.h ./armcip.h ./locks.h
+# $(FULL_LIBRARY_PATH)(mpi2_client.o): ./mpi2.h ./kr_malloc.h ./armcip.h ./locks.h request.h
 
-locks.h: semaphores.h
-armcip.h: message.h lapidefs.h memlock.h
-%.x: %.c
+# locks.h: semaphores.h
+# armcip.h: message.h lapidefs.h memlock.h
+# %.x: %.c
+
+#Hack to derive fortran & .gcc file names from object file names
+#SRCS = $(subst x86copy.c,x86copy.gcc,$(subst tas.c,tas.gcc,$(subst fcopy.c,fcopy.f,$(subst faccumulate.c,faccumulate.f,$(OBJ:.o=.c)))))
+
+PHONY: depend
+
+depend: 
+	./depend.py *.f *.c *.gcc > deps.h
+
+include deps.h
+
 

@@ -12,6 +12,10 @@
 extern Integer sf_create _ARGS_((char* fname, SFsize_t* size_hard_limit,
        SFsize_t* size_soft_limit, SFsize_t* req_size, Integer *handle));
  
+extern Integer sf_create_suffix _ARGS_((char* fname, SFsize_t* size_hard_limit,
+       SFsize_t* size_soft_limit, SFsize_t* req_size, Integer *handle,
+       Integer *suffix));
+
 extern void sf_errmsg _ARGS_((int code, char *msg));
 
 #undef _ARGS_

@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.61 2007-10-30 02:04:58 manoj Exp $ */
+/* $Id: matmul.c,v 1.60.4.1 2006-12-22 13:05:22 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -491,7 +491,86 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
 }
 
 
+static
+void init_block_info(Integer *g_c, Integer *proc_index, Integer *index,
+                     Integer *blocks, Integer *block_dims, Integer *topology,
+                     Integer *iblock) 
+{
+    Integer me= ga_nodeid_();
 
+    /* Uses simple block-cyclic data distribution */
+    if(!ga_uses_proc_grid_(g_c))
+    {
+       *iblock = me;
+    }
+    else /* Uses scalapack block-cyclic data distribution */ 
+    {   
+       *iblock = 0;
+       ga_get_proc_index_(g_c, &me, proc_index);
+       ga_get_proc_index_(g_c, &me, index);
+       ga_get_block_info_(g_c, blocks, block_dims);
+       ga_get_proc_grid_(g_c, topology);
+    }    
+}
+
+/**
+ * get the lo/hi distribution info of the next block
+ *   return 0 indicates no more blocks available
+ *   return 1 indicates there is a block available
+ */
+static
+int get_next_block_info(Integer *g_c, Integer *proc_index, Integer *index,
+                        Integer *blocks, Integer *block_dims, Integer*topology,
+                        Integer *iblock, Integer *blo, Integer *bhi) 
+{
+    Integer dims[MAXDIM], ndim, type;
+    int i;
+    
+    /* works only upto 2 dims - i.e vectors/matrices*/
+    nga_inquire_internal_(g_c,  &type, &ndim, dims);
+    if(ndim>2) ga_error("get_next_block_info() supports upto 2-d only ", 0L);
+    
+    /* Uses simple block-cyclic data distribution */
+    if (!ga_uses_proc_grid_(g_c)) 
+    {
+       if(*iblock < ga_total_blocks_(g_c)) 
+       {
+          nga_distribution_(g_c, iblock, blo, bhi);
+          *iblock += ga_nnodes_();
+          return 1;
+       }
+    }
+    else /* Uses scalapack block-cyclic data distribution */
+    {
+       if (index[ndim-1] < blocks[ndim-1]) 
+       {
+          /* find bounding coordinates of block */
+          for (i = 0; i < ndim; i++) 
+          {
+             blo[i] = index[i]*block_dims[i]+1;
+             bhi[i] = (index[i] + 1)*block_dims[i];
+             if (bhi[i] > dims[i]) bhi[i] = dims[i];
+          }
+
+          /* increment index to get next block on processor */
+          index[0] += topology[0];
+          for (i = 0; i < ndim; i++) 
+          {
+             if (index[i] >= blocks[i] && i<ndim-1) 
+             {
+                index[i]    = proc_index[i];
+                index[i+1] += topology[i+1];
+             }
+          }
+
+          return 1;
+       } /* end of while */ 
+    }
+
+    return 0; 
+}
+
+                        
 
 static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 			       g_a, ailo, aihi, ajlo, ajhi,
@@ -514,7 +593,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     Integer get_new_B=TRUE, i0, i1, j0, j1;
     Integer idim, jdim, kdim;
     Integer k, adim=0, bdim, cdim, adim_next, bdim_next;
-    Integer loC[2]={1,1}, hiC[2]={1,1}, ld[2];
+    Integer clo[2], chi[2], loC[2]={1,1}, hiC[2]={1,1}, ld[2];
     int max_tasks=0, shiftA=0, shiftB=0;
     int currA, nextA, currB, nextB=0; /* "current" and "next" task Ids */
     task_list_t taskListA[MAX_CHUNKS], taskListB[MAX_CHUNKS], state; 
@@ -523,7 +602,11 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     SingleComplex ONE_CF;
     float ONE_F = 1.0;
     int offset=0, gTaskId=0;
-
+    int numblocks=0, has_more_blocks=1;
+    Integer ctype, cndim, cdims[2];
+    Integer iblock, proc_index[2], index[2];
+    Integer blocks[2], block_dims[2], topology[2];
+    
     GA_PUSH_NAME("ga_matmul_regular");
     if(irregular) ga_error("irregular flag set", 0L);
 
@@ -532,11 +615,45 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 		       *bjhi-*bjlo+1,*ajhi-*ajlo+1);  fflush(stdout); }
 #endif
 
-    ONE.real =1.; ONE.imag =0.;   
+    ONE.real =1.;    ONE.imag =0.;   
     ONE_CF.real =1.; ONE_CF.imag =0.;   
+    clo[0] = *cilo; chi[0] = *cihi;
+    clo[1] = *cjlo; chi[1] = *cjhi;
     k = *ajhi - *ajlo +1;
-    state.lo[0] = -1; /* just for first do-while loop */
+    
+    numblocks = ga_total_blocks_(g_c);
+    if(numblocks>=0) init_block_info(g_c, proc_index, index, blocks,
+                                     block_dims, topology, &iblock);
 
+    has_more_blocks = 1;
+    while(has_more_blocks) 
+    {
+       /* if block cyclic distribution and loop accordigly. In case of simple
+       block distribution we process this loop only once */
+       if(numblocks<0)
+       { /* simple block distribution */
+          has_more_blocks = 0; 
+          nga_distribution_(g_c, &me, loC, hiC);
+       }
+       else
+       { /* block cyclic */
+          
+          if(!get_next_block_info(g_c, proc_index, index, blocks, block_dims,
+                                  topology, &iblock, loC, hiC))
+             break;
+       }
+
+       /* If loC and hiC intersects with current patch region, then they will
+        * be updated accordingly. Else it returns FALSE */
+       nga_inquire_internal_(g_c, &ctype, &cndim, cdims);
+       if(!ngai_patch_intersect(clo,chi,loC,hiC,cndim)) continue;
+       
+#if DEBUG_
+       printf("%d: Processing block #%d [%d,%d] - [%d,%d]\n", GAme, iblock,
+              loC[0], loC[1], hiC[0], hiC[1]);
+#endif
+       
+       state.lo[0] = -1; /* just for first do-while loop */
     do {
 
        /* Inital Settings */
@@ -554,7 +671,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
        
        /* to skip accumulate and exploit data locality:
 	  get chunks according to "C" matrix distribution*/
-       nga_distribution_(g_c, &me, loC, hiC);
+       /* nga_distribution_(g_c, &me, loC, hiC); */
        chunks_left=gai_get_task_list(taskListA, taskListB, &state,loC[0]-1,
 				     loC[1]-1, 0, hiC[0]-1, hiC[1]-1, k-1,
 				     Ichunk,Jchunk,Kchunk, &max_tasks,g_a);
@@ -686,7 +803,8 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 	  adim = adim_next;
        }
     } while(chunks_left);
-   
+    } /* while(has_more_blocks) */
+    
     GA_POP_NAME;
 }
 
@@ -1099,6 +1217,7 @@ void ga_matmul(transa, transb, alpha, beta,
     short int irregular=UNSET, use_armci_memory=UNSET;
     Integer a_grp=ga_get_pgroup_(g_a), b_grp=ga_get_pgroup_(g_b);
     Integer c_grp=ga_get_pgroup_(g_c);
+    Integer numblocks;
 
 #ifdef GA_USE_VAMPIR
   vampir_begin(GA_MATMUL,__FILE__,__LINE__);
@@ -1117,7 +1236,12 @@ void ga_matmul(transa, transb, alpha, beta,
 
     if (a_grp != b_grp || a_grp != c_grp)
        ga_error("Arrays must be defined on same group",0L);
-
+# if 0 /* disabled. should not fail if there are non-overlapping patches*/
+    /* check if C is different from A and B */
+    if (*g_c == *g_a || *g_c == *g_b)
+       ga_error("Global Array C should be different from A and B", 0);
+#endif
+    
     /**************************************************
      * Do All Sanity Checks 
      **************************************************/
@@ -1184,7 +1308,7 @@ void ga_matmul(transa, transb, alpha, beta,
     /* even ga_dgemm is called, m,n & k might not match GA dimensions */
     nga_inquire_internal_(g_c, &ctype, &rank, dims);
     if(dims[0] != m || dims[1] != n) irregular = SET; /* C matrix dims */
-    
+
     if(!irregular) {
        if((adim1=GA_Cluster_nnodes()) > 1) use_NB_matmul = SET;
        else {
@@ -1197,6 +1321,14 @@ void ga_matmul(transa, transb, alpha, beta,
 #    endif
     }
 
+    /* if block cyclic, then use regular algorithm. This is turned on for now
+     * to test block cyclic */ 
+    numblocks = ga_total_blocks_(g_c);
+    if(numblocks>=0) {
+       irregular     = UNSET;
+       use_NB_matmul = SET; 
+    }
+    
     /****************************************************************
      * Get the memory (i.e.static or dynamic) for temporary buffers 
      ****************************************************************/

@@ -198,7 +198,7 @@ void nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
       nga_release_block_segment_(g_a, &me);
 
       /* convert local index back into a global array index */
-      if (!ga_scalapack_distribution_(g_a)) {
+      if (!ga_uses_proc_grid_(g_a)) {
         offset = 0;
         for (i=me; i<num_blocks; i += nproc) {
           nga_distribution_(g_a, &i, lo, hi);
@@ -228,7 +228,7 @@ void nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
         Integer min, max;
         ga_get_proc_index_(g_a, &me, proc_index);
         ga_get_block_info_(g_a, blocks, block_dims);
-        ga_topology_(g_a, topology);
+        ga_get_proc_grid_(g_a, topology);
         /* figure out strides for locally held block of data */
         for (i=0; i<ndim; i++) {
           stride[i] = 0;

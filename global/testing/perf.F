@@ -62,7 +62,7 @@ c
 c
       integer g_a
       integer ilo, ihi, jlo, jhi
-      integer nproc, me, loop
+      integer nproc, me, loop, h_d, indexd
       integer chunk(num_chunks)
       data    chunk /1,9,16,81,256,576,900,2304,4096,8281,
      $               16384,29241,65536,124609,193600,262144/
@@ -73,9 +73,17 @@ c
 c***  Create global array
       if (.not. ga_create(MT_DBL, n, 1, 'a', 0, 0, g_a))
      $     call ga_error(' ga_create failed ',1)
-c     
+c
+c***     allocate memory for D
+      if(.not. ma_push_get(MT_DBL,nn,'d',h_d, indexd))
+     &     call ga_error('memory allocation failed',0)
+      
+c      
       do loop=1,nn
          buf(loop) = .01d0
+      enddo
+      do loop=0,nn-1
+         DBL_MB(indexd+loop) = .01d0
       enddo
       call ga_zero(g_a) 
 c
@@ -95,14 +103,17 @@ c***  local ops
 c
       call ga_distribution(g_a, me, ilo, ihi, jlo, jhi)
       call TestPutGetAcc1
-     &     (g_a, n, chunk, num_chunks, buf, ilo, ihi, jlo, jhi, .true.)
+     &     (g_a, n, chunk, num_chunks, DBL_MB(indexd), ilo, ihi,
+     &     jlo, jhi, .true.)
 c
 c***  remote ops
 c
       call TestPutGetAcc1
-     &     (g_a, n, chunk, num_chunks, buf, ilo, ihi, jlo, jhi,.false.)
+     &     (g_a, n, chunk, num_chunks, DBL_MB(indexd), ilo, ihi,
+     &     jlo, jhi,.false.)
 
 c     enddo
+      if(.not. ma_pop_stack(h_d)) call ga_error('invalid MA handle ?',0)
       end
 
 
@@ -327,7 +338,7 @@ c
 c
       integer g_a
       integer ilo, ihi, jlo, jhi
-      integer nproc, me, loop
+      integer nproc, me, loop, h_d, indexd
       integer chunk(num_chunks)
       data    chunk /1,3,4,9,16,24,30,48,64,91,128,171,256,353,440,512/
 c     
@@ -337,9 +348,17 @@ c
 c***  Create global array
       if (.not. ga_create(MT_DBL, n, n, 'a', 0, 0, g_a))
      $     call ga_error(' ga_create failed ',1)
+c
+c***  allocate memory for D
+      if(.not. ma_push_get(MT_DBL,nn,'d',h_d, indexd))
+     &     call ga_error('memory allocation failed',0)
+      
 c     
       do loop=1,nn
          buf(loop) = .01d0
+      enddo
+      do loop=0,nn-1
+         DBL_MB(indexd+loop) = .01d0
       enddo
       call ga_zero(g_a) 
 c
@@ -357,14 +376,17 @@ c***  local ops
 c
       call ga_distribution(g_a, me, ilo, ihi, jlo, jhi)
       call TestPutGetAcc
-     &     (g_a, n, chunk, num_chunks, buf, ilo, ihi, jlo, jhi, .true.)
+     &     (g_a, n, chunk, num_chunks, DBL_MB(indexd), ilo, ihi,
+     &     jlo, jhi, .true.)
 c
 c***  remote ops
 c
       call TestPutGetAcc
-     &     (g_a, n, chunk, num_chunks, buf, ilo, ihi, jlo, jhi,.false.)
+     &     (g_a, n, chunk, num_chunks, DBL_MB(indexd), ilo, ihi,
+     &     jlo, jhi,.false.)
 
 c     enddo
+      if(.not. ma_pop_stack(h_d)) call ga_error('invalid MA handle ?',0)
       end
 
 

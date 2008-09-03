@@ -6,115 +6,218 @@
 #include "message.h"
 
 
-static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, void* val, Integer add)
+static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, void* val,
+                            Integer add, Integer excl, Integer bit)
 {
-    int i;
-
-    switch (type){
-       int *ia, *ib;
-       double *da, *db;
-       DoubleComplex *ca, *cb;
-       SingleComplex *cfa, *cfb;
-       float *fa, *fb;
-       long *la, *lb;
-       long long *lla, *llb;
-       case C_INT:
-            ia = (int*)ptra;
-            ib = (int*)ptrb;
-            if(add) for(i=0; i< n; i++) {
-                    if(i==0) 
-		      ib[i] = ia[i];
-                    else
-                      ib[i] = ib[i-1] + ia[i-1]; 
-            }
-            else
-                    for(i=0; i< n; i++) ib[i] = *(int*)val; 
-            break;
-       case C_DCPL:
-            ca = (DoubleComplex*)ptra;
-            cb = (DoubleComplex*)ptrb;
-            if(add) for(i=0; i< n; i++){
-                    if(i==0) {
- 		      cb[i].real = ca[i].real;
-                      cb[i].imag = ca[i].imag;
-                    }  else {
-		      cb[i].real = cb[i-1].real + ca[i-1].real; 
-		      cb[i].imag = cb[i-1].imag + ca[i-1].imag; 
-                    }
-                }
-            else
-                for(i=0; i< n; i++){
-                    cb[i].real = ((DoubleComplex*)val)->real; 
-                    cb[i].imag = ((DoubleComplex*)val)->imag; 
-                }
-            break;
-       case C_SCPL:
-            cfa = (SingleComplex*)ptra;
-            cfb = (SingleComplex*)ptrb;
-            if(add) for(i=0; i< n; i++){
-                    if(i==0) {
- 		      cfb[i].real = cfa[i].real;
-                      cfb[i].imag = cfa[i].imag;
-                    }  else {
-		      cfb[i].real = cfb[i-1].real + cfa[i-1].real; 
-		      cfb[i].imag = cfb[i-1].imag + cfa[i-1].imag; 
-                    }
-                }
-            else
-                for(i=0; i< n; i++){
-                    cfb[i].real = ((SingleComplex*)val)->real; 
-                    cfb[i].imag = ((SingleComplex*)val)->imag; 
-                }
-            break;
-       case C_DBL:
-            da = (double*)ptra;
-            db = (double*)ptrb;
-            if(add) for(i=0; i< n; i++) {
-                    if(i==0) 
- 		      db[i] = da[i];
-                    else
-		      db[i] = db[i-1] + da[i-1]; 
-            } else
-               for(i=0; i< n; i++) db[i] = *(double*)val; 
-            break;
-       case C_FLOAT:
-            fa = (float*)ptra;
-            fb = (float*)ptrb;
-            if(add) for(i=0; i< n; i++) {
-                    if(i==0)
-		      fb[i] = fa[i];
-                    else
-		      fb[i] = fb[i-1] + fa[i-1];
-            }
-            else
-                    for(i=0; i< n; i++) fb[i] = *(float*)val;
-            break; 
-       case C_LONG:
-            la = (long*)ptra; 
-            lb = (long*)ptrb; 
-            if(add) for(i=0; i< n; i++) {
-                    if(i==0)
-		      lb[i] = la[i];
-                    else
-		      lb[i] = lb[i-1] + la[i-1];
-            }
-            else
-                    for(i=0; i< n; i++) lb[i] = *(long*)val;
-            break;                                                         
-       case C_LONGLONG:
-            lla = (long long*)ptra; 
-            llb = (long long*)ptrb; 
-            if(add) for(i=0; i< n; i++) {
-                    if(i==0)
-		      llb[i] = lla[i];
-                    else
-		      llb[i] = llb[i-1] + lla[i-1];
-            }
-            else
-                    for(i=0; i< n; i++) llb[i] = *(long long*)val;
-            break;                                                         
-       default: ga_error("ga_scan/add:wrong data type",type);
-       }
+  int i;
+  switch (type){
+    int *ia, *ib;
+    double *da, *db;
+    DoubleComplex *ca, *cb;
+    SingleComplex *cfa, *cfb;
+    float *fa, *fb;
+    long *la, *lb;
+    long long *lla, *llb;
+    case C_INT:
+    ia = (int*)ptra;
+    ib = (int*)ptrb;
+    if(add) {
+      if (excl) {
+        for (i=0; i<n; i++) {
+          if (i==0 && bit) {
+            ib[i] = 0;
+          } else if (i==0) {
+            ib[i] = ia[i];
+          } else {
+            ib[i] = ib[i-1] + ia[i-1]; 
+          }
+        }
+      } else {
+        for(i=0; i< n; i++) {
+          if(i==0) 
+            ib[i] = ia[i];
+          else
+            ib[i] = ib[i-1] + ia[i]; 
+        }
+      }
+    }
+    else {
+      for(i=0; i< n; i++) ib[i] = *(int*)val; 
+    }
+    break;
+    case C_DCPL:
+    ca = (DoubleComplex*)ptra;
+    cb = (DoubleComplex*)ptrb;
+    if(add) {
+      if (excl) {
+        for(i=0; i< n; i++) {
+          if (i==0 && bit) {
+            cb[i].real = 0.0;
+            cb[i].imag = 0.0;
+          } else if (i==0) {
+            cb[i].real = ca[i].real;
+            cb[i].imag = ca[i].imag;
+          } else {
+            cb[i].real = cb[i-1].real + ca[i-1].real; 
+            cb[i].imag = cb[i-1].imag + ca[i-1].imag; 
+          }
+        }
+      } else {
+        for(i=0; i< n; i++){
+          if(i==0) {
+            cb[i].real = ca[i].real;
+            cb[i].imag = ca[i].imag;
+          }  else {
+            cb[i].real = cb[i-1].real + ca[i].real; 
+            cb[i].imag = cb[i-1].imag + ca[i].imag; 
+          }
+        }
+      }
+    }
+    else
+      for(i=0; i< n; i++){
+        cb[i].real = ((DoubleComplex*)val)->real; 
+        cb[i].imag = ((DoubleComplex*)val)->imag; 
+      }
+    break;
+    case C_SCPL:
+    cfa = (SingleComplex*)ptra;
+    cfb = (SingleComplex*)ptrb;
+    if(add) {
+      if (excl) {
+        for(i=0; i< n; i++){
+          if (i==0 && bit) {
+            cfb[i].real = 0.0;
+            cfb[i].imag = 0.0;
+          } else if (i==0) {
+            cfb[i].real = cfa[i].real;
+            cfb[i].imag = cfa[i].imag;
+          } else {
+            cfb[i].real = cfb[i-1].real + cfa[i-1].real; 
+            cfb[i].imag = cfb[i-1].imag + cfa[i-1].imag; 
+          }
+        }
+      } else {
+        for(i=0; i< n; i++){
+          if(i==0) {
+            cfb[i].real = cfa[i].real;
+            cfb[i].imag = cfa[i].imag;
+          }  else {
+            cfb[i].real = cfb[i-1].real + cfa[i].real; 
+            cfb[i].imag = cfb[i-1].imag + cfa[i].imag; 
+          }
+        }
+      }
+    }
+    else
+      for(i=0; i< n; i++){
+        cfb[i].real = ((SingleComplex*)val)->real; 
+        cfb[i].imag = ((SingleComplex*)val)->imag; 
+      }
+    break;
+    case C_DBL:
+    da = (double*)ptra;
+    db = (double*)ptrb;
+    if(add) {
+      if (excl) {
+        for(i=0; i< n; i++) {
+          if (i==0 && bit) {
+            db[i] = 0.0;
+          } else if (i==0) {
+            db[i] = da[i];
+          } else {
+            db[i] = db[i-1] + da[i-1]; 
+          }
+        }
+      } else {
+        for(i=0; i< n; i++) {
+          if(i==0) 
+            db[i] = da[i];
+          else
+            db[i] = db[i-1] + da[i]; 
+        }
+      }
+    } else
+      for(i=0; i< n; i++) db[i] = *(double*)val; 
+    break;
+    case C_FLOAT:
+    fa = (float*)ptra;
+    fb = (float*)ptrb;
+    if(add) {
+      if (excl) {
+        if (i==0 && bit) {
+            fb[i] = 0.0;
+        } else if (i==0) {
+            fb[i] = fa[i];
+        } else {
+            fb[i] = fb[i-1] + fa[i-1];
+        }
+      } else {
+        for(i=0; i< n; i++) {
+          if(i==0)
+            fb[i] = fa[i];
+          else
+            fb[i] = fb[i-1] + fa[i];
+        }
+      }
+    }
+    else
+      for(i=0; i< n; i++) fb[i] = *(float*)val;
+    break; 
+    case C_LONG:
+    la = (long*)ptra; 
+    lb = (long*)ptrb; 
+    if(add) {
+      if (excl) {
+        for(i=0; i< n; i++) {
+          if (i==0 && bit) {
+            lb[i] = 0;
+          } else if (i==0) {
+            lb[i] = la[i];
+          } else {
+            lb[i] = lb[i-1] + la[i-1];
+          }
+        }
+      } else {
+        for(i=0; i< n; i++) {
+          if(i==0)
+            lb[i] = la[i];
+          else
+            lb[i] = lb[i-1] + la[i];
+        }
+      }
+    }
+    else
+      for(i=0; i< n; i++) lb[i] = *(long*)val;
+    break;                                                         
+    case C_LONGLONG:
+    lla = (long long*)ptra; 
+    llb = (long long*)ptrb; 
+    if(add) {
+      if (excl) {
+        for(i=0; i< n; i++) {
+          if (i==0 && bit) {
+            llb[i] = 0;
+          } else if (i==0) {
+            llb[i] = lla[i];
+          } else {
+            llb[i] = llb[i-1] + lla[i-1];
+          }
+        }
+      } else {
+        for(i=0; i< n; i++) {
+          if(i==0)
+            llb[i] = lla[i];
+          else
+            llb[i] = llb[i-1] + lla[i];
+        }
+      }
+    }
+    else
+      for(i=0; i< n; i++) llb[i] = *(long long*)val;
+    break;                                                         
+    default: ga_error("ga_scan/add:wrong data type",type);
+  }
 }
 
 static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
@@ -382,13 +485,16 @@ register Integer i;
 
 
 static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit, 
-           Integer* lo, Integer* hi, int add)
+           Integer* lo, Integer* hi, int add, Integer *excl)
 {
-   Integer *lim=NULL, nproc, me;
-   Integer lop, hip, ndim, dims, type;
+   Integer *lim=NULL, *lom=NULL, nproc, me;
+   Integer lop, hip, ndim, dims, type, ioff;
    double buf[2];
-   Integer *ia, elems,ld;
-   int i;
+   Integer bit;
+   Integer *ia, *ip, elems,ld;
+   int i, k;
+   void *ptr_b;
+   void *ptr_a;
 
    nproc = ga_nnodes_();
       me = ga_nodeid_();
@@ -399,7 +505,6 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    ga_sync_();
 
-   lim = (Integer *) ga_malloc(nproc, MT_F_INT, "ga scan buf");
 
    ndim = ga_ndim_(g_a);
    if(ndim>1)ga_error("ga_scan_copy: applicable to 1-dim arrays",ndim);
@@ -407,7 +512,11 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
    nga_inquire_internal_(g_a, &type, &ndim, &dims);
    nga_distribution_(g_sbit, &me, &lop, &hip);
 
-   bzero(lim,sizeof(Integer)*nproc);
+   /* create arrays to hold first and last bits set on a given process */
+   lim = (Integer *) ga_malloc(2*nproc, MT_F_INT, "ga scan buf");
+   bzero(lim,2*sizeof(Integer)*nproc);
+
+   lom = lim + nproc;
 
    if(!ga_compare_distr_(g_a, g_sbit))
        ga_error("ga_scan_copy: different distribution src",0);
@@ -417,28 +526,43 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */ 
 
         nga_access_ptr(g_sbit, &lop, &hip, &ia, &ld);
-        elems = hip -lop+1;
+        elems = hip - lop + 1;
         /* find last bit set on given process */
-        for(i=0; i<elems; i++) if(ia[i]) lim[me]= i+lop;
+        for(i=0; i<elems; i++) {
+          if(ia[i]) {
+            ioff = i + lop;
+            if (ioff >= *lo && ioff <= *hi) {
+              lim[me]= ioff;
+            }
+            /* find first bit set on given process */
+            if (!lom[me]) {
+              lom[me] = i;
+            }
+          }
+        }
+   } else {
+     /* if processor has no data then set value to -1 */
+     lim[me] = -1;
    }
 
-   ga_igop(GA_TYPE_GOP,lim, nproc,"+");
+   ga_igop(GA_TYPE_GOP,lim, 2*nproc,"+");
 
-   /* take product of patch owned and specified by the user */ 
-   if(*hi <lop || hip <*lo); /* we got no elements to update */
+   /* take intersection of patch owned by process and patch
+      specified by the user */ 
+   if(*hi <lop || hip <*lo); /* we have no elements to update */
    else{
-       Integer k, *ip=ia, lops=lop, hips=hip;
+       Integer lops=lop, hips=hip;
        Integer startp=0;
-       void *ptr_b;
-       void *ptr_a;
 
        /* what part of local data we should be working on */
+       ip = ia;
        if(lop < *lo){
            /* user specified patch starts in the middle */
            lop = *lo;
            ip = ia + (*lo-lop);
        } 
-       if(hip > *hi)hip = *hi;
+       bit = *ip;
+       if(hip > *hi) hip = *hi;
       
        /* access the data */
        nga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
@@ -453,7 +577,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
        }
        if(!startp) ga_error("sbit not found for",lop); /*nothing was found*/
 
-       /* copy the data */
+       /* copy or scan the data */
        i = 0;
        for(k=lop; k<= hip; ){ 
            int indx=i;
@@ -469,23 +593,206 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
            nga_get_(g_a, &startp, &startp, buf, &one);
 
            /* assign it to "elems" elements of B */
-           gai_combine_val(type, ptr_a, ptr_b, elems, buf,add); 
+           gai_combine_val(type, ptr_a, ptr_b, elems, buf, add, *excl, bit); 
 
            ptr_a = (char*)ptr_a + elems*elemsize;
            ptr_b = (char*)ptr_b + elems*elemsize;
            k += elems;
            startp = k;
+           bit = 1;
        }
-
        /* release local access to arrays */
        nga_release_(g_a, &lop, &hip);
        nga_release_(g_b, &lop, &hip);
-       nga_release_(g_sbit, &lops, &hips);
+       if (lops > 0) nga_release_(g_sbit, &lops, &hips);
+
+    }
+
+    /* fix up scan_add values for segments that cross processor boundaries */
+    if (add) {
+      Integer ichk = 1;
+      nga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
+      ioff = hip - lop;
+      switch (type) {
+        Integer *ilast;
+        DoubleComplex *cdlast;
+        SingleComplex *cflast;
+        double *dlast;
+        float *flast;
+        long *llast;
+        long long *lllast;
+        case C_INT:
+          ilast = (Integer*) ga_malloc(nproc, MT_F_INT, "ga add buf");
+          bzero(ilast,sizeof(Integer)*nproc);
+          if (lim[me] >= 0) {
+            ilast[me] = (Integer)((int*)ptr_b)[ioff];
+          }
+          ga_igop(GA_TYPE_GOP,ilast,nproc,"+");
+          if (!ip[0]) {
+            Integer iup;
+            if (lim[me] > 0) {
+              iup = lom[me];
+            } else {
+              iup = hip - lop;
+            }
+            for (k=me-1; k>=0 && ichk; k--) {
+              for (i=0; i<iup; i++) {
+                ((int*)ptr_b)[i] += (int)ilast[k];
+              }
+              if (lim[k] > 0) ichk = 0;
+            }
+          }
+          ga_free(ilast);
+          break;
+        case C_DCPL:
+          cdlast = (DoubleComplex*) ga_malloc(nproc, C_DCPL, "ga add buf");
+          bzero(cdlast,sizeof(DoubleComplex)*nproc);
+          if (lim[me] >= 0) {
+            cdlast[me].real = ((DoubleComplex*)ptr_b)[ioff].real;
+            cdlast[me].imag = ((DoubleComplex*)ptr_b)[ioff].imag;
+          }
+          ga_dgop(GA_TYPE_GOP,(double*)cdlast,2*nproc,"+");
+          if (!ip[0]) {
+            Integer iup;
+            if (lim[me] > 0) {
+              iup = lom[me];
+            } else {
+              iup = hip - lop + 1;
+            }
+            for (k=me-1; k>=0 && ichk; k--) {
+              for (i=0; i<iup; i++) {
+                ((DoubleComplex*)ptr_b)[i].real += cdlast[k].real;
+                ((DoubleComplex*)ptr_b)[i].imag += cdlast[k].imag;
+              }
+              if (lim[k] > 0) ichk = 0;
+            }
+          }
+          ga_free(cdlast);
+          break;
+        case C_SCPL:
+          cflast = (SingleComplex*) ga_malloc(nproc, C_SCPL, "ga add buf");
+          bzero(cflast,sizeof(SingleComplex)*nproc);
+          if (lim[me] >= 0) {
+            cflast[me].real = ((SingleComplex*)ptr_b)[ioff].real;
+            cflast[me].imag = ((SingleComplex*)ptr_b)[ioff].imag;
+          }
+          ga_fgop(GA_TYPE_GOP,(float*)cflast,2*nproc,"+");
+          if (!ip[0]) {
+            Integer iup;
+            if (lim[me] > 0) {
+              iup = lom[me];
+            } else {
+              iup = hip - lop + 1;
+            }
+            for (k=me-1; k>=0 && ichk; k--) {
+              for (i=0; i<iup; i++) {
+                ((SingleComplex*)ptr_b)[i].real += cflast[k].real;
+                ((SingleComplex*)ptr_b)[i].imag += cflast[k].imag;
+              }
+              if (lim[k] > 0) ichk = 0;
+            }
+          }
+          ga_free(cflast);
+          break;
+        case C_DBL:
+          dlast = (double*) ga_malloc(nproc, C_DBL, "ga add buf");
+          bzero(dlast,sizeof(double)*nproc);
+          if (lim[me] >= 0) {
+            dlast[me] = ((double*)ptr_b)[ioff];
+          }
+          ga_dgop(GA_TYPE_GOP,dlast,nproc,"+");
+          if (!ip[0]) {
+            Integer iup;
+            if (lim[me] > 0) {
+              iup = lom[me];
+            } else {
+              iup = hip - lop + 1;
+            }
+            for (k=me-1; k>=0 && ichk; k--) {
+              for (i=0; i<iup; i++) {
+                ((double*)ptr_b)[i] += dlast[k];
+              }
+              if (lim[k] > 0) ichk = 0;
+            }
+          }
+          ga_free(dlast);
+          break;
+        case C_FLOAT:
+          flast = (float*) ga_malloc(nproc, C_FLOAT, "ga add buf");
+          bzero(flast,sizeof(float)*nproc);
+          if (lim[me] >= 0) {
+            flast[me] = ((float*)ptr_b)[ioff];
+          }
+          ga_fgop(GA_TYPE_GOP,flast,nproc,"+");
+          if (!ip[0]) {
+            Integer iup;
+            if (lim[me] > 0) {
+              iup = lom[me];
+            } else {
+              iup = hip - lop + 1;
+            }
+            for (k=me-1; k>=0 && ichk; k--) {
+              for (i=0; i<iup; i++) {
+                ((float*)ptr_b)[i] += flast[k];
+              }
+              if (lim[k] > 0) ichk = 0;
+            }
+          }
+          ga_free(flast);
+          break;
+        case C_LONG:
+          llast = (long*) ga_malloc(nproc, C_LONG, "ga add buf");
+          bzero(llast,sizeof(long)*nproc);
+          if (lim[me] >= 0) {
+            llast[me] = ((long*)ptr_b)[ioff];
+          }
+          ga_lgop(GA_TYPE_GOP,llast,nproc,"+");
+          if (!ip[0]) {
+            Integer iup;
+            if (lim[me] > 0) {
+              iup = lom[me];
+            } else {
+              iup = hip - lop + 1;
+            }
+            for (k=me-1; k>=0 && ichk; k--) {
+              for (i=0; i<iup; i++) {
+                ((long*)ptr_b)[i] += llast[k];
+              }
+              if (lim[k] > 0) ichk = 0;
+            }
+          }
+          ga_free(llast);
+          break;
+        case C_LONGLONG:
+          lllast = (long long*) ga_malloc(nproc, C_LONGLONG, "ga add buf");
+          bzero(lllast,sizeof(long long)*nproc);
+          if (lim[me] >= 0) {
+            lllast[me] = ((long long*)ptr_b)[ioff];
+          }
+          ga_llgop(GA_TYPE_GOP,lllast,nproc,"+");
+          if (!ip[0]) {
+            Integer iup;
+            if (lim[me] > 0) {
+              iup = lom[me];
+            } else {
+              iup = hip - lop + 1;
+            }
+            for (k=me-1; k>=0 && ichk; k--) {
+              for (i=0; i<iup; i++) {
+                ((long long*)ptr_b)[i] += lllast[k];
+              }
+              if (lim[k] > 0) ichk = 0;
+            }
+          }
+          ga_free(lllast);
+          break;
+        default: ga_error("ga_scan/add:wrong data type",type);
+      }
+      nga_release_(g_b, &lop, &hip);
+
    }
 
-
    ga_sync_();
-
    ga_free(lim);
 }
 
@@ -493,17 +800,21 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 void FATR ga_scan_copy_(Integer* g_a, Integer* g_b, Integer* g_sbit,
                            Integer* lo, Integer* hi)
 {       
-        gai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 0);
+        Integer zero = 0;
+        gai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 0, &zero);
 }
 
 
 void FATR ga_scan_add_(Integer* g_a, Integer* g_b, Integer* g_sbit,
-                           Integer* lo, Integer* hi)
+                           Integer* lo, Integer* hi, Integer* excl)
 {       
-        gai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 1);
+        gai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 1, excl);
 }
 
-
+/**
+ * pack/unpack data from g_a into g_b based on the mask array g_sbit
+ * Return total number of bits set in variable icount.
+ */
 static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
               Integer* lo, Integer* hi, Integer* icount, int pack)
 {
@@ -531,11 +842,11 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
    /* how many elements we have to copy? */
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */
 
-        /* adjust the range of elements to consider to be within <lo,hi> */
+        /* adjust the range of elements to be within <lo,hi> */
         if(lop < *lo) lop = *lo;
         if(hip > *hi) hip = *hi;
 
-        if(*hi <lop || hip <*lo); /* we got no elements to update */
+        if(*hi <lop || hip <*lo); /* we have no elements to update */
         else{
 
           nga_access_ptr(g_sbit, &lop, &hip, &ptr, &elems);
@@ -545,7 +856,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
           /* find number of elements to be contributed */
           for(i=counter=0,first=-1; i<elems; i++) if(ia[i]){
               counter++;
-              if(first==-1)first=i;
+              if(first==-1) first=i;
           }
           lim[me] = counter;
         }
@@ -619,8 +930,8 @@ void gai_bin_offset(int scope, int *x, int n, int *offset)
 int root, up, left, right;
 int len, lenmes, tag=32100, i, me=armci_msg_me();
 
-    if(!x)armci_die("armci_bin_offset: NULL pointer", n);
-    if(n>NWORK)armci_die("armci_bin_offset: >NWORK", n);
+    if(!x)ga_error_("gai_bin_offset: NULL pointer", n);
+    if(n>NWORK)ga_error_("gai_bin_offset: >NWORK", n);
     len = sizeof(int)*n;
 
     armci_msg_bintree(scope, &root, &up, &left, &right);
@@ -844,7 +1155,8 @@ Integer type, ndim, nbin;
        printf("%d: elems=%d lo=%d sel=%d off=%d contrib=%d nbin=%d\n",ga_nodeid_(), elems, lo, selected,offset[selected-1],all_bin_contrib[0],nbin);
 */
        if(lo > nbin) {
-	 printf("Writing off end of bins array: index=%d elems=%d lo=%d hi=%d values=%d nbin=%d\n",i,elems,lo,hi,values+i,nbin);
+	      printf("Writing off end of bins array: index=%d elems=%d lo=%d hi=%d values=%d nbin=%d\n",
+                i,elems,lo,hi,values+i,nbin);
          break;   
        }else{
           nga_put_(g_bin, &lo, &hi, values+i, &selected); 

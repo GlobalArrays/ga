@@ -61,7 +61,8 @@ BUILDING GA
 
    Interface routines to ScaLAPACK are only available with MPI, and of
    course with ScaLAPACK. The user is required to define environment
-   variables USE_SCALAPACK, and location of ScaLAPACK & Co. libraries
+   variables USE_SCALAPACK or USE_SCALAPACK_I8 (to use scalapack libraries
+   compiled with 8-byte integers), and location of ScaLAPACK & Co. libraries
    in variable SCALAPACK.
 
    Example: using csh/tcsh

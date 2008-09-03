@@ -16,10 +16,14 @@
 #include <unistd.h>
 #include <errno.h>
 #endif
+#include "armci.h"
 
 #define PAUSE_ON_ERROR__
 
 #define  Error armci_die 
+#if !defined(armci_die)
+extern void Error();
+#endif
 
 #if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
 #   define SigType  int
@@ -36,7 +40,6 @@
 #include <sys/wait.h>
 #endif
 
-extern void Error();
 extern int armci_me;
 
 int AR_caught_sigint=0;

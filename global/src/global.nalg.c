@@ -297,7 +297,7 @@ int local_sync_begin,local_sync_end,use_put;
            nga_put_(g_b, lo, hi, ptr_a, ld);
          }
        } else {
-         if (!ga_scalapack_distribution_(g_a)) {
+         if (!ga_uses_proc_grid_(g_a)) {
            for (i=me_a; i<num_blocks_a; i += anproc) {
              nga_distribution_(g_a, &i, lo, hi);
              if (lo[0]>0) {
@@ -311,7 +311,7 @@ int local_sync_begin,local_sync_end,use_put;
            ga_get_proc_index_(g_a, &me_a, proc_index);
            ga_get_proc_index_(g_a, &me_a, index);
            ga_get_block_info_(g_a, blocks, block_dims);
-           ga_topology_(g_a, topology);
+           ga_get_proc_grid_(g_a, topology);
            while (index[ndim-1] < blocks[ndim-1]) {
              /* find bounding coordinates of block */
              chk = 1;
@@ -344,7 +344,7 @@ int local_sync_begin,local_sync_end,use_put;
            nga_get_(g_a, lo, hi, ptr_b, ld);
          }
        } else {
-         if (!ga_scalapack_distribution_(g_a)) {
+         if (!ga_uses_proc_grid_(g_a)) {
            for (i=me_b; i<num_blocks_b; i += bnproc) {
              nga_distribution_(g_b, &i, lo, hi);
              if (lo[0]>0) {
@@ -358,7 +358,7 @@ int local_sync_begin,local_sync_end,use_put;
            ga_get_proc_index_(g_b, &me_b, proc_index);
            ga_get_proc_index_(g_b, &me_b, index);
            ga_get_block_info_(g_b, blocks, block_dims);
-           ga_topology_(g_b, topology);
+           ga_get_proc_grid_(g_b, topology);
            while (index[ndim-1] < blocks[ndim-1]) {
              /* find bounding coordinates of block */
              chk = 1;
@@ -1167,7 +1167,7 @@ char *ptr_tmp, *ptr_a;
       nga_distribution_(g_a, &me, lo, hi);
 
       if(lo[0]>0){
-        Integer nelem, ld, lob[2], hib[2], nrow, ncol;
+        Integer nelem, lob[2], hib[2], nrow, ncol;
         int i, size=GAsizeofM(atype);
 
         nrow   = hi[0] -lo[0]+1;
@@ -1180,13 +1180,13 @@ char *ptr_tmp, *ptr_a;
         ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
 
         /* get access to local data */
-        nga_access_ptr(g_a, lo, hi, &ptr_a, &ld);
+        nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
 
         for(i = 0; i < ncol; i++){
           char *ptr = ptr_tmp + i*size;
 
           gai_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
-          ptr_a += ld*size;
+          ptr_a += ld[0]*size;
         }
 
         nga_release_(g_a, lo, hi); 
@@ -1199,19 +1199,19 @@ char *ptr_tmp, *ptr_a;
       Integer idx, lod[MAXDIM], hid[MAXDIM];
       Integer offset, jtot, last;
       Integer blocks[MAXDIM], block_dims[MAXDIM];
-      Integer nelem, ld, lob[2], hib[2], nrow, ncol;
+      Integer nelem, lob[2], hib[2], nrow, ncol;
       int i, size=GAsizeofM(atype);
 
       /* allocate memory for transposing elements locally */
       ga_get_block_info_(g_a, blocks, block_dims);
-      nelem = block_dims[0]*block_dims[1];
-      ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
 
       /* Simple block-cyclic data distribution */
-      if (!ga_scalapack_distribution_(g_a)) {
+      nelem = block_dims[0]*block_dims[1];
+      ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
+      if (!ga_uses_proc_grid_(g_a)) {
         for (idx = me; idx < num_blocks_a; idx += nproc) {
           nga_distribution_(g_a, &idx, lo, hi);
-          nga_access_block_ptr(g_a, &idx, &ptr_a, &ld);
+          nga_access_block_ptr(g_a, &idx, &ptr_a, ld);
 
           nrow   = hi[0] -lo[0]+1;
           ncol   = hi[1] -lo[1]+1; 
@@ -1222,7 +1222,7 @@ char *ptr_tmp, *ptr_a;
             char *ptr = ptr_tmp + i*size;
 
             gai_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
-            ptr_a += ld*size;
+            ptr_a += ld[0]*size;
           }
           nga_put_(g_b, lob, hib, ptr_tmp ,&ncol);
 
@@ -1232,43 +1232,53 @@ char *ptr_tmp, *ptr_a;
         /* Uses scalapack block-cyclic data distribution */
         Integer lod[MAXDIM], hid[MAXDIM], chk;
         Integer proc_index[MAXDIM], index[MAXDIM];
-        Integer topology[MAXDIM];
+        Integer topology[MAXDIM], ichk;
 
         ga_get_proc_index_(g_a, &me, proc_index);
         ga_get_proc_index_(g_a, &me, index);
         ga_get_block_info_(g_a, blocks, block_dims);
-        ga_topology_(g_a, topology);
-        while (index[andim-1] < blocks[andim-1]) {
-          /* find bounding coordinates of block */
-          chk = 1;
-          for (i = 0; i < andim; i++) {
-            lo[i] = index[i]*block_dims[i]+1;
-            hi[i] = (index[i] + 1)*block_dims[i];
-            if (hi[i] > dims[i]) hi[i] = dims[i];
-            if (hi[i] < lo[i]) chk = 0;
+        ga_get_proc_grid_(g_a, topology);
+        /* Verify that processor has data */
+        ichk = 1;
+        for (i=0; i<andim; i++) {
+          if (index[i]<0 || index[i] >= blocks[i]) {
+            ichk = 0;
           }
-          if (chk) {
-            nga_access_block_grid_ptr(g_a, index, &ptr_a, &ld);
-            nrow   = hi[0] -lo[0]+1;
-            ncol   = hi[1] -lo[1]+1; 
-            nelem  = nrow*ncol;
-            lob[0] = lo[1]; lob[1] = lo[0];
-            hib[0] = hi[1]; hib[1] = hi[0];
-            for(i = 0; i < ncol; i++){
-              char *ptr = ptr_tmp + i*size;
+        }
 
-              gai_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
-              ptr_a += ld*size;
+        if (ichk) {
+          nga_access_block_grid_ptr(g_a, index, &ptr_a, ld);
+          while (index[andim-1] < blocks[andim-1]) {
+            /* find bounding coordinates of block */
+            chk = 1;
+            for (i = 0; i < andim; i++) {
+              lo[i] = index[i]*block_dims[i]+1;
+              hi[i] = (index[i] + 1)*block_dims[i];
+              if (hi[i] > adims[i]) hi[i] = adims[i];
+              if (hi[i] < lo[i]) chk = 0;
             }
-            nga_put_(g_b, lob, hib, ptr_tmp ,&ncol);
-            nga_release_update_block_(g_a, index);
-          }
-          /* increment index to get next block on processor */
-          index[0] += topology[0];
-          for (i = 0; i < andim; i++) {
-            if (index[i] >= blocks[i] && i<andim-1) {
-              index[i] = proc_index[i];
-              index[i+1] += topology[i+1];
+            if (chk) {
+              nga_access_block_grid_ptr(g_a, index, &ptr_a, ld);
+              nrow   = hi[0] -lo[0]+1;
+              ncol   = hi[1] -lo[1]+1; 
+              nelem  = nrow*ncol;
+              lob[0] = lo[1]; lob[1] = lo[0];
+              hib[0] = hi[1]; hib[1] = hi[0];
+              for(i = 0; i < ncol; i++){
+                char *ptr = ptr_tmp + i*size;
+                gai_local_transpose(atype, ptr_a, nrow, block_dims[0]*size, ptr);
+                ptr_a += ld[0]*size;
+              }
+              nga_put_(g_b, lob, hib, ptr_tmp ,&block_dims[0]);
+              nga_release_update_block_(g_a, index);
+            }
+            /* increment index to get next block on processor */
+            index[0] += topology[0];
+            for (i = 0; i < andim; i++) {
+              if (index[i] >= blocks[i] && i<andim-1) {
+                index[i] = proc_index[i];
+                index[i+1] += topology[i+1];
+              }
             }
           }
         }

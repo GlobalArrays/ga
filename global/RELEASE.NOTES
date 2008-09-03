@@ -50,6 +50,18 @@ DIRECTORY STRUCTURE
 
 
 HISTORY
+  version 4.1   May 2008
+              * Support for several new platforms
+                * Cray XT4
+                * BlueGene/L, BlueGene/P
+                * OpenIB network
+              * Optimized one-sided non-blocking operations
+              * New networks. i.e. ARMCI_NETWORK
+                * OPENIB
+                * PORTALS
+                * MPI-SPAWN (one-sided communication thru' MPI2 Dynamic
+                             Process management and Send/Recv)
+
   version 4.0   April 2006
               * Support for multilevel parallelism: processor group awareness
               * GA_Dgemm matrix multiplication based on SRUMMA

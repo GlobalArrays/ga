@@ -1931,7 +1931,7 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
     Integer loS[MAXDIM];
     Integer nproc = ga_nnodes_();
     /* using simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)){
+    if (!ga_uses_proc_grid_(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of patch */
         nga_distribution_(g_a, &i, loA, hiA);
@@ -2004,7 +2004,7 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
       while (index[ndim-1] < blocks[ndim-1]) {
         /* find bounding coordinates of block */
         chk = 1;

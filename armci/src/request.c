@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.75 2007-10-30 02:04:55 manoj Exp $ */
+/* $Id: request.c,v 1.74.2.11 2007-10-18 06:09:37 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -572,7 +572,7 @@ void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra)
      int op = msginfo->operation;
 
      if(DEBUG_){
-        printf("%d server: executing RMW from %d\n",armci_me,msginfo->from);
+       printf("%d server: executing RMW from %d. op=%d pextra=%p\n",armci_me,msginfo->from, op, pextra);
         fflush(stdout);
      }
      if(msginfo->datalen != sizeof(long))
@@ -603,7 +603,12 @@ void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra)
 #ifdef SOCKETS
      armci_sock_send(msginfo->from, &(msginfo->tag), sizeof(msg_tag_t));
 #endif
+#if defined(PEND_BUFS)
+     memcpy(pextra,pold,msginfo->datalen);
+     armci_send_data(msginfo, pextra); /*Send from server-anointed buffers*/
+#else
      armci_send_data(msginfo, pold);
+#endif
 }
 
 extern int armci_direct_vector_snd(request_header_t *msginfo , armci_giov_t darr[], int len, int proc);
@@ -649,6 +654,11 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
 #ifdef SOCKETS
     msginfo->tag = BUF_TO_BUFINFO(buf)->bufid;
 #endif
+
+/*     printf("%d:: rem_vector. len=%d. ptr_len[len-1]=%d bytes[len-1]=%d bufsize=%d\n",  */
+/* 	   armci_me, len, darr[len-1].ptr_array_len, darr[len-1].bytes,bufsize); */
+/*     fflush(stdout); */
+
 
     if(nb_handle){
       INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
@@ -720,14 +730,14 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
 /*       fprintf(stderr,"sending %lf\n",*(double*)darr[0].src_ptr_array[0]);*/
        armci_vector_to_buf(darr, len, buf);
     }
-#ifdef VAPI
-    else{
-    if(msginfo->dscrlen < (bytes - sizeof(int)))
-       *(int*)(((char*)(msginfo+1))+(bytes-sizeof(int))) = ARMCI_VAPI_COMPLETE;
-    else
-       *(int*)(((char*)(msginfo+1))+(msginfo->dscrlen+bytes-sizeof(int))) = ARMCI_VAPI_COMPLETE;
-    }
-#endif
+/* #ifdef VAPI */
+/*     else{ */
+/*     if(msginfo->dscrlen < (bytes - sizeof(int))) */
+/*        *(int*)(((char*)(msginfo+1))+(bytes-sizeof(int))) = ARMCI_STAMP; */
+/*     else */
+/*        *(int*)(((char*)(msginfo+1))+(msginfo->dscrlen+bytes-sizeof(int))) = ARMCI_STAMP; */
+/*     } */
+/* #endif */
 
     armci_send_req(proc, msginfo, bufsize);
 
@@ -752,7 +762,7 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
 
     if(nb_handle && op==GET)armci_save_vector_dscr(&buf0,darr,len,op,1);
     if(op == GET
-#   if !defined(SOCKETS)
+#   if !defined(SOCKETS) && !defined(MPI_SPAWN)
        && !nb_handle
 #   endif
       ){
@@ -806,7 +816,7 @@ int armci_rem_strided(int op, void* scale, int proc,
       if(op==GET)bufsize -=bytes;
 #   endif
     }
-    buf = buf0= GET_SEND_BUFFER(bufsize,op,proc);
+    buf = buf0= GET_SEND_BUFFER((bufsize),op,proc);
     msginfo = (request_header_t*)buf;
     bzero(msginfo,sizeof(request_header_t));
 
@@ -845,7 +855,7 @@ int armci_rem_strided(int op, void* scale, int proc,
     }
 
     msginfo->datalen=bytes;
-#if defined(USE_SOCKET_VECTOR_API)
+#if defined(USE_SOCKET_VECTOR_API) || defined(MPI_SPAWN_ZEROCOPY)
     /*****for making put use readv/writev on sockets*****/
     if(op==PUT && flag)
        msginfo->datalen=0;
@@ -925,13 +935,13 @@ int armci_rem_strided(int op, void* scale, int proc,
     msginfo->bytes = msginfo->datalen+msginfo->dscrlen;
 
     if(op == GET){
-#ifdef VAPI
-       if(msginfo->dscrlen < (bytes - sizeof(int)))
-          *(int*)(((char*)(msginfo+1))+(bytes-sizeof(int)))=ARMCI_VAPI_COMPLETE;
-       else
-          *(int*)(((char*)(msginfo+1))+(msginfo->dscrlen+bytes-sizeof(int))) =
-                  ARMCI_VAPI_COMPLETE;
-#endif
+/* #ifdef VAPI */
+/*        if(msginfo->dscrlen < (bytes - sizeof(int))) */
+/*           *(int*)(((char*)(msginfo+1))+(bytes-sizeof(int)))=ARMCI_STAMP; */
+/*        else */
+/*           *(int*)(((char*)(msginfo+1))+(msginfo->dscrlen+bytes-sizeof(int))) = */
+/*                   ARMCI_STAMP; */
+/* #endif */
 #      if defined(CLIENT_BUF_BYPASS)
          if(msginfo->bypass){
 
@@ -972,12 +982,15 @@ int armci_rem_strided(int op, void* scale, int proc,
        {
           armci_send_req(proc, msginfo, bufsize);
        }
+#if !defined(MPI_SPAWN)
 #ifdef ACC_SMP
        if(!ACC(op))
 #endif
        armci_save_strided_dscr(&buf0,dst_ptr,dst_stride_arr,count,
                                  stride_levels,1);
-#ifdef NB_SOCKETS
+#endif
+       
+#if defined(NB_SOCKETS) || !defined(MPI_SPAWN)
        if(!nb_handle)
 #endif
        {
@@ -1030,13 +1043,14 @@ void armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int,
     buf = buf0 = GET_SEND_BUFFER(bufsize,PUT,proc);
     msginfo = (request_header_t*)buf;
     buf += sizeof(request_header_t);
+    bzero(msginfo, sizeof(request_header_t));
 
     rem_ptr = dst_ptr;
     rem_stride_arr = dst_stride_arr;
 
     armci_save_strided_dscr(&buf,rem_ptr,rem_stride_arr,count,stride_levels,0);
 
-    if(DEBUG_){
+    if(DEBUG_) {
        printf(" CLIENT :the dest_ptr is %p src is %p\n", rem_ptr,src_ptr);
        for(i =0; i<stride_levels; i++)
 	 printf("the value of stride_arr[i] is %d,value of count[i] is %d\n",
@@ -1060,14 +1074,14 @@ void armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int,
     /* send the first phase request */
     armci_send_req(proc, msginfo, bufsize); 
 
-    if(DEBUG_){
+    if(DEBUG_) {
         printf("%d:CLIENT : finished sending first put request \n",armci_me);
         fflush(stdout);
     }
 
     armci_wait_ack(buf0);
 
-    if(DEBUG_){
+    if(DEBUG_) {
        printf("\n%d: client got ack about to post gather\n",armci_me);
        fflush(stdout);
     }        
@@ -1080,7 +1094,7 @@ void armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int,
     armci_post_gather(src_ptr,src_stride_arr,count,stride_levels,
                      mhloc,proc,nbtag,CLN,&nbhandle->cmpl_info);
 
-    if(DEBUG_){
+    if(DEBUG_) {
        printf("%d(c) : returned from armci_post_gather\n",armci_me);
        fflush(stdout);
     }
@@ -1170,9 +1184,9 @@ extern void armci_wait_for_blocking_scatter();
     }
     else{
        armci_wait_for_blocking_scatter();
+       FREE_SEND_BUFFER(msginfo);
     }
 
-    FREE_SEND_BUFFER(msginfo);
 
     if(DEBUG_){
        printf("%d(c) : finished polling for scatter_recv\n",armci_me);
@@ -1184,7 +1198,7 @@ extern void armci_wait_for_blocking_scatter();
 #endif
 
 
-#if defined(ALLOW_PIN) || defined(LAPI2)
+#if (defined(ALLOW_PIN) || defined(LAPI2)) && !defined(HAS_RDMA_GET)
 /*\ client version of remote strided get
 \*/
 int armci_rem_get(int proc,
@@ -1265,7 +1279,7 @@ int armci_rem_get(int proc,
 #  ifdef GM
     *(int*)(((char*)(dst_ptr)) + (count[0] -sizeof(int))) = ARMCI_GM_COMPLETE;
 #  else
-    *(int*)(((char*)(dst_ptr)) + (count[0] -sizeof(int))) = ARMCI_VAPI_COMPLETE;
+    *(int*)(((char*)(dst_ptr)) + (count[0] -sizeof(int))) = ARMCI_STAMP;
 #  endif
 #endif
 
@@ -1313,14 +1327,14 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
       int  *client_stride_arr=0; 
       void *client_ptr=0;
 #   endif
-
+      
     /*return if using readv/socket for put*/
     if(msginfo->operation==PUT && msginfo->datalen==0){
       if(msginfo->ehlen) /* process extra header if available */
          armci_process_extheader(msginfo, dscr, buf, buflen);
       return;
     }
-
+    
     /* unpack descriptor record */
     loc_ptr = *(void**)dscr;           dscr += sizeof(void*);
     stride_levels = *(int*)dscr;       dscr += sizeof(int);
@@ -1396,10 +1410,19 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
            
        } else
 #endif
-       if((rc = armci_op_strided(msginfo->operation, scale, proc,
-               buf_ptr, buf_stride_arr, loc_ptr, loc_stride_arr,
-               count, stride_levels, 1,NULL)))
+	 {
+#if defined(PUT_NO_SRV_COPY)
+	   ARMCI_MEMHDL_T *mhloc;
+	   if(msginfo->operation==PUT && msginfo->format==STRIDED && !msginfo->pinned && get_armci_region_local_hndl(loc_ptr,armci_clus_id(armci_me),&mhloc) && !msginfo->tag.imm_msg) {
+	     /*do nothing; data movement done done in pbuf_start_get().*/
+	   }
+	   else
+#endif
+	     if((rc = armci_op_strided(msginfo->operation, scale, proc,
+				       buf_ptr, buf_stride_arr, loc_ptr, loc_stride_arr,
+				       count, stride_levels, 1,NULL)))
                armci_die("server_strided: op from buf failed",rc);
+	 }
     }
 
     if(msginfo->ehlen) /* process extra header if available */
@@ -1463,7 +1486,7 @@ void armci_server_vector( request_header_t *msginfo,
 #ifdef SOCKETS
     armci_sock_send(msginfo->from, &(msginfo->tag), sizeof(msg_tag_t));
 #endif
-	/*      fprintf(stderr,"server sending buffer %lf\n",*(double*)sbuf);*/
+/*     fprintf(stderr,"%d:: VECTOR GET. server sending buffer %p datalen=%d\n",armci_me, sbuf, msginfo->datalen); */
 	armci_send_data(msginfo, sbuf);
       }
       break;
@@ -1789,14 +1812,14 @@ void *ptr;
     }
 #endif
 
-#ifdef VAPI
-    if(op == GET) {
-    if(msginfo->dscrlen < (bytes - sizeof(int)))
-       *(int*)(((char*)(msginfo+1))+(bytes-sizeof(int))) = ARMCI_VAPI_COMPLETE;
-    else
-       *(int*)(((char*)(msginfo+1))+(msginfo->dscrlen+bytes-sizeof(int))) = ARMCI_VAPI_COMPLETE;
-    }
-#endif
+/* #ifdef VAPI */
+/*     if(op == GET) { */
+/*     if(msginfo->dscrlen < (bytes - sizeof(int))) */
+/*        *(int*)(((char*)(msginfo+1))+(bytes-sizeof(int))) = ARMCI_STAMP; */
+/*     else */
+/*        *(int*)(((char*)(msginfo+1))+(msginfo->dscrlen+bytes-sizeof(int))) = ARMCI_STAMP; */
+/*     } */
+/* #endif */
     armci_send_req(proc, msginfo, bufsize);
     if (nb_handle && op==GET) armci_save_vector_dscr(&buf0,darr,len,op,1);
     if (op == GET

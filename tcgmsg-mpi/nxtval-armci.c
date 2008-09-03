@@ -75,15 +75,14 @@ long NXTVAL_(mproc)
 
 /*\ initialization for nxtval -- called in PBEGIN
 \*/
-void install_nxtval()
+void install_nxtval(int *argc, char **argv[])
 {
    int rc;
    int me = (int)NODEID_(), bytes, server;
 
    void *ptr_ar[MAX_PROCESS];
-
-   rc = ARMCI_Init();
-   if(rc)Error("nxtv: armci_init failed",rc);
+   
+   ARMCI_Init_args(argc, argv);
    server = NXTV_SERVER;
 
    if(me== server) bytes = sizeof(long);

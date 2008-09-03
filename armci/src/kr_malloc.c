@@ -9,7 +9,9 @@
 /* Storage allocator basically copied from ANSI K&R and corrupted */
 
 extern char *armci_allocate(); /* Used to get memory from the system */
+#if !defined(armci_die)
 extern void armci_die();
+#endif
 static char *kr_malloc_shmem(size_t nbytes, context_t *ctx);
 static void kr_free_shmem(char *ap, context_t *ctx);
 

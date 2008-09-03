@@ -190,6 +190,8 @@
 #define  ga_total_blocks_          GA_TOTAL_BLOCKS
 #define  ga_get_proc_index_        GA_GET_PROC_INDEX
 #define  ga_get_block_info_        GA_GET_BLOCK_INFO
+#define  ga_uses_proc_grid_        GA_USES_PROC_GRID
+#define  ga_get_proc_grid_         GA_GET_PROC_GRID
 #define  nga_matmul_patch_         NGA_MATMUL_PATCH
 #define  nga_periodic_acc_         NGA_PERIODIC_ACC
 #define  nga_periodic_get_         NGA_PERIODIC_GET
@@ -447,6 +449,8 @@
 #define  ga_total_blocks_          ga_total_blocks__
 #define  ga_get_proc_index_        ga_get_proc_index__
 #define  ga_get_block_info_        ga_get_block_info__
+#define  ga_uses_proc_grid_        ga_uses_proc_grid__
+#define  ga_get_proc_grid_         ga_get_proc_grid__
 #define  nga_locate_region_        nga_locate_region__     
 #define  nga_matmul_patch_         nga_matmul_patch__     
 #define  nga_periodic_acc_         nga_periodic_acc__    

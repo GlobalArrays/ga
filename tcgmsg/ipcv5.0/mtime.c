@@ -12,7 +12,11 @@ double TCGTIME_();
   return (long) (TCGTIME_()*100.0);
 }
 
-#if !(defined(KSR) || defined(ALLIANT) || defined(CRAY_T3D) || defined(LAPI)) 
+#if defined(LAPI) && defined(AIX)
+#  define LAPI_AIX
+#endif
+
+#if !(defined(KSR) || defined(ALLIANT) || defined(CRAY_T3D) || defined(LAPI_AIX)) 
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -148,7 +152,7 @@ double TIMEF();
 #endif
 
 
-#ifdef LAPI
+#ifdef LAPI_AIX
 #include <sys/time.h>
 #include <sys/systemcfg.h>
 

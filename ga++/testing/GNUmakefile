@@ -19,6 +19,9 @@ endif
 ifdef USE_SCALAPACK
      LIB_DEFINES += -DSCALAPACK
 endif
+ifdef USE_SCALAPACK_I8
+     LIB_DEFINES += -DSCALAPACK
+endif
 
 LIB_DISTRIB  = ../../lib
 LIB_TARGETS  = *.x *.p

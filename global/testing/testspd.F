@@ -12,6 +12,8 @@ c***********************************************************************
 #define TRESH 3.d0
 #define ga_dnormF(g_a) sqrt(ga_ddot(g_a, g_a))
 
+#define BLOCK_CYCLIC 0
+
       
 c***********************************************************************
 c* Program: testllt
@@ -238,7 +240,12 @@ c****
       double precision A(n,n), X(n,n)
       
       integer g_A, g_B, g_X, g_Y
-      integer g_A1, g_X1, g_Y1
+      integer g_A1, g_X1, g_Y1, g_Y2
+#if BLOCK_CYCLIC
+      integer g_AA, g_BB, g_CC, g_YY, g_ZZ
+      integer dims(2), proc_grid(2), block(2)
+      integer g1, g2
+#endif
 
       integer hsA
 
@@ -283,6 +290,95 @@ c**** global arrays
       end do    ! j
       
 c**** Create global arrays
+#if BLOCK_CYCLIC
+      if (me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '* Creating Block-Cyclic Arrays'
+        write(6,*) '*'
+      endif
+      dims(1) = n
+      dims(2) = n
+      block(1) = 64
+      block(2) = 64
+      call factor(nproc,g1,g2)
+      proc_grid(1) = g1
+      proc_grid(2) = g2
+
+      g_A = ga_create_handle()
+      call ga_set_data(g_A,2,dims,MT_DBL)
+      call ga_set_block_cyclic_proc_grid(g_A,block,proc_grid)
+      if (.not.ga_allocate(g_A)) 
+     &     call ga_error(' ga_create A failed ', 2)
+
+      g_B = ga_create_handle()
+      call ga_set_data(g_B,2,dims,MT_DBL)
+      call ga_set_block_cyclic_proc_grid(g_B,block,proc_grid)
+      if (.not.ga_allocate(g_B)) 
+     &     call ga_error(' ga_create B failed ', 2)
+
+      g_A1 = ga_create_handle()
+      call ga_set_data(g_A1,2,dims,MT_DBL)
+      call ga_set_block_cyclic_proc_grid(g_A1,block,proc_grid)
+      if (.not.ga_allocate(g_A1)) 
+     &     call ga_error(' ga_create A1 failed ', 2)
+
+      g_X = ga_create_handle()
+      call ga_set_data(g_X,2,dims,MT_DBL)
+      call ga_set_block_cyclic_proc_grid(g_X,block,proc_grid)
+      if (.not.ga_allocate(g_X)) 
+     &     call ga_error(' ga_create X failed ', 2)
+
+      g_X1 = ga_create_handle()
+      call ga_set_data(g_X1,2,dims,MT_DBL)
+      call ga_set_block_cyclic_proc_grid(g_X1,block,proc_grid)
+      if (.not.ga_allocate(g_X1)) 
+     &     call ga_error(' ga_create X1 failed ', 2)
+
+      g_AA = ga_create_handle()
+      call ga_set_data(g_AA,2,dims,MT_DBL)
+      if (.not.ga_allocate(g_AA)) 
+     &     call ga_error(' ga_create AA failed ', 2)
+
+      g_BB = ga_create_handle()
+      call ga_set_data(g_BB,2,dims,MT_DBL)
+      if (.not.ga_allocate(g_BB)) 
+     &     call ga_error(' ga_create BB failed ', 2)
+
+      g_CC = ga_create_handle()
+      call ga_set_data(g_CC,2,dims,MT_DBL)
+      if (.not.ga_allocate(g_CC)) 
+     &     call ga_error(' ga_create CC failed ', 2)
+
+      dims(2) = 1
+
+      g_Y = ga_create_handle()
+      call ga_set_data(g_Y,2,dims,MT_DBL)
+      call ga_set_block_cyclic_proc_grid(g_Y,block,proc_grid)
+      if (.not.ga_allocate(g_Y)) 
+     &     call ga_error(' ga_create Y failed ', 2)
+
+      g_Y1 = ga_create_handle()
+      call ga_set_data(g_Y1,2,dims,MT_DBL)
+      call ga_set_block_cyclic_proc_grid(g_Y1,block,proc_grid)
+      if (.not.ga_allocate(g_Y1)) 
+     &     call ga_error(' ga_create Y1 failed ', 2)
+
+      g_Y2 = ga_create_handle()
+      call ga_set_data(g_Y2,2,dims,MT_DBL)
+      call ga_set_block_cyclic_proc_grid(g_Y2,block,proc_grid)
+      if (.not.ga_allocate(g_Y2)) 
+     &     call ga_error(' ga_create Y1 failed ', 2)
+
+      g_YY = ga_create_handle()
+      call ga_set_data(g_YY,2,dims,MT_DBL)
+      if (.not.ga_allocate(g_YY)) 
+     &     call ga_error(' ga_create YY failed ', 2)
+
+      g_ZZ = ga_create_handle()
+      call ga_set_data(g_ZZ,2,dims,MT_DBL)
+      if (.not.ga_allocate(g_ZZ)) 
+     &     call ga_error(' ga_create YY failed ', 2)
+#else
       if (.not. ga_create(MT_DBL, n, n, 'A', 1, 1, g_A))
      &     call ga_error(' ga_create A failed ', 2)
       
@@ -304,6 +400,10 @@ c**** Create global arrays
       if (.not. ga_create(MT_DBL, n, 1, 'Y1', 1, 1, g_Y1))
      &     call ga_error(' ga_create Y1 failed ', 2)
 
+      if (.not. ga_create(MT_DBL, n, 1, 'Y2', 1, 1, g_Y2))
+     &     call ga_error(' ga_create Y2 failed ', 2)
+#endif
+
 c**** Fill in arrays A, X
       do j = me+1, n, nproc
          call ga_put(g_A, 1, n, j, j, A(1,j), n)
@@ -315,13 +415,26 @@ c**** It is granted that A, B, Y will not change
 c**** during the execution of the test LLT driver      
       
 c**** B = A * A^
+#if BLOCK_CYCLIC
+      call ga_copy(g_A, g_AA)
+      call ga_dgemm('N', 'T', n, n, n, 1.d0, g_AA, g_AA, 0.d0, g_BB)
+      call ga_copy(g_BB, g_B)
+#else
       call ga_dgemm('N', 'T', n, n, n, 1.d0, g_A, g_A, 0.d0, g_B)
+#endif
 
 c**** A = B = A * A^
       call ga_copy(g_B, g_A)
       
 c**** B = A * X      
+#if BLOCK_CYCLIC
+      call ga_copy(g_A, g_AA)
+      call ga_copy(g_X, g_CC)
+      call ga_dgemm('N', 'N', n, n, n, 1.d0, g_AA, g_CC, 0.d0, g_BB)
+      call ga_copy(g_BB,g_B)
+#else
       call ga_dgemm('N', 'N', n, n, n, 1.d0, g_A, g_X, 0.d0, g_B)
+#endif
 
 c**** Copy B(1:n,1:1) to Y(1:n) so Y will X column 1
       call ga_copy_patch('N', g_B, 1, n, 1, 1, g_Y, 1, n, 1, 1)
@@ -347,9 +460,21 @@ c**** if return code 'zero' is OK
 
 c****    A1 = X * X^ or A1 = X^ * X
          if (uplo.eq.'L') then
+#if BLOCK_CYCLIC
+          call ga_copy(g_X, g_CC)
+          call ga_dgemm('N', 'T', n, n, n, 1.d0, g_CC, g_CC, 0.d0, g_AA)
+          call ga_copy(g_AA, g_A1)
+#else
           call ga_dgemm('N', 'T', n, n, n, 1.d0, g_X, g_X, 0.d0, g_A1)
+#endif
          else
+#if BLOCK_CYCLIC
+          call ga_copy(g_X, g_CC)
+          call ga_dgemm('T', 'N', n, n, n, 1.d0, g_CC, g_CC, 0.d0, g_AA)
+          call ga_copy(g_AA, g_A1)
+#else
           call ga_dgemm('T', 'N', n, n, n, 1.d0, g_X, g_X, 0.d0, g_A1)
+#endif
          endif
          
 c****    A1 = A - A1 = A - X * X^ or A1 = A - A1 = A - X^ * X
@@ -371,7 +496,6 @@ c**** if return code is > 0
      &             irc)
       endif
 
-
 c****************************************************
 c Test Cholesky factorization and solver
 c internal interfaces with a NxN RHS array
@@ -381,6 +505,9 @@ c****************************************************
 c**** call Cholesky factorization routine in ScaLAPACK PDPOTRF
 c**** to obtain an LL'/U'U factorization
 c**** (internal interface: it will not destroy A)
+#if BLOCK_CYCLIC
+         call ga_copy(g_A, g_AA)
+#endif
       hsA = 0
       irc = ga_llt_f(uplo, g_A, hsA)
       
@@ -395,8 +522,15 @@ c****    internal interface with an NxN RHS GA
          call ga_llt_s(uplo, g_A, g_X, hsA)
 
 c****    A1 = A * X
+#if BLOCK_CYCLIC
+         call ga_copy(g_X, g_BB)
+         call ga_dgemm('N', 'N', n, n, n, 1.d0,
+     &        g_AA, g_BB, 0.d0, g_CC)
+         call ga_copy(g_CC,g_A1)
+#else
          call ga_dgemm('N', 'N', n, n, n, 1.d0,
      &        g_A, g_X, 0.d0, g_A1)
+#endif
 
 c****    A1 = A1 - B = A * X - B
          call ga_add(1.d0, g_A1, -1.d0, g_B, g_A1)
@@ -425,6 +559,9 @@ c****************************************************
 c**** call Cholesky factorization routine in ScaLAPACK PDPOTRF
 c**** to obtain an LL'/U'U factorization
 c**** (internal interface: it will not destroy A)
+#if BLOCK_CYCLIC
+         call ga_copy(g_AA, g_A)
+#endif
       hsA = 0
       irc = ga_llt_f(uplo, g_A, hsA)
       
@@ -442,11 +579,18 @@ c****    dnY1 = ||Y1||
          dnY1 = ga_dnormF(g_Y1)
                   
 c****    Y1 = A * Y1
+#if BLOCK_CYCLIC
+         call ga_copy(g_Y1, g_YY)
          call ga_dgemm('N', 'N', n, 1, n, 1.d0,
-     &        g_A, g_Y1, 0.d0, g_Y1)
+     &        g_AA, g_YY, 0.d0, g_ZZ)
+         call ga_copy(g_ZZ,g_Y2)
+#else
+         call ga_dgemm('N', 'N', n, 1, n, 1.d0,
+     &        g_A, g_Y1, 0.d0, g_Y2)
+#endif
 
 c****    Y1 = Y1 - Y = A * Y1 - Y
-         call ga_add(1.d0, g_Y1, -1.d0, g_Y, g_Y1)
+         call ga_add(1.d0, g_Y2, -1.d0, g_Y, g_Y1)
 
 c****    dnS = ||AY1 - Y|| / (||A|| * ||Y1|| * N * eps)
          dnS = ga_dnormF(G_A1) / (dnA * dnY1 * n * eps)
@@ -458,7 +602,6 @@ c**** if return code is > 0
          call emsg('It is not positive definite the minor of order:',
      &        irc)         
       endif
-
       
 c****************************************************
 c Test Cholesky solver with a NxN RHS array
@@ -469,14 +612,24 @@ c**** copy B in X
       call ga_copy(g_B, g_X)
          
 c**** call Cholesky L/U solver with a NxN RHS
+#if BLOCK_CYCLIC
+      call ga_copy(g_AA,g_A)
+#endif
       irc = ga_llt_solve(g_A, g_X)
       
 c**** if return code from ga_llt_solve is zero
       if (irc.eq.0) then
          
 c****    A1 = A * X
+#if BLOCK_CYCLIC
+         call ga_copy(g_X,g_BB)
+         call ga_dgemm('N', 'N', n, n, n, 1.d0,
+     &        g_AA, g_BB, 0.d0, g_CC)
+         call ga_copy(g_CC,g_A1)
+#else
          call ga_dgemm('N', 'N', n, n, n, 1.d0,
      &        g_A, g_X, 0.d0, g_A1)
+#endif
 
 c****    A1 = A1 - B = A * X - B
          call ga_add(1.d0, g_A1, -1.d0, g_B, g_A1)
@@ -505,6 +658,9 @@ c**** copy Y in Y1
       call ga_copy(g_Y, g_Y1)
 
 c**** call Cholesky L/U solver with a single vector RHS
+#if BLOCK_CYCLIC
+      call ga_copy(g_AA,g_A)
+#endif
       irc = ga_llt_solve(g_A, g_Y1)
       
 c**** if return code from ga_llt_solve is zero
@@ -514,11 +670,18 @@ c****    dnY1 = ||Y1||
          dnY1 = ga_dnormF(g_Y1)
                   
 c****    Y1 = A * Y1
+#if BLOCK_CYCLIC
+         call ga_copy(g_Y1,g_YY)
          call ga_dgemm('N', 'N', n, 1, n, 1.d0,
-     &        g_A, g_Y1, 0.d0, g_Y1)
+     &        g_AA, g_YY, 0.d0, g_ZZ)
+         call ga_copy(g_ZZ,g_Y2)
+#else
+         call ga_dgemm('N', 'N', n, 1, n, 1.d0,
+     &        g_A, g_Y1, 0.d0, g_Y2)
+#endif
 
 c****    Y1 = Y1 - Y = A * Y1 - Y
-         call ga_add(1.d0, g_Y1, -1.d0, g_Y, g_Y1)
+         call ga_add(1.d0, g_Y2, -1.d0, g_Y, g_Y1)
 
 c****    dnS = ||AY1 - Y|| / (||A|| * ||Y1|| * N * eps)
          dnS = ga_dnormF(G_A1) / (dnA * dnY1 * n * eps)
@@ -539,6 +702,9 @@ c****************************************************
       call thead("Test II inversion of an SPD matrix")
 
 c**** copy A in X
+#if BLOCK_CYCLIC
+      call ga_copy(g_AA, g_A)
+#endif
       call ga_copy(g_A, g_X)
 
 c**** call Cholesky factorization routine in ScaLAPACK PDPOTRF
@@ -561,8 +727,15 @@ c****       dnX = ||X|| = ||invA||
             dnX = ga_dnormF(g_X)
 
 c****       A1 = A * X = A * invA
+#if BLOCK_CYCLIC
+            call ga_copy(g_X,g_BB)
+            call ga_dgemm('N', 'N', n, n, n, 1.d0,
+     &           g_AA, g_BB, 0.d0, g_CC)
+            call ga_copy(g_CC,g_A1)
+#else
             call ga_dgemm('N', 'N', n, n, n, 1.d0,
      &           g_A, g_X, 0.d0, g_A1)
+#endif
 
 c****       A1 = A1 - I = A * invA - I
             do j = me+1, n, nproc
@@ -595,6 +768,9 @@ c****************************************************
       call thead("Test inversion of an SPD matrix")
 
 c**** copy A in X
+#if BLOCK_CYCLIC
+      call ga_copy(g_AA, g_A)
+#endif
       call ga_copy(g_A, g_X)
 
 c**** call Cholesky L/U inversion
@@ -607,8 +783,15 @@ c****    dnX = ||X|| = ||invA||
          dnX = ga_dnormF(g_X)
          
 c****    A1 = A * X = A * invA
+#if BLOCK_CYCLIC
+         call ga_copy(g_X, g_BB)
+         call ga_dgemm('N', 'N', n, n, n, 1.d0,
+     &        g_AA, g_BB, 0.d0, g_CC)
+         call ga_copy(g_CC, g_A1)
+#else
          call ga_dgemm('N', 'N', n, n, n, 1.d0,
      &        g_A, g_X, 0.d0, g_A1)
+#endif
 
 c****    A1 = A1 - I = A * invA - I
          do j = me+1, n, nproc
@@ -645,11 +828,21 @@ c**** copy B in X
       call ga_copy(g_B, g_X)
          
 c**** call general solver with a NxN RHS p.d. symmetric array
+#if BLOCK_CYCLIC
+      call ga_copy(g_AA, g_A)
+#endif
       irc = ga_solve(g_A, g_X)
 
 c**** A1 = A * X
+#if BLOCK_CYCLIC
+      call ga_copy(g_X, g_BB)
+      call ga_dgemm('N', 'N', n, n, n, 1.d0,
+     &     g_AA, g_BB, 0.d0, g_CC)
+      call ga_copy(g_CC, g_A1)
+#else
       call ga_dgemm('N', 'N', n, n, n, 1.d0,
      &     g_A, g_X, 0.d0, g_A1)
+#endif
 
 c**** A1 = A1 - B = A * X - B
       call ga_add(1.d0, g_A1, -1.d0, g_B, g_A1)
@@ -683,7 +876,12 @@ c**** copy B in X
       call ga_copy(g_B, g_X)
       
 c**** call general solver with a NxN RHS symmetric array
+#if BLOCK_CYCLIC
+      call ga_copy(g_X1, g_BB)
+      irc = ga_solve(g_BB, g_X)
+#else
       irc = ga_solve(g_X1, g_X)
+#endif
       
 c**** dnX1 = ||X1||
       dnX1 = ga_dnormF(g_X1)
@@ -692,8 +890,16 @@ c**** dnX = ||X||
       dnX = ga_dnormF(g_X)
 
 c**** A1 = X1 * X
+#if BLOCK_CYCLIC
+      call ga_copy(g_X1,g_AA)
+      call ga_copy(g_X,g_BB)
+      call ga_dgemm('N', 'N', n, n, n, 1.d0,
+     &     g_AA, g_BB, 0.d0, g_CC)
+      call ga_copy(g_CC,g_A1)
+#else
       call ga_dgemm('N', 'N', n, n, n, 1.d0,
      &     g_X1, g_X, 0.d0, g_A1)
+#endif
 
 c**** A1 = A1 - B = X1 * X - B
       call ga_add(1.d0, g_A1, -1.d0, g_B, g_A1)
@@ -717,3 +923,53 @@ c**** just print a newline and return
       return
 
       end
+#if BLOCK_CYCLIC
+      subroutine factor(p,idx,idy)
+      implicit none
+      integer i,j,p,idx,idy,it
+      integer ip,ifac,pmax,prime(1280)
+      integer fac(1280)
+c
+      i = 1
+      ip = p
+c
+c    factor p completely
+c    first, find all prime numbers less than or equal to p
+c
+      pmax = 0
+      do i = 2, p
+        do j = 1, pmax
+          if (mod(i,prime(j)).eq.0) go to 100
+        end do
+        pmax = pmax + 1
+        prime(pmax) = i
+  100   continue
+      end do
+c
+c    find all prime factors of p
+c
+      ifac = 0
+      do i = 1, pmax
+  200   if (mod(ip,prime(i)).eq.0) then
+          ifac = ifac + 1
+          fac(ifac) = prime(i)
+          ip = ip/prime(i)
+          go to 200
+        endif
+      end do
+c
+c    determine two factors of p of approximately the
+c    same size
+c
+      idx = 1
+      idy = 1
+      do i = ifac, 1, -1
+        if (idx.le.idy) then
+          idx = fac(i)*idx
+        else
+          idy = fac(i)*idy
+        endif
+      end do
+      return
+      end
+#endif

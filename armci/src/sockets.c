@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.24 2007-10-30 02:04:55 manoj Exp $ */
+/* $Id: sockets.c,v 1.23.8.1 2007-02-09 17:10:18 andriy Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
@@ -28,6 +28,7 @@
 #  define CLOSE close
 #endif
 
+#include "armcip.h"
 #include "sockets.h"
 
 #ifdef AIX
@@ -63,8 +64,6 @@ typedef int soclen_t;
 #endif
 
 extern int armci_me, armci_nproc,armci_nclus;
-extern void armci_die(char* str,int);
-extern void armci_die2(char* str,int,int); 
 int tcp_sendrcv_bufsize=131072;
 #define DEBUG_ 0
 #define DEBUG1 0

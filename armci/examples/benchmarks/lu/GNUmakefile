@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.2 2007-10-30 02:15:38 manoj Exp $
+#$Id: GNUmakefile,v 1.1.2.1 2007-06-20 17:41:20 vinod Exp $
 all: pthreads armci_blocking armci_nonblocking armci_multithreaded
 
 .PHONY : pthreads

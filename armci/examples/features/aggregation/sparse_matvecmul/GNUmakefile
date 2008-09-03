@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.2 2007-10-30 02:15:40 manoj Exp $
+#$Id: GNUmakefile,v 1.1.2.1 2007-06-20 17:41:42 vinod Exp $
 include ../../../examples_config.h
 
 #default message-passing library for ARMCI is MPI

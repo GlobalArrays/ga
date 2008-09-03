@@ -1,4 +1,8 @@
-#$id$
+#$Id$
+#
+# AUTHOR: Manojkumar Krishnan, PNNL
+#
+
 include ../../../examples_config.h
 
 #default message-passing library for ARMCI is MPI

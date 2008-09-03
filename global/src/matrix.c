@@ -1,4 +1,4 @@
-/*$Id: matrix.c,v 1.8 2007-10-30 02:04:58 manoj Exp $******************************************************
+/*$Id: matrix.c,v 1.7.8.11 2007/12/18 18:49:36 d3g293 Exp $******************************************************
 File: matrix.c 
 
 Author: Limin Zhang, Ph.D.
@@ -521,7 +521,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
       Integer idx, lod[MAXDIM], hid[MAXDIM];
       Integer jtot, last, nproc;
       /* Simple block-cyclic data distribution */
-      if (!ga_scalapack_distribution_(g_m)) {
+      if (!ga_uses_proc_grid_(g_m)) {
         nproc = ga_nnodes_();
         for (idx = me; idx < num_blocks_m; idx += nproc) {
           nga_distribution_(g_m, &idx, loM, hiM);
@@ -566,7 +566,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
         ga_get_proc_index_(g_m, &me, proc_index);
         ga_get_proc_index_(g_m, &me, index);
         ga_get_block_info_(g_m, blocks, block_dims);
-        ga_topology_(g_m, topology);
+        ga_get_proc_grid_(g_m, topology);
 
         while (index[mndim-1] < blocks[mndim-1]) {
           /* find bounding coordinates of block */
@@ -893,7 +893,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
     Integer idx, lod[MAXDIM], hid[MAXDIM];
     Integer offset, jtot, last;
     /* Simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)) {
+    if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         nga_distribution_(g_a, &idx, lo, hi);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
@@ -909,7 +909,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
       while (index[ndim-1] < blocks[ndim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -1238,7 +1238,7 @@ ga_norm1_ (Integer * g_a, double *nm)
     Integer idx, lod[MAXDIM], hid[MAXDIM];
     Integer offset, jtot, last;
     /* Simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)) {
+    if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         nga_distribution_(g_a, &idx, lo, hi);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
@@ -1254,7 +1254,7 @@ ga_norm1_ (Integer * g_a, double *nm)
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
       while (index[ndim-1] < blocks[ndim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -1529,7 +1529,7 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
     Integer idx, lod[MAXDIM], hid[MAXDIM];
     Integer offset, jtot, last;
     /* Simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)) {
+    if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         nga_distribution_(g_a, &idx, loA, hiA);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
@@ -1545,7 +1545,7 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -1741,7 +1741,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
     Integer idx, lod[MAXDIM], hid[MAXDIM];
     Integer offset, jtot, last;
     /* Simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)) {
+    if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         nga_distribution_(g_a, &idx, loA, hiA);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
@@ -1757,7 +1757,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -1952,7 +1952,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
     Integer idx, lod[MAXDIM], hid[MAXDIM];
     Integer offset, jtot, last;
     /* Simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)) {
+    if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         nga_distribution_(g_a, &idx, loA, hiA);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
@@ -1968,7 +1968,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -2129,7 +2129,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
     Integer idx, lod[MAXDIM], hid[MAXDIM];
     Integer offset, jtot, last;
     /* Simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)) {
+    if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         nga_distribution_(g_a, &idx, loA, hiA);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
@@ -2145,7 +2145,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -2281,7 +2281,7 @@ void FATR ga_zero_diagonal_(Integer * g_a)
     Integer jtot, last, j;
     Integer nproc = ga_nnodes_();
     /* Simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)) {
+    if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         nga_distribution_(g_a, &idx, loA, hiA);
         lo[0] = MAX (loA[0], loA[1]);
@@ -2313,7 +2313,7 @@ void FATR ga_zero_diagonal_(Integer * g_a)
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
 
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
@@ -2510,7 +2510,7 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
   } else {
     Integer nproc = ga_nnodes_();
     /* Simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)) {
+    if (!ga_uses_proc_grid_(g_a)) {
       Integer idx;
       for (idx=me; idx<num_blocks_a; idx += nproc) {
         nga_distribution_(g_a, &idx, lo, hi);
@@ -2525,7 +2525,7 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
 
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
@@ -2707,7 +2707,7 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
   } else {
     Integer nproc = ga_nnodes_();
     /* Simple block-cyclic data distribution */
-    if (!ga_scalapack_distribution_(g_a)) {
+    if (!ga_uses_proc_grid_(g_a)) {
       Integer idx;
       for (idx=me; idx<num_blocks_a; idx += nproc) {
         nga_distribution_(g_a, &idx, lo, hi);
@@ -2722,7 +2722,7 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
       ga_get_proc_index_(g_a, &me, proc_index);
       ga_get_proc_index_(g_a, &me, index);
       ga_get_block_info_(g_a, blocks, block_dims);
-      ga_topology_(g_a, topology);
+      ga_get_proc_grid_(g_a, topology);
 
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */

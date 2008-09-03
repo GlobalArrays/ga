@@ -9,11 +9,23 @@
 # e.g., on Compaq with Quadrics network LIBMPI should also add -lelan3
 # LIBMPI = -lmpi -lelan3
 # 
-SKIP_MPILIB = LAPI HITACHI
+SKIP_MPILIB_TARGET = LAPI HITACHI BGML
+SKIP_MPILIB = mpifrt mpfort mpif77 mpxlf mpif90 ftn
 MPI_LIB_NAME = -lmpi
-ifeq ($(TARGET),$(findstring $(TARGET),$(SKIP_MPILIB)))
-MPI_LIB_NAME = 
+ifeq ($(TARGET),$(findstring $(TARGET),$(SKIP_MPILIB_TARGET)))
+   MPI_LIB_NAME = 
 endif
+ifneq (,$(findstring $(notdir $(FLD)), $(SKIP_MPILIB)))
+   MPI_LIB_NAME = 
+endif
+ifeq ($(notdir $(FC)),mpifrt)
+   MPI_LIB_NAME =
+endif
+
+ifeq ($(ARMCI_NETWORK),LAPI)
+   MPI_LIB_NAME = 
+endif
+
 ifeq ($(ARMCI_NETWORK),QUADRICS)
    ifeq ($(TARGET),DECOSF)
      MPI_LOC = /usr/opt/mpi
@@ -76,6 +88,55 @@ ifdef GA_USE_VAMPIR
    endif
 
 endif
+
+ifeq ($(MSG_COMMS), BGML)
+   ifdef BGML_INCLUDE
+      MP_TMP_INCLUDES = $(BGML_INCLUDE)
+   endif
+   ifdef BGML_LIB
+      MP_LIBS += -L$(BGML_LIB)
+   endif
+   ifdef LIBBGML_LIB_NAME
+      LIBBGML_LIB_NAME = $(LIBBGML)
+   endif
+   MP_LIBS += $(BGML_LIB_NAME)
+   MP_DEFINES +=  -DBGML
+endif
+
+ifeq ($(MSG_COMMS), BGMLMPI)
+    ifdef BGML_INCLUDE
+       MP_TMP_INCLUDES = $(BGML_INCLUDE)
+    endif
+    ifdef BGML_LIB
+       MP_LIBS += -L$(BGML_LIB)
+    endif
+    ifdef LIBBGML_LIB_NAME
+       LIBBGML_LIB_NAME = $(LIBBGML)
+    endif
+    MP_LIBS += $(BGML_LIB_NAME)
+    MP_DEFINES +=  -DBGML
+    MP_DEFINES += -DBGML -DMPI
+endif
+       
+ifeq ($(MSG_COMMS), DCMFMPI)
+   ifdef DCMF_INCLUDE
+      MP_TMP_INCLUDES = $(DCMF_INCLUDE)
+  else
+     MP_TMP_INCLUDES = $(MPI_INCLUDE)
+  endif
+   ifdef DCMF_LIB
+      MP_LIBS += -L$(DCMF_LIB)
+  else
+     MP_LIBS = -L$(MPI_LIB)
+   endif
+   ifdef LIBDCMF_LIB_NAME
+      LIBDCMF_LIB_NAME = $(LIBDCMF)
+   endif
+   MP_LIBS += $(DCMF_LIB_NAME)
+   MP_DEFINES += -DDCMF -DMPI
+endif
+
+
 #
 #
 ifeq ($(MSG_COMMS),MPI)

@@ -1,4 +1,7 @@
-/* $Id: DistHashmap.cc,v 1.2 2007-10-30 02:15:41 manoj Exp $  */
+/* $Id: DistHashmap.cc,v 1.1.2.1 2007-06-20 17:41:53 vinod Exp $  */
+/*
+ * AUTHOR: Manojkumar Krishnan, PNNL
+ */
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>

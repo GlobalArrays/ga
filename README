@@ -138,30 +138,8 @@ or a better solution (for C shell users) is
    setenv TARGET xxxx
    gmake
 
-   where xxxx is your machine. The list of supported machines is:
-        SOLARIS (Sun or Fujitsu running Solaris operating system)
-        SOLARIS64 (Sun or Fujitsu running Solaris operating system)
-        SGI (older 32-bit Mips-2 and Mips-3 SGI systems)
-        SGI_N32 (64-bit Mips-4 processors, 32-bit address space, fastest code)
-        SGITFP (all SGI systems with 64-bit address space) 
-        DECOSF (DEC/Compaq Alpha running OSF/Tru64)
-        IBM, IBM64 (IBM workstations/servers but NOT SP), 
-        LAPI (IBM SP with PSSP > 2.2 on top of LAPI Active Messages)
-        CRAY-T3E 
-        CRAY-YMP (J90)
-        CRAY-SV1
-        LINUX  (Intel, PowerPC, Ultra procesors with kernel >2.0)
-        LINUX64 (Alpha processor with Compaq compiler but not gcc/g77 and IA64)
-        FUJITSU-VPP (VX/VPP)
-        HPUX, HPUX64 (HP UNIX; bad luck if you got the free HP cc compiler!)
-        WIN32 (Intel, Windows NT using Windows compilers and MS nmake)
-        CYGNUS (Intel, Windows NT + Cygnus Unix interface)
-        HITACHI (HITACHI SR8000 System) 
-   Obsolete target platforms on which GA was supported in previous releases:
-        KSR (KSR-1/2)
-        IPSC, DELTA, PARAGON
-        SUN (SunOS 4.X) 
-        SP (IBM SP under the native IBM message-passing library, MPL)
+   where xxxx is your machine. The list of supported machines can
+   be found here: http://www.emsl.pnl.gov/docs/global/um/build.html
 
 If you have one of those, an older version GA 2.4 might still still work. 
 Otherwise please contact us for help.
@@ -192,15 +170,15 @@ directories, you need to define only USE_MPI variable.
 TARGET, MPI_INCLUDE, MPI_LIB, USE_MPI can be defined as environment
 variables, for example under the C shell:
  
-     setenv TARGET SUN
-     setenv MPI_INCLUDE /usr/local/mpich/include          (location of mpi.h)
-     setenv MPI_LIB /usr/local/mpich/lib/sun/ch_shmem  (location of libmpi.a)
+     setenv TARGET LINUX
+     setenv MPI_INCLUDE /usr/local/mpich/include       (location of mpi.h)
+     setenv MPI_LIB /usr/local/mpich/lib/ch_shmem      (location of libmpi.a)
      setenv USE_MPI yes
 
   or directly on the command line when calling GNU make, for example:
 
-       gmake TARGET=SUN MPI_INCLUDE=/usr/local/mpich/include \
-             MPI_LIB=/usr/local/mpich/lib/sun/ch_shmem USE_MPI=yes
+       gmake TARGET=LINUX MPI_INCLUDE=/usr/local/mpich/include \
+             MPI_LIB=/usr/local/mpich/lib/ch_shmem USE_MPI=yes
 
 If the MPI library you are using is not named libmpi.a you might need
 to define an additional variable LIBMPI, for example

@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.13 2007-10-30 02:05:02 manoj Exp $
+# $Id: GNUmakefile,v 1.12.6.1 2007-06-12 20:33:49 manoj Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -58,7 +58,7 @@ ifeq ($(TARGET),MACX)
 endif
 
 ifeq ($(TARGET),DECOSF)
-   LIB_DEFINES = -DSHMEM -DSYSV -DNOSPIN -DDECOSF
+   LIB_DEFINES = -DSHMEM -DSYSV -DNOSPIN -DDECOSF -DDECFORT
     EXTRA = $(OBJ_SYSV) memalign.o
 endif
 
@@ -69,6 +69,26 @@ ifeq ($(TARGET),INTERIX)
 endif
 
 ifeq ($(TARGET),LAPI)
+    LAPI_=1
+endif
+
+ifeq ($(TARGET),LAPI64)
+    LAPI64_=1
+endif
+
+ifeq ($(TARGET),LINUX)
+ifeq ($(ARMCI_NETWORK),LAPI)
+    LAPI_=1
+endif
+endif
+
+ifeq ($(TARGET),LINUX64)
+ifeq ($(ARMCI_NETWORK),LAPI)
+    LAPI64_=1
+endif
+endif
+
+ifdef LAPI_
    LIB_DEFINES =  -DSHMEM  -DNOTIFY_SENDER
     EXTRA = lapi_putget.o memalign.o async_send_lapi.o signals.o
   TESTOBJ = test.o
@@ -83,7 +103,7 @@ LIBLAPIDIR = /usr/lpp/ssp/css/lib
           -lppe -bl:new.map
 endif
 
-ifeq ($(TARGET),LAPI64)
+ifdef LAPI64_
    LIB_DEFINES = -O -DSHMEM  -DNOTIFY_SENDER
     EXTRA = lapi_putget.o memalign.o async_send_lapi.o signals.o
   TESTOBJ = test.o

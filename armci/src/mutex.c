@@ -1,4 +1,4 @@
-/* $Id: mutex.c,v 1.25 2007-10-30 02:04:55 manoj Exp $ */
+/* $Id: mutex.c,v 1.24.10.1 2006-12-21 23:50:48 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "request.h"
@@ -44,18 +44,22 @@ mutex_entry_t *glob_mutex;
 int ARMCI_Create_mutexes(int num)
 {
 int rc,p, totcount;
-int *mutex_count = (int*)armci_internal_buffer;
+ int *mutex_count;
 
 	if (num < 0 || num > MAX_LOCKS) return(FAIL);
         if(num_mutexes) armci_die("mutexes already created",num_mutexes);
 
         if(armci_nproc == 1){  num_mutexes=1; return(0); }
+	
+	mutex_count = malloc(sizeof(int)*armci_nproc);
+	dassert(1, mutex_count);
 
         /* local memory allocation for mutex arrays*/
         mutex_mem_ar = (void*) malloc(armci_nproc*sizeof(void*));
         if(!mutex_mem_ar) armci_die("ARMCI_Create_mutexes: malloc failed",0);
         glob_mutex = (void*)malloc(armci_nproc*sizeof(mutex_entry_t));
         if(!glob_mutex){
+	  free(mutex_count);
            free(mutex_mem_ar);
            armci_die("ARMCI_Create_mutexes: malloc 2 failed",0);
         }
@@ -73,6 +77,7 @@ int *mutex_count = (int*)armci_internal_buffer;
         if(!tickets) {
            free(glob_mutex);
            free(mutex_mem_ar);
+	   free(mutex_count);
            return(FAIL2);
         }
 
@@ -82,6 +87,7 @@ int *mutex_count = (int*)armci_internal_buffer;
            free(glob_mutex);
            free(mutex_mem_ar);
            free(tickets);
+	   free(mutex_count);
            return(FAIL3);
         }
 
@@ -105,6 +111,7 @@ int *mutex_count = (int*)armci_internal_buffer;
         if(DEBUG)
            fprintf(stderr,"%d created (%d,%d) mutexes\n",armci_me,num,totcount);
 
+	free(mutex_count);
         return(0);
 }
 

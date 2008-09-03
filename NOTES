@@ -41,8 +41,11 @@ memory.
 
                            PLATFORM SPECIFIC PROBLEMS
 
-For up-to-date information regarding platform specific problems, go to:
-http://www.emsl.pnl.gov:2080/docs/global/support.html
+PLEASE NOTE:
+===========
+For up-to-date information regarding platform specific problems, go to
+Global Arrays support page:
+        http://www.emsl.pnl.gov/docs/global/support.html
 
 Systems with QSnet interconnects
 --------------------------------

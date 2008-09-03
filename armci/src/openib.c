@@ -1,4 +1,4 @@
-/* $Id: openib.c,v 1.7 2007-10-30 02:04:55 manoj Exp $
+/* $Id: openib.c,v 1.4.2.9 2007-10-18 06:08:03 d3h325 Exp $
  *
  * File organized as follows
  */
@@ -12,6 +12,7 @@
 #include "copy.h"
 #include "request.h"
 #include "armci-vapi.h"
+#include "iterator.h"
 #define DEBUG_INIT 0
 #define DEBUG_FINALIZE 0
 #define DEBUG_SERVER 0
@@ -20,6 +21,11 @@
 #  define VAPIDEV_NAME "InfiniHost0"
 #  define INVAL_HNDL 0xFFFFFFFF
 #define RNR_TIMER 12
+
+/*Debug macros used to tune what is being tested -- mostly openib calls*/
+#define DBG_INIT  1
+#define DBG_POLL  1
+#define DBG_ALL   1
 
 u_int32_t armci_max_num_sg_ent;
 u_int32_t armci_max_qp_ous_swr;
@@ -87,18 +93,23 @@ static char * client_tail;
 static char * serv_tail;
 static ack_t *SRV_ack;
 
+#if defined(PEND_BUFS)
+typedef immbuf_t vapibuf_t;
+typedef pendbuf_t vapibuf_pend_t;
+#else
 typedef struct {
     struct ibv_recv_wr  dscr;
     struct ibv_sge      sg_entry;
     char buf[VBUF_DLEN];
 } vapibuf_t;
+#endif
 
 typedef struct {
     struct ibv_send_wr  snd_dscr;
     struct ibv_sge      ssg_entry;
     struct ibv_recv_wr  rcv_dscr;
     struct ibv_sge      rsg_entry;
-          char buf[VBUF_DLEN];
+  char buf[VBUF_DLEN];
 } vapibuf_ext_t;
 
 typedef struct {
@@ -107,8 +118,14 @@ typedef struct {
 } vapirmw_t;
 
 
-static vapibuf_t **serv_buf_arr, *spare_serv_buf,*spare_serv_bufptr;
+static vapibuf_t **serv_buf_arr;
+#if !defined(PEND_BUFS)
+/*These are typically used as spare buffers for communication. Since
+  we do not wait on completion anymore, we need to ensure things work
+  fine when these have in-flight messages. Disabled for now.*/
+static vapibuf_t *spare_serv_buf, *spare_serv_bufptr;
 static vapibuf_ext_t *serv_buf;
+#endif
 
 static vapirmw_t rmw[64];
 
@@ -128,7 +145,6 @@ static void* test_ptr;
 static int test_stride_arr[1];
 static int test_count[2];
 static int test_stride_levels;
-
 char *MessageRcvBuffer;
 
 extern void armci_util_wait_int(volatile int *,int,int);
@@ -136,6 +152,10 @@ void armci_send_data_to_client(int proc, void *buf,int bytes,void *dbuf);
 void armci_server_register_region(void *,long,ARMCI_MEMHDL_T *);
 static descr_pool_t serv_descr_pool = {MAX_DESCR,NULL,NULL};
 static descr_pool_t client_descr_pool = {MAX_DESCR,NULL,NULL};
+
+/**Buffer (long[1] used to set msginfo->tag.ack_ptr in
+   client-side. See usage in SERVER_SEND_ACK macro*/
+static long *ack_buf;
 
 #define GET_DATA_PTR(buf) (sizeof(request_header_t) + (char*)buf)
 
@@ -149,16 +169,25 @@ static descr_pool_t client_descr_pool = {MAX_DESCR,NULL,NULL};
 
 #define BUF_TO_EVBUF(buf) (vapibuf_ext_t*)(((char*)buf) - (sizeof(struct ibv_send_wr)+sizeof(struct ibv_recv_wr)+2*sizeof(struct ibv_sge)))
 
-#define SERVER_SEND_ACK(p) {*((long *)serv_buf->buf)=ARMCI_VAPI_COMPLETE;armci_send_data_to_client((p),serv_buf->buf,sizeof(long),msginfo->tag.ack_ptr);}
+#define SERVER_SEND_ACK(p) do {            \
+    assert(*ack_buf == ARMCI_STAMP);       \
+    assert((p)>=0);                        \
+    armci_send_data_to_client((p),ack_buf, \
+      sizeof(long),msginfo->tag.ack_ptr);  \
+  } while(0)
+/* #define SERVER_SEND_ACK(p) {assert(serv_buf!=NULL);assert(msginfo->from==(p));*((long *)serv_buf->buf)=ARMCI_STAMP;armci_send_data_to_client((p),serv_buf->buf,sizeof(long),msginfo->tag.ack_ptr);} */
+
+#define SERVER_SEND_DATA(_SS_proc,_SS_src,_SS_dst,_SS_size) {armci_send_data_to_client(_SS_proc,_SS_src,_SS_size,_SS_dst);}
+#define SERVER_GET_DATA(_SG_proc,_SG_src,_SG_dst,_SG_size) {armci_get_data_from_client(_SG_proc,_SG_src,_SG_size,_SG_dst);}
 
 
 /*\ descriptors will have unique ID's for the wait on descriptor routine to
  * complete a descriptor and know where it came from
 \*/
 
-#define NUMOFBUFFERS 20
+#define NUMOFBUFFERS (MAX_BUFS+MAX_SMALL_BUFS)
 #define DSCRID_FROMBUFS 1
-#define DSCRID_FROMBUFS_END DSCRID_FROMBUFS+NUMOFBUFFERS
+#define DSCRID_FROMBUFS_END (DSCRID_FROMBUFS+NUMOFBUFFERS)
 
 #define DSCRID_NBDSCR 10000
 #define DSCRID_NBDSCR_END (10000+MAX_PENDING)
@@ -168,6 +197,17 @@ static descr_pool_t client_descr_pool = {MAX_DESCR,NULL,NULL};
 
 #define DSCRID_RMW 30000
 #define DSCRID_RMW_END 30000+9999
+
+#if defined(PEND_BUFS)
+#define DSCRID_PENDBUF (40000)
+#define DSCRID_PENDBUF_END (DSCRID_PENDBUF + 2*PENDING_BUF_NUM+1)
+
+#define DSCRID_IMMBUF_RECV     (100000)
+#define DSCRID_IMMBUF_RECV_END (200000)
+
+#define DSCRID_IMMBUF_RESP     (200000)
+#define DSCRID_IMMBUF_RESP_END (300000)
+#endif
 
 extern double MPI_Wtime();
 static double inittime0=0,inittime1=0,inittime2=0,inittime3=0,inittime4=0;
@@ -182,8 +222,9 @@ void armci_server_transport_cleanup();
 /********************FUNCTIONS TO CHECK OPENIB RETURN STATUS*******************/
 void armci_check_status(int debug, int rc,char *msg)
 {
-    if(debug)printf("%d:%s, rc = %d\n", armci_me,msg, rc);
-    if(rc!=0)armci_die(msg,rc);
+  dassertp(debug,rc==0,("%d: %s, rc=%d\n",armci_me,msg,rc));
+/*     if(debug)printf("%d:%s, rc = %d\n", armci_me,msg, rc); */
+/*     if(rc!=0)armci_die(msg,rc); */
 }
 
 void armci_vapi_check_return(int debug, int ret, const char *ss)
@@ -251,9 +292,13 @@ int debug,i,done=0;
     }
     for(i=0;i<numofrecvs;i++){
     do{
-       while(rc == 0)
+      while(rc == 0) {
          rc = ibv_poll_cq(nic->rcq, 1, pdscr);
-       if(rc<0)armci_check_status(debug,rc,"client_scatter_rcv");
+      }
+      dassertp(DBG_POLL|DBG_ALL,rc>=0,
+	       ("%d: rc=%d id=%d status=%d (%d/%d)\n",
+		armci_me,rc,pdscr->wr_id,pdscr->status,i,numofrecvs));
+      dassert1(1,pdscr->status==IBV_WC_SUCCESS,pdscr->status);
        if(debug){
          if(pdscr->wr_id >= DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END)
            printf("\n%d:recv from %s complete id=%d num=%d",armci_me,
@@ -292,6 +337,11 @@ sr_descr_t *sdscr_arr;
 vapi_nic_t *nic;
 int debug,i;
 
+ pdscr1.status = IBV_WC_SUCCESS;
+/*  bzero(&pdscr1, sizeof(pdscr1)); */
+/* printf("%d: Waiting for send with wr_id=%d to complete\n", armci_me, snd_dscr->wr_id); */
+/* fflush(stdout); */
+
     if(SERVER_CONTEXT){
        sdscr_arr = armci_vapi_serv_nbsdscr_array;
        nic=CLN_nic;
@@ -303,7 +353,7 @@ int debug,i;
        debug = DEBUG_CLN;
     }
 
-    if(debug){
+    if(debug) {
        printf("\n%d%s:send_complete called from %s id=%ld nt=%d\n",armci_me,
                ((SERVER_CONTEXT)?"(s)":" "),from,snd_dscr->wr_id,numoftimes);
        fflush(stdout);
@@ -311,11 +361,20 @@ int debug,i;
     for(i=0;i<numoftimes;i++){
     do{
        while(rc == 0){  
-         rc = ibv_poll_cq(nic->scq,1, pdscr);
+#if defined(PEND_BUFS) 
+	 if(SERVER_CONTEXT)
+	   rc = ibv_poll_cq(nic->rcq,1,pdscr);
+	 else
+#endif
+	   rc = ibv_poll_cq(nic->scq,1, pdscr);
        }  
-       if(rc<0)armci_die("got negative return code for ib_poll_cq",rc);
+       dassertp(DBG_POLL|DBG_ALL,rc>=0,
+		("%d:rc=%d status=%d id=%d (%d/%d)",armci_me,
+		 rc,pdscr->status,(int)pdscr->wr_id,i,numoftimes));
+       dassert1(1,pdscr->status==IBV_WC_SUCCESS,pdscr->status);
+/*       printf("%d: Obtained completion of wr_id=%d\n", armci_me, pdscr->wr_id); */
+/*       fflush(stdout); */
        if(SERVER_CONTEXT){
-         if(rc<0)armci_check_status(DEBUG_SERVER,rc,"armci_send_complete wait fr send");
          if(debug)printf("%d:completed id %d i=%d\n",armci_me,pdscr->wr_id,i);
          if(pdscr->wr_id >=DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END){
            sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends--;
@@ -325,16 +384,23 @@ int debug,i;
          else if(pdscr->wr_id >=armci_nproc && pdscr->wr_id < 2*armci_nproc){
                  /*its coming from send_data_to_client just return*/
          }
+#if defined(PEND_BUFS)
+	 else if(pdscr->wr_id >= DSCRID_IMMBUF_RESP && pdscr->wr_id>DSCRID_IMMBUF_RESP_END) {
+	   /*send from server to client completed*/
+	 }
+#endif
          else armci_die("server send complete got weird id",pdscr->wr_id);
        }
        else{
-         if(rc<0)armci_check_status(DEBUG_CLN,rc,"armci_send_complete wait for send");
          if(debug)printf("%d:completed id %d i=%d\n",armci_me,pdscr->wr_id,i);
-         if(pdscr->wr_id >=DSCRID_FROMBUFS && pdscr->wr_id < DSCRID_FROMBUFS_END)
+         if(pdscr->wr_id >=DSCRID_FROMBUFS && pdscr->wr_id < DSCRID_FROMBUFS_END) {
+/*	   printf("%d: marking send buffer %d as complete\n", armci_me, pdscr->wr_id);*/
            mark_buf_send_complete[pdscr->wr_id]=1;
+	 }
          else if(pdscr->wr_id >=DSCRID_NBDSCR && pdscr->wr_id < DSCRID_NBDSCR_END){
-           sdscr_arr[pdscr->wr_id-DSCRID_NBDSCR].tag=0;
-           sdscr_arr[pdscr->wr_id-DSCRID_NBDSCR].numofsends=0;
+           sdscr_arr[pdscr->wr_id-DSCRID_NBDSCR].numofsends--;
+           if(sdscr_arr[pdscr->wr_id-DSCRID_NBDSCR].numofsends==0)
+	     sdscr_arr[pdscr->wr_id-DSCRID_NBDSCR].tag=0;
          }
          else if(pdscr->wr_id >=DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END){
            sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends--;
@@ -342,6 +408,7 @@ int debug,i;
              sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].tag=0;
          }
          else if(pdscr->wr_id == (DSCRID_SCATGAT + MAX_PENDING)){
+/* 	   printf("%d: completed a blocking scatgat descriptor\n", armci_me); */
            /*this was from a blocking call, do nothing*/
            continue;
          }
@@ -519,7 +586,7 @@ sr_descr_t *retdscr,*sdscr_arr;
        int i;
        for(i=0;i<MAX_PENDING;i++){
          sdscr_arr[i].tag=0;
-         bzero(&sdscr_arr[i].sdescr,sizeof(struct ibv_recv_wr));
+         bzero(&sdscr_arr[i].sdescr,sizeof(struct ibv_send_wr));
 	 if(sg)
            sdscr_arr[i].sdescr.wr_id = DSCRID_SCATGAT+i;
 	 else
@@ -578,12 +645,21 @@ static void armci_create_qp(vapi_nic_t *nic, struct ibv_qp **qp)
     bzero(&initattr, sizeof(struct ibv_qp_init_attr));
     *qp=NULL;
 
-    initattr.cap.max_send_wr = armci_max_qp_ous_rwr;
-    initattr.cap.max_recv_wr = armci_max_qp_ous_swr;
+    initattr.cap.max_send_wr = armci_max_qp_ous_swr;
+    initattr.cap.max_recv_wr = armci_max_qp_ous_rwr;
     initattr.cap.max_recv_sge = armci_max_num_sg_ent;
     initattr.cap.max_send_sge = armci_max_num_sg_ent;
-    initattr.send_cq = nic->scq;
-    initattr.recv_cq = nic->rcq;
+#if defined(PEND_BUFS)
+    if(nic==CLN_nic) {
+      initattr.send_cq = nic->rcq;
+      initattr.recv_cq = nic->rcq;
+    }
+    else 
+#endif
+    {
+      initattr.send_cq = nic->scq;
+      initattr.recv_cq = nic->rcq;      
+    }
     initattr.qp_type = IBV_QPT_RC;
 
     if(DEBUG_INIT){
@@ -591,6 +667,7 @@ static void armci_create_qp(vapi_nic_t *nic, struct ibv_qp **qp)
     }
 
     *qp = ibv_create_qp(nic->ptag, &initattr);
+    dassert(1,*qp!=NULL);
 
     if(!armci_vapi_max_inline_size){
        armci_vapi_max_inline_size = initattr.cap.max_inline_data;
@@ -601,9 +678,6 @@ static void armci_create_qp(vapi_nic_t *nic, struct ibv_qp **qp)
 #endif
        }
     }
-
-    if (!*qp)
-        armci_die("create qp returned NULL", 0);
 }
 
 static void armci_init_nic(vapi_nic_t *nic, int scq_entries, int rcq_entries)
@@ -614,29 +688,32 @@ static void armci_init_nic(vapi_nic_t *nic, int scq_entries, int rcq_entries)
 
     bzero(nic,sizeof(vapi_nic_t));
     nic->lid_arr = (uint16_t *)calloc(armci_nproc,sizeof(uint16_t));
-    if(!nic->lid_arr)
-        armci_die("malloc for nic_t arrays in vapi.c failed",0);
+    dassert(1,nic->lid_arr!=NULL);
 
     devs = ibv_get_device_list(&ndevs);
-    if (!devs)
-        armci_die("ibv_get_device_list returned NULL",0);
+    dassert(1,devs!=NULL);
 
     nic->handle = ibv_open_device(*devs); /*open first device*/
-    if (!nic->handle)
-        armci_die("ibv_open_device_list returned NULL",0);
+    dassert(1,nic->handle!=NULL);
 
     nic->maxtransfersize = MAX_RDMA_SIZE;
 
     nic->vendor = ibv_get_device_name(*devs);
-    if (!nic->vendor)
-        armci_die("ibv_get_device_name returned NULL",0);
+    dassert(1,nic->vendor!=NULL);
 
     rc = ibv_query_device(nic->handle, &nic->attr);
-    armci_check_status(DEBUG_INIT, rc, "query device");
+    dassert1(DBG_INIT|DBG_ALL,rc==0,rc);
+
+/*     { */
+/*       char name[80]; */
+/*       gethostname(name,80); */
+/*       printf("%d(%s): max_qps=%d max_wrs=%d\n", armci_me,name,nic->attr.max_qp,nic->attr.max_qp_wr); */
+/*       fflush(stdout); */
+/*     } */
 
     for (i = 1; i <= 2; i++) {
         rc = ibv_query_port(nic->handle, (uint8_t)i, &nic->hca_port);
-        armci_check_status(DEBUG_INIT, rc, "query ports");
+	dassert1(DBG_INIT|DBG_ALL,rc==0,rc);
         if (IBV_PORT_ACTIVE == nic->hca_port.state) {
             nic->active_port = i;
             break;
@@ -648,8 +725,7 @@ static void armci_init_nic(vapi_nic_t *nic, int scq_entries, int rcq_entries)
 
     /*allocate tag (protection domain) */
     nic->ptag = ibv_alloc_pd(nic->handle);
-    if (!nic->ptag)
-        armci_die("ibv_alloc_pd returned NULL",0);
+    dassert(1,nic->ptag!=NULL);
 
     /* properties of scq and rcq required for the cq number, this also needs
      * to be globally exchanged
@@ -660,37 +736,28 @@ static void armci_init_nic(vapi_nic_t *nic, int scq_entries, int rcq_entries)
     /*do the actual queue creation */
     if(scq_entries) {
         nic->sch = ibv_create_comp_channel(nic->handle);
-        if (!nic->sch)
-            armci_die("ibv_create_comp_channel (send) returned NULL",0);
-        nic->scq=ibv_create_cq(nic->handle,4000,nic->scq_cntx,nic->sch,0);
-        if (!nic->scq)
-            armci_die("ibv_create_cq (send) returned NULL",0);
+	dassert(1,nic->sch!=NULL);
+        nic->scq=ibv_create_cq(nic->handle,16000,nic->scq_cntx,nic->sch,0);
+	dassert(1,nic->scq!=NULL);
     }
     if(rcq_entries) {
         nic->rch = ibv_create_comp_channel(nic->handle);
-        if (!nic->rch)
-             armci_die("ibv_create_comp_channel (recv) returned NULL",0);
-        nic->rcq=ibv_create_cq(nic->handle,4000,nic->rcq_cntx,nic->rch,0);
-        if (!nic->rcq)
-            armci_die("ibv_create_cq (recv) returned NULL",0);
+	dassert(1,nic->rch!=NULL);
+        nic->rcq=ibv_create_cq(nic->handle,32768,nic->rcq_cntx,nic->rch,0);
+	dassert(1,nic->rcq!=NULL);
     }
     ibv_free_device_list(devs);
 
     /*set local variable values*/
     armci_max_num_sg_ent=29; /* reduced from 30 based on MG input */
-    armci_max_qp_ous_swr=800;
-    armci_max_qp_ous_rwr=400*16;
-    if(armci_nproc>200){
-       armci_max_qp_ous_swr=armci_nproc;
-       armci_max_qp_ous_rwr=armci_nproc*16;
-       if(armci_me==0)printf("\nARMCI:%d:qp_swr changed to %d qp_rwr changed to %d",armci_me,armci_max_qp_ous_swr,armci_max_qp_ous_rwr);
-    }
-    if(armci_max_qp_ous_rwr>nic->attr.max_qp_wr){
+    armci_max_qp_ous_swr=150;
+    armci_max_qp_ous_rwr=150;
+    if(armci_max_qp_ous_rwr+armci_max_qp_ous_swr>nic->attr.max_qp_wr){
        armci_max_qp_ous_swr=nic->attr.max_qp_wr/16;
-       armci_max_qp_ous_rwr=nic->attr.max_qp_wr;
+       armci_max_qp_ous_rwr=nic->attr.max_qp_wr - armci_max_qp_ous_swr;
        if(armci_me==0)printf("\nARMCI:%d:qp_swr changed to %d qp_rwr changed to %d",armci_me,armci_max_qp_ous_swr,armci_max_qp_ous_rwr);
     }
-    if(armci_max_num_sg_ent>nic->attr.max_sge){
+    if(armci_max_num_sg_ent>=nic->attr.max_sge){
        armci_max_num_sg_ent=nic->attr.max_sge-1;
        if(armci_me==0)
        printf("\n%d:Based on attributes from NIC, max SG list has changed to %d"
@@ -709,22 +776,32 @@ void armci_server_alloc_bufs()
     int mod, bytes, total, extra =sizeof(struct ibv_recv_wr)*MAX_DESCR+SIXTYFOUR;
     int mhsize = armci_nproc*sizeof(armci_vapi_memhndl_t); /* ack */
     char *tmp, *tmp0;
-    int clients = armci_nproc,i,j=0;
+    int i, j=0;
+#if defined(PEND_BUFS)
+    int clients = (IMM_BUF_NUM+1)*armci_nproc;
+#else
+    int clients = armci_nproc;
+#endif
 
     /* allocate memory for the recv buffers-must be alligned on 64byte bnd */
     /* note we add extra one to repost it for the client we are received req */
-    bytes =(clients+1)*sizeof(vapibuf_t)+sizeof(vapibuf_ext_t) + extra+ mhsize
+    bytes = (clients+1)*sizeof(vapibuf_t)+sizeof(vapibuf_ext_t) + extra+ mhsize
 #if ARMCI_ENABLE_GPC_CALLS
       + MAX_GPC_REQ * sizeof(gpc_buf_t)
 #endif
-      + SIXTYFOUR;
+#if defined(PEND_BUFS)
+      + (clients+1)*IMM_BUF_LEN
+      + PENDING_BUF_NUM*(sizeof(vapibuf_pend_t)+PENDING_BUF_LEN)
+#endif
+      + sizeof(long)
+      + 7*SIXTYFOUR;
     total = bytes + SIXTYFOUR;
     if(total%4096!=0)
        total = total - (total%4096) + 4096;
     tmp0=tmp = malloc(total);
     serv_malloc_buf_base = tmp0;
 
-    if(!tmp) armci_die("failed to malloc server vapibufs",total);
+    dassert1(1,tmp!=NULL,(int)total);
     /* stamp the last byte */
     serv_tail= tmp + bytes+SIXTYFOUR-1;
     *serv_tail=SERV_STAMP;
@@ -733,28 +810,61 @@ void armci_server_alloc_bufs()
     CLN_handle = (armci_vapi_memhndl_t*)tmp;
     memset(CLN_handle,0,mhsize); /* set it to zero */
     tmp += mhsize;
+
+#ifdef ARMCI_ENABLE_GPC_CALLS
     /* gpc_req memory*/
     tmp += SIXTYFOUR - ((ssize_t)tmp % SIXTYFOUR);
-#ifdef ARMCI_ENABLE_GPC_CALLS
     gpc_req = (gpc_buf_t *)tmp;
     tmp += MAX_GPC_REQ * sizeof(gpc_buf_t);
 #endif
+
     /* setup descriptor memory */
-    mod = ((ssize_t)tmp)%SIXTYFOUR;
-    serv_descr_pool.descr= (struct ibv_recv_wr *)(tmp+SIXTYFOUR-mod);
+    tmp += SIXTYFOUR - ((ssize_t)tmp % SIXTYFOUR);
+    serv_descr_pool.descr= (struct ibv_recv_wr *)(tmp);
     tmp += extra;
+
+    /* setup ack buffer*/
+    tmp += SIXTYFOUR - ((ssize_t)tmp % SIXTYFOUR);
+    ack_buf = (long *)(tmp);
+    *ack_buf=ARMCI_STAMP;
+    tmp += sizeof(long);
+
     /* setup buffer pointers */
-    mod = ((ssize_t)tmp)%SIXTYFOUR;
-    serv_buf_arr = (vapibuf_t **)malloc(sizeof(vapibuf_t*)*armci_nproc);
-    for(i=0;i<armci_nproc;i++){
-       serv_buf_arr[i] = (vapibuf_t*)(tmp+SIXTYFOUR-mod) + j++;
+    tmp += SIXTYFOUR - ((ssize_t)tmp % SIXTYFOUR);
+    serv_buf_arr = (vapibuf_t **)malloc(sizeof(vapibuf_t*)*clients);
+    for(i=0;i<clients;i++){
+      serv_buf_arr[i] = (vapibuf_t*)(tmp) + i;
     }
-    i=0;
-    while(serv_buf_arr[i]==NULL)i++;
-    spare_serv_buf = serv_buf_arr[i]+clients; /* spare buffer is at the end */
+    tmp = (char *)(serv_buf_arr[0]+clients);
+
+#if defined(PEND_BUFS)
+    /*setup buffers in immediate buffers*/
+    tmp += SIXTYFOUR - ((ssize_t)tmp % SIXTYFOUR);
+    for(i=0; i<clients; i++) {
+      serv_buf_arr[i]->buf = tmp + i*IMM_BUF_LEN;
+    }
+    tmp += clients*IMM_BUF_LEN;
+
+    /*setup pending buffers*/
+    tmp += SIXTYFOUR - ((ssize_t)tmp % SIXTYFOUR);
+    serv_pendbuf_arr = (vapibuf_pend_t *)(tmp);
+    tmp=(char *)(serv_pendbuf_arr+PENDING_BUF_NUM);
+    tmp += SIXTYFOUR - ((ssize_t)tmp % SIXTYFOUR);
+    for(i=0; i<PENDING_BUF_NUM; i++) {
+      serv_pendbuf_arr[i].buf = tmp+i*PENDING_BUF_LEN;
+      assert(serv_pendbuf_arr[i].buf != NULL);
+    }
+    tmp += PENDING_BUF_NUM*PENDING_BUF_LEN;
+    MessageRcvBuffer = NULL;    
+#else
+    tmp += SIXTYFOUR - ((ssize_t)tmp % SIXTYFOUR);
+    spare_serv_buf = (vapibuf_t *)tmp; /* spare buffer is at the end */
     spare_serv_bufptr = spare_serv_buf;    /* save the pointer for later */
-    serv_buf =(vapibuf_ext_t*)(serv_buf_arr[i]+clients+1);
+    serv_buf =(vapibuf_ext_t*)(spare_serv_buf+1);
+    tmp = (char *)(serv_buf+1);
+
     MessageRcvBuffer = serv_buf->buf;
+#endif
 
    flag_arr = (int *)malloc(sizeof(int)*armci_nproc);
    for (i =0; i<armci_nproc; i++) flag_arr[i] = 9999;
@@ -768,8 +878,7 @@ void armci_server_alloc_bufs()
                                         IBV_ACCESS_LOCAL_WRITE |
                                         IBV_ACCESS_REMOTE_WRITE |
                                         IBV_ACCESS_REMOTE_READ);
-    if (!serv_memhandle.memhndl)
-        armci_die("server register recv vbuf returned NULL", 0);
+    dassert1(1,serv_memhandle.memhndl!=NULL,total);
     serv_memhandle.lkey=serv_memhandle.memhndl->lkey;
     serv_memhandle.rkey=serv_memhandle.memhndl->rkey;
 
@@ -796,9 +905,10 @@ char * armci_vapi_client_mem_alloc(int size)
     if(total%4096!=0)
        total = total - (total%4096) + 4096;
     tmp0  = tmp = malloc(total);
+    dassert1(1,tmp!=NULL,total);
     client_malloc_buf_base = tmp;
     if(ALIGN64ADD(tmp0))tmp0+=ALIGN64ADD(tmp0);
-    if(!tmp) armci_die("failed to malloc client bufs",total);
+
     /* stamp the last byte */
     client_tail= tmp + extra+ size +2*SIXTYFOUR-1;
     *client_tail=CLIENT_STAMP;
@@ -814,8 +924,7 @@ char * armci_vapi_client_mem_alloc(int size)
                                           IBV_ACCESS_LOCAL_WRITE |
                                           IBV_ACCESS_REMOTE_WRITE |
                                           IBV_ACCESS_REMOTE_READ);
-    if (!client_memhandle.memhndl)
-        armci_die("client register send vbuf returned NULL", 0);
+    dassert(1,client_memhandle.memhndl!=NULL);
     
     client_memhandle.lkey = client_memhandle.memhndl->lkey;
     client_memhandle.rkey = client_memhandle.memhndl->rkey;
@@ -845,8 +954,7 @@ void armci_server_register_region(void *ptr,long bytes, ARMCI_MEMHDL_T *memhdl)
                IBV_ACCESS_LOCAL_WRITE |
                IBV_ACCESS_REMOTE_WRITE |
                IBV_ACCESS_REMOTE_READ);
-    if (!memhdl)
-        armci_die("server register region returned NULL", 0);
+    dassert(1,memhdl->memhndl!=NULL);
 
     memhdl->lkey=memhdl->memhndl->lkey;
     memhdl->rkey=memhdl->memhndl->rkey;
@@ -858,14 +966,13 @@ void armci_server_register_region(void *ptr,long bytes, ARMCI_MEMHDL_T *memhdl)
     }
 }
 
-int armci_pin_contig_hndl(void *ptr, int bytes, ARMCI_MEMHDL_T *memhdl)
+int armci_pin_contig_hndl(void *ptr, size_t bytes, ARMCI_MEMHDL_T *memhdl)
 {
     memhdl->memhndl = ibv_reg_mr(SRV_nic->ptag, ptr, bytes,
                IBV_ACCESS_LOCAL_WRITE |
                IBV_ACCESS_REMOTE_WRITE |
                IBV_ACCESS_REMOTE_READ);
-    if (!memhdl->memhndl)
-        armci_die("client register regioni returned NULL", 0);
+    dassert(1,memhdl->memhndl!=NULL);
     memhdl->lkey=memhdl->memhndl->lkey;
     memhdl->rkey=memhdl->memhndl->rkey;
     if(0){
@@ -880,6 +987,7 @@ void armci_network_client_deregister_memory(ARMCI_MEMHDL_T *mh)
 {
     int rc;
     rc = ibv_dereg_mr(mh->memhndl);
+    dassert1(1,rc==0,rc);
     armci_vapi_check_return(DEBUG_FINALIZE,rc,
                         "armci_network_client_deregister_memory:deregister_mr");
 }
@@ -889,6 +997,7 @@ void armci_network_server_deregister_memory(ARMCI_MEMHDL_T *mh)
 return; /* ??? why ??? */
     printf("\n%d:deregister ptr=%p",armci_me,mh);fflush(stdout);
     rc = ibv_dereg_mr(mh->memhndl);
+    dassert1(1,rc==0,rc);
     armci_vapi_check_return(DEBUG_FINALIZE,rc,
                         "armci_network_server_deregister_memory:deregister_mr");
 }
@@ -935,9 +1044,21 @@ int c,s;
 int sz;
 int *tmparr;
     if(TIME_INIT)inittime0 = MPI_Wtime(); 
+    
+#if defined(PEND_BUFS)
+    armci_pbuf_init_buffer_env();
+#endif
     /* initialize nic connection for qp numbers and lid's */
     armci_init_nic(SRV_nic,1,1);
+#if 0
+    /*SK: 0 value seems to mean send outstanding (see
+      armci_send_complete(). So init-ing to 1*/
     bzero(mark_buf_send_complete,sizeof(int)*(NUMOFBUFFERS+1));
+#else
+    for(c=0; c<NUMOFBUFFERS+1; c++) {
+      mark_buf_send_complete[c]=1;
+    }
+#endif
     _gtmparr = (int *)calloc(armci_nproc,sizeof(int)); 
 
     /*qp_numbers and lids need to be exchanged globally*/
@@ -951,11 +1072,11 @@ int *tmparr;
     }
     /*SRV_con is for client to connect to servers */
     SRV_con=(armci_connect_t *)malloc(sizeof(armci_connect_t)*armci_nclus);
-    if(!SRV_con)armci_die("cannot allocate SRV_con",armci_nclus);
+    dassert1(1,SRV_con!=NULL,sizeof(armci_connect_t)*armci_nclus);
     bzero(SRV_con,sizeof(armci_connect_t)*armci_nclus);
 
     CLN_con=(armci_connect_t*)malloc(sizeof(armci_connect_t)*armci_nproc);
-    if(!CLN_con)armci_die("cannot allocate SRV_con",armci_nproc);
+    dassert1(1,CLN_con!=NULL,sizeof(armci_connect_t)*armci_nproc);
     bzero(CLN_con,sizeof(armci_connect_t)*armci_nproc);
 
     /*every client creates a qp with every server other than the one on itself*/
@@ -979,10 +1100,10 @@ int *tmparr;
 
     /* ............ masters also set up connections for clients ......... */
     SRV_ack = (ack_t*)calloc(armci_nclus,sizeof(ack_t));
-    if(!SRV_ack)armci_die("buffer alloc failed",armci_nclus*sizeof(ack_t));
+    dassert1(1,SRV_ack!=NULL,armci_nclus*sizeof(ack_t));
 
     handle_array = (armci_vapi_memhndl_t *)calloc(sizeof(armci_vapi_memhndl_t),armci_nproc);
-    if(!handle_array)armci_die("handle_array malloc failed",0);
+    dassert1(1,handle_array!=NULL,sizeof(armci_vapi_memhndl_t)*armci_nproc);
     if(TIME_INIT)printf("\n%d:time for init_conn is %f",armci_me,MPI_Wtime()-inittime2);
 }
 
@@ -1060,7 +1181,7 @@ static void vapi_connect_client()
        armci_connect_t *con;
        con = SRV_con + i;
        rc = ibv_modify_qp(con->qp, &qp_attr, qp_attr_mask);
-       armci_check_status(DEBUG_INIT, rc,"client connect requesti RST->INIT");
+       dassertp(1,!rc,("%d: client RST->INIT i=%d rc=%d\n",armci_me,i,rc));
     }
 
     if (TIME_INIT) printf("\n%d:to init time for vapi_connect_client is %f",
@@ -1090,7 +1211,7 @@ static void vapi_connect_client()
         qp_attr.ah_attr.port_num = SRV_nic->active_port;
 
         rc = ibv_modify_qp(con->qp, &qp_attr, qp_attr_mask);
-        armci_check_status(DEBUG_INIT, rc,"client connect request INIT->RTR");
+	dassertp(1,!rc,("%d: INIT->RTR client i=%d rc=%d\n",armci_me,i,rc));
     }
 
     /*to to to RTS, other side must be in RTR*/
@@ -1109,7 +1230,7 @@ static void vapi_connect_client()
     qp_attr.qp_state            = IBV_QPS_RTS;
     qp_attr.sq_psn              = 0;
     qp_attr.timeout             = 18;
-    qp_attr.retry_cnt           = 7;
+    qp_attr.retry_cnt           = 20;
     qp_attr.rnr_retry           = 7;
     qp_attr.max_rd_atomic  = 4;
 
@@ -1118,8 +1239,7 @@ static void vapi_connect_client()
        armci_connect_t *con;
        con = SRV_con + i;
        rc = ibv_modify_qp(con->qp, &qp_attr, qp_attr_mask);
-       armci_check_status(DEBUG_CLN, rc,"client connect request RTR->RTS");
-       if(rc!=0)armci_die("client RTS fail",rc);
+       dassertp(1,!rc,("%d: client RTR->RTS i=%d rc=%d\n",armci_me,i,rc));
     }
     if (TIME_INIT) printf("\n%d:rtr to rts time for vapi_connect_client is %f",
                           armci_me, (inittime1 = MPI_Wtime()) - inittime2);
@@ -1149,6 +1269,7 @@ void armci_init_vapibuf_recv(struct ibv_recv_wr *rd, struct ibv_sge *sg_entry,
                              char *buf, int len, armci_vapi_memhndl_t *mhandle)
 {
      memset(rd,0,sizeof(struct ibv_recv_wr));
+     rd->next = NULL;
      rd->num_sge    = 1;
      rd->sg_list    = sg_entry;
      rd->wr_id      = 0;
@@ -1163,10 +1284,10 @@ void armci_init_vapibuf_send(struct ibv_send_wr *sd, struct ibv_sge *sg_entry,
                              char *buf, int len, armci_vapi_memhndl_t *mhandle)
 {
      sd->opcode = IBV_WR_SEND;
+     sd->next = NULL;
      sd->send_flags = IBV_SEND_SIGNALED;
      sd->num_sge            = 1;
      sd->sg_list            = sg_entry;
-     sd->wr.ud.remote_qkey  = 0;
 
      sg_entry->lkey     = mhandle->lkey;
      sg_entry->addr     = (uint64_t)buf;
@@ -1182,9 +1303,9 @@ static void armci_init_vbuf_srdma(struct ibv_send_wr *sd, struct ibv_sge *sg_ent
      /* NOTE: sd->wr is a union, sr->wr.ud might conflict with sr->wr.rdma */
      sd->opcode = IBV_WR_RDMA_WRITE;
      sd->send_flags = IBV_SEND_SIGNALED;
+     sd->next = NULL;
      sd->num_sge                    = 1;
      sd->sg_list                    = sg_entry;
-     sd->wr.ud.remote_qkey          = 0;
      if (rhandle) sd->wr.rdma.rkey  = rhandle->rkey;
      sd->wr.rdma.remote_addr        = (uint64_t)rbuf;
 
@@ -1200,6 +1321,7 @@ static void armci_init_vbuf_rrdma(struct ibv_send_wr *sd, struct ibv_sge *sg_ent
                                   armci_vapi_memhndl_t *rhandle)
 {
      sd->opcode = IBV_WR_RDMA_READ;
+     sd->next = NULL;
      sd->send_flags = IBV_SEND_SIGNALED;
      sd->num_sge                    = 1;
      sd->sg_list                    = sg_entry;
@@ -1216,7 +1338,7 @@ static void armci_init_vbuf_rrdma(struct ibv_send_wr *sd, struct ibv_sge *sg_ent
 
 void armci_server_initial_connection()
 {
-    int c, ib, rc;
+  int c, rc, i, j;
     struct ibv_qp_attr qp_attr;
     struct ibv_qp_init_attr qp_init_attr;
     struct ibv_qp_cap qp_cap;
@@ -1230,6 +1352,9 @@ void armci_server_initial_connection()
        fflush(stdout);
     }
 
+#if defined(PEND_BUFS) && !defined(SERVER_THREAD)
+    armci_pbuf_init_buffer_env();
+#endif
     armci_init_nic(CLN_nic,1,1);
 
     _gtmparr[armci_me] = CLN_nic->lid_arr[armci_me];
@@ -1280,7 +1405,7 @@ void armci_server_initial_connection()
     for (c = 0; c < armci_nproc; c++) {
        armci_connect_t *con = CLN_con + c;
        rc = ibv_modify_qp(con->qp, &qp_attr, qp_attr_mask);
-       armci_check_status(DEBUG_INIT, rc,"master connect request RST->INIT");
+       dassertp(1,!rc,("%d: RTS->INIT server c=%d rc=%d\n",armci_me,c,rc));
     }
     if (TIME_INIT) printf("\n%d:to init time for server_initial_conn is %f",
                           armci_me, (inittime2 = MPI_Wtime()) - inittime1);
@@ -1309,9 +1434,7 @@ void armci_server_initial_connection()
        }
 
        rc = ibv_modify_qp(con->qp, &qp_attr, qp_attr_mask); 
-       armci_check_status(DEBUG_SERVER, rc,"master connect request INIT->RTR");
-       if(rc!=0)armci_die("ibv_modify_qp to RTR failed",rc);
-
+       dassertp(1,!rc,("%d: INIT->RTR server cln=%d rc=%d\n",armci_me,c,rc));
     }
     if (TIME_INIT) printf("\n%d:init to rtr time for server_initial_conn is %f",
                           armci_me, (inittime3 = MPI_Wtime()) - inittime2);
@@ -1328,15 +1451,14 @@ void armci_server_initial_connection()
     qp_attr.qp_state            = IBV_QPS_RTS;
     qp_attr.sq_psn              = 0;
     qp_attr.timeout             = 18;
-    qp_attr.retry_cnt           = 7;
+    qp_attr.retry_cnt           = 20;
     qp_attr.rnr_retry           = 7;
     qp_attr.max_rd_atomic  = 4;
 
     for (c = 0; c < armci_nproc; c++) {
        armci_connect_t *con = CLN_con + c;
        rc = ibv_modify_qp(con->qp, &qp_attr,qp_attr_mask);
-       armci_check_status(DEBUG_SERVER, rc,"master connect request RTR->RTS");
-       if(rc!=0)armci_die("master RTS fail",rc);
+       dassertp(1,!rc,("%d: server RTR->RTS cln=%d rc=%d\n",armci_me,c,rc));
     }
     if (TIME_INIT) printf("\n%d:rtr to rts time for server_initial_conn is %f",
                           armci_me, (inittime4 = MPI_Wtime()) - inittime3);
@@ -1347,21 +1469,42 @@ void armci_server_initial_connection()
     armci_server_alloc_bufs();/* create receive buffers for server thread */
 
     /* setup descriptors and post nonblocking receives */
-    for(c = ib = 0; c < armci_nproc; c++) {
-       vapibuf_t *vbuf = serv_buf_arr[c];
-       armci_init_vapibuf_recv(&vbuf->dscr, &vbuf->sg_entry, vbuf->buf,
-                               VBUF_DLEN, &serv_memhandle);
-       /* we use index of the buffer to identify the buffer, this index is
-        * returned with a call toibv_poll_cq inside the ibv_wr */
-       vbuf->dscr.wr_id = c + armci_nproc;
-       if (DEBUG_SERVER) {
-         printf("\n%d(s):posted rr with lkey=%d",armci_me,vbuf->sg_entry.lkey);
-         fflush(stdout);
-       }
-
-       rc = ibv_post_recv((CLN_con+c)->qp, &vbuf->dscr, &bad_wr);
-       armci_check_status(DEBUG_SERVER, rc,"server post recv vbuf");
+#if defined(PEND_BUFS)
+    assert(armci_nproc*(IMM_BUF_NUM+1)<DSCRID_IMMBUF_RECV_END-DSCRID_IMMBUF_RECV);
+    for(i =  0; i < armci_nproc; i++) {
+      for(j=0; j<IMM_BUF_NUM+1; j++) {
+	vapibuf_t *vbuf;
+	vbuf = serv_buf_arr[i*(IMM_BUF_NUM+1)+j];
+	armci_init_vapibuf_recv(&vbuf->dscr, &vbuf->sg_entry, vbuf->buf,
+				IMM_BUF_LEN, &serv_memhandle);
+	/* we use index of the buffer to identify the buffer, this index is
+	 * returned with a call to ibv_poll_cq inside the ibv_wr */
+	vbuf->dscr.wr_id = i*(IMM_BUF_NUM+1)+j + DSCRID_IMMBUF_RECV;
+	if (DEBUG_SERVER) {
+	  printf("\n%d(s):posted rr with lkey=%d",armci_me,vbuf->sg_entry.lkey);
+	  fflush(stdout);
+	}
+	rc = ibv_post_recv((CLN_con+i)->qp, &vbuf->dscr, &bad_wr);
+	dassert1(1,rc==0,rc);
+      }
     }
+#else
+    for(i =  0; i < armci_nproc; i++) {
+      vapibuf_t *vbuf;
+      vbuf = serv_buf_arr[i];
+      armci_init_vapibuf_recv(&vbuf->dscr, &vbuf->sg_entry, vbuf->buf,
+			      VBUF_DLEN, &serv_memhandle);
+      /* we use index of the buffer to identify the buffer, this index is
+       * returned with a call to ibv_poll_cq inside the ibv_wr */
+      vbuf->dscr.wr_id = i+armci_nproc;
+      if (DEBUG_SERVER) {
+	printf("\n%d(s):posted rr with lkey=%d",armci_me,vbuf->sg_entry.lkey);
+	fflush(stdout);
+      }
+      rc = ibv_post_recv((CLN_con+i)->qp, &vbuf->dscr, &bad_wr);
+      dassert1(1,rc==0,rc);
+    }
+#endif
 
     if (TIME_INIT) printf("\n%d:post time for server_initial_conn is %f",
                           armci_me, MPI_Wtime() - inittime4);
@@ -1389,18 +1532,24 @@ static void armci_finalize_nic(vapi_nic_t *nic)
     int ret;
 
     ret = ibv_destroy_cq(nic->scq);
+    dassert1(1,ret==0,ret);
     armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:destroy_scq");
 
     ret = ibv_destroy_comp_channel(nic->sch);
+    dassert1(1,ret==0,ret);
     armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:destroy_sch");
 
     ret = ibv_destroy_cq(nic->rcq);
+    dassert1(1,ret==0,ret);
     armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:destroy_rcq");
 
     ret = ibv_destroy_comp_channel(nic->rch);
+    dassert1(1,ret==0,ret);
     armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:destroy_rch");
 
     ret = ibv_close_device(nic->handle);
+    dassert1(1,ret==0,ret);
+
     armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:release_hca");
 
 }
@@ -1414,6 +1563,7 @@ void armci_server_transport_cleanup()
     /*first we have empty send/recv queues TBD*/
     if(serv_malloc_buf_base){
         rc = ibv_dereg_mr(serv_memhandle.memhndl);
+	dassert1(1,rc==0,rc);
         armci_vapi_check_return(DEBUG_FINALIZE,rc,
                                 "armci_server_transport_cleanup:deregister_mr");
        /*now free it*/
@@ -1444,6 +1594,7 @@ void armci_transport_cleanup()
     /*first deregister buffers memory */
     if (client_malloc_buf_base) {
         rc = ibv_dereg_mr(client_memhandle.memhndl);
+	dassert1(1,rc==0,rc);
         armci_vapi_check_return(DEBUG_FINALIZE,rc,"armci_client_transport_cleanup:deregister_mr");
         /*now free it*/
         free(client_malloc_buf_base);
@@ -1455,6 +1606,7 @@ void armci_transport_cleanup()
             armci_connect_t *con = SRV_con + s;
             if (con->qp) {
                 rc = ibv_destroy_qp(con->qp);
+		dassert1(1,rc==0,rc);
                 armci_vapi_check_return(DEBUG_FINALIZE,rc,"armci_client_transport_cleanup:destroy_qp");
             }
             free(con->rqpnum);
@@ -1463,6 +1615,260 @@ void armci_transport_cleanup()
     }
     armci_finalize_nic(SRV_nic);
 }
+
+/** Post an immediate buffer back for the client to send.
+ */
+static void _armci_pendbuf_post_immbuf(vapibuf_t *vbuf, int to) {
+  int rc; 
+  struct ibv_recv_wr *bad_wr;
+#if defined(PEND_BUFS)
+  assert(vbuf->dscr.wr_id == vbuf-serv_buf_arr[0]+DSCRID_IMMBUF_RECV);
+#endif
+  rc = ibv_post_recv((CLN_con+to)->qp, &(vbuf->dscr), &bad_wr);
+  dassert1(1,rc==0,rc);
+}
+
+#if defined(PEND_BUFS)
+#define DSCRID_TO_IMMBUFID(x) (x-DSCRID_IMMBUF_RECV)
+#else
+#define DSCRID_TO_IMMBUFID(x) ((x)-armci_nproc)
+#endif
+
+#if defined(PEND_BUFS)
+
+/**Obtain a message receive buffer to receive a message. Used in place
+ *  of MessageRcvBuffer. Should not be used.
+ */
+char *armci_openib_get_msg_rcv_buf(int proc)
+{
+  armci_die("PEND_BUFS in OPENIB: MessageRcvBuffer not available. Should use the in-place buffers to receive data", proc);
+  return NULL;
+}
+
+/** Check that the data is in a server allocated buffer. This is
+ *   guaranteed to be pinned. Ideally, this should always be true. Any
+ *   operation that request alternative support will have to fix this
+ *   function and possibly @armci_openib_get_msg_rcv_buf().
+ * @param br IN Buffer pointer being checked
+ * @return 1 if it is a server-allocated buffer. 0 otherwise.
+ */
+int armci_data_in_serv_buf(void *br)
+{
+  if(br>=(void *)serv_malloc_buf_base && br<(void *)serv_tail)
+    return 1;
+  if(DEBUG_SERVER) {
+    printf("%d:: serv_bufs=%p<->%p. br=%p out of range\n",
+	   armci_me, serv_malloc_buf_base, serv_tail, br); 
+    fflush(stdout);
+  }
+  return 0;
+}
+
+#define PBUF_BUFID_TO_PUT_WRID(_pbufid) (DSCRID_PENDBUF+(_pbufid)*2)
+#define PBUF_BUFID_TO_GET_WRID(_pbufid) (DSCRID_PENDBUF+(_pbufid)*2+1)
+#define PBUF_WRID_TO_PBUFID(_id) (((_id)-DSCRID_PENDBUF)/2)
+#define PBUF_IS_GET_WRID(_id) (((_id)-DSCRID_PENDBUF)&1)
+#define PBUF_IS_PUT_WRID(_id) (!(((_id)-DSCRID_PENDBUF)&1))
+
+/**Complete processing this immediate buffer. Parameters is void *,
+ * since vapibuf_t*|immbuf_t* is not available in armci-vapi.h
+ */
+void armci_complete_immbuf(void *buf) {
+  vapibuf_t *vbuf = (vapibuf_t*)buf;
+  request_header_t *msginfo=(request_header_t*)vbuf->buf;
+  
+#if SRI_CORRECT
+  vbuf->send_pending = 0;
+#else
+    _armci_pendbuf_post_immbuf(vbuf,msginfo->from);
+#endif
+  armci_data_server(vbuf);
+  if(msginfo->operation==PUT || ACC(msginfo->operation)) {
+    SERVER_SEND_ACK(msginfo->from);
+  }  
+#if SRI_CORRECT
+  if(!vbuf->send_pending) {
+    _armci_pendbuf_post_immbuf(vbuf,msginfo->from);
+  }
+#endif
+}
+
+/**Complete processing this pending buffer. Parameters is void *,
+ * since vapibuf_t*|immbuf_t* is not available in armci-vapi.h. Note
+ * that the pending buffer may not yet be available for reuse. This
+ * will depend on the state of the pending buffer (which might have to
+ * wait for a communication innitiated by armci_data_server() to
+ * complete.
+ */
+void armci_complete_pendbuf(void *buf) {
+  vapibuf_pend_t *pbuf = (vapibuf_pend_t *)buf;
+  request_header_t *msginfo=(request_header_t*)pbuf->buf;
+
+  assert(pbuf->vbuf);
+#if SRI_CORRECT
+  pbuf->vbuf->send_pending=0;
+#else
+  _armci_pendbuf_post_immbuf(pbuf->vbuf,msginfo->from);
+#endif
+  armci_data_server(pbuf);
+  if(msginfo->operation==PUT || ACC(msginfo->operation)) {
+    SERVER_SEND_ACK(msginfo->from);
+  }
+#if SRI_CORRECT
+  assert(!pbuf->vbuf->send_pending);
+  _armci_pendbuf_post_immbuf(pbuf->vbuf,msginfo->from);
+#endif
+}
+
+void _armci_get_data_from_client(int proc, struct ibv_send_wr *sdscr, 
+				 int dscrid, struct ibv_sge *ssg_entry, 
+				 void *rbuf, void *lbuf, int bytes) ;
+void _armci_send_data_to_client_pbuf(int proc, struct ibv_send_wr *sdscr, 
+				     int dscrid, struct ibv_sge *ssg_entry, 
+				     void *rbuf, void *lbuf, int bytes);
+
+/** Initiate a get operation to progress a pending buffer.
+ * @param msginfo Request header for any additional processing
+ * @param src Pointer to src of data (remote for GET)
+ * @param dst Pointer to dst
+ * @param bytes #bytes to transfer
+ * @param proc proc to transfer from(for get)/to(for put)
+ * @param pbufid Index of pending buffer
+ */
+void armci_pbuf_start_get(void *msg_info, void *src, void *dst, 
+			  int bytes, int proc, int pbufid) {
+  struct ibv_send_wr sdscr;
+  struct ibv_sge sg_entry;
+  int wrid = PBUF_BUFID_TO_GET_WRID(pbufid);
+  request_header_t *msginfo=(request_header_t *)msg_info;
+  void armci_server_rdma_contig_to_strided(char *src_ptr, int proc,
+					   char *dst_ptr, 
+					   int dst_stride_arr[],
+					   int seg_count[],
+					   int stride_levels,
+					   request_header_t *msginfo);
+
+
+#if defined(PUT_NO_SRV_COPY)
+  if(msginfo->operation==PUT && msginfo->format==STRIDED 
+     && !msginfo->pinned && src==msginfo->tag.data_ptr)   {
+    char *loc_ptr, *rem_ptr;
+    int stride_levels, *count;
+    int *loc_stride_arr;
+    char *dscr = (char *)(msginfo+1);
+    ARMCI_MEMHDL_T *mhloc=NULL;
+
+    /* unpack descriptor record */
+    loc_ptr = *(void**)dscr;           dscr += sizeof(void*);
+    stride_levels = *(int*)dscr;       dscr += sizeof(int);
+    loc_stride_arr = (int*)dscr;       dscr += stride_levels*sizeof(int);
+    count = (int*)dscr;
+
+    rem_ptr = msginfo->tag.data_ptr;
+
+    dassert(1,proc==msginfo->from);
+    if(get_armci_region_local_hndl(loc_ptr,armci_clus_id(armci_me),&mhloc)) {
+/*       printf("%d(s): direct rdma from client buffers to server-side memory\n",armci_me); */
+/*       fflush(stdout); */
+   
+      armci_server_rdma_contig_to_strided(rem_ptr, proc,
+					  loc_ptr,loc_stride_arr,
+					  count, stride_levels,
+					  msginfo);
+    return;
+   }
+  }
+#endif
+/*   printf("%d(s): rdma from client buffers to pending buffers\n",armci_me); */
+/*   fflush(stdout);   */
+  _armci_get_data_from_client(proc,&sdscr,wrid,&sg_entry,src,dst,bytes);
+}
+
+/** Initiate a put operation to progress a pending buffer.
+ * @param src Pointer to src of data (local for PUT)
+ * @param dst Pointer to dst
+ * @param bytes #bytes to transfer
+ * @param proc proc to transfer from(for get)/to(for put)
+ * @param pbufid Index of pending buffer
+ */
+void armci_pbuf_start_put(void *src, void *dst, int bytes, int proc, 
+			  int pbufid) {
+  struct ibv_send_wr sdscr;
+  struct ibv_sge sg_entry;
+  int wrid = PBUF_BUFID_TO_PUT_WRID(pbufid);
+
+  _armci_send_data_to_client_pbuf(proc,&sdscr,wrid,&sg_entry,src,dst,bytes);
+}
+
+/**
+  * function to get data from remote client called by data
+  * server. Note that this is only called for pending buffers.
+  * @param proc IN the id of remote client
+  * @param sdscr IN/OUT Descriptor to be used to post the get
+  * @param dscrid IN ID to be used for the descriptor
+  * @param ssg_entry IN Scatter/gather list
+  * @param rbuf IN the remote buffer to get from
+  * @param lbuf IN local buf to get the data into, this is the queue buffer for SERVER_QUEUE path
+  * @param bytes IN the size of get
+  * @see SERVER_QUEUE
+  * @see armci_send_data_to_client
+  */
+/*static*/ void _armci_get_data_from_client(int proc, struct ibv_send_wr *sdscr, 
+				int dscrid, struct ibv_sge *ssg_entry, 
+				void *rbuf, void *lbuf, int bytes) 
+{
+    int rc = 0;
+
+    if(DEBUG_SERVER){
+       printf("\n%d(s):sending data to client %d at %p flag = %p bytes=%d\n",
+               armci_me,
+               proc,lbuf,(char *)lbuf+bytes-sizeof(int),bytes);fflush(stdout);
+    }
+
+    memset(sdscr,0,sizeof(struct ibv_send_wr));
+    armci_init_vbuf_rrdma(sdscr,ssg_entry,lbuf,rbuf,bytes,
+                          &serv_memhandle,(handle_array+proc));
+
+    if(DEBUG_SERVER){
+       printf("\n%d(s):handle_array[%d]=%p lbuf=%p flag=%p bytes=%d\n",armci_me,
+              proc,&handle_array[proc],(char *)lbuf,
+              (char *)lbuf+bytes-sizeof(int),bytes);
+       fflush(stdout);
+    }
+
+    assert(sizeof(request_header_t)+bytes<PENDING_BUF_LEN);
+
+    sdscr->wr_id = dscrid;
+    struct ibv_send_wr *bad_wr;
+    rc = ibv_post_send((CLN_con+proc)->qp, sdscr, &bad_wr);
+    dassert1(1,rc==0,rc);
+}
+
+void _armci_send_data_to_client_pbuf(int proc, struct ibv_send_wr *sdscr, 
+				     int dscrid, struct ibv_sge *ssg_entry, 
+				     void *rbuf, void *lbuf, int bytes)  {
+    int rc = 0;
+
+    if(DEBUG_SERVER) {
+       printf("\n%d(s):sending data to client %d at %p flag = %p bytes=%d\n",
+               armci_me,
+               proc,rbuf,(char *)rbuf+bytes-sizeof(int),bytes);fflush(stdout);
+    }
+    memset(sdscr,0,sizeof(struct ibv_send_wr));
+    armci_init_vbuf_srdma(sdscr,ssg_entry,lbuf,rbuf,bytes,
+                          &serv_memhandle,(handle_array+proc));
+    if(DEBUG_SERVER){
+       printf("\n%d(s):handle_array[%d]=%p dbuf=%p flag=%p bytes=%d\n",armci_me,
+              proc,&handle_array[proc],(char *)rbuf,
+              (char *)rbuf+bytes-sizeof(int),bytes);
+       fflush(stdout);
+    }
+    sdscr->wr_id = dscrid;
+    struct ibv_send_wr *bad_wr;
+    rc = ibv_post_send((CLN_con+proc)->qp, sdscr, &bad_wr);
+    dassert1(1,rc==0,rc);
+}
+#endif
 
 #define DATA_SERVER_YIELD_CPU
 void armci_call_data_server()
@@ -1488,10 +1894,15 @@ int nslave=armci_clus_info[armci_clus_me].nslave;
 #ifdef ARMCI_ENABLE_GPC_CALLS
     unblock_thread_signal(GPC_COMPLETION_SIGNAL);
 #endif
+#if defined(PEND_BUFS)
+    armci_pendbuf_init(); 
+#endif
+
     for (;;) {
       struct ibv_wc *pdscr=NULL;
       struct ibv_wc pdscr1;
       pdscr = &pdscr1;
+      pdscr->status = IBV_WC_SUCCESS;
       rc = 0;
 #ifdef CHANGE_SERVER_AFFINITY
       static int ccc;
@@ -1520,6 +1931,7 @@ int nslave=armci_clus_info[armci_clus_me].nslave;
 #ifdef ARMCI_ENABLE_GPC_CALLS
       block_thread_signal(GPC_COMPLETION_SIGNAL);
 #endif
+      bzero(pdscr, sizeof(*pdscr));
       if (server_can_poll) {
         rc = ibv_poll_cq(CLN_nic->rcq, 1, pdscr);
         while (rc == 0) {
@@ -1536,138 +1948,179 @@ int nslave=armci_clus_info[armci_clus_me].nslave;
           if(rc==0){doineednotify=1;/*continue;*/}
           if(doineednotify){
             rc1 = ibv_req_notify_cq(CLN_nic->rcq, 0);
-            if(rc1!=0){
-              armci_check_status(DEBUG_SERVER, rc1,"CQ notify req fail");
-            }
-            if (ibv_get_cq_event(CLN_nic->rch, &CLN_nic->rcq, &CLN_nic->rcq_cntx)){
-              armci_die("Failed to get cq_event\n",0);
-            }
+	    dassert1(1,rc1==0,rc1);
+            rc1=ibv_get_cq_event(CLN_nic->rch,&CLN_nic->rcq,&CLN_nic->rcq_cntx);
+	    dassert1(1,rc1==0,rc1);
             doineednotify=0;
+	    ibv_ack_cq_events(CLN_nic->rcq, 1);
             rc = ibv_poll_cq(CLN_nic->rcq, 1, pdscr);
           }
 
-        if (armci_server_terminating) {
-          /* server got interrupted when clients terminate connections */
-          armci_server_transport_cleanup();
-          sleep(1);
-          _exit(0);
-        }
+	  if (armci_server_terminating) {
+	    /* server got interrupted when clients terminate connections */
+	    armci_server_transport_cleanup();
+	    sleep(1);
+	    _exit(0);
+	  }
       }
 
-      if(DEBUG_SERVER){
+      if(DEBUG_SERVER) {
         printf("\n%d:pdscr=%p %p %d %d %d %d\n",armci_me,pdscr,&pdscr1,
                            pdscr->status,pdscr->opcode,pdscr->vendor_err,
                            pdscr->src_qp);
         fflush(stdout);
       }
-      if(rc<0)armci_check_status(DEBUG_SERVER, rc,"server poll/block");
-      /*we can figure out which buffer we got data info from the wc_desc_t id
-        * this can tell us from which process we go the buffer, as well */
-                      
+      dassertp(1,rc>=0,("%d: rc=%d id=%d status=%d",
+			armci_me,rc,(int)pdscr->wr_id,pdscr->status));
+      dassert1(1,pdscr->status==IBV_WC_SUCCESS,pdscr->status);
+                            
        if (DEBUG_SERVER) {
          printf("%d(s) : NEW MESSAGE bytelen %d \n",armci_me,pdscr->byte_len);
          printf("%d(s) : NEW MESSAGE id is %ld \n",armci_me,pdscr->wr_id);
          fflush(stdout);
        }
-
+#if defined(PEND_BUFS)
+      if(pdscr->wr_id>=DSCRID_IMMBUF_RESP && pdscr->wr_id<DSCRID_IMMBUF_RESP_END) {
+/* 	fprintf(stderr, "%d(s) : Got server response msg completion\n", armci_me); */
+#if SRI_CORRECT
+	int id = pdscr->wr_id - DSCRID_IMMBUF_RESP;
+	if(id>=0 && id<armci_nproc*(IMM_BUF_NUM+1)) {
+	  int dest = id/(IMM_BUF_NUM+1);
+	  dassert(1,serv_buf_arr[id]->send_pending==1);
+	  serv_buf_arr[id]->send_pending = 0;
+	  _armci_pendbuf_post_immbuf(serv_buf_arr[id],dest);
+	}
+#endif
+	continue;
+      }
+       if (pdscr->wr_id>=DSCRID_PENDBUF && pdscr->wr_id<DSCRID_PENDBUF_END) {
+	 int pbufid = PBUF_WRID_TO_PBUFID(pdscr->wr_id);
+/* 	 printf("%d(s) : Progressing pending msg (something completed) pbufid=%d id=%ld byte_len=%d status=%d\n", armci_me, pbufid,pdscr->wr_id,pdscr->byte_len,done_status); */
+/* 	 fflush(stdout); */
+	 if(PBUF_IS_GET_WRID(pdscr->wr_id))
+	   armci_pendbuf_done_get(pbufid);
+	 else if(PBUF_IS_PUT_WRID(pdscr->wr_id))
+	   armci_pendbuf_done_put(pbufid);
+	 else
+	   armci_die("Pending buffer op completed. But not PUT or GET!",pdscr->wr_id);
+	 continue;
+       }
+#endif
        if (pdscr->wr_id >= DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END) {
-         sr_descr_t *rdscr_arr;
+	 sr_descr_t *sdscr_arr, *rdscr_arr;
          if (DEBUG_SERVER) {
-           printf("%d(s) : received DATA id = %ld, length = %d\n",
+           printf("%d(s) : received SCATGAT DATA id = %ld, length = %d\n",
                   armci_me,pdscr->wr_id, pdscr->byte_len);
            fflush(stdout);
-         }
-         rdscr_arr = armci_vapi_serv_nbrdscr_array;
-         rdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofrecvs--;
-         if(rdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofrecvs==0)
-           rdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].tag=0;
+	 }
+#if defined(PEND_BUFS)
+	 sdscr_arr = armci_vapi_serv_nbsdscr_array;
+	 assert(sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends>0);
+	 sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends--;
+	 if(sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends==0)
+	     sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].tag=0;
+#else
+	 rdscr_arr;
+	 rdscr_arr = armci_vapi_serv_nbrdscr_array;
+	 rdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofrecvs--;
+	 if(rdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofrecvs==0)
+	   rdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].tag=0;
+#endif
          continue;
        }
 
-       vbuf = serv_buf_arr[pdscr->wr_id - armci_nproc];
+#if defined(PEND_BUFS)
+       assert(pdscr->wr_id>=DSCRID_IMMBUF_RECV && pdscr->wr_id<DSCRID_IMMBUF_RECV_END);
+#endif
+       vbuf = serv_buf_arr[DSCRID_TO_IMMBUFID(pdscr->wr_id)];
+       assert(vbuf->dscr.wr_id == pdscr->wr_id);
+
        msginfo = (request_header_t*)vbuf->buf;
        armci_ack_proc = c = msginfo->from;
 
        if (DEBUG_SERVER) {
-         printf("%d(s) : request id is %ld operation is %d, length is %d %d\n",
-armci_me,pdscr->wr_id,msginfo->operation,pdscr->byte_len,msginfo->from);
+         printf("%d(s) : request id is %ld operation is %d, length is %d from=%d vbuf->dscr.wr_id=%d\n",
+		armci_me,pdscr->wr_id,msginfo->operation,pdscr->byte_len,msginfo->from, (int)vbuf->dscr.wr_id);
          fflush(stdout);
        }
 
+#if defined(PEND_BUFS)
+       vbufs = vbuf;
+       armci_init_vapibuf_recv(&vbufs->dscr, &vbufs->sg_entry,vbufs->buf,
+			       IMM_BUF_LEN, &serv_memhandle);
+       vbufs->dscr.wr_id = pdscr->wr_id;
+#else
+       vbufs = serv_buf_arr[pdscr->wr_id - armci_nproc] = spare_serv_buf;
+       armci_init_vapibuf_recv(&vbufs->dscr, &vbufs->sg_entry,vbufs->buf,
+			       VBUF_DLEN, &serv_memhandle);
+       vbufs->dscr.wr_id = c + armci_nproc;
+
+       spare_serv_buf = vbuf;
+#endif
+
+       if(DEBUG_SERVER) {
+	 printf("%d(s):Came out of poll id=%ld\n",armci_me,pdscr->wr_id);
+	 fflush(stdout);
+       }
+
        if(msginfo->operation == PUT &&msginfo->pinned == 1){
-       int found, num;
-       int stride_arr[MAX_STRIDE_LEVEL]; /*should be MAX_STRIDE_LEVELS*/
-       int count[MAX_STRIDE_LEVEL];
-       void *dest_ptr;
-       int stride_levels;
-       ARMCI_MEMHDL_T *loc_memhandle;
-       void armci_post_scatter(void *,int *,int *,int, armci_vapi_memhndl_t *,int,int,int,sr_descr_t **);
+	 int found, num;
+	 int stride_arr[MAX_STRIDE_LEVEL]; /*should be MAX_STRIDE_LEVELS*/
+	 int count[MAX_STRIDE_LEVEL];
+	 void *dest_ptr;
+	 int stride_levels;
+	 ARMCI_MEMHDL_T *loc_memhandle;
+	 void armci_post_scatter(void *,int *,int *,int, armci_vapi_memhndl_t *,int,int,int,sr_descr_t **);
 
-          /*unpack decsriptor_record : should call a function instead */
-          msg = msginfo + 1;
-          test_ptr = dest_ptr = *(void**)msg;
-          msg = (request_header_t *) ((char*)msg + sizeof(void*));
-          test_stride_levels=stride_levels = *(int*)msg;
-          msg = (request_header_t *) ((char*)msg + sizeof(int));
-          for(i =0; i<stride_levels; i++){
-            test_stride_arr[i] = stride_arr[i] = *(int*)msg;
-            msg = (request_header_t*) ((int*)msg + 1);
-          }
-          for(i=0; i<stride_levels+1; i++){
-            test_count[i] = count[i] = *(int*)msg;
-            msg = (request_header_t*) ((int*)msg + 1);
-          }
+	 /*unpack decsriptor_record : should call a function instead */
+	 msg = msginfo + 1;
+	 test_ptr = dest_ptr = *(void**)msg;
+	 msg = (request_header_t *) ((char*)msg + sizeof(void*));
+	 test_stride_levels=stride_levels = *(int*)msg;
+	 msg = (request_header_t *) ((char*)msg + sizeof(int));
+	 for(i =0; i<stride_levels; i++){
+	   test_stride_arr[i] = stride_arr[i] = *(int*)msg;
+	   msg = (request_header_t*) ((int*)msg + 1);
+	 }
+	 for(i=0; i<stride_levels+1; i++){
+	   test_count[i] = count[i] = *(int*)msg;
+	   msg = (request_header_t*) ((int*)msg + 1);
+	 }
 
-          if (DEBUG_SERVER) {
-            printf(" server:the dest_ptr is %p\n", dest_ptr);
-            for(i =0; i<stride_levels; i++)
-	      printf("stride_arr[i] is %d,value of count[i] is %d\n",
-                               stride_arr[i], count[i]);
-            printf("the value of stride_levels is %d\n", stride_levels);
-            fflush(stdout);
-          }
+	 if (DEBUG_SERVER) {
+	   printf(" server:the dest_ptr is %p\n", dest_ptr);
+	   for(i =0; i<stride_levels; i++)
+	     printf("stride_arr[i] is %d,value of count[i] is %d\n",
+		    stride_arr[i], count[i]);
+	   printf("the value of stride_levels is %d\n", stride_levels);
+	   fflush(stdout);
+	 }
 
-          found =get_armci_region_local_hndl(dest_ptr,armci_me, &loc_memhandle);
+	 found =get_armci_region_local_hndl(dest_ptr,armci_me, &loc_memhandle);
+	 dassertp(1,found!=0,("%d:SERVER : local region not found id=%d",
+			      armci_me,pdscr->wr_id));
 
-	  if(!found){
-	    armci_die("SERVER : local region not found",pdscr->wr_id);
-          }
+	 if(DEBUG_SERVER) {
+	   printf("%d(s) : about to call armci_post_scatter\n",armci_me);
+	   fflush(stdout);
+	 }
 
-          if(DEBUG_SERVER){
-             printf("%d(s) : about to call armci_post_scatter\n",armci_me);
-             fflush(stdout);
-          }
+	 armci_post_scatter(dest_ptr, stride_arr, count, stride_levels,
+			    loc_memhandle,msginfo->from, mytag, SERV,NULL );
 
-          armci_post_scatter(dest_ptr, stride_arr, count, stride_levels,
-                        loc_memhandle,msginfo->from, mytag, SERV,NULL );
+	 mytag = (mytag+1)%(MAX_PENDING);
+	 if(mytag==0)mytag=1;
 
-          mytag = (mytag+1)%(MAX_PENDING);
-          if(mytag==0)mytag=1;
-
-          if(DEBUG_SERVER){
-             printf("%d(s) : finished posting %d scatter\n",armci_me,num);
-             fflush(stdout);
-          }
-        }
-
-        vbufs = serv_buf_arr[pdscr->wr_id - armci_nproc] = spare_serv_buf;
-        armci_init_vapibuf_recv(&vbufs->dscr, &vbufs->sg_entry,vbufs->buf,
-                                VBUF_DLEN, &serv_memhandle);
-        vbufs->dscr.wr_id = c + armci_nproc;
-
-        struct ibv_recv_wr *bad_wr;
-        rc = ibv_post_recv((CLN_con+c)->qp, &(vbufs->dscr), &bad_wr);
-        armci_check_status(DEBUG_SERVER, rc,"server post recv vbuf");
-
-        spare_serv_buf = vbuf;
-
-        if(DEBUG_SERVER){
-          printf("%d(s):Came out of poll id=%ld\n",armci_me,pdscr->wr_id);
-          fflush(stdout);
-        }
-
-        if(msginfo->operation == REGISTER){
-          if (DEBUG_SERVER) {
+	 if(DEBUG_SERVER) {
+	   printf("%d(s) : finished posting %d scatter\n",armci_me,num);
+	   fflush(stdout);
+	 }
+	 _armci_pendbuf_post_immbuf(vbufs, msginfo->from);
+	 SERVER_SEND_ACK(msginfo->from);
+	 need_ack = 0;
+       }
+       else if(msginfo->operation == REGISTER){
+	 if (DEBUG_SERVER) {
             printf("%d(s) : Register_op id is %d, comp_dscr_id is  %ld\n",
                      armci_me,msginfo->operation,pdscr->wr_id);
             fflush(stdout);
@@ -1676,33 +2129,38 @@ armci_me,pdscr->wr_id,msginfo->operation,pdscr->byte_len,msginfo->from);
           armci_server_register_region(*((void **)(msginfo+1)),
                            *((long *)((char *)(msginfo+1)+sizeof(void *))),
                            (ARMCI_MEMHDL_T *)(msginfo->tag.data_ptr));
-          *(long *)(msginfo->tag.ack_ptr) = ARMCI_VAPI_COMPLETE;
+	  _armci_pendbuf_post_immbuf(vbufs, msginfo->from);
+          *(long *)(msginfo->tag.ack_ptr) = ARMCI_STAMP;
           continue;
        }
-       if( msginfo->operation == PUT &&msginfo->pinned == 1);
-       else{
-         if(DEBUG_SERVER){
-            printf("%d(s) : request is %ld about to call armci_data_server\n",
-                    armci_me, pdscr->wr_id);
-            fflush(stdout);
+       else {
+         if(DEBUG_SERVER) {
+	   printf("%d(s) : request is %ld about to call armci_data_server\n",
+		  armci_me, pdscr->wr_id);
+	   fflush(stdout);
          }
-         armci_data_server(vbuf);
+#if defined(PEND_BUFS)
+	 armci_pendbuf_service_req(vbuf);
+#else
+	 _armci_pendbuf_post_immbuf(vbufs, msginfo->from);
+	 armci_data_server(vbuf);
+	 
+	 if((msginfo->operation == PUT) || ACC(msginfo->operation)) { 
+	   /* for operations that do not send data back we can send ACK now */
+	   SERVER_SEND_ACK(msginfo->from);
+	   need_ack=0;
+	   if(DEBUG_SERVER){
+	     printf("%d(s) : posted ack\n\n",armci_me);
+	     fflush(stdout);
+	   }
+	 } else need_ack=1;
+#endif
        }
-       if((msginfo->operation == PUT) || ACC(msginfo->operation)){
-           /* for operations that do not send data back we can send ACK now */
-           SERVER_SEND_ACK(armci_ack_proc);
-           need_ack=0;
-           if(DEBUG_SERVER){
-	          printf("%d(s) : posted ack\n\n",armci_me);
-              fflush(stdout);
-           }
-       } else need_ack=1;
-
        if (0) {
-          printf("%d(s):Done processed request\n\n",armci_me);
-          fflush(stdout);
+	 printf("%d(s):Done processed request\n\n",armci_me);
+	 fflush(stdout);
        }
-
+       
 #ifdef ARMCI_ENABLE_GPC_CALLS
        unblock_thread_signal(GPC_COMPLETION_SIGNAL);
 #endif
@@ -1710,59 +2168,115 @@ armci_me,pdscr->wr_id,msginfo->operation,pdscr->byte_len,msginfo->from);
 }
 
 
-void armci_vapi_complete_buf(armci_vapi_field_t *field,int snd,int rcv,int to,int op)
-{
-    struct ibv_send_wr *snd_dscr;
+void armci_vapi_complete_buf(armci_vapi_field_t *field,int snd,int rcv,int to,int op) {
+  struct ibv_send_wr *snd_dscr;
 
-    BUF_INFO_T *info;
-    info = (BUF_INFO_T *)((char *)field-sizeof(BUF_INFO_T));
+  BUF_INFO_T *info;
+  info = (BUF_INFO_T *)((char *)field-sizeof(BUF_INFO_T));
 
-    if(info->tag && op==GET)return;
+  if(info->tag && op==GET)return;
 
-    if(snd){
-       request_header_t *msginfo = (request_header_t *)(field+1);
-       snd_dscr=&(field->sdscr);
-       if(mark_buf_send_complete[snd_dscr->wr_id]==0)
-         armci_send_complete(snd_dscr,"armci_vapi_complete_buf",1);
+  if(snd){
+    request_header_t *msginfo = (request_header_t *)(field+1);
+    snd_dscr=&(field->sdscr);
+    if(mark_buf_send_complete[snd_dscr->wr_id]==0)
+      armci_send_complete(snd_dscr,"armci_vapi_complete_buf",1);
+  }
+
+  if(rcv){
+    int *last;
+    long *flag;
+    int loop = 0;
+    request_header_t *msginfo = (request_header_t *)(field+1);
+    flag = (long *)&msginfo->tag.ack;
+
+  
+    if(op==PUT || ACC(op)){
+      if(msginfo->bypass && msginfo->pinned && msginfo->format == STRIDED &&
+	 op == PUT);
+      else{
+	while(armci_util_long_getval(flag) != ARMCI_STAMP) {
+	  loop++;
+	  loop %=100000;
+	  if(loop==0){
+	  }
+	}
+      }
+      /* 	 printf("%d: client complete_buf. op=%d loop=%d till *flag=ARMCI_STAMP\n", armci_me,op,loop); */
+      /* 	 fflush(stdout); */
+      *flag = 0L;
     }
-
-    if(rcv){
-       int *last;
-       long *flag;
-       int loop = 0;
-       request_header_t *msginfo = (request_header_t *)(field+1);
-       flag = (long *)&msginfo->tag.ack;
-
-       if(op==PUT || ACC(op)){
-         if(msginfo->bypass && msginfo->pinned && msginfo->format == STRIDED &&
-                                       op == PUT);
-         else{
-           while(armci_util_long_getval(flag) != ARMCI_VAPI_COMPLETE) {
-             loop++;
-             loop %=100000;
-             if(loop==0){
-             }
-           }
-         }
-         *flag = 0L;
-       }
-       else{
-         last = (int *)((char *)msginfo+msginfo->datalen-sizeof(int));
-         while(armci_util_int_getval(last) == ARMCI_VAPI_COMPLETE &&
-               armci_util_long_getval(flag)  != ARMCI_VAPI_COMPLETE){
-           loop++;
-           loop %=100000;
-           if(loop==0){
-             if(DEBUG_CLN){
-               printf("%d: client last(%p)=%d flag(%p)=%ld off=%d\n",
-                      armci_me,last,*last,flag,*flag,msginfo->datalen);
-               fflush(stdout);
-             }
-           }
-         }
-       }
+    else{
+      /*SK: I think we get here only for GET with result directly
+	going to client's pinned memory. (info.tag==0 && op==GET)*/
+      last = (int *)((char *)msginfo+msginfo->datalen-sizeof(int));
+      while(armci_util_int_getval(last) == ARMCI_STAMP &&
+	    armci_util_long_getval(flag)  != ARMCI_STAMP){
+	loop++;
+	loop %=100000;
+	if(loop==0){
+	  if(DEBUG_CLN){
+	    printf("%d: client last(%p)=%d flag(%p)=%ld off=%d\n",
+		   armci_me,last,*last,flag,*flag,msginfo->datalen);
+	    fflush(stdout);
+	  }
+	}
+      }
     }
+  }
 }
+
+void armci_vapi_test_buf(armci_vapi_field_t *field,int snd,int rcv,int to,int op, int *retval) {
+  struct ibv_send_wr *snd_dscr;
+
+  BUF_INFO_T *info;
+  info = (BUF_INFO_T *)((char *)field-sizeof(BUF_INFO_T));
+
+  *retval = 0;
+
+  if(info->tag && op==GET)return;
+
+  if(snd){
+    request_header_t *msginfo = (request_header_t *)(field+1);
+    snd_dscr=&(field->sdscr);
+    if(mark_buf_send_complete[snd_dscr->wr_id]==0) {
+/*       printf("%d: test buf. send not complete\n",armci_me); */
+/*       fflush(stdout); */
+      return;
+    }
+  }
+
+  if(rcv){
+    int *last;
+    long *flag;
+    int loop = 0;
+    request_header_t *msginfo = (request_header_t *)(field+1);
+    flag = (long *)&msginfo->tag.ack;
+  
+    if(op==PUT || ACC(op)){
+      if(msginfo->bypass && msginfo->pinned && msginfo->format == STRIDED &&
+	 op == PUT) 
+	*retval=1;
+      else{
+	if(armci_util_long_getval(flag) == ARMCI_STAMP) {
+	  *retval = 1;
+	}
+      }
+      return;
+    }
+    else{
+      /*SK: I think we get here only for GET with result directly
+	going to client's pinned memory. (info.tag==0 && op==GET)*/
+      last = (int *)((char *)msginfo+msginfo->datalen-sizeof(int));
+      if(armci_util_int_getval(last) != ARMCI_STAMP ||
+	    armci_util_long_getval(flag)  == ARMCI_STAMP){
+	*retval=1;
+      }
+      return;
+    }
+  }
+}
+
 
 static inline void armci_vapi_post_send(int isclient,int con_offset,
                                         struct ibv_send_wr *snd_dscr,char *from)
@@ -1803,12 +2317,14 @@ static inline void armci_vapi_post_send(int isclient,int con_offset,
         /* no corresponding call, using ibv_post_send
        rc = EVAPI_post_inline_sr(nic->handle,con->qp,snd_dscr);*/
     }
-    armci_check_status(DEBUG_INIT, rc, from);
+    dassert1(1,rc==0,rc);
 }
 
+/** Send request to server. 
+  */
 int armci_send_req_msg(int proc, void *buf, int bytes)
 {
-    int cluster = armci_clus_id(proc);
+  int cluster = armci_clus_id(proc), i;
     request_header_t *msginfo = (request_header_t *)buf;
     struct ibv_send_wr *snd_dscr;
     struct ibv_sge *ssg_lst;
@@ -1818,11 +2334,91 @@ int armci_send_req_msg(int proc, void *buf, int bytes)
     snd_dscr = BUF_TO_SDESCR((char *)buf);
     ssg_lst  = BUF_TO_SSGLST((char *)buf);
 
-    _armci_buf_ensure_one_outstanding_op_per_node(buf,cluster);
-    msginfo->tag.ack = 0;
+    /*Stamp end of buffers as needed*/
+    if(msginfo->operation == GET && !msginfo->pinned) {
+      const int dscrlen = msginfo->dscrlen;
+      const int datalen = msginfo->datalen;
+      int *last;
+      if(dscrlen < (datalen - sizeof(int)))
+	last = (int*)(((char*)(msginfo+1))+(datalen-sizeof(int)));
+      else
+	last = (int*)(((char*)(msginfo+1))+(dscrlen+datalen-sizeof(int)));
+      *last = ARMCI_STAMP;
+#ifdef GET_STRIDED_COPY_PIPELINED
+      if(msginfo->format == STRIDED) {
+	const int ssize = GET_STRIDED_COPY_PIPELINED_SIZE/sizeof(int);
+	int *sfirst = (int*)(dscrlen+(char*)(msginfo+1))+ssize; /*stamping
+							    can start here*/
+	int *slast = last, *ptr;
+	for(ptr=sfirst; ptr<slast; ptr+=ssize) {
+	  *ptr = ARMCI_STAMP;
+	}
+      }
+#endif
+    }
+    if(msginfo->operation == ACK) {
+      *(int *)(msginfo +1) = ARMCI_STAMP+1;
+      *(((int *)(msginfo +1))+1) = ARMCI_STAMP+1;
+    }
+    
 
-    if(msginfo->operation == PUT || ACC(msginfo->operation))
-       msginfo->tag.data_ptr = (void *)&msginfo->tag.ack;
+#if defined(PEND_BUFS)
+    if((msginfo->operation==PUT || ACC(msginfo->operation)) 
+       && bytes > IMM_BUF_LEN) {
+      msginfo->tag.imm_msg=0;
+      assert(sizeof(request_header_t)<IMM_BUF_LEN); /*sanity check*/
+      bytes = MIN(bytes-msginfo->datalen, IMM_BUF_LEN);
+      assert(bytes==IMM_BUF_LEN||(bytes==sizeof(*msginfo)+msginfo->dscrlen));
+    }
+    else if(msginfo->operation==GET
+	    && !(msginfo->datalen+sizeof(request_header_t)+msginfo->dscrlen<IMM_BUF_LEN)) {
+      assert(sizeof(request_header_t) < IMM_BUF_LEN);
+      msginfo->tag.imm_msg=0;
+      bytes = MIN(sizeof(request_header_t)+msginfo->dscrlen, IMM_BUF_LEN);
+    }
+#if defined(PUT_NO_SRV_COPY) && 0 /*SK:disabled. Imm msgs are sent inline
+				    for latency reasons*/
+    else if(msginfo->operation==PUT && !msginfo->pinned && msginfo->format==STRIDED && msginfo->tag.data_len>=2048) {
+      msginfo->tag.imm_msg = 0;
+      assert(sizeof(request_header_t)<IMM_BUF_LEN); /*sanity check*/
+      bytes = MIN(bytes-msginfo->datalen, IMM_BUF_LEN);
+      assert(bytes==IMM_BUF_LEN||(bytes==sizeof(*msginfo)+msginfo->dscrlen));
+    }
+#endif
+    else{
+      msginfo->tag.imm_msg=1;
+    }
+/*    printf("%d: send_req: op=%d bytes=%d data_len=%d imm=%d\n",*/
+/*	   armci_me, msginfo->operation, bytes, msginfo->datalen,msginfo->tag.imm_msg);*/
+/*    fflush(stdout);*/
+    if(bytes<0 || bytes>IMM_BUF_LEN) {
+      printf("%d(pid=%d): Trying to send too large a mesg. op=%d bytes=%d(max=%d) to=%d\n", armci_me, getpid(),msginfo->operation,bytes,IMM_BUF_LEN, proc);
+      fflush(stdout);
+      pause();
+      assert(bytes>=0);
+      assert(bytes <= IMM_BUF_LEN);
+    }
+    _armci_buf_ensure_pend_outstanding_op_per_node(buf,cluster);
+/*     printf("%d: send_req. ensured pend os per node. to=%d op=%d\n", armci_me, msginfo->to,msginfo->operation); */
+/*     fflush(stdout); */
+#else
+    _armci_buf_ensure_one_outstanding_op_per_node(buf,cluster);
+#endif
+
+    if(msginfo->operation == PUT || ACC(msginfo->operation)){
+#if defined(PEND_BUFS)
+      if(!msginfo->tag.imm_msg){
+        msginfo->tag.data_ptr = (char *)(msginfo+1)+msginfo->dscrlen;
+        msginfo->tag.data_len = msginfo->datalen;
+      }
+      else
+	msginfo->tag.data_ptr = NULL;
+#else
+      {
+          msginfo->tag.data_ptr = (void *)&msginfo->tag.ack;
+      }
+#endif
+    }
     else {
        if(msginfo->operation == GET && !msginfo->bypass && msginfo->dscrlen
                        >= (msginfo->datalen-sizeof(int)))
@@ -1830,6 +2426,10 @@ int armci_send_req_msg(int proc, void *buf, int bytes)
        else
          msginfo->tag.data_ptr = GET_DATA_PTR(buf);
     }
+
+    /*this has to be reset so that we can wait on it
+      see ReadFromDirect*/
+    msginfo->tag.ack = 0;
     msginfo->tag.ack_ptr = &(msginfo->tag.ack);
 
     if(DEBUG_CLN){
@@ -1840,7 +2440,8 @@ int armci_send_req_msg(int proc, void *buf, int bytes)
     armci_init_vapibuf_send(snd_dscr, ssg_lst,buf, 
                             bytes, &client_memhandle);
 
-
+/*    printf("%d: Sending req wr_id=%d to=%d\n",armci_me,snd_dscr->wr_id,proc);*/
+/*    fflush(stdout);*/
     armci_vapi_post_send(1,cluster,snd_dscr,"send_req_msg:post_send");
 
     THREAD_UNLOCK(armci_user_threads.net_lock);
@@ -1864,7 +2465,7 @@ void armci_wait_ack(char *buffer)
    request_header_t *msginfo = (request_header_t *)(buffer);
    flag = (long*)&msginfo->tag.ack;
 
-   while(armci_util_long_getval(flag) != ARMCI_VAPI_COMPLETE);
+   while(armci_util_long_getval(flag) != ARMCI_STAMP);
    flag = 0;
 }
 
@@ -1926,13 +2527,14 @@ struct ibv_send_wr *bad_wr;
     armci_init_vbuf_rrdma(&dirdscr->sdescr,dirdscr->sg_entry,dst_buf,src_buf,
                           len,lochdl,remhdl);
     rc = ibv_post_send((SRV_con+clus)->qp, &(dirdscr->sdescr), &bad_wr);
-    armci_check_status(DEBUG_CLN, rc,"armci_client_get_direct");
+    dassert1(1,rc==0,rc);
 
     /* unlock/lock to ensure fairness: allows others thread post before
        waiting for completion */
+    /*VT?check to see if this should be UNLOCK followed by lock*/
 #if 1
-    THREAD_LOCK(armci_user_threads.net_lock);
     THREAD_UNLOCK(armci_user_threads.net_lock);
+    THREAD_LOCK(armci_user_threads.net_lock);
 #endif
 
     if(!nbtag){
@@ -1942,6 +2544,589 @@ struct ibv_send_wr *bad_wr;
     THREAD_UNLOCK(armci_user_threads.net_lock);
 }
 
+#define WQE_LIST_LENGTH 32
+#define WQE_LIST_COUNT  1
+
+/** Direct put into remote processor memory. Assumes that (and invoked
+ *  only when) the source buffers in user memory are pinned as well.
+ * @param operation PUT/GET
+ * @param src_ptr Source pointer for data
+ * @param src_stride_arr Strides on the source array
+ * @param dst_ptr Destination pointer to start writing to
+ * @param seq_count[stride_levels+1] #els in each stride
+ * level. seg_count[0] is contiguous bytes
+ * @param proc Destimation process
+ * @param cptr OUT Pointer to store the descriptor to wait on for completion
+ * @param nbtag IN Non-blocking tag (non-blocking op if nbtag!=0)
+ * @param lochdl IN Local memory handle/key (registered memory stuff)
+ * @param remhdl IN Remote memory handle/key
+ * 
+ */
+#if 0
+void armci_client_direct_rdma_strided(int operation, int proc,
+				      char *src_ptr, int src_stride_arr[],
+				      char *dst_ptr, int dst_stride_arr[],
+				      int seg_count[],
+				      int stride_levels,
+				      void **cptr, int nbtag,
+				      ARMCI_MEMHDL_T *lochdl,
+				      ARMCI_MEMHDL_T *remhdl) {
+  
+  int rc;
+  sr_descr_t *dirdscr;
+  const int clus = armci_clus_id(proc);
+  struct ibv_send_wr *bad_wr;
+  struct ibv_send_wr sdscr[WQE_LIST_COUNT][WQE_LIST_LENGTH];
+  struct ibv_sge     sg_entry[WQE_LIST_COUNT][WQE_LIST_LENGTH];
+  int busy[WQE_LIST_COUNT], wait_count[WQE_LIST_COUNT],clst;
+  int i, j, c, numposts;
+  int idx[MAX_STRIDE_LEVEL];
+
+  THREAD_LOCK(armci_user_threads.net_lock);
+
+  assert(stride_levels >= 0);
+  assert(stride_levels<=MAX_STRIDE_LEVEL);
+  /*ID for the desr that comes from get_next_descr is already set*/
+  dirdscr = armci_vapi_get_next_sdescr(nbtag,0);
+  if(nbtag)*cptr = dirdscr;
+  assert(dirdscr->tag == nbtag);
+
+  if(DEBUG_CLN) {
+    printf("\n%d: in direct rdma strided id=%d lkey=%ld rkey=%ld\n",
+	   armci_me,dirdscr->sdescr.wr_id,lochdl->lkey,remhdl->rkey);fflush(stdout);
+  }
+
+  for(c=0; c<WQE_LIST_COUNT; c++) {
+    busy[c]=0;
+  }
+  /*initialize fixed values for descriptors*/
+  bzero(sdscr, WQE_LIST_COUNT*WQE_LIST_LENGTH*sizeof(struct ibv_send_wr));
+  bzero(sg_entry, WQE_LIST_COUNT*WQE_LIST_LENGTH*sizeof(struct ibv_sge));
+  for(j=0; j<WQE_LIST_COUNT; j++) {
+    for(i=0; i<WQE_LIST_LENGTH; i++) {
+      if(operation == PUT) 
+	armci_init_vbuf_srdma(&sdscr[j][i],&sg_entry[j][i],NULL,NULL,seg_count[0],lochdl,remhdl);
+      else if(operation == GET) 
+	armci_init_vbuf_rrdma(&sdscr[j][i],&sg_entry[j][i],NULL,NULL,seg_count[0],lochdl,remhdl);
+      else
+	armci_die("rdma_strided: unsupported operation",operation);
+      sdscr[j][i].wr_id = dirdscr->sdescr.wr_id;
+      sdscr[j][i].send_flags = 0; /*non-signalled*/
+      if(i<WQE_LIST_LENGTH-1)
+	sdscr[j][i].next = &sdscr[j][i+1];
+    }
+  }
+  /*post requests in a loop*/
+  numposts=1;
+  for(i=1; i<=stride_levels; i++) {
+    numposts *= seg_count[i];
+  }
+/*   printf("%d: client rdma op=%d numposts=%d\n",armci_me,operation,numposts); */
+  
+  dirdscr->numofsends=0;
+  bzero(idx, stride_levels*sizeof(int));
+  int count = (numposts%WQE_LIST_LENGTH) ? (numposts%WQE_LIST_LENGTH):WQE_LIST_LENGTH;
+  assert(count == MIN(count, numposts));
+  clst=0;
+  for(i=0; i<numposts; ) {
+    for(j=i; j<i+count; j++) {
+      int src_offset=0, dst_offset=0;
+      for(c=0; c<stride_levels; c++) {
+	src_offset += idx[c]*src_stride_arr[c];
+	dst_offset += idx[c]*dst_stride_arr[c];
+      }
+
+/*       armci_client_direct_send(proc,src_ptr+src_offset,  */
+/* 			       dst_ptr+dst_offset, seg_count[0], */
+/* 			       NULL,0,lochdl,remhdl); */
+      if(busy[clst]) {
+	assert(wait_count[clst]>0);
+	armci_send_complete(&dirdscr->sdescr,"client_direct_rdma_strided",wait_count[clst]);
+	dirdscr->numofsends -= wait_count[clst];
+	busy[clst]=0;
+	wait_count[clst]=0;
+      }
+
+      if(operation == PUT) {
+	sg_entry[clst][j-i].addr        = (uint64_t)(src_ptr + src_offset);
+	sdscr[clst][j-i].wr.rdma.remote_addr = (uint64_t)(dst_ptr + dst_offset);
+      }
+      else if (operation == GET) {
+	sg_entry[clst][j-i].addr        = (uint64_t)(dst_ptr + dst_offset);
+	sdscr[clst][j-i].wr.rdma.remote_addr = (uint64_t)(src_ptr + src_offset);
+      }
+      assert(sg_entry[clst][j-i].length == seg_count[0]);
+
+      idx[0] += 1;
+      for(c=0;c<stride_levels-1 && idx[c]==seg_count[c+1]; c++) {
+	idx[c]=0; idx[c+1]++;
+      }
+    }
+    sdscr[clst][count-1].next=NULL;
+    sdscr[clst][count-1].send_flags=IBV_SEND_SIGNALED; /*only the last one*/
+    for(c=0; c<count-1; c++) {
+      assert(sdscr[clst][c].next == &sdscr[clst][c+1]);
+    }
+    rc = ibv_post_send(SRV_con[clus].qp, sdscr[clst], &bad_wr);
+    dassert1(1,rc==0,rc);
+    dirdscr->numofsends += 1;
+    wait_count[clst] = 1;
+/*     armci_send_complete(&dirdscr->sdescr,"armci_client_direct_rdma_strided",count); */
+
+    if(count < WQE_LIST_LENGTH) {
+      sdscr[clst][count-1].next=&sdscr[clst][count]; /*reset it*/ 
+    }
+    sdscr[clst][count-1].send_flags=0; /*reset it*/
+    i += count;
+    count = MIN(WQE_LIST_LENGTH,numposts-i);
+    assert(count==0 || count==WQE_LIST_LENGTH);
+    clst = (clst+1)%WQE_LIST_COUNT;
+  }
+
+  if(!nbtag) {
+    armci_send_complete(&dirdscr->sdescr,"armci_client_direct_get",dirdscr->numofsends);
+    dirdscr->numofsends = 0;
+    dirdscr->tag = 0;
+  }  
+  THREAD_UNLOCK(armci_user_threads.net_lock);
+}
+#else
+void armci_client_direct_rdma_strided(int operation, int proc,
+				      char *src_ptr, int src_stride_arr[],
+				      char *dst_ptr, int dst_stride_arr[],
+				      int seg_count[],
+				      int stride_levels,
+				      void **cptr, int nbtag,
+				      ARMCI_MEMHDL_T *lochdl,
+				      ARMCI_MEMHDL_T *remhdl) {
+  int rc, i, j, c, busy[WQE_LIST_COUNT], clst, ctr;
+  sr_descr_t *dirdscr;
+  const int clus = armci_clus_id(proc);
+  struct ibv_send_wr *bad_wr;
+  struct ibv_send_wr sdscr[WQE_LIST_COUNT][WQE_LIST_LENGTH];
+  struct ibv_sge     sg_entry[WQE_LIST_COUNT][WQE_LIST_LENGTH];
+  stride_itr_t sitr, ditr;
+
+  THREAD_LOCK(armci_user_threads.net_lock);
+
+  assert(stride_levels >= 0);
+  assert(stride_levels<=MAX_STRIDE_LEVEL);
+  /*ID for the desr that comes from get_next_descr is already set*/
+  dirdscr = armci_vapi_get_next_sdescr(nbtag,0);
+  if(nbtag)*cptr = dirdscr;
+  assert(dirdscr->tag == nbtag);
+
+  if(DEBUG_CLN) {
+    printf("\n%d: in direct rdma strided id=%d lkey=%ld rkey=%ld\n",
+	   armci_me,dirdscr->sdescr.wr_id,lochdl->lkey,remhdl->rkey);fflush(stdout);
+  }
+
+  /*initialize fixed values for descriptors*/
+  bzero(sdscr, WQE_LIST_COUNT*WQE_LIST_LENGTH*sizeof(struct ibv_send_wr));
+  bzero(sg_entry, WQE_LIST_COUNT*WQE_LIST_LENGTH*sizeof(struct ibv_sge));
+  for(j=0; j<WQE_LIST_COUNT; j++) {
+    for(i=0; i<WQE_LIST_LENGTH; i++) {
+      if(operation == PUT) 
+	armci_init_vbuf_srdma(&sdscr[j][i],&sg_entry[j][i],NULL,NULL,seg_count[0],lochdl,remhdl);
+      else if(operation == GET) 
+	armci_init_vbuf_rrdma(&sdscr[j][i],&sg_entry[j][i],NULL,NULL,seg_count[0],lochdl,remhdl);
+      else
+	armci_die("rdma_strided: unsupported operation",operation);
+      sdscr[j][i].wr_id = dirdscr->sdescr.wr_id;
+      sdscr[j][i].send_flags = 0; /*non-signalled*/
+      if(i<WQE_LIST_LENGTH-1)
+	sdscr[j][i].next = &sdscr[j][i+1];
+    }
+  }
+
+  /*post requests in a loop*/
+  sitr = armci_stride_itr_init(src_ptr,stride_levels,src_stride_arr,seg_count);
+  ditr = armci_stride_itr_init(dst_ptr,stride_levels,dst_stride_arr,seg_count);
+  assert(armci_stride_itr_size(sitr)==armci_stride_itr_size(ditr));
+  
+  dirdscr->numofsends=0;
+  clst=ctr=0;
+  bzero(busy, sizeof(int)*WQE_LIST_COUNT);
+  while(armci_stride_itr_has_more(sitr)) {
+    assert(armci_stride_itr_has_more(ditr));
+    uint64_t saddr = (uint64_t)armci_stride_itr_seg_ptr(sitr);
+    uint64_t daddr = (uint64_t)armci_stride_itr_seg_ptr(ditr);
+    if(operation == PUT) {
+      sg_entry[clst][ctr].addr = saddr;
+      sdscr[clst][ctr].wr.rdma.remote_addr = daddr;
+    }
+    else if (operation == GET) {
+      sg_entry[clst][ctr].addr = daddr;
+      sdscr[clst][ctr].wr.rdma.remote_addr = saddr;
+    }
+    assert(sg_entry[clst][ctr].length == seg_count[0]);
+
+    ctr+=1;
+    armci_stride_itr_next(sitr);
+    armci_stride_itr_next(ditr);
+    if(ctr == WQE_LIST_LENGTH || !armci_stride_itr_has_more(sitr)) {
+      sdscr[clst][ctr-1].next=NULL;
+      sdscr[clst][ctr-1].send_flags=IBV_SEND_SIGNALED; /*only the last one*/
+      for(c=0; c<ctr-1; c++) {
+	assert(sdscr[clst][c].next == &sdscr[clst][c+1]);
+      }
+      rc = ibv_post_send(SRV_con[clus].qp, sdscr[clst], &bad_wr);
+      dassert1(1,rc==0,rc);
+      busy[clst] = 1;
+      dirdscr->numofsends += 1;
+      if(ctr<WQE_LIST_LENGTH) 
+	sdscr[clst][ctr-1].next = &sdscr[clst][ctr];
+      sdscr[clst][ctr-1].send_flags = 0;
+
+      ctr=0;
+      clst = (clst+1)%WQE_LIST_COUNT;
+      if(busy[clst]) {
+	armci_send_complete(&dirdscr->sdescr,"client_direct_rdma_strided",1);
+	dirdscr->numofsends -= 1;
+	busy[clst]=0;	
+      }
+    }
+  }
+  armci_stride_itr_destroy(&sitr);
+  armci_stride_itr_destroy(&ditr);
+
+  if(!nbtag) {
+    armci_send_complete(&dirdscr->sdescr,"armci_client_direct_get",dirdscr->numofsends);
+    dirdscr->numofsends = 0;
+    dirdscr->tag = 0;
+  }  
+  THREAD_UNLOCK(armci_user_threads.net_lock);
+}
+#endif
+
+#if defined(PEND_BUFS)
+int armci_server_msginfo_to_pbuf_index(request_header_t *msginfo) {
+  int index=-1, i;
+  vapibuf_pend_t *pbuf=NULL;
+  
+  assert(!msginfo->tag.imm_msg);
+  for(i = 0; i<PENDING_BUF_NUM; i++) {
+    if(serv_pendbuf_arr[i].buf == (char *)msginfo) {
+      pbuf = &serv_pendbuf_arr[i];
+      index = i;
+      break;
+    }
+  }
+  return index;
+}
+
+
+/** Routine for server to RDMA strided data to the client-side buffers
+ * (allocated through buffers.c). This is to be used instead of
+ * copying the data to immediate or pending buffers when possible.
+ */
+#if 0
+void armci_server_rdma_strided_to_contig(char *src_ptr, int src_stride_arr[],
+					 int seg_count[],
+					 int stride_levels,
+					 char *dst_ptr, int proc,
+					 request_header_t *msginfo) {
+  int rc, i, j, c, busy[WQE_LIST_COUNT], clst, ctr, wr_id;
+  sr_descr_t *dirdscr;
+  struct ibv_send_wr *bad_wr, sdscr1;
+  struct ibv_send_wr sdscr[WQE_LIST_COUNT][WQE_LIST_LENGTH];
+  struct ibv_sge     sg_entry[WQE_LIST_COUNT][WQE_LIST_LENGTH];
+  stride_itr_t sitr;
+  uint64_t daddr;
+  ARMCI_MEMHDL_T *loc_memhdl;
+  ARMCI_MEMHDL_T *rem_memhdl = &handle_array[proc];
+  
+  THREAD_LOCK(armci_user_threads.net_lock);
+
+  assert(msginfo->operation == GET);
+  assert(stride_levels >= 0);
+  assert(stride_levels<=MAX_STRIDE_LEVEL);
+
+  if(!get_armci_region_local_hndl(src_ptr,armci_clus_id(armci_me), &loc_memhdl)) {
+    armci_die("rdma_strided_to_contig: failed to get local handle\n",0);
+  }
+
+  if(!msginfo->tag.imm_msg) {
+    int index = armci_server_msginfo_to_pbuf_index(msginfo);
+    assert(index>=0);
+    wr_id = PBUF_BUFID_TO_PUT_WRID(index);
+  }
+  else {
+    wr_id = DSCRID_IMMBUF_RESP_END-1-proc;
+  }
+  bzero(&sdscr1, sizeof(sdscr1));
+  sdscr1.wr_id = wr_id;
+
+  if(DEBUG_CLN) {
+    printf("\n%d: in rdma strided to contig id=%d lkey=%ld rkey=%ld\n",
+	   armci_me,wr_id,loc_memhdl->lkey,rem_memhdl->rkey);
+    fflush(stdout);
+  }
+
+  /*initialize fixed values for descriptors*/
+  bzero(sdscr, WQE_LIST_COUNT*WQE_LIST_LENGTH*sizeof(struct ibv_send_wr));
+  bzero(sg_entry, WQE_LIST_COUNT*WQE_LIST_LENGTH*sizeof(struct ibv_sge));
+  for(j=0; j<WQE_LIST_COUNT; j++) {
+    for(i=0; i<WQE_LIST_LENGTH; i++) {
+      armci_init_vbuf_srdma(&sdscr[j][i],&sg_entry[j][i],NULL,NULL,seg_count[0],loc_memhdl,rem_memhdl);
+      sdscr[j][i].wr_id = wr_id;
+      sdscr[j][i].send_flags = 0; /*non-signalled*/
+/*       sdscr[j][i].send_flags = IBV_SEND_SIGNALED; /\*signalled*\/ */
+      if(i<WQE_LIST_LENGTH-1)
+	sdscr[j][i].next = &sdscr[j][i+1];
+    }
+  }
+
+  /*post requests in a loop*/
+  sitr = armci_stride_itr_init(src_ptr,stride_levels,src_stride_arr,seg_count);
+  
+  clst=ctr=0;
+  bzero(busy, sizeof(int)*WQE_LIST_COUNT);
+  daddr = (uint64_t)dst_ptr;
+  while(armci_stride_itr_has_more(sitr)) {
+    uint64_t saddr = (uint64_t)armci_stride_itr_seg_ptr(sitr);
+    sg_entry[clst][ctr].addr = saddr;
+    sdscr[clst][ctr].wr.rdma.remote_addr = daddr;
+    assert(sg_entry[clst][ctr].length == seg_count[0]);
+
+    ctr+=1;
+    daddr += seg_count[0];
+    armci_stride_itr_next(sitr);
+    if(ctr == WQE_LIST_LENGTH || !armci_stride_itr_has_more(sitr)) {
+      sdscr[clst][ctr-1].next=NULL;
+      if(!armci_stride_itr_has_more(sitr)) {
+	sdscr[clst][ctr-1].send_flags=IBV_SEND_SIGNALED; /*only the last one*/
+      }
+      for(c=0; c<ctr-1; c++) {
+	assert(sdscr[clst][c].next == &sdscr[clst][c+1]);
+      }
+      rc = ibv_post_send(CLN_con[proc].qp, sdscr[clst], &bad_wr);
+      dassert1(1,rc==0,rc);
+      busy[clst] = 1;
+#if 0
+      armci_send_complete(&sdscr1,"serv_rdma_to_contig",ctr);
+      busy[clst] = 0;
+#endif
+      if(ctr<WQE_LIST_LENGTH) 
+	sdscr[clst][ctr-1].next = &sdscr[clst][ctr];
+      sdscr[clst][ctr-1].send_flags = 0;
+
+      ctr=0;
+      clst = (clst+1)%WQE_LIST_COUNT;
+#if 0
+      if(busy[clst]) {
+	armci_send_complete(&sdscr1,"client_direct_rdma_strided",1);
+	busy[clst]=0;	
+      }
+#endif
+    }
+  }
+  armci_stride_itr_destroy(&sitr);
+  assert(proc == msginfo->from);
+  THREAD_UNLOCK(armci_user_threads.net_lock);
+}
+#else
+
+#define MAX_NUM_SGE 64
+
+/*same as above, but uses gather rdma writes*/
+void armci_server_rdma_strided_to_contig(char *src_ptr, int src_stride_arr[],
+					 int seg_count[],
+					 int stride_levels,
+					 char *dst_ptr, int proc,
+					 request_header_t *msginfo) {
+  int rc, ctr, wr_id, bytes;
+  struct ibv_send_wr *bad_wr, sdscr1, sdscr;
+  struct ibv_sge     sg_entry[MAX_NUM_SGE];
+  stride_itr_t sitr;
+  uint64_t daddr;
+  ARMCI_MEMHDL_T *loc_memhdl;
+  ARMCI_MEMHDL_T *rem_memhdl = &handle_array[proc];
+  const int max_num_sge = MIN(MAX_NUM_SGE, armci_max_num_sg_ent);
+  int numposts=0, numsegs=0;
+  
+  THREAD_LOCK(armci_user_threads.net_lock);
+
+  assert(msginfo->operation == GET);
+  assert(stride_levels >= 0);
+  assert(stride_levels<=MAX_STRIDE_LEVEL);
+
+  if(!get_armci_region_local_hndl(src_ptr,armci_clus_id(armci_me), &loc_memhdl)) {
+    armci_die("rdma_strided_to_contig: failed to get local handle\n",0);
+  }
+
+  if(!msginfo->tag.imm_msg) {
+    int index = armci_server_msginfo_to_pbuf_index(msginfo);
+    assert(index>=0);
+    wr_id = PBUF_BUFID_TO_PUT_WRID(index);
+  }
+  else {
+    wr_id = DSCRID_IMMBUF_RESP_END-1-proc;
+  }
+  bzero(&sdscr1, sizeof(sdscr1));
+  sdscr1.wr_id = wr_id;
+
+  if(DEBUG_CLN) {
+    printf("\n%d: in rdma strided to contig id=%d lkey=%ld rkey=%ld\n",
+	   armci_me,wr_id,loc_memhdl->lkey,rem_memhdl->rkey);
+    fflush(stdout);
+  }
+
+  /*initialize fixed values for descriptors*/
+  bzero(&sdscr, sizeof(sdscr));
+  bzero(sg_entry, max_num_sge*sizeof(struct ibv_sge));
+  armci_init_vbuf_srdma(&sdscr,&sg_entry[0],NULL,NULL,seg_count[0],loc_memhdl,rem_memhdl);
+  sdscr.send_flags = 0; /*non-signalled*/
+  sdscr.num_sge    = 0; /*set below in the loop*/
+  sdscr.wr_id      = wr_id;
+
+  for(ctr=0; ctr<max_num_sge; ctr++) {
+    sg_entry[ctr].length = seg_count[0];
+    sg_entry[ctr].lkey = loc_memhdl->lkey;
+  }
+  
+  /*post requests in a loop*/
+  sitr = armci_stride_itr_init(src_ptr,stride_levels,src_stride_arr,seg_count);
+  
+  numposts = numsegs = 0;
+  ctr=0;
+  daddr = (uint64_t)dst_ptr;
+  bytes=0;
+  while(armci_stride_itr_has_more(sitr)) {
+    sg_entry[ctr].addr = (uint64_t)armci_stride_itr_seg_ptr(sitr);
+    assert(sg_entry[ctr].length == seg_count[0]);
+
+    sdscr.num_sge += 1;
+    bytes += seg_count[0];
+    ctr+=1;
+    numsegs += 1;
+    armci_stride_itr_next(sitr);
+    if(ctr == max_num_sge || !armci_stride_itr_has_more(sitr)) {
+      sdscr.wr.rdma.remote_addr = daddr;
+      if(!armci_stride_itr_has_more(sitr)) {
+	sdscr.send_flags=IBV_SEND_SIGNALED; /*only the last one*/
+      }
+      else {
+	assert(sdscr.send_flags == 0);
+      }
+      assert(ctr == sdscr.num_sge);
+      rc = ibv_post_send(CLN_con[proc].qp, &sdscr, &bad_wr);
+      dassert1(1,rc==0,rc);
+
+      numposts += 1;
+      ctr=0;
+      sdscr.num_sge = 0;
+      daddr += bytes;
+      bytes = 0;
+    }
+  }
+/*   printf("%d(s): scatgat write numposts=%d numsegs=%d\n",armci_me,numposts,numsegs); */
+  armci_stride_itr_destroy(&sitr);
+  assert(proc == msginfo->from);
+  THREAD_UNLOCK(armci_user_threads.net_lock);
+}
+
+/*Directly read data from client buffers into remote memory. Data is
+  contiguous in client-side. */
+void armci_server_rdma_contig_to_strided(char *src_ptr, int proc,
+					 char *dst_ptr, 
+					 int dst_stride_arr[],
+					 int seg_count[],
+					 int stride_levels,
+					 request_header_t *msginfo) {
+  int rc, ctr, wr_id, bytes;
+  struct ibv_send_wr *bad_wr, sdscr1, sdscr;
+  struct ibv_sge     sg_entry[MAX_NUM_SGE];
+  stride_itr_t ditr;
+  uint64_t saddr;
+  ARMCI_MEMHDL_T *loc_memhdl;
+  ARMCI_MEMHDL_T *rem_memhdl = &handle_array[proc];
+  const int max_num_sge = MIN(MAX_NUM_SGE, armci_max_num_sg_ent);
+  int numposts=0, numsegs=0;
+  
+  THREAD_LOCK(armci_user_threads.net_lock);
+
+  assert(msginfo->operation == PUT);
+  assert(stride_levels >= 0);
+  assert(stride_levels<=MAX_STRIDE_LEVEL);
+
+  if(!get_armci_region_local_hndl(dst_ptr,armci_clus_id(armci_me), &loc_memhdl)) {
+    armci_die("rdma_strided_to_contig: failed to get local handle\n",0);
+  }
+
+  if(!msginfo->tag.imm_msg) {
+    int index = armci_server_msginfo_to_pbuf_index(msginfo);
+    assert(index>=0);
+    wr_id = PBUF_BUFID_TO_GET_WRID(index);
+  }
+  else {
+    wr_id = DSCRID_IMMBUF_RESP_END-1-proc;
+  }
+  bzero(&sdscr1, sizeof(sdscr1));
+  sdscr1.wr_id = wr_id;
+
+  if(DEBUG_CLN) {
+    printf("\n%d: in rdma strided to contig id=%d lkey=%ld rkey=%ld\n",
+	   armci_me,wr_id,loc_memhdl->lkey,rem_memhdl->rkey);
+    fflush(stdout);
+  }
+
+  /*initialize fixed values for descriptors*/
+  bzero(&sdscr, sizeof(sdscr));
+  bzero(sg_entry, max_num_sge*sizeof(struct ibv_sge));
+  armci_init_vbuf_rrdma(&sdscr,&sg_entry[0],NULL,NULL,seg_count[0],loc_memhdl,rem_memhdl);
+  sdscr.send_flags = 0; /*non-signalled*/
+  sdscr.num_sge    = 0; /*set below in the loop*/
+  sdscr.wr_id      = wr_id;
+
+  for(ctr=0; ctr<max_num_sge; ctr++) {
+    sg_entry[ctr].length = seg_count[0];
+    sg_entry[ctr].lkey = loc_memhdl->lkey;
+  }
+  
+  /*post requests in a loop*/
+  ditr = armci_stride_itr_init(dst_ptr,stride_levels,dst_stride_arr,seg_count);
+  
+  numposts = numsegs = 0;
+  ctr=0;
+  saddr = (uint64_t)src_ptr;
+  bytes=0;
+  while(armci_stride_itr_has_more(ditr)) {
+    sg_entry[ctr].addr = (uint64_t)armci_stride_itr_seg_ptr(ditr);
+    assert(sg_entry[ctr].length == seg_count[0]);
+
+    sdscr.num_sge += 1;
+    bytes += seg_count[0];
+    ctr+=1;
+    numsegs += 1;
+    armci_stride_itr_next(ditr);
+    if(ctr == max_num_sge || !armci_stride_itr_has_more(ditr)) {
+      sdscr.wr.rdma.remote_addr = saddr;
+      if(!armci_stride_itr_has_more(ditr)) {
+	sdscr.send_flags=IBV_SEND_SIGNALED; /*only the last one*/
+      }
+      else {
+	assert(sdscr.send_flags == 0);
+      }
+      assert(ctr == sdscr.num_sge);
+      rc = ibv_post_send(CLN_con[proc].qp, &sdscr, &bad_wr);
+      dassert1(1,rc==0,rc);
+
+      numposts += 1;
+      ctr=0;
+      sdscr.num_sge = 0;
+      saddr += bytes;
+      bytes = 0;
+    }
+  }
+/*   printf("%d(s): scatgat write numposts=%d numsegs=%d\n",armci_me,numposts,numsegs); */
+  armci_stride_itr_destroy(&ditr);
+  assert(proc == msginfo->from);
+  THREAD_UNLOCK(armci_user_threads.net_lock);
+}
+
+#endif
+#endif
 
 char *armci_ReadFromDirect(int proc, request_header_t *msginfo, int len)
 {
@@ -1974,8 +3159,8 @@ extern void armci_util_wait_int(volatile int *,int,int);
                    last,*flag,len);fflush(stdout);
          }
 
-         while(armci_util_int_getval(last) == ARMCI_VAPI_COMPLETE &&
-               armci_util_long_getval(flag)  != ARMCI_VAPI_COMPLETE){
+         while(armci_util_int_getval(last) == ARMCI_STAMP &&
+               armci_util_long_getval(flag)  != ARMCI_STAMP){
            loop++;
            loop %=100000;
            if(loop==0){
@@ -1989,7 +3174,7 @@ extern void armci_util_wait_int(volatile int *,int,int);
          *flag = 0L;
        }
        else if(msginfo->operation == REGISTER){
-         while(armci_util_long_getval(flag)  != ARMCI_VAPI_COMPLETE){
+         while(armci_util_long_getval(flag)  != ARMCI_STAMP){
            loop++;
            loop %=100000;
            if(loop==0){
@@ -2003,7 +3188,7 @@ extern void armci_util_wait_int(volatile int *,int,int);
        }
        else{
          int *flg = (int *)(dataptr+len);
-         while(armci_util_int_getval(flg) != ARMCI_VAPI_COMPLETE){
+         while(armci_util_int_getval(flg) != ARMCI_STAMP){
            loop++;
            loop %=100000;
            if(loop==0){
@@ -2019,21 +3204,137 @@ extern void armci_util_wait_int(volatile int *,int,int);
     return dataptr;
 }
 
+
+#ifdef GET_STRIDED_COPY_PIPELINED
+/**Same as armci_ReadFromDirect, except reads partial segments
+ *  (identify by stamping done in armci_send_req_msg() and
+ *  returns. Note that the return value is the starting pointer of the
+ *  buffer containig the data. It is the same for all the segments
+ *  read for a message. 
+ * @param proc IN Read data corresponding to an earlier req to this proc
+ * @param msginfo IN The request for which we are reading now
+ * @param len IN #bytes in the total response
+ * @param bytes_done OUT @bytes of the total response read so far (monotonic)
+ * @return Starting pointer to the buffer containing the data
+ */
+char *armci_ReadFromDirectSegment(int proc, request_header_t *msginfo, int len, int *bytes_done) {
+  int cluster = armci_clus_id(proc);
+  vapibuf_ext_t* evbuf=BUF_TO_EVBUF(msginfo);
+  char *dataptr = GET_DATA_PTR(evbuf->buf);
+  extern void armci_util_wait_int(volatile int *,int,int);
+
+  if(DEBUG_CLN){ printf("%d(c):read direct %d qp=%p\n",armci_me,
+			len,&(SRV_con+cluster)->qp); fflush(stdout);
+  }
+
+  if(mark_buf_send_complete[evbuf->snd_dscr.wr_id]==0)
+    armci_send_complete(&(evbuf->snd_dscr),"armci_ReadFromDirect",1); 
+
+  if(!msginfo->bypass){
+    long *flag;
+    int *last, *mid1, *mid2, third;
+    int loop = 0;
+    flag = &(msginfo->tag.ack);
+    if(msginfo->operation==GET){
+      last = (int *)(dataptr+len-sizeof(int));
+      if(msginfo->dscrlen >= (len-sizeof(int))){
+	last = (int *)(dataptr+len+msginfo->dscrlen-sizeof(int));
+	dataptr+=msginfo->dscrlen;
+      }
+      third = (last-(int*)(msginfo->dscrlen+(char*)(msginfo+1)))/3;
+      mid2 = (last - third);
+      mid1 = mid2 - third;
+
+      if(DEBUG_CLN){
+	printf("\n%d:flagval=%d at ptr=%p ack=%ld dist=%d\n",armci_me,*last,
+	       last,*flag,len);fflush(stdout);
+      }
+
+      while(armci_util_int_getval(last) == ARMCI_STAMP &&
+	    armci_util_long_getval(flag)  != ARMCI_STAMP){
+	loop++;
+	loop %=100000;
+	if(loop==0){
+	  if(DEBUG_CLN){
+	    printf("%d: client last(%p)=%d flag(%p)=%ld off=%d\n",
+		   armci_me,last,*last,flag,*flag,msginfo->datalen);
+	    fflush(stdout);
+	  }
+	}
+
+	{
+	  int ssize = GET_STRIDED_COPY_PIPELINED_SIZE/sizeof(int);
+	  int *sfirst = (int*)(msginfo->dscrlen+(char*)(msginfo+1))+ssize; /*stamping
+									     can start here*/
+	  int *slast = last;
+	  int off = (((int *)(dataptr+*bytes_done)-sfirst+ssize)/ssize)*ssize;
+	  int *ptr = sfirst+off;
+	  dassert(1,off>=0);
+	  dassert(1,sfirst>dataptr);
+	  dassert(1,ptr>dataptr);
+	  if(ptr<=slast && armci_util_int_getval(ptr)!=ARMCI_STAMP) {
+	    *bytes_done = ((char*)ptr)-dataptr;
+	    return dataptr;
+	  }
+	}
+      }
+      *flag = 0L;
+      *bytes_done = len;
+      return dataptr;
+    }
+    else if(msginfo->operation == REGISTER){
+      while(armci_util_long_getval(flag)  != ARMCI_STAMP){
+	loop++;
+	loop %=100000;
+	if(loop==0){
+	  if(DEBUG_CLN){
+	    printf("%d: client flag(%p)=%ld off=%d\n",
+		   armci_me,flag,*flag,msginfo->datalen);
+	    fflush(stdout);
+	  }
+	}
+      }
+    }
+    else{
+      int *flg = (int *)(dataptr+len);
+      while(armci_util_int_getval(flg) != ARMCI_STAMP){
+	loop++;
+	loop %=100000;
+	if(loop==0){
+	  if(DEBUG_CLN){
+	    printf("%d: client waiting (%p)=%d off=%d\n",
+		   armci_me,flg,*flg,len);
+	    fflush(stdout);
+	  }
+	}
+      }
+    }
+  }
+  *bytes_done = len;
+  return dataptr;
+}
+#endif
+
+/**
+  * @param proc IN id of remote client to put to
+  * @param buf IN local buf (has to be registered)
+ */
 void armci_send_data_to_client(int proc, void *buf, int bytes,void *dbuf)
 {
-    int rc = 0;
-    struct ibv_send_wr *sdscr;
-
-    sdscr=&serv_buf->snd_dscr;
+  int i, rc = 0;
+    struct ibv_send_wr *bad_wr;
+    struct ibv_send_wr sdscr;
+    struct ibv_sge ssg_entry;
 
     if(DEBUG_SERVER){
        printf("\n%d(s):sending data to client %d at %p flag = %p bytes=%d\n",
                armci_me,
-               proc,dbuf,(char *)dbuf+bytes-sizeof(int),bytes);fflush(stdout);
+	      proc,dbuf,(char *)dbuf+bytes-sizeof(int),bytes);fflush(stdout);
     }
 
-    memset(sdscr,0,sizeof(struct ibv_send_wr));
-    armci_init_vbuf_srdma(sdscr,&serv_buf->ssg_entry,buf,dbuf,bytes,
+    memset(&sdscr,0,sizeof(struct ibv_send_wr));
+    memset(&ssg_entry,0,sizeof(ssg_entry));
+    armci_init_vbuf_srdma(&sdscr,&ssg_entry,buf,dbuf,bytes,
                           &serv_memhandle,(handle_array+proc));
 
     if(DEBUG_SERVER){
@@ -2043,18 +3344,49 @@ void armci_send_data_to_client(int proc, void *buf, int bytes,void *dbuf)
        fflush(stdout);
     }
 
-    serv_buf->snd_dscr.wr_id = proc+armci_nproc;
-    struct ibv_send_wr *bad_wr;
-    rc = ibv_post_send((CLN_con+proc)->qp, &serv_buf->snd_dscr, &bad_wr);
-    armci_check_status(DEBUG_SERVER, rc,"server post send to client");
+#if defined(PEND_BUFS)
+    for(i=proc*(IMM_BUF_NUM+1); i<(proc+1)*(IMM_BUF_NUM+1); i++) {
+      if((char*)buf>= serv_buf_arr[i]->buf && 
+	 (char*)buf<IMM_BUF_LEN+(char*)serv_buf_arr[i]->buf)
+	break;
+    }
 
-    armci_send_complete(&serv_buf->snd_dscr,"armci_send_data_to_client",1);
+#if SRI_CORRECT
+     if(i<(proc+1)*(IMM_BUF_NUM+1)) {
+      /*Message from an immediate buffer*/
+     assert(serv_buf_arr[i]->send_pending==0);
+      serv_buf_arr[i]->send_pending=1;
+      sdscr.wr_id = DSCRID_IMMBUF_RESP+i;
+    }
+    else 
+#endif
+      {
+	sdscr.wr_id = DSCRID_IMMBUF_RESP+armci_nproc*(IMM_BUF_NUM+1)+1;
+      }
+/* #endif */
+
+/* #if defined(PEND_BUFS) */
+/*     { */
+/*       static uint64_t ctr=DSCRID_IMMBUF_RESP; */
+/*       sdscr.wr_id = ctr; */
+/*       ctr = (ctr+1-DSCRID_IMMBUF_RESP)%(DSCRID_IMMBUF_RESP_END-DSCRID_IMMBUF_RESP)+DSCRID_IMMBUF_RESP; */
+/*     } */
+#else
+    sdscr.wr_id = proc+armci_nproc;
+#endif
+    rc = ibv_post_send((CLN_con+proc)->qp, &sdscr, &bad_wr);
+    dassert1(1,rc==0,rc);
+
+#if !defined(PEND_BUFS)
+    armci_send_complete(&sdscr,"armci_send_data_to_client",1);
+#endif
 }
 
 void armci_WriteToDirect(int proc, request_header_t* msginfo, void *buf)
 {
 int bytes;
 int *last;
+    ARMCI_PR_DBG("enter",0);
     bytes = (int)msginfo->datalen;
     if(DEBUG_SERVER){
       printf("%d(s):write to direct sent %d to %d at %p\n",armci_me,
@@ -2062,49 +3394,97 @@ int *last;
       fflush(stdout);
     }
     if(msginfo->operation!=GET){
-       *(int *)((char *)buf+bytes)=ARMCI_VAPI_COMPLETE;
+       *(int *)((char *)buf+bytes)=ARMCI_STAMP;
        bytes+=sizeof(int);
     }
-    armci_send_data_to_client(proc,buf,bytes,msginfo->tag.data_ptr);
+#if defined(PEND_BUFS)
+    if(!msginfo->tag.imm_msg) {
+      int i;
+/*       fprintf(stderr, "%d:: Not immediate mesg operated on\n", armci_me); */
+      assert(msginfo->operation == GET); /*nothing else uses this for now*/
+      /**This is a pending buf*/
+      vapibuf_pend_t *pbuf=NULL;
+      int index;
+      for(i = 0; i<PENDING_BUF_NUM; i++) {
+	if(serv_pendbuf_arr[i].buf == (char *)msginfo) {
+	  pbuf = &serv_pendbuf_arr[i];
+	  index = i;
+	  break;
+	}
+      }
+      assert(pbuf != NULL);
+      assert(sizeof(request_header_t)+msginfo->dscrlen+bytes<PENDING_BUF_LEN);
+      _armci_send_data_to_client_pbuf(proc, &pbuf->sdscr,
+				      PBUF_BUFID_TO_PUT_WRID(index),
+				      &pbuf->sg_entry,
+				      msginfo->tag.data_ptr, buf,
+				      bytes);
+    }
+    else 
+#endif
+    {
+      armci_send_data_to_client(proc,buf,bytes,msginfo->tag.data_ptr);
+    }
     /*if(msginfo->dscrlen >= (bytes-sizeof(int)))
        last = (int*)(((char*)(buf)) + (msginfo->dscrlen+bytes - sizeof(int)));
     else*/
        last = (int*)(((char*)(buf)) + (bytes - sizeof(int)));
 
-    if(msginfo->operation==GET && *last == ARMCI_VAPI_COMPLETE){
+    if(msginfo->operation==GET && *last == ARMCI_STAMP){
        SERVER_SEND_ACK(msginfo->from);
     }
     armci_ack_proc=NONE;
+    ARMCI_PR_DBG("exit",0);
 }
 
 
+#if defined(PEND_BUFS)
 void armci_rcv_req(void *mesg,void *phdr,void *pdescr,void *pdata,int *buflen)
 {
-vapibuf_t *vbuf = (vapibuf_t*)mesg;
-request_header_t *msginfo = (request_header_t *)vbuf->buf;
-*(void **)phdr = msginfo;
+  request_header_t *msginfo = *(request_header_t**)mesg;
+  *(void **)phdr = msginfo;
 
-    if(DEBUG_SERVER){
-        printf("%d(server): got %d req (dscrlen=%d datalen=%d) from %d\n",
-               armci_me, msginfo->operation, msginfo->dscrlen,
-               msginfo->datalen, msginfo->from); fflush(stdout);
-    }
-
-    /* we leave room for msginfo on the client side */
-    *buflen = MSG_BUFLEN - sizeof(request_header_t);
-
-    if(msginfo->bytes) {
-        *(void **)pdescr = msginfo+1;
-        if(msginfo->operation == GET)
-            *(void **)pdata = MessageRcvBuffer;
-        else
-            *(void **)pdata = msginfo->dscrlen + (char*)(msginfo+1);
-    }else {
-          *(void**)pdescr = NULL;
-          *(void**)pdata = MessageRcvBuffer;
-    }
+  if(msginfo->tag.imm_msg) 
+    *buflen = IMM_BUF_LEN - sizeof(request_header_t) - msginfo->dscrlen;
+  else 
+    *buflen = PENDING_BUF_LEN - sizeof(request_header_t) - msginfo->dscrlen;
+  
+  *(void **)pdata = msginfo->dscrlen + (char *)(msginfo+1);
+  if(msginfo->bytes)
+    *(void **)pdescr = msginfo+1;
+  else
+    *(void **)pdescr = NULL;
 }
+#else
+void armci_rcv_req(void *mesg,void *phdr,void *pdescr,void *pdata,int *buflen)
+{
+  vapibuf_t *vbuf = (vapibuf_t*)mesg;
+  request_header_t *msginfo = (request_header_t *)vbuf->buf;
+  *(void **)phdr = msginfo;
 
+  ARMCI_PR_DBG("enter",msginfo->operation);
+  if(DEBUG_SERVER){
+    printf("%d(server): got %d req (dscrlen=%d datalen=%d) from %d\n",
+	   armci_me, msginfo->operation, msginfo->dscrlen,
+	   msginfo->datalen, msginfo->from); fflush(stdout);
+  }
+
+  /* we leave room for msginfo on the client side */
+  *buflen = MSG_BUFLEN - sizeof(request_header_t);
+  
+  if(msginfo->bytes) {
+    *(void **)pdescr = msginfo+1;
+    if(msginfo->operation == GET)
+      *(void **)pdata = MessageRcvBuffer;
+    else
+      *(void **)pdata = msginfo->dscrlen + (char*)(msginfo+1);
+  }else {
+    *(void**)pdescr = NULL;
+    *(void**)pdata = MessageRcvBuffer;
+  }
+  ARMCI_PR_DBG("exit",msginfo->operation);
+}
+#endif
 
 /**********************SCATTER GATHER STUFF***********************************/
 static void posts_scatter_desc(sr_descr_t *pend_dscr,int proc,int type)
@@ -2127,10 +3507,9 @@ struct ibv_recv_wr *bad_wr;
         rc = ibv_post_recv((CLN_con + proc)->qp, scat_dscr, &bad_wr);
     else
         rc = ibv_post_recv((SRV_con+cluster)->qp, scat_dscr, &bad_wr);
+    dassert1(1,rc==0,rc);
 
-    armci_check_status(DEBUG_SERVER,rc,"posts 1 of several rcv");
-
-    if((type==SERV && DEBUG_SERVER) || (type==CLN && DEBUG_CLN) ){
+    if((type==SERV && DEBUG_SERVER) || (type==CLN && DEBUG_CLN) ) {
        printf("\n%d: list_length is %d, id is %ld\n",
 	      armci_me,scat_dscr->num_sge,scat_dscr->wr_id);
        fflush(stdout);
@@ -2260,6 +3639,7 @@ void armci_post_scatter(void *dest_ptr, int dest_stride_arr[], int count[],
 
     THREAD_UNLOCK(armci_user_threads.net_lock);
 
+/*     printf("%d(s): num scatters posted=%d\n", armci_me,pend_dscr->numofrecvs); */
     if(!nbtag){
        /*if blocking call wait_for_blocking_scatter to complete*/
     }
@@ -2295,15 +3675,13 @@ static void posts_gather_desc(sr_descr_t *pend_dscr,int proc,int type)
     }
 
     rc = 0;
-
     if(type == CLN){
        rc = ibv_post_send((SRV_con+cluster)->qp, gat_dscr, &bad_wr);
-       armci_check_status(DEBUG_CLN,rc,"client posts a gather sends");
     }
     else{
         rc = ibv_post_send((CLN_con + proc)->qp, gat_dscr, &bad_wr);
-        armci_check_status(DEBUG_SERVER,rc,"client posts a gather sends");
     }
+    dassert1(1,rc==0,rc);
 
     THREAD_UNLOCK(armci_user_threads.net_lock);
 
@@ -2353,7 +3731,7 @@ void armci_post_gather(void *src_ptr, int src_stride_arr[], int count[],
     gat_dscr->send_flags = IBV_SEND_SIGNALED;
     gat_dscr->sg_list = gat_sglist;
     gat_dscr->num_sge = 0;
-    gat_dscr->send_flags = 0;
+/*     gat_dscr->send_flags = 0; */
 
     index[2] = 0; unit[2] = 1;
     if(stride_levels > 1){
@@ -2426,6 +3804,7 @@ void armci_post_gather(void *src_ptr, int src_stride_arr[], int count[],
          else num_seg = max_seg;
        }
     }
+/*     printf("%d: num gathers posted =%d\n",armci_me,pend_dscr->numofsends); */
     if(!nbtag){
        /*complete here*/
        armci_send_complete(&pend_dscr->sdescr,"armci_post_gather",pend_dscr->numofsends);
@@ -2441,32 +3820,34 @@ void armci_server_direct_send(int dst, char *src_buf, char *dst_buf, int len,
                               uint32_t *lkey, uint32_t *rkey)
 {
     int rc = 0;
-    struct ibv_send_wr *sdscr;
     struct ibv_wc *pdscr=NULL;
     struct ibv_wc pdscr1;
+    struct ibv_send_wr sdscr;
+    struct ibv_sge ssg_entry;
 
     pdscr = &pdscr1;
-    sdscr=&serv_buf->snd_dscr;
 
     if(DEBUG_SERVER){
        printf("\n%d(s):sending dir data to client %d at %p bytes=%d last=%p\n",
                 armci_me,dst,dst_buf,len,(dst_buf+len-4));fflush(stdout);
     }
 
-    memset(sdscr,0,sizeof(struct ibv_send_wr));
-    armci_init_vbuf_srdma(sdscr,&serv_buf->ssg_entry,src_buf,dst_buf,len,NULL,NULL);
-    sdscr->wr.rdma.rkey = *rkey;
-    serv_buf->ssg_entry.lkey = *lkey;
+    memset(&sdscr,0,sizeof(struct ibv_send_wr));
+    armci_init_vbuf_srdma(&sdscr,&ssg_entry,src_buf,dst_buf,len,NULL,NULL);
+    sdscr.wr.rdma.rkey = *rkey;
+    ssg_entry.lkey = *lkey;
 
-    serv_buf->snd_dscr.wr_id = dst+armci_nproc;
+    sdscr.wr_id = dst+armci_nproc;
     struct ibv_send_wr *bad_wr;
-    rc = ibv_post_send((CLN_con+dst)->qp, &serv_buf->snd_dscr, &bad_wr);
-    armci_check_status(DEBUG_SERVER, rc,"server post sent dir data to client");
+    rc = ibv_post_send((CLN_con+dst)->qp, &sdscr, &bad_wr);
+    dassert1(1,rc==0,rc);
 
-    while (rc == 0)
+    while (rc == 0) {
        rc = ibv_poll_cq(CLN_nic->scq, 1, pdscr);
-    armci_check_status(DEBUG_SERVER, rc,"server poll sent dir data to client");
-
+    }
+    dassertp(1,rc>=0,("%d: rc=%d id=%d status=%d\n",
+		      armci_me,rc,(int)pdscr->wr_id,pdscr->status));
+    dassert1(1,pdscr->status==IBV_WC_SUCCESS,pdscr->status);;
 }
 
 
@@ -2480,7 +3861,7 @@ void armci_send_contig_bypass(int proc, request_header_t *msginfo,
     int dscrlen = msginfo->dscrlen;
 
     last = (int*)(((char*)(src_ptr)) + (bytes - sizeof(int)));
-    if(!msginfo->pinned)armci_die("armci_send_contig_bypass: not pinned",proc);
+    dassertp(1,msginfo->pinned,("%d: not pinned proc=%d",armci_me,proc));
 
     rkey = (uint32_t *)((char *)(msginfo+1)+dscrlen-(sizeof(uint32_t)+sizeof(uint32_t)));
 
@@ -2491,7 +3872,7 @@ void armci_send_contig_bypass(int proc, request_header_t *msginfo,
     }
     armci_server_direct_send(msginfo->from,src_ptr,rem_ptr,bytes,lkey,rkey);
 
-    if(*last == ARMCI_VAPI_COMPLETE){
+    if(*last == ARMCI_STAMP){
        SERVER_SEND_ACK(msginfo->from);
     }
 }
@@ -2510,8 +3891,8 @@ int loop=0;
     if(!stride_levels){
       last = (int*)(((char*)(ptr)) + (count[0] -sizeof(int)));
       ack  = (long *)&msginfo->tag;
-      while(armci_util_int_getval(last) == ARMCI_VAPI_COMPLETE &&
-            armci_util_long_getval(ack)  != ARMCI_VAPI_COMPLETE){
+      while(armci_util_int_getval(last) == ARMCI_STAMP &&
+            armci_util_long_getval(ack)  != ARMCI_STAMP){
         loop++;
         loop %=1000000;
         if(loop==0){
@@ -2627,9 +4008,12 @@ void client_rmw_complete(struct ibv_send_wr *snd_dscr, char *from)
   printf("%d(c) : inside client_rmw_complete\n",armci_me);
   do {
       while (rc == 0) {
-            rc =  ibv_poll_cq(CLN_nic->scq, 1, pdscr);
+	rc =  ibv_poll_cq(CLN_nic->scq, 1, pdscr);
       }
-      armci_check_status(DEBUG_CLN,rc,"rmw complete");
+      dassertp(DBG_POLL|DBG_ALL,rc>=0,
+	       ("%d: rc=%d id=%d status=%d\n",
+		armci_me,rc,pdscr->wr_id,pdscr->status));
+      dassert1(1,pdscr->status==IBV_WC_SUCCESS,pdscr->status);
       rc = 0;
     } while(pdscr->wr_id != snd_dscr->wr_id);
 }
@@ -2664,7 +4048,7 @@ void armci_direct_rmw(int op, int*ploc, int *prem, int extra, int proc,
 
   struct ibv_send_wr * bad_wr;
   rc = ibv_post_send(con->qp, sd, &bad_wr);
-  armci_check_status(DEBUG_CLN,rc,"client direct atomic");
+  dassert1(1,rc==0,rc);
 
   if (1) {
      printf("%d(c) : finished posting desc\n",armci_me);

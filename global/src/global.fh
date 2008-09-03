@@ -53,6 +53,7 @@
       integer ga_cluster_procid, ga_cluster_proc_nodeid
       integer nga_locate_num_blocks
       integer ga_total_blocks
+      logical ga_uses_proc_grid
       logical nga_create, nga_locate, nga_create_irreg
       logical nga_locate_region
       logical nga_create_ghosts_irreg,nga_create_ghosts
@@ -103,9 +104,14 @@
       external ga_cluster_procid, ga_cluster_proc_nodeid
       external ga_is_mirrored
       external ga_total_blocks
+      external ga_uses_proc_grid
       external ga_get_debug
       integer ga_get_pgroup
       external ga_get_pgroup
       logical ga_pgroup_destroy
       external ga_pgroup_destroy
       external ga_wtime
+
+      integer ga_pgroup_absolute_id
+      external ga_pgroup_absolute_id 
+

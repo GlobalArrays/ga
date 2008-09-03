@@ -1,24 +1,11 @@
 /* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/pbeginf.c,v 1.4 2006-01-19 02:18:59 manoj Exp $ */
 
 #include <stdio.h>
-#include "farg.h"
+#include "../farg.h"
 #include "sndrcv.h"
 #define LEN 255
 
 extern void PBEGIN_();
-
-#if defined(HPUX) || defined(SUNF77_2) ||defined(PARAGON) ||defined(FUJITSU) || defined(WIN32) || defined (XLFMAC) || defined(ABSOFTMAC) ||defined (GFORTRAN)
-#define HAS_GETARG 1
-#endif
-
-#ifdef WIN32
-#define iargc_ IARGC
-#define getarg_ GETARG
-#include "winutil.h"
-#else
-#define FATR 
-#endif
-
 
 #if !defined(HAS_GETARG)
 void FATR PBEGINF_()
@@ -39,22 +26,13 @@ void FATR PBEGINF_()
   extern char *strdup();
 
 #if defined(WIN32)
-    extern int FATR iargc_();
-    extern void FATR getarg_(short*, char*, int, short*);
     int argc = iargc_() + 1;
-#elif !defined(HPUX)
-    extern int iargc_();
-    extern void getarg_();
-    int argc = iargc_() + 1;
-#else
-#   ifndef EXTNAME
-#     define hpargv_ hpargv
-#     define hpargc_ hpargc
-#   endif
-    extern int hpargv_();
-    extern int hpargc_();
+#elif defined(HPUX)
     int argc = hpargc_();
+#else
+    int argc = iargc_() + 1;
 #endif
+    
     int i, len, maxlen=LEN;
     char *argv[LEN], arg[LEN];
 

@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.98 2007-10-30 02:04:57 manoj Exp $ */
+/* $Id: capi.c,v 1.97.2.9 2007/12/18 18:44:07 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -18,6 +18,11 @@ Integer _ga_xxlo[MAXDIM], _ga_xxhi[MAXDIM];
 Integer _ga_vvlo[MAXDIM], _ga_vvhi[MAXDIM];
 Integer _ga_xxlllo[MAXDIM], _ga_xxllhi[MAXDIM];
 Integer _ga_xxuulo[MAXDIM], _ga_xxuuhi[MAXDIM];
+
+int *_ga_argc=NULL;
+char ***_ga_argv=NULL;
+int _ga_initialize_args=0;
+
 
 short int _ga_irreg_flag = 0;
 
@@ -68,6 +73,40 @@ void GA_Initialize_ltd(size_t limit)
 {
 Integer lim = (Integer)limit;
      ga_initialize_ltd_(&lim);
+}
+
+void GA_Initialize_args(int *argc, char ***argv)
+{
+    _ga_argc = argc;
+    _ga_argv = argv;
+
+    _ga_initialize_args = 1;
+
+    ga_initialize_();
+}
+
+void GA_Initialize()
+{
+    char *network;
+    int cmd_args_required=0;
+
+#ifdef MPI_SPAWN
+    GA_Error("GA is build with ARMCI_NETWORK=MPI-SPAWN. For this network "
+             "setting, GA must be initialized with GA_Initialize_args() "
+             "instead of GA_Initialize(). Please replace GA_Initialize() "
+             " with GA_Initialize_args(&argc, &argv) as in the API docs", 0L);
+#endif
+    
+    ga_initialize_();
+}
+
+void GA_Terminate() 
+{
+    ga_terminate_();
+    
+    _ga_argc = NULL;
+    _ga_argv = NULL;
+    _ga_initialize_args = 0;
 }
 
 int NGA_Create(int type, int ndim,int dims[], char *name, int *chunk)
@@ -751,6 +790,12 @@ void GA_Get_block_info(int g_a, int num_blocks[], int block_dims[])
      ga_get_block_info_(&aa, _ga_work, _ga_lo);
      COPYF2C(_ga_work,num_blocks, ndim);
      COPYF2C(_ga_lo,block_dims, ndim);
+}
+
+int GA_Uses_proc_grid(int g_a)
+{
+     Integer aa = (Integer)g_a;
+     return (int)ga_uses_proc_grid_(&aa);
 }
 
 void GA_Set_block_cyclic_proc_grid(int g_a, int block[], int proc_grid[])
@@ -1468,6 +1513,134 @@ void NGA_Select_elem64(int g_a, char* op, void* val, int64_t* index)
      COPYINDEX_F2C_64(_ga_lo,index,ndim);
 }
 
+void GA_Scan_add(int g_a, int g_b, int g_sbit, int lo,
+                 int hi, int excl)
+{
+     Integer a = (Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+     Integer b = (Integer)g_b;
+     Integer s = (Integer)g_sbit;
+     COPYINDEX_F2C(_ga_lo, &lo, ndim);
+     COPYINDEX_F2C(_ga_hi, &hi, ndim);
+     Integer x = (Integer)excl;
+     ga_scan_add_(&a, &b, &s, _ga_lo, _ga_hi, &x);
+
+}
+
+void GA_Scan_add64(int g_a, int g_b, int g_sbit, int64_t lo,
+                 int64_t hi, int excl)
+{
+     Integer a = (Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+     Integer b = (Integer)g_b;
+     Integer s = (Integer)g_sbit;
+     COPYINDEX_F2C_64(_ga_lo, &lo, ndim);
+     COPYINDEX_F2C_64(_ga_hi, &hi, ndim);
+     Integer x = (Integer)excl;
+     ga_scan_add_(&a, &b, &s, _ga_lo, _ga_hi, &x);
+
+}
+
+void GA_Scan_copy(int g_a, int g_b, int g_sbit, int lo,
+                  int hi)
+{
+     Integer a = (Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+     Integer b = (Integer)g_b;
+     Integer s = (Integer)g_sbit;
+     COPYINDEX_F2C(_ga_lo, &lo, ndim);
+     COPYINDEX_F2C(_ga_hi, &hi, ndim);
+     ga_scan_copy_(&a, &b, &s, _ga_lo, _ga_hi);
+
+}
+
+void GA_Scan_copy64(int g_a, int g_b, int g_sbit, int64_t lo,
+                    int64_t hi)
+{
+     Integer a = (Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+     Integer b = (Integer)g_b;
+     Integer s = (Integer)g_sbit;
+     COPYINDEX_F2C_64(_ga_lo, &lo, ndim);
+     COPYINDEX_F2C_64(_ga_hi, &hi, ndim);
+     ga_scan_copy_(&a, &b, &s, _ga_lo, _ga_hi);
+
+}
+
+void GA_Patch_enum(int g_a, int lo, int hi, int istart, int inc)
+{
+     Integer a = (Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+     COPYINDEX_F2C(_ga_lo, &lo, ndim);
+     COPYINDEX_F2C(_ga_hi, &hi, ndim);
+     Integer aistart = (Integer)istart;
+     Integer ainc = (Integer)inc;
+     ga_patch_enum_(&a, _ga_lo, _ga_hi, &aistart, &ainc);
+}
+
+void GA_Patch_enum64(int g_a, int64_t lo, int64_t hi, int64_t istart, int64_t inc)
+{
+     Integer a = (Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+     COPYINDEX_F2C_64(_ga_lo, &lo, ndim);
+     COPYINDEX_F2C_64(_ga_hi, &hi, ndim);
+     Integer aistart = (Integer)istart;
+     Integer ainc = (Integer)inc;
+     ga_patch_enum_(&a, _ga_lo, _ga_hi, &aistart, &ainc);
+}
+
+void GA_Pack(int g_src, int g_dest, int g_mask, int lo, int hi, int *icount)
+{
+     Integer a = (Integer)g_src;
+     Integer ndim = ga_ndim_(&a);
+     Integer b = (Integer)g_dest;
+     Integer s = (Integer)g_mask;
+     COPYINDEX_F2C(_ga_lo, &lo, ndim);
+     COPYINDEX_F2C(_ga_hi, &hi, ndim);
+     Integer icnt;
+     ga_pack_(&a, &b, &s, _ga_lo, _ga_hi, &icnt); 
+     *icount = icnt;
+}
+
+void GA_Pack64(int g_src, int g_dest, int g_mask, int64_t lo, int64_t hi, int64_t *icount)
+{
+     Integer a = (Integer)g_src;
+     Integer ndim = ga_ndim_(&a);
+     Integer b = (Integer)g_dest;
+     Integer s = (Integer)g_mask;
+     COPYINDEX_F2C_64(_ga_lo, &lo, ndim);
+     COPYINDEX_F2C_64(_ga_hi, &hi, ndim);
+     Integer icnt;
+     ga_pack_(&a, &b, &s, _ga_lo, _ga_hi, &icnt); 
+     *icount = icnt;
+}
+
+void GA_Unpack(int g_src, int g_dest, int g_mask, int lo, int hi, int *icount)
+{
+     Integer a = (Integer)g_src;
+     Integer ndim = ga_ndim_(&a);
+     Integer b = (Integer)g_dest;
+     Integer s = (Integer)g_mask;
+     COPYINDEX_F2C(_ga_lo, &lo, ndim);
+     COPYINDEX_F2C(_ga_hi, &hi, ndim);
+     Integer icnt;
+     ga_pack_(&a, &b, &s, _ga_lo, _ga_hi, &icnt); 
+     *icount = icnt;
+}
+
+void GA_Unpack64(int g_src, int g_dest, int g_mask, int64_t lo, int64_t hi, int64_t *icount)
+{
+     Integer a = (Integer)g_src;
+     Integer ndim = ga_ndim_(&a);
+     Integer b = (Integer)g_dest;
+     Integer s = (Integer)g_mask;
+     COPYINDEX_F2C_64(_ga_lo, &lo, ndim);
+     COPYINDEX_F2C_64(_ga_hi, &hi, ndim);
+     Integer icnt;
+     ga_pack_(&a, &b, &s, _ga_lo, _ga_hi, &icnt); 
+     *icount = icnt;
+}
+
 int GA_Compare_distr(int g_a, int g_b)
 {
     logical st;
@@ -1509,6 +1682,15 @@ void NGA_Access_block(int g_a, int idx, void *ptr, int ld[])
      COPYF2C(_ga_work,ld, ndim-1);
 }
 
+void NGA_Access_block64(int g_a, int64_t idx, void *ptr, int64_t ld[])
+{
+     Integer a=(Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+     Integer iblock = (Integer)idx;
+     nga_access_block_ptr(&a,&iblock,ptr,_ga_work);
+     COPYF2C_64(_ga_work,ld, ndim-1);
+}
+
 void NGA_Access_block_grid(int g_a, int index[], void *ptr, int ld[])
 {
      Integer a=(Integer)g_a;
@@ -1518,6 +1700,15 @@ void NGA_Access_block_grid(int g_a, int index[], void *ptr, int ld[])
      COPYF2C(_ga_work,ld, ndim-1);
 }
 
+void NGA_Access_block_grid64(int g_a, int64_t index[], void *ptr, int64_t ld[])
+{
+     Integer a=(Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+     COPYF2C_64(_ga_lo,index, ndim);
+     nga_access_block_grid_ptr(&a,_ga_lo,ptr,_ga_work);
+     COPYF2C_64(_ga_work,ld, ndim-1);
+}
+
 void NGA_Access_block_segment(int g_a, int proc, void *ptr, int *len)
 {
      Integer a=(Integer)g_a;
@@ -1525,6 +1716,15 @@ void NGA_Access_block_segment(int g_a, int proc, void *ptr, int *len)
      Integer ilen = (Integer)len;
      nga_access_block_segment_ptr(&a,&iblock,ptr,&ilen);
      *len = (int)ilen;
+}
+
+void NGA_Access_block_segment64(int g_a, int proc, void *ptr, int64_t *len)
+{
+     Integer a=(Integer)g_a;
+     Integer iblock = (Integer)proc;
+     Integer ilen = (Integer)len;
+     nga_access_block_segment_ptr(&a,&iblock,ptr,&ilen);
+     *len = (int64_t)ilen;
 }
 
 void NGA_Access_ghosts(int g_a, int dims[], void *ptr, int ld[])
@@ -1757,11 +1957,11 @@ void NGA_Proc_topology(int g_a, int proc, int coord[])
      COPY(int,_ga_work, coord,ndim);  
 }
 
-void GA_Topology(int g_a, int dims[])
+void GA_Get_proc_grid(int g_a, int dims[])
 {
      Integer a=(Integer)g_a;
      Integer ndim = ga_ndim_(&a);
-     ga_topology_(&a, _ga_work);
+     ga_get_proc_grid_(&a, _ga_work);
      COPY(int,_ga_work, dims ,ndim);  
 }
 
@@ -3456,3 +3656,10 @@ void GA_Checkpoint(int* gas, int num)
     ga_checkpoint_arrays_(gas,num);
 }
 #endif
+
+int GA_Pgroup_absolute_id(int grp_id, int pid) {
+  Integer agrp_id = (Integer)grp_id;
+  Integer apid = (Integer) pid;
+  return (int)ga_pgroup_absolute_id_(&agrp_id, &apid);
+}
+

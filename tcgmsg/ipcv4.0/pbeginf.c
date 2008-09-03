@@ -1,15 +1,12 @@
 /* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbeginf.c,v 1.16 2006-07-19 00:21:43 manoj Exp $ */
 
 #include <stdio.h>
-#include "farg.h"
+#include "../farg.h"
 #include "srftoc.h"
 #include "typesf2c.h"
 
 extern void PBEGIN_();
 
-#if defined(HPUX) || defined(SUNF77_2) || (defined(LINUX64)&&defined(__alpha__)) || defined(XLFLINUX) || defined(LINUX) || defined(GFORTRAN)
-#define HAS_GETARG 1
-#endif
 #ifndef HAS_GETARG
 void PBEGINF_()
 /*
@@ -27,19 +24,15 @@ void PBEGINF_()
 */
 {
   extern char *strdup();
-#ifndef HPUX
-  extern int iargc_();
-  extern void getarg_();
-  int argc = iargc_() + 1;
+  
+#if defined(WIN32) || defined(__crayx1)
+    int argc = IARGC() + 1;
+#elif defined(HPUX)
+    int argc = hpargc_();
 #else
-#ifndef EXTNAME
-#define hpargv_ hpargv
-#define hpargc_ hpargc
+    int argc = iargc_() + 1;
 #endif
-  extern int hpargv_();
-  extern int hpargc_();
-  int argc = hpargc_();
-#endif
+    
   int i, len, maxlen=256;
   char *argv[256], arg[256];
 

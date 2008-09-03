@@ -369,6 +369,7 @@ extern Integer FATR nga_locate_num_blocks_( Integer *g_a,
                                             Integer *lo,
                                             Integer *hi);
 extern Integer FATR ga_total_blocks_( Integer *g_a );
+extern logical FATR ga_uses_proc_grid_( Integer *g_a );
 extern void FATR ga_set_debug_( logical *flag );
 extern logical FATR ga_get_debug_();
 extern void FATR ga_get_proc_index_( Integer *g_a, Integer *iproc, Integer *index );
@@ -425,7 +426,7 @@ extern void FATR nga_periodic_acc_(Integer *g_a, Integer *lo, Integer *hi,
 extern void FATR nga_proc_topology_(Integer* g_a, Integer* proc,
     Integer* subscr);
 
-extern void FATR ga_topology_(Integer* g_a, Integer* dims);
+extern void FATR ga_get_proc_grid_(Integer* g_a, Integer* dims);
 
 extern void nga_copy_patch(char *trans,
                            Integer *g_a, Integer *alo, Integer *ahi,
@@ -472,7 +473,7 @@ extern void FATR ga_unpack_(Integer* g_a, Integer* g_b, Integer* g_sbit,
 extern void FATR ga_scan_copy_(Integer* g_a, Integer* g_b, Integer* g_sbit,
                           Integer* lo, Integer* hi);
 extern void FATR ga_scan_add_(Integer* g_a, Integer* g_b, Integer* g_sbit,
-                          Integer* lo, Integer* hi);
+                          Integer* lo, Integer* hi, Integer *excl);
 extern void nga_select_elem_(Integer *g_a, char* op, void* val,
                              Integer *subscript);
 

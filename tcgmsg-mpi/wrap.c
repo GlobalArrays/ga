@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.9 2007-10-30 02:05:02 manoj Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.8.8.1 2006-12-14 13:24:56 manoj Exp $ */
 #include <stdlib.h>
 #include <mpi.h>
 #ifdef CRAY

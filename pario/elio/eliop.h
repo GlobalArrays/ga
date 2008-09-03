@@ -12,11 +12,11 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "typesf2c.h"
 
-
-#define PRINT_AND_ABORT(msg, val) ga_error(msg, (long)val)
+#define PRINT_AND_ABORT(msg, val) ga_error(msg, (Integer)val)
 #ifndef GLOBAL_H
-extern void ga_error(char*, long);
+extern void ga_error(char*, Integer);
 #endif
 
 #if (defined(SP) || defined(SP1))
@@ -36,7 +36,7 @@ extern void ga_error(char*, long);
 #        define  STATVFS _stat 
 #        define  S_ISDIR(mode) ((mode&S_IFMT) == S_IFDIR)
 #        define  S_ISREG(mode) ((mode&S_IFMT) == S_IFREG)
-#elif defined(CYGNUS) || defined(LINUX) || defined(CYGWIN) || defined(BGL)
+#elif defined(CYGNUS) ||  defined(LINUX)  ||  defined(CYGWIN) || defined(BGL) || defined(BGP)
 #        include <sys/vfs.h>
 #        define  STATVFS statfs
 #        define NO_F_FRSIZE 

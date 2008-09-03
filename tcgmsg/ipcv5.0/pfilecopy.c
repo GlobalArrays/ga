@@ -1,6 +1,7 @@
 /* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/pfilecopy.c,v 1.5 2004-04-01 02:23:05 manoj Exp $ */
 
 #include <stdio.h>
+#include <stdlib.h>
 #ifdef SEQUENT
 #include <strings.h>
 #else
@@ -15,12 +16,11 @@
 
 #if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX) || \
     defined(KSR)    || defined(DECOSF)
-extern void *malloc();
-#else
-extern char *malloc();
+  extern void *malloc();
+  extern void free();
 #endif
 
-extern void free();
+
 
 void PFILECOPY_(type, node0, filename)
      long *type, *node0;

@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <signal.h>
 #include "shmlimit.h"
+#include "armci.h"
 
 #define DEBUG_ 0
 

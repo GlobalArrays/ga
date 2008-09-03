@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.90 2007-10-30 02:04:55 manoj Exp $ */
+/* $Id: shmem.c,v 1.87.2.2 2007-09-10 23:31:32 manoj Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -84,7 +84,7 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #if defined(GM) || defined(VAPI)
 #   define SHMMAX_SEARCH_NO_FORK 
 #endif
-#if defined(LAPI) || defined(AIX) || defined(SHMMAX_SEARCH_NO_FORK)
+#if defined(LAPI) || defined(AIX) || defined(SHMMAX_SEARCH_NO_FORK) || defined(XT3)
 #   define NO_SHMMAX_SEARCH
 #endif
 
@@ -105,7 +105,7 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #  define _SHMMAX (1024)  /* memory in KB */
 #elif defined(SGI64) || defined(AIX) || defined(CONVEX)
 #  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)512*1024)
+#  define _SHMMAX ((unsigned long)1024*1024)
 #elif defined(SGI) && !defined(SGI64)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)128*1024)
@@ -299,8 +299,8 @@ long x=0;
      uval = getenv("ARMCI_DEFAULT_SHMMAX"); 
      if(uval != NULL){
        sscanf(uval,"%ld",&x);
-       if(x<1L || x> 2048L){ 
-          fprintf(stderr,"incorrect ARMCI_DEFAULT_SHMMAX should be <1,2048>mb and 2^N Found=%ld\n",x);
+       if(x<1L || x> 8192L){ 
+          fprintf(stderr,"incorrect ARMCI_DEFAULT_SHMMAX should be <1,8192>mb and 2^N Found=%ld\n",x);
           x=0;
        }
      }
@@ -915,6 +915,18 @@ int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
     return 1;
 }
 
+long armci_shm_reg_size(int i, long id)
+{
+     if(i<0 || i>= MAX_REGIONS)armci_die("armci_shmem_reg_size: bad i",i); 
+     return region_list[i].sz;
+}
+
+void* armci_shm_reg_ptr(int i)
+{
+     if(i<0 || i>= MAX_REGIONS)armci_die("armci_shmem_reg_ptr: bad i",i); 
+     return (void *)region_list[i].addr;
+}
+
 Header *armci_get_shmem_ptr(int shmid, long shmoffset, size_t shmsize) 
 {
 /* returns, address of the shared memory region based on shmid, offset.
@@ -1009,6 +1021,7 @@ static char *temp;
     POST_ALLOC_CHECK(temp,size);
     region_list[reg].addr = temp; 
     region_list[reg].attached = 1;
+    region_list[reg].sz= size;
 
   }
 
@@ -1077,6 +1090,11 @@ size_t sz = (size_t)size;
          printf("%d:allocate:attach:id=%d paddr=%p size=%ld\n",armci_me,id,temp,size);
          fflush(stdout);
        }
+#if 1
+       /* delete segment id so that OS cleans it when all attached processes are gone */
+       if(shmctl( id, IPC_RMID, (struct shmid_ds *)NULL))
+          fprintf(stderr,"failed to remove shm id=%d\n",id);
+#endif
 
     }
     POST_ALLOC_CHECK(temp,sz);

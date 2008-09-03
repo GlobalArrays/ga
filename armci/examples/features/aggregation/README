@@ -1,4 +1,4 @@
-$Id: README,v 1.2 2007-10-30 02:15:40 manoj Exp $
+$Id: README,v 1.1.2.1 2007-06-20 17:41:37 vinod Exp $
 Introduction:
   ARMCI has support for aggregating messages via its aggregate non-blocking
   handles.

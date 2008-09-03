@@ -1,34 +1,11 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.19 2007-10-30 02:05:02 manoj Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.18.4.1 2006-12-14 13:24:55 manoj Exp $ */
 
 #include <stdio.h>
-#include "farg.h"
+#include "../tcgmsg/farg.h"
 #include "sndrcv.h"
 #define LEN 255
 
 extern void PBEGIN_();
-
-#if defined(HPUX) || defined(SUN) || defined(SOLARIS) ||defined(PARAGON) ||defined(FUJITSU) || defined(WIN32) ||defined(LINUX64) || defined(NEC)|| defined(LINUX) || defined(HITACHI) || defined(__crayx1) || (defined(MACX) && defined(GFORTRAN) || defined(BGL))
-#define HAS_GETARG 1
-#endif
-
-#ifdef WIN32
-#define getarg_ GETARG
-extern int FATR IARGC(void);
-#include <windows.h>
-#include "winutil.h"
-#define NTYPE short
-extern void FATR getarg_( NTYPE *, char*, int, NTYPE*);
-#else
-#define FATR 
-#endif
-
-#if defined(__crayx1) 
-#define getarg_  pxfgetarg_
-#define IARGC  ipxfargc_
-#define NTYPE  int 
-extern void FATR getarg_( NTYPE *, char*, NTYPE*, NTYPE*, int);
-#endif
-
 
 #if !defined(HAS_GETARG)
 void FATR PBEGINF_()
@@ -50,19 +27,12 @@ void FATR PBEGINF_()
 
 #if defined(WIN32) || defined(__crayx1)
     int argc = IARGC() + 1;
-#elif !defined(HPUX)
-    extern int iargc_();
-    extern void getarg_();
-    int argc = iargc_() + 1;
-#else
-#   ifndef EXTNAME
-#     define hpargv_ hpargv
-#     define hpargc_ hpargc
-#   endif
-    extern int hpargv_();
-    extern int hpargc_();
+#elif defined(HPUX)
     int argc = hpargc_();
+#else
+    int argc = iargc_() + 1;
 #endif
+    
     int i, len, maxlen=LEN;
     char *argv[LEN], arg[LEN];
 

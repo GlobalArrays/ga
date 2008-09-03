@@ -1,1 +1,1 @@
-/*$Id: simple.c,v 1.2 2007-10-30 02:15:43 manoj Exp $*/
+/*$Id: simple.c,v 1.1.2.1 2007-06-20 17:42:20 vinod Exp $*/

@@ -9,10 +9,11 @@
 #include <mpi.h> 
 #include "armci.h"
 
-#define DEBUG
+/*#define DEBUG*/
 #define MAXRAND                         32767.0
 #define DEFAULT_N                        1500
-#define DEFAULT_B                          16
+#define DEFAULT_B                         16
+/*#define MPI2_ONESIDED*/
 
 /* ARMCI is message-passing ambivalent -  we define macros for common MP calls*/
 #ifdef PVM
@@ -56,6 +57,14 @@ int nproc, me = 0;
 int proc_bytes;
 
 int doprint = 0;
+double comm_time=0.0;
+int get_cntr=0;
+
+/* ARMCI */
+void **ptr;
+#ifdef MPI2_ONESIDED
+  MPI_Win win;
+#endif
 
 /* function declaration */
 void lu(int, int, int);
@@ -83,9 +92,7 @@ main(int argc, char *argv[])
     extern char *optarg;
     int edge;
     int size;
-    
-    /* ARMCI */
-    void **ptr;
+    int nloop=5;
     double **ptr_loc;
     
     MP_INIT(arc,argv);
@@ -162,10 +169,19 @@ main(int argc, char *argv[])
         }
     }
     
+    ptr = (void **)malloc(nproc * sizeof(void *));
+#ifdef MPI2_ONESIDED
+    MPI_Alloc_mem(proc_bytes, MPI_INFO_NULL, &ptr[me]);
+    MPI_Win_create((void*)ptr[me], proc_bytes, 1, MPI_INFO_NULL,
+                   MPI_COMM_WORLD, &win);
+    for(i=0; i<nproc; i++) ptr[i] = (double *)ptr[me];
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+#else
     /* initialize ARMCI */
     ARMCI_Init();
-    ptr = (void **)malloc(nproc * sizeof(void *));
     ARMCI_Malloc(ptr, proc_bytes);
+#endif
     
     a = (double **)malloc(nblocks*nblocks*sizeof(double *));
     if (a == NULL) {
@@ -206,18 +222,20 @@ main(int argc, char *argv[])
         MP_BARRIER();
     }
     
+    lu(n, block_size, me); /* cold start */
 
     /* Starting the timer */
-    if(me == 0) start_timer();
 
-    lu(n, block_size, me);
-    
+    MP_BARRIER();
+    if(me == 0) start_timer();
+    for(i=0; i<nloop; i++) lu(n, block_size, me);    
     MP_BARRIER();
 
     /* Timer Stops here */
     if(me == 0) 
-        printf("\nRunning time = %lf milliseconds.\n\n",  elapsed_time());
-
+        printf("\nRunning time = %lf milliseconds.\n\n",  elapsed_time()/nloop);
+    printf("%d: (ngets=%d) Communication (get) time = %e milliseconds\n", me, get_cntr, comm_time*1000/nloop);
+    
     if(doprint) {        
         if(me == 0) {
             printf("after LU\n");
@@ -227,8 +245,13 @@ main(int argc, char *argv[])
     }
     
     /* done */
+#ifdef MPI2_ONESIDED
+    MPI_Win_free(&win);
+    MPI_Free_mem(ptr[me]);
+#else
     ARMCI_Free(ptr[me]);
     ARMCI_Finalize();
+#endif
     MP_FINALIZE();
 }
 
@@ -348,6 +371,7 @@ void get_remote(double *buf, int I, int J)
 {
     int proc_owner;
     int edge, size;
+    double t1;
     
     proc_owner = block_owner(I, J);
     
@@ -366,8 +390,26 @@ void get_remote(double *buf, int I, int J)
         size = block_size*block_size;
     }
     size = size * sizeof(double);
-    
+
+    t1 = MPI_Wtime();
+#ifdef MPI2_ONESIDED
+    {
+       int target_disp = ( ((char*)(a[I+J*nblocks])) -
+                           ((char*)(ptr[proc_owner])) );
+       if(target_disp<0) {
+          printf("ERROR!: target disp is < 0, target_disp= %d\n", target_disp);
+          MPI_Abort(MPI_COMM_WORLD, 1);
+       }
+       MPI_Win_lock(MPI_LOCK_EXCLUSIVE, proc_owner, 0, win);
+       MPI_Get(buf, size, MPI_CHAR, proc_owner, target_disp, size,
+               MPI_CHAR, win);
+       MPI_Win_unlock(proc_owner, win);
+    }
+#else
     ARMCI_Get(a[I+J*nblocks], buf, size, proc_owner);
+#endif
+    comm_time += MPI_Wtime() - t1;
+    get_cntr++;
 }
 
 void lu0(double *a, int n, int stride)

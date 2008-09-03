@@ -20,6 +20,7 @@ typedef long armci_size_t;
 extern int armci_notify(int proc);
 extern int armci_notify_wait(int proc,int *pval);
 extern int ARMCI_Init(void);    /* initialize ARMCI */
+extern int ARMCI_Init_args(int *argc, char ***argv); /* initialize ARMCI */
 extern void ARMCI_Barrier(void);    /* ARMCI Barrier*/
 
 extern int ARMCI_Put(void *src, void* dst, int bytes, int proc);
@@ -181,13 +182,42 @@ extern void ARMCI_Copy(void *src, void *dst, int n);
 
 #define ARMCI_MAX_STRIDE_LEVEL 8
 
-#ifdef BGML     
-#define ARMCI_CRITICAL_SECTION_ENTER() BGML_CriticalSection_enter();
-#define ARMCI_CRITICAL_SECTION_EXIT()  BGML_CriticalSection_exit();
-#else
-#define ARMCI_CRITICAL_SECTION_ENTER()
-#define ARMCI_CRITICAL_SECTION_EXIT()     
-#endif    
+/****************Error/termination macros************************/
+/**Debug assert macro. To be used instead of assert for more user
+ * informative and cleaner death. Also allows individualized
+ * enabling/disabling of assert statements.
+ * @param _enable Ignore this assertion if _enable==0
+ * @param _cond   Condition to be evaluated (assert that it is true)
+ * @param _plist  Information to be printed using printf, should be
+ * within parenthesis (eg., dassert(1,0,("%d:test n=%d\n",me,0));
+ * ). This is fed directly to printf.  
+ */
+int dassertp_fail(const char *cond_string, const char *file, 
+		  const char *func, unsigned int line);
+#undef dassertp
+#define dassertp(_enable,_cond,_plist)  do {              \
+  if((_enable) && !(_cond)) {                             \
+    printf _plist;					  \
+    dassertp_fail(#_cond,__FILE__,__FUNCTION__,__LINE__); \
+  }} while(0)
+
+#undef dassert
+#define dassert(_enable,_cond) dassertp((_enable),(_cond),(""))
+
+#undef dassert1
+#define dassert1(_enable,_cond,_ival)                       \
+  dassertp((_enable),(_cond),("%d: error ival=%d\n",        \
+			      armci_msg_me(),(int)(_ival))) 
+
+#define armci_die(_msg,_code) dassertp(1,0,             \
+("%d:%s: %d\n", armci_msg_me(),(_msg),(_code)))
+
+#define armci_die2(_msg,_code1,_code2) dassertp(1,0,    \
+("%d:%s: (%d,%d)\n",armci_me,(_msg),(_code1),(_code2)))
+
+  /*Disable for now. Some parts of GA use ARMCI_Error function pointer. Wait for them to be changed before enabling this*/
+/* #define ARMCI_Error(_msg, _code) armci_die((_msg),(_code)) */
+
 
 /************ locality information **********************************************/
 typedef int armci_domain_t;
@@ -213,6 +243,7 @@ extern char *mp_group_name;
 /*********************stuff for non-blocking API******************************/
 /*\ the request structure for non-blocking api. 
 \*/
+#if 0
 typedef struct{
 #ifdef BGML 
     int data[4]; /* tag, bufid, agg_flag, op, proc */
@@ -232,15 +263,24 @@ typedef struct{
 #endif
 #endif
 } armci_hdl_t;
+#else
+  /*max of sizes for all platforms. Increase if any platform needs more*/
+typedef struct{
+    int data[4]; /* tag, bufid, agg_flag, op, proc */
+    double dummy[72]; 
+} armci_hdl_t;
+#endif
 
 #define armci_req_t armci_hdl_t
 
-#ifdef MPI
 typedef struct {
     double dummy[8];
 } ARMCI_Group;
  
 void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group_out);
+void ARMCI_Group_create_child(int n, int *pid_list, ARMCI_Group *group_out, 
+			      ARMCI_Group *group_parent);
+void ARMCI_Group_free(ARMCI_Group *group);
 int  ARMCI_Group_rank(ARMCI_Group *group, int *rank);
 void ARMCI_Group_size(ARMCI_Group *group, int *size);
 void ARMCI_Group_set_default(ARMCI_Group *group);
@@ -249,7 +289,6 @@ void ARMCI_Group_get_world(ARMCI_Group *group_out);
    
 int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,ARMCI_Group *group);
 int ARMCI_Free_group(void *ptr, ARMCI_Group *group);
-#endif
 
 extern int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* nb_handle);
 

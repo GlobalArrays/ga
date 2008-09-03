@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.16 2007-10-30 02:04:54 manoj Exp $ */
+/* $Id: elan4.c,v 1.15.2.2 2007-07-02 05:19:42 d3p687 Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>

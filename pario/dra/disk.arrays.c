@@ -3,7 +3,7 @@ DRA operations with a buffer manager layer, modified by Bilash
 The buffer manager provides functionalities related to buffers
 */
 
-/*$Id: disk.arrays.c,v 1.80 2007-10-30 02:05:01 manoj Exp $*/
+/*$Id: disk.arrays.c,v 1.79.2.2 2007-03-24 01:19:28 manoj Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1700,8 +1700,8 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
                     coordinate direction [output]
 */
 {
-  Integer patch_size;
-  Integer i, j, tmp_patch, block[MAXDIM], block_map[MAXDIM];
+  long patch_size, tmp_patch;
+  Integer i, j, block[MAXDIM], block_map[MAXDIM];
   double ratio;
   logical full_buf, some_neg, overfull_buf;
   /* copy block_orig so that original guesses are not destroyed */
@@ -1731,10 +1731,10 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
   full_buf = FALSE;
   overfull_buf = FALSE;
   for (i=0; i<ndim; i++) {
-    if (block[i] > 0) patch_size *= block[i];
+    if (block[i] > 0) patch_size *= (long)block[i];
     else some_neg = TRUE;
   }
-  if (patch_size*elem_size > DRA_BUF_SIZE) overfull_buf = TRUE;
+  if (patch_size*((long)elem_size) > DRA_BUF_SIZE) overfull_buf = TRUE;
 
   /* map dimension sizes from highest to lowest */
   block_sortM(ndim, dims, block_map);
@@ -1745,13 +1745,13 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
   if (!full_buf && !overfull_buf && some_neg) {
     for (i=ndim-1; i>=0; i--) {
       if (block[block_map[i]] < 0) {
-        tmp_patch = patch_size * dims[block_map[i]];
+        tmp_patch = patch_size * ((long)dims[block_map[i]]);
         if (tmp_patch*elem_size < DRA_BUF_SIZE) {
-          patch_size *= dims[block_map[i]];
+          patch_size *= (long)dims[block_map[i]];
           block[block_map[i]] = dims[block_map[i]];
         } else {
-          block[block_map[i]] = DRA_BUF_SIZE/(patch_size*elem_size); 
-          patch_size *= block[block_map[i]];
+          block[block_map[i]] = (Integer)(DRA_BUF_SIZE/(patch_size*((long)elem_size))); 
+          patch_size *= ((long)block[block_map[i]]);
           full_buf = TRUE;
         }
       }
@@ -1766,13 +1766,14 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
 
   /* If patch overfills buffer, scale patch down until it fits */
   if (overfull_buf) {
-    ratio = ((double)DRA_BUF_SIZE)/((double)(patch_size*elem_size));
+    ratio = ((double)DRA_BUF_SIZE)
+          / ((double)(patch_size*((long)elem_size)));
     ratio = pow(ratio,1.0/((double)ndim));
     patch_size = 1;
     for (i=0; i<ndim; i++) {
       chunk[i] = (int)(((double)chunk[i])*ratio);
       if (chunk[i] < 1) chunk[i] = 1;
-      patch_size *= chunk[i];
+      patch_size *= ((long)chunk[i]);
     }
   }
 
@@ -1785,15 +1786,15 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
   }
   /* Patch size may be slightly larger than buffer. If so, nudge
      size down until patch is smaller than buffer. */
-  if (elem_size*patch_size > DRA_BUF_SIZE) {
+  if (((long)elem_size)*patch_size > DRA_BUF_SIZE) {
     /* map chunks from highest to lowest */
     block_sortM(ndim, chunk, block_map);
     for (i=0; i < ndim; i++) {
       while (chunk[block_map[i]] > 1 &&
-             elem_size*patch_size > DRA_BUF_SIZE) {
-        patch_size /= chunk[block_map[i]];
+             ((long)elem_size)*patch_size > DRA_BUF_SIZE) {
+        patch_size /= ((long)chunk[block_map[i]]);
         chunk[block_map[i]]--;
-        patch_size *= chunk[block_map[i]];
+        patch_size *= ((long)chunk[block_map[i]]);
       }
     }
   }

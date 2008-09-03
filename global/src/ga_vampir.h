@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.h,v 1.9 2007-10-30 02:04:57 manoj Exp $ */
+/* $Id: ga_vampir.h,v 1.8.2.2 2007-09-25 22:39:44 d3g293 Exp $ */
 #ifndef _GA_VAMPIR_H_
 #define _GA_VAMPIR_H_
 

@@ -155,7 +155,7 @@ long NXTVAL_(mproc)
 
 /*\ initialization for nxtval -- called in PBEGIN
 \*/
-void install_nxtval()
+void install_nxtval(int *argc, char **argv[])
 {
 int numprocs, myid;
 

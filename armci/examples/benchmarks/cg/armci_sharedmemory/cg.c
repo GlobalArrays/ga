@@ -1,4 +1,4 @@
-/*$Id: cg.c,v 1.2 2007-10-30 02:15:37 manoj Exp $*/
+/*$Id: cg.c,v 1.1.2.2 2007-07-05 15:29:56 vinod Exp $*/
 #include <stdio.h>
 #include <math.h>
 #include "armci.h"

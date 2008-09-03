@@ -1,10 +1,10 @@
 cedo#define USE_PDSYEVR 1
-#ifdef USE_INTEGER8
+#ifdef SCALAPACK_I8
 #define INTGR4 integer*8
 #else
 #define INTGR4 integer*4
 #endif
-C     $Id: scalapack.F,v 1.11 2006-10-13 16:15:17 d3g293 Exp $
+C     $Id: scalapack.F,v 1.11 2006/10/13 16:15:17 d3g293 Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
 *                                                                          *
@@ -24,6 +24,7 @@ c
 #include "scalapack.fh"
       data init /.false./
       data init2 /.false./
+      data init3 /.false./
       end
 
 
@@ -43,9 +44,6 @@ c
       call blacs_pinfo(iam, nnodes)
 c
       call FindGrid(nnodes, nprow, npcol)
-      if(ga_nodeid().eq.0)
-     W     write(0,'(A,I4,A,I4)') ' proc grid ',nprow,' X',npcol
-      call ga_sync()
 c
       call blacs_get (zero4, zero4, icontxt)
       call blacs_gridinit(icontxt, 'R', nprow, npcol)
@@ -59,6 +57,7 @@ c
       call ga_sync()
 c    
       end
+c
       subroutine slinit2(n)
       implicit none
 #include "scalapack.fh"
@@ -81,12 +80,7 @@ c     determine optimal nprocs for eigensolvers based on matrix size n
 c
       maxproc=slgetmxproc(n,nnodes)
       call FindGrid(maxproc, nprow2, npcol2)
-      if(ga_nodeid().eq.0) then
-         write(0,*) ' maxproc ',maxproc, ' n = ',n
-         write(0,'(A,I4,A,I4)') ' proc grid ',nprow2,' X',npcol2
-      endif
 c
-
       call blacs_get( zero4, zero4, islctxt2 )
       call blacs_gridinit(islctxt2, 'R', nprow2, npcol2)
 
@@ -102,6 +96,84 @@ c
       endif
       
       init2=.true.
+c
+      call ga_sync()
+      
+c    
+      end
+c
+      subroutine SLinit3(g_a)
+      implicit none
+      INTGR4  icontxt
+c
+#include "scalapack.fh"
+#include "global.fh"
+      integer g_a, nblocks(2), ndim, dims(2), type
+      INTGR4 zero4
+      parameter(zero4=0)
+c
+      if(init3)return
+c
+c   find dimensions of processor grid for global array with handle g_a
+c     
+      call nga_inquire(g_a, type, ndim, dims)
+      if (ndim.ne.2) then
+        call ga_error('SCALAPAC array dimension is not 2',ndim)
+      endif
+      if (ga_uses_proc_grid(g_a)) then
+        call ga_get_proc_grid(g_a, nblocks)
+        nprow = nblocks(1)
+        npcol = nblocks(2)
+      else
+        call ga_error('Array does not use processor grid SCALAPACK',0)
+      endif
+
+c
+      call sl_init(icontxt, nprow, npcol)
+      iSLctxt = icontxt
+c
+      call blacs_gridinfo(iSLctxt, nprow, npcol, myrow, mycol)
+cedo      write(0,'(4I4)') nprow, npcol, myrow, mycol
+c
+      init3=.true.
+c
+      call ga_sync()
+c    
+      end
+c
+      subroutine SLinit4(g_a)
+      implicit none
+#include "scalapack.fh"
+#include "global.fh"
+c
+      INTGR4 icontxt
+      INTGR4 slgetmxproc
+      external slgetmxproc
+      integer g_a, nblocks(2), ndim, dims(2), type, n
+c
+      if(init4)return
+c
+c**** call ga_sync before to enter in BLACS and after
+      call nga_inquire(g_a, type, ndim, dims)
+      if (ndim.ne.2) then
+        call ga_error('SCALAPAC array dimension is not 2',ndim)
+      endif
+      if (ga_uses_proc_grid(g_a)) then
+        call ga_get_proc_grid(g_a, nblocks)
+        nprow = nblocks(1)
+        npcol = nblocks(2)
+      else
+        call ga_error('Array does not use processor grid SCALAPACK',0)
+      endif
+c
+      call blacs_pinfo(iam, nnodes)
+      maxproc=slgetmxproc(n,nnodes)
+      call sl_init(icontxt, nprow, npcol)
+      islctxt2 = icontxt
+c
+      call blacs_gridinfo(iSLctxt2, nprow2, npcol2, myrow2, mycol2)
+      
+      init4 = .true.
 c
       call ga_sync()
       
@@ -158,8 +230,36 @@ c
       return
 c    
       end
-
-
+c
+      subroutine slexit3
+      implicit none
+      INTGR4 nprocs
+c
+#include "scalapack.fh"
+#include "global.fh"
+c
+      if(.not.init3)return
+      call ga_sync()
+      call blacs_gridexit(islctxt)
+      init3=.false.
+      return
+c    
+      end
+c    
+      subroutine slexit4
+      implicit none
+      INTGR4 nprocs
+c
+#include "scalapack.fh"
+#include "global.fh"
+c
+      if(.not.init4)return
+      call ga_sync()
+      call blacs_gridexit(islctxt2)
+      init4=.false.
+      return
+c    
+      end
 
       subroutine FindGrid(nnodes, nprow, npcol)
 c
@@ -442,6 +542,8 @@ c
       integer dimB18, dimB28, typeB
       INTGR4 dimA1, dimA2
       INTGR4 dimB1, dimB2
+      logical uses_sl_A, uses_sl_B
+      integer alen, blen
 c
       INTGR4 mpA, nqA          ! number of rows/cols of A held by the processor
       INTGR4 mpB, nqB          ! number of rows/cols of B held by the processor
@@ -451,12 +553,16 @@ c
       integer elemA, elemB
       INTGR4 numroc
       integer lipiv
+      integer block_dims_A(2),block_dims_B(2),blocks(2)
+      integer gridA(2), gridB(2)
 
       INTGR4 one4,zero4
       parameter(zero4=0,one4=1)
       INTGR4 descA(DSCLEN), descB(DSCLEN) ! descriptors for distr. matrixes A,B
       INTGR4 nb                           ! block size for A and rhs
       data nb /64/
+      integer i
+      logical use_direct
 c
 c***  check environment
 c
@@ -479,11 +585,52 @@ c
          call ga_error('ga_lu_solve: dims of A and B do not match ',1)
       endif
 c
+c   Determine whether or not to use GA data directly
+c
+      use_direct = .true.
+      uses_sl_A = ga_uses_proc_grid(g_a)
+      uses_sl_B = .false.
+      if (uses_sl_A) then
+        uses_sl_B = ga_uses_proc_grid(g_b)
+      endif
+      if ((.not.uses_sl_A).or.(.not.uses_sl_B)) then
+        use_direct = .false.
+      endif
+      if (uses_sl_A) then
+        call ga_get_block_info(g_a,blocks,block_dims_A)
+        if (block_dims_A(1).ne.block_dims_A(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (uses_sl_B) then
+        call ga_get_block_info(g_b,blocks,block_dims_B)
+        if (block_dims_B(1).ne.block_dims_B(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (use_direct.and.(block_dims_A(1).ne.block_dims_B(1))) then
+        use_direct = .false.
+      endif
+      if (use_direct) then
+        call ga_get_proc_grid(g_a,gridA)
+        call ga_get_proc_grid(g_b,gridB)
+        if (gridA(1).ne.gridB(1).or.gridA(2).ne.gridB(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (use_direct) then
+        nb = block_dims_A(2)
+      endif
+c 
       n = dimA1
 c
 c***  initialize SL interface
 c 
-      call SLinit()
+      if (.not.use_direct) then
+        call SLinit()
+      else
+        call SLinit3(g_a)
+      endif
 c
 c***  find SBS format parameters
 c
@@ -501,14 +648,22 @@ c***     allocate A,B and ipiv arrays
 c     
          elemA= mpA*nqA
          status = .true.
-         if(elemA.ne.0)status = ma_push_get(MT_DBL,elemA,'a',ha,adra)
-         if(.not.status) 
+         if (use_direct) then
+           call nga_access_block_segment(g_a,me,adra,alen)
+         else
+           if(elemA.ne.0) status = ma_push_get(MT_DBL,elemA,'a',ha,adra)
+           if(.not.status) 
      &       call ga_error('ga_lu_solve: mem alloc failed A ', -1)
+         endif
 c
          elemB= mpB*nqB
-         if(elemB.ne.0)status = ma_push_get(MT_DBL,elemB,'b',hb,adrb)
-         if(.not.status) 
+         if (use_direct) then
+           call nga_access_block_segment(g_b,me,adrb,blen)
+         else
+           if(elemB.ne.0)status = ma_push_get(MT_DBL,elemB,'b',hb,adrb)
+           if(.not.status) 
      &       call ga_error('ga_lu_solve: mem alloc failed B ', -1)
+         endif
 c
          lipiv=mpa+nb
          status = ma_push_get(MT_INT,lipiv,'ipiv',hi,adri)
@@ -518,8 +673,10 @@ c
 c
 c***     copy g_a to A and g_b to B using the SBS SL format 
 c
-         call ga_to_SL(g_a, n, n, nb, nb, dbl_mb(adrA), lda, mpA,nqA)
-         call ga_to_SL(g_b, n,dimB2, nb,nb, dbl_mb(adrB), ldb, mpB, nqB)
+         if (.not.use_direct) then
+           call ga_to_SL(g_a,n,n,nb,nb,dbl_mb(adrA),lda,mpA,nqA)
+           call ga_to_SL(g_b,n,dimB2,nb,nb,dbl_mb(adrB),ldb,mpB,nqB)
+         endif
 c     
 c***     fill SCALAPACK matrices descriptors
 c
@@ -548,11 +705,13 @@ c
      A           descA, int_mb(adrI), dbl_mb(adrB),
      1           one4, one4, descB, info)
             if(info.eq.0)then
+              if (.not.use_direct) then
 c
 c***           copy solution matrix back to g_b
 c
-               call ga_from_SL(g_b, dimB1, dimB2, nb, nb, dbl_mb(adrb),
-     &                         mpB, ldb, nqB)
+                call ga_from_SL(g_b, dimB1, dimB2, nb, nb, dbl_mb(adrb),
+     &                          mpB, ldb, nqB)
+              endif
             else
                call ga_error(' ga_lu_solve: pdgetrs failed ', -info)
             endif
@@ -564,10 +723,17 @@ c
 c***     deallocate work/SL arrays
 c
          status = ma_pop_stack(hi)
-         if(elemB.ne.0) status = status .and. ma_pop_stack(hb)
-         if(elemA.ne.0) status = status .and. ma_pop_stack(ha)
+         if (.not.use_direct) then
+           if(elemB.ne.0) status = status .and. ma_pop_stack(hb)
+           if(elemA.ne.0) status = status .and. ma_pop_stack(ha)
+         endif
          if(.not.status)
      &       call ga_error('ga_lu_solve:ma_pop_stack failed',0)
+      endif
+      if (use_direct) then
+        call slexit3
+      else
+        call slexit
       endif
 c
       call ga_sync()
@@ -823,6 +989,8 @@ c****
       INTGR4 one4,zero4
       parameter(zero4=0,one4=1)
       logical oactive
+      integer alen,block_dims(2),blocks(2)
+      logical use_direct
       data nb /NB_/
 
 c**** Check Environment
@@ -837,11 +1005,28 @@ c****
       if (dimA1.ne.dimA2) then
          call ga_error('ga_llt_f: g_A must be a square matrix ', 1)
       endif
+c
+c   Determine whether or not to use GA data directly
+c
+      use_direct = ga_uses_proc_grid(g_A)
+      if (use_direct) then
+        call ga_get_block_info(g_A,blocks,block_dims)
+        if (block_dims(1).ne.block_dims(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (use_direct) then
+        nb = block_dims(1)
+      endif
 c****
       n = dimA1
 c**** Initialize SL Interface
-      call SLinit()
-!      oactive=iam.lt.maxproc
+      if (use_direct) then
+        call SLinit3(g_A)
+      else
+        call SLinit()
+      endif
+c      oactive=iam.lt.maxproc
       oactive=.true.
       call ga_sync
 
@@ -855,13 +1040,19 @@ c**** Find SBS format parameters
 c**** Allocate A
          elemA = mpA * nqA
          status = .true.
-         if (elemA.ne.0)
-     &        status = ma_push_get(MT_DBL, elemA, 'A', hA, adrA)
-         if (.not.status)
-     &        call ga_error('ga_llt_f: mem alloc failed A ', -1)
+         if (use_direct) then
+           call nga_access_block_segment(g_A,me,adrA,alen)
+         else
+           if (elemA.ne.0)
+     &          status = ma_push_get(MT_DBL, elemA, 'A', hA, adrA)
+           if (.not.status)
+     &          call ga_error('ga_llt_f: mem alloc failed A ', -1)
+         endif
          
 c**** Copy ga to A using SBS ScaLAPACK format      
-         call ga_to_SL(g_a, n, n, nb, nb, dbl_mb(adrA), ldA, mpA, nqA)
+         if (.not.use_direct) then
+           call ga_to_SL(g_a, n, n, nb, nb, dbl_mb(adrA), ldA, mpA, nqA)
+         endif
          
 c**** Fill ScaLAPACK matrix descriptor
          call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4,
@@ -877,8 +1068,10 @@ c*************************************************************
 c**** Copy solution matrix back to A if hsA==-1
 c**** and zero the L/U triangle part according to uplo         
             if (hsA.eq.-1) then
-               call ga_from_SL(g_A, dimA1, dimA2, nb, nb, dbl_mb(adrA),
-     &              mpA, ldA, nqA)
+              if (.not.use_direct) then
+                call ga_from_SL(g_A, dimA1, dimA2, nb, nb, dbl_mb(adrA),
+     &             mpA, ldA, nqA)
+              endif
             endif
             
 c
@@ -887,7 +1080,9 @@ c**** If the SL A array was allocated
 c**** and hsA==-1 or info>0 (i.e. fact. cannot be completed)
 c**** then deallocate the SL A MA array
                if ((hsA.eq.-1).or.(info.gt.0)) then
-                  status = ma_pop_stack(hA)
+                  if (.not.use_direct) then
+                    status = ma_pop_stack(hA)
+                  endif
 c**** otherwise just save the hA MA handle            
                else
                   hsA = hA
@@ -913,6 +1108,12 @@ c
          call ga_error('ga_llt_f: PDPOTRF failed ', -info)
       endif
       ga_llt_f = info
+c
+      if (use_direct) then
+        call slexit3
+      else
+        call slexit
+      endif
       end
 
 
@@ -968,6 +1169,12 @@ c****
       INTGR4 one4,zero4
       parameter(zero4=0,one4=1)
 c
+      integer block_dims_A(2),block_dims_B(2),blocks(2)
+      integer gridA(2), gridB(2)
+      logical uses_sl_A, uses_sl_B
+      integer alen, blen
+      logical use_direct
+c
       data nb /NB_/
 c
 c**** Check the Environment
@@ -989,10 +1196,52 @@ c****
          call ga_error('ga_llt_s: dims of A and B do not match ', 1)
       endif
 c
+c   Determine whether or not to use GA data directly
+c
+      use_direct = .true.
+      uses_sl_A = ga_uses_proc_grid(g_a)
+      uses_sl_B = .false.
+      if (uses_sl_A) then
+        uses_sl_B = ga_uses_proc_grid(g_b)
+      endif
+      if ((.not.uses_sl_A).or.(.not.uses_sl_B)) then
+        use_direct = .false.
+      endif
+      if (uses_sl_A) then
+        call ga_get_block_info(g_a,blocks,block_dims_A)
+        if (block_dims_A(1).ne.block_dims_A(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (uses_sl_B) then
+        call ga_get_block_info(g_b,blocks,block_dims_B)
+        if (block_dims_B(1).ne.block_dims_B(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (use_direct.and.(block_dims_A(1).ne.block_dims_B(1))) then
+        use_direct = .false.
+      endif
+      if (use_direct) then
+        call ga_get_proc_grid(g_a,gridA)
+        call ga_get_proc_grid(g_b,gridB)
+        if (gridA(1).ne.gridB(1).or.gridA(2).ne.gridB(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (use_direct) then
+        nb = block_dims_A(2)
+      endif
+c
       n = dimA1
       
 c**** Initialize SL Interface
-      call SLinit()
+      if (use_direct) then
+        call SLinit3(g_A)
+      else
+        call SLinit()
+      endif
+#if 1
 
 c**** Find SBS format parameters
       mpA = numroc(n, nb, myrow, zero4, nprow)
@@ -1008,28 +1257,36 @@ c**** Allocate A or retrieve it from the ga_llt_f calls
       elemA = mpA * nqA
       status = .true.
       if (elemA.ne.0) then
-         if (hsA.eq.-1) then
+        if (use_direct) then
+          call nga_access_block_segment(g_A,me,adrA,alen)
+        else
+          if (hsA.eq.-1) then
             status = ma_push_get(MT_DBL, elemA, 'A', hA, adrA)
             if (.not.status)
-     &           call ga_error('ga_llt_s: mem alloc failed A ', -1)
+     &        call ga_error('ga_llt_s: mem alloc failed A ', -1)
 c****       copy g_A to A using SBS SL format            
             call ga_to_SL(g_A, n, n, nb, nb, dbl_mb(adrA),
-     &           ldA, mpA, nqA)
-         else
+     &                    ldA, mpA, nqA)
+          else
             hA = hsA
             status = ma_get_index(hA, adrA)
             if (.not.status)
      &           call ga_error('ga_llt_s: get index failed A ', -1)
 c****       if hsA was given the SBS SL conversion is avoided            
-         endif
+          endif
+        endif
       endif
       
 c**** Allocate B and copy g_B to B in SBS SL format
       elemB = mpB * nqB
-      if (elemB.ne.0) status = ma_push_get(MT_DBL, elemB, 'B', hB, adrB)
-      if (.not.status)
+      if (use_direct) then
+        call nga_access_block_segment(g_B,me,adrB,blen)
+      else
+        if (elemB.ne.0) status = ma_push_get(MT_DBL,elemB,'B',hB,adrB)
+        if (.not.status)
      &     call ga_error('ga_llt_s: mem alloc failed B ', -1)
-      call ga_to_SL(g_B, n, dimB2, nb, nb, dbl_mb(adrB), ldB, mpB, nqB)
+        call ga_to_SL(g_B, n, dimB2, nb, nb, dbl_mb(adrB), ldB, mpB,nqB)
+      endif
 c
 c**** Fill ScaLAPACK matrix descriptors for A and B
       call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4,
@@ -1051,8 +1308,10 @@ c******************************************************************
 
       if (info.eq.0) then
 c****    copy solution matrix back to g_B
-         call ga_from_SL(g_B, dimB1, dimB2, nb, nb, dbl_mb(adrB),
+         if (.not.use_direct) then
+           call ga_from_SL(g_B, dimB1, dimB2, nb, nb, dbl_mb(adrB),
      &                   mpB, ldB, nqB)
+         endif
       else
          call ga_error(' ga_llt_s: PDPOTRS failed: ', -info)
       endif
@@ -1060,8 +1319,17 @@ c****    copy solution matrix back to g_B
 c**** deallocate work/SL arrays
 c**** note that should not be others MA allocations
 c**** between ga_llt_f and ga_llt_s beside A and B      
-      if (elemB.ne.0) status = ma_pop_stack(hB)
-      if (elemA.ne.0) status = ma_pop_stack(hA)
+      if (.not.use_direct) then
+        if (elemB.ne.0) status = ma_pop_stack(hB)
+        if (elemA.ne.0) status = ma_pop_stack(hA)
+      endif
+c
+#endif
+      if (use_direct) then
+        call slexit3
+      else
+        call slexit
+      endif
 c
       call ga_sync()
       end
@@ -1119,6 +1387,8 @@ c****
       logical oactive
       INTGR4 one4,zero4
       parameter(zero4=0,one4=1)
+      integer alen, block_dims(2),blocks(2)
+      logical use_direct
 c****      
       data nb /NB_/
 c
@@ -1137,59 +1407,82 @@ c**** Check that is actually a square matrix
          call ga_error('ga_llt_i: g_A must be a square matrix ', 1)
       endif
 c
+c   Determine whether or not to use GA data directly
+c
+      use_direct = ga_uses_proc_grid(g_A)
+      if (use_direct) then
+        call ga_get_block_info(g_A,blocks,block_dims)
+        if (block_dims(1).ne.block_dims(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (use_direct) then
+        nb = block_dims(1)
+      endif
+c
       n = dimA1
 
 c**** Initialize SL Interface
-      call SLinit()
+      if (use_direct) then
+        call SLinit3(g_A)
+      else
+        call SLinit()
+      endif
 c      oactive=iam.lt.maxproc
       oactive=.true.
       call ga_sync()
       if(oactive) then
 c**** Find SBS format parameters
-      mpA = numroc(n, nb, myrow, zero4, nprow)
-      nqA = numroc(n, nb, mycol, zero4, npcol)
-      ldA = max(one4, mpA)
+        mpA = numroc(n, nb, myrow, zero4, nprow)
+        nqA = numroc(n, nb, mycol, zero4, npcol)
+        ldA = max(one4, mpA)
 
 
 c**** Allocate A or retrieve it from ga_llt_f call
-      elemA = mpA * nqA
-      if (elemA.ne.0) then
-         status = .true.
-         if (hsA.eq.-1) then
-            status = ma_push_get(MT_DBL, elemA, 'A', hA, adrA)
-            if (.not.status)
-     &           call ga_error(' ga_llt_i: mem alloc failed A ', -1)
+        elemA = mpA * nqA
+           if (use_direct) then
+             call nga_access_block_segment(g_A,me,adrA,alen)
+           else
+             if (elemA.ne.0) then
+                status = .true.
+                if (hsA.eq.-1) then
+                   status = ma_push_get(MT_DBL, elemA, 'A', hA, adrA)
+                   if (.not.status)
+     &               call ga_error(' ga_llt_i: mem alloc failed A ', -1)
 c****       copy g_A to A using SBS SL format
-            call ga_to_SL(g_A, n, n, nb, nb, dbl_mb(adrA),
-     &           ldA, mpA, nqA)
-         else
-            hA = hsA
-            status = ma_get_index(hA, adrA)
-            if (.not.status)
-     &           call ga_error(' ga_llt_i: get index failed A ', -1)
-c****       if hsA was given the SBS SL conversion is avoided
-         endif
-      endif
+                   call ga_to_SL(g_A, n, n, nb, nb, dbl_mb(adrA),
+     &                           ldA, mpA, nqA)
+                else
+                   hA = hsA
+                   status = ma_get_index(hA, adrA)
+                   if (.not.status)
+     &               call ga_error(' ga_llt_i: get index failed A ', -1)
+c****         if hsA was given the SBS SL conversion is avoided
+                endif
+             endif
+           endif
 
 
 c**** Fill ScaLAPACK matrix descriptor for A
-      call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4,
-     &     iSLctxt, ldA, info)
-      if (info.ne.0) call ga_error(' ga_llt_i: descinit A failed ',
-     &     -info)
+        call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4,
+     &       iSLctxt, ldA, info)
+        if (info.ne.0) call ga_error(' ga_llt_i: descinit A failed ',
+     &       -info)
 
 c**** CALL ScaLAPACK PDPOTRI matrix inverter **********************
-      call PDPOTRI(uplo, n, dbl_mb(adrA), one4, one4, descA, info)
+        call PDPOTRI(uplo, n, dbl_mb(adrA), one4, one4, descA, info)
 c******************************************************************
 
-      if (info.eq.0) then
+        if (.not.use_direct) then
+          if (info.eq.0) then
 c****    Copy the inverse matrix back to A
 c****    and symmetrize it         
-         call ga_from_SL(g_A, dimA1, dimA2, nb, nb, dbl_mb(adrA),
-     &        mpA, ldA, nqA)
+             call ga_from_SL(g_A, dimA1, dimA2, nb, nb, dbl_mb(adrA),
+     &            mpA, ldA, nqA)
          
-      endif
-      if(elemA.ne.0) status = ma_pop_stack(hA)
+          endif
+          if(elemA.ne.0) status = ma_pop_stack(hA)
+        endif
       endif
       call ga_sync()
 #if 0
@@ -1432,8 +1725,15 @@ c
       parameter(zero4=0,one4=1,two4=2)
 
       double precision pdlamch,dumm
-      external pdlamch
       INTGR4 iceil
+      logical uses_sl_A, uses_sl_B
+      integer alen, blen
+      integer block_dims_A(2),block_dims_B(2),blocks(2)
+      integer gridA(2), gridB(2)
+      logical use_direct
+
+      external pdlamch
+      integer i,j
 
 c     
 c     processor dependent; machine dependent
@@ -1466,13 +1766,49 @@ c
      %     'ga_pdsyev: matrix B not square ',0)
       if(dimb1.ne.n) call ga_error(
      %     'ga_pdsyev: size matrix A and B differ ',0)
-      
-
+      use_direct = .true.
+      uses_sl_A = ga_uses_proc_grid(g_a)
+      uses_sl_B = .false.
+      if (uses_sl_A) then
+        uses_sl_B = ga_uses_proc_grid(g_b)
+      endif
+      if ((.not.uses_sl_A).or.(.not.uses_sl_B)) then
+        use_direct = .false.
+      endif
+      if (uses_sl_A) then
+        call ga_get_block_info(g_a,blocks,block_dims_A)
+        if (block_dims_A(1).ne.block_dims_A(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (uses_sl_B) then
+        call ga_get_block_info(g_b,blocks,block_dims_B)
+        if (block_dims_B(1).ne.block_dims_B(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (use_direct.and.(block_dims_A(1).ne.block_dims_B(1))) then
+        use_direct = .false.
+      endif
+      if (use_direct) then
+        call ga_get_proc_grid(g_a,gridA)
+        call ga_get_proc_grid(g_b,gridB)
+        if (gridA(1).ne.gridB(1).or.gridA(2).ne.gridB(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (use_direct) then
+        nb = block_dims_A(2)
+      endif
 c     
 c     
 c***  initialize SL interface
 c     
-      call SLinit2(n)
+      if (use_direct) then
+        call SLinit4(g_a)
+      else
+        call SLinit2(n)
+      endif
       oactive=iam.lt.maxproc
       call ga_sync
       if (oactive) then
@@ -1480,15 +1816,15 @@ c
 c***  find SBS format parameters
 c     
 c     
-      mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
-      nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
+        mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
+        nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
 c     
-      mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
-      nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
+        mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
+        nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
 c     
 c     
-      lda = max(one4,mpA)
-      ldb = max(one4,mpB)
+        lda = max(one4,mpA)
+        ldb = max(one4,mpB)
 c     
 c     
 c     let scalapack check for errors
@@ -1497,40 +1833,46 @@ c     should check to see if this is a compute node
 c     check to see how this works in the new data server model
 c     
 c     
-         elemA= mpA*nqA
-         status = .true.
-         if(elemA.ne.0)status =
+         if (use_direct) then
+           call nga_access_block_segment(g_a,me,adra,alen)
+           call nga_access_block_segment(g_b,me,adrb,blen)
+         else
+           elemA= mpA*nqA
+           status = .true.
+           if (elemA.ne.0)status =
      $        ma_push_get(MT_DBL,elemA,'a',ha,adra)
-         if(.not.status) 
+           if (.not.status) 
      &        call ga_error('ga_pdsyev: mem alloc failed A ', -1)
 c     
-         elemB= mpB*nqB
+           elemB= mpB*nqB
 c     
-         if(elemB.ne.0)status =
+           if (elemB.ne.0)status =
      $        ma_push_get(MT_DBL,elemB,'b',hb,adrb)
-         if(.not.status) 
+           if (.not.status) 
      &        call ga_error('ga_pdsyev: mem alloc failed B ', -1)
+         endif
 c     
 c     
 c***  copy g_a to A using the block cyclic scalapack format 
 c     
-         
-         call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
+         if (.not.use_direct) then 
+           call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
      $        dbl_mb(adrA), lda, mpA, nqA)
+         endif
 c     
 c***  fill SCALAPACK matrix descriptors
-c     
+c
          call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4,
      $        islctxt2, lda, info)
          info8=info
-         if(info8.ne.0) call ga_error(' ga_pdsyev: descinit A failed ',
-     .        -info8)
+         if (info8.ne.0)
+     $      call ga_error(' ga_pdsyev: descinit A failed ',-info8)
 c     
          call descinit(descB, dimB1, dimB2, nb, nb, zero4, zero4,
      .        islctxt2, ldb, info)
          info8=info
-         if(info8.ne.0) call ga_error(' ga_pdsyev: descinit B failed ',
-     .        -info8)
+         if (info8.ne.0)
+     $      call ga_error(' ga_pdsyev: descinit B failed ',-info8)
 c     
          jobz = 'V'
          uplo = 'L'
@@ -1557,11 +1899,11 @@ c     lwmin
          lcwork=max(lcwork,5*n+n*ldc+1+max(2*n-2,8192))
 #endif
 c     
-         if(lcwork.ne.0)
+         if (lcwork.ne.0)
      $        status = ma_push_get(MT_DBL, lcwork ,
      $        'cwork',hcwork,adrcwork)
-         if(.not.status) 
-     &        call ga_error('ga_pdsyev: mem alloc failed cwork  ', -1)
+         if (.not.status) 
+     &      call ga_error('ga_pdsyev: mem alloc failed cwork  ', -1)
 c     
 c     
          lcwork4=lcwork
@@ -1583,15 +1925,19 @@ c
 c     
 c***  copy solution matrix back to g_c
 c     
-         call ga_from_SL2(g_b, dimA1, dimB2,
+         if (.not.use_direct) then
+           call ga_from_SL2(g_b, dimA1, dimB2,
      $        nb, nb, dbl_mb(adrB),
      &        mpB, ldb, nqB)
+         endif
 c     
 c***  deallocate work/SL arrays
 c     
          if ( lcwork .ne. 0 ) status = ma_pop_stack(hcwork)
-         if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
-         if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
+         if (.not.use_direct) then
+           if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
+           if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
+         endif
       endif
 c     
       call ga_sync()
@@ -1599,6 +1945,11 @@ c
 c     broadcast evals
          dblsize=ma_sizeof(MT_DBL,1,MT_BYTE)*dima1
          call ga_brdcst(1688,eval,dblsize,0)
+      endif
+      if (use_direct) then
+        call SLexit4
+      else
+        call SLexit2
       endif
       return
       end
@@ -1920,7 +2271,7 @@ c******************************************************************
 #include "scalapack.fh"
 c     
       integer g_a               ! matrix A
-      integer g_b               ! matrix B
+      integer g_b               ! matrix B (eigenvectors)
       integer g_s               ! metric
 c
 c all eigenvalues are real
@@ -1933,9 +2284,9 @@ c
 c
       character*1 jobz, range, uplo
 c
-      integer ha, adra          !A
-      integer hb, adrb          !B
-      integer hs, adrs          !S
+      integer ha, adra          !A (input)
+      integer hb, adrb          !B (output)
+      integer hs, adrs          !S (input)
 c
 c
       logical oactive           ! true if this process participates
@@ -1980,8 +2331,16 @@ c
 
       INTGR4 iceil
       double precision pdlamch
+      integer i
+      logical use_direct
+      logical uses_sl_A, uses_sl_B, uses_sl_S
+      integer alen, blen, slen
+      integer block_dims_A(2),block_dims_B(2),block_dims_S(2),blocks(2)
+      integer gridA(2), gridB(2), gridS(2)
+
       external pdlamch
       external iceil
+      integer j
 !      intrinsic max
 c     
 c     processor dependent; machine dependent
@@ -1996,7 +2355,7 @@ c***  check GA info for input arrays
 c     
       call ga_check_handle(g_a, 'ga_pdsygv: a')
       call ga_check_handle(g_b, 'ga_pdsygv: b')
-      call ga_check_handle(g_s, 'ga_pdsygv: b')
+      call ga_check_handle(g_s, 'ga_pdsygv: s')
 c     
       call ga_inquire(g_a, typeA, dimA18, dimA28)
       call ga_inquire(g_b, typeB, dimB18, dimB28)
@@ -2018,14 +2377,61 @@ c
      %     'ga_pdsygv: matrix S not square ',0)
       if(dims1.ne.n) call ga_error(
      %     'ga_pdsygv: size matrix A and S differ ',0)
-      
-
 c     
+      use_direct = .true.
+      uses_sl_A = ga_uses_proc_grid(g_a)
+      uses_sl_B = .false.
+      uses_sl_S = .false.
+      if (uses_sl_A) then
+        uses_sl_B = ga_uses_proc_grid(g_b)
+        uses_sl_S = ga_uses_proc_grid(g_s)
+      endif
+      if ((.not.uses_sl_A).or.(.not.uses_sl_B)) then
+        use_direct = .false.
+      endif
+      if (uses_sl_A) then
+        call ga_get_block_info(g_a,blocks,block_dims_A)
+        if (block_dims_A(1).ne.block_dims_A(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (uses_sl_B) then
+        call ga_get_block_info(g_b,blocks,block_dims_B)
+        if (block_dims_B(1).ne.block_dims_B(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (uses_sl_S) then
+        call ga_get_block_info(g_s,blocks,block_dims_S)
+        if (block_dims_S(1).ne.block_dims_S(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (use_direct.and.((block_dims_A(1).ne.block_dims_B(1)).or.
+     %                   (block_dims_B(1).ne.block_dims_S(1)))) then
+        use_direct = .false.
+      endif
+      if (use_direct) then
+        call ga_get_proc_grid(g_a,gridA)
+        call ga_get_proc_grid(g_b,gridB)
+        call ga_get_proc_grid(g_s,gridS)
+        if ((gridA(1).ne.gridB(1).or.gridA(2).ne.gridB(2)).or.
+     %      (gridA(1).ne.gridS(1).or.gridA(2).ne.gridS(2))) then
+          use_direct = .false.
+        endif
+      endif
+      if (use_direct) then
+        nb = block_dims_A(2)
+      endif
 c     
 c***  initialize SL interface
 c     
 !      call SLinit()
-      call SLinit2(n)
+      if (use_direct) then
+        call SLinit4(g_a)
+      else
+        call SLinit2(n)
+      endif
       oactive=iam.lt.maxproc
       call ga_sync
       if (oactive) then
@@ -2033,40 +2439,46 @@ c
 c***  find SBS format parameters
 c     
 c     
-      mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
-      nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
+         mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
+         nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
 c     
-      mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
-      nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
+         mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
+         nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
 c     
-      mps = numroc(dims1, nb, myrow2, zero4, nprow2)
-      nqs = numroc(dims2, nb, mycol2, zero4, npcol2) 
+         mps = numroc(dims1, nb, myrow2, zero4, nprow2)
+         nqs = numroc(dims2, nb, mycol2, zero4, npcol2) 
 c     
 c     
-      lda = max(one4,mpA)
-      ldb = max(one4,mpB)
-      lds = max(one4,mps)
+         lda = max(one4,mpA)
+         ldb = max(one4,mpB)
+         lds = max(one4,mps)
 c     
 c     
 c     let scalapack check for errors
 c     
-         elemA= mpA*nqA
-         status = .true.
-         if(elemA.ne.0)            status =
+         if (use_direct) then
+           call nga_access_block_segment(g_a, me, adra, alen)
+           call nga_access_block_segment(g_b, me, adrb, blen)
+           call nga_access_block_segment(g_s, me, adrs, slen)
+         else
+           elemA= mpA*nqA
+           status = .true.
+           if(elemA.ne.0)            status =
      $        ma_push_get(MT_DBL,elemA,'a',ha,adra)
-         if(.not.status) 
+           if(.not.status) 
      &        call ga_error('ga_pdsygv: mem alloc failed A ', elema)
 c     
-         elemB= mpB*nqB
-         if(elemB.ne.0)status =
+           elemB= mpB*nqB
+           if(elemB.ne.0)status =
      $        ma_push_get(MT_DBL,elemB,'b',hb,adrb)
-         if(.not.status) 
+           if(.not.status) 
      &        call ga_error('ga_pdsygv: mem alloc failed B ', -1)
-         elems= mps*nqs
-         if(elems.ne.0)status =
+           elems= mps*nqs
+           if(elems.ne.0)status =
      $        ma_push_get(MT_DBL,elems,'s',hs,adrs)
-         if(.not.status) 
+           if(.not.status) 
      &        call ga_error('ga_pdsygv: mem alloc failed S ', -1)
+         endif
 c     
          ngaps = nprow2*npcol2
          if(ngaps.ne.0)status =
@@ -2093,13 +2505,15 @@ c
 c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
 c     
          
-         call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
-     $        dbl_mb(adrA), lda, mpA, nqA)
+         if (.not.use_direct) then
+           call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
+     $          dbl_mb(adrA), lda, mpA, nqA)
 c     
-         call ga_to_SL2(g_b, dimB1, dimB2, nb,nb,
-     $        dbl_mb(adrB), ldb, mpB, nqB)
-         call ga_to_SL2(g_s, dims1, dims2, nb,nb,
-     $        dbl_mb(adrs), ldb, mps, nqs)
+           call ga_to_SL2(g_b, dimB1, dimB2, nb,nb,
+     $          dbl_mb(adrB), ldb, mpB, nqB)
+           call ga_to_SL2(g_s, dims1, dims2, nb,nb,
+     $          dbl_mb(adrs), ldb, mps, nqs)
+         endif
 c     
 c     
 c***  fill SCALAPACK matrix descriptors
@@ -2195,9 +2609,11 @@ c
 c***  copy solution matrix back to g_c
 c     
 c     
-         call ga_from_SL2(g_b, dimA1, dimB2,
-     $        nb, nb, dbl_mb(adrB),
-     &        mpB, ldb, nqB)
+         if (.not.use_direct) then
+           call ga_from_SL2(g_b, dimA1, dimB2,
+     $          nb, nb, dbl_mb(adrB),
+     &          mpB, ldb, nqB)
+         endif
 c     
      
 c     
@@ -2208,9 +2624,11 @@ c
          if ( if .ne. 0 ) status = ma_pop_stack(hfail)
          if ( iclu .ne. 0 ) status = ma_pop_stack(hclustr)
          if ( ngaps.ne.0 ) status = ma_pop_stack(hgap)
-         if ( elemS .ne. 0 ) status = ma_pop_stack(hs)
-         if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
-         if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
+         if (.not.use_direct) then
+           if ( elemS .ne. 0 ) status = ma_pop_stack(hs)
+           if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
+           if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
+         endif
       endif
 c     
       call ga_sync()
@@ -2218,6 +2636,11 @@ c
 c     broadcast evals
          dblsize=ma_sizeof(MT_DBL,1,MT_BYTE)*dima1
          call ga_brdcst(1688,eval,dblsize,0)
+      endif
+      if (use_direct) then
+        call SLexit4
+      else
+        call SLexit2
       endif
       return
       end
@@ -2278,6 +2701,12 @@ c
 
       double precision pdlamch,dum
       INTGR4 iceil,indxg2p
+      logical uses_sl_A, uses_sl_B
+      integer alen, blen
+      integer block_dims_A(2),block_dims_B(2),blocks(2)
+      integer gridA(2), gridB(2)
+      logical use_direct
+
       external pdlamch,iceil,indxg2p
 c     
 c     processor dependent; machine dependent
@@ -2304,20 +2733,57 @@ c
       dimb1=dimb18
       dimb2=dimb28
       n=dima1
+
       if(dimA1.ne.dima2) call ga_error(
      %     'ga_pdsyevd: matrix A not square ',0)
       if(dimb1.ne.dimb2) call ga_error(
      %     'ga_pdsyevd: matrix B not square ',0)
       if(dimb1.ne.n) call ga_error(
      %     'ga_pdsyevd: size matrix B and B differ ',0)
-      
-
+      use_direct = .true.
+      uses_sl_A = ga_uses_proc_grid(g_a)
+      uses_sl_B = .false.
+      if (uses_sl_A) then
+        uses_sl_B = ga_uses_proc_grid(g_b)
+      endif
+      if ((.not.uses_sl_A).or.(.not.uses_sl_B)) then
+        use_direct = .false.
+      endif
+      if (uses_sl_A) then
+        call ga_get_block_info(g_a,blocks,block_dims_A)
+        if (block_dims_A(1).ne.block_dims_A(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (uses_sl_B) then
+        call ga_get_block_info(g_b,blocks,block_dims_B)
+        if (block_dims_B(1).ne.block_dims_B(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (use_direct.and.(block_dims_A(1).ne.block_dims_B(1))) then
+        use_direct = .false.
+      endif
+      if (use_direct) then
+        call ga_get_proc_grid(g_a,gridA)
+        call ga_get_proc_grid(g_b,gridB)
+        if (gridA(1).ne.gridB(1).or.gridA(2).ne.gridB(2)) then
+          use_direct = .false.
+        endif
+      endif
+      if (use_direct) then
+        nb = block_dims_A(2)
+      endif
 c     
 c     
 c***  initialize SL interface
 c     
 !      call SLinit()
-      call SLinit2(n)
+      if (use_direct) then
+        call SLinit4(g_a)
+      else
+        call SLinit2(n)
+      endif
       oactive=iam.lt.maxproc
       call ga_sync
       if (oactive) then
@@ -2343,26 +2809,33 @@ c     check to see how this works in the new data server model
 c     
 c     
 c     
-      elemA= mpA*nqA
-      status = .true.
-      if(elemA.ne.0)status =
+      if (use_direct) then
+        call nga_access_block_segment(g_a,me,adra,alen)
+        call nga_access_block_segment(g_b,me,adrb,blen)
+      else
+        elemA= mpA*nqA
+        status = .true.
+        if(elemA.ne.0)status =
      $     ma_push_get(MT_DBL,elemA,'a',ha,adra)
-      if(.not.status) 
+        if(.not.status) 
      &     call ga_error('ga_pdsyevd: mem alloc failed A ', -1)
 c     
-      elemB= mpB*nqB
+        elemB= mpB*nqB
 c     
-      if(elemB.ne.0)status =
+        if(elemB.ne.0)status =
      $     ma_push_get(MT_DBL,elemB,'b',hb,adrb)
-      if(.not.status) 
+        if(.not.status) 
      &     call ga_error('ga_pdsyevd: mem alloc failed B ', -1)
+      endif
 c     
 c     
 c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
 c     
          
-      call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
+      if (.not.use_direct) then
+        call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
      $     dbl_mb(adrA), lda, mpA, nqA)
+      endif
 c     
 c     
 c***  fill SCALAPACK matrix descriptors
@@ -2446,9 +2919,11 @@ c
 c     
 c***  copy solution matrix back to g_b
 c     
-      call ga_from_SL2(g_b, dimA1, dimB2,
-     $     nb, nb, dbl_mb(adrB),
-     &     mpB, ldb, nqB)
+      if (.not.use_direct) then
+        call ga_from_SL2(g_b, dimA1, dimB2,
+     $       nb, nb, dbl_mb(adrB),
+     &       mpB, ldb, nqB)
+      endif
 c     
 c     
 c     
@@ -2456,8 +2931,10 @@ c***  deallocate work/SL arrays
 c     
       if ( lcwork .ne. 0 ) status = ma_pop_stack(hcwork)
       if ( liwork .ne. 0 ) status = ma_pop_stack(hiwork)
-      if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
-      if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
+      if (.not.use_direct) then
+        if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
+        if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
+      endif
 c     
       endif
       call ga_sync()

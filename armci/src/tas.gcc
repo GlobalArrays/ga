@@ -1,8 +1,9 @@
+
 #ifdef __alpha
 #   include "tas-alpha.h"
 #elif defined(__i386__) || defined(__x86_64__)
 #   include "tas-i386.h"
-#elif defined(__ppc__)
+#elif defined(__ppc__) || defined(__PPC__) || defined(__PPC)
 #   define PT_EI inline
 #   include "tas-ppc.h"
 #   define testandset(x) (! __compare_and_swap((long int *)(x),0,1))

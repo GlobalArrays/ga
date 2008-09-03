@@ -1,4 +1,4 @@
-/*$Id: armci-vapi.h,v 1.22 2007-10-30 02:04:53 manoj Exp $ */
+/*$Id: armci-vapi.h,v 1.21.2.1 2007-03-06 19:50:24 vinod Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 
@@ -44,6 +44,10 @@ typedef struct {
     void *data_ptr;         /* pointer where the data should go */
     long ack;               /* header ack */
     void *ack_ptr;          /* pointer where the data should go */
+#if defined(PEND_BUFS)
+  unsigned int imm_msg:1;
+  unsigned int data_len:31;
+#endif
 } msg_tag_t;
 
 typedef struct {
@@ -109,6 +113,43 @@ typedef struct {
 	    int myindex;
 } rdescr_t;
 
+#if defined(PEND_BUFS)
+#ifdef OPENIB
+/* typedef struct { */
+/*   struct ibv_recv_wr  dscr; */
+/*   struct ibv_sge      sg_entry; */
+/* } IMMBUF_NW_T; */
+/* typedef struct { */
+/*   struct ibv_sge sg_entry; */
+/*   struct ibv_recv_wr rdscr; */
+/*   struct ibv_send_wr sdscr; */
+/* } PENDBUF_NW_T; */
+#define IMMBUF_NW_T 	    \
+  struct ibv_recv_wr  dscr; \
+  struct ibv_sge sg_entry;  \
+  int send_pending; 
+#define PENDBUF_NW_T        \
+  struct ibv_sge sg_entry;  \
+  struct ibv_recv_wr rdscr; \
+  struct ibv_send_wr sdscr; 
+
+#define IS_IMM_MSG(msginfo) ((msginfo).tag.imm_msg)
+
+void armci_complete_immbuf(void *vbuf);
+void armci_complete_pendbuf(void *buf);
+/*Note that start_put and start_get cannot report completion from
+  within. They have to just return and report completion later.  
+ */
+void armci_pbuf_start_put(void *src, void *dst, int bytes, int proc,
+			  int bufid);
+void armci_pbuf_start_get(void *msg_info,
+			  void *src, void *dst, int bytes, int proc, 
+			  int bufid);
+#else
+#error "PEND_BUFS only implemented for OPENIB"
+#endif
+#endif
+
 void armci_client_nbcall_complete(sr_descr_t *,int,int);
 void armci_vapi_set_mark_buf_send_complete(int);
 
@@ -124,6 +165,13 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define VBUF_DLEN 4*64*1023
 #define MSG_BUFLEN_DBL ((VBUF_DLEN)>>3)
 
+#if defined(PEND_BUFS)
+#define IMM_BUF_NUM_DEFAULT 16
+#define IMM_BUF_LEN_DEFAULT 4096
+#define PENDING_BUF_NUM_DEFAULT 20
+#define PENDING_BUF_LEN_DEFAULT (VBUF_DLEN)
+#endif
+
 #ifdef PIPE_BUFSIZE
 #  define STRIDED_GET_BUFLEN_DBL 31*1024
 #  define STRIDED_GET_BUFLEN (STRIDED_GET_BUFLEN_DBL<<3)
@@ -134,6 +182,7 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define BALANCE_BUFFERS
 #ifdef BALANCE_BUFFERS
 #  define BALANCE_FACTOR 1.6
+/* #  define BALANCE_FACTOR 2.0 */
 #  define BALANCE_BUFSIZE 25000
 #endif
 
@@ -150,7 +199,7 @@ void armci_vapi_set_mark_buf_send_complete(int);
 
 #define CLEAR_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op) armci_vapi_complete_buf((armci_vapi_field_t *)(&(_field)),(_snd),(_rcv),(_to),(_op));_snd=0;_rcv=0;_to=0
 
-#define TEST_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op,_ret)
+#define TEST_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op,_pret) armci_vapi_test_buf((armci_vapi_field_t *)(&(_field)),(_snd),(_rcv),(_to),(_op),(_pret))
 
 #define CLIENT_BUF_BYPASS 1
 
@@ -165,11 +214,17 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #  define CLEAR_HNDL_FIELD(_x) _x=NULL
 #endif
 
-
+/* #define DIRECT_PUT_MIN_SIZE 8192 */
+#define DIRECT_PUT_MIN_SIZE 0
 
 #define LONG_GET_THRESHOLD 2147483648
 #define LONG_GET_THRESHOLD_STRIDED 2147483648
+#ifndef ARMCI_STAMP
+#error "ARMCI_STAMP used to define ARMCI_VAPI_COMPLETE not found!"
 #define ARMCI_VAPI_COMPLETE 1088451863
+#else
+#define ARMCI_VAPI_COMPLETE ARMCI_STAMP
+#endif
 #define ARMCI_POST_SCATTER 1000000001
 #define ARMCI_VAPI_CLEAR 0
 #ifdef MELLANOX
@@ -177,8 +232,10 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define VAPI_SGPUT_MIN_COLUMN 720
 #endif
 #ifdef OPENIB
-#define VAPI_SGGET_MIN_COLUMN 2147483648
+/* #define VAPI_SGGET_MIN_COLUMN 2147483648 */
 #define VAPI_SGPUT_MIN_COLUMN 2147483648
+#define VAPI_SGGET_MIN_COLUMN 10
+/* #define VAPI_SGPUT_MIN_COLUMN 720 */
 #endif
 #define DSCRID_SCATTERCLIENT 70000
 #define DSCRID_SCATTERCLIENT_END 70000+9999
@@ -186,6 +243,22 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define MAX_PENDING 32
 
 #define HAS_RDMA_GET
+
+#if defined(OPENIB)
+#if 0
+#define PUT_NO_SRV_COPY /*server rdma-s from to client buffers (in
+			  buffers.c) to
+			  remote memory (bypassing
+			  servers intermediate buffers) when possible*/
+#define GET_NO_SRV_COPY /*server rdma-s from remote memory to client
+			  buffers (in buffers.c) (bypassing server
+			  intermediate buffers) when possible*/ 
+#endif
+#define GET_STRIDED_COPY_PIPELINED /*client copies data from buffers
+				     to user memory in segments rather
+				     than waiting for all the data*/
+#define GET_STRIDED_COPY_PIPELINED_SIZE (1*1024) /*size of each segment*/
+#endif
 
 #endif /* _VAPI_CONST_H */
 
