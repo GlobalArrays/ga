@@ -105,7 +105,7 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #  define _SHMMAX (1024)  /* memory in KB */
 #elif defined(SGI64) || defined(AIX) || defined(CONVEX)
 #  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)1024*1024)
+#  define _SHMMAX ((unsigned long)512*1024)
 #elif defined(SGI) && !defined(SGI64)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)128*1024)
@@ -1022,7 +1022,10 @@ static char *temp;
     region_list[reg].addr = temp; 
     region_list[reg].attached = 1;
     region_list[reg].sz= size;
-
+#if defined(OPENIB)
+    /*SK: Tested only for OPENIB*/
+    armci_region_register_loc(temp, size);
+#endif
   }
 
   if(STAMP)
@@ -1090,7 +1093,7 @@ size_t sz = (size_t)size;
          printf("%d:allocate:attach:id=%d paddr=%p size=%ld\n",armci_me,id,temp,size);
          fflush(stdout);
        }
-#if 1
+#if !defined(AIX)
        /* delete segment id so that OS cleans it when all attached processes are gone */
        if(shmctl( id, IPC_RMID, (struct shmid_ds *)NULL))
           fprintf(stderr,"failed to remove shm id=%d\n",id);
