@@ -83,8 +83,8 @@ extern int armci_post_descriptor(ptl_md_t *md);
 extern int armci_prepost_descriptor(void* start, long bytes);
 extern ptl_size_t armci_get_offset(ptl_md_t md, void *ptr,int proc);
 extern int armci_get_md(void * start, size_t bytes , ptl_md_t * md, ptl_match_bits_t * mb);
-extern void armci_portals_put(int,void *,void *,size_t,void *,int );
-extern void armci_portals_get(int,void *,void *,size_t,void *,int );
+extern void armci_portals_put(int,void *,void *,size_t,void **,int );
+extern void armci_portals_get(int,void *,void *,size_t,void **,int );
 extern void comp_desc_init();
 extern int armci_client_complete(ptl_event_kind_t *evt,int proc_id, int nb_tag ,comp_desc * cdesc);
 

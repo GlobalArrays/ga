@@ -193,7 +193,7 @@ class GAServices {
    GlobalArray * createGA_Ghosts(int type, int ndim, int dims[], 
 				 int width[], char *array_name, int map[], 
 				 int nblock[]);
-  
+
   /**
    * @param lenbuf      - length of buffer      [input]
    * @param buf[lenbuf] - data                  [input/output]
@@ -444,7 +444,7 @@ class GAServices {
    *
    * @param nbhandle    - nonblocking handle                         [input]
    */
-  void nbWait(int *nbhandle);
+  void nbWait(GANbhdl *nbhandle);
 
   /**
    * Returns the GA process id (0, ..., ga_Nnodes()-1) of the requesting 
@@ -471,10 +471,25 @@ class GAServices {
   void printStats();
   
   /**
+   * @param dbg       - value to set internal flag           [input]
+   *
+   * This function sets an internal flag in the GA library to either true or
+   * false. The value of this flag can be recovered at any time using the
+   * getDebug function. The flag is set to false when the the GA library
+   * is initialized. This can be useful in a number of debugging situations,
+   * especially when examining the behavior of routines that are called in
+   * multiple locations in a code. 
+   *
+   * This is a local operation.
+   */
+  void setDebug(int dbg);
+
+  /**
    * @param limit    - the amount of memory in bytes per process    [input]
    * 
-   * Sets the amount of memory to be used (in bytes) per process. 
-   * \n This is a local operation. 
+   * Sets the amount of memory to be used (in bytes) per process.
+   * 
+   * This is a local operation. 
    */
   void setMemoryLimit(size_t limit);
   
@@ -511,6 +526,23 @@ class GAServices {
    * Returns "1" if uses fortran API, else returns "0"
    */
   int usesFAPI();
+      
+  /**
+   * This function return a wall (or elapsed) time on the calling
+   * processor. Returns time in seconds representing elapsed wall-clock time
+   * since an arbitrary time in the past. Example:
+   *
+   *     double starttime, endtime;
+   *     starttime = GA::SERVICES.wtime();
+   *     {{.... code snippet to be timed ....}}
+   *     endtime   = GA::SERVICES.wtime();
+   *     printf("Time taken = %lf seconds\n", endtime-starttime);
+   *
+   * This is a local operation.
+   * This function is only available in release 4.1 or greater.
+   */
+  double wtime();
+   
 };
 
 

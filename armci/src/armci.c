@@ -643,7 +643,7 @@ int ARMCI_Init()
 #   if defined(DATA_SERVER) || defined(ELAN_ACC)
        if(armci_nclus >1) armci_start_server();
 #   endif
-#if defined(GM) || defined(VAPI)
+#if defined(GM) || defined(VAPI) || (defined(LAPI) && defined(LAPI_RDMA))
     /* initialize registration of memory */
     armci_region_init();
 #endif
@@ -705,6 +705,9 @@ void ARMCI_Finalize()
 
 #ifdef PORTALS
     armci_fini_portals();
+#endif
+#ifdef LAPI
+    armci_term_lapi();
 #endif
 #ifdef ALLOW_PIN
     free(armci_prot_switch_fence);

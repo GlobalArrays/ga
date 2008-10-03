@@ -43,7 +43,16 @@ class GlobalArray {
    */
   GlobalArray(int type, int ndim, int dims[], char *arrayname, int chunk[]);
   GlobalArray(int type, int ndim, int dims[], char *arrayname, int chunk[],
-              int p_handle);
+              GA::PGroup* p_handle);
+
+  /**
+   * "long" interface of above methods for large array creations 
+   */
+  GlobalArray(int type, int ndim, int64_t dims[], char *arrayname,
+              int64_t chunk[]);
+  GlobalArray(int type, int ndim, int64_t dims[], char *arrayname,
+              int64_t chunk[], GA::PGroup *p_handle);
+      
   
   /**
    * Creates an array by following the user-specified distribution and 
@@ -53,7 +62,7 @@ class GlobalArray {
    * for each dimension. The array indices start at 0. For example, the 
    * following figure demonstrates distribution of a 2-dimensional array 8x10 
    * on 6 (or more) processors. nblock[2]={3,2}, the size of map array is s=5 
-   * and array map contains the following elements map={0,2,8, 0, 5}. The 
+   * and array map contains the following elements map={0,2,6, 0, 5}. The 
    * distribution is nonuniform because, P1 and P4 get 20 elements each and 
    * processors P0,P2,P3, and P5 only 10 elements each. 
    *
@@ -77,8 +86,16 @@ class GlobalArray {
   GlobalArray(int type, int ndim, int dims[], char *arrayname, int block[],
 	      int maps[]);
   GlobalArray(int type, int ndim, int dims[], char *arrayname, int block[],
-	      int maps[], int p_handle);
+	      int maps[], GA::PGroup* p_handle);
   
+  /**
+   * "long" interface of above methods for large array creations 
+   */
+  GlobalArray(int type, int ndim, int64_t dims[], char *arrayname,
+              int64_t block[], int64_t maps[]);
+  GlobalArray(int type, int ndim, int64_t dims[], char *arrayname,
+              int64_t block[], int64_t maps[], GA::PGroup* p_handle);
+      
   /**
    * Creates an ndim-dimensional array with a layer of ghost cells around 
    * the visible data on each processor using the regular distribution 
@@ -113,9 +130,17 @@ class GlobalArray {
   GlobalArray(int type, int ndim, int dims[], int width[], char *arrayname, 
 	      int chunk[], char ghosts);
   GlobalArray(int type, int ndim, int dims[], int width[], char *arrayname, 
-	      int chunk[], int p_handle, char ghosts);
+	      int chunk[], GA::PGroup* p_handle, char ghosts);
   
+  /**
+   * "long" interface of above methods for large array creations 
+   */
+  GlobalArray(int type, int ndim, int64_t dims[], int64_t width[], char *arrayname, 
+	      int64_t chunk[], char ghosts);
+  GlobalArray(int type, int ndim, int64_t dims[], int64_t width[], char *arrayname, 
+	      int64_t chunk[], GA::PGroup* p_handle, char ghosts);
   
+
   /**
    * Creates an array with ghost cells by following the user-specified 
    * distribution and returns integer handle representing the array. 
@@ -156,7 +181,16 @@ class GlobalArray {
   GlobalArray(int type, int ndim, int dims[], int width[], char *arrayname, 
 	      int block[], int maps[], char ghosts);
   GlobalArray(int type, int ndim, int dims[], int width[], char *arrayname, 
-	      int block[], int maps[], int p_handle, char ghosts);
+	      int block[], int maps[], GA::PGroup* p_handle, char ghosts);
+
+  /**
+   * "long" interface of above methods for large array creations 
+   */
+  GlobalArray(int type, int ndim, int64_t dims[], int64_t width[], char *arrayname, 
+	      int64_t block[], int64_t maps[], char ghosts);
+  GlobalArray(int type, int ndim, int64_t dims[], int64_t width[], char *arrayname, 
+	      int64_t block[], int64_t maps[], GA::PGroup* p_handle, char ghosts);
+
   
   /**
    * Creates a new array by applying all the properties of another existing 
@@ -207,6 +241,11 @@ class GlobalArray {
    * @param alpha      - scale factor (double/DoubleComplex/long *) [input]
    */
   void acc(int lo[], int hi[], void *buf, int ld[], void *alpha) const;
+
+  /**
+   * "long" interface for accumulate operation on large arrays
+   */
+  void acc(int64_t lo[], int64_t hi[], void *buf, int64_t ld[], void *alpha) const;
   
   /**
    * Provides access to the specified patch of a global array. Returns 
@@ -233,6 +272,11 @@ class GlobalArray {
   void access(int lo[], int hi[], void *ptr, int ld[]) const;
 
   /**
+   * "long" interface of access() method for large array creations 
+   */
+  void access(int64_t lo[], int64_t hi[], void *ptr, int64_t ld[]) const;
+
+  /**
    * Provides access to the specified block of a global array that is using
    * simple block-cyclic data distribution. Returns array of leading
    * dimensions ld and a pointer to the first element in the patch. This
@@ -255,6 +299,11 @@ class GlobalArray {
    * @param ld[ndim-1]- leading dimensions for the pacth elements   [output]
    */
   void accessBlock(int idx, void *ptr, int ld[]) const;
+
+  /**
+   * "long" interface for accessBlock
+   */
+  void accessBlock(int64_t idx, void *ptr, int64_t ld[]) const;
 
   /**
    * Provides access to the specified block of a global array that is using
@@ -281,6 +330,11 @@ class GlobalArray {
   void accessBlockGrid(int index[], void *ptr, int ld[]) const;
 
   /**
+   * "long" interface for accessBlockGrid
+   */
+  void accessBlockGrid(int64_t index[], void *ptr, int64_t ld[]) const;
+
+  /**
    * Provides access to the local data of a global array that is using
    * either the simple or SCALAPACK type block-cyclic data distribution.
    * Returns the length of the local data block and a pointer to the first
@@ -298,16 +352,21 @@ class GlobalArray {
    * @param ptr        - points to location of first element         [output]
    * @param len        - length of locally held data                 [output]
    */
-  void accessBlockSegment(int index, void *ptr, int ld[]) const;
+  void accessBlockSegment(int index, void *ptr, int *len) const;
+
+  /**
+   * "long" interface for accessBlockSegment
+   */
+  void accessBlockSegment(int index, void *ptr, int64_t *len) const;
 
   /**
    * Provides access to the local patch of the  global array. Returns 
    * leading dimension ld and and pointer for the data.  This routine 
    * will provide access to the ghost cell data residing on each processor. 
-   * Calls to NGA_Access_ghosts should normally follow a call to  
-   * NGA_Distribution  that returns coordinates of the visible data patch 
+   * Calls to accessGhosts should normally follow a call to  
+   * distribution  that returns coordinates of the visible data patch 
    * associated with a processor. You need to make sure that the coordinates 
-   * of the patch are valid (test values returned from NGA_Distribution). 
+   * of the patch are valid (test values returned from distribution). 
    *    
    * You can only access local data. 
    * This is a local operation. 
@@ -322,6 +381,11 @@ class GlobalArray {
    *                     including ghost cells                    [output]
    */
   void accessGhosts(int dims[], void *ptr, int ld[]) const;
+
+  /**
+   * "long" interface for accessGhosts
+   */
+  void accessGhosts(int64_t dims[], void *ptr, int64_t ld[]) const;
   
   /**
    * @param g_a                                                [input]
@@ -340,6 +404,11 @@ class GlobalArray {
    * This is a  local operation. 
    */
   void accessGhostElement(void *ptr, int subscript[], int ld[]) const;
+
+  /**
+   * "long" interface for accessGhostElement
+   */
+  void accessGhostElement(void *ptr, int64_t subscript[], int64_t ld[]) const;
   
  /**
    * The arrays are aded together elemet-wise:
@@ -366,6 +435,13 @@ class GlobalArray {
   void addPatch (void *alpha, const GlobalArray * g_a, int alo[], int ahi[],
 		 void *beta,  const GlobalArray * g_b, int blo[], int bhi[],
 		 int clo[], int chi[]) const;
+
+  /**
+   * "long" interface for addPatch
+   */
+  void addPatch (void *alpha, const GlobalArray * g_a, int64_t alo[], int64_t ahi[],
+		 void *beta,  const GlobalArray * g_b, int64_t blo[], int64_t bhi[],
+		 int64_t clo[], int64_t chi[]) const;
   
  
   /**
@@ -416,6 +492,12 @@ class GlobalArray {
    */
   void copyPatch(char trans, const GlobalArray* ga, int alo[], int ahi[], 
 		 int blo[], int bhi[]) const;
+
+  /**
+   * "long" interface for copyPatch
+   */
+  void copyPatch(char trans, const GlobalArray* ga, int64_t alo[], int64_t ahi[], 
+		 int64_t blo[], int64_t bhi[]) const;
   
   /**
    * Computes element-wise dot product of the two arrays which must be of
@@ -437,6 +519,12 @@ class GlobalArray {
    */
   double ddotPatch(char ta, int alo[], int ahi[], const GlobalArray * g_a, 
 		   char tb, int blo[], int bhi[]) const;
+
+  /**
+   * "long" interface for ddotPatch
+   */
+  double ddotPatch(char ta, int64_t alo[], int64_t ahi[], const GlobalArray * g_a, 
+		   char tb, int64_t blo[], int64_t bhi[]) const;
   
   /** Deallocates the array and frees any associated resources. */
   void destroy();
@@ -463,6 +551,11 @@ class GlobalArray {
    * @param alpha, beta  - scale factors                            [input]
    */
   void dgemm(char ta, char tb, int m, int n, int k, double alpha,  
+	     const GlobalArray *g_a, const GlobalArray *g_b,double beta) const;
+  /**
+   * "long" interface for dgemm
+   */
+  void dgemm(char ta, char tb, int64_t m, int64_t n, int64_t k, double alpha,  
 	     const GlobalArray *g_a, const GlobalArray *g_b,double beta) const;
   
   /**
@@ -528,11 +621,21 @@ class GlobalArray {
    * @param hi[ndim]   - array of ending indices for array section  [input]
    */
   void distribution(int me, int* lo, int* hi) const;
+      
+  /**
+   * "long" interface of distribution() method for large array creations 
+   */
+  void distribution(int me, int64_t* lo, int64_t* hi) const;
 
   float fdot(const GlobalArray * g_a) const;
 
   float fdotPatch(char t_a, int alo[], int ahi[], const GlobalArray * g_b, 
 		  char t_b, int blo[], int bhi[]) const;
+  /**
+   * "long" interface for fdotPatch
+   */
+  float fdotPatch(char t_a, int64_t alo[], int64_t ahi[], const GlobalArray * g_b, 
+		  char t_b, int64_t blo[], int64_t bhi[]) const;
 
   /**
    * @param value   - pointer to the value of appropriate type 
@@ -551,6 +654,11 @@ class GlobalArray {
    * This is a collective operation. 
    */
   void fillPatch (int lo[], int hi[], void *val) const;
+
+  /**
+   * "long" interface for fillPatch
+   */
+  void fillPatch (int64_t lo[], int64_t hi[], void *val) const;
   
   /** 
    * Gathers array elements from a global array into a local array. 
@@ -569,6 +677,11 @@ class GlobalArray {
    * @param  subsarray[n][ndim]  - array of subscripts for each element [input]
    */
   void gather(void *v, int * subsarray[], int n) const;
+
+  /**
+   * "long" interface for gather
+   */
+  void gather(void *v, int64_t * subsarray[], int64_t n) const;
 
   /**
    * One-side operations. 
@@ -590,6 +703,11 @@ class GlobalArray {
   void get(int lo[], int hi[], void *buf, int ld[]) const;
 
   /**
+   * "long" interface of get() method for large array creations 
+   */
+  void get(int64_t lo[], int64_t hi[], void *buf, int64_t ld[]) const;
+
+  /**
    * The function retrieves the number of blocks along each coordinate dimension
    * and the dimensions of the individual blocks for a global array with a
    * block-cyclic data distribution.
@@ -601,7 +719,7 @@ class GlobalArray {
    * @param block_dims[ndim] - array containing block dimensions
    */
   void getBlockInfo(int num_blocks[], int block_dims[]);
-  
+
   /**
    * This function returns 1 if the global array has some dimensions for 
    * which the ghost cell width is greater than zero, it returns 0 otherwise. 
@@ -630,6 +748,13 @@ class GlobalArray {
    */
   long idotPatch(char ta, int alo[], int ahi[], const GlobalArray * g_a, 
 		 char tb, int blo[], int bhi[]) const;
+
+  /**
+   * "long" interface for idotPatch
+   */
+  long idotPatch(char ta, int64_t alo[], int64_t ahi[], const GlobalArray * g_a, 
+		 char tb, int64_t blo[], int64_t bhi[]) const;
+
   
   /** 
    * Returns data type and dimensions of the array. 
@@ -639,6 +764,11 @@ class GlobalArray {
    * @param dims - array of dimensions           [output]
    */
   void inquire(int *type, int *ndim, int dims[]) const;
+
+  /**
+   * "long" interface for inquire
+   */
+  void inquire(int *type, int *ndim, int64_t dims[]) const;
 
   /** 
    * Returns the name of an array represented by the handle g_a. 
@@ -682,6 +812,11 @@ class GlobalArray {
    * @param subscript[ndim]  element subscript    [output]
    */
   int locate(int subscript[]) const;
+
+  /**
+   * "long" interface for locate
+   */
+  int locate(int64_t subscript[]) const;
   
   /**
    * Return the list of the GA processes id that 'own' the data. Parts of the 
@@ -704,6 +839,11 @@ class GlobalArray {
    *                        section[output]
    */
   int locateRegion(int lo[], int hi[], int map[], int procs[]) const;
+
+  /**
+   * "long" interface for locateRegion
+   */
+  int locateRegion(int64_t lo[], int64_t hi[], int64_t map[], int procs[]) const;
 
   /**
    * @param trans   - transpose or not transpose [input]
@@ -755,6 +895,16 @@ class GlobalArray {
 		   int cilo, int cihi, int cjlo, int cjhi) const;
 
   /**
+   * "long" interface for matmulPatch
+   */
+  void matmulPatch(char transa, char transb, void* alpha, void *beta,
+		   const GlobalArray *g_a, 
+		   int64_t ailo, int64_t aihi, int64_t ajlo, int64_t ajhi,
+		   const GlobalArray *g_b, 
+		   int64_t bilo, int64_t bihi, int64_t bjlo, int64_t bjhi,
+		   int64_t cilo, int64_t cihi, int64_t cjlo, int64_t cjhi) const;
+
+  /**
    * N-dimensional Arrays:
    * @param g_a, g_b          global array                [input] 
    * @param alo, ahi          array of patch of g_a        [input]
@@ -780,6 +930,13 @@ class GlobalArray {
 		   const GlobalArray *g_a, int *alo, int *ahi,
 		   const GlobalArray *g_b, int *blo, int *bhi,
 		   int *clo, int *chi) const;
+  /**
+   * "long" interface for matmulPatch
+   */
+  void matmulPatch(char transa, char transb, void* alpha, void *beta,
+		   const GlobalArray *g_a, int64_t *alo, int64_t *ahi,
+		   const GlobalArray *g_b, int64_t *blo, int64_t *bhi,
+		   int64_t *clo, int64_t *chi) const;
 
   /**
    * This function merges all values in a patch of a mirrored array into
@@ -793,6 +950,12 @@ class GlobalArray {
    */
   void mergeDistrPatch(int alo[], int ahi[], GlobalArray *g_a,
                        int blo[], int bhi[]);
+
+  /**
+   * "long" interface for mergeDistrPatch
+   */
+  void mergeDistrPatch(int64_t alo[], int64_t ahi[], GlobalArray *g_a,
+                       int64_t blo[], int64_t bhi[]);
 
   /**
    * This function adds together all copies of a mirrored array so that all
@@ -817,7 +980,13 @@ class GlobalArray {
    * @param nbhandle          - nonblocking handle                     [output]
    */
   void nbAcc(int lo[], int hi[], void *buf, int ld[], void *alpha,
-             int *nbhandle);
+             GANbhdl *nbhandle);
+
+  /**
+   * "long" interface for non-blocking accumulate on large arrays
+   */
+  void nbAcc(int64_t lo[], int64_t hi[], void *buf, int64_t ld[], void *alpha,
+             GANbhdl *nbhandle);
   
   /**
    * Non-blocking get operation. This is function gets a data block from a
@@ -832,7 +1001,12 @@ class GlobalArray {
    * @param ld[ndim-1]        - array of strides for local data        [input]
    * @param nbhandle          - nonblocking handle                     [output]
    */
-  void nbGet(int lo[], int hi[], void *buf, int ld[], int *nbhandle);
+  void nbGet(int lo[], int hi[], void *buf, int ld[], GANbhdl *nbhandle);
+
+  /**
+   * "long" interface for nbGet for large arrays
+   */
+  void nbGet(int64_t lo[], int64_t hi[], void *buf, int64_t ld[], GANbhdl *nbhandle);
 
   /**
    * Non-blocking update operation for arrays with ghost cells. Ghost cells
@@ -845,7 +1019,12 @@ class GlobalArray {
    *                            are to be updated                     [input]
    * @param nbhandle          - nonblocking handle                    [output]
    */
-  void nbGetGhostDir(int mask[], int *hbhandle);
+  void nbGetGhostDir(int mask[], GANbhdl *hbhandle);
+
+  /**
+   * "long" interface for nbGetGhostDir
+   */
+  void nbGetGhostDir(int64_t mask[], GANbhdl *hbhandle);
   
   /**
    * @param nblock[ndim]  - number of partitions for each dimension [output]
@@ -869,7 +1048,12 @@ class GlobalArray {
    * @param ld[ndim-1]        - array of strides for local data        [input]
    * @param nbhandle          - nonblocking handle                     [output]
    */
-  void nbPut(int lo[], int hi[], void *buf, int ld[], int *nbhandle);
+  void nbPut(int lo[], int hi[], void *buf, int ld[], GANbhdl *nbhandle);
+
+  /**
+   *  "long" interface for nbPut operation on large arrays.
+   */
+  void nbPut(int64_t lo[], int64_t hi[], void *buf, int64_t ld[], GANbhdl *nbhandle);
 
   /**
    * Returns the number of dimensions in array represented by the handle 
@@ -898,8 +1082,14 @@ class GlobalArray {
    * @param lo, hi     - coordinate interval to pack       [input]
    * @param icount     - number of packed elements         [output]
    */
-  void pack(GlobalArray *g_dest, GlobalArray *g_mask, int lo, int hi, int
-            icount);
+  void pack(const GlobalArray *g_dest, const GlobalArray *g_mask,
+            int lo, int hi, int *icount) const;
+
+  /**
+   * "long" interface for pack
+   */
+  void pack(const GlobalArray *g_dest, const GlobalArray *g_mask,
+            int64_t lo, int64_t hi, int64_t *icount) const;
 
   /**
    * This subroutine enumerates the values of an array between elements lo and
@@ -918,6 +1108,11 @@ class GlobalArray {
    */
    void patchEnum(int lo, int hi, int istart, int inc);
 
+  /**
+   * "long" interface for patchEnum
+   */
+   void patchEnum(int64_t lo, int64_t hi, int64_t istart, int64_t inc);
+
   /**  
    * @param ndim       - number of dimensions of the global array
    * @param lo[ndim]   - array of starting indices for array section [input] 
@@ -932,6 +1127,11 @@ class GlobalArray {
    * This is a one-sided and atomic operation.     
    */
   void periodicAcc(int lo[], int hi[], void* buf, int ld[], void* alpha) const;
+
+  /**
+   * "long" interface for periodicAcc
+   */
+  void periodicAcc(int64_t lo[], int64_t hi[], void* buf, int64_t ld[], void* alpha) const;
   
   /**
    * @param ndim       - number of dimensions of the global array
@@ -949,6 +1149,11 @@ class GlobalArray {
    * This is a one-sided operation.
    */
   void periodicGet(int lo[], int hi[], void* buf, int ld[]) const;
+
+  /**
+   * "long" interface for periodicGet
+   */
+  void periodicGet(int64_t lo[], int64_t hi[], void* buf, int64_t ld[]) const;
   
   /**
    * @param ndim       - number of dimensions of the global array
@@ -966,6 +1171,11 @@ class GlobalArray {
    * This is a one-sided operation.
    */
   void periodicPut(int lo[], int hi[], void* buf, int ld[]) const;
+
+  /**
+   * "long" interface for periodicPut
+   */
+  void periodicPut(int64_t lo[], int64_t hi[], void* buf, int64_t ld[]) const;
   
   /** 
    * Prints an entire array to the standard output. 
@@ -996,6 +1206,11 @@ class GlobalArray {
    * @param int pretty        - formatting flag        [input]
    */
   void printPatch(int* lo, int* hi, int pretty)  const;
+
+  /**
+   * "long" interface for printPatch
+   */
+  void printPatch(int64_t* lo, int64_t* hi, int pretty)  const;
   
   /**
    * @param ndim              number of array dimensions 
@@ -1027,6 +1242,10 @@ class GlobalArray {
    */
   void put(int lo[], int hi[], void *buf, int ld[]) const;
   
+  /**
+   * "long" interface of put() method for large array creations 
+   */
+  void put(int64_t lo[], int64_t hi[], void *buf, int64_t ld[]) const;
 
   /**
    * @param ndim            - number of dimensions of the global array
@@ -1049,6 +1268,11 @@ class GlobalArray {
   long readInc(int subscript[], long inc) const;
 
   /**
+   * "long" interface for readInc
+   */
+  long readInc(int64_t subscript[], long inc) const;
+
+  /**
    * @param ndim       - number of dimensions of the global array
    * @param lo[ndim]   - array of starting indices for array section [input]
    * @param hi[ndim]   - array of ending indices for array section   [input]
@@ -1056,19 +1280,57 @@ class GlobalArray {
    * Releases access to a global array when the data was read only. 
    * Your code should look like: 
    * 
-   *        NGA_Distribution(g_a, myproc, lo,hi);
+   *        g_a->distribution(myproc, lo,hi);
    *
-   *        NGA_Access(g_a, lo, hi, &ptr, ld);
+   *        g_a->access(lo, hi, &ptr, ld);
    *            
    *          <operate on the data referenced by ptr> 
    *
-   *        GA_Release(g_a, lo, hi);
+   *        g_a->release(lo, hi);
    * 
    * NOTE: see restrictions specified for ga_access. 
    * This operation is local. 
    */
   void release(int lo[], int hi[]) const;
 
+  /**
+   * "long" interface for release
+   */
+  void release(int64_t lo[], int64_t hi[]) const;
+
+  /**
+   * @param index      - block index                       [input]
+   *
+   * Releases access to the block of data specified by the integer
+   * index when data was accessed as read only. This is only applicable to
+   * block-cyclic data distributions created using the simple block-cyclic
+   * distribution.
+   *
+   * This is a local operation.
+   */
+  void releaseBlock(int idx) const;
+
+  /**
+   * @param index[ndim] - indices of block in array                [input]
+   * @param ndim       - number of dimensions of the global array
+   *
+   * Releases access to the block of data specified by the subscript
+   * array when data was accessed as read only. This is only applicable to
+   * block-cyclic data distributions created using the SCALAPACK data
+   * distribution.
+   *
+   * This is a local operation.
+   */      
+  void releaseBlockGrid(int index[]) const;
+      
+  /**
+   * @param proc         - process ID/rank                   [input]
+   *
+   * Releases access to the block of locally held data for a block-cyclic
+   * array, when data was accessed as read-only. This is a local operation.
+   */
+  void releaseBlockSegment(int proc) const;
+      
   /**
    * @param ndim       - number of dimensions of the global array
    * @param lo[ndim]   - array of starting indices for array section [input]
@@ -1080,6 +1342,46 @@ class GlobalArray {
    */
   void releaseUpdate(int lo[], int hi[]) const;
 
+  /**
+   * "long" interface for releaseUpdate
+   */
+  void releaseUpdate(int64_t lo[], int64_t hi[]) const;
+
+  /**
+   * @param index      - block index                       [input]
+
+   * Releases access to the block of data specified by the integer index when
+   * data was accessed in read-write mode. This is only applicable to
+   * block-cyclic data distributions created using the simple block-cyclic
+   * distribution.
+  *
+  * This is a local operation.
+  */
+  void releaseUpdateBlock(int idx) const;
+      
+  /**
+   * @param index[ndim] - indices of block in array                [input
+   * @param ndim            - number of dimensions of the global array
+   *
+   * Releases access to the block of data specified by the subscript
+   * array when data was accessed in read-write mode. This is only applicable
+   * to block-cyclic data distributions created using the SCALAPACK data
+   * distribution.
+   *
+   * This is a local operation.
+   */   
+  void releaseUpdateBlockGrid(int index[]) const;
+
+  /**
+   * @param proc         - process ID/rank                   [input]
+   *
+   * Releases access to the block of locally held data for a block-cyclic
+   * array, when data was accessed as read-only.
+   *
+   * This is a local operation.
+   */
+  void releaseUpdateBlockSegment(int proc) const;    
+      
   /** 
    * Scales an array by the constant s. Note that the library is unable 
    * to detect errors when the pointed value is of different type than 
@@ -1098,7 +1400,82 @@ class GlobalArray {
    * This is a collective operation. 
    */
   void scalePatch (int lo[], int hi[], void *val) const;
-  
+
+  /**
+   * "long" interface for scalePatch
+   */
+  void scalePatch (int64_t lo[], int64_t hi[], void *val) const;
+      
+  /**
+   * @param g_src     - handle for source array    [input]
+   * @param g_dest    - handle for destination array [output]
+   * @param g_mask    - handle for integer array representing mask [input]
+   * @param lo, hi,   - low and high values of range on which operation
+   *                    is performed       [input]
+   * @param excl      - value to signify if masked values are included in
+   *                    in add [input]
+   * 
+   * This operation will add successive elements in a source vector g_src
+   * and put the results in a destination vector g_dest. The addition will
+   * restart based on the values of the integer mask vector g_mask. The scan
+   * is performed within the range specified by the integer values lo and
+   * hi. Note that this operation can only be applied to 1-dimensional
+   * arrays. The excl flag determines whether the sum starts with the value
+   * in the source vector corresponding to the location of a 1 in the mask
+   * vector (excl=0) or whether the first value is set equal to 0
+   * (excl=1). Some examples of this operation are given below.
+   *
+   * g_src->scanAdd(g_dest, g_mask, 1, n, 0);
+   * g_mask:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
+   * g_src:    1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+   * g_dest:   1  3  6 10 16 21  7 15  9 19 30 12 25 39 15 16 33
+   * 
+   * g_src->scanAdd(g_dest, g_mask, 1, n, 1);
+   * g_mask:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
+   * g_src:    1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+   * g_dest:   0  1  3  6 10 15  0  7  0  9 19  0 12 25  0  0 16
+   * 
+   * This is a collective operation.
+   */
+  void scanAdd(const GlobalArray *g_dest, const GlobalArray *g_mask,
+               int lo, int hi, int excl) const;
+  /**
+   * "long" interface for scanAdd
+   */
+  void scanAdd(const GlobalArray *g_dest, const GlobalArray *g_mask,
+               int64_t lo, int64_t hi, int excl) const;
+
+  /**
+   * @param g_src    - handle for source array [input]
+   * @param g_dest   - handle for destination array [output]
+   * @param g_mask   - handle for integer array representing mask      [input]
+   * @param lo, hi   - low and high values of range on which operation
+   *                   is performed [input]
+   *
+   * This subroutine does a segmented scan-copy of values in the
+   * source array g_src into a destination array g_dest with segments
+   * defined by values in the integer mask array g_mask. The scan-copy
+   * operation is only applied to the range between the lo and hi
+   * indices. This operation is restriced to 1-dimensional arrays. The
+   * resulting destination array will consist of segments of consecutive
+   * elements with the same value. An example is shown below
+   *
+   * g_src->scanCopy(g_src, g_dest, g_mask, 1, n);
+   * g_mask:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
+   * g_src:    1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+   * g_dest:   1  1  1  1  1  1  7  7  9  9  9 12 12 12 15 16 16
+   *
+   * This is  a collective operation.
+   */
+  void scanCopy(const GlobalArray *g_dest, const GlobalArray *g_mask,
+                int lo, int hi) const;
+
+  /**
+   * "long" interface for scanCopy
+   */
+  void scanCopy(const GlobalArray *g_dest, const GlobalArray *g_mask,
+                int64_t lo, int64_t hi) const;
+                 
   /** 
    * Scatters array elements into a global array. The contents of the input 
    * arrays (v,subscrArray) are preserved, but their contents might be 
@@ -1116,6 +1493,183 @@ class GlobalArray {
    */
   void scatter(void *v, int *subsarray[], int n) const;
 
+  /**
+   * "long" interface for scatter
+   */
+  void scatter(void *v, int64_t *subsarray[], int64_t n) const;
+
+  /**
+   * @param  op              - operator {"min","max"}               [input]
+   * @param  val             - address where value should be stored [output] 
+   * @param  subscript[ndim] - array index for the selected element [output]
+   *
+   * Returns the value and index for an element that is selected by the 
+   * specified operator  in a global array corresponding to g_a handle. 
+   * This is a collective operation. 
+   */
+  void selectElem(char *op, void* val, int index[]) const;
+
+  /**
+   * "long" interface for selectElem
+   */
+  void selectElem(char *op, void* val, int64_t index[]) const;
+
+  /**
+   * @param name       - array name [input]
+   *
+   * This function can be used to assign a unique character
+   * string name to a global array handle that was obtained
+   * using the createHandle function.
+   *
+   * This is a collective operation.
+   */
+  void setArrayName(char *name) const;
+
+  /**
+   *
+   * @param dims[]       - array of block dimensions        [input]
+   *
+   * This subroutine is used to create a global array with a simple
+   * block-cyclic data distribution. The array is broken up into blocks of
+   * size dims and each block is numbered sequentially using a column major
+   * indexing scheme. The blocks are then assigned in a simple round-robin
+   * fashion to processors. This is illustrated in the figure below for an
+   * array containing 25 blocks distributed on 4 processors. Blocks at the
+   * edge of the array may be smaller than the block size specified in
+   * dims. In the example below, blocks 4,9,14,19,20,21,22,23, and 24 might
+   * be smaller thatn the remaining blocks. Most global array operations
+   * are insensitive to whether or not a block-cyclic data distribution is
+   * used, although performance may be slower in some cases if the global
+   * array is using a block-cyclic data distribution. Individual data
+   * blocks can be accessesed using the block-cyclic access functions.
+   *
+   * This is a collective operation.
+   */
+  void setBlockCyclic(int dims[]) const;
+
+  /**
+   * @param dims[]         - array of block dimensions   [input]
+   * @param proc_grid[]    - processor grid dimensions   [input]
+   *
+   * This subroutine is used to create a global array with a
+   * SCALAPACK-type block cyclic data distribution. The user  specifies
+   * the dimensions of the processor grid in the array proc_grid. The
+   * product of the processor grid dimensions must equal the number of
+   * total number of processors  and the number of dimensions in the
+   * processor grid must be the same as the number of dimensions in the
+   * global array. The data blocks are mapped onto the processor grid
+   * in a cyclic manner along each of the processor grid axes. This is
+   * illustrated below for an array consisting of 25 data blocks
+   * disributed on 6 processors. The 6 processors are configured in a 3
+   * by 2 processor grid. Blocks at the edge of the array may be
+   * smaller than the block size specified in dims. Most global array
+   * operations are insensitive to whether or not a block-cyclic data
+   * distribution is used, although performance may be slower in some
+   * cases if the global array is using a block-cyclic data
+   * distribution. Individual data blocks can be accessesed using the
+   * block-cyclic access functions.
+   *
+   * This is a collective operation.
+   */
+  void setBlockCyclicProcGrid(int dims[], int proc_grid[]) const;
+
+  /**
+   * @param chunk[]  - array of chunk widths              [input]
+   *
+   * This function is used to set the chunk array for a global array handle
+   * that was obtained using the createHandle function. The chunk array
+   * is used to determine the minimum number of array elements assigned to
+   * each processor along each coordinate direction.
+   *
+   * This is a collective operation.
+   */
+  void setChunk(int chunk[]) const;
+
+  /**
+   * "long" interface for setChunk
+   */
+  void setChunk(int64_t chunk[]) const;
+
+  /**
+   * @param ndim     - dimension of global array                 [input]
+   * @param dims[]   - dimensions of global array                [input]
+   * @param type     - data type of global array                 [input]
+   *
+   * This function can be used to set the array dimension, the coordinate
+   * dimensions, and the data type assigned to a global array handle obtained
+   * using the GA_Create_handle function.
+   *
+   * This is a collective operation.
+   */
+  void setData(int ndim, int dims[], int type) const;
+
+  /**
+   * "long" interface for setData
+   */
+  void setData(int ndim, int64_t dims[], int type) const;
+
+      
+  /**
+   * @param width[ndim] - array of ghost cell widths     [input]
+   *
+   * This function can be used to set the ghost cell widths for a global
+   * array handle that was obtained using the createHandle function. The
+   * ghosts cells widths indicate how many ghost cells are used to pad the
+   * locally held array data along each dimension. The padding can be set
+   * independently for each coordinate dimension.
+   *
+   * This is a collective operation.
+   */
+  void setGhosts(int width[]) const;
+
+  /**
+   * "long" interface for setGhosts
+   */
+  void setGhosts(int64_t width[]) const;
+
+  /**
+   * @param mapc[s]       - starting index for each block; the size
+   *                        s is the sum of all elements of the array
+   *                        nblock                                     [input]
+   * @param nblock[ndim]  - number of blocks that each dimension is
+   *                        divided into                               [input]
+   *
+   * This function can be used to partition the array data among the
+   * individual processors for a global array handle obtained using the
+   * GA_Create_handle function.
+   *
+   * The distribution is specified as a Cartesian product of distributions
+   * for each dimension. For example, the following figure demonstrates
+   * distribution of a 2-dimensional array 8x10 on 6 (or more)
+   * processors. nblock(2)={3, 2}, the size of mapc array is s=5 and array
+   * mapc contains the following elements mapc={1, 3, 7, 1, 6}. The
+   * distribution is nonuniform because, P1 and P4 get 20 elements each and
+   * processors P0,P2,P3, and P5 only 10 elements each.
+   *
+   * The array width() is used to control the width of the ghost cell
+   * boundary around the visible data on each processor. The local data of
+   * the global array residing on each processor will have a layer width(n)
+   * ghosts cells wide on either side of the visible data along the dimension
+   * n.
+   *
+   * This is a collective operation.
+   */
+  void setIrregDistr(int mapc[], int nblock[]) const;
+
+  /**
+   * pHandle      processor group handle     [input]
+   *
+   * This function can be used to set the processor configuration assigned to
+   * a global array handle that was obtained using the
+   * createHandle function. It can be used to create mirrored arrays by
+   * using the mirrored array processor configuration in this function
+   * call. It can also be used to create an array on a processor group by
+   * using a processor group handle in this call.
+   *
+   * This is a collective operation.
+   */
+  void setPGroup(PGroup *pHandle) const;
+      
   /**
    * @param g_a,g_b- handles to input arrays  [input]
    * @param g_c    - handles to output array  [input]
@@ -1142,6 +1696,12 @@ class GlobalArray {
    * This is a collective operation. 
    */
   void sgemm(char ta, char tb, int m, int n, int k, float alpha,  
+	     const GlobalArray *g_a, const GlobalArray *g_b, float beta) const;
+
+  /**
+   * "long" interface for sgemm
+   */
+  void sgemm(char ta, char tb, int64_t m, int64_t n, int64_t k, float alpha,  
 	     const GlobalArray *g_a, const GlobalArray *g_b, float beta) const;
   
   /**
@@ -1187,22 +1747,83 @@ class GlobalArray {
   int spdInvert() const;
 
   /**
-   * @param  op              - operator {"min","max"}               [input]
-   * @param  val             - address where value should be stored [output] 
-   * @param  subscript[ndim] - array index for the selected element [output]
+   * @param ndim    - number of dimensions of the global array
+   * @param lo[ndim]- array of starting indices for glob array section [input]
+   * @param hi[ndim]- array of ending indices for global array section [input]
+   * @param skip[ndim] - array of strides for each dimension [input]
+   * @param buf        - pointer to local buffer array where data goes [output]
+   * @param ld[ndim-1] - array specifying leading dimensions/strides/extents
+   *                     for buffer array [input]
+   * @param double/DoublComplex/long *alpha     - scale factor [input]
    *
-   * Returns the value and index for an element that is selected by the 
-   * specified operator  in a global array corresponding to g_a handle. 
-   * This is a collective operation. 
+   * This operation is the same as "acc", except that the values
+   * corresponding to dimension n in buf are accumulated to every skip[n]
+   * values of the global array.
+   *
+   * This is a one-sided operation.
    */
-  void selectElem(char *op, void* val, int index[]) const;
+  void stridedAcc(int lo[], int hi[], int skip[], void*buf, int ld[]) const;
+      
+  /**
+   * @param ndim    - number of dimensions of the global array
+   * @param lo[ndim]- array of starting indices for glob array section [input]
+   * @param hi[ndim]- array of ending indices for global array section [input]
+   * @param skip[ndim] - array of strides for each dimension [input]
+   * @param buf        - pointer to local buffer array where data goes [output]
+   * @param ld[ndim-1] - array specifying leading dimensions/strides/extents
+   *                     for buffer array [input]
+   * @param double/DoublComplex/long *alpha     - scale factor [input]
+   *
+   * This operation is the same as "get", except that the values
+   * corresponding to dimension n in buf are accumulated to every skip[n]
+   * values of the global array.
+   *
+   * This is a one-sided operation.
+   */
+  void stridedGet(int lo[], int hi[], int skip[], void*buf, int ld[]) const;
+      
+  /**
+   * @param ndim    - number of dimensions of the global array
+   * @param lo[ndim]- array of starting indices for glob array section [input]
+   * @param hi[ndim]- array of ending indices for global array section [input]
+   * @param skip[ndim] - array of strides for each dimension [input]
+   * @param buf        - pointer to local buffer array where data goes [output]
+   * @param ld[ndim-1] - array specifying leading dimensions/strides/extents
+   *                     for buffer array [input]
+   * @param double/DoublComplex/long *alpha     - scale factor [input]
+   *
+   * This operation is the same as "put", except that the values
+   * corresponding to dimension n in buf are accumulated to every skip[n]
+   * values of the global array.
+   *
+   * This is a one-sided operation.
+   */
+  void stridedPut(int lo[], int hi[], int skip[], void*buf, int ld[]) const;
+  
+  /**
+   * "long" interface for stridedPut
+   */
+  void stridedPut(int64_t lo[], int64_t hi[], int64_t skip[], void*buf, int64_t ld[]) const;
 
+  /**
+   * @param verbose     - If true print distribution info [input]
+   *
+   * Prints info about allocated arrays.
+   */
+  void summarize(int verbose) const;
+      
   /** 
    * Symmmetrizes matrix A with handle A:=.5 * (A+A').
    * This is a collective operation 
    */
   void symmetrize() const;
-  
+
+  /**
+   * This function returns the total number of blocks contained in a global
+   * array with a block-cyclic data distribution. This is a local operation.
+   */
+  int totalBlocks() const;
+      
   /**
    * Transposes a matrix: B = A', where A and B are represented by 
    * handles g_a and g_b [say, g_b.transpose(g_a);]. This is a collective 
@@ -1211,14 +1832,46 @@ class GlobalArray {
   void transpose(const GlobalArray * g_a) const;
   
   /**
+   * @param g_src   - handle for source array      [input]
+   * @param g_dest  - handle for destination array [output]
+   * @param g_mask  - handle for integer array representing mask [input]
+   * @param lo, hi  - low and high values of range on which operation
+   *                  is performed
+   * @param icount - number of values in uncompressed array [output]
+   *
+   * The unpack subroutine is designed to expand the values in the source
+   * vector g_src into a larger destination array g_dest based on the values
+   * in an integer mask array g_mask. The values lo and hi denote the range
+   * of elements that should be compressed and icount is a variable that on
+   * output lists the number of values placed in the uncompressed array. This
+   * operation is the complement of the pack operation. An example is
+   * shown below
+   *
+   * g_src->unpack(g_dest, g_mask, 1, n, &icount);
+   * g_src:    1  7  9 12 15 16
+   * g_mask:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
+   * g_dest:   1  0  0  0  0  0  7  0  9  0  0 12  0  0 15 16  0
+   * icount:   6
+   *
+   *  This is a collective operation.
+   */
+  void unpack(GlobalArray *g_dest, GlobalArray *g_mask, int lo, int hi,
+              int *icount) const;
+  /**
+   * "long" interface for unpack
+   */
+  void unpack(GlobalArray *g_dest, GlobalArray *g_mask,
+            int64_t lo, int64_t hi, int64_t *icount) const;
+      
+  /**
    * This call updates the ghost cell regions on each processor with the 
    * corresponding neighbor data from other processors. The operation assumes 
    * that all data is wrapped around using periodic boundary data so that 
    * ghost cell data that goes beyound an array boundary is wrapped around to
-   * the other end of the array. The GA_Update_ghosts call contains two   
-   * GA_Sync   calls before and after the actual update operation. For some 
+   * the other end of the array. The updateGhosts call contains two   
+   * sync   calls before and after the actual update operation. For some 
    * applications these calls may be unecessary, if so they can be removed 
-   * using the GA_Mask_sync subroutine. 
+   * using the maskSync subroutine. 
    * This is a collective operation. 
    */
   void updateGhosts() const;
@@ -1232,15 +1885,22 @@ class GlobalArray {
    * the values +/-1 and indicates whether the side that is to be updated lies 
    * in the positive or negative direction, and cflag indicates whether or not
    * the corners on the side being updated are to be included in the update. 
-   * The following calls would be equivalent to a call to   GA_Update_ghosts 
+   * The following calls would be equivalent to a call to   updateGhosts 
    * for a 2-dimensional system: 
    *
-   * status = NGA_Update_ghost_dir(g_a,0,-1,1);\n 
-   * status = NGA_Update_ghost_dir(g_a,0,1,1);\n 
-   * status = NGA_Update_ghost_dir(g_a,1,-1,0);\n 
-   * status = NGA_Update_ghost_dir(g_a,1,1,0);\n 
+   * status = g_a->updateGhostDir(0,-1,1);\n 
+   * status = g_a->updateGhostDir(0,1,1);\n 
+   * status = g_a->updateGhostDir(1,-1,0);\n 
+   * status = g_a->updateGhostDir(1,1,0);\n 
    *
-   * The variable cflag is set equal to 1 (or non-zero) in the first two calls so that the corner ghost cells are update, it is set equal to 0 in the second two calls to avoid redundant updates of the corners. Note that updating the ghosts cells using several independent calls to the nga_update_ghost_dir functions is generally not as efficient as using   GA_Update_ghosts  unless the individual calls can be effectively overlapped with computation. 
+   * The variable cflag is set equal to 1 (or non-zero) in the first two
+   * calls so that the corner ghost cells are update, it is set equal to 0 in
+   * the second two calls to avoid redundant updates of the corners. Note
+   * that updating the ghosts cells using several independent calls to the
+   * nga_update_ghost_dir functions is generally not as efficient as using
+   * updateGhosts  unless the individual calls can be effectively overlapped
+   * with computation.
+   *
    * This is a  collective operation. 
    * @param g_a                                                    [input]
    * @param dimension    - array dimension that is to be updated   [input]
@@ -1249,7 +1909,6 @@ class GlobalArray {
    */
   int updateGhostDir(int dimension, int idir, int cflag) const;
 
-  
   /**
    * Computes element-wise dot product of the two arrays which must be of
    * the same types and same number of elements.
@@ -1272,6 +1931,13 @@ class GlobalArray {
   DoubleComplex zdotPatch(char ta, int alo[], int ahi[], 
 			  const GlobalArray * g_a, char tb, int blo[], 
 			  int bhi[]) const;
+
+  /**
+   * "long" interface for zdotPatch
+   */
+  DoubleComplex zdotPatch(char ta, int64_t alo[], int64_t ahi[], 
+			  const GlobalArray * g_a, char tb, int64_t blo[], 
+			  int64_t bhi[]) const;
   
   /** 
    * Sets value of all elements in the array to zero. 
@@ -1286,6 +1952,11 @@ class GlobalArray {
    * This is a collective operation. 
    */
   void zeroPatch (int lo[], int hi[]) const;
+
+  /**
+   * "long" interface for zeroPatch
+   */
+  void zeroPatch (int64_t lo[], int64_t hi[]) const;
   
   /**
    * @param g_a,g_b- handles to input arrays  [input]
@@ -1314,7 +1985,13 @@ class GlobalArray {
   void zgemm(char ta, char tb, int m, int n, int k, DoubleComplex alpha,  
 	     const GlobalArray *g_a, const GlobalArray *g_b, 
 	     DoubleComplex beta) const;
-  
+
+  /**
+   * "long" interface for zgemm
+   */
+  void zgemm(char ta, char tb, int64_t m, int64_t n, int64_t k, DoubleComplex alpha,  
+	     const GlobalArray *g_a, const GlobalArray *g_b, 
+	     DoubleComplex beta) const;
   
   /**
    * New additional functionalities from Limin. 
@@ -1333,6 +2010,11 @@ class GlobalArray {
    void absValuePatch(int *lo, int *hi) const;
 
   /**
+   * "long" interface for absValuePatch
+   */
+   void absValuePatch(int64_t *lo, int64_t *hi) const;
+
+  /**
    * Add the constant pointed by alpha to each element of the array. 
    * This is a collective operation. 
    * @param double/complex/int/long/float      *alpha      [input] 
@@ -1346,6 +2028,11 @@ class GlobalArray {
    * @param double/complex/int/long/float      *alpha     [input] 
    */
    void addConstantPatch(int *lo, int *hi, void *alpha) const;
+
+  /**
+   * "long" interface for addConstantPatch
+   */
+   void addConstantPatch(int64_t *lo, int64_t *hi, void *alpha) const;
   
   /**
    * Take element-wise reciprocal of the array. 
@@ -1359,6 +2046,11 @@ class GlobalArray {
    * @param   lo[], hi[]           - g_a patch coordinates     [input] 
    */
    void recipPatch(int *lo, int *hi) const;
+
+  /**
+   * "long" interface for recipPatch
+   */
+   void recipPatch(int64_t *lo, int64_t *hi) const;
   
   
   /**
@@ -1392,6 +2084,13 @@ class GlobalArray {
    void elemMultiplyPatch(const GlobalArray * g_a,int *alo,int *ahi,
 				 const GlobalArray * g_b,int *blo,int *bhi,
 				 int *clo,int *chi) const;
+  /**
+   * "long" interface for elemMultiplyPatch
+   */
+   void elemMultiplyPatch(const GlobalArray * g_a,int64_t *alo,int64_t *ahi,
+				 const GlobalArray * g_b,int64_t *blo,int64_t *bhi,
+				 int64_t *clo,int64_t *chi) const;
+
   /**
    * @param g_a, g_b - global array         [input] 
    *
@@ -1427,6 +2126,13 @@ class GlobalArray {
 			       const GlobalArray * g_b,int *blo,int *bhi,
 			       int *clo,int *chi) const;
   /**
+   * "long" interface for elemDividePatch
+   */
+   void elemDividePatch(const GlobalArray * g_a,int64_t *alo,int64_t *ahi,
+			       const GlobalArray * g_b,int64_t *blo,int64_t *bhi,
+			       int64_t *clo,int64_t *chi) const;
+
+  /**
    * Computes the element-wise maximum of the two arrays 
    * which must be of the same types and same number of 
    * elements. For two dimensional arrays, 
@@ -1461,6 +2167,13 @@ class GlobalArray {
 				 const GlobalArray * g_b,int *blo,int *bhi,
 				 int *clo,int *chi) const;
    /**
+    * "long" interface for elemMaximumPatch
+    */
+    void elemMaximumPatch(const GlobalArray * g_a,int64_t *alo,int64_t *ahi,
+				 const GlobalArray * g_b,int64_t *blo,int64_t *bhi,
+				 int64_t *clo,int64_t *chi) const;
+
+   /**
     * Computes the element-wise minimum of the two arrays 
     * which must be of the same types and same number of 
     * elements. For two dimensional arrays, 
@@ -1493,6 +2206,13 @@ class GlobalArray {
     void elemMinimumPatch(const GlobalArray * g_a,int *alo,int *ahi,
 				 const GlobalArray * g_b,int *blo,int *bhi,
 				 int *clo,int *chi) const;
+
+    /**
+     * "long" interface for elemMinimumPatch
+     */
+    void elemMinimumPatch(const GlobalArray * g_a, int64_t *alo, int64_t *ahi,
+				 const GlobalArray * g_b, int64_t *blo, int64_t *bhi,
+				 int64_t *clo, int64_t *chi) const;
   
    /** 
     * Calculates the largest multiple of a vector g_b that can be added 
@@ -1506,6 +2226,12 @@ class GlobalArray {
    
    void stepMaxPatch(int *alo, int *ahi, 
 			    const GlobalArray * g_b, int *blo, int *bhi, 
+			    double *step) const;
+   /**
+    * "long" interface for stepMaxPatch
+    */
+   void stepMaxPatch(int64_t *alo, int64_t *ahi, 
+			    const GlobalArray * g_b, int64_t *blo, int64_t *bhi, 
 			    double *step) const;
   
   /** Matrix Operations */
@@ -1522,7 +2248,7 @@ class GlobalArray {
    * vector g_v.  This is a collective operation. 
    * @param g_v - global array       [input]  
    */
-   void setDiagonal(const GlobalArray * g_v) const;
+  void setDiagonal(const GlobalArray * g_v) const;
   
   /**
    * Sets the diagonal elements of this matrix g_a with zeros. 
@@ -1595,6 +2321,13 @@ class GlobalArray {
 			       const GlobalArray * g_b, int *blo, int *bhi, 
 			       const GlobalArray * g_c, int *clo, int *chi, 
 			       int *mlo, int *mhi) const;
+  /**
+   * "long" interface for medianPatch
+   */
+   void medianPatch(const GlobalArray * g_a, int64_t *alo, int64_t *ahi, 
+			       const GlobalArray * g_b, int64_t *blo, int64_t *bhi, 
+			       const GlobalArray * g_c, int64_t *clo, int64_t *chi, 
+			       int64_t *mlo, int64_t *mhi) const;
 
    GlobalArray& operator=(const GlobalArray &g_a);
    int operator==(const GlobalArray &g_a) const;

@@ -21,11 +21,11 @@
 MPI_Comm MPI_COMM_CLIENT2SERVER=MPI_COMM_NULL;
 
 static int armci_nserver=-1;
+static int *_armci_mpi_tag=NULL;
 
 extern char ***_armci_argv;
 extern int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
                                 size_t *shmsize);
-
 
 #if MPI_SPAWN_DEBUG
 void armci_mpi2_debug(int rank, const char *format, ...) 
@@ -184,11 +184,30 @@ int armci_send_req_msg (int proc, void *buf, int bytes)
   if( !(server >= 0 && server < armci_nserver) )
      armci_die("armci_send_req_msg: Invalid server.", 0);
 
+#ifdef MULTIPLE_BUFS
+  /**
+   * Sequentially ordered tags to ensure flow control at the server side.
+   * For example, a put followed by get from a client should be processed in
+   * ORDER at the server side. If we don't have the flow control, the server
+   * might process the get request first instead of put (and thus violating
+   * ARMCI's ordering semantics.
+   */
+  ((request_header_t*)buf)->tag = _armci_mpi_tag[server];
   MPI_Check(
      MPI_Send(buf, bytes, MPI_BYTE, server, ARMCI_MPI_SPAWN_TAG,
               MPI_COMM_CLIENT2SERVER)
      );
 
+  _armci_mpi_tag[server]++;
+  if(_armci_mpi_tag[server] > ARMCI_MPI_SPAWN_TAG_END) 
+     _armci_mpi_tag[server] = ARMCI_MPI_SPAWN_TAG_BEGIN;
+  
+#else
+  MPI_Check(
+     MPI_Send(buf, bytes, MPI_BYTE, server, ARMCI_MPI_SPAWN_TAG,
+              MPI_COMM_CLIENT2SERVER)
+     );
+#endif
   armci_mpi2_debug(armci_me, "armci_send_req_msg(): send msg to server(%d), to"
                    "fwd to client %d\n", server, proc);
 
@@ -470,7 +489,7 @@ static void armci_mpi2_spawn()
  */
 void armci_create_server_MPIprocess ()
 {
-    int rank, size, flag;
+    int rank, size, flag, i;
 
     MPI_Initialized(&flag);
     if (flag == 0)
@@ -522,9 +541,15 @@ void armci_create_server_MPIprocess ()
                 MPI_COMM_CLIENT2SERVER);       
     }
      
+
+    /* initialize tags for flow control */
+    _armci_mpi_tag = (int*) malloc(armci_nserver*sizeof(int));
+    for(i=0; i<armci_nserver; i++)
+       _armci_mpi_tag[i]=ARMCI_MPI_SPAWN_TAG_BEGIN;
+    
     /* makesure all processes sync here. CHECK: does it ensure global sync ? */
     MPI_Barrier(MPI_COMM_WORLD);
-
+    
     armci_mpi2_debug(0, "armci_create_server_MPIprocess: Servers spawned!\n");
 }
 

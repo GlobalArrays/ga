@@ -177,7 +177,7 @@ GA::GAServices::memoryLimited() {
   return GA_Memory_limited();
 }
 
-void GA::GAServices::nbWait(int *nbhandle) {
+void GA::GAServices::nbWait(GANbhdl *nbhandle) {
   NGA_NbWait(nbhandle);
 }
 
@@ -194,6 +194,11 @@ GA::GAServices::nodes() {
 void 
 GA::GAServices::printStats() {
   GA_Print_stats();
+}
+
+void
+GA::GAServices::setDebug(int dbg) {
+    return GA_Set_debug(dbg);
 }
 
 void 
@@ -225,3 +230,8 @@ int
 GA::GAServices::usesFAPI() {
   return GA_Uses_fapi();
 }
+
+double GA::GAServices::wtime() {
+    return GA_Wtime();
+}
+

@@ -1024,7 +1024,7 @@ static char *temp;
     region_list[reg].sz= size;
 #if defined(OPENIB)
     /*SK: Tested only for OPENIB*/
-    armci_region_register_loc(temp, size);
+/*     armci_region_register_loc(temp, size); */
 #endif
   }
 

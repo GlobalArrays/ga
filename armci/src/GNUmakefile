@@ -65,9 +65,9 @@ endif
 SYSTEM_V = SUN SOLARIS SOLARIS64 SGI SGI_N32 SGI64 SGITFP 
 SYSTEM_V += HPUX HPUX64 IBM IBM64 DECOSF LINUX LINUX64 INTERIX NEC
 SHMEM    = $(SYSTEM_V) LAPI LAPI64
-CKPT = LINUX LINUX64 MACX
+CKPT = LINUX LINUX64 MACX MACX64
 SHMMMAP  = NEC
-SOCKETS  = $(SYSTEM_V) MACX
+SOCKETS  = $(SYSTEM_V) MACX MACX64
 ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP CRAY-SV2  LAPI FUJITSU-VPP FUJITSU-AP BGML BGP
 NB_NONCONT_NET = CRAY-SHMEM #QUADRICS ELAN4 PORTALS
 #USE_PTHREADS = LINUX SGI_N32 SOLARIS
@@ -137,6 +137,10 @@ ifeq ($(TARGET),MACX)
  OBJ += semaphores.o 
 endif
 
+ifeq ($(TARGET),MACX64)
+ OBJ += semaphores.o 
+endif
+
 ifeq ($(ARMCI_NETWORK),GM)
 #  OBJ += dataserv-myri.o myrinet.o spawn.o request.o 
   OBJ += dataserv-gm.o ds-shared.o myrinet.o spawn.o request.o bufalloc.o async.o buffers.o
@@ -175,6 +179,10 @@ endif
 
 ifeq ($(ARMCI_NETWORK),LAPI)
   OBJ += lapi.o request.o buffers.o async.o
+endif
+ifdef LAPI_RDMA
+  OBJ += regions.o
+  LIB_DEFINES += -DALLOW_PIN -DLAPI_RDMA
 endif
 
 ifeq ($(ARMCI_NETWORK),QUADRICS)

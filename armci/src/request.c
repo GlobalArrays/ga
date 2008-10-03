@@ -395,7 +395,9 @@ request_header_t *msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize,ATTACH,ar
     msginfo->datalen = sizeof(ARMCI_MEMHDL_T);
     msginfo->operation =  REGISTER;
     msginfo->bytes = msginfo->dscrlen+ msginfo->datalen;
+#ifndef LAPI    
     msginfo->tag.ack = 0;
+#endif    
     buf = (char *)(msginfo+1);
     ADDBUF(buf,void*,ptr);
     ADDBUF(buf,long,sz);
@@ -1413,7 +1415,12 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 	 {
 #if defined(PUT_NO_SRV_COPY)
 	   ARMCI_MEMHDL_T *mhloc;
-	   if(msginfo->operation==PUT && msginfo->format==STRIDED && !msginfo->pinned && get_armci_region_local_hndl(loc_ptr,armci_clus_id(armci_me),&mhloc) && !msginfo->tag.imm_msg) {
+	   int nsegs;
+	   nsegs = 1;
+	   for(i=0; i<stride_levels; i++) 
+	     nsegs *= count[i+1];    
+	   if(nsegs<no_srv_copy_nsegs_ulimit() &&
+	      msginfo->operation==PUT && msginfo->format==STRIDED && !msginfo->pinned && get_armci_region_local_hndl(loc_ptr,armci_clus_id(armci_me),&mhloc) && !msginfo->tag.imm_msg) {
 	     /*do nothing; data movement done done in pbuf_start_get().*/
 	   }
 	   else

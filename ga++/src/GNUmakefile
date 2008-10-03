@@ -14,14 +14,14 @@ endif
 
 LIB_DISTRIB = ../../lib
 INCDIR = ../../include
-HEADERS = ga++.h init_term.h GAServices.h GlobalArray.h
+HEADERS = ga++.h init_term.h GAServices.h GlobalArray.h PGroup.h
 
 ifndef LIBRARY
   LIBRARY = libga++.a
 endif
   LIBRARY_SHARED = libga++.so
 
-OBJ = init_term.o GAServices.o GlobalArray.o overload.o
+OBJ = init_term.o GAServices.o GlobalArray.o overload.o PGroup.o
 
 #--------------------------- extra definitions ---------------------
 

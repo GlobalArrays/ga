@@ -8,7 +8,7 @@ c vector boxes lack arithmetic precision
 # define THRESHF 1e-5
 #else
 # define THRESH 1d-13
-# define THRESHF 1e-5
+# define THRESHF 2e-5
 #endif
 
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
@@ -35,7 +35,7 @@ c#define USE_SCALAPACK_DISTR
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-      integer heap, stack, fudge, ma_heap, me, nproc, map(1000), block
+      integer heap, stack, fudge, ma_heap, me, nproc, map(4096), block
       integer g_s, ndim, dim1, i
       logical status
       parameter (heap=200*200*4, fudge=100, stack=200*200)
@@ -211,7 +211,7 @@ c
 #include "testutil.fh"
 c     
       integer n,m
-      parameter (n = 128)
+      parameter (n = 256)
       parameter (m = 2*n)
       double precision a(n,n), b(n,n), v(m),w(m)
 #ifdef MIRROR
@@ -234,7 +234,7 @@ c
       integer nproc, me, int, ij, inc, ii, jj
       parameter (maxloop = 100)
       integer maxproc
-      parameter (maxproc = 128)
+      parameter (maxproc = 4096)
       double precision crap, sum1, sum2, x
       double precision nwords
       logical found
@@ -1151,7 +1151,7 @@ c
       integer nproc, me, int, ij, inc, ii, jj, nnodes
       parameter (maxloop = 100)
       integer maxproc
-      parameter (maxproc = 128)
+      parameter (maxproc = 4096)
       double precision crap, real
       double precision nwords
       complex   x, sum1, sum2, factor
@@ -1719,7 +1719,7 @@ c
       integer nproc, me, int, ij, inc, ii, jj, nnodes
       parameter (maxloop = 100)
       integer maxproc
-      parameter (maxproc = 128)
+      parameter (maxproc = 4096)
       double precision crap, real
       double precision nwords
       double complex   x, sum1, sum2, factor
@@ -2311,7 +2311,7 @@ c
       double precision nwords
       parameter (nloop = 100)
       integer maxproc
-      parameter (maxproc = 128)
+      parameter (maxproc = 4096)
       double precision crap, sum1, real
       integer buf
 #ifdef BLOCK_CYCLIC
@@ -2583,8 +2583,8 @@ c     write(6,111) me,ilo,ihi,jlo,jhi,dimi,dimj
       call ga_sync()
       if(ilo .gt.0 .and. jhi .gt. 0)then
        do loop = 1,nloop 
-         ii= IABS(iran(dimi))
-         jj= IABS(iran(dimj))
+         ii= IABS(iran(dimi)) - 1
+         jj= IABS(iran(dimj)) - 1
          i=ilo + Mod(ii,dimi)
          j=jlo + Mod(jj,dimj)
 c
@@ -2828,7 +2828,7 @@ c---------------------------------------------------------------------
       parameter (maxloop = 100)
       integer maxproc
       integer ndim, dims(2), chunk(2), p_mirror
-      parameter (maxproc = 128)
+      parameter (maxproc = 4096)
       double precision crap
       real x, sum1, sum2
       logical found

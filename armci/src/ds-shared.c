@@ -836,9 +836,14 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo,
 #if defined(GET_NO_SRV_COPY)
     {
       ARMCI_MEMHDL_T *mhloc=NULL, *mhrem=NULL;
+      int nsegs, i;
 /*       printf("%d(s): TRYING to use rdma contig to strided\n",armci_me); */
 /*       fflush(stdout); */
-      if(msginfo->operation==GET && !msginfo->pinned && strides>=0 
+      nsegs = 1;
+      for(i=0;i<strides; i++) 
+	nsegs *= count[i+1];
+      if(nsegs<no_srv_copy_nsegs_ulimit() &&
+	 msginfo->operation==GET && !msginfo->pinned && strides>=0 
 	 && get_armci_region_local_hndl(ptr,armci_clus_id(armci_me),&mhloc)) {
 /* 	printf("%d(s): using rdma contig to strided\n",armci_me); */
 /* 	fflush(stdout); */

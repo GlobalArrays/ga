@@ -93,7 +93,7 @@ static int nxtask(void) {
  */
 void LJ_Setup(int natoms, double **x_i, double **x_j, double **grad) {
   
-  int i, j, k=0, n, handle;
+  int i, j, k=0, n;
 
   n = natoms/gBlockSize;
    
@@ -152,7 +152,6 @@ void check(int natoms) {
  * block to be computed.
  */
 void getBlock(int taskId, int size, double *x_i, double *x_j) { 
-  int rows, cols; /* block attributes that is to be computed */
   int lo, hi;
   
 #if DEBUG
@@ -181,7 +180,7 @@ void LJ_FG(int taskId, double *x_i, double *x_j, double *f,
 	   double *grad) {
   int b_x, b_y; /* block topology */
   int i, j, start_x, start_y, tempA, tempB;
-  int start_i, end_i, start_j, *end_j;
+  int start_i=0, end_i=0, start_j=0, *end_j=NULL;
   int sign_x, sign_y, sign_z;
   double xx, yy, zz, rij, temp,r2,r6,r12, xtmp, ytmp, ztmp;
   
@@ -284,12 +283,10 @@ void computeFG(double *force, int natoms,  double *x_i, double *x_j,
 /**
  * Process the command line arguments
  */
-int
+void
 commandLine(int argc, char **argv) {
  
-  int fileflag = 0;
   int n;
-  int i;
   extern char *optarg;   
  
   /* default options */
@@ -693,7 +690,7 @@ void LJ_Solve(int natoms) {
     execTime = CLOCK_()-execTime;
     printf("%d: Total Elapsed Time  = %lf\n", gMe, execTime);
     printf("%d: Computation Time    = %lf\n", gMe, gComputeTime);
-    printf("%d: Percentage Overhead = %lf%\n\n", gMe, 
+    printf("%d: Percentage Overhead = %lf\n\n", gMe, 
 	   100*(execTime-gComputeTime)/execTime);
   }
 #endif
@@ -721,7 +718,7 @@ int main(int argc, char **argv) {
   /**
    * Initialize Global Arrays.
    */
-  GA_Initialize();
+  GA_Initialize_args(&argc, &argv);
   gMe    = GA_Nodeid();
   gNproc = GA_Nnodes();
   heap  /= gNproc;      

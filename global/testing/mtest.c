@@ -18,7 +18,7 @@ Date: 2/28/2002
 #include "sndrcv.h"
 #endif
 
-#define N 4			/* dimension of matrices */
+#define N 100			/* dimension of matrices */
 #define BLOCK_SIZE 32           /* dimension of blocks (if used) */
 
 #define OP_SHIFT_DIAGONAL 1
@@ -2277,7 +2277,8 @@ test_shift_diagonal (int g_a)
 
 
   if (me == 0)
-    printf ("Testing GA_Shift_diagonal...");
+     printf ("Testing GA_Shift_diagonal...");
+  
   GA_Zero (g_a);
   GA_Shift_diagonal (g_a, val);
 

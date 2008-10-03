@@ -7,6 +7,7 @@
 #include <strings.h>
 #include <assert.h>
 #include <unistd.h>
+#include <mpi.h>
 
 #include "armcip.h"
 #include "copy.h"
@@ -34,10 +35,14 @@ u_int32_t armci_max_qp_ous_rwr;
 typedef struct {
    struct ibv_qp *qp;
    uint32_t sqpnum;                /*we need to exchng qp nums,arr for that*/
+#if 0
    uint32_t *rqpnum;               /*we need rqp nums,arr for that*/
+#endif
    uint16_t lid;
 } armci_connect_t;
 armci_connect_t *CLN_con, *SRV_con;
+static uint32_t *SRV_rqpnums, *CLN_rqpnums; /*relevant rqp num arrs, to connect to svr and client*/
+static uint32_t *CLN_rqpnumtmpbuf=NULL; /*temporary buf used during connection setup*/
 /*\
  * datastrucure for infinihost NIC
 \*/
@@ -202,11 +207,11 @@ static long *ack_buf;
 #define DSCRID_PENDBUF (40000)
 #define DSCRID_PENDBUF_END (DSCRID_PENDBUF + 2*PENDING_BUF_NUM+1)
 
-#define DSCRID_IMMBUF_RECV     (100000)
-#define DSCRID_IMMBUF_RECV_END (200000)
+#define DSCRID_IMMBUF_RECV     (200000)
+#define DSCRID_IMMBUF_RECV_END (600000)
 
-#define DSCRID_IMMBUF_RESP     (200000)
-#define DSCRID_IMMBUF_RESP_END (300000)
+#define DSCRID_IMMBUF_RESP     (600000)
+#define DSCRID_IMMBUF_RESP_END (1000000)
 #endif
 
 extern double MPI_Wtime();
@@ -1042,6 +1047,7 @@ void armci_init_connections()
 {
 int c,s;
 int sz;
+ uint32_t *tmpbuf;
 int *tmparr;
     if(TIME_INIT)inittime0 = MPI_Wtime(); 
     
@@ -1080,20 +1086,37 @@ int *tmparr;
     bzero(CLN_con,sizeof(armci_connect_t)*armci_nproc);
 
     /*every client creates a qp with every server other than the one on itself*/
+    SRV_rqpnums = (uint32_t*)malloc(sizeof(uint32_t)*armci_nproc);
+    dassert(1,SRV_rqpnums);
+    tmpbuf = (uint32_t*)calloc(armci_nproc,sizeof(uint32_t));
+    dassert(1,tmpbuf);
+
     sz = armci_nproc*(sizeof(uint32_t)/sizeof(int));
     armci_vapi_max_inline_size = 0;
     for(s=0; s< armci_nclus; s++){
        armci_connect_t *con = SRV_con + s;
+#if 0
        con->rqpnum = (uint32_t *)malloc(sizeof(uint32_t)*armci_nproc);
        bzero(con->rqpnum,sizeof(uint32_t)*armci_nproc);
+#endif
        /*if(armci_clus_me != s)*/
        {
          armci_create_qp(SRV_nic,&con->qp);
          con->sqpnum  = con->qp->qp_num;
+#if 0
          con->rqpnum[armci_me] = con->qp->qp_num;
+#endif
+	 tmpbuf[armci_clus_info[s].master] = con->qp->qp_num;
          con->lid = SRV_nic->lid_arr[s];
        }
-       armci_msg_gop_scope(SCOPE_ALL,con->rqpnum,sz,"+",ARMCI_INT);
+/*        armci_msg_gop_scope(SCOPE_ALL,con->rqpnum,sz,"+",ARMCI_INT); */
+    }
+    MPI_Alltoall(tmpbuf,sizeof(uint32_t),MPI_CHAR,SRV_rqpnums,
+		 sizeof(uint32_t),MPI_CHAR,MPI_COMM_WORLD);
+    free(tmpbuf);
+    if(armci_me != armci_master) {
+      free(SRV_rqpnums);
+      SRV_rqpnums=NULL;
     }
 
     if(DEBUG_CLN) printf("%d: connections ready for client\n",armci_me);
@@ -1136,10 +1159,11 @@ static void vapi_connect_client()
     armci_vapi_client_stage1 = 1;
 
     /* allocate and initialize connection structs */
-    sz = armci_nproc*(sizeof(uint32_t)/sizeof(int));
+    sz = armci_nproc*sizeof(uint32_t)/sizeof(int);
 
     if (armci_me == armci_master)
        armci_util_wait_int(&armci_vapi_server_stage2, 1, 10);
+#if 0
     for (c = 0; c < armci_nproc; c++){
        armci_connect_t *con = CLN_con + c;
        if (armci_me != armci_master) {
@@ -1153,6 +1177,18 @@ static void vapi_connect_client()
        }
        armci_msg_gop_scope(SCOPE_ALL, con->rqpnum, sz, "+", ARMCI_INT);
     }
+#else
+    CLN_rqpnums = (uint32_t*)malloc(sizeof(uint32_t)*armci_nproc);
+    if(armci_me != armci_master) {
+      /*just has junk*/
+      CLN_rqpnumtmpbuf = (uint32_t*)malloc(sizeof(uint32_t)*armci_nproc);
+    }
+    dassert(1, CLN_rqpnumtmpbuf);
+    MPI_Alltoall(CLN_rqpnumtmpbuf, sizeof(uint32_t), MPI_CHAR,
+		 CLN_rqpnums, sizeof(uint32_t), MPI_CHAR, MPI_COMM_WORLD);
+    free(CLN_rqpnumtmpbuf);
+    CLN_rqpnumtmpbuf=NULL;
+#endif
 
    if (TIME_INIT) printf("\n%d:wait for server tog et to stage 2 time for "
                          "vapi_connect_client is %f",
@@ -1203,10 +1239,15 @@ static void vapi_connect_client()
         armci_connect_t *con;
         armci_connect_t *conS;
         con = SRV_con + i;
+#if 0
         conS = CLN_con + armci_me;
-
+#endif
         qp_attr_mask |= IBV_QP_AV | IBV_QP_DEST_QPN;
+#if 0
         qp_attr.dest_qp_num = conS->rqpnum[armci_clus_info[i].master];
+#else
+        qp_attr.dest_qp_num = CLN_rqpnums[armci_clus_info[i].master];
+#endif
         qp_attr.ah_attr.dlid = SRV_nic->lid_arr[armci_clus_info[i].master];
         qp_attr.ah_attr.port_num = SRV_nic->active_port;
 
@@ -1243,6 +1284,8 @@ static void vapi_connect_client()
     }
     if (TIME_INIT) printf("\n%d:rtr to rts time for vapi_connect_client is %f",
                           armci_me, (inittime1 = MPI_Wtime()) - inittime2);
+    free(CLN_rqpnums);
+    CLN_rqpnums=NULL;
 }
 
 
@@ -1363,6 +1406,8 @@ void armci_server_initial_connection()
     if (TIME_INIT) printf("\n%d:wait for client time for server_initial_conn is %f",
                           armci_me, (inittime4 = MPI_Wtime()) - inittime0);
 
+    CLN_rqpnumtmpbuf = (uint32_t*)malloc(sizeof(uint32_t)*armci_nproc);
+    dassert(1, CLN_rqpnumtmpbuf);
     for (c = 0; c < armci_nproc; c++) {
        char *ptrr;
        int extra;
@@ -1371,15 +1416,21 @@ void armci_server_initial_connection()
          printf("\n%d:create qp before malloc c=%d\n",armci_me,c);
          fflush(stdout);
        }
+#if 0
        ptrr = malloc(8 + sizeof(uint32_t) * armci_nproc);
        extra = ALIGNLONGADD(ptrr);
        ptrr = ptrr + extra;
        con->rqpnum = (uint32_t *)ptrr;
        bzero(con->rqpnum, sizeof(uint32_t) * armci_nproc);
+#endif
        armci_create_qp(CLN_nic, &con->qp);
        con->sqpnum = con->qp->qp_num;
        con->lid    = CLN_nic->lid_arr[c];
+#if 0
        con->rqpnum[armci_me]  = con->qp->qp_num;
+#else
+       CLN_rqpnumtmpbuf[c] = con->qp->qp_num;
+#endif
        if (DEBUG_SERVER) {
          printf("\n%d:create qp success  for server c=%d\n",armci_me,c);fflush(stdout);
        }
@@ -1422,15 +1473,23 @@ void armci_server_initial_connection()
 
     for(c = 0; c < armci_nproc; c++) {
        armci_connect_t *con = CLN_con + c;
+#if 0
        armci_connect_t *conC = SRV_con + armci_clus_me;
+#endif
        qp_attr_mask |= IBV_QP_DEST_QPN | IBV_QP_AV;
+#if 0
        qp_attr.dest_qp_num  = conC->rqpnum[c];
+#else
+       qp_attr.dest_qp_num  = SRV_rqpnums[c];
+#endif
        qp_attr.ah_attr.dlid = SRV_nic->lid_arr[c];
        qp_attr.ah_attr.port_num = CLN_nic->active_port;
 
        if (DEBUG_SERVER) {
+/*          printf("\n%d(s):connecting to %d rqp = %d dlid=%d\n",armci_me,c, */
+/*                   conC->rqpnum[c],qp_attr.ah_attr.dlid);fflush(stdout); */
          printf("\n%d(s):connecting to %d rqp = %d dlid=%d\n",armci_me,c,
-                  conC->rqpnum[c],qp_attr.ah_attr.dlid);fflush(stdout);
+                  SRV_rqpnums[c],qp_attr.ah_attr.dlid);fflush(stdout);
        }
 
        rc = ibv_modify_qp(con->qp, &qp_attr, qp_attr_mask); 
@@ -1466,6 +1525,8 @@ void armci_server_initial_connection()
     if(DEBUG_SERVER)
        printf("%d:server thread done with connections\n",armci_me);
 
+    free(SRV_rqpnums);
+    SRV_rqpnums = NULL;
     armci_server_alloc_bufs();/* create receive buffers for server thread */
 
     /* setup descriptors and post nonblocking receives */
@@ -1579,7 +1640,9 @@ void armci_server_transport_cleanup()
                 armci_vapi_check_return(DEBUG_FINALIZE,rc,
                                         "armci_server_transport_cleanup:destroy_qp");
             }
+#if 0
             free(con->rqpnum);
+#endif
         }
         free(CLN_con);
     }
@@ -1609,7 +1672,9 @@ void armci_transport_cleanup()
 		dassert1(1,rc==0,rc);
                 armci_vapi_check_return(DEBUG_FINALIZE,rc,"armci_client_transport_cleanup:destroy_qp");
             }
+#if 0
             free(con->rqpnum);
+#endif
         }
         free(SRV_con);
     }
@@ -1727,6 +1792,10 @@ void _armci_send_data_to_client_pbuf(int proc, struct ibv_send_wr *sdscr,
 				     int dscrid, struct ibv_sge *ssg_entry, 
 				     void *rbuf, void *lbuf, int bytes);
 
+int no_srv_copy_nsegs_ulimit() {
+  return armci_max_qp_ous_swr*armci_max_num_sg_ent/10;
+}
+
 /** Initiate a get operation to progress a pending buffer.
  * @param msginfo Request header for any additional processing
  * @param src Pointer to src of data (remote for GET)
@@ -1757,6 +1826,7 @@ void armci_pbuf_start_get(void *msg_info, void *src, void *dst,
     int *loc_stride_arr;
     char *dscr = (char *)(msginfo+1);
     ARMCI_MEMHDL_T *mhloc=NULL;
+    int nsegs, i;
 
     /* unpack descriptor record */
     loc_ptr = *(void**)dscr;           dscr += sizeof(void*);
@@ -1766,8 +1836,13 @@ void armci_pbuf_start_get(void *msg_info, void *src, void *dst,
 
     rem_ptr = msginfo->tag.data_ptr;
 
+    nsegs = 1;
+    for(i=0; i<stride_levels; i++) 
+      nsegs *= count[i+1];    
+
     dassert(1,proc==msginfo->from);
-    if(get_armci_region_local_hndl(loc_ptr,armci_clus_id(armci_me),&mhloc)) {
+    if(nsegs<no_srv_copy_nsegs_ulimit() &&
+       get_armci_region_local_hndl(loc_ptr,armci_clus_id(armci_me),&mhloc)) {
 /*       printf("%d(s): direct rdma from client buffers to server-side memory\n",armci_me); */
 /*       fflush(stdout); */
    
@@ -3270,8 +3345,8 @@ char *armci_ReadFromDirectSegment(int proc, request_header_t *msginfo, int len, 
 	  int off = (((int *)(dataptr+*bytes_done)-sfirst+ssize)/ssize)*ssize;
 	  int *ptr = sfirst+off;
 	  dassert(1,off>=0);
-	  dassert(1,sfirst>dataptr);
-	  dassert(1,ptr>dataptr);
+	  dassert(1,(void *)sfirst>dataptr);
+	  dassert(1,(void *)ptr>dataptr);
 	  if(ptr<=slast && armci_util_int_getval(ptr)!=ARMCI_STAMP) {
 	    *bytes_done = ((char*)ptr)-dataptr;
 	    return dataptr;

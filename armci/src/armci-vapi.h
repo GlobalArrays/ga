@@ -166,8 +166,8 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define MSG_BUFLEN_DBL ((VBUF_DLEN)>>3)
 
 #if defined(PEND_BUFS)
-#define IMM_BUF_NUM_DEFAULT 16
-#define IMM_BUF_LEN_DEFAULT 4096
+#define IMM_BUF_NUM_DEFAULT 4
+#define IMM_BUF_LEN_DEFAULT 2048
 #define PENDING_BUF_NUM_DEFAULT 20
 #define PENDING_BUF_LEN_DEFAULT (VBUF_DLEN)
 #endif
@@ -245,7 +245,7 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define HAS_RDMA_GET
 
 #if defined(OPENIB)
-#if 0
+#if 1
 #define PUT_NO_SRV_COPY /*server rdma-s from to client buffers (in
 			  buffers.c) to
 			  remote memory (bypassing
@@ -253,6 +253,7 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define GET_NO_SRV_COPY /*server rdma-s from remote memory to client
 			  buffers (in buffers.c) (bypassing server
 			  intermediate buffers) when possible*/ 
+int no_srv_copy_nsegs_ulimit();/*max #contig segs for which we avoid server copy. Too many segments might overflow a queue*/
 #endif
 #define GET_STRIDED_COPY_PIPELINED /*client copies data from buffers
 				     to user memory in segments rather

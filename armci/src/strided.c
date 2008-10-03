@@ -117,7 +117,7 @@ void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
   armci_client_direct_get((_p),(_s),(_d),(_cou)[0],&((_hdl)->cmpl_info),(_hdl)->tag,(void *)mhloc,(void *)mhrem); \
 
 #  define ARMCI_REM_GET(_p,_s,_sst,_d,_dst,_cou,_lev,_hdl) \
-  armci_client_direct_get((_p),(_s),(_d),(_cou)[0],NULL,0,(void *)mhloc,(void *)mhrem); \
+  armci_client_direct_get((_p),(_s),(_d),(_cou)[0],NULL,0,(void *)mhloc,(void *)mhrem) \
 
 #else
 
@@ -715,14 +715,18 @@ static int _armci_puts(void *src_ptr,
 #  if defined(LAPI) || defined(DOELAN4)
   if(!direct) {
     switch(stride_levels) {
-    case 0:  direct =1; break;
+    case 0:
+#      ifndef LAPI_RDMA
+       direct =1;
+#      endif
+       break;
     case 1:  if((count[1]<PACKPUT)||count[0]>LONG_PUT_THRESHOLD) direct =1; break;
     default: if(count[0]> LONG_PUT_THRESHOLD )direct=1; break;
     }
   }
 #  endif /*LAPI||DOELAN4*/
  
-#  ifndef LAPI2
+#  if !defined(LAPI2) || defined(LAPI_RDMA)
   if(!direct){
 #    ifdef ALLOW_PIN /*if we can pin, we do*/
     if(!stride_levels && 
@@ -802,7 +806,11 @@ static int _armci_puts(void *src_ptr,
 #        endif /*!PEND_BUFS*/
 #      endif /*VAPI*/
 #    endif /*ALLOW_PIN*/
-
+  }
+#endif /* !LAPI2||LAPI_RDMA */
+  
+#  ifndef LAPI2
+  if(!direct){
     if(nbh) { DO_FENCE(proc,SERVER_PUT); }
     else    { DO_FENCE(proc,SERVER_NBPUT); }
 
@@ -1410,8 +1418,12 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 
   }
 #endif
-    
-#ifndef LAPI2
+
+#ifdef LAPI_RDMA
+  if(stride_levels == 0 || count[0] > LONG_GET_THRESHOLD) direct=0;
+#endif
+  
+#if !defined(LAPI2) || defined(LAPI_RDMA)
   if(!direct){
 #     ifdef ALLOW_PIN
 #if defined(VAPI)
@@ -1468,6 +1480,11 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #endif /*!PEND_BUFS*/
 #     endif
 #     endif
+  }
+#endif /*!LAPI||LAPI_RDMA */
+  
+#ifndef LAPI2
+  if(!direct){
     DO_FENCE(proc,SERVER_NBGET);
 #if defined(DATA_SERVER) && (defined(SOCKETS) || defined(CLIENT_BUF_BYPASS) )
     /* for larger strided or 1D reqests buffering can be avoided to send data

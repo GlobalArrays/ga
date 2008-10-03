@@ -12,10 +12,17 @@
                                  * data, if MPI_SPAWN_ZEROCOPY is enabled */
 #endif
 
+/* uncomment MULTIPLE_BUFS macro definition to disable multiple buffers */
+#define MULTIPLE_BUFS
+
 #define ARMCI_MPI_SPAWN_INIT_TAG   1000
 #define ARMCI_MPI_SPAWN_TAG        2000
 #define ARMCI_MPI_SPAWN_DATA_TAG   3000
 #define ARMCI_MPI_SPAWN_VDATA_TAG  4000
+/* In case of multiple buffers, we use tags from 2001 to 2999 (999 tags
+ * total) to ensure flow control at the server side */
+#define ARMCI_MPI_SPAWN_TAG_BEGIN  2001
+#define ARMCI_MPI_SPAWN_TAG_END    2999
 
 #define GET_SEND_BUFFER   _armci_buf_get
 #define FREE_SEND_BUFFER  _armci_buf_release
@@ -29,5 +36,9 @@
 extern void armci_mpi_strided(int op, void *ptr, int stride_levels,
                               int stride_arr[],  int count[], int proc,
                               MPI_Comm comm);
+
+extern void armci_mpi_strided2(int op, void *ptr, int stride_levels,
+                               int stride_arr[], int count[], int proc,
+                               MPI_Comm comm);
 
 #endif /* MPI2_H */

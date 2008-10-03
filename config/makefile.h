@@ -12,7 +12,7 @@
 # GA test programs but this should not be an issue here since
 # real GA apps should use their own version of blas/lapack for best performance.
 #
-
+#
            FC = f77
            CC = cc
           FLD = $(FC)
@@ -312,7 +312,7 @@ ifeq ($(TARGET),HITACHI)
  GLOB_DEFINES = -DHITACHI
 endif
 #
-#................................ APPLE ....................................
+#............................... APPLE MACX ..................................
 # MAC running MAC X or higher
 #
 ifeq ($(TARGET),MACX)
@@ -321,7 +321,7 @@ ifeq ($(TARGET),MACX)
        RANLIB = ranlib
 
 ifneq (,$(findstring mpif,$(_FC)))
-	_FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit }; /gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /xlf/ {print "xlf"; exit }; /Pro Fortran/ {print "absoft"; exit }' )
+	_FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit }; /gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /xlf/ {print "xlf"; exit }; /Pro Fortran/ {print "absoft"; exit }; /Version/ {print "ifort"; exit }' )
 endif
 ifneq (,$(findstring mpicc,$(_CC)))
          _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ { print "gcc" ; exit  } ' )
@@ -395,6 +395,113 @@ endif
 
 endif
 #
+#............................... APPLE MACX64 .................................
+# MAC running 64-bit MAC X or higher
+#
+ifeq ($(TARGET),MACX64)
+           CC = gcc
+           FC = ifort
+       RANLIB = ranlib
+GLOB_DEFINES += -DMACX
+
+ifneq (,$(findstring mpif,$(_FC)))
+	_FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit }; /gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /xlf/ {print "xlf"; exit }; /Pro Fortran/ {print "absoft"; exit }; /Version/ {print "ifort"; exit}' )
+endif
+ifneq (,$(findstring mpicc,$(_CC)))
+         _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ { print "gcc" ; exit  } ' )
+endif
+
+ifneq ($(_FC),g77)
+   ifdef USE_INTEGER4
+   else
+       GLOB_DEFINES += -DEXT_INT
+   endif
+endif
+
+
+# ======= GNU Compilers =======
+ifeq ($(_CC),gcc)
+   ifeq ($(COPT),-O)
+     COPT_REN += $(WALL) $(OPT_ALIGN)
+   endif
+endif
+
+ifeq ($(_FC),g95)
+   FOPT_REN += -cpp
+   ifdef USE_INTEGER4
+       FOPT_REN += -i4
+   else
+       FOPT_REN += -i8
+   endif
+endif
+ 
+ifeq ($(_FC),gfortran)
+   GLOB_DEFINES += -DGFORTRAN
+   ifdef USE_INTEGER4
+       FOPT_REN += -fdefault-integer-4
+   else
+       FOPT_REN += -fdefault-integer-8
+   endif
+endif
+   
+_REQUIRE_GCCLIBPATH = $(shell $(CC) --version 2>&1 | awk '/\(GCC\) 3.3/ {print "yes";exit}; /xlc/ {print "yes";exit}')
+ifeq ($(_REQUIRE_GCCLIBPATH),yes)
+   ifdef GCC_LIB_PATH
+       CLIBS += -L$(GCC_LIB_PATH) -lgcc
+       FLIBS += -L$(GCC_LIB_PATH) -lgcc
+   else
+       CLIBS += -L/usr/lib/gcc/darwin/default -lgcc
+       FLIBS += -L/usr/lib/gcc/darwin/default -lgcc
+   endif
+endif
+
+# ======= Intel Compilers =======
+ifeq ($(_FC),ifort)
+   ifeq ($(FOPT),-O)
+       FOPT = -O3
+       FOPT_REN = -prefetch -w -cm
+   endif
+   GLOB_DEFINES += -DIFCLINUX -DIFCV8
+   FLD_REN += -Vaxlib
+   ifeq ($(LINK.c),$(FC))
+       CLD_REN += -nofor_main
+   endif
+   ifdef USE_INTEGER4
+       FOPT_REN += -i4   
+   else
+       FOPT_REN += -i8
+   endif
+   ifdef USE_INTEGER8
+       CDEFS = -DEXT_INT -DEXT_INT64
+   endif
+endif
+
+# ======= IBM Compilers =======
+ifeq ($(_FC),xlf)
+     FOPT_REN     += -q64 -qextname
+     GLOB_DEFINES += -DXLFMAC -DEXTNAME
+     ifdef USE_INTEGER4
+         FOPT_REN += -qintsize=4
+     else
+         FOPT_REN += -qintsize=8
+     endif
+endif
+
+# ======= Absoft Compilers =======
+ifneq ($(_FC),xlf)
+ifneq ($(_FC),g77)
+	_FC = $(shell $(FC) -v 2>&1 | awk '/Pro Fortran/ {print "absoft"; exit }' )
+endif
+endif
+ifeq ($(_FC),absoft)
+#    echo $_FC
+     FOPT_REN += -f -N15
+GLOB_DEFINES += -DABSOFTMAC
+        FLIBS+= -lU77
+endif
+
+endif
+#
 #................................ LINUX ....................................
 # IBM PC running Linux
 #
@@ -407,7 +514,7 @@ ifeq ($(TARGET),LINUX)
                  awk ' /sparc/ { print "sparc" }; /i*86/ { print "x86" } ' )
 
 ifneq (,$(findstring mpif,$(_FC)))
-         _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit };/gcc version 4/ { print "gfortran"; exit }; /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /pgf/ { pgfcount++}; END {if(pgfcount)print "pgf77"}; /ifc/ { print "ifc" ; exit }; /ifort/ { print "ifort" ; exit }; / frt / { print "frt" ; exit }' )
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit };/gcc version 4/ { print "gfortran"; exit }; /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /pgf/ { pgfcount++}; END {if(pgfcount)print "pgf77"}; /ifc/ { print "ifc" ; exit }; /ifort/ { print "ifort" ; exit }; / frt / { print "frt" ; exit }; /Version/ {print "ifort"; exit }' )
 endif
 ifneq (,$(findstring mpicc,$(_CC)))
          _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ {gcccount++}; END {if(gcccount)print "gcc"} ' )
@@ -564,7 +671,7 @@ ifeq ($(TARGET),LINUX64)
        RANLIB = echo
 GLOB_DEFINES += -DLINUX 
 ifneq (,$(findstring mpif,$(_FC)))
-         _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit }; /gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /efc/ { print "efc" ; exit }; /ifort/ { print "ifort" ; exit }; / frt / { print "frt" ; exit } ' )
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit }; /gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /efc/ { print "efc" ; exit }; /ifort/ { print "ifort" ; exit }; / frt / { print "frt" ; exit }; /Version/ {print "ifort"; exit } ' )
 endif
 
 ifneq ($(_FC),g77)
@@ -739,18 +846,20 @@ ifeq  ($(_CPU),x86_64)
   ifeq ($(ARMCI_NETWORK), CRAY-SHMEM)
      CC = cc
      FC = ftn
-     CLD_REN += -Mnomain
   endif
 
   ifeq ($(ARMCI_NETWORK), PORTALS)
      CC = cc
      FC = ftn
-     CLD_REN += -Mnomain
   endif      
 
 ifneq (,$(findstring mpif,$(_FC)))
-  _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit };/gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; /PathScale/ { pathf90count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90" ; if(pathf90count)print "pathf90"} ')
+  _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit };/gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; /PathScale/ { pathf90count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90" ; if(pathf90count)print "pathf90"} ; /Version/ {print "ifort"; exit }')
 endif
+ifeq ($(_FC), ftn)
+  _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit };/gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; /PathScale/ { pathf90count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90" ; if(pathf90count)print "pathf90"} ; /Version/ {print "ifort"; exit }')
+endif
+     
 # As "pathf90 -v" also gives "gcc version" as output, if FC=pathf90, then
 # _FC will be "g77 pathf90". So we need to make sure _FC=pathf90
 ifneq (,$(findstring pathf90,$(_FC)))

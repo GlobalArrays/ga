@@ -3,14 +3,16 @@
 
 #if defined(__cplusplus) || defined(c_plusplus)
 
-#include <stdio.h>
-#include "ga.h"
-#include "macdecls.h"
 #ifdef MPIPP
 #include <mpi.h>
 #else
 #include "sndrcv.h"
 #endif
+#include <stdio.h>
+#include "ga.h"
+#include "macdecls.h"
+
+#define GANbhdl ga_nbhdl_t   
 
 #define _GA_USENAMESPACE_ 1
 
@@ -32,6 +34,7 @@ class GA {
   _GA_EXTERN_  _GA_STATIC_  GAServices SERVICES;
 
 #include "init_term.h"
+#include "PGroup.h"
 #include "GlobalArray.h"
 #include "GAServices.h"
 

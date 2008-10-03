@@ -22,6 +22,87 @@ static int armci_client_first=-1, armci_nclients=-1;
 
 extern Header *armci_get_shmem_ptr(int shmid, long shmoffset, size_t shmsize);
 
+/* ====================== MUltiple Buffers Code ======================== */
+#ifdef MULTIPLE_BUFS
+
+#define MPI2_MAX_BUFS 10
+
+typedef struct req_waitlist 
+{
+   int reqid;
+   int p;   
+   int tag;
+   struct req_waitlist *next;   
+}
+req_waitlist_t;
+
+static double      _mpi2_rcv_buf[MPI2_MAX_BUFS][MSG_BUFLEN_DBL];
+static MPI_Request _mpi_request[MPI2_MAX_BUFS];
+static int *_next_tag=NULL;
+static int _reqid_ready=0;
+static req_waitlist_t *_req_waitlist_head = NULL;
+static req_waitlist_t *_req_waitlist_tail = NULL;
+
+/* increment the tag value to maintain flowcontrol */
+#define INCR_TAG(p) \
+{                                                         \
+    if(++_next_tag[p] > ARMCI_MPI_SPAWN_TAG_END)          \
+            _next_tag[p] = ARMCI_MPI_SPAWN_TAG_BEGIN;     \
+}
+
+
+static int wlist_get_req(int *p, int *tag, int *reqid) {
+
+    req_waitlist_t *itr, *prev=NULL;
+    
+    for(itr=_req_waitlist_head; itr != NULL; itr=itr->next)
+    {
+       if(itr->tag == _next_tag[itr->p]) 
+       {
+          /* mark the request id as ready to be processed, and update the
+           * tag order and waitlist */
+          *p     = itr->p;
+          *tag   = itr->tag;
+          *reqid = itr->reqid;
+          INCR_TAG(*p);
+          
+          /* remove this request from the waiting list */
+          if(itr==_req_waitlist_head) _req_waitlist_head = itr->next;
+          if(itr==_req_waitlist_tail) _req_waitlist_tail = prev;
+          if(prev != NULL) prev->next = itr->next;
+          free(itr);
+          
+          return 1;
+       }       
+       prev = itr;
+    }
+    
+    return 0;
+}
+
+static void wlist_add_req(int reqid, int p, int tag) 
+{
+    req_waitlist_t *node = (req_waitlist_t *) malloc(sizeof(req_waitlist_t));
+    
+    node->reqid = reqid;
+    node->p     = p;
+    node->tag   = tag;
+    node->next  = NULL;
+    
+    if(_req_waitlist_head == NULL)
+    {
+       _req_waitlist_head = node;
+       _req_waitlist_tail = node;
+       return;
+    }
+
+    /* append the new request at the end of the list */
+    _req_waitlist_tail->next = node;
+    _req_waitlist_tail = node;
+}
+#endif
+
+/* ==================== END: Multiple Buffers Code ====================== */
 
 #if MPI_SPAWN_DEBUG
 void armci_mpi2_server_debug(int rank, const char *format, ...) 
@@ -52,6 +133,7 @@ static inline int MPI_Check (int status)
 #else
 # define MPI_Check(x) x
 #endif
+
 
 /**************************************************************************
  * Platform specific server code as required by the ARMCI s/w layer. (BEGIN)
@@ -86,7 +168,7 @@ static void armci_mpi_rcv_strided_data(request_header_t *msginfo,
     int stride_levels, *stride_arr, *count;
     
     bytes = msginfo->dscrlen;
-    dscr  = msginfo + 1;
+    dscr  = (char*)(msginfo + 1);
     *(void**)vdscr = (void *)dscr;
     
     ptr = *(void**)dscr;           dscr += sizeof(void*);
@@ -118,22 +200,34 @@ static void armci_mpi_rcv_vector_data(request_header_t *msginfo,
 void armci_rcv_req (void *mesg, void *phdr, void *pdescr,
                     void *pdata, int *buflen)
 {
-    MPI_Status status;
-    request_header_t *msginfo = (request_header_t*) MessageRcvBuffer;
+    request_header_t *msginfo = NULL;
     int hdrlen = sizeof(request_header_t);
-    int p = * (int *) mesg;
+    int p=-1;
     int bytes;
-    
-    if( !(p >= 0 && p < armci_nproc) )
-       armci_die("armci_rcv_req: request from invalid client", p);
+
+#if !defined(MULTIPLE_BUFS)
+    MPI_Status status;
+    msginfo = (request_header_t*) MessageRcvBuffer;
+    p = * (int *) mesg;
     
     MPI_Check(
        MPI_Recv(MessageRcvBuffer, MSG_BUFLEN, MPI_BYTE, p, ARMCI_MPI_SPAWN_TAG,
                 MPI_COMM_SERVER2CLIENT, &status)
        );
+#else
+    int reqid = _reqid_ready;;/*get request id that is ready to be processed */
+    
+    msginfo = (request_header_t*) _mpi2_rcv_buf[reqid];
+    p = * (int *) mesg;
+    if(p != msginfo->from)
+       armci_die("armci_rcv_req: invalid client", p);
+#endif
+    
+    * (void **) phdr = msginfo;    
 
-    * (void **) phdr = msginfo;
-
+    if( !(p >= 0 && p < armci_nproc) )
+       armci_die("armci_rcv_req: request from invalid client", p);
+    
     armci_mpi2_server_debug(armci_server_me,
                             "armci_rcv_req: op=%d mesg=%p, phdr=%p "
                             "pdata=%p, buflen=%p, p=%d\n", msginfo->operation,
@@ -167,7 +261,7 @@ void armci_rcv_req (void *mesg, void *phdr, void *pdescr,
                      msginfo->bytes, *buflen);
     }
 
-#if MPI_SPAWN_DEBUG && !defined(MPI_SPAWN_ZEROCOPY)
+#if MPI_SPAWN_DEBUG && !defined(MPI_SPAWN_ZEROCOPY) && 0
     {
        int count;
        MPI_Get_count(&status, MPI_BYTE, &count);
@@ -254,25 +348,94 @@ void armci_WriteStridedToDirect(int to, request_header_t* msginfo,
 
 void armci_call_data_server() 
 {
+    int p=-1;
+    MPI_Status status;
+    
     armci_mpi2_server_debug(0, "armci_call_data_server(): Server main loop\n");
     
+#if !defined(MULTIPLE_BUFS)
     /* server main loop; wait for and service requests until QUIT requested */
     for(;;)
-    {
-       int p;
-       MPI_Status status;
-       
+    {       
        MPI_Check(
-          MPI_Probe(MPI_ANY_SOURCE, ARMCI_MPI_SPAWN_TAG, MPI_COMM_SERVER2CLIENT,
+          MPI_Probe(MPI_ANY_SOURCE, ARMCI_MPI_SPAWN_TAG,MPI_COMM_SERVER2CLIENT,
                     &status)
           );
 
        p = status.MPI_SOURCE;
        armci_mpi2_server_debug(armci_server_me,
                                "Processing message from client %d\n", p);
-
+       
        armci_data_server(&p);  
     }
+#else
+
+    int i, tag, reqid, do_waitlist=0;
+
+    /* server multiple bufs setup */
+    _req_waitlist_head = NULL;
+    _req_waitlist_tail = NULL;
+    /* Initialize "next tag" array, which manages flow control */
+    if( (_next_tag = (int*) malloc(armci_nproc*sizeof(int)) ) == NULL)
+       armci_die("mpi2_server: _next_tag malloc failed", 0);
+    for(i=0; i<armci_nproc; i++) _next_tag[i] = ARMCI_MPI_SPAWN_TAG_BEGIN;
+    
+    
+    /* server posts multiple receive buffers in advance */
+    for(i=0; i<MPI2_MAX_BUFS; i++) 
+    {
+       MPI_Check(
+          MPI_Irecv(_mpi2_rcv_buf[i], MSG_BUFLEN, MPI_BYTE, MPI_ANY_SOURCE,
+                    ARMCI_MPI_SPAWN_TAG, MPI_COMM_SERVER2CLIENT,
+                    &_mpi_request[i])
+          );
+    }
+    
+    for(;;)
+    {
+       /* process wait-listed requests, if any */
+       do_waitlist = 0;       
+       if(_req_waitlist_head != NULL) 
+       {
+          do_waitlist = wlist_get_req(&p, &tag, &reqid);
+       }
+       
+       if(!do_waitlist) 
+       {  
+          /* process the first completed incoming request */
+          MPI_Check(
+             MPI_Waitany(MPI2_MAX_BUFS, _mpi_request, &reqid, &status)
+             );
+          p   = status.MPI_SOURCE;
+          /* tag = status.MPI_TAG; */
+          tag = ((request_header_t*) _mpi2_rcv_buf[reqid])->tag;
+          
+          /* check if it is in or out of order request */
+          if(tag == _next_tag[p]) { INCR_TAG(p); }
+          else 
+          {
+             /* out of order req - enforce ordering by waitlisting this req */
+             wlist_add_req(reqid, p, tag);
+             continue;
+          }
+       }
+       
+       /* mark the request id that is ready to processed */
+       _reqid_ready = reqid;
+       
+       /* server process the incoming (or waitlisted) request */
+       armci_data_server(&p);
+
+       /* After completing the request (which also frees a buffer), server
+        * posts a receive using this buffer */
+       MPI_Check(
+          MPI_Irecv(_mpi2_rcv_buf[reqid], MSG_BUFLEN, MPI_BYTE, MPI_ANY_SOURCE,
+                    ARMCI_MPI_SPAWN_TAG, MPI_COMM_SERVER2CLIENT,
+                    &_mpi_request[reqid])
+          );
+    }
+#endif
+
 }
 /**
  * Platform specific server code ENDs here.
@@ -366,7 +529,7 @@ void armci_mpi2_server_init()
      * Spawned Data server processes emulate ARMCI_Init() to complete the
      * ARMCI Initalization process similar to clients
      */
-
+    
     armci_clus_info =(armci_clus_t*)malloc(armci_nserver*sizeof(armci_clus_t));
     if(armci_clus_info == NULL)
     {
@@ -393,7 +556,7 @@ void armci_mpi2_server_init()
     /**
      * End of ARMCI_Init() emulation.
      * *******************************************************************/
-    
+
     MPI_Barrier(MPI_COMM_WORLD);
 }
 

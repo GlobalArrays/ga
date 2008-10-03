@@ -841,7 +841,7 @@ void GA_Set_ghosts64(int g_a, int64_t width[])
     ga_set_ghosts_(&aa, ptr);
 }
 
-void GA_Set_irreg_distr_(int g_a, int map[], int block[])
+void GA_Set_irreg_distr(int g_a, int map[], int block[])
 {
     Integer aa, *ptr, ndim;
     int d, base_map=0, base_work, b;
