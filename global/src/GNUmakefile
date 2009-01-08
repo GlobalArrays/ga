@@ -72,6 +72,12 @@ ifeq ($(TARGET),NEC)
 OBJ_FRAGILE = global.armci.o
 endif
 
+CRAY_XT_NETWORKS = PORTALS CRAY-SHMEM
+ifeq ($(ARMCI_NETWORK),$(findstring $(ARMCI_NETWORK),$(CRAY_XT_NETWORKS)))
+  GA_EXTRA += ga_dgemmf.o
+  LIB_DEFINES += -DXT3
+endif
+
 #--------------------------- extra definitions ---------------------
   LIB_DEFINES += -DARMCI
   ifeq ($(GA_TRACE), YES)

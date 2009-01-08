@@ -3373,7 +3373,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
               jtot *= ld[j];
             }
             offset += ((subscript+k*ndim)[last]-lo[last])*jtot;
-            ptr_src[map[iproc]][count[iproc]] += offset*GA[handle].elemsize;
+            ptr_src[map[iproc]][count[iproc]]=((char *)ptr_src[map[iproc]][count[iproc]])+offset*GA[handle].elemsize;
             count[iproc]++;
           }
         }
@@ -3476,7 +3476,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
               jtot *= ld[j];
             }
             offset += ((subscript+k*ndim)[last]-lo[last])*jtot;
-            ptr_dst[map[iproc]][count[iproc]] += offset*GA[handle].elemsize;
+            ptr_dst[map[iproc]][count[iproc]]=((char*)ptr_dst[map[iproc]][count[iproc]])+offset*GA[handle].elemsize;
             count[iproc]++;
           }
         }
@@ -3588,7 +3588,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
               jtot *= ld[j];
             }
             offset += ((subscript+k*ndim)[last]-lo[last])*jtot;
-            ptr_dst[map[iproc]][count[iproc]] += offset*GA[handle].elemsize;
+            ptr_dst[map[iproc]][count[iproc]]=((char*)ptr_dst[map[iproc]][count[iproc]])+offset*GA[handle].elemsize;
             count[iproc]++;
           }
         }

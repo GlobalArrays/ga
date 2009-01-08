@@ -633,7 +633,7 @@ static int _armci_puts(void *src_ptr,
 #endif
 
   PREPROCESS_STRIDED(tmp_count);
-#  if (!defined(QUADRICS) || defined(PACKPUT)) && !defined(PORTALS)
+#  if (!defined(QUADRICS) || defined(PACKPUT))
   direct=SAMECLUSNODE(proc);
 #  endif /*(!QUADRICS||!PACKPUT)&&!PORTALS*/
 
@@ -725,7 +725,10 @@ static int _armci_puts(void *src_ptr,
     }
   }
 #  endif /*LAPI||DOELAN4*/
- 
+#  ifdef PORTALS
+     if(stride_levels) direct=1;
+#  endif
+  
 #  if !defined(LAPI2) || defined(LAPI_RDMA)
   if(!direct){
 #    ifdef ALLOW_PIN /*if we can pin, we do*/
@@ -1292,7 +1295,7 @@ int armci_read_strided_inc(stride_itr_t sitr, const char *buf,int bytes, int *se
   off=0;
   if(*seg_off) {
     char *sptr = (char*) &buf[off];
-    char *dptr = armci_stride_itr_seg_ptr(sitr)+*seg_off;
+    char *dptr = ((char*)armci_stride_itr_seg_ptr(sitr))+*seg_off;
     int size = MIN(seg_size-*seg_off,bytes);
     /*     printf("%d:%s(): seg_size=%d,seg_off=%d,bytes=%d\n",armci_me,__FUNCTION__,seg_size,*seg_off,bytes); */
     dassert(1,armci_stride_itr_has_more(sitr));
@@ -1374,7 +1377,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 		0, &cb_wait, 1);
 #else
 
-#if !defined(QUADRICS) && !defined(PORTALS)
+#if !defined(QUADRICS)
   direct=SAMECLUSNODE(proc);
 #endif
   PREPROCESS_STRIDED(tmp_count);
@@ -1421,6 +1424,10 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 
 #ifdef LAPI_RDMA
   if(stride_levels == 0 || count[0] > LONG_GET_THRESHOLD) direct=0;
+#endif
+
+#ifdef PORTALS
+  if(stride_levels) direct=1;
 #endif
   
 #if !defined(LAPI2) || defined(LAPI_RDMA)

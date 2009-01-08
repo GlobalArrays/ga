@@ -770,6 +770,11 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
       ){
        armci_complete_vector_get(darr,len,msginfo);
     }
+
+#if defined(SOCKETS) && !defined(NB_SOCKETS)
+    _armci_buf_set_cmpld(msginfo, 1); /* this may not be the best place */
+#endif
+
 #endif
 
     return 0;
@@ -992,18 +997,24 @@ int armci_rem_strided(int op, void* scale, int proc,
                                  stride_levels,1);
 #endif
        
-#if defined(NB_SOCKETS) || !defined(MPI_SPAWN)
+#if defined(SOCKETS)
+#  ifdef NB_SOCKETS
        if(!nb_handle)
-#endif
+#  endif
        {
-#ifdef SOCKETS
-       armci_rcv_hdlr(msginfo);
-#else
-       armci_rcv_strided_data(proc, msginfo, msginfo->datalen,
-                              dst_ptr, stride_levels, dst_stride_arr, count);
-#endif
-         FREE_SEND_BUFFER(msginfo);
+          armci_rcv_hdlr(msginfo);
+          FREE_SEND_BUFFER(msginfo);
        }
+#else
+#  ifndef MPI_SPAWN
+       if(!nb_handle)
+#  endif
+       {
+          armci_rcv_strided_data(proc, msginfo, msginfo->datalen,
+                                 dst_ptr, stride_levels, dst_stride_arr,count);
+          FREE_SEND_BUFFER(msginfo);
+       }
+#endif
     } else {
        /* for put and accumulate send data */
        armci_send_strided(proc,msginfo, buf,

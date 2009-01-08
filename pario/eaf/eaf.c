@@ -20,7 +20,6 @@
  * publicly by or for the US Government, including the right to
  * distribute to other US Government contractors.
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef WIN32
@@ -115,7 +114,10 @@ int eaf_open(const char *fname, int type, int *fd)
   */
 {
     int i=0;
-
+#ifdef XT3
+    int myid;
+#include <mpi.h>
+#endif
     while ((i<EAF_MAX_FILES) && file[i].fname) /* Find first empty slot */
 	i++;
     if (i == EAF_MAX_FILES) return EAF_ERR_MAX_OPEN;
@@ -124,9 +126,18 @@ int eaf_open(const char *fname, int type, int *fd)
 	return EAF_ERR_MEMORY;
 
     if (!(file[i].elio_fd = elio_open(fname, type, ELIO_PRIVATE))) {
+#ifdef XT3
+      MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+      /* printf(" %d sleeping for %d usec \n", myid, (myid+1)/4); */
+      usleep((myid+1)/4);
+    if (!(file[i].elio_fd = elio_open(fname, type, ELIO_PRIVATE))) {
+#endif
 	free(file[i].fname);
 	file[i].fname = 0;
 	return ELIO_PENDING_ERR;
+#ifdef XT3
+    }
+#endif
     }
 
     file[i].nwait = file[i].nread = file[i].nwrite = 

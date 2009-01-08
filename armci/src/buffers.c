@@ -44,12 +44,14 @@
 #endif
 #define LEFT_GUARD  11.11e11
 #define RIGHT_GUARD 22.22e22
-#define CLEAR_TABLE_SLOT(idx) *((int*)(_armci_buf_state->table+(idx))) =0
+/* #define CLEAR_TABLE_SLOT(idx) *((int*)(_armci_buf_state->table+(idx))) =0 */
+#define CLEAR_TABLE_SLOT(idx) (memset(_armci_buf_state->table+(idx),'\0',sizeof(buf_state_t))
 
 
 /* we allow multiple buffers (up to 15) per single request
  * adjacent buffers can be coalesced into a large one
  */
+#if 0
 typedef struct {
   unsigned int op:8;     /* pending operation code */
   unsigned int snd:1;    /* if 1 then buffer is used for sending request */
@@ -62,7 +64,20 @@ typedef struct {
   unsigned int cmpl:1;   /* set to 1 if buffer was completed and can be released */
   unsigned int to:13;    /* serv/proc to which request was sent, 8172 possible */
 }buf_state_t;
-
+#else
+typedef struct {
+  unsigned int op:8;     /* pending operation code */
+  unsigned int snd:1;    /* if 1 then buffer is used for sending request */
+  unsigned int rcv:1;    /* if 1 then buffer is used for receiving data */
+  unsigned int async:1;  /* if 1 then request is nonblocking */
+  unsigned int first:20;  /* id of the 1st buffer in the set in same request */
+  unsigned int count:1;  /* count is not used and is always 1 (or 0???) */
+  /*unsigned int count:4;  \* how many buffers used for this request 8 possible */
+  unsigned int busy:1;   /* if 1 buffer is used and cannot be completed */
+  unsigned int cmpl:1;   /* set to 1 if buffer was completed and can be released */
+  unsigned int to:30;    /* serv/proc to which request was sent, can handle pretty large counts (can be used for fields in the future) */
+}buf_state_t;
+#endif
 
 #ifndef BUFID_PAD_T
 #define BUFID_PAD_T BUF_INFO_T
@@ -134,7 +149,7 @@ INLINE BUF_INFO_T *_armci_id_to_bufinfo(int bufid) {
 }
 
 
-#if 0 && (defined(THREAD_SAFE) || defined(SOCKETS))
+#if (defined(THREAD_SAFE) || defined(SOCKETS))
 
 
 /*\ we allocate alligned buffer space
@@ -147,8 +162,10 @@ int extra=0, i, n;
 int smallbuf_size = sizeof(buf_smext_t)*(MAX_SMALL_BUFS);
      tmp = (char *)BUF_ALLOCATE((MAX_BUFS*sizeof(buf_ext_t) + 64 + smallbuf_size));
      extra= ALIGN64ADD(tmp);
-     if(sizeof(buf_state_t) != sizeof(int))
-        armci_die("armci_buf_init size buf_state_t!=int",sizeof(buf_state_t));
+/*      if(sizeof(buf_state_t) != sizeof(int)) */
+/*         armci_die("armci_buf_init size buf_state_t!=int",sizeof(buf_state_t)); */
+     dassert(1,MAX_BUFS<sizeof(int)*8); /*should fit in the bitmap*/
+     dassert(1,MAX_SMALL_BUFS<sizeof(int)*8); /*should fit in the bitmap*/
 
      _armci_buffers = (buf_ext_t *) (tmp + extra);
 
@@ -279,7 +296,10 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
 #   endif
 
     /* clear table slots for all the buffers in the set for this request */
-    for(; count; count--, buf_state++) *(int*)buf_state = 0;
+    for(; count; count--, buf_state++) {
+/*       *(int*)buf_state = 0; */
+      memset(buf_state,'\0',sizeof(buf_state_t));
+    }
 }
 
 
@@ -574,7 +594,7 @@ char *_armci_buf_get(int size, int operation, int to)
         _armci_buf_state->smallbuf[idx].id.bufid = tbl_idx;
         _armci_buf_state->smallbuf[idx].id.protocol = 0;
 # ifdef BUF_EXTRA_FIELD_T
-        INIT_SEND_BUF(_armci_buf_state->smallbuf[idx].field,
+         INIT_SEND_BUF(_armci_buf_state->smallbuf[idx].field,
                       _armci_buf_state->table[tbl_idx].snd,
                       _armci_buf_state->table[tbl_idx].rcv);
 #endif
@@ -798,9 +818,10 @@ int  extra=0;
 int smallbuf_size = sizeof(buf_smext_t)*(MAX_SMALL_BUFS);
      tmp = (char *)BUF_ALLOCATE((MAX_BUFS*sizeof(buf_ext_t) + 64 + smallbuf_size));
      extra= ALIGN64ADD(tmp);
+#if 0
      if(sizeof(buf_state_t) != sizeof(int)) 
         armci_die("armci_buf_init size buf_state_t!=int",sizeof(buf_state_t));
-                   
+#endif                   
      _armci_buffers = (buf_ext_t *) (tmp + extra); 
 
      tmp = (char *)(_armci_buffers + MAX_BUFS);
@@ -932,7 +953,10 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
 
     /* clear table slots for all the buffers in the set for this request */
     assert(count==1);
-    for(; count; count--, buf_state++) *(int*)buf_state = 0;
+    for(; count; count--, buf_state++) {
+/*       *(int*)buf_state = 0; */
+      memset(buf_state, '\0', sizeof(buf_state_t));
+    }
 }
 
 
@@ -1415,7 +1439,10 @@ void _armci_buf_release_index(int index) {
   }
   
   /* clear table slots for all the buffers in the set for this request */
-  for(; count; count--, buf_state++) *(int*)buf_state = 0;
+  for(; count; count--, buf_state++) {
+    memset(buf_state, '\0', sizeof(buf_state_t));
+/*     *(int*)buf_state = 0; */
+  }
   if(index >= MAX_BUFS){
     _armci_buf_state->smallbuf[index-MAX_BUFS].id.tag=0;
 #ifndef VAPI

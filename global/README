@@ -83,8 +83,12 @@ BUILDING GA
 
 TEST PROGRAMS
 
- - Programs: test.x, testsolve.x, testeig.x, patch.x, ndim.x, ntestc.x 
-             and ngatest.x are available to test this software.
+ - GA test programs are available in global/testing directory
+
+ - To compile GA test programs, refer to the README file in global/testing 
+
+ - Programs: test.x, testsolve.x, testeig.x, patch.x, ndim.x, ntestc.x, 
+             pgtest.x, and ngatest.x are available to test this software.
 
  - Program testspd.x should work only with the ScaLAPACK and MPI
 

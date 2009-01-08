@@ -1,6 +1,12 @@
 c
 c FNAME - filename for test program
 c
+c  Only use the INTEGER4_TEST if you are compiling
+c  with USE_INTEGER4 and you are using an F90
+c  fortran compiler
+c
+c#define INTEGER4_TEST
+c
 #define BASE_NAME  'da.try'
 #define BASE_NAME1 'da1.try'
 #ifdef  HPIODIR
@@ -75,6 +81,9 @@ c
       logical status
       external  drand
       intrinsic int, dble
+#ifdef INTEGER4_TEST
+      double precision, allocatable :: buffer(:,:)
+#endif
       iran(i) = int(drand(0)*dble(i-1)) + 1
 c    
       loop  = 30
@@ -97,8 +106,17 @@ c     ... use ga_access to avoid allocating local buffers for ga_put
 c
       call ga_sync()
       call ga_distribution(g_a, me, gilo,gihi,gjlo,gjhi)
+#ifdef INTEGER4_TEST
+      allocate(buffer(gihi-gilo+1,gjhi-gjlo+1))
+      ld = gihi-gilo+1
+      call ga_get(g_a, gilo, gihi, gjlo, gjhi, buffer, ld)
+      call fill_random(buffer, gihi-gilo+1, gjhi-gjlo+1, ld)
+      call ga_put(g_a, gilo, gihi, gjlo, gjhi, buffer, ld)
+      deallocate(buffer)
+#else
       call ga_access(g_a, gilo,gihi,gjlo,gjhi, index, ld)
       call fill_random(DBL_MB(index), gihi-gilo+1, gjhi-gjlo+1, ld)
+#endif
       call ga_sync()
 *     if (me.eq.0) print *,'done '
 *     if (me.eq.0)call ffflush(6)

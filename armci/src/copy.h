@@ -246,7 +246,7 @@
 #   include "lapidefs.h"
 
 #elif defined(_CRAYMPP) || defined(QUADRICS) || defined(__crayx1)\
-   || defined(CRAY_SHMEM)
+   || defined(CRAY_SHMEM) || defined(PORTALS)
 #if defined(CRAY) || defined(XT3)
 #   include <mpp/shmem.h>
 #else
@@ -459,20 +459,21 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
 #      define armci_put(src,dst,n,proc) \
             if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
                armci_copy(src,dst,n);\
-            } else { armci_portals_put((proc),(src), (dst),(n),NULL,0);}
+            } else { ARMCI_Put((src), (dst),(n),(proc));}
 
 #      define armci_get(src,dst,n,proc)\
             if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
                armci_copy(src,dst,n);\
-            } else { armci_portals_get((proc),(src), (dst),(n),NULL,0);}
+            } else { ARMCI_Get((src), (dst),(n),(proc));}
 
+#if 0
 #      define ARMCI_NB_PUT(src,dst,n,proc,cmplt)\
             nb_handle->tag=GET_NEXT_NBTAG();armci_portals_put((proc),(src),\
                             (dst),(n),cmplt,nb_handle->tag)
 #      define ARMCI_NB_GET(src,dst,n,proc,cmplt)\
             nb_handle->tag=GET_NEXT_NBTAG();armci_portals_get((proc),(src),\
             (dst),(n),cmplt,nb_handle->tag)
-                                                                   
+#endif                                                              
 
 #elif defined(BGML)
 #define armci_get(src, dst, n, p)   ARMCI_Get(src, dst, n, p)

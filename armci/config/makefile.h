@@ -405,6 +405,7 @@ else
    endif
    ifeq ($(_CC),fcc)
       COPT = -Kfast
+      GLOB_DEFINES += -DNO__FUNCTION__  -DNO_I386ASM
    endif
    ifeq ($(_FC),mpifrt)
       _FC = frt
@@ -511,6 +512,7 @@ ifeq  ($(_CPU),ia64)
   endif
   ifeq ($(_CC),fcc)
      COPT = -Kfast
+     GLOB_DEFINES += -DNO__FUNCTION__  -DNO_I386ASM
   endif
   ifeq ($(_FC),mpifrt)
      _FC = frt
@@ -558,7 +560,7 @@ ifeq  ($(_CPU),x86_64)
      FC = ftn
   endif
 
-  _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit }; /gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /Path/ { print "pathf90" ; exit }; /efc/ { print "efc" ; exit }; /ifc/ { print "ifort" ; exit };/ifort/ { print "ifort" ; exit }; /pgf90/ { apgf90count++}; /pgf77/ { apgf77count++}; END {if(apgf77count)print "pgf77" ; if(apgf90count)print "pgf90"} ')
+  _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit }; /gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /Path/ { print "pathf90" ; exit }; /efc/ { print "efc" ; exit }; /ifc/ { print "ifort" ; exit };/ifort/ { print "ifort" ; exit }; /pgf90/ { apgf90count++}; /pgf77/ { apgf77count++}; END {if(apgf77count)print "pgf77" ; if(apgf90count)print "pgf90"}  ; / frt / { print "frt" ; exit }')
   ifeq ($(_FC),g77)
         FOPT_REN  += -fstrength-reduce -mfpmath=sse 
   endif
@@ -581,6 +583,22 @@ ifeq  ($(_CPU),x86_64)
      FOPT_REN += -i4
      FOPT_REN += -fno-second-underscore -ffixed-form -ffixed-line-length-80
      FLD_REN=
+  endif
+
+# Fujitsu Compilers
+  ifeq ($(_CC),mpifcc)
+      _CC = fcc
+  endif
+  ifeq ($(_CC),fcc)
+     COPT = -Kfast
+     GLOB_DEFINES += -DNO__FUNCTION__  -DNO_I386ASM
+  endif
+  ifeq ($(_FC),mpifrt)
+     _FC = frt
+  endif
+  ifeq ($(_FC),frt)
+     FOPT = -Kfast
+     FOPT_REN += -X9 -Am
   endif
 
 endif
@@ -685,7 +703,7 @@ ifeq ($(TARGET),SOLARIS)
   endif
   ifeq ($(_CC),fcc)
       COPT_REN = -Kfast -KV8PFMADD -x0
-      GLOB_DEFINES += -DSPARC64_GP
+      GLOB_DEFINES += -DSPARC64_GP -DNO__FUNCTION__  -DNO_I386ASM
   endif
 endif
 #
@@ -711,7 +729,7 @@ ifeq ($(TARGET),SOLARIS64)
   endif
   ifeq ($(_CC),fcc)
      COPT_REN = -Kfast -KV9FMADD -x0
-     GLOB_DEFINES += -DSPARC64_GP
+     GLOB_DEFINES += -DSPARC64_GP -DNO__FUNCTION__  -DNO_I386ASM
   else
      COPT_REN = -dalign $(_XARCH)
   endif

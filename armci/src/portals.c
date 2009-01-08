@@ -1,18 +1,26 @@
-/* $Id$ */
+/* preliminary implementation on top of portals */
+    /*there are 3 kinds of ARMCI memory: ARMCI_Malloc, ARMCI_Malloc_local, user
+     * allocated memory. For ARMCI_Malloc, we use region specific md that
+     * comes from completion descriptor.
+     * For ARMCI_Malloc_local, we use the MD from the lochdl
+     * For user allocated memory, we use another list of MD's
+     * which binds the user memory. We never keep track of non-armci allocated
+     * memory.
+     */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <float.h>
 #include "armcip.h"
 #include "message.h"
 #include <stdint.h>
-#include <assert.h>
 
 #define DEBUG_COMM 0
 #define DEBUG_INIT 0
+#ifndef PMI_SUCCESS
+#define PMI_SUCCESS 0
+#endif
 
-#define ARMCI_PORTALS_MAX_LOCKS 16
 
 #ifdef XT3
 #include "locks.h"
@@ -20,44 +28,19 @@ typedef struct {
        int off;
        int desc;
 } cnos_mutex_t;
+
 static cnos_mutex_t *_mutex_array;
 #endif
 
-static int num_locks=0;
-static long **all_locks;
-static long a_p_putfrom, a_p_getinto;
-ptl_md_t _armci_portals_lock_md;
-ptl_handle_md_t _armci_portals_lock_md_h;
-ptl_handle_me_t _armci_portals_lock_me_h;
-comp_desc *_lockput_cd_array;
-comp_desc *_lockget_cd_array;
-
-typedef struct {
-       void *base_ptr;
-       size_t size;
-       int islocal;
-}aptl_reginfo_t;
-
-typedef struct {
-       aptl_reginfo_t reginfo[MAX_MEM_REGIONS];  
-       int reg_count;
-} rem_meminfo_t;
 
 /*global variables and data structures */
-static armci_portals_proc_t _armci_portals_proc_struct;
-static armci_portals_serv_t _armci_portals_serv_struct;
-static armci_portals_proc_t *portals = &_armci_portals_proc_struct;
-static armci_portals_serv_t *serv_portals = &_armci_portals_serv_struct;
-/*static */comp_desc _compdesc_array[NUM_COMP_DSCR];
-
-static rem_meminfo_t *_rem_meminfo;
-static aptl_reginfo_t *_tmp_rem_reginfo;
-
-#define IN_REGION(_ptr__,_reg__) ((_ptr__)>=(_reg__.base_ptr) \
-                && (_ptr__) < ( (char *)(_reg__.base_ptr)+_reg__.size))
-
-static int ptl_initialized = 0;
-
+armci_portals_proc_t _armci_portals_proc_struct;
+armci_portals_proc_t *portals = &_armci_portals_proc_struct;
+comp_desc *_region_compdesc_array[PORTALS_MEM_REGIONS+1];
+int ptl_initialized = 0;
+int free_desc_index[PORTALS_MEM_REGIONS+1];
+FILE *utcp_lib_out;
+FILE* utcp_api_out;
 ptl_ni_limits_t armci_ptl_nilimits;
 
 int armci_init_portals(void)
@@ -65,75 +48,77 @@ int armci_init_portals(void)
 int num_interface;
 int rc;
 int npes,i;
+comp_desc *armci_comp_desc;
+ptl_process_id_t match_id;
     ARMCI_PR_DBG("enter",0);
    
-    rc = PtlInit(&num_interface);
-    if (rc != PTL_OK) {
-       printf("PtlInit() failed %d %s\n",rc, ARMCI_NET_ERRTOSTR(rc) );
-       armci_die("PtlInit Failed",rc);
+    if (PtlInit(&num_interface) != PTL_OK) {
+       fprintf(stderr, "PtlInit() failed\n");
+       exit(1);
+    }
+    portals->ptl = 37; /* our own ptl number */
+    for(i=0;i<=PORTALS_MEM_REGIONS;i++){
+      free_desc_index[i]=0;
     }
 
-    /*initialize data structures*/
-    bzero(portals,sizeof(armci_portals_proc_t));
-    bzero(serv_portals,sizeof(armci_portals_serv_t));
-
-    _rem_meminfo = (rem_meminfo_t *)malloc(sizeof(rem_meminfo_t)*armci_nproc);
-    _tmp_rem_reginfo = (aptl_reginfo_t *)malloc(sizeof(aptl_reginfo_t)*armci_nproc);
-    if( _rem_meminfo==NULL || _tmp_rem_reginfo ==NULL)
-      armci_die("malloc failed in init_portals",0);
-
-    portals->ptl = ARMCI_PORTALS_PTL_NUMBER; /* our own ptl number */
-
-    rc=PtlNIInit(IFACE_FROM_BRIDGE_AND_NALID(PTL_BRIDGE_UK,PTL_IFACE_SS), PTL_PID_ANY, NULL, &armci_ptl_nilimits, &(portals->ni_h));
+    rc=PtlNIInit(IFACE_FROM_BRIDGE_AND_NALID(PTL_BRIDGE_UK,PTL_IFACE_SS), PTL_PID_ANY, NULL, &armci_ptl_nilimits, &(portals->ni_h)); 
     switch(rc) {
        case PTL_OK:
        case PTL_IFACE_DUP:
          break;
        default:
-         printf( "PtlNIInit() failed %d error=%s\n",rc,ARMCI_NET_ERRTOSTR(rc) );
+         printf( "PtlNIInit() failed %d error=%s\n",rc,ptl_err_str[rc]);
          armci_die("NIInit Failed",0);
     }
     if(DEBUG_INIT || DEBUG_COMM)
       PtlNIDebug(portals->ni_h,PTL_DEBUG_ALL);
 
-    PtlGetId(portals->ni_h,&portals->rank);
+    PtlGetId(portals->ni_h,&portals->ptl_my_procid);
     if(DEBUG_INIT){
       printf("%d:the rank is %d, size is %d\n",armci_me,
-                      portals->rank,armci_nproc);
+                      portals->ptl_my_procid,portals->size);
     }
 
-    if ((npes = cnos_get_nidpid_map(&portals->ptl_pe_procid_map)) == -1) {
-      printf(" CNOS ERROR:Getting proc id/PE map failed (npes=%d)\n", npes);
+    if((rc=PMI_CNOS_Get_nidpid_map(&portals->ptl_pe_procid_map))!=PMI_SUCCESS){
+      printf("Getting proc map failed (npes=%d)\n", armci_nproc);
     }
 
     /* Allocate one shared event queue for all operations 
-     * DOTO tune size. Each comp desc may generate at most 3 events, there
-     * are NUM_COMP_DSCR comp desc's. 16 times that is a safe estimate for
-     * size of the queue.
+     * TODO tune size.
      */
-    rc = PtlEQAlloc(portals->ni_h,16*NUM_COMP_DSCR,NULL, &(portals->eq_h));
+    rc = PtlEQAlloc(portals->ni_h,1024,NULL, &(portals->eq_h));
     if (rc != PTL_OK) {
        printf("%d:PtlEQAlloc() failed: %s (%d)\n",
-                            portals->rank, ARMCI_NET_ERRTOSTR(rc) , rc);
-      armci_die("EQ Alloc failed",rc);
-    }
-
-    for(i=0;i<NUM_COMP_DSCR;i++){
-      _compdesc_array[i].active=0;
-      _compdesc_array[i].tag=-1;
-      _compdesc_array[i].dest_id=-1;
-      _compdesc_array[i].mem_dsc.eq_handle=portals->eq_h;
-      _compdesc_array[i].mem_dsc.max_size=0;
-      _compdesc_array[i].mem_dsc.threshold=2;
-      _compdesc_array[i].mem_dsc.options=PTL_MD_OP_GET | PTL_MD_OP_PUT | PTL_MD_EVENT_START_DISABLE;
+                            portals->ptl_my_procid, ptl_err_str[rc], rc);
+       armci_die("EQ Alloc failed",rc);                            
     }
 
     ptl_initialized = 1;
-    portals->free_comp_desc_index=0;
-    
+    portals->num_match_entries = 0;
+
+#ifndef XT3
+    utcp_lib_out = stdout;
+    utcp_api_out = stdout;
+#endif
+
+    /*now prepare for use of local memory*/ 
+    armci_comp_desc = (comp_desc *)malloc(sizeof(comp_desc)*MAX_OUT); 
+    for(i=0; i< MAX_OUT;i++){
+      ptl_md_t *md_ptr;
+      ptl_handle_md_t *md_h;
+      armci_comp_desc[i].active=0;
+      md_ptr = &armci_comp_desc[i].mem_dsc;
+      md_h = &armci_comp_desc[i].mem_dsc_hndl;
+      md_ptr->eq_handle = portals->eq_h;
+      md_ptr->max_size =0;
+      md_ptr->threshold = 2;/*PTL_MD_THRESH_INF;*/
+      md_ptr->options =  PTL_MD_OP_GET | PTL_MD_OP_PUT | PTL_MD_EVENT_START_DISABLE;
+    }
+    _region_compdesc_array[PORTALS_MEM_REGIONS]=armci_comp_desc;
     ARMCI_PR_DBG("exit",0);
     return 0;   
 }
+
 
 
 void armci_fini_portals()
@@ -151,153 +136,129 @@ void armci_fini_portals()
 }
 
 
-void armci_pin_contig1(void *start, size_t bytes)
+
+void armci_serv_register_req(void *start,long bytes, ARMCI_MEMHDL_T *reg_mem)
 {
 int rc;
+void * context;
 ptl_md_t *md_ptr;
-ptl_match_bits_t ignbits = 0xFFFFFFFFFFFFFF00;
+ptl_match_bits_t *mb;
 ptl_process_id_t match_id;
+ptl_handle_md_t *md_h;
+ptl_match_bits_t ignbits = 0xFFFFFFFFFFFFFFF0;
 
-    ARMCI_PR_DBG("enter",serv_portals->reg_count);
-
+    ARMCI_PR_DBG("enter",reg_mem->regid);
     if(DEBUG_COMM){
-      printf("\n%d:armci_pin_contig1 start=%p bytes=%ld\n",
-                      armci_me,start,bytes);fflush(stdout);
-    }
-
-    md_ptr            = &(serv_portals->meminfo[serv_portals->reg_count].md);
-    md_ptr->start     = start;
-    md_ptr->length    = bytes;
-    md_ptr->threshold = PTL_MD_THRESH_INF;
-    md_ptr->options   =  PTL_MD_OP_PUT | PTL_MD_OP_GET | PTL_MD_MANAGE_REMOTE;
-    md_ptr->user_ptr  = NULL;
-    md_ptr->max_size  = 0;
-    md_ptr->eq_handle = PTL_EQ_NONE;
-
-    serv_portals->meminfo[serv_portals->reg_count].mb=serv_portals->reg_count;
- 
-    match_id.nid = PTL_NID_ANY;
-    match_id.pid = PTL_PID_ANY; 
-
-    rc = PtlMEAttach(portals->ni_h,portals->ptl,match_id,
-                    serv_portals->meminfo[serv_portals->reg_count].mb,
-                    ignbits,
-		    PTL_RETAIN,PTL_INS_AFTER,
-		    &(serv_portals->meminfo[serv_portals->reg_count].me_h)); 
-    if (rc != PTL_OK) {
-      printf("%d:PtlMEAttach: %s\n", portals->rank, ARMCI_NET_ERRTOSTR(rc) );
-      armci_die("portals attach error2",rc);
-    }
-
-    rc = PtlMDAttach((serv_portals->meminfo[serv_portals->reg_count].me_h),
-                    *md_ptr,PTL_RETAIN,
-                    &(serv_portals->meminfo[serv_portals->reg_count].md_h));
-    if (rc != PTL_OK) {
-      printf("%d:PtlMDAttach: %s\n", portals->rank, ARMCI_NET_ERRTOSTR(rc) );
-      armci_die("portals attach error1",rc);
-    }
-    serv_portals->reg_count++;     
-
-    ARMCI_PR_DBG("exit",serv_portals->reg_count);
-}
-
-void armci_pin_contig_lock(void *start, size_t bytes)
-{
-int rc;
-ptl_md_t *md_ptr;
-ptl_match_bits_t ignbits = 0xFFFFFFFFFFFFFF00;
-ptl_process_id_t match_id;
-
-    ARMCI_PR_DBG("enter",0);
-
-    if(DEBUG_COMM){
-      printf("\n%d:armci_pin_contig_lock start=%p bytes=%ld\n",
-                      armci_me,start,bytes);fflush(stdout);
-    }
-
-    md_ptr            = &(_armci_portals_lock_md);
-    md_ptr->start     = start;
-    md_ptr->length    = bytes;
-    md_ptr->threshold = PTL_MD_THRESH_INF;
-    md_ptr->options   =  PTL_MD_OP_PUT | PTL_MD_OP_GET | PTL_MD_MANAGE_REMOTE;
-    md_ptr->user_ptr  = NULL;
-    md_ptr->max_size  = 0;
-    md_ptr->eq_handle = PTL_EQ_NONE;
-
-    match_id.nid = PTL_NID_ANY;
-    match_id.pid = PTL_PID_ANY; 
-
-    rc = PtlMEAttach(portals->ni_h,portals->ptl,match_id,
-                    MAX_MEM_REGIONS+1,
-                    ignbits,
-                    PTL_RETAIN,PTL_INS_AFTER,
-                    &(_armci_portals_lock_me_h)); 
-    if (rc != PTL_OK) {
-      printf("%d:PtlMEAttach: %s\n", portals->rank, ARMCI_NET_ERRTOSTR(rc) );
-      armci_die("portals attach error2",rc);
-    }
-
-    rc = PtlMDAttach(_armci_portals_lock_me_h,
-                    *md_ptr,PTL_RETAIN,
-                    &_armci_portals_lock_md_h);
-    if (rc != PTL_OK) {
-      printf("%d:PtlMDAttach: %s\n", portals->rank, ARMCI_NET_ERRTOSTR(rc) );
-      armci_die("portals attach error1",rc);
-    }
-
-    ARMCI_PR_DBG("exit",serv_portals->reg_count);
-}
-
-void armci_serv_register_req(void *start,int bytes, int ID)
-{
-int rc;
-ptl_md_t *md_ptr;
-ptl_match_bits_t ignbits;
-ptl_process_id_t match_id;
-
-    ARMCI_PR_DBG("enter",serv_portals->reg_count);
-
-    if(DEBUG_COMM){
+      printf("%d:armci_serv_register_req:size of mem_hndl is %d\n", 
+                      armci_me,sizeof(region_memhdl_t));
       printf("\n%d:armci_serv_register_req start=%p bytes=%d\n",
                       armci_me,start,bytes);fflush(stdout);
     }
 
-    md_ptr            = &(serv_portals->meminfo[serv_portals->reg_count].md);
-    md_ptr->start     = start;
-    md_ptr->length    = bytes;
-    md_ptr->threshold = PTL_MD_THRESH_INF;
-    md_ptr->options   =  PTL_MD_OP_PUT | PTL_MD_OP_GET | PTL_MD_MANAGE_REMOTE;
-    md_ptr->user_ptr  = NULL;
-    md_ptr->max_size  = 0;
-    md_ptr->eq_handle = PTL_EQ_NONE;
+    md_ptr = &reg_mem->cdesc.mem_dsc;
+    mb = &reg_mem->match_bits; 
+    md_h = &reg_mem->cdesc.mem_dsc_hndl;
+    context = NULL;
 
-    serv_portals->meminfo[serv_portals->reg_count].mb=serv_portals->reg_count;
+    md_ptr->start = start;
+    md_ptr->length = bytes;
+    md_ptr->threshold = PTL_MD_THRESH_INF;
+    md_ptr->options =  PTL_MD_OP_PUT | PTL_MD_OP_GET | PTL_MD_MANAGE_REMOTE;
+    md_ptr->user_ptr = context;
+    /*eq_hdl is null for the attaches done for a remote proc*/
+    /*md_ptr->eq_handle = portals->eq_h;*/
+    md_ptr->eq_handle = PTL_EQ_NONE;
+    md_ptr->max_size =0;
+    *mb = 0x0000000000000000;
+    *mb = (*mb+reg_mem->regid);
  
     match_id.nid = PTL_NID_ANY;
     match_id.pid = PTL_PID_ANY; 
 
-    rc = PtlMEAttach(portals->ni_h,portals->ptl,match_id,
-                    serv_portals->meminfo[serv_portals->reg_count].mb,
-                    ignbits,
-		    PTL_RETAIN,PTL_INS_AFTER,
-		    &(serv_portals->meminfo[serv_portals->reg_count].me_h)); 
+    rc = PtlMEAttach(portals->ni_h,portals->ptl,match_id,*mb,ignbits,
+		     PTL_RETAIN,PTL_INS_AFTER,
+		     &(portals->me_h[portals->num_match_entries])); 
+  
     if (rc != PTL_OK) {
-      printf("%d:PtlMEAttach: %s\n", portals->rank, ARMCI_NET_ERRTOSTR(rc) );
+      printf("%d:PtlMEAttach: %s\n", portals->ptl_my_procid, ptl_err_str[rc]);
       armci_die("portals attach error2",rc);
     }
 
-    rc = PtlMDAttach((serv_portals->meminfo[serv_portals->reg_count].me_h),
-                    *md_ptr,PTL_RETAIN,
-                    &serv_portals->meminfo[serv_portals->reg_count].md_h);
+    rc = PtlMDAttach(portals->me_h[portals->num_match_entries],*md_ptr,PTL_RETAIN,md_h);
+                    
     if (rc != PTL_OK) {
-      printf("%d:PtlMDAttach: %s\n", portals->rank, ARMCI_NET_ERRTOSTR(rc) );
+      printf("%d:PtlMDAttach: %s\n", portals->ptl_my_procid, ptl_err_str[rc]);
       armci_die("portals attach error1",rc);
     }
-    serv_portals->reg_count++;     
-
-    ARMCI_PR_DBG("exit",serv_portals->reg_count);
+     
+    portals->num_match_entries++;
+    ARMCI_PR_DBG("exit",reg_mem->regid);
  
 }
+
+int armci_pin_contig_hndl(void *start,int bytes, ARMCI_MEMHDL_T *reg_mem)
+{
+int rc,i;
+void * context;
+ptl_md_t *md_ptr;
+ptl_process_id_t match_id;
+ptl_handle_md_t *md_h;
+comp_desc *armci_comp_desc;
+
+    ARMCI_PR_DBG("enter",reg_mem->regid);
+   /*first create comp_desc arr for this region if it is not local*/
+    if(!reg_mem->islocal){
+      armci_comp_desc = (comp_desc *)malloc(sizeof(comp_desc)*MAX_OUT); 
+      for(i=0; i< MAX_OUT;i++){
+        armci_comp_desc[i].active=0;
+        md_ptr = &armci_comp_desc[i].mem_dsc;
+        md_h = &armci_comp_desc[i].mem_dsc_hndl;
+        context = NULL;
+        md_ptr->start = start;
+        md_ptr->length = bytes;
+        md_ptr->threshold = 2;/*PTL_MD_THRESH_INF;*/
+        md_ptr->options =  PTL_MD_OP_GET | PTL_MD_OP_PUT | PTL_MD_EVENT_START_DISABLE;
+        /*md_ptr->options =  PTL_MD_EVENT_START_DISABLE;*/
+                      
+        md_ptr->user_ptr = context;
+        md_ptr->eq_handle = portals->eq_h;
+        md_ptr->max_size =0;
+#ifdef DO_MD_UPDATE 
+        rc = PtlMDBind(portals->ni_h,*md_ptr, PTL_RETAIN, md_h);
+        if (rc != PTL_OK){
+          printf("%d:PtlMDBind: %s\n", portals->ptl_my_procid, ptl_err_str[rc]);
+          armci_die("ptlmdbind failed",0);
+        }
+#endif
+      }
+      _region_compdesc_array[reg_mem->regid]=armci_comp_desc;
+      ARMCI_PR_DBG("exit",0);
+      return 1;
+    }
+    else {
+      md_ptr = &reg_mem->cdesc.mem_dsc;
+      md_h = &reg_mem->cdesc.mem_dsc_hndl;
+      context = NULL;
+      md_ptr->start = start;
+      md_ptr->length = bytes;
+      md_ptr->threshold = 2;/*PTL_MD_THRESH_INF;*/
+      md_ptr->options =  PTL_MD_OP_PUT | PTL_MD_EVENT_START_DISABLE;
+                      
+      md_ptr->user_ptr = context;
+      md_ptr->eq_handle = portals->eq_h;
+      md_ptr->max_size =0;
+#if DO_MD_UPDATE
+      rc = PtlMDBind(portals->ni_h,*md_ptr, PTL_RETAIN, md_h);
+      if (rc != PTL_OK){
+         printf("%d:PtlMDBind: %s\n", portals->ptl_my_procid, ptl_err_str[rc]);
+         armci_die("ptlmdbind failed",0);
+      }
+#endif
+      ARMCI_PR_DBG("exit",1);
+      return 1;
+    }
+}
+
 
 int armci_client_complete(ptl_event_kind_t *evt,int proc_id, int nb_tag,
                 comp_desc *cdesc)
@@ -313,18 +274,16 @@ int temp_proc;
       printf("\n%d:enter:client_complete active=%d tag=%d %d\n",armci_me,
                       cdesc->active,cdesc->tag,nb_tag);fflush(stdout);
     }
-    
-    while(cdesc->active!=0)
-    {
+    while(cdesc->active!=0){
       ev->type=0;
       if((rc = PtlEQWait(portals->eq_h, ev)) != PTL_OK){
-        printf("%d:PtlEQWait(): %d %s\n", portals->rank,rc,
-                        ARMCI_NET_ERRTOSTR(rc) ); 
+        printf("%d:PtlEQWait(): %d %s\n", portals->ptl_my_procid,rc,
+                        ptl_err_str[rc]); 
         armci_die("EQWait problem",rc);
       }
       if (ev->ni_fail_type != PTL_NI_OK) {
         printf("%d:NI sent %d in event.\n",
-                        portals->rank,  ev->ni_fail_type); 
+                        portals->ptl_my_procid,  ev->ni_fail_type); 
         armci_die("event failure problem",0);
       }
       if(DEBUG_COMM){
@@ -332,24 +291,14 @@ int temp_proc;
                         ev->type);
         fflush(stdout);
       }
-      
       if (ev->type == PTL_EVENT_SEND_END){
         if(DEBUG_COMM){
           printf("\n%d:armci_client_complete:event send end\n",armci_me);
           fflush(stdout);
         }
         temp_comp = (comp_desc *)ev->md.user_ptr;
-        if(temp_comp->type==ARMCI_PORTALS_GETPUT ||
-           temp_comp->type==ARMCI_PORTALS_NBGETPUT)
-        {
-          temp_comp->active=0;
-          temp_comp->tag=-1;
-          continue;
-        }
 #ifdef PUT_LOCAL_ONLY_COMPLETION
-        if(temp_comp->type==ARMCI_PORTALS_PUT ||
-           temp_comp->type==ARMCI_PORTALS_NBPUT)
-        {
+        if(temp_comp->type==ARMCI_PORTALS_PUT || temp_comp->type=ARMCI_PORTALS_NBPUT){
           temp_comp->active=0;
           temp_comp->tag=-1;
         }
@@ -360,7 +309,7 @@ int temp_proc;
         continue;
       }
 
-      else if (ev->type == PTL_EVENT_REPLY_END){
+      if (ev->type == PTL_EVENT_REPLY_END){
         if(DEBUG_COMM){
           printf("\n%d:client_send_complete:reply end\n",armci_me);
           fflush(stdout);
@@ -370,7 +319,7 @@ int temp_proc;
         temp_comp->tag=-1;
         continue;
       }
-      else if (ev->type == PTL_EVENT_ACK){
+      if (ev->type == PTL_EVENT_ACK){
         if(DEBUG_COMM){
           printf("\n%d:client_send_complete:event ack\n",armci_me);
           fflush(stdout);
@@ -381,643 +330,678 @@ int temp_proc;
         armci_update_fence_array(temp_comp->dest_id,0);              
         portals->outstanding_puts--; 
       }
-      else
-         armci_die("armci_client_complete: unknown event",ev->type);
     }
     if(DEBUG_COMM){
       printf("\n%d:exit:client_complete active=%d tag=%d %d\n",armci_me,
                       cdesc->active,cdesc->tag,nb_tag);fflush(stdout);
     }
-
     ARMCI_PR_DBG("exit",0);
-
     return rc; 
 }
 
 
-comp_desc * get_free_comp_desc(int * comp_id)
+comp_desc * get_free_comp_desc(int region_id, int * comp_id)
 {
 comp_desc * c;     
 int rc = PTL_OK;
-
-    ARMCI_PR_DBG("enter",0);
-
-    c = &(_compdesc_array[portals->free_comp_desc_index]);
-    if(c->active!=0 && c->tag>0)
-      armci_client_complete(NULL,c->dest_id,c->tag,c);
-
+    ARMCI_PR_DBG("enter",region_id);
+    c = &(_region_compdesc_array[region_id][free_desc_index[region_id]]);
+    if(c->active!=0 && c->tag>0)armci_client_complete(NULL,c->dest_id,c->tag,c);
 #ifdef PUT_LOCAL_ONLY_COMPLETION
-    do {
-       rc = PtlMDUnlink(c->mem_dsc_hndl);
-    }while(rc==PTL_MD_IN_USE);
+    if(region_id<PORTALS_MEM_REGIONS){
+      do {
+         rc = PtlMDUnlink(*md_hdl_local);
+      }while(rc==PTL_MD_IN_USE);
+    }
 #endif
-
-    *comp_id = portals->free_comp_desc_index;
+    *comp_id = (region_id*PORTALS_MEM_REGIONS+free_desc_index[region_id]);
     if(DEBUG_COMM){
       printf("the value of comp_desc_id is %d\n",*comp_id);
       fflush(stdout);
     }
-    portals->free_comp_desc_index = (portals->free_comp_desc_index+1) % NUM_COMP_DSCR;
-
+    free_desc_index[region_id] = ((free_desc_index[region_id] + 1) % MAX_OUT);
     ARMCI_PR_DBG("exit",0);
-
     return c;
 }
 
 
 void print_mem_desc(ptl_md_t * md)
 {
-    printf("%d:md : start %p : length %d\n",armci_me,md->start, md->length);
-    fflush(stdout);
-}
-
-
-
-void armci_register_shmem(void *my_ptr, long size, long *idlist, long off,
-       void *sptr)
-{
-int i=0,dst,found=0;
-long id = idlist[2];
-long reg_size=0;
-int reg_num = serv_portals->reg_count;
-extern void *armci_shm_reg_ptr(int);
-extern long armci_shm_reg_size(int i, long id);
-ARMCI_Group def_group;
+  printf("%d:md : start %p : length %d\n",armci_me,md->start, md->length);
+  fflush(stdout);
         
-    ARMCI_PR_DBG("enter",0);
+}
+
+void armci_client_direct_get(int proc, void *src_buf, void *dst_buf, int bytes,
+                             void** cptr,int tag,ARMCI_MEMHDL_T *lochdl,
+                             ARMCI_MEMHDL_T *remhdl)
+{
+int clus = armci_clus_id(proc);
+int rc, i;
+ptl_size_t offset_local = 0, offset_remote=0;
+ptl_match_bits_t mb = remhdl->regid;
+ptl_md_t *md_remote,md, *md_local;
+ptl_md_t * md_ptr;
+ptl_handle_md_t *md_hdl_local;
+comp_desc *cdesc;
+ptl_process_id_t dest_proc;
+int c_info;
+int lproc,rproc,user_memory=0;
+
+    ARMCI_PR_DBG("enter",remhdl->regid);
 
     if(DEBUG_COMM){
-      printf("%d:registering id=%ld size=%ld\n",armci_me,id,size);
+      printf("%d:armci_client_direct_get:src_buf %p dstbuf %p loc_hd is %p\n"
+                      "rem_hndl is %p, BYTES = %d\n",armci_me,src_buf,dst_buf,
+                      lochdl,remhdl,bytes);
       fflush(stdout);
     }
 
-    bzero(_tmp_rem_reginfo,sizeof(aptl_reginfo_t)*armci_nproc);
-    if(size){
-      if(reg_num>=MAX_MEM_REGIONS)
-        armci_die("reg_num corrupted",reg_num);
-      for(i=0;i<reg_num;i++)
-        if(IN_REGION(my_ptr,_rem_meminfo[armci_me].reginfo[i])){
-          found=1;
-          break;
-        } 
-      if(!found){ 
-        /* record new region id */
-        _tmp_rem_reginfo[armci_me].base_ptr = armci_shm_reg_ptr(i);
-        _tmp_rem_reginfo[armci_me].size = armci_shm_reg_size(i,id);
-        _tmp_rem_reginfo[armci_me].islocal = 0;
-        armci_pin_contig1(_tmp_rem_reginfo[armci_me].base_ptr,_tmp_rem_reginfo[armci_me].size);
+    /*first process information*/
+    dest_proc.nid = portals->ptl_pe_procid_map[proc].nid;
+    dest_proc.pid = portals->ptl_pe_procid_map[proc].pid;
+    md_remote =&remhdl->cdesc.mem_dsc;
+
+    /*updating md to send*/
+    if(lochdl == NULL){ /*this is user memory (stack/heap/whatever) */
+      user_memory=1;
+      cdesc = get_free_comp_desc(PORTALS_MEM_REGIONS,&c_info);
+      md_local = &cdesc->mem_dsc;
+      md_hdl_local = &cdesc->mem_dsc_hndl; 
+      md_local->length=bytes;
+      md_local->start=dst_buf;
+    }
+    else {
+      if(lochdl->islocal){ /*ARMCI_Malloc_local memory*/
+        user_memory=1;
+#if    1
+        cdesc = get_free_comp_desc(PORTALS_MEM_REGIONS,&c_info);
+        md_local = &cdesc->mem_dsc;
+        md_hdl_local = &cdesc->mem_dsc_hndl; 
+        md_local->length=bytes;
+        md_local->start=dst_buf;
+#else
+        cdesc=&lochdl->cdesc;
+        md_local = &lochdl->cdesc.mem_dsc; 
+        md_hdl_local = &lochdl->cdesc.mem_dsc_hndl; 
+#endif
+      }
+      else{
+        /*we need to pass region id to get corresponding md*/
+        cdesc = get_free_comp_desc(lochdl->regid,&c_info);
+        md_local = &cdesc->mem_dsc;
+        md_hdl_local = &cdesc->mem_dsc_hndl; 
       }
     }
-    ARMCI_Group_get_default(&def_group);
-    armci_msg_group_gop_scope(SCOPE_ALL,_tmp_rem_reginfo,(sizeof(aptl_reginfo_t)*armci_nproc/sizeof(int)),"+",ARMCI_INT,&def_group);
-    for(i=0;i<armci_nproc;i++)
-      if(_tmp_rem_reginfo[i].size){
-        reg_num = _rem_meminfo[i].reg_count;
-        _rem_meminfo[i].reginfo[reg_num].base_ptr = _tmp_rem_reginfo[i].base_ptr;
-        _rem_meminfo[i].reginfo[reg_num].size = _tmp_rem_reginfo[i].size;
-        _rem_meminfo[i].reginfo[reg_num].islocal = _tmp_rem_reginfo[i].islocal;
-        _rem_meminfo[i].reg_count++;
-      }
+
+    /*compute the local and remote offsets*/ 
+    offset_local = (char*)dst_buf - (char *)md_local->start;
+    offset_remote = (char*)src_buf - (char *)md_remote->start;
     if(DEBUG_COMM){
-      printf("%d: regist id=%ld found=%d size=%ld reg_num=%d\n",
-                      armci_me,id,found,reg_size,reg_num);
-      fflush(stdout);
+      printf("\n%d:offr=%d offl=%d %p %p\n",armci_me,offset_remote,offset_local,md_local->start,md_remote->start);
     }
-    ARMCI_PR_DBG("enter",0);
-}
-
-void armci_register_shmem_grp(void *my_ptr, long size, long *idlist, long off,
-       void *sptr,ARMCI_Group *group)
-{
-ARMCI_Group orig_group;
-    ARMCI_Group_get_default(&orig_group);
-    ARMCI_Group_set_default(group);
-    armci_register_shmem(my_ptr,size,idlist,off,sptr);
-    ARMCI_Group_set_default(&orig_group);
-}
-
-static int _get_rem_lock_info(int proc, void *ptr,size_t bytes, size_t* offset)
-{
-int i;
-    ARMCI_PR_DBG("enter",0);
-    *offset = ((char *)ptr-(char *)all_locks[proc]);
-    return (MAX_MEM_REGIONS+1);
-    ARMCI_PR_DBG("exit",i);
-}
-
-static int _get_rem_info(int proc, void *ptr,size_t bytes, size_t* offset)
-{
-int i;
-rem_meminfo_t *mem_info=&(_rem_meminfo[proc]);
-aptl_reginfo_t *memreg = mem_info->reginfo;
-    ARMCI_PR_DBG("enter",0);
-    for(i=0;i<mem_info->reg_count;i++)
-      /*for now size is not verified*/
-      if(ptr>memreg[i].base_ptr && 
-                      ptr< ((char *)memreg[i].base_ptr+memreg[i].size)){
-        *offset = ((char *)ptr-(char *)memreg[i].base_ptr);
-        ARMCI_PR_DBG("exit",i);
-        return i;
+    /*printf("\n%d:get offr=%d ptrr=%p offl=%d ptrl=%p\n",armci_me,offset_remote,md_remote->start,offset_local,md_local->start);fflush(stdout);*/
+    
+    if(tag) *((comp_desc **)cptr) = cdesc;
+    /*if(tag){printf("\n%d:get tag=%d c_info=%d %p",armci_me,tag,c_info,cdesc);fflush(stdout);}*/
+    if (tag){
+      cdesc->tag = tag;
+      cdesc->dest_id = proc;
+      cdesc->type = ARMCI_PORTALS_NBGET;
+    }
+    else{
+       cdesc->tag = 0;
+       cdesc->dest_id = proc;
+       cdesc->type = ARMCI_PORTALS_GET; 
+    }
+    cdesc->active = 1;
+    md_local->user_ptr = (void *)cdesc;
+    md_local->options =  PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;
+#if DO_MD_UPDATE
+    if(user_memory==0){
+      do{
+        rc = PtlMDUpdate(*md_hdl_local,NULL,md_local,portals->eq_h);
+        printf("\n%d:trying to update\n",armci_me);fflush(stdout);
+      } while (rc == PTL_MD_NO_UPDATE);
+      if (rc != PTL_OK){
+         printf("%d:PtlMDUpdate: %s\n", portals->rank, ptl_err_str[rc]);
+         armci_die("ptlmdbind failed",0);
       }
-    ARMCI_PR_DBG("exit",i);
-    armci_die("_get_rem_info, rem memory region not found",bytes);
-}
-
-void armci_client_direct_get(ptl_process_id_t dest_proc,
-                ptl_size_t offset_remote, ptl_match_bits_t mb, size_t bytes,
-                ptl_md_t *md_local, 
-                ptl_handle_md_t *md_hdl_local)
-{
-int rc;
-ptl_size_t offset_local = 0;
-
-    ARMCI_PR_DBG("enter",0);
-
-    if(DEBUG_COMM){
-      printf("%d:armci_client_direct_get:BYTES = %d\n",armci_me,bytes);
-      printf("\n%d:offr=%d offl=%d\n",armci_me,offset_remote,offset_local);
-      fflush(stdout);
     }
+    else{
+#endif
+      rc = PtlMDBind(portals->ni_h,*md_local, PTL_UNLINK, md_hdl_local);
+      if (rc != PTL_OK){
+         fprintf(stderr, "%d:PtlMDBind: %s\n", portals->rank, ptl_err_str[rc]);
+         armci_die("ptlmdbind failed",0);
+      }
+#if DO_MD_UPDATE
+    }
+#endif
 
-    rc = PtlMDBind(portals->ni_h,*md_local, PTL_UNLINK, md_hdl_local);
+    rc = PtlGetRegion(*md_hdl_local,offset_local,bytes,dest_proc,
+                   portals->ptl,
+                   0, 
+                   mb,
+                   offset_remote);
     if (rc != PTL_OK){
-      printf("%d:PtlMDBind: %s\n", portals->rank, ARMCI_NET_ERRTOSTR(rc) );
-      armci_die("armci_client_direct_get: ptlmdbind failed",0);
-    }
-
-    rc = PtlGetRegion(*md_hdl_local,offset_local,bytes,dest_proc,portals->ptl,
-                   0,mb,offset_remote);
-
-    if (rc != PTL_OK){
-      printf("%d:PtlGetRegion: %s\n", portals->rank, ARMCI_NET_ERRTOSTR(rc) );
+      printf("%d:PtlGetRegion: %s\n", portals->rank,ptl_err_str[rc]);
       armci_die("PtlGetRegion failed",0); 
     }
 
     if(DEBUG_COMM){
-      printf("\n%d:issued get\n",armci_me);fflush(stdout);
+      printf("\n%d:issued get to %d %d\n",armci_me,proc,c_info);fflush(stdout);
     }
-
-    ARMCI_PR_DBG("exit",0);
-}
-
-void armci_portals_get(int proc, void *src_buf, void *dst_buf, size_t bytes,
-                       void** cptr,int tag)
-{
-int rc;
-ptl_size_t offset_local = 0, offset_remote=0;
-ptl_md_t *md_local;
-ptl_handle_md_t *md_hdl_local;
-int rem_info;
-comp_desc *cdesc;
-ptl_process_id_t dest_proc;
-int c_info;
-
-    ARMCI_PR_DBG("enter",0);
-
-    /*first remote process information*/
-    dest_proc.nid = portals->ptl_pe_procid_map[proc].nid;
-    dest_proc.pid = portals->ptl_pe_procid_map[proc].pid;
-
-    /*create local xfer info*/
-    cdesc = get_free_comp_desc(&c_info);
-    md_local = &cdesc->mem_dsc;
-    md_hdl_local = &cdesc->mem_dsc_hndl; 
-    md_local->length=bytes;
-    md_local->start=dst_buf;
-    md_local->user_ptr = (void *)cdesc;
-    md_local->options =  PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;
-
-    /*get remote info*/
-    rem_info = _get_rem_info(proc, src_buf, bytes, (size_t*)&offset_remote);
-
-    cdesc->dest_id = proc;
-    if (tag){
-      *((comp_desc **)cptr) = cdesc;
-      cdesc->tag = tag;
-      cdesc->type = ARMCI_PORTALS_NBGET;
-      /*printf("\n%d:get tag=%d c_info=%d
-       * %p",armci_me,tag,c_info,cdesc);fflush(stdout);*/
-    }
-    else{
-      cdesc->tag = 0;
-      cdesc->type = ARMCI_PORTALS_GET; 
-    }
-
-    cdesc->active = 1;
-    armci_client_direct_get(dest_proc,offset_remote,(ptl_match_bits_t)rem_info,
-                bytes,md_local,md_hdl_local);
 
     if(!tag){ 
        armci_client_complete(NULL,proc,0,cdesc); /* check this later */
     }
-
-    ARMCI_PR_DBG("exit",0);
-
+    /*printf("\n%d:issued get to %d %d\n",armci_me,proc,c_info);fflush(stdout);*/
+    ARMCI_PR_DBG("exit",remhdl->regid);
 }
 
 
 void armci_client_nb_get(int proc, void *src_buf, int *src_stride_arr, 
                              void *dst_buf, int *dst_stride_arr, int bytes,
-                             void** cptr,int tag)
+                             void** cptr,int tag,ARMCI_MEMHDL_T *lochdl,
+                             ARMCI_MEMHDL_T *remhdl)
 {
 }
 
-void armci_client_direct_send(ptl_process_id_t dest_proc,
-                ptl_size_t offset_remote, ptl_match_bits_t mb, size_t bytes,
-                ptl_md_t *md_local, 
-                ptl_handle_md_t *md_hdl_local)
+
+int armci_client_direct_send(int proc,void *src, void* dst, int bytes,  
+                void **cptr, int tag, ARMCI_MEMHDL_T *lochdl, 
+                ARMCI_MEMHDL_T *remhdl )
 {
-int rc;
-ptl_size_t offset_local = 0;
+int clus = armci_clus_id(proc);    
+int rc, i;
+ptl_size_t offset_local = 0, offset_remote = 0;
+ptl_match_bits_t mb = remhdl->regid;
+ptl_md_t *md_remote,md, *md_local;
+ptl_md_t * md_ptr;
+ptl_match_bits_t * mb_ptr;
+ptl_handle_md_t *md_hdl_local;
+comp_desc *cdesc;
+ptl_process_id_t dest_proc;
+int c_info;
+int lproc,rproc,user_memory=0;
 
-    ARMCI_PR_DBG("enter",0);
+    ARMCI_PR_DBG("enter",remhdl->regid);
+    dest_proc.nid = portals->ptl_pe_procid_map[proc].nid;
+    dest_proc.pid = portals->ptl_pe_procid_map[proc].pid;
+    md_remote =&remhdl->cdesc.mem_dsc;
 
-    if(DEBUG_COMM){
-      printf("%d:armci_client_direct_send:BYTES = %d\n",armci_me,bytes);
-      printf("\n%d:offr=%d offl=%d\n",armci_me,offset_remote,offset_local);
-      fflush(stdout);
+    if(lochdl == NULL){ /*this is user memory*/
+      user_memory=1;
+      cdesc = get_free_comp_desc(PORTALS_MEM_REGIONS,&c_info);
+      md_local = &cdesc->mem_dsc;
+      md_hdl_local = &cdesc->mem_dsc_hndl; 
+      md_local->length=bytes;
+      md_local->start=src;
     }
+    else {
+      if(lochdl->islocal){ /*ARMCI_Malloc_local memory*/
+        user_memory=1;
+#if    1
+        cdesc = get_free_comp_desc(PORTALS_MEM_REGIONS,&c_info);
+        md_local = &cdesc->mem_dsc;
+        md_hdl_local = &cdesc->mem_dsc_hndl; 
+        md_local->length=bytes;
+        md_local->start=src;
+#else
+        cdesc=&lochdl->cdesc;
+        md_local = &lochdl->cdesc.mem_dsc; 
+        md_hdl_local = &lochdl->cdesc.mem_dsc_hndl;
+#endif
+      }
+      else{
+        /*we need to pass region id to get corresponding md*/
+        cdesc = get_free_comp_desc(lochdl->regid,&c_info);
+        md_local = &cdesc->mem_dsc;
+        md_hdl_local = &cdesc->mem_dsc_hndl; 
 
-    rc = PtlMDBind(portals->ni_h,*md_local, PTL_UNLINK, md_hdl_local);
-    if (rc != PTL_OK){
-      fprintf(stderr, "%d:PtlMDBind: %s\n", portals->rank, 
-                      ARMCI_NET_ERRTOSTR(rc)); 
-      armci_die("armci_client_direct_send: ptlmdbind failed",0);
+      }
     }
     
+    offset_local = (char *)src - (char *)md_local->start;
+    offset_remote =(char *)dst - (char *)md_remote->start;
+    if(DEBUG_COMM){
+      printf("\n%d:offr=%d offl=%d\n",armci_me,offset_remote,offset_local);
+    }
+    /*printf("\n%d:offr=%d ptrr=%p offl=%d ptrl=%p\n",armci_me,offset_remote,md_remote->start,offset_local,md_local->start);fflush(stdout);*/
+
+    if(tag) *((comp_desc **)cptr) = cdesc; /*TOED*/
+    /*
+    if(tag){printf("\n%d:put tag=%d c_info=%d %p",armci_me,tag,c_info,cdesc);fflush(stdout);}
+    */
+    if (tag){
+      cdesc->tag = tag;
+      cdesc->dest_id = proc;
+      cdesc->type = ARMCI_PORTALS_NBPUT;
+    }
+    else{
+      cdesc->tag = 0;
+      cdesc->dest_id = proc;
+      cdesc->type = ARMCI_PORTALS_PUT; 
+    }
+#ifdef PUT_LOCAL_COMPLETION_ONLY
+    cdesc->active = 2;
+#else
+    cdesc->active = 1;
+#endif
+
+    md_local->user_ptr = (void *)cdesc;
+    md_local->options =  PTL_MD_OP_PUT | PTL_MD_EVENT_START_DISABLE;
+#if DO_MD_UPDATE
+    if(user_memory==0){
+      do{
+        rc = PtlMDUpdate(*md_hdl_local,NULL,md_local,portals->eq_h);
+      } while (rc == PTL_MD_NO_UPDATE);
+      if (rc != PTL_OK){
+         printf("%d:PtlMDUpdate: %s\n", portals->rank, ptl_err_str[rc]);
+         armci_die("ptlmdupdate failed",0);
+      }
+    }
+    else{
+#endif
+      rc = PtlMDBind(portals->ni_h,*md_local, PTL_UNLINK, md_hdl_local);
+      if (rc != PTL_OK){
+         fprintf(stderr, "%d:PtlMDBind: %s\n", portals->rank, ptl_err_str[rc]);
+         armci_die("ptlmdbind failed",0);
+      }
+#if DO_MD_UPDATE
+    }
+#endif
+    
     rc = PtlPutRegion(*md_hdl_local,offset_local,bytes,
-#ifdef PUT_LOCAL_ONLY_COMPLETION
+#ifdef PUT_LOCAL_COMPLETION_ONLY
                     PTL_NOACK_REQ,
 #else
                     PTL_ACK_REQ,
 #endif
-                    dest_proc,portals->ptl,0, mb,offset_remote, 0);
-
+                    dest_proc,
+                   portals->ptl,
+                   0, mb,offset_remote, 0);
     if (rc != PTL_OK){
-      fprintf(stderr, "%d:PtlPutRegion: %s\n", portals->rank, 
-                      ARMCI_NET_ERRTOSTR(rc) );
+      fprintf(stderr, "%d:PtlPutRegion: %s\n", portals->rank,ptl_err_str[rc]);
       armci_die("PtlPutRegion failed",0);
     }
-
-    ARMCI_PR_DBG("exit",0);
-}
-
-
-void armci_portals_put(int proc, void *src_buf, void *dst_buf, size_t bytes,
-                             void** cptr,int tag)
-{
-int rc;
-ptl_size_t offset_local = 0, offset_remote=0;
-ptl_md_t *md_local;
-ptl_handle_md_t *md_hdl_local;
-int rem_info;
-comp_desc *cdesc;
-ptl_process_id_t dest_proc;
-int c_info;
-
-    ARMCI_PR_DBG("enter",0);
-
-    /*first process information*/
-    dest_proc.nid = portals->ptl_pe_procid_map[proc].nid;
-    dest_proc.pid = portals->ptl_pe_procid_map[proc].pid;
-
-    /*create local xfer info*/
-    cdesc = get_free_comp_desc(&c_info);
-    md_local = &cdesc->mem_dsc;
-    md_hdl_local = &cdesc->mem_dsc_hndl; 
-    md_local->length=bytes;
-    md_local->start=src_buf;
-    md_local->user_ptr = (void *)cdesc;
-    md_local->options =  PTL_MD_OP_PUT | PTL_MD_EVENT_START_DISABLE;
-    
-    /*get remote info*/
-    rem_info = _get_rem_info(proc, dst_buf, bytes, (size_t*)&offset_remote);
-                    
-
     if(DEBUG_COMM){
-      printf("\n%d:offr=%d offl=%d\n",armci_me,offset_remote,offset_local);
+      printf("\n%d:issued put to %d\n",armci_me,proc);fflush(stdout);
     }
 
-    cdesc->dest_id = proc;
-    if (tag){
-      *((comp_desc **)cptr) = cdesc;
-      cdesc->tag = tag;
-      cdesc->type = ARMCI_PORTALS_NBPUT;
-      /*printf("\n%d:put tag=%d c_info=%d
-       * %p",armci_me,tag,c_info,cdesc);fflush(stdout);*/
-    }
-    else{
-      cdesc->tag = 0;
-      cdesc->type = ARMCI_PORTALS_PUT; 
-    }
-    
-    cdesc->active = 1;
-
-    armci_client_direct_send(dest_proc,offset_remote,(ptl_match_bits_t)rem_info,
-                bytes,md_local,md_hdl_local);
-
-    armci_update_fence_array(proc,1);
-
-    if(!tag){ 
+    armci_update_fence_array(proc, 1);
+    if(!tag){
        armci_client_complete(NULL,proc,0,cdesc); /* check this later */
     }
     else
-       portals->outstanding_puts++;
-
-
-    ARMCI_PR_DBG("exit",0);
-
+       portals->outstanding_puts++;   
+    ARMCI_PR_DBG("exit",remhdl->regid);
+    return rc;
 }
+
 void armci_client_nb_send(int proc, void *src_buf, int *src_stride_arr, 
                              void *dst_buf, int *dst_stride_arr, int bytes,
-                             void** cptr,int tag)
-                             
+                             void** cptr,int tag,ARMCI_MEMHDL_T *lochdl,
+                             ARMCI_MEMHDL_T *remhdl)
 {
 }
-
+#if 1
 /*using non-blocking for multiple 1ds inside a 2d*/
 void armci_network_strided(int op, void* scale, int proc,void *src_ptr,
-                int src_stride_arr[], void* dst_ptr, int dst_stride_arr[],
-                int count[], int stride_levels, armci_ihdl_t nb_handle)
+                   int src_stride_arr[], void* dst_ptr, int dst_stride_arr[],
+                   int count[], int stride_levels, armci_ihdl_t nb_handle)
 {
 int i, j,tag=0;
 long idxs,idxd;    /* index offset of current block position to ptr */
 int n1dim;  /* number of 1 dim block */
-int bvalue_s[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL];
-int bvalue_d[MAX_STRIDE_LEVEL];
-size_t bytes = count[0];
+int bvalues[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL];
+int bvalued[MAX_STRIDE_LEVEL];
+int bytes = count[0];
+void *loc, *rem;
 void *sptr,*dptr;
+ARMCI_MEMHDL_T *loc_memhdl=NULL,*rem_memhdl=NULL; 
 NB_CMPL_T cptr;
-ptl_process_id_t dest_proc;
-ptl_size_t offset_remote;
-comp_desc *cdesc;
-int c_info; 
-ptl_md_t *md_local;
-int rem_info;
-
-    ARMCI_PR_DBG("enter",0);
-    
+int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
+                ARMCI_MEMHDL_T **loc_memhdl,ARMCI_MEMHDL_T **rem_memhdl);
     if(nb_handle)tag=nb_handle->tag;
-
-    /*first remote process information*/
-    dest_proc.nid = portals->ptl_pe_procid_map[proc].nid;
-    dest_proc.pid = portals->ptl_pe_procid_map[proc].pid;
-
-    rem_info = _get_rem_info(proc, (op==GET)?src_ptr:dst_ptr, bytes,
-                             (size_t*)&offset_remote);
-
+    if(op==GET){
+      loc = dst_ptr;
+      rem = src_ptr;  
+    }
+    else {
+      loc = src_ptr;
+      rem = dst_ptr;  
+    }
+    armci_region_both_found_hndl(loc,rem,bytes,armci_clus_id(proc),
+                 &loc_memhdl,&rem_memhdl);
     /* number of n-element of the first dimension */
     n1dim = 1;
     for(i=1; i<=stride_levels; i++)
         n1dim *= count[i];
-
     /* calculate the destination indices */
-    bvalue_s[0] = 0; bvalue_s[1] = 0; bunit[0] = 1; 
-    bvalue_d[0] = 0; bvalue_d[1] = 0; bunit[1] = 1;
+    bvalues[0] = 0; bvalues[1] = 0; bunit[0] = 1; 
+    bvalued[0] = 0; bvalued[1] = 0; bunit[1] = 1;
     for(i=2; i<=stride_levels; i++) {
-        bvalue_s[i] = bvalue_d[i] = 0;
+        bvalues[i] = bvalued[i] = 0;
         bunit[i] = bunit[i-1] * count[i-1];
     }
-
-    if(ACC(op)){ /*for now die for acc*/
+    if(ACC(op)){
       /*lock here*/
-      printf("\nSHOULD NOT DO NETWORK_STRIDED FOR ACCS \n",armci_me);
-      fflush(stdout);
-      armci_die("network_strided called for acc",proc);
+            printf("\nSHOULD NOT DO NETWORK_STRIDED FOR ACCS \n",armci_me);
+            fflush(stdout);
+            armci_die("network_strided called for acc",proc);
     }
-
-    /*loop over #contig chunks*/
     for(i=0; i<n1dim; i++) {
-    ptl_handle_md_t *md_hdl_local;
       tag = GET_NEXT_NBTAG();      
       idxs = 0;
       idxd = 0;
       for(j=1; j<=stride_levels; j++) {
-        idxs += bvalue_s[j] * src_stride_arr[j-1];
-        idxd += bvalue_d[j] * dst_stride_arr[j-1];
-        if((i+1) % bunit[j] == 0) {bvalue_s[j]++;bvalue_d[j]++;}
-        if(bvalue_s[j] > (count[j]-1)) bvalue_s[j] = 0;
-        if(bvalue_d[j] > (count[j]-1)) bvalue_d[j] = 0;
+        idxs += bvalues[j] * src_stride_arr[j-1];
+        idxd += bvalued[j] * dst_stride_arr[j-1];
+        if((i+1) % bunit[j] == 0) {bvalues[j]++;bvalued[j]++;}
+        if(bvalues[j] > (count[j]-1)) bvalues[j] = 0;
+        if(bvalued[j] > (count[j]-1)) bvalued[j] = 0;
       }
+
       sptr = ((char *)src_ptr)+idxs;
       dptr = ((char *)dst_ptr)+idxd;
-      cdesc = get_free_comp_desc(&c_info);
-      md_local = &cdesc->mem_dsc;
-      md_hdl_local = &cdesc->mem_dsc_hndl;
-      md_local->length=bytes;
-      md_local->start=(op==GET)?dptr:sptr;
-      md_local->user_ptr = (void *)cdesc;
-      cdesc->dest_id = proc;
-      cdesc->tag = tag;
-      
       if(op==GET){
-        md_local->options =  PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;
-        cdesc->active = 1;
-        cdesc->type = ARMCI_PORTALS_NBGET;
-        /*
-        printf("\n%d:reminfo=%d off=%d idxs=%d idxd=%d",armci_me, rem_info,
-                        offset_remote, idxs, idxd);
-                        */
-        armci_client_direct_get( dest_proc,offset_remote+idxs,rem_info,
-                        bytes,md_local,md_hdl_local);
+        armci_client_direct_get(proc,sptr,dptr,bytes,&cptr,tag,loc_memhdl,
+                             rem_memhdl);
       }
       else if(op==PUT){
-        cdesc->active = 1;
-        cdesc->type = ARMCI_PORTALS_NBPUT;
-        md_local->options =  PTL_MD_OP_PUT | PTL_MD_EVENT_START_DISABLE;
-        armci_client_direct_send(dest_proc,offset_remote+idxd,rem_info,
-                bytes,md_local,md_hdl_local);
-        if(op==PUT)portals->outstanding_puts++;
-        armci_update_fence_array(proc,1);
+          armci_client_direct_send(proc,sptr,dptr,bytes,&cptr,tag,loc_memhdl,
+                             rem_memhdl);
       }
       else if(ACC(op)){
-        assert(0);
+          armci_client_direct_get(proc,sptr,dptr,bytes,&cptr,tag,loc_memhdl,
+                             rem_memhdl);
+          /*DO ACC*/
+          armci_client_direct_send(proc,sptr,dptr,bytes,&cptr,tag,loc_memhdl,
+                             rem_memhdl);
       }
-      else{
-        ARMCI_PR_DBG("exit",0);
-        armci_die("in network_strided unknown opcode",op);
-      }
-      
-      armci_client_complete(NULL,proc,tag,cdesc);
+      else
+          armci_die("in network_strided unknown opcode",op);
     }
-
     if(ACC(op)){
     /*unlock here*/
     }
-
     if(nb_handle){
-      /* completing the last call is sufficient, given ordering semantics*/
       nb_handle->tag=tag;
-      nb_handle->cmpl_info=cdesc;
+      nb_handle->cmpl_info=cptr;
     }
     else{
-      /*completing the last call ensures everything before it is complete this
-       * is one of the main reasons why dataserver is necessary*/
-      /*armci_client_complete(NULL,proc,tag,cdesc);*/
+      armci_client_complete(NULL,proc,tag,cptr); /* check this later */
     }
-    ARMCI_PR_DBG("exit",0);
-}
-
-void armci_client_direct_getput(ptl_process_id_t dest_proc,
-                ptl_size_t offset_remote, ptl_match_bits_t mb, size_t bytes,
-                ptl_md_t *md_local_get,ptl_md_t *md_local_put, 
-                ptl_handle_md_t *md_hdl_local_get, ptl_handle_md_t
-                *md_hdl_local_put)
+}                  
+#else /*using blocking for multiple 1ds inside a 2d*/
+void armci_network_strided(int op, void* scale, int proc,void *src_ptr,
+                   int src_stride_arr[], void* dst_ptr, int dst_stride_arr[],
+                   int count[], int stride_levels, armci_ihdl_t nb_handle)
 {
-int rc;
-ptl_size_t offset_get = 0;
-ptl_size_t offset_put = 0;
-
-    ARMCI_PR_DBG("enter",0);
-
-    if(DEBUG_COMM){
-      printf("%d:armci_client_direct_getput:BYTES = %d\n",armci_me,bytes);
-      printf("\n%d:offr=%d\n",armci_me,offset_remote);fflush(stdout);
+    int i, j;
+    long idxs,idxd;    /* index offset of current block position to ptr */
+    int n1dim;  /* number of 1 dim block */
+    int bvalues[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL];
+    int bvalued[MAX_STRIDE_LEVEL];
+    int bytes = count[0];
+    void *loc, *rem;
+    void *sptr,*dptr;
+#if 0
+    ARMCI_MEMHDL_T *loc_memhdl=NULL,*rem_memhdl=NULL; 
+    int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
+                 ARMCI_MEMHDL_T **loc_memhdl,ARMCI_MEMHDL_T **rem_memhdl);
+#endif
+    if(op==GET){
+      loc = dst_ptr;
+      rem = src_ptr;  
     }
-
-    rc = PtlGetPutRegion(*md_hdl_local_get, offset_get, *md_hdl_local_put,
-                    offset_put,bytes,dest_proc, portals->ptl,0,mb,
-                    offset_remote,0);
-    if (rc != PTL_OK){
-      printf("%d:PtlGetPutRegion: %s\n", portals->rank, ARMCI_NET_ERRTOSTR(rc) );
-      armci_die("PtlGetPutRegion failed",0);
+    else {
+      loc = src_ptr;
+      rem = dst_ptr;  
     }
+#if 0
+    armci_region_both_found_hndl(loc,rem,count[0],armci_clus_id(proc),
+                 &loc_memhdl,&rem_memhdl);
+#endif
+    /* number of n-element of the first dimension */
+    n1dim = 1;
+    for(i=1; i<=stride_levels; i++)
+        n1dim *= count[i];
     
-    ARMCI_PR_DBG("exit",0);
+    /* calculate the destination indices */
+    bvalues[0] = 0; bvalues[1] = 0; bunit[0] = 1; 
+    bvalued[0] = 0; bvalued[1] = 0; bunit[1] = 1;
+    for(i=2; i<=stride_levels; i++) {
+        bvalues[i] = bvalued[i] = 0;
+        bunit[i] = bunit[i-1] * count[i-1];
+    }
 
+    for(i=0; i<n1dim; i++) {
+        idxs = 0;
+        idxd = 0;
+        for(j=1; j<=stride_levels; j++) {
+            idxs += bvalues[j] * src_stride_arr[j-1];
+            idxd += bvalued[j] * dst_stride_arr[j-1];
+            if((i+1) % bunit[j] == 0) {bvalues[j]++;bvalued[j]++;}
+            if(bvalues[j] > (count[j]-1)) bvalues[j] = 0;
+            if(bvalued[j] > (count[j]-1)) bvalued[j] = 0;
+        }
+
+	sptr = ((char *)src_ptr)+idxs;
+	dptr = ((char *)dst_ptr)+idxd;
+	if((i<(n1dim-1)) || nb_handle==NULL){
+	  if(op==GET)
+            ARMCI_Get(sptr,dptr,bytes,proc);
+	  else if(op==PUT)
+            ARMCI_Put(sptr,dptr,bytes,proc);
+	  else if(ACC(op))
+            ARMCI_AccS(op,scale,sptr,NULL,dptr,NULL,count,1,proc);
+	  else
+            armci_die("in network_strided unknown opcode",op);
+	}
+    }
+    if(nb_handle!=NULL){
+      if(op==GET)
+        ARMCI_NbGet(sptr,dptr,bytes,proc,(armci_hdl_t *)nb_handle);
+      else if(op==PUT)
+        ARMCI_NbPut(sptr,dptr,bytes,proc,(armci_hdl_t *)nb_handle);
+      else if(ACC(op))
+        ARMCI_NbAccS(op,scale,sptr,NULL,dptr,NULL,count,1,proc,(armci_hdl_t *)nb_handle);
+      else
+        armci_die("in network_strided unknown opcode",op);
+    }
 }
+#endif
 
-/**
- * Performs the atomic swap operation. Atomic swap of the remote data at the
- * target with the data passed in the "put" memory descriptor. The original
- * contents of the remote memory region are returned and placed in the get
- * memory descriptor of the source.
- */
-int armci_portals_getput(int proc,void *getinto, void *putfrom, void* dst,
-                         size_t bytes, void **cptr, int tag)
+int armci_client_direct_getput(int proc,void *getinto, void *putfrom, void* dst,
+                int bytes, void **cptr, int tag, ARMCI_MEMHDL_T *lochdl, 
+                ARMCI_MEMHDL_T *remhdl )
+                
 {
+int clus = armci_clus_id(proc);    
 int rc, i;
-ptl_size_t offset_remote = 0;
+ptl_size_t offset_get = 0, offset_put=0, offset_remote = 0;
+ptl_match_bits_t mb = 100;
+ptl_md_t *md_remote,md, *md_local_put, *md_local_get;
+ptl_md_t * md_ptr;
+ptl_match_bits_t * mb_ptr;
 ptl_handle_md_t *md_hdl_local_put,*md_hdl_local_get;
-int rem_info;
-comp_desc *cdescg,*cdesc;
+comp_desc *cdesc;
 ptl_process_id_t dest_proc;
-
-    ARMCI_PR_DBG("enter",0);
-    
+int c_info;
+int lproc,rproc;
+    printf("\n%d:****************getput*********\n",armci_me);
     dest_proc.nid = portals->ptl_pe_procid_map[proc].nid;
     dest_proc.pid = portals->ptl_pe_procid_map[proc].pid;
-    rem_info = _get_rem_lock_info(proc, dst, bytes, (size_t*)&offset_remote);
+    md_remote =&remhdl->cdesc.mem_dsc;
 
-    cdescg = &(_lockget_cd_array[proc]);
-    cdescg->active = 1;
-    cdesc = &(_lockput_cd_array[proc]);
-    cdesc->active = 1;
+    cdesc = get_free_comp_desc(PORTALS_MEM_REGIONS,&c_info);
+    md_local_get = &cdesc->mem_dsc;
+    md_hdl_local_get = &cdesc->mem_dsc_hndl; 
+    md_local_get->length=bytes;
+    md_local_get->start=getinto;
+    offset_get = (char *)getinto - (char *)md_local_get->start;
+    offset_remote =(char *)dst - (char *)md_remote->start;
+    cdesc->tag = 999999;
+    cdesc->dest_id = proc;
+    cdesc->type = ARMCI_PORTALS_PUT;
+    cdesc->active = 0;
+    md_local_get->user_ptr = (void *)cdesc;
+    md_local_get->options =  PTL_MD_OP_GET | PTL_MD_OP_PUT | PTL_MD_EVENT_START_DISABLE | PTL_MD_EVENT_END_DISABLE;
+    rc = PtlMDBind(portals->ni_h,*md_local_get, PTL_UNLINK, md_hdl_local_get);
+    if (rc != PTL_OK){
+      fprintf(stderr, "%d:PtlMDBind: %s\n", portals->rank, ptl_err_str[rc]);
+      armci_die("ptlmdbind failed",0);
+    }
 
-    md_hdl_local_put = &(_lockput_cd_array[proc].mem_dsc_hndl);
-    md_hdl_local_get = &(_lockget_cd_array[proc].mem_dsc_hndl);
-
-    armci_client_direct_getput(dest_proc,offset_remote,(ptl_match_bits_t)rem_info,
-                    bytes,NULL,NULL,md_hdl_local_get,md_hdl_local_put);
-                    
+    cdesc = get_free_comp_desc(PORTALS_MEM_REGIONS,&c_info);
+    md_local_put = &cdesc->mem_dsc;
+    md_hdl_local_put = &cdesc->mem_dsc_hndl; 
+    md_local_put->length=bytes;
+    md_local_put->start=putfrom;
+    offset_put = (char *)putfrom - (char *)md_local_put->start;
+    cdesc->tag = 999999;
+    cdesc->dest_id = proc;
+    cdesc->type = ARMCI_PORTALS_GET;
+    cdesc->active = 0;
+    md_local_put->user_ptr = (void *)cdesc;
+    md_local_put->options =  PTL_MD_OP_PUT | PTL_MD_EVENT_START_DISABLE;
+    rc = PtlMDBind(portals->ni_h,*md_local_put, PTL_UNLINK, md_hdl_local_put);
+    if (rc != PTL_OK){
+      fprintf(stderr, "%d:PtlMDBind: %s\n", portals->rank, ptl_err_str[rc]);
+      armci_die("ptlmdbind failed",0);
+    }
+    
+    rc = PtlGetPutRegion(*md_hdl_local_get,offset_get,*md_hdl_local_put,
+                    offset_put,bytes,dest_proc, portals->ptl,0,mb,offset_remote,
+                    0);
+    if (rc != PTL_OK){
+      printf("%d:PtlPutRegion: %s\n", portals->rank,ptl_err_str[rc]);
+      armci_die("PtlPutRegion failed",0);
+    }
     if(DEBUG_COMM){
       printf("\n%d:issued getput to %d\n",armci_me,proc);fflush(stdout);
     }
 
-    armci_client_complete(NULL,proc,0,cdescg); 
-    armci_client_complete(NULL,proc,0,cdesc);
-    ARMCI_PR_DBG("exit",0);
+    armci_client_complete(NULL,proc,0,cdesc); /* check this later */
     return rc;
 }
 
+void armci_network_client_deregister_memory(ARMCI_MEMHDL_T *mh)
+{
+}
+
+
+void armci_network_server_deregister_memory(ARMCI_MEMHDL_T *mh)
+{
+}
+
+#ifdef XT3_
+static int num_locks=0;
+static long **all_locks;
+#define ARMCI_PORTALS_MAX_LOCKS 16
+typedef struct {
+  ptl_handle_md_t mem_dsc_h;
+  ptl_handle_me_t me_lock_h;
+  region_memhdl_t armci_portal_lock_memhdl;
+} armci_lock_struct;
+armci_lock_struct armci_portals_lock_st;
 void armcill_allocate_locks(int num)
 {
-    ptl_md_t *md_local_put, *md_local_get;
-    int rc, i;
-    long *my_locks;
+ptl_md_t *md_ptr;
+ptl_match_bits_t *mb;
+ptl_process_id_t match_id;
+ptl_handle_md_t *md_h;
+int ace_any=1;
+int rc;
+long *my_locks;
+int elems;
+armci_lock_struct *armci_portals_lock=&armci_portals_lock_st;
 
-    ARMCI_PR_DBG("enter",0);
-    
     num_locks = num;
-    if(DEBUG_COMM)
-       printf("%d:armci_allocate_locks num=%d\n", armci_me,num_locks);
-    
-    if(MAX_LOCKS < num)
-       armci_die2("too many locks", ARMCI_PORTALS_MAX_LOCKS, num);
-    
-    /* allocate memory to hold lock info for all the processors */
-    all_locks = malloc(armci_nproc*sizeof(long *));
-    if(!all_locks) armci_die("armcill_init_locks: malloc failed",0);
-    bzero(all_locks, armci_nproc*sizeof(long));
-    
-    /* initialize local locks */
-    my_locks = malloc(num*sizeof(long));
-    if(!my_locks) armci_die("armcill_init_locks: malloc failed",0);
-    bzero(my_locks, num*sizeof(long));
-
-    armci_pin_contig_lock(my_locks,num*sizeof(long));
-    
-    all_locks[armci_me]=my_locks;
-    
-    /* now we use all-reduce to exchange locks info among everybody */
-    armci_exchange_address((void **)all_locks, armci_nproc);
-    
-    _lockput_cd_array = (comp_desc *)
-                    malloc(sizeof(comp_desc)*armci_nproc); 
-    _lockget_cd_array = (comp_desc *)
-                    malloc(sizeof(comp_desc)*armci_nproc); 
-
-    for(i=0;i<armci_nproc;i++){
-
-      _lockget_cd_array[i].active  = _lockput_cd_array[i].active  = 0;
-      _lockget_cd_array[i].tag     = _lockput_cd_array[i].tag     = 0;
-      _lockget_cd_array[i].dest_id = _lockput_cd_array[i].dest_id = i;
-      _lockget_cd_array[i].type    = ARMCI_PORTALS_GET;
-      _lockput_cd_array[i].type    = ARMCI_PORTALS_GETPUT;
-      
-      md_local_put = &(_lockput_cd_array[i].mem_dsc);
-      md_local_get = &(_lockget_cd_array[i].mem_dsc);
-      
-      md_local_get->eq_handle = md_local_put->eq_handle = portals->eq_h;
-      md_local_get->max_size  = md_local_put->max_size  = 0;
-      md_local_get->threshold = md_local_put->threshold = PTL_MD_THRESH_INF;
-      md_local_put->options   = PTL_MD_OP_PUT | PTL_MD_EVENT_START_DISABLE;
-      md_local_get->options   = PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;
-      md_local_put->start     = &a_p_putfrom;
-      md_local_get->start     = &a_p_getinto;
-      md_local_get->length    = md_local_put->length=sizeof(long);
-      md_local_put->user_ptr  = (_lockput_cd_array+i);
-      md_local_get->user_ptr  = (_lockget_cd_array+i);
-    
-      rc = PtlMDBind(portals->ni_h, *md_local_put, 
-                     PTL_RETAIN, &(_lockput_cd_array[i].mem_dsc_hndl));
-      if (rc != PTL_OK){
-        printf("%d:PtlMDBind: %s\n", portals->rank, ARMCI_NET_ERRTOSTR(rc)); 
-        armci_die("ptlmdbind failed",0);
-      }
-      rc = PtlMDBind(portals->ni_h,*md_local_get, 
-                      PTL_RETAIN, &(_lockget_cd_array[i].mem_dsc_hndl));
-      if (rc != PTL_OK){
-        printf( "%d:PtlMDBind: %s\n", portals->rank, ARMCI_NET_ERRTOSTR(rc)); 
-        armci_die("ptlmdbind failed",0);
-      }
+    if(DEBUG_COMM){
+      printf("%d:armci_allocate_locks num=%d\n",
+                      armci_me,num_locks);
     }
-    ARMCI_PR_DBG("exit",0);
+    if(MAX_LOCKS<num)armci_die2("too many locks",ARMCI_PORTALS_MAX_LOCKS,num);
+
+   /* allocate memory to hold lock info for all the processors */
+   all_locks = malloc(armci_nproc*sizeof(long *));
+   if(!all_locks) armci_die("armcill_init_locks: malloc failed",0);
+   bzero(all_locks,armci_nproc*sizeof(long));
+   /* initialize local locks */
+   my_locks = malloc(num*sizeof(long));
+   if(!my_locks) armci_die("armcill_init_locks: malloc failed",0);
+   bzero(all_locks,armci_nproc*sizeof(long));
+
+   all_locks[armci_me]=my_locks;
+   /* now we use all-reduce to exchange locks info among everybody */
+   elems = armci_nproc;
+   armci_exchange_address((void **)all_locks,elems);
+#if 0
+    rc = PtlACEntry(portals->ni_h, ace_any,
+                    (ptl_process_id_t){PTL_NID_ANY, PTL_PID_ANY},
+                    PTL_PID_ANY, 128);
+    if (rc != PTL_OK) {
+      printf("%d: PtlACEntry() failed: %s\n",
+           armci_me, ptl_err_str[rc]);
+      armci_die("PtlACEntry failed",0);
+    }
+#endif
+    armci_portals_lock->armci_portal_lock_memhdl.cdesc.mem_dsc.start =&my_locks;
+    armci_portals_lock->armci_portal_lock_memhdl.cdesc.mem_dsc.length = 
+            sizeof(my_locks);
+    armci_portals_lock->armci_portal_lock_memhdl.cdesc.mem_dsc.threshold = 
+            PTL_MD_THRESH_INF;
+    armci_portals_lock->armci_portal_lock_memhdl.cdesc.mem_dsc.options =
+                PTL_MD_OP_PUT | PTL_MD_OP_GET |
+                PTL_MD_MANAGE_REMOTE | PTL_MD_TRUNCATE |
+                PTL_MD_EVENT_START_DISABLE;
+    armci_portals_lock->armci_portal_lock_memhdl.cdesc.mem_dsc.max_size = 0;
+    armci_portals_lock->armci_portal_lock_memhdl.cdesc.mem_dsc.user_ptr = NULL;
+    armci_portals_lock->armci_portal_lock_memhdl.cdesc.mem_dsc.eq_handle = 
+            PTL_EQ_NONE;
+    match_id.nid = PTL_NID_ANY;
+    match_id.pid = PTL_PID_ANY;
+
+    /* Lockmaster needs a match entry for clients to access lock value. 
+    */
+    rc = PtlMEAttach(portals->ni_h, portals->ptl,
+                         match_id,      /* source address */
+                         100,           /* expected match bits */
+                         0,             /* ignore bits to mask */
+                         PTL_RETAIN,    /* unlink when md is unlinked */
+                         PTL_INS_AFTER,
+                         &armci_portals_lock->me_lock_h);
+    if (rc != PTL_OK){
+      printf("%d: PtlMEAttach(): %s\n",
+                        armci_me, ptl_err_str[rc]);
+      armci_die("PtlMEAttach in init_locks failed",0);
+    }
+    rc = PtlMDAttach(armci_portals_lock->me_lock_h, 
+                 armci_portals_lock->armci_portal_lock_memhdl.cdesc.mem_dsc,
+                 PTL_RETAIN, 
+                 &armci_portals_lock->mem_dsc_h);
+    if (rc != PTL_OK) {
+      printf("%d: PtlMDAttach(): %s\n",
+                        armci_me, ptl_err_str[rc]);
+      armci_die("PtlMDAttach in init_locks failed",0);
+    }
 }
 
 void armcill_lock(int mutex, int proc)
 {
-    int lockcount=1;
-    
-    a_p_getinto=0;
-    a_p_putfrom=1;
-    
+long getinto=0,putfrom=1;
+armci_lock_struct *armci_portal_lock=&armci_portals_lock_st;
+region_memhdl_t *rem_lock_hdl=&armci_portal_lock->armci_portal_lock_memhdl;
+printf("\n%d:in lock before\n",armci_me);fflush(stdout);
     do{
-       armci_portals_getput(proc, &a_p_getinto, &a_p_putfrom,
-                            (all_locks[proc]+mutex), sizeof(long),
-                            NULL, GET_NEXT_NBTAG());
-       if(++lockcount%2) usleep(1);
-    }while(a_p_getinto!=0);
+      armci_client_direct_getput(proc,&getinto,&putfrom,(all_locks[proc]+mutex),
+                sizeof(long), NULL, 0, NULL,rem_lock_hdl);
+    }while(getinto!=0);
+printf("\n%d:in lock after\n",armci_me);fflush(stdout);
 }
 
 
@@ -1025,20 +1009,18 @@ void armcill_lock(int mutex, int proc)
 \*/
 void armcill_unlock(int mutex, int proc)
 {
-    a_p_getinto=0;
-    a_p_putfrom=0;
-    
-    armci_portals_getput(proc, &a_p_getinto, &a_p_putfrom,
-                         (all_locks[proc]+mutex), sizeof(long),
-                         NULL, GET_NEXT_NBTAG());
-    
-    if(a_p_getinto!=1) armci_die("armcill_unlock: getput failed", 0);
+long getinto=0,putfrom=0;
+armci_lock_struct *armci_portal_lock=&armci_portals_lock_st;
+region_memhdl_t *rem_lock_hdl=&armci_portal_lock->armci_portal_lock_memhdl;
+    armci_client_direct_getput(proc,&getinto,&putfrom,(all_locks[proc]+mutex),
+              sizeof(long), NULL, 0, NULL,rem_lock_hdl);
 }
 
 int armci_portals_rmw_(int op, int *ploc, int *prem, int extra, int proc)
 {
     return(0);
 }
+#endif
 
 void armci_portals_shmalloc_allocate_mem(int num_lks)
 {

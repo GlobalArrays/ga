@@ -1,11 +1,30 @@
       program scf
-C$Id: scf.F,v 1.17.4.2 2007-10-24 00:16:57 manoj Exp $
+C$Id: scf.F,v 1.18 2007/03/23 19:24:36 d3g293 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
-
+c
+      integer*8 nints, maxint                                           !cste
+c
+c     CAUTION: integer precision requirements
+c     nints, maxint, etc. are proportional to the number of basis functions
+c     to the fourth power! 216**4 is greater than the largest number 
+c     that can be represented as a 32-bit signed interger, so 64-bit 
+c     arithmetic is needed to count integrals when calculating more than
+c     14 Be atoms with 15 basis functions each. Since integrals are counted
+c     over all iterations, 18 iterations with 7 atoms can result in precision
+c     problems. Note that the wave function could be calculated correctly 
+c     for much larger basis sets without 64-bit integers because the required 
+c     indexing is usually proportional to nbfn**2, which is good to 46,340 
+c     basis functions, except that the task counter runs as (nbfn/ichunk)**4, 
+c     so with ichunk = 10, 32-bit integers yield correct wavefunctions out to 
+c     2145 basis functions (maxatom=143), or 4290 (maxatom=286) with ichunk = 20, ...
+c
+c     This warning applies to the Global Arrays implementation as well! 
+c     functions of special concern are ga_igop and nga_read_inc.
+c
 #define USE_TRANSFORM 1
       integer heap, stack
       data tinit, tonel, ttwoel, tdiag, tdens, tprint /6*0.0d0/
@@ -23,10 +42,11 @@ c
 c
 c   Allocate memory
 c
-      heap = 2000000
-      stack = 2000000
+      heap =  32000000  
+      stack = 32000000
       if (.not.ma_init(MT_DBL, stack, heap))
      +   call ga_error("ma_init failed",-1)
+      call flush(6)
       me = ga_nodeid()
       nproc = ga_nnodes()
 c     
@@ -41,6 +61,8 @@ c
 c     create and allocate global arrays
 c
       call setarrays
+      if (ga_nodeid().eq.0) write(6,*) 'bytes of memory used by node 0:'
+     +                                 ,ga_inquire_memory()
       call ininrm
 c
 c     create initial guess for density matrix by using single atom
@@ -53,20 +75,23 @@ c
 c     make initial orthogonal orbital set for solution method using
 c     similarity transform
 c
-      call makeob
+      call makeob      
 #endif
 c     
 c     make info for sparsity test
 c     
-         call makesz(schwmax)
+      call makesz(schwmax)
+c
+c     print preliminary data before any long compute segments start
+      if (ga_nodeid().eq.0) call flush(6)       
 c     
-c     iterate
-c     
+c     *** iterate ***
+c
       do 10 iter = 1, mxiter
 c
 c     make the one particle contribution to the fock matrix
 c     and get the partial contribution to the energy
-c     
+c    
          call oneel(schwmax, eone)
          tonel = tonel + timer()
 c     
@@ -113,9 +138,17 @@ c
 c     if converged then exit iteration loop
 c     
          if (deltad .lt. tol) goto 20
+         call ga_igop(9, icut4, 1, '+')                         !cste
+         if(icut4 .eq. 0) then                                  !cste
+c     something has gone wrong--print what you know and quit.   
+            write(6,*) 'no two-electron integrals computed!'    !cste
+            goto 20                                             !cste
+         endif                                                  !cste
  10   continue
+      iter = iter - 1                                           !cste
       if(me.eq.0)
-     $     write(6,*) ' SCF failed to converge in ', mxiter, ' iters'
+     $     write(6,*) ' SCF failed to converge in ', iter, ' iters'     
+c...v....1....v....2....v....3....v....4....v....5....v....6....v....7..
 c     
 c     finished ... print out eigenvalues and occupied orbitals
 c     
@@ -130,23 +163,38 @@ c
          call prnfin(energy)
          write(6,1) tinit, tonel, ttwoel, tdiag, tdens, tprint,
      $        nproc
- 1       format(/'   init   onel  twoel   diag   dens   print  ncpu'/
-     $        '  ------ ------ ------ ------ ------ ------ ------'/
-     $        1x, 6f7.2, i7/)
+ 1       format(/5x,' init ',4x,' onel ',4x,' twoel ',4x,' diag ',4x,   
+     $          ' dens      print  ncpu'/                               
+     $           5x,'------',4x,'------',4x,'-------',4x,'------',4x,   
+     $          '------    ------ ------'/                            
+     $          2f10.2,f11.2,3f10.2, i7/)
+         totsec = tinit+tonel+ttwoel+tdiag+tdens+tprint 
+         write(6,*)'elapsed time in seconds ',totsec   
 c     
-c     print out information on # integrals evaulated each iteration
+c     print out information on # integrals evaluated each iteration
 c     
-         nints = nnbfn*(nnbfn+1)/2
-         nints = nbfn**4
-         frac  = dble(icut3)/dble(nints)
-         write(6,2) icut1, icut2, icut3, nints, frac
- 2       format(/'       No. of integrals screened or computed '
-     $        /'       -------------------------------------'/
-     $        /1x,'   #ij test   #kl test   #compute     #total',
-     $        '  fraction',
-     $        /1x,'  ---------  ---------  ---------  ---------',
-     $        '  --------',
-     $        /1x,4(2x,i9),f9.3)
+
+          nints = icut1+icut2+icut3
+                  frac  = dble(icut3)/dble(nints)
+
+               write(6,2) icut1, icut2, icut3, nints, frac
+ 2       format(/'No. of integrals screened or computed (all iters) '
+     $          /'-------------------------------------'/
+     $        /1x,' failed #ij test failed #kl test',
+     $            '        #compute          #total',
+     $            ' fraction',
+     $        /1x,' --------------- ---------------',
+     $            ' --------------- ---------------',
+     $            ' --------',
+     $        /1x,4(1x,i15),f9.6)
+         maxint = nbfn                                  !cste   
+         maxint = maxint**4 * iter                      !cste
+         if(nints .ne. maxint) then                     !cste
+            write(6,*)'Inconsistent number of integrals, should be ',   !cste
+     $                 maxint                                           !cste
+            write(6,*)'Note: largest 32-bit integer is 2,147,483,647'   !cste
+       write(6,*)'Probably due to insufficient integer precision in GA.'!cste
+         endif                                                          !cste
          call stats
       endif
 c     
@@ -168,7 +216,7 @@ c
 #include "tcgmsg.fh"
       dimension work(ichunk,ichunk)
       integer lo(2),hi(2),i,j,iloc,jloc,ld
-      logical dotask
+      logical dotask, next_chunk
 c
 c     schwarz(ij) = (ij|ij) for sparsity test
 c
@@ -205,16 +253,25 @@ c
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
+      integer*8 maxint          
 c
 c     write a little welcome message
 c
-      if (ga_nodeid().eq.0) write(6,1) natom, nocc, nbfn, tol
+      maxint = nbfn             
+      maxint = maxint**4        
+      if (ga_nodeid().eq.0) then                                
+      write(6,1) natom, nocc, nbfn, maxint, tol, ichunk
 1     format(/' Example Direct Self Consistent Field Program '/
      $        ' -------------------------------------------- '//
-     $        ' no. of atoms ............... ',i3/
-     $        ' no. of occupied orbitals ... ',i3/
-     $        ' no. of basis functions ..... ',i3/
-     $        ' convergence threshold ...... ',d9.2//)
+     $        ' no. of atoms .............. ',i5/       
+     $        ' no. of occupied orbitals .. ',i5/       
+     $        ' no. of basis functions .... ',i5/       
+     $        ' basis functions^4 '          ,i15/      
+     $        ' convergence threshold ..... ',1pd9.2/
+     $        ' chunk size .................',i5)   
+      write(6,*)                                                !cste
+      call flush(6)                                             !cste
+      endif                                                     !cste
 c
 c     generate normalisation coefficients for the basis functions
 c     and the index array iky
@@ -299,7 +356,7 @@ c      dimension work(maxnbfn,maxnbfn), torbs(maxnbfn,maxnbfn)
       dimension work(ichunk,ichunk), orbsi(ichunk,maxnbfn)
       dimension orbsj(ichunk,maxnbfn)
       integer lo(2), hi(2), tlo(2), thi(2), i, j, iloc, jloc, ld
-      logical dotask
+      logical dotask, next_chunk
 c
 c     generate density matrix from orbitals in g_orbs. the first
 c     nocc orbitals are doubly occupied.
@@ -340,13 +397,13 @@ c
 #include "global.fh"
 #include "tcgmsg.fh"
       integer lo(2), hi(2), i, j, iloc, jloc, ld
-      dimension dens(nnbfn), fock(nnbfn), schwarz(nnbfn)
       dimension work(ichunk,ichunk),tfock(ichunk,ichunk)
-      logical dotask
+      logical dotask, next_chunk
 c
 c     fill in the one-electron part of the fock matrix and
 c     compute the one-electron energy contribution
 c
+
       me = ga_nodeid()
       nproc = ga_nnodes()
 c
@@ -414,8 +471,8 @@ c
       integer imax, lo(2), hi(2), ilo, jlo
       itask = nga_read_inc(g_counter,one,one)
       imax = nbfn/ichunk
+      if (nbfn - ichunk*imax.gt.0) imax = imax + 1 
       if (itask.lt.imax*imax) then
-        if (nbfn - ichunk*imax.gt.0) imax = imax + 1
         ilo = mod(itask,imax)
         jlo = (itask-ilo)/imax
         lo(1) = ilo*ichunk + 1
@@ -433,10 +490,20 @@ c
       include 'cscf.h'
       integer one
       parameter (one = 1)
-      integer imax, lo(4), hi(4), ilo, jlo, klo, llo, itmp
+      integer*8 imax, itask                                     !cste
+      integer lo(4), hi(4), ilo, jlo, klo, llo, itmp            !cste
+c
       itask = nga_read_inc(g_counter,one,one)
       imax = nbfn/ichunk
       if (nbfn - ichunk*imax.gt.0) imax = imax + 1
+      if (itask. lt. 0) then                                    !cste
+         write(6,*) 'next_4chunk: itask negative:',itask,       !cste
+     *             ' imax:',imax,' nbfn:',nbfn,' ichunk:',ichunk!cste
+         write(6,*) 'probable GA integer precision problem if ' !cste
+     *             ,'imax^4 > 2^31'                             !cste
+         call flush(6)                                          !cste
+         stop 'next_4chunk'                                     !cste
+      end if                                                    !cste
       if (itask.lt.imax**4) then
         ilo = mod(itask,imax)
         itmp = (itask - ilo)/imax
@@ -481,22 +548,31 @@ c
       double precision f_ik(ichunk,ichunk),d_jl(ichunk,ichunk)
       double precision s_ij(ichunk,ichunk),s_kl(ichunk,ichunk)
       double precision schwmax, one
-      integer nproc,lo(4),hi(4),ld,ich
-      integer lo_ik(2),hi_ik(2),lo_jl(2),hi_jl(2)
-      integer i,j,k,l,iloc,jloc,kloc,lloc,it,jt,kt,lt
+cste  integer nproc                                             !cste
+      integer*8 ijkls, ijcnt,klcnt,ijklcnt                      !cste
+      integer lo(4),hi(4),lo_ik(2),hi_ik(2),lo_jl(2),hi_jl(2)   !cste
+      integer i,j,k,l,iloc,jloc,kloc,lloc,ld,ich,it,jt,kt,lt    !cste
       logical dotask, next_4chunk
 c     
 c     add in the two-electron contribution to the fock matrix
 c     
-      nproc = ga_nnodes()
+cste  nproc = ga_nnodes()
       one = 1.0d00
+      ijcnt = icut1                                     !cste
+      klcnt = icut2                                     !cste
+      ijklcnt = icut3                                   !cste
 c
       call ga_zero(g_counter)
       ld = maxnbfn
       ich = ichunk
       dotask = next_4chunk(lo,hi,it,jt,kt,lt)
       itask = 0
+cste  ijkls = 0                                         !cste
       do while (dotask)
+cste  ijkl=(hi(1)-lo(1)+1)*(hi(2)-lo(2)+1)*             !cste
+cste *     (hi(3)-lo(3)+1)*(hi(4)-lo(4)+1)              !cste
+cste  ijkls = ijkls + ijkl                              !cste
+cste  write(6,*)itask,lo,hi,ijkl,ijkls                  !cste
         lo_ik(1) = lo(1)
         lo_ik(2) = lo(3)
         hi_ik(1) = hi(1)
@@ -517,7 +593,7 @@ c
           do j = lo(2), hi(2)
             jloc = j-lo(2) + 1
             if (s_ij(iloc,jloc)*schwmax .lt. tol2e) then
-              icut1 = icut1 + (hi(1)-lo(1)+1)*(hi(2)-lo(2)+1)
+              icut1 = icut1 + (hi(3)-lo(3)+1)*(hi(4)-lo(4)+1)   !cste
             else
               do k = lo(3), hi(3)
                 kloc = k-lo(3) + 1
@@ -543,7 +619,23 @@ c
         dotask = next_4chunk(lo,hi,it,jt,kt,lt)
       end do
       etwo = 0.5d00*contract_matrices(g_fock,g_dens)
+      ijcnt = icut1 - ijcnt
+      klcnt = icut2 - klcnt
+      ijklcnt = icut3 - ijklcnt
+cste  write(6,*) 'node ', ga_nodeid(), ijcnt, klcnt, ijklcnt    !cste
+cste *           ,icut1,icut2,icut3                             !cste
+cste  call flush(6)                                             !cste
+      icut4 = icut3                                             !cste
+      if (icut3 .gt. 0) return                                  !cste
+c
+c    no integrals may be calculated if there is no work for 
+c    this node (ichunk too big), or, something is wrong
+c
+      write(6,*) 'no two-electron integrals computed by node',  !cste
+     *            ga_nodeid()                                   !cste
+      call flush(6)                                             !cste
       return
+cste  stop 'twoel computed no integrals'                        !cste
       end
 c
       subroutine damp(fac)
@@ -573,7 +665,7 @@ c
       if (ga_nodeid().ne.0) return
       write(6,1) iter, energy, deltad, tester
       call flush(6)
-1     format(' iter=',i3,', energy=',f13.8,', deltad=',d9.2,
+1     format(' iter=',i3,', energy=',f15.8,', deltad=',1pd9.2,  
      $     ', deltaf=',d9.2)
       return
       end
@@ -587,7 +679,7 @@ c
       double precision xdiff
       dimension dens_c(ichunk,ichunk),work_c(ichunk,ichunk)
       integer lo(2), hi(2), i, j, ld
-      logical dotask
+      logical dotask, next_chunk
 c
 c     compute largest change in density matrix elements
 c
@@ -620,7 +712,7 @@ c
       double precision xmax, xtmp
       dimension work(ichunk,ichunk)
       integer lo(2), hi(2), i, j, iloc, jloc, ld
-      logical dotask
+      logical dotask, next_chunk
 c
 c     compute largest change in density matrix elements
 c
@@ -656,7 +748,7 @@ c
       double precision shift
       dimension work(ichunk,ichunk)
       integer lo(2), hi(2), i, j, iloc, jloc, ld, icnt
-      logical dotask
+      logical dotask, next_chunk
 c
 c     compute largest change in density matrix elements
 c
@@ -695,17 +787,8 @@ c     printout final results
 c
       if (ga_nodeid().ne.0) return
       write(6,1) energy
- 1    format(//' final energy = ',f16.11//' eigenvalues')
+ 1    format(//' final energy = ',f18.11//' eigenvalues') 
       call output(eigv, 1, min(nbfn,nocc+5), 1, 1, nbfn, 1, 1)
-      write(6,2)
-2     format(//' eigenvectors ')
-      lo(1) = 1
-      lo(2) = 1
-      hi(1) = nbfn
-      hi(2) = nbfn
-      ld = nbfn
-      call nga_get(g_orbs,lo,hi,orbs,ld) 
-      call output(orbs, 1, nbfn, 1, nocc, nbfn, nbfn, 1)
 c
       return
       end
@@ -811,7 +894,7 @@ c
       double precision work(ichunk,ichunk),orbs(ichunk,ichunk)
       double precision eval(maxnbfn)
       integer lo(2),hi(2),ld,me,i,j,iloc,jloc
-      logical dotask
+      logical dotask, next_chunk
 c
 c     generate set of orthonormal vectors by creating a random
 c     symmetric matrix and solving associated generalized eigenvalue
@@ -951,6 +1034,7 @@ c
       status = ga_allocate(g_fock)
       call ga_zero(g_fock)
 
+      
       g_tfock = ga_create_handle()
       call ga_set_data(g_tfock, two, dims, MT_DBL)
       status = ga_allocate(g_tfock)
@@ -1087,6 +1171,11 @@ c
         write(6,100) (a(i,j), j = 1, min(10,ld2))
       end do
       write(6,*)
+      trace = 0.0d0
+      do i=1,ld2
+         trace = trace +a(i,i)
+      end do
+      write(6,*) 'trace=',trace
   100 format(10f10.4)
       return
       end
@@ -1100,7 +1189,7 @@ c
       integer lo(2), hi(2), ptr_a, ptr_b, ld, ld1, ld2
       double precision a(ichunk,ichunk),b(ichunk,ichunk)
       double precision value
-      logical dotask
+      logical dotask, next_chunk
 c
 c   evalute sum_ij a_ij*b_ij
 c

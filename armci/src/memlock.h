@@ -22,7 +22,7 @@ extern void** memlock_table_array;
 extern int *armci_use_memlock_table;
 
 #if defined(LAPI  ) || defined(FUJITSU)  || defined(PTHREADS) || \
-  defined(QUADRICS) || defined(PORTALS)  || defined(HITACHI)  || \
+  defined(QUADRICS) || defined(HITACHI)  || \
   defined(CYGWIN)   || defined(__crayx1) || defined(NEC)      || \
   (defined(LINUX64) && defined(__GNUC__) && defined(__alpha__))
 #  define ARMCI_LOCKMEM armci_lockmem_

@@ -34,7 +34,7 @@ c     icut1        = no. of successful ij   2-e screening tests
 c     icut2        = no. of successful ijkl 2-e screening tests
 c     icut3        = no. of 2-e integrals computed
 c
-      parameter (maxatom =50)
+      parameter (maxatom = 286)		!cste original value 50
       parameter (maxnbfn =15*maxatom, mxiter = 30)
       parameter (maxnnbfn = maxnbfn*(maxnbfn+1)/2)
       parameter (pi = 3.141592653589793d0)
@@ -44,10 +44,11 @@ c
       common /cscf/
      $     enrep, q(maxatom), ax(maxatom), ay(maxatom), az(maxatom),
      $     x(maxnbfn), y(maxnbfn), z(maxnbfn), expnt(maxnbfn),
-     $     rnorm(maxnbfn),iky(maxnbfn), icut1, icut2, icut3, natom,
-     $     nocc, nbfn, nnbfn
+     $     rnorm(maxnbfn),iky(maxnbfn), icut1, icut2, icut3, icut4,
+     $     natom, nocc, nbfn, nnbfn
       double precision enrep, q, ax, ay, az, x, y, z, expnt, rnorm
-c      integer iky, icut1, icut2, icut3, natom, nocc, nbfn, nnbfn
+      integer*8 iky, icut1, icut2, icut3, icut4, natom, nocc, nbfn,
+     $     nnbfn
 c
 c    Global array parameters used in calculations:
 c
@@ -62,11 +63,10 @@ c    g_work:    global array used to store work matrix
 c    g_ident:   global array used to store identity matrix
 c    g_orbs:    global array used to store orbital vectors
 c
-      parameter (ichunk = 10)
-      parameter (numarrays =5)
+      parameter (ichunk = 20)        !cste original value 10
       common /g_arrays/ eigv(maxnbfn),
      $     g_counter, g_dens, g_fock, g_tfock, g_schwarz, g_work,
-     $     g_ident, g_orbs, arraylist(1:5)
+     $     g_ident, g_orbs
       double precision eigv
       integer g_counter, g_dens, g_fock, g_tfock, g_schwarz, g_work,
-     $     g_ident, g_orbs, arraylist
+     $     g_ident, g_orbs

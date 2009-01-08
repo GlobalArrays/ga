@@ -1,4 +1,4 @@
-      subroutine output (z,rowlow,rowhi,collow,colhi,rowdim,coldim,
+       subroutine output (z,rowlow,rowhi,collow,colhi,rowdim,coldim,
      $     nctl)
 c.......................................................................
 c output prints a real*8 matrix in formatted form with numbered rows
@@ -21,7 +21,7 @@ c columns.
 c author;  nelson h.f. beebe, quantum theory project, university of
 c          florida, gainesville
 c.......................................................................
-C$Id: output.F,v 1.1 2005-03-08 23:58:03 d3g293 Exp $
+C$Id: output.F,v 1.1 2005/03/08 23:58:03 d3g293 Exp $
       implicit double precision (a-h,o-z)
 #include "mafdecls.fh"
 #include "global.fh"
@@ -43,8 +43,6 @@ C$Id: output.F,v 1.1 2005-03-08 23:58:03 d3g293 Exp $
  3000 format (/' zero matrix'/)
       go to 3
  15   continue
-      ctl = blank
-      if ((nctl.le.3).and.(nctl.gt.0)) ctl = asa(nctl)
       if (rowhi.lt.rowlow) go to 3
       if (colhi.lt.collow) go to 3
       last = min0(colhi,collow+kcol-1)
@@ -55,15 +53,13 @@ C$Id: output.F,v 1.1 2005-03-08 23:58:03 d3g293 Exp $
                if (z(k,i).ne.zero) go to 5
  4          continue
             go to 1
- 5          write (6,2000) ctl,k,(z(k,i), i = begin,last)
+c
+5       write (6,2000) k,(z(k,i), i = begin,last)               
+
  1       continue
          last = min0(last+kcol,colhi)
  2    continue
  3    return
-* kcol = 4
-* 1000 format (/1h ,16x,3(a6,i3,2x),(a6,i3))
-* 2000 format (a1,3hrow,i4,2x,4f17.11)
-* kcol = 8
- 1000 format (/1h ,11x,7(a3,i3,3x),(a3,i3))
- 2000 format (a1,'row',i4,1x,8f9.4)
+ 1000 format (/11x,7(a3,i3,3x),(a3,i3)) 
+ 2000 format ('row',i4,1x,8f9.4) 
       end

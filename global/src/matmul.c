@@ -2318,7 +2318,14 @@ Integer clo[2], chi[2];
 /*********************** Fortran warppers for ga_Xgemm ***********************/
 
 
-#ifdef USE_SUMMA
+#ifndef USE_SUMMA
+#  ifdef XT3
+#    define GA_DGEMM ga_dgemm_DISABLE /* use ga_dgemm in ga_dgemmf.F as
+                                         accumulate is sloooow in XT3 */
+#  else
+#    define GA_DGEMM ga_dgemm_
+#  endif
+#else
 void ga_dgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer *k,
                double *alpha, Integer *g_a, Integer *g_b,
                double *beta, Integer *g_c) {
@@ -2336,9 +2343,8 @@ void ga_dgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer *k,
 #endif
 }
 #  define GA_DGEMM ga_ga_dgemm_
-#else
-#  define GA_DGEMM ga_dgemm_
 #endif
+
 
 
 #define  SET_GEMM_INDICES\

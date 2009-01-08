@@ -96,4 +96,5 @@ c
       nocc = 2*natom
       nbfn =  15*natom
       nnbfn = nbfn*(nbfn+1)/2
+      return
       end

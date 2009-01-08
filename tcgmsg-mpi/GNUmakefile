@@ -45,6 +45,10 @@ ifeq ($(TARGET),HPUX64)
         EXTRA_OBJ += hpuxargs.o
 endif
 
+ifeq ($(ARMCI_NETWORK),PORTALS)
+        LIB_DEFINES += -DXT3
+endif
+
 
 OBJ = checkbyte.o	drand48.o	pbeginf.o	sizeof.o\
       collect.o		misc.o		p2p.o		pfilecopy.o\

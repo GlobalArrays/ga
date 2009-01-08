@@ -17,6 +17,7 @@
 #include <errno.h>
 #endif
 #include "armci.h"
+#include "armcip.h"
 
 #define PAUSE_ON_ERROR__
 
@@ -292,8 +293,9 @@ SigType SigSegvHandler(sig)
   AR_caught_sig= sig;
   AR_caught_sigsegv=1;
 #ifdef PAUSE_ON_ERROR
-  fprintf(stderr,"%d(%d): Segmentation Violation ... pausing\n",
-          armci_me, getpid() );pause(); 
+  fprintf(stderr,"%d(%s:%d): Segmentation Violation ... pausing\n",
+          armci_me, armci_clus_info[armci_clus_me].hostname,
+	  getpid() );pause(); 
 #endif
 
   Error("Segmentation Violation error, status=",(int) sig);

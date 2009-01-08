@@ -94,11 +94,13 @@ static int altix_gethostname(char *name, int len) {
     sprintf(name,"altix");
     return 0;
 }
-#elif defined(XT3) && !defined(PORTALS)
+#elif defined(XT3) /* && !defined(PORTALS) */
 #define GETHOSTNAME cnos_gethostname
 static int cnos_gethostname(char *name, int len)
 {
-    sprintf(name,"%d",cnos_get_rank());
+    int size,rank;
+    size=PMI_Get_rank(&rank);
+    sprintf(name,"%d",rank);
 }
 #else
 # define GETHOSTNAME gethostname

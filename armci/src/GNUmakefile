@@ -154,12 +154,11 @@ ifeq ($(ARMCI_NETWORK),VIA)
 endif
 
 ifeq ($(ARMCI_NETWORK),PORTALS)
-  OBJ += portals.o regions.o
-  OBJ += signaltrap.o 
+  OBJ += signaltrap.o portals.o regions.o 
 ifeq ($(TARGET),LINUX64)
-  LIB_DEFINES += -DACC_SMP #-DPUT_LOCAL_ONLY_COMPLETION
+  LIB_DEFINES += -DNO_SHM -DCLUSTER 
 endif
-  LIB_DEFINES += -DXT3
+  LIB_DEFINES += -DALLOW_PIN -DXT3
   EXTRA_LIBS += -lpthread
 endif
 

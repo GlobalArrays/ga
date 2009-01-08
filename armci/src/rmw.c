@@ -3,7 +3,7 @@
 #include "locks.h"
 #include "copy.h"
 #include <stdio.h>
-#if defined(__i386__) || defined(__x86_64__) 
+#if (defined(__i386__) || defined(__x86_64__)) && !defined(NO_I386ASM)
 #  include "atomics-i386.h"
 #endif
 
@@ -93,7 +93,7 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
                 armci_put(&_a_ltemp,prem,sizeof(long),proc);
            break;
       case ARMCI_SWAP:
-#if (defined(__i386__) || defined(__x86_64__)) && !defined(PORTALS)
+#if (defined(__i386__) || defined(__x86_64__)) && !defined(PORTALS) && !defined(NO_I386ASM)
         if(SERVER_CONTEXT || armci_nclus==1){
 	  atomic_exchange(ploc, prem, sizeof(int));
         }

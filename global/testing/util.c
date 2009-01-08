@@ -450,7 +450,8 @@ double FATR util_drand_(Integer* flag)
   return ((double) random()) * 4.6566128752458e-10;
 #else
   if (fflag) srand((unsigned) fflag);
-  return ((double) rand()) * 4.6566128752458e-10;
+  /*return ((double) rand()) * 4.6566128752458e-10;*/
+  return ((double) (rand()&0xFFFF))/(1<<16);
 #endif
 
 #endif
@@ -468,7 +469,7 @@ double FATR util_timer_()
 void FATR set_ma_use_armci_mem_() 
 {
     int retval;
-#ifdef SPARC64_GP
+#if defined(SPARC64_GP) || defined(HPUX64)
     if((retval=putenv("MA_USE_ARMCI_MEM=YES")) != 0)       
 #else
     if((retval=setenv("MA_USE_ARMCI_MEM", "YES", 1)) != 0)

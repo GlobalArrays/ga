@@ -43,7 +43,7 @@
 #endif
 
 
-#if (defined(SPINLOCK) || defined(PMUTEXES) || defined(HITACHI) || defined(PORTALS)) && !(defined(BGML) || defined(DCMF))
+#if (defined(SPINLOCK) || defined(PMUTEXES) || defined(HITACHI)) && !(defined(BGML) || defined(DCMF))
 #  include "shmem.h"
    typedef struct {
      long off;
@@ -81,7 +81,7 @@
 #  define PAD_LOCK_T LOCK_T
    EXTERN PAD_LOCK_T *_armci_int_mutexes;
 
-#elif defined(HITACHI) || defined(PORTALS)
+#elif defined(HITACHI)
 
    extern void armcill_lock(int mutex, int proc);
    extern void armcill_unlock(int mutex, int proc);
@@ -152,9 +152,9 @@ extern void armcill_unlock(int m, int proc);
 
 
 #elif defined(CRAY_T3E) || defined(QUADRICS) || defined(__crayx1)\
-        || defined(CATAMOUNT) || defined(CRAY_SHMEM)
+        || defined(CATAMOUNT) || defined(CRAY_SHMEM) || defined(PORTALS)
 #  include <limits.h>
-#  if defined(CRAY) || defined(CRAY_SHMEM)
+#  if defined(CRAY) || defined(XT3)
 #    include <mpp/shmem.h>
 #  endif
 #if defined(DECOSF) || defined(LINUX64) || defined(__crayx1)\

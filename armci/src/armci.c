@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #if defined(CRAY) && !defined(__crayx1)
 #  include <sys/category.h>
 #  include <sys/resource.h>
@@ -265,7 +266,7 @@ void armci_allocate_locks()
 {
     /* note that if ELAN_ACC is defined the scope of locks is limited to SMP */
 #if !defined(CRAY_SHMEM) && \
-    ( defined(HITACHI) || defined(CATAMOUNT) || defined(PORTALS) || \
+    ( defined(HITACHI) || defined(CATAMOUNT) || \
       (defined(QUADRICS) && defined(_ELAN_LOCK_H) && !defined(ELAN_ACC)) )
        armcill_allocate_locks(NUM_LOCKS);
 #elif (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(HITACHI)
@@ -407,7 +408,7 @@ void _armci_test_connections() {
   int *val;
   dassert(1, bufs);
 
-  ARMCI_Malloc(bufs, sizeof(int));
+  ARMCI_Malloc((void **)bufs, sizeof(int));
   dassert(1, bufs[armci_me]);
   val = ARMCI_Malloc_local(sizeof(int));
   dassert(1, val);
@@ -498,6 +499,7 @@ int ARMCI_Init()
 
 #ifdef PORTALS
     armci_init_portals();
+    shmem_init();
 #endif
 
 #ifdef QUADRICS
@@ -643,7 +645,7 @@ int ARMCI_Init()
 #   if defined(DATA_SERVER) || defined(ELAN_ACC)
        if(armci_nclus >1) armci_start_server();
 #   endif
-#if defined(GM) || defined(VAPI) || (defined(LAPI) && defined(LAPI_RDMA))
+#if defined(GM) || defined(VAPI) || defined(PORTALS) || (defined(LAPI) && defined(LAPI_RDMA))
     /* initialize registration of memory */
     armci_region_init();
 #endif
@@ -1263,14 +1265,44 @@ char           *ret = 0;
 }
 #endif
 
+static int in_error_cleanup=0;
+
+void derr_printf(const char *format, ...) {
+    
+  extern int AR_caught_sigint;
+  extern int AR_caught_sigterm;
+  if(!in_error_cleanup) {
+#ifdef SYSV
+    if((!AR_caught_sigterm && !AR_caught_sigint) || armci_me==0) 
+#endif
+    {
+      va_list ap;
+      va_start(ap, format);
+      vprintf(format, ap);
+      va_end(ap);
+    }
+  }
+}
+
 
 int dassertp_fail(const char *cond_string, const char *file, 
 		  const char *func, unsigned int line) {
-  printf("%d:ARMCI DASSERT fail. %s:%s():%d cond:%s\n",
-	 armci_me,file,func,line,cond_string);
-#if defined(PRINT_BT)
-    backtrace_symbols_fd(bt, backtrace(bt, 100), 2);
+  extern int AR_caught_sigint;
+  extern int AR_caught_sigterm;
+  if(!in_error_cleanup) {
+    in_error_cleanup=1;
+#ifdef SYSV
+    if((!AR_caught_sigterm && !AR_caught_sigint) || armci_me==0)
 #endif
-  armci_abort(0);
+    {
+      printf("(rank:%d hostname:%s pid:%d):ARMCI DASSERT fail. %s:%s():%d cond:%s\n",
+	     armci_me,armci_clus_info[armci_clus_me].hostname, 
+	     getpid(), file,func,line,cond_string);
+#if defined(PRINT_BT)
+      backtrace_symbols_fd(bt, backtrace(bt, 100), 2);
+#endif
+    }
+    armci_abort(0);
+  }
   return 0;
 }

@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "sndrcv.h"
 
-#define MAX_PROCESS 4096
+#define MAX_PROCESS 100000
 #define TYPE_NXTVAL 33333
 
 extern MPI_Comm TCGMSG_Comm;

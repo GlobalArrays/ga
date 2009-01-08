@@ -22,9 +22,8 @@ extern void armci_shmalloc_exchange_offsets(context_t *);
 #endif
 
 static context_t ctx_localmem;
-/*
 static context_t ctx_mlocalmem;
-*/
+
 #if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI)
 #include "shmem.h"
 
@@ -258,7 +257,7 @@ void armci_shmem_malloc(void *ptr_arr[], armci_size_t bytes)
                  armci_me,myptr, *(void**)myptr,size); fflush(stdout);
        }
     }
-#   if defined(HITACHI) || defined(PORTALS)
+#   ifdef HITACHI
         armci_register_shmem(myptr,size,idlist+1,idlist[0],ptr_ref_arr[armci_clus_me]);
 #   endif
 #   if defined(DATA_SERVER)
@@ -556,7 +555,7 @@ void armci_shmem_malloc_group(void *ptr_arr[], armci_size_t bytes,
                  armci_me,myptr, *(void**)myptr,size); fflush(stdout);
        }
     }
-#   if defined(HITACHI) || defined(PORTALS)
+#   ifdef HITACHI
     armci_register_shmem_grp(myptr,size,idlist+1,idlist[0],ptr_ref_arr[armci_clus_me],group);
 #   endif
     
@@ -718,10 +717,8 @@ char *ptr;
 void armci_krmalloc_init_localmem() {
 #if defined(ALLOW_PIN)
     kr_malloc_init(0, 0, 0, reg_malloc, 0, &ctx_localmem);
-#  if defined(PORTALS_WITHREG)
     kr_malloc_init(0, 0, 0, malloc, 0, &ctx_mlocalmem);
     ctx_mlocalmem.ctx_type = KR_CTX_LOCALMEM;
-#  endif
 #elif defined(CRAY_SHMEM) && defined(XT3)
 #   ifdef CATAMOUNT
     int units_avail = (cnos_shmem_size() - 1024 * 1024) / SHM_UNIT;
@@ -753,7 +750,7 @@ void armci_krmalloc_init_localmem() {
 void *ARMCI_Malloc_local(armci_size_t bytes) {
     void *rptr;
     ARMCI_PR_DBG("enter",0);
-#if defined(PORTALS_WITHREG)
+#if defined(PORTALS)
     rptr=kr_malloc((size_t)bytes, &ctx_mlocalmem);
     ARMCI_PR_DBG("exit",0);
     return rptr;
@@ -765,7 +762,7 @@ void *ARMCI_Malloc_local(armci_size_t bytes) {
 
 int ARMCI_Free_local(void *ptr) {
     ARMCI_PR_DBG("enter",0);
-#if defined(PORTALS_WITHREG)
+#if defined(PORTALS)
     kr_free((char *)ptr, &ctx_mlocalmem);
 #else
     kr_free((char *)ptr, &ctx_localmem);

@@ -10,6 +10,10 @@ LIBRARY_SHARED= libpario.so
        INCDIR = ../../include
  LIB_INCLUDES = -I$(INCDIR)
 
+ifeq ($(ARMCI_NETWORK), PORTALS)
+	LIB_DEFINES += -DXT3
+endif
+
 ifndef OLD_GA
 include ../../armci/config/makecoms.h
 endif

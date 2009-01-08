@@ -844,17 +844,19 @@ ifeq  ($(_CPU),x86_64)
   endif
 
   ifeq ($(ARMCI_NETWORK), CRAY-SHMEM)
-     CC = cc
-     FC = ftn
+     FC  = ftn
+     CC  = cc
+     CXX = CC
   endif
 
   ifeq ($(ARMCI_NETWORK), PORTALS)
-     CC = cc
-     FC = ftn
+     FC  = ftn
+     CC  = cc
+     CXX = CC
   endif      
 
 ifneq (,$(findstring mpif,$(_FC)))
-  _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit };/gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; /PathScale/ { pathf90count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90" ; if(pathf90count)print "pathf90"} ; /Version/ {print "ifort"; exit }')
+  _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit };/gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; /PathScale/ { pathf90count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90" ; if(pathf90count)print "pathf90"} ; /Version/ {print "ifort"; exit } ; / frt / { print "frt" ; exit }')
 endif
 ifeq ($(_FC), ftn)
   _FC = $(shell $(FC) -v 2>&1 | awk ' /g95/ { print "g95"; exit }; /g77 version/ { print "g77"; exit };/gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; /PathScale/ { pathf90count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90" ; if(pathf90count)print "pathf90"} ; /Version/ {print "ifort"; exit }')
@@ -935,6 +937,17 @@ endif
        CLD_REN += -nofor_main
    endif
 
+# ======= Fujitsu Compilers =======
+  ifeq ($(_CC),fcc)
+     COPT = -Kfast
+  endif
+  ifeq ($(_FC),frt)
+     FOPT = -Kfast
+     FOPT_REN += -X9 -Am
+     CLD     = $(FLD)
+     CMAIN   = -Dmain=MAIN__
+  endif
+
 #
 # Using 32-bit integers
 #
@@ -946,7 +959,11 @@ endif
          FOPT_REN += -fdefault-integer-8
          GLOB_DEFINES += -DGFORTRAN
       else
-         FOPT_REN += -i8
+        ifeq ($(_FC),frt)
+          FOPT_REN += -CcdLL8 -CcdII8
+        else
+          FOPT_REN += -i8
+        endif
       endif
     endif
   endif

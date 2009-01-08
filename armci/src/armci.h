@@ -2,6 +2,9 @@
 /* ARMCI header file */
 #ifndef _ARMCI_H
 #define _ARMCI_H   
+#ifdef NO__FUNCTION__
+#define __FUNCTION__ "Unknown"
+#endif
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
@@ -194,10 +197,11 @@ extern void ARMCI_Copy(void *src, void *dst, int n);
  */
 int dassertp_fail(const char *cond_string, const char *file, 
 		  const char *func, unsigned int line);
+  void derr_printf(const char *format, ...);
 #undef dassertp
 #define dassertp(_enable,_cond,_plist)  do {              \
   if((_enable) && !(_cond)) {                             \
-    printf _plist;					  \
+    derr_printf _plist;					  \
     dassertp_fail(#_cond,__FILE__,__FUNCTION__,__LINE__); \
   }} while(0)
 

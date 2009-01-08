@@ -64,7 +64,7 @@ Edit the file ngatest.m4 (this step is optional if you want to test all):
 To compile, type "make ngatest.x"
 
 To run the test with MPI, 
-    On workstations, type "ngatest.x -np 4"
+    For example, type "mpirun -np 4 test.x"
 
 --------
 Source files: 

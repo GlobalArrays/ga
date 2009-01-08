@@ -755,8 +755,8 @@ static void armci_init_nic(vapi_nic_t *nic, int scq_entries, int rcq_entries)
 
     /*set local variable values*/
     armci_max_num_sg_ent=29; /* reduced from 30 based on MG input */
-    armci_max_qp_ous_swr=150;
-    armci_max_qp_ous_rwr=150;
+    armci_max_qp_ous_swr=100;
+    armci_max_qp_ous_rwr=50;
     if(armci_max_qp_ous_rwr+armci_max_qp_ous_swr>nic->attr.max_qp_wr){
        armci_max_qp_ous_swr=nic->attr.max_qp_wr/16;
        armci_max_qp_ous_rwr=nic->attr.max_qp_wr - armci_max_qp_ous_swr;
@@ -912,8 +912,10 @@ char * armci_vapi_client_mem_alloc(int size)
     tmp0  = tmp = malloc(total);
     dassert1(1,tmp!=NULL,total);
     client_malloc_buf_base = tmp;
+#if 0
+    /*SK: could this lead to a problem at ibv_reg_mr() because of unfixed 'total'?*/
     if(ALIGN64ADD(tmp0))tmp0+=ALIGN64ADD(tmp0);
-
+#endif
     /* stamp the last byte */
     client_tail= tmp + extra+ size +2*SIXTYFOUR-1;
     *client_tail=CLIENT_STAMP;

@@ -701,6 +701,11 @@ void armci_msg_bcast(void *buf, int len, int root)
 {
 int Root = armci_master;
 int nslave = armci_clus_info[armci_clus_me].nslave;
+
+#ifdef MPI_SPAWN
+    armci_msg_bcast_scope(SCOPE_ALL, (buf), (len), (root));
+    return;
+#endif
 #ifdef LAPI
     if(_armci_gop_init){_armci_msg_binomial_bcast(buf,len,root);return;}
 #endif

@@ -1,13 +1,17 @@
 #include <mpi.h>
 #include "tcgmsgP.h"
 #include "armci.h"
+#ifdef HPUX64
+#include <malloc.h>
+#endif
 
 #ifdef GA_USE_VAMPIR
 #include "tcgmsg_vampir.h"
 #endif
 
 #define LEN 2
-static long *pnxtval_counter;
+static long pnxtval_counter_val;
+static long *pnxtval_counter=&pnxtval_counter_val;
 #define INCR 1                 /* increment for NXTVAL */
 #define BUSY -1L               /* indicates somebody else updating counter*/
 #define NXTV_SERVER ((int)NNODES_() -1)
@@ -50,9 +54,12 @@ long NXTVAL_(mproc)
            if(rc!=MPI_SUCCESS)Error("nxtval: barrier failed",0);
      }
      if (*mproc > 0) {
-
+#ifndef XT3
        rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD_LONG,(int*)&local,(int*)pnxtval_counter,1,server);
-     
+#else
+       extern  long shmem_long_fadd(long *target, long value, int pe);
+       local = shmem_long_fadd(pnxtval_counter, 1L, server);
+#endif
      }
    } else {
      /* Not running in parallel ... just do a simulation */
@@ -80,7 +87,9 @@ void install_nxtval(int *argc, char **argv[])
    int rc;
    int me = (int)NODEID_(), bytes, server;
 
-   void *ptr_ar[MAX_PROCESS];
+   void **ptr_ar;
+   ptr_ar = (void **)malloc(sizeof(void *)*(int)NNODES_());
+   if(!ptr_ar) Error("malloc failed in install_nxtval", (long)NNODES_());  
    
    ARMCI_Init_args(argc, argv);
    server = NXTV_SERVER;
@@ -88,12 +97,16 @@ void install_nxtval(int *argc, char **argv[])
    if(me== server) bytes = sizeof(long);
    else bytes =0;
 
+#ifndef XT3
    rc = ARMCI_Malloc(ptr_ar,bytes);
    if(rc)Error("nxtv: armci_malloc failed",rc);
-
+   
    pnxtval_counter = (long*) ptr_ar[server];
+#endif
+   
    if(me==server)*pnxtval_counter = (long)0;
-    
+
+   free(ptr_ar);
    rc=MPI_Barrier(MPI_COMM_WORLD); 
    if(rc!=MPI_SUCCESS)Error("init_nxtval: barrier failed",0);
 }
@@ -101,6 +114,8 @@ void install_nxtval(int *argc, char **argv[])
 
 void finalize_nxtval()
 {
+#ifndef XT3
     if(NODEID_() == NXTV_SERVER)ARMCI_Free(pnxtval_counter);
+#endif
     ARMCI_Finalize();
 }
