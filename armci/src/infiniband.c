@@ -1047,78 +1047,77 @@ int s, ratio = sizeof(ack_t)/sizeof(int);
 \*/ 
 void armci_init_connections()
 {
-int c,s;
-int sz;
- uint32_t *tmpbuf;
-int *tmparr;
-    if(TIME_INIT)inittime0 = MPI_Wtime(); 
-    
+    int c,s;
+    int sz;
+    uint32_t *tmpbuf;
+    int *tmparr;
+
+    if(TIME_INIT) {
+        inittime0 = MPI_Wtime(); 
+    }
+
 #if defined(PEND_BUFS)
     armci_pbuf_init_buffer_env();
 #endif
-    /* initialize nic connection for qp numbers and lid's */
-    armci_init_nic(SRV_nic,1,1);
-#if 0
-    /*SK: 0 value seems to mean send outstanding (see
-      armci_send_complete(). So init-ing to 1*/
-    bzero(mark_buf_send_complete,sizeof(int)*(NUMOFBUFFERS+1));
-#else
-    for(c=0; c<NUMOFBUFFERS+1; c++) {
-      mark_buf_send_complete[c]=1;
+    // initialize nic connection for qp numbers and lid's
+    armci_init_nic(SRV_nic, 1, 1);
+    
+    
+    for(c = 0; c < NUMOFBUFFERS + 1; c++) {
+        memset(mark_buf_send_complete, 1, NUMOFBUFFERS + 1);
+        mark_buf_send_complete[c]=1;
     }
-#endif
+    memset(mark_buf_send_complete, 1, NUMOFBUFFERS + 1);
+   
     _gtmparr = (int *)calloc(armci_nproc,sizeof(int)); 
 
     /*qp_numbers and lids need to be exchanged globally*/
-    tmparr = (int *)calloc(armci_nproc,sizeof(int));
+    tmparr = (int *)calloc(armci_nproc, sizeof(int));
     tmparr[armci_me] = SRV_nic->lid_arr[armci_me];
-    sz = armci_nproc;
-    armci_msg_gop_scope(SCOPE_ALL,tmparr,sz,"+",ARMCI_INT);
-    for(c=0;c<armci_nproc;c++){
-       SRV_nic->lid_arr[c]=tmparr[c];
-       tmparr[c]=0;
-    }
-    /*SRV_con is for client to connect to servers */
-    SRV_con=(armci_connect_t *)malloc(sizeof(armci_connect_t)*armci_nclus);
-    dassert1(1,SRV_con!=NULL,sizeof(armci_connect_t)*armci_nclus);
-    bzero(SRV_con,sizeof(armci_connect_t)*armci_nclus);
 
-    CLN_con=(armci_connect_t*)malloc(sizeof(armci_connect_t)*armci_nproc);
+    sz = armci_nproc;
+
+    armci_msg_gop_scope(SCOPE_ALL, tmparr,sz, "+", ARMCI_INT);
+
+    // shouldn't there be a memory copy here?
+    for(c = 0; c < armci_nproc ; c++) {
+        SRV_nic->lid_arr[c]=tmparr[c];
+        tmparr[c]=0;
+    }
+   
+    // Connection to servers 
+    SRV_con = (armci_connect_t *) malloc(sizeof(armci_connect_t) * armci_nclus);
+    dassert1(1,SRV_con!=NULL,sizeof(armci_connect_t)*armci_nclus);
+    bzero(SRV_con, sizeof(armci_connect_t) * armci_nclus);
+
+    // Connection to clients
+    CLN_con=(armci_connect_t*)malloc(sizeof(armci_connect_t) * armci_nproc);
     dassert1(1,CLN_con!=NULL,sizeof(armci_connect_t)*armci_nproc);
     bzero(CLN_con,sizeof(armci_connect_t)*armci_nproc);
 
-    /*every client creates a qp with every server other than the one on itself*/
-    SRV_rqpnums = (uint32_t*)malloc(sizeof(uint32_t)*armci_nproc);
+    // Every client creates a qp with every server other than the one on itself
+    SRV_rqpnums = (uint32_t *)malloc(sizeof(uint32_t) * armci_nproc);
     dassert(1,SRV_rqpnums);
     tmpbuf = (uint32_t*)calloc(armci_nproc,sizeof(uint32_t));
     dassert(1,tmpbuf);
 
     sz = armci_nproc*(sizeof(uint32_t)/sizeof(int));
     armci_vapi_max_inline_size = 0;
-    for(s=0; s< armci_nclus; s++){
-       armci_connect_t *con = SRV_con + s;
-#if 0
-       con->rqpnum = (uint32_t *)malloc(sizeof(uint32_t)*armci_nproc);
-       bzero(con->rqpnum,sizeof(uint32_t)*armci_nproc);
-#endif
-       /*if(armci_clus_me != s)*/
-       {
-         armci_create_qp(SRV_nic,&con->qp);
-         con->sqpnum  = con->qp->qp_num;
-#if 0
-         con->rqpnum[armci_me] = con->qp->qp_num;
-#endif
-	 tmpbuf[armci_clus_info[s].master] = con->qp->qp_num;
-         con->lid = SRV_nic->lid_arr[s];
-       }
-/*        armci_msg_gop_scope(SCOPE_ALL,con->rqpnum,sz,"+",ARMCI_INT); */
+    
+    for(s = 0; s < armci_nclus; s++){
+        armci_connect_t *con = SRV_con + s;
+        armci_create_qp(SRV_nic,&con->qp);
+        con->sqpnum  = con->qp->qp_num;
+        tmpbuf[armci_clus_info[s].master] = con->qp->qp_num;
+        con->lid = SRV_nic->lid_arr[s];
     }
-    MPI_Alltoall(tmpbuf,sizeof(uint32_t),MPI_CHAR,SRV_rqpnums,
-		 sizeof(uint32_t),MPI_CHAR,MPI_COMM_WORLD);
+    MPI_Alltoall(tmpbuf, sizeof(uint32_t), MPI_CHAR, SRV_rqpnums,
+            sizeof(uint32_t), MPI_CHAR, MPI_COMM_WORLD);
     free(tmpbuf);
+
     if(armci_me != armci_master) {
-      free(SRV_rqpnums);
-      SRV_rqpnums=NULL;
+        free(SRV_rqpnums);
+        SRV_rqpnums=NULL;
     }
 
     if(DEBUG_CLN) printf("%d: connections ready for client\n",armci_me);
