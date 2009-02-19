@@ -1,5 +1,3 @@
-#ifndef _PM_UTIL_H_
-#define _PM_UTIL_H_
 
 void pm_init(int *argc, char *(*argv[]));
 void pm_finalize();
@@ -17,4 +15,3 @@ void pm_bcast(void *buffer, int len, int root);
 void pm_send(void *buffer, int len, int to, int tag);
 int pm_recv(void *buffer, int buflen, int *from, int tag);
 
-#endif
