@@ -2,14 +2,20 @@
 #include <assert.h>
 #include "armcip.h"
 
-int check_server_context()
+void pm_abort(int code)
+{   
+    MPI_Abort(MPI_COMM_WORLD, code);
+    assert(0);
+}               
+
+
+void check_server_context()
 {
     if (SERVER_CONTEXT) {
-        return 1;
-    } else 
-        return 0;
+        printf("Server Context should not make MPI Calls\n");
+        pm_abort(1);
+    }
 }
-
 
 void pm_init(int *argc, char *(*argv[])) 
 {
@@ -33,20 +39,15 @@ double pm_time(void)
  */
 void pm_alltoall(void *src, int sbytes, void *dst, int rbytes) 
 {
-    if (check_server_context()) {
-        printf("Server Context should not make this call\n");
-        pm_abort(1);
-    }
+    check_server_context();
+    assert(sbytes == rbytes);
     MPI_Alltoall(src,sbytes,MPI_CHAR,dst,sbytes,MPI_CHAR, MPI_COMM_WORLD);
 }
 
 void pm_barrier(void) 
 {
    
-    if (check_server_context()) {
-        printf("Server Context should not make this call\n");
-        pm_abort(1);
-    }
+    check_server_context();
     MPI_Barrier(MPI_COMM_WORLD);
 }
 
@@ -77,10 +78,6 @@ int pm_nproc()
 
 int PM_UNDEFINED() 
 {
-    if (check_server_context()) {
-        printf("Server Context should not make this call\n");
-        pm_abort(1);
-    }
     check_server_context();
     assert(0);
     return 0;
@@ -100,34 +97,28 @@ int PM_SUCCESS()
     return 0;
 }
 
-void pm_abort(int code) 
-{
-    check_server_context();
-    MPI_Abort(MPI_COMM_WORLD, code);
-    assert(0);
-}
-
 void pm_bcast(void *buffer, int len, int root) 
 {
-  check_server_context();
-  MPI_Bcast(buffer, len, MPI_CHAR, root, MPI_COMM_WORLD);
+    check_server_context();
+    MPI_Bcast(buffer, len, MPI_CHAR, root, MPI_COMM_WORLD);
 }
 
 void pm_send(void *buffer, int len, int to, int tag) 
 {
-  check_server_context();
-  MPI_Send(buffer, len, MPI_CHAR, to, tag, MPI_COMM_WORLD);
+    check_server_context();
+    MPI_Send(buffer, len, MPI_CHAR, to, tag, MPI_COMM_WORLD);
 }
 
 int pm_recv(void *buffer, int buflen, int *from, int tag) 
 {
-  int msglen;
-  MPI_Status status;
-  int proc = (*from == -1)? MPI_ANY_SOURCE: *from;
-  MPI_Recv(buffer, buflen, MPI_CHAR, proc, tag, MPI_COMM_WORLD, &status);
-  MPI_Get_count(&status, MPI_CHAR, &msglen);
-  if(*from == -1) *from = (int)status.MPI_SOURCE;
-  return msglen;
+    int msglen;
+    MPI_Status status;
+    int proc = (*from == -1)? MPI_ANY_SOURCE: *from;
+    MPI_Recv(buffer, buflen, MPI_CHAR, proc, tag, MPI_COMM_WORLD, &status);
+    MPI_Get_count(&status, MPI_CHAR, &msglen);
+    if(*from == -1) 
+        *from = (int)status.MPI_SOURCE;
+    return msglen;
 }
 
 
