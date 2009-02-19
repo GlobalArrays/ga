@@ -4,7 +4,6 @@
 
 void pm_abort(int code)
 {   
-    MPI_Abort(MPI_COMM_WORLD, code);
     assert(0);
 }               
 
@@ -30,7 +29,8 @@ void pm_finalize()
 
 double pm_time(void) 
 {
-   return MPI_Wtime(); 
+    check_server_context();
+    return MPI_Wtime(); 
 }
 
 /**
@@ -79,22 +79,19 @@ int pm_nproc()
 int PM_UNDEFINED() 
 {
     check_server_context();
-    assert(0);
-    return 0;
+    return MPI_UNDEFINED;
 }
 
 int PM_ERR_GROUP() 
 { 
     check_server_context();
-    assert(0);
-    return 0;
+    return MPI_ERR_GROUP;
 }
 
 int PM_SUCCESS() 
 { 
     check_server_context();
-    assert(0);
-    return 0;
+    return MPI_SUCCESS;
 }
 
 void pm_bcast(void *buffer, int len, int root) 
