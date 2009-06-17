@@ -408,7 +408,8 @@ void armci_nattach_preallocate_info(int* segments, int *segsize)
 #endif
         
 /* Create shared region to store kr_malloc context in shared memory */
-void armci_krmalloc_init_ctxshmem() {
+void armci_krmalloc_init_ctxshmem() 
+{
     void *myptr=NULL;
     long idlist[SHMIDLEN];
     long size; 
@@ -1129,42 +1130,42 @@ size_t sz = (size_t)size;
 \*/
 char *Create_Shared_Region(long *id, long size, long *offset)
 {
-  char *temp;  
-int  reg, refreg=0,nreg;
-  
+    char *temp;  
+    int  reg, refreg=0,nreg;
+
     if(alloc_regions>=MAX_REGIONS)
-       armci_die("Create_Shared_Region: to many regions ",0);
+        armci_die("Create_Shared_Region: to many regions ",0);
 
     if(DEBUG_){
-      printf("%d:CreateSharedRegion %d:size=%ld\n",armci_me,create_call++,size);
-      fflush(stdout);
+        printf("%d:CreateSharedRegion %d:size=%ld\n",armci_me,create_call++,size);
+        fflush(stdout);
     }
 
     /*initialization: 1st allocation request */
     if(!alloc_regions){
-       for(reg=0;reg<MAX_REGIONS;reg++){
-          region_list[reg].addr=(char*)0;
-          region_list[reg].attached=0;
-          region_list[reg].id=0;
-       }
-       if(DEBUG_){
-          printf("%d:1st CreateSharedRegion: allocation unit:%ldK,shmax:%ldK\n",
-                 armci_me,MinShmem,MaxShmem);
-          fflush(stdout);
-       }
+        for(reg=0;reg<MAX_REGIONS;reg++){
+            region_list[reg].addr=(char*)0;
+            region_list[reg].attached=0;
+            region_list[reg].id=0;
+        }
+        if(DEBUG_){
+            printf("%d:1st CreateSharedRegion: allocation unit:%ldK,shmax:%ldK\n",
+                    armci_me,MinShmem,MaxShmem);
+            fflush(stdout);
+        }
 
-       kr_malloc_init(SHM_UNIT, (size_t)MinShmem, (size_t)MaxShmem, 
-		      armci_allocate, 0, &ctx_shmem);
-       ctx_shmem.ctx_type = KR_CTX_SHMEM;
-       id[SHMIDLEN-2]=MinShmem;
+        kr_malloc_init(SHM_UNIT, (size_t)MinShmem, (size_t)MaxShmem, 
+                armci_allocate, 0, &ctx_shmem);
+        ctx_shmem.ctx_type = KR_CTX_SHMEM;
+        id[SHMIDLEN-2]=MinShmem;
     }
 
     if(!alloc_regions)  temp = kr_malloc((size_t)size, &ctx_shmem);
     else temp = kr_malloc((size_t)size, ctx_shmem_global);
 
     if(temp == (char*)0 )
-       armci_die("CreateSharedRegion:kr_malloc failed KB=",(int)size>>10);
-    
+        armci_die("CreateSharedRegion:kr_malloc failed KB=",(int)size>>10);
+
     if(!(nreg=find_regions(temp,id,&reg)))
         armci_die("CreateSharedRegion: allocation inconsitent",0);
 
@@ -1176,12 +1177,12 @@ int  reg, refreg=0,nreg;
     *offset = (long) (temp - region_list[refreg].addr);
     id[IDLOC]=region_list[reg].sz; /* elan post check */
     occup_blocks++;
-  
+
     if(DEBUG_){ 
-      printf("%d:CreateShmReg:reg=%d id=%ld off=%ld ptr=%p adr=%p s=%d n=%d sz=%ld\n",
-           armci_me,reg,region_list[reg].id,*offset,region_list[reg].addr,
-           temp,(int)size,nreg,id[IDLOC]);
-      fflush(stdout);
+        printf("%d:CreateShmReg:reg=%d id=%ld off=%ld ptr=%p adr=%p s=%d n=%d sz=%ld\n",
+                armci_me,reg,region_list[reg].id,*offset,region_list[reg].addr,
+                temp,(int)size,nreg,id[IDLOC]);
+        fflush(stdout);
     }
 
     return temp;

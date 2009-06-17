@@ -548,7 +548,8 @@ int ARMCI_Init()
 
 #ifndef BLRTS
     /* trap signals to cleanup ARMCI system resources in case of crash */
-    if(armci_me==armci_master) ARMCI_ParentTrapSignals();
+    if(armci_me==armci_master) 
+        ARMCI_ParentTrapSignals();
     ARMCI_ChildrenTrapSignals();
 #endif
 
@@ -563,7 +564,8 @@ int ARMCI_Init()
     }
 
 #   if defined(QUADRICS) && !defined(NO_SHM)
-       if(armci_me == armci_master)armci_check_shmmax();
+       if(armci_me == armci_master)
+           armci_check_shmmax();
 #   endif
 #endif
 

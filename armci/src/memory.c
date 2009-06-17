@@ -714,7 +714,8 @@ char *ptr;
 
 
 /* public constructor to initialize the kr_malloc context */
-void armci_krmalloc_init_localmem() {
+void armci_krmalloc_init_localmem() 
+{
 #if defined(ALLOW_PIN)
     kr_malloc_init(0, 0, 0, reg_malloc, 0, &ctx_localmem);
     kr_malloc_init(0, 0, 0, malloc, 0, &ctx_mlocalmem);
@@ -747,7 +748,8 @@ void armci_krmalloc_init_localmem() {
 /**
  * Local Memory Allocation and Free
  */
-void *ARMCI_Malloc_local(armci_size_t bytes) {
+void *ARMCI_Malloc_local(armci_size_t bytes) 
+{
     void *rptr;
     ARMCI_PR_DBG("enter",0);
 #if defined(PORTALS)
@@ -760,7 +762,8 @@ void *ARMCI_Malloc_local(armci_size_t bytes) {
 #endif
 }
 
-int ARMCI_Free_local(void *ptr) {
+int ARMCI_Free_local(void *ptr) 
+{
     ARMCI_PR_DBG("enter",0);
 #if defined(PORTALS)
     kr_free((char *)ptr, &ctx_mlocalmem);
