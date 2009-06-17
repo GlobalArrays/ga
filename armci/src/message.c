@@ -151,8 +151,11 @@ char *mp_group_name = "mp_working_group";
 
 static void _allocate_mem_for_work(){
     work = (double *)malloc(sizeof(double)*BUF_SIZE);
-    if(!work)armci_die("malloc in _allocate_mem_for_work failed",0);
-    lwork = (long *)work; iwork = (int *)work; fwork = (float *)work;
+    if(!work)
+        armci_die("malloc in _allocate_mem_for_work failed",0);
+    lwork = (long *)work; 
+    iwork = (int *)work; 
+    fwork = (float *)work;
     llwork = (long long *)work;
 }
 
@@ -161,10 +164,11 @@ static void _allocate_mem_for_work(){
 \*/
 void armci_msg_gop_init()
 {
-/*work was a static global array of doubles. It has been changed to get
-  memory from malloc because of a problem with cc on SV1
-*/
-    if(work==NULL)_allocate_mem_for_work();
+    /*work was a static global array of doubles. It has been changed to get
+      memory from malloc because of a problem with cc on SV1
+      */
+    if(work==NULL)
+        _allocate_mem_for_work();
 #if !defined(SGIALTIX) && defined(SYSV) || defined(MMAP) || defined(WIN32)
     if(ARMCI_Uses_shm()){
        char *tmp;
