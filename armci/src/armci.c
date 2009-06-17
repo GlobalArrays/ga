@@ -274,9 +274,13 @@ void armci_allocate_locks()
 #  if defined(SPINLOCK) || defined(PMUTEXES)
        CreateInitLocks(NUM_LOCKS, &lockid);
 #  else
-       if(armci_master==armci_me)CreateInitLocks(NUM_LOCKS, &lockid);
+       if(armci_master==armci_me)
+           CreateInitLocks(NUM_LOCKS, &lockid);
+       
        armci_msg_clus_brdcst(&lockid, sizeof(lockid));
-       if(armci_master != armci_me)InitLocks(NUM_LOCKS, lockid);
+       
+       if(armci_master != armci_me)
+           InitLocks(NUM_LOCKS, lockid);
 #  endif
 #endif
 }

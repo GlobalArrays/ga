@@ -410,7 +410,7 @@ void armci_nattach_preallocate_info(int* segments, int *segsize)
 /* Create shared region to store kr_malloc context in shared memory */
 void armci_krmalloc_init_ctxshmem() 
 {
-    void *myptr=NULL;
+    void *myptr = NULL;
     long idlist[SHMIDLEN];
     long size; 
     int offset = sizeof(void*)/sizeof(int);
@@ -420,11 +420,15 @@ void armci_krmalloc_init_ctxshmem()
     
     if(armci_me == armci_master ){
        myptr = Create_Shared_Region(idlist+1,size,idlist);
-       if(!myptr && size>0 ) armci_die("armci_krmalloc_init_ctxshmem: could not create", (int)(size>>10));
-       if(size) *(volatile void**)myptr = myptr;
+       if(!myptr && size>0 ) 
+           armci_die("armci_krmalloc_init_ctxshmem: could not create", 
+                   (int)(size>>10));
+       if(size) 
+           *(volatile void**)myptr = myptr;
        if(DEBUG_){
-	  printf("%d:armci_krmalloc_init_ctxshmem addr mptr=%p ref=%p size=%ld\n", armci_me, myptr, *(void**)myptr, size);
-	  fflush(stdout);
+           printf("%d:armci_krmalloc_init_ctxshmem addr mptr=%p ref=%p size=%ld\n", 
+                   armci_me, myptr, *(void**)myptr, size);
+           fflush(stdout);
        }
        
        /* Bootstrapping: allocate storage for ctx_shmem_global. NOTE:there is 
@@ -552,7 +556,8 @@ void armci_shmem_init()
     }
 
     armci_krmalloc_init_ctxshmem();
-    if(DEBUG_)printf("%d: out of shmem_init\n",armci_me);
+    if(DEBUG_)
+        printf("%d: out of shmem_init\n",armci_me);
 }
 
 
