@@ -30,7 +30,7 @@ void armci_init_fence()
 #if defined(THREAD_SAFE)
      _armci_fence_arr=calloc(armci_nproc*armci_user_threads.max,1);
 #else
-     _armci_fence_arr=calloc(armci_nproc,1);
+     _armci_fence_arr = calloc(armci_nproc,1);
 #endif
      if(!_armci_fence_arr)armci_die("armci_init_fence: calloc failed",0);
 #endif

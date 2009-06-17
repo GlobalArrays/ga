@@ -42,17 +42,18 @@ void DeleteLocks(lockset_t lockid) {
 
 void CreateInitLocks(int num_locks, lockset_t *plockid)
 {
-int locks_per_proc, size;
+    int locks_per_proc, size;
 #ifdef BGML
-  fprintf(stderr,"createinitlocks\n");
+    fprintf(stderr,"createinitlocks\n");
 #endif
-  ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
-  locks_per_proc = (num_locks*armci_nclus)/armci_nproc + 1;
-  size=locks_per_proc*sizeof(PAD_LOCK_T);
-  ARMCI_Malloc(ptr_arr, size);
-  _armci_int_mutexes = (PAD_LOCK_T*) ptr_arr[armci_master];
-  
-  if(!_armci_int_mutexes) armci_die("Failed to create spinlocks",size);
+    ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
+    locks_per_proc = (num_locks*armci_nclus)/armci_nproc + 1;
+    size=locks_per_proc*sizeof(PAD_LOCK_T);
+    ARMCI_Malloc(ptr_arr, size);
+    _armci_int_mutexes = (PAD_LOCK_T*) ptr_arr[armci_master];
+
+    if(!_armci_int_mutexes) 
+        armci_die("Failed to create spinlocks",size);
 
 #ifdef PMUTEXES
   if(armci_me == armci_master) {
@@ -200,18 +201,21 @@ int i;
 
 void InitLocks(int num_locks, lockset_t  lockid)
 {
-int i;
+    int i;
 
-   if(num_locks > NUM_LOCKS) armci_die("To many locks requested", num_locks);
-   sprintf(file_name,"/tmp/ga.locks.%ld", lockid);
-   if ( (fd = open(file_name, O_RDWR|O_CREAT, 0666)) < 0 )
-      armci_die("InitLocks: failed to open temporary file",0);
+    if(num_locks > NUM_LOCKS) 
+        armci_die("To many locks requested", num_locks);
+    sprintf(file_name,"/tmp/ga.locks.%ld", lockid);
+    if ((fd = open(file_name, O_RDWR|O_CREAT, 0666)) < 0 )
+        armci_die("InitLocks: failed to open temporary file",0);
 
-   shmem_size = (NUM_LOCKS)*sizeof(lock_t);
-   lock_array = (lock_t*)  mmap((caddr_t) 0, shmem_size,
-                     PROT_READ|PROT_WRITE,
-                     MAP_ANONYMOUS|CNX_MAP_SEMAPHORE|MAP_SHARED, fd, 0);
-   if(((unsigned)lock_array)%16)armci_die("InitLocks: not aligned",0);
+    shmem_size = (NUM_LOCKS) * sizeof(lock_t);
+    lock_array = (lock_t*)  mmap((caddr_t) 0, shmem_size,
+            PROT_READ|PROT_WRITE,
+            MAP_ANONYMOUS|CNX_MAP_SEMAPHORE|MAP_SHARED, fd, 0);
+    /* FIXME */
+    if(((unsigned)lock_array) % 16)
+        armci_die("InitLocks: not aligned",0);
 }
 
 
@@ -252,7 +256,8 @@ static int num_alloc_locks=0;
 void CreateInitLocks(int num_locks, lockset_t  *lockid)
 {
 
-   if(num_locks > NUM_LOCKS) armci_die("To many locks requested", num_locks);
+   if(num_locks > NUM_LOCKS) 
+       armci_die("To many locks requested", num_locks);
    *lockid = parent_pid = _getpid();
 
    InitLocks(num_locks, *lockid);
@@ -327,7 +332,6 @@ void DeleteLocks(lockset_t lockid)
 
 #else
 /*********************** every thing else *************************/
-
 void CreateInitLocks(int num_locks, lockset_t  *lockid)
 {}
 

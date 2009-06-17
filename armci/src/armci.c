@@ -307,14 +307,17 @@ void armci_init_memlock()
     
 #ifdef MEMLOCK_SHMEM_FLAG    
     /* last proc on node allocates memlock flag in shmem */
-    if(armci_clus_last == armci_me) bytes += sizeof(int);
+    if(armci_clus_last == armci_me) 
+        bytes += sizeof(int);
 #endif
 
     memlock_table_array = malloc(armci_nproc*sizeof(void*));
-    if(!memlock_table_array) armci_die("malloc failed for ARMCI lock array",0);
+    if(!memlock_table_array) 
+        armci_die("malloc failed for ARMCI lock array",0);
 
     rc = ARMCI_Malloc(memlock_table_array, bytes);
-    if(rc) armci_die("failed to allocate ARMCI memlock array",rc);
+    if(rc) 
+        armci_die("failed to allocate ARMCI memlock array",rc);
 
     armci_msg_barrier();
 
@@ -649,7 +652,8 @@ int ARMCI_Init()
     /* NOTE: FOR PROCESS-BASED DATA SERVER WE CANNOT call ARMCI_Malloc yet */
 
 #   if defined(DATA_SERVER) || defined(ELAN_ACC)
-       if(armci_nclus >1) armci_start_server();
+       if(armci_nclus >1) 
+           armci_start_server();
 #   endif
 #if defined(GM) || defined(VAPI) || defined(PORTALS) || (defined(LAPI) && defined(LAPI_RDMA))
     /* initialize registration of memory */
