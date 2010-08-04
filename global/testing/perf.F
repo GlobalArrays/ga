@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c $Id: perf.F,v 1.8 2005-01-12 02:07:10 manoj Exp $
 c------------------------------------------------------------------------
 c Program perf.x is used to test performance of GA put, get, accumulate  |
@@ -18,12 +21,7 @@ c
 c
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Intitialize the GA package
       call ga_initialize()
@@ -40,13 +38,12 @@ c***  Initialize the MA package
 c
       call test2D()
       call test1D()
+c
+      if(ga_nodeid().eq.0) print *,'All tests successful '
+c
       call ga_terminate()
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
       end
 
 
@@ -62,7 +59,8 @@ c
 c
       integer g_a
       integer ilo, ihi, jlo, jhi
-      integer nproc, me, loop, h_d, indexd
+      integer nproc, me, h_d
+      MA_ACCESS_INDEX_TYPE loop, indexd
       integer chunk(num_chunks)
       data    chunk /1,9,16,81,256,576,900,2304,4096,8281,
      $               16384,29241,65536,124609,193600,262144/
@@ -143,8 +141,8 @@ c
 
         write(6,*)'    section           get               put',
      &           '           accumulate'
-        write(6,*)' bytes    dim     sec      MB/s     sec      MB/s',
-     &           '     sec      MB/s'
+        write(6,*)' bytes    dim    usec      MB/s    usec      MB/s',
+     &           '    usec      MB/s'
         call ffflush(6)
       endif
       call ga_sync()
@@ -182,8 +180,10 @@ c       everybody touches own data
         endif
 c
         if (me .eq. 0) then
-          write(6,77)bytes, chunk(loop), tg, 
-     &          1d-6*bytes/tg,tp, 1d-6*bytes/tp, ta, 1d-6*bytes/ta
+          write(6,77)bytes, chunk(loop),
+     &          tg/1d-6, 1d-6*bytes/tg,
+     &          tp/1d-6, 1d-6*bytes/tp,
+     &          ta/1d-6, 1d-6*bytes/ta
           call ffflush(6)
         endif
       enddo
@@ -338,7 +338,8 @@ c
 c
       integer g_a
       integer ilo, ihi, jlo, jhi
-      integer nproc, me, loop, h_d, indexd
+      integer nproc, me, h_d
+      MA_ACCESS_INDEX_TYPE indexd, loop
       integer chunk(num_chunks)
       data    chunk /1,3,4,9,16,24,30,48,64,91,128,171,256,353,440,512/
 c     
@@ -416,8 +417,8 @@ c
 
         write(6,*)'    section           get               put',
      &           '           accumulate'
-        write(6,*)' bytes    dim     sec      MB/s     sec      MB/s',
-     &           '     sec      MB/s'
+        write(6,*)' bytes    dim    usec      MB/s    usec      MB/s',
+     &           '    usec      MB/s'
         call ffflush(6)
       endif
       call ga_sync()
@@ -455,8 +456,10 @@ c       everybody touches own data
         endif
 c
         if (me .eq. 0) then
-          write(6,77)bytes, chunk(loop), tg, 
-     &          1d-6*bytes/tg,tp, 1d-6*bytes/tp, ta, 1d-6*bytes/ta
+          write(6,77)bytes, chunk(loop),
+     &          tg/1d-6, 1d-6*bytes/tg,
+     &          tp/1d-6, 1d-6*bytes/tp,
+     &          ta/1d-6, 1d-6*bytes/ta
           call ffflush(6)
         endif
       enddo

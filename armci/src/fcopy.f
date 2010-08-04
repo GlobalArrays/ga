@@ -54,7 +54,6 @@
       end do
       end
 
-
       subroutine dcopy2d_n(rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld
@@ -65,8 +64,6 @@
          end do
       end do
       end
-
-      
 
       subroutine dcopy2d_u(rows, cols, A, ald, B, bld)
       integer rows, cols
@@ -125,4 +122,3 @@ ccdir$ no_cache_alloc a,b
          b(i+3) = d4
       end do
       end
-      

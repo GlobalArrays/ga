@@ -1,9 +1,0 @@
-This is an implementation of the TCGMSG interface on top of MPI.
-
-Heteregenous platforms are currently not supported.
-
-The TCGSMG nxtval operation is implemented by either using ARMCI.
-
-Questions/comments/problems: 
-
-<parsoft_support@emsl.pnl.gov>

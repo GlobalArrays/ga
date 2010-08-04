@@ -1,9 +1,17 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $id: lapi.c,v 1.19 2003/01/22 22:47:20 vinod Exp $ */
 /* initialization of data structures and setup of lapi internal parameters */ 
  
 #include <pthread.h>
-#include <stdio.h>
-#include <strings.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STRINGS_H
+#   include <strings.h>
+#endif
 #include "lapidefs.h"
 #include "armcip.h"
 #include "copy.h"
@@ -269,7 +277,7 @@ int rc;
 
       }
 
-      if(msginfo->operation==PUT || ACC(msginfo->operation)) 
+      if(msginfo->operation==PUT || ARMCI_ACC(msginfo->operation)) 
                   UPDATE_FENCE_STATE(msginfo->to, msginfo->operation, 1);
 
       if((rc=LAPI_Amsend(lapi_handle,(uint)msginfo->to,

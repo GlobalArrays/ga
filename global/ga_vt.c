@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include <stdio.h>
 #include <VT.h>
 #include <mpi.h>
@@ -16,7 +20,7 @@ double vampirtrace_timestamp = 0.0;
 #if defined(VT_DEBUG)
 #define MAX_TRACE_LEVEL 255
 int vt_traces[MAX_TRACE_LEVEL];
-extern int NODEID_();
+extern int tcg_nodeid();
 #endif
 
 void vampir_symdef(int id, char *state, char *activity, 
@@ -62,7 +66,7 @@ void vampir_begin(int id, char *file, int line)
         vt_traces[vampirtrace_level] = id;
     } 
     else {
-        printf("%d: Error: MAX_TRACE_LEVEL exceeded\n",NODEID_());
+        printf("%d: Error: MAX_TRACE_LEVEL exceeded\n",tcg_nodeid());
         fflush(stdout);
         abort();
     };
@@ -89,7 +93,7 @@ void vampir_end(int id, char *file, int line)
         abort();
     };
 #if defined(VT_DEBUG)
-    nodeid=NODEID_();
+    nodeid=tcg_nodeid();
     if (vt_traces[vampirtrace_level] != id) {
         printf("%d: Error: Improper nesting vampir_end. %s:%d\n",
                nodeid,file,line);

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include <iostream>
 #include <cstdio>
 #include <cmath>
@@ -22,12 +26,12 @@ using namespace std;
 #define OP_SCALE_ROWS           9
 #define OP_SCALE_COLS           10
 
-#define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#define GA_ABS(a)   (((a) >= 0) ? (a) : (-(a)))
+#define GA_MAX(a,b) (((a) >= (b)) ? (a) : (b))
+#define GA_MIN(a,b) (((a) <= (b)) ? (a) : (b))
 
 # define THRESH 1e-5
-#define MISMATCHED(x,y) ABS((x)-(y))>=THRESH
+#define MISMATCHED(x,y) GA_ABS((x)-(y))>=THRESH
 
 
 void  
@@ -53,7 +57,7 @@ test_scale_cols (GA::GlobalArray *g_a,
       -1.0, 0.0};
 
   GA::GlobalArray * g_b, *g_c;
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   void *val;
   int ival = -2;
   double dval = -2.0;
@@ -67,19 +71,8 @@ test_scale_cols (GA::GlobalArray *g_a,
   long lval2 = 4;
   DoubleComplex dcval2 = { 4.0, 0.0 };
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-
   int type, ndim, dims[MAXDIM];
   int vtype, vndim, vdims[MAXDIM];
-
-
-  int lo[2], hi[2], n, col, i, size;
-  int vlo, vhi;
-  void *buf;
-
-
 
   g_a->inquire (&type, &ndim, dims);
   g_v->inquire (&vtype, &vndim, vdims);
@@ -185,7 +178,7 @@ test_scale_cols (GA::GlobalArray *g_a,
 
   switch (type)
     {
-      double r, m, tmp;
+      double r, m;
     case C_INT:
       if (me == 0)
 	{
@@ -260,12 +253,11 @@ test_scale_rows (GA::GlobalArray *g_a,
   long al = 1, bl = -1;
   float af = 1.0, bf = -1.0;
   double ad = 1.0, bd = -1.0;
-  DoubleComplex adc = { 1.0, 0.0 }, bdc =
-    {
-      -1.0, 0.0};
+  DoubleComplex adc = { 1.0, 0.0 };
+  DoubleComplex bdc = {-1.0, 0.0 };
 
   GA::GlobalArray *g_b, *g_c;
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   void *val;
   int ival = -2;
   double dval = -2.0;
@@ -279,23 +271,11 @@ test_scale_rows (GA::GlobalArray *g_a,
   long lval2 = 4;
   DoubleComplex dcval2 = { 4.0, 0.0 };
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-
   int type, ndim, dims[MAXDIM];
   int vtype, vndim, vdims[MAXDIM];
 
-
-  int lo[2], hi[2], n, col, i, size;
-  int vlo, vhi;
-  void *buf;
-
-
-
   g_a->inquire (&type, &ndim, dims);
   g_v->inquire (&vtype, &vndim, vdims);
-
 
   switch (type)
     {
@@ -398,7 +378,7 @@ test_scale_rows (GA::GlobalArray *g_a,
 
   switch (type)
     {
-      double r, m, tmp;
+      double r, m;
     case C_INT:
       if (me == 0)
 	{
@@ -475,9 +455,8 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
   long al = 1, bl = -1;
   float af = 1.0, bf = -1.0;
   double ad = 1.0, bd = -1.0;
-  DoubleComplex adc = { 1.0, 0.0 }, bdc =
-    {
-      -1.0, 0.0};
+  DoubleComplex adc = { 1.0, 0.0 };
+  DoubleComplex bdc = {-1.0, 0.0 };
 
   void *val;
   int ival = -2;
@@ -493,7 +472,6 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
   long lval2 = 6;
   DoubleComplex dcval2;
 
-
   void *val3;
   int ival3 = 4;
   double dval3 = 4.0;
@@ -501,13 +479,7 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
   long lval3 = 4;
   DoubleComplex dcval3;
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-
-  double norm_infinity = -1.0, result = -1.0;
-
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   int type, ndim, dims[MAXDIM];
 
   g_a->inquire (&type, &ndim, dims);
@@ -630,7 +602,7 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
       min = (void *)&lmin;
       break;
     default:
-      ga_error ((char *)"test_median:wrong data type.", type);
+      GA_Error ((char *)"test_median:wrong data type.", type);
     }
 
   g_e->selectElem ((char *)"max", max, index);
@@ -639,7 +611,7 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
 
   switch (type)
     {
-      double r, m, tmp;
+      double r, m;
     case C_INT:
       if (me == 0)
 	{
@@ -716,9 +688,8 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
   long al = 1, bl = -1;
   float af = 1.0, bf = -1.0;
   double ad = 1.0, bd = -1.0;
-  DoubleComplex adc = { 1.0, 0.0 }, bdc =
-    {
-      -1.0, 0.0};
+  DoubleComplex adc = { 1.0, 0.0 };
+  DoubleComplex bdc = {-1.0, 0.0 };
 
   void *val;
   int ival = -2;
@@ -734,7 +705,6 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
   long lval2 = 6;
   DoubleComplex dcval2;
 
-
   void *val3;
   int ival3 = 4;
   double dval3 = 4.0;
@@ -742,13 +712,7 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
   long lval3 = 4;
   DoubleComplex dcval3;
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-
-  double norm_infinity = -1.0, result = -1.0;
-
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   int type, ndim, dims[MAXDIM];
 
   g_a->inquire (&type, &ndim, dims);
@@ -819,7 +783,7 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
       val3 = (void *)&lval3;
       break;
     default:
-      ga_error ((char *)"test_median:test_median:wrong data type.", type);
+      GA_Error ((char *)"test_median:test_median:wrong data type.", type);
     }
 
   if (me == 0)
@@ -876,7 +840,7 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
 
   switch (type)
     {
-      double r, m, tmp;
+      double r, m;
     case C_INT:
       if (me == 0)
 	{
@@ -944,13 +908,9 @@ test_norm_infinity (GA::GlobalArray * g_a) {
   long lval = -2;
   DoubleComplex dcval;
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-
   double norm_infinity = -1.0, result = -1.0;
 
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   int type, ndim, dims[MAXDIM];
 
   g_a->inquire (&type, &ndim, dims);
@@ -988,17 +948,17 @@ test_norm_infinity (GA::GlobalArray * g_a) {
   switch (type)
     {
     case C_INT:
-      result = (double) ABS (ival);
+      result = (double) GA_ABS (ival);
       break;
     case C_LONG:
-      result = (double) ABS (lval);
+      result = (double) GA_ABS (lval);
       break;
     case C_FLOAT:
-      result = (double) ABS (fval);
+      result = (double) GA_ABS (fval);
       break;
 
     case C_DBL:
-      result = ABS (dval);
+      result = GA_ABS (dval);
       break;
 
     case C_DCPL:
@@ -1029,13 +989,9 @@ test_norm1 (GA::GlobalArray * g_a)
   long lval = -2;
   DoubleComplex dcval;
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-
   double norm1 = 0.0, result = -1.0;
 
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   int type, ndim, dims[MAXDIM];
 
   g_a->inquire (&type, &ndim, dims);
@@ -1072,17 +1028,17 @@ test_norm1 (GA::GlobalArray * g_a)
   switch (type)
     {
     case C_INT:
-      result = (double) ABS (ival);
+      result = (double) GA_ABS (ival);
       break;
     case C_LONG:
-      result = (double) ABS (lval);
+      result = (double) GA_ABS (lval);
       break;
     case C_FLOAT:
-      result = (double) ABS (fval);
+      result = (double) GA_ABS (fval);
       break;
 
     case C_DBL:
-      result = ABS (dval);
+      result = GA_ABS (dval);
       break;
 
     case C_DCPL:
@@ -1106,7 +1062,7 @@ void
 test_get_diagonal (GA::GlobalArray * g_a, 
 		   GA::GlobalArray * g_v) {
   
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   void *val;
   int ival = -2;
   double dval = -2.0;
@@ -1228,7 +1184,7 @@ test_add_diagonal (GA::GlobalArray * g_a,
 		   GA::GlobalArray * g_v)
 {
 
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   void *val;
   int ival = -2;
   double dval = -2.0;
@@ -1363,7 +1319,7 @@ test_set_diagonal (GA::GlobalArray * g_a,
 		   GA::GlobalArray * g_v)  {
   
 
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   void *val;
   int ival = -2;
   double dval = -2.0;
@@ -1481,7 +1437,7 @@ test_set_diagonal (GA::GlobalArray * g_a,
 void
 test_shift_diagonal (GA::GlobalArray *g_a) {
   
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   void *val;
   int ival = -2;
   double dval = -2.0;
@@ -1498,7 +1454,7 @@ test_shift_diagonal (GA::GlobalArray *g_a) {
 
   g_a->inquire (&type, &ndim, dims);
 
-  dim = MIN (dims[0], dims[1]);
+  dim = GA_MIN (dims[0], dims[1]);
 
   dcval.real = -2.0;
   dcval.imag = -0.0;
@@ -1601,25 +1557,18 @@ test_shift_diagonal (GA::GlobalArray *g_a) {
 
 void
 do_work (int type, int op) {
-  GA::GlobalArray *g_a, *g_b, *g_c, *g_m, *g_v, *g_vv;
+  GA::GlobalArray *g_a, *g_b, *g_c, *g_m, *g_v;
   int n = N;
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
   int dims[2] = { N,		/*N columns */
 		  N + 2		/*N+2 rows */
   };
   int vdim;
   int lo[2], hi[2];
 
-
-  int atype, andim, adims[2];
-  int vtype, vndim, vdims;
-
-
   lo[0] = 1;
   hi[0] = dims[0] - 1;
   lo[1] = 1;
   hi[1] = dims[1] - 1;
-
 
   switch (op)
     {
@@ -1632,7 +1581,7 @@ do_work (int type, int op) {
     case OP_SET_DIAGONAL:
       g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       /*find out the diagonal length of the matrix A */
-      vdim = MIN (dims[0], dims[1]);
+      vdim = GA_MIN (dims[0], dims[1]);
       g_v = GA::SERVICES.createGA (type, 1, &vdim, (char *)"V", NULL);
       test_set_diagonal (g_a, g_v);
       g_a->destroy ();
@@ -1641,7 +1590,7 @@ do_work (int type, int op) {
     case OP_ADD_DIAGONAL:
       g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       /*find out the diagonal length of the matrix A */
-      vdim = MIN (dims[0], dims[1]);
+      vdim = GA_MIN (dims[0], dims[1]);
       g_v = GA::SERVICES.createGA (type, 1, &vdim, (char *)"V", NULL);
       test_add_diagonal (g_a, g_v);
       g_a->destroy ();
@@ -1650,7 +1599,7 @@ do_work (int type, int op) {
     case OP_GET_DIAGONAL:
       g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       /*find out the diagonal length of the matrix A */
-      vdim = MIN (dims[0], dims[1]);
+      vdim = GA_MIN (dims[0], dims[1]);
       g_v = GA::SERVICES.createGA (type, 1, &vdim, (char *)"V", NULL);
       test_get_diagonal (g_a, g_v);
       g_a->destroy ();
@@ -1733,7 +1682,7 @@ main(int argc, char *argv[]) {
  
   int me, nproc;
   int heap  = 200000, stack = 200000;
-  int d, op, ok = 1;
+  int op;
 
   GA::Initialize(argc, argv, heap, stack, GA_DATA_TYPE, 0);
   me=GA_Nodeid(); nproc=GA_Nnodes();

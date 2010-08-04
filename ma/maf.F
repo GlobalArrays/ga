@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c
 c     $Id: maf.F,v 1.14 2003-07-10 19:19:28 d3h325 Exp $
 c
@@ -23,13 +26,8 @@ c     --------------------------------------------------------------- c
 #include "mafdecls.fh"
 
       ma_set_sizes = 0
-#if (defined(_CRAY)&& !defined(__crayx1))  || defined(WIN32)
-      if (f2c_inform_base_fcd(MT_BYTE, byte_mb(1), byte_mb(2)) .eq.
-     $    MA_FALSE) return
-#else /* _CRAY */
       if (f2c_inform_base(MT_BYTE, byte_mb(1), byte_mb(2)) .eq.
      $    MA_FALSE) return
-#endif /* _CRAY */
       if (f2c_inform_base(MT_INT, int_mb(1), int_mb(2)) .eq.
      $    MA_FALSE) return
       if (f2c_inform_base(MT_LOG, log_mb(1), log_mb(2)) .eq.

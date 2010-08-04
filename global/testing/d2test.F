@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -17,7 +20,6 @@ c vector boxes lack arithmetic precision
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-#include "tcgmsg.fh"
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM, nwidth, MAXPROC, nloop
       parameter (nmax = 4, DIM = 2, nwidth = 2, MAXPROC = 2000)
@@ -35,12 +37,7 @@ c vector boxes lack arithmetic precision
 c     
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Initialize GA
 c
@@ -183,10 +180,10 @@ c      go to 122
       t1 = 0.0d00
       do i = 1, nloop
         start = util_timer()
-        status = ga_update_ghost_dir(g_a,1,1,.true.)
-        status = ga_update_ghost_dir(g_a,1,-1,.true.)
-        status = ga_update_ghost_dir(g_a,2,1,.true.)
-        status = ga_update_ghost_dir(g_a,2,-1,.true.)
+        status = nga_update_ghost_dir(g_a,1,1,.true.)
+        status = nga_update_ghost_dir(g_a,1,-1,.true.)
+        status = nga_update_ghost_dir(g_a,2,1,.true.)
+        status = nga_update_ghost_dir(g_a,2,-1,.true.)
         finish = util_timer()
         t1 = t1 + finish - start
       end do
@@ -324,17 +321,21 @@ c
       endif
   127 continue
 c
+c*** Print success
+c
+      if (me.eq.0) then
+        write(6,*)
+        write(6,*) 'All tests successful'
+        write(6,*)
+      endif
+c
 c***  Tidy up the GA package
 c
       call ga_terminate()
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
 
 c
       stop

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*$Id: grid.c,v 1.2 1995-02-02 23:24:11 d3g681 Exp $*/
 #include <stdio.h>
 #include <math.h>
@@ -25,9 +29,9 @@ extern char *malloc();
 #endif
 extern void exit();
 
-#define MAX(a,b) (((a)>(b)) ? (a) : (b))
-#define MIN(a,b) (((a)<(b)) ? (a) : (b))
-#define ABS(a)   (((a)>=0 ) ? (a) : -(a))
+#define TCG_MAX(a,b) (((a)>(b)) ? (a) : (b))
+#define TCG_MIN(a,b) (((a)<(b)) ? (a) : (b))
+#define TCG_ABS(a)   (((a)>=0 ) ? (a) : -(a))
 
 #define LO -3.1415926535       /* Phsyical dimensions   */
 #define HI  3.1415926535
@@ -80,8 +84,8 @@ double Solution(x,y)
 */
 
   return 0.5 * (cos(x)*exp(-y) + cos(y)*exp(-x) +
-		0.1*(sin(2.*x)*exp(-2.*y) + sin(2.*y)*exp(-2.*x)) +
-		0.1*(cos(3.*x)*exp(-3.*y) + cos(3.*y)*exp(-3.*x)));
+        0.1*(sin(2.*x)*exp(-2.*y) + sin(2.*y)*exp(-2.*x)) +
+        0.1*(cos(3.*x)*exp(-3.*y) + cos(3.*y)*exp(-3.*x)));
 }
 
 double GridError(grid, ncols, nrows, ngrid)
@@ -173,23 +177,23 @@ void Exchange(grid, ncols, nrows)
     if (west >= 0) {
       SND_(&type1, (char *) grid[1], &bnrows, &west, &synch);
       RCV_(&type2, (char *) grid[0], &bnrows, &lenmes, &west, 
-	   &nodefrom, &synch);
+       &nodefrom, &synch);
     }
     if (east >= 0) {
       SND_(&type3, (char *) grid[ncols-1], &bnrows, &east, &synch);
       RCV_(&type4, (char *) grid[ncols], &bnrows, &lenmes, &east, 
-	   &nodefrom, &synch);
+       &nodefrom, &synch);
     }
   }
   else {
     if (east >= 0) {
       RCV_(&type1, (char *) grid[ncols], &bnrows, &lenmes, &east, 
-	   &nodefrom, &synch);
+       &nodefrom, &synch);
       SND_(&type2, (char *) grid[ncols-1], &bnrows, &east, &synch);
     }
     if (west >= 0) {
       RCV_(&type3, (char *) grid[0], &bnrows, &lenmes, &west, 
-	   &nodefrom, &synch);
+       &nodefrom, &synch);
       SND_(&type4, (char *) grid[1], &bnrows, &west, &synch);
     }
   }
@@ -199,28 +203,28 @@ void Exchange(grid, ncols, nrows)
       GATHER(1);
       SND_(&type5, (char *) buffer, &bncols, &north, &synch);
       RCV_(&type6, (char *) buffer, &bncols, &lenmes, &north, 
-	   &nodefrom, &synch);
+       &nodefrom, &synch);
       SCATTER(0);
     }
     if (south >= 0) {
       GATHER(nrows-1);
       SND_(&type7, (char *) buffer, &bncols, &south, &synch);
       RCV_(&type8, (char *) buffer, &bncols, &lenmes, &south, 
-	   &nodefrom, &synch);
+       &nodefrom, &synch);
       SCATTER(nrows);
     }
   }
   else {
     if (south >= 0) {
       RCV_(&type5, (char *) buffer, &bncols, &lenmes, &south, 
-	   &nodefrom, &synch);
+       &nodefrom, &synch);
       SCATTER(nrows);
       GATHER(nrows-1);
       SND_(&type6, (char *) buffer, &bncols, &south, &synch);
     }
     if (north >= 0) {
       RCV_(&type7, (char *) buffer, &bncols, &lenmes, &north, 
-	   &nodefrom, &synch);
+       &nodefrom, &synch);
       SCATTER(0);
       GATHER(1);
       SND_(&type8, (char *) buffer, &bncols, &north, &synch);
@@ -317,20 +321,20 @@ void PlotGrid(grid, ngrid, ncols, nrows)
   case PLOT_VALUE:
     for (i=0; i<ncols; i++)
       for (j=0; j<nrows; j++) {
-	value = VALUE(grid[i][j]);
-	value = MIN(value, 63);
-	value = MAX(value, 0);
-	*temp++ = (unsigned char) value;
+    value = VALUE(grid[i][j]);
+    value = TCG_MIN(value, 63);
+    value = TCG_MAX(value, 0);
+    *temp++ = (unsigned char) value;
       }
     break;
 
   case PLOT_ERROR:
     for (i=0; i<ncols; i++)
       for (j=0; j<nrows; j++) {
-	value = VALUE(grid[i][j] - Solution(MAPCOL(i), MAPROW(j)));
-	value = MIN(value, 63);
-	value = MAX(value, 0);
-	*temp++ = (unsigned char) value;
+    value = VALUE(grid[i][j] - Solution(MAPCOL(i), MAPROW(j)));
+    value = TCG_MIN(value, 63);
+    value = TCG_MAX(value, 0);
+    *temp++ = (unsigned char) value;
       }
     break;
 
@@ -344,12 +348,12 @@ void PlotGrid(grid, ngrid, ncols, nrows)
     for (i=1; i<ncols; i++) {
       *temp++ = (unsigned char) VALUE(0.0);
       for (j=1; j<nrows; j++) {
-	residual = grid[i+1][j] + grid[i-1][j] + grid[i][j+1] +
-	  grid[i][j-1] - 4.0*grid[i][j];
-	value = VALUE(residual*factor);
-	value = MIN(value, 63);
-	value = MAX(value, 0);
-	*temp++ = (unsigned char) value;
+    residual = grid[i+1][j] + grid[i-1][j] + grid[i][j+1] +
+      grid[i][j-1] - 4.0*grid[i][j];
+    value = VALUE(residual*factor);
+    value = TCG_MIN(value, 63);
+    value = TCG_MAX(value, 0);
+    *temp++ = (unsigned char) value;
       }
     }
     break;
@@ -412,10 +416,10 @@ void PrintGrid(grid, ncols, nrows)
     newline = 0;
     for(j=0; j<=nrows; j++) {
       if (grid[i][j] != 0.0) {
-	(void) printf("(%3d,%10.4f) ",j+row_low,grid[i][j]);
-	if (++newline == 4) {
-	  (void) printf("\n"); newline = 0;
-	}
+    (void) printf("(%3d,%10.4f) ",j+row_low,grid[i][j]);
+    if (++newline == 4) {
+      (void) printf("\n"); newline = 0;
+    }
       }
     }
     if (newline) 
@@ -466,7 +470,7 @@ double Operate(grid, ncols, nrows, ngrid, do_sums)
       new = 0.25 * (ggp[j] + ggm[j] + gg[j-1] + gg[j+1]);
       new = new + omega*(new - gg[j]);
       diff = new - gg[j];
-      residual += ABS(diff);
+      residual += TCG_ABS(diff);
       gg[j] = new;
     }
   }
@@ -490,7 +494,7 @@ double Operate(grid, ncols, nrows, ngrid, do_sums)
       new = 0.25 * (ggp[j] + ggm[j] + gg[j-1] + gg[j+1]);
       new = new + omega*(new - gg[j]);
       diff = new - gg[j];
-      residual += ABS(diff);
+      residual += TCG_ABS(diff);
       gg[j] = new;
     }
   }
@@ -528,7 +532,7 @@ double **Make2d(ncols, nrows)
 }
 
 void Interpolate(old_grid, old_ncols, old_nrows, old_col_low, old_row_low,
-		 new_grid, new_ncols, new_nrows, new_col_low, new_row_low)
+         new_grid, new_ncols, new_nrows, new_col_low, new_row_low)
      double **old_grid, **new_grid;
      long old_ncols, old_nrows, old_col_low, old_row_low;
      long new_ncols, new_nrows, new_col_low, new_row_low;
@@ -548,15 +552,15 @@ void Interpolate(old_grid, old_ncols, old_nrows, old_col_low, old_row_low,
     for (j=0; j<=old_nrows; j++) {
       i1 = 2*i+col_shift; j1 = 2*j+row_shift;
       if ( (i1>=0) && (i1<=new_ncols) && (j1>=0) && (j1<=new_nrows) )
-	new_grid[i1][j1] = old_grid[i][j];
+    new_grid[i1][j1] = old_grid[i][j];
     }
 
   for (i=1; i<=old_ncols; i++)
     for (j=1; j<=old_nrows; j++) {
       i2 = 2*i-1+col_shift; j2 = 2*j-1+row_shift;
       if ( (i2>=0) && (i2<=new_ncols) && (j2>=0) && (j2<=new_nrows) )
-	new_grid[i2][j2] = 0.25 * (old_grid[i  ][j  ] + old_grid[i-1][j-1] +
-				   old_grid[i-1][j  ] + old_grid[i  ][j-1]);
+    new_grid[i2][j2] = 0.25 * (old_grid[i  ][j  ] + old_grid[i-1][j-1] +
+                   old_grid[i-1][j  ] + old_grid[i  ][j-1]);
     }
   
   BoundaryConditions(new_grid, new_ncols, new_nrows);
@@ -565,9 +569,9 @@ void Interpolate(old_grid, old_ncols, old_nrows, old_col_low, old_row_low,
   for (i=1; i<new_ncols; i++)
     for (j=1+((i+new_col_low+new_row_low)%2); j<new_nrows; j+=2)
       new_grid[i][j] = 0.25 * (new_grid[i+1][j] + 
-			       new_grid[i-1][j] + 
-			       new_grid[i][j-1] + 
-			       new_grid[i][j+1]);
+                   new_grid[i-1][j] + 
+                   new_grid[i][j-1] + 
+                   new_grid[i][j+1]);
 
   Exchange(new_grid, new_ncols, new_nrows);
 
@@ -587,13 +591,13 @@ void Solve(grid, ncols, nrows, ngrid, niter, nprint, thresh)
   long iter, do_sums, nsums;
   double residual, error;
 #ifdef PLOT
-  long nplots = MAX(5, ngrid/10);  /* Only plot when have changed a lot */
+  long nplots = TCG_MAX(5, ngrid/10);  /* Only plot when have changed a lot */
 #endif
 
-  nsums = MIN(10, nprint);     /* Need sums whenever we print */
+  nsums = TCG_MIN(10, nprint);     /* Need sums whenever we print */
   if (nprint%nsums)
     nprint= nprint + nsums - (nprint%nsums); /* Make nprint a multiple 
-					        of nsums */
+                            of nsums */
   for (iter=0; iter<niter; iter++) {
 
     /* For efficiency only do global sums every 10 iters */
@@ -605,15 +609,15 @@ void Solve(grid, ncols, nrows, ngrid, niter, nprint, thresh)
     /* Print the results every now and again or if converged */
     if ((NODEID_()==0) && ((iter%nprint == 0) || (residual < thresh))) {
       (void) printf("ngrid=%d iter=%d residual=%f\n",
-		    ngrid, iter+1, residual);
+            ngrid, iter+1, residual);
       (void) fflush(stdout);
     }
     
     /* Are we converged ? */
     if (do_sums && (residual < thresh)) {
       if (NODEID_() == 0) {
-	(void) printf("Converged!\n");
-	(void) fflush(stdout);
+    (void) printf("Converged!\n");
+    (void) fflush(stdout);
       }
       break;
     }
@@ -631,7 +635,7 @@ void Solve(grid, ncols, nrows, ngrid, niter, nprint, thresh)
   error = GridError(grid, ncols, nrows, ngrid);
   if (NODEID_() == 0) {
     (void) printf("Mean abs. error to exact soln. = %f, ngrid=%d\n\n",
-		  error, ngrid);
+          error, ngrid);
     (void) fflush(stdout);
   }
 
@@ -662,14 +666,14 @@ void ParseArguments(argc, argv, pngrid, pniter, pnprint, pnlevel, pthresh)
     else if (strcmp(*argv, "-plot") == 0) {
       argv++;
       if (strcmp(*argv,"value") == 0)
-	plot_type = PLOT_VALUE;
+    plot_type = PLOT_VALUE;
       else if (strcmp(*argv, "error") == 0)
-	plot_type = PLOT_ERROR;
+    plot_type = PLOT_ERROR;
       else if (strcmp(*argv, "residual") == 0)
-	plot_type = PLOT_RESIDUAL;
+    plot_type = PLOT_RESIDUAL;
       else
-	Error("Unknown plot type - use error|value|residual",(long) -1);
-    }	
+    Error("Unknown plot type - use error|value|residual",(long) -1);
+    }    
 #endif
     else if (strcmp(*argv, "-help") == 0) {
       (void) fprintf(stderr,"gridtest [-ngrid #] [-nprint #] [-niter #]\n");
@@ -714,9 +718,9 @@ void Partition(ngrid, pncols, pnrows)
   long row_chunk = (ngrid-1) / nrow_P;
   long row_extra = (ngrid-1) - row_chunk*nrow_P;
 
-  col_low = my_col_P*col_chunk + MIN(my_col_P,col_extra); /* Col of top LHS */
+  col_low = my_col_P*col_chunk + TCG_MIN(my_col_P,col_extra); /* Col of top LHS */
 
-  row_low = my_row_P*row_chunk + MIN(my_row_P,row_extra); /* Row of top LHS */
+  row_low = my_row_P*row_chunk + TCG_MIN(my_row_P,row_extra); /* Row of top LHS */
 
   *pncols = col_chunk + ( (my_col_P<col_extra) ? 1 : 0 ) + 1;
   *pnrows = row_chunk + ( (my_row_P<row_extra) ? 1 : 0 ) + 1;
@@ -750,7 +754,7 @@ int main(argc, argv)
   long old_ncols, old_nrows, old_col_low, old_row_low;
   long start = MTIME_();
 
-  PBEGIN_(argc, argv);            /* Initialize parallel environment */
+  tcg_pbegin(argc, argv);            /* Initialize parallel environment */
   SETDBG_(&on);
 
   P = NNODES_();
@@ -766,10 +770,10 @@ int main(argc, argv)
   west  = (my_col_P > 0)          ? NODEID_()-nrow_P : -1;
 
   ParseArguments(argc, argv, 
-		 &maxgrid, &niter, &nprint, &nlevel, &thresh);
+         &maxgrid, &niter, &nprint, &nlevel, &thresh);
 
-  ngrid1 = MAX(ncol_P,maxgrid>>(nlevel-1));
-  ngrid1 = MAX(nrow_P,ngrid1);                 /* Size of first grid */
+  ngrid1 = TCG_MAX(ncol_P,maxgrid>>(nlevel-1));
+  ngrid1 = TCG_MAX(nrow_P,ngrid1);                 /* Size of first grid */
   maxgrid = ngrid1<<(nlevel-1);                /* Actual size of final grid */
 
   if (!(buffer = (double *) malloc((unsigned) (sizeof(double)*(maxgrid+1)))))
@@ -799,7 +803,7 @@ int main(argc, argv)
     else {
       new_grid = Make2d(ncols+1, nrows+1);
       Interpolate(grid, old_ncols, old_nrows, old_col_low, old_row_low,
-		  new_grid, ncols, nrows, col_low, row_low);
+          new_grid, ncols, nrows, col_low, row_low);
       grid = new_grid;
     }
 
@@ -815,10 +819,10 @@ int main(argc, argv)
     (void) printf("\n  Plot    Exchange   Global-sum   Interpolate    Total ");
     (void) printf("\n ------   --------   ----------   -----------   -------");
     (void) printf("\n %6d    %6d     %6d       %6d      %7d\n",
-		  cs_plot, cs_exchange, cs_global,
-		  cs_interpolate, cs_total);
+          cs_plot, cs_exchange, cs_global,
+          cs_interpolate, cs_total);
   }
-		  
+          
   PEND_();                               /* Terminate parallel env. */
   return 0;
 }

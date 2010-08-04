@@ -1,32 +1,33 @@
-/*$Id:$*/
-#include <stdio.h>
-#include <math.h>
-#include "armci.h"
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include <mpi.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_SYS_STAT_H
+#   include <sys/stat.h>
+#endif
+#if HAVE_FCNTL_H
+#   include <fcntl.h>
+#endif
+
+#include "armci.h"
+#include "mp3.h"
 #include "../ra_common.h"
 
 #define DEBUG 0
-
-#if defined(TCGMSG)
-#   include <sndrcv.h>
-    long tcg_tag =30000;
-#   define MP_BARRIER()      SYNCH_(&tcg_tag)
-#   define MP_INIT(arc,argv) PBEGIN_((argc),(argv))
-#   define MP_FINALIZE()     PEND_()
-#   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
-#   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
-#else
-#   include <mpi.h>
-#   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
-#   define MP_FINALIZE()     MPI_Finalize()
-#   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
-#   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
-#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
-#endif
 
 static int me, nproc;
 static u64Int procnumupdates,myglobalstart,globaltablelen,mytablelen,mintablesize,*procglobalstart; 
@@ -154,10 +155,12 @@ armci_domain_t d;
     curdscr_ptr = &curdscr_val;
     procglobalstart = (u64Int *)calloc(nproc,sizeof(u64Int)); 
     procglobalstart[me]=myglobalstart;
-#if defined(LONG_IS_64BIT)
+#if   SIZEOF_LONG == 8
     armci_msg_lgop(procglobalstart,nproc,"+");
-#else
+#elif SIZEOF_LONG_LONG == 8
     armci_msg_llgop(procglobalstart,nproc,"+");
+#else
+#   error could not determine 64 bit int type
 #endif
     HPCC_Table = (u64Int **)malloc(sizeof(u64Int *)*nproc);    
     if(HPCC_Table == NULL)
@@ -216,7 +219,7 @@ s64Int ProcNumUpdates; /* number of updates per processor */
 FILE *outFile = NULL;
 double *GUPs;
 double max_time,min_time,avg_time,time_start,time_stop,total_time;
-    MP_INIT(arc,argv);
+    MP_INIT(argc,argv);
     MP_PROCS(&nproc);
     MP_MYID(&me);
     ARMCI_Init();      /* initialize ARMCI */
@@ -229,7 +232,7 @@ double max_time,min_time,avg_time,time_start,time_stop,total_time;
          fflush(stdout);
        }
        ARMCI_Finalize();
-       MPI_Finalize();
+       MP_FINALIZE();
        return 0;
     }
     globaltablelen = atoi(argv[1]);
@@ -249,26 +252,29 @@ double max_time,min_time,avg_time,time_start,time_stop,total_time;
 #if DEBUG
     printf("\n%d:%d is totaltable, mintablesize=%d rem=%d big=%d glosta=%d tablelen=%d numup=%d\n",me, globaltablelen, mintablesize,Remainder,bigtables,myglobalstart,mytablelen,procnumupdates);
 #endif
-    MPI_Barrier(MPI_COMM_WORLD);
+    MP_BARRIER();
 
     initialize_tables();
 
     if(me==0)printf("\n\nStarting Random Access....");
-    MPI_Barrier(MPI_COMM_WORLD);
-    time_start=MPI_Wtime();
+    MP_BARRIER();
+    time_start=MP_TIMER();
     HPCCRandom_Access();
-    time_stop=MPI_Wtime();
-    MPI_Barrier(MPI_COMM_WORLD);
+    time_stop=MP_TIMER();
+    MP_BARRIER();
     total_time=(time_stop-time_start);
-    MPI_Allreduce(&total_time,&max_time,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
-    MPI_Allreduce(&total_time,&min_time,1,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
-    MPI_Allreduce(&total_time,&avg_time,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+    max_time=total_time;
+    min_time=total_time;
+    avg_time=total_time;
+    armci_msg_dgop(&max_time,1,"max");
+    armci_msg_dgop(&min_time,1,"min");
+    armci_msg_dgop(&avg_time,1,"+");
     avg_time/=nproc;
     if(me==0)printf("\nGUPs = %.9f %.9f %.9f Billion(10^9) Updates/PE  per second [GUP/s]\n",1e-9*procnumupdates/max_time,1e-9*procnumupdates/min_time,1e-9*procnumupdates/avg_time);
 
     finalize_tables();
     if(me==0)printf("Terminating..\n");
     ARMCI_Finalize();
-    MPI_Finalize();
+    MP_FINALIZE();
     return 0;
 }

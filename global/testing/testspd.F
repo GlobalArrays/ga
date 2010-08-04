@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c $Id: testspd.F,v 1.8 2004-11-12 22:19:10 edo Exp $
 c***********************************************************************
 c* Source : testllt
@@ -31,12 +34,7 @@ c****
 c
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c**** Initialize GA package
       call ga_initialize()
@@ -60,11 +58,7 @@ c**** Do Core Tests
 c**** Exit from the GA package
       call ga_terminate()
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
       end
 
       

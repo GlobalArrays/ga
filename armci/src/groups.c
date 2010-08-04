@@ -1,10 +1,22 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: groups.c,v 1.4.6.2 2007-08-15 08:37:16 manoj Exp $ */
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
 
 #ifndef MPI
 #  define MPI
@@ -125,10 +137,10 @@ static void group_process_list(ARMCI_Group *group,
     ARMCI_Comm comm = igroup->icomm;
 #endif
 
-    int grp_me, grp_nproc, grp_nclus, *grp_clus_id, grp_clus_me;
+    int grp_me, grp_nproc, grp_nclus, grp_clus_me;
     armci_clus_t *grp_clus_info=NULL;
 #ifdef CLUSTER
-    int i, len, clus_id, cluster=0, root=0;
+    int i, len, root=0;
 #endif
     
 #ifndef ARMCI_GROUP
@@ -257,13 +269,14 @@ void ARMCI_Group_free(ARMCI_Group *group) {
  */
 void ARMCI_Group_create_child(int n, int *pid_list, ARMCI_Group *group_out,
 			      ARMCI_Group *grp_parent) {
-    int i,grp_me, world_me;
-    int rv;
-    
+    int i,grp_me;
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)group_out;
-    ARMCI_iGroup *igroup_parent = (ARMCI_iGroup *)grp_parent;
+#ifdef ARMCI_GROUP
     armci_grp_attr_t *grp_attr = &igroup->grp_attr;
-#ifndef ARMCI_GROUP
+    int world_me;
+#else
+    int rv;
+    ARMCI_iGroup *igroup_parent = (ARMCI_iGroup *)grp_parent;
     MPI_Group *group_parent;
     MPI_Comm *comm_parent;
 #endif
@@ -283,7 +296,8 @@ void ARMCI_Group_create_child(int n, int *pid_list, ARMCI_Group *group_out,
     for(i=0; i<n; i++)  {
       grp_attr->proc_list[i] = ARMCI_Absolute_id(grp_parent,pid_list[i]); 
     }
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_me);
+    /*  MPI_Comm_rank(MPI_COMM_WORLD, &world_me); */
+    world_me = armci_msg_me();
     grp_attr->grp_me = grp_me = MPI_UNDEFINED;
     for(i=0; i<n; i++) {
       if(igroup->grp_attr.proc_list[i] == world_me) {
@@ -371,13 +385,23 @@ void ARMCI_Group_get_world(ARMCI_Group *group_out)
 
 void armci_group_init() 
 {
-    int grp_me, i;
+    int grp_me;
+#ifdef ARMCI_GROUP
+    int i;
+#endif
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)&ARMCI_World_Proc_Group;
 
 #ifdef ARMCI_GROUP
     /*setup the world proc group*/
+
+    /*
     MPI_Comm_size(MPI_COMM_WORLD, &igroup->grp_attr.nproc); 
     MPI_Comm_rank(MPI_COMM_WORLD, &igroup->grp_attr.grp_me); 
+    */
+
+    igroup->grp_attr.nproc = armci_msg_nproc();
+    igroup->grp_attr.grp_me = armci_msg_me();
+
     igroup->grp_attr.proc_list = (int *)malloc(igroup->grp_attr.nproc*sizeof(int));
     assert(igroup->grp_attr.proc_list != NULL);
     for(i=0; i<igroup->grp_attr.nproc; i++) {

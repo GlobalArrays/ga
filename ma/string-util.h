@@ -1,15 +1,10 @@
-#ifndef _string_util_h
-#define _string_util_h
-
-/*
- * $Id: string-util.h,v 1.3 2000-07-04 05:54:56 d3g001 Exp $
- */
-
-/* 
+/** @file
  * Private header file for string utilities.
  *
  * This file should only be included by internal C files.
  */
+#ifndef _string_util_h
+#define _string_util_h
 
 /**
  ** constants

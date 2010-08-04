@@ -1,7 +1,15 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: elan4.c,v 1.15.2.2 2007-07-02 05:19:42 d3p687 Exp $ */
 #include <elan/elan.h>
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #include "armcip.h"
 #include "copy.h"
 #include "elandefs.h"
@@ -233,7 +241,7 @@ char *enval;
 
     armci_elan_fence_arr = (ops_t**)malloc(armci_nproc*sizeof(ops_t*));
     if(!armci_elan_fence_arr)armci_die("malloc failed for ARMCI fence array",0);
-    if(ARMCI_Malloc((void**)armci_elan_fence_arr, armci_nclus*sizeof(ops_t)))
+    if(PARMCI_Malloc((void**)armci_elan_fence_arr, armci_nclus*sizeof(ops_t)))
              armci_die("failed to allocate ARMCI fence array",0);
     bzero(armci_elan_fence_arr[armci_me],armci_nclus*sizeof(ops_t));
 
@@ -269,7 +277,7 @@ void armci_elan_notify_init()
 
     notify_epoch_arr = (int **)malloc(sizeof(int *)*armci_nproc);
     if(!notify_epoch_arr)armci_die("malloc failed for notify_epoch_arr",0);
-    if(ARMCI_Malloc((void**)notify_epoch_arr,armci_nproc*numepochs*sizeof(int)))
+    if(PARMCI_Malloc((void**)notify_epoch_arr,armci_nproc*numepochs*sizeof(int)))
              armci_die("failed to allocate ARMCI fence array",0);
     bzero(notify_epoch_arr[armci_me],armci_nproc*numepochs*sizeof(int));
     mynotify_epochs = (int **)calloc(armci_nproc,sizeof(int *));
@@ -299,11 +307,11 @@ void armci_elan_notify_init()
     if(!verify_wait->recv_verify_arr)armci_die("malloc fail-recv_verify_arr",0);
     bzero(verify_wait->recv_verify_arr ,armci_nproc*sizeof(int*));
 
-    if(ARMCI_Malloc((void**)verify_wait->recv_verify_arr,
+    if(PARMCI_Malloc((void**)verify_wait->recv_verify_arr,
                     armci_nproc*3*sizeof(int)))
              armci_die("failed to allocate recv_verify_arr",0);
 
-    if(ARMCI_Malloc((void**)verify_wait->recv_verify_smp_arr,
+    if(PARMCI_Malloc((void**)verify_wait->recv_verify_smp_arr,
                     armci_nproc*sizeof(int)*2))
        armci_die("failed to allocate ARMCI fence array",0); 
 }
@@ -503,7 +511,7 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     int proc_serv = armci_clus_info[cluster].master;
     int off =sizeof(request_header_t);
     int payload=0;
-    if(msginfo->operation==PUT || ACC(msginfo->operation))
+    if(msginfo->operation==PUT || ARMCI_ACC(msginfo->operation))
        ops_pending_ar[cluster]++;
     msginfo->tag.ack_ptr = &msginfo->tag.ack;
     if(msginfo->inbuf){

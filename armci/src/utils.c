@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*
  * A barrier causes threads to wait until a set of threads has
  * all "reached" the barrier. The number of threads required is
@@ -17,14 +21,30 @@
  * parallel section of code.
  */
 
-#include <sys/types.h>
-#include <sys/errno.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_SYS_ERRNO_H
+#   include <sys/errno.h>
+#endif
+#if HAVE_SYS_TIME_H
+#   include <sys/time.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+#if HAVE_ERRNO_H
+#   include <errno.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
 #include "utils.h"
 
 #define DEBUG_
@@ -39,7 +59,7 @@ int armci_malloc_mt(void *ptr[], int bytes)
 
     th_size = mt_size * mt_tpp;
     if (thread_barrier_wait(&mt_barrier)==-1) {
-        rc = ARMCI_Malloc(ptr, bytes * mt_tpp);
+        rc = PARMCI_Malloc(ptr, bytes * mt_tpp);
 #ifdef DEBUG
         printf("bytes=%d\n", bytes);
         for (i = 0; i < mt_size; i++) printf("ptr[%d]=%p\n",i,ptr[i]);

@@ -614,7 +614,7 @@ class GlobalArray {
   
   /** 
    * If no array elements are owned by process 'me', the range is returned
-   * as lo[]=0 and hi[]=-1 for all dimensions. The operation is local.
+   * as lo[]=-1 and hi[]=-2 for all dimensions. The operation is local.
    * @param iproc      - process number                            [input]
    * @param ndim       - number of dimensions of the global array
    * @param lo[ndim]   - array of starting indices for array section[input]
@@ -1657,7 +1657,7 @@ class GlobalArray {
   void setIrregDistr(int mapc[], int nblock[]) const;
 
   /**
-   * pHandle      processor group handle     [input]
+   * @param pHandle - processor group handle     [input]
    *
    * This function can be used to set the processor configuration assigned to
    * a global array handle that was obtained using the
@@ -1669,6 +1669,32 @@ class GlobalArray {
    * This is a collective operation.
    */
   void setPGroup(PGroup *pHandle) const;
+
+  /**
+   * @param list     - list of processors that should contain data [input]
+   * @param nprocs   - number of processors in list                [input]
+   *
+   * This function is used to restrict the number of processors in a global
+   * array that actually contain data. It can also be used to rearrange the
+   * layout of data on a processor from the default distribution. Only the
+   * processes listed in list[] will actually contain data, the remaining
+   * processes will be able to see the data in the global array but they will
+   * not contain any of the global array data locally.
+   */
+  void setRestricted(int list[], int nprocs) const;
+
+  /**
+   * @param lo_proc  - low end of processor range   [input]
+   * @param hi_proc  - high end of processor range  [input]
+   *
+   * This function is used to restrict the number of processors in a global
+   * array that actually contain data. Only the processors in the range
+   * [lo_proc:hi_proc] (inclusive) will actually contain data, the remaining
+   * processes will be able to see the data in the global array but they will
+   * not contain any of the global array data locally.
+   */
+  void setRestrictedRange(int lo_proc, int hi_proc) const;
+
       
   /**
    * @param g_a,g_b- handles to input arrays  [input]
@@ -1908,6 +1934,30 @@ class GlobalArray {
    * @param cflag        - flag (0/1) to include corners in update [input]
    */
   int updateGhostDir(int dimension, int idir, int cflag) const;
+
+  /**
+   * This operation is designed to extract ghost cell data from a global array
+   * and copy it to a local array. If the request can be satisfied using
+   * completely local data, then a local copy will be used. Otherwise, the
+   * method calls periodicGet. The request can be satisfied locally if
+   * lo is greater than or equal to the lower bound of data held on the
+   * processor minus the ghost cell width and hi is less than or equal to the
+   * upper bound of data held on the processor plus the ghost cell width. Cell
+   * indices using the global address space should be used for lo and hi. These
+   * may exceed the global array dimensions.
+   *
+   * @param lo[ndim] -array of starting indices for global array section[input]
+   * @param hi[ndim] - array of ending indices for global array section[input]
+   * @param buf - pointer to the local buffer array where the data goes[output]
+   * @param ld[ndim-1] - array specifying leading dimensions/strides/extents 
+   * for buffer array [input]
+   */
+  void getGhostBlock(int lo[], int hi[], void *buf, int ld[]) const;
+
+  /**
+   * "long" interface for getGhostBlock
+   */
+  void getGhostBlock(int64_t lo[], int64_t hi[], void *buf, int64_t ld[]) const;
 
   /**
    * Computes element-wise dot product of the two arrays which must be of

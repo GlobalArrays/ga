@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: shmlimit.c,v 1.13 2000-10-11 21:37:01 d3h325 Exp $ */
 /*
  * This code is used to test shared memory limits within
@@ -8,14 +12,28 @@
  * until the process exits.
  * JN/07.07.99
  */
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
-#include <signal.h>
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_SYS_WAIT_H
+#   include <sys/wait.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_ERRNO_H
+#   include <errno.h>
+#endif
+#if HAVE_SIGNAL_H
+#   include <signal.h>
+#endif
+
 #include "shmlimit.h"
 #include "armci.h"
+#include "message.h"
 
 #define DEBUG_ 0
 
@@ -58,10 +76,12 @@ static void RestoreSigChld()
 }
 
 
+#ifdef SOLARIS
 static int child_finished()
 {
   return armci_shmlimit_caught_sigchld;
 }
+#endif
 
 
 int armci_child_shmem_init()

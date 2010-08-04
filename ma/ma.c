@@ -1,15 +1,25 @@
-/*
- * $Id: ma.c,v 1.36.6.3 2007-02-06 20:13:26 manoj Exp $
- */
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
 
 /*
  * Portable dynamic memory allocator.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_MALLOC_H
+#   include <malloc.h>
+#endif
 #include "error.h"
+#include "farg.h"
 #include "ma.h"
 #include "memcpy.h"
 #include "scope.h"
@@ -18,9 +28,9 @@
 /*
  * Memory layout:
  *
- *	segment = heap_region stack_region
- *	region = block block block ...
- *	block = AD gap1 guard1 client_space guard2 gap2
+ *    segment = heap_region stack_region
+ *    region = block block block ...
+ *    block = AD gap1 guard1 client_space guard2 gap2
  *
  * A segment of memory is obtained from the OS upon initialization.
  * The low end of the segment is managed as a heap; the heap region
@@ -52,25 +62,21 @@
  **/
 
 /* return value for returns that should never execute */
-#define DONTCARE	(Integer)0
+#define DONTCARE (Integer)0
 
 /* default total # of bytes */
-#define DEFAULT_TOTAL_HEAP	524288	/* 2^19 */
-#define DEFAULT_TOTAL_STACK	524288	/* 2^19 */
+#define DEFAULT_TOTAL_HEAP  524288 /* 2^19 */
+#define DEFAULT_TOTAL_STACK 524288 /* 2^19 */
 
 /* estimate of max # of outstanding allocation requests */
-#define DEFAULT_REQUESTS_HEAP	1
-#define DEFAULT_REQUESTS_STACK	1
+#define DEFAULT_REQUESTS_HEAP  1
+#define DEFAULT_REQUESTS_STACK 1
 
 /* bytes per address */
-#ifdef _CRAY1
-#define BPA	8
-#else /* _CRAY1 */
-#define BPA	1
-#endif /* _CRAY1 */
+#define BPA    1
 
 /* per-allocation storage overhead, excluding alignment gaps */
-#define BLOCK_OVERHEAD_FIXED	(sizeof(AD) + (2 * sizeof(Guard)))
+#define BLOCK_OVERHEAD_FIXED (sizeof(AD) + (2 * sizeof(Guard)))
 
 /* block lengths are integral multiples of this */
 /*
@@ -85,45 +91,44 @@
  * problem is solved, but the sum of sizes of preceding fields can
  * still potentially cause difficulty.
  */
+#if defined(BGP)
+#define ALIGNMENT	32
+#else
 #define ALIGNMENT	sizeof(long)
+#endif
 
 /* min size of block split and placed on free list */
-#define MINBLOCKSIZE	round((long)(ALIGNMENT + BLOCK_OVERHEAD_FIXED), \
-			      (ulongi)ALIGNMENT)
+#define MINBLOCKSIZE mai_round((long)(ALIGNMENT + BLOCK_OVERHEAD_FIXED), \
+        (ulongi)ALIGNMENT)
 
 /* signatures for guard words */
-#ifdef _CRAY
-#define GUARD1		(Guard)0xaaaaaaaaaaaaaaaa	/* start signature */
-#define GUARD2		(Guard)0x5555555555555555	/* stop signature */
-#else /* _CRAY */
-#define GUARD1		(Guard)0xaaaaaaaa		/* start signature */
-#define GUARD2		(Guard)0x55555555		/* stop signature */
-#endif /* _CRAY */
+#define GUARD1 (Guard)0xaaaaaaaa /* start signature */
+#define GUARD2 (Guard)0x55555555 /* stop signature */
 
 /**
  ** types
  **/
 
-typedef unsigned int Guard;		/* for detection of memory trashing */
-typedef unsigned long ulongi;		/* for brevity */
+typedef unsigned int Guard;   /* for detection of memory trashing */
+typedef unsigned long ulongi; /* for brevity */
 
 /* allocation request for a block */
 typedef struct _AR
 {
-    Integer	datatype;		/* of elements */
-    Integer	nelem;			/* # of elements */
+    Integer    datatype; /* of elements */
+    Integer    nelem;    /* # of elements */
 } AR;
 
 /* allocation descriptor for a block */
 typedef struct _AD
 {
-    Integer	datatype;		/* of elements */
-    Integer	nelem;			/* # of elements */
-    char	name[MA_NAMESIZE];	/* given by client */
-    Pointer	client_space;		/* start of client space */
-    ulongi	nbytes;			/* total # of bytes */
-    struct _AD	*next;			/* AD in linked list */
-    ulongi	checksum;		/* of AD */
+    Integer     datatype;          /* of elements */
+    Integer     nelem;             /* # of elements */
+    char        name[MA_NAMESIZE]; /* given by client */
+    Pointer     client_space;      /* start of client space */
+    ulongi      nbytes;            /* total # of bytes */
+    struct _AD *next;              /* AD in linked list */
+    ulongi      checksum;          /* of AD */
 } AD;
 
 /* block location for mh2ad */
@@ -171,12 +176,12 @@ private Integer ma_nelem();
 private void ma_preinitialize();
 private Boolean mh2ad();
 private void mh_free();
-private long round();
+private long mai_round();
 private void str_ncopy();
 
 /* foreign routines */
 
-extern Integer ma_set_sizes_();	/* from the MA FORTRAN interface */
+extern Integer ma_set_sizes_();    /* from the MA FORTRAN interface */
 
 /**
  ** variables
@@ -185,23 +190,23 @@ extern Integer ma_set_sizes_();	/* from the MA FORTRAN interface */
 /* base addresses of the datatypes */
 private Pointer ma_base[] =
 {
-    (Pointer)ma_cb_char,	/* MT_C_CHAR */
-    (Pointer)ma_cb_int,		/* MT_C_INT */
-    (Pointer)ma_cb_long,	/* MT_C_LONGINT */
-    (Pointer)ma_cb_float,	/* MT_C_FLOAT */
-    (Pointer)ma_cb_dbl,		/* MT_C_DBL */
-    (Pointer)ma_cb_ldbl,	/* MT_C_LDBL */
-    (Pointer)ma_cb_scpl,	/* MT_C_SCPL */
-    (Pointer)ma_cb_dcpl,	/* MT_C_DCPL */
-    (Pointer)ma_cb_ldcpl,	/* MT_C_LDCPL */
-    0,				/* MT_F_BYTE */
-    0,				/* MT_F_INT */
-    0,				/* MT_F_LOG */
-    0,				/* MT_F_REAL */
-    0,				/* MT_F_DBL */
-    0,				/* MT_F_SCPL */
-    0,				/* MT_F_DCPL */
-    (Pointer)ma_cb_longlong	/* MT_C_LONGLONG */
+    (Pointer)ma_cb_char,    /* MT_C_CHAR */
+    (Pointer)ma_cb_int,     /* MT_C_INT */
+    (Pointer)ma_cb_long,    /* MT_C_LONGINT */
+    (Pointer)ma_cb_float,   /* MT_C_FLOAT */
+    (Pointer)ma_cb_dbl,     /* MT_C_DBL */
+    (Pointer)ma_cb_ldbl,    /* MT_C_LDBL */
+    (Pointer)ma_cb_scpl,    /* MT_C_SCPL */
+    (Pointer)ma_cb_dcpl,    /* MT_C_DCPL */
+    (Pointer)ma_cb_ldcpl,   /* MT_C_LDCPL */
+    0,                      /* MT_F_BYTE */
+    0,                      /* MT_F_INT */
+    0,                      /* MT_F_LOG */
+    0,                      /* MT_F_REAL */
+    0,                      /* MT_F_DBL */
+    0,                      /* MT_F_SCPL */
+    0,                      /* MT_F_DCPL */
+    (Pointer)ma_cb_longlong /* MT_C_LONGLONG */
 };
 
 /* names of the datatypes */
@@ -229,23 +234,23 @@ private char *ma_datatype[] =
 /* numbers of bytes in the datatypes */
 private int ma_sizeof[] =
 {
-    sizeof(char),			/* MT_C_CHAR */
-    sizeof(int),			/* MT_C_INT */
-    sizeof(long int),			/* MT_C_LONGINT */
-    sizeof(float),			/* MT_C_FLOAT */
-    sizeof(double),			/* MT_C_DBL */
-    sizeof(MA_LongDouble),		/* MT_C_LDBL */
-    sizeof(MA_SingleComplex),		/* MT_C_SCPL */
-    sizeof(MA_DoubleComplex),		/* MT_C_DCPL */
-    sizeof(MA_LongDoubleComplex),	/* MT_C_LDCPL */
-    0,					/* MT_F_BYTE */
-    0,					/* MT_F_INT */
-    0,					/* MT_F_LOG */
-    0,					/* MT_F_REAL */
-    0,					/* MT_F_DBL */
-    0,					/* MT_F_SCPL */
-    0,					/* MT_F_DCPL */
-    sizeof(long long)			/* MT_C_LONGLONG */
+    sizeof(char),                 /* MT_C_CHAR */
+    sizeof(int),                  /* MT_C_INT */
+    sizeof(long int),             /* MT_C_LONGINT */
+    sizeof(float),                /* MT_C_FLOAT */
+    sizeof(double),               /* MT_C_DBL */
+    sizeof(MA_LongDouble),        /* MT_C_LDBL */
+    sizeof(MA_SingleComplex),     /* MT_C_SCPL */
+    sizeof(MA_DoubleComplex),     /* MT_C_DCPL */
+    sizeof(MA_LongDoubleComplex), /* MT_C_LDCPL */
+    0,                            /* MT_F_BYTE */
+    0,                            /* MT_F_INT */
+    0,                            /* MT_F_LOG */
+    0,                            /* MT_F_REAL */
+    0,                            /* MT_F_DBL */
+    0,                            /* MT_F_SCPL */
+    0,                            /* MT_F_DCPL */
+    sizeof(long long)             /* MT_C_LONGLONG */
 };
 
 /*
@@ -257,27 +262,27 @@ private int ma_sizeof[] =
  * and the stack region, defined at initialization, is always pointed
  * to by ma_partition.
  *
- *	................................................
- *	^                      ^                        ^
- *	ma_segment, ma_hp      ma_partition             ma_eos, ma_sp
+ *    ................................................
+ *    ^                      ^                        ^
+ *    ma_segment, ma_hp      ma_partition             ma_eos, ma_sp
  *
  * Later, ma_hp points to the first address past the end of the
  * rightmost heap block, and ma_sp points to the leftmost stack block.
  *
- *	hhhhhhhhhhhhhhhh.....................sssssssssss
- *	^               ^      ^             ^          ^
- *	ma_segment      ma_hp  ma_partition  ma_sp      ma_eos
+ *    hhhhhhhhhhhhhhhh.....................sssssssssss
+ *    ^               ^      ^             ^          ^
+ *    ma_segment      ma_hp  ma_partition  ma_sp      ma_eos
  */
 
-private Pointer ma_segment;	/* memory from OS */
-private Pointer ma_partition;	/* boundary between heap and stack */
-private Pointer ma_eos;		/* end of segment */
-private Pointer ma_hp;		/* heap pointer */
-private Pointer ma_sp;		/* stack pointer */
+private Pointer ma_segment;   /* memory from OS */
+private Pointer ma_partition; /* boundary between heap and stack */
+private Pointer ma_eos;       /* end of segment */
+private Pointer ma_hp;        /* heap pointer */
+private Pointer ma_sp;        /* stack pointer */
 
-private AD *ma_hfree;		/* free list for heap */
-private AD *ma_hused;		/* used list for heap */
-private AD *ma_sused;		/* used list for stack */
+private AD *ma_hfree;         /* free list for heap */
+private AD *ma_hused;         /* used list for heap */
+private AD *ma_sused;         /* used list for stack */
 
 /* toggled when ma_preinitialize succeeds */
 private Boolean ma_preinitialized = MA_FALSE;
@@ -292,16 +297,16 @@ private Boolean ma_auto_verify = MA_FALSE;
 private Boolean ma_trace = MA_FALSE;
 
 /* base arrays for the C datatypes */
-public char			ma_cb_char[2];	/* MT_C_CHAR */
-public int			ma_cb_int[2];	/* MT_C_INT */
-public long			ma_cb_long[2];	/* MT_C_LONGINT */
-public long long		ma_cb_longlong[2];/* MT_C_LONGLONG */
-public float			ma_cb_float[2];	/* MT_C_FLOAT */
-public double			ma_cb_dbl[2];	/* MT_C_DBL */
-public MA_LongDouble		ma_cb_ldbl[2];	/* MT_C_LDBL */
-public MA_SingleComplex		ma_cb_scpl[2];	/* MT_C_SCPL */
-public MA_DoubleComplex		ma_cb_dcpl[2];	/* MT_C_DCPL */
-public MA_LongDoubleComplex	ma_cb_ldcpl[2];	/* MT_C_LDCPL */
+public char                 ma_cb_char[2];    /* MT_C_CHAR */
+public int                  ma_cb_int[2];     /* MT_C_INT */
+public long                 ma_cb_long[2];    /* MT_C_LONGINT */
+public long long            ma_cb_longlong[2];/* MT_C_LONGLONG */
+public float                ma_cb_float[2];   /* MT_C_FLOAT */
+public double               ma_cb_dbl[2];     /* MT_C_DBL */
+public MA_LongDouble        ma_cb_ldbl[2];    /* MT_C_LDBL */
+public MA_SingleComplex     ma_cb_scpl[2];    /* MT_C_SCPL */
+public MA_DoubleComplex     ma_cb_dcpl[2];    /* MT_C_DCPL */
+public MA_LongDoubleComplex ma_cb_ldcpl[2];   /* MT_C_LDCPL */
 
 /* requested power-of-two alignment */
 private Integer ma_numalign = 0;
@@ -314,44 +319,44 @@ private Integer ma_numalign = 0;
 #ifdef min
 #undef min
 #endif
-#define min(a, b)	(((b) < (a)) ? (b) : (a))
+#define min(a, b) (((b) < (a)) ? (b) : (a))
 
 /* maximum of two values */
 #ifdef max
 #undef max
 #endif
-#define max(a, b)	(((b) > (a)) ? (b) : (a))
+#define max(a, b) (((b) > (a)) ? (b) : (a))
 
 /* proper word ending corresponding to n */
-#define plural(n)	(((n) == 1) ? "" : "s")
+#define plural(n) (((n) == 1) ? "" : "s")
 
 /* convert between internal and external datatype values */
-#define mt_import(d)	((d) - MT_BASE)
-#define mt_export(d)	((d) + MT_BASE)
+#define mt_import(d) ((d) - MT_BASE)
+#define mt_export(d) ((d) + MT_BASE)
 
 /* return nonzero if d is a valid (external) datatype */
-#define mt_valid(d)	(((d) >= MT_FIRST) && ((d) <= MT_LAST))
+#define mt_valid(d) (((d) >= MT_FIRST) && ((d) <= MT_LAST))
 
 /* convert between pointer (address) and equivalent byte address */
-#define p2b(p)		((ulongi)(p) * BPA)
-#define b2p(b)		((Pointer)((b) / BPA))
+#define p2b(p) ((ulongi)(p) * BPA)
+#define b2p(b) ((Pointer)((b) / BPA))
 
 /* return nonzero if a is a potentially valid address */
-#define reasonable_address(a)	(((a) >= ma_segment) && ((a) < ma_eos))
+#define reasonable_address(a) (((a) >= ma_segment) && ((a) < ma_eos))
 
 /* worst case bytes of overhead for any block of elements of datatype d */
 #define max_block_overhead(d) \
-	(BLOCK_OVERHEAD_FIXED + (ma_sizeof[d] - 1) + (ALIGNMENT - 1))
+    (BLOCK_OVERHEAD_FIXED + (ma_sizeof[d] - 1) + (ALIGNMENT - 1))
 
 /* compute 0-based index for client_space from AD */
 #define client_space_index(ad) \
-	((Integer)((long)((ad)->client_space - ma_base[(ad)->datatype]) / \
-	             ma_sizeof[(ad)->datatype]))
+    ((MA_AccessIndex)((long)((ad)->client_space - ma_base[(ad)->datatype]) / \
+                 ma_sizeof[(ad)->datatype]))
 
 /* compute address of guard from AD */
-#define guard1(ad)	((Pointer)((ad)->client_space - sizeof(Guard)))
-#define guard2(ad)	((Pointer)((ad)->client_space \
-				+ ((ad)->nelem * ma_sizeof[(ad)->datatype])))
+#define guard1(ad) ((Pointer)((ad)->client_space - sizeof(Guard)))
+#define guard2(ad) ((Pointer)((ad)->client_space \
+                + ((ad)->nelem * ma_sizeof[(ad)->datatype])))
 
 /*
  * When reading or writing guard values, it is necessary to do an
@@ -360,12 +365,10 @@ private Integer ma_numalign = 0;
  */
 
 /* copy from guard to value */
-#define guard_read(guard, value)	\
-	bytecopy((guard), (value), sizeof(Guard))
+#define guard_read(guard, value) bytecopy((guard), (value), sizeof(Guard))
 
 /* copy from value to guard */
-#define guard_write(guard, value)	\
-	bytecopy((value), (guard), sizeof(Guard))
+#define guard_write(guard, value) bytecopy((value), (guard), sizeof(Guard))
 
 /**
  ** statistics stuff
@@ -374,7 +377,7 @@ private Integer ma_numalign = 0;
 #ifdef STATS
 
 /* the number of routines for which calls are counted */
-#define NUMROUTINES	((int)FID_MA_verify_allocator_stuff + 1)
+#define NUMROUTINES ((int)FID_MA_verify_allocator_stuff + 1)
 
 /* function identifiers */
 typedef enum
@@ -417,15 +420,15 @@ typedef enum
 /* MA usage statistics */
 typedef struct
 {
-    ulongi	hblocks;		/* current # of heap blocks */
-    ulongi	hblocks_max;		/* max # of heap blocks */
-    ulongi	hbytes;			/* current # of heap bytes */
-    ulongi	hbytes_max;		/* max # of heap bytes */
-    ulongi	sblocks;		/* current # of stack blocks */
-    ulongi	sblocks_max;		/* max # of stack blocks */
-    ulongi	sbytes;			/* current # of stack bytes */
-    ulongi	sbytes_max;		/* max # of stack bytes */
-    ulongi	calls[NUMROUTINES];	/* # of calls to each routine */
+    ulongi    hblocks;           /* current # of heap blocks */
+    ulongi    hblocks_max;       /* max # of heap blocks */
+    ulongi    hbytes;            /* current # of heap bytes */
+    ulongi    hbytes_max;        /* max # of heap bytes */
+    ulongi    sblocks;           /* current # of stack blocks */
+    ulongi    sblocks_max;       /* max # of stack blocks */
+    ulongi    sbytes;            /* current # of stack bytes */
+    ulongi    sbytes_max;        /* max # of stack bytes */
+    ulongi    calls[NUMROUTINES];/* # of calls to each routine */
 } Stats;
 
 /* names of the routines */
@@ -484,11 +487,11 @@ private Stats ma_stats;
 /* ------------------------------------------------------------------------- */
 
 private Boolean ad_big_enough(ad, ar)
-    AD		*ad;		/* the AD to test */
-    Pointer	ar;		/* allocation request */
+    AD        *ad;        /* the AD to test */
+    Pointer    ar;        /* allocation request */
 {
-    Pointer	client_space;	/* location of client_space */
-    ulongi	nbytes;		/* length of block for ar */
+    Pointer    client_space;    /* location of client_space */
+    ulongi    nbytes;        /* length of block for ar */
 
     /* perform trial allocation to determine size */
     balloc_after((AR *)ar, (Pointer)ad, &client_space, &nbytes);
@@ -516,8 +519,8 @@ private Boolean ad_big_enough(ad, ar)
 /* ------------------------------------------------------------------------- */
 
 private Boolean ad_eq(ad, ad_target)
-    AD		*ad;		/* the AD to test */
-    Pointer	ad_target;	/* the AD to match */
+    AD        *ad;        /* the AD to test */
+    Pointer    ad_target;    /* the AD to match */
 {
     return (ad == (AD *)ad_target) ? MA_TRUE : MA_FALSE;
 }
@@ -529,8 +532,8 @@ private Boolean ad_eq(ad, ad_target)
 /* ------------------------------------------------------------------------- */
 
 private Boolean ad_gt(ad, ad_target)
-    AD		*ad;		/* the AD to test */
-    Pointer	ad_target;	/* the AD to match */
+    AD        *ad;        /* the AD to test */
+    Pointer    ad_target;    /* the AD to match */
 {
     return (ad > (AD *)ad_target) ? MA_TRUE : MA_FALSE;
 }
@@ -542,8 +545,8 @@ private Boolean ad_gt(ad, ad_target)
 /* ------------------------------------------------------------------------- */
 
 private Boolean ad_le(ad, ad_target)
-    AD		*ad;		/* the AD to test */
-    Pointer	ad_target;	/* the AD to match */
+    AD        *ad;        /* the AD to test */
+    Pointer    ad_target;    /* the AD to match */
 {
     return (ad <= (AD *)ad_target) ? MA_TRUE : MA_FALSE;
 }
@@ -555,8 +558,8 @@ private Boolean ad_le(ad, ad_target)
 /* ------------------------------------------------------------------------- */
 
 private Boolean ad_lt(ad, ad_target)
-    AD		*ad;		/* the AD to test */
-    Pointer	ad_target;	/* the AD to match */
+    AD        *ad;        /* the AD to test */
+    Pointer    ad_target;    /* the AD to match */
 {
     return (ad < (AD *)ad_target) ? MA_TRUE : MA_FALSE;
 }
@@ -568,13 +571,13 @@ private Boolean ad_lt(ad, ad_target)
 /* ------------------------------------------------------------------------- */
 
 private void ad_print(ad, block_type)
-    AD		*ad;		/* to print */
-    char	*block_type;	/* for output */
+    AD        *ad;        /* to print */
+    char    *block_type;    /* for output */
 {
-    Integer	memhandle;	/* memhandle for AD */
+    Integer    memhandle;    /* memhandle for AD */
 
     /* convert AD to memhandle */
-    memhandle = table_lookup_assoc((TableData)ad);
+    memhandle = ma_table_lookup_assoc((TableData)ad);
 
     /* print to stdout */
     (void)printf("%s block '%s', handle ",
@@ -597,20 +600,20 @@ private void ad_print(ad, block_type)
 /* ------------------------------------------------------------------------- */
 
 private void balloc_after(ar, address, client_space, nbytes)
-    AR		*ar;		/* allocation request */
-    Pointer	address;	/* to allocate after */
-    Pointer	*client_space;	/* RETURN: location of client_space */
-    ulongi	*nbytes;	/* RETURN: length of block */
+    AR        *ar;        /* allocation request */
+    Pointer    address;    /* to allocate after */
+    Pointer    *client_space;    /* RETURN: location of client_space */
+    ulongi    *nbytes;    /* RETURN: length of block */
 {
-    Integer	datatype;	/* of elements in this block */
-    ulongi	L_client_space;	/* length of client_space */
-    Pointer	A_client_space;	/* address of client_space */
-    int		L_gap1;		/* length of gap1 */
-    int		L_gap2;		/* length of gap2 */
+    Integer    datatype;    /* of elements in this block */
+    ulongi    L_client_space;    /* length of client_space */
+    Pointer    A_client_space;    /* address of client_space */
+    int        L_gap1;        /* length of gap1 */
+    int        L_gap2;        /* length of gap2 */
 
-    ulongi	B_address;	/* byte equivalent of address */
-    ulongi	B_base;		/* byte equivalent of ma_base[datatype] */
-    ulongi	B_client_space;	/* byte equivalent of A_client_space */
+    ulongi    B_address;    /* byte equivalent of address */
+    ulongi    B_base;        /* byte equivalent of ma_base[datatype] */
+    ulongi    B_client_space;    /* byte equivalent of A_client_space */
 
     datatype = ar->datatype;
 
@@ -620,11 +623,11 @@ private void balloc_after(ar, address, client_space, nbytes)
     /*
      * To ensure that client_space is properly aligned:
      *
-     *	(A(client_space) - ma_base[datatype]) % ma_sizeof[datatype] == 0
+     *    (A(client_space) - ma_base[datatype]) % ma_sizeof[datatype] == 0
      *
      * where
      *
-     *	A(client_space) == address + L(AD) + L(gap1) + L(guard1)
+     *    A(client_space) == address + L(AD) + L(gap1) + L(guard1)
      */
 
     L_client_space = ar->nelem * ma_sizeof[datatype];
@@ -660,28 +663,28 @@ private void balloc_after(ar, address, client_space, nbytes)
        */
 
       if (diff) {
-	diff = (1<<ma_numalign) - diff;
-	if ((diff % ma_sizeof[datatype]) == 0 ) {
-	  /*printf("bafter realigned diff=%d\n",diff);*/
-	  A_client_space = b2p(B_client_space + diff);
-	  B_client_space = p2b(A_client_space);
-	}	
-	/*	else {
-	  printf("did not realign diff=%d typelen=%d mod=%d\n",
-		 diff, ma_sizeof[datatype], (diff % ma_sizeof[datatype]));
-		 }*/
+    diff = (1<<ma_numalign) - diff;
+    if ((diff % ma_sizeof[datatype]) == 0 ) {
+      /*printf("bafter realigned diff=%d\n",diff);*/
+      A_client_space = b2p(B_client_space + diff);
+      B_client_space = p2b(A_client_space);
+    }    
+    /*    else {
+      printf("did not realign diff=%d typelen=%d mod=%d\n",
+         diff, ma_sizeof[datatype], (diff % ma_sizeof[datatype]));
+         }*/
       }
     }
 
     /*
      * To ensure that the AD is properly aligned:
      *
-     *	L(block) % ALIGNMENT == 0
+     *    L(block) % ALIGNMENT == 0
      *
      * where
      *
-     *	L(block) == A(client_space) + L(client_space) + L(guard2) + L(gap2)
-     *		- address
+     *    L(block) == A(client_space) + L(client_space) + L(guard2) + L(gap2)
+     *        - address
      */
 
     L_gap2 = ((long)B_address
@@ -713,20 +716,20 @@ private void balloc_after(ar, address, client_space, nbytes)
 /* ------------------------------------------------------------------------- */
 
 private void balloc_before(ar, address, client_space, nbytes)
-    AR		*ar;		/* allocation request */
-    Pointer	address;	/* to allocate before */
-    Pointer	*client_space;	/* RETURN: location of client_space */
-    ulongi	*nbytes;	/* RETURN: length of block */
+    AR        *ar;        /* allocation request */
+    Pointer    address;    /* to allocate before */
+    Pointer    *client_space;    /* RETURN: location of client_space */
+    ulongi    *nbytes;    /* RETURN: length of block */
 {
-    Integer	datatype;	/* of elements in this block */
-    ulongi	L_client_space;	/* length of client_space */
-    Pointer	A_client_space;	/* address of client_space */
-    int		L_gap1;		/* length of gap1 */
-    int		L_gap2;		/* length of gap2 */
+    Integer    datatype;    /* of elements in this block */
+    ulongi    L_client_space;    /* length of client_space */
+    Pointer    A_client_space;    /* address of client_space */
+    int        L_gap1;        /* length of gap1 */
+    int        L_gap2;        /* length of gap2 */
 
-    ulongi	B_address;	/* byte equivalent of address */
-    ulongi	B_base;		/* byte equivalent of ma_base[datatype] */
-    ulongi	B_client_space;	/* byte equivalent of A_client_space */
+    ulongi    B_address;    /* byte equivalent of address */
+    ulongi    B_base;        /* byte equivalent of ma_base[datatype] */
+    ulongi    B_client_space;    /* byte equivalent of A_client_space */
 
     datatype = ar->datatype;
 
@@ -736,11 +739,11 @@ private void balloc_before(ar, address, client_space, nbytes)
     /*
      * To ensure that client_space is properly aligned:
      *
-     *	(A(client_space) - ma_base[datatype]) % ma_sizeof[datatype] == 0
+     *    (A(client_space) - ma_base[datatype]) % ma_sizeof[datatype] == 0
      *
      * where
      *
-     *	A(client_space) == address - L(gap2) - L(guard2) - L(client_space)
+     *    A(client_space) == address - L(gap2) - L(guard2) - L(client_space)
      */
 
     L_client_space = ar->nelem * ma_sizeof[datatype];
@@ -776,26 +779,26 @@ private void balloc_before(ar, address, client_space, nbytes)
        */
 
       if (diff) {
-	if ((diff % ma_sizeof[datatype]) == 0 ) {
-	  /* printf("bbefore realigned diff=%d\n",diff); */
-	  A_client_space = b2p(B_client_space - diff);
-	  B_client_space = p2b(A_client_space);
-	}	
-	/*	else {
-	  printf("did not realign diff=%d typelen=%d mod=%d\n",
-		 diff, ma_sizeof[datatype], (diff % ma_sizeof[datatype]));
-		 }*/
+    if ((diff % ma_sizeof[datatype]) == 0 ) {
+      /* printf("bbefore realigned diff=%d\n",diff); */
+      A_client_space = b2p(B_client_space - diff);
+      B_client_space = p2b(A_client_space);
+    }    
+    /*    else {
+      printf("did not realign diff=%d typelen=%d mod=%d\n",
+         diff, ma_sizeof[datatype], (diff % ma_sizeof[datatype]));
+         }*/
       }
     }
 
     /*
      * To ensure that the AD is properly aligned:
      *
-     *	A(AD) % ALIGNMENT == 0
+     *    A(AD) % ALIGNMENT == 0
      *
      * where
      *
-     *	A(AD) == A(client_space) - L(guard1) - L(gap1) - L(AD)
+     *    A(AD) == A(client_space) - L(guard1) - L(gap1) - L(AD)
      */
 
     L_gap1 = (B_client_space
@@ -822,10 +825,10 @@ private void balloc_before(ar, address, client_space, nbytes)
 /* ------------------------------------------------------------------------- */
 
 private void block_free_heap(ad)
-    AD		*ad;		/* AD to free */
+    AD        *ad;        /* AD to free */
 {
-    AD		*ad2;		/* traversal pointer */
-    AD		*max_ad;	/* rightmost AD */
+    AD        *ad2;        /* traversal pointer */
+    AD        *max_ad;    /* rightmost AD */
 
     /* find rightmost heap block */
     for (max_ad = (AD *)NULL, ad2 = ma_hused; ad2; ad2 = ad2->next)
@@ -878,12 +881,12 @@ private void block_free_heap(ad)
 /* ------------------------------------------------------------------------- */
 
 private AD *block_split(ad, bytes_needed, insert_free)
-    AD		*ad;		/* the AD to split */
-    ulongi	bytes_needed;	/* from ad */
-    Boolean	insert_free;	/* insert in free list? */
+    AD        *ad;        /* the AD to split */
+    ulongi    bytes_needed;    /* from ad */
+    Boolean    insert_free;    /* insert in free list? */
 {
-    ulongi	bytes_extra;	/* in ad */
-    AD		*ad2;		/* the new AD */
+    ulongi    bytes_extra;    /* in ad */
+    AD        *ad2;        /* the new AD */
 
     /* caller ensures that ad->nbytes >= bytes_needed */
     bytes_extra = ad->nbytes - bytes_needed;
@@ -930,7 +933,7 @@ private AD *block_split(ad, bytes_needed, insert_free)
 /* ------------------------------------------------------------------------- */
 
 private ulongi checksum(ad)
-    AD		*ad;		/* the AD to compute checksum for */
+    AD        *ad;        /* the AD to compute checksum for */
 {
     return (ulongi)(
                 ad->datatype +
@@ -948,14 +951,14 @@ private ulongi checksum(ad)
 #ifdef DEBUG
 
 private void debug_ad_print(ad)
-    AD		*ad;		/* the AD to print */
+    AD        *ad;        /* the AD to print */
 {
 #define NUMADFIELDS 7
 
-    char	*fn[NUMADFIELDS];	/* field names */
-    long	fa[NUMADFIELDS];	/* field addresses */
-    int		i;			/* loop index */
-    long	address;		/* other addresses */
+    char    *fn[NUMADFIELDS];    /* field names */
+    long    fa[NUMADFIELDS];    /* field addresses */
+    int        i;            /* loop index */
+    long    address;        /* other addresses */
 
     /* set field names */
     fn[0] = "datatype";
@@ -1018,10 +1021,10 @@ private void debug_ad_print(ad)
 /* ------------------------------------------------------------------------- */
 
 private Boolean guard_check(ad)
-    AD		*ad;		/* the AD to check guards for */
+    AD        *ad;        /* the AD to check guards for */
 {
-    Guard	signature;	/* value to be read */
-    Pointer	guard;		/* address to read from */
+    Guard    signature;    /* value to be read */
+    Pointer    guard;        /* address to read from */
 
     guard = guard1(ad);
     guard_read(guard, &signature);
@@ -1044,10 +1047,10 @@ private Boolean guard_check(ad)
 /* ------------------------------------------------------------------------- */
 
 private void guard_set(ad)
-    AD		*ad;		/* the AD to set guards for */
+    AD        *ad;        /* the AD to set guards for */
 {
-    Guard	signature;	/* value to be written */
-    Pointer	guard;		/* address to write to */
+    Guard    signature;    /* value to be written */
+    Pointer    guard;        /* address to write to */
 
     signature = GUARD1;
     guard = guard1(ad);
@@ -1067,10 +1070,10 @@ private void guard_set(ad)
 /* ------------------------------------------------------------------------- */
 
 private void list_coalesce(list)
-    AD		*list;		/* the list to coalesce */
+    AD        *list;        /* the list to coalesce */
 {
-    AD		*ad1;		/* lead traversal pointer */
-    AD		*ad2;		/* trailing traversal pointer */
+    AD        *ad1;        /* lead traversal pointer */
+    AD        *ad2;        /* trailing traversal pointer */
 
     for (ad2 = list; ad2;)
     {
@@ -1100,8 +1103,8 @@ private void list_coalesce(list)
 /* ------------------------------------------------------------------------- */
 
 private AD *list_delete(ad, list)
-    AD		*ad;		/* the AD to delete */
-    AD		**list;		/* the list to delete from */
+    AD        *ad;        /* the AD to delete */
+    AD        **list;        /* the list to delete from */
 {
     return list_delete_one(list, ad_eq, (Pointer)ad);
 }
@@ -1115,14 +1118,14 @@ private AD *list_delete(ad, list)
 /* ------------------------------------------------------------------------- */
 
 private int list_delete_many(list, pred, closure, action)
-    AD		**list;		/* the list to search */
-    Boolean	(*pred)();	/* predicate */
-    Pointer	closure;	/* for pred */
-    void	(*action)();	/* to apply before deletion */
+    AD        **list;        /* the list to search */
+    Boolean    (*pred)();    /* predicate */
+    Pointer    closure;    /* for pred */
+    void    (*action)();    /* to apply before deletion */
 {
-    AD		*ad1;		/* lead traversal pointer */
-    AD		*ad2;		/* trailing traversal pointer */
-    int		ndeleted = 0;	/* # of elements deleted from list */
+    AD        *ad1;        /* lead traversal pointer */
+    AD        *ad2;        /* trailing traversal pointer */
+    int        ndeleted = 0;    /* # of elements deleted from list */
 
     for (ad2 = (AD *)NULL, ad1 = *list; ad1; ad1 = ad1->next)
     {
@@ -1165,12 +1168,12 @@ private int list_delete_many(list, pred, closure, action)
 /* ------------------------------------------------------------------------- */
 
 private AD *list_delete_one(list, pred, closure)
-    AD		**list;		/* the list to search */
-    Boolean	(*pred)();	/* predicate */
-    Pointer	closure;	/* for pred */
+    AD        **list;        /* the list to search */
+    Boolean    (*pred)();    /* predicate */
+    Pointer    closure;    /* for pred */
 {
-    AD		*ad1;		/* lead traversal pointer */
-    AD		*ad2;		/* trailing traversal pointer */
+    AD        *ad1;        /* lead traversal pointer */
+    AD        *ad2;        /* trailing traversal pointer */
 
     for (ad2 = (AD *)NULL, ad1 = *list; ad1; ad2 = ad1, ad1 = ad1->next)
     {
@@ -1205,8 +1208,8 @@ private AD *list_delete_one(list, pred, closure)
 /* ------------------------------------------------------------------------- */
 
 private void list_insert(ad, list)
-    AD		*ad;		/* the AD to insert */
-    AD		**list;		/* the list to insert into */
+    AD        *ad;        /* the AD to insert */
+    AD        **list;        /* the list to insert into */
 {
     /* push ad onto list */
     ad->next = *list;
@@ -1222,12 +1225,12 @@ private void list_insert(ad, list)
 /* ------------------------------------------------------------------------- */
 
 private void list_insert_ordered(ad, list, pred)
-    AD		*ad;		/* the AD to insert */
-    AD		**list;		/* the list to insert into */
-    Boolean	(*pred)();	/* predicate */
+    AD        *ad;        /* the AD to insert */
+    AD        **list;        /* the list to insert into */
+    Boolean    (*pred)();    /* predicate */
 {
-    AD		*ad1;		/* lead traversal pointer */
-    AD		*ad2;		/* trailing traversal pointer */
+    AD        *ad1;        /* lead traversal pointer */
+    AD        *ad2;        /* trailing traversal pointer */
 
     if (*list == (AD *)NULL)
     {
@@ -1273,10 +1276,10 @@ private void list_insert_ordered(ad, list, pred)
 /* ------------------------------------------------------------------------- */
 
 private Boolean list_member(ad, list)
-    AD		*ad;		/* the AD to search for */
-    AD		*list;		/* the list to search */
+    AD        *ad;        /* the AD to search for */
+    AD        *list;        /* the list to search */
 {
-    AD		*ad1;		/* traversal pointer */
+    AD        *ad1;        /* traversal pointer */
 
     for (ad1 = list; ad1; ad1 = ad1->next)
         if (ad1 == ad)
@@ -1295,12 +1298,12 @@ private Boolean list_member(ad, list)
 /* ------------------------------------------------------------------------- */
 
 private int list_print(list, block_type, index_base)
-    AD		*list;		/* to print */
-    char	*block_type;	/* for output */
-    int		index_base;	/* 0 (C) or 1 (FORTRAN) */
+    AD        *list;        /* to print */
+    char    *block_type;    /* for output */
+    int        index_base;    /* 0 (C) or 1 (FORTRAN) */
 {
-    AD		*ad;		/* traversal pointer */
-    int		nblocks;	/* # of blocks on list */
+    AD        *ad;        /* traversal pointer */
+    int        nblocks;    /* # of blocks on list */
 
     /* print each block on list */
     for (ad = list, nblocks = 0; ad; ad = ad->next, nblocks++)
@@ -1334,20 +1337,20 @@ private int list_print(list, block_type, index_base)
 
 private void list_verify(list, block_type, preamble, blocks,
                          bad_blocks, bad_checksums, bad_lguards, bad_rguards)
-    AD		*list;		/* to verify */
-    char	*block_type;	/* for error messages */
-    char	*preamble;	/* printed before first error message */
-    int		*blocks;	/* RETURN: # of blocks */
-    int		*bad_blocks;	/* RETURN: # of blocks having errors */
-    int		*bad_checksums;	/* RETURN: # of blocks having bad checksum */
-    int		*bad_lguards;	/* RETURN: # of blocks having bad guard1 */
-    int		*bad_rguards;	/* RETURN: # of blocks having bad guard2 */
+    AD        *list;        /* to verify */
+    char    *block_type;    /* for error messages */
+    char    *preamble;    /* printed before first error message */
+    int        *blocks;    /* RETURN: # of blocks */
+    int        *bad_blocks;    /* RETURN: # of blocks having errors */
+    int        *bad_checksums;    /* RETURN: # of blocks having bad checksum */
+    int        *bad_lguards;    /* RETURN: # of blocks having bad guard1 */
+    int        *bad_rguards;    /* RETURN: # of blocks having bad guard2 */
 {
-    AD		*ad;		/* traversal pointer */
-    Boolean	first_bad_block;/* first bad block found? */
-    Boolean	bad_block;	/* problem in current block? */
-    Guard	signature;	/* value to be read */
-    Pointer	guard;		/* address to read from */
+    AD        *ad;        /* traversal pointer */
+    Boolean    first_bad_block;/* first bad block found? */
+    Boolean    bad_block;    /* problem in current block? */
+    Guard    signature;    /* value to be read */
+    Pointer    guard;        /* address to read from */
 
     /* initialize */
     *blocks = 0;
@@ -1450,14 +1453,14 @@ private void list_verify(list, block_type, preamble, blocks,
 /* ------------------------------------------------------------------------- */
 
 private Integer ma_max_heap_frag_nelem(datatype, min_nelem)
-    Integer	datatype;	/* of elements */
-    Integer	min_nelem;	/* for fragment to be considered */
+    Integer    datatype;    /* of elements */
+    Integer    min_nelem;    /* for fragment to be considered */
 {
-    ulongi	min_bytes;	/* for fragment to be considered */
-    AD		*ad;		/* traversal pointer */
-    ulongi	nbytes;		/* in current fragment */
-    Integer	nelem;		/* in current fragment */
-    Integer	max_nelem;	/* result */
+    ulongi    min_bytes;    /* for fragment to be considered */
+    AD        *ad;        /* traversal pointer */
+    ulongi    nbytes;        /* in current fragment */
+    Integer    nelem;        /* in current fragment */
+    Integer    max_nelem;    /* result */
 
     /* set the threshold */
     min_bytes = (min_nelem * ma_sizeof[datatype]) + BLOCK_OVERHEAD_FIXED;
@@ -1509,13 +1512,13 @@ private Integer ma_max_heap_frag_nelem(datatype, min_nelem)
 /* ------------------------------------------------------------------------- */
 
 private Integer ma_nelem(address, length, datatype)
-    Pointer	address;	/* location of hypothetical block */
-    ulongi	length;		/* length of hypothetical block */
-    Integer	datatype;	/* of elements in hypothetical block */
+    Pointer    address;    /* location of hypothetical block */
+    ulongi    length;        /* length of hypothetical block */
+    Integer    datatype;    /* of elements in hypothetical block */
 {
-    AR		ar;		/* allocation request */
-    Pointer	client_space;	/* location of client_space */
-    ulongi	nbytes;		/* length of block for ar */
+    AR        ar;        /* allocation request */
+    Pointer    client_space;    /* location of client_space */
+    ulongi    nbytes;        /* length of block for ar */
 
     if (length <= BLOCK_OVERHEAD_FIXED)
         /* no point in computing anything */
@@ -1551,7 +1554,7 @@ private Integer ma_nelem(address, length, datatype)
 /* ------------------------------------------------------------------------- */
 
 private void ma_preinitialize(caller)
-    char	*caller;	/* name of calling routine */
+    char    *caller;    /* name of calling routine */
 {
     if (ma_preinitialized)
         return;
@@ -1578,18 +1581,18 @@ private void ma_preinitialize(caller)
 /* ------------------------------------------------------------------------- */
 
 private Boolean mh2ad(memhandle, adout, location, caller)
-    Integer	memhandle;	/* the handle to verify and convert */
-    AD		**adout;	/* RETURN: AD corresponding to memhandle */
-    BlockLocation location;	/* where AD must reside */
-    char	*caller;	/* name of calling routine */
+    Integer    memhandle;    /* the handle to verify and convert */
+    AD        **adout;    /* RETURN: AD corresponding to memhandle */
+    BlockLocation location;    /* where AD must reside */
+    char    *caller;    /* name of calling routine */
 {
-    AD		*ad;
-    Boolean	check_checksum = MA_TRUE;
-    Boolean	check_guards = MA_TRUE;
-    Boolean	check_heap = MA_FALSE;
-    Boolean	check_stack = MA_FALSE;
-    Boolean	check_stacktop = MA_FALSE;
-    Boolean	check_heapandstack = MA_FALSE;
+    AD        *ad;
+    Boolean    check_checksum = MA_TRUE;
+    Boolean    check_guards = MA_TRUE;
+    Boolean    check_heap = MA_FALSE;
+    Boolean    check_stack = MA_FALSE;
+    Boolean    check_stacktop = MA_FALSE;
+    Boolean    check_heapandstack = MA_FALSE;
 
     switch (location)
     {
@@ -1614,10 +1617,10 @@ private Boolean mh2ad(memhandle, adout, location, caller)
     }
 
     /* convert memhandle to AD */
-    if (!table_verify(memhandle, caller))
+    if (!ma_table_verify(memhandle, caller))
         return MA_FALSE;
     else
-        ad = (AD *)table_lookup(memhandle);
+        ad = (AD *)ma_table_lookup(memhandle);
 
     /* attempt to avoid crashes due to corrupt addresses */
     if (!reasonable_address((Pointer)ad))
@@ -1721,12 +1724,12 @@ private Boolean mh2ad(memhandle, adout, location, caller)
 /* ------------------------------------------------------------------------- */
 
 private void mh_free(ad)
-    AD		*ad;		/* the AD whose memhandle to free */
+    AD        *ad;        /* the AD whose memhandle to free */
 {
-    Integer	memhandle;	/* memhandle for AD */
+    Integer    memhandle;    /* memhandle for AD */
 
     /* convert AD to memhandle */
-    if ((memhandle = table_lookup_assoc((TableData)ad)) == TABLE_HANDLE_NONE)
+    if ((memhandle = ma_table_lookup_assoc((TableData)ad)) == TABLE_HANDLE_NONE)
     {
         (void)sprintf(ma_ebuf,
             "cannot find memhandle for block address 0x%lx",
@@ -1735,7 +1738,7 @@ private void mh_free(ad)
     }
     else
         /* free memhandle */
-        table_deallocate(memhandle);
+        ma_table_deallocate(memhandle);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1744,9 +1747,9 @@ private void mh_free(ad)
  */
 /* ------------------------------------------------------------------------- */
 
-private long round(value, unit)
-    long	value;		/* to round */
-    ulongi	unit;		/* to round to */
+private long mai_round(value, unit)
+    long    value;        /* to round */
+    ulongi    unit;        /* to round to */
 {
     /* voodoo ... */
     unit--;
@@ -1762,9 +1765,9 @@ private long round(value, unit)
 /* ------------------------------------------------------------------------- */
 
 private void str_ncopy(to, from, maxchars)
-    char	*to;		/* space to copy to */
-    char	*from;		/* space to copy from */
-    int		maxchars;	/* max # of chars (including NUL) copied */
+    char    *to;        /* space to copy to */
+    char    *from;        /* space to copy from */
+    int        maxchars;    /* max # of chars (including NUL) copied */
 {
     if (from == (char *)NULL)
     {
@@ -1790,9 +1793,9 @@ private void str_ncopy(to, from, maxchars)
 /* ------------------------------------------------------------------------- */
 
 public Boolean MAi_inform_base(datatype, address1, address2)
-    Integer	datatype;	/* to set size of */
-    Pointer	address1;	/* of datatype element base */
-    Pointer	address2;	/* of an adjacent datatype element */
+    Integer    datatype;    /* to set size of */
+    Pointer    address1;    /* of datatype element base */
+    Pointer    address2;    /* of an adjacent datatype element */
 {
     /* verify uninitialization */
     if (ma_initialized)
@@ -1826,6 +1829,20 @@ public Boolean MAi_inform_base(datatype, address1, address2)
     return MA_TRUE;
 }
 
+#if NOFORT
+Integer ma_set_sizes_()
+{
+    MAi_inform_base(MT_F_BYTE, &ma_cb_char[0],  &ma_cb_char[1]);
+    MAi_inform_base(MT_F_INT,  &ma_cb_int[0],   &ma_cb_int[1]);
+    MAi_inform_base(MT_F_LOG,  &ma_cb_int[0],   &ma_cb_int[1]);
+    MAi_inform_base(MT_F_REAL, &ma_cb_float[0], &ma_cb_float[1]);
+    MAi_inform_base(MT_F_DBL,  &ma_cb_dbl[0],   &ma_cb_dbl[1]);
+    MAi_inform_base(MT_F_SCPL, &ma_cb_scpl[0],  &ma_cb_scpl[1]);
+    MAi_inform_base(MT_F_DCPL, &ma_cb_dcpl[0],  &ma_cb_dcpl[1]);
+    return 1;
+}
+#endif
+
 /* ------------------------------------------------------------------------- */
 /*
  * Print debugging information about all blocks currently in use
@@ -1834,10 +1851,10 @@ public Boolean MAi_inform_base(datatype, address1, address2)
 /* ------------------------------------------------------------------------- */
 
 public void MAi_summarize_allocated_blocks(index_base)
-    int		index_base;	/* 0 (C) or 1 (FORTRAN) */
+    int        index_base;    /* 0 (C) or 1 (FORTRAN) */
 {
-    int		heap_blocks;	/* # of blocks on heap used list */
-    int		stack_blocks;	/* # of blocks on stack used list */
+    int        heap_blocks;    /* # of blocks on heap used list */
+    int        stack_blocks;    /* # of blocks on stack used list */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_summarize_allocated_blocks]++;
@@ -1885,11 +1902,11 @@ public void MAi_summarize_allocated_blocks(index_base)
 /* ------------------------------------------------------------------------- */
 
 public Boolean MA_alloc_get(
-    Integer	datatype,	/* of elements in this block */
-    Integer	nelem,		/* # of elements in this block */
-    const char	*name,		/* assigned to this block by client */
-    Integer	*memhandle,	/* RETURN: handle for this block */
-    Integer	*index		/* RETURN: index for this block */   )
+    Integer    datatype,    /* of elements in this block */
+    Integer    nelem,        /* # of elements in this block */
+    const char    *name,        /* assigned to this block by client */
+    Integer    *memhandle,    /* RETURN: handle for this block */
+    MA_AccessIndex    *index  /* RETURN: index for this block */   )
 {
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_alloc_get]++;
@@ -1913,16 +1930,16 @@ public Boolean MA_alloc_get(
 /* ------------------------------------------------------------------------- */
 
 public Boolean MA_allocate_heap(
-    Integer	datatype,	/* of elements in this block */
-    Integer	nelem,		/* # of elements in this block */
-    const char	*name,		/* assigned to this block by client */
-    Integer	*memhandle	/* RETURN: handle for this block */ )
+    Integer    datatype,    /* of elements in this block */
+    Integer    nelem,        /* # of elements in this block */
+    const char    *name,        /* assigned to this block by client */
+    Integer    *memhandle    /* RETURN: handle for this block */ )
 {
-    AR		ar;		/* allocation request */
-    AD		*ad;		/* AD for newly allocated block */
-    Pointer	client_space;	/* location of client_space */
-    ulongi	nbytes;		/* length of block for ar */
-    Pointer	new_hp;		/* new ma_hp */
+    AR        ar;        /* allocation request */
+    AD        *ad;        /* AD for newly allocated block */
+    Pointer    client_space;    /* location of client_space */
+    ulongi    nbytes;        /* length of block for ar */
+    Pointer    new_hp;        /* new ma_hp */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_allocate_heap]++;
@@ -1934,7 +1951,7 @@ public Boolean MA_allocate_heap(
 #endif /* VERIFY */
 
     if (ma_trace) 
-	(void)printf("MA: allocating '%s' (%d)\n", name, (int)nelem);
+    (void)printf("MA: allocating '%s' (%d)\n", name, (int)nelem);
 
     /* verify initialization */
     if (!ma_initialized)
@@ -2040,7 +2057,7 @@ public Boolean MA_allocate_heap(
 #endif /* STATS */
 
     /* convert AD to memhandle */
-    if ((*memhandle = table_allocate((TableData)ad)) == TABLE_HANDLE_NONE)
+    if ((*memhandle = ma_table_allocate((TableData)ad)) == TABLE_HANDLE_NONE)
         /* failure */
         return MA_FALSE;
     else
@@ -2059,7 +2076,7 @@ public Boolean MA_allocate_heap(
 
 public Boolean MA_chop_stack(Integer memhandle)/*the block to deallocate up to*/
 {
-    AD		*ad;		/* AD for memhandle */
+    AD        *ad;        /* AD for memhandle */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_chop_stack]++;
@@ -2102,7 +2119,7 @@ public Boolean MA_chop_stack(Integer memhandle)/*the block to deallocate up to*/
 
 public Boolean MA_free_heap(Integer memhandle) /* the block to deallocate */
 {
-    AD		*ad;		/* AD for memhandle */
+    AD        *ad;        /* AD for memhandle */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_free_heap]++;
@@ -2118,7 +2135,7 @@ public Boolean MA_free_heap(Integer memhandle) /* the block to deallocate */
         return MA_FALSE;
 
     if (ma_trace) 
-	(void)printf("MA: freeing '%s'\n", ad->name);
+    (void)printf("MA: freeing '%s'\n", ad->name);
 
     /* delete block from used list */
     if (list_delete(ad, &ma_hused) != ad)
@@ -2139,7 +2156,7 @@ public Boolean MA_free_heap(Integer memhandle) /* the block to deallocate */
     block_free_heap(ad);
 
     /* free memhandle */
-    table_deallocate(memhandle);
+    ma_table_deallocate(memhandle);
 
     /* success */
     return MA_TRUE;
@@ -2158,14 +2175,14 @@ public Boolean MA_free_heap(Integer memhandle) /* the block to deallocate */
 /* ------------------------------------------------------------------------- */
 
 public Boolean MA_free_heap_piece(
-    Integer	memhandle,	/* the block to deallocate a piece of */
-    Integer	nelem 		/* # of elements to deallocate */)
+    Integer    memhandle,    /* the block to deallocate a piece of */
+    Integer    nelem         /* # of elements to deallocate */)
 {
-    AD		*ad;		/* AD for memhandle */
-    AD		*ad_reclaim;	/* AD for data returned */
-    AR		ar;		/* AR for data kept */
-    Pointer	client_space;	/* location of client_space */
-    ulongi	nbytes;		/* length of block for data kept */
+    AD        *ad;        /* AD for memhandle */
+    AD        *ad_reclaim;    /* AD for data returned */
+    AR        ar;        /* AR for data kept */
+    Pointer    client_space;    /* location of client_space */
+    ulongi    nbytes;        /* length of block for data kept */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_free_heap_piece]++;
@@ -2196,7 +2213,7 @@ public Boolean MA_free_heap_piece(
     }
 
     if (ma_trace) 
-	(void)printf("MA: freeing %ld elements of '%s'\n",
+    (void)printf("MA: freeing %ld elements of '%s'\n",
             (long)nelem, ad->name);
 
     /* set AR for data to keep */
@@ -2246,10 +2263,10 @@ public Boolean MA_free_heap_piece(
 /* ------------------------------------------------------------------------- */
 
 public Boolean MA_get_index(
-    Integer	memhandle,	/* block to get index for */
-    Integer	*index 		/* RETURN: base index */)
+    Integer    memhandle,    /* block to get index for */
+    MA_AccessIndex    *index         /* RETURN: base index */)
 {
-    AD		*ad;		/* AD for memhandle */
+    AD        *ad;        /* AD for memhandle */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_get_index]++;
@@ -2282,7 +2299,7 @@ public Boolean MA_get_index(
  */
 /* ------------------------------------------------------------------------- */
 
-public Pointer MA_get_mbase(Integer datatype)	/* to get base address of */
+public Pointer MA_get_mbase(Integer datatype)    /* to get base address of */
 {
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_get_mbase]++;
@@ -2317,8 +2334,8 @@ public Pointer MA_get_mbase(Integer datatype)	/* to get base address of */
 /* ------------------------------------------------------------------------- */
 
 public Boolean MA_get_next_memhandle(
-    Integer	*ithandle,	/* handle for this iterator */
-    Integer	*memhandle 	/* RETURN: handle for the next block */)
+    Integer    *ithandle,    /* handle for this iterator */
+    Integer    *memhandle     /* RETURN: handle for the next block */)
 {
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_get_next_memhandle]++;
@@ -2345,7 +2362,7 @@ public Boolean MA_get_next_memhandle(
 /* ------------------------------------------------------------------------- */
 
 public Boolean MA_get_numalign(Integer *value)
-	/* RETURN: requested alignment */
+    /* RETURN: requested alignment */
 {
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_get_numalign]++;
@@ -2365,10 +2382,10 @@ public Boolean MA_get_numalign(Integer *value)
 
 /* JN  converted to void* to avoid calling hassles */
 public Boolean MA_get_pointer(
-    Integer	memhandle,	/* block to get pointer for */
-    void	*pointer 	/* RETURN: base pointer */)
+    Integer    memhandle,    /* block to get pointer for */
+    void    *pointer     /* RETURN: base pointer */)
 {
-    AD		*ad;		/* AD for memhandle */
+    AD        *ad;        /* AD for memhandle */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_get_pointer]++;
@@ -2407,13 +2424,13 @@ public Boolean MA_get_pointer(
 /* ------------------------------------------------------------------------- */
 
 public Boolean MA_init(
-    Integer	datatype,	/* for computing storage requirement */
-    Integer	nominal_stack,	/* # of datatype elements desired for stack */
-    Integer	nominal_heap 	/* # of datatype elements desired for heap */)
+    Integer    datatype,    /* for computing storage requirement */
+    Integer    nominal_stack,    /* # of datatype elements desired for stack */
+    Integer    nominal_heap     /* # of datatype elements desired for heap */)
 {
-    ulongi	heap_bytes;	/* # of bytes for heap */
-    ulongi	stack_bytes;	/* # of bytes for stack */
-    ulongi	total_bytes;	/* total # of bytes */
+    ulongi    heap_bytes;    /* # of bytes for heap */
+    ulongi    stack_bytes;    /* # of bytes for stack */
+    ulongi    total_bytes;    /* total # of bytes */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_init]++;
@@ -2459,7 +2476,7 @@ public Boolean MA_init(
         heap_bytes = (nominal_heap * ma_sizeof[datatype]) +
             (DEFAULT_REQUESTS_HEAP * max_block_overhead(datatype));
     }
-    heap_bytes = (unsigned long)round((long)heap_bytes, (ulongi)ALIGNMENT);
+    heap_bytes = (unsigned long)mai_round((long)heap_bytes, (ulongi)ALIGNMENT);
 
     /* compute # of bytes in stack */
     if (nominal_stack < 0)
@@ -2471,7 +2488,7 @@ public Boolean MA_init(
         stack_bytes = (nominal_stack * ma_sizeof[datatype]) +
             (DEFAULT_REQUESTS_STACK * max_block_overhead(datatype));
     }
-    stack_bytes = (unsigned long)round((long)stack_bytes, (ulongi)ALIGNMENT);
+    stack_bytes = (unsigned long)mai_round((long)stack_bytes, (ulongi)ALIGNMENT);
 
     /* segment consists of heap and stack */
     total_bytes = heap_bytes + stack_bytes;
@@ -2481,7 +2498,7 @@ public Boolean MA_init(
     mallopt(M_TRIM_THRESHOLD, -1);
 #endif
     /* allocate the segment of memory */
-#ifdef ENABLE_USE_ARMCI_MEM_OPTION
+#ifdef ENABLE_ARMCI_MEM_OPTION
     if(getenv("MA_USE_ARMCI_MEM"))
     {
         void* ARMCI_Malloc_local(long bytes);
@@ -2579,8 +2596,8 @@ public Boolean MA_init_memhandle_iterator( Integer *ithandle)
 
 public Integer MA_inquire_avail(Integer datatype)
 {
-    long	gap_length;	/* # of bytes between heap and stack */
-    Integer	nelem_gap;	/* max elements containable in gap */
+    long    gap_length;    /* # of bytes between heap and stack */
+    Integer    nelem_gap;    /* max elements containable in gap */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_inquire_avail]++;
@@ -2643,9 +2660,9 @@ public Integer MA_inquire_avail(Integer datatype)
 
 public Integer MA_inquire_heap(Integer datatype)
 {
-    long	gap_length;	/* # of bytes between heap and partition */
-    Integer	nelem_gap;	/* max elements containable in gap */
-    Integer	nelem_frag;	/* max elements containable in any frag */
+    long    gap_length;    /* # of bytes between heap and partition */
+    Integer    nelem_gap;    /* max elements containable in gap */
+    Integer    nelem_frag;    /* max elements containable in any frag */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_inquire_heap]++;
@@ -2714,9 +2731,9 @@ public Integer MA_inquire_heap(Integer datatype)
 
 public Integer MA_inquire_heap_check_stack(Integer datatype)
 {
-    long	gap_length;	/* # of bytes between heap and partition */
-    Integer	nelem_gap;	/* max elements containable in gap */
-    Integer	nelem_frag;	/* max elements containable in any frag */
+    long    gap_length;    /* # of bytes between heap and partition */
+    Integer    nelem_gap;    /* max elements containable in gap */
+    Integer    nelem_frag;    /* max elements containable in any frag */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_inquire_heap_check_stack]++;
@@ -2784,9 +2801,9 @@ public Integer MA_inquire_heap_check_stack(Integer datatype)
 
 public Integer MA_inquire_heap_no_partition(Integer datatype)
 {
-    long	gap_length;	/* # of bytes between heap and partition */
-    Integer	nelem_gap;	/* max elements containable in gap */
-    Integer	nelem_frag;	/* max elements containable in any frag */
+    long    gap_length;    /* # of bytes between heap and partition */
+    Integer    nelem_gap;    /* max elements containable in gap */
+    Integer    nelem_frag;    /* max elements containable in any frag */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_inquire_heap_no_partition]++;
@@ -2852,8 +2869,8 @@ public Integer MA_inquire_heap_no_partition(Integer datatype)
 
 public Integer MA_inquire_stack(Integer datatype)
 {
-    long	gap_length;	/* # of bytes between partition and stack */
-    Integer	nelem_gap;	/* max elements containable in gap */
+    long    gap_length;    /* # of bytes between partition and stack */
+    Integer    nelem_gap;    /* max elements containable in gap */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_inquire_stack]++;
@@ -2919,8 +2936,8 @@ public Integer MA_inquire_stack(Integer datatype)
 
 public Integer MA_inquire_stack_check_heap(Integer datatype)
 {
-    long	gap_length;	/* # of bytes between partition and stack */
-    Integer	nelem_gap;	/* max elements containable in gap */
+    long    gap_length;    /* # of bytes between partition and stack */
+    Integer    nelem_gap;    /* max elements containable in gap */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_inquire_stack_check_heap]++;
@@ -2988,8 +3005,8 @@ public Integer MA_inquire_stack_check_heap(Integer datatype)
 
 public Integer MA_inquire_stack_no_partition(Integer datatype)
 {
-    long	gap_length;	/* # of bytes between heap and partition */
-    Integer	nelem_gap;	/* max elements containable in gap */
+    long    gap_length;    /* # of bytes between heap and partition */
+    Integer    nelem_gap;    /* max elements containable in gap */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_inquire_stack_no_partition]++;
@@ -3048,7 +3065,7 @@ public Integer MA_inquire_stack_no_partition(Integer datatype)
 
 public Boolean MA_pop_stack(Integer memhandle) /* the block to deallocate */
 {
-    AD		*ad;		/* AD for memhandle */
+    AD        *ad;        /* AD for memhandle */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_pop_stack]++;
@@ -3064,7 +3081,7 @@ public Boolean MA_pop_stack(Integer memhandle) /* the block to deallocate */
         return MA_FALSE;
 
     if (ma_trace) 
-	(void)printf("MA: popping '%s'\n", ad->name);
+    (void)printf("MA: popping '%s'\n", ad->name);
 
     /* delete block from used list */
     if (list_delete(ad, &ma_sused) != ad)
@@ -3085,7 +3102,7 @@ public Boolean MA_pop_stack(Integer memhandle) /* the block to deallocate */
 #endif /* STATS */
 
     /* free memhandle */
-    table_deallocate(memhandle);
+    ma_table_deallocate(memhandle);
 
     /* success */
     return MA_TRUE;
@@ -3101,7 +3118,7 @@ public void MA_print_stats(Boolean printroutines)
 {
 #ifdef STATS
 
-    int		i;		/* loop index */
+    int        i;        /* loop index */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_print_stats]++;
@@ -3159,11 +3176,11 @@ public void MA_print_stats(Boolean printroutines)
 /* ------------------------------------------------------------------------- */
 
 public Boolean MA_push_get(
-    Integer	datatype,	/* of elements in this block */
-    Integer	nelem,		/* # of elements in this block */
-    const char	*name,		/* assigned to this block by client */
-    Integer	*memhandle,	/* RETURN: handle for this block */
-    Integer	*index 		/* RETURN: index for this block */)
+    Integer    datatype,    /* of elements in this block */
+    Integer    nelem,        /* # of elements in this block */
+    const char    *name,        /* assigned to this block by client */
+    Integer    *memhandle,    /* RETURN: handle for this block */
+    MA_AccessIndex  *index    /* RETURN: index for this block */)
 {
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_push_get]++;
@@ -3187,16 +3204,16 @@ public Boolean MA_push_get(
 /* ------------------------------------------------------------------------- */
 
 public Boolean MA_push_stack(
-    Integer	datatype,	/* of elements in this block */
-    Integer	nelem,		/* # of elements in this block */
-    const char	*name,		/* assigned to this block by client */
-    Integer	*memhandle 	/* RETURN: handle for this block */)
+    Integer    datatype,    /* of elements in this block */
+    Integer    nelem,        /* # of elements in this block */
+    const char    *name,        /* assigned to this block by client */
+    Integer    *memhandle     /* RETURN: handle for this block */)
 {
-    AR		ar;		/* allocation request */
-    AD		*ad;		/* AD for newly allocated block */
-    Pointer	client_space;	/* location of client_space */
-    ulongi	nbytes;		/* length of block for ar */
-    Pointer	new_sp;		/* new ma_sp */
+    AR        ar;        /* allocation request */
+    AD        *ad;        /* AD for newly allocated block */
+    Pointer    client_space;    /* location of client_space */
+    ulongi    nbytes;        /* length of block for ar */
+    Pointer    new_sp;        /* new ma_sp */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_push_stack]++;
@@ -3208,7 +3225,7 @@ public Boolean MA_push_stack(
 #endif /* VERIFY */
 
     if (ma_trace) 
-	(void)printf("MA: pushing '%s' (%d)\n", name, (int)nelem);
+    (void)printf("MA: pushing '%s' (%d)\n", name, (int)nelem);
 
     /* verify initialization */
     if (!ma_initialized)
@@ -3298,7 +3315,7 @@ public Boolean MA_push_stack(
 #endif /* STATS */
 
     /* convert AD to memhandle */
-    if ((*memhandle = table_allocate((TableData)ad)) == TABLE_HANDLE_NONE)
+    if ((*memhandle = ma_table_allocate((TableData)ad)) == TABLE_HANDLE_NONE)
         /* failure */
         return MA_FALSE;
     else
@@ -3314,7 +3331,7 @@ public Boolean MA_push_stack(
 
 public Boolean MA_set_auto_verify(Boolean  value /* to set flag to */)
 {
-    Boolean	old_value;	/* of flag */
+    Boolean    old_value;    /* of flag */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_set_auto_verify]++;
@@ -3333,7 +3350,7 @@ public Boolean MA_set_auto_verify(Boolean  value /* to set flag to */)
 
 public Boolean MA_set_error_print(Boolean value /* to set flag to */)
 {
-    Boolean	old_value;	/* of flag */
+    Boolean    old_value;    /* of flag */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_set_error_print]++;
@@ -3352,7 +3369,7 @@ public Boolean MA_set_error_print(Boolean value /* to set flag to */)
 
 public Boolean MA_set_hard_fail( Boolean value /* to set flag to */)
 {
-    Boolean	old_value;	/* of flag */
+    Boolean    old_value;    /* of flag */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_set_hard_fail]++;
@@ -3397,12 +3414,12 @@ public Boolean MA_set_numalign(Integer  value)
 /* ------------------------------------------------------------------------- */
 
 public Integer MA_sizeof(
-    Integer	datatype1,	/* of source elements */
-    Integer	nelem1,		/* # of source elements */
-    Integer	datatype2 	/* of target elements */)
+    Integer    datatype1,    /* of source elements */
+    Integer    nelem1,        /* # of source elements */
+    Integer    datatype2     /* of target elements */)
 {
-    ulongi	source_bytes;	/* nelem1 * ma_sizeof[datatype1] */
-    int		ceiling;	/* 1 iff ceiling alters result */
+    ulongi    source_bytes;    /* nelem1 * ma_sizeof[datatype1] */
+    int        ceiling;    /* 1 iff ceiling alters result */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_sizeof]++;
@@ -3467,11 +3484,11 @@ public Integer MA_sizeof(
 
 public Integer MA_sizeof_overhead(Integer datatype) 
 {
-    int		overhead_bytes;	/* max bytes of overhead for any block */
-    int		ceiling;	/* 1 iff ceiling alters result */
-    int		max_sizeof;	/* max over i of ma_sizeof[i] */
-    int		biggest_datatype=0; /* corresponds to max_sizeof */
-    int		i;		/* loop index */
+    int        overhead_bytes;    /* max bytes of overhead for any block */
+    int        ceiling;    /* 1 iff ceiling alters result */
+    int        max_sizeof;    /* max over i of ma_sizeof[i] */
+    int        biggest_datatype=0; /* corresponds to max_sizeof */
+    int        i;        /* loop index */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_sizeof_overhead]++;
@@ -3546,18 +3563,18 @@ public Boolean MA_verify_allocator_stuff()
 {
 #ifdef VERIFY
 
-    char	*preamble;	/* printed before block error messages */
+    char    *preamble;    /* printed before block error messages */
 
-    int		heap_blocks;
-    int		bad_heap_blocks;
-    int		bad_heap_checksums;
-    int		bad_heap_lguards;
-    int		bad_heap_rguards;
-    int		stack_blocks;
-    int		bad_stack_blocks;
-    int		bad_stack_checksums;
-    int		bad_stack_lguards;
-    int		bad_stack_rguards;
+    int        heap_blocks;
+    int        bad_heap_blocks;
+    int        bad_heap_checksums;
+    int        bad_heap_lguards;
+    int        bad_heap_rguards;
+    int        stack_blocks;
+    int        bad_stack_blocks;
+    int        bad_stack_checksums;
+    int        bad_stack_lguards;
+    int        bad_stack_rguards;
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_verify_allocator_stuff]++;
@@ -3591,7 +3608,7 @@ public Boolean MA_verify_allocator_stuff()
 
     if ((bad_heap_blocks > 0) || (bad_stack_blocks > 0))
     {
-        Boolean	old_ma_error_print;
+        Boolean    old_ma_error_print;
 
         /* print postamble */
         (void)printf("MA_verify_allocator_stuff: scan completed\n");

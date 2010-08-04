@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include "xregion.h"
 
 void Error(char *message, int err_num)

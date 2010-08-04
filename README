@@ -1,361 +1,459 @@
+GLOBAL ARRAYS
+~~~~~~~~~~~~~
+
+DISCLAIMER
+==========
+
+This material was prepared as an account of work sponsored by an
+agency of the United States Government.  Neither the United States
+Government nor the United States Department of Energy, nor Battelle,
+nor any of their employees, MAKES ANY WARRANTY, EXPRESS OR IMPLIED,
+OR ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY,
+COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT,
+SOFTWARE, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT
+INFRINGE PRIVATELY OWNED RIGHTS.
+
+ACKNOWLEDGMENT
+==============
+
+This software and its documentation were produced with United States
+Government support under Contract Number DE-AC06-76RLO-1830 awarded
+by the United States Department of Energy. The United States
+Government retains a paid-up non-exclusive, irrevocable worldwide
+license to reproduce, prepare derivative works, perform publicly and
+display publicly by or for the US Government, including the right to
+distribute to other US Government contractors.
+
+The primary current source of funding for development of GA is the DoE-2000
+ACTS project. GA is a part of the ACTS toolkit:
+
+    http://acts.nersc.gov 
+
+FOR THE IMPATIENT
+=================
+
+The command::
+
+    ./configure && make && make install
+
+should compile the static GA library (libga.a) to use sockets and install
+headers and libraries to /usr/local/include and /usr/local/lib, respectively.
+
+Please refer to the INSTALL file for generic build instructions.  That is a
+good place to start if you are new to using "configure; make; make install"
+types of builds.  Detailed instructions are covered later in this file.
+
+QUESTIONS/HELP/SUPPORT/BUG-REPORT
+=================================
+
+email: hpctools@pnl.gov
+
+If you encounter any problems, please first refer to the file NOTES located in
+the same directory and see the GA support webpage:
+
+    http://www.emsl.pnl.gov/docs/global/support.html
+
+WHERE IS THE DOCUMENTATION?
+===========================
+
+The GA webpage has the most current versions of the Fortran and C documentation
+and the User's Manual in the HTML format:
+
+    http://www.emsl.pnl.gov/docs/global/
 
 ABOUT THIS SOFTWARE
-~~~~~~~~~~~~~~~~~~~
-This directory contains the Global Arrays (GA), ARMCI run-time library, and
-Memory Allocator (MA), parallel I/O libraries (DRA,EAF,SF),
-TCGMSG, and TCGMSG-MPI packages bundled together. 
+===================
 
-  Global Arrays is a portable Non-Uniform Memory Access (NUMA) shared-
-  memory programming environment for distributed and shared memory 
-  computers. It augments the message-passing model by providing
-  a shared-memory like access to distributed dense arrays.
+This directory contains the Global Arrays (GA), Aggregate Remote Memory Copy
+Interface (ARMCI) run-time library, and Memory Allocator (MA), parallel I/O
+libraries (DRA,EAF,SF), TCGMSG, and TCGMSG-MPI packages bundled together. 
 
-  ARMCI provides one-sided remote memory operations used by GA.
+Global Arrays is a portable Non-Uniform Memory Access (NUMA) shared- memory
+programming environment for distributed and shared memory computers. It
+augments the message-passing model by providing a shared-memory like access to
+distributed dense arrays.
 
-  DRA (Disk Resident Arrays) is a parallel I/O library
-  that maintains dense 2-dim arrays on disk. 
+ARMCI provides one-sided remote memory operations used by GA.
 
-  SF (Shared Files) is a parallel I/O library that allows
-  noncollective I/O to a parallel file.
+DRA (Disk Resident Arrays) is a parallel I/O library that maintains dense 2-dim
+arrays on disk. 
 
-  EAF (Exclusive Access Files) is parallel I/O library that 
-  supports I/O to private files.
+SF (Shared Files) is a parallel I/O library that allows noncollective I/O to a
+parallel file.
 
-  TCGMSG is a simple, efficient, but becoming obsolete message-passing library.
+EAF (Exclusive Access Files) is parallel I/O library that supports I/O to
+private files.
 
-  TCGMSG-MPI is a TCGMSG interface implementation on top of MPI and ARMCI. 
+TCGMSG is a simple, efficient, but becoming obsolete message-passing library.
 
-  MA is a dynamic memory allocator/manager for Fortran and C programs.
+TCGMSG-MPI is a TCGMSG interface implementation on top of MPI and ARMCI. 
 
-  GA++ is a C++ binding for global arrays.
+MA is a dynamic memory allocator/manager for Fortran and C programs.
+
+GA++ is a C++ binding for global arrays.
+
+See file 'COPYRIGHT' for copying conditions.
+See file 'INSTALL' for compilation and installation instructions (generic).
+See file 'NEWS' for a list of major changes in the current release.
+See file 'AUTHORS' for the names of anyone who has contributed to GA.
+See file 'NOTES' for a few platform-specific symptoms and fixes.
 
 DIRECTORY STRUCTURE
-~~~~~~~~~~~~~~~~~~~
+===================
 
-g
-|-- config           (make configuration files)
-|
-|--    lib           (final location of all the libraries)
-|
-|-- LinAlg           (linear algebra software used by GA)
-|        |-- lapack+blas
-|
-|-- global
-|        |-- src     (source code for GA library)
-|        |-- trace   (library and programs to generate and process tracefiles)
-|        |-- X       (xregion visualization program for GA)
-|        |-- doc     (paper & documentation in PostScript, HTML & plain text)
-|        |-- testing (GA test programs and performance results)
-|
-|-- armci
-|        |-- src     (source code for ARMCI library)
-|        |-- doc     (documentation for ARMCI library)
-|        |-- config  (configuration makefile includes)
-|        |-- lib     (this is where the library is built if standalone)
-|
-|-- pario
-|        |-- elio    ("device" layer for other parallel I/O models)
-|        |-- dra     (Disk Resident Library code)
-|        |-- eaf     (Exclusive Access Files Library code)
-|        |-- sf      (Shared Files Library code)
-|
-|-- tcgmsg           (simple, legacy message-passing library)
-|        |-- ipcv4.0
-|        |-- ipcv5.0
-|
-|-- tcgmsg-mpi       (TCGMSG on top of MPI)
-|
-|--     ma           (Memory Allocator) 
-|        |-- man
-|
-|-- ga++              (C++ Bindings for Global Arrays) [new]
-	|--src
-	|--testing
+- build-aux      (make configuration files)
 
+- m4             (autoconf macros)
+
+- compat         (compatibility source files for missing system features)
+
+- LinAlg         (linear algebra software used by GA)
+
+  + lapack+blas
+
+- gaf2c          (Fortran-to-C compatibility library and tests)
+
+- global
+
+  + src          (source code for GA library)
+  + trace        (library and programs to generate and process tracefiles)
+  + X            (xregion visualization program for GA)
+  + doc          (paper & documentation in PostScript, HTML & plain text)
+  + testing      (GA test programs and performance results)
+
+- armci
+
+  + src          (source code for ARMCI library)
+  + doc          (documentation for ARMCI library)
+  + config       (configuration makefile includes)
+  + lib          (compatibility source files for missing system features)
+
+- pario
+
+  + elio         ("device" layer for other parallel I/O models)
+  + dra          (Disk Resident Array Library code)
+  + eaf          (Exclusive Access Files Library code)
+  + sf           (Shared Files Library code)
+
+- tcgmsg         (simple, legacy message-passing library)
+
+  + ipcv4.0    
+  + ipcv5.0    
+  + tcgmsg-mpi   (TCGMSG on top of MPI)
+
+- ma             (Memory Allocator) 
+
+  + man
+
+- ga++           (C++ Bindings for Global Arrays)
+
+  + src          (source code for GA C++ bindings)
+  + testing      (test programs)
 
 
 HOW TO BUILD THE PACKAGE?
-~~~~~~~~~~~~~~~~~~~~~~~~
-NOTE: Also, please refer GA user manual (Chapter 2) for more updated
-installation instructions. http://www.emsl.pnl.gov/docs/global/user.html
+=========================
 
-1. MAKE program
-You can build GA, ARMCI, MA and TCGMSG libraries separately or all libraries
-and (a subset of) test programs automatically. To build the GA library, you 
-need GNU make version >3.68. On the native Windows NT/2000 (not Cygwin/Interix) 
-the Microsoft's nmake is used.
+Please refer to the INSTALL file for generic build instructions.  That is a
+good place to start if you are new to using "configure; make; make install"
+types of builds.  The following will cover platform-specific considerations as
+well as the various optional features of GA.  Customizations to the GA build
+via the configure script are discussed next.
 
-To learn if your default make is a GNU make, try to invoke it with the -v
-flag.  At some sites, GNU make is installed under the name of
-"gmake" or "gnumake". If none of these is located in your default
-path, you can also try /usr/local/bin or other location where GNU
-programs might be stored.
+Configuration Options
+---------------------
 
-2. Configuration variables
-The GA package relies on the GNU make capabilities supplemented by by
-user provided environment variables. In the future we are planning to employ 
-autoconf to simplify the installation.
+There are many options available when configuring GA.  Although configure can
+be safely run within this distributions' root folder, we recommend performing
+an out-of-source (aka VPATH) build.  This will cleanly separate the generated
+Makefiles and compiled object files and libraries from the source code.  This
+will allow, for example, one build using sockets versus another build using
+OpenIB for the communication layer to use the same source tree e.g.::
 
-The currently recognized environment variables:
+    mkdir bld_mpi_sockets && cd bld_mpi_sockets && ../configure
+    mkdir bld_mpi_openib  && cd bld_mpi_openib  && ../configure --with-openib
 
-   Name           Type       Platforms      Meaning
-   -------------------------------------------------------------------
-   TARGET        mandatory    all          indentifies the platform name
-   TARGET_CPU    optional     SGI          specifies CPU for better optimization
-                 optional     LINUX/Ultra  selects CPU flavor of the OS
-                 optional     LINUX/PowerPC         "
-   ARMCI_NETWORK optional     LINUX,DECOSF selects communication protocols
-                              SOLARIS
-   USE_MPI       optional     all          selects MPI message passing library
-   MPI_INCLUDE   optional     all          see next section 
-   MPI_LIB       optional     all          see next section
-   LIBMPI        optional     all          overwrites -lmpi when linking
-   LARGE_FILES   optional     64-bit OSes  allows to use large >2Gb file APIs
-   CC            optional     all          overwrite default C compiler name
-   FC            optional     all          overwrite fortran compiler name
-   COPT          optional     all          overwrite default C compler flags 
-   FOPT          optional     all          overwrite default fortran comp flags 
-   OLD_G77       optional     LINUX        drops more recent flags for g77
+Regardless of your choice to perform a VPATH build, the following should
+hopefully elucidate the myriad options to configure.  Only the options
+requiring additional details are documented here.  ./configure --help will
+certainly list more options in addition to limited documentation.
 
-   
-3. Fast path to building the package (default compilers and settings)
+--disable-f77           Disable Fortran code. This used to be the old
+                        GA_C_CORE or NOFORT environment variables which
+                        enabled the C++ bindings. However, it is severely
+                        broken. There are certain cases where Fortran code is
+                        required but this will not inhibit the building of the
+                        C++ bindings.  In the future we may be able to
+                        eliminate the need for the Fortran compiler/linker.
+                        Use at your own risk (of missing symbols at link-time.)
+--enable-cxx            Build C++ interface. This will require the C++ linker
+                        to locate the Fortran libraries (handled
+                        automatically) but user C++ code will require the same
+                        considerations (C++ linker, Fortran libraries.)
+--disable-opt           Don't use hard-coded optimization flags. GA is a
+                        highly-optimized piece of software. There are certain
+                        optimization levels or flags that are known to break
+                        the software. If you experience mysterious faults,
+                        consider rebuilding without optimization by using this
+                        option.
+--enable-peigs          Enable Parallel Eigensystem Solver interface. This
+                        will build the stubs required to call into the peigs
+                        library (external). 
+--enable-checkpoint     Enable checkpointing.  Untested.  For use with old
+                        X-based visualization tool.
+--enable-profile        Enable profiling. Not sure what this does, sorry.
+--enable-trace          Enable tracing. Not sure what this does, sorry.
+--enable-thread-safety  **unsupported** Turn on thread safety.
+--enable-underscoring   Force single underscore for all external Fortran
+                        symbols. Usually, configure is able to detect the name
+                        mangling scheme of the detected Fortran compiler and
+                        will default to using what is detected. This includes
+                        any variation of zero, one, or two underscores or
+                        whether UPPERCASE or lowercase symbols are used. If
+                        you want to force a single underscore which was the
+                        default of older GA builds, use this option.
+                        Otherwise, you can use the FFLAGS environment variable
+                        to override the Fortran compiler's or platform's
+                        defaults e.g. configure FFLAGS=-fno-underscoring.
+--enable-i4             Use 4 bytes for Fortran INTEGER size. Otherwise, the
+                        default INTEGER size is set to the results of the C
+                        sizeof(void*) operator.
+--enable-i8             Use 8 bytes for Fortran INTEGER size. Otherwise, the
+                        default INTEGER size is set to the results of the C
+                        sizeof(void*) operator.
+--enable-shared         Build shared libraries [default=no]. Useful, for
+                        example, if you plan on wrapping GA with an
+                        interpreted language such as Python. Otherwise, some
+                        systems only support static libraries (or vice versa)
+                        but static libraries are the default.
 
-NOTE: the instructions below assume that you are not compiling for clusters
-equipped with special networks such as Myrinet, Quadrics, or Giganet. If you do,
-you will have to refer to files in armci/doc directory for instructions
-on building ARMCI (a run-time library for GA) to exploit these networks.
-Otherwise, GA will not be able to used them effectively or might even hang.
+For most of the external software packages an optional argument is allowed
+(represented as ARG below.) **ARG can be omitted** or can be one or more
+whitespace-separated directories, linker or preprocessor directives.  For
+example::
 
-GA can be built to work with MPI or TCGMSG. Since the TCGMSG package is
-small (comparing to portable MPI implementations), compiles fast, it is 
-still bundled with the GA package.  If this is acceptable, you 
-ONLY NEED TO CALL GNU MAKE IN THE TOP DIRECTORY specifying TARGET platform
+    --with-mpi="/path/to/mpi -lmylib -I/mydir"
+    --with-mpi=/path/to/mpi/base
+    --with-mpi=-lmpich
 
-   gmake TARGET=xxxx
+The messaging libraries supported include MPI, TCGMSG, and TCGMSG over MPI.  If
+you omit their respective --with-* option, MPI is the default.  GA can be built
+to work with MPI or TCGMSG. Since the TCGMSG package is small (comparing to
+portable MPI implementations), compiles fast, it is still bundled with the GA
+package.
 
-or a better solution (for C shell users) is
+--with-mpi=ARG          Select MPI as the messaging library (default). If you
+                        omit ARG, we attempt to locate the MPI compiler
+                        wrappers. If you supply anything for ARG, we will
+                        parse ARG as indicated above.
+--with-tcgmsg=ARG       Select TCGMSG as the messaging library; if
+                        --with-mpi is also specified then TCGMSG over MPI is
+                        used.
+--with-vampir=ARG       Enable VAMPIR performance tracing.
+                        http://www.vampir.eu
+--with-blas=ARG         Use external BLAS library. If not found, an internal
+                        one is built.
+--with-lapack=ARG       Use external LAPACK library. If not found, an internal
+                        one is built.
+--with-scalapack=ARG    Use external ScaLAPACK library.
 
-   setenv TARGET xxxx
-   gmake
+The ARMCI networks supported are listed next.  Our ability to automatically
+locate required headers libraries is currently inadequate.  Therefore, you will
+likely need to specify the optional ARG pointing to the necessary directories
+and/or libraries. sockets is the default ARMCI network if nothing else is
+specified.
 
-   where xxxx is your machine. The list of supported machines can
-   be found here: http://www.emsl.pnl.gov/docs/global/um/build.html
+--with-bgml=ARG         select armci network as IBM BG/L
+--with-cray-shmem=ARG   select armci network as Cray XT shmem
+--with-dcmf=ARG         select armci network as IBM BG/P Deep Computing
+                        Message Framework
+--with-lapi=ARG         select armci network as IBM LAPI
+--with-mpi-spawn=ARG    select armci network as MPI-2 dynamic process mgmt
+--with-openib=ARG       select armci network as Infiniband OpenIB
+--with-portals=ARG      select armci network as Cray XT portals
+--with-sockets=ARG      select armci network as Ethernet TCP/IP (default)
 
-If you have one of those, an older version GA 2.4 might still still work. 
-Otherwise please contact us for help.
+There are some influential environment variables as documented in configure
+--help, however there are a few that are special to GA.
 
-The GA test program will be created in ./global/testing/test.x.
+- THREAD_LIBRARY
+  See --enable-thread-safety. I don't know what this does, sorry.
 
+- F77_INT_FLAG
+  Fortran compiler flag to set the default INTEGER size. We know about certain
+  Fortran flags that set the default INTEGER size, but there will certainly be
+  some new (or old) ones that we don't know about. If the configure test to
+  determine the correct flag fails, please try setting this variable and
+  rerunning configure.
 
-4. Message-passing library support for this package 
+- F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+  If cross compiling, set to either "yes" (default) or "no" (after string).
+  For compatibility between Fortran and C, a Fortran subroutine written in C
+  that takes a character string must take an additional argument (one per
+  character string) indicating the length of the string. This 'hidden'
+  argument appears either immediately after the string in the argument list
+  or after all other arguments to the function. This is compiler dependent. We
+  attempt to detect this behavior automatically, but in the case of
+  cross-compiled systems it may be necessary to specify the less usual after
+  string convention the gaf2c/testarg program crashes.
 
-library    suported platforms                     notes
--------------------------------------------------------------------------
-  MPI          All                                 -
-  TCGMSG       Sun, IBM, SP, SGI, HPUX, Compaq   can use TCGMSG-MPI on others
-           
-If you would like to build the MPI version of GA on a platform that does
-not have a vendor implementation of MPI and/or its header and library
-files are installed in non-standard locations, you need to:
-. provide locations of MPI include (MPI_INCLUDE) and library (MPI_LIB) files,
-. define an environment variable USE_MPI, and then 
-. call GNU make as described above. 
-This will built a version that allows using both the MPI and TCGMSG
-functions in the same program. See README file in ./global for
-instructions on how to built GA package with MPI and without the
-TCGMSG-MPI library. If the vendor of your machine provides MPI, and the
-include and library files are located in the standard system
-directories, you need to define only USE_MPI variable.
+Cross-Compilation Issues
+------------------------
 
-TARGET, MPI_INCLUDE, MPI_LIB, USE_MPI can be defined as environment
-variables, for example under the C shell:
- 
-     setenv TARGET LINUX
-     setenv MPI_INCLUDE /usr/local/mpich/include       (location of mpi.h)
-     setenv MPI_LIB /usr/local/mpich/lib/ch_shmem      (location of libmpi.a)
-     setenv USE_MPI yes
+Certain platforms cross-compile from a login node for a compute node, or one
+might choose to cross-compile for other reasons. Cross-compiling requires the
+use of the --host option to configure which indicates to configure that certain
+run-time tests should not be executed. See INSTALL for details on use of the
+--host option.
 
-  or directly on the command line when calling GNU make, for example:
+Two of our target platforms are known to require cross-compilation, Cray XT and
+IBM Blue Gene.
 
-       gmake TARGET=LINUX MPI_INCLUDE=/usr/local/mpich/include \
-             MPI_LIB=/usr/local/mpich/lib/ch_shmem USE_MPI=yes
+Cray XT
++++++++
 
-If the MPI library you are using is not named libmpi.a you might need
-to define an additional variable LIBMPI, for example
+It has been noted that configure still succeeds without the use of the --host
+flag.  If you experience problems without --host, we recommend::
 
-     gmake LIBMPI=-lmpich
+    configure --host=x86_64-unknown-linux-gnu
 
-Some versions (1.1.X) of MPICH (an MPI implementation from ANL/Missisipi State) 
-keep the MPI header files in more than one directory. One can :
+And if that doesn't work (cross-compilation is not detected) you must then
+*force* cross-compilation using both --host and --build together::
 
-.    specify in MPI_INCLUDE a list of directories separated by comma
-     e.g., setenv MPI_INCLUDE "/usr/local/include,/usr/local/mpich/build/alpha",
-     or  
-.    use mpicc and mpif77 to build GA right out of the box on UNIX 
-     workstations:
+    configure --host=x86_64-unknown-linux-gnu --build=x86_64-unknown-linux-gnu
 
-        make FC=mpif77 CC=mpicc
-or 
-        make FC=/usr/local/bin/mpif77 CC=/usr/local/bin/mpicc LIBMPI=-lmpich
+BlueGene/P
+++++++++++
 
-One disadvantage of the second approach it that GA makefile might be not able
-to determine which compiler (e.g., GNU or PGI) is called underneath
-by the MPICH compiler wrappers. This could cause the package to build 
-incorrectly (test programs do not compile/link).
+Currently the only way to detect the BGP platform and compile correctly is to
+use::
 
-5. Compiler issues 
- 
-Unless otherwise noted (LINUX64) you can try to overwrite the default
-compiler names by defining FC for Fortran and CC for C compilers e.g.,
-"make FC=f90 CC=gcc"
+    configure --host=powerpc-bgp-linux
 
-With older version of g77 on Linux, define OLD_G77 to avoid problems
-with compiler not recognizing some newer options
+The rest of the configure options apply as usual e.g. --with-dcmf in this case.
 
-What compiler/platform configurations were tested and should work:
- - compilers provided by the vendor of your OS/hardware
- - gcc/g77 pair on LINUX (but not LINUX64/alpha where use Compaq compilers)
- - Portland Group (PGI) fortran compilers (pgf77 and pgf90) on Linux/Intel
-   Note that PGI cc version 3.1 has bugs in varargs.h header file.
+Compiler Selection 
+------------------
 
+Unless otherwise noted you can try to overwrite the default compiler names
+detected by configure by defining F77, CC, and CXX for Fortran (77), C, and C++
+compilers, respectively.  Or when using the MPI compilers MPIF77, MPICC, and
+MPICXX for MPI Fortran (77), C, and C++ compilers, respectively::
 
-6. Special networks and communication protocols
+    configure F77=f90 CC=gcc
+    configure MPIF77=mpif90 MPICC=mpicc
 
-For Myrinet-based Linux clusters and Quadrix-based Compaq Alphaserver
-clusters, ARMCI library needs to be informed that you want to use
-the non-default (i.e., TCP/IP socket) communication protocols.
-This is critical to assure that the appropriate high-performance
-protocols are used.
+Although you can change the compiler at make-time it will likely fail.  Many
+platform-specific compiler flags are detected at configure-time based on the
+compiler selection. If changing compilers, we recommend rerunning configure as
+above.
 
-For Myrinet, define ARMCI_NETWORK=GM,  GM_LIB and GM_INCLUDE definitions
-for the location of the Myricom GM library and header files.
-Please refer to armci/doc/README.myrinet for installation details.
+After Configuration
+-------------------
 
-For Quadrics (QsNet1), define ARMCI_NETWORK=QUADRICS or ARMCI_NETWORK=ELAN3. 
-For Quadrics (QsNet2), define ARMCI_NETWORK=ELAN4. 
-You can also specify QUADRICS_INCLUDE and QUADRICS_LIB for nonstandard 
-installation of the libraries.
+By this point we assume you have successfully run configure either from the
+base distribution directory or from a separate build directory (aka VPATH
+build.)  You are now ready to run 'make'.  You can optionally run parallel
+make using the "-j" option which significantly speeds up the build.  If using
+the MPI compiler wrappers, occasionally using "-j" will cause build failures
+because the MPI compiler wrapper creates a temporary symlink to the mpif.h
+header.  In that case, you won't be able to use the "-j" option.  Further, the
+influential environment variables used at configure-time can be overridden at
+make-time in case problems are encountered.  For example::
 
-For Infiniband (VAPI), define ARMCI_NETWORK=MELLANOX. You can also specify 
-IB_INCLUDE and IB_LIB for nonstandard installation of the libraries. 
+    ./configure CFLAGS=-Wimplicit
+    ...
+    make CFLAGS="-Wimplicit -g -O0"
 
+One particularly influential make variable is "V" which controls the verbosity
+of the make output. This variable corresponds to the --dis/enable-silent-riles
+configure-time option, but I often prefer the make-time variable::
 
-7. Other issues 
+    make V=0 (configure  --enable-silent-rules)
+    make V=1 (configure --disable-silent-rules)
 
-(a) LINUX64 supports ALPHA, Itanium, Opteron, and Em64T processors only. 
+Test Programs
+-------------
 
-(b) The SGI_N32 version is recommended on all newer SGI boxes including
-the O2, Octane, Origin, Indigo2, and PowerChallenge systems
-unless the system has lots of memory and your program uses 
-huge arrays (>4GB) in which case 64-bit addressing is required
-(SGITFP version). In addition, TARGET_CPU environment
-variable can be used to choose the optimal compiler flags 
-for R8000 and R10000 processors.
+Running "make checkprogs" will build most test and example programs.  Note that
+not all tests are built -- some tests depend on certain features being
+detected or enabled during configure.  These programs are not intented to be
+examples of good GA coding practices because they often include private
+headers.  However, they help us debug or time our GA library.
 
-(c) In 64 bit platforms, if you are using blas libraries that takes
-integer as 8 bytes, then set the following environment variables:
-	setenv BLAS_I8 yes
-	setenv BLAS_LIB specify_your_blas_library
-		e.g.setenv BLAS_LIB -L/usr/lib/libblas.a
+Test Suite
+++++++++++
 
-(d) support for two underscores in fortran names on Linux/Cygwin
-    is enabled by setting F2C_TWO_UNDERSCORES.
-          (e.g. setenv F2C_TWO_UNDERSCORES 1)
+Running "make check" will build most test and example programs (See "make
+checkprogs" notes above) in addition to running the test suite.  The test
+suite runs both the serial and parallel tests.  The test suite must know how
+to launch the parallel tests via the MPIEXEC variable.  Please read your MPI
+flavor's documentation on how to launch, or if using TCGMSG you will use the
+"parallel" tool.  For example, the following is the command to launch the test
+suite when compiled with OpenMPI::
 
-(e) To turn Async I/O on under Linux, set environment variable USE_LINUXAIO=y
+    make check MPIEXEC="mpiexec -np 4"
 
-8. Performance tuning
+All tests have a per-test log file containing the output of the test.  So if
+the test is global/testing/test.x, the log file would be
+global/testing/test.log.  The output of failed tests is collected in the
+top-level log summary test-suite.log.
 
-global/src/config.h has a varible called AVOID_MA_STORAGE. If defined, this
-variable forces GA to use ARMCI memory which can lead to better performance
-on platfomrs on which memory needs to be registered for fast communication
+The test suite will recurse into the ARMCI directory and run the ARMCI test
+suite first.  If the ARMCI test suite fails, the GA test suite will not run
+(the assumption here is that you should fix bugs in the dependent library
+first.)  To run only the GA test suite, type "make check-ga" with the
+appropriate MPIEXEC variable.
 
-setting an environment variable MA_USE_ARMCI_MEM forces MA library to use
-ARMCI memory, communication via which can be faster on networks like GM, 
-VIA and InfiniBand
+How to Run GA Test Programs?  
+----------------------------
 
-SUBDIRECTORIES:
-~~~~~~~~~~~~~~
-This directory contains Global Arrays (GA), ARMCI, Memory Allocator (MA),
-TCGMSG, and TCGMSG-MPI packages bundled together.
-
-./global directory contains the source code for the GA library, test
-programs, performance tracing software, documentation (a bit out-of-date), 
-and an X windows-based visualization program.  
-
-./armci contains code for the ARMCI one-sided remote memory operations.
-It is used by GA as its run-time system.
-
-./pario contains subdirectories with source for three parallel I/O 
-libraries (DRA,EAF,SF). They build into libpario.a/pario.lib.
-
-./lapack_blas contains source code for some of the LAPACK and most of
-BLAS routines. In real applications, GA library should be linked
-with LAPACK and BLAS libraries optimized for the given machine.
-
-./tcgmsg directory contains TCGMSG library code with documentation and
-test programs.
-
-./tcgmsg-mpi directory contains TCGMSG library implemented on top of MPI 
-
-./ma directory contains MA library code with manpages and test programs.
-
-./ga++ directory contains C++ bindings for global arrays. This is an optional
-package that is built only if GA_C_CORE is defined as follows:
-	setenv GA_C_CORE y
-
-GATEST PROGRAMS
-~~~~~~~~~~~~~~~
- - GA test programs are available in global/testing directory
-
- - To compile/run GA test programs, refer to README file in global/testing 
-
-HOW TO RUN GA TEST PROGRAMS?  
-~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
-Depends on the system. MPPs like Intel iPSC/860, Delta, Paragon, IBM
-SPx, Cray T3/E have their own commands for submitting parallel jobs.
+Depends on the system. MPPs like Intel iPSC/860, Delta, Paragon, IBM SPx, Cray
+T3/E have their own commands for submitting parallel jobs.
 
 On workstations and clusters, GA are run like ordinary message-passing
-programs:
+programs::
 
-  To run GA programs with MPI, you need to built the package to be compatible 
-  with MPI (see README in ./global and documentation in ./global/doc/ ) 
-  and run it as any other MPI program. 
-  The GA package has been tested only with a limited number of MPI
-  implementations (MPICH, and vendor's: Intel, IBM, Sun, HP, and SGI).  
+  To run GA programs with MPI, you need to built the package to be compatible
+  with MPI (see README in ./global and documentation in ./global/doc/ ) and
+  run it as any other MPI program.  The GA package has been tested only with a
+  limited number of MPI implementations (MPICH, and vendor's: Intel, IBM, Sun,
+  HP, and SGI).
 
-  TCGMSG `parallel' command (built automaticaly in ./tcgmsg/ipcv4.0/parallel 
-  if needed) is used to start a job on clusters if you are using TCGMSG
-  as your message-passing library. On the workstations, GA-based programs
-  that use TCGMSG can be run with a single process without the `parallel'
-  command -- just by typing program name -- useful for debugging. 
+  TCGMSG `parallel' command (built automaticaly in ./tcgmsg/ipcv4.0/parallel
+  if needed) is used to start a job on clusters if you are using TCGMSG as
+  your message-passing library. On the workstations, GA-based programs that
+  use TCGMSG can be run with a single process without the `parallel' command
+  -- just by typing program name -- useful for debugging. 
 
+Other Issues 
+============
 
-ACKNOWLEDGMENTS & DISCLAIMER
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This is a public-domain software. However, please read file ./global/README
-for the legal details. 
+a. LINUX64 supports ALPHA, Itanium, Opteron, and Em64T processors only. 
 
-The primary current source of funding for development of GA is 
-the DoE-2000 ACTS project. GA is a part of the ACTS toolkit:
-http://acts.nersc.gov 
+b. The SGI_N32 version is recommended on all newer SGI boxes including
+   the O2, Octane, Origin, Indigo2, and PowerChallenge systems
+   unless the system has lots of memory and your program uses 
+   huge arrays (>4GB) in which case 64-bit addressing is required
+   (SGITFP version). In addition, TARGET_CPU environment
+   variable can be used to choose the optimal compiler flags 
+   for R8000 and R10000 processors.
 
+c. In 64 bit platforms, if you are using blas libraries that takes
+   integer as 8 bytes, then set the following environment variables:
+   setenv BLAS_I8 yes
+   setenv BLAS_LIB specify_your_blas_library
+   e.g.setenv BLAS_LIB -L/usr/lib/libblas.a
 
-QUESTIONS/HELP/SUPPORT/BUG-REPORT
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-email: hpctools@emsl.pnl.gov
+d. To turn Async I/O on under Linux, set environment variable USE_LINUXAIO=y
 
-If you encounter any problems, please first refer to the file NOTES
-located in the same directory and see the GA support webpage
-http://www.emsl.pnl.gov/docs/global/support.html
+Performance Tuning
+------------------
 
-WHERE IS THE DOCUMENTATION?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The GA webpage http://www.emsl.pnl.gov/docs/global/
-has the most current versions of the Fortran and C documentation 
-and the User's Manual in the HTML format.
+global/src/gaconfig.h has a varible called AVOID_MA_STORAGE. If defined, this
+variable forces GA to use ARMCI memory which can lead to better performance on
+platforms on which memory needs to be registered for fast communication.
 
-RELEASE NOTES
-~~~~~~~~~~~~~
-RELEASE.NOTES contains specific release notes for the current release
-of Global Arrays.
+Setting an environment variable MA_USE_ARMCI_MEM forces MA library to use
+ARMCI memory, communication via which can be faster on networks like GM, VIA
+and InfiniBand.

@@ -1,4 +1,6 @@
-#include<stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 /* Machine-dependent pthreads configuration and inline functions.
    powerpc version.
    Copyright (C) 1996, 1997, 1998, 2000, 2001 Free Software Foundation, Inc.

@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
       subroutine cell_list
 #include "common.fh"
 c

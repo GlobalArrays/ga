@@ -20,7 +20,7 @@ typedef struct immbuf_t {
   char *buf; /*immediate buffer[IMMBUF_LEN]*/
 /*   IMMBUF_NW_T fields; */
   char rguard[PBUF_RGUARD_SIZE];
-  IMMBUF_NW_T;
+  IMMBUF_NW_T
   struct immbuf_t *immbuf_list_next;
 } immbuf_t;
 
@@ -28,7 +28,7 @@ typedef struct pendbuf_t {
   char *buf; /*pending buffer[PENDBUF_LEN]*/
 /*   PENDBUF_NW_T fields; */
   char rguard[PBUF_RGUARD_SIZE];
-  PENDBUF_NW_T;
+  PENDBUF_NW_T
   int status; /*<Finite State Machine status*/
   int avail;  /*<Buffer is available*/
   immbuf_t *vbuf; /*<Immediate buffer corresponding to this pending buffer*/

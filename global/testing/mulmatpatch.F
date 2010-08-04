@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c $Id: mulmatpatch.F,v 1.6 2005-11-23 10:25:18 manoj Exp $
 #if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
 #   define xgemm SGEMM
@@ -24,12 +27,7 @@ c
 c
 c***  Initialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
       call ga_initialize()
       if(ga_nodeid().eq.0)then
@@ -62,11 +60,7 @@ c
 c      
       call ga_terminate()
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
       end
 
 
@@ -93,7 +87,7 @@ c
       integer g_a1, g_b1, g_c1 
       integer rows, cols, loop
       logical status, dist_same 
-      iran(i) = int(util_drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()

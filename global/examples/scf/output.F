@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
        subroutine output (z,rowlow,rowhi,collow,colhi,rowdim,coldim,
      $     nctl)
 c.......................................................................

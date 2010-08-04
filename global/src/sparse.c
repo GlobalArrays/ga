@@ -1,5 +1,16 @@
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STRINGS_H
+#   include <strings.h>
+#endif
 #include "global.h"
 #include "globalp.h"
 #include "macdecls.h"
@@ -7,9 +18,9 @@
 
 
 static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, void* val,
-                            Integer add, Integer excl, Integer bit)
+                            Integer add, Integer excl)
 {
-  int i;
+  int i=0;
   switch (type){
     int *ia, *ib;
     double *da, *db;
@@ -18,16 +29,14 @@ static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, voi
     float *fa, *fb;
     long *la, *lb;
     long long *lla, *llb;
-    case C_INT:
+  case C_INT:
     ia = (int*)ptra;
     ib = (int*)ptrb;
     if(add) {
       if (excl) {
         for (i=0; i<n; i++) {
-          if (i==0 && bit) {
+          if (i==0) {
             ib[i] = 0;
-          } else if (i==0) {
-            ib[i] = ia[i];
           } else {
             ib[i] = ib[i-1] + ia[i-1]; 
           }
@@ -45,18 +54,15 @@ static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, voi
       for(i=0; i< n; i++) ib[i] = *(int*)val; 
     }
     break;
-    case C_DCPL:
+  case C_DCPL:
     ca = (DoubleComplex*)ptra;
     cb = (DoubleComplex*)ptrb;
     if(add) {
       if (excl) {
         for(i=0; i< n; i++) {
-          if (i==0 && bit) {
+          if (i==0) {
             cb[i].real = 0.0;
             cb[i].imag = 0.0;
-          } else if (i==0) {
-            cb[i].real = ca[i].real;
-            cb[i].imag = ca[i].imag;
           } else {
             cb[i].real = cb[i-1].real + ca[i-1].real; 
             cb[i].imag = cb[i-1].imag + ca[i-1].imag; 
@@ -86,12 +92,9 @@ static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, voi
     if(add) {
       if (excl) {
         for(i=0; i< n; i++){
-          if (i==0 && bit) {
+          if (i==0) {
             cfb[i].real = 0.0;
             cfb[i].imag = 0.0;
-          } else if (i==0) {
-            cfb[i].real = cfa[i].real;
-            cfb[i].imag = cfa[i].imag;
           } else {
             cfb[i].real = cfb[i-1].real + cfa[i-1].real; 
             cfb[i].imag = cfb[i-1].imag + cfa[i-1].imag; 
@@ -121,10 +124,8 @@ static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, voi
     if(add) {
       if (excl) {
         for(i=0; i< n; i++) {
-          if (i==0 && bit) {
+          if (i==0) {
             db[i] = 0.0;
-          } else if (i==0) {
-            db[i] = da[i];
           } else {
             db[i] = db[i-1] + da[i-1]; 
           }
@@ -145,10 +146,8 @@ static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, voi
     fb = (float*)ptrb;
     if(add) {
       if (excl) {
-        if (i==0 && bit) {
+        if (i==0) {
             fb[i] = 0.0;
-        } else if (i==0) {
-            fb[i] = fa[i];
         } else {
             fb[i] = fb[i-1] + fa[i-1];
         }
@@ -170,10 +169,8 @@ static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, voi
     if(add) {
       if (excl) {
         for(i=0; i< n; i++) {
-          if (i==0 && bit) {
+          if (i==0) {
             lb[i] = 0;
-          } else if (i==0) {
-            lb[i] = la[i];
           } else {
             lb[i] = lb[i-1] + la[i-1];
           }
@@ -196,10 +193,8 @@ static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, voi
     if(add) {
       if (excl) {
         for(i=0; i< n; i++) {
-          if (i==0 && bit) {
+          if (i==0) {
             llb[i] = 0;
-          } else if (i==0) {
-            llb[i] = lla[i];
           } else {
             llb[i] = llb[i-1] + lla[i-1];
           }
@@ -216,10 +211,11 @@ static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, voi
     else
       for(i=0; i< n; i++) llb[i] = *(long long*)val;
     break;                                                         
-    default: ga_error("ga_scan/add:wrong data type",type);
+    default: gai_error("ga_scan/add:wrong data type",type);
   }
 }
 
+#if 0
 static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
 {
     int i;
@@ -282,9 +278,10 @@ static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
              lla2[0] = lla1[0] +  *(long long*)val;
              for(i=1; i< n; i++) lla2[i] = lla2[i-1]+lla1[i];
              break;
-          default: ga_error("ga_add_val:wrong data type",type);
+          default: gai_error("ga_add_val:wrong data type",type);
         }
 }                                                               
+#endif
 
 
 static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sbit, Integer pack, Integer mx)
@@ -342,7 +339,7 @@ static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sb
                      *lld = lls[i]; lld++; cnt++;
           }
              break;    
-          default: ga_error("ga_copy_sbit:wrong data type",type);
+          default: gai_error("ga_copy_sbit:wrong data type",type);
         }
     else
         switch (type){
@@ -376,11 +373,11 @@ static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sb
              lls = (long long*)b; lld = (long long*)a;
              for(i=0; i< n; i++) if(sbit[i]) { lld[i] = *lls; lls++;  cnt++; }
              break; 
-          default: ga_error("ga_copy_sbit:wrong data type",type);
+          default: gai_error("ga_copy_sbit:wrong data type",type);
         }
     if(cnt!=mx){
-        printf("\nga_copy_sbit: cnt=%d should be%d\n",cnt,mx);
-        ga_error("ga_copy_sbit mismatch",0);
+        printf("\nga_copy_sbit: cnt=%d should be%ld\n",cnt,(long)mx);
+        gai_error("ga_copy_sbit mismatch",0);
     }
 }
 
@@ -398,10 +395,10 @@ register Integer i;
    ga_sync_();
    me = ga_nodeid_();
 
-   ga_check_handle(g_a, "ga_patch_enum");
+   gai_check_handle(g_a, "ga_patch_enum");
 
    ndim = ga_ndim_(g_a);
-   if(ndim > 1)ga_error("ga_patch_enum:applicable to 1-dim arrays",ndim);
+   if (ndim > 1) gai_error("ga_patch_enum:applicable to 1-dim arrays",ndim);
 
    nga_inquire_internal_(g_a, &type, &ndim, dims);
    nga_distribution_(g_a, &me, &lop, &hip);
@@ -472,7 +469,7 @@ register Integer i;
              for(i=0; i< hip-lop+1; i++)
                  lla[i] = *(long long*)start+(off+i)* *(long long*)stride;
              break;              
-          default: ga_error("ga_patch_enum:wrong data type ",type);
+          default: gai_error("ga_patch_enum:wrong data type ",type);
         }
 
         nga_release_update_(g_a, &lop, &hip);
@@ -490,24 +487,23 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
    Integer *lim=NULL, *lom=NULL, nproc, me;
    Integer lop, hip, ndim, dims, type, ioff;
    double buf[2];
-   Integer bit;
-   Integer *ia, *ip, elems,ld;
+   Integer *ia=NULL, *ip=NULL, elems,ld;
    int i, k;
-   void *ptr_b;
-   void *ptr_a;
+   void *ptr_b=NULL;
+   void *ptr_a=NULL;
 
    nproc = ga_nnodes_();
       me = ga_nodeid_();
 
-   ga_check_handle(g_a, "ga_scan_copy");
-   ga_check_handle(g_b, "ga_scan_copy 2");
-   ga_check_handle(g_sbit,"ga_scan_copy 3");
+   gai_check_handle(g_a, "ga_scan_copy");
+   gai_check_handle(g_b, "ga_scan_copy 2");
+   gai_check_handle(g_sbit,"ga_scan_copy 3");
 
    ga_sync_();
 
 
    ndim = ga_ndim_(g_a);
-   if(ndim>1)ga_error("ga_scan_copy: applicable to 1-dim arrays",ndim);
+   if(ndim>1)gai_error("ga_scan_copy: applicable to 1-dim arrays",ndim);
 
    nga_inquire_internal_(g_a, &type, &ndim, &dims);
    nga_distribution_(g_sbit, &me, &lop, &hip);
@@ -519,22 +515,22 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
    lom = lim + nproc;
 
    if(!ga_compare_distr_(g_a, g_sbit))
-       ga_error("ga_scan_copy: different distribution src",0);
+       gai_error("ga_scan_copy: different distribution src",0);
    if(!ga_compare_distr_(g_b, g_sbit))
-       ga_error("ga_scan_copy: different distribution dst",0);
+       gai_error("ga_scan_copy: different distribution dst",0);
       
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */ 
 
         nga_access_ptr(g_sbit, &lop, &hip, &ia, &ld);
         elems = hip - lop + 1;
-        /* find last bit set on given process */
+        /* find last bit set on given process (store as global index) */
         for(i=0; i<elems; i++) {
           if(ia[i]) {
             ioff = i + lop;
             if (ioff >= *lo && ioff <= *hi) {
               lim[me]= ioff;
             }
-            /* find first bit set on given process */
+            /* find first bit set on given process (store as local index) */
             if (!lom[me]) {
               lom[me] = i;
             }
@@ -545,7 +541,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
      lim[me] = -1;
    }
 
-   ga_igop(GA_TYPE_GOP,lim, 2*nproc,"+");
+   gai_igop(GA_TYPE_GOP,lim, 2*nproc,"+");
 
    /* take intersection of patch owned by process and patch
       specified by the user */ 
@@ -558,24 +554,23 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
        ip = ia;
        if(lop < *lo){
            /* user specified patch starts in the middle */
+           ip = ia + (*lo-lop); /*set pointer to first value in sbit array*/
            lop = *lo;
-           ip = ia + (*lo-lop);
        } 
-       bit = *ip;
        if(hip > *hi) hip = *hi;
       
-       /* access the data */
+       /* access the data. g_a is source, g_b is destination */
        nga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
        nga_access_ptr(g_a, &lop, &hip, &ptr_a, &ld);
 
        /* find start bit corresponding to my patch */
        /* case 1: sbit set for the first patch element and check earlier elems*/
-       for(k=lop, i=0; k >= lops; i--, k--) if(ip[i]){ startp = k; break; }
+       for(k=lop, i=0; k >= lops; i--, k--) if (ip[i]) { startp = k; break; }
        if(!startp){
           /* case2: scan lim to find sbit set on lower numbered processors */ 
-          for(k=me-1; k >=0; k--)if(lim[k]) {startp =lim[k]; break; }
+          for(k=me-1; k >=0; k--)if(lim[k]>0) {startp =lim[k]; break; }
        }
-       if(!startp) ga_error("sbit not found for",lop); /*nothing was found*/
+       if(!startp) gai_error("sbit not found for",lop); /*nothing was found*/
 
        /* copy or scan the data */
        i = 0;
@@ -586,20 +581,26 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
            
            /* find where sbit changes */ 
            for(; i< hip-lop; indx=++i) if(ip[i+1]) {i++; break;}
+           /* at this point, i equals the location of the next non-zero value in
+            * sbit, indx equals the location of the last entry before this bit
+            * (unless there are two consecutive non-zero values in sbit, this
+            * will point to a zero in sbit) */
 
-           elems = indx- k+lop +1; /* that many elements will be updating now*/
+           elems = indx- k+lop +1; /* the number of elements that will be updated*/
 
            /* get the current value of A */
            nga_get_(g_a, &startp, &startp, buf, &one);
 
-           /* assign it to "elems" elements of B */
-           gai_combine_val(type, ptr_a, ptr_b, elems, buf, add, *excl, bit); 
+           /* assign elements of B
+              If add then assign ptr_b[i] = ptr_b[i-1]+ptr_a[i]
+              If add and excl then ptr_b[i] = ptr_b[i-1] + ptr_a[i-1]
+              If !add then ptr_b[i] = *buf */
+           gai_combine_val(type, ptr_a, ptr_b, elems, buf, add, *excl); 
 
            ptr_a = (char*)ptr_a + elems*elemsize;
            ptr_b = (char*)ptr_b + elems*elemsize;
            k += elems;
            startp = k;
-           bit = 1;
        }
        /* release local access to arrays */
        nga_release_(g_a, &lop, &hip);
@@ -612,9 +613,10 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
     if (add) {
       Integer ichk = 1;
       nga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
+      if (*excl) nga_access_ptr(g_a, &lop, &hip, &ptr_a, &ld);
       ioff = hip - lop;
       switch (type) {
-        Integer *ilast;
+        int *ilast;
         DoubleComplex *cdlast;
         SingleComplex *cflast;
         double *dlast;
@@ -622,18 +624,25 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
         long *llast;
         long long *lllast;
         case C_INT:
-          ilast = (Integer*) ga_malloc(nproc, MT_F_INT, "ga add buf");
-          bzero(ilast,sizeof(Integer)*nproc);
-          if (lim[me] >= 0) {
-            ilast[me] = (Integer)((int*)ptr_b)[ioff];
+          ilast = (int*) ga_malloc(nproc, C_INT, "ga add buf");
+          bzero(ilast,sizeof(int)*nproc);
+          if (lim[me] >= 0) { /* This processor contains data */
+            ilast[me] = ((int*)ptr_b)[ioff];
+            if (*excl) {
+              if (lim[me] - lop == ioff) {
+                ilast[me] = ((int*)ptr_a)[ioff];
+              } else {
+                ilast[me] += ((int*)ptr_a)[ioff];
+              }
+            }
           }
-          ga_igop(GA_TYPE_GOP,ilast,nproc,"+");
+          gac_igop(ilast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
-            if (lim[me] > 0) {
-              iup = lom[me];
+            if (lim[me] > 0) { /* There is a bit set on this processor */
+              iup = lom[me]; 
             } else {
-              iup = hip - lop;
+              iup = hip - lop + 1;
             }
             for (k=me-1; k>=0 && ichk; k--) {
               for (i=0; i<iup; i++) {
@@ -647,14 +656,23 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
         case C_DCPL:
           cdlast = (DoubleComplex*) ga_malloc(nproc, C_DCPL, "ga add buf");
           bzero(cdlast,sizeof(DoubleComplex)*nproc);
-          if (lim[me] >= 0) {
+          if (lim[me] >= 0) { /* This processor contains data */
             cdlast[me].real = ((DoubleComplex*)ptr_b)[ioff].real;
             cdlast[me].imag = ((DoubleComplex*)ptr_b)[ioff].imag;
+            if (*excl) {
+              if (lim[me] - lop == ioff) {
+                cdlast[me].real = ((DoubleComplex*)ptr_a)[ioff].real;
+                cdlast[me].imag = ((DoubleComplex*)ptr_a)[ioff].imag;
+              } else {
+                cdlast[me].real += ((DoubleComplex*)ptr_a)[ioff].real;
+                cdlast[me].imag += ((DoubleComplex*)ptr_a)[ioff].imag;
+              }
+            }
           }
-          ga_dgop(GA_TYPE_GOP,(double*)cdlast,2*nproc,"+");
+          gac_zgop(cdlast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
-            if (lim[me] > 0) {
+            if (lim[me] > 0) { /* There is a bit set on this processor */
               iup = lom[me];
             } else {
               iup = hip - lop + 1;
@@ -672,14 +690,23 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
         case C_SCPL:
           cflast = (SingleComplex*) ga_malloc(nproc, C_SCPL, "ga add buf");
           bzero(cflast,sizeof(SingleComplex)*nproc);
-          if (lim[me] >= 0) {
+          if (lim[me] >= 0) { /* This processor contains data */
             cflast[me].real = ((SingleComplex*)ptr_b)[ioff].real;
             cflast[me].imag = ((SingleComplex*)ptr_b)[ioff].imag;
+            if (*excl) {
+              if (lim[me] - lop == ioff) {
+                cflast[me].real = ((SingleComplex*)ptr_a)[ioff].real;
+                cflast[me].imag = ((SingleComplex*)ptr_a)[ioff].imag;
+              } else {
+                cflast[me].real += ((SingleComplex*)ptr_a)[ioff].real;
+                cflast[me].imag += ((SingleComplex*)ptr_a)[ioff].imag;
+              }
+            }
           }
-          ga_fgop(GA_TYPE_GOP,(float*)cflast,2*nproc,"+");
+          gac_cgop(cflast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
-            if (lim[me] > 0) {
+            if (lim[me] > 0) { /* There is a bit set on this processor */
               iup = lom[me];
             } else {
               iup = hip - lop + 1;
@@ -697,13 +724,20 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
         case C_DBL:
           dlast = (double*) ga_malloc(nproc, C_DBL, "ga add buf");
           bzero(dlast,sizeof(double)*nproc);
-          if (lim[me] >= 0) {
+          if (lim[me] >= 0) { /* This processor contains data */
             dlast[me] = ((double*)ptr_b)[ioff];
+            if (*excl) {
+              if (lim[me] - lop == ioff) {
+                dlast[me] = ((double*)ptr_a)[ioff];
+              } else {
+                dlast[me] += ((double*)ptr_a)[ioff];
+              }
+            }
           }
-          ga_dgop(GA_TYPE_GOP,dlast,nproc,"+");
+          gac_dgop(dlast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
-            if (lim[me] > 0) {
+            if (lim[me] > 0) { /* There is a bit set on this processor */
               iup = lom[me];
             } else {
               iup = hip - lop + 1;
@@ -720,13 +754,20 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
         case C_FLOAT:
           flast = (float*) ga_malloc(nproc, C_FLOAT, "ga add buf");
           bzero(flast,sizeof(float)*nproc);
-          if (lim[me] >= 0) {
+          if (lim[me] >= 0) { /* This processor contains data */
             flast[me] = ((float*)ptr_b)[ioff];
+            if (*excl) {
+              if (lim[me] - lop == ioff) {
+                flast[me] = ((float*)ptr_a)[ioff];
+              } else {
+                flast[me] += ((float*)ptr_a)[ioff];
+              }
+            }
           }
-          ga_fgop(GA_TYPE_GOP,flast,nproc,"+");
+          gac_fgop(flast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
-            if (lim[me] > 0) {
+            if (lim[me] > 0) { /* There is a bit set on this processor */
               iup = lom[me];
             } else {
               iup = hip - lop + 1;
@@ -743,13 +784,20 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
         case C_LONG:
           llast = (long*) ga_malloc(nproc, C_LONG, "ga add buf");
           bzero(llast,sizeof(long)*nproc);
-          if (lim[me] >= 0) {
+          if (lim[me] >= 0) { /* This processor contains data */
             llast[me] = ((long*)ptr_b)[ioff];
+            if (*excl) {
+              if (lim[me] - lop == ioff) {
+                llast[me] = ((long*)ptr_a)[ioff];
+              } else {
+                llast[me] += ((long*)ptr_a)[ioff];
+              }
+            }
           }
-          ga_lgop(GA_TYPE_GOP,llast,nproc,"+");
+          gac_lgop(llast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
-            if (lim[me] > 0) {
+            if (lim[me] > 0) { /* There is a bit set on this processor */
               iup = lom[me];
             } else {
               iup = hip - lop + 1;
@@ -766,13 +814,20 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
         case C_LONGLONG:
           lllast = (long long*) ga_malloc(nproc, C_LONGLONG, "ga add buf");
           bzero(lllast,sizeof(long long)*nproc);
-          if (lim[me] >= 0) {
+          if (lim[me] >= 0) { /* This processor contains data */
             lllast[me] = ((long long*)ptr_b)[ioff];
+            if (*excl) {
+              if (lim[me] - lop == ioff) {
+                lllast[me] = ((long long*)ptr_a)[ioff];
+              } else {
+                lllast[me] += ((long long*)ptr_a)[ioff];
+              }
+            }
           }
-          ga_llgop(GA_TYPE_GOP,lllast,nproc,"+");
+          gac_llgop(lllast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
-            if (lim[me] > 0) {
+            if (lim[me] > 0) { /* There is a bit set on this processor */
               iup = lom[me];
             } else {
               iup = hip - lop + 1;
@@ -786,9 +841,10 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
           }
           ga_free(lllast);
           break;
-        default: ga_error("ga_scan/add:wrong data type",type);
+        default: gai_error("ga_scan/add:wrong data type",type);
       }
       nga_release_(g_b, &lop, &hip);
+      if (*excl) nga_release_(g_a, &lop, &hip);
 
    }
 
@@ -821,14 +877,14 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
    void *ptr;
    Integer *lim=NULL, nproc, me;
    Integer lop, hip, ndim, dims, type,crap;
-   Integer *ia, elems, i, first, myplace =0, counter=0;
+   Integer *ia=NULL, elems=0, i=0, first=0, myplace =0, counter=0;
 
    nproc = ga_nnodes_();
       me = ga_nodeid_();
 
-   ga_check_handle(g_a, "ga_pack");
-   ga_check_handle(g_b, "ga_pack 2");
-   ga_check_handle(g_sbit,"ga_pack 3");
+   gai_check_handle(g_a, "ga_pack");
+   gai_check_handle(g_b, "ga_pack 2");
+   gai_check_handle(g_sbit,"ga_pack 3");
 
    ga_sync_();
 
@@ -836,7 +892,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    bzero(lim,sizeof(Integer)*nproc);
    nga_inquire_internal_(g_a, &type, &ndim, &dims);
-   if(ndim>1) ga_error("ga_pack: supports 1-dim arrays only",ndim);
+   if(ndim>1) gai_error("ga_pack: supports 1-dim arrays only",ndim);
    nga_distribution_(g_sbit, &me, &lop, &hip);
 
    /* how many elements we have to copy? */
@@ -863,7 +919,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
    }
 
    /* find number of elements everybody else is contributing */
-   ga_igop(GA_TYPE_GOP, lim, nproc,"+");
+   gai_igop(GA_TYPE_GOP, lim, nproc,"+");
 
    for(i= myplace= *icount= 0; i<nproc; i++){
         if( i<me && lim[i]) myplace += lim[i];
@@ -871,7 +927,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
    }
    ga_free(lim);
 
-   if(*hi <lop || hip <*lo || counter ==0 ); /* we got no elements to update */
+   if(*hi <lop || hip <*lo || counter ==0 ); /* we have no elements to update */
    else{
 
      void *buf;
@@ -930,8 +986,8 @@ void gai_bin_offset(int scope, int *x, int n, int *offset)
 int root, up, left, right;
 int len, lenmes, tag=32100, i, me=armci_msg_me();
 
-    if(!x)ga_error_("gai_bin_offset: NULL pointer", n);
-    if(n>NWORK)ga_error_("gai_bin_offset: >NWORK", n);
+    if(!x)gai_error("gai_bin_offset: NULL pointer", n);
+    if(n>NWORK)gai_error("gai_bin_offset: >NWORK", n);
     len = sizeof(int)*n;
 
     armci_msg_bintree(scope, &root, &up, &left, &right);
@@ -982,12 +1038,12 @@ Integer type, ndim, nbin, lobin, hibin, me=ga_nodeid_(),crap;
 Integer dims[2], nproc=ga_nnodes_(),chunk[2];
 
     nga_inquire_internal_(g_bin, &type, &ndim, &nbin);
-    if(ndim !=1) ga_error("ga_bin_index: 1-dim array required",ndim);
+    if(ndim !=1) gai_error("ga_bin_index: 1-dim array required",ndim);
     if(type!= C_INT && type!=C_LONG && type!=C_LONGLONG)
-       ga_error("ga_bin_index: not integer type",type);
+       gai_error("ga_bin_index: not integer type",type);
 
     chunk[0]=dims[0]=2; dims[1]=nproc; chunk[1]=1;
-    if(!nga_create(MT_F_INT, 2, dims, "bin_proc",chunk,g_range)) return FALSE;
+    if(!ngai_create(MT_F_INT, 2, dims, "bin_proc",chunk,g_range)) return FALSE;
 
     nga_distribution_(g_off,&me, &lobin,&hibin);
 
@@ -1009,9 +1065,9 @@ Integer dims[2], nproc=ga_nnodes_(),chunk[2];
 
       /* find processors on which these bins are located */
       if(!nga_locate_(g_bin, &first_off, &first_proc))
-          ga_error("ga_bin_sorter: failed to locate region f",first_off);
+          gai_error("ga_bin_sorter: failed to locate region f",first_off);
       if(!nga_locate_(g_bin, &last_off, &last_proc))
-          ga_error("ga_bin_sorter: failed to locate region l",last_off);
+          gai_error("ga_bin_sorter: failed to locate region l",last_off);
 
       /* inspect range of indices to bin elements stored on these processors */
       for(p=first_proc, bin=lobin; p<= last_proc; p++){
@@ -1072,10 +1128,10 @@ Integer nbin,totbin,type,ndim,lo,hi,me=ga_nodeid_(),crap;
 Integer g_range;
 
     if(FALSE==ga_create_bin_range_(g_bin, g_cnt, g_off, &g_range))
-        ga_error("ga_bin_sorter: failed to create temp bin range array",0); 
+        gai_error("ga_bin_sorter: failed to create temp bin range array",0); 
 
     nga_inquire_internal_(g_bin, &type, &ndim, &totbin);
-    if(ndim !=1) ga_error("ga_bin_sorter: 1-dim array required",ndim);
+    if(ndim !=1) gai_error("ga_bin_sorter: 1-dim array required",ndim);
      
     nga_distribution_(g_bin, &me, &lo, &hi);
     if (lo > 0 ){ /* we get 0 if no elements stored on this process */
@@ -1087,11 +1143,11 @@ Integer g_range;
         nga_get_(&g_range, rlo, rhi, bin_range, rhi); /* local */
         nbin = bin_range[1]-bin_range[0]+1;
         if(nbin<1 || nbin> totbin || nbin>(hi-lo+1))
-           ga_error("ga_bin_sorter:bad nbin",nbin);
+           gai_error("ga_bin_sorter:bad nbin",nbin);
 
         /* get count of elements in each bin stored on this task */
         if(!(bin_cnt = (Integer*)malloc(nbin*sizeof(Integer))))
-           ga_error("ga_bin_sorter:memory allocation failed",nbin);
+           gai_error("ga_bin_sorter:memory allocation failed",nbin);
         nga_get_(g_cnt,bin_range,bin_range+1,bin_cnt,&nbin);
 
         /* get access to local bin elements */
@@ -1119,19 +1175,19 @@ int *all_bin_contrib, *offset;
 Integer type, ndim, nbin;
 
     nga_inquire_internal_(g_bin, &type, &ndim, &nbin);
-    if(ndim !=1) ga_error("ga_bin_index: 1-dim array required",ndim);
+    if(ndim !=1) gai_error("ga_bin_index: 1-dim array required",ndim);
     if(type!= C_INT && type!=C_LONG && type!=C_LONGLONG)
-       ga_error("ga_bin_index: not integer type",type);
+       gai_error("ga_bin_index: not integer type",type);
 
     all_bin_contrib = (int*)calloc(nbin,sizeof(int));
-    if(!all_bin_contrib)ga_error("ga_binning:calloc failed",nbin);
+    if(!all_bin_contrib)gai_error("ga_binning:calloc failed",nbin);
     offset = (int*)malloc(nbin*sizeof(int));
-    if(!offset)ga_error("ga_binning:malloc failed",nbin);
+    if(!offset)gai_error("ga_binning:malloc failed",nbin);
 
     /* count how many elements go to each bin */
     for(i=0; i< *n; i++){
        int selected = subs[i];
-       if(selected <1 || selected> nbin) ga_error("wrong bin",selected);
+       if(selected <1 || selected> nbin) gai_error("wrong bin",selected);
 
        if(all_bin_contrib[selected-1] ==0) my_nbin++; /* new bin found */
        all_bin_contrib[selected-1]++;
@@ -1155,8 +1211,8 @@ Integer type, ndim, nbin;
        printf("%d: elems=%d lo=%d sel=%d off=%d contrib=%d nbin=%d\n",ga_nodeid_(), elems, lo, selected,offset[selected-1],all_bin_contrib[0],nbin);
 */
        if(lo > nbin) {
-	      printf("Writing off end of bins array: index=%d elems=%d lo=%d hi=%d values=%d nbin=%d\n",
-                i,elems,lo,hi,values+i,nbin);
+	      printf("Writing off end of bins array: index=%d elems=%d lo=%ld hi=%ld values=%ld nbin=%ld\n",
+                i,elems,(long)lo,(long)hi,(long)values+i,(long)nbin);
          break;   
        }else{
           nga_put_(g_bin, &lo, &hi, values+i, &selected); 

@@ -1,12 +1,26 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <math.h>
-#ifdef MPI
-#include <mpi.h>
-#else
-#include "sndrcv.h"
+#if HAVE_CONFIG_H
+#   include "config.h"
 #endif
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+
+#ifdef MPI
+#   include <mpi.h>
+#else
+#   include "tcgmsg.h"
+#endif
+
 #include "ga.h"
 #include "macdecls.h"
 
@@ -22,21 +36,21 @@
 
 #define STOP_ITERATING  0
 #define DEBUG           0
-#define PRINT_LEVEL_1   1 /* dumps result: level 1 */
-#define PRINT_LEVEL_2   1 /* dumps result: level 2..more results */
-#define WRITE_TO_FILE   0 /* dumps the coordinates in molden viz format */
-#define NDIM            3 /* always 3-d */
+#define PRINT_LEVEL_1   1 /**< dumps result: level 1 */
+#define PRINT_LEVEL_2   1 /**< dumps result: level 2..more results */
+#define WRITE_TO_FILE   0 /**< dumps the coordinates in molden viz format */
+#define NDIM            3 /**< always 3-d */
 #define MAX_PROC        256
 #define MAX_BLOCKS      256
 #define SAFELIMIT       3
 
 #ifdef MPI
-#define CLOCK_ MPI_Wtime
+#   define CLOCK_ MPI_Wtime
 #else
-#define CLOCK_ TCGTIME_
+#   define CLOCK_ tcg_time
 #endif
 
-#define ABS(a) ( ((a) > 0) ? (a) : -(a) )
+/* #define GA_ABS(a) ( ((a) > 0) ? (a) : -(a) ) */
 
 typedef struct {
   int x;
@@ -115,7 +129,7 @@ void LJ_Setup(int natoms, double **x_i, double **x_j, double **grad) {
   n = i + j + SAFELIMIT;                 /* total memory required */
   if(MA_push_get(C_DBL, n, "GA LJ bufs", (void *)&gMemHandle, (void *)&j))
     MA_get_pointer(gMemHandle, x_i);
-  else ga_error("ma_alloc_get failed",n);
+  else GA_Error("ma_alloc_get failed",n);
   
   *x_j  = *x_i + i/2 + 1;
   *grad = *x_j + i/2 + 1;
@@ -156,7 +170,7 @@ void getBlock(int taskId, int size, double *x_i, double *x_j) {
   
 #if DEBUG
   printf("%d: new task = %d: topo: %d,%d\n", gMe, taskId, 
-	 btopo[taskId].x,  btopo[taskId].y);
+     btopo[taskId].x,  btopo[taskId].y);
 #endif
   
   /** get the coordinates of the atoms in the corresponding rows in the 
@@ -177,7 +191,7 @@ void getBlock(int taskId, int size, double *x_i, double *x_j) {
  * LJ Function Gradient Computation.
  */
 void LJ_FG(int taskId, double *x_i, double *x_j, double *f, 
-	   double *grad) {
+       double *grad) {
   int b_x, b_y; /* block topology */
   int i, j, start_x, start_y, tempA, tempB;
   int start_i=0, end_i=0, start_j=0, *end_j=NULL;
@@ -226,9 +240,9 @@ void LJ_FG(int taskId, double *x_i, double *x_j, double *f,
       if(yy*sign_y > box.width/2)  yy -= sign_y*box.width ; 
       if(zz*sign_z > box.height/2) zz -= sign_z*box.height; 
       rij = xx*xx + yy*yy + zz*zz;
-#     if DEBUG
+#if DEBUG
       if(rij <= 0.0) GA_Error("Divide by Zero Error\n", 0L);
-#     endif
+#endif
       r2 = 1.0/rij;
       r6 = r2*r2*r2;
       r12 = r6*r6;
@@ -250,7 +264,7 @@ void LJ_FG(int taskId, double *x_i, double *x_j, double *f,
  * Compute Function and Gradient
  */
 void computeFG(double *force, int natoms,  double *x_i, double *x_j, 
-	       double *grad) {
+           double *grad) {
   int taskId, size, lo, hi, i;
   double tt;
   
@@ -286,7 +300,9 @@ void computeFG(double *force, int natoms,  double *x_i, double *x_j,
 void
 commandLine(int argc, char **argv) {
  
+#if 0
   int n;
+#endif
   extern char *optarg;   
  
   /* default options */
@@ -301,7 +317,7 @@ commandLine(int argc, char **argv) {
     while((n = getopt(argc, argv, "b:")) != EOF)
       switch (n) {
       case 'b':
-	gBlockSize = atoi(optarg); 
+    gBlockSize = atoi(optarg); 
       }
   }
 #endif
@@ -391,7 +407,7 @@ void LJ_Initialize(int natoms) {
     int c, i, j, k, m, n, p;
     double b, xSum[3] = {0.0, 0.0, 0.0};
     double rFCC[4][3] = {{0.0, 0.0, 0.0}, {0.0, 0.5, 0.5},
-			 {0.5, 0.0, 0.5}, {0.5, 0.5, 0.0}};
+             {0.5, 0.0, 0.5}, {0.5, 0.5, 0.0}};
     double rCell[3];
     double *x;
     int lo, hi, handle;  
@@ -399,29 +415,29 @@ void LJ_Initialize(int natoms) {
     n = NDIM * natoms + 1;
     if(MA_push_get(C_DBL, n, "GA LJ_Init bufs", (void *)&handle, (void *)&lo))
       MA_get_pointer(handle, &x);
-    else ga_error("ma_alloc_get failed",n);
+    else GA_Error("ma_alloc_get failed",n);
     
     /* Use face centered cubic (FCC) lattice for initial positions.
        Find number of unit cells (c) needed to place all atoms */
     for (c = 1; ; c++)
       if (4*c*c*c >= natoms)
-	break;
-    b = L / c;			/* side of unit cell */
-    p = 0;			/* atoms placed so far */
+    break;
+    b = L / c;            /* side of unit cell */
+    p = 0;            /* atoms placed so far */
     
     for (i = 0; i < c; i++) {
       rCell[0] = i * b;
       for (j = 0; j < c; j++) {
-	rCell[1] = j * b;
-	for (k = 0; k < c; k++) {
-	  rCell[2] = k * b;
-	  for (m = 0; m < 4; m++)	/* 4 particles in cell */
-	    if (p < natoms) {
-	      for (n = 0; n < NDIM; n++)  /* 3-dimensions - x, y, z */
-		x[p*NDIM + n] = rCell[n] + b * rFCC[m][n];
-	      ++p;
-	    }
-	}
+    rCell[1] = j * b;
+    for (k = 0; k < c; k++) {
+      rCell[2] = k * b;
+      for (m = 0; m < 4; m++)    /* 4 particles in cell */
+        if (p < natoms) {
+          for (n = 0; n < NDIM; n++)  /* 3-dimensions - x, y, z */
+        x[p*NDIM + n] = rCell[n] + b * rFCC[m][n];
+          ++p;
+        }
+    }
       }
     }
     
@@ -432,16 +448,16 @@ void LJ_Initialize(int natoms) {
     /* Random Gaussian distribution of initial velocities */ 
     for(i=0; i<natoms; i++) 
       for(j=0; j<NDIM; j++) 
-	xSum[j] += x[i*NDIM + j] = gaussianDistribution();
+    xSum[j] += x[i*NDIM + j] = gaussianDistribution();
     
     /* with zero total momentum */
     for(i=0; i<natoms; i++) 
       for(j=0; j<NDIM; j++) 
-	x[i*NDIM + j] -= xSum[j]/natoms;
+    x[i*NDIM + j] -= xSum[j]/natoms;
 
     NGA_Put (g_V, &lo, &hi, x, &hi); /* velocity array */
     
-    if(!MA_pop_stack(handle)) ga_error("LJ_Init:MA_pop_stack failed",0);  
+    if(!MA_pop_stack(handle)) GA_Error("LJ_Init:MA_pop_stack failed",0);  
   }
     
   /* rescale to desired temperature */
@@ -463,7 +479,7 @@ void initializeProperties () {
 }
 
 void computeProperties(int natoms, double potentialEnergy, 
-		       double *totalEnergy) {
+               double *totalEnergy) {
   
   int i, p, lo, hi, ld, natms;
   double kineticEnergy = 0.0, vir = 0.0;
@@ -522,11 +538,11 @@ void printProperties (int natoms) {
   stdDev = potentialEnergySqdSum / measurementStep;
   stdDev = sqrt(stdDev - average * average);
   printf("Potential Energy per particle = %f  +-  %f\n",
-	 average / natoms, stdDev / natoms);
+     average / natoms, stdDev / natoms);
   
   stdDev  = (totalEnergySqdSum - totalEnergySum);
   printf("Energy Fluctuation            = %lf\n\n", 
-	 sqrt(stdDev)/kineticEnergySum);
+     sqrt(stdDev)/kineticEnergySum);
 }
 
 
@@ -546,7 +562,7 @@ void LJ_Update() {
   for (p = 0; p < natms; p++)
     for (i = 0; i < NDIM; i++) {
       x[p*NDIM + i] += v[p*NDIM + i] * gTimeStep + 
-	0.5 * a[p*NDIM + i] * gTimeStep * gTimeStep;
+    0.5 * a[p*NDIM + i] * gTimeStep * gTimeStep;
       /* impose periodic boundary conditions */
       if (x[p*NDIM+i] < 0.0)   x[p*NDIM+i] += b[i];
       if (x[p*NDIM+i] >= b[i]) x[p*NDIM+i] -= b[i];
@@ -588,7 +604,7 @@ void initializeTaskArray() {
 }
 
 void solveOneTimeStep(double *potentialEnergy, int natoms, 
-		      double *x_i, double *x_j, double *grad) {
+              double *x_i, double *x_j, double *grad) {
   *potentialEnergy = 0.0;
 
   LJ_Update();    /* Update the coordinates */
@@ -619,7 +635,7 @@ void writeToFile(int natoms) {
     fprintf(gOutfile, "%d\n\n", natoms) ; /* 2 new lines needed */
     do {
       fprintf(gOutfile, "%s %lf %lf %lf\n", "XX",
-	      p_data[i], p_data[i+1], p_data[i+2]);
+          p_data[i], p_data[i+1], p_data[i+2]);
       i+=NDIM;
     }while(++n < natoms);
     
@@ -691,15 +707,15 @@ void LJ_Solve(int natoms) {
     printf("%d: Total Elapsed Time  = %lf\n", gMe, execTime);
     printf("%d: Computation Time    = %lf\n", gMe, gComputeTime);
     printf("%d: Percentage Overhead = %lf\n\n", gMe, 
-	   100*(execTime-gComputeTime)/execTime);
+       100*(execTime-gComputeTime)/execTime);
   }
 #endif
-  if(!MA_pop_stack(gMemHandle)) ga_error("LJ_Init:MA_pop_stack failed",0); 
+  if(!MA_pop_stack(gMemHandle)) GA_Error("LJ_Init:MA_pop_stack failed",0); 
 }
 
 
 /**
- * main()
+ * main(int argc, char **argv)
  */
 int main(int argc, char **argv) {
 
@@ -711,7 +727,7 @@ int main(int argc, char **argv) {
 #ifdef MPI
   MPI_Init(&argc, &argv);                     /* initialize MPI */
 #else
-  PBEGIN_(argc, argv);                        /* initialize TCGMSG */
+  tcg_pbegin(argc, argv);                     /* initialize TCGMSG */
 #endif
 
 
@@ -760,9 +776,8 @@ int main(int argc, char **argv) {
 #ifdef MPI
   MPI_Finalize();
 #else
-  PEND_(); 
+  tcg_pend(); 
 #endif
   
   return 0;
 }
-

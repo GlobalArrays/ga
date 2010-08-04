@@ -1,13 +1,33 @@
-#include <stdio.h>
-#include <math.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_SYS_STAT_H
+#   include <sys/stat.h>
+#endif
+#if HAVE_FCNTL_H
+#   include <fcntl.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+
+#include <mpi.h>
+
 #include "ga.h"
 #include "macdecls.h"
-#include <mpi.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
 
 extern int na;
 extern int nz;
@@ -20,21 +40,21 @@ extern int isvectormirrored;
 static FILE *fd;
 
 void generate_random_file(int naa,int nnz){
-int irow[naa],icol[nnz];
-double A[nnz],b[naa];
     fd = fopen("randominput.dat", "w");
 }
 
 void read_and_create(int argc, char **argv)
 {
-int ri,i,*iptr,zero=0,one=1;
+int ri,i;
 int ph;
-double d_one=1.0,d_zero=0.0;
-double *a,*dptr,*x;
+double d_one=1.0;
+double *a,*x;
 int *icol, *irow;
+#if 0
 int dims[2];
+#endif
 int tmp1,idealelementsperproc;
-int lo,hi,ld;
+int lo,hi;
 
     na = atoi(argv[1]);
     nz = atoi(argv[2]);
@@ -116,11 +136,11 @@ int lo,hi,ld;
          allfirstrow[i]=tmp1;
          for(ri=tmp1;ri<na;ri++,tmp1++){
            elementsperproc+=(irow[ri+1]-irow[ri]);
-	   if(elementsperproc>=idealelementsperproc){
+       if(elementsperproc>=idealelementsperproc){
              if((elementsperproc-idealelementsperproc) > 
                 idealelementsperproc-(elementsperproc-(irow[ri+1]-irow[ri]))){
                alllastrow[i] = ri-1;  
-	       if((ri-1)<0)GA_Error("run on a smaller processor count",0);
+           if((ri-1)<0)GA_Error("run on a smaller processor count",0);
                tmp1--;
              }
              else{
@@ -129,7 +149,7 @@ int lo,hi,ld;
              }
              elementsperproc=0;
              break;
-	   }
+       }
          }
        }
        alllastrow[nproc-1]=na-1;
@@ -220,7 +240,8 @@ int lo,hi,ld;
        if(!m_dvec) GA_Error("create mirrored dvec failed",na);
     }
 
-    ga_vecptr = (double *)GA_Malloc_local(na*sizeof(double));
+    /* JAD What is GA_Malloc_local?  Where is it? */
+    /* ga_vecptr = (double *)GA_Malloc_local(na*sizeof(double)); */
 
     
     if(me==0)fclose(fd);

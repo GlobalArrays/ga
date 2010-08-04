@@ -4,7 +4,9 @@
 #ifndef __ATOMICS_I386__
 #define __ATOMICS_I386__
 
-#include <assert.h>
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
 
 #define v4b (volatile unsigned int *)
 

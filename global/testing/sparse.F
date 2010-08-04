@@ -1,4 +1,7 @@
-Cx
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
+C 
 C     Test the minval, minloc, maxval, maxloc, and enum functions in GA.
 C
       program main
@@ -11,12 +14,7 @@ C
 c     
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Initialize GA
 c
@@ -56,11 +54,7 @@ c
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
 c
       end
 
@@ -86,7 +80,7 @@ c
       double precision xmax1, xmin1
       double precision xmax_ga, xmin_ga
 c
-      iran(i) = int(util_drand(1)*real(i)) + 1
+      iran(i) = int(drand(1)*real(i)) + 1
 c
 c***  check parallel environment
       me = ga_nodeid()
@@ -118,7 +112,7 @@ c***  scatter some values into the global array
         ilocmax = Mod(iran(50000000),dims(1))
         ilocmin = Mod(iran(1000000),dims(1))
 C        if(ilocmin.eq.ilocmax) ilocmin=Mod(ilocmin+1,dims(1)-1)
-        xmax1 = util_drand(0)*real(ilo) + dims(1)
+        xmax1 = drand(0)*real(ilo) + dims(1)
         xmin1= -1 
         call nga_put(g_a,ilocmin,ilocmin,xmin1,1)
         call nga_put(g_a,ilocmax,ilocmax,xmax1,1)

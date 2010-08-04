@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
       subroutine get_patch(g_fg,  fg,  ld_fg1,  ld_fg2,
      +                     g_fld, fld, ld_fld1, ld_fld2,
      +                     g_bc,  bc,  ld_bc1, ii, jj)

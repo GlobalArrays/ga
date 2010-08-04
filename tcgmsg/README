@@ -1,25 +1,24 @@
 TCGMSG Send/receive subroutines ... version 4.04 (January 1994)
 ---------------------------------------------------------------
 
-Robert J. Harrison
-
-Mail Stop K1-90                             tel: 509-375-2037
-Battelle Pacific Northwest Laboratory       fax: 509-375-6631
-P.O. Box 999, Richland WA 99352          E-mail: rj_harrison@pnl.gov
+:author: Robert J. Harrison
+:address: P.O. Box 999 Richland WA 99352 K1-90
+:tel: 509-375-2037
+:fax: 509-375-6631
+:email: rj_harrison@pnl.gov
 
 Summary
 -------
 
-     TCGMSG is a toolkit for writing portable parallel programs using
-a message passing model.  Supported are a variety of common UNIX
-workstations, mini-super and super computers and hetrogenous networks
-of the same, along with true parallel computers such as the Touchstone
-Delta, the Intel iPSC, the Kendall Square Research KSR-1, and the
-Alliant FX/2800 MPP system.  Applications port between all of these
-environments without modification to the parallel constructs.  This
-toolkit is available without charge, along with a set of example
-'chemistry' applications.  We are using this toolkit in our production
-codes, but cannot guarantee support or accept any liability for its
+TCGMSG is a toolkit for writing portable parallel programs using a message
+passing model.  Supported are a variety of common UNIX workstations,
+mini-super and super computers and hetrogenous networks of the same, along
+with true parallel computers such as the Touchstone Delta, the Intel iPSC, the
+Kendall Square Research KSR-1, and the Alliant FX/2800 MPP system.
+Applications port between all of these environments without modification to
+the parallel constructs.  This toolkit is available without charge, along with
+a set of example 'chemistry' applications.  We are using this toolkit in our
+production codes, but cannot guarantee support or accept any liability for its
 use.
 
 Release Notes (4.04)
@@ -95,7 +94,7 @@ Release Notes (4.02)
           INTEGER FUNCTION PROBE(TYPE, NODE)
           INTEGER TYPE, NODE
 
-          long PROBE_(long *type, long *node)
+          long PROBE_(long * type, long * node)
 
   9)  Are you aware of the message passing interface standardization
       effort?  Send mail to netlib@ornl.gov with the body
@@ -161,7 +160,7 @@ Installing TCGSMG
 
      Meaning of status field
 
-       - tested and fully functional
+     . - tested and fully functional
      s - tested but O/S does not support shared memory -> sockets only
      x - tested but O/S does not support XDR -> no data conversion
      ? - not tested recently but is supposed to work
@@ -170,28 +169,28 @@ Installing TCGSMG
 
   Status   Machine     Description
   ------   -------     -----------
-           SUN         Sun workstation running Sun O/S 4.0 or above
-           KSR         Kendall Square Research KSR-1
-           DEC         DecStation running ULTRIX
-           DECOSF      DEC Alpha running OSF (must use 8 byte FORTRAN integers)
-           SGI         Silicon Graphics workstation IRIX 4.0
-           ALLIANT     Alliant FX/8/80/800/2800 Concentrix 2800 2.2
-    ?      ALLIANTMPP  Alliant MPP system ALPHA VERSION
-           ARDENT      Stardent (formerly Ardent) Titan O/S 2.2
-           CONVEX      Convex C220 running ConvexOS V8.1
-           IBM         IBM R6000 with AIX 3.1 (xlf -qEXTNAME)
-           IBMNOEXT    IBM R6000 with AIX 3.1
-           HPUX        Hewlett-Packard risc (HP-UX A.B8.05) (f77 +ppu)
-           HPUXNOEXT   Hewlett-Packard risc (HP-UX A.B8.05)
-           IPSC        Intel iPSC i860 hypercube
-           DELTA       Intel/DARPA Touchstone Delta
-           PARAGON     Intel Paragon running OSF
-    x      APOLLO      Apollo DN10000, DomainOS Release 10.3 (bsd4.3)
-    s      CRAY        Cray running UNICOS 6.1 or above
-    s      NEXT        NeXT Workstation (OS 2.1) (Absoft f77 -f -N9)
-    s      NEXTNOEXT   NeXT Workstation (OS 2.1) (Absoft f77 -f)
-    ?      ENCORE      Encore running UMAX-4.3
-    !      SEQUENT     Sequent (DYNIX V3.0.14)
+  .        SUN         Sun workstation running Sun O/S 4.0 or above
+  .        KSR         Kendall Square Research KSR-1
+  .        DEC         DecStation running ULTRIX
+  .        DECOSF      DEC Alpha running OSF (must use 8 byte FORTRAN integers)
+  .        SGI         Silicon Graphics workstation IRIX 4.0
+  .        ALLIANT     Alliant FX/8/80/800/2800 Concentrix 2800 2.2
+  ?        ALLIANTMPP  Alliant MPP system ALPHA VERSION
+  .        ARDENT      Stardent (formerly Ardent) Titan O/S 2.2
+  .        CONVEX      Convex C220 running ConvexOS V8.1
+  .        IBM         IBM R6000 with AIX 3.1 (xlf -qEXTNAME)
+  .        IBMNOEXT    IBM R6000 with AIX 3.1
+  .        HPUX        Hewlett-Packard risc (HP-UX A.B8.05) (f77 +ppu)
+  .        HPUXNOEXT   Hewlett-Packard risc (HP-UX A.B8.05)
+  .        IPSC        Intel iPSC i860 hypercube
+  .        DELTA       Intel/DARPA Touchstone Delta
+  .        PARAGON     Intel Paragon running OSF
+  x        APOLLO      Apollo DN10000, DomainOS Release 10.3 (bsd4.3)
+  s        CRAY        Cray running UNICOS 6.1 or above
+  s        NEXT        NeXT Workstation (OS 2.1) (Absoft f77 -f -N9)
+  s        NEXTNOEXT   NeXT Workstation (OS 2.1) (Absoft f77 -f)
+  ?        ENCORE      Encore running UMAX-4.3
+  !        SEQUENT     Sequent (DYNIX V3.0.14)
 
      In the top-level TCGMSG directory type
 

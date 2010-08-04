@@ -12,4 +12,4 @@ extern void armci_hashmap_insert(VocabIntMap *vocabMap,
 extern void armci_hashmap_insert2(VocabIntMap *vocabMap, const char *buf,
                                   size_t bufsize, int *globalTermIds, int op);
 
-#endif // UTIL_H
+#endif /* UTIL_H */

@@ -33,9 +33,6 @@ c
       integer f2c_get_next_memhandle
       integer f2c_get_numalign
       integer f2c_inform_base
-#if defined(_CRAY) || defined(WIN32)
-      integer f2c_inform_base_fcd
-#endif /* _CRAY */
       integer f2c_init
       integer f2c_initialized
       integer f2c_init_memhandle_iterator
@@ -69,9 +66,6 @@ c     void f2c_trace
       external f2c_get_next_memhandle
       external f2c_get_numalign
       external f2c_inform_base
-#if defined(_CRAY) || defined(WIN32)
-      external f2c_inform_base_fcd
-#endif /* _CRAY */
       external f2c_init
       external f2c_initialized
       external f2c_init_memhandle_iterator

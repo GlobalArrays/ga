@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: stat.c,v 1.20.10.3 2007-08-30 18:19:44 manoj Exp $ */
 
 #include "eliop.h"
@@ -9,14 +13,16 @@
 
 #define DEBUG_ 0
  
-/*\ determines directory path for a given file
-\*/
+
+/**
+ * determines directory path for a given file
+ */
 int elio_dirname(const char *fname, char *dirname, int len)
 {
     size_t flen;
     
     if(len<= (flen =strlen(fname))) 
-	ELIO_ERROR(LONGFAIL,flen);
+    ELIO_ERROR(LONGFAIL,flen);
     
 #ifdef WIN32
     while(fname[flen] != '/' && fname[flen] != '\\' && flen >0 ) flen--;
@@ -30,12 +36,14 @@ int elio_dirname(const char *fname, char *dirname, int len)
     return(ELIO_OK);
 }
 
+
 #ifdef WIN32
 #include <direct.h>
 #include <stdlib.h>
 
-/*\ determine drive name given the file path name
-\*/ 
+/**
+ * determine drive name given the file path name
+ */ 
 char* elio_drivename(const char* fname)
 {
 
@@ -47,6 +55,7 @@ char* elio_drivename(const char* fname)
          return(drive);
 }
 
+
 void  get_avail_space(int dev, avail_t *avail, int* bsize)
 {
       static char drive[4]="A:\\";
@@ -57,12 +66,12 @@ void  get_avail_space(int dev, avail_t *avail, int* bsize)
       *avail = sectors*(avail_t)cfree;
 }
 
-#endif
+#endif /* WIN32 */
          
          
-
-/*\ Stat a file (or path) to determine it's filesystem info
-\*/
+/**
+ * Stat a file (or path) to determine it's filesystem info
+ */
 int  elio_stat(char *fname, stat_t *statinfo)
 {
     struct  stat      ufs_stat;
@@ -84,30 +93,30 @@ int  elio_stat(char *fname, stat_t *statinfo)
     if( (statpfsbuf = (struct statpfs *) malloc(bufsz)) == NULL)
         ELIO_ERROR(ALOCFAIL,1);
     if(statpfs(fname, &estatbuf, statpfsbuf, bufsz) == 0)
-	{
-	    if(estatbuf.f_type == MOUNT_PFS)
-		statinfo->fs = ELIO_PFS;
-	    else if(estatbuf.f_type == MOUNT_UFS || estatbuf.f_type == MOUNT_NFS)
-		statinfo->fs = ELIO_UFS;
-	    else
-		ELIO_ERROR(FTYPFAIL, 1);
+    {
+        if(estatbuf.f_type == MOUNT_PFS)
+        statinfo->fs = ELIO_PFS;
+        else if(estatbuf.f_type == MOUNT_UFS || estatbuf.f_type == MOUNT_NFS)
+        statinfo->fs = ELIO_UFS;
+        else
+        ELIO_ERROR(FTYPFAIL, 1);
 
-	    /*blocks avail - block=1KB */ 
-	    etos(estatbuf.f_bavail, str_avail);
-	    if(strlen(str_avail)==10)
-		fprintf(stderr,"elio_stat: possible ext. type conversion problem\n");
-	    if((bsize=strlen(str_avail))>10)
-		ELIO_ERROR(CONVFAIL,(long)bsize);
-	    statinfo->avail = atoi(str_avail);
-	} 
+        /*blocks avail - block=1KB */ 
+        etos(estatbuf.f_bavail, str_avail);
+        if(strlen(str_avail)==10)
+        fprintf(stderr,"elio_stat: possible ext. type conversion problem\n");
+        if((bsize=strlen(str_avail))>10)
+        ELIO_ERROR(CONVFAIL,(long)bsize);
+        statinfo->avail = atoi(str_avail);
+    } 
     else
-	ELIO_ERROR(STATFAIL,1);
+    ELIO_ERROR(STATFAIL,1);
     free(statpfsbuf);
 
 #else
     
     if(stat(fname, &ufs_stat) != 0)
-	    ELIO_ERROR(STATFAIL, 1);
+        ELIO_ERROR(STATFAIL, 1);
 
 #   if defined(PIOFS)
 /*        fprintf(stderr,"filesystem %d\n",ufs_stat.st_vfstype);*/
@@ -117,13 +126,13 @@ int  elio_stat(char *fname, stat_t *statinfo)
 #   endif
 
     statinfo->fs = ELIO_UFS;
-	
+    
     /* only regular or directory files are OK */
     if(!S_ISREG(ufs_stat.st_mode) && !S_ISDIR(ufs_stat.st_mode))
-	    ELIO_ERROR(TYPEFAIL, 1);
-	
+        ELIO_ERROR(TYPEFAIL, 1);
+    
 #   if defined(CRAY) || defined(NEC)
-	if(statfs(fname, &ufs_statfs, sizeof(ufs_statfs), 0) != 0)
+    if(statfs(fname, &ufs_statfs, sizeof(ufs_statfs), 0) != 0)
 #   elif defined (CATAMOUNT)
         statinfo->avail =2*1024*1024*128; 
         return(ELIO_OK);
@@ -131,7 +140,7 @@ int  elio_stat(char *fname, stat_t *statinfo)
         if(STATVFS(fname, &ufs_statfs) != 0)
 #   endif
            ELIO_ERROR(STATFAIL,1);
-	
+    
 #   if defined(WIN32)
 
        get_avail_space(ufs_statfs.st_dev, &(statinfo->avail), &bsize);
@@ -177,10 +186,10 @@ int  elio_stat(char *fname, stat_t *statinfo)
     case 16384: statinfo->avail *=16; break;
     case 32768: statinfo->avail *=32; break;
     default:   { 
-		double avail;
-		double factor = ((double)bsize)/1024.0;
-		avail = factor * (double)statinfo->avail;
-		statinfo->avail = (avail_t) avail;
+        double avail;
+        double factor = ((double)bsize)/1024.0;
+        avail = factor * (double)statinfo->avail;
+        statinfo->avail = (avail_t) avail;
                }
     }
     

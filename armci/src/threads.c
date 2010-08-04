@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: threads.c,v 1.1.2.5 2007-08-28 21:29:46 manoj Exp $ */
 
 #if 0
@@ -14,7 +18,9 @@
 #endif
 
 
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 #include "armcip.h"
 
 armci_user_threads_t armci_user_threads;
@@ -78,7 +84,7 @@ void armci_finalize_threads()
  * might be expensive -- needs optiomization */
 INLINE int armci_thread_idx()
 {
-    int i, n = MIN(armci_user_threads.avail, armci_user_threads.max);
+    int i, n = ARMCI_MIN(armci_user_threads.avail, armci_user_threads.max);
     thread_id_t id = THREAD_ID_SELF();
 
     for (i = 0; i < n; i++) if (id == armci_user_threads.ids[i]) {

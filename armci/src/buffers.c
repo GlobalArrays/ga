@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: buffers.c,v 1.29.6.9 2007-07-02 05:16:50 d3p687 Exp $    **/
 
 #define SIXTYFOUR 64
@@ -6,18 +10,26 @@
 #define EXTRA_ERR_CHECK
 
 /**********************************************************************/
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
 #include "armcip.h"
 #include "request.h"
 
-#ifdef WIN32
-#  include <windows.h>
-   typedef unsigned long ssize_t;
-#else
-#  include <unistd.h>
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#elif HAVE_WINDOWS_H
+#   include <windows.h>
+    typedef unsigned long ssize_t;
 #endif
 
 #ifdef SOCKETS
@@ -151,6 +163,14 @@ INLINE BUF_INFO_T *_armci_id_to_bufinfo(int bufid) {
 
 #if (defined(THREAD_SAFE) || defined(SOCKETS))
 
+/* check if buffer was completed and can be released */
+int armci_test_network_complete() {
+    int idx;
+    for (idx=0;idx<MAX_BUFS+MAX_SMALL_BUFS;idx++)
+        if (_armci_buf_state->table[idx].cmpl) break;
+    return (idx == MAX_BUFS+MAX_SMALL_BUFS ? -1 : idx);
+}
+
 
 /*\ we allocate alligned buffer space
  *  this operation can be implemented in platform specific files
@@ -158,7 +178,7 @@ INLINE BUF_INFO_T *_armci_id_to_bufinfo(int bufid) {
 void _armci_buf_init()
 {
 char *tmp;
-int extra=0, i, n;
+int extra=0;
 int smallbuf_size = sizeof(buf_smext_t)*(MAX_SMALL_BUFS);
      tmp = (char *)BUF_ALLOCATE((MAX_BUFS*sizeof(buf_ext_t) + 64 + smallbuf_size));
      extra= ALIGN64ADD(tmp);
@@ -174,9 +194,10 @@ int smallbuf_size = sizeof(buf_smext_t)*(MAX_SMALL_BUFS);
      _armci_smbuffers = (buf_smext_t *) (tmp + extra);
 
      if(DEBUG2_){
-	printf("%d:armci_init_bufs: pointer %p, before align ptr=%p bufptr=%p end of region is %p  size=%d extra=%d\n",
-               armci_me,_armci_buffers,tmp,_armci_buffers->buffer,(_armci_buffers+MAX_BUFS),
-               MAX_BUFS*sizeof(buf_ext_t),extra);
+	printf("%d:armci_init_bufs: pointer %p, before align ptr=%p bufptr=%p end of region is %p  size=%lu extra=%d\n",
+               armci_me, _armci_buffers, tmp, _armci_buffers->buffer,
+               (_armci_buffers+MAX_BUFS),
+               (long unsigned)MAX_BUFS*sizeof(buf_ext_t), extra);
 	fflush(stdout);
      }
 
@@ -419,8 +440,10 @@ int i;
 #endif
 
 enum {CALL_GET, CALL_RELEASE} last_call_ = CALL_RELEASE;
+#if DEBUG3_
 static int get_count_ = 0;
 static int release_count_ = 0;
+#endif
 
 
 /* release buffer, update free buffers bitmaps */
@@ -478,7 +501,7 @@ char *_armci_buf_get(int size, int operation, int to)
     unsigned bitmap;
     int small = size < SMALL_BUF_LEN;
     int max_bufs = small ? MAX_SMALL_BUFS : MAX_BUFS;
-    int idx;     /* same type buffers index: 0..{MAX_BUFS|MAX_SMALL_BUFS}-1 */
+    int idx = 0; /* same type buffers index: 0..{MAX_BUFS|MAX_SMALL_BUFS}-1 */
     int tbl_idx; /* global index in table: 0..MAX_BUFS+MAX_SMALL_BUFS-1 */
     int not_ready = 1;
 
@@ -555,7 +578,7 @@ char *_armci_buf_get(int size, int operation, int to)
                 _armci_buf_complete_index(tbl_idx, 0);
 
                 /* tbl_idx < MAX_BUFS ^ small - 1 if completed compatible buffer */
-                if (tbl_idx < MAX_BUFS ^ small) {
+                if ((tbl_idx < MAX_BUFS) ^ small) {
                     THREAD_LOCK(armci_user_threads.buf_lock);
 
                     /* is this check really necessary ??? */
@@ -623,7 +646,7 @@ char *_armci_buf_ptr_from_id(int id)
 }
 
 
-/*\function called from ARMCI_Wait to wait for non-blocking ops
+/*\function called from PARMCI_Wait to wait for non-blocking ops
 \*/
 void _armci_buf_complete_nb_request(int bufid,unsigned int tag, int *retcode) 
 {
@@ -659,7 +682,7 @@ int i=0;
 }
 
 
-/*\function called from ARMCI_Test to test completion of non-blocking ops
+/*\function called from PARMCI_Test to test completion of non-blocking ops
 \*/
 void _armci_buf_test_nb_request(int bufid,unsigned int tag, int *retcode) 
 {
@@ -790,22 +813,8 @@ int i,num,last,first;
 }
 #endif
 
-/* check if buffer was completed and can be released */
-int armci_test_network_complete() {
-    int idx;
-    for (idx=0;idx<MAX_BUFS+MAX_SMALL_BUFS;idx++)
-        if (_armci_buf_state->table[idx].cmpl) break;
-    return (idx == MAX_BUFS+MAX_SMALL_BUFS ? -1 : idx);
-}
 
-
-
-
-
-#else
-
-
-
+#else /* (defined(THREAD_SAFE) || defined(SOCKETS)) */
 
 
 /*\ we allocate alligned buffer space
@@ -1478,7 +1487,7 @@ char *_armci_buf_ptr_from_id(int id)
 
 
 
-/*\function called from ARMCI_Wait to wait for non-blocking ops
+/*\function called from PARMCI_Wait to wait for non-blocking ops
 \*/
 void _armci_buf_complete_nb_request(int bufid,unsigned int tag, int *retcode) 
 {
@@ -1536,7 +1545,7 @@ int i=0;
 }
 
 
-/*\function called from ARMCI_Test to test completion of non-blocking ops
+/*\function called from PARMCI_Test to test completion of non-blocking ops
 \*/
 void _armci_buf_test_nb_request(int bufid,unsigned int tag, int *retcode) 
 {

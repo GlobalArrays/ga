@@ -1,43 +1,43 @@
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+
 #include "macdecls.h"
 #include "ga.h"
-#ifdef MPI
-#include <mpi.h>
-#else
-#include "sndrcv.h"
-#endif
+#include "mp3.h"
 
 /* utilities for GA test programs */
 #include "testutil.h"
-#include "math.h"
 
 #define N 400          /* first dimension  */
 #define BASE 0
 #define PERMUTE_ 
 
 #define GA_DATA_TYPE MT_C_FLOAT
-#define ABS(a) (((a) >= 0) ? (a) : (-(a)))
+#define GA_ABS(a) (((a) >= 0) ? (a) : (-(a)))
 #define TOLERANCE 0.000001
 
-#ifdef MPI
-#define CLOCK_ MPI_Wtime
-#else
-#define CLOCK_ TCGTIME_
-#endif
 
 DoublePrecision gTime=0.0, gStart;
 
 void
 test(int data_type, int ndim) {
-  int me=GA_Nodeid(), nproc=GA_Nnodes();
+  int me=GA_Nodeid();
   int g_a, g_b, g_c, g_A, g_B, g_C;
-  int i;
   int dims[GA_MAX_DIM]={N,N,2,2,2,1,1};
   int lo[GA_MAX_DIM]={1,1,1,1,1,0,0};
   int hi[GA_MAX_DIM]={N-2,N-2,1,1,1,0,0};
   int clo[2], chi[2], m, n, k;
-  int ld[GA_MAX_DIM]={N-2,1,1,1,0,0};
   double value1_dbl = 2.0, value2_dbl = 2.0;
   double alpha_dbl = 1.0, beta_dbl = 0.0;
   float value1_flt = 2.0, value2_flt = 2.0;
@@ -46,7 +46,7 @@ test(int data_type, int ndim) {
   DoubleComplex alpha_dcpl = {1.0, 0.0} , beta_dcpl = {0.0, 0.0}; 
   SingleComplex value1_scpl = {2.0, 2.0}, value2_scpl = {2.0, 2.0};
   SingleComplex alpha_scpl = {1.0, 0.0} , beta_scpl = {0.0, 0.0}; 
-  void *value1, *value2, *alpha, *beta;
+  void *value1=NULL, *value2=NULL, *alpha=NULL, *beta=NULL;
 
   switch (data_type) {
   case C_FLOAT:
@@ -91,9 +91,9 @@ test(int data_type, int ndim) {
   GA_Zero(g_c);
 
   NGA_Matmul_patch('N', 'N', alpha, beta,
-		   g_a, lo, hi,
-		   g_b, lo, hi,
-		   g_c, lo, hi);  
+           g_a, lo, hi,
+           g_b, lo, hi,
+           g_c, lo, hi);  
   GA_Destroy(g_a);
   GA_Destroy(g_b);
 
@@ -114,7 +114,7 @@ test(int data_type, int ndim) {
   GA_Fill(g_B, value2);
   GA_Zero(g_C);
 
-  gStart = CLOCK_();
+  gStart = MP_TIMER();
   switch (data_type) {
   case C_FLOAT:
     GA_Sgemm('N', 'N', m, n, k, alpha_flt,  g_A, g_B, beta_flt, g_C);
@@ -135,7 +135,7 @@ test(int data_type, int ndim) {
   default:
     GA_Error("wrong data type", data_type);
   }
-  gTime += CLOCK_()-gStart;
+  gTime += MP_TIMER()-gStart;
 
   GA_Destroy(g_B);
   
@@ -202,11 +202,7 @@ Integer heap=9000000, stack=9000000;
 int me, nproc;
 DoublePrecision time;
 
-#ifdef MPI
-    MPI_Init(&argc, &argv);                       /* initialize MPI */
-#else
-    PBEGIN_(argc, argv);                        /* initialize TCGMSG */
-#endif
+    MP_INIT(argc,argv);
 
     GA_Initialize();                           /* initialize GA */
 
@@ -232,20 +228,16 @@ DoublePrecision time;
 
     if(GA_Uses_fapi())GA_Error("Program runs with C API only",0);
 
-    time = CLOCK_();
+    time = MP_TIMER();
     do_work();
-    /*    printf("%d: Total Time = %lf\n", me, CLOCK_()-time);
-	  printf("%d: GEMM Total Time = %lf\n", me, gTime);
+    /*    printf("%d: Total Time = %lf\n", me, MP_TIMER()-time);
+      printf("%d: GEMM Total Time = %lf\n", me, gTime);
     */
 
     if(me==0)printf("\nSuccess\n\n");
     GA_Terminate();
 
-#ifdef MPI
-    MPI_Finalize();
-#else
-    PEND_();
-#endif
+    MP_FINALIZE();
 
     return 0;
 }

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: noncont.c,v 1.3.2.2 2007-05-04 16:43:35 d3p687 Exp $
  * noncont.c
  *
@@ -15,7 +19,9 @@
 #include "copy.h"
 #include "acc.h"
 #include "memlock.h"
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 #ifdef PORTALS
 #include "armci_portals.h"
 #endif

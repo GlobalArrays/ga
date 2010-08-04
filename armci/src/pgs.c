@@ -1,11 +1,19 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: pgs.c,v 1.17.2.1 2007-05-04 22:04:32 manoj Exp $ 
  * Note: the general ARMCI copyright does not apply to code included in this file 
  *       Explicit permission is required to copy/modify this code. 
  */
 
 
-#include <stdlib.h>
-#include <stdio.h>
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 
 #include <qsnet/config.h>
 #include <qsnet/types.h>

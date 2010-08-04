@@ -34,7 +34,7 @@ c     icut1        = no. of successful ij   2-e screening tests
 c     icut2        = no. of successful ijkl 2-e screening tests
 c     icut3        = no. of 2-e integrals computed
 c
-      parameter (maxatom = 286)		!cste original value 50
+      parameter (maxatom = 286)        !cste original value 50
       parameter (maxnbfn =15*maxatom, mxiter = 30)
       parameter (maxnnbfn = maxnbfn*(maxnbfn+1)/2)
       parameter (pi = 3.141592653589793d0)

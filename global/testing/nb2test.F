@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -17,7 +20,7 @@ c vector boxes lack arithmetic precision
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-#include "tcgmsg.fh"
+c#include "tcgmsg.fh"
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM, nwidth, MAXPROC, nloop
       parameter (nmax = 4, DIM = 2, nwidth = 2, MAXPROC = 2000)
@@ -26,7 +29,8 @@ c vector boxes lack arithmetic precision
       integer i, j, k, dims(7), width(7), map(2*nmax)
       integer lo(7), hi(7), ld(7)
       integer lo2(7), hi2(7), ld2(7)
-      integer dims3(7), ld3(7), index3, chunk(7)
+      integer dims3(7), ld3(7), chunk(7)
+      MA_ACCESS_INDEX_TYPE index3
       integer a(nmax, nmax), b(nmax+2*nwidth,nmax+2*nwidth)
       integer handles(8),mask(7)
       double precision start,finish,start1,finish1,t1,t2,t3,t4,t5,tmp
@@ -36,12 +40,7 @@ c vector boxes lack arithmetic precision
 c     
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Initialize GA
 c
@@ -334,18 +333,15 @@ c
       endif
   127 continue
 c
+      if(ga_nodeid().eq.0) print *,'All tests successful '
+c
 c***  Tidy up the GA package
 c
       call ga_terminate()
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
-
+      call MP_FINALIZE()
 c
       stop
       end

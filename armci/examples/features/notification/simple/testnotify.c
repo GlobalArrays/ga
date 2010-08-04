@@ -1,30 +1,28 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: testnotify.c,v 1.1.2.1 2007-06-20 17:42:09 vinod Exp $ */
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STRINGS_H
+#   include <strings.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
 
 #define DEBUG__ 
 
-#include <unistd.h>
-
-/* ARMCI is impartial to message-passing libs - we handle them with MP macros */
-#if defined(TCGMSG)
-#   include <sndrcv.h>
-    long tcg_tag =30000;
-#   define MP_BARRIER()      SYNCH_(&tcg_tag)
-#   define MP_INIT(arc,argv) PBEGIN_((argc),(argv))
-#   define MP_FINALIZE()     PEND_()
-#   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
-#   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
-#else
-#   include <mpi.h>
-#   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
-#   define MP_FINALIZE()     MPI_Finalize()
-#   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
-#   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
-#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
-#endif
-
+#include "mp3.h"
 #include "armci.h"
 
 #define DIM1 5
@@ -75,9 +73,9 @@
 
 /***************************** macros ************************/
 #define COPY(src, dst, bytes) memcpy((dst),(src),(bytes))
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
-#define ABS(a) (((a) <0) ? -(a) : (a))
+#define ARMCI_MAX(a,b) (((a) >= (b)) ? (a) : (b))
+#define ARMCI_MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#define ARMCI_ABS(a) (((a) <0) ? -(a) : (a))
 
 /***************************** global data *******************/
 int me, nproc;
@@ -89,18 +87,18 @@ void* work[MAXPROC]; /* work array for propagating addresses */
 \*/
 void get_range(int ndim, int dims[], int lo[], int hi[]) 
 {
-	int dim;
-	for(dim=0; dim <ndim;dim++){
-		int toss1, toss2;
-		toss1 = rand()%dims[dim];
-		toss2 = rand()%dims[dim];
-		if(toss1<toss2){
-			lo[dim]=toss1;
-			hi[dim]=toss2;
-		}else {
-  			hi[dim]=toss1;
-			lo[dim]=toss2;
-		}
+    int dim;
+    for(dim=0; dim <ndim;dim++){
+        int toss1, toss2;
+        toss1 = rand()%dims[dim];
+        toss2 = rand()%dims[dim];
+        if(toss1<toss2){
+            lo[dim]=toss1;
+            hi[dim]=toss2;
+        }else {
+              hi[dim]=toss1;
+            lo[dim]=toss2;
+        }
     }
 }
 
@@ -110,18 +108,18 @@ void get_range(int ndim, int dims[], int lo[], int hi[])
 \*/
 void new_range(int ndim, int dims[], int lo[], int hi[],int new_lo[], int new_hi[])
 {
-	int dim;
-	for(dim=0; dim <ndim;dim++){
-		int toss, range;
-		int diff = hi[dim] -lo[dim]+1;
-		assert(diff <= dims[dim]);
+    int dim;
+    for(dim=0; dim <ndim;dim++){
+        int toss, range;
+        int diff = hi[dim] -lo[dim]+1;
+        assert(diff <= dims[dim]);
                 range = dims[dim]-diff;
                 toss = (range > 0)? rand()%range : lo[dim];
-		new_lo[dim] = toss;
-		new_hi[dim] = toss + diff -1;
-		assert(new_hi[dim] < dims[dim]);
-		assert(diff == (new_hi[dim] -new_lo[dim]+1));
-	}
+        new_lo[dim] = toss;
+        new_hi[dim] = toss + diff -1;
+        assert(new_hi[dim] < dims[dim]);
+        assert(diff == (new_hi[dim] -new_lo[dim]+1));
+    }
 }
 
 
@@ -129,28 +127,28 @@ void new_range(int ndim, int dims[], int lo[], int hi[],int new_lo[], int new_hi
 \*/
 void print_range(char *pre,int ndim, int lo[], int hi[], char* post)
 {
-	int i;
+    int i;
 
-	printf("%s[",pre);
-	for(i=0;i<ndim;i++){
-		printf("%d:%d",lo[i],hi[i]);
-		if(i==ndim-1)printf("] %s",post);
-		else printf(",");
-	}
+    printf("%s[",pre);
+    for(i=0;i<ndim;i++){
+        printf("%d:%d",lo[i],hi[i]);
+        if(i==ndim-1)printf("] %s",post);
+        else printf(",");
+    }
 }
 
 /*\ print subscript of ndim dimensional array with two strings before and after
 \*/
 void print_subscript(char *pre,int ndim, int subscript[], char* post)
 {
-	int i;
+    int i;
 
-	printf("%s [",pre);
-	for(i=0;i<ndim;i++){
-		printf("%d",subscript[i]);
-		if(i==ndim-1)printf("] %s",post);
-		else printf(",");
-	}
+    printf("%s [",pre);
+    for(i=0;i<ndim;i++){
+        printf("%d",subscript[i]);
+        if(i==ndim-1)printf("] %s",post);
+        else printf(",");
+    }
 }
 
 
@@ -161,23 +159,23 @@ void init(double *a, int ndim, int elems, int dims[])
   int idx[MAXDIMS];
   int i,dim;
 
- 	for(i=0; i<elems; i++){
-		int Index = i;
-		double field, val;
+     for(i=0; i<elems; i++){
+        int Index = i;
+        double field, val;
         
-		for(dim = 0; dim < ndim; dim++){
-			idx[dim] = Index%dims[dim];
-			Index /= dims[dim];
-		}
-		
+        for(dim = 0; dim < ndim; dim++){
+            idx[dim] = Index%dims[dim];
+            Index /= dims[dim];
+        }
+        
                 field=1.; val=0.;
-		for(dim=0; dim< ndim;dim++){
-			val += field*idx[dim];
-			field *= BASE;
-		}
-		a[i] = val;
-		/* printf("(%d,%d,%d)=%6.0f",idx[0],idx[1],idx[2],val); */
-	}
+        for(dim=0; dim< ndim;dim++){
+            val += field*idx[dim];
+            field *= BASE;
+        }
+        a[i] = val;
+        /* printf("(%d,%d,%d)=%6.0f",idx[0],idx[1],idx[2],val); */
+    }
 }
 
 
@@ -186,32 +184,32 @@ void init(double *a, int ndim, int elems, int dims[])
 \*/
 int Index(int ndim, int subscript[], int dims[])
 {
-	int idx = 0, i, factor=1;
-	for(i=0;i<ndim;i++){
-		idx += subscript[i]*factor;
-		factor *= dims[i];
-	}
-	return idx;
+    int idx = 0, i, factor=1;
+    for(i=0;i<ndim;i++){
+        idx += subscript[i]*factor;
+        factor *= dims[i];
+    }
+    return idx;
 }
 
 
 void update_subscript(int ndim, int subscript[], int lo[], int hi[], int dims[])
 {
-	int i;
-	for(i=0;i<ndim;i++){
-		if(subscript[i] < hi[i]) { subscript[i]++; return; }
-		subscript[i] = lo[i];
-	}
+    int i;
+    for(i=0;i<ndim;i++){
+        if(subscript[i] < hi[i]) { subscript[i]++; return; }
+        subscript[i] = lo[i];
+    }
 }
 
-	
+    
 
 void compare_patches(double eps, int ndim, double *patch1, int lo1[], int hi1[],
                      int dims1[],double *patch2, int lo2[], int hi2[], 
                      int dims2[])
-					           
+                               
 {
-int i,j, elems=1;	
+int i,j, elems=1;    
 int subscr1[MAXDIMS], subscr2[MAXDIMS];
 double diff,max;
 
@@ -225,24 +223,24 @@ double diff,max;
       subscr2[i]=lo2[i];
     }
     for(j=0; j< elems; j++){ 
-    int idx1, idx2, offset1, offset2;
+    int idx1=0, idx2=0, offset1=0, offset2=0;
       idx1 = Index(ndim, subscr1, dims1);
       idx2 = Index(ndim, subscr2, dims2);
       if(j==0){
         offset1 =idx1;
-	offset2 =idx2;
+    offset2 =idx2;
       }
       idx1 -= offset1;
       idx2 -= offset2;
       diff = patch1[idx1] - patch2[idx2];
-      max  = MAX(ABS(patch1[idx1]),ABS(patch2[idx2]));
+      max  = ARMCI_MAX(ARMCI_ABS(patch1[idx1]),ARMCI_ABS(patch2[idx2]));
       if(max == 0. || max <eps) max = 1.; 
-      if(eps < ABS(diff)/max){
+      if(eps < ARMCI_ABS(diff)/max){
        char msg[48];
          sprintf(msg,"(proc=%d):%f",me,patch1[idx1]);
-	 print_subscript("ERROR: a",ndim,subscr1,msg);
-	 sprintf(msg,"%f\n",patch2[idx2]);
-	 print_subscript(" b",ndim,subscr2,msg);
+     print_subscript("ERROR: a",ndim,subscr1,msg);
+     sprintf(msg,"%f\n",patch2[idx2]);
+     print_subscript(" b",ndim,subscr2,msg);
          fflush(stdout);
          sleep(1);
          ARMCI_Error("Bailing out",0);
@@ -303,7 +301,7 @@ void test_notify(int ndim)
 int lo[MAXDIMS], hi[MAXDIMS], count[MAXDIMS];
 int stride[MAXDIMS];
 int dim,elems;
-int i,j, proc=1,Idx=1,idx=0;
+int i,Idx=1,idx=0;
 void *b[MAXPROC], *a[MAXPROC];
 int left = (me+nproc-1) % nproc;
 int right = (me+1) % nproc;
@@ -381,11 +379,6 @@ int loopcnt=1, less=2, strl; /* less>1 takes a partial plane */
     destroy_array(a);
 }
 
-
-/* we need to rename main if linking with frt compiler */
-#ifdef FUJITSU_FRT
-#define main MAIN__
-#endif
 
 int main(int argc, char* argv[])
 {

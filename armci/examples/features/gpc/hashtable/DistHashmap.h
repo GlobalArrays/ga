@@ -1,5 +1,4 @@
 /* $Id:  */
-
 #ifndef DISTHASHMAP_H_
 #define DISTHASHMAP_H_
 
@@ -12,31 +11,26 @@ using std::string;
 class DistHashmap {
       
  public:
-  // -------------------------------------------
-  //  Constructor
-  // -------------------------------------------
+  /**
+   * Constructor
+   */
   DistHashmap();
   
-  // -------------------------------------------
-  // Default Destructor
-  // -------------------------------------------
+  /**
+   * Default Destructor
+   */
   ~DistHashmap();
   
-  // -------------------------------------------
   /**
    * creates a new distributed hashmap
    */
-  // -------------------------------------------
   void create();
   
-  // -------------------------------------------
   /**
    * destroys this distributed hashmap
    */
-  // -------------------------------------------
   void destroy();
   
-  // -------------------------------------------
   /**
    * str - string to be inserted into the distributed hashmap
    * size - size of strlen array
@@ -52,30 +46,23 @@ class DistHashmap {
    * good practice to call commit after all insert or whenever consistency is
    * required.
    */
-  // -------------------------------------------
   void insert(string str);
    
-  // -------------------------------------------
   /**
    * Call commit() to complete the data insertion into the distributed
    * hashmap.
    */
-  // -------------------------------------------
   void commit();
 
-  // -------------------------------------------  
   /**
    * Call commit() to complete the data insertion into the distributed
    * hashmap of a specified process.
    */
-  // -------------------------------------------
   void commit(int proc);
     
-  // -------------------------------------------
   /**
    * prints this distributed hashmap
    */
-  // -------------------------------------------
   void print();
 
   void print2();
@@ -84,18 +71,14 @@ class DistHashmap {
 
   const VocabIntMap * getLocalMapPtr();
   
-  // -------------------------------------------
   /**
    * returns the Global HashMap Size
    */
-  // -------------------------------------------
   int getGlobalHashMapSize();
   
-  // -------------------------------------------
   /**
    * returns true if a hashmap already exists
    */
-  // -------------------------------------------
   static bool isCreated();
   
  private:
@@ -103,10 +86,10 @@ class DistHashmap {
   int m_me;
   static short int sm_initialized;
   char **mBuf;
-  char *mTmpBuf; // temporary buffer
+  char *mTmpBuf; /* temporary buffer */
   int *mIndex;
   int m_globalHashMapSize;
   VocabIntMap *mGlobalIdMap;
 };
 
-#endif // DISTHASHMAP_H_
+#endif /* DISTHASHMAP_H_ */

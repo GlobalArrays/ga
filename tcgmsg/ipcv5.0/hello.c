@@ -1,20 +1,23 @@
-/* $$ */
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 
 #include "tcgmsg.h"
-#include "sndrcv.h"
 
-int main(argc, argv)
-     int argc;
-     char **argv;
-/*
-  Traditional first parallel program
-*/
+/**
+ * Traditional first parallel program
+ */
+int main(int argc, char **argv)
 {
-  PBEGIN_(argc, argv);
+    tcg_pbegin(argc, argv);
 
-  (void) printf("Hello from node %ld\n",NODEID_());
+    (void) printf("Hello from node %ld\n",tcg_nodeid());
 
-  PEND_();
+    tcg_pend();
 
-  return 0;
+    return 0;
 }

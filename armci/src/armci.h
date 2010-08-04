@@ -2,8 +2,10 @@
 /* ARMCI header file */
 #ifndef _ARMCI_H
 #define _ARMCI_H   
-#ifdef NO__FUNCTION__
-#define __FUNCTION__ "Unknown"
+
+/* for size_t */
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
 #endif
 
 #if defined(__cplusplus) || defined(c_plusplus)
@@ -291,6 +293,9 @@ void ARMCI_Group_set_default(ARMCI_Group *group);
 void ARMCI_Group_get_default(ARMCI_Group *group_out);
 void ARMCI_Group_get_world(ARMCI_Group *group_out);
    
+extern int ARMCI_Absolute_id(ARMCI_Group *group, int group_rank);
+extern int ARMCI_Uses_shm_grp(ARMCI_Group *group);
+
 int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,ARMCI_Group *group);
 int ARMCI_Free_group(void *ptr, ARMCI_Group *group);
 
@@ -416,7 +421,7 @@ extern void ARMCI_Memdt(armci_meminfo_t *meminfo, int memflg);
 extern void ARMCI_Memctl(armci_meminfo_t *meminfo);
   
 /* ------------------- ARMCI Checkpointing/Recovery ----------------- */
-#ifdef DO_CKPT
+#ifdef ENABLE_CHECKPOINT
 #define ARMCI_CKPT    0
 #define ARMCI_RESTART 1
 typedef struct {
@@ -437,11 +442,8 @@ void ARMCI_Ckpt_finalize(int rid);
 
 /* ------------------------------------------------------------------ */
 
-
 #if defined(__cplusplus) || defined(c_plusplus)
 }
 #endif
 
 #endif /* _ARMCI_H */
-
-

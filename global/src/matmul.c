@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: matmul.c,v 1.60.4.1 2006-12-22 13:05:22 manoj Exp $ */
 /*===========================================================
  *
@@ -6,11 +10,15 @@
  *
  *===========================================================*/
 
-#include <stdlib.h>
-#include <string.h>
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
 #include "matmul.h"
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
 #include "../ga_vt.h"
 #include "ga_vampir.h"
 #endif
@@ -25,9 +33,21 @@ static short int CYCLIC_DISTR_OPT_FLAG  = SET;
 static short int CONTIG_CHUNKS_OPT_FLAG = SET;
 static short int DIRECT_ACCESS_OPT_FLAG = SET;
 
-static int max3(int ichunk, int jchunk, int kchunk) {
-  if(ichunk>jchunk) return MAX(ichunk,kchunk);
-  else return MAX(jchunk, kchunk);
+static inline int max3(int ichunk, int jchunk, int kchunk) {
+  if(ichunk>jchunk) return GA_MAX(ichunk,kchunk);
+  else return GA_MAX(jchunk, kchunk);
+}
+
+static inline void init_task_list(task_list_t *thing)
+{
+    thing->lo[0] = 0;
+    thing->lo[1] = 0;
+    thing->hi[0] = 0;
+    thing->hi[1] = 0;
+    thing->dim[0] = 0;
+    thing->dim[1] = 0;
+    thing->chunkBId = 0;
+    thing->do_put = 0;
 }
 
 static void GET_BLOCK(Integer *g_x, task_list_t *chunk, void *buf, 
@@ -65,11 +85,11 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
     if(state->lo[0] != -1) recovery = 1;
 
     nloops = (iend-istart+1)/Ichunk + ( ((iend-istart+1)%Ichunk)?1:0 );
-    if(nloops>MAX_CHUNKS) ga_error("Increase MAX_CHUNKS value in matmul.h",0L);
+    if(nloops>MAX_CHUNKS) gai_error("Increase MAX_CHUNKS value in matmul.h",0L);
 
     if(recovery) jstart_ = state->lo[0]; /* recovering the previous state */
     for(ii=jj=0, jlo = jstart_; jlo <= jend; jlo += Jchunk) {
-       jhi = MIN(jend, jlo+Jchunk-1);
+       jhi = GA_MIN(jend, jlo+Jchunk-1);
 
        if(recovery) {
 	  do_put = state->do_put;
@@ -78,7 +98,7 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
        else do_put = SET; /* for 1st shot we can put, instead of accumulate */
        
        for(klo = kstart_; klo <= kend; klo += Kchunk) {
-	  khi = MIN(kend, klo+Kchunk-1); 
+	  khi = GA_MIN(kend, klo+Kchunk-1); 
 	  get_new_B = TRUE;
 	  
 	  /* set it back after the first loop */
@@ -97,14 +117,14 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
 	  }
 	  
 	  for(ilo = istart; ilo <= iend; ilo += Ichunk){ 	     
-	     ihi = MIN(iend, ilo+Ichunk-1);
+	     ihi = GA_MIN(iend, ilo+Ichunk-1);
 	     taskListA[ii].dim[0] = ihi - ilo + 1; 
 	     taskListA[ii].dim[1] = khi - klo + 1;
 	     taskListA[ii].lo[0]  = ilo; taskListA[ii].hi[0] = ihi;
 	     taskListA[ii].lo[1]  = klo; taskListA[ii].hi[1] = khi;
 	     taskListA[ii].do_put = do_put;
 	     if(get_new_B) { /* B matrix */
-		ihi = MIN(iend, ilo+Ichunk-1);
+		ihi = GA_MIN(iend, ilo+Ichunk-1);
 		taskListB[jj].dim[0] = khi - klo + 1; 
 		taskListB[jj].dim[1] = jhi - jlo + 1;
 		taskListB[jj].lo[0]  = klo; taskListB[jj].hi[0] = khi;
@@ -151,7 +171,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     Integer min_tasks = MINTASKS; /* Increase tasks if there is load imbalance.
 				     This controls the granularity of chunks */
     Integer  max_chunk, nproc=ga_nnodes_(), tmpa, tmpb;
-    Integer avail = ga_memory_avail(atype);
+    Integer avail = gai_memory_avail(atype);
 
     tmpa = *Ichunk;
     tmpb = *Jchunk;
@@ -164,16 +184,16 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     else
        max_chunk = (Integer) max3(*Ichunk, *Jchunk, *Kchunk);
 
-    ga_pgroup_igop(a_grp, GA_TYPE_GOP, &avail, (Integer)1, "min");
+    gai_pgroup_igop(a_grp, GA_TYPE_GOP, &avail, (Integer)1, "min");
     
     if ( max_chunk > CHUNK_SIZE/nbuf) {
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
-      if(avail<MINMEM && ga_pgroup_nodeid_(&a_grp)==0) ga_error("NotEnough memory",avail);
+      if(avail<MINMEM && ga_pgroup_nodeid_(&a_grp)==0) gai_error("NotEnough memory",avail);
       *elems = (Integer)(avail*0.9); /* Donot use every last drop */
       
       /* MAX: get the maximum chunk (or, block) size i.e  */
-      max_chunk=MIN(max_chunk, (Integer)(sqrt( (double)((*elems-nbuf*NUM_MATS)/(nbuf*NUM_MATS)))));
+      max_chunk=GA_MIN(max_chunk, (Integer)(sqrt( (double)((*elems-nbuf*NUM_MATS)/(nbuf*NUM_MATS)))));
 
       if(!irregular && use_armci_memory==SET) 
 	 max_chunk = *Ichunk = *Jchunk = *Kchunk = BLOCK_SIZE;
@@ -181,21 +201,21 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
       if(irregular) {
 	 /* NOTE:enable this part for regular cases, if later 
 	    part of the code is buggy or inefficient */
-	 *Ichunk = MIN(m,max_chunk);
-	 *Jchunk = MIN(n,max_chunk);
-	 *Kchunk = MIN(k,max_chunk);      
+	 *Ichunk = GA_MIN(m,max_chunk);
+	 *Jchunk = GA_MIN(n,max_chunk);
+	 *Kchunk = GA_MIN(k,max_chunk);      
       }
       else { /* This part of the code takes care of rectangular chunks and
 		most probably gives optimum rectangular chunk size */
 	 temp = max_chunk*max_chunk;
 	 if(*Ichunk < max_chunk && *Kchunk > max_chunk) {
-	    *Kchunk = MIN(*Kchunk,(Integer)(temp/(*Ichunk)));
-	    *Jchunk = MIN(*Jchunk,(Integer)(temp/(*Kchunk)));
+	    *Kchunk = GA_MIN(*Kchunk,(Integer)(temp/(*Ichunk)));
+	    *Jchunk = GA_MIN(*Jchunk,(Integer)(temp/(*Kchunk)));
 	 }
 	 else if(*Kchunk < max_chunk && *Ichunk > max_chunk) {
 	    temp *= 1.0/(*Kchunk);
-	    *Ichunk = MIN(*Ichunk,(Integer)temp);
-	    *Jchunk = MIN(*Jchunk,(Integer)temp);
+	    *Ichunk = GA_MIN(*Ichunk,(Integer)temp);
+	    *Jchunk = GA_MIN(*Jchunk,(Integer)temp);
 	 }
 	 else *Ichunk = *Jchunk = *Kchunk = max_chunk;
       }
@@ -209,7 +229,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
 	  if(*Ichunk > tmpa && *Jchunk > tmpb) {
 	     *Ichunk = tmpa;
 	     *Jchunk = tmpb;
-	     *Kchunk = MIN(*Ichunk,*Jchunk);
+	     *Kchunk = GA_MIN(*Ichunk,*Jchunk);
 	  }
 	  else {
 	     int i=1;/* i should be >=1 , to avoid divide by zero error */
@@ -222,7 +242,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
 		   *Jchunk = tmpb/i;
 		}
 		else *Jchunk = tmpb;
-		*Kchunk = MIN(*Ichunk, *Jchunk);
+		*Kchunk = GA_MIN(*Ichunk, *Jchunk);
 	     }
 	  }
        }
@@ -266,104 +286,102 @@ gai_get_armci_memory(Integer Ichunk, Integer Jchunk, Integer Kchunk,
  ************************************/
 
 static void GAI_DGEMM(Integer atype, char *transa, char *transb, 
-		      Integer idim, Integer jdim, Integer kdim, void *alpha, 
-		      DoubleComplex *a, Integer adim, DoubleComplex *b, 
-		      Integer bdim, DoubleComplex *c, Integer cdim) {
+        Integer idim, Integer jdim, Integer kdim, void *alpha, 
+        DoubleComplex *a, Integer adim, DoubleComplex *b, 
+        Integer bdim, DoubleComplex *c, Integer cdim) {
 
     int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
     DoubleComplex ZERO;
     SingleComplex ZERO_CF;
-    
+    Integer ONE = 1;
+
     idim_t=idim; jdim_t=jdim; kdim_t=kdim;
     adim_t=adim; bdim_t=bdim; cdim_t=cdim;
     ZERO.real = 0.; ZERO.imag = 0.;
     ZERO_CF.real = 0.; ZERO_CF.imag = 0.;
 
-# if (defined(CRAY) || defined(WIN32)) && !defined(GA_C_CORE)
     switch(atype) {
-       case C_FLOAT:
-	  xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-		   (float *)alpha, (float *)a, &adim_t, (float *)b, 
-		   &bdim_t, (float *)&ZERO,  (float *)c, &cdim_t);
-	  break;
-       case C_DBL:
-	  DGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
-		alpha, (double*)a, &adim, (double*)b, &bdim, &ZERO, 
-		(double*)c, &cdim);
-	  break;
-       case C_DCPL:
-	  ZGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
-		(DoubleComplex*)alpha, a, &adim, b, &bdim, &ZERO,c,&cdim);
-	  break;
-       case C_SCPL:
-	  CGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
-		(SingleComplex*)alpha, a, &adim, b, &bdim, &ZERO_CF,c,&cdim);
-	  break;
-       default:
-	  ga_error("ga_matmul_patch: wrong data type", atype);
+        case C_FLOAT:
+            xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                    (float *)alpha, (float *)a, &adim_t,
+                    (float *)b, &bdim_t,
+                    (float *)&ZERO, (float *)c, &cdim_t);
+            break;
+        case C_DBL:
+#if NOFORT
+            xb_dgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                    (double *)alpha, (double *)a, &adim_t,
+                    (double *)b, &bdim_t,
+                    (double *)&ZERO, (double *)c, &cdim_t);
+#elif defined(F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS)
+#   if HAVE_BLAS
+            dgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                    alpha, a, &adim_t, b, &bdim_t, &ZERO, c, &cdim_t, ONE, ONE);
+#   else
+            dgemm_(transa, transb, &idim, &jdim, &kdim,
+                    alpha, a, &adim, b, &bdim, &ZERO, c, &cdim, ONE, ONE);
+#   endif
+#else
+#   if HAVE_BLAS
+            dgemm_(transa, ONE, transb, ONE, &idim_t, &jdim_t, &kdim_t,
+                    alpha, a, &adim_t, b, &bdim_t, &ZERO, c, &cdim_t);
+#   else
+            dgemm_(transa, ONE, transb, ONE, &idim, &jdim, &kdim,
+                    alpha, a, &adim, b, &bdim, &ZERO, c, &cdim);
+#   endif
+#endif
+            break;
+        case C_DCPL:
+#if NOFORT
+            xb_zgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                    (DoubleComplex *)alpha, (DoubleComplex *)a, &adim_t,
+                    (DoubleComplex *)b, &bdim_t, 
+                    (DoubleComplex *)&ZERO, (DoubleComplex *)c, &cdim_t);
+#elif defined(F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS)
+#   if HAVE_BLAS
+            zgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                    alpha, a, &adim_t, b, &bdim_t, &ZERO, c, &cdim_t, ONE, ONE);
+#   else
+            zgemm_(transa, transb, &idim, &jdim, &kdim,
+                    alpha, a, &adim, b, &bdim, &ZERO, c, &cdim, ONE, ONE);
+#   endif
+#else
+#   if HAVE_BLAS
+            zgemm_(transa, ONE, transb, ONE, &idim_t, &jdim_t, &kdim_t,
+                    alpha, a, &adim_t, b, &bdim_t, &ZERO, c, &cdim_t);
+#   else
+            zgemm_(transa, ONE, transb, ONE, &idim, &jdim, &kdim,
+                    alpha, a, &adim, b, &bdim, &ZERO, c, &cdim);
+#   endif
+#endif
+            break;
+        case C_SCPL:
+#if NOFORT
+            xb_cgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                    (SingleComplex *)alpha, (SingleComplex *)a, &adim_t,
+                    (SingleComplex *)b, &bdim_t,
+                    (SingleComplex *)&ZERO, (SingleComplex *)c, &cdim_t);
+#elif defined(F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS)
+#   if HAVE_BLAS
+            cgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                    alpha, a, &adim_t, b, &bdim_t, &ZERO_CF, c, &cdim_t, ONE, ONE);
+#   else
+            cgemm_(transa, transb, &idim, &jdim, &kdim,
+                    alpha, a, &adim, b, &bdim, &ZERO_CF, c, &cdim, ONE, ONE);
+#   endif
+#else
+#   if HAVE_BLAS
+            cgemm_(transa, ONE, transb, ONE, &idim_t, &jdim_t, &kdim_t,
+                    alpha, a, &adim_t, b, &bdim_t, &ZERO_CF, c, &cdim_t);
+#   else
+            cgemm_(transa, ONE, transb, ONE, &idim, &jdim, &kdim,
+                    alpha, a, &adim, b, &bdim, &ZERO_CF, c, &cdim);
+#   endif
+#endif
+            break;
+        default:
+            gai_error("ga_matmul_patch: wrong data type", atype);
     }
-# else 
-    switch(atype) {
-       case C_FLOAT:
-	  xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-		   (float *)alpha, (float *)a, &adim_t, (float *)b, 
-		   &bdim_t, (float *)&ZERO,  (float *)c, &cdim_t);
-	  break;
-       case C_DBL:
-#   ifdef GA_C_CORE
-	  xb_dgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-		   alpha, (double *)a, &adim_t, (double *)b, &bdim_t, 
-		   (double *)&ZERO,  (double *)c, &cdim_t);
-#   else
-	  
-#     if !defined(HAS_BLAS) && defined(EXT_INT)
-	  dgemm_(transa, transb, &idim, &jdim, &kdim,
-		 alpha, a, &adim, b, &bdim, &ZERO, c, &cdim, 1, 1);
-#     else
-	  dgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-		 alpha, a, &adim_t, b, &bdim_t, &ZERO, c, &cdim_t, 1, 1);
-#     endif
-	  
-#   endif
-	  break;
-       case C_DCPL:
-#   ifdef GA_C_CORE 
-	  xb_zgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-		   (DoubleComplex *)alpha, a, &adim_t, b, &bdim_t, 
-		   &ZERO,  c, &cdim_t);
-#   else
-#     if !defined(HAS_BLAS) && defined(EXT_INT)
-	  zgemm_(transa, transb, &idim, &jdim, &kdim,
-		 (DoubleComplex*)alpha, a, &adim, b, &bdim, &ZERO, c, 
-		 &cdim, 1, 1);
-#     else
-	  zgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-                 (DoubleComplex*)alpha, a, &adim_t, b, &bdim_t, &ZERO, c,
-                 &cdim_t, 1, 1);
-#     endif
-#   endif
-      break;
-       case C_SCPL:
-#   ifdef GA_C_CORE 
-	  xb_cgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-		   (SingleComplex *)alpha, a, &adim_t, b, &bdim_t, 
-		   &ZERO,  c, &cdim_t);
-#   else
-#     if !defined(HAS_BLAS) && defined(EXT_INT)
-	  cgemm_(transa, transb, &idim, &jdim, &kdim,
-		 (SingleComplex*)alpha, a, &adim, b, &bdim, &ZERO_CF, c, 
-		 &cdim, 1, 1);
-#     else
-	  cgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-                 (SingleComplex*)alpha, a, &adim_t, b, &bdim_t, &ZERO_CF, c,
-                 &cdim_t, 1, 1);
-#     endif
-#   endif
-      break;
-       default:
-	  ga_error("ga_matmul_patch: wrong data type", atype);
-    }
-# endif
 }
 
 
@@ -416,7 +434,7 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
 
     /* loop through columns of g_c patch */
     for(jlo = jstart; jlo <= jend; jlo += Jchunk) { 
-       jhi  = MIN(jend, jlo+Jchunk-1);
+       jhi  = GA_MIN(jend, jlo+Jchunk-1);
        jdim = jhi - jlo +1;
      
        /* if beta=0,then for first shot we can do put,instead of accumulate */
@@ -424,13 +442,13 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
    
        /* loop cols of g_a patch : loop rows of g_b patch*/
        for(klo = kstart; klo <= kend; klo += Kchunk) { 
-	  khi = MIN(kend, klo+Kchunk-1);
+	  khi = GA_MIN(kend, klo+Kchunk-1);
 	  kdim= khi - klo +1;
 	  get_new_B = TRUE; /* Each pass thru' outer 2 loops means we 
 			       need a different patch of B.*/
 	  /*loop through rows of g_c patch */
 	  for(ilo = istart; ilo <= iend; ilo += Ichunk){ 
-	     ihi = MIN(iend, ilo+Ichunk-1);
+	     ihi = GA_MIN(iend, ilo+Ichunk-1);
 	     idim= cdim = ihi - ilo +1;
 	 
 	     /* STEP1(a): get matrix "A" chunk */
@@ -528,7 +546,7 @@ int get_next_block_info(Integer *g_c, Integer *proc_index, Integer *index,
     
     /* works only upto 2 dims - i.e vectors/matrices*/
     nga_inquire_internal_(g_c,  &type, &ndim, dims);
-    if(ndim>2) ga_error("get_next_block_info() supports upto 2-d only ", 0L);
+    if(ndim>2) gai_error("get_next_block_info() supports upto 2-d only ", 0L);
     
     /* Uses simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_c)) 
@@ -600,7 +618,6 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     short int do_put=UNSET, single_task_flag=UNSET, chunks_left=0;
     DoubleComplex ONE, *a, *b, *c;
     SingleComplex ONE_CF;
-    float ONE_F = 1.0;
     int offset=0, gTaskId=0;
     int numblocks=0, has_more_blocks=1;
     Integer ctype, cndim, cdims[2];
@@ -608,7 +625,9 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     Integer blocks[2], block_dims[2], topology[2];
     
     GA_PUSH_NAME("ga_matmul_regular");
-    if(irregular) ga_error("irregular flag set", 0L);
+    if(irregular) gai_error("irregular flag set", 0L);
+
+    init_task_list(&state);
 
 #if DEBUG_
     if(me==0) { printf("@@ga_matmul_regular:m,n,k=%ld %ld %ld\n",*aihi-*ailo+1,
@@ -683,7 +702,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 	     if(max_tasks == 1) {
 		if( !((hiC[0]-loC[0]+1 <= Ichunk) &&(hiC[1]-loC[1]+1 <=Jchunk)
 		      && (k <= Kchunk))) 
-		   ga_error("Invalid task list", 0L);
+		   gai_error("Invalid task list", 0L);
 		single_task_flag = SET;
 		nga_access_ptr(g_c, loC, hiC, &c, ld);
 	     }
@@ -827,7 +846,10 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
      short int need_scaling, irregular;
 {
   
-    Integer me= ga_nodeid_(), nproc=ga_nnodes_();
+#if DEBUG_
+    Integer me= ga_nodeid_();
+#endif
+    Integer nproc=ga_nnodes_();
     Integer get_new_B, i, i0, i1, j0, j1;
     Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim, ijk=0;
     Integer n, m, k, adim, bdim=0, cdim;
@@ -837,10 +859,10 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
     short int compute_flag=0, shiftA=0, shiftB=0;
     DoubleComplex ONE, *a, *b, *c;
     SingleComplex ONE_CF; 
-    float ONE_F = 1.0;
     Integer grp_me, a_grp = ga_get_pgroup_(g_a);
  
     GA_PUSH_NAME("ga_matmul_irreg");
+    init_task_list(&taskListC);
     ONE.real =1.; ONE.imag =0.;
     ONE_CF.real =1.; ONE_CF.imag =0.;
 #if DEBUG_
@@ -861,11 +883,11 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
     compute_flag=0;     /* take care of the last chunk */
 
     for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop thru columns of g_c patch */
-       jhi = MIN(n-1, jlo+Jchunk-1);
+       jhi = GA_MIN(n-1, jlo+Jchunk-1);
        jdim= jhi - jlo +1;
 
        for(klo = 0; klo < k; klo += Kchunk){    /* loop cols of g_a patch */
-	  khi = MIN(k-1, klo+Kchunk-1);          /* loop rows of g_b patch */
+	  khi = GA_MIN(k-1, klo+Kchunk-1);          /* loop rows of g_b patch */
 	  kdim= khi - klo +1;                                     
 	   
 	  /** Each pass through the outer two loops means we need a
@@ -876,7 +898,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
 	        
 	     if(ijk%nproc == grp_me){
 
-		ihi = MIN(m-1, ilo+Ichunk-1);
+		ihi = GA_MIN(m-1, ilo+Ichunk-1);
 		idim= cdim = ihi - ilo +1;
 
 
@@ -1033,6 +1055,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
     static DoubleComplex *tmpc_orig = NULL;
     Integer i,j,m,n,k,adim,bdim,cdim;
     Integer factor=sizeof(DoubleComplex)/GAsizeofM(atype);
+    int m_t, n_t, k_t, adim_t, bdim_t, cdim_t;
     
     m = *aihi - *ailo +1;
     n = *bjhi - *bjlo +1;
@@ -1042,7 +1065,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
     if(cond==0) { /* store the original matrix C before matmul starts, as 
 		     matrix C is subject to change during ga_matmul */
        tmpc_orig= (DoubleComplex*)malloc(sizeof(DoubleComplex)*(m*n/factor+1));
-       if(tmpc_orig==NULL) ga_error("check_result: malloc failed", 0);
+       if(tmpc_orig==NULL) gai_error("check_result: malloc failed", 0);
        
        /* get matrix C */
        ga_get_(g_c, cilo, cihi, cjlo, cjhi, tmpc_orig, &m);
@@ -1052,7 +1075,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
        /* Memory Allocation */
        tmpa = (DoubleComplex*)malloc( sizeof(DoubleComplex)* (m*k/factor+1));
        tmpb = (DoubleComplex*)malloc( sizeof(DoubleComplex)* (k*n/factor+1));
-       if(tmpa==NULL || tmpb==NULL) ga_error("check_result: malloc failed", 0);
+       if(tmpa==NULL || tmpb==NULL) gai_error("check_result: malloc failed", 0);
        
        switch(atype) {
 	  case C_FLOAT:
@@ -1072,7 +1095,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 	     for(i=0; i<k*n; i++) {((SingleComplex*)tmpb)[i].real=-1.0; ((SingleComplex*)tmpb)[i].imag=0.0;}
 	     break;
           default: 
-            ga_error("ga_matmul_patch: wrong data type", atype);
+            gai_error("ga_matmul_patch: wrong data type", atype);
        }
        
        /* get matrix A */
@@ -1085,22 +1108,35 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 	  bdim=k;  ga_get_(g_b, bilo, bihi, bjlo, bjhi, tmpb, &k); }
        else { bdim=n; ga_get_(g_b, bjlo, bjhi, bilo, bihi, tmpb, &n);}
        
-# if (defined(CRAY) || defined(WIN32)) && !defined(GA_C_CORE)
-       ga_error("check_result: Serial dgemms not defined", 0L);
-# else
+
+       m_t=m; n_t=n; k_t=k;
+       adim_t=adim; bdim_t=bdim; cdim_t=cdim;
+#if (defined(CRAY) || defined(WIN32)) && !NOFORT
+       gai_error("check_result: Serial dgemms not defined", 0L);
+#else
        switch(atype) {
 	  case C_DBL:
+#   if HAVE_BLAS
+	     dgemm_(transa, transb, &m_t, &n_t, &k_t, alpha, tmpa, &adim_t,
+		    tmpb, &bdim_t, beta, tmpc_orig, &cdim_t, 1, 1);
+#   else
 	     dgemm_(transa, transb, &m, &n, &k, alpha, tmpa, &adim,
 		    tmpb, &bdim, beta, tmpc_orig, &cdim, 1, 1);
+#   endif
 	     break;
 	  case C_DCPL: 
+#   if HAVE_BLAS
+	     zgemm_(transa, transb, &m_t, &n_t, &k_t, (DoubleComplex*)alpha,
+		    tmpa, &adim_t, tmpb, &bdim_t, beta, tmpc_orig, &cdim_t, 1, 1);
+#   else
 	     zgemm_(transa, transb, &m, &n, &k, (DoubleComplex*)alpha,
 		    tmpa, &adim, tmpb, &bdim, beta, tmpc_orig, &cdim, 1, 1);
+#   endif
 	     break;
 	  default:
-	     ga_error("check_result: data type not supported here", atype);
+	     gai_error("check_result: data type not supported here", atype);
        }
-# endif
+#endif
        
        printf("CHK:%c%c : %ld %ld %ld %ld: %ld %ld %ld %ld: %ld %ld %ld %ld\n",
 	      *transa, *transb, *ailo, *aihi, *ajlo, *ajhi, 
@@ -1109,7 +1145,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
        free(tmpa); free(tmpb);
        /* after computing c locally, verify it with the values in g_c */
        tmpc2 = (DoubleComplex*)malloc( sizeof(DoubleComplex)* (m*n/factor+1));
-       if(tmpc2==NULL) ga_error("check_result: malloc failed for tmpc2", 0);
+       if(tmpc2==NULL) gai_error("check_result: malloc failed for tmpc2", 0);
        ga_get_(g_c, cilo, cihi, cjlo, cjhi, tmpc2, &m);
        
 #define _GA_TOL_ 0.1 /* error tolerance */
@@ -1125,7 +1161,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 		     printf("Values are = %f : %f\n Alpha=%f Beta=%f\n", 
 			    ((float*)tmpc_orig)[i], ((float*)tmpc2)[i], 
 			    *((float*)alpha), *((float*)beta));
-		     ga_error("Matmul (type:float) check failed", 0);
+		     gai_error("Matmul (type:float) check failed", 0);
 		  }
 	       }
 	    }
@@ -1140,7 +1176,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 		     printf("Values are = %lf : %lf\n Alpha=%lf Beta=%lf\n", 
 			    ((double*)tmpc_orig)[i+j],	((double*)tmpc2)[i+j],
 			    *((double*)alpha),*((double*)beta));
-		     ga_error("Matmul (type:double) check failed", 0);
+		     gai_error("Matmul (type:double) check failed", 0);
 		  }
 	       }
 	    }
@@ -1156,7 +1192,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 		     abs_value.imag>_GA_TOL_ || abs_value.imag<-(_GA_TOL_)) {
 		     printf("Values= %lf, %lf : %lf, %lf\n", tmpc_orig[i].real,
 			    tmpc_orig[i].imag,tmpc2[i].real,tmpc2[i].imag);
-		     ga_error("Matmul (DoubleComplex) check failed", 0);
+		     gai_error("Matmul (DoubleComplex) check failed", 0);
 		  }
 	       }
 	    }
@@ -1172,14 +1208,14 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 		     abs_value.imag>_GA_TOL_ || abs_value.imag<-(_GA_TOL_)) {
 		     printf("Values= %lf, %lf : %lf, %lf\n", ((SingleComplex*)tmpc_orig)[i].real,
 			    ((SingleComplex*)tmpc_orig)[i].imag,((SingleComplex*)tmpc2)[i].real,((SingleComplex*)tmpc2)[i].imag);
-		     ga_error("Matmul (SingleComplex) check failed", 0);
+		     gai_error("Matmul (SingleComplex) check failed", 0);
 		  }
 	       }
 	    }
 	    break;
 	    
 	  default:
-	     ga_error("ga_matmul_patch: wrong data type", atype);
+	     gai_error("ga_matmul_patch: wrong data type", atype);
        }
        printf("Matrix Multiplication check (m,n,k=%ld %ld %ld)...O.K\n",m,n,k);
        fflush(stdout);
@@ -1219,7 +1255,7 @@ void ga_matmul(transa, transb, alpha, beta,
     Integer c_grp=ga_get_pgroup_(g_c);
     Integer numblocks;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(GA_MATMUL,__FILE__,__LINE__);
 #endif
 
@@ -1235,11 +1271,11 @@ void ga_matmul(transa, transb, alpha, beta,
     GA_PUSH_NAME("ga_matmul");
 
     if (a_grp != b_grp || a_grp != c_grp)
-       ga_error("Arrays must be defined on same group",0L);
+       gai_error("Arrays must be defined on same group",0L);
 # if 0 /* disabled. should not fail if there are non-overlapping patches*/
     /* check if C is different from A and B */
     if (*g_c == *g_a || *g_c == *g_b)
-       ga_error("Global Array C should be different from A and B", 0);
+       gai_error("Global Array C should be different from A and B", 0);
 #endif
     
     /**************************************************
@@ -1249,7 +1285,7 @@ void ga_matmul(transa, transb, alpha, beta,
     /* Check to make sure all global arrays are of the same type */
     if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
 	  ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
-       ga_error("Processors do not match for all arrays",ga_nnodes_());
+       gai_error("Processors do not match for all arrays",ga_nnodes_());
     }
 
     /* check if ranks are O.K. */
@@ -1261,35 +1297,35 @@ void ga_matmul(transa, transb, alpha, beta,
     VECTORCHECK(rank, dims, cdim1, cdim2, *cilo, *cihi, *cjlo, *cjhi);
 
     /* check for data-types mismatch */
-    if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L);
+    if(atype != btype || atype != ctype ) gai_error(" types mismatch ", 0L);
     if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT && atype!=C_SCPL)
-       ga_error(" type error",atype);
+       gai_error(" type error",atype);
    
     /* check if patch indices and dims match */
     if (*transa == 'n' || *transa == 'N'){
        if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
-	  ga_error("  g_a indices out of range ", *g_a);
+	  gai_error("  g_a indices out of range ", *g_a);
     }else
        if (*ailo <= 0 || *aihi > adim2 || *ajlo <= 0 || *ajhi > adim1)
-	  ga_error("  g_a indices out of range ", *g_a);
+	  gai_error("  g_a indices out of range ", *g_a);
    
     if (*transb == 'n' || *transb == 'N'){
        if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-	  ga_error("  g_b indices out of range ", *g_b);
+	  gai_error("  g_b indices out of range ", *g_b);
     }else
        if (*bilo <= 0 || *bihi > bdim2 || *bjlo <= 0 || *bjhi > bdim1)
-	  ga_error("  g_b indices out of range ", *g_b);
+	  gai_error("  g_b indices out of range ", *g_b);
    
     if (*cilo <= 0 || *cihi > cdim1 || *cjlo <= 0 || *cjhi > cdim2)
-       ga_error("  g_c indices out of range ", *g_c);
+       gai_error("  g_c indices out of range ", *g_c);
 
     /* verify if patch dimensions are consistent */
     m = *aihi - *ailo +1;
     n = *bjhi - *bjlo +1;
     k = *ajhi - *ajlo +1;
-    if( (*cihi - *cilo +1) != m) ga_error(" a & c dims error",m);
-    if( (*cjhi - *cjlo +1) != n) ga_error(" b & c dims error",n);
-    if( (*bihi - *bilo +1) != k) ga_error(" a & b dims error",k);
+    if( (*cihi - *cilo +1) != m) gai_error(" a & c dims error",m);
+    if( (*cjhi - *cjlo +1) != n) gai_error(" b & c dims error",n);
+    if( (*bihi - *bilo +1) != k) gai_error(" a & b dims error",k);
 
 #if DEBUG_
     if(me==0) check_result(0, transa, transb, alpha, beta, atype,
@@ -1344,15 +1380,15 @@ void ga_matmul(transa, transb, alpha, beta,
 	  short int nbuf=1;
 	  DoubleComplex *tmp = NULL;
 
-	  Ichunk = MIN( (hiC[0]-loC[0]+1), (hiA[0]-loA[0]+1) );
-	  Jchunk = MIN( (hiC[1]-loC[1]+1), (hiB[1]-loB[1]+1) );
-	  Kchunk = MIN( (hiA[1]-loA[1]+1), (hiB[0]-loB[0]+1) );
+	  Ichunk = GA_MIN( (hiC[0]-loC[0]+1), (hiA[0]-loA[0]+1) );
+	  Jchunk = GA_MIN( (hiC[1]-loC[1]+1), (hiB[1]-loB[1]+1) );
+	  Kchunk = GA_MIN( (hiA[1]-loA[1]+1), (hiB[0]-loB[0]+1) );
 
 #if KCHUNK_OPTIMIZATION /*works great for m=1000,n=1000,k=4000 kinda cases*/
 	  nga_distribution_(g_a, &me, loC, hiC);
 	  Kchunk = hiC[1]-loC[1]+1;
 	  nga_distribution_(g_b, &me, loC, hiC);
-	  Kchunk = MIN(Kchunk, (hiC[0]-loC[0]+1));
+	  Kchunk = GA_MIN(Kchunk, (hiC[0]-loC[0]+1));
 #endif
 
 	  /* Just to avoid divide by zero error */
@@ -1366,7 +1402,7 @@ void ga_matmul(transa, transb, alpha, beta,
 		Jchunk/Kchunk > GA_ASPECT_RATIO || Kchunk/Jchunk > GA_ASPECT_RATIO) {
                 irreg = SET;
              }
-	     ga_pgroup_igop(a_grp, GA_TYPE_GOP, &irreg, (Integer)1, "max");   
+	     gai_pgroup_igop(a_grp, GA_TYPE_GOP, &irreg, (Integer)1, "max");   
 	     if(irreg==SET) irregular = SET;
 	  }
 	  
@@ -1466,7 +1502,7 @@ void ga_matmul(transa, transb, alpha, beta,
        
        GA_POP_NAME;   
        if(local_sync_end)ga_pgroup_sync_(&a_grp);
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(GA_MATMUL,__FILE__,__LINE__);
 #endif
 }
@@ -1497,6 +1533,7 @@ Integer i, ijk = 0, i0, i1, j0, j1;
 Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
 Integer n, m, k, adim, bdim, cdim;
 Integer Ichunk, Kchunk, Jchunk;
+Integer _ONE = 1;
 DoubleComplex ONE;
 SingleComplex ONE_CF;
 
@@ -1504,7 +1541,7 @@ DoublePrecision chunk_cube;
 Integer min_tasks = 10, max_chunk;
 int need_scaling=1;
 Integer ZERO_I = 0, inode, iproc;
-float ONE_F = 1.0, ZERO_F = 0.0;
+float ZERO_F = 0.0;
 Integer get_new_B;
 int local_sync_begin,local_sync_end;
 int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
@@ -1521,7 +1558,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    /* Check to make sure all global arrays are of the same type */
    if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
         ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
-     ga_error("Processors do not match for all arrays",ga_nnodes_());
+     gai_error("Processors do not match for all arrays",ga_nnodes_());
    }
    if (ga_is_mirrored_(g_a)) {
      inode = ga_cluster_nodeid_();
@@ -1539,37 +1576,37 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    nga_inquire_internal_(g_c, &ctype, &rank, dims); 
    VECTORCHECK(rank, dims, cdim1, cdim2, *cilo, *cihi, *cjlo, *cjhi);
 
-   if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L);
+   if(atype != btype || atype != ctype ) gai_error(" types mismatch ", 0L);
    if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT && atype != C_SCPL)
-     ga_error(" type error",atype);
+     gai_error(" type error",atype);
    
    
    
    /* check if patch indices and dims match */
    if (*transa == 'n' || *transa == 'N'){
      if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
-       ga_error("  g_a indices out of range ", *g_a);
+       gai_error("  g_a indices out of range ", *g_a);
    }else
      if (*ailo <= 0 || *aihi > adim2 || *ajlo <= 0 || *ajhi > adim1)
-       ga_error("  g_a indices out of range ", *g_a);
+       gai_error("  g_a indices out of range ", *g_a);
    
    if (*transb == 'n' || *transb == 'N'){
      if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-       ga_error("  g_b indices out of range ", *g_b);
+       gai_error("  g_b indices out of range ", *g_b);
    }else
      if (*bilo <= 0 || *bihi > bdim2 || *bjlo <= 0 || *bjhi > bdim1)
-       ga_error("  g_b indices out of range ", *g_b);
+       gai_error("  g_b indices out of range ", *g_b);
    
    if (*cilo <= 0 || *cihi > cdim1 || *cjlo <= 0 || *cjhi > cdim2)
-     ga_error("  g_c indices out of range ", *g_c);
+     gai_error("  g_c indices out of range ", *g_c);
    
    /* verify if patch dimensions are consistent */
    m = *aihi - *ailo +1;
    n = *bjhi - *bjlo +1;
    k = *ajhi - *ajlo +1;
-   if( (*cihi - *cilo +1) != m) ga_error(" a & c dims error",m);
-   if( (*cjhi - *cjlo +1) != n) ga_error(" b & c dims error",n);
-   if( (*bihi - *bilo +1) != k) ga_error(" a & b dims error",k);
+   if( (*cihi - *cilo +1) != m) gai_error(" a & c dims error",m);
+   if( (*cjhi - *cjlo +1) != n) gai_error(" b & c dims error",n);
+   if( (*bihi - *bilo +1) != k) gai_error(" a & b dims error",k);
    
 
    /* In 32-bit platforms, k*m*n might exceed the "long" range(2^31), 
@@ -1597,7 +1634,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
      if ( max_chunk > Ichunk) {       
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
-       Integer avail = ga_memory_avail(atype);
+       Integer avail = gai_memory_avail(atype);
        if (ga_is_mirrored_(g_a)) {
          fflush(stdout);
          if (sizeof(Integer)/sizeof(int) > 1)
@@ -1607,15 +1644,15 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
          fflush(stdout);
        } else {
          fflush(stdout);
-         ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
+         gai_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
        }
-       if(avail<MINMEM && ga_nodeid_()==0) ga_error("NotEnough memory",avail);
+       if(avail<MINMEM && ga_nodeid_()==0) gai_error("NotEnough memory",avail);
        elems = (Integer)(avail*0.9); /* Donot use every last drop */
        
-       max_chunk=MIN(max_chunk, (Integer)(sqrt( (double)((elems-EXTRA)/3))));
-       Ichunk = MIN(m,max_chunk);
-       Jchunk = MIN(n,max_chunk);
-       Kchunk = MIN(k,max_chunk);
+       max_chunk=GA_MIN(max_chunk, (Integer)(sqrt( (double)((elems-EXTRA)/3))));
+       Ichunk = GA_MIN(m,max_chunk);
+       Jchunk = GA_MIN(n,max_chunk);
+       Kchunk = GA_MIN(k,max_chunk);
      }
      else /* "EXTRA" elems for safety - just in case */
        elems = 3*Ichunk*Jchunk + EXTRA*factor;
@@ -1638,11 +1675,11 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    else  ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
 
    for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop through columns of g_c patch */
-       jhi = MIN(n-1, jlo+Jchunk-1);
+       jhi = GA_MIN(n-1, jlo+Jchunk-1);
        jdim= jhi - jlo +1;
 
        for(klo = 0; klo < k; klo += Kchunk){    /* loop cols of g_a patch */
-	 khi = MIN(k-1, klo+Kchunk-1);          /* loop rows of g_b patch */
+	 khi = GA_MIN(k-1, klo+Kchunk-1);          /* loop rows of g_b patch */
 	 kdim= khi - klo +1;                                     
 	 
 	 /** Each pass through the outer two loops means we need a
@@ -1653,7 +1690,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	   
 	   if(ijk%nproc == iproc){
 
-	     ihi = MIN(m-1, ilo+Ichunk-1);
+	     ihi = GA_MIN(m-1, ilo+Ichunk-1);
 	     idim= cdim = ihi - ilo +1;
 	     
 	     if(atype == C_FLOAT) 
@@ -1701,7 +1738,6 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	     idim_t=idim; jdim_t=jdim; kdim_t=kdim;
 	     adim_t=adim; bdim_t=bdim; cdim_t=cdim;
 
-#	   if (defined(CRAY) || defined(WIN32)) && !defined(GA_C_CORE)
 	     switch(atype) {
 	     case C_FLOAT:
 	       xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
@@ -1709,75 +1745,91 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 			&bdim_t, &ZERO_F,  (float *)c, &cdim_t);
 	       break;
 	     case C_DBL:
-	       DGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
-		     alpha, (double*)a, &adim, (double*)b, &bdim, &ONE, 
-		     (double*)c, &cdim);
-	       break;
-	     case C_DCPL:
-	       ZGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
-		     (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE,c,&cdim);
-	       break;
-	     case C_SCPL:
-	       CGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
-		     (SingleComplex*)alpha, a, &adim, b, &bdim, &ONE_CF,c,&cdim);
-	       break;
-	     default:
-	       ga_error("ga_matmul_patch: wrong data type", atype);
-	     }
-#          else 
-	     switch(atype) {
-	     case C_FLOAT:
-	       xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			(float *)alpha, (float *)a, &adim_t, (float *)b, 
-			&bdim_t, &ZERO_F,  (float *)c, &cdim_t);
-	       break;
-	     case C_DBL:
-#            ifdef GA_C_CORE
+#if NOFORT
 	       {
-		  double ZERO_D = 0.0;
+		  double ZERO = 0.0;
 		  xb_dgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			   alpha, (double *)a, &adim_t, (double *)b, &bdim_t, 
-			   &ZERO_D,  (double *)c, &cdim_t);
+			   (double *)alpha, (double *)a, &adim_t,
+               (double *)b, &bdim_t, 
+			   (double *)&ZERO, (double *)c, &cdim_t);
 	       }
-#            else
+#elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+#   if HAVE_BLAS
+	       dgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+		      alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t, _ONE, _ONE);
+#   else
 	       dgemm_(transa, transb, &idim, &jdim, &kdim,
-		      alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
-#            endif
+		      alpha, a, &adim, b, &bdim, &ONE, c, &cdim, _ONE, _ONE);
+#   endif
+#else
+#   if HAVE_BLAS
+	       dgemm_(transa, _ONE, transb, _ONE, &idim_t, &jdim_t, &kdim_t,
+		      alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t);
+#   else
+	       dgemm_(transa, _ONE, transb, _ONE, &idim, &jdim, &kdim,
+		      alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
+#   endif
+#endif
 	       break;
 	     case C_DCPL:
-#            ifdef GA_C_CORE
+#if NOFORT
 	       {
 		  DoubleComplex ZERO;
 		  ZERO.real =0.; ZERO.imag =0.;
 		  xb_zgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			   (DoubleComplex *)alpha, a, &adim_t, b, &bdim_t, 
-			   &ZERO,  c, &cdim_t);
+			   (DoubleComplex *)alpha, (DoubleComplex *)a, &adim_t,
+               (DoubleComplex *)b, &bdim_t, 
+			   (DoubleComplex *)&ZERO, (DoubleComplex *)c, &cdim_t);
 	       }
-#            else
+#elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+#   if HAVE_BLAS
+	       zgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+		      alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t, _ONE, _ONE);
+#   else
 	       zgemm_(transa, transb, &idim, &jdim, &kdim,
-		      (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE, c, 
-		      &cdim, 1, 1);
-#            endif
+		      alpha, a, &adim, b, &bdim, &ONE, c, &cdim, _ONE, _ONE);
+#   endif
+#else
+#   if HAVE_BLAS
+	       zgemm_(transa, _ONE, transb, _ONE, &idim_t, &jdim_t, &kdim_t,
+		      alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t);
+#   else
+	       zgemm_(transa, _ONE, transb, _ONE, &idim, &jdim, &kdim,
+		      alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
+#   endif
+#endif
 	       break;
 	     case C_SCPL:
-#            ifdef GA_C_CORE
+#if NOFORT
 	       {
 		  SingleComplex ZERO;
 		  ZERO.real =0.; ZERO.imag =0.;
 		  xb_cgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			   (SingleComplex *)alpha, a, &adim_t, b, &bdim_t, 
-			   &ZERO,  c, &cdim_t);
+			   (SingleComplex *)alpha, (SingleComplex *)a, &adim_t,
+               (SingleComplex *)b, &bdim_t, 
+			   (SingleComplex *)&ZERO, (SingleComplex *)c, &cdim_t);
 	       }
-#            else
+#elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+#   if HAVE_BLAS
+	       cgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+		      alpha, a, &adim_t, b, &bdim_t, &ONE_CF, c, &cdim_t, _ONE, _ONE);
+#   else
 	       cgemm_(transa, transb, &idim, &jdim, &kdim,
-		      (SingleComplex*)alpha, a, &adim, b, &bdim, &ONE_CF, c, 
-		      &cdim, 1, 1);
-#            endif
+		      alpha, a, &adim, b, &bdim, &ONE_CF, c, &cdim, _ONE, _ONE);
+#   endif
+#else
+#   if HAVE_BLAS
+	       cgemm_(transa, _ONE, transb, _ONE, &idim_t, &jdim_t, &kdim_t,
+		      alpha, a, &adim_t, b, &bdim_t, &ONE_CF, c, &cdim_t);
+#   else
+	       cgemm_(transa, _ONE, transb, _ONE, &idim, &jdim, &kdim,
+		      alpha, a, &adim, b, &bdim, &ONE_CF, c, &cdim);
+#   endif
+#endif
 	       break;
 	     default:
-	       ga_error("ga_matmul_patch: wrong data type", atype);
+	       gai_error("ga_matmul_patch: wrong data type", atype);
 	     }
-#          endif
 	     
 	     i0= *cilo+ilo; i1= *cilo+ihi;   j0= *cjlo+jlo; j1= *cjlo+jhi;
 	     if(atype == C_FLOAT || atype == C_SCPL) 
@@ -1802,18 +1854,12 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 }
 
 
-void ga_matmul_patch(transa, transb, alpha, beta,
-		     g_a, ailo, aihi, ajlo, ajhi,
-		     g_b, bilo, bihi, bjlo, bjhi,
-		     g_c, cilo, cihi, cjlo, cjhi)
-
-     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
-     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
-     Integer *g_c, *cilo, *cihi, *cjlo, *cjhi;    /* patch of g_c */
-     void    *alpha, *beta;
-     char    *transa, *transb;
+void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
+        Integer *g_a,Integer *ailo,Integer *aihi,Integer *ajlo,Integer *ajhi,
+        Integer *g_b,Integer *bilo,Integer *bihi,Integer *bjlo,Integer *bjhi,
+        Integer *g_c,Integer *cilo,Integer *cihi,Integer *cjlo,Integer *cjhi)
 {
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(GA_MATMUL_PATCH,__FILE__,__LINE__);
 #endif
     if(ga_is_mirrored_(g_a)) 
@@ -1829,7 +1875,7 @@ void ga_matmul_patch(transa, transb, alpha, beta,
 		 g_c, cilo, cihi, cjlo, cjhi);
        _gai_matmul_patch_flag = UNSET;
     }
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(GA_MATMUL_PATCH,__FILE__,__LINE__);
 #endif
 
@@ -1848,7 +1894,7 @@ static void  gai_setup_2d_patch(Integer rank, Integer dims[],
     int d,e=0;
 
     for(d=0; d<rank; d++)
-       if( (hi[d]-lo[d])>0 && ++e>2 ) ga_error("3-D Patch Detected", 0L);
+       if( (hi[d]-lo[d])>0 && ++e>2 ) gai_error("3-D Patch Detected", 0L);
     *ipos = *jpos = -1;
     for(d=0; d<rank; d++){
        if( (*ipos <0) && (hi[d]>lo[d]) ) { *ipos =d; continue; }
@@ -1887,7 +1933,7 @@ static void  gai_setup_2d_patch(Integer rank, Integer dims[],
  *  [lo:hi,lo:hi] - patch indices _after_ op() operator was applied
  *
 \*/
-void nga_matmul_patch(char *transa, char *transb, void *alpha, void *beta, 
+void ngai_matmul_patch(char *transa, char *transb, void *alpha, void *beta, 
 		      Integer *g_a, Integer alo[], Integer ahi[], 
                       Integer *g_b, Integer blo[], Integer bhi[], 
 		      Integer *g_c, Integer clo[], Integer chi[])
@@ -1909,9 +1955,10 @@ Integer bilo, bihi, bjlo, bjhi;    /* 2d plane of g_b */
 Integer cilo, cihi, cjlo, cjhi;    /* 2d plane of g_c */
 Integer adims[GA_MAX_DIM],bdims[GA_MAX_DIM],cdims[GA_MAX_DIM],tmpld[GA_MAX_DIM];
 Integer *tmplo = adims, *tmphi =bdims; 
+Integer _ONE = 1;
 DoubleComplex ONE;
 SingleComplex ONE_CF;
-float ONE_F = 1.0, ZERO_F = 0.0;
+float ZERO_F = 0.0;
 Integer ZERO_I = 0;
 Integer get_new_B;
 DoublePrecision chunk_cube;
@@ -1919,7 +1966,7 @@ Integer min_tasks = 10, max_chunk;
 int local_sync_begin,local_sync_end;
 int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(NGA_MATMUL_PATCH,__FILE__,__LINE__);
 #endif
 
@@ -1935,7 +1982,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    /* Check to make sure all global arrays are of the same type */
    if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
         ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
-     ga_error("Processors do not match for all arrays",ga_nnodes_());
+     gai_error("Processors do not match for all arrays",ga_nnodes_());
    }
    if (ga_is_mirrored_(g_a)) {
      inode = ga_cluster_nodeid_();
@@ -1950,13 +1997,13 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    nga_inquire_internal_(g_b, &btype, &brank, bdims);
    nga_inquire_internal_(g_c, &ctype, &crank, cdims);
 
-   if(arank<2)  ga_error("rank of A must be at least 2",arank);
-   if(brank<2)  ga_error("rank of B must be at least 2",brank);
-   if(crank<2)  ga_error("rank of C must be at least 2",crank);
+   if(arank<2)  gai_error("rank of A must be at least 2",arank);
+   if(brank<2)  gai_error("rank of B must be at least 2",brank);
+   if(crank<2)  gai_error("rank of C must be at least 2",crank);
 
-   if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L);
+   if(atype != btype || atype != ctype ) gai_error(" types mismatch ", 0L);
    if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT && atype != C_SCPL)
-     ga_error(" type error",atype);
+     gai_error(" type error",atype);
    
    gai_setup_2d_patch(arank, adims, alo, ahi, &ailo, &aihi, &ajlo, &ajhi, 
 		                  &adim1, &adim2, &aipos, &ajpos);
@@ -1968,28 +2015,28 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    /* check if patch indices and dims match */
    if (*transa == 'n' || *transa == 'N'){
       if (ailo <= 0 || aihi > adim1 || ajlo <= 0 || ajhi > adim2)
-         ga_error("  g_a indices out of range ", *g_a);
+         gai_error("  g_a indices out of range ", *g_a);
    }else
       if (ailo <= 0 || aihi > adim2 || ajlo <= 0 || ajhi > adim1)
-         ga_error("  g_a indices out of range ", *g_a);
+         gai_error("  g_a indices out of range ", *g_a);
 
    if (*transb == 'n' || *transb == 'N'){
       if (bilo <= 0 || bihi > bdim1 || bjlo <= 0 || bjhi > bdim2)
-          ga_error("  g_b indices out of range ", *g_b);
+          gai_error("  g_b indices out of range ", *g_b);
    }else
       if (bilo <= 0 || bihi > bdim2 || bjlo <= 0 || bjhi > bdim1)
-          ga_error("  g_b indices out of range ", *g_b);
+          gai_error("  g_b indices out of range ", *g_b);
 
    if (cilo <= 0 || cihi > cdim1 || cjlo <= 0 || cjhi > cdim2)
-       ga_error("  g_c indices out of range ", *g_c);
+       gai_error("  g_c indices out of range ", *g_c);
 
   /* verify if patch dimensions are consistent */
    m = aihi - ailo +1;
    n = bjhi - bjlo +1;
    k = ajhi - ajlo +1;
-   if( (cihi - cilo +1) != m) ga_error(" a & c dims error",m);
-   if( (cjhi - cjlo +1) != n) ga_error(" b & c dims error",n);
-   if( (bihi - bilo +1) != k) ga_error(" a & b dims error",k);
+   if( (cihi - cilo +1) != m) gai_error(" a & c dims error",m);
+   if( (cjhi - cjlo +1) != n) gai_error(" b & c dims error",n);
+   if( (bihi - bilo +1) != k) gai_error(" a & b dims error",k);
 
    
    chunk_cube = (k*(double)(m*n)) / (min_tasks * nproc);
@@ -2010,15 +2057,15 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
      if ( max_chunk > Ichunk) {       
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
-       Integer avail = ga_memory_avail(atype);
-       ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
-       if(avail<MINMEM && ga_nodeid_()==0) ga_error("Not enough memory",avail);
+       Integer avail = gai_memory_avail(atype);
+       gai_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
+       if(avail<MINMEM && ga_nodeid_()==0) gai_error("Not enough memory",avail);
        elems = (Integer)(avail*0.9);/* Donot use every last drop */
        
-       max_chunk=MIN(max_chunk, (Integer)(sqrt( (double)((elems-EXTRA)/3))));
-       Ichunk = MIN(m,max_chunk);
-       Jchunk = MIN(n,max_chunk);
-       Kchunk = MIN(k,max_chunk);
+       max_chunk=GA_MIN(max_chunk, (Integer)(sqrt( (double)((elems-EXTRA)/3))));
+       Ichunk = GA_MIN(m,max_chunk);
+       Jchunk = GA_MIN(n,max_chunk);
+       Kchunk = GA_MIN(k,max_chunk);
      }
      else /* "EXTRA" elems for safety - just in case */
        elems = 3*Ichunk*Jchunk + EXTRA*factor;
@@ -2040,11 +2087,11 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    else      nga_fill_patch_(g_c, clo, chi, beta);
   
    for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop through columns of g_c patch */
-       jhi = MIN(n-1, jlo+Jchunk-1);
+       jhi = GA_MIN(n-1, jlo+Jchunk-1);
        jdim= jhi - jlo +1;
        
        for(klo = 0; klo < k; klo += Kchunk){    /* loop cols of g_a patch */
-	 khi = MIN(k-1, klo+Kchunk-1);        /* loop rows of g_b patch */
+	 khi = GA_MIN(k-1, klo+Kchunk-1);        /* loop rows of g_b patch */
 	 kdim= khi - klo +1;               
 
 	 get_new_B = TRUE;
@@ -2052,7 +2099,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	 for(ilo = 0; ilo < m; ilo += Ichunk){ /*loop through rows of g_c patch */
 	   
 	   if(ijk%nproc == iproc){
-	     ihi = MIN(m-1, ilo+Ichunk-1);
+	     ihi = GA_MIN(m-1, ilo+Ichunk-1);
 	     idim= cdim = ihi - ilo +1;
 	     
 	     if(atype == C_FLOAT) 
@@ -2110,89 +2157,102 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	     idim_t=idim; jdim_t=jdim; kdim_t=kdim;
 	     adim_t=adim; bdim_t=bdim; cdim_t=cdim;
 
-#	     if (defined(CRAY) || defined(WIN32)) && !defined(GA_C_CORE)
 		  switch(atype) {
 		  case C_FLOAT:
-		    xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			     (float *)alpha, (float *)a, &adim_t, (float *)b, 
-			     &bdim_t, &ZERO_F,  (float *)c, &cdim_t);
-		    break;		    
-		  case C_DBL:
-                    DGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
-                          alpha, (double*)a, &adim, (double*)b, &bdim, &ONE, 
-			  (double*)c, &cdim);
-		    break;
-		  case C_DCPL:
-                    ZGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
-                          (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE,c,&cdim);
-		    break;
-		  case C_SCPL:
-                    CGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
-                          (SingleComplex*)alpha, a, &adim, b, &bdim, &ONE_CF,c,&cdim);
-		    break;
-		  default:
-		    ga_error("ga_matmul_patch: wrong data type", atype);
-		  }
-#            else 
-		  switch(atype) {
-		  case C_FLOAT:
-		    xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			     (float *)alpha, (float *)a, &adim_t, (float *)b, &bdim_t, 
-			     &ZERO_F,  (float *)c, &cdim_t);
+            {
+               float ZERO = 0.0;
+		       xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			    (float *)alpha, (float *)a, &adim_t,
+                (float *)b, &bdim_t, 
+			    (float *)&ZERO, (float *)c, &cdim_t);
+            }
 		    break;
 		  case C_DBL:
-#                 ifdef GA_C_CORE
+#if NOFORT
 		    {
-		       double ZERO_D = 0.0;
+		       double ZERO = 0.0;
 		       xb_dgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-				alpha, (double*)a,&adim_t, (double*)b,&bdim_t,
-				&ZERO_D,  (double *)c, &cdim_t);
+				(double *)alpha, (double *)a, &adim_t,
+                (double *)b, &bdim_t,
+				(double *)&ZERO, (double *)c, &cdim_t);
 		    }
-#                 else
-#                 if !defined(HAS_BLAS) && defined(EXT_INT)
-		    dgemm_(transa, transb, &idim, &jdim, &kdim,
-			   alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
-#                   else
+#elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+#   if HAVE_BLAS
 		    dgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			   alpha, a, &adim_t, b, &bdim_t, &ONE,c,&cdim_t,1,1);
-#                   endif
-#                 endif
+			   alpha, a, &adim_t, b, &bdim, &ONE, c, &cdim_t, _ONE, _ONE);
+#   else
+		    dgemm_(transa, transb, &idim, &jdim, &kdim,
+			   alpha, a, &adim, b, &bdim, &ONE, c, &cdim, _ONE, _ONE);
+#   endif
+#else
+#   if HAVE_BLAS
+		    dgemm_(transa, _ONE, transb, _ONE, &idim_t, &jdim_t, &kdim_t,
+			   alpha, a, &adim_t, b, &bdim, &ONE, c, &cdim_t);
+#   else
+		    dgemm_(transa, _ONE, transb, _ONE, &idim, &jdim, &kdim,
+			   alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
+#   endif
+#endif
 		    break;
 		  case C_DCPL:
-#                 ifdef GA_C_CORE
+#if NOFORT
 		    {
 		       DoubleComplex ZERO;
 		       ZERO.real =0.; ZERO.imag =0.;
 		       xb_zgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-				(DoubleComplex *)alpha, a, &adim_t, b,&bdim_t,
-				&ZERO,  c, &cdim_t);
+				(DoubleComplex *)alpha, (DoubleComplex *)a, &adim_t,
+                (DoubleComplex *)b, &bdim_t,
+				(DoubleComplex *)&ZERO, (DoubleComplex *)c, &cdim_t);
 		    }
-#                 else
+#elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+#   if HAVE_BLAS
+		    zgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			   alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t, _ONE, _ONE);
+#   else
 		    zgemm_(transa, transb, &idim, &jdim, &kdim,
-			   (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE, c, 
-			   &cdim, 1, 1);
-#                 endif
+			   alpha, a, &adim, b, &bdim, &ONE, c, &cdim, _ONE, _ONE);
+#   endif
+#else
+#   if HAVE_BLAS
+		    zgemm_(transa, _ONE, transb, _ONE, &idim_t, &jdim_t, &kdim_t,
+			   alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t);
+#   else
+		    zgemm_(transa, _ONE, transb, _ONE, &idim, &jdim, &kdim,
+			   alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
+#   endif
+#endif
 		    break;
-
 		  case C_SCPL:
-#                 ifdef GA_C_CORE
+#if NOFORT
 		    {
 		       SingleComplex ZERO;
 		       ZERO.real =0.; ZERO.imag =0.;
 		       xb_cgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-				(SingleComplex *)alpha, a, &adim_t, b,&bdim_t,
-				&ZERO,  c, &cdim_t);
+				(SingleComplex *)alpha, (SingleComplex *)a, &adim_t,
+                (SingleComplex *)b, &bdim_t,
+				(SingleComplex *)&ZERO, (SingleComplex *)c, &cdim_t);
 		    }
-#                 else
+#elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+#   if HAVE_BLAS
+		    cgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			   alpha, a, &adim_t, b, &bdim_t, &ONE_CF, c, &cdim_t, _ONE, _ONE);
+#   else
 		    cgemm_(transa, transb, &idim, &jdim, &kdim,
-			   (SingleComplex*)alpha, a, &adim, b, &bdim, &ONE_CF,
-                           c, &cdim, 1, 1);
-#                 endif
+			   alpha, a, &adim, b, &bdim, &ONE_CF, c, &cdim, _ONE, _ONE);
+#   endif
+#else
+#   if HAVE_BLAS
+		    cgemm_(transa, _ONE, transb, _ONE, &idim_t, &jdim_t, &kdim_t,
+			   alpha, a, &adim_t, b, &bdim_t, &ONE_CF, c, &cdim_t);
+#   else
+		    cgemm_(transa, _ONE, transb, _ONE, &idim, &jdim, &kdim,
+			   alpha, a, &adim, b, &bdim, &ONE_CF, c, &cdim);
+#   endif
+#endif
 		    break;
 		  default:
-		    ga_error("ga_matmul_patch: wrong data type", atype);
+		    gai_error("ga_matmul_patch: wrong data type", atype);
 		  }
-#            endif
 
                   i0= cilo+ilo; i1= cilo+ihi;   j0= cjlo+jlo; j1= cjlo+jhi;
                   /* ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
@@ -2220,7 +2280,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    GA_POP_NAME;
    if(local_sync_end)ga_sync_(); 
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(NGA_MATMUL_PATCH,__FILE__,__LINE__);
 #endif
 }
@@ -2228,58 +2288,23 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 /*\ MATRIX MULTIPLICATION for patches 
  *  Fortran interface
 \*/
-void FATR nga_matmul_patch_(transa, transb, alpha, beta, g_a, alo, ahi, 
-
-                       g_b, blo, bhi, g_c, clo, chi)
-
-                      void *alpha, *beta;
-		      Integer *g_a, alo[], ahi[]; 
-                      Integer *g_b, blo[], bhi[]; 
-		      Integer *g_c, clo[], chi[];
-
-#if defined(CRAY) || defined(WIN32)
-     _fcd   transa, transb;
-{    
-     nga_matmul_patch(_fcdtocp(transa), _fcdtocp(transb), alpha, beta, g_a, alo,
-                      ahi, g_b, blo, bhi, g_c, clo, chi);
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+void FATR nga_matmul_patch_(char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer alo[], Integer ahi[], Integer *g_b, Integer blo[], Integer bhi[], Integer *g_c, Integer clo[], Integer chi[], int alen, int blen)
 #else
-     char    *transa, *transb;
-{    
-	nga_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi,
-                         g_b, blo, bhi, g_c, clo, chi);
+void FATR nga_matmul_patch_(char *transa, int alen, char *transb, int blen, void *alpha, void *beta, Integer *g_a, Integer alo[], Integer ahi[], Integer *g_b, Integer blo[], Integer bhi[], Integer *g_c, Integer clo[], Integer chi[])
 #endif
+{    
+	ngai_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi,
+                         g_b, blo, bhi, g_c, clo, chi);
 }
 
-void FATR ga_matmul_patch_(transa, transb, alpha, beta,
-                      g_a, ailo, aihi, ajlo, ajhi,
-                      g_b, bilo, bihi, bjlo, bjhi,
-                      g_c, cilo, cihi, cjlo, cjhi)
-
-     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
-     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
-     Integer *g_c, *cilo, *cihi, *cjlo, *cjhi;    /* patch of g_c */
-     DoublePrecision      *alpha, *beta;
-
-#if defined(CRAY) || defined(WIN32)
-     _fcd   transa, transb;
-     {   
-#ifdef GA_USE_VAMPIR
-  vampir_begin(GA_MATMUL_PATCH,__FILE__,__LINE__);
-#endif
-	_gai_matmul_patch_flag = SET;
-	ga_matmul(_fcdtocp(transa), _fcdtocp(transb), alpha, beta,
-		  g_a, ailo, aihi, ajlo, ajhi,
-		  g_b, bilo, bihi, bjlo, bjhi,
-		  g_c, cilo, cihi, cjlo, cjhi);
-	_gai_matmul_patch_flag = UNSET;
-#ifdef GA_USE_VAMPIR
-  vampir_end(GA_MATMUL_PATCH,__FILE__,__LINE__);
-#endif
-     }
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+void FATR ga_matmul_patch_(char *transa, char *transb, DoublePrecision *alpha, DoublePrecision *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi, int alen, int blen)
 #else
-     char    *transa, *transb;
+void FATR ga_matmul_patch_(char *transa, int alen, char *transb, int blen, DoublePrecision *alpha, DoublePrecision *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi)
+#endif
 {    
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(GA_MATMUL_PATCH,__FILE__,__LINE__);
 #endif
 #if 0
@@ -2289,7 +2314,7 @@ Integer clo[2], chi[2];
         alo[0]=*ailo; ahi[0]=*aihi; alo[1]=*ajlo; ahi[1]=*ajhi;
         blo[0]=*bilo; bhi[0]=*bihi; blo[1]=*bjlo; bhi[1]=*bjhi;
         clo[0]=*cilo; chi[0]=*cihi; clo[1]=*cjlo; chi[1]=*cjhi;
-	nga_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi,
+	ngai_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi,
                          g_b, blo, bhi, g_c, clo, chi);
 #else
 	if(ga_is_mirrored_(g_a)) 
@@ -2306,46 +2331,20 @@ Integer clo[2], chi[2];
 	   _gai_matmul_patch_flag = UNSET;
 	}
 #endif
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(GA_MATMUL_PATCH,__FILE__,__LINE__);
 #endif
 }
-#endif
 
 
+/*********************** Fortran wrappers for ga_Xgemm ***********************/
 
-
-/*********************** Fortran warppers for ga_Xgemm ***********************/
-
-
-#ifndef USE_SUMMA
-#  ifdef XT3
-#    define GA_DGEMM ga_dgemm_DISABLE /* use ga_dgemm in ga_dgemmf.F as
-                                         accumulate is sloooow in XT3 */
-#  else
-#    define GA_DGEMM ga_dgemm_
-#  endif
+/* use ga_dgemm in ga_dgemmf.F as accumulate is sloooow in CRAY_XT */
+#ifdef CRAY_XT
+#   define GA_DGEMM ga_dgemm_DISABLE 
 #else
-void ga_dgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer *k,
-               double *alpha, Integer *g_a, Integer *g_b,
-               double *beta, Integer *g_c) {
-
-#ifdef GA_USE_VAMPIR
-  vampir_begin(VT_GA_DGEMM,__FILE__,__LINE__);
+#   define GA_DGEMM ga_dgemm_
 #endif
-  /**
-   * ga_summa calls ga_ga_dgemm to handle cases it does not cover
-   */
-  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  ga_summa_(transa, transb, m, n, k, alpha, g_a, g_b, beta, g_c);
-#ifdef GA_USE_VAMPIR
-  vampir_end(VT_GA_DGEMM,__FILE__,__LINE__);
-#endif
-}
-#  define GA_DGEMM ga_ga_dgemm_
-#endif
-
-
 
 #define  SET_GEMM_INDICES\
   Integer ailo = 1;\
@@ -2363,91 +2362,89 @@ void ga_dgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer *k,
   Integer cjlo = 1;\
   Integer cjhi = *n
 
-#if defined(CRAY) || defined(WIN32)
-void FATR GA_DGEMM(_fcd Transa, _fcd Transb, Integer *m, Integer *n, Integer *k,
-             void *alpha, Integer *g_a, Integer *g_b,
-             void *beta, Integer *g_c)
-{
-char *transa, *transb;
-SET_GEMM_INDICES;
-      transa = _fcdtocp(Transa);
-      transb = _fcdtocp(Transb);
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+void FATR GA_DGEMM(
+        char *transa, char *transb,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c, int talen, int tblen
+        )
 #else
-void FATR GA_DGEMM(char *transa, char *transb, Integer *m, Integer *n, Integer *k,
-             void *alpha, Integer *g_a, Integer *g_b,
-             void *beta, Integer *g_c, int talen, int tblen)
+void FATR GA_DGEMM(
+        char *transa, int talen, char *transb, int tblen,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c
+        )
+#endif
 {
 SET_GEMM_INDICES;
-#endif
  
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(VT_GA_DGEMM,__FILE__,__LINE__);
 #endif
  ga_matmul(transa, transb, alpha, beta,
 	   g_a, &ailo, &aihi, &ajlo, &ajhi,
 	   g_b, &bilo, &bihi, &bjlo, &bjhi,
 	   g_c, &cilo, &cihi, &cjlo, &cjhi);
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(VT_GA_DGEMM,__FILE__,__LINE__);
 #endif
 }
 
-#if defined(CRAY) || defined(WIN32)
-void FATR ga_sgemm_(_fcd Transa, _fcd Transb, Integer *m, Integer *n, Integer *k,
-             void *alpha, Integer *g_a, Integer *g_b,
-             void *beta, Integer *g_c)
-{
-char *transa, *transb;
-SET_GEMM_INDICES;
-      transa = _fcdtocp(Transa);
-      transb = _fcdtocp(Transb);
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+void FATR ga_sgemm_(
+        char *transa, char *transb,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c, int talen, int tblen)
 #else
-void FATR ga_sgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer *k,
-             void *alpha, Integer *g_a, Integer *g_b,
-             void *beta, Integer *g_c, int talen, int tblen)
+void FATR ga_sgemm_(
+        char *transa, int talen, char *transb, int tblen,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c)
+#endif
 {
 SET_GEMM_INDICES;
-#endif
 
-
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(VT_GA_SGEMM,__FILE__,__LINE__);
 #endif
   ga_matmul (transa, transb, alpha, beta,
 	     g_a, &ailo, &aihi, &ajlo, &ajhi,
 	     g_b, &bilo, &bihi, &bjlo, &bjhi,
 	     g_c, &cilo, &cihi, &cjlo, &cjhi);
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(VT_GA_SGEMM,__FILE__,__LINE__);
 #endif
 }
 
 
-#if defined(CRAY) || defined(WIN32)
-void FATR ga_zgemm_(_fcd Transa, _fcd Transb, Integer *m, Integer *n, Integer *k,
-             void *alpha, Integer *g_a, Integer *g_b,
-             void *beta, Integer *g_c)
-{
-char *transa, *transb;
-SET_GEMM_INDICES;
-      transa = _fcdtocp(Transa);
-      transb = _fcdtocp(Transb);
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+void FATR ga_zgemm_(
+        char *transa, char *transb,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c, int talen, int tblen)
 #else
-void FATR ga_zgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer *k,
-             void *alpha, Integer *g_a, Integer *g_b,
-             void *beta, Integer *g_c, int talen, int tblen)
+void FATR ga_zgemm_(
+        char *transa, int talen, char *transb, int tblen,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c)
+#endif
 {
 SET_GEMM_INDICES;
-#endif
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(VT_GA_ZGEMM,__FILE__,__LINE__);
 #endif
   ga_matmul (transa, transb, alpha, beta,
 	     g_a, &ailo, &aihi, &ajlo, &ajhi,
 	     g_b, &bilo, &bihi, &bjlo, &bjhi,
 	     g_c, &cilo, &cihi, &cjlo, &cjhi);
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(VT_GA_ZGEMM,__FILE__,__LINE__);
 #endif
 }

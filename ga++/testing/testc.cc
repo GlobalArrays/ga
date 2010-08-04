@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include <iostream>
 #include <cstdio>
 #include <cmath>
@@ -17,10 +21,10 @@ using std::endl;
 int
 main(int argc, char *argv[]) {
   
-  int ONE=1, ZERO=0;   /* useful constants */
+  int ONE=1;   /* useful constants */
   int n=N, type=MT_F_DBL;
   int me, nproc;
-  int col, i, row;
+  int i, row;
   int dims[2]={N,N};
   int lo[2], hi[2];
   

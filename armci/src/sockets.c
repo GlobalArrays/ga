@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: sockets.c,v 1.23.8.1 2007-02-09 17:10:18 andriy Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
@@ -6,48 +10,80 @@
            be <0 (and ignored). Needed for the threaded version of server.
  *************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_ERRNO_H
+#   include <errno.h>
+#endif
 
-#ifdef WIN32
+#if HAVE_WINSOCK_H
 #  include <winsock.h>
 #  define bcopy(s1,s2,n) memcpy(s2,s1,n)
 #  define sleep(x) Sleep(1000*(x))
 #  define CLOSE closesocket
 #else
-#  include <sys/wait.h>
-#  include <sys/time.h>
-#  include <sys/types.h>
-#  include <sys/socket.h>
-/*#  include <sys/uio.h> */ /*moved to sockets.h*/ 
-#  include <netinet/in.h>
-#  include <netinet/tcp.h>
-#  include <netdb.h>
-#  include <unistd.h>
 #  define CLOSE close
+#endif
+#if HAVE_SYS_WAIT_H
+#  include <sys/wait.h>
+#endif
+#if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#if HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+#endif
+/*#  include <sys/uio.h> */ /*moved to sockets.h*/ 
+#if HAVE_NETINET_IN_H
+#  include <netinet/in.h>
+#endif
+#if HAVE_NETINET_TCP_H
+#  include <netinet/tcp.h>
+#endif
+#if HAVE_NETDB_H
+#  include <netdb.h>
+#endif
+#if HAVE_UNISTD_H
+#  include <unistd.h>
 #endif
 
 #include "armcip.h"
 #include "sockets.h"
 
-#ifdef AIX
-#  include <standards.h>
-#  include <sys/select.h>
-#  ifdef _AIXVERSION_430
-     typedef socklen_t soclen_t;
-#  else
-     typedef size_t soclen_t;
-#  endif
-#elif defined(XLCLINUX)
+/* JAD 2010-05-06 Code these days is safe to use socklen_t so long as it uses
+ * it throughout. */
+#if 0
+#   ifdef AIX
+#       include <standards.h>
+#       if HAVE_SYS_SELECT_H
+#           include <sys/select.h>
+#       endif
+#       ifdef _AIXVERSION_430
 typedef socklen_t soclen_t;
-#else
+#       else
+typedef size_t soclen_t;
+#       endif
+#   elif defined(XLCLINUX)
+typedef socklen_t soclen_t;
+#   else
 typedef int soclen_t;
+#   endif
+#else
+typedef socklen_t soclen_t;
 #endif
 
 
 #ifdef CRAY
-#include <memory.h>
+#   if HAVE_MEMORY_H
+#       include <memory.h>
+#   endif
 #endif
 
 /* portability of socklen_t definition is iffy - we need to avoid it !!

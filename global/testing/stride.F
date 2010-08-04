@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -17,7 +20,7 @@ c vector boxes lack arithmetic precision
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-#include "tcgmsg.fh"
+c#include "tcgmsg.fh"
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM, nwidth, MAXPROC, nloop, nskip
       parameter (nmax = 8, DIM = 2, nwidth = 0, MAXPROC = 2000)
@@ -32,12 +35,7 @@ c vector boxes lack arithmetic precision
 c     
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Initialize GA
 c
@@ -141,11 +139,7 @@ c
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
 
 c
       stop

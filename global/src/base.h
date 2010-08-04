@@ -1,4 +1,9 @@
 /*$Id: base.h,v 1.40.2.4 2007/12/18 18:41:27 d3g293 Exp $ */
+#include "armci.h"
+#include "gaconfig.h"
+#include "typesf2c.h"
+#include "global.h"
+
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -10,6 +15,7 @@ extern int** GA_Update_Flags;
 extern int* GA_Update_Signal;
 extern short int _ga_irreg_flag; 
 extern Integer GA_Debug_flag;
+extern int *ProcListPerm;            /*permuted list of processes */
 
 #define FNAM        31              /* length of array names   */
 #define CACHE_SIZE  512             /* size of the cache inside GA DS*/
@@ -22,7 +28,6 @@ extern Integer GA_Debug_flag;
 
 
 typedef int ARMCI_Datatype;
-#include "armci.h"
 typedef struct {
        int mirrored;
        int map_nproc;
@@ -42,7 +47,8 @@ typedef struct {
        short int  ndim;             /* number of dimensions                 */
        short int  irreg;            /* 0-regular; 1-irregular distribution  */
        int  type;                   /* data type in array                   */
-       int  actv;                   /* activity status                      */
+       int  actv;                   /* activity status, GA is allocated     */
+       int  actv_handle;            /* handle is created                    */
        C_Long   size;               /* size of local data in bytes          */
        int  elemsize;               /* sizeof(datatype)                     */
        int  ghosts;                 /* flag indicating presence of ghosts   */
@@ -69,8 +75,14 @@ typedef struct {
        C_Integer block_dims[MAXDIM];/* array of block dimensions            */
        C_Integer num_blocks[MAXDIM];/* number of blocks in each dimension   */
        C_Integer block_total;       /* total number of blocks in array      */
+                                    /* using restricted arrays              */
+       C_Integer *rstrctd_list;     /* list of processors with data         */
+       C_Integer num_rstrctd;       /* number of processors with data       */
+       C_Integer has_data;          /* flag that processor has data         */
+       C_Integer rstrctd_id;        /* rank of processor in restricted list */
+       C_Integer *rank_rstrctd;     /* ranks of processors with data        */
 
-#ifdef DO_CKPT
+#ifdef ENABLE_CHECKPOINT
        int record_id;               /* record id for writing ga to disk     */
 #endif
 } global_array_t;
@@ -101,11 +113,11 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 {\
     if(GA_OFFSET+ (*g_a) < 0 || GA_OFFSET+(*g_a) >=_max_global_array){ \
       sprintf(err_string, "%s: INVALID ARRAY HANDLE", string);         \
-      ga_error(err_string, (*g_a));                                    \
+      gai_error(err_string, (*g_a));                                   \
     }\
     if( ! (GA[GA_OFFSET+(*g_a)].actv) ){                               \
       sprintf(err_string, "%s: ARRAY NOT ACTIVE", string);             \
-      ga_error(err_string, (*g_a));                                    \
+      gai_error(err_string, (*g_a));                                   \
     }                                                                  \
 }
 
@@ -177,10 +189,25 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 /* this macro finds cordinates of the chunk of array owned by processor proc */
 #define ga_ownsM(ga_handle, proc, lo, hi)                                      \
 {                                                                              \
-  if (GA[ga_handle].block_flag ==0) {                                          \
-    ga_ownsM_no_handle(GA[ga_handle].ndim, GA[ga_handle].dims,                 \
-                       GA[ga_handle].nblock, GA[ga_handle].mapc,               \
-                       proc,lo, hi )                                           \
+  if (GA[ga_handle].block_flag == 0) {                                         \
+    if (GA[ga_handle].num_rstrctd == 0) {                                      \
+      ga_ownsM_no_handle(GA[ga_handle].ndim, GA[ga_handle].dims,               \
+                         GA[ga_handle].nblock, GA[ga_handle].mapc,             \
+                         proc,lo, hi )                                         \
+    } else {                                                                   \
+      if (proc < GA[ga_handle].num_rstrctd) {                                  \
+        ga_ownsM_no_handle(GA[ga_handle].ndim, GA[ga_handle].dims,             \
+                           GA[ga_handle].nblock, GA[ga_handle].mapc,           \
+                           proc,lo, hi )                                       \
+      } else {                                                                 \
+        int _i;                                                                \
+        int _ndim = GA[ga_handle].ndim;                                        \
+        for (_i=0; _i<_ndim; _i++) {                                           \
+          lo[_i] = 0;                                                          \
+          hi[_i] = -1;                                                         \
+        }                                                                      \
+      }                                                                        \
+    }                                                                          \
   } else {                                                                     \
     int _index[MAXDIM];                                                        \
     int _i;                                                                    \
@@ -279,7 +306,7 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
   }                                                                  \
   sprintf(err_string+_l, "]");                                       \
   _l=strlen(err_string);                                             \
-  ga_error(err_string, val);                                         \
+  gai_error(err_string, val);                                        \
 }
 
 /*\ Just return pointer (ptr_loc) to location in memory of element with
@@ -306,6 +333,8 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
       if (_p_handle == 0) {                                                   \
         _iproc = PGRP_LIST[_p_handle].inv_map_proc_list[_iproc];              \
       }                                                                       \
+      if (GA[g_handle].num_rstrctd > 0)                                       \
+        _iproc = GA[g_handle].rstrctd_list[_iproc];                           \
       *(ptr_loc) =  GA[g_handle].ptr[_iproc]+_offset*GA[g_handle].elemsize;   \
 }
 
@@ -317,7 +346,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
                string, (long)*(ilo), (long)*(ihi), (long)*(jlo), (long)*(jhi), \
                (long)GA[GA_OFFSET + *(g_a)].dims[0],                           \
                (long)GA[GA_OFFSET + *(g_a)].dims[1]);                          \
-       ga_error(err_string, *(g_a));                                           \
+       gai_error(err_string, *(g_a));                                          \
    }                                                                           \
 }
 
@@ -329,6 +358,6 @@ Integer _d;                                                                    \
       if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                        \
         sprintf(err_string,"check subscript failed:%ld not in (%ld:%ld) dim=", \
                   (long)subscr[_d],  (long)lo[_d],  (long)hi[_d]);             \
-          ga_error(err_string, _d);                                            \
+          gai_error(err_string, _d);                                           \
       }\
 }

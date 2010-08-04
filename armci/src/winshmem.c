@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: winshmem.c,v 1.20 2005-09-29 21:30:10 d3h325 Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
@@ -29,24 +33,34 @@
 #define DEBUG 0
 #define DEBUG0 0
 
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 
 #ifdef WIN32
 #  include <windows.h>
 #  include <process.h>
 #  define  GETPID _getpid
 #elif defined(NEC)
-#  include <unistd.h>
+#  if HAVE_UNISTD_H
+#   include <unistd.h>
+#  endif
 #  include <sys/mppg.h>
    typedef void* HANDLE;
    typedef void* LPVOID;
 #  define  GETPID getpid
 #elif defined(HITACHI)
-#  include <unistd.h>
+#  if HAVE_UNISTD_H
+#   include <unistd.h>
+#  endif
 #  define PAGE_SIZE       0x1000
 #  define ROUND_UP_PAGE(size)  ((size + (PAGE_SIZE-1)) & ~(PAGE_SIZE-1))
-#  include <strings.h>
-#  include <stdlib.h>
+#  if HAVE_STRINGS_H
+#   include <strings.h>
+#  endif
+#  if HAVE_STDLIB_H
+#   include <stdlib.h>
+#  endif
 #  include <hxb/combuf.h>
 #  include <hxb/combuf_returns.h>
    typedef long HANDLE;
@@ -55,10 +69,18 @@
    static long cb_key=1961;
    static long _hitachi_reg_size;
 #elif defined(MMAP)
-#  include <fcntl.h>
-#  include <unistd.h>
-#  include <sys/stat.h>
-#  include <sys/mman.h>
+#  if HAVE_FCNTL_H
+#   include <fcntl.h>
+#  endif
+#  if HAVE_UNISTD_H
+#   include <unistd.h>
+#  endif
+#  if HAVE_SYS_STAT_H
+#   include <sys/stat.h>
+#  endif
+#  if HAVE_SYS_MMAN_H
+#   include <sys/mman.h>
+#  endif
    typedef int HANDLE;
    typedef void* LPVOID;
 #  define  GETPID getpid
@@ -66,16 +88,26 @@
 #  ifndef _POSIX_C_SOURCE
 #    define  _POSIX_C_SOURCE 199309L
 #  endif
-#  include <fcntl.h>
-#  include <unistd.h>
-#  include <sys/stat.h>
-#  include <sys/mman.h>
+#  if HAVE_FCNTL_H
+#   include <fcntl.h>
+#  endif
+#  if HAVE_UNISTD_H
+#   include <unistd.h>
+#  endif
+#  if HAVE_SYS_STAT_H
+#   include <sys/stat.h>
+#  endif
+#  if HAVE_SYS_MMAN_H
+#   include <sys/mman.h>
+#  endif
    typedef int HANDLE; 
    typedef void* LPVOID; 
 #  define  GETPID getpid
 #endif
 
-#include <assert.h>
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
 #include "kr_malloc.h"
 #include "shmem.h"
 #include "armcip.h"
@@ -413,7 +445,7 @@ char *armci_allocate(size_t size)
 
     ptr = armci_get_core_from_map_file( 0, (long)size);
     if(ptr !=NULL) alloc_regions++;
-    if(DEBUG)printf("%d:got more core %lx %ld this was %ld segment allocated\n",armci_me,(unsigned long)ptr, (long)size, alloc_regions);
+    if(DEBUG)printf("%d:got more core %lx %ld this was %d segment allocated\n",armci_me,(unsigned long)ptr, (long)size, alloc_regions);
 
     return ptr;
 }
@@ -448,7 +480,7 @@ char* Create_Shared_Region(long idlist[], long size, long *offset)
 
      *offset = (long) (temp - region_list[reg].addr);
 
-     if(DEBUG)printf("Create_Shared_Region(): Found region reg=%d (id=%d) offset=%d temp=%p\n", reg, idlist[0], *offset, temp); 
+     if(DEBUG)printf("Create_Shared_Region(): Found region reg=%d (id=%ld) offset=%ld temp=%p\n", reg, idlist[0], *offset, temp); 
 
      /* idlist[0] = alloc_regions; This is set in find_regions() */
      idlist[1] = parent_pid;
@@ -458,7 +490,7 @@ char* Create_Shared_Region(long idlist[], long size, long *offset)
      idlist[SHMIDLEN-2]=_hitachi_reg_size;
 #endif
 #endif
-     if(DEBUG)printf("%d:created %p %ld id=%ld id[0]=%d\n",armci_me,temp, size,idlist[2],idlist[0]);
+     if(DEBUG)printf("%d:created %p %ld id=%ld id[0]=%ld\n",armci_me,temp, size,idlist[2],idlist[0]);
      return (temp);
 }
 
@@ -472,7 +504,7 @@ void server_reset_memory_variables()
 
 char *Attach_Shared_Region(long id[], long size, long offset)
 {
-    int found=0;
+    /*int found=0;*/
     int reg;
     char *temp=NULL;
 
@@ -485,7 +517,7 @@ char *Attach_Shared_Region(long id[], long size, long offset)
           }
      }
 
-     if(DEBUG)printf("%d:alloc_regions=%d size=%ld attachto(id)=%d\n",armci_me,alloc_regions,size, id[0]);
+     if(DEBUG)printf("%d:alloc_regions=%d size=%ld attachto(id)=%ld\n",armci_me,alloc_regions,size, id[0]);
 
      /* find out if a new shmem region was allocated */
      if(alloc_regions < id[0]+1){

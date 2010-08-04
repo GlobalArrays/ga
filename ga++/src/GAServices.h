@@ -353,7 +353,7 @@ class GAServices {
    * available regardless of the message-passing library that GA is running 
    * with. \n This is a collective operation. 
    */
-  void igop(Integer x[], int n, char *op);
+  void igop(int x[], int n, char *op);
   
   /**
    * Initializes tracing of completion status of data movement operations. 

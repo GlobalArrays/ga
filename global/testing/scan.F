@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 C
 C     Test the minval, minloc, maxval, maxloc, and enum functions in GA.
 C
@@ -7,15 +10,11 @@ C
 #include "global.fh"
       integer heap, stack, fudge, ma_heap, me, nproc
       logical status
-      parameter (heap=100*100*4, fudge=100, stack=100*100)
+      parameter (heap=200*200*4, fudge=100, stack=200*200)
 c     
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      call mpi_init
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Initialize GA
 c
@@ -36,6 +35,7 @@ c
 c***  Initialize the MA package
 c     MA must be initialized before any global array is allocated
 c
+      ma_heap = heap/nproc + fudge
       status = ma_init(MT_DCPL, stack, ma_heap)
       if (.not. status) call ga_error('ma_init failed',-1) 
 c
@@ -55,11 +55,7 @@ c
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      call mpi_finalize()
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
 c
       end
 
@@ -78,10 +74,10 @@ C
       integer ilo4, ihi4, num4
       integer i, it, count
       integer me, nproc                       ! my processor & number of procs 
-      integer ndim,dims(1),chunck(1)
+      integer ndim,dims(1),chunk(1)
 C
       integer nelements_max, nen_max
-      parameter (nelements_max=1000, nen_max=4)
+      parameter (nelements_max=100000, nen_max=4)
       integer ipack(nelements_max), 
      *        jpack(nelements_max), 
      *        kpack(nelements_max), 
@@ -104,52 +100,52 @@ c***  check parallel environment
       me = ga_nodeid()
       nproc = ga_nnodes()
 c
-      nelements=20
+      nelements=20000
       nen=4
 c
 c***  create a global 1-D array
       ndim=1
       dims(1)=nen*nelements
-      chunck(1)=min(1,dims(1)/nproc)
-      if (.not. nga_create(MT_INT, ndim, dims, 'ielm1', chunck, 
+      chunk(1)=min(1,dims(1)/nproc)
+      if (.not. nga_create(MT_INT, ndim, dims, 'ielm1', chunk, 
      $                     g_ielm1))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'result1', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'result1', chunk, 
      $                     g_result1))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'sbit2', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'sbit2', chunk, 
      $                     g_sbit2))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'src2', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'src2', chunk, 
      $                     g_src2))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'sink2', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'sink2', chunk, 
      $                     g_sink2))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'result2', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'result2', chunk, 
      $                     g_result2))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'irowmat', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'irowmat', chunk, 
      $                     g_irowmat))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'icolmat', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'icolmat', chunk, 
      $                     g_icolmat))
      $     call ga_error(' ga_create failed ',0)
 C
-      if (.not. nga_create(MT_DBL, ndim, dims, 'velm4', chunck, 
+      if (.not. nga_create(MT_DBL, ndim, dims, 'velm4', chunk, 
      $                     g_velm4))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_DBL, ndim, dims, 'velm5', chunck, 
+      if (.not. nga_create(MT_DBL, ndim, dims, 'velm5', chunk, 
      $                     g_velm5))
      $     call ga_error(' ga_create failed ',0)
 c
 c     Enumerate the sbit arrary to get a sequential vector.
       call ga_fill(g_ielm1,0)
       call ga_patch_enum(g_ielm1,1,nelements,1,1)
-C     *** ielm1: 1 2 3 4 5 ... nelements ... 0 0 0 0 0
+c     *** ielm1: 1 2 3 4 5 ... nelements ... 0 0 0 0 0
 c
 c***  compute local ilo, ihi, num for each processor
-      call nga_distribution(g_ielm1,me,ilo,ihi,chunck)
+      call nga_distribution(g_ielm1,me,ilo,ihi,chunk)
       num=ihi-ilo+1
       if(ihi.le.0) num=0
       if(ihi.gt.nelements) then
@@ -160,7 +156,9 @@ c***  compute local ilo, ihi, num for each processor
          print *,"Too many elements "
          goto 9999
       endif
-      print *, 'me=',me, num,ilo,ihi
+cbjp      print *, 'me=',me, num,ilo,ihi
+      write(6,'(a,i4,a,i8,a,i8,a,i8)') 'me: ',me,' num: ',num,' lo: ',
+     +                                 ilo,' hi: ',ihi
 c
 c***  scatter some values into the global array
       call ga_fill(g_sbit2,0)
@@ -173,33 +171,35 @@ c***  scatter some values into the global array
       enddo
       if(num.gt.0) call NGA_scatter(g_sbit2,jpack,ipack,num)
       if(num.gt.0) call NGA_scatter(g_src2 ,kpack,ipack,num)
-C     *** sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
-C     ***  src2: 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 5 0 0 0 6 .....
-C
-C     ..................................................................
-C     TEST THE "PACK" FUNCTION.
-C
+c     *** sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
+c     ***  src2: 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 5 0 0 0 6 .....
+c
+c     ..................................................................
+c     TEST THE "PACK" FUNCTION.
+c
       itoff=nen*nelements
       call ga_fill(g_sink2,0)
       call ga_pack(g_src2, g_sink2,g_sbit2,1,itoff,icount)
-C     *** sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
-C     ***  src2: 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 5 0 0 0 6 .....
-C     *** sink2: 1 2 3 4 5 ... icount ... 0 0 0 0 0 0 0 0 0 ..... 0
-C         [NOTE: icount should equal nelements.]
+c     *** sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
+c     ***  src2: 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 5 0 0 0 6 .....
+c     *** sink2: 1 2 3 4 5 ... icount ... 0 0 0 0 0 0 0 0 0 ..... 0
+c         [NOTE: icount should equal nelements.]
       if(icount.ne.nelements) then
          print *,"Wrong number of elements from PACK operation: ",
      *           "count = ",icount," should be = ",nelements
       endif
       call ga_add(1,g_ielm1,-1,g_sink2,g_result1)
-C     ***   ielm1: 1 2 3 4 5 ... nelements ... 0 0 0 0 0 0 0 0
-C     ***   sink2: 1 2 3 4 5 ... nelements ... 0 0 0 0 0 0 0 0
-C     *** result1: 0 0 0 0 0 0 0 ... 0  (result1=ielm1-sink2)
+c     ***   ielm1: 1 2 3 4 5 ... nelements ... 0 0 0 0 0 0 0 0
+c     ***   sink2: 1 2 3 4 5 ... nelements ... 0 0 0 0 0 0 0 0
+c     *** result1: 0 0 0 0 0 0 0 ... 0  (result1=ielm1-sink2)
 c***  Find the maximum value and the index of the maximum value
       call nga_select_elem(g_result1,'max',imax_ga,ilocmax_ga)
 c***  Find the minimum value and the index of the minimum value
       call nga_select_elem(g_result1,'min',imin_ga,ilocmin_ga)
       if(imax_ga.eq.0.and.imin_ga.eq.0) then
-         print *,"Pack successful"
+         if (me.eq.0) then
+           print *,"Pack successful"
+         endif
       else
          print *,"Pack unsuccessful"
       endif
@@ -234,7 +234,9 @@ c***  Find the maximum value and the index of the maximum value
 c***  Find the minimum value and the index of the minimum value
       call nga_select_elem(g_result1,'min',imin_ga,ilocmin_ga)
       if(imax_ga.eq.0.and.imin_ga.eq.0) then
-         print *,"Unpack successful"
+         if (me.eq.0) then
+           print *,"Unpack successful"
+         endif
       else
          print *,"Unpack unsuccessful", imin_ga,ilocmin_ga
          print *,"Unpack unsuccessful", imax_ga,ilocmax_ga
@@ -263,10 +265,10 @@ C
       integer ilo4, ihi4, num4
       integer i, it, count
       integer me, nproc                       ! my processor & number of procs 
-      integer ndim,dims(1),chunck(1)
+      integer ndim,dims(1),chunk(1)
 C
       integer nelements_max, nen_max
-      parameter (nelements_max=1000, nen_max=4)
+      parameter (nelements_max=10000, nen_max=4)
       integer ipack(nelements_max), 
      *        jpack(nelements_max), 
      *        kpack(nelements_max), 
@@ -293,52 +295,53 @@ c***  check parallel environment
       me = ga_nodeid()
       nproc = ga_nnodes()
 c
+      nelements=20000
       nelements=20
       nen=4
 c
 c***  create a global 1-D array
       ndim=1
       dims(1)=nen*nelements
-      chunck(1)=min(1,dims(1)/nproc)
-      if (.not. nga_create(MT_INT, ndim, dims, 'ielm1', chunck, 
+      chunk(1)=min(1,dims(1)/nproc)
+      if (.not. nga_create(MT_INT, ndim, dims, 'ielm1', chunk, 
      $                     g_ielm1))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'result1', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'result1', chunk, 
      $                     g_result1))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'sbit2', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'sbit2', chunk, 
      $                     g_sbit2))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'src2', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'src2', chunk, 
      $                     g_src2))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'sink2', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'sink2', chunk, 
      $                     g_sink2))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'result2', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'result2', chunk, 
      $                     g_result2))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'irowmat', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'irowmat', chunk, 
      $                     g_irowmat))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_INT, ndim, dims, 'icolmat', chunck, 
+      if (.not. nga_create(MT_INT, ndim, dims, 'icolmat', chunk, 
      $                     g_icolmat))
      $     call ga_error(' ga_create failed ',0)
 C
-      if (.not. nga_create(MT_DBL, ndim, dims, 'velm4', chunck, 
+      if (.not. nga_create(MT_DBL, ndim, dims, 'velm4', chunk, 
      $                     g_velm4))
      $     call ga_error(' ga_create failed ',0)
-      if (.not. nga_create(MT_DBL, ndim, dims, 'velm5', chunck, 
+      if (.not. nga_create(MT_DBL, ndim, dims, 'velm5', chunk, 
      $                     g_velm5))
      $     call ga_error(' ga_create failed ',0)
 c
 c     Enumerate the sbit arrary to get a sequential vector.
       call ga_fill(g_ielm1,0)
       call ga_patch_enum(g_ielm1,1,nelements,1,1)
-C     *** ielm1: 1 2 3 4 5 ... nelements ... 0 0 0 0 0
+c     *** ielm1: 1 2 3 4 5 ... nelements ... 0 0 0 0 0
 c
 c***  compute local ilo, ihi, num for each processor
-      call nga_distribution(g_ielm1,me,ilo,ihi,chunck)
+      call nga_distribution(g_ielm1,me,ilo,ihi,chunk)
       num=ihi-ilo+1
       if(ihi.le.0) num=0
       if(ihi.gt.nelements) then
@@ -349,7 +352,9 @@ c***  compute local ilo, ihi, num for each processor
          print *,"Too many elements "
          goto 9999
       endif
-      print *, 'me=',me, num,ilo,ihi
+cbjp      print *, 'me=',me, num,ilo,ihi
+      write(6,'(a,i4,a,i8,a,i8,a,i8)') 'me: ',me,' num: ',num,' lo: ',
+     +                                 ilo,' hi: ',ihi
 c
 c***  scatter some values into the global array
       call ga_fill(g_sbit2,0)
@@ -362,41 +367,43 @@ c***  scatter some values into the global array
       enddo
       if(num.gt.0) call NGA_scatter(g_sbit2,jpack,ipack,num)
       if(num.gt.0) call NGA_scatter(g_src2 ,kpack,ipack,num)
-C     *** sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
-C     ***  src2: 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 5 0 0 0 6 .....
-C
-C     ..................................................................
-C     TEST THE "PACK" FUNCTION.
-C
+c     *** sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
+c     ***  src2: 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 5 0 0 0 6 .....
+c
+c     ..................................................................
+c     TEST THE "PACK" FUNCTION.
+c
       itoff=nen*nelements
       call ga_fill(g_sink2,0)
       call ga_pack(g_src2, g_sink2,g_sbit2,1,itoff,icount)
-C     *** sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
-C     ***  src2: 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 5 0 0 0 6 .....
-C     *** sink2: 1 2 3 4 5 ... icount ... 0 0 0 0 0 0 0 0 0 ..... 0
-C         [NOTE: icount should equal nelements.]
+c     *** sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
+c     ***  src2: 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 5 0 0 0 6 .....
+c     *** sink2: 1 2 3 4 5 ... icount ... 0 0 0 0 0 0 0 0 0 ..... 0
+c         [NOTE: icount should equal nelements.]
       if(icount.ne.nelements) then
          print *,"Wrong number of elements from PACK operation: ",
      *           "count = ",icount," should be = ",nelements
       endif
       call ga_add(1,g_ielm1,-1,g_sink2,g_result1)
-C     ***   ielm1: 1 2 3 4 5 ... nelements ... 0 0 0 0 0 0 0 0
-C     ***   sink2: 1 2 3 4 5 ... nelements ... 0 0 0 0 0 0 0 0
-C     *** result1: 0 0 0 0 0 0 0 ... 0  (result1=ielm1-sink2)
+c     ***   ielm1: 1 2 3 4 5 ... nelements ... 0 0 0 0 0 0 0 0
+c     ***   sink2: 1 2 3 4 5 ... nelements ... 0 0 0 0 0 0 0 0
+c     *** result1: 0 0 0 0 0 0 0 ... 0  (result1=ielm1-sink2)
 c***  Find the maximum value and the index of the maximum value
       call nga_select_elem(g_result1,'max',imax_ga,ilocmax_ga)
 c***  Find the minimum value and the index of the minimum value
       call nga_select_elem(g_result1,'min',imin_ga,ilocmin_ga)
       if(imax_ga.eq.0.and.imin_ga.eq.0) then
-         print *,"Pack successful"
+         if (me.eq.0) then
+           print *,"Pack successful"
+         endif
       else
          print *,"Pack unsuccessful"
       endif
       call ga_sync()
-C
-C     ..................................................................
-C     TEST THE "UNPACK" FUNCTION.
-C
+c
+c     ..................................................................
+c     TEST THE "UNPACK" FUNCTION.
+c
       itoff=nen*nelements
       call ga_fill(g_src2,0)
       call ga_unpack(g_src2,g_sink2,g_sbit2,1,itoff,count)
@@ -424,50 +431,58 @@ c***  Find the maximum value and the index of the maximum value
 c***  Find the minimum value and the index of the minimum value
       call nga_select_elem(g_result1,'min',imin_ga,ilocmin_ga)
       if(imax_ga.eq.0.and.imin_ga.eq.0) then
-         print *,"Unpack successful"
+         if (me.eq.0) then
+           print *,"Unpack successful"
+         endif
       else
          print *,"Unpack unsuccessful"
       endif
       call ga_sync()
 *     call ga_print(g_src2)
-C
-C     ..................................................................
-C     TEST THE SCAN COPY FUNCTION.
-C
+c
+c     ..................................................................
+c     TEST THE SCAN COPY FUNCTION.
+c
 c***  compute local ilo, ihi, num for each processor
-      call nga_distribution(g_irowmat,me,ilo4,ihi4,chunck)
+      call nga_distribution(g_irowmat,me,ilo4,ihi4,chunk)
       num4=ihi4-ilo4+1
       if(ihi.le.0) num4=0
       if(num4.gt.nen*nelements_max) then
          print *,"Too many elements "
          goto 9999
       endif
-      print *, 'me=',me, num4,ilo4,ihi4
+cbjp      print *, 'me=',me, num4,ilo4,ihi4
+      write(6,'(a,i4,a,i8,a,i8,a,i8)') 'me: ',me,' num4: ',num4,
+     +                                 ' lo4: ',ilo4,' hi4: ',ihi4
       call ga_fill(g_irowmat,-1)
       call GA_scan_copy(g_src2, g_irowmat, g_sbit2,1,itoff)
-C     ***   sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
-C     ***    src2: 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 5 0 0 0 6 .....
-C     *** irowmat: 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 .....
-C
+c     ***   sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
+c     ***    src2: 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 5 0 0 0 6 .....
+c     *** irowmat: 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 .....
+c
       call nga_get(g_irowmat,ilo4,ihi4,ielm4,1)
       do i=ilo4,ihi4
          velm4(i-ilo4+1)=1.0d+00
       enddo
       call ga_fill(g_velm4,0.0d+00)
-      print *, num4, (ielm4(i),i=1,num4)
+cbjp      print *, num4, (ielm4(i),i=1,min(4,num4))
+      write(6,'(a,i4,a,i8,a,4i8)') 'me: ',me,' num4: ',num4,' ielm4: ',
+     +                                 (ielm4(i),i=1,min(4,num4))
       call nga_scatter_acc(g_velm4,velm4,ielm4,num4,1.0d+00)
 C     *** velm4: 4 4 4 4 4 4 4 4 4 4 ... nelements
       result=ga_ddot(g_velm4,g_velm4)
       if(result.eq.nen*nen*nelements) then
-         print *,"Scan_copy successful."
+         if (me.eq.0) then
+           print *,"Scan_copy successful."
+         endif
       else
          print *,"Scan_copy failed."
       endif
       call ga_sync()
-C
-C     ..................................................................
-C     TEST THE SCAN ADD FUNCTION.
-C
+c
+c     ..................................................................
+c     TEST THE SCAN ADD FUNCTION.
+c
       call ga_fill(g_src2,1)
       call ga_fill(g_icolmat,0)
 *     call ga_print(g_icolmat)
@@ -489,9 +504,9 @@ c        write(6,*)
 c        call nga_get(g_icolmat,one,dims,itest,one)
 c        write(6,'(25i4)') (itest(i),i=1,dims(1))
 c      endif
-C     ***   sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
-C     ***    src2: 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-C     *** icolmat: 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 .....
+c     ***   sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
+c     ***    src2: 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+c     *** icolmat: 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 .....
       call ga_fill(g_velm4,1.0d+00)
       call nga_get(g_icolmat,ilo4,ihi4,ielm4,1)
       do i=ilo4,ihi4
@@ -501,24 +516,26 @@ C     *** icolmat: 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 .....
       call nga_put(g_velm4,ilo4,ihi4,velm4,1)
       call nga_put(g_velm5,ilo4,ihi4,velm5,1)
       result=ga_ddot(g_velm4,g_velm5)
-C     *** velm4: 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 .....
-C     *** velm5: 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 .....
-C     *** result = sum(velm4 * velm5) = (1+2+3+4+...+nen)*nelements
+c     *** velm4: 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 .....
+c     *** velm5: 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 .....
+c     *** result = sum(velm4 * velm5) = (1+2+3+4+...+nen)*nelements
       isum=0
       do i=1,nen
          isum=isum+i
       enddo
       if(result.eq.isum*nelements) then
-         print *,"Scan_add successful."
+         if (me.eq.0) then
+           print *,"Scan_add successful."
+         endif
       else
          print *,"Scan_add failed."
       endif
       call ga_sync()
       call ga_sync
       call GA_scan_add(g_src2, g_icolmat,g_sbit2,1,itoff,1)
-C     ***   sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
-C     ***    src2: 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-C     *** icolmat: 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 .....
+c     ***   sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
+c     ***    src2: 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+c     *** icolmat: 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 .....
 c      if (me.eq.0) then
 c        one = 1
 c        write(6,*)
@@ -540,16 +557,24 @@ c      endif
           ichk = 0
         endif
       end do
+cc      ichk=ga_idot(g_src2,g_icolmat)
+      isum = 0
+      do i=1,nen
+         isum=isum+i-1
+      enddo
+cc      if (ichk.eq.nelements*isum) then
       if (ichk.eq.1) then
-        print *,"Exclusive scan_add successful."
+        if (me.eq.0) then
+          print *,"Exclusive scan_add successful."
+        endif
       else
        print *,"Exclusive scan_add failed."
       endif
-C
+c
       goto 9999
  9999 continue
-C
-C     ..................................................................
-C
+c
+c     ..................................................................
+c
       return
       end

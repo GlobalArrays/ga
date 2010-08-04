@@ -14,19 +14,20 @@ extern "C" {
 
 typedef void *stride_itr_t;
 
-stride_itr_t armci_stride_itr_init(char *base_ptr,
+stride_itr_t armci_stride_itr_init(void *base_ptr,
 				   int stride_levels,
 				   const int *stride_arr,
 				   const int *seg_count);
 
-void armci_stride_itr_destroy(stride_itr_t *psitr);
-int armci_stride_itr_count(stride_itr_t sitr);
-int armci_stride_itr_pos(stride_itr_t sitr);
-void armci_stride_itr_next(stride_itr_t sitr);
+void  armci_stride_itr_destroy(stride_itr_t *psitr);
+int   armci_stride_itr_count(stride_itr_t sitr);
+int   armci_stride_itr_pos(stride_itr_t sitr);
+void  armci_stride_itr_next(stride_itr_t sitr);
 void *armci_stride_itr_seg_ptr(stride_itr_t sitr);
-int armci_stride_itr_seg_size(stride_itr_t sitr);
-int armci_stride_itr_seg_off(stride_itr_t sitr);
-int armci_stride_itr_has_more(stride_itr_t sitr);
+int   armci_stride_itr_seg_size(stride_itr_t sitr);
+int   armci_stride_itr_seg_off(stride_itr_t sitr);
+int   armci_stride_itr_size(stride_itr_t sitr);
+int   armci_stride_itr_has_more(stride_itr_t sitr);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

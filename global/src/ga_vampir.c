@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: ga_vampir.c,v 1.11.2.1 2006-12-22 13:05:21 manoj Exp $ */
 #include "ga_vampir.h"
 
@@ -29,6 +33,7 @@ void ga_vampir_init() {
     vampir_symdef(GA_ERROR,                  "GA_Error",                   "GA",__FILE__,__LINE__);
     vampir_symdef(GA_FENCE,                  "GA_Fence",                   "GA",__FILE__,__LINE__);
     vampir_symdef(GA_FILL,                   "GA_Fill",                    "GA",__FILE__,__LINE__);
+    vampir_symdef(GA_RANDOMIZE,              "GA_Randomize",               "GA",__FILE__,__LINE__);
     vampir_symdef(GA_FILL_PATCH,             "GA_Fill_patch",              "GA",__FILE__,__LINE__);
     vampir_symdef(GA_GATHER,                 "GA_Gather",
         "GA_ONESIDED",__FILE__,__LINE__);

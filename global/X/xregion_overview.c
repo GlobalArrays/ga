@@ -1,5 +1,15 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+
 #include "xregion.h"
-#include <math.h>
 
 XtAppContext create_overview(int argc, char **argv)
 {
@@ -251,10 +261,10 @@ void draw_select_box(Widget widget, XtPointer data, XEvent *event,
           XCopyArea(disp, pixmap, win, gc_select, 0, 0, overview_width, 
                   overview_height, 0, 0); 
 
-          left_edge = (int)(MIN(x1, x2) / overview_scale + .5);
-          right_edge = (int)(MAX(x1, x2) / overview_scale + .5);
-          top_edge = (int)(MIN(y1, y2) / overview_scale + .5);
-          bottom_edge = (int)(MAX(y1, y2) / overview_scale + .5);
+          left_edge = (int)(GA_MIN(x1, x2) / overview_scale + .5);
+          right_edge = (int)(GA_MAX(x1, x2) / overview_scale + .5);
+          top_edge = (int)(GA_MIN(y1, y2) / overview_scale + .5);
+          bottom_edge = (int)(GA_MAX(y1, y2) / overview_scale + .5);
 
           if (left_edge < 0) left_edge = 0;
           if (right_edge > grid_x - 1) right_edge = grid_x - 1;
@@ -263,7 +273,7 @@ void draw_select_box(Widget widget, XtPointer data, XEvent *event,
 
           pict_width = right_edge - left_edge + 1; 
           pict_height = bottom_edge - top_edge + 1; 
-          scale = MIN( ceil((500.0 / pict_width)), 
+          scale = GA_MIN( ceil((500.0 / pict_width)), 
                        ceil((500.0 / pict_height)));
 
           if ((pict_width < 501) || (pict_height < 501))

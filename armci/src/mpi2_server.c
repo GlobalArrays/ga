@@ -1,12 +1,24 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /**
  * mpi2_server.c: MPI_SPAWN Server Code
  * Manojkumar Krishnan
  */
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
+#if HAVE_STDARG_H
+#   include <stdarg.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #include "mpi.h"
 
 #include "armcip.h"
@@ -525,8 +537,8 @@ void armci_mpi2_server_init()
     }
 
     /**********************************************************************
-     * Emulate ARMCI_Init().
-     * Spawned Data server processes emulate ARMCI_Init() to complete the
+     * Emulate PARMCI_Init().
+     * Spawned Data server processes emulate PARMCI_Init() to complete the
      * ARMCI Initalization process similar to clients
      */
     
@@ -546,7 +558,7 @@ void armci_mpi2_server_init()
     
     
     /* server setup clusinfo&locks, exactly as this node's armci master */
-    emulate_armci_init_clusinfo();  /* armci_init_clusinfo()  in ARMCI_Init */
+    emulate_armci_init_clusinfo();  /* armci_init_clusinfo()  in PARMCI_Init */
     emulate_armci_allocate_locks(shm_info); /* armci_allocate_locks() */
 
     /* Fence data structures should be initialized by server too. see
@@ -554,7 +566,7 @@ void armci_mpi2_server_init()
     armci_init_fence();
     
     /**
-     * End of ARMCI_Init() emulation.
+     * End of PARMCI_Init() emulation.
      * *******************************************************************/
 
     MPI_Barrier(MPI_COMM_WORLD);

@@ -1,3 +1,11 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+
 #include "xregion.h"
 
 void create_main_window()

@@ -1,6 +1,12 @@
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_SYS_IPC_H
+#   include <sys/ipc.h>
+#endif
+#if HAVE_SYS_SEM_H
+#   include <sys/sem.h>
+#endif
 
 /* how many semaphores are available ? */
 #ifndef SEMMSL

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* 
  * module: global.npatch.c
  * author: Jialin Ju
@@ -31,26 +35,18 @@
  * distribute to other US Government contractors.
  */
 
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+
 #include "message.h"
 #include "global.h"
 #include "globalp.h"
 #include "armci.h"
-#include <math.h>
 
-#ifdef GA_USE_VAMPIR
-#include "ga_vampir.h"
+#ifdef USE_VAMPIR
+#   include "ga_vampir.h"
 #endif
-
-#ifdef CRAY
-#      include <fortran.h>
-#endif
-
-#if defined(CRAY) || defined(WIN32)
-#   define cptofcd(fcd)  _cptofcd((fcd),1)
-#else
-#      define cptofcd(fcd) (fcd)
-#endif
-
 
 /**********************************************************
  *  n-dimensional utilities                               *
@@ -95,12 +91,13 @@ logical ngai_patch_intersect(Integer *lo, Integer *hi,
     }
     
     for(i=0; i<ndim; i++) {
-        lop[i] = MAX(lo[i], lop[i]);
-        hip[i] = MIN(hi[i], hip[i]);
+        lop[i] = GA_MAX(lo[i], lop[i]);
+        hip[i] = GA_MIN(hi[i], hip[i]);
     }
     
     return TRUE;
 }
+
 
 /*\ check if patches are identical 
 \*/
@@ -128,6 +125,7 @@ logical ngai_comp_patch(Integer andim, Integer *alo, Integer *ahi,
     return TRUE; 
 }
 
+
 /* test two GAs to see if they have the same shape */
 logical ngai_test_shape(Integer *alo, Integer *ahi, Integer *blo,
                           Integer *bhi, Integer andim, Integer bndim)
@@ -142,16 +140,18 @@ logical ngai_test_shape(Integer *alo, Integer *ahi, Integer *blo,
     return TRUE;
 }
 
+
 /**********************************************************
  *  n-dimensional functions                               *
  **********************************************************/
+
 
 /*\ COPY A PATCH AND POSSIBLY RESHAPE
  *
  *  . the element capacities of two patches must be identical
  *  . copy by column order - Fortran convention
 \*/
-void nga_copy_patch(char *trans,
+void ngai_copy_patch(char *trans,
                     Integer *g_a, Integer *alo, Integer *ahi,
                     Integer *g_b, Integer *blo, Integer *bhi)
 {
@@ -174,7 +174,7 @@ void nga_copy_patch(char *trans,
   int use_put, has_intersection;
   int local_sync_begin,local_sync_end;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(NGA_COPY_PATCH,__FILE__,__LINE__);
 #endif    
 
@@ -193,7 +193,7 @@ void nga_copy_patch(char *trans,
   }
 
   /*if (a_grp != b_grp)
-    ga_error("All matrices must be on same group for nga_copy_patch", 0L); */
+    gai_error("All matrices must be on same group for ngai_copy_patch", 0L); */
   if(local_sync_begin) {
     if (anproc <= bnproc) {
       ga_pgroup_sync_(&a_grp);
@@ -205,37 +205,37 @@ void nga_copy_patch(char *trans,
     }
   }
 
-
-  GA_PUSH_NAME("nga_copy_patch");
+  GA_PUSH_NAME("ngai_copy_patch");
 
   nga_inquire_internal_(g_a, &atype, &andim, adims);
   nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-  if(*g_a == *g_b)
+  if(*g_a == *g_b) {
     /* they are the same patch */
-    if(ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi)) return;
-  /* they are in the same GA, but not the same patch */
-    else if (ngai_patch_intersect(alo, ahi, blo, bhi, andim))
-      ga_error("array patches cannot overlap ", 0L);
+    if(ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi)) {
+        return;
+    /* they are in the same GA, but not the same patch */
+    } else if (ngai_patch_intersect(alo, ahi, blo, bhi, andim)) {
+      gai_error("array patches cannot overlap ", 0L);
+    }
+  }
 
-  if(atype != btype ) ga_error("array type mismatch ", 0L);
+  if(atype != btype ) gai_error("array type mismatch ", 0L);
 
   /* check if patch indices and dims match */
   for(i=0; i<andim; i++)
     if(alo[i] <= 0 || ahi[i] > adims[i])
-      ga_error("g_a indices out of range ", 0L);
+      gai_error("g_a indices out of range ", 0L);
   for(i=0; i<bndim; i++)
     if(blo[i] <= 0 || bhi[i] > bdims[i])
-      ga_error("g_b indices out of range ", 0L);
-
-
+      gai_error("g_b indices out of range ", 0L);
 
   /* check if numbers of elements in two patches match each other */
   atotal = 1; btotal = 1;
   for(i=0; i<andim; i++) atotal *= (ahi[i] - alo[i] + 1);
   for(i=0; i<bndim; i++) btotal *= (bhi[i] - blo[i] + 1);
   if(atotal != btotal)
-    ga_error("capacities two of patches do not match ", 0L);
+    gai_error("capacities two of patches do not match ", 0L);
 
   /* additional restrictions that apply if one or both arrays use
      block-cyclic data distributions */
@@ -243,10 +243,10 @@ void nga_copy_patch(char *trans,
   num_blocks_b = ga_total_blocks_(g_b);
   if (num_blocks_a >= 0 || num_blocks_b >= 0) {
     if (!(*trans == 'n' || *trans == 'N')) {
-      ga_error("Transpose option not supported for block-cyclic data", 0L);
+      gai_error("Transpose option not supported for block-cyclic data", 0L);
     }
     if (!ngai_test_shape(alo, ahi, blo, bhi, andim, bndim)) {
-      ga_error("Change in shape not supported for block-cyclic data", 0L);
+      gai_error("Change in shape not supported for block-cyclic data", 0L);
     }
   }
 
@@ -825,24 +825,11 @@ void nga_copy_patch(char *trans,
       ga_pgroup_sync_(&b_grp);
     }
   }
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(NGA_COPY_PATCH,__FILE__,__LINE__);
 #endif    
 }
 
-/*\ COPY A PATCH AND POSSIBLY RESHAPE
- *  Fortran interface
-\*/
-void FATR nga_copy_patch_(trans, g_a, alo, ahi, g_b, blo, bhi)
-     Integer *g_a, *alo, *ahi;
-     Integer *g_b, *blo, *bhi;
-#if defined(CRAY) || defined(WIN32)
-     _fcd    trans;
-{nga_copy_patch(_fcdtocp(trans),g_a,alo,ahi,g_b,blo,bhi);}
-#else 
-     char*   trans;
-{  nga_copy_patch(trans,g_a,alo,ahi,g_b,blo,bhi); }
-#endif
 
 void ngai_dot_local_patch(Integer atype, Integer andim, Integer *loA,
                           Integer *hiA, Integer *ldA, void *A_ptr, void *B_ptr,
@@ -993,42 +980,38 @@ void ngai_dot_local_patch(Integer atype, Integer andim, Integer *loA,
       *(long long*)retval += llsum;
       break;
      default:
-        ga_error("ngai_dot_local_patch: type not supported",atype);
+        gai_error("ngai_dot_local_patch: type not supported",atype);
         
   }
 }
 
+
 /*\ generic dot product routine
 \*/
-void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
-     Integer *g_a, *alo, *ahi;    /* patch of g_a */
-     Integer *g_b, *blo, *bhi;    /* patch of g_b */
-     char    *t_a, *t_b;          /* transpose operators */
-     void *retval;
+void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo, Integer *bhi, void *retval)
 {
-  Integer i, j;
-  Integer compatible;
-  Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
+  Integer i=0, j=0;
+  Integer compatible=0;
+  Integer atype=0, btype=0, andim=0, adims[MAXDIM], bndim=0, bdims[MAXDIM];
   Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
   Integer loB[MAXDIM], hiB[MAXDIM], ldB[MAXDIM];
   Integer g_A = *g_a, g_B = *g_b;
-  void *A_ptr, *B_ptr;
-  Integer bvalue[MAXDIM], bunit[MAXDIM], baseldA[MAXDIM];
-  Integer idx, n1dim, ctype;
-  Integer atotal, btotal;
-  int isum, alen;
-  long lsum;
-  long long llsum;
-  double dsum;
-  DoubleComplex zsum;
-  DoubleComplex csum;
-  float fsum;
+  void *A_ptr=NULL, *B_ptr=NULL;
+  Integer ctype=0;
+  Integer atotal=0, btotal=0;
+  int isum=0, alen=0;
+  long lsum=0;
+  long long llsum=0;
+  double dsum=0;
+  DoubleComplex zsum={0,0};
+  DoubleComplex csum={0,0};
+  float fsum=0;
   Integer me= ga_nodeid_(), temp_created=0;
   Integer nproc = ga_nnodes_();
-  Integer num_blocks_a, num_blocks_b;
+  Integer num_blocks_a=0, num_blocks_b=0;
   char *tempname = "temp", transp, transp_a, transp_b;
-  int local_sync_begin;
-  Integer a_grp, b_grp;
+  int local_sync_begin=0;
+  Integer a_grp=0, b_grp=0;
 
   local_sync_begin = _ga_sync_begin; 
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -1038,28 +1021,28 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
   a_grp = ga_get_pgroup_(g_a);
   b_grp = ga_get_pgroup_(g_b);
   if (a_grp != b_grp)
-    ga_error("Both arrays must be defined on same group",0L);
+    gai_error("Both arrays must be defined on same group",0L);
   me = ga_pgroup_nodeid_(&a_grp);
 
   nga_inquire_internal_(g_a, &atype, &andim, adims);
   nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-  if(atype != btype ) ga_error(" type mismatch ", 0L);
+  if(atype != btype ) gai_error(" type mismatch ", 0L);
 
   /* check if patch indices and g_a dims match */
   for(i=0; i<andim; i++)
     if(alo[i] <= 0 || ahi[i] > adims[i])
-      ga_error("g_a indices out of range ", *g_a);
+      gai_error("g_a indices out of range ", *g_a);
   for(i=0; i<bndim; i++)
     if(blo[i] <= 0 || bhi[i] > bdims[i])
-      ga_error("g_b indices out of range ", *g_b);
+      gai_error("g_b indices out of range ", *g_b);
 
   /* check if numbers of elements in two patches match each other */
   atotal = 1; for(i=0; i<andim; i++) atotal *= (ahi[i] - alo[i] + 1);
   btotal = 1; for(i=0; i<bndim; i++) btotal *= (bhi[i] - blo[i] + 1);
 
   if(atotal != btotal)
-    ga_error("  capacities of patches do not match ", 0L);
+    gai_error("  capacities of patches do not match ", 0L);
 
   /* is transpose operation required ? */
   /* -- only if for one array transpose operation requested*/
@@ -1073,7 +1056,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
 
   if (num_blocks_a >= 0 || num_blocks_b >= 0) {
     if (transp_a == 't' || transp_b == 't')
-      ga_error("transpose not supported for block-cyclic data ", 0);
+      gai_error("transpose not supported for block-cyclic data ", 0);
   }
 
   isum = 0; dsum = 0.; zsum.real = 0.; zsum.imag = 0.; fsum = 0;lsum=0;llsum=0;
@@ -1111,9 +1094,8 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
       alen = 1;
       break;
      default:
-        ga_error("ngai_dot_local_patch: type not supported",atype);
+        gai_error("ngai_dot_local_patch: type not supported",atype);
   }
-
 
   if (num_blocks_a < 0 && num_blocks_b < 0) {
     /* find out coordinates of patches of g_A and g_B that I own */
@@ -1123,24 +1105,23 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     if(ngai_comp_patch(andim, loA, hiA, bndim, loB, hiB) &&
         ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi)) compatible = 1;
     else compatible = 0;
-    ga_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
     if(!(compatible && (transp=='n'))) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_a
        *        - copy & reshape patch of g_b into g_B
        */
-      if (!ga_duplicate(g_a, &g_B, tempname))
-        ga_error("duplicate failed",0L);
+      if (!gai_duplicate(g_a, &g_B, tempname))
+        gai_error("duplicate failed",0L);
 
-      nga_copy_patch(&transp, g_b, blo, bhi, &g_B, alo, ahi);
+      ngai_copy_patch(&transp, g_b, blo, bhi, &g_B, alo, ahi);
       bndim = andim;
       temp_created = 1;
       nga_distribution_(&g_B, &me, loB, hiB);
     }
 
     if(!ngai_comp_patch(andim, loA, hiA, bndim, loB, hiB))
-      ga_error(" patches mismatch ",0);
-
+      gai_error(" patches mismatch ",0);
 
     /* A[83:125,1:1]  <==> B[83:125] */
     if(andim > bndim) andim = bndim; /* need more work */
@@ -1158,9 +1139,9 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     }
   } else {
     /* Create copy of g_b identical with identical distribution as g_a */
-    if (!ga_duplicate(g_a, &g_B, tempname))
-      ga_error("duplicate failed",0L);
-    nga_copy_patch(&transp, g_b, blo, bhi, &g_B, alo, ahi);
+    if (!gai_duplicate(g_a, &g_B, tempname))
+      gai_error("duplicate failed",0L);
+    ngai_copy_patch(&transp, g_b, blo, bhi, &g_B, alo, ahi);
     temp_created = 1;
 
     /* If g_a regular distribution, then just use normal dot product on patch */
@@ -1170,7 +1151,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
       nga_distribution_(&g_B, &me, loB, hiB);
 
       if(!ngai_comp_patch(andim, loA, hiA, bndim, loB, hiB))
-        ga_error(" patches mismatch ",0);
+        gai_error(" patches mismatch ",0);
 
       /* A[83:125,1:1]  <==> B[83:125] */
       if(andim > bndim) andim = bndim; /* need more work */
@@ -1347,7 +1328,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     case C_LONGLONG: ctype=ARMCI_LONG_LONG; break;
     case C_DCPL: ctype=ARMCI_DOUBLE; break;
     case C_SCPL: ctype=ARMCI_FLOAT; break;
-    default: ga_error("ngai_dot_patch: type not supported",atype);
+    default: gai_error("ngai_dot_patch: type not supported",atype);
   }
 
   if (ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) {
@@ -1371,40 +1352,56 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
 }
 
 
-/*\ compute Integer DOT PRODUCT of two patches
+/*****************************************************************************
+ * ngai_Xdot_patch routines
+ ****************************************************************************/
+
+
+/*\ compute Single Complex DOT PRODUCT of two patches
  *
  *          . different shapes and distributions allowed but not recommended
  *          . the same number of elements required
 \*/
-Integer nga_idot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+void ngai_cdot_patch_(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, sum, alen, blen)
+#else
+void ngai_cdot_patch_(g_a, t_a, alen, alo, ahi, g_b, t_b, blen, blo, bhi, sum)
+#endif
      Integer *g_a, *alo, *ahi;    /* patch of g_a */
      Integer *g_b, *blo, *bhi;    /* patch of g_b */
-     char    *t_a, *t_b;        /* transpose operators */
+     char    *t_a, *t_b;          /* transpose operators */
+     SingleComplex *sum;          /* return value */
+     int      alen, blen;         /* Fortran hidden string length */
 {
-    Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
-    Integer sum = 0.;
+Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
 
-    GA_PUSH_NAME("nga_idot_patch");
-    
-    nga_inquire_internal_(g_a, &atype, &andim, adims);
-    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+#ifdef USE_VAMPIR
+   vampir_begin(NGA_CDOT_PATCH,__FILE__,__LINE__);
+#endif    
 
-    if(atype != btype ||
-       ((atype != C_INT ) && (atype !=C_LONG) && (atype !=C_LONGLONG)))
-       ga_error(" wrong types ", 0L);
+   GA_PUSH_NAME("ngai_cdot_patch");
 
-    ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
+   nga_inquire_internal_(g_a, &atype, &andim, adims);
+   nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-    GA_POP_NAME;
-    return ((Integer)sum);
+   if(atype != btype || (atype != C_SCPL )) gai_error(" wrong types ", 0L);
+
+   ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi,
+                  (void *)(sum));
+
+   GA_POP_NAME;
+#ifdef USE_VAMPIR
+   vampir_end(NGA_CDOT_PATCH,__FILE__,__LINE__);
+#endif    
 }
+
 
 /*\ compute Double Precision DOT PRODUCT of two patches
  *
  *          . different shapes and distributions allowed but not recommended
  *          . the same number of elements required
 \*/
-DoublePrecision nga_ddot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
+DoublePrecision ngai_ddot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
      Integer *g_a, *alo, *ahi;    /* patch of g_a */
      Integer *g_b, *blo, *bhi;    /* patch of g_b */
      char    *t_a, *t_b;        /* transpose operators */
@@ -1412,138 +1409,128 @@ DoublePrecision nga_ddot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
     Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
     DoublePrecision  sum = 0.;
  
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_begin(NGA_DDOT_PATCH,__FILE__,__LINE__);
 #endif    
 
-    GA_PUSH_NAME("nga_ddot_patch");
+    GA_PUSH_NAME("ngai_ddot_patch");
     
     nga_inquire_internal_(g_a, &atype, &andim, adims);
     nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-    if(atype != btype || (atype != C_DBL )) ga_error(" wrong types ", 0L);
+    if(atype != btype || (atype != C_DBL )) gai_error(" wrong types ", 0L);
 
     ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
 
     GA_POP_NAME;
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_end(NGA_DDOT_PATCH,__FILE__,__LINE__);
 #endif    
     return (sum);
 }
 
-/*\ compute float DOT PRODUCT of two patches
+
+/*\ compute Integer DOT PRODUCT of two patches
  *
  *          . different shapes and distributions allowed but not recommended
  *          . the same number of elements required
 \*/
-float nga_fdot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
+Integer ngai_idot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
      Integer *g_a, *alo, *ahi;    /* patch of g_a */
      Integer *g_b, *blo, *bhi;    /* patch of g_b */
      char    *t_a, *t_b;        /* transpose operators */
 {
     Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
-    float  sum = 0.;
- 
-    GA_PUSH_NAME("nga_fdot_patch");
+    Integer sum = 0.;
 
+    GA_PUSH_NAME("ngai_idot_patch");
+    
     nga_inquire_internal_(g_a, &atype, &andim, adims);
     nga_inquire_internal_(g_b, &btype, &bndim, bdims);
- 
-    if(atype != btype || (atype != C_FLOAT )) ga_error(" wrong types ", 0L);
- 
-    ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
- 
-    GA_POP_NAME;
-    return (sum);
-}                                      
 
-/*\ compute Single Complex DOT PRODUCT of two patches
+    if(atype != btype ||
+       ((atype != C_INT ) && (atype !=C_LONG) && (atype !=C_LONGLONG)))
+       gai_error(" wrong types ", 0L);
+
+    ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
+
+    GA_POP_NAME;
+    return ((Integer)sum);
+}
+
+
+/*\ compute Real DOT PRODUCT of two patches
  *
  *          . different shapes and distributions allowed but not recommended
  *          . the same number of elements required
 \*/
-SingleComplex nga_cdot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
+Real ngai_sdot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
      Integer *g_a, *alo, *ahi;    /* patch of g_a */
      Integer *g_b, *blo, *bhi;    /* patch of g_b */
-     char    *t_a, *t_b;          /* transpose operators */
+     char    *t_a, *t_b;        /* transpose operators */
 {
-Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
-SingleComplex  sum;
-
-#ifdef GA_USE_VAMPIR
-   vampir_begin(NGA_CDOT_PATCH,__FILE__,__LINE__);
+    Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
+    Real  sum = 0.;
+ 
+#ifdef USE_VAMPIR
+    vampir_begin(NGA_DDOT_PATCH,__FILE__,__LINE__);
 #endif    
 
-   GA_PUSH_NAME("nga_cdot_patch");
+    GA_PUSH_NAME("ngai_sdot_patch");
+    
+    nga_inquire_internal_(g_a, &atype, &andim, adims);
+    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-   ga_inquire_internal_(g_a, &atype, &andim, adims);
-   ga_inquire_internal_(g_b, &btype, &bndim, bdims);
+    if(atype != btype || (atype != C_FLOAT )) gai_error(" wrong types ", 0L);
 
-   if(atype != btype || (atype != C_SCPL )) ga_error(" wrong types ", 0L);
+    ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
 
-   ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi,
-                  (void *)(&sum));
-
-   GA_POP_NAME;
-#ifdef GA_USE_VAMPIR
-   vampir_end(NGA_CDOT_PATCH,__FILE__,__LINE__);
+    GA_POP_NAME;
+#ifdef USE_VAMPIR
+    vampir_end(NGA_DDOT_PATCH,__FILE__,__LINE__);
 #endif    
-   return (sum);
+    return (sum);
 }
+
 
 /*\ compute Double Complex DOT PRODUCT of two patches
  *
  *          . different shapes and distributions allowed but not recommended
  *          . the same number of elements required
 \*/
-DoubleComplex nga_zdot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+void ngai_zdot_patch_(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, sum, alen, blen)
+#else
+void ngai_zdot_patch_(g_a, t_a, alen, alo, ahi, g_b, t_b, blen, blo, bhi, sum)
+#endif
      Integer *g_a, *alo, *ahi;    /* patch of g_a */
      Integer *g_b, *blo, *bhi;    /* patch of g_b */
      char    *t_a, *t_b;          /* transpose operators */
+     DoubleComplex *sum;          /* return value */
+     int      alen, blen;         /* Fortran hidden string length */
 {
 Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
-DoubleComplex  sum;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
    vampir_begin(NGA_ZDOT_PATCH,__FILE__,__LINE__);
 #endif    
 
-   GA_PUSH_NAME("nga_zdot_patch");
+   GA_PUSH_NAME("ngai_zdot_patch");
 
-   ga_inquire_internal_(g_a, &atype, &andim, adims);
-   ga_inquire_internal_(g_b, &btype, &bndim, bdims);
+   nga_inquire_internal_(g_a, &atype, &andim, adims);
+   nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-   if(atype != btype || (atype != C_DCPL )) ga_error(" wrong types ", 0L);
+   if(atype != btype || (atype != C_DCPL )) gai_error(" wrong types ", 0L);
 
    ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi,
-                  (void *)(&sum));
+                  (void *)(sum));
 
    GA_POP_NAME;
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
    vampir_end(NGA_ZDOT_PATCH,__FILE__,__LINE__);
 #endif    
-   return (sum);
 }
 
-
-/*\ compute DOT PRODUCT of two patches
- *  Fortran interface
-\*/
-void FATR ngai_dot_patch_(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
-Integer *g_a, *alo, *ahi;    /* patch of g_a */ 
-Integer *g_b, *blo, *bhi;    /* patch of g_b */
-void *retval; 
-
-#if defined(CRAY) || defined(WIN32)
-     _fcd   t_a, t_b;                          /* transpose operators */
-{  ngai_dot_patch(g_a, _fcdtocp(t_a), alo, ahi, 
-                  g_b, _fcdtocp(t_b), blo, bhi, retval);}
-#else 
-     char    *t_a, *t_b;                          /* transpose operators */
-{  ngai_dot_patch(g_a, t_a, alo, ahi,
-                g_b, t_b, blo, bhi, retval);}
-#endif
 
 /*\
  *  Set all values in patch to value stored in *val
@@ -1664,10 +1651,11 @@ void ngai_set_patch_value(Integer type, Integer ndim, Integer *loA, Integer *hiA
           ((long long*)data_ptr)[idx+j] = *(long long*)val;
       } 
       break;                          
-    default: ga_error(" wrong data type ",type);
+    default: gai_error(" wrong data type ",type);
   }
 
 }
+
 
 /*\ FILL IN ARRAY WITH VALUE 
 \*/
@@ -1681,7 +1669,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
   Integer me= ga_nodeid_();
   int local_sync_begin,local_sync_end;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(NGA_FILL_PATCH,__FILE__,__LINE__);
 #endif 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -1774,7 +1762,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
               case C_LONGLONG:
                 data_ptr = (void*)((long long*)data_ptr + offset);
                 break;                          
-              default: ga_error(" wrong data type ",type);
+              default: gai_error(" wrong data type ",type);
             }
           }
 
@@ -1857,7 +1845,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
               case C_LONGLONG:
                 data_ptr = (void*)((long long*)data_ptr + offset);
                 break;                          
-              default: ga_error(" wrong data type ",type);
+              default: gai_error(" wrong data type ",type);
             }
           }
 
@@ -1880,10 +1868,11 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
   }
   GA_POP_NAME;
   if(local_sync_end)ga_sync_();
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(NGA_FILL_PATCH,__FILE__,__LINE__);
 #endif 
 }
+
 
 void ngai_scale_patch_value(Integer type, Integer ndim, Integer *loA, Integer *hiA,
                      Integer *ld, void *src_data_ptr, void *alpha)
@@ -2020,29 +2009,25 @@ void ngai_scale_patch_value(Integer type, Integer ndim, Integer *loA, Integer *h
           ((float *)src_data_ptr)[idx+j]  *= *(float*)alpha;
       }                                                           
       break;
-    default: ga_error(" wrong data type ",type);
+    default: gai_error(" wrong data type ",type);
   }
 }
+
 
 /*\ SCALE ARRAY 
 \*/
 void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
                           void *alpha)
 {
-  Integer i, j;
   Integer ndim, dims[MAXDIM], type;
   Integer loA[MAXDIM], hiA[MAXDIM];
   Integer ld[MAXDIM];
   void *src_data_ptr;
   Integer num_blocks, nproc;
-  Integer idx, n1dim;
-  Integer bvalue[MAXDIM], bunit[MAXDIM], baseld[MAXDIM];
-  DoublePrecision tmp1_real, tmp1_imag, tmp2_real, tmp2_imag;
-  float ftmp1_real, ftmp1_imag, ftmp2_real, ftmp2_imag;
   Integer me= ga_nodeid_();
   int local_sync_begin,local_sync_end;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(NGA_SCALE_PATCH,__FILE__,__LINE__);
 #endif 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -2067,7 +2052,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
       nga_release_update_(g_a, loA, hiA); 
     }
   } else {
-    Integer offset, j, jtmp, chk;
+    Integer offset, i, j, jtmp, chk;
     Integer loS[MAXDIM];
     nproc = ga_nnodes_();
     /* using simple block-cyclic data distribution */
@@ -2129,7 +2114,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
               case C_LONGLONG:
                 src_data_ptr = (void*)((long long*)src_data_ptr + offset);
                 break;                          
-              default: ga_error(" wrong data type ",type);
+              default: gai_error(" wrong data type ",type);
             }
           }
 
@@ -2212,7 +2197,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
               case C_LONGLONG:
                 src_data_ptr = (void*)((long long*)src_data_ptr + offset);
                 break;                          
-              default: ga_error(" wrong data type ",type);
+              default: gai_error(" wrong data type ",type);
             }
           }
 
@@ -2235,10 +2220,11 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
   }
   GA_POP_NAME;
   if(local_sync_end)ga_sync_();   
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(NGA_SCALE_PATCH,__FILE__,__LINE__);
 #endif 
 }
+
 
 /*\ Utility function to add patch values together
 \*/
@@ -2387,9 +2373,10 @@ void ngai_add_patch_values(Integer type, void* alpha, void *beta,
             ((long long*)B_ptr)[idx+j];
       }
       break;
-    default: ga_error(" wrong data type ",type);
+    default: gai_error(" wrong data type ",type);
   }
 }
+
 
 /*\  SCALED ADDITION of two patches
 \*/
@@ -2398,7 +2385,7 @@ void FATR nga_add_patch_(alpha, g_a, alo, ahi, beta,  g_b, blo, bhi,
 Integer *g_a, *alo, *ahi;    /* patch of g_a */
 Integer *g_b, *blo, *bhi;    /* patch of g_b */
 Integer *g_c, *clo, *chi;    /* patch of g_c */
-DoublePrecision *alpha, *beta;
+void *alpha, *beta;
 {
   Integer i, j;
   Integer compatible;
@@ -2408,8 +2395,7 @@ DoublePrecision *alpha, *beta;
   Integer loB[MAXDIM], hiB[MAXDIM], ldB[MAXDIM];
   Integer loC[MAXDIM], hiC[MAXDIM], ldC[MAXDIM];
   void *A_ptr, *B_ptr, *C_ptr;
-  Integer bvalue[MAXDIM], bunit[MAXDIM], baseldC[MAXDIM];
-  Integer idx, n1dim;
+  Integer n1dim;
   Integer atotal, btotal;
   Integer g_A = *g_a, g_B = *g_b;
   Integer me= ga_nodeid_(), A_created=0, B_created=0;
@@ -2418,7 +2404,7 @@ DoublePrecision *alpha, *beta;
   char *tempname = "temp", notrans='n';
   int local_sync_begin,local_sync_end;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(NGA_ADD_PATCH,__FILE__,__LINE__);
 #endif 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -2431,18 +2417,18 @@ DoublePrecision *alpha, *beta;
   nga_inquire_internal_(g_b, &btype, &bndim, bdims);
   nga_inquire_internal_(g_c, &ctype, &cndim, cdims);
 
-  if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L); 
+  if(atype != btype || atype != ctype ) gai_error(" types mismatch ", 0L); 
 
   /* check if patch indices and dims match */
   for(i=0; i<andim; i++)
     if(alo[i] <= 0 || ahi[i] > adims[i])
-      ga_error("g_a indices out of range ", *g_a);
+      gai_error("g_a indices out of range ", *g_a);
   for(i=0; i<bndim; i++)
     if(blo[i] <= 0 || bhi[i] > bdims[i])
-      ga_error("g_b indices out of range ", *g_b);
+      gai_error("g_b indices out of range ", *g_b);
   for(i=0; i<cndim; i++)
     if(clo[i] <= 0 || chi[i] > cdims[i])
-      ga_error("g_b indices out of range ", *g_c);
+      gai_error("g_b indices out of range ", *g_c);
 
   /* check if numbers of elements in patches match each other */
   n1dim = 1; for(i=0; i<cndim; i++) n1dim *= (chi[i] - clo[i] + 1);
@@ -2450,7 +2436,7 @@ DoublePrecision *alpha, *beta;
   btotal = 1; for(i=0; i<bndim; i++) btotal *= (bhi[i] - blo[i] + 1);
 
   if((atotal != n1dim) || (btotal != n1dim))
-    ga_error("  capacities of patches do not match ", 0L);
+    gai_error("  capacities of patches do not match ", 0L);
 
   num_blocks_a = ga_total_blocks_(g_a);
   num_blocks_b = ga_total_blocks_(g_b);
@@ -2466,22 +2452,22 @@ DoublePrecision *alpha, *beta;
     if(ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC) &&
         ngai_comp_patch(andim, alo, ahi, cndim, clo, chi)) compatible = 1;
     else compatible = 0;
-    ga_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
     if(!compatible) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_c
        *        - do C<= A
        */
       if(*g_b != *g_c) {
-        nga_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
+        ngai_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
         andim = cndim;
         g_A = *g_c;
         nga_distribution_(&g_A, &me, loA, hiA);
       }
       else {
-        if (!ga_duplicate(g_c, &g_A, tempname))
-          ga_error("ga_dadd_patch: dup failed", 0L);
-        nga_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
+        if (!gai_duplicate(g_c, &g_A, tempname))
+          gai_error("ga_dadd_patch: dup failed", 0L);
+        ngai_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
         andim = cndim;
         A_created = 1;
         nga_distribution_(&g_A, &me, loA, hiA);
@@ -2492,15 +2478,15 @@ DoublePrecision *alpha, *beta;
     if(ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC) &&
         ngai_comp_patch(bndim, blo, bhi, cndim, clo, chi)) compatible = 1;
     else compatible = 0;
-    ga_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
     if(!compatible) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_c
        *        - copy & reshape patch of g_b into g_B
        */
-      if (!ga_duplicate(g_c, &g_B, tempname))
-        ga_error("ga_dadd_patch: dup failed", 0L);
-      nga_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
+      if (!gai_duplicate(g_c, &g_B, tempname))
+        gai_error("ga_dadd_patch: dup failed", 0L);
+      ngai_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
       bndim = cndim;
       B_created = 1;
       nga_distribution_(&g_B, &me, loB, hiB);
@@ -2510,9 +2496,9 @@ DoublePrecision *alpha, *beta;
     if(andim < bndim) cndim = andim;
 
     if(!ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC))
-      ga_error(" A patch mismatch ", g_A); 
+      gai_error(" A patch mismatch ", g_A); 
     if(!ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC))
-      ga_error(" B patch mismatch ", g_B);
+      gai_error(" B patch mismatch ", g_B);
 
     /*  determine subsets of my patches to access  */
     if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
@@ -2531,15 +2517,15 @@ DoublePrecision *alpha, *beta;
   } else {
     /* create copies of arrays A and B that are identically distributed
        as C*/
-    if (!ga_duplicate(g_c, &g_A, tempname))
-      ga_error("ga_dadd_patch: dup failed", 0L);
-    nga_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
+    if (!gai_duplicate(g_c, &g_A, tempname))
+      gai_error("ga_dadd_patch: dup failed", 0L);
+    ngai_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
     andim = cndim;
     A_created = 1;
 
-    if (!ga_duplicate(g_c, &g_B, tempname))
-      ga_error("ga_dadd_patch: dup failed", 0L);
-    nga_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
+    if (!gai_duplicate(g_c, &g_B, tempname))
+      gai_error("ga_dadd_patch: dup failed", 0L);
+    ngai_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
     bndim = cndim;
     B_created = 1;
 
@@ -2744,10 +2730,11 @@ DoublePrecision *alpha, *beta;
 
   GA_POP_NAME;
   if(local_sync_end)ga_sync_();
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(NGA_ADD_PATCH,__FILE__,__LINE__);
 #endif 
 }
+
 
 void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
 {
@@ -2759,10 +2746,10 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
     DoubleComplex cval;
     SingleComplex cfval;
     float fval = 0.0;
-    void *valptr;
+    void *valptr = NULL;
     int local_sync_begin,local_sync_end;
     
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_begin(NGA_ZERO_PATCH,__FILE__,__LINE__);
 #endif 
 
@@ -2802,27 +2789,29 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
        case C_LONGLONG:
             valptr = (void *)(&llval);
             break; 
-        default: ga_error(" wrong data type ",type);
+        default: gai_error(" wrong data type ",type);
     }
     nga_fill_patch_(g_a, lo, hi, valptr);
     
     GA_POP_NAME;
     if(local_sync_end)ga_sync_();
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_end(NGA_ZERO_PATCH,__FILE__,__LINE__);
 #endif 
 }
 
+
 /*************************************************************
  *   2-dim patch operations                                  *
  *************************************************************/
+
 
 /*\ COPY A PATCH AND POSSIBLY RESHAPE
  *
  *  . the element capacities of two patches must be identical
  *  . copy by column order - Fortran convention
 \*/
-void ga_copy_patch(char *trans, Integer *g_a, Integer *ailo, Integer *aihi,
+void gai_copy_patch(char *trans, Integer *g_a, Integer *ailo, Integer *aihi,
                    Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo,
                    Integer *bihi, Integer *bjlo, Integer *bjhi)
 {
@@ -2833,30 +2822,14 @@ void ga_copy_patch(char *trans, Integer *g_a, Integer *ailo, Integer *aihi,
     blo[0] = *bilo; blo[1] = *bjlo;
     bhi[0] = *bihi; bhi[1] = *bjhi;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_begin(GA_COPY_PATCH,__FILE__,__LINE__);
 #endif 
-    nga_copy_patch(trans, g_a, alo, ahi, g_b, blo, bhi);
-#ifdef GA_USE_VAMPIR
+    ngai_copy_patch(trans, g_a, alo, ahi, g_b, blo, bhi);
+#ifdef USE_VAMPIR
     vampir_end(GA_COPY_PATCH,__FILE__,__LINE__);
 #endif 
 }
-
-
-/*\ COPY A PATCH AND POSSIBLY RESHAPE
- *  Fortran interface
-\*/
-void FATR ga_copy_patch_(trans, g_a, ailo, aihi, ajlo, ajhi,
-                    g_b, bilo, bihi, bjlo, bjhi)
-     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;
-     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
-#if defined(CRAY) || defined(WIN32)
-     _fcd    trans;
-{ga_copy_patch(_fcdtocp(trans),g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi);}
-#else 
-     char*   trans;
-{  ga_copy_patch(trans,g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi); }
-#endif
 
 
 /*\ generic dot product routine
@@ -2866,7 +2839,7 @@ void gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
      char    *t_a, *t_b;                          /* transpose operators */
-     DoublePrecision *retval;
+     void    *retval;
 {
     Integer alo[2], ahi[2], blo[2], bhi[2];
 
@@ -2875,9 +2848,49 @@ void gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
     blo[0] = *bilo; blo[1] = *bjlo;
     bhi[0] = *bihi; bhi[1] = *bjhi;
 
-    ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)retval);
+    ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval);
 }
 
+
+/*\ compute Single Complex DOT PRODUCT of two patches
+ *
+ *          . different shapes and distributions allowed but not recommended
+ *          . the same number of elements required
+\*/
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+void gai_cdot_patch_(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                     g_b, t_b, bilo, bihi, bjlo, bjhi, sum, alen, blen)
+#else
+void gai_cdot_patch_(g_a, t_a, alen, ailo, aihi, ajlo, ajhi,
+                     g_b, t_b, blen, bilo, bihi, bjlo, bjhi, sum)
+#endif
+     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
+     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+     char    *t_a, *t_b;                          /* transpose operators */
+     SingleComplex *sum;                          /* return value */
+     int      alen, blen;                         /* Fortran hidden length */
+{
+Integer atype, btype, adim1, adim2, bdim1, bdim2;
+
+#ifdef USE_VAMPIR
+   vampir_begin(GA_CDOT_PATCH,__FILE__,__LINE__);
+#endif
+
+   GA_PUSH_NAME("ga_cdot_patch");
+
+   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
+   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
+
+   if(atype != btype || (atype != C_SCPL )) gai_error(" wrong types ", 0L);
+
+   gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                 g_b, t_b, bilo, bihi, bjlo, bjhi, (void*)sum);
+
+   GA_POP_NAME;
+#ifdef USE_VAMPIR
+   vampir_end(GA_CDOT_PATCH,__FILE__,__LINE__);
+#endif
+}
 
 
 /*\ compute Double Precision DOT PRODUCT of two patches
@@ -2885,7 +2898,7 @@ void gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
  *          . different shapes and distributions allowed but not recommended
  *          . the same number of elements required
 \*/
-DoublePrecision ga_ddot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+DoublePrecision gai_ddot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
                               g_b, t_b, bilo, bihi, bjlo, bjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
@@ -2894,7 +2907,7 @@ DoublePrecision ga_ddot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 DoublePrecision  sum = 0.;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
    vampir_begin(GA_DDOT_PATCH,__FILE__,__LINE__);
 #endif
 
@@ -2903,13 +2916,87 @@ DoublePrecision  sum = 0.;
    ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
    ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != C_DBL )) ga_error(" wrong types ", 0L);
+   if(atype != btype || (atype != C_DBL )) gai_error(" wrong types ", 0L);
 
    gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                 g_b, t_b, bilo, bihi, bjlo, bjhi, &sum);
+                 g_b, t_b, bilo, bihi, bjlo, bjhi, (void*)&sum);
 
    GA_POP_NAME;
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
+   vampir_end(GA_DDOT_PATCH,__FILE__,__LINE__);
+#endif
+   return (sum);
+}
+
+
+/*\ compute Integer DOT PRODUCT of two patches
+ *
+ *          . different shapes and distributions allowed but not recommended
+ *          . the same number of elements required
+\*/
+Integer gai_idot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                              g_b, t_b, bilo, bihi, bjlo, bjhi)
+     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
+     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+     char    *t_a, *t_b;                          /* transpose operators */
+{
+Integer atype, btype, adim1, adim2, bdim1, bdim2;
+Integer  sum = 0.;
+
+#ifdef USE_VAMPIR
+   vampir_begin(GA_DDOT_PATCH,__FILE__,__LINE__);
+#endif
+
+   GA_PUSH_NAME("ga_idot_patch");
+
+   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
+   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
+
+   if(atype != btype ||
+       ((atype != C_INT ) && (atype !=C_LONG) && (atype !=C_LONGLONG)))
+       gai_error(" wrong types ", 0L);
+
+   gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                 g_b, t_b, bilo, bihi, bjlo, bjhi, (void*)&sum);
+
+   GA_POP_NAME;
+#ifdef USE_VAMPIR
+   vampir_end(GA_DDOT_PATCH,__FILE__,__LINE__);
+#endif
+   return (sum);
+}
+
+
+/*\ compute Real DOT PRODUCT of two patches
+ *
+ *          . different shapes and distributions allowed but not recommended
+ *          . the same number of elements required
+\*/
+Real gai_sdot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                              g_b, t_b, bilo, bihi, bjlo, bjhi)
+     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
+     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+     char    *t_a, *t_b;                          /* transpose operators */
+{
+Integer atype, btype, adim1, adim2, bdim1, bdim2;
+Real  sum = 0.;
+
+#ifdef USE_VAMPIR
+   vampir_begin(GA_DDOT_PATCH,__FILE__,__LINE__);
+#endif
+
+   GA_PUSH_NAME("ga_sdot_patch");
+
+   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
+   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
+
+   if(atype != btype || (atype != C_FLOAT )) gai_error(" wrong types ", 0L);
+
+   gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                 g_b, t_b, bilo, bihi, bjlo, bjhi, (void*)&sum);
+
+   GA_POP_NAME;
+#ifdef USE_VAMPIR
    vampir_end(GA_DDOT_PATCH,__FILE__,__LINE__);
 #endif
    return (sum);
@@ -2921,16 +3008,22 @@ DoublePrecision  sum = 0.;
  *          . different shapes and distributions allowed but not recommended
  *          . the same number of elements required
 \*/
-DoubleComplex ga_zdot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                            g_b, t_b, bilo, bihi, bjlo, bjhi)
-     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
-     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
-     char    *t_a, *t_b;                          /* transpose operators */
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+void gai_zdot_patch_(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                     g_b, t_b, bilo, bihi, bjlo, bjhi, sum, alen, blen)
+#else
+void gai_zdot_patch_(g_a, t_a, alen, ailo, aihi, ajlo, ajhi,
+                     g_b, t_b, blen, bilo, bihi, bjlo, bjhi, sum)
+#endif
+     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi; /* patch of g_a */
+     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi; /* patch of g_b */
+     char    *t_a, *t_b;                       /* transpose operators */
+     DoubleComplex *sum;                       /* return value */
+     int      alen, blen;                      /* Fortran hidden str length */
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
-DoubleComplex  sum;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
    vampir_begin(GA_ZDOT_PATCH,__FILE__,__LINE__);
 #endif
 
@@ -2939,121 +3032,34 @@ DoubleComplex  sum;
    ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
    ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != C_DCPL )) ga_error(" wrong types ", 0L);
+   if(atype != btype || (atype != C_DCPL )) gai_error(" wrong types ", 0L);
 
    gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                 g_b, t_b, bilo, bihi, bjlo, bjhi, (DoublePrecision*)&sum);
+                 g_b, t_b, bilo, bihi, bjlo, bjhi, (void*)sum);
 
    GA_POP_NAME;
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
    vampir_end(GA_ZDOT_PATCH,__FILE__,__LINE__);
 #endif
-   return (sum);
 }
-
-/*\ compute Single Complex DOT PRODUCT of two patches
- *
- *          . different shapes and distributions allowed but not recommended
- *          . the same number of elements required
-\*/
-SingleComplex ga_cdot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                            g_b, t_b, bilo, bihi, bjlo, bjhi)
-     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
-     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
-     char    *t_a, *t_b;                          /* transpose operators */
-{
-Integer atype, btype, adim1, adim2, bdim1, bdim2;
-SingleComplex  sum;
-
-#ifdef GA_USE_VAMPIR
-   vampir_begin(GA_CDOT_PATCH,__FILE__,__LINE__);
-#endif
-
-   GA_PUSH_NAME("ga_cdot_patch");
-
-   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
-
-   if(atype != btype || (atype != C_SCPL )) ga_error(" wrong types ", 0L);
-
-   gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                 g_b, t_b, bilo, bihi, bjlo, bjhi, (DoublePrecision*)&sum);
-
-   GA_POP_NAME;
-#ifdef GA_USE_VAMPIR
-   vampir_end(GA_CDOT_PATCH,__FILE__,__LINE__);
-#endif
-   return (sum);
-}
-
-
-/*\ compute float DOT PRODUCT of two patches
- *
- *          . different shapes and distributions allowed but not recommended
- *          . the same number of elements required
-\*/
-float ga_fdot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                              g_b, t_b, bilo, bihi, bjlo, bjhi)
-     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
-     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
-     char    *t_a, *t_b;                          /* transpose operators */
-{
-Integer atype, btype, adim1, adim2, bdim1, bdim2;
-float  sum = 0.;
-
-   GA_PUSH_NAME("ga_fdot_patch");
- 
-   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
- 
-   if(atype != btype || (atype != C_FLOAT )) ga_error(" wrong types ", 0L);
- 
-   gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                 g_b, t_b, bilo, bihi, bjlo, bjhi, (DoublePrecision*)&sum);
- 
-   GA_POP_NAME;
-   return (sum);
-}                   
-
-
-/*\ compute DOT PRODUCT of two patches
- *  Fortran interface
-\*/
-void FATR gai_dot_patch_(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                    g_b, t_b, bilo, bihi, bjlo, bjhi, retval)
-     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
-     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
-     DoublePrecision *retval;
-
-#if defined(CRAY) || defined(WIN32)
-     _fcd   t_a, t_b;                          /* transpose operators */
-{  gai_dot_patch(g_a, _fcdtocp(t_a), ailo, aihi, ajlo, ajhi,
-                 g_b, _fcdtocp(t_b), bilo, bihi, bjlo, bjhi, retval);}
-#else 
-     char    *t_a, *t_b;                          /* transpose operators */
-{ gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                g_b, t_b, bilo, bihi, bjlo, bjhi, retval);}
-#endif
-
-
 
 
 /*\ FILL IN ARRAY WITH VALUE 
 \*/
 void FATR ga_fill_patch_(g_a, ilo, ihi, jlo, jhi, val)
      Integer *g_a, *ilo, *ihi, *jlo, *jhi;
-     Void    *val;
+     void    *val;
 {
     Integer lo[2], hi[2];
 
     lo[0] = *ilo; lo[1] = *jlo;
     hi[0] = *ihi; hi[1] = *jhi;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_begin(GA_FILL_PATCH,__FILE__,__LINE__);
 #endif
     nga_fill_patch_(g_a, lo, hi, val);
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_end(GA_FILL_PATCH,__FILE__,__LINE__);
 #endif
 }
@@ -3064,18 +3070,18 @@ void FATR ga_fill_patch_(g_a, ilo, ihi, jlo, jhi, val)
 \*/
 void FATR ga_scale_patch_(g_a, ilo, ihi, jlo, jhi, alpha)
      Integer *g_a, *ilo, *ihi, *jlo, *jhi;
-     DoublePrecision     *alpha;
+     void     *alpha;
 {
     Integer lo[2], hi[2];
 
     lo[0] = *ilo; lo[1] = *jlo;
     hi[0] = *ihi; hi[1] = *jhi;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_begin(GA_SCALE_PATCH,__FILE__,__LINE__);
 #endif
     nga_scale_patch_(g_a, lo, hi, (void *)alpha);
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_end(GA_SCALE_PATCH,__FILE__,__LINE__);
 #endif
 }
@@ -3089,7 +3095,7 @@ void FATR ga_add_patch_(alpha, g_a, ailo, aihi, ajlo, ajhi,
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
      Integer *g_c, *cilo, *cihi, *cjlo, *cjhi;    /* patch of g_c */
-     DoublePrecision      *alpha, *beta;
+     void    *alpha, *beta;
 {
     Integer alo[2], ahi[2], blo[2], bhi[2], clo[2], chi[2];
 
@@ -3100,13 +3106,198 @@ void FATR ga_add_patch_(alpha, g_a, ailo, aihi, ajlo, ajhi,
     clo[0] = *cilo; clo[1] = *cjlo;
     chi[0] = *cihi; chi[1] = *cjhi;
     
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_begin(GA_ADD_PATCH,__FILE__,__LINE__);
 #endif
     nga_add_patch_(alpha, g_a, alo, ahi, beta, g_b, blo, bhi, g_c, clo, chi);
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_end(GA_ADD_PATCH,__FILE__,__LINE__);
 #endif
 }
 
 
+/**********************************************************
+ * Fortran interfaces to the above functions. 
+ *
+ * Notably the functions returning complex types differ.
+ * See complex.F for details.
+ **********************************************************/
+
+void FATR ga_cadd_patch_(SingleComplex *alpha, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, SingleComplex *beta, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi)
+{
+    ga_add_patch_((void*)alpha, g_a, ailo, aihi, ajlo, ajhi,
+                  (void*)beta,  g_b, bilo, bihi, bjlo, bjhi,
+                         g_c, cilo, cihi, cjlo, cjhi);
+}
+
+
+void FATR ga_dadd_patch_(DoublePrecision *alpha, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, DoublePrecision *beta, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi)
+{
+    ga_add_patch_(alpha, g_a, ailo, aihi, ajlo, ajhi,
+                  beta,  g_b, bilo, bihi, bjlo, bjhi,
+                         g_c, cilo, cihi, cjlo, cjhi);
+}
+
+
+void FATR ga_iadd_patch_(Integer *alpha, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *beta, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi)
+{
+    ga_add_patch_(alpha, g_a, ailo, aihi, ajlo, ajhi,
+                  beta,  g_b, bilo, bihi, bjlo, bjhi,
+                         g_c, cilo, cihi, cjlo, cjhi);
+}
+
+
+void FATR ga_sadd_patch_(Real *alpha, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Real *beta, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi)
+{
+    ga_add_patch_(alpha, g_a, ailo, aihi, ajlo, ajhi,
+                  beta,  g_b, bilo, bihi, bjlo, bjhi,
+                         g_c, cilo, cihi, cjlo, cjhi);
+}
+
+
+void FATR ga_zadd_patch_(DoubleComplex *alpha, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, DoubleComplex *beta, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi)
+{
+    ga_add_patch_(alpha, g_a, ailo, aihi, ajlo, ajhi,
+                  beta,  g_b, bilo, bihi, bjlo, bjhi,
+                         g_c, cilo, cihi, cjlo, cjhi);
+}
+
+
+void FATR ga_cscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, SingleComplex *s)
+{
+    ga_scale_patch_(g_a, ilo, ihi, jlo, jhi, s);
+}
+
+
+void FATR ga_dscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, DoublePrecision *s)
+{
+    ga_scale_patch_(g_a, ilo, ihi, jlo, jhi, s);
+}
+
+
+void FATR ga_iscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, Integer *s)
+{
+    ga_scale_patch_(g_a, ilo, ihi, jlo, jhi, s);
+}
+
+
+void FATR ga_sscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, Real *s)
+{
+    ga_scale_patch_(g_a, ilo, ihi, jlo, jhi, s);
+}
+
+
+void FATR ga_zscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, DoubleComplex *s)
+{
+    ga_scale_patch_(g_a, ilo, ihi, jlo, jhi, s);
+}
+
+
+void FATR ga_cfill_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, SingleComplex *val)
+{
+    ga_fill_patch_(g_a, ilo, ihi, jlo, jhi, val);
+}
+
+
+void FATR ga_dfill_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, DoublePrecision *val)
+{
+    ga_fill_patch_(g_a, ilo, ihi, jlo, jhi, val);
+}
+
+
+void FATR ga_ifill_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, Integer *val)
+{
+    ga_fill_patch_(g_a, ilo, ihi, jlo, jhi, val);
+}
+
+
+void FATR ga_sfill_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, Real *val)
+{
+    ga_fill_patch_(g_a, ilo, ihi, jlo, jhi, val);
+}
+
+
+void FATR ga_zfill_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, DoubleComplex *val)
+{
+    ga_fill_patch_(g_a, ilo, ihi, jlo, jhi, val);
+}
+
+
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+void FATR ga_copy_patch_(char *trans, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, int len)
+#else
+void FATR ga_copy_patch_(char *trans, int len, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi)
+#endif
+{
+    gai_copy_patch(trans,g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi);
+}
+
+
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+DoublePrecision ga_ddot_patch_(Integer *g_a, char *t_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, char *t_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, int alen, int blen)
+#else
+DoublePrecision ga_ddot_patch_(Integer *g_a, char *t_a, int alen, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, char *t_b, int blen, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi)
+#endif
+{
+    return gai_ddot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi, g_b, t_b, bilo, bihi, bjlo, bjhi);
+}
+
+
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+Integer ga_idot_patch_(Integer *g_a, char *t_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, char *t_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, int alen, int blen)
+#else
+Integer ga_idot_patch_(Integer *g_a, char *t_a, int alen, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, char *t_b, int blen, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi)
+#endif
+{
+    return gai_idot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi, g_b, t_b, bilo, bihi, bjlo, bjhi);
+}
+
+
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+Real ga_sdot_patch_(Integer *g_a, char *t_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, char *t_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, int alen, int blen)
+#else
+Real ga_sdot_patch_(Integer *g_a, char *t_a, int alen, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, char *t_b, int blen, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi)
+#endif
+{
+    return gai_sdot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi, g_b, t_b, bilo, bihi, bjlo, bjhi);
+}
+
+
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+void FATR nga_copy_patch_(char *trans, Integer *g_a, Integer *alo, Integer *ahi, Integer *g_b, Integer *blo, Integer *bhi, int len)
+#else
+void FATR nga_copy_patch_(char *trans, int len, Integer *g_a, Integer *alo, Integer *ahi, Integer *g_b, Integer *blo, Integer *bhi)
+#endif
+{
+    ngai_copy_patch(trans,g_a,alo,ahi,g_b,blo,bhi);
+}
+
+
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+DoublePrecision FATR nga_ddot_patch_(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo, Integer *bhi, int alen, int blen)
+#else
+DoublePrecision FATR nga_ddot_patch_(Integer *g_a, char *t_a, int alen, Integer *alo, Integer *ahi, Integer *g_b, char *t_b, int blen, Integer *blo, Integer *bhi)
+#endif
+{
+    return ngai_ddot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi);
+}
+
+
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+Integer FATR nga_idot_patch_(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo, Integer *bhi, int alen, int blen)
+#else
+Integer FATR nga_idot_patch_(Integer *g_a, char *t_a, int alen, Integer *alo, Integer *ahi, Integer *g_b, char *t_b, int blen, Integer *blo, Integer *bhi)
+#endif
+{
+    return ngai_idot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi);
+}
+
+
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+Real FATR nga_sdot_patch_(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo, Integer *bhi, int alen, int blen)
+#else
+Real FATR nga_sdot_patch_(Integer *g_a, char *t_a, int alen, Integer *alo, Integer *ahi, Integer *g_b, char *t_b, int blen, Integer *blo, Integer *bhi)
+#endif
+{
+    return ngai_sdot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi);
+}

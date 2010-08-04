@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c $Id: jacobi.F,v 1.9 2003-06-24 19:01:59 d3h325 Exp $
       program jacobi 
 *
@@ -12,12 +15,7 @@ c $Id: jacobi.F,v 1.9 2003-06-24 19:01:59 d3h325 Exp $
 c
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
       heap = 80000
       stack = heap
@@ -25,19 +23,18 @@ c
       if (.not. ma_init(MT_DBL, heap, stack))                ! initialize MA
      $    call ga_error("ma init failed",heap+stack)
 #ifdef GA_TRACE
-      call trace_init(10000)				     ! initialize trace
+      call trace_init(10000)                     ! initialize trace
 #endif
       call iterate()                                         ! do the work      
 #ifdef GA_TRACE
-      call trace_end(ga_nodeid())			     ! end trace
+      call trace_end(ga_nodeid())                 ! end trace
 #endif
+c
+      if(ga_nodeid().eq.0) print *,'All tests successful '
+c
       call ga_terminate()                                    ! terminate GAs 
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
       end
 
 
@@ -50,12 +47,12 @@ c
       parameter (m = 10)
       integer ilo, ihi, jlo, jhi, ld,  ni, nj
       integer i, k
-      integer indexl, index, index_first, indexd    ! MA addressing indices
+      MA_ACCESS_INDEX_TYPE indexl, index, index_first, indexd    ! MA addressing indices
       integer h_l, h_d                        ! handles to MA objects
       integer me, nproc                       ! my processor & number of procs 
       double precision eps                    ! stopping number
       double precision S, W, C, N, E          ! coef. of G matrix and d
-      logical have_data	                      ! do I "own" any data ?
+      logical have_data                          ! do I "own" any data ?
       double precision norm, product, uxnorm
       data eps /1d-5/
 c

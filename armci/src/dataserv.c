@@ -1,10 +1,20 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: dataserv.c,v 1.30.8.5 2007-07-02 05:18:13 d3p687 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "copy.h"
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_ERRNO_H
+#   include <errno.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
 
 #define DEBUG_ 0
 #define DEBUG1 0

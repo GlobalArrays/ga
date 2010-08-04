@@ -1,6 +1,9 @@
-/*$Id: multidma.c,v 1.1.2.1 2007-06-20 17:41:46 vinod Exp $*/
-/*
- *                                Copyright (c) 2006
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+/** @file
+ *                              Copyright (c) 2006
  *                      Pacific Northwest National Laboratory,
  *                           Battelle Memorial Institute.
  *                              All rights reserved.
@@ -29,20 +32,39 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
+ * $Id: multidma.c,v 1.1.2.1 2007-06-20 17:41:46 vinod Exp $
  */
-
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <assert.h>
-#ifdef WIN32
-#include <windows.h>
-#else
-#include <unistd.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
 #endif
-#include <math.h>
-#include <time.h>
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STDARG_H
+#   include <stdarg.h>
+#endif
+#ifdef WINDOWS_H
+#   include <windows.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#if HAVE_TIME_H
+#   include <time.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_TIME_H
+#   include <time.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
+
 #include "mp3.h"
 #include "armci.h"
 
@@ -59,13 +81,14 @@ typedef int t_elem; /* type of an array element */
 #define MAX_MSG_SIZE    (1024 * 1024)
 #define MSG_COUNT       20
 
-int mpi_error_code;
-#define MP_ASSERT(error_code) if ((mpi_error_code = error_code) != MPI_SUCCESS)\
-        MPI_Abort(MPI_COMM_WORLD, mpi_error_code)
-int armci_error_code;
-#define ARMCI_ASSERT(error_code) if (armci_error_code = error_code) {   \
-        fprintf(stderr, "ARMCI error %d\n", armci_error_code);pause();         \
-        ARMCI_Cleanup(); MPI_Abort(MPI_COMM_WORLD, armci_error_code); }
+static inline void ARMCI_ASSERT(int error_code) {
+    if (error_code) {
+        fprintf(stderr, "ARMCI error %d\n", error_code);
+        pause();
+        ARMCI_Cleanup();
+        MPI_Abort(MPI_COMM_WORLD, error_code);
+    }
+}
 
 #define FIX_TIME(t) if (t < 0.0) t = 0.0;
 
@@ -110,7 +133,8 @@ void start_logging(const char *fname)
 {
     char exe_name[255];
     char log_path[255];
-    char i, j, k, len;
+    size_t i;
+    char k;
 
 #ifdef  LOG2FILE
     strcpy(exe_name, fname);
@@ -182,7 +206,6 @@ void benchmark(int msg_size, struct stats *st)
     void *out_ptrs[size], *in_ptrs[size];
     double time_start, time_after_start, time_after_call, time_after_wait;
     double time2put, time2get;
-    double time_all_start, time_all_finish;
     int i, j;
     armci_hdl_t handle;
 
@@ -337,10 +360,10 @@ void benchmark(int msg_size, struct stats *st)
 
 }
 
+
 int main (int argc, char *argv[])
 {
-    int i, j, k, l;
-    double u;
+    int i, j, l;
     char buf[255];
 
     int dist, pos, time_seed;
@@ -353,12 +376,10 @@ int main (int argc, char *argv[])
         7344, 13652, 25384, 47196, 87748, 163144, 303332, 563972, 1048576};
 #endif
 
-    int dim1_sizes[MSG_COUNT], dim2[MSG_COUNT], mul_elem;
-
     MP_ASSERT(MP_INIT(argc, argv));
     MP_ASSERT(MP_MYID(&rank));
     MP_ASSERT(MP_PROCS(&size));
-    assert(size & 1 ^ 1); /* works with even number of processors only */
+    assert((size & 1) ^ 1); /* works with even number of processors only */
     log_debug("Message passing initialized\n");
 
     if (!rank) start_logging(argv[0]);
@@ -462,4 +483,3 @@ int main (int argc, char *argv[])
 
     return 0;
 }
-

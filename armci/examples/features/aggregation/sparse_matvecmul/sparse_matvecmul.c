@@ -1,50 +1,27 @@
-/*$id$*/
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-
-#ifdef WIN32
-#  include <windows.h>
-#  define sleep(x) Sleep(1000*(x))
-#else
-#  include <unistd.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
 #endif
 
-#if defined(PVM)
-#   include <pvm3.h>
-#   ifdef CRAY
-#     define MPGROUP         (char *)NULL
-#     define MP_INIT(arc,argv)
-#   else
-#     define MPGROUP           "mp_working_group"
-#     define MP_INIT(arc,argv) pvm_init(arc, argv)
-#   endif
-#   define MP_FINALIZE()     pvm_exit()
-#   define MP_TIMER          armci_timer
-#   define MP_BARRIER()      pvm_barrier(MPGROUP,-1)
-#   define MP_MYID(pid)      *(pid)   = pvm_getinst(MPGROUP,pvm_mytid())
-#   define MP_PROCS(pproc)   *(pproc) = (int)pvm_gsize(MPGROUP)
-    void pvm_init(int argc, char *argv[]);
-#elif defined(TCGMSG)
-#   include <sndrcv.h>
-    long tcg_tag =30000;
-#   define MP_BARRIER()      SYNCH_(&tcg_tag)
-#   define MP_INIT(arc,argv) PBEGIN_((argc),(argv))
-#   define MP_FINALIZE()     PEND_()
-#   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
-#   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
-#   define MP_TIMER         TCGTIME_
-#else
-#   include <mpi.h>
-#   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
-#   define MP_FINALIZE()     MPI_Finalize()
-#   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
-#   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
-#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
-#   define MP_TIMER         MPI_Wtime
+/* $Id$ */
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#elif HAVE_WINDOWS_H
+#   include <windows.h>
+#   define sleep(x) Sleep(1000*(x))
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
 #endif
 
 #include "armci.h"
+#include "mp3.h"
 #include "message.h"
 
 #define DIM1 5
@@ -93,9 +70,9 @@
 
 /***************************** macros ************************/
 #define COPY(src, dst, bytes) memcpy((dst),(src),(bytes))
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
-#define ABS(a) (((a) <0) ? -(a) : (a))
+#define ARMCI_MAX(a,b) (((a) >= (b)) ? (a) : (b))
+#define ARMCI_MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#define ARMCI_ABS(a) (((a) <0) ? -(a) : (a))
 
 #define ROW      65536
 #define COL      ROW   /* square matrices only for the time being */
@@ -106,7 +83,7 @@ short int fortran_indexing=0;
 static int proc_row_list[MAXPROC];/*no of rows owned by each process - accumulated*/
 static int proc_nz_list[MAXPROC]; /*no of non-zeros owned by each process */
 
-#ifdef PVM
+#ifdef MSG_COMMS_PVM
 void pvm_init(int argc, char *argv[])
 {
     int mytid, mygid, ctid[MAXPROC];
@@ -208,13 +185,13 @@ static void load_balance(int n, int non_zero, int *row_ind_tmp) {
 }
 
 static int sparse_initialize(int *n, int *non_zero, int **row_ind, 
-			     int **col_ind, double **values, double **vec,
-			     double **svec) {
+                 int **col_ind, double **values, double **vec,
+                 double **svec) {
   
-  int i, j, rc, max, *row_ind_tmp, *tmp_indices;
-  double *tmp_values;
+  int i, j, rc, max, *row_ind_tmp=NULL, *tmp_indices=NULL;
+  double *tmp_values=NULL;
   unsigned long len;
-  FILE *fp;
+  FILE *fp=NULL;
 
   /* Broadcast order of matrix */
   if(me==0) {
@@ -278,17 +255,17 @@ static int sparse_initialize(int *n, int *non_zero, int **row_ind,
     
     for(j=0; j<nproc; j++) {
       for(i=0; i<proc_nz_list[j]; i++) {
-	fscanf(fp, "%d", &tmp_indices[i]); 
-	if(fortran_indexing) --tmp_indices[i];
+    fscanf(fp, "%d", &tmp_indices[i]); 
+    if(fortran_indexing) --tmp_indices[i];
       }
       /* rc = fread(tmp_indices, sizeof(int), proc_nz_list[j], fp); */
       if((rc=ARMCI_Put(tmp_indices, col_ind[j], proc_nz_list[j]*sizeof(int), j)))
-	ARMCI_Error("armci_nbput failed\n",rc);
+    ARMCI_Error("armci_nbput failed\n",rc);
     }
     for(j=0; j<nproc; j++) {
       for(i=0; i<proc_nz_list[j]; i++) fscanf(fp, "%lf", &tmp_values[i]);
       if((rc=ARMCI_Put(tmp_values, values[j], proc_nz_list[j]*sizeof(double), j)))
-	ARMCI_Error("armci_nbput failed\n",rc);
+    ARMCI_Error("armci_nbput failed\n",rc);
     }
   }
   ARMCI_AllFence(); MP_BARRIER();ARMCI_AllFence();
@@ -328,7 +305,7 @@ static armci_hdl_t gHandle[MAXPROC];
 static int prev_proc = -1;
 
 static void get_data(int n, int start, int end, double *vec_local, 
-		    double **vec) {
+            double **vec) {
   int i, j, rc, bytes, offset;
   int proc_start, proc_end, idx_start, idx_end;
 
@@ -360,18 +337,18 @@ static void get_data(int n, int start, int end, double *vec_local,
       vec_local[idx_start] = -1;
 #if 0
       if((rc=ARMCI_Get(&vec[i][idx_start-offset], &vec_local[idx_start],
-		       bytes, i)))
+               bytes, i)))
 #else
       if((rc=ARMCI_NbGet(&vec[i][idx_start-offset], &vec_local[idx_start],
-		       bytes, i, &gHandle[count])))
+               bytes, i, &gHandle[count])))
 #endif
-	ARMCI_Error("armci_nbget failed\n",rc);
+    ARMCI_Error("armci_nbget failed\n",rc);
     }
   }
 }
 
 static void sparse_multiply(int n, int non_zero, int *row_ind, int **col_ind, 
-		    double **values, double **vec, double **svec) {
+            double **values, double **vec, double **svec) {
   
   int i, j, k, num_elements, offset, *tmp_indices;
   double start_time, comm_time, comp_time, v, vec_local[COL];
@@ -440,7 +417,7 @@ static void sparse_multiply(int n, int non_zero, int *row_ind, int **col_ind,
   }
   comp_time = MP_TIMER()-start_time;
   printf("%d: %lf + %lf = %lf  (count = %d)\n", me, comm_time, comp_time, 
-	 comm_time+comp_time, count+1);
+     comm_time+comp_time, count+1);
 #endif
 }
 
@@ -448,7 +425,7 @@ static void gather_solution_vector(double **svec) {
 #if 0
   double y[COL];
   if((rc=ARMCI_Get(&vec[i][idx_start-offset], &vec_local[idx_start],
-		   bytes, i)))
+           bytes, i)))
     ARMCI_Error("armci_nbget failed\n",rc);
 #endif
 }
@@ -473,11 +450,6 @@ static void test_sparse() {
     destroy_array((void **)vec);
 }
 
-
-/* we need to rename main if linking with frt compiler */
-#ifdef FUJITSU_FRT
-#define main MAIN__
-#endif
 
 int main(int argc, char* argv[])
 {
@@ -509,7 +481,7 @@ int main(int argc, char* argv[])
     MP_BARRIER();
     if(me==0){printf("\nSuccess!!\n"); fflush(stdout);}
     sleep(2);
-	
+    
     MP_BARRIER();
     ARMCI_Finalize();
     MP_FINALIZE();

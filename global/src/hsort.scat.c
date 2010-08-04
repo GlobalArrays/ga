@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /**************************************************************************\
  
  Sort routines for scatter and gather.
@@ -10,7 +14,7 @@
 #include "typesf2c.h"
 #include "macommon.h"
 #include "global.h"
-extern void ga_error();
+extern void gai_error();
 
 #define GT(a,b) (*(a) > *(b))
 #define GE(a,b) (*(a) >= *(b))
@@ -226,7 +230,7 @@ void ga_sort_scat_flt_(pn, v, i, j, base)
 
 void ga_sort_scat(pn, v, i, j, base, type)
      Integer *pn;
-     Void    *v;
+     void    *v;
      Integer *i;
      Integer *j;
      Integer *base;
@@ -239,7 +243,7 @@ void ga_sort_scat(pn, v, i, j, base, type)
      case C_INT:  ga_sort_scat_int_(pn, (int*)v, i, j, base); break;
      case C_FLOAT:  ga_sort_scat_flt_(pn, (float*)v, i, j, base); break; 
      case C_LONG:  ga_sort_scat_long_(pn, (long*)v, i, j, base); break;
-     default:        ga_error("ERROR:ga_sort_scat: wrong type",type);
+     default:        gai_error("ERROR:ga_sort_scat: wrong type",type);
    } 
 }
 

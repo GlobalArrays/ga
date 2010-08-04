@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /** @file iterator.h
  *  @author Sriram Krishnamoorthy
  *  @brief Stride iterator.
@@ -5,13 +9,17 @@
  *  functionality. More functionality related to the strided
  *  descriptor reusable across files will be extracted here as well. 
  */
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #include "iterator.h"
 #include "armci.h" /*for ARMCI_MAX_STRIDE_LEVEL and dassert*/
 
 typedef struct {
-  char *base_ptr;
+  void *base_ptr;
   int stride_levels;
   int stride_arr[ARMCI_MAX_STRIDE_LEVEL];
   int seg_count[ARMCI_MAX_STRIDE_LEVEL+1];  
@@ -27,11 +35,11 @@ typedef struct {
  * level([stride_levels+1])  
  * @return Handle to stride iterator created
  */
-stride_itr_t armci_stride_itr_init(char *base_ptr,
+stride_itr_t armci_stride_itr_init(void *base_ptr,
 				   int stride_levels,
 				   const int *stride_arr,
 				   const int *seg_count) {
-  int i,off;
+  int i;
   stride_info_t *sinfo = malloc(sizeof(stride_info_t));
   dassert(1,sinfo!=NULL);
   dassert(1,stride_levels>=0);

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* begin_generated_IBM_copyright_prolog                             */
 /*                                                                  */
 /* ---------------------------------------------------------------- */
@@ -12,7 +16,9 @@
  */
 
 #include "armcix_impl.h"
-#include "strings.h"
+#if HAVE_STRINGS_H
+#   include <strings.h>
+#endif
 
 ARMCIX_DCMF_Connection_t __global_connection;
 ARMCIX_DCMF_Connection_t * __connection;
@@ -316,7 +322,7 @@ int ARMCIX_Init ()
   ARMCIX_DCMF_Rmw_register ();
 
   /* Determine interrupt mode */
-  int interrupts = 0;
+  int interrupts = 1;
   ENV_Bool (getenv ("DCMF_INTERRUPT"),  &interrupts);
   ENV_Bool (getenv ("DCMF_INTERRUPTS"), &interrupts);
 

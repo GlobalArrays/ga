@@ -1,10 +1,15 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/testmap.c,v 1.3 1995-02-24 02:18:00 d3h325 Exp $ */
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
 
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 
-long ncols;
-long nrows;
+#include "typesf2c.h"
 
+int ncols;
+int nrows;
 
 /* Given the col and row no. return the actual process no. */
 #define MAP(Row,Col) (ncols*(Row) + (Col))
@@ -15,22 +20,20 @@ long nrows;
 /* Given the node return the column no. */
 #define COL(Node) ((Node) - ncols*((Node)/ncols))
 
-int main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc, char **argv)
 {
+    int node, type, len, me;
 
-  long row, col, node, data, type, len, me;
+    (void) printf("Input nrows, ncols ");
+    (void) scanf("%d %d",&nrows, &ncols);
 
-  (void) printf("Input nrows, ncols ");
-  (void) scanf("%d %d",&nrows, &ncols);
-  
-  node = 0;
-  type = 1;
-  len = 4;
+    node = 0;
+    type = 1;
+    len = 4;
 
-  for (me=0; me<(nrows*ncols); me++)
-    (void) printf(" me=%d row=%d col=%d map=%d\n",me,
-		  ROW(me),COL(me),MAP(ROW(me),COL(me)));
-  return 0;
+    for (me=0; me<(nrows*ncols); me++) {
+        (void) printf(" me=%d row=%d col=%d map=%d\n",me,
+                      ROW(me),COL(me),MAP(ROW(me),COL(me)));
+    }
+    return 0;
 }

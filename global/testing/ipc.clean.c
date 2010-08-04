@@ -1,8 +1,25 @@
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
-#include <stdio.h>
-#include <errno.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_SYS_IPC_H
+#   include <sys/ipc.h>
+#endif
+#if HAVE_SYS_SEM_H
+#   include <sys/sem.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_ERRNO_H
+#   include <errno.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 
 #define MAX_SEM  10 
  
@@ -182,7 +199,7 @@ char *CreateSharedRegion(id, size)
   char *temp;
 
   if (next_id >= MAX_ADDR)
-	Error("CreateSharedRegion: too many shared regions", (long) next_id);
+    Error("CreateSharedRegion: too many shared regions", (long) next_id);
 
   if ( (temp = SHMALLOC((unsigned) *size)) == (char *) NULL)
     Error("CreateSharedRegion: failed in SHMALLOC", (long) *size);
@@ -397,29 +414,27 @@ long DeleteSharedAll()
 }
 
 #endif
-main(argc,argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
 int from=0, to, i;
-	if(argc<2){
-	  printf("Usage:\n ipc.clean [<from>] <to> \n single argument is interpreted as <to> with <from> = 0 assumed\n");
-	  return 1;
-	}
-	if(argc=2) sscanf(argv[1],"%d",&to);
-	else {
-	     sscanf(argv[1],"%d",&from);
-	     sscanf(argv[2],"%d",&to);
-	}
-	if(from>to && to <0){
-	   printf("wrong arguments\n");
-	   return 1;
-	}
-	for(i=from;i<=to;i++){ 
-	  semaphoreID =i;
-	  SemDel();
-	  DeleteSharedRegion((long)i);
-	}
+    if(argc<2){
+      printf("Usage:\n ipc.clean [<from>] <to> \n single argument is interpreted as <to> with <from> = 0 assumed\n");
+      return 1;
+    }
+    if(argc=2) sscanf(argv[1],"%d",&to);
+    else {
+         sscanf(argv[1],"%d",&from);
+         sscanf(argv[2],"%d",&to);
+    }
+    if(from>to && to <0){
+       printf("wrong arguments\n");
+       return 1;
+    }
+    for(i=from;i<=to;i++){ 
+      semaphoreID =i;
+      SemDel();
+      DeleteSharedRegion((long)i);
+    }
 
+    return 0;
 }
-

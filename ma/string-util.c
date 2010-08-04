@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*$Id: string-util.c,v 1.2 1995-02-02 23:18:32 d3g681 Exp $*/
 /*
  * string-util.c
@@ -25,7 +29,9 @@
  * bytes pointed to).  <Global Comment 1> is concerned with Nstrings.
  */
 
-#include <string.h>
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
 #include "string-util.h"
 
 /**
@@ -39,9 +45,9 @@
 /* ------------------------------------------------------------------------- */
 
 unsigned int str_len(s)
-    char		*s;		/* string */
+    char        *s;        /* string */
 {
-    int			length = 0;
+    int            length = 0;
 
     /* see <Global Comment 1> */
     if (!s)
@@ -72,13 +78,13 @@ unsigned int str_len(s)
 /* ------------------------------------------------------------------------- */
 
 int str_match(s, slist, n)
-    char		*s;		/* string to match */
-    char		*slist[];	/* list of strings to search */
-    unsigned int	n;		/* # of strings in slist */
+    char        *s;        /* string to match */
+    char        *slist[];    /* list of strings to search */
+    unsigned int    n;        /* # of strings in slist */
 {
-    int		i;		/* loop index */
-    int		length;		/* of s */
-    int		match;		/* index of string in slist matched by s */
+    int        i;        /* loop index */
+    int        length;        /* of s */
+    int        match;        /* index of string in slist matched by s */
 
     /* see <Global Comment 1> */
     if (!s)

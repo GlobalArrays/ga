@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*              
  * module: global.periodic.c
  * author: Author: Jialin Ju, PNNL
@@ -27,12 +31,16 @@
  */
 
 
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #include "global.h"
 #include "globalp.h"
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
 #include "ga_vampir.h"
 #endif
 
@@ -195,7 +203,7 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
     get_range = ngai_peri_get_range_(ndim, dims, lo, hi, range, range_num,
                                      offset, op_code);
     
-    if(!get_range) ga_error("g_a indices are invalid ", 0L);
+    if(!get_range) gai_error("g_a indices are invalid ", 0L);
 
     /* If this is a regular patch, not periodic operation needed */
     if(get_range == IS_REGULAR_PATCH) {
@@ -210,7 +218,7 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
               nga_acc_(g_a, lo, hi, buf, ld, alpha);
               break;
           default:
-              ga_error("This operation is invalid ", 0L);
+              gai_error("This operation is invalid ", 0L);
         }
         return;
     }
@@ -252,7 +260,7 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
                        (char *)buf+my_offset*GAsizeofM(type), ld, alpha);
               break;
           default:
-              ga_error("This operation is invalid ", 0L);
+              gai_error("This operation is invalid ", 0L);
         }      
 
         counter[0]++;
@@ -269,11 +277,11 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
 void FATR nga_periodic_get_(Integer *g_a, Integer *lo, Integer *hi,
                             void *buf, Integer *ld)
 {
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_begin(NGA_PERIODIC_GET,__FILE__,__LINE__);
 #endif
     ngai_periodic_(g_a, lo, hi, buf, ld, NULL, PERIODIC_GET);
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_end(NGA_PERIODIC_GET,__FILE__,__LINE__);
 #endif
 }
@@ -281,11 +289,11 @@ void FATR nga_periodic_get_(Integer *g_a, Integer *lo, Integer *hi,
 void FATR nga_periodic_put_(Integer *g_a, Integer *lo, Integer *hi,
                             void *buf, Integer *ld)
 {
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_begin(NGA_PERIODIC_PUT,__FILE__,__LINE__);
 #endif
     ngai_periodic_(g_a, lo, hi, buf, ld, NULL, PERIODIC_PUT);
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_end(NGA_PERIODIC_PUT,__FILE__,__LINE__);
 #endif
 }
@@ -293,11 +301,11 @@ void FATR nga_periodic_put_(Integer *g_a, Integer *lo, Integer *hi,
 void FATR nga_periodic_acc_(Integer *g_a, Integer *lo, Integer *hi,
                             void *buf, Integer *ld, void *alpha)
 {
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_begin(NGA_PERIODIC_ACC,__FILE__,__LINE__);
 #endif
     ngai_periodic_(g_a, lo, hi, buf, ld, alpha, PERIODIC_ACC);
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_end(NGA_PERIODIC_ACC,__FILE__,__LINE__);
 #endif
 }

@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c $Id: perfmod.F,v 1.4 2000-05-25 01:09:20 d3h325 Exp $
 c------------------------------------------------------------------------
 c Program perfmod.x is used to test performance of GA put,get,accumulate |
@@ -14,12 +17,7 @@ c
 c
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c     Intitialize the GA package
 c
@@ -35,13 +33,12 @@ c***  Initialize the MA package
      $    call ga_error("ma init failed",heap+stack)
 c
       call testit()
+c
+      if(ga_nodeid().eq.0) print *, 'All tests successful'
+c
       call ga_terminate()
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
       end
 
 

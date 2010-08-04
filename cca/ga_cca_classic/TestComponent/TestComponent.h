@@ -2,7 +2,7 @@
 #define _TESTCOMPONENT_H
 
 class TestComponent : public virtual classic::gov::cca::Component, 
-		      public virtual classic::gov::cca::GoPort {
+              public virtual classic::gov::cca::GoPort {
   
 public: 
   TestComponent();

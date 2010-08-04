@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c $Id: testeig.F,v 1.10 2004-11-13 02:49:18 edo Exp $
       program test
       implicit none
@@ -10,16 +13,11 @@ c
 c
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  initialize PEIGS
 #ifdef PAR_DIAG
-#ifdef SCALAPACK
+#ifdef HAVE_SCALAPACK
 c     something here?
 #else
        call mxinit()   ! PEIGS needs mxinit
@@ -40,11 +38,7 @@ c
       call testit()
       call ga_terminate()
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE() 
       end
 
 
@@ -79,11 +73,11 @@ c
          do i = 1, n
             a(i,j) = 1d0 * (i+j)  
             b(i,j) = DSIN(1d0* (i+j))   
-	    if(i.eq.j) then
+        if(i.eq.j) then
                b(i,j) = 2d0 *n
                a(i,j) = i
             endif
-	    if(i.le.j)then
+        if(i.le.j)then
                c(i,j) = a(i,j)
             else
                c(i,j) = 0d0
@@ -160,13 +154,13 @@ c        write(6,21)
  21      format(/' filling in ... ')
 c        call ffflush(6)
          do j = 1, n
-	    call ga_put(g_a, 1,n, j,j, a(1,j),n)
-	    call ga_put(g_b, 1,n, j,j, b(1,j),n)
-	    call ga_put(g_c, 1,n, j,j, c(1,j),n)
+        call ga_put(g_a, 1,n, j,j, a(1,j),n)
+        call ga_put(g_b, 1,n, j,j, b(1,j),n)
+        call ga_put(g_c, 1,n, j,j, c(1,j),n)
          enddo
-c	print *,'A'
+c    print *,'A'
         do j = 1, n
-c      	  call GA_GET(g_a, 1,n, j,j, eva,1)
+c            call GA_GET(g_a, 1,n, j,j, eva,1)
 c         write(6,'(10e8.2)')(eva(i),i=1,n)
         enddo
       endif
@@ -175,7 +169,7 @@ c***  check symmetrization
 c
       if (me .eq. 0) then
         print *,' '
- 	print *,'>checking ga_symmetrize '
+        print *,'>checking ga_symmetrize '
         print *,' '
         call ffflush(6)
       endif
@@ -203,9 +197,9 @@ c
 c***  check symmetrization 
 c
       if (me .eq. 0) then
- 	print *,' '
+        print *,' '
         print *,'>checking ga_transpose '
- 	print *,' '
+        print *,' '
         call ffflush(6)
       endif
 c
@@ -225,25 +219,25 @@ c
       enddo
       call ga_sync()
       if (me .eq. 0) then
- 	print *,' '
- 	print *,' ga_transpose is OK'
- 	print *,' '
+        print *,' '
+        print *,' ga_transpose is OK'
+        print *,' '
         call ffflush(6)
       endif
 c
 c
 c***  solve the eigenproblem
       if (me .eq. 0)then
- 	print *,' '
+        print *,' '
         write(6,*) '>checking the generalized eigensolver ... '
- 	print *,' '
+        print *,' '
         call ffflush(6)
       endif
       call ga_sync()
 #ifndef PAR_DIAG
       call ga_diag_seq(g_a,g_b,g_c,evals)
 #else
-#ifdef SCALAPACK
+#ifdef HAVE_SCALAPACK
 #if BLOCK_CYCLIC
       call ga_copy(g_a, g_aa)
       call ga_copy(g_b, g_bb)
@@ -258,9 +252,9 @@ c***  solve the eigenproblem
 #endif
 #endif
       if (me .eq. 0) then
- 	print *,' '
- 	print *,' checking multiplication'
- 	print *,' '
+        print *,' '
+        print *,' checking multiplication'
+        print *,' '
         call ffflush(6)
       endif
 c
@@ -279,7 +273,7 @@ c
       call ga_sync()
       if (me .eq. 0) then
          do j = 1, n
-	    call GA_GET(g_a, j,j, j,j, eva(j),1)
+        call GA_GET(g_a, j,j, j,j, eva(j),1)
          enddo
       endif
 
@@ -299,7 +293,7 @@ c
       call ga_sync()
       if (me .eq. 0) then
          do j = 1, n
-	    call GA_GET(g_b, j,j, j,j, evb(j),1)
+        call GA_GET(g_b, j,j, j,j, evb(j),1)
          enddo
          write(6,*)'  j   lambda      eva      evb      eva/evb' 
          write(6,*)'  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^' 
@@ -313,10 +307,10 @@ c
          call ffflush(6)
       endif
       if (me .eq. 0) then
- 	print *,' '
- 	print *,'  eigensolver & multiplication are OK'
- 	print *,' '
- 	print *,' '
+        print *,' '
+        print *,'  eigensolver & multiplication are OK'
+        print *,' '
+        print *,' '
         call ffflush(6)
       endif
 c
@@ -336,7 +330,7 @@ c***  solve the std eigenproblem
 
       call ga_sync()
 #ifdef PAR_DIAG
-#ifdef SCALAPACK
+#ifdef HAVE_SCALAPACK
 #if BLOCK_CYCLIC
       call ga_copy(g_a, g_aa)
 #endif

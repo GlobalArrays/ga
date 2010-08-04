@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: regions.c,v 1.14.2.3 2007-10-05 16:51:51 manoj Exp $ interface to keep track of memory regions accross the cluster */
 /* 
  * armci_region_init - allocates list of regions, initialization
@@ -23,8 +27,12 @@
  */
 
 #include "armcip.h"
-#include <stdlib.h>
-#include <stdio.h>
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 #include "copy.h"
 
 /*this should match similar def in portals.c vapi.c and openib.c */
@@ -187,28 +195,20 @@ void armci_region_clus_record(int node, void *start, long size)
 void armci_region_init()
 { 
     ARMCI_PR_DBG("enter",0);
-    allow_pin = 1; 
-    clus_regions = (armci_reglist_t *)calloc(armci_nclus,
-            sizeof(armci_reglist_t));
-
-    if(!clus_regions)
-        armci_die("armci_region_init: calloc failed",armci_nclus);
-
+    allow_pin =1; 
+    clus_regions=(armci_reglist_t*)calloc(armci_nclus,sizeof(armci_reglist_t));
+    if(!clus_regions)armci_die("armci_region_init: calloc failed",armci_nclus);
 #ifdef REGIONS_REQUIRE_MEMHDL
     serv_regions=(armci_reglist_t*)calloc(armci_nclus,sizeof(armci_reglist_t));
-    if(!serv_regions)
-        armci_die("armci_region_init: calloc failed",armci_nclus);
+    if(!serv_regions)armci_die("armci_region_init: calloc failed",armci_nclus);
 #endif
     exch_list = (void**)calloc(2*armci_nclus, sizeof(void*));
-    if(!exch_list) 
-        armci_die("armci_region_init: calloc 2 failed",armci_nclus);
+    if(!exch_list) armci_die("armci_region_init: calloc 2 failed",armci_nclus);
     bzero(exch_loc,sizeof(exch_loc));
     bzero(exch_rem,sizeof(exch_rem));
 
-    if(needs_pin_ptr) 
-        armci_region_register_loc(needs_pin_ptr, needs_pin_size); 
-    if(needs_pin_shmptr) 
-        armci_region_register_shm(needs_pin_shmptr, needs_pin_shmsize); 
+    if(needs_pin_ptr) armci_region_register_loc(needs_pin_ptr,needs_pin_size); 
+    if(needs_pin_shmptr) armci_region_register_shm(needs_pin_shmptr,needs_pin_shmsize); 
     ARMCI_PR_DBG("exit",0);
 } 
 

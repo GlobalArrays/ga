@@ -1,10 +1,18 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: timer.c,v 1.3 2004-04-09 22:03:51 manoj Exp $ */
 #ifdef WIN32
    static double msec;             /* reference for timer */
 #  include <windows.h>
 #else
+#if HAVE_SYS_TYPES_H
 #  include <sys/types.h>
+#endif
+#if HAVE SYS_TIME_H
 #  include <sys/time.h>
+#endif
    static unsigned firstsec=0;     /* Reference for timer */
    static unsigned firstusec=0;    /* Reference for timer */
 #endif

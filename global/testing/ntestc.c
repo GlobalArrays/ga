@@ -1,12 +1,17 @@
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+
 #include "macdecls.h"
 #include "ga.h"
-#ifdef MPI
-#include <mpi.h>
-#else
-#include "sndrcv.h"
-#endif
+#include "mp3.h"
 
 /* utilities for GA test programs */
 #include "testutil.h"
@@ -228,11 +233,7 @@ char **argv;
 Integer heap=300000, stack=300000;
 int me, nproc;
 
-#ifdef MPI
-    MPI_Init(&argc, &argv);                       /* initialize MPI */
-#else
-    PBEGIN_(argc, argv);                        /* initialize TCGMSG */
-#endif
+    MP_INIT(argc,argv);
 
     GA_Initialize();                           /* initialize GA */
 
@@ -263,11 +264,7 @@ int me, nproc;
     if(me==0)printf("\nAll tests successful\n\n");
     GA_Terminate();
 
-#ifdef MPI
-    MPI_Finalize();
-#else
-    PEND_();
-#endif
+    MP_FINALIZE();
 
     return 0;
 }

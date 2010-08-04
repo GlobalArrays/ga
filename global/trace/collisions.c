@@ -1,5 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 
 int **Patches,  *Col, *lastCol;
 int p;
@@ -7,6 +15,7 @@ int p;
 #define hash(ilo,ihi,p) (((ilo)+(ihi))%(p))
 #define hash2(ilo,ihi,jlo,jhi,p) ( ((ilo)+(ihi) + (jlo)+(jhi))%(p) )
 
+int LocFound(int *patch);
 
 
 int **idim2(row,col)
@@ -54,7 +63,7 @@ int row,col;
    return(prow);
 }
 
-main(argc,argv)
+int main(argc,argv)
 int argc;
 char **argv;
 {
@@ -131,6 +140,8 @@ unsigned long time;
        printf("\n");
      }
    }
+
+   return 0;
 }
 
 

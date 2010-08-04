@@ -1,14 +1,26 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* OS specific server process/thread creation and destruction  
  * JN/03.25.2000
  */
-#include <stdio.h>
-#include <errno.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_ERRNO_H
+#   include <errno.h>
+#endif
 #include "armcip.h"
 
 #ifdef WIN32
 /************************** Windows threads **************************/
-#include <windows.h>
-#include <process.h>
+#if HAVE_WINDOWS_H
+#   include <windows.h>
+#endif
+#if HAVE_PROCESS_H
+#   include <process.h>
+#endif
 
 thread_id_t armci_serv_tid;
 unsigned long armci_serv_handle;
@@ -85,9 +97,15 @@ void armci_terminate_server_thread()
 #else
 /**************************** Unix processes ******************************/
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_SYS_WAIT_H
+#   include <sys/wait.h>
+#endif
 
 pid_t server_pid= (pid_t)0;
 

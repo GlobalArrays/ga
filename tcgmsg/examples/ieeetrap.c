@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*$Id: ieeetrap.c,v 1.2 1995-02-02 23:24:12 d3g681 Exp $*/
 #include <floatingpoint.h>
 #include <stdio.h>

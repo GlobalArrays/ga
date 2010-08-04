@@ -8,48 +8,14 @@
 #include "message.h"
 #include "base.h"
 
-#include <math.h>
-#ifdef WIN32
-#include <armci.h>
-#else
-#include <../../armci/src/armci.h>
+#if HAVE_MATH_H
+#   include <math.h>
 #endif
+#include "armci.h"
 
-#ifdef KSR
-#  define dgemm_ sgemm_
-#  define zgemm_ cgemm_
-#endif
-
-#ifdef CRAY
-#      include <fortran.h>
-#      define  DGEMM SGEMM
-#      define  ZGEMM CGEMM
-#      define  CGEMM CGEMM
-#elif defined(WIN32)
-extern void FATR DGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
-		       void*, void*, Integer*, void*, Integer*, void*,
-		       void*, Integer*);
-extern void FATR ZGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
-		       DoubleComplex*, DoubleComplex*, Integer*,DoubleComplex*,
-		       Integer*, DoubleComplex*, DoubleComplex*, Integer*);
-extern void FATR CGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
-		       SingleComplex*, SingleComplex*, Integer*,SingleComplex*,
-		       Integer*, SingleComplex*, SingleComplex*, Integer*);
-#elif defined(F2C2__)
-#      define DGEMM dgemm__
-#      define ZGEMM zgemm__
-#      define CGEMM cgemm__
-#elif defined(HITACHI)
-#      define dgemm_ DGEMM
-#      define zgemm_ ZGEMM
-#      define cgemm_ CGEMM
-#endif
-
-#if defined(CRAY) || defined(WIN32)
-#   define cptofcd(fcd)  _cptofcd((fcd),1)
-#else
-#      define cptofcd(fcd) (fcd)
-#endif
+#define dgemm_ F77_FUNC(dgemm,DGEMM)
+#define zgemm_ F77_FUNC(zgemm,ZGEMM)
+#define cgemm_ F77_FUNC(cgemm,CGEMM)
 
 /* min acceptable amount of memory (in elements) and default chunk size */
 #  define MINMEM 64
@@ -77,18 +43,18 @@ typedef struct {
 }task_list_t;
 
 extern void FATR  ga_nbget_(Integer *g_a, Integer *ilo, Integer *ihi, 
-			    Integer *jlo, Integer *jhi, Void *buf, 
+			    Integer *jlo, Integer *jhi, void *buf, 
 			    Integer *ld, Integer *nbhdl);
 
 extern logical ngai_patch_intersect(Integer *lo, Integer *hi,
                                     Integer *lop, Integer *hip, Integer ndim);
     
 #define VECTORCHECK(rank,dims,dim1,dim2, ilo, ihi, jlo, jhi) \
-  if(rank>2)  ga_error("rank is greater than 2",rank); \
+  if(rank>2)  gai_error("rank is greater than 2",rank); \
   else if(rank==2) {dim1=dims[0]; dim2=dims[1];} \
   else if(rank==1) {if((ihi-ilo)>0) { dim1=dims[0]; dim2=1;} \
                     else { dim1=1; dim2=dims[0];}} \
-  else ga_error("rank must be atleast 1",rank);
+  else gai_error("rank must be atleast 1",rank);
 
 #define WAIT_GET_BLOCK(nbhdl) ga_nbwait_(nbhdl)
 

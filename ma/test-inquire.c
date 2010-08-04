@@ -1,24 +1,31 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*
  * $Id: test-inquire.c,v 1.1 2002-09-14 05:40:30 d3g001 Exp $
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #include "macdecls.h"
 
 #define MAXHANDLES 10
 
 static void print_inquire();
 
-main()
+int main(int argc, char **argv)
 {
-    Integer     units_heap;
-    Integer     units_stack;
-    int         howmany;
-    Boolean     ok;
-
-    Integer     handle[MAXHANDLES];
-    Integer     index[MAXHANDLES];
+    Integer        units_heap;
+    Integer        units_stack;
+    Boolean        ok;
+                  
+    Integer        handle[MAXHANDLES];
+    MA_AccessIndex index[MAXHANDLES];
 
     /* set sizes of heap and stack */
     units_heap = 50000;
@@ -32,7 +39,8 @@ main()
         exit(1);
     }
 
-    printf("# initialized heap = %d, stack = %d\n", units_heap, units_stack);
+    printf("# initialized heap = %ld, stack = %ld\n",
+            (long)units_heap, (long)units_stack);
 
     printf("# should see roughly the following values:\n");
     printf("#  MA_inquire_heap(MT_DBL)               = 50K\n");
@@ -61,6 +69,8 @@ main()
     printf("#  MA_inquire_stack_no_partition(MT_DBL) = 5K\n");
 
     print_inquire();
+
+    return 0;
 }
 
 void print_inquire()

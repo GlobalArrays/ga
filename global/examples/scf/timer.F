@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
       double precision function timer()
 c
 c     return the time since the last call to timer.

@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
       subroutine clear_hash
 #include "common.fh"
       integer i

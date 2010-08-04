@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: ga_profile.c,v 1.5 2005-07-21 08:13:26 manoj Exp $ */
 /**
  * Note #1: Right now, only process 0's profile is printed.
@@ -28,20 +32,28 @@
  */
 
 
-#ifdef GA_PROFILE
+#ifdef ENABLE_PROFILE
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <global.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#include "global.h"
 #include "globalp.h"
 #include "base.h" 
 #include "ga_profile.h" 
 
 #ifndef MPI
-#  include "sndrcv.h"
-#   define MP_TIMER TCGTIME_
+#  include "tcgmsg.h"
+#   define MP_TIMER tcg_time
 #else
 #  include "mpi.h"
 #   define MP_TIMER MPI_Wtime
@@ -123,19 +135,19 @@ void ga_profile_start(int g_a, long bytes, int ndim, Integer *lo, Integer *hi,
     if(count>1) non_contig=1; /* i.e. non-contiguous */
  
     switch(comm_type) {
-       case GA_PROFILE_PUT:
+       case ENABLE_PROFILE_PUT:
 	  if(non_contig) event_type = NC_PUT;
 	  else event_type = PUT;
 	  break;
-       case GA_PROFILE_GET: 
+       case ENABLE_PROFILE_GET: 
 	  if(non_contig) event_type = NC_GET;
 	  else event_type = GET;
 	  break;
-       case GA_PROFILE_ACC: 
+       case ENABLE_PROFILE_ACC: 
 	  if(non_contig) event_type = NC_ACC;
 	  else event_type = ACC;
 	  break;
-       default: ga_error("GA_PROFILE: Invalid communication type", 0L);
+       default: gai_error("ENABLE_PROFILE: Invalid communication type", 0L);
     }
 
     /* set the curent event for timer */
@@ -169,7 +181,7 @@ void ga_profile_stop() {
        gCURRENT_EVNT.is_set = 0; /* clear the event */
     }
     else
-       ga_error("GA_PROFILE: No event set. Probably ga_profile_stop() is called before ga_profile_start()", 0L);
+       gai_error("ENABLE_PROFILE: No event set. Probably ga_profile_stop() is called before ga_profile_start()", 0L);
 
 #if GA_PRINT_STRIDE
     {  /* measure the time of each strided data transfer */
@@ -297,5 +309,5 @@ void ga_profile_terminate() {
     }
 }
 
-#endif /* end of GA_PROFILE */
+#endif /* end of ENABLE_PROFILE */
 

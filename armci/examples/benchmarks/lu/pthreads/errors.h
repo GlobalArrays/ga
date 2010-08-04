@@ -1,13 +1,23 @@
 #ifndef __errors_h
 #define __errors_h
 
-#include <unistd.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+#if HAVE_ERRNO_H
+#   include <errno.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
 
-/*
+/**
  * Define a macro that can be used for diagnostic output from
  * examples. When compiled -DDEBUG, it results in calling printf
  * with the specified argument list. When DEBUG is not defined, it
@@ -19,7 +29,7 @@
 # define DPRINTF(arg)
 #endif
 
-/*
+/**
  * NOTE: the "do {" ... "} while (0);" bracketing around the macros
  * allows the err_abort and errno_abort macros to be used as if they
  * were function calls, even in contexts where a trailing ";" would

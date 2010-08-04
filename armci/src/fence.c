@@ -1,12 +1,18 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: fence.c,v 1.25.4.6 2007-08-30 19:17:02 manoj Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
-#   include <sndrcv.h>
+#   include <tcgmsg.h>
 #elif defined(BGML)
 #   include "bgml.h"
 #else
@@ -30,7 +36,7 @@ void armci_init_fence()
 #if defined(THREAD_SAFE)
      _armci_fence_arr=calloc(armci_nproc*armci_user_threads.max,1);
 #else
-     _armci_fence_arr = calloc(armci_nproc,1);
+     _armci_fence_arr=calloc(armci_nproc,1);
 #endif
      if(!_armci_fence_arr)armci_die("armci_init_fence: calloc failed",0);
 #endif
@@ -47,10 +53,8 @@ void armci_update_fence_array(int proc, int inc)
 #endif
 
 
-void ARMCI_Fence(int proc)
+void PARMCI_Fence(int proc)
 {
-int i;
-
 #ifdef GA_USE_VAMPIR
      vampir_begin(ARMCI_FENCE,__FILE__,__LINE__);
  if (armci_me != proc)
@@ -112,10 +116,10 @@ void _armci_amina_allfence()
            int master=armci_clus_info[cluster].master;
 
            h = ah+(c%MAX_HNDL);
-           if(c>=MAX_HNDL) ARMCI_Wait(h);
+           if(c>=MAX_HNDL) PARMCI_Wait(h);
 
            ARMCI_INIT_HANDLE(h);
-           ARMCI_NbGet(memlock_table_array[master], &buf, sizeof(int), master,
+           PARMCI_NbGet(memlock_table_array[master], &buf, sizeof(int), master,
                        h);
 
            /* one ack per cluster node suffices */
@@ -131,11 +135,11 @@ void _armci_amina_allfence()
         }
     }
 
-    for(i = 0; i < MIN(c,MAX_HNDL); i++) ARMCI_Wait(ah + i);
+    for(i = 0; i < ARMCI_MIN(c,MAX_HNDL); i++) PARMCI_Wait(ah + i);
 #endif
 }
 
-void ARMCI_AllFence()
+void PARMCI_AllFence()
 {
 #ifdef GA_USE_VAMPIR
      vampir_begin(ARMCI_ALLFENCE,__FILE__,__LINE__);
@@ -153,7 +157,7 @@ void ARMCI_AllFence()
 #if defined(GM) && !defined(ACK_FENCE)
      _armci_amina_allfence(); 
 #else
-     { int p; for(p=0;p<armci_nproc;p++)ARMCI_Fence(p); }
+     { int p; for(p=0;p<armci_nproc;p++)PARMCI_Fence(p); }
 #endif
 #endif
 #ifdef ARMCI_PROFILE
@@ -165,7 +169,7 @@ void ARMCI_AllFence()
        MEM_FENCE;
 }
 
-void ARMCI_Barrier()
+void PARMCI_Barrier()
 {
     if(armci_nproc==1)return;
 #ifdef ARMCI_PROFILE
@@ -184,7 +188,7 @@ void ARMCI_Barrier()
 #  else
       {
          long type=ARMCI_TAG;
-         SYNCH_(&type);
+         tcg_synch(type);
       }
 #  endif
 
@@ -204,13 +208,13 @@ void ARMCI_Barrier()
     bgml_barrier(3);
 
 #else
-    ARMCI_AllFence();
+    PARMCI_AllFence();
 #  ifdef MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #  else
     {
        long type=ARMCI_TAG;
-       SYNCH_(&type);
+       tcg_synch(type);
     }
 #  endif
 #endif

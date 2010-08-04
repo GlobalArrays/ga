@@ -1,12 +1,25 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: request.c,v 1.74.2.11 2007-10-18 06:09:37 d3h325 Exp $ */
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_SIGNAL_H
+#   include <signal.h>
+#endif
+
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
 #include "shmem.h"
 #include "copy.h"
 #include "gpc.h"
-#include <stdio.h>
-#include <signal.h>
+
+#ifdef SOCKETS
+extern void armci_sock_send(int to, void *data, int len);
+#endif
 
 #define DEBUG_ 0
 
@@ -768,7 +781,11 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
        && !nb_handle
 #   endif
       ){
-       armci_complete_vector_get(darr,len,msginfo);
+#ifdef SOCKETS
+        armci_rcv_hdlr(msginfo);
+#else
+        armci_complete_vector_get(darr,len,msginfo);
+#endif
     }
 
 #if defined(SOCKETS) && !defined(NB_SOCKETS)
@@ -798,7 +815,6 @@ int armci_rem_strided(int op, void* scale, int proc,
     int  *rem_stride_arr;
     int bufsize = sizeof(request_header_t);
     int ehlen =0;
-    msg_tag_t msg_tag;
 
     /* we send ext header only for last chunk */
 #if 0
@@ -844,7 +860,7 @@ int armci_rem_strided(int op, void* scale, int proc,
 
     if(nb_handle)
 #ifdef ACC_SMP
-	 if(!ACC(op))
+	 if(!ARMCI_ACC(op))
 #endif
     {
 /*    INIT_SENDBUF_INFO(nb_handle,buf,op,proc); same as _armci_buf_set_tag, why here? */
@@ -924,7 +940,7 @@ int armci_rem_strided(int op, void* scale, int proc,
     }
 
     /*
-	if(ACC(op))printf("%d client len=%d alpha=%lf data=%lf,%lf\n",
+	if(ARMCI_ACC(op))printf("%d client len=%d alpha=%lf data=%lf,%lf\n",
 	     armci_me, buf-(char*)msginfo,((double*)buf)[0],*((double*)src_ptr),             ((double*)buf)[1]);
     */
 
@@ -957,7 +973,7 @@ int armci_rem_strided(int op, void* scale, int proc,
              int seq=1;
              armci_send_req(proc,msginfo,bufsize);
              for(i=0; i< bytes; i+=CHUN){
-                  int len= MIN(CHUN,(bytes-i));
+                  int len= ARMCI_MIN(CHUN,(bytes-i));
                   char *p = i +(char*)dst_ptr;
 
                   armci_pin_contig(p, len);
@@ -991,7 +1007,7 @@ int armci_rem_strided(int op, void* scale, int proc,
        }
 #if !defined(MPI_SPAWN)
 #ifdef ACC_SMP
-       if(!ACC(op))
+       if(!ARMCI_ACC(op))
 #endif
        armci_save_strided_dscr(&buf0,dst_ptr,dst_stride_arr,count,
                                  stride_levels,1);
@@ -1335,7 +1351,6 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
     void *scale;
     char *dscr_save = dscr;
     int  rc, i,proc;
-    int stat;
 #   if defined(CLIENT_BUF_BYPASS) || defined(LAPI2) 
       int  *client_stride_arr=0; 
       void *client_ptr=0;
@@ -1381,7 +1396,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 
 	scale = dscr_save+ (msginfo->dscrlen - slen -msginfo->ehlen);
 /*
-    if(ACC(msginfo->operation))
+    if(ARMCI_ACC(msginfo->operation))
       fprintf(stderr,"%d in server len=%d slen=%d alpha=%lf data=%lf\n", 
                armci_me, msginfo->dscrlen, slen, *(double*)scale,*(double*)buf);
 */
@@ -1531,7 +1546,7 @@ void armci_server_vector( request_header_t *msginfo,
      default:
 
       /* this should be accumulate */
-      if(!ACC(msginfo->operation))
+      if(!ARMCI_ACC(msginfo->operation))
                armci_die("v server: wrong op code",msginfo->operation);
 
 /*      fprintf(stderr,"received first=%lf last =%lf in buffer\n",*/

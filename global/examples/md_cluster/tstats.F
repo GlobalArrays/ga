@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c
 c                                   NOTICE
 c
@@ -12,6 +15,7 @@ c   Products at Pacific Northwest Laboratory, Richland, Washington,  99352.
 c
       function wraptime()
       double precision wraptime
+#if HAVE_ETIME      
       real*4 etime,tarray(2)
       external etime
 c
@@ -23,10 +27,12 @@ c
 c      SGI
 c
       wraptime = dble(etime(tarray))
+#else
 c
 c      NO TIME STATISTICS
 c
-c      wraptime = 0.0d00
+      wraptime = 0.0d00
+#endif
 c
       return
       end

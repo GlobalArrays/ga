@@ -1,10 +1,14 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: message.c,v 1.58.6.4 2007-04-24 10:08:26 vinod Exp $ */
 #if defined(BGML)
 # include "bgml.h"
 #elif defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
-#   include <sndrcv.h>
+#   include <tcgmsg.h>
 #else
 #   ifndef MPI
 #      define MPI
@@ -14,18 +18,27 @@
 #include "message.h"
 #include "armcip.h"
 #include "copy.h"
-#include <stdio.h>
-#include <assert.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
 #ifdef _POSIX_PRIORITY_SCHEDULING
 #ifndef HITACHI
 #  include <sched.h>
 #endif
 #endif
 #include "armci.h"
+#include "acc.h"
 
 #define DEBUG_ 0
 #if defined(SYSV) || defined(MMAP) ||defined (WIN32)
 #    include "shmem.h"
+#endif
+
+#ifdef ARMCI_PROFILE
+#include "armci_profile.h"
 #endif
 
 /* global operations are use buffer size of BUF_SIZE doubles */ 
@@ -95,7 +108,9 @@ static bufstruct *_gop_buffer;
 /*\
  *  Variables/structures for use in Barrier and for Binomial tree
 \*/
-#include <math.h>
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
 int barr_switch;
 static int LnB=0,powof2nodes,Lp2;
 typedef struct {
@@ -151,11 +166,8 @@ char *mp_group_name = "mp_working_group";
 
 static void _allocate_mem_for_work(){
     work = (double *)malloc(sizeof(double)*BUF_SIZE);
-    if(!work)
-        armci_die("malloc in _allocate_mem_for_work failed",0);
-    lwork = (long *)work; 
-    iwork = (int *)work; 
-    fwork = (float *)work;
+    if(!work)armci_die("malloc in _allocate_mem_for_work failed",0);
+    lwork = (long *)work; iwork = (int *)work; fwork = (float *)work;
     llwork = (long long *)work;
 }
 
@@ -164,11 +176,10 @@ static void _allocate_mem_for_work(){
 \*/
 void armci_msg_gop_init()
 {
-    /*work was a static global array of doubles. It has been changed to get
-      memory from malloc because of a problem with cc on SV1
-      */
-    if(work==NULL)
-        _allocate_mem_for_work();
+/*work was a static global array of doubles. It has been changed to get
+  memory from malloc because of a problem with cc on SV1
+*/
+    if(work==NULL)_allocate_mem_for_work();
 #if !defined(SGIALTIX) && defined(SYSV) || defined(MMAP) || defined(WIN32)
     if(ARMCI_Uses_shm()){
        char *tmp;
@@ -185,7 +196,7 @@ void armci_msg_gop_init()
        ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
        if(armci_me==armci_master) bytes += 128;
        else bytes=0;
-       ARMCI_Malloc(ptr_arr, bytes);
+       PARMCI_Malloc(ptr_arr, bytes);
        tmp = (char*)ptr_arr[armci_master];
 
        if(DEBUG_){
@@ -215,8 +226,8 @@ void armci_msg_gop_init()
        barr_snd_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
        barr_rcv_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
 
-       if(ARMCI_Malloc(barr_snd_ptr,size))armci_die("malloc barrinit failed",0);
-       if(ARMCI_Malloc(barr_rcv_ptr,size))armci_die("malloc barrinit failed",0);
+       if(PARMCI_Malloc(barr_snd_ptr,size))armci_die("malloc barrinit failed",0);
+       if(PARMCI_Malloc(barr_rcv_ptr,size))armci_die("malloc barrinit failed",0);
        if(barr_rcv_ptr[armci_me]==NULL || barr_snd_ptr[armci_me]==NULL)
          armci_die("problems in malloc barr_init",0);
        powof2nodes=1;
@@ -275,7 +286,7 @@ void armci_msg_barr_init(){
     ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
     if(armci_me==armci_master) size = size+128;
     else size=0;
-    ARMCI_Malloc(ptr_arr, size);
+    PARMCI_Malloc(ptr_arr, size);
     tmp = (char*)ptr_arr[armci_master];
     size=2*sizeof(int);
 
@@ -289,8 +300,8 @@ void armci_msg_barr_init(){
     barr_snd_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
     barr_rcv_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
 
-    if(ARMCI_Malloc(barr_snd_ptr,size))armci_die("malloc barr_init failed",0);
-    if(ARMCI_Malloc(barr_rcv_ptr,size))armci_die("malloc barr_init failed",0);
+    if(PARMCI_Malloc(barr_snd_ptr,size))armci_die("malloc barr_init failed",0);
+    if(PARMCI_Malloc(barr_rcv_ptr,size))armci_die("malloc barr_init failed",0);
     if(barr_rcv_ptr[armci_me]==NULL || barr_snd_ptr[armci_me]==NULL)
        armci_die("problems in malloc barr_init",0);
 
@@ -398,6 +409,10 @@ static void _armci_msg_barrier(){
 #endif /*barrier enabled only for lapi*/
 void armci_msg_barrier()
 {
+#ifdef ARMCI_PROFILE
+    armci_profile_start(ARMCI_PROF_BARRIER);    
+#endif
+    
 #ifdef BGML
   bgml_barrier (3); /* this is always faster than MPI_Barrier() */
 #elif defined(MPI)
@@ -411,13 +426,18 @@ void armci_msg_barrier()
      else
 #endif
      {
-       long tag=ARMCI_TAG;
-       SYNCH_(&tag);
+       tcg_synch(ARMCI_TAG);
      }
 #  else
-     long tag=ARMCI_TAG;
-     SYNCH_(&tag);
+     {
+        tcg_synch(ARMCI_TAG);
+     }
 #  endif
+     
+#ifdef ARMCI_PROFILE
+     armci_profile_stop(ARMCI_PROF_BARRIER);     
+#endif
+     
 }
 /***********************End Barrier Code*************************************/
 
@@ -425,32 +445,47 @@ void armci_msg_barrier()
 int armci_msg_me()
 {
 #ifdef BGML
-     return(BGML_Messager_rank());
-#  elif defined(MPI)
-     int me;
-     MPI_Comm_rank(MPI_COMM_WORLD, &me);
-     return(me);
-#  elif defined(PVM)
-       return(pvm_getinst(mp_group_name,pvm_mytid()));
-#  else
-     return (int)NODEID_();
-#  endif
+    return BGML_Messager_rank();
+#elif defined(DCMF)
+    return DCMF_Messager_rank();
+#elif defined(MPI)
+    static int counter = 0;
+    int me;
+    if (counter == 0) {
+        MPI_Comm_rank(MPI_COMM_WORLD, &me);
+        armci_me = me;   
+        counter = 1;
+    }
+    return armci_me;
+
+#elif defined(PVM)
+    return(pvm_getinst(mp_group_name,pvm_mytid()));
+#else
+    return (int)tcg_nodeid();
+#endif
 }
 
 
 int armci_msg_nproc()
 {
 #ifdef BGML
-   return(BGML_Messager_size());
+    return BGML_Messager_size();
+#elif defined(DCMF)
+    return DCMF_Messager_size();
 #elif defined(MPI)
-     int nproc;
-     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-     return nproc;
-#  elif defined(PVM)
-     return(pvm_gsize(mp_group_name));
-#  else
-     return (int)NNODES_();
-#  endif
+    static int counter = 0;
+    int nproc;
+    if (counter == 0) {
+        MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+        armci_nproc = nproc;
+        counter = 1;
+    }
+    return armci_nproc;
+#elif defined(PVM)
+    return(pvm_gsize(mp_group_name));
+#else
+    return (int)tcg_nnodes();
+#endif
 }
 
 #ifdef CRAY_YMP
@@ -461,13 +496,15 @@ int armci_msg_nproc()
 double armci_timer()
 {
 #ifdef BGML
-   return BGML_Timer();
-#  elif defined(MPI)
+    return BGML_Timer();
+#elif defined(DCMF)
+    return DCMF_Timer();
+#elif defined(MPI)
 
-     return MPI_Wtime();
-#  else
-     return TCGTIME_();
-#  endif
+    return MPI_Wtime();
+#else
+    return tcg_time();
+#endif
 }
 #endif
 
@@ -475,21 +512,23 @@ double armci_timer()
 void armci_msg_abort(int code)
 {
 #ifdef BGML
-   fprintf(stderr,"ARMCI aborting [%d]\n", code);
+    fprintf(stderr,"ARMCI aborting [%d]\n", code);
+#elif defined(DCMF)
+    fprintf(stderr,"ARMCI aborting [%d]\n", code);
 #elif defined(MPI)
 #    ifndef BROKEN_MPI_ABORT
-         MPI_Abort(MPI_COMM_WORLD,code);
+    MPI_Abort(MPI_COMM_WORLD,code);
 #    endif
-#  elif defined(PVM)
-     char error_msg[25];
-     sprintf(error_msg, "ARMCI aborting [%d]", code);
-     pvm_halt();
-#  else
-     Error("ARMCI aborting",(long)code);
-#  endif
+#elif defined(PVM)
+    char error_msg[25];
+    sprintf(error_msg, "ARMCI aborting [%d]", code);
+    pvm_halt();
+#else
+    tcg_error("ARMCI aborting",(long)code);
+#endif
     fprintf(stderr,"%d:aborting\n",armci_me);
-   /* trap for broken abort in message passing libs */
-   _exit(1);
+    /* trap for broken abort in message passing libs */
+    _exit(1);
 }
 
 void armci_msg_bintree(int scope, int* Root, int *Up, int *Left, int *Right)
@@ -742,7 +781,7 @@ void armci_msg_brdcst(void* buffer, int len, int root)
 #  else
    {
       long ttag=ARMCI_TAG, llen=len, rroot=root;
-      BRDCST_(&ttag, buffer, &llen, &rroot);
+      tcg_brdcst(ttag, buffer, llen, rroot);
    }
 #  endif
 }
@@ -764,7 +803,7 @@ void armci_msg_snd(int tag, void* buffer, int len, int to)
       armci_die("bgl shouldn't use armci_msg_snd", armci_me);
 #  else
       long ttag=tag, llen=len, tto=to, block=1;
-      SND_(&ttag, buffer, &llen, &tto, &block);
+      tcg_snd(ttag, buffer, llen, tto, block);
 #  endif
 }
 
@@ -786,7 +825,7 @@ void armci_msg_rcv(int tag, void* buffer, int buflen, int *msglen, int from)
             armci_die("bgl shouldn't use armci_msg_rcv", armci_me);
 #  else
       long ttag=tag, llen=buflen, mlen, ffrom=from, sender, block=1;
-      RCV_(&ttag, buffer, &llen, &mlen, &ffrom, &sender, &block);
+      tcg_rcv(ttag, buffer, llen, &mlen, ffrom, &sender, block);
       if(msglen)*msglen = (int)mlen;
 #  endif
 }
@@ -814,7 +853,7 @@ int armci_msg_rcvany(int tag, void* buffer, int buflen, int *msglen)
       armci_die("bgl shouldn't use armci_msg_rcvany", armci_me);
 #  else
       long ttag=tag, llen=buflen, mlen, ffrom=-1, sender, block=1;
-      RCV_(&ttag, buffer, &llen, &mlen, &ffrom, &sender, &block);
+      tcg_rcv(ttag, buffer, llen, &mlen, ffrom, &sender, block);
       if(msglen)*msglen = (int)mlen;
       return (int)sender;
 #  endif
@@ -847,24 +886,24 @@ static void ldoop(int n, char *op, long *x, long* work)
       *x++ *= *work++;
   else if (strncmp(op,"max",3) == 0)
     while(n--) {
-      *x = MAX(*x, *work);
+      *x = ARMCI_MAX(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"min",3) == 0)
     while(n--) {
-      *x = MIN(*x, *work);
+      *x = ARMCI_MIN(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"absmax",6) == 0)
     while(n--) {
-      register long x1 = ABS(*x), x2 = ABS(*work);
-      *x = MAX(x1, x2);
+      register long x1 = ARMCI_ABS(*x), x2 = ARMCI_ABS(*work);
+      *x = ARMCI_MAX(x1, x2);
       x++; work++;
     }
   else if (strncmp(op,"absmin",6) == 0)
     while(n--) {
-      register long x1 = ABS(*x), x2 = ABS(*work);
-      *x = MIN(x1, x2);
+      register long x1 = ARMCI_ABS(*x), x2 = ARMCI_ABS(*work);
+      *x = ARMCI_MIN(x1, x2);
       x++; work++;
     }
   else if (strncmp(op,"or",2) == 0)
@@ -888,24 +927,24 @@ static void ldoop2(int n, char *op, long *x, long* work, long* work2)
       *x++ = *work++ *  *work2++;
   else if (strncmp(op,"max",3) == 0)
     while(n--) {
-      *x = MAX(*work2, *work);
+      *x = ARMCI_MAX(*work2, *work);
       x++; work++; work2++;
     }
   else if (strncmp(op,"min",3) == 0)
     while(n--) {
-      *x = MIN(*work2, *work);
+      *x = ARMCI_MIN(*work2, *work);
       x++; work++; work2++;
     }
   else if (strncmp(op,"absmax",6) == 0)
     while(n--) {
-      register long x1 = ABS(*work), x2 = ABS(*work2);
-      *x = MAX(x1, x2);
+      register long x1 = ARMCI_ABS(*work), x2 = ARMCI_ABS(*work2);
+      *x = ARMCI_MAX(x1, x2);
       x++; work++; work2++;
     }
   else if (strncmp(op,"absmin",6) == 0)
     while(n--) {
-      register long x1 = ABS(*work), x2 = ABS(*work2);
-      *x = MIN(x1, x2);
+      register long x1 = ARMCI_ABS(*work), x2 = ARMCI_ABS(*work2);
+      *x = ARMCI_MIN(x1, x2);
       x++; work++; work2++;
     }
   else if (strncmp(op,"or",2) == 0)
@@ -929,24 +968,24 @@ static void lldoop(int n, char *op, long long *x, long long* work)
       *x++ *= *work++;
   else if (strncmp(op,"max",3) == 0)
     while(n--) {
-      *x = MAX(*x, *work);
+      *x = ARMCI_MAX(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"min",3) == 0)
     while(n--) {
-      *x = MIN(*x, *work);
+      *x = ARMCI_MIN(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"absmax",6) == 0)
     while(n--) {
-      register long long x1 = ABS(*x), x2 = ABS(*work);
-      *x = MAX(x1, x2);
+      register long long x1 = ARMCI_ABS(*x), x2 = ARMCI_ABS(*work);
+      *x = ARMCI_MAX(x1, x2);
       x++; work++;
     }
   else if (strncmp(op,"absmin",6) == 0)
     while(n--) {
-      register long long x1 = ABS(*x), x2 = ABS(*work);
-      *x = MIN(x1, x2);
+      register long long x1 = ARMCI_ABS(*x), x2 = ARMCI_ABS(*work);
+      *x = ARMCI_MIN(x1, x2);
       x++; work++;
     }
   else if (strncmp(op,"or",2) == 0)
@@ -971,24 +1010,24 @@ static void lldoop2(int n, char *op, long long *x, long long* work,
       *x++ = *work++ *  *work2++;
   else if (strncmp(op,"max",3) == 0)
     while(n--) {
-      *x = MAX(*work2, *work);
+      *x = ARMCI_MAX(*work2, *work);
       x++; work++; work2++;
     }
   else if (strncmp(op,"min",3) == 0)
     while(n--) {
-      *x = MIN(*work2, *work);
+      *x = ARMCI_MIN(*work2, *work);
       x++; work++; work2++;
     }
   else if (strncmp(op,"absmax",6) == 0)
     while(n--) {
-      register long long x1 = ABS(*work), x2 = ABS(*work2);
-      *x = MAX(x1, x2);
+      register long long x1 = ARMCI_ABS(*work), x2 = ARMCI_ABS(*work2);
+      *x = ARMCI_MAX(x1, x2);
       x++; work++; work2++;
     }
   else if (strncmp(op,"absmin",6) == 0)
     while(n--) {
-      register long long x1 = ABS(*work), x2 = ABS(*work2);
-      *x = MIN(x1, x2);
+      register long long x1 = ARMCI_ABS(*work), x2 = ARMCI_ABS(*work2);
+      *x = ARMCI_MIN(x1, x2);
       x++; work++; work2++;
     }
   else if (strncmp(op,"or",2) == 0)
@@ -1012,24 +1051,24 @@ static void idoop(int n, char *op, int *x, int* work)
       *x++ *= *work++;
   else if (strncmp(op,"max",3) == 0)
     while(n--) {
-      *x = MAX(*x, *work);
+      *x = ARMCI_MAX(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"min",3) == 0)
     while(n--) {
-      *x = MIN(*x, *work);
+      *x = ARMCI_MIN(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"absmax",6) == 0)
     while(n--) {
-      register int x1 = ABS(*x), x2 = ABS(*work);
-      *x = MAX(x1, x2);
+      register int x1 = ARMCI_ABS(*x), x2 = ARMCI_ABS(*work);
+      *x = ARMCI_MAX(x1, x2);
       x++; work++;
     }
   else if (strncmp(op,"absmin",6) == 0)
     while(n--) {
-      register int x1 = ABS(*x), x2 = ABS(*work);
-      *x = MIN(x1, x2);
+      register int x1 = ARMCI_ABS(*x), x2 = ARMCI_ABS(*work);
+      *x = ARMCI_MIN(x1, x2);
       x++; work++;
     }
   else if (strncmp(op,"or",2) == 0)
@@ -1053,24 +1092,24 @@ static void idoop2(int n, char *op, int *x, int* work, int* work2)
       *x++ = *work++ *  *work2++;
   else if (strncmp(op,"max",3) == 0)
     while(n--) {
-      *x = MAX(*work2, *work);
+      *x = ARMCI_MAX(*work2, *work);
       x++; work++; work2++;
     }
   else if (strncmp(op,"min",3) == 0)
     while(n--) {
-      *x = MIN(*work2, *work);
+      *x = ARMCI_MIN(*work2, *work);
       x++; work++; work2++;
     }
   else if (strncmp(op,"absmax",6) == 0)
     while(n--) {
-      register int x1 = ABS(*work), x2 = ABS(*work2);
-      *x = MAX(x1, x2);
+      register int x1 = ARMCI_ABS(*work), x2 = ARMCI_ABS(*work2);
+      *x = ARMCI_MAX(x1, x2);
       x++; work++; work2++;
     }
   else if (strncmp(op,"absmin",6) == 0)
     while(n--) {
-      register int x1 = ABS(*work), x2 = ABS(*work2);
-      *x = MIN(x1, x2);
+      register int x1 = ARMCI_ABS(*work), x2 = ARMCI_ABS(*work2);
+      *x = ARMCI_MIN(x1, x2);
       x++; work++; work2++;
     }
   else if (strncmp(op,"or",2) == 0)
@@ -1086,26 +1125,6 @@ static void idoop2(int n, char *op, int *x, int* work, int* work2)
 \*/
 static void ddoop(int n, char* op, double* x, double* work)
 {
-#if (defined(CRAY) && !defined(__crayx1)) || defined(WIN32) || defined(HITACHI)
-#elif defined(AIX) || defined(NOUNDERSCORE)
-#   define FORT_DADD fort_dadd
-#   define FORT_DMULT fort_dmult
-#elif defined(BGML)
-#  define FORT_DADD fort_dadd__
-#  define FORT_DMULT fort_dmult__
-#else
-#   define FORT_DADD fort_dadd_
-#   define FORT_DMULT fort_dmult_
-#endif
-
-#ifdef NOFORT
-extern void FORT_DADD(int *, double *, double*);
-extern void FORT_DMULT(int *, double *, double*);
-#else
-extern void FATR FORT_DADD(int *, double *, double*);
-extern void FATR FORT_DMULT(int *, double *, double*);
-#endif
-
   if (strncmp(op,"+",1) == 0){
     if(n>63) FORT_DADD(&n,x,work);
     else while(n--) *x++ += *work++;
@@ -1114,24 +1133,24 @@ extern void FATR FORT_DMULT(int *, double *, double*);
     else while(n--) *x++ *= *work++;
   }else if (strncmp(op,"max",3) == 0)
     while(n--) {
-      *x = MAX(*x, *work);
+      *x = ARMCI_MAX(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"min",3) == 0)
     while(n--) {
-      *x = MIN(*x, *work);
+      *x = ARMCI_MIN(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"absmax",6) == 0)
     while(n--) {
-      register double x1 = ABS(*x), x2 = ABS(*work);
-      *x = MAX(x1, x2);
+      register double x1 = ARMCI_ABS(*x), x2 = ARMCI_ABS(*work);
+      *x = ARMCI_MAX(x1, x2);
       x++; work++;
     }
   else if (strncmp(op,"absmin",6) == 0)
     while(n--) {
-      register double x1 = ABS(*x), x2 = ABS(*work);
-      *x = MIN(x1, x2);
+      register double x1 = ARMCI_ABS(*x), x2 = ARMCI_ABS(*work);
+      *x = ARMCI_MIN(x1, x2);
       x++; work++;
     }
   else
@@ -1142,24 +1161,6 @@ extern void FATR FORT_DMULT(int *, double *, double*);
 \*/
 static void ddoop2(int n, char *op, double *x, double* work, double* work2)
 {
-#if (defined(CRAY) && !defined(__crayx1)) || defined(WIN32) || defined(HITACHI)
-#elif defined(AIX) || defined(NOUNDERSCORE)
-#   define FORT_DADD2 fort_dadd2
-#   define FORT_DMULT2 fort_dmult2
-#elif defined(BGML)
-#   define FORT_DADD2 fort_dadd2__
-#   define FORT_DMULT2 fort_dmult2__
-#else
-#   define FORT_DADD2 fort_dadd2_
-#   define FORT_DMULT2 fort_dmult2_
-#endif
-#ifdef NOFORT
-extern void FORT_DADD2(int *, double *, double*, double *);
-extern void FORT_DMULT2(int *, double *, double*, double *);
-#else
-extern void FATR FORT_DADD2(int *, double *, double*,double*);
-extern void FATR FORT_DMULT2(int *, double *, double*,double*);
-#endif
   if (strncmp(op,"+",1) == 0){
     if(n>63) FORT_DADD2(&n,x,work,work2);
     else while(n--) *x++ = *work++ + *work2++;
@@ -1168,24 +1169,24 @@ extern void FATR FORT_DMULT2(int *, double *, double*,double*);
     while(n--) *x++ = *work++ *  *work2++;
   }else if (strncmp(op,"max",3) == 0)
     while(n--) {
-      *x = MAX(*work2, *work);
+      *x = ARMCI_MAX(*work2, *work);
       x++; work++; work2++;
     }
   else if (strncmp(op,"min",3) == 0)
     while(n--) {
-      *x = MIN(*work2, *work);
+      *x = ARMCI_MIN(*work2, *work);
       x++; work++; work2++;
     }
   else if (strncmp(op,"absmax",6) == 0)
     while(n--) {
-      register double x1 = ABS(*work), x2 = ABS(*work2);
-      *x = MAX(x1, x2);
+      register double x1 = ARMCI_ABS(*work), x2 = ARMCI_ABS(*work2);
+      *x = ARMCI_MAX(x1, x2);
       x++; work++; work2++;
     }
   else if (strncmp(op,"absmin",6) == 0)
     while(n--) {
-      register double x1 = ABS(*work), x2 = ABS(*work2);
-      *x = MIN(x1, x2);
+      register double x1 = ARMCI_ABS(*work), x2 = ARMCI_ABS(*work2);
+      *x = ARMCI_MIN(x1, x2);
       x++; work++; work2++;
     }
   else
@@ -1205,24 +1206,24 @@ static void fdoop(int n, char* op, float* x, float* work)
       *x++ *= *work++;
   else if (strncmp(op,"max",3) == 0)
     while(n--) {
-      *x = MAX(*x, *work);
+      *x = ARMCI_MAX(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"min",3) == 0)
     while(n--) {
-      *x = MIN(*x, *work);
+      *x = ARMCI_MIN(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"absmax",6) == 0)
     while(n--) {
-      register float x1 = ABS(*x), x2 = ABS(*work);
-      *x = MAX(x1, x2);
+      register float x1 = ARMCI_ABS(*x), x2 = ARMCI_ABS(*work);
+      *x = ARMCI_MAX(x1, x2);
       x++; work++;
     }
   else if (strncmp(op,"absmin",6) == 0)
     while(n--) {
-      register float x1 = ABS(*x), x2 = ABS(*work);
-      *x = MIN(x1, x2);
+      register float x1 = ARMCI_ABS(*x), x2 = ARMCI_ABS(*work);
+      *x = ARMCI_MIN(x1, x2);
       x++; work++;
     }
   else
@@ -1241,24 +1242,24 @@ static void fdoop2(int n, char *op, float *x, float* work, float* work2)
       *x++ = *work++ *  *work2++;
   else if (strncmp(op,"max",3) == 0)
     while(n--) {
-      *x = MAX(*work2, *work);
+      *x = ARMCI_MAX(*work2, *work);
       x++; work++; work2++;
     }
   else if (strncmp(op,"min",3) == 0)
     while(n--) {
-      *x = MIN(*work2, *work);
+      *x = ARMCI_MIN(*work2, *work);
       x++; work++; work2++;
     }
   else if (strncmp(op,"absmax",6) == 0)
     while(n--) {
-      register float x1 = ABS(*work), x2 = ABS(*work2);
-      *x = MAX(x1, x2);
+      register float x1 = ARMCI_ABS(*work), x2 = ARMCI_ABS(*work2);
+      *x = ARMCI_MAX(x1, x2);
       x++; work++; work2++;
     }
   else if (strncmp(op,"absmin",6) == 0)
     while(n--) {
-      register float x1 = ABS(*work), x2 = ABS(*work2);
-      *x = MIN(x1, x2);
+      register float x1 = ARMCI_ABS(*work), x2 = ARMCI_ABS(*work2);
+      *x = ARMCI_MIN(x1, x2);
       x++; work++; work2++;
     }
   else
@@ -1852,6 +1853,10 @@ void armci_exchange_address(void *ptr_ar[], int n)
 void armci_msg_group_barrier(ARMCI_Group *group)
 {
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
+#ifdef ARMCI_PROFILE
+    armci_profile_start(ARMCI_PROF_BARRIER);    
+#endif
+    
 #ifdef ARMCI_GROUP
  {
    int val=0;
@@ -1860,6 +1865,10 @@ void armci_msg_group_barrier(ARMCI_Group *group)
 #else
     MPI_Barrier((MPI_Comm)(igroup->icomm));
 #endif
+
+#ifdef ARMCI_PROFILE
+     armci_profile_stop(ARMCI_PROF_BARRIER);     
+#endif    
 }
 void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
                            int grp_clus_nproc, ARMCI_Group *mastergroup) {
@@ -1885,6 +1894,7 @@ void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
     ARMCI_Bcast_(buf, len, root, &group);
     ARMCI_Group_free(&group);
 #else
+    /* why?*/
     MPI_Comm_group((MPI_Comm)(igroup->icomm), &group_world);
     MPI_Group_incl(group_world, grp_clus_nproc, pid_list, &group);
  

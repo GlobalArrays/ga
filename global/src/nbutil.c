@@ -1,6 +1,12 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include "globalp.h"
 #include "base.h"
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 #define DEBUG 0
 
 /*The structure of gai_nbhdl_t is (this is our internal handle)*/
@@ -83,7 +89,7 @@ unsigned int get_next_tag(){
 static void clear_list_element(int index){
 ga_armcihdl_t *listele,*prev,*next;
     if(DEBUG){
-       printf("\n%d:clearing handle %d\n",GAme,index);fflush(stdout);
+       printf("\n%ld:clearing handle %d\n",(long)GAme,index);fflush(stdout);
     }
     listele = &(list_element_array[index]);
 
@@ -124,7 +130,7 @@ ga_armcihdl_t *ret_handle;
          list_ele_avail[i]=0;
          ARMCI_INIT_HANDLE(list_element_array[i].handle);
          if(DEBUG){
-           printf("\n%d:found a free handle %d\n",GAme,i);fflush(stdout);
+           printf("\n%ld:found a free handle %d\n",(long)GAme,i);fflush(stdout);
          }
          return(&(list_element_array[i]));
        }
@@ -133,7 +139,7 @@ ga_armcihdl_t *ret_handle;
     if(nextLEAelement==-1)
        nextLEAelement=0;
     if(DEBUG){
-       printf("\n%d:have to clear handle %d\n",GAme,nextLEAelement);
+       printf("\n%ld:have to clear handle %d\n",(long)GAme,nextLEAelement);
        fflush(stdout);
     }
     clear_list_element(nextLEAelement);
@@ -240,9 +246,9 @@ int retval = 0;
 
 
 static int test_list_element(int index){
-ga_armcihdl_t *listele,*prev,*next;
+ga_armcihdl_t *listele;
     if(DEBUG){
-       printf("\n%d:clearing handle %d\n",GAme,index);fflush(stdout);
+       printf("\n%ld:clearing handle %d\n",(long)GAme,index);fflush(stdout);
     }
     listele = &(list_element_array[index]);
 

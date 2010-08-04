@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
 /**              
  * module: GAServices.cc
  * Author: Manoj Kumar Krishnan, PNNL.
@@ -138,7 +141,7 @@ GA::GAServices::fence() {
 }
 
 void 
-GA::GAServices::igop(Integer x[], int n, char *op) {
+GA::GAServices::igop(int x[], int n, char *op) {
   GA_Igop(x, n, op);
 }
 

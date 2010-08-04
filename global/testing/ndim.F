@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c$Id: ndim.F,v 1.7 2005-11-23 10:25:18 manoj Exp $
 #define  MAXLOOP 100
 
@@ -11,17 +14,12 @@ c$Id: ndim.F,v 1.7 2005-11-23 10:25:18 manoj Exp $
 c
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c     Intitialize the GA package
 c
       call ga_initialize()
       nproc = ga_nnodes()
-c     if(ga_nodeid().eq.0)print *,nproc,' nodes'
+      if(ga_nodeid().eq.0)print *,nproc,' nodes'
 c
 c     Initialize the MA package
 c
@@ -38,11 +36,7 @@ c
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
       end
 
 
@@ -192,7 +186,7 @@ c
       call ifill_array(lop,ndim,1)
       call ifill_array(hip,ndim,n-1)
       call random_range(lop,hip,lo,hi,ndim)
-      crap = util_drand(1)
+      crap = drand(1)
       maxloop = 10
       alpha = .1d0 ! alpha must be 1/maxloop
       call ga_sync()
@@ -362,7 +356,7 @@ c
       call ifill_array(lop,ndim,1)
       call ifill_array(hip,ndim,n)
       call random_range(lop,hip,lo,hi,ndim)
-      crap = util_drand(1)
+      crap = drand(1)
       maxloop = 10
       alpha = .1d0 ! alpha must be 1/maxloop
       call ga_sync()
@@ -397,7 +391,7 @@ c
 #include "testutil.fh"
       integer lo(1),hi(1),lop(1),hip(1),ndim
       integer i, range, swap, val,iran
-      iran(range) = int(util_drand(0)*dble(range)) + 1
+      iran(range) = int(drand(0)*dble(range)) + 1
 c     iran(range) = range/2 
       do i = 1, ndim
          range = hi(i)-lo(i)+1

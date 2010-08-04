@@ -1,12 +1,17 @@
-#include <stdio.h>
-#include <math.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+
 #include "ga.h"
 #include "macdecls.h"
-#ifdef MPI
-#include <mpi.h>
-#else
-#include "sndrcv.h"
-#endif
+#include "mp3.h"
 
 #define N 4            /* dimension of matrices */
 
@@ -15,10 +20,7 @@ int main( int argc, char **argv ) {
   int g_a, g_b,i;
   int n=N, type=MT_F_DBL;
   int dims[6]={N,N,N,N,N,N};
-
-  double buf[N], err, alpha, beta;
-  int lo[6], hi[6], ld[6];
-  double *data_address;
+  int lo[6], hi[6];
 
   int heap=30000, stack=20000;
   int me, nproc;
@@ -26,11 +28,7 @@ int main( int argc, char **argv ) {
   int datatype, elements;
   double *prealloc_mem;
 
-#ifdef MPI
-  MPI_Init(&argc, &argv);                       /* initialize MPI */
-#else
-  PBEGIN_(argc, argv);                        /* initialize TCGMSG */
-#endif
+  MP_INIT(argc,argv);
 
   GA_Initialize();                            /* initialize GA */
   me=GA_Nodeid(); 
@@ -61,7 +59,7 @@ int main( int argc, char **argv ) {
   for ( i=0; i<2; i++ ) {
     elements *= (hi[i] - lo[i] + 1);
   }
-  prealloc_mem = GA_Getmem(datatype, elements);
+  prealloc_mem = GA_Getmem(datatype, elements, 0);
   for ( i=0; i<elements; i++ ) prealloc_mem[i] = 3.141592654;
   GA_Freemem(prealloc_mem);
   if(me==0){printf("getmem&freemem OK\n"); fflush(stdout); }
@@ -73,7 +71,7 @@ int main( int argc, char **argv ) {
   for ( i=0; i<2; i++ ) {
     elements *= (hi[i] - lo[i] + 1);
   }
-  prealloc_mem = GA_Getmem(datatype, elements);
+  prealloc_mem = GA_Getmem(datatype, elements, 0);
   g_b = GA_Assemble_duplicate(g_a, "Matrix B", (void*)prealloc_mem );
   if(GA_Compare_distr(g_a,g_b)){ 
      if(me==0){printf("GA_Assemble_duplicate failed\n"); fflush(stdout); }
@@ -83,14 +81,10 @@ int main( int argc, char **argv ) {
   GA_Destroy(g_b);
 
   GA_Destroy(g_a);
-  if(me==0)printf("Terminating ..\n");
+  if(me==0)printf("\nSuccess\n");
   GA_Terminate();
 
-#ifdef MPI
-  MPI_Finalize();
-#else
-  PEND_();
-#endif
+  MP_FINALIZE();
 
  return 0;
 }

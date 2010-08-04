@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
       subroutine factor(p,idx,idy,idz)
       implicit none
       integer i,j,p,idx,idy,idz,it

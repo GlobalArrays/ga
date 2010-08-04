@@ -1,5 +1,4 @@
       double precision tcgtime
-!$Id: tcgmsg.fh,v 1.4 1999-12-13 23:31:19 d3h325 Exp $
       integer nodeid, nnodes, mitob, mdtob, nxtval
       external nodeid, nnodes, mitob, mdtob, nxtval
       external tcgtime

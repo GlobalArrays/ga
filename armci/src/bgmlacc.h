@@ -2,7 +2,7 @@
 #define _ACC_H_
 
 
-#ifdef NOFORT
+#if NOFORT
 #    define ATR  
 #else
 

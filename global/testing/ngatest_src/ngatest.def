@@ -217,7 +217,8 @@ include(`ngatest_src/ndim_NGA_DOT_PATCH.src')')')')
 	 define(m4_test_type, m4_test_type_dcpl)
 	 define(m4_MT, `MT_DCPL')
 	 define(m4_conv, `dcmplx(dble($1),dble(0))')
-	 define(m4_rand, `dcmplx(drand(0) * $1 * 2,-drand(0) * $1 * 2)')
+	 define(m4_rand, `dcmplx(drand(0) * $1 * 2,
+     $    -drand(0) * $1 * 2)')
 	 define(m4_dot, `zdot')
 	 divert
          forloop(`m4_i', m4_from, m4_to, 
@@ -290,6 +291,7 @@ ifelse(m4_test_dcpl, `yes',
    undefine(`m4_rand')
    define(m4_data_type, m4_data_type_dcpl)
    define(m4_test_type, m4_test_type_dcpl)
-   define(m4_rand, `dcmplx(drand(0) * i * 2,-drand(0) * i * 2)')
+   define(m4_rand, `dcmplx(drand(0) * i * 2,
+     $    -drand(0) * i * 2)')
    divert
 include(`ngatest_src/ndim_util.src')')

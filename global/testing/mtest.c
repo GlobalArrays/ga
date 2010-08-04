@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*File: mtest.c 
 
 Anthor: Limin Zhang
@@ -7,26 +11,29 @@ Date: 2/28/2002
 
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include "ga.h"
-#include "../src/globalp.h"
-#ifdef MPI
-#include <mpi.h>
-#else
-#include "sndrcv.h"
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
 #endif
 
-#define N 100			/* dimension of matrices */
+#include "ga.h"
+#include "globalp.h"
+#include "mp3.h"
+
+#define N 100            /* dimension of matrices */
 #define BLOCK_SIZE 32           /* dimension of blocks (if used) */
 
 #define OP_SHIFT_DIAGONAL 1
 #define OP_SET_DIAGONAL 2
 #define OP_ADD_DIAGONAL         3
 #define OP_GET_DIAGONAL 4
-#define OP_NORM1	5
-#define OP_NORM_INFINITY	6
+#define OP_NORM1    5
+#define OP_NORM_INFINITY    6
 #define OP_MEDIAN               7
 #define OP_MEDIAN_PATCH         8
 #define OP_SCALE_ROWS           9
@@ -34,7 +41,7 @@ Date: 2/28/2002
 #define OP_ZERO_DIAGONAL        11
 
 # define THRESH 1e-5
-#define MISMATCHED(x,y) ABS((x)-(y))>=THRESH
+#define MISMATCHED(x,y) GA_ABS((x)-(y))>=THRESH
 
 /*#define BLOCK_CYCLIC*/
 /*#define USE_SCALAPACK*/
@@ -48,7 +55,7 @@ void  test_scale_cols (int g_a, int g_v)
 {
 
   int index[MAXDIM];
-  void *min, *max;
+  void *min=NULL, *max=NULL;
   int imin, imax;
   float fmin, fmax;
   long lmin, lmax;
@@ -57,7 +64,7 @@ void  test_scale_cols (int g_a, int g_v)
   SingleComplex fcmin, fcmax;
 
 
-  void *alpha, *beta;
+  void *alpha=NULL, *beta=NULL;
   int ai = 1, bi = -1;
   long al = 1, bl = -1;
   float af = 1.0, bf = -1.0;
@@ -71,15 +78,15 @@ void  test_scale_cols (int g_a, int g_v)
       -1.0, 0.0};
 
   int g_b, g_c;
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
-  void *val;
+  int me = GA_Nodeid ();
+  void *val=NULL;
   int ival = -2;
   double dval = -2.0;
   float fval = -2.0;
   long lval = -2;
   DoubleComplex dcval = { -2.0, 0.0 };
   SingleComplex fcval = { -2.0, 0.0 };
-  void *val2;
+  void *val2=NULL;
   int ival2 = 4;
   double dval2 = 4.0;
   float fval2 = 4.0;
@@ -87,18 +94,16 @@ void  test_scale_cols (int g_a, int g_v)
   DoubleComplex dcval2 = { 4.0, 0.0 };
   SingleComplex fcval2 = { 4.0, 0.0 };
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-  SingleComplex cdot, cresult;
-
   int type, ndim, dims[MAXDIM];
   int vtype, vndim, vdims[MAXDIM];
 
 
-  int lo[2], hi[2], n, col, i, size;
+  int n=0;
+  /*
+  int lo[2], hi[2], col, i, size;
   int vlo, vhi;
   void *buf;
+  */
 
 
 
@@ -135,7 +140,7 @@ void  test_scale_cols (int g_a, int g_v)
       beta = (void *) &bl;
       break;
     default:
-      ga_error ("test_scale_cols:wrong data type.", type);
+      gai_error ("test_scale_cols:wrong data type.", type);
     }
 
   switch (type)
@@ -165,7 +170,7 @@ void  test_scale_cols (int g_a, int g_v)
       val2 = (void *)&lval2;
       break;
     default:
-      ga_error ("test_scale_cols:wrong data type.", type);
+      gai_error ("test_scale_cols:wrong data type.", type);
     }
 
   if (me == 0)
@@ -204,7 +209,7 @@ void  test_scale_cols (int g_a, int g_v)
     ((SingleComplex*)buf)[i].imag=(float)0.0;
     break;
     default:
-    ga_error("test_scale:wrong data type.", type);
+    gai_error("test_scale:wrong data type.", type);
     }
     NGA_Put(g_v, &vlo, &vhi, buf, &n);
 
@@ -241,7 +246,7 @@ void  test_scale_cols (int g_a, int g_v)
     ((SingleComplex*)buf)[i].imag=0.0;
     break;
     default:
-    ga_error("test_scale_cols:wrong data type.", type);
+    gai_error("test_scale_cols:wrong data type.", type);
     }
     NGA_Put(g_a, lo, hi, buf, &n);
     }
@@ -295,7 +300,7 @@ void  test_scale_cols (int g_a, int g_v)
       min = (void *)&lmin;
       break;
     default:
-      ga_error ("test_scale_rows:wrong data type.", type);
+      gai_error ("test_scale_rows:wrong data type.", type);
     }
 
   NGA_Select_elem (g_c, "max", max, index);
@@ -304,72 +309,72 @@ void  test_scale_cols (int g_a, int g_v)
 
   switch (type)
     {
-      double r, m, tmp;
-      float rf, mf, tmpf;
+      double r, m;
+      float rf, mf;
     case C_INT:
       if (me == 0)
-	{
-	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DCPL:
       r = dcmax.real - dcmin.real;
       m = dcmax.imag - dcmin.imag;
       if (me == 0)
-	{
-	  if (MISMATCHED (dcmax.real, dcmin.real) || (dcmax.real != 0.0)
-	      || (dcmin.real != 0.0) || MISMATCHED (dcmax.imag, dcmin.imag)
-	      || (dcmax.imag != 0.0) || (dcmin.imag != 0.0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (dcmax.real, dcmin.real) || (dcmax.real != 0.0)
+          || (dcmin.real != 0.0) || MISMATCHED (dcmax.imag, dcmin.imag)
+          || (dcmax.imag != 0.0) || (dcmin.imag != 0.0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_SCPL:
       rf = fcmax.real - fcmin.real;
       mf = fcmax.imag - fcmin.imag;
       if (me == 0)
-	{
-	  if (MISMATCHED (fcmax.real, fcmin.real) || (fcmax.real != 0.0)
-	      || (fcmin.real != 0.0) || MISMATCHED (fcmax.imag, fcmin.imag)
-	      || (fcmax.imag != 0.0) || (fcmin.imag != 0.0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (fcmax.real, fcmin.real) || (fcmax.real != 0.0)
+          || (fcmin.real != 0.0) || MISMATCHED (fcmax.imag, fcmin.imag)
+          || (fcmax.imag != 0.0) || (fcmin.imag != 0.0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DBL:
       if (me == 0)
-	{
-	  if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_FLOAT:
       if (me == 0)
-	{
-	  if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_LONG:
       if (me == 0)
-	{
-	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     default:
-      ga_error ("test_scale_rows:wrong data type.", type);
+      gai_error ("test_scale_rows:wrong data type.", type);
     }
 }
 
@@ -380,7 +385,7 @@ test_scale_rows (int g_a, int g_v)
 {
 
   int index[MAXDIM];
-  void *min, *max;
+  void *min=NULL, *max=NULL;
   int imin, imax;
   float fmin, fmax;
   long lmin, lmax;
@@ -389,7 +394,7 @@ test_scale_rows (int g_a, int g_v)
   SingleComplex fcmin, fcmax;
 
 
-  void *alpha, *beta;
+  void *alpha=NULL, *beta=NULL;
   int ai = 1, bi = -1;
   long al = 1, bl = -1;
   float af = 1.0, bf = -1.0;
@@ -403,15 +408,15 @@ test_scale_rows (int g_a, int g_v)
       -1.0, 0.0};
 
   int g_b, g_c;
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
-  void *val;
+  int me = GA_Nodeid ();
+  void *val=NULL;
   int ival = -2;
   double dval = -2.0;
   float fval = -2.0;
   long lval = -2;
   DoubleComplex dcval = { -2.0, 0.0 };
   SingleComplex fcval = { -2.0, 0.0 };
-  void *val2;
+  void *val2=NULL;
   int ival2 = 4;
   double dval2 = 4.0;
   float fval2 = 4.0;
@@ -419,18 +424,16 @@ test_scale_rows (int g_a, int g_v)
   DoubleComplex dcval2 = { 4.0, 0.0 };
   SingleComplex fcval2 = { 4.0, 0.0 };
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-  SingleComplex cdot, cresult;
-
   int type, ndim, dims[MAXDIM];
   int vtype, vndim, vdims[MAXDIM];
 
 
-  int lo[2], hi[2], n, col, i, size;
+  int n=0;
+  /*
+  int lo[2], hi[2], col, i, size;
   int vlo, vhi;
   void *buf;
+  */
 
 
 
@@ -467,7 +470,7 @@ test_scale_rows (int g_a, int g_v)
       beta = (void *)&bl;
       break;
     default:
-      ga_error ("test_scale_rows:wrong data type.", type);
+      gai_error ("test_scale_rows:wrong data type.", type);
     }
 
   switch (type)
@@ -497,7 +500,7 @@ test_scale_rows (int g_a, int g_v)
       val2 = (void *) &lval2;
       break;
     default:
-      ga_error ("test_scale_rows:wrong data type.", type);
+      gai_error ("test_scale_rows:wrong data type.", type);
     }
 
   if (me == 0)
@@ -536,7 +539,7 @@ test_scale_rows (int g_a, int g_v)
     ((SingleComplex*)buf)[i].imag=(float)0.0;
     break;
     default:
-    ga_error("test_scale:wrong data type.", type);
+    gai_error("test_scale:wrong data type.", type);
     }
     NGA_Put(g_v, &vlo, &vhi, buf, &n);
 
@@ -573,7 +576,7 @@ test_scale_rows (int g_a, int g_v)
     ((SingleComplex*)buf)[i].imag=(float)0.0;
     break;
     default:
-    ga_error("test_scale:wrong data type.", type);
+    gai_error("test_scale:wrong data type.", type);
     }
     NGA_Put(g_a, lo, hi, buf, &n);
     }
@@ -628,7 +631,7 @@ test_scale_rows (int g_a, int g_v)
       min = (void *) &lmin;
       break;
     default:
-      ga_error ("test_scale_rows:wrong data type.", type);
+      gai_error ("test_scale_rows:wrong data type.", type);
     }
 
   NGA_Select_elem (g_c, "max", max, index);
@@ -637,84 +640,84 @@ test_scale_rows (int g_a, int g_v)
 
   switch (type)
     {
-      double r, m, tmp;
-      float  rf, mf, tmpf;
+      double r, m;
+      float  rf, mf;
     case C_INT:
       if (me == 0)
-	{
-	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DCPL:
       r = dcmax.real - dcmin.real;
       m = dcmax.imag - dcmin.imag;
       if (me == 0)
-	{
-	  if (MISMATCHED (dcmax.real, dcmin.real) || (dcmax.real != 0.0)
-	      || (dcmin.real != 0.0) || MISMATCHED (dcmax.imag, dcmin.imag)
-	      || (dcmax.imag != 0.0) || (dcmin.imag != 0.0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (dcmax.real, dcmin.real) || (dcmax.real != 0.0)
+          || (dcmin.real != 0.0) || MISMATCHED (dcmax.imag, dcmin.imag)
+          || (dcmax.imag != 0.0) || (dcmin.imag != 0.0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_SCPL:
       rf = fcmax.real - fcmin.real;
       mf = fcmax.imag - fcmin.imag;
       if (me == 0)
-	{
-	  if (MISMATCHED (fcmax.real, fcmin.real) || (fcmax.real != 0.0)
-	      || (fcmin.real != 0.0) || MISMATCHED (fcmax.imag, fcmin.imag)
-	      || (fcmax.imag != 0.0) || (fcmin.imag != 0.0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (fcmax.real, fcmin.real) || (fcmax.real != 0.0)
+          || (fcmin.real != 0.0) || MISMATCHED (fcmax.imag, fcmin.imag)
+          || (fcmax.imag != 0.0) || (fcmin.imag != 0.0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DBL:
       if (me == 0)
-	{
-	  if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_FLOAT:
       if (me == 0)
-	{
-	  if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_LONG:
       if (me == 0)
-	{
-	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     default:
-      ga_error ("test_scale_rows:wrong data type.", type);
+      gai_error ("test_scale_rows:wrong data type.", type);
     }
 
 }
 
 void
 test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
-		   int g_c, int *clo, int *chi, int g_m, int *mlo, int *mhi)
+           int g_c, int *clo, int *chi, int g_m, int *mlo, int *mhi)
 {
 
   int g_e;
   int index[MAXDIM];
-  void *min, *max;
+  void *min=NULL, *max=NULL;
   int imin, imax;
   float fmin, fmax;
   long lmin, lmax;
@@ -723,7 +726,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
   SingleComplex fcmin, fcmax;
 
 
-  void *alpha, *beta;
+  void *alpha=NULL, *beta=NULL;
   int ai = 1, bi = -1;
   long al = 1, bl = -1;
   float af = 1.0, bf = -1.0;
@@ -735,7 +738,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
     {
       -1.0, 0.0};
 
-  void *val;
+  void *val=NULL;
   int ival = -2;
   double dval = -2.0;
   float fval = -2.0;
@@ -743,7 +746,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
   DoubleComplex dcval;
   SingleComplex fcval;
 
-  void *val2;
+  void *val2=NULL;
   int ival2 = 6;
   double dval2 = 6.0;
   float fval2 = 6.0;
@@ -752,7 +755,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
   SingleComplex fcval2;
 
 
-  void *val3;
+  void *val3=NULL;
   int ival3 = 4;
   double dval3 = 4.0;
   float fval3 = 4.0;
@@ -760,14 +763,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
   DoubleComplex dcval3;
   SingleComplex fcval3;
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-  SingleComplex cdot, cresult;
-
-  double norm_infinity = -1.0, result = -1.0;
-
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   int type, ndim, dims[MAXDIM];
 
   NGA_Inquire (g_a, &type, &ndim, dims);
@@ -802,7 +798,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
       beta = (void *) &bl;
       break;
     default:
-      ga_error ("test_median:wrong data type.", type);
+      gai_error ("test_median:wrong data type.", type);
     }
 
   dcval.real = -2.0;
@@ -859,7 +855,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
       val3 = (void *) &lval3;
       break;
     default:
-      ga_error ("test_median:test_median:wrong data type.", type);
+      gai_error ("test_median:test_median:wrong data type.", type);
     }
 
   if (me == 0)
@@ -875,7 +871,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
   NGA_Fill_patch (g_c, alo, bhi, val3);
 
   GA_Median_patch (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo,
-		   mhi);
+           mhi);
 
   /*
     The result array should        be g_c due to the value I chose: 
@@ -916,7 +912,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
       min = (void *)&lmin;
       break;
     default:
-      ga_error ("test_median:wrong data type.", type);
+      gai_error ("test_median:wrong data type.", type);
     }
 
   NGA_Select_elem (g_e, "max", max, index);
@@ -925,72 +921,72 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
 
   switch (type)
     {
-      double r, m, tmp;
-      float  rf, mf, tmpf;
+      double r, m;
+      float  rf, mf;
     case C_INT:
       if (me == 0)
-	{
-	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DCPL:
       r = dcmax.real - dcmin.real;
       m = dcmax.imag - dcmin.imag;
       if (me == 0)
-	{
-	  if (MISMATCHED (dcmax.real, dcmin.real) || (dcmax.real != 0.0)
-	      || (dcmin.real != 0.0) || MISMATCHED (dcmax.imag, dcmin.imag)
-	      || (dcmax.imag != 0.0) || (dcmin.imag != 0.0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (dcmax.real, dcmin.real) || (dcmax.real != 0.0)
+          || (dcmin.real != 0.0) || MISMATCHED (dcmax.imag, dcmin.imag)
+          || (dcmax.imag != 0.0) || (dcmin.imag != 0.0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_SCPL:
       rf = fcmax.real - fcmin.real;
       mf = fcmax.imag - fcmin.imag;
       if (me == 0)
-	{
-	  if (MISMATCHED (fcmax.real, fcmin.real) || (fcmax.real != 0.0)
-	      || (fcmin.real != 0.0) || MISMATCHED (fcmax.imag, fcmin.imag)
-	      || (fcmax.imag != 0.0) || (fcmin.imag != 0.0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (fcmax.real, fcmin.real) || (fcmax.real != 0.0)
+          || (fcmin.real != 0.0) || MISMATCHED (fcmax.imag, fcmin.imag)
+          || (fcmax.imag != 0.0) || (fcmin.imag != 0.0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DBL:
       if (me == 0)
-	{
-	  if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_FLOAT:
       if (me == 0)
-	{
-	  if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_LONG:
       if (me == 0)
-	{
-	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     default:
-      ga_error ("test_median:wrong data type.", type);
+      gai_error ("test_median:wrong data type.", type);
     }
 
 
@@ -1003,7 +999,7 @@ test_median (int g_a, int g_b, int g_c, int g_m)
 
   int g_e;
   int index[MAXDIM];
-  void *min, *max;
+  void *min=NULL, *max=NULL;
   int imin, imax;
   float fmin, fmax;
   long lmin, lmax;
@@ -1012,7 +1008,7 @@ test_median (int g_a, int g_b, int g_c, int g_m)
   SingleComplex fcmin, fcmax;
 
 
-  void *alpha, *beta;
+  void *alpha=NULL, *beta=NULL;
   int ai = 1, bi = -1;
   long al = 1, bl = -1;
   float af = 1.0, bf = -1.0;
@@ -1024,7 +1020,7 @@ test_median (int g_a, int g_b, int g_c, int g_m)
     {
       -1.0, 0.0};
 
-  void *val;
+  void *val=NULL;
   int ival = -2;
   double dval = -2.0;
   float fval = -2.0;
@@ -1032,7 +1028,7 @@ test_median (int g_a, int g_b, int g_c, int g_m)
   DoubleComplex dcval;
   SingleComplex fcval;
 
-  void *val2;
+  void *val2=NULL;
   int ival2 = 6;
   double dval2 = 6.0;
   float fval2 = 6.0;
@@ -1041,7 +1037,7 @@ test_median (int g_a, int g_b, int g_c, int g_m)
   SingleComplex fcval2;
 
 
-  void *val3;
+  void *val3=NULL;
   int ival3 = 4;
   double dval3 = 4.0;
   float fval3 = 4.0;
@@ -1049,14 +1045,7 @@ test_median (int g_a, int g_b, int g_c, int g_m)
   DoubleComplex dcval3;
   SingleComplex fcval3;
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-  SingleComplex cdot, cresult;
-
-  double norm_infinity = -1.0, result = -1.0;
-
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   int type, ndim, dims[MAXDIM];
 
   NGA_Inquire (g_a, &type, &ndim, dims);
@@ -1089,7 +1078,7 @@ test_median (int g_a, int g_b, int g_c, int g_m)
       beta = (void *)&bl;
       break;
     default:
-      ga_error ("test_median:wrong data type.", type);
+      gai_error ("test_median:wrong data type.", type);
     }
 
   dcval.real = -2.0;
@@ -1146,7 +1135,7 @@ test_median (int g_a, int g_b, int g_c, int g_m)
       val3 = (void *)&lval3;
       break;
     default:
-      ga_error ("test_median:test_median:wrong data type.", type);
+      gai_error ("test_median:test_median:wrong data type.", type);
     }
 
   if (me == 0)
@@ -1276,7 +1265,7 @@ test_median (int g_a, int g_b, int g_c, int g_m)
       min = (void *)&lmin;
       break;
     default:
-      ga_error ("test_median:wrong data type.", type);
+      gai_error ("test_median:wrong data type.", type);
     }
 
   NGA_Select_elem (g_e, "max", max, index);
@@ -1285,72 +1274,72 @@ test_median (int g_a, int g_b, int g_c, int g_m)
 
   switch (type)
     {
-      double r, m, tmp;
+      double r, m;
       float rf, mf;
     case C_INT:
       if (me == 0)
-	{
-	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DCPL:
       r = dcmax.real - dcmin.real;
       m = dcmax.imag - dcmin.imag;
       if (me == 0)
-	{
-	  if (MISMATCHED (dcmax.real, dcmin.real) || (dcmax.real != 0.0)
-	      || (dcmin.real != 0.0) || MISMATCHED (dcmax.imag, dcmin.imag)
-	      || (dcmax.imag != 0.0) || (dcmin.imag != 0.0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (dcmax.real, dcmin.real) || (dcmax.real != 0.0)
+          || (dcmin.real != 0.0) || MISMATCHED (dcmax.imag, dcmin.imag)
+          || (dcmax.imag != 0.0) || (dcmin.imag != 0.0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_SCPL:
       rf = fcmax.real - fcmin.real;
       mf = fcmax.imag - fcmin.imag;
       if (me == 0)
-	{
-	  if (MISMATCHED (fcmax.real, fcmin.real) || (fcmax.real != 0.0)
-	      || (fcmin.real != 0.0) || MISMATCHED (fcmax.imag, fcmin.imag)
-	      || (fcmax.imag != 0.0) || (fcmin.imag != 0.0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (fcmax.real, fcmin.real) || (fcmax.real != 0.0)
+          || (fcmin.real != 0.0) || MISMATCHED (fcmax.imag, fcmin.imag)
+          || (fcmax.imag != 0.0) || (fcmin.imag != 0.0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DBL:
       if (me == 0)
-	{
-	  if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (dmax, dmin) || (dmax != 0) || (dmin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_FLOAT:
       if (me == 0)
-	{
-	  if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (fmax, fmin) || (fmax != 0) || (fmin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_LONG:
       if (me == 0)
-	{
-	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     default:
-      ga_error ("test_median:wrong data type.", type);
+      gai_error ("test_median:wrong data type.", type);
     }
 
 
@@ -1361,7 +1350,7 @@ void
 test_norm_infinity (int g_a)
 {
 
-  void *val;
+  void *val=NULL;
   int ival = -2;
   double dval = -2.0;
   float fval = -2.0;
@@ -1369,14 +1358,9 @@ test_norm_infinity (int g_a)
   DoubleComplex dcval;
   SingleComplex fcval;
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-  SingleComplex cdot, cresult;
-
   double norm_infinity = -1.0, result = -1.0;
 
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   int type, ndim, dims[MAXDIM];
 
   NGA_Inquire (g_a, &type, &ndim, dims);
@@ -1407,7 +1391,7 @@ test_norm_infinity (int g_a)
       val = (void *)&lval;
       break;
     default:
-      ga_error ("test_norm_infinity:wrong data type.", type);
+      gai_error ("test_norm_infinity:wrong data type.", type);
     }
 
   if (me == 0)
@@ -1419,17 +1403,17 @@ test_norm_infinity (int g_a)
   switch (type)
     {
     case C_INT:
-      result = (double) ABS (ival);
+      result = (double) GA_ABS (ival);
       break;
     case C_LONG:
-      result = (double) ABS (lval);
+      result = (double) GA_ABS (lval);
       break;
     case C_FLOAT:
-      result = (double) ABS (fval);
+      result = (double) GA_ABS (fval);
       break;
 
     case C_DBL:
-      result = ABS (dval);
+      result = GA_ABS (dval);
       break;
 
     case C_DCPL:
@@ -1439,15 +1423,15 @@ test_norm_infinity (int g_a)
       result = sqrt (fcval.real * fcval.real + fcval.imag * fcval.imag);
       break;
     default:
-      ga_error ("test_norm_infinity: wrong data type.\n", type);
+      gai_error ("test_norm_infinity: wrong data type.\n", type);
     }
   result = result * dims[0];
   if (me == 0)
     {
       if (MISMATCHED (result, norm_infinity))
-	printf ("not ok.\n");
+    printf ("not ok.\n");
       else
-	printf ("ok.\n");
+    printf ("ok.\n");
     }
 }
 
@@ -1456,7 +1440,7 @@ void
 test_norm1 (int g_a)
 {
 
-  void *val;
+  void *val=NULL;
   int ival = -2;
   double dval = -2.0;
   float fval = -2.0;
@@ -1464,14 +1448,9 @@ test_norm1 (int g_a)
   DoubleComplex dcval;
   SingleComplex fcval;
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-  SingleComplex cdot, cresult;
-
   double norm1 = 0.0, result = -1.0;
 
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
+  int me = GA_Nodeid ();
   int type, ndim, dims[MAXDIM];
 
   NGA_Inquire (g_a, &type, &ndim, dims);
@@ -1502,7 +1481,7 @@ test_norm1 (int g_a)
       val = (void *)&lval;
       break;
     default:
-      ga_error ("test_norm1:wrong data type.", type);
+      gai_error ("test_norm1:wrong data type.", type);
     }
 
   if (me == 0)
@@ -1514,17 +1493,17 @@ test_norm1 (int g_a)
   switch (type)
     {
     case C_INT:
-      result = (double) ABS (ival);
+      result = (double) GA_ABS (ival);
       break;
     case C_LONG:
-      result = (double) ABS (lval);
+      result = (double) GA_ABS (lval);
       break;
     case C_FLOAT:
-      result = (double) ABS (fval);
+      result = (double) GA_ABS (fval);
       break;
 
     case C_DBL:
-      result = ABS (dval);
+      result = GA_ABS (dval);
       break;
 
     case C_DCPL:
@@ -1534,15 +1513,15 @@ test_norm1 (int g_a)
       result = sqrt (fcval.real * fcval.real + fcval.imag * fcval.imag);
       break;
     default:
-      ga_error ("test_norm1: wrong data type.\n", type);
+      gai_error ("test_norm1: wrong data type.\n", type);
     }
   result = result * dims[1];
   if (me == 0)
     {
       if (MISMATCHED (result, norm1))
-	printf ("not ok.\n");
+    printf ("not ok.\n");
       else
-	printf ("ok.\n");
+    printf ("ok.\n");
     }
 }
 
@@ -1551,8 +1530,8 @@ void
 test_get_diagonal (int g_a, int g_v)
 {
 
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
-  void *val;
+  int me = GA_Nodeid ();
+  void *val=NULL;
   int ival = -2;
   double dval = -2.0;
   float fval = -2.0;
@@ -1597,7 +1576,7 @@ test_get_diagonal (int g_a, int g_v)
       val = (void *)&lval;
       break;
     default:
-      ga_error ("test_get_diagonal:wrong data type.", type);
+      gai_error ("test_get_diagonal:wrong data type.", type);
     }
 
   if (me == 0)
@@ -1611,78 +1590,78 @@ test_get_diagonal (int g_a, int g_v)
       idot = vdims[0] * ival * ival;
       iresult = GA_Idot (g_v, g_v);
       if (me == 0)
-	{
-	  if (MISMATCHED (idot, iresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (idot, iresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_LONG:
       ldot = ((long) vdims[0]) * lval * lval;
       lresult = GA_Ldot (g_v, g_v);
       if (me == 0)
-	{
-	  if (MISMATCHED (ldot, lresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (ldot, lresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_FLOAT:
       fdot = ((float) vdims[0]) * fval * fval;
       fresult = GA_Fdot (g_v, g_v);
       if (me == 0)
-	{
-	  if (MISMATCHED (fdot, fresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (fdot, fresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DBL:
       ddot = ((double) vdims[0]) * dval * dval;
       dresult = GA_Ddot (g_v, g_v);
       if (me == 0)
-	{
-	  if (MISMATCHED (ddot, dresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (ddot, dresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DCPL:
       zdot.real =
-	((double) vdims[0]) * (dcval.real * dcval.real -
-			       dcval.imag * dcval.imag);
+    ((double) vdims[0]) * (dcval.real * dcval.real -
+                   dcval.imag * dcval.imag);
       zdot.imag = ((double) vdims[0]) * (2.0 * dcval.real * dcval.imag);
       zresult = GA_Zdot (g_v, g_v);
       if (me == 0)
-	{
-	  if (MISMATCHED (zdot.real, zresult.real)
-	      || MISMATCHED (zdot.imag, zresult.imag))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (zdot.real, zresult.real)
+          || MISMATCHED (zdot.imag, zresult.imag))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_SCPL:
       cdot.real =
-	((float ) vdims[0]) * (fcval.real * fcval.real -
-			       fcval.imag * fcval.imag);
+    ((float ) vdims[0]) * (fcval.real * fcval.real -
+                   fcval.imag * fcval.imag);
       cdot.imag = ((float ) vdims[0]) * (2.0 * fcval.real * fcval.imag);
       cresult = GA_Cdot (g_v, g_v);
       if (me == 0)
-	{
-	  if (MISMATCHED (cdot.real, cresult.real)
-	      || MISMATCHED (cdot.imag, cresult.imag))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (cdot.real, cresult.real)
+          || MISMATCHED (cdot.imag, cresult.imag))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     default:
-      ga_error ("test_get_diagonal:wrong data type:", type);
+      gai_error ("test_get_diagonal:wrong data type:", type);
     }
 
 
@@ -1696,8 +1675,8 @@ test_add_diagonal (int g_a, int g_v)
 {
 
 
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
-  void *val;
+  int me = GA_Nodeid ();
+  void *val=NULL;
   int ival = -2;
   double dval = -2.0;
   float fval = -2.0;
@@ -1744,7 +1723,7 @@ test_add_diagonal (int g_a, int g_v)
       val = (void *)&lval;
       break;
     default:
-      ga_error ("test_add_diagonal:wrong data type.", type);
+      gai_error ("test_add_diagonal:wrong data type.", type);
     }
 
 
@@ -1777,74 +1756,74 @@ test_add_diagonal (int g_a, int g_v)
       idot = vdims[0];
       iresult = GA_Idot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (idot, iresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (idot, iresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_LONG:
       ldot = ((long) vdims[0]);
       lresult = GA_Ldot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (ldot, lresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (ldot, lresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_FLOAT:
       fdot = ((float) vdims[0]);
       fresult = GA_Fdot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (fdot, fresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (fdot, fresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DBL:
       ddot = (double) vdims[0];
       dresult = GA_Ddot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (ddot, dresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (ddot, dresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DCPL:
       zdot.real = ((double) vdims[0]);
       zdot.imag = 0.0;
       zresult = GA_Zdot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (zdot.real, zresult.real)
-	      || MISMATCHED (zdot.imag, zresult.imag))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (zdot.real, zresult.real)
+          || MISMATCHED (zdot.imag, zresult.imag))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_SCPL:
       cdot.real = ((float ) vdims[0]);
       cdot.imag = 0.0;
       cresult = GA_Cdot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (cdot.real, cresult.real)
-	      || MISMATCHED (cdot.imag, cresult.imag))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (cdot.real, cresult.real)
+          || MISMATCHED (cdot.imag, cresult.imag))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     default:
-      ga_error ("test_add_diagonal:wrong data type:", type);
+      gai_error ("test_add_diagonal:wrong data type:", type);
     }
 
 
@@ -1858,8 +1837,8 @@ test_set_diagonal (int g_a, int g_v)
 {
 
 
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
-  void *val;
+  int me = GA_Nodeid ();
+  void *val=NULL;
   int ival = -2;
   double dval = -2.0;
   float fval = -2.0;
@@ -1904,7 +1883,7 @@ test_set_diagonal (int g_a, int g_v)
       val = (void *)&lval;
       break;
     default:
-      ga_error ("test_set_diagonal:wrong data type.", type);
+      gai_error ("test_set_diagonal:wrong data type.", type);
     }
 
 
@@ -1919,78 +1898,78 @@ test_set_diagonal (int g_a, int g_v)
       idot = vdims[0] * ival * ival;
       iresult = GA_Idot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (idot, iresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (idot, iresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_LONG:
       ldot = ((long) vdims[0]) * lval * lval;
       lresult = GA_Ldot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (ldot, lresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (ldot, lresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_FLOAT:
       fdot = ((float) vdims[0]) * fval * fval;
       fresult = GA_Fdot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (fdot, fresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (fdot, fresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DBL:
       ddot = ((double) vdims[0]) * dval * dval;
       dresult = GA_Ddot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (ddot, dresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (ddot, dresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DCPL:
       zdot.real =
-	((double) vdims[0]) * (dcval.real * dcval.real -
-			       dcval.imag * dcval.imag);
+    ((double) vdims[0]) * (dcval.real * dcval.real -
+                   dcval.imag * dcval.imag);
       zdot.imag = ((double) dims[0]) * (2.0 * dcval.real * dcval.imag);
       zresult = GA_Zdot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (zdot.real, zresult.real)
-	      || MISMATCHED (zdot.imag, zresult.imag))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (zdot.real, zresult.real)
+          || MISMATCHED (zdot.imag, zresult.imag))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_SCPL:
       cdot.real =
-	((float ) vdims[0]) * (fcval.real * fcval.real -
-			       fcval.imag * fcval.imag);
+    ((float ) vdims[0]) * (fcval.real * fcval.real -
+                   fcval.imag * fcval.imag);
       cdot.imag = ((float ) dims[0]) * (2.0 * fcval.real * fcval.imag);
       cresult = GA_Cdot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (cdot.real, cresult.real)
-	      || MISMATCHED (cdot.imag, cresult.imag))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (cdot.real, cresult.real)
+          || MISMATCHED (cdot.imag, cresult.imag))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     default:
-      ga_error ("test_set_diagonal:wrong data type:", type);
+      gai_error ("test_set_diagonal:wrong data type:", type);
     }
 
 }
@@ -2000,8 +1979,8 @@ test_zero_diagonal (int g_a)
 {
 
 
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
-  void *val;
+  int me = GA_Nodeid ();
+  void *val=NULL;
   int ival = -2;
   double dval = -2.0;
   float fval = -2.0;
@@ -2031,7 +2010,7 @@ test_zero_diagonal (int g_a)
   fcval.real = -2.0;
   fcval.imag = -0.0;
 
-  vdims = MIN(dims[0],dims[1]);
+  vdims = GA_MIN(dims[0],dims[1]);
 
   switch (type)
   {
@@ -2054,7 +2033,7 @@ test_zero_diagonal (int g_a)
       val = (void *)&lval;
       break;
     default:
-      ga_error ("test_zero_diagonal:wrong data type.", type);
+      gai_error ("test_zero_diagonal:wrong data type.", type);
   }
 
 
@@ -2217,7 +2196,7 @@ test_zero_diagonal (int g_a)
       }
       break;
     default:
-      ga_error ("test_zero_diagonal:wrong data type:", type);
+      gai_error ("test_zero_diagonal:wrong data type:", type);
   }
   GA_Destroy(g_b);
 }
@@ -2226,8 +2205,8 @@ void
 test_shift_diagonal (int g_a)
 {
 
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
-  void *val;
+  int me = GA_Nodeid ();
+  void *val=NULL;
   int ival = -2;
   double dval = -2.0;
   float fval = -2.0;
@@ -2240,12 +2219,12 @@ test_shift_diagonal (int g_a)
   DoubleComplex zdot, zresult;
   SingleComplex cdot, cresult;
   int type, ndim, dims[MAXDIM];
-  int dim;			/*the length of the diagonal */
+  int dim;            /*the length of the diagonal */
 
 
   NGA_Inquire (g_a, &type, &ndim, dims);
 
-  dim = MIN (dims[0], dims[1]);
+  dim = GA_MIN (dims[0], dims[1]);
 
   dcval.real = -2.0;
   dcval.imag = -0.0;
@@ -2272,7 +2251,7 @@ test_shift_diagonal (int g_a)
       val = (void *)&lval;
       break;
     default:
-      ga_error ("test_shift_diagonal:wrong data type.", type);
+      gai_error ("test_shift_diagonal:wrong data type.", type);
     }
 
 
@@ -2288,76 +2267,76 @@ test_shift_diagonal (int g_a)
       idot = dim * ival * ival;
       iresult = GA_Idot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (idot, iresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (idot, iresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_LONG:
       ldot = ((long) dim) * lval * lval;
       lresult = GA_Ldot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (ldot, lresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (ldot, lresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_FLOAT:
       fdot = ((float) dim) * fval * fval;
       fresult = GA_Fdot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (fdot, fresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (fdot, fresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DBL:
       ddot = ((double) dim) * dval * dval;
       dresult = GA_Ddot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (ddot, dresult))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (ddot, dresult))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_DCPL:
       zdot.real =
-	((double) dim) * (dcval.real * dcval.real - dcval.imag * dcval.imag);
+    ((double) dim) * (dcval.real * dcval.real - dcval.imag * dcval.imag);
       zdot.imag = ((double) dim) * (2.0 * dcval.real * dcval.imag);
       zresult = GA_Zdot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (zdot.real, zresult.real)
-	      || MISMATCHED (zdot.imag, zresult.imag))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (zdot.real, zresult.real)
+          || MISMATCHED (zdot.imag, zresult.imag))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     case C_SCPL:
       cdot.real =
-	((float ) dim) * (fcval.real * fcval.real - fcval.imag * fcval.imag);
+    ((float ) dim) * (fcval.real * fcval.real - fcval.imag * fcval.imag);
       cdot.imag = ((float ) dim) * (2.0 * fcval.real * fcval.imag);
       cresult = GA_Cdot (g_a, g_a);
       if (me == 0)
-	{
-	  if (MISMATCHED (cdot.real, cresult.real)
-	      || MISMATCHED (cdot.imag, cresult.imag))
-	    printf ("not ok.\n");
-	  else
-	    printf ("ok.\n");
-	}
+    {
+      if (MISMATCHED (cdot.real, cresult.real)
+          || MISMATCHED (cdot.imag, cresult.imag))
+        printf ("not ok.\n");
+      else
+        printf ("ok.\n");
+    }
       break;
     default:
-      ga_error ("test_shift_diagonal:wrong data type: ", type);
+      gai_error ("test_shift_diagonal:wrong data type: ", type);
     }
 
 
@@ -2367,18 +2346,16 @@ test_shift_diagonal (int g_a)
 void
 do_work (int type, int op)
 {
-  int g_a, g_b, g_c, g_m, g_v, g_vv;
+  int g_a, g_b, g_c, g_m, g_v;
   int n = N;
-  int me = GA_Nodeid (), nproc = GA_Nnodes ();
-  int dims[2] = { N,		/*N columns */
-		  N + 2			/*N+2 rows */
+  int nproc = GA_Nnodes ();
+  int dims[2] = { N,        /*N columns */
+          N + 2            /*N+2 rows */
   };
   int vdim, i;
   int lo[2], hi[2];
 
 
-  int atype, andim, adims[2];
-  int vtype, vndim, vdims;
   int block_size[2], proc_grid[2], proc_cnt;
 
   proc_cnt = 1;
@@ -2407,7 +2384,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-	GA_Error ("create failed: A", n);
+    GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2426,7 +2403,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-	GA_Error ("create failed: A", n);
+    GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2439,10 +2416,10 @@ do_work (int type, int op)
       GA_Allocate(g_a);
 #endif
       /*find out the diagonal length of the matrix A */
-      vdim = MIN (dims[0], dims[1]);
+      vdim = GA_MIN (dims[0], dims[1]);
       g_v = NGA_Create (type, 1, &vdim, "V", NULL);
       if (!g_v)
-	GA_Error ("create failed:V", n);
+    GA_Error ("create failed:V", n);
       test_set_diagonal (g_a, g_v);
       GA_Destroy (g_a);
       GA_Destroy (g_v);
@@ -2451,7 +2428,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-	GA_Error ("create failed: A", n);
+    GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2470,7 +2447,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-	GA_Error ("create failed: A", n);
+    GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2483,11 +2460,11 @@ do_work (int type, int op)
       GA_Allocate(g_a);
 #endif
       /*find out the diagonal length of the matrix A */
-      vdim = MIN (dims[0], dims[1]);
+      vdim = GA_MIN (dims[0], dims[1]);
       g_v = NGA_Create (type, 1, &vdim, "V", NULL);
       if (!g_v)
-	GA_Error ("create failed:V", n);
-      vdim = MIN (dims[0], dims[1]);
+    GA_Error ("create failed:V", n);
+      vdim = GA_MIN (dims[0], dims[1]);
       test_add_diagonal (g_a, g_v);
       GA_Destroy (g_a);
       GA_Destroy (g_v);
@@ -2496,7 +2473,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-	GA_Error ("create failed: A", n);
+    GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2509,10 +2486,10 @@ do_work (int type, int op)
       GA_Allocate(g_a);
 #endif
       /*find out the diagonal length of the matrix A */
-      vdim = MIN (dims[0], dims[1]);
+      vdim = GA_MIN (dims[0], dims[1]);
       g_v = NGA_Create (type, 1, &vdim, "V", NULL);
       if (!g_v)
-	GA_Error ("create failed:V", n);
+    GA_Error ("create failed:V", n);
       test_get_diagonal (g_a, g_v);
       GA_Destroy (g_a);
       GA_Destroy (g_v);
@@ -2521,7 +2498,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-	GA_Error ("create failed: A", n);
+    GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2541,7 +2518,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-	GA_Error ("create failed: A", n);
+    GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2561,7 +2538,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-	GA_Error ("create failed: A", n);
+    GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2576,15 +2553,15 @@ do_work (int type, int op)
       /*duplicate g_a */
       g_b = GA_Duplicate (g_a, "B");
       if (!g_b)
-	GA_Error ("duplicate failed: B", n);
+    GA_Error ("duplicate failed: B", n);
 
       g_c = GA_Duplicate (g_a, "C");
       if (!g_c)
-	GA_Error ("duplicate failed: C", n);
+    GA_Error ("duplicate failed: C", n);
 #if 0 /* test g_m is different from g_a, g_b, amd g_c */
       g_m = GA_Duplicate (g_a, "M");
       if (!g_m)
-	GA_Error ("duplicate failed: M", n);
+    GA_Error ("duplicate failed: M", n);
       test_median (g_a, g_b, g_c, g_m);
 #else /* test g_m = g_c */
       test_median (g_a, g_b, g_c, g_a);
@@ -2601,7 +2578,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-	GA_Error ("create failed: A", n);
+    GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2616,15 +2593,15 @@ do_work (int type, int op)
       /*duplicate g_a */
       g_b = GA_Duplicate (g_a, "B");
       if (!g_b)
-	GA_Error ("duplicate failed: B", n);
+    GA_Error ("duplicate failed: B", n);
 
       g_c = GA_Duplicate (g_a, "C");
       if (!g_c)
-	GA_Error ("duplicate failed: C", n);
+    GA_Error ("duplicate failed: C", n);
 
       g_m = GA_Duplicate (g_a, "M");
       if (!g_m)
-	GA_Error ("duplicate failed: M", n);
+    GA_Error ("duplicate failed: M", n);
 
       test_median_patch (g_a, lo, hi, g_b, lo, hi, g_c, lo, hi, g_m, lo, hi);
       GA_Destroy (g_a);
@@ -2636,7 +2613,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-	GA_Error ("create failed: A", n);
+    GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2652,7 +2629,7 @@ do_work (int type, int op)
       vdim = dims[1];
       g_v = NGA_Create (type, 1, &vdim, "V", NULL);
       if (!g_v)
-	GA_Error ("create failed:V", n);
+    GA_Error ("create failed:V", n);
       test_scale_rows (g_a, g_v);
       GA_Destroy (g_a);
       GA_Destroy (g_v);
@@ -2703,19 +2680,15 @@ main (argc, argv)
 
   type = C_DBL;
 
-#ifdef MPI
-  MPI_Init (&argc, &argv);	/* initialize MPI */
-#else
-  PBEGIN_ (argc, argv);		/* initialize TCGMSG */
-#endif
+  MP_INIT(argc,argv);
 
-  GA_Initialize ();		/* initialize GA */
+  GA_Initialize ();        /* initialize GA */
   me = GA_Nodeid ();
   nproc = GA_Nnodes ();
   if (me == 0)
     {
       if (GA_Uses_fapi ())
-	GA_Error ("Program runs with C array API only", 0);
+    GA_Error ("Program runs with C array API only", 0);
       printf ("Using %ld processes\n", (long) nproc);
       fflush (stdout);
     }
@@ -2723,39 +2696,37 @@ main (argc, argv)
   heap /= nproc;
   stack /= nproc;
   if (!MA_init (MT_F_DBL, stack, heap))
-    GA_Error ("MA_init failed", stack + heap);	/* initialize memory allocator */
+    GA_Error ("MA_init failed", stack + heap);    /* initialize memory allocator */
 
 
   for (op = 1; op < 12; op++)
     {
       if(me == 0) printf ("\n\n");
       if (me == 0)
-	printf ("type = C_INT \t ");
+    printf ("type = C_INT \t ");
       do_work (C_INT, op);
       if (me == 0)
-	printf ("type = C_LONG \t ");
+    printf ("type = C_LONG \t ");
       do_work (C_LONG, op);
       if (me == 0)
-	printf ("type = C_FLOAT \t ");
+    printf ("type = C_FLOAT \t ");
       do_work (C_FLOAT, op);
       if (me == 0)
-	printf ("type = C_DBL \t ");
+    printf ("type = C_DBL \t ");
       do_work (C_DBL, op);
       if (me == 0)
-	printf ("type = C_DCPL \t ");
+    printf ("type = C_DCPL \t ");
       do_work (C_DCPL, op);
       if (me == 0)
-	printf ("type = C_SCPL \t ");
+    printf ("type = C_SCPL \t ");
       do_work (C_SCPL, op);
     }
 
-  GA_Terminate ();
+  if(me==0) printf("\nSuccess\n");
 
-#ifdef MPI
-  MPI_Finalize ();
-#else
-  PEND_ ();
-#endif
+  GA_Terminate ();
+  
+  MP_FINALIZE();
 
   return 0;
 }

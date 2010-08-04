@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include "CompilerCharacteristics.h"
 #include <F90Compiler.h>
 #include <stdio.h>

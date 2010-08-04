@@ -1,7 +1,15 @@
-#ifndef  _GLOBALP_H_
+#ifndef _GLOBALP_H_
 #define _GLOBALP_H_
 
-#include "config.h"
+#if HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+
+#include "gaconfig.h"
 #include "global.h"
 
 #ifdef __crayx1
@@ -14,9 +22,6 @@
 #ifdef TRUE
 #undef TRUE
 #endif
-#ifdef CRAY
-#include <fortran.h>
-#endif
 #ifdef CRAY_YMP
 #define FALSE _btol(0)
 #define TRUE  _btol(1)
@@ -25,41 +30,13 @@
 #define TRUE  (logical) 1
 #endif
 
-#if defined(WIN32)
-#   include "winutil.h"
+#if HAVE_WINDOWS_H
+#   include <windows.h>
+#   define sleep(x) Sleep(1000*(x))
 #endif
 #include "macdecls.h"
 
-#if (defined(CRAY) && !defined(__crayx1)) || defined(NEC) 
-#  define NO_REAL_32  
-#endif
-
 #define GA_OFFSET   1000           /* offset for handle numbering */
-
-#ifndef MAX_NPROC                  /* default max number of processors  */
-#   ifdef PARAGON
-#     define MAX_NPROC    1024
-#   elif defined(DELTA)
-#     define MAX_NPROC     512
-#   elif defined(SP1) || defined(SP)
-#     define MAX_NPROC     512
-#   elif defined(LAPI)
-#     define MAX_NPROC     512
-#   elif defined(CRAY_T3D)
-#     define MAX_NPROC     256
-#   elif defined(KSR)
-#     define MAX_NPROC      80
-#   elif defined(LINUX64)
-#     define MAX_NPROC    2048
-#   elif defined(BGML)
-#     define MAX_NPROC    2048
-#   elif defined(BGP)
-#     define MAX_NPROC     8192
-#   else
-#     define MAX_NPROC    2048     /* default for everything else */
-#   endif
-#endif
-
 
 /* types/tags of messages used internally by GA */
 #define     GA_TYPE_SYN   GA_MSG_OFFSET + 1
@@ -85,14 +62,14 @@
 #define     GA_OP_UNL 18         /* release lock                */
 
 
-#ifdef GA_TRACE
+#ifdef ENABLE_TRACE
   static Integer     op_code;
 #endif
 
 
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
-#define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
+#define GA_MAX(a,b) (((a) >= (b)) ? (a) : (b))
+#define GA_MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#define GA_ABS(a)   (((a) >= 0) ? (a) : (-(a)))
 
 #define GAsizeofM(type)  ( (type)==C_DBL? sizeof(double): \
                            (type)==C_INT? sizeof(int): \
@@ -151,22 +128,13 @@ extern int _ga_sync_end;
 extern int *_ga_argc;
 extern char ***_ga_argv;
 
-
 #define  GA_PUSH_NAME(name) (GA_name_stack[GA_stack_size++] = (name)) 
 #define  GA_POP_NAME        (GA_stack_size--)
-
-
-extern void f2cstring(char*, Integer, char*, Integer);
-extern void c2fstring( char*, char*, Integer);
-extern void ga_clean_resources( void);
 
 /* periodic operations */
 #define PERIODIC_GET 1
 #define PERIODIC_PUT 2
 #define PERIODIC_ACC 3
-
-extern void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
-                           Integer *ld, void *alpha, Integer op_code);
 
 #define FLUSH_CACHE
 #ifdef  CRAY_T3D
@@ -179,39 +147,120 @@ extern void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
 #define allign_size(n) allign__((long)(n), ALLIGN_SIZE)
 #define allign_page(n) allign__((long)(n), PAGE_SIZE)
 
-extern void gai_print_subscript(char *pre,int ndim, Integer subscript[], char* post);
-extern void ngai_dest_indices(Integer ndims, Integer *los, Integer *blos, Integer *dimss,
-               Integer ndimd, Integer *lod, Integer *blod, Integer *dimsd);
+/* for brevity */
+#define EXT  extern
+#define DBL  DoublePrecision
+#define FLT  float
+#define INT  Integer
+#define LOG  Logical
+#define SCPL SingleComplex
+#define DCPL DoubleComplex
+#define REAL Real
 
-extern logical ngai_patch_intersect(Integer *lo, Integer *hi,
-                        Integer *lop, Integer *hip, Integer ndim);
+EXT INT   GAsizeof(INT type);
 
-extern logical ngai_comp_patch(Integer andim, Integer *alo, Integer *ahi,
-                          Integer bndim, Integer *blo, Integer *bhi);
-extern logical ngai_test_shape(Integer *alo, Integer *ahi, Integer *blo,
-                          Integer *bhi, Integer andim, Integer bndim);
+EXT void  ga_clean_resources( void);
+EXT void  ga_free(void *ptr);
+EXT void  ga_init_nbhandle(INT *nbhandle);
+EXT void* ga_malloc(INT nelem, int type, char *name);
+EXT void  ga_matmul(char *transa, char *transb, void *alpha, void *beta, INT *g_a, INT *ailo, INT *aihi, INT *ajlo, INT *ajhi, INT *g_b, INT *bilo, INT *bihi, INT *bjlo, INT *bjhi, INT *g_c, INT *cilo, INT *cihi, INT *cjlo, INT *cjhi);
+EXT void  ga_matmul_mirrored(char *transa, char *transb, void *alpha, void *beta, INT *g_a, INT *ailo, INT *aihi, INT *ajlo, INT *ajhi, INT *g_b, INT *bilo, INT *bihi, INT *bjlo, INT *bjhi, INT *g_c, INT *cilo, INT *cihi, INT *cjlo, INT *cjhi);
+EXT void  ga_msg_brdcst(INT type, void *buffer, INT len, INT root);
+EXT void  ga_print_file(FILE *, INT *);
+EXT int   ga_type_c2f(int type);
+EXT int   ga_type_f2c(int type);
+EXT short ga_usesMA;
 
-extern void xb_sgemm (char *transa, char *transb, int *M, int *N, int *K,
-		      float *alpha, const float *a, int *p_lda,const float *b,
-		      int *p_ldb, float *beta, float *c, int *p_ldc);
+EXT void  gai_gop(INT type, void *x, INT n, char *op);
 
-extern void xb_dgemm (char *transa, char *transb, int *M, int *N, int *K,
-		      double *alpha,const double *a,int *p_lda,const double *b,
-		      int *p_ldb, double *beta, double *c, int *p_ldc);
+EXT void  gac_igop(int *x, Integer n, char *op);
+EXT void  gac_lgop(long *x, Integer n, char *op);
+EXT void  gac_llgop(long long *x, Integer n, char *op);
+EXT void  gac_fgop(float *x, Integer n, char *op);
+EXT void  gac_dgop(double *x, Integer n, char *op);
+EXT void  gac_cgop(SingleComplex *x, Integer n, char *op);
+EXT void  gac_zgop(DoubleComplex *x, Integer n, char *op);
 
-extern void xb_zgemm (char * transa, char *transb, int *M, int *N, int *K,
-		      const void *alpha,const void *a,int *p_lda,const void *b,
-		      int *p_ldb, const void *beta, void *c, int *p_ldc);
+EXT void  gai_igop(INT type, INT  *x, INT n, char *op);
+EXT void  gai_sgop(INT type, REAL *x, INT n, char *op);
+EXT void  gai_dgop(INT type, DBL  *x, INT n, char *op);
+EXT void  gai_cgop(INT type, SCPL *x, INT n, char *op);
+EXT void  gai_zgop(INT type, DCPL *x, INT n, char *op);
 
-/* GA Memory allocation routines and variables */
-extern short int ga_usesMA;
+EXT void  gai_pgroup_gop(INT p_grp, INT type, void *x, INT n, char *op);
 
-extern void* ga_malloc(Integer nelem, int type, char *name);
+EXT void  gai_pgroup_igop(INT p_grp, INT type, INT  *x, INT n, char *op);
+EXT void  gai_pgroup_sgop(INT p_grp, INT type, REAL *x, INT n, char *op);
+EXT void  gai_pgroup_dgop(INT p_grp, INT type, DBL  *x, INT n, char *op);
+EXT void  gai_pgroup_cgop(INT p_grp, INT type, SCPL *x, INT n, char *op);
+EXT void  gai_pgroup_zgop(INT p_grp, INT type, DCPL *x, INT n, char *op);
 
-extern void ga_free(void *ptr);
+EXT void  gai_check_handle(INT *, char *);
+EXT void  gai_copy_patch(char *trans, INT *g_a, INT *ailo, INT *aihi, INT *ajlo, INT *ajhi, INT *g_b, INT *bilo, INT *bihi, INT *bjlo, INT *bjhi);
+EXT LOG   gai_create(INT *type, INT *dim1, INT *dim2, char *array_name, INT *chunk1, INT *chunk2, INT *g_a);
+EXT LOG   gai_create_irreg(INT *type, INT *dim1, INT *dim2, char *array_name, INT *map1, INT *nblock1, INT *map2, INT *nblock2, INT *g_a);
+EXT void  gai_dot(int Type, INT *g_a, INT *g_b, void *value);
+EXT LOG   gai_duplicate(INT *g_a, INT *g_b, char* array_name);
+EXT void  gai_error(char *string, INT icode);
+EXT int   gai_getval(int *ptr);
+EXT void  gai_inquire(INT* g_a, INT* type, INT* dim1, INT* dim2);
+EXT void  gai_inquire_name(INT *g_a, char **array_name);
+EXT void  gai_lu_solve_seq(char *trans, INT *g_a, INT *g_b);
+EXT void  gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta, INT *g_a,INT *ailo,INT *aihi,INT *ajlo,INT *ajhi, INT *g_b,INT *bilo,INT *bihi,INT *bjlo,INT *bjhi, INT *g_c,INT *cilo,INT *cihi,INT *cjlo,INT *cjhi);
+EXT INT   gai_memory_avail(INT datatype);
+EXT void  gai_print_distribution(int fstyle, INT g_a);
+EXT void  gai_print_subscript(char *pre,int ndim, INT subscript[], char* post);
+EXT void  gai_set_array_name(INT g_a, char *array_name);
 
-extern Integer ga_memory_avail(Integer datatype);
+EXT void  nga_acc_common(INT *g_a, INT *lo, INT *hi, void *buf, INT *ld, void *alpha, INT *nbhandle);
+EXT void  nga_access_block_grid_ptr(INT* g_a, INT *index, void* ptr, INT *ld);
+EXT void  nga_access_block_ptr(INT* g_a, INT *idx, void* ptr, INT *ld);
+EXT void  nga_access_block_segment_ptr(INT* g_a, INT *proc, void* ptr, INT *len);
+EXT void  nga_access_ghost_ptr(INT* g_a, INT dims[], void* ptr, INT ld[]);
+EXT void  nga_access_ghost_element_ptr(INT* g_a, void *ptr, INT subscript[], INT ld[]);
+EXT void  nga_access_ptr(INT* g_a, INT lo[], INT hi[], void* ptr, INT ld[]);
+EXT void  nga_get_common(INT *g_a, INT *lo, INT *hi, void *buf, INT *ld, INT *nbhandle);
+EXT void  nga_put_common(INT *g_a, INT *lo, INT *hi, void *buf, INT *ld, INT *nbhandle);
+EXT int   nga_test_internal(INT *nbhandle);
+EXT int   nga_wait_internal(INT *nbhandle);
 
-extern void ga_init_nbhandle(Integer *nbhandle);
-extern int nga_wait_internal(Integer *nbhandle);
-#endif
+EXT LOG   ngai_comp_patch(INT andim, INT *alo, INT *ahi, INT bndim, INT *blo, INT *bhi);
+EXT void  ngai_copy_patch(char *trans, INT *g_a, INT *alo, INT *ahi, INT *g_b, INT *blo, INT *bhi);
+EXT LOG   ngai_create_config(INT type, INT ndim, INT dims[], char* array_name, INT chunk[], INT p_handle, INT *g_a);
+EXT LOG   ngai_create_ghosts_config(INT type, INT ndim, INT dims[], INT width[], char* array_name, INT chunk[], INT p_handle, INT *g_a);
+EXT LOG   ngai_create_ghosts(INT type, INT ndim, INT dims[], INT width[], char* array_name, INT chunk[], INT *g_a);
+EXT LOG   ngai_create_ghosts_irreg_config(INT type, INT ndim, INT dims[], INT width[], char *array_name, INT map[], INT nblock[], INT p_handle, INT *g_a);
+EXT LOG   ngai_create_ghosts_irreg(INT type, INT ndim, INT dims[], INT width[], char *array_name, INT map[], INT nblock[], INT *g_a);
+EXT LOG   ngai_create(INT type, INT ndim, INT dims[], char* array_name, INT *chunk, INT *g_a);
+EXT LOG   ngai_create_irreg_config(INT type, INT ndim, INT dims[], char *array_name, INT map[], INT nblock[], INT p_handle, INT *g_a);
+EXT LOG   ngai_create_irreg(INT type, INT ndim, INT dims[], char *array_name, INT map[], INT nblock[], INT *g_a);
+EXT void  ngai_dest_indices(INT ndims, INT *los, INT *blos, INT *dimss, INT ndimd, INT *lod, INT *blod, INT *dimsd);
+EXT void  ngai_dot_patch(INT *g_a, char *t_a, INT *alo, INT *ahi, INT *g_b, char *t_b, INT *blo, INT *bhi, void *retval);
+EXT void  ngai_inquire(INT *g_a, INT *type, INT *ndim, INT *dims);
+EXT void  ngai_matmul_patch(char *transa, char *transb, void *alpha, void *beta, INT *g_a, INT alo[], INT ahi[], INT *g_b, INT blo[], INT bhi[], INT *g_c, INT clo[], INT chi[]);
+EXT LOG   ngai_patch_intersect(INT *lo, INT *hi, INT *lop, INT *hip, INT ndim);
+EXT void  ngai_periodic_(INT *g_a, INT *lo, INT *hi, void *buf, INT *ld, void *alpha, INT op_code);
+EXT LOG   ngai_test_shape(INT *alo, INT *ahi, INT *blo, INT *bhi, INT andim, INT bndim);
+
+EXT void  xb_dgemm (char *transa, char *transb, int *M, int *N, int *K, double *alpha,const double *a,int *p_lda,const double *b, int *p_ldb, double *beta, double *c, int *p_ldc);
+EXT void  xb_sgemm (char *transa, char *transb, int *M, int *N, int *K, FLT *alpha, const FLT *a, int *p_lda,const FLT *b, int *p_ldb, FLT *beta, FLT *c, int *p_ldc);
+EXT void  xb_zgemm (char * transa, char *transb, int *M, int *N, int *K, const void *alpha,const void *a,int *p_lda,const void *b, int *p_ldb, const void *beta, void *c, int *p_ldc);
+
+EXT DBL   gai_ddot_patch(INT *g_a, char *t_a, INT *ailo, INT *aihi, INT *ajlo, INT *ajhi, INT *g_b, char *t_b, INT *bilo, INT *bihi, INT *bjlo, INT *bjhi);
+EXT INT   gai_idot_patch(INT *g_a, char *t_a, INT *ailo, INT *aihi, INT *ajlo, INT *ajhi, INT *g_b, char *t_b, INT *bilo, INT *bihi, INT *bjlo, INT *bjhi);
+EXT REAL  gai_sdot_patch(INT *g_a, char *t_a, INT *ailo, INT *aihi, INT *ajlo, INT *ajhi, INT *g_b, char *t_b, INT *bilo, INT *bihi, INT *bjlo, INT *bjhi);
+
+EXT DBL   ngai_ddot_patch(INT *g_a, char *t_a, INT *alo, INT *ahi, INT *g_b, char *t_b, INT *blo, INT *bhi);
+EXT INT   ngai_idot_patch(INT *g_a, char *t_a, INT *alo, INT *ahi, INT *g_b, char *t_b, INT *blo, INT *bhi);
+EXT REAL  ngai_sdot_patch(INT *g_a, char *t_a, INT *alo, INT *ahi, INT *g_b, char *t_b, INT *blo, INT *bhi);
+
+#undef EXT
+#undef DBL
+#undef FLT
+#undef INT
+#undef LOG
+#undef SCPL
+#undef DCPL
+#undef REAL
+
+#endif /* _GLOBALP_H_ */

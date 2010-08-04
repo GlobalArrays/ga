@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 #define  MAXLOOP 100
 
       program test
@@ -8,12 +11,7 @@
 c
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Intitialize the GA package
       call ga_initialize()
@@ -378,10 +376,8 @@ c     test NGA_GATHER
 
 
 c
+      if(ga_nodeid().eq.0) print *, 'All tests successful'
+c
       call ga_terminate()
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
       end

@@ -1,9 +1,21 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*$Id: computation_impact.c,v 1.1.2.1 2007-06-20 17:42:13 vinod Exp $*/
+
 #define _GNU_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+
 #include <mpi.h>
 #include <sched.h>
+
 #include "armci.h"
 #include "gpc.h"
 
@@ -337,5 +349,3 @@ int right;
     ARMCI_Finalize();
     MPI_Finalize();
 }
-
-

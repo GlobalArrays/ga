@@ -1,38 +1,52 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/usleep.c,v 1.3 1995-02-24 02:18:03 d3h325 Exp $ */
-
-#ifdef AIX
-#include <stdio.h>
-#include <sys/select.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
 #endif
-#include <sys/types.h>
-#include <sys/time.h>
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_SYS_SELECT_H
+#   include <sys/select.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_SYS_TIME_H
+#   include <sys/time.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+
+#include "typesf2c.h"
+#include "sndrcv.h"
 
 #ifdef STUPIDUSLEEP
-void USleep(us)
-     long us;
+void USleep(Integer us)
 {
-  int s = us/1000000;
-  if (s == 0)
-	s = 1;
-  (void) sleep(s);
+    int s = us/1000000;
+    if (s == 0) {
+        s = 1;
+    }
+    (void) sleep(s);
 }
-#else
-void USleep(us)
-     long us;
-/*
-  Sleep for the specified no. of micro-seconds ... uses the timeout
-  on select ... it seems to be accurate to about a few centiseconds
-  on a sun.  I don't know how much system resources it eats.
-*/
+
+#else /* STUPIDUSLEEP */
+
+/**
+ * Sleep for the specified no. of micro-seconds ... uses the timeout
+ * on select ... it seems to be accurate to about a few centiseconds
+ * on a sun.  I don't know how much system resources it eats.
+ */
+void USleep(Integer us)
 {
-  int width=0;
-  struct timeval timelimit;
+    int width=0;
+    struct timeval timelimit;
 
-  timelimit.tv_sec = (int) (us/1000000);
-  timelimit.tv_usec = (int) (us - timelimit.tv_sec*1000000);
+    timelimit.tv_sec = (int) (us/1000000);
+    timelimit.tv_usec = (int) (us - timelimit.tv_sec*1000000);
 
-  (void) select(width, (fd_set *) 0, (fd_set *) 0, (fd_set *) 0,
-		&timelimit);
+    (void) select(width, (fd_set *) 0, (fd_set *) 0, (fd_set *) 0, &timelimit);
 }
-#endif
 
+#endif /* STUPIDUSLEEP */

@@ -1,8 +1,19 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include "ga++.h"
 
 GA::PGroup* GA::PGroup::pgMirror  = NULL;
 GA::PGroup* GA::PGroup::pgDefault = NULL;
 GA::PGroup* GA::PGroup::pgWorld   = NULL;
+
+/**
+ * Private -- never called.
+ */
+GA::PGroup::PGroup(void)
+{
+}
 
 /**
  * Constructors and Destructor of PGroup

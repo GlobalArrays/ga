@@ -56,7 +56,8 @@ c           generate indices
             unique_index = 0
             do while(unique_index.eq.0)
 c              generate random number
-               idx = int(drand(0)*(real(total/nproc)))+me*total/nproc
+               idx = int(drand(0)*(real(total/nproc)))
+     $             +me*total/nproc
                if(idx .eq. 0) idx = idx+1
 c
 c              convert to ndim

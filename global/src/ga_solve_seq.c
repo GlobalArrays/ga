@@ -1,43 +1,24 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /**
  * GA_Lu_solve_seq.c: Implemented with CLINPACK routines. Uses LINPACK
- * routines if GA_C_CORE is defined, else uses scalapack.
+ * routines if NOFORT is defined, else uses scalapack.
  */
 
 #include "global.h"
 #include "globalp.h"
 #include "macdecls.h"
-#include "math.h"
-#ifdef GA_USE_VAMPIR
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#ifdef USE_VAMPIR
 #  include "ga_vampir.h"
 #endif
 
-#ifdef CRAY
-#  include <fortran.h>
-#  define DGETRF SGETRF
-#  define DGETRS SGETRS
-#elif defined(WIN32)
-extern void FATR DGETRF(Integer *, Integer *, void *, Integer *, void *, 
-			Integer *);
-extern void FATR DGETRS(char *, int, Integer *, Integer *, void *, 
-			Integer *, void *, void *, Integer *, Integer *);
-#elif defined(F2C2__)
-#  define DGETRF dgetrf__
-#  define DGETRS dgetrs__
-#elif defined(HITACHI)
-#  define dgetrf_ DGETRF
-#  define dgetrs_ DGETRS
-#else
-#  define DGETRF dgetrf_
-#  define DGETRS dgetrs_
-#endif
-
-#if defined(CRAY) || defined(WIN32)
-#   define cptofcd(fcd)  _cptofcd((fcd),1)
-#else
-#      define cptofcd(fcd) (fcd)
-#endif
-
-
+#define DGETRF F77_FUNC(dgetrf,DGETRF)
+#define DGETRS F77_FUNC(dgetrs,DGETRS)
 
 #define REAL double
 #define ZERO 0.0e0
@@ -227,7 +208,7 @@ REAL dx[];
 int incx,n;
 {
 	REAL dmax;
-	int i, ix, itemp;
+	int i, ix, itemp = 0;
 
 	if( n < 1 ) return(-1);
 	if(n ==1 ) return(0);
@@ -508,7 +489,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
  * with possibly multiple rhs stored as columns of matrix B
  * the matrix A is not destroyed
  */
-void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
+void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
 
   logical oactive;  /* true iff this process participates */
   Integer dimA1, dimA2, typeA;
@@ -517,25 +498,25 @@ void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
   Integer info;
 
   /** check environment */
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(GA_LU_SOLVE_SEQ,__FILE__,__LINE__);
 #endif
   me     = ga_nodeid_();
   
   /** check GA info for input arrays */
-  ga_check_handle(g_a, "ga_lu_solve: a");
-  ga_check_handle(g_b, "ga_lu_solve: b");
-  ga_inquire(g_a, &typeA, &dimA1, &dimA2);
-  ga_inquire(g_b, &typeB, &dimB1, &dimB2);
+  gai_check_handle(g_a, "ga_lu_solve: a");
+  gai_check_handle(g_b, "ga_lu_solve: b");
+  gai_inquire(g_a, &typeA, &dimA1, &dimA2);
+  gai_inquire(g_b, &typeB, &dimB1, &dimB2);
   
   GA_PUSH_NAME("ga_lu_solve_seq");
 
   if (dimA1 != dimA2) 
-    ga_error("ga_lu_solve: g_a must be square matrix ", 1);
+    gai_error("ga_lu_solve: g_a must be square matrix ", 1);
   else if(dimA1 != dimB1) 
-    ga_error("ga_lu_solve: dims of A and B do not match ", 1);
+    gai_error("ga_lu_solve: dims of A and B do not match ", 1);
   else if(typeA != C_DBL || typeB != C_DBL) 
-    ga_error("ga_lu_solve: wrong type(s) of A and/or B ", 1);
+    gai_error("ga_lu_solve: wrong type(s) of A and/or B ", 1);
   
   ga_sync_();
   oactive = (me == 0);
@@ -547,14 +528,14 @@ void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
     /** allocate a,b, and work and ipiv arrays */
     adra = (DoublePrecision*) ga_malloc(dimA1*dimA2, C_DBL, "a");
     adrb = (DoublePrecision*) ga_malloc(dimB1*dimB2, C_DBL, "b");
-    adri = (DoublePrecision*) ga_malloc(MIN(dimA1,dimA2), C_DBL, "ipiv");
+    adri = (DoublePrecision*) ga_malloc(GA_MIN(dimA1,dimA2), C_DBL, "ipiv");
 
     /** Fill local arrays from global arrays */   
     ga_get_(g_a, &one, &dimA1, &one, &dimA2, adra, &dimA1);
     ga_get_(g_b, &one, &dimB1, &one, &dimB2, adrb, &dimB1);
     
     /** LU factorization */
-#ifdef GA_C_CORE
+#if NOFORT
     {  int info_t;
        LP_dgefa(adra, (int)dimA1, (int)dimA2, (int*)adri, &info_t);
        info = info_t;
@@ -565,7 +546,7 @@ void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
 
     /** SOLVE */
     if(info == 0) {
-#ifdef GA_C_CORE
+#if NOFORT
       DoublePrecision *p_b;
       Integer i;
       int job=0;
@@ -575,18 +556,23 @@ void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
 	LP_dgesl(adra, (int)dimA1, (int)dimA2, (int*)adri, p_b, job);
       }
 #else
-      DGETRS(cptofcd(trans), &dimA1, &dimB2, adra, &dimA1, 
+#   if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+      DGETRS(trans, &dimA1, &dimB2, adra, &dimA1, 
+	     adri, adrb, &dimB1, &info, (Integer)1);
+#   else
+      DGETRS(trans, (Integer)1, &dimA1, &dimB2, adra, &dimA1, 
 	     adri, adrb, &dimB1, &info);
+#   endif
 #endif
 
       if(info == 0) 
 	ga_put_(g_b, &one, &dimB1, &one, &dimB2, adrb, &dimB1);
       else
-	ga_error(" ga_lu_solve: LP_dgesl failed ", -info);
+	gai_error(" ga_lu_solve: LP_dgesl failed ", -info);
       
     }
     else
-      ga_error(" ga_lu_solve: LP_dgefa failed ", -info);
+      gai_error(" ga_lu_solve: LP_dgefa failed ", -info);
     
     /** deallocate work arrays */
     ga_free(adri);
@@ -595,19 +581,18 @@ void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
   }
 
   ga_sync_();
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(GA_LU_SOLVE_SEQ,__FILE__,__LINE__);
 #endif
   
   GA_POP_NAME;
 }
 
-void FATR ga_lu_solve_seq_(trans, g_a, g_b) 
-     Integer *g_a, *g_b;
-#if defined(CRAY) || defined(WIN32)
-     _fcd    trans;
-{ ga_lu_solve_seq(_fcdtocp(trans), g_a, g_b); }
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+void FATR ga_lu_solve_seq_(char *trans, Integer *g_a, Integer *g_b, int len) 
 #else
-     char* trans;
-{ ga_lu_solve_seq(trans, g_a, g_b); }
+void FATR ga_lu_solve_seq_(char *trans, int len, Integer *g_a, Integer *g_b) 
 #endif
+{
+    gai_lu_solve_seq(trans, g_a, g_b);
+}

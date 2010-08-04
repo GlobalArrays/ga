@@ -1,28 +1,32 @@
-/*$Id*/
-#include <stdio.h>
-#include <math.h>
-#include "armci.h"
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-#if defined(TCGMSG)
-#   include <sndrcv.h>
-    long tcg_tag =30000;
-#   define MP_BARRIER()      SYNCH_(&tcg_tag)
-#   define MP_INIT(arc,argv) PBEGIN_((argc),(argv))
-#   define MP_FINALIZE()     PEND_()
-#   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
-#   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
-#else
-#   include <mpi.h>
-#   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
-#   define MP_FINALIZE()     MPI_Finalize()
-#   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
-#   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
-#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
+#if HAVE_CONFIG_H
+#   include "config.h"
 #endif
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_SYS_STAT_H
+#   include <sys/stat.h>
+#endif
+#if HAVE_FCNTL_H
+#   include <fcntl.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+
+#include "mp3.h"
+#include "armci.h"
+#include "message.h"
 
 extern int na;
 extern int nz;
@@ -34,20 +38,13 @@ static int *columnmap,*allfirstrow,*alllastrow;
 static FILE *fd;
 
 void generate_random_file(int naa,int nnz){
-int irow[naa],icol[nnz];
-double A[nnz],b[naa];
     fd = fopen("randominput.dat", "w");
 }
 
 void read_and_create(int argc, char **argv)
 {
-int ri,i,*iptr,zero=0,one=1;
-int ph;
-double d_one=1.0,d_zero=0.0;
-double *a,*dptr,*x;
-int dims[2];
+int ri,i;
 int tmp1,idealelementsperproc;
-int lo,hi,ld,rc;
 void **amatptrs,**xvecptrs;
 
     na = atoi(argv[1]);
@@ -154,11 +151,11 @@ void **amatptrs,**xvecptrs;
          allfirstrow[i]=tmp1;
          for(ri=tmp1;ri<na;ri++,tmp1++){
            elementsperproc+=(ridx[ri+1]-ridx[ri]);
-	   if(elementsperproc>=idealelementsperproc){
+       if(elementsperproc>=idealelementsperproc){
              if((elementsperproc-idealelementsperproc) > 
                 idealelementsperproc-(elementsperproc-(ridx[ri+1]-ridx[ri]))){
                alllastrow[i] = ri-1;  
-	       if((ri-1)<0)ARMCI_Error("run on a smaller processor count",0);
+           if((ri-1)<0)ARMCI_Error("run on a smaller processor count",0);
                /*tmp1--;*/
              }
              else{
@@ -168,7 +165,7 @@ void **amatptrs,**xvecptrs;
              }
              elementsperproc=0;
              break;
-	   }
+       }
          }
        }
        alllastrow[nproc-1]=na-1;

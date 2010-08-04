@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 /*#define USE_SUMMA 1*/
 #ifdef  USE_SUMMA
 #  define GA_CREATE  ga_create2
@@ -159,9 +162,9 @@ c***  opening disk arrays
      &            call ga_error('dra_open failed',0)
 c
       if (me .eq. 0) then
- 	print *,' '
- 	print *,' Checking out-of-core matrix multiplication'
- 	print *,' '
+     print *,' '
+     print *,' Checking out-of-core matrix multiplication'
+     print *,' '
         call ffflush(6)
       endif
 c

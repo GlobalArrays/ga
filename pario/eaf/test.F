@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 #define IO_TEST_SZ (1024*1024/8)
 #define IO_NUM_FILES 4
 #define MAX_ITER 4

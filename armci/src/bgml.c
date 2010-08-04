@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* begin_generated_IBM_copyright_prolog                             */
 /*                                                                  */
 /* --------------------------------------------------------------   */
@@ -9,12 +13,18 @@
 
 /* $Id$ */
 
-#include <assert.h>
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
 #include "bgml.h"
 #include "bgmldefs.h"
-#include <unistd.h>
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
 #include "memlock.h"
-#include<stdio.h>
+#if HAVE_STDIO_H
+#   include<stdio.h>
+#endif
 
 void wait_callback(void *clientdata)
 {

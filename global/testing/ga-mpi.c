@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /****************************************************************************
 * program: ga-mpi.c
 * date:    Tue Oct  3 12:31:59 PDT 1995
@@ -14,14 +18,17 @@
 *
 ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "ga.h"
-#include "macommon.h"
-#include <mpi.h>
-#ifndef MPI
-#include "sndrcv.h"
+#if HAVE_STDIO_H
+#   include <stdio.h>
 #endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+
+#include "ga.h"
+#include "globalp.h"
+#include "macdecls.h"
+#include "mp3.h"
 
 
 #define N 100           /* dimension of matrices */
@@ -29,7 +36,7 @@
 
 void do_work()
 {
-int ONE=1, ZERO=0;   /* useful constants */
+int ZERO=0;   /* useful constants */
 int g_a, g_b;
 int n=N, ndim=2,type=MT_F_DBL,dims[2]={N,N},coord[2];
 int me=GA_Nodeid(), nproc=GA_Nnodes();
@@ -37,7 +44,7 @@ int row, i, j;
  int lo[2], hi[2];
 
 /* Note: on all current platforms DoublePrecision = double */
-DoublePrecision buf[N], *max_row;
+DoublePrecision buf[N], *max_row=NULL;
 
 MPI_Comm ROW_COMM;
 int ilo,ihi, jlo,jhi, ld, prow, pcol;
@@ -60,14 +67,14 @@ int root=0, grp_me=-1;
      if(me==0)printf("Initializing matrix A\n");
      /* fill in matrix A with values: A(i,j) = (i+j) */ 
      for(row=me; row<n; row+= nproc){
-	/**
-	 * simple load balancing: 
-	 * each process works on a different row in MIMD style 
-	 */ 
-	for(i=0; i<n; i++) buf[i]=(DoublePrecision)(i+row+1); 
-	lo[0]=hi[0]=row;
-	lo[1]=ZERO;  hi[1]=n-1; 
-	NGA_Put(g_a, lo, hi, buf, &n); 
+    /**
+     * simple load balancing: 
+     * each process works on a different row in MIMD style 
+     */ 
+    for(i=0; i<n; i++) buf[i]=(DoublePrecision)(i+row+1); 
+    lo[0]=hi[0]=row;
+    lo[1]=ZERO;  hi[1]=n-1; 
+    NGA_Put(g_a, lo, hi, buf, &n); 
      }
      
      /* GA_print(&g_a);*/
@@ -93,45 +100,45 @@ int root=0, grp_me=-1;
      /* create communicator for processes that 'own' A[:,jlo:jhi] */
      MPI_Barrier(MPI_COMM_WORLD);
      if(pcol < 0 || prow <0)
-	MPI_Comm_split(MPI_COMM_WORLD,MPI_UNDEFINED,MPI_UNDEFINED, &ROW_COMM);
+    MPI_Comm_split(MPI_COMM_WORLD,MPI_UNDEFINED,MPI_UNDEFINED, &ROW_COMM);
      else
-	MPI_Comm_split(MPI_COMM_WORLD, (int)pcol, (int)prow, &ROW_COMM);
+    MPI_Comm_split(MPI_COMM_WORLD, (int)pcol, (int)prow, &ROW_COMM);
      
      if(ROW_COMM != MPI_COMM_NULL){
-	double *ptr;
-	MPI_Comm_rank(ROW_COMM, &grp_me);
-	
-	/* each process computes max elements in the block it 'owns' */
-	lo[0]=ilo; hi[0]=ihi;
-	lo[1]=jlo; hi[1]=jhi;
-	NGA_Access(g_a, lo, hi, &ptr, &ld);
-	for(i=0; i<ihi-ilo+1; i++){
-	   for(j=0; j<jhi-jlo+1; j++)
-	      if(max_row[i] < ptr[i*ld + j]){
-		 max_row[i] = ptr[i*ld + j];
-	      }
-	}
-	MPI_Reduce(max_row, buf, ihi-ilo+1, MPI_DOUBLE, MPI_MAX,
-		   root, ROW_COMM);
-	
+    double *ptr;
+    MPI_Comm_rank(ROW_COMM, &grp_me);
+    
+    /* each process computes max elements in the block it 'owns' */
+    lo[0]=ilo; hi[0]=ihi;
+    lo[1]=jlo; hi[1]=jhi;
+    NGA_Access(g_a, lo, hi, &ptr, &ld);
+    for(i=0; i<ihi-ilo+1; i++){
+       for(j=0; j<jhi-jlo+1; j++)
+          if(max_row[i] < ptr[i*ld + j]){
+         max_row[i] = ptr[i*ld + j];
+          }
+    }
+    MPI_Reduce(max_row, buf, ihi-ilo+1, MPI_DOUBLE, MPI_MAX,
+           root, ROW_COMM);
+    
      }else fprintf(stderr,"process %d not participating\n",me);
      GA_Sync(); 
      
      /* processes with rank=root in ROW_COMM put results into g_b */
      ld = 1;
      if(grp_me == root) {
-	lo[0]=ilo;  hi[0]=ihi;
-	NGA_Put(g_b, lo, hi, buf, &ld); 
+    lo[0]=ilo;  hi[0]=ihi;
+    NGA_Put(g_b, lo, hi, buf, &ld); 
      }
         
      GA_Sync();
 
      if(me==0)printf("Checking the result\n");
      if(me==0){
-	lo[0]=ZERO; hi[0]=n-1;
+    lo[0]=ZERO; hi[0]=n-1;
         NGA_Get(g_b, lo, hi, buf, &n); 
         for(i=0; i< n; i++)if(buf[i] != (double)n+i){
-            fprintf(stderr,"error:%d max=%lf should be:%ld\n",i,buf[i],n+i);
+            fprintf(stderr,"error:%d max=%lf should be:%d\n",i,buf[i],n+i);
             GA_Error("terminating...",0);
         }
      }
@@ -152,9 +159,16 @@ int heap=20000, stack=20000;
 int me, nproc;
 
 #ifdef MPI
-    MPI_Init(&argc, &argv);                       /* initialize MPI */
+#   ifdef DCMF
+    int desired = MPI_THREAD_MULTIPLE;
+    int provided;
+    MPI_Init_thread(&argc, &argv, desired, &provided);
+    if ( provided != MPI_THREAD_MULTIPLE ) printf("provided != MPI_THREAD_MULTIPLE\n");
+#   else
+    MPI_Init (&argc, &argv);	/* initialize MPI */
+#   endif
 #else
-    PBEGIN_(argc, argv);                        /* initialize TCGMSG */
+    tcg_pbegin(argc, argv);                        /* initialize TCGMSG */
 #endif
 
     GA_Initialize();                            /* initialize GA */
@@ -165,7 +179,7 @@ int me, nproc;
     heap /= nproc;
     stack /= nproc;
     if(! MA_init((int)MT_F_DBL, stack, heap)) 
-       ga_error("MA_init failed",stack+heap);   /* initialize memory allocator*/ 
+       gai_error("MA_init failed",stack+heap);   /* initialize memory allocator*/ 
     do_work();
 
     if(me==0)printf("Terminating ..\n");
@@ -174,7 +188,7 @@ int me, nproc;
 #   ifdef MPI
       MPI_Finalize();
 #   else
-      PEND_();
+      tcg_pend();
 #   endif
 
     return 0;

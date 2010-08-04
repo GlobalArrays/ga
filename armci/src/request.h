@@ -135,7 +135,9 @@ unsigned int   ehlen:8;       /* size of extra header and the end of descr */
 }request_header_t;
 
 /*******gpc call strctures*************/
-#include <signal.h>
+#if HAVE_SIGNAL_H
+#   include <signal.h>
+#endif
 #define MAX_GPC_REQ 1
 #define MAX_GPC_REPLY_LEN (64*1024)
 #define MAX_GPC_SEND_LEN (64*1024)

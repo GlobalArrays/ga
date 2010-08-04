@@ -5,7 +5,7 @@
 #endif
       
       INTGR4 iam, nnodes,nprow,npcol, myrow, mycol, iSLctxt,
-     A	maxproc, iSLctxt2,nprow2,npcol2, myrow2, mycol2
+     A    maxproc, iSLctxt2,nprow2,npcol2, myrow2, mycol2
       logical init,init2, init3, init4
       common /SLface/ init, init2, init3, init4,
      *     iam, nnodes, nprow,npcol, myrow, mycol,

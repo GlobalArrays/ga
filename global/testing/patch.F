@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 C $iD: PATch.F,v 1.21 2002/10/15 23:35:52 vinod Exp $
 #if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
 #   define xgemm SGEMM
@@ -27,12 +30,7 @@ c
 c
 c***  Initialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
       call ga_initialize()
       if(ga_nodeid().eq.0)then
@@ -67,11 +65,7 @@ c
 c
       call ga_terminate()
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
       end
 
 
@@ -97,7 +91,7 @@ c
       integer ndim, dims(2)
       integer block_size(2), proc_grid(2)
 #endif
-      iran(i) = int(util_drand(1)*real(i)) + 1
+      iran(i) = int(drand(1)*real(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()
@@ -603,7 +597,7 @@ c
       integer ndim, dims(2)
       integer block_size(2), proc_grid(2)
 #endif
-      iran(i) = int(util_drand(1)*real(i)) + 1
+      iran(i) = int(drand(1)*real(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()
@@ -1109,7 +1103,7 @@ c
       integer ndim, dims(2)
       integer block_size(2), proc_grid(2)
 #endif
-      iran(i) = int(util_drand(1)*real(i)) + 1
+      iran(i) = int(drand(1)*real(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()

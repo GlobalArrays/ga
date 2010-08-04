@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: shmem.c,v 1.87.2.2 2007-09-10 23:31:32 manoj Exp $ */
 /* System V shared memory allocation and managment
  *
@@ -42,13 +46,27 @@
 #define STAMP 0
 
 
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <sys/param.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_SYS_IPC_H
+#   include <sys/ipc.h>
+#endif
+#if HAVE_SYS_SHM_H
+#   include <sys/shm.h>
+#endif
+#if HAVE_SYS_PARAM_H
+#   include <sys/param.h>
+#endif
+#if HAVE_ERRNO_H
+#   include <errno.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #include "shmem.h"
 #include "kr_malloc.h"
 #include "shmlimit.h"
@@ -56,8 +74,12 @@
 #include "armcip.h"
 
 #ifdef   ALLOC_MUNMAP
-#include <sys/mman.h>
-#include <unistd.h>
+#if HAVE_SYS_MMAN_H
+#   include <sys/mman.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
 static  size_t pagesize=0;
 static  int logpagesize=0;
 /* allow only that big shared memory segment (in MB)- incresed from 128 11/02 */
@@ -254,11 +276,11 @@ int armci_test_allocate(long size)
 }
 
 
+#ifdef  SHMMAX_SEARCH_NO_FORK
 /*\ try to allocate a shared memory region of a specified size; return pointer
 \*/
 static int armci_shmalloc_try(long size)
 {
-#ifdef  SHMMAX_SEARCH_NO_FORK
    char *ptr;
    int id = armci_shmget((size_t) size,"armci_shmalloc_try");
    if (id <0) return 0;
@@ -271,9 +293,9 @@ static int armci_shmalloc_try(long size)
 
    ptr_search_no_fork = ptr;
    id_search_no_fork = id;
-#endif
    return 1;
 }
+#endif
 
 
 
@@ -408,9 +430,8 @@ void armci_nattach_preallocate_info(int* segments, int *segsize)
 #endif
         
 /* Create shared region to store kr_malloc context in shared memory */
-void armci_krmalloc_init_ctxshmem() 
-{
-    void *myptr = NULL;
+void armci_krmalloc_init_ctxshmem() {
+    void *myptr=NULL;
     long idlist[SHMIDLEN];
     long size; 
     int offset = sizeof(void*)/sizeof(int);
@@ -420,15 +441,11 @@ void armci_krmalloc_init_ctxshmem()
     
     if(armci_me == armci_master ){
        myptr = Create_Shared_Region(idlist+1,size,idlist);
-       if(!myptr && size>0 ) 
-           armci_die("armci_krmalloc_init_ctxshmem: could not create", 
-                   (int)(size>>10));
-       if(size) 
-           *(volatile void**)myptr = myptr;
+       if(!myptr && size>0 ) armci_die("armci_krmalloc_init_ctxshmem: could not create", (int)(size>>10));
+       if(size) *(volatile void**)myptr = myptr;
        if(DEBUG_){
-           printf("%d:armci_krmalloc_init_ctxshmem addr mptr=%p ref=%p size=%ld\n", 
-                   armci_me, myptr, *(void**)myptr, size);
-           fflush(stdout);
+	  printf("%d:armci_krmalloc_init_ctxshmem addr mptr=%p ref=%p size=%ld\n", armci_me, myptr, *(void**)myptr, size);
+	  fflush(stdout);
        }
        
        /* Bootstrapping: allocate storage for ctx_shmem_global. NOTE:there is 
@@ -556,8 +573,7 @@ void armci_shmem_init()
     }
 
     armci_krmalloc_init_ctxshmem();
-    if(DEBUG_)
-        printf("%d: out of shmem_init\n",armci_me);
+    if(DEBUG_)printf("%d: out of shmem_init\n",armci_me);
 }
 
 
@@ -1135,42 +1151,42 @@ size_t sz = (size_t)size;
 \*/
 char *Create_Shared_Region(long *id, long size, long *offset)
 {
-    char *temp;  
-    int  reg, refreg=0,nreg;
-
+  char *temp;  
+int  reg, refreg=0,nreg;
+  
     if(alloc_regions>=MAX_REGIONS)
-        armci_die("Create_Shared_Region: to many regions ",0);
+       armci_die("Create_Shared_Region: to many regions ",0);
 
     if(DEBUG_){
-        printf("%d:CreateSharedRegion %d:size=%ld\n",armci_me,create_call++,size);
-        fflush(stdout);
+      printf("%d:CreateSharedRegion %d:size=%ld\n",armci_me,create_call++,size);
+      fflush(stdout);
     }
 
     /*initialization: 1st allocation request */
     if(!alloc_regions){
-        for(reg=0;reg<MAX_REGIONS;reg++){
-            region_list[reg].addr=(char*)0;
-            region_list[reg].attached=0;
-            region_list[reg].id=0;
-        }
-        if(DEBUG_){
-            printf("%d:1st CreateSharedRegion: allocation unit:%ldK,shmax:%ldK\n",
-                    armci_me,MinShmem,MaxShmem);
-            fflush(stdout);
-        }
+       for(reg=0;reg<MAX_REGIONS;reg++){
+          region_list[reg].addr=(char*)0;
+          region_list[reg].attached=0;
+          region_list[reg].id=0;
+       }
+       if(DEBUG_){
+          printf("%d:1st CreateSharedRegion: allocation unit:%ldK,shmax:%ldK\n",
+                 armci_me,MinShmem,MaxShmem);
+          fflush(stdout);
+       }
 
-        kr_malloc_init(SHM_UNIT, (size_t)MinShmem, (size_t)MaxShmem, 
-                armci_allocate, 0, &ctx_shmem);
-        ctx_shmem.ctx_type = KR_CTX_SHMEM;
-        id[SHMIDLEN-2]=MinShmem;
+       kr_malloc_init(SHM_UNIT, (size_t)MinShmem, (size_t)MaxShmem, 
+		      armci_allocate, 0, &ctx_shmem);
+       ctx_shmem.ctx_type = KR_CTX_SHMEM;
+       id[SHMIDLEN-2]=MinShmem;
     }
 
     if(!alloc_regions)  temp = kr_malloc((size_t)size, &ctx_shmem);
     else temp = kr_malloc((size_t)size, ctx_shmem_global);
 
     if(temp == (char*)0 )
-        armci_die("CreateSharedRegion:kr_malloc failed KB=",(int)size>>10);
-
+       armci_die("CreateSharedRegion:kr_malloc failed KB=",(int)size>>10);
+    
     if(!(nreg=find_regions(temp,id,&reg)))
         armci_die("CreateSharedRegion: allocation inconsitent",0);
 
@@ -1182,12 +1198,12 @@ char *Create_Shared_Region(long *id, long size, long *offset)
     *offset = (long) (temp - region_list[refreg].addr);
     id[IDLOC]=region_list[reg].sz; /* elan post check */
     occup_blocks++;
-
+  
     if(DEBUG_){ 
-        printf("%d:CreateShmReg:reg=%d id=%ld off=%ld ptr=%p adr=%p s=%d n=%d sz=%ld\n",
-                armci_me,reg,region_list[reg].id,*offset,region_list[reg].addr,
-                temp,(int)size,nreg,id[IDLOC]);
-        fflush(stdout);
+      printf("%d:CreateShmReg:reg=%d id=%ld off=%ld ptr=%p adr=%p s=%d n=%d sz=%ld\n",
+           armci_me,reg,region_list[reg].id,*offset,region_list[reg].addr,
+           temp,(int)size,nreg,id[IDLOC]);
+      fflush(stdout);
     }
 
     return temp;

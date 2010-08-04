@@ -1,6 +1,8 @@
-/*$Id: comdegree.c,v 1.1.2.1 2007-06-20 17:41:49 vinod Exp $*/
-/*
- *                                Copyright (c) 2006
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+/**                             Copyright (c) 2006
  *                      Pacific Northwest National Laboratory,
  *                           Battelle Memorial Institute.
  *                              All rights reserved.
@@ -28,65 +30,46 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- */
-
-
-/*************************
+ *
+ * $Id: comdegree.c,v 1.1.2.1 2007-06-20 17:41:49 vinod Exp $
+ *
  * This test checks the networks ability to overlap data transfers.
  * It does it both for an optimitic case (with no other communication) and
  * a more realistic case.
  * --Vinod Tipparaju
  * --Pacific Northwest National Laboratory
  * --vinod@pnl.gov
-*************************/
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <math.h>
+ */
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#if HAVE_STRINGS_H
+#   include <strings.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
 
 #define DEBUG__ 
 
-#if defined(PVM)
-#   include <pvm3.h>
-#   ifdef CRAY
-#     define MPGROUP         (char *)NULL
-#     define MP_INIT(arc,argv)
-#   else
-#     define MPGROUP           "mp_working_group"
-#     define MP_INIT(arc,argv) pvm_init(arc, argv)
-#   endif
-#   define MP_FINALIZE()     pvm_exit()
-#   define MP_BARRIER()      pvm_barrier(MPGROUP,-1)
-#   define MP_MYID(pid)      *(pid)   = pvm_getinst(MPGROUP,pvm_mytid())
-#   define MP_PROCS(pproc)   *(pproc) = (int)pvm_gsize(MPGROUP)
-    void pvm_init(int argc, char *argv[]);
-#elif defined(TCGMSG)
-#   include <sndrcv.h>
-    long tcg_tag =30000;
-#   define MP_BARRIER()      SYNCH_(&tcg_tag)
-#   define MP_INIT(arc,argv) PBEGIN_((argc),(argv))
-#   define MP_FINALIZE()     PEND_()
-#   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
-#   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
-#else
-#   include <mpi.h>
-#   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
-#   define MP_FINALIZE()     MPI_Finalize()
-#   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
-#   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
-#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
-#   define MP_TIMER()        MPI_Wtime()
-#endif
-
 #include "armci.h"
-
+#include "message.h"
+#include "mp3.h"
 
 /***************************** macros ************************/
 #define COPY(src, dst, bytes) memcpy((dst),(src),(bytes))
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
-#define ABS(a) (((a) <0) ? -(a) : (a))
+#define ARMCI_MAX(a,b) (((a) >= (b)) ? (a) : (b))
+#define ARMCI_MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#define ARMCI_ABS(a) (((a) <0) ? -(a) : (a))
 
 /***************************** global data *******************/
 int me, nproc;
@@ -95,7 +78,7 @@ int me, nproc;
 void create_array(void *a[], int size)
 {
      armci_size_t bytes=size;
-     int i, rc;
+     int rc;
 
      rc = ARMCI_Malloc(a, bytes);
      assert(rc==0);
@@ -123,14 +106,13 @@ void destroy_array(void *ptr[])
     
 void test_get_multidma()
 {
-int dim,elems;
-int i,j, proc=1,Idx=1,idx=0;
+int i,j;
 void *b[MAXPROC], *a[MAXPROC];
 int left = (me+nproc-1) % nproc;
 int right = (me+1) % nproc;
 int sendersright=0,sendersleft=0;
-int loopcnt=10, itercount=5,less=2, strl; /*less>1 takes a partial plane */
-double tt, t0[LCC],t1[LCC],t2[LCC],t3[LCC],t4=0,t5=0,t6=0;
+int loopcnt=10, itercount=5;
+double tt, t0[LCC],t1[LCC],t2[LCC],t3[LCC];
 armci_hdl_t hdl1,hdl2;
 
     for(i=0;i<LCC;i++){
@@ -157,7 +139,7 @@ armci_hdl_t hdl1,hdl2;
     /*start test*/
     for(j=0;j<itercount;j++){
        for(i=0;i<loopcnt;i++){
-         int lc, rc,wc,lc1,rc1,wc1,bytes;
+         int bytes;
         
          sendersright = (j+1)%nproc;
          sendersleft = (j+nproc-1)%nproc;
@@ -247,14 +229,13 @@ armci_hdl_t hdl1,hdl2;
 
 void test_put_multidma()
 {
-int dim,elems;
-int i,j, proc=1,Idx=1,idx=0;
+int i,j;
 void *b[MAXPROC], *a[MAXPROC];
 int left = (me+nproc-1) % nproc;
 int right = (me+1) % nproc;
 int sendersright=0,sendersleft=0;
-int loopcnt=LCC, itercount=1000,less=2, strl; /*less>1 takes a partial plane */
-double tt, t0[LCC],t1[LCC],t2[LCC],t3[LCC],t4=0,t5=0,t6=0;
+int loopcnt=LCC, itercount=1000;
+double tt, t0[LCC],t1[LCC],t2[LCC],t3[LCC];
 armci_hdl_t hdl1,hdl2;
 
 
@@ -271,7 +252,8 @@ armci_hdl_t hdl1,hdl2;
     ARMCI_Barrier();
     for(j=0;j<itercount;j++){
        for(i=0;i<loopcnt;i++){
-         int lc, rc,wc,lc1,rc1,wc1,bytes;
+         int lc,rc,wc,bytes;
+         /* int lc1,rc1,wc1; */
         
          sendersright = (j+1)%nproc;
          sendersleft = (j+nproc-1)%nproc;
@@ -292,10 +274,10 @@ armci_hdl_t hdl1,hdl2;
          ARMCI_NbPut((double*)a[me],(double*)b[left],bytes, left,&hdl1);
          ARMCI_Wait(&hdl1);
          t1[i] += (MP_TIMER()-tt);
-         //lc=armci_notify(left);
-         //tt = MP_TIMER();
-         //rc = armci_notify_wait(right,&wc); 
-         //t1[i] += (MP_TIMER()-tt);
+         /* lc=armci_notify(left); */
+         /* tt = MP_TIMER(); */
+         /* rc = armci_notify_wait(right,&wc);  */
+         /* t1[i] += (MP_TIMER()-tt); */
 
          ARMCI_INIT_HANDLE(&hdl1);
          ARMCI_INIT_HANDLE(&hdl2);
@@ -307,13 +289,13 @@ armci_hdl_t hdl1,hdl2;
                          right,&hdl2);
          ARMCI_Wait(&hdl1);
          t2[i] += (MP_TIMER()-tt);
-         //lc=armci_notify(left);
-         //lc1=armci_notify(right);
-         //tt = MP_TIMER();
-         //rc1 = armci_notify_wait(left,&wc1); 
-         //rc = armci_notify_wait(right,&wc); 
-         //t2[i] += (MP_TIMER()-tt);
-         //ARMCI_Wait(&hdl1);
+         /* lc=armci_notify(left); */
+         /* lc1=armci_notify(right); */
+         /* tt = MP_TIMER(); */
+         /* rc1 = armci_notify_wait(left,&wc1);  */
+         /* rc = armci_notify_wait(right,&wc);  */
+         /* t2[i] += (MP_TIMER()-tt); */
+         /* ARMCI_Wait(&hdl1); */
          ARMCI_Wait(&hdl2);
 
          ARMCI_INIT_HANDLE(&hdl1);
@@ -324,8 +306,8 @@ armci_hdl_t hdl1,hdl2;
          ARMCI_NbPut((double*)a[me],(double*)b[left],bytes/2,left,&hdl1);
          ARMCI_NbPut((double*)a[me]+bytes/16,(double*)b[left]+bytes/16,bytes/2,
                          left,&hdl2);
-         //ARMCI_Wait(&hdl1);
-         //ARMCI_Wait(&hdl2);
+         /* ARMCI_Wait(&hdl1); */
+         /* ARMCI_Wait(&hdl2); */
          t3[i] += ( MP_TIMER()-tt);
          lc=armci_notify(left);
          tt = MP_TIMER();
@@ -383,8 +365,6 @@ armci_hdl_t hdl1,hdl2;
 
 int main(int argc, char* argv[])
 {
-    int ndim;
-
     MP_INIT(argc, argv);
     MP_PROCS(&nproc);
     MP_MYID(&me);

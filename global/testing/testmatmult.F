@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 #if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
@@ -46,8 +49,8 @@ c
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
+#include "mp3.fh"
 
-      call PBEGINF
       if (.not.ma_init(MT_DBL,1,20000000)) then
          call ga_error('failed: ma_init(MT_DBL,1,20000000)',10)
       endif
@@ -211,7 +214,7 @@ c
       if(ga_nodeid().eq.0) print *,'All tests successful '
 c      
       call ga_terminate
-      call pend
+      call MP_FINALIZE()
 c     
       end
 c

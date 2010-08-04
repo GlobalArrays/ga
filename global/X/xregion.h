@@ -121,8 +121,8 @@ SCOPE  char title[80];
 SCOPE  char interval_string[10], slowdown_string[11];
 SCOPE  int top_edge, bottom_edge, left_edge, right_edge;
 
-#define MAX(a,b) (((a)>(b)) ? (a) : (b))
-#define MIN(a,b) (((a)<(b)) ? (a) : (b))
+#define GA_MAX(a,b) (((a)>(b)) ? (a) : (b))
+#define GA_MIN(a,b) (((a)<(b)) ? (a) : (b))
 
 #define MAX_COL 16
 SCOPE u_char cmap[MAX_COL+1];

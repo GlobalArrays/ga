@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*
  * $Id: testc.c,v 1.5 1999-05-27 16:31:16 d3h325 Exp $
  */
@@ -8,14 +12,18 @@
 
 #include "macdecls.h"
 #include "string-util.h"
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 
 /**
  ** constants
  **/
 
-#define NUM_COMMANDS	(int)(sizeof(commands) / sizeof(char *))
+#define NUM_COMMANDS    (int)(sizeof(commands) / sizeof(char *))
 
 /**
  ** types
@@ -131,19 +139,19 @@ static char *help[] =
  */
 /* ------------------------------------------------------------------------- */
 
-main(argc, argv)
-    int		argc;
-    char	*argv[];
+int main(argc, argv)
+    int        argc;
+    char    *argv[];
 {
-    char        	s[81];	/* string buffer */
-    int         	c;	/* index of command */
-    int         	ii1;	/* in int buffer */
-    int         	ii2;	/* in int buffer */
-    int         	ii3;	/* in int buffer */
-    int         	oi1;	/* out int buffer */
-    int         	oi2;	/* out int buffer */
-    Pointer         	op;	/* out Pointer buffer */
-    int         	value;	/* return value buffer */
+    char        s[81];  /* string buffer */
+    int         c;      /* index of command */
+    int         ii1;    /* in int buffer */
+    int         ii2;    /* in int buffer */
+    int         ii3;    /* in int buffer */
+    Integer     oi1;    /* out int buffer */
+    MA_AccessIndex oi2; /* out int buffer */
+    Pointer     op;     /* out Pointer buffer */
+    int         value;  /* return value buffer */
 
     while (1)
     {
@@ -175,8 +183,8 @@ main(argc, argv)
                 else
                 {
                     value = MA_alloc_get(ii1, ii2, s, &oi1, &oi2);
-                    printf("%s=%d memhandle=%d index=%d\n",
-                        commands[c], value, oi1, oi2);
+                    printf("%s=%d memhandle=%ld index=%ld\n",
+                        commands[c], value, (long)oi1, (long)oi2);
                 }
                 break;
             case C_MA_allocate_heap:
@@ -185,7 +193,8 @@ main(argc, argv)
                 else
                 {
                     value = MA_allocate_heap(ii1, ii2, s, &oi1);
-                    printf("%s=%d memhandle=%d\n", commands[c], value, oi1);
+                    printf("%s=%d memhandle=%ld\n",
+                            commands[c], value, (long)oi1);
                 }
                 break;
             case C_MA_chop_stack:
@@ -211,8 +220,8 @@ main(argc, argv)
                     printf("*** Input read failed for %s\n", commands[c]);
                 else
                 {
-                    value = MA_get_index(ii1, &oi1);
-                    printf("%s=%d index=%d\n", commands[c], value, oi1);
+                    value = MA_get_index(ii1, &oi2);
+                    printf("%s=%d index=%ld\n", commands[c], value, (long)oi2);
                 }
                 break;
             case C_MA_get_next_memhandle:
@@ -220,9 +229,10 @@ main(argc, argv)
                     printf("*** Input read failed for %s\n", commands[c]);
                 else
                 {
-                    value = MA_get_next_memhandle(&ii1, &oi1);
-                    printf("%s=%d ithandle=%d memhandle=%d\n",
-                        commands[c], value, ii1, oi1);
+                    Integer tmp = ii1;
+                    value = MA_get_next_memhandle(&tmp, &oi1);
+                    printf("%s=%d ithandle=%ld memhandle=%ld\n",
+                        commands[c], value, (long)tmp, (long)oi1);
                 }
                 break;
             case C_MA_get_pointer:
@@ -246,7 +256,7 @@ main(argc, argv)
                 break;
             case C_MA_init_memhandle_iterator:
                 value = MA_init_memhandle_iterator(&oi1);
-                printf("%s=%d ithandle=%d\n", commands[c], value, oi1);
+                printf("%s=%d ithandle=%ld\n", commands[c], value, (long)oi1);
                 break;
             case C_MA_inquire_avail:
                 if (scanf("%d", &ii1) != 1)
@@ -254,7 +264,7 @@ main(argc, argv)
                 else
                 {
                     oi1 = MA_inquire_avail(ii1);
-                    printf("%s=%d\n", commands[c], oi1);
+                    printf("%s=%ld\n", commands[c], (long)oi1);
                 }
                 break;
             case C_MA_inquire_heap:
@@ -263,7 +273,7 @@ main(argc, argv)
                 else
                 {
                     oi1 = MA_inquire_heap(ii1);
-                    printf("%s=%d\n", commands[c], oi1);
+                    printf("%s=%ld\n", commands[c], (long)oi1);
                 }
                 break;
             case C_MA_inquire_stack:
@@ -272,7 +282,7 @@ main(argc, argv)
                 else
                 {
                     oi1 = MA_inquire_stack(ii1);
-                    printf("%s=%d\n", commands[c], oi1);
+                    printf("%s=%ld\n", commands[c], (long)oi1);
                 }
                 break;
             case C_MA_pop_stack:
@@ -293,8 +303,8 @@ main(argc, argv)
                 else
                 {
                     value = MA_push_get(ii1, ii2, s, &oi1, &oi2);
-                    printf("%s=%d memhandle=%d index=%d\n",
-                        commands[c], value, oi1, oi2);
+                    printf("%s=%d memhandle=%ld index=%ld\n",
+                        commands[c], value, (long)oi1, (long)oi2);
                 }
                 break;
             case C_MA_push_stack: 
@@ -303,7 +313,8 @@ main(argc, argv)
                 else
                 {
                     value = MA_push_stack(ii1, ii2, s, &oi1);
-                    printf("%s=%d memhandle=%d\n", commands[c], value, oi1);
+                    printf("%s=%d memhandle=%ld\n",
+                            commands[c], value, (long)oi1);
                 }
                 break;
             case C_MA_set_auto_verify:
@@ -339,7 +350,7 @@ main(argc, argv)
                 else
                 {
                     oi1 = MA_sizeof(ii1, ii2, ii3);
-                    printf("%s=%d\n", commands[c], oi1);
+                    printf("%s=%ld\n", commands[c], (long)oi1);
                 }
                 break;
             case C_MA_sizeof_overhead:
@@ -348,7 +359,7 @@ main(argc, argv)
                 else
                 {
                     oi1 = MA_sizeof_overhead(ii1);
-                    printf("%s=%d\n", commands[c], oi1);
+                    printf("%s=%ld\n", commands[c], (long)oi1);
                 }
                 break;
             case C_MA_summarize_allocated_blocks:
@@ -374,4 +385,6 @@ main(argc, argv)
                 printf("*** Unrecognized case '%d' in switch\n", c);
         }
     }
+
+    return 0;
 }

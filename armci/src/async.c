@@ -1,8 +1,14 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: async.c,v 1.5 2002-12-18 18:25:33 vinod Exp $ */
 /* data structures and interfaces for handling asynchronous requests 
  */
 
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 #include "armcip.h" 
 
 #define DEBUG_ 0
@@ -115,7 +121,7 @@ strided_dscr_t *dscr;
 }
 
 #if 0 /*this function has been added in armci.c*/
-int ARMCI_Wait(int req_id)
+int PARMCI_Wait(int req_id)
 {
 int dsc_id = REQ_TO_DSC_ID(req_id);
 void *buf;
@@ -128,7 +134,7 @@ void *buf;
    buf = _armci_buf_ptr_from_id(dsc_id);
 
    if(dsc_id >MAX_PENDING_REQ) 
-       armci_die2("ARMCI_Wait: bad id",dsc_id,MAX_PENDING_REQ);
+       armci_die2("PARMCI_Wait: bad id",dsc_id,MAX_PENDING_REQ);
 
    /* when 0 it means the request was completed to get the buffer */
    if(armci_pending_dscr[dsc_id].reqid == 0) return 0;

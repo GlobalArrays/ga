@@ -1,5 +1,8 @@
-/*$id$*/
-/*
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+/** @file
  *                                Copyright (c) 2006
  *                      Pacific Northwest National Laboratory,
  *                           Battelle Memorial Institute.
@@ -29,20 +32,36 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
+ * $Id$
  */
 
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <assert.h>
-#ifdef WIN32
-#include <windows.h>
-#else
-#include <unistd.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
 #endif
-#include <math.h>
-#include <time.h>
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STDARG_H
+#   include <stdarg.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#elif HAVE_WINDOWS_H
+#   include <windows.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#if HAVE_TIME_H
+#   include <time.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
+
 #include "mp3.h"
 #include "armci.h"
 
@@ -62,11 +81,8 @@ typedef int t_elem; /* type of an array element */
 #define MAX_MSG_SIZE    (1024 * 1024)
 #define MSG_COUNT       20
 
-int mpi_error_code;
-#define MP_ASSERT(error_code) if ((mpi_error_code = error_code) != MPI_SUCCESS)\
-        MPI_Abort(MPI_COMM_WORLD, mpi_error_code)
 int armci_error_code;
-#define ARMCI_ASSERT(error_code) if (armci_error_code = error_code) {   \
+#define ARMCI_ASSERT(error_code) if ((armci_error_code = error_code)) {   \
         fprintf(stderr, "ARMCI error %d\n", armci_error_code);pause();         \
         ARMCI_Cleanup(); MPI_Abort(MPI_COMM_WORLD, armci_error_code); }
 
@@ -113,7 +129,8 @@ void start_logging(const char *fname)
 {
     char exe_name[255];
     char log_path[255];
-    char i, j, k, len;
+    size_t i;
+    char k;
 
 #ifdef  LOG2FILE
     strcpy(exe_name, fname);
@@ -158,7 +175,7 @@ int log_printf(const char *fmt, ...)
     va_list ap;
     int r;
     
-	va_start(ap, fmt);
+    va_start(ap, fmt);
 
     if (log_file)
         r = vfprintf(log_file, fmt, ap);
@@ -210,10 +227,10 @@ double * benchmark(int op, int msg_size, int size2)
 
     void *array_ptrs[size];
     int stride_dist, block_sizes[2], scale = 2;
-    int i, j, k, l, less, more;
-    double time_start, time_after_start, time_after_call, time_after_work,
-           time_after_wait;
-    double time2call_nw, time2wait_nw = 1.0, time_total_nw;
+    int i=0, j=0, k=0, l=0, less=0, more=0;
+    double time_start=0, time_after_start=0, time_after_call=0,
+           time_after_work=0, time_after_wait=0;
+    double time2call_nw=0, time2wait_nw = 1.0, time_total_nw=0;
     double time2call_fw, time2work_fw, time2wait_fw, time_total_fw;
     armci_hdl_t handle;
 
@@ -618,12 +635,12 @@ int main (int argc, char *argv[])
     int dist, pos, time_seed;
 
     int msg_sizes[MSG_COUNT], dim1_sizes[MSG_COUNT], dim2[MSG_COUNT], mul_elem;
-    double *stats, *stats_all;
+    double *stats=NULL, *stats_all=NULL;
 
     MP_ASSERT(MP_INIT(argc, argv));
     MP_ASSERT(MP_MYID(&rank));
     MP_ASSERT(MP_PROCS(&size));
-    assert(size & 1 ^ 1); /* works with even number of processors only */
+    assert((size & 1) ^ 1); /* works with even number of processors only */
     log_debug("Message passing initialized\n");
 
     ARMCI_ASSERT(ARMCI_Init());
@@ -781,4 +798,3 @@ int main (int argc, char *argv[])
 
     return 0;
 }
-

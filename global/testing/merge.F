@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c $Id: merge.F,v 1.4 2000-05-25 01:09:19 d3h325 Exp $
 c This program should run only in the network of MPPs (IWAY) environment 
 c
@@ -5,17 +8,12 @@ c
       program test
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
+c#include "tcgmsg.fh"
       logical status
 c
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Intitialize the GA package
       call ga_initialize()
@@ -31,11 +29,7 @@ c
  
       call ga_terminate()
 
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
       end
 
 

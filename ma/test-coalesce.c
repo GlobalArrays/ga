@@ -1,22 +1,30 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*
  * $Id: test-coalesce.c,v 1.4 2002-09-14 05:40:30 d3g001 Exp $
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #include "macdecls.h"
 
 #define MAXHANDLES 10
 
-main()
+int main(int argc, char **argv)
 {
-    Integer     bytes_heap;
-    Integer     bytes_stack;
-    int         howmany;
-    Boolean     ok;
-
-    Integer     handle[MAXHANDLES];
-    Integer     index[MAXHANDLES];
+    Integer        bytes_heap;
+    Integer        bytes_stack;
+    int            howmany;
+    Boolean        ok;
+                  
+    Integer        handle[MAXHANDLES];
+    MA_AccessIndex index[MAXHANDLES];
 
     /* set sizes of heap and stack */
     bytes_heap = 1024;
@@ -52,4 +60,6 @@ main()
 
     printf("# Printing stats for allocated blocks -- should be two active\n");
     MA_summarize_allocated_blocks();
+
+    return 0;
 }

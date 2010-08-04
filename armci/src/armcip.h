@@ -3,8 +3,11 @@
 #ifndef _ARMCI_P_H
 
 #define _ARMCI_P_H
-#include <stdlib.h>
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #include "armci.h"
+#include "parmci.h"
 #include "message.h"
 
 /*#define ARMCI_PR_DBG(__ARMCI_ST,__ARMCI_NU) \
@@ -34,11 +37,11 @@ extern void armci_elan_fence(int p);
 #   define INLINE
 #endif
 
-#ifdef WIN32
-#include <windows.h>
-#define sleep(x) Sleep(100*(x))
-#else
-#include <unistd.h>
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#elif HAVE_WINDOWS_H
+#   include <windows.h>
+#   define sleep(x) Sleep(100*(x))
 #endif
 
 #if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM) && !defined(HITACHI) && !defined(CATAMOUNT)
@@ -107,7 +110,7 @@ extern thread_id_t armci_usr_tid;
 #  define SERVER_CONTEXT (armci_me<0)
 #endif
 
-#if defined(LAPI) || defined(CLUSTER) || defined(CRAY) || defined(XT3)\
+#if defined(LAPI) || defined(CLUSTER) || defined(CRAY) || defined(CRAY_XT)\
         || defined(CRAY_SHMEM) || defined(BGML) || defined(DCMF)
 #  include "request.h"
 #endif
@@ -161,10 +164,12 @@ extern INLINE int armci_register_thread(thread_id_t id);
    }
 #  define bcopy(a,b,len) memcpy(b,a,len)
 #else
-# include <strings.h>
+#   if HAVE_STRINGS_H
+#       include <strings.h>
+#   endif
 #endif
 
-#if defined(XT3) || defined(CRAY_T3E) || defined(FUJITSU)\
+#if defined(CRAY_XT) || defined(CRAY_T3E) || defined(FUJITSU)\
        || defined(HITACHI) || (defined(QUADRICS) && !defined(ELAN_ACC))
 #define ACC_COPY
 #endif
@@ -289,10 +294,10 @@ extern void armci_init_fence();
 #endif
 
 
-#define MAX(a,b) (((a)>(b))?(a):(b))
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
-#define ACC(op)  ((((int)(op))-ARMCI_ACC_INT)>=0)
+#define ARMCI_MAX(a,b) (((a)>(b))?(a):(b))
+#define ARMCI_MIN(a,b) (((a)<(b))?(a):(b))
+#define ARMCI_ABS(a)   (((a) >= 0) ? (a) : (-(a)))
+#define ARMCI_ACC(op)  ((((int)(op))-ARMCI_ACC_INT)>=0)
 
 #ifdef CLUSTER
    extern char *_armci_fence_arr;
@@ -315,7 +320,7 @@ extern void armci_init_fence();
 
 #if defined(LAPI) || defined(ELAN_ACC)
 #  define ORDER(op,proc)\
-        if( proc == armci_me || ( ACC(op) && ACC(PENDING_OPER(proc))) );\
+        if( proc == armci_me || ( ARMCI_ACC(op) && ARMCI_ACC(PENDING_OPER(proc))) );\
         else  FENCE_NODE(proc)
 #  define UPDATE_FENCE_INFO(proc_)
 #elif defined(CLUSTER) && !defined(QUADRICS) && !defined(HITACHI)\
@@ -470,23 +475,14 @@ typedef struct {
  
 armci_grp_attr_t *ARMCI_Group_getattr(ARMCI_Group *grp);
  
-extern void armci_msg_group_igop(int *x, int n, char* op,ARMCI_Group *group);
-extern void armci_msg_group_lgop(long *x, int n, char* op,ARMCI_Group *group);
-extern void armci_msg_group_fgop(float *x, int n, char* op,ARMCI_Group *group);
-extern void armci_msg_group_dgop(double *x, int n,char* op,ARMCI_Group *group);
-extern void armci_msg_group_bcast_scope(int scope, void *buf, int len,
-                                        int root, ARMCI_Group *group);
-extern void armci_msg_group_barrier(ARMCI_Group *group);
-extern void armci_msg_group_gop_scope(int scope, void *x, int n, char* op,
-                                      int type, ARMCI_Group *group);
-extern void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
-                                  int grp_clus_nproc,ARMCI_Group *mastergroup);
-extern void armci_exchange_address_grp(void *ptr_arr[], int n, ARMCI_Group *group);
+extern void armci_group_init();
+extern void armci_group_finalize();
+
 #endif /* ifdef MPI */ 
 /* -------------------------------------------------------- */
 
 /* ------------ ARMCI Chekcpointing/Recovery -------------- */
-#ifdef DO_CKPT
+#ifdef ENABLE_CHECKPOINT
 extern int armci_init_checkpoint();
 extern void armci_create_ckptds(armci_ckpt_ds_t *ckptds, int count);
 extern int armci_icheckpoint_init(char *filename, ARMCI_Group *grp,
@@ -497,7 +493,7 @@ extern int armci_irecover(int rid,int iamreplacement);
 extern void armci_icheckpoint_finalize(int rid);
 
 
-#endif /* ifdef DO_CKPT */
+#endif /* ifdef ENABLE_CHECKPOINT */
 /* -------------------------------------------------------- */
 
 #ifdef BGML     

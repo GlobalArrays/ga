@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*******************************************************************************************************
  * This is a language (python,f90) independent layer of array management operations
  * Oerations defined here are called from language-specific layer to allocate & free memory

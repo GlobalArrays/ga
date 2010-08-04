@@ -499,7 +499,7 @@ c
         else
            shift = 0.0d0
         endif
-      endif	
+      endif    
       if (iter.ge.2) then
          do 40 i = nocc+1, nbfn
             fock(iky(i)+i) = fock(iky(i)+i) + shift

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*$Id: getmem.c,v 1.2 1995-02-02 23:24:10 d3g681 Exp $*/
 extern char * memalign();
 

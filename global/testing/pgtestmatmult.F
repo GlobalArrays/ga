@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 #if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
 c
 #   define xgemm SGEMM
@@ -47,8 +50,7 @@ c
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-
-      call PBEGINF
+#include "mp3.fh"
       if (.not.ma_init(MT_DBL,1,20000000)) then
          call ga_error('failed: ma_init(MT_DBL,1,20000000)',10)
       endif
@@ -212,7 +214,7 @@ c
       call ga_pgroup_set_default(ga_pgroup_get_world())
       call ga_sync() 
       call ga_terminate
-      call pend
+      call MP_FINALIZE()
 c     
       end
 c

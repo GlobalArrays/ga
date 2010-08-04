@@ -1,32 +1,28 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+
+#include "mp3.h"
+#include "armci.h"
+#include "message.h"
 
 extern int na,nz;
 extern int me, nproc;
 extern int myfirstrow,mylastrow;
 
-#if defined(TCGMSG)
-#   include <sndrcv.h>
-    long tcg_tag =30000;
-#   define MP_BARRIER()      SYNCH_(&tcg_tag)
-#   define MP_INIT(arc,argv) PBEGIN_((argc),(argv))
-#   define MP_FINALIZE()     PEND_()
-#   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
-#   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
-#else
-#   include <mpi.h>
-#   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
-#   define MP_FINALIZE()     MPI_Finalize()
-#   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
-#   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
-#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
-#endif
-
 void computeminverse(double *minvptr,double *aptr,int *rowptr,int *colptr)
 {
-int i,j,lo,hi,one=1,zero=0;
-double tmprowsum=0.0;
+int i,j;
     for(i=myfirstrow;i<=mylastrow;i++){
       for(j=rowptr[i];j<rowptr[i+1];j++){
         if(colptr[j]>=i){
@@ -47,7 +43,7 @@ double tmprowsum=0.0;
 
 void computeminverser(double *minvptr,double *rvecptr,double *minvrptr)
 {
-int i,lo,hi,one=1,zero=0;
+int i;
     for(i=myfirstrow;i<=mylastrow;i++)
        minvrptr[i]=minvptr[i]*rvecptr[i];
     /*MP_BARRIER();*/
@@ -101,10 +97,10 @@ double scale1=*pscale1,scale2=*pscale2;
 }
 
 void acg_2addvec(double *pscale1a,double *vec1a, double *pscale2a,double *vec2a,
-		double *resulta, 
+        double *resulta, 
                 double *pscale1b, double *vec1b,double *pscale2b, double *vec2b,
-		double *resultb, 
-		int *rowptr, int *colptr)
+        double *resultb, 
+        int *rowptr, int *colptr)
 {
 int i;
 double scale1a=*pscale1a,scale2a=*pscale2a, scale1b=*pscale1b,scale2b=*pscale2b;
@@ -117,8 +113,7 @@ double scale1a=*pscale1a,scale2a=*pscale2a, scale1b=*pscale1b,scale2b=*pscale2b;
 
 void acg_matvecmul(double *aptr,double *vec, double *result,int *rowptr, int *colptr)
 {
-int i,j,k,l=0,lo,hi,one=1,zero=0;
-double t0,d_zero=0.0,d_one=1.0;
+int i,j;
 double tmprowsum=0.0;
     ARMCI_Barrier();
     for(i=myfirstrow;i<=mylastrow;i++){

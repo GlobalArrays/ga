@@ -1,4 +1,7 @@
-#ifdef GA_USE_VAMPIR
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
+#ifdef USE_VAMPIR
 #include "ga_vampir.fh"
 #endif
       subroutine ga_diag_seq(g_a, g_s, g_v, evals)
@@ -11,8 +14,10 @@
       double precision evals(*) ! Local array to return evals
 c
       integer n, ierr
-      integer l_fv1, k_fv1, l_fv2, k_fv2
-      integer l_a, k_a, l_s, k_s, l_v, k_v
+      integer l_fv1, l_fv2
+      MA_ACCESS_INDEX_TYPE k_fv1, k_fv2
+      integer l_a, l_s, l_v
+      MA_ACCESS_INDEX_TYPE k_a, k_s, k_v
       integer dim1, dim2, type, me
       logical status
 c
@@ -22,7 +27,7 @@ c     all eigen-vectors and values in ascending order
 c
 c     The input matrices may be destroyed
 c
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
       call vampir_begin_galinalg(GA_DIAG_SEQ,__FILE__,__LINE__)
 #endif
       call ga_check_handle(g_a, 'ga_diag_seq a')
@@ -92,7 +97,7 @@ c
       call ga_brdcst(32500, evals, 
      $               ma_sizeof(MT_DBL,n,MT_BYTE), 0)
       call ga_sync()
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
       call vampir_end_galinalg(GA_DIAG_SEQ,__FILE__,__LINE__)
 #endif
 c
@@ -107,8 +112,10 @@ c
       double precision evals(*) ! Local array to return evals
 c
       integer n, ierr
-      integer l_fv1, k_fv1, l_fv2, k_fv2
-      integer l_a, k_a,  l_v, k_v
+      integer l_fv1, l_fv2
+      MA_ACCESS_INDEX_TYPE k_fv1, k_fv2
+      integer l_a, l_v
+      MA_ACCESS_INDEX_TYPE k_a, k_v
       integer dim1, dim2, type, me
       logical status
 c
@@ -118,7 +125,7 @@ c     all eigen-vectors and values in ascending order
 c
 c     The input matrices may be destroyed
 c
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
       call vampir_begin_galinalg(GA_DIAG_STD_SEQ,__FILE__,__LINE__)
 #endif
       call ga_check_handle(g_a, 'ga_diag_std a')
@@ -173,7 +180,7 @@ c
       call ga_brdcst(32500, evals, 
      $               ma_sizeof(MT_DBL,n,MT_BYTE), 0)
       call ga_sync()
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
       call vampir_end_galinalg(GA_DIAG_STD_SEQ,__FILE__,__LINE__)
 #endif
 c

@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -18,7 +21,6 @@ c#define MIRROR
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-#include "tcgmsg.fh"
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM, nwidth, MAXPROC, nloop
       parameter (nmax = 20, DIM = 3, nwidth = 2, MAXPROC = 2000)
@@ -27,7 +29,8 @@ c#define MIRROR
       integer i, j, k, dims(7), width(7), map(2*nmax)
       integer lo(7), hi(7), ld(7)
       integer lo2(7), hi2(7), ld2(7)
-      integer dims3(7), ld3(7), index3, chunk(7)
+      integer dims3(7), ld3(7), chunk(7)
+      MA_ACCESS_INDEX_TYPE index3
       integer a(nmax, nmax, nmax)
       integer b(nmax+2*nwidth,nmax+2*nwidth,nmax+2*nwidth)
 #ifdef MIRROR
@@ -41,12 +44,7 @@ c#define MIRROR
 c     
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Initialize GA
 c
@@ -357,6 +355,7 @@ c
       call atest(int_mb(index3),dims3,ld3(1),b,nmax+2*nwidth,has_data)
 
 c  123 continue
+#if 0
       t13 = 0.0d00
       t14 = 0.0d00
       t15 = 0.0d00
@@ -388,6 +387,7 @@ c  123 continue
       if (has_data(me).and.safe_get)
      +    call nga_periodic_get(g_a, lo2, hi2, b, ld2)
       call atest(int_mb(index3),dims3,ld3(1),b,nmax+2*nwidth,has_data)
+#endif
 
       t16 = 0.0d00
       t17 = 0.0d00
@@ -563,17 +563,15 @@ c
       endif
   127 continue
 c
+      if(ga_nodeid().eq.0) print *,'All tests successful '
+c      
 c***  Tidy up the GA package
 c
       call ga_terminate()
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
 
 c
       stop
@@ -587,7 +585,7 @@ c
       integer i, j, k, l, nproc, lprocs, iproc, inode
       logical has_data(0:1999), check_data
 
-      isok = .true.
+c      isok = .true.
       nproc = ga_nnodes()
       check_data = .true.
       do l = 1, nproc

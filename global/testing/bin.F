@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 C
 C     Test the minval, minloc, maxval, maxloc, and enum functions in GA.
 C
@@ -11,11 +14,7 @@ C
 c     
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      call mpi_init
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Initialize GA
 c
@@ -54,11 +53,7 @@ c
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      call mpi_finalize()
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
 c
       end
 
@@ -141,7 +136,6 @@ C
       integer isum, icount, jcount, itoff
       double precision result
       integer i1, i2, ibin
-      double precision drand
       logical ga_create_bin
 C
 C
@@ -212,8 +206,8 @@ C*****print *, 'me=',me, num,ilo,ihi
 c
       itoff=nen*nelements
       do i=ilo,ihi
-c        print *, 'rand=',10.0*util_drand(0),
-c    *             nint(10.0*util_drand(0)), util_drand(0),drand(0)
+c        print *, 'rand=',10.0*drand(0),
+c    *             nint(10.0*drand(0)), drand(0),drand(0)
          ielm1(i-ilo+1)=max(1,min(nbins_max,1+nint(20.0*drand(0))))
       enddo  
       call ssortii(ielm1,ielm1,num,1)

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /**************************************************
  *             LU factorization                   *
  *             Armci Version                      *
@@ -8,48 +12,30 @@ Non-blocking Version
 Pre-PUTing
 ******************/ 
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <mpi.h> 
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+
 #include "armci.h"
+#include "mp3.h"
 
 /*#define DEBUG*/
 #define MAXRAND                         32767.0
 #define DEFAULT_N                       8
 #define DEFAULT_B                       2
 #define MAXPROC 256 /* Maximum number of processors */
-
-/* ARMCI is message-passing ambivalent -  we define macros for common MP calls*/
-#ifdef PVM
-#   include <pvm3.h>
-#   ifdef CRAY
-#     define MPGROUP         (char *)NULL
-#     define MP_INIT(arc,argv)
-#   else
-#     define MPGROUP           "mp_working_group"
-#     define MP_INIT(arc,argv) pvm_init(arc, argv)
-#   endif
-#   define MP_FINALIZE()     pvm_exit()
-#   define MP_BARRIER()      pvm_barrier(MPGROUP,-1)
-#   define MP_MYID(pid)      *(pid)   = pvm_getinst(MPGROUP,pvm_mytid())
-#   define MP_PROCS(pproc)   *(pproc) = (int)pvm_gsize(MPGROUP)
-#elif defined(TCG)
-#   include <sndrcv.h>
-long tcg_tag =30000;
-#   define MP_BARRIER()      SYNCH_(&tcg_tag)
-#   define MP_INIT(arc,argv) PBEGIN_((argc),(argv))
-#   define MP_FINALIZE()     PEND_()
-#   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
-#   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
-#else
-#   include <mpi.h>
-#   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
-#   define MP_FINALIZE()     MPI_Finalize()
-#   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
-#   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
-#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
-#endif
 
 /* global variables */
 int n = DEFAULT_N;         /* The size of the matrix */
@@ -85,7 +71,7 @@ extern void start_timer(void);
 extern double elapsed_time(void);
 extern double stop_time(void);
 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   int i, j;
   int ch;
@@ -98,7 +84,7 @@ main(int argc, char *argv[])
   double **ptr_loc;
   void **bufr_g, **bufc_g;
 
-  MP_INIT(arc,argv);
+  MP_INIT(argc,argv);
   MP_PROCS(&nproc);
   MP_MYID(&me);
     
@@ -148,7 +134,7 @@ main(int argc, char *argv[])
   if(me == 0)
     for (i=0;i<nblocks;i++) {
       for (j=0;j<nblocks;j++) 
-	printf("%d ", block_owner(i, j));
+    printf("%d ", block_owner(i, j));
       printf("\n");
     }
   MP_BARRIER();
@@ -159,16 +145,16 @@ main(int argc, char *argv[])
   for (i=0;i<nblocks;i++) {
     for (j=0;j<nblocks;j++) {
       if(block_owner(i,j) == me) {
-	if ((i == nblocks-1) && (j == nblocks-1)) {
-	  size = edge*edge;
-	}
-	else if ((i == nblocks-1) || (j == nblocks-1)) {
-	  size = edge*block_size;
-	}
-	else {
-	  size = block_size*block_size;
-	}
-	proc_bytes += size*sizeof(double);
+    if ((i == nblocks-1) && (j == nblocks-1)) {
+      size = edge*edge;
+    }
+    else if ((i == nblocks-1) || (j == nblocks-1)) {
+      size = edge*block_size;
+    }
+    else {
+      size = block_size*block_size;
+    }
+    proc_bytes += size*sizeof(double);
       }
     }
   }
@@ -189,11 +175,11 @@ main(int argc, char *argv[])
     for(j=0; j<nblocks; j++) {
       a[i+j*nblocks] = ptr_loc[block_owner(i, j)];
       if ((i == nblocks-1) && (j == nblocks-1)) {
-	size = edge*edge;
+    size = edge*edge;
       } else if ((i == nblocks-1) || (j == nblocks-1)) {
-	size = edge*block_size;
+    size = edge*block_size;
       } else {
-	size = block_size*block_size;
+    size = block_size*block_size;
       }
       ptr_loc[block_owner(i, j)] += size;
     }
@@ -271,6 +257,8 @@ main(int argc, char *argv[])
   ARMCI_Free(bufr_g[me]);
   ARMCI_Finalize();
   MP_FINALIZE();
+
+  return 0;
 }
 
 void lu(int n, int bs, int me)
@@ -278,12 +266,9 @@ void lu(int n, int bs, int me)
   int i, il, j, jl, k, kl;
   int I, J, K;
   double *A, *B, *C, *D;
-  int dimI, dimJ, dimK;
   int strI, strJ, strK;
-  unsigned int t1, t2, t3, t4, t11, t22;
-  int diagowner, destp, hc, m;
+  int diagowner, destp, m;
   double *dbuf;
-  armci_hdl_t handle[2*MAXPROC];
   int saved[MAXPROC];  
   
   dbuf = (double *)ARMCI_Malloc_local((armci_size_t) block_size*block_size*sizeof(double));
@@ -315,50 +300,50 @@ void lu(int n, int bs, int me)
     
     for (i=kl, I=K+1; i<n; i+=bs, I++) {
       if (block_owner(I, K) == me) {  /* parcel out blocks */
-	il = i + bs; 
-	if (il > n) {
-	  il = n;
-	  strI = il - i;
-	} else {
-	  strI = bs;
-	}
-	A = a[I+K*nblocks]; 
-	bdiv(A, D, strI, strK, strI, strK);
-	
-	/* Pre-put this block to the block-owners of all blocks on the I-th row with a non-blocking put*/
-	memset (saved, 0, sizeof(saved));
-	for (m = K+1; m < nblocks; m++) {
-	    destp = block_owner (I, m);
-	    if (destp != me && !saved[destp]) {
-	      ARMCI_NbPut(A, bufc[destp*nblocks + I], strI*strK*sizeof(double), destp, NULL);
-	      saved[destp] = 1;
-	    }
-	}
+    il = i + bs; 
+    if (il > n) {
+      il = n;
+      strI = il - i;
+    } else {
+      strI = bs;
+    }
+    A = a[I+K*nblocks]; 
+    bdiv(A, D, strI, strK, strI, strK);
+    
+    /* Pre-put this block to the block-owners of all blocks on the I-th row with a non-blocking put*/
+    memset (saved, 0, sizeof(saved));
+    for (m = K+1; m < nblocks; m++) {
+        destp = block_owner (I, m);
+        if (destp != me && !saved[destp]) {
+          ARMCI_NbPut(A, bufc[destp*nblocks + I], strI*strK*sizeof(double), destp, NULL);
+          saved[destp] = 1;
+        }
+    }
       }
     } /* end of for (i=k1, I=K+1...) */
     
     /* modify row k by diagonal block */
     for (j=kl, J=K+1; j<n; j+=bs, J++) {
       if (block_owner(K, J) == me) {  /* parcel out blocks */
-	jl = j+bs; 
-	if (jl > n) {
-	  jl = n;
-	  strJ = jl - j;
-	} else {
-	  strJ = bs;
-	}
-	A = a[K+J*nblocks];
-	bmodd(D, A, strK, strJ, strK, strK);
+    jl = j+bs; 
+    if (jl > n) {
+      jl = n;
+      strJ = jl - j;
+    } else {
+      strJ = bs;
+    }
+    A = a[K+J*nblocks];
+    bmodd(D, A, strK, strJ, strK, strK);
      
-	/* Pre-put this block to the block-owners of all blocks on the J-th column with a non-blocking put*/
+    /* Pre-put this block to the block-owners of all blocks on the J-th column with a non-blocking put*/
         memset (saved, 0, sizeof(saved));
         for (m = K+1; m < nblocks; m++) {
-	  destp = block_owner (m, J);
-	  if (destp != me  && !saved[destp]) {
-	    ARMCI_NbPut(A, bufr[destp*nblocks + J], strK*strJ*sizeof(double), destp, NULL);
-	    saved[destp] = 1;
-	  }
-	}
+      destp = block_owner (m, J);
+      if (destp != me  && !saved[destp]) {
+        ARMCI_NbPut(A, bufr[destp*nblocks + J], strK*strJ*sizeof(double), destp, NULL);
+        saved[destp] = 1;
+      }
+    }
       }      
     }
         
@@ -370,35 +355,35 @@ void lu(int n, int bs, int me)
     for (i=kl, I=K+1; i<n; i+=bs, I++) {
       il = i+bs; 
       if (il > n) {
-	il = n;
-	strI = il - i;
+    il = n;
+    strI = il - i;
       } else {
-	strI = bs;
+    strI = bs;
       }
 
       for (j=kl, J=K+1; j<n; j+=bs, J++) {
-	jl = j + bs; 
-	if (jl > n) {
-	  jl = n;
-	  strJ= jl - j;
-	} else {
-	  strJ = bs;
-	  }
-	if (block_owner(I, J) == me) {  /* parcel out blocks */
-	  if(block_owner(I,K) == me)
-	    A = a[I+K*nblocks];
-	  else {
-	    A = bufc[me*nblocks+I];
+    jl = j + bs; 
+    if (jl > n) {
+      jl = n;
+      strJ= jl - j;
+    } else {
+      strJ = bs;
+      }
+    if (block_owner(I, J) == me) {  /* parcel out blocks */
+      if(block_owner(I,K) == me)
+        A = a[I+K*nblocks];
+      else {
+        A = bufc[me*nblocks+I];
           }
-	  
-	  if(block_owner(K,J) == me)
-	    B = a[K+J*nblocks];
-	  else
-	    B = bufr[me*nblocks + J];
-	    
-	  C = a[I+J*nblocks];
-	  bmod(A, B, C, strI, strJ, strK, strI, strK, strI);
-	}
+      
+      if(block_owner(K,J) == me)
+        B = a[K+J*nblocks];
+      else
+        B = bufr[me*nblocks + J];
+        
+      C = a[I+J*nblocks];
+      bmod(A, B, C, strI, strJ, strK, strI, strK, strI);
+    }
       }
     }
   }
@@ -409,7 +394,6 @@ void get_remote(double *buf, int I, int J)
 {
   int proc_owner;
   int edge, size;
-  int rc;
   
   proc_owner = block_owner(I, J);
     
@@ -470,7 +454,6 @@ void bdiv(double *a, double *diag, int stride_a, int stride_diag,
 void bmodd(double *a, double *c, int dimi, int dimj,
            int stride_a, int stride_c)
 {
-  int i; 
   int j; 
   int k; 
   int length;
@@ -489,7 +472,6 @@ void bmodd(double *a, double *c, int dimi, int dimj,
 void bmod(double *a, double *b, double *c, int dimi, int dimj, int dimk,
           int stridea, int strideb, int stridec)
 {
-  int i; 
   int j; 
   int k;
   double alpha;
@@ -529,27 +511,27 @@ void init_array()
   for (j=0; j<n; j++) {
     for (i=0; i<n; i++) {
       if(block_owner((i/block_size), (j/block_size)) == me) {
-	if ((n - i) <= edge) {
-	  ibs = edge;
-	  ibs = n-edge;
-	  skip = edge;
-	} else {
-	  ibs = block_size;
-	  skip = block_size;
-	}
-	if ((n - j) <= edge) {
-	  jbs = edge;
-	  jbs = n-edge;
-	} else {
-	  jbs = block_size;
-	}
-	ii = (i/block_size) + (j/block_size)*nblocks;
-	jj = (i%ibs)+(j%jbs)*skip;
-	/*            a[ii][jj] = ((double) lrand48())/MAXRAND; */
-	a[ii][jj] = i + j*6 + 1;
-	if (i == j) {
-	  a[ii][jj] *= 10;
-	}
+    if ((n - i) <= edge) {
+      ibs = edge;
+      ibs = n-edge;
+      skip = edge;
+    } else {
+      ibs = block_size;
+      skip = block_size;
+    }
+    if ((n - j) <= edge) {
+      jbs = edge;
+      jbs = n-edge;
+    } else {
+      jbs = block_size;
+    }
+    ii = (i/block_size) + (j/block_size)*nblocks;
+    jj = (i%ibs)+(j%jbs)*skip;
+    /*            a[ii][jj] = ((double) lrand48())/MAXRAND; */
+    a[ii][jj] = i + j*6 + 1;
+    if (i == j) {
+      a[ii][jj] *= 10;
+    }
       }
     }
   }
@@ -567,27 +549,27 @@ double touch_array(int bs, int me)
   for (J=0; J<nblocks; J++) {
     for (I=0; I<nblocks; I++) {
       if (block_owner(I, J) == me) {
-	if (J == nblocks-1) {
-	  jbs = n%bs;
-	  if (jbs == 0) {
-	    jbs = bs;
-	  }
-	} else {
-	  jbs = bs;
-	}
-	if (I == nblocks-1) {
-	  ibs = n%bs;
-	  if (ibs == 0) {
-	    ibs = bs;
-	  }
-	} else {
-	  ibs = bs;
-	}
-	for (j=0; j<jbs; j++) {
-	  for (i=0; i<ibs; i++) {
-	    tot += a[I+J*nblocks][i+j*ibs];
-	  }
-	}
+    if (J == nblocks-1) {
+      jbs = n%bs;
+      if (jbs == 0) {
+        jbs = bs;
+      }
+    } else {
+      jbs = bs;
+    }
+    if (I == nblocks-1) {
+      ibs = n%bs;
+      if (ibs == 0) {
+        ibs = bs;
+      }
+    } else {
+      ibs = bs;
+    }
+    for (j=0; j<jbs; j++) {
+      for (i=0; i<ibs; i++) {
+        tot += a[I+J*nblocks][i+j*ibs];
+      }
+    }
       }
     }
   } 
@@ -596,7 +578,7 @@ double touch_array(int bs, int me)
 
 void print_array(int myid)
 {
-  int i, j, k;
+  int i, j;
   double **buf;
 
   int ii, jj;
@@ -608,11 +590,11 @@ void print_array(int myid)
   for(i=0; i<nblocks; i++) 
     for(j=0; j<nblocks; j++) 
       if(block_owner(i, j) == myid)
-	buf[i+j*nblocks] = a[i+j*nblocks];
+    buf[i+j*nblocks] = a[i+j*nblocks];
       else {
-	buf[i+j*nblocks] = (double *)ARMCI_Malloc_local(block_size*block_size*
-					    sizeof(double));
-	get_remote(buf[i+j*nblocks], i, j);
+    buf[i+j*nblocks] = (double *)ARMCI_Malloc_local(block_size*block_size*
+                        sizeof(double));
+    get_remote(buf[i+j*nblocks], i, j);
       }
 
   /* copied from lu.C */
@@ -620,18 +602,18 @@ void print_array(int myid)
   for (i=0; i<n; i++) {
     for (j=0; j<n; j++) {
       if ((n - i) <= edge) {
-	ibs = edge;
-	ibs = n-edge;
-	skip = edge;
+    ibs = edge;
+    ibs = n-edge;
+    skip = edge;
       } else {
-	ibs = block_size;
-	skip = block_size;
+    ibs = block_size;
+    skip = block_size;
       }
       if ((n - j) <= edge) {
-	jbs = edge;
-	jbs = n-edge;
+    jbs = edge;
+    jbs = n-edge;
       } else {
-	jbs = block_size;
+    jbs = block_size;
       }
       ii = (i/block_size) + (j/block_size)*nblocks;
       jj = (i%ibs)+(j%jbs)*skip;
@@ -655,9 +637,9 @@ void print_block()
   for(i=0; i<nblocks; i++)
     for(j=0; j<nblocks; j++)
       if(block_owner(i,j) == me) {
-	printf("Block %d (%d,%d)\t", i+j*nblocks, i, j);
-	for(k=0; k<block_size*block_size; k++)
-	  printf("%8.1f ", a[i+j*nblocks][k]);
-	printf("\t me = %d\n", me);
+    printf("Block %d (%d,%d)\t", i+j*nblocks, i, j);
+    for(k=0; k<block_size*block_size; k++)
+      printf("%8.1f ", a[i+j*nblocks][k]);
+    printf("\t me = %d\n", me);
       }
 }

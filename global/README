@@ -1,142 +1,75 @@
-                        GLOBAL ARRAYS LIBRARY
-
+GLOBAL ARRAYS LIBRARY
+~~~~~~~~~~~~~~~~~~~~~
 
 DEPENDENCIES ON OTHER SOFTWARE
+==============================
 
- - ARMCI - one-sided communication library used by GA as its run-time system
-   This s/w is new in release 3.0
+- ARMCI - one-sided communication library used by GA as its run-time system
+  This s/w is new in release 3.0
 
- - MPI or TCGMSG: more or less extensive run-time support is required. For
-   example, a message-passing library is used on some platforms to
-   fork processes, implement broadcast, ga_dgop;
+- MPI or TCGMSG: more or less extensive run-time support is required. For
+  example, a message-passing library is used on some platforms to
+  fork processes, implement broadcast, ga_dgop;
 
- - MA (memory allocator by Greg Thomas)
+- MA (memory allocator by Greg Thomas)
 
- - GA eigensolver, ga_diag, is a wrapper for the eigensolver from
-   PEIGS library; (Please contact George Fann <gi_fann@pnl.gov> about
-   PEIGS)
+- GA eigensolver, ga_diag, is a wrapper for the eigensolver from
+  PEIGS library; (Please contact George Fann <gi_fann@pnl.gov> about
+  PEIGS)
 
- - BLAS library is required for the eigensolver and ga_dgemm;
+- BLAS library is required for the eigensolver and ga_dgemm;
 
- - LAPACK library is required for the eigensolver;
+- LAPACK library is required for the eigensolver;
 
- - MPI, SCALAPACK, PBBLAS, and BLACS libraries are required for
-   ga_lu_solve, ga_cholesky, ga_llt_solve, ga_spd_invert, ga_solve. If
-   you do not install these libs, the named operations will not be
-   available.
-
-
-MAKEFILES
-
- - GNUmakefile: Unix makefile
- - MakeFile:    Windows makefile
-
-   The user needs to specify TARGET in the GNUmakefile or on the
-   command line when calling make. The library and test programs
-   should be built by calling make in the current directory.
-   The list of valid target platforms is printed by make when
-   called in the directory above.
-
+- MPI, SCALAPACK, PBBLAS, and BLACS libraries are required for
+  ga_lu_solve, ga_cholesky, ga_llt_solve, ga_spd_invert, ga_solve. If
+  you do not install these libs, the named operations will not be
+  available.
 
 BUILDING GA 
-   (For more updated build instructions, refer GA user manual chapter 2.
-    http://www.emsl.pnl.gov/docs/global/um/build.html)
-
-   You need GNU make (version > 3.68) to build this software.
-
-   To build the GA toolkit compatible with MPI, you need to define
-   environmental variable USE_MPI, MPI_LIB and MPI_INCLUDE which
-   should point to the location of the MPI library and include
-   directories.
-
-   Example: using csh/tcsh
-      setenv USE_MPI y
-      setenv MPI_LOC /usr/local/mpich
-      setenv MPI_LIB $MPI_LOC/lib/rs6000/ch_shmem
-      setenv MPI_INCLUDE $MPI_LOC/include
-  
-   Additionaly, if the TCGMSG-MPI library is not needed, the
-   make/environmental variable MSG_COMMS should be defined as
-   MSG_COMMS = MPI. 
-
-   Interface routines to ScaLAPACK are only available with MPI, and of
-   course with ScaLAPACK. The user is required to define environment
-   variables USE_SCALAPACK or USE_SCALAPACK_I8 (to use scalapack libraries
-   compiled with 8-byte integers), and location of ScaLAPACK & Co. libraries
-   in variable SCALAPACK.
-
-   Example: using csh/tcsh
-      setenv USE_SCALAPACK y
-      setenv SCALAPACK '-L/msrc/proj/scalapack/LIB/rs6000 -lscalapack -lpblas -ltools -lblacsF77cinit -lblacs'
-      setenv USE_MPI y
-   
-   Since there are certain interdependencies between blacs and
-   blacsF77cinit, some system might require specification of -lblacs
-   twice to fix the unresolved external symbols from these libs.
-
-   Under Linux, LINUX_DBL_UNDERSCORE can be set to link with Scalapack 
-   libraries compiled by g77 to facilitate single or double undercores in
-   the fortran names.
-
-   To build the library, type "make" or "gmake".
-
+===========
+Please refer to the README in the base distribution directory.
 
 TEST PROGRAMS
+=============
+Please refer to the README in the base distribution directory for details on
+running the GA test suite.
 
- - GA test programs are available in global/testing directory
+TEST PROGRAM NOTES
+==================
+- Program testspd.x should work only with the ScaLAPACK and MPI.
 
- - To compile GA test programs, refer to the README file in global/testing 
+- Another example program that uses GA is called jacobi.x. The Jacobi
+  iterative method is used to solve a system of linear equations
+  generated in the solution process of a partial differential
+  equation by the finite differences method.
 
- - Programs: test.x, testsolve.x, testeig.x, patch.x, ndim.x, ntestc.x, 
-             pgtest.x, and ngatest.x are available to test this software.
+- To run test programs with TCGMSG that creates the GA processes on
+  the shared memory and (network of) workstations; execute them you
+  should use 'parallel' program -- built in tcgmsg/ipcv4.0::
 
- - Program testspd.x should work only with the ScaLAPACK and MPI
+    parallel testing/test.x
 
- - Another example program that uses GA is called jacobi.x. The Jacobi
-   iterative method is used to solve a system of linear equations
-   generated in the solution process of a partial differential
-   equation by the finite differences method.
+  For a single processor execution 'parallel' is not required and the
+  program can be run as::
+            
+    testing/test.x
 
- - You might have to modify Makelib.h to provide pointers to the PEIGS
-   library in order to use parallel versions of eigensolver in
-   testeig.x test program.
+  or under control of your favorite debugger. 
 
- - To run test programs with TCGMSG that creates the GA processes on
-   the shared memory and (network of) workstations; execute them you
-   should use 'parallel' program -- built in tcgmsg/ipcv4.0
+  On MPP like T3D, IBM SP, and Intel machines, use appropriate system
+  command to specify the number of processors, load and run the
+  programs. For example, to run on four processors of the Cray T3D
+  use::
 
-   Example: parallel testing/test.x
-
-   assuming that test.x is already built, parallel is accessible (you
-   might copy it into your "bin" directory), and you are still in the
-   current (g/global/) directory.
-
-   For a single processor execution 'parallel' is not required and the
-   program can be run as:
-             
-	 testing/test.x
-
-   or under control of your favorite debugger. 
-
-   On MPP like T3D, IBM SP, and Intel machines, use appropriate system
-   command to specify the number of processors, load and run the
-   programs. For example, to run on four processors of the Cray T3D
-   use:
-	 mppexec testing/test.x -npes 4
-
+    mppexec testing/test.x -npes 4
 
 DOCUMENTATION
+=============
+The documentation is located in doc/ and on the web at:
 
-   The documentation is located in doc/ and on the web:
-   http://www.emsl.pnl.gov/docs/global 
+    http://www.emsl.pnl.gov/docs/global.
 
 CONTACT
-
-   For suggestions, comments and bug report:
-
-   Jarek Nieplocha
-   Pacific Northwest National Laboratory
-   P.O. Box 999, MS K1-87
-   Richland, WA 99352
-   (509) 372-4469
-   Email: Jarek.Nieplocha@pnl.gov
+=======
+For suggestions, comments and bug reports: hpctools@pnl.gov

@@ -1,7 +1,15 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: elan.c,v 1.39 2004-06-28 17:38:11 manoj Exp $ */
 #include <elan/elan.h>
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #include "armcip.h"
 #include "copy.h"
 
@@ -138,7 +146,7 @@ int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
 
     armci_elan_fence_arr = (ops_t**)malloc(armci_nproc*sizeof(ops_t*));
     if(!armci_elan_fence_arr)armci_die("malloc failed for ARMCI fence array",0);
-    if(ARMCI_Malloc((void**)armci_elan_fence_arr, armci_nclus*sizeof(ops_t)))
+    if(PARMCI_Malloc((void**)armci_elan_fence_arr, armci_nclus*sizeof(ops_t)))
              armci_die("failed to allocate ARMCI fence array",0);
     bzero(armci_elan_fence_arr[armci_me],armci_nclus*sizeof(ops_t));
 

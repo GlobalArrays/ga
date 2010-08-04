@@ -4,32 +4,32 @@
 #if defined(__cplusplus) || defined(c_plusplus)
 
 #ifdef MPIPP
-#include <mpi.h>
+#   include <mpi.h>
 #else
-#include "sndrcv.h"
+#   include <tcgmsg.h>
 #endif
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 #include "ga.h"
 #include "macdecls.h"
 
 #define GANbhdl ga_nbhdl_t   
 
-#define _GA_USENAMESPACE_ 1
-
-#if _GA_USENAMESPACE_
+#ifdef _GA_USENAMESPACE_
 #define _GA_STATIC_ 
 #define _GA_EXTERN_ extern
-#else
+#else // ! _GA_USENAMESPACE_
 #define _GA_STATIC_ static
 #define _GA_EXTERN_ 
-#endif
+#endif // _GA_USENAMESPACE_
 
-#if _GA_USENAMESPACE_
+#ifdef _GA_USENAMESPACE_
 namespace GA {
-#else
+#else // ! _GA_USENAMESPACE_
 class GA {
  public:
-#endif
+#endif // _GA_USENAMESPACE_
   class GAServices;
   _GA_EXTERN_  _GA_STATIC_  GAServices SERVICES;
 
@@ -40,10 +40,10 @@ class GA {
 
   //GAServices SERVICES;
 
-#if ! _GA_USENAMESPACE_
+#ifndef _GA_USENAMESPACE_
  private:
   GA() { }
-#endif
+#endif // ! _GA_USENAMESPACE_
 };
 
 #endif // _GAPP_H

@@ -1,8 +1,22 @@
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdio.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_SYS_STAT_H
+#   include <sys/stat.h>
+#endif
+#if HAVE_FCNTL_H
+#   include <fcntl.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 
 void printsparse_(int *irow, int *icol, double *a,  double *b, int n,int nz)
 {
@@ -25,7 +39,7 @@ int i,max,j;
 
 }
 
-int main()
+int main(int argc, char **argv)
 {
 int NZROW=8,NZSQ=64;
 int i,k,irow[NZROW+1],icol[NZSQ+4],n=NZROW,nz=NZSQ;

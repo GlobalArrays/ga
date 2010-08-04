@@ -1,5 +1,11 @@
-/* $Id: shared.files.c,v 1.14 2002-11-09 06:05:40 sohirata Exp $ */
-/* DISCLAIMER
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+/** @file
+ * $Id: shared.files.c,v 1.14 2002-11-09 06:05:40 sohirata Exp $
+ *
+ * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
  * agency of the United States Government.  Neither the United States
@@ -21,22 +27,25 @@
  * publicly by or for the US Government, including the right to
  * distribute to other US Government contractors.
  */
-
-
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#include "ga.h"
 #include "elio.h"
 #include "sf.h"
+#include "sff2c.h"
 
 #define _max_shared_files 100
 #define SF_OFFSET 3000
 #define SF_FAIL (Integer)1
 
 typedef struct{
-        Integer handle;
-        Integer actv;
-        SFsize_t soft_size; 
-        SFsize_t hard_size; 
-        Fd_t fd;
-        char fname[200];
+    Integer handle;
+    Integer actv;
+    SFsize_t soft_size; 
+    SFsize_t hard_size; 
+    Fd_t fd;
+    char fname[200];
 } SF_t;
 
 SF_t SF[_max_shared_files];
@@ -47,71 +56,69 @@ SF_t SF[_max_shared_files];
 
 #define sfi_check_handleM(_handle, msg)\
 {\
-        if(_handle+SF_OFFSET >=_max_shared_files||_handle+SF_OFFSET<0)\
-        {fprintf(stderr,"%s, %ld --",msg,(long) _max_shared_files);   \
-            ERROR("invalid SF handle",(int)_handle);}                 \
-        if( SF[(_handle+SF_OFFSET)].actv == 0)                        \
-        {fprintf(stderr,"%s:",msg);                                   \
-            ERROR("disk array not active",(int)_handle);}             \
+    if(_handle+SF_OFFSET >=_max_shared_files||_handle+SF_OFFSET<0) { \
+        fprintf(stderr,"%s, %ld --",msg,(long) _max_shared_files); \
+        ERROR("invalid SF handle",(int)_handle); \
+    } \
+    if( SF[(_handle+SF_OFFSET)].actv == 0) { \
+        fprintf(stderr,"%s:",msg); \
+        ERROR("disk array not active",(int)_handle); \
+    } \
 }
-
 
 /*********************************************************************/
 
 Integer sfi_get_handle()
 {
-Integer sf_handle =-1, candidate = 0;
+    Integer sf_handle =-1, candidate = 0;
 
-        do{
-            if(!SF[candidate].actv){
-               sf_handle=candidate;
-               SF[candidate].actv =1;
-            }
-            candidate++;
-        }while(candidate < _max_shared_files && sf_handle == -1);
-        return(sf_handle);
+    do{
+        if(!SF[candidate].actv){
+            sf_handle=candidate;
+            SF[candidate].actv =1;
+        }
+        candidate++;
+    }while(candidate < _max_shared_files && sf_handle == -1);
+    return(sf_handle);
 }
 
 
 void sfi_release_handle(Integer *handle)
 {
-     SF[*handle+SF_OFFSET].actv =0;
-     *handle = 0;
+    SF[*handle+SF_OFFSET].actv =0;
+    *handle = 0;
 }
 
 
-Integer sf_create(fname, size_hard_limit, size_soft_limit, 
-                   req_size, handle)
-        char *fname;
-        SFsize_t *size_hard_limit, *size_soft_limit, *req_size;
-        Integer *handle;
+Integer sfi_create(char *fname, SFsize_t *size_hard_limit,
+        SFsize_t *size_soft_limit, SFsize_t *req_size, Integer *handle)
 {
-Integer hndl;
-        SYNC();
+    Integer hndl;
+    SYNC();
 
-        /*** Get next free SF handle ***/
-        if( (hndl = sfi_get_handle()) == -1)
-           ERROR("sf_create: too many shared files ",(int)_max_shared_files);
-        *handle = hndl - SF_OFFSET;
+    /*** Get next free SF handle ***/
+    if( (hndl = sfi_get_handle()) == -1)
+        ERROR("sf_create: too many shared files ",(int)_max_shared_files);
+    *handle = hndl - SF_OFFSET;
 
-        /*generate file name(s) */
-        sprintf(SF[hndl].fname,"%s.%d",fname, (int)hndl);
+    /*generate file name(s) */
+    sprintf(SF[hndl].fname,"%s.%d",fname, (int)hndl);
 
-#       ifdef  PARAGON
-          SF[hndl].fd = elio_gopen(SF[hndl].fname,ELIO_RW);
-#       else
-          if (ME() == 0) SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
-          SYNC();
-          if (ME() != 0) SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
-#       endif
+#ifdef  PARAGON
+    SF[hndl].fd = elio_gopen(SF[hndl].fname,ELIO_RW);
+#else
+    if (ME() == 0) SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
+    SYNC();
+    if (ME() != 0) SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
+#endif
 
-        if(SF[hndl].fd==NULL) ERROR("sf_create: could not open file",0);
-        if(SF[hndl].fd->fd==-1) ERROR("sf_create: descriptor -1",0);
+    if(SF[hndl].fd==NULL) ERROR("sf_create: could not open file",0);
+    if(SF[hndl].fd->fd==-1) ERROR("sf_create: descriptor -1",0);
 
-        SF[hndl].soft_size = *size_soft_limit;
-        SF[hndl].hard_size = *size_hard_limit;
-        SYNC();
-        return(ELIO_OK);
+    SF[hndl].soft_size = *size_soft_limit;
+    SF[hndl].hard_size = *size_hard_limit;
+    SYNC();
+    return(ELIO_OK);
 }
 
 
@@ -120,211 +127,208 @@ Integer hndl;
  * of the handle. This will give users complete control over the filename as it
  * is written to and read from disk. 
  */
-Integer sf_create_suffix(fname, size_hard_limit, size_soft_limit,
-                   req_size, handle, suffix)
-        char *fname;
-        SFsize_t *size_hard_limit, *size_soft_limit, *req_size;
-        Integer *handle;
-        Integer *suffix;
+Integer sfi_create_suffix(char *fname, SFsize_t *size_hard_limit,
+        SFsize_t *size_soft_limit, SFsize_t *req_size,
+        Integer *handle, Integer *suffix)
 {
-Integer hndl;
- 
-        SYNC();
+    Integer hndl;
 
-        /*** Get next free SF handle ***/
-        if( (hndl = sfi_get_handle()) == -1) 
-        {
-           ERROR("sf_create_suffix: too many shared files ",
-                 (int)_max_shared_files);
-        }
-        
-        *handle = hndl - SF_OFFSET;
+    SYNC();
 
-        /*generate file name(s) */
-        sprintf(SF[hndl].fname,"%s.%d",fname, (int) *suffix);
+    /*** Get next free SF handle ***/
+    if( (hndl = sfi_get_handle()) == -1) 
+    {
+        ERROR("sf_create_suffix: too many shared files ",
+                (int)_max_shared_files);
+    }
 
-#   ifdef  PARAGON
-        SF[hndl].fd = elio_gopen(SF[hndl].fname,ELIO_RW);
-#   else
-        if (ME() == 0)
-           SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
-        
-        SYNC();
-        
-        if (ME() != 0)
-           SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
-#   endif
+    *handle = hndl - SF_OFFSET;
 
-        if(SF[hndl].fd==NULL) ERROR("sf_create_suffix: could not open file",0);
-        if(SF[hndl].fd->fd==-1) ERROR("sf_create_suffix: descriptor -1",0);
+    /*generate file name(s) */
+    sprintf(SF[hndl].fname,"%s.%d",fname, (int) *suffix);
 
-        SF[hndl].soft_size = *size_soft_limit;
-        SF[hndl].hard_size = *size_hard_limit;
-        SYNC();
-        
-        return(ELIO_OK);
+#ifdef  PARAGON
+    SF[hndl].fd = elio_gopen(SF[hndl].fname,ELIO_RW);
+#else
+    if (ME() == 0)
+        SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
+
+    SYNC();
+
+    if (ME() != 0)
+        SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
+#endif
+
+    if(SF[hndl].fd==NULL) ERROR("sf_create_suffix: could not open file",0);
+    if(SF[hndl].fd->fd==-1) ERROR("sf_create_suffix: descriptor -1",0);
+
+    SF[hndl].soft_size = *size_soft_limit;
+    SF[hndl].hard_size = *size_hard_limit;
+    SYNC();
+
+    return(ELIO_OK);
 }
 
 /*****************************************************************************/
 
-Integer FATR sf_destroy_(s_a)
-        Integer *s_a;                      /*input:SF handle */
+Integer FATR sf_destroy_(Integer *s_a /**< [in] SF handle */)
 {
-Integer handle = *s_a+SF_OFFSET;
+    Integer handle = *s_a+SF_OFFSET;
 
-        SYNC();
+    SYNC();
 
-        sfi_check_handleM(*s_a,"sf_delete");
+    sfi_check_handleM(*s_a,"sf_delete");
 
-        elio_close(SF[handle].fd); /* fix from Peter Knowles */
+    elio_close(SF[handle].fd); /* fix from Peter Knowles */
 
-        SYNC(); /* this sync is unnecessary under Unix */
+    SYNC(); /* this sync is unnecessary under Unix */
 
-        if(ME() == 0)elio_delete(SF[handle].fname);
-        sfi_release_handle(s_a);
+    if(ME() == 0)elio_delete(SF[handle].fname);
+    sfi_release_handle(s_a);
 
-        SYNC();
+    SYNC();
 
-        return(ELIO_OK);
-}
-
-/*\ close rw file and open as read only
-\*/
-Integer FATR sf_rwtor_(s_a)
-        Integer *s_a;     /* input:SF handle */
-{
-Integer handle = *s_a+SF_OFFSET;
-
-        elio_close(SF[handle].fd);
-#       ifdef  PARAGON
-          SF[handle].fd = elio_gopen(SF[handle].fname,ELIO_RW);
-#       else
-          SF[handle].fd = elio_open(SF[handle].fname,ELIO_R, ELIO_SHARED);
-#       endif
-
-        if(SF[handle].fd==NULL) ERROR("sf_open: could not open file",0);
-        if(SF[handle].fd->fd==-1) ERROR("sf_open: descriptor -1",0);
-
-        return(ELIO_OK);
-}
-
-/*\ open
-\*/
-Integer FATR sf_open_(s_a)
-        Integer *s_a;     /* input:SF handle */
-{
-Integer handle = *s_a+SF_OFFSET;
-
-#       ifdef  PARAGON
-          SF[handle].fd = elio_gopen(SF[handle].fname,ELIO_RW);
-#       else
-          SF[handle].fd = elio_open(SF[handle].fname,ELIO_RW, ELIO_SHARED);
-#       endif
-
-        if(SF[handle].fd==NULL) ERROR("sf_open: could not open file",0);
-        if(SF[handle].fd->fd==-1) ERROR("sf_open: descriptor -1",0);
-
-        return(ELIO_OK);
-}
-
-/*\ close
-\*/
-Integer FATR sf_close_(s_a)
-        Integer *s_a;     /* input:SF handle */
-{
-Integer handle = *s_a+SF_OFFSET;
-
-        elio_close(SF[handle].fd);
-        return(ELIO_OK);
-}
-
-/*\ asynchronous write to shared file
-\*/
-Integer FATR sf_write_(s_a, offset, bytes, buffer, req_id)
-        Integer *s_a;
-        SFsize_t *offset, *bytes;
-        char *buffer;
-        Integer *req_id;
-{
-Integer handle = *s_a+SF_OFFSET;
-int status;
-io_request_t id;
-
-        sfi_check_handleM(*s_a,"sf_write");
-        status = elio_awrite(SF[handle].fd, (Off_t)*offset, buffer, 
-                            (Size_t)*bytes, &id);
-        *req_id = (Integer)id;
-        return((Integer)status);
-/*
- status = elio_write(SF[handle].fd, (Off_t)*offset, buffer,(Size_t)*bytes);
-                *req_id = (Integer)ELIO_DONE;
-        if(status != (int)*bytes)
-              return((Integer)SF_FAIL);
-        else
-              return((Integer)ELIO_OK);
-*/
-}
-        
-
-/*\ asynchronous read from shared file
-\*/
-Integer FATR sf_read_(s_a, offset, bytes, buffer, req_id)
-        Integer *s_a;
-        SFsize_t *offset, *bytes;
-        char *buffer;
-        Integer *req_id;
-{
-Integer handle = *s_a+SF_OFFSET;
-int status;
-io_request_t id;
-
-        sfi_check_handleM(*s_a,"sf_read");
-        status = elio_aread(SF[handle].fd, (Off_t)*offset, buffer, 
-                           (Size_t)*bytes, &id);
-        *req_id = (Integer)id;
-        return((Integer)status);
+    return(ELIO_OK);
 }
 
 
-/*\ block calling process until I/O operation completes
-\*/
-Integer FATR sf_wait_(req_id)
-        Integer *req_id;
+/**
+ * close rw file and open as read only
+ */
+Integer FATR sf_rwtor_(Integer *s_a /**< [in] SF handle */)
 {
-int status;
-io_request_t id = (io_request_t) *req_id;
-        status = elio_wait(&id);
-        *req_id = (Integer)id;
-        return((Integer)status);
+    Integer handle = *s_a+SF_OFFSET;
+
+    elio_close(SF[handle].fd);
+#ifdef  PARAGON
+    SF[handle].fd = elio_gopen(SF[handle].fname,ELIO_RW);
+#else
+    SF[handle].fd = elio_open(SF[handle].fname,ELIO_R, ELIO_SHARED);
+#endif
+
+    if(SF[handle].fd==NULL) ERROR("sf_open: could not open file",0);
+    if(SF[handle].fd->fd==-1) ERROR("sf_open: descriptor -1",0);
+
+    return(ELIO_OK);
 }
 
 
-/*\ block calling process until all I/O operations associated
+/**
+ * open
+ */
+Integer FATR sf_open_(Integer *s_a /**< [in] SF handle */)
+{
+    Integer handle = *s_a+SF_OFFSET;
+
+#ifdef  PARAGON
+    SF[handle].fd = elio_gopen(SF[handle].fname,ELIO_RW);
+#else
+    SF[handle].fd = elio_open(SF[handle].fname,ELIO_RW, ELIO_SHARED);
+#endif
+
+    if(SF[handle].fd==NULL) ERROR("sf_open: could not open file",0);
+    if(SF[handle].fd->fd==-1) ERROR("sf_open: descriptor -1",0);
+
+    return(ELIO_OK);
+}
+
+
+/**
+ * close
+ */
+Integer FATR sf_close_(Integer *s_a)
+{
+    Integer handle = *s_a+SF_OFFSET;
+
+    elio_close(SF[handle].fd);
+    return(ELIO_OK);
+}
+
+
+/**
+ * asynchronous write to shared file
+ */
+Integer FATR sf_write_(Integer *s_a, SFsize_t *offset, SFsize_t *bytes,
+        char *buffer, Integer *req_id)
+{
+    Integer handle = *s_a+SF_OFFSET;
+    int status;
+    io_request_t id;
+
+    sfi_check_handleM(*s_a,"sf_write");
+    status = elio_awrite(SF[handle].fd, (Off_t)*offset, buffer, 
+            (Size_t)*bytes, &id);
+    *req_id = (Integer)id;
+    return((Integer)status);
+    /*
+       status = elio_write(SF[handle].fd, (Off_t)*offset, buffer,(Size_t)*bytes);
+     *req_id = (Integer)ELIO_DONE;
+     if(status != (int)*bytes)
+     return((Integer)SF_FAIL);
+     else
+     return((Integer)ELIO_OK);
+     */
+}
+
+
+/**
+ * asynchronous read from shared file
+ */
+Integer FATR sf_read_(Integer *s_a, SFsize_t *offset, SFsize_t *bytes,
+        char *buffer, Integer *req_id)
+{
+    Integer handle = *s_a+SF_OFFSET;
+    int status;
+    io_request_t id;
+
+    sfi_check_handleM(*s_a,"sf_read");
+    status = elio_aread(SF[handle].fd, (Off_t)*offset, buffer, 
+            (Size_t)*bytes, &id);
+    *req_id = (Integer)id;
+    return((Integer)status);
+}
+
+
+/**
+ * block calling process until I/O operation completes
+ */
+Integer FATR sf_wait_(Integer *req_id)
+{
+    int status;
+    io_request_t id = (io_request_t) *req_id;
+    status = elio_wait(&id);
+    *req_id = (Integer)id;
+    return((Integer)status);
+}
+
+
+/**
+ * block calling process until all I/O operations associated
  *  with id in the list complete
-\*/
-Integer FATR sf_waitall_(list, num)
-        Integer *list, *num;
+ */
+Integer FATR sf_waitall_(Integer *list, Integer *num)
 {
-int i;
-int status, fail=0;
+    int i;
+    int status, fail=0;
 
-        for(i=0;i<*num;i++){
-           io_request_t id = (io_request_t) list[i];
-           status = elio_wait(&id);
-           if(status != ELIO_OK) fail++;
-           list[i] = (Integer)id;
-        }
-        if (fail)return((Integer)SF_FAIL);
-        else     return((Integer)ELIO_OK);
+    for(i=0;i<*num;i++){
+        io_request_t id = (io_request_t) list[i];
+        status = elio_wait(&id);
+        if(status != ELIO_OK) fail++;
+        list[i] = (Integer)id;
+    }
+    if (fail)return((Integer)SF_FAIL);
+    else     return((Integer)ELIO_OK);
 }
 
 
-/*\ retrieve message associated with error code
-\*/
-void sf_errmsg(int code, char *msg)
+/**
+ * retrieve message associated with error code
+ */
+void sfi_errmsg(int code, char *msg)
 {
- if(code==SF_FAIL)
-   (void) strcpy(msg, "SF operation failed");
- else
-    elio_errmsg(code, msg);
+    if(code==SF_FAIL)
+        (void) strcpy(msg, "SF operation failed");
+    else
+        elio_errmsg(code, msg);
 }

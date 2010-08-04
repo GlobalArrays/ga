@@ -1,19 +1,23 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/hello.c,v 1.4 1995-02-24 02:17:20 d3h325 Exp $ */
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
 
-#include "sndrcv.h"
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 
-int main(argc, argv)
-     int argc;
-     char **argv;
-/*
-  Traditional first parallel program
-*/
+#include "tcgmsg.h"
+
+/**
+ * Traditional first parallel program.
+ */
+int main(int argc, char **argv)
 {
-  PBEGIN_(argc, argv);
+    tcg_pbegin(argc, argv);
 
-  (void) printf("Hello from node %ld\n",NODEID_());
+    (void) printf("Hello from node %ld\n",tcg_nodeid());
 
-  PEND_();
+    tcg_pend();
 
-  return 0;
+    return 0;
 }

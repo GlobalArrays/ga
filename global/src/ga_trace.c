@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
  /***********************************************************************\
  * Tracing and Timing functions for the GA routines:                     *
  *   trace_init       - initialization                                   *
@@ -10,12 +14,16 @@
  \***********************************************************************/
 
 #include <macdecls.h>
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #include "ga.h"
 
 #ifndef MPI
-#  include "sndrcv.h"
+#  include "tcgmsg.h"
 #else
 #  include "mpi.h"
 #endif
@@ -36,14 +44,14 @@ double FATR ga_timer_()
 #ifdef MPI
        return MPI_Wtime();
 #else
-       return TCGTIME_();
+       return tcg_time();
 #endif
 }
 
 /* n is the max number of events to be traced */
 void trace_init_(long *n)
 {
-    Integer index;
+    MA_AccessIndex index;
     long err;
     
     if(*n<=0){

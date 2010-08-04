@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c
 c     $Id: testf.F,v 1.6 1997-02-26 20:39:23 d3h325 Exp $
 c
@@ -9,6 +12,7 @@ c
       program testf
 
       implicit none
+#include "mafdecls.fh"
 
       character char1
       character*2 char2
@@ -19,11 +23,10 @@ c
       integer handle4
       integer i
       integer ihandle1
-      integer index1
-      integer index2
+      MA_ACCESS_INDEX_TYPE index1
+      MA_ACCESS_INDEX_TYPE index2
       logical value
 
-#include "mafdecls.fh"
 
 c     ok
       write (*,*) 'start testing MA_set_error_print ...'

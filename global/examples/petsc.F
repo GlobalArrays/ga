@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
       program petsc
       implicit none
 #include "mafdecls.fh"
@@ -17,12 +20,12 @@ c
       call ga_initialize()                               ! initialize GAs 
       if (.not. ma_init(MT_DBL, heap, stack))            ! initialize MA
      $    call ga_error("ma init failed",heap+stack)
-#ifdef GA_TRACE
-      call trace_init(10000)				 ! initialize trace
+#ifdef ENABLE_TRACE
+      call trace_init(10000)                 ! initialize trace
 #endif
       call iterate()                                     ! do the work
-#ifdef GA_TRACE
-      call trace_end(ga_nodeid())			 ! end trace
+#ifdef ENABLE_TRACE
+      call trace_end(ga_nodeid())             ! end trace
 #endif
       call ga_terminate()                                ! terminate GAs 
 c

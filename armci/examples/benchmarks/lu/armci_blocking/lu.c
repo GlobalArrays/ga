@@ -1,50 +1,33 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /**************************************************
  *             LU factorization                   *
  *             Armci Version                      *
  **************************************************/
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <mpi.h> 
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+
+#include "mp3.h"
 #include "armci.h"
 
 /*#define DEBUG*/
-#define MAXRAND                         32767.0
-#define DEFAULT_N                        1500
-#define DEFAULT_B                         16
+#define MAXRAND   32767.0
+#define DEFAULT_N  1500
+#define DEFAULT_B    16
 /*#define MPI2_ONESIDED*/
-
-/* ARMCI is message-passing ambivalent -  we define macros for common MP calls*/
-#ifdef PVM
-#   include <pvm3.h>
-#   ifdef CRAY
-#     define MPGROUP         (char *)NULL
-#     define MP_INIT(arc,argv)
-#   else
-#     define MPGROUP           "mp_working_group"
-#     define MP_INIT(arc,argv) pvm_init(arc, argv)
-#   endif
-#   define MP_FINALIZE()     pvm_exit()
-#   define MP_BARRIER()      pvm_barrier(MPGROUP,-1)
-#   define MP_MYID(pid)      *(pid)   = pvm_getinst(MPGROUP,pvm_mytid())
-#   define MP_PROCS(pproc)   *(pproc) = (int)pvm_gsize(MPGROUP)
-#elif defined(TCG)
-#   include <sndrcv.h>
-    long tcg_tag =30000;
-#   define MP_BARRIER()      SYNCH_(&tcg_tag)
-#   define MP_INIT(arc,argv) PBEGIN_((argc),(argv))
-#   define MP_FINALIZE()     PEND_()
-#   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
-#   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
-#else
-#   include <mpi.h>
-#   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
-#   define MP_FINALIZE()     MPI_Finalize()
-#   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
-#   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
-#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
-#endif
 
 /* global variables */
 int n = DEFAULT_N;         /* The size of the matrix */
@@ -85,7 +68,7 @@ extern void start_timer(void);
 extern double elapsed_time(void);
 extern double stop_time(void);
 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     int i, j;
     int ch;
@@ -95,7 +78,7 @@ main(int argc, char *argv[])
     int nloop=5;
     double **ptr_loc;
     
-    MP_INIT(arc,argv);
+    MP_INIT(argc,argv);
     MP_PROCS(&nproc);
     MP_MYID(&me);
     
@@ -106,7 +89,7 @@ main(int argc, char *argv[])
             case 'p': nproc = atoi(optarg); break;
             case 'h': {
                 printf("Usage: LU, or \n");
-		printf("       LU -nMATRIXSIZE -bBLOCKSIZE -pNPROC\n");
+        printf("       LU -nMATRIXSIZE -bBLOCKSIZE -pNPROC\n");
                 MP_BARRIER();
                 MP_FINALIZE();
                 exit(0);
@@ -253,6 +236,8 @@ main(int argc, char *argv[])
     ARMCI_Finalize();
 #endif
     MP_FINALIZE();
+
+    return 0;
 }
 
 void lu(int n, int bs, int me)
@@ -260,9 +245,7 @@ void lu(int n, int bs, int me)
     int i, il, j, jl, k, kl;
     int I, J, K;
     double *A, *B, *C, *D;
-    int dimI, dimJ, dimK;
     int strI, strJ, strK;
-    unsigned int t1, t2, t3, t4, t11, t22;
     int diagowner;
     double *buf1, *buf2;
 
@@ -391,7 +374,7 @@ void get_remote(double *buf, int I, int J)
     }
     size = size * sizeof(double);
 
-    t1 = MPI_Wtime();
+    t1 = MP_TIMER();
 #ifdef MPI2_ONESIDED
     {
        int target_disp = ( ((char*)(a[I+J*nblocks])) -
@@ -408,7 +391,7 @@ void get_remote(double *buf, int I, int J)
 #else
     ARMCI_Get(a[I+J*nblocks], buf, size, proc_owner);
 #endif
-    comm_time += MPI_Wtime() - t1;
+    comm_time += MP_TIMER() - t1;
     get_cntr++;
 }
 
@@ -448,7 +431,6 @@ void bdiv(double *a, double *diag, int stride_a, int stride_diag,
 void bmodd(double *a, double *c, int dimi, int dimj,
            int stride_a, int stride_c)
 {
-    int i; 
     int j; 
     int k; 
     int length;
@@ -467,7 +449,6 @@ void bmodd(double *a, double *c, int dimi, int dimj,
 void bmod(double *a, double *b, double *c, int dimi, int dimj, int dimk,
           int stridea, int strideb, int stridec)
 {
-    int i; 
     int j; 
     int k;
     double alpha;
@@ -574,7 +555,7 @@ double touch_array(int bs, int me)
 
 void print_array(int myid)
 {
-    int i, j, k;
+    int i, j;
     double **buf;
 
     int ii, jj;

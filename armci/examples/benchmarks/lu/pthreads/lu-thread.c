@@ -1,25 +1,34 @@
-/*              
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+/** @file
  * Copyright (c)  1999 Pacific Northwest National Laboratory
  * All rights reserved.
  *
- *	Author: Jialin  Ju Account, PNNL
+ *    Author: Jialin  Ju Account, PNNL
+ * NAME
+ *   lu-thread.c
+ * PURPOSE
+ *   Thread version of lu factorization     
+ * NOTES
+ *   
+ * HISTORY
+ *   jju - Apr 19, 1999: Created.
  */
 
-/***
-   NAME
-     lu-thread.c
-   PURPOSE
-     Thread version of lu factorization     
-   NOTES
-     
-   HISTORY
-     jju - Apr 19, 1999: Created.
-***/
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
 #include <pthread.h>
+
 #include "barrier.h"
 #include "errors.h"
 
@@ -52,7 +61,7 @@ int num_cols;               /* Number of processors per col of processor grid */
 double **a;                 /* a = lu; l and u both placed back in a */
 double *rhs;
 int *proc_bytes;            /* Bytes to malloc per processor to hold blocks 
-			       of A*/
+                   of A*/
 double **last_malloc;       /* Starting point of last block of A */
 
 int test_result = 0;        /* Test result of factorization? */
@@ -75,25 +84,15 @@ void CheckResult(int, double **, double *);
 void printerr(char *);
 
 
-main(argc, argv)
-
-int argc;
-char *argv[];
-
+int main(int argc, char **argv)
 {
     int i, j;
     int ch;
     extern char *optarg;
     int MyNum=0;
-    double mint, maxt, avgt;
-    double min_fac, min_solve, min_mod, min_bar;
-    double max_fac, max_solve, max_mod, max_bar;
-    double avg_fac, avg_solve, avg_mod, avg_bar;
-    int last_page;
     int proc_num;
     int edge;
     int size;
-    unsigned int start;
     int status;
     
     while ((ch = getopt(argc, argv, "n:p:b:toh")) != -1) {
@@ -253,16 +252,14 @@ char *argv[];
     }
     
     barrier_destroy (&barrier);
+
+    return 0;
 }
 
 
 void *SlaveStart()
 
 {
-    int i; 
-    int j; 
-    int cluster; 
-    int max_block;
     int MyNum;
     int status;
     
@@ -295,10 +292,6 @@ int MyNum;
 int dostats;
 
 {
-    unsigned int i; 
-    unsigned int myrs; 
-    unsigned int myrf; 
-    unsigned int mydone;
     int status;
     
     /* barrier to ensure all initialization is done */
@@ -386,7 +379,6 @@ int stride_a;
 int stride_c;
 
 {
-    int i; 
     int j; 
     int k; 
     int length;
@@ -416,7 +408,6 @@ int strideb;
 int stridec;
 
 {
-    int i; 
     int j; 
     int k;
     double alpha;
@@ -468,9 +459,7 @@ int dostats;
     int i, il, j, jl, k, kl;
     int I, J, K;
     double *A, *B, *C, *D;
-    int dimI, dimJ, dimK;
     int strI, strJ, strK;
-    unsigned int t1, t2, t3, t4, t11, t22;
     int diagowner;
     int colowner;
     int status;

@@ -1,11 +1,17 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: locks.c,v 1.15.6.1 2006-12-14 13:24:36 manoj Exp $ */
 #define _LOCKS_C_
 #include "armcip.h"
 #include "locks.h"
-#ifndef WIN32
+#if HAVE_UNISTD_H
 #   include <unistd.h>
 #endif
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 
 
 #if !defined(armci_die)
@@ -27,14 +33,14 @@ int locks_per_proc, size;
     locks_per_proc = num_locks; /* this is am altix hack and no clue why this is works */
     size=locks_per_proc*sizeof(PAD_LOCK_T);
     ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
-    ARMCI_Malloc(ptr_arr, size);
+    PARMCI_Malloc(ptr_arr, size);
     _armci_int_mutexes = (PAD_LOCK_T*) ptr_arr;
     bzero((char*)ptr_arr[armci_me],size);
 }
 
 void DeleteLocks(lockset_t lockid) { 
     ptr_arr = (void**)_armci_int_mutexes;
-    ARMCI_Free(ptr_arr[armci_me]);
+    PARMCI_Free(ptr_arr[armci_me]);
     _armci_int_mutexes = (PAD_LOCK_T*)0; 
 }
 
@@ -42,18 +48,17 @@ void DeleteLocks(lockset_t lockid) {
 
 void CreateInitLocks(int num_locks, lockset_t *plockid)
 {
-    int locks_per_proc, size;
+int locks_per_proc, size;
 #ifdef BGML
-    fprintf(stderr,"createinitlocks\n");
+  fprintf(stderr,"createinitlocks\n");
 #endif
-    ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
-    locks_per_proc = (num_locks*armci_nclus)/armci_nproc + 1;
-    size=locks_per_proc*sizeof(PAD_LOCK_T);
-    ARMCI_Malloc(ptr_arr, size);
-    _armci_int_mutexes = (PAD_LOCK_T*) ptr_arr[armci_master];
-
-    if(!_armci_int_mutexes) 
-        armci_die("Failed to create spinlocks",size);
+  ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
+  locks_per_proc = (num_locks*armci_nclus)/armci_nproc + 1;
+  size=locks_per_proc*sizeof(PAD_LOCK_T);
+  PARMCI_Malloc(ptr_arr, size);
+  _armci_int_mutexes = (PAD_LOCK_T*) ptr_arr[armci_master];
+  
+  if(!_armci_int_mutexes) armci_die("Failed to create spinlocks",size);
 
 #ifdef PMUTEXES
   if(armci_me == armci_master) {
@@ -201,21 +206,18 @@ int i;
 
 void InitLocks(int num_locks, lockset_t  lockid)
 {
-    int i;
+int i;
 
-    if(num_locks > NUM_LOCKS) 
-        armci_die("To many locks requested", num_locks);
-    sprintf(file_name,"/tmp/ga.locks.%ld", lockid);
-    if ((fd = open(file_name, O_RDWR|O_CREAT, 0666)) < 0 )
-        armci_die("InitLocks: failed to open temporary file",0);
+   if(num_locks > NUM_LOCKS) armci_die("To many locks requested", num_locks);
+   sprintf(file_name,"/tmp/ga.locks.%ld", lockid);
+   if ( (fd = open(file_name, O_RDWR|O_CREAT, 0666)) < 0 )
+      armci_die("InitLocks: failed to open temporary file",0);
 
-    shmem_size = (NUM_LOCKS) * sizeof(lock_t);
-    lock_array = (lock_t*)  mmap((caddr_t) 0, shmem_size,
-            PROT_READ|PROT_WRITE,
-            MAP_ANONYMOUS|CNX_MAP_SEMAPHORE|MAP_SHARED, fd, 0);
-    /* FIXME */
-    if(((unsigned)lock_array) % 16)
-        armci_die("InitLocks: not aligned",0);
+   shmem_size = (NUM_LOCKS)*sizeof(lock_t);
+   lock_array = (lock_t*)  mmap((caddr_t) 0, shmem_size,
+                     PROT_READ|PROT_WRITE,
+                     MAP_ANONYMOUS|CNX_MAP_SEMAPHORE|MAP_SHARED, fd, 0);
+   if(((unsigned)lock_array)%16)armci_die("InitLocks: not aligned",0);
 }
 
 
@@ -256,8 +258,7 @@ static int num_alloc_locks=0;
 void CreateInitLocks(int num_locks, lockset_t  *lockid)
 {
 
-   if(num_locks > NUM_LOCKS) 
-       armci_die("To many locks requested", num_locks);
+   if(num_locks > NUM_LOCKS) armci_die("To many locks requested", num_locks);
    *lockid = parent_pid = _getpid();
 
    InitLocks(num_locks, *lockid);
@@ -332,6 +333,7 @@ void DeleteLocks(lockset_t lockid)
 
 #else
 /*********************** every thing else *************************/
+
 void CreateInitLocks(int num_locks, lockset_t  *lockid)
 {}
 

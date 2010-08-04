@@ -1,51 +1,27 @@
-/* $Id: simple.c,v 1.1.2.1 2007-06-20 17:41:40 vinod Exp $ */
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-
-#ifdef WIN32
-#  include <windows.h>
-#  define sleep(x) Sleep(1000*(x))
-#else
-#  include <unistd.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
 #endif
 
-/* ARMCI is impartial to message-passing libs - we handle them with MP macros */
-#if defined(PVM)
-#   include <pvm3.h>
-#   ifdef CRAY
-#     define MPGROUP         (char *)NULL
-#     define MP_INIT(arc,argv)
-#   else
-#     define MPGROUP           "mp_working_group"
-#     define MP_INIT(arc,argv) pvm_init(arc, argv)
-#   endif
-#   define MP_FINALIZE()     pvm_exit()
-#   define MP_TIMER          armci_timer
-#   define MP_BARRIER()      pvm_barrier(MPGROUP,-1)
-#   define MP_MYID(pid)      *(pid)   = pvm_getinst(MPGROUP,pvm_mytid())
-#   define MP_PROCS(pproc)   *(pproc) = (int)pvm_gsize(MPGROUP)
-    void pvm_init(int argc, char *argv[]);
-#elif defined(TCGMSG)
-#   include <sndrcv.h>
-    long tcg_tag =30000;
-#   define MP_BARRIER()      SYNCH_(&tcg_tag)
-#   define MP_INIT(arc,argv) PBEGIN_((argc),(argv))
-#   define MP_FINALIZE()     PEND_()
-#   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
-#   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
-#   define MP_TIMER         TCGTIME_
-#else
-#   include <mpi.h>
-#   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
-#   define MP_FINALIZE()     MPI_Finalize()
-#   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
-#   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
-#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
-#   define MP_TIMER         MPI_Wtime
+/* $Id: simple.c,v 1.1.2.1 2007-06-20 17:41:40 vinod Exp $ */
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#elif HAVE_WINDOWS_H
+#   include <windows.h>
+#   define sleep(x) Sleep(1000*(x))
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
 #endif
 
 #include "armci.h"
+#include "mp3.h"
 
 #define DIM1 5
 #define DIM2 3
@@ -94,9 +70,9 @@
 
 /***************************** macros ************************/
 #define COPY(src, dst, bytes) memcpy((dst),(src),(bytes))
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
-#define ABS(a) (((a) <0) ? -(a) : (a))
+#define ARMCI_MAX(a,b) (((a) >= (b)) ? (a) : (b))
+#define ARMCI_MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#define ARMCI_ABS(a) (((a) <0) ? -(a) : (a))
 
 /***************************** global data *******************/
 int me, nproc;
@@ -104,7 +80,7 @@ void* work[MAXPROC]; /* work array for propagating addresses */
 
 
 
-#ifdef PVM
+#ifdef MSG_COMMS_PVM
 void pvm_init(int argc, char *argv[])
 {
     int mytid, mygid, ctid[MAXPROC];
@@ -211,27 +187,27 @@ void test_aggregate(int dryrun) {
       start_time=MP_TIMER();
       start = 0; end = elems[1]; 
       for(i=1; i<nproc; i++) {
-	for(j=start; j<end; j++) {  
-	  ARMCI_NbPutValueDouble(dsrc[me][j], &ddst_put[i][me*elems[1]+j], i, 
-				 &hdl_put[j]);
-	}
-	for(j=start; j<end; j++) ARMCI_Wait(&hdl_put[j]);
+    for(j=start; j<end; j++) {  
+      ARMCI_NbPutValueDouble(dsrc[me][j], &ddst_put[i][me*elems[1]+j], i, 
+                 &hdl_put[j]);
+    }
+    for(j=start; j<end; j++) ARMCI_Wait(&hdl_put[j]);
       }
       if(!dryrun)printf("%d: Value Put time      = %.2es\n", me, MP_TIMER()-start_time);
  
       /* vector put */
       start_time=MP_TIMER();
       for(i=1; i<nproc; i++) {
-	for(j=start; j<end; j++) {
-	  src_ptr[j] = (void *)&dsrc[me][j];
-	  dst_ptr[j] = (void *)&ddst_put[i][me*elems[1]+j];
-	}
-	darr.src_ptr_array = src_ptr;
-	darr.dst_ptr_array = dst_ptr;
-	darr.bytes = sizeof(double);
-	darr.ptr_array_len = elems[1];
-	if((rc=ARMCI_NbPutV(&darr, 1, i, &hdl_put[i])))
-	  ARMCI_Error("armci_nbputv failed\n",rc);
+    for(j=start; j<end; j++) {
+      src_ptr[j] = (void *)&dsrc[me][j];
+      dst_ptr[j] = (void *)&ddst_put[i][me*elems[1]+j];
+    }
+    darr.src_ptr_array = src_ptr;
+    darr.dst_ptr_array = dst_ptr;
+    darr.bytes = sizeof(double);
+    darr.ptr_array_len = elems[1];
+    if((rc=ARMCI_NbPutV(&darr, 1, i, &hdl_put[i])))
+      ARMCI_Error("armci_nbputv failed\n",rc);
       }
       for(i=1; i<nproc; i++) ARMCI_Wait(&hdl_put[i]);
       if(!dryrun)printf("%d: Vector Put time     = %.2es\n", me, MP_TIMER()-start_time);
@@ -239,23 +215,23 @@ void test_aggregate(int dryrun) {
       /* regular put */
       start_time=MP_TIMER();    
       for(i=1; i<nproc; i++) {
-	for(j=start; j<end; j++) {  
-	  if((rc=ARMCI_NbPut(&dsrc[me][j], &ddst_put[i][me*elems[1]+j], bytes,
-			     i, &hdl_put[j])))
-	    ARMCI_Error("armci_nbput failed\n",rc);
-	}
-	for(j=start; j<end; j++) ARMCI_Wait(&hdl_put[j]);
+    for(j=start; j<end; j++) {  
+      if((rc=ARMCI_NbPut(&dsrc[me][j], &ddst_put[i][me*elems[1]+j], bytes,
+                 i, &hdl_put[j])))
+        ARMCI_Error("armci_nbput failed\n",rc);
+    }
+    for(j=start; j<end; j++) ARMCI_Wait(&hdl_put[j]);
       }
       if(!dryrun)printf("%d: Regular Put time    = %.2es\n", me, MP_TIMER()-start_time);
       
       /* aggregate put */
       start_time=MP_TIMER();
       for(i=1; i<nproc; i++) {
-	for(j=start; j<end; j++) {  
-	  if((rc=ARMCI_NbPut(&dsrc[me][j], &ddst_put[i][me*elems[1]+j], bytes,
-			     i,  &aggr_hdl_put[i])))
-	    ARMCI_Error("armci_nbput failed\n",rc);
-	}
+    for(j=start; j<end; j++) {  
+      if((rc=ARMCI_NbPut(&dsrc[me][j], &ddst_put[i][me*elems[1]+j], bytes,
+                 i,  &aggr_hdl_put[i])))
+        ARMCI_Error("armci_nbput failed\n",rc);
+    }
       }
       for(i=1; i<nproc; i++) ARMCI_Wait(&aggr_hdl_put[i]);
       if(!dryrun)printf("%d: Aggregate Put time  = %.2es\n\n", me, MP_TIMER()-start_time);
@@ -266,39 +242,39 @@ void test_aggregate(int dryrun) {
       /* vector get */
       start_time=MP_TIMER();
       for(i=1; i<nproc; i++) {
-	for(j=start; j<end; j++) {
-	  src_ptr[j] = (void *)&dsrc[i][j];
-	  dst_ptr[j] = (void *)&ddst_get[me][i*elems[1]+j];
-	}
-	darr.src_ptr_array = src_ptr;
-	darr.dst_ptr_array = dst_ptr;
-	darr.bytes = sizeof(double);
-	darr.ptr_array_len = elems[1];
-	if((rc=ARMCI_NbGetV(&darr, 1, i, &hdl_get[i])))
-	  ARMCI_Error("armci_nbgetv failed\n",rc);
-	ARMCI_Wait(&hdl_get[i]);
+    for(j=start; j<end; j++) {
+      src_ptr[j] = (void *)&dsrc[i][j];
+      dst_ptr[j] = (void *)&ddst_get[me][i*elems[1]+j];
+    }
+    darr.src_ptr_array = src_ptr;
+    darr.dst_ptr_array = dst_ptr;
+    darr.bytes = sizeof(double);
+    darr.ptr_array_len = elems[1];
+    if((rc=ARMCI_NbGetV(&darr, 1, i, &hdl_get[i])))
+      ARMCI_Error("armci_nbgetv failed\n",rc);
+    ARMCI_Wait(&hdl_get[i]);
       }
       if(!dryrun)printf("%d: Vector Get time     = %.2es\n", me, MP_TIMER()-start_time);
       
       /* regular get */
       start_time=MP_TIMER();    
       for(i=1; i<nproc; i++) {
-	for(j=start; j<end; j++) {  
-	  if((rc=ARMCI_NbGet(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], bytes,
-			     i, &hdl_get[j])))
-	    ARMCI_Error("armci_nbget failed\n",rc);
-	}
-	for(j=start; j<end; j++) ARMCI_Wait(&hdl_get[j]);
+    for(j=start; j<end; j++) {  
+      if((rc=ARMCI_NbGet(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], bytes,
+                 i, &hdl_get[j])))
+        ARMCI_Error("armci_nbget failed\n",rc);
+    }
+    for(j=start; j<end; j++) ARMCI_Wait(&hdl_get[j]);
       }
       if(!dryrun)printf("%d: Regular Get time    = %.2es\n", me, MP_TIMER()-start_time);
       
       /* aggregate get */
       start_time=MP_TIMER();
       for(i=1; i<nproc; i++) {
-	for(j=start; j<end; j++) {  
-	  ARMCI_NbGet(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], bytes,
-		      i, &aggr_hdl_get[i]);
-	}
+    for(j=start; j<end; j++) {  
+      ARMCI_NbGet(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], bytes,
+              i, &aggr_hdl_get[i]);
+    }
       }
       for(i=1; i<nproc; i++) ARMCI_Wait(&aggr_hdl_get[i]);
       if(!dryrun)printf("%d: Aggregate Get time  = %.2es\n", me, MP_TIMER()-start_time);
@@ -311,20 +287,20 @@ void test_aggregate(int dryrun) {
     /* Verify */
     if(!(me==0))
       for(j=0; j<elems[1]; j++) {
-	if( ABS(ddst_put[me][j]-j*1.001) > 0.1) {
-	  ARMCI_Error("aggregate put failed...1", 0);
-	}
+    if( ARMCI_ABS(ddst_put[me][j]-j*1.001) > 0.1) {
+      ARMCI_Error("aggregate put failed...1", 0);
+    }
       }
     MP_BARRIER();
     if(!dryrun)if(me==0) printf("\n  aggregate put ..O.K.\n"); fflush(stdout);
 
     if(me==0) {
       for(i=1; i<nproc; i++) {
-	for(j=0; j<elems[1]; j++) {
-	  if( ABS(ddst_get[me][i*elems[1]+j]-j*1.001*(i+1)) > 0.1) {
-	    ARMCI_Error("aggregate get failed...1", 0);
-	  }
-	}
+    for(j=0; j<elems[1]; j++) {
+      if( ARMCI_ABS(ddst_get[me][i*elems[1]+j]-j*1.001*(i+1)) > 0.1) {
+        ARMCI_Error("aggregate get failed...1", 0);
+      }
+    }
       }
     }
     MP_BARRIER();
@@ -340,11 +316,6 @@ void test_aggregate(int dryrun) {
     destroy_array((void **)dsrc);
 }
 
-
-/* we need to rename main if linking with frt compiler */
-#ifdef FUJITSU_FRT
-#define main MAIN__
-#endif
 
 int main(int argc, char* argv[])
 {
@@ -377,7 +348,7 @@ int main(int argc, char* argv[])
     MP_BARRIER();
     if(me==0){printf("\nSuccess!!\n"); fflush(stdout);}
     sleep(2);
-	
+    
     MP_BARRIER();
     ARMCI_Finalize();
     MP_FINALIZE();

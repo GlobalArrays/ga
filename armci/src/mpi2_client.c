@@ -1,12 +1,24 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /**
  * MPI_SPAWN: ARMCI on top of MPI.
  * Manojkumar Krishnan
  */
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#if HAVE_STDARG_H
+#   include <stdarg.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #include "mpi.h"
 
 #include "mpi2.h"
@@ -493,7 +505,7 @@ void armci_create_server_MPIprocess ()
 
     MPI_Initialized(&flag);
     if (flag == 0)
-       armci_die("ARMCI error: MPI_Init must be called before ARMCI_Init()",0);
+       armci_die("ARMCI error: MPI_Init must be called before PARMCI_Init()",0);
     
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -503,7 +515,7 @@ void armci_create_server_MPIprocess ()
     
     /**
      * Armci masters send the following info to their corresponding server as
-     * the server was not part of the initialization step in ARMCI_Init()
+     * the server was not part of the initialization step in PARMCI_Init()
      *    1. cluster info ( i.e. armci_init_clusinfo() )
      *    2. lock info    ( i.e.armci_allocate_locks() )
      */
@@ -560,7 +572,7 @@ void armci_create_server_MPIprocess ()
 
   2. For sockets with server process option (i.e. not thread, but an actual
   process as data server), all clients call armci_init_connections() in
-  armci_start_server(), which ic called by ARMCI_Init(). Should this init
+  armci_start_server(), which ic called by PARMCI_Init(). Should this init
   connections be done for MPI_SPAWN as well
   NOTE: armci_init_connections call _armci_buf_init(). In our MPI_SPAWN case we
   never call _armci_buf_init() either in clients or in (spawned) dataservers.

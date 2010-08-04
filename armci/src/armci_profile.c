@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: armci_profile.c,v 1.8 2005-11-30 10:20:53 vinod Exp $ */
 
 /**
@@ -45,17 +49,25 @@
 
 #ifdef ARMCI_PROFILE
 #define DEBUG_ 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
 #include "armci.h"
 #include "armcip.h"
 #include "armci_profile.h" 
 
 #ifndef MPI
-#  include "sndrcv.h"
-#   define MP_TIMER TCGTIME_
+#  include "tcgmsg.h"
+#   define MP_TIMER tcg_time
 #else
 #  include "mpi.h"
 #   define MP_TIMER MPI_Wtime

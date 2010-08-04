@@ -1,6 +1,8 @@
 #ifndef _MESSAGE_H_
 #define _MESSAGE_H_
 
+#include "armci.h"
+
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
@@ -20,6 +22,8 @@ extern "C" {
 #if 0
 #define armci_msg_bcast(buffer, len, root)\
         armci_msg_bcast_scope(SCOPE_ALL, (buffer), (len), (root))
+#else
+extern void armci_msg_bcast(void *buffer, int len, int root);
 #endif
 
 extern void armci_msg_sel_scope(int scope, void *x, int n, char* op, 
@@ -29,6 +33,8 @@ extern void armci_msg_brdcst(void* buffer, int len, int root);
 extern void armci_msg_snd(int tag, void* buffer, int len, int to);
 extern void armci_msg_rcv(int tag, void* buffer, int buflen, int *msglen, int from);
 extern int  armci_msg_rcvany(int tag, void* buffer, int buflen, int *msglen);
+extern void armci_msg_reduce(void *x, int n, char *op, int type);
+extern void armci_msg_reduce_scope(int scope, void *x, int n, char *op, int type);
 
 extern void armci_msg_gop_scope(int scope, void *x, int n, char* op, int type);
 extern void armci_msg_igop(int *x, int n, char* op);
@@ -51,6 +57,17 @@ extern void armci_msg_clus_fgop(float *x, int n, char* op);
 extern void armci_msg_clus_lgop(long *x, int n, char* op); 
 extern void armci_msg_clus_llgop(long long *x, int n, char* op); 
 extern void armci_msg_clus_dgop(double *x, int n, char* op); 
+
+extern void armci_msg_group_gop_scope(int scope, void *x, int n, char* op, int type, ARMCI_Group *group);
+extern void armci_msg_group_igop(int *x, int n, char* op,ARMCI_Group *group);
+extern void armci_msg_group_lgop(long *x, int n, char* op,ARMCI_Group *group);
+extern void armci_msg_group_llgop(long long *x, int n, char* op,ARMCI_Group *group);
+extern void armci_msg_group_fgop(float *x, int n, char* op,ARMCI_Group *group);
+extern void armci_msg_group_dgop(double *x, int n,char* op,ARMCI_Group *group);
+extern void armci_exchange_address_grp(void *ptr_arr[], int n, ARMCI_Group *group);
+extern void armci_msg_group_barrier(ARMCI_Group *group);
+extern void armci_msg_group_bcast_scope(int scope, void *buf, int len, int root, ARMCI_Group *group);
+extern void armci_grp_clus_brdcst(void *buf, int len, int grp_master, int grp_clus_nproc,ARMCI_Group *mastergroup);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

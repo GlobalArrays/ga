@@ -1,11 +1,23 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #if defined(PEND_BUFS)
 
 #include "pendbufs.h"
 #include "armcip.h"
-#include <stdio.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
 
 #define DEBUG_SERVER 0
 
@@ -228,7 +240,7 @@ static int _can_progress_accnoorder(immbuf_t *vbuf) {
     /*       fflush(stdout); */
     return 0; /*This buffer needs a free pending buffer*/
   }
-  if(IS_IMM_MSG(*msginfo) && ACC(msginfo->operation)) {
+  if(IS_IMM_MSG(*msginfo) && ARMCI_ACC(msginfo->operation)) {
     return 1;
   }
   if(info->immbuf_wlist_head && info->immbuf_wlist_head!=vbuf) {
@@ -237,17 +249,17 @@ static int _can_progress_accnoorder(immbuf_t *vbuf) {
     return 0; /*in order issue*/
   }
 
-  if(!ACC(msginfo->operation)) {
+  if(!ARMCI_ACC(msginfo->operation)) {
     if(info->order_head)
       return 0;
     return 1;
   }
   
-  assert(ACC(msginfo->operation));
+  assert(ARMCI_ACC(msginfo->operation));
   for(ptr=info->order_head; ptr!=NULL; ptr=ptr->order_next) {
     request_header_t *m = (request_header_t *)ptr->buf;
     assert(m->from == msginfo->from);
-    if(!ACC(m->operation)) 
+    if(!ARMCI_ACC(m->operation)) 
       break;
   }
   if(ptr != NULL) 
@@ -259,13 +271,13 @@ static int _can_progress_putaccsplitorder(immbuf_t*vbuf) {
   if(!IS_IMM_MSG(*msginfo) && _nPendBufsUsed==PENDING_BUF_NUM) {
     return 0; /*This buffer needs a free pending buffer*/
   }
-  if(IS_IMM_MSG(*msginfo) && ACC(msginfo->operation)) {
+  if(IS_IMM_MSG(*msginfo) && ARMCI_ACC(msginfo->operation)) {
     return 1;
   }
   if(info->immbuf_wlist_head && info->immbuf_wlist_head!=vbuf) {
     return 0;
   }
-  if(msginfo->operation!=PUT && !ACC(msginfo->operation)) {
+  if(msginfo->operation!=PUT && !ARMCI_ACC(msginfo->operation)) {
     if(info->order_head)
       return 0;
     return 1;
@@ -321,7 +333,7 @@ static int _armci_serv_pendbuf_can_progress(immbuf_t *vbuf) {
       return 0; /*This buffer needs a free pending buffer*/
     }
 #if 1 /*commented for now: it does work*/
-    if(IS_IMM_MSG(*msginfo) && ACC(msginfo->operation)) {
+    if(IS_IMM_MSG(*msginfo) && ARMCI_ACC(msginfo->operation)) {
       return 1;
     }
 #endif
@@ -331,17 +343,17 @@ static int _armci_serv_pendbuf_can_progress(immbuf_t *vbuf) {
       return 0; /*in order issue*/
     }
 
-    if(!ACC(msginfo->operation)) {
+    if(!ARMCI_ACC(msginfo->operation)) {
       if(info->order_head)
 	return 0;
       return 1;
     }
 
-    assert(ACC(msginfo->operation));
+    assert(ARMCI_ACC(msginfo->operation));
     for(ptr=info->order_head; ptr!=NULL; ptr=ptr->order_next) {
       request_header_t *m = (request_header_t *)ptr->buf;
       assert(m->from == msginfo->from);
-      if(!ACC(m->operation)) 
+      if(!ARMCI_ACC(m->operation)) 
 	break;
     }
     if(ptr != NULL) 
@@ -355,12 +367,12 @@ static int _armci_serv_pendbuf_can_progress(immbuf_t *vbuf) {
     if(info->immbuf_wlist_head && info->immbuf_wlist_head!=vbuf) {
       return 0;
     }
-    if(msginfo->operation!=PUT && !ACC(msginfo->operation)) {
+    if(msginfo->operation!=PUT && !ARMCI_ACC(msginfo->operation)) {
       if(info->order_head)
 	return 0;
       return 1;
     }
-    if(IS_IMM_MSG(*msginfo) && ACC(msginfo->operation)) {
+    if(IS_IMM_MSG(*msginfo) && ARMCI_ACC(msginfo->operation)) {
       return 1;
     }
     if(IS_IMM_MSG(*msginfo) && info->order_head)
@@ -371,13 +383,13 @@ static int _armci_serv_pendbuf_can_progress(immbuf_t *vbuf) {
     if(!IS_IMM_MSG(*msginfo) && _nPendBufsUsed==PENDING_BUF_NUM) {
       return 0; /*This buffer needs a free pending buffer*/
     }
-    if(IS_IMM_MSG(*msginfo) && ACC(msginfo->operation)) {
+    if(IS_IMM_MSG(*msginfo) && ARMCI_ACC(msginfo->operation)) {
       return 1;
     }
     if(info->immbuf_wlist_head && info->immbuf_wlist_head!=vbuf) {
       return 0;
     }
-    if(msginfo->operation!=PUT && !ACC(msginfo->operation)) {
+    if(msginfo->operation!=PUT && !ARMCI_ACC(msginfo->operation)) {
       if(info->order_tail) {
 	request_header_t *m=(request_header_t*)info->order_tail->buf;
 	if(msginfo->operation==GET && m->operation == GET) {
@@ -593,7 +605,7 @@ static void _armci_serv_pendbuf_progress_putacc(pendbuf_t *pbuf) {
   void *buffer =((char *)(msginfo+1))+msginfo->dscrlen;
   int *status = &pbuf->status;  
 
-  assert(msginfo->operation==PUT || ACC(msginfo->operation));
+  assert(msginfo->operation==PUT || ARMCI_ACC(msginfo->operation));
   assert(sizeof(request_header_t)+msginfo->dscrlen+msginfo->datalen<PENDING_BUF_LEN);
   switch(*status) {
   case INIT:
@@ -682,7 +694,7 @@ static void _armci_serv_pendbuf_progress(pendbuf_t *_pbuf){
       
       do {
 	assert(pbuf->vbuf == vbuf);
-	if(msginfo->operation == PUT || ACC(msginfo->operation)) {
+	if(msginfo->operation == PUT || ARMCI_ACC(msginfo->operation)) {
 	  _armci_serv_pendbuf_progress_putacc(pbuf);
 	}
 	else if (msginfo->operation == GET) {

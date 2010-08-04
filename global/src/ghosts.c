@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: ghosts.c,v 1.47.4.2 2007-05-02 16:23:39 d3g293 Exp $ */
 /* 
  * module: ghosts.c
@@ -31,15 +35,30 @@
  
 /*#define PERMUTE_PIDS */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <math.h>
-#include <assert.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
 #include "globalp.h"
 #include "base.h"
 #include "armci.h"
+#include "message.h"
 #include "macdecls.h"
+
+/* from armcip.h, but armcip.h is private so we should not include it */
+extern void armci_write_strided(void *ptr, int stride_levels, int stride_arr[], int count[], char *buf);
+extern void armci_read_strided(void *ptr, int stride_levels, int stride_arr[], int count[], char *buf);
 
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
@@ -100,23 +119,24 @@ Integer me = ga_nodeid_();
    GA_POP_NAME;
 }
 
-/*\  PROVIDE POINTER TO LOCALLY HELD DATA, ACCOUNTING FOR
+/*\  PROVIDE INDEX TO LOCALLY HELD DATA, ACCOUNTING FOR
  *   PRESENCE OF GHOST CELLS
 \*/
-void nga_access_ghost_element_(Integer* g_a, Integer* index,
+void FATR nga_access_ghost_element_(Integer* g_a, AccessIndex* index,
                         Integer subscript[], Integer ld[])
 {
-char *ptr;
+char *ptr=NULL;
 Integer  handle = GA_OFFSET + *g_a;
-Integer i;
-unsigned long    elemsize;
-unsigned long    lref, lptr;
+Integer i=0;
+Integer tmp_sub[MAXDIM];
+unsigned long    elemsize=0;
+unsigned long    lref=0, lptr=0;
 Integer me = ga_nodeid_();
    GA_PUSH_NAME("nga_access_ghost_element");
    /* Indices conform to Fortran convention. Shift them down 1 so that
       gam_LocationWithGhosts works. */
-   for (i=0; i<GA[handle].ndim; i++) subscript[i]--;
-   gam_LocationWithGhosts(me, handle, subscript, &ptr, ld);
+   for (i=0; i<GA[handle].ndim; i++) tmp_sub[i] = subscript[i] - 1;
+   gam_LocationWithGhosts(me, handle, tmp_sub, &ptr, ld);
    /*
     * return patch address as the distance elements from the reference address
     *
@@ -130,27 +150,27 @@ Integer me = ga_nodeid_();
    /* compute index and check if it is correct */
    switch (ga_type_c2f(GA[handle].type)){
      case MT_F_DBL:
-        *index = (Integer) ((DoublePrecision*)ptr - DBL_MB);
+        *index = (AccessIndex) ((DoublePrecision*)ptr - DBL_MB);
         lref = (unsigned long)DBL_MB;
         break;
 
      case MT_F_DCPL:
-        *index = (Integer) ((DoubleComplex*)ptr - DCPL_MB);
+        *index = (AccessIndex) ((DoubleComplex*)ptr - DCPL_MB);
         lref = (unsigned long)DCPL_MB;
         break;
 
      case MT_F_SCPL:
-        *index = (Integer) ((SingleComplex*)ptr - SCPL_MB);
+        *index = (AccessIndex) ((SingleComplex*)ptr - SCPL_MB);
         lref = (unsigned long)SCPL_MB;
         break;
 
      case MT_F_INT:
-        *index = (Integer) ((Integer*)ptr - INT_MB);
+        *index = (AccessIndex) ((Integer*)ptr - INT_MB);
         lref = (unsigned long)INT_MB;
         break;
 
      case MT_F_REAL:
-        *index = (Integer) ((float*)ptr - FLT_MB);
+        *index = (AccessIndex) ((float*)ptr - FLT_MB);
         lref = (unsigned long)FLT_MB;
         break;        
    }
@@ -161,7 +181,7 @@ Integer me = ga_nodeid_();
    if( lptr%elemsize != lref%elemsize ){ 
        printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
                                                     lref,lref%elemsize);
-       ga_error("nga_access: MA addressing problem: base address misallignment",
+       gai_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
 #endif
@@ -173,15 +193,36 @@ Integer me = ga_nodeid_();
    GA_POP_NAME;
 }
 
+/*\  PROVIDE POINTER TO LOCALLY HELD DATA, ACCOUNTING FOR 
+ *   PRESENCE OF GHOST CELLS 
+\*/ 
+void nga_access_ghost_element_ptr(Integer* g_a, void *ptr, 
+                        Integer subscript[], Integer ld[]) 
+{ 
+  char *lptr; 
+  Integer  handle = GA_OFFSET + *g_a; 
+  Integer i; 
+  Integer tmp_sub[MAXDIM]; 
+  Integer me = ga_nodeid_(); 
+  GA_PUSH_NAME("nga_access_ghost_element_ptr"); 
+  /* Indices conform to Fortran convention. Shift them down 1 so that 
+     gam_LocationWithGhosts works. */ 
+  for (i=0; i<GA[handle].ndim; i++) tmp_sub[i] = subscript[i] - 1; 
+  gam_LocationWithGhosts(me, handle, tmp_sub, &lptr, ld); 
+ 
+  *(char**)ptr = lptr; 
+  GA_POP_NAME; 
+} 
+ 
 /*\ PROVIDE ACCESS TO LOCAL PATCH OF A GLOBAL ARRAY WITH GHOST CELLS
 \*/
 void FATR nga_access_ghosts_(Integer* g_a, Integer dims[],
-                      Integer* index, Integer ld[])
+                      AccessIndex* index, Integer ld[])
 {
-char     *ptr;
+char     *ptr=NULL;
 Integer  handle = GA_OFFSET + *g_a;
-unsigned long    elemsize;
-unsigned long    lref, lptr;
+unsigned long    elemsize=0;
+unsigned long    lref=0, lptr=0;
 
    GA_PUSH_NAME("nga_access_ghosts");
    nga_access_ghost_ptr(g_a, dims, &ptr, ld);
@@ -199,27 +240,27 @@ unsigned long    lref, lptr;
    /* compute index and check if it is correct */
    switch (ga_type_c2f(GA[handle].type)){
      case MT_F_DBL:
-        *index = (Integer) ((DoublePrecision*)ptr - DBL_MB);
+        *index = (AccessIndex) ((DoublePrecision*)ptr - DBL_MB);
         lref = (unsigned long)DBL_MB;
         break;
 
      case MT_F_DCPL:
-        *index = (Integer) ((DoubleComplex*)ptr - DCPL_MB);
+        *index = (AccessIndex) ((DoubleComplex*)ptr - DCPL_MB);
         lref = (unsigned long)DCPL_MB;
         break;
 
      case MT_F_SCPL:
-        *index = (Integer) ((SingleComplex*)ptr - SCPL_MB);
+        *index = (AccessIndex) ((SingleComplex*)ptr - SCPL_MB);
         lref = (unsigned long)SCPL_MB;
         break;
 
      case MT_F_INT:
-        *index = (Integer) ((Integer*)ptr - INT_MB);
+        *index = (AccessIndex) ((Integer*)ptr - INT_MB);
         lref = (unsigned long)INT_MB;
         break;
 
      case MT_F_REAL:
-        *index = (Integer) ((float*)ptr - FLT_MB);
+        *index = (AccessIndex) ((float*)ptr - FLT_MB);
         lref = (unsigned long)FLT_MB;
         break;        
 
@@ -231,7 +272,7 @@ unsigned long    lref, lptr;
    if( lptr%elemsize != lref%elemsize ){ 
        printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
                                                     lref,lref%elemsize);
-       ga_error("nga_access: MA addressing problem: base address misallignment",
+       gai_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
 #endif
@@ -243,6 +284,96 @@ unsigned long    lref, lptr;
    GA_POP_NAME;
 }
 
+/*\ RELEASE ACCESS TO A GHOST ELEMENT
+\*/
+void FATR nga_release_ghost_element_(Integer* g_a, Integer subscript[])
+{
+}
+
+/*\ RELEASE ACCESS & UPDATE A GHOST ELEMENT
+\*/
+void FATR nga_release_update_ghost_element_(Integer* g_a, Integer subscript[])
+{
+}
+
+/*\ RELEASE ACCESS TO A GHOST BLOCK
+\*/
+void FATR nga_release_ghosts_(Integer* g_a)
+{
+}
+
+/*\ RELEASE ACCESS & UPDATE A GHOST BLOCK
+\*/
+void FATR nga_release_update_ghosts_(Integer* g_a)
+{
+}
+
+/*\ GET DATA FROM LOCAL BLOCK
+\*/
+void FATR nga_get_ghost_block_(Integer *g_a,
+                               Integer *lo,
+                               Integer *hi,
+                               void *buf,
+                               Integer *ld)
+{
+  /* g_a:      Global array handle
+     lo[]:     Array of lower indices of patch of global array
+     hi[]:     Array of upper indices of patch of global array
+     buf[]:    Local buffer that array patch will be copied into
+     ld[]:     Array of physical ndim-1 dimensions of local buffer */
+  Integer handle=GA_OFFSET + *g_a, ndim;
+  Integer i, glo[MAXDIM], ghi[MAXDIM], ichk, me, grp_id;
+  Integer llo[MAXDIM];
+  int  stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
+  Integer ldrem[MAXDIM];
+  Integer offset, factor, size;
+  char *ptr;
+
+  me = GAme;
+  grp_id = (Integer)GA[handle].p_handle;
+  if (grp_id>0) me = PGRP_LIST[grp_id].map_proc_list[me];
+  ndim = GA[handle].ndim;
+
+  /* Figure out whether or not lo and hi can be accessed completely
+     from local data */
+  nga_distribution_(g_a, &me, glo, ghi);
+  ichk = 1;
+  for (i=0; i<ndim; i++) {
+    if (lo[i] < glo[i]-(Integer)GA[handle].width[i]) ichk = 0;
+    if (hi[i] > ghi[i]+(Integer)GA[handle].width[i]) ichk = 0;
+    llo[i] = glo[i] - (Integer)GA[handle].width[i];
+    if (i<ndim-1) ldrem[i] = ghi[i] - glo[i] + 1
+      + 2*(Integer)GA[handle].width[i];
+  }
+
+  /* Get data. Use local copy if possible, otherwise use a periodic get */
+  if (ichk) {
+    offset = 0;
+    factor = 1;
+    size = GA[handle].elemsize;
+    for (i=0; i<ndim-1; i++) {
+      offset += (lo[i]-llo[i])*factor;
+      factor *= ghi[i] - glo[i] + 1 + 2*(Integer)GA[handle].width[i];
+    }
+    offset += (lo[ndim-1]-llo[ndim-1])*factor;
+    ptr = GA[handle].ptr[me] + size*offset;
+    /* compute number of elements in each dimension and store result in count */
+    gam_ComputeCount(ndim, lo, hi, count);
+
+    /* scale first element in count by element size. The ARMCI_GetS
+       routine uses this convention to figure out memory sizes.*/
+    count[0] *= size;
+
+    /* Return strides for memory containing global array on remote
+       processor indexed by proc (stride_rem) and for local buffer
+       buf (stride_loc) */
+    gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
+    ARMCI_GetS(ptr,stride_rem,buf,stride_loc,count,ndim-1,me);
+  } else {
+    nga_periodic_get_(g_a,lo,hi,buf,ld);
+  }
+}
+
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM
 \*/
 void FATR ga_update1_ghosts_(Integer *g_a)
@@ -250,7 +381,7 @@ void FATR ga_update1_ghosts_(Integer *g_a)
   Integer idx, ipx, inx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
   Integer size, ndim, nwidth, offset, slice, increment[MAXDIM];
   Integer width[MAXDIM];
-  Integer dims[MAXDIM], imax;
+  Integer dims[MAXDIM], imax=0;
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
   Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
   Integer lo_rem[MAXDIM], hi_rem[MAXDIM];
@@ -1505,9 +1636,9 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
   Integer idx, i, handle=GA_OFFSET + *g_a;
   Integer *size, bufsize, buflen, ndim, elemsize;
   Integer *proc_rem_snd, *proc_rem_rcv, pmax;
-  Integer msgcnt, *length, msglen;
+  Integer msgcnt, *length;
   Integer index[MAXDIM], width[MAXDIM];
-  int *stride_snd, *stride_rcv, *count;
+  int *stride_snd, *stride_rcv, *count, msglen;
   char **ptr_snd, **ptr_rcv, *cache, *current;
   char send_name[32], rcv_name[32];
   void *snd_ptr, *rcv_ptr, *snd_ptr_orig, *rcv_ptr_orig;
@@ -1728,7 +1859,7 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
           }
           /* make up for odd processor at end of string */
           if (index[idx] == pmax) {
-            armci_msg_snd(msgcnt, snd_ptr, length, *proc_rem_snd);
+            armci_msg_snd(msgcnt, snd_ptr, *length, *proc_rem_snd);
           }
           if (index[idx] == 0) {
             armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, *proc_rem_rcv);
@@ -1757,7 +1888,7 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
   Integer idx, idir, i, np, handle=GA_OFFSET + *g_a;
   Integer size, buflen, buftot, bufsize, ndim, increment[MAXDIM];
   Integer proc_rem_snd, proc_rem_rcv, pmax;
-  Integer msgcnt, length, msglen;
+  Integer msgcnt, length;
   Integer width[MAXDIM], dims[MAXDIM], index[MAXDIM];
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
   Integer plo_snd[MAXDIM], phi_snd[MAXDIM];
@@ -1765,6 +1896,7 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
   Integer slo_rcv[MAXDIM], shi_rcv[MAXDIM];
   Integer plo_rcv[MAXDIM], phi_rcv[MAXDIM];
   Integer ld_loc[MAXDIM];
+  int msglen;
   int stride_snd[MAXDIM], stride_rcv[MAXDIM],count[MAXDIM];
   char *ptr_snd, *ptr_rcv;
   char send_name[32], rcv_name[32];
@@ -2231,9 +2363,10 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
 }
 
 /* Utility function for ga_update5_ghosts routine */
-double waitforflags (int *ptr1, int *ptr2) {
+static inline double waitforflags (int *ptr1, int *ptr2)
+{
   int i = 1;
-  double val;
+  double val = 0;
   while (gai_getval(ptr1) ==  0 || gai_getval(ptr2) == 0) {
     val = exp(-(double)i++);
   }
@@ -2733,16 +2866,15 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
 \*/
 logical ga_update5_ghosts_(Integer *g_a)
 {
-  Integer idx, ipx, inx, i, np, handle=GA_OFFSET + *g_a;
+  Integer idx, i, handle=GA_OFFSET + *g_a;
   Integer size, ndim, nwidth;
   Integer width[MAXDIM];
-  Integer dims[MAXDIM];
   Integer* proc_rem_ptr;
   int *stride_loc, *stride_rem,*count;
-  int msgcnt, bytes, corner_flag, proc_rem;
+  int msgcnt, corner_flag, proc_rem;
+  /* int bytes; */
   char *ptr_loc, *ptr_rem,*cache;
   int local_sync_begin,local_sync_end;
-  Integer me = ga_nodeid_();
   Integer p_handle;
 #ifdef USE_MP_NORTHSOUTH
   char send_name[32], rcv_name[32];
@@ -2825,7 +2957,7 @@ logical ga_update5_ghosts_(Integer *g_a)
       }
       if(count[0]>1000000){
         /*tries to use armci direct put when possible */
-        ARMCI_PutS_flag_dir(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
+        ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
             (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
             *GA_Update_Signal, proc_rem);
       }
@@ -2855,7 +2987,7 @@ logical ga_update5_ghosts_(Integer *g_a)
       }
       if(count[0]>1000000){
         /*tries to use armci direct put when possible */
-        ARMCI_PutS_flag_dir(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
+        ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
             (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
             *GA_Update_Signal, proc_rem);
       }
@@ -2916,7 +3048,10 @@ logical ga_set_update5_info_(Integer *g_a)
   int idx, corner_flag;
   char **ptr_loc, **ptr_rem,*cache;
   Integer handle = GA_OFFSET + *g_a;
-  int scope,cache_size;
+  int cache_size;
+#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
+  int scope;
+#endif
   Integer me = ga_nodeid_();
   Integer p_handle;
 
@@ -3049,7 +3184,9 @@ logical ga_set_update5_info_(Integer *g_a)
           *proc_rem = PGRP_LIST[p_handle].inv_map_proc_list[*proc_rem];
         }
 
+#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
         do_negative:
+#endif
 
        /*BJP proc_rem++; */
         ptr_rem = (char **)cache;
@@ -3150,7 +3287,7 @@ void ga_update_ghosts_(Integer *g_a)
 /* Utility function for ga_update6_ghosts routine */
 double waitformixedflags (int flag1, int flag2, int *ptr1, int *ptr2) {
   int i = 1;
-  double val;
+  double val = 0;
   while ((flag1 && gai_getval(ptr1) ==  0) ||
          (flag2 && gai_getval(ptr2) == 0)) {
     val = exp(-(double)i++);
@@ -3166,7 +3303,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   Integer idx, idir, i, np, handle=GA_OFFSET + *g_a;
   Integer size, buflen, buftot, bufsize, ndim, increment[MAXDIM];
   Integer proc_rem_snd, proc_rem_rcv, pmax;
-  Integer msgcnt, length, msglen;
+  Integer msgcnt, length;
   Integer width[MAXDIM], dims[MAXDIM], index[MAXDIM];
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
   Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
@@ -3176,9 +3313,10 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   Integer slo_rcv[MAXDIM], shi_rcv[MAXDIM];
   Integer plo_rcv[MAXDIM], phi_rcv[MAXDIM];
   Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
+  int msglen;
   int stride_snd[MAXDIM], stride_rcv[MAXDIM],count[MAXDIM];
   int stride_rem[MAXDIM];
-  int flag1, flag2, sprocflag, rprocflag;
+  int flag1=0, flag2=0, sprocflag, rprocflag;
   char *ptr_snd, *ptr_rcv;
   char *ptr_loc, *ptr_rem;
   char send_name[32], rcv_name[32];
@@ -3205,7 +3343,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
    *
    * This implementation make use of a combination of explicit message
    * passing between processors on different nodes and shared memory
-   * copies with and additional flag between processors on the same node
+   * copies with an additional flag between processors on the same node
    * to perform the update. Separate message types for the messages and
    * the use of the additional flag are for the updates in each
    * coordinate direction are used to maintain synchronization locally
@@ -3890,7 +4028,7 @@ void FATR nga_nbget_ghost_dir_(Integer *g_a,
   /* check mask to see that it corresponds to a valid direction */
   for (i=0; i<ndim; i++) {
     if (abs(mask[i]) != 0 && abs(mask[i]) != 1)
-      ga_error("nga_nbget_ghost_dir: invalid mask entry", mask[i]);
+      gai_error("nga_nbget_ghost_dir: invalid mask entry", mask[i]);
   }
 
   /* get range of data on local processor */

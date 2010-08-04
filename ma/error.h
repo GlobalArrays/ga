@@ -1,16 +1,11 @@
-#ifndef _error_h
-#define _error_h
-
-/* 
- * $Id: error.h,v 1.3 1994-10-07 19:41:20 d3g681 Exp $
- */
-
-/* 
+/** @file
  * Private header file containing symbolic constants and type declarations
  * for the error handling module.
  *
  * This file should only be included by internal C files.
  */
+#ifndef _error_h
+#define _error_h
 
 #include "macdecls.h"
 
@@ -21,15 +16,15 @@
 /* severity levels of errors */
 typedef enum
 {
-    EL_Fatal,		/* unrecoverable */
-    EL_Nonfatal		/* recoverable */
+    EL_Fatal,        /* unrecoverable */
+    EL_Nonfatal        /* recoverable */
 } ErrorLevel;
 
 /* categories of errors */
 typedef enum
 {
-    ET_External,	/* anticipated, client-level problem */
-    ET_Internal		/* unanticipated problem internal to MA */
+    ET_External,    /* anticipated, client-level problem */
+    ET_Internal        /* unanticipated problem internal to MA */
 } ErrorType;
 
 /**

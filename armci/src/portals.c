@@ -1,19 +1,33 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* preliminary implementation on top of portals */
-    /*there are 3 kinds of ARMCI memory: ARMCI_Malloc, ARMCI_Malloc_local, user
-     * allocated memory. For ARMCI_Malloc, we use region specific md that
+    /*there are 3 kinds of ARMCI memory: PARMCI_Malloc, PARMCI_Malloc_local, user
+     * allocated memory. For PARMCI_Malloc, we use region specific md that
      * comes from completion descriptor.
-     * For ARMCI_Malloc_local, we use the MD from the lochdl
+     * For PARMCI_Malloc_local, we use the MD from the lochdl
      * For user allocated memory, we use another list of MD's
      * which binds the user memory. We never keep track of non-armci allocated
      * memory.
      */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <float.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_FLOAT_H
+#   include <float.h>
+#endif
 #include "armcip.h"
 #include "message.h"
-#include <stdint.h>
+#if HAVE_STDINT_H
+#   include <stdint.h>
+#endif
 
 #define DEBUG_COMM 0
 #define DEBUG_INIT 0
@@ -22,7 +36,7 @@
 #endif
 
 
-#ifdef XT3
+#ifdef CRAY_XT
 #include "locks.h"
 typedef struct {
        int off;
@@ -96,7 +110,7 @@ ptl_process_id_t match_id;
     ptl_initialized = 1;
     portals->num_match_entries = 0;
 
-#ifndef XT3
+#ifndef CRAY_XT
     utcp_lib_out = stdout;
     utcp_api_out = stdout;
 #endif
@@ -412,7 +426,7 @@ int lproc,rproc,user_memory=0;
       md_local->start=dst_buf;
     }
     else {
-      if(lochdl->islocal){ /*ARMCI_Malloc_local memory*/
+      if(lochdl->islocal){ /*PARMCI_Malloc_local memory*/
         user_memory=1;
 #if    1
         cdesc = get_free_comp_desc(PORTALS_MEM_REGIONS,&c_info);
@@ -540,7 +554,7 @@ int lproc,rproc,user_memory=0;
       md_local->start=src;
     }
     else {
-      if(lochdl->islocal){ /*ARMCI_Malloc_local memory*/
+      if(lochdl->islocal){ /*PARMCI_Malloc_local memory*/
         user_memory=1;
 #if    1
         cdesc = get_free_comp_desc(PORTALS_MEM_REGIONS,&c_info);
@@ -686,7 +700,7 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
         bvalues[i] = bvalued[i] = 0;
         bunit[i] = bunit[i-1] * count[i-1];
     }
-    if(ACC(op)){
+    if(ARMCI_ACC(op)){
       /*lock here*/
             printf("\nSHOULD NOT DO NETWORK_STRIDED FOR ACCS \n",armci_me);
             fflush(stdout);
@@ -714,7 +728,7 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
           armci_client_direct_send(proc,sptr,dptr,bytes,&cptr,tag,loc_memhdl,
                              rem_memhdl);
       }
-      else if(ACC(op)){
+      else if(ARMCI_ACC(op)){
           armci_client_direct_get(proc,sptr,dptr,bytes,&cptr,tag,loc_memhdl,
                              rem_memhdl);
           /*DO ACC*/
@@ -724,7 +738,7 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
       else
           armci_die("in network_strided unknown opcode",op);
     }
-    if(ACC(op)){
+    if(ARMCI_ACC(op)){
     /*unlock here*/
     }
     if(nb_handle){
@@ -793,22 +807,22 @@ void armci_network_strided(int op, void* scale, int proc,void *src_ptr,
 	dptr = ((char *)dst_ptr)+idxd;
 	if((i<(n1dim-1)) || nb_handle==NULL){
 	  if(op==GET)
-            ARMCI_Get(sptr,dptr,bytes,proc);
+            PARMCI_Get(sptr,dptr,bytes,proc);
 	  else if(op==PUT)
-            ARMCI_Put(sptr,dptr,bytes,proc);
-	  else if(ACC(op))
-            ARMCI_AccS(op,scale,sptr,NULL,dptr,NULL,count,1,proc);
+            PARMCI_Put(sptr,dptr,bytes,proc);
+	  else if(ARMCI_ACC(op))
+            PARMCI_AccS(op,scale,sptr,NULL,dptr,NULL,count,1,proc);
 	  else
             armci_die("in network_strided unknown opcode",op);
 	}
     }
     if(nb_handle!=NULL){
       if(op==GET)
-        ARMCI_NbGet(sptr,dptr,bytes,proc,(armci_hdl_t *)nb_handle);
+        PARMCI_NbGet(sptr,dptr,bytes,proc,(armci_hdl_t *)nb_handle);
       else if(op==PUT)
-        ARMCI_NbPut(sptr,dptr,bytes,proc,(armci_hdl_t *)nb_handle);
-      else if(ACC(op))
-        ARMCI_NbAccS(op,scale,sptr,NULL,dptr,NULL,count,1,proc,(armci_hdl_t *)nb_handle);
+        PARMCI_NbPut(sptr,dptr,bytes,proc,(armci_hdl_t *)nb_handle);
+      else if(ARMCI_ACC(op))
+        PARMCI_NbAccS(op,scale,sptr,NULL,dptr,NULL,count,1,proc,(armci_hdl_t *)nb_handle);
       else
         armci_die("in network_strided unknown opcode",op);
     }
@@ -898,7 +912,7 @@ void armci_network_server_deregister_memory(ARMCI_MEMHDL_T *mh)
 {
 }
 
-#ifdef XT3_
+#ifdef CRAY_XT_
 static int num_locks=0;
 static long **all_locks;
 #define ARMCI_PORTALS_MAX_LOCKS 16
@@ -1033,7 +1047,7 @@ void armci_portals_shmalloc_allocate_mem(int num_lks)
     if(!ptr_arr) armci_die("armci_shmalloc_get_offsets: malloc failed", 0);
     bzero((char*)ptr_arr,armci_nproc*sizeof(void*));
 
-    ARMCI_Malloc(ptr_arr,bytes);
+    PARMCI_Malloc(ptr_arr,bytes);
     
     return;
 }

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* This module contains functions for creating and destroying a simple
    dialog box.  
 */

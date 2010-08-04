@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
       subroutine f_matvecmul(a_mat,
      >        mult_vec,
      >        resultvec,

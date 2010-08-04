@@ -16,7 +16,9 @@
 #ifndef __bgml_h__
 #define __bgml_h__
 
-#include <stdint.h>
+#if HAVE_STDINT_H
+#   include <stdint.h>
+#endif
 
 #ifdef __cplusplus
 extern "C"

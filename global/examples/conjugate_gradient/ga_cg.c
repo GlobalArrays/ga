@@ -1,14 +1,34 @@
-#include <stdio.h>
-#include <math.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#if HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
+#include <mpi.h>
+
 #include "ga.h"
 #include "macdecls.h"
-#include <mpi.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include "finclude.h"
+
 #define VERIFY_RESULT 1
+
 int na,nz;
 int bvec,dvec,svec,dmvec,m_dvec,amat,xvec,axvec,rvec,qvec,ridx,cidx;
 int me, nproc;
@@ -26,9 +46,9 @@ extern void matvecmul(double *,int,double *,int,int *,int *);
 extern double *ga_vecptr;
 void conjugate_gradient(int nit,int dopreconditioning)
 {
-int i,one=1,zero=0,negone=-1;
+int i,zero=0;
 int lo,hi;
-double d_one=1.0,d_zero=0.0,d_negone=-1.0;
+double d_one=1.0,d_negone=-1.0;
 double delta0=0.0,deltaold=0.0,deltanew=0.0,alpha=0.0,negalpha,beta,dtransposeq;
 double *axvecptr,*qvecptr,*aptr,*dmvecptr,*rvecptr,*svecptr,*bvecptr;
 double time0;
@@ -52,7 +72,7 @@ int *mycp,*myrp;
        NGA_Access(dmvec,&lo,&hi,&dmvecptr,&zero);
        NGA_Access(svec,&lo,&hi,&svecptr,&zero);
        /* NGA_Distribution(dvec, 0, &lo, &hi);
-	  NGA_Access(dvec, &lo, &hi, &entiredvecptr, &zero); */
+      NGA_Access(dvec, &lo, &hi, &entiredvecptr, &zero); */
     }
     printf("\n%d:before matvecmul\n",me);fflush(stdout);
     /* compute Ax */
@@ -65,7 +85,7 @@ int *mycp,*myrp;
       f_computeminverser(dmvecptr,rvecptr,dvecptr,&myfirstrow,&mylastrow);
       NGA_Put(dvec,&lo,&hi,dvecptr,&hi);
       if (me == 0)
-	printf("Doing preconditioning!\n");
+    printf("Doing preconditioning!\n");
     }
     else{
       if(me==0){
@@ -93,13 +113,13 @@ int *mycp,*myrp;
        else{
          f_matvecmul(aptr,entiredvecptr,qvecptr,&zero,&myfirstrow,&mylastrow,myrp,mycp);
 
-	 sum = 0.0;
-	 for (j = 0; j < na; j++)
-	   if (entiredvecptr[j] != 0.0)
-	     sum += entiredvecptr[j];
+     sum = 0.0;
+     for (j = 0; j < na; j++)
+       if (entiredvecptr[j] != 0.0)
+         sum += entiredvecptr[j];
 
-	 /* if (me == 0)
-	    printf("me: %d, sum: %g\n", me, sum); */
+     /* if (me == 0)
+        printf("me: %d, sum: %g\n", me, sum); */
        }
 
        NGA_Put(dvec,&lo,&hi,dvecptr,&hi);
@@ -141,7 +161,7 @@ int *mycp,*myrp;
        if(isvectormirrored)
          GA_Copy(dvec,m_dvec);                     /*copy from distributed */
 
-       //if(me==0)printf("\n\t%d\t%0.4f\t%f",(i+1),beta,deltanew);
+       /* if(me==0)printf("\n\t%d\t%0.4f\t%f",(i+1),beta,deltanew); */
     }
     if(i < nit && me == 0)
         printf("\n Done with CG before reaching max iter %f",sqrt(deltanew/delta0));
@@ -161,8 +181,6 @@ int *mycp,*myrp;
 void initialize_arrays(int dpc)
 {
 double d_one=1.0;
-double d_ten=10.0;
-double d_zero=0.0;
 int i;
     GA_Zero(dvec);
     GA_Fill(xvec,&d_one);
@@ -183,8 +201,8 @@ static void create_entire_vecs()
 {
 extern int ARMCI_Malloc(void **, size_t);
 int i,lo,hi;
-    myptrarrx = (void **)malloc(sizeof(void)*nproc);
-    myptrarrd = (void **)malloc(sizeof(void)*nproc);
+    myptrarrx = (void **)malloc(sizeof(void*)*nproc);
+    myptrarrd = (void **)malloc(sizeof(void*)*nproc);
 
     i=ARMCI_Malloc(myptrarrx,na*sizeof(double));
     if(i!=0)GA_Error("malloc failed",0);
@@ -209,7 +227,6 @@ char **argv;
 int heap=200000, stack=200000;
 int dopreconditioning=1;
 double time0,time1;
-double d_one=1.0,d_zero=0.0,d_negone=-1.0;
 
     MPI_Init(&argc, &argv);                    /* initialize MPI */
     GA_Initialize();                           /* initialize GA */
@@ -260,8 +277,8 @@ double d_one=1.0,d_zero=0.0,d_negone=-1.0;
     conjugate_gradient(30000/*2*/,dopreconditioning);
     time1=MPI_Wtime();
 
-    //GA_Print(xvec);
-    //GA_Print(dvec);
+    /* GA_Print(xvec); */
+    /* GA_Print(dvec); */
     
     if(me==0)printf("\n%d:in %d iterations time to solution=%f-%f\n",me,niter,(time1-time0),time_get);
 

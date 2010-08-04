@@ -1,8 +1,14 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: ga_lock.c,v 1.6 2002-01-18 19:52:12 vinod Exp $ */
 #include "global.h"
 #include "globalp.h"
 #include "message.h"
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 
 #define MAX_LOCKS 32768
 #define SPINMAX 1000
@@ -27,7 +33,7 @@ save_t savelock[512];
 
 static waiting_list_t* blocked; /* stores info about locked (waiting) process */
 
-#define Error(str,code) ga_error(str, (Integer)code)
+#define Error(str,code) gai_error(str, (Integer)code)
 
 #if defined(NX) || defined(SP1) || defined(SP)
 #   define SERVER_LOCK 
@@ -53,7 +59,7 @@ Integer type=C_INT, nproc = ga_nnodes_(), indx;
 
         if(nproc == 1) return(TRUE);
 
-        if(!ga_create(&type, num, &two, "GA mutexes", &one,&two, &g_mutexes))
+        if(!gai_create(&type, num, &two, "GA mutexes", &one,&two, &g_mutexes))
                                                                 return(FALSE);
 
 #       if defined(SERVER_LOCK)

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* begin_generated_IBM_copyright_prolog                             */
 /*                                                                  */
 /* ---------------------------------------------------------------- */
@@ -12,7 +16,9 @@
  */
 
 #include "armcix_impl.h"
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 
 DCMF_Protocol_t __fence_rts_protocol;
 DCMF_Protocol_t __fence_ack_protocol;

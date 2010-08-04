@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -19,7 +22,6 @@ c vector boxes lack arithmetic precision
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-#include "tcgmsg.fh"
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM
 #if SMALL_TEST
@@ -28,7 +30,8 @@ c vector boxes lack arithmetic precision
       parameter (nmax = 2375, DIM = 2)
 #endif
       integer ndim, nprocs, type, length
-      integer g_a, g_b, g_c, g_d, g_e, g_f, g_h, g_i, g_j, inode, index
+      integer g_a, g_b, g_c, g_d, g_e, g_f, g_h, g_i, g_j, inode
+      MA_ACCESS_INDEX_TYPE index
       integer i, j, k, nb, dims(7)
       integer lo(7), hi(7), tlo(7), thi(7), t2lo(7), t2hi(7)
       integer block_list(10000), block_map(10000), nblock
@@ -42,12 +45,7 @@ c vector boxes lack arithmetic precision
 c
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Initialize GA
 c
@@ -1049,7 +1047,7 @@ c
       if (me.eq.0) then
         write(6,302)
       endif
-  302 format(' Finished tests')
+  302 format(' Finished tests: success')
       status = ga_destroy(g_a)
       status = ga_destroy(g_b)
       status = ga_destroy(g_c)
@@ -1060,11 +1058,7 @@ c
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
 c
       stop
       end

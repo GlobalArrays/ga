@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*************************************************************************\
  Purpose:   File global.nalg.c contains a set of linear algebra routines 
             that operate on n-dim global arrays in the SPMD mode. 
@@ -7,13 +11,15 @@
 \************************************************************************/
 
  
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 #include "message.h"
 #include "global.h"
 #include "globalp.h"
 #include "armci.h"
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
 #include "ga_vampir.h"
 #endif
 
@@ -25,7 +31,7 @@ static Integer one_arr[MAXDIM]={1,1,1,1,1,1,1};
 #define GET_ELEMS(ndim,lo,hi,ld,pelems){\
 int _i;\
       for(_i=0, *pelems = hi[ndim-1]-lo[ndim-1]+1; _i< ndim-1;_i++) {\
-         if(ld[_i] != (hi[_i]-lo[_i]+1)) ga_error("layout problem",_i);\
+         if(ld[_i] != (hi[_i]-lo[_i]+1)) gai_error("layout problem",_i);\
          *pelems *= hi[_i]-lo[_i]+1;\
       }\
 }
@@ -34,7 +40,7 @@ int _i;\
 int _i;\
       for(_i=0, *pelems = hi[ndim-1]-lo[ndim-1]+1; _i< ndim-1;_i++) {\
          if(ld[_i] < (hi[_i]-lo[_i]+1))\
-           ga_error("layout problem with ghosts",_i);\
+           gai_error("layout problem with ghosts",_i);\
          *pelems *= hi[_i]-lo[_i]+1;\
       }\
 }
@@ -48,7 +54,7 @@ void FATR ga_zero_(Integer *g_a)
   register Integer i;
   int local_sync_begin,local_sync_end;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(GA_ZERO,__FILE__,__LINE__);
 #endif
 
@@ -60,7 +66,7 @@ void FATR ga_zero_(Integer *g_a)
 
   me = ga_pgroup_nodeid_(&p_handle);
 
-  ga_check_handle(g_a, "ga_zero");
+  gai_check_handle(g_a, "ga_zero");
   GA_PUSH_NAME("ga_zero");
 
   num_blocks = ga_total_blocks_(g_a);
@@ -73,7 +79,7 @@ void FATR ga_zero_(Integer *g_a)
 
       if (ga_has_ghosts_(g_a)) {
         nga_zero_patch_(g_a,lo,hi);
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
         vampir_end(GA_ZERO,__FILE__,__LINE__);
 #endif
         return;
@@ -111,7 +117,7 @@ void FATR ga_zero_(Integer *g_a)
         lla = (long long*)ptr;
         for(i=0;i<elems;i++) lla[i]  = 0;
         break;                                 
-        default: ga_error(" wrong data type ",type);
+        default: gai_error(" wrong data type ",type);
       }
 
       /* release access to the data */
@@ -149,7 +155,7 @@ void FATR ga_zero_(Integer *g_a)
       lla = (long long*)ptr;
       for(i=0;i<elems;i++) lla[i]  = 0;
       break;                                 
-      default: ga_error(" wrong data type ",type);
+      default: gai_error(" wrong data type ",type);
     }
 
     /* release access to the data */
@@ -157,7 +163,7 @@ void FATR ga_zero_(Integer *g_a)
   }
   if(local_sync_end)ga_pgroup_sync_(&p_handle);
   GA_POP_NAME;
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(GA_ZERO,__FILE__,__LINE__);
 #endif
 }
@@ -176,16 +182,16 @@ void *ptr_a, *ptr_b;
 
    GA_PUSH_NAME("ga_copy");
 
-   if(*g_a == *g_b) ga_error("arrays have to be different ", 0L);
+   if(*g_a == *g_b) gai_error("arrays have to be different ", 0L);
 
    nga_inquire_internal_(g_a,  &type, &ndim, dims);
    nga_inquire_internal_(g_b,  &typeb, &ndimb, dimsb);
 
-   if(type != typeb) ga_error("types not the same", *g_b);
+   if(type != typeb) gai_error("types not the same", *g_b);
 
    if(!ga_compare_distr_(g_a,g_b))
 
-      nga_copy_patch("n",g_a, one_arr, dims, g_b, one_arr, dimsb);
+      ngai_copy_patch("n",g_a, one_arr, dims, g_b, one_arr, dimsb);
 
    else {
 
@@ -211,7 +217,7 @@ void *ptr_a, *ptr_b;
         }
      }
   
-     if(elems!= elemsb)ga_error("inconsistent number of elements",elems-elemsb);
+     if(elems!= elemsb)gai_error("inconsistent number of elements",elems-elemsb);
 
      if(elems>0){
         ARMCI_Copy(ptr_a, ptr_b, (int)elems*GAsizeofM(type));
@@ -240,7 +246,7 @@ Integer blocks[MAXDIM], block_dims[MAXDIM];
 void *ptr_a, *ptr_b;
 int local_sync_begin,local_sync_end,use_put;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
    vampir_begin(GA_COPY,__FILE__,__LINE__);
 #endif
    GA_PUSH_NAME("ga_copy");
@@ -261,7 +267,7 @@ int local_sync_begin,local_sync_end,use_put;
      use_put = 0;
    }
    /*if (a_grp != b_grp)
-     ga_error("Both arrays must be defined on same group",0L); */
+     gai_error("Both arrays must be defined on same group",0L); */
    if(local_sync_begin) {
      if (anproc <= bnproc) {
        ga_pgroup_sync_(&a_grp);
@@ -273,16 +279,16 @@ int local_sync_begin,local_sync_end,use_put;
      }
    }
 
-   if(*g_a == *g_b) ga_error("arrays have to be different ", 0L);
+   if(*g_a == *g_b) gai_error("arrays have to be different ", 0L);
 
    nga_inquire_internal_(g_a,  &type, &ndim, dims);
    nga_inquire_internal_(g_b,  &typeb, &ndimb, dimsb);
 
-   if(type != typeb) ga_error("types not the same", *g_b);
-   if(ndim != ndimb) ga_error("dimensions not the same", ndimb);
+   if(type != typeb) gai_error("types not the same", *g_b);
+   if(ndim != ndimb) gai_error("dimensions not the same", ndimb);
 
    for(i=0; i< ndim; i++)if(dims[i]!=dimsb[i]) 
-                          ga_error("dimensions not the same",i);
+                          gai_error("dimensions not the same",i);
 
    if ((ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) ||
        (!ga_is_mirrored_(g_a) && !ga_is_mirrored_(g_b))) {
@@ -428,7 +434,7 @@ int local_sync_begin,local_sync_end,use_put;
      }
    }
    GA_POP_NAME;
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
    vampir_end(GA_COPY,__FILE__,__LINE__);
 #endif
 }
@@ -439,18 +445,18 @@ int local_sync_begin,local_sync_end,use_put;
 \*/
 void gai_dot(int Type, Integer *g_a, Integer *g_b, void *value)
 {
-Integer  ndim, type, atype, me, elems=0, elemsb=0;
-register Integer i;
+Integer  ndim=0, type=0, atype=0, me=0, elems=0, elemsb=0;
+register Integer i=0;
 int isum=0;
 long lsum=0;
 long long llsum=0;
 DoubleComplex zsum ={0.,0.};
 SingleComplex csum ={0.,0.};
 float fsum=0.0;
-void *ptr_a, *ptr_b;
-int alen;
-Integer a_grp, b_grp;
-Integer num_blocks_a, num_blocks_b;
+void *ptr_a=NULL, *ptr_b=NULL;
+int alen=0;
+Integer a_grp=0, b_grp=0;
+Integer num_blocks_a=0, num_blocks_b=0;
 
 Integer andim, adims[MAXDIM];
 Integer bndim, bdims[MAXDIM];
@@ -461,7 +467,7 @@ Integer bndim, bdims[MAXDIM];
    a_grp = ga_get_pgroup_(g_a);
    b_grp = ga_get_pgroup_(g_b);
    if (a_grp != b_grp)
-     ga_error("Both arrays must be defined on same group",0L);
+     gai_error("Both arrays must be defined on same group",0L);
    me = ga_pgroup_nodeid_(&a_grp);
 
    /* Check to see if either GA is block cyclic distributed */
@@ -491,7 +497,7 @@ Integer bndim, bdims[MAXDIM];
    
    ga_pgroup_sync_(&a_grp);
    nga_inquire_internal_(g_a,  &type, &ndim, dims);
-   if(type != Type) ga_error("type not correct", *g_a);
+   if(type != Type) gai_error("type not correct", *g_a);
    nga_distribution_(g_a, &me, lo, hi);
    if(lo[0]>0){
       nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
@@ -507,10 +513,10 @@ Integer bndim, bdims[MAXDIM];
      ptr_b = ptr_a;
    }else {  
      nga_inquire_internal_(g_b,  &type, &ndim, dims);
-     if(type != Type) ga_error("type not correct", *g_b);
+     if(type != Type) gai_error("type not correct", *g_b);
      nga_distribution_(g_b, &me, lo, hi);
      if(lo[0]>0){
-	nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
+        nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
         if (ga_has_ghosts_(g_b)) {
           GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elemsb);
         } else {
@@ -519,7 +525,7 @@ Integer bndim, bdims[MAXDIM];
      }
    }
 
-   if(elems!= elemsb)ga_error("inconsistent number of elements",elems-elemsb); 
+   if(elems!= elemsb)gai_error("inconsistent number of elements",elems-elemsb); 
 
 
       /* compute "local" contribution to the dot product */
@@ -599,7 +605,7 @@ Integer bndim, bdims[MAXDIM];
            type = C_LONGLONG;
            alen = 1;
            break;               
-        default: ga_error(" wrong data type ",type);
+        default: gai_error(" wrong data type ",type);
       }
    
       /* release access to the data */
@@ -617,7 +623,7 @@ Integer bndim, bdims[MAXDIM];
       case C_LONGLONG: atype=ARMCI_LONG_LONG; break;
       case C_DCPL: atype=ARMCI_DOUBLE; break;
       case C_SCPL: atype=ARMCI_FLOAT; break;
-      default: ga_error("gai_dot: type not supported",type);
+      default: gai_error("gai_dot: type not supported",type);
     }
 
    if (ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) {
@@ -644,17 +650,18 @@ Integer bndim, bdims[MAXDIM];
 Integer FATR ga_idot_(g_a, g_b)
         Integer *g_a, *g_b;
 {
-Integer sum,ndim,type;
-#       ifdef EXT_INT 
-                type = C_LONG;
-#          ifdef EXT_INT64
-                type = C_LONGLONG;
-#          endif                
-#       else
-                type = C_INT;
-#       endif
+Integer sum;
 
-        gai_dot(type, g_a, g_b, &sum);
+#ifdef USE_VAMPIR
+        vampir_begin(GA_IDOT,__FILE__,__LINE__);
+#endif
+
+        gai_dot(ga_type_f2c(MT_F_INT), g_a, g_b, &sum);
+
+#ifdef USE_VAMPIR
+        vampir_end(GA_IDOT,__FILE__,__LINE__);
+#endif
+
         return sum;
 }
 
@@ -664,13 +671,13 @@ DoublePrecision FATR ga_ddot_(g_a, g_b)
 {
 DoublePrecision sum;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
         vampir_begin(GA_DDOT,__FILE__,__LINE__);
 #endif
 
-        gai_dot(C_DBL, g_a, g_b, &sum);
+        gai_dot(ga_type_f2c(MT_F_DBL), g_a, g_b, &sum);
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
         vampir_end(GA_DDOT,__FILE__,__LINE__);
 #endif
 
@@ -678,89 +685,53 @@ DoublePrecision sum;
 }
 
 
-#if defined(NO_REAL_32)
-DoublePrecision FATR ga_sdot_(g_a, g_b)
+Real FATR ga_sdot_(g_a, g_b)
         Integer *g_a, *g_b;
 {
-DoublePrecision sum;
-        gai_dot(C_DBL, g_a, g_b, &sum);
-        return sum;
-}            
-#else
-float FATR ga_sdot_(g_a, g_b)
-        Integer *g_a, *g_b;
-{
-float sum;
-        gai_dot(C_FLOAT, g_a, g_b, &sum);
-        return sum;
-}            
+Real sum;
+
+#ifdef USE_VAMPIR
+        vampir_begin(GA_SDOT,__FILE__,__LINE__);
 #endif
 
-/*\ DoubleComplex ga_zdot - C version
-\*/ 
-DoubleComplex ga_zdot(Integer *g_a, Integer *g_b)
-{
-DoubleComplex sum;
+        gai_dot(ga_type_f2c(MT_F_REAL), g_a, g_b, &sum);
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
+        vampir_end(GA_SDOT,__FILE__,__LINE__);
+#endif
+
+        return sum;
+}            
+
+
+void gai_zdot_(Integer *g_a, Integer *g_b, DoubleComplex *sum)
+{
+#ifdef USE_VAMPIR
         vampir_begin(GA_ZDOT,__FILE__,__LINE__);
 #endif
 
-        gai_dot(C_DCPL, g_a, g_b, &sum);
+        gai_dot(ga_type_f2c(MT_F_DCPL), g_a, g_b, sum);
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
         vampir_end(GA_ZDOT,__FILE__,__LINE__);
 #endif
-
-        return sum;
 }
 
-/*\ SingleComplex ga_cdot - C version
-\*/ 
-SingleComplex ga_cdot(Integer *g_a, Integer *g_b)
-{
-SingleComplex sum;
 
-#ifdef GA_USE_VAMPIR
+void gai_cdot_(Integer *g_a, Integer *g_b, SingleComplex *sum)
+{
+#ifdef USE_VAMPIR
         vampir_begin(GA_CDOT,__FILE__,__LINE__);
 #endif
 
-        gai_dot(C_SCPL, g_a, g_b, &sum);
+        gai_dot(ga_type_f2c(MT_F_SCPL), g_a, g_b, sum);
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
         vampir_end(GA_CDOT,__FILE__,__LINE__);
 #endif
-
-        return sum;
 }
 
 
-#if defined(CRAY) || defined(WIN32) ||defined(HITACHI)
-# define gai_zdot_ GAI_ZDOT
-#elif defined(F2C2_)
-# define gai_zdot_ gai_zdot__
-#endif
-void FATR gai_zdot_(g_a, g_b, retval)
-        Integer *g_a, *g_b;
-        DoubleComplex *retval;  
-{
-     gai_dot(C_DCPL, g_a, g_b, retval);
-}
-
-#if defined(CRAY) || defined(WIN32) ||defined(HITACHI)
-# define gai_cdot_ GAI_CDOT
-#elif defined(F2C2_)
-# define gai_cdot_ gai_cdot__
-#endif
-void FATR gai_cdot_(g_a, g_b, retval)
-        Integer *g_a, *g_b;
-        SingleComplex *retval;  
-{
-     gai_dot(C_SCPL, g_a, g_b, retval);
-}
-
-
- 
 void FATR ga_scale_(Integer *g_a, void* alpha)
 {
   Integer ndim, type, me, elems, grp_id;
@@ -769,7 +740,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
   void *ptr;
   int local_sync_begin,local_sync_end;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_begin(GA_SCALE,__FILE__,__LINE__);
 #endif
 
@@ -780,7 +751,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
 
   me = ga_pgroup_nodeid_(&grp_id);
 
-  ga_check_handle(g_a, "ga_scale");
+  gai_check_handle(g_a, "ga_scale");
   GA_PUSH_NAME("ga_scale");
   num_blocks = ga_total_blocks_(g_a);
 
@@ -789,7 +760,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
     nga_distribution_(g_a, &me, lo, hi);
     if (ga_has_ghosts_(g_a)) {
       nga_scale_patch_(g_a, lo, hi, alpha);
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
       vampir_end(GA_SCALE,__FILE__,__LINE__);
 #endif
       return;
@@ -821,23 +792,23 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
         for(i=0;i<elems;i++) lla[i]  *= *(long long*)alpha;
         break;
         case C_DCPL:
-           ca = (DoubleComplex*)ptr;
-           scale= *(DoubleComplex*)alpha;
-           for(i=0;i<elems;i++){
-               DoubleComplex val = ca[i]; 
-               ca[i].real = scale.real*val.real  - val.imag * scale.imag;
-               ca[i].imag = scale.imag*val.real  + val.imag * scale.real;
-           }
-           break;
+        ca = (DoubleComplex*)ptr;
+        scale= *(DoubleComplex*)alpha;
+        for(i=0;i<elems;i++){
+          DoubleComplex val = ca[i]; 
+          ca[i].real = scale.real*val.real  - val.imag * scale.imag;
+          ca[i].imag = scale.imag*val.real  + val.imag * scale.real;
+        }
+        break;
         case C_SCPL:
-           cfa = (SingleComplex*)ptr;
-           cfscale= *(SingleComplex*)alpha;
-           for(i=0;i<elems;i++){
-               SingleComplex val = cfa[i]; 
-               cfa[i].real = cfscale.real*val.real  - val.imag * cfscale.imag;
-               cfa[i].imag = cfscale.imag*val.real  + val.imag * cfscale.real;
-           }
-           break;
+        cfa = (SingleComplex*)ptr;
+        cfscale= *(SingleComplex*)alpha;
+        for(i=0;i<elems;i++){
+          SingleComplex val = cfa[i]; 
+          cfa[i].real = cfscale.real*val.real  - val.imag * cfscale.imag;
+          cfa[i].imag = cfscale.imag*val.real  + val.imag * cfscale.real;
+        }
+        break;
         case C_DBL:
         da = (double*)ptr;
         for(i=0;i<elems;i++) da[i] *= *(double*)alpha;
@@ -846,7 +817,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
         fa = (float*)ptr;
         for(i=0;i<elems;i++) fa[i]  *= *(float*)alpha;
         break;       
-        default: ga_error(" wrong data type ",type);
+        default: gai_error(" wrong data type ",type);
       }
 
       /* release access to the data */
@@ -900,19 +871,48 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
       fa = (float*)ptr;
       for(i=0;i<elems;i++) fa[i]  *= *(float*)alpha;
       break;       
-      default: ga_error(" wrong data type ",type);
+      default: gai_error(" wrong data type ",type);
     }
     /* release access to the data */
     nga_release_update_block_segment_(g_a, &me);
   }
   GA_POP_NAME;
   if(local_sync_end)ga_pgroup_sync_(&grp_id); 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
   vampir_end(GA_SCALE,__FILE__,__LINE__);
 #endif
 }
 
+/* (old?) Fortran interface to ga_scale_ */
 
+void FATR ga_cscal_(Integer *g_a, SingleComplex *alpha)
+{
+    ga_scale_(g_a, alpha);
+}
+
+
+void FATR ga_dscal_(Integer *g_a, DoublePrecision *alpha)
+{
+    ga_scale_(g_a, alpha);
+}
+
+
+void FATR ga_iscal_(Integer *g_a, Integer *alpha)
+{
+    ga_scale_(g_a, alpha);
+}
+
+
+void FATR ga_sscal_(Integer *g_a, Real *alpha)
+{
+    ga_scale_(g_a, alpha);
+}
+
+
+void FATR ga_zscal_(Integer *g_a, DoubleComplex *alpha)
+{
+    ga_scale_(g_a, alpha);
+}
 
 
 void FATR ga_add_(void *alpha, Integer* g_a, 
@@ -928,7 +928,7 @@ int local_sync_begin,local_sync_end;
  Integer bndim, bdims[MAXDIM];
  Integer cndim, cdims[MAXDIM];
  
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
    vampir_begin(GA_ADD,__FILE__,__LINE__);
 #endif
 
@@ -941,7 +941,7 @@ int local_sync_begin,local_sync_end;
    b_grp = ga_get_pgroup_(g_b);
    c_grp = ga_get_pgroup_(g_c);
    if (a_grp != b_grp || b_grp != c_grp)
-     ga_error("All three arrays must be on same group for ga_add",0L);
+     gai_error("All three arrays must be on same group for ga_add",0L);
 
    me = ga_pgroup_nodeid_(&a_grp);
    if((ga_compare_distr_(g_a,g_b) == FALSE) ||
@@ -958,7 +958,7 @@ int local_sync_begin,local_sync_end;
                       g_c, one_arr, cdims);
        
        GA_POP_NAME;
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
        vampir_end(GA_ADD,__FILE__,__LINE__);
 #endif
        return;
@@ -977,7 +977,7 @@ int local_sync_begin,local_sync_end;
      elemsa = elems;
    }else { 
      nga_inquire_internal_(g_a,  &type, &ndim, dims);
-     if(type != typeC) ga_error("types not consistent", *g_a);
+     if(type != typeC) gai_error("types not consistent", *g_a);
      nga_distribution_(g_a, &me, lo, hi);
      if (  lo[0]>0 ){
        nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
@@ -990,7 +990,7 @@ int local_sync_begin,local_sync_end;
      elemsb = elems;
    }else {
      nga_inquire_internal_(g_b,  &type, &ndim, dims);
-     if(type != typeC) ga_error("types not consistent", *g_b);
+     if(type != typeC) gai_error("types not consistent", *g_b);
      nga_distribution_(g_b, &me, lo, hi);
      if (  lo[0]>0 ){
        nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
@@ -998,8 +998,8 @@ int local_sync_begin,local_sync_end;
      }
    }
 
-   if(elems!= elemsb)ga_error("inconsistent number of elements a",elems-elemsb);
-   if(elems!= elemsa)ga_error("inconsistent number of elements b",elems-elemsa);
+   if(elems!= elemsb)gai_error("inconsistent number of elements a",elems-elemsb);
+   if(elems!= elemsa)gai_error("inconsistent number of elements b",elems-elemsa);
 
    if (  lo[0]>0 ){
 
@@ -1086,12 +1086,46 @@ int local_sync_begin,local_sync_end;
 
    GA_POP_NAME;
    if(local_sync_end)ga_pgroup_sync_(&a_grp);
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
    vampir_end(GA_ADD,__FILE__,__LINE__);
 #endif
 }
 
+/* (old?) Fortran interface to ga_add */
 
+void FATR ga_cadd_(SingleComplex *alpha, Integer *g_a, SingleComplex *beta,
+        Integer *g_b, Integer *g_c)
+{
+    ga_add_(alpha, g_a, beta, g_b, g_c);
+}
+
+
+void FATR ga_dadd_(DoublePrecision *alpha, Integer *g_a, DoublePrecision *beta,
+        Integer *g_b, Integer *g_c)
+{
+    ga_add_(alpha, g_a, beta, g_b, g_c);
+}
+
+
+void FATR ga_iadd_(Integer *alpha, Integer *g_a, Integer *beta,
+        Integer *g_b, Integer *g_c)
+{
+    ga_add_(alpha, g_a, beta, g_b, g_c);
+}
+
+
+void FATR ga_sadd_(Real *alpha, Integer *g_a, Real *beta,
+        Integer *g_b, Integer *g_c)
+{
+    ga_add_(alpha, g_a, beta, g_b, g_c);
+}
+
+
+void FATR ga_zadd_(DoubleComplex *alpha, Integer *g_a, DoubleComplex *beta,
+        Integer *g_b, Integer *g_c)
+{
+    ga_add_(alpha, g_a, beta, g_b, g_c);
+}
 
 
 static 
@@ -1128,7 +1162,7 @@ int i;
             for(i = 0; i< n; i++, ptrb+= stride)
                *(long long*)ptrb= ((long long*)ptra)[i];
             break;                                 
-       default: ga_error("bad type:",type);
+       default: gai_error("bad type:",type);
     }
 }
 
@@ -1143,7 +1177,7 @@ int local_sync_begin,local_sync_end;
 Integer num_blocks_a;
 char *ptr_tmp, *ptr_a;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_begin(GA_TRANSPOSE,__FILE__,__LINE__);
 #endif
 
@@ -1153,13 +1187,13 @@ char *ptr_tmp, *ptr_a;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)ga_sync_();
 
-    if(*g_a == *g_b) ga_error("arrays have to be different ", 0L);
+    if(*g_a == *g_b) gai_error("arrays have to be different ", 0L);
 
     nga_inquire_internal_(g_a, &atype, &andim, adims);
     nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-    if(bndim != 2 || andim != 2) ga_error("dimension must be 2",0);
-    if(atype != btype ) ga_error("array type mismatch ", 0L);
+    if(bndim != 2 || andim != 2) gai_error("dimension must be 2",0);
+    if(atype != btype ) gai_error("array type mismatch ", 0L);
 
     num_blocks_a = ga_total_blocks_(g_a);
 
@@ -1196,8 +1230,7 @@ char *ptr_tmp, *ptr_a;
         ga_free(ptr_tmp);
       }
     } else {
-      Integer idx, lod[MAXDIM], hid[MAXDIM];
-      Integer offset, jtot, last;
+      Integer idx;
       Integer blocks[MAXDIM], block_dims[MAXDIM];
       Integer nelem, lob[2], hib[2], nrow, ncol;
       int i, size=GAsizeofM(atype);
@@ -1230,7 +1263,7 @@ char *ptr_tmp, *ptr_a;
         }
       } else {
         /* Uses scalapack block-cyclic data distribution */
-        Integer lod[MAXDIM], hid[MAXDIM], chk;
+        Integer chk;
         Integer proc_index[MAXDIM], index[MAXDIM];
         Integer topology[MAXDIM], ichk;
 
@@ -1289,7 +1322,7 @@ char *ptr_tmp, *ptr_a;
     if(local_sync_end)ga_sync_();
     GA_POP_NAME;
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_end(GA_TRANSPOSE,__FILE__,__LINE__);
 #endif
 

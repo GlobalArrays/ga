@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
       program scf
 C$Id: ft-scf.F,v 1.1 2005-07-07 17:41:07 vinod Exp $
       implicit double precision (a-h, o-z)

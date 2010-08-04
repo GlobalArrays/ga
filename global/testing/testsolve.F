@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c $Id: testsolve.F,v 1.11 2006/03/20 20:02:29 manoj Exp $
       program test
       implicit none
@@ -8,12 +11,7 @@ c $Id: testsolve.F,v 1.11 2006/03/20 20:02:29 manoj Exp $
 c
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c     Intitialize the GA package
 c
@@ -34,11 +32,7 @@ c
 c
       call ga_terminate()
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
       end
 
 
@@ -69,11 +63,11 @@ c
          do i = 1, n
             a(i,j) = 1d0 * (i+j)  
             b(i,j) = DSIN(1d0* (i+j))   
-	    if(i.eq.j) then
+        if(i.eq.j) then
                b(i,j) = 2d0 *n
                a(i,j) = i
             endif
-	    if(i.le.j)then
+        if(i.le.j)then
                c(i,j) = a(i,j)
             else
                c(i,j) = 0d0
@@ -178,13 +172,13 @@ c***  Fill in arrays A & B
       if (me .eq. 0) then
          print *,  ' filling in A and B  '
          call ffflush(6)
-	 call ga_put(g_e, 1,n, 1,1, b(1,1),n)
-	 call ga_put(g_f, 1,n, 1,1, b(1,1),n)
+         call ga_put(g_e, 1,n, 1,1, b(1,1),n)
+         call ga_put(g_f, 1,n, 1,1, b(1,1),n)
       endif
       do j = 1+me, n, nproc 
-	    call ga_put(g_a, 1,n, j,j, a(1,j),n)
-	    call ga_put(g_b, 1,n, j,j, b(1,j),n)
-	    call ga_put(g_c, 1,n, j,j, b(1,j),n)
+        call ga_put(g_a, 1,n, j,j, a(1,j),n)
+        call ga_put(g_b, 1,n, j,j, b(1,j),n)
+        call ga_put(g_c, 1,n, j,j, b(1,j),n)
       enddo
       call ga_sync()
 c
@@ -196,7 +190,7 @@ c
         print *,' '
         call ffflush(6)
       endif
-#ifndef SCALAPACK
+#ifndef HAVE_SCALAPACK
       call ga_lu_solve_seq('n', g_a, g_b)
 #else
 #if BLOCK_CYCLIC
@@ -222,7 +216,7 @@ c      call print_rblock(g_b)
       sum = ga_ddot(g_c,g_c)
 #endif
       if (me .eq. 0) then
- 	print *,' '
+        print *,' '
         print *, ' dsqrt(sum) = ', dsqrt(sum)
         print *, ' n = ', n
         print *, ' norm = ', dsqrt(sum)/n
@@ -231,7 +225,7 @@ c      call print_rblock(g_b)
         else
            call ga_error(' test failed ',3)
         endif
- 	print *,' '
+        print *,' '
         call ffflush(6)
       endif
 c
@@ -242,7 +236,7 @@ c
         call ffflush(6)
       endif
 c
-#ifndef SCALAPACK
+#ifndef HAVE_SCALAPACK
       call ga_lu_solve_seq('n', g_a, g_e)
 #else
 #if BLOCK_CYCLIC

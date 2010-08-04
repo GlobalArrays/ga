@@ -1,37 +1,41 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ga++.h>
 
 /* utilities for GA test programs */
 #include "testutil.h"
-#include <math.h>
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
 
 #define N 256          /* first dimension  */
 #define BASE 0
 #define PERMUTE_ 
 
 #define GA_DATA_TYPE MT_C_FLOAT
-#define ABS(a) (((a) >= 0) ? (a) : (-(a)))
+#define GA_ABS(a) (((a) >= 0) ? (a) : (-(a)))
 #define TOLERANCE 0.000001
 
-#ifdef MPI
+#ifdef MPIPP
 #define CLOCK_ MPI_Wtime
 #else
-#define CLOCK_ TCGTIME_
+#define CLOCK_ tcg_time
 #endif
 
 DoublePrecision gTime=0.0, gStart;
 
 void
 test(int data_type, int ndim) {
-  int me=GA_Nodeid(), nproc=GA_Nnodes();
+  int me=GA_Nodeid();
   GA::GlobalArray *g_a, *g_b, *g_c, *g_A, *g_B, *g_C;
-  int i;
   int dims[GA_MAX_DIM]={N,N,2,2,2,1,1};
   int lo[GA_MAX_DIM]={1,1,1,1,1,0,0};
   int hi[GA_MAX_DIM]={N-2,N-2,1,1,1,0,0};
   int clo[2], chi[2], m, n, k;
-  int ld[GA_MAX_DIM]={N-2,1,1,1,0,0};
   double value1_dbl = 2.0, value2_dbl = 2.0;
   double alpha_dbl = 1.0, beta_dbl = 0.0;
   float value1_flt = 2.0, value2_flt = 2.0;
@@ -172,7 +176,7 @@ int
 main(int argc, char **argv) {
 
 Integer heap=9000000, stack=9000000;
-int me, nproc;
+int me;
 DoublePrecision time;
 
  GA::Initialize(argc, argv, heap, stack, GA_DATA_TYPE, 0);

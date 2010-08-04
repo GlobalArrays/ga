@@ -1,9 +1,13 @@
-/**********************************************************************\
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+/** @file
+ **********************************************************************\
  ELementary I/O (ELIO) disk operations for parallel I/O libraries   
  Authors: Jarek Nieplocha (PNNL) and Jace Mogill (ANL)
-\**********************************************************************/
-
-/* DISCLAIMER
+ *
+ * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
  * agency of the United States Government.  Neither the United States
@@ -13,7 +17,6 @@
  * COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT,
  * SOFTWARE, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT
  * INFRINGE PRIVATELY OWNED RIGHTS.
- *
  *
  * ACKNOWLEDGMENT
  *
@@ -25,17 +28,11 @@
  * publicly by or for the US Government, including the right to
  * distribute to other US Government contractors.
  */
-
 #ifdef USE_LUSTRE
 #include <lustre/lustre_user.h> // for O_LOV_DELAY_CREATE, LL_IOC_LOV_SETSTRIPE
 #include <linux/lustre_idl.h> // for struct lov_mds_md, LOV_MAGIC
 #include <sys/ioctl.h> // for ioctl
 #endif
-
-#if defined(CRAY_T3E)
-#define FFIO 1
-#endif
-
 
 #include "eliop.h"
 
@@ -145,7 +142,7 @@ int                   _elio_Errors_Fatal=0; /* sets mode of handling errors */
        stat    = 0; 
 
 #ifndef MIN 
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#define PARIO_MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #endif
 
 /* 
@@ -171,7 +168,7 @@ static Off_t elio_max_file_size(Fd_t fd)
 #ifdef LARGE_FILES
   return ABSURDLY_LARGE;
 #else
-  return (2047.0*1024.0*1024.0);		/* 2 GB - 1 MB */  
+  return (2047.0*1024.0*1024.0);        /* 2 GB - 1 MB */  
 #endif
 }
 
@@ -427,9 +424,9 @@ int elio_truncate(Fd_t fd, Off_t dlength)
     }
     (void) SEEK(fd->fd, 0L, SEEK_SET);
     if (ftruncate(fd->fd, length))
-	return TRUNFAIL;
+    return TRUNFAIL;
     else {
-	return ELIO_OK;
+    return ELIO_OK;
     }
 #ifdef PABLO
     PABLO_end(pablo_code);
@@ -763,13 +760,13 @@ int elio_probe(io_request_t *req_id, int* status)
           while(aio_req[aio_i] != *req_id && aio_i < MAX_AIO_REQ) aio_i++;
           if(aio_i >= MAX_AIO_REQ) ELIO_ERROR(HANDFAIL, aio_i);
 
-	  *req_id = ELIO_DONE; 
-	  *status = ELIO_DONE;
-	  aio_req[aio_i] = NULL_AIO;
-	  break;
+      *req_id = ELIO_DONE; 
+      *status = ELIO_DONE;
+      aio_req[aio_i] = NULL_AIO;
+      break;
       case INPROGRESS:
-	  *status = ELIO_PENDING; 
-	  break;
+      *status = ELIO_PENDING; 
+      break;
       default:
           return PROBFAIL;
       }
@@ -908,7 +905,7 @@ Fd_t  elio_open(const char* fname, int type, int mode)
 
       /* stripe is set so we only select secondary partitions with cbits */
       if(mode == ELIO_SHARED){
-         cbits = ~((~0L)<<MIN(32,sparts)); /* use all secondary partitions */
+         cbits = ~((~0L)<<PARIO_MIN(32,sparts)); /* use all secondary partitions */
          cblocks = 100;
       }else{
          cbits = 1 << (_MPP_MY_PE%sparts);  /* round robin over s part */
@@ -1112,10 +1109,10 @@ int elio_delete(const char* filename)
     {
       int extent;
       for (extent=1; extent<MAX_EXTENT; extent++) {
-	char fname[ELIO_FILENAME_MAX];
-	sprintf(fname,"%sx%3.3d",filename,extent);
-	/*printf("Deleting extent %d with name '%s'\n",extent,fname);*/
-	if (unlink(fname)) break;
+    char fname[ELIO_FILENAME_MAX];
+    sprintf(fname,"%sx%3.3d",filename,extent);
+    /*printf("Deleting extent %d with name '%s'\n",extent,fname);*/
+    if (unlink(fname)) break;
       }
     }
     
@@ -1137,7 +1134,7 @@ void elio_init(void)
 #     if defined(ASYNC)
            int i;
            for(i=0; i < MAX_AIO_REQ; i++)
-	     aio_req[i] = NULL_AIO;
+         aio_req[i] = NULL_AIO;
 #     endif
       first_elio_init = 0;
   }

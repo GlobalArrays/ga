@@ -1,9 +1,9 @@
+#if HAVE_CONFIG_H 
+#   include "config.fh"
+#endif
 c $Id: test.F,v 1.64.2.11 2007-04-06 22:37:35 d3g293 Exp $
 c vector boxes lack arithmetic precision 
-#ifdef CRAY_YMP
-# define THRESH 1d-10
-# define THRESHF 1e-5
-#elif defined(FUJITSU)
+#if defined(FUJITSU)
 # define THRESH 1d-12
 # define THRESHF 1e-5
 #else
@@ -17,9 +17,14 @@ c vector boxes lack arithmetic precision
 c#define NEW_API
 c#define MIRROR
 #define GA3
-c#define NGA_GATSCAT
+#define NGA_GATSCAT
 c#define BLOCK_CYCLIC
 c#define USE_SCALAPACK_DISTR
+c#define USE_RESTRICTED
+
+#ifdef USE_RESTRICTED
+#  define NEW_API
+#endif
 
 #define MEM_INC 1000
 
@@ -42,12 +47,7 @@ c#define USE_SCALAPACK_DISTR
 c     
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Initialize GA
 c
@@ -62,6 +62,9 @@ c     we can also use GA_set_memory_limit BEFORE first ga_create call
 c
       ma_heap = heap/nproc + fudge 
       ma_heap = 2*ma_heap
+#ifdef USE_RESTRICTED
+      ma_heap = 2*ma_heap
+#endif
       call GA_set_memory_limit(util_mdtob(ma_heap))
 c
       if(ga_nodeid().eq.0)then
@@ -125,6 +128,7 @@ c
       endif
 
       call check_dbl()
+#if 1
 c
 c***  Check support for single precision complex arrays
 c
@@ -184,6 +188,7 @@ c***  Check if memory limits are enforced
 c
       call check_mem(util_mdtob(ma_heap*ga_nnodes()))
 c
+#endif
       if(me.eq.0) call ga_print_stats()
       if(me.eq.0) print *,' ' 
       if(me.eq.0) print *,'All tests successful ' 
@@ -195,11 +200,7 @@ c
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
 c
       end
 
@@ -239,11 +240,15 @@ c
       double precision nwords
       logical found
       integer lprocs,inode,iproc,nnodes,lproc
+#ifdef USE_RESTRICTED
+      integer num_rstrctd
+      integer rstrctd_list(maxproc/2)
+#endif
 #ifdef BLOCK_CYCLIC
       integer block_size(2), proc_grid(2)
 #endif
       intrinsic int
-      iran(i) = int(util_drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -252,6 +257,13 @@ c
       nnodes = ga_cluster_nnodes()
       iproc = mod(me,lprocs)
       nloop = Min(maxloop,n)
+#ifdef USE_RESTRICTED
+      num_rstrctd = nproc/2
+      if (num_rstrctd.eq.0) num_rstrctd = 1
+      do i = 1, num_rstrctd
+        rstrctd_list(i) = (num_rstrctd/2) + i-1
+      end do
+#endif
 #ifdef BLOCK_CYCLIC
       block_size(1) = 32
       block_size(2) = 32
@@ -291,6 +303,9 @@ c     call setdbg(1)
       dims(2) = n
       call ga_set_data(g_a,ndim,dims,MT_DBL)
       call ga_set_array_name(g_a,'a')
+#ifdef USE_RESTRICTED
+      call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
+#endif
 #ifdef BLOCK_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
@@ -434,7 +449,7 @@ c
 c
       nwords = 0
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -484,6 +499,7 @@ c
 c
 c     Each node accumulates into disjoint sections of the array
 c
+#if 1
       if (me .eq. 0) then
          write(6,9) 
  9       format('> Checking accumulate ... ')
@@ -491,10 +507,10 @@ c
       endif
       call ga_sync()
 c     
-      crap = util_drand(12345)       ! Same seed for each process
+      crap = drand(12345)       ! Same seed for each process
       do j = 1, n
          do i = 1, n
-c           b(i,j) = util_drand(0)
+c           b(i,j) = drand(0)
             b(i,j) = i+j 
          enddo
       enddo
@@ -503,7 +519,7 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
-c           x = util_drand(0)
+c           x = drand(0)
             x = 10.
             ilo = i
             ihi = min(i+inc-1, n)
@@ -609,6 +625,7 @@ c
            write(6,*)
          endif
       endif
+#endif
 c
 c     Check the ga_add function
 c
@@ -619,10 +636,10 @@ c
       endif
 c
 c
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       do j = 1, n
          do i = 1, n
-            b(i,j) = util_drand(0)
+            b(i,j) = drand(0)
             a(i,j) = 0.1d0*a(i,j) + 0.9d0*b(i,j)
          enddo
       enddo
@@ -657,11 +674,11 @@ c
  19      format('> Checking ddot ...')
          call ffflush(6)
       endif
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       sum1 = 0.0d0
       do j = 1, n
          do i = 1, n
-            b(i,j) = util_drand(0)
+            b(i,j) = drand(0)
             sum1 = sum1 + a(i,j)*b(i,j)
          enddo
       enddo
@@ -743,7 +760,7 @@ c
       endif
       call ga_sync()
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do j = 1, 10 
        call ga_sync()
 #ifndef MIRROR
@@ -874,7 +891,7 @@ c     scatter-acc available in GA ver. 3.0
          write(6,*)
       endif
 c
-      crap = util_drand(1234)
+      crap = drand(1234)
       call ga_zero(g_a)
 c
       do j = 1, n
@@ -1156,8 +1173,12 @@ c
       double precision nwords
       complex   x, sum1, sum2, factor
       integer lprocs, inode, iproc, lproc
+#ifdef USE_RESTRICTED
+      integer num_rstrctd
+      integer rstrctd_list(maxproc/2)
+#endif
       intrinsic int
-      iran(i) = int(util_drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 c
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -1166,6 +1187,13 @@ c
       nnodes = ga_cluster_nnodes()
       iproc = mod(me,lprocs)
       nloop = Min(maxloop,n)
+#ifdef USE_RESTRICTED
+      num_rstrctd = nproc/2
+      if (num_rstrctd.eq.0) num_rstrctd = 1
+      do i = 1, num_rstrctd
+        rstrctd_list(i) = (num_rstrctd/2) + i-1
+      end do
+#endif
 c
 c     a() is a local copy of what the global array should start as
 c
@@ -1193,6 +1221,9 @@ c     call setdbg(1)
       g_a = ga_create_handle()
       call ga_set_data(g_a,ndim,dims,MT_SCPL)
       call ga_set_array_name(g_a,'a')
+#ifdef USE_RESTRICTED
+      call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
+#endif
 #  ifdef MIRROR
       p_mirror = ga_pgroup_get_mirror()
       call ga_set_pgroup(g_a,p_mirror)
@@ -1332,7 +1363,7 @@ c
 c
       nwords = 0
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -1385,10 +1416,10 @@ c
       endif
       call ga_sync()
 c
-      crap = util_drand(12345)       ! Same seed for each process
+      crap = drand(12345)       ! Same seed for each process
       do j = 1, n
          do i = 1, n
-            b(i,j) = cmplx(util_drand(0),util_drand(1))
+            b(i,j) = cmplx(drand(0),drand(1))
             b(i,j) = cmplx(real(i),real(j))
          enddo
       enddo
@@ -1397,7 +1428,7 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
-c           x = cmplx(util_drand(0),0.333d0)
+c           x = cmplx(drand(0),0.333d0)
 c           x = cmplx(0.333d0,0)
 *           x = cmplx(0d0,0d0)
             x = 0 
@@ -1538,7 +1569,7 @@ c
       endif
       call ga_sync()
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do j = 1, 10
        call ga_sync()
 #ifndef MIRROR
@@ -1619,10 +1650,10 @@ c
          call ffflush(6)
       endif
       call ga_get(g_a, 1, n, 1, n, a, n)
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       do j = 1, n
          do i = 1, n
-            b(i,j) = cmplx(util_drand(0), util_drand(1))
+            b(i,j) = cmplx(drand(0), drand(1))
             a(i,j) = (0.1d0,-.1d0)*a(i,j) + (.9d0,-.9d0)*b(i,j)
          enddo
       enddo
@@ -1657,11 +1688,11 @@ c
  19      format(/'> Checking cdot ...')
          call ffflush(6)
       endif
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       sum1 = (0.0d0,0.d0)
       do j = 1, n
          do i = 1, n
-            b(i,j) = cmplx(util_drand(0), util_drand(1))
+            b(i,j) = cmplx(drand(0), drand(1))
             sum1 = sum1 + a(i,j)*b(i,j)
          enddo
       enddo
@@ -1724,11 +1755,15 @@ c
       double precision nwords
       double complex   x, sum1, sum2, factor
       integer lprocs, inode, iproc, lproc
+#ifdef USE_RESTRICTED
+      integer num_rstrctd
+      integer rstrctd_list(maxproc/2)
+#endif
 #ifdef BLOCK_CYCLIC
       integer block_size(2), proc_grid(2)
 #endif
       intrinsic int
-      iran(i) = int(util_drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 c
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -1737,6 +1772,13 @@ c
       nnodes = ga_cluster_nnodes()
       iproc = mod(me,lprocs)
       nloop = Min(maxloop,n)
+#ifdef USE_RESTRICTED
+      num_rstrctd = nproc/2
+      if (num_rstrctd.eq.0) num_rstrctd = 1
+      do i = 1, num_rstrctd
+        rstrctd_list(i) = (num_rstrctd/2) + i-1
+      end do
+#endif
 #ifdef BLOCK_CYCLIC
       block_size(1) = 32
       block_size(2) = 32
@@ -1774,6 +1816,9 @@ c     call setdbg(1)
       g_a = ga_create_handle()
       call ga_set_data(g_a,ndim,dims,MT_DCPL)
       call ga_set_array_name(g_a,'a')
+#ifdef USE_RESTRICTED
+      call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
+#endif
 #ifdef BLOCK_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
@@ -1928,7 +1973,7 @@ c
 c
       nwords = 0
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -1982,10 +2027,10 @@ c
       endif
       call ga_sync()
 c
-      crap = util_drand(12345)       ! Same seed for each process
+      crap = drand(12345)       ! Same seed for each process
       do j = 1, n
          do i = 1, n
-            b(i,j) = cmplx(util_drand(0),util_drand(1))
+            b(i,j) = cmplx(drand(0),drand(1))
             b(i,j) = cmplx(dble(i),dble(j))
          enddo
       enddo
@@ -1994,7 +2039,7 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
-c           x = cmplx(util_drand(0),0.333d0)
+c           x = cmplx(drand(0),0.333d0)
 c           x = cmplx(0.333d0,0)
 *           x = cmplx(0d0,0d0)
             x = 0 
@@ -2135,7 +2180,7 @@ c
       endif
       call ga_sync()
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do j = 1, 10
        call ga_sync()
 #ifndef MIRROR
@@ -2216,10 +2261,10 @@ c
          call ffflush(6)
       endif
       call ga_get(g_a, 1, n, 1, n, a, n)
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       do j = 1, n
          do i = 1, n
-            b(i,j) = cmplx(util_drand(0), util_drand(1))
+            b(i,j) = cmplx(drand(0), drand(1))
             a(i,j) = (0.1d0,-.1d0)*a(i,j) + (.9d0,-.9d0)*b(i,j)
          enddo
       enddo
@@ -2254,11 +2299,11 @@ c
  19      format('> Checking zdot ...')
          call ffflush(6)
       endif
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       sum1 = (0.0d0,0.d0)
       do j = 1, n
          do i = 1, n
-            b(i,j) = cmplx(util_drand(0), util_drand(1))
+            b(i,j) = cmplx(drand(0), drand(1))
             sum1 = sum1 + a(i,j)*b(i,j)
          enddo
       enddo
@@ -2314,6 +2359,10 @@ c
       parameter (maxproc = 4096)
       double precision crap, sum1, real
       integer buf
+#ifdef USE_RESTRICTED
+      integer num_rstrctd
+      integer rstrctd_list(maxproc/2)
+#endif
 #ifdef BLOCK_CYCLIC
       integer block_size(2), proc_grid(2)
       integer map(4,maxproc), block_list(maxproc), found, np,k
@@ -2322,7 +2371,7 @@ c
       integer map(5,maxproc), found, np,k
 #endif
       intrinsic int
-      iran(i) = int(util_drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -2330,6 +2379,13 @@ c
       lprocs = ga_cluster_nprocs(inode)
       nnodes = ga_cluster_nnodes()
       iproc = mod(me,lprocs)
+#ifdef USE_RESTRICTED
+      num_rstrctd = nproc/2
+      if (num_rstrctd.eq.0) num_rstrctd = 1
+      do i = 1, num_rstrctd
+        rstrctd_list(i) = (num_rstrctd/2) + i-1
+      end do
+#endif
 #ifdef BLOCK_CYCLIC
       block_size(1) = 32
       block_size(2) = 32
@@ -2364,6 +2420,9 @@ c
       g_a = ga_create_handle()
       call ga_set_data(g_a,ndim,dims,MT_INT)
       call ga_set_array_name(g_a,'a')
+#ifdef USE_RESTRICTED
+      call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
+#endif
 #ifdef BLOCK_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
@@ -2487,7 +2546,7 @@ c
 c
       nwords = 0
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -2557,7 +2616,7 @@ c
       endif
       call ga_sync()
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       inc =5 
 c     every processor will be operating on somebody elses data
 c
@@ -2833,11 +2892,15 @@ c---------------------------------------------------------------------
       real x, sum1, sum2
       logical found
       integer lprocs, inode, iproc, lproc
+#ifdef USE_RESTRICTED
+      integer num_rstrctd
+      integer rstrctd_list(maxproc/2)
+#endif
 #ifdef BLOCK_CYCLIC
       integer block_size(2), proc_grid(2)
 #endif
       intrinsic int
-      iran(i) = int(util_drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -2846,6 +2909,13 @@ c---------------------------------------------------------------------
       nnodes = ga_cluster_nnodes()
       iproc = mod(me,lprocs)
       nloop = Min(maxloop,n)
+#ifdef USE_RESTRICTED
+      num_rstrctd = nproc/2
+      if (num_rstrctd.eq.0) num_rstrctd = 1
+      do i = 1, num_rstrctd
+        rstrctd_list(i) = (num_rstrctd/2) + i-1
+      end do
+#endif
 #ifdef BLOCK_CYCLIC
       block_size(1) = 32
       block_size(2) = 32
@@ -2882,6 +2952,9 @@ c
       g_a = ga_create_handle()
       call ga_set_data(g_a,ndim,dims,MT_REAL)
       call ga_set_array_name(g_a,'a')
+#ifdef USE_RESTRICTED
+      call ga_set_restricted(g_a, rstrctd_list, num_rstrctd)
+#endif
 #ifdef BLOCK_CYCLIC
 #ifdef USE_SCALAPACK_DISTR
       call ga_set_block_cyclic_proc_grid(g_a,block_size,proc_grid)
@@ -3017,7 +3090,7 @@ c
 c
       nwords = 0
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -3075,10 +3148,10 @@ c
       call ga_sync()
 
 c
-      crap = util_drand(12345)       ! Same seed for each process
+      crap = drand(12345)       ! Same seed for each process
       do j = 1, n
          do i = 1, n
-c           b(i,j) = real(util_drand(0))
+c           b(i,j) = real(drand(0))
             b(i,j) = i+j
          enddo
       enddo
@@ -3087,7 +3160,7 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
-c           x = real(util_drand(0))
+c           x = real(drand(0))
             x = 10.
             ilo = i
             ihi = min(i+inc-1, n)
@@ -3181,10 +3254,10 @@ c
          call ffflush(6)
       endif                           
 c
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       do j = 1, n
          do i = 1, n
-            b(i,j) = real(util_drand(0)*real(i)) + 1
+            b(i,j) = real(drand(0)*real(i)) + 1
             a(i,j) = 0.1*a(i,j) + 0.9*b(i,j)
          enddo
       enddo
@@ -3218,11 +3291,11 @@ c
  19      format('> Checking sdot ...')
          call ffflush(6)
       endif
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       sum1 = 0.0
       do j = 1, n
          do i = 1, n
-            b(i,j) = util_drand(0)
+            b(i,j) = drand(0)
             sum1 = sum1 + a(i,j)*b(i,j)
          enddo
       enddo
@@ -3304,7 +3377,7 @@ c
       endif
       call ga_sync()
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do j = 1, 10
        call ga_sync()
 #ifndef MIRROR
@@ -3390,7 +3463,7 @@ c     scatter-acc available in GA ver. 3.0
          write(6,*)
       endif
 c
-      crap = util_drand(1234)
+      crap = drand(1234)
       call ga_zero(g_a)
 c
       do j = 1, n

@@ -1,8 +1,14 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: rmw.c,v 1.24.2.5 2007-08-29 17:32:47 manoj Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 #if (defined(__i386__) || defined(__x86_64__)) && !defined(NO_I386ASM)
 #  include "atomics-i386.h"
 #endif
@@ -115,12 +121,12 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
 #ifdef VAPI
     if(!SERVER_CONTEXT)
 #endif
-      ARMCI_Fence(proc); 
+      PARMCI_Fence(proc); 
     NATIVE_UNLOCK(lock,proc);
 }
 
 
-int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
+int PARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
 {
 #ifdef LAPI64
     extern int LAPI_Rmw64(lapi_handle_t hndl, RMW_ops_t op, uint tgt, 
@@ -205,7 +211,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
          ARMCI_Error("Invalid operation for RMW", op);
    }
     
-   /* int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc) */
+   /* int PARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc) */
    /* assumes ploc will change
       dstbuf=prem, input=temp(extra), output=ploc
       val=ploc, arr[0]=prem, 1=extra */
@@ -269,7 +275,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
           printf("before opcode=%d rem=%ld, loc=(%ld,%ld) extra=%ld\n",
                   opcode,*prem,*(long*)ploc,llval, lltmp);  
           rc= sizeof(long);
-          ARMCI_Get(prem, &llval, rc, proc);
+          PARMCI_Get(prem, &llval, rc, proc);
           printf("%d:rem val before %ld\n",armci_me, llval); fflush(stdout);
 #endif
           if( rc = LAPI_Setcntr(lapi_handle,&req_id,0))
@@ -282,7 +288,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
           *(long*)ploc  = (long)llval;
 #if 0
           rc= sizeof(long);
-          ARMCI_Get(prem, &lltmp, rc, proc);
+          PARMCI_Get(prem, &lltmp, rc, proc);
           printf("%d:after rmw remote val from rmw=%ld and get=%ld extra=%d\n",
                   armci_me,llval, lltmp,extra);  
 #endif

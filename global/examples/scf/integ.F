@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
       double precision function exprjh(x)
 C$Id: integ.F,v 1.1 2005-03-08 23:58:03 d3g293 Exp $
       double precision x

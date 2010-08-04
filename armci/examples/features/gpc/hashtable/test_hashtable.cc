@@ -5,31 +5,14 @@
 #include <fstream>
 using namespace std;
 
-#ifdef WIN32
-#  include <windows.h>
-#  define sleep(x) Sleep(1000*(x))
-#else
-#  include <unistd.h>
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#elif HAVE_WINDOWS_H
+#   include <windows.h>
+#   define sleep(x) Sleep(1000*(x))
 #endif
 
-/* ARMCI is impartial to message-passing libs - we handle them with MP macros */
-#if defined(TCGMSG)
-#   include <sndrcv.h>
-    long tcg_tag =30000;
-#   define MP_BARRIER()      SYNCH_(&tcg_tag)
-#   define MP_INIT(arc,argv) PBEGIN_((argc),(argv))
-#   define MP_FINALIZE()     PEND_()
-#   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
-#   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
-#else
-#   include <mpi.h>
-#   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
-#   define MP_FINALIZE()     MPI_Finalize()
-#   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
-#   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
-#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
-#endif
-
+#include "mp3.h"
 #include "armci.h"
 #define ARMCI_ENABLE_GPC_CALLS
 #include "gpc.h"
@@ -38,11 +21,6 @@ using namespace std;
 #include "DistHashmap.h"
 int me, nproc;
 
-
-/* we need to rename main if linking with frt compiler */
-#ifdef FUJITSU_FRT
-#define main MAIN__
-#endif
 
 void test_distHashmap()
 {

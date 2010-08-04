@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /**************************************************
  *             LU factorization                   *
  *             Armci Version                      *
@@ -9,17 +13,23 @@
 #define DEBUG2_
 #define USE_MUTEX_
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <mpi.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+
 #include "armci.h"
 #include "utils.h"
 #include "mp3.h"
 
-#define MAXRAND                         32767.0
-#define DEFAULT_N                           8
-#define DEFAULT_B                           2
+#define MAXRAND   32767.0
+#define DEFAULT_N     8
+#define DEFAULT_B     2
 
 #define MAX_THREADS 8
 
@@ -73,7 +83,7 @@ main(int argc, char *argv[])
 
     THREAD_LOCK_INIT(mutex);
     
-    MP_INIT(arc,argv);
+    MP_INIT(argc,argv);
     MP_PROCS(&nproc);
     MP_MYID(&me);
     
@@ -86,7 +96,7 @@ main(int argc, char *argv[])
             case 'd': d = atoi(optarg); break;
             case 'h': {
                 printf("Usage: LU, or \n");
-		printf("       LU -nMATRIXSIZE -bBLOCKSIZE -pNPROC -tTH_PER_P\n");
+        printf("       LU -nMATRIXSIZE -bBLOCKSIZE -pNPROC -tTH_PER_P\n");
                 MP_BARRIER();
                 MP_FINALIZE();
                 exit(0);
@@ -143,8 +153,8 @@ main(int argc, char *argv[])
             printf("\n");
         }
     MP_BARRIER();
-//    MP_FINALIZE();
-//    exit(0);
+/*    MP_FINALIZE(); */
+/*    exit(0); */
 #endif
     
     for (l = 0; l < th_per_p; l++) {
@@ -209,7 +219,7 @@ main(int argc, char *argv[])
     MP_BARRIER();
 
     /* to remove cold-start misses, all processors touch their own data */
-//    for (l = 0; l < th_per_p; l++) touch_array(block_size, me_th[l]);
+/*    for (l = 0; l < th_per_p; l++) touch_array(block_size, me_th[l]); */
     MP_BARRIER();
 
     if(doprint) {
@@ -655,4 +665,3 @@ void print_block_dbg(double *block, const char *fmt, int x, int y, int z)
     THREAD_UNLOCK(mutex);
 #endif
 }
-

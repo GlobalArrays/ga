@@ -1,9 +1,15 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: memlock.c,v 1.24.2.3 2007-08-29 17:32:32 manoj Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
 #include "memlock.h"
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 
 #define DEBUG_ 0
 #define INVALID_VAL -9999999
@@ -43,7 +49,7 @@ void **memlock_table_array;
 #endif
 static memlock_t table[MAX_SLOTS];
 
-#if defined(SGIALTIX) || (defined(CRAY_SHMEM) && defined(XT3))
+#if defined(SGIALTIX) || (defined(CRAY_SHMEM) && defined(CRAY_XT))
 #define MAX_SEGS 512
 armci_memoffset_t armci_memoffset_table[MAX_SEGS];
 static short int seg_count=0;
@@ -386,8 +392,8 @@ void armci_memoffset_table_newentry(void *ptr, size_t seg_size) {
 }
 #endif
 
-#if defined(CRAY_SHMEM) && defined(XT3)
-/* CRAY-XT3 stuff */ 
+#if defined(CRAY_SHMEM) && defined(CRAY_XT)
+/* CRAY-CRAY_XT stuff */ 
 static void armci_cray_gettilesize(void *ptr, void **ptr_arr,
                                     size_t *tile_size) {
     int i;

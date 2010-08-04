@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*  This module contains the functions for displaying the access color map
     that appears on the right side of the display window 
 */

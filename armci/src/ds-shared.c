@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include "armcip.h"
 #include "request.h"
 #include "message.h"
@@ -5,12 +9,17 @@
 #include "copy.h"
 #include "gpc.h"
 #include "iterator.h"
-#include <stdio.h>
-#include <assert.h>
-#ifdef WIN32
-#include <process.h>
-#else
-#include <unistd.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
+#if HAVE_PROCESS_H
+#   include <process.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
 #endif
 
 #define DEBUG_ 0
@@ -30,6 +39,7 @@ int _armci_server_started=0;
 
 #if defined(SOCKETS)
 extern active_socks_t *_armci_active_socks;
+extern void armci_sock_send(int to, void *data, int len);
 #endif
 
 /**************************** pipelining for medium size msg ***********/
@@ -799,7 +809,7 @@ void armci_send_data(request_header_t* msginfo, void *data)
          * to do a put. This will not cause problems anywhere else in the
          * code and this part on elan4 will only be invoked in a GPC
          */
-        ARMCI_Put(data,msginfo->tag.data_ptr,msginfo->datalen,to);
+        PARMCI_Put(data,msginfo->tag.data_ptr,msginfo->datalen,to);
 #else
         armci_WriteToDirect(to, msginfo, data);
 #endif
@@ -909,8 +919,10 @@ void armci_data_server(void *mesg)
     void *descr;
     void *buffer;
     int buflen;
-    int from, i;
+    int from;
+#if defined(VAPI)
     static int mytag=1;
+#endif
 
     /* read header, descriptor, data, and buffer length */
     armci_rcv_req(mesg, &msginfo, &descr, &buffer, &buflen );

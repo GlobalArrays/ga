@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*$Id: global.util.c,v 1.48.6.6 2007-05-18 08:19:23 manoj Exp $*/
 /*
  * module: global.util.c
@@ -26,21 +30,24 @@
  * publicly by or for the US Government, including the right to
  * distribute to other US Government contractors.
  */
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
 
-
+#include "farg.h"
 #include "global.h"
 #include "globalp.h"
-#include <stdio.h>
-#include <string.h>
-#ifndef WIN32
-#include <unistd.h>
-#endif
-
 #include <armci.h> 
-
-#ifdef CRAY
-#include <fortran.h>
-#endif
+#define ARMCI 1
 
 #if defined(SUN)
   void fflush();
@@ -70,20 +77,21 @@ char *name;
 
   a_grp = ga_get_pgroup_(g_a);
   ga_pgroup_sync_(&a_grp);
-  ga_check_handle(g_a, "ga_print");
+  gai_check_handle(g_a, "ga_print");
   if(ga_pgroup_nodeid_(&a_grp) == 0){
 
      ga_inquire_internal_(g_a,  &type, &dim1, &dim2);
 /*     name[FLEN-1]='\0';*/
-     ga_inquire_name(g_a,  &name);
+     gai_inquire_name(g_a, &name);
      if (*ilo <= 0 || *ihi > dim1 || *jlo <= 0 || *jhi > dim2){
-                      fprintf(stderr,"%ld %ld %ld %ld dims: [%ld,%ld]\n", 
-                             *ilo,*ihi, *jlo,*jhi, dim1, dim2);
-                      ga_error(" ga_print: indices out of range ", *g_a);
+         fprintf(stderr,"%ld %ld %ld %ld dims: [%ld,%ld]\n", 
+                 (long)*ilo,(long)*ihi, (long)*jlo,(long)*jhi,
+                 (long)dim1, (long)dim2);
+         gai_error(" ga_print: indices out of range ", *g_a);
      }
 
      fprintf(file,"\n global array: %s[%ld:%ld,%ld:%ld],  handle: %d \n",
-             name, *ilo, *ihi, *jlo, *jhi, (int)*g_a);
+             name, (long)*ilo, (long)*ihi, (long)*jlo, (long)*jhi, (int)*g_a);
 
      bufsize = (type==C_DCPL)? BUFSIZE/2 : BUFSIZE;
      bufsize = (type==C_SCPL)? BUFSIZE/2 : BUFSIZE;
@@ -92,20 +100,18 @@ char *name;
      if (!*pretty) {
        for (i=*ilo; i <*ihi+1; i++){
          for (j=*jlo; j <*jhi+1; j+=bufsize){
-           jmax = MIN(j+bufsize-1,*jhi);
+           jmax = GA_MIN(j+bufsize-1,*jhi);
            switch(type){
               case C_INT:
                    ga_get_(g_a, &i, &i, &j, &jmax, ibuf, &ld);
                    for(jj=0; jj<(jmax-j+1); jj++)
-                     fprintf(file," %8ld",ibuf[jj]);
+                     fprintf(file," %8d",ibuf[jj]);
                    break;
-
               case C_DBL:
                    ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
                    for(jj=0; jj<(jmax-j+1); jj++)
                      fprintf(file," %11.5f",dbuf[jj]);
                    break;
-
               case C_DCPL:
                    ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
                    for(jj=0; jj<(jmax-j+1); jj+=2)
@@ -131,7 +137,7 @@ char *name;
                    for(jj=0; jj<(jmax-j+1); jj++)
                      fprintf(file," %8lld",llbuf[jj]);
                    break;
-              default: ga_error("ga_print: wrong type",0);
+              default: gai_error("ga_print: wrong type",0);
            }
          }
          fprintf(file,"\n");
@@ -141,7 +147,7 @@ char *name;
      } else {
 
         for (j=*jlo; j<*jhi+1; j+=bufsize){
-        jmax = MIN(j+bufsize-1,*jhi);
+        jmax = GA_MIN(j+bufsize-1,*jhi);
 
            fprintf(file, "\n"); fprintf(file, "\n");
 
@@ -150,41 +156,49 @@ char *name;
            fprintf(file, "      ");
            switch(type){
               case C_INT:
+                   for (jj=j; jj<=jmax; jj++) fprintf(file, "%6ld  ", (long)jj);
+                   fprintf(file,"\n      ");
+                   for (jj=j; jj<=jmax; jj++) fprintf(file," -------");
+                   break;
               case C_LONG:  
+                   for (jj=j; jj<=jmax; jj++) fprintf(file, "%6ld  ", (long)jj);
+                   fprintf(file,"\n      ");
+                   for (jj=j; jj<=jmax; jj++) fprintf(file," -------");
+                   break;
               case C_LONGLONG:  
-                   for (jj=j; jj<=jmax; jj++) fprintf(file, "%6ld  ", jj);
+                   for (jj=j; jj<=jmax; jj++) fprintf(file, "%6ld  ", (long)jj);
                    fprintf(file,"\n      ");
                    for (jj=j; jj<=jmax; jj++) fprintf(file," -------");
                    break;
               case C_DCPL:
-                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%20ld    ", jj);
+                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%20ld    ", (long)jj);
                    fprintf(file,"\n      ");
                    for (jj=j; jj<=2*jmax; jj++) fprintf(file," -----------");
                    break;
               case C_SCPL:
-                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%20ld    ", jj);
+                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%20ld    ", (long)jj);
                    fprintf(file,"\n      ");
                    for (jj=j; jj<=2*jmax; jj++) fprintf(file," -----------");
                    break;
               case C_DBL:
-                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%8ld    ", jj);
+                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%8ld    ", (long)jj);
                    fprintf(file,"\n      ");
                    for (jj=j; jj<=jmax; jj++) fprintf(file," -----------");         
               case C_FLOAT:
-                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%8ld    ", jj);
+                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%8ld    ", (long)jj);
                    fprintf(file,"\n      ");
                    for (jj=j; jj<=jmax; jj++) fprintf(file," -----------");
            }
            fprintf(file,"\n");
 
            for(i=*ilo; i <*ihi+1; i++){
-              fprintf(file,"%4ld  ",i);
+              fprintf(file,"%4ld  ",(long)i);
 
               switch(type){
                  case C_INT:
                       ga_get_(g_a, &i, &i, &j, &jmax, ibuf, &ld);
                       for(jj=0; jj<(jmax-j+1); jj++)
-                        fprintf(file," %8ld",ibuf[jj]);
+                        fprintf(file," %8d",ibuf[jj]);
                       break;
                  case C_LONG: 
                       ga_get_(g_a, &i, &i, &j, &jmax,lbuf, &ld);
@@ -216,7 +230,7 @@ char *name;
 	              for(jj=0; jj<(jmax-j+1); jj+=2)
 	                fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
                       break;
-                 default: ga_error("ga_print: wrong type",0);
+                 default: gai_error("ga_print: wrong type",0);
 	     }
 	     fprintf(file,"\n");
          }
@@ -296,9 +310,7 @@ int i;
 /*\  ERROR TERMINATION
  *   C-version
 \*/
-void ga_error(string, icode)
-     char     *string;
-     Integer  icode;
+void gai_error(char *string, Integer icode)
 {
 #ifndef ARMCI
 extern void Error();
@@ -338,107 +350,29 @@ extern void Error();
 }
 
 
-
-
 /*\  ERROR TERMINATION
  *   Fortran version
 \*/
-#ifdef CRAY_T3D
-void FATR ga_error_(string, icode)
-     _fcd        string;
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+void FATR ga_error_(char *string, Integer *icode, int slen)
 #else
-void FATR ga_error_(string, icode, slen)
-     char        *string;
-     int         slen;
+void FATR ga_error_(char *string, int slen, Integer *icode)
 #endif
-     Integer     *icode;
 {
 #define FMSG 256
 char buf[FMSG];
-#ifdef CRAY_T3D
-      f2cstring(_fcdtocp(string), _fcdlen(string), buf, FMSG);
-#else
-      f2cstring(string,slen, buf, FMSG);
-#endif
-      ga_error(buf,*icode);
-}
-
-
-
-
-
-/************** Fortran - C conversion routines for strings ************/
-
-/*\ converts C strings to  Fortran strings
-\*/
-void c2fstring( cstring, fstring, flen)
-     char *cstring, *fstring;
-     Integer flen;
-{
-    int clen = strlen(cstring);
-
-    /* remove terminal \n character if any */
-
-    if(cstring[clen] == '\n') clen--;
-
-    /* Truncate C string into Fortran string */
-
-    if (clen > flen) clen = (int)flen;
-
-    /* Copy characters over */
-
-    flen -= clen;
-    while (clen--)
-	*fstring++ = *cstring++;
-
-    /* Now terminate with blanks */
-
-    while (flen--)
-	*fstring++ = ' ';
-}
-
-
-/*\
- * Strip trailing blanks from fstring and copy it to cstring,
- * truncating if necessary to fit in cstring, and ensuring that
- * cstring is NUL-terminated.
-\*/
-void f2cstring(fstring, flength, cstring, clength)
-    char        *fstring;       /* FORTRAN string */
-    Integer      flength;        /* length of fstring */
-    char        *cstring;       /* C buffer */
-    Integer      clength;        /* max length (including NUL) of cstring */
-{
-    /* remove trailing blanks from fstring */
-    while (flength-- && fstring[flength] == ' ') ;
-
-    /* the postdecrement above went one too far */
-    flength++;
-
-    /* truncate fstring to cstring size */
-    if (flength >= clength)
-        flength = clength - 1;
-
-    /* ensure that cstring is NUL-terminated */
-    cstring[flength] = '\0';
-
-    /* copy fstring to cstring */
-    while (flength--)
-        cstring[flength] = fstring[flength];
+      ga_f2cstring(string,slen, buf, FMSG);
+      gai_error(buf,*icode);
 }
 
 
 void ga_debug_suspend()
 {
-#ifdef SYSV
-#  include <sys/types.h>
-#  include <unistd.h>
-
+#ifdef HAVE_PAUSE
    fprintf(stdout,"ga_debug: process %ld ready for debugging\n",
            (long)getpid());
    fflush(stdout);
    pause();
-
 #endif
 }
 
@@ -465,7 +399,7 @@ static void gai_print_range(char *pre,int ndim,
 
         printf("%s[",pre);
         for(i=0;i<ndim;i++){
-                printf("%ld:%ld",lo[i],hi[i]);
+                printf("%ld:%ld",(long)lo[i],(long)hi[i]);
                 if(i==ndim-1)printf("] %s",post);
                 else printf(",");
         }
@@ -497,7 +431,7 @@ int local_sync_begin,local_sync_end;
 
     if(ga_nodeid_() ==0){
       nga_inquire_internal_(&g_a, &type, &ndim, dims);
-      ga_inquire_name(&g_a,&name);
+      gai_inquire_name(&g_a, &name);
       printf("Array Handle=%d Name:'%s' ",(int)g_a, name);
       printf("Data Type:");
       switch(type){
@@ -508,7 +442,7 @@ int local_sync_begin,local_sync_end;
         case C_FLOAT: printf("float"); break; 
         case C_LONG: printf("long"); break; 
         case C_LONGLONG: printf("long long"); break; 
-        default: ga_error("ga_print_distribution: type not supported",type);
+        default: gai_error("ga_print_distribution: type not supported",type);
       }
       printf("\nArray Dimensions:");
       if(fstyle){
@@ -582,24 +516,26 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
     Integer done, status_2d, status_3d;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     ga_sync_();
-    ga_check_handle(g_a, "nga_print");
+    gai_check_handle(g_a, "nga_print");
 
     /* only the first process print the array */
     if(ga_nodeid_() == 0) {
         
         nga_inquire_internal_(g_a,  &type, &ndim, dims);
-        ga_inquire_name(g_a,  &name);
+        gai_inquire_name(g_a, &name);
         
         /* check the boundary */
         for(i=0; i<ndim; i++)
             if(lo[i] <= 0 || hi[i] > dims[i]) 
-                ga_error("g_a indices out of range ", *g_a);
+                gai_error("g_a indices out of range ", *g_a);
         
         /* print the general information */
         fprintf(file,"\n global array: %s[", name);
         for(i=0; i<ndim; i++)
-            if(i != (ndim-1)) fprintf(file, "%ld:%ld,", lo[i], hi[i]);
-            else fprintf(file, "%ld:%ld", lo[i], hi[i]);
+            if(i != (ndim-1))
+                fprintf(file, "%ld:%ld,", (long)lo[i], (long)hi[i]);
+            else
+                fprintf(file, "%ld:%ld",  (long)lo[i], (long)hi[i]);
         fprintf(file,"],  handle: %d \n", (int)*g_a);
         
         bufsize = (type==C_DCPL)? BUFSIZE/2 : BUFSIZE;
@@ -612,17 +548,17 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
             for(i=0; i<ndim; i++) {
                 lop[i] = lo[i]; hip[i] = lo[i];
             }
-            hip[0] = MIN(lop[0]+bufsize-1, hi[0]);
+            hip[0] = GA_MIN(lop[0]+bufsize-1, hi[0]);
             while(done) {
                 switch(type) {
-                    case C_INT: nga_get_(g_a, lop, hip, ibuf, ld); break;
-                    case C_DBL: nga_get_(g_a, lop, hip, dbuf, ld); break;
-                    case C_DCPL: nga_get_(g_a, lop, hip, dbuf, ld); break;
-                    case C_FLOAT: nga_get_(g_a, lop, hip, fbuf, ld); break; 
-                    case C_SCPL: nga_get_(g_a, lop, hip, fbuf, ld); break;
-                    case C_LONG: nga_get_(g_a, lop, hip, lbuf, ld); break; 
-                    case C_LONGLONG: nga_get_(g_a, lop, hip, llbuf, ld);break;
-                    default: ga_error("ga_print: wrong type",0);
+                    case C_INT:      nga_get_(g_a, lop, hip, ibuf, ld); break;
+                    case C_DBL:      nga_get_(g_a, lop, hip, dbuf, ld); break;
+                    case C_DCPL:     nga_get_(g_a, lop, hip, dbuf, ld); break;
+                    case C_FLOAT:    nga_get_(g_a, lop, hip, fbuf, ld); break; 
+                    case C_SCPL:     nga_get_(g_a, lop, hip, fbuf, ld); break;
+                    case C_LONG:     nga_get_(g_a, lop, hip, lbuf, ld); break; 
+                    case C_LONGLONG: nga_get_(g_a, lop, hip, llbuf,ld); break;
+                    default: gai_error("ga_print: wrong type",0);
                 }
                 
                 /* print the array */
@@ -630,17 +566,19 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                     fprintf(file,"%s(", name);
                     for(j=0; j<ndim; j++)
                         if((j == 0) && (j == (ndim-1)))
-                            fprintf(file, "%ld", lop[j]+i);
+                            fprintf(file, "%ld", (long)lop[j]+i);
                         else if((j != 0) && (j == (ndim-1)))
-                            fprintf(file, "%ld", lop[j]);
+                            fprintf(file, "%ld", (long)lop[j]);
                         else if((j == 0) && (j != (ndim-1)))
-                            fprintf(file, "%ld,", lop[j]+i);
-                        else fprintf(file, "%ld,", lop[j]);
+                            fprintf(file, "%ld,", (long)lop[j]+i);
+                        else fprintf(file, "%ld,", (long)lop[j]);
                     switch(type) {
-                        case C_INT: fprintf(file,") = %ld\n", ibuf[i]);break;
-                        case C_LONG: fprintf(file,") = %ld\n", lbuf[i]);break;
+                        case C_INT:
+                            fprintf(file,") = %d\n", ibuf[i]);break;
+                        case C_LONG:
+                            fprintf(file,") = %ld\n", lbuf[i]);break;
                         case C_LONGLONG:
-                           fprintf(file,") = %lld\n", llbuf[i]);break;
+                            fprintf(file,") = %lld\n", llbuf[i]);break;
                         case C_DBL:
                             if((double)dbuf[i]<100000.0)
                                 fprintf(file,") = %f\n", dbuf[i]);
@@ -670,17 +608,20 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                 
                 fflush(file);
                 
-                lop[0] = hip[0]+1; hip[0] = MIN(lop[0]+bufsize-1, hi[0]);
+                lop[0] = hip[0]+1; hip[0] = GA_MIN(lop[0]+bufsize-1, hi[0]);
                 
-                for(i=0; i<ndim; i++)
-                    if(lop[i] > hi[i]) 
-                        if(i == (ndim-1)) done = 0;
-                        else {
+                for(i=0; i<ndim; i++) {
+                    if(lop[i] > hi[i]) {
+                        if(i == (ndim-1)) {
+                            done = 0;
+                        } else {
                             lop[i] = lo[i];
-                            if(i == 0) hip[i] = MIN(lop[i]+bufsize-1, hi[i]);
+                            if(i == 0) hip[i] = GA_MIN(lop[i]+bufsize-1, hi[i]);
                             else hip[i] = lo[i];
                             lop[i+1]++; hip[i+1]++;
                         }
+                    }
+                }
             }
         }
         else {
@@ -689,7 +630,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
             for(i=0; i<ndim; i++) {
                 lop[i] = lo[i];
                 if((i == 0) || (i == 1))
-                    hip[i] = MIN(lop[i]+bufsize-1, hi[i]);
+                    hip[i] = GA_MIN(lop[i]+bufsize-1, hi[i]);
                 else 
                     hip[i] = lo[i];
             }
@@ -702,11 +643,14 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                     for(i=0; i<ndim; i++)
                         if(i < 2)
                             if(i != (ndim-1))
-                                fprintf(file, "%ld:%ld,", lo[i], hi[i]);
-                            else fprintf(file, "%ld:%ld", lo[i], hi[i]);
+                                fprintf(file, "%ld:%ld,", (long)lo[i], (long)hi[i]);
+                            else
+                                fprintf(file, "%ld:%ld", (long)lo[i], (long)hi[i]);
                         else
-                            if(i != (ndim-1)) fprintf(file, "%ld,", lop[i]);
-                            else fprintf(file, "%ld", lop[i]);
+                            if(i != (ndim-1))
+                                fprintf(file, "%ld,", (long)lop[i]);
+                            else
+                                fprintf(file, "%ld", (long)lop[i]);
                     fprintf(file,"]\n"); status_3d = 0;
                 }
                 
@@ -714,11 +658,25 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                     fprintf(file, "\n"); 
                     switch(type) {
                         case C_INT:
+                            fprintf(file, "     ");
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(file, "%7ld  ", (long)i);
+                            fprintf(file,"\n      ");
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(file," --------");
+                            break;
                         case C_LONG:
+                            fprintf(file, "     ");
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(file, "%7ld  ", (long)i);
+                            fprintf(file,"\n      ");
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(file," --------");
+                            break;
                         case C_LONGLONG:
                             fprintf(file, "     ");
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(file, "%7ld  ", i);
+                                fprintf(file, "%7ld  ", (long)i);
                             fprintf(file,"\n      ");
                             for (i=lop[1]; i<=hip[1]; i++)
                                 fprintf(file," --------");
@@ -726,21 +684,21 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                         case C_DBL:
                             fprintf(file, "   ");
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(file, "%10ld  ", i);
+                                fprintf(file, "%10ld  ", (long)i);
                             fprintf(file,"\n      ");
                             for (i=lop[1]; i<=hip[1]; i++)
                                 fprintf(file," -----------");
                             break;
                         case C_DCPL:
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(file, "%22ld  ", i);
+                                fprintf(file, "%22ld  ", (long)i);
                             fprintf(file,"\n      ");
                             for (i=lop[1]; i<=hip[1]; i++)
                                 fprintf(file," -----------------------");
                             break;
                         case C_SCPL:
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(file, "%22ld  ", i);
+                                fprintf(file, "%22ld  ", (long)i);
                             fprintf(file,"\n      ");
                             for (i=lop[1]; i<=hip[1]; i++)
                                 fprintf(file," -----------------------");
@@ -748,13 +706,13 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                         case C_FLOAT:
                             fprintf(file, "     ");
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(file, "%7ld  ", i);
+                                fprintf(file, "%7ld  ", (long)i);
                             fprintf(file,"\n      ");
                             for (i=lop[1]; i<=hip[1]; i++)
                                 fprintf(file," --------");
                             break;
                        default:
-                         ga_error("ga_print: wrong type", 0);
+                         gai_error("ga_print: wrong type", 0);
                     }
                     
                     fprintf(file,"\n");
@@ -763,23 +721,23 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                 
                 switch(type) {
                     case C_INT: nga_get_(g_a, lop, hip, ibuf_2d, ld); break;
-		    case C_LONG: nga_get_(g_a, lop, hip,lbuf_2d, ld); break;  
+                    case C_LONG: nga_get_(g_a, lop, hip,lbuf_2d, ld); break;
                     case C_LONGLONG: nga_get_(g_a, lop, hip,llbuf_2d,ld);break;
                     case C_DBL: nga_get_(g_a, lop, hip, dbuf_2d, ld); break;
                     case C_DCPL: nga_get_(g_a, lop, hip, dbuf_2d, ld);break;
                     case C_FLOAT: nga_get_(g_a, lop, hip, fbuf_2d, ld);break;
                     case C_SCPL: nga_get_(g_a, lop, hip, fbuf_2d, ld);break;  
-                   default: ga_error("ga_print: wrong type",0);
+                   default: gai_error("ga_print: wrong type",0);
                 }
                 
                 for(i=0; i<(hip[0]-lop[0]+1); i++) {
-                    fprintf(file,"%4ld  ", (lop[0]+i));
+                    fprintf(file,"%4ld  ", (long)(lop[0]+i));
                     switch(type) {
                         case C_INT:
                             if(ndim > 1)
                                 for(j=0; j<(hip[1]-lop[1]+1); j++)
-                                    fprintf(file," %8ld", ibuf_2d[j*bufsize+i]);
-                            else fprintf(file," %8ld", ibuf_2d[i]);
+                                    fprintf(file," %8d", ibuf_2d[j*bufsize+i]);
+                            else fprintf(file," %8d", ibuf_2d[i]);
                             break;
                         case C_LONG:
                             if(ndim > 1)
@@ -855,35 +813,39 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                                             fbuf_2d[i*2], fbuf_2d[i*2+1]);
                             break;
                        default:
-                          ga_error("ga_print: wrong data type", 0);
+                          gai_error("ga_print: wrong data type", 0);
                     }
                     
                     fprintf(file,"\n");
                 }
                 
-                lop[0] = hip[0]+1; hip[0] = MIN(lop[0]+bufsize-1, hi[0]);
+                lop[0] = hip[0]+1; hip[0] = GA_MIN(lop[0]+bufsize-1, hi[0]);
                 
-                for(i=0; i<ndim; i++)
-                    if(lop[i] > hi[i]) 
-                        if(i == (ndim-1)) done = 0;
-                        else {
+                for(i=0; i<ndim; i++) {
+                    if(lop[i] > hi[i]) {
+                        if(i == (ndim-1)) {
+                            done = 0;
+                        } else {
                             lop[i] = lo[i];
                             
-                            if((i == 0) || (i == 1))
-                                hip[i] = MIN(lop[i]+bufsize-1, hi[i]);
-                            else hip[i] = lo[i];
+                            if((i == 0) || (i == 1)) {
+                                hip[i] = GA_MIN(lop[i]+bufsize-1, hi[i]);
+                            } else {
+                                hip[i] = lo[i];
+                            }
                             
                             if(i == 0) {
                                 lop[i+1] = hip[i+1]+1;
-                                hip[i+1] = MIN(lop[i+1]+bufsize-1, hi[i+1]);
-                            }
-                            else {
+                                hip[i+1] = GA_MIN(lop[i+1]+bufsize-1, hi[i+1]);
+                            } else {
                                 lop[i+1]++; hip[i+1]++;
                             }
                             
                             if(i == 0) status_2d = 1;
                             if(i == 1) status_3d = 1;
                         }
+                    }
+                }
             }
         }
         fflush(file);
@@ -908,7 +870,6 @@ void FATR ga_summarize_(Integer *verbose)
     char *name;
     Integer ndim, dims[MAXDIM];
     Integer lop[MAXDIM], hip[MAXDIM];
-    Integer me = ga_nodeid_();
     Integer nproc = ga_nnodes_();
     
     fprintf(DEV, " Summary of allocated global arrays\n");
@@ -923,7 +884,7 @@ void FATR ga_summarize_(Integer *verbose)
         if(active == 1) {
             printed = 1;
             nga_inquire_internal_(&g_a, &type, &ndim, dims);
-            ga_inquire_name(&g_a,  &name);
+            gai_inquire_name(&g_a, &name);
             
             switch(type) {
                 case C_INT:
@@ -947,14 +908,14 @@ void FATR ga_summarize_(Integer *verbose)
                 case C_LONGLONG:
                     fprintf(DEV, "  array %d => long long",(int)arr_no);
                     break;   
-                default: ga_error("ga_print: wrong type",0);
+                default: gai_error("ga_print: wrong type",0);
             }
             arr_no++;
 
             fprintf(DEV,"%s(", name);
             for(i=0; i<ndim; i++)
-                if(i != (ndim-1)) fprintf(DEV, "%ld,", dims[i]);
-                else fprintf(DEV, "%ld", dims[i]);
+                if(i != (ndim-1)) fprintf(DEV, "%ld,", (long)dims[i]);
+                else fprintf(DEV, "%ld", (long)dims[i]);
             fprintf(DEV,"),  handle: %d \n",(int) g_a);
 
             if(*verbose) {
@@ -964,8 +925,9 @@ void FATR ga_summarize_(Integer *verbose)
                     fprintf(DEV,"    (");
                     for(j=0; j<ndim; j++)
                         if(j != (ndim-1))
-                            fprintf(DEV, "%ld:%ld,", lop[j], hip[j]);
-                        else fprintf(DEV, "%ld:%ld", lop[j], hip[j]);
+                            fprintf(DEV, "%ld:%ld,",(long)lop[j], (long)hip[j]);
+                        else
+                            fprintf(DEV, "%ld:%ld", (long)lop[j], (long)hip[j]);
                     fprintf(DEV,") -> %d \n",(int) i);
                 }
             }
@@ -1058,7 +1020,7 @@ Integer FATR ga_cluster_procid_(Integer *node, Integer *loc_proc_id)
 #ifdef MPI
 #  include <mpi.h>
 #else
-#  include "sndrcv.h"
+#  include "tcgmsg.h"
 #endif
 /*\ wrapper for wallclock timer. Returns an alapsed time on calling process
 \*/
@@ -1068,7 +1030,7 @@ DoublePrecision FATR ga_wtime_()
 #ifdef MPI
     wtime = MPI_Wtime();
 #else
-    wtime =  TCGTIME_();
+    wtime = tcg_time();
 #endif
     return (DoublePrecision)wtime; 
 }

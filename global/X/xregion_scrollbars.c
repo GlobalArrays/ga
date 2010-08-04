@@ -1,7 +1,11 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include "xregion.h"
 #include <math.h>
 
-#define ABS(x) (((x) < 0 )? -(x) : (x))
+#define GA_ABS(x) (((x) < 0 )? -(x) : (x))
 
 void DisplayIntervalValue()
 {
@@ -37,8 +41,8 @@ void ScrollProc(Widget scrollbar, XtPointer data, XtPointer position)
   fraction = ((int) position)/ (double) length;
 
   interval = fraction*0.05*interval_max;   
-  interval = MIN(interval, interval_max);
-  interval = MAX(interval, 1);
+  interval = GA_MIN(interval, interval_max);
+  interval = GA_MAX(interval, 1);
 
   fraction = (float) interval/ (float) interval_max;
   shown = -1.0;
@@ -72,8 +76,8 @@ void ScrollProc2(Widget scrollbar, XtPointer data, XtPointer position)
 
   /* need to add small number to avoid domain error in log(0) */
 
-  slowdown = MIN(slowdown,slowdown_max);
-  slowdown = MAX(slowdown, slowdown_min);
+  slowdown = GA_MIN(slowdown,slowdown_max);
+  slowdown = GA_MAX(slowdown, slowdown_min);
 
 
   /* scale current time according to the slowdown factor */
@@ -108,8 +112,8 @@ void JumpProc(Widget scrollbar, XtPointer data, XtPointer fraction_ptr)
   float fraction = *(float *) fraction_ptr;
 
   interval = fraction*interval_max;
-  interval = MIN(interval, interval_max);
-  interval = MAX(interval, 1);
+  interval = GA_MIN(interval, interval_max);
+  interval = GA_MAX(interval, 1);
 
   DisplayIntervalValue();
 }
@@ -131,8 +135,8 @@ void JumpProc2(Widget scrollbar, XtPointer data, XtPointer fraction_ptr)
   exp_fraction = (exp_fraction-1.)/ (pow(POW_BASE,1.) -1.);
 
   slowdown = exp_fraction*(slowdown_max-slowdown_min) + slowdown_min;
-  slowdown = MIN(slowdown,slowdown_max);
-  slowdown = MAX(slowdown, slowdown_min);
+  slowdown = GA_MIN(slowdown,slowdown_max);
+  slowdown = GA_MAX(slowdown, slowdown_min);
 
 
   /* scale current time according to the slowdown factor */

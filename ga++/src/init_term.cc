@@ -1,14 +1,15 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
 
 #include "ga++.h"
 
 void
 GA::Initialize(int argc, char *argv[], size_t limit) {
- 
-  int val;
-  
 #ifndef MPIPP
-  PBEGIN_(argc, argv);
+  tcg_pbegin(argc, argv);
 #else
+  int val;
   if((val=MPI_Init(&argc, &argv)) < 0) 
     fprintf(stderr, "MPI_Init() failed\n");
 #endif
@@ -23,17 +24,14 @@ GA::Initialize(int argc, char *argv[], size_t limit) {
 void 
 GA::Initialize(int argc, char *argv[], unsigned long heapSize, 
 	   unsigned long stackSize, int type, size_t limit) {
-  
-  int val;
-  
   // Initialize MPI/TCGMSG  
 #ifndef MPIPP
-  PBEGIN_(argc, argv);
+  tcg_pbegin(argc, argv);
 #else
+  int val;
   if((val=MPI_Init(&argc, &argv)) < 0) 
     fprintf(stderr, "MPI_Init() failed\n");
 #endif
-  
   
   // GA Initialization
   if(limit == 0) 
@@ -63,7 +61,7 @@ GA::Terminate()
   GA_Terminate();    
   
 #ifndef MPIPP
-  PEND_();
+  tcg_pend();
 #else
   MPI_Finalize();
 #endif    

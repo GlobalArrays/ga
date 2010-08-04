@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c $Id: perform.F,v 1.9 2000-05-25 01:09:20 d3h325 Exp $
       program perform
 c***
@@ -10,12 +13,7 @@ c***
 c
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Intitialize the GA package
       call ga_initialize()
@@ -28,13 +26,12 @@ c***  Initialize the MA package
      $     call ga_error('ma init failed',2*heap)
 c
       call testit()
+c
+      if(ga_nodeid().eq.0) print *, 'All tests successful'
+c
       call ga_terminate()
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
       end
 
 

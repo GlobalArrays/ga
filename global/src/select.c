@@ -1,17 +1,21 @@
-#include <stdio.h>
-#include <string.h>
-#include "global.h"
-#include "globalp.h"
-#include "../../armci/src/message.h"
-  
-#if defined(CRAY)
-#  include <fortran.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
 #endif
 
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#include "global.h"
+#include "globalp.h"
+#include "message.h"
+  
 #define GET_ELEMS(ndim,lo,hi,ld,pelems){\
 int _i;\
       for(_i=0, *pelems = hi[ndim-1]-lo[ndim-1]+1; _i< ndim-1;_i++) {\
-         if(ld[_i] != (hi[_i]-lo[_i]+1)) ga_error("layout problem",_i);\
+         if(ld[_i] != (hi[_i]-lo[_i]+1)) gai_error("layout problem",_i);\
          *pelems *= hi[_i]-lo[_i]+1;\
       }\
 }
@@ -128,12 +132,18 @@ void ngai_select_elem(Integer type, char* op, void *ptr, Integer elems, elem_inf
     info->v.llval = llval;
     break;
 
-    default: ga_error(" wrong data type ",type);
+    default: gai_error(" wrong data type ",type);
   }
 }
 
 /* note that there is no FATR - on windows and cray we call this though a wrapper below */
-void nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
+void FATR nga_select_elem_(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        Integer *g_a, char* op, void* val, Integer *subscript, int oplen
+#else
+        Integer *g_a, char* op, int oplen, void* val, Integer *subscript
+#endif
+        )
 {
   Integer ndim, type, me, elems, ind=0, i;
   Integer lo[MAXDIM],hi[MAXDIM],dims[MAXDIM],ld[MAXDIM-1];
@@ -148,15 +158,15 @@ void nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
 
   me = ga_nodeid_();
 
-  ga_check_handle(g_a, "ga_select_elem");
+  gai_check_handle(g_a, "ga_select_elem");
   GA_PUSH_NAME("ga_elem_op");
 
   if (strncmp(op,"min",3) == 0);
   else if (strncmp(op,"max",3) == 0);
-  else ga_error("operator not recognized",0);
+  else gai_error("operator not recognized",0);
 
   nga_inquire_internal_(g_a, &type, &ndim, dims);
-  num_blocks = GA_Total_blocks((int)*g_a);
+  num_blocks = ga_total_blocks_(g_a);
 
   if (num_blocks < 0) {
     nga_distribution_(g_a, &me, lo, hi);
@@ -186,7 +196,6 @@ void nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
     void *ptr;
     Integer j, offset, jtot, upper;
     Integer nproc = ga_nnodes_();
-    Integer iblock = 0;
     nga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
     if (elems > 0) {
       participate =1;
@@ -276,7 +285,7 @@ void nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
     *(DoublePrecision*)val = info.v.dval;
   }else if(type==C_FLOAT){
     int size = sizeof(double) + sizeof(Integer)*ndim;
-    armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);
+    armci_msg_sel(&info,size,op,ARMCI_FLOAT,participate);
     *(float*)val = info.v.fval;       
   }else if(type==C_SCPL){
     int size = sizeof(info); /* for simplicity we send entire info */
@@ -291,10 +300,3 @@ void nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
   for(i = 0; i < ndim; i++) subscript[i]= info.subscr[i];
   GA_POP_NAME;
 }
-
-#if defined(CRAY) || defined(WIN32)  
-void FATR NGA_SELECT_ELEM(Integer *g_a, _fcd op, void* val, Integer *subscript)
-{
-     nga_select_elem_(g_a,_fcdtocp(op), val, subscript);
-}
-#endif

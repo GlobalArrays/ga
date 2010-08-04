@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: strided.c,v 1.117.2.6 2007-08-29 17:46:40 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
@@ -5,8 +9,12 @@
 #include "memlock.h"
 #include "armci.h"
 #include "iterator.h"
-#include <stdio.h>
-#include <assert.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
 
 #ifdef GA_USE_VAMPIR
 #include "armci_vampir.h"
@@ -73,11 +81,11 @@
   else if(__prot==SERVER_PUT);					\
   else if(__prot==DIRECT_GET || __prot==DIRECT_NBGET){		\
     if(armci_prot_switch_fence[__proc]==SERVER_PUT)		\
-      ARMCI_Fence(__proc);					\
+      PARMCI_Fence(__proc);					\
   }								\
   else if(__prot==DIRECT_PUT || __prot==DIRECT_NBPUT){		\
     if(armci_prot_switch_fence[__proc]==SERVER_PUT)		\
-      ARMCI_Fence(__proc);					\
+      PARMCI_Fence(__proc);					\
   }								\
   else;								\
   armci_prot_switch_fence[__proc]=__prot
@@ -141,7 +149,9 @@ int armci_iwork[MAX_STRIDE_LEVEL];
 static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, 
                           int bytes, int count, int src_stride, int dst_stride)
 {
+#ifdef LAPI
   int armci_th_idx = ARMCI_THREAD_IDX;
+#endif
     
 #ifdef LAPI2__
 #  define COUNT 1
@@ -455,9 +465,9 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
 #   if defined(ACC_COPY)
       
 #      ifdef ACC_SMP
-  if(ACC(op) && !(SAMECLUSNODE(proc)) )
+  if(ARMCI_ACC(op) && !(SAMECLUSNODE(proc)) )
 #      else
-    if ( ACC(op) && proc!=armci_me)
+    if ( ARMCI_ACC(op) && proc!=armci_me)
 #      endif
       /* copy remote data, accumulate, copy back*/
       return (armci_acc_copy_strided(op,scale, proc, src_ptr, src_stride_arr,
@@ -466,7 +476,7 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
     else; /* do it directly through shared/local memory */
 #   endif
 
-  if(ACC(op) && (stride_levels>2) && lockit){
+  if(ARMCI_ACC(op) && (stride_levels>2) && lockit){
     /* we need one lock operation only - must be done outside 2d acc */
     armci_lockmem_patch(dst_ptr,dst_stride_arr, count, stride_levels, proc);
     unlockit=1;
@@ -478,11 +488,11 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
 #  if defined(LAPI2) || defined(PORTALS) /*|| defined(DOELAN4) && !defined(NB_NONCONT)*/
   /*even 1D armci_nbput has to use different origin counters for 1D */
 #   if defined(LAPI2)
-  if(!ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
+  if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
 					 (!nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD))) 
 #   elif defined(DOELAN4) && !defined(NB_NONCONT)
-    /*if(!ACC(op) && !SAMECLUSNODE(proc) && nb_handle && stride_levels<2)*/
-    if(!ACC(op) && !SAMECLUSNODE(proc) && stride_levels<2)
+    /*if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && nb_handle && stride_levels<2)*/
+    if(!ARMCI_ACC(op) && !SAMECLUSNODE(proc) && stride_levels<2)
 #   else
       if(!SAMECLUSNODE(proc))
 #   endif
@@ -688,13 +698,13 @@ static int _armci_puts(void *src_ptr,
   else {
     armci_hdl_t nb_handle;
     ARMCI_INIT_HANDLE(&nb_handle);
-    ARMCI_NbPutS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count,
+    PARMCI_NbPutS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count,
 		 stride_levels, proc, &nb_handle);
-    ARMCI_Wait(&nb_handle);
+    PARMCI_Wait(&nb_handle);
   }
   if(put_flag) { /*=>!nbh*/
-    ARMCI_Fence(proc);
-    ARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
+    PARMCI_Fence(proc);
+    PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
   }
 #elif ARMCIX
   if(nbh) 
@@ -706,8 +716,8 @@ static int _armci_puts(void *src_ptr,
     ARMCIX_PutS (src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc);
   }
   if(put_flag) { /*=>!nbh*/
-    ARMCI_Fence(proc);
-    ARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
+    PARMCI_Fence(proc);
+    PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
   }
 #else /*BGML*/
 
@@ -746,8 +756,8 @@ static int _armci_puts(void *src_ptr,
       }
       POSTPROCESS_STRIDED(tmp_count);
       if(put_flag) {
-	ARMCI_Fence(proc);
-	ARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
+	PARMCI_Fence(proc);
+	PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
       }
       ARMCI_PROFILE_STOP_STRIDED(proftype);
       return 0;
@@ -762,8 +772,8 @@ static int _armci_puts(void *src_ptr,
       armci_two_phase_send(proc, src_ptr, src_stride_arr, dst_ptr,
 			   dst_stride_arr,count,stride_levels,NULL,nbh,mhloc);
       if(put_flag) {
-	ARMCI_Fence(proc);
-	ARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
+	PARMCI_Fence(proc);
+	PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
       }
       ARMCI_PROFILE_STOP_STRIDED(proftype);
       return 0;  
@@ -799,8 +809,8 @@ static int _armci_puts(void *src_ptr,
 					   mhloc,mhrem);
 	}
 	if(put_flag) {
-	  ARMCI_Fence(proc);
-	  ARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
+	  PARMCI_Fence(proc);
+	  PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
 	}
 	ARMCI_PROFILE_STOP_STRIDED(proftype);
 	return 0;
@@ -859,8 +869,8 @@ static int _armci_puts(void *src_ptr,
 			       0,nbh);
       }
       if(put_flag) { /*=>!nbh*/
-	ARMCI_Fence(proc);
-	ARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
+	PARMCI_Fence(proc);
+	PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
       }
     }
 #endif /*BGML*/
@@ -876,7 +886,7 @@ static int _armci_puts(void *src_ptr,
 }
 
 
-int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/ 
+int PARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/ 
 		int src_stride_arr[], /* array of strides at source */
 		void* dst_ptr,        /* pointer to 1st segment at destination*/
 		int dst_stride_arr[], /* array of strides at destination */
@@ -892,22 +902,22 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #else
   armci_hdl_t nbh;
   ARMCI_INIT_HANDLE(&nbh);
-  ARMCI_NbPutS(src_ptr,src_stride_arr,dst_ptr,dst_stride_arr,seg_count,stride_levels,proc,&nbh);
-  ARMCI_Wait(&nbh);
+  PARMCI_NbPutS(src_ptr,src_stride_arr,dst_ptr,dst_stride_arr,seg_count,stride_levels,proc,&nbh);
+  PARMCI_Wait(&nbh);
   return 0;
 #endif
 }
 
 
-int ARMCI_PutS_flag_dir(void *src_ptr,   int src_stride_arr[],
+int PARMCI_PutS_flag_dir(void *src_ptr,   int src_stride_arr[],
 			void* dst_ptr,   int dst_stride_arr[],
 			int seg_count[], int stride_levels,
 			int *flag, int val, int proc) {
-  return ARMCI_PutS_flag(src_ptr, src_stride_arr,dst_ptr,dst_stride_arr,
+  return PARMCI_PutS_flag(src_ptr, src_stride_arr,dst_ptr,dst_stride_arr,
 			 seg_count, stride_levels, flag, val, proc);
 }
 
-int ARMCI_PutS_flag(void *src_ptr,     int src_stride_arr[],
+int PARMCI_PutS_flag(void *src_ptr,     int src_stride_arr[],
 		    void* dst_ptr,     int dst_stride_arr[],
 		    int seg_count[],   int stride_levels,   
 		    int *flag,  int val, int proc) {
@@ -919,7 +929,7 @@ int ARMCI_PutS_flag(void *src_ptr,     int src_stride_arr[],
 
 
 
-int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/ 
+int PARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/ 
 		int src_stride_arr[],   /* array of strides at source */
 		void* dst_ptr,          /* 1st segment at destination*/
 		int dst_stride_arr[],   /* array of strides at destination */
@@ -939,8 +949,8 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
   ARMCI_PROFILE_START_STRIDED(seg_count, stride_levels, proc, ARMCI_PROF_GETS);
   ORDER(GET,proc);
   ARMCI_INIT_HANDLE(&nbh);
-  ARMCI_NbGetS(src_ptr,src_stride_arr,dst_ptr,dst_stride_arr,seg_count,stride_levels,proc,&nbh);
-  ARMCI_Wait(&nbh);
+  PARMCI_NbGetS(src_ptr,src_stride_arr,dst_ptr,dst_stride_arr,seg_count,stride_levels,proc,&nbh);
+  PARMCI_Wait(&nbh);
   ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_GETS);
 #ifdef GA_USE_VAMPIR
   if (armci_me != proc)
@@ -1047,7 +1057,7 @@ static int _armci_accs( int  optype,    void *scale,
 		    dt, oper1, oper2,
 		    &cb_wait, 1);
 
-  if(!nbh) ARMCI_Wait(&tmp_hdl);
+  if(!nbh) PARMCI_Wait(&tmp_hdl);
 #elif ARMCIX
   if(!nbh)
     ARMCIX_AccS (optype, scale, src_ptr, src_stride_arr, dst_ptr,
@@ -1086,7 +1096,7 @@ static int _armci_accs( int  optype,    void *scale,
 
 
 
-int ARMCI_AccS( int  optype,            /* operation */
+int PARMCI_AccS( int  optype,            /* operation */
                 void *scale,            /* scale factor x += scale*y */
                 void *src_ptr,          /* pointer to 1st segment at source*/ 
 		int src_stride_arr[],   /* array of strides at source */
@@ -1103,26 +1113,26 @@ int ARMCI_AccS( int  optype,            /* operation */
 
 
 
-int ARMCI_Put(void *src, void* dst, int bytes, int proc) {
+int PARMCI_Put(void *src, void* dst, int bytes, int proc) {
   int rc=0;
   ARMCI_PROFILE_START_STRIDED(&bytes, 0, proc, ARMCI_PROF_PUT);
-  rc = ARMCI_PutS(src, NULL, dst, NULL, &bytes, 0, proc);
+  rc = PARMCI_PutS(src, NULL, dst, NULL, &bytes, 0, proc);
   ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_PUT);
   return rc;
 }
 
-int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc) {
-  return  ARMCI_PutS_flag(src, NULL, dst, NULL, &bytes, 0, f, v, proc);
+int PARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc) {
+  return  PARMCI_PutS_flag(src, NULL, dst, NULL, &bytes, 0, f, v, proc);
 }
 
-int ARMCI_Get(void *src, void* dst, int bytes, int proc) {
+int PARMCI_Get(void *src, void* dst, int bytes, int proc) {
   int rc=0;
   ARMCI_PROFILE_START_STRIDED(&bytes, 0, proc, ARMCI_PROF_GET);
   
 #ifdef __crayx1
   memcpy(dst,src,bytes);   
 #else
-  rc = ARMCI_GetS(src, NULL, dst, NULL, &bytes, 0, proc);
+  rc = PARMCI_GetS(src, NULL, dst, NULL, &bytes, 0, proc);
 #endif
   
   ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_GET);
@@ -1296,7 +1306,7 @@ int armci_read_strided_inc(stride_itr_t sitr, const char *buf,int bytes, int *se
   if(*seg_off) {
     char *sptr = (char*) &buf[off];
     char *dptr = ((char*)armci_stride_itr_seg_ptr(sitr))+*seg_off;
-    int size = MIN(seg_size-*seg_off,bytes);
+    int size = ARMCI_MIN(seg_size-*seg_off,bytes);
     /*     printf("%d:%s(): seg_size=%d,seg_off=%d,bytes=%d\n",armci_me,__FUNCTION__,seg_size,*seg_off,bytes); */
     dassert(1,armci_stride_itr_has_more(sitr));
     armci_copy(sptr,dptr,size);
@@ -1306,7 +1316,7 @@ int armci_read_strided_inc(stride_itr_t sitr, const char *buf,int bytes, int *se
     }
   }
   while(bytes>off) {
-    int size = MIN(seg_size, bytes-off);
+    int size = ARMCI_MIN(seg_size, bytes-off);
     dassert(1,armci_stride_itr_has_more(sitr));
     armci_copy(&buf[off],armci_stride_itr_seg_ptr(sitr),size);
     if(size==seg_size) armci_stride_itr_next(sitr);
@@ -1327,7 +1337,7 @@ int armci_read_strided_inc(stride_itr_t sitr, const char *buf,int bytes, int *se
 
 /*\Non-Blocking API
   \*/
-  int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/ 
+  int PARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/ 
 		    int src_stride_arr[], /* array of strides at source */
 		    void* dst_ptr,        /* pointer to 1st segment at destination*/
 		    int dst_stride_arr[], /* array of strides at destination */
@@ -1343,7 +1353,7 @@ int armci_read_strided_inc(stride_itr_t sitr, const char *buf,int bytes, int *se
 		     seg_count,stride_levels,proc,(armci_ihdl_t)usr_hdl,NULL);
 }
 
-int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/ 
+int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/ 
 		  int src_stride_arr[],   /* array of strides at source */
 		  void* dst_ptr,          /* 1st segment at destination*/
 		  int dst_stride_arr[],   /* array of strides at destination */
@@ -1412,7 +1422,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 # error "armci_nb_wait not defined!"
 #endif
   if(stride_levels==0){
-/*     ARMCI_NbGet(src_ptr,dst_ptr,count[0],proc,usr_hdl); */
+/*     PARMCI_NbGet(src_ptr,dst_ptr,count[0],proc,usr_hdl); */
     INIT_NB_HANDLE(nb_handle,GET,proc);
     ARMCI_NB_GET(src_ptr, dst_ptr, count[0], proc, &nb_handle->cmpl_info);
     POSTPROCESS_STRIDED(tmp_count);
@@ -1536,7 +1546,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 }
 
 
-int ARMCI_NbAccS( int  optype,            /* operation */
+int PARMCI_NbAccS( int  optype,            /* operation */
 		  void *scale,            /* scale factor x += scale*y */
 		  void *src_ptr,          /* pointer to 1st segment at source*/ 
 		  int src_stride_arr[],   /* array of strides at source */
@@ -1569,19 +1579,19 @@ void set_nbhandle(armci_ihdl_t *nbh, armci_hdl_t *nb_handle, int op,
 }
 
 
-int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle) {
+int PARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle) {
   int rc;
   ARMCI_PROFILE_START_STRIDED(&bytes, 0, proc, ARMCI_PROF_NBPUT);
-  rc = ARMCI_NbPutS(src,NULL,dst,NULL,&bytes,0,proc,uhandle);
+  rc = PARMCI_NbPutS(src,NULL,dst,NULL,&bytes,0,proc,uhandle);
   ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_NBPUT);
   return(rc);
 }
 
 
-int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle) {
+int PARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle) {
   int rc;
   ARMCI_PROFILE_START_STRIDED(&bytes, 0, proc, ARMCI_PROF_NBGET);
-  rc=ARMCI_NbGetS(src,NULL,dst,NULL,&bytes,0,proc,uhandle);
+  rc=PARMCI_NbGetS(src,NULL,dst,NULL,&bytes,0,proc,uhandle);
   ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_NBGET);
   return(rc);
 }
@@ -1590,7 +1600,9 @@ int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle) 
 static void _armci_op_value(int op, void *src, void *dst, int proc, 
 			    int bytes, armci_hdl_t *usr_hdl) {
   int rc=0,pv=0;
+#ifdef LAPI
   int armci_th_idx = ARMCI_THREAD_IDX;
+#endif
   armci_ihdl_t nbh = (armci_ihdl_t)usr_hdl;
 
   if(!nbh) {
@@ -1622,8 +1634,8 @@ static void _armci_op_value(int op, void *src, void *dst, int proc,
     SET_COUNTER(ack_cntr[armci_th_idx], 1);
 #  endif
 #  if defined(BGML) || defined(ARMCIX)
-    if(usr_hdl) ARMCI_NbPut(src,dst,bytes,proc,usr_hdl);
-    else ARMCI_Put(src,dst,bytes,proc);
+    if(usr_hdl) PARMCI_NbPut(src,dst,bytes,proc,usr_hdl);
+    else PARMCI_Put(src,dst,bytes,proc);
 #  else
     armci_put(src, dst, bytes, proc);
 #  endif
@@ -1633,8 +1645,8 @@ static void _armci_op_value(int op, void *src, void *dst, int proc,
     SET_COUNTER(get_cntr[armci_th_idx], 1);
 #  endif
 #  if defined(BGML) || defined(ARMCIX)
-    if(usr_hdl) ARMCI_NbGet(src,dst,bytes,proc,usr_hdl);
-    else ARMCI_Get(src,dst,bytes,proc);
+    if(usr_hdl) PARMCI_NbGet(src,dst,bytes,proc,usr_hdl);
+    else PARMCI_Get(src,dst,bytes,proc);
 #  else
     armci_get(src, dst, bytes, proc);
 #  endif
@@ -1683,28 +1695,28 @@ static void _armci_nb_rem_value(int op, void *src, void *dst, int proc,
 /** 
  * Register-Originated Put.
  */
-int ARMCI_PutValueInt(int src, void *dst, int proc) {
+int PARMCI_PutValueInt(int src, void *dst, int proc) {
   CHK_ERR(dst, proc);
   if( SAMECLUSNODE(proc) ) *(int *)dst = src;
   else _armci_rem_value(PUT, &src, dst, proc, sizeof(int));
   return 0;
 }
 
-int ARMCI_PutValueLong(long src, void *dst, int proc) {
+int PARMCI_PutValueLong(long src, void *dst, int proc) {
   CHK_ERR(dst, proc);
   if( SAMECLUSNODE(proc) ) *(long *)dst = src;
   else _armci_rem_value(PUT, &src, dst, proc, sizeof(long));
   return 0;
 }
 
-int ARMCI_PutValueFloat(float src, void *dst, int proc) {
+int PARMCI_PutValueFloat(float src, void *dst, int proc) {
   CHK_ERR(dst, proc);
   if( SAMECLUSNODE(proc) ) *(float *)dst = src;
   else _armci_rem_value(PUT, &src, dst, proc, sizeof(float));
   return 0;
 }
 
-int ARMCI_PutValueDouble(double src, void *dst, int proc) {
+int PARMCI_PutValueDouble(double src, void *dst, int proc) {
   CHK_ERR(dst, proc);
   if( SAMECLUSNODE(proc) ) *(double *)dst = src;
   else _armci_rem_value(PUT, &src, dst, proc, sizeof(double));
@@ -1746,28 +1758,28 @@ int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t* usr_hdl
 /** 
  * Register-Originated Get.
  */
-int ARMCI_GetValueInt(void *src, int proc) {
+int PARMCI_GetValueInt(void *src, int proc) {
   int dst;
   if( SAMECLUSNODE(proc) ) return *(int *)src;
   else _armci_rem_value(GET, src, &dst, proc, sizeof(int));
   return dst;
 }
 
-long ARMCI_GetValueLong(void *src, int proc) {
+long PARMCI_GetValueLong(void *src, int proc) {
   long dst;
   if( SAMECLUSNODE(proc) ) return *(long *)src;
   else _armci_rem_value(GET, src, &dst, proc, sizeof(long));
   return dst;
 }
 
-float ARMCI_GetValueFloat(void *src, int proc) {
+float PARMCI_GetValueFloat(void *src, int proc) {
   float dst;
   if( SAMECLUSNODE(proc) ) return *(float *)src;
   else _armci_rem_value(GET, src, &dst, proc, sizeof(float));
   return dst;
 }
 
-double ARMCI_GetValueDouble(void *src, int proc) {
+double PARMCI_GetValueDouble(void *src, int proc) {
   double dst;
   if( SAMECLUSNODE(proc) ) return *(double *)src;
   else _armci_rem_value(GET, src, &dst, proc, sizeof(double));

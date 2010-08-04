@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c $Id: ghosts.F,v 1.1.2.1 2007-05-07 19:02:02 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
@@ -36,7 +39,7 @@ c#define TEST_5
 #include "global.fh"
 #include "testutil.fh"
       integer heap, stack, fudge, ma_heap, me, nproc
-      integer inode,nnodes,proclist(100),i,j,nprocs
+      integer inode,proclist(100),i,j,nprocs
       integer proc_group(0:100), my_proc_group, grp, num_grp
       integer midnode, splitnode, color, key
       logical status
@@ -44,12 +47,7 @@ c#define TEST_5
 c     
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Initialize GA
 c
@@ -154,15 +152,9 @@ c
 c
       write(6,*) 'Calling ga_terminate'
       call ga_terminate()
-c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      write(6,*) 'Calling mpi_finalize'
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
 c
       stop
       end
@@ -172,7 +164,6 @@ c
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-#include "tcgmsg.fh"
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM, nwidth, MAXPROC, nloop
       parameter (nmax = 1000, DIM = 2, nwidth = 2, MAXPROC = 2000)

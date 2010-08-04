@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c
 c                                   NOTICE
 c
@@ -1094,7 +1097,7 @@ c
         do i = 1, mcbins
           r = cl_lower + (dble(i)-0.5d00)*mc_step
           write(2,200) r, rdist(i), rdist2(i),sigr(i),sigr2(i)
-  200     format(f12.4,'	',f16.8,'	',f16.8,'       ',
+  200     format(f12.4,'    ',f16.8,'    ',f16.8,'       ',
      +           f16.8,'       'f16.8)
         end do
         close(2)

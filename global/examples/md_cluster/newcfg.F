@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
       subroutine newcfg(natom1,natom2,itask,rcluster,rcut)
       implicit none 
       integer natom1, natom2, itask

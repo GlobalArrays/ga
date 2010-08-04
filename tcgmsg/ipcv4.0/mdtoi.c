@@ -1,22 +1,22 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/mdtoi.c,v 1.4 1995-02-24 02:17:24 d3h325 Exp $ */
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
 
 #include "sndrcv.h"
 
-/*
-  These routines use C's knowledge of the sizes of data types
-  to generate a portable mechanism for FORTRAN to translate
-  between bytes, integers and doubles. Note that we assume that
-  FORTRAN integers are the same size as C longs.
+/**
+ * Return the minimum no. of integers which will hold n DoublePrecisions.
+ *
+ * These routines use C's knowledge of the sizes of data types
+ * to generate a portable mechanism for FORTRAN to translate
+ * between bytes, integers and DoublePrecisions. Note that we assume that
+ * FORTRAN integers are the same size as C Integers.
 */
 
-long MDTOI_(n)
-     long *n;
-/*
-  Return the minimum no. of integers which will hold n doubles.
-*/
+Integer MDTOI_(Integer *n)
 {
-  if (*n < 0)
-    Error("MDTOI_: negative argument",*n);
-
-   return (long) ( (MDTOB_(n) + sizeof(long) - 1) / sizeof(long) );
+    if (*n < 0) {
+        Error("MDTOI_: negative argument",*n);
+    }
+    return (Integer) ( (MDTOB_(n) + sizeof(Integer) - 1) / sizeof(Integer) );
 }

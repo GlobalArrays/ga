@@ -1,30 +1,16 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/xdrstuff.c,v 1.5 2004-04-01 02:04:57 manoj Exp $ */
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
 
-#ifdef GOTXDR
+#if HAVE_RPC_XDR_H
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-#ifdef CRAY
-extern bool_t xdr_char();
-extern char *malloc();
-#define NULL 0
-#endif
+#include "sockets.h"
 
-#ifdef SEQUENT
+#ifndef HAVE_XDR_CHAR
 static bool_t xdr_char();  /* below from sun distribution tape */
-#define NULL 0
-#endif
-
-#ifdef HPUX
-#define NULL 0
-#endif
-
-#if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX)|| \
-    defined(AIX) || defined(KSR) || defined(DECOSF)
-extern void *malloc();
-#else
-extern char *malloc();
 #endif
 
 #define XDR_BUF_LEN 4096        /* Size of XDR buffer in bytes */
@@ -41,376 +27,383 @@ static int xdr_buf_allocated = 0; /* =1 if buffers allocated, 0 otherwise */
 
 extern void Error();
 
+/**
+ * Call at start to allocate the XDR buffers.
+ */
 void CreateXdrBuf()
-/*
-  Call at start to allocate the XDR buffers
-*/
 {
-  if (!xdr_buf_allocated) {
+    if (!xdr_buf_allocated) {
 
-    /* Malloc the buffer space */
-  
-    if ( (xdrbuf_decode = malloc((unsigned) XDR_BUF_LEN)) == (char *) NULL)
-      Error("CreateXdrBuf: malloc of xdrbuf_decode failed",
-            (long) XDR_BUF_LEN);
+        /* Malloc the buffer space */
 
-    if ( (xdrbuf_encode = malloc((unsigned) XDR_BUF_LEN)) == (char *) NULL)
-      Error("CreateXdrBuf: malloc of xdrbuf_encode failed",
-            (long) XDR_BUF_LEN);
+        if ( (xdrbuf_decode = malloc((unsigned) XDR_BUF_LEN)) == (char *) NULL) {
+            Error("CreateXdrBuf: malloc of xdrbuf_decode failed",
+                    (long) XDR_BUF_LEN);
+        }
 
-    /* Associate the xdr memory streams with the buffers */
+        if ( (xdrbuf_encode = malloc((unsigned) XDR_BUF_LEN)) == (char *) NULL) {
+            Error("CreateXdrBuf: malloc of xdrbuf_encode failed",
+                    (long) XDR_BUF_LEN);
+        }
 
-    xdrmem_create(&xdr_decode, xdrbuf_decode, XDR_BUF_LEN, XDR_DECODE);
+        /* Associate the xdr memory streams with the buffers */
 
-    xdrmem_create(&xdr_encode, xdrbuf_encode, XDR_BUF_LEN, XDR_ENCODE);
+        xdrmem_create(&xdr_decode, xdrbuf_decode, XDR_BUF_LEN, XDR_DECODE);
 
-    xdr_buf_allocated = 1;
-  }
+        xdrmem_create(&xdr_encode, xdrbuf_encode, XDR_BUF_LEN, XDR_ENCODE);
+
+        xdr_buf_allocated = 1;
+    }
 }
 
+
+/**
+ * Call to free the xdr buffers
+ */
 void DestroyXdrBuf()
-/*
-  Call to free the xdr buffers
-*/
 {
-  if (xdr_buf_allocated) {
+    if (xdr_buf_allocated) {
 
-    /* Destroy the buffers and free the space */
+        /* Destroy the buffers and free the space */
 
-    xdr_destroy(&xdr_encode);
-    xdr_destroy(&xdr_decode);
-    (void) free(xdrbuf_encode);
-    (void) free(xdrbuf_decode);
+        xdr_destroy(&xdr_encode);
+        xdr_destroy(&xdr_decode);
+        (void) free(xdrbuf_encode);
+        (void) free(xdrbuf_decode);
 
-    xdr_buf_allocated = 0;
-  }
+        xdr_buf_allocated = 0;
+    }
 }
 
-int WriteXdrDouble(sock, x, n_double)
-    int sock;
-    double *x;
-    long n_double;
-/*
-  Write double x[n_double] to the socket translating to XDR representation.
 
-  Returned is the number of bytes written to the socket.
-
-  All errors are treated as fatal.
-*/
+/**
+ * Write double x[n_double] to the socket translating to XDR representation.
+ * Returned is the number of bytes written to the socket.
+ * All errors are treated as fatal.
+ */
+int WriteXdrDouble(int sock, double *x, long n_double)
 {
-  int nd_per_buf = (XDR_BUF_LEN-4)/XDR_DOUBLE_LEN;
-                                              /* No. of XDR doubles per buf */
-  int status, nb=0;
-  u_int len;
-  long lenb;
+    int nd_per_buf = (XDR_BUF_LEN-4)/XDR_DOUBLE_LEN;
+    /* No. of XDR doubles per buf */
+    int status, nb=0;
+    u_int len;
+    long lenb;
 
-  if (!xdr_buf_allocated)
-    CreateXdrBuf();
+    if (!xdr_buf_allocated) {
+        CreateXdrBuf();
+    }
 
-  /* Loop thru buffer loads */
-    
-  while (n_double > 0) {
+    /* Loop thru buffer loads */
 
-    len = (n_double > nd_per_buf) ? nd_per_buf : n_double;
+    while (n_double > 0) {
 
-    /* Position the xdr buffer to the beginning */
+        len = (n_double > nd_per_buf) ? nd_per_buf : n_double;
 
-    if (!xdr_setpos(&xdr_encode, (u_int) 0))
-      Error("WriteXdrDouble: xdr_setpos failed", (long) -1);
+        /* Position the xdr buffer to the beginning */
 
-    /* Translate the buffer and then write it to the socket */
+        if (!xdr_setpos(&xdr_encode, (u_int) 0)) {
+            Error("WriteXdrDouble: xdr_setpos failed", (long) -1);
+        }
 
-    if (!xdr_array(&xdr_encode, (char **) &x, &len, (u_int) XDR_BUF_LEN,
-                   (u_int) sizeof(double), xdr_double))
-       Error("WriteXdrDouble: xdr_array failed", (long) -1);
+        /* Translate the buffer and then write it to the socket */
 
-    lenb = xdr_getpos(&xdr_encode);
+        if (!xdr_array(&xdr_encode, (char **) &x, &len, (u_int) XDR_BUF_LEN,
+                    (u_int) sizeof(double), (xdrproc_t)xdr_double)) {
+            Error("WriteXdrDouble: xdr_array failed", (long) -1);
+        }
 
-    if ((status = WriteToSocket(sock, xdrbuf_encode, lenb)) != lenb)
-      Error("WriteXdrDouble: WriteToSocket failed", (long) status);
+        lenb = xdr_getpos(&xdr_encode);
 
-    nb += lenb;
-    n_double -= len;
-    x += len;
-  }
+        if ((status = WriteToSocket(sock, xdrbuf_encode, lenb)) != lenb) {
+            Error("WriteXdrDouble: WriteToSocket failed", (long) status);
+        }
 
-  return nb;
+        nb += lenb;
+        n_double -= len;
+        x += len;
+    }
+
+    return nb;
 }
 
-int ReadXdrDouble(sock, x, n_double)
-    int sock;
-    double *x;
-    long n_double;
-/*
-  Read double x[n_double] from the socket translating from XDR representation.
 
-  Returned is the number of bytes read from the socket.
-
-  All errors are treated as fatal.
-*/
+/**
+ * Read double x[n_double] from the socket translating from XDR representation.
+ * Returned is the number of bytes read from the socket.
+ * All errors are treated as fatal.
+ */
+int ReadXdrDouble(int sock, double *x, long n_double)
 {
-  int nd_per_buf = (XDR_BUF_LEN-4)/XDR_DOUBLE_LEN; 
-                                              /* No. of XDR doubles per buf */
-  int status, nb=0;
-  u_int len;
-  long lenb;
+    int nd_per_buf = (XDR_BUF_LEN-4)/XDR_DOUBLE_LEN; 
+    /* No. of XDR doubles per buf */
+    int status, nb=0;
+    u_int len;
+    long lenb;
 
-  if (!xdr_buf_allocated)
-    CreateXdrBuf();
+    if (!xdr_buf_allocated) {
+        CreateXdrBuf();
+    }
 
-  /* Loop thru buffer loads */
-    
-  while (n_double > 0) {
+    /* Loop thru buffer loads */
 
-    len = (n_double > nd_per_buf) ? nd_per_buf : n_double;
-    lenb = 4 + len * XDR_DOUBLE_LEN;
+    while (n_double > 0) {
 
-    /* Position the xdr buffer to the beginning */
+        len = (n_double > nd_per_buf) ? nd_per_buf : n_double;
+        lenb = 4 + len * XDR_DOUBLE_LEN;
 
-    if (!xdr_setpos(&xdr_decode, (u_int) 0))
-      Error("ReadXdrDouble: xdr_setpos failed", (long) -1);
+        /* Position the xdr buffer to the beginning */
 
-    /* Read from the socket and then translate the buffer */
+        if (!xdr_setpos(&xdr_decode, (u_int) 0)) {
+            Error("ReadXdrDouble: xdr_setpos failed", (long) -1);
+        }
 
-    if ((status = ReadFromSocket(sock, xdrbuf_decode, lenb)) != lenb)
-      Error("ReadXdrDouble: ReadFromSocket failed", (long) status);
+        /* Read from the socket and then translate the buffer */
 
-    if (!xdr_array(&xdr_decode, (char **) &x, &len, (u_int) XDR_BUF_LEN, 
-                   (u_int) sizeof(double), xdr_double))
-       Error("ReadXdrDouble: xdr_array failed", (long) -1);
+        if ((status = ReadFromSocket(sock, xdrbuf_decode, lenb)) != lenb) {
+            Error("ReadXdrDouble: ReadFromSocket failed", (long) status);
+        }
 
-    nb += lenb;
-    n_double -= len;
-    x += len;
-  }
+        if (!xdr_array(&xdr_decode, (char **) &x, &len, (u_int) XDR_BUF_LEN, 
+                    (u_int) sizeof(double), (xdrproc_t)xdr_double)) {
+            Error("ReadXdrDouble: xdr_array failed", (long) -1);
+        }
 
-  return nb;
+        nb += lenb;
+        n_double -= len;
+        x += len;
+    }
+
+    return nb;
 }
 
-int WriteXdrLong(sock, x, n_long)
-    int sock;
-    long *x;
-    long n_long;
-/*
-  Write long x[n_long] to the socket translating to XDR representation.
 
-  Returned is the number of bytes written to the socket.
-
-  All errors are treated as fatal.
-*/
+/**
+ * Write long x[n_long] to the socket translating to XDR representation.
+ * Returned is the number of bytes written to the socket.
+ * All errors are treated as fatal.
+ */
+int WriteXdrLong(int sock, long *x, long n_long)
 {
-  int nd_per_buf = (XDR_BUF_LEN-4)/XDR_LONG_LEN;
-                                              /* No. of XDR longs per buf */
-  int status, nb=0;
-  u_int len;
-  long lenb;
+    int nd_per_buf = (XDR_BUF_LEN-4)/XDR_LONG_LEN;
+    /* No. of XDR longs per buf */
+    int status, nb=0;
+    u_int len;
+    long lenb;
 
-  if (!xdr_buf_allocated)
-    CreateXdrBuf();
+    if (!xdr_buf_allocated) {
+        CreateXdrBuf();
+    }
 
-  /* Loop thru buffer loads */
-    
-  while (n_long > 0) {
+    /* Loop thru buffer loads */
 
-    len = (n_long > nd_per_buf) ? nd_per_buf : n_long;
+    while (n_long > 0) {
 
-    /* Position the xdr buffer to the beginning */
+        len = (n_long > nd_per_buf) ? nd_per_buf : n_long;
 
-    if (!xdr_setpos(&xdr_encode, (u_int) 0))
-      Error("WriteXdrLong: xdr_setpos failed", (long) -1);
+        /* Position the xdr buffer to the beginning */
 
-    /* Translate the buffer and then write it to the socket */
+        if (!xdr_setpos(&xdr_encode, (u_int) 0)) {
+            Error("WriteXdrLong: xdr_setpos failed", (long) -1);
+        }
 
-    if (!xdr_array(&xdr_encode, (char **) &x, &len, (u_int) XDR_BUF_LEN,
-                   (u_int) sizeof(long), xdr_long))
-       Error("WriteXdrLong: xdr_array failed", (long) -1);
+        /* Translate the buffer and then write it to the socket */
 
-    lenb = xdr_getpos(&xdr_encode);
+        if (!xdr_array(&xdr_encode, (char **) &x, &len, (u_int) XDR_BUF_LEN,
+                    (u_int) sizeof(long), (xdrproc_t)xdr_long)) {
+            Error("WriteXdrLong: xdr_array failed", (long) -1);
+        }
 
-    if ((status = WriteToSocket(sock, xdrbuf_encode, lenb)) != lenb)
-      Error("WriteXdrLong: WriteToSocket failed", (long) status);
+        lenb = xdr_getpos(&xdr_encode);
 
-    nb += lenb;
-    n_long -= len;
-    x += len;
-  }
+        if ((status = WriteToSocket(sock, xdrbuf_encode, lenb)) != lenb) {
+            Error("WriteXdrLong: WriteToSocket failed", (long) status);
+        }
 
-  return nb;
+        nb += lenb;
+        n_long -= len;
+        x += len;
+    }
+
+    return nb;
 }
 
-int ReadXdrLong(sock, x, n_long)
-    int sock;
-    long *x;
-    long n_long;
-/*
-  Read long x[n_long] from the socket translating from XDR representation.
 
-  Returned is the number of bytes read from the socket.
-
-  All errors are treated as fatal.
-*/
+/**
+ * Read long x[n_long] from the socket translating from XDR representation.
+ * Returned is the number of bytes read from the socket.
+ * All errors are treated as fatal.
+ */
+int ReadXdrLong(int sock, long *x, long n_long)
 {
-  int nd_per_buf = (XDR_BUF_LEN-4)/XDR_LONG_LEN; 
-                                              /* No. of XDR longs per buf */
-  int status, nb=0;
-  u_int len;
-  long lenb;
+    int nd_per_buf = (XDR_BUF_LEN-4)/XDR_LONG_LEN; 
+    /* No. of XDR longs per buf */
+    int status, nb=0;
+    u_int len;
+    long lenb;
 
-  if (!xdr_buf_allocated)
-    CreateXdrBuf();
+    if (!xdr_buf_allocated) {
+        CreateXdrBuf();
+    }
 
-  /* Loop thru buffer loads */
-    
-  while (n_long > 0) {
+    /* Loop thru buffer loads */
 
-    len = (n_long > nd_per_buf) ? nd_per_buf : n_long;
-    lenb = 4 + len * XDR_LONG_LEN;
+    while (n_long > 0) {
 
-    /* Position the xdr buffer to the beginning */
+        len = (n_long > nd_per_buf) ? nd_per_buf : n_long;
+        lenb = 4 + len * XDR_LONG_LEN;
 
-    if (!xdr_setpos(&xdr_decode, (u_int) 0))
-      Error("ReadXdrLong: xdr_setpos failed", (long) -1);
+        /* Position the xdr buffer to the beginning */
 
-    /* Read from the socket and then translate the buffer */
+        if (!xdr_setpos(&xdr_decode, (u_int) 0)) {
+            Error("ReadXdrLong: xdr_setpos failed", (long) -1);
+        }
 
-    if ((status = ReadFromSocket(sock, xdrbuf_decode, lenb)) != lenb)
-      Error("ReadXdrLong: ReadFromSocket failed", (long) status);
+        /* Read from the socket and then translate the buffer */
 
-    if (!xdr_array(&xdr_decode, (char **) &x, &len, (u_int) XDR_BUF_LEN, 
-                   (u_int) sizeof(long), xdr_long))
-       Error("ReadXdrLong: xdr_array failed", (long) -1);
+        if ((status = ReadFromSocket(sock, xdrbuf_decode, lenb)) != lenb) {
+            Error("ReadXdrLong: ReadFromSocket failed", (long) status);
+        }
 
-    nb += lenb;
-    n_long -= len;
-    x += len;
-  }
+        if (!xdr_array(&xdr_decode, (char **) &x, &len, (u_int) XDR_BUF_LEN, 
+                    (u_int) sizeof(long), (xdrproc_t)xdr_long)) {
+            Error("ReadXdrLong: xdr_array failed", (long) -1);
+        }
 
-  return nb;
+        nb += lenb;
+        n_long -= len;
+        x += len;
+    }
+
+    return nb;
 }
 
-int WriteXdrChar(sock, x, n_char)
-    int sock;
-    char *x;
-    long n_char;
-/*
-  Write char x[n_char] to the socket translating to XDR representation.
 
-  Returned is the number of bytes written to the socket.
-
-  All errors are treated as fatal.
-*/
+/**
+ * Write char x[n_char] to the socket translating to XDR representation.
+ * Returned is the number of bytes written to the socket.
+ * All errors are treated as fatal.
+ */
+int WriteXdrChar(int sock, char *x, long n_char)
 {
-  int nc_per_buf = (XDR_BUF_LEN-4)/XDR_CHAR_LEN;
-                                              /* No. of XDR chars per buf */
-  int status, nb=0;
-  u_int len;
-  long lenb;
+    int nc_per_buf = (XDR_BUF_LEN-4)/XDR_CHAR_LEN;
+    /* No. of XDR chars per buf */
+    int status, nb=0;
+    u_int len;
+    long lenb;
 
-  if (!xdr_buf_allocated)
-    CreateXdrBuf();
+    if (!xdr_buf_allocated) {
+        CreateXdrBuf();
+    }
 
-  /* Loop thru buffer loads */
-    
-  while (n_char > 0) {
+    /* Loop thru buffer loads */
 
-    len = (n_char > nc_per_buf) ? nc_per_buf : n_char;
+    while (n_char > 0) {
 
-    /* Position the xdr buffer to the beginning */
+        len = (n_char > nc_per_buf) ? nc_per_buf : n_char;
 
-    if (!xdr_setpos(&xdr_encode, (u_int) 0))
-      Error("WriteXdrChar: xdr_setpos failed", (long) -1);
+        /* Position the xdr buffer to the beginning */
 
-    /* Translate the buffer and then write it to the socket */
+        if (!xdr_setpos(&xdr_encode, (u_int) 0)) {
+            Error("WriteXdrChar: xdr_setpos failed", (long) -1);
+        }
 
-    if (!xdr_array(&xdr_encode, (char **) &x, &len, (u_int) XDR_BUF_LEN,
-                   (u_int) sizeof(char), xdr_char))
-       Error("WriteXdrChar: xdr_array failed", (long) -1);
+        /* Translate the buffer and then write it to the socket */
 
-    lenb = xdr_getpos(&xdr_encode);
+        if (!xdr_array(&xdr_encode, (char **) &x, &len, (u_int) XDR_BUF_LEN,
+                    (u_int) sizeof(char), (xdrproc_t)xdr_char)) {
+            Error("WriteXdrChar: xdr_array failed", (long) -1);
+        }
 
-    if ((status = WriteToSocket(sock, xdrbuf_encode, lenb)) != lenb)
-      Error("WriteXdrChar: WriteToSocket failed", (long) status);
+        lenb = xdr_getpos(&xdr_encode);
 
-    nb += lenb;
-    n_char -= len;
-    x += len;
-  }
+        if ((status = WriteToSocket(sock, xdrbuf_encode, lenb)) != lenb) {
+            Error("WriteXdrChar: WriteToSocket failed", (long) status);
+        }
 
-  return nb;
+        nb += lenb;
+        n_char -= len;
+        x += len;
+    }
+
+    return nb;
 }
 
-int ReadXdrChar(sock, x, n_char)
-    int sock;
-    char *x;
-    long n_char;
-/*
-  Read char x[n_char] from the socket translating from XDR representation.
 
-  Returned is the number of bytes read from the socket.
-
-  All errors are treated as fatal.
-*/
+/**
+ * Read char x[n_char] from the socket translating from XDR representation.
+ * Returned is the number of bytes read from the socket.
+ * All errors are treated as fatal.
+ */
+int ReadXdrChar(int sock, char *x, long n_char)
 {
-  int nc_per_buf = (XDR_BUF_LEN-4)/XDR_CHAR_LEN; 
-                                              /* No. of XDR chars per buf */
-  int status, nb=0;
-  u_int len;
-  long lenb;
+    int nc_per_buf = (XDR_BUF_LEN-4)/XDR_CHAR_LEN; 
+    /* No. of XDR chars per buf */
+    int status, nb=0;
+    u_int len;
+    long lenb;
 
-  if (!xdr_buf_allocated)
-    CreateXdrBuf();
+    if (!xdr_buf_allocated) {
+        CreateXdrBuf();
+    }
 
-  /* Loop thru buffer loads */
-    
-  while (n_char > 0) {
+    /* Loop thru buffer loads */
 
-    len = (n_char > nc_per_buf) ? nc_per_buf : n_char;
-    lenb = 4 + len * XDR_CHAR_LEN;
+    while (n_char > 0) {
 
-    /* Position the xdr buffer to the beginning */
+        len = (n_char > nc_per_buf) ? nc_per_buf : n_char;
+        lenb = 4 + len * XDR_CHAR_LEN;
 
-    if (!xdr_setpos(&xdr_decode, (u_int) 0))
-      Error("ReadXdrChar: xdr_setpos failed", (long) -1);
+        /* Position the xdr buffer to the beginning */
 
-    /* Read from the socket and then translate the buffer */
+        if (!xdr_setpos(&xdr_decode, (u_int) 0)) {
+            Error("ReadXdrChar: xdr_setpos failed", (long) -1);
+        }
 
-    if ((status = ReadFromSocket(sock, xdrbuf_decode, lenb)) != lenb)
-      Error("ReadXdrChar: ReadFromSocket failed", (long) status);
+        /* Read from the socket and then translate the buffer */
 
-    if (!xdr_array(&xdr_decode, (char **) &x, &len, (u_int) XDR_BUF_LEN, 
-                   (u_int) sizeof(char), xdr_char))
-       Error("ReadXdrChar: xdr_array failed", (long) -1);
+        if ((status = ReadFromSocket(sock, xdrbuf_decode, lenb)) != lenb) {
+            Error("ReadXdrChar: ReadFromSocket failed", (long) status);
+        }
 
-    nb += lenb;
-    n_char -= len;
-    x += len;
-  }
+        if (!xdr_array(&xdr_decode, (char **) &x, &len, (u_int) XDR_BUF_LEN, 
+                    (u_int) sizeof(char), (xdrproc_t)xdr_char)) {
+            Error("ReadXdrChar: xdr_array failed", (long) -1);
+        }
 
-  return nb;
+        nb += lenb;
+        n_char -= len;
+        x += len;
+    }
+
+    return nb;
 }
 
-#ifdef SEQUENT
-/*
+
+#ifndef HAVE_XDR_CHAR
+/**
  * XDR a char
  */
-static bool_t xdr_char(xdrs, cp)
-        XDR *xdrs;
-        char *cp;
+static bool_t xdr_char(XDR *xdrs, char *cp)
 {
-        int i;
+    int i;
 
-        i = (*cp);
-        if (!xdr_int(xdrs, &i)) {
-                return (FALSE);
-        }
-        *cp = i;
-        return (TRUE);
+    i = (*cp);
+    if (!xdr_int(xdrs, &i)) {
+        return (FALSE);
+    }
+    *cp = i;
+    return (TRUE);
 }
 #endif
 
-#else
-/* dummy function to make this source file legitimate */
-#include <stdio.h>
-#include <stdlib.h>
-void _dummy_ZefP_() {printf("XDR:Illegal function call\n"); exit(1);}
+
+#else /* HAVE_RPC_XDR_H */
+#if HAVE_STDIO_H
+#   include <stdio.h>
 #endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+/** dummy function to make this source file legitimate */
+void _dummy_ZefP_() {printf("XDR:Illegal function call\n"); exit(1);}
+#endif /* HAVE_RPC_XDR_H */

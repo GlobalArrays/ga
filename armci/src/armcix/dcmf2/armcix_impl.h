@@ -13,11 +13,17 @@
 #ifndef __armci_src_x_armcix_impl_h
 #define __armci_src_x_armcix_impl_h
 
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
 #include "dcmf.h"
-#include "../armcix.h"
+#include "armcix/armcix.h"
 
 /*
 #define BLOCKING_OPERATIONS_REQUIRE_FENCE

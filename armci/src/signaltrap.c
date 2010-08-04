@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: signaltrap.c,v 1.28 2005-05-13 19:06:40 vinod Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
@@ -7,14 +11,26 @@
  \******************************************************/
 
 
-#include <signal.h>
-#include <stdio.h>
-#ifndef WIN32
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <errno.h>
+#if HAVE_SIGNAL_H
+#   include <signal.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_SYS_WAIT_H
+#   include <sys/wait.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+#if HAVE_ERRNO_H
+#   include <errno.h>
 #endif
 #include "armci.h"
 #include "armcip.h"
@@ -34,11 +50,6 @@ extern void Error();
 
 #ifndef SIG_ERR
 #   define SIG_ERR         (SigType (*)())-1
-#endif
-
-#if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
-    defined(AIX) || defined(NEXT)
-#include <sys/wait.h>
 #endif
 
 extern int armci_me;
@@ -300,7 +311,7 @@ SigType SigSegvHandler(sig)
 
   Error("Segmentation Violation error, status=",(int) sig);
 }
-#ifdef DO_CKPT
+#ifdef ENABLE_CHECKPOINT
 static void * signal_arr[100];
 SigType SigSegvActionSa(int sig,siginfo_t *sinfo, void *ptr)
 {
@@ -342,7 +353,7 @@ void RestoreSigSegv()
 /*
   if(AR_caught_sigsegv) SigSegvOrig(SIGSEGV);
 */
-#ifdef DO_CKPT__
+#ifdef ENABLE_CHECKPOINT__
   struct sigaction sa;
   sa.sa_handler = (void *)SigSegvOrig;
   sigemptyset(&sa.sa_mask);
@@ -568,7 +579,7 @@ void ARMCI_ChildrenTrapSignals()
 #endif
      TrapSigFpe();
      TrapSigIll();
-#ifdef DO_CKPT
+#ifdef ENABLE_CHECKPOINT
      TrapSigSegvSigaction();
 #else
      TrapSigSegv(); 
@@ -616,7 +627,7 @@ void ARMCI_ParentRestoreSignals()
      RestoreSigHup();
 }
 
-#ifdef DO_CKPT
+#ifdef ENABLE_CHECKPOINT
 /*user can register a function with 3 parameters, 1st offending address
  * 2nd err number and third file descriptor*/
 void ARMCI_Register_Signal_Handler(int sig, void  (*func)())

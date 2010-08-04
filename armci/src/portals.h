@@ -4,7 +4,7 @@
 
 /* portals header file */
 
-#ifdef XT3
+#ifdef CRAY_XT
 
 #include <portals/portals3.h>
 #include <portals/nal.h>

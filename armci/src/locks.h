@@ -1,7 +1,9 @@
 /* $Id: locks.h,v 1.28.2.4 2006-12-21 23:50:48 manoj Exp $ */
 #ifndef _ARMCI_LOCKS_H_
 #define _ARMCI_LOCKS_H_
-#include <sys/types.h>
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
 #define MAX_LOCKS 1024
 #define NUM_LOCKS MAX_LOCKS 
 
@@ -16,7 +18,7 @@
 #include <elan/elan.h>
 #endif
 
-#if !defined(CYGNUS) && !defined(QUADRICS) && !defined(XT3) || defined(ELAN_ACC)
+#if !defined(CYGNUS) && !defined(QUADRICS) && !defined(CRAY_XT) || defined(ELAN_ACC)
 #include "spinlock.h"
 #endif
 
@@ -154,7 +156,7 @@ extern void armcill_unlock(int m, int proc);
 #elif defined(CRAY_T3E) || defined(QUADRICS) || defined(__crayx1)\
         || defined(CATAMOUNT) || defined(CRAY_SHMEM) || defined(PORTALS)
 #  include <limits.h>
-#  if defined(CRAY) || defined(XT3)
+#  if defined(CRAY) || defined(CRAY_XT)
 #    include <mpp/shmem.h>
 #  endif
 #if defined(DECOSF) || defined(LINUX64) || defined(__crayx1)\

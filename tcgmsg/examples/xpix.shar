@@ -83,8 +83,8 @@ X
 Xstatic  int tail_mode = False; /* By default cycle thru frames
 X				  instead of tailing a file */
 X
-X#define MAX(a,b) (((a)>(b)) ? (a) : (b))
-X#define MIN(a,b) (((a)<(b)) ? (a) : (b))
+X#define TCG_MAX(a,b) (((a)>(b)) ? (a) : (b))
+X#define TCG_MIN(a,b) (((a)<(b)) ? (a) : (b))
 X
 X#define MAX_COL 64
 Xstatic u_char cmap[MAX_COL];
@@ -204,7 +204,7 @@ X      for (j=0; j<grid_size; j++) {
 X	to = pict + (i*max_grid_size + j)*scale;
 X
 X	index = *from++;
-X	value = cmap[MIN(index,MAX_COL)];
+X	value = cmap[TCG_MIN(index,MAX_COL)];
 X	
 X	for (k=0, tempk=to; k<scale; k++, tempk+=max_grid_size)
 X	  for (l=0, tempkl=tempk; l<scale; l++, tempkl++)
@@ -215,7 +215,7 @@ X  else {
 X    npix = grid_size * grid_size;
 X    while (npix--) {
 X      index = *from++;
-X      *to++ = cmap[MIN(index,MAX_COL)];
+X      *to++ = cmap[TCG_MIN(index,MAX_COL)];
 X    }
 X  }
 X
@@ -257,8 +257,8 @@ X  XtGetValues(scrollbar, arg, 1);
 X  fraction = ((int) position)/ (double) length;
 X
 X  interval -= fraction*0.05*interval_max;   
-X  interval = MIN(interval, interval_max);
-X  interval = MAX(interval, 1);
+X  interval = TCG_MIN(interval, interval_max);
+X  interval = TCG_MAX(interval, 1);
 X
 X  fraction = (float) interval/ (float) interval_max;
 X  shown = -1.0;
@@ -280,8 +280,8 @@ X{
 X  float fraction = *(float *) fraction_ptr;
 X
 X  interval = fraction*interval_max;
-X  interval = MIN(interval, interval_max);
-X  interval = MAX(interval, 1);
+X  interval = TCG_MIN(interval, interval_max);
+X  interval = TCG_MAX(interval, 1);
 X
 X  DisplayIntervalValue();
 X}
@@ -447,7 +447,7 @@ X    Error("Failed to get max_grid_size", -1);
 X
 X  max_grid_size = ntohl(max_grid_size);  /* Convert to machine format */
 X
-X  frame_size = MAX(max_grid_size, 256);
+X  frame_size = TCG_MAX(max_grid_size, 256);
 X
 X  /* Create top level shell widget */
 X  

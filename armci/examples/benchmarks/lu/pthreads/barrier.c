@@ -1,5 +1,8 @@
-/*
- * barrier.c
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+/** @file barrier.c
  *
  * This file implements the "barrier" synchronization construct.
  *
@@ -21,10 +24,11 @@
  * parallel section of code.
  */
 #include <pthread.h>
+
 #include "errors.h"
 #include "barrier.h"
 
-/*
+/**
  * Initialize a barrier for use.
  */
 int barrier_init (barrier_t *barrier, int count)
@@ -45,7 +49,7 @@ int barrier_init (barrier_t *barrier, int count)
     return 0;
 }
 
-/*
+/**
  * Destroy a barrier when done using it.
  */
 int barrier_destroy (barrier_t *barrier)
@@ -82,7 +86,7 @@ int barrier_destroy (barrier_t *barrier)
     return (status == 0 ? status : status2);
 }
 
-/*
+/**
  * Wait for all members of a barrier to reach the barrier. When
  * the count (of remaining members) reaches 0, broadcast to wake
  * all threads waiting.

@@ -1,36 +1,28 @@
-/* $Id: gpctest.c,v 1.1.2.1 2007-06-20 17:41:57 vinod Exp $ */
-#include <stdio.h>
-#include <stdlib.h>
-
-/*#define RMW*/
-#  include <unistd.h>
-
-/* ARMCI is impartial to message-passing libs - we handle them with MP macros */
-#ifdef TCGMSG
-#   include <sndrcv.h>
-    long tcg_tag =30000;
-#   define MP_BARRIER()      SYNCH_(&tcg_tag)
-#   define MP_INIT(arc,argv) PBEGIN_((argc),(argv))
-#   define MP_FINALIZE()     PEND_()
-#   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
-#   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
-#else
-#   include <mpi.h>
-#   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
-#   define MP_FINALIZE()     MPI_Finalize()
-#   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
-#   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
-#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
+#if HAVE_CONFIG_H
+#   include "config.h"
 #endif
 
+/* $Id: gpctest.c,v 1.1.2.1 2007-06-20 17:41:57 vinod Exp $ */
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+
+/*#define RMW*/
+
+#include "mp3.h"
 #include "armci.h"
 #include "gpc.h"
-
 
 #define MAXPROC 128
 # define ELEMS 200
 #define LOOP 100
-
 
 /***************************** global data *******************/
 int me, nproc;
@@ -61,10 +53,10 @@ extern int hswap;
 
 
 int gpc_swap_handler(int to, int from, void *hdr,   int hlen,
-		      void *data,  int dlen,
-		      void *rhdr,  int rhlen, int *rhsize,
-		      void *rdata, int rdlen, int *rdsize,
-		      int rtype)
+              void *data,  int dlen,
+              void *rhdr,  int rhlen, int *rhsize,
+              void *rdata, int rdlen, int *rdsize,
+              int rtype)
 {
 int *rem;
 int tmp_swap;
@@ -114,7 +106,7 @@ void test_swap()
 #ifdef RMW
         rc = ARMCI_Rmw(ARMCI_SWAP, &val, arr[0], whatever, 0);
         if(rc != 0)
-	  ARMCI_Error("test_swap: ARMCI_Rmw failed", 0);
+      ARMCI_Error("test_swap: ARMCI_Rmw failed", 0);
 #else
         gpc_swap(&val, arr[0], 0);
 #endif
@@ -126,7 +118,7 @@ void test_swap()
       rc = ARMCI_Rmw(ARMCI_SWAP, &val, arr[0], whatever, 0);
       if(rc != 0)
         ARMCI_Error("test_swap: ARMCI_Malloc failed", 0);
-	    
+        
 #else
       gpc_swap(&val, arr[0], 0);
 #endif
@@ -145,13 +137,6 @@ void test_swap()
     ARMCI_Free(arr[me]);
 }
 
-
-
-
-/* we need to rename main if linking with frt compiler */
-#ifdef FUJITSU_FRT
-#define main MAIN__
-#endif
 
 int main(int argc, char* argv[])
 {

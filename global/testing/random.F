@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
       program main
       implicit none
 #include "mafdecls.fh"
@@ -10,12 +13,7 @@ c
 c**** You can change dimension of the array and duration of the test here
       parameter (dim=500, minutes =90)
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Initialize GA
       call ga_initialize()
@@ -44,11 +42,7 @@ c
 c
       if(ga_nodeid().eq.0)call ga_print_stats()
       call ga_terminate()
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
       end
 
 
@@ -73,11 +67,11 @@ c**** maxloop determines number of puts/gest done before checking the clock
 c
       parameter (maxloop = 100000)
       double precision crap
-      iran(i) = int(util_drand(0)*real(i-1)) + 1
+      iran(i) = int(drand(0)*real(i-1)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
-      crap  = util_drand(real(me)) !different seed for each process
+      crap  = drand(real(me)) !different seed for each process
       if(n .gt. dim) call ga_error('insufficient dimension',dim)
 c     
       status = ga_create(MT_DBL, dim, dim, 'a', 0, 0, g_a)

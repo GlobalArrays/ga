@@ -10,7 +10,7 @@ c     loads for a to avoid writing over c in the cache.
 c
       do 10 ilo = 1, ncol, nchunk
          ihi = min(ncol, ilo+nchunk-1)
-	 ndo = ihi - ilo + 1
+     ndo = ihi - ilo + 1
          do 20 i = ilo, ihi
             c(i) = 0.0d0
  20      continue

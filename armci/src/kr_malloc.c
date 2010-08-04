@@ -1,5 +1,11 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: kr_malloc.c,v 1.24 2006-09-12 23:21:21 andriy Exp $ */
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
 #include "locks.h"
@@ -31,7 +37,7 @@ static void kr_free_shmem(char *ap, context_t *ctx);
 static int lock_mode=UNLOCKED;
 
 /* enable locking only after armci is initailized as locks (and lock
-   data structures) are initialized in ARMCI_Init */
+   data structures) are initialized in PARMCI_Init */
 #define  LOCKIT(p) \
     if(_armci_initialized && lock_mode==UNLOCKED) { \
        NAT_LOCK(0,p); lock_mode=LOCKED;             \
@@ -460,7 +466,10 @@ static char *kr_malloc_shmem(size_t nbytes, context_t *ctx) {
 
 
 static void kr_free_shmem(char *ap, context_t *ctx) {
-    Header *bp, *p, **up, *nextp;
+    Header *bp, *p, *nextp;
+#if USEDP
+    Header **up;
+#endif
     int shmid=-1;
     long shmoffset=0;
     size_t shmsize=0;

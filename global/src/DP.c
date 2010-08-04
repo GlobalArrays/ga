@@ -1,18 +1,12 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: DP.c,v 1.14 2003-02-18 00:24:32 manoj Exp $ */
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
-#if defined(CRAY_T3D)
-#include <fortran.h>
-#endif
 #include "typesf2c.h"
-
-#if defined(CRAY_T3D) || defined(WIN32)
-#      define cptofcd(fcd)  _cptofcd((fcd),1)
-#else
-#      define cptofcd(fcd) (fcd)
-#endif
-
 
 /*\ check if I own the patch
 \*/
@@ -37,10 +31,10 @@ static logical patch_intersect(ilo, ihi, jlo, jhi, ilop, ihip, jlop, jhip)
      /* find the intersection and update (ilop: ihip, jlop: jhip) */
      if( *ihi < *ilop || *ihip < *ilo) return FALSE; /* don't intersect */
      if( *jhi < *jlop || *jhip < *jlo) return FALSE; /* don't intersect */
-     *ilop = MAX(*ilo,*ilop);
-     *ihip = MIN(*ihi,*ihip);
-     *jlop = MAX(*jlo,*jlop);
-     *jhip = MIN(*jhi,*jhip);
+     *ilop = GA_MAX(*ilo,*ilop);
+     *ihip = GA_MIN(*ihi,*ihip);
+     *jlop = GA_MAX(*jlo,*jlop);
+     *jhip = GA_MIN(*jhi,*jhip);
 
      return TRUE;
 }
@@ -60,32 +54,33 @@ void ga_copy_patch_dp(t_a, g_a, ailo, aihi, ajlo, ajhi,
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 Integer ilos, ihis, jlos, jhis;
 Integer ilod, ihid, jlod, jhid, corr, nelem;
-Integer me= ga_nodeid_(), index, ld, i,j;
+Integer me= ga_nodeid_(), ld, i,j;
 Integer ldT;
+AccessIndex index;
 char transp;
-DoublePrecision *dbl_ptrA, *dbl_ptrB;
+DoublePrecision *dbl_ptrA=NULL, *dbl_ptrB=NULL;
 
-   ga_check_handle(g_a, "ga_copy_patch_dp");
-   ga_check_handle(g_b, "ga_copy_patch_dp");
+   gai_check_handle(g_a, "ga_copy_patch_dp");
+   gai_check_handle(g_b, "ga_copy_patch_dp");
 
-   /* if(*g_a == *g_b) ga_error("ga_copy_patch_dp: arrays have to different ", 0L); */
+   /* if(*g_a == *g_b) gai_error("ga_copy_patch_dp: arrays have to different ", 0L); */
 
    ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
    ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
    if(atype != btype || (atype != C_DBL ))
-      ga_error("ga_copy_patch_dp: wrong types ", 0L);
+      gai_error("ga_copy_patch_dp: wrong types ", 0L);
 
    /* check if patch indices and dims match */
    if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
-       ga_error(" ga_copy_patch_dp: g_a indices out of range ", 0L);
+       gai_error(" ga_copy_patch_dp: g_a indices out of range ", 0L);
    if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-       ga_error(" ga_copy_patch_dp: g_b indices out of range ", 0L);
+       gai_error(" ga_copy_patch_dp: g_b indices out of range ", 0L);
 
    /* check if numbers of elements in two patches match each other */
    if (((*bihi - *bilo + 1)  != (*aihi - *ailo + 1)) || 
       ( (*bjhi - *bjlo + 1)  != (*ajhi - *ajlo + 1)) )
-       ga_error(" ga_copy_patch_dp: shapes two of patches do not match ", 0L);
+       gai_error(" ga_copy_patch_dp: shapes two of patches do not match ", 0L);
 
     /* is transpose operation required ? */
    transp = (*t_a == 'n' || *t_a =='N')? 'n' : 't';
@@ -142,17 +137,18 @@ DoublePrecision *dbl_ptrA, *dbl_ptrB;
 /*\ COPY A PATCH
  *  Fortran interface
 \*/
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 void FATR ga_copy_patch_dp_(trans, g_a, ailo, aihi, ajlo, ajhi,
+                    g_b, bilo, bihi, bjlo, bjhi, translen)
+#else
+void FATR ga_copy_patch_dp_(trans, translen, g_a, ailo, aihi, ajlo, ajhi,
                     g_b, bilo, bihi, bjlo, bjhi)
+#endif
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
-#if defined(CRAY_T3D) || defined(WIN32)
-     _fcd    trans;
-{ga_copy_patch_dp(_fcdtocp(trans),g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi);}
-#else 
-     char*   trans;
+     char *trans;
+     int translen;
 {  ga_copy_patch_dp(trans,g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi); }
-#endif
 
 
 
@@ -163,8 +159,9 @@ DoublePrecision ga_ddot_patch_dp(g_a, t_a, ailo, aihi, ajlo, ajhi,
      char    *t_a, *t_b;                          /* transpose operators */
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
-Integer iloA, ihiA, jloA, jhiA, indexA, ldA;
-Integer iloB, ihiB, jloB, jhiB, indexB, ldB;
+Integer iloA, ihiA, jloA, jhiA, ldA;
+Integer iloB, ihiB, jloB, jhiB, ldB;
+AccessIndex indexA, indexB;
 Integer g_A = *g_a;
 Integer me= ga_nodeid_(), i, j, temp_created=0;
 Integer corr, nelem;
@@ -172,22 +169,22 @@ char    transp, transp_a, transp_b;
 DoublePrecision  sum = 0.;
 DoublePrecision *dbl_ptrB;
 
-   ga_check_handle(g_a, "ga_ddot_patch_dp");
-   ga_check_handle(g_b, "ga_ddot_patch_dp");
+   gai_check_handle(g_a, "ga_ddot_patch_dp");
+   gai_check_handle(g_b, "ga_ddot_patch_dp");
 
    ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
    ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
    if(atype != btype || (atype != C_DBL ))
-      ga_error("ga_ddot_patch_dp: wrong types ", 0L);
+      gai_error("ga_ddot_patch_dp: wrong types ", 0L);
 
   /* check if patch indices and g_a dims match */
    if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
-      ga_error(" ga_ddot_patch_dp: g_a indices out of range ", 0L);
+      gai_error(" ga_ddot_patch_dp: g_a indices out of range ", 0L);
 
    /* check if patch indices and g_b dims match */
    if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-       ga_error(" ga_ddot_patch_dp: g_b indices out of range ", 0L);
+       gai_error(" ga_ddot_patch_dp: g_b indices out of range ", 0L);
 
 
    /* is transpose operation required ? */
@@ -196,7 +193,7 @@ DoublePrecision *dbl_ptrB;
    transp_b = (*t_b == 'n' || *t_b =='N')? 'n' : 't';
    transp   = (transp_a == transp_b)? 'n' : 't';
    if(transp == 't')
-          ga_error(" ga_ddot_patch_dp: transpose operators don't match: ", me);
+          gai_error(" ga_ddot_patch_dp: transpose operators don't match: ", me);
 
 
    /* find out coordinates of patches of g_A and g_B that I own */
@@ -243,17 +240,16 @@ DoublePrecision *dbl_ptrB;
 /*\ compute DOT PRODUCT of two patches
  *  Fortran interface
 \*/
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 DoublePrecision FATR ga_ddot_patch_dp_(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                               g_b, t_b, bilo, bihi, bjlo, bjhi)
+                               g_b, t_b, bilo, bihi, bjlo, bjhi, alen, blen)
+#else
+DoublePrecision FATR ga_ddot_patch_dp_(g_a, t_a, alen, ailo, aihi, ajlo, ajhi,
+                               g_b, t_b, blen, bilo, bihi, bjlo, bjhi)
+#endif
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
-
-#if defined(CRAY_T3D) || defined(WIN32)
-     _fcd   t_a, t_b;                          /* transpose operators */
-{ return ga_ddot_patch_dp(g_a, _fcdtocp(t_a), ailo, aihi, ajlo, ajhi,
-                       g_b, _fcdtocp(t_b), bilo, bihi, bjlo, bjhi);}
-#else 
      char    *t_a, *t_b;                          /* transpose operators */
+     int alen, blen;
 { return ga_ddot_patch_dp(g_a, t_a, ailo, aihi, ajlo, ajhi,
                        g_b, t_b, bilo, bihi, bjlo, bjhi);}
-#endif

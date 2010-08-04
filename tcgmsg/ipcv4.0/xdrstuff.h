@@ -1,68 +1,51 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/xdrstuff.h,v 1.3 1995-02-24 02:18:08 d3h325 Exp $ */
+/** @file */
+#ifndef XDRSTUFF_H_
+#define XDRSTUFF_H_
 
-/*
-  Called automatically at start to allocate the XDR buffers
-*/
+/**
+ * Called automatically at start to allocate the XDR buffers.
+ */
 extern void CreateXdrBuf();
 
-
-/*
-  Call to free the xdr buffers
-*/
+/**
+ * Call to free the xdr buffers.
+ */
 extern void DestroyXdrBuf();
 
+/**
+ * Write DoublePrecision x[n_DoublePrecision] to the socket translating to XDR representation.
+ * 
+ * Returned is the number of bytes written to the socket.
+ * 
+ * All errors are treated as fatal.
+ */
+extern int WriteXdrDouble(int sock, DoublePrecision *x, Integer n_DoublePrecision);
 
-/*
-  int WriteXdrDouble(sock, x, n_double)
-    int sock;
-    double *x;
-    long n_double;
-  Write double x[n_double] to the socket translating to XDR representation.
+/**
+ * Read DoublePrecision x[n_DoublePrecision] from the socket translating from XDR representation.
+ *
+ * Returned is the number of bytes read from the socket.
+ *
+ * All errors are treated as fatal.
+ */
+extern int ReadXdrDouble(int sock, DoublePrecision *x, Integer n_DoublePrecision);
 
-  Returned is the number of bytes written to the socket.
+/**
+ * Write Integer x[n_Integer] to the socket translating to XDR representation.
+ *
+ * Returned is the number of bytes written to the socket.
+ *
+ * All errors are treated as fatal.
+ */
+extern int WriteXdrLong(int sock, Integer *x, Integer n_Integer);
 
-  All errors are treated as fatal.
-*/
-extern int WriteXdrDouble();
+/**
+ * Read Integer x[n_Integer] from the socket translating from XDR representation.
+ *
+ * Returned is the number of bytes read from the socket.
+ *
+ * All errors are treated as fatal.
+ */
+extern int ReadXdrLong(int sock, Integer *x, Integer n_Integer);
 
-
-/*
-  int ReadXdrDouble(sock, x, n_double)
-    int sock;
-    double *x;
-    long n_double;
-  Read double x[n_double] from the socket translating from XDR representation.
-
-  Returned is the number of bytes read from the socket.
-
-  All errors are treated as fatal.
-*/
-extern int ReadXdrDouble();
-
-
-/*
-int WriteXdrLong(sock, x, n_long)
-    int sock;
-    long *x;
-    long n_long;
-  Write long x[n_long] to the socket translating to XDR representation.
-
-  Returned is the number of bytes written to the socket.
-
-  All errors are treated as fatal.
-*/
-extern int WriteXdrLong();
-
-
-/*
-int ReadXdrLong(sock, x, n_long)
-    int sock;
-    long *x;
-    long n_long;
-  Read long x[n_long] from the socket translating from XDR representation.
-
-  Returned is the number of bytes read from the socket.
-
-  All errors are treated as fatal.
-*/
-extern int ReadXdrLong();
+#endif /* XDRSTUFF_H_ */

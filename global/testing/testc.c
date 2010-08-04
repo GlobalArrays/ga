@@ -1,12 +1,17 @@
-#include <stdio.h>
-#include <math.h>
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+
 #include "ga.h"
 #include "macdecls.h"
-#ifdef MPI
-#include <mpi.h>
-#else
-#include "sndrcv.h"
-#endif
+#include "mp3.h"
 
 #define N 100            /* dimension of matrices */
 
@@ -96,11 +101,7 @@ char **argv;
 int heap=20000, stack=20000;
 int me, nproc;
 
-#ifdef MPI
-    MPI_Init(&argc, &argv);                       /* initialize MPI */
-#else
-    PBEGIN_(argc, argv);                        /* initialize TCGMSG */
-#endif
+    MP_INIT(argc,argv);
 
     GA_Initialize();                            /* initialize GA */
     me=GA_Nodeid(); 
@@ -121,11 +122,7 @@ int me, nproc;
     if(me==0)printf("Terminating ..\n");
     GA_Terminate();
 
-#ifdef MPI
-    MPI_Finalize();
-#else
-    PEND_();
-#endif
+    MP_FINALIZE();
 
     return 0;
 }

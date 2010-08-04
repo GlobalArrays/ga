@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*interfaces for saving and restoring GA's */
 #include "globalp.h"
 #include "message.h"

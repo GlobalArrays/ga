@@ -6,9 +6,9 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#define   ELIO_UFS	     0	/* Unix filesystem type */
-#define   ELIO_PFS           1	/* PFS Intel parallel filesystem type */
-#define   ELIO_PIOFS         2	/* IBM SP parallel filesystem type */
+#define   ELIO_UFS         0    /* Unix filesystem type */
+#define   ELIO_PFS           1    /* PFS Intel parallel filesystem type */
+#define   ELIO_PIOFS         2    /* IBM SP parallel filesystem type */
 #define   ELIO_PENDING_ERR -44  /* error code for failing elio_(g)open */
 #define   ELIO_SHARED       77
 #define   ELIO_PRIVATE      88
@@ -16,16 +16,16 @@
 
 /*********************** type definitions for ELIO interface *****************/
 typedef long Size_t;         /* size of I/O request type */ 
-typedef double Off_t;	     /* size of offset type - double = 56 bit integer*/
+typedef double Off_t;         /* size of offset type - double = 56 bit integer*/
 typedef struct {
-  int   fd;			/* OS handle */
-  int   fs;			/* ??? */
-  int   mode;			/* ??? */
-  int   type;			/* ??? */
-  char  *name;		        /* Name of physical file */
-  int   extent;			/* Counts extents of logical files */
-  struct fd_struct *next;	/* Next extent */
-} fd_struct;			/* file descriptor type definition */
+  int   fd;            /* OS handle */
+  int   fs;            /* ??? */
+  int   mode;            /* ??? */
+  int   type;            /* ??? */
+  char  *name;                /* Name of physical file */
+  int   extent;            /* Counts extents of logical files */
+  struct fd_struct *next;    /* Next extent */
+} fd_struct;            /* file descriptor type definition */
 typedef fd_struct* Fd_t;
 #if defined(IBM) || defined(SOLARIS) || defined(HPUX)
 typedef unsigned long long avail_t;

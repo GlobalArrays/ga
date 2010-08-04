@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
       program main
       implicit none
 #include "global.fh"
@@ -11,9 +14,7 @@
       integer dims(2)
       double precision buf(n,n)
       integer proc_group(0:100),proclist(100),inode,nprocs,nnodes
-
-      call pbeginf
-
+#include "mp3.fh"
       call ga_initialize()
       nproc = ga_nnodes()
       me = ga_nodeid()
@@ -49,6 +50,6 @@
 
       call ga_terminate()
 
-      call pend
+      call MP_FINALIZE()
 
       end

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /*
  * module: global.msg.c
  * author: Jarek Nieplocha
@@ -31,7 +35,9 @@
 
 #include "global.h"
 #include "globalp.h"
-#include <stdio.h> 
+#if HAVE_STDIO_H
+#   include <stdio.h> 
+#endif
 
 #if defined(LAPI)
    /* we use MPI as native msg-passing library with lapi */
@@ -44,10 +50,6 @@
 
 
 #include "message.h"
-
-#ifdef CRAY_T3D
-#  include <fortran.h>
-#endif
 
 #ifdef SOCKCONNECT
        typedef struct{
@@ -81,7 +83,7 @@ Integer ga_msg_probe(type, from)
       * from ther server socket !!
       */
 
-     if(from != -1)ga_error("ga_msg_probe: only from=-1 works now",from);
+     if(from != -1)gai_error("ga_msg_probe: only from=-1 works now",from);
 
      /* check if msg header was read before */
      if(got_header){
@@ -97,7 +99,7 @@ Integer ga_msg_probe(type, from)
            /* read the message header */
            recv_from_server(&msg_header,&msglen);
            if(msglen != sizeof(msg_header))
-                        ga_error("ga_msg_probe: error in header",msglen); 
+                        gai_error("ga_msg_probe: error in header",msglen); 
            got_header=1;
            
            if(DEBUG){
@@ -123,7 +125,7 @@ Integer ga_msg_probe(type, from)
 
        node =  (from < 0) ? DONTCARE : from;
        rc = mpc_probe(&node, &ttype, &nbytes);
-       if(rc <0 ) ga_error("ga_msg_probe: failed ", type);
+       if(rc <0 ) gai_error("ga_msg_probe: failed ", type);
        return (nbytes==-1 ? 0 : 1);
      }
 #    elif defined(MPI)
@@ -133,12 +135,12 @@ Integer ga_msg_probe(type, from)
 
        node =  (from < 0) ? MPI_ANY_SOURCE : from;
        ierr   = MPI_Iprobe(node, (int)type, MPI_COMM_WORLD, &flag, &status);
-       if(ierr != MPI_SUCCESS) ga_error("ga_msg_probe: failed ", type);
+       if(ierr != MPI_SUCCESS) gai_error("ga_msg_probe: failed ", type);
        return (flag == 0 ? 0 : 1);
      }
 #    else
      {
-       return PROBE_(&type, &from);
+       return tcg_probe(type, from);
      }
 #    endif
 }
@@ -149,7 +151,7 @@ Integer ga_msg_probe(type, from)
 \*/
 void ga_msg_snd(type, buffer, bytes, to)
      Integer type, bytes, to;
-     Void    *buffer;
+     void    *buffer;
 {
      if(DEBUG1){
          printf("%s:%d> sending message type=%d len=%d to=%d\n",
@@ -166,7 +168,7 @@ void ga_msg_snd(type, buffer, bytes, to)
         if(cluster_server != ga_msg_nodeid_()){
               printf("%s:%d> ERROR sending to server type=%d len=%d to=%d\n",
               GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),type,bytes,to);
-                ga_error("ga_msg_snd:I cannot send message outside cluster",to);
+                gai_error("ga_msg_snd:I cannot send message outside cluster",to);
         }
         
         send_header.type = (int)type; 
@@ -207,21 +209,21 @@ void ga_msg_snd(type, buffer, bytes, to)
         int status, msgid;
 
         status = mpc_send(buffer, bytes, to, type, &msgid);
-        if(status == -1) ga_error("ga_msg_snd: error sending ", type);
+        if(status == -1) gai_error("ga_msg_snd: error sending ", type);
         while((status=mpc_status(msgid)) == -1); /* nonblocking probe */
-        if(status < -1) ga_error("ga_msg_snd: invalid message ID ", msgid );
+        if(status < -1) gai_error("ga_msg_snd: invalid message ID ", msgid );
      }
 #    elif defined(MPI)
      {
         int ierr;
         ierr = MPI_Send(buffer, (int)bytes, MPI_CHAR, (int)to, (int)type,
                         MPI_COMM_WORLD);
-        if(ierr != MPI_SUCCESS) ga_error("ga_msg_snd: failed ", type);
+        if(ierr != MPI_SUCCESS) gai_error("ga_msg_snd: failed ", type);
      }
 #    else
      {
         Integer sync=SYNC;
-        SND_(&type, buffer, &bytes, &to, &sync);
+        tcg_snd(type, buffer, bytes, to, sync);
      }
 #    endif
 }
@@ -232,7 +234,7 @@ void ga_msg_snd(type, buffer, bytes, to)
 \*/
 void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
      Integer type, buflen, *msglen, from, *whofrom;
-     Void    *buffer;
+     void    *buffer;
 {
      if(DEBUG){
          printf("%s:%d> receiving message type=%d buflen=%d from=%d\n",
@@ -243,21 +245,21 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
 #ifdef SOCKCONNECT
      if(ga_msg_nodeid_() == cluster_server){
        
-/*       if(from != -1)ga_error("ga_msg_rcv: server must use src =-1",from);*/
+/*       if(from != -1)gai_error("ga_msg_rcv: server must use src =-1",from);*/
 
        if(got_header){
           if(msg_header.type != type)
-              ga_error("ga_msg_rcv: server: wrong type",msg_header.type);
+              gai_error("ga_msg_rcv: server: wrong type",msg_header.type);
           if(msg_header.len > buflen) 
-              ga_error("ga_msg_rcv:overflowing buffer",msg_header.len);
+              gai_error("ga_msg_rcv:overflowing buffer",msg_header.len);
 
           /* get the message body from server socket */
           recv_from_server(buffer, msglen);
           if(*msglen  != msg_header.len)
-              ga_error("ga_msg_rcv: inconsistent length header",*msglen);
+              gai_error("ga_msg_rcv: inconsistent length header",*msglen);
           *whofrom = msg_header.from;
           if(*whofrom <0 || *whofrom >GA_n_proc)
-              ga_error("ga_msg_rcv: wrong sender entry in header",*whofrom);
+              gai_error("ga_msg_rcv: wrong sender entry in header",*whofrom);
 
           got_header = 0;
 
@@ -276,7 +278,7 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
 
      if(from>=0) {
              from -= cluster_master;
-             if(from<0) ga_error("ga_msg_rcv: msgid problem ", from);
+             if(from<0) gai_error("ga_msg_rcv: msgid problem ", from);
      }
 
 #    endif
@@ -297,7 +299,7 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
            *whofrom = infonode();
            if(from!=-1 &&  *whofrom != from) {
              fprintf(stderr,"ga_msg_rcv: from %d expected %d\n",*whofrom,from);
-             ga_error("ga_msg_rcv: error receiving",from);
+             gai_error("ga_msg_rcv: error receiving",from);
            }
 #       endif
 
@@ -308,10 +310,10 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
  
         ffrom = (from == -1)? DONTCARE: from;
         status = mpc_recv(buffer, buflen, &ffrom, &ttype, &msgid);
-        if(status == -1) ga_error("ga_msg_rcv: error receiving", type);
+        if(status == -1) gai_error("ga_msg_rcv: error receiving", type);
 
         while((status=mpc_status(msgid)) == -1); /* nonblocking probe */
-        if(status < -1) ga_error("ga_msg_rcv: invalid message ID ", msgid );
+        if(status < -1) gai_error("ga_msg_rcv: invalid message ID ", msgid );
         *msglen = status;
         *whofrom = (Integer)ffrom;
      }
@@ -323,17 +325,17 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
         ffrom = (from == -1)? MPI_ANY_SOURCE : (int)from;
         ierr = MPI_Recv(buffer, (int)buflen, MPI_CHAR, ffrom, (int)type,
                MPI_COMM_WORLD, &status);
-        if(ierr != MPI_SUCCESS) ga_error("ga_msg_rcv: Recv failed ", type);
+        if(ierr != MPI_SUCCESS) gai_error("ga_msg_rcv: Recv failed ", type);
 
         ierr = MPI_Get_count(&status, MPI_CHAR, &count);
-        if(ierr != MPI_SUCCESS) ga_error("ga_msg_rcv: Get_count failed ", type);
+        if(ierr != MPI_SUCCESS) gai_error("ga_msg_rcv: Get_count failed ", type);
         *whofrom = (Integer)status.MPI_SOURCE;
         *msglen  = (Integer)count;
      }
 #    else
      {
         Integer sync=SYNC;
-        RCV_(&type, buffer, &buflen, msglen, &from, whofrom, &sync);
+        tcg_rcv(type, buffer, buflen, msglen, from, whofrom, sync);
      }
 #    endif
 
@@ -356,7 +358,7 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
 \*/
 msgid_t ga_msg_ircv(type, buffer, buflen, from)
      Integer type, buflen, from;
-     Void    *buffer;
+     void    *buffer;
 {
 msgid_t msgid;
 
@@ -368,11 +370,11 @@ msgid_t msgid;
 
 #ifdef SOCKCONNECT
      if(ga_msg_nodeid_() == cluster_server){
-        ga_error("ga_msg_ircv: server cannot use irecv",type);
+        gai_error("ga_msg_ircv: server cannot use irecv",type);
      }
      if(from>=0) {
              from -= cluster_master;
-             if(from<0) ga_error("ga_msg_ircv: msgid problem ", from);
+             if(from<0) gai_error("ga_msg_ircv: msgid problem ", from);
      }
 #endif
 
@@ -395,7 +397,7 @@ msgid_t msgid;
         ttype = type;
         ffrom = (from == -1)? DONTCARE: from;
         status = mpc_recv(buffer, buflen, &ffrom, &ttype, &msgid);
-        if(status == -1) ga_error("ga_msg_ircv: error receiving", type);
+        if(status == -1) gai_error("ga_msg_ircv: error receiving", type);
      }
      /*****  we use MPI with lapi ********/
 #    elif defined(MPI)
@@ -404,12 +406,12 @@ msgid_t msgid;
         ffrom = (from == -1)? MPI_ANY_SOURCE : (int)from;
         ierr = MPI_Irecv(buffer, (int)buflen, MPI_CHAR, ffrom, (int)type,
                MPI_COMM_WORLD, &msgid);
-        if(ierr != MPI_SUCCESS) ga_error("ga_msg_ircv: Recv failed ", type);
+        if(ierr != MPI_SUCCESS) gai_error("ga_msg_ircv: Recv failed ", type);
      }
 #    else
      {
        Integer sync=ASYNC, msglen, whofrom;
-       RCV_(&type, buffer, &buflen, &msglen, &from, &whofrom, &sync);
+       tcg_rcv(type, buffer, buflen, &msglen, from, &whofrom, sync);
        msgid = from; /*TCGMSG waits for all comms to/from node */
      }
 #    endif
@@ -442,7 +444,7 @@ Integer *whofrom, *msglen;
      {
         int status;
         while((status=mpc_status(msgid)) == -1); /* nonblocking probe */
-        if(status < -1) ga_error("ga_wait_msg: invalid message ID ", msgid);
+        if(status < -1) gai_error("ga_wait_msg: invalid message ID ", msgid);
         *msglen = status;
         /* whofrom is currently not retrieved from MPL */
      }
@@ -452,14 +454,14 @@ Integer *whofrom, *msglen;
         MPI_Status status;
 
         ierr = MPI_Wait(&msgid, &status);
-        if(ierr != MPI_SUCCESS)ga_error("ga_msg_wait: failed ", 1);
+        if(ierr != MPI_SUCCESS)gai_error("ga_msg_wait: failed ", 1);
         ierr = MPI_Get_count(&status, MPI_CHAR, &count);
-        if(ierr != MPI_SUCCESS) ga_error("ga_msg_wait: Get_count failed",2);
+        if(ierr != MPI_SUCCESS) gai_error("ga_msg_wait: Get_count failed",2);
         *whofrom = (Integer)status.MPI_SOURCE;
         *msglen  = (Integer)count;
      }
 #    else
-        WAITCOM_(&msgid); /* cannot get whofrom and msglen from TCGMSG */
+        tcg_waitcom(msgid); /* cannot get whofrom and msglen from TCGMSG */
 #    endif
 } 
 
@@ -477,7 +479,7 @@ Integer ga_msg_nnodes_()
      MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
      return((Integer)numprocs);
 #  else
-     return (NNODES_());
+     return (tcg_nnodes());
 #  endif
 }
 
@@ -494,11 +496,11 @@ Integer msg_id;
      MPI_Comm_rank(MPI_COMM_WORLD,&myid);
      msg_id = ((Integer)myid);
 #  else
-     msg_id =  (NODEID_());
+     msg_id =  (tcg_nodeid());
 #  endif
 #  ifdef SOCKCONNECT
      msg_id += cluster_master;
-     if(msg_id >= GA_n_proc) ga_error("ga_msg_nodeid:what is going on?",msg_id);
+     if(msg_id >= GA_n_proc) gai_error("ga_msg_nodeid:what is going on?",msg_id);
 #  endif
    return (msg_id);
 }
@@ -506,12 +508,12 @@ Integer msg_id;
 
 void ga_msg_brdcst(type, buffer, len, root)
 Integer type, len, root;
-Void*   buffer; 
+void*   buffer; 
 {
 #  ifdef MPI
       MPI_Bcast(buffer, (int)len, MPI_CHAR, (int)root, MPI_COMM_WORLD);
 #  else
-      BRDCST_(&type, buffer, &len, &root);
+      tcg_brdcst(type, buffer, len, root);
 #  endif
 }
 
@@ -581,7 +583,7 @@ void ga_msg_sync_()
 #  ifdef LAPI
    {
      extern lapi_handle_t lapi_handle;
-     if(LAPI_Fence(lapi_handle)) ga_error("lapi_gfence failed",0);
+     if(LAPI_Fence(lapi_handle)) gai_error("lapi_gfence failed",0);
    }
 #  endif
 
@@ -625,7 +627,7 @@ void ga_msg_sync_()
 #  else
    {
       Integer type = GA_TYPE_SYN;
-      SYNCH_(&type);
+      tcg_synch(type);
    }
 #  endif
    if(DEBUG0){
@@ -710,14 +712,14 @@ Integer group_participate(me, root, up, left, right, group)
 #                          ifdef IWAY 
                              /* WARNING: will break if more than 2 clusters !!*/
                              if(GA_n_clus>2)
-                                ga_error("group_participate:fix me too",0);
+                                gai_error("group_participate:fix me too",0);
                              if(*up>-1)    *up = cluster_server; 
                              if(*left>-1)  *left = cluster_server; 
                              if(*right>-1) *right = cluster_server; 
 #                          endif
 
                            break;
-                 default:  ga_error("group_participate: wrong group ", group);
+                 default:  gai_error("group_participate: wrong group ", group);
      }
      return (1);
 }
@@ -731,7 +733,7 @@ Integer group_participate(me, root, up, left, right, group)
 \*/
 void ga_brdcst_clust(type, buf, len, originator, group)
      Integer type, len, originator, group;
-     Void *buf;
+     void *buf;
 {
      Integer me, lenmes, from, root=0;
      Integer up, left, right, participate;
@@ -763,11 +765,11 @@ void ga_brdcst_clust(type, buf, len, originator, group)
 \*/
 void FATR ga_brdcst_(type, buf, len, originator)
      Integer *type, *len, *originator;
-     Void *buf;
+     void *buf;
 {
      Integer orig_clust, tcg_orig_node, tcg_orig_master; 
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
      vampir_begin(GA_BRDCST,__FILE__,__LINE__);
 #endif
      if(DEBUG1){
@@ -807,7 +809,7 @@ void FATR ga_brdcst_(type, buf, len, originator)
             ga_msg_brdcst(gtype, buf, glen, gfrom);
 #       endif
      }
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
      vampir_end(GA_BRDCST,__FILE__,__LINE__);
 #endif
 }
@@ -828,28 +830,28 @@ static void ddoop(n, op, x, work)
       *x++ *= *work++;
   else if (strncmp(op,"max",3) == 0)
     while(n--) {
-      *x = MAX(*x, *work);
+      *x = GA_MAX(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"min",3) == 0)
     while(n--) {
-      *x = MIN(*x, *work);
+      *x = GA_MIN(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"absmax",6) == 0)
     while(n--) {
-      register double x1 = ABS(*x), x2 = ABS(*work);
-      *x = MAX(x1, x2);
+      register double x1 = GA_ABS(*x), x2 = GA_ABS(*work);
+      *x = GA_MAX(x1, x2);
       x++; work++;
     }
   else if (strncmp(op,"absmin",6) == 0)
     while(n--) {
-      register double x1 = ABS(*x), x2 = ABS(*work);
-      *x = MIN(x1, x2);
+      register double x1 = GA_ABS(*x), x2 = GA_ABS(*work);
+      *x = GA_MIN(x1, x2);
       x++; work++;
     }
   else
-    ga_error("ga_ddoop: unknown operation requested", (long) n);
+    gai_error("ga_ddoop: unknown operation requested", (long) n);
 }
 
 
@@ -869,24 +871,24 @@ static void idoop(n, op, x, work)
       *x++ *= *work++;
   else if (strncmp(op,"max",3) == 0)
     while(n--) {
-      *x = MAX(*x, *work);
+      *x = GA_MAX(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"min",3) == 0)
     while(n--) {
-      *x = MIN(*x, *work);
+      *x = GA_MIN(*x, *work);
       x++; work++;
     }
   else if (strncmp(op,"absmax",6) == 0)
     while(n--) {
-      register Integer x1 = ABS(*x), x2 = ABS(*work);
-      *x = MAX(x1, x2);
+      register Integer x1 = GA_ABS(*x), x2 = GA_ABS(*work);
+      *x = GA_MAX(x1, x2);
       x++; work++;
     }
   else if (strncmp(op,"absmin",6) == 0)
     while(n--) {
-      register Integer x1 = ABS(*x), x2 = ABS(*work);
-      *x = MIN(x1, x2);
+      register Integer x1 = GA_ABS(*x), x2 = GA_ABS(*work);
+      *x = GA_MIN(x1, x2);
       x++; work++;
     }
   else if (strncmp(op,"or",2) == 0) 
@@ -895,7 +897,7 @@ static void idoop(n, op, x, work)
       x++; work++;
     }
   else
-    ga_error("ga_idoop: unknown operation requested", (long) n);
+    gai_error("ga_idoop: unknown operation requested", (long) n);
 }
 
 
@@ -948,24 +950,21 @@ void ga_dgop_clust(type, x, n, op, group)
 
 
 #ifdef TIME_DGOP
-double t0_dgop, t_dgop=0., n_dgop=0., s_dgop=0., tcgtime_();
+double t0_dgop, t_dgop=0., n_dgop=0., s_dgop=0., tcg_time();
 #endif
 /*\ GLOBAL OPERATIONS
  *  (C)
  *  We cannot use TCGMSG in data-server mode
  *  where only compute processes participate
 \*/
-void ga_dgop(type, x, n, op)
-     Integer type, n;
-     DoublePrecision *x;
-     char *op;
+void gai_dgop(Integer type, DoublePrecision *x, Integer n, char *op)
 {
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_begin(GA_DGOP,__FILE__,__LINE__);
 #endif
 #ifdef TIME_DGOP
-     t0_dgop = tcgtime_();
+     t0_dgop = tcg_time();
 #endif
      if(ClusterMode){
 #       ifdef IWAY
@@ -986,18 +985,18 @@ void ga_dgop(type, x, n, op)
 #       ifdef MPI
             ga_dgop_clust(type, x, n, op, ALL_GRP);
 #       else
-            DGOP_(&type, x, &n, op);
+            tcg_dgop(type, x, n, op);
 #       endif
 #       if defined(SP1) || defined(SP)
             ga_msg_sync_();
 #       endif
      }
 #ifdef TIME_DGOP
-     t_dgop += tcgtime_() - t0_dgop;
+     t_dgop += tcg_time() - t0_dgop;
      n_dgop+= 1;
      s_dgop+= (double)n;
 #endif
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
     vampir_end(GA_DGOP,__FILE__,__LINE__);
 #endif
 }
@@ -1006,25 +1005,12 @@ void ga_dgop(type, x, n, op)
 /*\ GLOBAL OPERATIONS 
  *  Fortran
 \*/
-#ifdef CRAY_T3D
-void ga_dgop_(type, x, n, op)
-     _fcd op;
-#else
-void ga_dgop_(type, x, n, op, len)
-     char *op;
-     int len;
-#endif
-     Integer *type, *n;
-     DoublePrecision *x;
+void ga_dgop_(Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
 {
 long gtype,gn;
      gtype = (long)*type; gn = (long)*n; 
 
-#ifdef CRAY_T3D
-     ga_dgop(gtype, x, gn, _fcdtocp(op));
-#else
-     ga_dgop(gtype, x, gn, op);
-#endif
+     gai_dgop(gtype, x, gn, op);
 }
 
 
@@ -1076,12 +1062,10 @@ void ga_igop_clust(type, x, n, op, group)
  *  We cannot use TCGMSG in data-server mode
  *  where only compute processes participate
 \*/
-void ga_igop(type, x, n, op)
-     Integer type, n, *x;
-     char *op;
+void gai_igop(Integer type, Integer *x, Integer n, char *op)
 {
 
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
      vampir_begin(GA_IGOP,__FILE__,__LINE__);
 #endif
      if(ClusterMode){
@@ -1102,13 +1086,13 @@ void ga_igop(type, x, n, op)
 #       ifdef MPI
             ga_igop_clust(type, x, n, op, ALL_GRP);
 #       else
-            IGOP_(&type, x, &n, op);
+            tcg_igop(type, x, n, op);
 #       endif
 #       if defined(SP1) || defined(SP)
             ga_msg_sync_();
 #       endif
      }
-#ifdef GA_USE_VAMPIR
+#ifdef USE_VAMPIR
      vampir_end(GA_IGOP,__FILE__,__LINE__);
 #endif
 }
@@ -1119,23 +1103,10 @@ void ga_igop(type, x, n, op)
 /*\ GLOBAL OPERATIONS 
  *  Fortran
 \*/
-#ifdef CRAY_T3D
-void ga_igop_(type, x, n, op)
-     _fcd op;
-#else
-void ga_igop_(type, x, n, op, len)
-     char *op;
-     int  len;
-#endif
-     Integer *type, *n;
-     Integer *x;
+void ga_igop_(Integer *type, Integer *x, Integer *n, char *op, int len)
 {
 long gtype,gn;
      gtype = (long)*type; gn = (long)*n;
 
-#ifdef CRAY_T3D
-     ga_igop(gtype, x, gn, _fcdtocp(op));
-#else
-     ga_igop(gtype, x, gn, op);
-#endif
+     gai_igop(gtype, x, gn, op);
 }

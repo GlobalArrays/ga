@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -31,7 +34,6 @@ c#define TEST_5
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-#include "tcgmsg.fh"
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM, nwidth, MAXPROC, nloop
       parameter (nmax = 1000, DIM = 2, nwidth = 2, MAXPROC = 2000)
@@ -40,7 +42,8 @@ c#define TEST_5
       integer i, j, dims(7), width(7), map(2*nmax)
       integer lo(7), hi(7), ld(7)
       integer lo2(7), hi2(7), ld2(7)
-      integer dims3(7), ld3(7), index3, chunk(7)
+      integer dims3(7), ld3(7), chunk(7)
+      MA_ACCESS_INDEX_TYPE index3
       integer a(nmax, nmax), b(nmax+2*nwidth,nmax+2*nwidth)
       double precision start,t1,t2,t3,t4,t5,tmp
       double precision t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,t17,t18
@@ -51,12 +54,7 @@ c#define TEST_5
 c     
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 #ifdef USE_CORNERS
       corner_flag = .true.
 #else
@@ -638,11 +636,7 @@ c
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
 
 c
       stop

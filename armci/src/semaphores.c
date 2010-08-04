@@ -1,7 +1,15 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: semaphores.c,v 1.12 2005-03-10 19:11:23 vinodtipparaju Exp $ */
 #include "semaphores.h"
-#include <stdio.h>
-#include <unistd.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
 
 int num_sem_alloc=0;
 void perror();

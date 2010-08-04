@@ -1,52 +1,46 @@
-#include "srftoc.h"
-#include "tcgmsg.h"
+#ifndef TCGMSGP_H_
+#define TCGMSGP_H_
 
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <signal.h>
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+#if HAVE_SIGNAL_H
+#   include <signal.h>
+#endif
 
 #ifdef LAPI
-#include <lapi.h>
+#   include <lapi.h>
 #endif
 
-#ifdef SHMEM
+#include "typesf2c.h"
 #include "shmem.h"
-#endif
+#include "sndrcv.h"
+#include "srftoc.h"
 
+/* TODO autoconf way to detect this?? */
+#define MAX_PROC 512
+/* #define MAX_PROC 16 */
 /* under Cygnus we got only serial execution */
-#if defined(CRAY_T3D) || defined(LAPI)
-#  define    MAX_PROC 512
-#elif defined(CYGNUS)
-#  define    MAX_PROC 1
-#else
-#  define    MAX_PROC 16
-#endif
+/* #define MAX_PROC 1 */
 
-#define    INTERNAL_SYNC_TYPE 33333
-#define    MAX_N_OUTSTANDING_MSG 64
+#define INTERNAL_SYNC_TYPE 33333
+#define MAX_N_OUTSTANDING_MSG 64
 
-#ifdef PBEGIN_C
-/* This stupidity to avoid multiple defininitions in the SGI linker */
-#define EXTERN /**/
-#else
-#define EXTERN extern
-#endif
-
-extern void USleep(long);
-#if defined(SYSV) || defined(MMAP)
+extern void USleep(Integer);
+#ifndef LAPI
 extern long *nxtval_shmem;
 #endif
 
-EXTERN long DEBUG_;
-EXTERN long TCGMSG_nodeid;	/* The id of this process */
-EXTERN long TCGMSG_nnodes;	/* Total no. of processes */
-
-EXTERN char *TCGMSG_shmem;	/* Pointer to shared-memory segment */
-EXTERN long  TCGMSG_shmem_id;	/* ID of shared-memory segment */
-EXTERN long  TCGMSG_shmem_size;	/* Size of shared-memory segment */
-
-EXTERN long TCGMSG_caught_sigint; /* True if SIGINT was trapped */
+extern long DEBUG_;
+extern long TCGMSG_nodeid;        /**> The id of this process */
+extern long TCGMSG_nnodes;        /**> Total no. of processes */
+extern char *  TCGMSG_shmem;         /**> Pointer to shared-memory segment */
+extern long TCGMSG_shmem_id;      /**> ID of shared-memory segment */
+extern long TCGMSG_shmem_size;    /**> Size of shared-memory segment */
+extern long TCGMSG_caught_sigint; /**> True if SIGINT was trapped */
 
 /* Structure defines shared memory buffer ... each process has
    one for every process that can send to it via shared memory.
@@ -57,69 +51,64 @@ EXTERN long TCGMSG_caught_sigint; /* True if SIGINT was trapped */
 
 #ifdef NOTIFY_SENDER
 #  ifdef LAPI
-#    define RESERVED (6*sizeof(long) + sizeof(lapi_cntr_t))
+#    define RESERVED (6*sizeof(Integer) + sizeof(lapi_cntr_t))
 #  else
-#    define RESERVED 6*sizeof(long)
+#    define RESERVED 6*sizeof(Integer)
 #  endif
 #else
-#  define RESERVED 4*sizeof(long)
+#  define RESERVED 4*sizeof(Integer)
 #endif
 
-#ifdef CRAY_T3E
-#     define WHOLE_BUF_SIZE 16384
-#elif defined(CRAY_T3D)
-#     define WHOLE_BUF_SIZE 8192
-#elif defined(MACX)
-#     define WHOLE_BUF_SIZE 2*65536
+#if defined(MACX)
+#   define WHOLE_BUF_SIZE 2*65536
 #elif defined(LAPI)
-#     define WHOLE_BUF_SIZE (3*4096)
+#   define WHOLE_BUF_SIZE (3*4096)
 #else
-#     define WHOLE_BUF_SIZE (16*8192)
+#   define WHOLE_BUF_SIZE (16*8192)
 #endif
 
 #define SHMEM_BUF_SIZE (WHOLE_BUF_SIZE - RESERVED)
 
 #ifdef  LAPI
-#define SND_RESERVED (4*sizeof(long) + sizeof(lapi_cntr_t) + sizeof(void*))
-#define SEND_BUF_SIZE (WHOLE_BUF_SIZE - SND_RESERVED) 
+#   define SND_RESERVED (4*sizeof(Integer) + sizeof(lapi_cntr_t) + sizeof(void*))
+#   define SEND_BUF_SIZE (WHOLE_BUF_SIZE - SND_RESERVED) 
+#   define SENDBUF_NUM 2
 typedef struct {
-  lapi_cntr_t cntr;
-  void *next;
-  long info[4];
-  char buf[SEND_BUF_SIZE];
+    lapi_cntr_t cntr;
+    void *next;
+    Integer info[4];
+    char buf[SEND_BUF_SIZE];
 } sendbuf_t;
-#define SENDBUF_NUM 2
 sendbuf_t *sendbuf_arr, *localbuf;
 #endif
 
 typedef struct {
-  long info[4];                 /* 0=type, 1=length, 2=tag, 3=full */
-  char buf[SHMEM_BUF_SIZE];	/* Message buffer */
+    Integer info[4];          /**< 0=type, 1=length, 2=tag, 3=full */
+    char buf[SHMEM_BUF_SIZE]; /**< Message buffer */
 #ifdef NOTIFY_SENDER
-  long stamp;
-#ifdef LAPI
-  lapi_cntr_t cntr;
-#endif
-  long flag;                    /* JN: used by receiver to signal sender */
+    Integer stamp;
+#   ifdef LAPI
+    lapi_cntr_t cntr;
+#   endif
+    Integer flag;             /**< JN: used by receiver to signal sender */
 #endif
 } ShmemBuf;
 
 /* Structure defines an entry in the send q */
 
 typedef struct {
-  long msgid;			/* Message id for msg_status */
-  long type;			/* Message type */
-  long node;			/* Destination node */
-  long tag;			/* Message tag */
-  char *buf;			/* User or internally malloc'd buffer */
-  long lenbuf;			/* Length of user buffer in bytes */
-  long written;			/* Amount already sent */
-  long buffer_number;           /* No. of buffers alread sent */
-  long free_buf_on_completion;	/* Boolean true if free buffer using free */
-  void *next;			/* Pointer to next entry in linked list */
-
-  void *next_in_ring;		/* Pointer to next entry in ring of free entries */
-  long active;			/* 0/1 if free/allocated */
+    Integer msgid;         /**< Message id for msg_status */
+    Integer type;          /**< Message type */
+    Integer node;          /**< Destination node */
+    Integer tag;           /**< Message tag */
+    char *buf;             /**< User or internally malloc'd buffer */
+    Integer lenbuf;        /**< Length of user buffer in bytes */
+    Integer written;       /**< Amount already sent */
+    Integer buffer_number; /**< No. of buffers alread sent */
+    Integer free_buf_on_completion; /* Boolean true if free buffer using free */
+    void *next;            /**< Pointer to next entry in linked list */
+    void *next_in_ring;    /**< Pointer to next entry in ring of free entries */
+    Integer active;        /**< 0/1 if free/allocated */
 } SendQEntry;
 
 /* This structure holds basically all process specific information */
@@ -129,20 +118,20 @@ typedef struct {
 #define COMM_MODE_SOCK  2
 
 typedef struct {
-  ShmemBuf *sendbuf;		/* Shared-memory buffer for sending to node*/
-  ShmemBuf *recvbuf;		/* Shared-memory buffer for receiving from */
-  int sock;			/* Socket for send/receive */
-  int comm_mode;		/* Defines communication info */
-  pid_t pid;			/* Unix process id (or 0 if unknown) */
-  long tag_rcv;			/* Expected tag from next rcv() */
-  long n_snd;			/* No. of messages sent from this process */
-  long n_rcv;			/* No. of messages recv from this process */
-  SendQEntry *sendq;		/* Queue of messages to be sent */
+    ShmemBuf *sendbuf; /**< Shared-memory buffer for sending to node*/
+    ShmemBuf *recvbuf; /**< Shared-memory buffer for receiving from */
+    int sock;          /**< Socket for send/receive */
+    int comm_mode;     /**< Defines communication info */
+    pid_t pid;         /**< Unix process id (or 0 if unknown) */
+    Integer tag_rcv;   /**< Expected tag from next rcv() */
+    Integer n_snd;     /**< No. of messages sent from this process */
+    Integer n_rcv;     /**< No. of messages recv from this process */
+    SendQEntry *sendq; /**< Queue of messages to be sent */
 } ProcInfo;
 
-EXTERN ProcInfo *TCGMSG_proc_info; /* Will point to array of structures */
+extern ProcInfo *TCGMSG_proc_info; /**< Will point to array of structures */
 
-EXTERN SendQEntry *TCGMSG_sendq_ring; /* Circular ring of SendQEntry structures 
-					 for fast allocation/free */
+extern SendQEntry *TCGMSG_sendq_ring; /**< Circular ring of SendQEntry
+                                        structures for fast allocation/free */
 
-
+#endif /* TCGMSGP_H_ */

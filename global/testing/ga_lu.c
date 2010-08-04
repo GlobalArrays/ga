@@ -1,15 +1,18 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
 
-#include <stdio.h>
-#include <stdlib.h>
+
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+
 #include "ga.h"
 #include "macdecls.h"
-#ifdef MPI
-#  include "mpi.h"
-#  define CLOCK_ MPI_Wtime
-#else
-#  include "sndrcv.h"
-#  define CLOCK_ TCGTIME_
-#endif
+#include "mp3.h"
 
 #define BLOCK_CYCLIC
 #define BLOCK_SIZE 500
@@ -19,9 +22,10 @@
 typedef long Integer_t;
 
 /* lapack routines */
+#define dgetrf_ F77_FUNC(dgetrf,DGETRF)
 extern void dgetrf_( Integer_t *m, Integer_t *n, double *a, Integer_t *ld,
                      Integer_t *ipiv, Integer_t *info );
-
+#define dtrsm_  F77_FUNC(dtrsm,DTRSM)
 extern void dtrsm_(char *side, char *uplo, char *transa, char *diag,
                    Integer_t *m, Integer_t *n, double *alpha,
                    double *a, Integer_t *lda,
@@ -304,7 +308,10 @@ void ga_lu(double *A, int matrix_size)
 {
     int g_a, g_b, dims[2], type=C_DBL;
     int lo[2], hi[2], ld;
-    int block_size[2], proc_grid[2];
+    int block_size[2];
+#ifdef USE_SCALAPACK_DISTR
+    int proc_grid[2];
+#endif
     double time, gflops;
     
     /* create a 2-d GA (global matrix) */
@@ -313,6 +320,7 @@ void ga_lu(double *A, int matrix_size)
     block_size[0] = BLOCK_SIZE;
     block_size[1] = BLOCK_SIZE;
 #ifdef USE_SCALAPACK_DISTR
+    int proc_grid[2];
     proc_grid[0] = 2;
     proc_grid[1] = nprocs/2;
     if(nprocs%2) GA_Error("For ScaLAPACK stle distribution, nprocs must be "
@@ -360,9 +368,12 @@ void ga_lu(double *A, int matrix_size)
     GA_Sync();
 
     GA_Transpose(g_a, g_b);
-    time = CLOCK_();
-    GA_Lu('n', g_b);
-    time = CLOCK_() - time;
+    time = MP_TIMER();
+    /* The following function does not exist. Not sure what to replace it
+     * with. GA_Lu_solve(char trans, int g_a, int g_b) requiresa an
+     * additioanl GA. */
+    /* GA_Lu('n', g_b); */
+    time = MP_TIMER() - time;
 
     /* 2/3 N^3 - 1/2 N^2 flops for LU and 2*N^2 for solver */
     gflops = ( (((double)matrix_size) * matrix_size)/(time*1.0e+9) *
@@ -404,11 +415,7 @@ int main(int argc, char **argv) {
     /* *****************************************************************
      * Initialize MPI/TCGMSG-MPI, GA and MA
      * *****************************************************************/
-#ifdef MPI
-    MPI_Init(&argc, &argv); /* initialize MPI */
-#else
-    PBEGIN_(argc, argv);    /* initialize TCGMSG-MPI */
-#endif
+    MP_INIT(argc,argv);
     
     GA_Initialize();        /* initialize GA */
 
@@ -446,14 +453,10 @@ int main(int argc, char **argv) {
     /* *****************************************************************
      * Terminate MPI/TCGMSG-MPI, GA and MA
      * *****************************************************************/
-    if(me==0)printf("Terminating ..\n");
+    if(me==0)printf("Success\n");
     GA_Terminate();
 
-#ifdef MPI
-    MPI_Finalize();
-#else
-    PEND_();
-#endif
+    MP_FINALIZE();
     
     return 0;
 }

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 
 /**
  * Symmetrizes matrix A:  A := .5 * (A+A`)
@@ -10,7 +14,7 @@
 #include "macdecls.h"
 
 void FATR 
-gai_add(Integer *lo, Integer *hi, Void *a, Void *b, DoublePrecision alpha,
+gai_add(Integer *lo, Integer *hi, void *a, void *b, DoublePrecision alpha,
 	Integer type, Integer nelem, Integer ndim) {
 
   Integer i, j, m=0;
@@ -46,7 +50,7 @@ ga_symmetrize_(Integer *g_a) {
   Logical have_data;
   Integer g_b; /* temporary global array (b = A') */
   Integer num_blocks_a;
-  Void *a_ptr, *b_ptr;
+  void *a_ptr=NULL, *b_ptr=NULL;
   int local_sync_begin,local_sync_end;
   char *tempB = "A_transpose";
 
@@ -61,12 +65,12 @@ ga_symmetrize_(Integer *g_a) {
   nga_inquire_internal_(g_a, &type, &ndim, dims);
 
   if (type != C_DBL)
-    ga_error("ga_symmetrize: only implemented for double precision",0);
+    gai_error("ga_symmetrize: only implemented for double precision",0);
 
   if (num_blocks_a < 0) {
 
     if (dims[ndim-1] != dims[ndim-2]) 
-      ga_error("ga_sym: can only sym square matrix", 0L);
+      gai_error("ga_sym: can only sym square matrix", 0L);
 
     /* Find the local distribution */
     nga_distribution_(g_a, &me, alo, ahi);
@@ -79,7 +83,7 @@ ga_symmetrize_(Integer *g_a) {
       nga_access_ptr(g_a, alo, ahi, &a_ptr, lda); 
 
       for(i=0; i<ndim; i++) nelem *= ahi[i]-alo[i] +1;
-      b_ptr = (Void *) ga_malloc(nelem, MT_F_DBL, "v");
+      b_ptr = (void *) ga_malloc(nelem, MT_F_DBL, "v");
 
       for(i=0; i<ndim-2; i++) {bhi[i]=ahi[i]; blo[i]=alo[i]; }
 
@@ -104,8 +108,8 @@ ga_symmetrize_(Integer *g_a) {
     /* For block-cyclic data, probably most efficient solution is to
        create duplicate copy, transpose it and add the results together */
     DoublePrecision half = 0.5;
-    if (!ga_duplicate(g_a, &g_b, tempB))
-      ga_error("ga_symmetrize: duplicate failed", 0L);
+    if (!gai_duplicate(g_a, &g_b, tempB))
+      gai_error("ga_symmetrize: duplicate failed", 0L);
     ga_transpose_(g_a, &g_b);
     ga_add_(&half, g_a, &half, &g_b, g_a);
     ga_destroy_(&g_b);

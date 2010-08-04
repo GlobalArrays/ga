@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 c $Id: pg2test.F,v 1.6 2004-12-01 22:39:46 manoj Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
@@ -24,7 +27,7 @@ c#define GA3
 #include "global.fh"
 #include "testutil.fh"
       integer heap, stack, fudge, ma_heap, me, nproc
-      integer inode,nnodes,proclist(100),i,j,nprocs
+      integer inode,proclist(100),i,j,nprocs
       integer proc_group(0:100)
       logical status
       parameter (heap=200*200*4, fudge=100, stack=200*200)
@@ -35,12 +38,7 @@ c#define GA3
 c     
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Initialize GA
 c
@@ -55,13 +53,13 @@ c
 c***  Initialize the MA package
 c     MA must be initialized before any global array is allocated
 c
+      ma_heap = heap/nproc + fudge 
+      ma_heap = 2*ma_heap
       status = ma_init(MT_DCPL, stack, ma_heap)
       if (.not. status) call ga_error('ma_init failed',-1) 
 c
 c     we can also use GA_set_memory_limit BEFORE first ga_create call
 c
-      ma_heap = heap/nproc + fudge 
-      ma_heap = 2*ma_heap
       call GA_set_memory_limit(util_mdtob(ma_heap))
 c
 c***  Create a global array on the current default (world) group
@@ -107,12 +105,7 @@ c
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      write(6,*) 'Calling mpi_finalize'
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
 c
       stop
       end
@@ -236,7 +229,7 @@ c
       logical found
       integer lprocs,inode,iproc,nnodes
       intrinsic int
-      iran(i) = int(util_drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 c     
       nproc = ga_pgroup_nnodes(grp_id)
       me    = ga_pgroup_nodeid(grp_id)
@@ -379,7 +372,7 @@ c
 c
       nwords = 0
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -436,10 +429,10 @@ c
       endif
       call ga_pgroup_sync(grp_id)
 c     
-      crap = util_drand(12345)       ! Same seed for each process
+      crap = drand(12345)       ! Same seed for each process
       do j = 1, n
          do i = 1, n
-c           b(i,j) = util_drand(0)
+c           b(i,j) = drand(0)
             b(i,j) = i+j 
          enddo
       enddo
@@ -448,7 +441,7 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
-c           x = util_drand(0)
+c           x = drand(0)
             x = 10.
             ilo = i
             ihi = min(i+inc-1, n)
@@ -533,10 +526,10 @@ c
       endif
 c
 c
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       do j = 1, n
          do i = 1, n
-            b(i,j) = util_drand(0)
+            b(i,j) = drand(0)
             a(i,j) = 0.1d0*a(i,j) + 0.9d0*b(i,j)
          enddo
       enddo
@@ -567,11 +560,11 @@ c
  19      format(/'> Checking ddot ...')
          call ffflush(6)
       endif
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       sum1 = 0.0d0
       do j = 1, n
          do i = 1, n
-            b(i,j) = util_drand(0)
+            b(i,j) = drand(0)
             sum1 = sum1 + a(i,j)*b(i,j)
          enddo
       enddo
@@ -749,7 +742,7 @@ c
       endif
       call ga_pgroup_sync(grp_id)
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do j = 1, 10 
        call ga_pgroup_sync(grp_id)
        itmp = iran(nproc)-1
@@ -874,7 +867,7 @@ c     scatter-acc available in GA ver. 3.0
          write(6,*)
       endif
 c
-      crap = util_drand(1234)
+      crap = drand(1234)
       call ga_zero(g_a)
 c
       do j = 1, n
@@ -983,7 +976,7 @@ c
       double complex   x, sum1, sum2, factor
       integer lprocs, inode, iproc
       intrinsic int
-      iran(i) = int(util_drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 c
       nproc = ga_pgroup_nnodes(grp_id)
       me    = ga_pgroup_nodeid(grp_id)
@@ -1116,7 +1109,7 @@ c
 c
       nwords = 0
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -1170,10 +1163,10 @@ c
       endif
       call ga_pgroup_sync(grp_id)
 c
-      crap = util_drand(12345)       ! Same seed for each process
+      crap = drand(12345)       ! Same seed for each process
       do j = 1, n
          do i = 1, n
-            b(i,j) = cmplx(util_drand(0),util_drand(1))
+            b(i,j) = cmplx(drand(0),drand(1))
             b(i,j) = cmplx(dble(i),dble(j))
          enddo
       enddo
@@ -1182,7 +1175,7 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
-c           x = cmplx(util_drand(0),0.333d0)
+c           x = cmplx(drand(0),0.333d0)
 c           x = cmplx(0.333d0,0)
 *           x = cmplx(0d0,0d0)
             x = 0 
@@ -1305,7 +1298,7 @@ c
       endif
       call ga_pgroup_sync(grp_id)
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do j = 1, 10
        call ga_pgroup_sync(grp_id)
        itmp = iran(nproc)-1
@@ -1377,10 +1370,10 @@ c
          call ffflush(6)
       endif
       call ga_get(g_a, 1, n, 1, n, a, n)
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       do j = 1, n
          do i = 1, n
-            b(i,j) = cmplx(util_drand(0), util_drand(1))
+            b(i,j) = cmplx(drand(0), drand(1))
             a(i,j) = (0.1d0,-.1d0)*a(i,j) + (.9d0,-.9d0)*b(i,j)
          enddo
       enddo
@@ -1411,11 +1404,11 @@ c
  19      format(/'> Checking zdot ...')
          call ffflush(6)
       endif
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       sum1 = (0.0d0,0.d0)
       do j = 1, n
          do i = 1, n
-            b(i,j) = cmplx(util_drand(0), util_drand(1))
+            b(i,j) = cmplx(drand(0), drand(1))
             sum1 = sum1 + a(i,j)*b(i,j)
          enddo
       enddo
@@ -1471,7 +1464,7 @@ c
       double precision crap, sum1, real
       integer buf, abs_me
       intrinsic int
-      iran(i) = int(util_drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 c     
       nproc = ga_pgroup_nnodes(grp_id)
       me    = ga_pgroup_nodeid(grp_id)
@@ -1595,7 +1588,7 @@ c
 c
       nwords = 0
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -1665,7 +1658,7 @@ c
       endif
       call ga_pgroup_sync(grp_id)
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       inc =5 
 c     every processor will be operating on somebody elses data
 c
@@ -1872,7 +1865,7 @@ c---------------------------------------------------------------------
       logical found
       integer lprocs, inode, iproc
       intrinsic int
-      iran(i) = int(util_drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 
       nproc = ga_pgroup_nnodes(grp_id)
       me    = ga_pgroup_nodeid(grp_id)
@@ -2004,7 +1997,7 @@ c
 c
       nwords = 0
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -2062,10 +2055,10 @@ c
       call ga_pgroup_sync(grp_id)
 
 c
-      crap = util_drand(12345)       ! Same seed for each process
+      crap = drand(12345)       ! Same seed for each process
       do j = 1, n
          do i = 1, n
-c           b(i,j) = real(util_drand(0))
+c           b(i,j) = real(drand(0))
             b(i,j) = i+j
          enddo
       enddo
@@ -2074,7 +2067,7 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
-c           x = real(util_drand(0))
+c           x = real(drand(0))
             x = 10.
             ilo = i
             ihi = min(i+inc-1, n)
@@ -2155,10 +2148,10 @@ c
          call ffflush(6)
       endif                           
 c
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       do j = 1, n
          do i = 1, n
-            b(i,j) = real(util_drand(0)*real(i)) + 1
+            b(i,j) = real(drand(0)*real(i)) + 1
             a(i,j) = 0.1*a(i,j) + 0.9*b(i,j)
          enddo
       enddo
@@ -2188,11 +2181,11 @@ c
  19      format(/'> Checking sdot ...')
          call ffflush(6)
       endif
-      crap = util_drand(12345)       ! Everyone has same seed
+      crap = drand(12345)       ! Everyone has same seed
       sum1 = 0.0
       do j = 1, n
          do i = 1, n
-            b(i,j) = util_drand(0)
+            b(i,j) = drand(0)
             sum1 = sum1 + a(i,j)*b(i,j)
          enddo
       enddo
@@ -2270,7 +2263,7 @@ c
       endif
       call ga_pgroup_sync(grp_id)
 c
-      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
+      crap = drand(ga_nodeid()*51 +1) !Different seed for each proc
       do j = 1, 10
        call ga_pgroup_sync(grp_id)
        itmp = iran(nproc)-1
@@ -2348,7 +2341,7 @@ c     scatter-acc available in GA ver. 3.0
          write(6,*)
       endif
 c
-      crap = util_drand(1234)
+      crap = drand(1234)
       call ga_zero(g_a)
 c
       do j = 1, n

@@ -1,10 +1,16 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: gpc.c,v 1.7.4.4 2007-06-13 00:44:01 vinod Exp $ *****************************************************
   Prototype of Global Procedure Calls.
   July/03 JN - shared memory version  
   
 *************************************************************/ 
 
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 #include "armcip.h"
 #include "locks.h"
 #include "gpc.h"
@@ -25,7 +31,7 @@ int ARMCI_Gpc_register( int (*func) ())
 {
   int handle =-1, candidate = 0;
 
-  ARMCI_Barrier();
+  PARMCI_Barrier();
   do{
     if(!_table[candidate]){
       handle = candidate;
@@ -42,7 +48,7 @@ void ARMCI_Gpc_release(int handle)
 {
      int h = -handle + GPC_OFFSET;
 
-     ARMCI_Barrier();
+     PARMCI_Barrier();
      if(h<0 || h >= GPC_SLOTS) armci_die("ARMCI_Gpc_release: bad handle",h);
      _table[h] = (void*)0;
 }
@@ -119,7 +125,7 @@ int ARMCI_Gpc_exec(int h, int p, void  *hdr, int hlen,  void *data,  int dlen,
 	   rdata, rdlen, &rdsize, GPC_WAIT);
     } 
 #ifndef VAPI
-    ARMCI_Fence(p);
+    PARMCI_Fence(p);
 #endif
     return 0;
   }
@@ -207,7 +213,7 @@ int err = 0;
 	   rdata, rdlen, &rdsize, GPC_WAIT);
     } 
 #ifndef VAPI
-    ARMCI_Fence(p);
+    PARMCI_Fence(p);
 #endif
     return 0;
   }
@@ -318,13 +324,13 @@ void ARMCI_Gpc_init_handle(gpc_hdl_t *nbh) {
 void ARMCI_Gpc_wait(gpc_hdl_t *nbh) {
   if(SAMECLUSNODE(nbh->proc))
     return;
-  ARMCI_Wait(&nbh->ahdl);
+  PARMCI_Wait(&nbh->ahdl);
 }
 
 void ARMCI_Gpc_test(gpc_hdl_t *nbh) {
   if(SAMECLUSNODE(nbh->proc))
     return;
-  ARMCI_Test(&nbh->ahdl);
+  PARMCI_Test(&nbh->ahdl);
 }
 
 #define ARMCI_GPC_HLEN 65536

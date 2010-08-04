@@ -1,8 +1,14 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: mutex.c,v 1.24.10.1 2006-12-21 23:50:48 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "request.h"
-#include <stdio.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 
 #define DEBUG 0
 #define MAX_LOCKS 32768
@@ -41,7 +47,7 @@ void** mutex_mem_ar;
 mutex_entry_t *glob_mutex;
 
 
-int ARMCI_Create_mutexes(int num)
+int PARMCI_Create_mutexes(int num)
 {
 int rc,p, totcount;
  int *mutex_count;
@@ -56,12 +62,12 @@ int rc,p, totcount;
 
         /* local memory allocation for mutex arrays*/
         mutex_mem_ar = (void*) malloc(armci_nproc*sizeof(void*));
-        if(!mutex_mem_ar) armci_die("ARMCI_Create_mutexes: malloc failed",0);
+        if(!mutex_mem_ar) armci_die("PARMCI_Create_mutexes: malloc failed",0);
         glob_mutex = (void*)malloc(armci_nproc*sizeof(mutex_entry_t));
         if(!glob_mutex){
 	  free(mutex_count);
            free(mutex_mem_ar);
-           armci_die("ARMCI_Create_mutexes: malloc 2 failed",0);
+           armci_die("PARMCI_Create_mutexes: malloc 2 failed",0);
         }
 
            
@@ -82,7 +88,7 @@ int rc,p, totcount;
         }
 
         /* we need memory for token and turn - 2 ints */
-	rc = ARMCI_Malloc(mutex_mem_ar,2*num*sizeof(int));
+	rc = PARMCI_Malloc(mutex_mem_ar,2*num*sizeof(int));
         if(rc){
            free(glob_mutex);
            free(mutex_mem_ar);
@@ -106,7 +112,7 @@ int rc,p, totcount;
 #ifdef LAPI
         mymutexcount = num;
 #endif
-        ARMCI_Barrier();
+        PARMCI_Barrier();
 
         if(DEBUG)
            fprintf(stderr,"%d created (%d,%d) mutexes\n",armci_me,num,totcount);
@@ -131,7 +137,7 @@ void armci_serv_mutex_close()
 }
         
 
-int ARMCI_Destroy_mutexes()
+int PARMCI_Destroy_mutexes()
 {
 #ifdef LAPI /*fix to if cmpl handler for a pending unlock runs after destroy*/
      int proc, mutex, i,factor=0;
@@ -158,7 +164,7 @@ int ARMCI_Destroy_mutexes()
         armci_serv_mutex_close();
 #    endif
 
-     if(glob_mutex[armci_me].count)ARMCI_Free(glob_mutex[armci_me].token);
+     if(glob_mutex[armci_me].count)PARMCI_Free(glob_mutex[armci_me].token);
 
      free(tickets);
      free(glob_mutex);
@@ -175,7 +181,7 @@ int *mutex_entry, ticket;
     if(glob_mutex[proc].count < id)
        armci_die2("armci:invalid mutex id",id, glob_mutex[proc].count);
     mutex_entry = glob_mutex[proc].token  + id;
-    ARMCI_Rmw(ARMCI_FETCH_AND_ADD, &ticket, mutex_entry, 1, proc);
+    PARMCI_Rmw(ARMCI_FETCH_AND_ADD, &ticket, mutex_entry, 1, proc);
 
     return ticket;
 }
@@ -217,7 +223,7 @@ int  *mutex_ticket, next_in_line;
       _dummy_work_ = 0.; /* must be global to fool the compiler */
       do {
 
-           ARMCI_Get(mutex_ticket, &next_in_line, len, proc);
+           PARMCI_Get(mutex_ticket, &next_in_line, len, proc);
            if(next_in_line > myturn)
               armci_die2("armci: problem with tickets",myturn,next_in_line); 
           
@@ -242,7 +248,7 @@ int len=sizeof(int);
        (*newval) ++; 
 
        /* write new ticket value stored previously in tickets  */
-       ARMCI_Put(newval, mutex_ticket, len, proc);
+       PARMCI_Put(newval, mutex_ticket, len, proc);
        MEM_FENCE;
 }
 
@@ -341,21 +347,20 @@ int len=sizeof(int);
 
 
 
-void ARMCI_Lock(int mutex, int proc)        
+void PARMCI_Lock(int mutex, int proc)        
 {
 #if defined(SERVER_LOCK)
 int direct;
 #endif
 
         if(DEBUG)fprintf(stderr,"%d enter lock\n",armci_me);
+        if(armci_nproc == 1) return;
 
         if(!num_mutexes) armci_die("armci_lock: create mutexes first",0);
 
         if(mutex > glob_mutex[proc].count)
            armci_die2("armci_lock: mutex not allocated", mutex,
                       glob_mutex[proc].count); 
-
-        if(armci_nproc == 1) return;
 
 #       if defined(SERVER_LOCK)
            direct=SAMECLUSNODE(proc); 
@@ -370,17 +375,16 @@ int direct;
 
 
 
-void ARMCI_Unlock(int mutex, int proc)
+void PARMCI_Unlock(int mutex, int proc)
 {
         if(DEBUG)fprintf(stderr,"%d enter unlock\n",armci_me);
-
+        if(armci_nproc == 1) return;
+        
         if(!num_mutexes) armci_die("armci_lock: create mutexes first",0);
 
         if(mutex > glob_mutex[proc].count)
            armci_die2("armci_lock: mutex not allocated", mutex,
                       glob_mutex[proc].count); 
-
-        if(armci_nproc == 1) return;
 
 #       if defined(SERVER_LOCK)
            if(armci_nclus >1) { 

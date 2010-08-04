@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* ntestfc.c is a version of ntestc.c: 
  * This program shows how to use two flavors of the C API to GA:
  * 1. the standard C interface with C conventions for array indexes and layout
@@ -9,15 +13,16 @@
  * Jarek Nieplocha, Nov. 16th, 1999
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+
 #include "macdecls.h"
 #include "ga.h"
-#ifdef MPI
-#include <mpi.h>
-#else
-#include "sndrcv.h"
-#endif
+#include "mp3.h"
 
 /* utilities for GA test programs */
 #include "testutil.h"
@@ -253,11 +258,7 @@ char **argv;
 Integer heap=300000, stack=300000;
 int me, nproc;
 
-#ifdef MPI
-    MPI_Init(&argc, &argv);                       /* initialize MPI */
-#else
-    PBEGIN_(argc, argv);                        /* or, initialize TCGMSG */
-#endif
+    MP_INIT(argc,argv);
 
     GA_Initialize();                           /* initialize GA */
 
@@ -294,11 +295,7 @@ int me, nproc;
     if(me==0)printf("\nSuccess\n\n");
     GA_Terminate();
 
-#ifdef MPI
-    MPI_Finalize();
-#else
-    PEND_();
-#endif
+    MP_FINALIZE();
 
     return 0;
 }

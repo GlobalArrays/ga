@@ -1,6 +1,14 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: shmalloc.c,v 1.10 2002-06-20 23:34:17 vinod Exp $ */
-#include <stdio.h>
-#include <string.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
 #include "armcip.h"
 #include "message.h"
 #include "kr_malloc.h"
@@ -84,7 +92,7 @@ void* armci_shmalloc_remote_addr(void *ptr, int proc)
     return (void*)((char*)ptr - offset_arr[proc]);
 }
 
-#if defined(XT3)
+#if defined(CRAY_XT)
 
 #define XT_SYMMETRIC_HEAP_SIZE ((size_t)1024)*1024*1024; /* 1 GB is default */
 size_t get_xt_heapsize() 
@@ -131,5 +139,5 @@ size_t get_xt_heapsize()
     
     return size; 
 }
-#endif /* defined XT3 */
+#endif /* defined CRAY_XT */
 

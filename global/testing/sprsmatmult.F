@@ -1,23 +1,28 @@
-#define LMAX 943031
-#define MAXVEC 2000000
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 
 #define TEST_MULT 1
 #if TEST_MULT
-#define LMAX 972
+#   define LMAX 972
+#else
+#   define LMAX 943031
 #endif
+#define MAXVEC 2000000
 
       program main
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-#include "tcgmsg.fh"
+c#include "tcgmsg.fh"
       integer heap, stack, fudge, ma_heap
       integer nmax, ndim, nprocs, me
       integer g_a_data, g_a_i, g_a_j, g_a_sbit, g_tmp, isize
       integer g_b, g_c, g_tmp2
       integer i, j, k, one, icnt
-      integer lo, hi, chunk, kp1, ld, idx, id_tmp
+      integer lo, hi, chunk, kp1, ld
+      GA_ACCESS_INDEX_TYPE i8, idx, id_tmp
       integer g_chk(MAXVEC)
       double precision d_chk(MAXVEC)
       double precision t_beg, t_crt, t_mv, t_gat, t_elem, t_pack
@@ -34,12 +39,7 @@
 c
 c***  Intitialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
 c
 c***  Initialize GA
 c
@@ -123,8 +123,8 @@ c
       call nga_distribution(g_b,me,lo,hi)
       call nga_access(g_b,lo,hi,idx,ld)
       ld = hi-lo
-      do i = 0, ld
-        dbl_mb(i+idx) = util_drand(0)
+      do i8 = 0, ld
+        dbl_mb(i8+idx) = drand(0)
       end do
       call nga_release(g_b,lo,hi)
 #if TEST_MULT
@@ -248,11 +248,7 @@ c
 c
 c***  Tidy up after message-passing library
 c
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
 
 c
       stop
@@ -277,20 +273,21 @@ c
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-#include "tcgmsg.fh"
+c#include "tcgmsg.fh"
       integer idim, jdim, rmin, rmax, g_data, g_i, g_j, g_tmp
       integer g_sbit, g_mask, isize
       integer nprocs, me, imin, imax, icnt, jmin, jmax, ntot
       double precision rval(MAXVEC), x, dr
       integer jval(MAXVEC), inc(MAXVEC), ones(MAXVEC)
-      integer jdx(MAXVEC), i, j, k, itmp, itot, one, lo, hi, ld, idx
+      integer jdx(MAXVEC), i, j, k, itmp, itot, one, lo, hi, ld
       logical status
       integer i_chk(1000000)
       double precision d_chk(1000000)
+      GA_ACCESS_INDEX_TYPE idx
 c
       me = ga_nodeid()
       nprocs = ga_nnodes()
-      x = util_drand(12345+me)
+      x = drand(12345+me)
       dr = dble(rmax-rmin)
       one = 1
 c
@@ -310,9 +307,9 @@ c
       endif
       icnt = 0
       do i = imin, imax
-        jmax = rmin + nint(dr*util_drand(0)) 
+        jmax = rmin + nint(dr*drand(0)) 
         do j = 1, jmax
-          jdx(j) = int(dble(jdim)*util_drand(0))+1
+          jdx(j) = int(dble(jdim)*drand(0))+1
           if (jdx(j).gt.jdim) jdx(j) = jdim
         end do
 c
@@ -333,7 +330,7 @@ c
         inc(i-imin+1) = jmax
         do j = 1, jmax
           icnt = icnt + 1
-          rval(icnt) = util_drand(0)
+          rval(icnt) = drand(0)
           jval(icnt) = jdx(j)
         end do
       end do
@@ -457,27 +454,28 @@ c
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-#include "tcgmsg.fh"
+c#include "tcgmsg.fh"
       integer g_a, isize
-      integer lo, hi, ld, idx, i, me
+      integer lo, hi, ld, me, itmp
       integer isav
+      GA_ACCESS_INDEX_TYPE idx, ii
       me = ga_nodeid()
       call ga_sync
       call nga_distribution(g_a,me,lo,hi)
       call nga_access(g_a,lo,hi,idx,ld)
       ld = hi-lo
       isav = int_mb(idx)
-      do i = 1, ld
-        int_mb(idx + i - 1) = int_mb(idx + i)
+      do ii = 1, ld
+        int_mb(idx + ii - 1) = int_mb(idx + ii)
       end do
       if (lo.eq.1) then
-        idx = isize
+        itmp = isize
       else
-        idx = lo-1
+        itmp = lo-1
       endif
       call nga_release(g_a,lo,hi)
       call ga_sync
-      call nga_put(g_a,idx,idx,isav,ld)
+      call nga_put(g_a,itmp,itmp,isav,ld)
       call ga_sync
       return
       end

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: clusterinfo.c,v 1.36.2.3 2007-06-13 00:46:13 vinod Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
@@ -6,18 +10,23 @@
 *
 *******************************************************************************/
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#ifdef unix
-#include <unistd.h>
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
 #endif
 #include "message.h"
 #include "armcip.h"
 
-#ifdef WIN32
-   /* this is where gethostbyname is declared */
-#  include <winsock.h>
+#if HAVE_WINSOCK_H
+#   include <winsock.h> /* this is where gethostbyname is declared */
 #endif
 
 /* NO_SHMEM enables to simulate cluster environment on a single workstation.
@@ -94,7 +103,7 @@ static int altix_gethostname(char *name, int len) {
     sprintf(name,"altix");
     return 0;
 }
-#elif defined(XT3) /* && !defined(PORTALS) */
+#elif defined(CRAY_XT) /* && !defined(PORTALS) */
 #define GETHOSTNAME cnos_gethostname
 static int cnos_gethostname(char *name, int len)
 {
@@ -336,7 +345,9 @@ void armci_init_clusinfo()
   char name[MAX_HOSTNAME], *merged;
   int  len, limit, rc;
   char *tmp;
+#ifdef ARMCI_ENABLE_GPC_CALLS
   char *enval;
+#endif
 
   if((tmp =getenv("ARMCI_HOSTNAME")) == NULL){
     limit = MAX_HOSTNAME-1;

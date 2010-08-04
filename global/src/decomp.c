@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 /* $Id: decomp.c,v 1.9.6.2 2007-07-04 00:50:06 manoj Exp $ */
 /***************************************************************************
  *--- 
@@ -15,10 +19,17 @@
  *--- Bug et al.: jm.malard@pnl.gov
  *---
  ***************************************************************************/
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <global.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
+#include "global.h"
+#include "typesf2c.h"
 
  /*--
  *****************************************************************************
@@ -353,7 +364,6 @@ void ddb_ex( long ndims, Integer ardims[], long npes, double threshold,
 void ddb_h1(long ndims, Integer ardims[], long npes, double threshold,
            Integer blk[], Integer pedims[])
       {
-#include <math.h>
       long h, i, j, k;
       double * qedims;
       long * pdivs;
@@ -691,7 +701,7 @@ void ddb_h2(Integer ndims, Integer ardims[], Integer npes, double threshold, Int
           if(pedims[i]>0){
              blk[i] = (tard[i]+pedims[i]-1)/pedims[i];
           } else {
-             ga_error("process dimension is zero: ddb_h2",0);
+             gai_error("process dimension is zero: ddb_h2",0);
           }
 
       free(tard);
