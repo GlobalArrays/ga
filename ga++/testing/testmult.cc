@@ -43,6 +43,12 @@ test(int data_type, int ndim) {
   DoubleComplex value1_dcpl = {2.0, 2.0}, value2_dcpl = {2.0, 2.0};
   DoubleComplex alpha_dcpl = {1.0, 0.0} , beta_dcpl = {0.0, 0.0}; 
   void *value1, *value2, *alpha, *beta;
+  char name_a[] = "array A";
+  char name_b[] = "array B";
+  char name_c[] = "array C";
+  char name_a_[] = "array A_";
+  char name_b_[] = "array B_";
+  char name_c_[] = "array C_";
   
   switch (data_type) {
   case C_FLOAT:
@@ -70,9 +76,9 @@ test(int data_type, int ndim) {
     GA::SERVICES.error("wrong data type", data_type);
   }
 
-  g_a = GA::SERVICES.createGA(data_type, ndim, dims, "array A", NULL);
-  g_b = GA::SERVICES.createGA(g_a, "array B");  
-  g_c = GA::SERVICES.createGA(g_a, "array C");
+  g_a = GA::SERVICES.createGA(data_type, ndim, dims, name_a, NULL);
+  g_b = GA::SERVICES.createGA(g_a, name_b);  
+  g_c = GA::SERVICES.createGA(g_a, name_c);
 
   g_a->fill(value1);
   g_b->fill( value2);
@@ -95,9 +101,9 @@ test(int data_type, int ndim) {
    * 5. If all the elements in g_C is zero, implies SUCCESS.
    */
   dims[0] = dims[1] = m = n = k = N-2; 
-  g_A = GA::SERVICES.createGA(data_type, 2, dims, "array A_", NULL);
-  g_B = GA::SERVICES.createGA(g_A, "array B_");
-  g_C = GA::SERVICES.createGA(g_A, "array C_");
+  g_A = GA::SERVICES.createGA(data_type, 2, dims, name_a_, NULL);
+  g_B = GA::SERVICES.createGA(g_A, name_b_);
+  g_C = GA::SERVICES.createGA(g_A, name_c_);
 
   g_A->fill(value1);
   g_B->fill(value2);

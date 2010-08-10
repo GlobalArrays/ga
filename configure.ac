@@ -292,6 +292,9 @@ GA_SCALAPACK
 AC_PROG_GREP
 AC_PROG_SED
 
+AM_PATH_PYTHON([],[],[:])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
+
 AC_PATH_PROG([M4], [m4], [notfound])
 AM_CONDITIONAL([HAVE_M4], [test "x$M4" != xnotfound])
 

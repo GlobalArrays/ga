@@ -87,6 +87,14 @@ test_fun (int type, int dim, int OP) {
   double ad = 1.0, bd = -1.0;
   DoubleComplex adc, bdc;
 
+  char name_A[] = "A";
+  char name_B[] = "B";
+  char name_C[] = "C";
+  char name_D[] = "D";
+  char name_E[] = "E";
+  char name_max[] = "max";
+  char name_min[] = "min";
+
   adc.real = 1.0;
   adc.imag = 0.0;
   bdc.real = -1.0;
@@ -105,11 +113,11 @@ test_fun (int type, int dim, int OP) {
     hi[i] = N - 1;
   }
   
-  g_a = GA::SERVICES.createGA (type, dim, dims, "A", NULL);
-  g_b = GA::SERVICES.createGA (g_a, "B");
-  g_c = GA::SERVICES.createGA (g_a, "C");
-  g_d = GA::SERVICES.createGA (g_a, "D");
-  g_e = GA::SERVICES.createGA (g_a, "E");
+  g_a = GA::SERVICES.createGA (type, dim, dims, name_A, NULL);
+  g_b = GA::SERVICES.createGA (g_a, name_B);
+  g_c = GA::SERVICES.createGA (g_a, name_C);
+  g_d = GA::SERVICES.createGA (g_a, name_D);
+  g_e = GA::SERVICES.createGA (g_a, name_E);
 
   /*initialize  with zero */
   g_a->zero ();
@@ -319,8 +327,8 @@ test_fun (int type, int dim, int OP) {
       GA::SERVICES.error ("wrong data type.", type);
     }
   
-  g_e->selectElem ("max", max, index);
-  g_e->selectElem ("min", min, index);
+  g_e->selectElem (name_max, max, index);
+  g_e->selectElem (name_min, min, index);
 
   switch (type)
     {
