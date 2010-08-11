@@ -427,9 +427,9 @@ endif # MSG_COMMS_TCGMSG
 #
 BUILT_SOURCES += global/src/wapi.h
 BUILT_SOURCES += global/src/wapidefs.h
-#if HAVE_PYTHON
-#BUILT_SOURCES += global/src/wapi.c
-#endif
+if HAVE_PYTHON
+BUILT_SOURCES += global/src/wapi.c
+endif
 
 global/src/wapi.h: global/src/papi.h
 	-rm -f global/src/wapi.h && \
@@ -439,11 +439,11 @@ global/src/wapidefs.h: global/src/papi.h
 	-rm -f global/src/wapidefs.h && \
 	$(SED) -e "s/PAPI/WAPIDEFS/g" \
 		   -e "s/^.*p\(nga_.*\)(.*$$/#define w\1 p\1/g" $< > global/src/wapidefs.h
-#if HAVE_PYTHON
-#global/src/wapi.c: global/src/papi.h $(top_srcdir)/build-aux/wapi.py
-#	-rm -f global/src/wapi.c && \
-#	$(PYTHON) $(top_srcdir)/build-aux/wapi.py $< > global/src/wapi.c
-#endif
+if HAVE_PYTHON
+global/src/wapi.c: global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
+	-rm -f global/src/wapi.c && \
+	$(PYTHON) $(top_srcdir)/build-aux/wapigen.py $< > global/src/wapi.c
+endif
 
 libga_la_SOURCES += global/src/base.c
 libga_la_SOURCES += global/src/base.h

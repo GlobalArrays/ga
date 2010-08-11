@@ -5905,9 +5905,9 @@ global/src/wapidefs.h: global/src/papi.h
 	-rm -f global/src/wapidefs.h && \
 	$(SED) -e "s/PAPI/WAPIDEFS/g" \
 		   -e "s/^.*p\(nga_.*\)(.*$$/#define w\1 p\1/g" $< > global/src/wapidefs.h
-@HAVE_PYTHON_TRUE@global/src/wapi.c: global/src/papi.h $(top_srcdir)/build-aux/wapi.py
+@HAVE_PYTHON_TRUE@global/src/wapi.c: global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
 @HAVE_PYTHON_TRUE@	-rm -f global/src/wapi.c && \
-@HAVE_PYTHON_TRUE@	$(PYTHON) $(top_srcdir)/build-aux/wapi.py $< > global/src/wapi.c
+@HAVE_PYTHON_TRUE@	$(PYTHON) $(top_srcdir)/build-aux/wapigen.py $< > global/src/wapi.c
 @HAVE_M4_TRUE@global/testing/nga-onesided.F: $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@global/testing/nga-patch.F:    $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@global/testing/nga-periodic.F: $(GLOBAL_TESTING_M4_DEPS)
