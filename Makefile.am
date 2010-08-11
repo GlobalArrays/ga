@@ -79,8 +79,8 @@ endif
 #
 BUILT_SOURCES += config.fh
 
-config.fh: config.h
-	-rm -f config.fh && $(SED) "/^#/!d" $< > config.fh
+config.fh: $(top_build_prefix)config.h
+	-rm -f config.fh && $(SED) "/^#/!d" $(top_build_prefix)config.h > config.fh
 
 clean-config:
 	-rm -f config.fh
@@ -431,18 +431,18 @@ if HAVE_PYTHON
 BUILT_SOURCES += global/src/wapi.c
 endif
 
-global/src/wapi.h: global/src/papi.h
+global/src/wapi.h: $(top_srcdir)/global/src/papi.h
 	-rm -f global/src/wapi.h && \
 	$(SED) -e "s/PAPI/WAPI/g" \
-	       -e "s/pnga_/wnga_/g" $< > global/src/wapi.h
-global/src/wapidefs.h: global/src/papi.h
+	       -e "s/pnga_/wnga_/g" $(top_srcdir)/global/src/papi.h > global/src/wapi.h
+global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
 	-rm -f global/src/wapidefs.h && \
 	$(SED) -e "s/PAPI/WAPIDEFS/g" \
-		   -e "s/^.*p\(nga_.*\)(.*$$/#define w\1 p\1/g" $< > global/src/wapidefs.h
+		   -e "s/^.*p\(nga_.*\)(.*$$/#define w\1 p\1/g" $(top_srcdir)/global/src/papi.h > global/src/wapidefs.h
 if HAVE_PYTHON
-global/src/wapi.c: global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
+global/src/wapi.c: $(top_srcdir)/global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
 	-rm -f global/src/wapi.c && \
-	$(PYTHON) $(top_srcdir)/build-aux/wapigen.py $< > global/src/wapi.c
+	$(PYTHON) $(top_srcdir)/build-aux/wapigen.py $(top_srcdir)/global/src/papi.h > global/src/wapi.c
 endif
 
 libga_la_SOURCES += global/src/base.c
@@ -947,18 +947,20 @@ if CXX_BINDINGS
 
 lib_LTLIBRARIES += libga++.la
 
-libga___la_SOURCES =    \
-ga++/src/GAServices.cc  \
-ga++/src/GlobalArray.cc \
-ga++/src/init_term.cc   \
-ga++/src/overload.cc    \
-ga++/src/PGroup.cc
+libga___la_SOURCES =
+libga___la_SOURCES += ga++/src/GAServices.cc
+libga___la_SOURCES += ga++/src/GlobalArray.cc
+libga___la_SOURCES += ga++/src/PGroup.cc
+libga___la_SOURCES += ga++/src/init_term.cc
+libga___la_SOURCES += ga++/src/overload.cc
+libga___la_SOURCES += ga++/src/services.cc
 
 include_HEADERS += ga++/src/ga++.h
 include_HEADERS += ga++/src/GAServices.h
 include_HEADERS += ga++/src/GlobalArray.h
 include_HEADERS += ga++/src/init_term.h
 include_HEADERS += ga++/src/PGroup.h
+include_HEADERS += ga++/src/services.h
 
 AM_CPPFLAGS += -I$(top_srcdir)/ga++/src
 

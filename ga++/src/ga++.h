@@ -1,50 +1,51 @@
+/**
+ * @file ga++.h
+ *
+ * @author Manoj Kumar Krishnan, PNNL.
+ * @author Jeff Daily, PNNL.
+ */
+
+/**
+ * @mainpage
+ *
+ * @author Manoj Kumar Krishnan, PNNL.
+ * @author Jeff Daily, PNNL.
+ *
+ * The GA Toolkit
+ *
+ * The Global Arrays (GA) toolkit provides an efficient and portable
+ * “shared-memory” programming interface for distributed-memory computers.
+ * Each process in a MIMD parallel program can asynchronously access logical
+ * blocks of physically distributed dense multi-dimensional arrays, without
+ * need for explicit cooperation by other processes. Unlike other
+ * shared-memory environments, the GA model exposes to the programmer the
+ * non-uniform memory access (NUMA) characteristics of the high performance
+ * computers and acknowledges that access to a remote portion of the shared
+ * data is slower than to the local portion. The locality information for the
+ * shared data is available, and a direct access to the local portions of
+ * shared data is provided.
+ *
+ * Global Arrays have been designed to complement rather than substitute for
+ * the message-passing programming model. The programmer is free to use both
+ * the shared-memory and message-passing paradigms in the same program, and to
+ * take advantage of existing message-passing software libraries. Global
+ * Arrays are compatible with the Message Passing Interface (MPI).
+ *
+ * The Global Arrays toolkit has been in the public domain since 1994. It has
+ * been actively supported and employed in several large codes since then.
+ */
 #ifndef _GAPP_H
 #define _GAPP_H
 
-#if defined(__cplusplus) || defined(c_plusplus)
-
-#ifdef MPIPP
-#   include <mpi.h>
-#else
-#   include <tcgmsg.h>
-#endif
-#if HAVE_STDIO_H
-#   include <stdio.h>
-#endif
 #include "ga.h"
 #include "macdecls.h"
 
 #define GANbhdl ga_nbhdl_t   
 
-#ifdef _GA_USENAMESPACE_
-#define _GA_STATIC_ 
-#define _GA_EXTERN_ extern
-#else // ! _GA_USENAMESPACE_
-#define _GA_STATIC_ static
-#define _GA_EXTERN_ 
-#endif // _GA_USENAMESPACE_
-
-#ifdef _GA_USENAMESPACE_
-namespace GA {
-#else // ! _GA_USENAMESPACE_
-class GA {
- public:
-#endif // _GA_USENAMESPACE_
-  class GAServices;
-  _GA_EXTERN_  _GA_STATIC_  GAServices SERVICES;
-
 #include "init_term.h"
+#include "services.h"
 #include "PGroup.h"
 #include "GlobalArray.h"
 #include "GAServices.h"
 
-  //GAServices SERVICES;
-
-#ifndef _GA_USENAMESPACE_
- private:
-  GA() { }
-#endif // ! _GA_USENAMESPACE_
-};
-
 #endif // _GAPP_H
-#endif

@@ -1,17 +1,12 @@
+/**              
+ * @file GAServices.cc
+ * @author Manoj Kumar Krishnan, PNNL.
+ */
 #if HAVE_CONFIG_H
 #   include "config.h"
 #endif
-/**              
- * module: GAServices.cc
- * Author: Manoj Kumar Krishnan, PNNL.
- */
-
 
 #include "ga++.h"
-
-/**
- *  Constructor and Destructor of GAServices               
- */
 
 GA::GAServices::GAServices()
 {
@@ -140,6 +135,26 @@ GA::GAServices::fence() {
   GA_Fence();
 }
 
+void
+GA::GAServices::gop(int x[], int n, char *op) {
+    GA_Igop(x, n, op);
+}
+
+void
+GA::GAServices::gop(long x[], int n, char *op) {
+    GA_Lgop(x, n, op);
+}
+
+void
+GA::GAServices::gop(float x[], int n, char *op) {
+    GA_Fgop(x, n, op);
+}
+
+void
+GA::GAServices::gop(double x[], int n, char *op) {
+    GA_Dgop(x, n, op);
+}
+
 void 
 GA::GAServices::igop(int x[], int n, char *op) {
   GA_Igop(x, n, op);
@@ -238,3 +253,4 @@ double GA::GAServices::wtime() {
     return GA_Wtime();
 }
 
+GA::GAServices GA::SERVICES;

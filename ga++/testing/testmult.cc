@@ -21,8 +21,10 @@
 #define TOLERANCE 0.000001
 
 #ifdef MPIPP
+#include <mpi.h>
 #define CLOCK_ MPI_Wtime
 #else
+#include "tcgmsg.h"
 #define CLOCK_ tcg_time
 #endif
 

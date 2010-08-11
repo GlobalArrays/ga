@@ -2,6 +2,10 @@
 #   include "config.h"
 #endif
 
+#ifdef MPIPP
+#   include "mpi.h"
+#endif
+
 #include "ga++.h"
 
 void
@@ -66,5 +70,3 @@ GA::Terminate()
   MPI_Finalize();
 #endif    
 }
-
-GA::GAServices GA::SERVICES = GA::GAServices();

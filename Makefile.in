@@ -304,7 +304,7 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@am__append_51 = ga++/src/ga++.h \
 @CXX_BINDINGS_TRUE@	ga++/src/GAServices.h \
 @CXX_BINDINGS_TRUE@	ga++/src/GlobalArray.h ga++/src/init_term.h \
-@CXX_BINDINGS_TRUE@	ga++/src/PGroup.h
+@CXX_BINDINGS_TRUE@	ga++/src/PGroup.h ga++/src/services.h
 @CXX_BINDINGS_TRUE@am__append_52 = -I$(top_srcdir)/ga++/src
 
 ##############################################################################
@@ -411,7 +411,9 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/m4/ga_check_func.m4 \
 	$(top_srcdir)/m4/ga_check_header.m4 \
 	$(top_srcdir)/m4/ga_check_libplot.m4 \
-	$(top_srcdir)/m4/ga_cxx.m4 $(top_srcdir)/m4/ga_cxx_opt.m4 \
+	$(top_srcdir)/m4/ga_cxx.m4 \
+	$(top_srcdir)/m4/ga_cxx_namespaces.m4 \
+	$(top_srcdir)/m4/ga_cxx_opt.m4 \
 	$(top_srcdir)/m4/ga_enable_checkpoint.m4 \
 	$(top_srcdir)/m4/ga_enable_opt.m4 \
 	$(top_srcdir)/m4/ga_enable_peigs.m4 \
@@ -492,13 +494,14 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libga___la_LIBADD =
 am__libga___la_SOURCES_DIST = ga++/src/GAServices.cc \
-	ga++/src/GlobalArray.cc ga++/src/init_term.cc \
-	ga++/src/overload.cc ga++/src/PGroup.cc
+	ga++/src/GlobalArray.cc ga++/src/PGroup.cc \
+	ga++/src/init_term.cc ga++/src/overload.cc \
+	ga++/src/services.cc
 am__dirstamp = $(am__leading_dot)dirstamp
 @CXX_BINDINGS_TRUE@am_libga___la_OBJECTS = ga++/src/GAServices.lo \
-@CXX_BINDINGS_TRUE@	ga++/src/GlobalArray.lo \
+@CXX_BINDINGS_TRUE@	ga++/src/GlobalArray.lo ga++/src/PGroup.lo \
 @CXX_BINDINGS_TRUE@	ga++/src/init_term.lo ga++/src/overload.lo \
-@CXX_BINDINGS_TRUE@	ga++/src/PGroup.lo
+@CXX_BINDINGS_TRUE@	ga++/src/services.lo
 libga___la_OBJECTS = $(am_libga___la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
@@ -2173,7 +2176,7 @@ am__include_HEADERS_DIST = gaf2c/typesf2c.h gaf2c/farg.h ma/error.h \
 	pario/eaf/eaf.h pario/elio/chemio.h pario/elio/elio.h \
 	pario/sf/coms.h pario/sf/sf.fh pario/sf/sf.h ga++/src/ga++.h \
 	ga++/src/GAServices.h ga++/src/GlobalArray.h \
-	ga++/src/init_term.h ga++/src/PGroup.h
+	ga++/src/init_term.h ga++/src/PGroup.h ga++/src/services.h
 HEADERS = $(include_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
@@ -2843,13 +2846,10 @@ nodist_EXTRA_pario_bign_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_pario_ntestc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_pario_perfn_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_pario_rate_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@CXX_BINDINGS_TRUE@libga___la_SOURCES = \
-@CXX_BINDINGS_TRUE@ga++/src/GAServices.cc  \
-@CXX_BINDINGS_TRUE@ga++/src/GlobalArray.cc \
-@CXX_BINDINGS_TRUE@ga++/src/init_term.cc   \
-@CXX_BINDINGS_TRUE@ga++/src/overload.cc    \
-@CXX_BINDINGS_TRUE@ga++/src/PGroup.cc
-
+@CXX_BINDINGS_TRUE@libga___la_SOURCES = ga++/src/GAServices.cc \
+@CXX_BINDINGS_TRUE@	ga++/src/GlobalArray.cc ga++/src/PGroup.cc \
+@CXX_BINDINGS_TRUE@	ga++/src/init_term.cc ga++/src/overload.cc \
+@CXX_BINDINGS_TRUE@	ga++/src/services.cc
 @CXX_BINDINGS_TRUE@ga___testing_elempatch_SOURCES = ga++/testing/elempatch.cc
 @CXX_BINDINGS_TRUE@ga___testing_mtest_SOURCES = ga++/testing/mtest.cc
 @CXX_BINDINGS_TRUE@ga___testing_ntestc_SOURCES = ga++/testing/ntestc.cc \
@@ -3022,11 +3022,13 @@ ga++/src/GAServices.lo: ga++/src/$(am__dirstamp) \
 	ga++/src/$(DEPDIR)/$(am__dirstamp)
 ga++/src/GlobalArray.lo: ga++/src/$(am__dirstamp) \
 	ga++/src/$(DEPDIR)/$(am__dirstamp)
+ga++/src/PGroup.lo: ga++/src/$(am__dirstamp) \
+	ga++/src/$(DEPDIR)/$(am__dirstamp)
 ga++/src/init_term.lo: ga++/src/$(am__dirstamp) \
 	ga++/src/$(DEPDIR)/$(am__dirstamp)
 ga++/src/overload.lo: ga++/src/$(am__dirstamp) \
 	ga++/src/$(DEPDIR)/$(am__dirstamp)
-ga++/src/PGroup.lo: ga++/src/$(am__dirstamp) \
+ga++/src/services.lo: ga++/src/$(am__dirstamp) \
 	ga++/src/$(DEPDIR)/$(am__dirstamp)
 libga++.la: $(libga___la_OBJECTS) $(libga___la_DEPENDENCIES) 
 	$(AM_V_CXXLD)$(CXXLINK) $(am_libga___la_rpath) $(libga___la_OBJECTS) $(libga___la_LIBADD) $(LIBS)
@@ -4156,6 +4158,8 @@ mostlyclean-compile:
 	-rm -f ga++/src/init_term.lo
 	-rm -f ga++/src/overload.$(OBJEXT)
 	-rm -f ga++/src/overload.lo
+	-rm -f ga++/src/services.$(OBJEXT)
+	-rm -f ga++/src/services.lo
 	-rm -f ga++/testing/elempatch.$(OBJEXT)
 	-rm -f ga++/testing/mtest.$(OBJEXT)
 	-rm -f ga++/testing/ntestc.$(OBJEXT)
@@ -4587,6 +4591,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@ga++/src/$(DEPDIR)/PGroup.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ga++/src/$(DEPDIR)/init_term.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ga++/src/$(DEPDIR)/overload.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@ga++/src/$(DEPDIR)/services.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ga++/testing/$(DEPDIR)/elempatch.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ga++/testing/$(DEPDIR)/mtest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ga++/testing/$(DEPDIR)/ntestc.Po@am__quote@
@@ -5891,23 +5896,23 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 	uninstall-includeHEADERS uninstall-libLTLIBRARIES
 
 
-config.fh: config.h
-	-rm -f config.fh && $(SED) "/^#/!d" $< > config.fh
+config.fh: $(top_build_prefix)config.h
+	-rm -f config.fh && $(SED) "/^#/!d" $(top_build_prefix)config.h > config.fh
 
 clean-config:
 	-rm -f config.fh
 
-global/src/wapi.h: global/src/papi.h
+global/src/wapi.h: $(top_srcdir)/global/src/papi.h
 	-rm -f global/src/wapi.h && \
 	$(SED) -e "s/PAPI/WAPI/g" \
-	       -e "s/pnga_/wnga_/g" $< > global/src/wapi.h
-global/src/wapidefs.h: global/src/papi.h
+	       -e "s/pnga_/wnga_/g" $(top_srcdir)/global/src/papi.h > global/src/wapi.h
+global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
 	-rm -f global/src/wapidefs.h && \
 	$(SED) -e "s/PAPI/WAPIDEFS/g" \
-		   -e "s/^.*p\(nga_.*\)(.*$$/#define w\1 p\1/g" $< > global/src/wapidefs.h
-@HAVE_PYTHON_TRUE@global/src/wapi.c: global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
+		   -e "s/^.*p\(nga_.*\)(.*$$/#define w\1 p\1/g" $(top_srcdir)/global/src/papi.h > global/src/wapidefs.h
+@HAVE_PYTHON_TRUE@global/src/wapi.c: $(top_srcdir)/global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
 @HAVE_PYTHON_TRUE@	-rm -f global/src/wapi.c && \
-@HAVE_PYTHON_TRUE@	$(PYTHON) $(top_srcdir)/build-aux/wapigen.py $< > global/src/wapi.c
+@HAVE_PYTHON_TRUE@	$(PYTHON) $(top_srcdir)/build-aux/wapigen.py $(top_srcdir)/global/src/papi.h > global/src/wapi.c
 @HAVE_M4_TRUE@global/testing/nga-onesided.F: $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@global/testing/nga-patch.F:    $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@global/testing/nga-periodic.F: $(GLOBAL_TESTING_M4_DEPS)

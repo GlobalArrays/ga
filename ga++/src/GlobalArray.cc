@@ -436,7 +436,7 @@ GA::GlobalArray::hasGhosts()  const {
   return GA_Has_ghosts(mHandle);
 }
 
-Integer 
+int 
 GA::GlobalArray::idot(const GA::GlobalArray * g_a)  const {
   return GA_Idot(mHandle, g_a->mHandle);
 }
@@ -934,14 +934,26 @@ GA::GlobalArray::spdInvert()  const {
 
 void
 GA::GlobalArray::stridedAcc(int lo[], int hi[], int skip[], void*buf,
-                            int ld[]) const {
-    GA_Error((char *)"Method not defined in GA++",0);
+                            int ld[], void *alpha) const {
+    NGA_Strided_acc(mHandle, lo, hi, skip, buf, ld, alpha);
+}
+
+void
+GA::GlobalArray::stridedAcc(int64_t lo[], int64_t hi[], int64_t skip[], void*buf,
+                            int64_t ld[], void *alpha) const {
+    NGA_Strided_acc64(mHandle, lo, hi, skip, buf, ld, alpha);
 }
 
 void
 GA::GlobalArray::stridedGet(int lo[], int hi[], int skip[], void*buf,
                             int ld[]) const {
-    GA_Error((char *)"Method not defined in GA++",0);
+    NGA_Strided_get(mHandle, lo, hi, skip, buf, ld);
+}
+
+void
+GA::GlobalArray::stridedGet(int64_t lo[], int64_t hi[], int64_t skip[], void*buf,
+                            int64_t ld[]) const {
+    NGA_Strided_get64(mHandle, lo, hi, skip, buf, ld);
 }
 
 void

@@ -1,10 +1,12 @@
+/**
+ * @file init_term.h
+ *
+ * Ga Initialize and Terminate calls.
+ */
 #ifndef _INITTERM_H
 #define _INITTERM_H
 
-
-/**
- * Ga Initialize and Terminate calls.
- */
+namespace GA {
 
 /**
  * Initialize Global Arrays.
@@ -18,9 +20,7 @@
  * @param argc,argv - command line argument lists.
  * @param limit - amount of memory in bytes per process [input]
  */
-
-_GA_STATIC_ void
-Initialize(int argc, char *argv[], size_t limit = 0);
+void Initialize(int argc, char *argv[], size_t limit = 0);
 
 
 /**
@@ -40,8 +40,7 @@ Initialize(int argc, char *argv[], size_t limit = 0);
  * MA  allocates and manages local memory using stack and heap disciplines.
  * [refer section 3.2 of GA USer manual for more info]
  */
-_GA_STATIC_ void
-Initialize(int argc, char *argv[], unsigned long heapSize, 
+void Initialize(int argc, char *argv[], unsigned long heapSize, 
 	   unsigned long stackSize, int type, size_t limit = 0);
 
 
@@ -49,7 +48,8 @@ Initialize(int argc, char *argv[], unsigned long heapSize,
  * Delete all active arrays and destroy internal data structures. 
  * This is a collective operation. 
  */
-_GA_STATIC_ void 
-Terminate();
+void Terminate();
+
+};
 
 #endif // _INITTERM_H  

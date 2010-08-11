@@ -1,5 +1,5 @@
 # GA_CXX_NAMESPACES
-AC_DEFUN([AC_CXX_NAMESPACES],
+AC_DEFUN([GA_CXX_NAMESPACES],
 [AC_CACHE_CHECK([whether the compiler implements namespaces],
 [ga_cv_cxx_namespaces],
 [AC_LANG_PUSH([C++])
@@ -12,5 +12,4 @@ AC_LANG_POP([C++])])
 AS_IF([test x$ga_cv_cxx_namespaces = xyes],
     [AC_DEFINE([HAVE_NAMESPACES], [1],
         [define if the compiler implements namespaces])])
-AM_CONDITIONAL([CXX_NAMESPACES], [test x$ga_cv_cxx_namespaces = xyes])
 ])#GA_CXX_NAMESPACES

@@ -193,6 +193,7 @@ AS_IF([test "x$with_mpi" != xno], [GA_MPICXX_TEST])
 # Checks for C++ header files.
 
 # Checks for C++ typedefs, structures, and compiler characteristics.
+GA_CXX_NAMESPACES
 
 # Checks for C++ type sizes.
 
@@ -201,6 +202,9 @@ AS_IF([test "x$with_mpi" != xno], [GA_MPICXX_TEST])
 GA_CXX_OPT
 
 ])
+
+# conditionals must be defined unconditionally
+AM_CONDITIONAL([CXX_NAMESPACES], [test x$ga_cv_cxx_namespaces = xyes])
 
 AC_LANG_POP([C++])
 
