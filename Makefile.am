@@ -1152,7 +1152,7 @@ else
 PARALLEL_TESTS += global/testing/bin$(EXEEXT)
 PARALLEL_TESTS += global/testing/blktest$(EXEEXT)
 #PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
-PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT)
+#PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
 PARALLEL_TESTS += global/testing/g2test$(EXEEXT)
 PARALLEL_TESTS += global/testing/g3test$(EXEEXT)
 #PARALLEL_TESTS += global/testing/ghosts$(EXEEXT) # hangs

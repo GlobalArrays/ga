@@ -341,13 +341,13 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_22)
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_66 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
 #PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
 #PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
+#PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
 #PARALLEL_TESTS += global/testing/ghosts$(EXEEXT) # hangs
 #PARALLEL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/random$(EXEEXT) # takes too long
 @NOFORT_FALSE@am__append_67 = global/testing/bin$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/blktest$(EXEEXT) \
-@NOFORT_FALSE@	global/testing/ga_lu$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/g2test$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/g3test$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/jacobi$(EXEEXT) \
@@ -5430,8 +5430,6 @@ global/testing/bin.log: global/testing/bin$(EXEEXT)
 	@p='global/testing/bin$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/blktest.log: global/testing/blktest$(EXEEXT)
 	@p='global/testing/blktest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-global/testing/ga_lu.log: global/testing/ga_lu$(EXEEXT)
-	@p='global/testing/ga_lu$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/g2test.log: global/testing/g2test$(EXEEXT)
 	@p='global/testing/g2test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/g3test.log: global/testing/g3test$(EXEEXT)
