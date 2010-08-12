@@ -24,6 +24,7 @@
 #else
 #   include "wapidefs.h"
 #endif
+#include "papi.h"
 #include "wapi.h"
 
 Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM], _ga_work[MAXDIM];
@@ -48,8 +49,8 @@ int _ga_initialize_args=0;
 
 short int _ga_irreg_flag = 0;
 
-static inline void copy_map(int block[], int block_ndim, int map[]);
-static inline void copy_map64(int64_t block[], int block_ndim, int64_t map[]);
+static void copy_map(int block[], int block_ndim, int map[]);
+static void copy_map64(int64_t block[], int block_ndim, int64_t map[]);
 
 #ifdef USE_FAPI
 #  define COPYC2F(carr, farr, n){\
@@ -3690,7 +3691,7 @@ int GA_Nnodes()
     return ga_nnodes_();
 }
 
-static inline void copy_map(int block[], int block_ndim, int map[])
+static void copy_map(int block[], int block_ndim, int map[])
 {
     int d;
     int i,sum=0,capi_offset=0,map_offset=0;
@@ -3711,7 +3712,7 @@ static inline void copy_map(int block[], int block_ndim, int map[])
     }
 }
 
-static inline void copy_map64(int64_t block[], int block_ndim, int64_t map[])
+static void copy_map64(int64_t block[], int block_ndim, int64_t map[])
 {
     int d;
     int64_t i,sum=0,capi_offset=0,map_offset=0;

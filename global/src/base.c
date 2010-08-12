@@ -58,6 +58,7 @@
 #include "macdecls.h"
 #include "armci.h"
 
+static int calc_maplen(int handle);
 
 #ifdef USE_VAMPIR
 #include "ga_vampir.h"
@@ -71,7 +72,6 @@
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
 
-#define MAPLEN  (GAnproc + MAXDIM)
 #define FLEN        80              /* length of Fortran strings */
 
 /*uncomment line below to verify consistency of MA in every sync */
@@ -892,13 +892,7 @@ void gai_init_struct(int handle)
         int len = (int)GAnproc;
         GA[handle].ptr = (char**)malloc(len*sizeof(char**));
      }
-     if(!GA[handle].mapc){
-        int len = (int)MAPLEN;
-        GA[handle].mapc = (C_Integer*)malloc(len*sizeof(C_Integer*));
-        GA[handle].mapc[0] = -1;
-     }
      if(!GA[handle].ptr)gai_error("malloc failed: ptr:",0);
-     if(!GA[handle].mapc)gai_error("malloc failed: mapc:",0);
      GA[handle].ndim = -1;
 }
 
@@ -1210,7 +1204,7 @@ Integer ga_create_handle_()
   GA[ga_handle].p_handle = GA_Init_Proc_Group;
   GA[ga_handle].ndim = -1;
   GA[ga_handle].name[0] = '\0';
-  GA[ga_handle].mapc[0] = -1;
+  GA[ga_handle].mapc = NULL;
   GA[ga_handle].irreg = 0;
   GA[ga_handle].ghosts = 0;
   GA[ga_handle].corner_flag = -1;
@@ -1388,6 +1382,7 @@ void FATR ga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
     maplen += nblock[i];
     GA[ga_handle].nblock[i] = (C_Integer)nblock[i];
   }
+  GA[ga_handle].mapc = (C_Integer*)malloc((maplen+1)*sizeof(C_Integer*));
   for (i=0; i<maplen; i++) {
     GA[ga_handle].mapc[i] = (C_Integer)mapc[i];
   }
@@ -1622,7 +1617,7 @@ logical FATR ga_allocate_( Integer *g_a)
 
   /* The data distribution has not been specified by the user. Create
      default distribution */
-  if (GA[ga_handle].mapc[0] == -1 && GA[ga_handle].block_flag == 0) {
+  if (GA[ga_handle].mapc == NULL && GA[ga_handle].block_flag == 0) {
 #define OLD_DISTRIBUTION 1
 #if OLD_DISTRIBUTION
     extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,
@@ -1719,6 +1714,7 @@ logical FATR ga_allocate_( Integer *g_a)
       GA[ga_handle].nblock[i] = pe[i];
       maplen += pe[i];
     }
+    GA[ga_handle].mapc = (C_Integer*)malloc((maplen+1)*sizeof(C_Integer*));
     for(i = 0; i< maplen; i++) {
       GA[ga_handle].mapc[i] = (C_Integer)mapALL[i];
     }
@@ -2631,6 +2627,7 @@ logical gai_duplicate(Integer *g_a, Integer *g_b, char* array_name)
   C_Integer  *save_mapc;
   int local_sync_begin,local_sync_end;
   Integer grp_id, grp_me=GAme, grp_nproc=GAnproc;
+  int maplen = calc_maplen(GA_OFFSET + *g_a);
 
 #ifdef USE_VAMPIR
   vampir_begin(GA_DUPLICATE,__FILE__,__LINE__);
@@ -2665,12 +2662,14 @@ logical gai_duplicate(Integer *g_a, Integer *g_b, char* array_name)
 
   /*** copy content of the data structure ***/
   save_ptr = GA[ga_handle].ptr;
-  save_mapc = GA[ga_handle].mapc;
   GA[ga_handle] = GA[GA_OFFSET + *g_a];
   strcpy(GA[ga_handle].name, array_name);
   GA[ga_handle].ptr = save_ptr;
-  GA[ga_handle].mapc = save_mapc;
-  for(i=0;i<MAPLEN; i++)GA[ga_handle].mapc[i] = GA[GA_OFFSET+ *g_a].mapc[i];
+  if (maplen > 0) {
+    GA[ga_handle].mapc = (C_Integer*)malloc((maplen+1)*sizeof(C_Integer*));
+    for(i=0;i<maplen; i++)GA[ga_handle].mapc[i] = GA[GA_OFFSET+ *g_a].mapc[i];
+    GA[ga_handle].mapc[maplen] = -1;
+  }
 
   /*** copy info for restricted arrays, if relevant ***/
   if (GA[GA_OFFSET + *g_a].num_rstrctd > 0) {
@@ -2768,6 +2767,7 @@ int extra = sizeof(getmem_t)+GAnproc*sizeof(char*);
 getmem_t *info = (getmem_t *)((char*)ptr - extra);
 char **ptr_arr = (char**)(info+1);
 int g_b;
+int maplen = calc_maplen(GA_OFFSET + g_a);
 
 
       ga_sync_();
@@ -2792,12 +2792,14 @@ int g_b;
 
       /*** copy content of the data structure ***/
       save_ptr = GA[ga_handle].ptr;
-      save_mapc = GA[ga_handle].mapc;
       GA[ga_handle] = GA[GA_OFFSET + g_a];
       strcpy(GA[ga_handle].name, array_name);
       GA[ga_handle].ptr = save_ptr;
-      GA[ga_handle].mapc = save_mapc;
-      for(i=0;i<MAPLEN; i++)GA[ga_handle].mapc[i] = GA[GA_OFFSET+ g_a].mapc[i];
+      if (maplen > 0) {
+        GA[ga_handle].mapc = (C_Integer*)malloc((maplen+1)*sizeof(C_Integer*));
+        for(i=0;i<maplen; i++)GA[ga_handle].mapc[i] = GA[GA_OFFSET+ g_a].mapc[i];
+        GA[ga_handle].mapc[maplen] = -1;
+      }
 
       /* get ptrs and datatype from user memory */
       gam_checktype(ga_type_f2c(info->type));
@@ -3695,6 +3697,8 @@ logical FATR ga_compare_distr_(Integer *g_a, Integer *g_b)
 {
 int h_a =(int)*g_a + GA_OFFSET;
 int h_b =(int)*g_b + GA_OFFSET;
+int h_a_maplen = calc_maplen(h_a);
+int h_b_maplen = calc_maplen(h_b);
 int i;
 
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -3712,7 +3716,8 @@ int i;
    if (GA[h_a].block_flag != GA[h_b].block_flag) return FALSE;
    if (GA[h_a].block_sl_flag != GA[h_b].block_sl_flag) return FALSE;
    if (!GA[h_a].block_flag) {
-     for(i=0; i <MAPLEN; i++){
+     if (h_a_maplen != h_b_maplen) return FALSE;
+     for(i=0; i <h_a_maplen; i++){
        if(GA[h_a].mapc[i] != GA[h_b].mapc[i]) return FALSE;
        if(GA[h_a].mapc[i] == -1) break;
      }
@@ -4878,4 +4883,16 @@ Integer FATR ga_pgroup_absolute_id_(Integer *grp, Integer *pid)
   gai_error("ga_pgroup_absolute_id(): Defined only when using MPI groups",0);
   return -1;
 #endif
+}
+
+static int calc_maplen(int handle)
+{
+    if (GA[handle].mapc != NULL) {
+        int i,len=0;
+        for (i=0; i<GA[handle].ndim; i++) {
+            len += GA[handle].nblock[i];
+        }
+        return len;
+    }
+    return 0;
 }
