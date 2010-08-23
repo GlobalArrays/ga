@@ -2072,7 +2072,7 @@ void NGA_Gather64(int g_a, void *v, int64_t* subsArray[], int64_t n)
     free(_subs_array);
 }
 
-void GA_Dgemm(char ta, char tb, int m, int n, int k,
+void GA_Dgemm_c(char ta, char tb, int m, int n, int k,
               double alpha, int g_a, int g_b, double beta, int g_c )
 {
   Integer G_a = g_a;
@@ -2100,7 +2100,7 @@ void GA_Dgemm(char ta, char tb, int m, int n, int k,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
 }
 
-void GA_Zgemm(char ta, char tb, int m, int n, int k,
+void GA_Zgemm_c(char ta, char tb, int m, int n, int k,
               DoubleComplex alpha, int g_a, int g_b, 
 	      DoubleComplex beta, int g_c )
 {
@@ -2129,7 +2129,7 @@ void GA_Zgemm(char ta, char tb, int m, int n, int k,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
 }
 
-void GA_Cgemm(char ta, char tb, int m, int n, int k,
+void GA_Cgemm_c(char ta, char tb, int m, int n, int k,
               SingleComplex alpha, int g_a, int g_b, 
 	      SingleComplex beta, int g_c )
 {
@@ -2158,7 +2158,7 @@ void GA_Cgemm(char ta, char tb, int m, int n, int k,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
 }
 
-void GA_Sgemm(char ta, char tb, int m, int n, int k,
+void GA_Sgemm_c(char ta, char tb, int m, int n, int k,
               float alpha, int g_a, int g_b, 
 	      float beta,  int g_c )
 {
@@ -2187,7 +2187,7 @@ void GA_Sgemm(char ta, char tb, int m, int n, int k,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
 }
 
-void GA_Dgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
+void GA_Dgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
                 double alpha, int g_a, int g_b, double beta, int g_c )
 {
   Integer G_a = g_a;
@@ -2215,7 +2215,7 @@ void GA_Dgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
 }
 
-void GA_Zgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
+void GA_Zgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
                 DoubleComplex alpha, int g_a, int g_b, 
                 DoubleComplex beta, int g_c )
 {
@@ -2244,7 +2244,7 @@ void GA_Zgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
 }
 
-void GA_Cgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
+void GA_Cgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
                 SingleComplex alpha, int g_a, int g_b, 
                 SingleComplex beta, int g_c )
 {
@@ -2273,7 +2273,7 @@ void GA_Cgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
 }
 
-void GA_Sgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
+void GA_Sgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
                 float alpha, int g_a, int g_b, 
                 float beta,  int g_c )
 {
@@ -2300,6 +2300,69 @@ void GA_Sgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
 	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
 	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
+}
+
+/**
+ * When calling GA _dgemm from the C, it is represented as follows (since the
+ * underlying GA dgemm implementation ga_matmul is in Fortran style)
+ *   C(m,n) = A(m,k) * B(k,n)
+ * Since GA internally creates GAs in Fortran style, we remap the above
+ * expression to: C(n,m) = B(n,k) * A(k,m) and pass it to fortran. This
+ * produces the output C in (n,m) format, which translates to C as (m,n),and
+ * ultimately giving us the correct result.
+ */
+void GA_Dgemm(char ta, char tb, int m, int n, int k,
+              double alpha, int g_a, int g_b, double beta, int g_c )
+{
+    GA_Dgemm_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+}
+
+void GA_Zgemm(char ta, char tb, int m, int n, int k,
+              DoubleComplex alpha, int g_a, int g_b, 
+	      DoubleComplex beta, int g_c )
+{
+    GA_Zgemm_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+}
+
+void GA_Cgemm(char ta, char tb, int m, int n, int k,
+              SingleComplex alpha, int g_a, int g_b, 
+	      SingleComplex beta, int g_c )
+{
+    GA_Cgemm_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+}
+
+void GA_Sgemm(char ta, char tb, int m, int n, int k,
+              float alpha, int g_a, int g_b, 
+	      float beta,  int g_c )
+{
+    GA_Sgemm_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+}
+
+void GA_Dgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
+                double alpha, int g_a, int g_b, double beta, int g_c )
+{
+    GA_Dgemm64_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+}
+
+void GA_Zgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
+                DoubleComplex alpha, int g_a, int g_b, 
+                DoubleComplex beta, int g_c )
+{
+    GA_Zgemm64_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+}
+
+void GA_Cgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
+                SingleComplex alpha, int g_a, int g_b, 
+                SingleComplex beta, int g_c )
+{
+    GA_Cgemm64_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+}
+
+void GA_Sgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
+                float alpha, int g_a, int g_b, 
+                float beta,  int g_c )
+{
+    GA_Sgemm64_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
 }
 
 /* Patch related */
