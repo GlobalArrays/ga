@@ -67,7 +67,9 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
 	global/testing/print$(EXEEXT) global/testing/testc$(EXEEXT) \
-	global/testing/testmult$(EXEEXT) $(am__EXEEXT_12) \
+	global/testing/testmatmultc$(EXEEXT) \
+	global/testing/testmult$(EXEEXT) \
+	global/testing/testmultrect$(EXEEXT) $(am__EXEEXT_12) \
 	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15) \
 	$(am__EXEEXT_16) $(am__EXEEXT_17) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
@@ -1636,6 +1638,18 @@ global_testing_testmatmult_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_testmatmult_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am__global_testing_testmatmultc_SOURCES_DIST =  \
+	global/testing/testmatmultc.c global/testing/testutil.fh \
+	global/testing/util.c global/testing/ffflush.F
+am_global_testing_testmatmultc_OBJECTS =  \
+	global/testing/testmatmultc.$(OBJEXT) $(am__objects_22)
+global_testing_testmatmultc_OBJECTS =  \
+	$(am_global_testing_testmatmultc_OBJECTS)
+global_testing_testmatmultc_LDADD = $(LDADD)
+global_testing_testmatmultc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__global_testing_testmult_SOURCES_DIST = global/testing/testmult.c \
 	global/testing/testutil.fh global/testing/util.c \
 	global/testing/ffflush.F
@@ -1645,6 +1659,18 @@ global_testing_testmult_OBJECTS =  \
 	$(am_global_testing_testmult_OBJECTS)
 global_testing_testmult_LDADD = $(LDADD)
 global_testing_testmult_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__global_testing_testmultrect_SOURCES_DIST =  \
+	global/testing/testmultrect.c global/testing/testutil.fh \
+	global/testing/util.c global/testing/ffflush.F
+am_global_testing_testmultrect_OBJECTS =  \
+	global/testing/testmultrect.$(OBJEXT) $(am__objects_22)
+global_testing_testmultrect_OBJECTS =  \
+	$(am_global_testing_testmultrect_OBJECTS)
+global_testing_testmultrect_LDADD = $(LDADD)
+global_testing_testmultrect_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
@@ -2036,8 +2062,12 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(nodist_EXTRA_global_testing_testc_SOURCES) \
 	$(global_testing_testeig_SOURCES) \
 	$(global_testing_testmatmult_SOURCES) \
+	$(global_testing_testmatmultc_SOURCES) \
+	$(nodist_EXTRA_global_testing_testmatmultc_SOURCES) \
 	$(global_testing_testmult_SOURCES) \
 	$(nodist_EXTRA_global_testing_testmult_SOURCES) \
+	$(global_testing_testmultrect_SOURCES) \
+	$(nodist_EXTRA_global_testing_testmultrect_SOURCES) \
 	$(global_testing_testsolve_SOURCES) \
 	$(global_testing_testspd_SOURCES) \
 	$(global_trace_adjust_SOURCES) \
@@ -2135,7 +2165,9 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_testc_SOURCES_DIST) \
 	$(am__global_testing_testeig_SOURCES_DIST) \
 	$(am__global_testing_testmatmult_SOURCES_DIST) \
+	$(am__global_testing_testmatmultc_SOURCES_DIST) \
 	$(am__global_testing_testmult_SOURCES_DIST) \
+	$(am__global_testing_testmultrect_SOURCES_DIST) \
 	$(am__global_testing_testsolve_SOURCES_DIST) \
 	$(am__global_testing_testspd_SOURCES_DIST) \
 	$(global_trace_adjust_SOURCES) \
@@ -2701,7 +2733,9 @@ global_testing_stride_SOURCES = global/testing/stride.F $(gtsrc)
 global_testing_testc_SOURCES = global/testing/testc.c $(gtsrc)
 global_testing_testeig_SOURCES = global/testing/testeig.F $(gtsrc)
 global_testing_testmatmult_SOURCES = global/testing/testmatmult.F $(gtsrc)
+global_testing_testmatmultc_SOURCES = global/testing/testmatmultc.c $(gtsrc)
 global_testing_testmult_SOURCES = global/testing/testmult.c $(gtsrc)
+global_testing_testmultrect_SOURCES = global/testing/testmultrect.c $(gtsrc)
 global_testing_testsolve_SOURCES = global/testing/testsolve.F $(gtsrc)
 global_testing_testspd_SOURCES = global/testing/testspd.F $(gtsrc)
 global_testing_test_SOURCES = global/testing/test.F $(gtsrc)
@@ -2754,6 +2788,8 @@ nodist_EXTRA_global_testing_ntestfc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_print_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmult_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_testmultrect_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_testmatmultc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 global_examples_boltzmann_boltz_SOURCES = \
 global/examples/boltzmann/boltzmann.F     \
 global/examples/boltzmann/common          \
@@ -2899,9 +2935,12 @@ PARALLEL_TESTS = $(am__append_60) $(am__append_61) $(am__append_62) \
 	$(am__append_66) global/testing/elempatch$(EXEEXT) \
 	global/testing/mtest$(EXEEXT) global/testing/ntestc$(EXEEXT) \
 	global/testing/ntestfc$(EXEEXT) global/testing/print$(EXEEXT) \
-	global/testing/testc$(EXEEXT) global/testing/testmult$(EXEEXT) \
-	$(am__append_67) $(am__append_68) $(am__append_69) \
-	$(am__append_70) $(am__append_71) \
+	global/testing/testc$(EXEEXT) \
+	global/testing/testmatmultc$(EXEEXT) \
+	global/testing/testmult$(EXEEXT) \
+	global/testing/testmultrect$(EXEEXT) $(am__append_67) \
+	$(am__append_68) $(am__append_69) $(am__append_70) \
+	$(am__append_71) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
 	$(am__append_72) pario/ntestc$(EXEEXT) $(am__append_73) \
 	$(am__append_74)
@@ -3952,11 +3991,21 @@ global/testing/testmatmult.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/testmatmult$(EXEEXT): $(global_testing_testmatmult_OBJECTS) $(global_testing_testmatmult_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/testmatmult$(EXEEXT)
 	$(AM_V_F77LD)$(global_testing_testmatmult_LINK) $(global_testing_testmatmult_OBJECTS) $(global_testing_testmatmult_LDADD) $(LIBS)
+global/testing/testmatmultc.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/testmatmultc$(EXEEXT): $(global_testing_testmatmultc_OBJECTS) $(global_testing_testmatmultc_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/testmatmultc$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_testmatmultc_OBJECTS) $(global_testing_testmatmultc_LDADD) $(LIBS)
 global/testing/testmult.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/testmult$(EXEEXT): $(global_testing_testmult_OBJECTS) $(global_testing_testmult_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/testmult$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(global_testing_testmult_OBJECTS) $(global_testing_testmult_LDADD) $(LIBS)
+global/testing/testmultrect.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/testmultrect$(EXEEXT): $(global_testing_testmultrect_OBJECTS) $(global_testing_testmultrect_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/testmultrect$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_testmultrect_OBJECTS) $(global_testing_testmultrect_LDADD) $(LIBS)
 global/testing/testsolve.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/testsolve$(EXEEXT): $(global_testing_testsolve_OBJECTS) $(global_testing_testsolve_DEPENDENCIES) global/testing/$(am__dirstamp)
@@ -4350,7 +4399,9 @@ mostlyclean-compile:
 	-rm -f global/testing/testc.$(OBJEXT)
 	-rm -f global/testing/testeig.$(OBJEXT)
 	-rm -f global/testing/testmatmult.$(OBJEXT)
+	-rm -f global/testing/testmatmultc.$(OBJEXT)
 	-rm -f global/testing/testmult.$(OBJEXT)
+	-rm -f global/testing/testmultrect.$(OBJEXT)
 	-rm -f global/testing/testsolve.$(OBJEXT)
 	-rm -f global/testing/testspd.$(OBJEXT)
 	-rm -f global/testing/util.$(OBJEXT)
@@ -4658,7 +4709,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ntestfc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/print.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testmatmultc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testmult.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testmultrect.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/trace/$(DEPDIR)/adjust.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/trace/$(DEPDIR)/collisions.Po@am__quote@
@@ -5424,8 +5477,12 @@ global/testing/print.log: global/testing/print$(EXEEXT)
 	@p='global/testing/print$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testc.log: global/testing/testc$(EXEEXT)
 	@p='global/testing/testc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/testmatmultc.log: global/testing/testmatmultc$(EXEEXT)
+	@p='global/testing/testmatmultc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testmult.log: global/testing/testmult$(EXEEXT)
 	@p='global/testing/testmult$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/testmultrect.log: global/testing/testmultrect$(EXEEXT)
+	@p='global/testing/testmultrect$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/bin.log: global/testing/bin$(EXEEXT)
 	@p='global/testing/bin$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/blktest.log: global/testing/blktest$(EXEEXT)

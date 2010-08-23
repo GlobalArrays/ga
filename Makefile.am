@@ -532,7 +532,9 @@ check_PROGRAMS += global/testing/ntestc
 check_PROGRAMS += global/testing/ntestfc
 check_PROGRAMS += global/testing/print
 check_PROGRAMS += global/testing/testc
+check_PROGRAMS += global/testing/testmatmultc
 check_PROGRAMS += global/testing/testmult
+check_PROGRAMS += global/testing/testmultrect
 if NOFORT
 if HAVE_LAPACK
 check_PROGRAMS += global/testing/ga_lu
@@ -680,7 +682,9 @@ global_testing_stride_SOURCES         = global/testing/stride.F $(gtsrc)
 global_testing_testc_SOURCES          = global/testing/testc.c $(gtsrc)
 global_testing_testeig_SOURCES        = global/testing/testeig.F $(gtsrc)
 global_testing_testmatmult_SOURCES    = global/testing/testmatmult.F $(gtsrc)
+global_testing_testmatmultc_SOURCES   = global/testing/testmatmultc.c $(gtsrc)
 global_testing_testmult_SOURCES       = global/testing/testmult.c $(gtsrc)
+global_testing_testmultrect_SOURCES   = global/testing/testmultrect.c $(gtsrc)
 global_testing_testsolve_SOURCES      = global/testing/testsolve.F $(gtsrc)
 global_testing_testspd_SOURCES        = global/testing/testspd.F $(gtsrc)
 global_testing_test_SOURCES           = global/testing/test.F $(gtsrc)
@@ -723,18 +727,20 @@ global_testing_testsolve_LDFLAGS      = $(FLDFLAGS)
 global_testing_testspd_LDFLAGS        = $(FLDFLAGS)
 global_testing_test_LDFLAGS           = $(FLDFLAGS)
 
-nodist_EXTRA_global_testing_elempatch_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ga_lu_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ga_mpi_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_getmem_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ipc_clean_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_lock_SOURCES      = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_mtest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ntestc_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_ntestfc_SOURCES   = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_print_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_testc_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_testmult_SOURCES  = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_elempatch_SOURCES    = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_ga_lu_SOURCES        = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_ga_mpi_SOURCES       = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_getmem_SOURCES       = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_ipc_clean_SOURCES    = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_lock_SOURCES         = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_mtest_SOURCES        = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_ntestc_SOURCES       = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_ntestfc_SOURCES      = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_print_SOURCES        = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_testc_SOURCES        = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_testmult_SOURCES     = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_testmultrect_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_testmatmultc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 
 ##############################################################################
 # global/examples
@@ -1143,7 +1149,9 @@ PARALLEL_TESTS += global/testing/ntestc$(EXEEXT)
 PARALLEL_TESTS += global/testing/ntestfc$(EXEEXT)
 PARALLEL_TESTS += global/testing/print$(EXEEXT)
 PARALLEL_TESTS += global/testing/testc$(EXEEXT)
+PARALLEL_TESTS += global/testing/testmatmultc$(EXEEXT)
 PARALLEL_TESTS += global/testing/testmult$(EXEEXT)
+PARALLEL_TESTS += global/testing/testmultrect$(EXEEXT)
 if NOFORT
 if HAVE_LAPACK
 #PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
