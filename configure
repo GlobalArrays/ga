@@ -29071,7 +29071,7 @@ MA_ACCESS_INDEX_TYPE=$ga_access_index_type
 MA_ACCESS_INDEX_TYPE_C=$ga_access_index_type_c
 
 
-ac_config_files="$ac_config_files Makefile gaf2c/farg.h gaf2c/typesf2c.h ma/mafdecls.fh ma/matypes.h global/src/global.fh"
+ac_config_files="$ac_config_files Makefile ga.pc gaf2c/farg.h gaf2c/typesf2c.h global/src/global.fh ma/mafdecls.fh ma/matypes.h"
 
 
 
@@ -30499,11 +30499,12 @@ do
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "ga.pc") CONFIG_FILES="$CONFIG_FILES ga.pc" ;;
     "gaf2c/farg.h") CONFIG_FILES="$CONFIG_FILES gaf2c/farg.h" ;;
     "gaf2c/typesf2c.h") CONFIG_FILES="$CONFIG_FILES gaf2c/typesf2c.h" ;;
+    "global/src/global.fh") CONFIG_FILES="$CONFIG_FILES global/src/global.fh" ;;
     "ma/mafdecls.fh") CONFIG_FILES="$CONFIG_FILES ma/mafdecls.fh" ;;
     "ma/matypes.h") CONFIG_FILES="$CONFIG_FILES ma/matypes.h" ;;
-    "global/src/global.fh") CONFIG_FILES="$CONFIG_FILES global/src/global.fh" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

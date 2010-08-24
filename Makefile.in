@@ -37,6 +37,7 @@
 
 
 
+
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -396,8 +397,8 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_22)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(srcdir)/config.h.in $(top_srcdir)/configure \
-	$(top_srcdir)/gaf2c/farg.h.in \
+	$(srcdir)/config.h.in $(srcdir)/ga.pc.in \
+	$(top_srcdir)/configure $(top_srcdir)/gaf2c/farg.h.in \
 	$(top_srcdir)/gaf2c/typesf2c.h.in \
 	$(top_srcdir)/global/src/global.fh.in \
 	$(top_srcdir)/ma/mafdecls.fh.in $(top_srcdir)/ma/matypes.h.in \
@@ -467,8 +468,8 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES = gaf2c/farg.h gaf2c/typesf2c.h ma/mafdecls.fh \
-	ma/matypes.h global/src/global.fh
+CONFIG_CLEAN_FILES = ga.pc gaf2c/farg.h gaf2c/typesf2c.h \
+	global/src/global.fh ma/mafdecls.fh ma/matypes.h
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -492,7 +493,7 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
-	"$(DESTDIR)$(includedir)"
+	"$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libga___la_LIBADD =
 am__libga___la_SOURCES_DIST = ga++/src/GAServices.cc \
@@ -2198,6 +2199,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	install-pdf-recursive install-ps-recursive install-recursive \
 	installcheck-recursive installdirs-recursive pdf-recursive \
 	ps-recursive uninstall-recursive
+DATA = $(pkgconfig_DATA)
 am__include_HEADERS_DIST = gaf2c/typesf2c.h gaf2c/farg.h ma/error.h \
 	ma/macdecls.h ma/macommon.h ma/maf2c.fh ma/mafdecls.fh \
 	ma/matypes.h ma/scope.h ma/string-util.h ma/table.h \
@@ -2610,6 +2612,8 @@ AM_LDFLAGS = $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) $(am__append_1)
 LDADD = $(LTLIBOBJS) libga.la $(SCALAPACK_LIBS) $(LAPACK_LIBS) \
 	$(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
 FLDFLAGS = $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS)
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = ga.pc
 
 # Certain trickery when turning Fortran support on or off.
 @NOFORT_FALSE@MAYBE_DUMMY_F_LINK = dummy.f
@@ -3001,15 +3005,17 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
+ga.pc: $(top_builddir)/config.status $(srcdir)/ga.pc.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 gaf2c/farg.h: $(top_builddir)/config.status $(top_srcdir)/gaf2c/farg.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 gaf2c/typesf2c.h: $(top_builddir)/config.status $(top_srcdir)/gaf2c/typesf2c.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
+global/src/global.fh: $(top_builddir)/config.status $(top_srcdir)/global/src/global.fh.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 ma/mafdecls.fh: $(top_builddir)/config.status $(top_srcdir)/ma/mafdecls.fh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 ma/matypes.h: $(top_builddir)/config.status $(top_srcdir)/ma/matypes.h.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-global/src/global.fh: $(top_builddir)/config.status $(top_srcdir)/global/src/global.fh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 clean-checkLTLIBRARIES:
@@ -5121,6 +5127,26 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool config.lt
+install-pkgconfigDATA: $(pkgconfig_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(pkgconfigdir)" || $(MKDIR_P) "$(DESTDIR)$(pkgconfigdir)"
+	@list='$(pkgconfig_DATA)'; test -n "$(pkgconfigdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(pkgconfigdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(pkgconfigdir)" || exit $$?; \
+	done
+
+uninstall-pkgconfigDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(pkgconfig_DATA)'; test -n "$(pkgconfigdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(pkgconfigdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(pkgconfigdir)" && rm -f $$files
 install-includeHEADERS: $(include_HEADERS)
 	@$(NORMAL_INSTALL)
 	test -z "$(includedir)" || $(MKDIR_P) "$(DESTDIR)$(includedir)"
@@ -5760,12 +5786,13 @@ check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-recursive
-all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(HEADERS) config.h
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(DATA) $(HEADERS) \
+		config.h
 install-binPROGRAMS: install-libLTLIBRARIES
 
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(includedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(includedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: $(BUILT_SOURCES)
@@ -5873,7 +5900,7 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-includeHEADERS
+install-data-am: install-includeHEADERS install-pkgconfigDATA
 
 install-dvi: install-dvi-recursive
 
@@ -5922,7 +5949,7 @@ ps: ps-recursive
 ps-am:
 
 uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
-	uninstall-libLTLIBRARIES
+	uninstall-libLTLIBRARIES uninstall-pkgconfigDATA
 
 .MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) all check \
 	check-am check-html ctags-recursive install install-am \
@@ -5942,13 +5969,14 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 	install-dvi-am install-exec install-exec-am install-html \
 	install-html-am install-includeHEADERS install-info \
 	install-info-am install-libLTLIBRARIES install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs installdirs-am \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am recheck recheck-html tags tags-recursive \
-	uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-includeHEADERS uninstall-libLTLIBRARIES
+	install-pdf-am install-pkgconfigDATA install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am recheck recheck-html \
+	tags tags-recursive uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-includeHEADERS \
+	uninstall-libLTLIBRARIES uninstall-pkgconfigDATA
 
 
 config.fh: $(top_build_prefix)config.h
