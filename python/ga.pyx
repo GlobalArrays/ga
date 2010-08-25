@@ -49,6 +49,12 @@ _to_dtype = {
         C_DBL: np.double
         }
 
+cdef void* _gapy_malloc(size_t bytes, int align, char *name):
+    return malloc(bytes)
+
+cdef void _gapy_free(void *ptr):
+    free(ptr)
+
 def abs_value(int g_a, lo=None, hi=None):
     """Take element-wise absolute value of the array or patch.
     
@@ -801,6 +807,85 @@ def destroy_mutexes():
         return True
     return False
 
+def diag(int g_a, int g_s, int g_v, evalues=None):
+    """Solve the generalized eigen-value problem.
+
+    The input matrices are not overwritten or destroyed.
+    
+    Positional arguments:
+    g_a -- the array handle of the matrix to diagonalize
+    g_s -- the array handle of the metric
+    g_v -- the array handle to return evecs
+
+    Returns:
+    All eigen-values as an ndarray in ascending order.
+
+    This is a collective operation. 
+
+    """
+    if evalues is None:
+        gtype,dims = inquire(g_a)
+        evalues = np.ndarray((dims[0]), dtype=_to_dtype(gtype))
+    else:
+        evalues = np.asarray(evalues)
+    GA_Diag(g_a, g_s, g_v, <void*>evalues.data)
+    return evalues
+
+def diag_reuse(int control, int g_a, int g_s, int g_v, evalues=None):
+    """Solve the generalized eigen-value problem.
+
+    Recommended for REPEATED calls if g_s is unchanged.
+    The input matrices are not overwritten or destroyed.
+    
+    Positional arguments:
+    control --  0 indicates first call to the eigensolver
+               >0 consecutive calls (reuses factored g_s)
+               <0 only erases factorized g_s; g_v and eval unchanged
+                  (should be called after previous use if another
+                  eigenproblem, i.e., different g_a and g_s, is to
+                  be solved) 
+    g_a     -- the array handle of the matrix to diagonalize
+    g_s     -- the array handle of the metric
+    g_v     -- the array handle to return evecs
+
+    Returns:
+    All eigen-values as an ndarray in ascending order.
+
+    This is a collective operation. 
+
+    """
+    if evalues is None:
+        gtype,dims = inquire(g_a)
+        evalues = np.ndarray((dims[0]), dtype=_to_dtype(gtype))
+    else:
+        evalues = np.asarray(evalues)
+    GA_Diag_reuse(control, g_a, g_s, g_v, <void*>evalues.data)
+    return evalues
+
+def diag_std(int g_a, int g_v, evalues=None):
+    """Solve the standard (non-generalized) eigenvalue problem.
+
+    The input matrix is neither overwritten nor destroyed.
+    
+    Positional arguments:
+    g_a -- the array handle of the matrix to diagonalize
+    g_v -- the array handle to return evecs
+
+    Returns:
+    all eigenvectors via the g_v global array, and eigenvalues as an ndarray
+    in ascending order
+
+    This is a collective operation. 
+
+    """
+    if evalues is None:
+        gtype,dims = inquire(g_a)
+        evalues = np.ndarray((dims[0]), dtype=_to_dtype(gtype))
+    else:
+        evalues = np.asarray(evalues)
+    GA_Diag_std(g_a, g_v, <void*>evalues.data)
+    return evalues
+
 def distribution(int g_a, int iproc=-1):
     """Return the distribution given to iproc.
 
@@ -893,31 +978,321 @@ def dot(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None,
         else:
             raise TypeError
     
-def fill(int g_a, value):
-    """Assign a single value to all elements in the array."""
+def duplicate(int g_a, char *name=""):
+    """Creates a new array by applying all the properties of another existing
+    array.
+    
+    Positional arguments:
+    g_a -- the array handle
+
+    Keyword arguments:
+    name -- the new name of the created array
+
+    Returns:
+    a non-zero array handle means the call was succesful.
+
+    This is a collective operation. 
+
+    """
+    return GA_Duplicate(g_a, name)
+
+def elem_divide(int g_a, int g_b, int g_c, alo=None, ahi=None, blo=None,
+        bhi=None, clo=None, chi=None):
+    """Computes the element-wise quotient of the two arrays.
+
+    Arrays or array patches must be of the same types and same number of
+    elements. For two-dimensional arrays:
+
+                c(i, j)  = a(i,j)/b(i,j)
+
+    The result (c) may replace one of the input arrays (a/b).
+    If one of the elements of array g_b is zero, the quotient for the element
+    of g_c will be set to GA_NEGATIVE_INFINITY. 
+
+    This is a collective operation. 
+
+    Positional arguments:
+    g_a    -- the array handle
+    g_b    -- the array handle
+    g_c    -- the array handle
+
+    Keyword arguments:
+    alo   -- lower bound patch coordinates of g_a, inclusive
+    ahi   -- higher bound patch coordinates of g_a, inclusive
+    blo   -- lower bound patch coordinates of g_b, inclusive
+    bhi   -- higher bound patch coordinates of g_b, inclusive
+    clo   -- lower bound patch coordinates of g_c, inclusive
+    chi   -- higher bound patch coordinates of g_c, inclusive
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] blo_nd, bhi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] clo_nd, chi_nd
+    if (alo is None and ahi is None
+            and blo is None and bhi is None
+            and clo is None and chi is None):
+        GA_Elem_divide(g_a, g_b, g_c)
+    else:
+        alo_nd,ahi_nd = _lohi(g_a,alo,ahi)
+        blo_nd,bhi_nd = _lohi(g_b,blo,bhi)
+        clo_nd,chi_nd = _lohi(g_c,clo,chi)
+        GA_Elem_divide_patch64(
+                g_a, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
+                g_b, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data,
+                g_c, <int64_t*>clo_nd.data, <int64_t*>chi_nd.data)
+
+def elem_maximum(int g_a, int g_b, int g_c, alo=None, ahi=None, blo=None,
+        bhi=None, clo=None, chi=None):
+    """Computes the element-wise maximum of the two arrays.
+
+    Arrays or array patches must be of the same types and same number of
+    elements. For two-dimensional arrays:
+
+        c(i, j)  = max(a(i,j),b(i,j))
+
+    If the data type is complex, then
+        c(i, j).real = max{ |a(i,j)|, |b(i,j)|} while c(i,j).image = 0
+    The result (c) may replace one of the input arrays (a/b).
+
+    This is a collective operation. 
+
+    Positional arguments:
+    g_a    -- the array handle
+    g_b    -- the array handle
+    g_c    -- the array handle
+
+    Keyword arguments:
+    alo   -- lower bound patch coordinates of g_a, inclusive
+    ahi   -- higher bound patch coordinates of g_a, inclusive
+    blo   -- lower bound patch coordinates of g_b, inclusive
+    bhi   -- higher bound patch coordinates of g_b, inclusive
+    clo   -- lower bound patch coordinates of g_c, inclusive
+    chi   -- higher bound patch coordinates of g_c, inclusive
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] blo_nd, bhi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] clo_nd, chi_nd
+    if (alo is None and ahi is None
+            and blo is None and bhi is None
+            and clo is None and chi is None):
+        GA_Elem_maximum(g_a, g_b, g_c)
+    else:
+        alo_nd,ahi_nd = _lohi(g_a,alo,ahi)
+        blo_nd,bhi_nd = _lohi(g_b,blo,bhi)
+        clo_nd,chi_nd = _lohi(g_c,clo,chi)
+        GA_Elem_maximum_patch64(
+                g_a, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
+                g_b, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data,
+                g_c, <int64_t*>clo_nd.data, <int64_t*>chi_nd.data)
+
+def elem_minimum(int g_a, int g_b, int g_c, alo=None, ahi=None, blo=None,
+        bhi=None, clo=None, chi=None):
+    """Computes the element-wise minimum of the two arrays.
+
+    Arrays or array patches must be of the same types and same number of
+    elements. For two-dimensional arrays:
+
+        c(i, j)  = min(a(i,j),b(i,j))
+
+    If the data type is complex, then
+        c(i, j).real = min{ |a(i,j)|, |b(i,j)|} while c(i,j).image = 0
+    The result (c) may replace one of the input arrays (a/b).
+
+    This is a collective operation. 
+
+    Positional arguments:
+    g_a    -- the array handle
+    g_b    -- the array handle
+    g_c    -- the array handle
+
+    Keyword arguments:
+    alo   -- lower bound patch coordinates of g_a, inclusive
+    ahi   -- higher bound patch coordinates of g_a, inclusive
+    blo   -- lower bound patch coordinates of g_b, inclusive
+    bhi   -- higher bound patch coordinates of g_b, inclusive
+    clo   -- lower bound patch coordinates of g_c, inclusive
+    chi   -- higher bound patch coordinates of g_c, inclusive
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] blo_nd, bhi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] clo_nd, chi_nd
+    if (alo is None and ahi is None
+            and blo is None and bhi is None
+            and clo is None and chi is None):
+        GA_Elem_minimum(g_a, g_b, g_c)
+    else:
+        alo_nd,ahi_nd = _lohi(g_a,alo,ahi)
+        blo_nd,bhi_nd = _lohi(g_b,blo,bhi)
+        clo_nd,chi_nd = _lohi(g_c,clo,chi)
+        GA_Elem_minimum_patch64(
+                g_a, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
+                g_b, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data,
+                g_c, <int64_t*>clo_nd.data, <int64_t*>chi_nd.data)
+
+def elem_multiply(int g_a, int g_b, int g_c, alo=None, ahi=None, blo=None,
+        bhi=None, clo=None, chi=None):
+    """Computes the element-wise product of the two arrays.
+
+    Arrays or array patches must be of the same types and same number of
+    elements. For two-dimensional arrays:
+
+                c(i, j)  = a(i,j)*b(i,j)
+
+    The result (c) may replace one of the input arrays (a/b).
+
+    This is a collective operation. 
+
+    Positional arguments:
+    g_a    -- the array handle
+    g_b    -- the array handle
+    g_c    -- the array handle
+
+    Keyword arguments:
+    alo   -- lower bound patch coordinates of g_a, inclusive
+    ahi   -- higher bound patch coordinates of g_a, inclusive
+    blo   -- lower bound patch coordinates of g_b, inclusive
+    bhi   -- higher bound patch coordinates of g_b, inclusive
+    clo   -- lower bound patch coordinates of g_c, inclusive
+    chi   -- higher bound patch coordinates of g_c, inclusive
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] blo_nd, bhi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] clo_nd, chi_nd
+    if (alo is None and ahi is None
+            and blo is None and bhi is None
+            and clo is None and chi is None):
+        GA_Elem_multiply(g_a, g_b, g_c)
+    else:
+        alo_nd,ahi_nd = _lohi(g_a,alo,ahi)
+        blo_nd,bhi_nd = _lohi(g_b,blo,bhi)
+        clo_nd,chi_nd = _lohi(g_c,clo,chi)
+        GA_Elem_multiply_patch64(
+                g_a, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
+                g_b, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data,
+                g_c, <int64_t*>clo_nd.data, <int64_t*>chi_nd.data)
+
+def fence():
+    """Blocks the calling process until all the data transfers corresponding
+    to GA operations called after ga.init_fence() complete.
+    
+    For example, since ga.put might return before the data reaches the final
+    destination, ga_init_fence and ga_fence allow processes to wait until the
+    data tranfer is fully completed:
+
+        ga.init_fence()
+        ga.put(g_a, ...)
+        ga.fence()
+
+    ga.fence() must be called after ga.init_fence(). A barrier, ga.sync(),
+    assures completion of all data transfers and implicitly cancels all
+    outstanding ga.init_fence() calls. ga.init_fence() and ga.fence() must be
+    used in pairs, multiple calls to ga.fence() require the same number of
+    corresponding ga.init_fence() calls. ga.init_fence()/ga_fence() pairs can
+    be nested.
+
+    ga.fence() works for multiple GA operations. For example:
+
+        ga.init_fence()
+        ga.put(g_a, ...)
+        ga.scatter(g_a, ...)
+        ga.put(g_b, ...)
+        ga.fence()
+
+    The calling process will be blocked until data movements initiated by two
+    calls to ga_put and one ga_scatter complete.
+    
+    """
+    GA_Fence()
+
+def fill(int g_a, value, lo=None, hi=None):
+    """Assign a single value to all elements in the array or patch.
+    
+    Positional arguments:
+    g_a -- the array handle
+
+    Keyword arguments:
+    lo -- lower bound patch coordinates, inclusive
+    hi -- higher bound patch coordinates, inclusive
+    
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
     cdef int       ivalue
     cdef long      lvalue
     cdef long long llvalue
     cdef float     fvalue
     cdef double    dvalue
+    cdef void     *vvalue
     cdef int gtype=inquire_type(g_a)
-    if gtype == C_INT:
-        ivalue = value
-        GA_Fill(g_a, &ivalue)
-    elif gtype == C_LONG:
-        lvalue = value
-        GA_Fill(g_a, &lvalue)
-    elif gtype == C_LONGLONG:
-        llvalue = value
-        GA_Fill(g_a, &llvalue)
-    elif gtype == C_FLT:
-        fvalue = value
-        GA_Fill(g_a, &fvalue)
-    elif gtype == C_DBL:
-        dvalue = value
+    vvalue = _convert_multiplier(gtype, value, &ivalue, &lvalue, &llvalue,
+            &fvalue, &dvalue)
+    if lo is None and hi is None:
         GA_Fill(g_a, &dvalue)
     else:
-        raise TypeError
+        lo_nd,hi_nd = _lohi(g_a,lo,hi)
+        NGA_Fill_patch64(
+                g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data, vvalue)
+
+def gather(int g_a, subsarray, values=None):
+    """Gathers array elements from a global array into a local array.
+
+    subsarray will be converted to an ndarray if it is not one already.  A
+    two-dimensional array is allowed so long as its shape is (n,ndim) where n
+    is the number of elements to gather and ndim is the number of dimensions
+    of the target array.  Also, subsarray must be contiguous.
+
+    For example, if the subsarray were two-dimensional::
+
+        for k in range(n):
+            v[k] = g_a[subsarray[k,0],subsarray[k,1],subsarray[k,2]...]
+
+    For example, if the subsarray were one-dimensional::
+
+        for k in range(n):
+            base = n*ndim
+            v[k] = g_a[subsarray[base+0],subsarray[base+1],subsarray[base+2]...]
+
+    This is a one-sided operation. 
+
+    """
+    cdef np.ndarray values_nd
+    cdef np.ndarray[np.int64_t, ndim=1] subsarray1_nd = None
+    cdef np.ndarray[np.int64_t, ndim=2] subsarray2_nd = None
+    cdef int gtype = inquire_type(g_a)
+    cdef int ndim = GA_Ndim(g_a)
+    cdef int64_t n
+    # prepare subsarray
+    try:
+        subsarray1_nd = np.asarray(subsarray, dtype=np.int64)
+        n = len(subsarray1_nd) / ndim
+    except ValueError:
+        try:
+            subsarray2_nd = np.asarray(subsarray, dtype=np.int64)
+            n = len(subsarray2_nd) # length of first dimension of subsarray2_nd
+        except ValueError:
+            raise ValueError, "subsarray must be either 1- or 2-dimensional"
+    # prepare values array
+    if values is None:
+        values_nd = np.ndarray(n, dtype=_to_dtype[gtype])
+    else:
+        values_nd = np.asarray(values)
+        if values_nd.ndim != 1:
+            raise ValueError, "values_nd must be one-dimensional"
+        if not values_nd.flags['C_CONTIGUOUS']:
+            raise ValueError, "values_nd must be contiguous"
+        if len(values_nd) < n:
+            raise ValueError, "values_nd was not large enough"
+    if subsarray1_nd is not None:
+        NGA_Gather_flat64(g_a, <void*>values_nd.data,
+                <int64_t*>subsarray1_nd.data, n)
+    elif subsarray2_nd is not None:
+        NGA_Gather_flat64(g_a, <void*>values_nd.data,
+                <int64_t*>subsarray2_nd.data, n)
+    else:
+        raise ValueError, "how did this happen?"
+    return values_nd
 
 def gemm(bint ta, bint tb, int64_t m, int64_t n, int64_t k,
         alpha, int g_a, int g_b, beta, int g_c):
@@ -1001,6 +1376,7 @@ def gop_absmin(X):
 
 def initialize():
     GA_Initialize()
+    GA_Register_stack_memory(_gapy_malloc, _gapy_free)
 
 def inquire(int g_a):
     cdef int gtype

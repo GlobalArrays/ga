@@ -1,14 +1,21 @@
 from libc.stdio  cimport FILE
 from libc.stdint cimport int64_t
 
+cdef extern from "typesf2c.h":
+    ctypedef int Integer
+    ctypedef float Real
+    ctypedef double DoublePrecision
+    ctypedef struct DoubleComplex:
+        DoublePrecision real
+        DoublePrecision imag
+    ctypedef struct SingleComplex:
+        Real real
+        Real imag
+
 cdef extern from "ga.h":
     ctypedef struct ga_nbhdl_t:
         pass
     ctypedef void* nbhandle
-    ctypedef struct SingleComplex:
-        pass
-    ctypedef struct DoubleComplex:
-        pass
 
     void          GA_Abs_value(int g_a) 
     void          GA_Abs_value_patch(int g_a, int *lo, int *hi)
@@ -189,6 +196,7 @@ cdef extern from "ga.h":
     float         NGA_Fdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[])
     void          NGA_Fill_patch(int g_a, int lo[], int hi[], void *val)
     void          NGA_Gather(int g_a, void *v, int* subsArray[], int n)
+    void          NGA_Gather_flat(int g_a, void *v, int subsArray[], int n)
     void          NGA_Get_ghost_block(int g_a, int lo[], int hi[], void *buf, int ld[])
     void          NGA_Get(int g_a, int lo[], int hi[], void* buf, int ld[]) 
     int           NGA_Idot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[])
@@ -288,6 +296,7 @@ cdef extern from "ga.h":
     float         NGA_Fdot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[], int g_b, char t_b, int64_t blo[], int64_t bhi[])
     void          NGA_Fill_patch64(int g_a, int64_t lo[], int64_t hi[], void *val)
     void          NGA_Gather64(int g_a, void *v, int64_t* subsArray[], int64_t n)
+    void          NGA_Gather_flat64(int g_a, void *v, int64_t subsArray[], int64_t n)
     void          NGA_Get64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[]) 
     void          NGA_Get_ghost_block64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[]) 
     int           NGA_Idot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[], int g_b, char t_b, int64_t blo[], int64_t bhi[])

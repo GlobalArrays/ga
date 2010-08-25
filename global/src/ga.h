@@ -194,6 +194,7 @@ extern void          NGA_Distribution(int g_a, int iproc, int lo[], int hi[]);
 extern float         NGA_Fdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
 extern void          NGA_Fill_patch(int g_a, int lo[], int hi[], void *val);
 extern void          NGA_Gather(int g_a, void *v, int* subsArray[], int n);
+extern void          NGA_Gather_flat(int g_a, void *v, int subsArray[], int n);
 extern void          NGA_Get_ghost_block(int g_a, int lo[], int hi[], void *buf, int ld[]);
 extern void          NGA_Get(int g_a, int lo[], int hi[], void* buf, int ld[]); 
 extern int           NGA_Idot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
@@ -295,6 +296,7 @@ extern void          NGA_Distribution64(int g_a, int iproc, int64_t lo[], int64_
 extern float         NGA_Fdot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[], int g_b, char t_b, int64_t blo[], int64_t bhi[]);
 extern void          NGA_Fill_patch64(int g_a, int64_t lo[], int64_t hi[], void *val);
 extern void          NGA_Gather64(int g_a, void *v, int64_t* subsArray[], int64_t n);
+extern void          NGA_Gather_flat64(int g_a, void *v, int64_t subsArray[], int64_t n);
 extern void          NGA_Get64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[]); 
 extern void          NGA_Get_ghost_block64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[]); 
 extern int           NGA_Idot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[], int g_b, char t_b, int64_t blo[], int64_t bhi[]);

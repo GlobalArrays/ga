@@ -2051,6 +2051,27 @@ void NGA_Gather(int g_a, void *v, int* subsArray[], int n)
 }
 
 
+void NGA_Gather_flat(int g_a, void *v, int subsArray[], int n)
+{
+    int idx, i;
+    Integer a = (Integer)g_a;
+    Integer nv = (Integer)n;
+    Integer ndim = ga_ndim_(&a);
+    Integer *_subs_array;
+    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
+    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
+
+    /* adjust the indices for fortran interface */
+    for(idx=0; idx<n; idx++)
+        for(i=0; i<ndim; i++)
+            _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx*ndim+i] + 1;
+    
+    nga_gather_(&a, v, _subs_array , &nv);
+    
+    free(_subs_array);
+}
+
+
 void NGA_Gather64(int g_a, void *v, int64_t* subsArray[], int64_t n)
 {
     int64_t idx;
@@ -2071,6 +2092,28 @@ void NGA_Gather64(int g_a, void *v, int64_t* subsArray[], int64_t n)
     
     free(_subs_array);
 }
+
+
+void NGA_Gather_flat64(int g_a, void *v, int64_t subsArray[], int64_t n)
+{
+    int idx, i;
+    Integer a = (Integer)g_a;
+    Integer nv = (Integer)n;
+    Integer ndim = ga_ndim_(&a);
+    Integer *_subs_array;
+    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
+    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
+
+    /* adjust the indices for fortran interface */
+    for(idx=0; idx<n; idx++)
+        for(i=0; i<ndim; i++)
+            _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx*ndim+i] + 1;
+    
+    nga_gather_(&a, v, _subs_array , &nv);
+    
+    free(_subs_array);
+}
+
 
 void GA_Dgemm_c(char ta, char tb, int m, int n, int k,
               double alpha, int g_a, int g_b, double beta, int g_c )
