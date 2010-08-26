@@ -50,6 +50,200 @@ Date: 2/28/2002
 #define BLOCK_CYCLIC
 #endif
 
+/* Verify that the diagonal values of a matrix have the value val and
+   that the off-diagonal values are off_val */
+void check_diag(int g_a, void *val, void *off_val, int *chk)
+{
+  int ai, bi;
+  long al, bl;
+  float af, bf;
+  double ad, bd;
+  int lo[2], hi[2];
+  int i, j, ii, jj, me, ld, ioff;
+  int ndim, dims[2], type;
+  void *ptr;
+  DoubleComplex adc, bdc;
+  SingleComplex afc, bfc;
+
+  me = GA_Nodeid();
+  NGA_Inquire (g_a, &type, &ndim, dims);
+  NGA_Distribution(g_a, me, lo, hi);
+  NGA_Access(g_a, lo, hi, &ptr, &ld);
+  *chk = 1;
+  switch (type) {
+    case C_INT:
+      ai = *((int*)val);
+      bi = *((int*)off_val);
+      for (j=0; j<=hi[0]-lo[0]; j++) {
+        jj = j + lo[0];
+        for (i=0; i<=hi[1]-lo[1]; i++) {
+          ii = i + lo[1];
+          ioff = j*ld + i;
+          if (ii == jj) {
+            if (((int*)ptr)[ioff] != ai) *chk = 0;
+          } else {
+            if (((int*)ptr)[ioff] != bi) *chk = 0;
+          }
+        }
+      }
+      break;
+    case C_DCPL:
+      adc = *((DoubleComplex*)val);
+      bdc = *((DoubleComplex*)off_val);
+      for (j=0; j<=hi[0]-lo[0]; j++) {
+        jj = j + lo[0];
+        for (i=0; i<=hi[1]-lo[1]; i++) {
+          ii = i + lo[1];
+          ioff = j*ld + i;
+          if (ii == jj) {
+            if (((DoubleComplex*)ptr)[ioff].real != adc.real) *chk = 0;
+            if (((DoubleComplex*)ptr)[ioff].imag != adc.imag) *chk = 0;
+          } else {
+            if (((DoubleComplex*)ptr)[ioff].real != bdc.real) *chk = 0;
+            if (((DoubleComplex*)ptr)[ioff].imag != bdc.imag) *chk = 0;
+          }
+        }
+      }
+      break;
+    case C_SCPL:
+      afc = *((SingleComplex*)val);
+      bfc = *((SingleComplex*)off_val);
+      for (j=0; j<=hi[0]-lo[0]; j++) {
+        jj = j + lo[0];
+        for (i=0; i<=hi[1]-lo[1]; i++) {
+          ii = i + lo[1];
+          ioff = j*ld + i;
+          if (ii == jj) {
+            if (((SingleComplex*)ptr)[ioff].real != afc.real) *chk = 0;
+            if (((SingleComplex*)ptr)[ioff].imag != afc.imag) *chk = 0;
+          } else {
+            if (((SingleComplex*)ptr)[ioff].real != bfc.real) *chk = 0;
+            if (((SingleComplex*)ptr)[ioff].imag != bfc.imag) *chk = 0;
+          }
+        }
+      }
+      break;
+    case C_DBL:
+      ad = *((double*)val);
+      bd = *((double*)off_val);
+      for (j=0; j<=hi[0]-lo[0]; j++) {
+        jj = j + lo[0];
+        for (i=0; i<=hi[1]-lo[1]; i++) {
+          ii = i + lo[1];
+          ioff = j*ld + i;
+          if (ii == jj) {
+            if (((double*)ptr)[ioff] != ad) *chk = 0;
+          } else {
+            if (((double*)ptr)[ioff] != bd) *chk = 0;
+          }
+        }
+      }
+      break;
+    case C_FLOAT:
+      af = *((float*)val);
+      bf = *((float*)off_val);
+      for (j=0; j<=hi[0]-lo[0]; j++) {
+        jj = j + lo[0];
+        for (i=0; i<=hi[1]-lo[1]; i++) {
+          ii = i + lo[1];
+          ioff = j*ld + i;
+          if (ii == jj) {
+            if (((float*)ptr)[ioff] != af) *chk = 0;
+          } else {
+            if (((float*)ptr)[ioff] != bf) *chk = 0;
+          }
+        }
+      }
+      break;
+    case C_LONG:
+      al = *((long*)val);
+      bl = *((long*)off_val);
+      for (j=0; j<=hi[0]-lo[0]; j++) {
+        jj = j + lo[0];
+        for (i=0; i<=hi[1]-lo[1]; i++) {
+          ii = i + lo[1];
+          ioff = j*ld + i;
+          if (ii == jj) {
+            if (((long*)ptr)[ioff] != al) *chk = 0;
+          } else {
+            if (((long*)ptr)[ioff] != bl) *chk = 0;
+          }
+        }
+      }
+      break;
+    default:
+      GA_Error ("check diagonal:unknown data type.", type);
+  }
+  NGA_Release(g_a,lo,hi);
+  GA_Igop(chk, 1, "*");
+}
+
+/* Verify that values in vector match target value val */
+void check_vector(int g_v, void *val, int *chk)
+{
+  int ai;
+  long al;
+  float af;
+  double ad;
+  int lo, hi;
+  int i, me, ld;
+  int ndim, dims, type;
+  void *ptr;
+  DoubleComplex adc;
+  SingleComplex afc;
+
+  me = GA_Nodeid();
+  NGA_Inquire (g_v, &type, &ndim, &dims);
+  if (ndim != 1)
+    GA_Error("Array is wrong dimension in check_vector: ",ndim);
+  NGA_Distribution(g_v, me, &lo, &hi);
+  NGA_Access(g_v, &lo, &hi, &ptr, &ld);
+  *chk = 1;
+  switch (type) {
+    case C_INT:
+      ai = *((int*)val);
+      for (i = 0; i < hi-lo + 1; i++) {
+        if (((int*)ptr)[i] != ai) *chk = 0;
+      }
+      break;
+    case C_DCPL:
+      adc = *((DoubleComplex*)val);
+      for (i = 0; i < hi-lo + 1; i++) {
+        if (((DoubleComplex*)ptr)[i].real != adc.real) *chk = 0;
+        if (((DoubleComplex*)ptr)[i].imag != adc.imag) *chk = 0;
+      }
+      break;
+    case C_SCPL:
+      afc = *((SingleComplex*)val);
+      for (i = 0; i < hi-lo + 1; i++) {
+        if (((SingleComplex*)ptr)[i].real != afc.real) *chk = 0;
+        if (((SingleComplex*)ptr)[i].imag != afc.imag) *chk = 0;
+      }
+      break;
+    case C_DBL:
+      ad = *((double*)val);
+      for (i = 0; i < hi-lo + 1; i++) {
+        if (((double*)ptr)[i] != ad) *chk = 0;
+      }
+      break;
+    case C_FLOAT:
+      af = *((float*)val);
+      for (i = 0; i < hi-lo + 1; i++) {
+        if (((float*)ptr)[i] != af) *chk = 0;
+      }
+      break;
+    case C_LONG:
+      al = *((long*)val);
+      for (i = 0; i < hi-lo + 1; i++) {
+        if (((long*)ptr)[i] != al) *chk = 0;
+      }
+      break;
+    default:
+      GA_Error ("check vector:unknown data type.", type);
+  }
+  NGA_Release(g_v,&lo,&hi);
+  GA_Igop(chk, 1, "*");
+}
 
 void  test_scale_cols (int g_a, int g_v)
 {
@@ -140,7 +334,7 @@ void  test_scale_cols (int g_a, int g_v)
       beta = (void *) &bl;
       break;
     default:
-      gai_error ("test_scale_cols:wrong data type.", type);
+      GA_Error ("test_scale_cols:wrong data type.", type);
     }
 
   switch (type)
@@ -170,7 +364,7 @@ void  test_scale_cols (int g_a, int g_v)
       val2 = (void *)&lval2;
       break;
     default:
-      gai_error ("test_scale_cols:wrong data type.", type);
+      GA_Error ("test_scale_cols:wrong data type.", type);
     }
 
   if (me == 0)
@@ -209,7 +403,7 @@ void  test_scale_cols (int g_a, int g_v)
     ((SingleComplex*)buf)[i].imag=(float)0.0;
     break;
     default:
-    gai_error("test_scale:wrong data type.", type);
+    GA_Error("test_scale:wrong data type.", type);
     }
     NGA_Put(g_v, &vlo, &vhi, buf, &n);
 
@@ -246,7 +440,7 @@ void  test_scale_cols (int g_a, int g_v)
     ((SingleComplex*)buf)[i].imag=0.0;
     break;
     default:
-    gai_error("test_scale_cols:wrong data type.", type);
+    GA_Error("test_scale_cols:wrong data type.", type);
     }
     NGA_Put(g_a, lo, hi, buf, &n);
     }
@@ -300,7 +494,7 @@ void  test_scale_cols (int g_a, int g_v)
       min = (void *)&lmin;
       break;
     default:
-      gai_error ("test_scale_rows:wrong data type.", type);
+      GA_Error ("test_scale_rows:wrong data type.", type);
     }
 
   NGA_Select_elem (g_c, "max", max, index);
@@ -374,7 +568,7 @@ void  test_scale_cols (int g_a, int g_v)
     }
       break;
     default:
-      gai_error ("test_scale_rows:wrong data type.", type);
+      GA_Error ("test_scale_rows:wrong data type.", type);
     }
 }
 
@@ -470,7 +664,7 @@ test_scale_rows (int g_a, int g_v)
       beta = (void *)&bl;
       break;
     default:
-      gai_error ("test_scale_rows:wrong data type.", type);
+      GA_Error ("test_scale_rows:wrong data type.", type);
     }
 
   switch (type)
@@ -500,7 +694,7 @@ test_scale_rows (int g_a, int g_v)
       val2 = (void *) &lval2;
       break;
     default:
-      gai_error ("test_scale_rows:wrong data type.", type);
+      GA_Error ("test_scale_rows:wrong data type.", type);
     }
 
   if (me == 0)
@@ -539,7 +733,7 @@ test_scale_rows (int g_a, int g_v)
     ((SingleComplex*)buf)[i].imag=(float)0.0;
     break;
     default:
-    gai_error("test_scale:wrong data type.", type);
+    GA_Error("test_scale:wrong data type.", type);
     }
     NGA_Put(g_v, &vlo, &vhi, buf, &n);
 
@@ -576,7 +770,7 @@ test_scale_rows (int g_a, int g_v)
     ((SingleComplex*)buf)[i].imag=(float)0.0;
     break;
     default:
-    gai_error("test_scale:wrong data type.", type);
+    GA_Error("test_scale:wrong data type.", type);
     }
     NGA_Put(g_a, lo, hi, buf, &n);
     }
@@ -631,7 +825,7 @@ test_scale_rows (int g_a, int g_v)
       min = (void *) &lmin;
       break;
     default:
-      gai_error ("test_scale_rows:wrong data type.", type);
+      GA_Error ("test_scale_rows:wrong data type.", type);
     }
 
   NGA_Select_elem (g_c, "max", max, index);
@@ -705,7 +899,7 @@ test_scale_rows (int g_a, int g_v)
     }
       break;
     default:
-      gai_error ("test_scale_rows:wrong data type.", type);
+      GA_Error ("test_scale_rows:wrong data type.", type);
     }
 
 }
@@ -798,7 +992,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
       beta = (void *) &bl;
       break;
     default:
-      gai_error ("test_median:wrong data type.", type);
+      GA_Error ("test_median:wrong data type.", type);
     }
 
   dcval.real = -2.0;
@@ -855,7 +1049,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
       val3 = (void *) &lval3;
       break;
     default:
-      gai_error ("test_median:test_median:wrong data type.", type);
+      GA_Error ("test_median:test_median:wrong data type.", type);
     }
 
   if (me == 0)
@@ -912,7 +1106,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
       min = (void *)&lmin;
       break;
     default:
-      gai_error ("test_median:wrong data type.", type);
+      GA_Error ("test_median:wrong data type.", type);
     }
 
   NGA_Select_elem (g_e, "max", max, index);
@@ -986,7 +1180,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
     }
       break;
     default:
-      gai_error ("test_median:wrong data type.", type);
+      GA_Error ("test_median:wrong data type.", type);
     }
 
 
@@ -1078,7 +1272,7 @@ test_median (int g_a, int g_b, int g_c, int g_m)
       beta = (void *)&bl;
       break;
     default:
-      gai_error ("test_median:wrong data type.", type);
+      GA_Error ("test_median:wrong data type.", type);
     }
 
   dcval.real = -2.0;
@@ -1135,7 +1329,7 @@ test_median (int g_a, int g_b, int g_c, int g_m)
       val3 = (void *)&lval3;
       break;
     default:
-      gai_error ("test_median:test_median:wrong data type.", type);
+      GA_Error ("test_median:test_median:wrong data type.", type);
     }
 
   if (me == 0)
@@ -1265,7 +1459,7 @@ test_median (int g_a, int g_b, int g_c, int g_m)
       min = (void *)&lmin;
       break;
     default:
-      gai_error ("test_median:wrong data type.", type);
+      GA_Error ("test_median:wrong data type.", type);
     }
 
   NGA_Select_elem (g_e, "max", max, index);
@@ -1339,7 +1533,7 @@ test_median (int g_a, int g_b, int g_c, int g_m)
     }
       break;
     default:
-      gai_error ("test_median:wrong data type.", type);
+      GA_Error ("test_median:wrong data type.", type);
     }
 
 
@@ -1391,7 +1585,7 @@ test_norm_infinity (int g_a)
       val = (void *)&lval;
       break;
     default:
-      gai_error ("test_norm_infinity:wrong data type.", type);
+      GA_Error ("test_norm_infinity:wrong data type.", type);
     }
 
   if (me == 0)
@@ -1423,7 +1617,7 @@ test_norm_infinity (int g_a)
       result = sqrt (fcval.real * fcval.real + fcval.imag * fcval.imag);
       break;
     default:
-      gai_error ("test_norm_infinity: wrong data type.\n", type);
+      GA_Error ("test_norm_infinity: wrong data type.\n", type);
     }
   result = result * dims[0];
   if (me == 0)
@@ -1481,7 +1675,7 @@ test_norm1 (int g_a)
       val = (void *)&lval;
       break;
     default:
-      gai_error ("test_norm1:wrong data type.", type);
+      GA_Error ("test_norm1:wrong data type.", type);
     }
 
   if (me == 0)
@@ -1513,7 +1707,7 @@ test_norm1 (int g_a)
       result = sqrt (fcval.real * fcval.real + fcval.imag * fcval.imag);
       break;
     default:
-      gai_error ("test_norm1: wrong data type.\n", type);
+      GA_Error ("test_norm1: wrong data type.\n", type);
     }
   result = result * dims[1];
   if (me == 0)
@@ -1532,12 +1726,12 @@ test_get_diagonal (int g_a, int g_v)
 
   int me = GA_Nodeid ();
   void *val=NULL;
-  int ival = -2;
-  double dval = -2.0;
-  float fval = -2.0;
-  long lval = -2;
-  DoubleComplex dcval;
-  SingleComplex fcval;
+  int ival = -2, izero = 0;
+  double dval = -2.0, dzero = 0.0;
+  float fval = -2.0, fzero = 0.0;
+  long lval = -2, lzero = 0;
+  DoubleComplex dcval, dczero = {0.0,0.0};
+  SingleComplex fcval, fczero = {0.0,0.0};
 
   int idot, iresult, ldot, lresult;
   double fdot, ddot, fresult, dresult;
@@ -1546,6 +1740,7 @@ test_get_diagonal (int g_a, int g_v)
 
   int type, ndim, dims[MAXDIM];
   int vtype, vndim, vdims[MAXDIM];
+  int chk;
 
   NGA_Inquire (g_a, &type, &ndim, dims);
   NGA_Inquire (g_v, &vtype, &vndim, vdims);
@@ -1576,7 +1771,7 @@ test_get_diagonal (int g_a, int g_v)
       val = (void *)&lval;
       break;
     default:
-      gai_error ("test_get_diagonal:wrong data type.", type);
+      GA_Error ("test_get_diagonal:wrong data type.", type);
     }
 
   if (me == 0)
@@ -1587,86 +1782,68 @@ test_get_diagonal (int g_a, int g_v)
   switch (type)
     {
     case C_INT:
-      idot = vdims[0] * ival * ival;
-      iresult = GA_Idot (g_v, g_v);
+      check_vector(g_v, (void*)&ival, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (idot, iresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_LONG:
-      ldot = ((long) vdims[0]) * lval * lval;
-      lresult = GA_Ldot (g_v, g_v);
+      check_vector(g_v, (void*)&lval, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (ldot, lresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_FLOAT:
-      fdot = ((float) vdims[0]) * fval * fval;
-      fresult = GA_Fdot (g_v, g_v);
+      check_vector(g_v, (void*)&fval, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (fdot, fresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_DBL:
-      ddot = ((double) vdims[0]) * dval * dval;
-      dresult = GA_Ddot (g_v, g_v);
+      check_vector(g_v, (void*)&dval, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (ddot, dresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_DCPL:
-      zdot.real =
-    ((double) vdims[0]) * (dcval.real * dcval.real -
-                   dcval.imag * dcval.imag);
-      zdot.imag = ((double) vdims[0]) * (2.0 * dcval.real * dcval.imag);
-      zresult = GA_Zdot (g_v, g_v);
+      check_vector(g_v, (void*)&dcval, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (zdot.real, zresult.real)
-          || MISMATCHED (zdot.imag, zresult.imag))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_SCPL:
-      cdot.real =
-    ((float ) vdims[0]) * (fcval.real * fcval.real -
-                   fcval.imag * fcval.imag);
-      cdot.imag = ((float ) vdims[0]) * (2.0 * fcval.real * fcval.imag);
-      cresult = GA_Cdot (g_v, g_v);
+      check_vector(g_v, (void*)&fcval, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (cdot.real, cresult.real)
-          || MISMATCHED (cdot.imag, cresult.imag))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     default:
-      gai_error ("test_get_diagonal:wrong data type:", type);
+      GA_Error ("test_get_diagonal:wrong data type:", type);
     }
-
-
-
-
 }
 
 
@@ -1677,12 +1854,12 @@ test_add_diagonal (int g_a, int g_v)
 
   int me = GA_Nodeid ();
   void *val=NULL;
-  int ival = -2;
-  double dval = -2.0;
-  float fval = -2.0;
-  long lval = -2;
-  DoubleComplex dcval;
-  SingleComplex fcval;
+  int ival = -2, izero = 0;
+  double dval = -2.0, dzero = 0.0;
+  float fval = -2.0, fzero = 0.0;
+  long lval = -2, lzero = 0;
+  DoubleComplex dcval, dczero = {0.0,0.0};
+  SingleComplex fcval, fczero = {0.0,0.0};
 
   int idot, iresult, ldot, lresult;
   double fdot, ddot, fresult, dresult;
@@ -1691,6 +1868,7 @@ test_add_diagonal (int g_a, int g_v)
 
   int type, ndim, dims[MAXDIM];
   int vtype, vndim, vdims[MAXDIM];
+  int chk;
 
 
   NGA_Inquire (g_a, &type, &ndim, dims);
@@ -1723,7 +1901,7 @@ test_add_diagonal (int g_a, int g_v)
       val = (void *)&lval;
       break;
     default:
-      gai_error ("test_add_diagonal:wrong data type.", type);
+      GA_Error ("test_add_diagonal:wrong data type.", type);
     }
 
 
@@ -1753,77 +1931,75 @@ test_add_diagonal (int g_a, int g_v)
   switch (type)
     {
     case C_INT:
-      idot = vdims[0];
-      iresult = GA_Idot (g_a, g_a);
+      ival = 1;
+      check_diag(g_a, (void*)&ival, (void*)&izero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (idot, iresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_LONG:
-      ldot = ((long) vdims[0]);
-      lresult = GA_Ldot (g_a, g_a);
+      lval = 1;
+      check_diag(g_a, (void*)&lval, (void*)&lzero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (ldot, lresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_FLOAT:
-      fdot = ((float) vdims[0]);
-      fresult = GA_Fdot (g_a, g_a);
+      fval = 1.0;
+      check_diag(g_a, (void*)&fval, (void*)&fzero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (fdot, fresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_DBL:
-      ddot = (double) vdims[0];
-      dresult = GA_Ddot (g_a, g_a);
+      dval = 1.0;
+      check_diag(g_a, (void*)&dval, (void*)&dzero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (ddot, dresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_DCPL:
-      zdot.real = ((double) vdims[0]);
-      zdot.imag = 0.0;
-      zresult = GA_Zdot (g_a, g_a);
+      dcval.real = 1.0;
+      dcval.imag = 0.0;
+      check_diag(g_a, (void*)&dcval, (void*)&dczero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (zdot.real, zresult.real)
-          || MISMATCHED (zdot.imag, zresult.imag))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_SCPL:
-      cdot.real = ((float ) vdims[0]);
-      cdot.imag = 0.0;
-      cresult = GA_Cdot (g_a, g_a);
+      fcval.real = 1.0;
+      fcval.imag = 0.0;
+      check_diag(g_a, (void*)&fcval, (void*)&fczero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (cdot.real, cresult.real)
-          || MISMATCHED (cdot.imag, cresult.imag))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     default:
-      gai_error ("test_add_diagonal:wrong data type:", type);
+      GA_Error ("test_add_diagonal:wrong data type:", type);
     }
 
 
@@ -1839,12 +2015,12 @@ test_set_diagonal (int g_a, int g_v)
 
   int me = GA_Nodeid ();
   void *val=NULL;
-  int ival = -2;
-  double dval = -2.0;
-  float fval = -2.0;
-  long lval = -2;
-  DoubleComplex dcval;
-  SingleComplex fcval;
+  int ival = -2, izero = 0;
+  double dval = -2.0, dzero = 0.0;
+  float fval = -2.0, fzero = 0.0;
+  long lval = -2, lzero = 0;
+  DoubleComplex dcval, dczero = {0.0,0.0};
+  SingleComplex fcval, fczero = {0.0,0.0};
 
   int idot, iresult, ldot, lresult;
   double fdot, ddot, fresult, dresult;
@@ -1853,6 +2029,7 @@ test_set_diagonal (int g_a, int g_v)
 
   int type, ndim, dims[MAXDIM];
   int vtype, vndim, vdims[MAXDIM];
+  int chk;
 
   NGA_Inquire (g_a, &type, &ndim, dims);
   NGA_Inquire (g_v, &vtype, &vndim, vdims);
@@ -1883,7 +2060,7 @@ test_set_diagonal (int g_a, int g_v)
       val = (void *)&lval;
       break;
     default:
-      gai_error ("test_set_diagonal:wrong data type.", type);
+      GA_Error ("test_set_diagonal:wrong data type.", type);
     }
 
 
@@ -1895,81 +2072,67 @@ test_set_diagonal (int g_a, int g_v)
   switch (type)
     {
     case C_INT:
-      idot = vdims[0] * ival * ival;
-      iresult = GA_Idot (g_a, g_a);
+      check_diag(g_a, (void*)&ival, (void*)&izero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (idot, iresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_LONG:
-      ldot = ((long) vdims[0]) * lval * lval;
-      lresult = GA_Ldot (g_a, g_a);
+      check_diag(g_a, (void*)&lval, (void*)&lzero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (ldot, lresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_FLOAT:
-      fdot = ((float) vdims[0]) * fval * fval;
-      fresult = GA_Fdot (g_a, g_a);
+      check_diag(g_a, (void*)&fval, (void*)&fzero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (fdot, fresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_DBL:
-      ddot = ((double) vdims[0]) * dval * dval;
-      dresult = GA_Ddot (g_a, g_a);
+      check_diag(g_a, (void*)&dval, (void*)&dzero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (ddot, dresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_DCPL:
-      zdot.real =
-    ((double) vdims[0]) * (dcval.real * dcval.real -
-                   dcval.imag * dcval.imag);
-      zdot.imag = ((double) dims[0]) * (2.0 * dcval.real * dcval.imag);
-      zresult = GA_Zdot (g_a, g_a);
+      check_diag(g_a, (void*)&dcval, (void*)&dczero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (zdot.real, zresult.real)
-          || MISMATCHED (zdot.imag, zresult.imag))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_SCPL:
-      cdot.real =
-    ((float ) vdims[0]) * (fcval.real * fcval.real -
-                   fcval.imag * fcval.imag);
-      cdot.imag = ((float ) dims[0]) * (2.0 * fcval.real * fcval.imag);
-      cresult = GA_Cdot (g_a, g_a);
+      check_diag(g_a, (void*)&fcval, (void*)&fczero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (cdot.real, cresult.real)
-          || MISMATCHED (cdot.imag, cresult.imag))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     default:
-      gai_error ("test_set_diagonal:wrong data type:", type);
+      GA_Error ("test_set_diagonal:wrong data type:", type);
     }
 
 }
@@ -1981,12 +2144,12 @@ test_zero_diagonal (int g_a)
 
   int me = GA_Nodeid ();
   void *val=NULL;
-  int ival = -2;
-  double dval = -2.0;
-  float fval = -2.0;
-  long lval = -2;
-  DoubleComplex dcval;
-  SingleComplex fcval;
+  int ival = -2, izero = 0;
+  double dval = -2.0, dzero = 0.0;
+  float fval = -2.0, fzero = 0.0;
+  long lval = -2, lzero = 0;
+  DoubleComplex dcval, dczero = {0.0,0.0};
+  SingleComplex fcval, fczero = {0.0,0.0};
 
   int idot, iresult, ldot, lresult, g_b;
   int ialpha, ibeta;
@@ -2002,6 +2165,7 @@ test_zero_diagonal (int g_a)
   void *alpha, *beta;
 
   int type, ndim, dims[MAXDIM];
+  int chk;
 
   NGA_Inquire (g_a, &type, &ndim, dims);
   dcval.real = -2.0;
@@ -2033,7 +2197,7 @@ test_zero_diagonal (int g_a)
       val = (void *)&lval;
       break;
     default:
-      gai_error ("test_zero_diagonal:wrong data type.", type);
+      GA_Error ("test_zero_diagonal:wrong data type.", type);
   }
 
 
@@ -2043,47 +2207,6 @@ test_zero_diagonal (int g_a)
   GA_Zero_diagonal (g_a);
   g_b = GA_Duplicate(g_a, "tmp_array");
   GA_Fill (g_b, val);
-  /*
-  if (type == C_INT) {
-    int achk[100000];
-    int ii,jj,ndim,atype;
-    int lo[2],hi[2],ld[2],dims[2];
-    NGA_Inquire(g_a,&atype,&ndim,dims);
-    for (ii=0; ii<ndim; ii++) {
-      lo[ii] = 0;
-      hi[ii] = dims[ii]-1;
-      ld[ii] = dims[ii];
-    }
-    NGA_Get(g_a,lo,hi,achk,&ld[1]);
-    if (me == 0) {
-      for (ii=0; ii<dims[0]; ii++) {
-        printf("\n");
-        for (jj=0; jj<dims[1]; jj++) {
-          printf("%8d",achk[ii*ld[1]+jj]);
-        }
-      }
-      printf("\n");
-    }
-    printf("\n");
-    NGA_Inquire(g_b,&atype,&ndim,dims);
-    for (ii=0; ii<ndim; ii++) {
-      lo[ii] = 0;
-      hi[ii] = dims[ii]-1;
-      ld[ii] = dims[ii];
-    }
-    NGA_Get(g_b,lo,hi,achk,&ld[1]);
-    if (me == 0) {
-      for (ii=0; ii<dims[0]; ii++) {
-        printf("\n");
-        for (jj=0; jj<dims[1]; jj++) {
-          printf("%8d",achk[ii*ld[1]+jj]);
-        }
-      }
-      printf("\n");
-    }
-    printf("\n");
-  }
-  */
 
   switch (type)
   {
@@ -2093,11 +2216,10 @@ test_zero_diagonal (int g_a)
       alpha = (void*)&ialpha;
       beta = (void*)&ibeta;
       GA_Add(alpha,g_a,beta,g_b,g_a);
-      idot = vdims * ival * ival;
-      iresult = GA_Idot (g_a, g_a);
+      check_diag(g_a, (void*)&ival, (void*)&izero, &chk);
       if (me == 0)
       {
-        if (MISMATCHED (idot, iresult))
+        if (chk != 1)
           printf ("not ok.\n");
         else
           printf ("ok.\n");
@@ -2109,11 +2231,10 @@ test_zero_diagonal (int g_a)
       alpha = (void*)&lalpha;
       beta = (void*)&lbeta;
       GA_Add(alpha,g_a,beta,g_b,g_a);
-      ldot = ((long) vdims) * lval * lval;
-      lresult = GA_Ldot (g_a, g_a);
+      check_diag(g_a, (void*)&lval, (void*)&lzero, &chk);
       if (me == 0)
       {
-        if (MISMATCHED (ldot, lresult))
+        if (chk != 1)
           printf ("not ok.\n");
         else
           printf ("ok.\n");
@@ -2125,11 +2246,10 @@ test_zero_diagonal (int g_a)
       alpha = (void*)&falpha;
       beta = (void*)&fbeta;
       GA_Add(alpha,g_a,beta,g_b,g_a);
-      fdot = ((float) vdims) * fval * fval;
-      fresult = GA_Fdot (g_a, g_a);
+      check_diag(g_a, (void*)&fval, (void*)&fzero, &chk);
       if (me == 0)
       {
-        if (MISMATCHED (fdot, fresult))
+        if (chk != 1)
           printf ("not ok.\n");
         else
           printf ("ok.\n");
@@ -2141,11 +2261,10 @@ test_zero_diagonal (int g_a)
       alpha = (void*)&dalpha;
       beta = (void*)&dbeta;
       GA_Add(alpha,g_a,beta,g_b,g_a);
-      ddot = ((double) vdims) * dval * dval;
-      dresult = GA_Ddot (g_a, g_a);
+      check_diag(g_a, (void*)&dval, (void*)&dzero, &chk);
       if (me == 0)
       {
-        if (MISMATCHED (ddot, dresult))
+        if (chk != 1)
           printf ("not ok.\n");
         else
           printf ("ok.\n");
@@ -2159,15 +2278,10 @@ test_zero_diagonal (int g_a)
       alpha = (void*)&zalpha;
       beta = (void*)&zbeta;
       GA_Add(alpha,g_a,beta,g_b,g_a);
-      zdot.real =
-        ((double) vdims) * (dcval.real * dcval.real -
-                               dcval.imag * dcval.imag);
-      zdot.imag = ((double) dims[0]) * (2.0 * dcval.real * dcval.imag);
-      zresult = GA_Zdot (g_a, g_a);
+      check_diag(g_a, (void*)&dcval, (void*)&dczero, &chk);
       if (me == 0)
       {
-        if (MISMATCHED (zdot.real, zresult.real)
-            || MISMATCHED (zdot.imag, zresult.imag))
+        if (chk != 1)
           printf ("not ok.\n");
         else
           printf ("ok.\n");
@@ -2181,22 +2295,17 @@ test_zero_diagonal (int g_a)
       alpha = (void*)&calpha;
       beta = (void*)&cbeta;
       GA_Add(alpha,g_a,beta,g_b,g_a);
-      cdot.real =
-        ((float ) vdims) * (fcval.real * fcval.real -
-                               fcval.imag * fcval.imag);
-      cdot.imag = ((float ) dims[0]) * (2.0 * fcval.real * fcval.imag);
-      cresult = GA_Cdot (g_a, g_a);
+      check_diag(g_a, (void*)&fcval, (void*)&fczero, &chk);
       if (me == 0)
       {
-        if (MISMATCHED (cdot.real, cresult.real)
-            || MISMATCHED (cdot.imag, cresult.imag))
+        if (chk != 1)
           printf ("not ok.\n");
         else
           printf ("ok.\n");
       }
       break;
     default:
-      gai_error ("test_zero_diagonal:wrong data type:", type);
+      GA_Error ("test_zero_diagonal:wrong data type:", type);
   }
   GA_Destroy(g_b);
 }
@@ -2207,12 +2316,12 @@ test_shift_diagonal (int g_a)
 
   int me = GA_Nodeid ();
   void *val=NULL;
-  int ival = -2;
-  double dval = -2.0;
-  float fval = -2.0;
-  long lval = -2;
-  DoubleComplex dcval;
-  SingleComplex fcval;
+  int ival = -2, izero = 0;
+  double dval = -2.0, dzero = 0.0;
+  float fval = -2.0, fzero = 0.0;
+  long lval = -2, lzero = 0;
+  DoubleComplex dcval, dczero = {0.0,0.0};
+  SingleComplex fcval, fczero = {0.0,0.0};
 
   int idot, iresult, ldot, lresult;
   double fdot, ddot, fresult, dresult;
@@ -2220,6 +2329,7 @@ test_shift_diagonal (int g_a)
   SingleComplex cdot, cresult;
   int type, ndim, dims[MAXDIM];
   int dim;            /*the length of the diagonal */
+  int chk;
 
 
   NGA_Inquire (g_a, &type, &ndim, dims);
@@ -2251,7 +2361,7 @@ test_shift_diagonal (int g_a)
       val = (void *)&lval;
       break;
     default:
-      gai_error ("test_shift_diagonal:wrong data type.", type);
+      GA_Error ("test_shift_diagonal:wrong data type.", type);
     }
 
 
@@ -2264,79 +2374,67 @@ test_shift_diagonal (int g_a)
   switch (type)
     {
     case C_INT:
-      idot = dim * ival * ival;
-      iresult = GA_Idot (g_a, g_a);
+      check_diag(g_a, (void*)&ival, (void*)&izero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (idot, iresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_LONG:
-      ldot = ((long) dim) * lval * lval;
-      lresult = GA_Ldot (g_a, g_a);
+      check_diag(g_a, (void*)&lval, (void*)&lzero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (ldot, lresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_FLOAT:
-      fdot = ((float) dim) * fval * fval;
-      fresult = GA_Fdot (g_a, g_a);
+      check_diag(g_a, (void*)&fval, (void*)&fzero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (fdot, fresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_DBL:
-      ddot = ((double) dim) * dval * dval;
-      dresult = GA_Ddot (g_a, g_a);
+      check_diag(g_a, (void*)&dval, (void*)&dzero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (ddot, dresult))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_DCPL:
-      zdot.real =
-    ((double) dim) * (dcval.real * dcval.real - dcval.imag * dcval.imag);
-      zdot.imag = ((double) dim) * (2.0 * dcval.real * dcval.imag);
-      zresult = GA_Zdot (g_a, g_a);
+      check_diag(g_a, (void*)&dcval, (void*)&dczero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (zdot.real, zresult.real)
-          || MISMATCHED (zdot.imag, zresult.imag))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     case C_SCPL:
-      cdot.real =
-    ((float ) dim) * (fcval.real * fcval.real - fcval.imag * fcval.imag);
-      cdot.imag = ((float ) dim) * (2.0 * fcval.real * fcval.imag);
-      cresult = GA_Cdot (g_a, g_a);
+      check_diag(g_a, (void*)&fcval, (void*)&fczero, &chk);
       if (me == 0)
     {
-      if (MISMATCHED (cdot.real, cresult.real)
-          || MISMATCHED (cdot.imag, cresult.imag))
+      if (chk != 1)
         printf ("not ok.\n");
       else
         printf ("ok.\n");
     }
       break;
     default:
-      gai_error ("test_shift_diagonal:wrong data type: ", type);
+      GA_Error ("test_shift_diagonal:wrong data type: ", type);
     }
 
 
@@ -2384,7 +2482,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-    GA_Error ("create failed: A", n);
+        GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2403,7 +2501,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-    GA_Error ("create failed: A", n);
+        GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2419,7 +2517,7 @@ do_work (int type, int op)
       vdim = GA_MIN (dims[0], dims[1]);
       g_v = NGA_Create (type, 1, &vdim, "V", NULL);
       if (!g_v)
-    GA_Error ("create failed:V", n);
+        GA_Error ("create failed:V", n);
       test_set_diagonal (g_a, g_v);
       GA_Destroy (g_a);
       GA_Destroy (g_v);
@@ -2428,7 +2526,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-    GA_Error ("create failed: A", n);
+        GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2447,7 +2545,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-    GA_Error ("create failed: A", n);
+        GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2463,7 +2561,7 @@ do_work (int type, int op)
       vdim = GA_MIN (dims[0], dims[1]);
       g_v = NGA_Create (type, 1, &vdim, "V", NULL);
       if (!g_v)
-    GA_Error ("create failed:V", n);
+        GA_Error ("create failed:V", n);
       vdim = GA_MIN (dims[0], dims[1]);
       test_add_diagonal (g_a, g_v);
       GA_Destroy (g_a);
@@ -2473,7 +2571,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-    GA_Error ("create failed: A", n);
+        GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2489,7 +2587,7 @@ do_work (int type, int op)
       vdim = GA_MIN (dims[0], dims[1]);
       g_v = NGA_Create (type, 1, &vdim, "V", NULL);
       if (!g_v)
-    GA_Error ("create failed:V", n);
+        GA_Error ("create failed:V", n);
       test_get_diagonal (g_a, g_v);
       GA_Destroy (g_a);
       GA_Destroy (g_v);
@@ -2498,7 +2596,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-    GA_Error ("create failed: A", n);
+        GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2518,7 +2616,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-    GA_Error ("create failed: A", n);
+        GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2538,7 +2636,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-    GA_Error ("create failed: A", n);
+        GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2553,15 +2651,15 @@ do_work (int type, int op)
       /*duplicate g_a */
       g_b = GA_Duplicate (g_a, "B");
       if (!g_b)
-    GA_Error ("duplicate failed: B", n);
+        GA_Error ("duplicate failed: B", n);
 
       g_c = GA_Duplicate (g_a, "C");
       if (!g_c)
-    GA_Error ("duplicate failed: C", n);
+        GA_Error ("duplicate failed: C", n);
 #if 0 /* test g_m is different from g_a, g_b, amd g_c */
       g_m = GA_Duplicate (g_a, "M");
       if (!g_m)
-    GA_Error ("duplicate failed: M", n);
+        GA_Error ("duplicate failed: M", n);
       test_median (g_a, g_b, g_c, g_m);
 #else /* test g_m = g_c */
       test_median (g_a, g_b, g_c, g_a);
@@ -2578,7 +2676,7 @@ do_work (int type, int op)
 #ifndef BLOCK_CYCLIC
       g_a = NGA_Create (type, 2, dims, "A", NULL);
       if (!g_a)
-    GA_Error ("create failed: A", n);
+        GA_Error ("create failed: A", n);
 #else
       g_a = GA_Create_handle();
       GA_Set_data(g_a, 2, dims, type);
@@ -2593,15 +2691,15 @@ do_work (int type, int op)
       /*duplicate g_a */
       g_b = GA_Duplicate (g_a, "B");
       if (!g_b)
-    GA_Error ("duplicate failed: B", n);
+        GA_Error ("duplicate failed: B", n);
 
       g_c = GA_Duplicate (g_a, "C");
       if (!g_c)
-    GA_Error ("duplicate failed: C", n);
+        GA_Error ("duplicate failed: C", n);
 
       g_m = GA_Duplicate (g_a, "M");
       if (!g_m)
-    GA_Error ("duplicate failed: M", n);
+        GA_Error ("duplicate failed: M", n);
 
       test_median_patch (g_a, lo, hi, g_b, lo, hi, g_c, lo, hi, g_m, lo, hi);
       GA_Destroy (g_a);
@@ -2629,7 +2727,7 @@ do_work (int type, int op)
       vdim = dims[1];
       g_v = NGA_Create (type, 1, &vdim, "V", NULL);
       if (!g_v)
-    GA_Error ("create failed:V", n);
+        GA_Error ("create failed:V", n);
       test_scale_rows (g_a, g_v);
       GA_Destroy (g_a);
       GA_Destroy (g_v);
