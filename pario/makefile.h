@@ -8,8 +8,12 @@ ifeq ($(OSNAME),AIX)
                       print "-DAIX52" }')
 #lsdev -C -l aio0
 #aio0 Defined  Asynchronous I/O (Legacy)
-USE_OLDAIO= $(shell /usr/sbin/lsdev -C -l aio0  2>&1|grep Lega|awk ' /Legacy/  {print "Y"}')
-
+ifdef USE_OLDAIO
+     USE_OLDAIO=Y
+else   
+     USE_OLDAIO= $(shell /usr/sbin/lsdev -C -l aio0  2>&1|grep Lega|awk ' /Legacy/  {print "Y"}')
+endif
+      
 ifeq ($(USE_OLDAIO),Y)
      LIB_DEFINES += -D_AIO_AIX_SOURCE
 endif
