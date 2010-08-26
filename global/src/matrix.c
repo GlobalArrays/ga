@@ -1420,6 +1420,7 @@ void gai_get_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
       {
         case C_INT:
           ia = (int *) ptr;
+          ia += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             ((int *) buf)[i] = *ia;
@@ -1428,6 +1429,7 @@ void gai_get_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
           break;
         case C_LONG:
           la = (long *) ptr;
+          la += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             ((long *) buf)[i] = *la;
@@ -1436,6 +1438,7 @@ void gai_get_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
           break;
         case C_FLOAT:
           fa = (float *) ptr;
+          fa += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             ((float *) buf)[i] = *fa;
@@ -1444,6 +1447,7 @@ void gai_get_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
           break;
         case C_DBL:
           da = (double *) ptr;
+          da += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             ((double *) buf)[i] = *da;
@@ -1452,6 +1456,7 @@ void gai_get_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
           break;
         case C_DCPL:
           dca = (DoubleComplex *) ptr;
+          dca += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             (((DoubleComplex *) buf)[i]).real = (*dca).real;
@@ -1462,6 +1467,7 @@ void gai_get_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
 
         case C_SCPL:
           fca = (SingleComplex *) ptr;
+          fca += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             (((SingleComplex *) buf)[i]).real = (*fca).real;
@@ -1634,6 +1640,7 @@ void gai_add_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
       {
         case C_INT:
           ia = (int *) ptr;
+          ia += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             *ia += ((int *) buf)[i];
@@ -1642,6 +1649,7 @@ void gai_add_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
           break;
         case C_LONG:
           la = (long *) ptr;
+          la += ld*(lo[1]-jloA) + lo[0]-iloA; 
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             *la += ((long *) buf)[i];
@@ -1650,6 +1658,7 @@ void gai_add_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
           break;
         case C_FLOAT:
           fa = (float *) ptr;
+          fa += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             *fa += ((float *) buf)[i];
@@ -1658,6 +1667,7 @@ void gai_add_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
           break;
         case C_DBL:
           da = (double *) ptr;
+          da += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             *da += ((double *) buf)[i];
@@ -1666,6 +1676,7 @@ void gai_add_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
           break;
         case C_DCPL:
           dca = (DoubleComplex *) ptr;
+          dca += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             (*dca).real += (((DoubleComplex *) buf)[i]).real;
@@ -1676,6 +1687,7 @@ void gai_add_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
 
         case C_SCPL:
           fca = (SingleComplex *) ptr;
+          fca += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             (*fca).real += (((SingleComplex *) buf)[i]).real;
@@ -1841,6 +1853,7 @@ void gai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integer *loA,
       {
         case C_INT:
           ia = (int *) ptr;
+          ia += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             *ia = ((int *) buf)[i];
@@ -1849,6 +1862,7 @@ void gai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integer *loA,
           break;
         case C_LONG:
           la = (long *) ptr;
+          la += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             *la = ((long *) buf)[i];
@@ -1857,6 +1871,7 @@ void gai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integer *loA,
           break;
         case C_FLOAT:
           fa = (float *) ptr;
+          fa += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             *fa = ((float *) buf)[i];
@@ -1865,6 +1880,7 @@ void gai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integer *loA,
           break;
         case C_DBL:
           da = (double *) ptr;
+          da += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             *da = ((double *) buf)[i];
@@ -1873,6 +1889,7 @@ void gai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integer *loA,
           break;
         case C_DCPL:
           dca = (DoubleComplex *) ptr;
+          dca += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             (*dca).real = (((DoubleComplex *) buf)[i]).real;
@@ -1883,6 +1900,7 @@ void gai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integer *loA,
 
         case C_SCPL:
           fca = (SingleComplex *) ptr;
+          fca += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             (*fca).real = (((SingleComplex *) buf)[i]).real;
@@ -2035,6 +2053,7 @@ void gai_shift_diagonal_block(Integer *g_a, void *ptr, Integer *loA, Integer *hi
       {
         case C_INT:
           ia = (int *) ptr;
+          ia += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             *ia += *((int *) c);
@@ -2043,6 +2062,7 @@ void gai_shift_diagonal_block(Integer *g_a, void *ptr, Integer *loA, Integer *hi
           break;
         case C_LONG:
           la = (long *) ptr;
+          la += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             *la += *((long *) c);
@@ -2051,6 +2071,7 @@ void gai_shift_diagonal_block(Integer *g_a, void *ptr, Integer *loA, Integer *hi
           break;
         case C_FLOAT:
           fa = (float *) ptr;
+          fa += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             *fa += *((float *) c);
@@ -2059,6 +2080,7 @@ void gai_shift_diagonal_block(Integer *g_a, void *ptr, Integer *loA, Integer *hi
           break;
         case C_DBL:
           da = (double *) ptr;
+          da += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             *da += *((double *) c);
@@ -2067,6 +2089,7 @@ void gai_shift_diagonal_block(Integer *g_a, void *ptr, Integer *loA, Integer *hi
           break;
         case C_DCPL:
           dca = (DoubleComplex *) ptr;
+          dca += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             (*dca).real += (*((DoubleComplex *) c)).real;
@@ -2077,6 +2100,7 @@ void gai_shift_diagonal_block(Integer *g_a, void *ptr, Integer *loA, Integer *hi
 
         case C_SCPL:
           fca = (SingleComplex *) ptr;
+          fca += ld*(lo[1]-jloA) + lo[0]-iloA;
           for (i = 0; i < hi[0] - lo[0] + 1; i++)
           {
             (*fca).real += (*((SingleComplex *) c)).real;
