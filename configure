@@ -13959,7 +13959,7 @@ else
   LINUX64:fujitsu:x86_64) :
     ga_cv_f77_opt="-Kfast -X9 -Am" ;; #(
   LINUX64:gnu:x86_64) :
-    ga_cv_f77_opt="-O0 -w" ;; #(
+    ga_cv_f77_opt="-O" ;; #(
   LINUX64:ibm:x86_64) :
     ga_cv_f77_opt="" ;; #(
   LINUX64:intel:ia64) :
