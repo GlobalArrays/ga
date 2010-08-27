@@ -6,7 +6,10 @@
  *
  * File organized as follows
  */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
@@ -153,7 +156,7 @@ unsigned int armci_use_affinity = 0;
   
 unsigned int armci_srq_size = 4096; 
   
-pthread_t async_thread[4];
+pthread_t armci_async_thread[4];
 
 void async_thread_hca_events(void *ctx);
 void async_thread_ud_events(void *ctx);
@@ -210,6 +213,7 @@ int process_recv_completion_from_client_flag;
 
 int total_active_conn_to_server, total_active_conn_to_client, total_breaks;
 
+void check_state_of_ib_connection(int a, int b);
 
 static vapibuf_t **serv_buf_arr;
 #if !defined(PEND_BUFS)
@@ -858,7 +862,7 @@ static void armci_init_nic(vapi_nic_t *nic, int scq_entries, int
     if ((value = getenv("ARMCI_USE_ODCM")) != NULL){
         armci_use_odcm = atoi(value);
     } else {
-        armci_use_odcm = 0;
+        armci_use_odcm = 1;
     }
 
     armci_use_lazy_break = 0;
@@ -1287,8 +1291,10 @@ int *tmparr;
     handle_array = (armci_vapi_memhndl_t *)calloc(sizeof(armci_vapi_memhndl_t),
             armci_nproc);
     dassert1(1,handle_array!=NULL,sizeof(armci_vapi_memhndl_t)*armci_nproc);
-    
-    setup_ud_channel();
+   
+    if (armci_use_odcm) {
+        setup_ud_channel();
+    }
 }
 
 static void vapi_connect_client()
@@ -4489,7 +4495,7 @@ void process_recv_completion_from_client(armci_ud_rank *h, cbuf *v)
 
     /* Now send back the information */
 
-    cbuf *v1 = get_cbuf();
+    struct cbuf *v1 = get_cbuf();
 
     assert( v1 != NULL);
 
@@ -4693,7 +4699,7 @@ int create_cq(void)
         return 1;
     }
     if (armci_me == armci_master) {
-        pthread_create(&async_thread[1], NULL,
+        pthread_create(&armci_async_thread[1], NULL,
                 (void *) async_thread_ud_events, (void *) hca.context);
     }
 
@@ -4791,7 +4797,7 @@ int create_qp(void)
 
     return 0;
 }
-struct ibv_mr* register_memory(void* buf, int len)
+struct ibv_mr* armci_register_memory(void* buf, int len)
 {
     return (ibv_reg_mr(hca.pd, buf, len,
                 IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE |
@@ -5026,6 +5032,7 @@ struct con_q_t *con_q;
 
 armci_connect_t * dequeue_conn()
 {
+    return NULL;
 }
 
 int get_max_client_to_server_conn()

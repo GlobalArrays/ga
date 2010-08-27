@@ -178,7 +178,7 @@ static void allocate_cbuf_region(int ncbufs)
     reg->cbuf_head = free_cbuf_head;
 
 
-    reg->mem_handle = register_memory(cbuf_dma_buffer,
+    reg->mem_handle = armci_register_memory(cbuf_dma_buffer,
             ncbufs * viadev_cbuf_total_size);
 
     if (reg->mem_handle == NULL) {

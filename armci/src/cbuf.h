@@ -181,7 +181,7 @@ void init_cbuf_lock();
 
 void dump_cbuf(char *msg, cbuf * v);
 
-struct ibv_mr * register_memory(void *, int);
+struct ibv_mr * armci_register_memory(void *, int);
 
 /* 
  * Macros for working with cbufs 
