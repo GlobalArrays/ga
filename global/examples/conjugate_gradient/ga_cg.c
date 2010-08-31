@@ -21,11 +21,10 @@
 #include <fcntl.h>
 #endif
 
-#include <mpi.h>
-
 #include "ga.h"
 #include "macdecls.h"
 #include "finclude.h"
+#include "mp3.h"
 
 #define VERIFY_RESULT 1
 
@@ -228,7 +227,7 @@ int heap=200000, stack=200000;
 int dopreconditioning=1;
 double time0,time1;
 
-    MPI_Init(&argc, &argv);                    /* initialize MPI */
+    MP_INIT(argc, argv);                    /* initialize message passing */
     GA_Initialize();                           /* initialize GA */
 
     me=GA_Nodeid(); 
@@ -254,7 +253,7 @@ double time0,time1;
          fflush(stdout);
        }
        GA_Terminate();
-       MPI_Finalize();
+       MP_FINALIZE();
        return 0;
     }
 
@@ -273,9 +272,9 @@ double time0,time1;
     if(me==0)printf("\n\nStarting Conjugate Gradient ....");
     initialize_arrays(dopreconditioning);
 
-    time0=MPI_Wtime();
+    time0=MP_TIMER();
     conjugate_gradient(30000/*2*/,dopreconditioning);
-    time1=MPI_Wtime();
+    time1=MP_TIMER();
 
     /* GA_Print(xvec); */
     /* GA_Print(dvec); */
@@ -283,11 +282,11 @@ double time0,time1;
     if(me==0)printf("\n%d:in %d iterations time to solution=%f-%f\n",me,niter,(time1-time0),time_get);
 
     finalize_arrays(dopreconditioning);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MP_BARRIER();
 
     if(me==0)printf("Terminating ..\n");
     GA_Terminate();
-    MPI_Finalize();
+    MP_FINALIZE();
     return 0;
 }
 

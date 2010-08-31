@@ -35,11 +35,7 @@
 #include "dra.h"
 #include "ga.h"
 #include "macdecls.h"
-#ifdef MPI
-#   include <mpi.h>
-#else
-#   include "tcgmsg.h"
-#endif
+#include "mp3.h"
 
 #define MAXDIM GA_MAX_DIM
 
@@ -444,12 +440,7 @@ int main(int argc, char **argv)
     int stack=80000, heap=80000;
     double max_sz=100000000.0, max_disk=10000000000.0, max_mem=1000000.0;
 
-    /*      call pbeginf  */
-#ifdef MPI
-    MPI_Init(&argc, &argv);
-#else
-    tcg_pbegin(argc, argv);
-#endif
+    MP_INIT(argc,argv);
     if(MA_init(MT_DBL, stack, heap) ) {
         GA_Initialize();
         me    = GA_Nodeid();
@@ -464,11 +455,7 @@ int main(int argc, char **argv)
     } else {
         printf("MA_init failed\n");
     }
-#ifdef MPI
-    MPI_Finalize();
-#else
-    tcg_pend();
-#endif
+    MP_FINALIZE();
 
     return 0;
 }

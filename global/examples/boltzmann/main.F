@@ -15,16 +15,10 @@ c
 c
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 c
 c  Initialize a message passing library
 c
-#ifdef MPI
-      integer ierr
-      call mpi_init(ierr)
-#else
-      call pbeginf
-#endif
+#include "mp3.fh"
       size(1) = NSIZE
       size(2) = NSIZE
 c
@@ -133,11 +127,7 @@ c
 c   Close out calculation
 c
       call ga_terminate()
-#ifdef MPI
-      call mpi_finalize(ierr)
-#else
-      call pend()
-#endif
+      call MP_FINALIZE()
       stop
       end
 c

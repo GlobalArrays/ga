@@ -14,7 +14,9 @@ c
 c
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
+#define MP_DEFINES_ONLY
+#include "mp3.fh"
+#undef MP_DEFINES_ONLY
 c
 c   Advance simulation one timestep
 c
@@ -23,7 +25,7 @@ c
 c
 c   Make backup copies of distribution and update ghost cells
 c
-      start1 = tcgtime()
+      start1 = MP_TIMER()
       do jj = width(2) + 1, dims(2) - width(2)
         do i = 1, 9
           j = i + 18 
@@ -32,10 +34,10 @@ c
           end do
         end do
       end do
-      start2 = tcgtime()
+      start2 = MP_TIMER()
       call ga_mask_sync(.false.,.false.)
       call ga_update_ghosts(g_fg)
-      tstats(2) = tstats(2) + tcgtime() - start2
+      tstats(2) = tstats(2) + MP_TIMER() - start2
 c
 c   Perform streaming operation
 c
@@ -90,7 +92,7 @@ c            endif
         end do
       end do
 c
-      tstats(1) = tstats(1) + tcgtime() - start1
+      tstats(1) = tstats(1) + MP_TIMER() - start1
 c
       return
       end

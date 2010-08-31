@@ -24,10 +24,9 @@
 #   include <string.h>
 #endif
 
-#include <mpi.h>
-
 #include "ga.h"
 #include "macdecls.h"
+#include "mp3.h"
 
 extern int na;
 extern int nz;
@@ -70,7 +69,7 @@ int lo,hi;
          printf("\nERROR:exiting-no input file given and na or nz is 0");
          fflush(stdout);
          GA_Terminate();
-         MPI_Finalize();
+         MP_FINALIZE();
          return;
        }
        if(me==0){
@@ -105,12 +104,16 @@ int lo,hi;
          irow[i] -= 1;
        for (i = 0; i < nz + 1; i++)
          icol[i] -= 1;
-       MPI_Bcast(&nz,1,MPI_INT,0,MPI_COMM_WORLD);
-       MPI_Bcast(&na,1,MPI_INT,0,MPI_COMM_WORLD);
+       /* MPI_Bcast(&nz,1,MPI_INT,0,MPI_COMM_WORLD); */
+       GA_Brdcst(&nz, sizeof(int), 0);
+       /* MPI_Bcast(&na,1,MPI_INT,0,MPI_COMM_WORLD); */
+       GA_Brdcst(&na, sizeof(int), 0);
     }
     else {
-       MPI_Bcast(&nz,1,MPI_INT,0,MPI_COMM_WORLD);
-       MPI_Bcast(&na,1,MPI_INT,0,MPI_COMM_WORLD);
+       /* MPI_Bcast(&nz,1,MPI_INT,0,MPI_COMM_WORLD); */
+       GA_Brdcst(&nz, sizeof(int), 0);
+       /* MPI_Bcast(&na,1,MPI_INT,0,MPI_COMM_WORLD); */
+       GA_Brdcst(&na, sizeof(int), 0);
        /*for now, others dont need to malloc really*/
        a = (double *)malloc(sizeof(double)*nz);
        icol = (int *)malloc(sizeof(int)*(nz+1));
@@ -155,9 +158,12 @@ int lo,hi;
        alllastrow[nproc-1]=na-1;
        for(i=0;i<nproc;i++)columnmap[i]=irow[allfirstrow[i]];
     }
-    MPI_Bcast(columnmap,nproc,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(allfirstrow,nproc,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(alllastrow,nproc,MPI_INT,0,MPI_COMM_WORLD);
+    /* MPI_Bcast(columnmap,nproc,MPI_INT,0,MPI_COMM_WORLD); */
+    GA_Brdcst(columnmap, sizeof(int)*nproc, 0);
+    /* MPI_Bcast(allfirstrow,nproc,MPI_INT,0,MPI_COMM_WORLD); */
+    GA_Brdcst(allfirstrow, sizeof(int)*nproc, 0);
+    /* MPI_Bcast(alllastrow,nproc,MPI_INT,0,MPI_COMM_WORLD); */
+    GA_Brdcst(alllastrow, sizeof(int)*nproc, 0);
     myfirstrow = allfirstrow[me];
     mylastrow = alllastrow[me];
 
@@ -193,7 +199,7 @@ int lo,hi;
     }
     GA_Sync();
     GA_Print_distribution(ridx);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MP_BARRIER();
 
     xvec = NGA_Create_irreg(MT_C_DBL, 1, &na , "X",&nproc,allfirstrow);
     if(!xvec) GA_Error("create x failed",na); 

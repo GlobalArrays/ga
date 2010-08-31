@@ -12,10 +12,9 @@
 #   include <math.h>
 #endif
 
-#include <mpi.h>
-
 #include "ga.h"
 #include "macdecls.h"
+#include "mp3.h"
 
 extern int na,nz;
 extern int me, nproc;
@@ -69,11 +68,11 @@ void matvecmul(double *aptr,int ga_vec, double *myresultptr,int isvectormirrored
     }
     else { /*preliminary, later this will be done inside loop*/
 #if 1
-        t0=MPI_Wtime();
+        t0=MP_TIMER();
         na--;
         NGA_Get(ga_vec,&zero,&na,vecptr,&na);
         na++;
-        time_get+=(MPI_Wtime()-t0);
+        time_get+=(MP_TIMER()-t0);
 #else /* 1 */
         NGA_Access(ga_vec,&lo,&hi,&vecptr,&zero);
 #endif /* 1 */

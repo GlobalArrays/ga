@@ -4,6 +4,10 @@
  *
  * Nawab Ali <nawab.ali@pnl.gov>
  */
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

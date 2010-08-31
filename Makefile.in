@@ -74,8 +74,9 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15) \
 	$(am__EXEEXT_16) $(am__EXEEXT_17) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__EXEEXT_18) $(am__EXEEXT_19) pario/ntestc$(EXEEXT) \
-	$(am__EXEEXT_20) $(am__EXEEXT_21)
+	$(am__EXEEXT_18) $(am__EXEEXT_19) pario/bign$(EXEEXT) \
+	pario/ntestc$(EXEEXT) pario/perfn$(EXEEXT) pario/rate$(EXEEXT) \
+	$(am__EXEEXT_20)
 @NOFORT_FALSE@am__append_1 = $(FLD_NOMAIN)
 @NOFORT_FALSE@am__append_2 = gaf2c/farg.F
 @NOFORT_FALSE@am__append_3 = gaf2c/testarg
@@ -288,60 +289,56 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @HAVE_M4_TRUE@@NOFORT_FALSE@	global/testing/nga-util \
 @HAVE_M4_TRUE@@NOFORT_FALSE@	global/testing/ngatest
 @NOFORT_FALSE@am__append_45 = global/testing/ffflush.F
-@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_46 = global/examples/boltzmann/boltz \
-@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@	global/examples/md_cluster/grp_sim \
-@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@	global/examples/scf/scf
-@MSG_COMMS_MPI_TRUE@@NOFORT_FALSE@am__append_47 = global/examples/conjugate_gradient/ga_cg
+@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_46 = global/examples/scf/scf # uses nxtval, among others
+@NOFORT_FALSE@am__append_47 = global/examples/boltzmann/boltz \
+@NOFORT_FALSE@	global/examples/conjugate_gradient/ga_cg \
+@NOFORT_FALSE@	global/examples/md_cluster/grp_sim
 
 ##############################################################################
 # global/X
 #
 @ENABLE_XREGION_TRUE@@NO_X_FALSE@am__append_48 = global/X/xregion
-@MSG_COMMS_TCGMSG_TRUE@am__append_49 = pario/bign pario/perfn \
-@MSG_COMMS_TCGMSG_TRUE@	pario/rate
 
 ##############################################################################
 # ga++/src
 #
-@CXX_BINDINGS_TRUE@am__append_50 = libga++.la
-@CXX_BINDINGS_TRUE@am__append_51 = ga++/src/ga++.h \
+@CXX_BINDINGS_TRUE@am__append_49 = libga++.la
+@CXX_BINDINGS_TRUE@am__append_50 = ga++/src/ga++.h \
 @CXX_BINDINGS_TRUE@	ga++/src/GAServices.h \
 @CXX_BINDINGS_TRUE@	ga++/src/GlobalArray.h ga++/src/init_term.h \
 @CXX_BINDINGS_TRUE@	ga++/src/PGroup.h ga++/src/services.h
-@CXX_BINDINGS_TRUE@am__append_52 = -I$(top_srcdir)/ga++/src
+@CXX_BINDINGS_TRUE@am__append_51 = -I$(top_srcdir)/ga++/src
 
 ##############################################################################
 # ga++/testing
 #
-@CXX_BINDINGS_TRUE@am__append_53 = ga++/testing/elempatch \
+@CXX_BINDINGS_TRUE@am__append_52 = ga++/testing/elempatch \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest ga++/testing/ntestc \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc ga++/testing/testmult
-@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_54 = global/examples/boltzmann/boltz$(EXEEXT) \
-@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@	global/examples/md_cluster/grp_sim$(EXEEXT) \
-@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@	global/examples/scf/scf$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@@NOFORT_FALSE@am__append_55 = global/examples/conjugate_gradient/ga_cg$(EXEEXT)
-@MSG_COMMS_TCGMSG_TRUE@am__append_56 = pario/bign$(EXEEXT) \
-@MSG_COMMS_TCGMSG_TRUE@	pario/perfn$(EXEEXT) \
-@MSG_COMMS_TCGMSG_TRUE@	pario/rate$(EXEEXT)
-XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_22)
-@NOFORT_FALSE@am__append_57 = gaf2c/testarg$(EXEEXT)
-@NOFORT_FALSE@am__append_58 = ma/testf$(EXEEXT)
-@NOFORT_FALSE@am__append_59 = ma/testf$(EXEEXT)
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_60 = tcgmsg/ipcv4.0/hello$(EXEEXT) \
+@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_53 = global/examples/scf/scf$(EXEEXT)
+@NOFORT_FALSE@am__append_54 =  \
+@NOFORT_FALSE@	global/examples/boltzmann/boltz$(EXEEXT) \
+@NOFORT_FALSE@	global/examples/conjugate_gradient/ga_cg$(EXEEXT) \
+@NOFORT_FALSE@	global/examples/md_cluster/grp_sim$(EXEEXT)
+XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_21)
+@NOFORT_FALSE@am__append_55 = gaf2c/testarg$(EXEEXT)
+@NOFORT_FALSE@am__append_56 = ma/testf$(EXEEXT)
+@NOFORT_FALSE@am__append_57 = ma/testf$(EXEEXT)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_58 = tcgmsg/ipcv4.0/hello$(EXEEXT) \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/test$(EXEEXT) \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/testmap$(EXEEXT) \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/toplot$(EXEEXT) \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/xdrtest$(EXEEXT)
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_61 = tcgmsg/ipcv4.0/testf$(EXEEXT) \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_59 = tcgmsg/ipcv4.0/testf$(EXEEXT) \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@	tcgmsg/ipcv4.0/testpf$(EXEEXT)
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_62 = tcgmsg/ipcv5.0/hello$(EXEEXT) \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_60 = tcgmsg/ipcv5.0/hello$(EXEEXT) \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/test$(EXEEXT)
-@MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_63 = tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_64 = tcgmsg/ipcv5.0/jacobi$(EXEEXT) \
+@MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_61 = tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_62 = tcgmsg/ipcv5.0/jacobi$(EXEEXT) \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@	tcgmsg/ipcv5.0/testf$(EXEEXT)
-@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_65 = tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT)
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_63 = tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT)
 #PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test$(EXEEXT) # requires user input
-@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_66 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_64 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
 #PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
 #PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
 #PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
@@ -349,7 +346,7 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_22)
 #PARALLEL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/random$(EXEEXT) # takes too long
-@NOFORT_FALSE@am__append_67 = global/testing/bin$(EXEEXT) \
+@NOFORT_FALSE@am__append_65 = global/testing/bin$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/blktest$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/g2test$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/g3test$(EXEEXT) \
@@ -374,22 +371,20 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_22)
 @NOFORT_FALSE@	global/testing/testmatmult$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/testsolve$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/test$(EXEEXT)
-@HAVE_SCALAPACK_TRUE@@NOFORT_FALSE@am__append_68 = global/testing/testspd$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_69 = global/testing/ga-mpi$(EXEEXT) \
+@HAVE_SCALAPACK_TRUE@@NOFORT_FALSE@am__append_66 = global/testing/testspd$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_67 = global/testing/ga-mpi$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT)
-@SYSV_TRUE@am__append_70 = global/testing/ipc_clean$(EXEEXT)
-@NOFORT_FALSE@am__append_71 = global/testing/nga-onesided$(EXEEXT) \
+@SYSV_TRUE@am__append_68 = global/testing/ipc_clean$(EXEEXT)
+@NOFORT_FALSE@am__append_69 = global/testing/nga-onesided$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/nga-patch$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/nga-periodic$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/nga-scatter$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/nga-scatter$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/nga-util$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/ngatest$(EXEEXT)
-@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_72 = global/examples/boltzmann/boltz$(EXEEXT)
-@MSG_COMMS_TCGMSG_TRUE@am__append_73 = pario/bign$(EXEEXT) \
-@MSG_COMMS_TCGMSG_TRUE@	pario/perfn$(EXEEXT) \
-@MSG_COMMS_TCGMSG_TRUE@	pario/rate$(EXEEXT)
-@CXX_BINDINGS_TRUE@am__append_74 = ga++/testing/elempatch$(EXEEXT) \
+#PARALLEL_TESTS += global/examples/scf/scf$(EXEEXT) # needs input
+@NOFORT_FALSE@am__append_70 = global/examples/boltzmann/boltz$(EXEEXT)
+@CXX_BINDINGS_TRUE@am__append_71 = ga++/testing/elempatch$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/ntestc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc$(EXEEXT) \
@@ -795,14 +790,12 @@ libga_la_OBJECTS = $(am_libga_la_OBJECTS)
 @HAVE_M4_TRUE@@NOFORT_FALSE@	global/testing/nga-scatter$(EXEEXT) \
 @HAVE_M4_TRUE@@NOFORT_FALSE@	global/testing/nga-util$(EXEEXT) \
 @HAVE_M4_TRUE@@NOFORT_FALSE@	global/testing/ngatest$(EXEEXT)
-@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__EXEEXT_18 = global/examples/boltzmann/boltz$(EXEEXT) \
-@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@	global/examples/md_cluster/grp_sim$(EXEEXT) \
-@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@	global/examples/scf/scf$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@@NOFORT_FALSE@am__EXEEXT_19 = global/examples/conjugate_gradient/ga_cg$(EXEEXT)
-@MSG_COMMS_TCGMSG_TRUE@am__EXEEXT_20 = pario/bign$(EXEEXT) \
-@MSG_COMMS_TCGMSG_TRUE@	pario/perfn$(EXEEXT) \
-@MSG_COMMS_TCGMSG_TRUE@	pario/rate$(EXEEXT)
-@CXX_BINDINGS_TRUE@am__EXEEXT_21 = ga++/testing/elempatch$(EXEEXT) \
+@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__EXEEXT_18 = global/examples/scf/scf$(EXEEXT)
+@NOFORT_FALSE@am__EXEEXT_19 =  \
+@NOFORT_FALSE@	global/examples/boltzmann/boltz$(EXEEXT) \
+@NOFORT_FALSE@	global/examples/conjugate_gradient/ga_cg$(EXEEXT) \
+@NOFORT_FALSE@	global/examples/md_cluster/grp_sim$(EXEEXT)
+@CXX_BINDINGS_TRUE@am__EXEEXT_20 = ga++/testing/elempatch$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/ntestc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc$(EXEEXT) \
@@ -2273,7 +2266,7 @@ else dir="$(srcdir)/"; fi;				\
 tst=$$dir$$f; log='$@'; __SAVED_TERM=$$TERM;		\
 $(TESTS_ENVIRONMENT)
 RECHECK_LOGS = $(TEST_LOGS)
-am__EXEEXT_22 =
+am__EXEEXT_21 =
 TEST_SUITE_LOG = test-suite.log
 TEST_SUITE_HTML = $(TEST_SUITE_LOG:.log=.html)
 TEST_EXTENSIONS = @EXEEXT@ .test
@@ -2512,9 +2505,9 @@ include_HEADERS = gaf2c/typesf2c.h gaf2c/farg.h ma/error.h \
 	global/src/global.fh global/src/papi.h global/src/wapi.h \
 	pario/dra/dra.fh pario/dra/dra.h pario/eaf/eaf.fh \
 	pario/eaf/eaf.h pario/elio/chemio.h pario/elio/elio.h \
-	pario/sf/coms.h pario/sf/sf.fh pario/sf/sf.h $(am__append_51)
+	pario/sf/coms.h pario/sf/sf.fh pario/sf/sf.h $(am__append_50)
 check_LTLIBRARIES = 
-lib_LTLIBRARIES = libga.la $(am__append_50)
+lib_LTLIBRARIES = libga.la $(am__append_49)
 
 ##############################################################################
 # compat
@@ -2607,7 +2600,7 @@ AM_CPPFLAGS = $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
 	-I$(top_build_prefix)global/src -I$(top_srcdir)/global/src \
 	-I$(top_srcdir)/pario/dra -I$(top_srcdir)/pario/eaf \
 	-I$(top_srcdir)/pario/elio -I$(top_srcdir)/pario/sf \
-	$(am__append_52) -I$(top_srcdir)/armci/$(ARMCI_SRC_DIR)
+	$(am__append_51) -I$(top_srcdir)/armci/$(ARMCI_SRC_DIR)
 AM_LDFLAGS = $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) $(am__append_1)
 LDADD = $(LTLIBOBJS) libga.la $(SCALAPACK_LIBS) $(LAPACK_LIBS) \
 	$(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
@@ -2910,8 +2903,8 @@ SUBDIRS = armci .
 # This is the "noinst" libarmci so that libtool combines it with libga.
 libga_la_LIBADD = armci/libarmcii.la
 EXAMPLES = global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_54) $(am__append_55) pario/ntestc$(EXEEXT) \
-	$(am__append_56)
+	$(am__append_53) $(am__append_54) pario/bign$(EXEEXT) \
+	pario/ntestc$(EXEEXT) pario/perfn$(EXEEXT) pario/rate$(EXEEXT)
 GA_RECURSIVE_TARGETS = checkprogs-recursive examples-recursive
 # END COPY
 
@@ -2927,27 +2920,26 @@ TESTS_ENVIRONMENT = \
 maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
 
 #SERIAL_TESTS += ma/testc$(EXEEXT)
-SERIAL_TESTS = $(am__append_57) ma/test-coalesce$(EXEEXT) \
-	ma/test-inquire$(EXEEXT) $(am__append_58)
-SERIAL_TESTS_XFAIL = $(am__append_59)
+SERIAL_TESTS = $(am__append_55) ma/test-coalesce$(EXEEXT) \
+	ma/test-inquire$(EXEEXT) $(am__append_56)
+SERIAL_TESTS_XFAIL = $(am__append_57)
 #PARALLEL_TESTS += global/testing/getmem$(EXEEXT) # needs bug fixes
-#PARALLEL_TESTS += global/examples/md_cluster/grp_sim$(EXEEXT) # needs input
-#PARALLEL_TESTS += global/examples/scf/scf$(EXEEXT) # needs input
 #PARALLEL_TESTS += global/examples/conjugate_gradient/ga_cg$(EXEEXT) # needs user input
-PARALLEL_TESTS = $(am__append_60) $(am__append_61) $(am__append_62) \
-	$(am__append_63) $(am__append_64) $(am__append_65) \
-	$(am__append_66) global/testing/elempatch$(EXEEXT) \
+#PARALLEL_TESTS += global/examples/md_cluster/grp_sim$(EXEEXT) # needs input
+PARALLEL_TESTS = $(am__append_58) $(am__append_59) $(am__append_60) \
+	$(am__append_61) $(am__append_62) $(am__append_63) \
+	$(am__append_64) global/testing/elempatch$(EXEEXT) \
 	global/testing/mtest$(EXEEXT) global/testing/ntestc$(EXEEXT) \
 	global/testing/ntestfc$(EXEEXT) global/testing/print$(EXEEXT) \
 	global/testing/testc$(EXEEXT) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
-	global/testing/testmultrect$(EXEEXT) $(am__append_67) \
-	$(am__append_68) $(am__append_69) $(am__append_70) \
-	$(am__append_71) \
+	global/testing/testmultrect$(EXEEXT) $(am__append_65) \
+	$(am__append_66) $(am__append_67) $(am__append_68) \
+	$(am__append_69) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_72) pario/ntestc$(EXEEXT) $(am__append_73) \
-	$(am__append_74)
+	$(am__append_70) pario/bign$(EXEEXT) pario/ntestc$(EXEEXT) \
+	pario/perfn$(EXEEXT) pario/rate$(EXEEXT) $(am__append_71)
 PARALLEL_TESTS_XFAIL = 
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
@@ -5583,10 +5575,10 @@ global/examples/lennard-jones/lennard.log: global/examples/lennard-jones/lennard
 	@p='global/examples/lennard-jones/lennard$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/examples/boltzmann/boltz.log: global/examples/boltzmann/boltz$(EXEEXT)
 	@p='global/examples/boltzmann/boltz$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-pario/ntestc.log: pario/ntestc$(EXEEXT)
-	@p='pario/ntestc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 pario/bign.log: pario/bign$(EXEEXT)
 	@p='pario/bign$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+pario/ntestc.log: pario/ntestc$(EXEEXT)
+	@p='pario/ntestc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 pario/perfn.log: pario/perfn$(EXEEXT)
 	@p='pario/perfn$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 pario/rate.log: pario/rate$(EXEEXT)

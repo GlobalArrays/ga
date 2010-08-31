@@ -22,7 +22,7 @@
 #include "eaf.h"
 #include "ga.h"
 #include "macdecls.h"
-#include "tcgmsg.h"
+#include "mp3.h"
 
 #ifndef MAXDIM
 #   define MAXDIM GA_MAX_DIM
@@ -213,7 +213,7 @@ void test_io_dbl()
             dhi[j] = (((dra_size_t)index[j])+(dra_size_t)1)
                 * ((dra_size_t)SIZE) - (dra_size_t)1;
         }
-        tt0 = tcg_time();
+        tt0 = MP_TIMER();
         if (NDRA_Write_section(FALSE, g_a, glo, ghi,
                     d_a, dlo, dhi, &req) != 0) {
             GA_Error("ndra_write_section failed:",0);
@@ -221,7 +221,7 @@ void test_io_dbl()
         if (DRA_Wait(req) != 0) {
             GA_Error("DRA_Wait failed(d_a): ",req);
         }
-        tt1 += (tcg_time() - tt0);
+        tt1 += (MP_TIMER() - tt0);
     }
     GA_Dgop(&tt1,1,"+");
     tt1 = tt1/((double)nproc);
@@ -263,7 +263,7 @@ void test_io_dbl()
             dhi[j] = (((dra_size_t)index[j])+(dra_size_t)1)
                 * ((dra_size_t)SIZE) - (dra_size_t)1;
         }
-        tt0 = tcg_time();
+        tt0 = MP_TIMER();
         if (NDRA_Read_section(FALSE, g_b, glo, ghi,
                     d_a, dlo, dhi, &req) != 0) {
             GA_Error("ndra_read_section failed:",0);
@@ -271,7 +271,7 @@ void test_io_dbl()
         if (DRA_Wait(req) != 0) {
             GA_Error("DRA_Wait failed(d_a): ",req);
         }
-        tt1 += (tcg_time() - tt0);
+        tt1 += (MP_TIMER() - tt0);
         plus = 1.0;
         minus = -1.0;
         GA_Add(&plus, g_a, &minus, g_b, g_b);
@@ -306,7 +306,7 @@ int main(int argc, char **argv)
     int numfiles, numioprocs;
     int total, nproc;
 
-    tcg_pbegin(argc, argv); 
+    MP_INIT(argc,argv);
     GA_Initialize();
     me = GA_Nodeid();
     nproc = GA_Nnodes();
@@ -351,6 +351,6 @@ int main(int argc, char **argv)
         printf("MA_init failed\n");
     }
     if(me == 0) printf("all done ...\n");
-    tcg_pend();
+    MP_FINALIZE();
     return 0;
 }

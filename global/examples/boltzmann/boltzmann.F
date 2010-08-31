@@ -14,7 +14,6 @@ c
 c
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 c
       integer i, me, nprocs
       me = ga_nodeid()

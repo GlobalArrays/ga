@@ -14,7 +14,6 @@ c
 c
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 c
       double precision buffer(NSIZE,10,3)
       double precision dx, dy

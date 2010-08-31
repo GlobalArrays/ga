@@ -14,7 +14,6 @@ c
 c
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 c
       double precision rho0, ux0, uy0, t_rho, pi
       integer i, j, ii, jj, gtmp, me

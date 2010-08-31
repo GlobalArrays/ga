@@ -18,7 +18,7 @@
 #include "dra.h"
 #include "ga.h"
 #include "macdecls.h"
-#include "tcgmsg.h"
+#include "mp3.h"
 
 #define BASE_NAME  "/scratch/da.try"
 #define BASE_NAME1 "/scratch/da1.try"
@@ -198,7 +198,7 @@ void test_io_dbl()
             dlo[j] = n*icoord[j];
             dhi[j] = n*(icoord[j]+1)-1;
         }
-        tt0 = tcg_time();
+        tt0 = MP_TIMER();
         array_int_to_dra_size_t(dlo, ddlo, ndim);
         array_int_to_dra_size_t(dhi, ddhi, ndim);
         if (NDRA_Write_section(FALSE, g_a, glo, ghi, d_a, ddlo, ddhi, &req)
@@ -206,7 +206,7 @@ void test_io_dbl()
             GA_Error("ndra_write_section failed:",0);
 
         if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed(d_a): ",req);
-        tt1 += (tcg_time() - tt0);
+        tt1 += (MP_TIMER() - tt0);
     }
     mbytes = 1.e-6*(double)(pow(nfac*n,ndim)*sizeof(double));
     if (me == 0) {
@@ -214,9 +214,9 @@ void test_io_dbl()
                 mbytes,tt1,mbytes/tt1);
     }
 
-    tt0 = tcg_time();
+    tt0 = MP_TIMER();
     if (DRA_Close(d_a) != 0) GA_Error("DRA_Close failed(d_a): ",d_a);
-    tt1 += (tcg_time() - tt0);
+    tt1 += (MP_TIMER() - tt0);
     if (me == 0) {
         printf("Time including DRA_Close\n");
         printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
@@ -253,14 +253,14 @@ void test_io_dbl()
             dlo[j] = n*icoord[j];
             dhi[j] = n*(icoord[j]+1)-1;
         }
-        tt0 = tcg_time();
+        tt0 = MP_TIMER();
         array_int_to_dra_size_t(dlo, ddlo, ndim);
         array_int_to_dra_size_t(dhi, ddhi, ndim);
         if (NDRA_Read_section(FALSE, g_b, glo, ghi, d_a, ddlo, ddhi, &req) != 0)
             GA_Error("NDRA_Read_section failed:",0);
 
         if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
-        tt1 += (tcg_time() - tt0);
+        tt1 += (MP_TIMER() - tt0);
         plus = 1.0;
         minus = -1.0;
         GA_Add(&plus, g_a, &minus, g_b, g_b);
@@ -292,7 +292,7 @@ int main(int argc, char **argv)
     int stack = 1200000, heap = 800000;
 #endif
 
-    tcg_pbegin(argc, argv); 
+    MP_INIT(argc,argv);
     GA_Initialize();
     if (!GA_Uses_ma()) {
         stack = 100000;
@@ -313,6 +313,6 @@ int main(int argc, char **argv)
         printf("MA_init failed\n");
     }
     if(me == 0) printf("all done ...\n");
-    tcg_pend();
+    MP_FINALIZE();
     return 0;
 }

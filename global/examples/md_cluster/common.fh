@@ -13,7 +13,11 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
+#ifdef MPI
+#   include "mpif.h"
+#else
+#   include "tcgmsg.fh"
+#endif
       integer MAXNRG,MAXNB,MAXAT,MAXTIM
       integer NSTES,NSTDF
       integer MD_MAXPROC,MAXBINS

@@ -14,7 +14,6 @@ c
 c
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 c
 c   Subroutine to evaluate the vorticity of velocity field
 c

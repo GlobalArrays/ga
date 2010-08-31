@@ -13,7 +13,7 @@
       integer lo(2),hi(2)
       integer dims(2)
       double precision buf(n,n)
-      integer proc_group(0:100),proclist(100),inode,nprocs,nnodes
+      integer proc_group(0:100),proclist(100),inode,nprocs
 #include "mp3.fh"
       call ga_initialize()
       nproc = ga_nnodes()
@@ -26,7 +26,6 @@
       status = ma_set_error_print(.true.)
       
       inode = ga_cluster_nodeid()
-      nnodes = ga_cluster_nprocs(inode)
       do i=0,ga_cluster_nnodes()-1
          do j=0,ga_cluster_nprocs(i)-1
             proclist(j+1)=ga_cluster_procid(i,j)
