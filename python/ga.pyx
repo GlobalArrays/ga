@@ -426,24 +426,28 @@ def allocate(int g_a):
     """
     return GA_Allocate(g_a)
 
-def brdcst(buffer, int root):
+def brdcst(np.ndarray buffer, int root):
     """Broadcast from process root to all other processes.
 
-    If the buffer is not contiguous, a contiguous copy will be made.  This
-    operation is provided only for convenience purposes: it is available
-    regardless of the message-passing library that GA is running with.
+    If the buffer is not contiguous, an error is raised.  This operation is
+    provided only for convenience purposes: it is available regardless of the
+    message-passing library that GA is running with.
 
     This is a collective operation. 
 
     Positional arguments:
-    buffer -- the message
+    buffer -- the ndarray message
     root   -- the process which is sending
 
+    Returns:
+    The buffer in case a temporary was passed in.
+
     """
-    cdef np.ndarray buffer_nd = np.asarray(buffer)
-    if not buffer_nd.flags['C_CONTIGUOUS']:
-        buffer_nd = np.ascontiguousarray(buffer_nd)
-    GA_Brdcst(buffer_nd.data, len(buffer), root)
+    if not buffer.flags['C_CONTIGUOUS']:
+        raise ValueError, "the buffer must be contiguous"
+    if buffer.ndim != 1:
+        raise ValueError, "the buffer must be one-dimensional"
+    GA_Brdcst(buffer.data, len(buffer)*buffer.itemsize, root)
 
 def check_handle(int g_a, char *message):
     """Checks that the array handle g_a is valid.
@@ -1235,7 +1239,7 @@ def fill(int g_a, value, lo=None, hi=None):
         NGA_Fill_patch64(
                 g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data, vvalue)
 
-def gather(int g_a, subsarray, values=None):
+def gather(int g_a, subsarray, np.ndarray values=None):
     """Gathers array elements from a global array into a local array.
 
     subsarray will be converted to an ndarray if it is not one already.  A
@@ -1257,7 +1261,6 @@ def gather(int g_a, subsarray, values=None):
     This is a one-sided operation. 
 
     """
-    cdef np.ndarray values_nd
     cdef np.ndarray[np.int64_t, ndim=1] subsarray1_nd = None
     cdef np.ndarray[np.int64_t, ndim=2] subsarray2_nd = None
     cdef int gtype = inquire_type(g_a)
@@ -1275,24 +1278,23 @@ def gather(int g_a, subsarray, values=None):
             raise ValueError, "subsarray must be either 1- or 2-dimensional"
     # prepare values array
     if values is None:
-        values_nd = np.ndarray(n, dtype=_to_dtype[gtype])
+        values = np.ndarray(n, dtype=_to_dtype[gtype])
     else:
-        values_nd = np.asarray(values)
-        if values_nd.ndim != 1:
-            raise ValueError, "values_nd must be one-dimensional"
-        if not values_nd.flags['C_CONTIGUOUS']:
-            raise ValueError, "values_nd must be contiguous"
-        if len(values_nd) < n:
-            raise ValueError, "values_nd was not large enough"
+        if values.ndim != 1:
+            raise ValueError, "values must be one-dimensional"
+        if not values.flags['C_CONTIGUOUS']:
+            raise ValueError, "values must be contiguous"
+        if len(values) < n:
+            raise ValueError, "values was not large enough"
     if subsarray1_nd is not None:
-        NGA_Gather_flat64(g_a, <void*>values_nd.data,
+        NGA_Gather_flat64(g_a, <void*>values.data,
                 <int64_t*>subsarray1_nd.data, n)
     elif subsarray2_nd is not None:
-        NGA_Gather_flat64(g_a, <void*>values_nd.data,
+        NGA_Gather_flat64(g_a, <void*>values.data,
                 <int64_t*>subsarray2_nd.data, n)
     else:
         raise ValueError, "how did this happen?"
-    return values_nd
+    return values
 
 def gemm(bint ta, bint tb, int64_t m, int64_t n, int64_t k,
         alpha, int g_a, int g_b, beta, int g_c):
@@ -1318,6 +1320,43 @@ def gemm(bint ta, bint tb, int64_t m, int64_t n, int64_t k,
     
     """
     raise NotImplementedError
+
+def get(int g_a, lo=None, hi=None, np.ndarray buffer=None):
+    """Copies data from global array section to the local array buffer.
+    
+    The local array is assumed to be have the same number of dimensions as the
+    global array. Any detected inconsitencies/errors in the input arguments
+    are fatal.
+
+    This is a one-sided operation.
+
+    Positional arguments:
+    g_a -- the array handle
+    lo  -- a 1D array-like object, or None
+    hi  -- a 1D array-like object, or None
+
+    Keyword arguments:
+    buffer -- 
+
+    Returns:
+    The local array buffer.
+    
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape
+    cdef int gtype=inquire_type(g_a)
+    lo_nd,hi_nd = _lohi(g_a,lo,hi)
+    shape = hi_nd-lo_nd+1
+    ld_nd = shape[1:]
+    if buffer is None:
+        buffer = np.ndarray(shape, dtype=_to_dtype[gtype])
+    else:
+        # TODO perform check for shapes matching
+        if buffer.dtype != _to_dtype[gtype]:
+            raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
+                    buffer.dtype, _to_dtype[gtype])
+    NGA_Get64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+            <void*>buffer.data, <int64_t*>ld_nd.data)
+    return buffer
 
 def gop(X, char *op):
     """Global operation.
