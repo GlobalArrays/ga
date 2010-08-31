@@ -862,7 +862,7 @@ static void armci_init_nic(vapi_nic_t *nic, int scq_entries, int
     if ((value = getenv("ARMCI_USE_ODCM")) != NULL){
         armci_use_odcm = atoi(value);
     } else {
-        armci_use_odcm = 1;
+        armci_use_odcm = 0;
     }
 
     armci_use_lazy_break = 0;
@@ -878,7 +878,7 @@ static void armci_init_nic(vapi_nic_t *nic, int scq_entries, int
 }
 
 
-void viainit_setaffinity(char *cpu_mapping) {
+void armci_setaffinity(char *cpu_mapping) {
     long N_CPUs_online;
     cpu_set_t affinity_mask;
     unsigned long affinity_mask_len = sizeof(affinity_mask);
@@ -1221,7 +1221,7 @@ int *tmparr;
     armci_pbuf_init_buffer_env();
 #endif
 
-    viainit_setaffinity(NULL);
+    armci_setaffinity(NULL);
 
     /* initialize nic connection for qp numbers and lid's */
     armci_init_nic(SRV_nic,1,1);
