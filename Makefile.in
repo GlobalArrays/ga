@@ -99,6 +99,7 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @HAVE_BLAS_FALSE@@NOFORT_FALSE@am__append_7 =  \
 @HAVE_BLAS_FALSE@@NOFORT_FALSE@	LinAlg/lapack+blas/cgemm.f \
 @HAVE_BLAS_FALSE@@NOFORT_FALSE@	LinAlg/lapack+blas/dblas.f \
+@HAVE_BLAS_FALSE@@NOFORT_FALSE@	LinAlg/lapack+blas/sgemm.f \
 @HAVE_BLAS_FALSE@@NOFORT_FALSE@	LinAlg/lapack+blas/zaxpy.f \
 @HAVE_BLAS_FALSE@@NOFORT_FALSE@	LinAlg/lapack+blas/zgemm.f
 
@@ -515,65 +516,66 @@ am__libga_la_SOURCES_DIST = compat/random.c gaf2c/gaf2c.c \
 	LinAlg/lapack+blas/dlaswp.f LinAlg/lapack+blas/ilaenv.f \
 	LinAlg/lapack+blas/lsame.f LinAlg/lapack+blas/xerbla.f \
 	LinAlg/lapack+blas/cgemm.f LinAlg/lapack+blas/dblas.f \
-	LinAlg/lapack+blas/zaxpy.f LinAlg/lapack+blas/zgemm.f \
-	tcgmsg/capi.c global/src/ga_vt.c tcgmsg/tcgmsg_vampir.c \
-	tcgmsg/ipcv4.0/brdcst.c tcgmsg/ipcv4.0/checkbyte.c \
-	tcgmsg/ipcv4.0/cluster.c tcgmsg/ipcv4.0/cluster.h \
-	tcgmsg/ipcv4.0/defglobals.h tcgmsg/ipcv4.0/drand48.c \
-	tcgmsg/ipcv4.0/error.c tcgmsg/ipcv4.0/evlog.c \
-	tcgmsg/ipcv4.0/evlog.h tcgmsg/ipcv4.0/evon.c \
-	tcgmsg/ipcv4.0/globalop.c tcgmsg/ipcv4.0/llog.c \
-	tcgmsg/ipcv4.0/mdtob.c tcgmsg/ipcv4.0/mdtoi.c \
-	tcgmsg/ipcv4.0/mitob.c tcgmsg/ipcv4.0/mitod.c \
-	tcgmsg/ipcv4.0/mtime.c tcgmsg/ipcv4.0/niceftn.c \
-	tcgmsg/ipcv4.0/nnodes.c tcgmsg/ipcv4.0/nodeid.c \
-	tcgmsg/ipcv4.0/nxtval.c tcgmsg/ipcv4.0/pbegin.c \
-	tcgmsg/ipcv4.0/pbeginf.c tcgmsg/ipcv4.0/pfilecopy.c \
-	tcgmsg/ipcv4.0/sema.c tcgmsg/ipcv4.0/sema.h \
-	tcgmsg/ipcv4.0/setdbg.c tcgmsg/ipcv4.0/shmem.c \
-	tcgmsg/ipcv4.0/shmem.h tcgmsg/ipcv4.0/signals.c \
-	tcgmsg/ipcv4.0/signals.h tcgmsg/ipcv4.0/snd.c \
-	tcgmsg/ipcv4.0/sndrcv.h tcgmsg/ipcv4.0/sndrcvP.h \
-	tcgmsg/ipcv4.0/sockets.c tcgmsg/ipcv4.0/sockets.h \
-	tcgmsg/ipcv4.0/srftoc.h tcgmsg/ipcv4.0/srmover.c \
-	tcgmsg/ipcv4.0/stats.c tcgmsg/ipcv4.0/synch.c \
-	tcgmsg/ipcv4.0/usleep.c tcgmsg/ipcv4.0/waitall.c \
-	tcgmsg/ipcv4.0/waitcom.c tcgmsg/ipcv4.0/xdrstuff.c \
-	tcgmsg/ipcv4.0/xdrstuff.h tcgmsg/ipcv5.0/drand48.c \
-	tcgmsg/ipcv5.0/evlog.h tcgmsg/ipcv5.0/globalop.c \
-	tcgmsg/ipcv5.0/llog.c tcgmsg/ipcv5.0/mdtob.c \
-	tcgmsg/ipcv5.0/mdtoi.c tcgmsg/ipcv5.0/misc.c \
-	tcgmsg/ipcv5.0/mitob.c tcgmsg/ipcv5.0/mitod.c \
-	tcgmsg/ipcv5.0/mtime.c tcgmsg/ipcv5.0/niceftn.c \
-	tcgmsg/ipcv5.0/nnodes.c tcgmsg/ipcv5.0/nodeid.c \
-	tcgmsg/ipcv5.0/pbegin.c tcgmsg/ipcv5.0/pfilecopy.c \
-	tcgmsg/ipcv5.0/queues.c tcgmsg/ipcv5.0/shmem.h \
-	tcgmsg/ipcv5.0/signals.c tcgmsg/ipcv5.0/sndrcv.h \
-	tcgmsg/ipcv5.0/snd_rcv_probe.c tcgmsg/ipcv5.0/srftoc.h \
-	tcgmsg/ipcv5.0/tcgmsgP.h tcgmsg/ipcv5.0/usleep.c \
-	tcgmsg/ipcv5.0/waitall.c tcgmsg/ipcv5.0/async_send_lapi.c \
-	tcgmsg/ipcv5.0/lapi_putget.c tcgmsg/ipcv5.0/async_send.c \
-	tcgmsg/ipcv5.0/busy.c tcgmsg/ipcv5.0/error.c \
-	tcgmsg/ipcv5.0/nxtval.shm.c tcgmsg/ipcv5.0/pbeginf.c \
-	tcgmsg/ipcv5.0/shmem.c tcgmsg/ipcv5.0/synch.c \
-	tcgmsg/tcgmsg-mpi/checkbyte.c tcgmsg/tcgmsg-mpi/clustercheck.c \
-	tcgmsg/tcgmsg-mpi/collect.c tcgmsg/tcgmsg-mpi/drand48.c \
-	tcgmsg/tcgmsg-mpi/evlog.c tcgmsg/tcgmsg-mpi/evlog.h \
-	tcgmsg/tcgmsg-mpi/evon.c tcgmsg/tcgmsg-mpi/llog.c \
-	tcgmsg/tcgmsg-mpi/misc.c tcgmsg/tcgmsg-mpi/niceftn.c \
-	tcgmsg/tcgmsg-mpi/nxtval-armci.c tcgmsg/tcgmsg-mpi/p2p.c \
-	tcgmsg/tcgmsg-mpi/pbeginf.c tcgmsg/tcgmsg-mpi/pfilecopy.c \
-	tcgmsg/tcgmsg-mpi/sizeof.c tcgmsg/tcgmsg-mpi/sndrcv.h \
-	tcgmsg/tcgmsg-mpi/srftoc.h tcgmsg/tcgmsg-mpi/tcgmsgP.h \
-	global/src/base.c global/src/base.h global/src/capi.c \
-	global/src/c.names.h global/src/collect.c \
-	global/src/datatypes.c global/src/decomp.c global/src/diag.fh \
-	global/src/DP.c global/src/elem_alg.c global/src/fapi.c \
-	global/src/ga_ckpt.h global/src/gaconfig.h \
-	global/src/ga_malloc.c global/src/ga_profile.h \
-	global/src/ga_solve_seq.c global/src/ga_symmetr.c \
-	global/src/ga_trace.c global/src/ga_vampir.fh \
-	global/src/ga_vampir.h global/src/ghosts.c global/src/global.h \
+	LinAlg/lapack+blas/sgemm.f LinAlg/lapack+blas/zaxpy.f \
+	LinAlg/lapack+blas/zgemm.f tcgmsg/capi.c global/src/ga_vt.c \
+	tcgmsg/tcgmsg_vampir.c tcgmsg/ipcv4.0/brdcst.c \
+	tcgmsg/ipcv4.0/checkbyte.c tcgmsg/ipcv4.0/cluster.c \
+	tcgmsg/ipcv4.0/cluster.h tcgmsg/ipcv4.0/defglobals.h \
+	tcgmsg/ipcv4.0/drand48.c tcgmsg/ipcv4.0/error.c \
+	tcgmsg/ipcv4.0/evlog.c tcgmsg/ipcv4.0/evlog.h \
+	tcgmsg/ipcv4.0/evon.c tcgmsg/ipcv4.0/globalop.c \
+	tcgmsg/ipcv4.0/llog.c tcgmsg/ipcv4.0/mdtob.c \
+	tcgmsg/ipcv4.0/mdtoi.c tcgmsg/ipcv4.0/mitob.c \
+	tcgmsg/ipcv4.0/mitod.c tcgmsg/ipcv4.0/mtime.c \
+	tcgmsg/ipcv4.0/niceftn.c tcgmsg/ipcv4.0/nnodes.c \
+	tcgmsg/ipcv4.0/nodeid.c tcgmsg/ipcv4.0/nxtval.c \
+	tcgmsg/ipcv4.0/pbegin.c tcgmsg/ipcv4.0/pbeginf.c \
+	tcgmsg/ipcv4.0/pfilecopy.c tcgmsg/ipcv4.0/sema.c \
+	tcgmsg/ipcv4.0/sema.h tcgmsg/ipcv4.0/setdbg.c \
+	tcgmsg/ipcv4.0/shmem.c tcgmsg/ipcv4.0/shmem.h \
+	tcgmsg/ipcv4.0/signals.c tcgmsg/ipcv4.0/signals.h \
+	tcgmsg/ipcv4.0/snd.c tcgmsg/ipcv4.0/sndrcv.h \
+	tcgmsg/ipcv4.0/sndrcvP.h tcgmsg/ipcv4.0/sockets.c \
+	tcgmsg/ipcv4.0/sockets.h tcgmsg/ipcv4.0/srftoc.h \
+	tcgmsg/ipcv4.0/srmover.c tcgmsg/ipcv4.0/stats.c \
+	tcgmsg/ipcv4.0/synch.c tcgmsg/ipcv4.0/usleep.c \
+	tcgmsg/ipcv4.0/waitall.c tcgmsg/ipcv4.0/waitcom.c \
+	tcgmsg/ipcv4.0/xdrstuff.c tcgmsg/ipcv4.0/xdrstuff.h \
+	tcgmsg/ipcv5.0/drand48.c tcgmsg/ipcv5.0/evlog.h \
+	tcgmsg/ipcv5.0/globalop.c tcgmsg/ipcv5.0/llog.c \
+	tcgmsg/ipcv5.0/mdtob.c tcgmsg/ipcv5.0/mdtoi.c \
+	tcgmsg/ipcv5.0/misc.c tcgmsg/ipcv5.0/mitob.c \
+	tcgmsg/ipcv5.0/mitod.c tcgmsg/ipcv5.0/mtime.c \
+	tcgmsg/ipcv5.0/niceftn.c tcgmsg/ipcv5.0/nnodes.c \
+	tcgmsg/ipcv5.0/nodeid.c tcgmsg/ipcv5.0/pbegin.c \
+	tcgmsg/ipcv5.0/pfilecopy.c tcgmsg/ipcv5.0/queues.c \
+	tcgmsg/ipcv5.0/shmem.h tcgmsg/ipcv5.0/signals.c \
+	tcgmsg/ipcv5.0/sndrcv.h tcgmsg/ipcv5.0/snd_rcv_probe.c \
+	tcgmsg/ipcv5.0/srftoc.h tcgmsg/ipcv5.0/tcgmsgP.h \
+	tcgmsg/ipcv5.0/usleep.c tcgmsg/ipcv5.0/waitall.c \
+	tcgmsg/ipcv5.0/async_send_lapi.c tcgmsg/ipcv5.0/lapi_putget.c \
+	tcgmsg/ipcv5.0/async_send.c tcgmsg/ipcv5.0/busy.c \
+	tcgmsg/ipcv5.0/error.c tcgmsg/ipcv5.0/nxtval.shm.c \
+	tcgmsg/ipcv5.0/pbeginf.c tcgmsg/ipcv5.0/shmem.c \
+	tcgmsg/ipcv5.0/synch.c tcgmsg/tcgmsg-mpi/checkbyte.c \
+	tcgmsg/tcgmsg-mpi/clustercheck.c tcgmsg/tcgmsg-mpi/collect.c \
+	tcgmsg/tcgmsg-mpi/drand48.c tcgmsg/tcgmsg-mpi/evlog.c \
+	tcgmsg/tcgmsg-mpi/evlog.h tcgmsg/tcgmsg-mpi/evon.c \
+	tcgmsg/tcgmsg-mpi/llog.c tcgmsg/tcgmsg-mpi/misc.c \
+	tcgmsg/tcgmsg-mpi/niceftn.c tcgmsg/tcgmsg-mpi/nxtval-armci.c \
+	tcgmsg/tcgmsg-mpi/p2p.c tcgmsg/tcgmsg-mpi/pbeginf.c \
+	tcgmsg/tcgmsg-mpi/pfilecopy.c tcgmsg/tcgmsg-mpi/sizeof.c \
+	tcgmsg/tcgmsg-mpi/sndrcv.h tcgmsg/tcgmsg-mpi/srftoc.h \
+	tcgmsg/tcgmsg-mpi/tcgmsgP.h global/src/base.c \
+	global/src/base.h global/src/capi.c global/src/c.names.h \
+	global/src/collect.c global/src/datatypes.c \
+	global/src/decomp.c global/src/diag.fh global/src/DP.c \
+	global/src/elem_alg.c global/src/fapi.c global/src/ga_ckpt.h \
+	global/src/gaconfig.h global/src/ga_malloc.c \
+	global/src/ga_profile.h global/src/ga_solve_seq.c \
+	global/src/ga_symmetr.c global/src/ga_trace.c \
+	global/src/ga_vampir.fh global/src/ga_vampir.h \
+	global/src/ghosts.c global/src/global.h \
 	global/src/global.nalg.c global/src/global.npatch.c \
 	global/src/global.periodic.c global/src/globalp.h \
 	global/src/global.util.c global/src/hsort.scat.c \
@@ -609,6 +611,7 @@ am__libga_la_SOURCES_DIST = compat/random.c gaf2c/gaf2c.c \
 @HAVE_BLAS_FALSE@@NOFORT_FALSE@am__objects_4 =  \
 @HAVE_BLAS_FALSE@@NOFORT_FALSE@	LinAlg/lapack+blas/cgemm.lo \
 @HAVE_BLAS_FALSE@@NOFORT_FALSE@	LinAlg/lapack+blas/dblas.lo \
+@HAVE_BLAS_FALSE@@NOFORT_FALSE@	LinAlg/lapack+blas/sgemm.lo \
 @HAVE_BLAS_FALSE@@NOFORT_FALSE@	LinAlg/lapack+blas/zaxpy.lo \
 @HAVE_BLAS_FALSE@@NOFORT_FALSE@	LinAlg/lapack+blas/zgemm.lo
 @MSG_COMMS_TCGMSG_TRUE@am__objects_5 = tcgmsg/capi.lo
@@ -3128,6 +3131,8 @@ LinAlg/lapack+blas/cgemm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
 LinAlg/lapack+blas/dblas.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
+LinAlg/lapack+blas/sgemm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
+	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
 LinAlg/lapack+blas/zaxpy.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
 LinAlg/lapack+blas/zgemm.lo: LinAlg/lapack+blas/$(am__dirstamp) \
@@ -4185,6 +4190,8 @@ mostlyclean-compile:
 	-rm -f LinAlg/lapack+blas/ilaenv.lo
 	-rm -f LinAlg/lapack+blas/lsame.$(OBJEXT)
 	-rm -f LinAlg/lapack+blas/lsame.lo
+	-rm -f LinAlg/lapack+blas/sgemm.$(OBJEXT)
+	-rm -f LinAlg/lapack+blas/sgemm.lo
 	-rm -f LinAlg/lapack+blas/testblas.$(OBJEXT)
 	-rm -f LinAlg/lapack+blas/testblas.lo
 	-rm -f LinAlg/lapack+blas/xerbla.$(OBJEXT)

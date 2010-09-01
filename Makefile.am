@@ -189,6 +189,7 @@ if HAVE_BLAS
 else # !HAVE_BLAS
 libga_la_SOURCES += LinAlg/lapack+blas/cgemm.f
 libga_la_SOURCES += LinAlg/lapack+blas/dblas.f
+libga_la_SOURCES += LinAlg/lapack+blas/sgemm.f
 libga_la_SOURCES += LinAlg/lapack+blas/zaxpy.f
 libga_la_SOURCES += LinAlg/lapack+blas/zgemm.f
 endif # HAVE_BLAS

@@ -941,7 +941,6 @@ enable_underscoring
 enable_i4
 enable_i8
 with_blas
-with_blas4
 with_blas8
 with_lapack
 with_scalapack
@@ -1652,9 +1651,7 @@ Optional Packages:
   --with-openib[=ARG]     select armci network as Infiniband OpenIB
   --with-portals[=ARG]    select armci network as Cray XT portals
   --with-sockets[=ARG]    select armci network as Ethernet TCP/IP)
-  --with-blas[=ARG]       use external BLAS library compiled with default
-                          sizeof(INTEGER)
-  --with-blas4[=ARG]      use external BLAS library compiled with
+  --with-blas[=ARG]       use external BLAS library compiled with
                           sizeof(INTEGER)==4
   --with-blas8[=ARG]      use external BLAS library compiled with
                           sizeof(INTEGER)==8
@@ -14719,13 +14716,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 # Check whether --with-blas was given.
 if test "${with_blas+set}" = set; then :
-  withval=$with_blas; blas_size=$ga_cv_f77_integer_size
-fi
-
-
-# Check whether --with-blas4 was given.
-if test "${with_blas4+set}" = set; then :
-  withval=$with_blas4; blas_size=4; with_blas="$with_blas4"
+  withval=$with_blas; blas_size=4
 fi
 
 
@@ -14740,7 +14731,10 @@ if test "x$with_blas" = xno; then :
   ga_blas_ok=skip
 fi
 
-# Parse --with-blas argument.
+# Parse --with-blas argument. Clear previous values first.
+BLAS_LIBS=
+BLAS_LDFLAGS=
+BLAS_CPPFLAGS=
 for arg in $with_blas ; do
     case $arg in #(
   yes) :
@@ -14867,14 +14861,14 @@ $as_echo "$as_me: Attempting to locate BLAS library" >&6;}
 # First, check environment/command-line variables.
 # If failed, erase BLAS_LIBS but maintain BLAS_LDFLAGS and BLAS_CPPFLAGS.
 if test $ga_blas_ok = no; then :
-  LIBS="$BLAS_LIBS $LIBS"
-     if test "x$enable_f77" = xno; then :
+  if test "x$enable_f77" = xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C BLAS with user-supplied flags" >&5
 $as_echo_n "checking for C BLAS with user-supplied flags... " >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran 77 BLAS with user-supplied flags" >&5
 $as_echo_n "checking for Fortran 77 BLAS with user-supplied flags... " >&6; }
 fi
+     LIBS="$BLAS_LIBS $LIBS"
 
 if test "x$enable_f77" = xno; then :
   ac_ext=c
@@ -14984,9 +14978,21 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
+     LIBS="$ga_save_LIBS"
+     if test $ga_blas_ok = yes; then :
+  BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS $BLAS_LDFLAGS $BLAS_CPPFLAGS"
+         case $BLAS_SIZE_HACK in #(
+  *ilp64*) :
+    blas_size=8 ;; #(
+  # Intel MKL
+            *_int64*) :
+    blas_size=8 ;; #(
+  *) :
+     ;;
+esac
+fi # AMD ACML
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
 $as_echo "$ga_blas_ok" >&6; }
-     LIBS="$ga_save_LIBS"
 fi
 
 # BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
@@ -15256,6 +15262,15 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 
      LIBS="$ga_save_LIBS"
+     if test "x$ga_blas_ok" = xyes; then :
+  BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS $BLAS_LDFLAGS $BLAS_CPPFLAGS"
+         case $BLAS_SIZE_HACK in #(
+  *_int64*) :
+    blas_size=8 ;; #(
+  *) :
+     ;;
+esac
+fi
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
 $as_echo "$ga_blas_ok" >&6; }
 fi
@@ -15381,6 +15396,15 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 fi
 
      LIBS="$ga_save_LIBS"
+     if test "x$ga_blas_ok" = xyes; then :
+  BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS $BLAS_LDFLAGS $BLAS_CPPFLAGS"
+         case $BLAS_SIZE_HACK in #(
+  *ilp64*) :
+    blas_size=8 ;; #(
+  *) :
+     ;;
+esac
+fi
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
 $as_echo "$ga_blas_ok" >&6; }
 fi

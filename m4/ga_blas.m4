@@ -103,12 +103,8 @@ AC_DEFUN([GA_BLAS],
 [AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
 AC_ARG_WITH([blas],
     [AS_HELP_STRING([--with-blas[[=ARG]]],
-        [use external BLAS library compiled with default sizeof(INTEGER)])],
-    [blas_size=$ga_cv_f77_integer_size])
-AC_ARG_WITH([blas4],
-    [AS_HELP_STRING([--with-blas4[[=ARG]]],
         [use external BLAS library compiled with sizeof(INTEGER)==4])],
-    [blas_size=4; with_blas="$with_blas4"])
+    [blas_size=4])
 AC_ARG_WITH([blas8],
     [AS_HELP_STRING([--with-blas8[[=ARG]]],
         [use external BLAS library compiled with sizeof(INTEGER)==8])],
@@ -117,7 +113,10 @@ AC_ARG_WITH([blas8],
 ga_blas_ok=no
 AS_IF([test "x$with_blas" = xno], [ga_blas_ok=skip])
 
-# Parse --with-blas argument.
+# Parse --with-blas argument. Clear previous values first.
+BLAS_LIBS=
+BLAS_LDFLAGS=
+BLAS_CPPFLAGS=
 GA_ARG_PARSE([with_blas], [BLAS_LIBS], [BLAS_LDFLAGS], [BLAS_CPPFLAGS])
 
 # Get fortran linker names of BLAS functions to check for.
@@ -135,13 +134,18 @@ AC_MSG_NOTICE([Attempting to locate BLAS library])
 # First, check environment/command-line variables.
 # If failed, erase BLAS_LIBS but maintain BLAS_LDFLAGS and BLAS_CPPFLAGS.
 AS_IF([test $ga_blas_ok = no],
-    [LIBS="$BLAS_LIBS $LIBS"
-     AS_IF([test "x$enable_f77" = xno],
+    [AS_IF([test "x$enable_f77" = xno],
         [AC_MSG_CHECKING([for C BLAS with user-supplied flags])],
         [AC_MSG_CHECKING([for Fortran 77 BLAS with user-supplied flags])])
+     LIBS="$BLAS_LIBS $LIBS"
      GA_RUN_BLAS_TEST()
-     AC_MSG_RESULT([$ga_blas_ok])
-     LIBS="$ga_save_LIBS"])
+     LIBS="$ga_save_LIBS"
+     AS_IF([test $ga_blas_ok = yes],
+        [BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS $BLAS_LDFLAGS $BLAS_CPPFLAGS"
+         AS_CASE([$BLAS_SIZE_HACK],
+            [*ilp64*],  [blas_size=8],   # Intel MKL
+            [*_int64*], [blas_size=8])]) # AMD ACML
+     AC_MSG_RESULT([$ga_blas_ok])])
 
 # BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
 AS_IF([test $ga_blas_ok = no],
@@ -167,6 +171,9 @@ AS_IF([test $ga_blas_ok = no],
      LIBS="$BLAS_LIBS $LIBS"
      GA_RUN_BLAS_TEST()
      LIBS="$ga_save_LIBS"
+     AS_IF([test "x$ga_blas_ok" = xyes],
+        [BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS $BLAS_LDFLAGS $BLAS_CPPFLAGS"
+         AS_CASE([$BLAS_SIZE_HACK], [*_int64*], [blas_size=8])])
      AC_MSG_RESULT([$ga_blas_ok])])
 
 # BLAS in Intel MKL library?
@@ -176,6 +183,9 @@ AS_IF([test $ga_blas_ok = no],
      LIBS="$BLAS_LIBS $LIBS"
      GA_RUN_BLAS_TEST()
      LIBS="$ga_save_LIBS"
+     AS_IF([test "x$ga_blas_ok" = xyes],
+        [BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS $BLAS_LDFLAGS $BLAS_CPPFLAGS"
+         AS_CASE([$BLAS_SIZE_HACK], [*ilp64*], [blas_size=8])])
      AC_MSG_RESULT([$ga_blas_ok])])
 
 # BLAS in PhiPACK libraries? (requires generic BLAS lib, too)
