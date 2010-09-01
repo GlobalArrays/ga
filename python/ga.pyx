@@ -11,8 +11,10 @@ from libc.stdlib cimport malloc,free
 from gah cimport *
 import numpy as np
 cimport numpy as np
+import mpi4py.MPI as _MPI
 
 np.import_array()
+initialize()
 
 TYPE_BASE  = 1000
 C_CHAR     = (TYPE_BASE + 0)
@@ -34,19 +36,29 @@ F_DCPL     = (TYPE_BASE + 15)
 C_LONGLONG = (TYPE_BASE + 16)
 
 _to_typenum = {
+        C_CHAR: np.NPY_BYTE,
         C_INT: np.NPY_INT,
         C_LONG: np.NPY_LONG,
         C_LONGLONG: np.NPY_LONGLONG,
         C_FLT: np.NPY_FLOAT,
-        C_DBL: np.NPY_DOUBLE
+        C_DBL: np.NPY_DOUBLE,
+        C_LDBL: np.NPY_LONGDOUBLE,
+        C_SCPL: np.NPY_CFLOAT,
+        C_DCPL: np.NPY_CDOUBLE,
+        C_LDCPL: np.NPY_CLONGDOUBLE
         }
 
 _to_dtype = {
+        C_CHAR: np.byte,
         C_INT: np.intc,
         C_LONG: np.long,
         C_LONGLONG: np.longlong,
         C_FLT: np.single,
-        C_DBL: np.double
+        C_DBL: np.double,
+        C_LDBL: np.longfloat,
+        C_SCPL: np.csingle,
+        C_DCPL: np.cdouble,
+        C_LDCPL: np.clongfloat
         }
 
 cdef void* _gapy_malloc(size_t bytes, int align, char *name):
@@ -99,12 +111,13 @@ def acc(int g_a, lo, hi, buffer, alpha=None):
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape
     cdef np.ndarray buffer_nd
     cdef int gtype=inquire_type(g_a)
-    cdef int       ialpha=1
-    cdef long      lalpha=1
-    cdef long long llalpha=1
-    cdef float     falpha=1.0
-    cdef double    dalpha=1.0
-    cdef void     *valpha=NULL
+    cdef int         ialpha=1
+    cdef long        lalpha=1
+    cdef long long   llalpha=1
+    cdef float       falpha=1.0
+    cdef double      dalpha=1.0
+    cdef long double ldalpha=1.0
+    cdef void       *valpha=NULL
     dtype = _to_dtype[gtype]
     buffer_nd = np.asarray(buffer, dtype=dtype)
     lo_nd = np.asarray(lo, dtype=np.int64)
@@ -115,7 +128,7 @@ def acc(int g_a, lo, hi, buffer, alpha=None):
         buffer_nd = np.ascontiguousarray(buffer_nd, dtype=dtype)
     buffer_nd = np.reshape(buffer_nd, shape)
     valpha = _convert_multiplier(gtype, alpha,
-            &ialpha, &lalpha, &llalpha, &falpha, &dalpha)
+            &ialpha, &lalpha, &llalpha, &falpha, &dalpha, &ldalpha)
     NGA_Acc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
             <void*>buffer_nd.data, <int64_t*>ld_nd.data, valpha)
 
@@ -341,17 +354,18 @@ def add(int g_a, int g_b, int g_c, alpha=None, beta=None, alo=None, ahi=None,
     cdef np.ndarray[np.int64_t, ndim=1] blo_nd, bhi_nd
     cdef np.ndarray[np.int64_t, ndim=1] clo_nd, chi_nd
     cdef int gtype=inquire_type(g_a)
-    cdef int       ialpha=1,     ibeta=1
-    cdef long      lalpha=1,     lbeta=1
-    cdef long long llalpha=1,    llbeta=1
-    cdef float     falpha=1.0,   fbeta=1.0
-    cdef double    dalpha=1.0,   dbeta=1.0
-    cdef void     *valpha=NULL, *vbeta=NULL
+    cdef int         ialpha=1,     ibeta=1
+    cdef long        lalpha=1,     lbeta=1
+    cdef long long   llalpha=1,    llbeta=1
+    cdef float       falpha=1.0,   fbeta=1.0
+    cdef double      dalpha=1.0,   dbeta=1.0
+    cdef long double ldalpha=1.0,  ldbeta=1.0
+    cdef void       *valpha=NULL, *vbeta=NULL
     dtype = _to_dtype[gtype]
     valpha = _convert_multiplier(gtype, alpha,
-            &ialpha, &lalpha, &llalpha, &falpha, &dalpha)
+            &ialpha, &lalpha, &llalpha, &falpha, &dalpha, &ldalpha)
     vbeta = _convert_multiplier(gtype, beta,
-            &ibeta, &lbeta, &llbeta, &fbeta, &dbeta)
+            &ibeta, &lbeta, &llbeta, &fbeta, &dbeta, &ldbeta)
     if (alo is None and ahi is None
             and blo is None and bhi is None
             and clo is None and chi is None):
@@ -381,14 +395,15 @@ def add_constant(int g_a, alpha, lo=None, hi=None):
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
     cdef int gtype=inquire_type(g_a)
-    cdef int       ialpha=1,     ibeta=1
-    cdef long      lalpha=1,     lbeta=1
-    cdef long long llalpha=1,    llbeta=1
-    cdef float     falpha=1.0,   fbeta=1.0
-    cdef double    dalpha=1.0,   dbeta=1.0
-    cdef void     *valpha=NULL, *vbeta=NULL
+    cdef int         ialpha=1,     ibeta=1
+    cdef long        lalpha=1,     lbeta=1
+    cdef long long   llalpha=1,    llbeta=1
+    cdef float       falpha=1.0,   fbeta=1.0
+    cdef double      dalpha=1.0,   dbeta=1.0
+    cdef long double ldalpha=1.0,  ldbeta=1.0
+    cdef void       *valpha=NULL, *vbeta=NULL
     valpha = _convert_multiplier(gtype, alpha,
-            &ialpha, &lalpha, &llalpha, &falpha, &dalpha)
+            &ialpha, &lalpha, &llalpha, &falpha, &dalpha, &ldalpha)
     if lo is None and hi is None:
         GA_Add_constant(g_a, valpha)
     else:
@@ -519,7 +534,8 @@ def compare_distr(int g_a, int g_b):
     return False
 
 cdef void* _convert_multiplier(int gtype, value,
-        int *iv, long *lv, long long *llv, float *fv, double *dv):
+        int *iv, long *lv, long long *llv,
+        float *fv, double *dv, long double *ldv):
     if gtype == C_INT:
         if value is not None:
             iv[0] = value
@@ -540,6 +556,10 @@ cdef void* _convert_multiplier(int gtype, value,
         if value is not None:
             dv[0] = value
         return dv
+    elif gtype == C_LDBL:
+        if value is not None:
+            ldv[0] = value
+        return ldv
     else:
         raise TypeError, "type of g_a not recognized"
 
@@ -1223,15 +1243,16 @@ def fill(int g_a, value, lo=None, hi=None):
     
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
-    cdef int       ivalue
-    cdef long      lvalue
-    cdef long long llvalue
-    cdef float     fvalue
-    cdef double    dvalue
-    cdef void     *vvalue
+    cdef int         ivalue
+    cdef long        lvalue
+    cdef long long   llvalue
+    cdef float       fvalue
+    cdef double      dvalue
+    cdef long double ldvalue
+    cdef void       *vvalue
     cdef int gtype=inquire_type(g_a)
     vvalue = _convert_multiplier(gtype, value, &ivalue, &lvalue, &llvalue,
-            &fvalue, &dvalue)
+            &fvalue, &dvalue, &ldvalue)
     if lo is None and hi is None:
         GA_Fill(g_a, &dvalue)
     else:
@@ -1296,7 +1317,7 @@ def gather(int g_a, subsarray, np.ndarray values=None):
         raise ValueError, "how did this happen?"
     return values
 
-def gemm(bint ta, bint tb, int64_t m, int64_t n, int64_t k,
+def gemm(char ta, char tb, int64_t m, int64_t n, int64_t k,
         alpha, int g_a, int g_b, beta, int g_c):
     """Performs one of the matrix-matrix operations.
     
@@ -1318,8 +1339,52 @@ def gemm(bint ta, bint tb, int64_t m, int64_t n, int64_t k,
 
     This is a collective operation. 
     
+    Positional arguments:
+    ta    --
+    tb    --
+    m     --
+    n     --
+    k     --
+    alpha --
+    g_a   --
+    g_b   --
+    beta  --
+    g_c   --
+
     """
-    raise NotImplementedError
+    cdef int gtype=inquire_type(g_a)
+    #cdef int         ialpha=1, ibeta=1
+    #cdef long        lalpha=1, lbeta=1
+    #cdef long long   llalpha=1, llbeta=1
+    cdef float       falpha=1.0, fbeta=1.0
+    cdef double      dalpha=1.0, dbeta=1.0
+    cdef long double ldalpha=1.0, ldbeta=1.0
+    if gtype == C_INT:
+        raise TypeError, "C_INT not supported"
+    elif gtype == C_LONG:
+        raise TypeError, "C_LONG not supported"
+    elif gtype == C_LONGLONG:
+        raise TypeError, "C_LONGLONG not supported"
+    elif gtype == C_FLT:
+        falpha = alpha
+        fbeta = beta
+        GA_Sgemm64(ta, tb, m, n, k, falpha, g_a, g_b, fbeta, g_c)
+    elif gtype == C_DBL:
+        dalpha = alpha
+        dbeta = beta
+        GA_Sgemm64(ta, tb, m, n, k, dalpha, g_a, g_b, dbeta, g_c)
+    elif gtype == C_LDBL:
+        ldalpha = alpha
+        ldbeta = beta
+        GA_Sgemm64(ta, tb, m, n, k, ldalpha, g_a, g_b, ldbeta, g_c)
+    elif gtype == C_SCPL:
+        raise TypeError, "C_SCPL not supported (yet)"
+    elif gtype == C_DCPL:
+        raise TypeError, "C_DCPL not supported (yet)"
+    elif gtype == C_LDCPL:
+        raise TypeError, "C_LDCPL not supported (yet)"
+    else:
+        raise TypeError
 
 def get(int g_a, lo=None, hi=None, np.ndarray buffer=None):
     """Copies data from global array section to the local array buffer.
@@ -1357,6 +1422,51 @@ def get(int g_a, lo=None, hi=None, np.ndarray buffer=None):
     NGA_Get64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
             <void*>buffer.data, <int64_t*>ld_nd.data)
     return buffer
+
+def get_block_info(int g_a):
+    """Returns information about the block-cyclic distribution.
+
+    The number of blocks along each of the array axes are returned in the
+    array num_blocks and the dimensions of the individual blocks, specified in
+    the ga.set_block_cyclic or ga.set_block_cyclic_proc_grid subroutines, are
+    returned in block_dims.
+
+    This is a local function.
+
+    Positional arguments:
+    g_a -- the array handle
+
+    Returns:
+    The number of blocks along each of the array axes and the dimensions of
+    thet individual blocks, in that order, as ndarrays.
+
+    """
+    cdef np.ndarray[np.int_t, ndim=1] num_blocks, block_dims
+    cdef int ndim = GA_Ndim(g_a)
+    num_blocks = np.zeros(ndim, dtype=np.intc)
+    block_dims = np.zeros(ndim, dtype=np.intc)
+    GA_Get_block_info(g_a, <int*>num_blocks.data, <int*>block_dims.data)
+    return num_blocks,block_dims
+
+def get_diag(int g_a, int g_v):
+    """Inserts the diagonal elements of this matrix g_a into the vector g_v.
+
+    This is a collective operation.
+    
+    Positional arguments:
+    g_a -- the array handle
+
+    """
+    GA_Get_diag(g_a, g_v)
+
+def get_debug():
+    """Returns the value of an internal flag in the GA library whose value can
+    be set using the ga.set_debug() subroutine.
+
+    This is a local operation.
+
+    """
+    return GA_Get_debug()
 
 def gop(X, char *op):
     """Global operation.
@@ -1413,9 +1523,56 @@ def gop_absmax(X):
 def gop_absmin(X):
     return gop(X, "absmin")
 
+def has_ghosts(int g_a):
+    """Determines whether any dimension of the given array has ghost cells.
+
+    This is a collective operation. 
+
+    Positional arguments:
+    g_a -- the array handle
+
+    Returns:
+    True if the global array has some dimensions for which the ghost cell width
+    is greater than zero, it returns False otherwise.
+
+    """
+    if GA_Has_ghosts(g_a) == 1:
+        return True
+    return False
+
+def init_fence():
+    """Initializes tracing of completion status of data movement operations.
+
+    This operation is local.
+
+    """
+    GA_Init_fence()
+
 def initialize():
+    """Allocates and initializes internal data structures in Global Arrays.
+
+    This is a collective operation.
+
+    """
     GA_Initialize()
     GA_Register_stack_memory(_gapy_malloc, _gapy_free)
+
+def initialize_ltd(size_t limit):
+    """Allocates and initializes internal data structures and sets limit for
+    memory used in global arrays.
+    
+    The limit is per process: it is the amount of memory that the given
+    processor can contribute to collective allocation of global arrays. It
+    does not include temporary storage that GA might be allocating (and
+    releasing) during execution of a particular operation.
+
+    *limit < 0 means "allow unlimited memory usage" in which case this
+    operation is equivalent to GA_initialize.
+
+    This is a collective operation. 
+
+    """
+    GA_Initialize_ltd(limit)
 
 def inquire(int g_a):
     cdef int gtype
@@ -1430,11 +1587,67 @@ cpdef np.ndarray[np.int64_t, ndim=1] inquire_dims(int g_a):
     gtype,dims = inquire(g_a)
     return dims
 
+def inquire_memory():
+    """Returns amount of memory (in bytes) used in the allocated global arrays
+    on the calling processor.
+
+    This operation is local. 
+
+    """
+    return GA_Inquire_memory()
+
+def inquire_name(int g_a):
+    """Returns the name of an array represented by the handle g_a.
+
+    This operation is local.
+
+    Positional arguments:
+    g_a -- the array handle
+
+    """
+    return GA_Inquire_name(g_a)
+
 cpdef int inquire_type(int g_a):
     cdef int gtype
     cdef np.ndarray[np.int64_t, ndim=1] dims
     gtype,dims = inquire(g_a)
     return gtype
+
+def is_mirrored(int g_a):
+    """Checks whether the array is mirrored.
+    
+    This is a  local  operation. 
+
+    Returns:
+    True if it is a mirrored array, else returns False.
+
+    """
+    if GA_Is_mirrored(g_a) == 1:
+        return True
+    return False
+
+def llt_solve(int g_a, int g_b):
+    """Solves a system of linear equations
+
+        A * X = B
+
+    using the Cholesky factorization of an NxN double precision symmetric
+    positive definite matrix A (epresented by handle g_a). On successful exit
+    B will contain the solution X.
+
+    This is a collective operation. 
+
+    Positional arguments:
+    g_a -- the coefficient matrix
+    g_b -- the rhs/solution matrix
+
+    Returns:
+    = 0 : successful exit
+    > 0 : the leading minor of this order is not positive
+          definite and the factorization could not be completed
+
+    """
+    return GA_Llt_solve(g_a, g_b)
 
 def _lohi(int g_a, lo, hi):
     """Utility function which converts and/or prepares a lo/hi combination.
@@ -1480,42 +1693,23 @@ cpdef int nodeid():
     """TODO"""
     return GA_Nodeid()
 
-def randomize(int g_a, val):
-    """Fill array with random values in [0,val)."""
-    cdef int gtype=inquire_type(g_a)
-    cdef int       ival=1
-    cdef long      lval=1
-    cdef long long llval=1
-    cdef float     fval=1.0
-    cdef double    dval=1.0
-    cdef void     *vval=NULL
-    if gtype == C_INT:
-        if val:
-            ival = val
-        vval = &ival
-    elif gtype == C_LONG:
-        if val:
-            lval = val
-        vval = &lval
-    elif gtype == C_LONGLONG:
-        if val:
-            llval = val
-        vval = &llval
-    elif gtype == C_FLT:
-        if val:
-            fval = val
-        vval = &fval
-    elif gtype == C_DBL:
-        if val:
-            dval = val
-        vval = &dval
-    else:
-        raise TypeError, "type of g_a not recognized"
-    GA_Randomize(g_a, vval)
-
 def print_stdout(int g_a):
     """Prints an entire array to the standard output."""
     GA_Print(g_a)
+
+def randomize(int g_a, val):
+    """Fill array with random values in [0,val)."""
+    cdef int gtype=inquire_type(g_a)
+    cdef int         ival=1
+    cdef long        lval=1
+    cdef long long   llval=1
+    cdef float       fval=1.0
+    cdef double      dval=1.0
+    cdef long double ldval=1.0
+    cdef void       *vval=NULL
+    vval = _convert_multiplier(gtype, val, &ival, &lval, &llval, &fval, &dval,
+            &ldval)
+    GA_Randomize(g_a, vval)
 
 def release(int g_a, lo=None, hi=None):
     """TODO"""
@@ -1551,3 +1745,14 @@ cdef _release_common(int g_a, lo, hi, bint update):
 def release_update(int g_a, lo=None, hi=None):
     """TODO"""
     _release_common(g_a, lo, hi, True)
+
+def set_memory_limit(size_t limit):
+    """Sets the amount of memory to be used (in bytes) per process.
+
+    This is a local operation. 
+
+    Positional arguments:
+    limit -- the amount of memory in bytes per process
+
+    """
+    GA_Set_memory_limit(limit)
