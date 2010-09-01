@@ -941,6 +941,8 @@ enable_underscoring
 enable_i4
 enable_i8
 with_blas
+with_blas4
+with_blas8
 with_lapack
 with_scalapack
 enable_xregion
@@ -1650,7 +1652,12 @@ Optional Packages:
   --with-openib[=ARG]     select armci network as Infiniband OpenIB
   --with-portals[=ARG]    select armci network as Cray XT portals
   --with-sockets[=ARG]    select armci network as Ethernet TCP/IP)
-  --with-blas[=ARG]       use external BLAS library
+  --with-blas[=ARG]       use external BLAS library compiled with default
+                          sizeof(INTEGER)
+  --with-blas4[=ARG]      use external BLAS library compiled with
+                          sizeof(INTEGER)==4
+  --with-blas8[=ARG]      use external BLAS library compiled with
+                          sizeof(INTEGER)==8
   --with-lapack=[ARG]     use external LAPACK library
   --with-scalapack=[ARG]  use ScaLAPACK library
   --with-x                use the X Window System
@@ -14712,7 +14719,19 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 # Check whether --with-blas was given.
 if test "${with_blas+set}" = set; then :
-  withval=$with_blas;
+  withval=$with_blas; blas_size=$ga_cv_f77_integer_size
+fi
+
+
+# Check whether --with-blas4 was given.
+if test "${with_blas4+set}" = set; then :
+  withval=$with_blas4; blas_size=4; with_blas="$with_blas4"
+fi
+
+
+# Check whether --with-blas8 was given.
+if test "${with_blas8+set}" = set; then :
+  withval=$with_blas8; blas_size=8; with_blas="$with_blas8"
 fi
 
 
@@ -14848,168 +14867,23 @@ $as_echo "$as_me: Attempting to locate BLAS library" >&6;}
 # First, check environment/command-line variables.
 # If failed, erase BLAS_LIBS but maintain BLAS_LDFLAGS and BLAS_CPPFLAGS.
 if test $ga_blas_ok = no; then :
-  ga_save_LIBS="$LIBS"; LIBS="$BLAS_LIBS $LIBS"
+  LIBS="$BLAS_LIBS $LIBS"
      if test "x$enable_f77" = xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C BLAS with user-supplied flags" >&5
 $as_echo_n "checking for C BLAS with user-supplied flags... " >&6; }
-         ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char cgemm ();
-char dgemm ();
-char sgemm ();
-char zgemm ();
-#ifdef __cplusplus
-}
-#endif
-
-#ifdef F77_DUMMY_MAIN
-
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-
-#endif
-int
-main ()
-{
-char cresult =  cgemm ();
-char dresult =  dgemm ();
-char sresult =  sgemm ();
-char zresult =  zgemm ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  ga_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-         ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran 77 BLAS with user-supplied flags" >&5
 $as_echo_n "checking for Fortran 77 BLAS with user-supplied flags... " >&6; }
-         ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
-         cat > conftest.$ac_ext <<_ACEOF
-      program main
-      implicit none
-      INTEGER M, N, K, LDA, LDB, LDC
-      COMPLEX CA(20,40), CB(20,30), CC(40,30), Calpha, Cbeta
-      DOUBLE COMPLEX ZA(20,40), ZB(20,30), ZC(40,30), Zalpha, Zbeta
-      REAL SA(20,40), SB(20,30), SC(40,30), Salpha, Sbeta
-      DOUBLE PRECISION DA(20,40), DB(20,30), DC(40,30), Dalpha, Dbeta
-      external CGEMM
-      external ZGEMM
-      external SGEMM
-      external DGEMM
-      M = 10
-      N = 20
-      K = 15
-      LDA = 20
-      LDB = 20
-      LDC = 40
-      Calpha = 2.0
-      Cbeta = 2.0
-      Zalpha = 2.0
-      Zbeta = 2.0
-      Salpha = 2.0
-      Sbeta = 2.0
-      Dalpha = 2.0
-      Dbeta = 2.0
-      CALL CGEMM ('T','N',M,N,K,Calpha,CA,LDA,CB,LDB,Cbeta,CC,LDC)
-      CALL ZGEMM ('T','N',M,N,K,Zalpha,ZA,LDA,ZB,LDB,Zbeta,ZC,LDC)
-      CALL SGEMM ('T','N',M,N,K,Salpha,SA,LDA,SB,LDB,Sbeta,SC,LDC)
-      CALL DGEMM ('T','N',M,N,K,Dalpha,DA,LDA,DB,LDB,Dbeta,DC,LDC)
-      end
-_ACEOF
-
-         if ac_fn_f77_try_link "$LINENO"; then :
-  ga_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-         ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-fi
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
-$as_echo "$ga_blas_ok" >&6; }
-     LIBS="$ga_save_LIBS"
 fi
 
-# BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
-if test $ga_blas_ok = no; then :
-  if test "x$enable_f77" = xno; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C BLAS in ATLAS" >&5
-$as_echo_n "checking for C BLAS in ATLAS... " >&6; }
-         # add -lcblas if needed but missing from BLAS_LIBS and LIBS
-         case $LIBS:$BLAS_LIBS in #(
-  *cblas*:*) :
-     ;; #(
-  *:*cblas*) :
-     ;; #(
-  *) :
-    BLAS_LIBS="$BLAS_LIBS -lcblas" ;;
-esac
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran 77 BLAS in ATLAS" >&5
-$as_echo_n "checking for Fortran 77 BLAS in ATLAS... " >&6; }
-         # add -lf77blas if needed but missing from BLAS_LIBS and LIBS
-         case $LIBS:$BLAS_LIBS in #(
-  *f77blas*:*) :
-     ;; #(
-  *:*f77blas*) :
-     ;; #(
-  *) :
-    BLAS_LIBS="$BLAS_LIBS -lf77blas" ;;
-esac
-fi
-     # add -latlas if needed but missing from BLAS_LIBS and LIBS
-     case $LIBS:$BLAS_LIBS in #(
-  *atlas*:*) :
-     ;; #(
-  *:*atlas*) :
-     ;; #(
-  *) :
-    BLAS_LIBS="$BLAS_LIBS -latlas" ;;
-esac
-     LIBS="$BLAS_LIBS $LIBS"
-     if test "x$enable_f77" = xno; then :
+if test "x$enable_f77" = xno; then :
   ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #ifdef __cplusplus
 extern "C" {
@@ -15043,14 +14917,14 @@ char zresult =  zgemm ();
 }
 _ACEOF
 
-         if ac_fn_c_try_link "$LINENO"; then :
+    if ac_fn_c_try_link "$LINENO"; then :
   ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext
-         ac_ext=c
+    ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -15062,7 +14936,7 @@ ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
-         cat > conftest.$ac_ext <<_ACEOF
+    cat > conftest.$ac_ext <<_ACEOF
       program main
       implicit none
       INTEGER M, N, K, LDA, LDB, LDC
@@ -15095,20 +14969,166 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
       end
 _ACEOF
 
-         if ac_fn_f77_try_link "$LINENO"; then :
+    if ac_fn_f77_try_link "$LINENO"; then :
   ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext
-         ac_ext=c
+    ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
+
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
+     LIBS="$ga_save_LIBS"
+fi
+
+# BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
+if test $ga_blas_ok = no; then :
+  if test "x$enable_f77" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C BLAS in ATLAS" >&5
+$as_echo_n "checking for C BLAS in ATLAS... " >&6; }
+         # add -lcblas if needed but missing from LIBS
+         case $LIBS in #(
+  *cblas*) :
+     ;; #(
+  *) :
+    BLAS_LIBS="-lcblas" ;;
+esac
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran 77 BLAS in ATLAS" >&5
+$as_echo_n "checking for Fortran 77 BLAS in ATLAS... " >&6; }
+         # add -lf77blas if needed but missing from LIBS
+         case $LIBS in #(
+  *f77blas*) :
+     ;; #(
+  *) :
+    BLAS_LIBS="-lf77blas" ;;
+esac
+fi
+     # add -latlas if needed but missing from LIBS
+     case $LIBS in #(
+  *atlas*) :
+     ;; #(
+  *) :
+    BLAS_LIBS="$BLAS_LIBS -latlas" ;;
+esac
+     LIBS="$BLAS_LIBS $LIBS"
+
+if test "x$enable_f77" = xno; then :
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char cgemm ();
+char dgemm ();
+char sgemm ();
+char zgemm ();
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+char cresult =  cgemm ();
+char dresult =  dgemm ();
+char sresult =  sgemm ();
+char zresult =  zgemm ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+    if ac_fn_c_try_link "$LINENO"; then :
+  ga_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+else
+  ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+    cat > conftest.$ac_ext <<_ACEOF
+      program main
+      implicit none
+      INTEGER M, N, K, LDA, LDB, LDC
+      COMPLEX CA(20,40), CB(20,30), CC(40,30), Calpha, Cbeta
+      DOUBLE COMPLEX ZA(20,40), ZB(20,30), ZC(40,30), Zalpha, Zbeta
+      REAL SA(20,40), SB(20,30), SC(40,30), Salpha, Sbeta
+      DOUBLE PRECISION DA(20,40), DB(20,30), DC(40,30), Dalpha, Dbeta
+      external CGEMM
+      external ZGEMM
+      external SGEMM
+      external DGEMM
+      M = 10
+      N = 20
+      K = 15
+      LDA = 20
+      LDB = 20
+      LDC = 40
+      Calpha = 2.0
+      Cbeta = 2.0
+      Zalpha = 2.0
+      Zbeta = 2.0
+      Salpha = 2.0
+      Sbeta = 2.0
+      Dalpha = 2.0
+      Dbeta = 2.0
+      CALL CGEMM ('T','N',M,N,K,Calpha,CA,LDA,CB,LDB,Cbeta,CC,LDC)
+      CALL ZGEMM ('T','N',M,N,K,Zalpha,ZA,LDA,ZB,LDB,Zbeta,ZC,LDC)
+      CALL SGEMM ('T','N',M,N,K,Salpha,SA,LDA,SB,LDB,Sbeta,SC,LDC)
+      CALL DGEMM ('T','N',M,N,K,Dalpha,DA,LDA,DB,LDB,Dbeta,DC,LDC)
+      end
+_ACEOF
+
+    if ac_fn_f77_try_link "$LINENO"; then :
+  ga_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
+
      LIBS="$ga_save_LIBS"
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
 $as_echo "$ga_blas_ok" >&6; }
@@ -15118,21 +15138,76 @@ fi
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in AMD Core Math Library" >&5
 $as_echo_n "checking for BLAS in AMD Core Math Library... " >&6; }
-     case $LIBS:$BLAS_LIBS in #(
-  *acml*:*) :
-     ;; #(
-  *:*acml*) :
+     # add -lacml if needed but missing from LIBS
+     case $LIBS in #(
+  *acml*) :
      ;; #(
   *) :
-    BLAS_LIBS="$BLAS_LIBS -lacml" ;;
+    BLAS_LIBS="-lacml" ;;
 esac
      LIBS="$BLAS_LIBS $LIBS"
-     ac_ext=f
+
+if test "x$enable_f77" = xno; then :
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char cgemm ();
+char dgemm ();
+char sgemm ();
+char zgemm ();
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+char cresult =  cgemm ();
+char dresult =  dgemm ();
+char sresult =  sgemm ();
+char zresult =  zgemm ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+    if ac_fn_c_try_link "$LINENO"; then :
+  ga_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+else
+  ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
-     cat > conftest.$ac_ext <<_ACEOF
+    cat > conftest.$ac_ext <<_ACEOF
       program main
       implicit none
       INTEGER M, N, K, LDA, LDB, LDC
@@ -15165,18 +15240,20 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
       end
 _ACEOF
 
-     if ac_fn_f77_try_link "$LINENO"; then :
+    if ac_fn_f77_try_link "$LINENO"; then :
   ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext
-     ac_ext=c
+    ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
 
      LIBS="$ga_save_LIBS"
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
@@ -15187,21 +15264,75 @@ fi
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Intel MKL" >&5
 $as_echo_n "checking for BLAS in Intel MKL... " >&6; }
-     case $LIBS:$BLAS_LIBS in #(
-  *mkl*:*) :
-     ;; #(
-  *:*mkl*) :
+     case $LIBS in #(
+  *mkl*) :
      ;; #(
   *) :
-    BLAS_LIBS="$BLAS_LIBS -lmkl" ;;
+    BLAS_LIBS="-lmkl" ;;
 esac
      LIBS="$BLAS_LIBS $LIBS"
-     ac_ext=f
+
+if test "x$enable_f77" = xno; then :
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char cgemm ();
+char dgemm ();
+char sgemm ();
+char zgemm ();
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+char cresult =  cgemm ();
+char dresult =  dgemm ();
+char sresult =  sgemm ();
+char zresult =  zgemm ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+    if ac_fn_c_try_link "$LINENO"; then :
+  ga_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+else
+  ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
-     cat > conftest.$ac_ext <<_ACEOF
+    cat > conftest.$ac_ext <<_ACEOF
       program main
       implicit none
       INTEGER M, N, K, LDA, LDB, LDC
@@ -15234,18 +15365,20 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
       end
 _ACEOF
 
-     if ac_fn_f77_try_link "$LINENO"; then :
+    if ac_fn_f77_try_link "$LINENO"; then :
   ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext
-     ac_ext=c
+    ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
 
      LIBS="$ga_save_LIBS"
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
@@ -15268,22 +15401,22 @@ fi
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Apple vecLib library" >&5
 $as_echo_n "checking for BLAS in Apple vecLib library... " >&6; }
-     case $LIBS:$BLAS_LIBS in #(
-  *vecLib*:*) :
-     ;; #(
-  *:*vecLib*) :
+     case $LIBS in #(
+  *vecLib*) :
      ;; #(
   *) :
-    BLAS_LIBS="$BLAS_LIBS -framework vecLib" ;;
+    BLAS_LIBS="-framework vecLib" ;;
 esac
      LIBS="$BLAS_LIBS $LIBS"
-     ac_ext=c
+
+if test "x$enable_f77" = xno; then :
+  ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #ifdef __cplusplus
 extern "C" {
@@ -15317,18 +15450,72 @@ char zresult =  zgemm ();
 }
 _ACEOF
 
-     if ac_fn_c_try_link "$LINENO"; then :
+    if ac_fn_c_try_link "$LINENO"; then :
   ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext
-     ac_ext=c
+    ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+else
+  ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+    cat > conftest.$ac_ext <<_ACEOF
+      program main
+      implicit none
+      INTEGER M, N, K, LDA, LDB, LDC
+      COMPLEX CA(20,40), CB(20,30), CC(40,30), Calpha, Cbeta
+      DOUBLE COMPLEX ZA(20,40), ZB(20,30), ZC(40,30), Zalpha, Zbeta
+      REAL SA(20,40), SB(20,30), SC(40,30), Salpha, Sbeta
+      DOUBLE PRECISION DA(20,40), DB(20,30), DC(40,30), Dalpha, Dbeta
+      external CGEMM
+      external ZGEMM
+      external SGEMM
+      external DGEMM
+      M = 10
+      N = 20
+      K = 15
+      LDA = 20
+      LDB = 20
+      LDC = 40
+      Calpha = 2.0
+      Cbeta = 2.0
+      Zalpha = 2.0
+      Zbeta = 2.0
+      Salpha = 2.0
+      Sbeta = 2.0
+      Dalpha = 2.0
+      Dbeta = 2.0
+      CALL CGEMM ('T','N',M,N,K,Calpha,CA,LDA,CB,LDB,Cbeta,CC,LDC)
+      CALL ZGEMM ('T','N',M,N,K,Zalpha,ZA,LDA,ZB,LDB,Zbeta,ZC,LDC)
+      CALL SGEMM ('T','N',M,N,K,Salpha,SA,LDA,SB,LDB,Sbeta,SC,LDC)
+      CALL DGEMM ('T','N',M,N,K,Dalpha,DA,LDA,DB,LDB,Dbeta,DC,LDC)
+      end
+_ACEOF
+
+    if ac_fn_f77_try_link "$LINENO"; then :
+  ga_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
 
      LIBS="$ga_save_LIBS"
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
@@ -15339,13 +15526,11 @@ fi
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Alpha CXML library" >&5
 $as_echo_n "checking for BLAS in Alpha CXML library... " >&6; }
-     case $LIBS:$BLAS_LIBS in #(
-  *cxml*:*) :
-     ;; #(
-  *:*cxml*) :
+     case $LIBS in #(
+  *cxml*) :
      ;; #(
   *) :
-    BLAS_LIBS="$BLAS_LIBS -lcxml" ;;
+    BLAS_LIBS="-lcxml" ;;
 esac
      LIBS="$BLAS_LIBS $LIBS"
      ac_ext=f
@@ -15665,22 +15850,25 @@ LDFLAGS="$ga_save_LDFLAGS"
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test $ga_blas_ok = yes; then :
-
-$as_echo "#define HAVE_BLAS 1" >>confdefs.h
-
+  have_blas=1
 
 else
-  if test "x$enable_f77" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: BLAS library not found, using internal BLAS" >&5
 $as_echo "$as_me: WARNING: BLAS library not found, using internal BLAS" >&2;}
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: BLAS library not found and Fortran is disabled" >&5
-$as_echo "$as_me: WARNING: BLAS library not found and Fortran is disabled" >&2;}
-         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: BLAS use is disabled" >&5
-$as_echo "$as_me: WARNING: BLAS use is disabled" >&2;}
-fi
+     blas_size=$ga_cv_f77_integer_size # reset blas integer size to desired
+     have_blas=0
 
 fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_BLAS $have_blas
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define BLAS_SIZE $blas_size
+_ACEOF
+
  if test $ga_blas_ok = yes; then
   HAVE_BLAS_TRUE=
   HAVE_BLAS_FALSE='#'

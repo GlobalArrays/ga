@@ -23,6 +23,20 @@
 #include "ga_vampir.h"
 #endif
 
+#if NOFORT
+#   define BlasInt int
+#elif BLAS_SIZE == SIZEOF_F77_INTEGER
+#   define BlasInt Integer
+#elif BLAS_SIZE == SIZEOF_SHORT
+#   define BlasInt short
+#elif BLAS_SIZE == SIZEOF_INT
+#   define BlasInt int
+#elif BLAS_SIZE == SIZEOF_LONG
+#   define BlasInt long
+#elif BLAS_SIZE == SIZEOF_LONG_LONG
+#   define BlasInt long long
+#endif
+
 #define DEBUG_ 0 /*set 1, to verify the correctness of parallel matrix mult.*/
 
 /* some optimization macros */
@@ -290,10 +304,9 @@ static void GAI_DGEMM(Integer atype, char *transa, char *transb,
         DoubleComplex *a, Integer adim, DoubleComplex *b, 
         Integer bdim, DoubleComplex *c, Integer cdim) {
 
-    int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
+    BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
     DoubleComplex ZERO;
     SingleComplex ZERO_CF;
-    Integer ONE = 1;
 
     idim_t=idim; jdim_t=jdim; kdim_t=kdim;
     adim_t=adim; bdim_t=bdim; cdim_t=cdim;
@@ -302,10 +315,18 @@ static void GAI_DGEMM(Integer atype, char *transa, char *transb,
 
     switch(atype) {
         case C_FLOAT:
+#if NOFORT
             xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
                     (float *)alpha, (float *)a, &adim_t,
                     (float *)b, &bdim_t,
-                    (float *)&ZERO, (float *)c, &cdim_t);
+                    (float *)&ZERO_CF, (float *)c, &cdim_t);
+#elif defined(F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS)
+            sgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                    alpha, a, &adim_t, b, &bdim_t, &ZERO_CF, c, &cdim_t, 1, 1);
+#else
+            sgemm_(transa, 1, transb, 1, &idim_t, &jdim_t, &kdim_t,
+                    alpha, a, &adim_t, b, &bdim_t, &ZERO_CF, c, &cdim_t);
+#endif
             break;
         case C_DBL:
 #if NOFORT
@@ -314,21 +335,11 @@ static void GAI_DGEMM(Integer atype, char *transa, char *transb,
                     (double *)b, &bdim_t,
                     (double *)&ZERO, (double *)c, &cdim_t);
 #elif defined(F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS)
-#   if HAVE_BLAS
             dgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-                    alpha, a, &adim_t, b, &bdim_t, &ZERO, c, &cdim_t, ONE, ONE);
-#   else
-            dgemm_(transa, transb, &idim, &jdim, &kdim,
-                    alpha, a, &adim, b, &bdim, &ZERO, c, &cdim, ONE, ONE);
-#   endif
+                    alpha, a, &adim_t, b, &bdim_t, &ZERO, c, &cdim_t, 1, 1);
 #else
-#   if HAVE_BLAS
-            dgemm_(transa, ONE, transb, ONE, &idim_t, &jdim_t, &kdim_t,
+            dgemm_(transa, 1, transb, 1, &idim_t, &jdim_t, &kdim_t,
                     alpha, a, &adim_t, b, &bdim_t, &ZERO, c, &cdim_t);
-#   else
-            dgemm_(transa, ONE, transb, ONE, &idim, &jdim, &kdim,
-                    alpha, a, &adim, b, &bdim, &ZERO, c, &cdim);
-#   endif
 #endif
             break;
         case C_DCPL:
@@ -338,21 +349,11 @@ static void GAI_DGEMM(Integer atype, char *transa, char *transb,
                     (DoubleComplex *)b, &bdim_t, 
                     (DoubleComplex *)&ZERO, (DoubleComplex *)c, &cdim_t);
 #elif defined(F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS)
-#   if HAVE_BLAS
             zgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-                    alpha, a, &adim_t, b, &bdim_t, &ZERO, c, &cdim_t, ONE, ONE);
-#   else
-            zgemm_(transa, transb, &idim, &jdim, &kdim,
-                    alpha, a, &adim, b, &bdim, &ZERO, c, &cdim, ONE, ONE);
-#   endif
+                    alpha, a, &adim_t, b, &bdim_t, &ZERO, c, &cdim_t, 1, 1);
 #else
-#   if HAVE_BLAS
-            zgemm_(transa, ONE, transb, ONE, &idim_t, &jdim_t, &kdim_t,
+            zgemm_(transa, 1, transb, 1, &idim_t, &jdim_t, &kdim_t,
                     alpha, a, &adim_t, b, &bdim_t, &ZERO, c, &cdim_t);
-#   else
-            zgemm_(transa, ONE, transb, ONE, &idim, &jdim, &kdim,
-                    alpha, a, &adim, b, &bdim, &ZERO, c, &cdim);
-#   endif
 #endif
             break;
         case C_SCPL:
@@ -362,21 +363,11 @@ static void GAI_DGEMM(Integer atype, char *transa, char *transb,
                     (SingleComplex *)b, &bdim_t,
                     (SingleComplex *)&ZERO, (SingleComplex *)c, &cdim_t);
 #elif defined(F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS)
-#   if HAVE_BLAS
             cgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-                    alpha, a, &adim_t, b, &bdim_t, &ZERO_CF, c, &cdim_t, ONE, ONE);
-#   else
-            cgemm_(transa, transb, &idim, &jdim, &kdim,
-                    alpha, a, &adim, b, &bdim, &ZERO_CF, c, &cdim, ONE, ONE);
-#   endif
+                    alpha, a, &adim_t, b, &bdim_t, &ZERO_CF, c, &cdim_t, 1, 1);
 #else
-#   if HAVE_BLAS
-            cgemm_(transa, ONE, transb, ONE, &idim_t, &jdim_t, &kdim_t,
+            cgemm_(transa, 1, transb, 1, &idim_t, &jdim_t, &kdim_t,
                     alpha, a, &adim_t, b, &bdim_t, &ZERO_CF, c, &cdim_t);
-#   else
-            cgemm_(transa, ONE, transb, ONE, &idim, &jdim, &kdim,
-                    alpha, a, &adim, b, &bdim, &ZERO_CF, c, &cdim);
-#   endif
 #endif
             break;
         default:
@@ -1055,7 +1046,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
     static DoubleComplex *tmpc_orig = NULL;
     Integer i,j,m,n,k,adim,bdim,cdim;
     Integer factor=sizeof(DoubleComplex)/GAsizeofM(atype);
-    int m_t, n_t, k_t, adim_t, bdim_t, cdim_t;
+    BlasInt m_t, n_t, k_t, adim_t, bdim_t, cdim_t;
     
     m = *aihi - *ailo +1;
     n = *bjhi - *bjlo +1;
@@ -1116,21 +1107,21 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 #else
        switch(atype) {
 	  case C_DBL:
-#   if HAVE_BLAS
+#   if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 	     dgemm_(transa, transb, &m_t, &n_t, &k_t, alpha, tmpa, &adim_t,
 		    tmpb, &bdim_t, beta, tmpc_orig, &cdim_t, 1, 1);
 #   else
-	     dgemm_(transa, transb, &m, &n, &k, alpha, tmpa, &adim,
-		    tmpb, &bdim, beta, tmpc_orig, &cdim, 1, 1);
+	     dgemm_(transa, 1, transb, 1, &m_t, &n_t, &k_t, alpha, tmpa, &adim_t,
+		    tmpb, &bdim_t, beta, tmpc_orig, &cdim_t);
 #   endif
 	     break;
 	  case C_DCPL: 
-#   if HAVE_BLAS
+#   if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 	     zgemm_(transa, transb, &m_t, &n_t, &k_t, (DoubleComplex*)alpha,
 		    tmpa, &adim_t, tmpb, &bdim_t, beta, tmpc_orig, &cdim_t, 1, 1);
 #   else
-	     zgemm_(transa, transb, &m, &n, &k, (DoubleComplex*)alpha,
-		    tmpa, &adim, tmpb, &bdim, beta, tmpc_orig, &cdim, 1, 1);
+	     zgemm_(transa, 1, transb, 1, &m_t, &n_t, &k_t, (DoubleComplex*)alpha,
+		    tmpa, &adim_t, tmpb, &bdim_t, beta, tmpc_orig, &cdim_t);
 #   endif
 	     break;
 	  default:
@@ -1533,7 +1524,6 @@ Integer i, ijk = 0, i0, i1, j0, j1;
 Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
 Integer n, m, k, adim, bdim, cdim;
 Integer Ichunk, Kchunk, Jchunk;
-Integer _ONE = 1;
 DoubleComplex ONE;
 SingleComplex ONE_CF;
 
@@ -1541,10 +1531,9 @@ DoublePrecision chunk_cube;
 Integer min_tasks = 10, max_chunk;
 int need_scaling=1;
 Integer ZERO_I = 0, inode, iproc;
-float ZERO_F = 0.0;
 Integer get_new_B;
 int local_sync_begin,local_sync_end;
-int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
+BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
    ONE.real =1.; ONE.imag =0.;
    ONE_CF.real =1.; ONE_CF.imag =0.;
@@ -1740,9 +1729,20 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
 	     switch(atype) {
 	     case C_FLOAT:
-	       xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+#if NOFORT
+           {
+          float ZERO = 0.0;
+	      xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
 			(float *)alpha, (float *)a, &adim_t, (float *)b, 
-			&bdim_t, &ZERO_F,  (float *)c, &cdim_t);
+			&bdim_t, &ZERO,  (float *)c, &cdim_t);
+           }
+#elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+	       sgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+		      alpha, a, &adim_t, b, &bdim_t, &ONE_CF, c, &cdim_t, 1, 1);
+#else
+	       sgemm_(transa, 1, transb, 1, &idim_t, &jdim_t, &kdim_t,
+		      alpha, a, &adim_t, b, &bdim_t, &ONE_CF, c, &cdim_t);
+#endif
 	       break;
 	     case C_DBL:
 #if NOFORT
@@ -1754,21 +1754,11 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 			   (double *)&ZERO, (double *)c, &cdim_t);
 	       }
 #elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-#   if HAVE_BLAS
 	       dgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-		      alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t, _ONE, _ONE);
-#   else
-	       dgemm_(transa, transb, &idim, &jdim, &kdim,
-		      alpha, a, &adim, b, &bdim, &ONE, c, &cdim, _ONE, _ONE);
-#   endif
+		      alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t, 1, 1);
 #else
-#   if HAVE_BLAS
-	       dgemm_(transa, _ONE, transb, _ONE, &idim_t, &jdim_t, &kdim_t,
+	       dgemm_(transa, 1, transb, 1, &idim_t, &jdim_t, &kdim_t,
 		      alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t);
-#   else
-	       dgemm_(transa, _ONE, transb, _ONE, &idim, &jdim, &kdim,
-		      alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
-#   endif
 #endif
 	       break;
 	     case C_DCPL:
@@ -1782,21 +1772,11 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 			   (DoubleComplex *)&ZERO, (DoubleComplex *)c, &cdim_t);
 	       }
 #elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-#   if HAVE_BLAS
 	       zgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-		      alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t, _ONE, _ONE);
-#   else
-	       zgemm_(transa, transb, &idim, &jdim, &kdim,
-		      alpha, a, &adim, b, &bdim, &ONE, c, &cdim, _ONE, _ONE);
-#   endif
+		      alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t, 1, 1);
 #else
-#   if HAVE_BLAS
-	       zgemm_(transa, _ONE, transb, _ONE, &idim_t, &jdim_t, &kdim_t,
+	       zgemm_(transa, 1, transb, 1, &idim_t, &jdim_t, &kdim_t,
 		      alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t);
-#   else
-	       zgemm_(transa, _ONE, transb, _ONE, &idim, &jdim, &kdim,
-		      alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
-#   endif
 #endif
 	       break;
 	     case C_SCPL:
@@ -1810,21 +1790,11 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 			   (SingleComplex *)&ZERO, (SingleComplex *)c, &cdim_t);
 	       }
 #elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-#   if HAVE_BLAS
 	       cgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-		      alpha, a, &adim_t, b, &bdim_t, &ONE_CF, c, &cdim_t, _ONE, _ONE);
-#   else
-	       cgemm_(transa, transb, &idim, &jdim, &kdim,
-		      alpha, a, &adim, b, &bdim, &ONE_CF, c, &cdim, _ONE, _ONE);
-#   endif
+		      alpha, a, &adim_t, b, &bdim_t, &ONE_CF, c, &cdim_t, 1, 1);
 #else
-#   if HAVE_BLAS
-	       cgemm_(transa, _ONE, transb, _ONE, &idim_t, &jdim_t, &kdim_t,
+	       cgemm_(transa, 1, transb, 1, &idim_t, &jdim_t, &kdim_t,
 		      alpha, a, &adim_t, b, &bdim_t, &ONE_CF, c, &cdim_t);
-#   else
-	       cgemm_(transa, _ONE, transb, _ONE, &idim, &jdim, &kdim,
-		      alpha, a, &adim, b, &bdim, &ONE_CF, c, &cdim);
-#   endif
 #endif
 	       break;
 	     default:
@@ -1955,7 +1925,6 @@ Integer bilo, bihi, bjlo, bjhi;    /* 2d plane of g_b */
 Integer cilo, cihi, cjlo, cjhi;    /* 2d plane of g_c */
 Integer adims[GA_MAX_DIM],bdims[GA_MAX_DIM],cdims[GA_MAX_DIM],tmpld[GA_MAX_DIM];
 Integer *tmplo = adims, *tmphi =bdims; 
-Integer _ONE = 1;
 DoubleComplex ONE;
 SingleComplex ONE_CF;
 float ZERO_F = 0.0;
@@ -1964,7 +1933,7 @@ Integer get_new_B;
 DoublePrecision chunk_cube;
 Integer min_tasks = 10, max_chunk;
 int local_sync_begin,local_sync_end;
-int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
+BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
 #ifdef USE_VAMPIR
   vampir_begin(NGA_MATMUL_PATCH,__FILE__,__LINE__);
@@ -2159,6 +2128,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
 		  switch(atype) {
 		  case C_FLOAT:
+#if NOFORT
             {
                float ZERO = 0.0;
 		       xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
@@ -2166,6 +2136,13 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
                 (float *)b, &bdim_t, 
 			    (float *)&ZERO, (float *)c, &cdim_t);
             }
+#elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+		    sgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			   alpha, a, &adim_t, b, &bdim, &ONE_CF, c, &cdim_t, 1, 1);
+#else
+		    sgemm_(transa, 1, transb, 1, &idim_t, &jdim_t, &kdim_t,
+			   alpha, a, &adim_t, b, &bdim, &ONE_CF, c, &cdim_t);
+#endif
 		    break;
 		  case C_DBL:
 #if NOFORT
@@ -2177,21 +2154,11 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 				(double *)&ZERO, (double *)c, &cdim_t);
 		    }
 #elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-#   if HAVE_BLAS
 		    dgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			   alpha, a, &adim_t, b, &bdim, &ONE, c, &cdim_t, _ONE, _ONE);
-#   else
-		    dgemm_(transa, transb, &idim, &jdim, &kdim,
-			   alpha, a, &adim, b, &bdim, &ONE, c, &cdim, _ONE, _ONE);
-#   endif
+			   alpha, a, &adim_t, b, &bdim, &ONE, c, &cdim_t, 1, 1);
 #else
-#   if HAVE_BLAS
-		    dgemm_(transa, _ONE, transb, _ONE, &idim_t, &jdim_t, &kdim_t,
+		    dgemm_(transa, 1, transb, 1, &idim_t, &jdim_t, &kdim_t,
 			   alpha, a, &adim_t, b, &bdim, &ONE, c, &cdim_t);
-#   else
-		    dgemm_(transa, _ONE, transb, _ONE, &idim, &jdim, &kdim,
-			   alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
-#   endif
 #endif
 		    break;
 		  case C_DCPL:
@@ -2205,21 +2172,11 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 				(DoubleComplex *)&ZERO, (DoubleComplex *)c, &cdim_t);
 		    }
 #elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-#   if HAVE_BLAS
 		    zgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			   alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t, _ONE, _ONE);
-#   else
-		    zgemm_(transa, transb, &idim, &jdim, &kdim,
-			   alpha, a, &adim, b, &bdim, &ONE, c, &cdim, _ONE, _ONE);
-#   endif
+			   alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t, 1, 1);
 #else
-#   if HAVE_BLAS
-		    zgemm_(transa, _ONE, transb, _ONE, &idim_t, &jdim_t, &kdim_t,
+		    zgemm_(transa, 1, transb, 1, &idim_t, &jdim_t, &kdim_t,
 			   alpha, a, &adim_t, b, &bdim_t, &ONE, c, &cdim_t);
-#   else
-		    zgemm_(transa, _ONE, transb, _ONE, &idim, &jdim, &kdim,
-			   alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
-#   endif
 #endif
 		    break;
 		  case C_SCPL:
@@ -2233,21 +2190,11 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 				(SingleComplex *)&ZERO, (SingleComplex *)c, &cdim_t);
 		    }
 #elif F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-#   if HAVE_BLAS
 		    cgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			   alpha, a, &adim_t, b, &bdim_t, &ONE_CF, c, &cdim_t, _ONE, _ONE);
-#   else
-		    cgemm_(transa, transb, &idim, &jdim, &kdim,
-			   alpha, a, &adim, b, &bdim, &ONE_CF, c, &cdim, _ONE, _ONE);
-#   endif
+			   alpha, a, &adim_t, b, &bdim_t, &ONE_CF, c, &cdim_t, 1, 1);
 #else
-#   if HAVE_BLAS
-		    cgemm_(transa, _ONE, transb, _ONE, &idim_t, &jdim_t, &kdim_t,
+		    cgemm_(transa, 1, transb, 1, &idim_t, &jdim_t, &kdim_t,
 			   alpha, a, &adim_t, b, &bdim_t, &ONE_CF, c, &cdim_t);
-#   else
-		    cgemm_(transa, _ONE, transb, _ONE, &idim, &jdim, &kdim,
-			   alpha, a, &adim, b, &bdim, &ONE_CF, c, &cdim);
-#   endif
 #endif
 		    break;
 		  default:

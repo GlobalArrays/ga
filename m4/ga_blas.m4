@@ -54,6 +54,43 @@ char zresult =  zgemm ();
 ]])])
 ])
 
+# GA_C_RUN_BLAS_TEST
+# ------------------
+# Test the C linker.
+# Clears BLAS_LIBS on failure.  Sets ga_blas_ok=yes on success.
+AC_DEFUN([GA_C_RUN_BLAS_TEST], [
+   AC_LANG_PUSH([C])
+   GA_C_BLAS_TEST()
+   AC_LINK_IFELSE([], [ga_blas_ok=yes], [BLAS_LIBS=])
+   AC_LANG_POP([C])
+])dnl
+
+# GA_F77_RUN_BLAS_TEST
+# --------------------
+# Test the Fortran 77 linker.
+# Clears BLAS_LIBS on failure.  Sets ga_blas_ok=yes on success.
+AC_DEFUN([GA_F77_RUN_BLAS_TEST], [
+   AC_LANG_PUSH([Fortran 77])
+   GA_F77_BLAS_TEST()
+   AC_LINK_IFELSE([], [ga_blas_ok=yes], [BLAS_LIBS=])
+   AC_LANG_POP([Fortran 77])
+])dnl
+
+# GA_RUN_BLAS_TEST
+# ----------------
+# Test the linker.
+# Clears BLAS_LIBS on failure.  Sets ga_blas_ok=yes on success.
+AC_DEFUN([GA_RUN_BLAS_TEST], [
+AS_IF([test "x$enable_f77" = xno],
+   [AC_LANG_PUSH([C])
+    GA_C_BLAS_TEST()
+    AC_LINK_IFELSE([], [ga_blas_ok=yes], [BLAS_LIBS=])
+    AC_LANG_POP([C])],
+   [AC_LANG_PUSH([Fortran 77])
+    GA_F77_BLAS_TEST()
+    AC_LINK_IFELSE([], [ga_blas_ok=yes], [BLAS_LIBS=])
+    AC_LANG_POP([Fortran 77])])
+])dnl
 
 # GA_BLAS([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 # -------------------------------------------------
@@ -65,7 +102,17 @@ char zresult =  zgemm ();
 AC_DEFUN([GA_BLAS],
 [AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
 AC_ARG_WITH([blas],
-    [AS_HELP_STRING([--with-blas[[=ARG]]], [use external BLAS library])])
+    [AS_HELP_STRING([--with-blas[[=ARG]]],
+        [use external BLAS library compiled with default sizeof(INTEGER)])],
+    [blas_size=$ga_cv_f77_integer_size])
+AC_ARG_WITH([blas4],
+    [AS_HELP_STRING([--with-blas4[[=ARG]]],
+        [use external BLAS library compiled with sizeof(INTEGER)==4])],
+    [blas_size=4; with_blas="$with_blas4"])
+AC_ARG_WITH([blas8],
+    [AS_HELP_STRING([--with-blas8[[=ARG]]],
+        [use external BLAS library compiled with sizeof(INTEGER)==8])],
+    [blas_size=8; with_blas="$with_blas8"])
 
 ga_blas_ok=no
 AS_IF([test "x$with_blas" = xno], [ga_blas_ok=skip])
@@ -88,18 +135,11 @@ AC_MSG_NOTICE([Attempting to locate BLAS library])
 # First, check environment/command-line variables.
 # If failed, erase BLAS_LIBS but maintain BLAS_LDFLAGS and BLAS_CPPFLAGS.
 AS_IF([test $ga_blas_ok = no],
-    [ga_save_LIBS="$LIBS"; LIBS="$BLAS_LIBS $LIBS"
+    [LIBS="$BLAS_LIBS $LIBS"
      AS_IF([test "x$enable_f77" = xno],
-        [AC_MSG_CHECKING([for C BLAS with user-supplied flags])
-         AC_LANG_PUSH([C])
-         GA_C_BLAS_TEST()
-         AC_LINK_IFELSE([], [ga_blas_ok=yes], [BLAS_LIBS=])
-         AC_LANG_POP([C])],
-        [AC_MSG_CHECKING([for Fortran 77 BLAS with user-supplied flags])
-         AC_LANG_PUSH([Fortran 77])
-         GA_F77_BLAS_TEST()
-         AC_LINK_IFELSE([], [ga_blas_ok=yes], [BLAS_LIBS=])
-         AC_LANG_POP([Fortran 77])])
+        [AC_MSG_CHECKING([for C BLAS with user-supplied flags])],
+        [AC_MSG_CHECKING([for Fortran 77 BLAS with user-supplied flags])])
+     GA_RUN_BLAS_TEST()
      AC_MSG_RESULT([$ga_blas_ok])
      LIBS="$ga_save_LIBS"])
 
@@ -107,62 +147,34 @@ AS_IF([test $ga_blas_ok = no],
 AS_IF([test $ga_blas_ok = no],
     [AS_IF([test "x$enable_f77" = xno],
         [AC_MSG_CHECKING([for C BLAS in ATLAS])
-         # add -lcblas if needed but missing from BLAS_LIBS and LIBS
-         AS_CASE([$LIBS:$BLAS_LIBS],
-                 [*cblas*:*],       [],
-                 [*:*cblas*],       [],
-                                    [BLAS_LIBS="$BLAS_LIBS -lcblas"])],
+         # add -lcblas if needed but missing from LIBS
+         AS_CASE([$LIBS], [*cblas*], [], [BLAS_LIBS="-lcblas"])],
         [AC_MSG_CHECKING([for Fortran 77 BLAS in ATLAS])
-         # add -lf77blas if needed but missing from BLAS_LIBS and LIBS
-         AS_CASE([$LIBS:$BLAS_LIBS],
-                 [*f77blas*:*],         [],
-                 [*:*f77blas*],         [],
-                                        [BLAS_LIBS="$BLAS_LIBS -lf77blas"])])
-     # add -latlas if needed but missing from BLAS_LIBS and LIBS
-     AS_CASE([$LIBS:$BLAS_LIBS],
-             [*atlas*:*],       [],
-             [*:*atlas*],       [],
-                                [BLAS_LIBS="$BLAS_LIBS -latlas"])
+         # add -lf77blas if needed but missing from LIBS
+         AS_CASE([$LIBS], [*f77blas*], [], [BLAS_LIBS="-lf77blas"])])
+     # add -latlas if needed but missing from LIBS
+     AS_CASE([$LIBS], [*atlas*], [], [BLAS_LIBS="$BLAS_LIBS -latlas"])
      LIBS="$BLAS_LIBS $LIBS"
-     AS_IF([test "x$enable_f77" = xno],
-        [AC_LANG_PUSH([C])
-         GA_C_BLAS_TEST()
-         AC_LINK_IFELSE([], [ga_blas_ok=yes], [BLAS_LIBS=])
-         AC_LANG_POP([C])],
-        [AC_LANG_PUSH([Fortran 77])
-         GA_F77_BLAS_TEST()
-         AC_LINK_IFELSE([], [ga_blas_ok=yes], [BLAS_LIBS=])
-         AC_LANG_POP([Fortran 77])])
+     GA_RUN_BLAS_TEST()
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
 # BLAS in AMD Core Math Library? (ACML)
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in AMD Core Math Library])
-     AS_CASE([$LIBS:$BLAS_LIBS],
-        [*acml*:*],         [],
-        [*:*acml*],         [],
-                            [BLAS_LIBS="$BLAS_LIBS -lacml"])
+     # add -lacml if needed but missing from LIBS
+     AS_CASE([$LIBS], [*acml*], [], [BLAS_LIBS="-lacml"])
      LIBS="$BLAS_LIBS $LIBS"
-     AC_LANG_PUSH([Fortran 77])
-     GA_F77_BLAS_TEST()
-     AC_LINK_IFELSE([], [ga_blas_ok=yes], [BLAS_LIBS=])
-     AC_LANG_POP([Fortran 77])
+     GA_RUN_BLAS_TEST()
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
 # BLAS in Intel MKL library?
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in Intel MKL])
-     AS_CASE([$LIBS:$BLAS_LIBS],
-        [*mkl*:*],      [],
-        [*:*mkl*],      [],
-                        [BLAS_LIBS="$BLAS_LIBS -lmkl"])
+     AS_CASE([$LIBS], [*mkl*], [], [BLAS_LIBS="-lmkl"])
      LIBS="$BLAS_LIBS $LIBS"
-     AC_LANG_PUSH([Fortran 77])
-     GA_F77_BLAS_TEST()
-     AC_LINK_IFELSE([], [ga_blas_ok=yes], [BLAS_LIBS=])
-     AC_LANG_POP([Fortran 77])
+     GA_RUN_BLAS_TEST()
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
@@ -181,25 +193,16 @@ AS_IF([test $ga_blas_ok = no],
 # BLAS in Apple vecLib library?
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in Apple vecLib library])
-     AS_CASE([$LIBS:$BLAS_LIBS],
-        [*vecLib*:*],   [],
-        [*:*vecLib*],   [],
-        [BLAS_LIBS="$BLAS_LIBS -framework vecLib"])
+     AS_CASE([$LIBS], [*vecLib*], [], [BLAS_LIBS="-framework vecLib"])
      LIBS="$BLAS_LIBS $LIBS"
-     AC_LANG_PUSH([C])
-     GA_C_BLAS_TEST()
-     AC_LINK_IFELSE([], [ga_blas_ok=yes], [BLAS_LIBS=])
-     AC_LANG_POP([C])
+     GA_RUN_BLAS_TEST()
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
 # BLAS in Alpha CXML library?
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in Alpha CXML library])
-     AS_CASE([$LIBS:$BLAS_LIBS],
-        [*cxml*:*], [],
-        [*:*cxml*], [],
-                    [BLAS_LIBS="$BLAS_LIBS -lcxml"])
+     AS_CASE([$LIBS], [*cxml*], [], [BLAS_LIBS="-lcxml"])
      LIBS="$BLAS_LIBS $LIBS"
      AC_LANG_PUSH([Fortran 77])
      GA_F77_BLAS_TEST()
@@ -267,12 +270,15 @@ AC_SUBST([BLAS_CPPFLAGS])
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 AS_IF([test $ga_blas_ok = yes],
-    [AC_DEFINE([HAVE_BLAS], [1], [Define if you have a BLAS library.])
+    [have_blas=1
      $1],
-    [AS_IF([test "x$enable_f77" = xyes],
-        [AC_MSG_WARN([BLAS library not found, using internal BLAS])],
-        [AC_MSG_WARN([BLAS library not found and Fortran is disabled])
-         AC_MSG_WARN([BLAS use is disabled])])
+    [AC_MSG_WARN([BLAS library not found, using internal BLAS])
+     blas_size=$ga_cv_f77_integer_size # reset blas integer size to desired
+     have_blas=0
      $2])
+AC_DEFINE_UNQUOTED([HAVE_BLAS], [$have_blas],
+    [Define to 1 if using external BLAS library])
+AC_DEFINE_UNQUOTED([BLAS_SIZE], [$blas_size],
+    [Define to sizeof(INTEGER) used to compile BLAS])
 AM_CONDITIONAL([HAVE_BLAS], [test $ga_blas_ok = yes])
 ])dnl GA_BLAS

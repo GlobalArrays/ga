@@ -13,6 +13,7 @@
 #endif
 #include "armci.h"
 
+#define sgemm_ F77_FUNC(sgemm,SGEMM)
 #define dgemm_ F77_FUNC(dgemm,DGEMM)
 #define zgemm_ F77_FUNC(zgemm,ZGEMM)
 #define cgemm_ F77_FUNC(cgemm,CGEMM)
