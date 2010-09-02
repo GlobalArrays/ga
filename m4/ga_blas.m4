@@ -141,7 +141,7 @@ AS_IF([test $ga_blas_ok = no],
      GA_RUN_BLAS_TEST()
      LIBS="$ga_save_LIBS"
      AS_IF([test $ga_blas_ok = yes],
-        [BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS $BLAS_LDFLAGS $BLAS_CPPFLAGS"
+        [BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS"
          AS_CASE([$BLAS_SIZE_HACK],
             [*ilp64*],  [blas_size=8],   # Intel MKL
             [*_int64*], [blas_size=8])]) # AMD ACML
@@ -172,7 +172,7 @@ AS_IF([test $ga_blas_ok = no],
      GA_RUN_BLAS_TEST()
      LIBS="$ga_save_LIBS"
      AS_IF([test "x$ga_blas_ok" = xyes],
-        [BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS $BLAS_LDFLAGS $BLAS_CPPFLAGS"
+        [BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS"
          AS_CASE([$BLAS_SIZE_HACK], [*_int64*], [blas_size=8])])
      AC_MSG_RESULT([$ga_blas_ok])])
 
@@ -184,7 +184,7 @@ AS_IF([test $ga_blas_ok = no],
      GA_RUN_BLAS_TEST()
      LIBS="$ga_save_LIBS"
      AS_IF([test "x$ga_blas_ok" = xyes],
-        [BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS $BLAS_LDFLAGS $BLAS_CPPFLAGS"
+        [BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS"
          AS_CASE([$BLAS_SIZE_HACK], [*ilp64*], [blas_size=8])])
      AC_MSG_RESULT([$ga_blas_ok])])
 

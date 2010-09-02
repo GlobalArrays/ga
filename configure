@@ -4114,6 +4114,10 @@ if test x$need_parse = xyes; then :
     GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
   -*lib*) :
     GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
+  *.a) :
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
+  *.so) :
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
@@ -4128,7 +4132,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6225,6 +6229,10 @@ if test "x$with_bgml" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6239,7 +6247,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6281,6 +6289,10 @@ if test "x$with_cray_shmem" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6295,7 +6307,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6337,6 +6349,10 @@ if test "x$with_dcmf" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6351,7 +6367,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6393,6 +6409,10 @@ if test "x$with_lapi" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6407,7 +6427,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6449,6 +6469,10 @@ if test "x$with_mpi_spawn" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6463,7 +6487,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6505,6 +6529,10 @@ if test "x$with_openib" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6519,7 +6547,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6561,6 +6589,10 @@ if test "x$with_portals" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6575,7 +6607,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6617,6 +6649,10 @@ if test "x$with_sockets" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6631,7 +6667,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -14753,6 +14789,10 @@ for arg in $with_blas ; do
     BLAS_CPPFLAGS="$BLAS_CPPFLAGS $arg" ;; #(
   -*lib*) :
     BLAS_LDFLAGS="$BLAS_LDFLAGS $arg" ;; #(
+  *.a) :
+    BLAS_LIBS="$BLAS_LIBS $arg" ;; #(
+  *.so) :
+    BLAS_LIBS="$BLAS_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg"
@@ -14767,7 +14807,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -14980,7 +15020,7 @@ fi
 
      LIBS="$ga_save_LIBS"
      if test $ga_blas_ok = yes; then :
-  BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS $BLAS_LDFLAGS $BLAS_CPPFLAGS"
+  BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS"
          case $BLAS_SIZE_HACK in #(
   *ilp64*) :
     blas_size=8 ;; #(
@@ -15263,7 +15303,7 @@ fi
 
      LIBS="$ga_save_LIBS"
      if test "x$ga_blas_ok" = xyes; then :
-  BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS $BLAS_LDFLAGS $BLAS_CPPFLAGS"
+  BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS"
          case $BLAS_SIZE_HACK in #(
   *_int64*) :
     blas_size=8 ;; #(
@@ -15397,7 +15437,7 @@ fi
 
      LIBS="$ga_save_LIBS"
      if test "x$ga_blas_ok" = xyes; then :
-  BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS $BLAS_LDFLAGS $BLAS_CPPFLAGS"
+  BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS"
          case $BLAS_SIZE_HACK in #(
   *ilp64*) :
     blas_size=8 ;; #(
@@ -15915,7 +15955,10 @@ if test "x$with_lapack" = xno; then :
   ga_lapack_ok=skip
 fi
 
-# Parse --with-lapack argument.
+# Parse --with-lapack argument. Clear previous values first.
+LAPACK_LIBS=
+LAPACK_LDFLAGS=
+LAPACK_CPPFLAGS=
 for arg in $with_lapack ; do
     case $arg in #(
   yes) :
@@ -15934,6 +15977,10 @@ for arg in $with_lapack ; do
     LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     LAPACK_LDFLAGS="$LAPACK_LDFLAGS $arg" ;; #(
+  *.a) :
+    LAPACK_LIBS="$LAPACK_LIBS $arg" ;; #(
+  *.so) :
+    LAPACK_LIBS="$LAPACK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg"
@@ -15948,7 +15995,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -15987,16 +16034,13 @@ $as_echo "$as_me: Attempting to locate LAPACK library" >&6;}
 
 # We cannot use LAPACK if BLAS is not found
 if test $ga_blas_ok != yes; then :
-  ga_lapack_ok=noblas;
-     LAPACK_LIBS=
-     LAPACK_LDFLAGS=
-     LAPACK_CPPFLAGS=
+  ga_lapack_ok=noblas
 fi
 
 # First, check environment/command-line variables.
 # If failed, erase LAPACK_LIBS but maintain LAPACK_LDFLAGS and LAPACK_CPPFLAGS.
 if test $ga_lapack_ok = no; then :
-  ga_save_LIBS="$LIBS"; LIBS="$LAPACK_LIBS $BLAS_LIBS $LIBS"
+  LIBS="$LAPACK_LIBS $BLAS_LIBS $LIBS"
      if test "x$enable_f77" = xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C LAPACK with user-supplied flags" >&5
 $as_echo_n "checking for C LAPACK with user-supplied flags... " >&6; }
@@ -16149,22 +16193,19 @@ LDFLAGS="$ga_save_LDFLAGS"
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test $ga_lapack_ok = yes; then :
-
-$as_echo "#define HAVE_LAPACK 1" >>confdefs.h
-
+  have_lapack=1
 
 else
-  if test "x$enable_f77" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: LAPACK library not found, using internal LAPACK" >&5
 $as_echo "$as_me: WARNING: LAPACK library not found, using internal LAPACK" >&2;}
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: LAPACK library not found and Fortran is disabled" >&5
-$as_echo "$as_me: WARNING: LAPACK library not found and Fortran is disabled" >&2;}
-         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: LAPACK use is disabled" >&5
-$as_echo "$as_me: WARNING: LAPACK use is disabled" >&2;}
-fi
+     have_lapack=0
 
 fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_LAPACK $have_lapack
+_ACEOF
+
  if test $ga_lapack_ok = yes; then
   HAVE_LAPACK_TRUE=
   HAVE_LAPACK_FALSE='#'
@@ -16187,7 +16228,10 @@ if test "x$with_scalapack" = xno; then :
   ga_scalapack_ok=skip
 fi
 
-# Parse --with-scalapack argument.
+# Parse --with-scalapack argument. Clear previous values first.
+SCALAPACK_LIBS=
+SCALAPACK_LDFLAGS=
+SCALAPACK_CPPFLAGS=
 for arg in $with_scalapack ; do
     case $arg in #(
   yes) :
@@ -16206,6 +16250,10 @@ for arg in $with_scalapack ; do
     SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS $arg" ;; #(
+  *.a) :
+    SCALAPACK_LIBS="$SCALAPACK_LIBS $arg" ;; #(
+  *.so) :
+    SCALAPACK_LIBS="$SCALAPACK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg"
@@ -16220,7 +16268,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -16261,7 +16309,7 @@ $as_echo "$as_me: Attempting to locate SCALAPACK library" >&6;}
 # If failed, erase SCALAPACK_LIBS but maintain SCALAPACK_LDFLAGS and
 # SCALAPACK_CPPFLAGS.
 if test $ga_scalapack_ok = no; then :
-  ga_save_LIBS="$LIBS"; LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $LIBS"
+  LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $LIBS"
      if test "x$enable_f77" = xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C SCALAPACK with user-supplied flags" >&5
 $as_echo_n "checking for C SCALAPACK with user-supplied flags... " >&6; }
@@ -16405,21 +16453,28 @@ fi
 # TODO tests for PBLAS and BLACS to enable ScaLAPACK just in case all
 # packages are separate...
 
+CPPFLAGS="$ga_save_CPPFLAGS"
+LDFLAGS="$ga_save_LDFLAGS"
+
 
 
 
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test $ga_scalapack_ok = yes; then :
-
-$as_echo "#define HAVE_SCALAPACK 1" >>confdefs.h
-
+  have_scalapack=1
 
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ScaLAPACK library not found, interfaces won't be defined" >&5
 $as_echo "$as_me: WARNING: ScaLAPACK library not found, interfaces won't be defined" >&2;}
+     have_scalapack=0
 
 fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SCALAPACK $have_scalapack
+_ACEOF
+
  if test $ga_scalapack_ok = yes; then
   HAVE_SCALAPACK_TRUE=
   HAVE_SCALAPACK_FALSE='#'
@@ -32589,56 +32644,46 @@ if test "x$enable_f77" = xyes; then :
 
 { $as_echo "$as_me:${as_lineno-$LINENO}:                    F77=$F77" >&5
 $as_echo "$as_me:                    F77=$F77" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:                 FFLAGS=$FFLAGS" >&5
+$as_echo "$as_me:                 FFLAGS=$FFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:              FFLAG_INT=$FFLAG_INT" >&5
+$as_echo "$as_me:              FFLAG_INT=$FFLAG_INT" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:                GA_FOPT=$GA_FOPT" >&5
+$as_echo "$as_me:                GA_FOPT=$GA_FOPT" >&6;}
 
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}:                     CC=$CC" >&5
 $as_echo "$as_me:                     CC=$CC" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:                 CFLAGS=$CFLAGS" >&5
+$as_echo "$as_me:                 CFLAGS=$CFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:                GA_COPT=$GA_COPT" >&5
+$as_echo "$as_me:                GA_COPT=$GA_COPT" >&6;}
 if test "x$enable_cxx" = xyes; then :
 
 { $as_echo "$as_me:${as_lineno-$LINENO}:                    CXX=$CXX" >&5
 $as_echo "$as_me:                    CXX=$CXX" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:               CXXFLAGS=$CXXFLAGS" >&5
+$as_echo "$as_me:               CXXFLAGS=$CXXFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:              GA_CXXOPT=$GA_CXXOPT" >&5
+$as_echo "$as_me:              GA_CXXOPT=$GA_CXXOPT" >&6;}
 
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}:                    CPP=$CPP" >&5
 $as_echo "$as_me:                    CPP=$CPP" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:               CPPFLAGS=$CPPFLAGS" >&5
 $as_echo "$as_me:               CPPFLAGS=$CPPFLAGS" >&6;}
-if test "x$enable_f77" = xyes; then :
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                 FFLAGS=$FFLAGS" >&5
-$as_echo "$as_me:                 FFLAGS=$FFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:              FFLAG_INT=$FFLAG_INT" >&5
-$as_echo "$as_me:              FFLAG_INT=$FFLAG_INT" >&6;}
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                 CFLAGS=$CFLAGS" >&5
-$as_echo "$as_me:                 CFLAGS=$CFLAGS" >&6;}
-if test "x$enable_cxx" = xyes; then :
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}:               CXXFLAGS=$CXXFLAGS" >&5
-$as_echo "$as_me:               CXXFLAGS=$CXXFLAGS" >&6;}
-
-fi
-if test "x$enable_f77" = xyes; then :
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                GA_FOPT=$GA_FOPT" >&5
-$as_echo "$as_me:                GA_FOPT=$GA_FOPT" >&6;}
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                GA_COPT=$GA_COPT" >&5
-$as_echo "$as_me:                GA_COPT=$GA_COPT" >&6;}
-if test "x$enable_cxx" = xyes; then :
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}:              GA_CXXOPT=$GA_CXXOPT" >&5
-$as_echo "$as_me:              GA_CXXOPT=$GA_CXXOPT" >&6;}
-
-fi
 { $as_echo "$as_me:${as_lineno-$LINENO}:                LDFLAGS=$LDFLAGS" >&5
 $as_echo "$as_me:                LDFLAGS=$LDFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                   DEFS=$DEFS" >&5
-$as_echo "$as_me:                   DEFS=$DEFS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:                   LIBS=$LIBS" >&5
 $as_echo "$as_me:                   LIBS=$LIBS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:           BLAS_LDFLAGS=$BLAS_LDFLAGS" >&5
+$as_echo "$as_me:           BLAS_LDFLAGS=$BLAS_LDFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:              BLAS_LIBS=$BLAS_LIBS" >&5
+$as_echo "$as_me:              BLAS_LIBS=$BLAS_LIBS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:          BLAS_CPPFLAGS=$BLAS_CPPFLAGS" >&5
+$as_echo "$as_me:          BLAS_CPPFLAGS=$BLAS_CPPFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:                   DEFS=$DEFS" >&5
+$as_echo "$as_me:                   DEFS=$DEFS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:                  SHELL=$SHELL" >&5
 $as_echo "$as_me:                  SHELL=$SHELL" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: " >&5

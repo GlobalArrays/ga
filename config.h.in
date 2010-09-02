@@ -159,7 +159,7 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define if you have LAPACK library. */
+/* Define to 1 if using external LAPACK library */
 #undef HAVE_LAPACK
 
 /* Defined if plot library is available */
@@ -249,7 +249,7 @@
 /* Define to 1 if you have the <rpc/xdr.h> header file. */
 #undef HAVE_RPC_XDR_H
 
-/* Define if you have ScaLAPACK library. */
+/* Define to 1 if you have ScaLAPACK library. */
 #undef HAVE_SCALAPACK
 
 /* Define to 1 if you have the `select' function. */

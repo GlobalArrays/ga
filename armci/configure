@@ -4091,6 +4091,10 @@ if test x$need_parse = xyes; then :
     GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
   -*lib*) :
     GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
+  *.a) :
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
+  *.so) :
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
@@ -4105,7 +4109,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6265,6 +6269,10 @@ if test "x$with_bgml" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6279,7 +6287,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6321,6 +6329,10 @@ if test "x$with_cray_shmem" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6335,7 +6347,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6377,6 +6389,10 @@ if test "x$with_dcmf" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6391,7 +6407,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6433,6 +6449,10 @@ if test "x$with_lapi" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6447,7 +6467,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6489,6 +6509,10 @@ if test "x$with_mpi_spawn" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6503,7 +6527,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6545,6 +6569,10 @@ if test "x$with_openib" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6559,7 +6587,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6601,6 +6629,10 @@ if test "x$with_portals" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6615,7 +6647,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
@@ -6657,6 +6689,10 @@ if test "x$with_sockets" != x
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
   -*lib*) :
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
@@ -6671,7 +6707,7 @@ fi ;; #(
     if test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-                         if test -d $arg/include; then :
+         if test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac

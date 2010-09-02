@@ -2596,7 +2596,8 @@ BUILT_SOURCES = config.fh global/src/wapi.h global/src/wapidefs.h \
 AM_FFLAGS = $(GA_FOPT) $(FFLAG_INT)
 AM_CFLAGS = $(GA_COPT)
 AM_CXXFLAGS = $(GA_CXXOPT)
-AM_CPPFLAGS = $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
+AM_CPPFLAGS = $(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) \
+	$(BLAS_CPPFLAGS) $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
 	-I$(top_build_prefix)gaf2c -I$(top_srcdir)/gaf2c \
 	-I$(top_build_prefix)ma -I$(top_srcdir)/ma $(am__append_11) \
 	$(am__append_13) $(am__append_20) $(am__append_25) \
@@ -2604,10 +2605,12 @@ AM_CPPFLAGS = $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
 	-I$(top_srcdir)/pario/dra -I$(top_srcdir)/pario/eaf \
 	-I$(top_srcdir)/pario/elio -I$(top_srcdir)/pario/sf \
 	$(am__append_51) -I$(top_srcdir)/armci/$(ARMCI_SRC_DIR)
-AM_LDFLAGS = $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) $(am__append_1)
+AM_LDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
+	$(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) $(am__append_1)
+FLDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
+	$(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS)
 LDADD = $(LTLIBOBJS) libga.la $(SCALAPACK_LIBS) $(LAPACK_LIBS) \
 	$(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
-FLDFLAGS = $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS)
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ga.pc
 
