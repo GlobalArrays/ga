@@ -9,6 +9,8 @@
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
+#include "papi.h"
+#include "wapi.h"
 
 #define MAX_LOCKS 32768
 #define SPINMAX 1000
@@ -33,7 +35,7 @@ save_t savelock[512];
 
 static waiting_list_t* blocked; /* stores info about locked (waiting) process */
 
-#define Error(str,code) gai_error(str, (Integer)code)
+#define Error(str,code) pnga_error(str, (Integer)code)
 
 #if defined(NX) || defined(SP1) || defined(SP)
 #   define SERVER_LOCK 
@@ -50,7 +52,7 @@ static waiting_list_t* blocked; /* stores info about locked (waiting) process */
 
 logical FATR ga_create_mutexes_(Integer *num)
 {
-Integer type=C_INT, nproc = ga_nnodes_(), indx;
+Integer type=C_INT, nproc = pnga_nnodes(), indx;
 
 	if (*num <= 0 || *num > 32768) return(FALSE);
         if(num_mutexes) Error("mutexes already created",num_mutexes);
@@ -89,14 +91,14 @@ logical FATR ga_destroy_mutexes_()
 {
      if(num_mutexes==0)Error("ga_destroy_mutexes: mutexes not created",0);
      num_mutexes=0;
-     if(ga_nnodes_() == 1) return(TRUE);
+     if(pnga_nnodes() == 1) return(TRUE);
 
      MA_free_heap(Nhandle);
 #    if defined(SERVER_LOCK)
         if(blocked)   MA_free_heap(Whandle); 
 #    endif
 
-     return(ga_destroy_(&g_mutexes));
+     return(pnga_destroy(&g_mutexes));
 }
 
 
@@ -112,11 +114,11 @@ Integer i, myturn, factor=0;
 
            ga_get_(&g_mutexes, &id, &id, &two, &two, &myturn, &one);
            if(myturn > next[id]){
-              fprintf(stderr,"%d proble with next %d %d\n",ga_nodeid_(),myturn,
+              fprintf(stderr,"%d proble with next %d %d\n",pnga_nodeid(),myturn,
               next[id]);
               sleep(1);
            ga_get_(&g_mutexes, &id, &id, &two, &two, &myturn, &one);
-              fprintf(stderr,"%d proble with next %d %d\n",ga_nodeid_(),myturn,
+              fprintf(stderr,"%d proble with next %d %d\n",pnga_nodeid(),myturn,
               next[id]);
            }
           
@@ -143,7 +145,7 @@ static void ga_generic_unlock(Integer id)
 void ga_server_lock(Integer handle, Integer id, Integer node, msg_tag_t tag)
 {
 Integer myturn, turn, me;
-        me = ga_nodeid_();
+        me = pnga_nodeid();
         
 
         if(DEBUG) fprintf(stderr,"SLOCK:server=%d node=%d id=%d\n",
@@ -152,7 +154,7 @@ Integer myturn, turn, me;
         ga_get_local(handle, id, id, two, two, &turn, 0, 1, me);
 
         if(turn > myturn){
-              fprintf(stderr,"%d serv:problem with turn %d %d\n",ga_nodeid_(),myturn,
+              fprintf(stderr,"%d serv:problem with turn %d %d\n",pnga_nodeid(),myturn,
               myturn);
         }
 
@@ -186,7 +188,7 @@ Integer myturn, turn, me;
 void ga_server_unlock(Integer handle, Integer id, Integer node, 
                       Integer server_next)
 {
-Integer i, proc=-1, me = ga_nodeid_();
+Integer i, proc=-1, me = pnga_nodeid();
 
         if(DEBUG) fprintf(stderr,"SUNLOCK:server=%d node=%d id=%d next=%d\n",
                           me,node,id,server_next);
@@ -195,7 +197,7 @@ Integer i, proc=-1, me = ga_nodeid_();
         ga_put_local(handle, id, id, two, two, &server_next, 0, one, me);
         
         /* search for the node next in queue for this lock */
-        for(i=0; i< ga_nnodes_(); i++){
+        for(i=0; i< pnga_nnodes(); i++){
            if(DEBUG)fprintf(stderr,"SUNLOCK:server=%d node=%d list=(%d,%d)\n",
                              me, i, blocked[i].lock, blocked[i].turn);
            if((blocked[i].lock == id) && (blocked[i].turn == server_next)){
@@ -219,7 +221,7 @@ Integer i, proc=-1, me = ga_nodeid_();
 \*/
 static void dst_lock(Integer id)
 {
-Integer owner, owner2, server, me=ga_nodeid_();
+Integer owner, owner2, server, me=pnga_nodeid();
 
       /* check if elements (id,1) and (id,2) reside on the same process */ 
       if(!ga_locate_(&g_mutexes, &id, &one, &owner))
@@ -270,7 +272,7 @@ Integer owner, server;
       if(!ga_locate_(&g_mutexes, &id, &one, &owner)) 
                                   Error("ga_lock:locate failed",0);      
       server = DataServer(owner);
-      if(server == ga_nodeid_()){
+      if(server == pnga_nodeid()){
          ga_server_unlock(g_mutexes, id, server, next[id]);
       }else{ 
 #       if defined(LAPI)
@@ -284,13 +286,13 @@ Integer owner, server;
 void FATR ga_lock_(Integer *id)        
 {
 
-        if(DEBUG)fprintf(stderr,"%d enter lock\n",ga_nodeid_());
+        if(DEBUG)fprintf(stderr,"%d enter lock\n",pnga_nodeid());
 
         if(!num_mutexes) Error("ga_lock: need to create mutexes first",0);
 
         if(*id >= num_mutexes)Error("ga_lock: need more mutexes", num_mutexes); 
 
-        if(ga_nnodes_() == 1) return;
+        if(pnga_nnodes() == 1) return;
 
 #       if defined(SERVER_LOCK)
            dst_lock(*id+1);
@@ -298,20 +300,20 @@ void FATR ga_lock_(Integer *id)
            ga_generic_lock(*id+1);
 #       endif
 
-        if(DEBUG)fprintf(stderr,"%d leave lock\n",ga_nodeid_());
+        if(DEBUG)fprintf(stderr,"%d leave lock\n",pnga_nodeid());
 }
 
 
 
 void FATR ga_unlock_(Integer *id)
 {
-        if(DEBUG)fprintf(stderr,"%d enter unlock\n",ga_nodeid_());
+        if(DEBUG)fprintf(stderr,"%d enter unlock\n",pnga_nodeid());
 
         if(!num_mutexes) Error("ga_unlock: need to create mutexes first",0);
 
         if(*id >= num_mutexes) Error("ga_lock: need more mutexes", num_mutexes);
 
-        if(ga_nnodes_() == 1) return;
+        if(pnga_nnodes() == 1) return;
 
 #       if defined(SERVER_LOCK)
            dst_unlock(*id+1);
@@ -319,5 +321,5 @@ void FATR ga_unlock_(Integer *id)
            ga_generic_unlock(*id+1);
 #       endif
 
-        if(DEBUG)fprintf(stderr,"%d leave unlock\n",ga_nodeid_());
+        if(DEBUG)fprintf(stderr,"%d leave unlock\n",pnga_nodeid());
 }

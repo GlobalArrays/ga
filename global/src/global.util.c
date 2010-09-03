@@ -47,6 +47,9 @@
 #include "global.h"
 #include "globalp.h"
 #include <armci.h> 
+#include "papi.h"
+#include "wapi.h"
+
 #define ARMCI 1
 
 #if defined(SUN)
@@ -87,7 +90,7 @@ char *name;
          fprintf(stderr,"%ld %ld %ld %ld dims: [%ld,%ld]\n", 
                  (long)*ilo,(long)*ihi, (long)*jlo,(long)*jhi,
                  (long)dim1, (long)dim2);
-         gai_error(" ga_print: indices out of range ", *g_a);
+         pnga_error(" ga_print: indices out of range ", *g_a);
      }
 
      fprintf(file,"\n global array: %s[%ld:%ld,%ld:%ld],  handle: %d \n",
@@ -137,7 +140,7 @@ char *name;
                    for(jj=0; jj<(jmax-j+1); jj++)
                      fprintf(file," %8lld",llbuf[jj]);
                    break;
-              default: gai_error("ga_print: wrong type",0);
+              default: pnga_error("ga_print: wrong type",0);
            }
          }
          fprintf(file,"\n");
@@ -230,7 +233,7 @@ char *name;
 	              for(jj=0; jj<(jmax-j+1); jj+=2)
 	                fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
                       break;
-                 default: gai_error("ga_print: wrong type",0);
+                 default: pnga_error("ga_print: wrong type",0);
 	     }
 	     fprintf(file,"\n");
          }
@@ -264,7 +267,7 @@ int i;
      printf("\tNOTE:GA stats have been disabled on x1 for some GA calls, to enable them comment the line LIB_DEFINES += -DNO_GA_STATS in global/src/GNUmakefile under the GA directory");
 #endif
 #endif
-     printf("\n                         GA Statistics for process %4d\n",(int)ga_nodeid_());
+     printf("\n                         GA Statistics for process %4d\n",(int)pnga_nodeid());
      printf("                         ------------------------------\n\n");
      printf("       create   destroy   get      put      acc     scatter   gather  read&inc\n");
 
@@ -307,10 +310,14 @@ int i;
    
  
 
-/*\  ERROR TERMINATION
- *   C-version
-\*/
-void gai_error(char *string, Integer icode)
+/**
+ *  Error termination
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_error = pnga_error
+#endif
+
+void pnga_error(char *string, Integer icode)
 {
 #ifndef ARMCI
 extern void Error();
@@ -327,7 +334,7 @@ extern void Error();
 
 
     /* print GA names stack */
-    sprintf(error_buffer,"%d:", (int)ga_nodeid_());
+    sprintf(error_buffer,"%d:", (int)pnga_nodeid());
     for(level = 0; level < GA_stack_size; level++){
        strcat(error_buffer,GA_name_stack[level]);
        strcat(error_buffer,":");
@@ -339,7 +346,7 @@ extern void Error();
     ARMCI_Error(error_buffer,(int)icode);
 #else
     ga_clean_resources(); 
-    if (ga_nnodes_() > 1) Error(error_buffer, icode);
+    if (pnga_nnodes() > 1) Error(error_buffer, icode);
     else{
       fprintf(FOUT,"%s %ld\n",error_buffer,icode);
       perror("system message:");
@@ -348,23 +355,6 @@ extern void Error();
     }
 #endif
 }
-
-
-/*\  ERROR TERMINATION
- *   Fortran version
-\*/
-#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-void FATR ga_error_(char *string, Integer *icode, int slen)
-#else
-void FATR ga_error_(char *string, int slen, Integer *icode)
-#endif
-{
-#define FMSG 256
-char buf[FMSG];
-      ga_f2cstring(string,slen, buf, FMSG);
-      gai_error(buf,*icode);
-}
-
 
 void ga_debug_suspend()
 {
@@ -419,7 +409,7 @@ static void swap(Integer *a, Integer *b)
 \*/
 void gai_print_distribution(int fstyle, Integer g_a)
 {
-Integer ndim, i, proc, type, nproc=ga_nnodes_();
+Integer ndim, i, proc, type, nproc=pnga_nnodes();
 Integer dims[MAXDIM], lo[MAXDIM], hi[MAXDIM];
 char msg[100];
 char *name;
@@ -429,7 +419,7 @@ int local_sync_begin,local_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)ga_sync_();
 
-    if(ga_nodeid_() ==0){
+    if(pnga_nodeid() ==0){
       nga_inquire_internal_(&g_a, &type, &ndim, dims);
       gai_inquire_name(&g_a, &name);
       printf("Array Handle=%d Name:'%s' ",(int)g_a, name);
@@ -442,7 +432,7 @@ int local_sync_begin,local_sync_end;
         case C_FLOAT: printf("float"); break; 
         case C_LONG: printf("long"); break; 
         case C_LONGLONG: printf("long long"); break; 
-        default: gai_error("ga_print_distribution: type not supported",type);
+        default: pnga_error("ga_print_distribution: type not supported",type);
       }
       printf("\nArray Dimensions:");
       if(fstyle){
@@ -455,7 +445,7 @@ int local_sync_begin,local_sync_end;
 
       /* print array range for every processor */
       for(proc = 0; proc < nproc; proc++){
-          nga_distribution_(&g_a,&proc,lo,hi);
+          pnga_distribution(&g_a,&proc,lo,hi);
           sprintf(msg,"Process=%d\t owns array section: ",(int)proc);
 
           /* for C style need to swap and decremenent by 1 both arrays */
@@ -519,7 +509,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
     gai_check_handle(g_a, "nga_print");
 
     /* only the first process print the array */
-    if(ga_nodeid_() == 0) {
+    if(pnga_nodeid() == 0) {
         
         nga_inquire_internal_(g_a,  &type, &ndim, dims);
         gai_inquire_name(g_a, &name);
@@ -527,7 +517,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
         /* check the boundary */
         for(i=0; i<ndim; i++)
             if(lo[i] <= 0 || hi[i] > dims[i]) 
-                gai_error("g_a indices out of range ", *g_a);
+                pnga_error("g_a indices out of range ", *g_a);
         
         /* print the general information */
         fprintf(file,"\n global array: %s[", name);
@@ -558,7 +548,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                     case C_SCPL:     nga_get_(g_a, lop, hip, fbuf, ld); break;
                     case C_LONG:     nga_get_(g_a, lop, hip, lbuf, ld); break; 
                     case C_LONGLONG: nga_get_(g_a, lop, hip, llbuf,ld); break;
-                    default: gai_error("ga_print: wrong type",0);
+                    default: pnga_error("ga_print: wrong type",0);
                 }
                 
                 /* print the array */
@@ -712,7 +702,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                                 fprintf(file," --------");
                             break;
                        default:
-                         gai_error("ga_print: wrong type", 0);
+                         pnga_error("ga_print: wrong type", 0);
                     }
                     
                     fprintf(file,"\n");
@@ -727,7 +717,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                     case C_DCPL: nga_get_(g_a, lop, hip, dbuf_2d, ld);break;
                     case C_FLOAT: nga_get_(g_a, lop, hip, fbuf_2d, ld);break;
                     case C_SCPL: nga_get_(g_a, lop, hip, fbuf_2d, ld);break;  
-                   default: gai_error("ga_print: wrong type",0);
+                   default: pnga_error("ga_print: wrong type",0);
                 }
                 
                 for(i=0; i<(hip[0]-lop[0]+1); i++) {
@@ -813,7 +803,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                                             fbuf_2d[i*2], fbuf_2d[i*2+1]);
                             break;
                        default:
-                          gai_error("ga_print: wrong data type", 0);
+                          pnga_error("ga_print: wrong data type", 0);
                     }
                     
                     fprintf(file,"\n");
@@ -870,7 +860,7 @@ void FATR ga_summarize_(Integer *verbose)
     char *name;
     Integer ndim, dims[MAXDIM];
     Integer lop[MAXDIM], hip[MAXDIM];
-    Integer nproc = ga_nnodes_();
+    Integer nproc = pnga_nnodes();
     
     fprintf(DEV, " Summary of allocated global arrays\n");
     fprintf(DEV, "-----------------------------------\n");
@@ -908,7 +898,7 @@ void FATR ga_summarize_(Integer *verbose)
                 case C_LONGLONG:
                     fprintf(DEV, "  array %d => long long",(int)arr_no);
                     break;   
-                default: gai_error("ga_print: wrong type",0);
+                default: pnga_error("ga_print: wrong type",0);
             }
             arr_no++;
 
@@ -920,7 +910,7 @@ void FATR ga_summarize_(Integer *verbose)
 
             if(*verbose) {
                 for(i=0; i<nproc; i++){
-                    nga_distribution_(&g_a, &i, lop, hip);
+                    pnga_distribution(&g_a, &i, lop, hip);
                     
                     fprintf(DEV,"    (");
                     for(j=0; j<ndim; j++)

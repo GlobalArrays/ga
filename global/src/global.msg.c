@@ -50,6 +50,8 @@
 
 
 #include "message.h"
+#include "papi.h"
+#include "wapi.h"
 
 #ifdef SOCKCONNECT
        typedef struct{
@@ -83,7 +85,7 @@ Integer ga_msg_probe(type, from)
       * from ther server socket !!
       */
 
-     if(from != -1)gai_error("ga_msg_probe: only from=-1 works now",from);
+     if(from != -1)pnga_error("ga_msg_probe: only from=-1 works now",from);
 
      /* check if msg header was read before */
      if(got_header){
@@ -99,12 +101,12 @@ Integer ga_msg_probe(type, from)
            /* read the message header */
            recv_from_server(&msg_header,&msglen);
            if(msglen != sizeof(msg_header))
-                        gai_error("ga_msg_probe: error in header",msglen); 
+                        pnga_error("ga_msg_probe: error in header",msglen); 
            got_header=1;
            
            if(DEBUG){
               printf("%s:%d> server probing for message type=%d,%d available\n",
-              GA_clus_info[GA_clus_id].hostname, ga_nodeid_(), type, 
+              GA_clus_info[GA_clus_id].hostname, pnga_nodeid(), type, 
               msg_header.type);
               fflush(stdout);
            }
@@ -125,7 +127,7 @@ Integer ga_msg_probe(type, from)
 
        node =  (from < 0) ? DONTCARE : from;
        rc = mpc_probe(&node, &ttype, &nbytes);
-       if(rc <0 ) gai_error("ga_msg_probe: failed ", type);
+       if(rc <0 ) pnga_error("ga_msg_probe: failed ", type);
        return (nbytes==-1 ? 0 : 1);
      }
 #    elif defined(MPI)
@@ -135,7 +137,7 @@ Integer ga_msg_probe(type, from)
 
        node =  (from < 0) ? MPI_ANY_SOURCE : from;
        ierr   = MPI_Iprobe(node, (int)type, MPI_COMM_WORLD, &flag, &status);
-       if(ierr != MPI_SUCCESS) gai_error("ga_msg_probe: failed ", type);
+       if(ierr != MPI_SUCCESS) pnga_error("ga_msg_probe: failed ", type);
        return (flag == 0 ? 0 : 1);
      }
 #    else
@@ -168,7 +170,7 @@ void ga_msg_snd(type, buffer, bytes, to)
         if(cluster_server != ga_msg_nodeid_()){
               printf("%s:%d> ERROR sending to server type=%d len=%d to=%d\n",
               GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),type,bytes,to);
-                gai_error("ga_msg_snd:I cannot send message outside cluster",to);
+                pnga_error("ga_msg_snd:I cannot send message outside cluster",to);
         }
         
         send_header.type = (int)type; 
@@ -209,16 +211,16 @@ void ga_msg_snd(type, buffer, bytes, to)
         int status, msgid;
 
         status = mpc_send(buffer, bytes, to, type, &msgid);
-        if(status == -1) gai_error("ga_msg_snd: error sending ", type);
+        if(status == -1) pnga_error("ga_msg_snd: error sending ", type);
         while((status=mpc_status(msgid)) == -1); /* nonblocking probe */
-        if(status < -1) gai_error("ga_msg_snd: invalid message ID ", msgid );
+        if(status < -1) pnga_error("ga_msg_snd: invalid message ID ", msgid );
      }
 #    elif defined(MPI)
      {
         int ierr;
         ierr = MPI_Send(buffer, (int)bytes, MPI_CHAR, (int)to, (int)type,
                         MPI_COMM_WORLD);
-        if(ierr != MPI_SUCCESS) gai_error("ga_msg_snd: failed ", type);
+        if(ierr != MPI_SUCCESS) pnga_error("ga_msg_snd: failed ", type);
      }
 #    else
      {
@@ -245,21 +247,21 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
 #ifdef SOCKCONNECT
      if(ga_msg_nodeid_() == cluster_server){
        
-/*       if(from != -1)gai_error("ga_msg_rcv: server must use src =-1",from);*/
+/*       if(from != -1)pnga_error("ga_msg_rcv: server must use src =-1",from);*/
 
        if(got_header){
           if(msg_header.type != type)
-              gai_error("ga_msg_rcv: server: wrong type",msg_header.type);
+              pnga_error("ga_msg_rcv: server: wrong type",msg_header.type);
           if(msg_header.len > buflen) 
-              gai_error("ga_msg_rcv:overflowing buffer",msg_header.len);
+              pnga_error("ga_msg_rcv:overflowing buffer",msg_header.len);
 
           /* get the message body from server socket */
           recv_from_server(buffer, msglen);
           if(*msglen  != msg_header.len)
-              gai_error("ga_msg_rcv: inconsistent length header",*msglen);
+              pnga_error("ga_msg_rcv: inconsistent length header",*msglen);
           *whofrom = msg_header.from;
           if(*whofrom <0 || *whofrom >GA_n_proc)
-              gai_error("ga_msg_rcv: wrong sender entry in header",*whofrom);
+              pnga_error("ga_msg_rcv: wrong sender entry in header",*whofrom);
 
           got_header = 0;
 
@@ -278,7 +280,7 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
 
      if(from>=0) {
              from -= cluster_master;
-             if(from<0) gai_error("ga_msg_rcv: msgid problem ", from);
+             if(from<0) pnga_error("ga_msg_rcv: msgid problem ", from);
      }
 
 #    endif
@@ -299,7 +301,7 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
            *whofrom = infonode();
            if(from!=-1 &&  *whofrom != from) {
              fprintf(stderr,"ga_msg_rcv: from %d expected %d\n",*whofrom,from);
-             gai_error("ga_msg_rcv: error receiving",from);
+             pnga_error("ga_msg_rcv: error receiving",from);
            }
 #       endif
 
@@ -310,10 +312,10 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
  
         ffrom = (from == -1)? DONTCARE: from;
         status = mpc_recv(buffer, buflen, &ffrom, &ttype, &msgid);
-        if(status == -1) gai_error("ga_msg_rcv: error receiving", type);
+        if(status == -1) pnga_error("ga_msg_rcv: error receiving", type);
 
         while((status=mpc_status(msgid)) == -1); /* nonblocking probe */
-        if(status < -1) gai_error("ga_msg_rcv: invalid message ID ", msgid );
+        if(status < -1) pnga_error("ga_msg_rcv: invalid message ID ", msgid );
         *msglen = status;
         *whofrom = (Integer)ffrom;
      }
@@ -325,10 +327,10 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
         ffrom = (from == -1)? MPI_ANY_SOURCE : (int)from;
         ierr = MPI_Recv(buffer, (int)buflen, MPI_CHAR, ffrom, (int)type,
                MPI_COMM_WORLD, &status);
-        if(ierr != MPI_SUCCESS) gai_error("ga_msg_rcv: Recv failed ", type);
+        if(ierr != MPI_SUCCESS) pnga_error("ga_msg_rcv: Recv failed ", type);
 
         ierr = MPI_Get_count(&status, MPI_CHAR, &count);
-        if(ierr != MPI_SUCCESS) gai_error("ga_msg_rcv: Get_count failed ", type);
+        if(ierr != MPI_SUCCESS) pnga_error("ga_msg_rcv: Get_count failed ", type);
         *whofrom = (Integer)status.MPI_SOURCE;
         *msglen  = (Integer)count;
      }
@@ -370,11 +372,11 @@ msgid_t msgid;
 
 #ifdef SOCKCONNECT
      if(ga_msg_nodeid_() == cluster_server){
-        gai_error("ga_msg_ircv: server cannot use irecv",type);
+        pnga_error("ga_msg_ircv: server cannot use irecv",type);
      }
      if(from>=0) {
              from -= cluster_master;
-             if(from<0) gai_error("ga_msg_ircv: msgid problem ", from);
+             if(from<0) pnga_error("ga_msg_ircv: msgid problem ", from);
      }
 #endif
 
@@ -397,7 +399,7 @@ msgid_t msgid;
         ttype = type;
         ffrom = (from == -1)? DONTCARE: from;
         status = mpc_recv(buffer, buflen, &ffrom, &ttype, &msgid);
-        if(status == -1) gai_error("ga_msg_ircv: error receiving", type);
+        if(status == -1) pnga_error("ga_msg_ircv: error receiving", type);
      }
      /*****  we use MPI with lapi ********/
 #    elif defined(MPI)
@@ -406,7 +408,7 @@ msgid_t msgid;
         ffrom = (from == -1)? MPI_ANY_SOURCE : (int)from;
         ierr = MPI_Irecv(buffer, (int)buflen, MPI_CHAR, ffrom, (int)type,
                MPI_COMM_WORLD, &msgid);
-        if(ierr != MPI_SUCCESS) gai_error("ga_msg_ircv: Recv failed ", type);
+        if(ierr != MPI_SUCCESS) pnga_error("ga_msg_ircv: Recv failed ", type);
      }
 #    else
      {
@@ -444,7 +446,7 @@ Integer *whofrom, *msglen;
      {
         int status;
         while((status=mpc_status(msgid)) == -1); /* nonblocking probe */
-        if(status < -1) gai_error("ga_wait_msg: invalid message ID ", msgid);
+        if(status < -1) pnga_error("ga_wait_msg: invalid message ID ", msgid);
         *msglen = status;
         /* whofrom is currently not retrieved from MPL */
      }
@@ -454,9 +456,9 @@ Integer *whofrom, *msglen;
         MPI_Status status;
 
         ierr = MPI_Wait(&msgid, &status);
-        if(ierr != MPI_SUCCESS)gai_error("ga_msg_wait: failed ", 1);
+        if(ierr != MPI_SUCCESS)pnga_error("ga_msg_wait: failed ", 1);
         ierr = MPI_Get_count(&status, MPI_CHAR, &count);
-        if(ierr != MPI_SUCCESS) gai_error("ga_msg_wait: Get_count failed",2);
+        if(ierr != MPI_SUCCESS) pnga_error("ga_msg_wait: Get_count failed",2);
         *whofrom = (Integer)status.MPI_SOURCE;
         *msglen  = (Integer)count;
      }
@@ -500,7 +502,7 @@ Integer msg_id;
 #  endif
 #  ifdef SOCKCONNECT
      msg_id += cluster_master;
-     if(msg_id >= GA_n_proc) gai_error("ga_msg_nodeid:what is going on?",msg_id);
+     if(msg_id >= GA_n_proc) pnga_error("ga_msg_nodeid:what is going on?",msg_id);
 #  endif
    return (msg_id);
 }
@@ -583,7 +585,7 @@ void ga_msg_sync_()
 #  ifdef LAPI
    {
      extern lapi_handle_t lapi_handle;
-     if(LAPI_Fence(lapi_handle)) gai_error("lapi_gfence failed",0);
+     if(LAPI_Fence(lapi_handle)) pnga_error("lapi_gfence failed",0);
    }
 #  endif
 
@@ -712,14 +714,14 @@ Integer group_participate(me, root, up, left, right, group)
 #                          ifdef IWAY 
                              /* WARNING: will break if more than 2 clusters !!*/
                              if(GA_n_clus>2)
-                                gai_error("group_participate:fix me too",0);
+                                pnga_error("group_participate:fix me too",0);
                              if(*up>-1)    *up = cluster_server; 
                              if(*left>-1)  *left = cluster_server; 
                              if(*right>-1) *right = cluster_server; 
 #                          endif
 
                            break;
-                 default:  gai_error("group_participate: wrong group ", group);
+                 default:  pnga_error("group_participate: wrong group ", group);
      }
      return (1);
 }
@@ -851,7 +853,7 @@ static void ddoop(n, op, x, work)
       x++; work++;
     }
   else
-    gai_error("ga_ddoop: unknown operation requested", (long) n);
+    pnga_error("ga_ddoop: unknown operation requested", (long) n);
 }
 
 
@@ -897,7 +899,7 @@ static void idoop(n, op, x, work)
       x++; work++;
     }
   else
-    gai_error("ga_idoop: unknown operation requested", (long) n);
+    pnga_error("ga_idoop: unknown operation requested", (long) n);
 }
 
 

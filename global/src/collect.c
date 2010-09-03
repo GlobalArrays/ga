@@ -12,6 +12,8 @@
 #include "global.h"
 #include "message.h"
 #include "base.h"
+#include "papi.h"
+#include "wapi.h"
 
 /* can handle ga_brdcst/igop/dgop via ARMCI or native message-passing library
  * uncomment line below to use the ARMCI version */
@@ -108,7 +110,7 @@ void ga_msg_pgroup_sync_(Integer *grp_id)
 #     ifdef MPI       
         armci_msg_group_barrier(&(PGRP_LIST[p_grp].group));
 #     else
-        gai_error("ga_msg_pgroup_sync not implemented",0);
+        pnga_error("ga_msg_pgroup_sync not implemented",0);
 #     endif
     }
     else {
@@ -149,10 +151,10 @@ void gai_pgroup_gop(Integer p_grp, Integer type, void *x, Integer n, char *op)
             case C_DCPL:
                 armci_msg_group_dgop((double*)x, 2*n, op, (&(PGRP_LIST[group].group)));
                 break;
-            default: gai_error(" wrong data type ",type);
+            default: pnga_error(" wrong data type ",type);
         }
 #else
-        gai_error("Groups not implemented for system",0);
+        pnga_error("Groups not implemented for system",0);
 #endif
     } else {
         gai_gop(type, x, n, op);
@@ -192,33 +194,33 @@ void gai_gop(Integer type, void *x, Integer n, char *op)
                 armci_msg_dgop((double*)x, 2*n, op);
                 break;
             default:
-                gai_error(" wrong data type ",type);
+                pnga_error(" wrong data type ",type);
         }
 #else
         switch (type){
             case C_INT:
-                gai_error("Operation not defined for system",0);
+                pnga_error("Operation not defined for system",0);
                 break;
             case C_LONG:
                 tcg_igop(GA_TYPE_GOP, x, n, op);
                 break;
             case C_LONGLONG:
-                gai_error("Operation not defined for system",0);
+                pnga_error("Operation not defined for system",0);
                 break;
             case C_FLOAT:
-                gai_error("Operation not defined for system",0);
+                pnga_error("Operation not defined for system",0);
                 break;
             case C_DBL:
                 tcg_dgop(GA_TYPE_GOP, x, n, op);
                 break;
             case C_SCPL:
-                gai_error("Operation not defined for system",0);
+                pnga_error("Operation not defined for system",0);
                 break;
             case C_DCPL:
-                gai_error("Operation not defined for system",0);
+                pnga_error("Operation not defined for system",0);
                 break;
             default:
-                gai_error(" wrong data type ",type);
+                pnga_error(" wrong data type ",type);
         }
 #endif
     }

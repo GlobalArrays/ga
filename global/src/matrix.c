@@ -34,6 +34,8 @@ Purpose:
 #   include <string.h>
 #endif
 #include "message.h"
+#include "papi.h"
+#include "wapi.h"
 
 #define auxi_median(a,b,c,m)                         \
 {                                                    \
@@ -279,7 +281,7 @@ void gai_median_patch_values(Integer type, Integer ndim, Integer *loA,
       }
       break;
     default:
-      gai_error("median: wrong data type", type);
+      pnga_error("median: wrong data type", type);
   }
 }
 
@@ -306,7 +308,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
   Integer offset;
   Integer atotal, btotal;
   Integer ctotal, mtotal;
-  Integer me = ga_nodeid_ (), a_temp_created = 0, b_temp_created = 0, c_temp_created = 0;
+  Integer me = pnga_nodeid (), a_temp_created = 0, b_temp_created = 0, c_temp_created = 0;
   Integer type = GA_TYPE_GSM, compatible;
   char *tempname = "temp", transp = 'n';        /*no transpose */
   Integer num_blocks_a, num_blocks_b, num_blocks_c, num_blocks_m;
@@ -328,34 +330,34 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
   nga_inquire_internal_ (g_m, &type, &mndim, mdims);
 
   if (mtype != atype)
-    gai_error(" ga_median_patch_:type mismatch ", 0L);
+    pnga_error(" ga_median_patch_:type mismatch ", 0L);
   if (mtype != btype)
-    gai_error(" ga_median_patch_:type mismatch ", 0L);
+    pnga_error(" ga_median_patch_:type mismatch ", 0L);
   if (mtype != ctype)
-    gai_error(" ga_median_patch_:type mismatch ", 0L);
+    pnga_error(" ga_median_patch_:type mismatch ", 0L);
 
   /* check if patch indices and g_a dims match */
   for (i = 0; i < andim; i++)
     if (alo[i] <= 0 || ahi[i] > adims[i])
     {
-      gai_error("ga_median_patch_: g_a indices out of range ", *g_a);
+      pnga_error("ga_median_patch_: g_a indices out of range ", *g_a);
     }
 
   for (i = 0; i < bndim; i++)
     if (blo[i] <= 0 || bhi[i] > bdims[i])
     {
-      gai_error("ga_median_patch_:g_b indices out of range ", *g_b);
+      pnga_error("ga_median_patch_:g_b indices out of range ", *g_b);
     }
 
   for (i = 0; i < cndim; i++)
     if (clo[i] <= 0 || chi[i] > cdims[i])
     {
-      gai_error("ga_median_patch_:g_c indices out of range ", *g_c);
+      pnga_error("ga_median_patch_:g_c indices out of range ", *g_c);
     }         
   for (i = 0; i < mndim; i++)
     if (mlo[i] <= 0 || mhi[i] > mdims[i])
     {
-      gai_error("ga_median_patch_:g_m indices out of range ", *g_m);
+      pnga_error("ga_median_patch_:g_m indices out of range ", *g_m);
     }
 
   /* check if numbers of elements in two patches match each other */
@@ -378,13 +380,13 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
 
 
   if (mtotal != atotal)
-    gai_error("ga_median_patch_:  capacities of patches do not match ", 0L);
+    pnga_error("ga_median_patch_:  capacities of patches do not match ", 0L);
 
   if (mtotal != btotal)
-    gai_error("ga_median_patch_:  capacities of patches do not match ", 0L);
+    pnga_error("ga_median_patch_:  capacities of patches do not match ", 0L);
 
   if (mtotal != ctotal)
-    gai_error("ga_median_patch_:  capacities of patches do not match ", 0L);
+    pnga_error("ga_median_patch_:  capacities of patches do not match ", 0L);
 
   num_blocks_a = ga_total_blocks_(g_a);
   num_blocks_b = ga_total_blocks_(g_b);
@@ -394,10 +396,10 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
   if (num_blocks_a < 0 && num_blocks_b < 0 &&
       num_blocks_c < 0 && num_blocks_m < 0) {
     /* find out coordinates of patches of g_A, g_B, g_C, and g_M that I own */
-    nga_distribution_ (&g_A, &me, loA, hiA);
-    nga_distribution_ (&g_B, &me, loB, hiB);
-    nga_distribution_ (&g_C, &me, loC, hiC);
-    nga_distribution_ (&g_M, &me, loM, hiM);
+    pnga_distribution (&g_A, &me, loA, hiA);
+    pnga_distribution (&g_B, &me, loB, hiB);
+    pnga_distribution (&g_C, &me, loC, hiC);
+    pnga_distribution (&g_M, &me, loM, hiM);
 
     if (!ngai_comp_patch (andim, loA, hiA, mndim, loM, hiM)) compatible = 1;
     else compatible = 0;
@@ -408,12 +410,12 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
        *        - copy & reshape patch of g_b into g_B
        */
       if (!gai_duplicate(g_m, &g_A, tempname))
-        gai_error("ga_median_patch_:duplicate failed", 0L);
+        pnga_error("ga_median_patch_:duplicate failed", 0L);
 
       ngai_copy_patch(&transp, g_a, alo, ahi, &g_A, mlo, mhi);
       andim = mndim;
       a_temp_created = 1;
-      nga_distribution_ (&g_A, &me, loA, hiA);
+      pnga_distribution (&g_A, &me, loA, hiA);
     }
 
     if (!ngai_comp_patch (bndim, loB, hiB, mndim, loM, hiM)) compatible = 1;
@@ -425,12 +427,12 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
        *        - copy & reshape patch of g_c into g_C
        */
       if (!gai_duplicate(g_m, &g_B, tempname))
-        gai_error("ga_median_patch_:duplicate failed", 0L);
+        pnga_error("ga_median_patch_:duplicate failed", 0L);
 
       ngai_copy_patch(&transp, g_b, blo, bhi, &g_B, mlo, mhi);
       bndim = mndim;
       b_temp_created = 1;
-      nga_distribution_ (&g_B, &me, loB, hiB);
+      pnga_distribution (&g_B, &me, loB, hiB);
     }
 
     if (!ngai_comp_patch (cndim, loC, hiC, mndim, loM, hiM)) compatible = 1;
@@ -442,22 +444,22 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
        *        - copy & reshape patch of g_m into g_M
        */
       if (!gai_duplicate(g_m, &g_C, tempname))
-        gai_error("ga_median_patch_:duplicate failed", 0L);
+        pnga_error("ga_median_patch_:duplicate failed", 0L);
 
       /*no need to copy g_m since it is the output matrix. */
       cndim = mndim;
       c_temp_created = 1;
       ngai_copy_patch(&transp, g_c, clo, chi, &g_C, mlo, mhi);
-      nga_distribution_ (&g_C, &me, loC, hiC);
+      pnga_distribution (&g_C, &me, loC, hiC);
     }
 
 
     if (!ngai_comp_patch (mndim, loM, hiM, andim, loA, hiA))
-      gai_error(" patches mismatch ", 0);
+      pnga_error(" patches mismatch ", 0);
     if (!ngai_comp_patch (mndim, loM, hiM, bndim, loB, hiB))
-      gai_error(" patches mismatch ", 0);
+      pnga_error(" patches mismatch ", 0);
     if (!ngai_comp_patch (mndim, loM, hiM, cndim, loC, hiC))
-      gai_error(" patches mismatch ", 0);
+      pnga_error(" patches mismatch ", 0);
 
 
     /* A[83:125,1:1]  <==> B[83:125] */
@@ -490,19 +492,19 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
     /* create copies of A, B, and C that are identically distributed
        as M */
     if (!gai_duplicate(g_m, &g_A, tempname))
-      gai_error("ga_add_patch: dup failed", 0L);
+      pnga_error("ga_add_patch: dup failed", 0L);
     ngai_copy_patch(&transp, g_a, alo, ahi, &g_A, mlo, mhi);
     andim = mndim;
     a_temp_created = 1;
 
     if (!gai_duplicate(g_m, &g_B, tempname))
-      gai_error("ga_add_patch: dup failed", 0L);
+      pnga_error("ga_add_patch: dup failed", 0L);
     ngai_copy_patch(&transp, g_b, blo, bhi, &g_B, mlo, mhi);
     bndim = mndim;
     b_temp_created = 1;
 
     if (!gai_duplicate(g_m, &g_C, tempname))
-      gai_error("ga_add_patch: dup failed", 0L);
+      pnga_error("ga_add_patch: dup failed", 0L);
         ngai_copy_patch(&transp, g_c, clo, chi, &g_C, mlo, mhi);
     cndim = mndim;
     c_temp_created = 1;
@@ -510,7 +512,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
     /* M is normally distributed so just get the mean using standard approach */
     if (num_blocks_m < 0) {
       offset = 0;
-      nga_distribution_(g_m, &me, loM, hiM);
+      pnga_distribution(g_m, &me, loM, hiM);
       if (ngai_patch_intersect (mlo, mhi, loM, hiM, mndim)) {
         nga_access_ptr (&g_A, loM, hiM, &A_ptr, ldA);
         nga_access_ptr (&g_B, loM, hiM, &B_ptr, ldB);
@@ -531,9 +533,9 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
       Integer jtot, last, nproc;
       /* Simple block-cyclic data distribution */
       if (!ga_uses_proc_grid_(g_m)) {
-        nproc = ga_nnodes_();
+        nproc = pnga_nnodes();
         for (idx = me; idx < num_blocks_m; idx += nproc) {
-          nga_distribution_(g_m, &idx, loM, hiM);
+          pnga_distribution(g_m, &idx, loM, hiM);
           /* make temporary copies of loM and hiM since ngai_patch_intersect
              destroys original versions */
           for (j=0; j<mndim; j++) {
@@ -631,11 +633,11 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
     }
   }
   if (a_temp_created)
-    ga_destroy_ (&g_A);
+    pnga_destroy (&g_A);
   if (b_temp_created)
-    ga_destroy_ (&g_B);
+    pnga_destroy (&g_B);
   if (c_temp_created)
-    ga_destroy_ (&g_C);
+    pnga_destroy (&g_C);
   GA_POP_NAME;
   if(local_sync_end)ga_sync_();
 }
@@ -728,11 +730,11 @@ void gai_norm_infinity_block(Integer *g_a, void *ptr,
       csum = (SingleComplex *) buf;
       break;
     default:
-      gai_error("ga_norm_infinity_: wrong data type:", type);
+      pnga_error("ga_norm_infinity_: wrong data type:", type);
   }
 
   if(ndim<=0)
-    gai_error("ga_norm_infinity: wrong dimension", ndim);
+    pnga_error("ga_norm_infinity: wrong dimension", ndim);
   else if(ndim == 1){
     iloA=lo[0];
     ihiA=hi[0];
@@ -747,7 +749,7 @@ void gai_norm_infinity_block(Integer *g_a, void *ptr,
     jhiA=hi[1];
   }
   else
-    gai_error("ga_norm_infinity: wrong dimension", ndim);
+    pnga_error("ga_norm_infinity: wrong dimension", ndim);
 
   /* determine subset of my patch to access */
   if (ihiA > 0 && jhiA > 0)
@@ -812,7 +814,7 @@ void gai_norm_infinity_block(Integer *g_a, void *ptr,
           dsum[iloA + i - 1] += GA_ABS (pd[j * ld + i]);
       break;
       default:
-      gai_error("gai_norm_infinity_block: wrong data type ", type);
+      pnga_error("gai_norm_infinity_block: wrong data type ", type);
     }
   }
 }
@@ -821,7 +823,7 @@ void FATR
 ga_norm_infinity_ (Integer * g_a, double *nm)
 {
   Integer dim1, dim2, type, size, nelem;
-  Integer me = ga_nodeid_ (), i, j, nproc = ga_nnodes_();
+  Integer me = pnga_nodeid (), i, j, nproc = pnga_nnodes();
   Integer ndim, dims[MAXDIM], lo[2], hi[2], ld;
   Integer num_blocks_a;
   int local_sync_begin,local_sync_end;
@@ -847,13 +849,13 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
 
   dim1 = dims[0];
   if(ndim<=0)
-    gai_error("ga_norm_infinity: wrong dimension", ndim);
+    pnga_error("ga_norm_infinity: wrong dimension", ndim);
   else if(ndim == 1)
     dim2 = 1;
   else if(ndim==2)  
     dim2 = dims[1];
   else
-    gai_error("ga_norm_infinity: wrong dimension", ndim);
+    pnga_error("ga_norm_infinity: wrong dimension", ndim);
 
 
   /*allocate a temporary buffer of size equal to the number of rows */
@@ -862,7 +864,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
   buf = malloc (nelem * size);
 
   if (buf == NULL)
-    gai_error("ga_norm_infinity_: no more memory for the buffer.\n", 0);
+    pnga_error("ga_norm_infinity_: no more memory for the buffer.\n", 0);
 
   /*zero the buffer */
   memset (buf, 0, nelem * size);
@@ -888,13 +890,13 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
       csum = (SingleComplex *) buf;
       break;
     default:
-      gai_error("ga_norm_infinity_: wrong data type:", type);
+      pnga_error("ga_norm_infinity_: wrong data type:", type);
   }
 
   num_blocks_a = ga_total_blocks_(g_a);
 
   if (num_blocks_a < 0) {
-    nga_distribution_(g_a, &me, lo, hi);
+    pnga_distribution(g_a, &me, lo, hi);
     nga_access_ptr(g_a, lo, hi, &ptr, &ld);
     gai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
     nga_release_update_(g_a, lo, hi);
@@ -903,7 +905,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
     /* Simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
-        nga_distribution_(g_a, &idx, lo, hi);
+        pnga_distribution(g_a, &idx, lo, hi);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
         nga_release_update_block_(g_a, &idx);
@@ -967,7 +969,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
       armci_msg_lgop (lsum, nelem, "+");
       break;
     default:
-      gai_error("ga_norm_infinity_: wrong data type ", type);
+      pnga_error("ga_norm_infinity_: wrong data type ", type);
   }
 
   /*evaluate the norm infinity for the matrix g_a */
@@ -1016,7 +1018,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
       *((double *) nm) = (double) cmax;
       break;
     default:
-      gai_error("ga_norm_infinity_:wrong data type.", type);
+      pnga_error("ga_norm_infinity_:wrong data type.", type);
   }
 
   /*free the memory allocated to buf */
@@ -1071,11 +1073,11 @@ void gai_norm1_block(Integer *g_a, void *ptr,
       csum = (SingleComplex *) buf;
       break;
     default:
-      gai_error("ga1_norm1_block: wrong data type:", type);
+      pnga_error("ga1_norm1_block: wrong data type:", type);
   }
 
   if(ndim<=0)
-    gai_error("gai_norm1_block: wrong dimension", ndim);
+    pnga_error("gai_norm1_block: wrong dimension", ndim);
   else if(ndim == 1) { 
     iloA=lo[0];
     ihiA=hi[0];
@@ -1090,7 +1092,7 @@ void gai_norm1_block(Integer *g_a, void *ptr,
     jhiA=hi[1];
   }
   else
-    gai_error("gai_norm1_block: wrong dimension", ndim);
+    pnga_error("gai_norm1_block: wrong dimension", ndim);
 
   /* determine subset of my patch to access */
   if (ihiA > 0 && jhiA > 0)
@@ -1157,7 +1159,7 @@ void gai_norm1_block(Integer *g_a, void *ptr,
           dsum[jloA + j - 1 ] += GA_ABS (pd[j * ld + i]);
       break;
       default:
-      gai_error("gai_norm1_block: wrong data type ", type);
+      pnga_error("gai_norm1_block: wrong data type ", type);
     }
   }
 }
@@ -1166,7 +1168,7 @@ void FATR
 ga_norm1_ (Integer * g_a, double *nm)
 {
   Integer dim1=0, dim2=0, type=0, size=0, nelem=0;
-  Integer me = ga_nodeid_ (), i, j, nproc = ga_nnodes_();
+  Integer me = pnga_nodeid (), i, j, nproc = pnga_nnodes();
   Integer ndim, dims[MAXDIM], lo[2], hi[2], ld; 
   Integer num_blocks_a;
   int local_sync_begin,local_sync_end;
@@ -1191,13 +1193,13 @@ ga_norm1_ (Integer * g_a, double *nm)
 
   dim1 = dims[0];
   if(ndim<=0)
-    gai_error("ga_norm1: wrong dimension", ndim);
+    pnga_error("ga_norm1: wrong dimension", ndim);
   else if(ndim == 1) 
     dim2 = 1;
   else if(ndim == 2) 
     dim2 = dims[1];
   else
-    gai_error("ga_norm1: wrong dimension", ndim);
+    pnga_error("ga_norm1: wrong dimension", ndim);
   /* gai_inquire (g_a, &type, &dim1, &dim2); */
 
   /*allocate a temporary buffer of size equal to the number of columns */
@@ -1206,7 +1208,7 @@ ga_norm1_ (Integer * g_a, double *nm)
   buf = malloc (nelem * size);
 
   if (buf == NULL)
-    gai_error("ga_norm1: no more memory for the buffer.\n", 0);
+    pnga_error("ga_norm1: no more memory for the buffer.\n", 0);
 
   /*zero the buffer */
   memset (buf, 0, nelem * size);
@@ -1232,13 +1234,13 @@ ga_norm1_ (Integer * g_a, double *nm)
       csum = (SingleComplex *) buf;
       break;
     default:
-      gai_error("ga_norm1_: wrong data type:", type);
+      pnga_error("ga_norm1_: wrong data type:", type);
   }
 
   num_blocks_a = ga_total_blocks_(g_a);
 
   if (num_blocks_a < 0) {
-    nga_distribution_(g_a, &me, lo, hi);
+    pnga_distribution(g_a, &me, lo, hi);
     nga_access_ptr(g_a, lo, hi, &ptr, &ld);
     gai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
     nga_release_update_(g_a, lo, hi);
@@ -1247,7 +1249,7 @@ ga_norm1_ (Integer * g_a, double *nm)
     /* Simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
-        nga_distribution_(g_a, &idx, lo, hi);
+        pnga_distribution(g_a, &idx, lo, hi);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
         nga_release_update_block_(g_a, &idx);
@@ -1310,7 +1312,7 @@ ga_norm1_ (Integer * g_a, double *nm)
       armci_msg_lgop (lsum, nelem, "+");
       break;
     default:
-      gai_error("ga_norm1_: wrong data type ", type);
+      pnga_error("ga_norm1_: wrong data type ", type);
   }
 
   /*evaluate the norm1 for the matrix g_a */
@@ -1359,7 +1361,7 @@ ga_norm1_ (Integer * g_a, double *nm)
       *((double *) nm) = (double) cmax;
       break;
     default:
-      gai_error("ga_norm1_:wrong data type.", type);
+      pnga_error("ga_norm1_:wrong data type.", type);
   }
 
 
@@ -1411,7 +1413,7 @@ void gai_get_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
       nelem = vhi - vlo + 1;
       buf = malloc (nelem * size);
       if (buf == NULL)
-        gai_error
+        pnga_error
           ("ga_get_diag_:failed to allocate memory for the local buffer.",
            9999);
 
@@ -1477,7 +1479,7 @@ void gai_get_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
           break;
 
         default:
-          gai_error("get_diagonal_zero: wrong data type:", type);
+          pnga_error("get_diagonal_zero: wrong data type:", type);
       }
 
       /* copy the local memory buffer buf to g_v */
@@ -1493,7 +1495,7 @@ void FATR
 ga_get_diag_ (Integer * g_a, Integer * g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type;
-  Integer me = ga_nodeid_ (), i, nproc = ga_nnodes_();
+  Integer me = pnga_nodeid (), i, nproc = pnga_nnodes();
   Integer andim, adims[2];
   Integer loA[2], hiA[2], ld;
   Integer num_blocks_a;
@@ -1516,17 +1518,17 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
 
   /* Perform some error checking */
   if (vndim != 1)
-    gai_error("ga_get_diag: wrong dimension for g_v.", vndim);
+    pnga_error("ga_get_diag: wrong dimension for g_v.", vndim);
 
 
   if (vdims != GA_MIN (dim1, dim2))
-    gai_error
+    pnga_error
       ("ga_get_diag: The size of the first array's diagonal is greater than the size of the second array.",
        type);
 
   if (vtype != atype)
   {
-    gai_error
+    pnga_error
       ("ga_get_diag: input global arrays do not have the same data type. Global array type =",
        atype);
   }
@@ -1534,7 +1536,7 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
   num_blocks_a = ga_total_blocks_(g_a);
 
   if (num_blocks_a < 0) {
-    nga_distribution_(g_a, &me, loA, hiA);
+    pnga_distribution(g_a, &me, loA, hiA);
     nga_access_ptr(g_a, loA, hiA, &ptr, &ld);
     gai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
     nga_release_update_(g_a, loA, hiA);
@@ -1543,7 +1545,7 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
     /* Simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
-        nga_distribution_(g_a, &idx, loA, hiA);
+        pnga_distribution(g_a, &idx, loA, hiA);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
         nga_release_update_block_(g_a, &idx);
@@ -1629,7 +1631,7 @@ void gai_add_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
       nelem = vhi - vlo + 1;
       buf = malloc (nelem * size);
       if (buf == NULL)
-        gai_error
+        pnga_error
           ("ga_add_diagonal_:failed to allocate memory for the local buffer.",
            0);
 
@@ -1697,7 +1699,7 @@ void gai_add_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
           break;
 
         default:
-          gai_error("ga_add_diagonal_: wrong data type:", type);
+          pnga_error("ga_add_diagonal_: wrong data type:", type);
       }
 
       /*free the memory */
@@ -1710,7 +1712,7 @@ void FATR
 ga_add_diagonal_ (Integer * g_a, Integer * g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type;
-  Integer me = ga_nodeid_ (), i, nproc = ga_nnodes_();
+  Integer me = pnga_nodeid (), i, nproc = pnga_nnodes();
   Integer andim, adims[2];
   Integer loA[2], hiA[2], ld;
   Integer num_blocks_a;
@@ -1734,17 +1736,17 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
 
   /* Perform some error checking */
   if (vndim != 1)
-    gai_error("ga_add_diagonal: wrong dimension for g_v.", vndim);
+    pnga_error("ga_add_diagonal: wrong dimension for g_v.", vndim);
 
 
   if (vdims != GA_MIN (dim1, dim2))
-    gai_error
+    pnga_error
       ("ga_add_diagonal: The size of the first array's diagonal is greater than the size of the second array.",
        type);
 
   if (vtype != atype)
   {
-    gai_error
+    pnga_error
       ("ga_add_diagonal: input global arrays do not have the same data type. Global array type =",
        atype);
   }
@@ -1752,7 +1754,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
   num_blocks_a = ga_total_blocks_(g_a);
 
   if (num_blocks_a < 0) {
-    nga_distribution_(g_a, &me, loA, hiA);
+    pnga_distribution(g_a, &me, loA, hiA);
     nga_access_ptr(g_a, loA, hiA, &ptr, &ld);
     gai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
   } else {
@@ -1760,7 +1762,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
     /* Simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
-        nga_distribution_(g_a, &idx, loA, hiA);
+        pnga_distribution(g_a, &idx, loA, hiA);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
         nga_release_update_block_(g_a, &idx);
@@ -1843,7 +1845,7 @@ void gai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integer *loA,
       nelem = vhi - vlo + 1;
       buf = malloc (nelem * size);
       if (buf == NULL)
-        gai_error
+        pnga_error
           ("ga_set_diagonal_:failed to allocate memory for local buffer",0);
 
       /* get the vector from the global array to the local memory buffer */
@@ -1910,7 +1912,7 @@ void gai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integer *loA,
           break;
 
         default:
-          gai_error("ga_set_diagonal_: wrong data type:", type);
+          pnga_error("ga_set_diagonal_: wrong data type:", type);
       }
 
       /*free the memory */
@@ -1926,7 +1928,7 @@ void FATR
 ga_set_diagonal_ (Integer * g_a, Integer * g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type;
-  Integer me = ga_nodeid_ (), i, nproc = ga_nnodes_();
+  Integer me = pnga_nodeid (), i, nproc = pnga_nnodes();
   Integer andim, adims[2];
   Integer loA[2], hiA[2], ld;
   Integer num_blocks_a;
@@ -1949,17 +1951,17 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
 
   /* Perform some error checking */
   if (vndim != 1)
-    gai_error("ga_set_diagonal: wrong dimension for g_v.", vndim);
+    pnga_error("ga_set_diagonal: wrong dimension for g_v.", vndim);
 
 
   if (vdims != GA_MIN (dim1, dim2))
-    gai_error
+    pnga_error
       ("ga_set_diagonal: The size of the first array's diagonal is greater than the size of the second array.",
        type);
 
   if (vtype != atype)
   {
-    gai_error
+    pnga_error
       ("ga_set_diagonal: input global arrays do not have the same data type. Global array type =",
        atype);
   }
@@ -1967,7 +1969,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
   num_blocks_a = ga_total_blocks_(g_a);
 
   if (num_blocks_a < 0) {
-    nga_distribution_(g_a, &me, loA, hiA);
+    pnga_distribution(g_a, &me, loA, hiA);
     nga_access_ptr(g_a, loA, hiA, &ptr, &ld);
     gai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
     nga_release_update_(g_a, loA, hiA);
@@ -1976,7 +1978,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
     /* Simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
-        nga_distribution_(g_a, &idx, loA, hiA);
+        pnga_distribution(g_a, &idx, loA, hiA);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
         nga_release_update_block_(g_a, &idx);
@@ -2110,7 +2112,7 @@ void gai_shift_diagonal_block(Integer *g_a, void *ptr, Integer *loA, Integer *hi
           break;
 
         default:
-          gai_error("ga_shift_diagonal_: wrong data type:", type);
+          pnga_error("ga_shift_diagonal_: wrong data type:", type);
       }
     }
   }
@@ -2121,7 +2123,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
 {
   Integer loA[2], hiA[2], dim1, dim2, ld;
   Integer andim, adims[2], type, atype;
-  Integer me = ga_nodeid_ (), i, nproc = ga_nnodes_();
+  Integer me = pnga_nodeid (), i, nproc = pnga_nnodes();
   void *ptr;
   Integer num_blocks_a;
   int local_sync_begin,local_sync_end;
@@ -2135,7 +2137,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
 
   nga_inquire_ (g_a, &atype, &andim, adims);
   if (andim != 2) 
-    gai_error("Dimension must be 2 for shift diagonal operation",andim);
+    pnga_error("Dimension must be 2 for shift diagonal operation",andim);
 
   /* gai_inquire and nga_inquire handle type differently */
   gai_inquire(g_a, &type, &dim1, &dim2);
@@ -2143,7 +2145,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
   num_blocks_a = ga_total_blocks_(g_a);
 
   if (num_blocks_a < 0) {
-    nga_distribution_(g_a, &me, loA, hiA);
+    pnga_distribution(g_a, &me, loA, hiA);
     nga_access_ptr(g_a, loA, hiA, &ptr, &ld);
     gai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
     nga_release_update_(g_a, loA, hiA);
@@ -2152,7 +2154,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
     /* Simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
-        nga_distribution_(g_a, &idx, loA, hiA);
+        pnga_distribution(g_a, &idx, loA, hiA);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
         nga_release_update_block_(g_a, &idx);
@@ -2254,7 +2256,7 @@ void gai_zero_diagonal_block(Integer *g_a, void *ptr, Integer *lo, Integer *hi,
       }
       break;
     default:
-      gai_error("set_diagonal_zero: wrong data type:", type);
+      pnga_error("set_diagonal_zero: wrong data type:", type);
   }
 }
 
@@ -2262,7 +2264,7 @@ void FATR ga_zero_diagonal_(Integer * g_a)
 {
   Integer dim1, dim2, type;
   Integer ld, lo[2], hi[2], loA[2], hiA[2];
-  Integer me = ga_nodeid_ (), i, offset;
+  Integer me = pnga_nodeid (), i, offset;
   void *ptr;
   Integer num_blocks_a;
   Integer atype, andim, adims[2];
@@ -2282,7 +2284,7 @@ void FATR ga_zero_diagonal_(Integer * g_a)
 
   if (num_blocks_a < 0) {
     offset = 0;
-    nga_distribution_ (g_a, &me, loA, hiA);
+    pnga_distribution (g_a, &me, loA, hiA);
     /* determine subset of my patch to access */
     if (loA[0] > 0) {
       lo[0] = GA_MAX (loA[0], loA[1]);
@@ -2300,11 +2302,11 @@ void FATR ga_zero_diagonal_(Integer * g_a)
   } else {
     Integer idx, lld[MAXDIM], offset;
     Integer jtot, last, j;
-    Integer nproc = ga_nnodes_();
+    Integer nproc = pnga_nnodes();
     /* Simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
-        nga_distribution_(g_a, &idx, loA, hiA);
+        pnga_distribution(g_a, &idx, loA, hiA);
         lo[0] = GA_MAX (loA[0], loA[1]);
         lo[1] = GA_MAX (loA[0], loA[1]);
         hi[0] = GA_MIN (hiA[0], hiA[1]);
@@ -2409,7 +2411,7 @@ void gai_scale_row_values(Integer type, Integer *lo,
 
       buf = malloc (myrows * size);
       if (buf == NULL)
-        gai_error
+        pnga_error
           ("ga_scale_rows_:failed to allocate memory for the local buffer.",
            0);
 
@@ -2458,7 +2460,7 @@ void gai_scale_row_values(Integer type, Integer *lo,
             }
           break;
         default:
-          gai_error("ga_scale_rows_: wrong data type:", type);
+          pnga_error("ga_scale_rows_: wrong data type:", type);
       }
 
       /*free the memory */
@@ -2471,7 +2473,7 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type;
   Integer ld, lo[2], hi[2];
-  Integer me = ga_nodeid_ (), i, chk;
+  Integer me = pnga_nodeid (), i, chk;
   void *ptr;
   Integer andim, adims[2];
   Integer num_blocks_a;
@@ -2493,18 +2495,18 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
 
   /* Perform some error checking */
   if (vndim != 1)
-    gai_error("ga_scale_rows_: wrong dimension for g_v.", vndim);
+    pnga_error("ga_scale_rows_: wrong dimension for g_v.", vndim);
 
   /*in internal functions, dim1 = number of rows of the matrix g_a*/
   /*in internal functions, dim2 = number of columns of the matrix g_a*/
   if (vdims != dim1)
-    gai_error
+    pnga_error
       ("ga_scale_rows_: The size of the scalar array is not the same as the number of the rows of g_a.",
        vdims);
 
   if (vtype != atype)
   {
-    gai_error
+    pnga_error
       ("ga_scale_rows_: input global arrays do not have the same data type. Global array type =",
        atype);
   }
@@ -2512,7 +2514,7 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
   num_blocks_a = ga_total_blocks_(g_a);
 
   if (num_blocks_a < 0) {
-    nga_distribution_ (g_a, &me, lo, hi);
+    pnga_distribution (g_a, &me, lo, hi);
 
     chk = 1;
     for (i=0; i<andim; i++) {
@@ -2527,12 +2529,12 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
       nga_release_update_ (g_a, lo, hi);
     }
   } else {
-    Integer nproc = ga_nnodes_();
+    Integer nproc = pnga_nnodes();
     /* Simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)) {
       Integer idx;
       for (idx=me; idx<num_blocks_a; idx += nproc) {
-        nga_distribution_(g_a, &idx, lo, hi);
+        pnga_distribution(g_a, &idx, lo, hi);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_scale_row_values(type, lo, hi, ld, ptr, g_v);
         nga_release_update_block_(g_a, &idx);
@@ -2603,7 +2605,7 @@ void gai_scale_col_values(Integer type, Integer *lo,
 
       buf = malloc (mycols * size);
       if (buf == NULL)
-        gai_error
+        pnga_error
           ("ga_scale_cols_:failed to allocate memory for the local buffer.",
            0);
 
@@ -2654,7 +2656,7 @@ void gai_scale_col_values(Integer type, Integer *lo,
             }
           break;
         default:
-          gai_error("ga_scale_cols_: wrong data type:", type);
+          pnga_error("ga_scale_cols_: wrong data type:", type);
       }
       /*free the memory */
       free (buf);
@@ -2666,7 +2668,7 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type;
   Integer ld, lo[2], hi[2];
-  Integer me = ga_nodeid_ (), i;
+  Integer me = pnga_nodeid (), i;
   void *ptr;
   Integer andim, adims[2];
   int local_sync_begin,local_sync_end;
@@ -2689,18 +2691,18 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
 
   /* Perform some error checking */
   if (vndim != 1)
-    gai_error("ga_scale_cols_: wrong dimension for g_v.", vndim);
+    pnga_error("ga_scale_cols_: wrong dimension for g_v.", vndim);
 
   /*in internal functions, dim1 = number of rows of the matrix g_a*/
   /*in internal functions, dim2 = number of columns of the matrix g_a*/
   if (vdims != dim2)
-    gai_error
+    pnga_error
       ("ga_scale_cols_: The size of the scalar array is not the same as the number of the rows of g_a.",
        vdims);
 
   if (vtype != atype)
     {
-      gai_error
+      pnga_error
         ("ga_scale_cols_: input global arrays do not have the same data type. Global array type =",
          atype);
     }
@@ -2708,7 +2710,7 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
   num_blocks_a = ga_total_blocks_(g_a);
 
   if (num_blocks_a < 0) {
-    nga_distribution_ (g_a, &me, lo, hi);
+    pnga_distribution (g_a, &me, lo, hi);
 
     chk = 1;
     for (i=0; i<andim; i++) {
@@ -2723,12 +2725,12 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
       nga_release_update_ (g_a, lo, hi);
     }
   } else {
-    Integer nproc = ga_nnodes_();
+    Integer nproc = pnga_nnodes();
     /* Simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)) {
       Integer idx;
       for (idx=me; idx<num_blocks_a; idx += nproc) {
-        nga_distribution_(g_a, &idx, lo, hi);
+        pnga_distribution(g_a, &idx, lo, hi);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_scale_col_values(type, lo, hi, ld, ptr, g_v);
         nga_release_update_block_(g_a, &idx);

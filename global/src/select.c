@@ -11,11 +11,13 @@
 #include "global.h"
 #include "globalp.h"
 #include "message.h"
+#include "papi.h"
+#include "wapi.h"
   
 #define GET_ELEMS(ndim,lo,hi,ld,pelems){\
 int _i;\
       for(_i=0, *pelems = hi[ndim-1]-lo[ndim-1]+1; _i< ndim-1;_i++) {\
-         if(ld[_i] != (hi[_i]-lo[_i]+1)) gai_error("layout problem",_i);\
+         if(ld[_i] != (hi[_i]-lo[_i]+1)) pnga_error("layout problem",_i);\
          *pelems *= hi[_i]-lo[_i]+1;\
       }\
 }
@@ -132,7 +134,7 @@ void ngai_select_elem(Integer type, char* op, void *ptr, Integer elems, elem_inf
     info->v.llval = llval;
     break;
 
-    default: gai_error(" wrong data type ",type);
+    default: pnga_error(" wrong data type ",type);
   }
 }
 
@@ -156,20 +158,20 @@ void FATR nga_select_elem_(
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)ga_sync_();
 
-  me = ga_nodeid_();
+  me = pnga_nodeid();
 
   gai_check_handle(g_a, "ga_select_elem");
   GA_PUSH_NAME("ga_elem_op");
 
   if (strncmp(op,"min",3) == 0);
   else if (strncmp(op,"max",3) == 0);
-  else gai_error("operator not recognized",0);
+  else pnga_error("operator not recognized",0);
 
   nga_inquire_internal_(g_a, &type, &ndim, dims);
   num_blocks = ga_total_blocks_(g_a);
 
   if (num_blocks < 0) {
-    nga_distribution_(g_a, &me, lo, hi);
+    pnga_distribution(g_a, &me, lo, hi);
 
     if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
 
@@ -195,7 +197,7 @@ void FATR nga_select_elem_(
   } else {
     void *ptr;
     Integer j, offset, jtot, upper;
-    Integer nproc = ga_nnodes_();
+    Integer nproc = pnga_nnodes();
     nga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
     if (elems > 0) {
       participate =1;
@@ -210,7 +212,7 @@ void FATR nga_select_elem_(
       if (!ga_uses_proc_grid_(g_a)) {
         offset = 0;
         for (i=me; i<num_blocks; i += nproc) {
-          nga_distribution_(g_a, &i, lo, hi);
+          pnga_distribution(g_a, &i, lo, hi);
           jtot = 1;
           for (j=0; j<ndim; j++) {
             jtot *= (hi[j]-lo[j]+1);

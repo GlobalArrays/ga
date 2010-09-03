@@ -16,6 +16,8 @@
 #ifdef USE_VAMPIR
 #  include "ga_vampir.h"
 #endif
+#include "papi.h"
+#include "wapi.h"
 
 #define DGETRF F77_FUNC(dgetrf,DGETRF)
 #define DGETRS F77_FUNC(dgetrs,DGETRS)
@@ -501,7 +503,7 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
 #ifdef USE_VAMPIR
   vampir_begin(GA_LU_SOLVE_SEQ,__FILE__,__LINE__);
 #endif
-  me     = ga_nodeid_();
+  me     = pnga_nodeid();
   
   /** check GA info for input arrays */
   gai_check_handle(g_a, "ga_lu_solve: a");
@@ -512,11 +514,11 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
   GA_PUSH_NAME("ga_lu_solve_seq");
 
   if (dimA1 != dimA2) 
-    gai_error("ga_lu_solve: g_a must be square matrix ", 1);
+    pnga_error("ga_lu_solve: g_a must be square matrix ", 1);
   else if(dimA1 != dimB1) 
-    gai_error("ga_lu_solve: dims of A and B do not match ", 1);
+    pnga_error("ga_lu_solve: dims of A and B do not match ", 1);
   else if(typeA != C_DBL || typeB != C_DBL) 
-    gai_error("ga_lu_solve: wrong type(s) of A and/or B ", 1);
+    pnga_error("ga_lu_solve: wrong type(s) of A and/or B ", 1);
   
   ga_sync_();
   oactive = (me == 0);
@@ -568,11 +570,11 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
       if(info == 0) 
 	ga_put_(g_b, &one, &dimB1, &one, &dimB2, adrb, &dimB1);
       else
-	gai_error(" ga_lu_solve: LP_dgesl failed ", -info);
+	pnga_error(" ga_lu_solve: LP_dgesl failed ", -info);
       
     }
     else
-      gai_error(" ga_lu_solve: LP_dgefa failed ", -info);
+      pnga_error(" ga_lu_solve: LP_dgefa failed ", -info);
     
     /** deallocate work arrays */
     ga_free(adri);

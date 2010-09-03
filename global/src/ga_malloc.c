@@ -19,7 +19,7 @@ void GA_Register_stack_memory(
         void   (*ext_free)(void *))
 {
     if(ext_alloc == NULL || ext_free == NULL)
-      gai_error("GA_Register_stack_memory():Invalid pointer(s) passed\n", 0);
+      pnga_error("GA_Register_stack_memory():Invalid pointer(s) passed\n", 0);
     ga_ext_alloc = ext_alloc; ga_ext_free  = ext_free; ga_usesMA=0;
 }
 
@@ -32,13 +32,13 @@ void* ga_malloc(Integer nelem, int type, char *name)
 
     /* extra space for 1.ALIGNMENT and 2.storing handle */
     if(ALIGNMENT%item_size)
-       gai_error("ga_malloc: GA datatype cannot be aligned.Adjust ALIGNMENT",0);
+       pnga_error("ga_malloc: GA datatype cannot be aligned.Adjust ALIGNMENT",0);
     extra = 2*ALIGNMENT/item_size;
     nelem += extra;
 
     if(ga_usesMA) { /* Uses Memory Allocator (MA) */
        if(MA_push_stack(type,nelem,name,&handle))  MA_get_pointer(handle,&ptr);
-       else gai_error("ga_malloc: MA_push_stack failed",0);
+       else pnga_error("ga_malloc: MA_push_stack failed",0);
        addr = (unsigned long)ptr;
     }
     else { /* else, using external memory allocator */
@@ -53,7 +53,7 @@ void* ga_malloc(Integer nelem, int type, char *name)
     ptr = (void *)addr; 
     if(!ga_usesMA) handle = adjust;
 
-    if(ptr == NULL) gai_error("ga_malloc failed", 0L);
+    if(ptr == NULL) pnga_error("ga_malloc failed", 0L);
     *((Integer*)ptr)=handle;/*store handle or adjustment-value in this buffer*/
     ptr = ((char*)ptr) + ALIGNMENT;
 
@@ -67,7 +67,7 @@ void ga_free(void *ptr)
     handle= *((Integer*)ptr); /* retreive handle */
 
     if(ga_usesMA) {
-      if(!MA_pop_stack(handle)) gai_error("ga_free: MA_pop_stack failed",0);}
+      if(!MA_pop_stack(handle)) pnga_error("ga_free: MA_pop_stack failed",0);}
     else /*make sure to free original(before address alignment) pointer*/
       (*ga_ext_free)((char *)ptr - handle);
 }

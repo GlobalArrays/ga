@@ -17,6 +17,8 @@
 #   include <string.h>
 #endif
 #include "matmul.h"
+#include "papi.h"
+#include "wapi.h"
 
 #ifdef USE_VAMPIR
 #include "../ga_vt.h"
@@ -99,7 +101,7 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
     if(state->lo[0] != -1) recovery = 1;
 
     nloops = (iend-istart+1)/Ichunk + ( ((iend-istart+1)%Ichunk)?1:0 );
-    if(nloops>MAX_CHUNKS) gai_error("Increase MAX_CHUNKS value in matmul.h",0L);
+    if(nloops>MAX_CHUNKS) pnga_error("Increase MAX_CHUNKS value in matmul.h",0L);
 
     if(recovery) jstart_ = state->lo[0]; /* recovering the previous state */
     for(ii=jj=0, jlo = jstart_; jlo <= jend; jlo += Jchunk) {
@@ -184,7 +186,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     double temp;
     Integer min_tasks = MINTASKS; /* Increase tasks if there is load imbalance.
 				     This controls the granularity of chunks */
-    Integer  max_chunk, nproc=ga_nnodes_(), tmpa, tmpb;
+    Integer  max_chunk, nproc=pnga_nnodes(), tmpa, tmpb;
     Integer avail = gai_memory_avail(atype);
 
     tmpa = *Ichunk;
@@ -203,7 +205,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     if ( max_chunk > CHUNK_SIZE/nbuf) {
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
-      if(avail<MINMEM && ga_pgroup_nodeid_(&a_grp)==0) gai_error("NotEnough memory",avail);
+      if(avail<MINMEM && ga_pgroup_nodeid_(&a_grp)==0) pnga_error("NotEnough memory",avail);
       *elems = (Integer)(avail*0.9); /* Donot use every last drop */
       
       /* MAX: get the maximum chunk (or, block) size i.e  */
@@ -371,7 +373,7 @@ static void GAI_DGEMM(Integer atype, char *transa, char *transb,
 #endif
             break;
         default:
-            gai_error("ga_matmul_patch: wrong data type", atype);
+            pnga_error("ga_matmul_patch: wrong data type", atype);
     }
 }
 
@@ -393,7 +395,7 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
      short int need_scaling;
 {
 
-    Integer me = ga_nodeid_();
+    Integer me = pnga_nodeid();
     Integer get_new_B, loC[2]={0,0}, hiC[2]={0,0}, ld[2];
     Integer i0, i1, j0, j1;
     Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim, adim, bdim=0, cdim;
@@ -409,7 +411,7 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
 
     /* to skip accumulate and exploit data locality:
        get chunks according to "C" matrix distribution*/
-    nga_distribution_(g_c, &me, loC, hiC);
+    pnga_distribution(g_c, &me, loC, hiC);
     istart = loC[0]-1; iend = hiC[0]-1;
     jstart = loC[1]-1; jend = hiC[1]-1;
     kstart = 0       ; kend = *ajhi-*ajlo;
@@ -505,7 +507,7 @@ void init_block_info(Integer *g_c, Integer *proc_index, Integer *index,
                      Integer *blocks, Integer *block_dims, Integer *topology,
                      Integer *iblock) 
 {
-    Integer me= ga_nodeid_();
+    Integer me= pnga_nodeid();
 
     /* Uses simple block-cyclic data distribution */
     if(!ga_uses_proc_grid_(g_c))
@@ -537,15 +539,15 @@ int get_next_block_info(Integer *g_c, Integer *proc_index, Integer *index,
     
     /* works only upto 2 dims - i.e vectors/matrices*/
     nga_inquire_internal_(g_c,  &type, &ndim, dims);
-    if(ndim>2) gai_error("get_next_block_info() supports upto 2-d only ", 0L);
+    if(ndim>2) pnga_error("get_next_block_info() supports upto 2-d only ", 0L);
     
     /* Uses simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_c)) 
     {
        if(*iblock < ga_total_blocks_(g_c)) 
        {
-          nga_distribution_(g_c, iblock, blo, bhi);
-          *iblock += ga_nnodes_();
+          pnga_distribution(g_c, iblock, blo, bhi);
+          *iblock += pnga_nnodes();
           return 1;
        }
     }
@@ -598,7 +600,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
      short int need_scaling, irregular;
 {
   
-    Integer me= ga_nodeid_();
+    Integer me= pnga_nodeid();
     Integer get_new_B=TRUE, i0, i1, j0, j1;
     Integer idim, jdim, kdim;
     Integer k, adim=0, bdim, cdim, adim_next, bdim_next;
@@ -616,7 +618,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     Integer blocks[2], block_dims[2], topology[2];
     
     GA_PUSH_NAME("ga_matmul_regular");
-    if(irregular) gai_error("irregular flag set", 0L);
+    if(irregular) pnga_error("irregular flag set", 0L);
 
     init_task_list(&state);
 
@@ -643,7 +645,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
        if(numblocks<0)
        { /* simple block distribution */
           has_more_blocks = 0; 
-          nga_distribution_(g_c, &me, loC, hiC);
+          pnga_distribution(g_c, &me, loC, hiC);
        }
        else
        { /* block cyclic */
@@ -681,7 +683,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
        
        /* to skip accumulate and exploit data locality:
 	  get chunks according to "C" matrix distribution*/
-       /* nga_distribution_(g_c, &me, loC, hiC); */
+       /* pnga_distribution(g_c, &me, loC, hiC); */
        chunks_left=gai_get_task_list(taskListA, taskListB, &state,loC[0]-1,
 				     loC[1]-1, 0, hiC[0]-1, hiC[1]-1, k-1,
 				     Ichunk,Jchunk,Kchunk, &max_tasks,g_a);
@@ -693,7 +695,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 	     if(max_tasks == 1) {
 		if( !((hiC[0]-loC[0]+1 <= Ichunk) &&(hiC[1]-loC[1]+1 <=Jchunk)
 		      && (k <= Kchunk))) 
-		   gai_error("Invalid task list", 0L);
+		   pnga_error("Invalid task list", 0L);
 		single_task_flag = SET;
 		nga_access_ptr(g_c, loC, hiC, &c, ld);
 	     }
@@ -838,9 +840,9 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
 {
   
 #if DEBUG_
-    Integer me= ga_nodeid_();
+    Integer me= pnga_nodeid();
 #endif
-    Integer nproc=ga_nnodes_();
+    Integer nproc=pnga_nnodes();
     Integer get_new_B, i, i0, i1, j0, j1;
     Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim, ijk=0;
     Integer n, m, k, adim, bdim=0, cdim;
@@ -1056,7 +1058,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
     if(cond==0) { /* store the original matrix C before matmul starts, as 
 		     matrix C is subject to change during ga_matmul */
        tmpc_orig= (DoubleComplex*)malloc(sizeof(DoubleComplex)*(m*n/factor+1));
-       if(tmpc_orig==NULL) gai_error("check_result: malloc failed", 0);
+       if(tmpc_orig==NULL) pnga_error("check_result: malloc failed", 0);
        
        /* get matrix C */
        ga_get_(g_c, cilo, cihi, cjlo, cjhi, tmpc_orig, &m);
@@ -1066,7 +1068,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
        /* Memory Allocation */
        tmpa = (DoubleComplex*)malloc( sizeof(DoubleComplex)* (m*k/factor+1));
        tmpb = (DoubleComplex*)malloc( sizeof(DoubleComplex)* (k*n/factor+1));
-       if(tmpa==NULL || tmpb==NULL) gai_error("check_result: malloc failed", 0);
+       if(tmpa==NULL || tmpb==NULL) pnga_error("check_result: malloc failed", 0);
        
        switch(atype) {
 	  case C_FLOAT:
@@ -1086,7 +1088,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 	     for(i=0; i<k*n; i++) {((SingleComplex*)tmpb)[i].real=-1.0; ((SingleComplex*)tmpb)[i].imag=0.0;}
 	     break;
           default: 
-            gai_error("ga_matmul_patch: wrong data type", atype);
+            pnga_error("ga_matmul_patch: wrong data type", atype);
        }
        
        /* get matrix A */
@@ -1103,7 +1105,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
        m_t=m; n_t=n; k_t=k;
        adim_t=adim; bdim_t=bdim; cdim_t=cdim;
 #if (defined(CRAY) || defined(WIN32)) && !NOFORT
-       gai_error("check_result: Serial dgemms not defined", 0L);
+       pnga_error("check_result: Serial dgemms not defined", 0L);
 #else
        switch(atype) {
 	  case C_DBL:
@@ -1125,7 +1127,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 #   endif
 	     break;
 	  default:
-	     gai_error("check_result: data type not supported here", atype);
+	     pnga_error("check_result: data type not supported here", atype);
        }
 #endif
        
@@ -1136,7 +1138,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
        free(tmpa); free(tmpb);
        /* after computing c locally, verify it with the values in g_c */
        tmpc2 = (DoubleComplex*)malloc( sizeof(DoubleComplex)* (m*n/factor+1));
-       if(tmpc2==NULL) gai_error("check_result: malloc failed for tmpc2", 0);
+       if(tmpc2==NULL) pnga_error("check_result: malloc failed for tmpc2", 0);
        ga_get_(g_c, cilo, cihi, cjlo, cjhi, tmpc2, &m);
        
 #define _GA_TOL_ 0.1 /* error tolerance */
@@ -1152,7 +1154,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 		     printf("Values are = %f : %f\n Alpha=%f Beta=%f\n", 
 			    ((float*)tmpc_orig)[i], ((float*)tmpc2)[i], 
 			    *((float*)alpha), *((float*)beta));
-		     gai_error("Matmul (type:float) check failed", 0);
+		     pnga_error("Matmul (type:float) check failed", 0);
 		  }
 	       }
 	    }
@@ -1167,7 +1169,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 		     printf("Values are = %lf : %lf\n Alpha=%lf Beta=%lf\n", 
 			    ((double*)tmpc_orig)[i+j],	((double*)tmpc2)[i+j],
 			    *((double*)alpha),*((double*)beta));
-		     gai_error("Matmul (type:double) check failed", 0);
+		     pnga_error("Matmul (type:double) check failed", 0);
 		  }
 	       }
 	    }
@@ -1183,7 +1185,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 		     abs_value.imag>_GA_TOL_ || abs_value.imag<-(_GA_TOL_)) {
 		     printf("Values= %lf, %lf : %lf, %lf\n", tmpc_orig[i].real,
 			    tmpc_orig[i].imag,tmpc2[i].real,tmpc2[i].imag);
-		     gai_error("Matmul (DoubleComplex) check failed", 0);
+		     pnga_error("Matmul (DoubleComplex) check failed", 0);
 		  }
 	       }
 	    }
@@ -1199,14 +1201,14 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 		     abs_value.imag>_GA_TOL_ || abs_value.imag<-(_GA_TOL_)) {
 		     printf("Values= %lf, %lf : %lf, %lf\n", ((SingleComplex*)tmpc_orig)[i].real,
 			    ((SingleComplex*)tmpc_orig)[i].imag,((SingleComplex*)tmpc2)[i].real,((SingleComplex*)tmpc2)[i].imag);
-		     gai_error("Matmul (SingleComplex) check failed", 0);
+		     pnga_error("Matmul (SingleComplex) check failed", 0);
 		  }
 	       }
 	    }
 	    break;
 	    
 	  default:
-	     gai_error("ga_matmul_patch: wrong data type", atype);
+	     pnga_error("ga_matmul_patch: wrong data type", atype);
        }
        printf("Matrix Multiplication check (m,n,k=%ld %ld %ld)...O.K\n",m,n,k);
        fflush(stdout);
@@ -1234,7 +1236,7 @@ void ga_matmul(transa, transb, alpha, beta,
 {
     DoubleComplex *a=NULL, *b, *c, *a_ar[2], *b_ar[2], *c_ar[2];
     Integer adim1=0, adim2=0, bdim1=0, bdim2=0, cdim1=0, cdim2=0, dims[2];
-    Integer atype, btype, ctype, rank, me= ga_nodeid_();
+    Integer atype, btype, ctype, rank, me= pnga_nodeid();
     Integer n, m, k, Ichunk, Kchunk, Jchunk;
     Integer loA[2]={0,0}, hiA[2]={0,0};
     Integer loB[2]={0,0}, hiB[2]={0,0};
@@ -1262,11 +1264,11 @@ void ga_matmul(transa, transb, alpha, beta,
     GA_PUSH_NAME("ga_matmul");
 
     if (a_grp != b_grp || a_grp != c_grp)
-       gai_error("Arrays must be defined on same group",0L);
+       pnga_error("Arrays must be defined on same group",0L);
 # if 0 /* disabled. should not fail if there are non-overlapping patches*/
     /* check if C is different from A and B */
     if (*g_c == *g_a || *g_c == *g_b)
-       gai_error("Global Array C should be different from A and B", 0);
+       pnga_error("Global Array C should be different from A and B", 0);
 #endif
     
     /**************************************************
@@ -1276,7 +1278,7 @@ void ga_matmul(transa, transb, alpha, beta,
     /* Check to make sure all global arrays are of the same type */
     if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
 	  ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
-       gai_error("Processors do not match for all arrays",ga_nnodes_());
+       pnga_error("Processors do not match for all arrays",pnga_nnodes());
     }
 
     /* check if ranks are O.K. */
@@ -1288,35 +1290,35 @@ void ga_matmul(transa, transb, alpha, beta,
     VECTORCHECK(rank, dims, cdim1, cdim2, *cilo, *cihi, *cjlo, *cjhi);
 
     /* check for data-types mismatch */
-    if(atype != btype || atype != ctype ) gai_error(" types mismatch ", 0L);
+    if(atype != btype || atype != ctype ) pnga_error(" types mismatch ", 0L);
     if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT && atype!=C_SCPL)
-       gai_error(" type error",atype);
+       pnga_error(" type error",atype);
    
     /* check if patch indices and dims match */
     if (*transa == 'n' || *transa == 'N'){
        if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
-	  gai_error("  g_a indices out of range ", *g_a);
+	  pnga_error("  g_a indices out of range ", *g_a);
     }else
        if (*ailo <= 0 || *aihi > adim2 || *ajlo <= 0 || *ajhi > adim1)
-	  gai_error("  g_a indices out of range ", *g_a);
+	  pnga_error("  g_a indices out of range ", *g_a);
    
     if (*transb == 'n' || *transb == 'N'){
        if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-	  gai_error("  g_b indices out of range ", *g_b);
+	  pnga_error("  g_b indices out of range ", *g_b);
     }else
        if (*bilo <= 0 || *bihi > bdim2 || *bjlo <= 0 || *bjhi > bdim1)
-	  gai_error("  g_b indices out of range ", *g_b);
+	  pnga_error("  g_b indices out of range ", *g_b);
    
     if (*cilo <= 0 || *cihi > cdim1 || *cjlo <= 0 || *cjhi > cdim2)
-       gai_error("  g_c indices out of range ", *g_c);
+       pnga_error("  g_c indices out of range ", *g_c);
 
     /* verify if patch dimensions are consistent */
     m = *aihi - *ailo +1;
     n = *bjhi - *bjlo +1;
     k = *ajhi - *ajlo +1;
-    if( (*cihi - *cilo +1) != m) gai_error(" a & c dims error",m);
-    if( (*cjhi - *cjlo +1) != n) gai_error(" b & c dims error",n);
-    if( (*bihi - *bilo +1) != k) gai_error(" a & b dims error",k);
+    if( (*cihi - *cilo +1) != m) pnga_error(" a & c dims error",m);
+    if( (*cjhi - *cjlo +1) != n) pnga_error(" b & c dims error",n);
+    if( (*bihi - *bilo +1) != k) pnga_error(" a & b dims error",k);
 
 #if DEBUG_
     if(me==0) check_result(0, transa, transb, alpha, beta, atype,
@@ -1362,9 +1364,9 @@ void ga_matmul(transa, transb, alpha, beta,
 
     /* to skip accumulate and exploit data locality:
        get chunks according to "C" matrix distribution*/
-    nga_distribution_(g_a, &me, loA, hiA);
-    nga_distribution_(g_b, &me, loB, hiB);
-    nga_distribution_(g_c, &me, loC, hiC);
+    pnga_distribution(g_a, &me, loA, hiA);
+    pnga_distribution(g_b, &me, loB, hiB);
+    pnga_distribution(g_c, &me, loC, hiC);
 
        {
 	  Integer elems, factor=sizeof(DoubleComplex)/GAsizeofM(atype);
@@ -1376,9 +1378,9 @@ void ga_matmul(transa, transb, alpha, beta,
 	  Kchunk = GA_MIN( (hiA[1]-loA[1]+1), (hiB[0]-loB[0]+1) );
 
 #if KCHUNK_OPTIMIZATION /*works great for m=1000,n=1000,k=4000 kinda cases*/
-	  nga_distribution_(g_a, &me, loC, hiC);
+	  pnga_distribution(g_a, &me, loC, hiC);
 	  Kchunk = hiC[1]-loC[1]+1;
-	  nga_distribution_(g_b, &me, loC, hiC);
+	  pnga_distribution(g_b, &me, loC, hiC);
 	  Kchunk = GA_MIN(Kchunk, (hiC[0]-loC[0]+1));
 #endif
 
@@ -1519,7 +1521,7 @@ void ga_matmul_mirrored(transa, transb, alpha, beta,
    DoubleComplex *a, *b, *c;
 #endif
 Integer atype, btype, ctype, adim1=0, adim2=0, bdim1=0, bdim2=0, cdim1=0, cdim2=0, dims[2], rank;
-Integer me= ga_nodeid_(), nproc;
+Integer me= pnga_nodeid(), nproc;
 Integer i, ijk = 0, i0, i1, j0, j1;
 Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
 Integer n, m, k, adim, bdim, cdim;
@@ -1547,14 +1549,14 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    /* Check to make sure all global arrays are of the same type */
    if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
         ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
-     gai_error("Processors do not match for all arrays",ga_nnodes_());
+     pnga_error("Processors do not match for all arrays",pnga_nnodes());
    }
    if (ga_is_mirrored_(g_a)) {
      inode = ga_cluster_nodeid_();
      nproc = ga_cluster_nprocs_(&inode);
      iproc = me - ga_cluster_procid_(&inode, &ZERO_I);
    } else {
-     nproc = ga_nnodes_();
+     nproc = pnga_nnodes();
      iproc = me;
    }
 
@@ -1565,37 +1567,37 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    nga_inquire_internal_(g_c, &ctype, &rank, dims); 
    VECTORCHECK(rank, dims, cdim1, cdim2, *cilo, *cihi, *cjlo, *cjhi);
 
-   if(atype != btype || atype != ctype ) gai_error(" types mismatch ", 0L);
+   if(atype != btype || atype != ctype ) pnga_error(" types mismatch ", 0L);
    if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT && atype != C_SCPL)
-     gai_error(" type error",atype);
+     pnga_error(" type error",atype);
    
    
    
    /* check if patch indices and dims match */
    if (*transa == 'n' || *transa == 'N'){
      if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
-       gai_error("  g_a indices out of range ", *g_a);
+       pnga_error("  g_a indices out of range ", *g_a);
    }else
      if (*ailo <= 0 || *aihi > adim2 || *ajlo <= 0 || *ajhi > adim1)
-       gai_error("  g_a indices out of range ", *g_a);
+       pnga_error("  g_a indices out of range ", *g_a);
    
    if (*transb == 'n' || *transb == 'N'){
      if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-       gai_error("  g_b indices out of range ", *g_b);
+       pnga_error("  g_b indices out of range ", *g_b);
    }else
      if (*bilo <= 0 || *bihi > bdim2 || *bjlo <= 0 || *bjhi > bdim1)
-       gai_error("  g_b indices out of range ", *g_b);
+       pnga_error("  g_b indices out of range ", *g_b);
    
    if (*cilo <= 0 || *cihi > cdim1 || *cjlo <= 0 || *cjhi > cdim2)
-     gai_error("  g_c indices out of range ", *g_c);
+     pnga_error("  g_c indices out of range ", *g_c);
    
    /* verify if patch dimensions are consistent */
    m = *aihi - *ailo +1;
    n = *bjhi - *bjlo +1;
    k = *ajhi - *ajlo +1;
-   if( (*cihi - *cilo +1) != m) gai_error(" a & c dims error",m);
-   if( (*cjhi - *cjlo +1) != n) gai_error(" b & c dims error",n);
-   if( (*bihi - *bilo +1) != k) gai_error(" a & b dims error",k);
+   if( (*cihi - *cilo +1) != m) pnga_error(" a & c dims error",m);
+   if( (*cjhi - *cjlo +1) != n) pnga_error(" b & c dims error",n);
+   if( (*bihi - *bilo +1) != k) pnga_error(" a & b dims error",k);
    
 
    /* In 32-bit platforms, k*m*n might exceed the "long" range(2^31), 
@@ -1635,7 +1637,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
          fflush(stdout);
          gai_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
        }
-       if(avail<MINMEM && ga_nodeid_()==0) gai_error("NotEnough memory",avail);
+       if(avail<MINMEM && pnga_nodeid()==0) pnga_error("NotEnough memory",avail);
        elems = (Integer)(avail*0.9); /* Donot use every last drop */
        
        max_chunk=GA_MIN(max_chunk, (Integer)(sqrt( (double)((elems-EXTRA)/3))));
@@ -1798,7 +1800,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 #endif
 	       break;
 	     default:
-	       gai_error("ga_matmul_patch: wrong data type", atype);
+	       pnga_error("ga_matmul_patch: wrong data type", atype);
 	     }
 	     
 	     i0= *cilo+ilo; i1= *cilo+ihi;   j0= *cjlo+jlo; j1= *cjlo+jhi;
@@ -1864,7 +1866,7 @@ static void  gai_setup_2d_patch(Integer rank, Integer dims[],
     int d,e=0;
 
     for(d=0; d<rank; d++)
-       if( (hi[d]-lo[d])>0 && ++e>2 ) gai_error("3-D Patch Detected", 0L);
+       if( (hi[d]-lo[d])>0 && ++e>2 ) pnga_error("3-D Patch Detected", 0L);
     *ipos = *jpos = -1;
     for(d=0; d<rank; d++){
        if( (*ipos <0) && (hi[d]>lo[d]) ) { *ipos =d; continue; }
@@ -1914,7 +1916,7 @@ void ngai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
    DoubleComplex *a, *b, *c;
 #endif
 Integer atype, btype, ctype, adim1, adim2, bdim1, bdim2, cdim1, cdim2;
-Integer me= ga_nodeid_(), nproc, inode, iproc;
+Integer me= pnga_nodeid(), nproc, inode, iproc;
 Integer i, ijk = 0, i0, i1, j0, j1;
 Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
 Integer n, m, k, adim, bdim, cdim, arank, brank, crank;
@@ -1951,14 +1953,14 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    /* Check to make sure all global arrays are of the same type */
    if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
         ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
-     gai_error("Processors do not match for all arrays",ga_nnodes_());
+     pnga_error("Processors do not match for all arrays",pnga_nnodes());
    }
    if (ga_is_mirrored_(g_a)) {
      inode = ga_cluster_nodeid_();
      nproc = ga_cluster_nprocs_(&inode);
      iproc = me - ga_cluster_procid_(&inode, &ZERO_I);
    } else {
-     nproc = ga_nnodes_();
+     nproc = pnga_nnodes();
      iproc = me;
    }
 
@@ -1966,13 +1968,13 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    nga_inquire_internal_(g_b, &btype, &brank, bdims);
    nga_inquire_internal_(g_c, &ctype, &crank, cdims);
 
-   if(arank<2)  gai_error("rank of A must be at least 2",arank);
-   if(brank<2)  gai_error("rank of B must be at least 2",brank);
-   if(crank<2)  gai_error("rank of C must be at least 2",crank);
+   if(arank<2)  pnga_error("rank of A must be at least 2",arank);
+   if(brank<2)  pnga_error("rank of B must be at least 2",brank);
+   if(crank<2)  pnga_error("rank of C must be at least 2",crank);
 
-   if(atype != btype || atype != ctype ) gai_error(" types mismatch ", 0L);
+   if(atype != btype || atype != ctype ) pnga_error(" types mismatch ", 0L);
    if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT && atype != C_SCPL)
-     gai_error(" type error",atype);
+     pnga_error(" type error",atype);
    
    gai_setup_2d_patch(arank, adims, alo, ahi, &ailo, &aihi, &ajlo, &ajhi, 
 		                  &adim1, &adim2, &aipos, &ajpos);
@@ -1984,28 +1986,28 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    /* check if patch indices and dims match */
    if (*transa == 'n' || *transa == 'N'){
       if (ailo <= 0 || aihi > adim1 || ajlo <= 0 || ajhi > adim2)
-         gai_error("  g_a indices out of range ", *g_a);
+         pnga_error("  g_a indices out of range ", *g_a);
    }else
       if (ailo <= 0 || aihi > adim2 || ajlo <= 0 || ajhi > adim1)
-         gai_error("  g_a indices out of range ", *g_a);
+         pnga_error("  g_a indices out of range ", *g_a);
 
    if (*transb == 'n' || *transb == 'N'){
       if (bilo <= 0 || bihi > bdim1 || bjlo <= 0 || bjhi > bdim2)
-          gai_error("  g_b indices out of range ", *g_b);
+          pnga_error("  g_b indices out of range ", *g_b);
    }else
       if (bilo <= 0 || bihi > bdim2 || bjlo <= 0 || bjhi > bdim1)
-          gai_error("  g_b indices out of range ", *g_b);
+          pnga_error("  g_b indices out of range ", *g_b);
 
    if (cilo <= 0 || cihi > cdim1 || cjlo <= 0 || cjhi > cdim2)
-       gai_error("  g_c indices out of range ", *g_c);
+       pnga_error("  g_c indices out of range ", *g_c);
 
   /* verify if patch dimensions are consistent */
    m = aihi - ailo +1;
    n = bjhi - bjlo +1;
    k = ajhi - ajlo +1;
-   if( (cihi - cilo +1) != m) gai_error(" a & c dims error",m);
-   if( (cjhi - cjlo +1) != n) gai_error(" b & c dims error",n);
-   if( (bihi - bilo +1) != k) gai_error(" a & b dims error",k);
+   if( (cihi - cilo +1) != m) pnga_error(" a & c dims error",m);
+   if( (cjhi - cjlo +1) != n) pnga_error(" b & c dims error",n);
+   if( (bihi - bilo +1) != k) pnga_error(" a & b dims error",k);
 
    
    chunk_cube = (k*(double)(m*n)) / (min_tasks * nproc);
@@ -2028,7 +2030,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	 as chunk size is very small, which leads to communication overhead)*/
        Integer avail = gai_memory_avail(atype);
        gai_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
-       if(avail<MINMEM && ga_nodeid_()==0) gai_error("Not enough memory",avail);
+       if(avail<MINMEM && pnga_nodeid()==0) pnga_error("Not enough memory",avail);
        elems = (Integer)(avail*0.9);/* Donot use every last drop */
        
        max_chunk=GA_MIN(max_chunk, (Integer)(sqrt( (double)((elems-EXTRA)/3))));
@@ -2198,7 +2200,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 #endif
 		    break;
 		  default:
-		    gai_error("ga_matmul_patch: wrong data type", atype);
+		    pnga_error("ga_matmul_patch: wrong data type", atype);
 		  }
 
                   i0= cilo+ilo; i1= cilo+ihi;   j0= cjlo+jlo; j1= cjlo+jhi;

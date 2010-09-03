@@ -14,7 +14,10 @@
 #include "typesf2c.h"
 #include "macommon.h"
 #include "global.h"
-extern void gai_error();
+#include "papi.h"
+#include "wapi.h"
+
+extern void pnga_error();
 
 #define GT(a,b) (*(a) > *(b))
 #define GE(a,b) (*(a) >= *(b))
@@ -243,7 +246,7 @@ void ga_sort_scat(pn, v, i, j, base, type)
      case C_INT:  ga_sort_scat_int_(pn, (int*)v, i, j, base); break;
      case C_FLOAT:  ga_sort_scat_flt_(pn, (float*)v, i, j, base); break; 
      case C_LONG:  ga_sort_scat_long_(pn, (long*)v, i, j, base); break;
-     default:        gai_error("ERROR:ga_sort_scat: wrong type",type);
+     default:        pnga_error("ERROR:ga_sort_scat: wrong type",type);
    } 
 }
 

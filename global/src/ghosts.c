@@ -55,6 +55,8 @@
 #include "armci.h"
 #include "message.h"
 #include "macdecls.h"
+#include "papi.h"
+#include "wapi.h"
 
 /* from armcip.h, but armcip.h is private so we should not include it */
 extern void armci_write_strided(void *ptr, int stride_levels, int stride_arr[], int count[], char *buf);
@@ -102,11 +104,11 @@ char *lptr;
 Integer  handle = GA_OFFSET + *g_a;
 Integer  i, lo[MAXDIM], hi[MAXDIM];
 Integer ndim = GA[handle].ndim;
-Integer me = ga_nodeid_();
+Integer me = pnga_nodeid();
 
    GA_PUSH_NAME("nga_access_ghost_ptr");
 
-   nga_distribution_(g_a, &me, lo, hi);
+   pnga_distribution(g_a, &me, lo, hi);
 
    for (i=0; i < ndim; i++) {
      dims[i] = 0;
@@ -131,7 +133,7 @@ Integer i=0;
 Integer tmp_sub[MAXDIM];
 unsigned long    elemsize=0;
 unsigned long    lref=0, lptr=0;
-Integer me = ga_nodeid_();
+Integer me = pnga_nodeid();
    GA_PUSH_NAME("nga_access_ghost_element");
    /* Indices conform to Fortran convention. Shift them down 1 so that
       gam_LocationWithGhosts works. */
@@ -181,7 +183,7 @@ Integer me = ga_nodeid_();
    if( lptr%elemsize != lref%elemsize ){ 
        printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
                                                     lref,lref%elemsize);
-       gai_error("nga_access: MA addressing problem: base address misallignment",
+       pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
 #endif
@@ -203,7 +205,7 @@ void nga_access_ghost_element_ptr(Integer* g_a, void *ptr,
   Integer  handle = GA_OFFSET + *g_a; 
   Integer i; 
   Integer tmp_sub[MAXDIM]; 
-  Integer me = ga_nodeid_(); 
+  Integer me = pnga_nodeid(); 
   GA_PUSH_NAME("nga_access_ghost_element_ptr"); 
   /* Indices conform to Fortran convention. Shift them down 1 so that 
      gam_LocationWithGhosts works. */ 
@@ -272,7 +274,7 @@ unsigned long    lref=0, lptr=0;
    if( lptr%elemsize != lref%elemsize ){ 
        printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
                                                     lref,lref%elemsize);
-       gai_error("nga_access: MA addressing problem: base address misallignment",
+       pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
 #endif
@@ -336,7 +338,7 @@ void FATR nga_get_ghost_block_(Integer *g_a,
 
   /* Figure out whether or not lo and hi can be accessed completely
      from local data */
-  nga_distribution_(g_a, &me, glo, ghi);
+  pnga_distribution(g_a, &me, glo, ghi);
   ichk = 1;
   for (i=0; i<ndim; i++) {
     if (lo[i] < glo[i]-(Integer)GA[handle].width[i]) ichk = 0;
@@ -393,7 +395,7 @@ void FATR ga_update1_ghosts_(Integer *g_a)
   int stride_loc[MAXDIM], stride_rem[MAXDIM], count[MAXDIM];
   char *ptr_loc, *ptr_rem;
   logical hasData = TRUE;
-  Integer me = ga_nodeid_();
+  Integer me = pnga_nodeid();
   Integer p_handle;
 
   /* This routine makes use of the shift algorithm to update data in the
@@ -483,7 +485,7 @@ void FATR ga_update1_ghosts_(Integer *g_a)
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[me];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&me,lo_loc,hi_loc);
+  pnga_distribution(g_a,&me,lo_loc,hi_loc);
   /* initialize range increments and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
@@ -561,7 +563,7 @@ void FATR ga_update1_ghosts_(Integer *g_a)
              cells). Start by finding out what data is actually held by
              remote processor. */
           proc_rem = GA_proclist[ipx];
-          nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
+          pnga_distribution(g_a, &proc_rem, tlo_rem, thi_rem);
           for (i = 0; i < ndim; i++) {
             if (increment[i] == 0) {
               if (i == idx) {
@@ -684,7 +686,7 @@ void FATR ga_update1_ghosts_(Integer *g_a)
              cells). Start by finding out what data is actually held by
              remote processor. */
           proc_rem = GA_proclist[ipx];
-          nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
+          pnga_distribution(g_a, &proc_rem, tlo_rem, thi_rem);
           for (i = 0; i < ndim; i++) {
             if (increment[i] == 0) {
               if (i == idx) {
@@ -800,7 +802,7 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
   logical mask0;
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
   char *ptr_loc, *ptr_rem;
-  Integer me = ga_nodeid_();
+  Integer me = pnga_nodeid();
   Integer p_handle;
 
   /* if global array has no ghost cells, just return */
@@ -826,7 +828,7 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[me];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&me,lo_loc,hi_loc);
+  pnga_distribution(g_a,&me,lo_loc,hi_loc);
 
   /* evaluate total number of PUT operations that will be required */
   ntot = 1;
@@ -899,7 +901,7 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
        data to it. Start by getting distribution on remote
        processor.*/
     proc_rem = GA_proclist[0];
-    nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
+    pnga_distribution(g_a, &proc_rem, tlo_rem, thi_rem);
     for (idx = 0; idx < ndim; idx++) {
       if (mask[idx] == 0) {
         plo_loc[idx] = width[idx];
@@ -1031,7 +1033,7 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
   Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
   char *ptr_loc, *ptr_rem;
-  Integer me = ga_nodeid_();
+  Integer me = pnga_nodeid();
   Integer p_handle;
 
   /* This routine makes use of the shift algorithm to update data in the
@@ -1115,7 +1117,7 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[me];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&me,lo_loc,hi_loc);
+  pnga_distribution(g_a,&me,lo_loc,hi_loc);
 
   /* loop over dimensions for sequential update using shift algorithm */
   for (idx=0; idx < ndim; idx++) {
@@ -1139,7 +1141,7 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
          cells). Start by finding out what data is actually held by
          remote processor. */
       proc_rem = GA_proclist[0];
-      nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
+      pnga_distribution(g_a, &proc_rem, tlo_rem, thi_rem);
       for (i = 0; i < ndim; i++) {
         if (increment[i] == 0) {
           if (i == idx) {
@@ -1198,7 +1200,7 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
          cells). Start by finding out what data is actually held by
          remote processor. */
       proc_rem = GA_proclist[0];
-      nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
+      pnga_distribution(g_a, &proc_rem, tlo_rem, thi_rem);
       for (i = 0; i < ndim; i++) {
         if (increment[i] == 0) {
           if (i == idx) {
@@ -1272,7 +1274,7 @@ logical FATR ga_set_update4_info_(Integer *g_a)
   int corner_flag;
   char **ptr_snd, **ptr_rcv, *cache;
   char *current;
-  Integer me = ga_nodeid_();
+  Integer me = pnga_nodeid();
   Integer p_handle;
 
   /* This routine sets the arrays that are used to transfer data using
@@ -1328,7 +1330,7 @@ logical FATR ga_set_update4_info_(Integer *g_a)
 
   /* initialize range increments and get array dimensions */
 
-  nga_distribution_(g_a,&me,lo_loc,hi_loc);
+  pnga_distribution(g_a,&me,lo_loc,hi_loc);
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
     width[idx] = (Integer)GA[handle].width[idx];
@@ -1642,7 +1644,7 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
   char **ptr_snd, **ptr_rcv, *cache, *current;
   char send_name[32], rcv_name[32];
   void *snd_ptr, *rcv_ptr, *snd_ptr_orig, *rcv_ptr_orig;
-  Integer me = ga_nodeid_();
+  Integer me = pnga_nodeid();
   Integer p_handle;
 
   /* This routine makes use of the shift algorithm to update data in the
@@ -1901,7 +1903,7 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
   char *ptr_snd, *ptr_rcv;
   char send_name[32], rcv_name[32];
   void *snd_ptr, *rcv_ptr, *snd_ptr_orig, *rcv_ptr_orig;
-  Integer me = ga_nodeid_();
+  Integer me = pnga_nodeid();
   Integer p_handle;
 
   /* This routine makes use of the shift algorithm to update data in the
@@ -1980,7 +1982,7 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
   msgcnt = 0;
 
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&me,lo_loc,hi_loc);
+  pnga_distribution(g_a,&me,lo_loc,hi_loc);
   /* Get indices of processor in virtual grid */
   nga_proc_topology_(g_a, &me, index);
 
@@ -2422,7 +2424,7 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
   int msgcnt;
   char *ptr_loc, *ptr_rem;
-  Integer me = ga_nodeid_();
+  Integer me = pnga_nodeid();
   Integer p_handle;
 
   /* This routine makes use of the shift algorithm to update data in the
@@ -2510,7 +2512,7 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[GAme];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&me,lo_loc,hi_loc);
+  pnga_distribution(g_a,&me,lo_loc,hi_loc);
 
   /* loop over dimensions for sequential update using shift algorithm */
   msgcnt = 0;
@@ -2536,7 +2538,7 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
          cells). Start by finding out what data is actually held by
          remote processor. */
       proc_rem = GA_proclist[0];
-      nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
+      pnga_distribution(g_a, &proc_rem, tlo_rem, thi_rem);
       for (i = 0; i < ndim; i++) {
         if (increment[i] == 0) {
           if (i == idx) {
@@ -2604,7 +2606,7 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
          cells). Start by finding out what data is actually held by
          remote processor. */
       proc_rem = GA_proclist[0];
-      nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
+      pnga_distribution(g_a, &proc_rem, tlo_rem, thi_rem);
       for (i = 0; i < ndim; i++) {
         if (increment[i] == 0) {
           if (i == idx) {
@@ -2694,7 +2696,7 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   logical flag;
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
   char *ptr_loc, *ptr_rem;
-  Integer me = ga_nodeid_();
+  Integer me = pnga_nodeid();
   Integer p_handle;
 
   int local_sync_begin,local_sync_end;
@@ -2743,7 +2745,7 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[GAme];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&me,lo_loc,hi_loc);
+  pnga_distribution(g_a,&me,lo_loc,hi_loc);
 
   /* evaluate total number of GET operations */
   ntot = 1;
@@ -2810,7 +2812,7 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
        data from it. Start by getting distribution on remote
        processor.*/
     proc_rem = GA_proclist[0];
-    nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
+    pnga_distribution(g_a, &proc_rem, tlo_rem, thi_rem);
     for (idx = 0; idx < ndim; idx++) {
       if (mask[idx] == 0) {
         plo_loc[idx] = width[idx];
@@ -3052,7 +3054,7 @@ logical ga_set_update5_info_(Integer *g_a)
 #ifdef UPDATE_SAMENODE_GHOSTS_FIRST
   int scope;
 #endif
-  Integer me = ga_nodeid_();
+  Integer me = pnga_nodeid();
   Integer p_handle;
 
   /* This routine sets up the arrays that are used to transfer data
@@ -3107,7 +3109,7 @@ logical ga_set_update5_info_(Integer *g_a)
   cache = (char *)GA[handle].cache;
   corner_flag = GA[handle].corner_flag;
 
-  nga_distribution_(g_a,&me,lo_loc,hi_loc); 
+  pnga_distribution(g_a,&me,lo_loc,hi_loc); 
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
     width[idx] = (Integer)GA[handle].width[idx];
@@ -3149,7 +3151,7 @@ logical ga_set_update5_info_(Integer *g_a)
 
         cache = (char *)(proc_rem+1);
 
-        nga_distribution_(g_a, proc_rem, tlo_rem, thi_rem);
+        pnga_distribution(g_a, proc_rem, tlo_rem, thi_rem);
         
 
         for (i = 0; i < ndim; i++) {
@@ -3215,7 +3217,7 @@ logical ga_set_update5_info_(Integer *g_a)
 
         cache = (char *)(proc_rem+1);
 
-        nga_distribution_(g_a, proc_rem, tlo_rem, thi_rem);
+        pnga_distribution(g_a, proc_rem, tlo_rem, thi_rem);
 
 
 
@@ -3321,7 +3323,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   char *ptr_loc, *ptr_rem;
   char send_name[32], rcv_name[32];
   void *snd_ptr, *rcv_ptr, *snd_ptr_orig, *rcv_ptr_orig;
-  Integer me = ga_nodeid_();
+  Integer me = pnga_nodeid();
   Integer p_handle, wproc;
 
   /* This routine makes use of the shift algorithm to update data in the
@@ -3413,7 +3415,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[me];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&me,lo_loc,hi_loc);
+  pnga_distribution(g_a,&me,lo_loc,hi_loc);
   /* Get indices of processor in virtual grid */
   nga_proc_topology_(g_a, &me, index);
 
@@ -3496,7 +3498,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
       }
       sprocflag = ARMCI_Same_node(wproc);
       proc_rem_rcv = GA_proclist[0];
-      nga_distribution_(g_a, &proc_rem_rcv, tlo_rem, thi_rem);
+      pnga_distribution(g_a, &proc_rem_rcv, tlo_rem, thi_rem);
 
       /* Get actual coordinates of chunk of data that will be sent to
        * remote processor as well as coordinates of the array space that
@@ -3685,7 +3687,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
       }
       sprocflag = ARMCI_Same_node(wproc);
       proc_rem_rcv = GA_proclist[0];
-      nga_distribution_(g_a, &proc_rem_rcv, tlo_rem, thi_rem);
+      pnga_distribution(g_a, &proc_rem_rcv, tlo_rem, thi_rem);
 
       /* Get actual coordinates of chunk of data that will be sent to
        * remote processor as well as coordinates of the array space that
@@ -3858,7 +3860,7 @@ logical FATR ga_update7_ghosts_(Integer *g_a)
   logical mask0;
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
   char *ptr_loc, *ptr_rem;
-  Integer me = ga_nodeid_();
+  Integer me = pnga_nodeid();
   Integer p_handle;
 
   /* if global array has no ghost cells, just return */
@@ -3884,7 +3886,7 @@ logical FATR ga_update7_ghosts_(Integer *g_a)
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[me];
   /* obtain range of data that is held by local processor */
-  nga_distribution_(g_a,&me,lo_loc,hi_loc);
+  pnga_distribution(g_a,&me,lo_loc,hi_loc);
 
   /* evaluate total number of GET operations that will be required */
   ntot = 1;
@@ -3951,7 +3953,7 @@ logical FATR ga_update7_ghosts_(Integer *g_a)
        data to it. Start by getting distribution on remote
        processor.*/
     proc_rem = GA_proclist[0];
-    nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
+    pnga_distribution(g_a, &proc_rem, tlo_rem, thi_rem);
     for (idx = 0; idx < ndim; idx++) {
       if (mask[idx] == 0) {
         plo_loc[idx] = width[idx];
@@ -4020,7 +4022,7 @@ void FATR nga_nbget_ghost_dir_(Integer *g_a,
   Integer subscript[MAXDIM], ld[MAXDIM];
   Integer i, ndim, dim, width;
   char *ptr_loc;
-  Integer me = ga_nodeid_();
+  Integer me = pnga_nodeid();
   Integer p_handle;
   GA_PUSH_NAME("nga_nbget_ghost_dir");
   ndim = GA[handle].ndim;
@@ -4028,11 +4030,11 @@ void FATR nga_nbget_ghost_dir_(Integer *g_a,
   /* check mask to see that it corresponds to a valid direction */
   for (i=0; i<ndim; i++) {
     if (abs(mask[i]) != 0 && abs(mask[i]) != 1)
-      gai_error("nga_nbget_ghost_dir: invalid mask entry", mask[i]);
+      pnga_error("nga_nbget_ghost_dir: invalid mask entry", mask[i]);
   }
 
   /* get range of data on local processor */
-  nga_distribution_(g_a,&me,lo_loc,hi_loc);
+  pnga_distribution(g_a,&me,lo_loc,hi_loc);
 
   /* locate data on remote processor */
   for (i=0; i<ndim; i++) {

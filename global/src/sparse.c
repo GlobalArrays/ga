@@ -15,7 +15,8 @@
 #include "globalp.h"
 #include "macdecls.h"
 #include "message.h"
-
+#include "papi.h"
+#include "wapi.h"
 
 static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, void* val,
                             Integer add, Integer excl)
@@ -211,7 +212,7 @@ static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, voi
     else
       for(i=0; i< n; i++) llb[i] = *(long long*)val;
     break;                                                         
-    default: gai_error("ga_scan/add:wrong data type",type);
+    default: pnga_error("ga_scan/add:wrong data type",type);
   }
 }
 
@@ -278,7 +279,7 @@ static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
              lla2[0] = lla1[0] +  *(long long*)val;
              for(i=1; i< n; i++) lla2[i] = lla2[i-1]+lla1[i];
              break;
-          default: gai_error("ga_add_val:wrong data type",type);
+          default: pnga_error("ga_add_val:wrong data type",type);
         }
 }                                                               
 #endif
@@ -339,7 +340,7 @@ static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sb
                      *lld = lls[i]; lld++; cnt++;
           }
              break;    
-          default: gai_error("ga_copy_sbit:wrong data type",type);
+          default: pnga_error("ga_copy_sbit:wrong data type",type);
         }
     else
         switch (type){
@@ -373,11 +374,11 @@ static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sb
              lls = (long long*)b; lld = (long long*)a;
              for(i=0; i< n; i++) if(sbit[i]) { lld[i] = *lls; lls++;  cnt++; }
              break; 
-          default: gai_error("ga_copy_sbit:wrong data type",type);
+          default: pnga_error("ga_copy_sbit:wrong data type",type);
         }
     if(cnt!=mx){
         printf("\nga_copy_sbit: cnt=%d should be%ld\n",cnt,(long)mx);
-        gai_error("ga_copy_sbit mismatch",0);
+        pnga_error("ga_copy_sbit mismatch",0);
     }
 }
 
@@ -393,15 +394,15 @@ Integer ndim, type, me, off;
 register Integer i;
 
    ga_sync_();
-   me = ga_nodeid_();
+   me = pnga_nodeid();
 
    gai_check_handle(g_a, "ga_patch_enum");
 
    ndim = ga_ndim_(g_a);
-   if (ndim > 1) gai_error("ga_patch_enum:applicable to 1-dim arrays",ndim);
+   if (ndim > 1) pnga_error("ga_patch_enum:applicable to 1-dim arrays",ndim);
 
    nga_inquire_internal_(g_a, &type, &ndim, dims);
-   nga_distribution_(g_a, &me, &lop, &hip);
+   pnga_distribution(g_a, &me, &lop, &hip);
 
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */
 
@@ -469,7 +470,7 @@ register Integer i;
              for(i=0; i< hip-lop+1; i++)
                  lla[i] = *(long long*)start+(off+i)* *(long long*)stride;
              break;              
-          default: gai_error("ga_patch_enum:wrong data type ",type);
+          default: pnga_error("ga_patch_enum:wrong data type ",type);
         }
 
         nga_release_update_(g_a, &lop, &hip);
@@ -492,8 +493,8 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
    void *ptr_b=NULL;
    void *ptr_a=NULL;
 
-   nproc = ga_nnodes_();
-      me = ga_nodeid_();
+   nproc = pnga_nnodes();
+      me = pnga_nodeid();
 
    gai_check_handle(g_a, "ga_scan_copy");
    gai_check_handle(g_b, "ga_scan_copy 2");
@@ -503,10 +504,10 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
 
    ndim = ga_ndim_(g_a);
-   if(ndim>1)gai_error("ga_scan_copy: applicable to 1-dim arrays",ndim);
+   if(ndim>1)pnga_error("ga_scan_copy: applicable to 1-dim arrays",ndim);
 
    nga_inquire_internal_(g_a, &type, &ndim, &dims);
-   nga_distribution_(g_sbit, &me, &lop, &hip);
+   pnga_distribution(g_sbit, &me, &lop, &hip);
 
    /* create arrays to hold first and last bits set on a given process */
    lim = (Integer *) ga_malloc(2*nproc, MT_F_INT, "ga scan buf");
@@ -514,10 +515,10 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    lom = lim + nproc;
 
-   if(!ga_compare_distr_(g_a, g_sbit))
-       gai_error("ga_scan_copy: different distribution src",0);
-   if(!ga_compare_distr_(g_b, g_sbit))
-       gai_error("ga_scan_copy: different distribution dst",0);
+   if(!pnga_compare_distr(g_a, g_sbit))
+       pnga_error("ga_scan_copy: different distribution src",0);
+   if(!pnga_compare_distr(g_b, g_sbit))
+       pnga_error("ga_scan_copy: different distribution dst",0);
       
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */ 
 
@@ -570,7 +571,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
           /* case2: scan lim to find sbit set on lower numbered processors */ 
           for(k=me-1; k >=0; k--)if(lim[k]>0) {startp =lim[k]; break; }
        }
-       if(!startp) gai_error("sbit not found for",lop); /*nothing was found*/
+       if(!startp) pnga_error("sbit not found for",lop); /*nothing was found*/
 
        /* copy or scan the data */
        i = 0;
@@ -841,7 +842,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
           }
           ga_free(lllast);
           break;
-        default: gai_error("ga_scan/add:wrong data type",type);
+        default: pnga_error("ga_scan/add:wrong data type",type);
       }
       nga_release_(g_b, &lop, &hip);
       if (*excl) nga_release_(g_a, &lop, &hip);
@@ -879,8 +880,8 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
    Integer lop, hip, ndim, dims, type,crap;
    Integer *ia=NULL, elems=0, i=0, first=0, myplace =0, counter=0;
 
-   nproc = ga_nnodes_();
-      me = ga_nodeid_();
+   nproc = pnga_nnodes();
+      me = pnga_nodeid();
 
    gai_check_handle(g_a, "ga_pack");
    gai_check_handle(g_b, "ga_pack 2");
@@ -892,8 +893,8 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    bzero(lim,sizeof(Integer)*nproc);
    nga_inquire_internal_(g_a, &type, &ndim, &dims);
-   if(ndim>1) gai_error("ga_pack: supports 1-dim arrays only",ndim);
-   nga_distribution_(g_sbit, &me, &lop, &hip);
+   if(ndim>1) pnga_error("ga_pack: supports 1-dim arrays only",ndim);
+   pnga_distribution(g_sbit, &me, &lop, &hip);
 
    /* how many elements we have to copy? */
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */
@@ -986,8 +987,8 @@ void gai_bin_offset(int scope, int *x, int n, int *offset)
 int root, up, left, right;
 int len, lenmes, tag=32100, i, me=armci_msg_me();
 
-    if(!x)gai_error("gai_bin_offset: NULL pointer", n);
-    if(n>NWORK)gai_error("gai_bin_offset: >NWORK", n);
+    if(!x)pnga_error("gai_bin_offset: NULL pointer", n);
+    if(n>NWORK)pnga_error("gai_bin_offset: >NWORK", n);
     len = sizeof(int)*n;
 
     armci_msg_bintree(scope, &root, &up, &left, &right);
@@ -1034,18 +1035,18 @@ int rc=0;
 
 logical FATR ga_create_bin_range_(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *g_range)
 {
-Integer type, ndim, nbin, lobin, hibin, me=ga_nodeid_(),crap;
-Integer dims[2], nproc=ga_nnodes_(),chunk[2];
+Integer type, ndim, nbin, lobin, hibin, me=pnga_nodeid(),crap;
+Integer dims[2], nproc=pnga_nnodes(),chunk[2];
 
     nga_inquire_internal_(g_bin, &type, &ndim, &nbin);
-    if(ndim !=1) gai_error("ga_bin_index: 1-dim array required",ndim);
+    if(ndim !=1) pnga_error("ga_bin_index: 1-dim array required",ndim);
     if(type!= C_INT && type!=C_LONG && type!=C_LONGLONG)
-       gai_error("ga_bin_index: not integer type",type);
+       pnga_error("ga_bin_index: not integer type",type);
 
     chunk[0]=dims[0]=2; dims[1]=nproc; chunk[1]=1;
-    if(!ngai_create(MT_F_INT, 2, dims, "bin_proc",chunk,g_range)) return FALSE;
+    if(!pnga_create(MT_F_INT, 2, dims, "bin_proc",chunk,g_range)) return FALSE;
 
-    nga_distribution_(g_off,&me, &lobin,&hibin);
+    pnga_distribution(g_off,&me, &lobin,&hibin);
 
     if(lobin>0){ /* enter this block when we have data */
       Integer first_proc, last_proc, p;
@@ -1065,16 +1066,16 @@ Integer dims[2], nproc=ga_nnodes_(),chunk[2];
 
       /* find processors on which these bins are located */
       if(!nga_locate_(g_bin, &first_off, &first_proc))
-          gai_error("ga_bin_sorter: failed to locate region f",first_off);
+          pnga_error("ga_bin_sorter: failed to locate region f",first_off);
       if(!nga_locate_(g_bin, &last_off, &last_proc))
-          gai_error("ga_bin_sorter: failed to locate region l",last_off);
+          pnga_error("ga_bin_sorter: failed to locate region l",last_off);
 
       /* inspect range of indices to bin elements stored on these processors */
       for(p=first_proc, bin=lobin; p<= last_proc; p++){
           Integer lo, hi, buf[2], off, cnt; 
           buf[0] =-1; buf[1]=-1;
 
-          nga_distribution_(g_bin,&p,&lo,&hi);
+          pnga_distribution(g_bin,&p,&lo,&hi);
 
           for(/* start from current bin */; bin<= hibin; bin++, myoff++){ 
               Integer blo,bhi,stat;
@@ -1124,16 +1125,16 @@ Integer dims[2], nproc=ga_nnodes_(),chunk[2];
 void FATR ga_bin_sorter_(Integer *g_bin, Integer *g_cnt, Integer *g_off)
 {
 extern void gai_hsort(Integer *list, int n);
-Integer nbin,totbin,type,ndim,lo,hi,me=ga_nodeid_(),crap;
+Integer nbin,totbin,type,ndim,lo,hi,me=pnga_nodeid(),crap;
 Integer g_range;
 
     if(FALSE==ga_create_bin_range_(g_bin, g_cnt, g_off, &g_range))
-        gai_error("ga_bin_sorter: failed to create temp bin range array",0); 
+        pnga_error("ga_bin_sorter: failed to create temp bin range array",0); 
 
     nga_inquire_internal_(g_bin, &type, &ndim, &totbin);
-    if(ndim !=1) gai_error("ga_bin_sorter: 1-dim array required",ndim);
+    if(ndim !=1) pnga_error("ga_bin_sorter: 1-dim array required",ndim);
      
-    nga_distribution_(g_bin, &me, &lo, &hi);
+    pnga_distribution(g_bin, &me, &lo, &hi);
     if (lo > 0 ){ /* we get 0 if no elements stored on this process */
         Integer bin_range[2], rlo[2],rhi[2];
         Integer *bin_cnt, *ptr, i;
@@ -1143,11 +1144,11 @@ Integer g_range;
         nga_get_(&g_range, rlo, rhi, bin_range, rhi); /* local */
         nbin = bin_range[1]-bin_range[0]+1;
         if(nbin<1 || nbin> totbin || nbin>(hi-lo+1))
-           gai_error("ga_bin_sorter:bad nbin",nbin);
+           pnga_error("ga_bin_sorter:bad nbin",nbin);
 
         /* get count of elements in each bin stored on this task */
         if(!(bin_cnt = (Integer*)malloc(nbin*sizeof(Integer))))
-           gai_error("ga_bin_sorter:memory allocation failed",nbin);
+           pnga_error("ga_bin_sorter:memory allocation failed",nbin);
         nga_get_(g_cnt,bin_range,bin_range+1,bin_cnt,&nbin);
 
         /* get access to local bin elements */
@@ -1175,19 +1176,19 @@ int *all_bin_contrib, *offset;
 Integer type, ndim, nbin;
 
     nga_inquire_internal_(g_bin, &type, &ndim, &nbin);
-    if(ndim !=1) gai_error("ga_bin_index: 1-dim array required",ndim);
+    if(ndim !=1) pnga_error("ga_bin_index: 1-dim array required",ndim);
     if(type!= C_INT && type!=C_LONG && type!=C_LONGLONG)
-       gai_error("ga_bin_index: not integer type",type);
+       pnga_error("ga_bin_index: not integer type",type);
 
     all_bin_contrib = (int*)calloc(nbin,sizeof(int));
-    if(!all_bin_contrib)gai_error("ga_binning:calloc failed",nbin);
+    if(!all_bin_contrib)pnga_error("ga_binning:calloc failed",nbin);
     offset = (int*)malloc(nbin*sizeof(int));
-    if(!offset)gai_error("ga_binning:malloc failed",nbin);
+    if(!offset)pnga_error("ga_binning:malloc failed",nbin);
 
     /* count how many elements go to each bin */
     for(i=0; i< *n; i++){
        int selected = subs[i];
-       if(selected <1 || selected> nbin) gai_error("wrong bin",selected);
+       if(selected <1 || selected> nbin) pnga_error("wrong bin",selected);
 
        if(all_bin_contrib[selected-1] ==0) my_nbin++; /* new bin found */
        all_bin_contrib[selected-1]++;
@@ -1208,7 +1209,7 @@ Integer type, ndim, nbin;
        lo += offset[selected-1]+1;
        hi = lo + elems -1;
 /*
-       printf("%d: elems=%d lo=%d sel=%d off=%d contrib=%d nbin=%d\n",ga_nodeid_(), elems, lo, selected,offset[selected-1],all_bin_contrib[0],nbin);
+       printf("%d: elems=%d lo=%d sel=%d off=%d contrib=%d nbin=%d\n",pnga_nodeid(), elems, lo, selected,offset[selected-1],all_bin_contrib[0],nbin);
 */
        if(lo > nbin) {
 	      printf("Writing off end of bins array: index=%d elems=%d lo=%ld hi=%ld values=%ld nbin=%ld\n",

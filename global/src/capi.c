@@ -131,7 +131,7 @@ void GA_Terminate()
     _ga_initialize_args = 0;
 }
 
-int NGA_Create(int type, int ndim,int dims[], char *name, int *chunk)
+int NGA_Create(int type, int ndim, int dims[], char *name, int *chunk)
 {
     Integer *ptr, g_a; 
     logical st;
@@ -143,12 +143,12 @@ int NGA_Create(int type, int ndim,int dims[], char *name, int *chunk)
          COPYC2F(chunk,_ga_work, ndim);
          ptr = _ga_work;
     }
-    st = ngai_create((Integer)type, (Integer)ndim, _ga_dims, name, ptr, &g_a);
+    st = wnga_create((Integer)type, (Integer)ndim, _ga_dims, name, ptr, &g_a);
     if(st==TRUE) return (int) g_a;
     else return 0;
 }
 
-int NGA_Create64(int type, int ndim,int64_t dims[], char *name, int64_t *chunk)
+int NGA_Create64(int type, int ndim, int64_t dims[], char *name, int64_t *chunk)
 {
     Integer *ptr, g_a; 
     logical st;
@@ -160,12 +160,12 @@ int NGA_Create64(int type, int ndim,int64_t dims[], char *name, int64_t *chunk)
          COPYC2F(chunk,_ga_work, ndim);
          ptr = _ga_work;
     }
-    st = ngai_create((Integer)type, (Integer)ndim, _ga_dims, name, ptr, &g_a);
+    st = wnga_create((Integer)type, (Integer)ndim, _ga_dims, name, ptr, &g_a);
     if(st==TRUE) return (int) g_a;
     else return 0;
 }
 
-int NGA_Create_config(int type, int ndim,int dims[], char *name, int chunk[],
+int NGA_Create_config(int type, int ndim, int dims[], char *name, int chunk[],
                       int p_handle)
 {
     Integer *ptr, g_a; 
@@ -178,14 +178,14 @@ int NGA_Create_config(int type, int ndim,int dims[], char *name, int chunk[],
          COPYC2F(chunk,_ga_work, ndim);
          ptr = _ga_work;
     }
-    st = ngai_create_config((Integer)type, (Integer)ndim, _ga_dims, name, ptr,
+    st = wnga_create_config((Integer)type, (Integer)ndim, _ga_dims, name, ptr,
                     (Integer)p_handle, &g_a);
     if(st==TRUE) return (int) g_a;
     else return 0;
 }
 
 
-int NGA_Create_config64(int type, int ndim,int64_t dims[], char *name, int64_t chunk[], int p_handle)
+int NGA_Create_config64(int type, int ndim, int64_t dims[], char *name, int64_t chunk[], int p_handle)
 {
     Integer *ptr, g_a; 
     logical st;
@@ -197,7 +197,7 @@ int NGA_Create_config64(int type, int ndim,int64_t dims[], char *name, int64_t c
          COPYC2F(chunk,_ga_work, ndim);
          ptr = _ga_work;
     }
-    st = ngai_create_config((Integer)type, (Integer)ndim, _ga_dims, name, ptr,
+    st = wnga_create_config((Integer)type, (Integer)ndim, _ga_dims, name, ptr,
                     (Integer)p_handle, &g_a);
     if(st==TRUE) return (int) g_a;
     else return 0;
@@ -214,7 +214,7 @@ int NGA_Create_irreg(int type,int ndim,int dims[],char *name,int block[],int map
     copy_map(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
-    st = ngai_create_irreg(type, (Integer)ndim, _ga_dims, name, _ga_map_capi,
+    st = pnga_create_irreg(type, (Integer)ndim, _ga_dims, name, _ga_map_capi,
             _ga_work, &g_a);
     _ga_irreg_flag = 0; /* unset it after creating the array */
 
@@ -234,7 +234,7 @@ int NGA_Create_irreg64(int type,int ndim,int64_t dims[],char *name,int64_t block
     copy_map64(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
-    st = ngai_create_irreg(type, (Integer)ndim, _ga_dims, name, _ga_map_capi,
+    st = pnga_create_irreg(type, (Integer)ndim, _ga_dims, name, _ga_map_capi,
             _ga_work, &g_a);
     _ga_irreg_flag = 0; /* unset it after creating the array */
 
@@ -255,7 +255,7 @@ int NGA_Create_irreg_config(int type,int ndim,int dims[],char *name,int block[],
     copy_map(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
-    st = ngai_create_irreg_config(type, (Integer)ndim, _ga_dims, name,
+    st = pnga_create_irreg_config(type, (Integer)ndim, _ga_dims, name,
             _ga_map_capi, _ga_work, (Integer)p_handle, &g_a);
     _ga_irreg_flag = 0; /* unset it, after creating array */
 
@@ -275,7 +275,7 @@ int NGA_Create_irreg_config64(int type,int ndim,int64_t dims[],char *name,int64_
     copy_map64(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
-    st = ngai_create_irreg_config(type, (Integer)ndim, _ga_dims, name,
+    st = pnga_create_irreg_config(type, (Integer)ndim, _ga_dims, name,
             _ga_map_capi, _ga_work, (Integer)p_handle, &g_a);
     _ga_irreg_flag = 0; /* unset it, after creating array */
 
@@ -296,7 +296,7 @@ int NGA_Create_ghosts_irreg(int type,int ndim,int dims[],int width[],char *name,
     copy_map(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
-    st = ngai_create_ghosts_irreg(type, (Integer)ndim, _ga_dims, _ga_width,
+    st = pnga_create_ghosts_irreg(type, (Integer)ndim, _ga_dims, _ga_width,
             name, _ga_map_capi, _ga_work, &g_a);
     _ga_irreg_flag = 0; /* unset it, after creating array */ 
 
@@ -317,7 +317,7 @@ int NGA_Create_ghosts_irreg64(int type,int ndim,int64_t dims[],int64_t width[],c
     copy_map64(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
-    st = ngai_create_ghosts_irreg(type, (Integer)ndim, _ga_dims, _ga_width,
+    st = pnga_create_ghosts_irreg(type, (Integer)ndim, _ga_dims, _ga_width,
             name, _ga_map_capi, _ga_work, &g_a);
     _ga_irreg_flag = 0; /* unset it, after creating array */ 
      
@@ -338,7 +338,7 @@ int NGA_Create_ghosts_irreg_config(int type, int ndim, int dims[], int width[], 
     copy_map(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
-    st = ngai_create_ghosts_irreg_config(type, (Integer)ndim, _ga_dims,
+    st = pnga_create_ghosts_irreg_config(type, (Integer)ndim, _ga_dims,
 					 _ga_width, name, _ga_map_capi, _ga_work, 
 					 (Integer)p_handle, &g_a);
     _ga_irreg_flag = 0; /* unset it, after creating array */ 
@@ -360,7 +360,7 @@ int NGA_Create_ghosts_irreg_config64(int type, int ndim, int64_t dims[], int64_t
     copy_map64(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
-    st = ngai_create_ghosts_irreg_config(type, (Integer)ndim, _ga_dims,
+    st = pnga_create_ghosts_irreg_config(type, (Integer)ndim, _ga_dims,
 					 _ga_width, name, _ga_map_capi, _ga_work, 
 					 (Integer)p_handle, &g_a);
     _ga_irreg_flag = 0; /* unset it, after creating array */ 
@@ -384,7 +384,7 @@ int NGA_Create_ghosts(int type, int ndim,int dims[], int width[], char *name,
          COPYC2F(chunk,_ga_work, ndim);
          ptr = _ga_work;
     }
-    st = ngai_create_ghosts((Integer)type, (Integer)ndim, _ga_dims,
+    st = pnga_create_ghosts((Integer)type, (Integer)ndim, _ga_dims,
         _ga_width, name, ptr, &g_a);
     if(st==TRUE) return (int) g_a;
     else return 0;
@@ -405,7 +405,7 @@ int NGA_Create_ghosts64(int type, int ndim, int64_t dims[], int64_t width[], cha
          COPYC2F(chunk,_ga_work, ndim);
          ptr = _ga_work;
     }
-    st = ngai_create_ghosts((Integer)type, (Integer)ndim, _ga_dims,
+    st = pnga_create_ghosts((Integer)type, (Integer)ndim, _ga_dims,
         _ga_width, name, ptr, &g_a);
     if(st==TRUE) return (int) g_a;
     else return 0;
@@ -426,7 +426,7 @@ int NGA_Create_ghosts_config(int type, int ndim,int dims[], int width[], char *n
          COPYC2F(chunk,_ga_work, ndim);
          ptr = _ga_work;
     }
-    st = ngai_create_ghosts_config((Integer)type, (Integer)ndim, _ga_dims,
+    st = pnga_create_ghosts_config((Integer)type, (Integer)ndim, _ga_dims,
         _ga_width, name, ptr, (Integer)p_handle, &g_a);
     if(st==TRUE) return (int) g_a;
     else return 0;
@@ -446,7 +446,7 @@ int NGA_Create_ghosts_config64(int type, int ndim,int64_t  dims[], int64_t width
          COPYC2F(chunk,_ga_work, ndim);
          ptr = _ga_work;
     }
-    st = ngai_create_ghosts_config((Integer)type, (Integer)ndim, _ga_dims,
+    st = pnga_create_ghosts_config((Integer)type, (Integer)ndim, _ga_dims,
         _ga_width, name, ptr, (Integer)p_handle, &g_a);
     if(st==TRUE) return (int) g_a;
     else return 0;
@@ -455,7 +455,14 @@ int NGA_Create_ghosts_config64(int type, int ndim,int64_t  dims[], int64_t width
 int GA_Create_handle()
 {
     Integer g_a;
-    g_a = ga_create_handle_();
+    g_a = pnga_create_handle();
+    return (int)g_a;
+}
+
+int NGA_Create_handle()
+{
+    Integer g_a;
+    g_a = pnga_create_handle();
     return (int)g_a;
 }
 
@@ -683,7 +690,14 @@ int GA_Allocate(int g_a)
 {
   Integer aa;
   aa = (Integer)g_a;
-  return (int)ga_allocate_(&aa);
+  return (int)wnga_allocate(&aa);
+}
+
+int NGA_Allocate(int g_a)
+{
+  Integer aa;
+  aa = (Integer)g_a;
+  return (int)wnga_allocate(&aa);
 }
 
 int GA_Pgroup_nodeid(int grp_id)
@@ -902,7 +916,15 @@ void GA_Destroy(int g_a)
 {
     logical st;
     Integer a=(Integer)g_a;
-    st = ga_destroy_(&a);
+    st = pnga_destroy(&a);
+    if(st==FALSE)GA_Error("GA (c) destroy failed",g_a);
+}
+
+void NGA_Destroy(int g_a)
+{
+    logical st;
+    Integer a=(Integer)g_a;
+    st = pnga_destroy(&a);
     if(st==FALSE)GA_Error("GA (c) destroy failed",g_a);
 }
 
@@ -1341,7 +1363,7 @@ void NGA_Distribution(int g_a, int iproc, int lo[], int hi[])
      Integer a=(Integer)g_a;
      Integer p=(Integer)iproc;
      Integer ndim = ga_ndim_(&a);
-     nga_distribution_(&a, &p, _ga_lo, _ga_hi);
+     pnga_distribution(&a, &p, _ga_lo, _ga_hi);
      COPYINDEX_F2C(_ga_lo,lo, ndim);
      COPYINDEX_F2C(_ga_hi,hi, ndim);
 }
@@ -1351,7 +1373,7 @@ void NGA_Distribution64(int g_a, int iproc, int64_t lo[], int64_t hi[])
      Integer a=(Integer)g_a;
      Integer p=(Integer)iproc;
      Integer ndim = ga_ndim_(&a);
-     nga_distribution_(&a, &p, _ga_lo, _ga_hi);
+     pnga_distribution(&a, &p, _ga_lo, _ga_hi);
      COPYINDEX_F2C_64(_ga_lo,lo, ndim);
      COPYINDEX_F2C_64(_ga_hi,hi, ndim);
 }
@@ -1505,7 +1527,17 @@ int GA_Compare_distr(int g_a, int g_b)
     logical st;
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    st = ga_compare_distr_(&a,&b);
+    st = wnga_compare_distr(&a,&b);
+    if(st == TRUE) return 0;
+    else return 1;
+}
+
+int NGA_Compare_distr(int g_a, int g_b)
+{
+    logical st;
+    Integer a=(Integer)g_a;
+    Integer b=(Integer)g_b;
+    st = wnga_compare_distr(&a,&b);
     if(st == TRUE) return 0;
     else return 1;
 }
@@ -3754,7 +3786,13 @@ int GA_Pgroup_absolute_id(int grp_id, int pid) {
 void GA_Error(char *str, int code)
 {
     Integer icode = code;
-    gai_error(str, icode);
+    pnga_error(str, icode);
+}
+
+void NGA_Error(char *str, int code)
+{
+    Integer icode = code;
+    pnga_error(str, icode);
 }
 
 size_t GA_Inquire_memory()
@@ -3789,12 +3827,22 @@ void GA_Fence()
 
 int GA_Nodeid()
 {
-    return ga_nodeid_();
+    return pnga_nodeid();
+}
+
+int NGA_Nodeid()
+{
+    return pnga_nodeid();
 }
 
 int GA_Nnodes()
 {
-    return ga_nnodes_();
+    return pnga_nnodes();
+}
+
+int NGA_Nnodes()
+{
+    return pnga_nnodes();
 }
 
 static void copy_map(int block[], int block_ndim, int map[])

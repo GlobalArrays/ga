@@ -120,7 +120,7 @@ void FATR ga_pgroup_sync_(Integer *grp_id)
        if(GA_fence_set)bzero(fence_array,(int)GAnproc);
        GA_fence_set=0;
 #   else
-       gai_error("ga_pgroup_sync_(): MPI not defined. ga_msg_pgroup_sync_()  can be called only if GA is built with MPI", 0);
+       pnga_error("ga_pgroup_sync_(): MPI not defined. ga_msg_pgroup_sync_()  can be called only if GA is built with MPI", 0);
 #   endif
     } else {
       /* printf("p[%d] calling regular sync in ga_pgroup_sync\n",GAme); */
@@ -183,7 +183,7 @@ void FATR ga_fence_()
 #ifdef USE_VAMPIR
     vampir_begin(GA_FENCE,__FILE__,__LINE__);
 #endif
-    if(GA_fence_set<1)gai_error("ga_fence: fence not initialized",0);
+    if(GA_fence_set<1)pnga_error("ga_fence: fence not initialized",0);
     GA_fence_set--;
     for(proc=0;proc<GAnproc;proc++)if(fence_array[proc])ARMCI_Fence(proc);
     bzero(fence_array,(int)GAnproc);
@@ -208,9 +208,9 @@ void FATR ga_init_fence_()
 void gai_init_onesided()
 {
     _ga_map = (Integer*)malloc((size_t)(GAnproc*2*MAXDIM +1)*sizeof(Integer));
-    if(!_ga_map) gai_error("ga_init:malloc failed (_ga_map)",0);
+    if(!_ga_map) pnga_error("ga_init:malloc failed (_ga_map)",0);
     fence_array = calloc((size_t)GAnproc,1);
-    if(!fence_array) gai_error("ga_init:calloc failed",0);
+    if(!fence_array) pnga_error("ga_init:calloc failed",0);
 }
 
 
@@ -221,7 +221,7 @@ void gai_init_onesided()
   if((nproc) ==1) ProcListPerm[0]=0; \
   else{\
     int _i, iswap, temp;\
-    if((nproc) > GAnproc) gai_error("permute_proc: error ", (nproc));\
+    if((nproc) > GAnproc) pnga_error("permute_proc: error ", (nproc));\
 \
     /* every process generates different random sequence */\
     (void)srand((unsigned)GAme); \
@@ -312,7 +312,7 @@ void gai_free(void *ptr)
     sprintf(err_string,"%s:p=%ld invalid i/j (%ld,%ld)><(%ld:%ld,%ld:%ld)",    \
         "gaShmemLocation", (long)proc, (long)(_i),(long)(_j),                  \
         (long)_ilo, (long)_ihi, (long)_jlo, (long)_jhi);                       \
-    gai_error(err_string, g_a );                                                \
+    pnga_error(err_string, g_a );                                                \
   }                                                                            \
   offset = ((_i)-_ilo+_iw) + (_ihi-_ilo+1+2*_iw)*((_j)-_jlo+_jw);              \
                                                                                \
@@ -418,7 +418,7 @@ void FATR ga_nbwait_(Integer *nbhandle)
 #ifdef __crayx1
 #pragma _CRI inline nga_locate_region_
 #endif
-void nga_put_common(Integer *g_a, 
+void ngai_put_common(Integer *g_a, 
                    Integer *lo,
                    Integer *hi,
                    void    *buf,
@@ -440,9 +440,9 @@ void nga_put_common(Integer *g_a,
 #ifdef USE_VAMPIR
   vampir_begin(NGA_NBPUT,__FILE__,__LINE__);
 #endif
-  GA_PUSH_NAME("nga_put_common");
+  GA_PUSH_NAME("ngai_put_common");
 
-  ga_check_handleM(g_a, "nga_put_common");
+  ga_check_handleM(g_a, "ngai_put_common");
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -913,7 +913,7 @@ void nga_put_common(Integer *g_a,
 #endif
 void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer *nbhandle)
 {
-    nga_put_common(g_a,lo,hi,buf,ld,nbhandle); 
+    ngai_put_common(g_a,lo,hi,buf,ld,nbhandle); 
 }
 
 
@@ -925,7 +925,7 @@ void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, 
 #endif
 void pnga_put(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld)
 {
-    nga_put_common(g_a,lo,hi,buf,ld,NULL); 
+    ngai_put_common(g_a,lo,hi,buf,ld,NULL); 
 }
 
 
@@ -1559,7 +1559,7 @@ void nga_acc_common(Integer *g_a,
   else if(type==C_SCPL)optype= ARMCI_ACC_CPL;
   else if(type==C_INT)optype= ARMCI_ACC_INT;
   else if(type==C_LONG)optype= ARMCI_ACC_LNG;
-  else gai_error("type not supported",type);
+  else pnga_error("type not supported",type);
 
   if (!use_blocks) {
     /* Locate the processors containing some portion of the patch
@@ -2091,16 +2091,16 @@ Integer  ow,i,p_handle;
 
    GA_PUSH_NAME("nga_access_ptr");
    p_handle = GA[handle].p_handle;
-   if (!nga_locate_(g_a,lo,&ow)) gai_error("locate top failed",0);
+   if (!nga_locate_(g_a,lo,&ow)) pnga_error("locate top failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme)) 
-      gai_error("cannot access top of the patch",ow);
-   if (!nga_locate_(g_a,hi, &ow)) gai_error("locate bottom failed",0);
+      pnga_error("cannot access top of the patch",ow);
+   if (!nga_locate_(g_a,hi, &ow)) pnga_error("locate bottom failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme))
-      gai_error("cannot access bottom of the patch",ow);
+      pnga_error("cannot access bottom of the patch",ow);
 
    for (i=0; i<GA[handle].ndim; i++)
        if(lo[i]>hi[i]) {
@@ -2147,7 +2147,7 @@ void nga_access_block_grid_ptr(Integer* g_a, Integer *index, void* ptr, Integer 
   GA_PUSH_NAME("nga_access_block_grid_ptr");
   p_handle = GA[handle].p_handle;
   if (!GA[handle].block_sl_flag) {
-    gai_error("Array is not using ScaLAPACK data distribution",0);
+    pnga_error("Array is not using ScaLAPACK data distribution",0);
   }
   proc_grid = GA[handle].nblock;
   num_blocks = GA[handle].num_blocks;
@@ -2156,7 +2156,7 @@ void nga_access_block_grid_ptr(Integer* g_a, Integer *index, void* ptr, Integer 
   ndim = GA[handle].ndim;
   for (i=0; i<ndim; i++) {
     if (index[i] < 0 || index[i] >= num_blocks[i])
-      gai_error("block index outside allowed values",index[i]);
+      pnga_error("block index outside allowed values",index[i]);
   }
 
   /* find out what processor block is located on */
@@ -2285,7 +2285,7 @@ void nga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer *ld)
   ndim = GA[handle].ndim;
   index = *idx;
   if (index < 0 || index >= nblocks)
-    gai_error("block index outside allowed values",index);
+    pnga_error("block index outside allowed values",index);
 
   if (GA[handle].block_sl_flag == 0) {
     offset = 0;
@@ -2337,10 +2337,10 @@ void nga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Intege
   ndim = GA[handle].ndim;
   index = *proc;
   if (index < 0 || index >= GAnproc)
-    gai_error("processor index outside allowed values",index);
+    pnga_error("processor index outside allowed values",index);
 
   if (index != GAme)
-    gai_error("Only get accurate number of elements for processor making request",0);
+    pnga_error("Only get accurate number of elements for processor making request",0);
   lptr = GA[handle].ptr[index];
 
   *len = GA[handle].size/GA[handle].elemsize;
@@ -2364,16 +2364,16 @@ unsigned long    lref=0, lptr;
 #endif
    GA_PUSH_NAME("nga_access");
    p_handle = GA[handle].p_handle;
-   if(!nga_locate_(g_a,lo,&ow))gai_error("locate top failed",0);
+   if(!nga_locate_(g_a,lo,&ow))pnga_error("locate top failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme)) 
-      gai_error("cannot access top of the patch",ow);
-   if(!nga_locate_(g_a,hi, &ow))gai_error("locate bottom failed",0);
+      pnga_error("cannot access top of the patch",ow);
+   if(!nga_locate_(g_a,hi, &ow))pnga_error("locate bottom failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme)) 
-      gai_error("cannot access bottom of the patch",ow);
+      pnga_error("cannot access bottom of the patch",ow);
 
    for (i=0; i<GA[handle].ndim; i++)
        if(lo[i]>hi[i]) {
@@ -2430,7 +2430,7 @@ unsigned long    lref=0, lptr;
    if( lptr%elemsize != lref%elemsize ){ 
        printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
                                                     lref,lref%elemsize);
-       gai_error("nga_access: MA addressing problem: base address misallignment",
+       pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
 #endif
@@ -2462,7 +2462,7 @@ unsigned long    lref=0, lptr;
    p_handle = GA[handle].p_handle;
    iblock = *idx;
    if (iblock < 0 || iblock >= GA[handle].block_total)
-     gai_error("block index outside allowed values",iblock);
+     pnga_error("block index outside allowed values",iblock);
 
    nga_access_block_ptr(g_a,&iblock,&ptr,ld);
    /*
@@ -2509,7 +2509,7 @@ unsigned long    lref=0, lptr;
    if( lptr%elemsize != lref%elemsize ){ 
        printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
                                                     lref,lref%elemsize);
-       gai_error("nga_access: MA addressing problem: base address misallignment",
+       pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
 #endif
@@ -2543,7 +2543,7 @@ unsigned long    lref=0, lptr;
    ndim = GA[handle].ndim;
    for (i=0; i<ndim; i++) 
      if (subscript[i]<0 || subscript[i] >= GA[handle].num_blocks[i]) 
-       gai_error("index outside allowed values",subscript[i]);
+       pnga_error("index outside allowed values",subscript[i]);
 
    nga_access_block_grid_ptr(g_a,subscript,&ptr,ld);
    /*
@@ -2590,7 +2590,7 @@ unsigned long    lref=0, lptr;
    if( lptr%elemsize != lref%elemsize ){ 
        printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
                                                     lref,lref%elemsize);
-       gai_error("nga_access: MA addressing problem: base address misallignment",
+       pnga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
 #endif
@@ -2667,7 +2667,7 @@ unsigned long    lref=0, lptr;
    if( lptr%elemsize != lref%elemsize ){ 
        printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
                                                     lref,lref%elemsize);
-       gai_error("nga_access_block_segment: MA addressing problem: base address misallignment",
+       pnga_error("nga_access_block_segment: MA addressing problem: base address misallignment",
                  handle);
    }
 #endif
@@ -2691,7 +2691,7 @@ void FATR ga_access_(g_a, ilo, ihi, jlo, jhi, index, ld)
 Integer lo[2], hi[2],ndim=ga_ndim_(g_a);
 
      if(ndim != 2) 
-        gai_error("ga_access: 2D API cannot be used for array dimension",ndim);
+        pnga_error("ga_access: 2D API cannot be used for array dimension",ndim);
 
 #ifdef USE_VAMPIR
      vampir_begin(GA_ACCESS,__FILE__,__LINE__);
@@ -2783,6 +2783,7 @@ void ga_scatter_acc_local(Integer g_a, void *v,Integer *i,Integer *j,
 void **ptr_src, **ptr_dst;
 char *ptr_ref;
 Integer ldp, item_size, ilo, ihi, jlo, jhi, type;
+Integer lo[2], hi[2];
 Integer handle,p_handle,iproc;
 armci_giov_t desc;
 register Integer k, offset;
@@ -2796,7 +2797,11 @@ int use_blocks;
   p_handle = GA[handle].p_handle;
   use_blocks = GA[handle].block_flag;
 
-  ga_distribution_(&g_a, &proc, &ilo, &ihi, &jlo, &jhi);
+  pnga_distribution(&g_a, &proc, lo, hi);
+  ilo = lo[0];
+  jlo = lo[1];
+  ihi = hi[0];
+  jhi = hi[1];
 
   iproc = proc;
   if (!use_blocks) {
@@ -2810,7 +2815,7 @@ int use_blocks;
     nga_access_block_ptr(&g_a, &iproc, &ptr_ref, &ldp);
     nga_release_block_(&g_a, &iproc);
     if (GA[handle].block_sl_flag == 0) {
-      proc = proc%ga_nnodes_();
+      proc = proc%pnga_nnodes();
     } else {
       Integer index[2];
       gam_find_block_indices(handle, proc, index);
@@ -2825,7 +2830,7 @@ int use_blocks;
   item_size = GAsizeofM(type);
 
   ptr_src = gai_malloc((int)nv*2*sizeof(void*));
-  if(ptr_src==NULL)gai_error("gai_malloc failed",nv);
+  if(ptr_src==NULL)pnga_error("gai_malloc failed",nv);
   ptr_dst=ptr_src+ nv;
 
   for(k=0; k< nv; k++){
@@ -2833,7 +2838,7 @@ int use_blocks;
        sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)>< [%ld:%ld,%ld:%ld]",
                (int)proc, (long)i[k], (long)j[k], (long)ilo, 
                (long)ihi, (long)jlo, (long)jhi); 
-       gai_error(err_string,g_a);
+       pnga_error(err_string,g_a);
      }
 
      offset  = (j[k] - jlo)* ldp + i[k] - ilo;
@@ -2862,11 +2867,11 @@ int use_blocks;
     else if(type==C_INT)optype= ARMCI_ACC_INT;
     else if(type==C_LONG)optype= ARMCI_ACC_LNG;
     else if(type==C_FLOAT)optype= ARMCI_ACC_FLT;  
-    else gai_error("type not supported",type);
+    else pnga_error("type not supported",type);
     rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)proc);
   }
 
-  if(rc) gai_error("scatter/_acc failed in armci",rc);
+  if(rc) pnga_error("scatter/_acc failed in armci",rc);
 
   gai_free(ptr_src);
 
@@ -2888,7 +2893,7 @@ extern void ga_sort_permutation();
 
    for(k=0; k< *nv; k++)if(!nga_locate_(g_a, sbar+k*ndim, proc+k)){
          gai_print_subscript("invalid subscript",ndim, sbar +k*ndim,"\n");
-         gai_error("failed -element:",k);
+         pnga_error("failed -element:",k);
    }
          
    /* Sort the entries by processor */
@@ -2910,10 +2915,10 @@ Integer pindex, phandle;
   if (*nv < 1) return;
 
   if(!MA_push_get(MT_F_INT,*nv, "nga_sort_permut--p", &phandle, &pindex))
-              gai_error("MA alloc failed ", *g_a);
+              pnga_error("MA alloc failed ", *g_a);
 
   gai_sort_proc(g_a, subscr_arr, nv, index, INT_MB+pindex);
-  if(! MA_pop_stack(phandle)) gai_error(" pop stack failed!",phandle);
+  if(! MA_pop_stack(phandle)) pnga_error(" pop stack failed!",phandle);
     */
 }
 
@@ -2941,6 +2946,7 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
     void **ptr_org; /* the entire pointer array */
     armci_giov_t desc;
     Integer *ilo, *ihi, *jlo, *jhi, *ldp, *owner;
+    Integer lo[2], hi[2];
     char **ptr_ref;
     int use_blocks;
     Integer num_blocks=0;
@@ -2968,11 +2974,11 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
     /* allocate temp memory */
     if (!use_blocks) {
       buf1 = gai_malloc((int) (nproc *4 +*nv)* (sizeof(Integer)));
-      if(buf1 == NULL) gai_error("gai_malloc failed", 3*nproc);
+      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*nproc);
     } else {
       num_blocks = GA[handle].block_total;
       buf1 = gai_malloc((int) (num_blocks *4 +*nv)* (sizeof(Integer)));
-      if(buf1 == NULL) gai_error("gai_malloc failed", 3*num_blocks);
+      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*num_blocks);
     }
    
     owner = (Integer *)buf1;  
@@ -3003,7 +3009,7 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
       for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, owner+k)){
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
-          gai_error(err_string,*g_a);
+          pnga_error(err_string,*g_a);
         }
         iproc = owner[k];
         nelem[iproc]++;
@@ -3012,7 +3018,7 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
       for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, owner+k)){
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
-          gai_error(err_string,*g_a);
+          pnga_error(err_string,*g_a);
         }
         iproc = GA[handle].rank_rstrctd[owner[k]];
         nelem[iproc]++;
@@ -3038,7 +3044,7 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
 
     buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *) +
                       5*naproc*sizeof(Integer) + naproc*sizeof(char*)));
-    if(buf2 == NULL) gai_error("gai_malloc failed", naproc);
+    if(buf2 == NULL) pnga_error("gai_malloc failed", naproc);
  
     ptr_src = (void ***)buf2;
     ptr_dst = (void ***)(buf2 + naproc*sizeof(void **));
@@ -3055,8 +3061,11 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
         iproc = aproc[kk];
         if (GA[handle].num_rstrctd > 0)
                     iproc = GA[handle].rstrctd_list[iproc];
-        ga_distribution_(g_a, &iproc,
-            &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
+        pnga_distribution(g_a, &iproc, lo, hi);
+        ilo[kk] = lo[0];
+        jlo[kk] = lo[1];
+        ihi[kk] = hi[0];
+        jhi[kk] = hi[1];
 
         /* get address of the first element owned by proc */
         gaShmemLocation(aproc[kk], *g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),
@@ -3065,8 +3074,11 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
     } else {
       for(kk=0; kk<naproc; kk++) {
         iproc = aproc[kk];
-        ga_distribution_(g_a, &iproc,
-            &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
+        pnga_distribution(g_a, &iproc, lo, hi);
+        ilo[kk] = lo[0];
+        jlo[kk] = lo[1];
+        ihi[kk] = hi[0];
+        jhi[kk] = hi[1];
 
         /* get address of the first element owned by proc */
         nga_access_block_ptr(g_a, &iproc, &(ptr_ref[kk]), &(ldp[kk]));
@@ -3100,7 +3112,7 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
           sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)><[%ld:%ld,%ld:%ld]",
              (int)proc, (long)i[k], (long)j[k], (long)ilo[proc], 
              (long)ihi[proc], (long)jlo[proc], (long)jhi[proc]);
-            gai_error(err_string, *g_a);
+            pnga_error(err_string, *g_a);
         }
         ptr_dst[proc][this_count] = ptr_ref[proc] + item_size *
             ((j[k] - jlo[proc])* ldp[proc] + i[k] - ilo[proc]);
@@ -3124,7 +3136,7 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
         }
 
         rc = ARMCI_PutV(&desc, 1, (int)iproc);
-        if(rc) gai_error("scatter failed in armci",rc);
+        if(rc) pnga_error("scatter failed in armci",rc);
       }
     } else {
       if (GA[handle].block_sl_flag == 0) {
@@ -3142,7 +3154,7 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
           }
 
           rc = ARMCI_PutV(&desc, 1, (int)iproc);
-          if(rc) gai_error("scatter failed in armci",rc);
+          if(rc) pnga_error("scatter failed in armci",rc);
         }
       } else {
         Integer index[MAXDIM];
@@ -3163,7 +3175,7 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
           }
 
           rc = ARMCI_PutV(&desc, 1, (int)iproc);
-          if(rc) gai_error("scatter failed in armci",rc);
+          if(rc) pnga_error("scatter failed in armci",rc);
         }
       }
     }
@@ -3201,7 +3213,7 @@ Integer *int_ptr;
   /* find proc that owns the (i,j) element; store it in temp: int_ptr */
   for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, int_ptr+k)){
          sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
-         gai_error(err_string,*g_a);
+         pnga_error(err_string,*g_a);
   }
 
   /* determine limit for message size --  v,i, & j will travel together */
@@ -3262,7 +3274,7 @@ extern void ga_sort_permutation();
   /* find proc that owns the (i,j) element; store it in temp: int_ptr */
   for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, int_ptr+k)){
          sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
-         gai_error(err_string,*g_a);
+         pnga_error(err_string,*g_a);
   }
 
   /* Sort the entries by processor */
@@ -3323,11 +3335,11 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     /* allocate temp memory */
     if (!use_blocks) {
       buf1 = gai_malloc((int) nproc * 4 * (sizeof(Integer)));
-      if(buf1 == NULL) gai_error("gai_malloc failed", 3*nproc);
+      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*nproc);
     } else {
       num_blocks = GA[handle].block_total;
       buf1 = gai_malloc((int) num_blocks * 4 * (sizeof(Integer)));
-      if(buf1 == NULL) gai_error("gai_malloc failed", 3*num_blocks);
+      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*num_blocks);
     }
     
     count = (Integer *)buf1;
@@ -3358,7 +3370,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
       for(k=0; k<*nv; k++) {
         if(!nga_locate_(g_a, subscript+k*ndim, proc+k)) {
           gai_print_subscript("invalid subscript",ndim, subscript+k*ndim,"\n");
-          gai_error("failed -element:",k);
+          pnga_error("failed -element:",k);
         }
         iproc = proc[k];
         nelem[iproc]++;
@@ -3367,7 +3379,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
       for(k=0; k<*nv; k++) {
         if(!nga_locate_(g_a, subscript+k*ndim, proc+k)) {
           gai_print_subscript("invalid subscript",ndim, subscript+k*ndim,"\n");
-          gai_error("failed -element:",k);
+          pnga_error("failed -element:",k);
         }
         iproc = GA[handle].rank_rstrctd[proc[k]];
         nelem[iproc]++;
@@ -3391,7 +3403,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     }
 
     buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *)));
-    if(buf2 == NULL) gai_error("gai_malloc failed", 2*naproc);
+    if(buf2 == NULL) pnga_error("gai_malloc failed", 2*naproc);
     
     ptr_src = (void ***)buf2;
     ptr_dst = (void ***)(buf2 + naproc * sizeof(void **));
@@ -3447,7 +3459,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
           for(k=0; k<(*nv); k++){
             iproc = proc[k];
             ptr_dst[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            nga_distribution_(g_a, &iproc, lo, hi);
+            pnga_distribution(g_a, &iproc, lo, hi);
             nga_access_block_ptr(g_a, &iproc, &(ptr_src[map[iproc]][count[iproc]]), ld);
             nga_release_block_(g_a, &iproc);
             /* calculate remaining offset */
@@ -3482,7 +3494,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
               iproc = PGRP_LIST[p_handle].inv_map_proc_list[aproc[k]];
             }
             rc=ARMCI_GetV(&desc, 1, (int)iproc);
-            if(rc) gai_error("gather failed in armci",rc);
+            if(rc) pnga_error("gather failed in armci",rc);
           }
         } else {
           if (GA[handle].block_sl_flag == 0) {
@@ -3499,7 +3511,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
                 iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
               }
               rc=ARMCI_GetV(&desc, 1, (int)iproc);
-              if(rc) gai_error("gather failed in armci",rc);
+              if(rc) pnga_error("gather failed in armci",rc);
             }
           } else {
             Integer j, index[MAXDIM];
@@ -3520,7 +3532,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
                 iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
               }
               rc=ARMCI_GetV(&desc, 1, (int)iproc);
-              if(rc) gai_error("gather failed in armci",rc);
+              if(rc) pnga_error("gather failed in armci",rc);
             }
           }
         }
@@ -3554,7 +3566,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
           for(k=0; k<(*nv); k++){
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            nga_distribution_(g_a, &iproc, lo, hi);
+            pnga_distribution(g_a, &iproc, lo, hi);
             nga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
             nga_release_block_(g_a, &iproc);
             /* calculate remaining offset */
@@ -3592,7 +3604,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             if(GA_fence_set) fence_array[iproc]=1;
 
             rc=ARMCI_PutV(&desc, 1, (int)iproc);
-            if(rc) gai_error("scatter failed in armci",rc);
+            if(rc) pnga_error("scatter failed in armci",rc);
           }
         } else {
           if (GA[handle].block_sl_flag == 0) {
@@ -3612,7 +3624,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
               if(GA_fence_set) fence_array[iproc]=1;
 
               rc=ARMCI_PutV(&desc, 1, (int)iproc);
-              if(rc) gai_error("scatter failed in armci",rc);
+              if(rc) pnga_error("scatter failed in armci",rc);
             }
           } else {
             Integer j, index[MAXDIM];
@@ -3636,7 +3648,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
               if(GA_fence_set) fence_array[iproc]=1;
 
               rc=ARMCI_PutV(&desc, 1, (int)iproc);
-              if(rc) gai_error("scatter failed in armci",rc);
+              if(rc) pnga_error("scatter failed in armci",rc);
             }
           }
         }
@@ -3670,7 +3682,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
           for(k=0; k<(*nv); k++){
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            nga_distribution_(g_a, &iproc, lo, hi);
+            pnga_distribution(g_a, &iproc, lo, hi);
             nga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
             nga_release_block_(g_a, &iproc);
             /* calculate remaining offset */
@@ -3714,10 +3726,10 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
               else if(type==C_INT)optype= ARMCI_ACC_INT;
               else if(type==C_LONG)optype= ARMCI_ACC_LNG;
               else if(type==C_FLOAT)optype= ARMCI_ACC_FLT; 
-              else gai_error("type not supported",type);
+              else pnga_error("type not supported",type);
               rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)iproc);
             }
-            if(rc) gai_error("scatter_acc failed in armci",rc);
+            if(rc) pnga_error("scatter_acc failed in armci",rc);
           }
         } else {
           if (GA[handle].block_sl_flag == 0) {
@@ -3744,10 +3756,10 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
                 else if(type==C_INT)optype= ARMCI_ACC_INT;
                 else if(type==C_LONG)optype= ARMCI_ACC_LNG;
                 else if(type==C_FLOAT)optype= ARMCI_ACC_FLT; 
-                else gai_error("type not supported",type);
+                else pnga_error("type not supported",type);
                 rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)iproc);
               }
-              if(rc) gai_error("scatter_acc failed in armci",rc);
+              if(rc) pnga_error("scatter_acc failed in armci",rc);
             }
           } else {
             Integer j, index[MAXDIM];
@@ -3778,15 +3790,15 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
                 else if(type==C_INT)optype= ARMCI_ACC_INT;
                 else if(type==C_LONG)optype= ARMCI_ACC_LNG;
                 else if(type==C_FLOAT)optype= ARMCI_ACC_FLT; 
-                else gai_error("type not supported",type);
+                else pnga_error("type not supported",type);
                 rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)iproc);
               }
-              if(rc) gai_error("scatter_acc failed in armci",rc);
+              if(rc) pnga_error("scatter_acc failed in armci",rc);
             }
           }
         }
         break;        
-      default: gai_error("operation not supported",op);
+      default: pnga_error("operation not supported",op);
     }
 
     gai_free(buf2); gai_free(buf1);
@@ -3843,11 +3855,11 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
     /* allocate temp memory */
     if (!use_blocks) {
       buf1 = gai_malloc((int) nproc * 4 * (sizeof(Integer)));
-      if(buf1 == NULL) gai_error("gai_malloc failed", 3*nproc);
+      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*nproc);
     } else {
       num_blocks = GA[handle].block_total;
       buf1 = gai_malloc((int) num_blocks * 4 * (sizeof(Integer)));
-      if(buf1 == NULL) gai_error("gai_malloc failed", 3*num_blocks);
+      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*num_blocks);
     }
     
     count = (Integer *)buf1;
@@ -3880,7 +3892,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
           for (j=0; j<ndim; j++) subscript[j] = subscript32[k][j];
           if(!nga_locate_(g_a, subscript, proc+k)) {
             gai_print_subscript("invalid subscript",ndim, subscript,"\n");
-            gai_error("failed -element:",k);
+            pnga_error("failed -element:",k);
           }
           iproc = proc[k];
           nelem[iproc]++;
@@ -3890,7 +3902,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
           for (j=0; j<ndim; j++) subscript[j] = subscript64[k][j];
           if(!nga_locate_(g_a, subscript, proc+k)) {
             gai_print_subscript("invalid subscript",ndim, subscript,"\n");
-            gai_error("failed -element:",k);
+            pnga_error("failed -element:",k);
           }
           iproc = proc[k];
           nelem[iproc]++;
@@ -3902,7 +3914,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
           for (j=0; j<ndim; j++) subscript[j] = subscript32[k][j];
           if(!nga_locate_(g_a, subscript, proc+k)) {
             gai_print_subscript("invalid subscript",ndim, subscript,"\n");
-            gai_error("failed -element:",k);
+            pnga_error("failed -element:",k);
           }
           iproc = GA[handle].rank_rstrctd[proc[k]];
           nelem[iproc]++;
@@ -3912,7 +3924,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
           for (j=0; j<ndim; j++) subscript[j] = subscript64[k][j];
           if(!nga_locate_(g_a, subscript, proc+k)) {
             gai_print_subscript("invalid subscript",ndim, subscript,"\n");
-            gai_error("failed -element:",k);
+            pnga_error("failed -element:",k);
           }
           iproc = GA[handle].rank_rstrctd[proc[k]];
           nelem[iproc]++;
@@ -3937,7 +3949,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
     }
 
     buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *)));
-    if(buf2 == NULL) gai_error("gai_malloc failed", 2*naproc);
+    if(buf2 == NULL) pnga_error("gai_malloc failed", 2*naproc);
     
     ptr_src = (void ***)buf2;
     ptr_dst = (void ***)(buf2 + naproc * sizeof(void **));
@@ -4003,7 +4015,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
           for(k=0; k<(*nv); k++){
             iproc = proc[k];
             ptr_dst[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            nga_distribution_(g_a, &iproc, lo, hi);
+            pnga_distribution(g_a, &iproc, lo, hi);
             nga_access_block_ptr(g_a, &iproc, &(ptr_src[map[iproc]][count[iproc]]), ld);
             nga_release_block_(g_a, &iproc);
             /* calculate remaining offset */
@@ -4046,7 +4058,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
               iproc = PGRP_LIST[p_handle].inv_map_proc_list[aproc[k]];
             }
             rc=ARMCI_GetV(&desc, 1, (int)iproc);
-            if(rc) gai_error("gather failed in armci",rc);
+            if(rc) pnga_error("gather failed in armci",rc);
           }
         } else {
           if (GA[handle].block_sl_flag == 0) {
@@ -4063,7 +4075,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
                 iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
               }
               rc=ARMCI_GetV(&desc, 1, (int)iproc);
-              if(rc) gai_error("gather failed in armci",rc);
+              if(rc) pnga_error("gather failed in armci",rc);
             }
           } else {
             Integer j, index[MAXDIM];
@@ -4084,7 +4096,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
                 iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
               }
               rc=ARMCI_GetV(&desc, 1, (int)iproc);
-              if(rc) gai_error("gather failed in armci",rc);
+              if(rc) pnga_error("gather failed in armci",rc);
             }
           }
         }
@@ -4128,7 +4140,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
           for(k=0; k<(*nv); k++){
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            nga_distribution_(g_a, &iproc, lo, hi);
+            pnga_distribution(g_a, &iproc, lo, hi);
             nga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
             nga_release_block_(g_a, &iproc);
             /* calculate remaining offset */
@@ -4174,7 +4186,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
             if(GA_fence_set) fence_array[iproc]=1;
 
             rc=ARMCI_PutV(&desc, 1, (int)iproc);
-            if(rc) gai_error("scatter failed in armci",rc);
+            if(rc) pnga_error("scatter failed in armci",rc);
           }
         } else {
           if (GA[handle].block_sl_flag == 0) {
@@ -4194,7 +4206,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
               if(GA_fence_set) fence_array[iproc]=1;
 
               rc=ARMCI_PutV(&desc, 1, (int)iproc);
-              if(rc) gai_error("scatter failed in armci",rc);
+              if(rc) pnga_error("scatter failed in armci",rc);
             }
           } else {
             Integer j, index[MAXDIM];
@@ -4218,7 +4230,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
               if(GA_fence_set) fence_array[iproc]=1;
 
               rc=ARMCI_PutV(&desc, 1, (int)iproc);
-              if(rc) gai_error("scatter failed in armci",rc);
+              if(rc) pnga_error("scatter failed in armci",rc);
             }
           }
         }
@@ -4262,7 +4274,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
           for(k=0; k<(*nv); k++){
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            nga_distribution_(g_a, &iproc, lo, hi);
+            pnga_distribution(g_a, &iproc, lo, hi);
             nga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
             nga_release_block_(g_a, &iproc);
             /* calculate remaining offset */
@@ -4314,10 +4326,10 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
               else if(type==C_INT)optype= ARMCI_ACC_INT;
               else if(type==C_LONG)optype= ARMCI_ACC_LNG;
               else if(type==C_FLOAT)optype= ARMCI_ACC_FLT; 
-              else gai_error("type not supported",type);
+              else pnga_error("type not supported",type);
               rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)iproc);
             }
-            if(rc) gai_error("scatter_acc failed in armci",rc);
+            if(rc) pnga_error("scatter_acc failed in armci",rc);
           }
         } else {
           if (GA[handle].block_sl_flag == 0) {
@@ -4344,10 +4356,10 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
                 else if(type==C_INT)optype= ARMCI_ACC_INT;
                 else if(type==C_LONG)optype= ARMCI_ACC_LNG;
                 else if(type==C_FLOAT)optype= ARMCI_ACC_FLT; 
-                else gai_error("type not supported",type);
+                else pnga_error("type not supported",type);
                 rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)iproc);
               }
-              if(rc) gai_error("scatter_acc failed in armci",rc);
+              if(rc) pnga_error("scatter_acc failed in armci",rc);
             }
           } else {
             Integer j, index[MAXDIM];
@@ -4378,15 +4390,15 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
                 else if(type==C_INT)optype= ARMCI_ACC_INT;
                 else if(type==C_LONG)optype= ARMCI_ACC_LNG;
                 else if(type==C_FLOAT)optype= ARMCI_ACC_FLT; 
-                else gai_error("type not supported",type);
+                else pnga_error("type not supported",type);
                 rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)iproc);
               }
-              if(rc) gai_error("scatter_acc failed in armci",rc);
+              if(rc) pnga_error("scatter_acc failed in armci",rc);
             }
           }
         }
         break;        
-      default: gai_error("operation not supported",op);
+      default: pnga_error("operation not supported",op);
     }
 
     gai_free(buf2); gai_free(buf1);
@@ -4458,7 +4470,7 @@ void FATR  ga_gather000_(g_a, v, i, j, nv)
 {
 int k;
 Integer *sbar = (Integer*)malloc(2*sizeof(Integer)*  (int)*nv);
-     if(!sbar) gai_error("gather:malloc failed",*nv);
+     if(!sbar) pnga_error("gather:malloc failed",*nv);
      for(k=0;k<*nv;k++){
           sbar[2*k] = i[k];
           sbar[2*k+1] = j[k];
@@ -4477,7 +4489,7 @@ void FATR  ga_scatter000_(g_a, v, i, j, nv)
 {
 int k;
 Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* (int) *nv);
-     if(!sbar) gai_error("scatter:malloc failed",*nv);
+     if(!sbar) pnga_error("scatter:malloc failed",*nv);
      for(k=0;k<*nv;k++){
           sbar[2*k] = i[k];
           sbar[2*k+1] = j[k];
@@ -4507,6 +4519,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     void **ptr_org; /* the entire pointer array */
     armci_giov_t desc;
     Integer *ilo, *ihi, *jlo, *jhi, *ldp, *owner;
+    Integer lo[2], hi[2];
     char **ptr_ref;
     int use_blocks;
     Integer num_blocks=0;
@@ -4535,11 +4548,11 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     /* allocate temp memory */
     if (!use_blocks) {
       buf1 = gai_malloc((int)(nproc *4  + *nv)*  (sizeof(Integer)));
-      if(buf1 == NULL) gai_error("gai_malloc failed", 3*nproc);
+      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*nproc);
     } else {
       num_blocks = GA[handle].block_total;
       buf1 = gai_malloc((int)(num_blocks *4  + *nv)*  (sizeof(Integer)));
-      if(buf1 == NULL) gai_error("gai_malloc failed", 3*num_blocks);
+      if(buf1 == NULL) pnga_error("gai_malloc failed", 3*num_blocks);
     }
     
     owner = (Integer *)buf1; 
@@ -4570,7 +4583,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
       for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, owner+k)){
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
-          gai_error(err_string, *g_a);
+          pnga_error(err_string, *g_a);
         }
         iproc = owner[k];
         nelem[iproc]++;
@@ -4579,7 +4592,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
       for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, owner+k)){
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
-          gai_error(err_string, *g_a);
+          pnga_error(err_string, *g_a);
         }
         iproc = GA[handle].rank_rstrctd[owner[k]];
         nelem[iproc]++;
@@ -4604,7 +4617,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     
     buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *) +
                       5*naproc*sizeof(Integer) + naproc*sizeof(char*)));
-    if(buf2 == NULL) gai_error("gai_malloc failed", naproc);
+    if(buf2 == NULL) pnga_error("gai_malloc failed", naproc);
  
     ptr_src = (void ***)buf2;
     ptr_dst = (void ***)(buf2 + naproc*sizeof(void **));
@@ -4621,8 +4634,11 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         iproc = aproc[kk];
         if (GA[handle].num_rstrctd > 0)
           iproc = GA[handle].rstrctd_list[iproc];
-        ga_distribution_(g_a, &iproc,
-            &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
+        pnga_distribution(g_a, &iproc, lo, hi);
+        ilo[kk] = lo[0];
+        jlo[kk] = lo[1];
+        ihi[kk] = hi[0];
+        jhi[kk] = hi[1];
 
         /* get address of the first element owned by proc */
         gaShmemLocation(aproc[kk], *g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),
@@ -4631,8 +4647,11 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     } else {
       for(kk=0; kk<naproc; kk++) {
         iproc = aproc[kk];
-        ga_distribution_(g_a, &iproc,
-            &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
+        pnga_distribution(g_a, &iproc, lo, hi);
+        ilo[kk] = lo[0];
+        jlo[kk] = lo[1];
+        ihi[kk] = hi[0];
+        jhi[kk] = hi[1];
 
         /* get address of the first element owned by proc */
         nga_access_block_ptr(g_a, &iproc, &(ptr_ref[kk]), &(ldp[kk]));
@@ -4669,7 +4688,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
                  (int)proc,(long)i[k],(long)j[k],
                  (long)ilo[proc],(long)ihi[proc],
                  (long)jlo[proc], (long)jhi[proc]);
-            gai_error(err_string, *g_a);
+            pnga_error(err_string, *g_a);
         }
         ptr_src[proc][this_count] = ptr_ref[proc] + item_size *
             ((j[k] - jlo[proc])* ldp[proc] + i[k] - ilo[proc]);
@@ -4691,7 +4710,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
           iproc = PGRP_LIST[p_handle].inv_map_proc_list[aproc[k]]; 
         }
         rc=ARMCI_GetV(&desc, 1, (int)iproc);
-        if(rc) gai_error("gather failed in armci",rc);
+        if(rc) pnga_error("gather failed in armci",rc);
       }
     } else {
       if (GA[handle].block_sl_flag == 0) {
@@ -4708,7 +4727,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
             iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc]; 
           }
           rc=ARMCI_GetV(&desc, 1, (int)iproc);
-          if(rc) gai_error("gather failed in armci",rc);
+          if(rc) pnga_error("gather failed in armci",rc);
         }
       } else {
         Integer index[MAXDIM];
@@ -4728,7 +4747,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
             iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc]; 
           }
           rc=ARMCI_GetV(&desc, 1, (int)iproc);
-          if(rc) gai_error("gather failed in armci",rc);
+          if(rc) pnga_error("gather failed in armci",rc);
         }
       }
     }
@@ -4762,7 +4781,7 @@ void *pval;
 
     if(GA[handle].type!=C_INT && GA[handle].type!=C_LONG &&
        GA[handle].type!=C_LONGLONG)
-       gai_error("type must be integer",GA[handle].type);
+       pnga_error("type must be integer",GA[handle].type);
 
     GAstat.numrdi++;
     GAbytes.rditot += (double)sizeof(Integer);
@@ -4782,7 +4801,7 @@ void *pval;
     } else {
       Integer lo[MAXDIM], hi[MAXDIM];
       Integer j, jtot, last, offset;
-      nga_distribution_(g_a, &proc, lo, hi);
+      pnga_distribution(g_a, &proc, lo, hi);
       nga_access_block_ptr(g_a, &proc, (char**)&ptr, ldp);
       nga_release_block_(g_a, &proc);
       offset = 0;
@@ -4811,7 +4830,7 @@ void *pval;
 #endif
     if (GA[handle].block_flag) {
       if (GA[handle].block_sl_flag == 0) {
-        proc = proc%ga_nnodes_();
+        proc = proc%pnga_nnodes();
       } else {
         Integer j, index[MAXDIM];
         gam_find_block_indices(handle, proc, index);
@@ -5001,13 +5020,13 @@ void FATR nga_strided_put_(Integer *g_a,
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
   use_blocks = GA[handle].block_flag;
-  nproc = ga_nnodes_();
+  nproc = pnga_nnodes();
   p_handle = GA[handle].p_handle;
 
   /* check values of skips to make sure they are legitimate */
   for (i = 0; i<ndim; i++) {
     if (skip[i]<1) {
-      gai_error("nga_strided_put: Invalid value of skip along coordinate ",i);
+      pnga_error("nga_strided_put: Invalid value of skip along coordinate ",i);
     }
   }
 
@@ -5366,13 +5385,13 @@ void FATR nga_strided_get_(Integer *g_a,
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
   use_blocks = GA[handle].block_flag;
-  nproc = ga_nnodes_();
+  nproc = pnga_nnodes();
   p_handle = GA[handle].p_handle;
 
   /* check values of skips to make sure they are legitimate */
   for (i = 0; i<ndim; i++) {
     if (skip[i]<1) {
-      gai_error("nga_strided_get: Invalid value of skip along coordinate ",i);
+      pnga_error("nga_strided_get: Invalid value of skip along coordinate ",i);
     }
   }
 
@@ -5736,7 +5755,7 @@ void FATR nga_strided_acc_(Integer *g_a,
   ndim = GA[handle].ndim;
   type = GA[handle].type;
   use_blocks = GA[handle].block_flag;
-  nproc = ga_nnodes_();
+  nproc = pnga_nnodes();
   p_handle = GA[handle].p_handle;
 
   if (type == C_DBL) optype = ARMCI_ACC_DBL;
@@ -5745,12 +5764,12 @@ void FATR nga_strided_acc_(Integer *g_a,
   else if (type == C_SCPL) optype = ARMCI_ACC_CPL;
   else if (type == C_INT) optype = ARMCI_ACC_INT;
   else if (type == C_LONG) optype = ARMCI_ACC_LNG;
-  else gai_error("nga_strided_acc: type not supported",type);
+  else pnga_error("nga_strided_acc: type not supported",type);
 
   /* check values of skips to make sure they are legitimate */
   for (i = 0; i<ndim; i++) {
     if (skip[i]<1) {
-      gai_error("nga_strided_acc: Invalid value of skip along coordinate ",i);
+      pnga_error("nga_strided_acc: Invalid value of skip along coordinate ",i);
     }
   }
 

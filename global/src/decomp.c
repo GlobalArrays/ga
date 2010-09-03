@@ -701,7 +701,7 @@ void ddb_h2(Integer ndims, Integer ardims[], Integer npes, double threshold, Int
           if(pedims[i]>0){
              blk[i] = (tard[i]+pedims[i]-1)/pedims[i];
           } else {
-             gai_error("process dimension is zero: ddb_h2",0);
+             pnga_error("process dimension is zero: ddb_h2",0);
           }
 
       free(tard);

@@ -51,11 +51,11 @@ extern logical ngai_patch_intersect(Integer *lo, Integer *hi,
                                     Integer *lop, Integer *hip, Integer ndim);
     
 #define VECTORCHECK(rank,dims,dim1,dim2, ilo, ihi, jlo, jhi) \
-  if(rank>2)  gai_error("rank is greater than 2",rank); \
+  if(rank>2)  pnga_error("rank is greater than 2",rank); \
   else if(rank==2) {dim1=dims[0]; dim2=dims[1];} \
   else if(rank==1) {if((ihi-ilo)>0) { dim1=dims[0]; dim2=1;} \
                     else { dim1=1; dim2=dims[0];}} \
-  else gai_error("rank must be atleast 1",rank);
+  else pnga_error("rank must be atleast 1",rank);
 
 #define WAIT_GET_BLOCK(nbhdl) ga_nbwait_(nbhdl)
 

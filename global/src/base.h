@@ -113,11 +113,11 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 {\
     if(GA_OFFSET+ (*g_a) < 0 || GA_OFFSET+(*g_a) >=_max_global_array){ \
       sprintf(err_string, "%s: INVALID ARRAY HANDLE", string);         \
-      gai_error(err_string, (*g_a));                                   \
-    }\
+      pnga_error(err_string, (*g_a));                                  \
+    }                                                                  \
     if( ! (GA[GA_OFFSET+(*g_a)].actv) ){                               \
       sprintf(err_string, "%s: ARRAY NOT ACTIVE", string);             \
-      gai_error(err_string, (*g_a));                                   \
+      pnga_error(err_string, (*g_a));                                  \
     }                                                                  \
 }
 
@@ -306,7 +306,7 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
   }                                                                  \
   sprintf(err_string+_l, "]");                                       \
   _l=strlen(err_string);                                             \
-  gai_error(err_string, val);                                        \
+  pnga_error(err_string, val);                                       \
 }
 
 /*\ Just return pointer (ptr_loc) to location in memory of element with
@@ -346,7 +346,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
                string, (long)*(ilo), (long)*(ihi), (long)*(jlo), (long)*(jhi), \
                (long)GA[GA_OFFSET + *(g_a)].dims[0],                           \
                (long)GA[GA_OFFSET + *(g_a)].dims[1]);                          \
-       gai_error(err_string, *(g_a));                                          \
+       pnga_error(err_string, *(g_a));                                         \
    }                                                                           \
 }
 
@@ -358,6 +358,6 @@ Integer _d;                                                                    \
       if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                        \
         sprintf(err_string,"check subscript failed:%ld not in (%ld:%ld) dim=", \
                   (long)subscr[_d],  (long)lo[_d],  (long)hi[_d]);             \
-          gai_error(err_string, _d);                                           \
+          pnga_error(err_string, _d);                                          \
       }\
 }

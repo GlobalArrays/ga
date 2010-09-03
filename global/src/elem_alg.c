@@ -33,6 +33,8 @@ Modified 3/2004 By Doug Baxter to increase robustness.
 #if HAVE_MATH_H
 #   include <math.h>
 #endif
+#include "papi.h"
+#include "wapi.h"
 
 #ifndef GA_HALF_MAX_INT 
 #define GA_HALF_MAX_INT ((((int)1) << ((int)(8*sizeof(int))-2)) - 1)
@@ -167,7 +169,7 @@ static void do_stepboundinfo(void *ptr, int nelem, int type)
 	      behavior changed by adding code for C_FLOAT and C_LONG
 	      cases below. 01/24/04
 	   */
-	   gai_error("do_stepboundinfo:wrong data type",type);
+	   pnga_error("do_stepboundinfo:wrong data type",type);
          case C_FLOAT:
 	   /* This case added 01/24/04 */
 	   fa = (float *) ptr;
@@ -180,7 +182,7 @@ static void do_stepboundinfo(void *ptr, int nelem, int type)
 	   for (i=0;i<nelem;i++)
 	     if (la[i]>= GA_INFINITY_L) la[i] = GA_NEGATIVE_INFINITY_L;
 	   break;
-         default: gai_error("do_stepboundinfo:wrong data type",type);
+         default: pnga_error("do_stepboundinfo:wrong data type",type);
     }
 }
 static void do_stepmax(void *ptr, int nelem, int type)
@@ -218,7 +220,7 @@ static void do_stepmax(void *ptr, int nelem, int type)
 	      behavior changed by adding code for C_FLOAT and C_LONG
 	      cases below. 01/24/04
 	   */
-	   gai_error("do_stepmax:wrong data type",type);
+	   pnga_error("do_stepmax:wrong data type",type);
          case C_FLOAT:
 	   /* Thix case added 01/24/04*/
               fa = (float *) ptr;
@@ -233,7 +235,7 @@ static void do_stepmax(void *ptr, int nelem, int type)
               for(i=0;i<nelem;i++)
 		if(la[i]>l_0) la[i]=-GA_INFINITY_L;
               break;
-         default: gai_error("do_stepmax:wrong data type",type);
+         default: pnga_error("do_stepmax:wrong data type",type);
     }
 }
 
@@ -326,7 +328,7 @@ static void do_abs(void *ptr, int nelem, int type)
                   la[i]= GA_ABS(la[i]);
               break;
 
-         default: gai_error("wrong data type",type);
+         default: pnga_error("wrong data type",type);
     }
 } 
 
@@ -365,7 +367,7 @@ static void do_recip(void *ptr, int nelem, int type)
               for(i=0;i<nelem;i++)
                   if(ia[i]!=0) ia[i]= 1/ia[i];
                      else
-                   gai_error("zero value at index",i);
+                   pnga_error("zero value at index",i);
 		       /*
 			 ia[i] = GA_INFINITY_I;
 		       */
@@ -383,7 +385,7 @@ static void do_recip(void *ptr, int nelem, int type)
                    ca[i].imag =-ca[i].imag/temp;
                   }
                   else{
- 		     gai_error("zero value at index",i); 
+ 		     pnga_error("zero value at index",i); 
                      OR
 		       ca[i].real = GA_INFINITY_D;
 		       ca[i].imag = GA_INFINITY_D;
@@ -410,7 +412,7 @@ static void do_recip(void *ptr, int nelem, int type)
 		    ca[i].real = d;
 		    ca[i].imag = -c*d;
 		  } else {
-		    gai_error("zero value at index",i); 
+		    pnga_error("zero value at index",i); 
 		  }
 		} else {
 		  c = x1/x2;
@@ -438,7 +440,7 @@ static void do_recip(void *ptr, int nelem, int type)
                    cfa[i].imag =-cfa[i].imag/temp;
                   }
                   else{
- 		     gai_error("zero value at index",i); 
+ 		     pnga_error("zero value at index",i); 
                      OR
 		       cfa[i].real = GA_INFINITY_D;
 		       cfa[i].imag = GA_INFINITY_D;
@@ -465,7 +467,7 @@ static void do_recip(void *ptr, int nelem, int type)
 		    cfa[i].real = sd;
 		    cfa[i].imag = -sc*sd;
 		  } else {
-		    gai_error("zero value at index",i); 
+		    pnga_error("zero value at index",i); 
 		  }
 		} else {
 		  sc = sx1/sx2;
@@ -485,7 +487,7 @@ static void do_recip(void *ptr, int nelem, int type)
               for(i=0;i<nelem;i++)
                   if(da[i]!=(double)0.0) da[i]= ((double)1.0)/da[i];
   		     else
-		   gai_error("zero value at index",i); 
+		   pnga_error("zero value at index",i); 
 		    /* 
 		       da[i] = GA_INFINITY_D;
 		    */
@@ -495,7 +497,7 @@ static void do_recip(void *ptr, int nelem, int type)
               for(i=0;i<nelem;i++)
                   if(fa[i]!=(float)0.0) fa[i]= ((float)1.0)/fa[i];
                      else
-		   gai_error("zero value at index",i); 
+		   pnga_error("zero value at index",i); 
          	   /*
 		     fa[i] = GA_INFINITY_F
 		   */;
@@ -505,14 +507,14 @@ static void do_recip(void *ptr, int nelem, int type)
               for(i=0;i<nelem;i++)
                   if(la[i]!=(long)0) la[i]= ((long)1)/la[i];
                      else
-                  gai_error("zero value at index",i); 
+                  pnga_error("zero value at index",i); 
 	          /*
 		    la[i] = GA_INFINITY_I;
 		  */
               break;
 
 
-         default: gai_error("wrong data type",type);
+         default: pnga_error("wrong data type",type);
     }
 } 
 
@@ -564,7 +566,7 @@ static void do_add_const(void *ptr, int nelem, int type, void *alpha)
                   la[i] += *(long *)alpha;
               break;
 
-         default: gai_error("wrong data type",type);
+         default: pnga_error("wrong data type",type);
     }
 } 
 
@@ -616,7 +618,7 @@ void do_fill(void *ptr, int nelem, int type, void *alpha)
                   la[i] = *(long *)alpha;
               break;
 
-         default: gai_error("wrong data type",type);
+         default: pnga_error("wrong data type",type);
     }
 } 
 */
@@ -692,7 +694,7 @@ void ngai_do_oper_elem(Integer type, Integer ndim, Integer *loA, Integer *hiA,
       case C_LONG:
         temp=((long *)data_ptr)+idx;
         break;
-      default: gai_error("wrong data type.",type);	
+      default: pnga_error("wrong data type.",type);	
 
     }
 
@@ -706,7 +708,7 @@ void ngai_do_oper_elem(Integer type, Integer ndim, Integer *loA, Integer *hiA,
       case OP_RECIP:
         do_recip(temp ,hiA[0] -loA[0] +1, type); break;
         break;
-      default: gai_error("bad operation",op);
+      default: pnga_error("bad operation",op);
     }
   }
 
@@ -718,7 +720,7 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
   Integer ndim, dims[MAXDIM], type;
   Integer loA[MAXDIM], hiA[MAXDIM], ld[MAXDIM];
   void /* *temp,*/ *data_ptr;
-  Integer me= ga_nodeid_();
+  Integer me= pnga_nodeid();
   Integer num_blocks;
   int local_sync_begin,local_sync_end;
 
@@ -735,7 +737,7 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
 
   if (num_blocks < 0) {
     /* get limits of VISIBLE patch */
-    nga_distribution_(g_a, &me, loA, hiA);
+    pnga_distribution(g_a, &me, loA, hiA);
 
     /*  determine subset of my local patch to access  */
     /*  Output is in loA and hiA */
@@ -754,13 +756,13 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
   } else {
     Integer offset, i, j, jtmp, chk;
     Integer loS[MAXDIM];
-    Integer nproc = ga_nnodes_();
+    Integer nproc = pnga_nnodes();
     /* using simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
 
         /* get limits of patch */
-        nga_distribution_(g_a, &i, loA, hiA); 
+        pnga_distribution(g_a, &i, loA, hiA); 
 
         /* loA is changed by ngai_patch_intersect, so
            save a copy */
@@ -812,7 +814,7 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
               case C_LONG:
                 data_ptr = (void*)((long*)data_ptr + offset);
                 break;
-              default: gai_error(" wrong data type ",type);
+              default: pnga_error(" wrong data type ",type);
             }
           }
           /* perform operation on all elements in local patch */
@@ -891,7 +893,7 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
               case C_LONG:
                 data_ptr = (void*)((long*)data_ptr + offset);
                 break;
-              default: gai_error(" wrong data type ",type);
+              default: pnga_error(" wrong data type ",type);
             }
           }
 
@@ -1020,7 +1022,7 @@ static void do_multiply(void *pA, void *pB, void *pC, Integer nelems, Integer ty
       ((long *)pC)[i]= ((long *)pA)[i]* ((long *)pB)[i];
     break;
     
-  default: gai_error(" wrong data type ",type);
+  default: pnga_error(" wrong data type ",type);
   }
 }
 
@@ -1042,7 +1044,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
       if(((double*)pB)[i]!=(double)0.0)
 	((double*)pC)[i]=  ((double*)pA)[i]/((double*)pB)[i];
       else{
-	gai_error("zero divisor ",((double*)pB)[i]); 
+	pnga_error("zero divisor ",((double*)pB)[i]); 
       }
     }
     break;
@@ -1063,7 +1065,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
 	  =(aImag*bReal-aReal*bImag)/temp;
       }
       else{
-	gai_error("zero divisor ",temp); 
+	pnga_error("zero divisor ",temp); 
       }
       */
       if (GA_ABS(bReal) >= GA_ABS(bImag)) {
@@ -1075,7 +1077,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
 	  ((DoubleComplex*)pC)[i].imag = (aImag - aReal*x1)*x2;
 	}
 	else{
-	  gai_error("zero divisor ",bReal); 
+	  pnga_error("zero divisor ",bReal); 
 	}
       } else {
 	x1 = bReal/bImag;
@@ -1103,7 +1105,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
 	  =(aImag*bReal-aReal*bImag)/temp;
       }
       else{
-	gai_error("zero divisor ",temp); 
+	pnga_error("zero divisor ",temp); 
       }
       */
       if (GA_ABS(bReal) >= GA_ABS(bImag)) {
@@ -1115,7 +1117,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
 	  ((SingleComplex*)pC)[i].imag = (aImag - aReal*x1)*x2;
 	}
 	else{
-	  gai_error("zero divisor ",bReal); 
+	  pnga_error("zero divisor ",bReal); 
 	}
       } else {
 	x1 = bReal/bImag;
@@ -1131,7 +1133,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
       if(((int*)pB)[i]!=0)
 	((int*)pC)[i] = ((int*)pA)[i]/((int*)pB)[i];
       else{
-	gai_error("zero divisor ",((int*)pB)[i]); 
+	pnga_error("zero divisor ",((int*)pB)[i]); 
       } 
     }
     break;
@@ -1140,7 +1142,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
       if(((float*)pB)[i]!=(float)0.0) 
 	((float*)pC)[i]=  ((float*)pA)[i]/((float*)pB)[i];
       else{
-	gai_error("zero divisor ",((float*)pB)[i]); 
+	pnga_error("zero divisor ",((float*)pB)[i]); 
       }
     }
     break;
@@ -1149,11 +1151,11 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
       if(((long *)pB)[i]!=0)
 	((long *)pC)[i]=  ((long *)pA)[i]/((long *)pB)[i];
       else{
-	gai_error("zero divisor ",((long*)pB)[i]); 
+	pnga_error("zero divisor ",((long*)pB)[i]); 
       }
     }
     break;		
-  default: gai_error(" wrong data type ",type);
+  default: pnga_error(" wrong data type ",type);
   }
 }
  
@@ -1198,10 +1200,10 @@ static void do_step_divide(void *pA, void *pB, void *pC, Integer nelems, Integer
     }
     break;
   case C_DCPL:
-    gai_error(" do_step_divide called with type C_DCPL",C_DCPL);
+    pnga_error(" do_step_divide called with type C_DCPL",C_DCPL);
     break;
   case C_SCPL:
-    gai_error(" do_step_divide called with type C_SCPL",C_SCPL);
+    pnga_error(" do_step_divide called with type C_SCPL",C_SCPL);
     break;
   case C_INT:
     i_0 = (int)0;
@@ -1258,7 +1260,7 @@ static void do_step_divide(void *pA, void *pB, void *pC, Integer nelems, Integer
       }
     }
     break;		
-  default: gai_error(" wrong data type ",type);
+  default: pnga_error(" wrong data type ",type);
   }
 }
 
@@ -1302,10 +1304,10 @@ static void do_stepb_divide(void *pA, void *pB, void *pC, Integer nelems, Intege
     }
     break;
   case C_DCPL:
-    gai_error(" do_stepb_divide called with type C_DCPL",C_DCPL);
+    pnga_error(" do_stepb_divide called with type C_DCPL",C_DCPL);
     break;
   case C_SCPL:
-    gai_error(" do_stepb_divide called with type C_SCPL",C_SCPL);
+    pnga_error(" do_stepb_divide called with type C_SCPL",C_SCPL);
     break;
   case C_INT:
     i_0 = (int)0;
@@ -1362,7 +1364,7 @@ static void do_stepb_divide(void *pA, void *pB, void *pC, Integer nelems, Intege
       }
     }
     break;		
-  default: gai_error(" do_stepb_divide: wrong data type ",type);
+  default: pnga_error(" do_stepb_divide: wrong data type ",type);
   }
 }
 
@@ -1385,10 +1387,10 @@ static void do_step_mask(void *pA, void *pB, void *pC, Integer nelems, Integer t
     }
     break;
   case C_DCPL:
-    gai_error(" do_step_mask called with type C_DCPL",C_DCPL);
+    pnga_error(" do_step_mask called with type C_DCPL",C_DCPL);
     break;
   case C_SCPL:
-    gai_error(" do_step_mask called with type C_SCPL",C_SCPL);
+    pnga_error(" do_step_mask called with type C_SCPL",C_SCPL);
     break;
   case C_INT:
     for(i = 0; i<nelems; i++){
@@ -1417,7 +1419,7 @@ static void do_step_mask(void *pA, void *pB, void *pC, Integer nelems, Integer t
       }
     }
     break;		
-  default: gai_error(" do_step_mask: wrong data type ",type);
+  default: pnga_error(" do_step_mask: wrong data type ",type);
   }
 }
 
@@ -1512,7 +1514,7 @@ static void do_maximum(void *pA, void *pB, void *pC, Integer nelems, Integer typ
       ((long *)pC)[i]=GA_MAX(((long *)pA)[i],((long *)pB)[i]);
     break;
     
-  default: gai_error(" wrong data type ",type);
+  default: pnga_error(" wrong data type ",type);
   }
 }
 
@@ -1607,7 +1609,7 @@ static void do_minimum(void *pA, void *pB, void *pC, Integer nelems, Integer typ
       ((long *)pC)[i]=GA_MIN(((long *)pA)[i],((long *)pB)[i]);
     break;
     
-  default: gai_error(" wrong data type ",type);
+  default: pnga_error(" wrong data type ",type);
   }
 } 
 
@@ -1677,7 +1679,7 @@ void ngai_do_elem2_oper(Integer atype, Integer cndim, Integer *loC, Integer *hiC
         tempC=((long *)C_ptr)+idx;
         break;
 
-      default: gai_error(" wrong data type ",atype);
+      default: pnga_error(" wrong data type ",atype);
     }   
     switch((int)op)
     {
@@ -1704,7 +1706,7 @@ void ngai_do_elem2_oper(Integer atype, Integer cndim, Integer *loC, Integer *hiC
         break;
       default: 
         printf("op : OP_ELEM_MULT = %d:%d\n", op, OP_ELEM_MULT);
-        gai_error(" wrong operation ",op);
+        pnga_error(" wrong operation ",op);
     }
   }
 }
@@ -1730,7 +1732,7 @@ int op; /* operation to be perform between g_a and g_b */
   Integer atotal, btotal;
   Integer g_A = *g_a, g_B = *g_b;
   Integer num_blocks_a, num_blocks_b, num_blocks_c;
-  Integer me= ga_nodeid_(), A_created=0, B_created=0;
+  Integer me= pnga_nodeid(), A_created=0, B_created=0;
   char *tempname = "temp", notrans='n';
   int local_sync_begin,local_sync_end;
 
@@ -1744,18 +1746,18 @@ int op; /* operation to be perform between g_a and g_b */
   nga_inquire_internal_(g_b, &btype, &bndim, bdims);
   nga_inquire_internal_(g_c, &ctype, &cndim, cdims);
 
-  if(atype != btype || atype != ctype ) gai_error(" types mismatch ", 0L); 
+  if(atype != btype || atype != ctype ) pnga_error(" types mismatch ", 0L); 
 
   /* check if patch indices and dims match */
   for(i=0; i<andim; i++)
     if(alo[i] <= 0 || ahi[i] > adims[i])
-      gai_error("g_a indices out of range ", *g_a);
+      pnga_error("g_a indices out of range ", *g_a);
   for(i=0; i<bndim; i++)
     if(blo[i] <= 0 || bhi[i] > bdims[i])
-      gai_error("g_b indices out of range ", *g_b);
+      pnga_error("g_b indices out of range ", *g_b);
   for(i=0; i<cndim; i++)
     if(clo[i] <= 0 || chi[i] > cdims[i])
-      gai_error("g_c indices out of range ", *g_c);
+      pnga_error("g_c indices out of range ", *g_c);
 
   /* check if numbers of elements in patches match each other */
   n1dim = 1; for(i=0; i<cndim; i++) n1dim *= (chi[i] - clo[i] + 1);
@@ -1763,7 +1765,7 @@ int op; /* operation to be perform between g_a and g_b */
   btotal = 1; for(i=0; i<bndim; i++) btotal *= (bhi[i] - blo[i] + 1);
 
   if((atotal != n1dim) || (btotal != n1dim))
-    gai_error("  capacities of patches do not match ", 0L);
+    pnga_error("  capacities of patches do not match ", 0L);
 
   num_blocks_a = ga_total_blocks_(g_a);
   num_blocks_b = ga_total_blocks_(g_b);
@@ -1771,9 +1773,9 @@ int op; /* operation to be perform between g_a and g_b */
 
   if (num_blocks_a < 0 && num_blocks_b < 0 && num_blocks_c < 0) {
     /* find out coordinates of patches of g_a, g_b and g_c that I own */
-    nga_distribution_(&g_A, &me, loA, hiA);
-    nga_distribution_(&g_B, &me, loB, hiB);
-    nga_distribution_( g_c, &me, loC, hiC);
+    pnga_distribution(&g_A, &me, loA, hiA);
+    pnga_distribution(&g_B, &me, loB, hiB);
+    pnga_distribution( g_c, &me, loC, hiC);
 
     /* test if the local portion of patches matches */
     if(ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC) &&
@@ -1789,15 +1791,15 @@ int op; /* operation to be perform between g_a and g_b */
         ngai_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
         andim = cndim;
         g_A = *g_c;
-        nga_distribution_(&g_A, &me, loA, hiA);
+        pnga_distribution(&g_A, &me, loA, hiA);
       }
       else {
         if (!gai_duplicate(g_c, &g_A, tempname))
-          gai_error("ga_dadd_patch: dup failed", 0L);
+          pnga_error("ga_dadd_patch: dup failed", 0L);
         ngai_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
         andim = cndim;
         A_created = 1;
-        nga_distribution_(&g_A, &me, loA, hiA);
+        pnga_distribution(&g_A, &me, loA, hiA);
       }
     }
 
@@ -1812,20 +1814,20 @@ int op; /* operation to be perform between g_a and g_b */
        *        - copy & reshape patch of g_b into g_B
        */
       if (!gai_duplicate(g_c, &g_B, tempname))
-        gai_error("ga_dadd_patch: dup failed", 0L);
+        pnga_error("ga_dadd_patch: dup failed", 0L);
       ngai_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
       bndim = cndim;
       B_created = 1;
-      nga_distribution_(&g_B, &me, loB, hiB);
+      pnga_distribution(&g_B, &me, loB, hiB);
     }        
 
     if(andim > bndim) cndim = bndim;
     if(andim < bndim) cndim = andim;
 
     if(!ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC))
-      gai_error(" A patch mismatch ", g_A); 
+      pnga_error(" A patch mismatch ", g_A); 
     if(!ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC))
-      gai_error(" B patch mismatch ", g_B);
+      pnga_error(" B patch mismatch ", g_B);
 
     /*  determine subsets of my patches to access  */
     if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
@@ -1846,13 +1848,13 @@ int op; /* operation to be perform between g_a and g_b */
     /* create copies of arrays A and B that are identically distributed
        as C*/
     if (!gai_duplicate(g_c, &g_A, tempname))
-      gai_error("ga_dadd_patch: dup failed", 0L);
+      pnga_error("ga_dadd_patch: dup failed", 0L);
     ngai_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
     andim = cndim;
     A_created = 1;
 
     if (!gai_duplicate(g_c, &g_B, tempname))
-      gai_error("ga_dadd_patch: dup failed", 0L);
+      pnga_error("ga_dadd_patch: dup failed", 0L);
     ngai_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
     bndim = cndim;
     B_created = 1;
@@ -1860,7 +1862,7 @@ int op; /* operation to be perform between g_a and g_b */
     /* C is normally distributed so just add copies together for regular
        arrays */
     if (num_blocks_c < 0) {
-      nga_distribution_( g_c, &me, loC, hiC);
+      pnga_distribution( g_c, &me, loC, hiC);
       if(andim > bndim) cndim = bndim;
       if(andim < bndim) cndim = andim;
       if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
@@ -1880,10 +1882,10 @@ int op; /* operation to be perform between g_a and g_b */
       Integer lod[MAXDIM], hid[MAXDIM], chk;
       Integer offset, last, jtot;
       if (!ga_uses_proc_grid_(g_c)) {
-        Integer nproc = ga_nnodes_();
+        Integer nproc = pnga_nnodes();
         for (idx = me; idx < num_blocks_c; idx += nproc) {
 
-          nga_distribution_(g_c, &idx, loC, hiC);
+          pnga_distribution(g_c, &idx, loC, hiC);
           /* make temporary copies of loC and hiC since ngai_patch_intersect
              destroys original versions */
           for (j=0; j<cndim; j++) {
@@ -2044,8 +2046,8 @@ int op; /* operation to be perform between g_a and g_b */
     }
   }
 
-  if(A_created) ga_destroy_(&g_A);
-  if(B_created) ga_destroy_(&g_B);
+  if(A_created) pnga_destroy(&g_A);
+  if(B_created) pnga_destroy(&g_B);
 
   GA_POP_NAME;
   if(local_sync_end)ga_sync_();
@@ -2064,7 +2066,7 @@ void FATR ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c){
     nga_inquire_internal_(g_b,  &btype, &bndim, bhi);
     nga_inquire_internal_(g_c,  &ctype, &cndim, chi);
     if((andim!=bndim)||(andim!=cndim))
-	gai_error("global arrays have different dimmensions.", andim);
+	pnga_error("global arrays have different dimmensions.", andim);
     while(andim){
         alo[andim-1]=1;
         blo[bndim-1]=1;
@@ -2092,7 +2094,7 @@ void FATR ga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c){
     nga_inquire_internal_(g_b,  &btype, &bndim, bhi);
     nga_inquire_internal_(g_c,  &ctype, &cndim, chi);
     if((andim!=bndim)||(andim!=cndim))
-        gai_error("global arrays have different dimmensions.", andim);
+        pnga_error("global arrays have different dimmensions.", andim);
     while(andim){
         alo[andim-1]=1;
         blo[bndim-1]=1;
@@ -2123,7 +2125,7 @@ void FATR ga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c){
     nga_inquire_internal_(g_b,  &btype, &bndim, bhi);
     nga_inquire_internal_(g_c,  &ctype, &cndim, chi);
     if((andim!=bndim)||(andim!=cndim))
-        gai_error("global arrays have different dimmensions.", andim);
+        pnga_error("global arrays have different dimmensions.", andim);
     while(andim){
         alo[andim-1]=1;
         blo[bndim-1]=1;
@@ -2152,7 +2154,7 @@ void FATR ga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c){
     nga_inquire_internal_(g_b,  &btype, &bndim, bhi);
     nga_inquire_internal_(g_c,  &ctype, &cndim, chi);
     if((andim!=bndim)||(andim!=cndim))
-        gai_error("global arrays have different dimmensions.", andim);
+        pnga_error("global arrays have different dimmensions.", andim);
     while(andim){
         alo[andim-1]=1;
         blo[bndim-1]=1;
@@ -2251,7 +2253,7 @@ void ngai_do_elem3_patch(Integer atype, Integer andim, Integer *loA, Integer *hi
         break;
       case C_DCPL:
       case C_SCPL:
-        gai_error(" ngai_elem3_patch_: wrong data type ",atype);
+        pnga_error(" ngai_elem3_patch_: wrong data type ",atype);
         break;
       case C_INT:
         tempA=((int*)A_ptr)+idx;
@@ -2263,7 +2265,7 @@ void ngai_do_elem3_patch(Integer atype, Integer andim, Integer *loA, Integer *hi
         tempA=((long *)A_ptr)+idx;
         break;
 
-      default: gai_error(" ngai_elem3_patch_: wrong data type ",atype);
+      default: pnga_error(" ngai_elem3_patch_: wrong data type ",atype);
     }
 
     switch(op){
@@ -2273,7 +2275,7 @@ void ngai_do_elem3_patch(Integer atype, Integer andim, Integer *loA, Integer *hi
       case  OP_STEPBOUNDINFO:
         do_stepboundinfo(tempA,hiA[0]-loA[0]+1, atype);
         break;
-      default: gai_error(" wrong operation ",op);
+      default: pnga_error(" wrong operation ",op);
     }
   }
 }
@@ -2286,7 +2288,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
   Integer andim, adims[MAXDIM];
   Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
   void *A_ptr;
-  Integer me= ga_nodeid_();
+  Integer me= pnga_nodeid();
   Integer num_blocks;
   int local_sync_begin,local_sync_end;
 
@@ -2303,11 +2305,11 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
   /* check if patch indices and dims match */
   for(i=0; i<andim; i++)
     if(alo[i] <= 0 || ahi[i] > adims[i])
-      gai_error("g_a indices out of range ", *g_a);
+      pnga_error("g_a indices out of range ", *g_a);
 
   if (num_blocks < 0) {
   /* find out coordinates of patches of g_a, g_b and g_c that I own */
-    nga_distribution_(g_a, &me, loA, hiA);
+    pnga_distribution(g_a, &me, loA, hiA);
 
     /*  determine subsets of my patches to access  */
     if (ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
@@ -2322,12 +2324,12 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
   } else {
     Integer offset, j, jtmp, chk;
     Integer loS[MAXDIM], nproc;
-    nproc = ga_nnodes_();
+    nproc = pnga_nnodes();
     /* using simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of patch */
-        nga_distribution_(g_a, &i, loA, hiA);
+        pnga_distribution(g_a, &i, loA, hiA);
 
         /* loA is changed by ngai_patch_intersect, so
          *            save a copy */
@@ -2379,7 +2381,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
               case C_LONG:
                 A_ptr = (void*)((long*)A_ptr + offset);
                 break;
-              default: gai_error(" wrong data type ",atype);
+              default: pnga_error(" wrong data type ",atype);
             }
           }
 
@@ -2456,7 +2458,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
               case C_LONG:
                 A_ptr = (void*)((long*)A_ptr + offset);
                 break;
-              default: gai_error(" wrong data type ",atype);
+              default: pnga_error(" wrong data type ",atype);
             }
           }
 
@@ -2530,7 +2532,7 @@ void ngai_has_negative_element(Integer atype, Integer andim, Integer *loA, Integ
         break;
       case C_DCPL:
       case C_SCPL:
-        gai_error(" has_negative_elem: wrong data type ",
+        pnga_error(" has_negative_elem: wrong data type ",
             atype);
         break;
       case C_INT:
@@ -2549,7 +2551,7 @@ void ngai_has_negative_element(Integer atype, Integer andim, Integer *loA, Integ
           if(ltempA[j]<(long)0) *iretval=1;
         break;
 
-      default: gai_error(" has_negative_elem: wrong data type ",
+      default: pnga_error(" has_negative_elem: wrong data type ",
                    atype);
     }
 
@@ -2567,7 +2569,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
   void *A_ptr; 
   Integer iretval;
   Integer num_blocks;
-  Integer me= ga_nodeid_();
+  Integer me= pnga_nodeid();
 
 
   ga_sync_();
@@ -2580,11 +2582,11 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
   /* check if patch indices and dims match */
   for(i=0; i<andim; i++)
     if(alo[i] <= 0 || ahi[i] > adims[i])
-      gai_error("g_a indices out of range ", *g_a);
+      pnga_error("g_a indices out of range ", *g_a);
 
   if (num_blocks < 0) {
     /* find out coordinates of patches of g_a, g_b and g_c that I own */
-    nga_distribution_(g_a, &me, loA, hiA);
+    pnga_distribution(g_a, &me, loA, hiA);
     iretval = 0;
     /*  determine subsets of my patches to access  */
     if (ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
@@ -2598,12 +2600,12 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
   } else {
     Integer offset, j, jtmp, chk;
     Integer loS[MAXDIM], nproc;
-    nproc = ga_nnodes_();
+    nproc = pnga_nnodes();
     /* using simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of patch */
-        nga_distribution_(g_a, &i, loA, hiA);
+        pnga_distribution(g_a, &i, loA, hiA);
 
         /* loA is changed by ngai_patch_intersect, so
          *            save a copy */
@@ -2655,7 +2657,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
               case C_LONG:
                 A_ptr = (void*)((long*)A_ptr + offset);
                 break;
-              default: gai_error(" wrong data type ",atype);
+              default: pnga_error(" wrong data type ",atype);
             }
           }
 
@@ -2732,7 +2734,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
               case C_LONG:
                 A_ptr = (void*)((long*)A_ptr + offset);
                 break;
-              default: gai_error(" wrong data type ",atype);
+              default: pnga_error(" wrong data type ",atype);
             }
           }
 
@@ -2789,7 +2791,7 @@ void FATR ga_step_bound_info_patch_(
      Integer loXU[MAXDIM], hiXU[MAXDIM];
      Integer g_XL = *g_xxll, g_XU = *g_xxuu;
      Integer xltotal,xutotal;
-     Integer me= ga_nodeid_();
+     Integer me= pnga_nodeid();
      Integer g_Q;
      /* Integer *g_q = &g_Q; */
      Integer g_R;
@@ -2835,25 +2837,25 @@ void FATR ga_step_bound_info_patch_(
 
      /* Check for matching types. */
 
-     if(xxtype != vvtype) gai_error(" ga_step_bound_info_patch_: types mismatch ", 0L); 
-     if(xxtype != xltype) gai_error(" ga_step_bound_info_patch_: types mismatch ", 0L); 
-     if(xxtype != xutype) gai_error(" ga_step_bound_info_patch_: types mismatch ", 0L); 
+     if(xxtype != vvtype) pnga_error(" ga_step_bound_info_patch_: types mismatch ", 0L); 
+     if(xxtype != xltype) pnga_error(" ga_step_bound_info_patch_: types mismatch ", 0L); 
+     if(xxtype != xutype) pnga_error(" ga_step_bound_info_patch_: types mismatch ", 0L); 
 
      /* check if patch indices and dims match */
      for(i=0; i<xxndim; i++)
        if(xxlo[i] <= 0 || xxhi[i] > xxdims[i])
-	 gai_error("ga_elem_step_bound_info_patch: g_a indices out of range ", *g_xx);
+	 pnga_error("ga_elem_step_bound_info_patch: g_a indices out of range ", *g_xx);
 
      for(i=0; i<vvndim; i++)
        if(vvlo[i] <= 0 || vvhi[i] > vvdims[i])
-	 gai_error("ga_elem_step_bound_info_patch: g_a indices out of range ", *g_vv);
+	 pnga_error("ga_elem_step_bound_info_patch: g_a indices out of range ", *g_vv);
 
      for(i=0; i<xlndim; i++)
        if(xxlllo[i] <= 0 || xxllhi[i] > xldims[i])
-	 gai_error("ga_elem_step_bound_info_patch: g_a indices out of range ", *g_xxll);
+	 pnga_error("ga_elem_step_bound_info_patch: g_a indices out of range ", *g_xxll);
      for(i=0; i<xundim; i++)
        if(xxuulo[i] <= 0 || xxuuhi[i] > xudims[i])
-	 gai_error("ga_elem_step_bound_info_patch: g_a indices out of range ", *g_xxuu);
+	 pnga_error("ga_elem_step_bound_info_patch: g_a indices out of range ", *g_xxuu);
      
      /* check if numbers of elements in patches match each other */
      xxtotal = 1; for(i=0; i<xxndim; i++) xxtotal *= (xxhi[i] - xxlo[i] + 1);
@@ -2862,16 +2864,16 @@ void FATR ga_step_bound_info_patch_(
      xutotal = 1; for(i=0; i<xundim; i++) xutotal *= (xxuuhi[i] - xxuulo[i] + 1);
  
      if(xxtotal != vvtotal)
-        gai_error(" ga_step_bound_info_patch_ capacities of patches do not match ", 0L);
+        pnga_error(" ga_step_bound_info_patch_ capacities of patches do not match ", 0L);
      if(xxtotal != xltotal)
-        gai_error(" ga_step_bound_info_patch_ capacities of patches do not match ", 0L);
+        pnga_error(" ga_step_bound_info_patch_ capacities of patches do not match ", 0L);
      if(xxtotal != xutotal)
-        gai_error(" ga_step_bound_info_patch_ capacities of patches do not match ", 0L);
+        pnga_error(" ga_step_bound_info_patch_ capacities of patches do not match ", 0L);
      /* find out coordinates of patches of g_a, and g_b that I own */
-     nga_distribution_(&g_XX, &me, loXX, hiXX);
-     nga_distribution_(&g_VV, &me, loVV, hiVV);
-     nga_distribution_(&g_XL, &me, loXL, hiXL);
-     nga_distribution_(&g_XU, &me, loXU, hiXU);
+     pnga_distribution(&g_XX, &me, loXX, hiXX);
+     pnga_distribution(&g_VV, &me, loVV, hiVV);
+     pnga_distribution(&g_XL, &me, loXL, hiXL);
+     pnga_distribution(&g_XU, &me, loXU, hiXU);
      
 
      /* test if the local portion of patches matches */
@@ -2899,7 +2901,7 @@ void FATR ga_step_bound_info_patch_(
      compatible = compatible * compatible2 * compatible3;
      gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
      if(!compatible) {
-       gai_error(" ga_step_bound_info_patch_ mismatched patchs ",0);
+       pnga_error(" ga_step_bound_info_patch_ mismatched patchs ",0);
      }
      switch (xxtype)
        {
@@ -2914,7 +2916,7 @@ void FATR ga_step_bound_info_patch_(
 	 break;
        case C_DCPL:
        case C_SCPL:
-	 gai_error("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
+	 pnga_error("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
 		   xxtype);
 	 break;
        case C_DBL:
@@ -2936,28 +2938,28 @@ void FATR ga_step_bound_info_patch_(
 	 beta     = &lbeta;
 	 break;
        default:
-	 gai_error("Ga_step_max_patch_: alpha/beta set wrong data type.", xxtype);
+	 pnga_error("Ga_step_max_patch_: alpha/beta set wrong data type.", xxtype);
        }
 
      /*duplicatecate an array Q to hold the temparary result */
      gai_duplicate(g_xx, &g_Q, "TempQ");
      if(g_Q==0)
-       gai_error("ga_step_bound_info_patch_:fail to duplicate array Q", g_Q);
+       pnga_error("ga_step_bound_info_patch_:fail to duplicate array Q", g_Q);
      
      /*duplicatecate an array R to hold the temparary result */
      gai_duplicate(g_xx, &g_R, "TempR");
      if(g_R==0)
-       gai_error("ga_step_bound_info_patch_:fail to duplicate array R", g_R);
+       pnga_error("ga_step_bound_info_patch_:fail to duplicate array R", g_R);
 
      /*duplicatecate an array s to hold the temparary result */
      gai_duplicate(g_xx, &g_S, "TempS");
      if(g_S==0)
-       gai_error("ga_step_bound_info_patch_:fail to duplicate array S", g_S);
+       pnga_error("ga_step_bound_info_patch_:fail to duplicate array S", g_S);
      
      /*duplicatecate an array T to hold the temparary result */
      gai_duplicate(g_xx, &g_T, "TempT");
      if(g_T==0)
-       gai_error("ga_step_bound_info_patch_:fail to duplicate array T", g_T);
+       pnga_error("ga_step_bound_info_patch_:fail to duplicate array T", g_T);
 
      /*First, compute xu - xx */
      nga_add_patch_(alpha, g_xxuu, xxuulo, xxuuhi, beta, g_xx, xxlo, xxhi,&g_S, xxlo, xxhi); 
@@ -2966,7 +2968,7 @@ void FATR ga_step_bound_info_patch_(
        not an upper bound, exit with error message.
      */
      if(has_negative_elem(&g_S, xxlo, xxhi) == 1)
-       gai_error("ga_step_bound_info_patch_: Upper bound is not > xx.", -1);
+       pnga_error("ga_step_bound_info_patch_: Upper bound is not > xx.", -1);
 
      /* Then compute t = positve elements of vv */
      ga_zero_(&g_T);
@@ -2988,7 +2990,7 @@ void FATR ga_step_bound_info_patch_(
            break;
        case C_DCPL:
        case C_SCPL:
-	 gai_error("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
+	 pnga_error("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
 		   xxtype);
 	 break;
        case C_DBL:
@@ -3001,7 +3003,7 @@ void FATR ga_step_bound_info_patch_(
 	 result1 = (double)lresult;
 	 break;
        default:
-	 gai_error("Ga_step_bound_info_patch_: result set: wrong data type.", xxtype);
+	 pnga_error("Ga_step_bound_info_patch_: result set: wrong data type.", xxtype);
        }
 
      /*Now doing the same thing to get (xx-xxll)/dv */
@@ -3011,7 +3013,7 @@ void FATR ga_step_bound_info_patch_(
        not a lower bound, exit with error message.
      */
      if(has_negative_elem(&g_Q, xxlo, xxhi) == 1)
-       gai_error("ga_step_bound_info_patch_: Lower bound is not < xx.", -1);
+       pnga_error("ga_step_bound_info_patch_: Lower bound is not < xx.", -1);
 
      /* Then compute r = negative elements of vv */
      ga_zero_(&g_R);
@@ -3029,7 +3031,7 @@ void FATR ga_step_bound_info_patch_(
 	 break;
        case C_DCPL:
        case C_SCPL:
-	 gai_error("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
+	 pnga_error("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
 		   xxtype);
 	 break;
        case C_DBL:
@@ -3042,7 +3044,7 @@ void FATR ga_step_bound_info_patch_(
 	 *(long*)wolfemin =  GA_ABS(GA_MIN(lresult,lresult2));
 	 break;
        default:
-	 gai_error("Ga_step_bound_info_patch_: result2 set: wrong data type.", xxtype);
+	 pnga_error("Ga_step_bound_info_patch_: result2 set: wrong data type.", xxtype);
        }
      /* 
        Now set T to be the elementwise minimum of R and T. 
@@ -3090,7 +3092,7 @@ void FATR ga_step_bound_info_patch_(
            break;
        case C_DCPL:
        case C_SCPL:
-	 gai_error("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
+	 pnga_error("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
 		   xxtype);
 	 break;
        case C_DBL:
@@ -3103,7 +3105,7 @@ void FATR ga_step_bound_info_patch_(
 	 *(long*)boundmin = lresult;
 	 break;
        default:
-	 gai_error("Ga_step_bound_info_patch_: result set: wrong data type.", xxtype);
+	 pnga_error("Ga_step_bound_info_patch_: result set: wrong data type.", xxtype);
        }
      /* 
        Then, we will select the maximum of the array g_t, that will
@@ -3120,7 +3122,7 @@ void FATR ga_step_bound_info_patch_(
            break;
        case C_DCPL:
        case C_SCPL:
-	 gai_error("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
+	 pnga_error("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
 		   xxtype);
 	 break;
        case C_DBL:
@@ -3133,12 +3135,12 @@ void FATR ga_step_bound_info_patch_(
 	 *(long*)boundmax = lresult;
 	 break;
        default:
-	 gai_error("Ga_step_bound_info_patch_: result set: wrong data type.", xxtype);
+	 pnga_error("Ga_step_bound_info_patch_: result set: wrong data type.", xxtype);
        }
-     ga_destroy_(&g_Q); 
-     ga_destroy_(&g_R); 
-     ga_destroy_(&g_S); 
-     ga_destroy_(&g_T); 
+     pnga_destroy(&g_Q); 
+     pnga_destroy(&g_R); 
+     pnga_destroy(&g_S); 
+     pnga_destroy(&g_T); 
      GA_POP_NAME;
      if(local_sync_end)ga_sync_();
 }
@@ -3197,29 +3199,29 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
   num_blocks_b = ga_total_blocks_(g_b);
 
   /* Check for matching types. */
-  if(atype != btype) gai_error(" ga_step_max_patch_: types mismatch ", 0L); 
+  if(atype != btype) pnga_error(" ga_step_max_patch_: types mismatch ", 0L); 
 
   /* check if patch indices and dims match */
   for(i=0; i<andim; i++)
     if(alo[i] <= 0 || ahi[i] > adims[i])
-      gai_error("g_a indices out of range ", *g_a);
+      pnga_error("g_a indices out of range ", *g_a);
   for(i=0; i<bndim; i++)
     if(blo[i] <= 0 || bhi[i] > bdims[i])
-      gai_error("g_b indices out of range ", *g_b);
+      pnga_error("g_b indices out of range ", *g_b);
 
   /* check if numbers of elements in patches match each other */
   atotal = 1; for(i=0; i<andim; i++) atotal *= (ahi[i] - alo[i] + 1);
   btotal = 1; for(i=0; i<bndim; i++) btotal *= (bhi[i] - blo[i] + 1);
 
   if(btotal != atotal)
-    gai_error(" ga_step_max_patch_ capacities of patches do not match ", 0L);
+    pnga_error(" ga_step_max_patch_ capacities of patches do not match ", 0L);
 
   /* test if patches match */
   if(ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi)) compatible = 1;
   else compatible = 0;
   gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
   if(!compatible) {
-    gai_error(" ga_step_max_patch_ mismatched patchs ",0);
+    pnga_error(" ga_step_max_patch_ mismatched patchs ",0);
   }
 
   switch (atype)
@@ -3229,7 +3231,7 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
       break;
     case C_DCPL:
     case C_SCPL:
-      gai_error("Ga_step_max_patch_: unavalable for complex datatype.", 
+      pnga_error("Ga_step_max_patch_: unavalable for complex datatype.", 
           atype);
       break;
     case C_DBL:
@@ -3242,7 +3244,7 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
       sresult = &lresult;
       break;
     default:
-      gai_error("Ga_step_max_patch_: wrong data type.", atype);
+      pnga_error("Ga_step_max_patch_: wrong data type.", atype);
   }
 
   if(*g_a == *g_b) {
@@ -3258,7 +3260,7 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
         break;
       case C_DCPL:
       case C_SCPL:
-        gai_error("Ga_step_max_patch_: unavailable for complex datatype.", 
+        pnga_error("Ga_step_max_patch_: unavailable for complex datatype.", 
             atype);
         break;
       case C_DBL:
@@ -3271,18 +3273,18 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
         *(long*)result = GA_INFINITY_L;
         break;
       default:
-        gai_error("Ga_step_max_patch_: wrong data type.", atype);
+        pnga_error("Ga_step_max_patch_: wrong data type.", atype);
     }
   } else {
     /*Now look at each element of the array g_a. 
       If an element of g_a is negative, then simply return */ 
     if(has_negative_elem(g_a, alo, ahi) == 1)
-      gai_error("ga_step_max_patch_: g_a has negative element.", -1);
+      pnga_error("ga_step_max_patch_: g_a has negative element.", -1);
 
     /*duplicate an array c to hold the temparate result = g_a/g_b; */
     gai_duplicate(g_a, &g_C, "Temp");
     if(g_C==0)
-      gai_error("ga_step_max_patch_:fail to duplicate array c", *g_a);
+      pnga_error("ga_step_max_patch_:fail to duplicate array c", *g_a);
     g_c = &g_C; 
 
     /*
@@ -3303,7 +3305,7 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
         break;
       case C_DCPL:
       case C_SCPL:
-        gai_error("Ga_step_max_patch_: unavailable for complex datatype.", 
+        pnga_error("Ga_step_max_patch_: unavailable for complex datatype.", 
             atype);
         break;
       case C_DBL:
@@ -3316,9 +3318,9 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
         *(long*)result = GA_ABS(lresult);
         break;
       default:
-        gai_error("Ga_step_max_patch_: wrong data type.", atype);
+        pnga_error("Ga_step_max_patch_: wrong data type.", atype);
     }
-    ga_destroy_ (&g_C);
+    pnga_destroy (&g_C);
   }
   GA_POP_NAME;
   if(local_sync_end)ga_sync_();

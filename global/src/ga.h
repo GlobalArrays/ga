@@ -57,6 +57,7 @@ extern void          GA_Elem_minimum_patch(int g_a,int *alo,int *ahi, int g_b,in
 extern void          GA_Elem_multiply(int g_a, int g_b, int g_c);
 extern void          GA_Elem_multiply_patch(int g_a,int *alo,int *ahi, int g_b,int *blo,int *bhi,int g_c,int *clo,int *chi);
 extern void          GA_Error(char *str, int code);
+extern void          NGA_Error(char *str, int code);
 extern void          GA_Fast_merge_mirrored(int g_a);
 extern float         GA_Fdot(int g_a, int g_b);
 extern void          GA_Fence(void);
@@ -97,7 +98,9 @@ extern void          GA_Merge_mirrored(int g_a);
 extern void          GA_Nblock(int g_a, int *nblock);
 extern int           GA_Ndim(int g_a);
 extern int           GA_Nnodes(void);
+extern int           NGA_Nnodes(void);
 extern int           GA_Nodeid(void);
+extern int           NGA_Nodeid(void);
 extern void          GA_Norm1(int g_a, double *nm);
 extern void          GA_Norm_infinity(int g_a, double *nm);
 extern int           GA_Num_mirrored_seg(int g_a);

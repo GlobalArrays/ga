@@ -8,6 +8,8 @@
 #include "base.h"
 #include "macdecls.h"
 #include "ga_ckpt.h"
+#include "papi.h"
+#include "wapi.h"
 
 #define DEBUG 0
 
@@ -26,11 +28,11 @@ int ga_icheckpoint_init(Integer *gas, int num)
     (void)ARMCI_Ckpt_create_ds(&ckptds,2*num);
     for(i=0;i<num*2;i=i+2){
     hdl = gas[i/2]+GA_OFFSET;
-       printf("\n%d:i=%d hdl=%d gas=%d %d %d",ga_nodeid_(),i,hdl,gas[i/2],i/2,GA[hdl].p_handle);fflush(stdout);
+       printf("\n%d:i=%d hdl=%d gas=%d %d %d",pnga_nodeid(),i,hdl,gas[i/2],i/2,GA[hdl].p_handle);fflush(stdout);
        ckptds.ptr_arr[i]=&GA[hdl];
        ckptds.sz[i]=sizeof(global_array_t);
        ckptds.saveonce[i]=1;
-       ckptds.ptr_arr[i+1]=GA[hdl].ptr[ga_nodeid_()];
+       ckptds.ptr_arr[i+1]=GA[hdl].ptr[pnga_nodeid()];
        ckptds.sz[i+1]=GA[hdl].size;
     }
     hdl = gas[0]+GA_OFFSET;
@@ -63,7 +65,7 @@ int ga_irecover(int rid)
     /*restore state*/
     /*if longjmp things are hosed */
     if(rid == 0){
-       printf("\n%d:in recover\n",ga_nodeid_());
+       printf("\n%d:in recover\n",pnga_nodeid());
        armci_irecover(rid,1);
     }
     else

@@ -50,6 +50,8 @@
 #include "globalp.h"
 #include "base.h" 
 #include "ga_profile.h" 
+#include "papi.h"
+#include "wapi.h"
 
 #ifndef MPI
 #  include "tcgmsg.h"
@@ -107,7 +109,7 @@ struct event_info {
 
 void ga_profile_init() {
     int i,j;
-    if(ga_nodeid_()==0) {printf("\nProfiling GA - ON\n");fflush(stdout);}
+    if(pnga_nodeid()==0) {printf("\nProfiling GA - ON\n");fflush(stdout);}
     for(i=0; i<GA_EVENTS; i++)
        for(j=0; j<GA_MAX_MSG_RANGE; j++) {
 	  GA_PROF[i][j].count = 0;  GA_PROF[i][j].exectime = 0.0; 
@@ -147,7 +149,7 @@ void ga_profile_start(int g_a, long bytes, int ndim, Integer *lo, Integer *hi,
 	  if(non_contig) event_type = NC_ACC;
 	  else event_type = ACC;
 	  break;
-       default: gai_error("ENABLE_PROFILE: Invalid communication type", 0L);
+       default: pnga_error("ENABLE_PROFILE: Invalid communication type", 0L);
     }
 
     /* set the curent event for timer */
@@ -181,7 +183,7 @@ void ga_profile_stop() {
        gCURRENT_EVNT.is_set = 0; /* clear the event */
     }
     else
-       gai_error("ENABLE_PROFILE: No event set. Probably ga_profile_stop() is called before ga_profile_start()", 0L);
+       pnga_error("ENABLE_PROFILE: No event set. Probably ga_profile_stop() is called before ga_profile_start()", 0L);
 
 #if GA_PRINT_STRIDE
     {  /* measure the time of each strided data transfer */
@@ -203,10 +205,10 @@ void ga_print_numcalls1() {
     int i; 
     GA_HDR1(); GA_HDR3();
     for(i=0; i< GA_MAX_MSG_RANGE-1; i++)
-       printf("%d\t %d\t %d\t %d\t (%d-%d)\n", ga_nodeid_(),
+       printf("%d\t %d\t %d\t %d\t (%d-%d)\n", pnga_nodeid(),
 	      GA_PROF[GET][i].count, GA_PROF[PUT][i].count,
 	      GA_PROF[ACC][i].count, 1<<i, 1<<(i+1));
-    printf("%d\t %d\t %d\t %d\t (>%d)\n", ga_nodeid_(),
+    printf("%d\t %d\t %d\t %d\t (>%d)\n", pnga_nodeid(),
 	   GA_PROF[GET][i].count, GA_PROF[PUT][i].count,
 	   GA_PROF[ACC][i].count, 1<<GA_MAX_MSG_RANGE);
 }
@@ -217,10 +219,10 @@ void ga_print_numcalls2() {
     int i; 
     GA_HDR2(); GA_HDR3();
     for(i=0; i< GA_MAX_MSG_RANGE-1; i++)
-       printf("%d\t %d\t %d\t %d\t (%d-%d)\n", ga_nodeid_(),
+       printf("%d\t %d\t %d\t %d\t (%d-%d)\n", pnga_nodeid(),
 	      GA_PROF[NC_GET][i].count, GA_PROF[NC_PUT][i].count,
 	      GA_PROF[NC_ACC][i].count, 1<<i, 1<<(i+1));
-    printf("%d\t %d\t %d\t %d\t (>%d)\n",ga_nodeid_(),
+    printf("%d\t %d\t %d\t %d\t (>%d)\n",pnga_nodeid(),
 	   GA_PROF[NC_GET][i].count, GA_PROF[NC_PUT][i].count,
 	   GA_PROF[NC_ACC][i].count, 1<<GA_MAX_MSG_RANGE);
 }
@@ -231,10 +233,10 @@ void ga_print_timings1() {
     int i; 
     GA_HDR1(); GA_HDR4();
     for(i=0; i< GA_MAX_MSG_RANGE-1; i++)
-       printf("%d\t %.2e\t %.2e\t %.2e\t (%d-%d)\n", ga_nodeid_(), 
+       printf("%d\t %.2e\t %.2e\t %.2e\t (%d-%d)\n", pnga_nodeid(), 
 	      GA_PROF[GET][i].exectime, GA_PROF[PUT][i].exectime, 
 	      GA_PROF[ACC][i].exectime, 1<<i, 1<<(i+1));
-    printf("%d\t %.2e\t %.2e\t %.2e\t (>%d)\n", ga_nodeid_(), 
+    printf("%d\t %.2e\t %.2e\t %.2e\t (>%d)\n", pnga_nodeid(), 
 	   GA_PROF[GET][i].exectime, GA_PROF[PUT][i].exectime, 
 	   GA_PROF[ACC][i].exectime, 1<<GA_MAX_MSG_RANGE);    
 }
@@ -245,10 +247,10 @@ void ga_print_timings2() {
     int i; 
     GA_HDR2(); GA_HDR4();
     for(i=0; i< GA_MAX_MSG_RANGE-1; i++)
-       printf("%d\t %.2e\t %.2e\t %.2e\t (%d-%d)\n", ga_nodeid_(), 
+       printf("%d\t %.2e\t %.2e\t %.2e\t (%d-%d)\n", pnga_nodeid(), 
 	      GA_PROF[NC_GET][i].exectime, GA_PROF[NC_PUT][i].exectime, 
 	      GA_PROF[NC_ACC][i].exectime, 1<<i, 1<<(i+1));
-    printf("%d\t %.2e\t %.2e\t %.2e\t (>%d)\n", ga_nodeid_(), 
+    printf("%d\t %.2e\t %.2e\t %.2e\t (>%d)\n", pnga_nodeid(), 
 	   GA_PROF[NC_GET][i].exectime, GA_PROF[NC_PUT][i].exectime, 
 	   GA_PROF[NC_ACC][i].exectime, 1<<GA_MAX_MSG_RANGE);    
 }
@@ -283,7 +285,7 @@ void ga_print_stridedinfo(int event, int range) {
 
 void ga_profile_terminate() {
     int i; 
-    if(ga_nodeid_() == 0) { /* process 0's profile only */
+    if(pnga_nodeid() == 0) { /* process 0's profile only */
 
        /* contiguous calls */
        ga_print_numcalls1();

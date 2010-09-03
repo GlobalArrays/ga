@@ -43,6 +43,8 @@
 #include "global.h"
 #include "globalp.h"
 #include "armci.h"
+#include "papi.h"
+#include "wapi.h"
 
 #ifdef USE_VAMPIR
 #   include "ga_vampir.h"
@@ -193,7 +195,7 @@ void ngai_copy_patch(char *trans,
   }
 
   /*if (a_grp != b_grp)
-    gai_error("All matrices must be on same group for ngai_copy_patch", 0L); */
+    pnga_error("All matrices must be on same group for ngai_copy_patch", 0L); */
   if(local_sync_begin) {
     if (anproc <= bnproc) {
       ga_pgroup_sync_(&a_grp);
@@ -216,26 +218,26 @@ void ngai_copy_patch(char *trans,
         return;
     /* they are in the same GA, but not the same patch */
     } else if (ngai_patch_intersect(alo, ahi, blo, bhi, andim)) {
-      gai_error("array patches cannot overlap ", 0L);
+      pnga_error("array patches cannot overlap ", 0L);
     }
   }
 
-  if(atype != btype ) gai_error("array type mismatch ", 0L);
+  if(atype != btype ) pnga_error("array type mismatch ", 0L);
 
   /* check if patch indices and dims match */
   for(i=0; i<andim; i++)
     if(alo[i] <= 0 || ahi[i] > adims[i])
-      gai_error("g_a indices out of range ", 0L);
+      pnga_error("g_a indices out of range ", 0L);
   for(i=0; i<bndim; i++)
     if(blo[i] <= 0 || bhi[i] > bdims[i])
-      gai_error("g_b indices out of range ", 0L);
+      pnga_error("g_b indices out of range ", 0L);
 
   /* check if numbers of elements in two patches match each other */
   atotal = 1; btotal = 1;
   for(i=0; i<andim; i++) atotal *= (ahi[i] - alo[i] + 1);
   for(i=0; i<bndim; i++) btotal *= (bhi[i] - blo[i] + 1);
   if(atotal != btotal)
-    gai_error("capacities two of patches do not match ", 0L);
+    pnga_error("capacities two of patches do not match ", 0L);
 
   /* additional restrictions that apply if one or both arrays use
      block-cyclic data distributions */
@@ -243,19 +245,19 @@ void ngai_copy_patch(char *trans,
   num_blocks_b = ga_total_blocks_(g_b);
   if (num_blocks_a >= 0 || num_blocks_b >= 0) {
     if (!(*trans == 'n' || *trans == 'N')) {
-      gai_error("Transpose option not supported for block-cyclic data", 0L);
+      pnga_error("Transpose option not supported for block-cyclic data", 0L);
     }
     if (!ngai_test_shape(alo, ahi, blo, bhi, andim, bndim)) {
-      gai_error("Change in shape not supported for block-cyclic data", 0L);
+      pnga_error("Change in shape not supported for block-cyclic data", 0L);
     }
   }
 
   if (num_blocks_a < 0 && num_blocks_b <0) {
     /* now find out cordinates of a patch of g_a that I own */
     if (use_put) {
-      nga_distribution_(g_a, &me_a, los, his);
+      pnga_distribution(g_a, &me_a, los, his);
     } else {
-      nga_distribution_(g_b, &me_b, los, his);
+      pnga_distribution(g_b, &me_b, los, his);
     }
 
     /* copy my share of data */
@@ -537,7 +539,7 @@ void ngai_copy_patch(char *trans,
         /* Uses simple block-cyclic data distribution */
         if (!ga_uses_proc_grid_(g_a)) {
           for (i = me_a; i < num_blocks_a; i += anproc) {
-            nga_distribution_(g_a, &i, los, his); 
+            pnga_distribution(g_a, &i, los, his); 
             /* make temporory copies of los, his since ngai_patch_intersection
                destroys original versions */
             for (j=0; j < andim; j++) {
@@ -662,7 +664,7 @@ void ngai_copy_patch(char *trans,
         }
       } else {
         /* Array b is block-cyclic distributed */
-        nga_distribution_(g_a, &me_a, los, his); 
+        pnga_distribution(g_a, &me_a, los, his); 
         if (ngai_patch_intersect(alo,ahi,los,his,andim)) {
           nga_access_ptr(g_a, los, his, &src_data_ptr, ld); 
           ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
@@ -677,7 +679,7 @@ void ngai_copy_patch(char *trans,
         /* Uses simple block-cyclic data distribution */
         if (!ga_uses_proc_grid_(g_b)) {
           for (i = me_b; i < num_blocks_b; i += bnproc) {
-            nga_distribution_(g_b, &i, los, his); 
+            pnga_distribution(g_b, &i, los, his); 
             /* make temporory copies of los, his since ngai_patch_intersection
                destroys original versions */
             for (j=0; j < andim; j++) {
@@ -802,7 +804,7 @@ void ngai_copy_patch(char *trans,
         }
       } else {
         /* Array a is block-cyclic distributed */
-        nga_distribution_(g_b, &me_b, los, his); 
+        pnga_distribution(g_b, &me_b, los, his); 
         if (ngai_patch_intersect(blo,bhi,los,his,bndim)) {
           nga_access_ptr(g_b, los, his, &src_data_ptr, ld); 
           ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
@@ -980,7 +982,7 @@ void ngai_dot_local_patch(Integer atype, Integer andim, Integer *loA,
       *(long long*)retval += llsum;
       break;
      default:
-        gai_error("ngai_dot_local_patch: type not supported",atype);
+        pnga_error("ngai_dot_local_patch: type not supported",atype);
         
   }
 }
@@ -1006,8 +1008,8 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
   DoubleComplex zsum={0,0};
   DoubleComplex csum={0,0};
   float fsum=0;
-  Integer me= ga_nodeid_(), temp_created=0;
-  Integer nproc = ga_nnodes_();
+  Integer me= pnga_nodeid(), temp_created=0;
+  Integer nproc = pnga_nnodes();
   Integer num_blocks_a=0, num_blocks_b=0;
   char *tempname = "temp", transp, transp_a, transp_b;
   int local_sync_begin=0;
@@ -1021,28 +1023,28 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
   a_grp = ga_get_pgroup_(g_a);
   b_grp = ga_get_pgroup_(g_b);
   if (a_grp != b_grp)
-    gai_error("Both arrays must be defined on same group",0L);
+    pnga_error("Both arrays must be defined on same group",0L);
   me = ga_pgroup_nodeid_(&a_grp);
 
   nga_inquire_internal_(g_a, &atype, &andim, adims);
   nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-  if(atype != btype ) gai_error(" type mismatch ", 0L);
+  if(atype != btype ) pnga_error(" type mismatch ", 0L);
 
   /* check if patch indices and g_a dims match */
   for(i=0; i<andim; i++)
     if(alo[i] <= 0 || ahi[i] > adims[i])
-      gai_error("g_a indices out of range ", *g_a);
+      pnga_error("g_a indices out of range ", *g_a);
   for(i=0; i<bndim; i++)
     if(blo[i] <= 0 || bhi[i] > bdims[i])
-      gai_error("g_b indices out of range ", *g_b);
+      pnga_error("g_b indices out of range ", *g_b);
 
   /* check if numbers of elements in two patches match each other */
   atotal = 1; for(i=0; i<andim; i++) atotal *= (ahi[i] - alo[i] + 1);
   btotal = 1; for(i=0; i<bndim; i++) btotal *= (bhi[i] - blo[i] + 1);
 
   if(atotal != btotal)
-    gai_error("  capacities of patches do not match ", 0L);
+    pnga_error("  capacities of patches do not match ", 0L);
 
   /* is transpose operation required ? */
   /* -- only if for one array transpose operation requested*/
@@ -1056,7 +1058,7 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
 
   if (num_blocks_a >= 0 || num_blocks_b >= 0) {
     if (transp_a == 't' || transp_b == 't')
-      gai_error("transpose not supported for block-cyclic data ", 0);
+      pnga_error("transpose not supported for block-cyclic data ", 0);
   }
 
   isum = 0; dsum = 0.; zsum.real = 0.; zsum.imag = 0.; fsum = 0;lsum=0;llsum=0;
@@ -1094,13 +1096,13 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
       alen = 1;
       break;
      default:
-        gai_error("ngai_dot_local_patch: type not supported",atype);
+        pnga_error("ngai_dot_local_patch: type not supported",atype);
   }
 
   if (num_blocks_a < 0 && num_blocks_b < 0) {
     /* find out coordinates of patches of g_A and g_B that I own */
-    nga_distribution_(&g_A, &me, loA, hiA);
-    nga_distribution_(&g_B, &me, loB, hiB);
+    pnga_distribution(&g_A, &me, loA, hiA);
+    pnga_distribution(&g_B, &me, loB, hiB);
 
     if(ngai_comp_patch(andim, loA, hiA, bndim, loB, hiB) &&
         ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi)) compatible = 1;
@@ -1112,16 +1114,16 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
        *        - copy & reshape patch of g_b into g_B
        */
       if (!gai_duplicate(g_a, &g_B, tempname))
-        gai_error("duplicate failed",0L);
+        pnga_error("duplicate failed",0L);
 
       ngai_copy_patch(&transp, g_b, blo, bhi, &g_B, alo, ahi);
       bndim = andim;
       temp_created = 1;
-      nga_distribution_(&g_B, &me, loB, hiB);
+      pnga_distribution(&g_B, &me, loB, hiB);
     }
 
     if(!ngai_comp_patch(andim, loA, hiA, bndim, loB, hiB))
-      gai_error(" patches mismatch ",0);
+      pnga_error(" patches mismatch ",0);
 
     /* A[83:125,1:1]  <==> B[83:125] */
     if(andim > bndim) andim = bndim; /* need more work */
@@ -1140,18 +1142,18 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
   } else {
     /* Create copy of g_b identical with identical distribution as g_a */
     if (!gai_duplicate(g_a, &g_B, tempname))
-      gai_error("duplicate failed",0L);
+      pnga_error("duplicate failed",0L);
     ngai_copy_patch(&transp, g_b, blo, bhi, &g_B, alo, ahi);
     temp_created = 1;
 
     /* If g_a regular distribution, then just use normal dot product on patch */
     if (num_blocks_a < 0) {
       /* find out coordinates of patches of g_A and g_B that I own */
-      nga_distribution_(&g_A, &me, loA, hiA);
-      nga_distribution_(&g_B, &me, loB, hiB);
+      pnga_distribution(&g_A, &me, loA, hiA);
+      pnga_distribution(&g_B, &me, loB, hiB);
 
       if(!ngai_comp_patch(andim, loA, hiA, bndim, loB, hiB))
-        gai_error(" patches mismatch ",0);
+        pnga_error(" patches mismatch ",0);
 
       /* A[83:125,1:1]  <==> B[83:125] */
       if(andim > bndim) andim = bndim; /* need more work */
@@ -1171,7 +1173,7 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
       /* simple block cyclic data distribution */
       if (!ga_uses_proc_grid_(g_a)) {
         for (i=me; i<num_blocks_a; i += nproc) {
-          nga_distribution_(&g_A, &i, loA, hiA);
+          pnga_distribution(&g_A, &i, loA, hiA);
           /* make copies of loA and hiA since ngai_patch_intersect destroys
              original versions */
           for (j=0; j<andim; j++) {
@@ -1328,7 +1330,7 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
     case C_LONGLONG: ctype=ARMCI_LONG_LONG; break;
     case C_DCPL: ctype=ARMCI_DOUBLE; break;
     case C_SCPL: ctype=ARMCI_FLOAT; break;
-    default: gai_error("ngai_dot_patch: type not supported",atype);
+    default: pnga_error("ngai_dot_patch: type not supported",atype);
   }
 
   if (ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) {
@@ -1347,7 +1349,7 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
     }
   }
 
-  if(temp_created) ga_destroy_(&g_B);
+  if(temp_created) pnga_destroy(&g_B);
   GA_POP_NAME;
 }
 
@@ -1384,7 +1386,7 @@ Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
    nga_inquire_internal_(g_a, &atype, &andim, adims);
    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-   if(atype != btype || (atype != C_SCPL )) gai_error(" wrong types ", 0L);
+   if(atype != btype || (atype != C_SCPL )) pnga_error(" wrong types ", 0L);
 
    ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi,
                   (void *)(sum));
@@ -1418,7 +1420,7 @@ DoublePrecision ngai_ddot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
     nga_inquire_internal_(g_a, &atype, &andim, adims);
     nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-    if(atype != btype || (atype != C_DBL )) gai_error(" wrong types ", 0L);
+    if(atype != btype || (atype != C_DBL )) pnga_error(" wrong types ", 0L);
 
     ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
 
@@ -1450,7 +1452,7 @@ Integer ngai_idot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
 
     if(atype != btype ||
        ((atype != C_INT ) && (atype !=C_LONG) && (atype !=C_LONGLONG)))
-       gai_error(" wrong types ", 0L);
+       pnga_error(" wrong types ", 0L);
 
     ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
 
@@ -1481,7 +1483,7 @@ Real ngai_sdot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
     nga_inquire_internal_(g_a, &atype, &andim, adims);
     nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-    if(atype != btype || (atype != C_FLOAT )) gai_error(" wrong types ", 0L);
+    if(atype != btype || (atype != C_FLOAT )) pnga_error(" wrong types ", 0L);
 
     ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
 
@@ -1520,7 +1522,7 @@ Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
    nga_inquire_internal_(g_a, &atype, &andim, adims);
    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-   if(atype != btype || (atype != C_DCPL )) gai_error(" wrong types ", 0L);
+   if(atype != btype || (atype != C_DCPL )) pnga_error(" wrong types ", 0L);
 
    ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi,
                   (void *)(sum));
@@ -1651,7 +1653,7 @@ void ngai_set_patch_value(Integer type, Integer ndim, Integer *loA, Integer *hiA
           ((long long*)data_ptr)[idx+j] = *(long long*)val;
       } 
       break;                          
-    default: gai_error(" wrong data type ",type);
+    default: pnga_error(" wrong data type ",type);
   }
 
 }
@@ -1666,7 +1668,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
   Integer loA[MAXDIM], hiA[MAXDIM], ld[MAXDIM];
   void *data_ptr;
   Integer num_blocks, nproc;
-  Integer me= ga_nodeid_();
+  Integer me= pnga_nodeid();
   int local_sync_begin,local_sync_end;
 
 #ifdef USE_VAMPIR
@@ -1683,7 +1685,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
 
   if (num_blocks < 0) {
     /* get limits of VISIBLE patch */ 
-    nga_distribution_(g_a, &me, loA, hiA);
+    pnga_distribution(g_a, &me, loA, hiA);
 
     /*  determine subset of my local patch to access  */
     /*  Output is in loA and hiA */
@@ -1702,12 +1704,12 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
   } else {
     Integer offset, j, jtmp, chk;
     Integer loS[MAXDIM];
-    nproc = ga_nnodes_();
+    nproc = pnga_nnodes();
     /* using simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of patch */ 
-        nga_distribution_(g_a, &i, loA, hiA);
+        pnga_distribution(g_a, &i, loA, hiA);
 
         /* loA is changed by ngai_patch_intersect, so
            save a copy */
@@ -1762,7 +1764,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
               case C_LONGLONG:
                 data_ptr = (void*)((long long*)data_ptr + offset);
                 break;                          
-              default: gai_error(" wrong data type ",type);
+              default: pnga_error(" wrong data type ",type);
             }
           }
 
@@ -1845,7 +1847,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
               case C_LONGLONG:
                 data_ptr = (void*)((long long*)data_ptr + offset);
                 break;                          
-              default: gai_error(" wrong data type ",type);
+              default: pnga_error(" wrong data type ",type);
             }
           }
 
@@ -2009,7 +2011,7 @@ void ngai_scale_patch_value(Integer type, Integer ndim, Integer *loA, Integer *h
           ((float *)src_data_ptr)[idx+j]  *= *(float*)alpha;
       }                                                           
       break;
-    default: gai_error(" wrong data type ",type);
+    default: pnga_error(" wrong data type ",type);
   }
 }
 
@@ -2024,7 +2026,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
   Integer ld[MAXDIM];
   void *src_data_ptr;
   Integer num_blocks, nproc;
-  Integer me= ga_nodeid_();
+  Integer me= pnga_nodeid();
   int local_sync_begin,local_sync_end;
 
 #ifdef USE_VAMPIR
@@ -2040,7 +2042,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
   num_blocks = ga_total_blocks_(g_a);
 
   if (num_blocks < 0) {
-    nga_distribution_(g_a, &me, loA, hiA);
+    pnga_distribution(g_a, &me, loA, hiA);
 
     /* determine subset of my patch to access */
     if (ngai_patch_intersect(lo, hi, loA, hiA, ndim)){
@@ -2054,12 +2056,12 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
   } else {
     Integer offset, i, j, jtmp, chk;
     Integer loS[MAXDIM];
-    nproc = ga_nnodes_();
+    nproc = pnga_nnodes();
     /* using simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of VISIBLE patch */
-        nga_distribution_(g_a, &i, loA, hiA);
+        pnga_distribution(g_a, &i, loA, hiA);
 
         /* loA is changed by ngai_patch_intersect, so
            save a copy */
@@ -2114,7 +2116,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
               case C_LONGLONG:
                 src_data_ptr = (void*)((long long*)src_data_ptr + offset);
                 break;                          
-              default: gai_error(" wrong data type ",type);
+              default: pnga_error(" wrong data type ",type);
             }
           }
 
@@ -2197,7 +2199,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
               case C_LONGLONG:
                 src_data_ptr = (void*)((long long*)src_data_ptr + offset);
                 break;                          
-              default: gai_error(" wrong data type ",type);
+              default: pnga_error(" wrong data type ",type);
             }
           }
 
@@ -2373,7 +2375,7 @@ void ngai_add_patch_values(Integer type, void* alpha, void *beta,
             ((long long*)B_ptr)[idx+j];
       }
       break;
-    default: gai_error(" wrong data type ",type);
+    default: pnga_error(" wrong data type ",type);
   }
 }
 
@@ -2398,8 +2400,8 @@ void *alpha, *beta;
   Integer n1dim;
   Integer atotal, btotal;
   Integer g_A = *g_a, g_B = *g_b;
-  Integer me= ga_nodeid_(), A_created=0, B_created=0;
-  Integer nproc = ga_nnodes_();
+  Integer me= pnga_nodeid(), A_created=0, B_created=0;
+  Integer nproc = pnga_nnodes();
   Integer num_blocks_a, num_blocks_b, num_blocks_c;
   char *tempname = "temp", notrans='n';
   int local_sync_begin,local_sync_end;
@@ -2417,18 +2419,18 @@ void *alpha, *beta;
   nga_inquire_internal_(g_b, &btype, &bndim, bdims);
   nga_inquire_internal_(g_c, &ctype, &cndim, cdims);
 
-  if(atype != btype || atype != ctype ) gai_error(" types mismatch ", 0L); 
+  if(atype != btype || atype != ctype ) pnga_error(" types mismatch ", 0L); 
 
   /* check if patch indices and dims match */
   for(i=0; i<andim; i++)
     if(alo[i] <= 0 || ahi[i] > adims[i])
-      gai_error("g_a indices out of range ", *g_a);
+      pnga_error("g_a indices out of range ", *g_a);
   for(i=0; i<bndim; i++)
     if(blo[i] <= 0 || bhi[i] > bdims[i])
-      gai_error("g_b indices out of range ", *g_b);
+      pnga_error("g_b indices out of range ", *g_b);
   for(i=0; i<cndim; i++)
     if(clo[i] <= 0 || chi[i] > cdims[i])
-      gai_error("g_b indices out of range ", *g_c);
+      pnga_error("g_b indices out of range ", *g_c);
 
   /* check if numbers of elements in patches match each other */
   n1dim = 1; for(i=0; i<cndim; i++) n1dim *= (chi[i] - clo[i] + 1);
@@ -2436,7 +2438,7 @@ void *alpha, *beta;
   btotal = 1; for(i=0; i<bndim; i++) btotal *= (bhi[i] - blo[i] + 1);
 
   if((atotal != n1dim) || (btotal != n1dim))
-    gai_error("  capacities of patches do not match ", 0L);
+    pnga_error("  capacities of patches do not match ", 0L);
 
   num_blocks_a = ga_total_blocks_(g_a);
   num_blocks_b = ga_total_blocks_(g_b);
@@ -2444,9 +2446,9 @@ void *alpha, *beta;
 
   if (num_blocks_a < 0 && num_blocks_b < 0 && num_blocks_c < 0) {
     /* find out coordinates of patches of g_a, g_b and g_c that I own */
-    nga_distribution_(&g_A, &me, loA, hiA);
-    nga_distribution_(&g_B, &me, loB, hiB);
-    nga_distribution_( g_c, &me, loC, hiC);
+    pnga_distribution(&g_A, &me, loA, hiA);
+    pnga_distribution(&g_B, &me, loB, hiB);
+    pnga_distribution( g_c, &me, loC, hiC);
 
     /* test if the local portion of patches matches */
     if(ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC) &&
@@ -2462,15 +2464,15 @@ void *alpha, *beta;
         ngai_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
         andim = cndim;
         g_A = *g_c;
-        nga_distribution_(&g_A, &me, loA, hiA);
+        pnga_distribution(&g_A, &me, loA, hiA);
       }
       else {
         if (!gai_duplicate(g_c, &g_A, tempname))
-          gai_error("ga_dadd_patch: dup failed", 0L);
+          pnga_error("ga_dadd_patch: dup failed", 0L);
         ngai_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
         andim = cndim;
         A_created = 1;
-        nga_distribution_(&g_A, &me, loA, hiA);
+        pnga_distribution(&g_A, &me, loA, hiA);
       }
     }
 
@@ -2485,20 +2487,20 @@ void *alpha, *beta;
        *        - copy & reshape patch of g_b into g_B
        */
       if (!gai_duplicate(g_c, &g_B, tempname))
-        gai_error("ga_dadd_patch: dup failed", 0L);
+        pnga_error("ga_dadd_patch: dup failed", 0L);
       ngai_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
       bndim = cndim;
       B_created = 1;
-      nga_distribution_(&g_B, &me, loB, hiB);
+      pnga_distribution(&g_B, &me, loB, hiB);
     }        
 
     if(andim > bndim) cndim = bndim;
     if(andim < bndim) cndim = andim;
 
     if(!ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC))
-      gai_error(" A patch mismatch ", g_A); 
+      pnga_error(" A patch mismatch ", g_A); 
     if(!ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC))
-      gai_error(" B patch mismatch ", g_B);
+      pnga_error(" B patch mismatch ", g_B);
 
     /*  determine subsets of my patches to access  */
     if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
@@ -2518,13 +2520,13 @@ void *alpha, *beta;
     /* create copies of arrays A and B that are identically distributed
        as C*/
     if (!gai_duplicate(g_c, &g_A, tempname))
-      gai_error("ga_dadd_patch: dup failed", 0L);
+      pnga_error("ga_dadd_patch: dup failed", 0L);
     ngai_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
     andim = cndim;
     A_created = 1;
 
     if (!gai_duplicate(g_c, &g_B, tempname))
-      gai_error("ga_dadd_patch: dup failed", 0L);
+      pnga_error("ga_dadd_patch: dup failed", 0L);
     ngai_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
     bndim = cndim;
     B_created = 1;
@@ -2532,7 +2534,7 @@ void *alpha, *beta;
     /* C is normally distributed so just add copies together for regular
        arrays */
     if (num_blocks_c < 0) {
-      nga_distribution_( g_c, &me, loC, hiC);
+      pnga_distribution( g_c, &me, loC, hiC);
       if(andim > bndim) cndim = bndim;
       if(andim < bndim) cndim = andim;
       if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
@@ -2554,7 +2556,7 @@ void *alpha, *beta;
       /* Simple block-cyclic data disribution */
       if (!ga_uses_proc_grid_(g_c)) {
         for (idx = me; idx < num_blocks_c; idx += nproc) {
-          nga_distribution_(g_c, &idx, loC, hiC);
+          pnga_distribution(g_c, &idx, loC, hiC);
           /* make temporary copies of loC and hiC since ngai_patch_intersect
              destroys original versions */
           for (j=0; j<cndim; j++) {
@@ -2725,8 +2727,8 @@ void *alpha, *beta;
     }
   }
 
-  if(A_created) ga_destroy_(&g_A);
-  if(B_created) ga_destroy_(&g_B);
+  if(A_created) pnga_destroy(&g_A);
+  if(B_created) pnga_destroy(&g_B);
 
   GA_POP_NAME;
   if(local_sync_end)ga_sync_();
@@ -2789,7 +2791,7 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
        case C_LONGLONG:
             valptr = (void *)(&llval);
             break; 
-        default: gai_error(" wrong data type ",type);
+        default: pnga_error(" wrong data type ",type);
     }
     nga_fill_patch_(g_a, lo, hi, valptr);
     
@@ -2881,7 +2883,7 @@ Integer atype, btype, adim1, adim2, bdim1, bdim2;
    ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
    ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != C_SCPL )) gai_error(" wrong types ", 0L);
+   if(atype != btype || (atype != C_SCPL )) pnga_error(" wrong types ", 0L);
 
    gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
                  g_b, t_b, bilo, bihi, bjlo, bjhi, (void*)sum);
@@ -2916,7 +2918,7 @@ DoublePrecision  sum = 0.;
    ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
    ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != C_DBL )) gai_error(" wrong types ", 0L);
+   if(atype != btype || (atype != C_DBL )) pnga_error(" wrong types ", 0L);
 
    gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
                  g_b, t_b, bilo, bihi, bjlo, bjhi, (void*)&sum);
@@ -2954,7 +2956,7 @@ Integer  sum = 0.;
 
    if(atype != btype ||
        ((atype != C_INT ) && (atype !=C_LONG) && (atype !=C_LONGLONG)))
-       gai_error(" wrong types ", 0L);
+       pnga_error(" wrong types ", 0L);
 
    gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
                  g_b, t_b, bilo, bihi, bjlo, bjhi, (void*)&sum);
@@ -2990,7 +2992,7 @@ Real  sum = 0.;
    ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
    ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != C_FLOAT )) gai_error(" wrong types ", 0L);
+   if(atype != btype || (atype != C_FLOAT )) pnga_error(" wrong types ", 0L);
 
    gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
                  g_b, t_b, bilo, bihi, bjlo, bjhi, (void*)&sum);
@@ -3032,7 +3034,7 @@ Integer atype, btype, adim1, adim2, bdim1, bdim2;
    ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
    ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != C_DCPL )) gai_error(" wrong types ", 0L);
+   if(atype != btype || (atype != C_DCPL )) pnga_error(" wrong types ", 0L);
 
    gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
                  g_b, t_b, bilo, bihi, bjlo, bjhi, (void*)sum);

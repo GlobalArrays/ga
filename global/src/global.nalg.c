@@ -18,6 +18,8 @@
 #include "global.h"
 #include "globalp.h"
 #include "armci.h"
+#include "papi.h"
+#include "wapi.h"
 
 #ifdef USE_VAMPIR
 #include "ga_vampir.h"
@@ -31,7 +33,7 @@ static Integer one_arr[MAXDIM]={1,1,1,1,1,1,1};
 #define GET_ELEMS(ndim,lo,hi,ld,pelems){\
 int _i;\
       for(_i=0, *pelems = hi[ndim-1]-lo[ndim-1]+1; _i< ndim-1;_i++) {\
-         if(ld[_i] != (hi[_i]-lo[_i]+1)) gai_error("layout problem",_i);\
+         if(ld[_i] != (hi[_i]-lo[_i]+1)) pnga_error("layout problem",_i);\
          *pelems *= hi[_i]-lo[_i]+1;\
       }\
 }
@@ -40,7 +42,7 @@ int _i;\
 int _i;\
       for(_i=0, *pelems = hi[ndim-1]-lo[ndim-1]+1; _i< ndim-1;_i++) {\
          if(ld[_i] < (hi[_i]-lo[_i]+1))\
-           gai_error("layout problem with ghosts",_i);\
+           pnga_error("layout problem with ghosts",_i);\
          *pelems *= hi[_i]-lo[_i]+1;\
       }\
 }
@@ -73,7 +75,7 @@ void FATR ga_zero_(Integer *g_a)
 
   nga_inquire_internal_(g_a, &type, &ndim, dims);
   if (num_blocks < 0) {
-    nga_distribution_(g_a, &me, lo, hi);
+    pnga_distribution(g_a, &me, lo, hi);
 
     if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
 
@@ -117,7 +119,7 @@ void FATR ga_zero_(Integer *g_a)
         lla = (long long*)ptr;
         for(i=0;i<elems;i++) lla[i]  = 0;
         break;                                 
-        default: gai_error(" wrong data type ",type);
+        default: pnga_error(" wrong data type ",type);
       }
 
       /* release access to the data */
@@ -155,7 +157,7 @@ void FATR ga_zero_(Integer *g_a)
       lla = (long long*)ptr;
       for(i=0;i<elems;i++) lla[i]  = 0;
       break;                                 
-      default: gai_error(" wrong data type ",type);
+      default: pnga_error(" wrong data type ",type);
     }
 
     /* release access to the data */
@@ -178,18 +180,18 @@ Integer  ndim, ndimb, type, typeb, me, elems=0, elemsb=0;
 Integer dimsb[MAXDIM];
 void *ptr_a, *ptr_b;
 
-   me = ga_nodeid_();
+   me = pnga_nodeid();
 
    GA_PUSH_NAME("ga_copy");
 
-   if(*g_a == *g_b) gai_error("arrays have to be different ", 0L);
+   if(*g_a == *g_b) pnga_error("arrays have to be different ", 0L);
 
    nga_inquire_internal_(g_a,  &type, &ndim, dims);
    nga_inquire_internal_(g_b,  &typeb, &ndimb, dimsb);
 
-   if(type != typeb) gai_error("types not the same", *g_b);
+   if(type != typeb) pnga_error("types not the same", *g_b);
 
-   if(!ga_compare_distr_(g_a,g_b))
+   if(!pnga_compare_distr(g_a,g_b))
 
       ngai_copy_patch("n",g_a, one_arr, dims, g_b, one_arr, dimsb);
 
@@ -197,7 +199,7 @@ void *ptr_a, *ptr_b;
 
      ga_sync_();
 
-     nga_distribution_(g_a, &me, lo, hi);
+     pnga_distribution(g_a, &me, lo, hi);
      if(lo[0]>0){
         nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
         if (ga_has_ghosts_(g_a)) {
@@ -207,7 +209,7 @@ void *ptr_a, *ptr_b;
         }
      }
 
-     nga_distribution_(g_b, &me, lo, hi);
+     pnga_distribution(g_b, &me, lo, hi);
      if(lo[0]>0){
         nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
         if (ga_has_ghosts_(g_b)) {
@@ -217,7 +219,7 @@ void *ptr_a, *ptr_b;
         }
      }
   
-     if(elems!= elemsb)gai_error("inconsistent number of elements",elems-elemsb);
+     if(elems!= elemsb)pnga_error("inconsistent number of elements",elems-elemsb);
 
      if(elems>0){
         ARMCI_Copy(ptr_a, ptr_b, (int)elems*GAsizeofM(type));
@@ -267,7 +269,7 @@ int local_sync_begin,local_sync_end,use_put;
      use_put = 0;
    }
    /*if (a_grp != b_grp)
-     gai_error("Both arrays must be defined on same group",0L); */
+     pnga_error("Both arrays must be defined on same group",0L); */
    if(local_sync_begin) {
      if (anproc <= bnproc) {
        ga_pgroup_sync_(&a_grp);
@@ -279,16 +281,16 @@ int local_sync_begin,local_sync_end,use_put;
      }
    }
 
-   if(*g_a == *g_b) gai_error("arrays have to be different ", 0L);
+   if(*g_a == *g_b) pnga_error("arrays have to be different ", 0L);
 
    nga_inquire_internal_(g_a,  &type, &ndim, dims);
    nga_inquire_internal_(g_b,  &typeb, &ndimb, dimsb);
 
-   if(type != typeb) gai_error("types not the same", *g_b);
-   if(ndim != ndimb) gai_error("dimensions not the same", ndimb);
+   if(type != typeb) pnga_error("types not the same", *g_b);
+   if(ndim != ndimb) pnga_error("dimensions not the same", ndimb);
 
    for(i=0; i< ndim; i++)if(dims[i]!=dimsb[i]) 
-                          gai_error("dimensions not the same",i);
+                          pnga_error("dimensions not the same",i);
 
    if ((ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) ||
        (!ga_is_mirrored_(g_a) && !ga_is_mirrored_(g_b))) {
@@ -297,7 +299,7 @@ int local_sync_begin,local_sync_end,use_put;
 
      if (use_put) {
        if (num_blocks_a < 0) {
-         nga_distribution_(g_a, &me_a, lo, hi);
+         pnga_distribution(g_a, &me_a, lo, hi);
          if(lo[0]>0){
            nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
            nga_put_(g_b, lo, hi, ptr_a, ld);
@@ -305,7 +307,7 @@ int local_sync_begin,local_sync_end,use_put;
        } else {
          if (!ga_uses_proc_grid_(g_a)) {
            for (i=me_a; i<num_blocks_a; i += anproc) {
-             nga_distribution_(g_a, &i, lo, hi);
+             pnga_distribution(g_a, &i, lo, hi);
              if (lo[0]>0) {
                nga_access_block_ptr(g_a, &i, &ptr_a, ld);
                nga_put_(g_b, lo, hi, ptr_a, ld);
@@ -344,7 +346,7 @@ int local_sync_begin,local_sync_end,use_put;
        }
      } else {
        if (num_blocks_b < 0) {
-         nga_distribution_(g_b, &me_b, lo, hi);
+         pnga_distribution(g_b, &me_b, lo, hi);
          if(lo[0]>0){
            nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
            nga_get_(g_a, lo, hi, ptr_b, ld);
@@ -352,7 +354,7 @@ int local_sync_begin,local_sync_end,use_put;
        } else {
          if (!ga_uses_proc_grid_(g_a)) {
            for (i=me_b; i<num_blocks_b; i += bnproc) {
-             nga_distribution_(g_b, &i, lo, hi);
+             pnga_distribution(g_b, &i, lo, hi);
              if (lo[0]>0) {
                nga_access_block_ptr(g_b, &i, &ptr_b, ld);
                nga_get_(g_a, lo, hi, ptr_b, ld);
@@ -395,7 +397,7 @@ int local_sync_begin,local_sync_end,use_put;
      if (ga_is_mirrored_(g_a)) {
        /* Source array is mirrored and destination
           array is distributed. Assume source array is consistent */
-       nga_distribution_(g_b, &me_b, lo, hi);
+       pnga_distribution(g_b, &me_b, lo, hi);
        if (lo[0]>0) {
          nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
          nga_get_(g_a, lo, hi, ptr_b, ld);
@@ -413,7 +415,7 @@ int local_sync_begin,local_sync_end,use_put;
          }
          ga_fast_merge_mirrored_(g_b);
        } else {
-         nga_distribution_(g_a, &me_a, lo, hi);
+         pnga_distribution(g_a, &me_a, lo, hi);
          if (lo[0] > 0) {
            nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
            nga_put_(g_b, lo, hi, ptr_a, ld);
@@ -467,7 +469,7 @@ Integer bndim, bdims[MAXDIM];
    a_grp = ga_get_pgroup_(g_a);
    b_grp = ga_get_pgroup_(g_b);
    if (a_grp != b_grp)
-     gai_error("Both arrays must be defined on same group",0L);
+     pnga_error("Both arrays must be defined on same group",0L);
    me = ga_pgroup_nodeid_(&a_grp);
 
    /* Check to see if either GA is block cyclic distributed */
@@ -482,7 +484,7 @@ Integer bndim, bdims[MAXDIM];
      return;
    }
 
-   if(ga_compare_distr_(g_a,g_b) == FALSE ||
+   if(pnga_compare_distr(g_a,g_b) == FALSE ||
       ga_has_ghosts_(g_a) || ga_has_ghosts_(g_b)) {
        /* distributions not identical */
        nga_inquire_internal_(g_a, &type, &andim, adims);
@@ -497,8 +499,8 @@ Integer bndim, bdims[MAXDIM];
    
    ga_pgroup_sync_(&a_grp);
    nga_inquire_internal_(g_a,  &type, &ndim, dims);
-   if(type != Type) gai_error("type not correct", *g_a);
-   nga_distribution_(g_a, &me, lo, hi);
+   if(type != Type) pnga_error("type not correct", *g_a);
+   pnga_distribution(g_a, &me, lo, hi);
    if(lo[0]>0){
       nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
       if (ga_has_ghosts_(g_a)) {
@@ -513,8 +515,8 @@ Integer bndim, bdims[MAXDIM];
      ptr_b = ptr_a;
    }else {  
      nga_inquire_internal_(g_b,  &type, &ndim, dims);
-     if(type != Type) gai_error("type not correct", *g_b);
-     nga_distribution_(g_b, &me, lo, hi);
+     if(type != Type) pnga_error("type not correct", *g_b);
+     pnga_distribution(g_b, &me, lo, hi);
      if(lo[0]>0){
         nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
         if (ga_has_ghosts_(g_b)) {
@@ -525,7 +527,7 @@ Integer bndim, bdims[MAXDIM];
      }
    }
 
-   if(elems!= elemsb)gai_error("inconsistent number of elements",elems-elemsb); 
+   if(elems!= elemsb)pnga_error("inconsistent number of elements",elems-elemsb); 
 
 
       /* compute "local" contribution to the dot product */
@@ -605,7 +607,7 @@ Integer bndim, bdims[MAXDIM];
            type = C_LONGLONG;
            alen = 1;
            break;               
-        default: gai_error(" wrong data type ",type);
+        default: pnga_error(" wrong data type ",type);
       }
    
       /* release access to the data */
@@ -623,7 +625,7 @@ Integer bndim, bdims[MAXDIM];
       case C_LONGLONG: atype=ARMCI_LONG_LONG; break;
       case C_DCPL: atype=ARMCI_DOUBLE; break;
       case C_SCPL: atype=ARMCI_FLOAT; break;
-      default: gai_error("gai_dot: type not supported",type);
+      default: pnga_error("gai_dot: type not supported",type);
     }
 
    if (ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) {
@@ -757,7 +759,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
 
   nga_inquire_internal_(g_a, &type, &ndim, dims);
   if (num_blocks < 0) {
-    nga_distribution_(g_a, &me, lo, hi);
+    pnga_distribution(g_a, &me, lo, hi);
     if (ga_has_ghosts_(g_a)) {
       nga_scale_patch_(g_a, lo, hi, alpha);
 #ifdef USE_VAMPIR
@@ -817,7 +819,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
         fa = (float*)ptr;
         for(i=0;i<elems;i++) fa[i]  *= *(float*)alpha;
         break;       
-        default: gai_error(" wrong data type ",type);
+        default: pnga_error(" wrong data type ",type);
       }
 
       /* release access to the data */
@@ -871,7 +873,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
       fa = (float*)ptr;
       for(i=0;i<elems;i++) fa[i]  *= *(float*)alpha;
       break;       
-      default: gai_error(" wrong data type ",type);
+      default: pnga_error(" wrong data type ",type);
     }
     /* release access to the data */
     nga_release_update_block_segment_(g_a, &me);
@@ -941,11 +943,11 @@ int local_sync_begin,local_sync_end;
    b_grp = ga_get_pgroup_(g_b);
    c_grp = ga_get_pgroup_(g_c);
    if (a_grp != b_grp || b_grp != c_grp)
-     gai_error("All three arrays must be on same group for ga_add",0L);
+     pnga_error("All three arrays must be on same group for ga_add",0L);
 
    me = ga_pgroup_nodeid_(&a_grp);
-   if((ga_compare_distr_(g_a,g_b) == FALSE) ||
-      (ga_compare_distr_(g_a,g_c) == FALSE) ||
+   if((pnga_compare_distr(g_a,g_b) == FALSE) ||
+      (pnga_compare_distr(g_a,g_c) == FALSE) ||
        ga_has_ghosts_(g_a) || ga_has_ghosts_(g_b) || ga_has_ghosts_(g_c) ||
        ga_total_blocks_(g_a) > 0 || ga_total_blocks_(g_b) > 0 ||
        ga_total_blocks_(g_c) > 0) {
@@ -966,7 +968,7 @@ int local_sync_begin,local_sync_end;
 
    ga_pgroup_sync_(&a_grp);
    nga_inquire_internal_(g_c,  &typeC, &ndim, dims);
-   nga_distribution_(g_c, &me, lo, hi);
+   pnga_distribution(g_c, &me, lo, hi);
    if (  lo[0]>0 ){
      nga_access_ptr(g_c, lo, hi, &ptr_c, ld);
      GET_ELEMS(ndim,lo,hi,ld,&elems);
@@ -977,8 +979,8 @@ int local_sync_begin,local_sync_end;
      elemsa = elems;
    }else { 
      nga_inquire_internal_(g_a,  &type, &ndim, dims);
-     if(type != typeC) gai_error("types not consistent", *g_a);
-     nga_distribution_(g_a, &me, lo, hi);
+     if(type != typeC) pnga_error("types not consistent", *g_a);
+     pnga_distribution(g_a, &me, lo, hi);
      if (  lo[0]>0 ){
        nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
        GET_ELEMS(ndim,lo,hi,ld,&elemsa);
@@ -990,16 +992,16 @@ int local_sync_begin,local_sync_end;
      elemsb = elems;
    }else {
      nga_inquire_internal_(g_b,  &type, &ndim, dims);
-     if(type != typeC) gai_error("types not consistent", *g_b);
-     nga_distribution_(g_b, &me, lo, hi);
+     if(type != typeC) pnga_error("types not consistent", *g_b);
+     pnga_distribution(g_b, &me, lo, hi);
      if (  lo[0]>0 ){
        nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
        GET_ELEMS(ndim,lo,hi,ld,&elemsb);
      }
    }
 
-   if(elems!= elemsb)gai_error("inconsistent number of elements a",elems-elemsb);
-   if(elems!= elemsa)gai_error("inconsistent number of elements b",elems-elemsa);
+   if(elems!= elemsb)pnga_error("inconsistent number of elements a",elems-elemsb);
+   if(elems!= elemsa)pnga_error("inconsistent number of elements b",elems-elemsa);
 
    if (  lo[0]>0 ){
 
@@ -1162,15 +1164,15 @@ int i;
             for(i = 0; i< n; i++, ptrb+= stride)
                *(long long*)ptrb= ((long long*)ptra)[i];
             break;                                 
-       default: gai_error("bad type:",type);
+       default: pnga_error("bad type:",type);
     }
 }
 
 
 void FATR ga_transpose_(Integer *g_a, Integer *g_b)
 {
-Integer me = ga_nodeid_();
-Integer nproc = ga_nnodes_(); 
+Integer me = pnga_nodeid();
+Integer nproc = pnga_nnodes(); 
 Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
 Integer lo[2],hi[2];
 int local_sync_begin,local_sync_end;
@@ -1187,18 +1189,18 @@ char *ptr_tmp, *ptr_a;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)ga_sync_();
 
-    if(*g_a == *g_b) gai_error("arrays have to be different ", 0L);
+    if(*g_a == *g_b) pnga_error("arrays have to be different ", 0L);
 
     nga_inquire_internal_(g_a, &atype, &andim, adims);
     nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-    if(bndim != 2 || andim != 2) gai_error("dimension must be 2",0);
-    if(atype != btype ) gai_error("array type mismatch ", 0L);
+    if(bndim != 2 || andim != 2) pnga_error("dimension must be 2",0);
+    if(atype != btype ) pnga_error("array type mismatch ", 0L);
 
     num_blocks_a = ga_total_blocks_(g_a);
 
     if (num_blocks_a < 0) {
-      nga_distribution_(g_a, &me, lo, hi);
+      pnga_distribution(g_a, &me, lo, hi);
 
       if(lo[0]>0){
         Integer nelem, lob[2], hib[2], nrow, ncol;
@@ -1243,7 +1245,7 @@ char *ptr_tmp, *ptr_a;
       ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
       if (!ga_uses_proc_grid_(g_a)) {
         for (idx = me; idx < num_blocks_a; idx += nproc) {
-          nga_distribution_(g_a, &idx, lo, hi);
+          pnga_distribution(g_a, &idx, lo, hi);
           nga_access_block_ptr(g_a, &idx, &ptr_a, ld);
 
           nrow   = hi[0] -lo[0]+1;

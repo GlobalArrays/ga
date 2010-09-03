@@ -39,6 +39,8 @@
 #endif
 #include "global.h"
 #include "globalp.h"
+#include "papi.h"
+#include "wapi.h"
 
 #ifdef USE_VAMPIR
 #include "ga_vampir.h"
@@ -203,7 +205,7 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
     get_range = ngai_peri_get_range_(ndim, dims, lo, hi, range, range_num,
                                      offset, op_code);
     
-    if(!get_range) gai_error("g_a indices are invalid ", 0L);
+    if(!get_range) pnga_error("g_a indices are invalid ", 0L);
 
     /* If this is a regular patch, not periodic operation needed */
     if(get_range == IS_REGULAR_PATCH) {
@@ -218,7 +220,7 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
               nga_acc_(g_a, lo, hi, buf, ld, alpha);
               break;
           default:
-              gai_error("This operation is invalid ", 0L);
+              pnga_error("This operation is invalid ", 0L);
         }
         return;
     }
@@ -260,7 +262,7 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
                        (char *)buf+my_offset*GAsizeofM(type), ld, alpha);
               break;
           default:
-              gai_error("This operation is invalid ", 0L);
+              pnga_error("This operation is invalid ", 0L);
         }      
 
         counter[0]++;

@@ -7,15 +7,22 @@
 #include "globalp.h"
 #include "macommon.h"
 #include "typesf2c.h"
+#include "papi.h"
+#include "wapi.h"
 
 /*\ check if I own the patch
 \*/
 static logical own_patch(g_a, ilo, ihi, jlo, jhi)
      Integer *g_a, ilo, ihi, jlo, jhi;
 {
-   Integer ilop, ihip, jlop, jhip, me=ga_nodeid_();
+   Integer ilop, ihip, jlop, jhip, me=pnga_nodeid();
+   Integer lo[2],hi[2];
 
-   ga_distribution_(g_a, &me, &ilop, &ihip, &jlop, &jhip);
+   pnga_distribution(g_a, &me, lo, hi);
+   ilop = lo[0];
+   jlop = lo[1];
+   ihip = hi[0];
+   jhip = hi[1];
    if(ihip != ihi || ilop != ilo || jhip != jhi || jlop != jlo) return(FALSE);
    else return(TRUE);
 }
@@ -54,7 +61,8 @@ void ga_copy_patch_dp(t_a, g_a, ailo, aihi, ajlo, ajhi,
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 Integer ilos, ihis, jlos, jhis;
 Integer ilod, ihid, jlod, jhid, corr, nelem;
-Integer me= ga_nodeid_(), ld, i,j;
+Integer me= pnga_nodeid(), ld, i,j;
+Integer lo[2], hi[2];
 Integer ldT;
 AccessIndex index;
 char transp;
@@ -63,30 +71,34 @@ DoublePrecision *dbl_ptrA=NULL, *dbl_ptrB=NULL;
    gai_check_handle(g_a, "ga_copy_patch_dp");
    gai_check_handle(g_b, "ga_copy_patch_dp");
 
-   /* if(*g_a == *g_b) gai_error("ga_copy_patch_dp: arrays have to different ", 0L); */
+   /* if(*g_a == *g_b) pnga_error("ga_copy_patch_dp: arrays have to different ", 0L); */
 
    ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
    ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
    if(atype != btype || (atype != C_DBL ))
-      gai_error("ga_copy_patch_dp: wrong types ", 0L);
+      pnga_error("ga_copy_patch_dp: wrong types ", 0L);
 
    /* check if patch indices and dims match */
    if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
-       gai_error(" ga_copy_patch_dp: g_a indices out of range ", 0L);
+       pnga_error(" ga_copy_patch_dp: g_a indices out of range ", 0L);
    if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-       gai_error(" ga_copy_patch_dp: g_b indices out of range ", 0L);
+       pnga_error(" ga_copy_patch_dp: g_b indices out of range ", 0L);
 
    /* check if numbers of elements in two patches match each other */
    if (((*bihi - *bilo + 1)  != (*aihi - *ailo + 1)) || 
       ( (*bjhi - *bjlo + 1)  != (*ajhi - *ajlo + 1)) )
-       gai_error(" ga_copy_patch_dp: shapes two of patches do not match ", 0L);
+       pnga_error(" ga_copy_patch_dp: shapes two of patches do not match ", 0L);
 
     /* is transpose operation required ? */
    transp = (*t_a == 'n' || *t_a =='N')? 'n' : 't';
 
    /* now find out cordinates of a patch of g_a that I own */
-   ga_distribution_(g_a, &me, &ilos, &ihis, &jlos, &jhis);
+   pnga_distribution(g_a, &me, lo, hi);
+   ilos = lo[0];
+   jlos = lo[1];
+   ihis = hi[0];
+   jhis = hi[1];
 
    if(patch_intersect(ailo, aihi, ajlo, ajhi, &ilos, &ihis, &jlos, &jhis)){
       ga_access_(g_a, &ilos, &ihis, &jlos, &jhis, &index, &ld);
@@ -161,9 +173,10 @@ DoublePrecision ga_ddot_patch_dp(g_a, t_a, ailo, aihi, ajlo, ajhi,
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 Integer iloA, ihiA, jloA, jhiA, ldA;
 Integer iloB, ihiB, jloB, jhiB, ldB;
+Integer lo[2], hi[2];
 AccessIndex indexA, indexB;
 Integer g_A = *g_a;
-Integer me= ga_nodeid_(), i, j, temp_created=0;
+Integer me= pnga_nodeid(), i, j, temp_created=0;
 Integer corr, nelem;
 char    transp, transp_a, transp_b;
 DoublePrecision  sum = 0.;
@@ -176,15 +189,15 @@ DoublePrecision *dbl_ptrB;
    ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
    if(atype != btype || (atype != C_DBL ))
-      gai_error("ga_ddot_patch_dp: wrong types ", 0L);
+      pnga_error("ga_ddot_patch_dp: wrong types ", 0L);
 
   /* check if patch indices and g_a dims match */
    if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
-      gai_error(" ga_ddot_patch_dp: g_a indices out of range ", 0L);
+      pnga_error(" ga_ddot_patch_dp: g_a indices out of range ", 0L);
 
    /* check if patch indices and g_b dims match */
    if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-       gai_error(" ga_ddot_patch_dp: g_b indices out of range ", 0L);
+       pnga_error(" ga_ddot_patch_dp: g_b indices out of range ", 0L);
 
 
    /* is transpose operation required ? */
@@ -193,11 +206,15 @@ DoublePrecision *dbl_ptrB;
    transp_b = (*t_b == 'n' || *t_b =='N')? 'n' : 't';
    transp   = (transp_a == transp_b)? 'n' : 't';
    if(transp == 't')
-          gai_error(" ga_ddot_patch_dp: transpose operators don't match: ", me);
+          pnga_error(" ga_ddot_patch_dp: transpose operators don't match: ", me);
 
 
    /* find out coordinates of patches of g_A and g_B that I own */
-   ga_distribution_(&g_A, &me, &iloA, &ihiA, &jloA, &jhiA);
+   pnga_distribution(&g_A, &me, lo, hi);
+   iloA = lo[0];
+   jloA = lo[1];
+   ihiA = hi[0];
+   jhiA = hi[1];
 
    if (patch_intersect(ailo, aihi, ajlo, ajhi, &iloA, &ihiA, &jloA, &jhiA)){
        ga_access_(&g_A, &iloA, &ihiA, &jloA, &jhiA, &indexA, &ldA);

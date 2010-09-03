@@ -12,6 +12,8 @@
 #include "global.h"
 #include "globalp.h"
 #include "macdecls.h"
+#include "papi.h"
+#include "wapi.h"
 
 void FATR 
 gai_add(Integer *lo, Integer *hi, void *a, void *b, DoublePrecision alpha,
@@ -43,7 +45,7 @@ void FATR
 ga_symmetrize_(Integer *g_a) {
   
   DoublePrecision alpha = 0.5;
-  Integer i, me = ga_nodeid_();
+  Integer i, me = pnga_nodeid();
   Integer alo[GA_MAX_DIM], ahi[GA_MAX_DIM], lda[GA_MAX_DIM], nelem=1;
   Integer blo[GA_MAX_DIM], bhi[GA_MAX_DIM], ldb[GA_MAX_DIM];
   Integer ndim, dims[GA_MAX_DIM], type;
@@ -65,15 +67,15 @@ ga_symmetrize_(Integer *g_a) {
   nga_inquire_internal_(g_a, &type, &ndim, dims);
 
   if (type != C_DBL)
-    gai_error("ga_symmetrize: only implemented for double precision",0);
+    pnga_error("ga_symmetrize: only implemented for double precision",0);
 
   if (num_blocks_a < 0) {
 
     if (dims[ndim-1] != dims[ndim-2]) 
-      gai_error("ga_sym: can only sym square matrix", 0L);
+      pnga_error("ga_sym: can only sym square matrix", 0L);
 
     /* Find the local distribution */
-    nga_distribution_(g_a, &me, alo, ahi);
+    pnga_distribution(g_a, &me, alo, ahi);
 
 
     have_data = ahi[0]>0;
@@ -109,10 +111,10 @@ ga_symmetrize_(Integer *g_a) {
        create duplicate copy, transpose it and add the results together */
     DoublePrecision half = 0.5;
     if (!gai_duplicate(g_a, &g_b, tempB))
-      gai_error("ga_symmetrize: duplicate failed", 0L);
+      pnga_error("ga_symmetrize: duplicate failed", 0L);
     ga_transpose_(g_a, &g_b);
     ga_add_(&half, g_a, &half, &g_b, g_a);
-    ga_destroy_(&g_b);
+    pnga_destroy(&g_b);
   }
   GA_POP_NAME;
   if(local_sync_end)ga_sync_();
