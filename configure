@@ -12195,83 +12195,9 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_suppress" >&5
 $as_echo "$ga_cv_f77_suppress" >&6; }
 
-# Check whether --enable-underscoring was given.
-if test "${enable_underscoring+set}" = set; then :
-  enableval=$enable_underscoring;
-fi
 
-if test "x$enable_underscoring" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $F77 flag to add single underscore to external names" >&5
-$as_echo_n "checking for $F77 flag to add single underscore to external names... " >&6; }
-if test "${ga_cv_f77_underscore_flag+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void my_sub_() {}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  mv conftest.$ac_objext cfortran_test.$ac_objext
-    ga_save_LIBS="$LIBS"
-    LIBS="cfortran_test.$ac_objext $LIBS"
-    ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
-    for ga_flag in none -qextname -qEXTNAME -funderscoring -fno-second-underscore -f +ppu ; do
-        ga_save_FFLAGS="$FFLAGS"
-        if test "x$ga_flag" != xnone; then :
-  FFLAGS="$FFLAGS $ga_flag"
-fi
-        cat > conftest.$ac_ext <<_ACEOF
-      program main
-      call my_sub
-      end program
-_ACEOF
-if ac_fn_f77_try_link "$LINENO"; then :
-  ga_cv_f77_underscore_flag="$ga_flag"
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-        FFLAGS="$ga_save_FFLAGS"
-        if test "x$ga_cv_f77_underscore_flag" != x; then :
-  break
-fi
-    done
-    ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-    LIBS="$ga_save_LIBS"
-    rm -f cfortran_test.$ac_objext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_underscore_flag" >&5
-$as_echo "$ga_cv_f77_underscore_flag" >&6; }
-if test "x$ga_cv_f77_underscore_flag" != xnone; then :
-  if test "x$ga_cv_f77_underscore_flag" != x; then :
-  FFLAGS="$FFLAGS $ga_cv_f77_underscore_flag"
-fi
-fi
-
-fi
-
-ac_ext=f
+if test "x$enable_f77" = xyes; then :
+  ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
@@ -12576,6 +12502,147 @@ ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether FLIBS needs -lgcc_s" >&5
+$as_echo_n "checking whether FLIBS needs -lgcc_s... " >&6; }
+if test "${ga_cv_flibs_gcc_s+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ga_save_LIBS="$LIBS";  LIBS="$LIBS $FLIBS"
+         ga_save_FLIBS="$FLIBS"
+         ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ga_cv_flibs_gcc_s=no
+else
+  LIBS="$LIBS -lgcc_s"
+             cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  FLIBS="$FLIBS -lgcc_s"
+                 ga_cv_flibs_gcc_s=yes
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: FLIBS does not work" >&5
+$as_echo "$as_me: WARNING: FLIBS does not work" >&2;}
+                 FLIBS="$ga_save_FLIBS"
+                 ga_cv_flibs_gcc_s=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+         LIBS="$ga_save_LIBS"
+         ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_flibs_gcc_s" >&5
+$as_echo "$ga_cv_flibs_gcc_s" >&6; }
+
+fi
+
+# Check whether --enable-underscoring was given.
+if test "${enable_underscoring+set}" = set; then :
+  enableval=$enable_underscoring;
+fi
+
+if test "x$enable_underscoring" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $F77 flag to add single underscore to external names" >&5
+$as_echo_n "checking for $F77 flag to add single underscore to external names... " >&6; }
+if test "${ga_cv_f77_underscore_flag+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void my_sub_() {}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  mv conftest.$ac_objext cfortran_test.$ac_objext
+    ga_save_LIBS="$LIBS"
+    LIBS="cfortran_test.$ac_objext $LIBS"
+    ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+    for ga_flag in none -qextname -qEXTNAME -funderscoring -fno-second-underscore -f +ppu ; do
+        ga_save_FFLAGS="$FFLAGS"
+        if test "x$ga_flag" != xnone; then :
+  FFLAGS="$FFLAGS $ga_flag"
+fi
+        cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call my_sub
+      end program
+_ACEOF
+if ac_fn_f77_try_link "$LINENO"; then :
+  ga_cv_f77_underscore_flag="$ga_flag"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+        FFLAGS="$ga_save_FFLAGS"
+        if test "x$ga_cv_f77_underscore_flag" != x; then :
+  break
+fi
+    done
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    LIBS="$ga_save_LIBS"
+    rm -f cfortran_test.$ac_objext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_underscore_flag" >&5
+$as_echo "$ga_cv_f77_underscore_flag" >&6; }
+if test "x$ga_cv_f77_underscore_flag" != xnone; then :
+  if test "x$ga_cv_f77_underscore_flag" != x; then :
+  FFLAGS="$FFLAGS $ga_cv_f77_underscore_flag"
+fi
+fi
+
+fi
 
 
 if test "x$enable_f77" = xyes; then :
@@ -32676,6 +32743,8 @@ $as_echo "$as_me:               CPPFLAGS=$CPPFLAGS" >&6;}
 $as_echo "$as_me:                LDFLAGS=$LDFLAGS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:                   LIBS=$LIBS" >&5
 $as_echo "$as_me:                   LIBS=$LIBS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:                  FLIBS=$FLIBS" >&5
+$as_echo "$as_me:                  FLIBS=$FLIBS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:           BLAS_LDFLAGS=$BLAS_LDFLAGS" >&5
 $as_echo "$as_me:           BLAS_LDFLAGS=$BLAS_LDFLAGS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:              BLAS_LIBS=$BLAS_LIBS" >&5

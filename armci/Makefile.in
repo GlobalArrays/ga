@@ -419,6 +419,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/ga_f77_fixed.m4 \
 	$(top_srcdir)/../m4/ga_f77_integer_size.m4 \
 	$(top_srcdir)/../m4/ga_f77_ld_override.m4 \
+	$(top_srcdir)/../m4/ga_f77_library_ldflags.m4 \
 	$(top_srcdir)/../m4/ga_f77_wrappers.m4 \
 	$(top_srcdir)/../m4/ga_function.m4 \
 	$(top_srcdir)/../m4/ga_mpi_test_disable.m4 \

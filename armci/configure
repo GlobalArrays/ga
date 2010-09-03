@@ -11391,7 +11391,9 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_suppress" >&5
 $as_echo "$ga_cv_f77_suppress" >&6; }
 
-ac_ext=f
+
+if test "x$enable_f77" = xyes; then :
+  ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
@@ -11696,6 +11698,71 @@ ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether FLIBS needs -lgcc_s" >&5
+$as_echo_n "checking whether FLIBS needs -lgcc_s... " >&6; }
+if test "${ga_cv_flibs_gcc_s+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ga_save_LIBS="$LIBS";  LIBS="$LIBS $FLIBS"
+         ga_save_FLIBS="$FLIBS"
+         ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ga_cv_flibs_gcc_s=no
+else
+  LIBS="$LIBS -lgcc_s"
+             cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  FLIBS="$FLIBS -lgcc_s"
+                 ga_cv_flibs_gcc_s=yes
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: FLIBS does not work" >&5
+$as_echo "$as_me: WARNING: FLIBS does not work" >&2;}
+                 FLIBS="$ga_save_FLIBS"
+                 ga_cv_flibs_gcc_s=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+         LIBS="$ga_save_LIBS"
+         ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_flibs_gcc_s" >&5
+$as_echo "$ga_cv_flibs_gcc_s" >&6; }
+
+fi
 
 
 if test "x$enable_f77" = xyes; then :
@@ -28247,56 +28314,42 @@ if test "x$enable_f77" = xyes; then :
 
 { $as_echo "$as_me:${as_lineno-$LINENO}:                    F77=$F77" >&5
 $as_echo "$as_me:                    F77=$F77" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:                 FFLAGS=$FFLAGS" >&5
+$as_echo "$as_me:                 FFLAGS=$FFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:            FFLAG_INT_4=$FFLAG_INT_4" >&5
+$as_echo "$as_me:            FFLAG_INT_4=$FFLAG_INT_4" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:             ARMCI_FOPT=$ARMCI_FOPT" >&5
+$as_echo "$as_me:             ARMCI_FOPT=$ARMCI_FOPT" >&6;}
 
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}:                     CC=$CC" >&5
 $as_echo "$as_me:                     CC=$CC" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:                 CFLAGS=$CFLAGS" >&5
+$as_echo "$as_me:                 CFLAGS=$CFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:             ARMCI_COPT=$ARMCI_COPT" >&5
+$as_echo "$as_me:             ARMCI_COPT=$ARMCI_COPT" >&6;}
 if test "x$enable_cxx" = xyes; then :
 
 { $as_echo "$as_me:${as_lineno-$LINENO}:                    CXX=$CXX" >&5
 $as_echo "$as_me:                    CXX=$CXX" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:               CXXFLAGS=$CXXFLAGS" >&5
+$as_echo "$as_me:               CXXFLAGS=$CXXFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:           ARMCI_CXXOPT=$ARMCI_CXXOPT" >&5
+$as_echo "$as_me:           ARMCI_CXXOPT=$ARMCI_CXXOPT" >&6;}
 
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}:                    CPP=$CPP" >&5
 $as_echo "$as_me:                    CPP=$CPP" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:               CPPFLAGS=$CPPFLAGS" >&5
 $as_echo "$as_me:               CPPFLAGS=$CPPFLAGS" >&6;}
-if test "x$enable_f77" = xyes; then :
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                 FFLAGS=$FFLAGS" >&5
-$as_echo "$as_me:                 FFLAGS=$FFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:            FFLAG_INT_4=$FFLAG_INT_4" >&5
-$as_echo "$as_me:            FFLAG_INT_4=$FFLAG_INT_4" >&6;}
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                 CFLAGS=$CFLAGS" >&5
-$as_echo "$as_me:                 CFLAGS=$CFLAGS" >&6;}
-if test "x$enable_cxx" = xyes; then :
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}:               CXXFLAGS=$CXXFLAGS" >&5
-$as_echo "$as_me:               CXXFLAGS=$CXXFLAGS" >&6;}
-
-fi
-if test "x$enable_f77" = xyes; then :
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}:             ARMCI_FOPT=$ARMCI_FOPT" >&5
-$as_echo "$as_me:             ARMCI_FOPT=$ARMCI_FOPT" >&6;}
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}:             ARMCI_COPT=$ARMCI_COPT" >&5
-$as_echo "$as_me:             ARMCI_COPT=$ARMCI_COPT" >&6;}
-if test "x$enable_cxx" = xyes; then :
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}:           ARMCI_CXXOPT=$ARMCI_CXXOPT" >&5
-$as_echo "$as_me:           ARMCI_CXXOPT=$ARMCI_CXXOPT" >&6;}
-
-fi
 { $as_echo "$as_me:${as_lineno-$LINENO}:                LDFLAGS=$LDFLAGS" >&5
 $as_echo "$as_me:                LDFLAGS=$LDFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                   DEFS=$DEFS" >&5
-$as_echo "$as_me:                   DEFS=$DEFS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:                   LIBS=$LIBS" >&5
 $as_echo "$as_me:                   LIBS=$LIBS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:                  FLIBS=$FLIBS" >&5
+$as_echo "$as_me:                  FLIBS=$FLIBS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:                   DEFS=$DEFS" >&5
+$as_echo "$as_me:                   DEFS=$DEFS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:                  SHELL=$SHELL" >&5
 $as_echo "$as_me:                  SHELL=$SHELL" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: " >&5

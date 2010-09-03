@@ -227,6 +227,7 @@ AS_IF([test "x$with_mpi" != xno],
         [GA_MPIF77_TEST_COMPILE])])
 
 GA_SUPPRESS_MESSAGE
+GA_F77_LIBRARY_LDFLAGS
 GA_F77_DUMMY_MAIN
 GA_F77_WRAPPERS
 GA_F77_CPP_SYMBOL
@@ -322,30 +323,23 @@ AC_MSG_NOTICE([    ARMCI_NETWORK_LIBS=$ARMCI_NETWORK_LIBS])
 AC_MSG_NOTICE([ARMCI_NETWORK_CPPFLAGS=$ARMCI_NETWORK_CPPFLAGS])
 AS_IF([test "x$enable_f77" = xyes], [
 AC_MSG_NOTICE([                   F77=$F77])
+AC_MSG_NOTICE([                FFLAGS=$FFLAGS])
+AC_MSG_NOTICE([           FFLAG_INT_4=$FFLAG_INT_4])
+AC_MSG_NOTICE([            ARMCI_FOPT=$ARMCI_FOPT])
 ])
 AC_MSG_NOTICE([                    CC=$CC])
+AC_MSG_NOTICE([                CFLAGS=$CFLAGS])
+AC_MSG_NOTICE([            ARMCI_COPT=$ARMCI_COPT])
 AS_IF([test "x$enable_cxx" = xyes], [
 AC_MSG_NOTICE([                   CXX=$CXX])
+AC_MSG_NOTICE([              CXXFLAGS=$CXXFLAGS])
+AC_MSG_NOTICE([          ARMCI_CXXOPT=$ARMCI_CXXOPT])
 ])
 AC_MSG_NOTICE([                   CPP=$CPP])
 AC_MSG_NOTICE([              CPPFLAGS=$CPPFLAGS])
-AS_IF([test "x$enable_f77" = xyes], [
-AC_MSG_NOTICE([                FFLAGS=$FFLAGS])
-AC_MSG_NOTICE([           FFLAG_INT_4=$FFLAG_INT_4])
-])
-AC_MSG_NOTICE([                CFLAGS=$CFLAGS])
-AS_IF([test "x$enable_cxx" = xyes], [
-AC_MSG_NOTICE([              CXXFLAGS=$CXXFLAGS])
-])
-AS_IF([test "x$enable_f77" = xyes], [
-AC_MSG_NOTICE([            ARMCI_FOPT=$ARMCI_FOPT])
-])
-AC_MSG_NOTICE([            ARMCI_COPT=$ARMCI_COPT])
-AS_IF([test "x$enable_cxx" = xyes], [
-AC_MSG_NOTICE([          ARMCI_CXXOPT=$ARMCI_CXXOPT])
-])
 AC_MSG_NOTICE([               LDFLAGS=$LDFLAGS])
-AC_MSG_NOTICE([                  DEFS=$DEFS])
 AC_MSG_NOTICE([                  LIBS=$LIBS])
+AC_MSG_NOTICE([                 FLIBS=$FLIBS])
+AC_MSG_NOTICE([                  DEFS=$DEFS])
 AC_MSG_NOTICE([                 SHELL=$SHELL])
 AC_MSG_NOTICE([])
