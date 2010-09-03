@@ -1649,6 +1649,40 @@ def llt_solve(int g_a, int g_b):
     """
     return GA_Llt_solve(g_a, g_b)
 
+def locate(int g_a, subscript):
+    """Return the GA compute process id that 'owns' the data.
+    
+    If any element of subscript[] is out of bounds "-1" is returned.
+
+    This operation is local.
+
+    Positional arguments:
+    g_a -- the array handle
+    subscript -- 1D array-like; len(subscript) should be ndim
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] subscript_nd
+    subscript_nd = np.asarray(subscript, dtype=np.int64)
+    return NGA_Locate64(g_a, <int64_t*>subscript_nd.data)
+
+def locate_region(int g_a, lo, hi):
+    """Return the list of the GA processes id that 'own' the data.
+    
+    Parts of the specified patch might be actually 'owned' by several
+    processes. If lo/hi are out of bounds "0" is returned, otherwise return
+    value is equal to the number of processes that hold the data .
+          
+    map[i][0:ndim-1]         - lo[i]
+    map[i][ndim:2*ndim-1]    - hi[i]
+    procs[i]                 - processor id that owns data in patch lo[i]:hi[i]
+
+    This operation is local. 
+
+    """
+    # TODO to be safe, we must allocate ndim*2*nproc int64 array
+    # then slice it and reshape to something useful?
+    raise NotImplementedError, "TODO"
+
 def _lohi(int g_a, lo, hi):
     """Utility function which converts and/or prepares a lo/hi combination.
 
