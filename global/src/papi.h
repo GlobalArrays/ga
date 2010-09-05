@@ -35,7 +35,7 @@ extern logical pnga_create_irreg_config(Integer type, Integer ndim,
                                         Integer *block, Integer p_handle, Integer *g_a);
 extern Integer pnga_create_handle();
 extern logical pnga_destroy(Integer *g_a);
-extern logical pnga_distribution(Integer *g_a, Integer *proc, Integer *lo, Integer *hi);
+extern void pnga_distribution(Integer *g_a, Integer *proc, Integer *lo, Integer *hi);
 extern Integer pnga_nnodes();
 extern Integer pnga_nodeid();
 
