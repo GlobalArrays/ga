@@ -406,7 +406,7 @@ char msg[100];
 Integer FATR util_mdtob_(Integer *n)
 {
   if (*n < 0)
-    gai_error("util_MDTOB_: negative argument",*n);
+    GA_Error("util_MDTOB_: negative argument",*n);
 
   return (Integer) (*n * sizeof(double));
 }
@@ -418,7 +418,7 @@ Integer FATR util_mdtob_(Integer *n)
 Integer FATR util_mitob_(Integer *n)
 {
   if (*n < 0)
-    gai_error("util_MITOB_: negative argument",*n);
+    GA_Error("util_MITOB_: negative argument",*n);
 
   return (Integer) (*n * sizeof(Integer));
 }

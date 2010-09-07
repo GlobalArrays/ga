@@ -14,9 +14,9 @@
 #include <sys/stat.h>
 #include "typesf2c.h"
 
-#define PRINT_AND_ABORT(msg, val) gai_error(msg, (Integer)val)
+#define PRINT_AND_ABORT(msg, val) GA_Error(msg, (int)val)
 #ifndef GLOBAL_H
-extern void gai_error(char*, Integer);
+extern void GA_Error(char*, int);
 #endif
 
 #if (defined(SP) || defined(SP1))

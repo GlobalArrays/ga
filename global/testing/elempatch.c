@@ -229,7 +229,7 @@ fill_func (int nelem, int type, void *buf)
     ((int *) buf)[i] = ifun (i);
       break;
     default:
-      gai_error (" wrong data type ", type);
+      GA_Error (" wrong data type ", type);
 
     }
 }
@@ -268,7 +268,7 @@ fill_func2 (int nelem, int type, void *buf)
     ((int *) buf)[i] = ifun2 (i);
       break;
     default:
-      gai_error (" wrong data type ", type);
+      GA_Error (" wrong data type ", type);
 
     }
 }
@@ -318,7 +318,7 @@ fill_func3 (int nelem, int type, void *buf)
     ((int *) buf)[i] = GA_ABS (ifun (i));
       break;
     default:
-      gai_error (" wrong data type ", type);
+      GA_Error (" wrong data type ", type);
 
     }
 }
@@ -629,7 +629,7 @@ test_fun (int type, int dim, int OP)
       wolfeminx = &wolfeminl;
       break;
     default:
-      gai_error ("wrong data type.", type);
+      GA_Error ("wrong data type.", type);
     }
 
 
@@ -1199,7 +1199,7 @@ test_fun (int type, int dim, int OP)
         aboundmaxl = (long)GA_INFINITY_L - boundmaxl;
         break;
       default:
-        gai_error ("GA_step_bound_info wrong data type.", type);
+        GA_Error ("GA_step_bound_info wrong data type.", type);
       }
       }
       break;
@@ -1235,7 +1235,7 @@ test_fun (int type, int dim, int OP)
       beta = &bl;
       break;
     default:
-      gai_error ("wrong data type.", type);
+      GA_Error ("wrong data type.", type);
     }
 
   if (OP < 4) {
@@ -1289,7 +1289,7 @@ test_fun (int type, int dim, int OP)
       max = &lmax;
       break;
     default:
-      gai_error ("wrong data type.", type);
+      GA_Error ("wrong data type.", type);
     }
 
   /*  
@@ -1402,7 +1402,7 @@ test_fun (int type, int dim, int OP)
       }
       break;
       default:
-      gai_error ("wrong data type.", type);
+      GA_Error ("wrong data type.", type);
       }
   } else {
     /*
@@ -1444,7 +1444,7 @@ test_fun (int type, int dim, int OP)
         }
         break;
       default:
-        gai_error ("Stepmax op, wrong data type.", type);
+        GA_Error ("Stepmax op, wrong data type.", type);
       }
       } else {
     /* OP = 8 so Step_bound_info */
@@ -1519,7 +1519,7 @@ test_fun (int type, int dim, int OP)
         }
         break;
       default:
-        gai_error ("Stepmax op, wrong data type.", type);
+        GA_Error ("Stepmax op, wrong data type.", type);
       }
     result = result | result2 | result3;
       }
@@ -1756,7 +1756,7 @@ void FATR nga_vfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
                         ((long *)data_ptr)[idx+j] = (long)(idx+j);
                 } 
                 break;                          
-            default: gai_error(" wrong data type ",type);
+            default: GA_Error(" wrong data type ",type);
         }
         
         /* release access to the data */
@@ -1873,7 +1873,7 @@ void ngai_do_pnfill_patch(Integer type, Integer ndim, Integer *loA, Integer *hiA
           ((long *)data_ptr)[idx+j] = (long)(((idx+j)&3)-2);
       } 
       break;                          
-    default: gai_error(" wrong data type ",type);
+    default: GA_Error(" wrong data type ",type);
   }
 
 }
@@ -1982,7 +1982,7 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
               case C_LONG:
                 data_ptr = (void*)((long*)data_ptr + offset);
                 break;
-              default: gai_error(" wrong data type ",type);
+              default: GA_Error(" wrong data type ",type);
             }
           }
           /* fill in patch */
@@ -2061,7 +2061,7 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
               case C_LONG:
                 data_ptr = (void*)((long*)data_ptr + offset);
                 break;
-              default: gai_error(" wrong data type ",type);
+              default: GA_Error(" wrong data type ",type);
             }
           }
           /* fill in patch */

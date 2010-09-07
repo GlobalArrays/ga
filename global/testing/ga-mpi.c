@@ -179,7 +179,7 @@ int me, nproc;
     heap /= nproc;
     stack /= nproc;
     if(! MA_init((int)MT_F_DBL, stack, heap)) 
-       gai_error("MA_init failed",stack+heap);   /* initialize memory allocator*/ 
+       GA_Error("MA_init failed",stack+heap);   /* initialize memory allocator*/ 
     do_work();
 
     if(me==0)printf("Terminating ..\n");

@@ -415,7 +415,7 @@ char msg[100];
 Integer FATR util_mdtob_(Integer *n)
 {
   if (*n < 0)
-    gai_error("util_MDTOB_: negative argument",*n);
+    GA_Error("util_MDTOB_: negative argument",*n);
 
   return (Integer) (*n * sizeof(double));
 }
@@ -427,7 +427,7 @@ Integer FATR util_mdtob_(Integer *n)
 Integer FATR util_mitob_(Integer *n)
 {
   if (*n < 0)
-    gai_error("util_MITOB_: negative argument",*n);
+    GA_Error("util_MITOB_: negative argument",*n);
 
   return (Integer) (*n * sizeof(Integer));
 }
@@ -446,5 +446,5 @@ void FATR set_ma_use_armci_mem_()
 #else
     if((retval=setenv("MA_USE_ARMCI_MEM", "YES", 1)) != 0)
 #endif          
-       gai_error("setenv failed: insufficient space in the environment",0);
+       GA_Error("setenv failed: insufficient space in the environment",0);
 }

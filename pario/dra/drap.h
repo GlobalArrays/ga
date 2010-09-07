@@ -92,7 +92,7 @@ extern logical dra_debug_flag;
 #define PARIO_MAX(a,b) (((a) >= (b)) ? (a) : (b))
 #define PARIO_MIN(a,b) (((a) <= (b)) ? (a) : (b))
 
-#define dai_error gai_error
+#define dai_error GA_Error
 
 extern int     dai_read_param(char* filename, Integer d_a);
 extern void    dai_write_param(char* filename, Integer d_a);
