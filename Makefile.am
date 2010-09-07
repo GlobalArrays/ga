@@ -450,11 +450,16 @@ endif
 global/src/wapi.h: $(top_srcdir)/global/src/papi.h
 	-rm -f global/src/wapi.h && \
 	$(SED) -e "s/PAPI/WAPI/g" \
-	       -e "s/pnga_/wnga_/g" $(top_srcdir)/global/src/papi.h > global/src/wapi.h
+	       -e "s/pnga_/wnga_/g" \
+		   $(top_srcdir)/global/src/papi.h > global/src/wapi.h
 global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
 	-rm -f global/src/wapidefs.h && \
 	$(SED) -e "s/PAPI/WAPIDEFS/g" \
-		   -e "s/^.*p\(nga_.*\)(.*$$/#define w\1 p\1/g" $(top_srcdir)/global/src/papi.h > global/src/wapidefs.h
+		   -e "s/^.*p\(nga_.*\)(.*$$/#define w\1 p\1/g" \
+		   -e "/^ /d" \
+		   -e "/^\/\*/d" \
+		   -e "/^ \*/d" \
+		   $(top_srcdir)/global/src/papi.h > global/src/wapidefs.h
 if HAVE_PYTHON
 global/src/wapi.c: $(top_srcdir)/global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
 	-rm -f global/src/wapi.c && \
