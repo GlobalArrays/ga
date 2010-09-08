@@ -256,6 +256,16 @@ Integer FATR nga_create_handle_()
   return wnga_create_handle();
 }
 
+logical FATR ga_create_mutexes_(Integer *num)
+{
+  return wnga_create_mutexes(num);
+}
+
+logical FATR nga_create_mutexes_(Integer *num)
+{
+  return wnga_create_mutexes(num);
+}
+
 logical FATR ga_destroy_(Integer *g_a)
 {
   return wnga_destroy(g_a);
@@ -264,6 +274,16 @@ logical FATR ga_destroy_(Integer *g_a)
 logical FATR nga_destroy_(Integer *g_a)
 {
   return wnga_destroy(g_a);
+}
+
+logical FATR ga_destroy_mutexes_()
+{
+  return wnga_destroy_mutexes();
+}
+
+logical FATR nga_destroy_mutexes_()
+{
+  return wnga_destroy_mutexes();
 }
 
 void FATR ga_distribution_(Integer *g_a, Integer *proc, Integer *ilo,
@@ -280,6 +300,22 @@ void FATR ga_distribution_(Integer *g_a, Integer *proc, Integer *ilo,
 void FATR nga_distribution_(Integer *g_a, Integer *proc, Integer *lo, Integer *hi)
 {
   wnga_distribution(g_a, proc, lo, hi);
+}
+
+logical FATR ga_duplicate_( Integer *g_a, Integer *g_b, char *array_name, int slen)
+{
+  char buf[FNAM];
+
+  ga_f2cstring(array_name ,slen, buf, FNAM);
+  return(wnga_duplicate(g_a, g_b, buf));
+}
+
+logical FATR nga_duplicate_( Integer *g_a, Integer *g_b, char *array_name, int slen)
+{
+  char buf[FNAM];
+
+  ga_f2cstring(array_name ,slen, buf, FNAM);
+  return(wnga_duplicate(g_a, g_b, buf));
 }
 
 Integer FATR ga_nnodes_()

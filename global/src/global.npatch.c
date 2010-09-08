@@ -1113,7 +1113,7 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
        *        - create a temp array that matches distribution of g_a
        *        - copy & reshape patch of g_b into g_B
        */
-      if (!gai_duplicate(g_a, &g_B, tempname))
+      if (!pnga_duplicate(g_a, &g_B, tempname))
         pnga_error("duplicate failed",0L);
 
       ngai_copy_patch(&transp, g_b, blo, bhi, &g_B, alo, ahi);
@@ -1141,7 +1141,7 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
     }
   } else {
     /* Create copy of g_b identical with identical distribution as g_a */
-    if (!gai_duplicate(g_a, &g_B, tempname))
+    if (!pnga_duplicate(g_a, &g_B, tempname))
       pnga_error("duplicate failed",0L);
     ngai_copy_patch(&transp, g_b, blo, bhi, &g_B, alo, ahi);
     temp_created = 1;
@@ -2467,7 +2467,7 @@ void *alpha, *beta;
         pnga_distribution(&g_A, &me, loA, hiA);
       }
       else {
-        if (!gai_duplicate(g_c, &g_A, tempname))
+        if (!pnga_duplicate(g_c, &g_A, tempname))
           pnga_error("ga_dadd_patch: dup failed", 0L);
         ngai_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
         andim = cndim;
@@ -2486,7 +2486,7 @@ void *alpha, *beta;
        *        - create a temp array that matches distribution of g_c
        *        - copy & reshape patch of g_b into g_B
        */
-      if (!gai_duplicate(g_c, &g_B, tempname))
+      if (!pnga_duplicate(g_c, &g_B, tempname))
         pnga_error("ga_dadd_patch: dup failed", 0L);
       ngai_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
       bndim = cndim;
@@ -2519,13 +2519,13 @@ void *alpha, *beta;
   } else {
     /* create copies of arrays A and B that are identically distributed
        as C*/
-    if (!gai_duplicate(g_c, &g_A, tempname))
+    if (!pnga_duplicate(g_c, &g_A, tempname))
       pnga_error("ga_dadd_patch: dup failed", 0L);
     ngai_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
     andim = cndim;
     A_created = 1;
 
-    if (!gai_duplicate(g_c, &g_B, tempname))
+    if (!pnga_duplicate(g_c, &g_B, tempname))
       pnga_error("ga_dadd_patch: dup failed", 0L);
     ngai_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
     bndim = cndim;

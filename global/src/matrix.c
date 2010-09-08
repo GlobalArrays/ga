@@ -409,7 +409,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
        *        - create a temp array that matches distribution of g_a
        *        - copy & reshape patch of g_b into g_B
        */
-      if (!gai_duplicate(g_m, &g_A, tempname))
+      if (!pnga_duplicate(g_m, &g_A, tempname))
         pnga_error("ga_median_patch_:duplicate failed", 0L);
 
       ngai_copy_patch(&transp, g_a, alo, ahi, &g_A, mlo, mhi);
@@ -426,7 +426,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
        *        - create a temp array that matches distribution of g_a
        *        - copy & reshape patch of g_c into g_C
        */
-      if (!gai_duplicate(g_m, &g_B, tempname))
+      if (!pnga_duplicate(g_m, &g_B, tempname))
         pnga_error("ga_median_patch_:duplicate failed", 0L);
 
       ngai_copy_patch(&transp, g_b, blo, bhi, &g_B, mlo, mhi);
@@ -443,7 +443,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
        *        - create a temp array that matches distribution of g_a
        *        - copy & reshape patch of g_m into g_M
        */
-      if (!gai_duplicate(g_m, &g_C, tempname))
+      if (!pnga_duplicate(g_m, &g_C, tempname))
         pnga_error("ga_median_patch_:duplicate failed", 0L);
 
       /*no need to copy g_m since it is the output matrix. */
@@ -491,19 +491,19 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
   } else {
     /* create copies of A, B, and C that are identically distributed
        as M */
-    if (!gai_duplicate(g_m, &g_A, tempname))
+    if (!pnga_duplicate(g_m, &g_A, tempname))
       pnga_error("ga_add_patch: dup failed", 0L);
     ngai_copy_patch(&transp, g_a, alo, ahi, &g_A, mlo, mhi);
     andim = mndim;
     a_temp_created = 1;
 
-    if (!gai_duplicate(g_m, &g_B, tempname))
+    if (!pnga_duplicate(g_m, &g_B, tempname))
       pnga_error("ga_add_patch: dup failed", 0L);
     ngai_copy_patch(&transp, g_b, blo, bhi, &g_B, mlo, mhi);
     bndim = mndim;
     b_temp_created = 1;
 
-    if (!gai_duplicate(g_m, &g_C, tempname))
+    if (!pnga_duplicate(g_m, &g_C, tempname))
       pnga_error("ga_add_patch: dup failed", 0L);
         ngai_copy_patch(&transp, g_c, clo, chi, &g_C, mlo, mhi);
     cndim = mndim;

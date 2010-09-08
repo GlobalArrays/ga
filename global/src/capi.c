@@ -906,11 +906,19 @@ int GA_Duplicate(int g_a, char* array_name)
 {
     logical st;
     Integer a=(Integer)g_a, b;
-    st = gai_duplicate(&a, &b, array_name);
+    st = wnga_duplicate(&a, &b, array_name);
     if(st==TRUE) return (int) b;
     else return 0;
 }
 
+int NGA_Duplicate(int g_a, char* array_name)
+{
+    logical st;
+    Integer a=(Integer)g_a, b;
+    st = wnga_duplicate(&a, &b, array_name);
+    if(st==TRUE) return (int) b;
+    else return 0;
+}
 
 void GA_Destroy(int g_a)
 {
@@ -1902,12 +1910,24 @@ void GA_Check_handle(int g_a, char* string)
 int GA_Create_mutexes(int number)
 {
      Integer n = (Integer)number;
-     if(ga_create_mutexes_(&n) == TRUE)return 1;
+     if(wnga_create_mutexes(&n) == TRUE)return 1;
+     else return 0;
+}
+
+int NGA_Create_mutexes(int number)
+{
+     Integer n = (Integer)number;
+     if(wnga_create_mutexes(&n) == TRUE)return 1;
      else return 0;
 }
 
 int GA_Destroy_mutexes(void) {
-  if(ga_destroy_mutexes_() == TRUE) return 1;
+  if(wnga_destroy_mutexes() == TRUE) return 1;
+  else return 0;
+}
+
+int NGA_Destroy_mutexes(void) {
+  if(wnga_destroy_mutexes() == TRUE) return 1;
   else return 0;
 }
 

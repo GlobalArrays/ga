@@ -110,7 +110,7 @@ ga_symmetrize_(Integer *g_a) {
     /* For block-cyclic data, probably most efficient solution is to
        create duplicate copy, transpose it and add the results together */
     DoublePrecision half = 0.5;
-    if (!gai_duplicate(g_a, &g_b, tempB))
+    if (!pnga_duplicate(g_a, &g_b, tempB))
       pnga_error("ga_symmetrize: duplicate failed", 0L);
     ga_transpose_(g_a, &g_b);
     ga_add_(&half, g_a, &half, &g_b, g_a);

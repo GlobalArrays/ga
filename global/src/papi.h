@@ -34,8 +34,11 @@ extern logical pnga_create_irreg_config(Integer type, Integer ndim,
                                         Integer *dims, char* name, Integer *map,
                                         Integer *block, Integer p_handle, Integer *g_a);
 extern Integer pnga_create_handle();
+extern logical pnga_create_mutexes(Integer *num);
 extern logical pnga_destroy(Integer *g_a);
+extern logical pnga_destroy_mutexes();
 extern void pnga_distribution(Integer *g_a, Integer *proc, Integer *lo, Integer *hi);
+extern logical pnga_duplicate(Integer *g_a, Integer *g_b, char *array_name);
 extern Integer pnga_nnodes();
 extern Integer pnga_nodeid();
 

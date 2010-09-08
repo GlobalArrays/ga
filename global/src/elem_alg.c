@@ -1794,7 +1794,7 @@ int op; /* operation to be perform between g_a and g_b */
         pnga_distribution(&g_A, &me, loA, hiA);
       }
       else {
-        if (!gai_duplicate(g_c, &g_A, tempname))
+        if (!pnga_duplicate(g_c, &g_A, tempname))
           pnga_error("ga_dadd_patch: dup failed", 0L);
         ngai_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
         andim = cndim;
@@ -1813,7 +1813,7 @@ int op; /* operation to be perform between g_a and g_b */
        *        - create a temp array that matches distribution of g_c
        *        - copy & reshape patch of g_b into g_B
        */
-      if (!gai_duplicate(g_c, &g_B, tempname))
+      if (!pnga_duplicate(g_c, &g_B, tempname))
         pnga_error("ga_dadd_patch: dup failed", 0L);
       ngai_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
       bndim = cndim;
@@ -1847,13 +1847,13 @@ int op; /* operation to be perform between g_a and g_b */
   } else {
     /* create copies of arrays A and B that are identically distributed
        as C*/
-    if (!gai_duplicate(g_c, &g_A, tempname))
+    if (!pnga_duplicate(g_c, &g_A, tempname))
       pnga_error("ga_dadd_patch: dup failed", 0L);
     ngai_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
     andim = cndim;
     A_created = 1;
 
-    if (!gai_duplicate(g_c, &g_B, tempname))
+    if (!pnga_duplicate(g_c, &g_B, tempname))
       pnga_error("ga_dadd_patch: dup failed", 0L);
     ngai_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
     bndim = cndim;
@@ -2942,22 +2942,22 @@ void FATR ga_step_bound_info_patch_(
        }
 
      /*duplicatecate an array Q to hold the temparary result */
-     gai_duplicate(g_xx, &g_Q, "TempQ");
+     pnga_duplicate(g_xx, &g_Q, "TempQ");
      if(g_Q==0)
        pnga_error("ga_step_bound_info_patch_:fail to duplicate array Q", g_Q);
      
      /*duplicatecate an array R to hold the temparary result */
-     gai_duplicate(g_xx, &g_R, "TempR");
+     pnga_duplicate(g_xx, &g_R, "TempR");
      if(g_R==0)
        pnga_error("ga_step_bound_info_patch_:fail to duplicate array R", g_R);
 
      /*duplicatecate an array s to hold the temparary result */
-     gai_duplicate(g_xx, &g_S, "TempS");
+     pnga_duplicate(g_xx, &g_S, "TempS");
      if(g_S==0)
        pnga_error("ga_step_bound_info_patch_:fail to duplicate array S", g_S);
      
      /*duplicatecate an array T to hold the temparary result */
-     gai_duplicate(g_xx, &g_T, "TempT");
+     pnga_duplicate(g_xx, &g_T, "TempT");
      if(g_T==0)
        pnga_error("ga_step_bound_info_patch_:fail to duplicate array T", g_T);
 
@@ -3282,7 +3282,7 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
       pnga_error("ga_step_max_patch_: g_a has negative element.", -1);
 
     /*duplicate an array c to hold the temparate result = g_a/g_b; */
-    gai_duplicate(g_a, &g_C, "Temp");
+    pnga_duplicate(g_a, &g_C, "Temp");
     if(g_C==0)
       pnga_error("ga_step_max_patch_:fail to duplicate array c", *g_a);
     g_c = &g_C; 

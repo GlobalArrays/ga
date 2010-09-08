@@ -57,7 +57,6 @@ extern void          GA_Elem_minimum_patch(int g_a,int *alo,int *ahi, int g_b,in
 extern void          GA_Elem_multiply(int g_a, int g_b, int g_c);
 extern void          GA_Elem_multiply_patch(int g_a,int *alo,int *ahi, int g_b,int *blo,int *bhi,int g_c,int *clo,int *chi);
 extern void          GA_Error(char *str, int code);
-extern void          NGA_Error(char *str, int code);
 extern void          GA_Fast_merge_mirrored(int g_a);
 extern float         GA_Fdot(int g_a, int g_b);
 extern void          GA_Fence(void);
@@ -98,9 +97,7 @@ extern void          GA_Merge_mirrored(int g_a);
 extern void          GA_Nblock(int g_a, int *nblock);
 extern int           GA_Ndim(int g_a);
 extern int           GA_Nnodes(void);
-extern int           NGA_Nnodes(void);
 extern int           GA_Nodeid(void);
-extern int           NGA_Nodeid(void);
 extern void          GA_Norm1(int g_a, double *nm);
 extern void          GA_Norm_infinity(int g_a, double *nm);
 extern int           GA_Num_mirrored_seg(int g_a);
@@ -182,6 +179,7 @@ extern void          NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[]
 extern void          NGA_Acc(int g_a, int lo[], int hi[],void* buf,int ld[],void* alpha);
 extern void          NGA_Add_patch(void * alpha, int g_a, int alo[], int ahi[], void * beta,  int g_b, int blo[], int bhi[], int g_c, int clo[], int chi[]);
 extern SingleComplex NGA_Cdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
+extern int           NGA_Compare_distr(int g_a, int g_b); 
 extern void          NGA_Copy_patch(char trans, int g_a, int alo[], int ahi[], int g_b, int blo[], int bhi[]);
 extern int           NGA_Create_config(int type,int ndim,int dims[], char *name, int chunk[], int p_handle);
 extern int           NGA_Create_ghosts_config(int type,int ndim,int dims[], int width[], char *name, int chunk[], int p_handle);
@@ -192,8 +190,13 @@ extern int           NGA_Create(int type,int ndim,int dims[], char *name, int ch
 extern int           NGA_Create(int type,int ndim,int dims[], char *name, int chunk[]);
 extern int           NGA_Create_irreg_config(int type,int ndim,int dims[],char *name, int map[], int block[], int p_handle);
 extern int           NGA_Create_irreg(int type,int ndim,int dims[],char *name, int map[], int block[]);
+extern int           NGA_Create_handle(void);
+extern void          NGA_Destroy(int g_a);
+extern int           NGA_Destroy_mutexes(void);
 extern double        NGA_Ddot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
 extern void          NGA_Distribution(int g_a, int iproc, int lo[], int hi[]); 
+extern int           NGA_Duplicate(int g_a, char* array_name);
+extern void          NGA_Error(char *str, int code);
 extern float         NGA_Fdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
 extern void          NGA_Fill_patch(int g_a, int lo[], int hi[], void *val);
 extern void          NGA_Gather(int g_a, void *v, int* subsArray[], int n);
@@ -215,6 +218,8 @@ extern void          NGA_NbGet(int g_a, int lo[], int hi[], void* buf, int ld[],
 extern void          NGA_NbPut(int g_a, int lo[], int hi[], void* buf, int ld[], ga_nbhdl_t* nbhandle);
 extern int           NGA_NbTest(ga_nbhdl_t* nbhandle);
 extern int           NGA_NbWait(ga_nbhdl_t* nbhandle);
+extern int           NGA_Nnodes(void);
+extern int           NGA_Nodeid(void);
 extern void          NGA_Periodic_acc(int g_a, int lo[], int hi[],void* buf,int ld[],void* alpha);
 extern void          NGA_Periodic_get(int g_a, int lo[], int hi[], void* buf, int ld[]); 
 extern void          NGA_Periodic_put(int g_a, int lo[], int hi[], void* buf, int ld[]); 

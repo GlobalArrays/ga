@@ -2354,13 +2354,18 @@ Integer FATR ga_ndim_(Integer *g_a)
  
 
 
-/*\ DUPLICATE A GLOBAL ARRAY
+/**
+ * Duplicate an existing global array
  *  -- new array g_b will have properties of g_a
  * array_name    - a character string [input]
  * g_a           - Integer handle for reference array [input]
  * g_b           - Integer handle for new array [output]
 \*/
-logical gai_duplicate(Integer *g_a, Integer *g_b, char* array_name)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_duplicate =  pnga_duplicate
+#endif
+
+logical pnga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
 {
   char     **save_ptr;
   C_Long  mem_size, mem_size_proc;
@@ -2386,7 +2391,7 @@ logical gai_duplicate(Integer *g_a, Integer *g_b, char* array_name)
 
   GAstat.numcre ++; 
 
-  ga_check_handleM(g_a,"gai_duplicate");       
+  ga_check_handleM(g_a,"ga_duplicate");       
 
   /* find a free global_array handle for g_b */
   ga_handle =-1; i=0;
@@ -2395,7 +2400,7 @@ logical gai_duplicate(Integer *g_a, Integer *g_b, char* array_name)
     i++;
   }while(i<_max_global_array && ga_handle==-1);
   if( ga_handle == -1)
-    pnga_error("gai_duplicate: too many arrays", (Integer)_max_global_array);
+    pnga_error("ga_duplicate: too many arrays", (Integer)_max_global_array);
   *g_b = (Integer)ga_handle - GA_OFFSET;
    GA[ga_handle].actv_handle = 1;
 
@@ -2476,7 +2481,7 @@ logical gai_duplicate(Integer *g_a, Integer *g_b, char* array_name)
       float bad = FLT_MAX;
       ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);   
     } else {
-      pnga_error("gai_duplicate: type not supported ",GA[ga_handle].type);
+      pnga_error("ga_duplicate: type not supported ",GA[ga_handle].type);
     }
   }
 #     endif
@@ -2556,21 +2561,6 @@ int maplen = calc_maplen(GA_OFFSET + g_a);
 
       return(g_b);
 }
-
-
-/*\ DUPLICATE A GLOBAL ARRAY
- *  Fortran version
-\*/
-logical FATR ga_duplicate_(
-        Integer *g_a, Integer *g_b, char *array_name, int slen)
-{
-    char buf[FNAM];
-
-    ga_f2cstring(array_name ,slen, buf, FNAM);
-    return(gai_duplicate(g_a, g_b, buf));
-}
-
-
 
 /**
  *  Destroy a Global Array and clean up memory
@@ -3506,8 +3496,14 @@ int i;
 
 static int num_mutexes=0;
 static int chunk_mutex;
+/**
+ * Create a set of mutexes
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_create_mutexes =  pnga_create_mutexes
+#endif
 
-logical FATR ga_create_mutexes_(Integer *num)
+logical pnga_create_mutexes(Integer *num)
 {
 int myshare;
 
@@ -3596,7 +3592,14 @@ int m,p;
 }              
    
 
-logical FATR ga_destroy_mutexes_()
+/**
+ * Destroy mutexes
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_destroy_mutexes =  pnga_destroy_mutexes
+#endif
+
+logical pnga_destroy_mutexes()
 {
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if(num_mutexes<1) pnga_error("mutexes destroyed",0);
