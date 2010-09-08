@@ -519,7 +519,7 @@ void init_block_info(Integer *g_c, Integer *proc_index, Integer *index,
        *iblock = 0;
        ga_get_proc_index_(g_c, &me, proc_index);
        ga_get_proc_index_(g_c, &me, index);
-       ga_get_block_info_(g_c, blocks, block_dims);
+       pnga_get_block_info(g_c, blocks, block_dims);
        ga_get_proc_grid_(g_c, topology);
     }    
 }

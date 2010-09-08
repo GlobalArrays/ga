@@ -580,7 +580,17 @@ void GA_Get_block_info(int g_a, int num_blocks[], int block_dims[])
      Integer aa, ndim;
      aa = (Integer)g_a;
      ndim = ga_get_dimension_(&aa);
-     ga_get_block_info_(&aa, _ga_work, _ga_lo);
+     wnga_get_block_info(&aa, _ga_work, _ga_lo);
+     COPYF2C(_ga_work,num_blocks, ndim);
+     COPYF2C(_ga_lo,block_dims, ndim);
+}
+
+void NGA_Get_block_info(int g_a, int num_blocks[], int block_dims[])
+{
+     Integer aa, ndim;
+     aa = (Integer)g_a;
+     ndim = ga_get_dimension_(&aa);
+     wnga_get_block_info(&aa, _ga_work, _ga_lo);
      COPYF2C(_ga_work,num_blocks, ndim);
      COPYF2C(_ga_lo,block_dims, ndim);
 }
@@ -1052,9 +1062,14 @@ void GA_Randomize(int g_a, void *value)
 void GA_Fill(int g_a, void *value)
 {
     Integer a=(Integer)g_a;
-    ga_fill_(&a, value);
+    wnga_fill(&a, value);
 }
 
+void NGA_Fill(int g_a, void *value)
+{
+    Integer a=(Integer)g_a;
+    wnga_fill(&a, value);
+}
 
 void GA_Scale(int g_a, void *value)
 {

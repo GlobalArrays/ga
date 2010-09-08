@@ -318,7 +318,7 @@ int local_sync_begin,local_sync_end,use_put;
            Integer topology[MAXDIM], chk;
            ga_get_proc_index_(g_a, &me_a, proc_index);
            ga_get_proc_index_(g_a, &me_a, index);
-           ga_get_block_info_(g_a, blocks, block_dims);
+           pnga_get_block_info(g_a, blocks, block_dims);
            ga_get_proc_grid_(g_a, topology);
            while (index[ndim-1] < blocks[ndim-1]) {
              /* find bounding coordinates of block */
@@ -365,7 +365,7 @@ int local_sync_begin,local_sync_end,use_put;
            Integer topology[MAXDIM], chk;
            ga_get_proc_index_(g_b, &me_b, proc_index);
            ga_get_proc_index_(g_b, &me_b, index);
-           ga_get_block_info_(g_b, blocks, block_dims);
+           pnga_get_block_info(g_b, blocks, block_dims);
            ga_get_proc_grid_(g_b, topology);
            while (index[ndim-1] < blocks[ndim-1]) {
              /* find bounding coordinates of block */
@@ -1238,7 +1238,7 @@ char *ptr_tmp, *ptr_a;
       int i, size=GAsizeofM(atype);
 
       /* allocate memory for transposing elements locally */
-      ga_get_block_info_(g_a, blocks, block_dims);
+      pnga_get_block_info(g_a, blocks, block_dims);
 
       /* Simple block-cyclic data distribution */
       nelem = block_dims[0]*block_dims[1];
@@ -1271,7 +1271,7 @@ char *ptr_tmp, *ptr_a;
 
         ga_get_proc_index_(g_a, &me, proc_index);
         ga_get_proc_index_(g_a, &me, index);
-        ga_get_block_info_(g_a, blocks, block_dims);
+        pnga_get_block_info(g_a, blocks, block_dims);
         ga_get_proc_grid_(g_a, topology);
         /* Verify that processor has data */
         ichk = 1;

@@ -39,6 +39,9 @@ extern logical pnga_destroy(Integer *g_a);
 extern logical pnga_destroy_mutexes();
 extern void pnga_distribution(Integer *g_a, Integer *proc, Integer *lo, Integer *hi);
 extern logical pnga_duplicate(Integer *g_a, Integer *g_b, char *array_name);
+extern void pnga_fill(Integer *g_a, void* val);
+extern void pnga_get_block_info(Integer *g_a, Integer *num_blocks,
+                                Integer *block_dims);
 extern Integer pnga_nnodes();
 extern Integer pnga_nodeid();
 

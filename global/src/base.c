@@ -2819,9 +2819,14 @@ void FATR ga_randomize_(Integer *g_a, void* val)
 #endif
 }
 
-/*\fill array with value
-\*/
-void FATR ga_fill_(Integer *g_a, void* val)
+/**
+ * Fill array with value
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_fill =  pnga_fill
+#endif
+
+void pnga_fill(Integer *g_a, void* val)
 {
   int i,handle=GA_OFFSET + (int)*g_a;
   char *ptr;
@@ -2925,31 +2930,31 @@ void FATR ga_fill_(Integer *g_a, void* val)
 
 void FATR ga_cfill_(Integer *g_a, SingleComplex *val)
 {
-    ga_fill_(g_a, val);
+    pnga_fill(g_a, val);
 }
 
 
 void FATR ga_dfill_(Integer *g_a, DoublePrecision *val)
 {
-    ga_fill_(g_a, val);
+    pnga_fill(g_a, val);
 }
 
 
 void FATR ga_ifill_(Integer *g_a, Integer *val)
 {
-    ga_fill_(g_a, val);
+    pnga_fill(g_a, val);
 }
 
 
 void FATR ga_sfill_(Integer *g_a, Real *val)
 {
-    ga_fill_(g_a, val);
+    pnga_fill(g_a, val);
 }
 
 
 void FATR ga_zfill_(Integer *g_a, DoubleComplex *val)
 {
-    ga_fill_(g_a, val);
+    pnga_fill(g_a, val);
 }
 
 
@@ -4552,10 +4557,15 @@ void FATR ga_get_proc_index_(Integer *g_a, Integer *iproc, Integer *index)
   return;
 }
 
-/*\ RETURN PROC GRID DIMENSIONS AND BLOCK DIMENSIONS FOR A PARTICULAR
- *  GLOBAL ARRAY
-\*/
-void FATR ga_get_block_info_(Integer *g_a, Integer *num_blocks, Integer *block_dims)
+/**
+ *  Return proc grid dimension and block dimension for a particular
+ *  Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_block_info =  pnga_get_block_info
+#endif
+
+void pnga_get_block_info(Integer *g_a, Integer *num_blocks, Integer *block_dims)
 {
   Integer ga_handle = GA_OFFSET + *g_a;
   Integer i, ndim;

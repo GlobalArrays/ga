@@ -238,7 +238,7 @@ void FATR nga_select_elem_(
         Integer l_index[MAXDIM];
         Integer min, max;
         ga_get_proc_index_(g_a, &me, proc_index);
-        ga_get_block_info_(g_a, blocks, block_dims);
+        pnga_get_block_info(g_a, blocks, block_dims);
         ga_get_proc_grid_(g_a, topology);
         /* figure out strides for locally held block of data */
         for (i=0; i<ndim; i++) {

@@ -318,6 +318,28 @@ logical FATR nga_duplicate_( Integer *g_a, Integer *g_b, char *array_name, int s
   return(wnga_duplicate(g_a, g_b, buf));
 }
 
+void FATR ga_fill_(Integer *g_a, void* val)
+{
+  wnga_fill(g_a, val);
+}
+
+void FATR nga_fill_(Integer *g_a, void* val)
+{
+  wnga_fill(g_a, val);
+}
+
+void FATR ga_get_block_info_(Integer *g_a, Integer *num_blocks,
+                             Integer *block_dims)
+{
+  wnga_get_block_info(g_a, num_blocks, block_dims);
+}
+
+void FATR nga_get_block_info_(Integer *g_a, Integer *num_blocks,
+                             Integer *block_dims)
+{
+  wnga_get_block_info(g_a, num_blocks, block_dims);
+}
+
 Integer FATR ga_nnodes_()
 {
   return wnga_nnodes();
