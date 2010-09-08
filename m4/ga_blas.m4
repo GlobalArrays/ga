@@ -101,10 +101,16 @@ AS_IF([test "x$enable_f77" = xno],
 # test for a different BLAS routine. cgemm seems okay.
 AC_DEFUN([GA_BLAS],
 [AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
+blas_size=4
+blas_size_hack=no
 AC_ARG_WITH([blas],
     [AS_HELP_STRING([--with-blas[[=ARG]]],
+        [use external BLAS library; attempt to detect sizeof(INTEGER)])],
+    [blas_size_hack=yes])
+AC_ARG_WITH([blas4],
+    [AS_HELP_STRING([--with-blas4[[=ARG]]],
         [use external BLAS library compiled with sizeof(INTEGER)==4])],
-    [blas_size=4])
+    [blas_size=4; with_blas="$with_blas4"])
 AC_ARG_WITH([blas8],
     [AS_HELP_STRING([--with-blas8[[=ARG]]],
         [use external BLAS library compiled with sizeof(INTEGER)==8])],
@@ -134,27 +140,52 @@ AC_MSG_NOTICE([Attempting to locate BLAS library])
 # First, check environment/command-line variables.
 # If failed, erase BLAS_LIBS but maintain BLAS_LDFLAGS and BLAS_CPPFLAGS.
 AS_IF([test $ga_blas_ok = no],
-    [AS_IF([test "x$enable_f77" = xno],
-        [AC_MSG_CHECKING([for C BLAS with user-supplied flags])],
-        [AC_MSG_CHECKING([for Fortran 77 BLAS with user-supplied flags])])
+    [AC_MSG_CHECKING([for BLAS with user-supplied flags])
      LIBS="$BLAS_LIBS $LIBS"
      GA_RUN_BLAS_TEST()
      LIBS="$ga_save_LIBS"
      AS_IF([test $ga_blas_ok = yes],
-        [BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS"
-         AS_CASE([$BLAS_SIZE_HACK],
-            [*ilp64*],  [blas_size=8],   # Intel MKL
-            [*_int64*], [blas_size=8])]) # AMD ACML
+        [AS_IF([test $blas_size_hack = yes],
+            [AS_CASE(["$BLAS_LIBS $LIBS $LDFLAGS $CPPFLAGS"],
+                [*ilp64*],  [blas_size=8],     # Intel MKL
+                [*_int64*], [blas_size=8])])]) # AMD ACML
+     AC_MSG_RESULT([$ga_blas_ok])])
+
+# BLAS in AMD Core Math Library? (ACML)
+AS_IF([test $ga_blas_ok = no],
+    [AC_MSG_CHECKING([for BLAS in AMD Core Math Library])
+     # add -lacml to BLAS_LIBS if missing from LIBS
+     AS_CASE([$LIBS], [*acml*], [], [BLAS_LIBS="-lacml"])
+     LIBS="$BLAS_LIBS $LIBS"
+     GA_RUN_BLAS_TEST()
+     LIBS="$ga_save_LIBS"
+     AS_IF([test "x$ga_blas_ok" = xyes],
+        [AS_IF([test $blas_size_hack = yes],
+            [AS_CASE(["$BLAS_LIBS $LIBS $LDFLAGS $CPPFLAGS"],
+                [*_int64*], [blas_size=8])])])
+     AC_MSG_RESULT([$ga_blas_ok])])
+
+# BLAS in Intel MKL library?
+AS_IF([test $ga_blas_ok = no],
+    [AC_MSG_CHECKING([for BLAS in Intel Math Kernel Library])
+     # add -lmkl to BLAS_LIBS if missing from LIBS
+     AS_CASE([$LIBS], [*mkl*], [], [BLAS_LIBS="-lmkl"])
+     LIBS="$BLAS_LIBS $LIBS"
+     GA_RUN_BLAS_TEST()
+     LIBS="$ga_save_LIBS"
+     AS_IF([test "x$ga_blas_ok" = xyes],
+        [AS_IF([test $blas_size_hack = yes],
+            [AS_CASE(["$BLAS_LIBS $LIBS $LDFLAGS $CPPFLAGS"],
+                [*ilp64*], [blas_size=8])])])
      AC_MSG_RESULT([$ga_blas_ok])])
 
 # BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
 AS_IF([test $ga_blas_ok = no],
-    [AS_IF([test "x$enable_f77" = xno],
-        [AC_MSG_CHECKING([for C BLAS in ATLAS])
-         # add -lcblas if needed but missing from LIBS
+    [AC_MSG_CHECKING([for BLAS in ATLAS])
+     AS_IF([test "x$enable_f77" = xno],
+        [# add -lcblas if needed but missing from LIBS
          AS_CASE([$LIBS], [*cblas*], [], [BLAS_LIBS="-lcblas"])],
-        [AC_MSG_CHECKING([for Fortran 77 BLAS in ATLAS])
-         # add -lf77blas if needed but missing from LIBS
+        [# add -lf77blas if needed but missing from LIBS
          AS_CASE([$LIBS], [*f77blas*], [], [BLAS_LIBS="-lf77blas"])])
      # add -latlas if needed but missing from LIBS
      AS_CASE([$LIBS], [*atlas*], [], [BLAS_LIBS="$BLAS_LIBS -latlas"])
@@ -163,113 +194,108 @@ AS_IF([test $ga_blas_ok = no],
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in AMD Core Math Library? (ACML)
-AS_IF([test $ga_blas_ok = no],
-    [AC_MSG_CHECKING([for BLAS in AMD Core Math Library])
-     # add -lacml if needed but missing from LIBS
-     AS_CASE([$LIBS], [*acml*], [], [BLAS_LIBS="-lacml"])
-     LIBS="$BLAS_LIBS $LIBS"
-     GA_RUN_BLAS_TEST()
-     LIBS="$ga_save_LIBS"
-     AS_IF([test "x$ga_blas_ok" = xyes],
-        [BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS"
-         AS_CASE([$BLAS_SIZE_HACK], [*_int64*], [blas_size=8])])
-     AC_MSG_RESULT([$ga_blas_ok])])
-
-# BLAS in Intel MKL library?
-AS_IF([test $ga_blas_ok = no],
-    [AC_MSG_CHECKING([for BLAS in Intel MKL])
-     AS_CASE([$LIBS], [*mkl*], [], [BLAS_LIBS="-lmkl"])
-     LIBS="$BLAS_LIBS $LIBS"
-     GA_RUN_BLAS_TEST()
-     LIBS="$ga_save_LIBS"
-     AS_IF([test "x$ga_blas_ok" = xyes],
-        [BLAS_SIZE_HACK="$LIBS $LDFLAGS $CPPFLAGS $BLAS_LIBS"
-         AS_CASE([$BLAS_SIZE_HACK], [*ilp64*], [blas_size=8])])
-     AC_MSG_RESULT([$ga_blas_ok])])
-
 # BLAS in PhiPACK libraries? (requires generic BLAS lib, too)
-#AS_IF([test $ga_blas_ok = no],
-#    [AC_MSG_NOTICE([  BLAS in PhiPACK libraries?])
-#     AC_CHECK_LIB([blas], [$sgemm],
-#        [AC_CHECK_LIB([dgemm], [$dgemm],
-#            [AC_CHECK_LIB([sgemm], [$sgemm],
-#                [ga_blas_ok=yes; BLAS_LIBS="-lsgemm -ldgemm -lblas"],
-#                [],
-#                [-lblas])],
-#            [],
-#            [-lblas])])])
+AS_IF([test $ga_blas_ok = no],
+    [AC_MSG_CHECKING([for BLAS in PhiPACK libraries])
+     # add -lblas to BLAS_LIBS if missing from LIBS
+     AS_CASE([$LIBS], [*blas*], [], [BLAS_LIBS="-lblas"])
+     # add -ldgemm to BLAS_LIBS if missing from LIBS
+     AS_CASE([$LIBS], [*dgemm*], [], [BLAS_LIBS="-ldgemm $BLAS_LIBS"])
+     # add -lsgemm to BLAS_LIBS if missing from LIBS
+     AS_CASE([$LIBS], [*sgemm*], [], [BLAS_LIBS="-lsgemm $BLAS_LIBS"])
+     LIBS="$BLAS_LIBS $LIBS"
+     GA_RUN_BLAS_TEST()
+     LIBS="$ga_save_LIBS"
+     AC_MSG_RESULT([$ga_blas_ok])])
 
 # BLAS in Apple vecLib library?
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in Apple vecLib library])
+     # add -framework vecLib to BLAS_LIBS if missing from LIBS
      AS_CASE([$LIBS], [*vecLib*], [], [BLAS_LIBS="-framework vecLib"])
      LIBS="$BLAS_LIBS $LIBS"
      GA_RUN_BLAS_TEST()
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in Alpha CXML library?
+# BLAS in Alpha CXML library? CXML=Compaq Extended Math Library
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in Alpha CXML library])
+     # add -lcxml to BLAS_LIBS if missing from LIBS
      AS_CASE([$LIBS], [*cxml*], [], [BLAS_LIBS="-lcxml"])
      LIBS="$BLAS_LIBS $LIBS"
-     AC_LANG_PUSH([Fortran 77])
-     GA_F77_BLAS_TEST()
-     AC_LINK_IFELSE([], [ga_blas_ok=yes],
-        [AS_CASE([$LIBS:$BLAS_LIBS],
-            [*cpml*:*], [],
-            [*:*cpml*], [],
-                        [BLAS_LIBS="$BLAS_LIBS -lcpml"; LIBS="$LIBS -lcpml"])
-         AC_LINK_IFELSE([], [ga_blas_ok=yes], [BLAS_LIBS=])])
-     AC_LANG_POP([Fortran 77])
+     GA_RUN_BLAS_TEST()
      LIBS="$ga_save_LIBS"
+     AS_IF([test $ga_blas_ok = no],
+        [# add -lcxml to BLAS_LIBS if missing from LIBS
+         AS_CASE([$LIBS], [*cxml*], [], [BLAS_LIBS="-lcxml"])
+         # add -lcpml to BLAS_LIBS if missing from LIBS
+         AS_CASE([$LIBS], [*cpml*], [], [BLAS_LIBS="$BLAS_LIBS -lcpml"])
+         LIBS="$BLAS_LIBS $LIBS"
+         GA_RUN_BLAS_TEST()
+         LIBS="$ga_save_LIBS"])
      AC_MSG_RESULT([$ga_blas_ok])])
 
 # BLAS in Alpha DXML library? (now called CXML, see above)
-#AS_IF([test $ga_blas_ok = no],
-#    [AC_MSG_NOTICE([  BLAS in Alpha DXML library?])
-#     AC_CHECK_LIB(dxml, $sgemm, [ga_blas_ok=yes; BLAS_LIBS="-ldxml"])])
-
-################### Assume Fortran 77 hereafter
-AC_LANG_PUSH([Fortran 77])
 
 # BLAS in Sun Performance library?
 AS_IF([test $ga_blas_ok = no],
-    [AS_IF([test "x$GCC" != xyes],
-        [AC_MSG_NOTICE([  BLAS in Sun Performance library?])
-         AC_CHECK_LIB([sunmath], [acosp],
-            [AC_CHECK_LIB([sunperf], [sgemm],
-                [ga_blas_ok=yes; BLAS_LIBS="-xlic_lib=sunperf -lsunmath"],
-                [],
-                [-lsunmath])])])])
+    [AC_MSG_CHECKING([for BLAS in Sun Performance Library])
+     # add -xlic_lib=sunperf to BLAS_LIBS if missing from LIBS
+     AS_CASE([$LIBS], [*sunperf*], [], [BLAS_LIBS="-xlic_lib=sunperf"])
+     LIBS="$BLAS_LIBS $LIBS"
+     GA_RUN_BLAS_TEST()
+     LIBS="$ga_save_LIBS"
+     AS_IF([test $ga_blas_ok = no],
+        [# add -xlic_lib=sunperf to BLAS_LIBS if missing from LIBS
+         AS_CASE([$LIBS], [*sunperf*], [], [BLAS_LIBS="-xlic_lib=sunperf"])
+         # add -lsunmath to BLAS_LIBS if missing from LIBS
+         AS_CASE([$LIBS], [*sunmath*], [], [BLAS_LIBS="$BLAS_LIBS -lsunmath"])
+         LIBS="$BLAS_LIBS $LIBS"
+         GA_RUN_BLAS_TEST()
+         LIBS="$ga_save_LIBS"])
+     AC_MSG_RESULT([$ga_blas_ok])])
 
 # BLAS in SCSL library?  (SGI/Cray Scientific Library)
 AS_IF([test $ga_blas_ok = no],
-    [AC_MSG_NOTICE([  BLAS in SGI/Cray Scientific Library?])
-     AC_CHECK_LIB([scs], [sgemm], [ga_blas_ok=yes; BLAS_LIBS="-lscs"])])
+    [AC_MSG_CHECKING([for BLAS in SGI/Cray Scientific Library])
+     # add -lscs to BLAS_LIBS if missing from LIBS
+     AS_CASE([$LIBS], [*scs*], [], [BLAS_LIBS="-lscs"])
+     LIBS="$BLAS_LIBS $LIBS"
+     GA_RUN_BLAS_TEST()
+     LIBS="$ga_save_LIBS"
+     AC_MSG_RESULT([$ga_blas_ok])])
 
 # BLAS in SGIMATH library?
 AS_IF([test $ga_blas_ok = no],
-    [AC_MSG_NOTICE([  BLAS in SGIMATH library?])
-     AC_CHECK_LIB([complib.sgimath], [sgemm],
-        [ga_blas_ok=yes; BLAS_LIBS="-lcomplib.sgimath"])])
+    [AC_MSG_CHECKING([for BLAS in SGIMATH library])
+     # add -lcomplib.sgimath to BLAS_LIBS if missing from LIBS
+     AS_CASE([$LIBS], [*complib.sgimath*], [], [BLAS_LIBS="-lcomplib.sgimath"])
+     LIBS="$BLAS_LIBS $LIBS"
+     GA_RUN_BLAS_TEST()
+     LIBS="$ga_save_LIBS"
+     AC_MSG_RESULT([$ga_blas_ok])])
 
 # BLAS in IBM ESSL library? (requires generic BLAS lib, too)
 AS_IF([test $ga_blas_ok = no],
-    [AC_MSG_NOTICE([  BLAS in IBM ESSL library?])
-     AC_CHECK_LIB([blas], [sgemm],
-        [AC_CHECK_LIB([essl], [sgemm],
-            [ga_blas_ok=yes; BLAS_LIBS="-lessl -lblas"],
-            [],
-            [-lblas $FLIBS])])])
+    [AC_MSG_CHECKING([for BLAS in IBM ESSL library])
+     # add -lessl to BLAS_LIBS if missing from LIBS
+     AS_CASE([$LIBS], [*essl*], [], [BLAS_LIBS="-lessl"])
+     # add -lblas to BLAS_LIBS if missing from LIBS
+     AS_CASE([$LIBS], [*blas*], [], [BLAS_LIBS="$BLAS_LIBS -lblas"])
+     LIBS="$BLAS_LIBS $LIBS"
+     GA_RUN_BLAS_TEST()
+     LIBS="$ga_save_LIBS"
+     AC_MSG_RESULT([$ga_blas_ok])])
 
 # Generic BLAS library?
 AS_IF([test $ga_blas_ok = no],
-    [AC_MSG_NOTICE([  BLAS generic library?])
-     AC_CHECK_LIB([blas], [sgemm], [ga_blas_ok=yes; BLAS_LIBS="-lblas"])])
-
-AC_LANG_POP([Fortran 77])
+    [AC_MSG_CHECKING([for BLAS in generic library])
+     BLAS_LIBS="-lblas"
+     LIBS="$BLAS_LIBS $LIBS"
+     GA_RUN_BLAS_TEST()
+     LIBS="$ga_save_LIBS"
+     AC_MSG_RESULT([$ga_blas_ok])])
 
 CPPFLAGS="$ga_save_CPPFLAGS"
 LDFLAGS="$ga_save_LDFLAGS"
