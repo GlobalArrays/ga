@@ -79,7 +79,7 @@ void FATR ga_zero_(Integer *g_a)
 
     if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
 
-      if (ga_has_ghosts_(g_a)) {
+      if (pnga_has_ghosts(g_a)) {
         nga_zero_patch_(g_a,lo,hi);
 #ifdef USE_VAMPIR
         vampir_end(GA_ZERO,__FILE__,__LINE__);
@@ -202,7 +202,7 @@ void *ptr_a, *ptr_b;
      pnga_distribution(g_a, &me, lo, hi);
      if(lo[0]>0){
         nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-        if (ga_has_ghosts_(g_a)) {
+        if (pnga_has_ghosts(g_a)) {
           GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
         } else {
           GET_ELEMS(ndim,lo,hi,ld,&elems);
@@ -212,7 +212,7 @@ void *ptr_a, *ptr_b;
      pnga_distribution(g_b, &me, lo, hi);
      if(lo[0]>0){
         nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-        if (ga_has_ghosts_(g_b)) {
+        if (pnga_has_ghosts(g_b)) {
           GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
         } else {
           GET_ELEMS(ndim,lo,hi,ld,&elems);
@@ -316,10 +316,10 @@ int local_sync_begin,local_sync_end,use_put;
          } else {
            Integer proc_index[MAXDIM], index[MAXDIM];
            Integer topology[MAXDIM], chk;
-           ga_get_proc_index_(g_a, &me_a, proc_index);
-           ga_get_proc_index_(g_a, &me_a, index);
+           pnga_get_proc_index(g_a, &me_a, proc_index);
+           pnga_get_proc_index(g_a, &me_a, index);
            pnga_get_block_info(g_a, blocks, block_dims);
-           ga_get_proc_grid_(g_a, topology);
+           pnga_get_proc_grid(g_a, topology);
            while (index[ndim-1] < blocks[ndim-1]) {
              /* find bounding coordinates of block */
              chk = 1;
@@ -363,10 +363,10 @@ int local_sync_begin,local_sync_end,use_put;
          } else {
            Integer proc_index[MAXDIM], index[MAXDIM];
            Integer topology[MAXDIM], chk;
-           ga_get_proc_index_(g_b, &me_b, proc_index);
-           ga_get_proc_index_(g_b, &me_b, index);
+           pnga_get_proc_index(g_b, &me_b, proc_index);
+           pnga_get_proc_index(g_b, &me_b, index);
            pnga_get_block_info(g_b, blocks, block_dims);
-           ga_get_proc_grid_(g_b, topology);
+           pnga_get_proc_grid(g_b, topology);
            while (index[ndim-1] < blocks[ndim-1]) {
              /* find bounding coordinates of block */
              chk = 1;
@@ -485,7 +485,7 @@ Integer bndim, bdims[MAXDIM];
    }
 
    if(pnga_compare_distr(g_a,g_b) == FALSE ||
-      ga_has_ghosts_(g_a) || ga_has_ghosts_(g_b)) {
+      pnga_has_ghosts(g_a) || pnga_has_ghosts(g_b)) {
        /* distributions not identical */
        nga_inquire_internal_(g_a, &type, &andim, adims);
        nga_inquire_internal_(g_b, &type, &bndim, bdims);
@@ -503,7 +503,7 @@ Integer bndim, bdims[MAXDIM];
    pnga_distribution(g_a, &me, lo, hi);
    if(lo[0]>0){
       nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-      if (ga_has_ghosts_(g_a)) {
+      if (pnga_has_ghosts(g_a)) {
         GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
       } else {
         GET_ELEMS(ndim,lo,hi,ld,&elems);
@@ -519,7 +519,7 @@ Integer bndim, bdims[MAXDIM];
      pnga_distribution(g_b, &me, lo, hi);
      if(lo[0]>0){
         nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-        if (ga_has_ghosts_(g_b)) {
+        if (pnga_has_ghosts(g_b)) {
           GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elemsb);
         } else {
           GET_ELEMS(ndim,lo,hi,ld,&elemsb);
@@ -760,7 +760,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
   nga_inquire_internal_(g_a, &type, &ndim, dims);
   if (num_blocks < 0) {
     pnga_distribution(g_a, &me, lo, hi);
-    if (ga_has_ghosts_(g_a)) {
+    if (pnga_has_ghosts(g_a)) {
       nga_scale_patch_(g_a, lo, hi, alpha);
 #ifdef USE_VAMPIR
       vampir_end(GA_SCALE,__FILE__,__LINE__);
@@ -948,7 +948,7 @@ int local_sync_begin,local_sync_end;
    me = ga_pgroup_nodeid_(&a_grp);
    if((pnga_compare_distr(g_a,g_b) == FALSE) ||
       (pnga_compare_distr(g_a,g_c) == FALSE) ||
-       ga_has_ghosts_(g_a) || ga_has_ghosts_(g_b) || ga_has_ghosts_(g_c) ||
+       pnga_has_ghosts(g_a) || pnga_has_ghosts(g_b) || pnga_has_ghosts(g_c) ||
        ga_total_blocks_(g_a) > 0 || ga_total_blocks_(g_b) > 0 ||
        ga_total_blocks_(g_c) > 0) {
        /* distributions not identical */
@@ -1269,10 +1269,10 @@ char *ptr_tmp, *ptr_a;
         Integer proc_index[MAXDIM], index[MAXDIM];
         Integer topology[MAXDIM], ichk;
 
-        ga_get_proc_index_(g_a, &me, proc_index);
-        ga_get_proc_index_(g_a, &me, index);
+        pnga_get_proc_index(g_a, &me, proc_index);
+        pnga_get_proc_index(g_a, &me, index);
         pnga_get_block_info(g_a, blocks, block_dims);
-        ga_get_proc_grid_(g_a, topology);
+        pnga_get_proc_grid(g_a, topology);
         /* Verify that processor has data */
         ichk = 1;
         for (i=0; i<andim; i++) {

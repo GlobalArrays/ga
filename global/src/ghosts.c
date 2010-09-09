@@ -473,7 +473,7 @@ void FATR ga_update1_ghosts_(Integer *g_a)
    * up into two pieces. */
 
   /* if global array has no ghost cells, just return */
-  if (!ga_has_ghosts_(g_a)) return;
+  if (!pnga_has_ghosts(g_a)) return;
 
   GA_PUSH_NAME("ga_update1_ghosts");
 
@@ -806,7 +806,7 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
   Integer p_handle;
 
   /* if global array has no ghost cells, just return */
-  if (!ga_has_ghosts_(g_a)) {
+  if (!pnga_has_ghosts(g_a)) {
     return TRUE;
   }
 
@@ -1093,7 +1093,7 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
    */
 
   /* if global array has no ghost cells, just return */
-  if (!ga_has_ghosts_(g_a)) return TRUE;
+  if (!pnga_has_ghosts(g_a)) return TRUE;
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -1309,7 +1309,7 @@ logical FATR ga_set_update4_info_(Integer *g_a)
    */
 
   /* if global array has no ghost cells, just return */
-  if (!ga_has_ghosts_(g_a)) return TRUE;
+  if (!pnga_has_ghosts(g_a)) return TRUE;
 
   /* Check to make sure that global array is well-behaved (all processors
      have data and the width of the data in each dimension is greater
@@ -1672,7 +1672,7 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
    */
 
   /* if global array has no ghost cells, just return */
-  if (!ga_has_ghosts_(g_a)) return TRUE;
+  if (!pnga_has_ghosts(g_a)) return TRUE;
 
   ndim = GA[handle].ndim;
   p_handle = GA[handle].p_handle;
@@ -1960,7 +1960,7 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
    */
 
   /* if global array has no ghost cells, just return */
-  if (!ga_has_ghosts_(g_a)) return TRUE;
+  if (!pnga_has_ghosts(g_a)) return TRUE;
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -2488,7 +2488,7 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
    */
 
   /* if global array has no ghost cells, just return */
-  if (!ga_has_ghosts_(g_a)) return TRUE;
+  if (!pnga_has_ghosts(g_a)) return TRUE;
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -2705,7 +2705,7 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 
   /* if global array has no ghost cells, just return */
-  if (!ga_has_ghosts_(g_a)) 
+  if (!pnga_has_ghosts(g_a)) 
     return TRUE;
   
   if(local_sync_begin)ga_sync_();
@@ -2922,7 +2922,7 @@ logical ga_update5_ghosts_(Integer *g_a)
  
   cache = (char *)GA[handle].cache;
   /* if global array has no ghost cells, just return */
-  if (!ga_has_ghosts_(g_a)) return TRUE;
+  if (!pnga_has_ghosts(g_a)) return TRUE;
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -3093,7 +3093,7 @@ logical ga_set_update5_info_(Integer *g_a)
    */
 
   /* if global array has no ghost cells, just return */
-  if (!ga_has_ghosts_(g_a)) return TRUE;
+  if (!pnga_has_ghosts(g_a)) return TRUE;
 
   /* Check to make sure that global array is well-behaved (all processors
      have data and the width of the data in each dimension is greater
@@ -3391,7 +3391,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
    */
 
   /* if global array has no ghost cells, just return */
-  if (!ga_has_ghosts_(g_a)) return TRUE;
+  if (!pnga_has_ghosts(g_a)) return TRUE;
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -3864,7 +3864,7 @@ logical FATR ga_update7_ghosts_(Integer *g_a)
   Integer p_handle;
 
   /* if global array has no ghost cells, just return */
-  if (!ga_has_ghosts_(g_a)) {
+  if (!pnga_has_ghosts(g_a)) {
     return TRUE;
   }
 

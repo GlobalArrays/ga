@@ -520,7 +520,7 @@ void init_block_info(Integer *g_c, Integer *proc_index, Integer *index,
        ga_get_proc_index_(g_c, &me, proc_index);
        ga_get_proc_index_(g_c, &me, index);
        pnga_get_block_info(g_c, blocks, block_dims);
-       ga_get_proc_grid_(g_c, topology);
+       pnga_get_proc_grid(g_c, topology);
     }    
 }
 

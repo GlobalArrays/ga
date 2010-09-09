@@ -574,10 +574,10 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
         Integer proc_index[MAXDIM], index[MAXDIM];
         Integer topology[MAXDIM];
         Integer blocks[MAXDIM], block_dims[MAXDIM];
-        ga_get_proc_index_(g_m, &me, proc_index);
-        ga_get_proc_index_(g_m, &me, index);
+        pnga_get_proc_index(g_m, &me, proc_index);
+        pnga_get_proc_index(g_m, &me, index);
         pnga_get_block_info(g_m, blocks, block_dims);
-        ga_get_proc_grid_(g_m, topology);
+        pnga_get_proc_grid(g_m, topology);
 
         while (index[mndim-1] < blocks[mndim-1]) {
           /* find bounding coordinates of block */
@@ -916,10 +916,10 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer topology[MAXDIM];
       Integer blocks[MAXDIM], block_dims[MAXDIM];
-      ga_get_proc_index_(g_a, &me, proc_index);
-      ga_get_proc_index_(g_a, &me, index);
+      pnga_get_proc_index(g_a, &me, proc_index);
+      pnga_get_proc_index(g_a, &me, index);
       pnga_get_block_info(g_a, blocks, block_dims);
-      ga_get_proc_grid_(g_a, topology);
+      pnga_get_proc_grid(g_a, topology);
       while (index[ndim-1] < blocks[ndim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -1260,10 +1260,10 @@ ga_norm1_ (Integer * g_a, double *nm)
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer topology[MAXDIM];
       Integer blocks[MAXDIM], block_dims[MAXDIM];
-      ga_get_proc_index_(g_a, &me, proc_index);
-      ga_get_proc_index_(g_a, &me, index);
+      pnga_get_proc_index(g_a, &me, proc_index);
+      pnga_get_proc_index(g_a, &me, index);
       pnga_get_block_info(g_a, blocks, block_dims);
-      ga_get_proc_grid_(g_a, topology);
+      pnga_get_proc_grid(g_a, topology);
       while (index[ndim-1] < blocks[ndim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -1556,10 +1556,10 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer topology[MAXDIM];
       Integer blocks[MAXDIM], block_dims[MAXDIM];
-      ga_get_proc_index_(g_a, &me, proc_index);
-      ga_get_proc_index_(g_a, &me, index);
+      pnga_get_proc_index(g_a, &me, proc_index);
+      pnga_get_proc_index(g_a, &me, index);
       pnga_get_block_info(g_a, blocks, block_dims);
-      ga_get_proc_grid_(g_a, topology);
+      pnga_get_proc_grid(g_a, topology);
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -1773,10 +1773,10 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer topology[MAXDIM];
       Integer blocks[MAXDIM], block_dims[MAXDIM];
-      ga_get_proc_index_(g_a, &me, proc_index);
-      ga_get_proc_index_(g_a, &me, index);
+      pnga_get_proc_index(g_a, &me, proc_index);
+      pnga_get_proc_index(g_a, &me, index);
       pnga_get_block_info(g_a, blocks, block_dims);
-      ga_get_proc_grid_(g_a, topology);
+      pnga_get_proc_grid(g_a, topology);
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -1989,10 +1989,10 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer topology[MAXDIM];
       Integer blocks[MAXDIM], block_dims[MAXDIM];
-      ga_get_proc_index_(g_a, &me, proc_index);
-      ga_get_proc_index_(g_a, &me, index);
+      pnga_get_proc_index(g_a, &me, proc_index);
+      pnga_get_proc_index(g_a, &me, index);
       pnga_get_block_info(g_a, blocks, block_dims);
-      ga_get_proc_grid_(g_a, topology);
+      pnga_get_proc_grid(g_a, topology);
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -2165,10 +2165,10 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer topology[MAXDIM];
       Integer blocks[MAXDIM], block_dims[MAXDIM];
-      ga_get_proc_index_(g_a, &me, proc_index);
-      ga_get_proc_index_(g_a, &me, index);
+      pnga_get_proc_index(g_a, &me, proc_index);
+      pnga_get_proc_index(g_a, &me, index);
       pnga_get_block_info(g_a, blocks, block_dims);
-      ga_get_proc_grid_(g_a, topology);
+      pnga_get_proc_grid(g_a, topology);
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -2333,10 +2333,10 @@ void FATR ga_zero_diagonal_(Integer * g_a)
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer topology[MAXDIM];
       Integer blocks[MAXDIM], block_dims[MAXDIM];
-      ga_get_proc_index_(g_a, &me, proc_index);
-      ga_get_proc_index_(g_a, &me, index);
+      pnga_get_proc_index(g_a, &me, proc_index);
+      pnga_get_proc_index(g_a, &me, index);
       pnga_get_block_info(g_a, blocks, block_dims);
-      ga_get_proc_grid_(g_a, topology);
+      pnga_get_proc_grid(g_a, topology);
 
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
@@ -2543,10 +2543,10 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer topology[MAXDIM];
       Integer blocks[MAXDIM], block_dims[MAXDIM];
-      ga_get_proc_index_(g_a, &me, proc_index);
-      ga_get_proc_index_(g_a, &me, index);
+      pnga_get_proc_index(g_a, &me, proc_index);
+      pnga_get_proc_index(g_a, &me, index);
       pnga_get_block_info(g_a, blocks, block_dims);
-      ga_get_proc_grid_(g_a, topology);
+      pnga_get_proc_grid(g_a, topology);
 
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
@@ -2739,10 +2739,10 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer topology[MAXDIM];
       Integer blocks[MAXDIM], block_dims[MAXDIM];
-      ga_get_proc_index_(g_a, &me, proc_index);
-      ga_get_proc_index_(g_a, &me, index);
+      pnga_get_proc_index(g_a, &me, proc_index);
+      pnga_get_proc_index(g_a, &me, index);
       pnga_get_block_info(g_a, blocks, block_dims);
-      ga_get_proc_grid_(g_a, topology);
+      pnga_get_proc_grid(g_a, topology);
 
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */

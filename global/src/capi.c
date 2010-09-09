@@ -571,7 +571,17 @@ void GA_Get_proc_index(int g_a, int iproc, int index[])
      aa = (Integer)g_a;
      proc = (Integer)iproc;
      ndim = ga_get_dimension_(&aa);
-     ga_get_proc_index_(&aa, &proc, _ga_work);
+     wnga_get_proc_index(&aa, &proc, _ga_work);
+     COPYF2C(_ga_work,index, ndim);
+}
+
+void NGA_Get_proc_index(int g_a, int iproc, int index[])
+{
+     Integer aa, proc, ndim;
+     aa = (Integer)g_a;
+     proc = (Integer)iproc;
+     ndim = ga_get_dimension_(&aa);
+     wnga_get_proc_index(&aa, &proc, _ga_work);
      COPYF2C(_ga_work,index, ndim);
 }
 
@@ -880,7 +890,15 @@ int GA_Has_ghosts(int g_a)
 {
     Integer a=(Integer)g_a;
     logical st;
-    st = ga_has_ghosts_(&a);
+    st = wnga_has_ghosts(&a);
+    return (int)st;
+}
+
+int NGA_Has_ghosts(int g_a)
+{
+    Integer a=(Integer)g_a;
+    logical st;
+    st = wnga_has_ghosts(&a);
     return (int)st;
 }
 
@@ -1912,7 +1930,15 @@ void GA_Get_proc_grid(int g_a, int dims[])
 {
      Integer a=(Integer)g_a;
      Integer ndim = ga_ndim_(&a);
-     ga_get_proc_grid_(&a, _ga_work);
+     wnga_get_proc_grid(&a, _ga_work);
+     COPY(int,_ga_work, dims ,ndim);  
+}
+
+void NGA_Get_proc_grid(int g_a, int dims[])
+{
+     Integer a=(Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+     wnga_get_proc_grid(&a, _ga_work);
      COPY(int,_ga_work, dims ,ndim);  
 }
 
@@ -3796,14 +3822,25 @@ void GA_Set_debug(int flag)
 {
     Integer aa;
     aa = (Integer)flag;
-    ga_set_debug_(&aa);
+    wnga_set_debug(&aa);
+}
+
+void NGA_Set_debug(int flag)
+{
+    Integer aa;
+    aa = (Integer)flag;
+    wnga_set_debug(&aa);
 }
 
 int GA_Get_debug()
 {
-    return (int)ga_get_debug_();
+    return (int)wnga_get_debug();
 }
 
+int NGA_Get_debug()
+{
+    return (int)wnga_get_debug();
+}
 
 #ifdef ENABLE_CHECKPOINT
 void GA_Checkpoint(int* gas, int num)

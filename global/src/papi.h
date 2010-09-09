@@ -42,8 +42,13 @@ extern logical pnga_duplicate(Integer *g_a, Integer *g_b, char *array_name);
 extern void pnga_fill(Integer *g_a, void* val);
 extern void pnga_get_block_info(Integer *g_a, Integer *num_blocks,
                                 Integer *block_dims);
+extern logical pnga_get_debug();
+extern void pnga_get_proc_grid(Integer *g_a, Integer *dims);
+extern void pnga_get_proc_index(Integer *g_a, Integer *iproc, Integer *index);
+extern logical pnga_has_ghosts(Integer *g_a);
 extern Integer pnga_nnodes();
 extern Integer pnga_nodeid();
+extern void pnga_set_debug(logical *flag);
 
 /**
  * Routines from onesided.c

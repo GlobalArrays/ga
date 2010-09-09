@@ -2338,9 +2338,14 @@ Integer ga_handle, lproc;
    }
 }
 
-/*\ Check to see if array has ghost cells.
-\*/
-logical FATR ga_has_ghosts_(Integer* g_a)
+/**
+ * Check to see if array has ghost cells.
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_has_ghosts =  pnga_has_ghosts
+#endif
+
+logical FATR pnga_has_ghosts(Integer* g_a)
 {
       int h_a = (int)*g_a + GA_OFFSET;
       return GA[h_a].ghosts;
@@ -3074,9 +3079,14 @@ Integer d, index, ndim, ga_handle = GA_OFFSET + *g_a;
    }
 }
 
-/*\ RETURN DIMENSIONS OF PROCESSOR GRID
-\*/
-void FATR ga_get_proc_grid_(Integer *g_a, Integer *dims)
+/**
+ * Return dimensions of processor grid associate with a Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_proc_grid =  pnga_get_proc_grid
+#endif
+
+void pnga_get_proc_grid(Integer *g_a, Integer *dims)
 {
   Integer i, ndim, ga_handle = GA_OFFSET + *g_a;
   ga_check_handleM(g_a, "ga_get_proc_grid");
@@ -4544,10 +4554,16 @@ logical FATR ga_uses_proc_grid_(Integer *g_a)
   return (logical)GA[ga_handle].block_sl_flag;
 }
 
-/*\ RETURN THE INDEX OF PROCESSOR BASED ON THE BLOCK PARTITION ASSOCIATED
- *  WITH A PARTICULAR GLOBAL ARRAY
-\*/
-void FATR ga_get_proc_index_(Integer *g_a, Integer *iproc, Integer *index)
+/**
+ *  Return the index of a processor based on the block partition associated
+ *  with a particular Global Array (assuming GA uses a ScalLAPACK data
+ *  distribution)
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_proc_index =  pnga_get_proc_index
+#endif
+
+void pnga_get_proc_index(Integer *g_a, Integer *iproc, Integer *index)
 {
   Integer ga_handle = GA_OFFSET + *g_a;
   Integer proc = *iproc;
@@ -4595,12 +4611,26 @@ void pnga_get_block_info(Integer *g_a, Integer *num_blocks, Integer *block_dims)
   return;
 }
 
-void FATR ga_set_debug_(logical *flag)
+/**
+ *  Set the value of internal debug flag
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_debug =  pnga_set_debug
+#endif
+
+void pnga_set_debug(logical *flag)
 {
   GA_Debug_flag = (Integer)(*flag);
 }
 
-logical FATR ga_get_debug_()
+/**
+ *  Get current value of internal debug flag
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_debug =  pnga_get_debug
+#endif
+
+logical pnga_get_debug()
 {
   return (logical)GA_Debug_flag;
 }

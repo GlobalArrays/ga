@@ -340,6 +340,46 @@ void FATR nga_get_block_info_(Integer *g_a, Integer *num_blocks,
   wnga_get_block_info(g_a, num_blocks, block_dims);
 }
 
+logical FATR ga_get_debug_()
+{
+  return wnga_get_debug();
+}
+
+logical FATR nga_get_debug_()
+{
+  return wnga_get_debug();
+}
+
+void FATR ga_get_proc_grid_(Integer *g_a, Integer *dims)
+{
+  wnga_get_proc_grid(g_a, dims);
+}
+
+void FATR ga_get_proc_index_(Integer *g_a, Integer *iproc, Integer *index)
+{
+  wnga_get_proc_index(g_a, iproc, index);
+}
+
+void FATR nga_get_proc_index_(Integer *g_a, Integer *iproc, Integer *index)
+{
+  wnga_get_proc_index(g_a, iproc, index);
+}
+
+void FATR nga_get_proc_grid_(Integer *g_a, Integer *dims)
+{
+  wnga_get_proc_grid(g_a, dims);
+}
+
+logical FATR ga_has_ghosts_(Integer *g_a)
+{
+  return wnga_has_ghosts(g_a);
+}
+
+logical FATR nga_has_ghosts_(Integer *g_a)
+{
+  return wnga_has_ghosts(g_a);
+}
+
 Integer FATR ga_nnodes_()
 {
   return wnga_nnodes();
@@ -358,6 +398,16 @@ Integer FATR ga_nodeid_()
 Integer FATR nga_nodeid_()
 {
   return wnga_nodeid();
+}
+
+void FATR ga_set_debug_(logical *flag)
+{
+  wnga_set_debug(flag);
+}
+
+void FATR nga_set_debug_(logical *flag)
+{
+  wnga_set_debug(flag);
 }
 
 /**
