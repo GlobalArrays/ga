@@ -15,12 +15,12 @@
 #   include <string.h>
 #endif
 
-#define BASE_NAME  "/dtemp/d3g293/da.try"
-#define BASE_NAME1 "/dtemp/d3g293/da1.try"
-#define BASE_NAME2 "/dtemp/d3g293/da2.try"
-#define FNAME  BASE_NAME
-#define FNAME1 BASE_NAME1
-#define FNAME2 BASE_NAME2
+#define FNAME      "/scratch/da.try"
+#define FNAME_ALT  "/tmp/da.try"
+#define FNAME1     "/scratch/da1.try"
+#define FNAME1_ALT "/tmp/da1.try"
+#define FNAME2     "/scratch/da2.try"
+#define FNAME2_ALT "/tmp/da2.try"
 
 #include "dra.h"
 #include "ga.h"
@@ -89,6 +89,20 @@
 #define IQ 127773
 #define IR 2836
 #define MASK 123459876
+
+
+void filename_check(char *result, const char *fname, const char *fname_alt)
+{
+    FILE *fd;
+    strcpy(result, fname);
+    if (! (fd = fopen(result, "w"))) {
+        strcpy(result, fname_alt);
+        if (! (fd = fopen(result, "w"))) {
+            GA_Error("Could not open file", 0);
+        }
+    }
+    fclose(fd);
+}
 
 
 float ran0(long *idum)
@@ -201,7 +215,7 @@ void test_io_dbl()
         reqdims[i] = n;
     }
     GA_Sync();
-    strcpy(filename1,FNAME1);
+    filename_check(filename1, FNAME1, FNAME1_ALT);
     if (NDRA_Create(MT_DBL, ndim, ddims, "B", filename1, DRA_RW,
                 reqdims, &d_b) != 0) {
         GA_Error("NDRA_Create failed(d_b): ",0);
@@ -258,7 +272,7 @@ void test_io_dbl()
         ddims[i] = n;
         reqdims[i] = n;
     }
-    strcpy(filename,FNAME);
+    filename_check(filename, FNAME, FNAME_ALT);
     if (NDRA_Create(MT_DBL, ndim, ddims, "A", filename, DRA_RW,
                 reqdims, &d_a) != 0)
     {
@@ -304,8 +318,8 @@ void test_io_dbl()
         ddims[i] = n;
         reqdims[i] = n;
     }
-    strcpy(filename,FNAME);
     GA_Sync();
+    filename_check(filename, FNAME, FNAME_ALT);
     if (NDRA_Create(MT_DBL, ndim, ddims, "A", filename, DRA_RW,
                 reqdims, &d_a) != 0) {
         GA_Error("NDRA_Create failed(d_a): ",0);
@@ -350,7 +364,7 @@ void test_io_dbl()
         ddims[i] = m;
         reqdims[i] = n;
     }
-    strcpy(filename1,FNAME1);
+    filename_check(filename1, FNAME1, FNAME1_ALT);
     if (NDRA_Create(MT_DBL, ndim, ddims, "B", filename1, DRA_RW,
                 reqdims, &d_b) != 0) {
         GA_Error("NDRA_Create failed(d_b): ",0);
@@ -534,7 +548,7 @@ void test_io_dbl()
         ddims[i] = m;
         reqdims[i] = n;
     }
-    strcpy(filename2,FNAME2);
+    filename_check(filename2, FNAME2, FNAME2_ALT);
     if (me == 0) printf("Creating DRA for transpose test\n");
     if (NDRA_Create(MT_DBL, ndim, ddims, "C", filename2, DRA_RW,
                 reqdims, &d_c) != 0) {

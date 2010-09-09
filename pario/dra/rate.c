@@ -15,8 +15,8 @@
 #   include <string.h>
 #endif
 
-#define BASE_NAME  "/scratch/da.try"
-#define FNAME BASE_NAME
+#define FNAME     "/scratch/da.try"
+#define FNAME_ALT "/tmp/da.try"
 
 #include "dra.h"
 #include "eaf.h"
@@ -134,6 +134,7 @@ void test_io_dbl()
     double plus, minus;
     int ld[MAXDIM], chunk[MAXDIM];
     char filename[80];
+    FILE *fd;
 
     n = SIZE;
     m = ((dra_size_t)NFACTOR)*((dra_size_t)SIZE);
@@ -191,8 +192,15 @@ void test_io_dbl()
         ddims[i] = m;
         reqdims[i] = (dra_size_t)n;
     }
-    strcpy(filename,FNAME);
     GA_Sync();
+    strcpy(filename,FNAME);
+    if (! (fd = fopen(filename, "w"))) {
+        strcpy(filename,FNAME_ALT);
+        if (! (fd = fopen(filename, "w"))) {
+            GA_Error("open failed",0);
+        }
+    }
+    fclose(fd);
     if (NDRA_Create(MT_DBL, ndim, ddims, "A", filename, DRA_RW,
                 reqdims, &d_a) != 0) {
         GA_Error("NDRA_Create failed(d_a): ",0);

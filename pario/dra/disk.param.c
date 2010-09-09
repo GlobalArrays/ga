@@ -165,8 +165,12 @@ void dai_write_param(char* filename, Integer d_a)
         strcpy(param_filename,filename);
         strcat(param_filename,HD_EXT);
 
-        if(! (fd = fopen(param_filename,"w")) )
-            dai_error("dai_write_param:open failed",0);
+        if(! (fd = fopen(param_filename,"w")) ) {
+            char message[MAX_HD_NAME_LEN*2];
+            strcpy(message,"dai_write_param:open failed :: ");
+            strcpy(message,param_filename);
+            dai_error(message,0);
+        }
 
         if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].ndim)) 
             dai_error("dai_write_param:ndim",0);

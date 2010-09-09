@@ -20,12 +20,8 @@
 #include "macdecls.h"
 #include "mp3.h"
 
-#define BASE_NAME  "/scratch/da.try"
-#define BASE_NAME1 "/scratch/da1.try"
-#define BASE_NAME2 "/scratch/da2.try"
-#define FNAME  BASE_NAME
-#define FNAME1 BASE_NAME1
-#define FNAME2 BASE_NAME2
+#define FNAME     "/scratch/da.try"
+#define FNAME_ALT "/tmp/da.try"
 
 #define NDIM 3
 #define SIZE 300
@@ -109,6 +105,7 @@ void test_io_dbl()
     double *index;
     int ld[MAXDIM], chunk[MAXDIM];
     char filename[80];
+    FILE *fd;
 
     n = SIZE;
 
@@ -165,6 +162,18 @@ void test_io_dbl()
         dims[i] = n*nfac;
     }
     strcpy(filename,FNAME);
+    /* attempt to open filename, verify whether we have permission */
+    if (! (fd = fopen(filename,"w"))) {
+        strcpy(filename,FNAME_ALT);
+        if (! (fd = fopen(filename,"w"))) {
+            char msg[60];
+            strcpy(msg, "Could not open file :: ");
+            strcpy(msg, filename);
+            GA_Error(msg, 0);
+        }
+    }
+    fclose(fd);
+
     GA_Sync();
     array_int_to_dra_size_t(dims, ddims, ndim);
     array_int_to_dra_size_t(reqdims, dreqdims, ndim);
