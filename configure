@@ -1651,7 +1651,7 @@ Optional Packages:
   --with-mpi-spawn[=ARG]  select armci network as MPI-2 dynamic process mgmt
   --with-openib[=ARG]     select armci network as Infiniband OpenIB
   --with-portals[=ARG]    select armci network as Cray XT portals
-  --with-sockets[=ARG]    select armci network as Ethernet TCP/IP)
+  --with-sockets[=ARG]    select armci network as Ethernet TCP/IP
   --with-blas[=ARG]       use external BLAS library; attempt to detect
                           sizeof(INTEGER)
   --with-blas4[=ARG]      use external BLAS library compiled with

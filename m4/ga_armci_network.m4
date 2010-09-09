@@ -169,7 +169,7 @@ _GA_ARMCI_NETWORK_WITH([lapi],      [IBM LAPI])
 _GA_ARMCI_NETWORK_WITH([mpi-spawn], [MPI-2 dynamic process mgmt])
 _GA_ARMCI_NETWORK_WITH([openib],    [Infiniband OpenIB])
 _GA_ARMCI_NETWORK_WITH([portals],   [Cray XT portals])
-_GA_ARMCI_NETWORK_WITH([sockets],   [Ethernet TCP/IP)])
+_GA_ARMCI_NETWORK_WITH([sockets],   [Ethernet TCP/IP])
 AS_IF([test "x$enable_autodetect" = xyes],
     [AC_MSG_NOTICE([searching for ARMCI_NETWORK...])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_bgml" != xno],
