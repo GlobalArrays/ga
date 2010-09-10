@@ -1665,6 +1665,17 @@ def locate(int g_a, subscript):
     subscript_nd = np.asarray(subscript, dtype=np.int64)
     return NGA_Locate64(g_a, <int64_t*>subscript_nd.data)
 
+cpdef int locate_nnodes(int g_a, lo, hi):
+    """Return the number of process which own the specified patch.
+
+    This operation is local.
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] lo_nd,hi_nd
+    cdef int result
+    lo_nd,hi_nd = _lohi(g_a,lo,hi)
+    return NGA_Locate_nnodes64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data)
+
 def locate_region(int g_a, lo, hi):
     """Return the list of the GA processes id that 'own' the data.
     
@@ -1679,9 +1690,22 @@ def locate_region(int g_a, lo, hi):
     This operation is local. 
 
     """
-    # TODO to be safe, we must allocate ndim*2*nproc int64 array
-    # then slice it and reshape to something useful?
-    raise NotImplementedError, "TODO"
+    cdef np.ndarray[np.int64_t, ndim=1] lo_nd
+    cdef np.ndarray[np.int64_t, ndim=1] hi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] map
+    cdef np.ndarray[np.int32_t, ndim=1] procs
+    cdef int np_result
+    cdef int np_guess
+    cdef int ndim = GA_Ndim(g_a)
+    lo_nd,hi_nd = _lohi(g_a,lo,hi)
+    np_guess = locate_nnodes(g_a, lo_nd, hi_nd)
+    map = np.ndarray(np_guess*ndim*2, dtype=np.int64)
+    procs = np.ndarray(np_guess, dtype=np.int32)
+    np_result = NGA_Locate_region64(g_a,
+            <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+            <int64_t*>map.data, <int*>procs.data)
+    # TODO then slice it and reshape to something useful?
+    return map.reshape(np_result,2,ndim),procs
 
 def _lohi(int g_a, lo, hi):
     """Utility function which converts and/or prepares a lo/hi combination.

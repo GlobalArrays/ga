@@ -55,6 +55,7 @@ void do_work()
 int g_a, g_b;
 int me=GA_Nodeid(), nproc=GA_Nnodes(), proc, loop;
 int dims[NDIM], lo[NDIM], hi[NDIM], block[NDIM], ld[NDIM-1];
+int64_t lo64[NDIM], hi64[NDIM];
 int i,d,*proclist, offset;
 int adims[NDIM], ndim,type;
 typedef struct {
@@ -101,6 +102,12 @@ double *buf;
      /* first find out how array g_a is distributed */
      for(i=0;i<ndim;i++)lo[i]=BASE;
      for(i=0;i<ndim;i++)hi[i]=adims[i] -1 + BASE;
+     for(i=0;i<ndim;i++)lo64[i]=BASE;
+     for(i=0;i<ndim;i++)hi64[i]=adims[i] -1 + BASE;
+     proc = NGA_Locate_nnodes(g_a, lo, hi);
+     if(proc<1) GA_Error("error in NGA_Locate_nnodes",proc);
+     proc = NGA_Locate_nnodes64(g_a, lo64, hi64);
+     if(proc<1) GA_Error("error in NGA_Locate_nnodes",proc);
      proc = NGA_Locate_region(g_a, lo, hi, (int*)regions, proclist);
      if(proc<1) GA_Error("error in NGA_Locate_region",proc);
 

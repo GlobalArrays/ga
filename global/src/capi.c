@@ -1798,6 +1798,33 @@ int NGA_Locate64(int g_a, int64_t subscript[])
     else return -1;
 }
 
+
+int NGA_Locate_nnodes(int g_a, int lo[], int hi[])
+{
+     logical st;
+     Integer a=(Integer)g_a, np;
+     Integer ndim = ga_ndim_(&a);
+
+     COPYINDEX_C2F(lo,_ga_lo,ndim);
+     COPYINDEX_C2F(hi,_ga_hi,ndim);
+     st = nga_locate_nnodes_(&a, _ga_lo, _ga_hi, &np);
+     return (int)np;
+}
+
+
+int NGA_Locate_nnodes64(int g_a, int64_t lo[], int64_t hi[])
+{
+     logical st;
+     Integer a=(Integer)g_a, np;
+     Integer ndim = ga_ndim_(&a);
+
+     COPYINDEX_C2F(lo,_ga_lo,ndim);
+     COPYINDEX_C2F(hi,_ga_hi,ndim);
+     st = nga_locate_nnodes_(&a, _ga_lo, _ga_hi, &np);
+     return (int)np;
+}
+
+
 int NGA_Locate_region(int g_a,int lo[],int hi[],int map[],int procs[])
 {
      logical st;
@@ -1805,11 +1832,13 @@ int NGA_Locate_region(int g_a,int lo[],int hi[],int map[],int procs[])
      Integer ndim = ga_ndim_(&a);
      Integer *tmap;
      int i;
-     tmap = (Integer *)malloc( (int)(GA_Nnodes()*2*ndim *sizeof(Integer)));
-     if(!map)GA_Error("NGA_Locate_region: unable to allocate memory",g_a);
+     
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
-     _ga_map_capi = (Integer*)malloc(GA_Nnodes()*sizeof(Integer));
+     st = nga_locate_nnodes_(&a, _ga_lo, _ga_hi, &np);
+     tmap = (Integer *)malloc( (int)(np*2*ndim *sizeof(Integer)));
+     if(!map)GA_Error("NGA_Locate_region: unable to allocate memory",g_a);
+     _ga_map_capi = (Integer*)malloc(np*sizeof(Integer));
 
      st = nga_locate_region_(&a,_ga_lo, _ga_hi, tmap, _ga_map_capi, &np);
      if(st==FALSE){
@@ -1839,11 +1868,13 @@ int NGA_Locate_region64(int g_a,int64_t lo[],int64_t hi[],int64_t map[],int proc
      Integer ndim = ga_ndim_(&a);
      Integer *tmap;
      int i;
-     tmap = (Integer *)malloc( (int)(GA_Nnodes()*2*ndim *sizeof(Integer)));
-     if(!map)GA_Error("NGA_Locate_region: unable to allocate memory",g_a);
+
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
-     _ga_map_capi = (Integer*)malloc(GA_Nnodes()*sizeof(Integer));
+     st = nga_locate_nnodes_(&a, _ga_lo, _ga_hi, &np);
+     tmap = (Integer *)malloc( (int)(np*2*ndim *sizeof(Integer)));
+     if(!map)GA_Error("NGA_Locate_region: unable to allocate memory",g_a);
+     _ga_map_capi = (Integer*)malloc(np*sizeof(Integer));
 
      st = nga_locate_region_(&a,_ga_lo, _ga_hi, tmap, _ga_map_capi, &np);
      if(st==FALSE){

@@ -280,6 +280,7 @@
 #define nga_inquire_internal_              F77_FUNC_(nga_inquire_internal, NGA_INQUIRE_INTERNAL)
 #define nga_locate_                        F77_FUNC_(nga_locate, NGA_LOCATE)
 #define nga_locate_num_blocks_             F77_FUNC_(nga_locate_num_blocks, NGA_LOCATE_NUM_BLOCKS)
+#define nga_locate_nnodes                  F77_FUNC_(nga_locate_nnodes, NGA_LOCATE_NNODES)
 #define nga_locate_region_                 F77_FUNC_(nga_locate_region, NGA_LOCATE_REGION)
 #define nga_matmul_patch_                  F77_FUNC_(nga_matmul_patch, NGA_MATMUL_PATCH)
 #define nga_merge_distr_patch_             F77_FUNC_(nga_merge_distr_patch, NGA_MERGE_DISTR_PATCH)

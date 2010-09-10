@@ -218,6 +218,7 @@ extern long          NGA_Ldot_patch(int g_a, char t_a, int alo[], int ahi[], int
 extern long long     NGA_Lldot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
 extern int           NGA_Locate(int g_a, int subscript[]);
 extern int           NGA_Locate_num_blocks(int g_a, int lo[], int hi[]);
+extern int           NGA_Locate_nnodes(int g_a, int lo[], int hi[]);
 extern int           NGA_Locate_region(int g_a,int lo[],int hi[],int map[],int procs[]);
 extern void          NGA_Matmul_patch(char transa, char transb, void* alpha, void *beta, int g_a, int alo[], int ahi[], int g_b, int blo[], int bhi[], int g_c, int clo[], int chi[]) ;
 extern void          NGA_Merge_distr_patch(int g_a, int alo[], int ahi[], int g_b, int blo[], int bhi[]);
@@ -321,6 +322,7 @@ extern void          NGA_Inquire64(int g_a, int *type, int *ndim, int64_t dims[]
 extern long          NGA_Ldot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[], int g_b, char t_b, int64_t blo[], int64_t bhi[]);
 extern long long     NGA_Lldot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[], int g_b, char t_b, int64_t blo[], int64_t bhi[]);
 extern int           NGA_Locate64(int g_a, int64_t subscript[]);
+extern int           NGA_Locate_nnodes64(int g_a, int64_t lo[], int64_t hi[]);
 extern int           NGA_Locate_region64(int g_a,int64_t lo[],int64_t hi[],int64_t map[],int procs[]);
 extern void          NGA_Matmul_patch64(char transa, char transb, void* alpha, void *beta, int g_a, int64_t alo[], int64_t ahi[], int g_b, int64_t blo[], int64_t bhi[], int g_c, int64_t clo[], int64_t chi[]) ;
 extern void          NGA_Merge_distr_patch64(int g_a, int64_t alo[], int64_t ahi[], int g_b, int64_t blo[], int64_t bhi[]);

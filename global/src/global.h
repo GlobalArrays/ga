@@ -348,6 +348,7 @@ EXT void FATR nga_inquire_(INT *g_a, INT *type, INT *ndim, INT *dims);
 EXT void FATR nga_inquire_internal_(INT *g_a, INT *type, INT *ndim, INT *dims);
 EXT LOG  FATR nga_locate_(INT *g_a, INT* subscr, INT* owner);
 EXT INT  FATR nga_locate_num_blocks_(INT *g_a, INT *lo, INT *hi);
+EXT LOG  FATR nga_locate_nnodes_(INT *g_a, INT *lo, INT *hi, INT *np);
 EXT LOG  FATR nga_locate_region_(INT *g_a, INT *lo, INT *hi, INT *map, INT *proclist, INT *np);
 EXT void FATR nga_merge_distr_patch_(INT *g_a, INT *alo, INT *ahi, INT *g_b, INT *blo, INT *bhi);
 EXT void FATR nga_merge_distr_patch_(INT *g_a, INT *alo, INT *ahi, INT *g_b, INT *blo, INT *bhi);
