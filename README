@@ -53,6 +53,11 @@ the same directory and see the GA support webpage:
 
     http://www.emsl.pnl.gov/docs/global/support.html
 
+Please don't hesitate to send us an email.  An archive of emails is available
+at:
+
+    http://groups.google.com/group/hpctools
+
 WHERE IS THE DOCUMENTATION?
 ===========================
 
@@ -68,7 +73,7 @@ This directory contains the Global Arrays (GA), Aggregate Remote Memory Copy
 Interface (ARMCI) run-time library, and Memory Allocator (MA), parallel I/O
 libraries (DRA,EAF,SF), TCGMSG, and TCGMSG-MPI packages bundled together. 
 
-Global Arrays is a portable Non-Uniform Memory Access (NUMA) shared- memory
+Global Arrays is a portable Non-Uniform Memory Access (NUMA) shared-memory
 programming environment for distributed and shared memory computers. It
 augments the message-passing model by providing a shared-memory like access to
 distributed dense arrays.
@@ -98,58 +103,43 @@ See file 'NEWS' for a list of major changes in the current release.
 See file 'AUTHORS' for the names of anyone who has contributed to GA.
 See file 'NOTES' for a few platform-specific symptoms and fixes.
 
-DIRECTORY STRUCTURE
-===================
-
-- build-aux      (make configuration files)
-
-- m4             (autoconf macros)
-
-- compat         (compatibility source files for missing system features)
-
-- LinAlg         (linear algebra software used by GA)
-
-  + lapack+blas
-
-- gaf2c          (Fortran-to-C compatibility library and tests)
-
-- global
-
-  + src          (source code for GA library)
-  + trace        (library and programs to generate and process tracefiles)
-  + X            (xregion visualization program for GA)
-  + doc          (paper & documentation in PostScript, HTML & plain text)
-  + testing      (GA test programs and performance results)
+DIRECTORY STRUCTURE (ALPHABETICALLY)
+====================================
 
 - armci
-
-  + src          (source code for ARMCI library)
-  + doc          (documentation for ARMCI library)
-  + config       (configuration makefile includes)
-  + lib          (compatibility source files for missing system features)
-
+    + config        (configuration makefile includes)
+    + doc           (documentation for ARMCI library)
+    + lib           (compatibility source files for missing system features)
+    + src           (source code for ARMCI library)
+- build-aux         (autotools support scripts)
+- cca               (common component architecture)
+- compat            (compatibility source files for missing system features)
+- doc               (documentation)
+- ga++              (C++ Bindings for Global Arrays)
+    + doc           (contains sample Doxyfile for Doxygen doc generator)
+    + src           (source code for GA C++ bindings)
+    + testing       (test programs)
+- gaf2c             (Fortran-to-C compatibility library and tests)
+- global
+    + doc           (paper & documentation in PostScript, HTML & plain text)
+    + src           (source code for GA library)
+    + testing       (GA test programs and performance results)
+    + trace         (library and programs to generate and process tracefiles)
+    + X             (xregion visualization program for GA)
+- LinAlg            (linear algebra software used by GA)
+    + lapack+blas
+- m4                (autoconf macros)
+- ma                (Memory Allocator) 
+    + man
 - pario
-
-  + elio         ("device" layer for other parallel I/O models)
-  + dra          (Disk Resident Array Library code)
-  + eaf          (Exclusive Access Files Library code)
-  + sf           (Shared Files Library code)
-
-- tcgmsg         (simple, legacy message-passing library)
-
-  + ipcv4.0    
-  + ipcv5.0    
-  + tcgmsg-mpi   (TCGMSG on top of MPI)
-
-- ma             (Memory Allocator) 
-
-  + man
-
-- ga++           (C++ Bindings for Global Arrays)
-
-  + src          (source code for GA C++ bindings)
-  + testing      (test programs)
-
+    + dra           (Disk Resident Array Library code)
+    + eaf           (Exclusive Access Files Library code)
+    + elio          ("device" layer for other parallel I/O models)
+    + sf            (Shared Files Library code)
+- tcgmsg            (simple, legacy message-passing library)
+    + ipcv4.0    
+    + ipcv5.0    
+    + tcgmsg-mpi    (TCGMSG on top of MPI)
 
 HOW TO BUILD THE PACKAGE?
 =========================
@@ -246,13 +236,18 @@ package.
                         omit ARG, we attempt to locate the MPI compiler
                         wrappers. If you supply anything for ARG, we will
                         parse ARG as indicated above.
---with-tcgmsg=ARG       Select TCGMSG as the messaging library; if
+--with-tcgmsg           Select TCGMSG as the messaging library; if
                         --with-mpi is also specified then TCGMSG over MPI is
                         used.
 --with-vampir=ARG       Enable VAMPIR performance tracing.
                         http://www.vampir.eu
---with-blas=ARG         Use external BLAS library. If not found, an internal
-                        one is built.
+--with-blas=ARG         Use external BLAS library; attempt to detect
+                        sizeof(INTEGER) used to compile BLAS; if not found, an
+                        internal BLAS is built
+--with-blas4=ARG        Use external BLAS library compiled with
+                        sizeof(INTEGER)==4
+--with-blas8=ARG        Use external BLAS library compiled with
+                        sizeof(INTEGER)==8
 --with-lapack=ARG       Use external LAPACK library. If not found, an internal
                         one is built.
 --with-scalapack=ARG    Use external ScaLAPACK library.
@@ -296,6 +291,28 @@ There are some influential environment variables as documented in configure
   attempt to detect this behavior automatically, but in the case of
   cross-compiled systems it may be necessary to specify the less usual after
   string convention the gaf2c/testarg program crashes.
+
+Special Notes for BLAS
+----------------------
+
+BLAS, being a Fortran library, can be compiled with a default INTEGER size of
+4 or a promoted INTEGER size of 8.  Experience has shown us that most of the
+time the default size of INTEGER used is 4.  In some cases, however, you may
+have an external BLAS library which is using 8-byte INTEGERs.  In order to
+correctly interface with an external BLAS library, GA must know the size of
+INTEGER used by the BLAS library.
+
+configure has the following BLAS-related options: --with-blas, --with-blas4,
+and --with-blas8.  The latter two will force the INTEGER size to 4- or
+8-bytes, respectively.  The first option, --with-blas, defaults to 4-byte
+INTEGERS *however* in the two special cases of using ACML or MKL, it is
+possible to detect 8-byte INTEGERs automatically.  As documented in the ACML
+manual, if the path to the library has "_int64" then 8-byte INTEGERs are used.
+As documented in the MKL manual, if the library is "ilp64", then 8-byte
+INTEGERs are used.
+
+You may always override --with-blas by specifying the INTEGER size using one
+of the two more specific options.
 
 Cross-Compilation Issues
 ------------------------
