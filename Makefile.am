@@ -1022,7 +1022,12 @@ SUBDIRS = armci .
 armci/libarmcii.la:
 	($(am__cd) armci && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
 
-AM_CPPFLAGS += -I$(top_srcdir)/armci/$(ARMCI_SRC_DIR)
+if ARMCI_NETWORK_PORTALS
+AM_CPPFLAGS += -I$(top_srcdir)/armci/src-portals
+else
+AM_CPPFLAGS += -I$(top_srcdir)/armci/src/include
+endif
+
 
 # This is the "noinst" libarmci so that libtool combines it with libga.
 libga_la_LIBADD = armci/libarmcii.la
