@@ -317,7 +317,10 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest ga++/testing/ntestc \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc ga++/testing/testmult
 @ARMCI_NETWORK_PORTALS_TRUE@am__append_53 = -I$(top_srcdir)/armci/src-portals
-@ARMCI_NETWORK_PORTALS_FALSE@am__append_54 = -I$(top_srcdir)/armci/src/include
+# remove the former CPPFLAG once the ARMCI refactoring is finished
+@ARMCI_NETWORK_PORTALS_FALSE@am__append_54 =  \
+@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src \
+@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src/include
 @MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_55 = global/examples/scf/scf$(EXEEXT)
 @NOFORT_FALSE@am__append_56 =  \
 @NOFORT_FALSE@	global/examples/boltzmann/boltz$(EXEEXT) \

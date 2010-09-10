@@ -1025,6 +1025,8 @@ armci/libarmcii.la:
 if ARMCI_NETWORK_PORTALS
 AM_CPPFLAGS += -I$(top_srcdir)/armci/src-portals
 else
+# remove the former CPPFLAG once the ARMCI refactoring is finished
+AM_CPPFLAGS += -I$(top_srcdir)/armci/src # this is the one to remove later
 AM_CPPFLAGS += -I$(top_srcdir)/armci/src/include
 endif
 
