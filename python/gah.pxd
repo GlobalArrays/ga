@@ -13,9 +13,7 @@ cdef extern from "typesf2c.h":
         Real imag
 
 cdef extern from "ga.h":
-    ctypedef struct ga_nbhdl_t:
-        pass
-    ctypedef void* nbhandle
+    ctypedef Integer ga_nbhdl_t
 
     void          GA_Abs_value(int g_a) 
     void          GA_Abs_value_patch(int g_a, int *lo, int *hi)

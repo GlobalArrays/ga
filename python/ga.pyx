@@ -7,6 +7,7 @@ provides the GlobalArray object-oriented class.
 """
 # keep the ga functions alphabetical since this is going to be a huge file!
 
+import atexit
 from libc.stdlib cimport malloc,free
 from gah cimport *
 import numpy as np
@@ -35,6 +36,8 @@ F_SCPL     = (TYPE_BASE + 14)
 F_DCPL     = (TYPE_BASE + 15)
 C_LONGLONG = (TYPE_BASE + 16)
 
+WORLD_PROC_GROUP = -1
+
 _to_typenum = {
         C_CHAR: np.NPY_BYTE,
         C_INT: np.NPY_INT,
@@ -61,11 +64,88 @@ _to_dtype = {
         C_LDCPL: np.clongfloat
         }
 
+#############################################################################
+# utility functions
+#############################################################################
+
 cdef void* _gapy_malloc(size_t bytes, int align, char *name):
+    """Wrapper around C stdlib malloc()."""
     return malloc(bytes)
 
 cdef void _gapy_free(void *ptr):
+    """Wrapper around C stdlib free()."""
     free(ptr)
+
+def _lohi(int g_a, lo, hi):
+    """Utility function which converts and/or prepares a lo/hi combination.
+
+    Functions which take a patch specification can use this to convert the
+    given lo and/or hi into ndarrays using numpy.asarray.
+    If lo is not given, it is replaced with an array of zeros.
+    If hi is not given, it is replaced with the last index in each dimension.
+
+    Positional arguments:
+    g_a -- the array handle
+    lo  -- a 1D array-like object, or None
+    hi  -- a 1D array-like object, or None
+
+    Returns:
+    The converted lo and hi ndarrays.
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
+    if lo is None:
+        lo_nd = np.zeros((GA_Ndim(g_a)), dtype=np.int64)
+    else:
+        lo_nd = np.asarray(lo, dtype=np.int64)
+    if hi is None:
+        hi_nd = inquire_dims(g_a)-1
+    else:
+        hi_nd = np.asarray(hi, dtype=np.int64)
+    return lo_nd,hi_nd
+
+cdef void* _convert_multiplier(int gtype, value,
+        int *iv, long *lv, long long *llv,
+        float *fv, double *dv, long double *ldv,
+        SingleComplex *fcv, DoubleComplex *dcv):
+    cdef float complex pfcv=1.0
+    cdef double complex pdcv=1.0
+    if value is None:
+        raise ValueError, "cannot convert None"
+    if gtype == C_INT:
+        iv[0] = value
+        return iv
+    elif gtype == C_LONG:
+        lv[0] = value
+        return lv
+    elif gtype == C_LONGLONG:
+        llv[0] = value
+        return llv
+    elif gtype == C_FLT:
+        fv[0] = value
+        return fv
+    elif gtype == C_DBL:
+        dv[0] = value
+        return dv
+    elif gtype == C_LDBL:
+        ldv[0] = value
+        return ldv
+    elif gtype == C_SCPL:
+        pfcv = value
+        fcv[0].real = pfcv.real
+        fcv[0].imag = pfcv.imag
+        return fcv
+    elif gtype == C_DCPL:
+        pdcv = value
+        dcv[0].real = pdcv.real
+        dcv[0].imag = pdcv.imag
+        return dcv
+    else:
+        raise TypeError, "type of g_a not recognized"
+
+#############################################################################
+# GA API
+#############################################################################
 
 def abs_value(int g_a, lo=None, hi=None):
     """Take element-wise absolute value of the array or patch.
@@ -87,7 +167,7 @@ def abs_value(int g_a, lo=None, hi=None):
         lo_nd,hi_nd = _lohi(g_a,lo,hi)
         GA_Abs_value_patch64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data)
 
-def acc(int g_a, lo, hi, buffer, alpha=None):
+def acc(int g_a, lo, hi, buffer, alpha=None, nb=False, periodic=False):
     """Combines data from buffer with data in the global array patch.
     
     The buffer array is assumed to be have the same number of
@@ -105,19 +185,27 @@ def acc(int g_a, lo, hi, buffer, alpha=None):
     buffer -- an array-like object with same shape as indicated patch
 
     Keyword arguments:
-    alpha  -- multiplier
+    alpha    -- multiplier
+    nb       -- whether the call is non-blocking (see ga.nbacc)
+    periodic -- whether the call is periodic (see ga.periodic_acc)
+
+    Returns:
+    None, usually.  However if nb=True, the nonblocking handle is returned.
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape
     cdef np.ndarray buffer_nd
     cdef int gtype=inquire_type(g_a)
-    cdef int         ialpha=1
-    cdef long        lalpha=1
-    cdef long long   llalpha=1
-    cdef float       falpha=1.0
-    cdef double      dalpha=1.0
-    cdef long double ldalpha=1.0
-    cdef void       *valpha=NULL
+    cdef int            ialpha
+    cdef long           lalpha
+    cdef long long      llalpha
+    cdef float          falpha
+    cdef double         dalpha
+    cdef long double    ldalpha
+    cdef SingleComplex  fcalpha
+    cdef DoubleComplex  dcalpha
+    cdef void          *valpha=NULL
+    cdef ga_nbhdl_t     nbhandle
     dtype = _to_dtype[gtype]
     buffer_nd = np.asarray(buffer, dtype=dtype)
     lo_nd = np.asarray(lo, dtype=np.int64)
@@ -127,10 +215,24 @@ def acc(int g_a, lo, hi, buffer, alpha=None):
     if buffer_nd.dtype != dtype or not buffer_nd.flags['C_CONTIGUOUS']:
         buffer_nd = np.ascontiguousarray(buffer_nd, dtype=dtype)
     buffer_nd = np.reshape(buffer_nd, shape)
+    if alpha is None:
+        alpha = 1
     valpha = _convert_multiplier(gtype, alpha,
-            &ialpha, &lalpha, &llalpha, &falpha, &dalpha, &ldalpha)
-    NGA_Acc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
-            <void*>buffer_nd.data, <int64_t*>ld_nd.data, valpha)
+            &ialpha,  &lalpha,  &llalpha,
+            &falpha,  &dalpha,  &ldalpha,
+            &fcalpha, &dcalpha)
+    if nb and periodic:
+        raise ValueError, "acc can't be both non-blocking and periodic"
+    elif nb:
+        NGA_NbAcc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <void*>buffer_nd.data, <int64_t*>ld_nd.data, valpha, &nbhandle)
+        return nbhandle
+    elif periodic:
+        NGA_Periodic_acc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <void*>buffer_nd.data, <int64_t*>ld_nd.data, valpha)
+    else:
+        NGA_Acc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <void*>buffer_nd.data, <int64_t*>ld_nd.data, valpha)
 
 def access(int g_a, lo=None, hi=None):
     """Returns local array patch.
@@ -354,18 +456,27 @@ def add(int g_a, int g_b, int g_c, alpha=None, beta=None, alo=None, ahi=None,
     cdef np.ndarray[np.int64_t, ndim=1] blo_nd, bhi_nd
     cdef np.ndarray[np.int64_t, ndim=1] clo_nd, chi_nd
     cdef int gtype=inquire_type(g_a)
-    cdef int         ialpha=1,     ibeta=1
-    cdef long        lalpha=1,     lbeta=1
-    cdef long long   llalpha=1,    llbeta=1
-    cdef float       falpha=1.0,   fbeta=1.0
-    cdef double      dalpha=1.0,   dbeta=1.0
-    cdef long double ldalpha=1.0,  ldbeta=1.0
-    cdef void       *valpha=NULL, *vbeta=NULL
-    dtype = _to_dtype[gtype]
+    cdef int            ialpha,  ibeta
+    cdef long           lalpha,  lbeta
+    cdef long long      llalpha, llbeta
+    cdef float          falpha,  fbeta
+    cdef double         dalpha,  dbeta
+    cdef long double    ldalpha, ldbeta
+    cdef SingleComplex  fcalpha, fcbeta
+    cdef DoubleComplex  dcalpha, dcbeta
+    cdef void          *valpha, *vbeta
+    if alpha is None:
+        alpha = 1
     valpha = _convert_multiplier(gtype, alpha,
-            &ialpha, &lalpha, &llalpha, &falpha, &dalpha, &ldalpha)
+            &ialpha,  &lalpha,  &llalpha,
+            &falpha,  &dalpha,  &ldalpha,
+            &fcalpha, &dcalpha)
+    if beta is None:
+        beta = 1
     vbeta = _convert_multiplier(gtype, beta,
-            &ibeta, &lbeta, &llbeta, &fbeta, &dbeta, &ldbeta)
+            &ibeta,  &lbeta,  &llbeta,
+            &fbeta,  &dbeta,  &ldbeta,
+            &fcbeta, &dcbeta)
     if (alo is None and ahi is None
             and blo is None and bhi is None
             and clo is None and chi is None):
@@ -395,15 +506,19 @@ def add_constant(int g_a, alpha, lo=None, hi=None):
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
     cdef int gtype=inquire_type(g_a)
-    cdef int         ialpha=1,     ibeta=1
-    cdef long        lalpha=1,     lbeta=1
-    cdef long long   llalpha=1,    llbeta=1
-    cdef float       falpha=1.0,   fbeta=1.0
-    cdef double      dalpha=1.0,   dbeta=1.0
-    cdef long double ldalpha=1.0,  ldbeta=1.0
-    cdef void       *valpha=NULL, *vbeta=NULL
+    cdef int            ialpha
+    cdef long           lalpha
+    cdef long long      llalpha
+    cdef float          falpha
+    cdef double         dalpha
+    cdef long double    ldalpha
+    cdef SingleComplex  fcalpha
+    cdef DoubleComplex  dcalpha
+    cdef void          *valpha
     valpha = _convert_multiplier(gtype, alpha,
-            &ialpha, &lalpha, &llalpha, &falpha, &dalpha, &ldalpha)
+            &ialpha,  &lalpha,  &llalpha,
+            &falpha,  &dalpha,  &ldalpha,
+            &fcalpha, &dcalpha)
     if lo is None and hi is None:
         GA_Add_constant(g_a, valpha)
     else:
@@ -532,36 +647,6 @@ def compare_distr(int g_a, int g_b):
     if GA_Compare_distr(g_a, g_b) == 0:
         return True
     return False
-
-cdef void* _convert_multiplier(int gtype, value,
-        int *iv, long *lv, long long *llv,
-        float *fv, double *dv, long double *ldv):
-    if gtype == C_INT:
-        if value is not None:
-            iv[0] = value
-        return iv
-    elif gtype == C_LONG:
-        if value is not None:
-            lv[0] = value
-        return lv
-    elif gtype == C_LONGLONG:
-        if value is not None:
-            llv[0] = value
-        return llv
-    elif gtype == C_FLT:
-        if value is not None:
-            fv[0] = value
-        return fv
-    elif gtype == C_DBL:
-        if value is not None:
-            dv[0] = value
-        return dv
-    elif gtype == C_LDBL:
-        if value is not None:
-            ldv[0] = value
-        return ldv
-    else:
-        raise TypeError, "type of g_a not recognized"
 
 def copy(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None,
         bint trans=False):
@@ -1243,18 +1328,22 @@ def fill(int g_a, value, lo=None, hi=None):
     
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
-    cdef int         ivalue
-    cdef long        lvalue
-    cdef long long   llvalue
-    cdef float       fvalue
-    cdef double      dvalue
-    cdef long double ldvalue
-    cdef void       *vvalue
+    cdef int            ivalue
+    cdef long           lvalue
+    cdef long long      llvalue
+    cdef float          fvalue
+    cdef double         dvalue
+    cdef long double    ldvalue
+    cdef SingleComplex  fcvalue
+    cdef DoubleComplex  dcvalue
+    cdef void          *vvalue
     cdef int gtype=inquire_type(g_a)
-    vvalue = _convert_multiplier(gtype, value, &ivalue, &lvalue, &llvalue,
-            &fvalue, &dvalue, &ldvalue)
+    vvalue = _convert_multiplier(gtype, value,
+            &ivalue,  &lvalue,  &llvalue,
+            &fvalue,  &dvalue,  &ldvalue,
+            &fcvalue, &dcvalue)
     if lo is None and hi is None:
-        GA_Fill(g_a, &dvalue)
+        GA_Fill(g_a, vvalue)
     else:
         lo_nd,hi_nd = _lohi(g_a,lo,hi)
         NGA_Fill_patch64(
@@ -1317,7 +1406,7 @@ def gather(int g_a, subsarray, np.ndarray values=None):
         raise ValueError, "how did this happen?"
     return values
 
-def gemm(char ta, char tb, int64_t m, int64_t n, int64_t k,
+def gemm(bint ta, bint tb, int64_t m, int64_t n, int64_t k,
         alpha, int g_a, int g_b, beta, int g_c):
     """Performs one of the matrix-matrix operations.
     
@@ -1334,31 +1423,42 @@ def gemm(char ta, char tb, int64_t m, int64_t n, int64_t k,
 
     On entry, ta specifies the form of op( A ) to be used in the
     matrix multiplication as follows:
-        ta = 'N' or 'n', op( A ) = A.
-        ta = 'T' or 't', op( A ) = A'.
+        ta = False, op( A ) = A.
+        ta = True, op( A ) = A'.
 
     This is a collective operation. 
     
     Positional arguments:
-    ta    --
-    tb    --
-    m     --
-    n     --
-    k     --
-    alpha --
-    g_a   --
-    g_b   --
-    beta  --
-    g_c   --
+    ta    -- transpose operator
+    tb    -- transpose operator
+    m     -- number of rows of op(A) and of matrix C
+    n     -- number of columns of op(B) and of matrix C
+    k     -- number of columns of op(A) and rows of matrix op(B)
+    alpha -- scale factor
+    g_a   -- handle to input array
+    g_b   -- handle to input array
+    beta  -- scale factor
+    g_c   -- handle to output array
 
     """
     cdef int gtype=inquire_type(g_a)
-    #cdef int         ialpha=1, ibeta=1
-    #cdef long        lalpha=1, lbeta=1
-    #cdef long long   llalpha=1, llbeta=1
-    cdef float       falpha=1.0, fbeta=1.0
-    cdef double      dalpha=1.0, dbeta=1.0
-    cdef long double ldalpha=1.0, ldbeta=1.0
+    #cdef int                 ialpha=1, ibeta=1
+    #cdef long                lalpha=1, lbeta=1
+    #cdef long long           llalpha=1, llbeta=1
+    cdef float               falpha=1.0, fbeta=1.0
+    cdef double              dalpha=1.0, dbeta=1.0
+    #cdef long double         ldalpha=1.0, ldbeta=1.0
+    cdef float complex       fcalpha=1.0, fcbeta=1.0
+    cdef double complex      dcalpha=1.0, dcbeta=1.0
+    #cdef long double complex ldalpha=1.0, ldbeta=1.0
+    cdef SingleComplex       ga_fcalpha, ga_fcbeta
+    cdef DoubleComplex       ga_dcalpha, ga_dcbeta
+    cdef char ta_char = 'N'
+    cdef char tb_char = 'N'
+    if ta:
+        ta_char = 'T'
+    if tb:
+        tb_char = 'T'
     if gtype == C_INT:
         raise TypeError, "C_INT not supported"
     elif gtype == C_LONG:
@@ -1368,25 +1468,36 @@ def gemm(char ta, char tb, int64_t m, int64_t n, int64_t k,
     elif gtype == C_FLT:
         falpha = alpha
         fbeta = beta
-        GA_Sgemm64(ta, tb, m, n, k, falpha, g_a, g_b, fbeta, g_c)
+        GA_Sgemm64(ta_char, tb_char, m, n, k, falpha, g_a, g_b, fbeta, g_c)
     elif gtype == C_DBL:
         dalpha = alpha
         dbeta = beta
-        GA_Sgemm64(ta, tb, m, n, k, dalpha, g_a, g_b, dbeta, g_c)
+        GA_Dgemm64(ta_char, tb_char, m, n, k, dalpha, g_a, g_b, dbeta, g_c)
     elif gtype == C_LDBL:
-        ldalpha = alpha
-        ldbeta = beta
-        GA_Sgemm64(ta, tb, m, n, k, ldalpha, g_a, g_b, ldbeta, g_c)
+        raise TypeError, "C_LDBL not supported"
     elif gtype == C_SCPL:
-        raise TypeError, "C_SCPL not supported (yet)"
+        fcalpha = alpha
+        fcbeta = beta
+        ga_fcalpha.real = fcalpha.real
+        ga_fcalpha.imag = fcalpha.imag
+        ga_fcbeta.real = fcbeta.real
+        ga_fcbeta.imag = fcbeta.imag
+        GA_Cgemm64(ta_char, tb_char, m, n, k, ga_fcalpha, g_a, g_b, ga_fcbeta, g_c)
     elif gtype == C_DCPL:
-        raise TypeError, "C_DCPL not supported (yet)"
+        dcalpha = alpha
+        dcbeta = beta
+        ga_dcalpha.real = dcalpha.real
+        ga_dcalpha.imag = dcalpha.imag
+        ga_dcbeta.real = dcbeta.real
+        ga_dcbeta.imag = dcbeta.imag
+        GA_Zgemm64(ta_char, tb_char, m, n, k, ga_dcalpha, g_a, g_b, ga_dcbeta, g_c)
     elif gtype == C_LDCPL:
         raise TypeError, "C_LDCPL not supported (yet)"
     else:
         raise TypeError
 
-def get(int g_a, lo=None, hi=None, np.ndarray buffer=None):
+def get(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
+        periodic=False):
     """Copies data from global array section to the local array buffer.
     
     The local array is assumed to be have the same number of dimensions as the
@@ -1402,13 +1513,17 @@ def get(int g_a, lo=None, hi=None, np.ndarray buffer=None):
 
     Keyword arguments:
     buffer -- 
+    nb       -- whether this call is non-blocking (see ga.nbget)
+    periodic -- whether this call is periodic (see ga.periodic_get)
 
     Returns:
     The local array buffer.
+    Also returns the nonblocking handle if nb=True.
     
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape
     cdef int gtype=inquire_type(g_a)
+    cdef ga_nbhdl_t nbhandle
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
     shape = hi_nd-lo_nd+1
     ld_nd = shape[1:]
@@ -1419,9 +1534,20 @@ def get(int g_a, lo=None, hi=None, np.ndarray buffer=None):
         if buffer.dtype != _to_dtype[gtype]:
             raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
                     buffer.dtype, _to_dtype[gtype])
-    NGA_Get64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
-            <void*>buffer.data, <int64_t*>ld_nd.data)
-    return buffer
+    if nb and periodic:
+        raise ValueError, "get can't be both non-blocking and periodic"
+    elif nb:
+        NGA_NbGet64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <void*>buffer.data, <int64_t*>ld_nd.data, &nbhandle)
+        return buffer,nbhandle
+    elif periodic:
+        NGA_Periodic_get64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <void*>buffer.data, <int64_t*>ld_nd.data)
+        return buffer
+    else:
+        NGA_Get64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <void*>buffer.data, <int64_t*>ld_nd.data)
+        return buffer
 
 def get_block_info(int g_a):
     """Returns information about the block-cyclic distribution.
@@ -1556,6 +1682,7 @@ def initialize():
     """
     GA_Initialize()
     GA_Register_stack_memory(_gapy_malloc, _gapy_free)
+    atexit.register(terminate)
 
 def initialize_ltd(size_t limit):
     """Allocates and initializes internal data structures and sets limit for
@@ -1683,9 +1810,9 @@ def locate_region(int g_a, lo, hi):
     processes. If lo/hi are out of bounds "0" is returned, otherwise return
     value is equal to the number of processes that hold the data .
           
-    map[i][0:ndim-1]         - lo[i]
-    map[i][ndim:2*ndim-1]    - hi[i]
-    procs[i]                 - processor id that owns data in patch lo[i]:hi[i]
+    map[i][0] - lo[ndim]
+    map[i][1] - hi[ndim]
+    procs[i]  - processor id that owns data in patch lo[i]:hi[i]
 
     This operation is local. 
 
@@ -1707,71 +1834,882 @@ def locate_region(int g_a, lo, hi):
     # TODO then slice it and reshape to something useful?
     return map.reshape(np_result,2,ndim),procs
 
-def _lohi(int g_a, lo, hi):
-    """Utility function which converts and/or prepares a lo/hi combination.
+def lock(int mutex):
+    """Locks a mutex object identified by the mutex number.
+    
+    It is a fatal error for a process to attempt to lock a mutex which was
+    already locked by this process. 
 
-    Functions which take a patch specification can use this to convert the
-    given lo and/or hi into ndarrays using numpy.asarray.
-    If lo is not given, it is replaced with an array of zeros.
-    If hi is not given, it is replaced with the last index in each dimension.
+    """
+    GA_Lock(mutex)
+
+def lu_solve(int g_a, int g_b, bint trans=False):
+    """Solve the system of linear equations op(A)X = B based on the LU
+    factorization.
+
+    op(A) = A or A' depending on the parameter trans
+    trans = False means that the transpose operator should not be applied.
+    trans = True means that the transpose operator should be applied.
+
+    Matrix A is a general real matrix. Matrix B contains possibly multiple rhs
+    vectors. The array associated with the handle g_b is overwritten by the
+    solution matrix X.
+
+    This is a collective operation. 
+
+    Positional arguments:
+    g_a -- the array handle for the coefficient matrix
+    g_b -- the array handle for the solution matrix
+
+    Keyword arguments:
+    trans -- transpose (True) or not transpose (False)
+
+    """
+    cdef char ctrans = 'N'
+    if trans:
+        ctrans = 'T'
+    GA_Lu_solve(ctrans, g_a, g_b)
+
+def mask_sync(bint first, bint last):
+    """This subroutine can be used to remove synchronization calls from around
+    collective operations.
+    
+    Setting the parameter first=False removes the synchronization prior to the
+    collective operation, setting last=False removes the synchronization call
+    after the collective operation. This call is applicable to all collective
+    operations. It most be invoked before each collective operation.
+    
+    This is a collective operation. 
+
+    Positional arguments:
+    first -- mask for prior internal synchronization
+    last  -- mask for post internal synchronization
+
+    """
+    GA_Mask_sync(first,last)
+
+def matmul_patch(bint transa, bint transb, alpha, beta,
+        int g_a, alo, ahi,
+        int g_b, blo, bhi,
+        int g_c, clo, chi):
+    """An n-dimensional patch version of ga_dgemm.
+
+    C[clo[]:chi[]] := alpha * AA[alo[]:ahi[]] *
+                                   BB[blo[]:bhi[]] ) + beta*C[clo[]:chi[]],
+
+    where AA = op(A), BB = op(B), and op( X ) is one of
+
+    op( X ) = X   or   op( X ) = X',
+
+    It works for both double and DoubleComplex data tape.
+
+    This is a collective operation. 
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] blo_nd, bhi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] clo_nd, chi_nd
+    cdef int gtype=inquire_type(g_a)
+    cdef int            ialpha,  ibeta
+    cdef long           lalpha,  lbeta
+    cdef long long      llalpha, llbeta
+    cdef float          falpha,  fbeta
+    cdef double         dalpha,  dbeta
+    cdef long double    ldalpha, ldbeta
+    cdef SingleComplex  fcalpha, fcbeta
+    cdef DoubleComplex  dcalpha, dcbeta
+    cdef void          *valpha, *vbeta
+    cdef char char_transa = 'N'
+    cdef char char_transb = 'N'
+    if alpha is None:
+        alpha = 1
+    valpha = _convert_multiplier(gtype, alpha,
+            &ialpha,  &lalpha,  &llalpha,
+            &falpha,  &dalpha,  &ldalpha,
+            &fcalpha, &dcalpha)
+    if beta is None:
+        beta = 1
+    vbeta = _convert_multiplier(gtype, beta,
+            &ibeta,  &lbeta,  &llbeta,
+            &fbeta,  &dbeta,  &ldbeta,
+            &fcbeta, &dcbeta)
+    alo_nd,ahi_nd = _lohi(g_a,alo,ahi)
+    blo_nd,bhi_nd = _lohi(g_b,blo,bhi)
+    clo_nd,chi_nd = _lohi(g_c,clo,chi)
+    if transa:
+        char_transa = 'T'
+    if transb:
+        char_transb = 'T'
+    NGA_Matmul_patch64(char_transa, char_transb, valpha, vbeta,
+            g_a, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
+            g_b, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data,
+            g_c, <int64_t*>clo_nd.data, <int64_t*>chi_nd.data)
+
+def median(int g_a, int g_b, int g_c, int g_m,
+        alo=None, ahi=None, blo=None, bhi=None,
+        clo=None, chi=None, mlo=None, mhi=None):
+    """Computes the componentwise Median of three arrays or patches g_a, g_b,
+    and g_c, and stores the result in this array or patch g_m.
+    
+    The result (m) may replace one of the input arrays (a/b/c).
+
+    This is a collective operation. 
+
+    Positional arguments:
+    g_a -- the array handle
+    g_b -- the array handle
+    g_c -- the array handle
+    g_m -- the array handle for the result
+
+    Keyword arguments:
+    alo -- lower bound patch coordinates of g_a, inclusive
+    ahi -- higher bound patch coordinates of g_a, inclusive
+    blo -- lower bound patch coordinates of g_b, inclusive
+    bhi -- higher bound patch coordinates of g_b, inclusive
+    clo -- lower bound patch coordinates of g_c, inclusive
+    chi -- higher bound patch coordinates of g_c, inclusive
+    mlo -- lower bound patch coordinates of g_m, inclusive
+    mhi -- higher bound patch coordinates of g_m, inclusive
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] blo_nd, bhi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] clo_nd, chi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] mlo_nd, mhi_nd
+    if (alo is None and ahi is None
+            and blo is None and bhi is None
+            and clo is None and chi is None
+            and mlo is None and mhi is None):
+        GA_Median(g_a, g_b, g_c, g_m)
+    else:
+        alo_nd,ahi_nd = _lohi(g_a,alo,ahi)
+        blo_nd,bhi_nd = _lohi(g_b,blo,bhi)
+        clo_nd,chi_nd = _lohi(g_c,clo,chi)
+        mlo_nd,mhi_nd = _lohi(g_m,mlo,mhi)
+        GA_Median_patch64(
+                g_a, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
+                g_b, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data,
+                g_c, <int64_t*>clo_nd.data, <int64_t*>chi_nd.data,
+                g_m, <int64_t*>mlo_nd.data, <int64_t*>mhi_nd.data)
+
+def memory_avail():
+    """Returns amount of memory (in bytes) left for allocation of new global
+    arrays on the calling processor.
+
+    Note: If ga.uses_ma() returns True, then ga.memory_avail() returns the
+    lesser of the amount available under the GA limit and the amount available
+    from MA (according to ma.inquire_avail() operation). If no GA limit has
+    been set, it returns what MA says is available.
+
+    If ( ! ga.uses_ma() && ! ga.memory_limited() ) returns < 0, indicating
+    that the bound on currently available memory cannot be determined.
+
+    This operation is local. 
+    
+    """
+    return GA_Memory_avail()
+
+def memory_limited():
+    """Indicates if limit is set on memory usage in Global Arrays on the
+    calling processor.
+    
+    This operation is local. 
+
+    Returns:
+    True for "yes", False for "no"
+
+    """
+    if 1 == GA_Memory_limited():
+        return True
+    return False
+
+def merge_distr_patch(int g_a, alo, ahi, int g_b, blo, bhi):
+    """This function merges all copies of a patch of a mirrored array (g_a)
+    into a patch in a distributed array (g_b).
+
+    This is a  collective  operation. 
+
+    Positional arguments:
+    g_a -- array handle
+    alo -- g_a patch coordinate
+    ahi -- g_a patch coordinate
+    g_b -- array handle
+    blo -- g_b patch coordinate
+    bhi -- g_b patch coordinate
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] blo_nd, bhi_nd
+    alo_nd,ahi_nd = _lohi(g_a,alo,ahi)
+    blo_nd,bhi_nd = _lohi(g_b,blo,bhi)
+    NGA_Merge_distr_patch64(
+            g_a, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
+            g_b, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data)
+
+def merge_mirrored(int g_a):
+    """This subroutine merges mirrored arrays by adding the contents of each
+    array across nodes.
+    
+    The result is that the each mirrored copy of the array represented by g_a
+    is the sum of the individual arrays before the merge operation. After the
+    merge, all mirrored arrays are equal.
+
+    This is a  collective  operation. 
+
+    Positional arguments:
+    g_a -- array handle
+
+    """
+    GA_Merge_mirrored(g_a)
+
+def nbacc(int g_a, lo, hi, buffer, alpha=None):
+    """Non-blocking version of the blocking accumulate operation.
+
+    The accumulate operation can be completed locally by making a call to the
+    ga.nbwait() routine.
+    
+    Combines data from buffer with data in the global array patch.
+    
+    The buffer array is assumed to be have the same number of
+    dimensions as the global array.  If the buffer is not contiguous, a
+    contiguous copy will be made.
+    
+        global array section (lo[],hi[]) += alpha * buffer
+
+    This is a non-blocking and one-sided and atomic operation.
+
+    Positional arguments:
+    g_a    -- the array handle
+    lo     -- lower bound patch coordinates, inclusive
+    hi     -- higher bound patch coordinates, inclusive
+    buffer -- an array-like object with same shape as indicated patch
+
+    Keyword arguments:
+    alpha  -- multiplier
+
+    Returns:
+    The non-blocking request handle.
+
+    """
+    return acc(g_a, lo, hi, buffer, alpha, True)
+
+def nbget(int g_a, lo=None, hi=None, np.ndarray buffer=None):
+    """Non-blocking version of the blocking get operation.
+    
+    The get operation can be completed locally by making a call to the
+    ga.nbwait() routine.
+    
+    Copies data from global array section to the local array buffer.
+    
+    The local array is assumed to be have the same number of dimensions as the
+    global array. Any detected inconsitencies/errors in the input arguments
+    are fatal.
+
+    This is a non-blocking and one-sided operation.
 
     Positional arguments:
     g_a -- the array handle
     lo  -- a 1D array-like object, or None
     hi  -- a 1D array-like object, or None
 
+    Keyword arguments:
+    buffer -- 
+
     Returns:
-    The converted lo and hi ndarrays.
+    The local array buffer.
+    
+    """
+    return get(g_a, lo, hi, buffer, True)
+
+def nblock(int g_a):
+    """Returns the number of partitions of each array dimension for g_a.
+
+    This operation is local. 
+
+    Positional arguments:
+    g_a -- array handle
 
     """
-    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
-    if lo is None:
-        lo_nd = np.zeros((GA_Ndim(g_a)), dtype=np.int64)
-    else:
-        lo_nd = np.asarray(lo, dtype=np.int64)
-    if hi is None:
-        hi_nd = inquire_dims(g_a)-1
-    else:
-        hi_nd = np.asarray(hi, dtype=np.int64)
-    return lo_nd,hi_nd
+    cdef np.ndarray[np.int32_t, ndim=1] nblock_nd
+    cdef ndim = GA_Ndim(g_a)
+    nblock_nd = np.zeros(ndim, dtype=np.intc)
+    GA_Nblock(g_a, <int*>nblock_nd.data)
+    return nblock_nd
 
-cpdef int ndim(int g_a):
+def nbput():
+    """TODO"""
+    raise NotImplementedError, "need to do ga.put() first"
+ 
+def nbwait(ga_nbhdl_t nbhandle):
+    """This function completes a non-blocking one-sided operation locally.
+
+    Waiting on a nonblocking put or an accumulate operation assures that data
+    was injected into the network and the user buffer can be now be reused.
+    Completing a get operation assures data has arrived into the user memory
+    and is ready for use. Wait operation ensures only local completion. Unlike
+    their blocking counterparts, the nonblocking operations are not ordered
+    with respect to the destination. Performance being one reason, the other
+    reason is that by ensuring ordering we incur additional and possibly
+    unnecessary overhead on applications that do not require their operations
+    to be ordered. For cases where ordering is necessary, it can be done by
+    calling a fence operation. The fence operation is provided to the user to
+    confirm remote completion if needed. 
+
+    """
+    NGA_NbWait(&nbhandle)
+
+def ndim(int g_a):
     """Returns the number of dimensions in array represented by the handle g_a.
 
     This operation is local.
     
+    Positional arguments:
+    g_a -- the array handle
+
+    Returns:
+    the number of dimensions in the array g_a
+
     """
     return GA_Ndim(g_a)
 
-cpdef int nnodes():
-    """TODO"""
+def nnodes():
+    """Returns the number of the GA compute (user) processes.
+
+    This operation is local.
+    
+    Returns:
+    the number of GA compute (user) processes
+
+    """
     return GA_Nnodes()
 
-cpdef int nodeid():
-    """TODO"""
+def nodeid():
+    """Returns the GA process id (0, ..., ga.nnodes()-1) of the requesting
+    compute process.
+
+    This operation is local.
+    
+    Returns:
+    the GA process id
+
+    """
     return GA_Nodeid()
+
+def norm1(int g_a):
+    """Computes the 1-norm of the matrix or vector g_a.
+
+    This is a collective operation. 
+
+    Positional arguments:
+    g_a -- the array handle
+
+    Returns:
+    the 1-norm of the matrix or vector g_a (as a float)
+
+    """
+    cdef double nm
+    GA_Norm1(g_a, &nm)
+    return nm
+
+def norm_infinity(int g_a):
+    """Computes the 1-norm of the matrix or vector g_a.
+
+    This is a collective operation. 
+
+    Positional arguments:
+    g_a -- the array handle
+
+    Returns:
+    the 1-norm of the matrix or vector g_a
+
+    """
+    cdef double nm
+    GA_Norm_infinity(g_a, &nm)
+    return nm
+
+def enum(int g_a, lo=None, hi=None, start=None, inc=None):
+    """This subroutine enumerates the values of an array between elements lo
+    and hi starting with the value istart and incrementing each subsequent
+    value by inc.
+    
+    This operation is only applicable to 1-dimensional arrays.
+
+    An example of its use is shown below:
+
+        ga.enum(g_a, 1, n, 7, 2)
+        # g_a: 7  9 11 13 15 17 19 21 23 ...
+
+    This is a collective operation.
+
+    Positional arguments:
+    g_a -- the array handle
+
+    Keyword arguments:
+    lo    -- patch coordinate
+    hi    -- patch coordinate
+    start -- starting value of enumeration
+    inc   -- increment value
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] hi_nd = inquire_dims(g_a)-1
+    cdef int64_t c_lo=0, c_hi=hi_nd[0], c_start=0, c_inc=1
+    if lo is not None:
+        c_lo = lo
+    if hi is not None:
+        c_hi = hi
+    if start is not None:
+        c_start = start
+    if inc is not None:
+        c_inc = inc
+    GA_Patch_enum64(g_a, c_lo, c_hi, c_start, c_inc)
+
+def pack(int g_src, int g_dst, int g_msk, lo=None, hi=None):
+    """The pack subroutine is designed to compress the values in the source
+    vector g_src into a smaller destination array g_dest based on the values
+    in an integer mask array g_mask. The values lo and hi denote the range of
+    elements that should be compressed and the number of values placed in the
+    compressed array is returned.  This operation is the complement of the
+    ga.unpack operation. An example is shown below
+
+    icount = ga.pack(g_src, g_dest, g_mask, 1, n);
+    # g_mask:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
+    # g_src:    1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+    # g_dest:   1  7  9 12 15 16
+    # icount:   6
+
+    This is a collective operation.
+
+    Positional arguments:
+    g_src -- handle for source arrray
+    g_dst -- handle for destination array
+    g_msk -- handle for integer array representing mask
+
+    Keyword arguments:
+    lo    -- low value of range on which operation is performed
+    hi    -- hi value of range on which operation is performed
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] hi_nd = inquire_dims(g_src)-1
+    cdef int64_t c_lo=0, c_hi=hi_nd[0], icount
+    if lo is not None:
+        c_lo = lo
+    if hi is not None:
+        c_hi = hi
+    GA_Pack64(g_src, g_dst, g_msk, lo, hi, &icount)
+    return icount
+
+def periodic_acc(int g_a, lo, hi, buffer, alpha=None):
+    """Periodic version of ga.acc.
+
+    The indices can extend beyond the array boundary/dimensions in which case
+    the libray wraps them around.
+    
+    Combines data from buffer with data in the global array patch.
+    
+    The buffer array is assumed to be have the same number of
+    dimensions as the global array.  If the buffer is not contiguous, a
+    contiguous copy will be made.
+    
+        global array section (lo[],hi[]) += alpha * buffer
+
+    This is a one-sided and atomic operation.
+
+    Positional arguments:
+    g_a    -- the array handle
+    lo     -- lower bound patch coordinates, inclusive
+    hi     -- higher bound patch coordinates, inclusive
+    buffer -- an array-like object with same shape as indicated patch
+
+    Keyword arguments:
+    alpha  -- multiplier
+
+    """
+    acc(g_a, lo, hi, buffer, alpha, False, True)
+
+def periodic_get(int g_a, lo, hi, buffer, alpha=None):
+    """Periodic version of ga.get.
+    
+    The indices can extend beyond the array boundary/dimensions in which case
+    the libray wraps them around.
+    
+    Copies data from global array section to the local array buffer.
+    
+    The local array is assumed to be have the same number of dimensions as the
+    global array. Any detected inconsitencies/errors in the input arguments
+    are fatal.
+
+    This is a one-sided operation.
+
+    Positional arguments:
+    g_a -- the array handle
+    lo  -- a 1D array-like object, or None
+    hi  -- a 1D array-like object, or None
+
+    Keyword arguments:
+    buffer -- 
+
+    Returns:
+    The local array buffer.
+    
+    """
+    get(g_a, lo, hi, buffer, alpha, False, True)
+
+def periodic_put():
+    """TODO"""
+    raise NotImplementedError, "need to do ga.put() first"
+
+def pgroup_brdcst(int pgroup, np.ndarray buffer, int root):
+    """Broadcast from process root to all other processes in the same group.
+
+    If the buffer is not contiguous, an error is raised.  This operation is
+    provided only for convenience purposes: it is available regardless of the
+    message-passing library that GA is running with.
+
+    This is a collective operation. 
+
+    Positional arguments:
+    pgroup -- processor group handle
+    buffer -- the ndarray message
+    root   -- the process which is sending
+
+    Returns:
+    The buffer in case a temporary was passed in.
+
+    """
+    if not buffer.flags['C_CONTIGUOUS']:
+        raise ValueError, "the buffer must be contiguous"
+    if buffer.ndim != 1:
+        raise ValueError, "the buffer must be one-dimensional"
+    GA_Pgroup_brdcst(pgroup, buffer.data, len(buffer)*buffer.itemsize, root)
+
+def pgroup_create(list):
+    """Creates a processor group.
+    
+    At present, it must be invoked by all processors in the current default
+    processor group. The list of processors use the indexing scheme of the
+    default processor group.  If the default processor group is the world
+    group, then these indices are the usual processor indices. This function
+    returns a process group handle that can be used to reference this group by
+    other functions.
+
+    This is a collective operation on the default processor group. 
+
+    """
+    cdef np.ndarray[np.int32_t, ndim=1] list_nd
+    list_nd = np.asarray(list, dtype=np.intc)
+    return GA_Pgroup_create(<int*>list_nd.data, len(list_nd))
+
+def pgroup_destroy(int pgroup):
+    """Frees up a processor group handle.
+    
+    This is a collective operation on the default processor group.
+
+    Returns:
+    True if the handle was previously active.
+    False if the handle was not previously active.
+
+    """
+    if 0 == GA_Pgroup_destroy(pgroup):
+        return False
+    return True
+
+def pgroup_get_default():
+    """Returns a handle to the default processor group.
+
+    The return value can then be used to create a global array using one of
+    the ga.create or ga.set_pgroup calls.
+
+    This is a local operation.  
+
+    """
+    return GA_Pgroup_get_default()
+
+def pgroup_get_mirror():
+    """Returns a handle to the mirrored processor group.
+
+    The return value can then be used to create a global array using one of
+    the ga.create or ga.set_pgroup calls.
+
+    This is a local operation.  
+
+    """
+    return GA_Pgroup_get_mirror()
+
+def pgroup_get_world():
+    """Returns a handle to the world processor group.
+    
+    The return value can then be used to create a global array using one of
+    the ga.create or ga.set_pgroup calls.
+
+    This is a local operation. 
+
+    """
+    return GA_Pgroup_get_world()
+
+def pgroup_gop():
+    raise NotImplementedError
+
+def pgroup_nnodes(int pgroup):
+    """Returns the number of processors contained in the group specified by
+    pgroup.
+
+    This is a local local operation. 
+
+    Positional arguments:
+    pgroup -- the group handle
+
+    """
+    return GA_Pgroup_nnodes(pgroup)
+
+def pgroup_nodeid(int pgroup):
+    """Returns the relative index of the processor in the processor group
+    specified by pgroup.
+    
+    This index will generally differ from the absolute processor index
+    returned by ga.nodeid if the processor group is not the world group.
+
+    This is a local operation. 
+
+    Positional arguments:
+    pgroup -- the group handle
+
+    """
+    return GA_Pgroup_nodeid(pgroup)
+
+def pgroup_set_default(int pgroup):
+    """Resets the default processor group on a collection of processors.
+    
+    All processors in the group referenced by p_handle must make a call to
+    this function. Any standard global array call that is made after resetting
+    the default processor group will be restricted to processors in that
+    group. Global arrays that are created after resetting the default
+    processor group will only be defined on that group and global operations
+    such as ga.sync or ga.gop will be restricted to processors in that group.
+    The ga.pgroup_set_default call can be used to rapidly convert large
+    applications, written with GA, into routines that run on processor groups.
+
+    The default processor group can be overridden by using GA calls that
+    require an explicit group handle as one of the arguments.
+
+    This is a collective operation on the group represented by the handle
+    pgroup. 
+
+    """
+    GA_Pgroup_set_default(pgroup)
+
+def pgroup_split(int pgroup, int num_group):
+    """TODO"""
+    return GA_Pgroup_split(pgroup, num_group)
+
+def pgroup_split_irreg(int pgroup, int color, int key):
+    """TODO"""
+    return GA_Pgroup_split_irreg(pgroup, color, key)
+
+def pgroup_sync(int pgroup):
+    """Executes a synchronization group across the processors in the processor
+    group specified by pgroup.
+    
+    Nodes outside this group are unaffected.
+
+    This is a collective operation on the processor group specified by
+    pgroup.  
+
+    """
+    GA_Pgroup_sync(pgroup)
+
+def print_distribution(int g_a):
+    """Prints the array distribution.
+
+    This is a collective operation. 
+
+    """
+    GA_Print_distribution(g_a)
+
+def print_file(file, int g_a):
+    """Prints an entire array to a file.
+
+    This is a collective operation. 
+
+    Positional arguments:
+    file -- file-like object which must implement fileno(), or a string
+    g_a  -- the array handle
+
+    """
+    #GA_Print_file(file.fileno(), g_a)
+    raise NotImplementedError
+
+def print_patch(int g_a, lo, hi, bint pretty=True):
+    """Prints a patch of g_a array to the standard output.
+    
+    If pretty is False then output is printed in a dense fashion. If
+    pretty is True then output is formatted and rows/columns labeled.
+
+    This is a collective operation. 
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
+    cdef int apretty=0
+    lo_nd,hi_nd = _lohi(g_a,lo,hi)
+    if pretty:
+        apretty = 1
+    NGA_Print_patch64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data, apretty)
+
+def print_stats():
+    """This non-collective (MIMD) operation prints information about:
+
+    * number of calls to the GA create/duplicate, destroy, get, put,
+    * scatter, gather, and read_and_inc operations
+    * total amount of data moved in the GA primitive operations
+    * amount of data moved in GA primitive operations to logicaly
+    * remote locations
+    * maximum memory consumption in global arrays, and
+    * number of requests serviced in the interrupt-driven
+    * implementations by the calling process.
+
+    This operation is local. 
+
+    """
+    GA_Print_stats()
 
 def print_stdout(int g_a):
     """Prints an entire array to the standard output."""
     GA_Print(g_a)
 
-def randomize(int g_a, val):
+def proc_topology(int g_a, int proc):
+    """Based on the distribution of an array associated with handle g_a,
+    determines coordinates of the specified processor in the virtual processor
+    grid corresponding to the distribution of array g_a.
+    
+    The numbering starts from 0. The values of -1 means that the processor
+    doesn't 'own' any section of array represented by g_a.
+
+    This operation is local. 
+
+    """
+    cdef int ndim = GA_Ndim(g_a)
+    cdef np.ndarray[np.int32_t, ndim=1] coord
+    coord = np.zeros(ndim, dtype=np.intc)
+    NGA_Proc_topology(g_a, proc, <int*>coord.data)
+    return coord
+
+def put(int g_a, lo, hi, np.ndarray buffer, nb=False, periodic=False):
+    """Copies data from local array buffer to the global array section.
+    
+    The local array is assumed to be have the same number of dimensions as the
+    global array.  Any detected inconsitencies/errors in input arguments are
+    fatal.
+
+    This is a one-sided operation. 
+
+    Positional arguments:
+    g_a    -- the array handle
+    lo     -- a 1D array-like object, or None
+    hi     -- a 1D array-like object, or None
+    buffer -- array-like, the data to put
+
+    Keyword arguments:
+    nb       -- whether this call is non-blocking (see ga.nbget)
+    periodic -- whether this call is periodic (see ga.periodic_get)
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape
+    cdef int gtype=inquire_type(g_a)
+    cdef ga_nbhdl_t nbhandle
+    lo_nd,hi_nd = _lohi(g_a,lo,hi)
+    shape = hi_nd-lo_nd+1
+    ld_nd = shape[1:]
+    buffer = np.asarray(buffer, dtype=_to_dtype[gtype])
+    if not buffer.flags['C_CONTIGUOUS']:
+        buffer = np.ascontiguousarray(buffer, dtype=_to_dtype[gtype])
+    if nb and periodic:
+        raise ValueError, "put can't be both non-blocking and periodic"
+    elif nb:
+        NGA_NbPut64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <void*>buffer.data, <int64_t*>ld_nd.data, &nbhandle)
+        return nbhandle
+    elif periodic:
+        NGA_Periodic_put64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <void*>buffer.data, <int64_t*>ld_nd.data)
+    else:
+        NGA_Put64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <void*>buffer.data, <int64_t*>ld_nd.data)
+
+def randomize(int g_a, val=None):
     """Fill array with random values in [0,val)."""
     cdef int gtype=inquire_type(g_a)
-    cdef int         ival=1
-    cdef long        lval=1
-    cdef long long   llval=1
-    cdef float       fval=1.0
-    cdef double      dval=1.0
-    cdef long double ldval=1.0
-    cdef void       *vval=NULL
-    vval = _convert_multiplier(gtype, val, &ival, &lval, &llval, &fval, &dval,
-            &ldval)
+    cdef int            ival
+    cdef long           lval
+    cdef long long      llval
+    cdef float          fval
+    cdef double         dval
+    cdef long double    ldval
+    cdef SingleComplex  fcval
+    cdef DoubleComplex  dcval
+    cdef void          *vval=NULL
+    if val is None:
+        val = 1
+    vval = _convert_multiplier(gtype, val,
+            &ival,  &lval,  &llval,
+            &fval,  &dval,  &ldval,
+            &fcval, &dcval)
     GA_Randomize(g_a, vval)
 
+def read_inc(int g_a, subscript, long inc=1):
+    """Atomically read and increment an element in an integer array. 
+
+    This is a one-sided and atomic operation.
+
+    Positional arguments:
+    g_a -- the array handle
+    subscript -- array-like index for the referenced element
+
+    Keyword arguments:
+    inc -- the increment
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] subscript_nd
+    subscript_nd = np.asarray(subscript, dtype=np.int64)
+    return NGA_Read_inc64(g_a, <int64_t*>subscript_nd.data, inc)
+
+def recip(int g_a, lo=None, hi=None):
+    """Take element-wise reciprocal of the array or patch.
+
+    This is a collective operation. 
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
+    if lo is None and hi is None:
+        GA_Recip(g_a)
+    else:
+        lo_nd,hi_nd = _lohi(g_a,lo,hi)
+        GA_Recip_patch64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data)
+
 def release(int g_a, lo=None, hi=None):
-    """TODO"""
+    """Releases access to a global array when the data was read only.
+
+    Your code should look like:
+
+        array = ga.access(g_a)
+        # <operate on the data referenced by ptr> 
+        ga.release(g_a)
+
+    NOTE: see restrictions specified for ga.access
+
+    This operation is local. 
+    
+    """
     _release_common(g_a, lo, hi, False)
+
+def release_block(int g_a, int index):
+    """Releases access to the block of data specified by the integer index
+    when data was accessed as read only.
+    
+    This is only applicable to block-cyclic data distributions created using
+    the simple block-cyclic distribution. This is a local operation.
+
+    """
+    # TODO
+    raise NotImplementedError
 
 cdef _release_common(int g_a, lo, hi, bint update):
     """TODO"""
@@ -1814,3 +2752,11 @@ def set_memory_limit(size_t limit):
 
     """
     GA_Set_memory_limit(limit)
+
+def terminate():
+    """Delete all active arrays and destroy internal data structures.
+
+    This is a collective operation. 
+
+    """
+    GA_Terminate()
