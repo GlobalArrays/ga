@@ -12,7 +12,7 @@
 /* Defined when using DCMF */
 #undef ARMCIX
 
-/* Define if GPC calls are enabled */
+/* Define to 1 if GPC calls are enabled */
 #undef ARMCI_ENABLE_GPC_CALLS
 
 /* TODO */

@@ -887,7 +887,7 @@ with_mpi
 with_tcgmsg
 enable_f77
 enable_portals_new_malloc
-enable_armci_gpc
+enable_gpc
 enable_armci_group
 enable_nb_noncont
 enable_profiling
@@ -1564,7 +1564,7 @@ Optional Features:
   --disable-f77           disable Fortran code
   --enable-portals-new-malloc
                           add -DNEW_MALLOC to CPPFLAGS
-  --enable-armci-gpc      Enable GPC calls in ARMCI
+  --enable-gpc            enable GPC calls
   --enable-armci-group    TODO
   --enable-nb-noncont     TODO
   --enable-profiling      enable profiling
@@ -1604,7 +1604,7 @@ Optional Packages:
   --with-mpi-spawn[=ARG]  select armci network as MPI-2 dynamic process mgmt
   --with-openib[=ARG]     select armci network as Infiniband OpenIB
   --with-portals[=ARG]    select armci network as Cray XT portals
-  --with-sockets[=ARG]    select armci network as Ethernet TCP/IP)
+  --with-sockets[=ARG]    select armci network as Ethernet TCP/IP
   --with-pic              try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
@@ -4274,17 +4274,24 @@ else
 fi
 
 
-# Check whether --enable-armci_gpc was given.
-if test "${enable_armci_gpc+set}" = set; then :
-  enableval=$enable_armci_gpc; enable_armci_gpc=yes
+
+# Check whether --enable-gpc was given.
+if test "${enable_gpc+set}" = set; then :
+  enableval=$enable_gpc; enable_gpc=yes
+else
+  enable_gpc=no
+fi
+
+if test $enable_gpc = yes; then :
 
 $as_echo "#define ARMCI_ENABLE_GPC_CALLS 1" >>confdefs.h
 
 else
-  enable_armci_gpc=no
-fi
 
- if test x$enable_armci_gpc = xyes; then
+$as_echo "#define ARMCI_ENABLE_GPC_CALLS 0" >>confdefs.h
+
+fi
+ if test x$enable_gpc = xyes; then
   ARMCI_ENABLE_GPC_CALLS_TRUE=
   ARMCI_ENABLE_GPC_CALLS_FALSE='#'
 else
