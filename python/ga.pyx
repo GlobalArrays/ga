@@ -1381,6 +1381,7 @@ def gather(int g_a, subsarray, np.ndarray values=None):
         subsarray1_nd = np.asarray(subsarray, dtype=np.int64)
         n = len(subsarray1_nd) / ndim
     except ValueError:
+        subsarray1_nd = None
         try:
             subsarray2_nd = np.asarray(subsarray, dtype=np.int64)
             n = len(subsarray2_nd) # length of first dimension of subsarray2_nd
@@ -1396,6 +1397,7 @@ def gather(int g_a, subsarray, np.ndarray values=None):
             raise ValueError, "values must be contiguous"
         if len(values) < n:
             raise ValueError, "values was not large enough"
+    # call the wrapped function
     if subsarray1_nd is not None:
         NGA_Gather_flat64(g_a, <void*>values.data,
                 <int64_t*>subsarray1_nd.data, n)
@@ -2265,17 +2267,17 @@ def enum(int g_a, lo=None, hi=None, start=None, inc=None):
 
 def pack(int g_src, int g_dst, int g_msk, lo=None, hi=None):
     """The pack subroutine is designed to compress the values in the source
-    vector g_src into a smaller destination array g_dest based on the values
-    in an integer mask array g_mask. The values lo and hi denote the range of
+    vector g_src into a smaller destination array g_dst based on the values
+    in an integer mask array g_msk. The values lo and hi denote the range of
     elements that should be compressed and the number of values placed in the
     compressed array is returned.  This operation is the complement of the
     ga.unpack operation. An example is shown below
 
-    icount = ga.pack(g_src, g_dest, g_mask, 1, n);
-    # g_mask:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
-    # g_src:    1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
-    # g_dest:   1  7  9 12 15 16
-    # icount:   6
+    icount = ga.pack(g_src, g_dst, g_msk, 1, n);
+    # g_msk:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
+    # g_src:   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+    # g_dst:   1  7  9 12 15 16
+    # icount:  6
 
     This is a collective operation.
 
@@ -2708,8 +2710,30 @@ def release_block(int g_a, int index):
     the simple block-cyclic distribution. This is a local operation.
 
     """
-    # TODO
-    raise NotImplementedError
+    NGA_Release_block(g_a, index)
+
+def release_block_grid(int g_a, subscript):
+    """Releases access to the block of data specified by the subscript array
+    when data was accessed as read only.
+    
+    This is only applicable to block-cyclic data distributions created using
+    the SCALAPACK data distribution.
+    
+    This is a local operation.
+
+    """
+    cdef np.ndarray[np.int32_t, ndim=1] subscript_nd
+    subscript_nd = np.asarray(subscript, dtype=np.int32)
+    NGA_Release_block_grid(g_a, <int*>subscript_nd.data)
+
+def release_block_segment(int g_a, int iproc):
+    """Releases access to the block of locally held data for a block-cyclic
+    array, when data was accessed as read-only.
+    
+    This is a local operation.
+
+    """
+    NGA_Release_block_segment(g_a, iproc)
 
 cdef _release_common(int g_a, lo, hi, bint update):
     """TODO"""
@@ -2738,9 +2762,356 @@ cdef _release_common(int g_a, lo, hi, bint update):
     else:
         NGA_Release64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data)
 
+def release_ghost_element(int g_a, subscript):
+    """Releases access to the locally held data for an array with ghost
+    elements, when data was accessed as read-only.
+    
+    This is a local operation.
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] subscript_nd
+    subscript_nd = np.asarray(subscript, dtype=np.int64)
+    NGA_Release_ghost_element64(g_a, <int64_t*>subscript_nd.data)
+
+def release_ghosts(int g_a):
+    """Releases access to the locally held block of data containing ghost
+    elements, when data was accessed as read-only.
+    
+    This is a local operation.
+
+    """
+    NGA_Release_ghosts(g_a)
+
 def release_update(int g_a, lo=None, hi=None):
-    """TODO"""
+    """Releases access to the data.
+    
+    It must be used if the data was accessed for writing.
+    NOTE: see restrictions specified for ga.access.
+    
+    This operation is local. 
+    
+    """
     _release_common(g_a, lo, hi, True)
+
+def release_update_block(int g_a, int index):
+    """Releases access to the block of data specified by the integer index
+    when data was accessed in read-write mode.
+    
+    This is only applicable to block-cyclic data distributions created using
+    the simple block-cyclic distribution.
+    
+    This is a local operation.
+
+    """
+    NGA_Release_update_block(g_a, index)
+
+def release_update_block_grid(int g_a, subscript):
+    """Releases access to the block of data specified by the subscript array
+    when data was accessed in read-write mode.
+    
+    This is only applicable to block-cyclic data distributions created using
+    the SCALAPACK data distribution.
+    
+    This is a local operation.
+
+    """
+    cdef np.ndarray[np.int32_t, ndim=1] subscript_nd
+    subscript_nd = np.asarray(subscript, dtype=np.int32)
+    NGA_Release_update_block_grid(g_a, <int*>subscript_nd.data)
+
+def release_update_block_segment(int g_a, int iproc):
+    """Releases access to the block of locally held data for a block-cyclic
+    array, when data was accessed as read-only.
+    
+    This is a local operation.
+
+    """
+    NGA_Release_update_block_segment(g_a, iproc)
+
+def release_update_ghost_element(int g_a, subscript):
+    """Releases access to the locally held data for an array with ghost
+    elements, when data was accessed in read-write mode.
+    
+    This is a local operation.
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] subscript_nd
+    subscript_nd = np.asarray(subscript, dtype=np.int64)
+    NGA_Release_update_ghost_element64(g_a, <int64_t*>subscript_nd.data)
+    pass
+
+def release_update_ghosts(int g_a):
+    """Releases access to the locally held block of data containing ghost
+    elements, when data was accessed in read-write mode.
+    
+    This is a local operation. 
+
+    """
+    NGA_Release_update_ghosts(g_a)
+
+def scale(int g_a, value, lo=None, hi=None):
+    """Scales an array by the constant s.
+    
+    Note that the library is unable to detect errors when the pointed value is
+    of different type than the array.
+
+    This is a collective operation. 
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
+    cdef int gtype=inquire_type(g_a)
+    cdef int            ivalue
+    cdef long           lvalue
+    cdef long long      llvalue
+    cdef float          fvalue
+    cdef double         dvalue
+    cdef long double    ldvalue
+    cdef SingleComplex  fcvalue
+    cdef DoubleComplex  dcvalue
+    cdef void          *vvalue
+    vvalue = _convert_multiplier(gtype, value,
+            &ivalue,  &lvalue,  &llvalue,
+            &fvalue,  &dvalue,  &ldvalue,
+            &fcvalue, &dcvalue)
+    if lo is None and hi is None:
+        GA_Scale(g_a, vvalue)
+    else:
+        lo_nd,hi_nd = _lohi(g_a,lo,hi)
+        NGA_Scale_patch64(
+                g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data, vvalue)
+
+def scale_rows(int g_a, int g_v):
+    """Scales the rows of this matrix g_a using the vector g_v.
+
+    This is a collective operation. 
+
+    """
+    GA_Scale_rows(g_a, g_v)
+            
+def scale_cols(int g_a, int g_v):
+    """Scales the columns of this matrix g_a using the vector g_v.
+
+    This is a collective operation. 
+
+    """
+    GA_Scale_cols(g_a, g_v)
+
+def scan_add(int g_src, int g_dst, int g_msk, lo=None, hi=None, bint
+        excl=False):
+    """Adds successive elements in a source vector g_src and put the results
+    in a destination vector g_dst.
+    
+    The addition will restart based on the values of the integer mask vector
+    g_msk. The scan is performed within the range specified by the integer
+    values lo and hi. Note that this operation can only be applied to
+    1-dimensional arrays. The excl flag determines whether the sum starts with
+    the value in the source vector corresponding to the location of a 1 in the
+    mask vector (excl=False) or whether the first value is set equal to 0
+    (excl=True). Some examples of this operation are given below.
+
+    ga.scan_add(g_src, g_dst, g_msk, 0, n, False);
+    g_msk:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
+    g_src:   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+    g_dst:   1  3  6 10 16 21  7 15  9 19 30 12 25 39 15 16 33
+
+    ga.scan_add(g_src, g_dst, g_msk, 0, n, True);
+    g_msk:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
+    g_src:   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+    g_dst:   0  1  3  6 10 15  0  7  0  9 19  0 12 25  0  0 16
+
+    This is a collective operation.
+
+    Positional arguments:
+    g_src -- handle for source arrray
+    g_dst -- handle for destination array
+    g_msk -- handle for integer array representing mask
+
+    Keyword arguments:
+    lo    -- low value of range on which operation is performed
+    hi    -- hi value of range on which operation is performed
+    excl  -- 
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] hi_nd = inquire_dims(g_src)-1
+    cdef int64_t c_lo=0, c_hi=hi_nd[0]
+    cdef int c_excl=0
+    if lo is not None:
+        c_lo = lo
+    if hi is not None:
+        c_hi = hi
+    if excl:
+        c_excl = 1
+    GA_Scan_add64(g_src, g_dst, g_msk, c_lo, c_hi, c_excl)
+
+def scan_copy(int g_src, int g_dst, int g_msk, lo=None, hi=None):
+    """This subroutine does a segmented scan-copy of values in the source
+    array g_src into a destination array g_dst with segments defined by
+    values in the integer mask array g_msk. The scan-copy operation is only
+    applied to the range between the lo and hi indices. This operation is
+    restriced to 1-dimensional arrays. The resulting destination array will
+    consist of segments of consecutive elements with the same value. An
+    example is shown below
+
+    GA_Scan_copy(g_src, g_dst, g_msk, 0, n);
+    g_msk:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
+    g_src:   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+    g_dst:   1  1  1  1  1  1  7  7  9  9  9 12 12 12 15 16 16
+
+    This is a collective operation.
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] hi_nd = inquire_dims(g_src)-1
+    cdef int64_t c_lo=0, c_hi=hi_nd[0]
+    cdef int c_excl=0
+    if lo is not None:
+        c_lo = lo
+    if hi is not None:
+        c_hi = hi
+    GA_Scan_copy64(g_src, g_dst, g_msk, c_lo, c_hi)
+
+def scatter(int g_a, values, subsarray):
+    """Scatters array elements from a global array into a local array.
+
+    subsarray will be converted to an ndarray if it is not one already.  A
+    two-dimensional array is allowed so long as its shape is (n,ndim) where n
+    is the number of elements to gather and ndim is the number of dimensions
+    of the target array.  Also, subsarray must be contiguous.
+
+    For example, if the subsarray were two-dimensional::
+
+        for k in range(n):
+            v[k] = g_a[subsarray[k,0],subsarray[k,1],subsarray[k,2]...]
+
+    For example, if the subsarray were one-dimensional::
+
+        for k in range(n):
+            base = n*ndim
+            v[k] = g_a[subsarray[base+0],subsarray[base+1],subsarray[base+2]...]
+
+    This is a one-sided operation. 
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] subsarray1_nd = None
+    cdef np.ndarray[np.int64_t, ndim=2] subsarray2_nd = None
+    cdef np.ndarray values_nd = None
+    cdef int gtype = inquire_type(g_a)
+    cdef int ndim = GA_Ndim(g_a)
+    cdef int64_t n
+    # prepare subsarray
+    try:
+        subsarray1_nd = np.asarray(subsarray, dtype=np.int64)
+        n = len(subsarray1_nd) / ndim
+    except ValueError:
+        subsarray1_nd = None
+        try:
+            subsarray2_nd = np.asarray(subsarray, dtype=np.int64)
+            n = len(subsarray2_nd) # length of first dimension of subsarray2_nd
+        except ValueError:
+            raise ValueError, "subsarray must be either 1- or 2-dimensional"
+    # prepare values array
+    values_nd = np.asarray(values, dtype=_to_dtype[gtype])
+    if values_nd.ndim != 1:
+        raise ValueError, "values must be one-dimensional"
+    if not values_nd.flags['C_CONTIGUOUS']:
+        raise ValueError, "values must be contiguous"
+    if len(values_nd) < n:
+        raise ValueError, "values was not large enough"
+    # call the wrapped function
+    if subsarray1_nd is not None:
+        NGA_Scatter_flat64(g_a, <void*>values_nd.data,
+                <int64_t*>subsarray1_nd.data, n)
+    elif subsarray2_nd is not None:
+        NGA_Scatter_flat64(g_a, <void*>values_nd.data,
+                <int64_t*>subsarray2_nd.data, n)
+    else:
+        raise ValueError, "how did this happen?"
+
+def scatter_acc(int g_a, values, subsarray, alpha=None):
+    """Scatters array elements from a global array into a local array.
+
+    Like scatter, but adds values to existing values in the global array after
+    multiplying by alpha.
+
+    subsarray will be converted to an ndarray if it is not one already.  A
+    two-dimensional array is allowed so long as its shape is (n,ndim) where n
+    is the number of elements to gather and ndim is the number of dimensions
+    of the target array.  Also, subsarray must be contiguous.
+
+    For example, if the subsarray were two-dimensional::
+
+        for k in range(n):
+            v[k] = g_a[subsarray[k,0],subsarray[k,1],subsarray[k,2]...]
+
+    For example, if the subsarray were one-dimensional::
+
+        for k in range(n):
+            base = n*ndim
+            v[k] = g_a[subsarray[base+0],subsarray[base+1],subsarray[base+2]...]
+
+    This is a one-sided operation. 
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] subsarray1_nd = None
+    cdef np.ndarray[np.int64_t, ndim=2] subsarray2_nd = None
+    cdef np.ndarray values_nd = None
+    cdef int gtype = inquire_type(g_a)
+    cdef int ndim = GA_Ndim(g_a)
+    cdef int64_t n
+    cdef int            ialpha
+    cdef long           lalpha
+    cdef long long      llalpha
+    cdef float          falpha
+    cdef double         dalpha
+    cdef long double    ldalpha
+    cdef SingleComplex  fcalpha
+    cdef DoubleComplex  dcalpha
+    cdef void          *valpha=NULL
+    # prepare subsarray
+    try:
+        subsarray1_nd = np.asarray(subsarray, dtype=np.int64)
+        n = len(subsarray1_nd) / ndim
+    except ValueError:
+        subsarray1_nd = None
+        try:
+            subsarray2_nd = np.asarray(subsarray, dtype=np.int64)
+            n = len(subsarray2_nd) # length of first dimension of subsarray2_nd
+        except ValueError:
+            raise ValueError, "subsarray must be either 1- or 2-dimensional"
+    # prepare values array
+    values_nd = np.asarray(values, dtype=_to_dtype[gtype])
+    if values_nd.ndim != 1:
+        raise ValueError, "values must be one-dimensional"
+    if not values_nd.flags['C_CONTIGUOUS']:
+        raise ValueError, "values must be contiguous"
+    if len(values_nd) < n:
+        raise ValueError, "values was not large enough"
+    # prepare alpha
+    if alpha is None:
+        alpha = 1
+    valpha = _convert_multiplier(gtype, alpha,
+            &ialpha,  &lalpha,  &llalpha,
+            &falpha,  &dalpha,  &ldalpha,
+            &fcalpha, &dcalpha)
+    # call the wrapped function
+    if subsarray1_nd is not None:
+        NGA_Scatter_acc_flat64(g_a, <void*>values_nd.data,
+                <int64_t*>subsarray1_nd.data, n, valpha)
+    elif subsarray2_nd is not None:
+        NGA_Scatter_acc_flat64(g_a, <void*>values_nd.data,
+                <int64_t*>subsarray2_nd.data, n, valpha)
+    else:
+        raise ValueError, "how did this happen?"
+
+def select_elem(int g_a, char *op):
+    """
+
+    Returns:
+    the selected element and the array index for the selected element
+
+    """
+    pass
+    # TODO this is where I left off
+    raise NotImplementedError, "TODO"
 
 def set_memory_limit(size_t limit):
     """Sets the amount of memory to be used (in bytes) per process.

@@ -2098,6 +2098,27 @@ void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
     free(_subs_array);
 }
 
+void NGA_Scatter_flat(int g_a, void *v, int subsArray[], int n)
+{
+    int idx, i;
+    Integer a = (Integer)g_a;
+    Integer nv = (Integer)n;
+    Integer ndim = ga_ndim_(&a);
+    Integer *_subs_array;
+    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
+    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
+
+    /* adjust the indices for fortran interface */
+    for(idx=0; idx<n; idx++)
+        for(i=0; i<ndim; i++)
+            _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx*ndim+i] + 1;
+    
+    nga_scatter_(&a, v, _subs_array , &nv);
+    
+    free(_subs_array);
+}
+
+
 void NGA_Scatter64(int g_a, void *v, int64_t* subsArray[], int64_t n)
 {
     int64_t idx;
@@ -2117,6 +2138,27 @@ void NGA_Scatter64(int g_a, void *v, int64_t* subsArray[], int64_t n)
     free(_subs_array);
 }
 
+void NGA_Scatter_flat64(int g_a, void *v, int64_t subsArray[], int64_t n)
+{
+    int idx, i;
+    Integer a = (Integer)g_a;
+    Integer nv = (Integer)n;
+    Integer ndim = ga_ndim_(&a);
+    Integer *_subs_array;
+    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
+    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
+
+    /* adjust the indices for fortran interface */
+    for(idx=0; idx<n; idx++)
+        for(i=0; i<ndim; i++)
+            _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx*ndim+i] + 1;
+    
+    nga_scatter_(&a, v, _subs_array , &nv);
+    
+    free(_subs_array);
+}
+
+
 void NGA_Scatter_acc(int g_a, void *v, int* subsArray[], int n, void *alpha)
 {
     int idx, i;
@@ -2129,6 +2171,26 @@ void NGA_Scatter_acc(int g_a, void *v, int* subsArray[], int n, void *alpha)
     for(idx=0; idx<n; idx++)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+i] = subsArray[idx][i] + 1;
+    
+    nga_scatter_acc_(&a, v, _subs_array , &nv, alpha);
+    
+    free(_subs_array);
+}
+
+void NGA_Scatter_acc_flat(int g_a, void *v, int subsArray[], int n, void *alpha)
+{
+    int idx, i;
+    Integer a = (Integer)g_a;
+    Integer nv = (Integer)n;
+    Integer ndim = ga_ndim_(&a);
+    Integer *_subs_array;
+    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
+    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
+
+    /* adjust the indices for fortran interface */
+    for(idx=0; idx<n; idx++)
+        for(i=0; i<ndim; i++)
+            _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx*ndim+i] + 1;
     
     nga_scatter_acc_(&a, v, _subs_array , &nv, alpha);
     
@@ -2148,6 +2210,26 @@ void NGA_Scatter_acc64(int g_a, void *v, int64_t* subsArray[], int64_t n, void *
     for(idx=0; idx<n; idx++)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+i] = subsArray[idx][i] + 1;
+    
+    nga_scatter_acc_(&a, v, _subs_array , &nv, alpha);
+    
+    free(_subs_array);
+}
+
+void NGA_Scatter_acc_flat64(int g_a, void *v, int64_t subsArray[], int64_t n, void *alpha)
+{
+    int idx, i;
+    Integer a = (Integer)g_a;
+    Integer nv = (Integer)n;
+    Integer ndim = ga_ndim_(&a);
+    Integer *_subs_array;
+    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
+    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
+
+    /* adjust the indices for fortran interface */
+    for(idx=0; idx<n; idx++)
+        for(i=0; i<ndim; i++)
+            _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx*ndim+i] + 1;
     
     nga_scatter_acc_(&a, v, _subs_array , &nv, alpha);
     
