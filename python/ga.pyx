@@ -167,7 +167,8 @@ def abs_value(int g_a, lo=None, hi=None):
         lo_nd,hi_nd = _lohi(g_a,lo,hi)
         GA_Abs_value_patch64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data)
 
-def acc(int g_a, lo, hi, buffer, alpha=None, nb=False, periodic=False):
+def acc(int g_a, lo, hi, buffer, alpha=None, nb=False, periodic=False,
+        skip=None):
     """Combines data from buffer with data in the global array patch.
     
     The buffer array is assumed to be have the same number of
@@ -188,12 +189,13 @@ def acc(int g_a, lo, hi, buffer, alpha=None, nb=False, periodic=False):
     alpha    -- multiplier
     nb       -- whether the call is non-blocking (see ga.nbacc)
     periodic -- whether the call is periodic (see ga.periodic_acc)
+    skip     -- array-like of strides for each dimension
 
     Returns:
     None, usually.  However if nb=True, the nonblocking handle is returned.
 
     """
-    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape
+    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape, skip_nd
     cdef np.ndarray buffer_nd
     cdef int gtype=inquire_type(g_a)
     cdef int            ialpha
@@ -221,14 +223,17 @@ def acc(int g_a, lo, hi, buffer, alpha=None, nb=False, periodic=False):
             &ialpha,  &lalpha,  &llalpha,
             &falpha,  &dalpha,  &ldalpha,
             &fcalpha, &dcalpha)
-    if nb and periodic:
-        raise ValueError, "acc can't be both non-blocking and periodic"
-    elif nb:
+    if nb:
         NGA_NbAcc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data, valpha, &nbhandle)
         return nbhandle
     elif periodic:
         NGA_Periodic_acc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <void*>buffer_nd.data, <int64_t*>ld_nd.data, valpha)
+    elif skip is not None:
+        skip_nd = np.asarray(skip, np.int64)
+        NGA_Strided_acc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <int64_t*>skip_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data, valpha)
     else:
         NGA_Acc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
@@ -1499,7 +1504,7 @@ def gemm(bint ta, bint tb, int64_t m, int64_t n, int64_t k,
         raise TypeError
 
 def get(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
-        periodic=False):
+        periodic=False, skip=None):
     """Copies data from global array section to the local array buffer.
     
     The local array is assumed to be have the same number of dimensions as the
@@ -1517,13 +1522,14 @@ def get(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
     buffer   -- an ndarray of the appropriate type, large enough to hold lo,hi
     nb       -- whether this call is non-blocking (see ga.nbget)
     periodic -- whether this call is periodic (see ga.periodic_get)
+    skip     -- array-like of strides for each dimension
 
     Returns:
     The local array buffer.
     Also returns the nonblocking handle if nb=True.
     
     """
-    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape
+    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape, skip_nd
     cdef int gtype=inquire_type(g_a)
     cdef ga_nbhdl_t nbhandle
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
@@ -1536,14 +1542,18 @@ def get(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
         if buffer.dtype != _to_dtype[gtype]:
             raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
                     buffer.dtype, _to_dtype[gtype])
-    if nb and periodic:
-        raise ValueError, "get can't be both non-blocking and periodic"
-    elif nb:
+    if nb:
         NGA_NbGet64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer.data, <int64_t*>ld_nd.data, &nbhandle)
         return buffer,nbhandle
     elif periodic:
         NGA_Periodic_get64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <void*>buffer.data, <int64_t*>ld_nd.data)
+        return buffer
+    elif skip is not None:
+        skip_nd = np.asarray(skip, dtype=np.int64)
+        NGA_Strided_get64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <int64_t*>skip_nd.data,
                 <void*>buffer.data, <int64_t*>ld_nd.data)
         return buffer
     else:
@@ -2632,7 +2642,7 @@ def proc_topology(int g_a, int proc):
     NGA_Proc_topology(g_a, proc, <int*>coord.data)
     return coord
 
-def put(int g_a, lo, hi, buffer, nb=False, periodic=False):
+def put(int g_a, lo, hi, buffer, nb=False, periodic=False, skip=None):
     """Copies data from local array buffer to the global array section.
     
     The local array is assumed to be have the same number of dimensions as the
@@ -2652,7 +2662,7 @@ def put(int g_a, lo, hi, buffer, nb=False, periodic=False):
     periodic -- whether this call is periodic (see ga.periodic_get)
 
     """
-    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape
+    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape, skip_nd
     cdef int gtype=inquire_type(g_a)
     cdef ga_nbhdl_t nbhandle
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
@@ -2661,14 +2671,17 @@ def put(int g_a, lo, hi, buffer, nb=False, periodic=False):
     buffer = np.asarray(buffer, dtype=_to_dtype[gtype])
     if not buffer.flags['C_CONTIGUOUS']:
         buffer = np.ascontiguousarray(buffer, dtype=_to_dtype[gtype])
-    if nb and periodic:
-        raise ValueError, "put can't be both non-blocking and periodic"
-    elif nb:
+    if nb:
         NGA_NbPut64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer.data, <int64_t*>ld_nd.data, &nbhandle)
         return nbhandle
     elif periodic:
         NGA_Periodic_put64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <void*>buffer.data, <int64_t*>ld_nd.data)
+    elif skip is not None:
+        skip_nd = np.asarray(skip, dtype=np.int64)
+        NGA_Strided_put64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
+                <int64_t*>skip_nd.data,
                 <void*>buffer.data, <int64_t*>ld_nd.data)
     else:
         NGA_Put64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
@@ -3435,8 +3448,121 @@ def spd_invert(int g_a):
     This is a collective operation.
 
     """
-    raise NotImplementedError, "TODO"
-    # THIS IS WHERE I LEFT OFF
+    return GA_Spd_invert(g_a)
+
+def step_max(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None):
+    """Calculates the largest multiple of a vector g_b that can be added to
+    this vector g_a while keeping each element of this vector non-negative.
+
+    This is a collective operation. 
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
+    cdef np.ndarray[np.int64_t, ndim=1] blo_nd, bhi_nd
+    cdef double step
+    if (alo is None and ahi is None
+            and blo is None and bhi is None):
+        GA_Step_max(g_a, g_b, &step)
+    else:
+        alo_nd,ahi_nd = _lohi(g_a,alo,ahi)
+        blo_nd,bhi_nd = _lohi(g_b,blo,bhi)
+        GA_Step_max_patch64(g_a, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
+                g_b, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data, &step)
+    return step
+
+def strided_acc(int g_a, lo, hi, skip, buffer, alpha=None):
+    """Same as ga.acc, except that the values corresponding to dimension n in
+    buf are accumulated to every skip[n] values of the global array g_a.
+    
+    Combines data from buffer with data in the global array patch.
+    
+    The buffer array is assumed to be have the same number of dimensions as
+    the global array.  If the buffer is not contiguous, a contiguous copy will
+    be made.
+    
+        global array section (lo[],hi[]) += alpha * buffer
+
+    This is a one-sided and atomic operation.
+
+    Positional arguments:
+    g_a    -- the array handle
+    lo     -- lower bound patch coordinates, inclusive
+    hi     -- higher bound patch coordinates, inclusive
+    buffer -- an array-like object with same shape as indicated patch
+
+    Keyword arguments:
+    alpha    -- multiplier
+
+    """
+    acc(g_a, lo, hi, buffer, alpha, False, False, skip)
+       
+def strided_get(int g_a, lo=None, hi=None, skip=None, np.ndarray buffer=None):
+    """TODO see opening of strided_acc
+    
+    Copies data from global array section to the local array buffer.
+    
+    The local array is assumed to be have the same number of dimensions as the
+    global array. Any detected inconsitencies/errors in the input arguments
+    are fatal.
+
+    This is a one-sided operation.
+
+    Positional arguments:
+    g_a -- the array handle
+
+    Keyword arguments:
+    lo       -- a 1D array-like object, or None
+    hi       -- a 1D array-like object, or None
+    skip     -- array-like of strides for each dimension
+    buffer   -- an ndarray of the appropriate type, large enough to hold lo,hi
+
+    Returns:
+    The local array buffer.
+    
+    """
+    get(g_a, lo, hi, buffer, False, False, skip)
+
+def strided_put(int g_a, lo, hi, skip, buffer):
+    """TODO see opening of strided_acc
+    
+    Copies data from local array buffer to the global array section.
+    
+    The local array is assumed to be have the same number of dimensions as the
+    global array.  Any detected inconsitencies/errors in input arguments are
+    fatal.
+
+    This is a one-sided operation. 
+
+    Positional arguments:
+    g_a    -- the array handle
+    lo     -- a 1D array-like object, or None
+    hi     -- a 1D array-like object, or None
+    skip   -- array-like of strides for each dimension
+    buffer -- array-like, the data to put
+
+    """
+    put(g_a, lo, hi, buffer, False, False, skip)
+
+def summarize(bint verbose):
+    """Prints info about allocated arrays."""
+    GA_Summarize(verbose)
+
+def symmetrize(int g_a):
+    """Symmetrizes matrix A represented with handle g_a: A:= .5 * (A+A').
+
+    This is a collective operation.
+
+    """
+    GA_Symmetrize(g_a)
+
+def sync():
+    """Synchronize processes (a barrier) and ensure that all GA operations
+    completed.
+
+    This is a collective operation.
+
+    """
+    GA_Sync()
 
 def terminate():
     """Delete all active arrays and destroy internal data structures.
@@ -3445,3 +3571,133 @@ def terminate():
 
     """
     GA_Terminate()
+
+def total_blocks(int g_a):
+    """Returns the total number of blocks contained in a global
+    array with a block-cyclic data distribution.
+    
+    This is a local operation.
+
+    """
+    return GA_Total_blocks(g_a)
+
+def transpose(int g_a, int g_b):
+    """Transposes a matrix: B = A', where A and B are represented by handles
+    g_a and g_b.
+
+    This is a collective operation.
+
+    """
+    GA_Transpose(g_a, g_b)
+
+def unlock(int mutex):
+    """Unlocks a mutex object identified by the mutex number. It is a fatal
+    error for a process to attempt to unlock a mutex which has not been locked
+    by this process."""
+    GA_Unlock(mutex)
+
+def unpack(int g_src, int g_dst, int g_msk, lo=None, hi=None):
+    """The unpack subroutine is designed to expand the values in the source
+    vector g_src into a larger destination array g_dst based on the values in
+    an integer mask array g_msk. The values lo and hi denote the range of
+    elements that should be compressed and icount is a variable that on output
+    lists the number of values placed in the uncompressed array. This
+    operation is the complement of the ga.pack operation. An example is shown
+    below
+
+    ga.unpack(g_src, g_dst, g_msk, 1, n, &icount);
+    g_src:   1  7  9 12 15 16
+    g_msk:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
+    g_dst:   1  0  0  0  0  0  7  0  9  0  0 12  0  0 15 16  0
+    icount:  6
+
+    This is a collective operation.
+
+    """
+    raise NotImplementedError, "TODO"
+
+
+def update_ghosts(int g_a):
+    """This call updates the ghost cell regions on each processor with the
+    corresponding neighbor data from other processors.
+    
+    The operation assumes that all data is wrapped around using periodic
+    boundary data so that ghost cell data that goes beyound an array boundary
+    is wrapped around to the other end of the array. The ga.update_ghosts call
+    contains two ga.sync calls before and after the actual update operation.
+    For some applications these calls may be unecessary, if so they can be
+    removed using the ga.mask_sync subroutine.
+
+    This is a collective operation.
+
+    """
+    GA_Update_ghosts(g_a)
+
+def update_ghost_dir(int g_a, int dimension, int dir, int flag):
+    """This function can be used to update the ghost cells along individual
+    directions. It is designed for algorithms that can overlap updates with
+    computation. The variable dimension indicates which coordinate direction
+    is to be updated (e.g. dimension = 1 would correspond to the y axis in a
+    two or three dimensional system), the variable idir can take the values
+    +/-1 and indicates whether the side that is to be updated lies in the
+    positive or negative direction, and cflag indicates whether or not the
+    corners on the side being updated are to be included in the update. The
+    following calls would be equivalent to a call to GA_Update_ghosts  for a
+    2-dimensional system:
+     
+
+    status = NGA_Update_ghost_dir(g_a,0,-1,1);
+    status = NGA_Update_ghost_dir(g_a,0,1,1);
+    status = NGA_Update_ghost_dir(g_a,1,-1,0);
+    status = NGA_Update_ghost_dir(g_a,1,1,0);
+
+    The variable cflag is set equal to 1 (or non-zero) in the first two calls
+    so that the corner ghost cells are update, it is set equal to 0 in the
+    second two calls to avoid redundant updates of the corners. Note that
+    updating the ghosts cells using several independent calls to the
+    nga_update_ghost_dir functions is generally not as efficient as using
+    GA_Update_ghosts  unless the individual calls can be effectively
+    overlapped with computation.
+
+    """
+    NGA_Update_ghost_dir(g_a, dimension, dir, flag)
+
+def uses_ma():
+    """TODO"""
+    if GA_Uses_ma() == 1:
+        return True
+    return False
+
+def wtime():
+    """This function return a wall (or elapsed) time on the calling processor.
+    Returns time in seconds representing elapsed wall-clock time since an
+    arbitrary time in the past. Example:
+
+    starttime = ga.wtime()
+    # .... code snippet to be timed ....
+    endtime   = ga.wtime()
+    print "Time taken = %s seconds" % endtime-starttime
+
+    This is a local operation.
+
+    This function is only available in release 4.1 or greater.
+
+    """
+    return GA_Wtime()
+
+def zero(int g_a, lo=None, hi=None):
+    """Set all the elements in the array or patch to zero."""
+    cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
+    if lo is None and hi is None:
+        GA_Zero(g_a)
+    else:
+        lo_nd,hi_nd = _lohi(g_a,lo,hi)
+        NGA_Zero_patch64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data)
+
+def zero_diagonal(int g_a):
+    """Sets the diagonal elements of this matrix g_a with zeros.
+    
+    This is a collective operation. 
+
+    """
+    GA_Zero_diagonal(g_a)
