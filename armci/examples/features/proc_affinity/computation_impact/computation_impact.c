@@ -4,13 +4,24 @@
 
 /*$Id: computation_impact.c,v 1.1.2.1 2007-06-20 17:42:13 vinod Exp $*/
 
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+#   define _GNU_SOURCE
+#endif
 
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
 #if HAVE_STDLIB_H
 #   include <stdlib.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_STRINGS_H
+#   include <strings.h>
+#endif
+#if HAVE_UNISTD_H
+#   include <unistd.h>
 #endif
 
 #include <mpi.h>

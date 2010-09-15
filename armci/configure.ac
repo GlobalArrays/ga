@@ -252,6 +252,13 @@ GA_F77_LD_OVERRIDE
 AC_LANG_POP([Fortran 77])
 
 ###############################################################################
+# Checks for BLAS/LAPACK/SCALAPACK require both C and Fortran features to
+# have been detected. Further, they assume the current AC_LANG is C.
+###############################################################################
+GA_BLAS
+GA_LAPACK
+
+###############################################################################
 # Checks for programs.
 ###############################################################################
 AC_PROG_GREP

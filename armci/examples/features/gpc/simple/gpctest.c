@@ -10,6 +10,9 @@
 #if HAVE_STDLIB_H
 #   include <stdlib.h>
 #endif
+#if HAVE_STRINGS_H
+#   include <strings.h>
+#endif
 #if HAVE_UNISTD_H
 #   include <unistd.h>
 #endif

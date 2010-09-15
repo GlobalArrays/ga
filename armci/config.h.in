@@ -30,6 +30,9 @@
 /* Define to 1 on BlueGene/P systems */
 #undef BGP
 
+/* Define to sizeof(INTEGER) used to compile BLAS */
+#undef BLAS_SIZE
+
 /* Define to 1 on Cray XT systems using Catamount */
 #undef CATAMOUNT
 
@@ -110,6 +113,9 @@
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
 
+/* Define to 1 if using external BLAS library */
+#undef HAVE_BLAS
+
 /* Define to 1 if you have the `bzero' function. */
 #undef HAVE_BZERO
 
@@ -158,6 +164,9 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define to 1 if using external LAPACK library */
+#undef HAVE_LAPACK
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H

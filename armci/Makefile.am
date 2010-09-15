@@ -49,12 +49,16 @@ AM_CPPFLAGS += $(ARMCI_NETWORK_CPPFLAGS)
 if MSG_COMMS_TCGMSG
 AM_CPPFLAGS += -I$(top_srcdir)/../tcgmsg
 endif
-AM_LDFLAGS += $(GA_MP_LDFLAGS)
-AM_LDFLAGS += $(ARMCI_NETWORK_LDFLAGS)
+LDFLAGS_BASE =
+LDFLAGS_BASE += $(GA_MP_LDFLAGS)
+LDFLAGS_BASE += $(ARMCI_NETWORK_LDFLAGS)
+AM_LDFLAGS += $(LDFLAGS_BASE)
 if NOFORT
 else
 AM_LDFLAGS += $(FLD_NOMAIN)
 endif
+# You can only build armci with tcgmsg within the ga distribution.
+# armci's configure will bomb if if you try to use tcgmsg, so this is safe.
 if MSG_COMMS_TCGMSG
 LDADD += $(top_bld_prefix)../libga.la
 else
@@ -580,9 +584,13 @@ check_PROGRAMS += examples/simpleApps/transp1D-c
 if ARMCI_ENABLE_GPC_CALLS
 check_PROGRAMS += examples/features/gpc/hashtable/test_hashtable
 check_PROGRAMS += examples/features/gpc/simple/gpctest
+if HAVE_BLAS
+if HAVE_LAPACK
 check_PROGRAMS += examples/features/proc_affinity/computation_impact/computation_impact
+endif # HAVE_LAPACK
+endif # HAVE_BLAS
 check_PROGRAMS += examples/features/proc_affinity/simple/simple
-endif
+endif # ARMCI_ENABLE_GPC_CALLS
 if MSG_COMMS_MPI
 check_PROGRAMS += examples/features/concurrency/multidma/multidma
 check_PROGRAMS += examples/features/non-blocking/overlap/overlap
@@ -663,7 +671,10 @@ examples/features/gpc/hashtable/Hash_common.h            \
 examples/features/gpc/hashtable/HashFunctions.cc         \
 examples/features/gpc/hashtable/hash_map.h               \
 examples/features/gpc/hashtable/HashUtil.cc              \
+examples/features/gpc/hashtable/test_hashtable.cc        \
 examples/features/gpc/hashtable/Util.h
+examples_features_gpc_hashtable_test_hashtable_LDFLAGS = $(LDFLAGS_BASE)
+examples_features_gpc_hashtable_test_hashtable_LDADD = $(LDADD) $(MAYBE_FLIBS)
 
 examples_features_gpc_simple_gpctest_SOURCES = \
 examples/features/gpc/simple/gpctest.c
@@ -679,6 +690,14 @@ examples/features/notification/simple/testnotify.c
 
 examples_features_proc_affinity_computation_impact_computation_impact_SOURCES = \
 examples/features/proc_affinity/computation_impact/computation_impact.c
+examples_features_proc_affinity_computation_impact_computation_impact_LDFLAGS = \
+$(AM_LDFLAGS) \
+$(LAPACK_LDFLAGS) \
+$(BLAS_LDFLAGS)
+examples_features_proc_affinity_computation_impact_computation_impact_LDADD = \
+$(LDADD) \
+$(LAPACK_LIBS) \
+$(BLAS_LIBS)
 
 examples_features_proc_affinity_simple_simple_SOURCES = \
 examples/features/proc_affinity/simple/simple.c
@@ -743,7 +762,11 @@ EXAMPLES += examples/simpleApps/transp1D-c$(EXEEXT)
 if ARMCI_ENABLE_GPC_CALLS
 EXAMPLES += examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
 EXAMPLES += examples/features/gpc/simple/gpctest$(EXEEXT)
+if HAVE_BLAS
+if HAVE_LAPACK
 EXAMPLES += examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+endif # HAVE_LAPACK
+endif # HAVE_BLAS
 EXAMPLES += examples/features/proc_affinity/simple/simple$(EXEEXT)
 endif
 if MSG_COMMS_MPI
@@ -849,7 +872,11 @@ PARALLEL_TESTS += examples/simpleApps/transp1D-c$(EXEEXT)
 if ARMCI_ENABLE_GPC_CALLS
 PARALLEL_TESTS += examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
 PARALLEL_TESTS += examples/features/gpc/simple/gpctest$(EXEEXT)
+if HAVE_BLAS
+if HAVE_LAPACK
 PARALLEL_TESTS += examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+endif # HAVE_LAPACK
+endif # HAVE_BLAS
 PARALLEL_TESTS += examples/features/proc_affinity/simple/simple$(EXEEXT)
 endif
 if MSG_COMMS_MPI

@@ -74,9 +74,12 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
 	examples/simpleApps/transp1D-c$(EXEEXT) $(am__EXEEXT_12) \
-	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15)
+	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15) \
+	$(am__EXEEXT_16) $(am__EXEEXT_17)
 @MSG_COMMS_TCGMSG_TRUE@am__append_1 = -I$(top_srcdir)/../tcgmsg
 @NOFORT_FALSE@am__append_2 = $(FLD_NOMAIN)
+# You can only build armci with tcgmsg within the ga distribution.
+# armci's configure will bomb if if you try to use tcgmsg, so this is safe.
 @MSG_COMMS_TCGMSG_TRUE@am__append_3 = $(top_bld_prefix)../libga.la
 @MSG_COMMS_TCGMSG_FALSE@am__append_4 = libarmci.la
 
@@ -318,28 +321,28 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_PORTALS_FALSE@@NOFORT_FALSE@	testing/acc_test \
 @ARMCI_NETWORK_PORTALS_FALSE@@NOFORT_FALSE@	testing/copy_test
 @ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_58 = examples/features/gpc/hashtable/test_hashtable \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/proc_affinity/computation_impact/computation_impact \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/proc_affinity/simple/simple
-@MSG_COMMS_MPI_TRUE@am__append_59 = examples/features/concurrency/multidma/multidma \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_59 = examples/features/proc_affinity/computation_impact/computation_impact
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_60 = examples/features/proc_affinity/simple/simple
+@MSG_COMMS_MPI_TRUE@am__append_61 = examples/features/concurrency/multidma/multidma \
 @MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap
-@RANDOM_ACCESS_TRUE@am__append_60 = examples/benchmarks/RandomAccess/simple/simple \
+@RANDOM_ACCESS_TRUE@am__append_62 = examples/benchmarks/RandomAccess/simple/simple \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket
-@THREAD_SAFE_TRUE@am__append_61 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_62 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT) \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT) \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/proc_affinity/simple/simple$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_63 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
+@THREAD_SAFE_TRUE@am__append_63 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_64 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_65 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_66 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_67 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap$(EXEEXT)
-@RANDOM_ACCESS_TRUE@am__append_64 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__append_68 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__append_65 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
-XFAIL_TESTS = $(am__EXEEXT_16) $(am__EXEEXT_16)
+@THREAD_SAFE_TRUE@am__append_69 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+XFAIL_TESTS = $(am__EXEEXT_18) $(am__EXEEXT_18)
 #PARALLEL_TESTS += testing-portals/perf_nb$(EXEEXT) # needs bug fixes
 #SERIAL_TESTS += testing-portals/shmclean$(EXEEXT) # not sure we need this
 #SERIAL_TESTS += testing-portals/shmtest$(EXEEXT) # not sure we need this
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_66 =  \
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_70 =  \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/clone$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/fork$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/msgcheck$(EXEEXT) \
@@ -353,14 +356,14 @@ XFAIL_TESTS = $(am__EXEEXT_16) $(am__EXEEXT_16)
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/testnotify$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/test$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/te$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_67 = testing-portals/gpctest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_71 = testing-portals/gpctest$(EXEEXT)
 #PARALLEL_TESTS += testing-portals/ipctest$(EXEEXT) # needs bug fixes
-@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_68 = testing-portals/test_groups$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__append_69 = testing-portals/test_mt$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_72 = testing-portals/test_groups$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__append_73 = testing-portals/test_mt$(EXEEXT)
 #PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
 #SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
 #SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
-@ARMCI_NETWORK_PORTALS_FALSE@am__append_70 =  \
+@ARMCI_NETWORK_PORTALS_FALSE@am__append_74 =  \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/msgcheck$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/perf_aggr$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/perf$(EXEEXT) \
@@ -368,22 +371,22 @@ XFAIL_TESTS = $(am__EXEEXT_16) $(am__EXEEXT_16)
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/testitr$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/testnotify$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/test$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_71 = testing/fttest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_72 = testing/gpctest$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_73 = testing/test_groups$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_75 = testing/fttest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_76 = testing/gpctest$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_77 = testing/test_groups$(EXEEXT)
 #PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
-@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_74 = testing/test_mt$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_FALSE@@NOFORT_FALSE@am__append_75 = testing/acc_test$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_78 = testing/test_mt$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_FALSE@@NOFORT_FALSE@am__append_79 = testing/acc_test$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@@NOFORT_FALSE@	testing/copy_test$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_76 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT) \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT) \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/proc_affinity/simple/simple$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_80 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_81 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_82 = examples/features/proc_affinity/simple/simple$(EXEEXT)
 #PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
 #PARALLEL_TESTS += examples/features/non-blocking/overlap/overlap$(EXEEXT) # needs bug fixes
-@RANDOM_ACCESS_TRUE@am__append_77 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__append_83 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__append_78 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+@THREAD_SAFE_TRUE@am__append_84 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -406,6 +409,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/../m4/ga_arg_parse.m4 \
 	$(top_srcdir)/../m4/ga_armci_network.m4 \
+	$(top_srcdir)/../m4/ga_blas.m4 \
 	$(top_srcdir)/../m4/ga_check_func.m4 \
 	$(top_srcdir)/../m4/ga_check_header.m4 \
 	$(top_srcdir)/../m4/ga_enable_checkpoint.m4 \
@@ -422,6 +426,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/ga_f77_library_ldflags.m4 \
 	$(top_srcdir)/../m4/ga_f77_wrappers.m4 \
 	$(top_srcdir)/../m4/ga_function.m4 \
+	$(top_srcdir)/../m4/ga_lapack.m4 \
 	$(top_srcdir)/../m4/ga_mpi_test_disable.m4 \
 	$(top_srcdir)/../m4/ga_mpicc.m4 \
 	$(top_srcdir)/../m4/ga_mpicc_test.m4 \
@@ -826,14 +831,14 @@ libarmcii_la_OBJECTS = $(am_libarmcii_la_OBJECTS)
 @ARMCI_NETWORK_PORTALS_FALSE@@NOFORT_FALSE@am__EXEEXT_11 = testing/acc_test$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@@NOFORT_FALSE@	testing/copy_test$(EXEEXT)
 @ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_12 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT) \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT) \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/proc_affinity/simple/simple$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__EXEEXT_13 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__EXEEXT_13 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_14 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__EXEEXT_15 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap$(EXEEXT)
-@RANDOM_ACCESS_TRUE@am__EXEEXT_14 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__EXEEXT_16 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__EXEEXT_15 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+@THREAD_SAFE_TRUE@am__EXEEXT_17 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 LIBOBJDIR = compat/
 am_examples_benchmarks_RandomAccess_simple_simple_OBJECTS =  \
@@ -959,13 +964,20 @@ am_examples_features_gpc_hashtable_test_hashtable_OBJECTS =  \
 	examples/features/gpc/hashtable/GPCHashmap.$(OBJEXT) \
 	examples/features/gpc/hashtable/GPCHashmapHandler.$(OBJEXT) \
 	examples/features/gpc/hashtable/HashFunctions.$(OBJEXT) \
-	examples/features/gpc/hashtable/HashUtil.$(OBJEXT)
+	examples/features/gpc/hashtable/HashUtil.$(OBJEXT) \
+	examples/features/gpc/hashtable/test_hashtable.$(OBJEXT)
 examples_features_gpc_hashtable_test_hashtable_OBJECTS =  \
 	$(am_examples_features_gpc_hashtable_test_hashtable_OBJECTS)
-examples_features_gpc_hashtable_test_hashtable_LDADD = $(LDADD)
-examples_features_gpc_hashtable_test_hashtable_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
+am__DEPENDENCIES_2 = $(am__append_3) $(am__append_4) $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+@NOFORT_FALSE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
+examples_features_gpc_hashtable_test_hashtable_DEPENDENCIES =  \
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+examples_features_gpc_hashtable_test_hashtable_LINK = $(LIBTOOL) \
+	$(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(examples_features_gpc_hashtable_test_hashtable_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_examples_features_gpc_simple_gpctest_OBJECTS =  \
 	examples/features/gpc/simple/gpctest.$(OBJEXT)
 examples_features_gpc_simple_gpctest_OBJECTS =  \
@@ -999,11 +1011,14 @@ examples_features_notification_simple_testnotify_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS = examples/features/proc_affinity/computation_impact/computation_impact.$(OBJEXT)
 examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS = $(am_examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS)
-examples_features_proc_affinity_computation_impact_computation_impact_LDADD =  \
-	$(LDADD)
 examples_features_proc_affinity_computation_impact_computation_impact_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+examples_features_proc_affinity_computation_impact_computation_impact_LINK =  \
+	$(LIBTOOL) $(AM_V_lt) --tag=F77 $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(F77LD) $(AM_FFLAGS) $(FFLAGS) \
+	$(examples_features_proc_affinity_computation_impact_computation_impact_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_examples_features_proc_affinity_simple_simple_OBJECTS =  \
 	examples/features/proc_affinity/simple/simple.$(OBJEXT)
 examples_features_proc_affinity_simple_simple_OBJECTS =  \
@@ -1602,7 +1617,7 @@ tst=$$dir$$f; log='$@'; __SAVED_TERM=$$TERM;		\
 $(TESTS_ENVIRONMENT)
 RECHECK_LOGS = $(TEST_LOGS)
 AM_RECURSIVE_TARGETS = check check-html recheck recheck-html
-am__EXEEXT_16 =
+am__EXEEXT_18 =
 TEST_SUITE_LOG = test-suite.log
 TEST_SUITE_HTML = $(TEST_SUITE_LOG:.log=.html)
 TEST_EXTENSIONS = @EXEEXT@ .test
@@ -1641,6 +1656,9 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BLAS_CPPFLAGS = @BLAS_CPPFLAGS@
+BLAS_LDFLAGS = @BLAS_LDFLAGS@
+BLAS_LIBS = @BLAS_LIBS@
 CC = @CC@
 CCAS = @CCAS@
 CCASDEPMODE = @CCASDEPMODE@
@@ -1679,6 +1697,9 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+LAPACK_CPPFLAGS = @LAPACK_CPPFLAGS@
+LAPACK_LDFLAGS = @LAPACK_LDFLAGS@
+LAPACK_LIBS = @LAPACK_LIBS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
@@ -1810,9 +1831,10 @@ AM_CXXFLAGS = $(ARMCI_CXXOPT)
 AM_CPPFLAGS = $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
 	$(am__append_1) $(am__append_16) $(am__append_37) \
 	$(am__append_50)
-AM_LDFLAGS = $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) $(am__append_2)
+AM_LDFLAGS = $(LDFLAGS_BASE) $(am__append_2)
 LDADD = $(am__append_3) $(am__append_4) $(LTLIBOBJS) $(GA_MP_LIBS) \
 	$(ARMCI_NETWORK_LIBS)
+LDFLAGS_BASE = $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS)
 
 # Certain trickery when turning Fortran support on or off.
 @NOFORT_FALSE@MAYBE_DUMMY_F_LINK = dummy.f
@@ -1961,8 +1983,11 @@ examples/features/gpc/hashtable/Hash_common.h            \
 examples/features/gpc/hashtable/HashFunctions.cc         \
 examples/features/gpc/hashtable/hash_map.h               \
 examples/features/gpc/hashtable/HashUtil.cc              \
+examples/features/gpc/hashtable/test_hashtable.cc        \
 examples/features/gpc/hashtable/Util.h
 
+examples_features_gpc_hashtable_test_hashtable_LDFLAGS = $(LDFLAGS_BASE)
+examples_features_gpc_hashtable_test_hashtable_LDADD = $(LDADD) $(MAYBE_FLIBS)
 examples_features_gpc_simple_gpctest_SOURCES = \
 examples/features/gpc/simple/gpctest.c
 
@@ -1977,6 +2002,16 @@ examples/features/notification/simple/testnotify.c
 
 examples_features_proc_affinity_computation_impact_computation_impact_SOURCES = \
 examples/features/proc_affinity/computation_impact/computation_impact.c
+
+examples_features_proc_affinity_computation_impact_computation_impact_LDFLAGS = \
+$(AM_LDFLAGS) \
+$(LAPACK_LDFLAGS) \
+$(BLAS_LDFLAGS)
+
+examples_features_proc_affinity_computation_impact_computation_impact_LDADD = \
+$(LDADD) \
+$(LAPACK_LIBS) \
+$(BLAS_LIBS)
 
 examples_features_proc_affinity_simple_simple_SOURCES = \
 examples/features/proc_affinity/simple/simple.c
@@ -2023,8 +2058,9 @@ EXAMPLES = examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) \
 	examples/features/non-blocking/simple/simple$(EXEEXT) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_62) \
-	$(am__append_63) $(am__append_64) $(am__append_65)
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_64) \
+	$(am__append_65) $(am__append_66) $(am__append_67) \
+	$(am__append_68) $(am__append_69)
 
 ##############################################################################
 # test suite
@@ -2037,13 +2073,13 @@ TESTS = $(SERIAL_TESTS) $(PARALLEL_TESTS)
 TESTS_ENVIRONMENT = \
 maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
 
-SERIAL_TESTS = $(am__append_75)
+SERIAL_TESTS = $(am__append_79)
 SERIAL_TESTS_XFAIL = 
 #PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
 #PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
-PARALLEL_TESTS = $(am__append_66) $(am__append_67) $(am__append_68) \
-	$(am__append_69) $(am__append_70) $(am__append_71) \
-	$(am__append_72) $(am__append_73) $(am__append_74) \
+PARALLEL_TESTS = $(am__append_70) $(am__append_71) $(am__append_72) \
+	$(am__append_73) $(am__append_74) $(am__append_75) \
+	$(am__append_76) $(am__append_77) $(am__append_78) \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu$(EXEEXT) \
@@ -2055,8 +2091,9 @@ PARALLEL_TESTS = $(am__append_66) $(am__append_67) $(am__append_68) \
 	examples/features/non-blocking/simple/simple$(EXEEXT) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_76) \
-	$(am__append_77) $(am__append_78)
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_80) \
+	$(am__append_81) $(am__append_82) $(am__append_83) \
+	$(am__append_84)
 PARALLEL_TESTS_XFAIL = 
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -2651,9 +2688,12 @@ examples/features/gpc/hashtable/HashFunctions.$(OBJEXT):  \
 examples/features/gpc/hashtable/HashUtil.$(OBJEXT):  \
 	examples/features/gpc/hashtable/$(am__dirstamp) \
 	examples/features/gpc/hashtable/$(DEPDIR)/$(am__dirstamp)
+examples/features/gpc/hashtable/test_hashtable.$(OBJEXT):  \
+	examples/features/gpc/hashtable/$(am__dirstamp) \
+	examples/features/gpc/hashtable/$(DEPDIR)/$(am__dirstamp)
 examples/features/gpc/hashtable/test_hashtable$(EXEEXT): $(examples_features_gpc_hashtable_test_hashtable_OBJECTS) $(examples_features_gpc_hashtable_test_hashtable_DEPENDENCIES) examples/features/gpc/hashtable/$(am__dirstamp)
 	@rm -f examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(examples_features_gpc_hashtable_test_hashtable_OBJECTS) $(examples_features_gpc_hashtable_test_hashtable_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(examples_features_gpc_hashtable_test_hashtable_LINK) $(examples_features_gpc_hashtable_test_hashtable_OBJECTS) $(examples_features_gpc_hashtable_test_hashtable_LDADD) $(LIBS)
 examples/features/gpc/simple/$(am__dirstamp):
 	@$(MKDIR_P) examples/features/gpc/simple
 	@: > examples/features/gpc/simple/$(am__dirstamp)
@@ -2712,7 +2752,7 @@ examples/features/proc_affinity/computation_impact/computation_impact.$(OBJEXT):
 	examples/features/proc_affinity/computation_impact/$(DEPDIR)/$(am__dirstamp)
 examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT): $(examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS) $(examples_features_proc_affinity_computation_impact_computation_impact_DEPENDENCIES) examples/features/proc_affinity/computation_impact/$(am__dirstamp)
 	@rm -f examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS) $(examples_features_proc_affinity_computation_impact_computation_impact_LDADD) $(LIBS)
+	$(AM_V_F77LD)$(examples_features_proc_affinity_computation_impact_computation_impact_LINK) $(examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS) $(examples_features_proc_affinity_computation_impact_computation_impact_LDADD) $(LIBS)
 examples/features/proc_affinity/simple/$(am__dirstamp):
 	@$(MKDIR_P) examples/features/proc_affinity/simple
 	@: > examples/features/proc_affinity/simple/$(am__dirstamp)
@@ -2978,6 +3018,7 @@ mostlyclean-compile:
 	-rm -f examples/features/gpc/hashtable/GPCHashmapHandler.$(OBJEXT)
 	-rm -f examples/features/gpc/hashtable/HashFunctions.$(OBJEXT)
 	-rm -f examples/features/gpc/hashtable/HashUtil.$(OBJEXT)
+	-rm -f examples/features/gpc/hashtable/test_hashtable.$(OBJEXT)
 	-rm -f examples/features/gpc/simple/gpctest.$(OBJEXT)
 	-rm -f examples/features/non-blocking/overlap/overlap.$(OBJEXT)
 	-rm -f examples/features/non-blocking/simple/simple.$(OBJEXT)
@@ -3291,6 +3332,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/gpc/hashtable/$(DEPDIR)/GPCHashmapHandler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/gpc/hashtable/$(DEPDIR)/HashFunctions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/gpc/hashtable/$(DEPDIR)/HashUtil.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@examples/features/gpc/hashtable/$(DEPDIR)/test_hashtable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/gpc/simple/$(DEPDIR)/gpctest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/non-blocking/overlap/$(DEPDIR)/overlap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/non-blocking/simple/$(DEPDIR)/simple.Po@am__quote@
