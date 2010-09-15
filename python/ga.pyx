@@ -1510,11 +1510,11 @@ def get(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
 
     Positional arguments:
     g_a -- the array handle
-    lo  -- a 1D array-like object, or None
-    hi  -- a 1D array-like object, or None
 
     Keyword arguments:
-    buffer -- 
+    lo       -- a 1D array-like object, or None
+    hi       -- a 1D array-like object, or None
+    buffer   -- an ndarray of the appropriate type, large enough to hold lo,hi
     nb       -- whether this call is non-blocking (see ga.nbget)
     periodic -- whether this call is periodic (see ga.periodic_get)
 
@@ -2138,9 +2138,28 @@ def nblock(int g_a):
     GA_Nblock(g_a, <int*>nblock_nd.data)
     return nblock_nd
 
-def nbput():
-    """TODO"""
-    raise NotImplementedError, "need to do ga.put() first"
+def nbput(int g_a, lo, hi, buffer):
+    """Non-blocking version of the blocking put operation.
+    
+    The put operation can be completed locally by making a call to the
+    ga.nbwait() routine.
+    
+    Copies data from local array buffer to the global array section.
+    
+    The local array is assumed to be have the same number of dimensions as the
+    global array.  Any detected inconsitencies/errors in input arguments are
+    fatal.
+
+    This is a one-sided operation. 
+
+    Positional arguments:
+    g_a    -- the array handle
+    lo     -- a 1D array-like object, or None
+    hi     -- a 1D array-like object, or None
+    buffer -- array-like, the data to put
+
+    """
+    put(g_a, lo, hi, buffer, True, False)
  
 def nbwait(ga_nbhdl_t nbhandle):
     """This function completes a non-blocking one-sided operation locally.
@@ -2356,9 +2375,28 @@ def periodic_get(int g_a, lo, hi, buffer, alpha=None):
     """
     get(g_a, lo, hi, buffer, alpha, False, True)
 
-def periodic_put():
-    """TODO"""
-    raise NotImplementedError, "need to do ga.put() first"
+def periodic_put(int g_a, lo, hi, buffer):
+    """Periodic  version of ga.put.
+
+    The indices can extend beyond the array boundary/dimensions in which case
+    the libray wraps them around.
+    
+    Copies data from local array buffer to the global array section.
+    
+    The local array is assumed to be have the same number of dimensions as the
+    global array.  Any detected inconsitencies/errors in input arguments are
+    fatal.
+
+    This is a one-sided operation. 
+
+    Positional arguments:
+    g_a    -- the array handle
+    lo     -- a 1D array-like object, or None
+    hi     -- a 1D array-like object, or None
+    buffer -- array-like, the data to put
+
+    """
+    put(g_a, lo, hi, buffer, False, True)
 
 def pgroup_brdcst(int pgroup, np.ndarray buffer, int root):
     """Broadcast from process root to all other processes in the same group.
@@ -2594,7 +2632,7 @@ def proc_topology(int g_a, int proc):
     NGA_Proc_topology(g_a, proc, <int*>coord.data)
     return coord
 
-def put(int g_a, lo, hi, np.ndarray buffer, nb=False, periodic=False):
+def put(int g_a, lo, hi, buffer, nb=False, periodic=False):
     """Copies data from local array buffer to the global array section.
     
     The local array is assumed to be have the same number of dimensions as the
@@ -3103,15 +3141,214 @@ def scatter_acc(int g_a, values, subsarray, alpha=None):
         raise ValueError, "how did this happen?"
 
 def select_elem(int g_a, char *op):
-    """
+    """Returns the value and index for an element that is selected by the
+    specified operator in a global array corresponding to g_a handle.
+
+    This is a collective operation. 
 
     Returns:
     the selected element and the array index for the selected element
 
     """
-    pass
-    # TODO this is where I left off
-    raise NotImplementedError, "TODO"
+    cdef np.ndarray[np.int64_t, ndim=1] index
+    cdef int gtype=inquire_type(g_a)
+    cdef int            ialpha
+    cdef long           lalpha
+    cdef long long      llalpha
+    cdef float          falpha
+    cdef double         dalpha
+    cdef long double    ldalpha
+    cdef SingleComplex  fcalpha
+    cdef DoubleComplex  dcalpha
+    cdef void          *valpha=NULL
+    valpha = _convert_multiplier(gtype, 0,
+            &ialpha,  &lalpha,  &llalpha,
+            &falpha,  &dalpha,  &ldalpha,
+            &fcalpha, &dcalpha)
+    index = np.ndarray(GA_Ndim(g_a), dype=np.int64)
+    NGA_Select_elem64(g_a, op, valpha, <int64_t*>index.data)
+    if gtype == C_INT:
+        return ialpha,index
+    elif gtype == C_LONG:
+        return lalpha,index
+    elif gtype == C_LONGLONG:
+        return llalpha,index
+    elif gtype == C_FLT:
+        return falpha,index
+    elif gtype == C_DBL:
+        return dalpha,index
+    elif gtype == C_LDBL:
+        return ldalpha,index
+    elif gtype == C_SCPL:
+        return fcalpha,index
+    elif gtype == C_DCPL:
+        return dcalpha,index
+    else:
+        raise TypeError, "type of g_a not recognized"
+
+def select_elem_min(int g_a):
+    """Equivalent to ga.select_elem(g_a, "min")."""
+    return select_elem(g_a, "min")
+
+def select_elem_max(int g_a):
+    """Equivalent to ga.select_elem(g_a, "max")."""
+    return select_elem(g_a, "max")
+
+def set_array_name(int g_a, char *name):
+    """Assigns a unique character string name to a global array handle that
+    was obtained using the GA_Create_handle function.
+
+    This is a collective operation.
+
+    """
+    GA_Set_array_name(g_a, name)
+
+def set_block_cyclic(int g_a, dims):
+    """Creates a global array with a simple block-cyclic data distribution.
+
+    The array is broken up into blocks of size dims and each block is numbered
+    sequentially using a column major indexing scheme. The blocks are then
+    assigned in a simple round-robin fashion to processors. This is
+    illustrated in the figure below for an array containing 25 blocks
+    distributed on 4 processors. Blocks at the edge of the array may be
+    smaller than the block size specified in dims. In the example below,
+    blocks 4,9,14,19,20,21,22,23, and 24 might be smaller thatn the remaining
+    blocks. Most global array operations are insensitive to whether or not a
+    block-cyclic data distribution is used, although performance may be slower
+    in some cases if the global array is using a block-cyclic data
+    distribution. Individual data blocks can be accessesed using the
+    block-cyclic access functions.
+
+    This is a collective operation.
+
+    """
+    cdef np.ndarray[np.int32_t, ndim=1] dims_nd
+    dims_nd = np.asarray(dims, dtype=np.int32)
+    GA_Set_block_cyclic(g_a, <int*>dims_nd.data)
+
+def set_block_cyclic_proc_grid(int g_a, block, proc_grid):
+    """Creates a global array with a SCALAPACK-type block cyclic data
+    distribution.
+    
+    The user specifies the dimensions of the processor grid in the array
+    proc_grid. The product of the processor grid dimensions must equal the
+    number of total number of processors  and the number of dimensions in the
+    processor grid must be the same as the number of dimensions in the global
+    array. The data blocks are mapped onto the processor grid in a cyclic
+    manner along each of the processor grid axes.  This is illustrated below
+    for an array consisting of 25 data blocks disributed on 6 processors. The
+    6 processors are configured in a 3 by 2 processor grid. Blocks at the edge
+    of the array may be smaller than the block size specified in dims. Most
+    global array operations are insensitive to whether or not a block-cyclic
+    data distribution is used, although performance may be slower in some
+    cases if the global array is using a block-cyclic data distribution.
+    Individual data blocks can be accessesed using the block-cyclic access
+    functions.
+
+    This is a collective operation.
+
+    """
+    cdef np.ndarray[np.int32_t, ndim=1] block_nd, proc_grid_nd
+    block_nd = np.asarray(block, dtype=np.int32)
+    proc_grid_nd = np.asarray(proc_grid, dtype=np.int32)
+    GA_Set_block_cyclic_proc_grid(g_a,
+            <int*>block_nd.data,
+            <int*>proc_grid_nd.data)
+
+def set_chunk(int g_a, chunk):
+    """This function is used to set the chunk array for a global array handle
+    that was obtained using the GA_Create_handle function. The chunk array is
+    used to determine the minimum number of array elements assigned to each
+    processor along each coordinate direction.
+
+    This is a collective operation.
+    
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] chunk_nd
+    chunk_nd = np.asarray(chunk, dype=np.int64)
+    GA_Set_chunk64(g_a, <int64_t*>chunk_nd.data)
+
+def set_data(int g_a, dims, int type):
+    """Sets the array dimension, the coordinate dimensions, and the data type
+    assigned to a global array handle obtained using the ga.create_handle
+    function.
+
+    This is a collective operation.
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] dims_nd
+    dims_nd = np.asarray(dims, dtype=np.int64)
+    GA_Set_data64(g_a, len(dims_nd), <int64_t*>dims_nd.data, type)
+
+def set_debug(bint debug):
+    """Sets an internal flag in the GA library to either True or False.
+    
+    The value of this flag can be recovered at any time using the ga.get_debug
+    function. The flag is set to false when the the GA library is initialized.
+    This can be useful in a number of debugging situations, especially when
+    examining the behavior of routines that are called in multiple locations
+    in a code.
+
+    This is a local operation.
+
+    """
+    GA_Set_debug(debug)
+
+def set_diagonal(int g_a, int g_v):
+    """Sets the diagonal elements of this matrix g_a with the elements of the
+    vector g_v.
+
+    This is a collective operation.
+
+    """
+    GA_Set_diagonal(g_a, g_v)
+
+def set_ghosts(int g_a, width):
+    """Sets the ghost cell widths for a global array handle that was obtained
+    using the ga.create_handle function.
+    
+    The ghosts cells widths indicate how many ghost cells are used to pad the
+    locally held array data along each dimension. The padding can be set
+    independently for each coordinate dimension.
+
+    This is a collective operation.
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] width_nd
+    width_nd = np.asarray(width, dtype=np.int64)
+    GA_Set_ghosts64(g_a, <int64_t*>width_nd.data)
+
+def set_irreg_distr(int g_a, mapc, nblock):
+    """Partitions the array data among the individual processors for a global
+    array handle obtained using the ga.create_handle function.
+
+    The distribution is specified as a Cartesian product of distributions for
+    each dimension. For example, the following figure demonstrates
+    distribution of a 2-dimensional array 8x10 on 6 (or more) processors.
+    nblock(2)={3,2}, the size of mapc array is s=5 and array mapc contains the
+    following elements mapc={1,3,7, 1, 6}. The distribution is nonuniform
+    because, P1 and P4 get 20 elements each and processors P0,P2,P3, and P5
+    only 10 elements each.
+     
+       5    5
+    +----+----+
+    | P0 | P3 | 2
+    | P1 | P4 | 4
+    | P2 | P5 | 2
+    +----+----+
+
+    The array width() is used to control the width of the ghost cell boundary
+    around the visible data on each processor. The local data of the global
+    array residing on each processor will have a layer width(n) ghosts cells
+    wide on either side of the visible data along the dimension n.
+
+    This is a collective operation.
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] mapc_nd, nblock_nd
+    mapc_nd = np.asarray(mapc, dtype=np.int64)
+    nblock_nd = np.asarray(nblock, dtype=np.int64)
+    GA_Set_irreg_distr64(g_a, <int64_t*>mapc_nd.data, <int64_t*>nblock_nd.data)
 
 def set_memory_limit(size_t limit):
     """Sets the amount of memory to be used (in bytes) per process.
@@ -3123,6 +3360,83 @@ def set_memory_limit(size_t limit):
 
     """
     GA_Set_memory_limit(limit)
+
+def set_pgroup(int g_a, int pgroup):
+    """Sets the processor configuration assigned to a global array handle that
+    was obtained using the ga.create_handle function.
+    
+    It can be used to create mirrored arrays by using the mirrored array
+    processor configuration in this function call. It can also be used to
+    create an array on a processor group by using a processor group handle in
+    this call.
+
+    This is a collective operation.
+
+    """
+    GA_Set_pgroup(g_a, pgroup)
+
+def shift_diagoal(int g_a, value=None):
+    """Adds this constant to the diagonal elements of the matrix.
+
+    This is a collective operation.
+
+    """
+    cdef int            ivalue
+    cdef long           lvalue
+    cdef long long      llvalue
+    cdef float          fvalue
+    cdef double         dvalue
+    cdef long double    ldvalue
+    cdef SingleComplex  fcvalue
+    cdef DoubleComplex  dcvalue
+    cdef void          *vvalue
+    cdef int gtype=inquire_type(g_a)
+    if value is None:
+        value = 1
+    vvalue = _convert_multiplier(gtype, value,
+            &ivalue,  &lvalue,  &llvalue,
+            &fvalue,  &dvalue,  &ldvalue,
+            &fcvalue, &dcvalue)
+    GA_Shift_diagonal(g_a, vvalue)
+
+def solve(int g_a, int g_b):
+    """Solves a system of linear equations A * X = B.
+
+    It first will call the Cholesky factorization routine and, if sucessfully,
+    will solve the system with the Cholesky solver. If Cholesky will be not be
+    able to factorize A, then it will call the LU factorization routine and
+    will solve the system with forward/backward substitution. On exit B will
+    contain the solution X.
+
+    Returns:
+    = 0 : Cholesky factoriztion was succesful
+    > 0 : the leading minor of this order is not positive definite, Cholesky
+          factorization could not be completed and LU factoriztion was used
+
+    This is a collective operation.
+
+    """
+    return GA_Solve(g_a, g_b)
+
+def spd_invert(int g_a):
+    """Compute the inverse of a double precision using the Cholesky
+    factorization of a NxN double precision symmetric positive definite matrix
+    A stored in the global array represented by g_a. On successful exit, A
+    will contain the inverse.
+
+    It returns:
+    = 0 : successful exit
+    > 0 : the leading minor of this order is not positive
+          definite and the factorization could not be completed
+    < 0 : it returns the index i of the (i,i)
+          element of the factor L/U that is zero and
+          the inverse could not be computed
+
+    This is a collective operation.
+
+    """
+    raise NotImplementedError, "TODO"
+    # THIS IS WHERE I LEFT OFF
 
 def terminate():
     """Delete all active arrays and destroy internal data structures.
