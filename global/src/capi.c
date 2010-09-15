@@ -27,21 +27,21 @@
 #include "papi.h"
 #include "wapi.h"
 
-Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM], _ga_work[MAXDIM];
-Integer _ga_dims[MAXDIM];
-Integer *_ga_map_capi;
-Integer _ga_width[MAXDIM];
-Integer _ga_skip[MAXDIM];
+static Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM], _ga_work[MAXDIM];
+static Integer _ga_dims[MAXDIM];
+static Integer *_ga_map_capi;
+static Integer _ga_width[MAXDIM];
+static Integer _ga_skip[MAXDIM];
 
-Integer _ga_alo[MAXDIM], _ga_ahi[MAXDIM];
-Integer _ga_blo[MAXDIM], _ga_bhi[MAXDIM];
-Integer _ga_clo[MAXDIM], _ga_chi[MAXDIM];
-Integer _ga_mlo[MAXDIM], _ga_mhi[MAXDIM];
+static Integer _ga_alo[MAXDIM], _ga_ahi[MAXDIM];
+static Integer _ga_blo[MAXDIM], _ga_bhi[MAXDIM];
+static Integer _ga_clo[MAXDIM], _ga_chi[MAXDIM];
+static Integer _ga_mlo[MAXDIM], _ga_mhi[MAXDIM];
 
-Integer _ga_xxlo[MAXDIM], _ga_xxhi[MAXDIM];
-Integer _ga_vvlo[MAXDIM], _ga_vvhi[MAXDIM];
-Integer _ga_xxlllo[MAXDIM], _ga_xxllhi[MAXDIM];
-Integer _ga_xxuulo[MAXDIM], _ga_xxuuhi[MAXDIM];
+static Integer _ga_xxlo[MAXDIM], _ga_xxhi[MAXDIM];
+static Integer _ga_vvlo[MAXDIM], _ga_vvhi[MAXDIM];
+static Integer _ga_xxlllo[MAXDIM], _ga_xxllhi[MAXDIM];
+static Integer _ga_xxuulo[MAXDIM], _ga_xxuuhi[MAXDIM];
 
 int *_ga_argc=NULL;
 char ***_ga_argv=NULL;
