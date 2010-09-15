@@ -7,12 +7,10 @@ provides the GlobalArray object-oriented class.
 """
 # keep the ga functions alphabetical since this is going to be a huge file!
 
-import atexit
 from libc.stdlib cimport malloc,free
 from gah cimport *
 import numpy as np
 cimport numpy as np
-import mpi4py.MPI as _MPI
 
 np.import_array()
 initialize()
@@ -1692,6 +1690,7 @@ def initialize():
     This is a collective operation.
 
     """
+    import atexit
     GA_Initialize()
     GA_Register_stack_memory(_gapy_malloc, _gapy_free)
     atexit.register(terminate)

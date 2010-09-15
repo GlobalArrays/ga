@@ -403,9 +403,9 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(top_srcdir)/gaf2c/typesf2c.h.in \
 	$(top_srcdir)/global/src/global.fh.in \
 	$(top_srcdir)/ma/mafdecls.fh.in $(top_srcdir)/ma/matypes.h.in \
-	AUTHORS INSTALL NEWS build-aux/config.guess \
-	build-aux/config.sub build-aux/depcomp build-aux/install-sh \
-	build-aux/ltmain.sh build-aux/missing
+	INSTALL NEWS build-aux/config.guess build-aux/config.sub \
+	build-aux/depcomp build-aux/install-sh build-aux/ltmain.sh \
+	build-aux/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/m4/ax_sys_weak_alias.m4 \
@@ -6017,6 +6017,14 @@ global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
 @HAVE_M4_TRUE@global/testing/ngatest.F:      $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@.m4.F:
 @HAVE_M4_TRUE@	$(M4) -I$(top_srcdir)/global/testing $< > $@ 
+
+##############################################################################
+# python
+#
+
+@HAVE_PYTHON_TRUE@python: install
+@HAVE_PYTHON_TRUE@	(cd $(top_srcdir)/python && $(PYTHON) setup.py build_ext -L$(libdir) -I$(includedir)) || exit 1
+@HAVE_PYTHON_TRUE@	(cd $(top_srcdir)/python && $(PYTHON) setup.py install) || exit 1
 
 armci/libarmcii.la:
 	($(am__cd) armci && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;

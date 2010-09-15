@@ -1016,6 +1016,17 @@ ga___testing_testmult_LDADD    = libga++.la $(LDADD) $(MAYBE_FLIBS)
 endif # CXX_BINDINGS
 
 ##############################################################################
+# python
+#
+if HAVE_PYTHON
+
+python: install
+	(cd $(top_srcdir)/python && $(PYTHON) setup.py build_ext -L$(libdir) -I$(includedir)) || exit 1
+	(cd $(top_srcdir)/python && $(PYTHON) setup.py install) || exit 1
+
+endif
+
+##############################################################################
 # armci
 SUBDIRS = armci .
 
