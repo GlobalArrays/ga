@@ -269,231 +269,227 @@ nodist_EXTRA_testing_portals_test_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 # src
 #
 else # !ARMCI_NETWORK_PORTALS
-libarmci_la_SOURCES += src/acc.h
-libarmci_la_SOURCES += src/aggregate.c
-libarmci_la_SOURCES += src/armci.c
-libarmci_la_SOURCES += src/armci_chkpt.h
-libarmci_la_SOURCES += src/armcip.h
-libarmci_la_SOURCES += src/armci_portals.h
-libarmci_la_SOURCES += src/armci_profile.h
-libarmci_la_SOURCES += src/armci_storage.h
-libarmci_la_SOURCES += src/armci_vampir.h
-libarmci_la_SOURCES += src/armci-vapi.h
-libarmci_la_SOURCES += src/atomics-i386.h
-libarmci_la_SOURCES += src/bgmlacc.h
-libarmci_la_SOURCES += src/bgmldefs.h
-libarmci_la_SOURCES += src/bgml.h
-libarmci_la_SOURCES += src/bgmltas-ppc.h
-libarmci_la_SOURCES += src/caccumulate.c
-libarmci_la_SOURCES += src/capi.c
-libarmci_la_SOURCES += src/cbuf.h
-libarmci_la_SOURCES += src/ccopy.c
-libarmci_la_SOURCES += src/clusterinfo.c
-libarmci_la_SOURCES += src/copy.h
-libarmci_la_SOURCES += src/elandefs.h
-libarmci_la_SOURCES += src/fence.c
-libarmci_la_SOURCES += src/fujitsu-vpp.h
-libarmci_la_SOURCES += src/gpc.h
-libarmci_la_SOURCES += src/iterator.c
-libarmci_la_SOURCES += src/iterator.h
-libarmci_la_SOURCES += src/kr_malloc.c
-libarmci_la_SOURCES += src/kr_malloc.h
-libarmci_la_SOURCES += src/lapidefs.h
-libarmci_la_SOURCES += src/locks.c
-libarmci_la_SOURCES += src/locks.h
-libarmci_la_SOURCES += src/memlock.c
-libarmci_la_SOURCES += src/memlock.h
-libarmci_la_SOURCES += src/memory.c
-libarmci_la_SOURCES += src/message.c
-libarmci_la_SOURCES += src/mp3.h
-libarmci_la_SOURCES += src/mpi2.h
-libarmci_la_SOURCES += src/mutex.c
-libarmci_la_SOURCES += src/pack.c
-libarmci_la_SOURCES += src/parmci.h
-libarmci_la_SOURCES += src/pendbufs.h
-libarmci_la_SOURCES += src/pgs_sys.h
-libarmci_la_SOURCES += src/pgs_thread.h
-libarmci_la_SOURCES += src/portals.h
-libarmci_la_SOURCES += src/request.h
-libarmci_la_SOURCES += src/rmw.c
-libarmci_la_SOURCES += src/rtinfo.c
-libarmci_la_SOURCES += src/semaphores.c
-libarmci_la_SOURCES += src/semaphores.h
-libarmci_la_SOURCES += src/shmalloc.h
-libarmci_la_SOURCES += src/shmem.h
-libarmci_la_SOURCES += src/shmlimit.h
-libarmci_la_SOURCES += src/signaltrap.h
-libarmci_la_SOURCES += src/sockets.h
-libarmci_la_SOURCES += src/spinlock.h
-libarmci_la_SOURCES += src/strided.c
-libarmci_la_SOURCES += src/tas-alpha.h
-libarmci_la_SOURCES += src/tas-i386.h
-libarmci_la_SOURCES += src/tas-ia64.h
-libarmci_la_SOURCES += src/tas-ppc.h
-libarmci_la_SOURCES += src/utils.h
-libarmci_la_SOURCES += src/vector.c
+libarmci_la_SOURCES += src/collectives/message.c
+libarmci_la_SOURCES += src/common/aggregate.c
+libarmci_la_SOURCES += src/common/armci.c
+libarmci_la_SOURCES += src/common/capi.c
+libarmci_la_SOURCES += src/common/ccopy.c
+libarmci_la_SOURCES += src/common/clusterinfo.c
+libarmci_la_SOURCES += src/common/pack.c
+libarmci_la_SOURCES += src/common/iterator.c
+libarmci_la_SOURCES += src/include/iterator.h
+libarmci_la_SOURCES += src/ft/armci_chkpt.h
+libarmci_la_SOURCES += src/ft/armci_storage.h
+libarmci_la_SOURCES += src/include/acc.h
+libarmci_la_SOURCES += src/include/armcip.h
+libarmci_la_SOURCES += src/include/armci_profile.h
+libarmci_la_SOURCES += src/include/armci_vampir.h
+libarmci_la_SOURCES += src/include/atomics-i386.h
+libarmci_la_SOURCES += src/include/copy.h
+libarmci_la_SOURCES += src/include/fujitsu-vpp.h
+libarmci_la_SOURCES += src/include/gpc.h
+libarmci_la_SOURCES += src/include/kr_malloc.h
+libarmci_la_SOURCES += src/include/locks.h
+libarmci_la_SOURCES += src/include/memlock.h
+libarmci_la_SOURCES += src/include/mp3.h
+libarmci_la_SOURCES += src/include/parmci.h
+libarmci_la_SOURCES += src/include/request.h
+libarmci_la_SOURCES += src/include/semaphores.h
+libarmci_la_SOURCES += src/include/shmalloc.h
+libarmci_la_SOURCES += src/include/shmem.h
+libarmci_la_SOURCES += src/include/shmlimit.h
+libarmci_la_SOURCES += src/include/signaltrap.h
+libarmci_la_SOURCES += src/include/spinlock.h
+libarmci_la_SOURCES += src/include/tas-alpha.h
+libarmci_la_SOURCES += src/include/tas-i386.h
+libarmci_la_SOURCES += src/include/tas-ia64.h
+libarmci_la_SOURCES += src/include/tas-ppc.h
+libarmci_la_SOURCES += src/include/utils.h
+libarmci_la_SOURCES += src/locks/locks.c
+libarmci_la_SOURCES += src/locks/memlock.c
+libarmci_la_SOURCES += src/locks/mutex.c
+libarmci_la_SOURCES += src/locks/semaphores.c
+libarmci_la_SOURCES += src/memory/kr_malloc.c
+libarmci_la_SOURCES += src/memory/memory.c
+libarmci_la_SOURCES += src/progress/fence.c
+libarmci_la_SOURCES += src/xfer/caccumulate.c
+libarmci_la_SOURCES += src/xfer/rmw.c
+libarmci_la_SOURCES += src/xfer/strided.c
+libarmci_la_SOURCES += src/xfer/vector.c
 if NOFORT
 else # !NOFORT
-libarmci_la_SOURCES += src/faccumulate.f
-libarmci_la_SOURCES += src/fcopy.f
+libarmci_la_SOURCES += src/common/fcopy.f
+libarmci_la_SOURCES += src/xfer/faccumulate.f
 endif # NOFORT
 if MSG_COMMS_MPI
-libarmci_la_SOURCES += src/groups.c
+libarmci_la_SOURCES += src/common/groups.c
 endif
 if ARMCI_NETWORK_BGML
-libarmci_la_SOURCES += src/bgml.c
-libarmci_la_SOURCES += src/groups.c
-libarmci_la_SOURCES += src/message.c
+AM_CPPFLAGS += -I$(top_srcdir)/src/devices/bgml
+libarmci_la_SOURCES += src/collectives/message.c
+libarmci_la_SOURCES += src/common/groups.c
+libarmci_la_SOURCES += src/devices/bgml/bgmlacc.h
+libarmci_la_SOURCES += src/devices/bgml/bgml.c
+libarmci_la_SOURCES += src/devices/bgml/bgmldefs.h
+libarmci_la_SOURCES += src/devices/bgml/bgml.h
+libarmci_la_SOURCES += src/devices/bgml/bgmltas-ppc.h
 endif
 if ARMCI_NETWORK_CRAY_SHMEM
-libarmci_la_SOURCES += src/shmalloc.c
+AM_CPPFLAGS += -I$(top_srcdir)/src/devices/cray-shmem
+libarmci_la_SOURCES += src/memory/shmalloc.c
 endif
 if ARMCI_NETWORK_DCMF
-libarmci_la_SOURCES += src/groups.c
-libarmci_la_SOURCES += src/message.c
-libarmci_la_SOURCES += src/request.c
+AM_CPPFLAGS += -I$(top_srcdir)/src/devices/dcmf
+libarmci_la_SOURCES += src/collectives/message.c
+libarmci_la_SOURCES += src/common/groups.c
+libarmci_la_SOURCES += src/common/request.c
+libarmci_la_SOURCES += src/devices/dcmf/armcix.h
 if DCMF_VER_2
-libarmci_la_SOURCES += src/armcix/dcmf2/armcix_acc.c
-libarmci_la_SOURCES += src/armcix/dcmf2/armcix_fence.c
-libarmci_la_SOURCES += src/armcix/dcmf2/armcix_get.c
-libarmci_la_SOURCES += src/armcix/dcmf2/armcix_impl.c
-libarmci_la_SOURCES += src/armcix/dcmf2/armcix_lock.c
-libarmci_la_SOURCES += src/armcix/dcmf2/armcix_put.c
-libarmci_la_SOURCES += src/armcix/dcmf2/armcix_rmw.c
-libarmci_la_SOURCES += src/armcix/dcmf2/armcix_wait.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_acc.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_fence.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_get.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_impl.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_lock.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_put.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_rmw.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_wait.c
 endif
 if DCMF_VER_0_2
-libarmci_la_SOURCES += src/armcix/dcmf-0.2.0/armcix_acc.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.2.0/armcix_fence.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.2.0/armcix_get.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.2.0/armcix_impl.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.2.0/armcix_lock.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.2.0/armcix_put.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.2.0/armcix_rmw.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.2.0/armcix_wait.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_acc.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_fence.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_get.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_impl.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_lock.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_put.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_rmw.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.2.0/armcix_wait.c
 endif
 if DCMF_VER_0_3
-libarmci_la_SOURCES += src/armcix/dcmf-0.3.0/armcix_acc.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.3.0/armcix_fence.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.3.0/armcix_get.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.3.0/armcix_impl.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.3.0/armcix_lock.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.3.0/armcix_put.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.3.0/armcix_rmw.c
-libarmci_la_SOURCES += src/armcix/dcmf-0.3.0/armcix_wait.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_acc.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_fence.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_get.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_impl.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_lock.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_put.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_rmw.c
+libarmci_la_SOURCES += src/devices/dcmf/dcmf-0.3.0/armcix_wait.c
 endif
 endif # ARMCI_NETWORK_DCMF
 if ARMCI_NETWORK_LAPI
-libarmci_la_SOURCES += src/async.c
-libarmci_la_SOURCES += src/buffers.c
-libarmci_la_SOURCES += src/lapi.c
-libarmci_la_SOURCES += src/request.c
+AM_CPPFLAGS += -I$(top_srcdir)/src/devices/lapi
+libarmci_la_SOURCES += src/common/async.c
+libarmci_la_SOURCES += src/common/request.c
+libarmci_la_SOURCES += src/devices/lapi/lapi.c
+libarmci_la_SOURCES += src/devices/lapi/lapidefs.h
+libarmci_la_SOURCES += src/memory/buffers.c
 endif
 if ARMCI_NETWORK_MPI_SPAWN
-libarmci_la_SOURCES += src/buffers.c
-libarmci_la_SOURCES += src/ds-shared.c
-libarmci_la_SOURCES += src/mpi2_client.c
-libarmci_la_SOURCES += src/mpi2_server.c
-libarmci_la_SOURCES += src/request.c
+AM_CPPFLAGS += -I$(top_srcdir)/src/devices/mpi
+libarmci_la_SOURCES += src/common/ds-shared.c
+libarmci_la_SOURCES += src/common/request.c
+libarmci_la_SOURCES += src/devices/mpi/mpi2_client.c
+libarmci_la_SOURCES += src/devices/mpi/mpi2.h
+libarmci_la_SOURCES += src/devices/mpi/mpi2_server.c
+libarmci_la_SOURCES += src/memory/buffers.c
 endif
 if ARMCI_NETWORK_OPENIB
-libarmci_la_SOURCES += src/async.c
-libarmci_la_SOURCES += src/buffers.c
-libarmci_la_SOURCES += src/cbuf.c
-libarmci_la_SOURCES += src/ds-shared.c
-libarmci_la_SOURCES += src/gpc.c
-libarmci_la_SOURCES += src/openib.c
-libarmci_la_SOURCES += src/pendbufs.c
-libarmci_la_SOURCES += src/regions.c
-libarmci_la_SOURCES += src/request.c
-libarmci_la_SOURCES += src/spawn.c
+AM_CPPFLAGS += -I$(top_srcdir)/src/devices/openib
+libarmci_la_SOURCES += src/common/async.c
+libarmci_la_SOURCES += src/common/ds-shared.c
+libarmci_la_SOURCES += src/common/gpc.c
+libarmci_la_SOURCES += src/common/regions.c
+libarmci_la_SOURCES += src/common/request.c
+libarmci_la_SOURCES += src/common/spawn.c
+libarmci_la_SOURCES += src/devices/openib/armci-vapi.h
+libarmci_la_SOURCES += src/devices/openib/cbuf.c
+libarmci_la_SOURCES += src/devices/openib/cbuf.h
+libarmci_la_SOURCES += src/devices/openib/openib.c
+libarmci_la_SOURCES += src/devices/openib/pendbufs.c
+libarmci_la_SOURCES += src/devices/openib/pendbufs.h
+libarmci_la_SOURCES += src/devices/openib/rtinfo.c
+libarmci_la_SOURCES += src/memory/buffers.c
 endif
 if ARMCI_NETWORK_SOCKETS
-libarmci_la_SOURCES += src/async.c
-libarmci_la_SOURCES += src/buffers.c
-libarmci_la_SOURCES += src/dataserv.c
-libarmci_la_SOURCES += src/ds-shared.c
-libarmci_la_SOURCES += src/request.c
-libarmci_la_SOURCES += src/sockets.c
-libarmci_la_SOURCES += src/spawn.c
+AM_CPPFLAGS += -I$(top_srcdir)/src/devices/sockets
+libarmci_la_SOURCES += src/common/async.c
+libarmci_la_SOURCES += src/common/ds-shared.c
+libarmci_la_SOURCES += src/common/request.c
+libarmci_la_SOURCES += src/common/spawn.c
+libarmci_la_SOURCES += src/devices/sockets/dataserv.c
+libarmci_la_SOURCES += src/devices/sockets/sockets.c
+libarmci_la_SOURCES += src/devices/sockets/sockets.h
+libarmci_la_SOURCES += src/memory/buffers.c
 endif
-#if ARMCI_NETWORK_VIA
-#libarmci_la_SOURCES += src/async.c
-#libarmci_la_SOURCES += src/buffers.c
-#libarmci_la_SOURCES += src/ds-shared.c
-#libarmci_la_SOURCES += src/request.c
-#libarmci_la_SOURCES += src/spawn.c
-#endif
 if ENABLE_CHECKPOINT
-libarmci_la_SOURCES += src/armci_chkpt.c
-libarmci_la_SOURCES += src/armci_storage.c
+libarmci_la_SOURCES += src/ft/armci_chkpt.c
+libarmci_la_SOURCES += src/ft/armci_storage.c
 endif
 if ARMCI_ENABLE_GPC_CALLS
-libarmci_la_SOURCES += src/gpc.c
+libarmci_la_SOURCES += src/common/gpc.c
 endif
 if MACX
-libarmci_la_SOURCES += src/shmalloc.c
-libarmci_la_SOURCES += src/signaltrap.c
-libarmci_la_SOURCES += src/winshmem.c
+libarmci_la_SOURCES += src/common/signaltrap.c
+libarmci_la_SOURCES += src/memory/shmalloc.c
+libarmci_la_SOURCES += src/memory/winshmem.c
 AM_CPPFLAGS += -DSHMEM -DMMAP
 else
 if SYSV
-libarmci_la_SOURCES += src/shmem.c
-libarmci_la_SOURCES += src/shmlimit.c
-libarmci_la_SOURCES += src/signaltrap.c
+libarmci_la_SOURCES += src/common/signaltrap.c
+libarmci_la_SOURCES += src/memory/shmem.c
+libarmci_la_SOURCES += src/memory/shmlimit.c
 endif
 endif
 if NB_NONCONT
-libarmci_la_SOURCES += src/noncont.c
+libarmci_la_SOURCES += src/common/noncont.c
 endif
 if USE_VAMPIR
-libarmci_la_SOURCES += src/armci_vampir.c
+libarmci_la_SOURCES += src/util/armci_vampir.c
 endif
 if ENABLE_PROFILING
-libarmci_la_SOURCES += src/armci_profile.c
+libarmci_la_SOURCES += src/util/armci_profile.c
 endif
 if THREAD_SAFE
-libarmci_la_SOURCES += src/threads.c
-libarmci_la_SOURCES += src/utils.c
+libarmci_la_SOURCES += src/common/utils.c
+libarmci_la_SOURCES += src/util/threads.c
 endif
 if INLINE_TAS_OKAY
-libarmci_la_SOURCES += src/tas.c
+libarmci_la_SOURCES += src/locks/tas.c
 else
 if INLINE_TAS_WITH
-BUILT_SOURCES       += src/tas_as.s
-libarmci_la_SOURCES += src/tas_as.s
+BUILT_SOURCES       += src/locks/tas_as.s
+libarmci_la_SOURCES += src/locks/tas_as.s
 endif
 endif
 if INLINE_X86COPY_NEEDED
 if INLINE_X86COPY_OKAY
-libarmci_la_SOURCES += src/x86copy.c
+libarmci_la_SOURCES += src/common/x86copy.c
 else
 if INLINE_X86COPY_WITH
-BUILT_SOURCES       += src/x86copy_as.s
-libarmci_la_SOURCES += src/x86copy_as.s
+BUILT_SOURCES       += src/common/x86copy_as.s
+libarmci_la_SOURCES += src/common/x86copy_as.s
 endif
 endif
 endif
 
-include_HEADERS += src/armci.h
-include_HEADERS += src/message.h
+include_HEADERS += src/include/armci.h
+include_HEADERS += src/include/message.h
 
-AM_CPPFLAGS += -I$(top_srcdir)/src
+AM_CPPFLAGS += -I$(top_srcdir)/src/include
 
 if ENABLE_SHARED
 MAYBE_PIC = -fPIC -DPIC
 endif
 
-src/tas_as.s: src/tas.c
+src/locks/tas_as.s: src/locks/tas.c
 	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ $<
 
-src/x86copy_as.s: src/x86copy.c
+src/common/x86copy_as.s: src/common/x86copy.c
 	$(ARMCI_X86COPY_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ $<
 
 clean-asm:
-	rm -f src/tas_as.s src/x86copy_as.s
+	rm -f src/locks/tas_as.s src/common/x86copy_as.s
 
 check_PROGRAMS += testing/msgcheck
 check_PROGRAMS += testing/perf_aggr

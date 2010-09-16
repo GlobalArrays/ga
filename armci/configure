@@ -568,7 +568,7 @@ PACKAGE_BUGREPORT='hpctools@pnl.gov'
 PACKAGE_URL='http://www.emsl.pnl.gov/docs/parsoft/armci/'
 
 ac_config_libobj_dir=compat
-ac_unique_file="src/armci.c"
+ac_unique_file="src/common/armci.c"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -681,7 +681,6 @@ SYSV_FALSE
 SYSV_TRUE
 CRAY_XT_NETWORKS_FALSE
 CRAY_XT_NETWORKS_TRUE
-ARMCI_SRC_DIR
 DCMF_VER_0_3_FALSE
 DCMF_VER_0_3_TRUE
 DCMF_VER_0_2_FALSE
@@ -8052,14 +8051,6 @@ else
   DCMF_VER_0_3_FALSE=
 fi
  # always true
-
-# temporary hack
-if test x$ga_armci_network = xPORTALS; then :
-  ARMCI_SRC_DIR=src-portals
-else
-  ARMCI_SRC_DIR=src
-fi
-
 
 # tcgmsg5 requires this
 if test x$ga_armci_network = xLAPI; then :

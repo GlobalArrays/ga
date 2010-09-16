@@ -71,7 +71,9 @@ extern INLINE void _armci_buf_set_cmpld_idx(int idx, int state);
    typedef long msg_tag_t;
 #endif
 
-#include "pendbufs.h"
+#ifdef OPENIB
+#  include "pendbufs.h"
+#endif
 
 #ifndef CLEAR_HNDL_FIELD 
 #   define CLEAR_HNDL_FIELD(_x) 

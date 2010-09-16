@@ -1,5 +1,3 @@
-#ifndef _MP3_H
-#define _MP3_H
 #if defined(PVM)
 #   include <pvm3.h>
     extern void pvm_init(int argc, char *argv[]);
@@ -69,4 +67,3 @@
         }
     }
 #endif
-#endif /* _MP3_H */
