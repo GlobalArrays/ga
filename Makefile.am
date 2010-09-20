@@ -790,6 +790,7 @@ global/examples/boltzmann/setup.F         \
 global/examples/boltzmann/timestep.F      \
 global/examples/boltzmann/vorticity.F
 global_examples_boltzmann_boltz_LDFLAGS = $(FLDFLAGS)
+global_examples_boltzmann_boltz_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/global/examples/boltzmann
 
 global_examples_conjugate_gradient_ga_cg_SOURCES = \
 global/examples/conjugate_gradient/computeloops.F  \

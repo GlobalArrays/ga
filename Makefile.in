@@ -883,17 +883,16 @@ global_X_xregion_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(AM_CFLAGS) $(CFLAGS) $(global_X_xregion_LDFLAGS) $(LDFLAGS) \
 	-o $@
-am_global_examples_boltzmann_boltz_OBJECTS =  \
-	global/examples/boltzmann/boltzmann.$(OBJEXT) \
-	global/examples/boltzmann/equil.$(OBJEXT) \
-	global/examples/boltzmann/get_patch.$(OBJEXT) \
-	global/examples/boltzmann/initpar.$(OBJEXT) \
-	global/examples/boltzmann/main.$(OBJEXT) \
-	global/examples/boltzmann/printdat.$(OBJEXT) \
-	global/examples/boltzmann/properties.$(OBJEXT) \
-	global/examples/boltzmann/setup.$(OBJEXT) \
-	global/examples/boltzmann/timestep.$(OBJEXT) \
-	global/examples/boltzmann/vorticity.$(OBJEXT)
+am_global_examples_boltzmann_boltz_OBJECTS = global/examples/boltzmann/global_examples_boltzmann_boltz-boltzmann.$(OBJEXT) \
+	global/examples/boltzmann/global_examples_boltzmann_boltz-equil.$(OBJEXT) \
+	global/examples/boltzmann/global_examples_boltzmann_boltz-get_patch.$(OBJEXT) \
+	global/examples/boltzmann/global_examples_boltzmann_boltz-initpar.$(OBJEXT) \
+	global/examples/boltzmann/global_examples_boltzmann_boltz-main.$(OBJEXT) \
+	global/examples/boltzmann/global_examples_boltzmann_boltz-printdat.$(OBJEXT) \
+	global/examples/boltzmann/global_examples_boltzmann_boltz-properties.$(OBJEXT) \
+	global/examples/boltzmann/global_examples_boltzmann_boltz-setup.$(OBJEXT) \
+	global/examples/boltzmann/global_examples_boltzmann_boltz-timestep.$(OBJEXT) \
+	global/examples/boltzmann/global_examples_boltzmann_boltz-vorticity.$(OBJEXT)
 global_examples_boltzmann_boltz_OBJECTS =  \
 	$(am_global_examples_boltzmann_boltz_OBJECTS)
 global_examples_boltzmann_boltz_LDADD = $(LDADD)
@@ -2813,6 +2812,7 @@ global/examples/boltzmann/timestep.F      \
 global/examples/boltzmann/vorticity.F
 
 global_examples_boltzmann_boltz_LDFLAGS = $(FLDFLAGS)
+global_examples_boltzmann_boltz_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/global/examples/boltzmann
 global_examples_conjugate_gradient_ga_cg_SOURCES = \
 global/examples/conjugate_gradient/computeloops.F  \
 global/examples/conjugate_gradient/finclude.h      \
@@ -3589,34 +3589,34 @@ global/examples/boltzmann/$(am__dirstamp):
 global/examples/boltzmann/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) global/examples/boltzmann/$(DEPDIR)
 	@: > global/examples/boltzmann/$(DEPDIR)/$(am__dirstamp)
-global/examples/boltzmann/boltzmann.$(OBJEXT):  \
+global/examples/boltzmann/global_examples_boltzmann_boltz-boltzmann.$(OBJEXT):  \
 	global/examples/boltzmann/$(am__dirstamp) \
 	global/examples/boltzmann/$(DEPDIR)/$(am__dirstamp)
-global/examples/boltzmann/equil.$(OBJEXT):  \
+global/examples/boltzmann/global_examples_boltzmann_boltz-equil.$(OBJEXT):  \
 	global/examples/boltzmann/$(am__dirstamp) \
 	global/examples/boltzmann/$(DEPDIR)/$(am__dirstamp)
-global/examples/boltzmann/get_patch.$(OBJEXT):  \
+global/examples/boltzmann/global_examples_boltzmann_boltz-get_patch.$(OBJEXT):  \
 	global/examples/boltzmann/$(am__dirstamp) \
 	global/examples/boltzmann/$(DEPDIR)/$(am__dirstamp)
-global/examples/boltzmann/initpar.$(OBJEXT):  \
+global/examples/boltzmann/global_examples_boltzmann_boltz-initpar.$(OBJEXT):  \
 	global/examples/boltzmann/$(am__dirstamp) \
 	global/examples/boltzmann/$(DEPDIR)/$(am__dirstamp)
-global/examples/boltzmann/main.$(OBJEXT):  \
+global/examples/boltzmann/global_examples_boltzmann_boltz-main.$(OBJEXT):  \
 	global/examples/boltzmann/$(am__dirstamp) \
 	global/examples/boltzmann/$(DEPDIR)/$(am__dirstamp)
-global/examples/boltzmann/printdat.$(OBJEXT):  \
+global/examples/boltzmann/global_examples_boltzmann_boltz-printdat.$(OBJEXT):  \
 	global/examples/boltzmann/$(am__dirstamp) \
 	global/examples/boltzmann/$(DEPDIR)/$(am__dirstamp)
-global/examples/boltzmann/properties.$(OBJEXT):  \
+global/examples/boltzmann/global_examples_boltzmann_boltz-properties.$(OBJEXT):  \
 	global/examples/boltzmann/$(am__dirstamp) \
 	global/examples/boltzmann/$(DEPDIR)/$(am__dirstamp)
-global/examples/boltzmann/setup.$(OBJEXT):  \
+global/examples/boltzmann/global_examples_boltzmann_boltz-setup.$(OBJEXT):  \
 	global/examples/boltzmann/$(am__dirstamp) \
 	global/examples/boltzmann/$(DEPDIR)/$(am__dirstamp)
-global/examples/boltzmann/timestep.$(OBJEXT):  \
+global/examples/boltzmann/global_examples_boltzmann_boltz-timestep.$(OBJEXT):  \
 	global/examples/boltzmann/$(am__dirstamp) \
 	global/examples/boltzmann/$(DEPDIR)/$(am__dirstamp)
-global/examples/boltzmann/vorticity.$(OBJEXT):  \
+global/examples/boltzmann/global_examples_boltzmann_boltz-vorticity.$(OBJEXT):  \
 	global/examples/boltzmann/$(am__dirstamp) \
 	global/examples/boltzmann/$(DEPDIR)/$(am__dirstamp)
 global/examples/boltzmann/boltz$(EXEEXT): $(global_examples_boltzmann_boltz_OBJECTS) $(global_examples_boltzmann_boltz_DEPENDENCIES) global/examples/boltzmann/$(am__dirstamp)
@@ -4248,16 +4248,16 @@ mostlyclean-compile:
 	-rm -f global/X/global_X_xregion-xregion_util.$(OBJEXT)
 	-rm -f global/X/global_X_xregion-xregion_view.$(OBJEXT)
 	-rm -f global/X/global_X_xregion-xregion_xcmap.$(OBJEXT)
-	-rm -f global/examples/boltzmann/boltzmann.$(OBJEXT)
-	-rm -f global/examples/boltzmann/equil.$(OBJEXT)
-	-rm -f global/examples/boltzmann/get_patch.$(OBJEXT)
-	-rm -f global/examples/boltzmann/initpar.$(OBJEXT)
-	-rm -f global/examples/boltzmann/main.$(OBJEXT)
-	-rm -f global/examples/boltzmann/printdat.$(OBJEXT)
-	-rm -f global/examples/boltzmann/properties.$(OBJEXT)
-	-rm -f global/examples/boltzmann/setup.$(OBJEXT)
-	-rm -f global/examples/boltzmann/timestep.$(OBJEXT)
-	-rm -f global/examples/boltzmann/vorticity.$(OBJEXT)
+	-rm -f global/examples/boltzmann/global_examples_boltzmann_boltz-boltzmann.$(OBJEXT)
+	-rm -f global/examples/boltzmann/global_examples_boltzmann_boltz-equil.$(OBJEXT)
+	-rm -f global/examples/boltzmann/global_examples_boltzmann_boltz-get_patch.$(OBJEXT)
+	-rm -f global/examples/boltzmann/global_examples_boltzmann_boltz-initpar.$(OBJEXT)
+	-rm -f global/examples/boltzmann/global_examples_boltzmann_boltz-main.$(OBJEXT)
+	-rm -f global/examples/boltzmann/global_examples_boltzmann_boltz-printdat.$(OBJEXT)
+	-rm -f global/examples/boltzmann/global_examples_boltzmann_boltz-properties.$(OBJEXT)
+	-rm -f global/examples/boltzmann/global_examples_boltzmann_boltz-setup.$(OBJEXT)
+	-rm -f global/examples/boltzmann/global_examples_boltzmann_boltz-timestep.$(OBJEXT)
+	-rm -f global/examples/boltzmann/global_examples_boltzmann_boltz-vorticity.$(OBJEXT)
 	-rm -f global/examples/conjugate_gradient/computeloops.$(OBJEXT)
 	-rm -f global/examples/conjugate_gradient/ga_cg.$(OBJEXT)
 	-rm -f global/examples/conjugate_gradient/matvecmul.$(OBJEXT)
@@ -4858,6 +4858,86 @@ distclean-compile:
 .F.lo:
 	$(AM_V_PPF77) @AM_BACKSLASH@
 	$(LTPPF77COMPILE) -c -o $@ $<
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-boltzmann.o: global/examples/boltzmann/boltzmann.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-boltzmann.o `test -f 'global/examples/boltzmann/boltzmann.F' || echo '$(srcdir)/'`global/examples/boltzmann/boltzmann.F
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-boltzmann.obj: global/examples/boltzmann/boltzmann.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-boltzmann.obj `if test -f 'global/examples/boltzmann/boltzmann.F'; then $(CYGPATH_W) 'global/examples/boltzmann/boltzmann.F'; else $(CYGPATH_W) '$(srcdir)/global/examples/boltzmann/boltzmann.F'; fi`
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-equil.o: global/examples/boltzmann/equil.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-equil.o `test -f 'global/examples/boltzmann/equil.F' || echo '$(srcdir)/'`global/examples/boltzmann/equil.F
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-equil.obj: global/examples/boltzmann/equil.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-equil.obj `if test -f 'global/examples/boltzmann/equil.F'; then $(CYGPATH_W) 'global/examples/boltzmann/equil.F'; else $(CYGPATH_W) '$(srcdir)/global/examples/boltzmann/equil.F'; fi`
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-get_patch.o: global/examples/boltzmann/get_patch.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-get_patch.o `test -f 'global/examples/boltzmann/get_patch.F' || echo '$(srcdir)/'`global/examples/boltzmann/get_patch.F
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-get_patch.obj: global/examples/boltzmann/get_patch.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-get_patch.obj `if test -f 'global/examples/boltzmann/get_patch.F'; then $(CYGPATH_W) 'global/examples/boltzmann/get_patch.F'; else $(CYGPATH_W) '$(srcdir)/global/examples/boltzmann/get_patch.F'; fi`
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-initpar.o: global/examples/boltzmann/initpar.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-initpar.o `test -f 'global/examples/boltzmann/initpar.F' || echo '$(srcdir)/'`global/examples/boltzmann/initpar.F
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-initpar.obj: global/examples/boltzmann/initpar.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-initpar.obj `if test -f 'global/examples/boltzmann/initpar.F'; then $(CYGPATH_W) 'global/examples/boltzmann/initpar.F'; else $(CYGPATH_W) '$(srcdir)/global/examples/boltzmann/initpar.F'; fi`
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-main.o: global/examples/boltzmann/main.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-main.o `test -f 'global/examples/boltzmann/main.F' || echo '$(srcdir)/'`global/examples/boltzmann/main.F
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-main.obj: global/examples/boltzmann/main.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-main.obj `if test -f 'global/examples/boltzmann/main.F'; then $(CYGPATH_W) 'global/examples/boltzmann/main.F'; else $(CYGPATH_W) '$(srcdir)/global/examples/boltzmann/main.F'; fi`
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-printdat.o: global/examples/boltzmann/printdat.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-printdat.o `test -f 'global/examples/boltzmann/printdat.F' || echo '$(srcdir)/'`global/examples/boltzmann/printdat.F
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-printdat.obj: global/examples/boltzmann/printdat.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-printdat.obj `if test -f 'global/examples/boltzmann/printdat.F'; then $(CYGPATH_W) 'global/examples/boltzmann/printdat.F'; else $(CYGPATH_W) '$(srcdir)/global/examples/boltzmann/printdat.F'; fi`
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-properties.o: global/examples/boltzmann/properties.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-properties.o `test -f 'global/examples/boltzmann/properties.F' || echo '$(srcdir)/'`global/examples/boltzmann/properties.F
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-properties.obj: global/examples/boltzmann/properties.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-properties.obj `if test -f 'global/examples/boltzmann/properties.F'; then $(CYGPATH_W) 'global/examples/boltzmann/properties.F'; else $(CYGPATH_W) '$(srcdir)/global/examples/boltzmann/properties.F'; fi`
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-setup.o: global/examples/boltzmann/setup.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-setup.o `test -f 'global/examples/boltzmann/setup.F' || echo '$(srcdir)/'`global/examples/boltzmann/setup.F
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-setup.obj: global/examples/boltzmann/setup.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-setup.obj `if test -f 'global/examples/boltzmann/setup.F'; then $(CYGPATH_W) 'global/examples/boltzmann/setup.F'; else $(CYGPATH_W) '$(srcdir)/global/examples/boltzmann/setup.F'; fi`
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-timestep.o: global/examples/boltzmann/timestep.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-timestep.o `test -f 'global/examples/boltzmann/timestep.F' || echo '$(srcdir)/'`global/examples/boltzmann/timestep.F
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-timestep.obj: global/examples/boltzmann/timestep.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-timestep.obj `if test -f 'global/examples/boltzmann/timestep.F'; then $(CYGPATH_W) 'global/examples/boltzmann/timestep.F'; else $(CYGPATH_W) '$(srcdir)/global/examples/boltzmann/timestep.F'; fi`
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-vorticity.o: global/examples/boltzmann/vorticity.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-vorticity.o `test -f 'global/examples/boltzmann/vorticity.F' || echo '$(srcdir)/'`global/examples/boltzmann/vorticity.F
+
+global/examples/boltzmann/global_examples_boltzmann_boltz-vorticity.obj: global/examples/boltzmann/vorticity.F
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(global_examples_boltzmann_boltz_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS) -c -o global/examples/boltzmann/global_examples_boltzmann_boltz-vorticity.obj `if test -f 'global/examples/boltzmann/vorticity.F'; then $(CYGPATH_W) 'global/examples/boltzmann/vorticity.F'; else $(CYGPATH_W) '$(srcdir)/global/examples/boltzmann/vorticity.F'; fi`
 .F.f:
 	$(F77COMPILE) -F $<
 
