@@ -336,7 +336,7 @@ void armci_set_mem_offset(void *ptr)
    }else{
       if(armci_mem_offset != off){
          *armci_use_memlock_table =0;
-         printf("%d: WARNING:armci_set_mem_offset: offset changed %ld to %ld\n",
+         fprintf(stderr, "%d: WARNING:armci_set_mem_offset: offset changed %ld to %ld\n",
                  armci_me, (long)armci_mem_offset, (long)off); fflush(stdout);
       }
    }
