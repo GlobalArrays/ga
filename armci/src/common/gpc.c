@@ -23,7 +23,7 @@ static void *_table[GPC_SLOTS]={
 (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0,
 (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0};
 
-#if (defined(LAPI) || defined(GM) || defined(VAPI) || defined(QUADRICS)) && defined(ARMCI_ENABLE_GPC_CALLS)
+#if (defined(LAPI) || defined(GM) || defined(VAPI) || defined(QUADRICS)) && ARMCI_ENABLE_GPC_CALLS
 
 /*\ callback functions must be registered -- user gets int handle back
 \*/

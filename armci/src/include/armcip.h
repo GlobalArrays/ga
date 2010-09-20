@@ -116,7 +116,7 @@ extern thread_id_t armci_usr_tid;
 #endif
 
 #ifdef ARMCIX
-#include "armcix/armcix.h"
+#include "armcix.h"
 #endif
 
 /* ------------------------ ARMCI threads support ------------------------- */

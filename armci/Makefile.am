@@ -342,7 +342,6 @@ if ARMCI_NETWORK_DCMF
 AM_CPPFLAGS += -I$(top_srcdir)/src/devices/dcmf
 libarmci_la_SOURCES += src/collectives/message.c
 libarmci_la_SOURCES += src/common/groups.c
-libarmci_la_SOURCES += src/common/request.c
 libarmci_la_SOURCES += src/devices/dcmf/armcix.h
 if DCMF_VER_2
 libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_acc.c

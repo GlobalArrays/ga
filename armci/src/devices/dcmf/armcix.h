@@ -13,10 +13,10 @@
 #ifndef __armci_src_x_armcix_h
 #define __armci_src_x_armcix_h
 
-#include "../armci.h"
-#include "../armcip.h"
-#include "../request.h"
-#include "../memlock.h"
+#include "armci.h"
+#include "armcip.h"
+#include "request.h"
+#include "memlock.h"
 
 
 /**

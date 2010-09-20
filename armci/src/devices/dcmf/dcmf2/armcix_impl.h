@@ -23,7 +23,7 @@
 #   include <assert.h>
 #endif
 #include "dcmf.h"
-#include "armcix/armcix.h"
+#include "armcix.h"
 
 /*
 #define BLOCKING_OPERATIONS_REQUIRE_FENCE

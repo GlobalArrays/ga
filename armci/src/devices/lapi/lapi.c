@@ -40,7 +40,7 @@ char err_msg_buf[LAPI_MAX_ERR_STRING]; /* for error msg returned by LAPI */
     }                                                             \
 }
 
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
     extern gpc_buf_t *gpc_req;
 #endif
 int lapi_max_uhdr_data_sz; /* max  data payload */
@@ -86,7 +86,7 @@ int whofrom, msglen;
 request_header_t *msginfo = (request_header_t *)save;
 char *descr= (char*)(msginfo+1), *buf=MessageRcvBuffer;
 int buflen=MSG_BUFLEN;
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
   extern pthread_t data_server;
   data_server = pthread_self();
 #endif
@@ -227,7 +227,7 @@ lapi_cntr_t *pcmpl_cntr, *pcntr = &(BUF_TO_EVBUF(msginfo)->cntr);
 int rc;
 
       msginfo->tag.cntr= pcntr;
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
       if(msginfo->operation==GET && msginfo->format==VECTOR && msginfo->ehlen){ 
         msginfo->tag.buf = (char *)(msginfo+1)+msginfo->dscrlen;
       }
@@ -323,7 +323,7 @@ char* armci_rcv_data(int proc, request_header_t *msginfo)
 {
 lapi_cmpl_t *pcntr=BUF_TO_EVBUF(msginfo);
      CLEAR_COUNTER((*pcntr));
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
      if(msginfo->operation==GET && msginfo->format==VECTOR && msginfo->ehlen){
        return((char *)(msginfo+1)+msginfo->dscrlen);
      }
@@ -464,7 +464,7 @@ lapi_remote_cxt_t util_cxt;  /* For call to obtain rCxt */
 #ifdef LAPI_RDMA
      CHECK((LAPI_Gfence(lapi_handle)));
 #endif
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
     gpc_req = (gpc_buf_t *)malloc(sizeof(gpc_buf_t)*MAX_GPC_REQ);
     if(gpc_req==NULL)armci_die("malloc for gpc failed",sizeof(gpc_buf_t));
     gpc_init();

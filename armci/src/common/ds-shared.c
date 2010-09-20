@@ -1080,7 +1080,7 @@ void armci_start_server()
 void *armci_server_code(void *data)
 {
 #ifdef SERVER_THREAD
-#if (defined(GM) || defined(VAPI) || defined(QUADRICS)) && defined(ARMCI_ENABLE_GPC_CALLS)
+#if (defined(GM) || defined(VAPI) || defined(QUADRICS)) && ARMCI_ENABLE_GPC_CALLS
 #  ifdef PTHREADS
   extern pthread_t data_server;
   data_server = pthread_self();
@@ -1100,7 +1100,7 @@ void *armci_server_code(void *data)
         printf("%d(server): connected to all computing processes\n",armci_me);
         fflush(stdout);
     }
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
     gpc_init();
 #endif
     armci_call_data_server();

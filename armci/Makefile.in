@@ -243,7 +243,6 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_28 = -I$(top_srcdir)/src/devices/dcmf
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_29 = src/collectives/message.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/groups.c \
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/dcmf/armcix.h
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@am__append_30 = src/devices/dcmf/dcmf2/armcix_acc.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_fence.c \
@@ -346,27 +345,27 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_PORTALS_FALSE@@NOFORT_FALSE@	testing/copy_test
 @ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_65 = examples/features/gpc/hashtable/test_hashtable \
 @ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_59 = examples/features/proc_affinity/computation_impact/computation_impact
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_60 = examples/features/proc_affinity/simple/simple
-@MSG_COMMS_MPI_TRUE@am__append_61 = examples/features/concurrency/multidma/multidma \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_66 = examples/features/proc_affinity/computation_impact/computation_impact
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_67 = examples/features/proc_affinity/simple/simple
+@MSG_COMMS_MPI_TRUE@am__append_68 = examples/features/concurrency/multidma/multidma \
 @MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap
-@RANDOM_ACCESS_TRUE@am__append_62 = examples/benchmarks/RandomAccess/simple/simple \
+@RANDOM_ACCESS_TRUE@am__append_69 = examples/benchmarks/RandomAccess/simple/simple \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket
-@THREAD_SAFE_TRUE@am__append_63 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_64 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
+@THREAD_SAFE_TRUE@am__append_70 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_71 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
 @ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_65 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_66 = examples/features/proc_affinity/simple/simple$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_67 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_72 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_73 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_74 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap$(EXEEXT)
-@RANDOM_ACCESS_TRUE@am__append_68 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__append_75 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__append_69 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+@THREAD_SAFE_TRUE@am__append_76 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 XFAIL_TESTS = $(am__EXEEXT_18) $(am__EXEEXT_18)
 #PARALLEL_TESTS += testing-portals/perf_nb$(EXEEXT) # needs bug fixes
 #SERIAL_TESTS += testing-portals/shmclean$(EXEEXT) # not sure we need this
 #SERIAL_TESTS += testing-portals/shmtest$(EXEEXT) # not sure we need this
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_70 =  \
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_77 =  \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/clone$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/fork$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/msgcheck$(EXEEXT) \
@@ -380,14 +379,14 @@ XFAIL_TESTS = $(am__EXEEXT_18) $(am__EXEEXT_18)
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/testnotify$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/test$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/te$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_71 = testing-portals/gpctest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_78 = testing-portals/gpctest$(EXEEXT)
 #PARALLEL_TESTS += testing-portals/ipctest$(EXEEXT) # needs bug fixes
-@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_72 = testing-portals/test_groups$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__append_73 = testing-portals/test_mt$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_79 = testing-portals/test_groups$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__append_80 = testing-portals/test_mt$(EXEEXT)
 #PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
 #SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
 #SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
-@ARMCI_NETWORK_PORTALS_FALSE@am__append_74 =  \
+@ARMCI_NETWORK_PORTALS_FALSE@am__append_81 =  \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/msgcheck$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/perf_aggr$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/perf$(EXEEXT) \
@@ -395,22 +394,22 @@ XFAIL_TESTS = $(am__EXEEXT_18) $(am__EXEEXT_18)
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/testitr$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/testnotify$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/test$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_75 = testing/fttest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_76 = testing/gpctest$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_77 = testing/test_groups$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_82 = testing/fttest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_83 = testing/gpctest$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_84 = testing/test_groups$(EXEEXT)
 #PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
-@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_78 = testing/test_mt$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_FALSE@@NOFORT_FALSE@am__append_79 = testing/acc_test$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_85 = testing/test_mt$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_FALSE@@NOFORT_FALSE@am__append_86 = testing/acc_test$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@@NOFORT_FALSE@	testing/copy_test$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_80 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_87 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
 @ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_81 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_82 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_88 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_89 = examples/features/proc_affinity/simple/simple$(EXEEXT)
 #PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
 #PARALLEL_TESTS += examples/features/non-blocking/overlap/overlap$(EXEEXT) # needs bug fixes
-@RANDOM_ACCESS_TRUE@am__append_83 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__append_90 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__append_84 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+@THREAD_SAFE_TRUE@am__append_91 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -556,8 +555,7 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.c src-portals/acc.h \
 	src/devices/bgml/bgmlacc.h src/devices/bgml/bgml.c \
 	src/devices/bgml/bgmldefs.h src/devices/bgml/bgml.h \
 	src/devices/bgml/bgmltas-ppc.h src/memory/shmalloc.c \
-	src/common/request.c src/devices/dcmf/armcix.h \
-	src/devices/dcmf/dcmf2/armcix_acc.c \
+	src/devices/dcmf/armcix.h src/devices/dcmf/dcmf2/armcix_acc.c \
 	src/devices/dcmf/dcmf2/armcix_fence.c \
 	src/devices/dcmf/dcmf2/armcix_get.c \
 	src/devices/dcmf/dcmf2/armcix_impl.c \
@@ -581,11 +579,11 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.c src-portals/acc.h \
 	src/devices/dcmf/dcmf-0.3.0/armcix_put.c \
 	src/devices/dcmf/dcmf-0.3.0/armcix_rmw.c \
 	src/devices/dcmf/dcmf-0.3.0/armcix_wait.c src/common/async.c \
-	src/devices/lapi/lapi.c src/devices/lapi/lapidefs.h \
-	src/memory/buffers.c src/common/ds-shared.c \
-	src/devices/mpi/mpi2_client.c src/devices/mpi/mpi2.h \
-	src/devices/mpi/mpi2_server.c src/common/gpc.c \
-	src/common/regions.c src/common/spawn.c \
+	src/common/request.c src/devices/lapi/lapi.c \
+	src/devices/lapi/lapidefs.h src/memory/buffers.c \
+	src/common/ds-shared.c src/devices/mpi/mpi2_client.c \
+	src/devices/mpi/mpi2.h src/devices/mpi/mpi2_server.c \
+	src/common/gpc.c src/common/regions.c src/common/spawn.c \
 	src/devices/openib/armci-vapi.h src/devices/openib/cbuf.c \
 	src/devices/openib/cbuf.h src/devices/openib/openib.c \
 	src/devices/openib/pendbufs.c src/devices/openib/pendbufs.h \
@@ -666,8 +664,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgml.lo
 @ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_14 = src/memory/shmalloc.lo
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_15 = src/collectives/message.lo \
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/groups.lo \
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.lo
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/groups.lo
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@am__objects_16 = src/devices/dcmf/dcmf2/armcix_acc.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_fence.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_get.lo \
@@ -807,8 +804,7 @@ am__libarmcii_la_SOURCES_DIST = src-portals/acc.c src-portals/acc.h \
 	src/devices/bgml/bgmlacc.h src/devices/bgml/bgml.c \
 	src/devices/bgml/bgmldefs.h src/devices/bgml/bgml.h \
 	src/devices/bgml/bgmltas-ppc.h src/memory/shmalloc.c \
-	src/common/request.c src/devices/dcmf/armcix.h \
-	src/devices/dcmf/dcmf2/armcix_acc.c \
+	src/devices/dcmf/armcix.h src/devices/dcmf/dcmf2/armcix_acc.c \
 	src/devices/dcmf/dcmf2/armcix_fence.c \
 	src/devices/dcmf/dcmf2/armcix_get.c \
 	src/devices/dcmf/dcmf2/armcix_impl.c \
@@ -832,11 +828,11 @@ am__libarmcii_la_SOURCES_DIST = src-portals/acc.c src-portals/acc.h \
 	src/devices/dcmf/dcmf-0.3.0/armcix_put.c \
 	src/devices/dcmf/dcmf-0.3.0/armcix_rmw.c \
 	src/devices/dcmf/dcmf-0.3.0/armcix_wait.c src/common/async.c \
-	src/devices/lapi/lapi.c src/devices/lapi/lapidefs.h \
-	src/memory/buffers.c src/common/ds-shared.c \
-	src/devices/mpi/mpi2_client.c src/devices/mpi/mpi2.h \
-	src/devices/mpi/mpi2_server.c src/common/gpc.c \
-	src/common/regions.c src/common/spawn.c \
+	src/common/request.c src/devices/lapi/lapi.c \
+	src/devices/lapi/lapidefs.h src/memory/buffers.c \
+	src/common/ds-shared.c src/devices/mpi/mpi2_client.c \
+	src/devices/mpi/mpi2.h src/devices/mpi/mpi2_server.c \
+	src/common/gpc.c src/common/regions.c src/common/spawn.c \
 	src/devices/openib/armci-vapi.h src/devices/openib/cbuf.c \
 	src/devices/openib/cbuf.h src/devices/openib/openib.c \
 	src/devices/openib/pendbufs.c src/devices/openib/pendbufs.h \
@@ -1720,6 +1716,7 @@ ARMCI_FOPT = @ARMCI_FOPT@
 ARMCI_NETWORK_CPPFLAGS = @ARMCI_NETWORK_CPPFLAGS@
 ARMCI_NETWORK_LDFLAGS = @ARMCI_NETWORK_LDFLAGS@
 ARMCI_NETWORK_LIBS = @ARMCI_NETWORK_LIBS@
+ARMCI_SRC_DIR = @ARMCI_SRC_DIR@
 ARMCI_TAS_AS = @ARMCI_TAS_AS@
 ARMCI_X86COPY_AS = @ARMCI_X86COPY_AS@
 AUTOCONF = @AUTOCONF@
@@ -2130,9 +2127,9 @@ EXAMPLES = examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) \
 	examples/features/non-blocking/simple/simple$(EXEEXT) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_64) \
-	$(am__append_65) $(am__append_66) $(am__append_67) \
-	$(am__append_68) $(am__append_69)
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_71) \
+	$(am__append_72) $(am__append_73) $(am__append_74) \
+	$(am__append_75) $(am__append_76)
 
 ##############################################################################
 # test suite
@@ -2145,13 +2142,13 @@ TESTS = $(SERIAL_TESTS) $(PARALLEL_TESTS)
 TESTS_ENVIRONMENT = \
 maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
 
-SERIAL_TESTS = $(am__append_79)
+SERIAL_TESTS = $(am__append_86)
 SERIAL_TESTS_XFAIL = 
 #PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
 #PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
-PARALLEL_TESTS = $(am__append_70) $(am__append_71) $(am__append_72) \
-	$(am__append_73) $(am__append_74) $(am__append_75) \
-	$(am__append_76) $(am__append_77) $(am__append_78) \
+PARALLEL_TESTS = $(am__append_77) $(am__append_78) $(am__append_79) \
+	$(am__append_80) $(am__append_81) $(am__append_82) \
+	$(am__append_83) $(am__append_84) $(am__append_85) \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu$(EXEEXT) \
@@ -2163,9 +2160,9 @@ PARALLEL_TESTS = $(am__append_70) $(am__append_71) $(am__append_72) \
 	examples/features/non-blocking/simple/simple$(EXEEXT) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_80) \
-	$(am__append_81) $(am__append_82) $(am__append_83) \
-	$(am__append_84)
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_87) \
+	$(am__append_88) $(am__append_89) $(am__append_90) \
+	$(am__append_91)
 PARALLEL_TESTS_XFAIL = 
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -2446,8 +2443,6 @@ src/devices/bgml/bgml.lo: src/devices/bgml/$(am__dirstamp) \
 	src/devices/bgml/$(DEPDIR)/$(am__dirstamp)
 src/memory/shmalloc.lo: src/memory/$(am__dirstamp) \
 	src/memory/$(DEPDIR)/$(am__dirstamp)
-src/common/request.lo: src/common/$(am__dirstamp) \
-	src/common/$(DEPDIR)/$(am__dirstamp)
 src/devices/dcmf/dcmf2/$(am__dirstamp):
 	@$(MKDIR_P) src/devices/dcmf/dcmf2
 	@: > src/devices/dcmf/dcmf2/$(am__dirstamp)
@@ -2539,6 +2534,8 @@ src/devices/dcmf/dcmf-0.3.0/armcix_wait.lo:  \
 	src/devices/dcmf/dcmf-0.3.0/$(am__dirstamp) \
 	src/devices/dcmf/dcmf-0.3.0/$(DEPDIR)/$(am__dirstamp)
 src/common/async.lo: src/common/$(am__dirstamp) \
+	src/common/$(DEPDIR)/$(am__dirstamp)
+src/common/request.lo: src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
 src/devices/lapi/$(am__dirstamp):
 	@$(MKDIR_P) src/devices/lapi

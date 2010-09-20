@@ -23,7 +23,7 @@
 #   include <assert.h>
 #endif
 #include "dcmf.h"
-#include "armcix/armcix.h"
+#include "armcix.h"
 
 /* verify that the version of the installed dcmf library is compatible */
 #if (DCMF_VERSION_RELEASE == 0)

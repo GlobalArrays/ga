@@ -345,7 +345,7 @@ void armci_init_clusinfo()
   char name[MAX_HOSTNAME], *merged;
   int  len, limit, rc;
   char *tmp;
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
   char *enval;
 #endif
 
@@ -363,7 +363,7 @@ void armci_init_clusinfo()
       fflush(stdout);
   }
   len =  strlen(name);
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
   /*a simple way to run as many servers as compute processes*/ 
   enval = getenv("ARMCI_NSERV_EQ_NPROC");
   if(enval != NULL){

@@ -1,5 +1,4 @@
 #ifndef __GPCDEF
-#if defined(ARMCI_ENABLE_GPC_CALLS)
 #define __GPCDEF
 
 #include "armci.h"
@@ -40,5 +39,4 @@ extern void ARMCI_Gpc_wait(gpc_hdl_t *nbh);
 }
 #endif
 
-#endif
 #endif

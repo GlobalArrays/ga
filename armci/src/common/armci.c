@@ -59,7 +59,7 @@
 #include "signaltrap.h"
 
 #ifdef ARMCIX
-#include "armcix/armcix.h"
+#include "armcix.h"
 #endif
 #ifdef GA_USE_VAMPIR
 #include "armci_vampir.h"
@@ -650,7 +650,7 @@ int PARMCI_Init()
     armci_allocate_locks();
     armci_init_fence();
 
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
     gpc_init_signals();
 #endif
 
@@ -1100,7 +1100,7 @@ void ARMCI_Ckpt_finalize(int rid)
     armci_icheckpoint_finalize(rid);
 }
 #endif
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
 int armci_gpc(int hndl, int proc, void  *hdr, int hlen,  void *data,  int dlen,
               void *rhdr, int rhlen, void *rdata, int rdlen,
               armci_hdl_t* nbh) {

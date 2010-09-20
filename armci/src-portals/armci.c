@@ -384,7 +384,7 @@ caddr_t atbeginbrval = (caddr_t)sbrk(0);
 #endif
     armci_allocate_locks();
     armci_init_fence();
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
     gpc_init_signals();
 #endif
     armci_msg_barrier();
@@ -777,7 +777,7 @@ void ARMCI_Ckpt_finalize(int rid)
     armci_icheckpoint_finalize(rid);
 }
 #endif
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
 int armci_gpc(int hndl, int proc, void  *hdr, int hlen,  void *data,  int dlen,
               void *rhdr, int rhlen, void *rdata, int rdlen,
               armci_hdl_t* nbh) {

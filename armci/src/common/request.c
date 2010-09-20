@@ -1495,7 +1495,7 @@ void armci_server_vector( request_header_t *msginfo,
     case GET:
 /*        fprintf(stderr, "%d:: Got a vector message!!\n", armci_me); */
       if(msginfo->ehlen) {
-#if defined(ARMCI_ENABLE_GPC_CALLS) && (defined(LAPI) || defined(GM) || defined(VAPI) || defined(DOELAN4))
+#if ARMCI_ENABLE_GPC_CALLS && (defined(LAPI) || defined(GM) || defined(VAPI) || defined(DOELAN4))
 	gpc_call_process(msginfo, len, dscr, buf, buflen, sbuf);
 #else
 	armci_die("Unexpected vector message with non-zero ehlen. GPC call?",
@@ -1573,7 +1573,7 @@ void armci_server_vector( request_header_t *msginfo,
 
 /**Server side routine to handle a GPC call request**/
 /*===============Register this memory=====================*/
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
 #if defined(LAPI) || defined(GM) || defined(VAPI) || defined(QUADRICS)
 gpc_buf_t *gpc_req;
 /*VT: I made the change below because DATA_SERVER is not defined for elan4

@@ -936,7 +936,7 @@ void armci_setaffinity(char *cpu_mapping) {
 
 /****************MEMORY ALLOCATION REGISTRATION DEREGISTRATION****************/
 static char * serv_malloc_buf_base;
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
 extern gpc_buf_t *gpc_req;
 #endif
 void armci_server_alloc_bufs()
@@ -980,7 +980,7 @@ void armci_server_alloc_bufs()
     memset(CLN_handle,0,mhsize); /* set it to zero */
     tmp += mhsize;
 
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
     /* gpc_req memory*/
     tmp += SIXTYFOUR - ((ssize_t)tmp % SIXTYFOUR);
     gpc_req = (gpc_buf_t *)tmp;
@@ -2122,7 +2122,7 @@ int nslave=armci_clus_info[armci_clus_me].nslave;
     rrr=sched_getaffinity(0, sizeof(mycpuid), &mycpuid);
 #endif
 
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
     unblock_thread_signal(GPC_COMPLETION_SIGNAL);
 #endif
 #if defined(PEND_BUFS)
@@ -2159,7 +2159,7 @@ int nslave=armci_clus_info[armci_clus_me].nslave;
 #endif
 #endif
 
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
       block_thread_signal(GPC_COMPLETION_SIGNAL);
 #endif
       bzero(pdscr, sizeof(*pdscr));
@@ -2392,7 +2392,7 @@ int nslave=armci_clus_info[armci_clus_me].nslave;
 	 fflush(stdout);
        }
        
-#ifdef ARMCI_ENABLE_GPC_CALLS
+#if ARMCI_ENABLE_GPC_CALLS
        unblock_thread_signal(GPC_COMPLETION_SIGNAL);
 #endif
    }/* end of for */
