@@ -681,6 +681,7 @@ SYSV_FALSE
 SYSV_TRUE
 CRAY_XT_NETWORKS_FALSE
 CRAY_XT_NETWORKS_TRUE
+ARMCI_SRC_DIR
 DCMF_VER_0_3_FALSE
 DCMF_VER_0_3_TRUE
 DCMF_VER_0_2_FALSE
@@ -8052,6 +8053,14 @@ else
 fi
  # always true
 
+# temporary hack
+if test x$ga_armci_network = xPORTALS; then :
+  ARMCI_SRC_DIR=src-portals
+else
+  ARMCI_SRC_DIR=src
+fi
+
+
 # tcgmsg5 requires this
 if test x$ga_armci_network = xLAPI; then :
 
@@ -9504,8 +9513,10 @@ else
   case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu:$ga_armci_network in #(
   BGL:*:*:*) :
     armci_cv_c_opt="-O0" ;; #(
-  BGP:*:*:*) :
+  BGP:ibm:*:*) :
     armci_cv_c_opt="-O3 -qstrict -qarch=450 -qtune=450" ;; #(
+  BGP:gnu:*:*) :
+    armci_cv_c_opt="-O2" ;; #(
   CATAMOUNT:*:*:*) :
     armci_cv_c_opt= ;; #(
   CRAY_XT:*:*:*) :
@@ -12489,8 +12500,10 @@ else
   case $ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu:$ga_armci_network in #(
   BGL:*:*:*) :
     armci_cv_f77_opt="-O0" ;; #(
-  BGP:*:*:*) :
+  BGP:ibm:*:*) :
     armci_cv_f77_opt="-O3 -qstrict -qarch=450 -qtune=450" ;; #(
+  BGP:gnu:*:*) :
+    armci_cv_f77_opt="-O2" ;; #(
   CATAMOUNT:*:*:*) :
     armci_cv_f77_opt="-O3" ;; #(
   CRAY_XT:*:*:*) :

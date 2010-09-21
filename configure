@@ -10420,8 +10420,10 @@ else
   case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu in #(
   BGL:*:*) :
     ga_cv_c_opt="-O0" ;; #(
-  BGP:*:*) :
+  BGP:ibm:*) :
     ga_cv_c_opt="-O3 -qstrict -qarch=450 -qtune=450" ;; #(
+  BGP:gnu:*) :
+    ga_cv_c_opt="-O2" ;; #(
   CATAMOUNT:*:*) :
     ga_cv_c_opt= ;; #(
   CRAY_XT:*:*) :
@@ -14036,8 +14038,10 @@ else
   case $ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu in #(
   BGL:*:*) :
     ga_cv_f77_opt="-O0" ;; #(
-  BGP:*:*) :
+  BGP:ibm:*) :
     ga_cv_f77_opt="-O3 -qstrict -qarch=450 -qtune=450" ;; #(
+  BGP:gnu:*) :
+    ga_cv_f77_opt="-O2" ;; #(
   CATAMOUNT:*:*) :
     ga_cv_f77_opt="-O3" ;; #(
   CRAY_XT:*:*) :
