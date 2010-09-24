@@ -23,8 +23,6 @@ static void *_table[GPC_SLOTS]={
 (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0,
 (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0};
 
-#if (defined(LAPI) || defined(GM) || defined(VAPI) || defined(QUADRICS)) && ARMCI_ENABLE_GPC_CALLS
-
 /*\ callback functions must be registered -- user gets int handle back
 \*/
 int ARMCI_Gpc_register( int (*func) ())
@@ -342,6 +340,3 @@ int ARMCI_Gpc_get_hlen() {
 int ARMCI_Gpc_get_dlen() {
   return ARMCI_GPC_DLEN;
 }
-
-#endif
-
