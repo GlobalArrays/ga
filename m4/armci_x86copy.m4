@@ -6,7 +6,7 @@
 AC_DEFUN([ARMCI_X86COPY], [
 AC_CACHE_CHECK([whether we can compile x86copy inline assembly],
     [armci_cv_as_x86copy],
-    [ga_compile="$CC -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src $CPPFLAGS $ARMCI_TOP_SRCDIR/src/x86copy.c"
+    [ga_compile="$CC -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src/include $CPPFLAGS $ARMCI_TOP_SRCDIR/src/common/x86copy.c"
      AS_ECHO(["$ga_compile"])>&AS_MESSAGE_LOG_FD
      AS_IF([$ga_compile 1>&AS_MESSAGE_LOG_FD 2>&1],
         [armci_cv_as_x86copy=yes],
@@ -15,7 +15,7 @@ AC_CACHE_CHECK([whether we can compile x86copy inline assembly],
 AC_CACHE_CHECK([whether we can compile x86copy inline assembly with help],
     [armci_cv_as_x86copy_with],
     [AC_PATH_PROGS_FEATURE_CHECK([ARMCI_X86COPY_AS], [bgxlc xlc gcc],
-        [ga_compile="$ac_path_ARMCI_X86COPY_AS -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src $CPPFLAGS $ARMCI_TOP_SRCDIR/src/x86copy.c"
+        [ga_compile="$ac_path_ARMCI_X86COPY_AS -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src/include $CPPFLAGS $ARMCI_TOP_SRCDIR/src/common/x86copy.c"
          AS_ECHO(["$ga_compile"])>&AS_MESSAGE_LOG_FD
          AS_IF([$ga_compile 1>&AS_MESSAGE_LOG_FD 2>&1],
             [armci_cv_as_x86copy_with=$ac_path_ARMCI_X86COPY_AS

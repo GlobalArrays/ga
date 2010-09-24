@@ -6,7 +6,7 @@
 AC_DEFUN([ARMCI_TAS], [
 AC_CACHE_CHECK([whether we can compile test-and-set inline assembly],
     [armci_cv_as_tas],
-    [ga_compile="$CC -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src $CPPFLAGS $ARMCI_TOP_SRCDIR/src/tas.c"
+    [ga_compile="$CC -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src/include $CPPFLAGS $ARMCI_TOP_SRCDIR/src/locks/tas.c"
      AS_ECHO(["$ga_compile"])>&AS_MESSAGE_LOG_FD
      AS_IF([$ga_compile 1>&AS_MESSAGE_LOG_FD 2>&1],
         [armci_cv_as_tas=yes],
@@ -15,7 +15,7 @@ AC_CACHE_CHECK([whether we can compile test-and-set inline assembly],
 AC_CACHE_CHECK([whether we can compile test-and-set inline assembly with help],
     [armci_cv_as_tas_with],
     [AC_PATH_PROGS_FEATURE_CHECK([ARMCI_TAS_AS], [bgxlc xlc gcc],
-        [ga_compile="$ac_path_ARMCI_TAS_AS -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src $CPPFLAGS $ARMCI_TOP_SRCDIR/src/tas.c"
+        [ga_compile="$ac_path_ARMCI_TAS_AS -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src/include $CPPFLAGS $ARMCI_TOP_SRCDIR/src/locks/tas.c"
          AS_ECHO(["$ga_compile"])>&AS_MESSAGE_LOG_FD
          AS_IF([$ga_compile 1>&AS_MESSAGE_LOG_FD 2>&1],
             [armci_cv_as_tas_with=$ac_path_ARMCI_TAS_AS

@@ -10510,7 +10510,7 @@ $as_echo_n "checking whether we can compile test-and-set inline assembly... " >&
 if test "${armci_cv_as_tas+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  ga_compile="$CC -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src $CPPFLAGS $ARMCI_TOP_SRCDIR/src/tas.c"
+  ga_compile="$CC -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src/include $CPPFLAGS $ARMCI_TOP_SRCDIR/src/locks/tas.c"
      $as_echo "$ga_compile">&5
      if $ga_compile 1>&5 2>&1; then :
   armci_cv_as_tas=yes
@@ -10538,7 +10538,7 @@ do
     for ac_exec_ext in '' $ac_executable_extensions; do
       ac_path_ARMCI_TAS_AS="$as_dir/$ac_prog$ac_exec_ext"
       { test -f "$ac_path_ARMCI_TAS_AS" && $as_test_x "$ac_path_ARMCI_TAS_AS"; } || continue
-ga_compile="$ac_path_ARMCI_TAS_AS -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src $CPPFLAGS $ARMCI_TOP_SRCDIR/src/tas.c"
+ga_compile="$ac_path_ARMCI_TAS_AS -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src/include $CPPFLAGS $ARMCI_TOP_SRCDIR/src/locks/tas.c"
          $as_echo "$ga_compile">&5
          if $ga_compile 1>&5 2>&1; then :
   armci_cv_as_tas_with=$ac_path_ARMCI_TAS_AS
@@ -10586,7 +10586,7 @@ $as_echo_n "checking whether we can compile x86copy inline assembly... " >&6; }
 if test "${armci_cv_as_x86copy+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  ga_compile="$CC -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src $CPPFLAGS $ARMCI_TOP_SRCDIR/src/x86copy.c"
+  ga_compile="$CC -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src/include $CPPFLAGS $ARMCI_TOP_SRCDIR/src/common/x86copy.c"
      $as_echo "$ga_compile">&5
      if $ga_compile 1>&5 2>&1; then :
   armci_cv_as_x86copy=yes
@@ -10614,7 +10614,7 @@ do
     for ac_exec_ext in '' $ac_executable_extensions; do
       ac_path_ARMCI_X86COPY_AS="$as_dir/$ac_prog$ac_exec_ext"
       { test -f "$ac_path_ARMCI_X86COPY_AS" && $as_test_x "$ac_path_ARMCI_X86COPY_AS"; } || continue
-ga_compile="$ac_path_ARMCI_X86COPY_AS -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src $CPPFLAGS $ARMCI_TOP_SRCDIR/src/x86copy.c"
+ga_compile="$ac_path_ARMCI_X86COPY_AS -c $CFLAGS -I$ARMCI_TOP_SRCDIR/src/include $CPPFLAGS $ARMCI_TOP_SRCDIR/src/common/x86copy.c"
          $as_echo "$ga_compile">&5
          if $ga_compile 1>&5 2>&1; then :
   armci_cv_as_x86copy_with=$ac_path_ARMCI_X86COPY_AS
