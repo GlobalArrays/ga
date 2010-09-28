@@ -26,6 +26,11 @@ double **myptrs;
 double t0,t1,tnbget=0,tnbwait=0,t2=0;
     MP_INIT(argc,argv);
     MP_PROCS(&nprocs);
+    if (nprocs==1)
+    {
+        fprintf(stderr,"You must use more than 1 process for this test.  Exiting gently.");
+        return 0;
+    }
     MP_MYID(&me);
     myptrs = (double **)malloc(sizeof(double *)*nprocs);
     ARMCI_Init();
