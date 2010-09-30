@@ -6,6 +6,7 @@
       integer ga_pgroup_nnodes, ga_pgroup_nodeid
       integer ga_spd_invert, ga_solve, ga_llt_solve
       integer ga_inquire_memory, ga_memory_avail
+      integer nga_inquire_memory
       logical ga_create, ga_destroy, ga_locate, ga_create_irreg
       logical nga_destroy
       logical ga_locate_region
@@ -45,7 +46,7 @@
       integer ga_pgroup_get_world, ga_num_mirrored_seg
       integer ga_ndim
       real ga_sdot, ga_sdot_patch, nga_sdot_patch
-      integer ga_is_mirrored
+      logical ga_is_mirrored, nga_is_mirrored
       integer ga_nbtest, nga_nbtest
 !
       integer nga_read_inc
@@ -69,6 +70,7 @@
       external ga_ddot_patch, ga_compare_distr, ga_duplicate
       external nga_compare_distr, nga_duplicate
       external ga_inquire_memory, ga_uses_ma, ga_memory_limited
+      external nga_inquire_memory
       external ga_memory_avail
       external ga_zdot, ga_zdot_patch
       external ga_cdot, ga_cdot_patch

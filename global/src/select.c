@@ -167,7 +167,7 @@ void FATR nga_select_elem_(
   else if (strncmp(op,"max",3) == 0);
   else pnga_error("operator not recognized",0);
 
-  nga_inquire_internal_(g_a, &type, &ndim, dims);
+  pnga_inquire(g_a, &type, &ndim, dims);
   num_blocks = ga_total_blocks_(g_a);
 
   if (num_blocks < 0) {

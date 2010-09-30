@@ -2091,12 +2091,12 @@ Integer  ow,i,p_handle;
 
    GA_PUSH_NAME("nga_access_ptr");
    p_handle = GA[handle].p_handle;
-   if (!nga_locate_(g_a,lo,&ow)) pnga_error("locate top failed",0);
+   if (!pnga_locate(g_a,lo,&ow)) pnga_error("locate top failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme)) 
       pnga_error("cannot access top of the patch",ow);
-   if (!nga_locate_(g_a,hi, &ow)) pnga_error("locate bottom failed",0);
+   if (!pnga_locate(g_a,hi, &ow)) pnga_error("locate bottom failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme))
@@ -2364,12 +2364,12 @@ unsigned long    lref=0, lptr;
 #endif
    GA_PUSH_NAME("nga_access");
    p_handle = GA[handle].p_handle;
-   if(!nga_locate_(g_a,lo,&ow))pnga_error("locate top failed",0);
+   if(!pnga_locate(g_a,lo,&ow))pnga_error("locate top failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme)) 
       pnga_error("cannot access top of the patch",ow);
-   if(!nga_locate_(g_a,hi, &ow))pnga_error("locate bottom failed",0);
+   if(!pnga_locate(g_a,hi, &ow))pnga_error("locate bottom failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme)) 
@@ -2891,7 +2891,7 @@ extern void ga_sort_permutation();
    ga_check_handleM(g_a, "gai_get_pointers");
    ndim = GA[*g_a+GA_OFFSET].ndim;
 
-   for(k=0; k< *nv; k++)if(!nga_locate_(g_a, sbar+k*ndim, proc+k)){
+   for(k=0; k< *nv; k++)if(!pnga_locate(g_a, sbar+k*ndim, proc+k)){
          gai_print_subscript("invalid subscript",ndim, sbar +k*ndim,"\n");
          pnga_error("failed -element:",k);
    }
@@ -2933,6 +2933,7 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
     Integer item_size;
     Integer proc, type=GA[GA_OFFSET + *g_a].type;
     Integer nproc, p_handle, iproc;
+    Integer subscrpt[2];
 
     Integer *aproc, naproc; /* active processes and numbers */
     Integer *map;           /* map the active processes to allocated space */
@@ -3007,7 +3008,9 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
     /* find proc that owns the (i,j) element; store it in temp:  */
     if (GA[handle].num_rstrctd == 0) {
       for(k=0; k< *nv; k++) {
-        if(! ga_locate_(g_a, i+k, j+k, owner+k)){
+        subscrpt[0] = *(i+k);
+        subscrpt[1] = *(j+k);
+        if(! pnga_locate(g_a, subscrpt, owner+k)){
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
           pnga_error(err_string,*g_a);
         }
@@ -3016,7 +3019,9 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
       }
     } else {
       for(k=0; k< *nv; k++) {
-        if(! ga_locate_(g_a, i+k, j+k, owner+k)){
+        subscrpt[0] = *(i+k);
+        subscrpt[1] = *(j+k);
+        if(! pnga_locate(g_a, subscrpt, owner+k)){
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
           pnga_error(err_string,*g_a);
         }
@@ -3201,6 +3206,7 @@ register Integer k;
 Integer item_size;
 Integer first, nelem, proc, type=GA[GA_OFFSET + *g_a].type;
 Integer *int_ptr;
+Integer subscrpt[2];
 
   if (*nv < 1) return;
 
@@ -3211,9 +3217,13 @@ Integer *int_ptr;
   int_ptr = (Integer*) ga_malloc(*nv, MT_F_INT, "ga_scatter_acc--p");
 
   /* find proc that owns the (i,j) element; store it in temp: int_ptr */
-  for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, int_ptr+k)){
+  for(k=0; k< *nv; k++) {
+    subscrpt[0] = *(i+k);
+    subscrpt[1] = *(j+k);
+    if(! pnga_locate(g_a, subscrpt, int_ptr+k)){
          sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
          pnga_error(err_string,*g_a);
+    }
   }
 
   /* determine limit for message size --  v,i, & j will travel together */
@@ -3265,6 +3275,7 @@ void FATR  ga_sort_permut_(g_a, index, i, j, nv)
 #if 0
 register Integer k;
 Integer *int_ptr;
+Integer subscrpt[2];
 extern void ga_sort_permutation();
 
   if (*nv < 1) return;
@@ -3272,9 +3283,13 @@ extern void ga_sort_permutation();
   int_ptr = (Integer*) ga_malloc(*nv, MT_F_INT, "ga_sort_permut--p");
 
   /* find proc that owns the (i,j) element; store it in temp: int_ptr */
-  for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, int_ptr+k)){
+  for(k=0; k< *nv; k++) {
+    subscrpt[0] = *(i+k);
+    subscrpt[1] = *(j+k);
+    if(!pnga_locate(g_a, subscrpt, int_ptr+k)){
          sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
          pnga_error(err_string,*g_a);
+    }
   }
 
   /* Sort the entries by processor */
@@ -3368,7 +3383,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
      */
     if (GA[handle].num_rstrctd == 0) {
       for(k=0; k<*nv; k++) {
-        if(!nga_locate_(g_a, subscript+k*ndim, proc+k)) {
+        if(!pnga_locate(g_a, subscript+k*ndim, proc+k)) {
           gai_print_subscript("invalid subscript",ndim, subscript+k*ndim,"\n");
           pnga_error("failed -element:",k);
         }
@@ -3377,7 +3392,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
       }
     } else {
       for(k=0; k<*nv; k++) {
-        if(!nga_locate_(g_a, subscript+k*ndim, proc+k)) {
+        if(!pnga_locate(g_a, subscript+k*ndim, proc+k)) {
           gai_print_subscript("invalid subscript",ndim, subscript+k*ndim,"\n");
           pnga_error("failed -element:",k);
         }
@@ -3890,7 +3905,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
       if (int32) {
         for(k=0; k<*nv; k++) {
           for (j=0; j<ndim; j++) subscript[j] = subscript32[k][j];
-          if(!nga_locate_(g_a, subscript, proc+k)) {
+          if(!pnga_locate(g_a, subscript, proc+k)) {
             gai_print_subscript("invalid subscript",ndim, subscript,"\n");
             pnga_error("failed -element:",k);
           }
@@ -3900,7 +3915,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
       } else {
         for(k=0; k<*nv; k++) {
           for (j=0; j<ndim; j++) subscript[j] = subscript64[k][j];
-          if(!nga_locate_(g_a, subscript, proc+k)) {
+          if(!pnga_locate(g_a, subscript, proc+k)) {
             gai_print_subscript("invalid subscript",ndim, subscript,"\n");
             pnga_error("failed -element:",k);
           }
@@ -3912,7 +3927,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
       if (int32) {
         for(k=0; k<*nv; k++) {
           for (j=0; j<ndim; j++) subscript[j] = subscript32[k][j];
-          if(!nga_locate_(g_a, subscript, proc+k)) {
+          if(!pnga_locate(g_a, subscript, proc+k)) {
             gai_print_subscript("invalid subscript",ndim, subscript,"\n");
             pnga_error("failed -element:",k);
           }
@@ -3922,7 +3937,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
       } else {
         for(k=0; k<*nv; k++) {
           for (j=0; j<ndim; j++) subscript[j] = subscript64[k][j];
-          if(!nga_locate_(g_a, subscript, proc+k)) {
+          if(!pnga_locate(g_a, subscript, proc+k)) {
             gai_print_subscript("invalid subscript",ndim, subscript,"\n");
             pnga_error("failed -element:",k);
           }
@@ -4523,6 +4538,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     char **ptr_ref;
     int use_blocks;
     Integer num_blocks=0;
+    Integer subscrpt[2];
     
     if (*nv < 1) return;
 
@@ -4581,7 +4597,9 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     /* find proc or block that owns the (i,j) element; store it in temp: */
     if (GA[handle].num_rstrctd == 0) {
       for(k=0; k< *nv; k++) {
-        if(! ga_locate_(g_a, i+k, j+k, owner+k)){
+        subscrpt[0] = *(i+k);
+        subscrpt[1] = *(j+k);
+        if(! pnga_locate(g_a, subscrpt, owner+k)){
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
           pnga_error(err_string, *g_a);
         }
@@ -4590,7 +4608,9 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
       }
     } else {
       for(k=0; k< *nv; k++) {
-        if(! ga_locate_(g_a, i+k, j+k, owner+k)){
+        subscrpt[0] = *(i+k);
+        subscrpt[1] = *(j+k);
+        if(! pnga_locate(g_a, subscrpt, owner+k)){
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
           pnga_error(err_string, *g_a);
         }
@@ -4789,7 +4809,7 @@ void *pval;
     ndim = GA[handle].ndim;
 
     /* find out who owns it */
-    nga_locate_(g_a, subscript, &proc);
+    pnga_locate(g_a, subscript, &proc);
 
     /* get an address of the g_a(subscript) element */
     if (!GA[handle].block_flag) {

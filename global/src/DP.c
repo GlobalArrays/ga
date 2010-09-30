@@ -67,14 +67,19 @@ Integer ldT;
 AccessIndex index;
 char transp;
 DoublePrecision *dbl_ptrA=NULL, *dbl_ptrB=NULL;
+Integer ndim, dims[2];
 
    gai_check_handle(g_a, "ga_copy_patch_dp");
    gai_check_handle(g_b, "ga_copy_patch_dp");
 
    /* if(*g_a == *g_b) pnga_error("ga_copy_patch_dp: arrays have to different ", 0L); */
 
-   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
+   pnga_inquire(g_a, &atype, &ndim, dims);
+   adim1 = dims[0];
+   adim2 = dims[1];
+   pnga_inquire(g_b, &btype, &ndim, dims);
+   bdim1 = dims[0];
+   bdim2 = dims[1];
 
    if(atype != btype || (atype != C_DBL ))
       pnga_error("ga_copy_patch_dp: wrong types ", 0L);
@@ -181,12 +186,17 @@ Integer corr, nelem;
 char    transp, transp_a, transp_b;
 DoublePrecision  sum = 0.;
 DoublePrecision *dbl_ptrB;
+Integer ndim, dims[2];
 
    gai_check_handle(g_a, "ga_ddot_patch_dp");
    gai_check_handle(g_b, "ga_ddot_patch_dp");
 
-   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
+   pnga_inquire(g_a, &atype, &ndim, dims);
+   adim1 = dims[0];
+   adim2 = dims[1];
+   pnga_inquire(g_b, &btype, &ndim, dims);
+   bdim1 = dims[0];
+   bdim2 = dims[1];
 
    if(atype != btype || (atype != C_DBL ))
       pnga_error("ga_ddot_patch_dp: wrong types ", 0L);

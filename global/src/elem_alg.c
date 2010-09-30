@@ -732,7 +732,7 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
 
   GA_PUSH_NAME("gai_oper_elem");
 
-  nga_inquire_internal_(g_a,  &type, &ndim, dims);
+  pnga_inquire(g_a,  &type, &ndim, dims);
   num_blocks = ga_total_blocks_(g_a);
 
   if (num_blocks < 0) {
@@ -940,7 +940,7 @@ void FATR ga_abs_value_(Integer *g_a)
    Integer type, ndim;
    Integer lo[MAXDIM],hi[MAXDIM];
 
-    nga_inquire_internal_(g_a,  &type, &ndim, hi);
+    pnga_inquire(g_a,  &type, &ndim, hi);
     while(ndim){
         lo[ndim-1]=1;
         ndim--;
@@ -954,7 +954,7 @@ void FATR ga_add_constant_(Integer *g_a, void *alpha)
    Integer type, ndim;
    Integer lo[MAXDIM],hi[MAXDIM];
 
-    nga_inquire_internal_(g_a,  &type, &ndim, hi);
+    pnga_inquire(g_a,  &type, &ndim, hi);
     while(ndim){
         lo[ndim-1]=1;
         ndim--;
@@ -968,7 +968,7 @@ void FATR ga_recip_(Integer *g_a)
    Integer type, ndim;
    Integer lo[MAXDIM],hi[MAXDIM];
         
-    nga_inquire_internal_(g_a,  &type, &ndim, hi);
+    pnga_inquire(g_a,  &type, &ndim, hi);
     while(ndim){
         lo[ndim-1]=1; 
         ndim--;
@@ -1742,9 +1742,9 @@ int op; /* operation to be perform between g_a and g_b */
   gai_check_handle(g_a, "gai_elem2_patch_");
   GA_PUSH_NAME("ngai_elem2_patch_");
 
-  nga_inquire_internal_(g_a, &atype, &andim, adims);
-  nga_inquire_internal_(g_b, &btype, &bndim, bdims);
-  nga_inquire_internal_(g_c, &ctype, &cndim, cdims);
+  pnga_inquire(g_a, &atype, &andim, adims);
+  pnga_inquire(g_b, &btype, &bndim, bdims);
+  pnga_inquire(g_c, &ctype, &cndim, cdims);
 
   if(atype != btype || atype != ctype ) pnga_error(" types mismatch ", 0L); 
 
@@ -2062,9 +2062,9 @@ void FATR ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c){
    Integer blo[MAXDIM],bhi[MAXDIM];
    Integer clo[MAXDIM],chi[MAXDIM];
  
-    nga_inquire_internal_(g_a,  &atype, &andim, ahi);
-    nga_inquire_internal_(g_b,  &btype, &bndim, bhi);
-    nga_inquire_internal_(g_c,  &ctype, &cndim, chi);
+    pnga_inquire(g_a,  &atype, &andim, ahi);
+    pnga_inquire(g_b,  &btype, &bndim, bhi);
+    pnga_inquire(g_c,  &ctype, &cndim, chi);
     if((andim!=bndim)||(andim!=cndim))
 	pnga_error("global arrays have different dimmensions.", andim);
     while(andim){
@@ -2090,9 +2090,9 @@ void FATR ga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c){
    Integer blo[MAXDIM],bhi[MAXDIM];
    Integer clo[MAXDIM],chi[MAXDIM];
  
-    nga_inquire_internal_(g_a,  &atype, &andim, ahi);
-    nga_inquire_internal_(g_b,  &btype, &bndim, bhi);
-    nga_inquire_internal_(g_c,  &ctype, &cndim, chi);
+    pnga_inquire(g_a,  &atype, &andim, ahi);
+    pnga_inquire(g_b,  &btype, &bndim, bhi);
+    pnga_inquire(g_c,  &ctype, &cndim, chi);
     if((andim!=bndim)||(andim!=cndim))
         pnga_error("global arrays have different dimmensions.", andim);
     while(andim){
@@ -2121,9 +2121,9 @@ void FATR ga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c){
    Integer blo[MAXDIM],bhi[MAXDIM];
    Integer clo[MAXDIM],chi[MAXDIM];
 
-    nga_inquire_internal_(g_a,  &atype, &andim, ahi);
-    nga_inquire_internal_(g_b,  &btype, &bndim, bhi);
-    nga_inquire_internal_(g_c,  &ctype, &cndim, chi);
+    pnga_inquire(g_a,  &atype, &andim, ahi);
+    pnga_inquire(g_b,  &btype, &bndim, bhi);
+    pnga_inquire(g_c,  &ctype, &cndim, chi);
     if((andim!=bndim)||(andim!=cndim))
         pnga_error("global arrays have different dimmensions.", andim);
     while(andim){
@@ -2150,9 +2150,9 @@ void FATR ga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c){
    Integer blo[MAXDIM],bhi[MAXDIM];
    Integer clo[MAXDIM],chi[MAXDIM];
  
-    nga_inquire_internal_(g_a,  &atype, &andim, ahi);
-    nga_inquire_internal_(g_b,  &btype, &bndim, bhi);
-    nga_inquire_internal_(g_c,  &ctype, &cndim, chi);
+    pnga_inquire(g_a,  &atype, &andim, ahi);
+    pnga_inquire(g_b,  &btype, &bndim, bhi);
+    pnga_inquire(g_c,  &ctype, &cndim, chi);
     if((andim!=bndim)||(andim!=cndim))
         pnga_error("global arrays have different dimmensions.", andim);
     while(andim){
@@ -2299,7 +2299,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
   gai_check_handle(g_a, "gai_elem3_patch_");
   GA_PUSH_NAME("ngai_elem3_patch_");
 
-  nga_inquire_internal_(g_a, &atype, &andim, adims);
+  pnga_inquire(g_a, &atype, &andim, adims);
   num_blocks = ga_total_blocks_(g_a);
 
   /* check if patch indices and dims match */
@@ -2576,7 +2576,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
   gai_check_handle(g_a, "has_negative_elem");
   GA_PUSH_NAME("has_negative_elem");
 
-  nga_inquire_internal_(g_a, &atype, &andim, adims);
+  pnga_inquire(g_a, &atype, &andim, adims);
   num_blocks = ga_total_blocks_(g_a);
 
   /* check if patch indices and dims match */
@@ -2830,10 +2830,10 @@ void FATR ga_step_bound_info_patch_(
 
      /* get chaacteristics of the input ga patches */
 
-     nga_inquire_internal_(g_xx, &xxtype, &xxndim, xxdims);
-     nga_inquire_internal_(g_vv, &vvtype, &vvndim, vvdims);
-     nga_inquire_internal_(g_xxll, &xltype, &xlndim, xldims);
-     nga_inquire_internal_(g_xxuu, &xutype, &xundim, xudims);
+     pnga_inquire(g_xx, &xxtype, &xxndim, xxdims);
+     pnga_inquire(g_vv, &vvtype, &vvndim, vvdims);
+     pnga_inquire(g_xxll, &xltype, &xlndim, xldims);
+     pnga_inquire(g_xxuu, &xutype, &xundim, xudims);
 
      /* Check for matching types. */
 
@@ -3193,8 +3193,8 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
 
   /* get chacteristics of the input ga patches */
 
-  nga_inquire_internal_(g_a, &atype, &andim, adims);
-  nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+  pnga_inquire(g_a, &atype, &andim, adims);
+  pnga_inquire(g_b, &btype, &bndim, bdims);
   num_blocks_a = ga_total_blocks_(g_a);
   num_blocks_b = ga_total_blocks_(g_b);
 
@@ -3334,8 +3334,8 @@ void FATR ga_step_max_(Integer *g_a, Integer *g_b, void *retval)
    Integer alo[MAXDIM],ahi[MAXDIM];
    Integer blo[MAXDIM],bhi[MAXDIM];
  
-    nga_inquire_internal_(g_a,  &atype, &andim, ahi);
-    nga_inquire_internal_(g_b,  &btype, &bndim, bhi);
+    pnga_inquire(g_a,  &atype, &andim, ahi);
+    pnga_inquire(g_b,  &btype, &bndim, bhi);
     while(andim){
         alo[andim-1]=1;
         andim--;
@@ -3363,10 +3363,10 @@ void FATR ga_step_bound_info_(Integer *g_xx, Integer *g_vv, Integer *g_xxll,
   Integer xxlllo[MAXDIM],xxllhi[MAXDIM];
   Integer xxuulo[MAXDIM],xxuuhi[MAXDIM];
 
-  nga_inquire_internal_(g_xx,  &xxtype, &xxndim, xxhi);
-  nga_inquire_internal_(g_vv,  &vvtype, &vvndim, vvhi);
-  nga_inquire_internal_(g_xxll,  &xxlltype, &xxllndim, xxllhi);
-  nga_inquire_internal_(g_xxuu,  &xxuutype, &xxuundim, xxuuhi);
+  pnga_inquire(g_xx,  &xxtype, &xxndim, xxhi);
+  pnga_inquire(g_vv,  &vvtype, &vvndim, vvhi);
+  pnga_inquire(g_xxll,  &xxlltype, &xxllndim, xxllhi);
+  pnga_inquire(g_xxuu,  &xxuutype, &xxuundim, xxuuhi);
   while(xxndim){
     xxlo[xxndim-1]=1;
     xxndim--;

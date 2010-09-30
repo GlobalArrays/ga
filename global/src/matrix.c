@@ -320,14 +320,10 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
 
   GA_PUSH_NAME ("ga_median_patch_");
 
-  nga_inquire_ (g_a, &atype, &andim, adims);
-  nga_inquire_ (g_b, &btype, &bndim, bdims);
-  nga_inquire_ (g_c, &ctype, &cndim, cdims);
-  nga_inquire_ (g_m, &mtype, &mndim, mdims);
-
-  /* I have to inquire the data type again since nga_inquire and
-   * nga_inquire_internal_ treat data type differently */
-  nga_inquire_internal_ (g_m, &type, &mndim, mdims);
+  pnga_inquire (g_a, &atype, &andim, adims);
+  pnga_inquire (g_b, &btype, &bndim, bdims);
+  pnga_inquire (g_c, &ctype, &cndim, cdims);
+  pnga_inquire (g_m, &mtype, &mndim, mdims);
 
   if (mtype != atype)
     pnga_error(" ga_median_patch_:type mismatch ", 0L);
@@ -657,10 +653,10 @@ ga_median_ (Integer * g_a, Integer * g_b, Integer * g_c, Integer * g_m){
    Integer mtype, mndim;
    Integer mlo[MAXDIM],mhi[MAXDIM];
 
-    nga_inquire_internal_(g_a,  &atype, &andim, ahi);
-    nga_inquire_internal_(g_b,  &btype, &bndim, bhi);
-    nga_inquire_internal_(g_c,  &ctype, &cndim, chi);
-    nga_inquire_internal_(g_m,  &mtype, &mndim, mhi);
+    pnga_inquire(g_a,  &atype, &andim, ahi);
+    pnga_inquire(g_b,  &btype, &bndim, bhi);
+    pnga_inquire(g_c,  &ctype, &cndim, chi);
+    pnga_inquire(g_m,  &mtype, &mndim, mhi);
 
     while(andim){
         alo[andim-1]=1;
@@ -844,8 +840,8 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
   gai_check_handle (g_a, "ga_norm_infinity_");
   GA_PUSH_NAME ("ga_norm_infinity_");
 
-  /*  gai_inquire (g_a, &type, &dim1, &dim2); */
-  nga_inquire_internal_ (g_a, &type, &ndim, dims);
+  /*  pnga_inquire (g_a, &type, &dim1, &dim2); */
+  pnga_inquire (g_a, &type, &ndim, dims);
 
   dim1 = dims[0];
   if(ndim<=0)
@@ -1188,7 +1184,7 @@ ga_norm1_ (Integer * g_a, double *nm)
   gai_check_handle (g_a, "ga_norm1_");
   GA_PUSH_NAME ("ga_norm1_");
 
-  nga_inquire_internal_ (g_a, &type, &ndim, dims);
+  pnga_inquire (g_a, &type, &ndim, dims);
 
 
   dim1 = dims[0];
@@ -1200,7 +1196,6 @@ ga_norm1_ (Integer * g_a, double *nm)
     dim2 = dims[1];
   else
     pnga_error("ga_norm1: wrong dimension", ndim);
-  /* gai_inquire (g_a, &type, &dim1, &dim2); */
 
   /*allocate a temporary buffer of size equal to the number of columns */
   size = GAsizeof (type);
@@ -1510,16 +1505,17 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
   gai_check_handle (g_v, "ga_get_diag_");
   GA_PUSH_NAME ("ga_get_diag_");
 
-  gai_inquire (g_a, &type, &dim1, &dim2);
-
-  /*Make sure to use nga_inquire to query for the data type since gai_inquire and nga_inquire treat data type differently */
-  nga_inquire_ (g_a, &atype, &andim, adims);
-  nga_inquire_ (g_v, &vtype, &vndim, &vdims);
+  pnga_inquire (g_a, &atype, &andim, adims);
+  dim1 = adims[0];
+  dim2 = adims[1];
+  type = atype;
+  pnga_inquire (g_v, &vtype, &vndim, &vdims);
 
   /* Perform some error checking */
+  if (andim != 2)
+    pnga_error("ga_get_diag: wrong dimension for g_a.", andim);
   if (vndim != 1)
     pnga_error("ga_get_diag: wrong dimension for g_v.", vndim);
-
 
   if (vdims != GA_MIN (dim1, dim2))
     pnga_error
@@ -1727,14 +1723,15 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
   gai_check_handle (g_v, "ga_add_diagonal_");
   GA_PUSH_NAME ("ga_add_diagonal_");
 
-  gai_inquire (g_a, &type, &dim1, &dim2);
-
-
-  /*Make sure to use nga_inquire to query for the data type since gai_inquire and nga_inquire treat data type differently */
-  nga_inquire_ (g_a, &atype, &andim, adims);
-  nga_inquire_ (g_v, &vtype, &vndim, &vdims);
+  pnga_inquire(g_a, &atype, &andim, adims);
+  dim1 = adims[0];
+  dim2 = adims[1];
+  type = atype;
+  pnga_inquire(g_v, &vtype, &vndim, &vdims);
 
   /* Perform some error checking */
+  if (andim != 2)
+    pnga_error("ga_add_diagonal: wrong dimension for g_a.", andim);
   if (vndim != 1)
     pnga_error("ga_add_diagonal: wrong dimension for g_v.", vndim);
 
@@ -1943,13 +1940,15 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
   gai_check_handle (g_v, "ga_set_diagonal_");
   GA_PUSH_NAME ("ga_set_diagonal_");
 
-  gai_inquire (g_a, &type, &dim1, &dim2);
-
-  /*Make sure to use nga_inquire to query for the data type since gai_inquire and nga_inquire treat data type differently */
-  nga_inquire_ (g_a, &atype, &andim, adims);
-  nga_inquire_ (g_v, &vtype, &vndim, &vdims);
+  pnga_inquire (g_a, &atype, &andim, adims);
+  dim1 = adims[0];
+  dim2 = adims[1];
+  type = atype;
+  pnga_inquire (g_v, &vtype, &vndim, &vdims);
 
   /* Perform some error checking */
+  if (andim != 2)
+    pnga_error("ga_set_diagonal: wrong dimension for g_a.", andim);
   if (vndim != 1)
     pnga_error("ga_set_diagonal: wrong dimension for g_v.", vndim);
 
@@ -2135,12 +2134,12 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
   gai_check_handle (g_a, "ga_shift_diagonal_");
   GA_PUSH_NAME ("ga_shift_diagonal_");
 
-  nga_inquire_ (g_a, &atype, &andim, adims);
+  pnga_inquire (g_a, &atype, &andim, adims);
+  dim1 = adims[0];
+  dim2 = adims[1];
+  type = atype;
   if (andim != 2) 
     pnga_error("Dimension must be 2 for shift diagonal operation",andim);
-
-  /* gai_inquire and nga_inquire handle type differently */
-  gai_inquire(g_a, &type, &dim1, &dim2);
 
   num_blocks_a = ga_total_blocks_(g_a);
 
@@ -2276,9 +2275,10 @@ void FATR ga_zero_diagonal_(Integer * g_a)
 
   GA_PUSH_NAME ("ga_zero_diagonal_");
 
-  nga_inquire_ (g_a, &atype, &andim, adims);
-  /* gai_inquire and nga_inquire return different values for type */
-  gai_inquire (g_a, &type, &dim1, &dim2);
+  pnga_inquire (g_a, &atype, &andim, adims);
+  dim1 = adims[0];
+  dim2 = adims[1];
+  type = atype;
 
   num_blocks_a = ga_total_blocks_(g_a);
 
@@ -2487,13 +2487,15 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
   gai_check_handle (g_v, "ga_scale_rows_");
   GA_PUSH_NAME ("ga_scale_rows_");
 
-  gai_inquire (g_a, &type, &dim1, &dim2);
-
-  /*Make sure to use nga_inquire to query for the data type since gai_inquire and nga_inquire treat data type differently */
-  nga_inquire_ (g_a, &atype, &andim, adims);
-  nga_inquire_ (g_v, &vtype, &vndim, &vdims);
+  pnga_inquire (g_a, &atype, &andim, adims);
+  dim1 = adims[0];
+  dim2 = adims[1];
+  type = atype;
+  pnga_inquire (g_v, &vtype, &vndim, &vdims);
 
   /* Perform some error checking */
+  if (andim != 2)
+    pnga_error("ga_scale_rows_: wrong dimension for g_a.", andim);
   if (vndim != 1)
     pnga_error("ga_scale_rows_: wrong dimension for g_v.", vndim);
 
@@ -2683,13 +2685,15 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
   gai_check_handle (g_v, "ga_scale_cols_");
   GA_PUSH_NAME ("ga_scale_cols_");
 
-  gai_inquire (g_a, &type, &dim1, &dim2);
-
-  /*Make sure to use nga_inquire to query for the data type since gai_inquire and nga_inquire treat data type differently */
-  nga_inquire_ (g_a, &atype, &andim, adims);
-  nga_inquire_ (g_v, &vtype, &vndim, &vdims);
+  pnga_inquire(g_a, &atype, &andim, adims);
+  dim1 = adims[0];
+  dim2 = adims[1];
+  type = atype;
+  pnga_inquire(g_v, &vtype, &vndim, &vdims);
 
   /* Perform some error checking */
+  if (andim != 2)
+    pnga_error("ga_scale_cols_: wrong dimension for g_a.", andim);
   if (vndim != 1)
     pnga_error("ga_scale_cols_: wrong dimension for g_v.", vndim);
 

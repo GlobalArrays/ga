@@ -64,7 +64,7 @@ ga_symmetrize_(Integer *g_a) {
   
   num_blocks_a = ga_total_blocks_(g_a);
 
-  nga_inquire_internal_(g_a, &type, &ndim, dims);
+  pnga_inquire(g_a, &type, &ndim, dims);
 
   if (type != C_DBL)
     pnga_error("ga_symmetrize: only implemented for double precision",0);

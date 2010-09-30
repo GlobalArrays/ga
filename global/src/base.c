@@ -376,12 +376,16 @@ Integer  off_dbl, off_int, off_dcpl, off_flt,off_scpl;
 
 
 
-/*\ INITIALIZE GLOBAL ARRAY STRUCTURES
- *
+/**
+ *  Initialize library structures in Global Arrays.
  *  either ga_initialize_ltd or ga_initialize must be the first 
  *         GA routine called (except ga_uses_ma)
-\*/
-void FATR  ga_initialize_()
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_initialize = pnga_initialize
+#endif
+
+void pnga_initialize()
 {
 Integer  i, j,nproc, nnode, zero;
 int bytes;
@@ -559,9 +563,14 @@ logical FATR ga_memory_limited_()
 
 
 
-/*\ RETURNS AMOUNT OF MEMORY on each processor IN ACTIVE GLOBAL ARRAYS 
-\*/
-Integer  FATR ga_inquire_memory_()
+/**
+ *  Returns the amount of memory on each processor used in active Global Arrays
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_inquire_memory =  pnga_inquire_memory
+#endif
+
+Integer pnga_inquire_memory()
 {
 Integer i, sum=0;
     for(i=0; i<_max_global_array; i++) 
@@ -609,17 +618,21 @@ void FATR ga_set_memory_limit_(Integer *mem_limit)
      }
 }
 
-
-/*\ INITIALIZE GLOBAL ARRAY STRUCTURES and SET LIMIT ON GA MEMORY USAGE
- *  
- *  the byte limit is per processor (even for shared memory)
- *  either ga_initialize_ltd or ga_initialize must be the first 
+/**
+ *  Initialize Global Array library structures and set a limit on memory
+ *  usage by GA.
+ *    the byte limit is per processor (even for shared memory)
+ *    either ga_initialize_ltd or ga_initialize must be the first 
  *         GA routine called (except ga_uses_ma)
- *  ga_initialize_ltd is another version of ga_initialize 
+ *    ga_initialize is another version of ga_initialize_ltd, except
  *         without memory control
- *  mem_limit < 0 means "memory unlimited"
-\*/
-void FATR  ga_initialize_ltd_(Integer *mem_limit)
+ *    mem_limit < 0 means "memory unlimited"
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_initialize_ltd = pnga_initialize_ltd
+#endif
+
+void pnga_initialize_ltd(Integer *mem_limit)
 {
 #ifdef USE_VAMPIR
   vampir_init(NULL,NULL,__FILE__,__LINE__);
@@ -633,9 +646,6 @@ void FATR  ga_initialize_ltd_(Integer *mem_limit)
   vampir_end(GA_INITIALIZE_LTD,__FILE__,__LINE__);
 #endif
 }
-
-
-  
 
 #define gam_checktype(_type)\
        if(_type != C_DBL  && _type != C_INT &&  \
@@ -652,9 +662,14 @@ int _d;\
          if(dims[_d]<1)pnga_error("wrong dimension specified",dims[_d]);\
 }
 
-/*\ utility function to tell whether or not an array is mirrored
-\*/
-logical FATR ga_is_mirrored_(Integer *g_a)
+/**
+ * Utility function to tell whether or not an array is mirrored
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_is_mirrored = pnga_is_mirrored
+#endif
+
+logical pnga_is_mirrored(Integer *g_a)
 {
   Integer ret = FALSE;
   Integer handle = GA_OFFSET + *g_a;
@@ -664,6 +679,95 @@ logical FATR ga_is_mirrored_(Integer *g_a)
   }
   return ret;
 }
+
+#define findblock(map_ij,n,scale,elem, block)\
+{\
+int candidate, found, b; \
+C_Integer *map= (map_ij);\
+\
+    candidate = (int)(scale*(elem));\
+    found = 0;\
+    if(map[candidate] <= (elem)){ /* search downward */\
+         b= candidate;\
+         while(b<(n)-1){ \
+            found = (map[b+1]>(elem));\
+            if(found)break;\
+            b++;\
+         } \
+    }else{ /* search upward */\
+         b= candidate-1;\
+         while(b>=0){\
+            found = (map[b]<=(elem));\
+            if(found)break;\
+            b--;\
+         }\
+    }\
+    if(!found)b=(n)-1;\
+    *(block) = b;\
+}
+
+/**
+ *  Locate the owner of an element of a Global Array specified by the array
+ *  subscript
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_locate =  pnga_locate
+#endif
+
+logical pnga_locate(Integer *g_a, Integer* subscript, Integer* owner)
+{
+Integer d, proc, dpos, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
+int use_blocks;
+
+   ga_check_handleM(g_a, "nga_locate");
+   ndim = GA[ga_handle].ndim;
+   use_blocks = GA[ga_handle].block_flag;
+
+   if (!use_blocks) {
+     for(d=0, *owner=-1; d< ndim; d++) 
+       if(subscript[d]< 1 || subscript[d]>GA[ga_handle].dims[d]) return FALSE;
+
+     for(d = 0, dpos = 0; d< ndim; d++){
+       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d],
+           GA[ga_handle].scale[d], subscript[d], &proc_s[d]);
+       dpos += GA[ga_handle].nblock[d];
+     }
+
+     ga_ComputeIndexM(&proc, ndim, proc_s, GA[ga_handle].nblock); 
+
+     *owner = GA_Proc_list ? GA_Proc_list[proc]: proc;
+     if (GA[ga_handle].num_rstrctd > 0) {
+       *owner = GA[ga_handle].rstrctd_list[*owner];
+     }
+   } else {
+     if (GA[ga_handle].block_sl_flag == 0) {
+       Integer i, j, chk, lo[MAXDIM], hi[MAXDIM];
+       Integer num_blocks = GA[ga_handle].block_total;
+       for (i=0; i< num_blocks; i++) {
+         pnga_distribution(g_a, &i, lo, hi);
+         chk = 1;
+         for (j=0; j<ndim; j++) {
+           if (subscript[j]<lo[j] || subscript[j] > hi[j]) chk = 0;
+         }
+         if (chk) {
+           *owner = i;
+           break;
+         }
+       }
+     } else {
+       Integer index[MAXDIM];
+       Integer i;
+       for (i=0; i<ndim; i++) {
+         index[i] = (subscript[i]-1)/GA[ga_handle].block_dims[i];
+       }
+       gam_find_block_from_indices(ga_handle, i, index);
+       *owner = i;
+     }
+   }
+   
+   return TRUE;
+}
+
 
 
 /*\ UTILITY FUNCTION TO LOCATE THE BOUNDING INDICES OF A CONTIGUOUS CHUNK OF
@@ -689,7 +793,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
   for (i=0; i<ndim; i++) nelems *= GA[handle].dims[i];
 
   /* If array is mirrored, evaluate first and last indices */
-  if (ga_is_mirrored_(g_a)) {
+  if (pnga_is_mirrored(g_a)) {
     /* If default group is not world group, change default group to world group
        temporarily */
     Save_default_group = GA_Default_Proc_Group;
@@ -856,11 +960,11 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
       default: pnga_error("type not supported",type);
     }
     for (i=0; i<ndim; i++) index[i] = (Integer)GA[handle].first[i];
-    i = nga_locate_(g_a, index, &id);
+    i = (int)pnga_locate(g_a, index, &id);
     gam_Loc_ptr(id, handle, (Integer)GA[handle].first, &fptr);
 
     for (i=0; i<ndim; i++) index[i] = (Integer)GA[handle].last[i];
-    i = nga_locate_(g_a, index, &id);
+    i = (int)pnga_locate(g_a, index, &id);
     gam_Loc_ptr(id, handle, (Integer)GA[handle].last, &lptr);
 
     GA[handle].shm_length = (C_Long)(lptr - fptr + size);
@@ -2931,104 +3035,22 @@ void pnga_fill(Integer *g_a, void* val)
 #endif
 }
 
-/* (old?) Fortran interface to ga_fill_ */
+/**
+ *  Get properties of Global Array. Note that type variable will be
+ *  using C conventions
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_inquire =  pnga_inquire
+#endif
 
-void FATR ga_cfill_(Integer *g_a, SingleComplex *val)
-{
-    pnga_fill(g_a, val);
-}
-
-
-void FATR ga_dfill_(Integer *g_a, DoublePrecision *val)
-{
-    pnga_fill(g_a, val);
-}
-
-
-void FATR ga_ifill_(Integer *g_a, Integer *val)
-{
-    pnga_fill(g_a, val);
-}
-
-
-void FATR ga_sfill_(Integer *g_a, Real *val)
-{
-    pnga_fill(g_a, val);
-}
-
-
-void FATR ga_zfill_(Integer *g_a, DoubleComplex *val)
-{
-    pnga_fill(g_a, val);
-}
-
-
-/*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
- *   Fortran version for internal global array functions
-\*/
-void FATR ga_inquire_internal_(Integer* g_a, Integer* type, Integer* dim1, Integer* dim2)
-{
-    gai_inquire(g_a, type, dim1, dim2);
-}
-
-
-/*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
- *  Fortran version
-\*/ 
-void FATR ga_inquire_(Integer* g_a, Integer* type, Integer* dim1,Integer* dim2)
-{
-    gai_inquire(g_a, type, dim1, dim2);
-    *type = (Integer)ga_type_c2f(*type);
-}
-
-
-/*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
- *  C version
-\*/
-void gai_inquire(Integer* g_a, Integer* type, Integer* dim1, Integer* dim2)
-{
-Integer ndim = ga_ndim_(g_a);
-
-   if(ndim != 2)
-      pnga_error("gai_inquire: 2D API cannot be used for array dimension",ndim);
-
-   *type       = GA[GA_OFFSET + *g_a].type;
-   *dim1       = (Integer)GA[GA_OFFSET + *g_a].dims[0];
-   *dim2       = (Integer)GA[GA_OFFSET + *g_a].dims[1];
-}
-
-
-/*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
- *  Fortran version
-\*/
-void FATR nga_inquire_(Integer *g_a, Integer *type, Integer *ndim, Integer *dims)
-{
-    ngai_inquire(g_a, type, ndim, dims);
-    *type = (Integer)ga_type_c2f(*type);
-}
-
-
-/*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
- *  C version
-\*/
-void ngai_inquire(Integer *g_a, Integer *type, Integer *ndim, Integer *dims)
+void pnga_inquire(Integer *g_a, Integer *type, Integer *ndim, Integer *dims)
 {
 Integer handle = GA_OFFSET + *g_a,i;
    ga_check_handleM(g_a, "nga_inquire");
    *type       = GA[handle].type;
    *ndim       = GA[handle].ndim;
-   for(i=0;i<*ndim;i++)dims[i]=(Integer)GA[handle].dims[i];
+   for(i=0;i<*ndim;i++) dims[i]=(Integer)GA[handle].dims[i];
 }
-
-
-/*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
- *  Fortran version for internal global array routines
-\*/
-void FATR nga_inquire_internal_(Integer *g_a, Integer *type, Integer *ndim,Integer *dims)
-{
-    ngai_inquire(g_a, type, ndim, dims);
-}
-
 
 /*\ RETURN A POINTER TO LOCAL DATA FOR BLOCK-CYCLIC DISTRIBUTION AND
  *  RETURN THE SIZE OF THE DATA BLOCK
@@ -3043,24 +3065,18 @@ void nga_inquire_block_internal(Integer* g_a, Integer proc, Integer *size, void*
 }
 
 
-/*\ INQUIRE NAME OF A GLOBAL ARRAY
- *  Fortran version
-\*/
-void FATR ga_inquire_name_(Integer *g_a, char *array_name, int len)
+/**
+ *  Inquire name of Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_inquire_name =  pnga_inquire_name
+#endif
+
+void pnga_inquire_name(Integer *g_a, char **array_name)
 {
-   ga_c2fstring(GA[GA_OFFSET + *g_a].name, array_name, len);
-}
-
-
-/*\ INQUIRE NAME OF A GLOBAL ARRAY
- *  C version
-\*/
-void gai_inquire_name(Integer *g_a, char **array_name)
-{ 
-   ga_check_handleM(g_a, "gai_inquire_name");
+   ga_check_handleM(g_a, "ga_inquire_name");
    *array_name = GA[GA_OFFSET + *g_a].name;
 }
-
 
 /*\ RETURN PROCESSOR COORDINATES
 \*/
@@ -3126,92 +3142,6 @@ void gai_get_proc_from_block_index_(Integer *g_a, Integer *index, Integer *proc)
     *proc = *proc%pnga_nnodes();
   }
 }
-
-
-#define findblock(map_ij,n,scale,elem, block)\
-{\
-int candidate, found, b; \
-C_Integer *map= (map_ij);\
-\
-    candidate = (int)(scale*(elem));\
-    found = 0;\
-    if(map[candidate] <= (elem)){ /* search downward */\
-         b= candidate;\
-         while(b<(n)-1){ \
-            found = (map[b+1]>(elem));\
-            if(found)break;\
-            b++;\
-         } \
-    }else{ /* search upward */\
-         b= candidate-1;\
-         while(b>=0){\
-            found = (map[b]<=(elem));\
-            if(found)break;\
-            b--;\
-         }\
-    }\
-    if(!found)b=(n)-1;\
-    *(block) = b;\
-}
-
-
-
-/*\ LOCATE THE OWNER OF SPECIFIED ELEMENT OF A GLOBAL ARRAY
-\*/
-logical FATR nga_locate_(Integer *g_a, Integer* subscript, Integer* owner)
-{
-Integer d, proc, dpos, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
-int use_blocks;
-
-   ga_check_handleM(g_a, "nga_locate");
-   ndim = GA[ga_handle].ndim;
-   use_blocks = GA[ga_handle].block_flag;
-
-   if (!use_blocks) {
-     for(d=0, *owner=-1; d< ndim; d++) 
-       if(subscript[d]< 1 || subscript[d]>GA[ga_handle].dims[d]) return FALSE;
-
-     for(d = 0, dpos = 0; d< ndim; d++){
-       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d],
-           GA[ga_handle].scale[d], subscript[d], &proc_s[d]);
-       dpos += GA[ga_handle].nblock[d];
-     }
-
-     ga_ComputeIndexM(&proc, ndim, proc_s, GA[ga_handle].nblock); 
-
-     *owner = GA_Proc_list ? GA_Proc_list[proc]: proc;
-     if (GA[ga_handle].num_rstrctd > 0) {
-       *owner = GA[ga_handle].rstrctd_list[*owner];
-     }
-   } else {
-     if (GA[ga_handle].block_sl_flag == 0) {
-       Integer i, j, chk, lo[MAXDIM], hi[MAXDIM];
-       Integer num_blocks = GA[ga_handle].block_total;
-       for (i=0; i< num_blocks; i++) {
-         pnga_distribution(g_a, &i, lo, hi);
-         chk = 1;
-         for (j=0; j<ndim; j++) {
-           if (subscript[j]<lo[j] || subscript[j] > hi[j]) chk = 0;
-         }
-         if (chk) {
-           *owner = i;
-           break;
-         }
-       }
-     } else {
-       Integer index[MAXDIM];
-       Integer i;
-       for (i=0; i<ndim; i++) {
-         index[i] = (subscript[i]-1)/GA[ga_handle].block_dims[i];
-       }
-       gam_find_block_from_indices(ga_handle, i, index);
-       *owner = i;
-     }
-   }
-   
-   return TRUE;
-}
-
 
 /*\
  * RETURN HOW MANY PROCESSORS/OWNERS THERE ARE FOR THE SPECIFIED PATCH OF A
@@ -3795,22 +3725,24 @@ logical pnga_destroy_mutexes()
    return TRUE;
 }
 
+/**
+ * Return a list that maps GA process IDs to message-passing process IDs
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_list_nodeid =  pnga_list_nodeid
+#endif
 
-/*\ return list of message-passing process ids for GA process ids
-\*/
-void FATR ga_list_nodeid_(list, num_procs)
-     Integer *list, *num_procs;
+void pnga_list_nodeid(Integer *list, Integer *num_procs)
 {
-Integer proc;
-   for( proc = 0; proc < *num_procs; proc++)
+  Integer proc;
+  for( proc = 0; proc < *num_procs; proc++)
 
 #ifdef PERMUTE_PIDS
-       if(GA_Proc_list) list[proc] = GA_inv_Proc_list[proc]; 
-       else
+    if(GA_Proc_list) list[proc] = GA_inv_Proc_list[proc];
+    else
 #endif
-       list[proc]=proc;
+      list[proc]=proc;
 }
-
 
 /*************************************************************************/
 
@@ -3838,20 +3770,6 @@ logical FATR ga_locate_region_(g_a, ilo, ihi, jlo, jhi, mapl, np )
    }
 
    return status;
-}
-
-
-
-/*\ LOCATE THE OWNER OF THE (i,j) ELEMENT OF A GLOBAL ARRAY
-\*/
-logical FATR ga_locate_(g_a, i, j, owner)
-        Integer *g_a, *i, *j, *owner;
-{
-Integer subscript[2];
-  
-    subscript[0]=*i; subscript[1]=*j;
-
-    return nga_locate_(g_a, subscript, owner);
 }
 
 /*\ RETURN COORDINATES OF ARRAY BLOCK HELD BY A PROCESSOR
@@ -3919,7 +3837,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
   _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
   if (local_sync_begin) ga_sync_();
   /* don't perform update if node is not mirrored */
-  if (!ga_is_mirrored_(g_a)) return;
+  if (!pnga_is_mirrored(g_a)) return;
   GA_PUSH_NAME("ga_merge_mirrored");
 
   inode = ga_cluster_nodeid_();
@@ -4111,7 +4029,7 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
   a_handle = GA_OFFSET + *g_a;
   b_handle = GA_OFFSET + *g_b;
 
-  if (!ga_is_mirrored_(g_a)) {
+  if (!pnga_is_mirrored(g_a)) {
     if (ga_cluster_nnodes_() > 1) {
       pnga_error("Handle to a non-mirrored array passed",0);
     } else {
@@ -4122,7 +4040,7 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
     }
   }
 
-  if (ga_is_mirrored_(g_b) && ga_cluster_nnodes_())
+  if (pnga_is_mirrored(g_b) && ga_cluster_nnodes_())
     pnga_error("Distributed array is mirrored",0);
 
   adim = GA[a_handle].ndim;
@@ -4226,7 +4144,7 @@ Integer FATR ga_num_mirrored_seg_(Integer *g_a)
   Integer istart, nproc, inode;
   Integer ret = 0, icheck;
 
-  if (!ga_is_mirrored_(g_a)) return ret;
+  if (!pnga_is_mirrored(g_a)) return ret;
   GA_PUSH_NAME("ga_num_mirrored_seg");
   ndim = GA[handle].ndim;
   first = GA[handle].first;
@@ -4297,7 +4215,7 @@ void FATR ga_get_mirrored_block_(Integer *g_a,
   /* Assume fortran indexing for npatch */
   tpatch = *npatch - 1;
 
-  if (!ga_is_mirrored_(g_a)) {
+  if (!pnga_is_mirrored(g_a)) {
     for (j=0; j<GA[handle].ndim; j++) {
       lo[j] = 0;
       hi[j] = -1;
@@ -4416,7 +4334,7 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
   _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
   if (local_sync_begin) ga_sync_();
   /* don't perform update if node is not mirrored */
-  if (!ga_is_mirrored_(g_a)) return;
+  if (!pnga_is_mirrored(g_a)) return;
   
   /* If default group is not world group, change default group to world group
      temporarily */
@@ -4518,7 +4436,7 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
       /* This algorith is based on the armci_msg_barrier code */
       /* Locate pointers to beginning and end of non-zero data */
       for (i=0;i<ndim;i++) index[i] = (Integer)GA[handle].first[i];
-      i = nga_locate_(g_a, index, &id);
+      i = (int)pnga_locate(g_a, index, &id);
       gam_Loc_ptr(id, handle, GA[handle].first, &fptr);
       for (i=0;i<ndim;i++) index[i] = (Integer)GA[handle].last[i];
       slength = (int)GA[handle].shm_length;

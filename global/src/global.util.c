@@ -77,15 +77,18 @@ float fbuf[BUFSIZE];
 long lbuf[BUFSIZE]; 
 long long llbuf[BUFSIZE]; 
 char *name;
+Integer ndim, dims[2];
 
   a_grp = ga_get_pgroup_(g_a);
   ga_pgroup_sync_(&a_grp);
   gai_check_handle(g_a, "ga_print");
   if(ga_pgroup_nodeid_(&a_grp) == 0){
 
-     ga_inquire_internal_(g_a,  &type, &dim1, &dim2);
+    pnga_inquire(g_a, &type, &ndim, dims);
+    dim1 = dims[0];
+    dim2 = dims[1];
 /*     name[FLEN-1]='\0';*/
-     gai_inquire_name(g_a, &name);
+     pnga_inquire_name(g_a, &name);
      if (*ilo <= 0 || *ihi > dim1 || *jlo <= 0 || *jhi > dim2){
          fprintf(stderr,"%ld %ld %ld %ld dims: [%ld,%ld]\n", 
                  (long)*ilo,(long)*ihi, (long)*jlo,(long)*jhi,
@@ -420,8 +423,8 @@ int local_sync_begin,local_sync_end;
     if(local_sync_begin)ga_sync_();
 
     if(pnga_nodeid() ==0){
-      nga_inquire_internal_(&g_a, &type, &ndim, dims);
-      gai_inquire_name(&g_a, &name);
+      pnga_inquire(&g_a, &type, &ndim, dims);
+      pnga_inquire_name(&g_a, &name);
       printf("Array Handle=%d Name:'%s' ",(int)g_a, name);
       printf("Data Type:");
       switch(type){
@@ -511,8 +514,8 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
     /* only the first process print the array */
     if(pnga_nodeid() == 0) {
         
-        nga_inquire_internal_(g_a,  &type, &ndim, dims);
-        gai_inquire_name(g_a, &name);
+        pnga_inquire(g_a,  &type, &ndim, dims);
+        pnga_inquire_name(g_a, &name);
         
         /* check the boundary */
         for(i=0; i<ndim; i++)
@@ -873,8 +876,8 @@ void FATR ga_summarize_(Integer *verbose)
 
         if(active == 1) {
             printed = 1;
-            nga_inquire_internal_(&g_a, &type, &ndim, dims);
-            gai_inquire_name(&g_a, &name);
+            pnga_inquire(&g_a, &type, &ndim, dims);
+            pnga_inquire_name(&g_a, &name);
             
             switch(type) {
                 case C_INT:
@@ -940,7 +943,7 @@ void ga_print_file(FILE *file, Integer *g_a)
     Integer lo[MAXDIM];
     Integer pretty = 1;
 
-    nga_inquire_internal_(g_a, &type, &ndim, dims);
+    pnga_inquire(g_a, &type, &ndim, dims);
 
     for(i=0; i<ndim; i++) lo[i] = 1;
 
@@ -950,8 +953,11 @@ void ga_print_file(FILE *file, Integer *g_a)
     Integer type, dim1, dim2;
     Integer ilo=1, jlo=1;
     Integer pretty = 1;
+    Integer ndim, dims[2];
     
-    ga_inquire_internal_(g_a, &type, &dim1, &dim2);
+    pnga_inquire(g_a, &type, &ndim, dims);
+    dim1 = dims[0];
+    dim2 = dims[1];
     
     ga_file_print_patch(file, g_a, &ilo, &dim1, &jlo, &dim2, &pretty);
 #endif    

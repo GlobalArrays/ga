@@ -209,8 +209,8 @@ void ngai_copy_patch(char *trans,
 
   GA_PUSH_NAME("ngai_copy_patch");
 
-  nga_inquire_internal_(g_a, &atype, &andim, adims);
-  nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+  pnga_inquire(g_a, &atype, &andim, adims);
+  pnga_inquire(g_b, &btype, &bndim, bdims);
 
   if(*g_a == *g_b) {
     /* they are the same patch */
@@ -1026,8 +1026,8 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
     pnga_error("Both arrays must be defined on same group",0L);
   me = ga_pgroup_nodeid_(&a_grp);
 
-  nga_inquire_internal_(g_a, &atype, &andim, adims);
-  nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+  pnga_inquire(g_a, &atype, &andim, adims);
+  pnga_inquire(g_b, &btype, &bndim, bdims);
 
   if(atype != btype ) pnga_error(" type mismatch ", 0L);
 
@@ -1333,7 +1333,7 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
     default: pnga_error("ngai_dot_patch: type not supported",atype);
   }
 
-  if (ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) {
+  if (pnga_is_mirrored(g_a) && pnga_is_mirrored(g_b)) {
     armci_msg_gop_scope(SCOPE_NODE,retval,alen,"+",ctype);
   } else {
 #ifdef MPI
@@ -1383,8 +1383,8 @@ Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
 
    GA_PUSH_NAME("ngai_cdot_patch");
 
-   nga_inquire_internal_(g_a, &atype, &andim, adims);
-   nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+   pnga_inquire(g_a, &atype, &andim, adims);
+   pnga_inquire(g_b, &btype, &bndim, bdims);
 
    if(atype != btype || (atype != C_SCPL )) pnga_error(" wrong types ", 0L);
 
@@ -1417,8 +1417,8 @@ DoublePrecision ngai_ddot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
 
     GA_PUSH_NAME("ngai_ddot_patch");
     
-    nga_inquire_internal_(g_a, &atype, &andim, adims);
-    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+    pnga_inquire(g_a, &atype, &andim, adims);
+    pnga_inquire(g_b, &btype, &bndim, bdims);
 
     if(atype != btype || (atype != C_DBL )) pnga_error(" wrong types ", 0L);
 
@@ -1447,8 +1447,8 @@ Integer ngai_idot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
 
     GA_PUSH_NAME("ngai_idot_patch");
     
-    nga_inquire_internal_(g_a, &atype, &andim, adims);
-    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+    pnga_inquire(g_a, &atype, &andim, adims);
+    pnga_inquire(g_b, &btype, &bndim, bdims);
 
     if(atype != btype ||
        ((atype != C_INT ) && (atype !=C_LONG) && (atype !=C_LONGLONG)))
@@ -1480,8 +1480,8 @@ Real ngai_sdot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
 
     GA_PUSH_NAME("ngai_sdot_patch");
     
-    nga_inquire_internal_(g_a, &atype, &andim, adims);
-    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+    pnga_inquire(g_a, &atype, &andim, adims);
+    pnga_inquire(g_b, &btype, &bndim, bdims);
 
     if(atype != btype || (atype != C_FLOAT )) pnga_error(" wrong types ", 0L);
 
@@ -1519,8 +1519,8 @@ Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
 
    GA_PUSH_NAME("ngai_zdot_patch");
 
-   nga_inquire_internal_(g_a, &atype, &andim, adims);
-   nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+   pnga_inquire(g_a, &atype, &andim, adims);
+   pnga_inquire(g_b, &btype, &bndim, bdims);
 
    if(atype != btype || (atype != C_DCPL )) pnga_error(" wrong types ", 0L);
 
@@ -1680,7 +1680,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
 
   GA_PUSH_NAME("nga_fill_patch");
 
-  nga_inquire_internal_(g_a,  &type, &ndim, dims);
+  pnga_inquire(g_a,  &type, &ndim, dims);
   num_blocks = ga_total_blocks_(g_a);
 
   if (num_blocks < 0) {
@@ -2038,7 +2038,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
 
   GA_PUSH_NAME("nga_scal_patch");
 
-  nga_inquire_internal_(g_a,  &type, &ndim, dims);
+  pnga_inquire(g_a,  &type, &ndim, dims);
   num_blocks = ga_total_blocks_(g_a);
 
   if (num_blocks < 0) {
@@ -2415,9 +2415,9 @@ void *alpha, *beta;
 
   GA_PUSH_NAME("nga_add_patch");
 
-  nga_inquire_internal_(g_a, &atype, &andim, adims);
-  nga_inquire_internal_(g_b, &btype, &bndim, bdims);
-  nga_inquire_internal_(g_c, &ctype, &cndim, cdims);
+  pnga_inquire(g_a, &atype, &andim, adims);
+  pnga_inquire(g_b, &btype, &bndim, bdims);
+  pnga_inquire(g_c, &ctype, &cndim, cdims);
 
   if(atype != btype || atype != ctype ) pnga_error(" types mismatch ", 0L); 
 
@@ -2761,7 +2761,7 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
 
     GA_PUSH_NAME("nga_zero_patch");
     
-    nga_inquire_internal_(g_a,  &type, &ndim, dims);
+    pnga_inquire(g_a,  &type, &ndim, dims);
     
     switch (type){
         case C_INT:
@@ -2873,6 +2873,7 @@ void gai_cdot_patch_(g_a, t_a, alen, ailo, aihi, ajlo, ajhi,
      int      alen, blen;                         /* Fortran hidden length */
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
+Integer dims[2], ndim;
 
 #ifdef USE_VAMPIR
    vampir_begin(GA_CDOT_PATCH,__FILE__,__LINE__);
@@ -2880,8 +2881,12 @@ Integer atype, btype, adim1, adim2, bdim1, bdim2;
 
    GA_PUSH_NAME("ga_cdot_patch");
 
-   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
+   pnga_inquire(g_a, &atype, &ndim, dims);
+   adim1 = dims[0];
+   adim2 = dims[1];
+   pnga_inquire(g_b, &btype, &ndim, dims);
+   bdim1 = dims[0];
+   bdim2 = dims[1];
 
    if(atype != btype || (atype != C_SCPL )) pnga_error(" wrong types ", 0L);
 
@@ -2908,6 +2913,7 @@ DoublePrecision gai_ddot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 DoublePrecision  sum = 0.;
+Integer ndim, dims[2];
 
 #ifdef USE_VAMPIR
    vampir_begin(GA_DDOT_PATCH,__FILE__,__LINE__);
@@ -2915,8 +2921,12 @@ DoublePrecision  sum = 0.;
 
    GA_PUSH_NAME("ga_ddot_patch");
 
-   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
+   pnga_inquire(g_a, &atype, &ndim, dims);
+   adim1 = dims[0];
+   adim2 = dims[1];
+   pnga_inquire(g_b, &btype, &ndim, dims);
+   bdim1 = dims[0];
+   bdim2 = dims[1];
 
    if(atype != btype || (atype != C_DBL )) pnga_error(" wrong types ", 0L);
 
@@ -2944,6 +2954,7 @@ Integer gai_idot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 Integer  sum = 0.;
+Integer ndim, dims[2];
 
 #ifdef USE_VAMPIR
    vampir_begin(GA_DDOT_PATCH,__FILE__,__LINE__);
@@ -2951,8 +2962,12 @@ Integer  sum = 0.;
 
    GA_PUSH_NAME("ga_idot_patch");
 
-   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
+   pnga_inquire(g_a, &atype, &ndim, dims);
+   adim1 = dims[0];
+   adim2 = dims[1];
+   pnga_inquire(g_b, &btype, &ndim, dims);
+   bdim1 = dims[0];
+   bdim2 = dims[1];
 
    if(atype != btype ||
        ((atype != C_INT ) && (atype !=C_LONG) && (atype !=C_LONGLONG)))
@@ -2982,6 +2997,7 @@ Real gai_sdot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 Real  sum = 0.;
+Integer ndim, dims[2];
 
 #ifdef USE_VAMPIR
    vampir_begin(GA_DDOT_PATCH,__FILE__,__LINE__);
@@ -2989,8 +3005,12 @@ Real  sum = 0.;
 
    GA_PUSH_NAME("ga_sdot_patch");
 
-   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
+   pnga_inquire(g_a, &atype, &ndim, dims);
+   adim1 = dims[0];
+   adim2 = dims[1];
+   pnga_inquire(g_b, &btype, &ndim, dims);
+   bdim1 = dims[0];
+   bdim2 = dims[1];
 
    if(atype != btype || (atype != C_FLOAT )) pnga_error(" wrong types ", 0L);
 
@@ -3024,6 +3044,7 @@ void gai_zdot_patch_(g_a, t_a, alen, ailo, aihi, ajlo, ajhi,
      int      alen, blen;                      /* Fortran hidden str length */
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
+Integer ndim, dims[2];
 
 #ifdef USE_VAMPIR
    vampir_begin(GA_ZDOT_PATCH,__FILE__,__LINE__);
@@ -3031,8 +3052,12 @@ Integer atype, btype, adim1, adim2, bdim1, bdim2;
 
    GA_PUSH_NAME("ga_zdot_patch");
 
-   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
+   pnga_inquire(g_a, &atype, &ndim, dims);
+   adim1 = dims[0];
+   adim2 = dims[1];
+   pnga_inquire(g_b, &btype, &ndim, dims);
+   bdim1 = dims[0];
+   bdim2 = dims[1];
 
    if(atype != btype || (atype != C_DCPL )) pnga_error(" wrong types ", 0L);
 

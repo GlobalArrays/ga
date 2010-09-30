@@ -73,7 +73,7 @@ void FATR ga_zero_(Integer *g_a)
 
   num_blocks = ga_total_blocks_(g_a);
 
-  nga_inquire_internal_(g_a, &type, &ndim, dims);
+  pnga_inquire(g_a, &type, &ndim, dims);
   if (num_blocks < 0) {
     pnga_distribution(g_a, &me, lo, hi);
 
@@ -186,8 +186,8 @@ void *ptr_a, *ptr_b;
 
    if(*g_a == *g_b) pnga_error("arrays have to be different ", 0L);
 
-   nga_inquire_internal_(g_a,  &type, &ndim, dims);
-   nga_inquire_internal_(g_b,  &typeb, &ndimb, dimsb);
+   pnga_inquire(g_a,  &type, &ndim, dims);
+   pnga_inquire(g_b,  &typeb, &ndimb, dimsb);
 
    if(type != typeb) pnga_error("types not the same", *g_b);
 
@@ -283,8 +283,8 @@ int local_sync_begin,local_sync_end,use_put;
 
    if(*g_a == *g_b) pnga_error("arrays have to be different ", 0L);
 
-   nga_inquire_internal_(g_a,  &type, &ndim, dims);
-   nga_inquire_internal_(g_b,  &typeb, &ndimb, dimsb);
+   pnga_inquire(g_a,  &type, &ndim, dims);
+   pnga_inquire(g_b,  &typeb, &ndimb, dimsb);
 
    if(type != typeb) pnga_error("types not the same", *g_b);
    if(ndim != ndimb) pnga_error("dimensions not the same", ndimb);
@@ -292,8 +292,8 @@ int local_sync_begin,local_sync_end,use_put;
    for(i=0; i< ndim; i++)if(dims[i]!=dimsb[i]) 
                           pnga_error("dimensions not the same",i);
 
-   if ((ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) ||
-       (!ga_is_mirrored_(g_a) && !ga_is_mirrored_(g_b))) {
+   if ((pnga_is_mirrored(g_a) && pnga_is_mirrored(g_b)) ||
+       (!pnga_is_mirrored(g_a) && !pnga_is_mirrored(g_b))) {
      /* Both global arrays are mirrored or both global arrays are not mirrored.
         Copy operation is straightforward */
 
@@ -394,7 +394,7 @@ int local_sync_begin,local_sync_end,use_put;
      }
    } else {
      /* One global array is mirrored and the other is not */
-     if (ga_is_mirrored_(g_a)) {
+     if (pnga_is_mirrored(g_a)) {
        /* Source array is mirrored and destination
           array is distributed. Assume source array is consistent */
        pnga_distribution(g_b, &me_b, lo, hi);
@@ -476,8 +476,8 @@ Integer bndim, bdims[MAXDIM];
    num_blocks_a = ga_total_blocks_(g_a);
    num_blocks_b = ga_total_blocks_(g_b);
    if (num_blocks_a >= 0 || num_blocks_b >= 0) {
-     nga_inquire_internal_(g_a, &type, &andim, adims);
-     nga_inquire_internal_(g_b, &type, &bndim, bdims);
+     pnga_inquire(g_a, &type, &andim, adims);
+     pnga_inquire(g_b, &type, &bndim, bdims);
      ngai_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
          value);
      GA_POP_NAME;
@@ -487,8 +487,8 @@ Integer bndim, bdims[MAXDIM];
    if(pnga_compare_distr(g_a,g_b) == FALSE ||
       pnga_has_ghosts(g_a) || pnga_has_ghosts(g_b)) {
        /* distributions not identical */
-       nga_inquire_internal_(g_a, &type, &andim, adims);
-       nga_inquire_internal_(g_b, &type, &bndim, bdims);
+       pnga_inquire(g_a, &type, &andim, adims);
+       pnga_inquire(g_b, &type, &bndim, bdims);
 
        ngai_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
                       value);
@@ -498,7 +498,7 @@ Integer bndim, bdims[MAXDIM];
    }
    
    ga_pgroup_sync_(&a_grp);
-   nga_inquire_internal_(g_a,  &type, &ndim, dims);
+   pnga_inquire(g_a,  &type, &ndim, dims);
    if(type != Type) pnga_error("type not correct", *g_a);
    pnga_distribution(g_a, &me, lo, hi);
    if(lo[0]>0){
@@ -514,7 +514,7 @@ Integer bndim, bdims[MAXDIM];
      elemsb = elems;
      ptr_b = ptr_a;
    }else {  
-     nga_inquire_internal_(g_b,  &type, &ndim, dims);
+     pnga_inquire(g_b,  &type, &ndim, dims);
      if(type != Type) pnga_error("type not correct", *g_b);
      pnga_distribution(g_b, &me, lo, hi);
      if(lo[0]>0){
@@ -628,7 +628,7 @@ Integer bndim, bdims[MAXDIM];
       default: pnga_error("gai_dot: type not supported",type);
     }
 
-   if (ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) {
+   if (pnga_is_mirrored(g_a) && pnga_is_mirrored(g_b)) {
      armci_msg_gop_scope(SCOPE_NODE,value,alen,"+",atype);
    } else {
 #ifdef MPI
@@ -757,7 +757,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
   GA_PUSH_NAME("ga_scale");
   num_blocks = ga_total_blocks_(g_a);
 
-  nga_inquire_internal_(g_a, &type, &ndim, dims);
+  pnga_inquire(g_a, &type, &ndim, dims);
   if (num_blocks < 0) {
     pnga_distribution(g_a, &me, lo, hi);
     if (pnga_has_ghosts(g_a)) {
@@ -952,9 +952,9 @@ int local_sync_begin,local_sync_end;
        ga_total_blocks_(g_a) > 0 || ga_total_blocks_(g_b) > 0 ||
        ga_total_blocks_(g_c) > 0) {
        /* distributions not identical */
-       nga_inquire_internal_(g_a, &type, &andim, adims);
-       nga_inquire_internal_(g_b, &type, &bndim, bdims);
-       nga_inquire_internal_(g_b, &type, &cndim, cdims);
+       pnga_inquire(g_a, &type, &andim, adims);
+       pnga_inquire(g_b, &type, &bndim, bdims);
+       pnga_inquire(g_b, &type, &cndim, cdims);
 
        nga_add_patch_(alpha, g_a, one_arr, adims, beta, g_b, one_arr, bdims,
                       g_c, one_arr, cdims);
@@ -967,7 +967,7 @@ int local_sync_begin,local_sync_end;
    }
 
    ga_pgroup_sync_(&a_grp);
-   nga_inquire_internal_(g_c,  &typeC, &ndim, dims);
+   pnga_inquire(g_c,  &typeC, &ndim, dims);
    pnga_distribution(g_c, &me, lo, hi);
    if (  lo[0]>0 ){
      nga_access_ptr(g_c, lo, hi, &ptr_c, ld);
@@ -978,7 +978,7 @@ int local_sync_begin,local_sync_end;
      ptr_a  = ptr_c;
      elemsa = elems;
    }else { 
-     nga_inquire_internal_(g_a,  &type, &ndim, dims);
+     pnga_inquire(g_a,  &type, &ndim, dims);
      if(type != typeC) pnga_error("types not consistent", *g_a);
      pnga_distribution(g_a, &me, lo, hi);
      if (  lo[0]>0 ){
@@ -991,7 +991,7 @@ int local_sync_begin,local_sync_end;
      ptr_b  = ptr_c;
      elemsb = elems;
    }else {
-     nga_inquire_internal_(g_b,  &type, &ndim, dims);
+     pnga_inquire(g_b,  &type, &ndim, dims);
      if(type != typeC) pnga_error("types not consistent", *g_b);
      pnga_distribution(g_b, &me, lo, hi);
      if (  lo[0]>0 ){
@@ -1191,8 +1191,8 @@ char *ptr_tmp, *ptr_a;
 
     if(*g_a == *g_b) pnga_error("arrays have to be different ", 0L);
 
-    nga_inquire_internal_(g_a, &atype, &andim, adims);
-    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+    pnga_inquire(g_a, &atype, &andim, adims);
+    pnga_inquire(g_b, &btype, &bndim, bdims);
 
     if(bndim != 2 || andim != 2) pnga_error("dimension must be 2",0);
     if(atype != btype ) pnga_error("array type mismatch ", 0L);

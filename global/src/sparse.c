@@ -401,7 +401,7 @@ register Integer i;
    ndim = ga_ndim_(g_a);
    if (ndim > 1) pnga_error("ga_patch_enum:applicable to 1-dim arrays",ndim);
 
-   nga_inquire_internal_(g_a, &type, &ndim, dims);
+   pnga_inquire(g_a, &type, &ndim, dims);
    pnga_distribution(g_a, &me, &lop, &hip);
 
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */
@@ -506,7 +506,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
    ndim = ga_ndim_(g_a);
    if(ndim>1)pnga_error("ga_scan_copy: applicable to 1-dim arrays",ndim);
 
-   nga_inquire_internal_(g_a, &type, &ndim, &dims);
+   pnga_inquire(g_a, &type, &ndim, &dims);
    pnga_distribution(g_sbit, &me, &lop, &hip);
 
    /* create arrays to hold first and last bits set on a given process */
@@ -892,7 +892,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
    lim = (Integer *) ga_malloc(nproc, MT_F_INT, "ga_pack lim buf");
 
    bzero(lim,sizeof(Integer)*nproc);
-   nga_inquire_internal_(g_a, &type, &ndim, &dims);
+   pnga_inquire(g_a, &type, &ndim, &dims);
    if(ndim>1) pnga_error("ga_pack: supports 1-dim arrays only",ndim);
    pnga_distribution(g_sbit, &me, &lop, &hip);
 
@@ -1038,7 +1038,7 @@ logical FATR ga_create_bin_range_(Integer *g_bin, Integer *g_cnt, Integer *g_off
 Integer type, ndim, nbin, lobin, hibin, me=pnga_nodeid(),crap;
 Integer dims[2], nproc=pnga_nnodes(),chunk[2];
 
-    nga_inquire_internal_(g_bin, &type, &ndim, &nbin);
+    pnga_inquire(g_bin, &type, &ndim, &nbin);
     if(ndim !=1) pnga_error("ga_bin_index: 1-dim array required",ndim);
     if(type!= C_INT && type!=C_LONG && type!=C_LONGLONG)
        pnga_error("ga_bin_index: not integer type",type);
@@ -1065,9 +1065,9 @@ Integer dims[2], nproc=pnga_nnodes(),chunk[2];
       first_off++; last_off++;
 
       /* find processors on which these bins are located */
-      if(!nga_locate_(g_bin, &first_off, &first_proc))
+      if(!pnga_locate(g_bin, &first_off, &first_proc))
           pnga_error("ga_bin_sorter: failed to locate region f",first_off);
-      if(!nga_locate_(g_bin, &last_off, &last_proc))
+      if(!pnga_locate(g_bin, &last_off, &last_proc))
           pnga_error("ga_bin_sorter: failed to locate region l",last_off);
 
       /* inspect range of indices to bin elements stored on these processors */
@@ -1131,7 +1131,7 @@ Integer g_range;
     if(FALSE==ga_create_bin_range_(g_bin, g_cnt, g_off, &g_range))
         pnga_error("ga_bin_sorter: failed to create temp bin range array",0); 
 
-    nga_inquire_internal_(g_bin, &type, &ndim, &totbin);
+    pnga_inquire(g_bin, &type, &ndim, &totbin);
     if(ndim !=1) pnga_error("ga_bin_sorter: 1-dim array required",ndim);
      
     pnga_distribution(g_bin, &me, &lo, &hi);
@@ -1175,7 +1175,7 @@ int i, my_nbin=0;
 int *all_bin_contrib, *offset;
 Integer type, ndim, nbin;
 
-    nga_inquire_internal_(g_bin, &type, &ndim, &nbin);
+    pnga_inquire(g_bin, &type, &ndim, &nbin);
     if(ndim !=1) pnga_error("ga_bin_index: 1-dim array required",ndim);
     if(type!= C_INT && type!=C_LONG && type!=C_LONGLONG)
        pnga_error("ga_bin_index: not integer type",type);

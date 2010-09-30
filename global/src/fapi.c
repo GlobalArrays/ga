@@ -380,6 +380,99 @@ logical FATR nga_has_ghosts_(Integer *g_a)
   return wnga_has_ghosts(g_a);
 }
 
+void FATR ga_initialize_()
+{
+  wnga_initialize();
+}
+
+void FATR nga_initialize_()
+{
+  wnga_initialize();
+}
+
+void FATR ga_initialize_ltd_(Integer *limit)
+{
+  wnga_initialize_ltd(limit);
+}
+
+void FATR nga_initialize_ltd_(Integer *limit)
+{
+  wnga_initialize_ltd(limit);
+}
+
+void FATR ga_inquire_(Integer *g_a, Integer *type, Integer *dim1, Integer *dim2)
+{
+  Integer dims[2], ndim;
+  wnga_inquire(g_a, type, &ndim, dims);
+  if (ndim != 2) wnga_error("Wrong array dimension in ga_inquire",ndim);
+  *type = (Integer)ga_type_c2f(*type);
+  *dim1 = dims[0];
+  *dim2 = dims[1];
+}
+
+void FATR nga_inquire_(Integer *g_a, Integer *type, Integer *ndim, Integer *dims)
+{
+  wnga_inquire(g_a, type, ndim, dims);
+  *type = (Integer)ga_type_c2f(*type);
+}
+
+Integer FATR ga_inquire_memory_()
+{
+  return wnga_inquire_memory();
+}
+
+Integer FATR nga_inquire_memory_()
+{
+  return wnga_inquire_memory();
+}
+
+void FATR ga_inquire_name_(Integer *g_a, char *array_name, int len)
+{
+  char *c_name;
+  wnga_inquire_name(g_a, &c_name);
+  ga_c2fstring(c_name, array_name, len);
+}
+
+void FATR nga_inquire_name_(Integer *g_a, char *array_name, int len)
+{
+  char *c_name;
+  wnga_inquire_name(g_a, &c_name);
+  ga_c2fstring(c_name, array_name, len);
+}
+
+logical FATR ga_is_mirrored_(Integer *g_a)
+{
+  return pnga_is_mirrored(g_a);
+}
+
+logical FATR nga_is_mirrored_(Integer *g_a)
+{
+  return pnga_is_mirrored(g_a);
+}
+
+void FATR ga_list_nodeid_(Integer *list, Integer *nprocs)
+{
+  wnga_list_nodeid(list, nprocs);
+}
+
+void FATR nga_list_nodeid_(Integer *list, Integer *nprocs)
+{
+  wnga_list_nodeid(list, nprocs);
+}
+
+logical FATR ga_locate_(Integer *g_a, Integer *i, Integer *j, Integer *owner)
+{
+  Integer subscript[2];
+  subscript[0] = *i;
+  subscript[1] = *j;
+  return wnga_locate(g_a, subscript, owner);
+}
+
+logical FATR nga_locate_(Integer *g_a, Integer *subscript, Integer *owner)
+{
+  return wnga_locate(g_a, subscript, owner);
+}
+
 Integer FATR ga_nnodes_()
 {
   return wnga_nnodes();

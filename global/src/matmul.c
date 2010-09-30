@@ -538,7 +538,7 @@ int get_next_block_info(Integer *g_c, Integer *proc_index, Integer *index,
     int i;
     
     /* works only upto 2 dims - i.e vectors/matrices*/
-    nga_inquire_internal_(g_c,  &type, &ndim, dims);
+    pnga_inquire(g_c,  &type, &ndim, dims);
     if(ndim>2) pnga_error("get_next_block_info() supports upto 2-d only ", 0L);
     
     /* Uses simple block-cyclic data distribution */
@@ -657,7 +657,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 
        /* If loC and hiC intersects with current patch region, then they will
         * be updated accordingly. Else it returns FALSE */
-       nga_inquire_internal_(g_c, &ctype, &cndim, cdims);
+       pnga_inquire(g_c, &ctype, &cndim, cdims);
        if(!ngai_patch_intersect(clo,chi,loC,hiC,cndim)) continue;
        
 #if DEBUG_
@@ -1276,17 +1276,17 @@ void ga_matmul(transa, transb, alpha, beta,
      **************************************************/
 
     /* Check to make sure all global arrays are of the same type */
-    if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
-	  ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
+    if (!(pnga_is_mirrored(g_a) == pnga_is_mirrored(g_b) &&
+	  pnga_is_mirrored(g_a) == pnga_is_mirrored(g_c))) {
        pnga_error("Processors do not match for all arrays",pnga_nnodes());
     }
 
     /* check if ranks are O.K. */
-    nga_inquire_internal_(g_a, &atype, &rank, dims); 
+    pnga_inquire(g_a, &atype, &rank, dims); 
     VECTORCHECK(rank, dims, adim1, adim2, *ailo, *aihi, *ajlo, *ajhi);
-    nga_inquire_internal_(g_b, &btype, &rank, dims); 
+    pnga_inquire(g_b, &btype, &rank, dims); 
     VECTORCHECK(rank, dims, bdim1, bdim2, *bilo, *bihi, *bjlo, *bjhi);
-    nga_inquire_internal_(g_c, &ctype, &rank, dims); 
+    pnga_inquire(g_c, &ctype, &rank, dims); 
     VECTORCHECK(rank, dims, cdim1, cdim2, *cilo, *cihi, *cjlo, *cjhi);
 
     /* check for data-types mismatch */
@@ -1335,7 +1335,7 @@ void ga_matmul(transa, transb, alpha, beta,
 	_gai_matmul_patch_flag == SET) irregular = SET;
 
     /* even ga_dgemm is called, m,n & k might not match GA dimensions */
-    nga_inquire_internal_(g_c, &ctype, &rank, dims);
+    pnga_inquire(g_c, &ctype, &rank, dims);
     if(dims[0] != m || dims[1] != n) irregular = SET; /* C matrix dims */
 
     if(!irregular) {
@@ -1547,11 +1547,11 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    GA_PUSH_NAME("ga_matmul_patch");
 
    /* Check to make sure all global arrays are of the same type */
-   if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
-        ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
+   if (!(pnga_is_mirrored(g_a) == pnga_is_mirrored(g_b) &&
+        pnga_is_mirrored(g_a) == pnga_is_mirrored(g_c))) {
      pnga_error("Processors do not match for all arrays",pnga_nnodes());
    }
-   if (ga_is_mirrored_(g_a)) {
+   if (pnga_is_mirrored(g_a)) {
      inode = ga_cluster_nodeid_();
      nproc = ga_cluster_nprocs_(&inode);
      iproc = me - ga_cluster_procid_(&inode, &ZERO_I);
@@ -1560,11 +1560,11 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
      iproc = me;
    }
 
-   nga_inquire_internal_(g_a, &atype, &rank, dims); 
+   pnga_inquire(g_a, &atype, &rank, dims); 
    VECTORCHECK(rank, dims, adim1, adim2, *ailo, *aihi, *ajlo, *ajhi);
-   nga_inquire_internal_(g_b, &btype, &rank, dims); 
+   pnga_inquire(g_b, &btype, &rank, dims); 
    VECTORCHECK(rank, dims, bdim1, bdim2, *bilo, *bihi, *bjlo, *bjhi);
-   nga_inquire_internal_(g_c, &ctype, &rank, dims); 
+   pnga_inquire(g_c, &ctype, &rank, dims); 
    VECTORCHECK(rank, dims, cdim1, cdim2, *cilo, *cihi, *cjlo, *cjhi);
 
    if(atype != btype || atype != ctype ) pnga_error(" types mismatch ", 0L);
@@ -1626,7 +1626,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
        Integer avail = gai_memory_avail(atype);
-       if (ga_is_mirrored_(g_a)) {
+       if (pnga_is_mirrored(g_a)) {
          fflush(stdout);
          if (sizeof(Integer)/sizeof(int) > 1)
            armci_msg_gop_scope(SCOPE_NODE, &avail, 1, "min", ARMCI_LONG);
@@ -1834,7 +1834,7 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
 #ifdef USE_VAMPIR
   vampir_begin(GA_MATMUL_PATCH,__FILE__,__LINE__);
 #endif
-    if(ga_is_mirrored_(g_a)) 
+    if(pnga_is_mirrored(g_a)) 
        ga_matmul_mirrored(transa, transb, alpha, beta,
 			  g_a, ailo, aihi, ajlo, ajhi,
 			  g_b, bilo, bihi, bjlo, bjhi,
@@ -1951,11 +1951,11 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    GA_PUSH_NAME("nga_matmul_patch");
 
    /* Check to make sure all global arrays are of the same type */
-   if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
-        ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
+   if (!(pnga_is_mirrored(g_a) == pnga_is_mirrored(g_b) &&
+        pnga_is_mirrored(g_a) == pnga_is_mirrored(g_c))) {
      pnga_error("Processors do not match for all arrays",pnga_nnodes());
    }
-   if (ga_is_mirrored_(g_a)) {
+   if (pnga_is_mirrored(g_a)) {
      inode = ga_cluster_nodeid_();
      nproc = ga_cluster_nprocs_(&inode);
      iproc = me - ga_cluster_procid_(&inode, &ZERO_I);
@@ -1964,9 +1964,9 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
      iproc = me;
    }
 
-   nga_inquire_internal_(g_a, &atype, &arank, adims);
-   nga_inquire_internal_(g_b, &btype, &brank, bdims);
-   nga_inquire_internal_(g_c, &ctype, &crank, cdims);
+   pnga_inquire(g_a, &atype, &arank, adims);
+   pnga_inquire(g_b, &btype, &brank, bdims);
+   pnga_inquire(g_c, &ctype, &crank, cdims);
 
    if(arank<2)  pnga_error("rank of A must be at least 2",arank);
    if(brank<2)  pnga_error("rank of B must be at least 2",brank);
@@ -2266,7 +2266,7 @@ Integer clo[2], chi[2];
 	ngai_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi,
                          g_b, blo, bhi, g_c, clo, chi);
 #else
-	if(ga_is_mirrored_(g_a)) 
+	if(pnga_is_mirrored(g_a)) 
 	   ga_matmul_mirrored(transa, transb, (void*)alpha, (void*)beta,
 			      g_a, ailo, aihi, ajlo, ajhi,
 			      g_b, bilo, bihi, bjlo, bjhi,

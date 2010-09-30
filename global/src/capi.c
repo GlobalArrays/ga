@@ -83,7 +83,13 @@ return 0;
 void GA_Initialize_ltd(size_t limit)
 {
   Integer lim = (Integer)limit;
-  ga_initialize_ltd_(&lim);
+  wnga_initialize_ltd(&lim);
+}
+
+void NGA_Initialize_ltd(size_t limit)
+{
+  Integer lim = (Integer)limit;
+  wnga_initialize_ltd(&lim);
 }
 
 void GA_Initialize_args(int *argc, char ***argv)
@@ -105,7 +111,19 @@ void GA_Initialize()
       " with GA_Initialize_args(&argc, &argv) as in the API docs", 0L);
 #endif
 
-  ga_initialize_();
+  wnga_initialize();
+}
+
+void NGA_Initialize()
+{
+#ifdef MPI_SPAWN
+  GA_Error("GA was built with ARMCI_NETWORK=MPI-SPAWN. For this network "
+      "setting, GA must be initialized with GA_Initialize_args() "
+      "instead of GA_Initialize(). Please replace GA_Initialize() "
+      " with GA_Initialize_args(&argc, &argv) as in the API docs", 0L);
+#endif
+
+  wnga_initialize();
 }
 
 void GA_Terminate() 
@@ -830,6 +848,40 @@ int GA_Is_mirrored(int g_a)
 {
     Integer a=(Integer)g_a;
     return (int)ga_is_mirrored_(&a);
+}
+
+int NGA_Is_mirrored(int g_a)
+{
+    Integer a=(Integer)g_a;
+    return (int)ga_is_mirrored_(&a);
+}
+
+void GA_List_nodeid(int *nlist, int *nprocs)
+{
+  Integer i, procs;
+  Integer *list;
+  procs = (Integer)(*nprocs);
+  list = malloc(procs*sizeof(int));
+  wnga_list_nodeid(list, &procs);
+  for (i=0; i<procs; i++) {
+    nlist[i] = (int)list[i];
+  }
+  *nprocs = (int)procs;
+  free(list);
+}
+
+void NGA_List_nodeid(int *nlist, int *nprocs)
+{
+  Integer i, procs;
+  Integer *list;
+  procs = (Integer)(*nprocs);
+  list = malloc(procs*sizeof(int));
+  wnga_list_nodeid(list, &procs);
+  for (i=0; i<procs; i++) {
+    nlist[i] = (int)list[i];
+  }
+  *nprocs = (int)procs;
+  free(list);
 }
 
 int GA_Num_mirrored_seg(int g_a)
@@ -1929,7 +1981,7 @@ int NGA_Locate(int g_a, int subscript[])
     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
     COPYINDEX_C2F(subscript,_ga_lo,ndim);
 
-    st = nga_locate_(&a,_ga_lo,&owner);
+    st = wnga_locate(&a,_ga_lo,&owner);
     if(st == TRUE) return (int)owner;
     else return -1;
 }
@@ -1942,7 +1994,7 @@ int NGA_Locate64(int g_a, int64_t subscript[])
     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
     COPYINDEX_C2F(subscript,_ga_lo,ndim);
 
-    st = nga_locate_(&a,_ga_lo,&owner);
+    st = wnga_locate(&a,_ga_lo,&owner);
     if(st == TRUE) return (int)owner;
     else return -1;
 }
@@ -2066,7 +2118,7 @@ void NGA_Inquire(int g_a, int *type, int *ndim, int dims[])
      Integer a=(Integer)g_a;
      Integer ttype, nndim;
      Integer _ga_dims[MAXDIM];
-     ngai_inquire(&a,&ttype, &nndim, _ga_dims);
+     wnga_inquire(&a,&ttype, &nndim, _ga_dims);
      COPYF2C(_ga_dims, dims,nndim);  
      *ndim = (int)nndim;
      *type = (int)ttype;
@@ -2077,7 +2129,7 @@ void NGA_Inquire64(int g_a, int *type, int *ndim, int64_t dims[])
      Integer a=(Integer)g_a;
      Integer ttype, nndim;
      Integer _ga_dims[MAXDIM];
-     ngai_inquire(&a,&ttype, &nndim, _ga_dims);
+     wnga_inquire(&a,&ttype, &nndim, _ga_dims);
      COPYF2C_64(_ga_dims, dims,nndim);  
      *ndim = (int)nndim;
      *type = (int)ttype;
@@ -2087,7 +2139,15 @@ char* GA_Inquire_name(int g_a)
 {
      Integer a=(Integer)g_a;
      char *ptr;
-     gai_inquire_name(&a, &ptr);
+     wnga_inquire_name(&a, &ptr);
+     return(ptr);
+}
+
+char* NGA_Inquire_name(int g_a)
+{
+     Integer a=(Integer)g_a;
+     char *ptr;
+     wnga_inquire_name(&a, &ptr);
      return(ptr);
 }
 
@@ -4263,7 +4323,12 @@ void NGA_Error(char *str, int code)
 
 size_t GA_Inquire_memory()
 {
-    return ga_inquire_memory_();
+    return (size_t)wnga_inquire_memory();
+}
+
+size_t NGA_Inquire_memory()
+{
+    return (size_t)wnga_inquire_memory();
 }
 
 void GA_Sync()

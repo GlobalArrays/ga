@@ -222,11 +222,16 @@ Integer i, proc=-1, me = pnga_nodeid();
 static void dst_lock(Integer id)
 {
 Integer owner, owner2, server, me=pnga_nodeid();
+Integer subscrpt[2];
 
       /* check if elements (id,1) and (id,2) reside on the same process */ 
-      if(!ga_locate_(&g_mutexes, &id, &one, &owner))
+      subscrpt[0] = id;
+      subscrpt[1] = one;
+      if(!pnga_locate(&g_mutexes, subscrpt, &owner))
                      Error("ga_lock:locate fail",1);
-      if(!ga_locate_(&g_mutexes, &id, &two, &owner2))
+      subscrpt[0] = id;
+      subscrpt[1] = two;
+      if(!pnga_locate(&g_mutexes, subscrpt, &owner2))
                      Error("ga_lock:locate fail",2);
       if(owner != owner2) Error("ga_lock:error in mutex array distribution",0);
 
@@ -268,8 +273,11 @@ Integer owner, owner2, server, me=pnga_nodeid();
 static void dst_unlock(Integer id)
 {
 Integer owner, server;
+Integer subscrpt[2];
 
-      if(!ga_locate_(&g_mutexes, &id, &one, &owner)) 
+      subscrpt[0] = id;
+      subscrpt[1] = one;
+      if(!pnga_locate(&g_mutexes, subscrpt, &owner)) 
                                   Error("ga_lock:locate failed",0);      
       server = DataServer(owner);
       if(server == pnga_nodeid()){

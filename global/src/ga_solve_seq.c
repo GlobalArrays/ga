@@ -498,6 +498,7 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
   Integer dimB1, dimB2, typeB;
   Integer me;
   Integer info;
+  Integer dims[2], ndim;
 
   /** check environment */
 #ifdef USE_VAMPIR
@@ -508,8 +509,12 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
   /** check GA info for input arrays */
   gai_check_handle(g_a, "ga_lu_solve: a");
   gai_check_handle(g_b, "ga_lu_solve: b");
-  gai_inquire(g_a, &typeA, &dimA1, &dimA2);
-  gai_inquire(g_b, &typeB, &dimB1, &dimB2);
+  pnga_inquire(g_a, &typeA, &ndim, &dims);
+  dimA1 = dims[0];
+  dimA2 = dims[1];
+  pnga_inquire(g_b, &typeB, &ndim, &dims);
+  dimB1 = dims[0];
+  dimB2 = dims[1];
   
   GA_PUSH_NAME("ga_lu_solve_seq");
 
