@@ -30,7 +30,8 @@ check_PROGRAMS =
 check_LTLIBRARIES =
 lib_LTLIBRARIES = libga.la
 libga_la_SOURCES =
-EXTRA_DIST =
+nodist_libga_la_SOURCES =
+EXTRA_DIST = README
 BUILT_SOURCES =
 AM_FFLAGS =
 AM_CFLAGS =
@@ -93,6 +94,7 @@ endif
 # and works with all Fortran compilers.
 #
 BUILT_SOURCES += config.fh
+nodist_libga_la_SOURCES += config.fh
 
 config.fh: $(top_build_prefix)config.h
 	-rm -f config.fh && $(SED) "/^#/!d" $(top_build_prefix)config.h > config.fh
@@ -208,14 +210,16 @@ libga_la_SOURCES += LinAlg/lapack+blas/zgemm.f
 endif # HAVE_BLAS
 endif # NOFORT
 
+EXTRA_DIST += LinAlg/lapack+blas/README
+
 ##############################################################################
 # tcgmsg
 #
 if MSG_COMMS_TCGMSG
 libga_la_SOURCES += tcgmsg/capi.c
 if USE_VAMPIR
-libga_la_SOURCES += global/src/ga_vt.c
 libga_la_SOURCES += tcgmsg/tcgmsg_vampir.c
+libga_la_SOURCES += tcgmsg/tcgmsg_vampir.h
 endif
 
 include_HEADERS += tcgmsg/msgtypesc.h
@@ -226,6 +230,62 @@ include_HEADERS += tcgmsg/tcgmsg.h
 AM_CPPFLAGS += -I$(top_srcdir)/tcgmsg
 
 endif # MSG_COMMS_TCGMSG
+
+EXTRA_DIST += tcgmsg/README
+
+##############################################################################
+# tcgmsg/examples
+#
+# NOTE: While we don't build the tcgmsg examples, we include everything in the
+# distribution anyway.
+#
+if MSG_COMMS_TCGMSG
+
+endif # MSG_COMMS_TCGMSG
+
+EXTRA_DIST += tcgmsg/examples/blkdat120lin.f
+EXTRA_DIST += tcgmsg/examples/blkdat15.f
+EXTRA_DIST += tcgmsg/examples/blkdat240lin.f
+EXTRA_DIST += tcgmsg/examples/blkdat30.f
+EXTRA_DIST += tcgmsg/examples/blkdat60.f
+EXTRA_DIST += tcgmsg/examples/blkdat60lin.f
+EXTRA_DIST += tcgmsg/examples/cscf120lin.h
+EXTRA_DIST += tcgmsg/examples/cscf15.h
+EXTRA_DIST += tcgmsg/examples/cscf240lin.h
+EXTRA_DIST += tcgmsg/examples/cscf30.h
+EXTRA_DIST += tcgmsg/examples/cscf60.h
+EXTRA_DIST += tcgmsg/examples/cscf60lin.h
+EXTRA_DIST += tcgmsg/examples/cscf.h
+EXTRA_DIST += tcgmsg/examples/daxpy1.s
+EXTRA_DIST += tcgmsg/examples/daxpy.f
+EXTRA_DIST += tcgmsg/examples/ddot.f
+EXTRA_DIST += tcgmsg/examples/demo.proto
+EXTRA_DIST += tcgmsg/examples/diagon.f
+EXTRA_DIST += tcgmsg/examples/dscal.f
+EXTRA_DIST += tcgmsg/examples/fexit.f.proto
+EXTRA_DIST += tcgmsg/examples/getmem.c
+EXTRA_DIST += tcgmsg/examples/grid.c
+EXTRA_DIST += tcgmsg/examples/ieeetrap.c
+EXTRA_DIST += tcgmsg/examples/integ.f
+EXTRA_DIST += tcgmsg/examples/jacobi.f
+EXTRA_DIST += tcgmsg/examples/Makefile.proto
+EXTRA_DIST += tcgmsg/examples/mc.f
+EXTRA_DIST += tcgmsg/examples/mc.input
+EXTRA_DIST += tcgmsg/examples/md.f
+EXTRA_DIST += tcgmsg/examples/mxv_daxpy1.f
+EXTRA_DIST += tcgmsg/examples/mxv_dgemv.f
+EXTRA_DIST += tcgmsg/examples/mxv_fortran.f
+EXTRA_DIST += tcgmsg/examples/output.f
+EXTRA_DIST += tcgmsg/examples/prtri.f
+EXTRA_DIST += tcgmsg/examples/random.c
+EXTRA_DIST += tcgmsg/examples/README
+EXTRA_DIST += tcgmsg/examples/runit
+EXTRA_DIST += tcgmsg/examples/runit.grid
+EXTRA_DIST += tcgmsg/examples/scfblas.f
+EXTRA_DIST += tcgmsg/examples/scf.f
+EXTRA_DIST += tcgmsg/examples/timer.f
+EXTRA_DIST += tcgmsg/examples/trace.out
+EXTRA_DIST += tcgmsg/examples/xpix.shar
 
 ##############################################################################
 # tcgmsg/ipcv4.0
@@ -315,6 +375,8 @@ nodist_EXTRA_parallel_SOURCES = $(MAYBE_DUMMY_F_LINK)
 
 endif # MSG_COMMS_TCGMSG4
 endif # MSG_COMMS_TCGMSG
+
+EXTRA_DIST += tcgmsg/ipcv4.0/README
 
 ##############################################################################
 # tcgmsg/ipcv5.0
@@ -438,15 +500,11 @@ nodist_EXTRA_tcgmsg_tcgmsg_mpi_test_SOURCES      = $(MAYBE_DUMMY_F_LINK)
 endif # MSG_COMMS_TCGMSGMPI
 endif # MSG_COMMS_TCGMSG
 
+EXTRA_DIST += tcgmsg/tcgmsg-mpi/README
+
 ##############################################################################
 # global/src
 #
-BUILT_SOURCES += global/src/wapi.h
-BUILT_SOURCES += global/src/wapidefs.h
-if HAVE_PYTHON
-BUILT_SOURCES += global/src/wapi.c
-endif
-
 global/src/wapi.h: $(top_srcdir)/global/src/papi.h
 	-rm -f global/src/wapi.h && \
 	$(SED) -e "s/PAPI/WAPI/g" \
@@ -506,7 +564,7 @@ libga_la_SOURCES += global/src/xgemm.c
 libga_la_SOURCES += global/src/wapidefs.h
 if HAVE_SYS_WEAK_ALIAS_PRAGMA
 else
-libga_la_SOURCES += global/src/wapi.c
+nodist_libga_la_SOURCES += global/src/wapi.c
 endif
 if NOFORT
 else
@@ -531,6 +589,8 @@ else
 libga_la_SOURCES += global/src/sclstubs.c
 endif
 if USE_VAMPIR
+libga_la_SOURCES += global/ga_vt.c
+libga_la_SOURCES += global/ga_vt.h
 libga_la_SOURCES += global/src/ga_vampir.c
 endif
 
@@ -538,7 +598,7 @@ include_HEADERS += global/src/gacommon.h
 include_HEADERS += global/src/ga.h
 include_HEADERS += global/src/global.fh
 include_HEADERS += global/src/papi.h
-include_HEADERS += global/src/wapi.h
+nodist_include_HEADERS += global/src/wapi.h
 
 AM_CPPFLAGS += -I$(top_build_prefix)global/src
 AM_CPPFLAGS += -I$(top_srcdir)/global/src
@@ -605,32 +665,36 @@ check_PROGRAMS += global/testing/ipc_clean
 endif
 
 if HAVE_M4
-GLOBAL_TESTING_M4_DEPS =                             \
-global/testing/ngatest_src/ndim_GA_FILL.src          \
-global/testing/ngatest_src/ndim_main.src             \
-global/testing/ngatest_src/ndim_NGA_ACC.src          \
-global/testing/ngatest_src/ndim_NGA_ADD_PATCH.src    \
-global/testing/ngatest_src/ndim_NGA_COPY_PATCH.src   \
-global/testing/ngatest_src/ndim_NGA_DOT_PATCH.src    \
-global/testing/ngatest_src/ndim_NGA_FILL_PATCH.src   \
-global/testing/ngatest_src/ndim_NGA_GATHER.src       \
-global/testing/ngatest_src/ndim_NGA_GET.src          \
-global/testing/ngatest_src/ndim_NGA_PERIODIC_ACC.src \
-global/testing/ngatest_src/ndim_NGA_PERIODIC_GET.src \
-global/testing/ngatest_src/ndim_NGA_PERIODIC_PUT.src \
-global/testing/ngatest_src/ndim_NGA_PUT.src          \
-global/testing/ngatest_src/ndim_NGA_SCALE_PATCH.src  \
-global/testing/ngatest_src/ndim_NGA_SCATTER_ACC.src  \
-global/testing/ngatest_src/ndim_NGA_SCATTER.src      \
-global/testing/ngatest_src/ndim_util_comm.src        \
-global/testing/ngatest_src/ndim_util.src             \
-global/testing/ngatest_src/ngatest.def
-BUILT_SOURCES += global/testing/nga-onesided.F
-BUILT_SOURCES += global/testing/nga-patch.F
-BUILT_SOURCES += global/testing/nga-periodic.F
-BUILT_SOURCES += global/testing/nga-scatter.F
-BUILT_SOURCES += global/testing/nga-util.F
-BUILT_SOURCES += global/testing/ngatest.F 
+GLOBAL_TESTING_M4_DEPS =
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_GA_FILL.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_main.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_ACC.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_ADD_PATCH.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_COPY_PATCH.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_DOT_PATCH.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_FILL_PATCH.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_GATHER.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_GET.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_PERIODIC_ACC.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_PERIODIC_GET.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_PERIODIC_PUT.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_PUT.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_SCALE_PATCH.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_SCATTER_ACC.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_NGA_SCATTER.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_util_comm.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_util.src
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ngatest.def
+GLOBAL_TESTING_M4_DEPS += global/testing/nga-onesided.m4
+GLOBAL_TESTING_M4_DEPS += global/testing/nga-patch.m4
+GLOBAL_TESTING_M4_DEPS += global/testing/nga-periodic.m4
+GLOBAL_TESTING_M4_DEPS += global/testing/nga-scatter.m4
+GLOBAL_TESTING_M4_DEPS += global/testing/ngatest.m4
+GLOBAL_TESTING_M4_DEPS += global/testing/nga-util.m4
+
+EXTRA_DIST += $(GLOBAL_TESTING_M4_DEPS)
+EXTRA_DIST += global/testing/README
+
 global/testing/nga-onesided.F: $(GLOBAL_TESTING_M4_DEPS)
 global/testing/nga-patch.F:    $(GLOBAL_TESTING_M4_DEPS)
 global/testing/nga-periodic.F: $(GLOBAL_TESTING_M4_DEPS)
@@ -652,6 +716,7 @@ endif
 
 gtsrc =
 gtsrc += global/testing/testutil.fh
+gtsrc += global/testing/testutil.h
 gtsrc += global/testing/util.c
 if NOFORT
 else
@@ -677,12 +742,6 @@ global_testing_mtest_SOURCES          = global/testing/mtest.c $(gtsrc)
 global_testing_mulmatpatch_SOURCES    = global/testing/mulmatpatch.F $(gtsrc)
 global_testing_nb2test_SOURCES        = global/testing/nb2test.F $(gtsrc)
 global_testing_ndim_SOURCES           = global/testing/ndim.F $(gtsrc)
-global_testing_nga_onesided_SOURCES   = global/testing/nga-onesided.F $(gtsrc)
-global_testing_nga_patch_SOURCES      = global/testing/nga-patch.F $(gtsrc)
-global_testing_nga_periodic_SOURCES   = global/testing/nga-periodic.F $(gtsrc)
-global_testing_nga_scatter_SOURCES    = global/testing/nga-scatter.F $(gtsrc)
-global_testing_nga_util_SOURCES       = global/testing/nga-util.F $(gtsrc)
-global_testing_ngatest_SOURCES        = global/testing/ngatest.F $(gtsrc)
 global_testing_ntestc_SOURCES         = global/testing/ntestc.c $(gtsrc)
 global_testing_ntestfc_SOURCES        = global/testing/ntestfc.c $(gtsrc)
 global_testing_patch_SOURCES          = global/testing/patch.F $(gtsrc)
@@ -709,6 +768,12 @@ global_testing_testmultrect_SOURCES   = global/testing/testmultrect.c $(gtsrc)
 global_testing_testsolve_SOURCES      = global/testing/testsolve.F $(gtsrc)
 global_testing_testspd_SOURCES        = global/testing/testspd.F $(gtsrc)
 global_testing_test_SOURCES           = global/testing/test.F $(gtsrc)
+nodist_global_testing_nga_onesided_SOURCES = global/testing/nga-onesided.F $(gtsrc)
+nodist_global_testing_nga_patch_SOURCES    = global/testing/nga-patch.F $(gtsrc)
+nodist_global_testing_nga_periodic_SOURCES = global/testing/nga-periodic.F $(gtsrc)
+nodist_global_testing_nga_scatter_SOURCES  = global/testing/nga-scatter.F $(gtsrc)
+nodist_global_testing_nga_util_SOURCES     = global/testing/nga-util.F $(gtsrc)
+nodist_global_testing_ngatest_SOURCES      = global/testing/ngatest.F $(gtsrc)
 
 global_testing_bin_LDFLAGS            = $(FLDFLAGS)
 global_testing_blktest_LDFLAGS        = $(FLDFLAGS)
@@ -876,6 +941,8 @@ global_X_xregion_LDADD = -lXaw -lXmu -lXt -lX11 -lXau -lXdmcp -lXext
 endif
 endif
 
+EXTRA_DIST += global/X/README
+
 ##############################################################################
 # global/trace
 #
@@ -940,14 +1007,10 @@ AM_CPPFLAGS += -I$(top_srcdir)/pario/eaf
 AM_CPPFLAGS += -I$(top_srcdir)/pario/elio
 AM_CPPFLAGS += -I$(top_srcdir)/pario/sf
 
-EXTRA_DIST += pario/dra/bign.c
 EXTRA_DIST += pario/dra/dbg_read.c
 EXTRA_DIST += pario/dra/dbg_write.c
 EXTRA_DIST += pario/dra/dra2arviz.c
 EXTRA_DIST += pario/dra/global.unsup.c
-EXTRA_DIST += pario/dra/ntestc.c
-EXTRA_DIST += pario/dra/perfn.c
-EXTRA_DIST += pario/dra/rate.c
 
 check_PROGRAMS += pario/bign
 check_PROGRAMS += pario/ntestc
@@ -963,6 +1026,8 @@ nodist_EXTRA_pario_bign_SOURCES   = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_pario_ntestc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_pario_perfn_SOURCES  = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_pario_rate_SOURCES   = $(MAYBE_DUMMY_F_LINK)
+
+EXTRA_DIST += pario/dra/README
 
 ##############################################################################
 # ga++/src
@@ -989,6 +1054,8 @@ include_HEADERS += ga++/src/services.h
 AM_CPPFLAGS += -I$(top_srcdir)/ga++/src
 
 endif # CXX_BINDINGS
+
+EXTRA_DIST += ga++/README
 
 ##############################################################################
 # ga++/testing

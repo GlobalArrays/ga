@@ -30,8 +30,9 @@ check_LTLIBRARIES =
 lib_LTLIBRARIES = libarmci.la
 noinst_LTLIBRARIES = libarmcii.la
 libarmci_la_SOURCES =
+nodist_libarmci_la_SOURCES =
 libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
-EXTRA_DIST =
+EXTRA_DIST = README
 BUILT_SOURCES =
 AM_FFLAGS =
 AM_CFLAGS =
@@ -84,6 +85,7 @@ endif
 # and works with all Fortran compilers.
 #
 BUILT_SOURCES += config.fh
+nodist_libarmci_la_SOURCES += config.fh
 
 config.fh: config.h
 	-rm -f config.fh && $(SED) "/^#/!d" config.h > config.fh
@@ -110,7 +112,6 @@ libarmci_la_SOURCES += src-portals/clusterinfo.c
 libarmci_la_SOURCES += src-portals/copy.h
 libarmci_la_SOURCES += src-portals/ds-shared.c
 libarmci_la_SOURCES += src-portals/fence.c
-libarmci_la_SOURCES += src-portals/gpc.h
 libarmci_la_SOURCES += src-portals/kr_malloc.c
 libarmci_la_SOURCES += src-portals/kr_malloc.h
 libarmci_la_SOURCES += src-portals/locks.c
@@ -119,6 +120,7 @@ libarmci_la_SOURCES += src-portals/memlock.c
 libarmci_la_SOURCES += src-portals/memlock.h
 libarmci_la_SOURCES += src-portals/memory.c
 libarmci_la_SOURCES += src-portals/message.c
+libarmci_la_SOURCES += src-portals/mp3.fh
 libarmci_la_SOURCES += src-portals/mp3.h
 libarmci_la_SOURCES += src-portals/mutex.c
 libarmci_la_SOURCES += src-portals/pack.c
@@ -174,12 +176,12 @@ if INLINE_TAS_OKAY
 libarmci_la_SOURCES += src-portals/tas.c
 else
 if INLINE_TAS_WITH
-BUILT_SOURCES       += src-portals/tas_as.s
-libarmci_la_SOURCES += src-portals/tas_as.s
+nodist_libarmci_la_SOURCES += src-portals/tas_as.s
 endif
 endif
 
 include_HEADERS += src-portals/armci.h
+include_HEADERS += src-portals/gpc.h
 include_HEADERS += src-portals/message.h
 include_HEADERS += src-portals/parmci.h
 
@@ -291,6 +293,7 @@ libarmci_la_SOURCES += src/include/gpc.h
 libarmci_la_SOURCES += src/include/kr_malloc.h
 libarmci_la_SOURCES += src/include/locks.h
 libarmci_la_SOURCES += src/include/memlock.h
+libarmci_la_SOURCES += src/include/mp3.fh
 libarmci_la_SOURCES += src/include/mp3.h
 libarmci_la_SOURCES += src/include/parmci.h
 libarmci_la_SOURCES += src/include/request.h
@@ -455,8 +458,7 @@ if INLINE_TAS_OKAY
 libarmci_la_SOURCES += src/locks/tas.c
 else
 if INLINE_TAS_WITH
-BUILT_SOURCES       += src/locks/tas_as.s
-libarmci_la_SOURCES += src/locks/tas_as.s
+nodist_libarmci_la_SOURCES += src/locks/tas_as.s
 endif
 endif
 if INLINE_X86COPY_NEEDED
@@ -464,8 +466,7 @@ if INLINE_X86COPY_OKAY
 libarmci_la_SOURCES += src/common/x86copy.c
 else
 if INLINE_X86COPY_WITH
-BUILT_SOURCES       += src/common/x86copy_as.s
-libarmci_la_SOURCES += src/common/x86copy_as.s
+nodist_libarmci_la_SOURCES += src/common/x86copy_as.s
 endif
 endif
 endif
@@ -726,6 +727,15 @@ nodist_EXTRA_examples_features_proc_affinity_computation_impact_computation_impa
 nodist_EXTRA_examples_features_proc_affinity_simple_simple_SOURCES                         = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_features_symmetric_memory_simple_simple_SOURCES                      = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_simpleApps_transp1D_c_SOURCES                                        = $(MAYBE_DUMMY_F_LINK)
+
+EXTRA_DIST += examples/benchmarks/lu/README
+EXTRA_DIST += examples/features/aggregation/README
+EXTRA_DIST += examples/features/concurrency/README
+EXTRA_DIST += examples/features/gpc/hashtable/README
+EXTRA_DIST += examples/features/non-blocking/README
+EXTRA_DIST += examples/features/notification/README
+EXTRA_DIST += examples/features/proc_affinity/README
+EXTRA_DIST += examples/README
 
 ##############################################################################
 # the end

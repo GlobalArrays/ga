@@ -1645,7 +1645,7 @@ void FATR nga_vfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
 
     GA_PUSH_NAME("nga_vfill_patch");
     
-    nga_inquire_internal_(g_a,  &type, &ndim, dims);
+    pnga_inquire(g_a,  &type, &ndim, dims);
 
     /* get limits of VISIBLE patch */ 
     nga_distribution_(g_a, &me, loA, hiA);
@@ -1901,7 +1901,7 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
 
   GA_PUSH_NAME("nga_pnfill_patch");
 
-  nga_inquire_internal_(g_a,  &type, &ndim, dims);
+  pnga_inquire(g_a,  &type, &ndim, dims);
 
   num_blocks = ga_total_blocks_(g_a);
 

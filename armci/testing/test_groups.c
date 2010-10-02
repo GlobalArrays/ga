@@ -271,8 +271,24 @@ int main(int argc, char* argv[])
 
 /*    printf("nproc = %d, me = %d\n", nproc, me);*/
     
-    if( (nproc<MINPROC || nproc>MAXPROC) && me==0)
-       ARMCI_Error("Test works for up to %d processors\n",MAXPROC);
+        if (nproc<MINPROC) {
+            if (0==me) {
+                printf("Test needs at least %d processors (%d used)\n",
+                        MINPROC, nproc);
+            }
+            MP_BARRIER();
+            MP_FINALIZE();
+            exit(0);
+        }
+        if (nproc>MAXPROC) {
+            if (0==me) {
+                printf("Test works for up to %d processors (%d used)\n",
+                        MAXPROC, nproc);
+            }
+            MP_BARRIER();
+            MP_FINALIZE();
+            exit(0);
+        }
 
     if(me==0){
        printf("ARMCI test program (%d processes)\n",nproc); 
