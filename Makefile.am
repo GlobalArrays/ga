@@ -25,6 +25,7 @@ ACLOCAL_AMFLAGS = -I m4
 # are listed in these variables.  Appended to throughout.  These are the
 # automake variables used.
 include_HEADERS =
+nodist_include_HEADERS =
 bin_PROGRAMS =
 check_PROGRAMS =
 check_LTLIBRARIES =

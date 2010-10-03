@@ -568,7 +568,7 @@ PACKAGE_BUGREPORT='hpctools@pnl.gov'
 PACKAGE_URL='http://www.emsl.pnl.gov/docs/global/'
 
 ac_config_libobj_dir=compat
-ac_unique_file="LinAlg/lapack+blas/dummy.c"
+ac_unique_file="global/src/ga.h"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
