@@ -60,5 +60,5 @@ AS_IF([test "x$enable_cxx" = xyes], [
     # but override MPICXX for the UNWRAP macro.
     AS_IF([test x$with_mpi_wrappers = xyes],
         [MPICXX="$CXX"
-         GA_MPICXX_UNWRAP])])
+         GA_MPI_UNWRAP])])
 ])dnl

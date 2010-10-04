@@ -435,14 +435,12 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/m4/ga_f77_wrappers.m4 \
 	$(top_srcdir)/m4/ga_function.m4 $(top_srcdir)/m4/ga_lapack.m4 \
 	$(top_srcdir)/m4/ga_mpi_test_disable.m4 \
-	$(top_srcdir)/m4/ga_mpicc.m4 $(top_srcdir)/m4/ga_mpicc_test.m4 \
-	$(top_srcdir)/m4/ga_mpicc_unwrap.m4 \
+	$(top_srcdir)/m4/ga_mpi_unwrap.m4 $(top_srcdir)/m4/ga_mpicc.m4 \
+	$(top_srcdir)/m4/ga_mpicc_test.m4 \
 	$(top_srcdir)/m4/ga_mpicxx.m4 \
 	$(top_srcdir)/m4/ga_mpicxx_test.m4 \
-	$(top_srcdir)/m4/ga_mpicxx_unwrap.m4 \
 	$(top_srcdir)/m4/ga_mpif77.m4 \
 	$(top_srcdir)/m4/ga_mpif77_test.m4 \
-	$(top_srcdir)/m4/ga_mpif77_unwrap.m4 \
 	$(top_srcdir)/m4/ga_msg_comms.m4 $(top_srcdir)/m4/ga_pragma.m4 \
 	$(top_srcdir)/m4/ga_scalapack.m4 \
 	$(top_srcdir)/m4/ga_suppress_msg.m4 \

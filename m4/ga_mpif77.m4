@@ -111,5 +111,5 @@ AC_PROG_F77([$F77_TO_TEST])
 # but override MPIF77 for the UNWRAP macro.
 AS_IF([test x$with_mpi_wrappers = xyes],
     [MPIF77="$F77"
-     GA_MPIF77_UNWRAP])
+     GA_MPI_UNWRAP])
 ])dnl

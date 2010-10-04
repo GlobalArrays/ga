@@ -58,5 +58,5 @@ AC_PROG_CC([$CC_TO_TEST])
 # but override MPICC for the UNWRAP macro.
 AS_IF([test x$with_mpi_wrappers = xyes],
     [MPICC="$CC"
-     GA_MPICC_UNWRAP])
+     GA_MPI_UNWRAP])
 ])dnl

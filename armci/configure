@@ -5321,15 +5321,9 @@ fi
 if test x$with_mpi_wrappers = xyes; then :
   MPICC="$CC"
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $MPICC compiler" >&5
-$as_echo_n "checking for base $MPICC compiler... " >&6; }
-if test "${ga_cv_mpicc_naked+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
 
-versions="--version -v -V -qversion"
-inside="$srcdir/build-aux/inside.pl"
-case $MPICC in #(
+    wrapped="$CC"
+    case $wrapped in #(
   *_r) :
     compilers="bgxlc_r xlc_r" ;; #(
   *) :
@@ -5337,16 +5331,29 @@ case $MPICC in #(
   *) :
      ;;
 esac
-# Try separating stdout and stderr. Only compare stdout.
-if test "x$ga_cv_mpicc_naked" = x; then :
 
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $wrapped compiler" >&5
+$as_echo_n "checking for base $wrapped compiler... " >&6; }
+if test "${ga_cv_mpic_naked+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+versions="--version -v -V -qversion"
+inside="$srcdir/build-aux/inside.pl"
+found_wrapped_version=0
+# Try separating stdout and stderr. Only compare stdout.
+if test "x$ga_cv_mpic_naked" = x; then :
+
+echo "only comparing stdout" >&5
 for version in $versions; do
     for naked_compiler in $compilers; do
         rm -f mpi.txt mpi.err naked.txt naked.err
-        if $MPICC $version 1>mpi.txt 2>mpi.err; then :
-  if $naked_compiler $version 1>naked.txt 2>naked.err; then :
-  if $inside mpi.txt naked.txt; then :
-  ga_cv_mpicc_naked=$naked_compiler; break
+        if $wrapped $version 1>mpi.txt 2>mpi.err; then :
+  found_wrapped_version=1
+             if $naked_compiler $version 1>naked.txt 2>naked.err; then :
+  if $inside mpi.txt naked.txt >/dev/null; then :
+  ga_cv_mpic_naked=$naked_compiler; break
 else
   echo "inside.pl failed, skipping" >&5
 fi
@@ -5354,25 +5361,54 @@ else
   echo "$naked_compiler $version failed, skipping" >&5
 fi
 else
-  echo "$MPICC $version failed, skipping" >&5
+  echo "$wrapped $version failed, skipping" >&5
 fi
     done
-    if test "x$ga_cv_mpicc_naked" != x; then :
+    if test "x$ga_cv_mpic_naked" != x; then :
   break
 fi
 done
 
 fi
-if test "x$ga_cv_mpicc_naked" = x; then :
+# Perhaps none of the MPI compilers had a zero exit status (this is wrong).
+if test "x$found_wrapped_version" = x0; then :
 
+echo "no zero exit status found for MPI compilers" >&5
+if test "x$ga_cv_mpic_naked" = x; then :
+
+for version in $versions; do
+    for naked_compiler in $compilers; do
+        rm -f mpi.txt mpi.err naked.txt naked.err
+        $wrapped $version 1>mpi.txt 2>mpi.err
+        if $naked_compiler $version 1>naked.txt 2>naked.err; then :
+  if $inside mpi.txt naked.txt >/dev/null; then :
+  ga_cv_mpic_naked=$naked_compiler; break
+else
+  echo "inside.pl failed, skipping" >&5
+fi
+else
+  echo "$naked_compiler $version failed, skipping" >&5
+fi
+    done
+    if test "x$ga_cv_mpic_naked" != x; then :
+  break
+fi
+done
+
+fi
+
+fi
 # Try by combining stdout/err into one file.
+if test "x$ga_cv_mpic_naked" = x; then :
+
+echo "try combining stdout and stderr into one file" >&5
 for version in $versions; do
     for naked_compiler in $compilers; do
         rm -f mpi.txt naked.txt
-        if $MPICC $version 1>mpi.txt 2>&1; then :
+        if $wrapped $version 1>mpi.txt 2>&1; then :
   if $naked_compiler $version 1>naked.txt 2>&1; then :
-  if $inside mpi.txt naked.txt; then :
-  ga_cv_mpicc_naked=$naked_compiler; break
+  if $inside mpi.txt naked.txt >/dev/null; then :
+  ga_cv_mpic_naked=$naked_compiler; break
 else
   echo "inside.pl failed, skipping" >&5
 fi
@@ -5380,26 +5416,27 @@ else
   echo "$naked_compiler $version failed, skipping" >&5
 fi
 else
-  echo "$MPICC $version failed, skipping" >&5
+  echo "$wrapped $version failed, skipping" >&5
 fi
     done
-    if test "x$ga_cv_mpicc_naked" != x; then :
+    if test "x$ga_cv_mpic_naked" != x; then :
   break
 fi
 done
 
 fi
 rm -f mpi.txt mpi.err naked.txt naked.err
-if test "x$ga_cv_mpicc_naked" = x; then :
-  ga_cv_mpicc_naked=error
+if test "x$ga_cv_mpic_naked" = x; then :
+  ga_cv_mpic_naked=error
 fi
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpicc_naked" >&5
-$as_echo "$ga_cv_mpicc_naked" >&6; }
-if test "x$ga_cv_mpicc_naked" = xerror; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the C compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the C compiler wrapped by MPI" >&2;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpic_naked" >&5
+$as_echo "$ga_cv_mpic_naked" >&6; }
+
+if test "x$ga_cv_mpi_naked" = xerror; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
+$as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi
@@ -10063,15 +10100,9 @@ if test "x$enable_cxx" = xyes; then :
     if test x$with_mpi_wrappers = xyes; then :
   MPICXX="$CXX"
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $MPICXX compiler" >&5
-$as_echo_n "checking for base $MPICXX compiler... " >&6; }
-if test "${ga_cv_mpicxx_naked+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
 
-versions="--version -v -V -qversion"
-inside="$srcdir/build-aux/inside.pl"
-case $MPICXX in #(
+    wrapped="$CXX"
+    case $wrapped in #(
   *_r) :
     compilers="bgxlC_r" ;; #(
   *) :
@@ -10079,14 +10110,27 @@ case $MPICXX in #(
   *) :
      ;;
 esac
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $wrapped compiler" >&5
+$as_echo_n "checking for base $wrapped compiler... " >&6; }
+if test "${ga_cv_mpicxx_naked+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+versions="--version -v -V -qversion"
+inside="$srcdir/build-aux/inside.pl"
+found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
 if test "x$ga_cv_mpicxx_naked" = x; then :
 
+echo "only comparing stdout" >&5
 for version in $versions; do
     for naked_compiler in $compilers; do
         rm -f mpi.txt mpi.err naked.txt naked.err
-        if $MPICXX $version 1>mpi.txt 2>mpi.err; then :
-  if $naked_compiler $version 1>naked.txt 2>naked.err; then :
+        if $wrapped $version 1>mpi.txt 2>mpi.err; then :
+  found_wrapped_version=1
+             if $naked_compiler $version 1>naked.txt 2>naked.err; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
   ga_cv_mpicxx_naked=$naked_compiler; break
 else
@@ -10096,7 +10140,7 @@ else
   echo "$naked_compiler $version failed, skipping" >&5
 fi
 else
-  echo "$MPICXX $version failed, skipping" >&5
+  echo "$wrapped $version failed, skipping" >&5
 fi
     done
     if test "x$ga_cv_mpicxx_naked" != x; then :
@@ -10105,13 +10149,42 @@ fi
 done
 
 fi
-# Try by combining stdout/err into one file.
+# Perhaps none of the MPI compilers had a zero exit status (this is wrong).
+if test "x$found_wrapped_version" = x0; then :
+
+echo "no zero exit status found for MPI compilers" >&5
 if test "x$ga_cv_mpicxx_naked" = x; then :
 
 for version in $versions; do
     for naked_compiler in $compilers; do
+        rm -f mpi.txt mpi.err naked.txt naked.err
+        $wrapped $version 1>mpi.txt 2>mpi.err
+        if $naked_compiler $version 1>naked.txt 2>naked.err; then :
+  if $inside mpi.txt naked.txt >/dev/null; then :
+  ga_cv_mpicxx_naked=$naked_compiler; break
+else
+  echo "inside.pl failed, skipping" >&5
+fi
+else
+  echo "$naked_compiler $version failed, skipping" >&5
+fi
+    done
+    if test "x$ga_cv_mpicxx_naked" != x; then :
+  break
+fi
+done
+
+fi
+
+fi
+# Try by combining stdout/err into one file.
+if test "x$ga_cv_mpicxx_naked" = x; then :
+
+echo "try combining stdout and stderr into one file" >&5
+for version in $versions; do
+    for naked_compiler in $compilers; do
         rm -f mpi.txt naked.txt
-        if $MPICXX $version 1>mpi.txt 2>&1; then :
+        if $wrapped $version 1>mpi.txt 2>&1; then :
   if $naked_compiler $version 1>naked.txt 2>&1; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
   ga_cv_mpicxx_naked=$naked_compiler; break
@@ -10122,7 +10195,7 @@ else
   echo "$naked_compiler $version failed, skipping" >&5
 fi
 else
-  echo "$MPICXX $version failed, skipping" >&5
+  echo "$wrapped $version failed, skipping" >&5
 fi
     done
     if test "x$ga_cv_mpicxx_naked" != x; then :
@@ -10139,9 +10212,10 @@ fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpicxx_naked" >&5
 $as_echo "$ga_cv_mpicxx_naked" >&6; }
-if test "x$ga_cv_mpicxx_naked" = xerror; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the C++ compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the C++ compiler wrapped by MPI" >&2;}
+
+if test "x$ga_cv_mpi_naked" = xerror; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
+$as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi
@@ -10965,15 +11039,9 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 if test x$with_mpi_wrappers = xyes; then :
   MPIF77="$F77"
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $MPIF77 compiler" >&5
-$as_echo_n "checking for base $MPIF77 compiler... " >&6; }
-if test "${ga_cv_mpif77_naked+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
 
-versions="--version -v -V -qversion"
-inside="$srcdir/build-aux/inside.pl"
-case $MPIF77 in #(
+    wrapped="$F77"
+    case $wrapped in #(
   *_r) :
     compilers="bgxlf95_r xlf95_r bgxlf90_r xlf90_r bgxlf_r xlf_r" ;; #(
   *) :
@@ -10981,14 +11049,27 @@ case $MPIF77 in #(
   *) :
      ;;
 esac
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $wrapped compiler" >&5
+$as_echo_n "checking for base $wrapped compiler... " >&6; }
+if test "${ga_cv_mpif77_naked+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+versions="--version -v -V -qversion"
+inside="$srcdir/build-aux/inside.pl"
+found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
 if test "x$ga_cv_mpif77_naked" = x; then :
 
+echo "only comparing stdout" >&5
 for version in $versions; do
     for naked_compiler in $compilers; do
         rm -f mpi.txt mpi.err naked.txt naked.err
-        if $MPIF77 $version 1>mpi.txt 2>mpi.err; then :
-  if $naked_compiler $version 1>naked.txt 2>naked.err; then :
+        if $wrapped $version 1>mpi.txt 2>mpi.err; then :
+  found_wrapped_version=1
+             if $naked_compiler $version 1>naked.txt 2>naked.err; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
   ga_cv_mpif77_naked=$naked_compiler; break
 else
@@ -10998,7 +11079,7 @@ else
   echo "$naked_compiler $version failed, skipping" >&5
 fi
 else
-  echo "$MPIF77 $version failed, skipping" >&5
+  echo "$wrapped $version failed, skipping" >&5
 fi
     done
     if test "x$ga_cv_mpif77_naked" != x; then :
@@ -11007,13 +11088,42 @@ fi
 done
 
 fi
-# Try by combining stdout/err into one file.
+# Perhaps none of the MPI compilers had a zero exit status (this is wrong).
+if test "x$found_wrapped_version" = x0; then :
+
+echo "no zero exit status found for MPI compilers" >&5
 if test "x$ga_cv_mpif77_naked" = x; then :
 
 for version in $versions; do
     for naked_compiler in $compilers; do
+        rm -f mpi.txt mpi.err naked.txt naked.err
+        $wrapped $version 1>mpi.txt 2>mpi.err
+        if $naked_compiler $version 1>naked.txt 2>naked.err; then :
+  if $inside mpi.txt naked.txt >/dev/null; then :
+  ga_cv_mpif77_naked=$naked_compiler; break
+else
+  echo "inside.pl failed, skipping" >&5
+fi
+else
+  echo "$naked_compiler $version failed, skipping" >&5
+fi
+    done
+    if test "x$ga_cv_mpif77_naked" != x; then :
+  break
+fi
+done
+
+fi
+
+fi
+# Try by combining stdout/err into one file.
+if test "x$ga_cv_mpif77_naked" = x; then :
+
+echo "try combining stdout and stderr into one file" >&5
+for version in $versions; do
+    for naked_compiler in $compilers; do
         rm -f mpi.txt naked.txt
-        if $MPIF77 $version 1>mpi.txt 2>&1; then :
+        if $wrapped $version 1>mpi.txt 2>&1; then :
   if $naked_compiler $version 1>naked.txt 2>&1; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
   ga_cv_mpif77_naked=$naked_compiler; break
@@ -11024,7 +11134,7 @@ else
   echo "$naked_compiler $version failed, skipping" >&5
 fi
 else
-  echo "$MPIF77 $version failed, skipping" >&5
+  echo "$wrapped $version failed, skipping" >&5
 fi
     done
     if test "x$ga_cv_mpif77_naked" != x; then :
@@ -11041,7 +11151,8 @@ fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpif77_naked" >&5
 $as_echo "$ga_cv_mpif77_naked" >&6; }
-if test "x$ga_cv_mpif77_naked" = xerror; then :
+
+if test "x$ga_cv_mpi_naked" = xerror; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
 $as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
@@ -11426,19 +11537,24 @@ $as_echo "$ga_cv_f77_suppress" >&6; }
 
 
 if test "x$enable_f77" = xyes; then :
-  # temporarily restore unwrapped compilers
-     # this works around MPI libraries and paths getting into FLIBS
-     if test x$with_mpi_wrappers = xyes; then :
-  if test "x$ga_cv_mpicc_naked"  != xerror; then :
-  CC="$ga_cv_mpicc_naked"
+
+pagoda_mpi_unwrap_push_save_CC="$CC"
+pagoda_mpi_unwrap_push_save_CXX="$CXX"
+pagoda_mpi_unwrap_push_save_F77="$F77"
+pagoda_mpi_unwrap_push_save_FC="$FC"
+if test "x$ga_cv_mpic_naked"   != xerror; then :
+   CC="$ga_cv_mpic_naked"
 fi
-         if test "x$ga_cv_mpicxx_naked" != xerror; then :
+if test "x$ga_cv_mpicxx_naked" != xerror; then :
   CXX="$ga_cv_mpicxx_naked"
 fi
-         if test "x$ga_cv_mpif77_naked" != xerror; then :
+if test "x$ga_cv_mpif77_naked" != xerror; then :
   F77="$ga_cv_mpif77_naked"
 fi
+if test "x$ga_cv_mpifc_naked"  != xerror; then :
+   FC="$ga_cv_mpifc_naked"
 fi
+
      ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -11745,12 +11861,12 @@ ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
-     # and now that that's over, put the MPI compilers back
-     if test x$with_mpi_wrappers = xyes; then :
-  CC="$MPICC"
-         CXX="$MPICXX"
-         F77="$MPIF77"
-fi
+
+ CC="$pagoda_mpi_unwrap_push_save_CC"
+CXX="$pagoda_mpi_unwrap_push_save_CXX"
+F77="$pagoda_mpi_unwrap_push_save_F77"
+ FC="$pagoda_mpi_unwrap_push_save_FC"
+
      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether FLIBS needs -lgcc_s" >&5
 $as_echo_n "checking whether FLIBS needs -lgcc_s... " >&6; }
 if test "${ga_cv_flibs_gcc_s+set}" = set; then :
