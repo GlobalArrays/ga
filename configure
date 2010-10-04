@@ -5263,7 +5263,7 @@ if test "${ga_cv_mpicc_naked+set}" = set; then :
 else
 
 versions="--version -v -V -qversion"
-inside="$GA_TOP_SRCDIR/build-aux/inside.pl"
+inside="$srcdir/build-aux/inside.pl"
 case $MPICC in #(
   *_r) :
     compilers="bgxlc_r xlc_r" ;; #(
@@ -10967,7 +10967,7 @@ if test "${ga_cv_mpicxx_naked+set}" = set; then :
 else
 
 versions="--version -v -V -qversion"
-inside="$GA_TOP_SRCDIR/build-aux/inside.pl"
+inside="$srcdir/build-aux/inside.pl"
 case $MPICXX in #(
   *_r) :
     compilers="bgxlC_r" ;; #(
@@ -11751,7 +11751,7 @@ if test "${ga_cv_mpif77_naked+set}" = set; then :
 else
 
 versions="--version -v -V -qversion"
-inside="$GA_TOP_SRCDIR/build-aux/inside.pl"
+inside="$srcdir/build-aux/inside.pl"
 case $MPIF77 in #(
   *_r) :
     compilers="bgxlf95_r xlf95_r bgxlf90_r xlf90_r bgxlf_r xlf_r" ;; #(
@@ -12205,7 +12205,20 @@ $as_echo "$ga_cv_f77_suppress" >&6; }
 
 
 if test "x$enable_f77" = xyes; then :
-  ac_ext=f
+  # temporarily restore unwrapped compilers
+     # this works around MPI libraries and paths getting into FLIBS
+     if test x$with_mpi_wrappers = xyes; then :
+  if test "x$ga_cv_mpicc_naked"  != xerror; then :
+  CC="$ga_cv_mpicc_naked"
+fi
+         if test "x$ga_cv_mpicxx_naked" != xerror; then :
+  CXX="$ga_cv_mpicxx_naked"
+fi
+         if test "x$ga_cv_mpif77_naked" != xerror; then :
+  F77="$ga_cv_mpif77_naked"
+fi
+fi
+     ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
@@ -12511,6 +12524,12 @@ ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
+     # and now that that's over, put the MPI compilers back
+     if test x$with_mpi_wrappers = xyes; then :
+  CC="$MPICC"
+         CXX="$MPICXX"
+         F77="$MPIF77"
+fi
      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether FLIBS needs -lgcc_s" >&5
 $as_echo_n "checking whether FLIBS needs -lgcc_s... " >&6; }
 if test "${ga_cv_flibs_gcc_s+set}" = set; then :

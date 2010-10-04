@@ -10,7 +10,7 @@
 AC_DEFUN([GA_MPICXX_UNWRAP], [
 AC_CACHE_CHECK([for base $MPICXX compiler], [ga_cv_mpicxx_naked], [
 versions="--version -v -V -qversion"
-inside="$GA_TOP_SRCDIR/build-aux/inside.pl"
+inside="$srcdir/build-aux/inside.pl"
 AS_CASE([$MPICXX],
     [*_r],  [compilers="bgxlC_r"],
     [*],    [compilers="g++ c++ icpc pgCC pathCC gpp aCC cxx cc++ cl.exe FCC KCC RCC bgxlC_r bgxlC xlC_r xlC CC"])

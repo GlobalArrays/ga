@@ -10,7 +10,7 @@
 AC_DEFUN([GA_MPICC_UNWRAP], [
 AC_CACHE_CHECK([for base $MPICC compiler], [ga_cv_mpicc_naked], [
 versions="--version -v -V -qversion"
-inside="$GA_TOP_SRCDIR/build-aux/inside.pl"
+inside="$srcdir/build-aux/inside.pl"
 AS_CASE([$MPICC],
     [*_r],  [compilers="bgxlc_r xlc_r"],
     [*],    [compilers="bgxlc xlc gcc pgcc pathcc icc ecc cl ccc cc"])

@@ -10,7 +10,7 @@
 AC_DEFUN([GA_MPIF77_UNWRAP], [
 AC_CACHE_CHECK([for base $MPIF77 compiler], [ga_cv_mpif77_naked], [
 versions="--version -v -V -qversion"
-inside="$GA_TOP_SRCDIR/build-aux/inside.pl"
+inside="$srcdir/build-aux/inside.pl"
 AS_CASE([$MPIF77],
     [*_r],  [compilers="bgxlf95_r xlf95_r bgxlf90_r xlf90_r bgxlf_r xlf_r"],
     [*],    [compilers="gfortran g95 bgxlf95 xlf95 f95 fort ifort ifc efc pgf95 pathf95 lf95 bgxlf90 xlf90 f90 pgf90 pathf90 pghpf epcf90 g77 bgxlf xlf f77 frt pgf77 pathf77 cf77 fort77 fl32 af77"])
