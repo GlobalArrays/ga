@@ -5263,6 +5263,7 @@ if test "${ga_cv_mpicc_naked+set}" = set; then :
 else
 
 versions="--version -v -V -qversion"
+inside="$GA_TOP_SRCDIR/build-aux/inside.pl"
 case $MPICC in #(
   *_r) :
     compilers="bgxlc_r xlc_r" ;; #(
@@ -5279,10 +5280,10 @@ for version in $versions; do
         rm -f mpi.txt mpi.err naked.txt naked.err
         if $MPICC $version 1>mpi.txt 2>mpi.err; then :
   if $naked_compiler $version 1>naked.txt 2>naked.err; then :
-  if diff mpi.txt naked.txt >/dev/null; then :
+  if $inside mpi.txt naked.txt; then :
   ga_cv_mpicc_naked=$naked_compiler; break
 else
-  echo "diff failed, skipping" >&5
+  echo "inside.pl failed, skipping" >&5
 fi
 else
   echo "$naked_compiler $version failed, skipping" >&5
@@ -5305,10 +5306,10 @@ for version in $versions; do
         rm -f mpi.txt naked.txt
         if $MPICC $version 1>mpi.txt 2>&1; then :
   if $naked_compiler $version 1>naked.txt 2>&1; then :
-  if diff mpi.txt naked.txt >/dev/null; then :
+  if $inside mpi.txt naked.txt; then :
   ga_cv_mpicc_naked=$naked_compiler; break
 else
-  echo "diff failed, skipping" >&5
+  echo "inside.pl failed, skipping" >&5
 fi
 else
   echo "$naked_compiler $version failed, skipping" >&5
@@ -10966,6 +10967,7 @@ if test "${ga_cv_mpicxx_naked+set}" = set; then :
 else
 
 versions="--version -v -V -qversion"
+inside="$GA_TOP_SRCDIR/build-aux/inside.pl"
 case $MPICXX in #(
   *_r) :
     compilers="bgxlC_r" ;; #(
@@ -10982,10 +10984,10 @@ for version in $versions; do
         rm -f mpi.txt mpi.err naked.txt naked.err
         if $MPICXX $version 1>mpi.txt 2>mpi.err; then :
   if $naked_compiler $version 1>naked.txt 2>naked.err; then :
-  if diff mpi.txt naked.txt >/dev/null; then :
+  if $inside mpi.txt naked.txt >/dev/null; then :
   ga_cv_mpicxx_naked=$naked_compiler; break
 else
-  echo "diff failed, skipping" >&5
+  echo "inside.pl failed, skipping" >&5
 fi
 else
   echo "$naked_compiler $version failed, skipping" >&5
@@ -11008,10 +11010,10 @@ for version in $versions; do
         rm -f mpi.txt naked.txt
         if $MPICXX $version 1>mpi.txt 2>&1; then :
   if $naked_compiler $version 1>naked.txt 2>&1; then :
-  if diff mpi.txt naked.txt >/dev/null; then :
+  if $inside mpi.txt naked.txt >/dev/null; then :
   ga_cv_mpicxx_naked=$naked_compiler; break
 else
-  echo "diff failed, skipping" >&5
+  echo "inside.pl failed, skipping" >&5
 fi
 else
   echo "$naked_compiler $version failed, skipping" >&5
@@ -11749,6 +11751,7 @@ if test "${ga_cv_mpif77_naked+set}" = set; then :
 else
 
 versions="--version -v -V -qversion"
+inside="$GA_TOP_SRCDIR/build-aux/inside.pl"
 case $MPIF77 in #(
   *_r) :
     compilers="bgxlf95_r xlf95_r bgxlf90_r xlf90_r bgxlf_r xlf_r" ;; #(
@@ -11765,10 +11768,10 @@ for version in $versions; do
         rm -f mpi.txt mpi.err naked.txt naked.err
         if $MPIF77 $version 1>mpi.txt 2>mpi.err; then :
   if $naked_compiler $version 1>naked.txt 2>naked.err; then :
-  if diff mpi.txt naked.txt >/dev/null; then :
+  if $inside mpi.txt naked.txt >/dev/null; then :
   ga_cv_mpif77_naked=$naked_compiler; break
 else
-  echo "diff failed, skipping" >&5
+  echo "inside.pl failed, skipping" >&5
 fi
 else
   echo "$naked_compiler $version failed, skipping" >&5
@@ -11791,10 +11794,10 @@ for version in $versions; do
         rm -f mpi.txt naked.txt
         if $MPIF77 $version 1>mpi.txt 2>&1; then :
   if $naked_compiler $version 1>naked.txt 2>&1; then :
-  if diff mpi.txt naked.txt >/dev/null; then :
+  if $inside mpi.txt naked.txt >/dev/null; then :
   ga_cv_mpif77_naked=$naked_compiler; break
 else
-  echo "diff failed, skipping" >&5
+  echo "inside.pl failed, skipping" >&5
 fi
 else
   echo "$naked_compiler $version failed, skipping" >&5

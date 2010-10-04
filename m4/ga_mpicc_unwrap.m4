@@ -6,10 +6,11 @@
 # gets it wrong.
 #
 # The strategy is to compare the (stdout) outputs of the version flags using
-# diff.
+# a custom perl script.
 AC_DEFUN([GA_MPICC_UNWRAP], [
 AC_CACHE_CHECK([for base $MPICC compiler], [ga_cv_mpicc_naked], [
 versions="--version -v -V -qversion"
+inside="$GA_TOP_SRCDIR/build-aux/inside.pl"
 AS_CASE([$MPICC],
     [*_r],  [compilers="bgxlc_r xlc_r"],
     [*],    [compilers="bgxlc xlc gcc pgcc pathcc icc ecc cl ccc cc"])
@@ -20,9 +21,9 @@ for version in $versions; do
         rm -f mpi.txt mpi.err naked.txt naked.err
         AS_IF([$MPICC $version 1>mpi.txt 2>mpi.err],
             [AS_IF([$naked_compiler $version 1>naked.txt 2>naked.err],
-                [AS_IF([diff mpi.txt naked.txt >/dev/null],
+                [AS_IF([$inside mpi.txt naked.txt],
                     [ga_cv_mpicc_naked=$naked_compiler; break],
-                    [echo "diff failed, skipping" >&AS_MESSAGE_LOG_FD])],
+                    [echo "inside.pl failed, skipping" >&AS_MESSAGE_LOG_FD])],
                 [echo "$naked_compiler $version failed, skipping" >&AS_MESSAGE_LOG_FD])],
             [echo "$MPICC $version failed, skipping" >&AS_MESSAGE_LOG_FD])
     done
@@ -36,9 +37,9 @@ for version in $versions; do
         rm -f mpi.txt naked.txt
         AS_IF([$MPICC $version 1>mpi.txt 2>&1],
             [AS_IF([$naked_compiler $version 1>naked.txt 2>&1],
-                [AS_IF([diff mpi.txt naked.txt >/dev/null],
+                [AS_IF([$inside mpi.txt naked.txt],
                     [ga_cv_mpicc_naked=$naked_compiler; break],
-                    [echo "diff failed, skipping" >&AS_MESSAGE_LOG_FD])],
+                    [echo "inside.pl failed, skipping" >&AS_MESSAGE_LOG_FD])],
                 [echo "$naked_compiler $version failed, skipping" >&AS_MESSAGE_LOG_FD])],
             [echo "$MPICC $version failed, skipping" >&AS_MESSAGE_LOG_FD])
     done

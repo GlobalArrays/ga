@@ -17,16 +17,21 @@ open NAKED, "$ARGV[1]" or die "Couldn't open naked text file: $!";
 $naked_lines = <NAKED>;
 close NAKED;
 
-# Multiline match of the original output within the wrapped output.
+# Remove newlines from wrapped and naked lines.
+$wrapped_lines =~ s/\n//g;
+$naked_lines =~ s/\n//g;
+
+# Can the naked lines be found within the wrapped lines?
 if ($wrapped_lines =~ /$naked_lines/) {
-    print "Found as substring\n";
+    #print "Found as substring\n";
     exit 0;
 }
+# Are the naked lines exactly the same as the wrapped lines?
 elsif ($wrapped_lines eq $naked_lines) {
-    print "Found equal\n";
+    #print "Found equal\n";
     exit 0;
 }
 else {
-    print "Not found\n";
+    #print "Not found\n";
     exit 1;
 }
