@@ -17,9 +17,9 @@ open NAKED, "$ARGV[1]" or die "Couldn't open naked text file: $!";
 $naked_lines = <NAKED>;
 close NAKED;
 
-# Remove newlines from wrapped and naked lines.
-$wrapped_lines =~ s/\n//g;
-$naked_lines =~ s/\n//g;
+# Replace newlines, + from wrapped and naked lines.
+$wrapped_lines =~ tr/\n+/ /;
+$naked_lines =~ tr/\n+/ /;
 
 # Can the naked lines be found within the wrapped lines?
 if ($wrapped_lines =~ /$naked_lines/) {
