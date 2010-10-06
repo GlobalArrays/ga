@@ -198,13 +198,20 @@ extern void ARMCI_Copy(void *src, void *dst, int n);
  * ). This is fed directly to printf.  
  */
 int dassertp_fail(const char *cond_string, const char *file, 
-		  const char *func, unsigned int line);
+		  const char *func, unsigned int line, int code);
   void derr_printf(const char *format, ...);
 #undef dassertp
 #define dassertp(_enable,_cond,_plist)  do {              \
   if((_enable) && !(_cond)) {                             \
     derr_printf _plist;					  \
-    dassertp_fail(#_cond,__FILE__,__FUNCTION__,__LINE__); \
+    dassertp_fail(#_cond,__FILE__,__FUNCTION__,__LINE__,0); \
+  }} while(0)
+
+#undef dassertc
+#define dassertc(_enable,_cond,_plist,_code)  do {              \
+  if((_enable) && !(_cond)) {                             \
+    derr_printf _plist;					  \
+    dassertp_fail(#_cond,__FILE__,__FUNCTION__,__LINE__,_code); \
   }} while(0)
 
 #undef dassert
@@ -215,11 +222,11 @@ int dassertp_fail(const char *cond_string, const char *file,
   dassertp((_enable),(_cond),("%d: error ival=%d\n",        \
 			      armci_msg_me(),(int)(_ival))) 
 
-#define armci_die(_msg,_code) dassertp(1,0,             \
-("%d:%s: %d\n", armci_msg_me(),(_msg),(_code)))
+#define armci_die(_msg,_code) dassertc(1,0,             \
+("%d:%s: %d\n", armci_msg_me(),(_msg),(_code)),_code)
 
-#define armci_die2(_msg,_code1,_code2) dassertp(1,0,    \
-("%d:%s: (%d,%d)\n",armci_me,(_msg),(_code1),(_code2)))
+#define armci_die2(_msg,_code1,_code2) dassertc(1,0,    \
+("%d:%s: (%d,%d)\n",armci_me,(_msg),(_code1),(_code2)),_code1)
 
   /*Disable for now. Some parts of GA use ARMCI_Error function pointer. Wait for them to be changed before enabling this*/
 /* #define ARMCI_Error(_msg, _code) armci_die((_msg),(_code)) */

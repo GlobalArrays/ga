@@ -1311,7 +1311,7 @@ void derr_printf(const char *format, ...) {
 
 
 int dassertp_fail(const char *cond_string, const char *file, 
-		  const char *func, unsigned int line) {
+		  const char *func, unsigned int line, int code) {
   extern int AR_caught_sigint;
   extern int AR_caught_sigterm;
   if(!in_error_cleanup) {
@@ -1327,7 +1327,7 @@ int dassertp_fail(const char *cond_string, const char *file,
       backtrace_symbols_fd(bt, backtrace(bt, 100), 2);
 #endif
     }
-    armci_abort(0);
+    armci_abort(code);
   }
-  return 0;
+  return code;
 }
