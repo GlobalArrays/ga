@@ -75,7 +75,7 @@ cdef void _gapy_free(void *ptr):
     free(ptr)
 
 def _lohi(int g_a, lo, hi):
-    """Utility function which converts and/or prepares a lo/hi combination.
+    """Converts and/or prepares a lo/hi combination.
 
     Functions which take a patch specification can use this to convert the
     given lo and/or hi into ndarrays using numpy.asarray.
@@ -106,6 +106,14 @@ cdef void* _convert_multiplier(int gtype, value,
         int *iv, long *lv, long long *llv,
         float *fv, double *dv, long double *ldv,
         SingleComplex *fcv, DoubleComplex *dcv):
+    """Returns the address of an appropriately converted value.
+    
+    Functions which take an alpha/beta/value need to have the value
+    appropriately converted from the (possible) Python type to a C type. Often
+    the GA function takes a void* in this case, so the address of the
+    converted value is returned.
+
+    """
     cdef float complex pfcv=1.0
     cdef double complex pdcv=1.0
     if value is None:
@@ -165,7 +173,30 @@ def abs_value(int g_a, lo=None, hi=None):
         lo_nd,hi_nd = _lohi(g_a,lo,hi)
         GA_Abs_value_patch64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data)
 
-def acc(int g_a, lo, hi, buffer, alpha=None, nb=False, periodic=False,
+def acc(int g_a, lo, hi, buffer, alpha=None):
+    """Combines data from buffer with data in the global array patch.
+    
+    The buffer array is assumed to be have the same number of
+    dimensions as the global array.  If the buffer is not contiguous, a
+    contiguous copy will be made.
+    
+        global array section (lo[],hi[]) += alpha * buffer
+
+    This is a one-sided and atomic operation.
+
+    Positional arguments:
+    g_a    -- the array handle
+    lo     -- lower bound patch coordinates, inclusive
+    hi     -- higher bound patch coordinates, inclusive
+    buffer -- an array-like object with same shape as indicated patch
+
+    Keyword arguments:
+    alpha  -- multiplier
+
+    """
+    _acc_common(g_a, lo, hi, buffer, alpha=None)
+
+def _acc_common(int g_a, lo, hi, buffer, alpha=None, nb=False, periodic=False,
         skip=None):
     """Combines data from buffer with data in the global array patch.
     
@@ -187,7 +218,7 @@ def acc(int g_a, lo, hi, buffer, alpha=None, nb=False, periodic=False,
     alpha    -- multiplier
     nb       -- whether the call is non-blocking (see ga.nbacc)
     periodic -- whether the call is periodic (see ga.periodic_acc)
-    skip     -- array-like of strides for each dimension
+    skip     -- array-like of strides for each dimension (see ga.strided_acc)
 
     Returns:
     None, usually.  However if nb=True, the nonblocking handle is returned.
@@ -1501,7 +1532,30 @@ def gemm(bint ta, bint tb, int64_t m, int64_t n, int64_t k,
     else:
         raise TypeError
 
-def get(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
+def get(int g_a, lo=None, hi=None, np.ndarray buffer=None):
+    """Copies data from global array section to the local array buffer.
+    
+    The local array is assumed to be have the same number of dimensions as the
+    global array. Any detected inconsitencies/errors in the input arguments
+    are fatal.
+
+    This is a one-sided operation.
+
+    Positional arguments:
+    g_a -- the array handle
+
+    Keyword arguments:
+    lo       -- a 1D array-like object, or None
+    hi       -- a 1D array-like object, or None
+    buffer   -- an ndarray of the appropriate type, large enough to hold lo,hi
+
+    Returns:
+    The local array buffer.
+    
+    """
+    return _get_common(g_a, lo, hi, buffer)
+
+def _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
         periodic=False, skip=None):
     """Copies data from global array section to the local array buffer.
     
@@ -2074,7 +2128,7 @@ def merge_mirrored(int g_a):
     GA_Merge_mirrored(g_a)
 
 def nbacc(int g_a, lo, hi, buffer, alpha=None):
-    """Non-blocking version of the blocking accumulate operation.
+    """Non-blocking version of ga.acc.
 
     The accumulate operation can be completed locally by making a call to the
     ga.nbwait() routine.
@@ -2102,10 +2156,10 @@ def nbacc(int g_a, lo, hi, buffer, alpha=None):
     The non-blocking request handle.
 
     """
-    return acc(g_a, lo, hi, buffer, alpha, True)
+    return _acc_common(g_a, lo, hi, buffer, alpha, True)
 
 def nbget(int g_a, lo=None, hi=None, np.ndarray buffer=None):
-    """Non-blocking version of the blocking get operation.
+    """Non-blocking version of the blocking ga.get operation.
     
     The get operation can be completed locally by making a call to the
     ga.nbwait() routine.
@@ -2130,7 +2184,7 @@ def nbget(int g_a, lo=None, hi=None, np.ndarray buffer=None):
     The local array buffer.
     
     """
-    return get(g_a, lo, hi, buffer, True)
+    return _get_common(g_a, lo, hi, buffer, True)
 
 def nblock(int g_a):
     """Returns the number of partitions of each array dimension for g_a.
@@ -2168,7 +2222,7 @@ def nbput(int g_a, lo, hi, buffer):
     buffer -- array-like, the data to put
 
     """
-    put(g_a, lo, hi, buffer, True, False)
+    _put_common(g_a, lo, hi, buffer, True, False)
  
 def nbwait(ga_nbhdl_t nbhandle):
     """This function completes a non-blocking one-sided operation locally.
@@ -2354,7 +2408,7 @@ def periodic_acc(int g_a, lo, hi, buffer, alpha=None):
     alpha  -- multiplier
 
     """
-    acc(g_a, lo, hi, buffer, alpha, False, True)
+    _acc_common(g_a, lo, hi, buffer, alpha, False, True)
 
 def periodic_get(int g_a, lo, hi, buffer, alpha=None):
     """Periodic version of ga.get.
@@ -2382,10 +2436,10 @@ def periodic_get(int g_a, lo, hi, buffer, alpha=None):
     The local array buffer.
     
     """
-    get(g_a, lo, hi, buffer, alpha, False, True)
+    _get_common(g_a, lo, hi, buffer, alpha, False, True)
 
 def periodic_put(int g_a, lo, hi, buffer):
-    """Periodic  version of ga.put.
+    """Periodic version of ga.put.
 
     The indices can extend beyond the array boundary/dimensions in which case
     the libray wraps them around.
@@ -2405,7 +2459,7 @@ def periodic_put(int g_a, lo, hi, buffer):
     buffer -- array-like, the data to put
 
     """
-    put(g_a, lo, hi, buffer, False, True)
+    _put_common(g_a, lo, hi, buffer, False, True)
 
 def pgroup_brdcst(int pgroup, np.ndarray buffer, int root):
     """Broadcast from process root to all other processes in the same group.
@@ -2641,7 +2695,25 @@ def proc_topology(int g_a, int proc):
     NGA_Proc_topology(g_a, proc, <int*>coord.data)
     return coord
 
-def put(int g_a, lo, hi, buffer, nb=False, periodic=False, skip=None):
+def put(int g_a, lo, hi, buffer):
+    """Copies data from local array buffer to the global array section.
+    
+    The local array is assumed to be have the same number of dimensions as the
+    global array.  Any detected inconsitencies/errors in input arguments are
+    fatal.
+
+    This is a one-sided operation. 
+
+    Positional arguments:
+    g_a    -- the array handle
+    lo     -- a 1D array-like object, or None
+    hi     -- a 1D array-like object, or None
+    buffer -- array-like, the data to put
+
+    """
+    _put_common(g_a, lo, hi, buffer)
+
+def _put_common(int g_a, lo, hi, buffer, nb=False, periodic=False, skip=None):
     """Copies data from local array buffer to the global array section.
     
     The local array is assumed to be have the same number of dimensions as the
@@ -2659,6 +2731,9 @@ def put(int g_a, lo, hi, buffer, nb=False, periodic=False, skip=None):
     Keyword arguments:
     nb       -- whether this call is non-blocking (see ga.nbget)
     periodic -- whether this call is periodic (see ga.periodic_get)
+
+    Returns:
+    None, usually.  However if nb=True, the nonblocking handle is returned.
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape, skip_nd
@@ -3470,8 +3545,10 @@ def step_max(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None):
     return step
 
 def strided_acc(int g_a, lo, hi, skip, buffer, alpha=None):
-    """Same as ga.acc, except that the values corresponding to dimension n in
-    buf are accumulated to every skip[n] values of the global array g_a.
+    """Strided version of ga.acc.
+    
+    The values corresponding to dimension n in buf are accumulated to every
+    skip[n] values of the global array g_a.
     
     Combines data from buffer with data in the global array patch.
     
@@ -3493,10 +3570,10 @@ def strided_acc(int g_a, lo, hi, skip, buffer, alpha=None):
     alpha    -- multiplier
 
     """
-    acc(g_a, lo, hi, buffer, alpha, False, False, skip)
+    _acc_common(g_a, lo, hi, buffer, alpha, False, False, skip)
        
 def strided_get(int g_a, lo=None, hi=None, skip=None, np.ndarray buffer=None):
-    """TODO see opening of strided_acc
+    """Strided version of ga.get.
     
     Copies data from global array section to the local array buffer.
     
@@ -3519,10 +3596,10 @@ def strided_get(int g_a, lo=None, hi=None, skip=None, np.ndarray buffer=None):
     The local array buffer.
     
     """
-    get(g_a, lo, hi, buffer, False, False, skip)
+    _get_common(g_a, lo, hi, buffer, False, False, skip)
 
 def strided_put(int g_a, lo, hi, skip, buffer):
-    """TODO see opening of strided_acc
+    """Strided version of ga.put.
     
     Copies data from local array buffer to the global array section.
     
@@ -3540,7 +3617,7 @@ def strided_put(int g_a, lo, hi, skip, buffer):
     buffer -- array-like, the data to put
 
     """
-    put(g_a, lo, hi, buffer, False, False, skip)
+    _put_common(g_a, lo, hi, buffer, False, False, skip)
 
 def summarize(bint verbose):
     """Prints info about allocated arrays."""
