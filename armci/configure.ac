@@ -42,8 +42,8 @@ AM_CONDITIONAL([ARMCI_STANDALONE], [test ! -d "$ARMCI_TOP_BUILDDIR/../global"])
 # MPI compiler wrappers instead of the standard compilers.
 GA_MSG_COMMS
 
-# Whether to disable F77 source dependency.
-GA_F77_DISABLE
+# Whether to enable F77 source dependency.
+ARMCI_F77_ENABLE
 
 # Hack to enable NEW_MALLOC feature
 AC_ARG_ENABLE([portals-new-malloc],

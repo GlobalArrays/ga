@@ -1575,7 +1575,7 @@ Optional Features:
   --disable-silent-rules         verbose build output (undo: `make V=0')
   --enable-maintainer-mode  enable make rules and dependencies not useful
 			  (and sometimes confusing) to the casual installer
-  --disable-f77           disable Fortran code
+  --enable-f77            enable Fortran code
   --enable-portals-new-malloc
                           add -DNEW_MALLOC to CPPFLAGS
   --enable-gpc            enable GPC calls
@@ -4247,25 +4247,25 @@ esac
 
 
 
-# Whether to disable F77 source dependency.
+# Whether to enable F77 source dependency.
 # Check whether --enable-f77 was given.
 if test "${enable_f77+set}" = set; then :
   enableval=$enable_f77;
 else
-  enable_f77=yes
+  enable_f77=no
 fi
 
-if test x$enable_f77 = xno; then :
-  ga_nofort=1
+if test "x$enable_f77" = xno; then :
+  armci_nofort=1
 else
-  ga_nofort=0
+  armci_nofort=0
 fi
 
 cat >>confdefs.h <<_ACEOF
-#define NOFORT $ga_nofort
+#define NOFORT $armci_nofort
 _ACEOF
 
- if test x$enable_f77 = xno; then
+ if test "x$enable_f77" = xno; then
   NOFORT_TRUE=
   NOFORT_FALSE='#'
 else

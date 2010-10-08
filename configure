@@ -4261,7 +4261,7 @@ else
   enable_f77=yes
 fi
 
-if test x$enable_f77 = xno; then :
+if test "x$enable_f77" = xno; then :
   ga_nofort=1
 else
   ga_nofort=0
@@ -4271,7 +4271,7 @@ cat >>confdefs.h <<_ACEOF
 #define NOFORT $ga_nofort
 _ACEOF
 
- if test x$enable_f77 = xno; then
+ if test "x$enable_f77" = xno; then
   NOFORT_TRUE=
   NOFORT_FALSE='#'
 else
