@@ -1307,7 +1307,7 @@ int armci_read_strided_inc(stride_itr_t sitr, const char *buf,int bytes, int *se
     char *sptr = (char*) &buf[off];
     char *dptr = ((char*)armci_stride_itr_seg_ptr(sitr))+*seg_off;
     int size = ARMCI_MIN(seg_size-*seg_off,bytes);
-    /*     printf("%d:%s(): seg_size=%d,seg_off=%d,bytes=%d\n",armci_me,__FUNCTION__,seg_size,*seg_off,bytes); */
+    /*     printf("%d:%s(): seg_size=%d,seg_off=%d,bytes=%d\n",armci_me,FUNCTION_NAME,seg_size,*seg_off,bytes); */
     dassert(1,armci_stride_itr_has_more(sitr));
     armci_copy(sptr,dptr,size);
     off += size;

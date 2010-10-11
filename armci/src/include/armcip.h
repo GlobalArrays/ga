@@ -11,7 +11,7 @@
 #include "message.h"
 
 /*#define ARMCI_PR_DBG(__ARMCI_ST,__ARMCI_NU) \
-        printf("\n%d:%s:%d:%s:%s:%d",armci_me,__FILE__,__LINE__,__FUNCTION__,__ARMCI_ST,__ARMCI_NU)*/
+        printf("\n%d:%s:%d:%s:%s:%d",armci_me,__FILE__,__LINE__,FUNCTION_NAME,__ARMCI_ST,__ARMCI_NU)*/
 #define ARMCI_PR_DBG(__ARMCI_ST,__ARMCI_NU) 
 
 #ifdef QUADRICS

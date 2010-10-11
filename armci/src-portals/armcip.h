@@ -9,9 +9,9 @@
 #include "code_options.h"
 #if 0
 #define ARMCI_PR_DBG(__ARMCI_ST,__ARMCI_NU) \
-        printf("\n%d:%s:%d:%s:%s:%d",armci_me,__FILE__,__LINE__,__FUNCTION__,__ARMCI_ST,__ARMCI_NU);fflush(stdout)
+        printf("\n%d:%s:%d:%s:%s:%d",armci_me,__FILE__,__LINE__,FUNCTION_NAME,__ARMCI_ST,__ARMCI_NU);fflush(stdout)
 #define ARMCI_PR_SDBG(__ARMCI_ST,__ARMCI_NU) \
-        printf("\n(%d):%s:%d:%s:%s:%d",armci_me,__FILE__,__LINE__,__FUNCTION__,__ARMCI_ST,__ARMCI_NU);fflush(stdout)
+        printf("\n(%d):%s:%d:%s:%s:%d",armci_me,__FILE__,__LINE__,FUNCTION_NAME,__ARMCI_ST,__ARMCI_NU);fflush(stdout)
 #else
 #define ARMCI_PR_DBG(__ARMCI_ST,__ARMCI_NU)
 #define ARMCI_PR_SDBG(__ARMCI_ST,__ARMCI_NU)

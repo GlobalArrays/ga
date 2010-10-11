@@ -509,10 +509,10 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
   /** check GA info for input arrays */
   gai_check_handle(g_a, "ga_lu_solve: a");
   gai_check_handle(g_b, "ga_lu_solve: b");
-  pnga_inquire(g_a, &typeA, &ndim, &dims);
+  pnga_inquire(g_a, &typeA, &ndim, dims);
   dimA1 = dims[0];
   dimA2 = dims[1];
-  pnga_inquire(g_b, &typeB, &ndim, &dims);
+  pnga_inquire(g_b, &typeB, &ndim, dims);
   dimB1 = dims[0];
   dimB2 = dims[1];
   

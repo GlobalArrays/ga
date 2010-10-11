@@ -14,7 +14,7 @@ AC_DEFUN([GA_F2C_NOMAIN],
         ga_save_LIBS=$LIBS
         LIBS="cfortran_test.$ac_objext $LIBS"
         AC_LANG_PUSH([Fortran 77])
-        for flag in none -nofor-main -nofor_main -Mnomain; do
+        for flag in none -nofor-main -nofor_main -Mnomain -mlcmain=main; do
             ga_save_FFLAGS=$FFLAGS
             AS_IF([test "x$flag" != xnone], [FFLAGS="$FFLAGS $flag"])
             AC_LINK_IFELSE(

@@ -164,7 +164,7 @@ int npes,i;
     }
 
     if((rc=PtlGetId(portals->ni_h,&portals->rank)) !=PTL_OK) {
-      printf("%s: PtlGetId failed: %d(%d)\n",__FUNCTION__, rc, server_pid);
+      printf("%s: PtlGetId failed: %d(%d)\n",FUNCTION_NAME, rc, server_pid);
       exit(1);
     }
     ARMCI_PR_DBG("exit",0);
@@ -315,7 +315,7 @@ int rc,num_interface;
     }
 
     if((rc=PtlGetId(portals->Sni_h,&portals->Srank)) !=PTL_OK) {
-      printf("%s: PtlGetId failed: %d(%d)\n",__FUNCTION__, rc, server_pid);
+      printf("%s: PtlGetId failed: %d(%d)\n",FUNCTION_NAME, rc, server_pid);
       exit(1);
     }
     /*printf("\n(%d):server nid=%d pid=%d\n",armci_me,portals->Srank.nid,portals->Srank.pid);*/
@@ -374,7 +374,7 @@ static int check_meminfo(void *ptr, long size, int proc)
     long left = (caddr_t)ptr - all_meminfo[proc].ptr[i];
     long right= all_meminfo[proc].size[i]-left;
 #ifdef DEBUG_MEM
-    printf("\n%d:%s:proc=%d curds=%d/%d ptr=%p base=%p top=%p left=%ld right=%ld size=%ld",armci_me,__FUNCTION__,proc,i,all_meminfo[proc].cur_ds,ptr,all_meminfo[proc].ptr[i],(all_meminfo[proc].ptr[i]+all_meminfo[proc].size[i]),left,right,size);fflush(stdout);
+    printf("\n%d:%s:proc=%d curds=%d/%d ptr=%p base=%p top=%p left=%ld right=%ld size=%ld",armci_me,FUNCTION_NAME,proc,i,all_meminfo[proc].cur_ds,ptr,all_meminfo[proc].ptr[i],(all_meminfo[proc].ptr[i]+all_meminfo[proc].size[i]),left,right,size);fflush(stdout);
 #endif
     if((left>=0) && (right>=size))
       return(i+1);
@@ -390,7 +390,7 @@ static void add_meminfo(void *ptr, size_t size, int proc)
   all_meminfo[proc].ptr[all_meminfo[proc].cur_ds]=ptr;
   all_meminfo[proc].size[all_meminfo[proc].cur_ds]=size;
 #ifdef DEBUG_MEM
-  printf("\n%d:%s:adding %p %ld %d at %d",armci_me,__FUNCTION__,ptr,size,proc,all_meminfo[proc].cur_ds);
+  printf("\n%d:%s:adding %p %ld %d at %d",armci_me,FUNCTION_NAME,ptr,size,proc,all_meminfo[proc].cur_ds);
 #endif
 }
 
@@ -419,7 +419,7 @@ void armci_exchange_meminfo(void *ptr, size_t size,size_t off)
 static caddr_t get_heap_bottom_addr()                                                                                       
 {                                                                                                                           
     extern caddr_t _end;
-    printf("\n%d:%s:_end=%p addr_end=%p",armci_me,__FUNCTION__,_end,&_end);fflush(stdout);
+    printf("\n%d:%s:_end=%p addr_end=%p",armci_me,FUNCTION_NAME,_end,&_end);fflush(stdout);
     return((caddr_t)&_end);                                                                                                 
 }       
 
@@ -442,7 +442,7 @@ void armci_portals_memsetup(long serv_offset)
     ptr = portals->brval[cds] = br_val;
     size = portals->dssizes[cds]=((caddr_t)portals->brval[cds] - portals->dsbase[cds]);
     portals->serv_offs[cds] = serv_offset;
-    printf("\n%d:%s:base=%p brval=%p dslen=%ld %p end=%p",armci_me,__FUNCTION__,portals->dsbase[cds],br_val,
+    printf("\n%d:%s:base=%p brval=%p dslen=%ld %p end=%p",armci_me,FUNCTION_NAME,portals->dsbase[cds],br_val,
                       portals->dssizes[cds],portals->brval[cds],get_heap_bottom_addr());
 
     md_ptr            = &(portals->heap_md[cds]);
@@ -479,7 +479,7 @@ void armci_portals_memsetup(long serv_offset)
   else{
 #ifdef DEBUG_MEM_
     extern caddr_t _end;
-    printf("\n%d:%s:curds=%d brvalin=%p curbrval=%p _end=%p &_end=%p",armci_me,__FUNCTION__,portals->cur_ds,portals->brval[portals->cur_ds],br_val,_end,&_end);
+    printf("\n%d:%s:curds=%d brvalin=%p curbrval=%p _end=%p &_end=%p",armci_me,FUNCTION_NAME,portals->cur_ds,portals->brval[portals->cur_ds],br_val,_end,&_end);
 #endif
   }
   armci_exchange_meminfo(ptr,size,serv_offset);
@@ -1079,7 +1079,7 @@ void *tptr;
      
     ARMCI_PR_DBG("enter",reg_num);
 #ifdef DEBUG_MEM
-    printf("%d:%s:got size=%ld myptr %p\n",armci_me,__FUNCTION__,size,my_ptr);
+    printf("%d:%s:got size=%ld myptr %p\n",armci_me,FUNCTION_NAME,size,my_ptr);
     fflush(stdout);
 #endif
     bzero(_tmp_rem_reginfo,sizeof(aptl_reginfo_t)*armci_nproc);
@@ -1112,7 +1112,7 @@ ARMCI_Group def_group;
      
     ARMCI_PR_DBG("enter",reg_num);
 #ifdef DEBUG_MEM
-      printf("%d:%s:got id=%ld size=%ld myptr %p, sptr %p offset=%d\n",armci_me,__FUNCTION__,id,size,my_ptr,sptr,idlist,off);
+      printf("%d:%s:got id=%ld size=%ld myptr %p, sptr %p offset=%d\n",armci_me,FUNCTION_NAME,id,size,my_ptr,sptr,idlist,off);
       fflush(stdout);
 #endif
     bzero(_tmp_rem_reginfo,sizeof(aptl_reginfo_t)*armci_nproc);
@@ -1140,7 +1140,7 @@ ARMCI_Group def_group;
         armci_register_req(tptr,_tmp_rem_reginfo[armci_me].size,0);
         _tmp_rem_reginfo[armci_me].islocal = 0;
 #ifdef DEBUG_MEM
-        {printf("\n%d:%s:not found serv_ptr=%p base=%p size=%d",armci_me,__FUNCTION__,((char *)sptr-off),_tmp_rem_reginfo[armci_me].base_ptr,_tmp_rem_reginfo[armci_me].size);}
+        {printf("\n%d:%s:not found serv_ptr=%p base=%p size=%d",armci_me,FUNCTION_NAME,((char *)sptr-off),_tmp_rem_reginfo[armci_me].base_ptr,_tmp_rem_reginfo[armci_me].size);}
 #endif
       }
     }
@@ -1155,7 +1155,7 @@ ARMCI_Group def_group;
         _rem_meminfo[i].reginfo[reg_num].islocal = _tmp_rem_reginfo[i].islocal;
         _rem_meminfo[i].reginfo[reg_num].valid = 1;
 #ifdef DEBUG_MEM
-        {printf("\n%d:%s:new region %d, proc=%d base=%p sptr=%p size=%d\n",armci_me,__FUNCTION__,reg_num,i,_tmp_rem_reginfo[i].base_ptr,_tmp_rem_reginfo[i].serv_ptr,_tmp_rem_reginfo[i].size);fflush(stdout);}
+        {printf("\n%d:%s:new region %d, proc=%d base=%p sptr=%p size=%d\n",armci_me,FUNCTION_NAME,reg_num,i,_tmp_rem_reginfo[i].base_ptr,_tmp_rem_reginfo[i].serv_ptr,_tmp_rem_reginfo[i].size);fflush(stdout);}
 #endif
         _rem_meminfo[i].reg_count++;
         if(_rem_meminfo[i].reg_count>=MAX_MEM_REGIONS-1){
@@ -2193,7 +2193,7 @@ int i;
     return(all_meminfo[proc].serv_offs[i]);
 #else
     ARMCI_PR_DBG("enter",_rem_meminfo[proc].reg_count);
-    if(DEBUG_COMM){printf("\n%d:%s:buf=%p",armci_me,__FUNCTION__,buf);fflush(stdout); }
+    if(DEBUG_COMM){printf("\n%d:%s:buf=%p",armci_me,FUNCTION_NAME,buf);fflush(stdout); }
     for(i=0;i<_rem_meminfo[proc].reg_count;i++){
       if(IN_REGION(buf,_rem_meminfo[proc].reginfo[i])){
 #ifdef DEBUG_MEM

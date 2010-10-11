@@ -31,6 +31,7 @@
 #  mpxlc
 #  mpxlc_r
 #  sxmpic++ NEC SX
+#  mpiFCC   Fujitsu
 #
 AC_DEFUN([GA_PROG_MPICXX],
 [AC_ARG_VAR([MPICXX], [MPI C++ compiler])
@@ -50,7 +51,7 @@ AS_IF([test x$with_mpi_wrappers = xyes],
             [AC_MSG_WARN([MPI compilers desired but CXX is set, ignoring])
              AC_MSG_WARN([Perhaps you mean to set MPICXX instead?])])])])
 ga_cxx="icpc pgCC pathCC sxc++ g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC xlC_r xlC"
-ga_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ CC"
+ga_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ mpiFCC CC"
 AS_IF([test x$with_mpi_wrappers = xyes],
     [CXX_TO_TEST="$ga_mpicxx_pref $ga_mpicxx"],
     [CXX_TO_TEST="$ga_cxx_pref $ga_cxx"])

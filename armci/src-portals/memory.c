@@ -581,7 +581,7 @@ void *PARMCI_Malloc_local(armci_size_t bytes) {
     ARMCI_PR_DBG("enter",0);
     ARMCI_PR_DBG("exit",0);
     rptr = (void *)kr_malloc((size_t)bytes, &ctx_localmem, 0, NULL, NULL);
-    //printf("\n%d:%s:%d:%p\n",armci_me,__FUNCTION__,bytes,rptr);
+    //printf("\n%d:%s:%d:%p\n",armci_me,FUNCTION_NAME,bytes,rptr);
     return rptr;
 }
 
@@ -646,7 +646,7 @@ int PARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
     # endif
     }
     ARMCI_PR_DBG("exit",0);
-    //printf("\n%d:%s:%d:%p\n",armci_me,__FUNCTION__,bytes,ptr_arr[armci_me]);
+    //printf("\n%d:%s:%d:%p\n",armci_me,FUNCTION_NAME,bytes,ptr_arr[armci_me]);
     return(0);
 }
 

@@ -72,6 +72,7 @@
 #  mpif77       generic compiler name
 #  mpxlf        IBM BlueGene/L Fortran 77
 #  mpxlf_r      IBM BlueGene/L Fortran 77, reentrant code
+#  mpifrt       Fujitsu
 #
 AC_DEFUN([GA_PROG_MPIF77],
 [AC_ARG_VAR([MPIF77], [MPI Fortran 77 compiler])
@@ -99,7 +100,7 @@ AS_IF([test x$with_mpi_wrappers = xyes],
 ])
 ga_mpif95="mpif95 mpxlf95_r mpxlf95 ftn"
 ga_mpif90="mpif90 mpxlf90_r mpxlf90 mpf90 cmpif90c sxmpif90"
-ga_mpif77="mpif77 hf77 mpxlf_r mpxlf mpf77 cmpifc"
+ga_mpif77="mpif77 hf77 mpxlf_r mpxlf mpifrt mpf77 cmpifc"
 ga_f95="xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc gfortran lf95 ftn"
 ga_f90="xlf90 f90 pgf90 pghpf pathf90 epcf90 sxf90"
 ga_f77="xlf f77 frt pgf77 pathf77 g77 cf77 fort77 fl32 af77"

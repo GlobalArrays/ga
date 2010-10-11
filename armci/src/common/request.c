@@ -1705,7 +1705,7 @@ int gpc_call_process( request_header_t *msginfo, int len,
   void *hdr, *data, *rhdr, *rdata;
   gpc_buf_t *gbuf;
   gpc_call_t *gcall;
-  /*printf("%d:%s dscr=%p buf=%p \n",armci_me,__FUNCTION__,dscr,buf);fflush(stdout);*/
+  /*printf("%d:%s dscr=%p buf=%p \n",armci_me,FUNCTION_NAME,dscr,buf);fflush(stdout);*/
   GETBUF(dscr, int, parlen);
   if(parlen != 1)
     armci_die("gpc_call_process: Invalid parlen in dscr", parlen);

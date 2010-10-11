@@ -129,7 +129,7 @@ int id,nodeids[mynslave],mynodeid=armci_me-armci_master;
 		  if(mynslave>1){
 
 #ifdef DEBUG_MEM
-        printf("\n%d:%s:mynslave is %d",armci_me,__FUNCTION__,mynslave);fflush(stdout);
+        printf("\n%d:%s:mynslave is %d",armci_me,FUNCTION_NAME,mynslave);fflush(stdout);
 #endif
         bzero((void *)nodeids,sizeof(int)*mynslave);
         id =nodeids[mynodeid]= armci_shmget(bytes,"ARMCI_Malloc");
@@ -161,7 +161,7 @@ int id,nodeids[mynslave],mynodeid=armci_me-armci_master;
 		  }
 			else{
 #ifdef DEBUG_MEM
-        printf("\n%d:%s:mynslave is %d, doing malloc",armci_me,__FUNCTION__,mynslave);fflush(stdout);
+        printf("\n%d:%s:mynslave is %d, doing malloc",armci_me,FUNCTION_NAME,mynslave);fflush(stdout);
 #endif
         mynodeptrs[mynodeid] = servptr = malloc(bytes);
 			}

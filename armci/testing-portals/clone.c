@@ -35,27 +35,27 @@ server(void *arg)
        printf("IN SERVER\n");
 
        if ((ret=PtlInit(&num_interfaces)) != PTL_OK) {
-               printf("%s: PtlInit failed: %d\n", __FUNCTION__, ret);
+               printf("%s: PtlInit failed: %d\n", FUNCTION_NAME, ret);
                exit(1);
        }
-       printf("%s: PtlInit succeeds (%d:%d)\n", __FUNCTION__, ret, num_interfaces);
+       printf("%s: PtlInit succeeds (%d:%d)\n", FUNCTION_NAME, ret, num_interfaces);
 
        if (((ret=PtlNIInit(
                IFACE_FROM_BRIDGE_AND_NALID(PTL_BRIDGE_UK, PTL_IFACE_SS),
                PTL_PID_ANY, NULL, &ptl_limits, &nih)) != PTL_OK) && (ret != PTL_IFACE_DUP)) {
-               printf("%s: PtlNIInit failed: %d\n", __FUNCTION__, ret);
+               printf("%s: PtlNIInit failed: %d\n", FUNCTION_NAME, ret);
                exit(1);
        }
-       printf("%s: PtlNIInit succeeds (%d)\n", __FUNCTION__, ret);
+       printf("%s: PtlNIInit succeeds (%d)\n", FUNCTION_NAME, ret);
 
        if ((ret=PtlEQAlloc(nih, 4096, NULL, &eqh)) != PTL_OK) {
                printf("%s: PtlEQAlloc failed: %d\n",
-                       __FUNCTION__, ret);
+                       FUNCTION_NAME, ret);
                exit(1);
        }
        iv=11;
        ret=PtlEQWait(nih,ev);
-       printf("%s: PtlEQAlloc succeeds\n", __FUNCTION__);
+       printf("%s: PtlEQAlloc succeeds\n", FUNCTION_NAME);
        printf("%d\n",iv);
        iv=13;
 

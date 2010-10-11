@@ -94,7 +94,7 @@ static Header *morecore(size_t nu, context_t *ctx, size_t *last_size, char **las
     if(last_size!=NULL && last_ptr!=NULL){
       *last_size =  ((size_t)nu * sizeof(Header));
       *last_ptr = cp;
-      /*printf("\n%d:%s:got %p %d",armci_me,__FUNCTION__,*last_ptr,*last_size);*/
+      /*printf("\n%d:%s:got %p %d",armci_me,FUNCTION_NAME,*last_ptr,*last_size);*/
     }
 /*    if(armci_nclus==armci_nproc && armci_nclus!=1) 
     armci_register_shmem(cp,((size_t)nu * sizeof(Header)),NULL,0,cp);

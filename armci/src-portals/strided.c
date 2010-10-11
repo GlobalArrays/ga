@@ -637,7 +637,7 @@ int *count=seg_count, tmp_count=0;
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
     if(seg_count[0]<0)return FAIL3;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
-    if(proc<0||proc>=armci_nproc){printf("\n%d:%s:proc=%d",armci_me,__FUNCTION__,proc);fflush(stdout);return FAIL5;}
+    if(proc<0||proc>=armci_nproc){printf("\n%d:%s:proc=%d",armci_me,FUNCTION_NAME,proc);fflush(stdout);return FAIL5;}
     
 #ifdef ARMCI_PROFILE
     armci_profile_start_strided(seg_count, stride_levels, proc, 

@@ -817,7 +817,7 @@ static char *temp;
     region_list[reg].attached = 1;
     region_list[reg].sz= size;
     if(DEBUG_){
-    printf("\n%d:%s:new memory region\n",armci_me,__FUNCTION__);fflush(stdout);
+    printf("\n%d:%s:new memory region\n",armci_me,FUNCTION_NAME);fflush(stdout);
     }
 
   }

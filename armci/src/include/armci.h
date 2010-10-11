@@ -204,14 +204,14 @@ int dassertp_fail(const char *cond_string, const char *file,
 #define dassertp(_enable,_cond,_plist)  do {              \
   if((_enable) && !(_cond)) {                             \
     derr_printf _plist;					  \
-    dassertp_fail(#_cond,__FILE__,__FUNCTION__,__LINE__,1); \
+    dassertp_fail(#_cond,__FILE__,FUNCTION_NAME,__LINE__,1); \
   }} while(0)
 
 #undef dassertc
 #define dassertc(_enable,_cond,_plist,_code)  do {              \
   if((_enable) && !(_cond)) {                             \
     derr_printf _plist;					  \
-    dassertp_fail(#_cond,__FILE__,__FUNCTION__,__LINE__,_code); \
+    dassertp_fail(#_cond,__FILE__,FUNCTION_NAME,__LINE__,_code); \
   }} while(0)
 
 #undef dassert

@@ -4519,8 +4519,8 @@ $as_echo "$as_me: WARNING: Perhaps you meant to set MPICC instead?" >&2;}
 fi
 fi
 fi
-ga_cc="bgxlc_r bgxlc xlc pgcc pathcc icc sxcc gcc cc ecc cl ccc"
-ga_mpicc="mpicc mpixlc_r mpixlc hcc mpxlc_r mpxlc sxmpicc mpgcc mpcc cmpicc cc"
+ga_cc="bgxlc_r bgxlc xlc pgcc pathcc icc sxcc fcc gcc cc ecc cl ccc"
+ga_mpicc="mpicc mpixlc_r mpixlc hcc mpxlc_r mpxlc sxmpicc mpifcc mpgcc mpcc cmpicc cc"
 if test x$with_mpi_wrappers = xyes; then :
   CC_TO_TEST="$ga_mpicc_pref $ga_mpicc"
 else
@@ -9118,7 +9118,7 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 if test x$ga_cv_cpp_function = x; then :
-  ga_cv_cpp_function="FUNCTION_NAME_NOT_AVAILABLE"
+  ga_cv_cpp_function='"Unknown"'
 fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_cpp_function" >&5
@@ -10600,7 +10600,7 @@ fi
 fi
 fi
 ga_cxx="icpc pgCC pathCC sxc++ g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC xlC_r xlC"
-ga_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ CC"
+ga_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ mpiFCC CC"
 if test x$with_mpi_wrappers = xyes; then :
   CXX_TO_TEST="$ga_mpicxx_pref $ga_mpicxx"
 else
@@ -11594,7 +11594,7 @@ fi
 fi
 ga_mpif95="mpif95 mpxlf95_r mpxlf95 ftn"
 ga_mpif90="mpif90 mpxlf90_r mpxlf90 mpf90 cmpif90c sxmpif90"
-ga_mpif77="mpif77 hf77 mpxlf_r mpxlf mpf77 cmpifc"
+ga_mpif77="mpif77 hf77 mpxlf_r mpxlf mpifrt mpf77 cmpifc"
 ga_f95="xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc gfortran lf95 ftn"
 ga_f90="xlf90 f90 pgf90 pghpf pathf90 epcf90 sxf90"
 ga_f77="xlf f77 frt pgf77 pathf77 g77 cf77 fort77 fl32 af77"
@@ -14118,7 +14118,7 @@ ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
-        for flag in none -nofor-main -nofor_main -Mnomain; do
+        for flag in none -nofor-main -nofor_main -Mnomain -mlcmain=main; do
             ga_save_FFLAGS=$FFLAGS
             if test "x$flag" != xnone; then :
   FFLAGS="$FFLAGS $flag"

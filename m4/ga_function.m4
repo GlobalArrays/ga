@@ -16,7 +16,7 @@ AS_IF([test x$ga_cv_cpp_function = x],
             [[printf("__FUNCTION__ = %s\n", __FUNCTION__);]])],
         [ga_cv_cpp_function=__FUNCTION__])])
 AS_IF([test x$ga_cv_cpp_function = x],
-    [ga_cv_cpp_function="FUNCTION_NAME_NOT_AVAILABLE"])])
+    [ga_cv_cpp_function='"Unknown"'])])
 AC_DEFINE_UNQUOTED([FUNCTION_NAME], [$ga_cv_cpp_function],
     [CPP symbol for function name, if available])
 ])# GA_FUNCTION
