@@ -438,6 +438,9 @@
 /* this was defined unconditionally when using LAPI for tcgmsg 5 */
 #undef NOTIFY_SENDER
 
+/* define when inline asm is not supported */
+#undef NO_I386ASM
+
 /* Disables use of shared memory */
 #undef NO_SHM
 

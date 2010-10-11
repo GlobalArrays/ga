@@ -10750,6 +10750,26 @@ fi
 
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether NO_I386ASM is needed" >&5
+$as_echo_n "checking whether NO_I386ASM is needed... " >&6; }
+if test "${armci_cv_as_no_i386asm+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "x$ax_cv_c_compiler_vendor" = xfujitsu; then :
+  armci_cv_as_no_i386asm=yes
+else
+  armci_cv_as_no_i386asm=no
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $armci_cv_as_no_i386asm" >&5
+$as_echo "$armci_cv_as_no_i386asm" >&6; }
+if test "x$armci_cv_as_no_i386asm" = xyes; then :
+
+$as_echo "#define NO_I386ASM 1" >>confdefs.h
+
+fi
+
+
 #########################################
 # Fortran compiler
 #########################################
