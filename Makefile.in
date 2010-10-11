@@ -2563,7 +2563,8 @@ nodist_libga_la_SOURCES = config.fh $(am__append_28)
 ##############################################################################
 # global/doc
 #
-EXTRA_DIST = README LinAlg/lapack+blas/README tcgmsg/README \
+EXTRA_DIST = README build-aux/inside.pl build-aux/wapigen.py \
+	LinAlg/lapack+blas/README tcgmsg/README \
 	tcgmsg/examples/blkdat120lin.f tcgmsg/examples/blkdat15.f \
 	tcgmsg/examples/blkdat240lin.f tcgmsg/examples/blkdat30.f \
 	tcgmsg/examples/blkdat60.f tcgmsg/examples/blkdat60lin.f \

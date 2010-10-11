@@ -1879,7 +1879,7 @@ libarmci_la_SOURCES = $(am__append_5) $(am__append_6) $(am__append_7) \
 nodist_libarmci_la_SOURCES = config.fh $(am__append_13) \
 	$(am__append_50) $(am__append_52)
 libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
-EXTRA_DIST = README examples/benchmarks/lu/README \
+EXTRA_DIST = README build-aux/inside.pl examples/benchmarks/lu/README \
 	examples/features/aggregation/README \
 	examples/features/concurrency/README \
 	examples/features/gpc/hashtable/README \
