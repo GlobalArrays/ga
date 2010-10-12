@@ -855,7 +855,10 @@ am__objects_35 = $(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	$(am__objects_28) $(am__objects_29) $(am__objects_30) \
 	$(am__objects_31)
 am_libarmcii_la_OBJECTS = $(am__objects_35)
-libarmcii_la_OBJECTS = $(am_libarmcii_la_OBJECTS)
+am__objects_36 = $(am__objects_32) $(am__objects_33) $(am__objects_34)
+nodist_libarmcii_la_OBJECTS = $(am__objects_36)
+libarmcii_la_OBJECTS = $(am_libarmcii_la_OBJECTS) \
+	$(nodist_libarmcii_la_OBJECTS)
 @ARMCI_NETWORK_PORTALS_TRUE@am__EXEEXT_1 =  \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/clone$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/fork$(EXEEXT) \
@@ -1443,7 +1446,7 @@ AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libarmci_la_SOURCES) $(nodist_libarmci_la_SOURCES) \
-	$(libarmcii_la_SOURCES) \
+	$(libarmcii_la_SOURCES) $(nodist_libarmcii_la_SOURCES) \
 	$(examples_benchmarks_RandomAccess_simple_simple_SOURCES) \
 	$(nodist_EXTRA_examples_benchmarks_RandomAccess_simple_simple_SOURCES) \
 	$(examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_SOURCES) \
@@ -1880,6 +1883,7 @@ libarmci_la_SOURCES = $(am__append_5) $(am__append_6) $(am__append_7) \
 nodist_libarmci_la_SOURCES = config.fh $(am__append_13) \
 	$(am__append_50) $(am__append_52)
 libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
+nodist_libarmcii_la_SOURCES = $(nodist_libarmci_la_SOURCES)
 EXTRA_DIST = README build-aux/inside.pl examples/benchmarks/lu/README \
 	examples/features/aggregation/README \
 	examples/features/concurrency/README \
