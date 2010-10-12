@@ -1317,6 +1317,10 @@ def elem_multiply(int g_a, int g_b, int g_c, alo=None, ahi=None, blo=None,
                 g_b, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data,
                 g_c, <int64_t*>clo_nd.data, <int64_t*>chi_nd.data)
 
+def error(char *message, int code):
+    """Prints message and aborts safely with code."""
+    GA_Error(message, code)
+
 def fence():
     """Blocks the calling process until all the data transfers corresponding
     to GA operations called after ga.init_fence() complete.
@@ -2745,6 +2749,7 @@ def _put_common(int g_a, lo, hi, buffer, nb=False, periodic=False, skip=None):
     buffer = np.asarray(buffer, dtype=_to_dtype[gtype])
     if not buffer.flags['C_CONTIGUOUS']:
         buffer = np.ascontiguousarray(buffer, dtype=_to_dtype[gtype])
+        assert(buffer.flags['C_CONTIGUOUS'])
     if nb:
         NGA_NbPut64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer.data, <int64_t*>ld_nd.data, &nbhandle)
