@@ -14207,9 +14207,9 @@ else
   LINUX64:*:alpha) :
     ga_cv_f77_opt="-align_dcommons -fpe3 -check nooverflow -assume accuracy_sensitive -check nopower -check nounderflow" ;; #(
   LINUX64:fujitsu:ia64) :
-    ga_cv_f77_opt="-Kfast -X9 -Am" ;; #(
+    ga_cv_f77_opt="-Kfast -X9 -Am -fw" ;; #(
   LINUX64:fujitsu:x86_64) :
-    ga_cv_f77_opt="-Kfast -X9 -Am" ;; #(
+    ga_cv_f77_opt="-Kfast -X9 -Am -fw" ;; #(
   LINUX64:gnu:x86_64) :
     ga_cv_f77_opt="-O" ;; #(
   LINUX64:ibm:x86_64) :
@@ -14225,7 +14225,7 @@ else
   LINUX64:portland:x86_64) :
     ga_cv_f77_opt="-Mdalign" ;; #(
   LINUX:fujitsu:*) :
-    ga_cv_f77_opt="-Kfast -X9 -Am" ;; #(
+    ga_cv_f77_opt="-Kfast -X9 -Am -fw" ;; #(
   LINUX:gnu:786) :
     ga_cv_f77_opt="-O2 -funroll-loops -malign-double" ;; #(
   LINUX:gnu:*) :
@@ -14249,7 +14249,7 @@ else
   NEC:*:*) :
     ga_cv_f77_opt="-Cvopt -Wf\"-pvctl nomsg noassume vwork=stack\" -ew -size_t6" ;; #(
   SOLARIS64:fujitsu:*) :
-    ga_cv_f77_opt="-Kfast -KV9FMADD" ;; #(
+    ga_cv_f77_opt="-fw -Kfast -KV9FMADD" ;; #(
   SOLARIS64:gnu:*) :
     ga_cv_f77_opt="-xs -dalign -xarch=v9" ;; #(
   SOLARIS64:gnu:i386) :

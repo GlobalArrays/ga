@@ -12687,13 +12687,13 @@ else
   LAPI:*:*:*) :
     armci_cv_f77_opt= ;; #(
   LINUX64:fujitsu:ia64:OPENIB) :
-    armci_cv_f77_opt="-Kfast -X9 -Am -Kthreadsafe" ;; #(
+    armci_cv_f77_opt="-Kfast -X9 -Am -fw -Kthreadsafe" ;; #(
   LINUX64:fujitsu:ia64:*) :
-    armci_cv_f77_opt="-Kfast -X9 -Am" ;; #(
+    armci_cv_f77_opt="-Kfast -X9 -Am -fw" ;; #(
   LINUX64:fujitsu:x86_64:OPENIB) :
-    armci_cv_f77_opt="-Kfast -X9 -Am -Kthreadsafe" ;; #(
+    armci_cv_f77_opt="-Kfast -X9 -Am -fw -Kthreadsafe" ;; #(
   LINUX64:fujitsu:x86_64:*) :
-    armci_cv_f77_opt="-Kfast -X9 -Am" ;; #(
+    armci_cv_f77_opt="-Kfast -X9 -Am -fw" ;; #(
   LINUX64:gnu:x86_64:*) :
     armci_cv_f77_opt="-fstrength-reduce -mfpmath=sse" ;; #(
   LINUX64:ibm:powerpc64:*) :
@@ -12713,9 +12713,9 @@ else
   LINUX64:unknown:ia64:*) :
     armci_cv_f77_opt="-assume no2underscore -fpe3 -check nooverflow -assume accuracy_sensitive -check nopower -check nounderflow" ;; #(
   LINUX:fujitsu:*:OPENIB) :
-    armci_cv_f77_opt="-Kfast -X9 -Am -Kthreadsafe" ;; #(
+    armci_cv_f77_opt="-Kfast -X9 -Am -fw -Kthreadsafe" ;; #(
   LINUX:fujitsu:*:*) :
-    armci_cv_f77_opt="-Kfast -X9 -Am" ;; #(
+    armci_cv_f77_opt="-Kfast -X9 -Am -fw" ;; #(
   LINUX:gnu:686:*) :
     armci_cv_f77_opt="-O3 -funroll-loops -march=pentiumpro -malign-double" ;; #(
   LINUX:gnu:686:MELLANOX) :
