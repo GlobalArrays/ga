@@ -2,8 +2,8 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
 
-#ga_install = "/home/d3n000/ga/ga-dev/bld_openmpi_shared"
-ga_install = "/Users/d3n000/ga/ga-dev/bld_openmpi_shared"
+ga_install = "/home/d3n000/ga/ga-dev/bld_openmpi_shared"
+#ga_install = "/Users/d3n000/ga/ga-dev/bld_openmpi_shared"
 
 try:
     import numpy

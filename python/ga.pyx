@@ -92,14 +92,25 @@ def _lohi(int g_a, lo, hi):
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
+    cdef int ndim = GA_Ndim(g_a)
     if lo is None:
-        lo_nd = np.zeros((GA_Ndim(g_a)), dtype=np.int64)
+        lo_nd = np.zeros((ndim), dtype=np.int64)
     else:
-        lo_nd = np.asarray(lo, dtype=np.int64)
+        try:
+            lo_nd = np.asarray(lo, dtype=np.int64)
+        except ValueError: # try again in case lo is a single value
+            lo_nd = np.asarray([lo], dtype=np.int64)
+    if len(lo_nd) != ndim:
+        raise ValueError, 'len(lo_nd) != ndim; len(%s) != %s' % (lo_nd,ndim)
     if hi is None:
         hi_nd = inquire_dims(g_a)-1
     else:
-        hi_nd = np.asarray(hi, dtype=np.int64)
+        try:
+            hi_nd = np.asarray(hi, dtype=np.int64)
+        except ValueError: # try again in case hi is a single value
+            hi_nd = np.asarray([hi], dtype=np.int64)
+    if len(hi_nd) != ndim:
+        raise ValueError, 'len(hi_nd) != ndim; len(%s) != %s' % (hi_nd,ndim)
     return lo_nd,hi_nd
 
 cdef void* _convert_multiplier(int gtype, value,
@@ -194,7 +205,7 @@ def acc(int g_a, lo, hi, buffer, alpha=None):
     alpha  -- multiplier
 
     """
-    _acc_common(g_a, lo, hi, buffer, alpha=None)
+    _acc_common(g_a, lo, hi, buffer, alpha)
 
 def _acc_common(int g_a, lo, hi, buffer, alpha=None, nb=False, periodic=False,
         skip=None):
@@ -585,10 +596,12 @@ def allocate(int g_a):
     g_a -- the array handle
 
     Returns:
-    TODO
+    True if allocation of g_a was successful.
 
     """
-    return GA_Allocate(g_a)
+    if GA_Allocate(g_a) == 1:
+        return True
+    return False
 
 def brdcst(np.ndarray buffer, int root):
     """Broadcast from process root to all other processes.
@@ -1085,6 +1098,10 @@ def dot(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None,
             return GA_Fdot(g_a, g_b)
         elif gtype == C_DBL:
             return GA_Ddot(g_a, g_b)
+        elif gtype == C_SCPL:
+            return GA_Cdot(g_a, g_b)
+        elif gtype == C_DCPL:
+            return GA_Zdot(g_a, g_b)
         else:
             raise TypeError
     else:
@@ -1116,6 +1133,14 @@ def dot(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None,
                     g_b, tb_c, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data)
         elif gtype == C_DBL:
             return NGA_Ddot_patch64(
+                    g_a, ta_c, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
+                    g_b, tb_c, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data)
+        elif gtype == C_SCPL:
+            return NGA_Cdot_patch64(
+                    g_a, ta_c, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
+                    g_b, tb_c, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data)
+        elif gtype == C_DCPL:
+            return NGA_Zdot_patch64(
                     g_a, ta_c, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
                     g_b, tb_c, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data)
         else:
@@ -1317,7 +1342,7 @@ def elem_multiply(int g_a, int g_b, int g_c, alo=None, ahi=None, blo=None,
                 g_b, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data,
                 g_c, <int64_t*>clo_nd.data, <int64_t*>chi_nd.data)
 
-def error(char *message, int code):
+def error(char *message, int code=1):
     """Prints message and aborts safely with code."""
     GA_Error(message, code)
 
@@ -2200,7 +2225,7 @@ def nblock(int g_a):
 
     """
     cdef np.ndarray[np.int32_t, ndim=1] nblock_nd
-    cdef ndim = GA_Ndim(g_a)
+    cdef int ndim = GA_Ndim(g_a)
     nblock_nd = np.zeros(ndim, dtype=np.intc)
     GA_Nblock(g_a, <int*>nblock_nd.data)
     return nblock_nd
@@ -2645,7 +2670,7 @@ def print_file(file, int g_a):
     #GA_Print_file(file.fileno(), g_a)
     raise NotImplementedError
 
-def print_patch(int g_a, lo, hi, bint pretty=True):
+def print_patch(int g_a, lo=None, hi=None, bint pretty=True):
     """Prints a patch of g_a array to the standard output.
     
     If pretty is False then output is printed in a dense fashion. If
@@ -2740,31 +2765,32 @@ def _put_common(int g_a, lo, hi, buffer, nb=False, periodic=False, skip=None):
     None, usually.  However if nb=True, the nonblocking handle is returned.
 
     """
+    cdef np.ndarray buffer_nd
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape, skip_nd
     cdef int gtype=inquire_type(g_a)
     cdef ga_nbhdl_t nbhandle
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
     shape = hi_nd-lo_nd+1
     ld_nd = shape[1:]
-    buffer = np.asarray(buffer, dtype=_to_dtype[gtype])
-    if not buffer.flags['C_CONTIGUOUS']:
-        buffer = np.ascontiguousarray(buffer, dtype=_to_dtype[gtype])
-        assert(buffer.flags['C_CONTIGUOUS'])
+    buffer_nd = np.asarray(buffer, dtype=_to_dtype[gtype])
+    if not buffer_nd.flags['C_CONTIGUOUS']:
+        buffer_nd = np.ascontiguousarray(buffer_nd, dtype=_to_dtype[gtype])
+        assert(buffer_nd.flags['C_CONTIGUOUS'])
     if nb:
         NGA_NbPut64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
-                <void*>buffer.data, <int64_t*>ld_nd.data, &nbhandle)
+                <void*>buffer_nd.data, <int64_t*>ld_nd.data, &nbhandle)
         return nbhandle
     elif periodic:
         NGA_Periodic_put64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
-                <void*>buffer.data, <int64_t*>ld_nd.data)
+                <void*>buffer_nd.data, <int64_t*>ld_nd.data)
     elif skip is not None:
         skip_nd = np.asarray(skip, dtype=np.int64)
         NGA_Strided_put64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <int64_t*>skip_nd.data,
-                <void*>buffer.data, <int64_t*>ld_nd.data)
+                <void*>buffer_nd.data, <int64_t*>ld_nd.data)
     else:
         NGA_Put64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
-                <void*>buffer.data, <int64_t*>ld_nd.data)
+                <void*>buffer_nd.data, <int64_t*>ld_nd.data)
 
 def randomize(int g_a, val=None):
     """Fill array with random values in [0,val)."""
