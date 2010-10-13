@@ -4,9 +4,7 @@
 #define _ARMCI_H   
 
 /* for size_t */
-#if HAVE_STDLIB_H
-#   include <stdlib.h>
-#endif
+#include <stdlib.h>
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
