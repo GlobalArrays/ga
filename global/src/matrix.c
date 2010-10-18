@@ -325,6 +325,10 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
   pnga_inquire (g_c, &ctype, &cndim, cdims);
   pnga_inquire (g_m, &mtype, &mndim, mdims);
 
+  /* I have to inquire the data type again since nga_inquire and
+   * nga_inquire_internal_ treat data type differently */
+  pnga_inquire(g_m, &type, &mndim, mdims);
+
   if (mtype != atype)
     pnga_error(" ga_median_patch_:type mismatch ", 0L);
   if (mtype != btype)
