@@ -15,9 +15,10 @@ c
 *      timer = dble(dtime(tt))
 *mdc*elseif tcgmsg
 C$Id: timer.F,v 1.1 2005-03-08 23:58:03 d3g293 Exp $
+#include "mp3def.fh"
       save mlast
       data mlast/0/
-      m = mtime()
+      m = MP_TIMER()
       timer = dble(m - mlast) * 0.01d0
       mlast = m
 *mdc*endif

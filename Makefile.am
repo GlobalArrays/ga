@@ -835,12 +835,10 @@ nodist_EXTRA_global_testing_testmatmultc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 check_PROGRAMS += global/examples/lennard-jones/lennard
 if NOFORT
 else
-if MSG_COMMS_TCGMSG
-check_PROGRAMS += global/examples/scf/scf # uses nxtval, among others
-endif
 check_PROGRAMS += global/examples/boltzmann/boltz
 check_PROGRAMS += global/examples/conjugate_gradient/ga_cg
 check_PROGRAMS += global/examples/md_cluster/grp_sim
+check_PROGRAMS += global/examples/scf/scf
 endif # NOFORT
 
 global_examples_boltzmann_boltz_SOURCES = \

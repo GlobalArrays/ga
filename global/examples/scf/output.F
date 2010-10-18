@@ -28,7 +28,7 @@ C$Id: output.F,v 1.1 2005/03/08 23:58:03 d3g293 Exp $
       implicit double precision (a-h,o-z)
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
+#include "mp3def.fh"
       integer rowlow,rowhi,collow,colhi,rowdim,coldim,begin,kcol
       dimension z(rowdim,coldim)
       dimension asa(3)

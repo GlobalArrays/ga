@@ -61,9 +61,9 @@
 #   define MP_MYID(pid)         MPI_Comm_rank(MPI_COMM_WORLD, (pid))
 #   define MP_PROCS(pproc)      MPI_Comm_size(MPI_COMM_WORLD, (pproc))
 #   define MP_TIMER             MPI_Wtime
-    static inline void MP_ASSERT(int code) {
-        if (MPI_SUCCESS != code) {
-            MPI_Abort(MPI_COMM_WORLD, code);
-        }
-    }
+#   define MP_ASSERT(code) do { \
+        if (MPI_SUCCESS != (code)) { \
+            MPI_Abort(MPI_COMM_WORLD, (code)); \
+        } \
+    } while (0)
 #endif
