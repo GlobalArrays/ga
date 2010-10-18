@@ -27,16 +27,14 @@
 #include "papi.h"
 #include "wapi.h"
 
-static Integer *_ga_map_capi;
-
 int *_ga_argc=NULL;
 char ***_ga_argv=NULL;
 int _ga_initialize_args=0;
 
 short int _ga_irreg_flag = 0;
 
-static void copy_map(int block[], int block_ndim, int map[]);
-static void copy_map64(int64_t block[], int block_ndim, int64_t map[]);
+static Integer* copy_map(int block[], int block_ndim, int map[]);
+static Integer* copy_map64(int64_t block[], int block_ndim, int64_t map[]);
 
 #ifdef USE_FAPI
 #  define COPYC2F(carr, farr, n){\
@@ -221,11 +219,12 @@ int NGA_Create_irreg(int type,int ndim,int dims[],char *name,int block[],int map
     logical st;
     Integer _ga_dims[MAXDIM];
     Integer _ga_work[MAXDIM];
+    Integer *_ga_map_capi;
     if(ndim>MAXDIM)return 0;
 
     COPYC2F(dims,_ga_dims, ndim);
     COPYC2F(block,_ga_work, ndim);
-    copy_map(block, ndim, map);
+    _ga_map_capi = copy_map(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
     st = pnga_create_irreg(type, (Integer)ndim, _ga_dims, name, _ga_map_capi,
@@ -243,11 +242,12 @@ int NGA_Create_irreg64(int type,int ndim,int64_t dims[],char *name,int64_t block
     logical st;
     Integer _ga_dims[MAXDIM];
     Integer _ga_work[MAXDIM];
+    Integer *_ga_map_capi;
     if(ndim>MAXDIM)return 0;
 
     COPYC2F(dims,_ga_dims, ndim);
     COPYC2F(block,_ga_work, ndim);
-    copy_map64(block, ndim, map);
+    _ga_map_capi = copy_map64(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
     st = pnga_create_irreg(type, (Integer)ndim, _ga_dims, name, _ga_map_capi,
@@ -266,11 +266,12 @@ int NGA_Create_irreg_config(int type,int ndim,int dims[],char *name,int block[],
     logical st;
     Integer _ga_dims[MAXDIM];
     Integer _ga_work[MAXDIM];
+    Integer *_ga_map_capi;
     if(ndim>MAXDIM)return 0;
 
     COPYC2F(dims,_ga_dims, ndim);
     COPYC2F(block,_ga_work, ndim);
-    copy_map(block, ndim, map);
+    _ga_map_capi = copy_map(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
     st = pnga_create_irreg_config(type, (Integer)ndim, _ga_dims, name,
@@ -288,11 +289,12 @@ int NGA_Create_irreg_config64(int type,int ndim,int64_t dims[],char *name,int64_
     logical st;
     Integer _ga_dims[MAXDIM];
     Integer _ga_work[MAXDIM];
+    Integer *_ga_map_capi;
     if(ndim>MAXDIM)return 0;
 
     COPYC2F(dims,_ga_dims, ndim);
     COPYC2F(block,_ga_work, ndim);
-    copy_map64(block, ndim, map);
+    _ga_map_capi = copy_map64(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
     st = pnga_create_irreg_config(type, (Integer)ndim, _ga_dims, name,
@@ -311,12 +313,13 @@ int NGA_Create_ghosts_irreg(int type,int ndim,int dims[],int width[],char *name,
     Integer _ga_dims[MAXDIM];
     Integer _ga_work[MAXDIM];
     Integer _ga_width[MAXDIM];
+    Integer *_ga_map_capi;
     if(ndim>MAXDIM)return 0;
 
     COPYC2F(dims,_ga_dims, ndim);
     COPYC2F(block,_ga_work, ndim);
     COPYC2F(width,_ga_width, ndim);
-    copy_map(block, ndim, map);
+    _ga_map_capi = copy_map(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
     st = pnga_create_ghosts_irreg(type, (Integer)ndim, _ga_dims, _ga_width,
@@ -335,12 +338,13 @@ int NGA_Create_ghosts_irreg64(int type,int ndim,int64_t dims[],int64_t width[],c
     Integer _ga_dims[MAXDIM];
     Integer _ga_work[MAXDIM];
     Integer _ga_width[MAXDIM];
+    Integer *_ga_map_capi;
     if(ndim>MAXDIM)return 0;
 
     COPYC2F(dims,_ga_dims, ndim);
     COPYC2F(block,_ga_work, ndim);
     COPYC2F(width,_ga_width, ndim);
-    copy_map64(block, ndim, map);
+    _ga_map_capi = copy_map64(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
     st = pnga_create_ghosts_irreg(type, (Integer)ndim, _ga_dims, _ga_width,
@@ -359,12 +363,13 @@ int NGA_Create_ghosts_irreg_config(int type, int ndim, int dims[], int width[], 
     Integer _ga_dims[MAXDIM];
     Integer _ga_work[MAXDIM];
     Integer _ga_width[MAXDIM];
+    Integer *_ga_map_capi;
     if(ndim>MAXDIM)return 0;
 
     COPYC2F(dims,_ga_dims, ndim);
     COPYC2F(block,_ga_work, ndim);
     COPYC2F(width,_ga_width, ndim);
-    copy_map(block, ndim, map);
+    _ga_map_capi = copy_map(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
     st = pnga_create_ghosts_irreg_config(type, (Integer)ndim, _ga_dims,
@@ -384,12 +389,13 @@ int NGA_Create_ghosts_irreg_config64(int type, int ndim, int64_t dims[], int64_t
     Integer _ga_dims[MAXDIM];
     Integer _ga_work[MAXDIM];
     Integer _ga_width[MAXDIM];
+    Integer *_ga_map_capi;
     if(ndim>MAXDIM)return 0;
 
     COPYC2F(dims,_ga_dims, ndim);
     COPYC2F(block,_ga_work, ndim);
     COPYC2F(width,_ga_width, ndim);
-    copy_map64(block, ndim, map);
+    _ga_map_capi = copy_map64(block, ndim, map);
 
     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
     st = pnga_create_ghosts_irreg_config(type, (Integer)ndim, _ga_dims,
@@ -591,6 +597,7 @@ void GA_Set_restricted(int g_a, int list[], int size)
     Integer aa;
     Integer asize = (Integer)size;
     int i;
+    Integer *_ga_map_capi;
     aa = (Integer)g_a;
     _ga_map_capi = (Integer*)malloc(size * sizeof(Integer));
     for (i=0; i<size; i++)
@@ -717,11 +724,12 @@ void GA_Set_irreg_distr(int g_a, int map[], int block[])
 {
     Integer aa, ndim;
     Integer _ga_work[MAXDIM];
+    Integer *_ga_map_capi;
 
     aa = (Integer)g_a;
     ndim = ga_get_dimension_(&aa);
     COPYC2F(block,_ga_work, ndim);
-    copy_map(block, ndim, map);
+    _ga_map_capi = copy_map(block, ndim, map);
 
     ga_set_irreg_distr_(&aa, _ga_map_capi, _ga_work);
     free(_ga_map_capi);
@@ -731,11 +739,12 @@ void GA_Set_irreg_distr64(int g_a, int64_t map[], int64_t block[])
 {
     Integer aa, ndim;
     Integer _ga_work[MAXDIM];
+    Integer *_ga_map_capi;
 
     aa = (Integer)g_a;
     ndim = ga_get_dimension_(&aa);
     COPYC2F(block,_ga_work, ndim);
-    copy_map64(block, ndim, map);
+    _ga_map_capi = copy_map64(block, ndim, map);
 
     ga_set_irreg_distr_(&aa, _ga_map_capi, _ga_work);
     free(_ga_map_capi);
@@ -797,6 +806,7 @@ int GA_Pgroup_create(int *list, int count)
     Integer acount = (Integer)count;
     int i;
     int grp_id;
+    Integer *_ga_map_capi;
     _ga_map_capi = (Integer*)malloc(count * sizeof(Integer));
     for (i=0; i<count; i++)
        _ga_map_capi[i] = (Integer)list[i];
@@ -2036,6 +2046,7 @@ int NGA_Locate_region(int g_a,int lo[],int hi[],int map[],int procs[])
      Integer *tmap;
      int i;
      Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
+     Integer *_ga_map_capi;
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
      st = nga_locate_nnodes_(&a, _ga_lo, _ga_hi, &np);
@@ -2072,6 +2083,7 @@ int NGA_Locate_region64(int g_a,int64_t lo[],int64_t hi[],int64_t map[],int proc
      Integer *tmap;
      int i;
      Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
+     Integer *_ga_map_capi;
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
      st = nga_locate_nnodes_(&a, _ga_lo, _ga_hi, &np);
@@ -4376,10 +4388,11 @@ int NGA_Nnodes()
     return pnga_nnodes();
 }
 
-static void copy_map(int block[], int block_ndim, int map[])
+static Integer* copy_map(int block[], int block_ndim, int map[])
 {
     int d;
     int i,sum=0,capi_offset=0,map_offset=0;
+    Integer *_ga_map_capi;
 
     for (d=0; d<block_ndim; d++) {
         sum += block[d];
@@ -4395,12 +4408,15 @@ static void copy_map(int block[], int block_ndim, int map[])
         }
         map_offset += block[d];
     }
+
+    return _ga_map_capi;
 }
 
-static void copy_map64(int64_t block[], int block_ndim, int64_t map[])
+static Integer* copy_map64(int64_t block[], int block_ndim, int64_t map[])
 {
     int d;
     int64_t i,sum=0,capi_offset=0,map_offset=0;
+    Integer *_ga_map_capi;
 
     for (d=0; d<block_ndim; d++) {
         sum += block[d];
@@ -4416,4 +4432,6 @@ static void copy_map64(int64_t block[], int block_ndim, int64_t map[])
         }
         map_offset += block[d];
     }
+
+    return _ga_map_capi;
 }
