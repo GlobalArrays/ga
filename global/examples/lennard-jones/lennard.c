@@ -108,6 +108,7 @@ static int nxtask(void) {
 void LJ_Setup(int natoms, double **x_i, double **x_j, double **grad) {
   
   int i, j, k=0, n;
+  MA_AccessIndex maindex;
 
   n = natoms/gBlockSize;
    
@@ -127,7 +128,7 @@ void LJ_Setup(int natoms, double **x_i, double **x_j, double **grad) {
   i = gBlockSize * NDIM * 2; /* for gX_i and gX_j used in computeFG() */
   j = natoms * NDIM;         /* for gGrad in computeFG() */
   n = i + j + SAFELIMIT;                 /* total memory required */
-  if(MA_push_get(C_DBL, n, "GA LJ bufs", (void *)&gMemHandle, (void *)&j))
+  if(MA_push_get(C_DBL, n, "GA LJ bufs", (void *)&gMemHandle, &maindex))
     MA_get_pointer(gMemHandle, x_i);
   else GA_Error("ma_alloc_get failed",n);
   
@@ -411,9 +412,10 @@ void LJ_Initialize(int natoms) {
     double rCell[3];
     double *x;
     int lo, hi, handle;  
+    MA_AccessIndex maindex;
     
     n = NDIM * natoms + 1;
-    if(MA_push_get(C_DBL, n, "GA LJ_Init bufs", (void *)&handle, (void *)&lo))
+    if(MA_push_get(C_DBL, n, "GA LJ_Init bufs", (void *)&handle, &maindex))
       MA_get_pointer(handle, &x);
     else GA_Error("ma_alloc_get failed",n);
     
