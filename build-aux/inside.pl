@@ -21,6 +21,24 @@ close NAKED;
 $wrapped_lines =~ tr/\n+/ /;
 $naked_lines =~ tr/\n+/ /;
 
+# Remove whitespace from beginning of wrapped and naked lines.
+$wrapped_lines =~ s/^\s+//;
+$naked_lines =~ s/^\s+//;
+
+# Remove whitespace from end of wrapped and naked lines.
+$wrapped_lines =~ s/\s+$//;
+$naked_lines =~ s/\s+$//;
+
+# If either wrapped_lines or naked_lines are empty, this is an error.
+# It is assumed that the particular version string which created the input
+# files should generate SOMETHING.
+unless ($wrapped_lines) {
+    exit 1;
+}
+unless ($naked_lines) {
+    exit 1;
+}
+
 # Can the naked lines be found within the wrapped lines?
 if ($wrapped_lines =~ /$naked_lines/) {
     #print "Found as substring\n";
