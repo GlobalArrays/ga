@@ -581,13 +581,13 @@ am__libga_la_SOURCES_DIST = compat/random.c gaf2c/gaf2c.c \
 	global/src/matmul.c global/src/matmul.h global/src/matrix.c \
 	global/src/nbutil.c global/src/onesided.c \
 	global/src/scalapack.fh global/src/select.c \
-	global/src/sparse.c global/src/xgemm.c global/src/wapidefs.h \
-	global/src/complex.F global/src/ga_diag_seq.F global/src/rsg.f \
-	global/src/ga_ckpt.c global/src/ga_dgemmf.F \
-	global/src/ga_diag.F global/src/peigstubs.c \
-	global/src/scalapack.F global/src/sclstubs.c global/ga_vt.c \
-	global/ga_vt.h global/src/ga_vampir.c pario/dra/buffers.c \
-	pario/dra/buffers.h pario/dra/capi.c pario/dra/disk.arrays.c \
+	global/src/sparse.c global/src/xgemm.c global/src/complex.F \
+	global/src/ga_diag_seq.F global/src/rsg.f global/src/ga_ckpt.c \
+	global/src/ga_dgemmf.F global/src/ga_diag.F \
+	global/src/peigstubs.c global/src/scalapack.F \
+	global/src/sclstubs.c global/ga_vt.c global/ga_vt.h \
+	global/src/ga_vampir.c pario/dra/buffers.c pario/dra/buffers.h \
+	pario/dra/capi.c pario/dra/disk.arrays.c \
 	pario/dra/disk.param.c pario/dra/draf2c.h pario/dra/drap.h \
 	pario/dra/env.c pario/dra/fortran.c pario/dra/patch.util.c \
 	pario/eaf/eaf.c pario/eaf/eaf_f2c.c pario/eaf/eafP.h \
@@ -2539,18 +2539,19 @@ libga_la_SOURCES = compat/random.c gaf2c/gaf2c.c gaf2c/drand.c \
 	global/src/matmul.c global/src/matmul.h global/src/matrix.c \
 	global/src/nbutil.c global/src/onesided.c \
 	global/src/scalapack.fh global/src/select.c \
-	global/src/sparse.c global/src/xgemm.c global/src/wapidefs.h \
-	$(am__append_29) $(am__append_30) $(am__append_31) \
-	$(am__append_32) $(am__append_33) $(am__append_34) \
-	$(am__append_35) $(am__append_36) pario/dra/buffers.c \
-	pario/dra/buffers.h pario/dra/capi.c pario/dra/disk.arrays.c \
+	global/src/sparse.c global/src/xgemm.c $(am__append_29) \
+	$(am__append_30) $(am__append_31) $(am__append_32) \
+	$(am__append_33) $(am__append_34) $(am__append_35) \
+	$(am__append_36) pario/dra/buffers.c pario/dra/buffers.h \
+	pario/dra/capi.c pario/dra/disk.arrays.c \
 	pario/dra/disk.param.c pario/dra/draf2c.h pario/dra/drap.h \
 	pario/dra/env.c pario/dra/fortran.c pario/dra/patch.util.c \
 	pario/eaf/eaf.c pario/eaf/eaf_f2c.c pario/eaf/eafP.h \
 	pario/elio/elio.c pario/elio/eliop.h pario/elio/pablo.h \
 	pario/elio/stat.c pario/sf/sf_capi.c pario/sf/sff2c.h \
 	pario/sf/sf_fortran.c pario/sf/shared.files.c
-nodist_libga_la_SOURCES = config.fh $(am__append_28)
+nodist_libga_la_SOURCES = config.fh global/src/wapidefs.h \
+	$(am__append_28)
 
 ##############################################################################
 # tcgmsg/examples
@@ -2562,31 +2563,31 @@ nodist_libga_la_SOURCES = config.fh $(am__append_28)
 ##############################################################################
 # global/doc
 #
-EXTRA_DIST = README build-aux/inside.pl build-aux/wapigen.py \
-	LinAlg/lapack+blas/README tcgmsg/README \
-	tcgmsg/examples/blkdat120lin.f tcgmsg/examples/blkdat15.f \
-	tcgmsg/examples/blkdat240lin.f tcgmsg/examples/blkdat30.f \
-	tcgmsg/examples/blkdat60.f tcgmsg/examples/blkdat60lin.f \
-	tcgmsg/examples/cscf120lin.h tcgmsg/examples/cscf15.h \
-	tcgmsg/examples/cscf240lin.h tcgmsg/examples/cscf30.h \
-	tcgmsg/examples/cscf60.h tcgmsg/examples/cscf60lin.h \
-	tcgmsg/examples/cscf.h tcgmsg/examples/daxpy1.s \
-	tcgmsg/examples/daxpy.f tcgmsg/examples/ddot.f \
-	tcgmsg/examples/demo.proto tcgmsg/examples/diagon.f \
-	tcgmsg/examples/dscal.f tcgmsg/examples/fexit.f.proto \
-	tcgmsg/examples/getmem.c tcgmsg/examples/grid.c \
-	tcgmsg/examples/ieeetrap.c tcgmsg/examples/integ.f \
-	tcgmsg/examples/jacobi.f tcgmsg/examples/Makefile.proto \
-	tcgmsg/examples/mc.f tcgmsg/examples/mc.input \
-	tcgmsg/examples/md.f tcgmsg/examples/mxv_daxpy1.f \
-	tcgmsg/examples/mxv_dgemv.f tcgmsg/examples/mxv_fortran.f \
-	tcgmsg/examples/output.f tcgmsg/examples/prtri.f \
-	tcgmsg/examples/random.c tcgmsg/examples/README \
-	tcgmsg/examples/runit tcgmsg/examples/runit.grid \
-	tcgmsg/examples/scfblas.f tcgmsg/examples/scf.f \
-	tcgmsg/examples/timer.f tcgmsg/examples/trace.out \
-	tcgmsg/examples/xpix.shar tcgmsg/ipcv4.0/README \
-	tcgmsg/tcgmsg-mpi/README $(am__append_42) \
+EXTRA_DIST = README build-aux/inside.pl LinAlg/lapack+blas/README \
+	tcgmsg/README tcgmsg/examples/blkdat120lin.f \
+	tcgmsg/examples/blkdat15.f tcgmsg/examples/blkdat240lin.f \
+	tcgmsg/examples/blkdat30.f tcgmsg/examples/blkdat60.f \
+	tcgmsg/examples/blkdat60lin.f tcgmsg/examples/cscf120lin.h \
+	tcgmsg/examples/cscf15.h tcgmsg/examples/cscf240lin.h \
+	tcgmsg/examples/cscf30.h tcgmsg/examples/cscf60.h \
+	tcgmsg/examples/cscf60lin.h tcgmsg/examples/cscf.h \
+	tcgmsg/examples/daxpy1.s tcgmsg/examples/daxpy.f \
+	tcgmsg/examples/ddot.f tcgmsg/examples/demo.proto \
+	tcgmsg/examples/diagon.f tcgmsg/examples/dscal.f \
+	tcgmsg/examples/fexit.f.proto tcgmsg/examples/getmem.c \
+	tcgmsg/examples/grid.c tcgmsg/examples/ieeetrap.c \
+	tcgmsg/examples/integ.f tcgmsg/examples/jacobi.f \
+	tcgmsg/examples/Makefile.proto tcgmsg/examples/mc.f \
+	tcgmsg/examples/mc.input tcgmsg/examples/md.f \
+	tcgmsg/examples/mxv_daxpy1.f tcgmsg/examples/mxv_dgemv.f \
+	tcgmsg/examples/mxv_fortran.f tcgmsg/examples/output.f \
+	tcgmsg/examples/prtri.f tcgmsg/examples/random.c \
+	tcgmsg/examples/README tcgmsg/examples/runit \
+	tcgmsg/examples/runit.grid tcgmsg/examples/scfblas.f \
+	tcgmsg/examples/scf.f tcgmsg/examples/timer.f \
+	tcgmsg/examples/trace.out tcgmsg/examples/xpix.shar \
+	tcgmsg/ipcv4.0/README tcgmsg/tcgmsg-mpi/README \
+	build-aux/wapigen.py $(am__append_42) \
 	global/examples/boltzmann/README \
 	global/examples/lennard-jones/README \
 	global/examples/md_cluster/atom.inp \
@@ -2606,7 +2607,7 @@ EXTRA_DIST = README build-aux/inside.pl build-aux/wapigen.py \
 # understand.  Therefore, we create a config.fh file which is Fortran-specific
 # and works with all Fortran compilers.
 #
-BUILT_SOURCES = config.fh
+BUILT_SOURCES = config.fh global/src/wapi.h global/src/wapidefs.h
 AM_FFLAGS = $(GA_FOPT) $(FFLAG_INT)
 AM_CFLAGS = $(GA_COPT)
 AM_CXXFLAGS = $(GA_CXXOPT)
@@ -6139,6 +6140,11 @@ global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
 @HAVE_PYTHON_TRUE@	-rm -f global/src/wapi.c && \
 @HAVE_PYTHON_TRUE@	$(PYTHON) $(top_srcdir)/build-aux/wapigen.py $(top_srcdir)/global/src/papi.h > global/src/wapi.c
 
+clean-weak:
+	-rm -f global/src/wapi.c
+	-rm -f global/src/wapi.h
+	-rm -f global/src/wapidefs.h
+
 @HAVE_M4_TRUE@global/testing/nga-onesided.F: $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@global/testing/nga-patch.F:    $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@global/testing/nga-periodic.F: $(GLOBAL_TESTING_M4_DEPS)
@@ -6162,7 +6168,7 @@ armci/libarmcii.la:
 ##############################################################################
 # the end
 #
-clean-local: clean-config
+clean-local: clean-config clean-weak
 	-rm -f $(BUILT_SOURCES)
 
 .PHONY: checkprogs checkprogs-recursive checkprogs-am

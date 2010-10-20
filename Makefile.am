@@ -32,7 +32,7 @@ check_LTLIBRARIES =
 lib_LTLIBRARIES = libga.la
 libga_la_SOURCES =
 nodist_libga_la_SOURCES =
-EXTRA_DIST = README build-aux/inside.pl build-aux/wapigen.py
+EXTRA_DIST = README build-aux/inside.pl
 BUILT_SOURCES =
 AM_FFLAGS =
 AM_CFLAGS =
@@ -525,6 +525,15 @@ global/src/wapi.c: $(top_srcdir)/global/src/papi.h $(top_srcdir)/build-aux/wapig
 	$(PYTHON) $(top_srcdir)/build-aux/wapigen.py $(top_srcdir)/global/src/papi.h > global/src/wapi.c
 endif
 
+EXTRA_DIST += build-aux/wapigen.py
+BUILT_SOURCES += global/src/wapi.h
+BUILT_SOURCES += global/src/wapidefs.h
+
+clean-weak:
+	-rm -f global/src/wapi.c
+	-rm -f global/src/wapi.h
+	-rm -f global/src/wapidefs.h
+
 libga_la_SOURCES += global/src/base.c
 libga_la_SOURCES += global/src/base.h
 libga_la_SOURCES += global/src/capi.c
@@ -562,7 +571,7 @@ libga_la_SOURCES += global/src/scalapack.fh
 libga_la_SOURCES += global/src/select.c
 libga_la_SOURCES += global/src/sparse.c
 libga_la_SOURCES += global/src/xgemm.c
-libga_la_SOURCES += global/src/wapidefs.h
+nodist_libga_la_SOURCES += global/src/wapidefs.h
 if HAVE_SYS_WEAK_ALIAS_PRAGMA
 else
 nodist_libga_la_SOURCES += global/src/wapi.c
@@ -1115,7 +1124,7 @@ libga_la_LIBADD = armci/libarmcii.la
 ##############################################################################
 # the end
 #
-clean-local: clean-config
+clean-local: clean-config clean-weak
 	-rm -f $(BUILT_SOURCES)
 
 .PHONY: checkprogs checkprogs-recursive checkprogs-am
