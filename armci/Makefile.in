@@ -96,7 +96,9 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/armci_profile.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/atomics-i386.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/buffers.c \
+@ARMCI_NETWORK_PORTALS_TRUE@	src-portals/caccumulate.c \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/capi.c \
+@ARMCI_NETWORK_PORTALS_TRUE@	src-portals/ccopy.c \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/clusterinfo.c \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/copy.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/ds-shared.c \
@@ -505,7 +507,8 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.c src-portals/acc.h \
 	src-portals/armcip.h src-portals/armci_portals.c \
 	src-portals/armci_portals.h src-portals/armci_profile.h \
 	src-portals/atomics-i386.h src-portals/buffers.c \
-	src-portals/capi.c src-portals/clusterinfo.c \
+	src-portals/caccumulate.c src-portals/capi.c \
+	src-portals/ccopy.c src-portals/clusterinfo.c \
 	src-portals/copy.h src-portals/ds-shared.c src-portals/fence.c \
 	src-portals/kr_malloc.c src-portals/kr_malloc.h \
 	src-portals/locks.c src-portals/locks.h src-portals/memlock.c \
@@ -599,7 +602,9 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/armci.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/armci_portals.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/buffers.lo \
+@ARMCI_NETWORK_PORTALS_TRUE@	src-portals/caccumulate.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/capi.lo \
+@ARMCI_NETWORK_PORTALS_TRUE@	src-portals/ccopy.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/clusterinfo.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/ds-shared.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/fence.lo \
@@ -755,7 +760,8 @@ am__libarmcii_la_SOURCES_DIST = src-portals/acc.c src-portals/acc.h \
 	src-portals/armcip.h src-portals/armci_portals.c \
 	src-portals/armci_portals.h src-portals/armci_profile.h \
 	src-portals/atomics-i386.h src-portals/buffers.c \
-	src-portals/capi.c src-portals/clusterinfo.c \
+	src-portals/caccumulate.c src-portals/capi.c \
+	src-portals/ccopy.c src-portals/clusterinfo.c \
 	src-portals/copy.h src-portals/ds-shared.c src-portals/fence.c \
 	src-portals/kr_malloc.c src-portals/kr_malloc.h \
 	src-portals/locks.c src-portals/locks.h src-portals/memlock.c \
@@ -2294,7 +2300,11 @@ src-portals/armci_portals.lo: src-portals/$(am__dirstamp) \
 	src-portals/$(DEPDIR)/$(am__dirstamp)
 src-portals/buffers.lo: src-portals/$(am__dirstamp) \
 	src-portals/$(DEPDIR)/$(am__dirstamp)
+src-portals/caccumulate.lo: src-portals/$(am__dirstamp) \
+	src-portals/$(DEPDIR)/$(am__dirstamp)
 src-portals/capi.lo: src-portals/$(am__dirstamp) \
+	src-portals/$(DEPDIR)/$(am__dirstamp)
+src-portals/ccopy.lo: src-portals/$(am__dirstamp) \
 	src-portals/$(DEPDIR)/$(am__dirstamp)
 src-portals/clusterinfo.lo: src-portals/$(am__dirstamp) \
 	src-portals/$(DEPDIR)/$(am__dirstamp)
@@ -3250,8 +3260,12 @@ mostlyclean-compile:
 	-rm -f src-portals/armci_profile.lo
 	-rm -f src-portals/buffers.$(OBJEXT)
 	-rm -f src-portals/buffers.lo
+	-rm -f src-portals/caccumulate.$(OBJEXT)
+	-rm -f src-portals/caccumulate.lo
 	-rm -f src-portals/capi.$(OBJEXT)
 	-rm -f src-portals/capi.lo
+	-rm -f src-portals/ccopy.$(OBJEXT)
+	-rm -f src-portals/ccopy.lo
 	-rm -f src-portals/clusterinfo.$(OBJEXT)
 	-rm -f src-portals/clusterinfo.lo
 	-rm -f src-portals/ds-shared.$(OBJEXT)
@@ -3558,7 +3572,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src-portals/$(DEPDIR)/armci_portals.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-portals/$(DEPDIR)/armci_profile.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-portals/$(DEPDIR)/buffers.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src-portals/$(DEPDIR)/caccumulate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-portals/$(DEPDIR)/capi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src-portals/$(DEPDIR)/ccopy.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-portals/$(DEPDIR)/clusterinfo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-portals/$(DEPDIR)/ds-shared.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-portals/$(DEPDIR)/fence.Plo@am__quote@
