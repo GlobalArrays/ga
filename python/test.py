@@ -25,7 +25,8 @@ USE_SCALAPACK_DISTR = False
 np.set_printoptions(precision=6, suppress=True, edgeitems=4)
 
 def mismatch(x,y):
-    return abs(x-y)/max(1.0,abs(x)) > 1e-12
+    #return abs(x-y)/max(1.0,abs(x)) > 1e-12
+    return abs(x-y)/max(1.0,abs(x)) > 1e-4
 
 def main():
     if 0 == me:
@@ -75,16 +76,14 @@ def main():
         print ''
         print ' CHECKING SINGLE COMPLEX '
         print ''
-        print ' !!!SKIPPED'
-    #check(ga.C_SCPL, np.complex64)
+    check(ga.C_SCPL, np.complex64)
 
     # check support for double precision complex arrays
     if 0 == me:
         print ''
         print ' CHECKING DOUBLE COMPLEX '
         print ''
-        print ' !!!SKIPPED'
-    #check(ga.C_DCPL, np.complex128)
+    check(ga.C_DCPL, np.complex128)
 
     # check support for integer arrays
     if 0 == me:
@@ -124,9 +123,42 @@ def main():
     # NO NEED -- atexit registered ga.terminate()
 
     # tidy up after message-passing library
-    # NO NEED -- atexti registered MPI.Finalize()
+    # NO NEED -- atexit registered MPI.Finalize()
 
     # Note: so long as mpi4py is imported before ga, cleanup is automatic
+
+def init_first_a(gatype, nptype, n):
+    if gatype == ga.C_SCPL:
+        if MIRROR:
+            a = np.fromfunction(lambda i,j: i+inode, (n,n), dtype=np.float32)
+            b = np.fromfunction(lambda i,j: j*n,     (n,n), dtype=np.float32)
+            return np.vectorize(complex)(a,b)
+        else:
+            a = np.fromfunction(lambda i,j: i,   (n,n), dtype=np.float32)
+            b = np.fromfunction(lambda i,j: j*n, (n,n), dtype=np.float32)
+            return np.vectorize(complex)(a,b)
+    elif gatype == ga.C_DCPL:
+        if MIRROR:
+            a = np.fromfunction(lambda i,j: i+inode, (n,n), dtype=np.float64)
+            b = np.fromfunction(lambda i,j: j*n,     (n,n), dtype=np.float64)
+            return np.vectorize(complex)(a,b)
+        else:
+            a = np.fromfunction(lambda i,j: i,   (n,n), dtype=np.float64)
+            b = np.fromfunction(lambda i,j: j*n, (n,n), dtype=np.float64)
+            return np.vectorize(complex)(a,b)
+    else:
+        if MIRROR:
+            return np.fromfunction(lambda i,j: inode+i+j*n, (n,n), dtype=nptype)
+        else:
+            return np.fromfunction(lambda i,j: i+j*n,       (n,n), dtype=nptype)
+
+def init_first_b(gatype, nptype, n):
+    if gatype == ga.C_SCPL:
+        return complex(-1,1)
+    elif gatype == ga.C_DCPL:
+        return complex(-1,1)
+    else:
+        return -1
 
 def check(gatype, nptype):
     n = 256
@@ -134,7 +166,6 @@ def check(gatype, nptype):
     a = np.zeros((n,n), dtype=nptype)
     b = np.zeros((n,n), dtype=nptype)
     maxloop = 100
-    maxproc = 4096
     num_restricted = 0
     restricted_list = 0
     iproc = me % lprocs
@@ -153,11 +184,8 @@ def check(gatype, nptype):
                 ga.error('Available procs must be divisible by 2',nproc)
             proc_grid = [2,nproc/2]
     # a[] is a local copy of what the global array should start as
-    if MIRROR:
-        a[:] = np.fromfunction(lambda i,j: inode+i+j*n, (n,n), dtype=nptype)
-    else:
-        a[:] = np.fromfunction(lambda i,j: i+j*n, (n,n), dtype=nptype)
-    b[:] = -1
+    a[:] = init_first_a(gatype, nptype, n)
+    b[:] = init_first_b(gatype, nptype, n)
     # create a global array
     if NEW_API:
         g_a = ga.create_handle()
@@ -340,18 +368,28 @@ def check(gatype, nptype):
     if 0 == me:
         print '> Checking add ...'
     random.seed(12345) # everyone has same seed
-    for i in range(n):
-        for j in range(n):
-            b[i,j] = random.random()
-            a[i,j] = 0.1*a[i,j] + 0.9*b[i,j]
+    if gatype == ga.C_SCPL:
+        for i in range(n):
+            for j in range(n):
+                b[i,j] = complex(random.random(),random.random())
+                a[i,j] = complex(0.1,-.1)*a[i,j] + complex(0.9,-.9)*b[i,j]
+    else:
+        for i in range(n):
+            for j in range(n):
+                b[i,j] = random.random()
+                a[i,j] = 0.1*a[i,j] + 0.9*b[i,j]
     if MIRROR:
         if 0 == iproc:
             ga.put(g_b, b)
     else:
         if 0 == me:
             ga.put(g_b, b)
-    ga.add(g_a, g_b, g_b, 0.1, 0.9)
-    if not np.all(ga.get(g_b) == a):
+    if gatype == ga.C_SCPL:
+        ga.add(g_a, g_b, g_b, complex(0.1,-0.1), complex(0.9,-0.9))
+    else:
+        ga.add(g_a, g_b, g_b, 0.1, 0.9)
+    b = ga.get(g_b, buffer=b)
+    if np.any(np.vectorize(mismatch)(ga.get(g_b),a)):
         ga.error('add failed')
     if 0 == me:
         print ''

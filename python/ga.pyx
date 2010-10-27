@@ -1098,6 +1098,10 @@ def dot(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None,
     cdef np.ndarray[np.int64_t, ndim=1] blo_nd, bhi_nd
     cdef char ta_c, tb_c
     cdef int gtype=inquire_type(g_a)
+    cdef float complex pfcv
+    cdef double complex pdcv
+    cdef SingleComplex gfcv
+    cdef DoubleComplex gdcv
     if alo is None and ahi is None and blo is None and bhi is None:
         if gtype == C_INT:
             return GA_Idot(g_a, g_b)
@@ -1110,9 +1114,15 @@ def dot(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None,
         elif gtype == C_DBL:
             return GA_Ddot(g_a, g_b)
         elif gtype == C_SCPL:
-            return GA_Cdot(g_a, g_b)
+            gfcv = GA_Cdot(g_a, g_b)
+            pfcv.real = gfcv.real
+            pfcv.imag = gfcv.imag
+            return pfcv
         elif gtype == C_DCPL:
-            return GA_Zdot(g_a, g_b)
+            gdcv = GA_Zdot(g_a, g_b)
+            pdcv.real = gdcv.real
+            pdcv.imag = gdcv.imag
+            return pdcv
         else:
             raise TypeError
     else:
@@ -1147,13 +1157,19 @@ def dot(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None,
                     g_a, ta_c, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
                     g_b, tb_c, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data)
         elif gtype == C_SCPL:
-            return NGA_Cdot_patch64(
+            gfcv = NGA_Cdot_patch64(
                     g_a, ta_c, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
                     g_b, tb_c, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data)
+            pfcv.real = gfcv.real
+            pfcv.imag = gfcv.imag
+            return pfcv
         elif gtype == C_DCPL:
-            return NGA_Zdot_patch64(
+            gdcv = NGA_Zdot_patch64(
                     g_a, ta_c, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
                     g_b, tb_c, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data)
+            pdcv.real = gdcv.real
+            pdcv.imag = gdcv.imag
+            return pdcv
         else:
             raise TypeError
     
