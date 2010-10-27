@@ -86,6 +86,9 @@ int root=0, grp_me=-1;
      if(ihi-ilo+1 >0){
         max_row=(DoublePrecision*)malloc(sizeof(DoublePrecision)*(ihi-ilo+1));
         if (!max_row) GA_Error("malloc 3 failed",(ihi-ilo+1));
+        for (i=0; i<(ihi-ilo+1); i++) {
+            max_row[i] = 0.0;
+        }
      }
      NGA_Proc_topology(g_a, me, coord);  /* block coordinates */
      prow = coord[0];
