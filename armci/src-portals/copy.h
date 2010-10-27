@@ -226,42 +226,101 @@
 
 /********* interface to fortran 1D and 2D memory copy functions ***********/
 /* dcopy2d_u_ uses explicit unrolled loops to depth 4 */
-#if   defined(AIX) || defined(NOUNDERSCORE)
-#     define DCOPY2D	dcopy2d_u
-#     define DCOPY1D	dcopy1d_u
-#elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(DECOSF)
-#     define DCOPY2D	dcopy2d_n_
-#     define DCOPY1D	dcopy1d_n_
-#elif defined(CRAY)  || defined(WIN32) || defined(HITACHI)
-#     define DCOPY2D    DCOPY2D_N
-#     define DCOPY1D    DCOPY1D_N
-#elif defined(BGML)
-#     define DCOPY2D dcopy2d_u__
-#     define DCOPY1D dcopy1d_u__
+/* since all of this code replaces Fortran, it should never improperly alias vectors */
+#if __STDC_VERSION__ >= 199901L
+#   define MAYBE_RESTRICT restrict
 #else
-#     define DCOPY2D	dcopy2d_u_
-#     define DCOPY1D	dcopy1d_u_
+#   define MAYBE_RESTRICT
 #endif
-void FATR DCOPY2D(int*, int*, void*, int*, void*, int*); 
-void FATR DCOPY1D(void*, void*, int*); 
-
-#if   defined(AIX) || defined(NOUNDERSCORE)
-#     define DCOPY21	dcopy21
-#     define DCOPY12	dcopy12
-#     define DCOPY31	dcopy31
-#     define DCOPY13	dcopy13
-#elif (defined(CRAY) &&!defined(__crayx1)) || defined(WIN32) || defined(HITACHI)
+void c_dcopy2d_n_(const int* const rows,
+                  const int* const cols,
+                  const double* const A,
+                  const int* const ald,
+                  double* MAYBE_RESTRICT B,
+                  const int* const bld);
+void c_dcopy2d_u_(const int* const rows,
+                  const int* const cols,
+                  double* MAYBE_RESTRICT A,
+                  const int* const ald,
+                  double* MAYBE_RESTRICT B,
+                  const int* const bld);
+void c_dcopy1d_n_(double* const A,
+                  double* MAYBE_RESTRICT B,
+                  const int* const n);
+void c_dcopy1d_u_(double* const A,
+                  double* MAYBE_RESTRICT B,
+                  const int* const n);
+void c_dcopy21_(const int* const rows,
+                const int* const cols,
+                double* const A,
+                const int* const ald,
+                double* MAYBE_RESTRICT buf,
+                int* const cur); /* value changes, location does not */
+void c_dcopy12_(const int* const rows,
+                const int* const cols,
+                double* MAYBE_RESTRICT A,
+                const int* const ald,
+                double* MAYBE_RESTRICT buf,
+                int* const cur); /* value changes, location does not */
+void c_dcopy31_(const int* const rows,
+                const int* const cols,
+                const int* const plns,
+                double* MAYBE_RESTRICT A,
+                const int* const aldr,
+                const int* const aldc,
+                double* MAYBE_RESTRICT buf,
+                int* const cur); /* value changes, location does not */
+void c_dcopy13_(const int* const rows,
+                const int* const cols,
+                const int* const plns,
+                double* MAYBE_RESTRICT A,
+                const int* const aldr,
+                const int* const aldc,
+                double* MAYBE_RESTRICT buf,
+                int* const cur); /* value changes, location does not */
+#if NOFORT
+#   define ATR
+#   if defined(AIX) || defined(BGML)
+#       define DCOPY2D c_dcopy2d_u_
+#       define DCOPY1D c_dcopy1d_u_
+#   elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(DECOSF) || defined(CRAY) || defined(WIN32) || defined(HITACHI)
+#       define DCOPY2D c_dcopy2d_n_
+#       define DCOPY1D c_dcopy1d_n_
+#   else
+#       define DCOPY2D c_dcopy2d_u_
+#       define DCOPY1D c_dcopy1d_u_
+#   endif
+#   define DCOPY21 c_dcopy21_
+#   define DCOPY12 c_dcopy12_
+#   define DCOPY31 c_dcopy31_
+#   define DCOPY13 c_dcopy13_
 #else
-#     define DCOPY21	dcopy21_
-#     define DCOPY12	dcopy12_
-#     define DCOPY31	dcopy31_
-#     define DCOPY13	dcopy13_
+#   ifdef WIN32
+#       define ATR __stdcall
+#   else
+#       define ATR
+#   endif
+#   if defined(AIX) || defined(BGML)
+#       define DCOPY2D F77_FUNC_(dcopy2d_u,DCOPY2D_U)
+#       define DCOPY1D F77_FUNC_(dcopy1d_u,DCOPY1D_U)
+#   elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(DECOSF) || defined(CRAY) || defined(WIN32) || defined(HITACHI)
+#       define DCOPY2D F77_FUNC_(dcopy2d_n,DCOPY2D_N)
+#       define DCOPY1D F77_FUNC_(dcopy1d_n,DCOPY2D_N)
+#   else
+#       define DCOPY2D F77_FUNC_(dcopy2d_u,DCOPY2D_U)
+#       define DCOPY1D F77_FUNC_(dcopy1d_u,DCOPY1D_U)
+#   endif
+#   define DCOPY21	F77_FUNC(dcopy21,DCOPY21)
+#   define DCOPY12	F77_FUNC(dcopy12,DCOPY12)
+#   define DCOPY31	F77_FUNC(dcopy31,DCOPY31)
+#   define DCOPY13	F77_FUNC(dcopy13,DCOPY13)
+void ATR DCOPY2D(int*, int*, void*, int*, void*, int*); 
+void ATR DCOPY1D(void*, void*, int*); 
+void ATR DCOPY21(int*, int*, void*, int*, void*, int*); 
+void ATR DCOPY12(int*, int*, void*, int*, void*, int*); 
+void ATR DCOPY31(int*, int*, int*, void*, int*, int*, void*, int*); 
+void ATR DCOPY13(int*, int*, int*, void*, int*, int*, void*, int*); 
 #endif
-
-void FATR DCOPY21(int*, int*, void*, int*, void*, int*); 
-void FATR DCOPY12(int*, int*, void*, int*, void*, int*); 
-void FATR DCOPY31(int*, int*, int*, void*, int*, int*, void*, int*); 
-void FATR DCOPY13(int*, int*, int*, void*, int*, int*, void*, int*); 
 
 
 /***************************** 1-Dimensional copy ************************/

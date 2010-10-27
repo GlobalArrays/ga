@@ -25,6 +25,7 @@
 #  include <sched.h>
 #endif
 #endif
+#include "acc.h"
 
 #define DEBUG_ 0
 #if defined(SYSV) || defined(MMAP) ||defined (WIN32)
@@ -1080,26 +1081,6 @@ static void idoop2(int n, char *op, int *x, int* work, int* work2)
 \*/
 static void ddoop(int n, char* op, double* x, double* work)
 {
-#if (defined(CRAY) && !defined(__crayx1)) || defined(WIN32) || defined(HITACHI)
-#elif defined(AIX) || defined(NOUNDERSCORE)
-#   define FORT_DADD fort_dadd
-#   define FORT_DMULT fort_dmult
-#elif defined(BGML)
-#  define FORT_DADD fort_dadd__
-#  define FORT_DMULT fort_dmult__
-#else
-#   define FORT_DADD fort_dadd_
-#   define FORT_DMULT fort_dmult_
-#endif
-
-#if NOFORT
-extern void FORT_DADD(int *, double *, double*);
-extern void FORT_DMULT(int *, double *, double*);
-#else
-extern void FATR FORT_DADD(int *, double *, double*);
-extern void FATR FORT_DMULT(int *, double *, double*);
-#endif
-
   if (strncmp(op,"+",1) == 0){
     if(n>63) FORT_DADD(&n,x,work);
     else while(n--) *x++ += *work++;
@@ -1136,24 +1117,6 @@ extern void FATR FORT_DMULT(int *, double *, double*);
 \*/
 static void ddoop2(int n, char *op, double *x, double* work, double* work2)
 {
-#if (defined(CRAY) && !defined(__crayx1)) || defined(WIN32) || defined(HITACHI)
-#elif defined(AIX) || defined(NOUNDERSCORE)
-#   define FORT_DADD2 fort_dadd2
-#   define FORT_DMULT2 fort_dmult2
-#elif defined(BGML)
-#   define FORT_DADD2 fort_dadd2__
-#   define FORT_DMULT2 fort_dmult2__
-#else
-#   define FORT_DADD2 fort_dadd2_
-#   define FORT_DMULT2 fort_dmult2_
-#endif
-#if NOFORT
-extern void FORT_DADD2(int *, double *, double*, double *);
-extern void FORT_DMULT2(int *, double *, double*, double *);
-#else
-extern void FATR FORT_DADD2(int *, double *, double*,double*);
-extern void FATR FORT_DMULT2(int *, double *, double*,double*);
-#endif
   if (strncmp(op,"+",1) == 0){
     if(n>63) FORT_DADD2(&n,x,work,work2);
     else while(n--) *x++ = *work++ + *work2++;
