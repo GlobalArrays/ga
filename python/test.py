@@ -153,12 +153,10 @@ def check(gatype, nptype):
                 ga.error('Available procs must be divisible by 2',nproc)
             proc_grid = [2,nproc/2]
     # a[] is a local copy of what the global array should start as
-    for i in range(n):
-        for j in range(n):
-            if MIRROR:
-                a[i,j] = inode + i + j*n
-            else:
-                a[i,j] = i + j*n
+    if MIRROR:
+        a[:] = np.fromfunction(lambda i,j: inode+i+j*n, (n,n), dtype=nptype)
+    else:
+        a[:] = np.fromfunction(lambda i,j: i+j*n, (n,n), dtype=nptype)
     b[:] = -1
     # create a global array
     if NEW_API:
@@ -219,9 +217,10 @@ def check(gatype, nptype):
                 check = ij % nproc == me
             if check:
                 lo = [i,j]
-                hi = [min(i+inc,n)-1, min(j+inc,n)-1]
-                piece = a[lo[0]:(hi[0]+1), lo[1]:(hi[1]+1)]
-                ga.put(g_a, lo, hi, piece)
+                hi = [min(i+inc,n), min(j+inc,n)]
+                #piece = a[lo[0]:hi[0], lo[1]:hi[1]]
+                piece = a[ga.zip(lo,hi)]
+                ga.put(g_a, piece, lo, hi)
                 # the following check is not part of the original test.F
                 result = ga.get(g_a, lo, hi) # ndarray created inside get
                 if not np.all(result == piece):
@@ -250,9 +249,10 @@ def check(gatype, nptype):
         jlo,jhi = random.randint(0, nloop-1),random.randint(0, nloop-1)
         if jhi < jlo: jlo,jhi = jhi,jlo
         nwords += (ihi-ilo+1)*(jhi-jlo+1)
-        aihi,ajhi = ihi+1,jhi+1 # since numpy is exlusive and ga is inclusive
+        ihi += 1
+        jhi += 1
         result = ga.get(g_a, (ilo,jlo), (ihi,jhi))
-        if not np.all(result == a[ilo:aihi,jlo:ajhi]):
+        if not np.all(result == a[ilo:ihi,jlo:jhi]):
             ga.error('random get failed')
         if 0 == me and loop % max(1,nloop/20) == 0:
             print ' call %d node %d checking get((%d,%d),(%d,%d)) total %f' % (
@@ -266,17 +266,15 @@ def check(gatype, nptype):
         print '> Checking accumulate ... '
     ga.sync()
     random.seed(12345) # same seed for each process
-    for i in range(n):
-        for j in range(n):
-            b[i,j] = i+j+2
+    b[:] = np.fromfunction(lambda i,j: i+j+2, (n,n), dtype=nptype)
     inc = (n-1)/20 + 1
     ij = 0
     for i in range(0,n,inc):
         for j in range(0,n,inc):
             x = 10.0
             lo = [i,j]
-            hi = [min(i+inc,n)-1, min(j+inc,n)-1]
-            piece = b[lo[0]:(hi[0]+1), lo[1]:(hi[1]+1)]
+            hi = [min(i+inc,n), min(j+inc,n)]
+            piece = b[lo[0]:hi[0], lo[1]:hi[1]]
             check = False
             if MIRROR:
                 check = ij % lprocs == iproc
@@ -287,7 +285,7 @@ def check(gatype, nptype):
             ga.sync()
             ij += 1
             # each process applies all updates to its local copy
-            a[lo[0]:(hi[0]+1), lo[1]:(hi[1]+1)] += x * piece
+            a[lo[0]:hi[0], lo[1]:hi[1]] += x * piece
     ga.sync()
     # all nodes check all of a
     if not np.all(ga.get(g_a) == a):
@@ -319,18 +317,18 @@ def check(gatype, nptype):
         if 0 == g_b:
             ga.error('ga.create failed for second array')
     ga.zero(g_b)
-    ga.acc(g_b, (n/2,n/2), (n/2,n/2), [1], 1)
+    ga.acc(g_b, (n/2,n/2), (n/2+1,n/2+1), [1], 1)
     ga.sync()
     x = None
     if MIRROR:
         if 0 == iproc:
-            x = abs(ga.get(g_b, (n/2,n/2), (n/2,n/2))[0,0] - lprocs)
+            x = abs(ga.get(g_b, (n/2,n/2), (n/2+1,n/2+1))[0,0] - lprocs)
             if not 0 == x:
                 ga.error('overlapping accumulate failed -- expected %s got %s'%(
                         x, lprocs))
     else:
         if 0 == me:
-            x = abs(ga.get(g_b, (n/2,n/2), (n/2,n/2))[0,0] - nproc)
+            x = abs(ga.get(g_b, (n/2,n/2), (n/2+1,n/2+1))[0,0] - nproc)
             if not 0 == x:
                 ga.error('overlapping accumulate failed -- expected %s got %s'%(
                         x, nproc))
@@ -348,10 +346,10 @@ def check(gatype, nptype):
             a[i,j] = 0.1*a[i,j] + 0.9*b[i,j]
     if MIRROR:
         if 0 == iproc:
-            ga.put(g_b, None, None, b)
+            ga.put(g_b, b)
     else:
         if 0 == me:
-            ga.put(g_b, None, None, b)
+            ga.put(g_b, b)
     ga.add(g_a, g_b, g_b, 0.1, 0.9)
     if not np.all(ga.get(g_b) == a):
         ga.error('add failed')
@@ -373,8 +371,8 @@ def check(gatype, nptype):
             pass
     else:
         if 0 == me:
-            ga.put(g_b, None, None, b)
-            ga.put(g_a, None, None, a)
+            ga.put(g_b, b)
+            ga.put(g_a, a)
     ga.sync()
     sum2 = ga.dot(g_a, g_b)
     if mismatch(sum1, sum2):
@@ -400,7 +398,7 @@ def check(gatype, nptype):
         print '> Checking copy'
         print ''
     if 0 == me:
-        ga.put(g_a, None, None, a)
+        ga.put(g_a, a)
     ga.copy(g_a, g_b)
     if not np.all(a == ga.get(g_b)):
         ga.error('copy failed')
@@ -427,7 +425,7 @@ def check(gatype, nptype):
                 #    ijv[loop,:] = ijv[loop,::-1] # reverse
             result = ga.gather(g_a, ijv)
             for loop in range(m):
-                value = ga.get(g_a, ijv[loop], ijv[loop]).flatten()
+                value = ga.get(g_a, ijv[loop], ijv[loop]+1).flatten()
                 if not result[loop] == value:
                     ga.error('gather failed')
     if 0 == me:

@@ -2,8 +2,8 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
 
-ga_install = "/home/d3n000/ga/ga-dev/bld_openmpi_shared"
-#ga_install = "/Users/d3n000/ga/ga-dev/bld_openmpi_shared"
+#ga_install = "/home/d3n000/ga/ga-dev/bld_openmpi_shared"
+ga_install = "/Users/d3n000/ga/ga-dev/bld_openmpi_shared"
 
 try:
     import numpy
@@ -18,8 +18,8 @@ ext_modules = [
         name="ga",
         sources=["ga.pyx"],
         include_dirs=[ga_install+"/include",numpy_include],
-        library_dirs=[ga_install+"/lib"],
-        libraries=["ga"],
+        library_dirs=[ga_install+"/lib","/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A"],
+        libraries=["ga","LAPACK","BLAS"]
     )
 ]
 

@@ -1,8 +1,12 @@
 """
 The Global Arrays (GA) Python interface.
 
-This module exports the GA C API, with a few enhancements.  This module also
-provides the GlobalArray object-oriented class.
+This module exports the GA C API, with a few enhancements.  The notable
+exceptions include supporting Pythonic ranges -- zero-based with the start
+inclusive and the stop exclusive (whereas the C API was zero-based with the
+start and stop inclusive.)
+
+This module also provides the GlobalArray object-oriented class.
 
 """
 # keep the ga functions alphabetical since this is going to be a huge file!
@@ -11,6 +15,9 @@ from libc.stdlib cimport malloc,free
 from gah cimport *
 import numpy as np
 cimport numpy as np
+import __builtin__
+
+DEF EXCLUSIVE = 0
 
 np.import_array()
 initialize()
@@ -103,7 +110,7 @@ def _lohi(int g_a, lo, hi):
     if len(lo_nd) != ndim:
         raise ValueError, 'len(lo_nd) != ndim; len(%s) != %s' % (lo_nd,ndim)
     if hi is None:
-        hi_nd = inquire_dims(g_a)-1
+        hi_nd = inquire_dims(g_a)
     else:
         try:
             hi_nd = np.asarray(hi, dtype=np.int64)
@@ -111,6 +118,7 @@ def _lohi(int g_a, lo, hi):
             hi_nd = np.asarray([hi], dtype=np.int64)
     if len(hi_nd) != ndim:
         raise ValueError, 'len(hi_nd) != ndim; len(%s) != %s' % (hi_nd,ndim)
+    hi_nd -= 1 # prep hi for GA's inclusive indexing
     return lo_nd,hi_nd
 
 cdef void* _convert_multiplier(int gtype, value,
@@ -159,6 +167,10 @@ cdef void* _convert_multiplier(int gtype, value,
         return dcv
     else:
         raise TypeError, "type of g_a not recognized"
+
+def zip(lo, hi):
+    """Transforms a GA lo,hi combination into a slice list."""
+    return [slice(l,h) for l,h in __builtin__.zip(lo,hi)]
 
 #############################################################################
 # GA API
@@ -250,8 +262,7 @@ def _acc_common(int g_a, lo, hi, buffer, alpha=None, nb=False, periodic=False,
     cdef ga_nbhdl_t     nbhandle
     dtype = _to_dtype[gtype]
     buffer_nd = np.asarray(buffer, dtype=dtype)
-    lo_nd = np.asarray(lo, dtype=np.int64)
-    hi_nd = np.asarray(hi, dtype=np.int64)
+    lo_nd,hi_nd = _lohi(g_a,lo,hi)
     shape = hi_nd-lo_nd+1
     ld_nd = shape[1:]
     if buffer_nd.dtype != dtype or not buffer_nd.flags['C_CONTIGUOUS']:
@@ -2230,7 +2241,7 @@ def nblock(int g_a):
     GA_Nblock(g_a, <int*>nblock_nd.data)
     return nblock_nd
 
-def nbput(int g_a, lo, hi, buffer):
+def nbput(int g_a, buffer, lo=None, hi=None):
     """Non-blocking version of the blocking put operation.
     
     The put operation can be completed locally by making a call to the
@@ -2246,12 +2257,14 @@ def nbput(int g_a, lo, hi, buffer):
 
     Positional arguments:
     g_a    -- the array handle
-    lo     -- a 1D array-like object, or None
-    hi     -- a 1D array-like object, or None
     buffer -- array-like, the data to put
 
+    Keyword arguments:
+    lo -- a 1D array-like object, or None
+    hi -- a 1D array-like object, or None
+
     """
-    _put_common(g_a, lo, hi, buffer, True, False)
+    return _put_common(g_a, buffer, lo, hi, True, False)
  
 def nbwait(ga_nbhdl_t nbhandle):
     """This function completes a non-blocking one-sided operation locally.
@@ -2467,7 +2480,7 @@ def periodic_get(int g_a, lo, hi, buffer, alpha=None):
     """
     _get_common(g_a, lo, hi, buffer, alpha, False, True)
 
-def periodic_put(int g_a, lo, hi, buffer):
+def periodic_put(int g_a, buffer, lo=None, hi=None):
     """Periodic version of ga.put.
 
     The indices can extend beyond the array boundary/dimensions in which case
@@ -2483,12 +2496,14 @@ def periodic_put(int g_a, lo, hi, buffer):
 
     Positional arguments:
     g_a    -- the array handle
-    lo     -- a 1D array-like object, or None
-    hi     -- a 1D array-like object, or None
     buffer -- array-like, the data to put
 
+    Keyword arguments:
+    lo -- a 1D array-like object, or None
+    hi -- a 1D array-like object, or None
+
     """
-    _put_common(g_a, lo, hi, buffer, False, True)
+    _put_common(g_a, buffer, lo, hi, False, True)
 
 def pgroup_brdcst(int pgroup, np.ndarray buffer, int root):
     """Broadcast from process root to all other processes in the same group.
@@ -2724,7 +2739,7 @@ def proc_topology(int g_a, int proc):
     NGA_Proc_topology(g_a, proc, <int*>coord.data)
     return coord
 
-def put(int g_a, lo, hi, buffer):
+def put(int g_a, buffer, lo=None, hi=None):
     """Copies data from local array buffer to the global array section.
     
     The local array is assumed to be have the same number of dimensions as the
@@ -2735,29 +2750,32 @@ def put(int g_a, lo, hi, buffer):
 
     Positional arguments:
     g_a    -- the array handle
-    lo     -- a 1D array-like object, or None
-    hi     -- a 1D array-like object, or None
-    buffer -- array-like, the data to put
-
-    """
-    _put_common(g_a, lo, hi, buffer)
-
-def _put_common(int g_a, lo, hi, buffer, nb=False, periodic=False, skip=None):
-    """Copies data from local array buffer to the global array section.
-    
-    The local array is assumed to be have the same number of dimensions as the
-    global array.  Any detected inconsitencies/errors in input arguments are
-    fatal.
-
-    This is a one-sided operation. 
-
-    Positional arguments:
-    g_a    -- the array handle
-    lo     -- a 1D array-like object, or None
-    hi     -- a 1D array-like object, or None
     buffer -- array-like, the data to put
 
     Keyword arguments:
+    lo -- a 1D array-like object, or None
+    hi -- a 1D array-like object, or None
+
+    """
+    _put_common(g_a, buffer, lo, hi)
+
+def _put_common(int g_a, buffer, lo=None, hi=None,
+        nb=False, periodic=False, skip=None):
+    """Copies data from local array buffer to the global array section.
+    
+    The local array is assumed to be have the same number of dimensions as the
+    global array.  Any detected inconsitencies/errors in input arguments are
+    fatal.
+
+    This is a one-sided operation. 
+
+    Positional arguments:
+    g_a    -- the array handle
+    buffer -- array-like, the data to put
+
+    Keyword arguments:
+    lo       -- a 1D array-like object, or None
+    hi       -- a 1D array-like object, or None
     nb       -- whether this call is non-blocking (see ga.nbget)
     periodic -- whether this call is periodic (see ga.periodic_get)
 
@@ -3629,7 +3647,7 @@ def strided_get(int g_a, lo=None, hi=None, skip=None, np.ndarray buffer=None):
     """
     _get_common(g_a, lo, hi, buffer, False, False, skip)
 
-def strided_put(int g_a, lo, hi, skip, buffer):
+def strided_put(int g_a, buffer, lo=None, hi=None, skip=None):
     """Strided version of ga.put.
     
     Copies data from local array buffer to the global array section.
@@ -3642,13 +3660,15 @@ def strided_put(int g_a, lo, hi, skip, buffer):
 
     Positional arguments:
     g_a    -- the array handle
-    lo     -- a 1D array-like object, or None
-    hi     -- a 1D array-like object, or None
-    skip   -- array-like of strides for each dimension
     buffer -- array-like, the data to put
 
+    Keyword arguments:
+    lo   -- a 1D array-like object, or None
+    hi   -- a 1D array-like object, or None
+    skip -- array-like of strides for each dimension
+
     """
-    _put_common(g_a, lo, hi, buffer, False, False, skip)
+    _put_common(g_a, buffer, lo, hi, False, False, skip)
 
 def summarize(bint verbose):
     """Prints info about allocated arrays."""
