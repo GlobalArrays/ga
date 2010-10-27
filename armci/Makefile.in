@@ -86,8 +86,7 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 ##############################################################################
 # src-portals
 #
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_5 = src-portals/acc.c \
-@ARMCI_NETWORK_PORTALS_TRUE@	src-portals/acc.h \
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_5 = src-portals/acc.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/aggregate.c \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/armci.c \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/armcip.h \
@@ -502,7 +501,7 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
 libarmci_la_LIBADD =
-am__libarmci_la_SOURCES_DIST = src-portals/acc.c src-portals/acc.h \
+am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src-portals/aggregate.c src-portals/armci.c \
 	src-portals/armcip.h src-portals/armci_portals.c \
 	src-portals/armci_portals.h src-portals/armci_profile.h \
@@ -597,8 +596,7 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.c src-portals/acc.h \
 	src/common/utils.c src/util/threads.c src/locks/tas.c \
 	src/common/x86copy.c
 am__dirstamp = $(am__leading_dot)dirstamp
-@ARMCI_NETWORK_PORTALS_TRUE@am__objects_1 = src-portals/acc.lo \
-@ARMCI_NETWORK_PORTALS_TRUE@	src-portals/aggregate.lo \
+@ARMCI_NETWORK_PORTALS_TRUE@am__objects_1 = src-portals/aggregate.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/armci.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/armci_portals.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/buffers.lo \
@@ -755,7 +753,7 @@ AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
 libarmcii_la_LIBADD =
-am__libarmcii_la_SOURCES_DIST = src-portals/acc.c src-portals/acc.h \
+am__libarmcii_la_SOURCES_DIST = src-portals/acc.h \
 	src-portals/aggregate.c src-portals/armci.c \
 	src-portals/armcip.h src-portals/armci_portals.c \
 	src-portals/armci_portals.h src-portals/armci_profile.h \
@@ -2290,8 +2288,6 @@ src-portals/$(am__dirstamp):
 src-portals/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src-portals/$(DEPDIR)
 	@: > src-portals/$(DEPDIR)/$(am__dirstamp)
-src-portals/acc.lo: src-portals/$(am__dirstamp) \
-	src-portals/$(DEPDIR)/$(am__dirstamp)
 src-portals/aggregate.lo: src-portals/$(am__dirstamp) \
 	src-portals/$(DEPDIR)/$(am__dirstamp)
 src-portals/armci.lo: src-portals/$(am__dirstamp) \
@@ -3248,8 +3244,6 @@ mostlyclean-compile:
 	-rm -f examples/features/proc_affinity/simple/simple.$(OBJEXT)
 	-rm -f examples/features/symmetric_memory/simple/simple.$(OBJEXT)
 	-rm -f examples/simpleApps/transp1D-c.$(OBJEXT)
-	-rm -f src-portals/acc.$(OBJEXT)
-	-rm -f src-portals/acc.lo
 	-rm -f src-portals/aggregate.$(OBJEXT)
 	-rm -f src-portals/aggregate.lo
 	-rm -f src-portals/armci.$(OBJEXT)
@@ -3566,7 +3560,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/proc_affinity/simple/$(DEPDIR)/simple.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/symmetric_memory/simple/$(DEPDIR)/simple.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/simpleApps/$(DEPDIR)/transp1D-c.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src-portals/$(DEPDIR)/acc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-portals/$(DEPDIR)/aggregate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-portals/$(DEPDIR)/armci.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-portals/$(DEPDIR)/armci_portals.Plo@am__quote@

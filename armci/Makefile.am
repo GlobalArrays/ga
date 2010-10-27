@@ -98,7 +98,6 @@ clean-config:
 # src-portals
 #
 if ARMCI_NETWORK_PORTALS
-libarmci_la_SOURCES += src-portals/acc.c
 libarmci_la_SOURCES += src-portals/acc.h
 libarmci_la_SOURCES += src-portals/aggregate.c
 libarmci_la_SOURCES += src-portals/armci.c
