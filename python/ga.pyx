@@ -73,6 +73,17 @@ _to_dtype = {
 # utility functions
 #############################################################################
 
+def dtype(int gatype):
+    """Converts the given GA type to a numpy dtype."""
+    if gatype in _to_dtype:
+        return _to_dtype[gatype]
+    raise ValueError, "%d was not a recognized GA type" % gatype
+
+def inquire_dtype(int g_a):
+    """Returns the numpy dtype of the given GA."""
+    gatype = inquire_type(g_a)
+    return dtype(gatype)
+
 cdef void* _gapy_malloc(size_t bytes, int align, char *name):
     """Wrapper around C stdlib malloc()."""
     return malloc(bytes)
