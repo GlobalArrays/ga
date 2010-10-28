@@ -53,7 +53,6 @@ def main():
                 nproc, ga.cluster_nnodes())
         print 'process %d is on node %d with %d processes' % (
                 me, ga.cluster_nodeid(), ga.cluster_nprocs(-1))
-    ga.sync()
 
     # create array to force staggering of memory and uneven distribution
     # of pointers
@@ -69,57 +68,40 @@ def main():
 
     if MIRROR:
         if 0 == me:
-            print ''
-            print '  TESTING MIRRORED ARRAYS  '
-            print ''
-    ga.sync()
+            print '\nTESTING MIRRORED ARRAYS\n'
 
     # check support for single precision arrays
     if 0 == me:
-        print ''
-        print ' CHECKING SINGLE PRECISION '
-        print ''
-    check(ga.C_FLT)
+        print '\nCHECKING SINGLE PRECISION\n'
+    check_float()
 
     # check support for double precision arrays
     if 0 == me:
-        print ''
-        print ' CHECKING DOUBLE PRECISION '
-        print ''
-    check(ga.C_DBL)
+        print '\nCHECKING DOUBLE PRECISION\n'
+    check_double()
 
     # check support for single precision complex arrays
     if 0 == me:
-        print ''
-        print ' CHECKING SINGLE COMPLEX '
-        print ''
-    check(ga.C_SCPL)
+        print '\nCHECKING SINGLE COMPLEX\n'
+    check_complex_float()
 
     # check support for double precision complex arrays
     if 0 == me:
-        print ''
-        print ' CHECKING DOUBLE COMPLEX '
-        print ''
-    check(ga.C_DCPL)
+        print '\nCHECKING DOUBLE COMPLEX\n'
+    check_complex_double()
 
     # check support for integer arrays
     if 0 == me:
-        print ''
-        print ' CHECKING INT'
-        print ''
-    check(ga.C_INT, np.int32)
+        print '\nCHECKING INT\n'
+    check_int()
 
     # check support for long integer arrays
     if 0 == me:
-        print ''
-        print ' CHECKING LONG INT'
-        print ''
-    check(ga.C_LONG, np.int64)
+        print '\nCHECKING LONG INT\n'
+    check_long()
 
     if 0 == me:
-        print ''
-        print ' CHECKING Wrappers to Message Passing Collective ops '
-        print ''
+        print '\nCHECKING Wrappers to Message Passing Collective ops\n'
     check_wrappers()
 
     # check if memory limits are enforced
@@ -432,11 +414,9 @@ def check_scale(gatype):
         ga.put(g_a, a)
     ga.sync()
     ga.scale(g_a, 0.123)
-    if not np.all(a*0.123 == ga.get(g_a)):
-        print a*0.123
-        print ga.get(g_a)
-        print a*0.123 == ga.get(g_a)
-        ga.error('scale failed')
+    a *= 0.123
+    if np.any(np.vectorize(mismatch)(a,ga.get(g_a))):
+        ga.error('add failed')
     if 0 == me:
         print 'OK'
     ga.destroy(g_a)
@@ -499,13 +479,31 @@ def check(gatype):
     check_copy(gatype)
     check_scatter_gather(gatype)
 
-def check_complex_float():
-    pass
+def check_float():
+    check(ga.C_FLT)
 
-def check_complex():
-    pass
+def check_double():
+    check(ga.C_DBL)
+
+def check_complex_float():
+    check(ga.C_SCPL)
+
+def check_complex_double():
+    check(ga.C_DCPL)
 
 def check_int():
+    gatype = ga.C_INT
+    check_zero(gatype)
+    check_put_disjoint(gatype)
+    check_get(gatype)
+    check_accumulate_disjoint(gatype)
+    check_accumulate_overlap(gatype)
+    #check_add(gatype)
+    check_dot(gatype)
+    check_scale(gatype)
+    check_copy(gatype)
+    check_scatter_gather(gatype)
+    """
     ga.sync()
     if 0 == me and n > 7:
         print ''
@@ -516,9 +514,9 @@ def check_int():
         print ''
     if n > 7:
         ga.print_patch(g_a, (3,3), (5,7))
-    pass
+    """
 
-def check_flt():
+def check_long():
     pass
 
 def check_wrappers():
