@@ -26,7 +26,7 @@ np.set_printoptions(precision=6, suppress=True, edgeitems=4)
 
 def mismatch(x,y):
     #return abs(x-y)/max(1.0,abs(x)) > 1e-12
-    return abs(x-y)/max(1.0,abs(x)) > 1e-4
+    return abs(x-y)/max(1.0,abs(x)) > 1e-5
 
 def main():
     if 0 == me:
@@ -64,6 +64,13 @@ def main():
             print ''
     ga.sync()
 
+    # check support for single precision arrays
+    if 0 == me:
+        print ''
+        print ' CHECKING SINGLE PRECISION '
+        print ''
+    check(ga.C_FLT, np.float32)
+
     # check support for double precision arrays
     if 0 == me:
         print ''
@@ -98,13 +105,6 @@ def main():
         print ' CHECKING LONG INT'
         print ''
     check(ga.C_LONG, np.int64)
-
-    # check support for single precision arrays
-    if 0 == me:
-        print ''
-        print ' CHECKING SINGLE PRECISION '
-        print ''
-    check(ga.C_FLOAT, np.float32)
 
     if 0 == me:
         print ''
@@ -146,11 +146,16 @@ def init_first_a(gatype, nptype, n):
             a = np.fromfunction(lambda i,j: i,   (n,n), dtype=np.float64)
             b = np.fromfunction(lambda i,j: j*n, (n,n), dtype=np.float64)
             return np.vectorize(complex)(a,b)
-    else:
+    elif gatype in [ga.C_DBL,ga.C_FLT]:
         if MIRROR:
             return np.fromfunction(lambda i,j: inode+i+j*n, (n,n), dtype=nptype)
         else:
             return np.fromfunction(lambda i,j: i+j*n,       (n,n), dtype=nptype)
+    elif gatype == ga.C_INT:
+        if MIRROR:
+            return np.fromfunction(lambda i,j: inode+i+j*1000, (n,n), dtype=nptype)
+        else:
+            return np.fromfunction(lambda i,j: i+j*1000, (n,n), dtype=nptype)
 
 def init_first_b(gatype, nptype, n):
     if gatype == ga.C_SCPL:
@@ -478,6 +483,16 @@ def check_complex():
     pass
 
 def check_int():
+    ga.sync()
+    if 0 == me and n > 7:
+        print ''
+        print '> Checking ga.print_patch --- should see '
+        #print ' [2002 3002 4002 5002 6002]'
+        #print ' [2003 3003 4003 5003 6003]'
+        #print ' [2004 3004 4004 5004 6004]'
+        print ''
+    if n > 7:
+        ga.print_patch(g_a, (3,3), (5,7))
     pass
 
 def check_flt():
