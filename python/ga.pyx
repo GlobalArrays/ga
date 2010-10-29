@@ -960,7 +960,7 @@ def create_mutexes(int number):
     True on success, False on failure
 
     """
-    if GA_Create_mutexes(number) == 0:
+    if GA_Create_mutexes(number) == 1:
         return True
     return False
 
@@ -981,7 +981,7 @@ def destroy_mutexes():
     This is a collective operation. 
 
     """
-    if GA_Destroy_mutexes() == 0:
+    if GA_Destroy_mutexes() == 1:
         return True
     return False
 

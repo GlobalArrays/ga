@@ -145,7 +145,7 @@ def create_local_a(gatype):
             return np.fromfunction(lambda i,j: inode+i+j*n, (n,n), dtype=nptype)
         else:
             return np.fromfunction(lambda i,j: i+j*n,       (n,n), dtype=nptype)
-    elif gatype == ga.C_INT:
+    elif gatype in [ga.C_INT,ga.C_LONG]:
         if MIRROR:
             return np.fromfunction(lambda i,j: inode+i+j*1000, (n,n), dtype=nptype)
         else:
@@ -467,6 +467,53 @@ def check_scatter_gather(gatype):
         print 'OK'
     ga.destroy(g_a)
 
+def check_print_patch(gatype):
+    """TODO"""
+    g_a = create_global_array(gatype)
+    a = create_local_a(gatype)
+    if n > 7:
+        if 0 == me:
+            print '> Checking ga.print_patch --- should match'
+            print a[2:5,2:7]
+        ga.print_patch(g_a, (2,2), (5,7))
+    ga.destroy(g_a)
+
+def check_read_inc(gatype):
+    """TODO"""
+    if 0 == me:
+        print '> Checking ga.read_inc ...',
+        print "CHECK NOT IMPLEMENTED" 
+    #print 'OK'
+
+def check_fence_and_lock(gatype):
+    """TODO"""
+    if 0 == me:
+        print '> Checking ga.fence and ga.lock',
+    g_a = create_global_array(gatype)
+    ga.zero(g_a)
+    if not ga.create_mutexes(1):
+        ga.error('ga.create_mutexes failed')
+    if n < 2:
+        ga.error('insufficient n to test ga.fence', n)
+    ga.lock(0)
+    a = ga.get(g_a) # get original values
+    a[:,0] += 1 # add my contribution
+    # need to use fence to assure that coms complete before leaving
+    # critical section
+    ga.init_fence()
+    ga.put(g_a, a)
+    ga.fence()
+    ga.unlock(0)
+    if not ga.destroy_mutexes():
+        ga.error('mutex not destroyed')
+    ga.sync()
+    if 0 == me:
+        a = ga.get(g_a)
+        if not np.all(a[:,0] == nproc):
+            ga.error('fence failed')
+    if 0 == me:
+        print 'OK'
+
 def check(gatype):
     check_zero(gatype)
     check_put_disjoint(gatype)
@@ -499,25 +546,27 @@ def check_int():
     check_accumulate_disjoint(gatype)
     check_accumulate_overlap(gatype)
     #check_add(gatype)
-    check_dot(gatype)
-    check_scale(gatype)
+    #check_dot(gatype)
+    #check_scale(gatype)
     check_copy(gatype)
     check_scatter_gather(gatype)
-    """
-    ga.sync()
-    if 0 == me and n > 7:
-        print ''
-        print '> Checking ga.print_patch --- should see '
-        #print ' [2002 3002 4002 5002 6002]'
-        #print ' [2003 3003 4003 5003 6003]'
-        #print ' [2004 3004 4004 5004 6004]'
-        print ''
-    if n > 7:
-        ga.print_patch(g_a, (3,3), (5,7))
-    """
+    check_print_patch(gatype)
+    check_fence_and_lock(gatype)
 
 def check_long():
-    pass
+    gatype = ga.C_LONG
+    check_zero(gatype)
+    check_put_disjoint(gatype)
+    check_get(gatype)
+    check_accumulate_disjoint(gatype)
+    check_accumulate_overlap(gatype)
+    #check_add(gatype)
+    #check_dot(gatype)
+    #check_scale(gatype)
+    check_copy(gatype)
+    check_scatter_gather(gatype)
+    check_print_patch(gatype)
+    check_fence_and_lock(gatype)
 
 def check_wrappers():
     pass
