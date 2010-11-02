@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+"""At first it was a duplicate of GA's test.x, but was made more modular since
+so much could be reused.  It is more like unit tests since each piece has
+build up and tear down."""
 
 import random
 import sys
@@ -7,12 +10,19 @@ from mpi4py import MPI
 import ga
 import numpy as np
 
-nproc = ga.nnodes()
 me = ga.nodeid()
+nproc = ga.nnodes()
+nnodes = ga.cluster_nnodes()
 inode = ga.cluster_nodeid()
 lprocs = ga.cluster_nprocs(inode)
-nnodes = ga.cluster_nnodes()
+iproc = me % lprocs
 
+n = 256
+m = 2*n
+maxloop = 100
+nloop = min(maxloop,n)
+block_size = [32,32]
+proc_grid = [2,nproc/2]
 MEM_INC = 1000
 MIRROR = False
 USE_RESTRICTED = False
@@ -43,7 +53,6 @@ def main():
                 nproc, ga.cluster_nnodes())
         print 'process %d is on node %d with %d processes' % (
                 me, ga.cluster_nodeid(), ga.cluster_nprocs(-1))
-    ga.sync()
 
     # create array to force staggering of memory and uneven distribution
     # of pointers
@@ -59,57 +68,40 @@ def main():
 
     if MIRROR:
         if 0 == me:
-            print ''
-            print '  TESTING MIRRORED ARRAYS  '
-            print ''
-    ga.sync()
+            print '\nTESTING MIRRORED ARRAYS\n'
 
     # check support for single precision arrays
     if 0 == me:
-        print ''
-        print ' CHECKING SINGLE PRECISION '
-        print ''
-    check(ga.C_FLT, np.float32)
+        print '\nCHECKING SINGLE PRECISION\n'
+    check_float()
 
     # check support for double precision arrays
     if 0 == me:
-        print ''
-        print ' CHECKING DOUBLE PRECISION '
-        print ''
-    check(ga.C_DBL, np.float64)
+        print '\nCHECKING DOUBLE PRECISION\n'
+    check_double()
 
     # check support for single precision complex arrays
     if 0 == me:
-        print ''
-        print ' CHECKING SINGLE COMPLEX '
-        print ''
-    check(ga.C_SCPL, np.complex64)
+        print '\nCHECKING SINGLE COMPLEX\n'
+    check_complex_float()
 
     # check support for double precision complex arrays
     if 0 == me:
-        print ''
-        print ' CHECKING DOUBLE COMPLEX '
-        print ''
-    check(ga.C_DCPL, np.complex128)
+        print '\nCHECKING DOUBLE COMPLEX\n'
+    check_complex_double()
 
     # check support for integer arrays
     if 0 == me:
-        print ''
-        print ' CHECKING INT'
-        print ''
-    check(ga.C_INT, np.int32)
+        print '\nCHECKING INT\n'
+    check_int()
 
     # check support for long integer arrays
     if 0 == me:
-        print ''
-        print ' CHECKING LONG INT'
-        print ''
-    check(ga.C_LONG, np.int64)
+        print '\nCHECKING LONG INT\n'
+    check_long()
 
     if 0 == me:
-        print ''
-        print ' CHECKING Wrappers to Message Passing Collective ops '
-        print ''
+        print '\nCHECKING Wrappers to Message Passing Collective ops\n'
     check_wrappers()
 
     # check if memory limits are enforced
@@ -127,7 +119,8 @@ def main():
 
     # Note: so long as mpi4py is imported before ga, cleanup is automatic
 
-def init_first_a(gatype, nptype, n):
+def create_local_a(gatype):
+    nptype = ga.dtype(gatype)
     if gatype == ga.C_SCPL:
         if MIRROR:
             a = np.fromfunction(lambda i,j: i+inode, (n,n), dtype=np.float32)
@@ -151,55 +144,34 @@ def init_first_a(gatype, nptype, n):
             return np.fromfunction(lambda i,j: inode+i+j*n, (n,n), dtype=nptype)
         else:
             return np.fromfunction(lambda i,j: i+j*n,       (n,n), dtype=nptype)
-    elif gatype == ga.C_INT:
+    elif gatype in [ga.C_INT,ga.C_LONG]:
         if MIRROR:
             return np.fromfunction(lambda i,j: inode+i+j*1000, (n,n), dtype=nptype)
         else:
             return np.fromfunction(lambda i,j: i+j*1000, (n,n), dtype=nptype)
 
-def init_first_b(gatype, nptype, n):
-    if gatype == ga.C_SCPL:
-        return complex(-1,1)
-    elif gatype == ga.C_DCPL:
-        return complex(-1,1)
-    else:
-        return -1
-
-def check(gatype, nptype):
-    n = 256
-    m = 2*n
-    a = np.zeros((n,n), dtype=nptype)
+def create_local_b(gatype):
+    nptype = ga.dtype(gatype)
     b = np.zeros((n,n), dtype=nptype)
-    maxloop = 100
-    num_restricted = 0
-    restricted_list = 0
-    iproc = me % lprocs
-    nloop = min(maxloop,n)
-    if USE_RESTRICTED:
-        num_restricted = nproc/2
-        restricted_list = [0]*num_restricted
-        if (num_restricted == 0):
-            num_restricted = 1
-        for i in range(num_restricted):
-            restricted_list[i] = (num_restricted/2) + i
-    if BLOCK_CYCLIC:
-        block_size = [32,32]
-        if USE_SCALAPACK_DISTR:
-            if nproc % 2 == 0:
-                ga.error('Available procs must be divisible by 2',nproc)
-            proc_grid = [2,nproc/2]
-    # a[] is a local copy of what the global array should start as
-    a[:] = init_first_a(gatype, nptype, n)
-    b[:] = init_first_b(gatype, nptype, n)
-    # create a global array
+    if gatype in [ga.C_SCPL, ga.C_DCPL]:
+        b[:] = complex(-1,1)
+    else:
+        b[:] = -1
+    return b
+
+def create_global_array(gatype):
     if NEW_API:
         g_a = ga.create_handle()
         ga.set_data(g_a, [n,n], gatype)
         ga.set_array_name(g_a, 'a')
         if USE_RESTRICTED:
+            num_restricted = nproc/2 or 1
+            restricted_list = np.arange(num_restricted) + num_restricted/2
             ga.set_restricted(g_a, restricted_list)
         if BLOCK_CYCLIC:
             if USE_SCALAPACK_DISTR:
+                if nproc % 2 == 0:
+                    ga.error('Available procs must be divisible by 2',nproc)
                 ga.set_block_cyclic_proc_grid(g_a, block_size, proc_grid)
             else:
                 ga.set_block_cyclic(g_a, block_size)
@@ -221,24 +193,26 @@ def check(gatype, nptype):
     else:
         lo,hi = ga.distribution(g_a, me)
     ga.sync()
-    # zero the array
+    return g_a
+
+def check_zero(gatype):
     if 0 == me:
-        print '> Checking zero ...'
+        print '> Checking zero ...',
+    g_a = create_global_array(gatype)
     ga.zero(g_a)
-    # check that it is indeed zero
-    b = ga.get(g_a, buffer=b) # gets the result into supplied buffer b
-    ga.sync()
-    if not np.all(b == 0):
+    a = ga.get(g_a)
+    if not np.all(a == 0):
         ga.error('ga.zero failed')
     if 0 == me:
-        print ''
-        print ' ga.zero is OK'
-        print ''
-    ga.sync()
-    # each node fills in disjoint sections of the array
+        print 'OK'
+    ga.destroy(g_a)
+
+def check_put_disjoint(gatype):
+    """each node fills in disjoint sections of the array"""
     if 0 == me:
-        print '> Checking disjoint put ... '
-    ga.sync()
+        print '> Checking disjoint put ...',
+    g_a = create_global_array(gatype)
+    a = create_local_a(gatype)
     inc = (n-1)/20 + 1
     ij = 0
     for i in range(0,n,inc):
@@ -251,28 +225,31 @@ def check(gatype, nptype):
             if check:
                 lo = [i,j]
                 hi = [min(i+inc,n), min(j+inc,n)]
-                #piece = a[lo[0]:hi[0], lo[1]:hi[1]]
                 piece = a[ga.zip(lo,hi)]
                 ga.put(g_a, piece, lo, hi)
                 # the following check is not part of the original test.F
-                result = ga.get(g_a, lo, hi) # ndarray created inside get
+                result = ga.get(g_a, lo, hi)
                 if not np.all(result == piece):
                     ga.error("put followed by get failed", 1)
             ga.sync()
             ij += 1
     ga.sync()
     # all nodes check all of a
-    b[:] = 0
-    b = ga.get(g_a, buffer=b)
+    b = ga.get(g_a)
     if not np.all(a == b):
         ga.error('put failed, exiting')
     if 0 == me:
-        print ''
-        print ' ga.put is OK'
-        print ''
-    # now check nloop random gets from each node
+        print 'OK'
+    ga.destroy(g_a)
+
+def check_get(gatype):
+    """check nloop random gets from each node"""
     if 0 == me:
         print '> Checking random get (%d calls)...' % nloop
+    g_a = create_global_array(gatype)
+    a = create_local_a(gatype)
+    if 0 == me:
+        ga.put(g_a, a)
     ga.sync()
     nwords = 0
     random.seed(ga.nodeid()*51+1) # different seed for each proc
@@ -291,15 +268,19 @@ def check(gatype, nptype):
             print ' call %d node %d checking get((%d,%d),(%d,%d)) total %f' % (
                     loop, me, ilo, ihi, jlo, jhi, nwords)
     if 0 == me:
-        print ''
-        print ' ga_get is OK'
-        print ''
-    # each node accumulates into disjoint sections of the array
+        print 'OK'
+    ga.destroy(g_a)
+
+def check_accumulate_disjoint(gatype):
+    """Each node accumulates into disjoint sections of the array."""
     if 0 == me:
-        print '> Checking accumulate ... '
+        print '> Checking disjoint accumulate ...',
+    g_a = create_global_array(gatype)
+    a = create_local_a(gatype)
+    b = np.fromfunction(lambda i,j: i+j+2, (n,n), dtype=ga.dtype(gatype))
+    if 0 == me:
+        ga.put(g_a, a)
     ga.sync()
-    random.seed(12345) # same seed for each process
-    b[:] = np.fromfunction(lambda i,j: i+j+2, (n,n), dtype=nptype)
     inc = (n-1)/20 + 1
     ij = 0
     for i in range(0,n,inc):
@@ -307,7 +288,7 @@ def check(gatype, nptype):
             x = 10.0
             lo = [i,j]
             hi = [min(i+inc,n), min(j+inc,n)]
-            piece = b[lo[0]:hi[0], lo[1]:hi[1]]
+            piece = b[ga.zip(lo,hi)]
             check = False
             if MIRROR:
                 check = ij % lprocs == iproc
@@ -318,140 +299,143 @@ def check(gatype, nptype):
             ga.sync()
             ij += 1
             # each process applies all updates to its local copy
-            a[lo[0]:hi[0], lo[1]:hi[1]] += x * piece
+            a[ga.zip(lo,hi)] += x * piece
     ga.sync()
     # all nodes check all of a
     if not np.all(ga.get(g_a) == a):
         ga.error('acc failed')
     if 0 == me:
-        print ''
-        print ' disjoint ga.acc is OK'
-        print ''
-    # overlapping accumulate
+        print 'OK'
+    ga.destroy(g_a)
+
+def check_accumulate_overlap(gatype):
+    if 0 == me:
+        print '> Checking overlapping accumulate ...',
+    g_a = create_global_array(gatype)
+    ga.zero(g_a)
+    ga.acc(g_a, (n/2,n/2), (n/2+1,n/2+1), [1], 1)
     ga.sync()
-    if NEW_API:
-        g_b = ga.create_handle()
-        ga.set_data(g_b, (n,n), gatype)
-        ga.set_array_name(g_b, 'b')
-        if BLOCK_CYCLIC:
-            if USE_SCALAPACK_DISTR:
-                ga.set_block_cyclic_proc_grid(g_b, block_size, proc_grid)
-            else:
-                ga.set_block_cyclic(g_b, block_size)
-        if MIRROR:
-            ga.set_pgroup(g_b, p_mirror)
-        if not ga.allocate(g_b):
-            ga.error('ga.create failed for second array')
-    else:
-        if MIRROR:
-            g_b = ga.create_config(gatype, (n,n), 'b', chunk, p_mirror)
-        else:
-            g_b = ga.create(gatype, (n,n), 'b')
-        if 0 == g_b:
-            ga.error('ga.create failed for second array')
-    ga.zero(g_b)
-    ga.acc(g_b, (n/2,n/2), (n/2+1,n/2+1), [1], 1)
-    ga.sync()
-    x = None
     if MIRROR:
         if 0 == iproc:
-            x = abs(ga.get(g_b, (n/2,n/2), (n/2+1,n/2+1))[0,0] - lprocs)
+            x = abs(ga.get(g_a, (n/2,n/2), (n/2+1,n/2+1))[0,0] - lprocs)
             if not 0 == x:
                 ga.error('overlapping accumulate failed -- expected %s got %s'%(
                         x, lprocs))
     else:
         if 0 == me:
-            x = abs(ga.get(g_b, (n/2,n/2), (n/2+1,n/2+1))[0,0] - nproc)
+            x = abs(ga.get(g_a, (n/2,n/2), (n/2+1,n/2+1))[0,0] - nproc)
             if not 0 == x:
                 ga.error('overlapping accumulate failed -- expected %s got %s'%(
                         x, nproc))
     if 0 == me:
-        print ''
-        print ' overlapping ga.acc is OK'
-        print ''
-    # check the ga.add function
+        print 'OK'
+    ga.destroy(g_a)
+
+def check_add(gatype):
     if 0 == me:
-        print '> Checking add ...'
-    random.seed(12345) # everyone has same seed
-    if gatype == ga.C_SCPL:
-        for i in range(n):
-            for j in range(n):
-                b[i,j] = complex(random.random(),random.random())
-                a[i,j] = complex(0.1,-.1)*a[i,j] + complex(0.9,-.9)*b[i,j]
+        print '> Checking add ...',
+    g_a = create_global_array(gatype)
+    g_b = create_global_array(gatype)
+    a = create_local_a(gatype)
+    b = create_local_b(gatype)
+    alpha = None
+    beta = None
+    if 0 == me:
+        ga.put(g_a, a)
+    ga.sync();
+    np.random.seed(12345) # everyone has same seed
+    if gatype in [ga.C_SCPL,ga.C_DCPL]:
+        b_real = np.random.random_sample((n,n))
+        b_imag = np.random.random_sample((n,n))
+        b[:] = np.vectorize(complex)(b_real,b_imag)
+        alpha = complex(0.1,-0.1)
+        beta = complex(0.9,-0.9)
     else:
-        for i in range(n):
-            for j in range(n):
-                b[i,j] = random.random()
-                a[i,j] = 0.1*a[i,j] + 0.9*b[i,j]
+        b[:] = np.random.random_sample((n,n))
+        alpha = 0.1
+        beta = 0.9
+    a = alpha*a + beta*b
     if MIRROR:
         if 0 == iproc:
             ga.put(g_b, b)
     else:
         if 0 == me:
             ga.put(g_b, b)
-    if gatype == ga.C_SCPL:
-        ga.add(g_a, g_b, g_b, complex(0.1,-0.1), complex(0.9,-0.9))
-    else:
-        ga.add(g_a, g_b, g_b, 0.1, 0.9)
+    ga.sync()
+    ga.add(g_a, g_b, g_b, alpha, beta)
     b = ga.get(g_b, buffer=b)
-    if np.any(np.vectorize(mismatch)(ga.get(g_b),a)):
+    if np.any(np.vectorize(mismatch)(b,a)):
         ga.error('add failed')
     if 0 == me:
-        print ''
-        print ' add is OK '
-        print ''
-    # check the dot function
+        print 'OK'
+    ga.destroy(g_a)
+    ga.destroy(g_b)
+
+def check_dot(gatype):
     if 0 == me:
-        print '> Checking dot ...'
-    random.seed(12345) # everyone has same seed
-    sum1 = 0.0
-    for i in range(n):
-        for j in range(n):
-            b[i,j] = random.random()
-            sum1 += a[i,j]*b[i,j]
+        print '> Checking dot ...',
+    np.random.seed(12345) # everyone has same seed
+    g_a = create_global_array(gatype)
+    g_b = create_global_array(gatype)
+    a = create_local_a(gatype)
+    b = np.random.random_sample((n,n))
     if MIRROR:
         if 0 == iproc:
-            pass
+            ga.put(g_b, b)
+            ga.put(g_a, a)
     else:
         if 0 == me:
             ga.put(g_b, b)
             ga.put(g_a, a)
     ga.sync()
+    sum1 = np.sum(a*b)
     sum2 = ga.dot(g_a, g_b)
     if mismatch(sum1, sum2):
         ga.error('dot wrong %s != %s' % (sum1, sum2))
     if 0 == me:
-        print ''
-        print ' dot is OK '
-        print ''
-    # check the ga.scale function
+        print 'OK'
+    ga.destroy(g_a)
+    ga.destroy(g_b)
+
+def check_scale(gatype):
     if 0 == me:
-        print '> Checking scale ...'
+        print '> Checking scale ...',
+    g_a = create_global_array(gatype)
+    a = create_local_a(gatype)
+    if 0 == me:
+        ga.put(g_a, a)
+    ga.sync()
     ga.scale(g_a, 0.123)
-    result = ga.get(g_a)
-    if not np.all(a*0.123 == ga.get(g_a)):
-        ga.error('scale failed')
+    a *= 0.123
+    if np.any(np.vectorize(mismatch)(a,ga.get(g_a))):
+        ga.error('add failed')
     if 0 == me:
-        print ''
-        print ' scale is OK '
-        print ''
-    # check the ga.copy function
+        print 'OK'
+    ga.destroy(g_a)
+
+def check_copy(gatype):
     if 0 == me:
-        print ''
-        print '> Checking copy'
-        print ''
+        print '> Checking copy ...',
+    g_a = create_global_array(gatype)
+    g_b = create_global_array(gatype)
+    a = create_local_a(gatype)
     if 0 == me:
         ga.put(g_a, a)
     ga.copy(g_a, g_b)
     if not np.all(a == ga.get(g_b)):
         ga.error('copy failed')
     if 0 == me:
-        print ''
-        print ' copy is OK '
-        print ''
-    ga.sync()
+        print 'OK'
+    ga.destroy(g_a)
+    ga.destroy(g_b)
+
+def check_gather(gatype):
     if 0 == me:
-        print '> Checking scatter/gather (might be slow)...'
+        print '> Checking gather (might be slow)...',
+    g_a = create_global_array(gatype)
+    a = create_local_a(gatype)
+    if 0 == me:
+        ga.put(g_a, a)
     ga.sync()
     ijv = np.zeros((m,2), dtype=np.int64)
     random.seed(ga.nodeid()*51 + 1) # different seed for each proc
@@ -472,34 +456,174 @@ def check(gatype, nptype):
                 if not result[loop] == value:
                     ga.error('gather failed')
     if 0 == me:
-        print ''
-        print ' gather is OK'
-        print ''
+        print 'OK'
+    ga.destroy(g_a)
+
+def check_scatter(gatype):
+    nptype = ga.dtype(gatype)
+    if 0 == me:
+        print '> Checking scatter (might be slow)...',
+    g_a = create_global_array(gatype)
+    a = create_local_a(gatype)
+    if 0 == me:
+        ga.put(g_a, a)
+    ga.sync()
+    ijv = np.zeros((m,2), dtype=np.int64)
+    v = np.zeros(m, dtype=nptype)
+    random.seed(ga.nodeid()*51 + 1) # different seed for each proc
+    for j in range(10):
+        check = None
+        if MIRROR:
+            check = random.randint(0,lprocs-1) == iproc
+        else:
+            check = random.randint(0,nproc-1) == me
+        if check:
+            for loop in range(m):
+                ijv[loop,:] = (random.randint(0,n-1),random.randint(0,n-1))
+                v[loop] = ijv[loop,0]+ijv[loop,1]
+            ga.scatter(g_a, v, ijv)
+            for loop in range(m):
+                value = ga.get(g_a, ijv[loop], ijv[loop]+1).flatten()
+                if not v[loop] == value:
+                    ga.error('scatter failed')
+    if 0 == me:
+        print 'OK'
+    ga.destroy(g_a)
+
+def check_print_patch(gatype):
+    g_a = create_global_array(gatype)
+    a = create_local_a(gatype)
+    if n > 7:
+        if 0 == me:
+            print '> Checking ga.print_patch --- should match'
+            print a[2:5,2:7]
+        ga.print_patch(g_a, (2,2), (5,7))
+    ga.destroy(g_a)
+
+def check_read_inc(gatype):
+    if 0 == me:
+        print '> Checking ga.read_inc ...',
+        print "CHECK NOT IMPLEMENTED" 
+    #print 'OK'
+
+def check_fence_and_lock(gatype):
+    if 0 == me:
+        print '> Checking ga.fence and ga.lock',
+    g_a = create_global_array(gatype)
+    ga.zero(g_a)
+    if not ga.create_mutexes(1):
+        ga.error('ga.create_mutexes failed')
+    if n < 2:
+        ga.error('insufficient n to test ga.fence', n)
+    ga.lock(0)
+    a = ga.get(g_a) # get original values
+    a[:,0] += 1 # add my contribution
+    # need to use fence to assure that coms complete before leaving
+    # critical section
+    ga.init_fence()
+    ga.put(g_a, a)
+    ga.fence()
+    ga.unlock(0)
+    if not ga.destroy_mutexes():
+        ga.error('mutex not destroyed')
+    ga.sync()
+    if 0 == me:
+        a = ga.get(g_a)
+        if not np.all(a[:,0] == nproc):
+            ga.error('fence failed')
+    if 0 == me:
+        print 'OK'
+
+def check(gatype):
+    check_zero(gatype)
+    check_put_disjoint(gatype)
+    check_get(gatype)
+    check_accumulate_disjoint(gatype)
+    check_accumulate_overlap(gatype)
+    check_add(gatype)
+    check_dot(gatype)
+    check_scale(gatype)
+    check_copy(gatype)
+    check_gather(gatype)
+    check_scatter(gatype)
+
+def check_float():
+    check(ga.C_FLT)
+
+def check_double():
+    check(ga.C_DBL)
 
 def check_complex_float():
-    pass
+    check(ga.C_SCPL)
 
-def check_complex():
-    pass
+def check_complex_double():
+    check(ga.C_DCPL)
 
 def check_int():
-    ga.sync()
-    if 0 == me and n > 7:
-        print ''
-        print '> Checking ga.print_patch --- should see '
-        #print ' [2002 3002 4002 5002 6002]'
-        #print ' [2003 3003 4003 5003 6003]'
-        #print ' [2004 3004 4004 5004 6004]'
-        print ''
-    if n > 7:
-        ga.print_patch(g_a, (3,3), (5,7))
-    pass
+    gatype = ga.C_INT
+    check_zero(gatype)
+    check_put_disjoint(gatype)
+    check_get(gatype)
+    check_accumulate_disjoint(gatype)
+    check_accumulate_overlap(gatype)
+    #check_add(gatype)
+    #check_dot(gatype)
+    #check_scale(gatype)
+    check_copy(gatype)
+    check_gather(gatype)
+    check_scatter(gatype)
+    check_print_patch(gatype)
+    check_fence_and_lock(gatype)
 
-def check_flt():
-    pass
+def check_long():
+    gatype = ga.C_LONG
+    check_zero(gatype)
+    check_put_disjoint(gatype)
+    check_get(gatype)
+    check_accumulate_disjoint(gatype)
+    check_accumulate_overlap(gatype)
+    #check_add(gatype)
+    #check_dot(gatype)
+    #check_scale(gatype)
+    check_copy(gatype)
+    check_gather(gatype)
+    check_scatter(gatype)
+    check_print_patch(gatype)
+    check_fence_and_lock(gatype)
+
+def check_gop(nptype):
+    if 0 == me:
+        print '> checking ga.gop (%s)' % nptype,
+    input = np.arange(n, dtype=nptype) + me
+    sum = np.arange(n, dtype=nptype)*nproc + (nproc-1)*nproc/2
+    output = ga.gop(input, '+')
+    if not np.all(output == sum):
+        ga.error('ga.gop (%s) error' % nptype)
+    if 0 == me:
+        print 'OK'
+
+def check_broadcast():
+    if 0 == me:
+        print '> Checking ga.brdcst',
+    buf = [0,0]
+    if nproc-1 == me:
+        buf = [me,nproc]
+    buf = ga.brdcst(buf,nproc-1)
+    if buf[0] != nproc-1:
+        ga.error('ga.brdcst buf[0] failed')
+    if buf[1] != nproc:
+        ga.error('ga.brdcst buf[1] failed')
+    if 0 == me:
+        print 'OK'
 
 def check_wrappers():
-    pass
+    check_gop(np.int32)
+    check_gop(np.int64)
+    check_gop(np.float32)
+    check_gop(np.float64)
+    check_gop(np.complex64)
+    check_gop(np.complex128)
+    check_broadcast()
 
 if __name__ == '__main__':
     main()
