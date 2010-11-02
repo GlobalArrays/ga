@@ -1,10 +1,10 @@
-"""
-The Global Arrays (GA) Python interface.
+#cython: embedsignature=True
+"""The Global Arrays (GA) Python interface.
 
 This module exports the GA C API, with a few enhancements.  The notable
-exceptions include supporting Pythonic ranges -- zero-based with the start
-inclusive and the stop exclusive (whereas the C API was zero-based with the
-start and stop inclusive.)
+exceptions include supporting Pythonic ranges.  The ranges here are half-open
+e.g. [0,n) instead of in C where they are closed e.g. [0,n].  This follows the
+Python convention.
 
 This module also provides the GlobalArray object-oriented class.
 
@@ -100,13 +100,15 @@ def _lohi(int g_a, lo, hi):
     If lo is not given, it is replaced with an array of zeros.
     If hi is not given, it is replaced with the last index in each dimension.
 
-    Positional arguments:
-    g_a -- the array handle
-    lo  -- a 1D array-like object, or None
-    hi  -- a 1D array-like object, or None
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like
+            lower bounds of a slice
+        hi : 1D array-like
+            upper bounds of a slice
 
-    Returns:
-    The converted lo and hi ndarrays.
+    :returns: The converted lo and hi ndarrays.
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
@@ -192,12 +194,13 @@ def abs_value(int g_a, lo=None, hi=None):
     
     This is a collective operation.
 
-    Positional arguments:
-    g_a -- the array handle
-
-    Keyword arguments:
-    lo -- lower bound patch coordinates, inclusive
-    hi -- higher bound patch coordinates, inclusive
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like
+            lower bound patch coordinates, inclusive
+        hi : 1D array-like
+            higher bound patch coordinates, exclusive
     
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
@@ -218,14 +221,17 @@ def acc(int g_a, lo, hi, buffer, alpha=None):
 
     This is a one-sided and atomic operation.
 
-    Positional arguments:
-    g_a    -- the array handle
-    lo     -- lower bound patch coordinates, inclusive
-    hi     -- higher bound patch coordinates, inclusive
-    buffer -- an array-like object with same shape as indicated patch
-
-    Keyword arguments:
-    alpha  -- multiplier
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like
+            lower bound patch coordinates, inclusive
+        hi : 1D array-like
+            higher bound patch coordinates, exclusive
+        buffer : array-like
+            must have same shape as indicated patch
+        alpha : object
+            multiplier (converted to appropriate type)
 
     """
     _acc_common(g_a, lo, hi, buffer, alpha)
@@ -242,20 +248,29 @@ def _acc_common(int g_a, lo, hi, buffer, alpha=None, nb=False, periodic=False,
 
     This is a one-sided and atomic operation.
 
-    Positional arguments:
-    g_a    -- the array handle
-    lo     -- lower bound patch coordinates, inclusive
-    hi     -- higher bound patch coordinates, inclusive
-    buffer -- an array-like object with same shape as indicated patch
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like
+            lower bound patch coordinates, inclusive
+        hi : 1D array-like
+            higher bound patch coordinates, exclusive
+        buffer : array-like
+            must have same shape as indicated patch
+        alpha : object
+            multiplier (converted to appropriate type)
+        nb : bool
+            whether the call is non-blocking
+        periodic : bool
+            whether the call is periodic
+        skip : 1D array-like
+            strides for each dimension
 
-    Keyword arguments:
-    alpha    -- multiplier
-    nb       -- whether the call is non-blocking (see ga.nbacc)
-    periodic -- whether the call is periodic (see ga.periodic_acc)
-    skip     -- array-like of strides for each dimension (see ga.strided_acc)
+    :see: nbacc
+    :see: periodic_acc
+    :see: strided_acc
 
-    Returns:
-    None, usually.  However if nb=True, the nonblocking handle is returned.
+    :returns: None, however if nb=True, the nonblocking handle is returned.
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape, skip_nd
@@ -319,15 +334,15 @@ def access(int g_a, lo=None, hi=None):
 
     This operation is local. 
 
-    Positional arguments:
-    g_a -- the array handle
-
-    Keyword arguments:
-    lo -- lower bound patch coordinates, inclusive
-    hi -- higher bound patch coordinates, inclusive
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like
+            lower bound patch coordinates, inclusive
+        hi : 1D array-like
+            higher bound patch coordinates, exclusive
     
-    Returns:
-    ndarray representing local patch
+    :returns: ndarray representing local patch
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
@@ -386,12 +401,13 @@ def access_block(int g_a, int idx):
 
     This operation is local. 
 
-    Positional arguments:
-    g_a -- the array handle
-    idx -- the block index
+    :Parameters:
+        g_a : int
+            the array handle
+        idx : int
+            the block index
 
-    Returns:
-    ndarray representing local block
+    :returns: ndarray representing local block
 
     """
     raise NotImplementedError
@@ -411,12 +427,13 @@ def access_block_grid(int g_a, subscript):
 
     This operation is local. 
 
-    Positional arguments:
-    g_a       -- the array handle
-    subscript -- subscript of the block in the array
+    :Parameters:
+        g_a : int
+            the array handle
+        subscript : 1D array-like
+            subscript of the block in the array
 
-    Returns:
-    ndarray representing local block
+    :returns: ndarray representing local block
 
     """
     raise NotImplementedError
@@ -436,12 +453,13 @@ def access_block_segment(int g_a, int proc):
 
     This is a local operation.
 
-    Positional arguments:
-    g_a  -- the array handle
-    proc -- processor ID
+    :Parameters:
+        g_a : int
+            the array handle
+        proc : int
+            processor ID
 
-    Returns:
-    ndarray representing local block
+    :returns: ndarray representing local block
 
     """
     raise NotImplementedError
@@ -457,12 +475,13 @@ def access_ghost_element(int g_a, subscript, ld):
 
     This is a  local operation. 
 
-    Positional arguments:
-    g_a       -- the array handle
-    subscript -- array-like of integers that index desired element
+    :Parameters:
+        g_a : int
+            the array handle
+        subscript : 1D array-like of integers
+            index of the desired element
 
-    Returns:
-    ndarray scalar representing local block
+    :returns: ndarray scalar representing local block
 
     """
     raise NotImplementedError
@@ -480,11 +499,11 @@ def access_ghosts(int g_a):
 
     This operation is local.
 
-    Positional arguments:
-    g_a       -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
 
-    Returns:
-    ndarray scalar representing local block with ghost cells
+    :returns: ndarray scalar representing local block with ghost cells
 
     """
     raise NotImplementedError
@@ -494,29 +513,37 @@ def add(int g_a, int g_b, int g_c, alpha=None, beta=None, alo=None, ahi=None,
     """Element-wise addition of two arrays.
 
     The arrays must be the same shape and identically aligned.
-        c = alpha * a  +  beta * b
     The result (c) may replace one of the input arrays (a/b).
-
     Patches of arrays (which must have the same number of elements) may also
     be added together elementw=-wise, if patch coordinates are specified.
-        c[][] = alpha * a[][] + beta * b[][]. 
+    c = alpha*a + beta*b
 
     This is a collective operation. 
 
-    Positional arguments:
-    g_a    -- the array handle
-    g_b    -- the array handle
-    g_c    -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
+        g_b : int
+            the array handle
+        g_c : int
+            the array handle
+        alpha : object
+            multiplier (converted to appropriate type)
+        beta : object
+            multiplier (converted to appropriate type)
+        alo : 1D array-like of integers
+            lower bound patch coordinates of g_a, inclusive
+        ahi : 1D array-like of integers
+            higher bound patch coordinates of g_a, exclusive
+        blo : 1D array-like of integers
+            lower bound patch coordinates of g_b, inclusive
+        bhi : 1D array-like of integers
+            higher bound patch coordinates of g_b, exclusive
+        clo : 1D array-like of integers
+            lower bound patch coordinates of g_c, inclusive
+        chi : 1D array-like of integers
+            higher bound patch coordinates of g_c, exclusive
 
-    Keyword arguments:
-    alpha -- multiplier
-    beta  -- multiplier
-    alo   -- lower bound patch coordinates of g_a, inclusive
-    ahi   -- higher bound patch coordinates of g_a, inclusive
-    blo   -- lower bound patch coordinates of g_b, inclusive
-    bhi   -- higher bound patch coordinates of g_b, inclusive
-    clo   -- lower bound patch coordinates of g_c, inclusive
-    chi   -- higher bound patch coordinates of g_c, inclusive
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
@@ -562,13 +589,15 @@ def add_constant(int g_a, alpha, lo=None, hi=None):
 
     This operation is collective.
 
-    Positional arguments:
-    g_a   -- the array handle
-    alpha -- the constant to add
-
-    Keyword arguments:
-    lo    -- lower bound patch coordinates, inclusive
-    hi    -- higher bound patch coordinates, inclusive
+    :Parameters:
+        g_a : int
+            the array handle
+        alpha : object
+            the constant to add (converted to appropriate type)
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : 1D array-like of integers
+            higher bound patch coordinates, exclusive
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
@@ -598,9 +627,11 @@ def add_diagonal(int g_a, int g_v):
 
     This operation is collective.
 
-    Positional arguments:
-    g_a -- the array handle
-    g_v -- the vector handle
+    :Parameters:
+        g_a : int
+            the array handle
+        g_v : int
+            the vector handle
 
     """
     GA_Add_diagonal(g_a, g_v)
@@ -614,11 +645,11 @@ def allocate(int g_a):
 
     This is a collective operation. 
 
-    Positional arguments:
-    g_a -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
 
-    Returns:
-    True if allocation of g_a was successful.
+    :returns: True if allocation of g_a was successful.
 
     """
     if GA_Allocate(g_a) == 1:
@@ -634,12 +665,13 @@ def brdcst(buffer, int root):
 
     This is a collective operation. 
 
-    Positional arguments:
-    buffer -- the ndarray message
-    root   -- the process which is sending
+    :Parameters:
+        buffer : 1D array-like of objects
+            the ndarray message (converted to the appropriate type)
+        root : int
+            the process which is sending
 
-    Returns:
-    The buffer in case a temporary was passed in.
+    :returns: The buffer in case a temporary was passed in.
 
     """
     cdef np.ndarray buffer_nd
@@ -680,8 +712,9 @@ def cluster_nodeid(int proc=-1):
 
     This is a local operation.
 
-    Keyword arguments:
-    proc -- process ID to lookup
+    :Parameters:
+        proc : int
+            process ID to lookup
 
     """
     if proc >= 0:
@@ -712,8 +745,7 @@ def compare_distr(int g_a, int g_b):
 
     This is a collective operation.
 
-    Returns:
-    True if distributions are identical and False when they are not
+    :returns: True if distributions are identical and False when they are not
 
     """
     if GA_Compare_distr(g_a, g_b) == 0:
@@ -734,16 +766,21 @@ def copy(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None,
 
     This is a collective operation. 
 
-    Positional arguments:
-    g_a   -- the array handle copying from
-    g_b   -- the array handle copying to
-
-    Keyword arguments:
-    alo   -- lower bound patch coordinates of g_a, inclusive
-    ahi   -- higher bound patch coordinates of g_a, inclusive
-    blo   -- lower bound patch coordinates of g_b, inclusive
-    bhi   -- higher bound patch coordinates of g_b, inclusive
-    trans -- whether the transpose operator should be applied True=applied
+    :Parameters:
+        g_a : int
+            the array handle copying from
+        g_b : int
+            the array handle copying to
+        alo : 1D array-like of integers
+            lower bound patch coordinates of g_a, inclusive
+        ahi : 1D array-like of integers
+            higher bound patch coordinates of g_a, exclusive
+        blo : 1D array-like of integers
+            lower bound patch coordinates of g_b, inclusive
+        bhi : 1D array-like of integers
+            higher bound patch coordinates of g_b, exclusive
+        trans : bool
+            whether the transpose operator should be applied True=applied
              
     """
     cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
@@ -778,17 +815,19 @@ def create(int gtype, dims, char *name="", chunk=None, int pgroup=-1):
     As a convenience, when chunk is omitted or None, the entire array is
     distributed evenly.
 
-    Positional arguments:
-    gtype  -- the type of the array
-    dims   -- array-like shape of the array
+    :Parameters:
+        gtype : int
+            the type of the array
+        dims : 1D array-like of integers
+            shape of the array
+        name : string
+            the name of the array
+        chunk : 1D array-like of integers
+            see above
+        pgroup : int
+            create array only as part of this processor group
 
-    Keyword arguments:
-    name   -- the name of the array
-    chunk  -- see above
-    pgroup -- create array only as part of this processor group
-
-    Returns:
-    a non-zero array handle means the call was succesful.
+    :returns: a non-zero array handle means the call was succesful.
 
     This is a collective operation. 
 
@@ -821,18 +860,21 @@ def create_ghosts(int gtype, dims, width, char *name="", chunk=None,
     ghosts cells wide on either side of the visible data along the dimension
     n.
 
-    Positional arguments:
-    gtype  -- the type of the array
-    dims   -- array-like shape of the array
-    width  -- array-like of ghost cell widths
+    :Parameters:
+        gtype : int
+            the type of the array
+        dims : 1D array-like of integers
+            shape of the array
+        width : 1D array-like of integers
+            ghost cell widths
+        name : string
+            the name of the array
+        chunk : 1D array-like of integers
+            see above
+        pgroup : int
+            create array only as part of this processor group
 
-    Keyword arguments:
-    name   -- the name of the array
-    chunk  -- see above
-    pgroup -- create array only as part of this processor group
-
-    Returns:
-    a non-zero array handle means the call was successful.
+    :returns: a non-zero array handle means the call was successful.
 
     This is a collective operation. 
 
@@ -878,19 +920,22 @@ def create_irreg(int gtype, dims, block, map, char *name="", int pgroup=-1):
 
     This is a collective operation.
 
-    Positional arguments:
-    gtype  -- the type of the array
-    dims   -- array-like shape of the array
-    block  -- array-like number of blocks each dimension is divided into
-    map    -- array-like starting index for each block; len(map) == sum of all
-              elements of nblock array
-
-    Keyword arguments:
-    name   -- the name of the array
-    pgroup -- create array only as part of this processor group
+    :Parameters:
+        gtype : int
+            the type of the array
+        dims : 1D array-like of integers
+            shape of the array
+        block : 1D array-like of integers
+            the number of blocks each dimension is divided into
+        map : 1D array-like of integers
+            starting index for each block
+            len(map) == sum of all elements of nblock array
+        name : string
+            the name of the array
+        pgroup : int
+            create array only as part of this processor group
     
-    Returns:
-    integer handle representing the array; a non-zero value indicates success
+    :returns: integer handle representing the array; a non-zero value indicates success
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] dims_nd, block_nd, map_nd
@@ -920,20 +965,24 @@ def create_ghosts_irreg(int gtype, dims, width, block, map, char *name="",
 
     This is a collective operation. 
 
-    Positional arguments:
-    gtype  -- the type of the array
-    dims   -- array-like shape of the array
-    width  -- array-like of ghost cell widths
-    block  -- array-like number of blocks each dimension is divided into
-    map    -- array-like starting index for each block; len(map) == sum of all
-              elements of nblock array
-
-    Keyword arguments:
-    name   -- the name of the array
-    pgroup -- create array only as part of this processor group
+    :Parameters:
+        gtype : int
+            the type of the array
+        dims : 1D array-like of integers
+            shape of the array
+        width : 1D array-like of integers
+            ghost cell widths
+        block : 1D array-like of integers
+            number of blocks each dimension is divided into
+        map : 1D array-like of integers
+            starting index for each block
+            len(map) == sum of all elements of nblock array
+        name : string
+            the name of the array
+        pgroup : int
+            create array only as part of this processor group
     
-    Returns:
-    a non-zero array handle means the call was succesful
+    :returns: a non-zero array handle means the call was succesful
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] dims_nd, width_nd, block_nd, map_nd
@@ -956,11 +1005,11 @@ def create_mutexes(int number):
 
     This is a collective operation. 
 
-    Positional arguments:
-    number -- the number of mutexes to create
+    :Parameters:
+        number : int
+            the number of mutexes to create
 
-    Returns:
-    True on success, False on failure
+    :returns: True on success, False on failure
 
     """
     if GA_Create_mutexes(number) == 1:
@@ -978,8 +1027,7 @@ def destroy(int g_a):
 def destroy_mutexes():
     """Destroys the set of mutexes created with ga_create_mutexes.
     
-    Returns:
-    True if the operation succeeded; False when failed
+    :returns: True if the operation succeeded; False when failed
 
     This is a collective operation. 
 
@@ -993,13 +1041,15 @@ def diag(int g_a, int g_s, int g_v, evalues=None):
 
     The input matrices are not overwritten or destroyed.
     
-    Positional arguments:
-    g_a -- the array handle of the matrix to diagonalize
-    g_s -- the array handle of the metric
-    g_v -- the array handle to return evecs
+    :Parameters:
+        g_a : int
+            the array handle of the matrix to diagonalize
+        g_s : int
+            the array handle of the metric
+        g_v : int
+            the array handle to return evecs
 
-    Returns:
-    All eigen-values as an ndarray in ascending order.
+    :returns: All eigen-values as an ndarray in ascending order.
 
     This is a collective operation. 
 
@@ -1018,19 +1068,22 @@ def diag_reuse(int control, int g_a, int g_s, int g_v, evalues=None):
     Recommended for REPEATED calls if g_s is unchanged.
     The input matrices are not overwritten or destroyed.
     
-    Positional arguments:
-    control --  0 indicates first call to the eigensolver
-               >0 consecutive calls (reuses factored g_s)
-               <0 only erases factorized g_s; g_v and eval unchanged
-                  (should be called after previous use if another
-                  eigenproblem, i.e., different g_a and g_s, is to
-                  be solved) 
-    g_a     -- the array handle of the matrix to diagonalize
-    g_s     -- the array handle of the metric
-    g_v     -- the array handle to return evecs
+    :Parameters:
+        control : int
+            0 indicates first call to the eigensolver;
+            >0 consecutive calls (reuses factored g_s);
+            <0 only erases factorized g_s; g_v and eval unchanged
+            (should be called after previous use if another
+            eigenproblem, i.e., different g_a and g_s, is to
+            be solved) 
+        g_a : int
+            the array handle of the matrix to diagonalize
+        g_s : int
+            the array handle of the metric
+        g_v : int
+            the array handle to return evecs
 
-    Returns:
-    All eigen-values as an ndarray in ascending order.
+    :returns: All eigen-values as an ndarray in ascending order.
 
     This is a collective operation. 
 
@@ -1048,13 +1101,13 @@ def diag_std(int g_a, int g_v, evalues=None):
 
     The input matrix is neither overwritten nor destroyed.
     
-    Positional arguments:
-    g_a -- the array handle of the matrix to diagonalize
-    g_v -- the array handle to return evecs
+    :Parameters:
+        g_a : int
+            the array handle of the matrix to diagonalize
+        g_v : int
+            the array handle to return evecs
 
-    Returns:
-    all eigenvectors via the g_v global array, and eigenvalues as an ndarray
-    in ascending order
+    :returns: all eigenvectors via the g_v global array, and eigenvalues as an ndarray in ascending order
 
     This is a collective operation. 
 
@@ -1092,20 +1145,25 @@ def dot(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None,
 
     This is a collective operation.
 
-    Positional arguments:
-    g_a -- the array handle
-    g_b -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
+        g_b : int
+            the array handle
+        alo : 1D array-like of integers
+            lower bound patch coordinates of g_a, inclusive
+        ahi : 1D array-like of integers
+            higher bound patch coordinates of g_a, exclusive
+        blo : 1D array-like of integers
+            lower bound patch coordinates of g_b, inclusive
+        bhi : 1D array-like of integers
+            higher bound patch coordinates of g_b, exclusive
+        ta : bool
+            whether the transpose operator should be applied to g_a True=applied
+        tb : bool
+            whether the transpose operator should be applied to g_b True=applied
 
-    Keyword arguments:
-    alo -- lower bound patch coordinates of g_a, inclusive
-    ahi -- higher bound patch coordinates of g_a, inclusive
-    blo -- lower bound patch coordinates of g_b, inclusive
-    bhi -- higher bound patch coordinates of g_b, inclusive
-    ta  -- whether the transpose operator should be applied to g_a True=applied
-    tb  -- whether the transpose operator should be applied to g_b True=applied
-
-    Returns:
-    SUM_ij a(i,j)*b(i,j)
+    :returns: SUM_ij a(i,j)*b(i,j)
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
@@ -1191,14 +1249,13 @@ def duplicate(int g_a, char *name=""):
     """Creates a new array by applying all the properties of another existing
     array.
     
-    Positional arguments:
-    g_a -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
+        name : string
+            the new name of the created array
 
-    Keyword arguments:
-    name -- the new name of the created array
-
-    Returns:
-    a non-zero array handle means the call was succesful.
+    :returns: a non-zero array handle means the call was succesful.
 
     This is a collective operation. 
 
@@ -1220,18 +1277,25 @@ def elem_divide(int g_a, int g_b, int g_c, alo=None, ahi=None, blo=None,
 
     This is a collective operation. 
 
-    Positional arguments:
-    g_a    -- the array handle
-    g_b    -- the array handle
-    g_c    -- the array handle
-
-    Keyword arguments:
-    alo   -- lower bound patch coordinates of g_a, inclusive
-    ahi   -- higher bound patch coordinates of g_a, inclusive
-    blo   -- lower bound patch coordinates of g_b, inclusive
-    bhi   -- higher bound patch coordinates of g_b, inclusive
-    clo   -- lower bound patch coordinates of g_c, inclusive
-    chi   -- higher bound patch coordinates of g_c, inclusive
+    :Parameters:
+        g_a : int
+            the array handle
+        g_b : int
+            the array handle
+        g_c : int
+            the array handle
+        alo : 1D array-like of integers
+            lower bound patch coordinates of g_a, inclusive
+        ahi : 1D array-like of integers
+            higher bound patch coordinates of g_a, exclusive
+        blo : 1D array-like of integers
+            lower bound patch coordinates of g_b, inclusive
+        bhi : 1D array-like of integers
+            higher bound patch coordinates of g_b, exclusive
+        clo : 1D array-like of integers
+            lower bound patch coordinates of g_c, inclusive
+        chi : 1D array-like of integers
+            higher bound patch coordinates of g_c, exclusive
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
@@ -1255,28 +1319,37 @@ def elem_maximum(int g_a, int g_b, int g_c, alo=None, ahi=None, blo=None,
     """Computes the element-wise maximum of the two arrays.
 
     Arrays or array patches must be of the same types and same number of
-    elements. For two-dimensional arrays:
+    elements. For two-dimensional arrays::
 
-        c(i, j)  = max(a(i,j),b(i,j))
+        c(i,j) = max(a(i,j),b(i,j))
 
-    If the data type is complex, then
-        c(i, j).real = max{ |a(i,j)|, |b(i,j)|} while c(i,j).image = 0
+    If the data type is complex, then::
+
+        c(i,j).real = max{ |a(i,j)|, |b(i,j)|} while c(i,j).image = 0
+
     The result (c) may replace one of the input arrays (a/b).
 
     This is a collective operation. 
 
-    Positional arguments:
-    g_a    -- the array handle
-    g_b    -- the array handle
-    g_c    -- the array handle
-
-    Keyword arguments:
-    alo   -- lower bound patch coordinates of g_a, inclusive
-    ahi   -- higher bound patch coordinates of g_a, inclusive
-    blo   -- lower bound patch coordinates of g_b, inclusive
-    bhi   -- higher bound patch coordinates of g_b, inclusive
-    clo   -- lower bound patch coordinates of g_c, inclusive
-    chi   -- higher bound patch coordinates of g_c, inclusive
+    :Parameters:
+        g_a : int
+            the array handle
+        g_b : int
+            the array handle
+        g_c : int
+            the array handle
+        alo : 1D array-like of integers
+            lower bound patch coordinates of g_a, inclusive
+        ahi : 1D array-like of integers
+            higher bound patch coordinates of g_a, exclusive
+        blo : 1D array-like of integers
+            lower bound patch coordinates of g_b, inclusive
+        bhi : 1D array-like of integers
+            higher bound patch coordinates of g_b, exclusive
+        clo : 1D array-like of integers
+            lower bound patch coordinates of g_c, inclusive
+        chi : 1D array-like of integers
+            higher bound patch coordinates of g_c, exclusive
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
@@ -1300,28 +1373,37 @@ def elem_minimum(int g_a, int g_b, int g_c, alo=None, ahi=None, blo=None,
     """Computes the element-wise minimum of the two arrays.
 
     Arrays or array patches must be of the same types and same number of
-    elements. For two-dimensional arrays:
+    elements. For two-dimensional arrays::
 
-        c(i, j)  = min(a(i,j),b(i,j))
+        c(i,j)  = min(a(i,j),b(i,j))
 
-    If the data type is complex, then
-        c(i, j).real = min{ |a(i,j)|, |b(i,j)|} while c(i,j).image = 0
+    If the data type is complex, then::
+
+        c(i,j).real = min{ |a(i,j)|, |b(i,j)|} while c(i,j).image = 0
+
     The result (c) may replace one of the input arrays (a/b).
 
     This is a collective operation. 
 
-    Positional arguments:
-    g_a    -- the array handle
-    g_b    -- the array handle
-    g_c    -- the array handle
-
-    Keyword arguments:
-    alo   -- lower bound patch coordinates of g_a, inclusive
-    ahi   -- higher bound patch coordinates of g_a, inclusive
-    blo   -- lower bound patch coordinates of g_b, inclusive
-    bhi   -- higher bound patch coordinates of g_b, inclusive
-    clo   -- lower bound patch coordinates of g_c, inclusive
-    chi   -- higher bound patch coordinates of g_c, inclusive
+    :Parameters:
+        g_a : int
+            the array handle
+        g_b : int
+            the array handle
+        g_c : int
+            the array handle
+        alo : 1D array-like of integers
+            lower bound patch coordinates of g_a, inclusive
+        ahi : 1D array-like of integers
+            higher bound patch coordinates of g_a, exclusive
+        blo : 1D array-like of integers
+            lower bound patch coordinates of g_b, inclusive
+        bhi : 1D array-like of integers
+            higher bound patch coordinates of g_b, exclusive
+        clo : 1D array-like of integers
+            lower bound patch coordinates of g_c, inclusive
+        chi : 1D array-like of integers
+            higher bound patch coordinates of g_c, exclusive
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
@@ -1353,18 +1435,25 @@ def elem_multiply(int g_a, int g_b, int g_c, alo=None, ahi=None, blo=None,
 
     This is a collective operation. 
 
-    Positional arguments:
-    g_a    -- the array handle
-    g_b    -- the array handle
-    g_c    -- the array handle
-
-    Keyword arguments:
-    alo   -- lower bound patch coordinates of g_a, inclusive
-    ahi   -- higher bound patch coordinates of g_a, inclusive
-    blo   -- lower bound patch coordinates of g_b, inclusive
-    bhi   -- higher bound patch coordinates of g_b, inclusive
-    clo   -- lower bound patch coordinates of g_c, inclusive
-    chi   -- higher bound patch coordinates of g_c, inclusive
+    :Parameters:
+        g_a : int
+            the array handle
+        g_b : int
+            the array handle
+        g_c : int
+            the array handle
+        alo : 1D array-like of integers
+            lower bound patch coordinates of g_a, inclusive
+        ahi : 1D array-like of integers
+            higher bound patch coordinates of g_a, exclusive
+        blo : 1D array-like of integers
+            lower bound patch coordinates of g_b, inclusive
+        bhi : 1D array-like of integers
+            higher bound patch coordinates of g_b, exclusive
+        clo : 1D array-like of integers
+            lower bound patch coordinates of g_c, inclusive
+        chi : 1D array-like of integers
+            higher bound patch coordinates of g_c, exclusive
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
@@ -1423,12 +1512,13 @@ def fence():
 def fill(int g_a, value, lo=None, hi=None):
     """Assign a single value to all elements in the array or patch.
     
-    Positional arguments:
-    g_a -- the array handle
-
-    Keyword arguments:
-    lo -- lower bound patch coordinates, inclusive
-    hi -- higher bound patch coordinates, inclusive
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : 1D array-like of integers
+            higher bound patch coordinates, exclusive
     
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
@@ -1518,33 +1608,39 @@ def gemm(bint ta, bint tb, int64_t m, int64_t n, int64_t k,
     
     C := alpha*op( A )*op( B ) + beta*C
 
-    where op( X ) is one of
-
-        op( X ) = X   or   op( X ) = X',
-        alpha and beta are scalars, and
-        A, B and C are matrices, with
-        op( A ) an m by k matrix,
-        op( B ) a  k by n matrix, and
-        C an m by n matrix.
+    where op( X ) is one of op(X)=X or op(X) = X', alpha and beta are scalars,
+    and A, B and C are matrices, with op(A) an m by k matrix, op(B) a k by n
+    matrix, and C an m by n matrix.
 
     On entry, ta specifies the form of op( A ) to be used in the
-    matrix multiplication as follows:
-        ta = False, op( A ) = A.
-        ta = True, op( A ) = A'.
+    matrix multiplication as follows::
+
+        ta = False, op(A) = A.
+        ta = True,  op(A) = A'.
 
     This is a collective operation. 
     
-    Positional arguments:
-    ta    -- transpose operator
-    tb    -- transpose operator
-    m     -- number of rows of op(A) and of matrix C
-    n     -- number of columns of op(B) and of matrix C
-    k     -- number of columns of op(A) and rows of matrix op(B)
-    alpha -- scale factor
-    g_a   -- handle to input array
-    g_b   -- handle to input array
-    beta  -- scale factor
-    g_c   -- handle to output array
+    :Parameters:
+        ta : bool
+            transpose operator
+        tb : bool
+            transpose operator
+        m : int
+            number of rows of op(A) and of matrix C
+        n : int
+            number of columns of op(B) and of matrix C
+        k : int
+            number of columns of op(A) and rows of matrix op(B)
+        alpha : object
+            scale factor
+        g_a : int
+            handle to input array
+        g_b : int
+            handle to input array
+        beta : object
+            scale factor
+        g_c : int
+            handle to output array
 
     """
     cdef int gtype=inquire_type(g_a)
@@ -1611,16 +1707,17 @@ def get(int g_a, lo=None, hi=None, np.ndarray buffer=None):
 
     This is a one-sided operation.
 
-    Positional arguments:
-    g_a -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : 1D array-like of integers
+            higher bound patch coordinates, exclusive
+        buffer : 
+            an ndarray of the appropriate type, large enough to hold lo,hi
 
-    Keyword arguments:
-    lo       -- a 1D array-like object, or None
-    hi       -- a 1D array-like object, or None
-    buffer   -- an ndarray of the appropriate type, large enough to hold lo,hi
-
-    Returns:
-    The local array buffer.
+    :returns: The local array buffer.
     
     """
     return _get_common(g_a, lo, hi, buffer)
@@ -1635,20 +1732,23 @@ def _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
 
     This is a one-sided operation.
 
-    Positional arguments:
-    g_a -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : 1D array-like of integers
+            higher bound patch coordinates, exclusive
+        buffer : ndarray
+            should be the appropriate type and large enough to hold lo,hi
+        nb : bool
+            whether this call is non-blocking (see ga.nbget)
+        periodic : bool
+            whether this call is periodic (see ga.periodic_get)
+        skip : 1D array-like of integers
+            strides for each dimension
 
-    Keyword arguments:
-    lo       -- a 1D array-like object, or None
-    hi       -- a 1D array-like object, or None
-    buffer   -- an ndarray of the appropriate type, large enough to hold lo,hi
-    nb       -- whether this call is non-blocking (see ga.nbget)
-    periodic -- whether this call is periodic (see ga.periodic_get)
-    skip     -- array-like of strides for each dimension
-
-    Returns:
-    The local array buffer.
-    Also returns the nonblocking handle if nb=True.
+    :returns: The local array buffer (and the nonblocking handle if nb=True.)
     
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape, skip_nd
@@ -1693,12 +1793,11 @@ def get_block_info(int g_a):
 
     This is a local function.
 
-    Positional arguments:
-    g_a -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
 
-    Returns:
-    The number of blocks along each of the array axes and the dimensions of
-    thet individual blocks, in that order, as ndarrays.
+    :returns: The number of blocks along each of the array axes and the dimensions of thet individual blocks, in that order, as ndarrays.
 
     """
     cdef np.ndarray[np.int_t, ndim=1] num_blocks, block_dims
@@ -1713,8 +1812,9 @@ def get_diag(int g_a, int g_v):
 
     This is a collective operation.
     
-    Positional arguments:
-    g_a -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
 
     """
     GA_Get_diag(g_a, g_v)
@@ -1792,12 +1892,11 @@ def has_ghosts(int g_a):
 
     This is a collective operation. 
 
-    Positional arguments:
-    g_a -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
 
-    Returns:
-    True if the global array has some dimensions for which the ghost cell width
-    is greater than zero, it returns False otherwise.
+    :returns: True if the global array has some dimensions for which the ghost cell width is greater than zero, it returns False otherwise.
 
     """
     if GA_Has_ghosts(g_a) == 1:
@@ -1832,7 +1931,7 @@ def initialize_ltd(size_t limit):
     does not include temporary storage that GA might be allocating (and
     releasing) during execution of a particular operation.
 
-    *limit < 0 means "allow unlimited memory usage" in which case this
+    limit = 0 means "allow unlimited memory usage" in which case this
     operation is equivalent to GA_initialize.
 
     This is a collective operation. 
@@ -1867,8 +1966,9 @@ def inquire_name(int g_a):
 
     This operation is local.
 
-    Positional arguments:
-    g_a -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
 
     """
     return GA_Inquire_name(g_a)
@@ -1884,8 +1984,7 @@ def is_mirrored(int g_a):
     
     This is a  local  operation. 
 
-    Returns:
-    True if it is a mirrored array, else returns False.
+    :returns: True if it is a mirrored array, else returns False.
 
     """
     if GA_Is_mirrored(g_a) == 1:
@@ -1903,14 +2002,13 @@ def llt_solve(int g_a, int g_b):
 
     This is a collective operation. 
 
-    Positional arguments:
-    g_a -- the coefficient matrix
-    g_b -- the rhs/solution matrix
+    :Parameters:
+        g_a : int
+            the coefficient matrix
+        g_b : int
+            the rhs/solution matrix
 
-    Returns:
-    = 0 : successful exit
-    > 0 : the leading minor of this order is not positive
-          definite and the factorization could not be completed
+    :returns: 0 if successful; >0 if the leading minor of this order is not positive definite and the factorization could not be completed
 
     """
     return GA_Llt_solve(g_a, g_b)
@@ -1922,9 +2020,11 @@ def locate(int g_a, subscript):
 
     This operation is local.
 
-    Positional arguments:
-    g_a -- the array handle
-    subscript -- 1D array-like; len(subscript) should be ndim
+    :Parameters:
+        g_a : int
+            the array handle
+        subscript : 1D array-like of integers
+            len(subscript) should be ndim
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] subscript_nd
@@ -1996,12 +2096,13 @@ def lu_solve(int g_a, int g_b, bint trans=False):
 
     This is a collective operation. 
 
-    Positional arguments:
-    g_a -- the array handle for the coefficient matrix
-    g_b -- the array handle for the solution matrix
-
-    Keyword arguments:
-    trans -- transpose (True) or not transpose (False)
+    :Parameters:
+        g_a : int
+            the array handle for the coefficient matrix
+        g_b : int
+            the array handle for the solution matrix
+        trans : bool
+            transpose (True) or not transpose (False)
 
     """
     cdef char ctrans = 'N'
@@ -2020,9 +2121,11 @@ def mask_sync(bint first, bint last):
     
     This is a collective operation. 
 
-    Positional arguments:
-    first -- mask for prior internal synchronization
-    last  -- mask for post internal synchronization
+    :Parameters:
+        first : bool
+            mask for prior internal synchronization
+        last : bool
+            mask for post internal synchronization
 
     """
     GA_Mask_sync(first,last)
@@ -2094,21 +2197,31 @@ def median(int g_a, int g_b, int g_c, int g_m,
 
     This is a collective operation. 
 
-    Positional arguments:
-    g_a -- the array handle
-    g_b -- the array handle
-    g_c -- the array handle
-    g_m -- the array handle for the result
-
-    Keyword arguments:
-    alo -- lower bound patch coordinates of g_a, inclusive
-    ahi -- higher bound patch coordinates of g_a, inclusive
-    blo -- lower bound patch coordinates of g_b, inclusive
-    bhi -- higher bound patch coordinates of g_b, inclusive
-    clo -- lower bound patch coordinates of g_c, inclusive
-    chi -- higher bound patch coordinates of g_c, inclusive
-    mlo -- lower bound patch coordinates of g_m, inclusive
-    mhi -- higher bound patch coordinates of g_m, inclusive
+    :Parameters:
+        g_a : int
+            the array handle
+        g_b : int
+            the array handle
+        g_c : int
+            the array handle
+        g_m : int
+            the array handle for the result
+        alo : 1D array-like of integers
+            lower bound patch coordinates of g_a, inclusive
+        ahi : 1D array-like of integers
+            higher bound patch coordinates of g_a, exclusive
+        blo : 1D array-like of integers
+            lower bound patch coordinates of g_b, inclusive
+        bhi : 1D array-like of integers
+            higher bound patch coordinates of g_b, exclusive
+        clo : 1D array-like of integers
+            lower bound patch coordinates of g_c, inclusive
+        chi : 1D array-like of integers
+            higher bound patch coordinates of g_c, exclusive
+        mlo : 1D array-like of integers
+            lower bound patch coordinates of g_m, inclusive
+        mhi : 1D array-like of integers
+            higher bound patch coordinates of g_m, exclusive
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
@@ -2154,8 +2267,7 @@ def memory_limited():
     
     This operation is local. 
 
-    Returns:
-    True for "yes", False for "no"
+    :returns: True for "yes", False for "no"
 
     """
     if 1 == GA_Memory_limited():
@@ -2168,13 +2280,19 @@ def merge_distr_patch(int g_a, alo, ahi, int g_b, blo, bhi):
 
     This is a  collective  operation. 
 
-    Positional arguments:
-    g_a -- array handle
-    alo -- g_a patch coordinate
-    ahi -- g_a patch coordinate
-    g_b -- array handle
-    blo -- g_b patch coordinate
-    bhi -- g_b patch coordinate
+    :Parameters:
+        g_a : int
+            array handle
+        alo : 1D array-like of integers
+            g_a patch coordinate
+        ahi : 1D array-like of integers
+            g_a patch coordinate
+        g_b : int
+            array handle
+        blo : 1D array-like of integers
+            g_b patch coordinate
+        bhi : 1D array-like of integers
+            g_b patch coordinate
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] alo_nd, ahi_nd
@@ -2195,8 +2313,9 @@ def merge_mirrored(int g_a):
 
     This is a  collective  operation. 
 
-    Positional arguments:
-    g_a -- array handle
+    :Parameters:
+        g_a : int
+            array handle
 
     """
     GA_Merge_mirrored(g_a)
@@ -2213,21 +2332,23 @@ def nbacc(int g_a, lo, hi, buffer, alpha=None):
     dimensions as the global array.  If the buffer is not contiguous, a
     contiguous copy will be made.
     
-        global array section (lo[],hi[]) += alpha * buffer
+    global array section (lo[],hi[]) += alpha * buffer
 
     This is a non-blocking and one-sided and atomic operation.
 
-    Positional arguments:
-    g_a    -- the array handle
-    lo     -- lower bound patch coordinates, inclusive
-    hi     -- higher bound patch coordinates, inclusive
-    buffer -- an array-like object with same shape as indicated patch
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : 1D array-like of integers
+            higher bound patch coordinates, exclusive
+        buffer : array-like
+            must be same shape as indicated patch
+        alpha : object
+            multiplier (converted to the appropriate type)
 
-    Keyword arguments:
-    alpha  -- multiplier
-
-    Returns:
-    The non-blocking request handle.
+    :returns: The non-blocking request handle.
 
     """
     return _acc_common(g_a, lo, hi, buffer, alpha, True)
@@ -2246,16 +2367,18 @@ def nbget(int g_a, lo=None, hi=None, np.ndarray buffer=None):
 
     This is a non-blocking and one-sided operation.
 
-    Positional arguments:
-    g_a -- the array handle
-    lo  -- a 1D array-like object, or None
-    hi  -- a 1D array-like object, or None
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : 1D array-like of integers
+            higher bound patch coordinates, exclusive
+        buffer : ndarray
+            Fill this buffer instead of allocating a new one internally.
+            Must have same shape as lo,hi patch and be correct type.
 
-    Keyword arguments:
-    buffer -- 
-
-    Returns:
-    The local array buffer.
+    :returns: The local array buffer.
     
     """
     return _get_common(g_a, lo, hi, buffer, True)
@@ -2265,8 +2388,9 @@ def nblock(int g_a):
 
     This operation is local. 
 
-    Positional arguments:
-    g_a -- array handle
+    :Parameters:
+        g_a : int
+            array handle
 
     """
     cdef np.ndarray[np.int32_t, ndim=1] nblock_nd
@@ -2289,13 +2413,15 @@ def nbput(int g_a, buffer, lo=None, hi=None):
 
     This is a one-sided operation. 
 
-    Positional arguments:
-    g_a    -- the array handle
-    buffer -- array-like, the data to put
-
-    Keyword arguments:
-    lo -- a 1D array-like object, or None
-    hi -- a 1D array-like object, or None
+    :Parameters:
+        g_a : int
+            the array handle
+        buffer : array-like
+            the data to put
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : 1D array-like of integers
+            higher bound patch coordinates, exclusive
 
     """
     return _put_common(g_a, buffer, lo, hi, True, False)
@@ -2323,11 +2449,11 @@ def ndim(int g_a):
 
     This operation is local.
     
-    Positional arguments:
-    g_a -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
 
-    Returns:
-    the number of dimensions in the array g_a
+    :returns: the number of dimensions in the array g_a
 
     """
     return GA_Ndim(g_a)
@@ -2337,8 +2463,7 @@ def nnodes():
 
     This operation is local.
     
-    Returns:
-    the number of GA compute (user) processes
+    :returns: the number of GA compute (user) processes
 
     """
     return GA_Nnodes()
@@ -2349,8 +2474,7 @@ def nodeid():
 
     This operation is local.
     
-    Returns:
-    the GA process id
+    :returns: the GA process id
 
     """
     return GA_Nodeid()
@@ -2360,11 +2484,11 @@ def norm1(int g_a):
 
     This is a collective operation. 
 
-    Positional arguments:
-    g_a -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
 
-    Returns:
-    the 1-norm of the matrix or vector g_a (as a float)
+    :returns: the 1-norm of the matrix or vector g_a (as a float)
 
     """
     cdef double nm
@@ -2376,11 +2500,11 @@ def norm_infinity(int g_a):
 
     This is a collective operation. 
 
-    Positional arguments:
-    g_a -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
 
-    Returns:
-    the 1-norm of the matrix or vector g_a
+    :returns: the 1-norm of the matrix or vector g_a
 
     """
     cdef double nm
@@ -2401,14 +2525,17 @@ def enum(int g_a, lo=None, hi=None, start=None, inc=None):
 
     This is a collective operation.
 
-    Positional arguments:
-    g_a -- the array handle
-
-    Keyword arguments:
-    lo    -- patch coordinate
-    hi    -- patch coordinate
-    start -- starting value of enumeration
-    inc   -- increment value
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like of integers
+            patch coordinate
+        hi : 1D array-like of integers
+            patch coordinate
+        start : object
+            starting value of enumeration (converted to appropriate type)
+        inc : object
+            increment value (converted to appropriate type)
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] hi_nd = inquire_dims(g_a)-1
@@ -2439,14 +2566,17 @@ def pack(int g_src, int g_dst, int g_msk, lo=None, hi=None):
 
     This is a collective operation.
 
-    Positional arguments:
-    g_src -- handle for source arrray
-    g_dst -- handle for destination array
-    g_msk -- handle for integer array representing mask
-
-    Keyword arguments:
-    lo    -- low value of range on which operation is performed
-    hi    -- hi value of range on which operation is performed
+    :Parameters:
+        g_src : int
+            handle for source arrray
+        g_dst : int
+            handle for destination array
+        g_msk : int
+            handle for integer array representing mask
+        lo : 1D array-like of integers
+            low value of range on which operation is performed
+        hi : 1D array-like of integers
+            hi value of range on which operation is performed
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] hi_nd = inquire_dims(g_src)-1
@@ -2474,14 +2604,17 @@ def periodic_acc(int g_a, lo, hi, buffer, alpha=None):
 
     This is a one-sided and atomic operation.
 
-    Positional arguments:
-    g_a    -- the array handle
-    lo     -- lower bound patch coordinates, inclusive
-    hi     -- higher bound patch coordinates, inclusive
-    buffer -- an array-like object with same shape as indicated patch
-
-    Keyword arguments:
-    alpha  -- multiplier
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : array-like of integers
+            higher bound patch coordinates, exclusive
+        buffer : array-like
+            same shape as indicated patch
+        alpha : object
+            multiplier (converted to the appropriate type)
 
     """
     _acc_common(g_a, lo, hi, buffer, alpha, False, True)
@@ -2500,16 +2633,17 @@ def periodic_get(int g_a, lo, hi, buffer, alpha=None):
 
     This is a one-sided operation.
 
-    Positional arguments:
-    g_a -- the array handle
-    lo  -- a 1D array-like object, or None
-    hi  -- a 1D array-like object, or None
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : array-like of integers
+            higher bound patch coordinates, exclusive
+        buffer : array-like
+            same shape as indicated patch
 
-    Keyword arguments:
-    buffer -- 
-
-    Returns:
-    The local array buffer.
+    :returns: The local array buffer.
     
     """
     _get_common(g_a, lo, hi, buffer, alpha, False, True)
@@ -2528,13 +2662,15 @@ def periodic_put(int g_a, buffer, lo=None, hi=None):
 
     This is a one-sided operation. 
 
-    Positional arguments:
-    g_a    -- the array handle
-    buffer -- array-like, the data to put
-
-    Keyword arguments:
-    lo -- a 1D array-like object, or None
-    hi -- a 1D array-like object, or None
+    :Parameters:
+        g_a : int
+            the array handle
+        buffer : array-like
+            the data to put
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : array-like of integers
+            higher bound patch coordinates, exclusive
 
     """
     _put_common(g_a, buffer, lo, hi, False, True)
@@ -2548,20 +2684,26 @@ def pgroup_brdcst(int pgroup, np.ndarray buffer, int root):
 
     This is a collective operation. 
 
-    Positional arguments:
-    pgroup -- processor group handle
-    buffer -- the ndarray message
-    root   -- the process which is sending
+    :Parameters:
+        pgroup : int
+            processor group handle
+        buffer : array-like
+            the message
+        root : int
+            the process which is sending
 
-    Returns:
-    The buffer in case a temporary was passed in.
+    :returns: The buffer in case a temporary was passed in.
 
     """
-    if not buffer.flags['C_CONTIGUOUS']:
+    cdef np.ndarray buffer_nd
+    buffer_nd = np.asarray(buffer)
+    if not buffer_nd.flags['C_CONTIGUOUS']:
         raise ValueError, "the buffer must be contiguous"
-    if buffer.ndim != 1:
+    if buffer_nd.ndim != 1:
         raise ValueError, "the buffer must be one-dimensional"
-    GA_Pgroup_brdcst(pgroup, buffer.data, len(buffer)*buffer.itemsize, root)
+    GA_Pgroup_brdcst(pgroup, buffer_nd.data,
+            len(buffer_nd)*buffer_nd.itemsize, root)
+    return buffer_nd
 
 def pgroup_create(list):
     """Creates a processor group.
@@ -2585,9 +2727,7 @@ def pgroup_destroy(int pgroup):
     
     This is a collective operation on the default processor group.
 
-    Returns:
-    True if the handle was previously active.
-    False if the handle was not previously active.
+    :returns: True if the handle was previously active.  False if the handle was not previously active.
 
     """
     if 0 == GA_Pgroup_destroy(pgroup):
@@ -2636,8 +2776,9 @@ def pgroup_nnodes(int pgroup):
 
     This is a local local operation. 
 
-    Positional arguments:
-    pgroup -- the group handle
+    :Parameters:
+        pgroup : int
+            the group handle
 
     """
     return GA_Pgroup_nnodes(pgroup)
@@ -2651,8 +2792,9 @@ def pgroup_nodeid(int pgroup):
 
     This is a local operation. 
 
-    Positional arguments:
-    pgroup -- the group handle
+    :Parameters:
+        pgroup : int
+            the group handle
 
     """
     return GA_Pgroup_nodeid(pgroup)
@@ -2706,14 +2848,16 @@ def print_distribution(int g_a):
     """
     GA_Print_distribution(g_a)
 
-def print_file(file, int g_a):
+def print_file(int g_a, file):
     """Prints an entire array to a file.
 
     This is a collective operation. 
 
-    Positional arguments:
-    file -- file-like object which must implement fileno(), or a string
-    g_a  -- the array handle
+    :Parameters:
+        file : file-like
+            file-like object which must implement fileno(), or a string
+        g_a : int
+            the array handle
 
     """
     #GA_Print_file(file.fileno(), g_a)
@@ -2782,13 +2926,15 @@ def put(int g_a, buffer, lo=None, hi=None):
 
     This is a one-sided operation. 
 
-    Positional arguments:
-    g_a    -- the array handle
-    buffer -- array-like, the data to put
-
-    Keyword arguments:
-    lo -- a 1D array-like object, or None
-    hi -- a 1D array-like object, or None
+    :Parameters:
+        g_a : int
+            the array handle
+        buffer : array-like
+            the data to put
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : array-like of integers
+            higher bound patch coordinates, exclusive
 
     """
     _put_common(g_a, buffer, lo, hi)
@@ -2803,18 +2949,23 @@ def _put_common(int g_a, buffer, lo=None, hi=None,
 
     This is a one-sided operation. 
 
-    Positional arguments:
-    g_a    -- the array handle
-    buffer -- array-like, the data to put
+    :Parameters:
+        g_a : int
+            the array handle
+        buffer : array-like
+            the data to put
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : array-like of integers
+            higher bound patch coordinates, exclusive
+        nb : bool
+            whether this call is non-blocking (see ga.nbget)
+        periodic : bool
+            whether this call is periodic (see ga.periodic_get)
+        skip : 1D array-like of integers
+            strides for each dimension
 
-    Keyword arguments:
-    lo       -- a 1D array-like object, or None
-    hi       -- a 1D array-like object, or None
-    nb       -- whether this call is non-blocking (see ga.nbget)
-    periodic -- whether this call is periodic (see ga.periodic_get)
-
-    Returns:
-    None, usually.  However if nb=True, the nonblocking handle is returned.
+    :returns: None, usually.  However if nb=True, the nonblocking handle is returned.
 
     """
     cdef np.ndarray buffer_nd
@@ -2869,12 +3020,13 @@ def read_inc(int g_a, subscript, long inc=1):
 
     This is a one-sided and atomic operation.
 
-    Positional arguments:
-    g_a -- the array handle
-    subscript -- array-like index for the referenced element
-
-    Keyword arguments:
-    inc -- the increment
+    :Parameters:
+        g_a : int
+            the array handle
+        subscript : 1D array-like of integers
+            index for the referenced element
+        inc : long
+            the increment
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] subscript_nd
@@ -3129,15 +3281,19 @@ def scan_add(int g_src, int g_dst, int g_msk, lo=None, hi=None, bint
 
     This is a collective operation.
 
-    Positional arguments:
-    g_src -- handle for source arrray
-    g_dst -- handle for destination array
-    g_msk -- handle for integer array representing mask
-
-    Keyword arguments:
-    lo    -- low value of range on which operation is performed
-    hi    -- hi value of range on which operation is performed
-    excl  -- 
+    :Parameters:
+        g_src : int
+            handle for source arrray
+        g_dst : int
+            handle for destination array
+        g_msk : int
+            handle for integer array representing mask
+        lo : 1D array-like of integers
+            low value of range on which operation is performed
+        hi : 1D array-like of integers
+            hi value of range on which operation is performed
+        excl : bool
+            whether the first value is set to 0 (see above)
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] hi_nd = inquire_dims(g_src)-1
@@ -3316,8 +3472,7 @@ def select_elem(int g_a, char *op):
 
     This is a collective operation. 
 
-    Returns:
-    the selected element and the array index for the selected element
+    :returns: the selected element and the array index for the selected element
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] index
@@ -3500,12 +3655,13 @@ def set_irreg_distr(int g_a, mapc, nblock):
     because, P1 and P4 get 20 elements each and processors P0,P2,P3, and P5
     only 10 elements each.
      
-       5    5
-    +----+----+
-    | P0 | P3 | 2
-    | P1 | P4 | 4
-    | P2 | P5 | 2
-    +----+----+
+    +----+----++--+
+    |  5 |  5 ||  |
+    +====+====++==+
+    | P0 | P3 || 2|
+    | P1 | P4 || 4|
+    | P2 | P5 || 2|
+    +----+----++--+
 
     The array width() is used to control the width of the ghost cell boundary
     around the visible data on each processor. The local data of the global
@@ -3525,8 +3681,9 @@ def set_memory_limit(size_t limit):
 
     This is a local operation. 
 
-    Positional arguments:
-    limit -- the amount of memory in bytes per process
+    :Parameters:
+        limit : size_t
+            the amount of memory in bytes per process
 
     """
     GA_Set_memory_limit(limit)
@@ -3578,12 +3735,9 @@ def solve(int g_a, int g_b):
     will solve the system with forward/backward substitution. On exit B will
     contain the solution X.
 
-    Returns:
-    = 0 : Cholesky factoriztion was succesful
-    > 0 : the leading minor of this order is not positive definite, Cholesky
-          factorization could not be completed and LU factoriztion was used
-
     This is a collective operation.
+
+    :returns: 0 if Cholesky factoriztion was succesful.  >0 if the leading minor of this order is not positive definite, Cholesky factorization could not be completed and LU factoriztion was used
 
     """
     return GA_Solve(g_a, g_b)
@@ -3594,15 +3748,9 @@ def spd_invert(int g_a):
     A stored in the global array represented by g_a. On successful exit, A
     will contain the inverse.
 
-    It returns:
-    = 0 : successful exit
-    > 0 : the leading minor of this order is not positive
-          definite and the factorization could not be completed
-    < 0 : it returns the index i of the (i,i)
-          element of the factor L/U that is zero and
-          the inverse could not be computed
-
     This is a collective operation.
+
+    :returns: 0 if successful exit; >0 if the leading minor of this order is not positive definite and the factorization could not be completed; <0 if it returns the index i of the (i,i) element of the factor L/U that is zero and the inverse could not be computed
 
     """
     return GA_Spd_invert(g_a)
@@ -3643,14 +3791,17 @@ def strided_acc(int g_a, lo, hi, skip, buffer, alpha=None):
 
     This is a one-sided and atomic operation.
 
-    Positional arguments:
-    g_a    -- the array handle
-    lo     -- lower bound patch coordinates, inclusive
-    hi     -- higher bound patch coordinates, inclusive
-    buffer -- an array-like object with same shape as indicated patch
-
-    Keyword arguments:
-    alpha    -- multiplier
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : 1D array-like of integers
+            higher bound patch coordinates, exclusive
+        buffer : array-like
+            same shape as indicated patch
+        alpha : object
+            multiplier (converted to the appropriate type)
 
     """
     _acc_common(g_a, lo, hi, buffer, alpha, False, False, skip)
@@ -3666,17 +3817,19 @@ def strided_get(int g_a, lo=None, hi=None, skip=None, np.ndarray buffer=None):
 
     This is a one-sided operation.
 
-    Positional arguments:
-    g_a -- the array handle
+    :Parameters:
+        g_a : int
+            the array handle
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : 1D array-like of integers
+            higher bound patch coordinates, exclusive
+        skip : 1D array-like of integers
+            strides for each dimension
+        buffer : ndarray
+            an ndarray of the appropriate type, large enough to hold lo,hi
 
-    Keyword arguments:
-    lo       -- a 1D array-like object, or None
-    hi       -- a 1D array-like object, or None
-    skip     -- array-like of strides for each dimension
-    buffer   -- an ndarray of the appropriate type, large enough to hold lo,hi
-
-    Returns:
-    The local array buffer.
+    :returns: The local array buffer.
     
     """
     _get_common(g_a, lo, hi, buffer, False, False, skip)
@@ -3692,14 +3845,17 @@ def strided_put(int g_a, buffer, lo=None, hi=None, skip=None):
 
     This is a one-sided operation. 
 
-    Positional arguments:
-    g_a    -- the array handle
-    buffer -- array-like, the data to put
-
-    Keyword arguments:
-    lo   -- a 1D array-like object, or None
-    hi   -- a 1D array-like object, or None
-    skip -- array-like of strides for each dimension
+    :Parameters:
+        g_a : int
+            the array handle
+        buffer : array-like
+            the data to put
+        lo : 1D array-like of integers
+            lower bound patch coordinates, inclusive
+        hi : array-like of integers
+            higher bound patch coordinates, exclusive
+        skip : 1D array-like of integers
+            strides for each dimension
 
     """
     _put_common(g_a, buffer, lo, hi, False, False, skip)
