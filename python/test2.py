@@ -120,7 +120,6 @@ def main():
     # Note: so long as mpi4py is imported before ga, cleanup is automatic
 
 def create_local_a(gatype):
-    """TODO"""
     nptype = ga.dtype(gatype)
     if gatype == ga.C_SCPL:
         if MIRROR:
@@ -152,7 +151,6 @@ def create_local_a(gatype):
             return np.fromfunction(lambda i,j: i+j*1000, (n,n), dtype=nptype)
 
 def create_local_b(gatype):
-    """TODO"""
     nptype = ga.dtype(gatype)
     b = np.zeros((n,n), dtype=nptype)
     if gatype in [ga.C_SCPL, ga.C_DCPL]:
@@ -162,7 +160,6 @@ def create_local_b(gatype):
     return b
 
 def create_global_array(gatype):
-    """TODO"""
     if NEW_API:
         g_a = ga.create_handle()
         ga.set_data(g_a, [n,n], gatype)
@@ -199,7 +196,6 @@ def create_global_array(gatype):
     return g_a
 
 def check_zero(gatype):
-    """TODO"""
     if 0 == me:
         print '> Checking zero ...',
     g_a = create_global_array(gatype)
@@ -313,7 +309,6 @@ def check_accumulate_disjoint(gatype):
     ga.destroy(g_a)
 
 def check_accumulate_overlap(gatype):
-    """TODO"""
     if 0 == me:
         print '> Checking overlapping accumulate ...',
     g_a = create_global_array(gatype)
@@ -337,7 +332,6 @@ def check_accumulate_overlap(gatype):
     ga.destroy(g_a)
 
 def check_add(gatype):
-    """TODO"""
     if 0 == me:
         print '> Checking add ...',
     g_a = create_global_array(gatype)
@@ -378,7 +372,6 @@ def check_add(gatype):
     ga.destroy(g_b)
 
 def check_dot(gatype):
-    """TODO"""
     if 0 == me:
         print '> Checking dot ...',
     np.random.seed(12345) # everyone has same seed
@@ -405,7 +398,6 @@ def check_dot(gatype):
     ga.destroy(g_b)
 
 def check_scale(gatype):
-    """TODO"""
     if 0 == me:
         print '> Checking scale ...',
     g_a = create_global_array(gatype)
@@ -437,9 +429,9 @@ def check_copy(gatype):
     ga.destroy(g_a)
     ga.destroy(g_b)
 
-def check_scatter_gather(gatype):
+def check_gather(gatype):
     if 0 == me:
-        print '> Checking scatter/gather (might be slow)...',
+        print '> Checking gather (might be slow)...',
     g_a = create_global_array(gatype)
     a = create_local_a(gatype)
     if 0 == me:
@@ -467,8 +459,38 @@ def check_scatter_gather(gatype):
         print 'OK'
     ga.destroy(g_a)
 
+def check_scatter(gatype):
+    nptype = ga.dtype(gatype)
+    if 0 == me:
+        print '> Checking scatter (might be slow)...',
+    g_a = create_global_array(gatype)
+    a = create_local_a(gatype)
+    if 0 == me:
+        ga.put(g_a, a)
+    ga.sync()
+    ijv = np.zeros((m,2), dtype=np.int64)
+    v = np.zeros(m, dtype=nptype)
+    random.seed(ga.nodeid()*51 + 1) # different seed for each proc
+    for j in range(10):
+        check = None
+        if MIRROR:
+            check = random.randint(0,lprocs-1) == iproc
+        else:
+            check = random.randint(0,nproc-1) == me
+        if check:
+            for loop in range(m):
+                ijv[loop,:] = (random.randint(0,n-1),random.randint(0,n-1))
+                v[loop] = ijv[loop,0]+ijv[loop,1]
+            ga.scatter(g_a, v, ijv)
+            for loop in range(m):
+                value = ga.get(g_a, ijv[loop], ijv[loop]+1).flatten()
+                if not v[loop] == value:
+                    ga.error('scatter failed')
+    if 0 == me:
+        print 'OK'
+    ga.destroy(g_a)
+
 def check_print_patch(gatype):
-    """TODO"""
     g_a = create_global_array(gatype)
     a = create_local_a(gatype)
     if n > 7:
@@ -479,14 +501,12 @@ def check_print_patch(gatype):
     ga.destroy(g_a)
 
 def check_read_inc(gatype):
-    """TODO"""
     if 0 == me:
         print '> Checking ga.read_inc ...',
         print "CHECK NOT IMPLEMENTED" 
     #print 'OK'
 
 def check_fence_and_lock(gatype):
-    """TODO"""
     if 0 == me:
         print '> Checking ga.fence and ga.lock',
     g_a = create_global_array(gatype)
@@ -524,7 +544,8 @@ def check(gatype):
     check_dot(gatype)
     check_scale(gatype)
     check_copy(gatype)
-    check_scatter_gather(gatype)
+    check_gather(gatype)
+    check_scatter(gatype)
 
 def check_float():
     check(ga.C_FLT)
@@ -549,7 +570,8 @@ def check_int():
     #check_dot(gatype)
     #check_scale(gatype)
     check_copy(gatype)
-    check_scatter_gather(gatype)
+    check_gather(gatype)
+    check_scatter(gatype)
     check_print_patch(gatype)
     check_fence_and_lock(gatype)
 
@@ -564,12 +586,44 @@ def check_long():
     #check_dot(gatype)
     #check_scale(gatype)
     check_copy(gatype)
-    check_scatter_gather(gatype)
+    check_gather(gatype)
+    check_scatter(gatype)
     check_print_patch(gatype)
     check_fence_and_lock(gatype)
 
+def check_gop(nptype):
+    if 0 == me:
+        print '> checking ga.gop (%s)' % nptype,
+    input = np.arange(n, dtype=nptype) + me
+    sum = np.arange(n, dtype=nptype)*nproc + (nproc-1)*nproc/2
+    output = ga.gop(input, '+')
+    if not np.all(output == sum):
+        ga.error('ga.gop (%s) error' % nptype)
+    if 0 == me:
+        print 'OK'
+
+def check_broadcast():
+    if 0 == me:
+        print '> Checking ga.brdcst',
+    buf = [0,0]
+    if nproc-1 == me:
+        buf = [me,nproc]
+    buf = ga.brdcst(buf,nproc-1)
+    if buf[0] != nproc-1:
+        ga.error('ga.brdcst buf[0] failed')
+    if buf[1] != nproc:
+        ga.error('ga.brdcst buf[1] failed')
+    if 0 == me:
+        print 'OK'
+
 def check_wrappers():
-    pass
+    check_gop(np.int32)
+    check_gop(np.int64)
+    check_gop(np.float32)
+    check_gop(np.float64)
+    check_gop(np.complex64)
+    check_gop(np.complex128)
+    check_broadcast()
 
 if __name__ == '__main__':
     main()

@@ -625,7 +625,7 @@ def allocate(int g_a):
         return True
     return False
 
-def brdcst(np.ndarray buffer, int root):
+def brdcst(buffer, int root):
     """Broadcast from process root to all other processes.
 
     If the buffer is not contiguous, an error is raised.  This operation is
@@ -642,11 +642,14 @@ def brdcst(np.ndarray buffer, int root):
     The buffer in case a temporary was passed in.
 
     """
-    if not buffer.flags['C_CONTIGUOUS']:
+    cdef np.ndarray buffer_nd
+    buffer_nd = np.asarray(buffer)
+    if not buffer_nd.flags['C_CONTIGUOUS']:
         raise ValueError, "the buffer must be contiguous"
-    if buffer.ndim != 1:
+    if buffer_nd.ndim != 1:
         raise ValueError, "the buffer must be one-dimensional"
-    GA_Brdcst(buffer.data, len(buffer)*buffer.itemsize, root)
+    GA_Brdcst(buffer_nd.data, len(buffer_nd)*buffer_nd.itemsize, root)
+    return buffer_nd
 
 def check_handle(int g_a, char *message):
     """Checks that the array handle g_a is valid.
@@ -1758,6 +1761,10 @@ def gop(X, char *op):
         GA_Fgop(<float*>X_nd.data, len(X_nd), op)
     elif X_nd.dtype == np.double:
         GA_Dgop(<double*>X_nd.data, len(X_nd), op)
+    elif X_nd.dtype == np.complex64:
+        GA_Cgop(<SingleComplex*>X_nd.data, len(X_nd), op)
+    elif X_nd.dtype == np.complex128:
+        GA_Zgop(<DoubleComplex*>X_nd.data, len(X_nd), op)
     else:
         raise TypeError, "type not supported by ga.gop %s" % X_nd.dtype
     return X_nd
