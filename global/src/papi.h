@@ -43,6 +43,7 @@ extern void pnga_fill(Integer *g_a, void* val);
 extern void pnga_get_block_info(Integer *g_a, Integer *num_blocks,
                                 Integer *block_dims);
 extern logical pnga_get_debug();
+extern Integer pnga_get_dimension(Integer *g_a);
 extern void pnga_get_proc_grid(Integer *g_a, Integer *dims);
 extern void pnga_get_proc_index(Integer *g_a, Integer *iproc, Integer *index);
 extern logical pnga_has_ghosts(Integer *g_a);
@@ -54,9 +55,23 @@ extern void pnga_inquire_name(Integer *g_a, char **array_name);
 extern logical pnga_is_mirrored(Integer *g_a);
 extern void pnga_list_nodeid(Integer *list, Integer *nprocs);
 extern logical pnga_locate(Integer *g_a, Integer *subscript, Integer *owner);
+extern Integer pnga_locate_num_blocks(Integer *g_a, Integer *lo, Integer *hi);
+extern logical pnga_locate_region(Integer *g_a, Integer *lo, Integer *hi, Integer *map,
+                                  Integer *proclist, Integer *np);
+extern void pnga_lock(Integer *mutex);
+extern Integer pnga_ndim(Integer *g_a);
+extern void pnga_mask_sync(Integer *begin, Integer *end);
+extern Integer pnga_memory_avail();
+extern logical pnga_memory_limited();
+extern void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
+                                   Integer *g_b, Integer *blo, Integer *bhi);
+extern void pnga_merge_mirrored(Integer *g_a);
+extern void pnga_nblock(Integer *g_a, Integer *nblock);
+
 extern Integer pnga_nnodes();
 extern Integer pnga_nodeid();
 extern void pnga_set_debug(logical *flag);
+extern Integer pnga_pgroup_absolute_id(Integer *grp, Integer *pid);
 
 /**
  * Routines from onesided.c

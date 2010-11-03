@@ -350,6 +350,16 @@ logical FATR nga_get_debug_()
   return wnga_get_debug();
 }
 
+Integer FATR ga_get_dimension_(Integer *g_a)
+{
+  return wnga_get_dimension(g_a);
+}
+
+Integer FATR nga_get_dimension_(Integer *g_a)
+{
+  return wnga_get_dimension(g_a);
+}
+
 void FATR ga_get_proc_grid_(Integer *g_a, Integer *dims)
 {
   wnga_get_proc_grid(g_a, dims);
@@ -442,12 +452,12 @@ void FATR nga_inquire_name_(Integer *g_a, char *array_name, int len)
 
 logical FATR ga_is_mirrored_(Integer *g_a)
 {
-  return pnga_is_mirrored(g_a);
+  return wnga_is_mirrored(g_a);
 }
 
 logical FATR nga_is_mirrored_(Integer *g_a)
 {
-  return pnga_is_mirrored(g_a);
+  return wnga_is_mirrored(g_a);
 }
 
 void FATR ga_list_nodeid_(Integer *list, Integer *nprocs)
@@ -458,6 +468,66 @@ void FATR ga_list_nodeid_(Integer *list, Integer *nprocs)
 void FATR nga_list_nodeid_(Integer *list, Integer *nprocs)
 {
   wnga_list_nodeid(list, nprocs);
+}
+
+Integer FATR nga_locate_num_blocks_(Integer *g_a, Integer *lo, Integer *hi)
+{
+  return wnga_locate_num_blocks(g_a,lo,hi);
+}
+
+logical FATR ga_locate_region_( Integer *g_a,
+                                Integer *ilo,
+                                Integer *ihi,
+                                Integer *jlo,
+                                Integer *jhi,
+                                Integer map[][5],
+                                Integer *np)
+{
+  logical status = FALSE;
+  Integer lo[2], hi[2], p;
+  Integer *mapl, *proclist;
+  proclist = (Integer*)malloc(wnga_nnodes()*sizeof(Integer));
+  mapl = (Integer*)malloc(5*wnga_nnodes()*sizeof(Integer));
+  lo[0] = *ilo;
+  lo[1] = *jlo;
+  hi[0] = *ihi;
+  hi[1] = *jhi;
+  if (wnga_locate_num_blocks(g_a, lo, hi) == -1) {
+    status = wnga_locate_region(g_a, lo, hi, mapl, proclist, np);
+    /* need to swap elements (ilo,jlo,ihi,jhi) -> (ilo,ihi,jlo,jhi) */
+    for(p = 0; p< *np; p++){
+      map[p][0] = mapl[4*p];
+      map[p][1] = mapl[4*p + 2];
+      map[p][2] = mapl[4*p + 1];
+      map[p][3] = mapl[4*p + 3];
+      map[p][4] = proclist[p];
+    }
+  } else {
+    wnga_error("Must call nga_locate_region on block-cyclic data distribution",0);
+  }
+  free(proclist);
+  free(mapl);
+  return status;
+}
+
+logical FATR nga_locate_region_( Integer *g_a,
+                                 Integer *lo,
+                                 Integer *hi,
+                                 Integer *map,
+                                 Integer *proclist,
+                                 Integer *np)
+{
+  return wnga_locate_region(g_a, lo, hi, map, proclist, np);
+}
+
+void FATR ga_lock_(Integer *mutex)
+{
+  wnga_lock(mutex);
+}
+
+void FATR nga_lock_(Integer *mutex)
+{
+  wnga_lock(mutex);
 }
 
 logical FATR ga_locate_(Integer *g_a, Integer *i, Integer *j, Integer *owner)
@@ -471,6 +541,72 @@ logical FATR ga_locate_(Integer *g_a, Integer *i, Integer *j, Integer *owner)
 logical FATR nga_locate_(Integer *g_a, Integer *subscript, Integer *owner)
 {
   return wnga_locate(g_a, subscript, owner);
+}
+
+void FATR ga_mask_sync_(Integer *begin, Integer *end)
+{
+  wnga_mask_sync(begin, end);
+}
+
+void FATR nga_mask_sync_(Integer *begin, Integer *end)
+{
+  wnga_mask_sync(begin, end);
+}
+
+Integer FATR ga_memory_avail_()
+{
+  return wnga_memory_avail();
+}
+
+Integer FATR nga_memory_avail_()
+{
+  return wnga_memory_avail();
+}
+
+logical FATR ga_memory_limited_()
+{
+  return wnga_memory_limited();
+}
+
+logical FATR nga_memory_limited_()
+{
+  return wnga_memory_limited();
+}
+
+void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
+                                 Integer *g_b, Integer *blo, Integer *bhi)
+{
+  wnga_merge_distr_patch(g_a, alo, ahi, g_b, blo, bhi);
+}
+
+void FATR ga_merge_mirrored_(Integer *g_a)
+{
+  wnga_merge_mirrored(g_a);
+}
+
+void FATR nga_merge_mirrored_(Integer *g_a)
+{
+  wnga_merge_mirrored(g_a);
+}
+
+void FATR ga_nblock_(Integer *g_a, Integer *nblock)
+{
+  wnga_nblock(g_a, nblock);
+}
+
+void FATR nga_nblock_(Integer *g_a, Integer *nblock)
+{
+  wnga_nblock(g_a, nblock);
+}
+
+Integer FATR ga_ndim_(Integer *g_a)
+{
+  return wnga_ndim(g_a);
+}
+
+Integer FATR nga_ndim_(Integer *g_a)
+{
+  return wnga_ndim(g_a);
 }
 
 Integer FATR ga_nnodes_()
@@ -491,6 +627,16 @@ Integer FATR ga_nodeid_()
 Integer FATR nga_nodeid_()
 {
   return wnga_nodeid();
+}
+
+Integer FATR ga_pgroup_absolute_id_(Integer *grp, Integer *pid)
+{
+  return wnga_pgroup_absolute_id(grp, pid);
+}
+
+Integer FATR nga_pgroup_absolute_id_(Integer *grp, Integer *pid)
+{
+  return wnga_pgroup_absolute_id(grp, pid);
 }
 
 void FATR ga_set_debug_(logical *flag)

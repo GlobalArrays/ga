@@ -398,7 +398,7 @@ register Integer i;
 
    gai_check_handle(g_a, "ga_patch_enum");
 
-   ndim = ga_ndim_(g_a);
+   ndim = pnga_ndim(g_a);
    if (ndim > 1) pnga_error("ga_patch_enum:applicable to 1-dim arrays",ndim);
 
    pnga_inquire(g_a, &type, &ndim, dims);
@@ -503,7 +503,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
    ga_sync_();
 
 
-   ndim = ga_ndim_(g_a);
+   ndim = pnga_ndim(g_a);
    if(ndim>1)pnga_error("ga_scan_copy: applicable to 1-dim arrays",ndim);
 
    pnga_inquire(g_a, &type, &ndim, &dims);

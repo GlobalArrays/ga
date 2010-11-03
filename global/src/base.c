@@ -552,16 +552,18 @@ logical FATR ga_uses_ma_()
 #endif
 }
 
+/**
+ *  Is memory limit set
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_memory_limited =  pnga_memory_limited
+#endif
 
-/*\ IS MEMORY LIMIT SET ?
-\*/
-logical FATR ga_memory_limited_()
+logical pnga_memory_limited()
 {
    if(GA_memory_limited) return TRUE;
    else                  return FALSE;
 }
-
-
 
 /**
  *  Returns the amount of memory on each processor used in active Global Arrays
@@ -578,10 +580,14 @@ Integer i, sum=0;
     return(sum);
 }
 
+/**
+ *  Returns the amount of memory available on the calling processor
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_memory_avail =  pnga_memory_avail
+#endif
 
-/*\ RETURNS AMOUNT OF GA MEMORY AVAILABLE on calling processor 
-\*/
-Integer FATR ga_memory_avail_()
+Integer FATR pnga_memory_avail()
 {
    if(!ga_uses_ma_()) return(GA_total_memory);
    else{
@@ -1512,9 +1518,14 @@ void FATR ga_set_irreg_flag_(Integer *g_a, logical *flag)
   GA_POP_NAME;
 }
 
-/*\ Get dimension on a new global array
-\*/
-Integer FATR ga_get_dimension_(Integer *g_a)
+/**
+ *  Get dimension on a new global array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_dimension = pnga_get_dimension
+#endif
+
+Integer pnga_get_dimension(Integer *g_a)
 {
   Integer ga_handle = *g_a + GA_OFFSET;
   return (Integer)GA[ga_handle].ndim;
@@ -2454,8 +2465,14 @@ logical FATR pnga_has_ghosts(Integer* g_a)
       int h_a = (int)*g_a + GA_OFFSET;
       return GA[h_a].ghosts;
 }
+/**
+ *  Return the dimension of a Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_ndim =  pnga_ndim
+#endif
 
-Integer FATR ga_ndim_(Integer *g_a)
+Integer FATR pnga_ndim(Integer *g_a)
 {
       ga_check_handleM(g_a,"ga_ndim");       
       return GA[*g_a +GA_OFFSET].ndim;
@@ -3166,7 +3183,7 @@ logical FATR nga_locate_nnodes_( Integer *g_a,
   Integer  proc, owner, i, ga_handle;
   Integer  d, dpos, ndim, elems, p_handle, use_blocks;
 
-  ga_check_handleM(g_a, "nga_locate_region");
+  ga_check_handleM(g_a, "nga_locate_nnodes");
 
   ga_handle = GA_OFFSET + *g_a;
 #ifdef __crayx1
@@ -3296,14 +3313,20 @@ logical FATR nga_locate_nnodes_( Integer *g_a,
 #endif
 
 
-/*\ LOCATE PROCESSORS/OWNERS OF THE SPECIFIED PATCH OF A GLOBAL ARRAY
-\*/
-logical FATR nga_locate_region_( Integer *g_a,
-                                 Integer *lo,
-                                 Integer *hi,
-                                 Integer *map,
-                                 Integer *proclist,
-                                 Integer *np)
+/**
+ *  Locate individual patches and their owner of specified patch of a
+ *  Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_locate_region =  pnga_locate_region
+#endif
+
+logical pnga_locate_region( Integer *g_a,
+                            Integer *lo,
+                            Integer *hi,
+                            Integer *map,
+                            Integer *proclist,
+                            Integer *np)
 /*    g_a      [input]  global array handle
       lo       [input]  lower indices of patch in global array
       hi       [input]  upper indices of patch in global array
@@ -3451,31 +3474,17 @@ logical FATR nga_locate_region_( Integer *g_a,
   return(TRUE);
 }
 #ifdef __crayx1
-#pragma _CRI inline nga_locate_region_
+#pragma _CRI inline pnga_locate_region
 #endif
 
-
-/*\ returns in nblock array the number of blocks each dimension is divided to
-\*/
-void GA_Nblock(int g_a, int *nblock)
-{
-int ga_handle = GA_OFFSET + g_a;
-int i, n;
-
-     ga_check_handleM(&g_a, "GA_Nblock");
-
-     n = GA[ga_handle].ndim;
-
-#ifdef USE_FAPI 
-     for(i=0; i<n; i++) nblock[i] = GA[ga_handle].nblock[i];
-#else
-     for(i=0; i<n; i++) nblock[n-i-1] = GA[ga_handle].nblock[i];
+/**
+ *  Returns the processor grid for the global array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_nblock =  pnga_nblock
 #endif
-     
-}
-     
 
-void FATR ga_nblock_(Integer *g_a, Integer *nblock)
+void pnga_nblock(Integer *g_a, Integer *nblock)
 {
 Integer ga_handle = GA_OFFSET + *g_a;
 int i, n;
@@ -3638,7 +3647,14 @@ int myshare;
 }
 
 
-void FATR ga_lock_(Integer *mutex)
+/**
+ * Lock an object defined by the mutex number
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_lock =  pnga_lock
+#endif
+
+void pnga_lock(Integer *mutex)
 {
 int m,p;
 
@@ -3744,34 +3760,6 @@ void pnga_list_nodeid(Integer *list, Integer *num_procs)
       list[proc]=proc;
 }
 
-/*************************************************************************/
-
-logical FATR ga_locate_region_(g_a, ilo, ihi, jlo, jhi, mapl, np )
-        Integer *g_a, *ilo, *jlo, *ihi, *jhi, mapl[][5], *np;
-{
-   logical status = FALSE;
-   Integer lo[2], hi[2], p;
-   if (!GA[GA_OFFSET+(*g_a)].block_flag) {
-     lo[0]=*ilo; lo[1]=*jlo;
-     hi[0]=*ihi; hi[1]=*jhi;
-
-     status = nga_locate_region_(g_a,lo,hi,_ga_map, GA_proclist, np);
-
-     /* need to swap elements (ilo,jlo,ihi,jhi) -> (ilo,ihi,jlo,jhi) */
-     for(p = 0; p< *np; p++){
-       mapl[p][0] = _ga_map[4*p];
-       mapl[p][1] = _ga_map[4*p + 2];
-       mapl[p][2] = _ga_map[4*p + 1];
-       mapl[p][3] = _ga_map[4*p + 3];
-       mapl[p][4] = GA_proclist[p];
-     } 
-   } else {
-     pnga_error("Must call nga_locate_region on block-cyclic data distribution",0);
-   }
-
-   return status;
-}
-
 /*\ RETURN COORDINATES OF ARRAY BLOCK HELD BY A PROCESSOR
 \*/
 void FATR ga_proc_topology_(g_a, proc, pr, pc)
@@ -3810,7 +3798,11 @@ int gai_getval(int *ptr) { return *ptr;}
        and reset the global mask variables to avoid carring the mask to a
        collective call inside the current collective call.
 */
-void FATR ga_mask_sync_(Integer *begin, Integer *end)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_mask_sync =  pnga_mask_sync
+#endif
+
+void FATR pnga_mask_sync(Integer *begin, Integer *end)
 {
   if (*begin) _ga_sync_begin = 1;
   else _ga_sync_begin = 0;
@@ -3819,9 +3811,14 @@ void FATR ga_mask_sync_(Integer *begin, Integer *end)
   else _ga_sync_end = 0;
 }
 
-/*\ merge all copies of a mirrored array by adding them together
-\*/
-void FATR ga_merge_mirrored_(Integer *g_a)
+/**
+ *  Merge all copies of a mirrored array by adding them together
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_merge_mirrored =  pnga_merge_mirrored
+#endif
+
+void pnga_merge_mirrored(Integer *g_a)
 {
   Integer handle = GA_OFFSET + *g_a;
   Integer inode, nprocs, nnodes, zero, zproc, nblocks;
@@ -3989,11 +3986,16 @@ void FATR ga_merge_mirrored_(Integer *g_a)
   GA_POP_NAME;
 }
 
-/*\ merge all copies of a  patch of a mirrored array into a patch in a
+/**
+ *  Merge all copies of a  patch of a mirrored array into a patch in a
  *  distributed array
-\*/
-void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
-                                 Integer *g_b, Integer *blo, Integer *bhi)
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_merge_distr_patch =  pnga_merge_distr_patch
+#endif
+
+void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
+                            Integer *g_b, Integer *blo, Integer *bhi)
 /*    Integer *g_a  handle to mirrored array
       Integer *alo  indices of lower corner of mirrored array patch
       Integer *ahi  indices of upper corner of mirrored array patch
@@ -4131,442 +4133,14 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
   GA_POP_NAME;
 }
 
-/*\ get number of distinct patches corresponding to a contiguous shared
- *  memory segment
-\*/
-Integer FATR ga_num_mirrored_seg_(Integer *g_a)
-{
-  Integer handle = *g_a + GA_OFFSET;
-  Integer i, j, ndim, map_offset[MAXDIM];
-  int *nblock;
-  C_Integer *first, *last;
-  Integer lower[MAXDIM], upper[MAXDIM];
-  Integer istart, nproc, inode;
-  Integer ret = 0, icheck;
+/**
+ * Return the total number of blocks in a region (if any)
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_locate_num_blocks =  pnga_locate_num_blocks
+#endif
 
-  if (!pnga_is_mirrored(g_a)) return ret;
-  GA_PUSH_NAME("ga_num_mirrored_seg");
-  ndim = GA[handle].ndim;
-  first = GA[handle].first;
-  last = GA[handle].last;
-  nblock = GA[handle].nblock;
-  for (i=0; i<ndim; i++) {
-    map_offset[i] = 0;
-    for (j=0; j<i; j++) {
-      map_offset[i] += nblock[j];
-    }
-  }
-  inode = ga_cluster_nodeid_();
-  nproc = ga_cluster_nprocs_(&inode);
-  /* loop over all data blocks on this node to find out how many
-   * separate data blocks correspond to this segment of shared
-   * memory */
-  istart = 0;
-  for (i=0; i<nproc; i++) {
-    pnga_distribution(g_a,&i,lower,upper);
-    icheck = 0;
-    /* see if processor corresponds to block of array data
-     * that contains start of shared memory segment */
-    if (!istart) {
-      icheck = 1;
-      for (j=0; j<ndim; j++) {
-        if (first[j] < (C_Integer)lower[j] || first[j] > (C_Integer)upper[j]) {
-          icheck = 0;
-          break;
-        }
-      }
-    }
-    if (icheck && !istart) {
-      istart = 1;
-    }
-    icheck = 1;
-    for (j=0; j<ndim; j++) {
-      if (last[j] < (C_Integer)lower[j] || last[j] > (C_Integer)upper[j]) {
-        icheck = 0;
-        break;
-      }
-    }
-    if (istart) ret++;
-    if (istart && icheck) {
-      GA_POP_NAME;
-      return ret;
-    }
-  }
-  GA_POP_NAME;
-  return ret;
-}
-
-/*\ Get patch corresponding to one of the blocks of data
- *  identified using ga_num_mirrored_seg_
-\*/
-void FATR ga_get_mirrored_block_(Integer *g_a,
-                               Integer *npatch,
-                               Integer *lo,
-                               Integer *hi)
-{
-  Integer handle = *g_a + GA_OFFSET;
-  Integer i, j, ndim, map_offset[MAXDIM];
-  C_Integer *first, *last;
-  int *nblock;
-  Integer lower[MAXDIM], upper[MAXDIM];
-  Integer istart, nproc, inode;
-  Integer ipatch, tpatch, icheck;
-
-  /* Assume fortran indexing for npatch */
-  tpatch = *npatch - 1;
-
-  if (!pnga_is_mirrored(g_a)) {
-    for (j=0; j<GA[handle].ndim; j++) {
-      lo[j] = 0;
-      hi[j] = -1;
-    }
-    return;
-  }
-  GA_PUSH_NAME("ga_get_mirrored_block");
-  ndim = GA[handle].ndim;
-  first = GA[handle].first;
-  last = GA[handle].last;
-  nblock = GA[handle].nblock;
-  for (i=0; i<ndim; i++) {
-    map_offset[i] = 0;
-    for (j=0; j<i; j++) {
-      map_offset[i] += nblock[j];
-    }
-  }
-  inode = ga_cluster_nodeid_();
-  nproc = ga_cluster_nprocs_(&inode);
-  /* loop over all data blocks on this node to find out how many
-   * separate data blocks correspond to this segment of shared
-   * memory */
-  ipatch = 0;
-  istart = 0;
-  for (i=0; i<nproc; i++) {
-    pnga_distribution(g_a,&i,lower,upper);
-    icheck = 0;
-    /* see if processor corresponds to block of array data
-     * that contains start of shared memory segment */
-    if (!istart) {
-      icheck = 1;
-      for (j=0; j<ndim; j++) {
-        if (first[j] < (C_Integer)lower[j] || first[j] > (C_Integer)upper[j]) {
-          icheck = 0;
-          break;
-        }
-      }
-    }
-    if (icheck && !istart) {
-      istart = 1;
-    }
-    icheck = 1;
-    for (j=0; j<ndim; j++) {
-      if (last[j] < (C_Integer)lower[j] || last[j] > (C_Integer)upper[j]) {
-        icheck = 0;
-        break;
-      }
-    }
-    if (istart && ipatch == tpatch) {
-      if (!icheck) {
-        if (ipatch == 0) {
-          for (j=0; j<ndim; j++) {
-            lo[j] = (Integer)first[j];
-            hi[j] = upper[j];
-          }
-        } else {
-          for (j=0; j<ndim; j++) {
-            lo[j] = lower[j];
-            hi[j] = upper[j];
-          }
-        }
-      } else {
-        if (ipatch == 0) {
-          for (j=0; j<ndim; j++) {
-            lo[j] = (Integer)first[j];
-            hi[j] = (Integer)last[j];
-          }
-        } else {
-          for (j=0; j<ndim; j++) {
-            lo[j] = lower[j];
-            hi[j] = (Integer)last[j];
-          }
-        }
-      }
-      GA_POP_NAME;
-      return;
-    }
-    if (istart) ipatch++;
-  }
-  for (j=0; j<ndim; j++) {
-    lo[j] = 0;
-    hi[j] = -1;
-  }
-  GA_POP_NAME;
-  return;
-}
-
-/*\ do a fast merge of all copies of a mirrored array only passing
- *  around non-zero data
-\*/
-void FATR ga_fast_merge_mirrored_(Integer *g_a)
-{
-  Integer handle = GA_OFFSET + *g_a;
-  Integer inode, new_inode, nprocs, nnodes, new_nnodes, zero, zproc;
-  C_Integer *map, *dims, *width;
-  int *blocks;
-  Integer i, j, index[MAXDIM], itmp, ndim;
-  Integer nelem, count, type;
-  int slength, rlength, nsize;
-  char  *bptr, *nptr, *fptr;
-  Integer bytes;
-  Integer ilast,inext,id;
-  int Save_default_group;
-  int local_sync_begin, local_sync_end;
-
-  /* declarations for message exchanges */
-  int next_node,next;
-  int armci_tag = 88000;
-  char *dstn,*srcp;
-  int next_nodel=0;
-  int dummy=1, LnB, powof2nodes;
-  int groupA, groupB, sizeB;
-  void armci_util_wait_int(volatile int *,int,int);
-
-  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-  _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
-  if (local_sync_begin) ga_sync_();
-  /* don't perform update if node is not mirrored */
-  if (!pnga_is_mirrored(g_a)) return;
-  
-  /* If default group is not world group, change default group to world group
-     temporarily */
-  Save_default_group = GA_Default_Proc_Group;
-  GA_Default_Proc_Group = -1;
-
-  GA_PUSH_NAME("ga_fast_merge_mirrored");
-
-  inode = ga_cluster_nodeid_();
-  /* BJP printf("p[%d] inode: %d\n",GAme,inode); */
-  nnodes = ga_cluster_nnodes_(); 
-  nprocs = ga_cluster_nprocs_(&inode);
-  zero = 0;
-
-  powof2nodes=1;
-  LnB = floor(log(nnodes)/log(2))+1;
-  if(pow(2,LnB-1)<nnodes){powof2nodes=0;}
-  /* Partition nodes into groups A and B. Group A contains a power of 2
-   * nodes, group B contains the remainder */
-  if (powof2nodes) {
-    groupA = 1;
-    groupB = 0;
-    sizeB = 0;
-    new_nnodes = nnodes;
-  } else {  
-    new_nnodes = pow(2,LnB-1);
-    sizeB = nnodes-new_nnodes;
-    if (inode<2*sizeB) {
-      if (inode%2 == 0) {
-        groupA = 1;
-        groupB = 0;
-      } else {
-        groupA = 0;
-        groupB = 1;
-      }
-    } else {
-      groupA = 1;
-      groupB = 0;
-    }
-  }
-  /*if (groupA) printf("p[%d] Group A\n",GAme);
-  if (groupB) printf("p[%d] Group B\n",GAme);*/
-
-  zproc = ga_cluster_procid_(&inode, &zero);
-  map = GA[handle].mapc;
-  blocks = GA[handle].nblock;
-  dims = GA[handle].dims;
-  width = GA[handle].width;
-  type = GA[handle].type;
-  ndim = GA[handle].ndim;
-
-  /* Check whether or not all nodes contain the same number
-     of processors. */
-  if (nnodes*nprocs == pnga_nnodes())  {
-    /* check to see if there is any buffer space between the data
-       associated with each processor that needs to be zeroed out
-       before performing the merge */
-    if (zproc == GAme) {
-      nsize = 0;
-      for (i=0; i<nprocs; i++) {
-        /* Find out from mapc data how many elements are supposed to be located
-           on this processor. Start by converting processor number to indices */
-        itmp = i;
-        for (j=0; j<ndim; j++) {
-          index[j] = itmp%(Integer)blocks[j];
-          itmp = (itmp - index[j])/(Integer)blocks[j];
-        }
-
-        nelem = 1;
-        count = 0;
-        for (j=0; j<ndim; j++) {
-          if (index[j] < (Integer)blocks[j]-1) {
-            nelem *= (Integer)(map[index[j]+1+count] - map[index[j]+count]
-                   + 2*width[j]);
-          } else {
-            nelem *= (Integer)(dims[j] - map[index[j]+count] + 1 + 2*width[j]);
-          }
-          count += (Integer)blocks[j];
-        }
-        /* We now have the total number of elements located on this processor.
-           Find out if the location of the end of this data set matches the
-           origin of the data on the next processor. If not, then zero data in
-           the gap. */
-        nelem *= GAsizeof(type);
-        nsize += (int)nelem;
-        bptr = GA[handle].ptr[ga_cluster_procid_(&inode, &i)];
-        bptr += nelem;
-        if (i<nprocs-1) {
-          j = i+1;
-          nptr = GA[handle].ptr[ga_cluster_procid_(&inode, &j)];
-          if (bptr != nptr) {
-            bytes = (long)nptr - (long)bptr;
-            nsize += (int)bytes;
-            bzero(bptr, bytes);
-          }
-        }
-      }
-      /* The gaps have now been zeroed out. Begin exchange of data */
-      /* This algorith is based on the armci_msg_barrier code */
-      /* Locate pointers to beginning and end of non-zero data */
-      for (i=0;i<ndim;i++) index[i] = (Integer)GA[handle].first[i];
-      i = (int)pnga_locate(g_a, index, &id);
-      gam_Loc_ptr(id, handle, GA[handle].first, &fptr);
-      for (i=0;i<ndim;i++) index[i] = (Integer)GA[handle].last[i];
-      slength = (int)GA[handle].shm_length;
-      if(nnodes>1){
-        if(!powof2nodes && inode < 2*sizeB && groupA) {
-          ilast = inode + 1;
-          next_nodel = ga_cluster_procid_(&ilast, &zero);
-        } else if (groupB) {
-          ilast = inode - 1;
-          next_nodel = ga_cluster_procid_(&ilast, &zero);
-        }
-        ilast = ((int)pow(2,(LnB-1)))^inode;
-        /*printf("p[%d] Value of next nodel: %d\n",GAme,next_nodel);*/
-        /*three step exchange if num of nodes is not pow of 2*/
-        /*divide _nodes_ into two sets, first set "pow2" will have a power of 
-         *two nodes, the second set "not-pow2" will have the remaining.
-         *Each node in the not-pow2 set will have a pair node in the pow2 set.
-         *Step-1:each node in pow2 set with a pair in not-pow2 set first recvs 
-         *      :a message from its pair in not-pow2. 
-         *step-2:All nodes in pow2 do a Rercusive Doubling based Pairwise exng.
-         *step-3:Each node in pow2 with a pair in not-pow2 snds msg to its 
-         *      :pair node.
-         *if num of nodes a pow of 2, only step 2 executed
-         */
-        if(/*ilast>inode &&*/ groupA){ /*the pow2 set of procs*/
-          /* Use actual index of processor you are recieving from in group B
-           * and perform first exchange (for non-power of 2) */
-          if(!powof2nodes && inode < 2*sizeB){ /*step 1*/
-            dstn = (char *)&rlength;
-            armci_msg_rcv(armci_tag, dstn,4,NULL,next_nodel);
-            if (GAme > next_nodel) {
-              dstn = fptr - rlength;
-            } else {
-              dstn = fptr + slength;
-            }
-            armci_msg_rcv(armci_tag, dstn,rlength,NULL,next_nodel);
-            if (GAme > next_nodel)
-              fptr -= rlength;
-            slength += rlength;
-          }
-          /* Assign inode = new_inode */
-          if (inode < 2*sizeB) {
-            new_inode  = inode/2;
-          } else {
-            new_inode  = inode - sizeB;
-          }
-          /*LnB=1;*/ /*BJP*/
-          for(i=0;i<LnB-1;i++){ /*step 2*/
-            next=((int)pow(2,i))^new_inode;
-            if(next>=0 && next<new_nnodes){
-              /* Translate back from relative_next_node to actual_next_node */
-              if (next < sizeB)
-                inext = (Integer)2*next;
-              else
-                inext = (Integer)(next+sizeB);
-              next_node = ga_cluster_procid_(&inext, &zero);
-              srcp = (char *)&slength;
-              dstn = (char *)&rlength;
-              if(next_node > GAme){
-                armci_msg_snd(armci_tag, srcp,4,next_node);
-                armci_msg_rcv(armci_tag, dstn,4,NULL,next_node);
-              }
-              else{
-                /*would we gain anything by doing a snd,rcv instead of rcv,snd*/
-                armci_msg_rcv(armci_tag, dstn,4,NULL,next_node);
-                armci_msg_snd(armci_tag, srcp,4,next_node);
-              }
-              srcp = fptr;
-              if (GAme > next_node) {
-                dstn = fptr - rlength;
-              } else {
-                dstn = fptr + slength;
-              }
-              /* Translate back from relative_next_node to actual_next_node */
-              if(next_node > GAme){
-                armci_msg_snd(armci_tag, srcp,slength,next_node);
-                armci_msg_rcv(armci_tag, dstn,rlength,NULL,next_node);
-              }
-              else{
-                /*would we gain anything by doing a snd,rcv instead of rcv,snd*/
-                armci_msg_rcv(armci_tag, dstn,rlength,NULL,next_node);
-                armci_msg_snd(armci_tag, srcp,slength,next_node);
-              }
-              if (GAme > next_node)
-                fptr -= rlength;
-              slength += rlength;
-            }
-          }
-              /* Use actual index of processor that you already recieved from
-               * and that you will be sending to in group B*/
-          if(!powof2nodes && inode < 2*sizeB){ /*step 3*/
-            srcp = GA[handle].ptr[GAme];
-            armci_msg_snd(armci_tag, srcp,nsize,next_nodel);
-          }
-        }
-        else if (groupB) {
-          /* Send data from group B to group A and then wait to
-           * recieve data from group A to group B */
-          if(!powof2nodes){
-            /* printf("p[%d] Sending (1) data to %d\n",GAme,next_nodel); */
-            srcp = (char *)&slength;
-            armci_msg_snd(armci_tag, srcp,4,next_nodel);
-            srcp = fptr;
-            armci_msg_snd(armci_tag, srcp,slength,next_nodel);
-            dstn = GA[handle].ptr[GAme];
-            rlength = nsize;
-            armci_msg_rcv(armci_tag, dstn,rlength,NULL,next_nodel);
-            /*printf("p[%d] Recieved (2) data from %d\n",GAme,next_nodel);*/
-          }
-        }
-      }
-      /*printf("p[%d] About to execute armci_msg_gop_scope\n",GAme);*/
-      armci_msg_gop_scope(SCOPE_NODE,&dummy,1,"+",ARMCI_INT);
-    } else {
-      /*printf("p[%d] About to execute armci_msg_gop_scope\n",GAme);*/
-      armci_msg_gop_scope(SCOPE_NODE,&dummy,1,"+",ARMCI_INT);
-    }
-    /*printf("p[%d] Executed armci_msg_gop_scope\n",GAme);*/
-  } else {
-    ga_merge_mirrored_(g_a);
-  }
-
-  GA_Default_Proc_Group = Save_default_group;
-  if (local_sync_end) ga_sync_();
-  GA_POP_NAME;
-}
-
-/*\ RETURN THE TOTAL NUMBER OF BLOCKS IN REGION (IF ANY)
-\*/
-Integer FATR nga_locate_num_blocks_(Integer *g_a, Integer *lo, Integer *hi)
+Integer pnga_locate_num_blocks(Integer *g_a, Integer *lo, Integer *hi)
 {
   Integer ga_handle = GA_OFFSET + *g_a;
   Integer ndim = GA[ga_handle].ndim;
@@ -4729,8 +4303,14 @@ int ga_recover_arrays(Integer *gas, int num)
     }
 }
 #endif
+/**
+ *  Return the world group ID of the pid in process group grp
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_absolute_id = pnga_pgroup_absolute_id
+#endif
 
-Integer FATR ga_pgroup_absolute_id_(Integer *grp, Integer *pid) 
+Integer FATR pnga_pgroup_absolute_id(Integer *grp, Integer *pid) 
 {
 #ifdef MPI
   if(*grp == GA_World_Proc_Group) /*a.k.a -1*/

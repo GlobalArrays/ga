@@ -551,8 +551,8 @@ void FATR ga_update1_ghosts_(Integer *g_a)
           }
         }
         /* locate processor with this data */
-        if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
-            GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+        if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
+            GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
             slo_rem, shi_rem, *g_a);
 
         for (ipx = 0; ipx < np; ipx++) {
@@ -674,8 +674,8 @@ void FATR ga_update1_ghosts_(Integer *g_a)
           }
         }
         /* locate processor with this data */
-        if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
-            GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+        if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
+            GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
             slo_rem, shi_rem, *g_a);
 
         for (ipx = 0; ipx < np; ipx++) {
@@ -891,8 +891,8 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
       }
     }
     /* Locate remote processor to which data must be sent */
-    if (!nga_locate_region_(g_a, tlo_rem, thi_rem, _ga_map,
-       GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+    if (!pnga_locate_region(g_a, tlo_rem, thi_rem, _ga_map,
+       GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
        tlo_rem, thi_rem, *g_a);
     if (np > 1) {
       fprintf(stderr,"More than one remote processor found\n");
@@ -1130,8 +1130,8 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
       get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                            dims, width);
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rem, shi_rem, *g_a);
 
       /* Get actual coordinates of desired location of remote
@@ -1189,8 +1189,8 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
       get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                            dims, width);
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rem, shi_rem, *g_a);
 
       /* Get actual coordinates of desired chunk of remote
@@ -1391,8 +1391,8 @@ logical FATR ga_set_update4_info_(Integer *g_a)
       get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
                            dims, width);
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, *g_a);
       *proc_rem_snd = GA_proclist[0];
       if (p_handle >= 0) {
@@ -1426,8 +1426,8 @@ logical FATR ga_set_update4_info_(Integer *g_a)
         }
       }
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, *g_a);
       *proc_rem_rcv = GA_proclist[0];
       if (p_handle >= 0) {
@@ -1513,8 +1513,8 @@ logical FATR ga_set_update4_info_(Integer *g_a)
       get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
                            dims, width);
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, *g_a);
       *proc_rem_snd = GA_proclist[0];
       if (p_handle >= 0) {
@@ -1548,8 +1548,8 @@ logical FATR ga_set_update4_info_(Integer *g_a)
         }
       }
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, *g_a);
       *proc_rem_rcv = GA_proclist[0];
       if (p_handle >= 0) {
@@ -2016,8 +2016,8 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
       get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
                            dims, width);
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, *g_a);
       proc_rem_snd = GA_proclist[0];
       if (p_handle >= 0) {
@@ -2051,8 +2051,8 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
         }
       }
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, *g_a);
       proc_rem_rcv = GA_proclist[0];
       if (p_handle >= 0) {
@@ -2186,8 +2186,8 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
       get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
                            dims, width);
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, *g_a);
       proc_rem_snd = GA_proclist[0];
       if (p_handle >= 0) {
@@ -2221,8 +2221,8 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
         }
       }
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, *g_a);
       proc_rem_rcv = GA_proclist[0];
       if (p_handle >= 0) {
@@ -2527,8 +2527,8 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
       get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                            dims, width);
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rem, shi_rem, *g_a);
 
       /* Get actual coordinates of desired location of remote
@@ -2595,8 +2595,8 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
       get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                            dims, width);
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rem, shi_rem, *g_a);
 
       /* Get actual coordinates of desired chunk of remote
@@ -2802,8 +2802,8 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
       }
     }
     /* Locate remote processor to which data must be sent */
-    if (!nga_locate_region_(g_a, tlo_rem, thi_rem, _ga_map,
-       GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+    if (!pnga_locate_region(g_a, tlo_rem, thi_rem, _ga_map,
+       GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
        tlo_rem, thi_rem, *g_a);
     if (np > 1) {
       fprintf(stderr,"More than one remote processor found\n");
@@ -3135,8 +3135,8 @@ logical ga_set_update5_info_(Integer *g_a)
 
         get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                              dims, width);
-        if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
-            GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+        if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
+            GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
             slo_rem, shi_rem, *g_a);
 
         *proc_rem = (Integer)GA_proclist[0];
@@ -3201,8 +3201,8 @@ logical ga_set_update5_info_(Integer *g_a)
         get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                              dims, width);
 
-        if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
-            GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+        if (!pnga_locate_region(g_a, slo_rem, shi_rem, _ga_map,
+            GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
             slo_rem, shi_rem, *g_a);
 
         *proc_rem = (Integer)GA_proclist[0];
@@ -3451,8 +3451,8 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
       get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
                            dims, width);
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, *g_a);
       /* find out if this processor is on the same node */
       wproc = GA_proclist[0];
@@ -3489,8 +3489,8 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
         }
       }
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, *g_a);
       wproc = GA_proclist[0];
       if (p_handle >= 0) {
@@ -3641,8 +3641,8 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
       get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
                            dims, width);
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, *g_a);
       wproc = GA_proclist[0];
       if (p_handle >= 0) {
@@ -3678,8 +3678,8 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
         }
       }
       /* locate processor with this data */
-      if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
-          GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+      if (!pnga_locate_region(g_a, slo_rcv, shi_rcv, _ga_map,
+          GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
           slo_rcv, shi_rcv, *g_a);
       wproc = GA_proclist[0];
       if (p_handle >= 0) {
@@ -3943,8 +3943,8 @@ logical FATR ga_update7_ghosts_(Integer *g_a)
       }
     }
     /* Locate remote processor to which data must be sent */
-    if (!nga_locate_region_(g_a, tlo_rem, thi_rem, _ga_map,
-       GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+    if (!pnga_locate_region(g_a, tlo_rem, thi_rem, _ga_map,
+       GA_proclist, &np)) ga_RegionError(pnga_ndim(g_a),
        tlo_rem, thi_rem, *g_a);
     if (np > 1) {
       fprintf(stderr,"More than one remote processor found\n");

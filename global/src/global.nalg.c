@@ -406,22 +406,12 @@ int local_sync_begin,local_sync_end,use_put;
        /* source array is distributed and destination
           array is mirrored */
        ga_zero_(g_b);
-       if (ndim == 1) {
-         nseg = ga_num_mirrored_seg_(g_b);
-         for (i=0; i< nseg; i++) {
-           ga_get_mirrored_block_(g_b, &i, lo, hi);
-           nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-           nga_get_(g_a, lo, hi, ptr_b, ld);
-         }
-         ga_fast_merge_mirrored_(g_b);
-       } else {
-         pnga_distribution(g_a, &me_a, lo, hi);
-         if (lo[0] > 0) {
-           nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-           nga_put_(g_b, lo, hi, ptr_a, ld);
-         }
-         ga_merge_mirrored_(g_b);
+       pnga_distribution(g_a, &me_a, lo, hi);
+       if (lo[0] > 0) {
+         nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+         nga_put_(g_b, lo, hi, ptr_a, ld);
        }
+       pnga_merge_mirrored(g_b);
      }
    }
 

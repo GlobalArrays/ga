@@ -1661,7 +1661,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0) need_scaling =0;}
    else if( *(float*)beta ==0) need_scaling =0;
 
-   ga_mask_sync_(&ZERO_I, &ZERO_I);
+   pnga_mask_sync(&ZERO_I, &ZERO_I);
    if(need_scaling) ga_scale_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
    else  ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
 

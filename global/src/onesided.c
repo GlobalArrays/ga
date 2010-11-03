@@ -416,7 +416,7 @@ void FATR ga_nbwait_(Integer *nbhandle)
 /*\ A common routine called by both non-blocking and blocking GA put calls.
 \*/
 #ifdef __crayx1
-#pragma _CRI inline nga_locate_region_
+#pragma _CRI inline pnga_locate_region
 #endif
 void ngai_put_common(Integer *g_a, 
                    Integer *lo,
@@ -461,8 +461,8 @@ void ngai_put_common(Integer *g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    if(!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np ))
-      ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+    if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
+      ga_RegionError(pnga_ndim(g_a), lo, hi, *g_a);
 
 #ifndef NO_GA_STATS
     gam_CountElems(ndim, lo, hi, &elems);
@@ -981,8 +981,8 @@ void nga_get_common(Integer *g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    if(!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np ))
-      ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+    if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
+      ga_RegionError(pnga_ndim(g_a), lo, hi, *g_a);
 
     /* get total size of patch */
 #ifndef NO_GA_STATS
@@ -1570,8 +1570,8 @@ void nga_acc_common(Integer *g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    if(!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np ))
-      ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+    if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
+      ga_RegionError(pnga_ndim(g_a), lo, hi, *g_a);
 
 #ifndef NO_GA_STATS
     gam_CountElems(ndim, lo, hi, &elems);
@@ -2688,7 +2688,7 @@ void FATR ga_access_(g_a, ilo, ihi, jlo, jhi, index, ld)
    Integer *g_a, *ilo, *ihi, *jlo, *jhi, *ld;
    AccessIndex *index;
 {
-Integer lo[2], hi[2],ndim=ga_ndim_(g_a);
+Integer lo[2], hi[2],ndim=pnga_ndim(g_a);
 
      if(ndim != 2) 
         pnga_error("ga_access: 2D API cannot be used for array dimension",ndim);
@@ -5060,8 +5060,8 @@ void FATR nga_strided_put_(Integer *g_a,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    if (!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np))
-      ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
+      ga_RegionError(pnga_ndim(g_a), lo, hi, *g_a);
 
     /* Loop over all processors containing a portion of patch */
     gaPermuteProcList(np);
@@ -5425,8 +5425,8 @@ void FATR nga_strided_get_(Integer *g_a,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    if (!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np))
-      ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
+      ga_RegionError(pnga_ndim(g_a), lo, hi, *g_a);
 
     /* Loop over all processors containing a portion of patch */
     gaPermuteProcList(np);
@@ -5803,8 +5803,8 @@ void FATR nga_strided_acc_(Integer *g_a,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    if (!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np))
-      ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
+      ga_RegionError(pnga_ndim(g_a), lo, hi, *g_a);
 
     /* Loop over all processors containing a portion of patch */
     gaPermuteProcList(np);
