@@ -184,8 +184,8 @@ void ngai_copy_patch(char *trans,
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   a_grp = ga_get_pgroup_(g_a);
   b_grp = ga_get_pgroup_(g_b);
-  me_a = ga_pgroup_nodeid_(&a_grp);
-  me_b = ga_pgroup_nodeid_(&b_grp);
+  me_a = pnga_pgroup_nodeid(&a_grp);
+  me_b = pnga_pgroup_nodeid(&b_grp);
   anproc = ga_get_pgroup_size_(&a_grp);
   bnproc = ga_get_pgroup_size_(&b_grp);
   if (anproc <= bnproc) {
@@ -199,8 +199,8 @@ void ngai_copy_patch(char *trans,
   if(local_sync_begin) {
     if (anproc <= bnproc) {
       ga_pgroup_sync_(&a_grp);
-    } else if (a_grp == ga_pgroup_get_world_() &&
-        b_grp == ga_pgroup_get_world_()) {
+    } else if (a_grp == pnga_pgroup_get_world() &&
+        b_grp == pnga_pgroup_get_world()) {
       ga_sync_();
     } else {
       ga_pgroup_sync_(&b_grp);
@@ -820,8 +820,8 @@ void ngai_copy_patch(char *trans,
   if(local_sync_end) {
     if (anproc <= bnproc) {
       ga_pgroup_sync_(&a_grp);
-    } else if (a_grp == ga_pgroup_get_world_() &&
-        b_grp == ga_pgroup_get_world_()) {
+    } else if (a_grp == pnga_pgroup_get_world() &&
+        b_grp == pnga_pgroup_get_world()) {
       ga_sync_();
     } else {
       ga_pgroup_sync_(&b_grp);
@@ -1024,7 +1024,7 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
   b_grp = ga_get_pgroup_(g_b);
   if (a_grp != b_grp)
     pnga_error("Both arrays must be defined on same group",0L);
-  me = ga_pgroup_nodeid_(&a_grp);
+  me = pnga_pgroup_nodeid(&a_grp);
 
   pnga_inquire(g_a, &atype, &andim, adims);
   pnga_inquire(g_b, &btype, &bndim, bdims);

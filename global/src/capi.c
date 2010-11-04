@@ -799,13 +799,25 @@ int NGA_Allocate(int g_a)
 int GA_Pgroup_nodeid(int grp_id)
 {
     Integer agrp_id = (Integer)grp_id;
-    return (int)ga_pgroup_nodeid_(&agrp_id);
+    return (int)wnga_pgroup_nodeid(&agrp_id);
+}
+
+int NGA_Pgroup_nodeid(int grp_id)
+{
+    Integer agrp_id = (Integer)grp_id;
+    return (int)wnga_pgroup_nodeid(&agrp_id);
 }
 
 int GA_Pgroup_nnodes(int grp_id)
 {
     Integer agrp_id = (Integer)grp_id;
-    return (int)ga_pgroup_nnodes_(&agrp_id);
+    return (int)wnga_pgroup_nnodes(&agrp_id);
+}
+
+int NGA_Pgroup_nnodes(int grp_id)
+{
+    Integer agrp_id = (Integer)grp_id;
+    return (int)wnga_pgroup_nnodes(&agrp_id);
 }
 
 int GA_Pgroup_create(int *list, int count)
@@ -817,7 +829,21 @@ int GA_Pgroup_create(int *list, int count)
     _ga_map_capi = (Integer*)malloc(count * sizeof(Integer));
     for (i=0; i<count; i++)
        _ga_map_capi[i] = (Integer)list[i];
-    grp_id = (int)ga_pgroup_create_(_ga_map_capi,&acount);
+    grp_id = (int)wnga_pgroup_create(_ga_map_capi,&acount);
+    free(_ga_map_capi);
+    return grp_id;
+}
+
+int NGA_Pgroup_create(int *list, int count)
+{
+    Integer acount = (Integer)count;
+    int i;
+    int grp_id;
+    Integer *_ga_map_capi;
+    _ga_map_capi = (Integer*)malloc(count * sizeof(Integer));
+    for (i=0; i<count; i++)
+       _ga_map_capi[i] = (Integer)list[i];
+    grp_id = (int)wnga_pgroup_create(_ga_map_capi,&acount);
     free(_ga_map_capi);
     return grp_id;
 }
@@ -825,22 +851,41 @@ int GA_Pgroup_create(int *list, int count)
 int GA_Pgroup_destroy(int grp)
 {
     Integer grp_id = (Integer)grp;
-    return (int)ga_pgroup_destroy_(&grp_id);
+    return (int)wnga_pgroup_destroy(&grp_id);
+}
+
+int NGA_Pgroup_destroy(int grp)
+{
+    Integer grp_id = (Integer)grp;
+    return (int)wnga_pgroup_destroy(&grp_id);
 }
 
 int GA_Pgroup_split(int grp_id, int num_group)
 {
     Integer anum = (Integer)num_group;
     Integer grp  = (Integer)grp_id;
-    return (int)ga_pgroup_split_(&grp, &anum);
+    return (int)wnga_pgroup_split(&grp, &anum);
 }
 
-int GA_Pgroup_split_irreg(int grp_id, int color, int key)
+int NGA_Pgroup_split(int grp_id, int num_group)
+{
+    Integer anum = (Integer)num_group;
+    Integer grp  = (Integer)grp_id;
+    return (int)wnga_pgroup_split(&grp, &anum);
+}
+
+int GA_Pgroup_split_irreg(int grp_id, int color)
 {
     Integer acolor = (Integer)color;
-    Integer akey = (Integer)key;
     Integer grp  = (Integer)grp_id;
-    return (int)ga_pgroup_split_irreg_(&grp, &acolor, &akey);
+    return (int)wnga_pgroup_split_irreg(&grp, &acolor);
+}
+
+int NGA_Pgroup_split_irreg(int grp_id, int color)
+{
+    Integer acolor = (Integer)color;
+    Integer grp  = (Integer)grp_id;
+    return (int)wnga_pgroup_split_irreg(&grp, &acolor);
 }
 
 void GA_Update_ghosts(int g_a)
@@ -1086,25 +1131,49 @@ void GA_Zero(int g_a)
 
 int GA_Pgroup_get_default()
 {
-    int value = (int)ga_pgroup_get_default_();
+    int value = (int)wnga_pgroup_get_default();
+    return value;
+}
+
+int NGA_Pgroup_get_default()
+{
+    int value = (int)wnga_pgroup_get_default();
     return value;
 }
 
 void GA_Pgroup_set_default(int p_handle)
 {
     Integer grp = (Integer)p_handle;
-    ga_pgroup_set_default_(&grp);
+    pnga_pgroup_set_default(&grp);
+}
+
+void NGA_Pgroup_set_default(int p_handle)
+{
+    Integer grp = (Integer)p_handle;
+    pnga_pgroup_set_default(&grp);
 }
 
 int GA_Pgroup_get_mirror()
 {
-    int value = (int)ga_pgroup_get_mirror_();
+    int value = (int)wnga_pgroup_get_mirror();
+    return value;
+}
+
+int NGA_Pgroup_get_mirror()
+{
+    int value = (int)wnga_pgroup_get_mirror();
     return value;
 }
 
 int GA_Pgroup_get_world()
 {
-    int value = (int)ga_pgroup_get_world_();
+    int value = (int)wnga_pgroup_get_world();
+    return value;
+}
+
+int NGA_Pgroup_get_world()
+{
+    int value = (int)wnga_pgroup_get_world();
     return value;
 }
 
@@ -2175,7 +2244,7 @@ void NGA_Proc_topology(int g_a, int proc, int coord[])
      Integer p=(Integer)proc;
      Integer ndim = wnga_ndim(&a);
      Integer _ga_work[MAXDIM];
-     nga_proc_topology_(&a, &p, _ga_work);
+     wnga_proc_topology(&a, &p, _ga_work);
      COPY(int,_ga_work, coord,ndim);  
 }
 

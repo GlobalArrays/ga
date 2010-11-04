@@ -66,7 +66,7 @@ void FATR ga_zero_(Integer *g_a)
 
   if(local_sync_begin) ga_pgroup_sync_(&p_handle);
 
-  me = ga_pgroup_nodeid_(&p_handle);
+  me = pnga_pgroup_nodeid(&p_handle);
 
   gai_check_handle(g_a, "ga_zero");
   GA_PUSH_NAME("ga_zero");
@@ -257,8 +257,8 @@ int local_sync_begin,local_sync_end,use_put;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    a_grp = ga_get_pgroup_(g_a);
    b_grp = ga_get_pgroup_(g_b);
-   me_a = ga_pgroup_nodeid_(&a_grp);
-   me_b = ga_pgroup_nodeid_(&b_grp);
+   me_a = pnga_pgroup_nodeid(&a_grp);
+   me_b = pnga_pgroup_nodeid(&b_grp);
    anproc = ga_get_pgroup_size_(&a_grp);
    bnproc = ga_get_pgroup_size_(&b_grp);
    num_blocks_a = ga_total_blocks_(g_a);
@@ -273,8 +273,8 @@ int local_sync_begin,local_sync_end,use_put;
    if(local_sync_begin) {
      if (anproc <= bnproc) {
        ga_pgroup_sync_(&a_grp);
-     } else if (a_grp == ga_pgroup_get_world_() &&
-                b_grp == ga_pgroup_get_world_()) {
+     } else if (a_grp == pnga_pgroup_get_world() &&
+                b_grp == pnga_pgroup_get_world()) {
        ga_sync_();
      } else {
        ga_pgroup_sync_(&b_grp);
@@ -418,8 +418,8 @@ int local_sync_begin,local_sync_end,use_put;
    if(local_sync_end) {
      if (anproc <= bnproc) {
        ga_pgroup_sync_(&a_grp);
-     } else if (a_grp == ga_pgroup_get_world_() &&
-                b_grp == ga_pgroup_get_world_()) {
+     } else if (a_grp == pnga_pgroup_get_world() &&
+                b_grp == pnga_pgroup_get_world()) {
        ga_sync_();
      } else {
        ga_pgroup_sync_(&b_grp);
@@ -460,7 +460,7 @@ Integer bndim, bdims[MAXDIM];
    b_grp = ga_get_pgroup_(g_b);
    if (a_grp != b_grp)
      pnga_error("Both arrays must be defined on same group",0L);
-   me = ga_pgroup_nodeid_(&a_grp);
+   me = pnga_pgroup_nodeid(&a_grp);
 
    /* Check to see if either GA is block cyclic distributed */
    num_blocks_a = ga_total_blocks_(g_a);
@@ -741,7 +741,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
   grp_id = ga_get_pgroup_(g_a);
   if(local_sync_begin)ga_pgroup_sync_(&grp_id);
 
-  me = ga_pgroup_nodeid_(&grp_id);
+  me = pnga_pgroup_nodeid(&grp_id);
 
   gai_check_handle(g_a, "ga_scale");
   GA_PUSH_NAME("ga_scale");
@@ -935,7 +935,7 @@ int local_sync_begin,local_sync_end;
    if (a_grp != b_grp || b_grp != c_grp)
      pnga_error("All three arrays must be on same group for ga_add",0L);
 
-   me = ga_pgroup_nodeid_(&a_grp);
+   me = pnga_pgroup_nodeid(&a_grp);
    if((pnga_compare_distr(g_a,g_b) == FALSE) ||
       (pnga_compare_distr(g_a,g_c) == FALSE) ||
        pnga_has_ghosts(g_a) || pnga_has_ghosts(g_b) || pnga_has_ghosts(g_c) ||

@@ -31,7 +31,7 @@
 void ga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root)
 {
 #ifdef ARMCI_COLLECTIVES
-    int p_grp = (int)ga_pgroup_get_default_();
+    int p_grp = (int)pnga_pgroup_get_default();
     if (p_grp > 0) {
 #   ifdef MPI
         int aroot = PGRP_LIST[p_grp].inv_map_proc_list[root];
@@ -88,7 +88,7 @@ MPI_Comm *GA_COMM;
 void ga_msg_sync_()
 {
 #ifdef MPI
-    int p_grp = (int)ga_pgroup_get_default_(); 
+    int p_grp = (int)pnga_pgroup_get_default(); 
     if(p_grp>0)
        armci_msg_group_barrier(&(PGRP_LIST[p_grp].group));
     else
@@ -164,7 +164,7 @@ void gai_pgroup_gop(Integer p_grp, Integer type, void *x, Integer n, char *op)
 
 void gai_gop(Integer type, void *x, Integer n, char *op)
 {
-    Integer p_grp = ga_pgroup_get_default_();
+    Integer p_grp = pnga_pgroup_get_default();
 
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if (p_grp > 0) {

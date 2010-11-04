@@ -639,6 +639,121 @@ Integer FATR nga_pgroup_absolute_id_(Integer *grp, Integer *pid)
   return wnga_pgroup_absolute_id(grp, pid);
 }
 
+Integer FATR ga_pgroup_create_(Integer *list, Integer *count)
+{
+  return wnga_pgroup_create(list, count);
+}
+
+Integer FATR nga_pgroup_create_(Integer *list, Integer *count)
+{
+  return wnga_pgroup_create(list, count);
+}
+
+logical FATR ga_pgroup_destroy_(Integer *grp)
+{
+  return wnga_pgroup_destroy(grp);
+}
+
+logical FATR nga_pgroup_destroy_(Integer *grp)
+{
+  return wnga_pgroup_destroy(grp);
+}
+
+Integer FATR ga_pgroup_get_default_()
+{
+  return wnga_pgroup_get_default();
+}
+
+Integer FATR nga_pgroup_get_default_()
+{
+  return wnga_pgroup_get_default();
+}
+
+Integer FATR ga_pgroup_get_mirror_()
+{
+  return wnga_pgroup_get_mirror();
+}
+
+Integer FATR nga_pgroup_get_mirror_()
+{
+  return wnga_pgroup_get_mirror();
+}
+
+Integer FATR ga_pgroup_get_world_()
+{
+  return wnga_pgroup_get_world();
+}
+
+Integer FATR nga_pgroup_get_world_()
+{
+  return wnga_pgroup_get_world();
+}
+
+void FATR ga_pgroup_set_default_(Integer *grp)
+{
+  wnga_pgroup_set_default(grp);
+}
+
+void FATR nga_pgroup_set_default_(Integer *grp)
+{
+  wnga_pgroup_set_default(grp);
+}
+
+Integer FATR ga_pgroup_split_(Integer *grp, Integer *grp_num)
+{
+  return wnga_pgroup_split(grp, grp_num);
+}
+
+Integer FATR nga_pgroup_split_(Integer *grp, Integer *grp_num)
+{
+  return wnga_pgroup_split(grp, grp_num);
+}
+
+Integer FATR ga_pgroup_split_irreg_(Integer *grp, Integer *mycolor)
+{
+  return wnga_pgroup_split_irreg(grp, mycolor);
+}
+
+Integer FATR nga_pgroup_split_irreg_(Integer *grp, Integer *mycolor)
+{
+  return wnga_pgroup_split_irreg(grp, mycolor);
+}
+
+Integer FATR ga_pgroup_nnodes_(Integer *grp)
+{
+  return wnga_pgroup_nnodes(grp);
+}
+
+Integer FATR nga_pgroup_nnodes_(Integer *grp)
+{
+  return wnga_pgroup_nnodes(grp);
+}
+
+Integer FATR ga_pgroup_nodeid_(Integer *grp)
+{
+  return wnga_pgroup_nodeid(grp);
+}
+
+Integer FATR nga_pgroup_nodeid_(Integer *grp)
+{
+  return wnga_pgroup_nodeid(grp);
+}
+
+void FATR ga_proc_topology_(Integer* g_a, Integer* proc, Integer* pr,
+                            Integer *pc)
+{
+  Integer subscript[2];
+  wnga_proc_topology(g_a, proc, subscript);
+  *pr = subscript[0];
+  *pc = subscript[1];
+}
+
+
+void FATR nga_proc_topology_(Integer* g_a, Integer* proc, Integer* subscript)
+{
+  wnga_proc_topology(g_a, proc, subscript);
+}
+
 void FATR ga_set_debug_(logical *flag)
 {
   wnga_set_debug(flag);

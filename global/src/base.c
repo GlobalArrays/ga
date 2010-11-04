@@ -517,7 +517,7 @@ int bytes;
     for(i=0;i<tmpcount;i++)
             tmplist[i]=i;
     ga_group_is_for_ft=1;
-    GA_Default_Proc_Group = ga_pgroup_create_(tmplist,&tmpcount);
+    GA_Default_Proc_Group = pnga_pgroup_create(tmplist,&tmpcount);
     ga_group_is_for_ft=0;
     if(GAme>=tmpcount)
       ga_irecover(0);
@@ -587,7 +587,7 @@ Integer i, sum=0;
 #   pragma weak wnga_memory_avail =  pnga_memory_avail
 #endif
 
-Integer FATR pnga_memory_avail()
+Integer pnga_memory_avail()
 {
    if(!ga_uses_ma_()) return(GA_total_memory);
    else{
@@ -830,7 +830,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     nlast = -1;
     for (i = 0; i<nproc; i++) {
       /* find block indices corresponding to proc i */
-      nga_proc_topology_(g_a, &i, index);
+      pnga_proc_topology(g_a, &i, index);
       nelems = 1;
       for (j = 0; j<ndim; j++) {
         if (index[j] < GA[handle].nblock[j]-1) {
@@ -886,7 +886,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     }
     if (ifirst > GA[handle].dims[ndim-1]-1) ifirst=GA[handle].dims[ndim-1]-1;
     /* adjust value of ifirst */
-    nga_proc_topology_(g_a, &nfirst, index);
+    pnga_proc_topology(g_a, &nfirst, index);
     subscript[ndim-1] = ifirst;
     for (i=0; i<ndim-1; i++) {
       subscript[i] = 0;
@@ -926,7 +926,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     for (i=0; i<ndim-1; i++) {
       subscript[i] = (hi[i] - lo[i]);
     }
-    nga_proc_topology_(g_a, &nlast, index);
+    pnga_proc_topology(g_a, &nlast, index);
     /*
     icheck = 1;
     for (i=1; i<ndim; i++) {
@@ -1008,9 +1008,14 @@ void gai_init_struct(int handle)
      GA[handle].ndim = -1;
 }
 
-/*\ SIMPLE FUNCTION TO SET DEFAULT PROCESSOR GROUP
-  \*/
-void FATR ga_pgroup_set_default_(Integer *grp)
+/**
+ *  Function to set default processor group
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_set_default = pnga_pgroup_set_default
+#endif
+
+void pnga_pgroup_set_default(Integer *grp)
 {
     int local_sync_begin,local_sync_end;
  
@@ -1034,8 +1039,17 @@ void FATR ga_pgroup_set_default_(Integer *grp)
     }
 #endif
 }
- 
-Integer FATR ga_pgroup_create_(Integer *list, Integer *count)
+
+/**
+ *  Create a new processor group containing count processors with
+ *  process IDs (in the default group) in list. Return process group
+ *  handle.
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_create = pnga_pgroup_create
+#endif
+
+Integer pnga_pgroup_create(Integer *list, Integer *count)
 {
     Integer pgrp_handle, i, j, nprocs, itmp;
     Integer parent;
@@ -1046,7 +1060,7 @@ Integer FATR ga_pgroup_create_(Integer *list, Integer *count)
     ARMCI_Group *tmpgrp;
 #endif
  
-    GA_PUSH_NAME("ga_pgroup_create_");
+    GA_PUSH_NAME("ga_pgroup_create");
 
     /* Allocate temporary arrays */
     tmp_list = (Integer*)malloc(GAnproc*sizeof(Integer));
@@ -1139,13 +1153,18 @@ Integer FATR ga_pgroup_create_(Integer *list, Integer *count)
 #ifdef MPI
     return pgrp_handle;
 #else
-    return ga_pgroup_get_default_();
+    return pnga_pgroup_get_default();
 #endif
 }
 
-/*\ FREE UP PROCESSOR GROUP HANDLE FOR REUSE
-\*/
-logical FATR ga_pgroup_destroy_(Integer *grp)
+/**
+ *  Free up processor group handle for reuse
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_destroy = pnga_pgroup_destroy
+#endif
+
+logical pnga_pgroup_destroy(Integer *grp)
 {
   logical ret = TRUE;
   Integer grp_id = *grp;
@@ -1168,25 +1187,53 @@ logical FATR ga_pgroup_destroy_(Integer *grp)
   return ret;
 }
 
+/**
+ *  Simple function to recover handle of current default processor group
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_get_default = pnga_pgroup_get_default
+#endif
 
-/*\ SIMPLE FUNCTIONS TO RECOVER STANDARD PROCESSOR LISTS
-\*/
-Integer FATR ga_pgroup_get_default_()
+Integer pnga_pgroup_get_default()
 {
   return GA_Default_Proc_Group;
 }
 
-Integer FATR ga_pgroup_get_mirror_()
+/**
+ *  Simple function to recover handle of mirror group
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_get_mirror = pnga_pgroup_get_mirror
+#endif
+
+Integer pnga_pgroup_get_mirror()
 {
   return 0;
 }
 
-Integer FATR ga_pgroup_get_world_()
+/**
+ *  Simple function to recover handle of world group
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_get_world = pnga_pgroup_get_world
+#endif
+
+Integer FATR pnga_pgroup_get_world()
 {
   return -1;
 }
 
-Integer FATR ga_pgroup_split_(Integer *grp, Integer *grp_num)
+/**
+ *  Create new process groups by splitting the group grp into grp_num new
+ *  groups. If mod(size(grp),grp_num) != 0, then one group consists of a smaller
+ *  number of processes than the others. The new group handle is returned by
+ *  the call.
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_split = pnga_pgroup_split
+#endif
+
+Integer pnga_pgroup_split(Integer *grp, Integer *grp_num)
 {
   Integer nprocs, me, default_grp;
   Integer ratio, start, end, grp_size;
@@ -1201,12 +1248,12 @@ Integer FATR ga_pgroup_split_(Integer *grp, Integer *grp_num)
   if(*grp_num<0) pnga_error("Invalid argument (number of groups < 0)",*grp_num);
   if(*grp_num==0) return *grp;
   
-  default_grp = ga_pgroup_get_default_();
-  ga_pgroup_set_default_(grp);
+  default_grp = pnga_pgroup_get_default();
+  pnga_pgroup_set_default(grp);
   
 #if 0 /* This is wrong. Should split only default group and not world group */
-  world_grp = ga_pgroup_get_world_();
-  ga_pgroup_set_default_(&world_grp);
+  world_grp = pnga_pgroup_get_world();
+  pnga_pgroup_set_default(&world_grp);
 #endif
   nprocs = pnga_nnodes();
   me = pnga_nodeid();
@@ -1223,7 +1270,7 @@ Integer FATR ga_pgroup_split_(Integer *grp, Integer *grp_num)
   icnt = 0;
   for (i= 0; i<nprocs; i++) {
     if (icnt%grp_size == 0 && i>0) {
-      grp_id = ga_pgroup_create_(nodes, &grp_size);
+      grp_id = pnga_pgroup_create(nodes, &grp_size);
       if (i == end + 1) {
         ret = grp_id;
       }
@@ -1232,11 +1279,11 @@ Integer FATR ga_pgroup_split_(Integer *grp, Integer *grp_num)
     nodes[icnt] = i;
     icnt++;
   }
-  grp_id = ga_pgroup_create_(nodes, &icnt);
+  grp_id = pnga_pgroup_create(nodes, &icnt);
   if (end == nprocs-1) {
     ret = grp_id;
   }
-  ga_pgroup_set_default_(&default_grp);
+  pnga_pgroup_set_default(&default_grp);
   if(ret==-1) pnga_error("ga_pgroup_split failed",ret);
   /* Free temporary array */
   GA_POP_NAME;
@@ -1244,7 +1291,15 @@ Integer FATR ga_pgroup_split_(Integer *grp, Integer *grp_num)
   return ret;
 }
 
-Integer FATR ga_pgroup_split_irreg_(Integer *grp, Integer *mycolor, Integer *key)
+/**
+ *  Split grp into multiple groups based on the color in mycolor. All processes
+ *  in grp with the same color are assigned to the same group.
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_split_irreg = pnga_pgroup_split_irreg
+#endif
+
+Integer pnga_pgroup_split_irreg(Integer *grp, Integer *mycolor)
 {
   Integer nprocs, me, default_grp, grp_id;
   Integer i, icnt=0;
@@ -1258,8 +1313,8 @@ Integer FATR ga_pgroup_split_irreg_(Integer *grp, Integer *mycolor, Integer *key
 
   if(*mycolor<0) pnga_error("Invalid argument (color < 0)",*mycolor);
 
-  default_grp = ga_pgroup_get_default_();
-  ga_pgroup_set_default_(grp);
+  default_grp = pnga_pgroup_get_default();
+  pnga_pgroup_set_default(grp);
   nprocs = pnga_nnodes();
   me = pnga_nodeid();
 
@@ -1275,9 +1330,9 @@ Integer FATR ga_pgroup_split_irreg_(Integer *grp, Integer *mycolor, Integer *key
      }
   }
 
-  grp_id = ga_pgroup_create_(nodes, &icnt);
+  grp_id = pnga_pgroup_create(nodes, &icnt);
 
-  ga_pgroup_set_default_(&default_grp);
+  pnga_pgroup_set_default(&default_grp);
 
   /* Free temporary arrays */
   free(nodes);
@@ -1616,7 +1671,7 @@ void FATR ga_set_restricted_(Integer *g_a, Integer *list, Integer *size)
   GA[ga_handle].rstrctd_list = (Integer*)malloc((*size)*sizeof(Integer));
   GA[ga_handle].rank_rstrctd = (Integer*)malloc((GAnproc)*sizeof(Integer));
   p_handle = GA[ga_handle].p_handle;
-  if (p_handle == -2) p_handle = ga_pgroup_get_default_();
+  if (p_handle == -2) p_handle = pnga_pgroup_get_default();
   if (p_handle > 0) {
     me = PGRP_LIST[p_handle].map_proc_list[GAme];
     nproc = PGRP_LIST[p_handle].map_nproc;
@@ -1661,7 +1716,7 @@ void FATR ga_set_restricted_range_(Integer *g_a, Integer *lo_proc, Integer *hi_p
   GA[ga_handle].rstrctd_list = (Integer*)malloc((size)*sizeof(Integer));
   GA[ga_handle].rank_rstrctd = (Integer*)malloc((GAnproc)*sizeof(Integer));
   p_handle = GA[ga_handle].p_handle;
-  if (p_handle == -2) p_handle = ga_pgroup_get_default_();
+  if (p_handle == -2) p_handle = pnga_pgroup_get_default();
   if (p_handle > 0) {
     me = PGRP_LIST[p_handle].map_proc_list[GAme];
     nproc = PGRP_LIST[p_handle].map_nproc;
@@ -1889,7 +1944,7 @@ logical pnga_allocate( Integer *g_a)
   /* If only one node is being used and array is mirrored,
    * set proc list to world group */
   if (ga_cluster_nnodes_() == 1 && GA[ga_handle].p_handle == 0) {
-    GA[ga_handle].p_handle = ga_pgroup_get_world_();
+    GA[ga_handle].p_handle = pnga_pgroup_get_world();
   }
 
   /* Set remaining paramters and determine memory size if regular data
@@ -2034,7 +2089,7 @@ logical pnga_create_ghosts_irreg(
         Integer nblock[], /* number of blocks for each dimension in map */
         Integer *g_a)     /* array handle (output) */
 {
-   Integer p_handle = ga_pgroup_get_default_();
+   Integer p_handle = pnga_pgroup_get_default();
    return pnga_create_ghosts_irreg_config(type, ndim, dims, width,
                 array_name, map, nblock, p_handle, g_a);
 }
@@ -2083,7 +2138,7 @@ logical pnga_create(Integer type,
                    Integer *chunk,
                    Integer *g_a)
 {
-  Integer p_handle = ga_pgroup_get_default_();
+  Integer p_handle = pnga_pgroup_get_default();
   return pnga_create_config(type, ndim, dims, array_name, chunk, p_handle, g_a);
 }
 
@@ -2130,7 +2185,7 @@ logical pnga_create_ghosts(Integer type,
                    Integer chunk[],
                    Integer *g_a)
 {
-  Integer p_handle = ga_pgroup_get_default_();
+  Integer p_handle = pnga_pgroup_get_default();
   return pnga_create_ghosts_config(type, ndim, dims, width, array_name,
                   chunk, p_handle, g_a);
 }
@@ -2460,7 +2515,7 @@ Integer ga_handle, lproc;
 #   pragma weak wnga_has_ghosts =  pnga_has_ghosts
 #endif
 
-logical FATR pnga_has_ghosts(Integer* g_a)
+logical pnga_has_ghosts(Integer* g_a)
 {
       int h_a = (int)*g_a + GA_OFFSET;
       return GA[h_a].ghosts;
@@ -2472,7 +2527,7 @@ logical FATR pnga_has_ghosts(Integer* g_a)
 #   pragma weak wnga_ndim =  pnga_ndim
 #endif
 
-Integer FATR pnga_ndim(Integer *g_a)
+Integer pnga_ndim(Integer *g_a)
 {
       ga_check_handleM(g_a,"ga_ndim");       
       return GA[*g_a +GA_OFFSET].ndim;
@@ -2695,7 +2750,7 @@ int maplen = calc_maplen(GA_OFFSET + g_a);
 #   pragma weak wnga_destroy =  pnga_destroy
 #endif
 
-logical FATR pnga_destroy(Integer *g_a)
+logical pnga_destroy(Integer *g_a)
 {
 Integer ga_handle = GA_OFFSET + *g_a, grp_id, grp_me=GAme;
 int local_sync_begin;
@@ -3095,9 +3150,14 @@ void pnga_inquire_name(Integer *g_a, char **array_name)
    *array_name = GA[GA_OFFSET + *g_a].name;
 }
 
-/*\ RETURN PROCESSOR COORDINATES
-\*/
-void FATR nga_proc_topology_(Integer* g_a, Integer* proc, Integer* subscript)
+/**
+ *  Return processor coordinates in processor grid
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_proc_topology =  pnga_proc_topology
+#endif
+
+void pnga_proc_topology(Integer* g_a, Integer* proc, Integer* subscript)
 {
 Integer d, index, ndim, ga_handle = GA_OFFSET + *g_a;
 
@@ -3503,7 +3563,7 @@ int i, n;
 #   pragma weak wnga_nodeid =  pnga_nodeid
 #endif
 
-Integer FATR pnga_nodeid()
+Integer pnga_nodeid()
 {
     if (GA_Default_Proc_Group > 0) {
        return (Integer)PGRP_LIST[GA_Default_Proc_Group].map_proc_list[GAme];
@@ -3512,7 +3572,14 @@ Integer FATR pnga_nodeid()
     }
 }
 
-Integer FATR ga_pgroup_nodeid_(Integer *grp)
+/**
+ * Return ID of calling process in group grp
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_nodeid =  pnga_pgroup_nodeid
+#endif
+
+Integer pnga_pgroup_nodeid(Integer *grp)
 {
     if (*grp >= 0) {
        return (Integer)PGRP_LIST[(int)(*grp)].map_proc_list[GAme];
@@ -3528,7 +3595,7 @@ Integer FATR ga_pgroup_nodeid_(Integer *grp)
 #   pragma weak wnga_nnodes =  pnga_nnodes
 #endif
 
-Integer FATR pnga_nnodes()
+Integer pnga_nnodes()
 {
     if (GA_Default_Proc_Group > 0) {
        return (Integer)PGRP_LIST[GA_Default_Proc_Group].map_nproc;
@@ -3537,7 +3604,14 @@ Integer FATR pnga_nnodes()
     }
 }
 
-Integer FATR ga_pgroup_nnodes_(Integer *grp)
+/**
+ * Return number of nodes in group grp
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_nnodes =  pnga_pgroup_nnodes
+#endif
+
+Integer pnga_pgroup_nnodes(Integer *grp)
 {
     if(*grp >=0 )
        return (Integer)PGRP_LIST[(int)(*grp)].map_nproc;
@@ -3760,18 +3834,6 @@ void pnga_list_nodeid(Integer *list, Integer *num_procs)
       list[proc]=proc;
 }
 
-/*\ RETURN COORDINATES OF ARRAY BLOCK HELD BY A PROCESSOR
-\*/
-void FATR ga_proc_topology_(g_a, proc, pr, pc)
-   Integer *g_a, *proc, *pr, *pc;
-{
-Integer subscript[2];
-   nga_proc_topology_(g_a, proc,subscript);
-   *pr = subscript[0]; 
-   *pc = subscript[1]; 
-}
-
-
 /*\ returns true/false depending on validity of the handle
 \*/
 logical FATR ga_valid_handle_(Integer *g_a)
@@ -3802,7 +3864,7 @@ int gai_getval(int *ptr) { return *ptr;}
 #   pragma weak wnga_mask_sync =  pnga_mask_sync
 #endif
 
-void FATR pnga_mask_sync(Integer *begin, Integer *end)
+void pnga_mask_sync(Integer *begin, Integer *end)
 {
   if (*begin) _ga_sync_begin = 1;
   else _ga_sync_begin = 0;
@@ -4310,7 +4372,7 @@ int ga_recover_arrays(Integer *gas, int num)
 #   pragma weak wnga_pgroup_absolute_id = pnga_pgroup_absolute_id
 #endif
 
-Integer FATR pnga_pgroup_absolute_id(Integer *grp, Integer *pid) 
+Integer pnga_pgroup_absolute_id(Integer *grp, Integer *pid) 
 {
 #ifdef MPI
   if(*grp == GA_World_Proc_Group) /*a.k.a -1*/

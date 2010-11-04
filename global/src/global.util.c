@@ -82,7 +82,7 @@ Integer ndim, dims[2];
   a_grp = ga_get_pgroup_(g_a);
   ga_pgroup_sync_(&a_grp);
   gai_check_handle(g_a, "ga_print");
-  if(ga_pgroup_nodeid_(&a_grp) == 0){
+  if(pnga_pgroup_nodeid(&a_grp) == 0){
 
     pnga_inquire(g_a, &type, &ndim, dims);
     dim1 = dims[0];

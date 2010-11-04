@@ -166,7 +166,7 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
     if(CYCLIC_DISTR_OPT_FLAG) { /* should not be called for irregular matmul */
        int prow, pcol, offset, grp_me;
        Integer a_grp = ga_get_pgroup_(g_a);
-       grp_me = (int)ga_pgroup_nodeid_(&a_grp);
+       grp_me = (int)pnga_pgroup_nodeid(&a_grp);
        prow = GA[GA_OFFSET + *g_a].nblock[0];
        pcol = GA[GA_OFFSET + *g_a].nblock[1];
        offset = (grp_me/prow + grp_me%prow) % pcol;
@@ -205,7 +205,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     if ( max_chunk > CHUNK_SIZE/nbuf) {
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
-      if(avail<MINMEM && ga_pgroup_nodeid_(&a_grp)==0) pnga_error("NotEnough memory",avail);
+      if(avail<MINMEM && pnga_pgroup_nodeid(&a_grp)==0) pnga_error("NotEnough memory",avail);
       *elems = (Integer)(avail*0.9); /* Donot use every last drop */
       
       /* MAX: get the maximum chunk (or, block) size i.e  */
@@ -705,7 +705,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
        if(CYCLIC_DISTR_OPT_FLAG) {
 	  int prow,pcol,grp_me;
 	  Integer a_grp=ga_get_pgroup_(g_a);
-          grp_me = (int)ga_pgroup_nodeid_(&a_grp);
+          grp_me = (int)pnga_pgroup_nodeid(&a_grp);
 	  prow = GA[GA_OFFSET + *g_a].nblock[0];
 	  pcol = GA[GA_OFFSET + *g_a].nblock[1];
 	  offset = (grp_me/prow + grp_me%prow) % pcol;
@@ -870,7 +870,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
     b = b_ar[0];
     c = c_ar[0];
     
-    grp_me = ga_pgroup_nodeid_(&a_grp);
+    grp_me = pnga_pgroup_nodeid(&a_grp);
     if(!need_scaling) ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
 
     compute_flag=0;     /* take care of the last chunk */
@@ -1484,7 +1484,7 @@ void ga_matmul(transa, transb, alpha, beta,
        
 #if DEBUG_
        Integer grp_me;
-       grp_me = ga_pgroup_nodeid_(&a_grp);
+       grp_me = pnga_pgroup_nodeid(&a_grp);
        ga_pgroup_sync_(&a_grp);
        if(me==0) check_result(1, transa, transb, alpha, beta, atype,
 			      g_a, ailo, aihi, ajlo, ajhi,

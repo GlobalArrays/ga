@@ -70,8 +70,19 @@ extern void pnga_nblock(Integer *g_a, Integer *nblock);
 
 extern Integer pnga_nnodes();
 extern Integer pnga_nodeid();
-extern void pnga_set_debug(logical *flag);
 extern Integer pnga_pgroup_absolute_id(Integer *grp, Integer *pid);
+extern Integer pnga_pgroup_create(Integer *list, Integer *count);
+extern logical pnga_pgroup_destroy(Integer *grp);
+extern Integer pnga_pgroup_get_default();
+extern Integer pnga_pgroup_get_mirror();
+extern Integer pnga_pgroup_get_world();
+extern void pnga_pgroup_set_default(Integer *grp);
+extern Integer pnga_pgroup_split(Integer *grp, Integer *grp_num);
+extern Integer pnga_pgroup_split_irreg(Integer *grp, Integer *mycolor);
+extern Integer pnga_pgroup_nnodes(Integer *grp);
+extern Integer pnga_pgroup_nodeid(Integer *grp);
+extern void pnga_proc_topology(Integer* g_a, Integer* proc, Integer* subscript);
+extern void pnga_set_debug(logical *flag);
 
 /**
  * Routines from onesided.c

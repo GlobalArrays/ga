@@ -1342,7 +1342,7 @@ logical FATR ga_set_update4_info_(Integer *g_a)
   }
 
   /* Get indices of processor in virtual grid */
-  nga_proc_topology_(g_a, &me, index);
+  pnga_proc_topology(g_a, &me, index);
 
   /* Try to find maximum size of message that will be sent during
    * update operations and use this to allocate memory for message
@@ -1686,7 +1686,7 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
   msgcnt = 0;
 
   /* Get indices of processor in virtual grid */
-  nga_proc_topology_(g_a, &me, index);
+  pnga_proc_topology(g_a, &me, index);
 
   size = (Integer*)cache;
   current = (char*)(size+1);
@@ -1984,7 +1984,7 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
   /* obtain range of data that is held by local processor */
   pnga_distribution(g_a,&me,lo_loc,hi_loc);
   /* Get indices of processor in virtual grid */
-  nga_proc_topology_(g_a, &me, index);
+  pnga_proc_topology(g_a, &me, index);
 
   /* Try to find maximum size of message that will be sent during
    * update operations and use this to allocate memory for message
@@ -3417,7 +3417,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   /* obtain range of data that is held by local processor */
   pnga_distribution(g_a,&me,lo_loc,hi_loc);
   /* Get indices of processor in virtual grid */
-  nga_proc_topology_(g_a, &me, index);
+  pnga_proc_topology(g_a, &me, index);
 
   /* Try to find maximum size of message that will be sent during
    * update operations and use this to allocate memory for message
