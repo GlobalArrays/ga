@@ -1,5 +1,5 @@
 """
-Test ga.dgemm.
+Test ga.gemm (double).
 
 Note:
  * change nummax for large arrays
@@ -28,19 +28,31 @@ nums_m = [512,1024]
 nums_n = [512,1024]
 nums_k = [512,1024]
 howmany = len(nums_k)
-h0 = np.zeros((num1,num1), dtype=np.float64)
+h0 = np.zeros(num1*num1, dtype=np.float64)
 avg_t = np.zeros(ntrans, dtype=np.float64)
 avg_mf = np.zeros(ntrans, dtype=np.float64)
+
+try:
+    import scipy as sp
+    import scipy.linalg
+    from scipy.linalg.fblas import dgemm
+except:
+    if VERIFY and 0 == me:
+        print "WARNING: VERIFY=True but scipy's dgemm not available"
+        print "         ga.gemm will not be verified"
+    VERIFY = False
+
+# This was used to debug as it makes printed numpy arrays a bit easier to read
+np.set_printoptions(precision=6, suppress=True, edgeitems=4)
 
 def main():
     # TODO there's got to be a loopless, more pythonic way to do this
     ii = 0
-    for i in range(num1):
-        for j in range(num1):
-            ii += 1
-            if ii > num1:
-                ii = 0
-            h0[i,j] = ii
+    for i in range(num1*num1):
+        ii += 1
+        if ii > num1:
+            ii = 0
+        h0[i] = ii
     # compute times assuming 500 mflops and 5 second target time
     # ntimes = max(3.0, 5.0/(4.0-9*num**3))
     ntimes = 5
@@ -109,7 +121,7 @@ def main():
                     avg_mf[i] += mf
                     print ' Run# %2d %12.4f seconds %12.1f mflops/proc %s %s'%(
                             itime+1, t1, mf, ta, tb)
-                    if VERIFY and itime == 1:
+                    if VERIFY and itime == 0:
                         verify_ga_gemm(ta, tb, num_m, num_n, num_k,
                                 1.0, g_a, g_b, 0.0, g_c)
         if 0 == me:
@@ -122,28 +134,52 @@ def main():
                 print 'All ga.gemms are verified...O.K.'
 
 def load_ga(handle, h0, num_m, num_k):
-    ga.put(handle, h0[:num_m,:num_k])
+    if True:
+        ga.put(handle, h0[:num_m*num_k])
+    else:
+        a = np.arange(num_m*num_k, dtype=np.float64)
+        ga.put(handle, a)
+
+def wtf(alpha,tmpa,tmpb,beta):
+    print "NO NO ########################################"
+    for ta,tb in zip([True,True,False,False],[True,False,True,False]):
+        print ta,tb
+        print dgemm(alpha, tmpa, tmpb, beta=beta, trans_a=ta, trans_b=tb)
+    print "T  NO ########################################"
+    for ta,tb in zip([True,True,False,False],[True,False,True,False]):
+        print ta,tb
+        print dgemm(alpha, tmpa.T, tmpb, beta=beta, trans_a=ta, trans_b=tb)
+    print "NO  T ########################################"
+    for ta,tb in zip([True,True,False,False],[True,False,True,False]):
+        print ta,tb
+        print dgemm(alpha, tmpa, tmpb.T, beta=beta, trans_a=ta, trans_b=tb)
+    print "T   T ########################################"
+    for ta,tb in zip([True,True,False,False],[True,False,True,False]):
+        print ta,tb
+        print dgemm(alpha, tmpa.T, tmpb.T, beta=beta, trans_a=ta, trans_b=tb)
 
 def verify_ga_gemm(ta, tb, num_m, num_n, num_k, alpha, g_a, g_b, beta, g_c):
-    # TODO Why did the buffer version of ga.get seg fault???
-    #tmpa = np.array((num_m, num_k), dtype=np.float64)
-    #tmpb = np.array((num_k, num_n), dtype=np.float64)
-    #tmpc = np.array((num_m, num_n), dtype=np.float64)
-    #tmpc[:] = -1.0
-    #tmpa[:] = -2.0
-    #tmpa = ga.get(g_a, buffer=tmpa) # seg faulted
-    #tmpb = ga.get(g_b, buffer=tmpb) # seg faulted
-    #tmpc = ga.get(g_c, buffer=tmpc) # seg faulted
-    tmpa = ga.get(g_a)
-    tmpb = ga.get(g_b)
-    tmpc = ga.get(g_c)
-    # TODO need to create another array same shape as g_c for result of xgemm
-    result = tmpc
-    # TODO the rest of verify
-    # call xgemm which is really "test_dgemm" from Linalg library
-    # test_dgemm(...)
+    tmpa = np.ndarray((num_m, num_k), dtype=np.float64)
+    tmpb = np.ndarray((num_k, num_n), dtype=np.float64)
+    tmpc = np.ndarray((num_m, num_n), dtype=np.float64)
+    tmpa = ga.get(g_a, buffer=tmpa)
+    tmpb = ga.get(g_b, buffer=tmpb)
+    tmpc = ga.get(g_c, buffer=tmpc)
+    if not ta and not tb:
+        result = dgemm(alpha, tmpa, tmpb, beta=beta, trans_a=ta, trans_b=tb)
+    elif ta and not tb:
+        # for some reason to interface with this dgemm we need to swap ta,tb
+        ta,tb=tb,ta
+        result = dgemm(alpha, tmpa, tmpb, beta=beta, trans_a=ta, trans_b=tb)
+    elif not ta and tb:
+        # for some reason to interface with this dgemm we need to swap ta,tb
+        ta,tb=tb,ta
+        result = dgemm(alpha, tmpa, tmpb, beta=beta, trans_a=ta, trans_b=tb)
+    elif ta and tb:
+        result = dgemm(alpha, tmpa, tmpb, beta=beta, trans_a=ta, trans_b=tb)
+    else:
+        raise ValueError, "shouldn't get here"
     abs_value = np.abs(tmpc-result)
-    # TODO abs_value check
     if np.any(abs_value > 1):
         ga.error('verify ga.gemm failed')
 
