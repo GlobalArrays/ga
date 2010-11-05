@@ -210,7 +210,7 @@ def abs_value(int g_a, lo=None, hi=None):
         lo_nd,hi_nd = _lohi(g_a,lo,hi)
         GA_Abs_value_patch64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data)
 
-def acc(int g_a, lo, hi, buffer, alpha=None):
+def acc(int g_a, buffer, lo=None, hi=None, alpha=None):
     """Combines data from buffer with data in the global array patch.
     
     The buffer array is assumed to be have the same number of
@@ -234,10 +234,10 @@ def acc(int g_a, lo, hi, buffer, alpha=None):
             multiplier (converted to appropriate type)
 
     """
-    _acc_common(g_a, lo, hi, buffer, alpha)
+    _acc_common(g_a, buffer, lo, hi, alpha)
 
-def _acc_common(int g_a, lo, hi, buffer, alpha=None, nb=False, periodic=False,
-        skip=None):
+def _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
+        nb=False, periodic=False, skip=None):
     """Combines data from buffer with data in the global array patch.
     
     The buffer array is assumed to be have the same number of
@@ -287,13 +287,24 @@ def _acc_common(int g_a, lo, hi, buffer, alpha=None, nb=False, periodic=False,
     cdef void          *valpha=NULL
     cdef ga_nbhdl_t     nbhandle
     dtype = _to_dtype[gtype]
-    buffer_nd = np.asarray(buffer, dtype=dtype)
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
     shape = hi_nd-lo_nd+1
     ld_nd = shape[1:]
-    if buffer_nd.dtype != dtype or not buffer_nd.flags['C_CONTIGUOUS']:
+    buffer_nd = np.asarray(buffer, dtype=dtype)
+    if not buffer_nd.flags['C_CONTIGUOUS']:
         buffer_nd = np.ascontiguousarray(buffer_nd, dtype=dtype)
-    buffer_nd = np.reshape(buffer_nd, shape)
+        assert(buffer_nd.flags['C_CONTIGUOUS'])
+    if len(shape) != buffer_nd.ndim:
+        raise ValueError, ("buffer has wrong ndim :: "
+                "buffer.ndim=%s != %s" % (buffer_nd.ndim, len(shape)))
+    for i in range(len(shape)):
+        if buffer_nd.shape[i] != shape[i]:
+            raise ValueError, ("buffer is wrong shape :: "
+                    "buffer.shape[%d]=%s != %s" % (
+                    i, buffer_nd.shape[i], shape[i]))
+    if buffer_nd.dtype != dtype:
+        raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
+                buffer.dtype, dtype)
     if alpha is None:
         alpha = 1
     valpha = _convert_multiplier(gtype, alpha,
@@ -355,6 +366,8 @@ def access(int g_a, lo=None, hi=None):
     lo_dst,hi_dst = distribution(g_a)
     if lo_dst[0] < 0 or hi_dst[0] < 0:
         return None
+    # put hi_dst back to GA inclusive indexing convention
+    hi_dst -= 1
     # always access the entire local data
     ld_nd = np.zeros(dimlen-1, dtype=np.int64)
     NGA_Access64(g_a, <int64_t*>lo_dst.data, <int64_t*>hi_dst.data, &ptr,
@@ -1134,6 +1147,8 @@ def distribution(int g_a, int iproc=-1):
     if iproc < 0:
         iproc = GA_Nodeid()
     NGA_Distribution64(g_a, iproc, <int64_t*>lo.data, <int64_t*>hi.data)
+    # convert hi to python exclusive indexing convetion
+    hi += 1
     return lo,hi
 
 def dot(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None,
@@ -1760,7 +1775,14 @@ def _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
     if buffer is None:
         buffer = np.ndarray(shape, dtype=_to_dtype[gtype])
     else:
-        # TODO perform check for shapes matching
+        if len(shape) != buffer.ndim:
+            raise ValueError, ("buffer has wrong ndim :: "
+                    "buffer.ndim=%s != %s" % (buffer.ndim, len(shape)))
+        for i in range(len(shape)):
+            if buffer.shape[i] != shape[i]:
+                raise ValueError, ("buffer is wrong shape :: "
+                        "buffer.shape[%d]=%s != %s" % (
+                        i, buffer.shape[i], shape[i]))
         if buffer.dtype != _to_dtype[gtype]:
             raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
                     buffer.dtype, _to_dtype[gtype])
@@ -2320,7 +2342,7 @@ def merge_mirrored(int g_a):
     """
     GA_Merge_mirrored(g_a)
 
-def nbacc(int g_a, lo, hi, buffer, alpha=None):
+def nbacc(int g_a, buffer, lo=None, hi=None, alpha=None):
     """Non-blocking version of ga.acc.
 
     The accumulate operation can be completed locally by making a call to the
@@ -2351,7 +2373,7 @@ def nbacc(int g_a, lo, hi, buffer, alpha=None):
     :returns: The non-blocking request handle.
 
     """
-    return _acc_common(g_a, lo, hi, buffer, alpha, True)
+    return _acc_common(g_a, buffer, lo, hi, alpha, True)
 
 def nbget(int g_a, lo=None, hi=None, np.ndarray buffer=None):
     """Non-blocking version of the blocking ga.get operation.
@@ -2588,7 +2610,7 @@ def pack(int g_src, int g_dst, int g_msk, lo=None, hi=None):
     GA_Pack64(g_src, g_dst, g_msk, lo, hi, &icount)
     return icount
 
-def periodic_acc(int g_a, lo, hi, buffer, alpha=None):
+def periodic_acc(int g_a, buffer, lo=None, hi=None, alpha=None):
     """Periodic version of ga.acc.
 
     The indices can extend beyond the array boundary/dimensions in which case
@@ -2617,7 +2639,7 @@ def periodic_acc(int g_a, lo, hi, buffer, alpha=None):
             multiplier (converted to the appropriate type)
 
     """
-    _acc_common(g_a, lo, hi, buffer, alpha, False, True)
+    _acc_common(g_a, buffer, lo, hi, alpha, False, True)
 
 def periodic_get(int g_a, lo, hi, buffer, alpha=None):
     """Periodic version of ga.get.
@@ -2979,6 +3001,17 @@ def _put_common(int g_a, buffer, lo=None, hi=None,
     if not buffer_nd.flags['C_CONTIGUOUS']:
         buffer_nd = np.ascontiguousarray(buffer_nd, dtype=_to_dtype[gtype])
         assert(buffer_nd.flags['C_CONTIGUOUS'])
+    if len(shape) != buffer_nd.ndim:
+        raise ValueError, ("buffer has wrong ndim :: "
+                "buffer.ndim=%s != %s" % (buffer_nd.ndim, len(shape)))
+    for i in range(len(shape)):
+        if buffer_nd.shape[i] != shape[i]:
+            raise ValueError, ("buffer is wrong shape :: "
+                    "buffer.shape[%d]=%s != %s" % (
+                    i, buffer_nd.shape[i], shape[i]))
+    if buffer_nd.dtype != _to_dtype[gtype]:
+        raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
+                buffer.dtype, _to_dtype[gtype])
     if nb:
         NGA_NbPut64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data, &nbhandle)
@@ -3100,6 +3133,8 @@ cdef _release_common(int g_a, lo, hi, bint update):
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, lo_dst, hi_dst
     # first things first, if no data is owned, return silently
     lo_dst,hi_dst = distribution(g_a)
+    # convet hi_dst back to GA inclusive indexing convention
+    hi_dst -= 1
     if lo_dst[0] < 0 or hi_dst[0] < 0:
         return
     if lo is not None:
@@ -3775,7 +3810,7 @@ def step_max(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None):
                 g_b, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data, &step)
     return step
 
-def strided_acc(int g_a, lo, hi, skip, buffer, alpha=None):
+def strided_acc(int g_a, buffer, lo=None, hi=None, skip=None, alpha=None):
     """Strided version of ga.acc.
     
     The values corresponding to dimension n in buf are accumulated to every
@@ -3804,7 +3839,7 @@ def strided_acc(int g_a, lo, hi, skip, buffer, alpha=None):
             multiplier (converted to the appropriate type)
 
     """
-    _acc_common(g_a, lo, hi, buffer, alpha, False, False, skip)
+    _acc_common(g_a, buffer, lo, hi, alpha, False, False, skip)
        
 def strided_get(int g_a, lo=None, hi=None, skip=None, np.ndarray buffer=None):
     """Strided version of ga.get.

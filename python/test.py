@@ -295,7 +295,7 @@ def check_accumulate_disjoint(gatype):
             else:
                 check = ij % nproc == me
             if check:
-                ga.acc(g_a, lo, hi, piece, x)
+                ga.acc(g_a, piece, lo, hi, x)
             ga.sync()
             ij += 1
             # each process applies all updates to its local copy
@@ -313,7 +313,7 @@ def check_accumulate_overlap(gatype):
         print '> Checking overlapping accumulate ...',
     g_a = create_global_array(gatype)
     ga.zero(g_a)
-    ga.acc(g_a, (n/2,n/2), (n/2+1,n/2+1), [1], 1)
+    ga.acc(g_a, [1], (n/2,n/2), (n/2+1,n/2+1), 1)
     ga.sync()
     if MIRROR:
         if 0 == iproc:
