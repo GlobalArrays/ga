@@ -88,7 +88,7 @@ int SF_Read(int handle, SFsize_t offset, SFsize_t bytes,
 
 int SF_Wait(int *req_id)
 {
-    Integer id;
+    Integer id = (Integer)*req_id;
     int retcode = sf_wait_(&id);
     *req_id = id;
     return retcode;
