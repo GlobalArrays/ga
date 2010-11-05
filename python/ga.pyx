@@ -97,8 +97,14 @@ def _lohi(int g_a, lo, hi):
 
     Functions which take a patch specification can use this to convert the
     given lo and/or hi into ndarrays using numpy.asarray.
-    If lo is not given, it is replaced with an array of zeros.
-    If hi is not given, it is replaced with the last index in each dimension.
+
+    * If neither lo nor hi is given, lo is replaced with an array of zeros and
+      hi is replaced with the last index in each dimension (i.e. the shape).
+
+    * If only lo is given, hi is replaced with lo. In other words, this is
+      a single value.
+
+    * It is an error to specify hi without lo.
 
     :Parameters:
         g_a : int
@@ -113,22 +119,28 @@ def _lohi(int g_a, lo, hi):
     """
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
     cdef int ndim = GA_Ndim(g_a)
-    if lo is None:
+    if lo is None and hi is None:
         lo_nd = np.zeros((ndim), dtype=np.int64)
-    else:
+        hi_nd = inquire_dims(g_a)
+    elif lo is not None and hi is None:
         try:
             lo_nd = np.asarray(lo, dtype=np.int64)
         except ValueError: # try again in case lo is a single value
             lo_nd = np.asarray([lo], dtype=np.int64)
-    if len(lo_nd) != ndim:
-        raise ValueError, 'len(lo_nd) != ndim; len(%s) != %s' % (lo_nd,ndim)
-    if hi is None:
-        hi_nd = inquire_dims(g_a)
-    else:
+        hi_nd = lo_nd+1
+    elif lo is None and hi is not None:
+        raise ValueError, 'lo cannot be None if hi is None'
+    else: # lo and hi are not None
+        try:
+            lo_nd = np.asarray(lo, dtype=np.int64)
+        except ValueError: # try again in case lo is a single value
+            lo_nd = np.asarray([lo], dtype=np.int64)
         try:
             hi_nd = np.asarray(hi, dtype=np.int64)
         except ValueError: # try again in case hi is a single value
             hi_nd = np.asarray([hi], dtype=np.int64)
+    if len(lo_nd) != ndim:
+        raise ValueError, 'len(lo_nd) != ndim; len(%s) != %s' % (lo_nd,ndim)
     if len(hi_nd) != ndim:
         raise ValueError, 'len(hi_nd) != ndim; len(%s) != %s' % (hi_nd,ndim)
     hi_nd -= 1 # prep hi for GA's inclusive indexing
@@ -224,12 +236,12 @@ def acc(int g_a, buffer, lo=None, hi=None, alpha=None):
     :Parameters:
         g_a : int
             the array handle
+        buffer : array-like
+            must be contiguous and have same number of elements as patch
         lo : 1D array-like
             lower bound patch coordinates, inclusive
         hi : 1D array-like
             higher bound patch coordinates, exclusive
-        buffer : array-like
-            must have same shape as indicated patch
         alpha : object
             multiplier (converted to appropriate type)
 
@@ -251,12 +263,12 @@ def _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
     :Parameters:
         g_a : int
             the array handle
+        buffer : array-like
+            must be contiguous and have same number of elements as patch
         lo : 1D array-like
             lower bound patch coordinates, inclusive
         hi : 1D array-like
             higher bound patch coordinates, exclusive
-        buffer : array-like
-            must have same shape as indicated patch
         alpha : object
             multiplier (converted to appropriate type)
         nb : bool
@@ -2354,12 +2366,12 @@ def nbacc(int g_a, buffer, lo=None, hi=None, alpha=None):
     :Parameters:
         g_a : int
             the array handle
+        buffer : array-like
+            must be contiguous and have same number of elements as patch
         lo : 1D array-like of integers
             lower bound patch coordinates, inclusive
         hi : 1D array-like of integers
             higher bound patch coordinates, exclusive
-        buffer : array-like
-            must be same shape as indicated patch
         alpha : object
             multiplier (converted to the appropriate type)
 
@@ -2391,7 +2403,7 @@ def nbget(int g_a, lo=None, hi=None, np.ndarray buffer=None):
             higher bound patch coordinates, exclusive
         buffer : ndarray
             Fill this buffer instead of allocating a new one internally.
-            Must have same shape as lo,hi patch and be correct type.
+            Must be contiguous and have same number of elements as patch.
 
     :returns: The local array buffer.
     
@@ -2622,12 +2634,12 @@ def periodic_acc(int g_a, buffer, lo=None, hi=None, alpha=None):
     :Parameters:
         g_a : int
             the array handle
+        buffer : array-like
+            must be contiguous and have same number of elements as patch
         lo : 1D array-like of integers
             lower bound patch coordinates, inclusive
         hi : array-like of integers
             higher bound patch coordinates, exclusive
-        buffer : array-like
-            same shape as indicated patch
         alpha : object
             multiplier (converted to the appropriate type)
 
@@ -2656,7 +2668,7 @@ def periodic_get(int g_a, lo, hi, buffer, alpha=None):
         hi : array-like of integers
             higher bound patch coordinates, exclusive
         buffer : array-like
-            same shape as indicated patch
+            must be contiguous and have same number of elements as patch
 
     :returns: The local array buffer.
     
@@ -3819,12 +3831,12 @@ def strided_acc(int g_a, buffer, lo=None, hi=None, skip=None, alpha=None):
     :Parameters:
         g_a : int
             the array handle
+        buffer : array-like
+            must be contiguous and have same number of elements as patch
         lo : 1D array-like of integers
             lower bound patch coordinates, inclusive
         hi : 1D array-like of integers
             higher bound patch coordinates, exclusive
-        buffer : array-like
-            same shape as indicated patch
         alpha : object
             multiplier (converted to the appropriate type)
 

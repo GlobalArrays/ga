@@ -17,8 +17,8 @@ me = ga.nodeid()
 def main():
     if 4 != nproc and 0 == me:
         ga.error('Program requires 4 GA processes')
-    test1D()
     test2D()
+    test1D()
     if 0 == me:
         print 'All tests successful'
 
@@ -109,7 +109,7 @@ def time_get(g_a, lo, hi, buf, chunk, jump, local):
                 index = count%3
                 llo = [ilo+shifti[index],jlo+shiftj[index]]
                 lhi = [ihi+shifti[index],jhi+shiftj[index]]
-                ignore = ga.get(g_a, llo, lhi, buf[ga.zip(llo,lhi)])
+                ignore = ga.get(g_a, llo, lhi, buf[ilo:ihi,jlo:jhi])
     seconds = time.time() - seconds
     return seconds/count
 
@@ -135,7 +135,7 @@ def time_put(g_a, lo, hi, buf, chunk, jump, local):
                 index = count%3
                 llo = [ilo+shifti[index],jlo+shiftj[index]]
                 lhi = [ihi+shifti[index],jhi+shiftj[index]]
-                ga.put(g_a, buf[ga.zip(llo,lhi)], llo, lhi)
+                ga.put(g_a, buf[ilo:ihi,jlo:jhi], llo, lhi)
     seconds = time.time() - seconds
     return seconds/count
 
@@ -161,7 +161,7 @@ def time_acc(g_a, lo, hi, buf, chunk, jump, local):
                 index = count%3
                 llo = [ilo+shifti[index],jlo+shiftj[index]]
                 lhi = [ihi+shifti[index],jhi+shiftj[index]]
-                ga.acc(g_a, buf[ga.zip(llo,lhi)], llo, lhi, 1)
+                ga.acc(g_a, buf[ilo:ihi,jlo:jhi], llo, lhi, 1)
     seconds = time.time() - seconds
     return seconds/count
 
@@ -182,10 +182,10 @@ def test1D():
         print (' Performance of GA get, put & acc'
                 ' for 1-dimensional sections of array[%d]' % n)
     lo,hi = ga.distribution(g_a, me)
-    # remote ops
-    TestPutGetAcc1(g_a, n, chunk, buf, lo, hi, False)
     # local ops
     TestPutGetAcc1(g_a, n, chunk, buf, lo, hi, True)
+    # remote ops
+    TestPutGetAcc1(g_a, n, chunk, buf, lo, hi, False)
 
 def TestPutGetAcc1(g_a, n, chunk, buf, lo, hi, local):
     if 0 == me:
@@ -250,8 +250,7 @@ def time_get1(g_a, lo, hi, buf, chunk, jump, local):
             index = count%3
             llo = ilo+shift[index]
             lhi = ihi+shift[index]
-            print ilo,ihi
-            ignore = ga.get(g_a, llo, lhi, buf[llo:lhi])
+            ignore = ga.get(g_a, llo, lhi, buf[ilo:ihi])
     seconds = time.time() - seconds
     return seconds/count
 
@@ -271,7 +270,7 @@ def time_put1(g_a, lo, hi, buf, chunk, jump, local):
             index = count%3
             llo = ilo+shift[index]
             lhi = ihi+shift[index]
-            ga.put(g_a, buf[llo:lhi], llo, lhi)
+            ga.put(g_a, buf[ilo:ihi], llo, lhi)
     seconds = time.time() - seconds
     return seconds/count
 
