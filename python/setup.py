@@ -3,8 +3,11 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
 import os
 
-#ga_install = "/home/d3n000/ga/ga-dev/bld_openmpi_shared"
-ga_install = "/Users/d3n000/ga/ga-dev/bld_openmpi_shared"
+ga_install = '/home/d3n000/ga/ga-dev/bld_openmpi_shared'
+if not os.path.exists(ga_install):
+    ga_install = "/Users/d3n000/ga/ga-dev/bld_openmpi_shared"
+if not os.path.exists(ga_install):
+    raise ValueError, 'cannot locate GA installation'
 
 try:
     import numpy

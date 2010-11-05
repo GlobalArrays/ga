@@ -294,14 +294,10 @@ def _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
     if not buffer_nd.flags['C_CONTIGUOUS']:
         buffer_nd = np.ascontiguousarray(buffer_nd, dtype=dtype)
         assert(buffer_nd.flags['C_CONTIGUOUS'])
-    if len(shape) != buffer_nd.ndim:
-        raise ValueError, ("buffer has wrong ndim :: "
-                "buffer.ndim=%s != %s" % (buffer_nd.ndim, len(shape)))
-    for i in range(len(shape)):
-        if buffer_nd.shape[i] != shape[i]:
-            raise ValueError, ("buffer is wrong shape :: "
-                    "buffer.shape[%d]=%s != %s" % (
-                    i, buffer_nd.shape[i], shape[i]))
+    if buffer_nd.size != np.prod(shape):
+        raise ValueError, ('buffer size does not match shape :: '
+                'buffer.size=%s != np.prod(shape)=%s' % (
+                buffer_nd.size, np.prod(shape)))
     if buffer_nd.dtype != dtype:
         raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
                 buffer.dtype, dtype)
@@ -1769,23 +1765,20 @@ def _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape, skip_nd
     cdef int gtype=inquire_type(g_a)
     cdef ga_nbhdl_t nbhandle
+    dtype = _to_dtype[gtype]
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
     shape = hi_nd-lo_nd+1
     ld_nd = shape[1:]
     if buffer is None:
-        buffer = np.ndarray(shape, dtype=_to_dtype[gtype])
+        buffer = np.ndarray(shape, dtype=dtype)
     else:
-        if len(shape) != buffer.ndim:
-            raise ValueError, ("buffer has wrong ndim :: "
-                    "buffer.ndim=%s != %s" % (buffer.ndim, len(shape)))
-        for i in range(len(shape)):
-            if buffer.shape[i] != shape[i]:
-                raise ValueError, ("buffer is wrong shape :: "
-                        "buffer.shape[%d]=%s != %s" % (
-                        i, buffer.shape[i], shape[i]))
-        if buffer.dtype != _to_dtype[gtype]:
+        if buffer.size != np.prod(shape):
+            raise ValueError, ('buffer size does not match shape :: '
+                    'buffer.size=%s != np.prod(shape)=%s' % (
+                    buffer.size, np.prod(shape)))
+        if buffer.dtype != dtype:
             raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
-                    buffer.dtype, _to_dtype[gtype])
+                    buffer.dtype, dtype)
     if nb:
         NGA_NbGet64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer.data, <int64_t*>ld_nd.data, &nbhandle)
@@ -2994,24 +2987,21 @@ def _put_common(int g_a, buffer, lo=None, hi=None,
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd, ld_nd, shape, skip_nd
     cdef int gtype=inquire_type(g_a)
     cdef ga_nbhdl_t nbhandle
+    dtype = _to_dtype[gtype]
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
     shape = hi_nd-lo_nd+1
     ld_nd = shape[1:]
-    buffer_nd = np.asarray(buffer, dtype=_to_dtype[gtype])
+    buffer_nd = np.asarray(buffer, dtype=dtype)
     if not buffer_nd.flags['C_CONTIGUOUS']:
-        buffer_nd = np.ascontiguousarray(buffer_nd, dtype=_to_dtype[gtype])
+        buffer_nd = np.ascontiguousarray(buffer_nd, dtype=dtype)
         assert(buffer_nd.flags['C_CONTIGUOUS'])
-    if len(shape) != buffer_nd.ndim:
-        raise ValueError, ("buffer has wrong ndim :: "
-                "buffer.ndim=%s != %s" % (buffer_nd.ndim, len(shape)))
-    for i in range(len(shape)):
-        if buffer_nd.shape[i] != shape[i]:
-            raise ValueError, ("buffer is wrong shape :: "
-                    "buffer.shape[%d]=%s != %s" % (
-                    i, buffer_nd.shape[i], shape[i]))
-    if buffer_nd.dtype != _to_dtype[gtype]:
+    if buffer_nd.size != np.prod(shape):
+        raise ValueError, ('buffer size does not match shape :: '
+                'buffer.size=%s != np.prod(shape)=%s' % (
+                buffer_nd.size, np.prod(shape)))
+    if buffer_nd.dtype != dtype:
         raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
-                buffer.dtype, _to_dtype[gtype])
+                buffer.dtype, dtype)
     if nb:
         NGA_NbPut64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data, &nbhandle)
