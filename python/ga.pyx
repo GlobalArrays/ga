@@ -2851,9 +2851,9 @@ def pgroup_split(int pgroup, int num_group):
     """TODO"""
     return GA_Pgroup_split(pgroup, num_group)
 
-def pgroup_split_irreg(int pgroup, int color, int key):
+def pgroup_split_irreg(int pgroup, int color):
     """TODO"""
-    return GA_Pgroup_split_irreg(pgroup, color, key)
+    return GA_Pgroup_split_irreg(pgroup, color)
 
 def pgroup_sync(int pgroup):
     """Executes a synchronization group across the processors in the processor

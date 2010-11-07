@@ -115,7 +115,7 @@ cdef extern from "ga.h":
     int           GA_Pgroup_nodeid(int grp_id)
     void          GA_Pgroup_set_default(int p_handle)
     int           GA_Pgroup_split(int grp_id, int num_group)
-    int           GA_Pgroup_split_irreg(int grp_id, int color, int key)
+    int           GA_Pgroup_split_irreg(int grp_id, int color)
     void          GA_Pgroup_sync(int grp_id)
     void          GA_Print_distribution(int g_a) 
     void          GA_Print_file(FILE *file, int g_a)
