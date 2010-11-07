@@ -2583,13 +2583,13 @@ def pack(int g_src, int g_dst, int g_msk, lo=None, hi=None):
     in an integer mask array g_msk. The values lo and hi denote the range of
     elements that should be compressed and the number of values placed in the
     compressed array is returned.  This operation is the complement of the
-    ga.unpack operation. An example is shown below
+    ga.unpack operation. An example is shown below::
 
-    icount = ga.pack(g_src, g_dst, g_msk, 1, n);
-    # g_msk:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
-    # g_src:   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
-    # g_dst:   1  7  9 12 15 16
-    # icount:  6
+        icount = ga.pack(g_src, g_dst, g_msk, 1, n);
+        # g_msk:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
+        # g_src:   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+        # g_dst:   1  7  9 12 15 16
+        # icount:  6
 
     This is a collective operation.
 
@@ -3951,25 +3951,45 @@ def unlock(int mutex):
     GA_Unlock(mutex)
 
 def unpack(int g_src, int g_dst, int g_msk, lo=None, hi=None):
-    """The unpack subroutine is designed to expand the values in the source
+    """Expands the values in the source vector into a larger destination vector.
+
+    The unpack subroutine is designed to expand the values in the source
     vector g_src into a larger destination array g_dst based on the values in
     an integer mask array g_msk. The values lo and hi denote the range of
-    elements that should be compressed and icount is a variable that on output
-    lists the number of values placed in the uncompressed array. This
+    elements that should be uncompressed and icount is a variable that on
+    output lists the number of values placed in the uncompressed array. This
     operation is the complement of the ga.pack operation. An example is shown
-    below
+    below::
 
-    ga.unpack(g_src, g_dst, g_msk, 1, n, &icount);
-    g_src:   1  7  9 12 15 16
-    g_msk:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
-    g_dst:   1  0  0  0  0  0  7  0  9  0  0 12  0  0 15 16  0
-    icount:  6
+        ga.unpack(g_src, g_dst, g_msk, 1, n, &icount);
+        g_src:   1  7  9 12 15 16
+        g_msk:   1  0  0  0  0  0  1  0  1  0  0  1  0  0  1  1  0
+        g_dst:   1  0  0  0  0  0  7  0  9  0  0 12  0  0 15 16  0
+        icount:  6
 
     This is a collective operation.
 
-    """
-    raise NotImplementedError, "TODO"
+    :Parameters:
+        g_src : int
+            handle for source arrray
+        g_dst : int
+            handle for destination array
+        g_msk : int
+            handle for integer array representing mask
+        lo : 1D array-like of integers
+            low value of range on which operation is performed
+        hi : 1D array-like of integers
+            hi value of range on which operation is performed
 
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] hi_nd = inquire_dims(g_src)-1
+    cdef int64_t c_lo=0, c_hi=hi_nd[0], icount
+    if lo is not None:
+        c_lo = lo
+    if hi is not None:
+        c_hi = hi
+    GA_Unpack64(g_src, g_dst, g_msk, lo, hi, &icount)
+    return icount
 
 def update_ghosts(int g_a):
     """This call updates the ghost cell regions on each processor with the
