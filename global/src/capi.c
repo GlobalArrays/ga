@@ -906,6 +906,11 @@ void NGA_Merge_mirrored(int g_a)
     wnga_merge_mirrored(&a);
 }
 
+void GA_Nblock(int g_a, int *nblock)
+{
+    NGA_Nblock(g_a, nblock);
+}
+
 void NGA_Nblock(int g_a, int *nblock)
 {
     Integer aa, *ptr, ndim;
