@@ -12753,7 +12753,7 @@ else
   LINUX:portland:*:*) :
     armci_cv_f77_opt="-Mvect -Munroll -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical" ;; #(
   MACX64:intel:*:*) :
-    armci_cv_f77_opt="-O3 -prefetch -w- cm" ;; #(
+    armci_cv_f77_opt="-O3 -prefetch -w -cm" ;; #(
   MACX:*:*:*) :
     armci_cv_f77_opt= ;; #(
   NEC:*:*:*) :
