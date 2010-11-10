@@ -3,10 +3,8 @@
 
 This module exports the GA C API, with a few enhancements.  The notable
 exceptions include supporting Pythonic ranges.  The ranges here are half-open
-e.g. [0,n) instead of in C where they are closed e.g. [0,n].  This follows the
-Python convention.
-
-This module also provides the GlobalArray object-oriented class.
+e.g. [0,n) instead of in the C API where they are closed e.g. [0,n].  This
+follows the Python convention.
 
 """
 # keep the ga functions alphabetical since this is going to be a huge file!
