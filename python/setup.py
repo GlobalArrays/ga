@@ -2,31 +2,28 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
 import os
-
-ga_install = '/home/d3n000/ga/ga-dev/bld_openmpi_shared'
-if not os.path.exists(ga_install):
-    ga_install = "/Users/d3n000/ga/ga-dev/bld_openmpi_shared"
-if not os.path.exists(ga_install):
-    raise ValueError, 'cannot locate GA installation'
+import sys
 
 try:
     import numpy
 except ImportError:
     print "numpy is required"
     raise
-
 numpy_include = numpy.get_include()
-if os.uname()[0] == 'Darwin':
-    linalg_include = []
-    linalg_library = ["/System/Library/Frameworks/Accelerate.framework/Frameworks/vecLib.framework/Versions/A"]
-    linalg_lib = ["LAPACK","BLAS"]
-else:
-    linalg_include = []
-    linalg_library = []
-    linalg_lib = []
 
-include_dirs = [ga_install+"/include",numpy_include]
-library_dirs = [ga_install+"/lib"]
+linalg_include = []
+linalg_library = []
+linalg_lib = []
+
+if sys.platform.startswith('darwin'):
+    path = "/System/Library/Frameworks/Accelerate.framework/Frameworks/vecLib.framework/Versions/A"
+    linalg_include = []
+    if os.path.exists(path):
+        linalg_library = [path]
+        linalg_lib = ["LAPACK","BLAS"]
+
+include_dirs = [numpy_include]
+library_dirs = []
 libraries = ["ga"]
 
 for dir in linalg_include:
