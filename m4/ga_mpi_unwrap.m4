@@ -38,34 +38,44 @@ found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
 AS_IF([test "x$ga_cv_mpi_naked" = x], [
 echo "only comparing stdout" >&AS_MESSAGE_LOG_FD
-for version in $versions; do
-    for naked_compiler in $compilers; do
-        rm -f mpi.txt mpi.err naked.txt naked.err
-        AS_IF([$wrapped $version 1>mpi.txt 2>mpi.err],
-            [found_wrapped_version=1
-             AS_IF([$naked_compiler $version 1>naked.txt 2>naked.err],
-                [AS_IF([$inside mpi.txt naked.txt >/dev/null],
-                    [ga_cv_mpi_naked=$naked_compiler; break],
-                    [echo "inside.pl failed, skipping" >&AS_MESSAGE_LOG_FD])],
-                [echo "$naked_compiler $version failed, skipping" >&AS_MESSAGE_LOG_FD])],
-            [echo "$wrapped $version failed, skipping" >&AS_MESSAGE_LOG_FD])
-    done
+for version in $versions
+do
+    echo "trying version=$version" >&AS_MESSAGE_LOG_FD
+    rm -f mpi.txt mpi.err naked.txt naked.err
+    AS_IF([$wrapped $version 1>mpi.txt 2>mpi.err],
+        [found_wrapped_version=1
+         for naked_compiler in $compilers
+         do
+            AS_IF([test "x$naked_compiler" != "x$wrapped"],
+                [AS_IF([$naked_compiler $version 1>naked.txt 2>naked.err],
+                    [AS_IF([$inside mpi.txt naked.txt >/dev/null],
+                        [ga_cv_mpi_naked=$naked_compiler; break],
+                        [echo "inside.pl $wrapped $naked_compiler failed, skipping" >&AS_MESSAGE_LOG_FD])],
+                    [echo "$naked_compiler $version failed, skipping" >&AS_MESSAGE_LOG_FD])])
+         done],
+        [echo "$wrapped $version failed, skipping" >&AS_MESSAGE_LOG_FD])
     AS_IF([test "x$ga_cv_mpi_naked" != x], [break])
 done
 ])
-# Perhaps none of the MPI compilers had a zero exit status (this is wrong).
+# Perhaps none of the MPI compilers had a zero exit status (this is bad).
+# In this case we have to do a brute force match regardless of exit status.
 AS_IF([test "x$found_wrapped_version" = x0], [
 echo "no zero exit status found for MPI compilers" >&AS_MESSAGE_LOG_FD
 AS_IF([test "x$ga_cv_mpi_naked" = x], [
-for version in $versions; do
-    for naked_compiler in $compilers; do
-        rm -f mpi.txt mpi.err naked.txt naked.err
-        $wrapped $version 1>mpi.txt 2>mpi.err
-        AS_IF([$naked_compiler $version 1>naked.txt 2>naked.err],
-            [AS_IF([$inside mpi.txt naked.txt >/dev/null],
-                [ga_cv_mpi_naked=$naked_compiler; break],
-                [echo "inside.pl failed, skipping" >&AS_MESSAGE_LOG_FD])],
-            [echo "$naked_compiler $version failed, skipping" >&AS_MESSAGE_LOG_FD])
+for version in $versions
+do
+    echo "trying version=$version" >&AS_MESSAGE_LOG_FD
+    rm -f mpi.txt mpi.err
+    $wrapped $version 1>mpi.txt 2>mpi.err
+    for naked_compiler in $compilers
+    do
+        AS_IF([test "x$naked_compiler" != "x$wrapped"],
+            [rm -f naked.txt naked.err
+             AS_IF([$naked_compiler $version 1>naked.txt 2>naked.err],
+                [AS_IF([$inside mpi.txt naked.txt >/dev/null],
+                    [ga_cv_mpi_naked=$naked_compiler; break],
+                    [echo "inside.pl $wrapped $naked_compiler failed, skipping" >&AS_MESSAGE_LOG_FD])],
+                [echo "$naked_compiler $version failed, skipping" >&AS_MESSAGE_LOG_FD])])
     done
     AS_IF([test "x$ga_cv_mpi_naked" != x], [break])
 done
@@ -74,16 +84,45 @@ done
 # Try by combining stdout/err into one file.
 AS_IF([test "x$ga_cv_mpi_naked" = x], [
 echo "try combining stdout and stderr into one file" >&AS_MESSAGE_LOG_FD
-for version in $versions; do
-    for naked_compiler in $compilers; do
-        rm -f mpi.txt naked.txt
-        AS_IF([$wrapped $version 1>mpi.txt 2>&1],
-            [AS_IF([$naked_compiler $version 1>naked.txt 2>&1],
+for version in $versions
+do
+    echo "trying version=$version" >&AS_MESSAGE_LOG_FD
+    rm -f mpi.txt naked.txt
+    AS_IF([$wrapped $version 1>mpi.txt 2>&1],
+        [for naked_compiler in $compilers
+         do
+            AS_IF([test "x$naked_compiler" != "x$wrapped"],
+                [AS_IF([$naked_compiler $version 1>naked.txt 2>&1],
+                    [AS_IF([$inside mpi.txt naked.txt >/dev/null],
+                        [ga_cv_mpi_naked=$naked_compiler; break],
+                        [echo "inside.pl $wrapped $naked_compiler failed, skipping" >&AS_MESSAGE_LOG_FD])],
+                    [echo "$naked_compiler $version failed, skipping" >&AS_MESSAGE_LOG_FD])])
+         done],
+        [echo "$wrapped $version failed, skipping" >&AS_MESSAGE_LOG_FD])
+    AS_IF([test "x$ga_cv_mpi_naked" != x], [break])
+done
+])
+# If we got this far, then it's likely that the MPI compiler had a zero exit
+# status when it shouldn't have for one version flag, but later had a non-zero
+# exit status for a flag it shouldn't have.  One false positive hid a false
+# negative.  In this case, brute force compare all MPI compiler output against
+# all compiler output.
+AS_IF([test "x$ga_cv_mpi_naked" = x], [
+echo "we have a very badly behaving MPI compiler" >&AS_MESSAGE_LOG_FD
+for version in $versions
+do
+    echo "trying version=$version" >&AS_MESSAGE_LOG_FD
+    rm -f mpi.txt mpi.err
+    $wrapped $version 1>mpi.txt 2>mpi.err
+    for naked_compiler in $compilers
+    do
+        AS_IF([test "x$naked_compiler" != "x$wrapped"],
+            [rm -f naked.txt naked.err
+             AS_IF([$naked_compiler $version 1>naked.txt 2>naked.err],
                 [AS_IF([$inside mpi.txt naked.txt >/dev/null],
                     [ga_cv_mpi_naked=$naked_compiler; break],
-                    [echo "inside.pl failed, skipping" >&AS_MESSAGE_LOG_FD])],
-                [echo "$naked_compiler $version failed, skipping" >&AS_MESSAGE_LOG_FD])],
-            [echo "$wrapped $version failed, skipping" >&AS_MESSAGE_LOG_FD])
+                    [echo "inside.pl $wrapped $naked_compiler failed, skipping" >&AS_MESSAGE_LOG_FD])],
+                [echo "$naked_compiler $version failed, skipping" >&AS_MESSAGE_LOG_FD])])
     done
     AS_IF([test "x$ga_cv_mpi_naked" != x], [break])
 done
