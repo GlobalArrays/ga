@@ -14,7 +14,9 @@
 #endif
 
 #include "farg.h"
+#include "macommon.h"
 
+#include "papi.h"
 #if PROFILING_DEFINES
 #   include "wapidefs.h"
 #endif
@@ -971,4 +973,195 @@ void FATR nga_error_(
   ga_f2cstring(string,slen, buf, FMSG);
   wnga_error(buf,*icode);
 }
+
+/* Routines from collect.c */
+
+#define ga_brdcst_ F77_FUNC_(ga_brdcst,GA_BRDCST)
+void FATR ga_brdcst_(
+        Integer *type, void *buf, Integer *len, Integer *originator)
+{
+    wnga_brdcst(type, buf, len, originator);
+}
+
+#define nga_brdcst_ F77_FUNC_(nga_brdcst,NGA_BRDCST)
+void FATR nga_brdcst_(
+        Integer *type, void *buf, Integer *len, Integer *originator)
+{
+    wnga_brdcst(type, buf, len, originator);
+}
+
+#define ga_pgroup_brdcst_ F77_FUNC_(ga_pgroup_brdcst,GA_PGROUP_BRDCST)
+void FATR ga_pgroup_brdcst_(Integer *grp_id, Integer *type, void *buf, Integer *len, Integer *originator)
+{
+    wnga_pgroup_brdcst(grp_id, type, buf, len, originator);
+}
+
+#define ga_msg_sync_ F77_FUNC_(ga_msg_sync,GA_MSG_SYNC)
+void ga_msg_sync_()
+{
+    wnga_msg_sync();
+}
+
+#define nga_msg_sync_ F77_FUNC_(nga_msg_sync,NGA_MSG_SYNC)
+void nga_msg_sync_()
+{
+    wnga_msg_sync();
+}
+
+#define ga_msg_pgroup_sync_ F77_FUNC_(ga_msg_pgroup_sync,GA_MSG_PGROUP_SYNC)
+void ga_msg_pgroup_sync_(Integer *grp_id)
+{
+    wnga_msg_pgroup_sync(grp_id);
+}
+
+#define nga_msg_pgroup_sync_ F77_FUNC_(nga_msg_pgroup_sync,NGA_MSG_PGROUP_SYNC)
+void nga_msg_pgroup_sync_(Integer *grp_id)
+{
+    wnga_msg_pgroup_sync(grp_id);
+}
+
+#define ga_pgroup_gop_ F77_FUNC_(ga_pgroup_gop,GA_PGROUP_GOP)
+void ga_pgroup_gop_(Integer *grp, Integer *type, void *x, Integer *n, char *op, int len)
+{
+    wnga_pgroup_gop(*grp, pnga_type_f2c(*type), x, *n, op);
+}
+
+#define nga_pgroup_gop_ F77_FUNC_(nga_pgroup_gop,NGA_PGROUP_GOP)
+void nga_pgroup_gop_(Integer *grp, Integer *type, void *x, Integer *n, char *op, int len)
+{
+    wnga_pgroup_gop(*grp, pnga_type_f2c(*type), x, *n, op);
+}
+
+#define ga_pgroup_igop_ F77_FUNC_(ga_pgroup_igop,GA_PGROUP_IGOP)
+void ga_pgroup_igop_(Integer *grp, Integer *type, Integer *x, Integer *n, char *op, int len)
+{
+    wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_INT), x, *n, op);
+}
+
+#define nga_pgroup_igop_ F77_FUNC_(nga_pgroup_igop,NGA_PGROUP_IGOP)
+void nga_pgroup_igop_(Integer *grp, Integer *type, Integer *x, Integer *n, char *op, int len)
+{
+    wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_INT), x, *n, op);
+}
+
+#define ga_pgroup_sgop_ F77_FUNC_(ga_pgroup_sgop,GA_PGROUP_SGOP)
+void ga_pgroup_sgop_(Integer *grp, Integer *type, Real *x, Integer *n, char *op, int len)
+{
+    wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_REAL), x, *n, op);
+}
+
+#define nga_pgroup_sgop_ F77_FUNC_(nga_pgroup_sgop,NGA_PGROUP_SGOP)
+void nga_pgroup_sgop_(Integer *grp, Integer *type, Real *x, Integer *n, char *op, int len)
+{
+    wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_REAL), x, *n, op);
+}
+
+#define ga_pgroup_dgop_ F77_FUNC_(ga_pgroup_dgop,GA_PGROUP_DGOP)
+void ga_pgroup_dgop_(Integer *grp, Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
+{
+    wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_DBL), x, *n, op);
+}
+
+#define nga_pgroup_dgop_ F77_FUNC_(nga_pgroup_dgop,NGA_PGROUP_DGOP)
+void nga_pgroup_dgop_(Integer *grp, Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
+{
+    wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_DBL), x, *n, op);
+}
+
+#define ga_pgroup_cgop_ F77_FUNC_(ga_pgroup_cgop,GA_PGROUP_CGOP)
+void ga_pgroup_cgop_(Integer *grp, Integer *type, SingleComplex *x, Integer *n, char *op, int len)
+{
+    wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_SCPL), x, *n, op);
+}
+
+#define nga_pgroup_cgop_ F77_FUNC_(nga_pgroup_cgop,NGA_PGROUP_CGOP)
+void nga_pgroup_cgop_(Integer *grp, Integer *type, SingleComplex *x, Integer *n, char *op, int len)
+{
+    wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_SCPL), x, *n, op);
+}
+
+#define ga_pgroup_zgop_ F77_FUNC_(ga_pgroup_zgop,GA_PGROUP_ZGOP)
+void ga_pgroup_zgop_(Integer *grp, Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
+{
+    wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_DCPL), x, *n, op);
+}
+
+#define nga_pgroup_zgop_ F77_FUNC_(nga_pgroup_zgop,NGA_PGROUP_ZGOP)
+void nga_pgroup_zgop_(Integer *grp, Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
+{
+    wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_DCPL), x, *n, op);
+}
+
+#define ga_gop_ F77_FUNC_(ga_gop,GA_GOP)
+void ga_gop_(Integer *type, void *x, Integer *n, char *op, int len)
+{
+    wnga_gop(pnga_type_f2c(*type), x, *n, op);
+}
+
+#define nga_gop_ F77_FUNC_(nga_gop,NGA_GOP)
+void nga_gop_(Integer *type, void *x, Integer *n, char *op, int len)
+{
+    wnga_gop(pnga_type_f2c(*type), x, *n, op);
+}
+
+#define ga_igop_ F77_FUNC_(ga_igop,GA_IGOP)
+void ga_igop_(Integer *type, Integer *x, Integer *n, char *op, int len)
+{
+    wnga_gop(pnga_type_f2c(MT_F_INT), x, *n, op);
+}
+
+#define nga_igop_ F77_FUNC_(nga_igop,NGA_IGOP)
+void nga_igop_(Integer *type, Integer *x, Integer *n, char *op, int len)
+{
+    wnga_gop(pnga_type_f2c(MT_F_INT), x, *n, op);
+}
+
+#define ga_sgop_ F77_FUNC_(ga_sgop,GA_SGOP)
+void ga_sgop_(Integer *type, Real *x, Integer *n, char *op, int len)
+{
+    wnga_gop(pnga_type_f2c(MT_F_REAL), x, *n, op);
+}
+
+#define nga_sgop_ F77_FUNC_(nga_sgop,NGA_SGOP)
+void nga_sgop_(Integer *type, Real *x, Integer *n, char *op, int len)
+{
+    wnga_gop(pnga_type_f2c(MT_F_REAL), x, *n, op);
+}
+
+#define ga_dgop_ F77_FUNC_(ga_dgop,GA_DGOP)
+void ga_dgop_(Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
+{
+    wnga_gop(pnga_type_f2c(MT_F_DBL), x, *n, op);
+}
+
+#define nga_dgop_ F77_FUNC_(nga_dgop,NGA_DGOP)
+void nga_dgop_(Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
+{
+    wnga_gop(pnga_type_f2c(MT_F_DBL), x, *n, op);
+}
+
+#define ga_cgop_ F77_FUNC_(ga_cgop,GA_CGOP)
+void ga_cgop_(Integer *type, SingleComplex *x, Integer *n, char *op, int len)
+{
+    wnga_gop(pnga_type_f2c(MT_F_SCPL), x, *n, op);
+}
+
+#define nga_cgop_ F77_FUNC_(nga_cgop,NGA_CGOP)
+void nga_cgop_(Integer *type, SingleComplex *x, Integer *n, char *op, int len)
+{
+    wnga_gop(pnga_type_f2c(MT_F_SCPL), x, *n, op);
+}
+
+#define ga_zgop_ F77_FUNC_(ga_zgop,GA_ZGOP)
+void ga_zgop_(Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
+{
+    wnga_gop(pnga_type_f2c(MT_F_DCPL), x, *n, op);
+}
+
+#define nga_zgop_ F77_FUNC_(nga_zgop,NGA_ZGOP)
+void nga_zgop_(Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
+{
+    wnga_gop(pnga_type_f2c(MT_F_DCPL), x, *n, op);
+}
+
 

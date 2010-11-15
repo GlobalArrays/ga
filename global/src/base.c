@@ -1321,7 +1321,7 @@ Integer pnga_pgroup_split_irreg(Integer *grp, Integer *mycolor)
   /* Figure out what procs are in my group */
   for(i=0; i<nprocs; i++) color_arr[i] = 0;
   color_arr[me] = *mycolor;
-  gai_igop(GA_TYPE_GOP, color_arr, nprocs, "+");
+  pnga_gop(pnga_type_f2c(MT_F_INT), color_arr, nprocs, "+");
 
   for (icnt=0, i=0; i<nprocs; i++) {
      if(color_arr[i] == *mycolor) {
@@ -1990,9 +1990,9 @@ logical pnga_allocate( Integer *g_a)
   if(GA_memory_limited){
      status = (GA_total_memory >= 0) ? 1 : 0;
      if (p_handle > 0) {
-        gai_pgroup_igop(p_handle,GA_TYPE_GSM, &status, 1, "*");
+        pnga_pgroup_gop(p_handle,pnga_type_f2c(MT_F_INT), &status, 1, "*");
      } else {
-        gai_igop(GA_TYPE_GSM, &status, 1, "*");
+        pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "*");
      }
   }else status = 1;
 
@@ -2190,12 +2190,11 @@ logical pnga_create_ghosts(Integer type,
                   chunk, p_handle, g_a);
 }
 
-/*\ CREATE A GLOBAL ARRAY -- IRREGULAR DISTRIBUTION -- PROCESSOR CONFIGURATION
 /**
  *  Create a Global Array with an irregular distribution and a user-specified
- *  process group. The user can specify location of array boundaries on individual
- *  processors.
-\*/
+ *  process group. The user can specify location of array boundaries on
+ *  individual processors.
+ */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_create_irreg_config = pnga_create_irreg_config
 #endif
@@ -2333,9 +2332,9 @@ int i, nproc,grp_me=GAme;
     *adj = adjust[grp_me];
 
     if (grp_id > 0)
-       gai_pgroup_igop(grp_id,GA_TYPE_GSM, adjust, nproc, "+");
+       pnga_pgroup_gop(grp_id, pnga_type_f2c(MT_F_INT), adjust, nproc, "+");
     else
-       gai_igop(GA_TYPE_GSM, adjust, nproc, "+");
+       pnga_gop(pnga_type_f2c(MT_F_INT), adjust, nproc, "+");
     
     for(i=0;i<nproc;i++){
        ptr_arr[i] = adjust[i] + (char*)ptr_arr[i];
@@ -2425,7 +2424,7 @@ Integer status;
      if(GA_memory_limited){
          GA_total_memory -= bytes+extra;
          status = (GA_total_memory >= 0) ? 1 : 0;
-         gai_igop(GA_TYPE_GSM, &status, 1, "*");
+         pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "*");
          if(!status)GA_total_memory +=bytes+extra;
      }else status = 1;
 
@@ -2551,7 +2550,6 @@ logical pnga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
   char     **save_ptr;
   C_Long  mem_size, mem_size_proc;
   Integer  i, ga_handle, status;
-  C_Integer  *save_mapc;
   int local_sync_begin,local_sync_end;
   Integer grp_id, grp_me=GAme, grp_nproc=GAnproc;
   int maplen = calc_maplen(GA_OFFSET + *g_a);
@@ -2615,10 +2613,10 @@ logical pnga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
   if(GA_memory_limited){
     status = (GA_total_memory >= 0) ? 1 : 0;
     if (grp_id > 0) {
-      gai_pgroup_igop((int)grp_id,GA_TYPE_GSM, &status, 1, "*");
+      pnga_pgroup_gop(grp_id, pnga_type_f2c(MT_F_INT), &status, 1, "*");
       status = (Integer)status;
     } else {
-      gai_igop(GA_TYPE_GSM, &status, 1, "*");
+      pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "*");
     }
   }else status = 1;
 
@@ -2689,7 +2687,6 @@ int GA_Assemble_duplicate(int g_a, char* array_name, void* ptr)
 {
 char     **save_ptr;
 int      i, ga_handle;
-C_Integer      *save_mapc;
 int extra = sizeof(getmem_t)+GAnproc*sizeof(char*);
 getmem_t *info = (getmem_t *)((char*)ptr - extra);
 char **ptr_arr = (char**)(info+1);
@@ -3240,7 +3237,7 @@ logical FATR nga_locate_nnodes_( Integer *g_a,
 */
 {
   int  procT[MAXDIM], procB[MAXDIM], proc_subscript[MAXDIM];
-  Integer  proc, owner, i, ga_handle;
+  Integer  proc, i, ga_handle;
   Integer  d, dpos, ndim, elems, p_handle, use_blocks;
 
   ga_check_handleM(g_a, "nga_locate_nnodes");
@@ -3289,7 +3286,6 @@ logical FATR nga_locate_nnodes_( Integer *g_a,
     p_handle = (Integer)GA[ga_handle].p_handle;
     for(i= 0; i< elems; i++){ 
       Integer _lo[MAXDIM], _hi[MAXDIM];
-      Integer  offset;
 
       /* convert i to owner processor id using the current values in
          proc_subscript */
@@ -3297,27 +3293,6 @@ logical FATR nga_locate_nnodes_( Integer *g_a,
       /* get range of global array indices that are owned by owner */
       ga_ownsM(ga_handle, proc, _lo, _hi);
 
-#if 0
-      offset = *np *(ndim*2); /* location in map to put patch range */
-
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
-      for(d = 0; d< ndim; d++)
-        map[d + offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
-      for(d = 0; d< ndim; d++)
-        map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
-
-      owner = proc;
-      if (GA[ga_handle].num_rstrctd == 0) {
-        proclist[i] = owner;
-      } else {
-        proclist[i] = GA[ga_handle].rstrctd_list[owner];
-      }
-#endif
       /* Update to proc_subscript so that it corresponds to the next
        * processor in the block of processors containing the patch */
       ga_UpdateSubscriptM(ndim,proc_subscript,procT,procB,GA[ga_handle].nblock);
@@ -3326,7 +3301,6 @@ logical FATR nga_locate_nnodes_( Integer *g_a,
   } else {
     Integer nblocks = GA[ga_handle].block_total;
     Integer chk, j, tlo[MAXDIM], thi[MAXDIM], cnt;
-    Integer offset;
     cnt = 0;
     for (i=0; i<nblocks; i++) {
       /* check to see if this block overlaps with requested block
@@ -3345,26 +3319,10 @@ logical FATR nga_locate_nnodes_( Integer *g_a,
       }
       /* store blocks that overlap request region in proclist */
       if (chk) {
-#if 0
-        proclist[cnt] = i;
-#endif
         cnt++;
       }
     }
     *np = cnt;
-
-#if 0
-    /* fill map array with block coordinates */
-    for (i=0; i<cnt; i++) {
-      offset = i*2*ndim;
-      j = proclist[i];
-      pnga_distribution(g_a,&j,tlo,thi);
-      for (j=0; j<ndim; j++) {
-        map[offset + j] = lo[j] < tlo[j] ? tlo[j] : lo[j];
-        map[offset + ndim + j] = hi[j] > thi[j] ? thi[j] : hi[j];
-      }
-    }
-#endif
   }
   return(TRUE);
 }

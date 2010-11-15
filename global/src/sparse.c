@@ -542,7 +542,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
      lim[me] = -1;
    }
 
-   gai_igop(GA_TYPE_GOP,lim, 2*nproc,"+");
+   pnga_gop(pnga_type_f2c(MT_F_INT),lim, 2*nproc,"+");
 
    /* take intersection of patch owned by process and patch
       specified by the user */ 
@@ -637,7 +637,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
               }
             }
           }
-          gac_igop(ilast,nproc,"+");
+          pnga_gop(MT_C_INT,ilast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
             if (lim[me] > 0) { /* There is a bit set on this processor */
@@ -670,7 +670,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
               }
             }
           }
-          gac_zgop(cdlast,nproc,"+");
+          pnga_gop(MT_C_DCPL,cdlast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
             if (lim[me] > 0) { /* There is a bit set on this processor */
@@ -704,7 +704,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
               }
             }
           }
-          gac_cgop(cflast,nproc,"+");
+          pnga_gop(MT_C_SCPL,cflast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
             if (lim[me] > 0) { /* There is a bit set on this processor */
@@ -735,7 +735,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
               }
             }
           }
-          gac_dgop(dlast,nproc,"+");
+          pnga_gop(MT_C_DBL,dlast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
             if (lim[me] > 0) { /* There is a bit set on this processor */
@@ -765,7 +765,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
               }
             }
           }
-          gac_fgop(flast,nproc,"+");
+          pnga_gop(MT_C_FLOAT,flast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
             if (lim[me] > 0) { /* There is a bit set on this processor */
@@ -795,7 +795,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
               }
             }
           }
-          gac_lgop(llast,nproc,"+");
+          pnga_gop(MT_C_LONGINT,llast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
             if (lim[me] > 0) { /* There is a bit set on this processor */
@@ -825,7 +825,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
               }
             }
           }
-          gac_llgop(lllast,nproc,"+");
+          pnga_gop(MT_C_LONGLONG,lllast,nproc,"+");
           if (!ip[0]) {
             Integer iup;
             if (lim[me] > 0) { /* There is a bit set on this processor */
@@ -920,7 +920,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
    }
 
    /* find number of elements everybody else is contributing */
-   gai_igop(GA_TYPE_GOP, lim, nproc,"+");
+   pnga_gop(pnga_type_f2c(MT_F_INT), lim, nproc,"+");
 
    for(i= myplace= *icount= 0; i<nproc; i++){
         if( i<me && lim[i]) myplace += lim[i];

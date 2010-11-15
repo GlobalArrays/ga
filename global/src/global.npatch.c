@@ -1107,7 +1107,7 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
     if(ngai_comp_patch(andim, loA, hiA, bndim, loB, hiB) &&
         ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi)) compatible = 1;
     else compatible = 0;
-    gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
     if(!(compatible && (transp=='n'))) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_a
@@ -2454,7 +2454,7 @@ void *alpha, *beta;
     if(ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC) &&
         ngai_comp_patch(andim, alo, ahi, cndim, clo, chi)) compatible = 1;
     else compatible = 0;
-    gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
     if(!compatible) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_c
@@ -2480,7 +2480,7 @@ void *alpha, *beta;
     if(ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC) &&
         ngai_comp_patch(bndim, blo, bhi, cndim, clo, chi)) compatible = 1;
     else compatible = 0;
-    gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
     if(!compatible) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_c

@@ -1781,7 +1781,7 @@ int op; /* operation to be perform between g_a and g_b */
     if(ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC) &&
         ngai_comp_patch(andim, alo, ahi, cndim, clo, chi)) compatible = 1;
     else compatible = 0;
-    gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
     if(!compatible) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_c
@@ -1807,7 +1807,7 @@ int op; /* operation to be perform between g_a and g_b */
     if(ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC) &&
         ngai_comp_patch(bndim, blo, bhi, cndim, clo, chi)) compatible = 1;
     else compatible = 0;
-    gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
     if(!compatible) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_c
@@ -2899,7 +2899,7 @@ void FATR ga_step_bound_info_patch_(
        compatible3 = 0;
      }
      compatible = compatible * compatible2 * compatible3;
-     gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
+     pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
      if(!compatible) {
        pnga_error(" ga_step_bound_info_patch_ mismatched patchs ",0);
      }
@@ -3219,7 +3219,7 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
   /* test if patches match */
   if(ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi)) compatible = 1;
   else compatible = 0;
-  gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
+  pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
   if(!compatible) {
     pnga_error(" ga_step_max_patch_ mismatched patchs ",0);
   }

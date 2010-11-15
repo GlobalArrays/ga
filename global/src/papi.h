@@ -104,4 +104,13 @@ extern void pnga_error(char *string, Integer icode);
 extern Integer pnga_type_f2c(Integer type);
 extern Integer pnga_type_c2f(Integer type);
 
+/* Routines from collect.c */
+void pnga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root);
+void pnga_brdcst(Integer *type, void *buf, Integer *len, Integer *originator);
+void pnga_pgroup_brdcst(Integer *grp_id, Integer *type, void *buf, Integer *len, Integer *originator);
+void pnga_msg_sync();
+void pnga_msg_pgroup_sync(Integer *grp_id);
+void pnga_pgroup_gop(Integer p_grp, Integer type, void *x, Integer n, char *op);
+void pnga_gop(Integer type, void *x, Integer n, char *op);
+
 #endif /* PAPI_H_ */

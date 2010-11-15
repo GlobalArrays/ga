@@ -200,7 +200,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     else
        max_chunk = (Integer) max3(*Ichunk, *Jchunk, *Kchunk);
 
-    gai_pgroup_igop(a_grp, GA_TYPE_GOP, &avail, (Integer)1, "min");
+    pnga_pgroup_gop(a_grp, pnga_type_f2c(MT_F_INT), &avail, (Integer)1, "min");
     
     if ( max_chunk > CHUNK_SIZE/nbuf) {
        /*if memory if very limited, performance degrades for large matrices
@@ -1395,7 +1395,7 @@ void ga_matmul(transa, transb, alpha, beta,
 		Jchunk/Kchunk > GA_ASPECT_RATIO || Kchunk/Jchunk > GA_ASPECT_RATIO) {
                 irreg = SET;
              }
-	     gai_pgroup_igop(a_grp, GA_TYPE_GOP, &irreg, (Integer)1, "max");   
+	     pnga_pgroup_gop(a_grp, pnga_type_f2c(MT_F_INT), &irreg, (Integer)1, "max");   
 	     if(irreg==SET) irregular = SET;
 	  }
 	  
@@ -1635,7 +1635,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
          fflush(stdout);
        } else {
          fflush(stdout);
-         gai_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
+         pnga_gop(pnga_type_f2c(MT_F_INT), &avail, (Integer)1, "min");
        }
        if(avail<MINMEM && pnga_nodeid()==0) pnga_error("NotEnough memory",avail);
        elems = (Integer)(avail*0.9); /* Donot use every last drop */
@@ -1929,7 +1929,6 @@ Integer adims[GA_MAX_DIM],bdims[GA_MAX_DIM],cdims[GA_MAX_DIM],tmpld[GA_MAX_DIM];
 Integer *tmplo = adims, *tmphi =bdims; 
 DoubleComplex ONE;
 SingleComplex ONE_CF;
-float ZERO_F = 0.0;
 Integer ZERO_I = 0;
 Integer get_new_B;
 DoublePrecision chunk_cube;
@@ -2029,7 +2028,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
        Integer avail = gai_memory_avail(atype);
-       gai_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
+       pnga_gop(pnga_type_f2c(MT_F_INT), &avail, (Integer)1, "min");
        if(avail<MINMEM && pnga_nodeid()==0) pnga_error("Not enough memory",avail);
        elems = (Integer)(avail*0.9);/* Donot use every last drop */
        

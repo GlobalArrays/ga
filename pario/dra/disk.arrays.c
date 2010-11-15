@@ -49,6 +49,7 @@
 #include "drap.h"
 #include "ga.h"
 #include "global.h"
+#include "papi.h"
 #include "macdecls.h"
 
 #define WALLTIME 0
@@ -1658,7 +1659,7 @@ Integer FATR dra_probe_(
     done = (Integer) k;
 
     /* determine global status */
-    gai_igop(type, &done, (Integer)1, op);
+    pnga_gop(pnga_type_f2c(MT_F_INT), &done, (Integer)1, op);
 
     if(done){
         *status = ELIO_DONE;

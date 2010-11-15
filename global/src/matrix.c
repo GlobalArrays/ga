@@ -403,7 +403,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
 
     if (!ngai_comp_patch (andim, loA, hiA, mndim, loM, hiM)) compatible = 1;
     else compatible = 0;
-    gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
     if (!compatible) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_a
@@ -420,7 +420,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
 
     if (!ngai_comp_patch (bndim, loB, hiB, mndim, loM, hiM)) compatible = 1;
     else compatible = 0;
-    gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
     if (!compatible) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_a
@@ -437,7 +437,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
 
     if (!ngai_comp_patch (cndim, loC, hiC, mndim, loM, hiM)) compatible = 1;
     else compatible = 0;
-    gai_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
     if (!compatible) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_a

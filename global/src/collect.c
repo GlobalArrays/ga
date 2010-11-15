@@ -28,7 +28,10 @@
 #endif
 
 
-void ga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_msg_brdcst = pnga_msg_brdcst
+#endif
+void pnga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root)
 {
 #ifdef ARMCI_COLLECTIVES
     int p_grp = (int)pnga_pgroup_get_default();
@@ -52,15 +55,21 @@ void ga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root)
 
 /*\ BROADCAST
 \*/
-void FATR ga_brdcst_(
-        Integer *type, void *buf, Integer *len, Integer *originator)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_brdcst = pnga_brdcst
+#endif
+void pnga_brdcst(Integer *type, void *buf, Integer *len, Integer *originator)
 {
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    ga_msg_brdcst(*type,buf,*len,*originator);
+    pnga_msg_brdcst(*type,buf,*len,*originator);
 }
 
 
-void FATR ga_pgroup_brdcst_(Integer *grp_id, Integer *type, void *buf, Integer *len, Integer *originator)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_brdcst = pnga_pgroup_brdcst
+#endif
+void FATR pnga_pgroup_brdcst(Integer *grp_id, Integer *type, void *buf,
+                             Integer *len, Integer *originator)
 {
     int p_grp = (int)*grp_id;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -85,7 +94,10 @@ MPI_Comm *GA_COMM;
 #endif
 
 
-void ga_msg_sync_()
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_msg_sync = pnga_msg_sync
+#endif
+void pnga_msg_sync()
 {
 #ifdef MPI
     int p_grp = (int)pnga_pgroup_get_default(); 
@@ -103,7 +115,10 @@ void ga_msg_sync_()
 }
 
 
-void ga_msg_pgroup_sync_(Integer *grp_id)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_msg_pgroup_sync = pnga_msg_pgroup_sync
+#endif
+void pnga_msg_pgroup_sync(Integer *grp_id)
 {
     int p_grp = (int)(*grp_id);
     if(p_grp>0) {
@@ -123,7 +138,10 @@ void ga_msg_pgroup_sync_(Integer *grp_id)
 }
 
 
-void gai_pgroup_gop(Integer p_grp, Integer type, void *x, Integer n, char *op)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_gop = pnga_pgroup_gop
+#endif
+void pnga_pgroup_gop(Integer p_grp, Integer type, void *x, Integer n, char *op)
 {
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if (p_grp > 0) {
@@ -157,18 +175,21 @@ void gai_pgroup_gop(Integer p_grp, Integer type, void *x, Integer n, char *op)
         pnga_error("Groups not implemented for system",0);
 #endif
     } else {
-        gai_gop(type, x, n, op);
+        pnga_gop(type, x, n, op);
     }
 }
 
 
-void gai_gop(Integer type, void *x, Integer n, char *op)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_gop = pnga_gop
+#endif
+void pnga_gop(Integer type, void *x, Integer n, char *op)
 {
     Integer p_grp = pnga_pgroup_get_default();
 
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if (p_grp > 0) {
-        gai_pgroup_gop(p_grp, type, x, n, op);
+        pnga_pgroup_gop(p_grp, type, x, n, op);
     } else {
 #if defined(ARMCI_COLLECTIVES) || defined(MPI)
         switch (type){
@@ -225,124 +246,3 @@ void gai_gop(Integer type, void *x, Integer n, char *op)
 #endif
     }
 }
-
-/***************************************************************************
- * GLOBAL OPERATIONS -- C type safe for convenience
- **************************************************************************/
-
-void gac_igop(int *x, Integer n, char *op)
-{ gai_gop(C_INT, x, n, op); }
-
-void gac_lgop(long *x, Integer n, char *op)
-{ gai_gop(C_LONG, x, n, op); }
-
-void gac_llgop(long long *x, Integer n, char *op)
-{ gai_gop(C_LONGLONG, x, n, op); }
-
-void gac_fgop(float *x, Integer n, char *op)
-{ gai_gop(C_FLOAT, x, n, op); }
-
-void gac_dgop(double *x, Integer n, char *op)
-{ gai_gop(C_DBL, x, n, op); }
-
-void gac_cgop(SingleComplex *x, Integer n, char *op)
-{ gai_gop(C_SCPL, x, n, op); }
-
-void gac_zgop(DoubleComplex *x, Integer n, char *op)
-{ gai_gop(C_DCPL, x, n, op); }
-
-/***************************************************************************
- * GLOBAL OPERATIONS GROUP -- Fortran
- **************************************************************************/
-
-void ga_pgroup_igop_(Integer *grp, Integer *type, Integer *x, Integer *n, char *op, int len)
-{ gai_pgroup_gop(*grp, pnga_type_f2c(MT_F_INT), x, *n, op); }
-
-void ga_pgroup_sgop_(Integer *grp, Integer *type, Real *x, Integer *n, char *op, int len)
-{ gai_pgroup_gop(*grp, pnga_type_f2c(MT_F_REAL), x, *n, op); }
-
-void ga_pgroup_dgop_(Integer *grp, Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
-{ gai_pgroup_gop(*grp, pnga_type_f2c(MT_F_DBL), x, *n, op); }
-
-void ga_pgroup_cgop_(Integer *grp, Integer *type, SingleComplex *x, Integer *n, char *op, int len)
-{ gai_pgroup_gop(*grp, pnga_type_f2c(MT_F_SCPL), x, *n, op); }
-
-void ga_pgroup_zgop_(Integer *grp, Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
-{ gai_pgroup_gop(*grp, pnga_type_f2c(MT_F_DCPL), x, *n, op); }
-
-
-/***************************************************************************
- * GLOBAL OPERATIONS -- Fortran
- **************************************************************************/
-
-void ga_gop_(Integer *type, void *x, Integer *n, char *op, int len)
-{ gai_gop(pnga_type_f2c(*type), x, *n, op); }
-
-void ga_igop_(Integer *type, Integer *x, Integer *n, char *op, int len)
-{
-#if defined(ARMCI_COLLECTIVES) || defined(MPI)
-    gai_gop(pnga_type_f2c(MT_F_INT), x, *n, op);
-#else
-    IGOP_(type, x, n, op, len);
-#endif
-}
-
-void ga_sgop_(Integer *type, Real *x, Integer *n, char *op, int len)
-{ gai_gop(pnga_type_f2c(MT_F_REAL), x, *n, op); }
-
-void ga_dgop_(Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
-{
-#if defined(ARMCI_COLLECTIVES) || defined(MPI)
-    gai_gop(pnga_type_f2c(MT_F_DBL), x, *n, op);
-#else
-    DGOP_(type, x, n, op, len);
-#endif
-}
-
-void ga_cgop_(Integer *type, SingleComplex *x, Integer *n, char *op, int len)
-{ gai_gop(pnga_type_f2c(MT_F_SCPL), x, *n, op); }
-
-
-void ga_zgop_(Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
-{
-#if defined(ARMCI_COLLECTIVES) || defined(MPI)
-    gai_gop(pnga_type_f2c(MT_F_DCPL), x, *n, op);
-#else
-    Integer 2n = 2*(*n);
-    DGOP_(type, x, &2n, op, len);
-#endif
-}
-
-/***************************************************************************
- * GLOBAL OPERATIONS -- Fortran (old internal interfaces -- deprecated)
- **************************************************************************/
-
-void gai_igop(Integer type, Integer *x, Integer n, char *op)
-{ ga_igop_(&type, x, &n, op, strlen(op)); }
-
-void gai_sgop(Integer type, Real *x, Integer n, char *op)
-{ ga_sgop_(&type, x, &n, op, strlen(op)); }
-
-void gai_dgop(Integer type, DoublePrecision *x, Integer n, char *op)
-{ ga_dgop_(&type, x, &n, op, strlen(op)); }
-
-void gai_cgop(Integer type, SingleComplex *x, Integer n, char *op)
-{ ga_cgop_(&type, x, &n, op, strlen(op)); }
-
-void gai_zgop(Integer type, DoubleComplex *x, Integer n, char *op)
-{ ga_zgop_(&type, x, &n, op, strlen(op)); }
-
-void gai_pgroup_igop(Integer p_grp, Integer type, Integer *x, Integer n, char *op)
-{ ga_pgroup_igop_(&p_grp, &type, x, &n, op, strlen(op)); }
-
-void gai_pgroup_sgop(Integer p_grp, Integer type, Real *x, Integer n, char *op)
-{ ga_pgroup_sgop_(&p_grp, &type, x, &n, op, strlen(op)); }
-
-void gai_pgroup_dgop(Integer p_grp, Integer type, DoublePrecision *x, Integer n, char *op)
-{ ga_pgroup_dgop_(&p_grp, &type, x, &n, op, strlen(op)); }
-
-void gai_pgroup_cgop(Integer p_grp, Integer type, SingleComplex *x, Integer n, char *op)
-{ ga_pgroup_cgop_(&p_grp, &type, x, &n, op, strlen(op)); }
-
-void gai_pgroup_zgop(Integer p_grp, Integer type, DoubleComplex *x, Integer n, char *op)
-{ ga_pgroup_zgop_(&p_grp, &type, x, &n, op, strlen(op)); }

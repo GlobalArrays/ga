@@ -9,6 +9,7 @@
 #include "draf2c.h"
 #include "farg.h"
 #include "typesf2c.h"
+#include "papi.h"
 #include "global.h"
 
 static char cname[DRA_MAX_NAME+1], cfilename[DRA_MAX_FNAME+1];

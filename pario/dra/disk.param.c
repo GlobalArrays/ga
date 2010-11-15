@@ -16,6 +16,7 @@
 
 #include "drap.h"
 #include "global.h"
+#include "papi.h"
 
 #define MAX_HD_NAME_LEN 100
 #define HD_NAME_EXT_LEN 10
@@ -57,7 +58,7 @@ int dai_file_config(char* filename)
     status = (status==ELIO_OK) ? 1 : 0; /* normalize status */
 
     /* combine status accross all processors */
-    gai_igop(DRA_GOP_TYPE, &status, 1, &sum);
+    pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, &sum);
 
     /* 1     - only 0 can access the file => independent files 
      * nproc - all can access it => shared file

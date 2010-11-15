@@ -14,13 +14,11 @@
 #include "drap.h"
 #include "global.h"
 
-static Integer _da_lo[MAXDIM], _da_hi[MAXDIM], _ga_work[MAXDIM];
+static Integer _da_lo[MAXDIM], _da_hi[MAXDIM];
 static Integer _da_dims[MAXDIM];
 static Integer _da_reqdims[MAXDIM];
 
 static Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
-static Integer _da_blo[MAXDIM], _da_bhi[MAXDIM];
-static Integer _da_clo[MAXDIM], _da_chi[MAXDIM];
 
 #ifdef USE_FAPI
 #  define COPYC2F(carr, farr, n){\

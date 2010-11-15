@@ -241,7 +241,6 @@ void FATR ga_copy_(Integer *g_a, Integer *g_b)
 {
 Integer  ndim, ndimb, type, typeb, me_a, me_b;
 Integer dimsb[MAXDIM],i;
-Integer nseg;
 Integer a_grp, b_grp, anproc, bnproc;
 Integer num_blocks_a, num_blocks_b;
 Integer blocks[MAXDIM], block_dims[MAXDIM];
