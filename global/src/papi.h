@@ -11,26 +11,34 @@ extern logical pnga_create(Integer type, Integer ndim,
                            Integer *chunk, Integer *g_a);
 extern logical pnga_create_config(Integer type, Integer ndim,
                                   Integer *dims, char* name,
-                                  Integer *chunk, Integer p_handle, Integer *g_a);
+                                  Integer *chunk, Integer p_handle,
+                                  Integer *g_a);
 extern logical pnga_create_ghosts(Integer type, Integer ndim,
                                   Integer *dims, Integer *width, char* name,
                                   Integer *chunk, Integer *g_a);
 extern logical pnga_create_ghosts_irreg(Integer type, Integer ndim,
-                                        Integer *dims, Integer *width, char* name,
-                                        Integer *map, Integer *block, Integer *g_a);
+                                        Integer *dims, Integer *width,
+                                        char* name,
+                                        Integer *map, Integer *block,
+                                        Integer *g_a);
 extern logical pnga_create_ghosts_irreg_config(Integer type, Integer ndim,
-                                               Integer *dims, Integer *width, char* name,
+                                               Integer *dims, Integer *width,
+                                               char* name,
                                                Integer *map, Integer *block,
                                                Integer p_handle, Integer *g_a);
 extern logical pnga_create_ghosts_config(Integer type, Integer ndim,
-                                         Integer *dims, Integer *width, char* name,
-                                         Integer *chunk, Integer p_handle, Integer *g_a);
+                                         Integer *dims, Integer *width,
+                                         char* name,
+                                         Integer *chunk, Integer p_handle,
+                                         Integer *g_a);
 extern logical pnga_create_irreg(Integer type, Integer ndim,
                                  Integer *dims, char* name,
                                  Integer *map, Integer *block, Integer *g_a);
 extern logical pnga_create_irreg_config(Integer type, Integer ndim,
-                                        Integer *dims, char* name, Integer *map,
-                                        Integer *block, Integer p_handle, Integer *g_a);
+                                        Integer *dims, char* name,
+                                        Integer *map,
+                                        Integer *block, Integer p_handle,
+                                        Integer *g_a);
 extern Integer pnga_create_handle();
 extern logical pnga_create_mutexes(Integer *num);
 extern logical pnga_destroy(Integer *g_a);
@@ -47,15 +55,16 @@ extern void pnga_get_proc_index(Integer *g_a, Integer *iproc, Integer *index);
 extern logical pnga_has_ghosts(Integer *g_a);
 extern void pnga_initialize();
 extern void pnga_initialize_ltd(Integer *limit);
-extern void pnga_inquire(Integer *g_a, Integer *type, Integer *ndim, Integer *dims);
+extern void pnga_inquire(Integer *g_a, Integer *type, Integer *ndim,
+                         Integer *dims);
 extern Integer pnga_inquire_memory();
 extern void pnga_inquire_name(Integer *g_a, char **array_name);
 extern logical pnga_is_mirrored(Integer *g_a);
 extern void pnga_list_nodeid(Integer *list, Integer *nprocs);
 extern logical pnga_locate(Integer *g_a, Integer *subscript, Integer *owner);
 extern Integer pnga_locate_num_blocks(Integer *g_a, Integer *lo, Integer *hi);
-extern logical pnga_locate_region(Integer *g_a, Integer *lo, Integer *hi, Integer *map,
-                                  Integer *proclist, Integer *np);
+extern logical pnga_locate_region(Integer *g_a, Integer *lo, Integer *hi,
+                                  Integer *map, Integer *proclist, Integer *np);
 extern void pnga_lock(Integer *mutex);
 extern Integer pnga_ndim(Integer *g_a);
 extern void pnga_mask_sync(Integer *begin, Integer *end);
@@ -83,8 +92,10 @@ extern void pnga_proc_topology(Integer* g_a, Integer* proc, Integer* subscript);
 extern void pnga_set_debug(logical *flag);
 
 /* Routines from onesided.c */
-extern void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer *nbhandle);
-extern void pnga_put(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld);
+extern void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf,
+                       Integer *ld, Integer *nbhandle);
+extern void pnga_put(Integer *g_a, Integer *lo, Integer *hi, void *buf,
+                     Integer *ld);
 
 /* Routines from global.util.c */
 extern void pnga_error(char *string, Integer icode);
@@ -92,4 +103,5 @@ extern void pnga_error(char *string, Integer icode);
 /* Routines from datatypes.c */
 extern Integer pnga_type_f2c(Integer type);
 extern Integer pnga_type_c2f(Integer type);
+
 #endif /* PAPI_H_ */
