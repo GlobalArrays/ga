@@ -1,3 +1,12 @@
+5.0   November 2010
+    * Now built using GNU autotools (autoconf,automake,libtool)
+    * Restricted arrays (see user manual)
+    * ARMCI runtime enhancements
+        + On-demand connection management
+        + Improved scalability for fence
+    * New Python interface
+    * Task Scheduling Library (tascel)
+
 5.0b  July 2010
     * Now built using GNU autotools (autoconf,automake,libtool)
 

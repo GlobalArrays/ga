@@ -52,7 +52,22 @@ dnl AS_IF([test "x$happy" = xyes],
 dnl     [AS_IF([test -d /bgl/BlueLight/ppcfloor/bglsys], [], [happy=no])])
 AS_IF([test "x$happy" = xyes],
     [AC_SEARCH_LIBS([BGLML_memcpy], [msglayer.rts], [], [happy=no],
-        [-lrts.rts -ldevices.rts])])
+        [-lrts.rts -ldevices.rts])
+     AS_CASE([$ac_cv_search_BGLML_memcpy],
+        ["none required"], [],
+        [no], [],
+        [# add msglayer.rts to ARMCI_NETWORK_LIBS if not there
+         AS_CASE([$ARMCI_NETWORK_LIBS],
+                 [*msglayer.rts*], [],
+                 [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lmsglayer.rts"])
+         # add extra lib rts.rts to ARMCI_NETWORK_LIBS if not there
+         AS_CASE([$ARMCI_NETWORK_LIBS],
+                 [*rts.rts*], [],
+                 [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lrts.rts"])
+         # add extra lib devices.rts to ARMCI_NETWORK_LIBS if not there
+         AS_CASE([$ARMCI_NETWORK_LIBS],
+                 [*devices.rts*], [],
+                 [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -ldevices.rts"])])])
 AS_IF([test "x$happy" = xyes],
     [ga_armci_network=BGML; with_bgml=yes; $1],
     [$2])
@@ -67,7 +82,14 @@ AS_IF([test "x$happy" = xyes],
     [AC_CHECK_HEADER([mpp/shmem.h], [],
         [AC_CHECK_HEADER([shmem.h], [], [happy=no])])])
 AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([shmem_init], [sma], [], [happy=no])])
+    [AC_SEARCH_LIBS([shmem_init], [sma], [], [happy=no])
+     AS_CASE([$ac_cv_search_shmem_init],
+        ["none required"], [],
+        [no], [],
+        [# add sma to ARMCI_NETWORK_LIBS if not there
+         AS_CASE([$ARMCI_NETWORK_LIBS],
+                 [*sma*], [],
+                 [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lsma"])])])
 AS_IF([test "x$happy" = xyes],
     [ga_armci_network=CRAY_SHMEM; with_cray_shmem=yes; $1],
     [$2])
@@ -82,7 +104,26 @@ AS_IF([test "x$happy" = xyes],
     [AC_CHECK_HEADER([dcmf.h], [], [happy=no])])
 AS_IF([test "x$happy" = xyes],
     [AC_SEARCH_LIBS([DCMF_Messager_initialize], [dcmf.cnk],
-        [], [happy=no], [-ldcmfcoll.cnk])])
+        [], [happy=no], [-ldcmfcoll.cnk -lSPI.cna -lrt])
+     AS_CASE([$ac_cv_search_DCMF_Messager_initialize],
+            ["none required"], [],
+            [no], [],
+            [# add dcmf.cnk to ARMCI_NETWORK_LIBS if not there
+             AS_CASE([$ARMCI_NETWORK_LIBS],
+                     [*dcmf.cnk*], [],
+                     [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -ldcmf.cnk"])
+             # add extra lib dcmfcoll.cnk if not there
+             AS_CASE([$ARMCI_NETWORK_LIBS],
+                     [*dcmfcoll.cnk*], [],
+                     [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -ldcmfcoll.cnk"])
+             # add extra lib SPI.cna if not there
+             AS_CASE([$ARMCI_NETWORK_LIBS],
+                     [*SPI.cna*], [],
+                     [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lSPI.cna"])
+             # add extra lib rt if not there
+             AS_CASE([$ARMCI_NETWORK_LIBS],
+                     [*rt*], [],
+                     [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lrt"])])])
 AS_IF([test "x$happy" = xyes],
     [ga_armci_network=DCMF; with_dcmf=yes; $1],
     [$2])
@@ -96,7 +137,14 @@ happy=yes
 AS_IF([test "x$happy" = xyes],
     [AC_CHECK_HEADER([lapi.h], [], [happy=no])])
 AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([LAPI_Init], [lapi_r lapi], [], [happy=no])])
+    [AC_SEARCH_LIBS([LAPI_Init], [lapi_r lapi], [], [happy=no])
+     AS_CASE([$ac_cv_search_LAPI_Init],
+            ["none required"], [],
+            [no], [],
+            [# add missing lib to ARMCI_NETWORK_LIBS if not there
+             AS_CASE([$ARMCI_NETWORK_LIBS],
+                     [*$ac_cv_search_LAPI_Init*], [],
+                     [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_LAPI_Init"])])])
 AS_IF([test "x$happy" = xyes],
     [ga_armci_network=LAPI; with_lapi=yes; $1],
     [$2])
@@ -125,7 +173,11 @@ happy=yes
 AS_IF([test "x$happy" = xyes],
     [AC_CHECK_HEADER([infiniband/verbs.h], [], [happy=no])])
 AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([ibv_open_device], [ibverbs], [], [happy=no])])
+    [AC_SEARCH_LIBS([ibv_open_device], [ibverbs], [], [happy=no])
+     AS_CASE([$ac_cv_search_ibv_open_device],
+        ["none required"], [],
+        [no], [],
+        [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_ibv_open_device"])])
 AS_IF([test "x$happy" = xyes],
     [ga_armci_network=OPENIB; with_openib=yes; $1],
     [$2])

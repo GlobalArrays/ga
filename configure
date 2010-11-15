@@ -6846,6 +6846,34 @@ else
   happy=no
 fi
 
+     case $ac_cv_search_BGLML_memcpy in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    # add msglayer.rts to ARMCI_NETWORK_LIBS if not there
+         case $ARMCI_NETWORK_LIBS in #(
+  *msglayer.rts*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lmsglayer.rts" ;;
+esac
+         # add extra lib rts.rts to ARMCI_NETWORK_LIBS if not there
+         case $ARMCI_NETWORK_LIBS in #(
+  *rts.rts*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lrts.rts" ;;
+esac
+         # add extra lib devices.rts to ARMCI_NETWORK_LIBS if not there
+         case $ARMCI_NETWORK_LIBS in #(
+  *devices.rts*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -ldevices.rts" ;;
+esac ;;
+esac
 fi
 if test "x$happy" = xyes; then :
   ga_armci_network=BGML; with_bgml=yes;
@@ -6933,6 +6961,20 @@ else
   happy=no
 fi
 
+     case $ac_cv_search_shmem_init in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    # add sma to ARMCI_NETWORK_LIBS if not there
+         case $ARMCI_NETWORK_LIBS in #(
+  *sma*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lsma" ;;
+esac ;;
+esac
 fi
 if test "x$happy" = xyes; then :
   ga_armci_network=CRAY_SHMEM; with_cray_shmem=yes;
@@ -6984,7 +7026,7 @@ for ac_lib in '' dcmf.cnk; do
     ac_res="none required"
   else
     ac_res=-l$ac_lib
-    LIBS="-l$ac_lib -ldcmfcoll.cnk $ac_func_search_save_LIBS"
+    LIBS="-l$ac_lib -ldcmfcoll.cnk -lSPI.cna -lrt $ac_func_search_save_LIBS"
   fi
   if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_search_DCMF_Messager_initialize=$ac_res
@@ -7013,6 +7055,41 @@ else
   happy=no
 fi
 
+     case $ac_cv_search_DCMF_Messager_initialize in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    # add dcmf.cnk to ARMCI_NETWORK_LIBS if not there
+             case $ARMCI_NETWORK_LIBS in #(
+  *dcmf.cnk*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -ldcmf.cnk" ;;
+esac
+             # add extra lib dcmfcoll.cnk if not there
+             case $ARMCI_NETWORK_LIBS in #(
+  *dcmfcoll.cnk*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -ldcmfcoll.cnk" ;;
+esac
+             # add extra lib SPI.cna if not there
+             case $ARMCI_NETWORK_LIBS in #(
+  *SPI.cna*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lSPI.cna" ;;
+esac
+             # add extra lib rt if not there
+             case $ARMCI_NETWORK_LIBS in #(
+  *rt*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lrt" ;;
+esac ;;
+esac
 fi
 if test "x$happy" = xyes; then :
   ga_armci_network=DCMF; with_dcmf=yes;
@@ -7093,6 +7170,20 @@ else
   happy=no
 fi
 
+     case $ac_cv_search_LAPI_Init in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    # add missing lib to ARMCI_NETWORK_LIBS if not there
+             case $ARMCI_NETWORK_LIBS in #(
+  *$ac_cv_search_LAPI_Init*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_LAPI_Init" ;;
+esac ;;
+esac
 fi
 if test "x$happy" = xyes; then :
   ga_armci_network=LAPI; with_lapi=yes;
@@ -7173,6 +7264,14 @@ else
   happy=no
 fi
 
+     case $ac_cv_search_ibv_open_device in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_ibv_open_device" ;;
+esac
 fi
 if test "x$happy" = xyes; then :
   ga_armci_network=OPENIB; with_openib=yes;
@@ -7351,6 +7450,34 @@ else
   happy=no
 fi
 
+     case $ac_cv_search_BGLML_memcpy in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    # add msglayer.rts to ARMCI_NETWORK_LIBS if not there
+         case $ARMCI_NETWORK_LIBS in #(
+  *msglayer.rts*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lmsglayer.rts" ;;
+esac
+         # add extra lib rts.rts to ARMCI_NETWORK_LIBS if not there
+         case $ARMCI_NETWORK_LIBS in #(
+  *rts.rts*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lrts.rts" ;;
+esac
+         # add extra lib devices.rts to ARMCI_NETWORK_LIBS if not there
+         case $ARMCI_NETWORK_LIBS in #(
+  *devices.rts*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -ldevices.rts" ;;
+esac ;;
+esac
 fi
 if test "x$happy" = xyes; then :
   ga_armci_network=BGML; with_bgml=yes;
@@ -7440,6 +7567,20 @@ else
   happy=no
 fi
 
+     case $ac_cv_search_shmem_init in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    # add sma to ARMCI_NETWORK_LIBS if not there
+         case $ARMCI_NETWORK_LIBS in #(
+  *sma*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lsma" ;;
+esac ;;
+esac
 fi
 if test "x$happy" = xyes; then :
   ga_armci_network=CRAY_SHMEM; with_cray_shmem=yes;
@@ -7493,7 +7634,7 @@ for ac_lib in '' dcmf.cnk; do
     ac_res="none required"
   else
     ac_res=-l$ac_lib
-    LIBS="-l$ac_lib -ldcmfcoll.cnk $ac_func_search_save_LIBS"
+    LIBS="-l$ac_lib -ldcmfcoll.cnk -lSPI.cna -lrt $ac_func_search_save_LIBS"
   fi
   if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_search_DCMF_Messager_initialize=$ac_res
@@ -7522,6 +7663,41 @@ else
   happy=no
 fi
 
+     case $ac_cv_search_DCMF_Messager_initialize in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    # add dcmf.cnk to ARMCI_NETWORK_LIBS if not there
+             case $ARMCI_NETWORK_LIBS in #(
+  *dcmf.cnk*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -ldcmf.cnk" ;;
+esac
+             # add extra lib dcmfcoll.cnk if not there
+             case $ARMCI_NETWORK_LIBS in #(
+  *dcmfcoll.cnk*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -ldcmfcoll.cnk" ;;
+esac
+             # add extra lib SPI.cna if not there
+             case $ARMCI_NETWORK_LIBS in #(
+  *SPI.cna*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lSPI.cna" ;;
+esac
+             # add extra lib rt if not there
+             case $ARMCI_NETWORK_LIBS in #(
+  *rt*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS -lrt" ;;
+esac ;;
+esac
 fi
 if test "x$happy" = xyes; then :
   ga_armci_network=DCMF; with_dcmf=yes;
@@ -7604,6 +7780,20 @@ else
   happy=no
 fi
 
+     case $ac_cv_search_LAPI_Init in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    # add missing lib to ARMCI_NETWORK_LIBS if not there
+             case $ARMCI_NETWORK_LIBS in #(
+  *$ac_cv_search_LAPI_Init*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_LAPI_Init" ;;
+esac ;;
+esac
 fi
 if test "x$happy" = xyes; then :
   ga_armci_network=LAPI; with_lapi=yes;
@@ -7768,6 +7958,14 @@ else
   happy=no
 fi
 
+     case $ac_cv_search_ibv_open_device in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_ibv_open_device" ;;
+esac
 fi
 if test "x$happy" = xyes; then :
   ga_armci_network=OPENIB; with_openib=yes;
