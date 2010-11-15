@@ -2144,7 +2144,7 @@ Integer ndrai_create_config(Integer *type, Integer *ndim, Integer dims[],
     Integer handle, elem_size, ctype, i;
 
     /* convert Fortran to C data type */
-    ctype = (Integer)ga_type_f2c((int)(*type));
+    ctype = pnga_type_f2c(*type);
     ga_sync_();
 
     /* if we have an error here, it is fatal */       
@@ -2270,7 +2270,7 @@ Integer drai_create(Integer *type, Integer *dim1, Integer *dim2, char *name,
     Integer handle, elem_size, ctype;
 
     /* convert Fortran to C data type */
-    ctype = (Integer)ga_type_f2c((int)(*type));
+    ctype = pnga_type_f2c(*type);
     ga_sync_();
 
     /* if we have an error here, it is fatal        */

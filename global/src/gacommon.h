@@ -1,6 +1,8 @@
 #ifndef GACOMMON_H_
 #define GACOMMON_H_
 
+#include "macommon.h"
+
 #define GA_MAX_DIM 7
 
 #define GA_VERSION_MAJOR 5

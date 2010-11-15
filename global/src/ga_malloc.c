@@ -27,7 +27,7 @@ void* ga_malloc(Integer nelem, int type, char *name)
 {
     void *ptr;  
     unsigned long addr;
-    Integer handle, adjust=0, bytes, item_size=GAsizeofM(ga_type_f2c(type));
+    Integer handle, adjust=0, bytes, item_size=GAsizeofM(pnga_type_f2c(type));
     Integer extra;
 
     /* extra space for 1.ALIGNMENT and 2.storing handle */

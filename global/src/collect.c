@@ -256,19 +256,19 @@ void gac_zgop(DoubleComplex *x, Integer n, char *op)
  **************************************************************************/
 
 void ga_pgroup_igop_(Integer *grp, Integer *type, Integer *x, Integer *n, char *op, int len)
-{ gai_pgroup_gop(*grp, ga_type_f2c(MT_F_INT), x, *n, op); }
+{ gai_pgroup_gop(*grp, pnga_type_f2c(MT_F_INT), x, *n, op); }
 
 void ga_pgroup_sgop_(Integer *grp, Integer *type, Real *x, Integer *n, char *op, int len)
-{ gai_pgroup_gop(*grp, ga_type_f2c(MT_F_REAL), x, *n, op); }
+{ gai_pgroup_gop(*grp, pnga_type_f2c(MT_F_REAL), x, *n, op); }
 
 void ga_pgroup_dgop_(Integer *grp, Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
-{ gai_pgroup_gop(*grp, ga_type_f2c(MT_F_DBL), x, *n, op); }
+{ gai_pgroup_gop(*grp, pnga_type_f2c(MT_F_DBL), x, *n, op); }
 
 void ga_pgroup_cgop_(Integer *grp, Integer *type, SingleComplex *x, Integer *n, char *op, int len)
-{ gai_pgroup_gop(*grp, ga_type_f2c(MT_F_SCPL), x, *n, op); }
+{ gai_pgroup_gop(*grp, pnga_type_f2c(MT_F_SCPL), x, *n, op); }
 
 void ga_pgroup_zgop_(Integer *grp, Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
-{ gai_pgroup_gop(*grp, ga_type_f2c(MT_F_DCPL), x, *n, op); }
+{ gai_pgroup_gop(*grp, pnga_type_f2c(MT_F_DCPL), x, *n, op); }
 
 
 /***************************************************************************
@@ -276,37 +276,37 @@ void ga_pgroup_zgop_(Integer *grp, Integer *type, DoubleComplex *x, Integer *n, 
  **************************************************************************/
 
 void ga_gop_(Integer *type, void *x, Integer *n, char *op, int len)
-{ gai_gop(ga_type_f2c(*type), x, *n, op); }
+{ gai_gop(pnga_type_f2c(*type), x, *n, op); }
 
 void ga_igop_(Integer *type, Integer *x, Integer *n, char *op, int len)
 {
 #if defined(ARMCI_COLLECTIVES) || defined(MPI)
-    gai_gop(ga_type_f2c(MT_F_INT), x, *n, op);
+    gai_gop(pnga_type_f2c(MT_F_INT), x, *n, op);
 #else
     IGOP_(type, x, n, op, len);
 #endif
 }
 
 void ga_sgop_(Integer *type, Real *x, Integer *n, char *op, int len)
-{ gai_gop(ga_type_f2c(MT_F_REAL), x, *n, op); }
+{ gai_gop(pnga_type_f2c(MT_F_REAL), x, *n, op); }
 
 void ga_dgop_(Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
 {
 #if defined(ARMCI_COLLECTIVES) || defined(MPI)
-    gai_gop(ga_type_f2c(MT_F_DBL), x, *n, op);
+    gai_gop(pnga_type_f2c(MT_F_DBL), x, *n, op);
 #else
     DGOP_(type, x, n, op, len);
 #endif
 }
 
 void ga_cgop_(Integer *type, SingleComplex *x, Integer *n, char *op, int len)
-{ gai_gop(ga_type_f2c(MT_F_SCPL), x, *n, op); }
+{ gai_gop(pnga_type_f2c(MT_F_SCPL), x, *n, op); }
 
 
 void ga_zgop_(Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
 {
 #if defined(ARMCI_COLLECTIVES) || defined(MPI)
-    gai_gop(ga_type_f2c(MT_F_DCPL), x, *n, op);
+    gai_gop(pnga_type_f2c(MT_F_DCPL), x, *n, op);
 #else
     Integer 2n = 2*(*n);
     DGOP_(type, x, &2n, op, len);

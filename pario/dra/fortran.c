@@ -122,7 +122,7 @@ Integer FATR dra_inquire_(
         )
 {
     Integer stat = drai_inquire(d_a, type, dim1, dim2, cname, cfilename);
-    *type = (Integer)ga_type_c2f((int)*type);
+    *type = pnga_type_c2f(*type);
     ga_c2fstring(cname, name, nlen);
     ga_c2fstring(cfilename, filename, flen);
     return stat;
@@ -152,7 +152,7 @@ Integer FATR ndra_inquire_(
         )
 {
     Integer stat = ndrai_inquire(d_a, type, ndim, dims, cname, cfilename);
-    *type = (Integer)ga_type_c2f((int)*type);
+    *type = pnga_type_c2f(*type);
     ga_c2fstring(cname, name, nlen);
     ga_c2fstring(cfilename, filename, flen);
     return stat;

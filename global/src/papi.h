@@ -3,9 +3,7 @@
 
 #include "typesf2c.h"
 
-/**
- * Routines from base.c
- */
+/* Routines from base.c */
 extern logical pnga_allocate(Integer *g_a);
 extern logical pnga_compare_distr(Integer *g_a, Integer *g_b);
 extern logical pnga_create(Integer type, Integer ndim,
@@ -84,16 +82,14 @@ extern Integer pnga_pgroup_nodeid(Integer *grp);
 extern void pnga_proc_topology(Integer* g_a, Integer* proc, Integer* subscript);
 extern void pnga_set_debug(logical *flag);
 
-/**
- * Routines from onesided.c
- */
-
+/* Routines from onesided.c */
 extern void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer *nbhandle);
 extern void pnga_put(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld);
 
-/**
- * Routines from global.util.c
- */
+/* Routines from global.util.c */
 extern void pnga_error(char *string, Integer icode);
 
+/* Routines from datatypes.c */
+extern Integer pnga_type_f2c(Integer type);
+extern Integer pnga_type_c2f(Integer type);
 #endif /* PAPI_H_ */

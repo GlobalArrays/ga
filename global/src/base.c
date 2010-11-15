@@ -1405,9 +1405,9 @@ void FATR ga_set_data_(Integer *g_a, Integer *ndim, Integer *dims, Integer *type
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set data on array that has been allocated",0);
   gam_checkdim(*ndim, dims);
-  gam_checktype(ga_type_f2c(*type));
+  gam_checktype(pnga_type_f2c(*type));
 
-  GA[ga_handle].type = ga_type_f2c((int)(*type));
+  GA[ga_handle].type = pnga_type_f2c((int)(*type));
   GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
 
   for (i=0; i<*ndim; i++) {
@@ -2271,7 +2271,7 @@ int i, nproc,grp_me=GAme;
        nproc = GAnproc; 
  
     /* need to enforce proper, natural allignment (on size boundary)  */
-    switch (ga_type_c2f(type)){
+    switch (pnga_type_c2f(type)){
       case MT_F_DBL:   base =  (char *) DBL_MB; break;
       case MT_F_INT:   base =  (char *) INT_MB; break;
       case MT_F_DCPL:  base =  (char *) DCPL_MB; break;
@@ -2420,7 +2420,7 @@ int bytes;
 int extra=sizeof(getmem_t)+GAnproc*sizeof(char*);
 char *myptr;
 Integer status;
-     type = ga_type_f2c(type);	
+     type = pnga_type_f2c(type);	
      bytes = nelem *  GAsizeofM(type);
      if(GA_memory_limited){
          GA_total_memory -= bytes+extra;
@@ -2729,8 +2729,8 @@ int maplen = calc_maplen(GA_OFFSET + g_a);
       }
 
       /* get ptrs and datatype from user memory */
-      gam_checktype(ga_type_f2c(info->type));
-      GA[ga_handle].type = ga_type_f2c(info->type);
+      gam_checktype(pnga_type_f2c(info->type));
+      GA[ga_handle].type = pnga_type_f2c(info->type);
       GA[ga_handle].size = (C_Long)info->size;
       GA[ga_handle].id = info->id;
       memcpy(GA[ga_handle].ptr,ptr_arr,(size_t)GAnproc*sizeof(char**));

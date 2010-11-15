@@ -2397,7 +2397,7 @@ unsigned long    lref=0, lptr;
    elemsize = (unsigned long)GA[handle].elemsize;
 
    /* compute index and check if it is correct */
-   switch (ga_type_c2f(GA[handle].type)){
+   switch (pnga_type_c2f(GA[handle].type)){
      case MT_F_DBL:
         *index = (AccessIndex) ((DoublePrecision*)ptr - DBL_MB);
         lref = (unsigned long)DBL_MB;
@@ -2476,7 +2476,7 @@ unsigned long    lref=0, lptr;
    elemsize = (unsigned long)GA[handle].elemsize;
 
    /* compute index and check if it is correct */
-   switch (ga_type_c2f(GA[handle].type)){
+   switch (pnga_type_c2f(GA[handle].type)){
      case MT_F_DBL:
         *index = (AccessIndex) ((DoublePrecision*)ptr - DBL_MB);
         lref = (unsigned long)DBL_MB;
@@ -2557,7 +2557,7 @@ unsigned long    lref=0, lptr;
    elemsize = (unsigned long)GA[handle].elemsize;
 
    /* compute index and check if it is correct */
-   switch (ga_type_c2f(GA[handle].type)){
+   switch (pnga_type_c2f(GA[handle].type)){
      case MT_F_DBL:
         *index = (AccessIndex) ((DoublePrecision*)ptr - DBL_MB);
         lref = (unsigned long)DBL_MB;
@@ -2634,7 +2634,7 @@ unsigned long    lref=0, lptr;
    elemsize = (unsigned long)GA[handle].elemsize;
 
    /* compute index and check if it is correct */
-   switch (ga_type_c2f(GA[handle].type)){
+   switch (pnga_type_c2f(GA[handle].type)){
      case MT_F_DBL:
         *index = (AccessIndex) ((DoublePrecision*)ptr - DBL_MB);
         lref = (unsigned long)DBL_MB;

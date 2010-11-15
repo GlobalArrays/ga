@@ -1227,7 +1227,7 @@ DoubleComplex GA_Zdot(int g_a, int g_b)
     DoubleComplex value;
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    gai_dot(ga_type_f2c(MT_F_DCPL),&a,&b,&value);
+    gai_dot(pnga_type_f2c(MT_F_DCPL),&a,&b,&value);
     return value;
 }
 
@@ -1237,7 +1237,7 @@ SingleComplex GA_Cdot(int g_a, int g_b)
     SingleComplex value;
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    gai_dot(ga_type_f2c(MT_F_SCPL),&a,&b,&value);
+    gai_dot(pnga_type_f2c(MT_F_SCPL),&a,&b,&value);
     return value;
 }
 

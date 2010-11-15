@@ -648,7 +648,7 @@ Integer sum;
         vampir_begin(GA_IDOT,__FILE__,__LINE__);
 #endif
 
-        gai_dot(ga_type_f2c(MT_F_INT), g_a, g_b, &sum);
+        gai_dot(pnga_type_f2c(MT_F_INT), g_a, g_b, &sum);
 
 #ifdef USE_VAMPIR
         vampir_end(GA_IDOT,__FILE__,__LINE__);
@@ -667,7 +667,7 @@ DoublePrecision sum;
         vampir_begin(GA_DDOT,__FILE__,__LINE__);
 #endif
 
-        gai_dot(ga_type_f2c(MT_F_DBL), g_a, g_b, &sum);
+        gai_dot(pnga_type_f2c(MT_F_DBL), g_a, g_b, &sum);
 
 #ifdef USE_VAMPIR
         vampir_end(GA_DDOT,__FILE__,__LINE__);
@@ -686,7 +686,7 @@ Real sum;
         vampir_begin(GA_SDOT,__FILE__,__LINE__);
 #endif
 
-        gai_dot(ga_type_f2c(MT_F_REAL), g_a, g_b, &sum);
+        gai_dot(pnga_type_f2c(MT_F_REAL), g_a, g_b, &sum);
 
 #ifdef USE_VAMPIR
         vampir_end(GA_SDOT,__FILE__,__LINE__);
@@ -702,7 +702,7 @@ void gai_zdot_(Integer *g_a, Integer *g_b, DoubleComplex *sum)
         vampir_begin(GA_ZDOT,__FILE__,__LINE__);
 #endif
 
-        gai_dot(ga_type_f2c(MT_F_DCPL), g_a, g_b, sum);
+        gai_dot(pnga_type_f2c(MT_F_DCPL), g_a, g_b, sum);
 
 #ifdef USE_VAMPIR
         vampir_end(GA_ZDOT,__FILE__,__LINE__);
@@ -716,7 +716,7 @@ void gai_cdot_(Integer *g_a, Integer *g_b, SingleComplex *sum)
         vampir_begin(GA_CDOT,__FILE__,__LINE__);
 #endif
 
-        gai_dot(ga_type_f2c(MT_F_SCPL), g_a, g_b, sum);
+        gai_dot(pnga_type_f2c(MT_F_SCPL), g_a, g_b, sum);
 
 #ifdef USE_VAMPIR
         vampir_end(GA_CDOT,__FILE__,__LINE__);

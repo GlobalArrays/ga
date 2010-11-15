@@ -7,11 +7,13 @@
  * Note that ga_type_c2f(MT_F_INT) == MT_F_INT 
  */
 
-#include "global.h"
-#include "globalp.h"
-int ga_type_f2c(int type)
+#include "gacommon.h"
+#include "macommon.h"
+#include "papi.h"
+
+Integer pnga_type_f2c(Integer type)
 {
-int ctype;
+Integer ctype;
    switch(type){
    case MT_F_INT: 
 #       if   SIZEOF_F77_INTEGER == SIZEOF_INT
@@ -66,9 +68,9 @@ int ctype;
 }
 
 
-int ga_type_c2f(int type)
+Integer pnga_type_c2f(Integer type)
 {
-int ftype;
+Integer ftype;
    switch(type){
    case C_INT: 
                 ftype = (sizeof(int) != sizeof(Integer))? -1: MT_F_INT;

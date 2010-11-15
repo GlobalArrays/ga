@@ -20,9 +20,7 @@
 
 #define FNAM 31
 
-/**
- *  Routines from base.c
- */
+/* Routines from base.c */
 
 logical FATR ga_allocate_(Integer *g_a)
 {
@@ -415,7 +413,7 @@ void FATR ga_inquire_(Integer *g_a, Integer *type, Integer *dim1, Integer *dim2)
   Integer dims[2], ndim;
   wnga_inquire(g_a, type, &ndim, dims);
   if (ndim != 2) wnga_error("Wrong array dimension in ga_inquire",ndim);
-  *type = (Integer)ga_type_c2f(*type);
+  *type = pnga_type_c2f(*type);
   *dim1 = dims[0];
   *dim2 = dims[1];
 }
@@ -423,7 +421,7 @@ void FATR ga_inquire_(Integer *g_a, Integer *type, Integer *dim1, Integer *dim2)
 void FATR nga_inquire_(Integer *g_a, Integer *type, Integer *ndim, Integer *dims)
 {
   wnga_inquire(g_a, type, ndim, dims);
-  *type = (Integer)ga_type_c2f(*type);
+  *type = pnga_type_c2f(*type);
 }
 
 Integer FATR ga_inquire_memory_()
@@ -764,9 +762,7 @@ void FATR nga_set_debug_(logical *flag)
   wnga_set_debug(flag);
 }
 
-/**
- *  Routines from onesided.c
- */
+/* Routines from onesided.c */
 
 void FATR ga_nbput_(Integer *g_a, Integer *ilo, Integer *ihi,
                     Integer *jlo, Integer *jhi, void *buf,
@@ -804,9 +800,7 @@ void FATR nga_put_(Integer *g_a, Integer *lo,
     wnga_put(g_a, lo, hi, buf, ld);
 }
 
-/**
- *  Routines from global.util.c
- */
+/* Routines from global.util.c */
 
 #if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 void FATR ga_error_(char *string, Integer *icode, int slen)
@@ -831,3 +825,4 @@ void FATR nga_error_(char *string, int slen, Integer *icode)
   ga_f2cstring(string,slen, buf, FMSG);
   wnga_error(buf,*icode);
 }
+

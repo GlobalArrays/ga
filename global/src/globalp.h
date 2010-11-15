@@ -167,8 +167,6 @@ EXT void  ga_matmul(char *transa, char *transb, void *alpha, void *beta, INT *g_
 EXT void  ga_matmul_mirrored(char *transa, char *transb, void *alpha, void *beta, INT *g_a, INT *ailo, INT *aihi, INT *ajlo, INT *ajhi, INT *g_b, INT *bilo, INT *bihi, INT *bjlo, INT *bjhi, INT *g_c, INT *cilo, INT *cihi, INT *cjlo, INT *cjhi);
 EXT void  ga_msg_brdcst(INT type, void *buffer, INT len, INT root);
 EXT void  ga_print_file(FILE *, INT *);
-EXT int   ga_type_c2f(int type);
-EXT int   ga_type_f2c(int type);
 EXT short ga_usesMA;
 
 EXT void  gai_gop(INT type, void *x, INT n, char *op);
