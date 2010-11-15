@@ -2368,6 +2368,30 @@ void GA_Cgop(SingleComplex x[], int n, char *op)
 void GA_Zgop(DoubleComplex x[], int n, char *op)
 { pnga_gop(C_DCPL, x, n, op); }
 
+void NGA_Gop(int type, void *x, int n, char *op)
+{ pnga_gop(type, x, n, op); }
+
+void NGA_Igop(int x[], int n, char *op)
+{ pnga_gop(C_INT, x, n, op); }
+
+void NGA_Lgop(long x[], int n, char *op)
+{ pnga_gop(C_LONG, x, n, op); }
+
+void NGA_Llgop(long long x[], int n, char *op)
+{ pnga_gop(C_LONGLONG, x, n, op); }
+
+void NGA_Fgop(float x[], int n, char *op)
+{ pnga_gop(C_FLOAT, x, n, op); }       
+
+void NGA_Dgop(double x[], int n, char *op)
+{ pnga_gop(C_DBL, x, n, op); }
+
+void NGA_Cgop(SingleComplex x[], int n, char *op)
+{ pnga_gop(C_SCPL, x, n, op); }
+
+void NGA_Zgop(DoubleComplex x[], int n, char *op)
+{ pnga_gop(C_DCPL, x, n, op); }
+
 void GA_Pgroup_gop(int grp_id, int type, double x[], int n, char *op)
 { pnga_pgroup_gop(grp_id, type, x, n, op); }
 
@@ -2384,6 +2408,24 @@ void GA_Pgroup_fgop(int grp_id, float x[], int n, char *op)
 { pnga_pgroup_gop(grp_id, C_FLOAT, x, n, op); }
  
 void GA_Pgroup_dgop(int grp_id, double x[], int n, char *op)
+{ pnga_pgroup_gop(grp_id, C_DBL, x, n, op); }
+ 
+void NGA_Pgroup_gop(int grp_id, int type, double x[], int n, char *op)
+{ pnga_pgroup_gop(grp_id, type, x, n, op); }
+
+void NGA_Pgroup_igop(int grp_id, int x[], int n, char *op)
+{ pnga_pgroup_gop(grp_id, C_INT, x, n, op); }
+ 
+void NGA_Pgroup_lgop(int grp_id, long x[], int n, char *op)
+{ pnga_pgroup_gop(grp_id, C_LONG, x, n, op); }
+ 
+void NGA_Pgroup_llgop(int grp_id, long long x[], int n, char *op)
+{ pnga_pgroup_gop(grp_id, C_LONGLONG, x, n, op); }
+ 
+void NGA_Pgroup_fgop(int grp_id, float x[], int n, char *op)
+{ pnga_pgroup_gop(grp_id, C_FLOAT, x, n, op); }
+ 
+void NGA_Pgroup_dgop(int grp_id, double x[], int n, char *op)
 { pnga_pgroup_gop(grp_id, C_DBL, x, n, op); }
  
 void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
