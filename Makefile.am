@@ -572,9 +572,11 @@ libga_la_SOURCES += global/src/select.c
 libga_la_SOURCES += global/src/sparse.c
 libga_la_SOURCES += global/src/xgemm.c
 nodist_libga_la_SOURCES += global/src/wapidefs.h
+if ENABLE_PROFILING
 if HAVE_SYS_WEAK_ALIAS_PRAGMA
 else
 nodist_libga_la_SOURCES += global/src/wapi.c
+endif
 endif
 if NOFORT
 else

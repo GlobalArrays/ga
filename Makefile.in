@@ -239,7 +239,7 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_26 = tcgmsg/tcgmsg-mpi/test_asyn \
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/test
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_27 = tcgmsg/tcgmsg-mpi/testf
-@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_28 = global/src/wapi.c
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_28 = global/src/wapi.c
 @NOFORT_FALSE@am__append_29 = global/src/complex.F \
 @NOFORT_FALSE@	global/src/ga_diag_seq.F global/src/rsg.f
 @ENABLE_CHECKPOINT_TRUE@am__append_30 = global/src/ga_ckpt.c
@@ -415,6 +415,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/m4/ga_enable_checkpoint.m4 \
 	$(top_srcdir)/m4/ga_enable_opt.m4 \
 	$(top_srcdir)/m4/ga_enable_peigs.m4 \
+	$(top_srcdir)/m4/ga_enable_profile.m4 \
 	$(top_srcdir)/m4/ga_enable_trace.m4 \
 	$(top_srcdir)/m4/ga_f2c_cmdargs.m4 \
 	$(top_srcdir)/m4/ga_f2c_match_types.m4 \
@@ -725,7 +726,7 @@ am_libga_la_OBJECTS = compat/random.lo gaf2c/gaf2c.lo gaf2c/drand.lo \
 	pario/eaf/eaf.lo pario/eaf/eaf_f2c.lo pario/elio/elio.lo \
 	pario/elio/stat.lo pario/sf/sf_capi.lo pario/sf/sf_fortran.lo \
 	pario/sf/shared.files.lo
-@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__objects_20 = global/src/wapi.lo
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__objects_20 = global/src/wapi.lo
 nodist_libga_la_OBJECTS = $(am__objects_20)
 libga_la_OBJECTS = $(am_libga_la_OBJECTS) $(nodist_libga_la_OBJECTS)
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__EXEEXT_1 = parallel$(EXEEXT)

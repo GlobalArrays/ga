@@ -17,10 +17,11 @@
 #include "macommon.h"
 
 #include "papi.h"
-#if PROFILING_DEFINES
+#if ENABLE_PROFILING
+#   include "wapi.h"
+#else
 #   include "wapidefs.h"
 #endif
-#include "wapi.h"
 
 #define FNAM 31
 #define FMSG 256

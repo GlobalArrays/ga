@@ -65,7 +65,7 @@ static int calc_maplen(int handle);
 #ifdef USE_VAMPIR
 #include "ga_vampir.h"
 #endif
-#ifdef ENABLE_PROFILE
+#ifdef PROFILE_OLD
 #include "ga_profile.h"
 #endif
 /*#define AVOID_MA_STORAGE 1*/ 
@@ -506,7 +506,7 @@ int bytes;
 
     GAinitialized = 1;
 
-#ifdef ENABLE_PROFILE 
+#ifdef PROFILE_OLD 
     ga_profile_init();
 #endif
 #ifdef ENABLE_CHECKPOINT
@@ -2846,7 +2846,7 @@ Integer i, handle;
 #ifdef USE_VAMPIR
     vampir_begin(GA_TERMINATE,__FILE__,__LINE__);
 #endif
-#ifdef ENABLE_PROFILE 
+#ifdef PROFILE_OLD 
     ga_profile_terminate();
 #endif
     for (i=0;i<_max_global_array;i++){

@@ -70,7 +70,7 @@
 #ifdef USE_VAMPIR
 #include "ga_vampir.h"
 #endif
-#ifdef ENABLE_PROFILE
+#ifdef PROFILE_OLD
 #include "ga_profile.h"
 #endif
 
@@ -476,7 +476,7 @@ void ngai_put_common(Integer *g_a,
     else ga_init_nbhandle(&ga_nbhandle);
 #endif
 
-#ifdef ENABLE_PROFILE
+#ifdef PROFILE_OLD
     ga_profile_start((int)handle, (long)size*elems, ndim, lo, hi, 
         ENABLE_PROFILE_PUT);
 #endif
@@ -896,7 +896,7 @@ void ngai_put_common(Integer *g_a,
   }
 
   GA_POP_NAME;
-#ifdef ENABLE_PROFILE
+#ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
 #ifdef USE_VAMPIR
@@ -997,7 +997,7 @@ void nga_get_common(Integer *g_a,
     else ga_init_nbhandle(&ga_nbhandle);
 #endif
 
-#ifdef ENABLE_PROFILE
+#ifdef PROFILE_OLD
     ga_profile_start((int)handle, (long)size*elems, ndim, lo, hi,
         ENABLE_PROFILE_GET);
 #endif
@@ -1422,7 +1422,7 @@ void nga_get_common(Integer *g_a,
   }
 
   GA_POP_NAME;
-#ifdef ENABLE_PROFILE
+#ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
 #ifdef USE_VAMPIR
@@ -1583,7 +1583,7 @@ void nga_acc_common(Integer *g_a,
     if(nbhandle)ga_init_nbhandle(nbhandle);
     else ga_init_nbhandle(&ga_nbhandle);
 
-#ifdef ENABLE_PROFILE
+#ifdef PROFILE_OLD
     ga_profile_start((int)handle, (long)size*elems, ndim, lo, hi,
         ENABLE_PROFILE_ACC);
 #endif
@@ -1990,7 +1990,7 @@ void nga_acc_common(Integer *g_a,
   }
 
   GA_POP_NAME;
-#ifdef ENABLE_PROFILE
+#ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
 #ifdef USE_VAMPIR

@@ -45,6 +45,9 @@
 /* Define if PeIGS is enabled */
 #undef ENABLE_PEIGS
 
+/* set to 1 if profiling is enabled */
+#undef ENABLE_PROFILING
+
 /* Define if tracing is enabled */
 #undef ENABLE_TRACE
 

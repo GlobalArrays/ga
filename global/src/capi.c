@@ -19,13 +19,13 @@
 #include "armci.h"
 #include "ga.h"
 #include "globalp.h"
+#include "papi.h"
 
-#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#if ENABLE_PROFILING
+#   include "wapi.h"
 #else
 #   include "wapidefs.h"
 #endif
-#include "papi.h"
-#include "wapi.h"
 
 int *_ga_argc=NULL;
 char ***_ga_argv=NULL;

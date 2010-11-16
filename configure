@@ -767,6 +767,8 @@ THREAD_SAFE_FALSE
 THREAD_SAFE_TRUE
 ENABLE_TRACE_FALSE
 ENABLE_TRACE_TRUE
+ENABLE_PROFILING_FALSE
+ENABLE_PROFILING_TRUE
 ENABLE_PEIGS_FALSE
 ENABLE_PEIGS_TRUE
 ENABLE_CHECKPOINT_FALSE
@@ -926,6 +928,7 @@ enable_mpi_tests
 enable_checkpoint
 enable_opt
 enable_peigs
+enable_profiling
 enable_trace
 enable_thread_safety
 with_vampir
@@ -1616,6 +1619,7 @@ Optional Features:
   --enable-checkpoint     enable checkpointing
   --disable-opt           don't use hard-coded optimization flags
   --enable-peigs          enable Parallel Eigensystem Solver interface
+  --enable-profiling      enable profiling
   --enable-trace          enable tracing
   --enable-thread-safety  **unsupported** turn on thread safety
   --disable-dependency-tracking  speeds up one-time build
@@ -4357,6 +4361,31 @@ else
   ENABLE_PEIGS_FALSE=
 fi
 
+
+# Check whether --enable-profiling was given.
+if test "${enable_profiling+set}" = set; then :
+  enableval=$enable_profiling;
+else
+  enable_profiling=no
+fi
+
+ if test x$enable_profiling = xyes; then
+  ENABLE_PROFILING_TRUE=
+  ENABLE_PROFILING_FALSE='#'
+else
+  ENABLE_PROFILING_TRUE='#'
+  ENABLE_PROFILING_FALSE=
+fi
+
+if test "x$enable_profiling" = xyes; then :
+
+$as_echo "#define ENABLE_PROFILING 1" >>confdefs.h
+
+else
+
+$as_echo "#define ENABLE_PROFILING 0" >>confdefs.h
+
+fi
 
 # Check whether --enable-trace was given.
 if test "${enable_trace+set}" = set; then :
@@ -31979,6 +32008,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_PEIGS_TRUE}" && test -z "${ENABLE_PEIGS_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_PEIGS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_PROFILING_TRUE}" && test -z "${ENABLE_PROFILING_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_PROFILING\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_TRACE_TRUE}" && test -z "${ENABLE_TRACE_FALSE}"; then
