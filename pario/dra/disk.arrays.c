@@ -1573,7 +1573,7 @@ Integer FATR dra_probe_(
         Integer *request, /* [in] */
         Integer *status)  /* [out] */
 {
-    Integer done,  type=DRA_TYPE_GSM;
+    Integer done;
     int  stat, i, k, call_id, op_code, n_buf, ret;
     io_request_t *io_req;
     Integer *ga_movhdl;

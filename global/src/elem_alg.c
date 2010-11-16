@@ -644,6 +644,7 @@ None
 
 /*\ Internal utility function to do operation.
 \*/
+static
 void ngai_do_oper_elem(Integer type, Integer ndim, Integer *loA, Integer *hiA,
                        Integer *ld, void *data_ptr, void *scalar, Integer op)
 {
@@ -714,7 +715,7 @@ void ngai_do_oper_elem(Integer type, Integer ndim, Integer *loA, Integer *hiA,
 
 }
 
-static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, Integer op)
+static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, Integer op)
 {
 
   Integer ndim, dims[MAXDIM], type;
@@ -918,24 +919,36 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
   if(local_sync_end)ga_sync_();
 }
 
-void FATR ga_abs_value_patch_(Integer *g_a, Integer *lo, Integer *hi)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_abs_value_patch = pnga_abs_value_patch
+#endif
+void pnga_abs_value_patch(Integer *g_a, Integer *lo, Integer *hi)
 {
     gai_oper_elem(g_a, lo, hi, NULL, OP_ABS);
 }
 
-void FATR ga_recip_patch_(Integer *g_a, Integer *lo, Integer *hi)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_recip_patch = pnga_recip_patch
+#endif
+void pnga_recip_patch(Integer *g_a, Integer *lo, Integer *hi)
 {
     gai_oper_elem(g_a, lo, hi, NULL, OP_RECIP);
 
 }
 
-void FATR ga_add_constant_patch_(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_add_constant_patch = pnga_add_constant_patch
+#endif
+void pnga_add_constant_patch(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
 {
     gai_oper_elem(g_a, lo, hi, alpha, OP_ADD_CONST);
 
 }
 
-void FATR ga_abs_value_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_abs_value = pnga_abs_value
+#endif
+void pnga_abs_value(Integer *g_a)
 {
    Integer type, ndim;
    Integer lo[MAXDIM],hi[MAXDIM];
@@ -949,7 +962,10 @@ void FATR ga_abs_value_(Integer *g_a)
     gai_oper_elem(g_a, lo, hi, NULL, OP_ABS);
 }
 
-void FATR ga_add_constant_(Integer *g_a, void *alpha)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_add_constant = pnga_add_constant
+#endif
+void pnga_add_constant(Integer *g_a, void *alpha)
 {
    Integer type, ndim;
    Integer lo[MAXDIM],hi[MAXDIM];
@@ -963,7 +979,10 @@ void FATR ga_add_constant_(Integer *g_a, void *alpha)
     gai_oper_elem(g_a, lo, hi, alpha, OP_ADD_CONST);
 }
 
-void FATR ga_recip_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_recip = pnga_recip
+#endif
+void pnga_recip(Integer *g_a)
 {        
    Integer type, ndim;
    Integer lo[MAXDIM],hi[MAXDIM];
@@ -1613,6 +1632,7 @@ static void do_minimum(void *pA, void *pB, void *pC, Integer nelems, Integer typ
   }
 } 
 
+static
 void ngai_do_elem2_oper(Integer atype, Integer cndim, Integer *loC, Integer *hiC,
                         Integer *ldC, void *A_ptr, void *B_ptr, void *C_ptr, int op)
 {
@@ -2053,7 +2073,10 @@ int op; /* operation to be perform between g_a and g_b */
   if(local_sync_end)ga_sync_();
 }
 
-void FATR ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c){
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_elem_multiply = pnga_elem_multiply
+#endif
+void pnga_elem_multiply(Integer *g_a, Integer *g_b, Integer *g_c){
  
    Integer atype, andim;
    Integer btype, bndim;
@@ -2081,7 +2104,10 @@ void FATR ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c){
 }
 
 
-void FATR ga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c){
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_elem_divide = pnga_elem_divide
+#endif
+void pnga_elem_divide(Integer *g_a, Integer *g_b, Integer *g_c){
  
    Integer atype, andim;
    Integer btype, bndim;
@@ -2112,7 +2138,10 @@ void FATR ga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c){
  
 
 
-void FATR ga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c){
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_elem_maximum = pnga_elem_maximum
+#endif
+void pnga_elem_maximum(Integer *g_a, Integer *g_b, Integer *g_c){
 
    Integer atype, andim;
    Integer btype, bndim;
@@ -2141,7 +2170,10 @@ void FATR ga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c){
 }
 
  
-void FATR ga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c){
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_elem_minimum = pnga_elem_minimum
+#endif
+void pnga_elem_minimum(Integer *g_a, Integer *g_b, Integer *g_c){
  
    Integer atype, andim;
    Integer btype, bndim;
@@ -2169,52 +2201,76 @@ void FATR ga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c){
  
 }
  
-void FATR ga_elem_multiply_patch_(Integer *g_a,Integer *alo,Integer *ahi,Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi){
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_elem_multiply_patch = pnga_elem_multiply_patch
+#endif
+void pnga_elem_multiply_patch(Integer *g_a,Integer *alo,Integer *ahi,Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi){
 
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_MULT);
 
 }
 
-void FATR ga_elem_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_elem_divide_patch = pnga_elem_divide_patch
+#endif
+void pnga_elem_divide_patch(Integer *g_a,Integer *alo,Integer *ahi,
 Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi){
 
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_DIV);
 
 }
 
-void FATR ga_elem_step_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_elem_step_divide_patch = pnga_elem_step_divide_patch
+#endif
+void pnga_elem_step_divide_patch(Integer *g_a,Integer *alo,Integer *ahi,
 Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi){
 
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_SDIV);
 
 }
 
-void FATR ga_elem_stepb_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_elem_stepb_divide_patch = pnga_elem_stepb_divide_patch
+#endif
+void pnga_elem_stepb_divide_patch(Integer *g_a,Integer *alo,Integer *ahi,
 Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi){
 
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_SDIV2);
 
 }
-void FATR ga_step_mask_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_step_mask_patch = pnga_step_mask_patch
+#endif
+void pnga_step_mask_patch(Integer *g_a,Integer *alo,Integer *ahi,
 Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi){
 
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_STEP_MASK);
 
 }
-void FATR ga_elem_maximum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_elem_maximum_patch = pnga_elem_maximum_patch
+#endif
+void pnga_elem_maximum_patch(Integer *g_a,Integer *alo,Integer *ahi,
 Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi){
 
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_MAX);
 
 }
 
-void FATR ga_elem_minimum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_elem_minimum_patch = pnga_elem_minimum_patch
+#endif
+void pnga_elem_minimum_patch(Integer *g_a,Integer *alo,Integer *ahi,
 Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi){
 
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_MIN);
 
 }
 
+static
 void ngai_do_elem3_patch(Integer atype, Integer andim, Integer *loA, Integer *hiA,
                          Integer *ldA, void *A_ptr, Integer op)
 {
@@ -2484,8 +2540,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
   if(local_sync_end)ga_sync_();
 }
 
-void ngai_has_negative_element(Integer atype, Integer andim, Integer *loA, Integer *hiA,
-                       Integer *ldA, void *A_ptr, Integer *iretval)
+static void ngai_has_negative_element(Integer atype, Integer andim, Integer *loA, Integer *hiA, Integer *ldA, void *A_ptr, Integer *iretval)
 {
   Integer i, j;
   Integer bvalue[MAXDIM], bunit[MAXDIM], baseldA[MAXDIM];
@@ -2763,7 +2818,10 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
 }
 
 
-void FATR ga_step_bound_info_patch_(
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_step_bound_info_patch = pnga_step_bound_info_patch
+#endif
+void pnga_step_bound_info_patch(
      Integer *g_xx, Integer *xxlo, Integer *xxhi,    /* patch of g_xx */
      Integer *g_vv, Integer *vvlo, Integer *vvhi,    /* patch of g_vv */
      Integer *g_xxll, Integer *xxlllo, Integer *xxllhi,    /* patch of g_xxll */
@@ -2821,12 +2879,12 @@ void FATR ga_step_bound_info_patch_(
 
      /* Check for valid ga handles. */
 
-     gai_check_handle(g_xx, "ga_step_bound_info_patch_");
-     gai_check_handle(g_vv, "ga_step_bound_info_patch_");
-     gai_check_handle(g_xxll, "ga_step_bound_info_patch_");
-     gai_check_handle(g_xxuu, "ga_step_bound_info_patch_");
+     gai_check_handle(g_xx, "pnga_step_bound_info_patch");
+     gai_check_handle(g_vv, "pnga_step_bound_info_patch");
+     gai_check_handle(g_xxll, "pnga_step_bound_info_patch");
+     gai_check_handle(g_xxuu, "pnga_step_bound_info_patch");
 
-     GA_PUSH_NAME("ga_step_bound_info_patch_");
+     GA_PUSH_NAME("pnga_step_bound_info_patch");
 
      /* get chaacteristics of the input ga patches */
 
@@ -2837,9 +2895,9 @@ void FATR ga_step_bound_info_patch_(
 
      /* Check for matching types. */
 
-     if(xxtype != vvtype) pnga_error(" ga_step_bound_info_patch_: types mismatch ", 0L); 
-     if(xxtype != xltype) pnga_error(" ga_step_bound_info_patch_: types mismatch ", 0L); 
-     if(xxtype != xutype) pnga_error(" ga_step_bound_info_patch_: types mismatch ", 0L); 
+     if(xxtype != vvtype) pnga_error(" pnga_step_bound_info_patch: types mismatch ", 0L); 
+     if(xxtype != xltype) pnga_error(" pnga_step_bound_info_patch: types mismatch ", 0L); 
+     if(xxtype != xutype) pnga_error(" pnga_step_bound_info_patch: types mismatch ", 0L); 
 
      /* check if patch indices and dims match */
      for(i=0; i<xxndim; i++)
@@ -2864,11 +2922,11 @@ void FATR ga_step_bound_info_patch_(
      xutotal = 1; for(i=0; i<xundim; i++) xutotal *= (xxuuhi[i] - xxuulo[i] + 1);
  
      if(xxtotal != vvtotal)
-        pnga_error(" ga_step_bound_info_patch_ capacities of patches do not match ", 0L);
+        pnga_error(" pnga_step_bound_info_patch capacities of patches do not match ", 0L);
      if(xxtotal != xltotal)
-        pnga_error(" ga_step_bound_info_patch_ capacities of patches do not match ", 0L);
+        pnga_error(" pnga_step_bound_info_patch capacities of patches do not match ", 0L);
      if(xxtotal != xutotal)
-        pnga_error(" ga_step_bound_info_patch_ capacities of patches do not match ", 0L);
+        pnga_error(" pnga_step_bound_info_patch capacities of patches do not match ", 0L);
      /* find out coordinates of patches of g_a, and g_b that I own */
      pnga_distribution(&g_XX, &me, loXX, hiXX);
      pnga_distribution(&g_VV, &me, loVV, hiVV);
@@ -2901,7 +2959,7 @@ void FATR ga_step_bound_info_patch_(
      compatible = compatible * compatible2 * compatible3;
      pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
      if(!compatible) {
-       pnga_error(" ga_step_bound_info_patch_ mismatched patchs ",0);
+       pnga_error(" pnga_step_bound_info_patch mismatched patchs ",0);
      }
      switch (xxtype)
        {
@@ -2944,22 +3002,22 @@ void FATR ga_step_bound_info_patch_(
      /*duplicatecate an array Q to hold the temparary result */
      pnga_duplicate(g_xx, &g_Q, "TempQ");
      if(g_Q==0)
-       pnga_error("ga_step_bound_info_patch_:fail to duplicate array Q", g_Q);
+       pnga_error("pnga_step_bound_info_patch:fail to duplicate array Q", g_Q);
      
      /*duplicatecate an array R to hold the temparary result */
      pnga_duplicate(g_xx, &g_R, "TempR");
      if(g_R==0)
-       pnga_error("ga_step_bound_info_patch_:fail to duplicate array R", g_R);
+       pnga_error("pnga_step_bound_info_patch:fail to duplicate array R", g_R);
 
      /*duplicatecate an array s to hold the temparary result */
      pnga_duplicate(g_xx, &g_S, "TempS");
      if(g_S==0)
-       pnga_error("ga_step_bound_info_patch_:fail to duplicate array S", g_S);
+       pnga_error("pnga_step_bound_info_patch:fail to duplicate array S", g_S);
      
      /*duplicatecate an array T to hold the temparary result */
      pnga_duplicate(g_xx, &g_T, "TempT");
      if(g_T==0)
-       pnga_error("ga_step_bound_info_patch_:fail to duplicate array T", g_T);
+       pnga_error("pnga_step_bound_info_patch:fail to duplicate array T", g_T);
 
      /*First, compute xu - xx */
      nga_add_patch_(alpha, g_xxuu, xxuulo, xxuuhi, beta, g_xx, xxlo, xxhi,&g_S, xxlo, xxhi); 
@@ -2968,14 +3026,14 @@ void FATR ga_step_bound_info_patch_(
        not an upper bound, exit with error message.
      */
      if(has_negative_elem(&g_S, xxlo, xxhi) == 1)
-       pnga_error("ga_step_bound_info_patch_: Upper bound is not > xx.", -1);
+       pnga_error("pnga_step_bound_info_patch: Upper bound is not > xx.", -1);
 
      /* Then compute t = positve elements of vv */
      ga_zero_(&g_T);
-     ga_elem_maximum_(g_vv,&g_T,&g_T);
+     pnga_elem_maximum(g_vv,&g_T,&g_T);
 
      /* Then, compute (xu-xx)/vv */
-     ga_elem_stepb_divide_patch_(&g_S, xxlo, xxhi, &g_T, vvlo, vvhi, &g_T, xxlo, xxhi); 
+     pnga_elem_stepb_divide_patch(&g_S, xxlo, xxhi, &g_T, vvlo, vvhi, &g_T, xxlo, xxhi); 
 
      /* Then, we will select the minimum of the array g_t*/ 
      nga_select_elem_(&g_T, "min", sresult, &index[0], 1); 
@@ -3013,15 +3071,15 @@ void FATR ga_step_bound_info_patch_(
        not a lower bound, exit with error message.
      */
      if(has_negative_elem(&g_Q, xxlo, xxhi) == 1)
-       pnga_error("ga_step_bound_info_patch_: Lower bound is not < xx.", -1);
+       pnga_error("pnga_step_bound_info_patch: Lower bound is not < xx.", -1);
 
      /* Then compute r = negative elements of vv */
      ga_zero_(&g_R);
-     ga_elem_minimum_(g_vv,&g_R,&g_R);
-     ga_abs_value_(&g_R);
+     pnga_elem_minimum(g_vv,&g_R,&g_R);
+     pnga_abs_value(&g_R);
 
      /* Then, compute (xx-xl)/vv */
-     ga_elem_stepb_divide_patch_(&g_Q, xxlo, xxhi, &g_R, vvlo, vvhi, &g_R, xxlo, xxhi); 
+     pnga_elem_stepb_divide_patch(&g_Q, xxlo, xxhi, &g_R, vvlo, vvhi, &g_R, xxlo, xxhi); 
      /* Then, we will select the minimum of the array g_t*/ 
      nga_select_elem_(&g_R, "min", sresult2, &index[0], 1); 
      switch (xxtype)
@@ -3050,19 +3108,19 @@ void FATR ga_step_bound_info_patch_(
        Now set T to be the elementwise minimum of R and T. 
        So, T is infinity only where ever g_vv is zero.
      */
-     ga_elem_minimum_(&g_R,&g_T,&g_T);
+     pnga_elem_minimum(&g_R,&g_T,&g_T);
      /*
        Now we want to set T to be zero whenever g_vv was zero
        and gxx coincides with either boundary vector.
        Set S to be the element-wise product of S and Q.
        It will be zero when either of them is zero.
      */
-     ga_elem_multiply_(&g_Q,&g_S,&g_S);
+     pnga_elem_multiply(&g_Q,&g_S,&g_S);
      /*
        Set Q to the |vv|.
      */
      ga_copy_(g_vv,&g_Q);
-     ga_abs_value_(&g_Q);
+     pnga_abs_value(&g_Q);
      /* 
        Now add q and s to get a vector that is zero only
        where g_vv was zero and g_xx meets one of the
@@ -3075,7 +3133,7 @@ void FATR ga_step_bound_info_patch_(
        of the a_i and c_i elements as per the TAO StepBoundInfo
        function).
      */
-     ga_step_mask_patch_(&g_S,xxlo,xxhi,&g_T,xxlo,xxhi,&g_T,xxlo,xxhi);
+     pnga_step_mask_patch(&g_S,xxlo,xxhi,&g_T,xxlo,xxhi,&g_T,xxlo,xxhi);
 
      /* 
        Then, we will select the minimum of the array g_t, that will
@@ -3152,7 +3210,10 @@ void ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result, op)
 #else
 #endif
 
-void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result) 
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_step_max_patch = pnga_step_max_patch
+#endif
+void pnga_step_max_patch(g_a,  alo, ahi, g_b,  blo, bhi, result) 
      Integer *g_a, *alo, *ahi;    /* patch of g_a */
      Integer *g_b, *blo, *bhi;    /* patch of g_b */
      void *result;
@@ -3288,9 +3349,9 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
     g_c = &g_C; 
 
     /*
-       ga_elem_divide_patch_(g_a, alo, ahi, g_b, blo, bhi, g_c, alo, ahi);
+       pnga_elem_divide_patch(g_a, alo, ahi, g_b, blo, bhi, g_c, alo, ahi);
      */
-    ga_elem_step_divide_patch_(g_a, alo, ahi, g_b, blo, bhi, 
+    pnga_elem_step_divide_patch(g_a, alo, ahi, g_b, blo, bhi, 
         g_c, alo, ahi);
 
     /*Now look at each element of the array g_c. If an element of g_c is positive,
@@ -3327,7 +3388,10 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
 }
 
 
-void FATR ga_step_max_(Integer *g_a, Integer *g_b, void *retval)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_step_max = pnga_step_max
+#endif
+void pnga_step_max(Integer *g_a, Integer *g_b, void *retval)
 {
    Integer atype, andim;
    Integer btype, bndim;
@@ -3344,15 +3408,18 @@ void FATR ga_step_max_(Integer *g_a, Integer *g_b, void *retval)
     }
     
 #if 0
-    ga_step_max_patch_(g_a, alo, ahi, g_b, blo, bhi, retval, OP_STEPMAX);
+    pnga_step_max_patch(g_a, alo, ahi, g_b, blo, bhi, retval, OP_STEPMAX);
 #else
-    ga_step_max_patch_(g_a, alo, ahi, g_b, blo, bhi, retval);
+    pnga_step_max_patch(g_a, alo, ahi, g_b, blo, bhi, retval);
 #endif
 }
 
-void FATR ga_step_bound_info_(Integer *g_xx, Integer *g_vv, Integer *g_xxll,
-                              Integer *g_xxuu,  void *boundmin, void *wolfemin,
-                              void *boundmax)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_step_bound_info = pnga_step_bound_info
+#endif
+void pnga_step_bound_info(Integer *g_xx, Integer *g_vv, Integer *g_xxll,
+                          Integer *g_xxuu,  void *boundmin, void *wolfemin,
+                          void *boundmax)
 {
   Integer xxtype, xxndim;
   Integer vvtype, vvndim;
@@ -3378,6 +3445,6 @@ void FATR ga_step_bound_info_(Integer *g_xx, Integer *g_vv, Integer *g_xxll,
     xxuundim--;
   }
 
-  ga_step_bound_info_patch_(g_xx,xxlo,xxhi, g_vv,vvlo,vvhi, g_xxll,xxlllo,xxllhi, g_xxuu,xxuulo,xxuuhi, boundmin, wolfemin, boundmax);
+  pnga_step_bound_info_patch(g_xx,xxlo,xxhi, g_vv,vvlo,vvhi, g_xxll,xxlllo,xxllhi, g_xxuu,xxuulo,xxuuhi, boundmin, wolfemin, boundmax);
 }
 

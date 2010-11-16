@@ -113,4 +113,27 @@ void pnga_msg_pgroup_sync(Integer *grp_id);
 void pnga_pgroup_gop(Integer p_grp, Integer type, void *x, Integer n, char *op);
 void pnga_gop(Integer type, void *x, Integer n, char *op);
 
+/* Routines from elem_alg.c */
+void pnga_abs_value_patch(Integer *g_a, Integer *lo, Integer *hi);
+void pnga_recip_patch(Integer *g_a, Integer *lo, Integer *hi);
+void pnga_add_constant_patch(Integer *g_a, Integer *lo, Integer *hi, void *alpha);
+void pnga_abs_value(Integer *g_a);
+void pnga_add_constant(Integer *g_a, void *alpha);
+void pnga_recip(Integer *g_a);
+void pnga_elem_multiply(Integer *g_a, Integer *g_b, Integer *g_c);
+void pnga_elem_divide(Integer *g_a, Integer *g_b, Integer *g_c);
+void pnga_elem_maximum(Integer *g_a, Integer *g_b, Integer *g_c);
+void pnga_elem_minimum(Integer *g_a, Integer *g_b, Integer *g_c);
+void pnga_elem_multiply_patch(Integer *g_a,Integer *alo,Integer *ahi,Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi);
+void pnga_elem_divide_patch(Integer *g_a,Integer *alo,Integer *ahi,Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi);
+void pnga_elem_maximum_patch(Integer *g_a,Integer *alo,Integer *ahi,Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi);
+void pnga_elem_minimum_patch(Integer *g_a,Integer *alo,Integer *ahi,Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi);
+void pnga_elem_step_divide_patch(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi);
+void pnga_elem_stepb_divide_patch(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi);
+void pnga_step_mask_patch(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi);
+void pnga_step_bound_info_patch(Integer *g_xx, Integer *xxlo, Integer *xxhi, Integer *g_vv, Integer *vvlo, Integer *vvhi, Integer *g_xxll, Integer *xxlllo, Integer *xxllhi, Integer *g_xxuu, Integer *xxuulo, Integer *xxuuhi, void *boundmin, void* wolfemin, void *boundmax);
+void pnga_step_max_patch(Integer *g_a, Integer *alo, Integer *ahi, Integer *g_b, Integer *blo, Integer *bhi, void *result);
+void pnga_step_max(Integer *g_a, Integer *g_b, void *retval);
+void pnga_step_bound_info(Integer *g_xx, Integer *g_vv, Integer *g_xxll, Integer *g_xxuu, void *boundmin, void *wolfemin, void *boundmax);
+
 #endif /* PAPI_H_ */

@@ -997,171 +997,406 @@ void FATR ga_pgroup_brdcst_(Integer *grp_id, Integer *type, void *buf, Integer *
 }
 
 #define ga_msg_sync_ F77_FUNC_(ga_msg_sync,GA_MSG_SYNC)
-void ga_msg_sync_()
+void FATR ga_msg_sync_()
 {
     wnga_msg_sync();
 }
 
 #define nga_msg_sync_ F77_FUNC_(nga_msg_sync,NGA_MSG_SYNC)
-void nga_msg_sync_()
+void FATR nga_msg_sync_()
 {
     wnga_msg_sync();
 }
 
 #define ga_msg_pgroup_sync_ F77_FUNC_(ga_msg_pgroup_sync,GA_MSG_PGROUP_SYNC)
-void ga_msg_pgroup_sync_(Integer *grp_id)
+void FATR ga_msg_pgroup_sync_(Integer *grp_id)
 {
     wnga_msg_pgroup_sync(grp_id);
 }
 
 #define nga_msg_pgroup_sync_ F77_FUNC_(nga_msg_pgroup_sync,NGA_MSG_PGROUP_SYNC)
-void nga_msg_pgroup_sync_(Integer *grp_id)
+void FATR nga_msg_pgroup_sync_(Integer *grp_id)
 {
     wnga_msg_pgroup_sync(grp_id);
 }
 
 #define ga_pgroup_gop_ F77_FUNC_(ga_pgroup_gop,GA_PGROUP_GOP)
-void ga_pgroup_gop_(Integer *grp, Integer *type, void *x, Integer *n, char *op, int len)
+void FATR ga_pgroup_gop_(Integer *grp, Integer *type, void *x, Integer *n, char *op, int len)
 {
     wnga_pgroup_gop(*grp, pnga_type_f2c(*type), x, *n, op);
 }
 
 #define nga_pgroup_gop_ F77_FUNC_(nga_pgroup_gop,NGA_PGROUP_GOP)
-void nga_pgroup_gop_(Integer *grp, Integer *type, void *x, Integer *n, char *op, int len)
+void FATR nga_pgroup_gop_(Integer *grp, Integer *type, void *x, Integer *n, char *op, int len)
 {
     wnga_pgroup_gop(*grp, pnga_type_f2c(*type), x, *n, op);
 }
 
 #define ga_pgroup_igop_ F77_FUNC_(ga_pgroup_igop,GA_PGROUP_IGOP)
-void ga_pgroup_igop_(Integer *grp, Integer *type, Integer *x, Integer *n, char *op, int len)
+void FATR ga_pgroup_igop_(Integer *grp, Integer *type, Integer *x, Integer *n, char *op, int len)
 {
     wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_INT), x, *n, op);
 }
 
 #define nga_pgroup_igop_ F77_FUNC_(nga_pgroup_igop,NGA_PGROUP_IGOP)
-void nga_pgroup_igop_(Integer *grp, Integer *type, Integer *x, Integer *n, char *op, int len)
+void FATR nga_pgroup_igop_(Integer *grp, Integer *type, Integer *x, Integer *n, char *op, int len)
 {
     wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_INT), x, *n, op);
 }
 
 #define ga_pgroup_sgop_ F77_FUNC_(ga_pgroup_sgop,GA_PGROUP_SGOP)
-void ga_pgroup_sgop_(Integer *grp, Integer *type, Real *x, Integer *n, char *op, int len)
+void FATR ga_pgroup_sgop_(Integer *grp, Integer *type, Real *x, Integer *n, char *op, int len)
 {
     wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_REAL), x, *n, op);
 }
 
 #define nga_pgroup_sgop_ F77_FUNC_(nga_pgroup_sgop,NGA_PGROUP_SGOP)
-void nga_pgroup_sgop_(Integer *grp, Integer *type, Real *x, Integer *n, char *op, int len)
+void FATR nga_pgroup_sgop_(Integer *grp, Integer *type, Real *x, Integer *n, char *op, int len)
 {
     wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_REAL), x, *n, op);
 }
 
 #define ga_pgroup_dgop_ F77_FUNC_(ga_pgroup_dgop,GA_PGROUP_DGOP)
-void ga_pgroup_dgop_(Integer *grp, Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
+void FATR ga_pgroup_dgop_(Integer *grp, Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
 {
     wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_DBL), x, *n, op);
 }
 
 #define nga_pgroup_dgop_ F77_FUNC_(nga_pgroup_dgop,NGA_PGROUP_DGOP)
-void nga_pgroup_dgop_(Integer *grp, Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
+void FATR nga_pgroup_dgop_(Integer *grp, Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
 {
     wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_DBL), x, *n, op);
 }
 
 #define ga_pgroup_cgop_ F77_FUNC_(ga_pgroup_cgop,GA_PGROUP_CGOP)
-void ga_pgroup_cgop_(Integer *grp, Integer *type, SingleComplex *x, Integer *n, char *op, int len)
+void FATR ga_pgroup_cgop_(Integer *grp, Integer *type, SingleComplex *x, Integer *n, char *op, int len)
 {
     wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_SCPL), x, *n, op);
 }
 
 #define nga_pgroup_cgop_ F77_FUNC_(nga_pgroup_cgop,NGA_PGROUP_CGOP)
-void nga_pgroup_cgop_(Integer *grp, Integer *type, SingleComplex *x, Integer *n, char *op, int len)
+void FATR nga_pgroup_cgop_(Integer *grp, Integer *type, SingleComplex *x, Integer *n, char *op, int len)
 {
     wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_SCPL), x, *n, op);
 }
 
 #define ga_pgroup_zgop_ F77_FUNC_(ga_pgroup_zgop,GA_PGROUP_ZGOP)
-void ga_pgroup_zgop_(Integer *grp, Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
+void FATR ga_pgroup_zgop_(Integer *grp, Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
 {
     wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_DCPL), x, *n, op);
 }
 
 #define nga_pgroup_zgop_ F77_FUNC_(nga_pgroup_zgop,NGA_PGROUP_ZGOP)
-void nga_pgroup_zgop_(Integer *grp, Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
+void FATR nga_pgroup_zgop_(Integer *grp, Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
 {
     wnga_pgroup_gop(*grp, pnga_type_f2c(MT_F_DCPL), x, *n, op);
 }
 
 #define ga_gop_ F77_FUNC_(ga_gop,GA_GOP)
-void ga_gop_(Integer *type, void *x, Integer *n, char *op, int len)
+void FATR ga_gop_(Integer *type, void *x, Integer *n, char *op, int len)
 {
     wnga_gop(pnga_type_f2c(*type), x, *n, op);
 }
 
 #define nga_gop_ F77_FUNC_(nga_gop,NGA_GOP)
-void nga_gop_(Integer *type, void *x, Integer *n, char *op, int len)
+void FATR nga_gop_(Integer *type, void *x, Integer *n, char *op, int len)
 {
     wnga_gop(pnga_type_f2c(*type), x, *n, op);
 }
 
 #define ga_igop_ F77_FUNC_(ga_igop,GA_IGOP)
-void ga_igop_(Integer *type, Integer *x, Integer *n, char *op, int len)
+void FATR ga_igop_(Integer *type, Integer *x, Integer *n, char *op, int len)
 {
     wnga_gop(pnga_type_f2c(MT_F_INT), x, *n, op);
 }
 
 #define nga_igop_ F77_FUNC_(nga_igop,NGA_IGOP)
-void nga_igop_(Integer *type, Integer *x, Integer *n, char *op, int len)
+void FATR nga_igop_(Integer *type, Integer *x, Integer *n, char *op, int len)
 {
     wnga_gop(pnga_type_f2c(MT_F_INT), x, *n, op);
 }
 
 #define ga_sgop_ F77_FUNC_(ga_sgop,GA_SGOP)
-void ga_sgop_(Integer *type, Real *x, Integer *n, char *op, int len)
+void FATR ga_sgop_(Integer *type, Real *x, Integer *n, char *op, int len)
 {
     wnga_gop(pnga_type_f2c(MT_F_REAL), x, *n, op);
 }
 
 #define nga_sgop_ F77_FUNC_(nga_sgop,NGA_SGOP)
-void nga_sgop_(Integer *type, Real *x, Integer *n, char *op, int len)
+void FATR nga_sgop_(Integer *type, Real *x, Integer *n, char *op, int len)
 {
     wnga_gop(pnga_type_f2c(MT_F_REAL), x, *n, op);
 }
 
 #define ga_dgop_ F77_FUNC_(ga_dgop,GA_DGOP)
-void ga_dgop_(Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
+void FATR ga_dgop_(Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
 {
     wnga_gop(pnga_type_f2c(MT_F_DBL), x, *n, op);
 }
 
 #define nga_dgop_ F77_FUNC_(nga_dgop,NGA_DGOP)
-void nga_dgop_(Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
+void FATR nga_dgop_(Integer *type, DoublePrecision *x, Integer *n, char *op, int len)
 {
     wnga_gop(pnga_type_f2c(MT_F_DBL), x, *n, op);
 }
 
 #define ga_cgop_ F77_FUNC_(ga_cgop,GA_CGOP)
-void ga_cgop_(Integer *type, SingleComplex *x, Integer *n, char *op, int len)
+void FATR ga_cgop_(Integer *type, SingleComplex *x, Integer *n, char *op, int len)
 {
     wnga_gop(pnga_type_f2c(MT_F_SCPL), x, *n, op);
 }
 
 #define nga_cgop_ F77_FUNC_(nga_cgop,NGA_CGOP)
-void nga_cgop_(Integer *type, SingleComplex *x, Integer *n, char *op, int len)
+void FATR nga_cgop_(Integer *type, SingleComplex *x, Integer *n, char *op, int len)
 {
     wnga_gop(pnga_type_f2c(MT_F_SCPL), x, *n, op);
 }
 
 #define ga_zgop_ F77_FUNC_(ga_zgop,GA_ZGOP)
-void ga_zgop_(Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
+void FATR ga_zgop_(Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
 {
     wnga_gop(pnga_type_f2c(MT_F_DCPL), x, *n, op);
 }
 
 #define nga_zgop_ F77_FUNC_(nga_zgop,NGA_ZGOP)
-void nga_zgop_(Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
+void FATR nga_zgop_(Integer *type, DoubleComplex *x, Integer *n, char *op, int len)
 {
     wnga_gop(pnga_type_f2c(MT_F_DCPL), x, *n, op);
 }
 
+/* Routines from elem_alg.c */
+
+#define ga_abs_value_patch_ F77_FUNC_(ga_abs_value_patch,GA_ABS_VALUE_PATCH)
+void FATR ga_abs_value_patch_(Integer *g_a, Integer *lo, Integer *hi)
+{
+    wnga_abs_value_patch(g_a, lo, hi);
+}
+
+#define nga_abs_value_patch_ F77_FUNC_(nga_abs_value_patch,NGA_ABS_VALUE_PATCH)
+void FATR nga_abs_value_patch_(Integer *g_a, Integer *lo, Integer *hi)
+{
+    wnga_abs_value_patch(g_a, lo, hi);
+}
+
+#define ga_recip_patch_ F77_FUNC_(ga_recip_patch,GA_RECIP_PATCH)
+void FATR ga_recip_patch_(Integer *g_a, Integer *lo, Integer *hi)
+{
+    wnga_recip_patch(g_a, lo, hi);
+}
+
+#define nga_recip_patch_ F77_FUNC_(nga_recip_patch,NGA_RECIP_PATCH)
+void FATR nga_recip_patch_(Integer *g_a, Integer *lo, Integer *hi)
+{
+    wnga_recip_patch(g_a, lo, hi);
+}
+
+#define ga_add_constant_patch_ F77_FUNC_(ga_add_constant_patch,GA_ADD_CONSTANT_PATCH)
+void FATR ga_add_constant_patch_(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
+{
+    wnga_add_constant_patch(g_a, lo, hi, alpha);
+}
+
+#define nga_add_constant_patch_ F77_FUNC_(nga_add_constant_patch,NGA_ADD_CONSTANT_PATCH)
+void FATR nga_add_constant_patch_(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
+{
+    wnga_add_constant_patch(g_a, lo, hi, alpha);
+}
+
+#define ga_abs_value_ F77_FUNC_(ga_abs_value,GA_ABS_VALUE)
+void FATR ga_abs_value_(Integer *g_a)
+{
+    wnga_abs_value(g_a);
+}
+
+#define nga_abs_value_ F77_FUNC_(nga_abs_value,NGA_ABS_VALUE)
+void FATR nga_abs_value_(Integer *g_a)
+{
+    wnga_abs_value(g_a);
+}
+
+#define ga_add_constant_ F77_FUNC_(ga_add_constant,GA_ADD_CONSTANT)
+void FATR ga_add_constant_(Integer *g_a, void *alpha)
+{
+    wnga_add_constant(g_a, alpha);
+}
+
+#define nga_add_constant_ F77_FUNC_(nga_add_constant,NGA_ADD_CONSTANT)
+void FATR nga_add_constant_(Integer *g_a, void *alpha)
+{
+    wnga_add_constant(g_a, alpha);
+}
+
+#define ga_recip_ F77_FUNC_(ga_recip,GA_RECIP)
+void FATR ga_recip_(Integer *g_a)
+{
+    wnga_recip(g_a);
+}
+
+#define ga_elem_multiply_ F77_FUNC_(ga_elem_multiply,GA_ELEM_MULTIPLY)
+void FATR ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c)
+{
+    wnga_elem_multiply(g_a, g_b, g_c);
+}
+
+#define nga_elem_multiply_ F77_FUNC_(nga_elem_multiply,NGA_ELEM_MULTIPLY)
+void FATR nga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c)
+{
+    wnga_elem_multiply(g_a, g_b, g_c);
+}
+
+#define ga_elem_divide_ F77_FUNC_(ga_elem_divide,GA_ELEM_DIVIDE)
+void FATR ga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c)
+{
+    wnga_elem_divide(g_a, g_b, g_c);
+}
+
+#define nga_elem_divide_ F77_FUNC_(nga_elem_divide,NGA_ELEM_DIVIDE)
+void FATR nga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c)
+{
+    wnga_elem_divide(g_a, g_b, g_c);
+}
+
+#define ga_elem_maximum_ F77_FUNC_(ga_elem_maximum,GA_ELEM_MAXIMUM)
+void FATR ga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c)
+{
+    wnga_elem_maximum(g_a, g_b, g_c);
+}
+
+#define nga_elem_maximum_ F77_FUNC_(nga_elem_maximum,NGA_ELEM_MAXIMUM)
+void FATR nga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c)
+{
+    wnga_elem_maximum(g_a, g_b, g_c);
+}
+
+#define ga_elem_minimum_ F77_FUNC_(ga_elem_minimum,GA_ELEM_MINIMUM)
+void FATR ga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c)
+{
+    wnga_elem_minimum(g_a, g_b, g_c);
+}
+
+#define nga_elem_minimum_ F77_FUNC_(nga_elem_minimum,NGA_ELEM_MINIMUM)
+void FATR nga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c)
+{
+    wnga_elem_minimum(g_a, g_b, g_c);
+}
+
+#define ga_elem_multiply_patch_ F77_FUNC_(ga_elem_multiply_patch,GA_ELEM_MULTIPLY_PATCH)
+void FATR ga_elem_multiply_patch_(Integer *g_a,Integer *alo,Integer *ahi,Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi)
+{
+    wnga_elem_multiply_patch(g_a,alo,ahi,g_b,blo,bhi,g_c,clo,chi);
+}
+
+#define nga_elem_multiply_patch_ F77_FUNC_(nga_elem_multiply_patch,NGA_ELEM_MULTIPLY_PATCH)
+void FATR nga_elem_multiply_patch_(Integer *g_a,Integer *alo,Integer *ahi,Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi)
+{
+    wnga_elem_multiply_patch(g_a,alo,ahi,g_b,blo,bhi,g_c,clo,chi);
+}
+
+#define ga_elem_divide_patch_ F77_FUNC_(ga_elem_divide_patch,GA_ELEM_DIVIDE_PATCH)
+void FATR ga_elem_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi)
+{
+    wnga_elem_divide_patch(g_a,alo,ahi, g_b,blo,bhi,g_c, clo,chi);
+}
+
+#define nga_elem_divide_patch_ F77_FUNC_(nga_elem_divide_patch,NGA_ELEM_DIVIDE_PATCH)
+void FATR nga_elem_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi)
+{
+    wnga_elem_divide_patch(g_a,alo,ahi, g_b,blo,bhi,g_c, clo,chi);
+}
+
+#define ga_elem_step_divide_patch_ F77_FUNC_(ga_elem_step_divide_patch,GA_ELEM_STEP_DIVIDE_PATCH)
+void FATR ga_elem_step_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi)
+{
+    wnga_elem_step_divide_patch(g_a,alo,ahi, g_b,blo,bhi,g_c, clo,chi);
+}
+
+#define nga_elem_step_divide_patch_ F77_FUNC_(nga_elem_step_divide_patch,NGA_ELEM_STEP_DIVIDE_PATCH)
+void FATR nga_elem_step_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi)
+{
+    wnga_elem_step_divide_patch(g_a,alo,ahi, g_b,blo,bhi,g_c, clo,chi);
+}
+
+#define ga_elem_stepb_divide_patch_ F77_FUNC_(ga_elem_stepb_divide_patch,GA_ELEM_STEPB_DIVIDE_PATCH)
+void FATR ga_elem_stepb_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi)
+{
+    wnga_elem_stepb_divide_patch(g_a,alo,ahi, g_b,blo,bhi,g_c, clo,chi);
+}
+
+#define nga_elem_stepb_divide_patch_ F77_FUNC_(nga_elem_stepb_divide_patch,NGA_ELEM_STEPB_DIVIDE_PATCH)
+void FATR nga_elem_stepb_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi)
+{
+    wnga_elem_stepb_divide_patch(g_a,alo,ahi, g_b,blo,bhi,g_c, clo,chi);
+}
+
+#define ga_elem_maximum_patch_ F77_FUNC_(ga_elem_maximum_patch,GA_ELEM_MAXIMUM_PATCH)
+void FATR ga_elem_maximum_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi)
+{
+    wnga_elem_maximum_patch(g_a,alo,ahi, g_b,blo,bhi,g_c,clo,chi);
+}
+
+#define nga_elem_maximum_patch_ F77_FUNC_(nga_elem_maximum_patch,NGA_ELEM_MAXIMUM_PATCH)
+void FATR nga_elem_maximum_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi)
+{
+    wnga_elem_maximum_patch(g_a,alo,ahi, g_b,blo,bhi,g_c,clo,chi);
+}
+
+#define ga_elem_minimum_patch_ F77_FUNC_(ga_elem_minimum_patch,GA_ELEM_MINIMUM_PATCH)
+void FATR ga_elem_minimum_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi)
+{
+    wnga_elem_minimum_patch(g_a,alo,ahi, g_b,blo,bhi,g_c,clo,chi);
+}
+
+#define nga_elem_minimum_patch_ F77_FUNC_(nga_elem_minimum_patch,NGA_ELEM_MINIMUM_PATCH)
+void FATR nga_elem_minimum_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi)
+{
+    wnga_elem_minimum_patch(g_a,alo,ahi, g_b,blo,bhi,g_c,clo,chi);
+}
+
+#define ga_step_bound_info_patch_ F77_FUNC_(ga_step_bound_info_patch,GA_STEP_BOUND_INFO_PATCH)
+void FATR ga_step_bound_info_patch(Integer *g_xx, Integer *xxlo, Integer *xxhi, Integer *g_vv, Integer *vvlo, Integer *vvhi, Integer *g_xxll, Integer *xxlllo, Integer *xxllhi, Integer *g_xxuu, Integer *xxuulo, Integer *xxuuhi, void *boundmin, void* wolfemin, void *boundmax)
+{
+    wnga_step_bound_info_patch(g_xx, xxlo, xxhi, g_vv, vvlo, vvhi, g_xxll, xxlllo, xxllhi, g_xxuu, xxuulo, xxuuhi, boundmin, wolfemin, boundmax);
+}
+
+#define nga_step_bound_info_patch_ F77_FUNC_(nga_step_bound_info_patch,NGA_STEP_BOUND_INFO_PATCH)
+void FATR nga_step_bound_info_patch(Integer *g_xx, Integer *xxlo, Integer *xxhi, Integer *g_vv, Integer *vvlo, Integer *vvhi, Integer *g_xxll, Integer *xxlllo, Integer *xxllhi, Integer *g_xxuu, Integer *xxuulo, Integer *xxuuhi, void *boundmin, void* wolfemin, void *boundmax)
+{
+    wnga_step_bound_info_patch(g_xx, xxlo, xxhi, g_vv, vvlo, vvhi, g_xxll, xxlllo, xxllhi, g_xxuu, xxuulo, xxuuhi, boundmin, wolfemin, boundmax);
+}
+
+#define ga_step_max_patch_ F77_FUNC_(ga_step_max_patch,GA_STEP_MAX_PATCH)
+void FATR ga_step_max_patch_(Integer *g_a,  Integer *alo, Integer *ahi, Integer *g_b,  Integer *blo, Integer *bhi, void *result)
+{
+    wnga_step_max_patch(g_a, alo, ahi, g_b, blo, bhi, result);
+}
+
+#define nga_step_max_patch_ F77_FUNC_(nga_step_max_patch,NGA_STEP_MAX_PATCH)
+void FATR nga_step_max_patch_(Integer *g_a,  Integer *alo, Integer *ahi, Integer *g_b,  Integer *blo, Integer *bhi, void *result)
+{
+    wnga_step_max_patch(g_a, alo, ahi, g_b, blo, bhi, result);
+}
+
+#define ga_step_max_ F77_FUNC_(ga_step_max,GA_STEP_MAX)
+void FATR ga_step_max_(Integer *g_a, Integer *g_b, void *retval)
+{
+    wnga_step_max(g_a, g_b, retval);
+}
+
+#define nga_step_max_ F77_FUNC_(nga_step_max,NGA_STEP_MAX)
+void FATR nga_step_max_(Integer *g_a, Integer *g_b, void *retval)
+{
+    wnga_step_max(g_a, g_b, retval);
+}
+
+#define ga_step_bound_info_ F77_FUNC_(ga_step_bound_info,GA_STEP_BOUND_INFO)
+void FATR ga_step_bound_info_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, Integer *g_xxuu,  void *boundmin, void *wolfemin, void *boundmax)
+{
+    wnga_step_bound_info(g_xx, g_vv, g_xxll, g_xxuu, boundmin, wolfemin, boundmax);
+}
+
+#define nga_step_bound_info_ F77_FUNC_(nga_step_bound_info,NGA_STEP_BOUND_INFO)
+void FATR nga_step_bound_info_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, Integer *g_xxuu,  void *boundmin, void *wolfemin, void *boundmax)
+{
+    wnga_step_bound_info(g_xx, g_vv, g_xxll, g_xxuu, boundmin, wolfemin, boundmax);
+}
 

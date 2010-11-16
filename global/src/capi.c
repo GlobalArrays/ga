@@ -1151,13 +1151,13 @@ int NGA_Pgroup_get_default()
 void GA_Pgroup_set_default(int p_handle)
 {
     Integer grp = (Integer)p_handle;
-    pnga_pgroup_set_default(&grp);
+    wnga_pgroup_set_default(&grp);
 }
 
 void NGA_Pgroup_set_default(int p_handle)
 {
     Integer grp = (Integer)p_handle;
-    pnga_pgroup_set_default(&grp);
+    wnga_pgroup_set_default(&grp);
 }
 
 int GA_Pgroup_get_mirror()
@@ -2326,7 +2326,7 @@ void GA_Brdcst(void *buf, int lenbuf, int root)
   Integer type=GA_TYPE_BRD;
   Integer len = (Integer)lenbuf;
   Integer orig = (Integer)root;
-  pnga_msg_brdcst(type, buf, len, orig);
+  wnga_msg_brdcst(type, buf, len, orig);
 }
    
 void GA_Pgroup_brdcst(int grp_id, void *buf, int lenbuf, int root)
@@ -2345,88 +2345,88 @@ void GA_Pgroup_sync(int grp_id)
 }
 
 void GA_Gop(int type, void *x, int n, char *op)
-{ pnga_gop(type, x, n, op); }
+{ wnga_gop(type, x, n, op); }
 
 void GA_Igop(int x[], int n, char *op)
-{ pnga_gop(C_INT, x, n, op); }
+{ wnga_gop(C_INT, x, n, op); }
 
 void GA_Lgop(long x[], int n, char *op)
-{ pnga_gop(C_LONG, x, n, op); }
+{ wnga_gop(C_LONG, x, n, op); }
 
 void GA_Llgop(long long x[], int n, char *op)
-{ pnga_gop(C_LONGLONG, x, n, op); }
+{ wnga_gop(C_LONGLONG, x, n, op); }
 
 void GA_Fgop(float x[], int n, char *op)
-{ pnga_gop(C_FLOAT, x, n, op); }       
+{ wnga_gop(C_FLOAT, x, n, op); }       
 
 void GA_Dgop(double x[], int n, char *op)
-{ pnga_gop(C_DBL, x, n, op); }
+{ wnga_gop(C_DBL, x, n, op); }
 
 void GA_Cgop(SingleComplex x[], int n, char *op)
-{ pnga_gop(C_SCPL, x, n, op); }
+{ wnga_gop(C_SCPL, x, n, op); }
 
 void GA_Zgop(DoubleComplex x[], int n, char *op)
-{ pnga_gop(C_DCPL, x, n, op); }
+{ wnga_gop(C_DCPL, x, n, op); }
 
 void NGA_Gop(int type, void *x, int n, char *op)
-{ pnga_gop(type, x, n, op); }
+{ wnga_gop(type, x, n, op); }
 
 void NGA_Igop(int x[], int n, char *op)
-{ pnga_gop(C_INT, x, n, op); }
+{ wnga_gop(C_INT, x, n, op); }
 
 void NGA_Lgop(long x[], int n, char *op)
-{ pnga_gop(C_LONG, x, n, op); }
+{ wnga_gop(C_LONG, x, n, op); }
 
 void NGA_Llgop(long long x[], int n, char *op)
-{ pnga_gop(C_LONGLONG, x, n, op); }
+{ wnga_gop(C_LONGLONG, x, n, op); }
 
 void NGA_Fgop(float x[], int n, char *op)
-{ pnga_gop(C_FLOAT, x, n, op); }       
+{ wnga_gop(C_FLOAT, x, n, op); }       
 
 void NGA_Dgop(double x[], int n, char *op)
-{ pnga_gop(C_DBL, x, n, op); }
+{ wnga_gop(C_DBL, x, n, op); }
 
 void NGA_Cgop(SingleComplex x[], int n, char *op)
-{ pnga_gop(C_SCPL, x, n, op); }
+{ wnga_gop(C_SCPL, x, n, op); }
 
 void NGA_Zgop(DoubleComplex x[], int n, char *op)
-{ pnga_gop(C_DCPL, x, n, op); }
+{ wnga_gop(C_DCPL, x, n, op); }
 
 void GA_Pgroup_gop(int grp_id, int type, double x[], int n, char *op)
-{ pnga_pgroup_gop(grp_id, type, x, n, op); }
+{ wnga_pgroup_gop(grp_id, type, x, n, op); }
 
 void GA_Pgroup_igop(int grp_id, int x[], int n, char *op)
-{ pnga_pgroup_gop(grp_id, C_INT, x, n, op); }
+{ wnga_pgroup_gop(grp_id, C_INT, x, n, op); }
  
 void GA_Pgroup_lgop(int grp_id, long x[], int n, char *op)
-{ pnga_pgroup_gop(grp_id, C_LONG, x, n, op); }
+{ wnga_pgroup_gop(grp_id, C_LONG, x, n, op); }
  
 void GA_Pgroup_llgop(int grp_id, long long x[], int n, char *op)
-{ pnga_pgroup_gop(grp_id, C_LONGLONG, x, n, op); }
+{ wnga_pgroup_gop(grp_id, C_LONGLONG, x, n, op); }
  
 void GA_Pgroup_fgop(int grp_id, float x[], int n, char *op)
-{ pnga_pgroup_gop(grp_id, C_FLOAT, x, n, op); }
+{ wnga_pgroup_gop(grp_id, C_FLOAT, x, n, op); }
  
 void GA_Pgroup_dgop(int grp_id, double x[], int n, char *op)
-{ pnga_pgroup_gop(grp_id, C_DBL, x, n, op); }
+{ wnga_pgroup_gop(grp_id, C_DBL, x, n, op); }
  
 void NGA_Pgroup_gop(int grp_id, int type, double x[], int n, char *op)
-{ pnga_pgroup_gop(grp_id, type, x, n, op); }
+{ wnga_pgroup_gop(grp_id, type, x, n, op); }
 
 void NGA_Pgroup_igop(int grp_id, int x[], int n, char *op)
-{ pnga_pgroup_gop(grp_id, C_INT, x, n, op); }
+{ wnga_pgroup_gop(grp_id, C_INT, x, n, op); }
  
 void NGA_Pgroup_lgop(int grp_id, long x[], int n, char *op)
-{ pnga_pgroup_gop(grp_id, C_LONG, x, n, op); }
+{ wnga_pgroup_gop(grp_id, C_LONG, x, n, op); }
  
 void NGA_Pgroup_llgop(int grp_id, long long x[], int n, char *op)
-{ pnga_pgroup_gop(grp_id, C_LONGLONG, x, n, op); }
+{ wnga_pgroup_gop(grp_id, C_LONGLONG, x, n, op); }
  
 void NGA_Pgroup_fgop(int grp_id, float x[], int n, char *op)
-{ pnga_pgroup_gop(grp_id, C_FLOAT, x, n, op); }
+{ wnga_pgroup_gop(grp_id, C_FLOAT, x, n, op); }
  
 void NGA_Pgroup_dgop(int grp_id, double x[], int n, char *op)
-{ pnga_pgroup_gop(grp_id, C_DBL, x, n, op); }
+{ wnga_pgroup_gop(grp_id, C_DBL, x, n, op); }
  
 void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
 {
@@ -3864,7 +3864,7 @@ void GA_Step_bound_info(int g_xx, int g_vv, int g_xxll, int g_xxuu,  void *bound
     Integer vv = (Integer)g_vv;
     Integer xxll = (Integer)g_xxll;
     Integer xxuu = (Integer)g_xxuu;
-    ga_step_bound_info_(&xx, &vv, &xxll, &xxuu, boundmin, wolfemin, boundmax);
+    wnga_step_bound_info(&xx, &vv, &xxll, &xxuu, boundmin, wolfemin, boundmax);
 }
 
 void GA_Step_bound_info_patch(int g_xx, int xxlo[], int xxhi[],  int g_vv, int vvlo[], int vvhi[], int g_xxll, int xxlllo[], int xxllhi[], int g_xxuu,  int xxuulo[], int xxuuhi[], void *boundmin, void *wolfemin, void *boundmax)
@@ -3886,7 +3886,7 @@ void GA_Step_bound_info_patch(int g_xx, int xxlo[], int xxhi[],  int g_vv, int v
     COPYINDEX_C2F(xxllhi,_ga_xxllhi, ndim);
     COPYINDEX_C2F(xxuulo,_ga_xxuulo, ndim);
     COPYINDEX_C2F(xxuuhi,_ga_xxuuhi, ndim);
-    ga_step_bound_info_patch_(&xx, _ga_xxlo, _ga_xxhi, &vv, _ga_vvlo, _ga_vvhi, &xxll, _ga_xxlllo, _ga_xxllhi, &xxuu, _ga_xxuulo, _ga_xxuuhi , 
+    wnga_step_bound_info_patch(&xx, _ga_xxlo, _ga_xxhi, &vv, _ga_vvlo, _ga_vvhi, &xxll, _ga_xxlllo, _ga_xxllhi, &xxuu, _ga_xxuulo, _ga_xxuuhi , 
     boundmin,wolfemin,boundmax);
 }
 
@@ -3913,7 +3913,7 @@ void GA_Step_bound_info_patch64(int g_xx, int64_t xxlo[], int64_t xxhi[],
     COPYINDEX_C2F(xxllhi,_ga_xxllhi, ndim);
     COPYINDEX_C2F(xxuulo,_ga_xxuulo, ndim);
     COPYINDEX_C2F(xxuuhi,_ga_xxuuhi, ndim);
-    ga_step_bound_info_patch_(&xx, _ga_xxlo, _ga_xxhi, &vv, _ga_vvlo, _ga_vvhi, &xxll, _ga_xxlllo, _ga_xxllhi, &xxuu, _ga_xxuulo, _ga_xxuuhi , 
+    wnga_step_bound_info_patch(&xx, _ga_xxlo, _ga_xxhi, &vv, _ga_vvlo, _ga_vvhi, &xxll, _ga_xxlllo, _ga_xxllhi, &xxuu, _ga_xxuulo, _ga_xxuuhi , 
     boundmin,wolfemin,boundmax);
 }
 
@@ -3956,20 +3956,20 @@ void GA_Step_max_patch64(int g_a, int64_t alo[], int64_t  ahi[],
 void GA_Abs_value(int g_a)
 {
     Integer a = (Integer)g_a;
-    ga_abs_value_(&a);
+    wnga_abs_value(&a);
 }
 
 void GA_Add_constant(int g_a, void *alpha)
 {
     Integer a = (Integer)g_a;
-    ga_add_constant_(&a, alpha);
+    wnga_add_constant(&a, alpha);
 }
 
 
 void GA_Recip(int g_a)
 {
     Integer a = (Integer)g_a;
-    ga_recip_(&a);
+    wnga_recip(&a);
 }
 
 void GA_Elem_multiply(int g_a, int g_b, int g_c)
@@ -3977,7 +3977,7 @@ void GA_Elem_multiply(int g_a, int g_b, int g_c)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
     Integer c = (Integer)g_c;
-    ga_elem_multiply_(&a, &b, &c);
+    wnga_elem_multiply(&a, &b, &c);
 }
 
 void GA_Elem_divide(int g_a, int g_b, int g_c)
@@ -3985,7 +3985,7 @@ void GA_Elem_divide(int g_a, int g_b, int g_c)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
     Integer c = (Integer)g_c;
-    ga_elem_divide_(&a, &b, &c);
+    wnga_elem_divide(&a, &b, &c);
 }
 
 void GA_Elem_maximum(int g_a, int g_b, int g_c)
@@ -3993,7 +3993,7 @@ void GA_Elem_maximum(int g_a, int g_b, int g_c)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
     Integer c = (Integer)g_c;
-    ga_elem_maximum_(&a, &b, &c);
+    wnga_elem_maximum(&a, &b, &c);
 }
 
 
@@ -4002,7 +4002,7 @@ void GA_Elem_minimum(int g_a, int g_b, int g_c)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
     Integer c = (Integer)g_c;
-    ga_elem_minimum_(&a, &b, &c);
+    wnga_elem_minimum(&a, &b, &c);
 }
 
 
@@ -4085,7 +4085,7 @@ void GA_Elem_multiply_patch(int g_a, int alo[], int ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    ga_elem_multiply_patch_(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_multiply_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
 }
 
 void GA_Elem_multiply_patch64(int g_a, int64_t alo[], int64_t ahi[],
@@ -4107,7 +4107,7 @@ void GA_Elem_multiply_patch64(int g_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    ga_elem_multiply_patch_(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_multiply_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
 }
 
 void GA_Elem_divide_patch(int g_a, int alo[], int ahi[],
@@ -4129,7 +4129,7 @@ void GA_Elem_divide_patch(int g_a, int alo[], int ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    ga_elem_divide_patch_(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_divide_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
 }
 
 void GA_Elem_divide_patch64(int g_a, int64_t alo[], int64_t ahi[],
@@ -4151,7 +4151,7 @@ void GA_Elem_divide_patch64(int g_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    ga_elem_divide_patch_(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_divide_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
 }
 
 
@@ -4174,7 +4174,7 @@ void GA_Elem_maximum_patch(int g_a, int alo[], int ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    ga_elem_maximum_patch_(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_maximum_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
 }
 
 void GA_Elem_maximum_patch64(int g_a, int64_t alo[], int64_t ahi[],
@@ -4196,7 +4196,7 @@ void GA_Elem_maximum_patch64(int g_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    ga_elem_maximum_patch_(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_maximum_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
 }
 
 void GA_Elem_minimum_patch(int g_a, int alo[], int ahi[],
@@ -4218,7 +4218,7 @@ void GA_Elem_minimum_patch(int g_a, int alo[], int ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    ga_elem_minimum_patch_(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_minimum_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
 }
 
 void GA_Elem_minimum_patch64(int g_a, int64_t alo[], int64_t ahi[],
@@ -4240,7 +4240,7 @@ void GA_Elem_minimum_patch64(int g_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    ga_elem_minimum_patch_(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_minimum_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
 }
 
 void GA_Shift_diagonal(int g_a, void *c){
