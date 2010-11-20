@@ -4,7 +4,7 @@
       subroutine boltzmann(g_fg,  fg,  ld_fg1,  ld_fg2,
      +                     g_fld, fld, ld_fld1, ld_fld2,
      +                     g_bc,  bc,  ld_bc1)
-      include 'common'
+#include "common"
 c
       integer ld_fg1, ld_fg2, ld_fld1, ld_fld2, ld_bc1
       double precision fg(ld_fg1,ld_fg2, *)

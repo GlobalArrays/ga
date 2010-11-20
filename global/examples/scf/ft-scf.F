@@ -4,7 +4,7 @@
       program scf
 C$Id: ft-scf.F,v 1.1 2005-07-07 17:41:07 vinod Exp $
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -111,7 +111,7 @@ c
 c
       subroutine iterate(niter)
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -180,7 +180,7 @@ c
 
       subroutine makesz(schwmax)
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -219,7 +219,7 @@ c
 c
       subroutine ininrm
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -252,7 +252,7 @@ c
       end
       double precision function h(i,j)
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -293,7 +293,7 @@ c
       end
       double precision function s(i,j)
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -309,7 +309,7 @@ c
       end
       subroutine makden
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -353,7 +353,7 @@ c
 c
       subroutine oneel(schwmax, eone)
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -426,7 +426,7 @@ c$$$      endif
       end
 c
       logical function next_chunk(lo,hi)
-      include 'cscf.h'
+#include "cscf.h"
       integer one
       parameter (one = 1)
       integer imax, lo(2), hi(2), ilo, jlo
@@ -448,7 +448,7 @@ c
       end
 c
       logical function next_4chunk(lo,hi,ilo,jlo,klo,llo)
-      include 'cscf.h'
+#include "cscf.h"
       integer one
       parameter (one = 1)
       integer imax, lo(4), hi(4), ilo, jlo, klo, llo, itmp
@@ -478,7 +478,7 @@ c
       end
 c
       subroutine clean_chunk(chunk)
-      include 'cscf.h'
+#include "cscf.h"
       double precision chunk(ichunk,ichunk)
       integer i,j
       do j = 1, ichunk
@@ -491,7 +491,7 @@ c
 c
       subroutine twoel(schwmax, etwo)
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -566,7 +566,7 @@ c
 c
       subroutine damp(fac)
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -581,7 +581,7 @@ c
 c
       subroutine prnout(iter, energy, deltad, tester)
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -598,7 +598,7 @@ c
 c
       double precision function dendif()
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -631,7 +631,7 @@ c
 c
       double precision function testfock()
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -667,7 +667,7 @@ c
 c
       subroutine shiftfock(shift)
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -702,7 +702,7 @@ c
 c
       subroutine prnfin(energy)
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -729,7 +729,7 @@ c
       end
       subroutine g(value,i,j,k,l)
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -765,7 +765,7 @@ c
       subroutine diagon(tester, iter)
 c      subroutine diagon(fock, orbs, evals, work, tester, iter)
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -816,7 +816,7 @@ c
 c
       subroutine makeob
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -854,7 +854,7 @@ c
 c
       subroutine denges
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -933,7 +933,7 @@ c
 c
       subroutine setarrays
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -996,7 +996,7 @@ c
       end
       subroutine closearrays
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -1016,7 +1016,7 @@ c
 c
       subroutine makoverlap
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -1033,7 +1033,7 @@ c
       end
 c
       subroutine setoverlap(a,lo,hi,ld1,ld2)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -1060,7 +1060,7 @@ c
 c
       subroutine print_ga_block(g_a)
       implicit double precision(a-h,o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -1079,7 +1079,7 @@ c
 c
       subroutine print_ga_block_ij(g_a,tlo)
       implicit double precision(a-h,o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -1098,7 +1098,7 @@ c
 c
       subroutine dump_chunk(a,ld1,ld2)
       implicit double precision (a-h, o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
@@ -1114,7 +1114,7 @@ c
 c
       double precision function contract_matrices(g_a,g_b)
       implicit double precision(a-h,o-z)
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"

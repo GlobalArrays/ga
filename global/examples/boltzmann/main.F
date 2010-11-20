@@ -4,7 +4,7 @@
       program main
 
 c
-      include 'common'
+#include "common"
 c
       integer i, j, gdim, type
       integer gdims(NDIM+1), gwidth(NDIM+1)

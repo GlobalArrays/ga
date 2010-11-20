@@ -10,7 +10,7 @@ c     LOG is the FORTRAN unit number for standard output.
 c
       parameter (LOG = 6)
       parameter (MAXLEN = 262144 )
-      include 'msgtypesf.h'
+#include "msgtypesf.h"
       dimension buf(MAXLEN)
       integer ibuf(MAXLEN)
       character*80 fname

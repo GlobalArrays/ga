@@ -2,7 +2,7 @@
 #   include "config.fh"
 #endif
       subroutine initpar
-      include 'common'
+#include "common"
 c
       double precision q8_ei(18,3)
       data q8_ei

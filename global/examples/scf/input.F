@@ -2,7 +2,7 @@
 #   include "config.fh"
 #endif
       subroutine input
-      include 'cscf.h'
+#include "cscf.h"
 #include "mafdecls.fh"
 #include "global.fh"
 #include "mp3def.fh"
