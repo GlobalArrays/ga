@@ -1091,6 +1091,12 @@ ga___testing_ntestc_LDADD      = libga++.la $(LDADD) $(MAYBE_FLIBS)
 ga___testing_testc_LDADD       = libga++.la $(LDADD) $(MAYBE_FLIBS)
 ga___testing_testmult_LDADD    = libga++.la $(LDADD) $(MAYBE_FLIBS)
 
+ga___testing_elempatch_LDFLAGS = $(FLDFLAGS)
+ga___testing_mtest_LDFLAGS     = $(FLDFLAGS)
+ga___testing_ntestc_LDFLAGS    = $(FLDFLAGS)
+ga___testing_testc_LDFLAGS     = $(FLDFLAGS)
+ga___testing_testmult_LDFLAGS  = $(FLDFLAGS)
+
 endif # CXX_BINDINGS
 
 ##############################################################################

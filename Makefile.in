@@ -815,12 +815,20 @@ am__DEPENDENCIES_2 = $(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 @NOFORT_FALSE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
 @CXX_BINDINGS_TRUE@ga___testing_elempatch_DEPENDENCIES = libga++.la \
 @CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+ga___testing_elempatch_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(ga___testing_elempatch_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__ga___testing_mtest_SOURCES_DIST = ga++/testing/mtest.cc
 @CXX_BINDINGS_TRUE@am_ga___testing_mtest_OBJECTS =  \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest.$(OBJEXT)
 ga___testing_mtest_OBJECTS = $(am_ga___testing_mtest_OBJECTS)
 @CXX_BINDINGS_TRUE@ga___testing_mtest_DEPENDENCIES = libga++.la \
 @CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+ga___testing_mtest_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(ga___testing_mtest_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__ga___testing_ntestc_SOURCES_DIST = ga++/testing/ntestc.cc \
 	ga++/testing/util.c
 @CXX_BINDINGS_TRUE@am_ga___testing_ntestc_OBJECTS =  \
@@ -829,18 +837,30 @@ am__ga___testing_ntestc_SOURCES_DIST = ga++/testing/ntestc.cc \
 ga___testing_ntestc_OBJECTS = $(am_ga___testing_ntestc_OBJECTS)
 @CXX_BINDINGS_TRUE@ga___testing_ntestc_DEPENDENCIES = libga++.la \
 @CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+ga___testing_ntestc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(ga___testing_ntestc_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__ga___testing_testc_SOURCES_DIST = ga++/testing/testc.cc
 @CXX_BINDINGS_TRUE@am_ga___testing_testc_OBJECTS =  \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc.$(OBJEXT)
 ga___testing_testc_OBJECTS = $(am_ga___testing_testc_OBJECTS)
 @CXX_BINDINGS_TRUE@ga___testing_testc_DEPENDENCIES = libga++.la \
 @CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+ga___testing_testc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(ga___testing_testc_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__ga___testing_testmult_SOURCES_DIST = ga++/testing/testmult.cc
 @CXX_BINDINGS_TRUE@am_ga___testing_testmult_OBJECTS =  \
 @CXX_BINDINGS_TRUE@	ga++/testing/testmult.$(OBJEXT)
 ga___testing_testmult_OBJECTS = $(am_ga___testing_testmult_OBJECTS)
 @CXX_BINDINGS_TRUE@ga___testing_testmult_DEPENDENCIES = libga++.la \
 @CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+ga___testing_testmult_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(ga___testing_testmult_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_gaf2c_testarg_OBJECTS = gaf2c/testarg.$(OBJEXT) \
 	gaf2c/testargf.$(OBJEXT)
 gaf2c_testarg_OBJECTS = $(am_gaf2c_testarg_OBJECTS)
@@ -2926,6 +2946,11 @@ nodist_EXTRA_pario_rate_SOURCES = $(MAYBE_DUMMY_F_LINK)
 @CXX_BINDINGS_TRUE@ga___testing_ntestc_LDADD = libga++.la $(LDADD) $(MAYBE_FLIBS)
 @CXX_BINDINGS_TRUE@ga___testing_testc_LDADD = libga++.la $(LDADD) $(MAYBE_FLIBS)
 @CXX_BINDINGS_TRUE@ga___testing_testmult_LDADD = libga++.la $(LDADD) $(MAYBE_FLIBS)
+@CXX_BINDINGS_TRUE@ga___testing_elempatch_LDFLAGS = $(FLDFLAGS)
+@CXX_BINDINGS_TRUE@ga___testing_mtest_LDFLAGS = $(FLDFLAGS)
+@CXX_BINDINGS_TRUE@ga___testing_ntestc_LDFLAGS = $(FLDFLAGS)
+@CXX_BINDINGS_TRUE@ga___testing_testc_LDFLAGS = $(FLDFLAGS)
+@CXX_BINDINGS_TRUE@ga___testing_testmult_LDFLAGS = $(FLDFLAGS)
 
 ##############################################################################
 # armci
@@ -3547,29 +3572,29 @@ ga++/testing/elempatch.$(OBJEXT): ga++/testing/$(am__dirstamp) \
 	ga++/testing/$(DEPDIR)/$(am__dirstamp)
 ga++/testing/elempatch$(EXEEXT): $(ga___testing_elempatch_OBJECTS) $(ga___testing_elempatch_DEPENDENCIES) ga++/testing/$(am__dirstamp)
 	@rm -f ga++/testing/elempatch$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(ga___testing_elempatch_OBJECTS) $(ga___testing_elempatch_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(ga___testing_elempatch_LINK) $(ga___testing_elempatch_OBJECTS) $(ga___testing_elempatch_LDADD) $(LIBS)
 ga++/testing/mtest.$(OBJEXT): ga++/testing/$(am__dirstamp) \
 	ga++/testing/$(DEPDIR)/$(am__dirstamp)
 ga++/testing/mtest$(EXEEXT): $(ga___testing_mtest_OBJECTS) $(ga___testing_mtest_DEPENDENCIES) ga++/testing/$(am__dirstamp)
 	@rm -f ga++/testing/mtest$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(ga___testing_mtest_OBJECTS) $(ga___testing_mtest_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(ga___testing_mtest_LINK) $(ga___testing_mtest_OBJECTS) $(ga___testing_mtest_LDADD) $(LIBS)
 ga++/testing/ntestc.$(OBJEXT): ga++/testing/$(am__dirstamp) \
 	ga++/testing/$(DEPDIR)/$(am__dirstamp)
 ga++/testing/util.$(OBJEXT): ga++/testing/$(am__dirstamp) \
 	ga++/testing/$(DEPDIR)/$(am__dirstamp)
 ga++/testing/ntestc$(EXEEXT): $(ga___testing_ntestc_OBJECTS) $(ga___testing_ntestc_DEPENDENCIES) ga++/testing/$(am__dirstamp)
 	@rm -f ga++/testing/ntestc$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(ga___testing_ntestc_OBJECTS) $(ga___testing_ntestc_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(ga___testing_ntestc_LINK) $(ga___testing_ntestc_OBJECTS) $(ga___testing_ntestc_LDADD) $(LIBS)
 ga++/testing/testc.$(OBJEXT): ga++/testing/$(am__dirstamp) \
 	ga++/testing/$(DEPDIR)/$(am__dirstamp)
 ga++/testing/testc$(EXEEXT): $(ga___testing_testc_OBJECTS) $(ga___testing_testc_DEPENDENCIES) ga++/testing/$(am__dirstamp)
 	@rm -f ga++/testing/testc$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(ga___testing_testc_OBJECTS) $(ga___testing_testc_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(ga___testing_testc_LINK) $(ga___testing_testc_OBJECTS) $(ga___testing_testc_LDADD) $(LIBS)
 ga++/testing/testmult.$(OBJEXT): ga++/testing/$(am__dirstamp) \
 	ga++/testing/$(DEPDIR)/$(am__dirstamp)
 ga++/testing/testmult$(EXEEXT): $(ga___testing_testmult_OBJECTS) $(ga___testing_testmult_DEPENDENCIES) ga++/testing/$(am__dirstamp)
 	@rm -f ga++/testing/testmult$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(ga___testing_testmult_OBJECTS) $(ga___testing_testmult_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(ga___testing_testmult_LINK) $(ga___testing_testmult_OBJECTS) $(ga___testing_testmult_LDADD) $(LIBS)
 gaf2c/testarg.$(OBJEXT): gaf2c/$(am__dirstamp) \
 	gaf2c/$(DEPDIR)/$(am__dirstamp)
 gaf2c/testargf.$(OBJEXT): gaf2c/$(am__dirstamp) \
