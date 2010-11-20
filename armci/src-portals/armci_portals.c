@@ -2,7 +2,7 @@
 #   include "config.h"
 #endif
         /*$id:$*/
-#define _GNU_SOURCE
+/*#define _GNU_SOURCE*/
 #include <stdio.h>
 #include <stdlib.h>
 #include "armcip.h"
@@ -370,7 +370,8 @@ extern int _armci_server_started;
 
 static int check_meminfo(void *ptr, long size, int proc)
 {
-  for(int i=0;i<all_meminfo[proc].cur_ds;i++){
+  int i;
+  for(i=0;i<all_meminfo[proc].cur_ds;i++){
     long left = (caddr_t)ptr - all_meminfo[proc].ptr[i];
     long right= all_meminfo[proc].size[i]-left;
 #ifdef DEBUG_MEM
@@ -404,15 +405,19 @@ typedef struct{
 
 void armci_exchange_meminfo(void *ptr, size_t size,size_t off)
 {
-  static meminfo_t exng[armci_nproc];
+  int i;
+  meminfo_t *exng;
+  exng = (meminfo_t*)malloc(armci_nproc*sizeof(meminfo_t));
+  assert(exng != NULL);
   bzero(exng,sizeof(meminfo_t)*armci_nproc);
   exng[armci_me].ptr=ptr; exng[armci_me].size=size; exng[armci_me].serv_offs = off;
   armci_msg_gop_scope(SCOPE_ALL,exng,(sizeof(meminfo_t)*armci_nproc)/sizeof(int),"+",ARMCI_INT);
-  for(int i=0;i<armci_nproc;i++){
+  for(i=0;i<armci_nproc;i++){
     if(exng[i].size!=0){
       add_meminfo(exng[i].ptr,exng[i].size,i);
     }
   }
+  free(exng);
 }
 
 

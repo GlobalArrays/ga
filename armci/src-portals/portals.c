@@ -6,7 +6,8 @@
    author: ryan olson
    email:  ryan@cray.com
 \* ---------------------------------------------------------------------------------------------- */
- # include "armcip.h"
+#include <stdio.h>
+#include "armcip.h"
 
 /* ---------------------------------------------------------------------------------------------- *\
    global variables
@@ -483,7 +484,7 @@ const char *Portals_ID() {
 
 
 void
-hex_print(char* data, int length)
+hex_print(const char* data, int length)
 {
         int ptr = 0;
         for(;ptr < length;ptr++)

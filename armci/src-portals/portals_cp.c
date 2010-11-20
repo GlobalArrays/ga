@@ -281,7 +281,7 @@ portals_req_send(void *buffer, size_t size, portals_ds_req_t *req)
 }
 
 
-static inline void
+void
 portals_req_wait(portals_ds_req_t *req) 
 {
         int rc;

@@ -95,10 +95,10 @@
 /* ---------------------------------------------------------------------------------------------- *\
    portals global variables
 \* ---------------------------------------------------------------------------------------------- */
-   ptl_handle_ni_t   cp_nih;
-   ptl_handle_ni_t   ds_nih;
-   ptl_handle_eq_t   cp_eqh;
-   ptl_handle_eq_t   ds_eqh;
+   /*ptl_handle_ni_t   cp_nih;*/
+   /*ptl_handle_ni_t   ds_nih;*/
+   /*ptl_handle_eq_t   cp_eqh;*/
+   /*ptl_handle_eq_t   ds_eqh;*/
    ptl_process_id_t *portals_id_map;
    ptl_process_id_t *portals_cloned_id_map;
 
@@ -129,7 +129,7 @@
    int portals_wait(portals_desc_t*);
 
 
-   void* portalsCloneDataServer(void *);
+   void* portalsCloneDataServer(void *(*func)(void*));
    void  portalsSpinLockOnInt(volatile int*, int, int);
 
    void portals_print_event_details(ptl_event_t *ev);

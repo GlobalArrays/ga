@@ -69,7 +69,7 @@ extern void kr_malloc_init(size_t usize, /* unit size in bytes */
   Returns data aligned on a quad boundary. Even if the request
   size is zero it returns a non-zero pointer.
 */
-extern char *kr_malloc(size_t size, context_t *ctx, int new_allocation, void **new_base, size_t *new_size);
+extern char *kr_malloc(size_t size, context_t *ctx, int new_allocation, char **new_base, size_t *new_size);
 
 /*
   Frees memory allocated by kr_malloc(). Ignores NULL pointers

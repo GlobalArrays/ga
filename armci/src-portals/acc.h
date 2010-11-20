@@ -248,10 +248,10 @@ void ATR FORT_DMULT2(int*, void*, void*, void*);
 #endif
 
 #ifndef CRAY_T3E
-void ATR RA_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*);
+void ATR RA_ACCUMULATE_2D(long*, int*, int*, long*, int*, long*, int*);
 #else
 #define RA_ACCUMULATE_2D RA_ACCUMULATE_2D_
-void RA_ACCUMULATE_2D_(void*, int*, int*, void*, int*, void*, int*);
+void RA_ACCUMULATE_2D_(long*, int*, int*, long*, int*, long*, int*);
 #endif
 
 #endif /* _ACC_H_ */

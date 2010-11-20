@@ -41,6 +41,7 @@
         else;\
         armci_prot_switch_fence[__proc]=__prot
 
+/*
 typedef struct {
     float real;
     float imag;
@@ -50,6 +51,7 @@ typedef struct {
     double real;
     double imag;
 } dcomplex_t;
+*/
 
 /*
 void I_ACCUMULATE(void* scale, int elems, void*src, void* dst)
