@@ -54,6 +54,9 @@
 /* Define to 1 on Cray T3E systems */
 #undef CRAY_T3E
 
+/* for Gemini */
+#undef CRAY_UGNI
+
 /* TODO */
 #undef CRAY_XT
 
@@ -376,6 +379,9 @@
 
 /* TODO */
 #undef LAPI_RDMA
+
+/* for Gemini */
+#undef LIBONESIDED
 
 /* Define to 1 on generic Linux systems */
 #undef LINUX

@@ -21,6 +21,9 @@
 /* Define to 1 on Cray T3E systems */
 #undef CRAY_T3E
 
+/* for Gemini */
+#undef CRAY_UGNI
+
 /* Define to 1 on Cray XT systems */
 #undef CRAY_XT
 
@@ -460,6 +463,9 @@
 
 /* Define to 1 on 64bit IBM systems with LAPI */
 #undef LAPI64
+
+/* for Gemini */
+#undef LIBONESIDED
 
 /* Define to 1 on generic Linux systems */
 #undef LINUX

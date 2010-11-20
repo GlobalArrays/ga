@@ -270,9 +270,179 @@ nodist_EXTRA_testing_portals_testnotify_SOURCES  = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_portals_test_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 
 ##############################################################################
-# src
+# src-gemini
 #
 else # !ARMCI_NETWORK_PORTALS
+if ARMCI_NETWORK_GEMINI
+libarmci_la_SOURCES += src-gemini/acc.h
+libarmci_la_SOURCES += src-gemini/aggregate.c
+libarmci_la_SOURCES += src-gemini/armci.c
+libarmci_la_SOURCES += src-gemini/armci-onesided.c
+libarmci_la_SOURCES += src-gemini/armci-onesided.h
+libarmci_la_SOURCES += src-gemini/armcip.h
+libarmci_la_SOURCES += src-gemini/armci_profile.h
+libarmci_la_SOURCES += src-gemini/atomics-i386.h
+libarmci_la_SOURCES += src-gemini/buffers.c
+libarmci_la_SOURCES += src-gemini/caccumulate.c
+libarmci_la_SOURCES += src-gemini/ccopy.c
+libarmci_la_SOURCES += src-gemini/clusterinfo.c
+libarmci_la_SOURCES += src-gemini/copy.h
+libarmci_la_SOURCES += src-gemini/ds-shared.c
+libarmci_la_SOURCES += src-gemini/fence.c
+libarmci_la_SOURCES += src-gemini/groups.c
+libarmci_la_SOURCES += src-gemini/kr_malloc.c
+libarmci_la_SOURCES += src-gemini/kr_malloc.h
+libarmci_la_SOURCES += src-gemini/locks.c
+libarmci_la_SOURCES += src-gemini/locks.h
+libarmci_la_SOURCES += src-gemini/memlock.c
+libarmci_la_SOURCES += src-gemini/memlock.h
+libarmci_la_SOURCES += src-gemini/memory.c
+libarmci_la_SOURCES += src-gemini/message.c
+libarmci_la_SOURCES += src-gemini/mp3.fh
+libarmci_la_SOURCES += src-gemini/mp3.h
+libarmci_la_SOURCES += src-gemini/mutex.c
+libarmci_la_SOURCES += src-gemini/pack.c
+libarmci_la_SOURCES += src-gemini/pendbufs.h
+libarmci_la_SOURCES += src-gemini/request.c
+libarmci_la_SOURCES += src-gemini/request.h
+libarmci_la_SOURCES += src-gemini/rmw.c
+libarmci_la_SOURCES += src-gemini/rtinfo.c
+libarmci_la_SOURCES += src-gemini/semaphores.c
+libarmci_la_SOURCES += src-gemini/semaphores.h
+libarmci_la_SOURCES += src-gemini/shmalloc.h
+libarmci_la_SOURCES += src-gemini/shmem.c
+libarmci_la_SOURCES += src-gemini/shmem.h
+libarmci_la_SOURCES += src-gemini/shmlimit.c
+libarmci_la_SOURCES += src-gemini/shmlimit.h
+libarmci_la_SOURCES += src-gemini/signaltrap.c
+libarmci_la_SOURCES += src-gemini/signaltrap.h
+libarmci_la_SOURCES += src-gemini/sockets.h
+libarmci_la_SOURCES += src-gemini/spawn.c
+libarmci_la_SOURCES += src-gemini/spinlock.h
+libarmci_la_SOURCES += src-gemini/strided.c
+libarmci_la_SOURCES += src-gemini/tas-alpha.h
+libarmci_la_SOURCES += src-gemini/tas-i386.h
+libarmci_la_SOURCES += src-gemini/tas-ia64.h
+libarmci_la_SOURCES += src-gemini/tas-ppc.h
+libarmci_la_SOURCES += src-gemini/utils.h
+libarmci_la_SOURCES += src-gemini/vector.c
+if NOFORT
+else
+libarmci_la_SOURCES += src-gemini/faccumulate.f
+libarmci_la_SOURCES += src-gemini/fcopy.f
+endif
+if ARMCI_ENABLE_GPC_CALLS
+libarmci_la_SOURCES += src-gemini/gpc.c
+endif
+if ENABLE_PROFILING
+libarmci_la_SOURCES += src-gemini/armci_profile.c
+endif
+if THREAD_SAFE
+libarmci_la_SOURCES += src-gemini/threads.c
+libarmci_la_SOURCES += src-gemini/utils.c
+endif
+if INLINE_TAS_OKAY
+libarmci_la_SOURCES += src-gemini/tas.c
+else
+if INLINE_TAS_WITH
+nodist_libarmci_la_SOURCES += src-gemini/tas_as.s
+endif
+endif
+
+include_HEADERS += src-gemini/armci.h
+include_HEADERS += src-gemini/gpc.h
+include_HEADERS += src-gemini/message.h
+
+AM_CPPFLAGS += -I$(top_srcdir)/src-gemini
+AM_CPPFLAGS += -I$(top_srcdir)/src-gemini/libnumatoolkit
+AM_CPPFLAGS += -I$(top_srcdir)/src-gemini/libonesided
+LDADD += $(top_srcdir)/src-gemini/libnumatoolkit/libnumatoolkit.a
+LDADD += $(top_srcdir)/src-gemini/libonesided/libonesided.a
+
+if ENABLE_SHARED
+MAYBE_PIC = -fPIC -DPIC
+endif
+
+src-gemini/tas_as.s: src-gemini/tas.c
+	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ $<
+
+clean-asm:
+	rm -f src-gemini/tas_as.s
+
+check_PROGRAMS += testing-portals/clone
+check_PROGRAMS += testing-portals/fork
+check_PROGRAMS += testing-portals/msgcheck
+check_PROGRAMS += testing-portals/origptl
+check_PROGRAMS += testing-portals/perf_aggr
+check_PROGRAMS += testing-portals/perf_nb
+check_PROGRAMS += testing-portals/perf
+check_PROGRAMS += testing-portals/ptltest
+check_PROGRAMS += testing-portals/shmclean
+check_PROGRAMS += testing-portals/shmtest
+check_PROGRAMS += testing-portals/simplelock
+check_PROGRAMS += testing-portals/simple
+check_PROGRAMS += testing-portals/test2
+check_PROGRAMS += testing-portals/testnotify
+check_PROGRAMS += testing-portals/test
+check_PROGRAMS += testing-portals/te
+if ARMCI_ENABLE_GPC_CALLS
+check_PROGRAMS += testing-portals/gpctest
+endif
+if MSG_COMMS_MPI
+check_PROGRAMS += testing-portals/ipctest
+check_PROGRAMS += testing-portals/test_groups
+endif
+if THREAD_SAFE
+check_PROGRAMS += testing-portals/test_mt
+endif
+
+testing_portals_clone_SOURCES       = testing-portals/clone.c
+testing_portals_fork_SOURCES        = testing-portals/fork.c
+testing_portals_gpctest_SOURCES     = testing-portals/gpctest.c
+testing_portals_ipctest_SOURCES     = testing-portals/ipctest.c
+testing_portals_msgcheck_SOURCES    = testing-portals/msgcheck.c
+testing_portals_origptl_SOURCES     = testing-portals/origptl.c
+testing_portals_perf_aggr_SOURCES   = testing-portals/perf_aggr.c
+testing_portals_perf_nb_SOURCES     = testing-portals/perf_nb.c
+testing_portals_perf_SOURCES        = testing-portals/perf.c
+testing_portals_ptltest_SOURCES     = testing-portals/ptltest.c
+testing_portals_shmclean_SOURCES    = testing-portals/shmclean.c
+testing_portals_shmtest_SOURCES     = testing-portals/shmtest.c
+testing_portals_simple_SOURCES      = testing-portals/simple.c
+testing_portals_simplelock_SOURCES  = testing-portals/simplelock.c
+testing_portals_te_SOURCES          = testing-portals/te.c
+testing_portals_test2_SOURCES       = testing-portals/test2.c
+testing_portals_test_groups_SOURCES = testing-portals/test_groups.c
+testing_portals_test_mt_SOURCES     = testing-portals/test_mt.c
+testing_portals_testnotify_SOURCES  = testing-portals/testnotify.c
+testing_portals_test_SOURCES        = testing-portals/test.c
+
+nodist_EXTRA_testing_portals_clone_SOURCES       = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_fork_SOURCES        = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_gpctest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_ipctest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_msgcheck_SOURCES    = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_origptl_SOURCES     = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_perf_aggr_SOURCES   = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_perf_nb_SOURCES     = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_perf_SOURCES        = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_ptltest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_shmclean_SOURCES    = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_shmtest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_simple_SOURCES      = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_simplelock_SOURCES  = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_te_SOURCES          = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_test2_SOURCES       = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_test_groups_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_test_mt_SOURCES     = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_testnotify_SOURCES  = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_portals_test_SOURCES        = $(MAYBE_DUMMY_F_LINK)
+
+##############################################################################
+# src
+#
+else # !ARMCI_NETWORK_GEMINI
 libarmci_la_SOURCES += src/collectives/message.c
 libarmci_la_SOURCES += src/common/aggregate.c
 libarmci_la_SOURCES += src/common/armci.c
@@ -560,6 +730,7 @@ nodist_EXTRA_testing_test_mt_SOURCES     = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_testnotify_SOURCES  = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_test_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 
+endif # ARMCI_NETWORK_GEMINI
 endif # ARMCI_NETWORK_PORTALS
 
 ##############################################################################

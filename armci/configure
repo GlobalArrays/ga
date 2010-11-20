@@ -698,6 +698,8 @@ ARMCI_NETWORK_SOCKETS_FALSE
 ARMCI_NETWORK_SOCKETS_TRUE
 ARMCI_NETWORK_PORTALS_FALSE
 ARMCI_NETWORK_PORTALS_TRUE
+ARMCI_NETWORK_GEMINI_FALSE
+ARMCI_NETWORK_GEMINI_TRUE
 ARMCI_NETWORK_OPENIB_FALSE
 ARMCI_NETWORK_OPENIB_TRUE
 ARMCI_NETWORK_MPI_SPAWN_FALSE
@@ -919,6 +921,7 @@ with_lapi
 with_mpi_spawn
 with_openib
 with_portals
+with_gemini
 with_sockets
 enable_assert
 with_blas
@@ -1622,6 +1625,7 @@ Optional Packages:
   --with-mpi-spawn[=ARG]  select armci network as MPI-2 dynamic process mgmt
   --with-openib[=ARG]     select armci network as Infiniband OpenIB
   --with-portals[=ARG]    select armci network as Cray XT portals
+  --with-gemini[=ARG]     select armci network as Cray XE Gemini
   --with-sockets[=ARG]    select armci network as Ethernet TCP/IP
   --with-blas[=ARG]       use external BLAS library; attempt to detect
                           sizeof(INTEGER)
@@ -6786,6 +6790,66 @@ fi
 
 
 
+# Check whether --with-gemini was given.
+if test "${with_gemini+set}" = set; then :
+  withval=$with_gemini;
+fi
+
+
+
+if test "x$with_gemini" != x
+    for arg in $with_gemini ; do
+    case $arg in #(
+  yes) :
+     ;; #(
+  no) :
+     ;; #(
+  -l*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  -L*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -WL*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -Wl*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -I*) :
+    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
+  -*lib*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *lib*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+fi ;; #(
+  -*include*) :
+    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
+  *include*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+fi ;; #(
+  *) :
+    if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+fi
+         if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi ;;
+esac
+done; then :
+
+fi
+if test "x$with_gemini" != xno && test "x$with_gemini" != x; then :
+  ga_armci_network=GEMINI
+     as_fn_arith $armci_network_count + 1 && armci_network_count=$as_val
+fi
+
+
+
+
+
 # Check whether --with-sockets was given.
 if test "${with_sockets+set}" = set; then :
   withval=$with_sockets;
@@ -6844,6 +6908,12 @@ fi
 
 
 
+# Temporarily add ARMCI_NETWORK_CPPFLAGS to CPPFLAGS.
+ga_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $ARMCI_NETWORK_CPPFLAGS"
+# Temporarily add ARMCI_NETWORK_LDFLAGS to LDFLAGS.
+ga_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $ARMCI_NETWORK_LDFLAGS"
+# Temporarily add ARMCI_NETWORK_LIBS to LIBS.
+ga_save_LIBS="$LIBS"; LIBS="$ARMCI_NETWORK_LIBS $LIBS"
 if test "x$enable_autodetect" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: searching for ARMCI_NETWORK..." >&5
 $as_echo "$as_me: searching for ARMCI_NETWORK..." >&6;}
@@ -7430,6 +7500,169 @@ fi
 fi
 if test "x$happy" = xyes; then :
   ga_armci_network=PORTALS; with_portals=yes;
+fi
+
+fi
+     if test "x$ga_armci_network" = x && test "x$with_gemini" != xno; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for GEMINI..." >&5
+$as_echo "$as_me: searching for GEMINI..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "numatoolkit.h" "ac_cv_header_numatoolkit_h" "$ac_includes_default"
+if test "x$ac_cv_header_numatoolkit_h" = x""yes; then :
+
+else
+  happy=no
+fi
+
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing NTK_Init" >&5
+$as_echo_n "checking for library containing NTK_Init... " >&6; }
+if test "${ac_cv_search_NTK_Init+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char NTK_Init ();
+int
+main ()
+{
+return NTK_Init ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' numatoolkit; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_NTK_Init=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if test "${ac_cv_search_NTK_Init+set}" = set; then :
+  break
+fi
+done
+if test "${ac_cv_search_NTK_Init+set}" = set; then :
+
+else
+  ac_cv_search_NTK_Init=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_NTK_Init" >&5
+$as_echo "$ac_cv_search_NTK_Init" >&6; }
+ac_res=$ac_cv_search_NTK_Init
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+# CPPFLAGS must have CRAY_UGNI before looking for the next headers.
+gemini_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS -DCRAY_UGNI"
+if test "x$happy" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "onesided.h" "ac_cv_header_onesided_h" "$ac_includes_default"
+if test "x$ac_cv_header_onesided_h" = x""yes; then :
+
+else
+  happy=no
+fi
+
+
+fi
+if test "x$happy" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "gni.h" "ac_cv_header_gni_h" "$ac_includes_default"
+if test "x$ac_cv_header_gni_h" = x""yes; then :
+
+else
+  happy=no
+fi
+
+
+fi
+CPPFLAGS="$gemini_save_CPPFLAGS"
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing gniInit" >&5
+$as_echo_n "checking for library containing gniInit... " >&6; }
+if test "${ac_cv_search_gniInit+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gniInit ();
+int
+main ()
+{
+return gniInit ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' onesided; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_gniInit=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if test "${ac_cv_search_gniInit+set}" = set; then :
+  break
+fi
+done
+if test "${ac_cv_search_gniInit+set}" = set; then :
+
+else
+  ac_cv_search_gniInit=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_gniInit" >&5
+$as_echo "$ac_cv_search_gniInit" >&6; }
+ac_res=$ac_cv_search_gniInit
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  ga_armci_network=GEMINI; with_gemini=yes;
 fi
 
 fi
@@ -8131,6 +8364,171 @@ else
 fi
 
 fi
+              if test "x$ga_armci_network" = xGEMINI; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for GEMINI..." >&5
+$as_echo "$as_me: searching for GEMINI..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "numatoolkit.h" "ac_cv_header_numatoolkit_h" "$ac_includes_default"
+if test "x$ac_cv_header_numatoolkit_h" = x""yes; then :
+
+else
+  happy=no
+fi
+
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing NTK_Init" >&5
+$as_echo_n "checking for library containing NTK_Init... " >&6; }
+if test "${ac_cv_search_NTK_Init+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char NTK_Init ();
+int
+main ()
+{
+return NTK_Init ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' numatoolkit; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_NTK_Init=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if test "${ac_cv_search_NTK_Init+set}" = set; then :
+  break
+fi
+done
+if test "${ac_cv_search_NTK_Init+set}" = set; then :
+
+else
+  ac_cv_search_NTK_Init=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_NTK_Init" >&5
+$as_echo "$ac_cv_search_NTK_Init" >&6; }
+ac_res=$ac_cv_search_NTK_Init
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+# CPPFLAGS must have CRAY_UGNI before looking for the next headers.
+gemini_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS -DCRAY_UGNI"
+if test "x$happy" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "onesided.h" "ac_cv_header_onesided_h" "$ac_includes_default"
+if test "x$ac_cv_header_onesided_h" = x""yes; then :
+
+else
+  happy=no
+fi
+
+
+fi
+if test "x$happy" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "gni.h" "ac_cv_header_gni_h" "$ac_includes_default"
+if test "x$ac_cv_header_gni_h" = x""yes; then :
+
+else
+  happy=no
+fi
+
+
+fi
+CPPFLAGS="$gemini_save_CPPFLAGS"
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing gniInit" >&5
+$as_echo_n "checking for library containing gniInit... " >&6; }
+if test "${ac_cv_search_gniInit+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gniInit ();
+int
+main ()
+{
+return gniInit ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' onesided; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_gniInit=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if test "${ac_cv_search_gniInit+set}" = set; then :
+  break
+fi
+done
+if test "${ac_cv_search_gniInit+set}" = set; then :
+
+else
+  ac_cv_search_gniInit=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_gniInit" >&5
+$as_echo "$ac_cv_search_gniInit" >&6; }
+ac_res=$ac_cv_search_gniInit
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  ga_armci_network=GEMINI; with_gemini=yes;
+else
+  as_fn_error $? "test for ARMCI_NETWORK=GEMINI failed" "$LINENO" 5
+fi
+
+fi
               ;; #(
   *) :
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: too many armci networks specified: $armci_network_count" >&5
@@ -8195,6 +8593,14 @@ fi
 
 
 
+if test "x$with_gemini" != x && test "x$with_gemini" != xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-gemini=$with_gemini" >&5
+$as_echo "$as_me: WARNING: --with-gemini=$with_gemini" >&2;}
+fi
+
+
+
+
 if test "x$with_sockets" != x && test "x$with_sockets" != xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-sockets=$with_sockets" >&5
 $as_echo "$as_me: WARNING: --with-sockets=$with_sockets" >&2;}
@@ -8204,6 +8610,12 @@ fi
          as_fn_error $? "please select only one armci network" "$LINENO" 5 ;;
 esac
 fi
+# Remove ARMCI_NETWORK_CPPFLAGS from CPPFLAGS.
+CPPFLAGS="$ga_save_CPPFLAGS"
+# Remove ARMCI_NETWORK_LDFLAGS from LDFLAGS.
+LDFLAGS="$ga_save_LDFLAGS"
+# Remove ARMCI_NETWORK_LIBS from LIBS.
+LIBS="$ga_save_LIBS"
 
 
 
@@ -8291,6 +8703,20 @@ fi
 
 
 
+ if test "x$with_gemini" != x && test "x$with_gemini" != xno; then
+  ARMCI_NETWORK_GEMINI_TRUE=
+  ARMCI_NETWORK_GEMINI_FALSE='#'
+else
+  ARMCI_NETWORK_GEMINI_TRUE='#'
+  ARMCI_NETWORK_GEMINI_FALSE=
+fi
+
+
+
+
+
+
+
  if test "x$with_portals" != x && test "x$with_portals" != xno; then
   ARMCI_NETWORK_PORTALS_TRUE=
   ARMCI_NETWORK_PORTALS_FALSE='#'
@@ -8346,9 +8772,20 @@ else
 fi
  # always true
 
-# temporary hack
+# permanent hack
 if test x$ga_armci_network = xPORTALS; then :
   ARMCI_SRC_DIR=src-portals
+else
+  ARMCI_SRC_DIR=src
+fi
+if test x$ga_armci_network = xGEMINI; then :
+  ARMCI_SRC_DIR=src-gemini
+
+$as_echo "#define CRAY_UGNI 1" >>confdefs.h
+
+
+$as_echo "#define LIBONESIDED 1" >>confdefs.h
+
 else
   ARMCI_SRC_DIR=src
 fi
@@ -8387,7 +8824,7 @@ if test "x$ARMCI_TOP_BUILDDIR" != x; then :
 
     if test x$ga_cv_sysv = xno; then :
   case $ga_armci_network in #(
-  BGML|DCMF|PORTALS) :
+  BGML|DCMF|PORTALS|GEMINI) :
     ga_cv_sysv_hack=no ;; #(
   *) :
     ga_cv_sysv_hack=yes ;;
@@ -29306,6 +29743,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ARMCI_NETWORK_OPENIB_TRUE}" && test -z "${ARMCI_NETWORK_OPENIB_FALSE}"; then
   as_fn_error $? "conditional \"ARMCI_NETWORK_OPENIB\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ARMCI_NETWORK_GEMINI_TRUE}" && test -z "${ARMCI_NETWORK_GEMINI_FALSE}"; then
+  as_fn_error $? "conditional \"ARMCI_NETWORK_GEMINI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ARMCI_NETWORK_PORTALS_TRUE}" && test -z "${ARMCI_NETWORK_PORTALS_FALSE}"; then
