@@ -70,7 +70,7 @@ Supported Platforms
 - shared-memory systems: SUN Solaris, SGI, SGI Altix, IBM, Linux, DEC, HP,
   Cray SV1, Cray X1, and Windows NT/95/2000
 - distributed-memory systems: Cray T3E, IBM SP(TARGET=LAPI), FUJITSU VX/VPP.
-- clusters of workstations (over Myrinet, Quadrics, Infiniband, sockets, VIA)
+- clusters of workstations (over Myrinet, Quadrics, InfiniBand, sockets, VIA)
 
 configure options
 -----------------
@@ -136,7 +136,7 @@ specified.
                         Message Framework
 --with-lapi=ARG         select armci network as IBM LAPI
 --with-mpi-spawn=ARG    select armci network as MPI-2 dynamic process mgmt
---with-openib=ARG       select armci network as Infiniband OpenIB
+--with-openib=ARG       select armci network as InfiniBand OpenIB
 --with-portals=ARG      select armci network as Cray XT portals
 --with-sockets=ARG      select armci network as Ethernet TCP/IP (default)
 --enable-autodetect     attempt to locate ARMCI network besides sockets
