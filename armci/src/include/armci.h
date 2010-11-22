@@ -1,4 +1,3 @@
-/*$id$*/
 /* ARMCI header file */
 #ifndef _ARMCI_H
 #define _ARMCI_H   
@@ -226,10 +225,6 @@ int dassertp_fail(const char *cond_string, const char *file,
 #define armci_die2(_msg,_code1,_code2) dassertc(1,0,    \
 ("%d:%s: (%d,%d)\n",armci_me,(_msg),(_code1),(_code2)),_code1)
 
-  /*Disable for now. Some parts of GA use ARMCI_Error function pointer. Wait for them to be changed before enabling this*/
-/* #define ARMCI_Error(_msg, _code) armci_die((_msg),(_code)) */
-
-
 /************ locality information **********************************************/
 typedef int armci_domain_t;
 #define ARMCI_DOMAIN_SMP 0        /* SMP node domain for armci_domain_XXX calls */
@@ -253,34 +248,12 @@ extern char *mp_group_name;
 
 /*********************stuff for non-blocking API******************************/
 /*\ the request structure for non-blocking api. 
-\*/
-#if 0
-typedef struct{
-#ifdef BGML 
-    int data[4]; /* tag, bufid, agg_flag, op, proc */
-    double dummy[72]; /* bg1s_t, count, extra */
-#else
-    int data[4];
-#if defined(_AIX) 
-#   if defined(__64BIT__)
-    double dummy[27]; /*lapi_cntr_t is 200 bytes, using 216 just to be safe*/ 
-#   else
-    double dummy[24]; /*lapi_cntr_t is 148 bytes, using 166 just to be safe*/ 
-#   endif
-#elif defined(ALLOW_PIN)
-    void *dummy[2];/*2 cause itshould be aligned after we cast hdl_t to ihdl_t*/
-#else
-    double dummy;
-#endif
-#endif
-} armci_hdl_t;
-#else
-  /*max of sizes for all platforms. Increase if any platform needs more*/
+  \*/
+/*max of sizes for all platforms. Increase if any platform needs more*/
 typedef struct{
     int data[4]; /* tag, bufid, agg_flag, op, proc */
     double dummy[72]; 
 } armci_hdl_t;
-#endif
 
 #define armci_req_t armci_hdl_t
 
