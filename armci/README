@@ -66,11 +66,12 @@ Index
 
 Supported Platforms
 -------------------
-
+- leadership class machines: Cray XE6, Cray XTs, IBM Blue Gene/L, IBM Blue
+  Gene /P
 - shared-memory systems: SUN Solaris, SGI, SGI Altix, IBM, Linux, DEC, HP,
   Cray SV1, Cray X1, and Windows NT/95/2000
 - distributed-memory systems: Cray T3E, IBM SP(TARGET=LAPI), FUJITSU VX/VPP.
-- clusters of workstations (over Myrinet, Quadrics, InfiniBand, sockets, VIA)
+- clusters of workstations (InfiniBand, sockets)
 
 configure options
 -----------------
