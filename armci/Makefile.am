@@ -195,7 +195,7 @@ endif
 
 src-portals/tas_as.s: src-portals/tas.c
 	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ $<
+	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src-portals/tas.c
 
 clean-asm:
 	rm -f src-portals/tas_as.s
@@ -654,11 +654,11 @@ endif
 
 src/locks/tas_as.s: src/locks/tas.c
 	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ $<
+	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src/locks/tas.c
 
 src/common/x86copy_as.s: src/common/x86copy.c
 	$(ARMCI_X86COPY_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ $<
+	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src/common/x86copy.c
 
 clean-asm:
 	rm -f src/locks/tas_as.s src/common/x86copy_as.s
