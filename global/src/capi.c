@@ -524,7 +524,7 @@ void GA_Set_data(int g_a, int ndim, int dims[], int type)
     aa = (Integer)g_a;
     nndim = (Integer)ndim;
     ttype = (Integer)type;
-    ga_set_data_(&aa, &nndim, _ga_dims, &ttype);
+    wnga_set_data(&aa, &nndim, _ga_dims, &ttype);
 }
 
 void GA_Set_data64(int g_a, int ndim, int64_t dims[], int type)
@@ -535,7 +535,29 @@ void GA_Set_data64(int g_a, int ndim, int64_t dims[], int type)
     aa = (Integer)g_a;
     nndim = (Integer)ndim;
     ttype = (Integer)type;
-    ga_set_data_(&aa, &nndim, _ga_dims, &ttype);
+    wnga_set_data(&aa, &nndim, _ga_dims, &ttype);
+}
+
+void NGA_Set_data(int g_a, int ndim, int dims[], int type)
+{
+    Integer aa, nndim, ttype;
+    Integer _ga_dims[MAXDIM];
+    COPYC2F(dims,_ga_dims, ndim);
+    aa = (Integer)g_a;
+    nndim = (Integer)ndim;
+    ttype = (Integer)type;
+    wnga_set_data(&aa, &nndim, _ga_dims, &ttype);
+}
+
+void NGA_Set_data64(int g_a, int ndim, int64_t dims[], int type)
+{
+    Integer aa, nndim, ttype;
+    Integer _ga_dims[MAXDIM];
+    COPYC2F(dims,_ga_dims, ndim);
+    aa = (Integer)g_a;
+    nndim = (Integer)ndim;
+    ttype = (Integer)type;
+    wnga_set_data(&aa, &nndim, _ga_dims, &ttype);
 }
 
 void GA_Set_chunk(int g_a, int chunk[])
@@ -549,7 +571,7 @@ void GA_Set_chunk(int g_a, int chunk[])
       COPYC2F(chunk,_ga_work, ndim);
       ptr = _ga_work;
     }
-    ga_set_chunk_(&aa, ptr);
+    wnga_set_chunk(&aa, ptr);
 }
 
 void GA_Set_chunk64(int g_a, int64_t chunk[])
@@ -563,14 +585,49 @@ void GA_Set_chunk64(int g_a, int64_t chunk[])
       COPYC2F(chunk,_ga_work, ndim);
       ptr = _ga_work;
     }
-    ga_set_chunk_(&aa, ptr);
+    wnga_set_chunk(&aa, ptr);
+}
+
+void NGA_Set_chunk(int g_a, int chunk[])
+{
+    Integer aa, *ptr, ndim;
+    Integer _ga_work[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(&aa);
+    if(!chunk)ptr=(Integer*)0;  
+    else {
+      COPYC2F(chunk,_ga_work, ndim);
+      ptr = _ga_work;
+    }
+    wnga_set_chunk(&aa, ptr);
+}
+
+void NGA_Set_chunk64(int g_a, int64_t chunk[])
+{
+    Integer aa, *ptr, ndim;
+    Integer _ga_work[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(&aa);
+    if(!chunk)ptr=(Integer*)0;  
+    else {
+      COPYC2F(chunk,_ga_work, ndim);
+      ptr = _ga_work;
+    }
+    wnga_set_chunk(&aa, ptr);
 }
 
 void GA_Set_array_name(int g_a, char *name)
 {
     Integer aa;
     aa = (Integer)g_a;
-    gai_set_array_name(aa, name);
+    wnga_set_array_name(&aa, name);
+}
+
+void NGA_Set_array_name(int g_a, char *name)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    wnga_set_array_name(&aa, name);
 }
 
 void GA_Set_pgroup(int g_a, int p_handle)
@@ -578,7 +635,15 @@ void GA_Set_pgroup(int g_a, int p_handle)
   Integer aa, pp;
   aa = (Integer)g_a;
   pp = (Integer)p_handle;
-  ga_set_pgroup_(&aa, &pp);
+  wnga_set_pgroup(&aa, &pp);
+}
+
+void NGA_Set_pgroup(int g_a, int p_handle)
+{
+  Integer aa, pp;
+  aa = (Integer)g_a;
+  pp = (Integer)p_handle;
+  wnga_set_pgroup(&aa, &pp);
 }
 
 void GA_Set_block_cyclic(int g_a, int dims[])
@@ -588,7 +653,18 @@ void GA_Set_block_cyclic(int g_a, int dims[])
     aa = (Integer)g_a;
     ndim = wnga_get_dimension(&aa);
     COPYC2F(dims,_ga_dims, ndim);
-    ga_set_block_cyclic_(&aa, _ga_dims);
+    wnga_set_block_cyclic(&aa, _ga_dims);
+}
+
+void NGA_Set_block_cyclic(int g_a, int dims[])
+{
+    Integer aa, ndim;
+    Integer _ga_work[MAXDIM];
+    Integer _ga_dims[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(&aa);
+    COPYC2F(dims,_ga_dims, ndim);
+    wnga_set_block_cyclic(&aa, _ga_dims);
 }
 
 void GA_Set_restricted(int g_a, int list[], int size)
@@ -680,14 +756,47 @@ void GA_Set_block_cyclic_proc_grid(int g_a, int block[], int proc_grid[])
     ndim = wnga_get_dimension(&aa);
     COPYC2F(block,_ga_dims, ndim);
     COPYC2F(proc_grid,_ga_lo, ndim);
-    ga_set_block_cyclic_proc_grid_(&aa, _ga_dims, _ga_lo);
+    pnga_set_block_cyclic_proc_grid(&aa, _ga_dims, _ga_lo);
+}
+
+void NGA_Set_block_cyclic_proc_grid(int g_a, int block[], int proc_grid[])
+{
+    Integer aa, ndim;
+    Integer _ga_dims[MAXDIM];
+    Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(&aa);
+    COPYC2F(block,_ga_dims, ndim);
+    COPYC2F(proc_grid,_ga_lo, ndim);
+    pnga_set_block_cyclic_proc_grid(&aa, _ga_dims, _ga_lo);
 }
 
 int GA_Get_pgroup(int g_a)
 {
     Integer aa;
     aa = (Integer)g_a;
-    return (int)ga_get_pgroup_(&aa);
+    return (int)wnga_get_pgroup(&aa);
+}
+
+int NGA_Get_pgroup(int g_a)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    return (int)wnga_get_pgroup(&aa);
+}
+
+int GA_Get_pgroup_size(int grp_id)
+{
+    Integer aa;
+    aa = (Integer)grp_id;
+    return (int)wnga_get_pgroup_size(&aa);
+}
+
+int NGA_Get_pgroup_size(int grp_id)
+{
+    Integer aa;
+    aa = (Integer)grp_id;
+    return (int)wnga_get_pgroup_size(&aa);
 }
 
 void GA_Set_ghosts(int g_a, int width[])
@@ -701,7 +810,7 @@ void GA_Set_ghosts(int g_a, int width[])
       COPYC2F(width,_ga_work, ndim);
       ptr = _ga_work;
     }
-    ga_set_ghosts_(&aa, ptr);
+    wnga_set_ghosts(&aa, ptr);
 }
 
 void GA_Set_ghosts64(int g_a, int64_t width[])
@@ -715,9 +824,36 @@ void GA_Set_ghosts64(int g_a, int64_t width[])
       COPYC2F(width,_ga_work, ndim);
       ptr = _ga_work;
     }
-    ga_set_ghosts_(&aa, ptr);
+    wnga_set_ghosts(&aa, ptr);
 }
 
+void NGA_Set_ghosts(int g_a, int width[])
+{
+    Integer aa, *ptr, ndim;
+    Integer _ga_work[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(&aa);
+    if(!width)ptr=(Integer*)0;  
+    else {
+      COPYC2F(width,_ga_work, ndim);
+      ptr = _ga_work;
+    }
+    wnga_set_ghosts(&aa, ptr);
+}
+
+void NGA_Set_ghosts64(int g_a, int64_t width[])
+{
+    Integer aa, *ptr, ndim;
+    Integer _ga_work[MAXDIM];
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(&aa);
+    if(!width)ptr=(Integer*)0;  
+    else {
+      COPYC2F(width,_ga_work, ndim);
+      ptr = _ga_work;
+    }
+    wnga_set_ghosts(&aa, ptr);
+}
 
 void GA_Set_irreg_distr(int g_a, int map[], int block[])
 {
@@ -730,7 +866,7 @@ void GA_Set_irreg_distr(int g_a, int map[], int block[])
     COPYC2F(block,_ga_work, ndim);
     _ga_map_capi = copy_map(block, ndim, map);
 
-    ga_set_irreg_distr_(&aa, _ga_map_capi, _ga_work);
+    wnga_set_irreg_distr(&aa, _ga_map_capi, _ga_work);
     free(_ga_map_capi);
 }
 
@@ -745,7 +881,37 @@ void GA_Set_irreg_distr64(int g_a, int64_t map[], int64_t block[])
     COPYC2F(block,_ga_work, ndim);
     _ga_map_capi = copy_map64(block, ndim, map);
 
-    ga_set_irreg_distr_(&aa, _ga_map_capi, _ga_work);
+    wnga_set_irreg_distr(&aa, _ga_map_capi, _ga_work);
+    free(_ga_map_capi);
+}
+
+void NGA_Set_irreg_distr(int g_a, int map[], int block[])
+{
+    Integer aa, ndim;
+    Integer _ga_work[MAXDIM];
+    Integer *_ga_map_capi;
+
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(&aa);
+    COPYC2F(block,_ga_work, ndim);
+    _ga_map_capi = copy_map(block, ndim, map);
+
+    wnga_set_irreg_distr(&aa, _ga_map_capi, _ga_work);
+    free(_ga_map_capi);
+}
+
+void NGA_Set_irreg_distr64(int g_a, int64_t map[], int64_t block[])
+{
+    Integer aa, ndim;
+    Integer _ga_work[MAXDIM];
+    Integer *_ga_map_capi;
+
+    aa = (Integer)g_a;
+    ndim = wnga_get_dimension(&aa);
+    COPYC2F(block,_ga_work, ndim);
+    _ga_map_capi = copy_map64(block, ndim, map);
+
+    wnga_set_irreg_distr(&aa, _ga_map_capi, _ga_work);
     free(_ga_map_capi);
 }
 
@@ -755,7 +921,16 @@ void GA_Set_irreg_flag(int g_a, int flag)
   logical fflag;
   aa = (Integer)g_a;
   fflag = (logical)flag;
-  ga_set_irreg_flag_(&aa, &fflag);
+  wnga_set_irreg_flag(&aa, &fflag);
+}
+
+void NGA_Set_irreg_flag(int g_a, int flag)
+{
+  Integer aa;
+  logical fflag;
+  aa = (Integer)g_a;
+  fflag = (logical)flag;
+  wnga_set_irreg_flag(&aa, &fflag);
 }
 
 void GA_Set_ghost_corner_flag(int g_a, int flag)
@@ -1127,7 +1302,13 @@ void NGA_Destroy(int g_a)
 void GA_Set_memory_limit(size_t limit)
 {
 Integer lim = (Integer)limit;
-     ga_set_memory_limit_(&lim);
+     wnga_set_memory_limit(&lim);
+}
+
+void NGA_Set_memory_limit(size_t limit)
+{
+Integer lim = (Integer)limit;
+     wnga_set_memory_limit(&lim);
 }
 
 void GA_Zero(int g_a)
@@ -1257,9 +1438,14 @@ float GA_Fdot(int g_a, int g_b)
 void GA_Randomize(int g_a, void *value)
 {
     Integer a=(Integer)g_a;
-    ga_randomize_(&a, value);
+    wnga_randomize(&a, value);
 }
 
+void NGA_Randomize(int g_a, void *value)
+{
+    Integer a=(Integer)g_a;
+    wnga_randomize(&a, value);
+}
 
 void GA_Fill(int g_a, void *value)
 {

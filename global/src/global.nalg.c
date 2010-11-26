@@ -62,7 +62,7 @@ void FATR ga_zero_(Integer *g_a)
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  p_handle = ga_get_pgroup_(g_a);
+  p_handle = pnga_get_pgroup(g_a);
 
   if(local_sync_begin) ga_pgroup_sync_(&p_handle);
 
@@ -254,12 +254,12 @@ int local_sync_begin,local_sync_end,use_put;
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   a_grp = ga_get_pgroup_(g_a);
-   b_grp = ga_get_pgroup_(g_b);
+   a_grp = pnga_get_pgroup(g_a);
+   b_grp = pnga_get_pgroup(g_b);
    me_a = pnga_pgroup_nodeid(&a_grp);
    me_b = pnga_pgroup_nodeid(&b_grp);
-   anproc = ga_get_pgroup_size_(&a_grp);
-   bnproc = ga_get_pgroup_size_(&b_grp);
+   anproc = pnga_get_pgroup_size(&a_grp);
+   bnproc = pnga_get_pgroup_size(&b_grp);
    num_blocks_a = ga_total_blocks_(g_a);
    num_blocks_b = ga_total_blocks_(g_b);
    if (anproc <= bnproc) {
@@ -455,8 +455,8 @@ Integer bndim, bdims[MAXDIM];
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 
    GA_PUSH_NAME("ga_dot");
-   a_grp = ga_get_pgroup_(g_a);
-   b_grp = ga_get_pgroup_(g_b);
+   a_grp = pnga_get_pgroup(g_a);
+   b_grp = pnga_get_pgroup(g_b);
    if (a_grp != b_grp)
      pnga_error("Both arrays must be defined on same group",0L);
    me = pnga_pgroup_nodeid(&a_grp);
@@ -737,7 +737,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  grp_id = ga_get_pgroup_(g_a);
+  grp_id = pnga_get_pgroup(g_a);
   if(local_sync_begin)ga_pgroup_sync_(&grp_id);
 
   me = pnga_pgroup_nodeid(&grp_id);
@@ -928,9 +928,9 @@ int local_sync_begin,local_sync_end;
 
 
    GA_PUSH_NAME("ga_add");
-   a_grp = ga_get_pgroup_(g_a);
-   b_grp = ga_get_pgroup_(g_b);
-   c_grp = ga_get_pgroup_(g_c);
+   a_grp = pnga_get_pgroup(g_a);
+   b_grp = pnga_get_pgroup(g_b);
+   c_grp = pnga_get_pgroup(g_c);
    if (a_grp != b_grp || b_grp != c_grp)
      pnga_error("All three arrays must be on same group for ga_add",0L);
 

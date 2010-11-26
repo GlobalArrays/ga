@@ -182,12 +182,12 @@ void ngai_copy_patch(char *trans,
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  a_grp = ga_get_pgroup_(g_a);
-  b_grp = ga_get_pgroup_(g_b);
+  a_grp = pnga_get_pgroup(g_a);
+  b_grp = pnga_get_pgroup(g_b);
   me_a = pnga_pgroup_nodeid(&a_grp);
   me_b = pnga_pgroup_nodeid(&b_grp);
-  anproc = ga_get_pgroup_size_(&a_grp);
-  bnproc = ga_get_pgroup_size_(&b_grp);
+  anproc = pnga_get_pgroup_size(&a_grp);
+  bnproc = pnga_get_pgroup_size(&b_grp);
   if (anproc <= bnproc) {
     use_put = 1;
   }  else {
@@ -1020,8 +1020,8 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
   if(local_sync_begin)ga_sync_();
 
   GA_PUSH_NAME("ngai_dot_patch");
-  a_grp = ga_get_pgroup_(g_a);
-  b_grp = ga_get_pgroup_(g_b);
+  a_grp = pnga_get_pgroup(g_a);
+  b_grp = pnga_get_pgroup(g_b);
   if (a_grp != b_grp)
     pnga_error("Both arrays must be defined on same group",0L);
   me = pnga_pgroup_nodeid(&a_grp);

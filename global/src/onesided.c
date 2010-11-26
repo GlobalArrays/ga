@@ -87,7 +87,6 @@ int *ProcListPerm;
 
 extern void ga_sort_scat(Integer*,void*,Integer*,Integer*,Integer*, Integer);
 extern void ga_sort_gath_(Integer*, Integer*, Integer*, Integer*);
-extern void ga_msg_sync_();
 extern void ga_msg_pgroup_sync_(Integer *grp_id);
 
 extern void armci_read_strided(void*, int, int*, int*, char*);
@@ -116,7 +115,7 @@ void FATR ga_pgroup_sync_(Integer *grp_id)
 #ifdef BGML 
        ARMCI_Barrier();
 #endif
-       ga_msg_pgroup_sync_(grp_id);
+       pnga_msg_pgroup_sync(grp_id);
        if(GA_fence_set)bzero(fence_array,(int)GAnproc);
        GA_fence_set=0;
 #   else
@@ -128,7 +127,7 @@ void FATR ga_pgroup_sync_(Integer *grp_id)
 #ifdef BGML 
        ARMCI_Barrier();
 #endif
-       ga_msg_pgroup_sync_(grp_id);
+       pnga_msg_pgroup_sync(grp_id);
        if(GA_fence_set)bzero(fence_array,(int)GAnproc);
        GA_fence_set=0;
     }
@@ -156,7 +155,7 @@ Integer status;
 #ifdef BGML
           ARMCI_Barrier();
 #endif
-	  ga_msg_sync_();
+	  pnga_msg_sync();
 	  if(GA_fence_set)bzero(fence_array,(int)GAnproc);
 	  GA_fence_set=0;
        } else {

@@ -64,6 +64,10 @@
       logical nga_create_ghosts_irreg_config, nga_create_ghosts_config
       logical ga_get_debug, nga_get_debug
       integer ga_get_dimension, nga_get_dimension
+      integer ga_get_pgroup, nga_get_pgroup
+      integer ga_get_pgroup_size, nga_get_pgroup_size
+      logical ga_pgroup_destroy, nga_pgroup_destroy
+      integer ga_pgroup_absolute_id, nga_pgroup_absolute_id
 !
       external ga_create, ga_destroy, ga_ddot, ga_locate
       external nga_destroy
@@ -118,15 +122,12 @@
       external ga_total_blocks
       external ga_uses_proc_grid
       external ga_get_debug, nga_get_debug
-      integer ga_get_pgroup
-      external ga_get_pgroup
-      logical ga_pgroup_destroy, nga_pgroup_destroy
+      external ga_get_pgroup, nga_get_pgroup
+      external ga_get_pgroup_size, nga_get_pgroup_size
       external ga_pgroup_destroy, nga_pgroup_destroy
       external ga_wtime
       external ga_nbtest, nga_nbtest
       external ga_nbwait, nga_nbwait
-
-      integer ga_pgroup_absolute_id, nga_pgroup_absolute_id
       external ga_pgroup_absolute_id, nga_pgroup_absolute_id
 
 #define GA_ACCESS_INDEX_TYPE @GA_ACCESS_INDEX_TYPE@

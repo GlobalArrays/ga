@@ -89,7 +89,20 @@ extern Integer pnga_pgroup_split_irreg(Integer *grp, Integer *mycolor);
 extern Integer pnga_pgroup_nnodes(Integer *grp);
 extern Integer pnga_pgroup_nodeid(Integer *grp);
 extern void pnga_proc_topology(Integer* g_a, Integer* proc, Integer* subscript);
+extern void pnga_randomize(Integer *g_a, void* val);
+extern Integer pnga_get_pgroup(Integer *g_a);
+extern Integer pnga_get_pgroup_size(Integer *grp_id);
+extern void pnga_set_array_name(Integer *g_a, char *array_name);
+extern void pnga_set_block_cyclic(Integer *g_a, Integer *dims);
+extern void pnga_set_block_cyclic_proc_grid(Integer *g_a, Integer *dims, Integer *proc_grid);
+extern void pnga_set_chunk(Integer *g_a, Integer *chunk);
+extern void pnga_set_data(Integer *g_a, Integer *ndim, Integer *dims, Integer *type);
 extern void pnga_set_debug(logical *flag);
+extern void pnga_set_ghosts(Integer *g_a, Integer *width);
+extern void pnga_set_irreg_distr(Integer *g_a, Integer *mapc, Integer *nblock);
+extern void pnga_set_irreg_flag(Integer *g_a, logical *flag);
+extern void pnga_set_memory_limit(Integer *mem_limit);
+extern void pnga_set_pgroup(Integer *g_a, Integer *p_handle);
 
 /* Routines from onesided.c */
 extern void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf,

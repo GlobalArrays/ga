@@ -165,7 +165,7 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
 
     if(CYCLIC_DISTR_OPT_FLAG) { /* should not be called for irregular matmul */
        int prow, pcol, offset, grp_me;
-       Integer a_grp = ga_get_pgroup_(g_a);
+       Integer a_grp = pnga_get_pgroup(g_a);
        grp_me = (int)pnga_pgroup_nodeid(&a_grp);
        prow = GA[GA_OFFSET + *g_a].nblock[0];
        pcol = GA[GA_OFFSET + *g_a].nblock[1];
@@ -704,7 +704,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
        
        if(CYCLIC_DISTR_OPT_FLAG) {
 	  int prow,pcol,grp_me;
-	  Integer a_grp=ga_get_pgroup_(g_a);
+	  Integer a_grp=pnga_get_pgroup(g_a);
           grp_me = (int)pnga_pgroup_nodeid(&a_grp);
 	  prow = GA[GA_OFFSET + *g_a].nblock[0];
 	  pcol = GA[GA_OFFSET + *g_a].nblock[1];
@@ -852,7 +852,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
     short int compute_flag=0, shiftA=0, shiftB=0;
     DoubleComplex ONE, *a, *b, *c;
     SingleComplex ONE_CF; 
-    Integer grp_me, a_grp = ga_get_pgroup_(g_a);
+    Integer grp_me, a_grp = pnga_get_pgroup(g_a);
  
     GA_PUSH_NAME("ga_matmul_irreg");
     init_task_list(&taskListC);
@@ -1244,8 +1244,8 @@ void ga_matmul(transa, transb, alpha, beta,
     int local_sync_begin,local_sync_end;
     short int need_scaling=SET,use_NB_matmul=SET;
     short int irregular=UNSET, use_armci_memory=UNSET;
-    Integer a_grp=ga_get_pgroup_(g_a), b_grp=ga_get_pgroup_(g_b);
-    Integer c_grp=ga_get_pgroup_(g_c);
+    Integer a_grp=pnga_get_pgroup(g_a), b_grp=pnga_get_pgroup(g_b);
+    Integer c_grp=pnga_get_pgroup(g_c);
     Integer numblocks;
 
 #ifdef USE_VAMPIR

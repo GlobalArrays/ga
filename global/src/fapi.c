@@ -430,6 +430,30 @@ Integer FATR nga_get_dimension_(Integer *g_a)
   return wnga_get_dimension(g_a);
 }
 
+#define ga_get_pgroup_ F77_FUNC_(ga_get_pgroup,GA_GET_PGROUP)
+Integer FATR ga_get_pgroup_(Integer *g_a)
+{
+  return wnga_get_pgroup(g_a);
+}
+
+#define nga_get_pgroup_ F77_FUNC_(nga_get_pgroup,NGA_GET_PGROUP)
+Integer FATR nga_get_pgroup_(Integer *g_a)
+{
+  return wnga_get_pgroup(g_a);
+}
+
+#define ga_get_pgroup_size_ F77_FUNC_(ga_get_pgroup_size,GA_GET_PGROUP_SIZE)
+Integer FATR ga_get_pgroup_size_(Integer *grp_id)
+{
+  return wnga_get_pgroup_size(grp_id);
+}
+
+#define nga_get_pgroup_size_ F77_FUNC_(nga_get_pgroup_size,NGA_GET_PGROUP_SIZE)
+Integer FATR nga_get_pgroup_size_(Integer *grp_id)
+{
+  return wnga_get_pgroup_size(grp_id);
+}
+
 #define ga_get_proc_grid_ F77_FUNC_(ga_get_proc_grid,GA_GET_PROC_GRID)
 void FATR ga_get_proc_grid_(Integer *g_a, Integer *dims)
 {
@@ -891,6 +915,88 @@ void FATR nga_proc_topology_(Integer* g_a, Integer* proc, Integer* subscript)
   wnga_proc_topology(g_a, proc, subscript);
 }
 
+#define ga_randomize_ F77_FUNC_(ga_randomize,GA_RANDOMIZE)
+void FATR ga_randomize_(Integer *g_a, void* val)
+{
+  wnga_randomize(g_a, val);
+}
+
+#define nga_randomize_ F77_FUNC_(nga_randomize,NGA_RANDOMIZE)
+void FATR nga_randomize_(Integer *g_a, void* val)
+{
+  wnga_randomize(g_a, val);
+}
+
+#define ga_set_array_name_ F77_FUNC_(ga_set_array_name,GA_SET_ARRAY_NAME)
+void FATR ga_set_array_name_(Integer *g_a, char *array_name, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(array_name ,slen, buf, FNAM);
+  wnga_set_array_name(g_a, buf);
+}
+
+#define nga_set_array_name_ F77_FUNC_(nga_set_array_name,NGA_SET_ARRAY_NAME)
+void FATR nga_set_array_name_(Integer *g_a, char *array_name, int slen)
+{
+  char buf[FNAM];
+  ga_f2cstring(array_name ,slen, buf, FNAM);
+  wnga_set_array_name(g_a, buf);
+}
+
+#define ga_set_block_cyclic_ F77_FUNC_(ga_set_block_cyclic,GA_SET_BLOCK_CYCLIC)
+void FATR ga_set_block_cyclic_(Integer *g_a, Integer *dims)
+{
+  wnga_set_block_cyclic(g_a, dims);
+}
+
+#define nga_set_block_cyclic_ F77_FUNC_(nga_set_block_cyclic,NGA_SET_BLOCK_CYCLIC)
+void FATR nga_set_block_cyclic_(Integer *g_a, Integer *dims)
+{
+  wnga_set_block_cyclic(g_a, dims);
+}
+
+#define ga_set_block_cyclic_proc_grid_ F77_FUNC_(ga_set_block_cyclic_proc_grid,\
+    GA_SET_BLOCK_CYCLIC_PROC_GRID)
+void FATR ga_set_block_cyclic_proc_grid_(Integer *g_a, Integer *dims,
+                                         Integer *proc_grid)
+{
+  wnga_set_block_cyclic_proc_grid(g_a, dims, proc_grid);
+}
+
+#define nga_set_block_cyclic_proc_grid_ F77_FUNC_(nga_set_block_cyclic_proc_grid,\
+    NGA_SET_BLOCK_CYCLIC_PROC_GRID)
+void FATR nga_set_block_cyclic_proc_grid_(Integer *g_a, Integer *dims,
+                                          Integer *proc_grid)
+{
+  wnga_set_block_cyclic_proc_grid(g_a, dims, proc_grid);
+}
+
+#define ga_set_chunk_ F77_FUNC_(ga_set_chunk,GA_SET_CHUNK)
+void FATR ga_set_chunk_(Integer *g_a, Integer *chunk)
+{
+  wnga_set_chunk(g_a, chunk);
+}
+
+#define nga_set_chunk_ F77_FUNC_(nga_set_chunk,NGA_SET_CHUNK)
+void FATR nga_set_chunk_(Integer *g_a, Integer *chunk)
+{
+  wnga_set_chunk(g_a, chunk);
+}
+
+#define ga_set_data_ F77_FUNC_(ga_set_data, GA_SET_DATA)
+void FATR ga_set_data_(Integer *g_a, Integer *ndim, Integer *dims,
+                       Integer *type)
+{
+  wnga_set_data(g_a, ndim, dims, type);
+}
+
+#define nga_set_data_ F77_FUNC_(nga_set_data, NGA_SET_DATA)
+void FATR nga_set_data_(Integer *g_a, Integer *ndim, Integer *dims,
+                        Integer *type)
+{
+  wnga_set_data(g_a, ndim, dims, type);
+}
+
 #define ga_set_debug_ F77_FUNC_(ga_set_debug,GA_SET_DEBUG)
 void FATR ga_set_debug_(logical *flag)
 {
@@ -901,6 +1007,66 @@ void FATR ga_set_debug_(logical *flag)
 void FATR nga_set_debug_(logical *flag)
 {
   wnga_set_debug(flag);
+}
+
+#define ga_set_ghosts_ F77_FUNC_(ga_set_ghosts,GA_SET_GHOSTS)
+void FATR ga_set_ghosts_(Integer *g_a, Integer *width)
+{
+  wnga_set_ghosts(g_a,width);
+}
+
+#define nga_set_ghosts_ F77_FUNC_(nga_set_ghosts,NGA_SET_GHOSTS)
+void FATR nga_set_ghosts_(Integer *g_a, Integer *width)
+{
+  wnga_set_ghosts(g_a,width);
+}
+
+#define ga_set_irreg_distr_ F77_FUNC_(ga_set_irreg_distr,GA_SET_IRREG_DISTR)
+void FATR ga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
+{
+  wnga_set_irreg_distr(g_a, mapc, nblock);
+}
+
+#define nga_set_irreg_distr_ F77_FUNC_(nga_set_irreg_distr,NGA_SET_IRREG_DISTR)
+void FATR nga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
+{
+  wnga_set_irreg_distr(g_a, mapc, nblock);
+}
+
+#define ga_set_irreg_flag_ F77_FUNC_(ga_set_irreg_flag,GA_SET_IRREG_FLAG)
+void FATR ga_set_irreg_flag_(Integer *g_a, logical *flag)
+{
+  wnga_set_irreg_flag(g_a, flag);
+}
+
+#define nga_set_irreg_flag_ F77_FUNC_(nga_set_irreg_flag,NGA_SET_IRREG_FLAG)
+void FATR nga_set_irreg_flag_(Integer *g_a, logical *flag)
+{
+  wnga_set_irreg_flag(g_a, flag);
+}
+
+#define ga_set_memory_limit_ F77_FUNC_(ga_set_memory_limit,GA_SET_MEMORY_LIMIT)
+void FATR ga_set_memory_limit_(Integer *mem_limit)
+{
+  wnga_set_memory_limit(mem_limit);
+}
+
+#define nga_set_memory_limit_ F77_FUNC_(nga_set_memory_limit,NGA_SET_MEMORY_LIMIT)
+void FATR nga_set_memory_limit_(Integer *mem_limit)
+{
+  wnga_set_memory_limit(mem_limit);
+}
+
+#define ga_set_pgroup_ F77_FUNC_(ga_set_pgroup,GA_SET_PGROUP)
+void FATR ga_set_pgroup_(Integer *g_a, Integer *p_handle)
+{
+  wnga_set_pgroup(g_a, p_handle);
+}
+
+#define nga_set_pgroup_ F77_FUNC_(nga_set_pgroup,NGA_SET_PGROUP)
+void FATR nga_set_pgroup_(Integer *g_a, Integer *p_handle)
+{
+  wnga_set_pgroup(g_a, p_handle);
 }
 
 /* Routines from onesided.c */
@@ -995,30 +1161,6 @@ void FATR nga_brdcst_(
 void FATR ga_pgroup_brdcst_(Integer *grp_id, Integer *type, void *buf, Integer *len, Integer *originator)
 {
     wnga_pgroup_brdcst(grp_id, type, buf, len, originator);
-}
-
-#define ga_msg_sync_ F77_FUNC_(ga_msg_sync,GA_MSG_SYNC)
-void FATR ga_msg_sync_()
-{
-    wnga_msg_sync();
-}
-
-#define nga_msg_sync_ F77_FUNC_(nga_msg_sync,NGA_MSG_SYNC)
-void FATR nga_msg_sync_()
-{
-    wnga_msg_sync();
-}
-
-#define ga_msg_pgroup_sync_ F77_FUNC_(ga_msg_pgroup_sync,GA_MSG_PGROUP_SYNC)
-void FATR ga_msg_pgroup_sync_(Integer *grp_id)
-{
-    wnga_msg_pgroup_sync(grp_id);
-}
-
-#define nga_msg_pgroup_sync_ F77_FUNC_(nga_msg_pgroup_sync,NGA_MSG_PGROUP_SYNC)
-void FATR nga_msg_pgroup_sync_(Integer *grp_id)
-{
-    wnga_msg_pgroup_sync(grp_id);
 }
 
 #define ga_pgroup_gop_ F77_FUNC_(ga_pgroup_gop,GA_PGROUP_GOP)

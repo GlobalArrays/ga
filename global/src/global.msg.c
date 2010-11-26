@@ -571,10 +571,11 @@ Integer len, from, xsyn;
 
 static long sync_cnt=0;
 
-/*\ Synchronization using message-passing
+/** 
+ *  Synchronization using message-passing
  *  Note: ga_sync might not be calling it at all on some platforms
-\*/
-void ga_msg_sync_()
+ */
+void ga_msg_sync()
 {
    if(DEBUG){
        printf("%s:%d> ga_msg_sync\n",
@@ -982,7 +983,7 @@ void gai_dgop(Integer type, DoublePrecision *x, Integer n, char *op)
      } else {
         /* use TCGMSG as a wrapper to native implementation of global ops */
 #       if defined(SP1) || defined(SP)
-            ga_msg_sync_();
+            ga_msg_sync();
 #       endif
 #       ifdef MPI
             ga_dgop_clust(type, x, n, op, ALL_GRP);
@@ -990,7 +991,7 @@ void gai_dgop(Integer type, DoublePrecision *x, Integer n, char *op)
             tcg_dgop(type, x, n, op);
 #       endif
 #       if defined(SP1) || defined(SP)
-            ga_msg_sync_();
+            ga_msg_sync();
 #       endif
      }
 #ifdef TIME_DGOP
@@ -1083,7 +1084,7 @@ void gai_igop(Integer type, Integer *x, Integer n, char *op)
      } else {
         /* use TCGMSG as a wrapper to native implementation of global ops */
 #       if defined(SP1) || defined(SP)
-            ga_msg_sync_();
+            ga_msg_sync();
 #       endif
 #       ifdef MPI
             ga_igop_clust(type, x, n, op, ALL_GRP);
@@ -1091,7 +1092,7 @@ void gai_igop(Integer type, Integer *x, Integer n, char *op)
             tcg_igop(type, x, n, op);
 #       endif
 #       if defined(SP1) || defined(SP)
-            ga_msg_sync_();
+            ga_msg_sync();
 #       endif
      }
 #ifdef USE_VAMPIR

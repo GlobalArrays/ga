@@ -600,28 +600,33 @@ Integer pnga_memory_avail()
 
 
 
-/*\ (re)set limit on GA memory usage
-\*/
-void FATR ga_set_memory_limit_(Integer *mem_limit)
+/**
+ *  (re)set limit on GA memory usage
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_memory_limit =  pnga_set_memory_limit
+#endif
+
+void pnga_set_memory_limit(Integer *mem_limit)
 {
-     if(GA_memory_limited){
+  if(GA_memory_limited){
 
-         /* if we had the limit set we need to adjust the amount available */
-         if (*mem_limit>=0)
-             /* adjust the current value by diff between old and new limit */
-             GA_total_memory += (*mem_limit - GA_memory_limit);     
-         else{
+    /* if we had the limit set we need to adjust the amount available */
+    if (*mem_limit>=0)
+      /* adjust the current value by diff between old and new limit */
+      GA_total_memory += (*mem_limit - GA_memory_limit);     
+    else{
 
-             /* negative values reset limit to "unlimited" */
-             GA_memory_limited =  0;     
-             GA_total_memory= -1;     
-         }
+      /* negative values reset limit to "unlimited" */
+      GA_memory_limited =  0;     
+      GA_total_memory= -1;     
+    }
 
-     }else{
-         
-          GA_total_memory = GA_memory_limit  = *mem_limit;
-          if(*mem_limit >= 0) GA_memory_limited = 1;
-     }
+  }else{
+
+    GA_total_memory = GA_memory_limit  = *mem_limit;
+    if(*mem_limit >= 0) GA_memory_limited = 1;
+  }
 }
 
 /**
@@ -1218,7 +1223,7 @@ Integer pnga_pgroup_get_mirror()
 #   pragma weak wnga_pgroup_get_world = pnga_pgroup_get_world
 #endif
 
-Integer FATR pnga_pgroup_get_world()
+Integer pnga_pgroup_get_world()
 {
   return -1;
 }
@@ -1395,9 +1400,14 @@ Integer pnga_create_handle()
   return g_a;
 }
 
-/*\ Set the dimensions and data type on a new global array
-\*/
-void FATR ga_set_data_(Integer *g_a, Integer *ndim, Integer *dims, Integer *type)
+/**
+ *  Set the dimensions and data type on a new global array handle
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_data = pnga_set_data
+#endif
+
+void pnga_set_data(Integer *g_a, Integer *ndim, Integer *dims, Integer *type)
 {
   Integer i;
   Integer ga_handle = *g_a + GA_OFFSET;
@@ -1419,9 +1429,14 @@ void FATR ga_set_data_(Integer *g_a, Integer *ndim, Integer *dims, Integer *type
   GA_POP_NAME;
 }
 
-/*\ Set the chunk array on a new global array
-\*/
-void FATR ga_set_chunk_(Integer *g_a, Integer *chunk)
+/**
+ *  Set the chunk array on a new global array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_chunk = pnga_set_chunk
+#endif
+
+void pnga_set_chunk(Integer *g_a, Integer *chunk)
 {
   Integer i;
   Integer ga_handle = *g_a + GA_OFFSET;
@@ -1438,11 +1453,16 @@ void FATR ga_set_chunk_(Integer *g_a, Integer *chunk)
   GA_POP_NAME;
 }
 
-/*\ Set the array name on a new global array
-\*/
-void FATR gai_set_array_name(Integer g_a, char *array_name)
+/**
+ * Set the array name on a new global array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_array_name = pnga_set_array_name
+#endif
+
+void pnga_set_array_name(Integer *g_a, char *array_name)
 {
-  Integer ga_handle = g_a + GA_OFFSET;
+  Integer ga_handle = *g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_array_name");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set array name on array that has been allocated",0);
@@ -1450,20 +1470,14 @@ void FATR gai_set_array_name(Integer g_a, char *array_name)
   GA_POP_NAME;
 }
 
-/*\ Set the array name on a new global array
- *  Fortran version
-\*/
-void FATR ga_set_array_name_(Integer *g_a, char* array_name, int slen)
-{
-  char buf[FNAM];
-  ga_f2cstring(array_name ,slen, buf, FNAM);
+/**
+ *  Set the processor group on a new global array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_pgroup = pnga_set_pgroup
+#endif
 
-  gai_set_array_name(*g_a, buf);
-}
-
-/*\ Set the processor configuration on a new global array
-\*/
-void FATR ga_set_pgroup_(Integer *g_a, Integer *p_handle)
+void pnga_set_pgroup(Integer *g_a, Integer *p_handle)
 {
   Integer ga_handle = *g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_pgroup");
@@ -1477,13 +1491,27 @@ void FATR ga_set_pgroup_(Integer *g_a, Integer *p_handle)
   GA_POP_NAME;
 }
 
-Integer FATR ga_get_pgroup_(Integer *g_a)
+/**
+ *  Get the processor group handle associated with g_a
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_pgroup = pnga_get_pgroup
+#endif
+
+Integer pnga_get_pgroup(Integer *g_a)
 {
     Integer ga_handle = *g_a + GA_OFFSET;
     return (Integer)GA[ga_handle].p_handle;
 }
- 
-Integer FATR ga_get_pgroup_size_(Integer *grp_id)
+
+/**
+ *  Return the number of processors associated with a processor group
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_pgroup_size = pnga_get_pgroup_size
+#endif
+
+Integer pnga_get_pgroup_size(Integer *grp_id)
 {
     int p_handle = (int)(*grp_id);
     if (p_handle > 0) {
@@ -1493,9 +1521,14 @@ Integer FATR ga_get_pgroup_size_(Integer *grp_id)
     }
 }
 
-/*\ Add ghost cells to a new global array
-\*/
-void FATR ga_set_ghosts_(Integer *g_a, Integer *width)
+/**
+ *  Add ghost cells to a new global array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_ghosts = pnga_set_ghosts
+#endif
+
+void pnga_set_ghosts(Integer *g_a, Integer *width)
 {
   Integer i;
   Integer ga_handle = *g_a + GA_OFFSET;
@@ -1517,9 +1550,14 @@ void FATR ga_set_ghosts_(Integer *g_a, Integer *width)
   GA_POP_NAME;
 }
 
-/*\ Set irregular distribution in a new global array
-\*/
-void FATR ga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
+/**
+ *  Set irregular distribution in a new global array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_irreg_distr = pnga_set_irreg_distr
+#endif
+
+void pnga_set_irreg_distr(Integer *g_a, Integer *mapc, Integer *nblock)
 {
   Integer i, j, ichk, maplen;
   Integer ga_handle = *g_a + GA_OFFSET;
@@ -1563,12 +1601,17 @@ void FATR ga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
   GA_POP_NAME;
 }
 
-/*\ Overide the irregular data distribution flag on a new global array
-\*/
-void FATR ga_set_irreg_flag_(Integer *g_a, logical *flag)
+/**
+ *  Overide the irregular data distribution flag on a new global array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_irreg_flag = pnga_set_irreg_flag
+#endif
+
+void pnga_set_irreg_flag(Integer *g_a, logical *flag)
 {
   Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_irreg");
+  GA_PUSH_NAME("ga_set_irreg_flag");
   GA[ga_handle].irreg = (int)(*flag);
   GA_POP_NAME;
 }
@@ -1586,9 +1629,14 @@ Integer pnga_get_dimension(Integer *g_a)
   return (Integer)GA[ga_handle].ndim;
 } 
 
-/*\ Use block-cyclic data distribution for array
-\*/
-void FATR ga_set_block_cyclic_(Integer *g_a, Integer *dims)
+/**
+ *  Use a simple block-cyclic data distribution for array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_block_cyclic = pnga_set_block_cyclic
+#endif
+
+void pnga_set_block_cyclic(Integer *g_a, Integer *dims)
 {
   Integer i, jsize;
   Integer ga_handle = *g_a + GA_OFFSET;
@@ -1618,9 +1666,14 @@ void FATR ga_set_block_cyclic_(Integer *g_a, Integer *dims)
   GA_POP_NAME;
 }
 
-/*\ Use block-cyclic data distribution with ScaLAPACK proc grid for array
-\*/
-void FATR ga_set_block_cyclic_proc_grid_(Integer *g_a, Integer *dims, Integer *proc_grid)
+/**
+ *  Use block-cyclic data distribution with ScaLAPACK-type proc grid for array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_block_cyclic_proc_grid = pnga_set_block_cyclic_proc_grid
+#endif
+
+void pnga_set_block_cyclic_proc_grid(Integer *g_a, Integer *dims, Integer *proc_grid)
 {
   Integer i, jsize, tot;
   Integer ga_handle = *g_a + GA_OFFSET;
@@ -2061,11 +2114,11 @@ logical pnga_create_ghosts_irreg_config(
   GA_PUSH_NAME("pnga_create_ghosts_irreg_config");
 
   *g_a = pnga_create_handle();
-  ga_set_data_(g_a,&ndim,dims,&type);
-  ga_set_ghosts_(g_a,width);
-  gai_set_array_name(*g_a,array_name);
-  ga_set_irreg_distr_(g_a,map,nblock);
-  ga_set_pgroup_(g_a,&p_handle);
+  pnga_set_data(g_a,&ndim,dims,&type);
+  pnga_set_ghosts(g_a,width);
+  pnga_set_array_name(g_a,array_name);
+  pnga_set_irreg_distr(g_a,map,nblock);
+  pnga_set_pgroup(g_a,&p_handle);
   status = pnga_allocate(g_a);
 
   GA_POP_NAME;
@@ -2114,10 +2167,10 @@ logical pnga_create_config(Integer type,
   logical status;
   GA_PUSH_NAME("pnga_create_config");
   *g_a = pnga_create_handle();
-  ga_set_data_(g_a,&ndim,dims,&type);
-  gai_set_array_name(*g_a,array_name);
-  ga_set_chunk_(g_a,chunk);
-  ga_set_pgroup_(g_a,&p_handle);
+  pnga_set_data(g_a,&ndim,dims,&type);
+  pnga_set_array_name(g_a,array_name);
+  pnga_set_chunk(g_a,chunk);
+  pnga_set_pgroup(g_a,&p_handle);
   status = pnga_allocate(g_a);
   GA_POP_NAME;
   return status;
@@ -2163,11 +2216,11 @@ logical pnga_create_ghosts_config(Integer type,
   logical status;
   GA_PUSH_NAME("nga_create_ghosts_config");
   *g_a = pnga_create_handle();
-  ga_set_data_(g_a,&ndim,dims,&type);
-  ga_set_ghosts_(g_a,width);
-  gai_set_array_name(*g_a,array_name);
-  ga_set_chunk_(g_a,chunk);
-  ga_set_pgroup_(g_a,&p_handle);
+  pnga_set_data(g_a,&ndim,dims,&type);
+  pnga_set_ghosts(g_a,width);
+  pnga_set_array_name(g_a,array_name);
+  pnga_set_chunk(g_a,chunk);
+  pnga_set_pgroup(g_a,&p_handle);
   status = pnga_allocate(g_a);
   GA_POP_NAME;
   return status;
@@ -2560,7 +2613,7 @@ logical pnga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  grp_id = ga_get_pgroup_(g_a);
+  grp_id = pnga_get_pgroup(g_a);
   if(local_sync_begin)ga_pgroup_sync_(&grp_id);
 
   if (grp_id > 0) {
@@ -2891,9 +2944,14 @@ Integer FATR ga_verify_handle_(g_a)
  
 
 
-/*\fill array with random values in [0,val)
-\*/
-void FATR ga_randomize_(Integer *g_a, void* val)
+/**
+ *  Fill array with random values in [0,val)
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_randomize =  pnga_randomize
+#endif
+
+void pnga_randomize(Integer *g_a, void* val)
 {
   int i,handle=GA_OFFSET + (int)*g_a;
   char *ptr;
@@ -2910,7 +2968,7 @@ void FATR ga_randomize_(Integer *g_a, void* val)
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
-  grp_id = ga_get_pgroup_(g_a);
+  grp_id = pnga_get_pgroup(g_a);
   if(local_sync_begin)ga_pgroup_sync_(&grp_id);
 
 
@@ -3021,7 +3079,7 @@ void pnga_fill(Integer *g_a, void* val)
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
-  grp_id = ga_get_pgroup_(g_a);
+  grp_id = pnga_get_pgroup(g_a);
   if(local_sync_begin)ga_pgroup_sync_(&grp_id);
 
 
