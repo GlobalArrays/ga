@@ -28,6 +28,7 @@ extern void ARMCI_Barrier(void);    /* ARMCI Barrier*/
 extern int ARMCI_Put(void *src, void* dst, int bytes, int proc);
 extern int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc);
 
+/* On path for deprecation */
 #define ARMCI_Put1(_s,_d,_b,_p) memcpy(_d,_s,_b), 0
 
 extern int ARMCI_PutS(          /* strided put */
@@ -81,11 +82,7 @@ extern int ARMCI_AccS(                /* strided accumulate */
                 );
 
 
-#ifdef __crayx1__
-#define ARMCI_Get(_s,_d,_b,_p) memcpy(_d,_s,_b), 0
-#else
 extern int ARMCI_Get(void *src, void* dst, int bytes, int proc);
-#endif
 
 extern int ARMCI_GetS(          /* strided get */
                 void *src_ptr,        /* pointer to 1st segment at source*/ 
@@ -398,26 +395,6 @@ extern void ARMCI_Memdt(armci_meminfo_t *meminfo, int memflg);
   
 extern void ARMCI_Memctl(armci_meminfo_t *meminfo);
   
-/* ------------------- ARMCI Checkpointing/Recovery ----------------- */
-#ifdef ENABLE_CHECKPOINT
-#define ARMCI_CKPT    0
-#define ARMCI_RESTART 1
-typedef struct {
-        void **ptr_arr;
-        size_t *sz;
-        int *saveonce;
-        int count;
-}armci_ckpt_ds_t;
-void ARMCI_Ckpt_create_ds(armci_ckpt_ds_t *ckptds, int count);
-int ARMCI_Ckpt_init(char *filename, ARMCI_Group *grp, int savestack, int saveheap, armci_ckpt_ds_t *ckptds);
-int ARMCI_Ckpt(int rid);
-void ARMCI_Ckpt_finalize(int rid);
-#define ARMCI_Restart_simulate armci_irecover
-# ifdef MPI
-    ARMCI_Group * ARMCI_Get_ft_group();
-# endif
-#endif
-
 /* ------------------------------------------------------------------ */
 
 #if defined(__cplusplus) || defined(c_plusplus)
