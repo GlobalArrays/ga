@@ -117,6 +117,7 @@ static int server_can_poll=0;
 static int armci_vapi_max_inline_size=-1;
 #define CLIENT_STAMP 101
 #define SERV_STAMP 99
+#define MAX_PROC_INLINE_SIZE 2048
 
 static char * client_tail;
 static char * serv_tail;
@@ -326,17 +327,6 @@ void armci_check_status(int debug, int rc,char *msg)
 
 void armci_vapi_check_return(int debug, int ret, const char *ss)
 {
-#if 0
-    if(ret!=VAPI_OK){
-       printf("\n%d:from %s ret=%d str=%s str_sym=%s\n",armci_me,ss,ret,
-		       VAPI_strerror(ret),VAPI_strerror_sym(ret));
-       fflush(stdout);
-    }
-    if(debug){
-       printf("\n%d:from %s ret=%d str=%s str_sym=%s\n",armci_me,ss,ret,
-		       VAPI_strerror(ret),VAPI_strerror_sym(ret));
-    }
-#endif
 }
 
 void armci_vapi_print_dscr_info(struct ibv_send_wr *sr, struct ibv_recv_wr *rr)
@@ -763,7 +753,12 @@ static void armci_create_qp(vapi_nic_t *nic, struct ibv_qp **qp)
     *qp = ibv_create_qp(nic->ptag, &initattr);
     dassert(1,*qp!=NULL);
 
-    if(!armci_vapi_max_inline_size){
+    /* The value of inline size should be dependent on number of processes
+     * */
+    if (armci_nproc >= MAX_PROC_INLINE_SIZE) {
+        armci_vapi_max_inline_size = -1;
+    }
+    else {
         armci_vapi_max_inline_size = initattr.cap.max_inline_data;
     }
 }
@@ -1211,12 +1206,12 @@ int s, ratio = sizeof(ack_t)/sizeof(int);
 \*/ 
 void armci_init_connections()
 {
-int c,s;
-int sz;
- uint32_t *tmpbuf;
-int *tmparr;
+    int c,s;
+    int sz;
+    uint32_t *tmpbuf;
+    int *tmparr;
     if(TIME_INIT)inittime0 = MPI_Wtime(); 
-    
+
 #if defined(PEND_BUFS)
     armci_pbuf_init_buffer_env();
 #endif
@@ -1225,8 +1220,8 @@ int *tmparr;
 
     /* initialize nic connection for qp numbers and lid's */
     armci_init_nic(SRV_nic,1,1);
-    for(c=0; c<NUMOFBUFFERS+1; c++) {
-      mark_buf_send_complete[c]=1;
+    for(c=0; c < NUMOFBUFFERS+1; c++) {
+        mark_buf_send_complete[c]=1;
     }
     _gtmparr = (int *)calloc(armci_nproc,sizeof(int)); 
 
@@ -1236,8 +1231,8 @@ int *tmparr;
     sz = armci_nproc;
     armci_msg_gop_scope(SCOPE_ALL,tmparr,sz,"+",ARMCI_INT);
     for(c=0;c<armci_nproc;c++){
-       SRV_nic->lid_arr[c]=tmparr[c];
-       tmparr[c]=0;
+        SRV_nic->lid_arr[c]=tmparr[c];
+        tmparr[c]=0;
     }
     /*SRV_con is for client to connect to servers */
     SRV_con=(armci_connect_t *)malloc(sizeof(armci_connect_t)*armci_nclus);
@@ -1282,10 +1277,9 @@ int *tmparr;
             armci_connect_t *con = SRV_con + s;
             con->state = QP_INACTIVE;
         }
-
     }
 
-    SRV_ack = (ack_t*)calloc(armci_nclus,sizeof(ack_t));
+    SRV_ack = (ack_t*)calloc(armci_nclus, sizeof(ack_t));
     dassert1(1,SRV_ack!=NULL,armci_nclus*sizeof(ack_t));
 
     handle_array = (armci_vapi_memhndl_t *)calloc(sizeof(armci_vapi_memhndl_t),
@@ -1898,6 +1892,7 @@ void armci_complete_immbuf(void *buf) {
   request_header_t *msginfo=(request_header_t*)cbuf->buf;
   
 #if SRI_CORRECT
+#error
   cbuf->send_pending = 0;
 #else
     _armci_pendbuf_post_immbuf(cbuf,msginfo->from);
@@ -4675,8 +4670,6 @@ int open_hca(void)
                 ibv_get_device_name(hca.ib_dev));
         return 1;
     }
-#if 0
-#endif
     return 0;
 }
 
