@@ -2632,6 +2632,11 @@ EXTRA_DIST = README build-aux/inside.pl LinAlg/lapack+blas/README \
 # and works with all Fortran compilers.
 #
 BUILT_SOURCES = config.fh global/src/wapi.h global/src/wapidefs.h
+MOSTLYCLEANFILES = 
+CLEANFILES = config.fh global/src/wapi.c global/src/wapi.h \
+	global/src/wapidefs.h
+DISTCLEANFILES = 
+MAINTAINERCLEANFILES = 
 AM_FFLAGS = $(GA_FOPT) $(FFLAG_INT)
 AM_CFLAGS = $(GA_COPT)
 AM_CXXFLAGS = $(GA_CXXOPT)
@@ -5972,12 +5977,14 @@ install-strip:
 mostlyclean-generic:
 	-test -z "$(LIBOBJS)" || rm -f $(LIBOBJS)
 	-test -z "$(LTLIBOBJS)" || rm -f $(LTLIBOBJS)
+	-test -z "$(MOSTLYCLEANFILES)" || rm -f $(MOSTLYCLEANFILES)
 	-test -z "$(TEST_LOGS)" || rm -f $(TEST_LOGS)
 	-test -z "$(TEST_LOGS_TMP)" || rm -f $(TEST_LOGS_TMP)
 	-test -z "$(TEST_SUITE_HTML)" || rm -f $(TEST_SUITE_HTML)
 	-test -z "$(TEST_SUITE_LOG)" || rm -f $(TEST_SUITE_LOG)
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -6031,15 +6038,17 @@ distclean-generic:
 	-rm -f tcgmsg/ipcv5.0/$(am__dirstamp)
 	-rm -f tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tcgmsg/tcgmsg-mpi/$(am__dirstamp)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
+	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-recursive
 
 clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-checkPROGRAMS \
-	clean-generic clean-libLTLIBRARIES clean-libtool clean-local \
+	clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-recursive
@@ -6122,16 +6131,16 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 	all all-am am--refresh check check-TESTS check-am check-html \
 	clean clean-binPROGRAMS clean-checkLTLIBRARIES \
 	clean-checkPROGRAMS clean-generic clean-libLTLIBRARIES \
-	clean-libtool clean-local ctags ctags-recursive dist dist-all \
-	dist-bzip2 dist-gzip dist-lzma dist-shar dist-tarZ dist-xz \
-	dist-zip distcheck distclean distclean-compile \
-	distclean-generic distclean-hdr distclean-libtool \
-	distclean-tags distcleancheck distdir distuninstallcheck dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-binPROGRAMS install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-includeHEADERS install-info \
-	install-info-am install-libLTLIBRARIES install-man \
+	clean-libtool ctags ctags-recursive dist dist-all dist-bzip2 \
+	dist-gzip dist-lzma dist-shar dist-tarZ dist-xz dist-zip \
+	distcheck distclean distclean-compile distclean-generic \
+	distclean-hdr distclean-libtool distclean-tags distcleancheck \
+	distdir distuninstallcheck dvi dvi-am html html-am info \
+	info-am install install-am install-binPROGRAMS install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am \
+	install-includeHEADERS install-info install-info-am \
+	install-libLTLIBRARIES install-man \
 	install-nodist_includeHEADERS install-pdf install-pdf-am \
 	install-pkgconfigDATA install-ps install-ps-am install-strip \
 	installcheck installcheck-am installdirs installdirs-am \
@@ -6145,9 +6154,6 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 
 config.fh: $(top_build_prefix)config.h
 	-rm -f config.fh && $(SED) "/^#/!d" $(top_build_prefix)config.h > config.fh
-
-clean-config:
-	-rm -f config.fh
 
 ##############################################################################
 # global/src
@@ -6168,11 +6174,6 @@ global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
 @HAVE_PYTHON_TRUE@global/src/wapi.c: $(top_srcdir)/global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
 @HAVE_PYTHON_TRUE@	-rm -f global/src/wapi.c && \
 @HAVE_PYTHON_TRUE@	$(PYTHON) $(top_srcdir)/build-aux/wapigen.py $(top_srcdir)/global/src/papi.h > global/src/wapi.c
-
-clean-weak:
-	-rm -f global/src/wapi.c
-	-rm -f global/src/wapi.h
-	-rm -f global/src/wapidefs.h
 
 @HAVE_M4_TRUE@global/testing/nga-onesided.F: $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@global/testing/nga-patch.F:    $(GLOBAL_TESTING_M4_DEPS)
@@ -6197,9 +6198,6 @@ armci/libarmcii.la:
 ##############################################################################
 # the end
 #
-clean-local: clean-config clean-weak
-	-rm -f $(BUILT_SOURCES)
-
 .PHONY: checkprogs checkprogs-recursive checkprogs-am
 checkprogs: checkprogs-recursive
 checkprogs-am: $(check_PROGRAMS)

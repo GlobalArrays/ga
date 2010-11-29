@@ -34,6 +34,10 @@ libga_la_SOURCES =
 nodist_libga_la_SOURCES =
 EXTRA_DIST = README build-aux/inside.pl
 BUILT_SOURCES =
+MOSTLYCLEANFILES =
+CLEANFILES =
+DISTCLEANFILES =
+MAINTAINERCLEANFILES =
 AM_FFLAGS =
 AM_CFLAGS =
 AM_CXXFLAGS =
@@ -100,8 +104,7 @@ nodist_libga_la_SOURCES += config.fh
 config.fh: $(top_build_prefix)config.h
 	-rm -f config.fh && $(SED) "/^#/!d" $(top_build_prefix)config.h > config.fh
 
-clean-config:
-	-rm -f config.fh
+CLEANFILES += config.fh
 
 ##############################################################################
 # compat
@@ -529,10 +532,9 @@ EXTRA_DIST += build-aux/wapigen.py
 BUILT_SOURCES += global/src/wapi.h
 BUILT_SOURCES += global/src/wapidefs.h
 
-clean-weak:
-	-rm -f global/src/wapi.c
-	-rm -f global/src/wapi.h
-	-rm -f global/src/wapidefs.h
+CLEANFILES += global/src/wapi.c
+CLEANFILES += global/src/wapi.h
+CLEANFILES += global/src/wapidefs.h
 
 libga_la_SOURCES += global/src/base.c
 libga_la_SOURCES += global/src/base.h
@@ -1132,9 +1134,6 @@ libga_la_LIBADD = armci/libarmcii.la
 ##############################################################################
 # the end
 #
-clean-local: clean-config clean-weak
-	-rm -f $(BUILT_SOURCES)
-
 .PHONY: checkprogs checkprogs-recursive checkprogs-am
 checkprogs: checkprogs-recursive
 checkprogs-am: $(check_PROGRAMS)

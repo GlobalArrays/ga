@@ -403,7 +403,6 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
     short int do_put=UNSET, single_task_flag=UNSET;
     DoubleComplex ONE;
     SingleComplex ONE_CF;
-    float ONE_F = 1.0;
     ONE.real =1.; ONE.imag =0.; 
     ONE_CF.real =1.; ONE_CF.imag =0.; 
 
@@ -482,7 +481,7 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
 			 ga_put_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim);
 		      else
 			 ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim, 
-				 &ONE_F);
+				 &ONE_CF);
 		      break;
 		   default:
 		      if(do_put==SET) /* i.e.beta == 0.0 */
