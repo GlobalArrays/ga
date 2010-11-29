@@ -8,6 +8,59 @@
 # Occasionally, the MPI compiler will always report a non-zero exit status.
 # That is the last case checked for.
 AC_DEFUN([GA_MPI_UNWRAP], [
+# Find perl.
+AC_PATH_PROG([PERL], [perl])
+# Create inside.pl.
+rm -f inside.pl
+cat >inside.pl <<EOF
+'#!/usr/bin/perl
+$numargs = $#ARGV + 1;
+if ($numargs != 2) {
+    print "Usage: wrapped.txt naked.txt\n";
+    exit 1;
+}
+# Read each input file as a string (rather than a list).
+local $/=undef;
+open WRAPPED, "$ARGV[0]" or die "Could not open wrapped text file: $!";
+$wrapped_lines = <WRAPPED>;
+close WRAPPED;
+open NAKED, "$ARGV[1]" or die "Could not open naked text file: $!";
+$naked_lines = <NAKED>;
+close NAKED;
+# Replace newlines, + from wrapped and naked lines.
+$wrapped_lines =~ tr/\n+/ /;
+$naked_lines =~ tr/\n+/ /;
+# Remove whitespace from beginning of wrapped and naked lines.
+$wrapped_lines =~ s/^\s+//;
+$naked_lines =~ s/^\s+//;
+# Remove whitespace from end of wrapped and naked lines.
+$wrapped_lines =~ s/\s+$//;
+$naked_lines =~ s/\s+$//;
+# If either wrapped_lines or naked_lines are empty, this is an error.
+# It is assumed that the particular version string which created the input
+# files should generate SOMETHING.
+unless ($wrapped_lines) {
+    exit 1;
+}
+unless ($naked_lines) {
+    exit 1;
+}
+# Can the naked lines be found within the wrapped lines?
+if ($wrapped_lines =~ /$naked_lines/) {
+    #print "Found as substring\n";
+    exit 0;
+}
+# Are the naked lines exactly the same as the wrapped lines?
+elsif ($wrapped_lines eq $naked_lines) {
+    #print "Found equal\n";
+    exit 0;
+}
+else {
+    #print "Not found\n";
+    exit 1;
+}'
+EOF
+inside="$PERL inside.pl"
 AC_LANG_CASE(
 [C], [
     wrapped="$CC"
@@ -33,7 +86,6 @@ AC_LANG_CASE(
 AS_VAR_PUSHDEF([ga_cv_mpi_naked], [ga_cv_mpi[]_AC_LANG_ABBREV[]_naked])
 AC_CACHE_CHECK([for base $wrapped compiler], [ga_cv_mpi_naked], [
 versions="--version -v -V -qversion"
-inside="$srcdir/build-aux/inside.pl"
 found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
 AS_IF([test "x$ga_cv_mpi_naked" = x], [
@@ -131,6 +183,7 @@ rm -f mpi.txt mpi.err naked.txt naked.err
 AS_IF([test "x$ga_cv_mpi_naked" = x], [ga_cv_mpi_naked=error])
 ])
 AS_VAR_POPDEF([ga_cv_mpi_naked])
+rm -f inside.pl
 AS_IF([test "x$ga_cv_mpi_naked" = xerror],
     [AC_MSG_WARN([Could not determine the Fortran compiler wrapped by MPI])
      AC_MSG_WARN([This is usually okay])])

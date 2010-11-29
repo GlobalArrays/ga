@@ -715,6 +715,7 @@ ARMCI_NETWORK_BGML_TRUE
 EGREP
 GREP
 CPP
+PERL
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
@@ -5331,6 +5332,98 @@ fi
 if test x$with_mpi_wrappers = xyes; then :
   MPICC="$CC"
 
+# Find perl.
+# Extract the first word of "perl", so it can be a program name with args.
+set dummy perl; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_path_PERL+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PERL in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PERL="$PERL" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_PERL="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PERL=$ac_cv_path_PERL
+if test -n "$PERL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL" >&5
+$as_echo "$PERL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+# Create inside.pl.
+rm -f inside.pl
+cat >inside.pl <<EOF
+'#!/usr/bin/perl
+$numargs = 0ARGV + 1;
+if ($numargs != 2) {
+    print "Usage: wrapped.txt naked.txt\n";
+    exit 1;
+}
+# Read each input file as a string (rather than a list).
+local $/=undef;
+open WRAPPED, "$ARGV0" or die "Could not open wrapped text file: $!";
+$wrapped_lines = <WRAPPED>;
+close WRAPPED;
+open NAKED, "$ARGV1" or die "Could not open naked text file: $!";
+$naked_lines = <NAKED>;
+close NAKED;
+# Replace newlines, + from wrapped and naked lines.
+$wrapped_lines =~ tr/\n+/ /;
+$naked_lines =~ tr/\n+/ /;
+# Remove whitespace from beginning of wrapped and naked lines.
+$wrapped_lines =~ s/^\s+//;
+$naked_lines =~ s/^\s+//;
+# Remove whitespace from end of wrapped and naked lines.
+$wrapped_lines =~ s/\s+$//;
+$naked_lines =~ s/\s+$//;
+# If either wrapped_lines or naked_lines are empty, this is an error.
+# It is assumed that the particular version string which created the input
+# files should generate SOMETHING.
+unless ($wrapped_lines) {
+    exit 1;
+}
+unless ($naked_lines) {
+    exit 1;
+}
+# Can the naked lines be found within the wrapped lines?
+if ($wrapped_lines =~ /$naked_lines/) {
+    #print "Found as substring\n";
+    exit 0;
+}
+# Are the naked lines exactly the same as the wrapped lines?
+elsif ($wrapped_lines eq $naked_lines) {
+    #print "Found equal\n";
+    exit 0;
+}
+else {
+    #print "Not found\n";
+    exit 1;
+}'
+EOF
+inside="$PERL inside.pl"
 
     wrapped="$CC"
     case $wrapped in #(
@@ -5350,7 +5443,6 @@ if test "${ga_cv_mpic_naked+set}" = set; then :
 else
 
 versions="--version -v -V -qversion"
-inside="$srcdir/build-aux/inside.pl"
 found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
 if test "x$ga_cv_mpic_naked" = x; then :
@@ -5495,6 +5587,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpic_naked" >&5
 $as_echo "$ga_cv_mpic_naked" >&6; }
 
+rm -f inside.pl
 if test "x$ga_cv_mpi_naked" = xerror; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
 $as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
@@ -10792,6 +10885,98 @@ if test "x$enable_cxx" = xyes; then :
     if test x$with_mpi_wrappers = xyes; then :
   MPICXX="$CXX"
 
+# Find perl.
+# Extract the first word of "perl", so it can be a program name with args.
+set dummy perl; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_path_PERL+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PERL in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PERL="$PERL" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_PERL="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PERL=$ac_cv_path_PERL
+if test -n "$PERL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL" >&5
+$as_echo "$PERL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+# Create inside.pl.
+rm -f inside.pl
+cat >inside.pl <<EOF
+'#!/usr/bin/perl
+$numargs = 0ARGV + 1;
+if ($numargs != 2) {
+    print "Usage: wrapped.txt naked.txt\n";
+    exit 1;
+}
+# Read each input file as a string (rather than a list).
+local $/=undef;
+open WRAPPED, "$ARGV0" or die "Could not open wrapped text file: $!";
+$wrapped_lines = <WRAPPED>;
+close WRAPPED;
+open NAKED, "$ARGV1" or die "Could not open naked text file: $!";
+$naked_lines = <NAKED>;
+close NAKED;
+# Replace newlines, + from wrapped and naked lines.
+$wrapped_lines =~ tr/\n+/ /;
+$naked_lines =~ tr/\n+/ /;
+# Remove whitespace from beginning of wrapped and naked lines.
+$wrapped_lines =~ s/^\s+//;
+$naked_lines =~ s/^\s+//;
+# Remove whitespace from end of wrapped and naked lines.
+$wrapped_lines =~ s/\s+$//;
+$naked_lines =~ s/\s+$//;
+# If either wrapped_lines or naked_lines are empty, this is an error.
+# It is assumed that the particular version string which created the input
+# files should generate SOMETHING.
+unless ($wrapped_lines) {
+    exit 1;
+}
+unless ($naked_lines) {
+    exit 1;
+}
+# Can the naked lines be found within the wrapped lines?
+if ($wrapped_lines =~ /$naked_lines/) {
+    #print "Found as substring\n";
+    exit 0;
+}
+# Are the naked lines exactly the same as the wrapped lines?
+elsif ($wrapped_lines eq $naked_lines) {
+    #print "Found equal\n";
+    exit 0;
+}
+else {
+    #print "Not found\n";
+    exit 1;
+}'
+EOF
+inside="$PERL inside.pl"
 
     wrapped="$CXX"
     case $wrapped in #(
@@ -10811,7 +10996,6 @@ if test "${ga_cv_mpicxx_naked+set}" = set; then :
 else
 
 versions="--version -v -V -qversion"
-inside="$srcdir/build-aux/inside.pl"
 found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
 if test "x$ga_cv_mpicxx_naked" = x; then :
@@ -10956,6 +11140,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpicxx_naked" >&5
 $as_echo "$ga_cv_mpicxx_naked" >&6; }
 
+rm -f inside.pl
 if test "x$ga_cv_mpi_naked" = xerror; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
 $as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
@@ -11802,6 +11987,98 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 if test x$with_mpi_wrappers = xyes; then :
   MPIF77="$F77"
 
+# Find perl.
+# Extract the first word of "perl", so it can be a program name with args.
+set dummy perl; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_path_PERL+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PERL in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PERL="$PERL" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_PERL="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PERL=$ac_cv_path_PERL
+if test -n "$PERL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL" >&5
+$as_echo "$PERL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+# Create inside.pl.
+rm -f inside.pl
+cat >inside.pl <<EOF
+'#!/usr/bin/perl
+$numargs = 0ARGV + 1;
+if ($numargs != 2) {
+    print "Usage: wrapped.txt naked.txt\n";
+    exit 1;
+}
+# Read each input file as a string (rather than a list).
+local $/=undef;
+open WRAPPED, "$ARGV0" or die "Could not open wrapped text file: $!";
+$wrapped_lines = <WRAPPED>;
+close WRAPPED;
+open NAKED, "$ARGV1" or die "Could not open naked text file: $!";
+$naked_lines = <NAKED>;
+close NAKED;
+# Replace newlines, + from wrapped and naked lines.
+$wrapped_lines =~ tr/\n+/ /;
+$naked_lines =~ tr/\n+/ /;
+# Remove whitespace from beginning of wrapped and naked lines.
+$wrapped_lines =~ s/^\s+//;
+$naked_lines =~ s/^\s+//;
+# Remove whitespace from end of wrapped and naked lines.
+$wrapped_lines =~ s/\s+$//;
+$naked_lines =~ s/\s+$//;
+# If either wrapped_lines or naked_lines are empty, this is an error.
+# It is assumed that the particular version string which created the input
+# files should generate SOMETHING.
+unless ($wrapped_lines) {
+    exit 1;
+}
+unless ($naked_lines) {
+    exit 1;
+}
+# Can the naked lines be found within the wrapped lines?
+if ($wrapped_lines =~ /$naked_lines/) {
+    #print "Found as substring\n";
+    exit 0;
+}
+# Are the naked lines exactly the same as the wrapped lines?
+elsif ($wrapped_lines eq $naked_lines) {
+    #print "Found equal\n";
+    exit 0;
+}
+else {
+    #print "Not found\n";
+    exit 1;
+}'
+EOF
+inside="$PERL inside.pl"
 
     wrapped="$F77"
     case $wrapped in #(
@@ -11821,7 +12098,6 @@ if test "${ga_cv_mpif77_naked+set}" = set; then :
 else
 
 versions="--version -v -V -qversion"
-inside="$srcdir/build-aux/inside.pl"
 found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
 if test "x$ga_cv_mpif77_naked" = x; then :
@@ -11966,6 +12242,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpif77_naked" >&5
 $as_echo "$ga_cv_mpif77_naked" >&6; }
 
+rm -f inside.pl
 if test "x$ga_cv_mpi_naked" = xerror; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
 $as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
