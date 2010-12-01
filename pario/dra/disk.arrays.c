@@ -47,6 +47,7 @@
 #include "dra.h"
 #include "draf2c.h"
 #include "drap.h"
+#include "papi.h"
 #include "ga.h"
 #include "global.h"
 #include "papi.h"
@@ -3296,7 +3297,7 @@ Integer FATR ndra_read_(Integer* g_a, Integer* d_a, Integer* request)
     dai_check_handleM(*d_a,"ndra_read");
     if(!dai_read_allowed(*d_a))dai_error("ndra_read: read not allowed",*d_a);
     pnga_inquire(g_a, &gtype, &ndim, gdims);
-    /* printf("%d: CAME After nga_inquire_internals!!\n", ga_nodeid_()); */
+    /* printf("%d: CAME After pnga_inquire!!\n", ga_nodeid_()); */
     if(DRA[handle].type != (int)gtype)dai_error("ndra_read: type mismatch",gtype);
     if(DRA[handle].ndim != ndim)dai_error("ndra_read: dimension mismatch",ndim);
     for (i=0; i<ndim; i++) {
