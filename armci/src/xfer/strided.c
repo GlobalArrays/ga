@@ -1788,25 +1788,4 @@ double PARMCI_GetValueDouble(void *src, int proc) {
 
 #endif
 
-#if 0
-/**
- * Register-Originated Get.
- */
-int ARMCI_GetValue(void *src, void *dst, int proc, int bytes) {
-  CHK_ERR_GET(src, dst, proc, bytes);
-  if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }
-  else _armci_rem_value(GET, src, dst, proc, bytes);
-  return 0;
-}
-
-/**
- * Non-Blocking register-originated get.
- */
-int ARMCI_NbGetValue(void *src, void *dst, int proc, int bytes, armci_hdl_t* usr_hdl) {
-  CHK_ERR_GET(src, dst, proc, bytes);
-  if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }
-  else _armci_nb_rem_value(GET, src, dst, proc, bytes, (armci_ihdl_t)usr_hdl);
-  return 0;
-}
-#endif
 
