@@ -2,7 +2,6 @@
 #   include "config.h"
 #endif
 
-
 /* DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -506,19 +505,6 @@ int PARMCI_Init()
 	 void* test_ptr_arr = malloc(sizeof(void *)*MAX_PROC);
 	 dassert(1,test_ptr_arr);
 	 PARMCI_Malloc(test_ptr_arr,256*1024*1024);
-#if 0
-       {
-          int i;
-          armci_region_shm_malloc(test_ptr_arr, 100000000);
-          *(long*)test_ptr_arr[armci_me]=10000+armci_me;
-          armci_msg_barrier();
-          for(i = 0; i < armci_clus_last -armci_clus_first+1; i++){
-             printf("for %d got ptr is %p\n", armci_clus_first+i,(long*)test_ptr_arr[i+armci_clus_first]);
-             printf("for %d got %ld\n",armci_clus_first+i, *(long*)test_ptr_arr[i+armci_clus_first]);
-          }
-          armci_msg_barrier();
-       }
-#endif
        PARMCI_Free(test_ptr_arr[armci_me]);
        free(test_ptr_arr);
        }
