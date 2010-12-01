@@ -173,8 +173,6 @@ void process_recv_completion_from_client(armci_ud_rank *h, cbuf *v);
 struct ibv_srq      *CLN_srq_hndl;
 struct ibv_srq      *SRV_srq_hndl;
 void post_recv(void);
-#if 0
-#endif
 struct Remote_Buf
 {
     char            **buf;
@@ -4147,10 +4145,10 @@ int loop=0;
 }
 
 
-/*************************END OF FILE UNUSED CODE BELOW********************/
 int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
 {
-    printf("\n%d:armci_pin_memory not implemented",armci_me);fflush(stdout);
+    fprintf("stderr, [%d]:armci_pin_memory not implemented\n",armci_me);
+    fflush(stderr);
     return 0;
 }
 
@@ -4675,18 +4673,8 @@ int open_hca(void)
 
 int create_cq(void)
 {
-#if 0
-    hca.comp_channel = ibv_create_comp_channel(hca.context);
-    hca.cq = ibv_create_cq(hca.context, 16000, NULL,
-            hca.comp_channel, 0);
-    printf("Created Completion channel\n");
-    if (ibv_req_notify_cq(hca.cq, 0)) {
-        fprintf(stderr,"could not notify requests\n");
-    }
-#else
     hca.cq = ibv_create_cq(hca.context, 16000, NULL,
                     NULL, 0);
-#endif
     if(!hca.cq) {
         fprintf(stderr, "Couldn't create CQ\n");
         return 1;
@@ -4936,9 +4924,6 @@ void setup_ud_channel()
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-#if 0 
-    test_connectivity(); 
-#endif
 }
 
 
@@ -5209,11 +5194,6 @@ void check_state_of_ib_connection(int proc, int force)
         if(ibv_post_send(conn.qp[0], &(v->desc.u.sr), &bad_wr)) {
             printf("Error posting send\n");
         }
-
-#if 0 
-        printf("me = %d, Connection created to process [%d]\n", 
-                armci_me, armci_clus_info[clus_id].master);
-#endif
 
         if (armci_me != armci_master) {
             while (con->state != QP_ACTIVE) {
