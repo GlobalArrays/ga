@@ -434,21 +434,31 @@ void armci_init_clusinfo()
 \*/
 int armci_clus_id(int p)
 {
-int from, to, found, c;
+    int from, to, found, c;
 
-    if(p<0 || p >= armci_nproc)armci_die("armci_clus_id: out of range",p);
+    if (p <0 || p >= armci_nproc)
+        armci_die("armci_clus_id: out of range",p);
 
-    if(p < armci_clus_first){ from = 0; to = armci_clus_me;}
-    else {from = armci_clus_me; to = armci_nclus;}
+    if (p < armci_clus_first){ 
+        from = 0; 
+        to = armci_clus_me;
+    }
+    else {
+        from = armci_clus_me; 
+        to = armci_nclus;
+    }
 
-    found = to-1;
-    for(c = from; c< to-1; c++)
-        if(p < armci_clus_info[c+1].master){
-              found=c;
-              break;
+    found = to - 1;
+
+    /* Binary search algorithm to be implemented,
+     * sequential search for now */
+    for(c = from; c < to - 1; c++)
+        if (p < armci_clus_info[c+1].master) {
+            found = c;
+            break;
         }
 
-    return (found);
+    return found;
 }
 
 
