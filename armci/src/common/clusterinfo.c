@@ -456,8 +456,12 @@ int from, to, found, c;
 \*/
 int armci_domain_nprocs(armci_domain_t domain, int id)
 {
-    if(id>= armci_nclus) armci_die2("armci domain error",id,armci_nclus);
-    if(id<0) id = armci_clus_me;
+    if(id >= armci_nclus) 
+        armci_die2("armci domain error",id,armci_nclus);
+    /* This is an error condition */
+    if(id < 0) {
+        fprintf(stderr,"[%d] Returned domain is invalid\n", armci_me);
+    }
     return armci_clus_info[id].nslave;
 }
 
@@ -472,14 +476,19 @@ int armci_domain_count(armci_domain_t domain)
 \*/
 int armci_domain_id(armci_domain_t domain, int glob_proc_id)
 {
-int id = glob_proc_id;
-    if(id<0 || id>= armci_nproc) armci_die2("armci domain error",id,armci_nproc);
+    int id = glob_proc_id;
+
+    if(id <0 || id >= armci_nproc)  {
+        armci_die2("armci domain error",id,armci_nproc);
+    }
+    
     return armci_clus_id(glob_proc_id);
 }
 
-/*\ return global ID of a process loc_proc_id in domain identified by id
+/* return global ID of a process loc_proc_id in domain identified by id
  *  armci_domain_nproc(id)< loc_proc_id >=0
-\*/
+ */
+
 int armci_domain_glob_proc_id(armci_domain_t domain, int id, int loc_proc_id)
 {
     if(id<0 || id>= armci_nclus) armci_die2("armci domain error",id,armci_nclus);
