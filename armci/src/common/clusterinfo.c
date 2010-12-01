@@ -2,9 +2,8 @@
 #   include "config.h"
 #endif
 
-/* $Id: clusterinfo.c,v 1.36.2.3 2007-06-13 00:46:13 vinod Exp $ */
 /****************************************************************************** 
-* file:    cluster.c
+* file:    clusterinfo.c
 * purpose: Determine cluster info i.e., number of machines and processes
 *          running on each of them.
 *
@@ -48,7 +47,7 @@
 
 /*  print info on how many cluster nodes detected */
 #ifdef CLUSTER
-#  define PRINT_CLUSTER_INFO 1
+#  define PRINT_CLUSTER_INFO 0
 #else
 #  define PRINT_CLUSTER_INFO 0
 #endif
@@ -241,7 +240,8 @@ static void process_hostlist(char *names)
     if(armci_me){
       /* allocate memory */ 
       armci_clus_info = (armci_clus_t*)malloc(armci_nclus*sizeof(armci_clus_t));
-      if(!armci_clus_info)armci_die("malloc failed for clusinfo",armci_nclus);
+      if(!armci_clus_info)
+          armci_die("malloc failed for clusinfo",armci_nclus);
     }
 
     len = sizeof(armci_clus_t)*armci_nclus;
@@ -268,7 +268,9 @@ static void process_hostlist(char *names)
 #endif
 
     armci_clus_first = armci_clus_info[armci_clus_me].master;
-    armci_clus_last = armci_clus_first +armci_clus_info[armci_clus_me].nslave-1;
+
+    armci_clus_last = armci_clus_first +
+        armci_clus_info[armci_clus_me].nslave-1;
 
 }
        
@@ -277,9 +279,9 @@ static void process_hostlist(char *names)
 \*/
 static char *substr_replace(char *haystack, char *needle, char *nail)
 {
-char *tmp, *pos, *first;
-size_t len=strlen(needle), nlen=strlen(nail),bytes;
-size_t left;
+    char *tmp, *pos, *first;
+    size_t len=strlen(needle), nlen=strlen(nail),bytes;
+    size_t left;
 
     pos = strstr(haystack,needle);
     if (pos ==NULL) return NULL;
@@ -322,22 +324,21 @@ static char *new_hostname(char *host)
 
 static void print_clus_info()
 {
-int i;
+    int i;
 
-  if(PRINT_CLUSTER_INFO && armci_nclus >1 && armci_me ==0){
+    if(PRINT_CLUSTER_INFO && armci_nclus > 1 && armci_me ==0){
 #if defined(DATA_SERVER) || defined(SERVER_THREAD) || defined(PORTALS)
-     printf("ARMCI configured for %d cluster nodes. Network protocol is '%s'.\n",
-            armci_nclus, network_protocol);
+        printf("ARMCI configured for %d cluster nodes. Network protocol is '%s'.\n",
+                armci_nclus, network_protocol);
 #else
-     printf("ARMCI configured for %d cluster nodes\n", armci_nclus);
+        printf("ARMCI configured for %d cluster nodes\n", armci_nclus);
 #endif
-     fflush(stdout);
-  }
+        fflush(stdout);
+    }
 
-  if(armci_me==0 && DEBUG) for(i=0;i<armci_nclus;i++)
-     printf("%s cluster:%d nodes:%d master=%d\n",armci_clus_info[i].hostname,i,
-                         armci_clus_info[i].nslave,armci_clus_info[i].master);
-
+    if(armci_me==0 && DEBUG) for(i=0;i<armci_nclus;i++)
+        printf("%s cluster:%d nodes:%d master=%d\n",armci_clus_info[i].hostname,i,
+                armci_clus_info[i].nslave,armci_clus_info[i].master);
 }
 
 void armci_init_clusinfo()
@@ -475,15 +476,13 @@ int armci_domain_nprocs(armci_domain_t domain, int id)
     return armci_clus_info[id].nslave;
 }
 
-/*\ return number of nodes in diven domain
-\*/
+/* return number of nodes in diven domain */
 int armci_domain_count(armci_domain_t domain)
 {
     return armci_nclus;
 }
 
-/*\ return domain ID of the specified process
-\*/
+/* return domain ID of the specified process */
 int armci_domain_id(armci_domain_t domain, int glob_proc_id)
 {
     int id = glob_proc_id;
@@ -501,21 +500,26 @@ int armci_domain_id(armci_domain_t domain, int glob_proc_id)
 
 int armci_domain_glob_proc_id(armci_domain_t domain, int id, int loc_proc_id)
 {
-    if(id<0 || id>= armci_nclus) armci_die2("armci domain error",id,armci_nclus);
+    if(id <0 || id >= armci_nclus) 
+        armci_die2("armci domain error",id,armci_nclus);
+
     if(loc_proc_id<0 || loc_proc_id>= armci_clus_info[id].nslave)
-           armci_die2("armci domain proc error",loc_proc_id,armci_clus_info[id].nslave);
+        armci_die2("armci domain proc error",
+                loc_proc_id,armci_clus_info[id].nslave);
+
     return (armci_clus_info[id].master + loc_proc_id);
 }
 
-/*\ return ID of domain that the calling process belongs to
-\*/
+/* return ID of domain that the calling process belongs to
+ */
 int armci_domain_my_id(armci_domain_t domain)
 {
-    return(armci_clus_me);
+    return armci_clus_me;
 }
 
+/* Check whether the oricess is in the same domain */
 int armci_domain_same_id (armci_domain_t domain, int proc)
 {
   int rc = SAMECLUSNODE(proc);
-  return(rc);
+  return rc;
 }
