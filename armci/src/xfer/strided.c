@@ -1754,38 +1754,56 @@ int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t* usr_hdl
   return 0;
 }
 
-#if 1
 /** 
  * Register-Originated Get.
  */
-int PARMCI_GetValueInt(void *src, int proc) {
-  int dst;
-  if( SAMECLUSNODE(proc) ) return *(int *)src;
-  else _armci_rem_value(GET, src, &dst, proc, sizeof(int));
-  return dst;
+int PARMCI_GetValueInt(void *src, int proc) 
+{
+    int dst;
+
+    if (SAMECLUSNODE(proc)) 
+        return *(int *)src;
+    else 
+        _armci_rem_value(GET, src, &dst, proc, sizeof(int));
+
+    return dst;
 }
 
-long PARMCI_GetValueLong(void *src, int proc) {
-  long dst;
-  if( SAMECLUSNODE(proc) ) return *(long *)src;
-  else _armci_rem_value(GET, src, &dst, proc, sizeof(long));
-  return dst;
+long PARMCI_GetValueLong(void *src, int proc) 
+{
+    long dst;
+
+    if (SAMECLUSNODE(proc)) 
+        return *(long *)src;
+    else 
+        _armci_rem_value(GET, src, &dst, proc, sizeof(long));
+
+    return dst;
 }
 
-float PARMCI_GetValueFloat(void *src, int proc) {
-  float dst;
-  if( SAMECLUSNODE(proc) ) return *(float *)src;
-  else _armci_rem_value(GET, src, &dst, proc, sizeof(float));
-  return dst;
+float PARMCI_GetValueFloat(void *src, int proc) 
+{
+    float dst;
+
+    if (SAMECLUSNODE(proc)) 
+        return *(float *)src;
+    else 
+        _armci_rem_value(GET, src, &dst, proc, sizeof(float));
+
+    return dst;
 }
 
-double PARMCI_GetValueDouble(void *src, int proc) {
+double PARMCI_GetValueDouble(void *src, int proc) 
+{
   double dst;
-  if( SAMECLUSNODE(proc) ) return *(double *)src;
-  else _armci_rem_value(GET, src, &dst, proc, sizeof(double));
+ 
+  if(SAMECLUSNODE(proc)) 
+      return *(double *)src;
+  else 
+      _armci_rem_value(GET, src, &dst, proc, sizeof(double));
+  
   return dst;
 }
 
-#endif
 
 
