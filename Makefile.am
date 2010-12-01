@@ -1113,6 +1113,22 @@ python: install
 endif
 
 ##############################################################################
+# gparrays
+#
+libga_la_SOURCES += gparrays/src/gpbase.c
+libga_la_SOURCES += gparrays/src/gpbase.h
+libga_la_SOURCES += gparrays/src/gpcapi.c
+libga_la_SOURCES += gparrays/src/gpfapi.c
+libga_la_SOURCES += gparrays/src/gponesided.c
+libga_la_SOURCES += gparrays/src/gppapi.h
+
+check_PROGRAMS += gparrays/testing/test
+
+gparrays_testing_test_SOURCES = gparrays/testing/test.F
+
+gparrays_testing_test_LDFLAGS = $(FLDFLAGS)
+
+##############################################################################
 # armci
 SUBDIRS = armci .
 
