@@ -352,7 +352,8 @@ int i;
 
 /*****************END FUNCTIONS TO CHECK VAPI RETURN STATUS********************/
 
-void armci_recv_complete(struct ibv_recv_wr *rcv_dscr, char *from, int numofrecvs) /*needs work*/
+void armci_recv_complete(struct ibv_recv_wr *rcv_dscr, 
+        char *from, int numofrecvs) 
 {
 int rc=0;
 struct ibv_wc pdscr1;
@@ -415,93 +416,93 @@ void armci_vapi_set_mark_buf_send_complete(int id)
 
 void armci_send_complete(struct ibv_send_wr *snd_dscr, char *from,int numoftimes)
 {
-int rc=0;
-struct ibv_wc pdscr1;
-struct ibv_wc *pdscr = &pdscr1;
-sr_descr_t *sdscr_arr;
-vapi_nic_t *nic;
-int debug,i;
+    int rc=0;
+    struct ibv_wc pdscr1;
+    struct ibv_wc *pdscr = &pdscr1;
+    sr_descr_t *sdscr_arr;
+    vapi_nic_t *nic;
+    int debug,i;
 
- pdscr1.status = IBV_WC_SUCCESS;
-/*  bzero(&pdscr1, sizeof(pdscr1)); */
-/* printf("%d: Waiting for send with wr_id=%d to complete\n", armci_me, snd_dscr->wr_id); */
-/* fflush(stdout); */
+    pdscr1.status = IBV_WC_SUCCESS;
+    /*  bzero(&pdscr1, sizeof(pdscr1)); */
+    /* printf("%d: Waiting for send with wr_id=%d to complete\n", armci_me, snd_dscr->wr_id); */
+    /* fflush(stdout); */
 
     if(SERVER_CONTEXT){
-       sdscr_arr = armci_vapi_serv_nbsdscr_array;
-       nic=CLN_nic;
-       debug = DEBUG_SERVER;
+        sdscr_arr = armci_vapi_serv_nbsdscr_array;
+        nic=CLN_nic;
+        debug = DEBUG_SERVER;
     }
     else{
-       sdscr_arr = armci_vapi_client_nbsdscr_array;
-       nic=SRV_nic;
-       debug = DEBUG_CLN;
+        sdscr_arr = armci_vapi_client_nbsdscr_array;
+        nic=SRV_nic;
+        debug = DEBUG_CLN;
     }
 
     if(debug) {
-       printf("\n%d%s:send_complete called from %s id=%ld nt=%d\n",armci_me,
-               ((SERVER_CONTEXT)?"(s)":" "),from,snd_dscr->wr_id,numoftimes);
-       fflush(stdout);
+        printf("\n%d%s:send_complete called from %s id=%ld nt=%d\n",armci_me,
+                ((SERVER_CONTEXT)?"(s)":" "),from,snd_dscr->wr_id,numoftimes);
+        fflush(stdout);
     }
     for(i=0;i<numoftimes;i++){
-    do{
-       while(rc == 0){  
+        do{
+            while(rc == 0){  
 #if defined(PEND_BUFS) 
-	 if(SERVER_CONTEXT)
-	   rc = ibv_poll_cq(nic->rcq,1,pdscr);
-	 else
+                if(SERVER_CONTEXT)
+                    rc = ibv_poll_cq(nic->rcq,1,pdscr);
+                else
 #endif
-	   rc = ibv_poll_cq(nic->scq,1, pdscr);
-       }  
-       dassertp(DBG_POLL|DBG_ALL,rc>=0,
-		("%d:rc=%d status=%d id=%d (%d/%d)",armci_me,
-		 rc,pdscr->status,(int)pdscr->wr_id,i,numoftimes));
-       dassert1(1,pdscr->status==IBV_WC_SUCCESS,pdscr->status);
-/*       printf("%d: Obtained completion of wr_id=%d\n", armci_me, pdscr->wr_id); */
-/*       fflush(stdout); */
-       if(SERVER_CONTEXT){
-         if(debug)printf("%d:completed id %d i=%d\n",armci_me,pdscr->wr_id,i);
-         if(pdscr->wr_id >=DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END){
-           sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends--;
-           if(sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends==0)
-             sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].tag=0;
-         }
-         else if(pdscr->wr_id >=armci_nproc && pdscr->wr_id < 2*armci_nproc){
-                 /*its coming from send_data_to_client just return*/
-         }
+                    rc = ibv_poll_cq(nic->scq,1, pdscr);
+            }  
+            dassertp(DBG_POLL|DBG_ALL,rc>=0,
+                    ("%d:rc=%d status=%d id=%d (%d/%d)",armci_me,
+                     rc,pdscr->status,(int)pdscr->wr_id,i,numoftimes));
+            dassert1(1,pdscr->status==IBV_WC_SUCCESS,pdscr->status);
+            /*       printf("%d: Obtained completion of wr_id=%d\n", armci_me, pdscr->wr_id); */
+            /*       fflush(stdout); */
+            if(SERVER_CONTEXT){
+                if(debug)printf("%d:completed id %d i=%d\n",armci_me,pdscr->wr_id,i);
+                if(pdscr->wr_id >=DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END){
+                    sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends--;
+                    if(sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends==0)
+                        sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].tag=0;
+                }
+                else if(pdscr->wr_id >=armci_nproc && pdscr->wr_id < 2*armci_nproc){
+                    /*its coming from send_data_to_client just return*/
+                }
 #if defined(PEND_BUFS)
-	 else if(pdscr->wr_id >= DSCRID_IMMBUF_RESP && pdscr->wr_id>DSCRID_IMMBUF_RESP_END) {
-	   /*send from server to client completed*/
-	 }
+                else if(pdscr->wr_id >= DSCRID_IMMBUF_RESP && pdscr->wr_id>DSCRID_IMMBUF_RESP_END) {
+                    /*send from server to client completed*/
+                }
 #endif
-         else armci_die("server send complete got weird id",pdscr->wr_id);
-       }
-       else{
-         if(debug)printf("%d:completed id %d i=%d\n",armci_me,pdscr->wr_id,i);
-         if(pdscr->wr_id >=DSCRID_FROMBUFS && pdscr->wr_id < DSCRID_FROMBUFS_END) {
-/*	   printf("%d: marking send buffer %d as complete\n", armci_me, pdscr->wr_id);*/
-           mark_buf_send_complete[pdscr->wr_id]=1;
-	 }
-         else if(pdscr->wr_id >=DSCRID_NBDSCR && pdscr->wr_id < DSCRID_NBDSCR_END){
-           sdscr_arr[pdscr->wr_id-DSCRID_NBDSCR].numofsends--;
-           if(sdscr_arr[pdscr->wr_id-DSCRID_NBDSCR].numofsends==0)
-	     sdscr_arr[pdscr->wr_id-DSCRID_NBDSCR].tag=0;
-         }
-         else if(pdscr->wr_id >=DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END){
-           sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends--;
-           if(sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends==0)
-             sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].tag=0;
-         }
-         else if(pdscr->wr_id == (DSCRID_SCATGAT + MAX_PENDING)){
-/* 	   printf("%d: completed a blocking scatgat descriptor\n", armci_me); */
-           /*this was from a blocking call, do nothing*/
-           continue;
-         }
-         else armci_die("client send complete got weird id",pdscr->wr_id);
-       }
-       rc = 0;
-    }while(pdscr->wr_id!=snd_dscr->wr_id);
-       rc = 0;
+                else armci_die("server send complete got weird id",pdscr->wr_id);
+            }
+            else{
+                if(debug)printf("%d:completed id %d i=%d\n",armci_me,pdscr->wr_id,i);
+                if(pdscr->wr_id >=DSCRID_FROMBUFS && pdscr->wr_id < DSCRID_FROMBUFS_END) {
+                    /*	   printf("%d: marking send buffer %d as complete\n", armci_me, pdscr->wr_id);*/
+                    mark_buf_send_complete[pdscr->wr_id]=1;
+                }
+                else if(pdscr->wr_id >=DSCRID_NBDSCR && pdscr->wr_id < DSCRID_NBDSCR_END){
+                    sdscr_arr[pdscr->wr_id-DSCRID_NBDSCR].numofsends--;
+                    if(sdscr_arr[pdscr->wr_id-DSCRID_NBDSCR].numofsends==0)
+                        sdscr_arr[pdscr->wr_id-DSCRID_NBDSCR].tag=0;
+                }
+                else if(pdscr->wr_id >=DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END){
+                    sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends--;
+                    if(sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].numofsends==0)
+                        sdscr_arr[pdscr->wr_id-DSCRID_SCATGAT].tag=0;
+                }
+                else if(pdscr->wr_id == (DSCRID_SCATGAT + MAX_PENDING)){
+                    /* 	   printf("%d: completed a blocking scatgat descriptor\n", armci_me); */
+                    /*this was from a blocking call, do nothing*/
+                    continue;
+                }
+                else armci_die("client send complete got weird id",pdscr->wr_id);
+            }
+            rc = 0;
+        }while(pdscr->wr_id!=snd_dscr->wr_id);
+        rc = 0;
     }
 }
 
