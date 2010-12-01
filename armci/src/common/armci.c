@@ -409,7 +409,8 @@ int PARMCI_Init_args(int *argc, char ***argv)
     {
        MPI_Comm parent_comm;
        MPI_Comm_get_parent(&parent_comm);
-       if (parent_comm != MPI_COMM_NULL) armci_mpi2_server();
+       if (parent_comm != MPI_COMM_NULL) 
+           armci_mpi2_server();
     }
 #endif
 
@@ -419,7 +420,8 @@ int PARMCI_Init_args(int *argc, char ***argv)
     return PARMCI_Init();
 }
 
-void _armci_test_connections() {
+void _armci_test_connections() 
+{
   int i;
   int nprocs = armci_msg_nproc();
   int **bufs = (int **)malloc(nprocs*sizeof(int*));
@@ -522,38 +524,6 @@ int PARMCI_Init()
     shmem_init();
 #endif
 
-#ifdef QUADRICS
-#   ifdef DECOSF
-    {
-       char *tmp = getenv("SHMEM_SMP_ENABLE");
-       if(tmp == NULL || strcmp((const char *)tmp,"0"))
-           printf("WARNING: On Tru64 (Compaq Alphaserver) it might be required to set the Quadrics environment variable SHMEM_SMP_ENABLE=0 as a work around for shmem_fadd problem.\n");
-    }
-#   endif
-
-    /* Ensure we're linked with compatible software */
-    if (!elan_checkVersion (ELAN_VERSION))
-        fprintf(stderr,
-                "libelan version '%s' incompatible with '%s' ('%s' expected)",
-                ELAN_VERSION, elan_version(), ELAN_VERSION);
-
-#ifdef QSNETLIBS_VERSION_CODE
-#   if QSNETLIBS_VERSION_CODE < QSNETLIBS_VERSION(1,4,6)
-       elan_baseInit();
-#   else
-       elan_baseInit(0);
-#   endif
-#endif
-
-#   ifdef LIBELAN_ATOMICS
-    {
-        ELAN_QUEUE *q = elan_gallocQueue(elan_base, elan_base->allGroup);
-        a = elan_atomicInit(elan_base->state, q, 16, 0);
-    }
-#   else
-       shmem_init();
-#   endif
-#endif /* QUADRICS */
 
 #ifdef CRAY_SHMEM
     shmem_init();
@@ -568,7 +538,9 @@ int PARMCI_Init()
 
 #ifndef BLRTS
     /* trap signals to cleanup ARMCI system resources in case of crash */
-    if(armci_me==armci_master) ARMCI_ParentTrapSignals();
+    if(armci_me == armci_master) {
+        ARMCI_ParentTrapSignals();
+    }
     ARMCI_ChildrenTrapSignals();
 #endif
 

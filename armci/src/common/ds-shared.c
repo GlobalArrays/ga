@@ -703,13 +703,13 @@ void armci_rcv_strided_data(int proc, request_header_t* msginfo, int datalen,
 \*/
 void armci_rem_ack(int clus)
 {
-int bufsize = sizeof(request_header_t)+sizeof(int);
-int destproc = 0;
-request_header_t *msginfo;
-destproc = SERVER_NODE(clus);
-msginfo = (request_header_t *)GET_SEND_BUFFER(bufsize,ACK,destproc);
+    int bufsize = sizeof(request_header_t)+sizeof(int);
+    int destproc = 0;
+    request_header_t *msginfo;
+    destproc = SERVER_NODE(clus);
+    msginfo = (request_header_t *)GET_SEND_BUFFER(bufsize,ACK,destproc);
 
- bzero(msginfo, sizeof(request_header_t));
+    bzero(msginfo, sizeof(request_header_t));
     msginfo->dscrlen = 0;
     msginfo->from  = armci_me;
     msginfo->to    = SERVER_NODE(clus);
@@ -721,7 +721,7 @@ msginfo = (request_header_t *)GET_SEND_BUFFER(bufsize,ACK,destproc);
 #endif
 
     if(DEBUG_){
-       printf("%d(c):sending ACKreq to %d clus=%d\n",armci_me,msginfo->to,clus);
+        printf("%d(c):sending ACKreq to %d clus=%d\n",armci_me,msginfo->to,clus);
         fflush(stdout);
     }
 
