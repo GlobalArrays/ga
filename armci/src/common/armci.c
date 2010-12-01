@@ -113,10 +113,6 @@ int armci_prot_switch_preop = -1;
    void armci_init_memlock();
 #endif
 
-#ifdef LIBELAN_ATOMICS
-ELAN_ATOMIC *a;
-#warning "Enabling new atomics"
-#endif
 
 typedef struct{
   int sent;
@@ -163,11 +159,6 @@ void ARMCI_Cleanup()
 void armci_notify_init()
 {
   int rc,bytes=sizeof(armci_notify_t)*armci_nproc;
-
-#ifdef DOELAN4
-  armci_elan_notify_init();
-  return;
-#endif
 
   _armci_notify_arr=
         (armci_notify_t**)malloc(armci_nproc*sizeof(armci_notify_t*));
@@ -891,9 +882,9 @@ int armci_notify(int proc)
 }
 
 
-/*\ blocks until received count becomes >= waited count
+/* blocks until received count becomes >= waited count
  *  return received count and store waited count in *pval
-\*/
+ */
 int armci_notify_wait(int proc,int *pval)
 {
   int retval;
@@ -901,7 +892,6 @@ int armci_notify_wait(int proc,int *pval)
   armci_profile_start(ARMCI_PROF_NOTIFY);
 #endif
 
-  {
      long loop=0;
      armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
      pnotify->waited++;
@@ -911,7 +901,6 @@ int armci_notify_wait(int proc,int *pval)
      }
      *pval = pnotify->waited;
      retval=pnotify->received;
-  }
 #ifdef ARMCI_PROFILE
   armci_profile_stop(ARMCI_PROF_NOTIFY);
 #endif
