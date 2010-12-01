@@ -2,7 +2,6 @@
 #   include "config.h"
 #endif
 
-/* $Id: armci.c,v 1.114.2.17 2007-08-30 22:58:18 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -219,54 +218,6 @@ void armci_abort(int code)
 #endif
     armci_msg_abort(code);
 }
-
-
-#if 0
-/*more informative program termination in armci.h*/
-void armci_die(char *msg, int code)
-{
-    void *bt[100];
-
-    if(_armci_terminating)return;
-    else _armci_terminating=1;
-
-    if(SERVER_CONTEXT){
-       fprintf(stdout,"%d(s):%s: %d\n",armci_me, msg, code); fflush(stdout);
-       fprintf(stderr,"%d(s):%s: %d\n",armci_me, msg, code);
-    }else{
-      fprintf(stdout,"%d:%s: %d\n",armci_me, msg, code); fflush(stdout);
-      fprintf(stderr,"%d:%s: %d\n",armci_me, msg, code);
-    }
-
-#ifdef PRINT_BT
-    backtrace_symbols_fd(bt, backtrace(bt, 100), 2);
-#endif
-
-    armci_abort(code);
-}
-
-void armci_die2(char *msg, int code1, int code2)
-{
-    void *bt[100];
-
-    if(_armci_terminating)return;
-    else _armci_terminating=1;
-
-    if(SERVER_CONTEXT){
-      fprintf(stdout,"%d(s):%s: (%d,%d)\n",armci_me,msg,code1,code2);
-      fflush(stdout);
-      fprintf(stderr,"%d(s):%s: (%d,%d)\n",armci_me,msg,code1,code2);
-    }else{
-      fprintf(stdout,"%d:%s: (%d,%d)\n",armci_me,msg,code1,code2);
-      fflush(stdout);
-      fprintf(stderr,"%d:%s: (%d,%d)\n",armci_me,msg,code1,code2);
-    }
-#ifdef PRINT_BT
-        backtrace_symbols_fd(bt, backtrace(bt, 100), 2);
-#endif
-    armci_abort(code1);
-}
-#endif
 
 
 /*For now, until no code requires a function pointer to ARMCI_Error
