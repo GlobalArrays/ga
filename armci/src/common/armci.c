@@ -585,7 +585,7 @@ int PARMCI_Init()
 
     /* NOTE: FOR PROCESS-BASED DATA SERVER WE CANNOT call PARMCI_Malloc yet */
 
-#   if defined(DATA_SERVER) || defined(ELAN_ACC)
+#   if defined(DATA_SERVER) 
        if(armci_nclus >1) 
            armci_start_server();
 #   endif
@@ -880,17 +880,6 @@ void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle) {
 
 int armci_notify(int proc)
 {
-#ifdef DOELAN4
-  if(proc==armci_me){
-    return 0;
-  }
-#endif
-#if defined(GM) || (defined(DOELAN4) && defined(ELAN_ACC))
-  {
-    extern int armci_inotify_proc(int);
-    return(armci_inotify_proc(proc));
-  }
-#else
    armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
    pnotify->sent++;
 # ifdef MEM_FENCE
@@ -899,7 +888,6 @@ int armci_notify(int proc)
    PARMCI_Put(&pnotify->sent,&(_armci_notify_arr[proc]+armci_me)->received, 
              sizeof(pnotify->sent),proc);
    return(pnotify->sent);
-#endif
 }
 
 
@@ -912,24 +900,7 @@ int armci_notify_wait(int proc,int *pval)
 #ifdef ARMCI_PROFILE
   armci_profile_start(ARMCI_PROF_NOTIFY);
 #endif
-#ifdef DOELAN4
-  if(proc==armci_me){
-#ifdef MEM_FENCE
-       MEM_FENCE;
-#endif
-#ifdef ARMCI_PROFILE
-    armci_profile_stop(ARMCI_PROF_NOTIFY);
-#endif
-    return 0;
-  }
-#endif
 
-#if defined(GM) || (defined(DOELAN4) && defined(ELAN_ACC))
-  {
-     extern int armci_inotify_wait(int,int*);
-     retval=armci_inotify_wait(proc,pval);
-  }
-#else
   {
      long loop=0;
      armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
@@ -941,8 +912,6 @@ int armci_notify_wait(int proc,int *pval)
      *pval = pnotify->waited;
      retval=pnotify->received;
   }
-#endif
-
 #ifdef ARMCI_PROFILE
   armci_profile_stop(ARMCI_PROF_NOTIFY);
 #endif
