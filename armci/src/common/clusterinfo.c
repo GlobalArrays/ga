@@ -52,22 +52,10 @@
 #  define PRINT_CLUSTER_INFO 0
 #endif
 
-#if defined(GM)
-    static const char *network_protocol="Myrinet GM";
-#elif defined(VIA)
-    static const char *network_protocol="VIA";
-#elif defined(MELLANOX)
-    static const char *network_protocol="Mellanox Verbs API";
-#elif defined(OPENIB)
+#if defined(OPENIB)
     static const char *network_protocol="OpenIB Verbs API";
-#elif defined(DOELAN4)
-    static const char *network_protocol="Quadrics ELAN-4";
-#elif defined(QUADRICS)
-    static const char *network_protocol="Quadrics ELAN-3";
 #elif defined(PM)
     static const char *network_protocol="Score PM";
-#elif defined(PORTALS)
-    static const char *network_protocol="PORTALS";
 #elif defined(MPI_SPAWN)
     static const char *network_protocol="MPI-SPAWN";
 #else
