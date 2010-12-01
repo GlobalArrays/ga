@@ -107,11 +107,11 @@ void PARMCI_AllFence()
 #elif defined(BGML)
     BGML_WaitAll();
 #elif defined(LAPI) || defined(CLUSTER)
-#if defined(GM) && !defined(ACK_FENCE)
-    _armci_amina_allfence(); 
-#else
-    { int p; for(p=0;p<armci_nproc;p++)PARMCI_Fence(p); }
-#endif
+    int p;
+
+    for(p = 0;p < armci_nproc; p++) {
+        PARMCI_Fence(p); 
+    }
 #endif
 #ifdef ARMCI_PROFILE
     armci_profile_stop(ARMCI_PROF_ALLFENCE);
@@ -124,7 +124,8 @@ void PARMCI_AllFence()
 
 void PARMCI_Barrier()
 {
-    if(armci_nproc==1)return;
+    if (armci_nproc==1)
+        return;
 #ifdef ARMCI_PROFILE
     armci_profile_start(ARMCI_PROF_BARRIER);
 #endif
