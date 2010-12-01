@@ -162,7 +162,8 @@ static void process_hostlist(char *names)
 
       /* allocate memory */ 
       armci_clus_info = (armci_clus_t*)malloc(armci_nclus*sizeof(armci_clus_t));
-      if(!armci_clus_info)armci_die("malloc failed for clusinfo",armci_nclus);
+      if(!armci_clus_info)
+          armci_die("malloc failed for clusinfo",armci_nclus);
 
       /* fill the data structure  -- go through the list again */ 
       s=names;
@@ -179,34 +180,17 @@ static void process_hostlist(char *names)
 #ifdef    CHECK_NODE_NAMES
           /* need consecutive task id allocated on the same node
            * the current test only compares hostnames against first cluster */
-          if(cluster) if(!strcmp(master,armci_clus_info[0].hostname)){
+          if(cluster) 
+              if(!strcmp(master,armci_clus_info[0].hostname)){
                /* we have seen that hostname before */
-               fprintf(stderr, "\nIt appears that tasks allocated on the same");
-               fprintf(stderr, " host machine do not have\n");
-               fprintf(stderr, "consecutive message-passing IDs/numbers. ");
-               fprintf(stderr,"This is not acceptable \nto the ARMCI library ");
-               fprintf(stderr,"as it prevents SMP optimizations and would\n");
-               fprintf(stderr,"lead to poor resource utilization.\n\n");
-               fprintf(stderr,"Please contact your System Administrator ");
-               fprintf(stderr,"or, if you can, modify the ");
-#              if defined(MPI)
-                 fprintf(stderr,"MPI");
-#              elif defined(TCGMSG)
-                 fprintf(stderr,"TCGMSG");
-#              elif defined(PVM)
-                 fprintf(stderr,"PVM");
-#              endif
-               fprintf(stderr,"\nmessage-passing job startup configuration.\n\n");
-#ifdef HITACHI
-               fprintf(stderr,"On Hitachi it can be done by setting environment variable MPIR_RANK_NO_ROUND, for example\n  setenv MPIR_RANK_NO_ROUND yes\n\n");
-#endif
-               sleep(1);
+               fprintf(stderr, "ARMCI supports block process mapping only\n");
                armci_die("Cannot run: improper task to host mapping!",0); 
           }
 #endif
           cluster++;
 
-        }else{
+        }
+        else{
           /* the process is still on the same host */
           armci_clus_info[cluster-1].nslave++;
         }
