@@ -71,7 +71,7 @@ void FATR ga_zero_(Integer *g_a)
   gai_check_handle(g_a, "ga_zero");
   GA_PUSH_NAME("ga_zero");
 
-  num_blocks = ga_total_blocks_(g_a);
+  num_blocks = pnga_total_blocks(g_a);
 
   pnga_inquire(g_a, &type, &ndim, dims);
   if (num_blocks < 0) {
@@ -260,8 +260,8 @@ int local_sync_begin,local_sync_end,use_put;
    me_b = pnga_pgroup_nodeid(&b_grp);
    anproc = pnga_get_pgroup_size(&a_grp);
    bnproc = pnga_get_pgroup_size(&b_grp);
-   num_blocks_a = ga_total_blocks_(g_a);
-   num_blocks_b = ga_total_blocks_(g_b);
+   num_blocks_a = pnga_total_blocks(g_a);
+   num_blocks_b = pnga_total_blocks(g_b);
    if (anproc <= bnproc) {
      use_put = 1;
    } else {
@@ -462,8 +462,8 @@ Integer bndim, bdims[MAXDIM];
    me = pnga_pgroup_nodeid(&a_grp);
 
    /* Check to see if either GA is block cyclic distributed */
-   num_blocks_a = ga_total_blocks_(g_a);
-   num_blocks_b = ga_total_blocks_(g_b);
+   num_blocks_a = pnga_total_blocks(g_a);
+   num_blocks_b = pnga_total_blocks(g_b);
    if (num_blocks_a >= 0 || num_blocks_b >= 0) {
      pnga_inquire(g_a, &type, &andim, adims);
      pnga_inquire(g_b, &type, &bndim, bdims);
@@ -744,7 +744,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
 
   gai_check_handle(g_a, "ga_scale");
   GA_PUSH_NAME("ga_scale");
-  num_blocks = ga_total_blocks_(g_a);
+  num_blocks = pnga_total_blocks(g_a);
 
   pnga_inquire(g_a, &type, &ndim, dims);
   if (num_blocks < 0) {
@@ -938,8 +938,8 @@ int local_sync_begin,local_sync_end;
    if((pnga_compare_distr(g_a,g_b) == FALSE) ||
       (pnga_compare_distr(g_a,g_c) == FALSE) ||
        pnga_has_ghosts(g_a) || pnga_has_ghosts(g_b) || pnga_has_ghosts(g_c) ||
-       ga_total_blocks_(g_a) > 0 || ga_total_blocks_(g_b) > 0 ||
-       ga_total_blocks_(g_c) > 0) {
+       pnga_total_blocks(g_a) > 0 || pnga_total_blocks(g_b) > 0 ||
+       pnga_total_blocks(g_c) > 0) {
        /* distributions not identical */
        pnga_inquire(g_a, &type, &andim, adims);
        pnga_inquire(g_b, &type, &bndim, bdims);
@@ -1186,7 +1186,7 @@ char *ptr_tmp, *ptr_a;
     if(bndim != 2 || andim != 2) pnga_error("dimension must be 2",0);
     if(atype != btype ) pnga_error("array type mismatch ", 0L);
 
-    num_blocks_a = ga_total_blocks_(g_a);
+    num_blocks_a = pnga_total_blocks(g_a);
 
     if (num_blocks_a < 0) {
       pnga_distribution(g_a, &me, lo, hi);

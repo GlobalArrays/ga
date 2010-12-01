@@ -416,9 +416,13 @@ EXT void FATR nga_set_irreg_distr_(INT *g_a, INT *map, INT *nblock);
 EXT void FATR nga_set_irreg_flag_(INT *g_a, LOG *flag);
 EXT void FATR nga_set_memory_limit_(INT *mem_limit);
 EXT void FATR nga_set_pgroup_(INT *g_a, INT *p_handle);
+EXT void FATR nga_set_restricted_(INT *g_a, INT list[], INT *size);
+EXT void FATR nga_set_restricted_range_(INT *g_a, INT *lo_proc, INT *hi_proc);
 EXT void FATR nga_strided_acc_(INT *g_a, INT *lo, INT *hi, INT *skip, void *buf, INT *ld, void *alpha);
 EXT void FATR nga_strided_get_(INT *g_a, INT *lo, INT *hi, INT *skip, void *buf, INT *ld);
 EXT void FATR nga_strided_put_(INT *g_a, INT *lo, INT *hi, INT *skip, void *buf, INT *ld);
+EXT void FATR nga_terminate_( void);
+EXT INT  FATR nga_total_blocks_( INT *g_a );
 EXT LOG  FATR nga_update_ghost_dir_(INT *g_a, INT *idim, INT *idir, LOG *flag);
 EXT void FATR nga_zero_patch_(INT *g_a, INT *lo, INT *hi);
 

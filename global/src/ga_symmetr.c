@@ -62,7 +62,7 @@ ga_symmetrize_(Integer *g_a) {
 
   GA_PUSH_NAME("ga_symmetrize");
   
-  num_blocks_a = ga_total_blocks_(g_a);
+  num_blocks_a = pnga_total_blocks(g_a);
 
   pnga_inquire(g_a, &type, &ndim, dims);
 

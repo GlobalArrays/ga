@@ -126,7 +126,16 @@ void NGA_Initialize()
 
 void GA_Terminate() 
 {
-    ga_terminate_();
+    wnga_terminate();
+    
+    _ga_argc = NULL;
+    _ga_argv = NULL;
+    _ga_initialize_args = 0;
+}
+
+void NGA_Terminate() 
+{
+    wnga_terminate();
     
     _ga_argc = NULL;
     _ga_argv = NULL;
@@ -677,7 +686,21 @@ void GA_Set_restricted(int g_a, int list[], int size)
     _ga_map_capi = (Integer*)malloc(size * sizeof(Integer));
     for (i=0; i<size; i++)
        _ga_map_capi[i] = (Integer)list[i];
-    ga_set_restricted_(&aa,_ga_map_capi,&asize);
+    wnga_set_restricted(&aa,_ga_map_capi,&asize);
+    free(_ga_map_capi);
+}
+
+void NGA_Set_restricted(int g_a, int list[], int size)
+{
+    Integer aa;
+    Integer asize = (Integer)size;
+    int i;
+    Integer *_ga_map_capi;
+    aa = (Integer)g_a;
+    _ga_map_capi = (Integer*)malloc(size * sizeof(Integer));
+    for (i=0; i<size; i++)
+       _ga_map_capi[i] = (Integer)list[i];
+    wnga_set_restricted(&aa,_ga_map_capi,&asize);
     free(_ga_map_capi);
 }
 
@@ -687,14 +710,30 @@ void GA_Set_restricted_range(int g_a, int lo_proc, int hi_proc)
     aa = (Integer)g_a;
     lo = (Integer)lo_proc;
     hi = (Integer)hi_proc;
-    ga_set_restricted_range_(&aa,&lo,&hi);
+    wnga_set_restricted_range(&aa,&lo,&hi);
+}
+
+void NGA_Set_restricted_range(int g_a, int lo_proc, int hi_proc)
+{
+    Integer aa, lo, hi;
+    aa = (Integer)g_a;
+    lo = (Integer)lo_proc;
+    hi = (Integer)hi_proc;
+    wnga_set_restricted_range(&aa,&lo,&hi);
 }
 
 int GA_Total_blocks(int g_a)
 {
     Integer aa;
     aa = (Integer)g_a;
-    return (int)ga_total_blocks_(&aa);
+    return (int)wnga_total_blocks(&aa);
+}
+
+int NGA_Total_blocks(int g_a)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    return (int)wnga_total_blocks(&aa);
 }
 
 void GA_Get_proc_index(int g_a, int iproc, int index[])

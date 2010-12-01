@@ -1069,6 +1069,54 @@ void FATR nga_set_pgroup_(Integer *g_a, Integer *p_handle)
   wnga_set_pgroup(g_a, p_handle);
 }
 
+#define ga_set_restricted_ F77_FUNC_(ga_set_restricted,GA_SET_RESTRICTED)
+void FATR ga_set_restricted_(Integer *g_a, Integer *list, Integer *size)
+{
+  wnga_set_restricted(g_a, list, size);
+}
+
+#define nga_set_restricted_ F77_FUNC_(nga_set_restricted,NGA_SET_RESTRICTED)
+void FATR nga_set_restricted_(Integer *g_a, Integer *list, Integer *size)
+{
+  wnga_set_restricted(g_a, list, size);
+}
+
+#define ga_set_restricted_range_ F77_FUNC_(ga_set_restricted_range,GA_SET_RESTRICTED_RANGE)
+void FATR ga_set_restricted_range_(Integer *g_a, Integer *lo_proc, Integer *hi_proc)
+{
+  wnga_set_restricted_range(g_a, lo_proc, hi_proc);
+}
+
+#define nga_set_restricted_range_ F77_FUNC_(nga_set_restricted_range,NGA_SET_RESTRICTED_RANGE)
+void FATR nga_set_restricted_range_(Integer *g_a, Integer *lo_proc, Integer *hi_proc)
+{
+  wnga_set_restricted_range(g_a, lo_proc, hi_proc);
+}
+
+#define ga_terminate_ F77_FUNC_(ga_terminate,GA_TERMINATE)
+void FATR  ga_terminate_()
+{
+  wnga_terminate();
+}
+
+#define nga_terminate_ F77_FUNC_(nga_terminate,NGA_TERMINATE)
+void FATR  nga_terminate_()
+{
+  wnga_terminate();
+}
+
+#define ga_total_blocks_ F77_FUNC_(ga_total_blocks,GA_TOTAL_BLOCKS)
+Integer FATR ga_total_blocks_(Integer *g_a)
+{
+  return wnga_total_blocks(g_a);
+}
+
+#define nga_total_blocks_ F77_FUNC_(nga_total_blocks,NGA_TOTAL_BLOCKS)
+Integer FATR nga_total_blocks_(Integer *g_a)
+{
+  return wnga_total_blocks(g_a);
+}
+
 /* Routines from onesided.c */
 
 #define ga_nbput_ F77_FUNC_(ga_nbput,GA_NBPUT)

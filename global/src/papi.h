@@ -103,6 +103,10 @@ extern void pnga_set_irreg_distr(Integer *g_a, Integer *mapc, Integer *nblock);
 extern void pnga_set_irreg_flag(Integer *g_a, logical *flag);
 extern void pnga_set_memory_limit(Integer *mem_limit);
 extern void pnga_set_pgroup(Integer *g_a, Integer *p_handle);
+extern void pnga_set_restricted(Integer *g_a, Integer *list, Integer *size);
+extern void pnga_set_restricted_range(Integer *g_a, Integer *lo_proc, Integer *hi_proc);
+extern void pnga_terminate();
+extern Integer pnga_total_blocks(Integer *g_a);
 
 /* Routines from onesided.c */
 extern void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf,

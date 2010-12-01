@@ -241,8 +241,8 @@ void ngai_copy_patch(char *trans,
 
   /* additional restrictions that apply if one or both arrays use
      block-cyclic data distributions */
-  num_blocks_a = ga_total_blocks_(g_a);
-  num_blocks_b = ga_total_blocks_(g_b);
+  num_blocks_a = pnga_total_blocks(g_a);
+  num_blocks_b = pnga_total_blocks(g_b);
   if (num_blocks_a >= 0 || num_blocks_b >= 0) {
     if (!(*trans == 'n' || *trans == 'N')) {
       pnga_error("Transpose option not supported for block-cyclic data", 0L);
@@ -1053,8 +1053,8 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
   transp   = (transp_a == transp_b)? 'n' : 't';
 
   /* Find out if distribution is block-cyclic */
-  num_blocks_a = ga_total_blocks_(g_a);
-  num_blocks_b = ga_total_blocks_(g_b);
+  num_blocks_a = pnga_total_blocks(g_a);
+  num_blocks_b = pnga_total_blocks(g_b);
 
   if (num_blocks_a >= 0 || num_blocks_b >= 0) {
     if (transp_a == 't' || transp_b == 't')
@@ -1681,7 +1681,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
   GA_PUSH_NAME("nga_fill_patch");
 
   pnga_inquire(g_a,  &type, &ndim, dims);
-  num_blocks = ga_total_blocks_(g_a);
+  num_blocks = pnga_total_blocks(g_a);
 
   if (num_blocks < 0) {
     /* get limits of VISIBLE patch */ 
@@ -2039,7 +2039,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
   GA_PUSH_NAME("nga_scal_patch");
 
   pnga_inquire(g_a,  &type, &ndim, dims);
-  num_blocks = ga_total_blocks_(g_a);
+  num_blocks = pnga_total_blocks(g_a);
 
   if (num_blocks < 0) {
     pnga_distribution(g_a, &me, loA, hiA);
@@ -2440,9 +2440,9 @@ void *alpha, *beta;
   if((atotal != n1dim) || (btotal != n1dim))
     pnga_error("  capacities of patches do not match ", 0L);
 
-  num_blocks_a = ga_total_blocks_(g_a);
-  num_blocks_b = ga_total_blocks_(g_b);
-  num_blocks_c = ga_total_blocks_(g_c);
+  num_blocks_a = pnga_total_blocks(g_a);
+  num_blocks_b = pnga_total_blocks(g_b);
+  num_blocks_c = pnga_total_blocks(g_c);
 
   if (num_blocks_a < 0 && num_blocks_b < 0 && num_blocks_c < 0) {
     /* find out coordinates of patches of g_a, g_b and g_c that I own */

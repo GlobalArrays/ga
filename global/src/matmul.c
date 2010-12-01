@@ -543,7 +543,7 @@ int get_next_block_info(Integer *g_c, Integer *proc_index, Integer *index,
     /* Uses simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_c)) 
     {
-       if(*iblock < ga_total_blocks_(g_c)) 
+       if(*iblock < pnga_total_blocks(g_c)) 
        {
           pnga_distribution(g_c, iblock, blo, bhi);
           *iblock += pnga_nnodes();
@@ -632,7 +632,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     clo[1] = *cjlo; chi[1] = *cjhi;
     k = *ajhi - *ajlo +1;
     
-    numblocks = ga_total_blocks_(g_c);
+    numblocks = pnga_total_blocks(g_c);
     if(numblocks>=0) init_block_info(g_c, proc_index, index, blocks,
                                      block_dims, topology, &iblock);
 
@@ -1351,7 +1351,7 @@ void ga_matmul(transa, transb, alpha, beta,
 
     /* if block cyclic, then use regular algorithm. This is turned on for now
      * to test block cyclic */ 
-    numblocks = ga_total_blocks_(g_c);
+    numblocks = pnga_total_blocks(g_c);
     if(numblocks>=0) {
        irregular     = UNSET;
        use_NB_matmul = SET; 

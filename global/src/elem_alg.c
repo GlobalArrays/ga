@@ -734,7 +734,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
   GA_PUSH_NAME("gai_oper_elem");
 
   pnga_inquire(g_a,  &type, &ndim, dims);
-  num_blocks = ga_total_blocks_(g_a);
+  num_blocks = pnga_total_blocks(g_a);
 
   if (num_blocks < 0) {
     /* get limits of VISIBLE patch */
@@ -1787,9 +1787,9 @@ int op; /* operation to be perform between g_a and g_b */
   if((atotal != n1dim) || (btotal != n1dim))
     pnga_error("  capacities of patches do not match ", 0L);
 
-  num_blocks_a = ga_total_blocks_(g_a);
-  num_blocks_b = ga_total_blocks_(g_b);
-  num_blocks_c = ga_total_blocks_(g_c);
+  num_blocks_a = pnga_total_blocks(g_a);
+  num_blocks_b = pnga_total_blocks(g_b);
+  num_blocks_c = pnga_total_blocks(g_c);
 
   if (num_blocks_a < 0 && num_blocks_b < 0 && num_blocks_c < 0) {
     /* find out coordinates of patches of g_a, g_b and g_c that I own */
@@ -2356,7 +2356,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
   GA_PUSH_NAME("ngai_elem3_patch_");
 
   pnga_inquire(g_a, &atype, &andim, adims);
-  num_blocks = ga_total_blocks_(g_a);
+  num_blocks = pnga_total_blocks(g_a);
 
   /* check if patch indices and dims match */
   for(i=0; i<andim; i++)
@@ -2632,7 +2632,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
   GA_PUSH_NAME("has_negative_elem");
 
   pnga_inquire(g_a, &atype, &andim, adims);
-  num_blocks = ga_total_blocks_(g_a);
+  num_blocks = pnga_total_blocks(g_a);
 
   /* check if patch indices and dims match */
   for(i=0; i<andim; i++)
@@ -3256,8 +3256,8 @@ void pnga_step_max_patch(g_a,  alo, ahi, g_b,  blo, bhi, result)
 
   pnga_inquire(g_a, &atype, &andim, adims);
   pnga_inquire(g_b, &btype, &bndim, bdims);
-  num_blocks_a = ga_total_blocks_(g_a);
-  num_blocks_b = ga_total_blocks_(g_b);
+  num_blocks_a = pnga_total_blocks(g_a);
+  num_blocks_b = pnga_total_blocks(g_b);
 
   /* Check for matching types. */
   if(atype != btype) pnga_error(" ga_step_max_patch_: types mismatch ", 0L); 

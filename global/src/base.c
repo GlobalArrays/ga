@@ -1713,9 +1713,15 @@ void pnga_set_block_cyclic_proc_grid(Integer *g_a, Integer *dims, Integer *proc_
   GA_POP_NAME;
 }
 
-/*\  Restrict processors that actually contain data in the global array
-\*/
-void FATR ga_set_restricted_(Integer *g_a, Integer *list, Integer *size)
+/**
+ *  Restrict processors that actually contain data in the global array. Can also
+ *  be used to rearrange the distribution of data amongst processors
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_restricted = pnga_set_restricted
+#endif
+
+void FATR pnga_set_restricted(Integer *g_a, Integer *list, Integer *size)
 {
   Integer i, ig, id=0, me, p_handle, has_data, nproc;
   Integer ga_handle = *g_a + GA_OFFSET;
@@ -1756,10 +1762,15 @@ void FATR ga_set_restricted_(Integer *g_a, Integer *list, Integer *size)
   GA_POP_NAME;
 }
 
-/*\  Restrict processors that actually contain data in the global array
- *   by specifying a range of processors
-\*/
-void FATR ga_set_restricted_range_(Integer *g_a, Integer *lo_proc, Integer *hi_proc)
+/**
+ *  Restrict processors that actually contain data in the global array
+ *  by specifying a range of processors
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_restricted_range = pnga_set_restricted_range
+#endif
+
+void pnga_set_restricted_range(Integer *g_a, Integer *lo_proc, Integer *hi_proc)
 {
   Integer i, ig, id=0, me, p_handle, has_data, icnt, nproc, size;
   Integer ga_handle = *g_a + GA_OFFSET;
@@ -2884,12 +2895,17 @@ int local_sync_begin;
 
     
      
-/*\ TERMINATE GLOBAL ARRAY STRUCTURES
+/**
+ *  Terminate Global Array structures
  *
- *  all GA arrays are destroyed & shared memory is dealocated
+ *  All GA arrays are destroyed & shared memory is dealocated
  *  GA routines (except for ga_initialize) should not be called thereafter 
-\*/
-void FATR  ga_terminate_() 
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_terminate =  pnga_terminate
+#endif
+
+void pnga_terminate() 
 {
 Integer i, handle;
 
@@ -4261,9 +4277,15 @@ Integer pnga_locate_num_blocks(Integer *g_a, Integer *lo, Integer *hi)
   return ret;
 }
 
-/*\ RETURN THE TOTAL NUMBER OF BLOCKS IN REGION (IF ANY)
-\*/
-Integer FATR ga_total_blocks_(Integer *g_a)
+/**
+ *  Return the total number of blocks in a Global Array (if any). Only returns
+ *  non-zero values for block-cyclic data distributions.
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_total_blocks =  pnga_total_blocks
+#endif
+
+Integer pnga_total_blocks(Integer *g_a)
 {
   Integer ga_handle = GA_OFFSET + *g_a;
   return GA[ga_handle].block_total;

@@ -388,10 +388,10 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
   if (mtotal != ctotal)
     pnga_error("ga_median_patch_:  capacities of patches do not match ", 0L);
 
-  num_blocks_a = ga_total_blocks_(g_a);
-  num_blocks_b = ga_total_blocks_(g_b);
-  num_blocks_c = ga_total_blocks_(g_c);
-  num_blocks_m = ga_total_blocks_(g_m);
+  num_blocks_a = pnga_total_blocks(g_a);
+  num_blocks_b = pnga_total_blocks(g_b);
+  num_blocks_c = pnga_total_blocks(g_c);
+  num_blocks_m = pnga_total_blocks(g_m);
 
   if (num_blocks_a < 0 && num_blocks_b < 0 &&
       num_blocks_c < 0 && num_blocks_m < 0) {
@@ -893,7 +893,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
       pnga_error("ga_norm_infinity_: wrong data type:", type);
   }
 
-  num_blocks_a = ga_total_blocks_(g_a);
+  num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, lo, hi);
@@ -1236,7 +1236,7 @@ ga_norm1_ (Integer * g_a, double *nm)
       pnga_error("ga_norm1_: wrong data type:", type);
   }
 
-  num_blocks_a = ga_total_blocks_(g_a);
+  num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, lo, hi);
@@ -1533,7 +1533,7 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
        atype);
   }
 
-  num_blocks_a = ga_total_blocks_(g_a);
+  num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, loA, hiA);
@@ -1752,7 +1752,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
        atype);
   }
 
-  num_blocks_a = ga_total_blocks_(g_a);
+  num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, loA, hiA);
@@ -1969,7 +1969,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
        atype);
   }
 
-  num_blocks_a = ga_total_blocks_(g_a);
+  num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, loA, hiA);
@@ -2145,7 +2145,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
   if (andim != 2) 
     pnga_error("Dimension must be 2 for shift diagonal operation",andim);
 
-  num_blocks_a = ga_total_blocks_(g_a);
+  num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, loA, hiA);
@@ -2284,7 +2284,7 @@ void FATR ga_zero_diagonal_(Integer * g_a)
   dim2 = adims[1];
   type = atype;
 
-  num_blocks_a = ga_total_blocks_(g_a);
+  num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
     offset = 0;
@@ -2517,7 +2517,7 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
        atype);
   }
 
-  num_blocks_a = ga_total_blocks_(g_a);
+  num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
     pnga_distribution (g_a, &me, lo, hi);
@@ -2715,7 +2715,7 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
          atype);
     }
 
-  num_blocks_a = ga_total_blocks_(g_a);
+  num_blocks_a = pnga_total_blocks(g_a);
 
   if (num_blocks_a < 0) {
     pnga_distribution (g_a, &me, lo, hi);

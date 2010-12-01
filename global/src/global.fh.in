@@ -55,7 +55,7 @@
       integer ga_cluster_nprocs, ga_cluster_nodeid, ga_cluster_nnodes
       integer ga_cluster_procid, ga_cluster_proc_nodeid
       integer nga_locate_num_blocks
-      integer ga_total_blocks
+      integer ga_total_blocks, nga_total_blocks
       logical ga_uses_proc_grid
       logical nga_create, nga_locate, nga_create_irreg
       logical nga_locate_region

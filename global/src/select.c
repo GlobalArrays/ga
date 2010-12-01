@@ -168,7 +168,7 @@ void FATR nga_select_elem_(
   else pnga_error("operator not recognized",0);
 
   pnga_inquire(g_a, &type, &ndim, dims);
-  num_blocks = ga_total_blocks_(g_a);
+  num_blocks = pnga_total_blocks(g_a);
 
   if (num_blocks < 0) {
     pnga_distribution(g_a, &me, lo, hi);
