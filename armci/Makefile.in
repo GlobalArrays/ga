@@ -317,6 +317,7 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/kr_malloc.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/memory.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/progress/fence.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/progress/wait.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/caccumulate.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/rmw.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/strided.c \
@@ -667,13 +668,14 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src/include/utils.h src/locks/locks.c src/locks/memlock.c \
 	src/locks/mutex.c src/locks/semaphores.c \
 	src/memory/kr_malloc.c src/memory/memory.c \
-	src/progress/fence.c src/xfer/caccumulate.c src/xfer/rmw.c \
-	src/xfer/strided.c src/xfer/vector.c src/common/fcopy.f \
-	src/xfer/faccumulate.f src/common/groups.c \
-	src/devices/bgml/bgmlacc.h src/devices/bgml/bgml.c \
-	src/devices/bgml/bgmldefs.h src/devices/bgml/bgml.h \
-	src/devices/bgml/bgmltas-ppc.h src/memory/shmalloc.c \
-	src/devices/dcmf/armcix.h src/devices/dcmf/dcmf2/armcix_acc.c \
+	src/progress/fence.c src/progress/wait.c \
+	src/xfer/caccumulate.c src/xfer/rmw.c src/xfer/strided.c \
+	src/xfer/vector.c src/common/fcopy.f src/xfer/faccumulate.f \
+	src/common/groups.c src/devices/bgml/bgmlacc.h \
+	src/devices/bgml/bgml.c src/devices/bgml/bgmldefs.h \
+	src/devices/bgml/bgml.h src/devices/bgml/bgmltas-ppc.h \
+	src/memory/shmalloc.c src/devices/dcmf/armcix.h \
+	src/devices/dcmf/dcmf2/armcix_acc.c \
 	src/devices/dcmf/dcmf2/armcix_fence.c \
 	src/devices/dcmf/dcmf2/armcix_get.c \
 	src/devices/dcmf/dcmf2/armcix_impl.c \
@@ -802,6 +804,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/kr_malloc.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/memory.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/progress/fence.lo \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/progress/wait.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/caccumulate.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/rmw.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/strided.lo \
@@ -978,13 +981,14 @@ am__libarmcii_la_SOURCES_DIST = src-portals/acc.h \
 	src/include/utils.h src/locks/locks.c src/locks/memlock.c \
 	src/locks/mutex.c src/locks/semaphores.c \
 	src/memory/kr_malloc.c src/memory/memory.c \
-	src/progress/fence.c src/xfer/caccumulate.c src/xfer/rmw.c \
-	src/xfer/strided.c src/xfer/vector.c src/common/fcopy.f \
-	src/xfer/faccumulate.f src/common/groups.c \
-	src/devices/bgml/bgmlacc.h src/devices/bgml/bgml.c \
-	src/devices/bgml/bgmldefs.h src/devices/bgml/bgml.h \
-	src/devices/bgml/bgmltas-ppc.h src/memory/shmalloc.c \
-	src/devices/dcmf/armcix.h src/devices/dcmf/dcmf2/armcix_acc.c \
+	src/progress/fence.c src/progress/wait.c \
+	src/xfer/caccumulate.c src/xfer/rmw.c src/xfer/strided.c \
+	src/xfer/vector.c src/common/fcopy.f src/xfer/faccumulate.f \
+	src/common/groups.c src/devices/bgml/bgmlacc.h \
+	src/devices/bgml/bgml.c src/devices/bgml/bgmldefs.h \
+	src/devices/bgml/bgml.h src/devices/bgml/bgmltas-ppc.h \
+	src/memory/shmalloc.c src/devices/dcmf/armcix.h \
+	src/devices/dcmf/dcmf2/armcix_acc.c \
 	src/devices/dcmf/dcmf2/armcix_fence.c \
 	src/devices/dcmf/dcmf2/armcix_get.c \
 	src/devices/dcmf/dcmf2/armcix_impl.c \
@@ -2782,6 +2786,8 @@ src/progress/$(DEPDIR)/$(am__dirstamp):
 	@: > src/progress/$(DEPDIR)/$(am__dirstamp)
 src/progress/fence.lo: src/progress/$(am__dirstamp) \
 	src/progress/$(DEPDIR)/$(am__dirstamp)
+src/progress/wait.lo: src/progress/$(am__dirstamp) \
+	src/progress/$(DEPDIR)/$(am__dirstamp)
 src/xfer/$(am__dirstamp):
 	@$(MKDIR_P) src/xfer
 	@: > src/xfer/$(am__dirstamp)
@@ -3894,6 +3900,8 @@ mostlyclean-compile:
 	-rm -f src/memory/winshmem.lo
 	-rm -f src/progress/fence.$(OBJEXT)
 	-rm -f src/progress/fence.lo
+	-rm -f src/progress/wait.$(OBJEXT)
+	-rm -f src/progress/wait.lo
 	-rm -f src/util/armci_profile.$(OBJEXT)
 	-rm -f src/util/armci_profile.lo
 	-rm -f src/util/armci_vampir.$(OBJEXT)
@@ -4125,6 +4133,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/memory/$(DEPDIR)/shmlimit.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/memory/$(DEPDIR)/winshmem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/progress/$(DEPDIR)/fence.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/progress/$(DEPDIR)/wait.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/armci_profile.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/armci_vampir.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/threads.Plo@am__quote@

@@ -487,6 +487,7 @@ libarmci_la_SOURCES += src/locks/semaphores.c
 libarmci_la_SOURCES += src/memory/kr_malloc.c
 libarmci_la_SOURCES += src/memory/memory.c
 libarmci_la_SOURCES += src/progress/fence.c
+libarmci_la_SOURCES += src/progress/wait.c
 libarmci_la_SOURCES += src/xfer/caccumulate.c
 libarmci_la_SOURCES += src/xfer/rmw.c
 libarmci_la_SOURCES += src/xfer/strided.c
