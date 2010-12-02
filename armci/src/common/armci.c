@@ -613,7 +613,8 @@ void PARMCI_Finalize()
     _armci_argv = NULL;
     
     armci_msg_barrier();
-    if(armci_me==armci_master) ARMCI_ParentRestoreSignals();
+    if(armci_me==armci_master) 
+        ARMCI_ParentRestoreSignals();
 
 #if defined(DATA_SERVER)
     if(armci_nclus >1){
@@ -754,34 +755,6 @@ int armci_util_int_getval(int* p)
    return *p;
 }
 
-#ifdef ENABLE_CHECKPOINT
-void ARMCI_Ckpt_create_ds(armci_ckpt_ds_t *ckptds, int count)
-{
-    armci_create_ckptds(ckptds,count);
-}
-
-int ARMCI_Ckpt_init(char *filename, ARMCI_Group *grp, int savestack, 
-        int saveheap, armci_ckpt_ds_t *ckptds)
-{
-int rid;
-    rid = armci_icheckpoint_init(filename,grp,savestack,saveheap,ckptds);
-    return(rid);
-}
-
-int ARMCI_Ckpt(int rid)
-{
-    return(armci_icheckpoint(rid));
-}
-
-void ARMCI_Ckpt_Recover(int rid, int iamreplacement)
-{
-    armci_irecover(rid, iamreplacement);
-}
-void ARMCI_Ckpt_finalize(int rid)
-{
-    armci_icheckpoint_finalize(rid);
-}
-#endif
 #if ARMCI_ENABLE_GPC_CALLS
 int armci_gpc(int hndl, int proc, void  *hdr, int hlen,  void *data,  int dlen,
               void *rhdr, int rhlen, void *rdata, int rdlen,

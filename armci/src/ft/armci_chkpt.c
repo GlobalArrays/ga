@@ -101,6 +101,32 @@ static char *armci_ckpt_bspBottom=NULL;
 #define UPDATE_FILE_POS(rid,size) \
     armci_storage_record[rid].fileinfo.startindex += (size)
 
+void ARMCI_Ckpt_create_ds(armci_ckpt_ds_t *ckptds, int count)
+{   
+    armci_create_ckptds(ckptds,count);
+}   
+
+int ARMCI_Ckpt_init(char *filename, ARMCI_Group *grp, int savestack,
+        int saveheap, armci_ckpt_ds_t *ckptds)
+{     
+int rid;
+    rid = armci_icheckpoint_init(filename,grp,savestack,saveheap,ckptds);
+    return(rid);
+}   
+      
+int ARMCI_Ckpt(int rid)
+{   
+    return(armci_icheckpoint(rid));
+}
+    
+void ARMCI_Ckpt_Recover(int rid, int iamreplacement)
+{     
+    armci_irecover(rid, iamreplacement);
+}
+void ARMCI_Ckpt_finalize(int rid)
+{
+    armci_icheckpoint_finalize(rid);
+}
 
 /* ----------SUPPORT FUNCTIONS ----------- */
 
