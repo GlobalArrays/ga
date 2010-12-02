@@ -189,13 +189,11 @@ void TrapSigChld()
 
 
 void RestoreSigChld()
-/*
- Restore the original signal handler
-*/
 {
-  if(AR_caught_sigchld) SigChldOrig(SIGCHLD);
-  if ( signal(SIGCHLD, SigChldOrig) == SIG_ERR)
-    Error("RestoreSigChld: error from restoring signal SIGChld",0);
+    if(AR_caught_sigchld) 
+        SigChldOrig(SIGCHLD);
+    if (signal(SIGCHLD, SigChldOrig) == SIG_ERR)
+        Error("RestoreSigChld: error from restoring signal SIGChld",0);
 }
 
 

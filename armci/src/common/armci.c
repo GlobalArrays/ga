@@ -157,7 +157,7 @@ void ARMCI_Cleanup()
 
 void armci_notify_init()
 {
-  int rc,bytes=sizeof(armci_notify_t)*armci_nproc;
+  int rc, bytes= sizeof(armci_notify_t)*armci_nproc;
 
   _armci_notify_arr=
         (armci_notify_t**)malloc(armci_nproc*sizeof(armci_notify_t*));
@@ -172,7 +172,8 @@ void armci_notify_init()
 static void armci_perror_msg()
 {
     char perr_str[80];
-    if(!errno)return;
+    if(!errno)
+        return;
     sprintf(perr_str,"Last System Error Message from Task %d:",armci_me);
     perror(perr_str);
 }
@@ -189,21 +190,19 @@ void armci_abort(int code)
     armci_perror_msg();
 #endif
     ARMCI_Cleanup();
-#if defined(CRAY) && !defined(__crayx1)
-    limit(C_PROC,0,L_CORE,1L); /* MPI_Abort on Cray dumps core!!! - sqeeze it */
-    chdir("/"); /* we should not be able to write core file here */
-#endif
 
     /* data server process cannot use message-passing library to abort
      * it simply exits, parent will get SIGCHLD and abort the program
      */
 #if defined(IBM) || defined(IBM64)
      /* hack for a problem in POE signal handlers in non-LAPI MPI  */
-     if(AR_caught_sigint || AR_caught_sigterm) _exit(1);
+     if(AR_caught_sigint || AR_caught_sigterm) 
+         _exit(1);
 #endif
 
 #if defined(DATA_SERVER)
-    if(armci_me<0)_exit(1);
+    if(armci_me<0)
+        _exit(1);
     else
 #endif
     armci_msg_abort(code);
@@ -604,9 +603,6 @@ void PARMCI_Finalize()
 
     if(_armci_initialized<=0)return;
     _armci_initialized=0;
-#ifdef GA_USE_VAMPIR
-    vampir_begin(ARMCI_FINALIZE,__FILE__,__LINE__);
-#endif
 #ifdef ARMCI_PROFILE
     armci_profile_terminate();
 #endif
@@ -639,10 +635,6 @@ void PARMCI_Finalize()
     armci_msg_barrier();
 #ifdef MPI
     armci_group_finalize();
-#endif
-#ifdef GA_USE_VAMPIR
-    vampir_end(ARMCI_FINALIZE,__FILE__,__LINE__);
-    vampir_finalize(__FILE__,__LINE__);
 #endif
 #ifdef ARMCIX
     ARMCIX_Finalize ();
@@ -689,17 +681,16 @@ extern void cpu_yield();
 }
   
 
-/*\ returns 1 if specified process resides on the same smp node as calling task 
-\*/
 int ARMCI_Same_node(int proc)
 {
-   int direct=SAMECLUSNODE(proc);
+   int direct = SAMECLUSNODE(proc);
    return direct;
 }
 
 /*\ blocks the calling process until a nonblocking operation represented
  *  by the user handle completes
 \*/
+#if 0
 int PARMCI_Wait(armci_hdl_t* usr_hdl){
 armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
 int success=0;
@@ -766,7 +757,6 @@ int direct=SAMECLUSNODE(nb_handle->proc);
 #endif
     return(success);
 }
-
 /** 
  * implicit handle 
  */
@@ -792,7 +782,6 @@ armci_hdl_t *armci_set_implicit_handle (int op, int proc) {
   ++impcount;
   return &armci_nb_handle[i];
 }
- 
  
 /* wait for all non-blocking operations to finish */
 int PARMCI_WaitAll (void) {
@@ -835,7 +824,7 @@ int PARMCI_WaitProc (int proc) {
 #endif
   return 0;
 }
-
+#endif
 unsigned int _armci_get_next_tag(){
   static unsigned int _armci_nb_tag=0;
   unsigned int rval;
@@ -903,7 +892,7 @@ int armci_util_int_getval(int* p)
    return *p;
 }
 
-
+#if 0
 int PARMCI_Test(armci_hdl_t *usr_hdl)
 {
 armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
@@ -938,7 +927,7 @@ int direct=SAMECLUSNODE(nb_handle->proc);
 #endif
     return(success);
 }
-
+#endif
 #ifdef ENABLE_CHECKPOINT
 void ARMCI_Ckpt_create_ds(armci_ckpt_ds_t *ckptds, int count)
 {
