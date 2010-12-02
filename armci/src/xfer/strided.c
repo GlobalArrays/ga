@@ -1417,27 +1417,15 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     else
       nb_handle = (armci_ihdl_t)armci_set_implicit_handle(GET, proc);
   }
-#ifdef DOELAN4
-#ifndef ARMCI_NB_GET
-# error "armci_nb_wait not defined!"
-#endif
-  if(stride_levels==0){
-/*     PARMCI_NbGet(src_ptr,dst_ptr,count[0],proc,usr_hdl); */
-    INIT_NB_HANDLE(nb_handle,GET,proc);
-    ARMCI_NB_GET(src_ptr, dst_ptr, count[0], proc, &nb_handle->cmpl_info);
-    POSTPROCESS_STRIDED(tmp_count);
-    ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_NBGETS);
-    return 0;
-
-  }
-#endif
 
 #ifdef LAPI_RDMA
-  if(stride_levels == 0 || count[0] > LONG_GET_THRESHOLD) direct=0;
+  if(stride_levels == 0 || count[0] > LONG_GET_THRESHOLD) 
+      direct=0;
 #endif
 
 #ifdef PORTALS
-  if(stride_levels) direct=1;
+  if(stride_levels) 
+      direct=1;
 #endif
   
 #if !defined(LAPI2) || defined(LAPI_RDMA)
@@ -1454,48 +1442,6 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
       ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_NBGETS);
       return 0;
     }
-#if 0 && defined(VAPI)
-#if !defined(PEND_BUFS) || 1
-    if(stride_levels==1 && 
-       (/*count[1] < armci_max_num_sg_ent ||*/ count[0] > VAPI_SGGET_MIN_COLUMN) && 
-       ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
-      DO_FENCE(proc,DIRECT_NBGET);
-      /* 	 printf("%d: Calling two phased get\n",armci_me); */
-      armci_two_phase_get(proc, src_ptr, src_stride_arr, dst_ptr,
-			  dst_stride_arr,count,stride_levels,NULL,nb_handle,mhloc);  
-#        ifdef ARMCI_PROFILE
-      armci_profile_stop_strided(ARMCI_PROF_NBGETS);
-#        endif
-      return 0;
-    }
-#else /*!PEND_BUFS*/
-    {
-      int i, off;
-      for(i=0; i<stride_levels; i++) {
-	if(i==0) assert(src_stride_arr[0]>0);
-	if(i!=0) assert(src_stride_arr[i]>=src_stride_arr[i-1]*count[i]);
-      }
-      off = src_stride_arr[stride_levels-1]*count[stride_levels];
-	 
-      mhloc=mhrem=NULL;
-      if(ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,off,armci_clus_id(proc))) {
-	assert(mhloc != NULL);
-	assert(mhrem != NULL);
-	DO_FENCE(proc, DIRECT_GET);
-	nb_handle->cmpl_info=NULL;
-	armci_client_direct_rdma_strided(GET,proc,src_ptr,src_stride_arr,
-					 dst_ptr,dst_stride_arr,
-					 count, stride_levels,
-					 &nb_handle->cmpl_info,nb_handle->tag,
-					 mhloc,mhrem);
-	assert(nb_handle->cmpl_info != NULL);
-	ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_PUTS);
-	return 0;
-      }
-    }
-
-#endif /*!PEND_BUFS*/
-#     endif
 #     endif
   }
 #endif /*!LAPI||LAPI_RDMA */
