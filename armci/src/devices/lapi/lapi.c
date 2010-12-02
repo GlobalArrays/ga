@@ -167,7 +167,8 @@ void* armci_header_handler(lapi_handle_t *t_hndl, void *uhdr, uint *t_uhdrlen,
     if(DEBUG_)
         fprintf(stderr,"%d:HH: op=%d from %d\n",armci_me,msginfo->operation,
                 msginfo->from);
-    if(msginfo->to != armci_me)armci_die("wrong message delivered",msginfo->to);
+    if(msginfo->to != armci_me)
+        armci_die("wrong message delivered",msginfo->to);
 
     /* process small requests that do not require comms in header handler */
     if(msginfo->datalen >0 && msginfo->dscrlen>0 && msginfo->operation != GET 
@@ -693,11 +694,15 @@ int armci_pin_contig_hndl(void *ptr, int bytes, ARMCI_MEMHDL_T *memhdl)
 
 void armci_network_client_deregister_memory(ARMCI_MEMHDL_T *mh)
 {
+    fprintf(stderr," armci_network_client_deregister_memory not available\n");
+    fflush(stderr);
 }
 
 
 void armci_network_server_deregister_memory(ARMCI_MEMHDL_T *mh)
 {
+    fprintf(stderr," armci_network_client_deregister_memory not available\n");
+    fflush(stderr);
 }
 #endif /* LAPI_RDMA */
 
