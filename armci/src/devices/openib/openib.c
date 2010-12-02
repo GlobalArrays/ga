@@ -509,24 +509,25 @@ void armci_send_complete(struct ibv_send_wr *snd_dscr, char *from,int numoftimes
 
 void armci_dscrlist_recv_complete(int tag, char* from,sr_descr_t *dscr)
 {
-int i,nr,j;
-sr_descr_t *retdscr,*rdscr_arr;
-    if(dscr==NULL){
-       if(SERVER_CONTEXT)
-         rdscr_arr = armci_vapi_serv_nbrdscr_array;
-       else
-         rdscr_arr = armci_vapi_client_nbrdscr_array;
+    int i,nr,j;
+    sr_descr_t *retdscr,*rdscr_arr;
+    
+    if(dscr == NULL){
+        if(SERVER_CONTEXT)
+            rdscr_arr = armci_vapi_serv_nbrdscr_array;
+        else
+            rdscr_arr = armci_vapi_client_nbrdscr_array;
 
-       for(i=0;i<MAX_PENDING;i++){
-         if(rdscr_arr[i].tag==tag)
-           break;
-       }
+        for(i=0;i<MAX_PENDING;i++){
+            if(rdscr_arr[i].tag==tag)
+                break;
+        }
 
-       if(i==MAX_PENDING)return;
-       retdscr = &rdscr_arr[i];
+        if(i==MAX_PENDING)return;
+        retdscr = &rdscr_arr[i];
     }
     else
-       retdscr=dscr;
+        retdscr=dscr;
 
     nr = retdscr->numofrecvs;
     armci_recv_complete(&(retdscr->rdescr),"(s)list_send_complete",nr);
@@ -535,23 +536,23 @@ sr_descr_t *retdscr,*rdscr_arr;
 
 void armci_dscrlist_send_complete(int tag,char *from, sr_descr_t *dscr)
 {
-int i,ns,j;
-sr_descr_t *retdscr,*sdscr_arr;
+    int i,ns,j;
+    sr_descr_t *retdscr,*sdscr_arr;
     if(dscr==NULL){
-       if(SERVER_CONTEXT)
-         sdscr_arr = armci_vapi_serv_nbsdscr_array;
-       else
-         sdscr_arr = armci_vapi_client_nbsdscr_array;
+        if(SERVER_CONTEXT)
+            sdscr_arr = armci_vapi_serv_nbsdscr_array;
+        else
+            sdscr_arr = armci_vapi_client_nbsdscr_array;
 
-       for(i=0;i<MAX_PENDING;i++){
-         if(sdscr_arr[i].tag==tag)
-           break;
-       }
-       if(i==MAX_PENDING)return;
-       retdscr=&sdscr_arr[i];
+        for(i=0;i<MAX_PENDING;i++){
+            if(sdscr_arr[i].tag==tag)
+                break;
+        }
+        if(i==MAX_PENDING)return;
+        retdscr=&sdscr_arr[i];
     }
     else
-       retdscr=dscr;
+        retdscr=dscr;
 
     ns = retdscr->numofsends;
 
@@ -561,11 +562,12 @@ sr_descr_t *retdscr,*sdscr_arr;
 
 void armci_client_nbcall_complete(sr_descr_t *dscr, int tag, int op)
 {
-    if(tag != dscr->tag)return;
+    if(tag != dscr->tag)
+        return;
 
 	THREAD_LOCK(armci_user_threads.net_lock);
 
-    if(op==GET){
+    if(op == GET){
        if(dscr->issg){
          if(dscr->numofrecvs>0)
            armci_dscrlist_recv_complete(tag,"armci_client_nbcall_complete recv",
@@ -577,7 +579,7 @@ void armci_client_nbcall_complete(sr_descr_t *dscr, int tag, int op)
                            dscr);
        }
     }
-    if(op==PUT){
+    if(op == PUT){
        if(dscr->numofsends>0)
          armci_dscrlist_send_complete(tag,"armci_client_nbcall_complete send",
                          dscr);
@@ -654,36 +656,36 @@ sr_descr_t *retdscr,*rdscr_arr;
 
 sr_descr_t *armci_vapi_get_next_sdescr(int nbtag,int sg)
 {
-static int serverthreadavail=-1; /*client thread can't touch this*/
-static int clientthreadavail=-1; /*server thread can't touch this*/
-int avail,newavail;
-sr_descr_t *retdscr,*sdscr_arr;
+    static int serverthreadavail=-1; /*client thread can't touch this*/
+    static int clientthreadavail=-1; /*server thread can't touch this*/
+    int avail,newavail;
+    sr_descr_t *retdscr,*sdscr_arr;
 
     if(SERVER_CONTEXT){
-       sdscr_arr = armci_vapi_serv_nbsdscr_array;
-       avail = serverthreadavail;
+        sdscr_arr = armci_vapi_serv_nbsdscr_array;
+        avail = serverthreadavail;
     }
     else{
-       sdscr_arr = armci_vapi_client_nbsdscr_array;
-       avail = clientthreadavail;
+        sdscr_arr = armci_vapi_client_nbsdscr_array;
+        avail = clientthreadavail;
     }
 
     if(avail==-1){ /*first call*/
-       int i;
-       for(i=0;i<MAX_PENDING;i++){
-         sdscr_arr[i].tag=0;
-         bzero(&sdscr_arr[i].sdescr,sizeof(struct ibv_send_wr));
-	 if(sg)
-           sdscr_arr[i].sdescr.wr_id = DSCRID_SCATGAT+i;
-	 else
-           sdscr_arr[i].sdescr.wr_id = DSCRID_NBDSCR + i;
-       }
-       avail=0;
+        int i;
+        for(i=0;i<MAX_PENDING;i++){
+            sdscr_arr[i].tag=0;
+            bzero(&sdscr_arr[i].sdescr,sizeof(struct ibv_send_wr));
+            if(sg)
+                sdscr_arr[i].sdescr.wr_id = DSCRID_SCATGAT+i;
+            else
+                sdscr_arr[i].sdescr.wr_id = DSCRID_NBDSCR + i;
+        }
+        avail=0;
     }
 
     if(sdscr_arr[avail].tag!=0){
-       armci_dscrlist_send_complete(sdscr_arr[avail].tag,
-                       "armci_vapi_get_next_sdescr",&sdscr_arr[avail]);
+        armci_dscrlist_send_complete(sdscr_arr[avail].tag,
+                "armci_vapi_get_next_sdescr",&sdscr_arr[avail]);
     }
 
     sdscr_arr[avail].tag=nbtag;
@@ -693,26 +695,22 @@ sr_descr_t *retdscr,*sdscr_arr;
     memset(&retdscr->sdescr,0,sizeof(struct ibv_recv_wr));
 
     if(sg)
-       retdscr->sdescr.wr_id = DSCRID_SCATGAT + avail;
+        retdscr->sdescr.wr_id = DSCRID_SCATGAT + avail;
     else{
-       retdscr->sdescr.wr_id = DSCRID_NBDSCR + avail;
-       retdscr->numofsends=1;
+        retdscr->sdescr.wr_id = DSCRID_NBDSCR + avail;
+        retdscr->numofsends=1;
     }
 
     newavail = (avail+1)%MAX_PENDING;
 
     if(SERVER_CONTEXT){
-      cur_serv_pend_descr = avail;
-      serverthreadavail=newavail;
+        cur_serv_pend_descr = avail;
+        serverthreadavail=newavail;
     }
     else{
-      cur_client_pend_descr = avail;
-      clientthreadavail=newavail;
+        cur_client_pend_descr = avail;
+        clientthreadavail=newavail;
     }
-    /*
-    printf("\n%d:avail=%d newavail=%d cln=%d serv=%d",armci_me,avail,
-      newavail,clientthreadavail,serverthreadavail); 
-    */
     return(retdscr);
 }
 
