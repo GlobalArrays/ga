@@ -600,8 +600,13 @@ int PARMCI_Init()
 
 void PARMCI_Finalize()
 {
+    if(_armci_initialized <= 0 ) {
+        fprintf(stderr,"ARMCI Finalize called multiple times\n");
+        fflush(stderr);
+        return;
+    }
 
-    if(_armci_initialized<=0)return;
+
     _armci_initialized=0;
 #ifdef ARMCI_PROFILE
     armci_profile_terminate();
@@ -611,15 +616,15 @@ void PARMCI_Finalize()
     _armci_initialized_args=0;
     _armci_argc = NULL;
     _armci_argv = NULL;
-    
+
     armci_msg_barrier();
     if(armci_me==armci_master) 
         ARMCI_ParentRestoreSignals();
 
 #if defined(DATA_SERVER)
     if(armci_nclus >1){
-       armci_wait_for_server();
-       armci_msg_barrier(); /* need to sync before closing sockets */
+        armci_wait_for_server();
+        armci_msg_barrier(); /* need to sync before closing sockets */
     }
 #endif
 
