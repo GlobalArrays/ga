@@ -2,7 +2,6 @@
 #   include "config.h"
 #endif
 
-/* $Id: rmw.c,v 1.24.2.5 2007-08-29 17:32:47 manoj Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -13,52 +12,6 @@
 #  include "atomics-i386.h"
 #endif
 
-#ifdef LIBELAN_ATOMICS 
-
-ELAN_ATOMIC *a;
-
-int elan_int_fadd(int *target, int inc, int vp)
-{
-    int result;
-
-    elan_wait(elan_atomic32(a, ELAN_ATOMIC_ADD, target, inc, 0, vp, &result), elan_base->waitType);
-    return(result);
-}
-
-int elan_long_fadd(long *target, long inc, int vp)
-{
-    long result;
-    
-#ifdef _LP64
-    elan_wait(elan_atomic64(a, ELAN_ATOMIC_ADD, target, inc, 0, vp, &result), elan_base->waitType);
-#else
-    elan_wait(elan_atomic32(a, ELAN_ATOMIC_ADD, target, inc, 0, vp, &result), elan_base->waitType);
-#endif
-
-    return(result);
-}
-
-int elan_int_swap(int *target, int value, int vp)
-{
-    int result;
-
-    elan_wait(elan_atomic32(a, ELAN_ATOMIC_SWAP, target, value, 0, vp, &result), elan_base->waitType);
-    return(result);
-}
-
-int elan_long_swap(long *target, long value, int vp)
-{
-    long result;
-    
-#ifdef _LP64
-    elan_wait(elan_atomic64(a, ELAN_ATOMIC_SWAP, target, value, 0, vp, &result), elan_base->waitType);
-#else
-    elan_wait(elan_atomic32(a, ELAN_ATOMIC_SWAP, target, value, 0, vp, &result), elan_base->waitType);
-#endif
-
-    return(result);
-}
-#endif /* LIBELAN_ATOMICS */
 
 /* enable use of newer interfaces in SHMEM */
 #ifndef CRAY
