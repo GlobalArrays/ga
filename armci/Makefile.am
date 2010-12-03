@@ -35,6 +35,10 @@ libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
 nodist_libarmcii_la_SOURCES = $(nodist_libarmci_la_SOURCES)
 EXTRA_DIST = README build-aux/inside.pl
 BUILT_SOURCES =
+MOSTLYCLEANFILES =
+CLEANFILES =
+DISTCLEANFILES =
+MAINTAINERCLEANFILES =
 AM_FFLAGS =
 AM_CFLAGS =
 AM_CXXFLAGS =
@@ -91,8 +95,7 @@ nodist_libarmci_la_SOURCES += config.fh
 config.fh: config.h
 	-rm -f config.fh && $(SED) "/^#/!d" config.h > config.fh
 
-clean-config:
-	-rm -f config.fh
+CLEANFILES += config.fh
 
 ##############################################################################
 # src-portals
@@ -197,8 +200,7 @@ src-portals/tas_as.s: src-portals/tas.c
 	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src-portals/tas.c
 
-clean-asm:
-	rm -f src-portals/tas_as.s
+CLEANFILES += src-portals/tas_as.s
 
 check_PROGRAMS += testing-portals/clone
 check_PROGRAMS += testing-portals/fork
@@ -367,8 +369,7 @@ src-gemini/tas_as.s: src-gemini/tas.c
 	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ $<
 
-clean-asm:
-	rm -f src-gemini/tas_as.s
+CLEANFILES += src-gemini/tas_as.s
 
 check_PROGRAMS += testing-portals/clone
 check_PROGRAMS += testing-portals/fork
@@ -661,8 +662,8 @@ src/common/x86copy_as.s: src/common/x86copy.c
 	$(ARMCI_X86COPY_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src/common/x86copy.c
 
-clean-asm:
-	rm -f src/locks/tas_as.s src/common/x86copy_as.s
+CLEANFILES += src/common/x86copy_as.s
+CLEANFILES += src/locks/tas_as.s
 
 check_PROGRAMS += testing/msgcheck
 check_PROGRAMS += testing/perf_aggr
@@ -914,8 +915,6 @@ EXTRA_DIST += examples/README
 ##############################################################################
 # the end
 #
-clean-local: clean-config clean-asm
-
 .PHONY: checkprogs
 checkprogs: $(check_PROGRAMS)
 
