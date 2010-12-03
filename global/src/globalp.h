@@ -199,7 +199,6 @@ EXT LOG   gai_create(INT *type, INT *dim1, INT *dim2, char *array_name, INT *chu
 EXT LOG   gai_create_irreg(INT *type, INT *dim1, INT *dim2, char *array_name, INT *map1, INT *nblock1, INT *map2, INT *nblock2, INT *g_a);
 EXT void  gai_dot(int Type, INT *g_a, INT *g_b, void *value);
 EXT LOG   gai_duplicate(INT *g_a, INT *g_b, char* array_name);
-EXT int   gai_getval(int *ptr);
 EXT void  gai_inquire(INT* g_a, INT* type, INT* dim1, INT* dim2);
 EXT void  gai_lu_solve_seq(char *trans, INT *g_a, INT *g_b);
 EXT void  gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta, INT *g_a,INT *ailo,INT *aihi,INT *ajlo,INT *ajhi, INT *g_b,INT *bilo,INT *bihi,INT *bjlo,INT *bjhi, INT *g_c,INT *cilo,INT *cihi,INT *cjlo,INT *cjhi);

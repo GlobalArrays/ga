@@ -209,7 +209,7 @@ void FATR nga_select_elem_(
       nga_release_block_segment_(g_a, &me);
 
       /* convert local index back into a global array index */
-      if (!ga_uses_proc_grid_(g_a)) {
+      if (!pnga_uses_proc_grid(g_a)) {
         offset = 0;
         for (i=me; i<num_blocks; i += nproc) {
           pnga_distribution(g_a, &i, lo, hi);

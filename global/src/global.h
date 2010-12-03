@@ -423,7 +423,12 @@ EXT void FATR nga_strided_get_(INT *g_a, INT *lo, INT *hi, INT *skip, void *buf,
 EXT void FATR nga_strided_put_(INT *g_a, INT *lo, INT *hi, INT *skip, void *buf, INT *ld);
 EXT void FATR nga_terminate_( void);
 EXT INT  FATR nga_total_blocks_( INT *g_a );
+EXT void FATR nga_unlock_(INT* );
 EXT LOG  FATR nga_update_ghost_dir_(INT *g_a, INT *idim, INT *idir, LOG *flag);
+EXT LOG  FATR nga_uses_ma_( void);
+EXT LOG  FATR nga_uses_proc_grid_( INT *g_a );
+EXT LOG  FATR nga_valid_handle_(INT *g_a);
+EXT INT  FATR nga_verify_handle_(INT* );
 EXT void FATR nga_zero_patch_(INT *g_a, INT *lo, INT *hi);
 
 #ifdef __cplusplus

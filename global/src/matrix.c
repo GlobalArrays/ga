@@ -532,7 +532,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
       Integer idx, lod[MAXDIM], hid[MAXDIM];
       Integer jtot, last, nproc;
       /* Simple block-cyclic data distribution */
-      if (!ga_uses_proc_grid_(g_m)) {
+      if (!pnga_uses_proc_grid(g_m)) {
         nproc = pnga_nnodes();
         for (idx = me; idx < num_blocks_m; idx += nproc) {
           pnga_distribution(g_m, &idx, loM, hiM);
@@ -903,7 +903,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
   } else {
     Integer idx;
     /* Simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)) {
+    if (!pnga_uses_proc_grid(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, lo, hi);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
@@ -1246,7 +1246,7 @@ ga_norm1_ (Integer * g_a, double *nm)
   } else {
     Integer idx;
     /* Simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)) {
+    if (!pnga_uses_proc_grid(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, lo, hi);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
@@ -1543,7 +1543,7 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
   } else {
     Integer idx;
     /* Simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)) {
+    if (!pnga_uses_proc_grid(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, loA, hiA);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
@@ -1761,7 +1761,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
   } else {
     Integer idx;
     /* Simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)) {
+    if (!pnga_uses_proc_grid(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, loA, hiA);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
@@ -1979,7 +1979,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
   } else {
     Integer idx;
     /* Simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)) {
+    if (!pnga_uses_proc_grid(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, loA, hiA);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
@@ -2155,7 +2155,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
   } else {
     Integer idx;
     /* Simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)) {
+    if (!pnga_uses_proc_grid(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, loA, hiA);
         nga_access_block_ptr(g_a, &idx, &ptr, &ld);
@@ -2308,7 +2308,7 @@ void FATR ga_zero_diagonal_(Integer * g_a)
     Integer jtot, last, j;
     Integer nproc = pnga_nnodes();
     /* Simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)) {
+    if (!pnga_uses_proc_grid(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, loA, hiA);
         lo[0] = GA_MAX (loA[0], loA[1]);
@@ -2537,7 +2537,7 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
   } else {
     Integer nproc = pnga_nnodes();
     /* Simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)) {
+    if (!pnga_uses_proc_grid(g_a)) {
       Integer idx;
       for (idx=me; idx<num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, lo, hi);
@@ -2735,7 +2735,7 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
   } else {
     Integer nproc = pnga_nnodes();
     /* Simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)) {
+    if (!pnga_uses_proc_grid(g_a)) {
       Integer idx;
       for (idx=me; idx<num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, lo, hi);

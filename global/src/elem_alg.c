@@ -759,7 +759,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
     Integer loS[MAXDIM];
     Integer nproc = pnga_nnodes();
     /* using simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)){
+    if (!pnga_uses_proc_grid(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
 
         /* get limits of patch */
@@ -1901,7 +1901,7 @@ int op; /* operation to be perform between g_a and g_b */
     } else {
       Integer lod[MAXDIM], hid[MAXDIM], chk;
       Integer offset, last, jtot;
-      if (!ga_uses_proc_grid_(g_c)) {
+      if (!pnga_uses_proc_grid(g_c)) {
         Integer nproc = pnga_nnodes();
         for (idx = me; idx < num_blocks_c; idx += nproc) {
 
@@ -2382,7 +2382,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
     Integer loS[MAXDIM], nproc;
     nproc = pnga_nnodes();
     /* using simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)){
+    if (!pnga_uses_proc_grid(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of patch */
         pnga_distribution(g_a, &i, loA, hiA);
@@ -2657,7 +2657,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
     Integer loS[MAXDIM], nproc;
     nproc = pnga_nnodes();
     /* using simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)){
+    if (!pnga_uses_proc_grid(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of patch */
         pnga_distribution(g_a, &i, loA, hiA);

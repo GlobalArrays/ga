@@ -538,9 +538,14 @@ void set_ga_group_is_for_ft(int val)
 }
 #endif
 
-/*\ IS MA USED FOR ALLOCATION OF GA MEMORY ?
-\*/ 
-logical FATR ga_uses_ma_()
+/**
+ *  Is MA used for allocation of GA memory?
+ */ 
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_uses_ma =  pnga_uses_ma
+#endif
+
+logical pnga_uses_ma()
 {
 #ifdef AVOID_MA_STORAGE
    return FALSE;
@@ -589,7 +594,7 @@ Integer i, sum=0;
 
 Integer pnga_memory_avail()
 {
-   if(!ga_uses_ma_()) return(GA_total_memory);
+   if(!pnga_uses_ma()) return(GA_total_memory);
    else{
       Integer ma_limit = MA_inquire_avail(MT_F_BYTE);
 
@@ -1721,7 +1726,7 @@ void pnga_set_block_cyclic_proc_grid(Integer *g_a, Integer *dims, Integer *proc_
 #   pragma weak wnga_set_restricted = pnga_set_restricted
 #endif
 
-void FATR pnga_set_restricted(Integer *g_a, Integer *list, Integer *size)
+void pnga_set_restricted(Integer *g_a, Integer *list, Integer *size)
 {
   Integer i, ig, id=0, me, p_handle, has_data, nproc;
   Integer ga_handle = *g_a + GA_OFFSET;
@@ -2948,10 +2953,14 @@ Integer i, handle;
 }   
 
     
-/*\ IS ARRAY ACTIVE/INACTIVE
-\*/ 
-Integer FATR ga_verify_handle_(g_a)
-     Integer *g_a;
+/**
+ *  Is array active or inactive
+ */ 
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_verify_handle =  pnga_verify_handle
+#endif
+
+Integer pnga_verify_handle(Integer *g_a)
 {
   return (Integer)
     ((*g_a + GA_OFFSET>= 0) && (*g_a + GA_OFFSET< _max_global_array) && 
@@ -3265,7 +3274,7 @@ void gai_get_proc_from_block_index_(Integer *g_a, Integer *index, Integer *proc)
   Integer ga_handle = GA_OFFSET + *g_a;
   Integer ndim = GA[ga_handle].ndim;
   Integer i, ld;
-  if (ga_uses_proc_grid_(g_a)) {
+  if (pnga_uses_proc_grid(g_a)) {
     int *proc_grid = GA[ga_handle].nblock;
     Integer proc_id[MAXDIM];
     for (i=0; i<ndim; i++) {
@@ -3785,8 +3794,14 @@ int m,p;
 #endif
 }
 
+/**
+ *  Unlock a mutex
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_unlock =  pnga_unlock
+#endif
 
-void FATR ga_unlock_(Integer *mutex)
+void pnga_unlock(Integer *mutex)
 {
 int m,p;
 
@@ -3866,32 +3881,35 @@ void pnga_list_nodeid(Integer *list, Integer *num_procs)
       list[proc]=proc;
 }
 
-/*\ returns true/false depending on validity of the handle
-\*/
-logical FATR ga_valid_handle_(Integer *g_a)
+/**
+ *  Returns true/false depending on validity of the handle
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_valid_handle =  pnga_valid_handle
+#endif
+
+logical pnga_valid_handle(Integer *g_a)
 {
    if(GA_OFFSET+ (*g_a) < 0 || GA_OFFSET+(*g_a) >= _max_global_array ||
       ! (GA[GA_OFFSET+(*g_a)].actv) ) return FALSE;
    else return TRUE;
 }
 
-int gai_getval(int *ptr) { return *ptr;}
 
-/*\ A function that helps user avoid syncs that he thinks are unnecessary
-    inside a collective call.
-\*/
-
-/*
-       Mask flags have to be reset in every collective call. Even if that
-       collective call doesnt do any sync at all.
-       If masking only the beginning sync is possible, make sure to
-       clear even the _sync_end mask to avoid a mask intended for this
-       collective_function_call to be carried to next collective_function_call
-       or to a collective function called by this function.
-       Similarly, make sure to use two copy mask values to local variables
-       and reset the global mask variables to avoid carring the mask to a
-       collective call inside the current collective call.
-*/
+/**
+ *     A function that helps users avoid syncs inside a collective call
+ *     that they think are unnecessary
+ *
+ *     Mask flags have to be reset in every collective call. Even if that
+ *     collective call doesnt do any sync at all.
+ *     If masking only the beginning sync is possible, make sure to
+ *     clear even the _sync_end mask to avoid a mask intended for this
+ *     collective_function_call to be carried to next collective_function_call
+ *     or to a collective function called by this function.
+ *     Similarly, make sure to use two copy mask values to local variables
+ *     and reset the global mask variables to avoid carring the mask to a
+ *     collective call inside the current collective call.
+ */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_mask_sync =  pnga_mask_sync
 #endif
@@ -4291,9 +4309,14 @@ Integer pnga_total_blocks(Integer *g_a)
   return GA[ga_handle].block_total;
 }
 
-/*\ RETURN TRUE IF GA USES SCALAPACK DATA DISTRIBUTION
-\*/
-logical FATR ga_uses_proc_grid_(Integer *g_a)
+/**
+ *  Return true if GA uses SCALPACK data distribution
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_uses_proc_grid =  pnga_uses_proc_grid
+#endif
+
+logical pnga_uses_proc_grid(Integer *g_a)
 {
   Integer ga_handle = GA_OFFSET + *g_a;
   return (logical)GA[ga_handle].block_sl_flag;

@@ -1117,6 +1117,66 @@ Integer FATR nga_total_blocks_(Integer *g_a)
   return wnga_total_blocks(g_a);
 }
 
+#define ga_unlock_ F77_FUNC_(ga_unlock,GA_UNLOCK)
+void FATR ga_unlock_(Integer *mutex)
+{
+  wnga_unlock(mutex);
+}
+
+#define nga_unlock_ F77_FUNC_(nga_unlock,NGA_UNLOCK)
+void FATR nga_unlock_(Integer *mutex)
+{
+  wnga_unlock(mutex);
+}
+
+#define ga_uses_ma_ F77_FUNC_(ga_uses_ma,GA_USES_MA)
+logical FATR ga_uses_ma_()
+{
+  return wnga_uses_ma();
+}
+
+#define nga_uses_ma_ F77_FUNC_(nga_uses_ma,NGA_USES_MA)
+logical FATR nga_uses_ma_()
+{
+  return wnga_uses_ma();
+}
+
+#define ga_uses_proc_grid_ F77_FUNC_(ga_uses_proc_grid,GA_USES_PROC_GRID)
+logical FATR ga_uses_proc_grid_(Integer *g_a)
+{
+  return wnga_uses_proc_grid(g_a);
+}
+
+#define nga_uses_proc_grid_ F77_FUNC_(nga_uses_proc_grid,NGA_USES_PROC_GRID)
+logical FATR nga_uses_proc_grid_(Integer *g_a)
+{
+  return wnga_uses_proc_grid(g_a);
+}
+
+#define ga_valid_handle_ F77_FUNC_(ga_valid_handle,GA_VALID_HANDLE)
+logical FATR ga_valid_handle_(Integer *g_a)
+{
+  return wnga_valid_handle(g_a);
+}
+
+#define nga_valid_handle_ F77_FUNC_(nga_valid_handle,NGA_VALID_HANDLE)
+logical FATR nga_valid_handle_(Integer *g_a)
+{
+  return wnga_valid_handle(g_a);
+}
+
+#define ga_verify_handle_ F77_FUNC_(ga_verify_handle,GA_VERIFY_HANDLE)
+Integer FATR ga_verify_handle_(Integer *g_a)
+{
+  return wnga_verify_handle(g_a);
+}
+
+#define nga_verify_handle_ F77_FUNC_(nga_verify_handle,NGA_VERIFY_HANDLE)
+Integer FATR nga_verify_handle_(Integer *g_a)
+{
+  return wnga_verify_handle(g_a);
+}
+
 /* Routines from onesided.c */
 
 #define ga_nbput_ F77_FUNC_(ga_nbput,GA_NBPUT)

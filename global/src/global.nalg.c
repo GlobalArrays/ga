@@ -304,7 +304,7 @@ int local_sync_begin,local_sync_end,use_put;
            nga_put_(g_b, lo, hi, ptr_a, ld);
          }
        } else {
-         if (!ga_uses_proc_grid_(g_a)) {
+         if (!pnga_uses_proc_grid(g_a)) {
            for (i=me_a; i<num_blocks_a; i += anproc) {
              pnga_distribution(g_a, &i, lo, hi);
              if (lo[0]>0) {
@@ -351,7 +351,7 @@ int local_sync_begin,local_sync_end,use_put;
            nga_get_(g_a, lo, hi, ptr_b, ld);
          }
        } else {
-         if (!ga_uses_proc_grid_(g_a)) {
+         if (!pnga_uses_proc_grid(g_a)) {
            for (i=me_b; i<num_blocks_b; i += bnproc) {
              pnga_distribution(g_b, &i, lo, hi);
              if (lo[0]>0) {
@@ -1232,7 +1232,7 @@ char *ptr_tmp, *ptr_a;
       /* Simple block-cyclic data distribution */
       nelem = block_dims[0]*block_dims[1];
       ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
-      if (!ga_uses_proc_grid_(g_a)) {
+      if (!pnga_uses_proc_grid(g_a)) {
         for (idx = me; idx < num_blocks_a; idx += nproc) {
           pnga_distribution(g_a, &idx, lo, hi);
           nga_access_block_ptr(g_a, &idx, &ptr_a, ld);

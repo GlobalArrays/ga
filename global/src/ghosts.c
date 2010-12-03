@@ -2369,7 +2369,7 @@ static inline double waitforflags (int *ptr1, int *ptr2)
 {
   int i = 1;
   double val = 0;
-  while (gai_getval(ptr1) ==  0 || gai_getval(ptr2) == 0) {
+  while (*ptr1 ==  0 || *ptr2 == 0) {
     val = exp(-(double)i++);
   }
 #if 0
@@ -3290,8 +3290,8 @@ void ga_update_ghosts_(Integer *g_a)
 double waitformixedflags (int flag1, int flag2, int *ptr1, int *ptr2) {
   int i = 1;
   double val = 0;
-  while ((flag1 && gai_getval(ptr1) ==  0) ||
-         (flag2 && gai_getval(ptr2) == 0)) {
+  while ((flag1 && *ptr1 ==  0) ||
+         (flag2 && *ptr2 == 0)) {
     val = exp(-(double)i++);
   }
   return(val);

@@ -170,6 +170,9 @@ extern void          GA_Unlock(int mutex);
 extern void          GA_Update_ghosts(int g_a);
 extern int           GA_Uses_fapi(void);
 extern int           GA_Uses_ma(void);
+extern int           GA_Uses_proc_grid(int g_a);
+extern int           GA_Valid_handle(int g_a);
+extern int           GA_Verify_handle(int g_a);
 extern double        GA_Wtime(void);
 extern DoubleComplex GA_Zdot(int g_a, int g_b); 
 extern void          GA_Zgop(DoubleComplex x[], int n, char *op);
@@ -304,7 +307,12 @@ extern void          NGA_Strided_get(int g_a, int lo[], int hi[], int skip[], vo
 extern void          NGA_Strided_put(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[]); 
 extern void          NGA_Terminate(void);
 extern int           NGA_Total_blocks(int g_a);   
+extern void          NGA_Unlock(int mutex);
 extern int           NGA_Update_ghost_dir(int g_a, int dimension, int idir, int flag);
+extern int           NGA_Uses_ma(void);
+extern int           NGA_Uses_proc_grid(int g_a);
+extern int           NGA_Valid_handle(int g_a);
+extern int           NGA_Verify_handle(int g_a);
 extern DoubleComplex NGA_Zdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
 extern void          NGA_Zero_patch(int g_a, int lo[], int hi[]);
 

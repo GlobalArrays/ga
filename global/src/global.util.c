@@ -872,7 +872,7 @@ void FATR ga_summarize_(Integer *verbose)
     arr_no = 0;
     
     for(g_a=-1000; g_a<-900; g_a++) {
-        active = ga_verify_handle_(&g_a);
+        active = pnga_verify_handle(&g_a);
 
         if(active == 1) {
             printed = 1;

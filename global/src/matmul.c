@@ -509,7 +509,7 @@ void init_block_info(Integer *g_c, Integer *proc_index, Integer *index,
     Integer me= pnga_nodeid();
 
     /* Uses simple block-cyclic data distribution */
-    if(!ga_uses_proc_grid_(g_c))
+    if(!pnga_uses_proc_grid(g_c))
     {
        *iblock = me;
     }
@@ -541,7 +541,7 @@ int get_next_block_info(Integer *g_c, Integer *proc_index, Integer *index,
     if(ndim>2) pnga_error("get_next_block_info() supports upto 2-d only ", 0L);
     
     /* Uses simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_c)) 
+    if (!pnga_uses_proc_grid(g_c)) 
     {
        if(*iblock < pnga_total_blocks(g_c)) 
        {

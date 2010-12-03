@@ -537,7 +537,7 @@ void ngai_copy_patch(char *trans,
       /* Array a is block-cyclic distributed */
       if (num_blocks_a >= 0) {
         /* Uses simple block-cyclic data distribution */
-        if (!ga_uses_proc_grid_(g_a)) {
+        if (!pnga_uses_proc_grid(g_a)) {
           for (i = me_a; i < num_blocks_a; i += anproc) {
             pnga_distribution(g_a, &i, los, his); 
             /* make temporory copies of los, his since ngai_patch_intersection
@@ -677,7 +677,7 @@ void ngai_copy_patch(char *trans,
       /* Array b is block-cyclic distributed */
       if (num_blocks_b >= 0) {
         /* Uses simple block-cyclic data distribution */
-        if (!ga_uses_proc_grid_(g_b)) {
+        if (!pnga_uses_proc_grid(g_b)) {
           for (i = me_b; i < num_blocks_b; i += bnproc) {
             pnga_distribution(g_b, &i, los, his); 
             /* make temporory copies of los, his since ngai_patch_intersection
@@ -1171,7 +1171,7 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
       Integer lo[MAXDIM], hi[MAXDIM];
       Integer offset, jtot, last;
       /* simple block cyclic data distribution */
-      if (!ga_uses_proc_grid_(g_a)) {
+      if (!pnga_uses_proc_grid(g_a)) {
         for (i=me; i<num_blocks_a; i += nproc) {
           pnga_distribution(&g_A, &i, loA, hiA);
           /* make copies of loA and hiA since ngai_patch_intersect destroys
@@ -1706,7 +1706,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
     Integer loS[MAXDIM];
     nproc = pnga_nnodes();
     /* using simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)){
+    if (!pnga_uses_proc_grid(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of patch */ 
         pnga_distribution(g_a, &i, loA, hiA);
@@ -2058,7 +2058,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
     Integer loS[MAXDIM];
     nproc = pnga_nnodes();
     /* using simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)){
+    if (!pnga_uses_proc_grid(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of VISIBLE patch */
         pnga_distribution(g_a, &i, loA, hiA);
@@ -2554,7 +2554,7 @@ void *alpha, *beta;
       Integer idx, lod[MAXDIM], hid[MAXDIM];
       Integer offset, jtot, last;
       /* Simple block-cyclic data disribution */
-      if (!ga_uses_proc_grid_(g_c)) {
+      if (!pnga_uses_proc_grid(g_c)) {
         for (idx = me; idx < num_blocks_c; idx += nproc) {
           pnga_distribution(g_c, &idx, loC, hiC);
           /* make temporary copies of loC and hiC since ngai_patch_intersect

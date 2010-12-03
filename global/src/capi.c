@@ -783,7 +783,37 @@ void NGA_Get_block_info(int g_a, int num_blocks[], int block_dims[])
 int GA_Uses_proc_grid(int g_a)
 {
      Integer aa = (Integer)g_a;
-     return (int)ga_uses_proc_grid_(&aa);
+     return (int)wnga_uses_proc_grid(&aa);
+}
+
+int NGA_Uses_proc_grid(int g_a)
+{
+     Integer aa = (Integer)g_a;
+     return (int)wnga_uses_proc_grid(&aa);
+}
+
+int GA_Valid_handle(int g_a)
+{
+     Integer aa = (Integer)g_a;
+     return (int)wnga_valid_handle(&aa);
+}
+
+int NGA_Valid_handle(int g_a)
+{
+     Integer aa = (Integer)g_a;
+     return (int)wnga_valid_handle(&aa);
+}
+
+int GA_Verify_handle(int g_a)
+{
+     Integer aa = (Integer)g_a;
+     return (int)wnga_valid_handle(&aa);
+}
+
+int NGA_Verify_handle(int g_a)
+{
+     Integer aa = (Integer)g_a;
+     return (int)wnga_valid_handle(&aa);
 }
 
 void GA_Set_block_cyclic_proc_grid(int g_a, int block[], int proc_grid[])
@@ -2543,7 +2573,13 @@ void NGA_Lock(int mutex)
 void GA_Unlock(int mutex)
 {
      Integer m = (Integer)mutex;
-     ga_unlock_(&m);
+     wnga_unlock(&m);
+}
+
+void NGA_Unlock(int mutex)
+{
+     Integer m = (Integer)mutex;
+     wnga_unlock(&m);
 }
 
 void GA_Brdcst(void *buf, int lenbuf, int root)
@@ -4689,7 +4725,12 @@ void GA_Sync()
 
 int GA_Uses_ma()
 {
-    return ga_uses_ma_();
+    return wnga_uses_ma();
+}
+
+int NGA_Uses_ma()
+{
+    return wnga_uses_ma();
 }
 
 void GA_Print_stats()

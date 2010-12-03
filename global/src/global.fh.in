@@ -12,13 +12,14 @@
       logical nga_destroy
       logical ga_locate_region
       logical ga_compare_distr, ga_duplicate, ga_uses_ma
-      logical nga_compare_distr, nga_duplicate
+      logical nga_compare_distr, nga_duplicate, nga_uses_ma
       logical ga_memory_limited, nga_memory_limited
       logical ga_create_mutexes
       logical nga_create_mutexes
       logical ga_destroy_mutexes
       logical nga_destroy_mutexes
-      logical ga_valid_handle
+      logical ga_valid_handle, nga_valid_handle
+      logical ga_verify_handle, nga_verify_handle
       logical ga_update2_ghosts
       logical ga_update3_ghosts
       logical ga_update4_ghosts
@@ -56,7 +57,7 @@
       integer ga_cluster_procid, ga_cluster_proc_nodeid
       integer nga_locate_num_blocks
       integer ga_total_blocks, nga_total_blocks
-      logical ga_uses_proc_grid
+      logical ga_uses_proc_grid, nga_uses_proc_grid
       logical nga_create, nga_locate, nga_create_irreg
       logical nga_locate_region
       logical nga_create_ghosts_irreg,nga_create_ghosts
@@ -78,7 +79,7 @@
       external ga_ddot_patch, ga_compare_distr, ga_duplicate
       external nga_compare_distr, nga_duplicate
       external ga_inquire_memory, ga_uses_ma, ga_memory_limited
-      external nga_inquire_memory
+      external nga_inquire_memory, nga_uses_ma, nga_memory_limited
       external ga_memory_avail
       external ga_zdot, ga_zdot_patch
       external ga_cdot, ga_cdot_patch
@@ -86,7 +87,8 @@
       external nga_create_mutexes
       external ga_destroy_mutexes
       external nga_destroy_mutexes
-      external ga_valid_handle
+      external ga_valid_handle, nga_valid_handle
+      external ga_verify_handle, nga_verify_handle
       external ga_update2_ghosts
       external ga_update3_ghosts
       external ga_update4_ghosts
@@ -120,7 +122,7 @@
       external ga_cluster_procid, ga_cluster_proc_nodeid
       external ga_is_mirrored
       external ga_total_blocks
-      external ga_uses_proc_grid
+      external ga_uses_proc_grid, nga_uses_proc_grid
       external ga_get_debug, nga_get_debug
       external ga_get_pgroup, nga_get_pgroup
       external ga_get_pgroup_size, nga_get_pgroup_size
