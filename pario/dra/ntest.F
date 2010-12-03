@@ -22,7 +22,7 @@ c
       data max_arrays, max_sz, max_disk, max_mem /10,1d8,1d10, 1d6/
       data stack, heap /80000, 80000/
 c
-      call pbeginf 
+#include "mp3.fh"
       if(ma_init(MT_F_DBL, stack, heap) ) then
         call ga_initialize()
         me    = ga_nodeid()
@@ -43,7 +43,7 @@ c
         print *,'ma_init failed'
       endif
 c     if(me.eq.0)print *, 'all done ...'
-      call pend()
+      call MP_FINALIZE()
       end
 
 
@@ -58,8 +58,7 @@ c     if(me.eq.0)print *, 'all done ...'
       parameter (m = 2*n)
       integer a(n,n,n)
       integer g_a, g_b, d_a
-      integer ga_idot
-      integer i,j,k, req, err, type
+      integer i,j,k, err, type
       integer me, nproc, dims(3), req(3), ndim
       integer chunk(3), lo(3), hi(3), ld(3)
       logical status
@@ -194,7 +193,7 @@ c
       double precision a(n,n,n),  err
       integer g_a, g_b,  d_a
       double precision drand
-      integer i,j,k, req, loop
+      integer i,j,k, loop
       integer dlo(3),dhi(3)
       integer glo(3),ghi(3)
       integer elem

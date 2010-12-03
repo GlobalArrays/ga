@@ -29,7 +29,7 @@ c
       data stack, heap /1200000, 800000/
 #endif
 c
-      call pbeginf 
+#include "mp3.fh"
       if(.not. ga_uses_ma())then
          stack = 10000 
          heap  = 10000 
@@ -51,7 +51,7 @@ c
         print *,'ma_init failed'
       endif
       if(me.eq.0)print *, 'all done ...'
-      call pend()
+      call MP_FINALIZE()
       end
 
 
@@ -60,8 +60,8 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 #include "dra.fh"
+#include "mp3def.fh"
       integer n,m
       parameter (n=10000)
       parameter (m = 2*n)
@@ -76,7 +76,9 @@ c
       integer index, ld
       integer iran
       logical status
+      integer util_mdtob
       external  drand
+      external util_mdtob
       intrinsic int, dble
       iran(i) = int(drand(0)*dble(i-1)) + 1
 c    
@@ -118,18 +120,18 @@ c.......................................................................
 c
       if(me.eq.0) print *, 'alligned blocking write'
       if (me.eq.0)call ffflush(6)
-      tt0 = tcgtime()
+      tt0 = MP_TIMER()
       if(dra_write(g_a, d_a,req).ne.0)
      $   CALL ga_error('dra_write failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
-      tt1 = tcgtime() -tt0
-      mbytes = 1e-6*mdtob(n*n)
+      tt1 = MP_TIMER() -tt0
+      mbytes = 1e-6*util_mdtob(n*n)
       if (me.eq.0)then
           write(6,100)mbytes,tt1,mbytes/tt1
       endif
 c
       if(dra_close(d_a).ne.0)call ga_error('dra_close failed: ',d_a)
-      tt1 = tcgtime() -tt0
+      tt1 = MP_TIMER() -tt0
       if (me.eq.0)then
           write(6,100)mbytes,tt1,mbytes/tt1
       endif
@@ -153,20 +155,20 @@ c
       gjlo =1 
       gihi =n
       gjhi =n
-      tt0 = tcgtime()
+      tt0 = MP_TIMER()
       if(dra_write_section(.false.,     g_a, gilo, gihi, gjlo, gjhi,
      &               d_b, gilo+1, gihi+1, gjlo+1, gjhi+1, req).ne.0)
      &         call  ga_error('dra_write_section failed:',0)
 
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
-      tt1 = tcgtime() -tt0
-      mbytes = 1e-6*mdtob(n*n)
+      tt1 = MP_TIMER() -tt0
+      mbytes = 1e-6*util_mdtob(n*n)
       if (me.eq.0)then
           write(6,100)mbytes,tt1,mbytes/tt1
       endif
 c
       if(dra_close(d_b).ne.0)call ga_error('dra_close failed: ',d_b)
-      tt1 = tcgtime() -tt0
+      tt1 = MP_TIMER() -tt0
       if (me.eq.0)then
           write(6,100)mbytes,tt1,mbytes/tt1
       endif
@@ -183,11 +185,11 @@ c
      &            call ga_error('dra_open failed',0)
       if(me.eq.0) print *, 'alligned blocking read'
       if (me.eq.0)call ffflush(6)
-      tt0 = tcgtime()
+      tt0 = MP_TIMER()
       if(dra_read(g_b, d_a, req).ne.0)
      $   CALL ga_error('dra_read failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
-      tt1 = tcgtime() -tt0
+      tt1 = MP_TIMER() -tt0
       if (me.eq.0)then
           write(6,100)mbytes,tt1,mbytes/tt1
       endif
@@ -213,12 +215,12 @@ c
       gjlo =1 
       gihi =n
       gjhi =n
-      tt0 = tcgtime()
+      tt0 = MP_TIMER()
       if(dra_read_section(.false.,   g_b, gilo, gihi, gjlo, gjhi,
      &               d_b, gilo+1, gihi+1, gjlo+1, gjhi+1, req).ne.0)
      &        call   ga_error('dra_read_section failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
-      tt1 = tcgtime() -tt0
+      tt1 = MP_TIMER() -tt0
       if (me.eq.0)then
           write(6,100)mbytes,tt1,mbytes/tt1
       endif

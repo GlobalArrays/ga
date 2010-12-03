@@ -27,16 +27,15 @@
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 #include "dra.fh"
       integer max_arrays
       integer status
       double precision max_sz, max_disk, max_mem
       data max_arrays, max_sz, max_disk, max_mem /4,1d8,1d10, 1d6/
 
-      call pbeginf
+#include "mp3.fh"
       if (.not. ma_init(MT_DBL, 800000, 800000))
-     $     call parerr(1)
+     $     call ga_error('ma_init failed', 1)
       call ga_initialize()
       if(dra_init(max_arrays, max_sz, max_disk, max_mem).ne.0)
      $           call ga_error('dra_init failed: ',0)
@@ -45,7 +44,7 @@ c
 c
       status = dra_terminate()
       call ga_terminate()
-      call pend()
+      call MP_FINALIZE()
       end
 
 
@@ -53,8 +52,8 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 #include "dra.fh"
+#include "mp3def.fh"
 c
       integer n, nrhs, nb
       integer g_temp
@@ -69,6 +68,8 @@ c
       double precision temp(n), mbytes
       double precision tt0, tt1
       logical status
+      integer util_mdtob
+      external util_mdtob
 c     ...................................................
 c     
       nproc = ga_nnodes()
@@ -112,13 +113,13 @@ c...  writing to disk arrays
 c
       if(me.eq.0) print *, 'writing global array  to disk'
       if (me.eq.0)call ffflush(6)
-      tt0 = tcgtime()
+      tt0 = MP_TIMER()
       if(dra_write(g_temp,d_a,req).ne.0)
      $   CALL ga_error('write failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
       if(dra_close(d_a).ne.0)call ga_error('dra_close failed: ',d_a)
-      tt1 = tcgtime() -tt0
-      mbytes = 1e-6*mdtob(n*n)
+      tt1 = MP_TIMER() -tt0
+      mbytes = 1e-6*util_mdtob(n*n)
       if (me.eq.0)then
           write(6,100)mbytes,tt1,mbytes/tt1
       endif
@@ -142,13 +143,13 @@ c...  writing to disk arrays
 c
       if(me.eq.0) print *, 'writing global array  to disk'
       if (me.eq.0)call ffflush(6)
-      tt0 = tcgtime()
+      tt0 = MP_TIMER()
       if(dra_write(g_temp,d_b,req).ne.0)
      $   CALL ga_error('write failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
       if(dra_close(d_b).ne.0)call ga_error('dra_close failed: ',d_b)
-      tt1 = tcgtime() -tt0
-      mbytes = 1e-6*mdtob(n*n)
+      tt1 = MP_TIMER() -tt0
+      mbytes = 1e-6*util_mdtob(n*n)
       if (me.eq.0)then
           write(6,100)mbytes,tt1,mbytes/tt1
       endif
@@ -162,16 +163,16 @@ c***  opening disk arrays
      &            call ga_error('dra_open failed',0)
 c
       if (me .eq. 0) then
-     print *,' '
-     print *,' Checking out-of-core matrix multiplication'
-     print *,' '
-        call ffflush(6)
+         print *,' '
+         print *,' Checking out-of-core matrix multiplication'
+         print *,' '
+         call ffflush(6)
       endif
 c
       call ga_sync()
-      tt0 = tcgtime()
+      tt0 = MP_TIMER()
       call chunk_mxm(n, nrhs, nb, d_a, d_b, d_c)
-      tt1 = tcgtime() -tt0
+      tt1 = MP_TIMER() -tt0
       if(me.eq.0)print *,'time=',tt1,' MFLOPS=', 2d-6*n*n*nrhs/tt1 
 c
 c     this is a hack to avoid specifying -lglobal twice 
@@ -279,6 +280,8 @@ c
 #include "mafdecls.fh"
 #include "global.fh"
 #include "dra.fh"
+#include "mp3def.fh"
+
       integer n, m, nb, d_a, d_b, d_c
       integer i, j, chunks_i, chunks_j
       integer ilo, ihi, jlo, jhi, nr, nc
@@ -286,7 +289,7 @@ c
       logical status
       integer req, req_b, req_c, Prefetch_Next
       integer nxt_idx, cur_idx
-      double precision tcgtime, tot, t0
+      double precision MP_TIMER, tot, t0
       logical ga_create2
       integer LO, HI, NEXT
       LO(i,n)  = (i-1)*nb +1
@@ -343,10 +346,10 @@ c           handle the case when we have the data & there in nothing to prefetch
             endif
 c
 *           call ga_print_patch(g_b_chunk(cur_idx), 1, n, 1, nc, 1)
-            t0 =tcgtime()
+            t0 =MP_TIMER()
             call GA_DGEMM('n','n', nr, nc, n, 1d0, 
      $                     g_a_chunk, g_b_chunk(cur_idx), 0d0,g_c_chunk)
-            tot = tcgtime() -t0
+            tot = MP_TIMER() -t0
 
 *           call ga_print_patch(g_c_chunk, 1, nr, 1,nc, 1)
             cur_idx = nxt_idx
@@ -356,7 +359,7 @@ c
      &                       call ga_error('dra_write failed for C:',0)
             if(dra_wait(req_c).ne.0)call ga_error('wait failed:',req_c)
             if(ga_nodeid().eq.0)
-     &         write(6,'(2i5,5x,2e15.4)')i,j,tot, tcgtime()
+     &         write(6,'(2i5,5x,2e15.4)')i,j,tot, MP_TIMER()
          enddo
       enddo
       if(dra_wait(req_b).ne.0) call ga_error('dra_wait failed:',req_b)

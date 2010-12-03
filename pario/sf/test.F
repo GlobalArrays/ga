@@ -15,6 +15,7 @@ c
       program sftest
 c
       implicit none
+#include "global.fh"
 #include "sf.fh"
 c
       integer size
@@ -23,20 +24,19 @@ c
       parameter(maxid=5)           ! max number of outstanding I/O requests
       parameter(dimnsn=8192)
       real*8 buffer(dimnsn,maxid)  ! need buffering for all maxid requests
-      double precision tt0,ttw, ttr, tcgtime
+      double precision tt0,ttw, ttr
 c     integer stack, heap
       integer idlist(maxid), curid
       character*80 errmsg
 c
-      integer nodeid, nnodes
       integer me,nproc,handle,i,start,end,j, rc, chunk
 c
-      call pbeginf()
+#include "mp3.fh"
       call ga_initialize()
 c
       curid = 0
-      me = nodeid()
-      nproc = nnodes()
+      me = ga_nodeid()
+      nproc = ga_nnodes()
       size  = maxid*dimnsn*nproc
 c
       rc = sf_create(FNAME,
@@ -46,7 +46,7 @@ c
       chunk = (size+nproc-1)/nproc
       start = me*chunk+1
       end = min((start+chunk-1),size)
-      tt0 = tcgtime()
+      tt0 = MP_TIMER()
 c
       print *,'me=',me,'writing:', start, end
 c     everybody writes chunk of data
@@ -73,7 +73,7 @@ c
       if(rc.ne.0)call ga_error('waitall failed',rc)
       curid = 0
 
-      ttw = tcgtime() -tt0
+      ttw = MP_TIMER() -tt0
 c
       call ga_dgop(88,ttw,1,'max')
       call SYNCH
@@ -83,7 +83,7 @@ c     everybody reads different chunk of data
       start = (nproc-me-1)*chunk+1
       end = min((start+chunk-1),size)
       print *,'me=',me,'reading:', start, end
-      tt0 = tcgtime()
+      tt0 = MP_TIMER()
       do i = start,end,dimnsn
 
 c           read and test data chunk by chunk
@@ -104,7 +104,7 @@ c
                endif
             enddo
       enddo
-      ttr = tcgtime() -tt0
+      ttr = MP_TIMER() -tt0
 c
       call ga_dgop(88,ttr,1,'max')
       call SYNCH
@@ -120,5 +120,5 @@ c
 c
       call SYNCH
       call ga_terminate
-      call pend()
+      call MP_FINALIZE()
       end

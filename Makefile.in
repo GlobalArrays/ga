@@ -15,6 +15,26 @@
 
 @SET_MAKE@
 
+##############################################################################
+# Makefile.am for Global Arrays.
+#
+# Rationale:
+# This Makefile.am follows many of the suggestions outlined in the paper
+# "Recursive Make Considered Harmful".  We do not use automake's
+# 'include' feature (instead preferring a single, large Makefile.am).
+# We do recurse into the armci directory, but since armci is a stand-alone
+# package this is the correct behavior.
+#
+# Additional targets:
+# Besides the traditional make targets supplied by automake, we have added the
+# "checkprogs" target to build example programs and test programs.
+#
+# Notes:
+# In general, each subdirectory has a corresponding section within this
+# Makefile.am with the notable exception being the many examples getting
+# rolled up into the global/examples section.
+#
+
 
 
 
@@ -54,8 +74,16 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15) \
 	$(am__EXEEXT_16) $(am__EXEEXT_17) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__EXEEXT_18) pario/bign$(EXEEXT) pario/ntestc$(EXEEXT) \
-	pario/perfn$(EXEEXT) pario/rate$(EXEEXT) $(am__EXEEXT_19) \
+	$(am__EXEEXT_18) pario/dra/big$(EXEEXT) \
+	pario/dra/bign$(EXEEXT) pario/dra/dbg_read$(EXEEXT) \
+	pario/dra/dbg_write$(EXEEXT) pario/dra/dra2arviz$(EXEEXT) \
+	pario/dra/dra_mxm$(EXEEXT) pario/dra/ntest$(EXEEXT) \
+	pario/dra/ntestc$(EXEEXT) pario/dra/perf$(EXEEXT) \
+	pario/dra/perf2$(EXEEXT) pario/dra/perf3$(EXEEXT) \
+	pario/dra/perfn$(EXEEXT) pario/dra/rate$(EXEEXT) \
+	pario/dra/test$(EXEEXT) pario/dra/test_mxm$(EXEEXT) \
+	pario/dra/time_mxm$(EXEEXT) pario/eaf/test$(EXEEXT) \
+	pario/sf/test$(EXEEXT) $(am__EXEEXT_19) \
 	gparrays/testing/test$(EXEEXT)
 @NOFORT_FALSE@am__append_1 = $(FLD_NOMAIN)
 @NOFORT_FALSE@am__append_2 = gaf2c/farg.F
@@ -1770,31 +1798,183 @@ parallel_LDADD = $(LDADD)
 parallel_DEPENDENCIES = $(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-am_pario_bign_OBJECTS = pario/dra/bign.$(OBJEXT)
-pario_bign_OBJECTS = $(am_pario_bign_OBJECTS)
-pario_bign_LDADD = $(LDADD)
-pario_bign_DEPENDENCIES = $(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-am_pario_ntestc_OBJECTS = pario/dra/ntestc.$(OBJEXT)
-pario_ntestc_OBJECTS = $(am_pario_ntestc_OBJECTS)
-pario_ntestc_LDADD = $(LDADD)
-pario_ntestc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+am__objects_23 = pario/dra/ffflush.$(OBJEXT) pario/dra/util.$(OBJEXT)
+am_pario_dra_big_OBJECTS = pario/dra/big.$(OBJEXT) $(am__objects_23)
+pario_dra_big_OBJECTS = $(am_pario_dra_big_OBJECTS)
+pario_dra_big_LDADD = $(LDADD)
+pario_dra_big_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
-am_pario_perfn_OBJECTS = pario/dra/perfn.$(OBJEXT)
-pario_perfn_OBJECTS = $(am_pario_perfn_OBJECTS)
-pario_perfn_LDADD = $(LDADD)
-pario_perfn_DEPENDENCIES = $(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+pario_dra_big_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_big_LDFLAGS) $(LDFLAGS) -o \
+	$@
+am_pario_dra_bign_OBJECTS = pario/dra/bign.$(OBJEXT)
+pario_dra_bign_OBJECTS = $(am_pario_dra_bign_OBJECTS)
+pario_dra_bign_LDADD = $(LDADD)
+pario_dra_bign_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-am_pario_rate_OBJECTS = pario/dra/rate.$(OBJEXT)
-pario_rate_OBJECTS = $(am_pario_rate_OBJECTS)
-pario_rate_LDADD = $(LDADD)
-pario_rate_DEPENDENCIES = $(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1)
+am_pario_dra_dbg_read_OBJECTS = pario/dra/dbg_read.$(OBJEXT)
+pario_dra_dbg_read_OBJECTS = $(am_pario_dra_dbg_read_OBJECTS)
+pario_dra_dbg_read_LDADD = $(LDADD)
+pario_dra_dbg_read_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_pario_dra_dbg_write_OBJECTS = pario/dra/dbg_write.$(OBJEXT)
+pario_dra_dbg_write_OBJECTS = $(am_pario_dra_dbg_write_OBJECTS)
+pario_dra_dbg_write_LDADD = $(LDADD)
+pario_dra_dbg_write_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_pario_dra_dra2arviz_OBJECTS = pario/dra/dra2arviz.$(OBJEXT)
+pario_dra_dra2arviz_OBJECTS = $(am_pario_dra_dra2arviz_OBJECTS)
+pario_dra_dra2arviz_LDADD = $(LDADD)
+pario_dra_dra2arviz_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_pario_dra_dra_mxm_OBJECTS = pario/dra/dra_mxm.$(OBJEXT) \
+	$(am__objects_23)
+pario_dra_dra_mxm_OBJECTS = $(am_pario_dra_dra_mxm_OBJECTS)
+pario_dra_dra_mxm_LDADD = $(LDADD)
+pario_dra_dra_mxm_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+pario_dra_dra_mxm_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_dra_mxm_LDFLAGS) $(LDFLAGS) \
+	-o $@
+am_pario_dra_ntest_OBJECTS = pario/dra/ntest.$(OBJEXT) \
+	$(am__objects_23)
+pario_dra_ntest_OBJECTS = $(am_pario_dra_ntest_OBJECTS)
+pario_dra_ntest_LDADD = $(LDADD)
+pario_dra_ntest_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+pario_dra_ntest_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_ntest_LDFLAGS) $(LDFLAGS) \
+	-o $@
+am_pario_dra_ntestc_OBJECTS = pario/dra/ntestc.$(OBJEXT)
+pario_dra_ntestc_OBJECTS = $(am_pario_dra_ntestc_OBJECTS)
+pario_dra_ntestc_LDADD = $(LDADD)
+pario_dra_ntestc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_pario_dra_perf_OBJECTS = pario/dra/perf.$(OBJEXT) $(am__objects_23)
+pario_dra_perf_OBJECTS = $(am_pario_dra_perf_OBJECTS)
+pario_dra_perf_LDADD = $(LDADD)
+pario_dra_perf_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+pario_dra_perf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_perf_LDFLAGS) $(LDFLAGS) -o \
+	$@
+am_pario_dra_perf2_OBJECTS = pario/dra/perf2.$(OBJEXT) \
+	$(am__objects_23)
+pario_dra_perf2_OBJECTS = $(am_pario_dra_perf2_OBJECTS)
+pario_dra_perf2_LDADD = $(LDADD)
+pario_dra_perf2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+pario_dra_perf2_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_perf2_LDFLAGS) $(LDFLAGS) \
+	-o $@
+am_pario_dra_perf3_OBJECTS = pario/dra/perf3.$(OBJEXT) \
+	$(am__objects_23)
+pario_dra_perf3_OBJECTS = $(am_pario_dra_perf3_OBJECTS)
+pario_dra_perf3_LDADD = $(LDADD)
+pario_dra_perf3_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+pario_dra_perf3_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_perf3_LDFLAGS) $(LDFLAGS) \
+	-o $@
+am_pario_dra_perfn_OBJECTS = pario/dra/perfn.$(OBJEXT)
+pario_dra_perfn_OBJECTS = $(am_pario_dra_perfn_OBJECTS)
+pario_dra_perfn_LDADD = $(LDADD)
+pario_dra_perfn_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_pario_dra_rate_OBJECTS = pario/dra/rate.$(OBJEXT)
+pario_dra_rate_OBJECTS = $(am_pario_dra_rate_OBJECTS)
+pario_dra_rate_LDADD = $(LDADD)
+pario_dra_rate_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_pario_dra_test_OBJECTS = pario/dra/test.$(OBJEXT) $(am__objects_23)
+pario_dra_test_OBJECTS = $(am_pario_dra_test_OBJECTS)
+pario_dra_test_LDADD = $(LDADD)
+pario_dra_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+pario_dra_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_test_LDFLAGS) $(LDFLAGS) -o \
+	$@
+am_pario_dra_test_mxm_OBJECTS = pario/dra/test_mxm.$(OBJEXT) \
+	$(am__objects_23)
+pario_dra_test_mxm_OBJECTS = $(am_pario_dra_test_mxm_OBJECTS)
+pario_dra_test_mxm_LDADD = $(LDADD)
+pario_dra_test_mxm_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+pario_dra_test_mxm_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_test_mxm_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am_pario_dra_time_mxm_OBJECTS = pario/dra/time_mxm.$(OBJEXT) \
+	$(am__objects_23)
+pario_dra_time_mxm_OBJECTS = $(am_pario_dra_time_mxm_OBJECTS)
+pario_dra_time_mxm_LDADD = $(LDADD)
+pario_dra_time_mxm_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+pario_dra_time_mxm_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_time_mxm_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am_pario_eaf_test_OBJECTS = pario/eaf/test.$(OBJEXT) $(am__objects_23)
+pario_eaf_test_OBJECTS = $(am_pario_eaf_test_OBJECTS)
+pario_eaf_test_LDADD = $(LDADD)
+pario_eaf_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+pario_eaf_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(pario_eaf_test_LDFLAGS) $(LDFLAGS) -o \
+	$@
+am_pario_sf_test_OBJECTS = pario/sf/test.$(OBJEXT) $(am__objects_23)
+pario_sf_test_OBJECTS = $(am_pario_sf_test_OBJECTS)
+pario_sf_test_LDADD = $(LDADD)
+pario_sf_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+pario_sf_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(pario_sf_test_LDFLAGS) $(LDFLAGS) -o \
+	$@
 am__tcgmsg_ipcv4_0_hello_SOURCES_DIST = tcgmsg/ipcv4.0/hello.c
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_ipcv4_0_hello_OBJECTS = tcgmsg/ipcv4.0/hello.$(OBJEXT)
 tcgmsg_ipcv4_0_hello_OBJECTS = $(am_tcgmsg_ipcv4_0_hello_OBJECTS)
@@ -2091,11 +2271,25 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(nodist_EXTRA_ma_test_inquire_SOURCES) $(ma_testc_SOURCES) \
 	$(nodist_EXTRA_ma_testc_SOURCES) $(ma_testf_SOURCES) \
 	$(parallel_SOURCES) $(nodist_EXTRA_parallel_SOURCES) \
-	$(pario_bign_SOURCES) $(nodist_EXTRA_pario_bign_SOURCES) \
-	$(pario_ntestc_SOURCES) $(nodist_EXTRA_pario_ntestc_SOURCES) \
-	$(pario_perfn_SOURCES) $(nodist_EXTRA_pario_perfn_SOURCES) \
-	$(pario_rate_SOURCES) $(nodist_EXTRA_pario_rate_SOURCES) \
-	$(tcgmsg_ipcv4_0_hello_SOURCES) \
+	$(pario_dra_big_SOURCES) $(pario_dra_bign_SOURCES) \
+	$(nodist_EXTRA_pario_dra_bign_SOURCES) \
+	$(pario_dra_dbg_read_SOURCES) \
+	$(nodist_EXTRA_pario_dra_dbg_read_SOURCES) \
+	$(pario_dra_dbg_write_SOURCES) \
+	$(nodist_EXTRA_pario_dra_dbg_write_SOURCES) \
+	$(pario_dra_dra2arviz_SOURCES) \
+	$(nodist_EXTRA_pario_dra_dra2arviz_SOURCES) \
+	$(pario_dra_dra_mxm_SOURCES) $(pario_dra_ntest_SOURCES) \
+	$(pario_dra_ntestc_SOURCES) \
+	$(nodist_EXTRA_pario_dra_ntestc_SOURCES) \
+	$(pario_dra_perf_SOURCES) $(pario_dra_perf2_SOURCES) \
+	$(pario_dra_perf3_SOURCES) $(pario_dra_perfn_SOURCES) \
+	$(nodist_EXTRA_pario_dra_perfn_SOURCES) \
+	$(pario_dra_rate_SOURCES) \
+	$(nodist_EXTRA_pario_dra_rate_SOURCES) \
+	$(pario_dra_test_SOURCES) $(pario_dra_test_mxm_SOURCES) \
+	$(pario_dra_time_mxm_SOURCES) $(pario_eaf_test_SOURCES) \
+	$(pario_sf_test_SOURCES) $(tcgmsg_ipcv4_0_hello_SOURCES) \
 	$(nodist_EXTRA_tcgmsg_ipcv4_0_hello_SOURCES) \
 	$(tcgmsg_ipcv4_0_test_SOURCES) \
 	$(nodist_EXTRA_tcgmsg_ipcv4_0_test_SOURCES) \
@@ -2183,8 +2377,15 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(gparrays_testing_test_SOURCES) $(ma_test_coalesce_SOURCES) \
 	$(ma_test_inquire_SOURCES) $(ma_testc_SOURCES) \
 	$(ma_testf_SOURCES) $(am__parallel_SOURCES_DIST) \
-	$(pario_bign_SOURCES) $(pario_ntestc_SOURCES) \
-	$(pario_perfn_SOURCES) $(pario_rate_SOURCES) \
+	$(pario_dra_big_SOURCES) $(pario_dra_bign_SOURCES) \
+	$(pario_dra_dbg_read_SOURCES) $(pario_dra_dbg_write_SOURCES) \
+	$(pario_dra_dra2arviz_SOURCES) $(pario_dra_dra_mxm_SOURCES) \
+	$(pario_dra_ntest_SOURCES) $(pario_dra_ntestc_SOURCES) \
+	$(pario_dra_perf_SOURCES) $(pario_dra_perf2_SOURCES) \
+	$(pario_dra_perf3_SOURCES) $(pario_dra_perfn_SOURCES) \
+	$(pario_dra_rate_SOURCES) $(pario_dra_test_SOURCES) \
+	$(pario_dra_test_mxm_SOURCES) $(pario_dra_time_mxm_SOURCES) \
+	$(pario_eaf_test_SOURCES) $(pario_sf_test_SOURCES) \
 	$(am__tcgmsg_ipcv4_0_hello_SOURCES_DIST) \
 	$(am__tcgmsg_ipcv4_0_test_SOURCES_DIST) \
 	$(am__tcgmsg_ipcv4_0_testf_SOURCES_DIST) \
@@ -2510,24 +2711,6 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-# Makefile.am for Global Arrays.
-#
-# Rationale:
-# This Makefile.am follows many of the suggestions outlined in the paper
-# "Recursive Make Considered Harmful".  We do not use automake's
-# 'include' feature (instead preferring a single, large Makefile.am).
-# We do recurse into the armci directory, but since armci is a stand-alone
-# package this is the correct behavior.
-#
-# Additional targets:
-# Besides the traditional make targets supplied by automake, we have added the
-# "checkprogs" target to build example programs and test programs.
-#
-# Notes:
-# In general, each subdirectory has a corresponding section within this
-# Makefile.am with the notable exception being the many examples getting
-# rolled up into the global/examples section.
-#
 
 # The usual aclocal nonsense to get include paths right.
 ACLOCAL_AMFLAGS = -I m4
@@ -2958,14 +3141,43 @@ global_trace_adjust_LDADD =
 global_trace_collisions_SOURCES = global/trace/collisions.c
 global_trace_collisions_LDFLAGS = 
 global_trace_collisions_LDADD = 
-pario_bign_SOURCES = pario/dra/bign.c
-pario_ntestc_SOURCES = pario/dra/ntestc.c
-pario_perfn_SOURCES = pario/dra/perfn.c
-pario_rate_SOURCES = pario/dra/rate.c
-nodist_EXTRA_pario_bign_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_ntestc_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_perfn_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_pario_rate_SOURCES = $(MAYBE_DUMMY_F_LINK)
+dtsrc = pario/dra/ffflush.F pario/dra/util.c
+pario_dra_big_SOURCES = pario/dra/big.F $(dtsrc)
+pario_dra_bign_SOURCES = pario/dra/bign.c
+pario_dra_dbg_read_SOURCES = pario/dra/dbg_read.c
+pario_dra_dbg_write_SOURCES = pario/dra/dbg_write.c
+pario_dra_dra2arviz_SOURCES = pario/dra/dra2arviz.c
+pario_dra_dra_mxm_SOURCES = pario/dra/dra_mxm.F $(dtsrc)
+pario_dra_ntest_SOURCES = pario/dra/ntest.F $(dtsrc)
+pario_dra_ntestc_SOURCES = pario/dra/ntestc.c
+pario_dra_perf_SOURCES = pario/dra/perf.F $(dtsrc)
+pario_dra_perf2_SOURCES = pario/dra/perf2.F $(dtsrc)
+pario_dra_perf3_SOURCES = pario/dra/perf3.F $(dtsrc)
+pario_dra_perfn_SOURCES = pario/dra/perfn.c
+pario_dra_rate_SOURCES = pario/dra/rate.c
+pario_dra_test_SOURCES = pario/dra/test.F $(dtsrc)
+pario_dra_test_mxm_SOURCES = pario/dra/test_mxm.F $(dtsrc)
+pario_dra_time_mxm_SOURCES = pario/dra/time_mxm.F $(dtsrc)
+pario_eaf_test_SOURCES = pario/eaf/test.F $(dtsrc)
+pario_sf_test_SOURCES = pario/sf/test.F $(dtsrc)
+nodist_EXTRA_pario_dra_bign_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_pario_dra_dbg_read_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_pario_dra_dbg_write_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_pario_dra_dra2arviz_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_pario_dra_ntestc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_pario_dra_perfn_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_pario_dra_rate_SOURCES = $(MAYBE_DUMMY_F_LINK)
+pario_dra_big_LDFLAGS = $(FLDFLAGS)
+pario_dra_dra_mxm_LDFLAGS = $(FLDFLAGS)
+pario_dra_ntest_LDFLAGS = $(FLDFLAGS)
+pario_dra_perf_LDFLAGS = $(FLDFLAGS)
+pario_dra_perf2_LDFLAGS = $(FLDFLAGS)
+pario_dra_perf3_LDFLAGS = $(FLDFLAGS)
+pario_dra_test_LDFLAGS = $(FLDFLAGS)
+pario_dra_test_mxm_LDFLAGS = $(FLDFLAGS)
+pario_dra_time_mxm_LDFLAGS = $(FLDFLAGS)
+pario_eaf_test_LDFLAGS = $(FLDFLAGS)
+pario_sf_test_LDFLAGS = $(FLDFLAGS)
 @CXX_BINDINGS_TRUE@libga___la_SOURCES = ga++/src/GAServices.cc \
 @CXX_BINDINGS_TRUE@	ga++/src/GlobalArray.cc ga++/src/PGroup.cc \
 @CXX_BINDINGS_TRUE@	ga++/src/init_term.cc ga++/src/overload.cc \
@@ -2997,8 +3209,7 @@ SUBDIRS = armci .
 # This is the "noinst" libarmci so that libtool combines it with libga.
 libga_la_LIBADD = armci/libarmcii.la
 EXAMPLES = global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_54) $(am__append_55) pario/bign$(EXEEXT) \
-	pario/ntestc$(EXEEXT) pario/perfn$(EXEEXT) pario/rate$(EXEEXT)
+	$(am__append_54) $(am__append_55)
 GA_RECURSIVE_TARGETS = checkprogs-recursive examples-recursive
 # END COPY
 
@@ -3046,8 +3257,9 @@ PARALLEL_TESTS = $(am__append_59) $(am__append_60) $(am__append_61) \
 	$(am__append_67) $(am__append_68) $(am__append_69) \
 	$(am__append_70) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_71) pario/bign$(EXEEXT) pario/ntestc$(EXEEXT) \
-	pario/perfn$(EXEEXT) pario/rate$(EXEEXT) $(am__append_72)
+	$(am__append_71) pario/dra/bign$(EXEEXT) \
+	pario/dra/ntestc$(EXEEXT) pario/dra/perfn$(EXEEXT) \
+	pario/dra/rate$(EXEEXT) $(am__append_72)
 PARALLEL_TESTS_XFAIL = 
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
@@ -4194,29 +4406,100 @@ tcgmsg/ipcv4.0/parallel.$(OBJEXT): tcgmsg/ipcv4.0/$(am__dirstamp) \
 parallel$(EXEEXT): $(parallel_OBJECTS) $(parallel_DEPENDENCIES) 
 	@rm -f parallel$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(parallel_OBJECTS) $(parallel_LDADD) $(LIBS)
+pario/dra/big.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/ffflush.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/util.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/big$(EXEEXT): $(pario_dra_big_OBJECTS) $(pario_dra_big_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/big$(EXEEXT)
+	$(AM_V_F77LD)$(pario_dra_big_LINK) $(pario_dra_big_OBJECTS) $(pario_dra_big_LDADD) $(LIBS)
 pario/dra/bign.$(OBJEXT): pario/dra/$(am__dirstamp) \
 	pario/dra/$(DEPDIR)/$(am__dirstamp)
-pario/$(am__dirstamp):
-	@$(MKDIR_P) pario
-	@: > pario/$(am__dirstamp)
-pario/bign$(EXEEXT): $(pario_bign_OBJECTS) $(pario_bign_DEPENDENCIES) pario/$(am__dirstamp)
-	@rm -f pario/bign$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(pario_bign_OBJECTS) $(pario_bign_LDADD) $(LIBS)
+pario/dra/bign$(EXEEXT): $(pario_dra_bign_OBJECTS) $(pario_dra_bign_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/bign$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(pario_dra_bign_OBJECTS) $(pario_dra_bign_LDADD) $(LIBS)
+pario/dra/dbg_read.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/dbg_read$(EXEEXT): $(pario_dra_dbg_read_OBJECTS) $(pario_dra_dbg_read_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/dbg_read$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(pario_dra_dbg_read_OBJECTS) $(pario_dra_dbg_read_LDADD) $(LIBS)
+pario/dra/dbg_write.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/dbg_write$(EXEEXT): $(pario_dra_dbg_write_OBJECTS) $(pario_dra_dbg_write_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/dbg_write$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(pario_dra_dbg_write_OBJECTS) $(pario_dra_dbg_write_LDADD) $(LIBS)
+pario/dra/dra2arviz.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/dra2arviz$(EXEEXT): $(pario_dra_dra2arviz_OBJECTS) $(pario_dra_dra2arviz_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/dra2arviz$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(pario_dra_dra2arviz_OBJECTS) $(pario_dra_dra2arviz_LDADD) $(LIBS)
+pario/dra/dra_mxm.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/dra_mxm$(EXEEXT): $(pario_dra_dra_mxm_OBJECTS) $(pario_dra_dra_mxm_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/dra_mxm$(EXEEXT)
+	$(AM_V_F77LD)$(pario_dra_dra_mxm_LINK) $(pario_dra_dra_mxm_OBJECTS) $(pario_dra_dra_mxm_LDADD) $(LIBS)
+pario/dra/ntest.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/ntest$(EXEEXT): $(pario_dra_ntest_OBJECTS) $(pario_dra_ntest_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/ntest$(EXEEXT)
+	$(AM_V_F77LD)$(pario_dra_ntest_LINK) $(pario_dra_ntest_OBJECTS) $(pario_dra_ntest_LDADD) $(LIBS)
 pario/dra/ntestc.$(OBJEXT): pario/dra/$(am__dirstamp) \
 	pario/dra/$(DEPDIR)/$(am__dirstamp)
-pario/ntestc$(EXEEXT): $(pario_ntestc_OBJECTS) $(pario_ntestc_DEPENDENCIES) pario/$(am__dirstamp)
-	@rm -f pario/ntestc$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(pario_ntestc_OBJECTS) $(pario_ntestc_LDADD) $(LIBS)
+pario/dra/ntestc$(EXEEXT): $(pario_dra_ntestc_OBJECTS) $(pario_dra_ntestc_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/ntestc$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(pario_dra_ntestc_OBJECTS) $(pario_dra_ntestc_LDADD) $(LIBS)
+pario/dra/perf.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/perf$(EXEEXT): $(pario_dra_perf_OBJECTS) $(pario_dra_perf_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/perf$(EXEEXT)
+	$(AM_V_F77LD)$(pario_dra_perf_LINK) $(pario_dra_perf_OBJECTS) $(pario_dra_perf_LDADD) $(LIBS)
+pario/dra/perf2.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/perf2$(EXEEXT): $(pario_dra_perf2_OBJECTS) $(pario_dra_perf2_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/perf2$(EXEEXT)
+	$(AM_V_F77LD)$(pario_dra_perf2_LINK) $(pario_dra_perf2_OBJECTS) $(pario_dra_perf2_LDADD) $(LIBS)
+pario/dra/perf3.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/perf3$(EXEEXT): $(pario_dra_perf3_OBJECTS) $(pario_dra_perf3_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/perf3$(EXEEXT)
+	$(AM_V_F77LD)$(pario_dra_perf3_LINK) $(pario_dra_perf3_OBJECTS) $(pario_dra_perf3_LDADD) $(LIBS)
 pario/dra/perfn.$(OBJEXT): pario/dra/$(am__dirstamp) \
 	pario/dra/$(DEPDIR)/$(am__dirstamp)
-pario/perfn$(EXEEXT): $(pario_perfn_OBJECTS) $(pario_perfn_DEPENDENCIES) pario/$(am__dirstamp)
-	@rm -f pario/perfn$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(pario_perfn_OBJECTS) $(pario_perfn_LDADD) $(LIBS)
+pario/dra/perfn$(EXEEXT): $(pario_dra_perfn_OBJECTS) $(pario_dra_perfn_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/perfn$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(pario_dra_perfn_OBJECTS) $(pario_dra_perfn_LDADD) $(LIBS)
 pario/dra/rate.$(OBJEXT): pario/dra/$(am__dirstamp) \
 	pario/dra/$(DEPDIR)/$(am__dirstamp)
-pario/rate$(EXEEXT): $(pario_rate_OBJECTS) $(pario_rate_DEPENDENCIES) pario/$(am__dirstamp)
-	@rm -f pario/rate$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(pario_rate_OBJECTS) $(pario_rate_LDADD) $(LIBS)
+pario/dra/rate$(EXEEXT): $(pario_dra_rate_OBJECTS) $(pario_dra_rate_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/rate$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(pario_dra_rate_OBJECTS) $(pario_dra_rate_LDADD) $(LIBS)
+pario/dra/test.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/test$(EXEEXT): $(pario_dra_test_OBJECTS) $(pario_dra_test_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/test$(EXEEXT)
+	$(AM_V_F77LD)$(pario_dra_test_LINK) $(pario_dra_test_OBJECTS) $(pario_dra_test_LDADD) $(LIBS)
+pario/dra/test_mxm.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/test_mxm$(EXEEXT): $(pario_dra_test_mxm_OBJECTS) $(pario_dra_test_mxm_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/test_mxm$(EXEEXT)
+	$(AM_V_F77LD)$(pario_dra_test_mxm_LINK) $(pario_dra_test_mxm_OBJECTS) $(pario_dra_test_mxm_LDADD) $(LIBS)
+pario/dra/time_mxm.$(OBJEXT): pario/dra/$(am__dirstamp) \
+	pario/dra/$(DEPDIR)/$(am__dirstamp)
+pario/dra/time_mxm$(EXEEXT): $(pario_dra_time_mxm_OBJECTS) $(pario_dra_time_mxm_DEPENDENCIES) pario/dra/$(am__dirstamp)
+	@rm -f pario/dra/time_mxm$(EXEEXT)
+	$(AM_V_F77LD)$(pario_dra_time_mxm_LINK) $(pario_dra_time_mxm_OBJECTS) $(pario_dra_time_mxm_LDADD) $(LIBS)
+pario/eaf/test.$(OBJEXT): pario/eaf/$(am__dirstamp) \
+	pario/eaf/$(DEPDIR)/$(am__dirstamp)
+pario/eaf/test$(EXEEXT): $(pario_eaf_test_OBJECTS) $(pario_eaf_test_DEPENDENCIES) pario/eaf/$(am__dirstamp)
+	@rm -f pario/eaf/test$(EXEEXT)
+	$(AM_V_F77LD)$(pario_eaf_test_LINK) $(pario_eaf_test_OBJECTS) $(pario_eaf_test_LDADD) $(LIBS)
+pario/sf/test.$(OBJEXT): pario/sf/$(am__dirstamp) \
+	pario/sf/$(DEPDIR)/$(am__dirstamp)
+pario/sf/test$(EXEEXT): $(pario_sf_test_OBJECTS) $(pario_sf_test_DEPENDENCIES) pario/sf/$(am__dirstamp)
+	@rm -f pario/sf/test$(EXEEXT)
+	$(AM_V_F77LD)$(pario_sf_test_LINK) $(pario_sf_test_OBJECTS) $(pario_sf_test_LDADD) $(LIBS)
 tcgmsg/ipcv4.0/hello.$(OBJEXT): tcgmsg/ipcv4.0/$(am__dirstamp) \
 	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
 tcgmsg/ipcv4.0/hello$(EXEEXT): $(tcgmsg_ipcv4_0_hello_OBJECTS) $(tcgmsg_ipcv4_0_hello_DEPENDENCIES) tcgmsg/ipcv4.0/$(am__dirstamp)
@@ -4573,28 +4856,43 @@ mostlyclean-compile:
 	-rm -f ma/test-inquire.$(OBJEXT)
 	-rm -f ma/testc.$(OBJEXT)
 	-rm -f ma/testf.$(OBJEXT)
+	-rm -f pario/dra/big.$(OBJEXT)
 	-rm -f pario/dra/bign.$(OBJEXT)
 	-rm -f pario/dra/buffers.$(OBJEXT)
 	-rm -f pario/dra/buffers.lo
 	-rm -f pario/dra/capi.$(OBJEXT)
 	-rm -f pario/dra/capi.lo
+	-rm -f pario/dra/dbg_read.$(OBJEXT)
+	-rm -f pario/dra/dbg_write.$(OBJEXT)
 	-rm -f pario/dra/disk.arrays.$(OBJEXT)
 	-rm -f pario/dra/disk.arrays.lo
 	-rm -f pario/dra/disk.param.$(OBJEXT)
 	-rm -f pario/dra/disk.param.lo
+	-rm -f pario/dra/dra2arviz.$(OBJEXT)
+	-rm -f pario/dra/dra_mxm.$(OBJEXT)
 	-rm -f pario/dra/env.$(OBJEXT)
 	-rm -f pario/dra/env.lo
+	-rm -f pario/dra/ffflush.$(OBJEXT)
 	-rm -f pario/dra/fortran.$(OBJEXT)
 	-rm -f pario/dra/fortran.lo
+	-rm -f pario/dra/ntest.$(OBJEXT)
 	-rm -f pario/dra/ntestc.$(OBJEXT)
 	-rm -f pario/dra/patch.util.$(OBJEXT)
 	-rm -f pario/dra/patch.util.lo
+	-rm -f pario/dra/perf.$(OBJEXT)
+	-rm -f pario/dra/perf2.$(OBJEXT)
+	-rm -f pario/dra/perf3.$(OBJEXT)
 	-rm -f pario/dra/perfn.$(OBJEXT)
 	-rm -f pario/dra/rate.$(OBJEXT)
+	-rm -f pario/dra/test.$(OBJEXT)
+	-rm -f pario/dra/test_mxm.$(OBJEXT)
+	-rm -f pario/dra/time_mxm.$(OBJEXT)
+	-rm -f pario/dra/util.$(OBJEXT)
 	-rm -f pario/eaf/eaf.$(OBJEXT)
 	-rm -f pario/eaf/eaf.lo
 	-rm -f pario/eaf/eaf_f2c.$(OBJEXT)
 	-rm -f pario/eaf/eaf_f2c.lo
+	-rm -f pario/eaf/test.$(OBJEXT)
 	-rm -f pario/elio/elio.$(OBJEXT)
 	-rm -f pario/elio/elio.lo
 	-rm -f pario/elio/stat.$(OBJEXT)
@@ -4605,6 +4903,7 @@ mostlyclean-compile:
 	-rm -f pario/sf/sf_fortran.lo
 	-rm -f pario/sf/shared.files.$(OBJEXT)
 	-rm -f pario/sf/shared.files.lo
+	-rm -f pario/sf/test.$(OBJEXT)
 	-rm -f tcgmsg/capi.$(OBJEXT)
 	-rm -f tcgmsg/capi.lo
 	-rm -f tcgmsg/ipcv4.0/brdcst.$(OBJEXT)
@@ -4880,14 +5179,18 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/bign.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/buffers.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/capi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/dbg_read.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/dbg_write.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/disk.arrays.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/disk.param.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/dra2arviz.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/env.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/fortran.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/ntestc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/patch.util.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/perfn.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/rate.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@pario/dra/$(DEPDIR)/util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/eaf/$(DEPDIR)/eaf.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/eaf/$(DEPDIR)/eaf_f2c.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/elio/$(DEPDIR)/elio.Plo@am__quote@
@@ -5346,7 +5649,6 @@ clean-libtool:
 	-rm -rf gparrays/src/.libs gparrays/src/_libs
 	-rm -rf gparrays/testing/.libs gparrays/testing/_libs
 	-rm -rf ma/.libs ma/_libs
-	-rm -rf pario/.libs pario/_libs
 	-rm -rf pario/dra/.libs pario/dra/_libs
 	-rm -rf pario/eaf/.libs pario/eaf/_libs
 	-rm -rf pario/elio/.libs pario/elio/_libs
@@ -5834,14 +6136,14 @@ global/examples/lennard-jones/lennard.log: global/examples/lennard-jones/lennard
 	@p='global/examples/lennard-jones/lennard$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/examples/boltzmann/boltz.log: global/examples/boltzmann/boltz$(EXEEXT)
 	@p='global/examples/boltzmann/boltz$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-pario/bign.log: pario/bign$(EXEEXT)
-	@p='pario/bign$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-pario/ntestc.log: pario/ntestc$(EXEEXT)
-	@p='pario/ntestc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-pario/perfn.log: pario/perfn$(EXEEXT)
-	@p='pario/perfn$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-pario/rate.log: pario/rate$(EXEEXT)
-	@p='pario/rate$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+pario/dra/bign.log: pario/dra/bign$(EXEEXT)
+	@p='pario/dra/bign$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+pario/dra/ntestc.log: pario/dra/ntestc$(EXEEXT)
+	@p='pario/dra/ntestc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+pario/dra/perfn.log: pario/dra/perfn$(EXEEXT)
+	@p='pario/dra/perfn$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+pario/dra/rate.log: pario/dra/rate$(EXEEXT)
+	@p='pario/dra/rate$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 ga++/testing/elempatch.log: ga++/testing/elempatch$(EXEEXT)
 	@p='ga++/testing/elempatch$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 ga++/testing/mtest.log: ga++/testing/mtest$(EXEEXT)
@@ -6112,7 +6414,6 @@ distclean-generic:
 	-rm -f gparrays/testing/$(am__dirstamp)
 	-rm -f ma/$(DEPDIR)/$(am__dirstamp)
 	-rm -f ma/$(am__dirstamp)
-	-rm -f pario/$(am__dirstamp)
 	-rm -f pario/dra/$(DEPDIR)/$(am__dirstamp)
 	-rm -f pario/dra/$(am__dirstamp)
 	-rm -f pario/eaf/$(DEPDIR)/$(am__dirstamp)
@@ -6242,7 +6543,6 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 	uninstall-includeHEADERS uninstall-libLTLIBRARIES \
 	uninstall-nodist_includeHEADERS uninstall-pkgconfigDATA
 
-_##############################################################################
 
 config.fh: config.h
 	@-rm -f config.fh

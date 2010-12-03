@@ -10,60 +10,72 @@
 #endif
 
 #include "dra.h"
-#include "global.h"
+#include "ga.h"
 #include "macommon.h"
-#include "msgtypesc.h"
-#include "tcgmsg.h"
+#include "mp3.h"
 
 #define ERROR(msg,code){printf("ERROR:%s\0",(msg)); fflush(stdout); exit(1);}
 
 #define BUFSIZE 8000000
 int main(int argc, char **argv)
 {
-    Integer heap=400000, stack=400000;
-    Integer me, nproc;
+    int heap=400000, stack=400000;
+    int me, nproc;
     char buf[BUFSIZE];
-    Integer max_arrays=2;
-    double  max_sz=1e8, max_disk=2e8, max_mem=1e6;
-    Integer d_a, mode=DRA_R;
-    Integer g_a,dim1,dim2,rows,cols,block=-1;
-    char    name[1024], fname[1024];
-    Integer transp=0, reqid, one=1;
-    Integer index, ld;
-    Integer i,j,ilo,ihi,jlo,jhi,type;
+    int max_arrays=2;
+    double max_sz=1e8, max_disk=2e8, max_mem=1e6;
+    int d_a, mode=DRA_R;
+    int g_a,dim1,dim2,rows,cols,block=-1;
+    char name[1024], fname[1024];
+    logical transp=0;
+    int one=1;
+    int reqid;
+    int index, ld;
+    int i,j,ilo,ihi,jlo,jhi,type,ndim,glo[2],ghi[2],gld[1],gdims[2];
+    dra_size_t dlo[2],dhi[2],ddims[2];
     size_t size, nitems;
+    void *ptr;
 
-    if(argc<6){
+    if(argc!=6){
         printf("Usage: dra2arviz <dra_filename> <ilo> <ihi> <jlo> <jhi>\n");
         printf("       dra_filename is the meta-file name for disk resident array\n");
         printf("       [ilo:ihi, jlo:jhi]  array section to read\0\n\n");
         return(1);
     }
 
-    tcg_pbegin(argc, argv);
-    me=tcg_nodeid();
-    nproc=tcg_nnodes();
+    MP_INIT(argc,argv);
+    MP_MYID(&me);
+    MP_PROCS(&nproc);
 
     heap /= nproc;
     stack /= nproc;
     if(! MA_init((Integer)MT_F_DBL, stack, heap))
-        tcg_error("MA_init failed",stack+heap); /* initialize memory allocator*/
-    GA_initialize();                         /* initialize GA */
+        GA_Error("MA_init failed",stack+heap); /* initialize memory allocator*/
+    GA_Initialize();                         /* initialize GA */
 
     if(nproc != 1)ERROR("Error: does not run in parallel",nproc);
 
-    if(DRA_init(&max_arrays, &max_sz, &max_disk, &max_mem))
+    if(DRA_Init(max_arrays, max_sz, max_disk, max_mem))
         ERROR("initialization failed",0);
 
-    if(DRA_open(argv[1],&mode, &d_a)) ERROR("dra_open failed",0);
+    if(DRA_Open(argv[1], mode, &d_a)) ERROR("dra_open failed",0);
 
     ilo = atoi(argv[2]); ihi = atoi(argv[3]);
     jlo = atoi(argv[4]); jhi = atoi(argv[5]);
+    dlo[0] = ilo;
+    dlo[1] = jlo;
+    dhi[0] = ihi;
+    dhi[1] = jhi;
     rows = ihi - ilo +1; 
     cols = jhi - jlo +1; 
+    glo[0] = 0;
+    glo[1] = 0;
+    ghi[0] = rows-1;
+    ghi[1] = cols-1;
+    gdims[0] = rows;
+    gdims[1] = cols;
 
-
-    if(DRA_inquire(&d_a, &type, &dim1, &dim2, name, fname))
+    if(NDRA_Inquire(d_a, &type, &ndim, ddims, name, fname))
         ERROR("dra_inquire failed",0);
 
     switch (type) {
@@ -73,36 +85,34 @@ int main(int argc, char **argv)
         default: ERROR("type not supported",type);
     }
 
-    if(!GA_create(&type, &rows, &cols, "temp", &block, &block, &g_a))
-        ERROR("ga_create failed:",0);
+    g_a = NGA_Create(type, 2, gdims, "temp", NULL);
 
-    if(DRA_read_section(&transp, &g_a, &one, &rows, &one, &cols,
-                &d_a, &ilo, &ihi, &jlo, &jhi, &reqid))
+    if(NDRA_Read_section(transp, g_a, glo, ghi,
+                d_a, dlo, dhi, &reqid))
         ERROR("dra_read_section failed",0);
 
-    if(DRA_wait(&reqid)) ERROR("dra_wait failed",0);
+    if(DRA_Wait(reqid)) ERROR("dra_wait failed",0);
 
-    GA_access(&g_a, &one, &rows, &one, &cols, &index, &ld);
-    index --; /* adjustment for C addressing */
+    NGA_Access(g_a, glo, ghi, &ptr, gld);
 
-    if(ld != rows) ERROR("ld != rows",ld); 
+    if(gld[0] != rows) ERROR("ld != rows",gld[0]); 
 
     fwrite("OK\0",1,3,stdout);
     nitems = (size_t)rows;
     /* write data by columns */
     for(i=0; i<cols; i++){
-        if(type == MT_F_DBL)fwrite(&DBL_MB[index + i*ld],size,nitems,stdout);
-        else 
-            if(type == MT_F_DCPL)
-                fwrite(&DCPL_MB[index+i*ld],size,nitems,stdout);
-            else
-                fwrite(&INT_MB[index + i*ld],size,nitems,stdout);
+        if(type == MT_F_DBL)
+            fwrite(ptr,size,nitems,stdout);
+        else if(type == MT_F_DCPL)
+            fwrite(ptr,size,nitems,stdout);
+        else
+            fwrite(ptr,size,nitems,stdout);
     }
     fflush(stdout);
 
-    GA_destroy(&g_a);
+    GA_Destroy(g_a);
 
-    GA_terminate();
-    tcg_pend();
+    GA_Terminate();
+    MP_FINALIZE();
     return 0;
 }

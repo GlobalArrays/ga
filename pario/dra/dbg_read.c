@@ -29,7 +29,13 @@ int main(int argc, char **argv)
     to   = atoi(argv[4]);
 
     if(from < 0 || to < from) {printf("range error\n"); return 1;}
+#if 0
     if(!(fd = dra_el_open(argv[1],DRA_R))){printf("not found\n"); return 1;} 
+#else
+    /* TODO This must be an old test program using an old API...
+     * consider removing this program. */
+    return 1;
+#endif
 
     switch (type){
 
@@ -37,7 +43,11 @@ int main(int argc, char **argv)
             for(i=from; i<= to; i+= LEN){
                 imax = PARIO_MIN(i+LEN-1,to);
                 offset = sizeof(Integer)*i;
+#if 0
                 status=dra_el_read(idata, sizeof(Integer), imax -i+1, fd, offset);
+#else
+                status = 1;
+#endif
                 if(!status)printf("error read failed\n");
                 for(ii=0;ii<imax-i+1;ii++) printf("%4ld ",idata[ii]);
                 printf("\n");
@@ -47,7 +57,11 @@ int main(int argc, char **argv)
             for(i=from; i<= to; i+= LEN){ 
                 imax = PARIO_MIN(i+LEN-1,to);
                 offset = sizeof(DoublePrecision)*i;
+#if 0
                 status=dra_el_read(ddata, sizeof(DoublePrecision), imax -i+1, fd, offset);
+#else
+                status = 1;
+#endif
                 if(!status)printf("error read failed\n");
                 for(ii=0;ii<imax-i+1;ii++) printf("%lf ",ddata[ii]);
                 printf("\n");

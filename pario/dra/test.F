@@ -22,7 +22,7 @@ c
       data max_arrays, max_sz, max_disk, max_mem /10,1d8,1d10, 1d6/
       data stack, heap /80000, 80000/
 c
-      call pbeginf 
+#include "mp3.fh"
       if(ma_init(MT_F_DBL, stack, heap) ) then
         call ga_initialize()
         me    = ga_nodeid()
@@ -43,7 +43,7 @@ c
         print *,'ma_init failed'
       endif
 c     if(me.eq.0)print *, 'all done ...'
-      call pend()
+      call MP_FINALIZE()
       end
 
 

@@ -39,7 +39,7 @@ c#define MULTFILES 1
       data stack, heap /1200000, 800000/
 #endif
 c
-      call pbeginf 
+#include "mp3.fh"
       call ga_initialize()
       if(.not. ga_uses_ma())then
          stack = 100000 
@@ -61,7 +61,7 @@ c
         print *,'ma_init failed'
       endif
       if(me.eq.0)print *, 'all done ...'
-      call pend()
+      call MP_FINALIZE()
       end
 
 
@@ -70,8 +70,8 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 #include "dra.fh"
+#include "mp3def.fh"
       integer n,m,ndim
       parameter (n=250, ndim=3)
       parameter (m = 2*n)
@@ -88,8 +88,10 @@ c
       integer ilen
       character*80 filename, filename1
 #endif
+      integer util_mdtob
       logical status
       external  drand
+      external util_mdtob
       intrinsic int, dble
       iran(i) = int(drand(0)*dble(i-1)) + 1
 c    
@@ -151,20 +153,20 @@ c.......................................................................
 c
       if(me.eq.0) print *, 'alligned blocking write'
       if (me.eq.0)call ffflush(6)
-      tt0 = tcgtime()
+      tt0 = MP_TIMER()
       if(ndra_write(g_a, d_a,req).ne.0)
      $   CALL ga_error('ndra_write failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
-      tt1 = tcgtime() -tt0
+      tt1 = MP_TIMER() -tt0
       rmax = tt1
       call ga_dgop(1,rmax,1,'max')
-      mbytes = 1e-6*mdtob(n*n*n)
+      mbytes = 1e-6*util_mdtob(n*n*n)
       if (me.eq.0)then
           write(6,100)mbytes,rmax,mbytes/rmax
       endif
 c
       if(dra_close(d_a).ne.0)call ga_error('dra_close failed: ',d_a)
-      tt1 = tcgtime() -tt0
+      tt1 = MP_TIMER() -tt0
       rmax = tt1
       call ga_dgop(1,rmax,1,'max')
       if (me.eq.0)then
@@ -207,25 +209,25 @@ c
         dlo(i) = 2
         dhi(i) = n+1
       end do
-      tt0 = tcgtime()
+      tt0 = MP_TIMER()
       if(ndra_write_section(.false., g_a, glo, ghi,
      &               d_b, dlo, dhi, req).ne.0)
      &         call  ga_error('ndra_write_section failed:',0)
 
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
-      tt1 = tcgtime() -tt0
+      tt1 = MP_TIMER() -tt0
       rmax = tt1
       call ga_dgop(1,rmax,1,'max')
-      mbytes = 1e-6*mdtob(n*n*n)
+      mbytes = 1e-6*util_mdtob(n*n*n)
       if (me.eq.0)then
           write(6,100)mbytes,rmax,mbytes/rmax
       endif
 c
       if(dra_close(d_b).ne.0)call ga_error('dra_close failed: ',d_b)
-      tt1 = tcgtime() -tt0
+      tt1 = MP_TIMER() -tt0
       rmax = tt1
       call ga_dgop(1,rmax,1,'max')
-      mbytes = 1e-6*mdtob(n*n*n)
+      mbytes = 1e-6*util_mdtob(n*n*n)
       if (me.eq.0)then
           write(6,100)mbytes,rmax,mbytes/rmax
       endif
@@ -249,11 +251,11 @@ c
 #endif
       if(me.eq.0) print *, 'alligned blocking read'
       if (me.eq.0)call ffflush(6)
-      tt0 = tcgtime()
+      tt0 = MP_TIMER()
       if(ndra_read(g_b, d_a, req).ne.0)
      $   CALL ga_error('ndra_read failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
-      tt1 = tcgtime() -tt0
+      tt1 = MP_TIMER() -tt0
       rmax = tt1
       call ga_dgop(1,rmax,1,'max')
       if (me.eq.0)then
@@ -284,12 +286,12 @@ c
 #endif
       if(me.eq.0) print *, 'non alligned blocking read'
       if (me.eq.0)call ffflush(6)
-      tt0 = tcgtime()
+      tt0 = MP_TIMER()
       if(ndra_read_section(.false., g_b, glo, ghi,
      &               d_b, dlo, dhi, req).ne.0)
      &        call   ga_error('ndra_read_section failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
-      tt1 = tcgtime() -tt0
+      tt1 = MP_TIMER() -tt0
       rmax = tt1
       call ga_dgop(1,rmax,1,'max')
       if (me.eq.0)then
