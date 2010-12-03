@@ -3753,8 +3753,9 @@ else
     ga_cv_target_base=MACX ;; #(
   *apple*) :
     ga_cv_target_base=MACX ;; #(
-  #[TODO],            [ga_cv_target_base=NEC],
-*solaris*) :
+  *superux*) :
+    ga_cv_target_base=NEC ;; #(
+  *solaris*) :
     ga_cv_target_base=SOLARIS ;; #(
   *) :
     ga_cv_target_base=UNKNOWN

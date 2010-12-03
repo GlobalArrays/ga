@@ -63,8 +63,8 @@ AC_CACHE_CHECK([for TARGET base (64bit-ness checked later)],
 #[TODO],            [ga_cv_target_base=LAPI],
 [*linux*],          [ga_cv_target_base=LINUX],
 [*darwin*],         [ga_cv_target_base=MACX],
-[*apple*],         [ga_cv_target_base=MACX],
-#[TODO],            [ga_cv_target_base=NEC],
+[*apple*],          [ga_cv_target_base=MACX],
+[*superux*],        [ga_cv_target_base=NEC],
 [*solaris*],        [ga_cv_target_base=SOLARIS],
 [ga_cv_target_base=UNKNOWN]
 )
