@@ -948,16 +948,19 @@ LDFLAGS
 LIBS
 CPPFLAGS
 CPP
+ARMCI_COPT
 MPICXX
 CXX
 CXXFLAGS
 CCC
+ARMCI_CXXOPT
 CCAS
 CCASFLAGS
 MPIF77
 F77
 FFLAGS
 FFLAG_INT_4
+ARMCI_FOPT
 CXXCPP'
 
 
@@ -1653,15 +1656,19 @@ Some influential environment variables:
   CPPFLAGS    (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if
               you have headers in a nonstandard directory <include dir>
   CPP         C preprocessor
+  ARMCI_COPT  ARMCI C optimization flags
   MPICXX      MPI C++ compiler
   CXX         C++ compiler command
   CXXFLAGS    C++ compiler flags
+  ARMCI_CXXOPT
+              ARMCI C++ optimization flags
   CCAS        assembler compiler command (defaults to CC)
   CCASFLAGS   assembler compiler flags (defaults to CFLAGS)
   MPIF77      MPI Fortran 77 compiler
   F77         Fortran 77 compiler command
   FFLAGS      Fortran 77 compiler flags
   FFLAG_INT_4 Fortran 77 compiler flag to set integer size to 4 bytes
+  ARMCI_FOPT  ARMCI Fortran 77 optimization flags
   CXXCPP      C++ preprocessor
 
 Use these variables to override the choices made by `configure' or to help
@@ -10322,15 +10329,21 @@ fi
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for specific C optimizations" >&5
 $as_echo_n "checking for specific C optimizations... " >&6; }
 if test "${armci_cv_c_opt+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  if test x$enable_opt = xno; then :
-  armci_cv_c_opt="-O0"
+
+if test "x$ARMCI_COPT" != x; then :
+  armci_cv_c_opt="$ARMCI_COPT"
 else
-  case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu:$ga_armci_network in #(
+  armci_cv_c_opt=
+fi
+if test "x$armci_cv_c_opt" = x && test "x$enable_opt" = xyes; then :
+
+case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu:$ga_armci_network in #(
   BGL:*:*:*) :
     armci_cv_c_opt="-O0" ;; #(
   BGP:ibm:*:*) :
@@ -10424,6 +10437,7 @@ else
   *) :
     armci_cv_c_opt="-O0" ;;
 esac
+
 fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $armci_cv_c_opt" >&5
@@ -11327,20 +11341,27 @@ fi
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for specific C++ optimizations" >&5
 $as_echo_n "checking for specific C++ optimizations... " >&6; }
 if test "${armci_cv_cxx_opt+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  if test x$enable_opt = xno; then :
-  armci_cv_cxx_opt="-O0"
+
+if test "x$ARMCI_CXXOPT" != x; then :
+  armci_cv_cxx_opt="$ARMCI_CXXOPT"
 else
-  case $ga_cv_target:$ax_cv_cxx_compiler_vendor:$host_cpu:$ga_armci_network in #(
+  armci_cv_cxx_opt=
+fi
+if test "x$armci_cv_cxx_opt" = x && test "x$enable_opt" = xyes; then :
+
+case $ga_cv_target:$ax_cv_cxx_compiler_vendor:$host_cpu:$ga_armci_network in #(
   LINUX:*:*:*) :
     armci_cv_cxx_opt="-O0" ;; #(
   *) :
-    armci_cv_cxx_opt="-O0" ;;
+    armci_cv_cxx_opt= ;;
 esac
+
 fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $armci_cv_cxx_opt" >&5
@@ -13709,15 +13730,21 @@ fi
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for specific Fortran optimizations" >&5
 $as_echo_n "checking for specific Fortran optimizations... " >&6; }
 if test "${armci_cv_f77_opt+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  if test x$enable_opt = xno; then :
-  armci_cv_f77_opt=-O0
+
+if test "x$ARMCI_FOPT" != x; then :
+  armci_cv_f77_opt="$ARMCI_FOPT"
 else
-  case $ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu:$ga_armci_network in #(
+  armci_cv_f77_opt=
+fi
+if test "x$armci_cv_f77_opt" = x && test "x$enable_opt" = xyes; then :
+
+case $ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu:$ga_armci_network in #(
   BGL:*:*:*) :
     armci_cv_f77_opt="-O0" ;; #(
   BGP:ibm:*:*) :
@@ -13737,11 +13764,11 @@ else
   HPUX64:*:*:*) :
     armci_cv_f77_opt="-O3 +Odataprefetch +Ofastaccess" ;; #(
   HPUX64:*:ia64:*) :
-    armci_cv_f77_opt="" ;; #(
+    armci_cv_f77_opt= ;; #(
   HPUX:*:*:*) :
     armci_cv_f77_opt="-O3 +Odataprefetch" ;; #(
   IBM64:*:*:*) :
-    armci_cv_f77_opt="" ;; #(
+    armci_cv_f77_opt= ;; #(
   IBM:*:*:*) :
     armci_cv_f77_opt="-O4 -qarch=auto -qstrict" ;; #(
   LAPI64:*:*:*) :
@@ -13827,8 +13854,9 @@ else
   SOLARIS:gnu:i386:*) :
     armci_cv_f77_opt="-dalign -xarch=sse2" ;; #(
   *) :
-    armci_cv_f77_opt="-O0" ;;
+    armci_cv_f77_opt= ;;
 esac
+
 fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $armci_cv_f77_opt" >&5

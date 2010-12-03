@@ -5,9 +5,11 @@ AC_DEFUN([ARMCI_C_OPT], [
 AC_REQUIRE([GA_TARGET64])
 AC_REQUIRE([GA_ENABLE_OPT])
 AC_REQUIRE([GA_ARMCI_NETWORK])
-AC_CACHE_CHECK([for specific C optimizations], [armci_cv_c_opt],
-[AS_IF([test x$enable_opt = xno], [armci_cv_c_opt="-O0"],
-[AS_CASE([$ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu:$ga_armci_network],
+AC_ARG_VAR([ARMCI_COPT], [ARMCI C optimization flags])
+AC_CACHE_CHECK([for specific C optimizations], [armci_cv_c_opt], [
+AS_IF([test "x$ARMCI_COPT" != x], [armci_cv_c_opt="$ARMCI_COPT"], [armci_cv_c_opt=])
+AS_IF([test "x$armci_cv_c_opt" = x && test "x$enable_opt" = xyes], [
+AS_CASE([$ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu:$ga_armci_network],
 [BGL:*:*:*],                [armci_cv_c_opt="-O0"],
 [BGP:ibm:*:*],              [armci_cv_c_opt="-O3 -qstrict -qarch=450 -qtune=450"],
 [BGP:gnu:*:*],              [armci_cv_c_opt="-O2"],
@@ -53,6 +55,7 @@ AC_CACHE_CHECK([for specific C optimizations], [armci_cv_c_opt],
 [SOLARIS:fujitsu:*:*],      [armci_cv_c_opt="-Kfast -KV8PFMADD -x0"],
 [SOLARIS:gnu:*:*],          [armci_cv_c_opt="-dalign"],
 [SOLARIS:gnu:i386:*],       [armci_cv_c_opt="-dalign -xarch=sse2"],
-                            [armci_cv_c_opt="-O0"])])])
-AC_SUBST([ARMCI_COPT],      [$armci_cv_c_opt])
+                            [armci_cv_c_opt="-O0"])
+])])
+AC_SUBST([ARMCI_COPT],  [$armci_cv_c_opt])
 ])dnl

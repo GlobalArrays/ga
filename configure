@@ -976,16 +976,19 @@ LDFLAGS
 LIBS
 CPPFLAGS
 CPP
+GA_COPT
 MPICXX
 CXX
 CXXFLAGS
 CCC
+GA_CXXOPT
 CCAS
 CCASFLAGS
 MPIF77
 F77
 FFLAGS
 FFLAG_INT
+GA_FOPT
 F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 XMKMF
 CXXCPP'
@@ -1692,15 +1695,18 @@ Some influential environment variables:
   CPPFLAGS    (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if
               you have headers in a nonstandard directory <include dir>
   CPP         C preprocessor
+  GA_COPT     GA C optimization flags
   MPICXX      MPI C++ compiler
   CXX         C++ compiler command
   CXXFLAGS    C++ compiler flags
+  GA_CXXOPT   GA C++ optimization flags
   CCAS        assembler compiler command (defaults to CC)
   CCASFLAGS   assembler compiler flags (defaults to CFLAGS)
   MPIF77      MPI Fortran 77 compiler
   F77         Fortran 77 compiler command
   FFLAGS      Fortran 77 compiler flags
   FFLAG_INT   Fortran 77 compiler flag to set desired integer size
+  GA_FOPT     GA Fortran 77 optimization flags
   F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
               if cross compiling, set to either "yes" (default) or "no" (after
               string)
@@ -11258,15 +11264,21 @@ fi
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for specific C optimizations" >&5
 $as_echo_n "checking for specific C optimizations... " >&6; }
 if test "${ga_cv_c_opt+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  if test x$enable_opt = xno; then :
-  ga_cv_c_opt="-O0"
+
+if test "x$GA_COPT" != x; then :
+  ga_cv_c_opt="$GA_COPT"
 else
-  case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu in #(
+  ga_cv_c_opt=
+fi
+if test "x$ga_cv_c_opt" = x && test "x$enable_opt" = xyes; then :
+
+case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu in #(
   BGL:*:*) :
     ga_cv_c_opt="-O0" ;; #(
   BGP:ibm:*) :
@@ -11290,11 +11302,11 @@ else
   HPUX:*:*) :
     ga_cv_c_opt="-Ae" ;; #(
   IBM64:*:*) :
-    ga_cv_c_opt="" ;; #(
+    ga_cv_c_opt= ;; #(
   IBM:*:*) :
     ga_cv_c_opt= ;; #(
   LAPI64:*:*) :
-    ga_cv_c_opt="" ;; #(
+    ga_cv_c_opt= ;; #(
   LAPI:*:*) :
     ga_cv_c_opt= ;; #(
   LINUX64:fujitsu:ia64) :
@@ -11314,7 +11326,7 @@ else
   LINUX64:ibm:ppc64) :
     ga_cv_c_opt="-qlanglvl=extended -qinline=100 -qstrict -qarch=auto -qtune=auto" ;; #(
   LINUX64:ibm:x86_64) :
-    ga_cv_c_opt="" ;; #(
+    ga_cv_c_opt= ;; #(
   LINUX64:intel:ia64) :
     ga_cv_c_opt="-fno-alias -ftz" ;; #(
   LINUX:fujitsu:*) :
@@ -11348,8 +11360,9 @@ else
   SOLARIS:gnu:i386) :
     ga_cv_c_opt="-dalign -xarch=sse2" ;; #(
   *) :
-    ga_cv_c_opt="-O" ;;
+    ga_cv_c_opt= ;;
 esac
+
 fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_c_opt" >&5
@@ -12295,20 +12308,27 @@ fi
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for specific C++ optimizations" >&5
 $as_echo_n "checking for specific C++ optimizations... " >&6; }
 if test "${ga_cv_cxx_opt+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  if test x$enable_opt = xno; then :
-  ga_cv_cxx_opt="-O0"
+
+if test "x$GA_CXXOPT" != x; then :
+  ga_cv_cxx_opt="$GA_CXXOPT"
 else
-  case $ga_cv_target:$ax_cv_cxx_compiler_vendor:$host_cpu in #(
+  ga_cv_cxx_opt=
+fi
+if test "x$ga_cv_cxx_opt" = x && test "x$enable_opt" = xyes; then :
+
+case $ga_cv_target:$ax_cv_cxx_compiler_vendor:$host_cpu in #(
   LINUX:*:*) :
     ga_cv_cxx_opt="-O0" ;; #(
   *) :
-    ga_cv_cxx_opt="-O0" ;;
+    ga_cv_cxx_opt= ;;
 esac
+
 fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_cxx_opt" >&5
@@ -15256,15 +15276,21 @@ fi
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for specific Fortran optimizations" >&5
 $as_echo_n "checking for specific Fortran optimizations... " >&6; }
 if test "${ga_cv_f77_opt+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  if test x$enable_opt = xno; then :
-  ga_cv_f77_opt="-O0"
+
+if test "x$GA_FOPT" != x; then :
+  ga_cv_f77_opt="$GA_FOPT"
 else
-  case $ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu in #(
+  ga_cv_f77_opt=
+fi
+if test "x$ga_cv_f77_opt" = x && test "x$enable_opt" = xyes; then :
+
+case $ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu in #(
   BGL:*:*) :
     ga_cv_f77_opt="-O0" ;; #(
   BGP:ibm:*) :
@@ -15304,13 +15330,13 @@ else
   LINUX64:gnu:x86_64) :
     ga_cv_f77_opt="-O" ;; #(
   LINUX64:ibm:x86_64) :
-    ga_cv_f77_opt="" ;; #(
+    ga_cv_f77_opt= ;; #(
   LINUX64:intel:ia64) :
     ga_cv_f77_opt="-cm -w90 -w95 -align" ;; #(
   LINUX64:intel:powerpc64) :
-    ga_cv_f77_opt="" ;; #(
+    ga_cv_f77_opt= ;; #(
   LINUX64:intel:ppc64) :
-    ga_cv_f77_opt="" ;; #(
+    ga_cv_f77_opt= ;; #(
   LINUX64:intel:x86_64) :
     ga_cv_f77_opt="-O3 -w -cm -xW -tpp7" ;; #(
   LINUX64:portland:x86_64) :
@@ -15330,7 +15356,7 @@ else
   LINUX:portland:*) :
     ga_cv_f77_opt="-Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical" ;; #(
   MACX64:ibm:*) :
-    ga_cv_f77_opt="" ;; #(
+    ga_cv_f77_opt= ;; #(
   MACX64:intel:*) :
     ga_cv_f77_opt="-O3 -prefetch -w -cm" ;; #(
   MACX:gnu:*) :
@@ -15352,8 +15378,9 @@ else
   SOLARIS:gnu:i386) :
     ga_cv_f77_opt="-xs -dalign -xarch=sse2" ;; #(
   *) :
-    ga_cv_f77_opt="-O" ;;
+    ga_cv_f77_opt= ;;
 esac
+
 fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_opt" >&5
