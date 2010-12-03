@@ -1,4 +1,4 @@
-##############################################################################
+_##############################################################################
 # Makefile.am for Global Arrays.
 #
 # Rationale:
@@ -99,12 +99,13 @@ endif
 # and works with all Fortran compilers.
 #
 BUILT_SOURCES += config.fh
+CLEANFILES += config.fh
 nodist_libga_la_SOURCES += config.fh
 
-config.fh: $(top_build_prefix)config.h
-	-rm -f config.fh && $(SED) "/^#/!d" $(top_build_prefix)config.h > config.fh
-
-CLEANFILES += config.fh
+config.fh: config.h
+	@-rm -f config.fh
+	$(SED_V) \
+	$(SED) "/^#/!d" config.h > config.fh
 
 ##############################################################################
 # compat
@@ -510,21 +511,26 @@ EXTRA_DIST += tcgmsg/tcgmsg-mpi/README
 # global/src
 #
 global/src/wapi.h: $(top_srcdir)/global/src/papi.h
-	-rm -f global/src/wapi.h && \
+	@-rm -f global/src/wapi.h
+	$(SED_V) \
 	$(SED) -e "s/PAPI/WAPI/g" \
 	       -e "s/pnga_/wnga_/g" \
 		   $(top_srcdir)/global/src/papi.h > global/src/wapi.h
+
 global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
-	-rm -f global/src/wapidefs.h && \
+	@-rm -f global/src/wapidefs.h
+	$(SED_V) \
 	$(SED) -e "s/PAPI/WAPIDEFS/g" \
 		   -e "s/^.*p\(nga_.*\)(.*$$/#define w\1 p\1/g" \
 		   -e "/^ /d" \
 		   -e "/^\/\*/d" \
 		   -e "/^ \*/d" \
 		   $(top_srcdir)/global/src/papi.h > global/src/wapidefs.h
+
 if HAVE_PYTHON
 global/src/wapi.c: $(top_srcdir)/global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
-	-rm -f global/src/wapi.c && \
+	@-rm -f global/src/wapi.c
+	$(PYTHON_V) \
 	$(PYTHON) $(top_srcdir)/build-aux/wapigen.py $(top_srcdir)/global/src/papi.h > global/src/wapi.c
 endif
 
@@ -715,6 +721,14 @@ global/testing/nga-periodic.F: $(GLOBAL_TESTING_M4_DEPS)
 global/testing/nga-scatter.F:  $(GLOBAL_TESTING_M4_DEPS)
 global/testing/nga-util.F:     $(GLOBAL_TESTING_M4_DEPS)
 global/testing/ngatest.F:      $(GLOBAL_TESTING_M4_DEPS)
+
+CLEANFILES += global/testing/nga-onesided.F
+CLEANFILES += global/testing/nga-patch.F
+CLEANFILES += global/testing/nga-periodic.F
+CLEANFILES += global/testing/nga-scatter.F
+CLEANFILES += global/testing/nga-util.F
+CLEANFILES += global/testing/ngatest.F
+
 if NOFORT
 else
 check_PROGRAMS += global/testing/nga-onesided
@@ -725,6 +739,7 @@ check_PROGRAMS += global/testing/nga-util
 check_PROGRAMS += global/testing/ngatest
 endif
 .m4.F:
+	$(M4_V) \
 	$(M4) -I$(top_srcdir)/global/testing $< > $@ 
 endif
 
@@ -1203,6 +1218,20 @@ $(GA_RECURSIVE_TARGETS): all
 	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
 	fi; test -z "$$fail"
 # END COPY
+
+# support verbose/silent make rules for additional programs
+# m4
+M4_V = $(M4__v_$(V))
+M4__v_ = $(M4__v_$(AM_DEFAULT_VERBOSITY))
+M4__v_0 = @echo "  M4    " $@;
+# sed
+SED_V = $(SED__v_$(V))
+SED__v_ = $(SED__v_$(AM_DEFAULT_VERBOSITY))
+SED__v_0 = @echo "  SED   " $@;
+# python
+PYTHON_V = $(PYTHON__v_$(V))
+PYTHON__v_ = $(PYTHON__v_$(AM_DEFAULT_VERBOSITY))
+PYTHON__v_0 = @echo "  PYTHON" $@;
 
 ##############################################################################
 # test suite

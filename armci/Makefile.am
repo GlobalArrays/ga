@@ -90,12 +90,13 @@ endif
 # and works with all Fortran compilers.
 #
 BUILT_SOURCES += config.fh
+CLEANFILES += config.fh
 nodist_libarmci_la_SOURCES += config.fh
 
 config.fh: config.h
-	-rm -f config.fh && $(SED) "/^#/!d" config.h > config.fh
-
-CLEANFILES += config.fh
+	@-rm -f config.fh
+	$(SED_V) \
+	$(SED) "/^#/!d" config.h > config.fh
 
 ##############################################################################
 # src-portals
@@ -197,6 +198,7 @@ MAYBE_PIC = -fPIC -DPIC
 endif
 
 src-portals/tas_as.s: src-portals/tas.c
+	$(ARMCI_TAS_AS_V) \
 	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src-portals/tas.c
 
@@ -366,6 +368,7 @@ MAYBE_PIC = -fPIC -DPIC
 endif
 
 src-gemini/tas_as.s: src-gemini/tas.c
+	$(ARMCI_TAS_AS_V) \
 	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ $<
 
@@ -655,10 +658,12 @@ MAYBE_PIC = -fPIC -DPIC
 endif
 
 src/locks/tas_as.s: src/locks/tas.c
+	$(ARMCI_TAS_AS_V) \
 	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src/locks/tas.c
 
 src/common/x86copy_as.s: src/common/x86copy.c
+	$(ARMCI_X86COPY_AS_V) \
 	$(ARMCI_X86COPY_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src/common/x86copy.c
 
@@ -958,6 +963,20 @@ endif
 if THREAD_SAFE
 EXAMPLES += examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 endif
+
+# support verbose/silent make rules for additional programs
+# sed
+SED_V = $(SED__v_$(V))
+SED__v_ = $(SED__v_$(AM_DEFAULT_VERBOSITY))
+SED__v_0 = @echo "  SED   " $@;
+# ARMCI_TAS_AS
+ARMCI_TAS_AS_V = $(ARMCI_TAS_AS__v_$(V))
+ARMCI_TAS_AS__v_ = $(ARMCI_TAS_AS__v_$(AM_DEFAULT_VERBOSITY))
+ARMCI_TAS_AS__v_0 = @echo "  GCC   " $@;
+# ARMCI_X86COPY_AS
+ARMCI_X86COPY_AS_V = $(ARMCI_X86COPY_AS__v_$(V))
+ARMCI_X86COPY_AS__v_ = $(ARMCI_X86COPY_AS__v_$(AM_DEFAULT_VERBOSITY))
+ARMCI_X86COPY_AS__v_0 = @echo "  GCC   " $@;
 
 ##############################################################################
 # test suite

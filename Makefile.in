@@ -15,26 +15,6 @@
 
 @SET_MAKE@
 
-##############################################################################
-# Makefile.am for Global Arrays.
-#
-# Rationale:
-# This Makefile.am follows many of the suggestions outlined in the paper
-# "Recursive Make Considered Harmful".  We do not use automake's
-# 'include' feature (instead preferring a single, large Makefile.am).
-# We do recurse into the armci directory, but since armci is a stand-alone
-# package this is the correct behavior.
-#
-# Additional targets:
-# Besides the traditional make targets supplied by automake, we have added the
-# "checkprogs" target to build example programs and test programs.
-#
-# Notes:
-# In general, each subdirectory has a corresponding section within this
-# Makefile.am with the notable exception being the many examples getting
-# rolled up into the global/examples section.
-#
-
 
 
 
@@ -277,15 +257,21 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @SYSV_TRUE@am__append_41 = global/testing/ipc_clean
 @HAVE_M4_TRUE@am__append_42 = $(GLOBAL_TESTING_M4_DEPS) \
 @HAVE_M4_TRUE@	global/testing/README
-@HAVE_M4_TRUE@@NOFORT_FALSE@am__append_43 =  \
+@HAVE_M4_TRUE@am__append_43 = global/testing/nga-onesided.F \
+@HAVE_M4_TRUE@	global/testing/nga-patch.F \
+@HAVE_M4_TRUE@	global/testing/nga-periodic.F \
+@HAVE_M4_TRUE@	global/testing/nga-scatter.F \
+@HAVE_M4_TRUE@	global/testing/nga-util.F \
+@HAVE_M4_TRUE@	global/testing/ngatest.F
+@HAVE_M4_TRUE@@NOFORT_FALSE@am__append_44 =  \
 @HAVE_M4_TRUE@@NOFORT_FALSE@	global/testing/nga-onesided \
 @HAVE_M4_TRUE@@NOFORT_FALSE@	global/testing/nga-patch \
 @HAVE_M4_TRUE@@NOFORT_FALSE@	global/testing/nga-periodic \
 @HAVE_M4_TRUE@@NOFORT_FALSE@	global/testing/nga-scatter \
 @HAVE_M4_TRUE@@NOFORT_FALSE@	global/testing/nga-util \
 @HAVE_M4_TRUE@@NOFORT_FALSE@	global/testing/ngatest
-@NOFORT_FALSE@am__append_44 = global/testing/ffflush.F
-@NOFORT_FALSE@am__append_45 = global/examples/boltzmann/boltz \
+@NOFORT_FALSE@am__append_45 = global/testing/ffflush.F
+@NOFORT_FALSE@am__append_46 = global/examples/boltzmann/boltz \
 @NOFORT_FALSE@	global/examples/conjugate_gradient/ga_cg \
 @NOFORT_FALSE@	global/examples/md_cluster/grp_sim \
 @NOFORT_FALSE@	global/examples/scf/scf
@@ -293,53 +279,53 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 ##############################################################################
 # global/X
 #
-@ENABLE_XREGION_TRUE@@NO_X_FALSE@am__append_46 = global/X/xregion
+@ENABLE_XREGION_TRUE@@NO_X_FALSE@am__append_47 = global/X/xregion
 
 ##############################################################################
 # ga++/src
 #
-@CXX_BINDINGS_TRUE@am__append_47 = libga++.la
-@CXX_BINDINGS_TRUE@am__append_48 = ga++/src/ga++.h \
+@CXX_BINDINGS_TRUE@am__append_48 = libga++.la
+@CXX_BINDINGS_TRUE@am__append_49 = ga++/src/ga++.h \
 @CXX_BINDINGS_TRUE@	ga++/src/GAServices.h \
 @CXX_BINDINGS_TRUE@	ga++/src/GlobalArray.h ga++/src/init_term.h \
 @CXX_BINDINGS_TRUE@	ga++/src/PGroup.h ga++/src/services.h
-@CXX_BINDINGS_TRUE@am__append_49 = -I$(top_srcdir)/ga++/src
+@CXX_BINDINGS_TRUE@am__append_50 = -I$(top_srcdir)/ga++/src
 
 ##############################################################################
 # ga++/testing
 #
-@CXX_BINDINGS_TRUE@am__append_50 = ga++/testing/elempatch \
+@CXX_BINDINGS_TRUE@am__append_51 = ga++/testing/elempatch \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest ga++/testing/ntestc \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc ga++/testing/testmult
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_51 = -I$(top_srcdir)/armci/src-portals
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_52 = -I$(top_srcdir)/armci/src-portals
 # remove the former CPPFLAG once the ARMCI refactoring is finished
-@ARMCI_NETWORK_PORTALS_FALSE@am__append_52 =  \
+@ARMCI_NETWORK_PORTALS_FALSE@am__append_53 =  \
 @ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src \
 @ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src/include
-@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_53 = global/examples/scf/scf$(EXEEXT)
-@NOFORT_FALSE@am__append_54 =  \
+@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_54 = global/examples/scf/scf$(EXEEXT)
+@NOFORT_FALSE@am__append_55 =  \
 @NOFORT_FALSE@	global/examples/boltzmann/boltz$(EXEEXT) \
 @NOFORT_FALSE@	global/examples/conjugate_gradient/ga_cg$(EXEEXT) \
 @NOFORT_FALSE@	global/examples/md_cluster/grp_sim$(EXEEXT)
 XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
-@NOFORT_FALSE@am__append_55 = gaf2c/testarg$(EXEEXT)
-@NOFORT_FALSE@am__append_56 = ma/testf$(EXEEXT)
+@NOFORT_FALSE@am__append_56 = gaf2c/testarg$(EXEEXT)
 @NOFORT_FALSE@am__append_57 = ma/testf$(EXEEXT)
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_58 = tcgmsg/ipcv4.0/hello$(EXEEXT) \
+@NOFORT_FALSE@am__append_58 = ma/testf$(EXEEXT)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_59 = tcgmsg/ipcv4.0/hello$(EXEEXT) \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/test$(EXEEXT) \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/testmap$(EXEEXT) \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/toplot$(EXEEXT) \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/xdrtest$(EXEEXT)
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_59 = tcgmsg/ipcv4.0/testf$(EXEEXT) \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_60 = tcgmsg/ipcv4.0/testf$(EXEEXT) \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@	tcgmsg/ipcv4.0/testpf$(EXEEXT)
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_60 = tcgmsg/ipcv5.0/hello$(EXEEXT) \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_61 = tcgmsg/ipcv5.0/hello$(EXEEXT) \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/test$(EXEEXT)
-@MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_61 = tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_62 = tcgmsg/ipcv5.0/jacobi$(EXEEXT) \
+@MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_62 = tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_63 = tcgmsg/ipcv5.0/jacobi$(EXEEXT) \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@	tcgmsg/ipcv5.0/testf$(EXEEXT)
-@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_63 = tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT)
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_64 = tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT)
 #PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test$(EXEEXT) # requires user input
-@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_64 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_65 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
 #PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
 #PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
 #PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
@@ -347,7 +333,7 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 #PARALLEL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/random$(EXEEXT) # takes too long
-@NOFORT_FALSE@am__append_65 = global/testing/bin$(EXEEXT) \
+@NOFORT_FALSE@am__append_66 = global/testing/bin$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/blktest$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/g2test$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/g3test$(EXEEXT) \
@@ -372,11 +358,11 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 @NOFORT_FALSE@	global/testing/testmatmult$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/testsolve$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/test$(EXEEXT)
-@HAVE_SCALAPACK_TRUE@@NOFORT_FALSE@am__append_66 = global/testing/testspd$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_67 = global/testing/ga-mpi$(EXEEXT) \
+@HAVE_SCALAPACK_TRUE@@NOFORT_FALSE@am__append_67 = global/testing/testspd$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_68 = global/testing/ga-mpi$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT)
-@SYSV_TRUE@am__append_68 = global/testing/ipc_clean$(EXEEXT)
-@NOFORT_FALSE@am__append_69 = global/testing/nga-onesided$(EXEEXT) \
+@SYSV_TRUE@am__append_69 = global/testing/ipc_clean$(EXEEXT)
+@NOFORT_FALSE@am__append_70 = global/testing/nga-onesided$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/nga-patch$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/nga-periodic$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/nga-scatter$(EXEEXT) \
@@ -384,8 +370,8 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 @NOFORT_FALSE@	global/testing/nga-util$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/ngatest$(EXEEXT)
 #PARALLEL_TESTS += global/examples/scf/scf$(EXEEXT) # needs input
-@NOFORT_FALSE@am__append_70 = global/examples/boltzmann/boltz$(EXEEXT)
-@CXX_BINDINGS_TRUE@am__append_71 = ga++/testing/elempatch$(EXEEXT) \
+@NOFORT_FALSE@am__append_71 = global/examples/boltzmann/boltz$(EXEEXT)
+@CXX_BINDINGS_TRUE@am__append_72 = ga++/testing/elempatch$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/ntestc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc$(EXEEXT) \
@@ -2524,6 +2510,24 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+# Makefile.am for Global Arrays.
+#
+# Rationale:
+# This Makefile.am follows many of the suggestions outlined in the paper
+# "Recursive Make Considered Harmful".  We do not use automake's
+# 'include' feature (instead preferring a single, large Makefile.am).
+# We do recurse into the armci directory, but since armci is a stand-alone
+# package this is the correct behavior.
+#
+# Additional targets:
+# Besides the traditional make targets supplied by automake, we have added the
+# "checkprogs" target to build example programs and test programs.
+#
+# Notes:
+# In general, each subdirectory has a corresponding section within this
+# Makefile.am with the notable exception being the many examples getting
+# rolled up into the global/examples section.
+#
 
 # The usual aclocal nonsense to get include paths right.
 ACLOCAL_AMFLAGS = -I m4
@@ -2538,10 +2542,10 @@ include_HEADERS = gaf2c/typesf2c.h gaf2c/farg.h ma/error.h \
 	global/src/global.fh global/src/papi.h pario/dra/dra.fh \
 	pario/dra/dra.h pario/eaf/eaf.fh pario/eaf/eaf.h \
 	pario/elio/chemio.h pario/elio/elio.h pario/sf/coms.h \
-	pario/sf/sf.fh pario/sf/sf.h $(am__append_48)
+	pario/sf/sf.fh pario/sf/sf.h $(am__append_49)
 nodist_include_HEADERS = global/src/wapi.h
 check_LTLIBRARIES = 
-lib_LTLIBRARIES = libga.la $(am__append_47)
+lib_LTLIBRARIES = libga.la $(am__append_48)
 
 ##############################################################################
 # compat
@@ -2661,7 +2665,7 @@ EXTRA_DIST = README build-aux/inside.pl LinAlg/lapack+blas/README \
 BUILT_SOURCES = config.fh global/src/wapi.h global/src/wapidefs.h
 MOSTLYCLEANFILES = 
 CLEANFILES = config.fh global/src/wapi.c global/src/wapi.h \
-	global/src/wapidefs.h
+	global/src/wapidefs.h $(am__append_43)
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
 AM_FFLAGS = $(GA_FOPT) $(FFLAG_INT)
@@ -2675,7 +2679,7 @@ AM_CPPFLAGS = $(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) \
 	-I$(top_build_prefix)global/src -I$(top_srcdir)/global/src \
 	-I$(top_srcdir)/pario/dra -I$(top_srcdir)/pario/eaf \
 	-I$(top_srcdir)/pario/elio -I$(top_srcdir)/pario/sf \
-	$(am__append_49) $(am__append_51) $(am__append_52)
+	$(am__append_50) $(am__append_52) $(am__append_53)
 AM_LDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
 	$(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) $(am__append_1)
 FLDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
@@ -2766,7 +2770,7 @@ nodist_EXTRA_ma_test_inquire_SOURCES = $(MAYBE_DUMMY_F_LINK)
 @HAVE_M4_TRUE@	global/testing/ngatest.m4 \
 @HAVE_M4_TRUE@	global/testing/nga-util.m4
 gtsrc = global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c $(am__append_44)
+	global/testing/util.c $(am__append_45)
 global_testing_bin_SOURCES = global/testing/bin.F $(gtsrc)
 global_testing_blktest_SOURCES = global/testing/blktest.F $(gtsrc)
 global_testing_d2test_SOURCES = global/testing/d2test.F $(gtsrc)
@@ -2993,10 +2997,24 @@ SUBDIRS = armci .
 # This is the "noinst" libarmci so that libtool combines it with libga.
 libga_la_LIBADD = armci/libarmcii.la
 EXAMPLES = global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_53) $(am__append_54) pario/bign$(EXEEXT) \
+	$(am__append_54) $(am__append_55) pario/bign$(EXEEXT) \
 	pario/ntestc$(EXEEXT) pario/perfn$(EXEEXT) pario/rate$(EXEEXT)
 GA_RECURSIVE_TARGETS = checkprogs-recursive examples-recursive
 # END COPY
+
+# support verbose/silent make rules for additional programs
+# m4
+M4_V = $(M4__v_$(V))
+M4__v_ = $(M4__v_$(AM_DEFAULT_VERBOSITY))
+M4__v_0 = @echo "  M4    " $@;
+# sed
+SED_V = $(SED__v_$(V))
+SED__v_ = $(SED__v_$(AM_DEFAULT_VERBOSITY))
+SED__v_0 = @echo "  SED   " $@;
+# python
+PYTHON_V = $(PYTHON__v_$(V))
+PYTHON__v_ = $(PYTHON__v_$(AM_DEFAULT_VERBOSITY))
+PYTHON__v_0 = @echo "  PYTHON" $@;
 
 ##############################################################################
 # test suite
@@ -3010,26 +3028,26 @@ TESTS_ENVIRONMENT = \
 maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
 
 #SERIAL_TESTS += ma/testc$(EXEEXT)
-SERIAL_TESTS = $(am__append_55) ma/test-coalesce$(EXEEXT) \
-	ma/test-inquire$(EXEEXT) $(am__append_56)
-SERIAL_TESTS_XFAIL = $(am__append_57)
+SERIAL_TESTS = $(am__append_56) ma/test-coalesce$(EXEEXT) \
+	ma/test-inquire$(EXEEXT) $(am__append_57)
+SERIAL_TESTS_XFAIL = $(am__append_58)
 #PARALLEL_TESTS += global/testing/getmem$(EXEEXT) # needs bug fixes
 #PARALLEL_TESTS += global/examples/conjugate_gradient/ga_cg$(EXEEXT) # needs user input
 #PARALLEL_TESTS += global/examples/md_cluster/grp_sim$(EXEEXT) # needs input
-PARALLEL_TESTS = $(am__append_58) $(am__append_59) $(am__append_60) \
-	$(am__append_61) $(am__append_62) $(am__append_63) \
-	$(am__append_64) global/testing/elempatch$(EXEEXT) \
+PARALLEL_TESTS = $(am__append_59) $(am__append_60) $(am__append_61) \
+	$(am__append_62) $(am__append_63) $(am__append_64) \
+	$(am__append_65) global/testing/elempatch$(EXEEXT) \
 	global/testing/mtest$(EXEEXT) global/testing/ntestc$(EXEEXT) \
 	global/testing/ntestfc$(EXEEXT) global/testing/print$(EXEEXT) \
 	global/testing/testc$(EXEEXT) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
-	global/testing/testmultrect$(EXEEXT) $(am__append_65) \
-	$(am__append_66) $(am__append_67) $(am__append_68) \
-	$(am__append_69) \
+	global/testing/testmultrect$(EXEEXT) $(am__append_66) \
+	$(am__append_67) $(am__append_68) $(am__append_69) \
+	$(am__append_70) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_70) pario/bign$(EXEEXT) pario/ntestc$(EXEEXT) \
-	pario/perfn$(EXEEXT) pario/rate$(EXEEXT) $(am__append_71)
+	$(am__append_71) pario/bign$(EXEEXT) pario/ntestc$(EXEEXT) \
+	pario/perfn$(EXEEXT) pario/rate$(EXEEXT) $(am__append_72)
 PARALLEL_TESTS_XFAIL = 
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
@@ -6224,28 +6242,36 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 	uninstall-includeHEADERS uninstall-libLTLIBRARIES \
 	uninstall-nodist_includeHEADERS uninstall-pkgconfigDATA
 
+_##############################################################################
 
-config.fh: $(top_build_prefix)config.h
-	-rm -f config.fh && $(SED) "/^#/!d" $(top_build_prefix)config.h > config.fh
+config.fh: config.h
+	@-rm -f config.fh
+	$(SED_V) \
+	$(SED) "/^#/!d" config.h > config.fh
 
 ##############################################################################
 # global/src
 #
 global/src/wapi.h: $(top_srcdir)/global/src/papi.h
-	-rm -f global/src/wapi.h && \
+	@-rm -f global/src/wapi.h
+	$(SED_V) \
 	$(SED) -e "s/PAPI/WAPI/g" \
 	       -e "s/pnga_/wnga_/g" \
 		   $(top_srcdir)/global/src/papi.h > global/src/wapi.h
+
 global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
-	-rm -f global/src/wapidefs.h && \
+	@-rm -f global/src/wapidefs.h
+	$(SED_V) \
 	$(SED) -e "s/PAPI/WAPIDEFS/g" \
 		   -e "s/^.*p\(nga_.*\)(.*$$/#define w\1 p\1/g" \
 		   -e "/^ /d" \
 		   -e "/^\/\*/d" \
 		   -e "/^ \*/d" \
 		   $(top_srcdir)/global/src/papi.h > global/src/wapidefs.h
+
 @HAVE_PYTHON_TRUE@global/src/wapi.c: $(top_srcdir)/global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
-@HAVE_PYTHON_TRUE@	-rm -f global/src/wapi.c && \
+@HAVE_PYTHON_TRUE@	@-rm -f global/src/wapi.c
+@HAVE_PYTHON_TRUE@	$(PYTHON_V) \
 @HAVE_PYTHON_TRUE@	$(PYTHON) $(top_srcdir)/build-aux/wapigen.py $(top_srcdir)/global/src/papi.h > global/src/wapi.c
 
 @HAVE_M4_TRUE@global/testing/nga-onesided.F: $(GLOBAL_TESTING_M4_DEPS)
@@ -6255,6 +6281,7 @@ global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
 @HAVE_M4_TRUE@global/testing/nga-util.F:     $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@global/testing/ngatest.F:      $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@.m4.F:
+@HAVE_M4_TRUE@	$(M4_V) \
 @HAVE_M4_TRUE@	$(M4) -I$(top_srcdir)/global/testing $< > $@ 
 
 ##############################################################################

@@ -2439,6 +2439,20 @@ EXAMPLES = examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) \
 	$(am__append_86) $(am__append_87) $(am__append_88) \
 	$(am__append_89) $(am__append_90)
 
+# support verbose/silent make rules for additional programs
+# sed
+SED_V = $(SED__v_$(V))
+SED__v_ = $(SED__v_$(AM_DEFAULT_VERBOSITY))
+SED__v_0 = @echo "  SED   " $@;
+# ARMCI_TAS_AS
+ARMCI_TAS_AS_V = $(ARMCI_TAS_AS__v_$(V))
+ARMCI_TAS_AS__v_ = $(ARMCI_TAS_AS__v_$(AM_DEFAULT_VERBOSITY))
+ARMCI_TAS_AS__v_0 = @echo "  GCC   " $@;
+# ARMCI_X86COPY_AS
+ARMCI_X86COPY_AS_V = $(ARMCI_X86COPY_AS__v_$(V))
+ARMCI_X86COPY_AS__v_ = $(ARMCI_X86COPY_AS__v_$(AM_DEFAULT_VERBOSITY))
+ARMCI_X86COPY_AS__v_0 = @echo "  GCC   " $@;
+
 ##############################################################################
 # test suite
 #
@@ -5020,21 +5034,27 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 
 
 config.fh: config.h
-	-rm -f config.fh && $(SED) "/^#/!d" config.h > config.fh
+	@-rm -f config.fh
+	$(SED_V) \
+	$(SED) "/^#/!d" config.h > config.fh
 
 @ARMCI_NETWORK_PORTALS_TRUE@src-portals/tas_as.s: src-portals/tas.c
+@ARMCI_NETWORK_PORTALS_TRUE@	$(ARMCI_TAS_AS_V) \
 @ARMCI_NETWORK_PORTALS_TRUE@	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 @ARMCI_NETWORK_PORTALS_TRUE@	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src-portals/tas.c
 
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@src-gemini/tas_as.s: src-gemini/tas.c
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	$(ARMCI_TAS_AS_V) \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ $<
 
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@src/locks/tas_as.s: src/locks/tas.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	$(ARMCI_TAS_AS_V) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src/locks/tas.c
 
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@src/common/x86copy_as.s: src/common/x86copy.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	$(ARMCI_X86COPY_AS_V) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	$(ARMCI_X86COPY_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src/common/x86copy.c
 
