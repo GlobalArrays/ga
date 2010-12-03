@@ -113,7 +113,6 @@ static int armci_vapi_client_stage1=0;
 static int armci_vapi_server_stage2=0;
 static int armci_vapi_client_ready;
 int _s=-1,_c=-1;
-static int server_can_poll=0;
 static int armci_vapi_max_inline_size=-1;
 #define CLIENT_STAMP 101
 #define SERV_STAMP 99
@@ -761,20 +760,25 @@ static void armci_create_qp(vapi_nic_t *nic, struct ibv_qp **qp)
 }
 
 int armci_openib_sl;
-
+int armci_openib_server_poll;
 void armci_openib_env_init()
 {
     char *value;
 
-    if ((value = getenv("ARMCI_OPENIB_SL")) != NULL){
+    if ((value = getenv("ARMCI_OPENIB_USE_SL")) != NULL){
         armci_openib_sl = atoi(value);
     } 
     else {
-        /* AV: default based on Chinook */
         armci_openib_sl = 0;
     }
         
-    /* Similarly other constants can be changes to runtime */
+    /* Enable server polling by default */
+    if ((value = getenv("ARMCI_OPENIB_SERVER_POLL")) != NULL){
+        armci_openib_server_poll = atoi(value);
+    } 
+    else {
+        armci_openib_server_poll = 1;
+    }
 }
 
 static void armci_init_nic(vapi_nic_t *nic, int scq_entries, int
@@ -1717,15 +1721,6 @@ void armci_server_initial_connection()
                           armci_me, MPI_Wtime() - inittime4);
 
     armci_vapi_server_ready=1;
-    /* check if we can poll in the server thread */
-    enval = getenv("ARMCI_SERVER_CAN_POLL");
-    if (enval != NULL){
-       if((enval[0] != 'N') && (enval[0]!='n')) server_can_poll=1;
-    } else{
-      if(armci_clus_info[armci_clus_me].nslave < armci_getnumcpus())
-        server_can_poll=1;
-    }
-    server_can_poll=0;
 
     if (DEBUG_SERVER) {
        printf("%d: server connected to all clients\n",armci_me); fflush(stdout);
@@ -2155,7 +2150,7 @@ int nslave=armci_clus_info[armci_clus_me].nslave;
       block_thread_signal(GPC_COMPLETION_SIGNAL);
 #endif
       bzero(pdscr, sizeof(*pdscr));
-      if (server_can_poll) {
+      if (armci_openib_server_poll) {
         rc = ibv_poll_cq(CLN_nic->rcq, 1, pdscr);
         while (rc == 0) {
           rc = ibv_poll_cq(CLN_nic->rcq, 1, pdscr);
