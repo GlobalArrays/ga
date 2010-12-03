@@ -1345,7 +1345,7 @@ endif
 endif # MSG_COMMS_TCGMSGMPI
 endif # MSG_COMMS_TCGMSG
 PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
-#PARALLEL_TESTS += global/testing/getmem$(EXEEXT) # needs bug fixes
+PARALLEL_TESTS += global/testing/getmem$(EXEEXT)
 PARALLEL_TESTS += global/testing/mtest$(EXEEXT)
 PARALLEL_TESTS += global/testing/ntestc$(EXEEXT)
 PARALLEL_TESTS += global/testing/ntestfc$(EXEEXT)

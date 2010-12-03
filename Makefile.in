@@ -3242,15 +3242,14 @@ maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; 
 SERIAL_TESTS = $(am__append_56) ma/test-coalesce$(EXEEXT) \
 	ma/test-inquire$(EXEEXT) $(am__append_57)
 SERIAL_TESTS_XFAIL = $(am__append_58)
-#PARALLEL_TESTS += global/testing/getmem$(EXEEXT) # needs bug fixes
 #PARALLEL_TESTS += global/examples/conjugate_gradient/ga_cg$(EXEEXT) # needs user input
 #PARALLEL_TESTS += global/examples/md_cluster/grp_sim$(EXEEXT) # needs input
 PARALLEL_TESTS = $(am__append_59) $(am__append_60) $(am__append_61) \
 	$(am__append_62) $(am__append_63) $(am__append_64) \
 	$(am__append_65) global/testing/elempatch$(EXEEXT) \
-	global/testing/mtest$(EXEEXT) global/testing/ntestc$(EXEEXT) \
-	global/testing/ntestfc$(EXEEXT) global/testing/print$(EXEEXT) \
-	global/testing/testc$(EXEEXT) \
+	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
+	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
+	global/testing/print$(EXEEXT) global/testing/testc$(EXEEXT) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
 	global/testing/testmultrect$(EXEEXT) $(am__append_66) \
@@ -6046,6 +6045,8 @@ tcgmsg/tcgmsg-mpi/testf.log: tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
 	@p='tcgmsg/tcgmsg-mpi/testf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/elempatch.log: global/testing/elempatch$(EXEEXT)
 	@p='global/testing/elempatch$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/getmem.log: global/testing/getmem$(EXEEXT)
+	@p='global/testing/getmem$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/mtest.log: global/testing/mtest$(EXEEXT)
 	@p='global/testing/mtest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ntestc.log: global/testing/ntestc$(EXEEXT)
