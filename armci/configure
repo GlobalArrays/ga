@@ -5375,19 +5375,19 @@ fi
 
 # Create inside.pl.
 rm -f inside.pl
-cat >inside.pl <<EOF
-'#!/usr/bin/perl
-$numargs = 0ARGV + 1;
+cat >inside.pl <<"EOF"
+#!/usr/bin/perl
+$numargs = $#ARGV + 1;
 if ($numargs != 2) {
     print "Usage: wrapped.txt naked.txt\n";
     exit 1;
 }
 # Read each input file as a string (rather than a list).
 local $/=undef;
-open WRAPPED, "$ARGV0" or die "Could not open wrapped text file: $!";
+open WRAPPED, "$ARGV[0]" or die "Could not open wrapped text file: $!";
 $wrapped_lines = <WRAPPED>;
 close WRAPPED;
-open NAKED, "$ARGV1" or die "Could not open naked text file: $!";
+open NAKED, "$ARGV[1]" or die "Could not open naked text file: $!";
 $naked_lines = <NAKED>;
 close NAKED;
 # Replace newlines, + from wrapped and naked lines.
@@ -5421,7 +5421,7 @@ elsif ($wrapped_lines eq $naked_lines) {
 else {
     #print "Not found\n";
     exit 1;
-}'
+}
 EOF
 inside="$PERL inside.pl"
 
@@ -5579,21 +5579,18 @@ done
 
 fi
 rm -f mpi.txt mpi.err naked.txt naked.err
-if test "x$ga_cv_mpic_naked" = x; then :
-  ga_cv_mpic_naked=error
-fi
 
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpic_naked" >&5
 $as_echo "$ga_cv_mpic_naked" >&6; }
-
-rm -f inside.pl
-if test "x$ga_cv_mpi_naked" = xerror; then :
+if test "x$ga_cv_mpic_naked" = x; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
 $as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi
+
+rm -f inside.pl
 
 fi
 
@@ -10928,19 +10925,19 @@ fi
 
 # Create inside.pl.
 rm -f inside.pl
-cat >inside.pl <<EOF
-'#!/usr/bin/perl
-$numargs = 0ARGV + 1;
+cat >inside.pl <<"EOF"
+#!/usr/bin/perl
+$numargs = $#ARGV + 1;
 if ($numargs != 2) {
     print "Usage: wrapped.txt naked.txt\n";
     exit 1;
 }
 # Read each input file as a string (rather than a list).
 local $/=undef;
-open WRAPPED, "$ARGV0" or die "Could not open wrapped text file: $!";
+open WRAPPED, "$ARGV[0]" or die "Could not open wrapped text file: $!";
 $wrapped_lines = <WRAPPED>;
 close WRAPPED;
-open NAKED, "$ARGV1" or die "Could not open naked text file: $!";
+open NAKED, "$ARGV[1]" or die "Could not open naked text file: $!";
 $naked_lines = <NAKED>;
 close NAKED;
 # Replace newlines, + from wrapped and naked lines.
@@ -10974,7 +10971,7 @@ elsif ($wrapped_lines eq $naked_lines) {
 else {
     #print "Not found\n";
     exit 1;
-}'
+}
 EOF
 inside="$PERL inside.pl"
 
@@ -11132,21 +11129,18 @@ done
 
 fi
 rm -f mpi.txt mpi.err naked.txt naked.err
-if test "x$ga_cv_mpicxx_naked" = x; then :
-  ga_cv_mpicxx_naked=error
-fi
 
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpicxx_naked" >&5
 $as_echo "$ga_cv_mpicxx_naked" >&6; }
-
-rm -f inside.pl
-if test "x$ga_cv_mpi_naked" = xerror; then :
+if test "x$ga_cv_mpicxx_naked" = x; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
 $as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi
+
+rm -f inside.pl
 
 fi
 fi
@@ -12030,19 +12024,19 @@ fi
 
 # Create inside.pl.
 rm -f inside.pl
-cat >inside.pl <<EOF
-'#!/usr/bin/perl
-$numargs = 0ARGV + 1;
+cat >inside.pl <<"EOF"
+#!/usr/bin/perl
+$numargs = $#ARGV + 1;
 if ($numargs != 2) {
     print "Usage: wrapped.txt naked.txt\n";
     exit 1;
 }
 # Read each input file as a string (rather than a list).
 local $/=undef;
-open WRAPPED, "$ARGV0" or die "Could not open wrapped text file: $!";
+open WRAPPED, "$ARGV[0]" or die "Could not open wrapped text file: $!";
 $wrapped_lines = <WRAPPED>;
 close WRAPPED;
-open NAKED, "$ARGV1" or die "Could not open naked text file: $!";
+open NAKED, "$ARGV[1]" or die "Could not open naked text file: $!";
 $naked_lines = <NAKED>;
 close NAKED;
 # Replace newlines, + from wrapped and naked lines.
@@ -12076,7 +12070,7 @@ elsif ($wrapped_lines eq $naked_lines) {
 else {
     #print "Not found\n";
     exit 1;
-}'
+}
 EOF
 inside="$PERL inside.pl"
 
@@ -12234,21 +12228,18 @@ done
 
 fi
 rm -f mpi.txt mpi.err naked.txt naked.err
-if test "x$ga_cv_mpif77_naked" = x; then :
-  ga_cv_mpif77_naked=error
-fi
 
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpif77_naked" >&5
 $as_echo "$ga_cv_mpif77_naked" >&6; }
-
-rm -f inside.pl
-if test "x$ga_cv_mpi_naked" = xerror; then :
+if test "x$ga_cv_mpif77_naked" = x; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
 $as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi
+
+rm -f inside.pl
 
 fi
 
@@ -12629,20 +12620,20 @@ $as_echo "$ga_cv_f77_suppress" >&6; }
 
 if test "x$enable_f77" = xyes; then :
 
-pagoda_mpi_unwrap_push_save_CC="$CC"
-pagoda_mpi_unwrap_push_save_CXX="$CXX"
-pagoda_mpi_unwrap_push_save_F77="$F77"
-pagoda_mpi_unwrap_push_save_FC="$FC"
-if test "x$ga_cv_mpic_naked"   != xerror; then :
+ga_mpi_unwrap_push_save_CC="$CC"
+ga_mpi_unwrap_push_save_CXX="$CXX"
+ga_mpi_unwrap_push_save_F77="$F77"
+ga_mpi_unwrap_push_save_FC="$FC"
+if test "x$ga_cv_mpic_naked"   != x; then :
    CC="$ga_cv_mpic_naked"
 fi
-if test "x$ga_cv_mpicxx_naked" != xerror; then :
+if test "x$ga_cv_mpicxx_naked" != x; then :
   CXX="$ga_cv_mpicxx_naked"
 fi
-if test "x$ga_cv_mpif77_naked" != xerror; then :
+if test "x$ga_cv_mpif77_naked" != x; then :
   F77="$ga_cv_mpif77_naked"
 fi
-if test "x$ga_cv_mpifc_naked"  != xerror; then :
+if test "x$ga_cv_mpifc_naked"  != x; then :
    FC="$ga_cv_mpifc_naked"
 fi
 
@@ -12953,10 +12944,10 @@ ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
 
- CC="$pagoda_mpi_unwrap_push_save_CC"
-CXX="$pagoda_mpi_unwrap_push_save_CXX"
-F77="$pagoda_mpi_unwrap_push_save_F77"
- FC="$pagoda_mpi_unwrap_push_save_FC"
+ CC="$ga_mpi_unwrap_push_save_CC"
+CXX="$ga_mpi_unwrap_push_save_CXX"
+F77="$ga_mpi_unwrap_push_save_F77"
+ FC="$ga_mpi_unwrap_push_save_FC"
 
      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether FLIBS needs -lgcc_s" >&5
 $as_echo_n "checking whether FLIBS needs -lgcc_s... " >&6; }

@@ -12,9 +12,9 @@ AC_DEFUN([GA_MPI_UNWRAP], [
 AC_PATH_PROG([PERL], [perl])
 # Create inside.pl.
 rm -f inside.pl
-cat >inside.pl <<EOF
-'#!/usr/bin/perl
-$numargs = $#ARGV + 1;
+[cat >inside.pl <<"EOF"
+#!/usr/bin/perl
+$numargs = @S|@#ARGV + 1;
 if ($numargs != 2) {
     print "Usage: wrapped.txt naked.txt\n";
     exit 1;
@@ -58,8 +58,8 @@ elsif ($wrapped_lines eq $naked_lines) {
 else {
     #print "Not found\n";
     exit 1;
-}'
-EOF
+}
+EOF]
 inside="$PERL inside.pl"
 AC_LANG_CASE(
 [C], [
@@ -180,13 +180,12 @@ do
 done
 ])
 rm -f mpi.txt mpi.err naked.txt naked.err
-AS_IF([test "x$ga_cv_mpi_naked" = x], [ga_cv_mpi_naked=error])
 ])
-AS_VAR_POPDEF([ga_cv_mpi_naked])
-rm -f inside.pl
-AS_IF([test "x$ga_cv_mpi_naked" = xerror],
+AS_IF([test "x$ga_cv_mpi_naked" = x],
     [AC_MSG_WARN([Could not determine the Fortran compiler wrapped by MPI])
      AC_MSG_WARN([This is usually okay])])
+AS_VAR_POPDEF([ga_cv_mpi_naked])
+rm -f inside.pl
 ])dnl
 
 
@@ -195,14 +194,14 @@ AS_IF([test "x$ga_cv_mpi_naked" = xerror],
 # Set CC/CXX/F77/FC to their unwrapped MPI counterparts.
 # Save their old values for restoring later.
 AC_DEFUN([GA_MPI_UNWRAP_PUSH], [
-pagoda_mpi_unwrap_push_save_CC="$CC"
-pagoda_mpi_unwrap_push_save_CXX="$CXX"
-pagoda_mpi_unwrap_push_save_F77="$F77"
-pagoda_mpi_unwrap_push_save_FC="$FC"
-AS_IF([test "x$ga_cv_mpic_naked"   != xerror], [ CC="$ga_cv_mpic_naked"])
-AS_IF([test "x$ga_cv_mpicxx_naked" != xerror], [CXX="$ga_cv_mpicxx_naked"])
-AS_IF([test "x$ga_cv_mpif77_naked" != xerror], [F77="$ga_cv_mpif77_naked"])
-AS_IF([test "x$ga_cv_mpifc_naked"  != xerror], [ FC="$ga_cv_mpifc_naked"])
+ga_mpi_unwrap_push_save_CC="$CC"
+ga_mpi_unwrap_push_save_CXX="$CXX"
+ga_mpi_unwrap_push_save_F77="$F77"
+ga_mpi_unwrap_push_save_FC="$FC"
+AS_IF([test "x$ga_cv_mpic_naked"   != x], [ CC="$ga_cv_mpic_naked"])
+AS_IF([test "x$ga_cv_mpicxx_naked" != x], [CXX="$ga_cv_mpicxx_naked"])
+AS_IF([test "x$ga_cv_mpif77_naked" != x], [F77="$ga_cv_mpif77_naked"])
+AS_IF([test "x$ga_cv_mpifc_naked"  != x], [ FC="$ga_cv_mpifc_naked"])
 ])dnl
 
 
@@ -210,8 +209,8 @@ AS_IF([test "x$ga_cv_mpifc_naked"  != xerror], [ FC="$ga_cv_mpifc_naked"])
 # -------------------
 # Restore CC/CXX/F77/FC to their MPI counterparts.
 AC_DEFUN([GA_MPI_UNWRAP_POP], [
- CC="$pagoda_mpi_unwrap_push_save_CC"
-CXX="$pagoda_mpi_unwrap_push_save_CXX"
-F77="$pagoda_mpi_unwrap_push_save_F77"
- FC="$pagoda_mpi_unwrap_push_save_FC"
+ CC="$ga_mpi_unwrap_push_save_CC"
+CXX="$ga_mpi_unwrap_push_save_CXX"
+F77="$ga_mpi_unwrap_push_save_F77"
+ FC="$ga_mpi_unwrap_push_save_FC"
 ])dnl
