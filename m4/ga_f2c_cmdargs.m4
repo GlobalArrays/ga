@@ -123,10 +123,7 @@ AC_LANG_POP([Fortran 77])
 # --------------
 # Determine how to access the Fortran 77 command line from C.
 AC_DEFUN([GA_F2C_CMDARGS], [
-AS_IF([test "x$enable_f77" = xyes],
-    [_GA_F2C_CMDARGS],
-    [F2C_GETARG="F2C_GETARG"
-     F2C_IARGC="F2C_IARGC"])
+_GA_F2C_CMDARGS
 AC_SUBST([F2C_GETARG])
 AC_SUBST([F2C_IARGC])
 ])dnl

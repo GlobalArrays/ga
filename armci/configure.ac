@@ -88,12 +88,11 @@ CFLAGS="$ga_save_CFLAGS"
 AC_USE_SYSTEM_EXTENSIONS
 AX_COMPILER_VENDOR
 # If F77 is enabled, only perform a simple compilation test.
-AS_IF([test "x$with_mpi" != xno],
-    [AS_IF([test "x$enable_f77" = xyes],
-        [GA_MPICC_TEST_COMPILE],
-        [AS_IF([test "x$enable_mpi_tests" = xyes],
-            [GA_MPICC_TEST_LINK],
-            [GA_MPICC_TEST_COMPILE])])])
+AS_IF([test "x$with_mpi" != xno], [
+    AS_CASE([$enable_f77:$enable_mpi_tests],
+        [yes:*], [GA_MPICC_TEST_COMPILE],
+        [no:yes],[GA_MPICC_TEST_LINK],
+        [no:no], [GA_MPICC_TEST_COMPILE])])
 # Hack to append .x to executables.
 AC_SUBST([EXEEXT], [.x$EXEEXT])
 
@@ -218,19 +217,20 @@ FFLAGS="$ga_save_FFLAGS"
 # If Fortran 77 compiler was not found, we disable support for it.
 AS_IF([test "x$F77" = x], [enable_f77=no])
 
+# Perform Fortran 77 tests only if enabled.
+if test "x$enable_f77" = xyes; then :
+
 AX_COMPILER_VENDOR
 # If F77 is enabled, perform a simple link test.
 AS_IF([test "x$with_mpi" != xno],
-    [AS_IF([test "x$enable_f77" = xyes],
-        [AS_IF([test "x$enable_mpi_tests" = xyes],
-            [GA_MPIF77_TEST_LINK],
-            [GA_MPIF77_TEST_COMPILE])],
+    [AS_IF([test "x$enable_mpi_tests" = xyes],
+        [GA_MPIF77_TEST_LINK],
         [GA_MPIF77_TEST_COMPILE])])
 
 GA_SUPPRESS_MESSAGE
 GA_F77_LIBRARY_LDFLAGS
-GA_F77_DUMMY_MAIN
-GA_F77_WRAPPERS
+AC_F77_DUMMY_MAIN
+AC_F77_WRAPPERS
 GA_F77_CPP_SYMBOL
 GA_F77_FIXED
 
@@ -241,11 +241,19 @@ GA_F77_FIXED
 # Checks for Fortran library functions.
 
 # Fortran to C compatibility.
-AS_IF([test "x$enable_f77" = xyes], [
 ARMCI_F77_I4
 GA_F2C_NOMAIN
 ARMCI_F77_OPT
-])
+
+else
+
+# enable_f77=no version of AC_F77_WRAPPERS
+AC_DEFINE([F77_FUNC(name,NAME)], [name])
+AC_DEFINE([F77_FUNC_(name,NAME)],[name @%:@@%:@ _])
+# enable_f77=no version of GA_F2C_NOMAIN
+AC_SUBST([FLD_NOMAIN], [])
+
+fi
 
 # This is required to override what automake does, if needed.
 GA_F77_LD_OVERRIDE
@@ -262,6 +270,10 @@ GA_LAPACK
 ###############################################################################
 # Checks for programs.
 ###############################################################################
+AC_MSG_NOTICE
+AC_MSG_NOTICE([Checks for additional programs])
+AC_MSG_NOTICE
+
 AC_PROG_GREP
 AC_PROG_SED
 

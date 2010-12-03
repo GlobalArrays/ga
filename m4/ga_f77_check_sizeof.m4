@@ -45,14 +45,12 @@ rm -rf conftest*
 AC_DEFUN([GA_F77_CHECK_SIZEOF],
 [AS_VAR_PUSHDEF([type_var], [ga_cv_f77_sizeof_$1])
 AC_CACHE_CHECK([size of Fortran $1], type_var,
-    [AS_IF([test x$cross_compiling = xyes || test "x$enable_f77" = xno],
+    [AS_IF([test x$cross_compiling = xyes],
         [AS_VAR_SET(type_var, [$2])],
         [GA_F77_COMPUTE_SIZEOF([$1], type_var)])])
 AS_IF([test x$cross_compiling = xyes],
     [AC_MSG_WARN([Cannot determine size of $1 when cross-compiling.])
      AC_MSG_WARN([Defaulting to $2])])
-AS_IF([test "x$enable_f77" = xno],
-    [AC_MSG_NOTICE([Fortran was disabled; setting size of $1 to $2])])
 AC_DEFINE_UNQUOTED(AS_TR_CPP(sizeof_f77_$1), $type_var,
     [The size of '$1' as computed by C's sizeof.])
 AS_VAR_POPDEF([type_var])

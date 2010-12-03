@@ -76,12 +76,11 @@ CFLAGS="$ga_save_CFLAGS"
 AC_USE_SYSTEM_EXTENSIONS
 AX_COMPILER_VENDOR
 # If F77 is enabled, only perform a simple compilation test.
-AS_IF([test "x$with_mpi" != xno],
-    [AS_IF([test "x$enable_f77" = xyes],
-        [GA_MPICC_TEST_COMPILE],
-        [AS_IF([test "x$enable_mpi_tests" = xyes],
-            [GA_MPICC_TEST_LINK],
-            [GA_MPICC_TEST_COMPILE])])])
+AS_IF([test "x$with_mpi" != xno], [
+    AS_CASE([$enable_f77:$enable_mpi_tests],
+        [yes:*], [GA_MPICC_TEST_COMPILE],
+        [no:yes],[GA_MPICC_TEST_LINK],
+        [no:no], [GA_MPICC_TEST_COMPILE])])
 # Hack to append .x to executables.
 AC_SUBST([EXEEXT], [.x$EXEEXT])
 
@@ -235,20 +234,21 @@ FFLAGS="$ga_save_FFLAGS"
 # If Fortran 77 compiler was not found, we disable support for it.
 AS_IF([test "x$F77" = x], [enable_f77=no])
 
+# Perform Fortran 77 tests only if enabled.
+if test "x$enable_f77" = xyes; then :
+
 AX_COMPILER_VENDOR
-# If F77 is enabled, perform a simple link test.
+# Perform a simple link test for MPI.
 AS_IF([test "x$with_mpi" != xno],
-    [AS_IF([test "x$enable_f77" = xyes],
-        [AS_IF([test "x$enable_mpi_tests" = xyes],
-            [GA_MPIF77_TEST_LINK],
-            [GA_MPIF77_TEST_COMPILE])],
+    [AS_IF([test "x$enable_mpi_tests" = xyes],
+        [GA_MPIF77_TEST_LINK],
         [GA_MPIF77_TEST_COMPILE])])
 
 GA_SUPPRESS_MESSAGE
 GA_F77_LIBRARY_LDFLAGS
 GA_F77_MAYBE_UNDERSCORING
-GA_F77_DUMMY_MAIN
-GA_F77_WRAPPERS
+AC_F77_DUMMY_MAIN
+AC_F77_WRAPPERS
 GA_F77_CPP_SYMBOL
 GA_F77_FIXED
 GA_F77_INTEGER_SIZE
@@ -263,21 +263,46 @@ GA_F77_CHECK_SIZEOF([REAL], [4])
 GA_F77_CHECK_SIZEOF([DOUBLE PRECISION], [8])
 
 # Checks for Fortran library functions.
-AS_IF([test "x$enable_f77" = xyes], [
 GA_CHECK_FUNCS([dtime etime])
 GA_F77_FLUSH
-])
 
 # The rest of the Fortran 77 to C compatibility checks.
-AS_IF([test "x$enable_f77" = xyes], [
 GA_F2C_NOMAIN
 GA_F77_OPT
-])
 GA_F2C_CMDARGS
 GA_F2C_HIDDEN_STRING_LENGTH_CONVENTION
 GA_F2C_MATCH_TYPES([INTEGER], [short, int, long, long long])
 GA_F2C_MATCH_TYPES([REAL], [float, double, long double])
 GA_F2C_MATCH_TYPES([DOUBLE PRECISION], [float, double, long double])
+
+else
+
+# enable_f77=no version of AC_F77_WRAPPERS
+AC_DEFINE([F77_FUNC(name,NAME)], [name])
+AC_DEFINE([F77_FUNC_(name,NAME)],[name @%:@@%:@ _])
+# enable_f77=no version of GA_F77_CHECK_SIZEOF
+AC_DEFINE_UNQUOTED(AS_TR_CPP(sizeof_f77_INTEGER), [$ac_cv_sizeof_voidp],
+    [The size of 'INTEGER' as computed by C's sizeof.])
+AC_DEFINE_UNQUOTED(AS_TR_CPP(sizeof_f77_REAL), [4],
+    [The size of 'REAL' as computed by C's sizeof.])
+AC_DEFINE_UNQUOTED(AS_TR_CPP(sizeof_f77_DOUBLE PRECISION), [8],
+    [The size of 'DOUBLE PRECISION' as computed by C's sizeof.])
+# enable_f77=no version of GA_F2C_NOMAIN
+AC_SUBST([FLD_NOMAIN], [])
+# enable_f77=no version of GA_F2C_CMDARGS
+F2C_GETARG="F2C_GETARG"
+F2C_IARGC="F2C_IARGC"
+AC_SUBST([F2C_GETARG])
+AC_SUBST([F2C_IARGC])
+# enable_f77=no version of GA_F2C_HIDDEN_STRING_LENGTH_CONVENTION
+AC_DEFINE([F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS], [1],
+    [whether the hidden string length comes after all other args])
+# enable_f77=no version of GA_F2C_MATCH_TYPES
+AC_SUBST([F2C_INTEGER_C_TYPE], [long])
+AC_SUBST([F2C_REAL_C_TYPE], [float])
+AC_SUBST([F2C_DOUBLE_PRECISION_C_TYPE], [double])
+
+fi
 
 # This is required to override what automake does, if needed.
 GA_F77_LD_OVERRIDE
@@ -288,6 +313,10 @@ AC_LANG_POP([Fortran 77])
 # Checks for BLAS/LAPACK/SCALAPACK require both C and Fortran features to
 # have been detected. Further, they assume the current AC_LANG is C.
 ###############################################################################
+AC_MSG_NOTICE
+AC_MSG_NOTICE([Checks for BLAS,LAPACK,ScaLAPACK])
+AC_MSG_NOTICE
+
 GA_BLAS
 GA_LAPACK
 GA_SCALAPACK
@@ -295,11 +324,15 @@ GA_SCALAPACK
 ###############################################################################
 # Checks for programs.
 ###############################################################################
+AC_MSG_NOTICE
+AC_MSG_NOTICE([Checks for additional programs])
+AC_MSG_NOTICE
+
 AC_PROG_GREP
 AC_PROG_SED
 
 AM_PATH_PYTHON([],[],[:])
-AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
+AM_CONDITIONAL([HAVE_PYTHON], [test "x$PYTHON" != x])
 
 AC_PATH_PROG([M4], [m4], [notfound])
 AM_CONDITIONAL([HAVE_M4], [test "x$M4" != xnotfound])

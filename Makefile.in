@@ -74,17 +74,11 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15) \
 	$(am__EXEEXT_16) $(am__EXEEXT_17) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__EXEEXT_18) pario/dra/big$(EXEEXT) \
-	pario/dra/bign$(EXEEXT) pario/dra/dbg_read$(EXEEXT) \
-	pario/dra/dbg_write$(EXEEXT) pario/dra/dra2arviz$(EXEEXT) \
-	pario/dra/dra_mxm$(EXEEXT) pario/dra/ntest$(EXEEXT) \
-	pario/dra/ntestc$(EXEEXT) pario/dra/perf$(EXEEXT) \
-	pario/dra/perf2$(EXEEXT) pario/dra/perf3$(EXEEXT) \
+	$(am__EXEEXT_18) pario/dra/bign$(EXEEXT) \
+	pario/dra/dbg_read$(EXEEXT) pario/dra/dbg_write$(EXEEXT) \
+	pario/dra/dra2arviz$(EXEEXT) pario/dra/ntestc$(EXEEXT) \
 	pario/dra/perfn$(EXEEXT) pario/dra/rate$(EXEEXT) \
-	pario/dra/test$(EXEEXT) pario/dra/test_mxm$(EXEEXT) \
-	pario/dra/time_mxm$(EXEEXT) pario/eaf/test$(EXEEXT) \
-	pario/sf/test$(EXEEXT) $(am__EXEEXT_19) \
-	gparrays/testing/test$(EXEEXT)
+	$(am__EXEEXT_19) gparrays/testing/test$(EXEEXT)
 @NOFORT_FALSE@am__append_1 = $(FLD_NOMAIN)
 @NOFORT_FALSE@am__append_2 = gaf2c/farg.F
 @NOFORT_FALSE@am__append_3 = gaf2c/testarg
@@ -302,7 +296,11 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @NOFORT_FALSE@am__append_46 = global/examples/boltzmann/boltz \
 @NOFORT_FALSE@	global/examples/conjugate_gradient/ga_cg \
 @NOFORT_FALSE@	global/examples/md_cluster/grp_sim \
-@NOFORT_FALSE@	global/examples/scf/scf
+@NOFORT_FALSE@	global/examples/scf/scf pario/dra/big \
+@NOFORT_FALSE@	pario/dra/dra_mxm pario/dra/ntest pario/dra/perf \
+@NOFORT_FALSE@	pario/dra/perf2 pario/dra/perf3 pario/dra/test \
+@NOFORT_FALSE@	pario/dra/test_mxm pario/dra/time_mxm \
+@NOFORT_FALSE@	pario/eaf/test pario/sf/test
 
 ##############################################################################
 # global/X
@@ -439,7 +437,6 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/m4/ga_f77_check_sizeof.m4 \
 	$(top_srcdir)/m4/ga_f77_cpp_symbols.m4 \
 	$(top_srcdir)/m4/ga_f77_disable.m4 \
-	$(top_srcdir)/m4/ga_f77_dummy_main.m4 \
 	$(top_srcdir)/m4/ga_f77_fixed.m4 \
 	$(top_srcdir)/m4/ga_f77_flush.m4 \
 	$(top_srcdir)/m4/ga_f77_integer_size.m4 \
@@ -447,7 +444,6 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/m4/ga_f77_library_ldflags.m4 \
 	$(top_srcdir)/m4/ga_f77_opt.m4 \
 	$(top_srcdir)/m4/ga_f77_underscore.m4 \
-	$(top_srcdir)/m4/ga_f77_wrappers.m4 \
 	$(top_srcdir)/m4/ga_function.m4 $(top_srcdir)/m4/ga_lapack.m4 \
 	$(top_srcdir)/m4/ga_mpi_test_disable.m4 \
 	$(top_srcdir)/m4/ga_mpi_unwrap.m4 $(top_srcdir)/m4/ga_mpicc.m4 \
@@ -816,7 +812,15 @@ libga_la_OBJECTS = $(am_libga_la_OBJECTS) $(nodist_libga_la_OBJECTS)
 @NOFORT_FALSE@	global/examples/boltzmann/boltz$(EXEEXT) \
 @NOFORT_FALSE@	global/examples/conjugate_gradient/ga_cg$(EXEEXT) \
 @NOFORT_FALSE@	global/examples/md_cluster/grp_sim$(EXEEXT) \
-@NOFORT_FALSE@	global/examples/scf/scf$(EXEEXT)
+@NOFORT_FALSE@	global/examples/scf/scf$(EXEEXT) \
+@NOFORT_FALSE@	pario/dra/big$(EXEEXT) \
+@NOFORT_FALSE@	pario/dra/dra_mxm$(EXEEXT) \
+@NOFORT_FALSE@	pario/dra/ntest$(EXEEXT) pario/dra/perf$(EXEEXT) \
+@NOFORT_FALSE@	pario/dra/perf2$(EXEEXT) \
+@NOFORT_FALSE@	pario/dra/perf3$(EXEEXT) pario/dra/test$(EXEEXT) \
+@NOFORT_FALSE@	pario/dra/test_mxm$(EXEEXT) \
+@NOFORT_FALSE@	pario/dra/time_mxm$(EXEEXT) \
+@NOFORT_FALSE@	pario/eaf/test$(EXEEXT) pario/sf/test$(EXEEXT)
 @CXX_BINDINGS_TRUE@am__EXEEXT_19 = ga++/testing/elempatch$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/ntestc$(EXEEXT) \
@@ -2799,6 +2803,10 @@ nodist_libga_la_SOURCES = config.fh global/src/wapidefs.h \
 #
 
 ##############################################################################
+# global
+#
+
+##############################################################################
 # global/doc
 #
 EXTRA_DIST = README build-aux/inside.pl LinAlg/lapack+blas/README \
@@ -2824,7 +2832,7 @@ EXTRA_DIST = README build-aux/inside.pl LinAlg/lapack+blas/README \
 	tcgmsg/examples/runit.grid tcgmsg/examples/scfblas.f \
 	tcgmsg/examples/scf.f tcgmsg/examples/timer.f \
 	tcgmsg/examples/trace.out tcgmsg/examples/xpix.shar \
-	tcgmsg/ipcv4.0/README tcgmsg/tcgmsg-mpi/README \
+	tcgmsg/ipcv4.0/README tcgmsg/tcgmsg-mpi/README global/README \
 	build-aux/wapigen.py $(am__append_42) \
 	global/examples/boltzmann/README \
 	global/examples/lennard-jones/README \

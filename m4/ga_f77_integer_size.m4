@@ -139,14 +139,12 @@ AC_CACHE_CHECK([for desired Fortran INTEGER size], [ga_cv_f77_integer_size],
             [ga_cv_f77_integer_size=8],
             [ga_cv_f77_integer_size=$ga_f77_integer_size])])])
 # Now determine the correct compiler flag to adjust the integer size.
-AS_IF([test "x$enable_f77" = xyes], [
 AC_CACHE_CHECK([for INTEGER size compile flag], [ga_cv_f77_integer_size_flag],
     [AS_CASE([$cross_compiling:$ga_cv_f77_integer_size],
         [yes:4],[_GA_F77_INTEGER_4_FLAG_CROSS([ga_cv_f77_integer_size_flag])],
         [yes:8],[_GA_F77_INTEGER_8_FLAG_CROSS([ga_cv_f77_integer_size_flag])],
         [*:4],  [_GA_F77_INTEGER_4_FLAG([ga_cv_f77_integer_size_flag])],
         [*:8],  [_GA_F77_INTEGER_8_FLAG([ga_cv_f77_integer_size_flag])])])
-])
 AS_IF([test "x$ga_cv_f77_integer_size_flag" != x],
     [AS_IF([test "x$ga_cv_f77_integer_size_flag" != xnone],
         [AC_SUBST([FFLAG_INT], [$ga_cv_f77_integer_size_flag])])])

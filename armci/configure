@@ -6103,7 +6103,9 @@ $as_echo "$ax_cv_c_compiler_vendor" >&6; }
 
 # If F77 is enabled, only perform a simple compilation test.
 if test "x$with_mpi" != xno; then :
-  if test "x$enable_f77" = xyes; then :
+
+    case $enable_f77:$enable_mpi_tests in #(
+  yes:*) :
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -6165,9 +6167,8 @@ $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "could not compile simple C MPI program
 See \`config.log' for more details" "$LINENO" 5; }
 fi
-
-else
-  if test "x$enable_mpi_tests" = xyes; then :
+ ;; #(
+  no:yes) :
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -6356,8 +6357,8 @@ See \`config.log' for more details" "$LINENO" 5; } ;; #(
   *) :
      ;;
 esac
-
-else
+ ;; #(
+  no:no) :
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -6419,9 +6420,10 @@ $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "could not compile simple C MPI program
 See \`config.log' for more details" "$LINENO" 5; }
 fi
-
-fi
-fi
+ ;; #(
+  *) :
+     ;;
+esac
 fi
 # Hack to append .x to executables.
 EXEEXT=.x$EXEEXT
@@ -12272,6 +12274,9 @@ if test "x$F77" = x; then :
   enable_f77=no
 fi
 
+# Perform Fortran 77 tests only if enabled.
+if test "x$enable_f77" = xyes; then :
+
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran 77 compiler vendor" >&5
@@ -12308,7 +12313,6 @@ $as_echo "$ax_cv_f77_compiler_vendor" >&6; }
 
 # If F77 is enabled, perform a simple link test.
 if test "x$with_mpi" != xno; then :
-  if test "x$enable_f77" = xyes; then :
   if test "x$enable_mpi_tests" = xyes; then :
 
 ac_ext=f
@@ -12549,63 +12553,6 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 fi
-else
-
-ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
-
-ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
-cat > conftest.$ac_ext <<_ACEOF
-      program main
-      include 'mpif.h'
-      integer ierr
-      call MPI_Init( ierr )
-      call MPI_Finalize( ierr )
-      end
-_ACEOF
-ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether a simple Fortran MPI program compiles" >&5
-$as_echo_n "checking whether a simple Fortran MPI program compiles... " >&6; }
-if test "${ga_cv_f77_mpi_test_compile+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ga_save_FFLAGS="$FFLAGS"; FFLAGS="$FFLAGS $GA_MP_CPPFLAGS"
-     if ac_fn_f77_try_compile "$LINENO"; then :
-  ga_cv_f77_mpi_test_compile=yes
-else
-  ga_cv_f77_mpi_test_compile=no
-fi
-rm -f core conftest.err conftest.$ac_objext
-     FFLAGS="$ga_save_FFLAGS"
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_mpi_test_compile" >&5
-$as_echo "$ga_cv_f77_mpi_test_compile" >&6; }
-rm -f conftest.$ac_ext
-ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
-if test "x$ga_cv_f77_mpi_test_compile" = xno; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "could not compile simple Fortran MPI program
-See \`config.log' for more details" "$LINENO" 5; }
-fi
-
-fi
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran 77 flag to suppress info messages" >&5
@@ -12640,7 +12587,6 @@ fi
 $as_echo "$ga_cv_f77_suppress" >&6; }
 
 
-if test "x$enable_f77" = xyes; then :
 
 ga_mpi_unwrap_push_save_CC="$CC"
 ga_mpi_unwrap_push_save_CXX="$CXX"
@@ -12659,7 +12605,7 @@ if test "x$ga_cv_mpifc_naked"  != x; then :
    FC="$ga_cv_mpifc_naked"
 fi
 
-     ac_ext=f
+    ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
@@ -12971,7 +12917,7 @@ CXX="$ga_mpi_unwrap_push_save_CXX"
 F77="$ga_mpi_unwrap_push_save_F77"
  FC="$ga_mpi_unwrap_push_save_FC"
 
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether FLIBS needs -lgcc_s" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether FLIBS needs -lgcc_s" >&5
 $as_echo_n "checking whether FLIBS needs -lgcc_s... " >&6; }
 if test "${ga_cv_flibs_gcc_s+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -13034,11 +12980,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_flibs_gcc_s" >&5
 $as_echo "$ga_cv_flibs_gcc_s" >&6; }
 
-fi
-
-
-if test "x$enable_f77" = xyes; then :
-  ac_ext=f
+ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
@@ -13149,8 +13091,6 @@ ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
-fi
 
 ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
@@ -13318,9 +13258,7 @@ ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
-
-if test "x$enable_f77" = xyes; then :
-  ac_ext=f
+ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
@@ -13375,13 +13313,6 @@ ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
-else
-  $as_echo "#define F77_FUNC(name,NAME) name" >>confdefs.h
-
-     $as_echo "#define F77_FUNC_(name,NAME) name ## _" >>confdefs.h
-
-fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking how to pass symbols to preprocessed $F77" >&5
 $as_echo_n "checking how to pass symbols to preprocessed $F77... " >&6; }
@@ -13482,8 +13413,6 @@ fi
 # Checks for Fortran library functions.
 
 # Fortran to C compatibility.
-if test "x$enable_f77" = xyes; then :
-
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for INTEGER size compile flag" >&5
@@ -13720,11 +13649,9 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_fld_nomain" >&5
 $as_echo "$ga_cv_fld_nomain" >&6; }
-if test "x$enable_f77" = xyes; then :
-  if test "x$ga_cv_fld_nomain" != xnone; then :
+if test "x$ga_cv_fld_nomain" != xnone; then :
   FLD_NOMAIN=$ga_cv_fld_nomain
 
-fi
 fi
 
 
@@ -13864,6 +13791,16 @@ fi
 $as_echo "$armci_cv_f77_opt" >&6; }
 ARMCI_FOPT=$armci_cv_f77_opt
 
+
+
+else
+
+# enable_f77=no version of AC_F77_WRAPPERS
+$as_echo "#define F77_FUNC(name,NAME) name" >>confdefs.h
+
+$as_echo "#define F77_FUNC_(name,NAME) name ## _" >>confdefs.h
+
+# enable_f77=no version of GA_F2C_NOMAIN
 
 
 fi
@@ -16318,6 +16255,13 @@ fi
 ###############################################################################
 # Checks for programs.
 ###############################################################################
+{ $as_echo "$as_me:${as_lineno-$LINENO}: " >&5
+$as_echo "$as_me: " >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Checks for additional programs" >&5
+$as_echo "$as_me: Checks for additional programs" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: " >&5
+$as_echo "$as_me: " >&6;}
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for grep that handles long lines and -e" >&5
 $as_echo_n "checking for grep that handles long lines and -e... " >&6; }
 if test "${ac_cv_path_GREP+set}" = set; then :

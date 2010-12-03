@@ -73,7 +73,7 @@ AC_CACHE_CHECK([whether Fortran hidden string length convention is after args],
   [AS_IF([test "x$F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS" != x],
     [ga_cv_f2c_string_after_args="$F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS"])
   AS_IF([test "x$ga_cv_f2c_string_after_args" = x],
-    [AS_IF([test x$cross_compiling = xyes || test "x$enable_f77" = xno],
+    [AS_IF([test x$cross_compiling = xyes],
       [AS_IF([test "x$1" != x],
         [ga_cv_f2c_string_after_args="$1"],
         [ga_cv_f2c_string_after_args="yes"])])])

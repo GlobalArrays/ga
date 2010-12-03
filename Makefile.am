@@ -508,6 +508,11 @@ endif # MSG_COMMS_TCGMSG
 EXTRA_DIST += tcgmsg/tcgmsg-mpi/README
 
 ##############################################################################
+# global
+#
+EXTRA_DIST += global/README
+
+##############################################################################
 # global/src
 #
 global/src/wapi.h: $(top_srcdir)/global/src/papi.h
@@ -1039,24 +1044,28 @@ EXTRA_DIST += pario/dra/dbg_write.c
 EXTRA_DIST += pario/dra/dra2arviz.c
 EXTRA_DIST += pario/dra/global.unsup.c
 
+if NOFORT
+else
 check_PROGRAMS += pario/dra/big
-check_PROGRAMS += pario/dra/bign
-check_PROGRAMS += pario/dra/dbg_read
-check_PROGRAMS += pario/dra/dbg_write
-check_PROGRAMS += pario/dra/dra2arviz
 check_PROGRAMS += pario/dra/dra_mxm
 check_PROGRAMS += pario/dra/ntest
-check_PROGRAMS += pario/dra/ntestc
 check_PROGRAMS += pario/dra/perf
 check_PROGRAMS += pario/dra/perf2
 check_PROGRAMS += pario/dra/perf3
-check_PROGRAMS += pario/dra/perfn
-check_PROGRAMS += pario/dra/rate
 check_PROGRAMS += pario/dra/test
 check_PROGRAMS += pario/dra/test_mxm
 check_PROGRAMS += pario/dra/time_mxm
 check_PROGRAMS += pario/eaf/test
 check_PROGRAMS += pario/sf/test
+endif
+
+check_PROGRAMS += pario/dra/bign
+check_PROGRAMS += pario/dra/dbg_read
+check_PROGRAMS += pario/dra/dbg_write
+check_PROGRAMS += pario/dra/dra2arviz
+check_PROGRAMS += pario/dra/ntestc
+check_PROGRAMS += pario/dra/perfn
+check_PROGRAMS += pario/dra/rate
 
 dtsrc =
 dtsrc += pario/dra/ffflush.F
