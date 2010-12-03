@@ -208,9 +208,19 @@ AS_IF([test $ga_blas_ok = no],
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in Apple vecLib library?
+# BLAS in Apple Accelerate.framework?
 AS_IF([test $ga_blas_ok = no],
-    [AC_MSG_CHECKING([for BLAS in Apple vecLib library])
+    [AC_MSG_CHECKING([for BLAS in Apple Accelerate.framework])
+     # add -framework Accelerate to BLAS_LIBS if missing from LIBS
+     AS_CASE([$LIBS], [*Accelerate*], [], [BLAS_LIBS="-framework Accelerate"])
+     LIBS="$BLAS_LIBS $LIBS"
+     GA_RUN_BLAS_TEST()
+     LIBS="$ga_save_LIBS"
+     AC_MSG_RESULT([$ga_blas_ok])])
+
+# BLAS in Apple vecLib.framework?
+AS_IF([test $ga_blas_ok = no],
+    [AC_MSG_CHECKING([for BLAS in Apple vecLib.framework])
      # add -framework vecLib to BLAS_LIBS if missing from LIBS
      AS_CASE([$LIBS], [*vecLib*], [], [BLAS_LIBS="-framework vecLib"])
      LIBS="$BLAS_LIBS $LIBS"
