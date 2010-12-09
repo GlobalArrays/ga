@@ -1482,7 +1482,7 @@ void gai_get_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
       }
 
       /* copy the local memory buffer buf to g_v */
-      nga_put_ (g_v, &vlo, &vhi, buf, &vhi);
+      pnga_put(g_v, &vlo, &vhi, buf, &vhi);
 
       /*free the memory */
       free (buf);
@@ -1636,7 +1636,7 @@ void gai_add_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
            0);
 
       /* get the vector from the global array to the local memory buffer */
-      nga_get_ (g_v, &vlo, &vhi, buf, &vhi);
+      pnga_get (g_v, &vlo, &vhi, buf, &vhi);
 
       switch (type)
       {
@@ -1850,7 +1850,7 @@ void gai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integer *loA,
           ("ga_set_diagonal_:failed to allocate memory for local buffer",0);
 
       /* get the vector from the global array to the local memory buffer */
-      nga_get_ (g_v, &vlo, &vhi, buf, &vhi);
+      pnga_get (g_v, &vlo, &vhi, buf, &vhi);
 
       switch (type)
       {
@@ -2420,7 +2420,7 @@ void gai_scale_row_values(Integer type, Integer *lo,
            0);
 
       /* get the vector from the global array to the local memory buffer */
-      nga_get_ (g_v, &vlo, &vhi, buf, &vhi);
+      pnga_get (g_v, &vlo, &vhi, buf, &vhi);
 
       switch (type) {
         case C_INT:
@@ -2616,7 +2616,7 @@ void gai_scale_col_values(Integer type, Integer *lo,
            0);
 
       /* get the vector from the global array to the local memory buffer */
-      nga_get_ (g_v, &vlo, &vhi, buf, &vhi);
+      pnga_get (g_v, &vlo, &vhi, buf, &vhi);
 
       switch (type) {
         case C_INT:

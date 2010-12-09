@@ -499,6 +499,7 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
   Integer me;
   Integer info;
   Integer dims[2], ndim;
+  Integer lo[2], hi[2];
 
   /** check environment */
 #ifdef USE_VAMPIR
@@ -538,8 +539,16 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
     adri = (DoublePrecision*) ga_malloc(GA_MIN(dimA1,dimA2), C_DBL, "ipiv");
 
     /** Fill local arrays from global arrays */   
-    ga_get_(g_a, &one, &dimA1, &one, &dimA2, adra, &dimA1);
-    ga_get_(g_b, &one, &dimB1, &one, &dimB2, adrb, &dimB1);
+    lo[0] = one;
+    lo[1] = dimA1;
+    hi[0] = one;
+    hi[1] = dimA2;
+    pnga_get(g_a, lo, hi, adra, &dimA1);
+    lo[0] = one;
+    lo[1] = dimB1;
+    hi[0] = one;
+    hi[1] = dimB2;
+    pnga_get(g_b, lo, hi, adrb, &dimB1);
     
     /** LU factorization */
 #if NOFORT

@@ -97,7 +97,7 @@ ga_symmetrize_(Integer *g_a) {
 
       for (i=0; i < ndim-1; i++) 
         ldb[i] = bhi[i] - blo[i] + 1; 
-      nga_get_(g_a, blo, bhi, b_ptr, ldb);
+      pnga_get(g_a, blo, bhi, b_ptr, ldb);
     }
     ga_sync_(); 
 

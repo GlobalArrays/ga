@@ -174,9 +174,14 @@ Integer status;
 }
 
 
-/*\ wait until requests intiated by calling process are completed
-\*/
-void FATR ga_fence_()
+/**
+ *  Wait until all requests initiated by calling process are completed
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_fence = pnga_fence
+#endif
+
+void pnga_fence()
 {
     int proc;
 #ifdef USE_VAMPIR
@@ -191,9 +196,14 @@ void FATR ga_fence_()
 #endif
 }
 
-/*\ initialize tracing of request completion
-\*/
-void FATR ga_init_fence_()
+/**
+ *  Initialize tracing of request completion
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_init_fence = pnga_init_fence
+#endif
+
+void FATR pnga_init_fence()
 {
 #ifdef USE_VAMPIR
     vampir_begin(GA_INIT_FENCE,__FILE__,__LINE__);
@@ -933,7 +943,7 @@ void pnga_put(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld)
 
 /*\ A common routine called by both non-blocking and blocking GA Get calls.
 \*/
-void nga_get_common(Integer *g_a,
+void ngai_get_common(Integer *g_a,
                    Integer *lo,
                    Integer *hi,
                    void    *buf,
@@ -1432,96 +1442,33 @@ void nga_get_common(Integer *g_a,
 #endif
 }
 
-void FATR nga_get_(Integer *g_a,
-                   Integer *lo,
-                   Integer *hi,
-                   void    *buf,
-                   Integer *ld)
+/**
+ * Get an N-dimensional patch of data from a Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get = pnga_get
+#endif
+
+void pnga_get(Integer *g_a, Integer *lo, Integer *hi,
+              void *buf, Integer *ld)
 {
-    nga_get_common(g_a,lo,hi,buf,ld,(Integer *)NULL);
+    ngai_get_common(g_a,lo,hi,buf,ld,(Integer *)NULL);
 }
 
-void FATR ngai_get(Integer *g_a,
-                   Integer *lo,
-                   Integer *hi,
-                   void    *buf,
-                   Integer *ld)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_nbget = pnga_nbget
+#endif
+
+void pnga_nbget(Integer *g_a, Integer *lo, Integer *hi,
+               void *buf, Integer *ld, Integer *nbhandle)
 {
-    nga_get_(g_a, lo, hi, buf, ld);
-}
-
-void FATR nga_nbget_(Integer *g_a,
-                   Integer *lo,
-                   Integer *hi,
-                   void    *buf,
-                   Integer *ld,
-                   Integer *nbhandle)
-{
-    nga_get_common(g_a,lo,hi,buf,ld,nbhandle);
-}
-
-void FATR  ga_get_(g_a, ilo, ihi, jlo, jhi, buf, ld)
-   Integer  *g_a,  *ilo, *ihi, *jlo, *jhi,  *ld;
-   void  *buf;
-{
-Integer lo[2], hi[2];
-
-#ifdef USE_VAMPIR
-   vampir_begin(GA_GET,__FILE__,__LINE__);
-#endif
-#ifdef ENABLE_TRACE
-   trace_stime_();
-#endif
-
-   lo[0]=*ilo;
-   lo[1]=*jlo;
-   hi[0]=*ihi;
-   hi[1]=*jhi;
-   nga_get_common(g_a, lo, hi, buf, ld,(Integer *)NULL);
-
-#ifdef ENABLE_TRACE
-   trace_etime_();
-   op_code = GA_OP_GET;
-   trace_genrec_(g_a, ilo, ihi, jlo, jhi, &op_code);
-#endif
-#ifdef USE_VAMPIR
-   vampir_end(GA_GET,__FILE__,__LINE__);
-#endif
+    ngai_get_common(g_a,lo,hi,buf,ld,nbhandle);
 }
 
 #ifdef __crayx1 
 #  pragma _CRI inline ga_get_
-#  pragma _CRI inline nga_get_common
+#  pragma _CRI inline ngai_get_common
 #endif
-
-void FATR  ga_nbget_(g_a, ilo, ihi, jlo, jhi, buf, ld,nbhdl)
-   Integer  *g_a,  *ilo, *ihi, *jlo, *jhi,  *ld, *nbhdl;
-   void  *buf;
-{
-Integer lo[2], hi[2];
-
-#ifdef USE_VAMPIR
-   vampir_begin(GA_GET,__FILE__,__LINE__);
-#endif
-#ifdef ENABLE_TRACE
-   trace_stime_();
-#endif
-
-   lo[0]=*ilo;
-   lo[1]=*jlo;
-   hi[0]=*ihi;
-   hi[1]=*jhi;
-   nga_get_common(g_a, lo, hi, buf, ld,nbhdl);
-
-#ifdef ENABLE_TRACE
-   trace_etime_();
-   op_code = GA_OP_GET;
-   trace_genrec_(g_a, ilo, ihi, jlo, jhi, &op_code);
-#endif
-#ifdef USE_VAMPIR
-   vampir_end(GA_GET,__FILE__,__LINE__);
-#endif
-}
 
 /**
  *  A common routine called by both non-blocking and blocking GA acc calls.
@@ -4396,9 +4343,14 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
 }
 
 
-/*\ GATHER OPERATION elements from the global array into v
+/**
+ *  Gather random elements from a global array into local buffer v
 \*/
-void FATR nga_gather_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_gather = pnga_gather
+#endif
+
+void pnga_gather(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 {
 
   if (*nv < 1) return;
@@ -4452,6 +4404,7 @@ void FATR nga_scatter_acc_(Integer *g_a, void* v, Integer subscript[],
   GA_POP_NAME;
 }
 
+#if 000
 void FATR  ga_gather000_(g_a, v, i, j, nv)
      Integer *g_a, *nv, *i, *j;
      void *v;
@@ -4486,12 +4439,18 @@ Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* (int) *nv);
      free(sbar);
 }
 
+#endif
 
 
-/*\ GATHER OPERATION elements from the global array into v
-\*/
-void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
-                      Integer *nv)
+/**
+ *  Gather random elements from 2D global array into local buffer v
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_gather2d = pnga_gather2d
+#endif
+
+void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
+                         Integer *nv)
 {
     Integer k, kk, proc, item_size;
     Integer *aproc, naproc; /* active processes and numbers */

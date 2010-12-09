@@ -4093,7 +4093,7 @@ void pnga_merge_mirrored(Integer *g_a)
     /* copy data back to original global array */
     ga_sync_();
     if (chk) {
-      nga_get_(&_ga_tmp, lo, hi, ptr_a, ld);
+      pnga_get(&_ga_tmp, lo, hi, ptr_a, ld);
     }
     pnga_destroy(&_ga_tmp);
   }

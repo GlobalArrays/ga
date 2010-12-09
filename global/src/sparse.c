@@ -590,7 +590,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
            elems = indx- k+lop +1; /* the number of elements that will be updated*/
 
            /* get the current value of A */
-           nga_get_(g_a, &startp, &startp, buf, &one);
+           pnga_get(g_a, &startp, &startp, buf, &one);
 
            /* assign elements of B
               If add then assign ptr_b[i] = ptr_b[i-1]+ptr_a[i]
@@ -943,11 +943,11 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
      if(pack){
 
         gai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter); /* pack data to buf */
-        nga_put_(g_b, &dst_lo, &dst_hi,  buf, &counter); /* put it into destination array */
+        pnga_put(g_b, &dst_lo, &dst_hi,  buf, &counter); /* put it into destination array */
 
      }else{
 
-        nga_get_(g_b, &dst_lo, &dst_hi,  buf, &counter); /* get data to buffer*/
+        pnga_get(g_b, &dst_lo, &dst_hi,  buf, &counter); /* get data to buffer*/
         gai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter);  /* copy data to array*/
 
      }
@@ -1037,6 +1037,7 @@ logical FATR ga_create_bin_range_(Integer *g_bin, Integer *g_cnt, Integer *g_off
 {
 Integer type, ndim, nbin, lobin, hibin, me=pnga_nodeid(),crap;
 Integer dims[2], nproc=pnga_nnodes(),chunk[2];
+Integer tlo[2], thi[2];
 
     pnga_inquire(g_bin, &type, &ndim, &nbin);
     if(ndim !=1) pnga_error("ga_bin_index: 1-dim array required",ndim);
@@ -1057,8 +1058,8 @@ Integer dims[2], nproc=pnga_nnodes(),chunk[2];
       pnga_access_ptr(g_off, &lobin, &hibin, &myoff, &crap);
       first_off = myoff[0]; last_off = myoff[hibin-lobin];
 /*
-      nga_get_(g_off,&lobin,&lobin,&first_off,&lo);
-      nga_get_(g_off,&hibin,&hibin,&last_off,&hi);
+      pnga_get(g_off,&lobin,&lobin,&first_off,&lo);
+      pnga_get(g_off,&hibin,&hibin,&last_off,&hi);
 */
 
       /* since offset starts at 0, add 1 to get index to g_bin */
@@ -1082,7 +1083,7 @@ Integer dims[2], nproc=pnga_nnodes(),chunk[2];
 
               blo = *myoff +1;
               if(bin == hibin){
-                 nga_get_(g_cnt, &hibin, &hibin, &cnt, &hibin); /* local */
+                 pnga_get(g_cnt, &hibin, &hibin, &cnt, &hibin); /* local */
                  bhi = blo + cnt-1; 
               }else
                  bhi = myoff[1]; 
@@ -1109,7 +1110,11 @@ Integer dims[2], nproc=pnga_nnodes(),chunk[2];
           if(cnt){
                  Integer p1 = p+1;
                  lo = 1+off; hi = lo+cnt-1;
-                 ga_put_(g_range,&lo,&hi,&p1, &p1, buf+off, &cnt);
+                 tlo[0] = lo;
+                 tlo[1] = p1;
+                 thi[0] = hi;
+                 thi[1] = p1;
+                 pnga_put(g_range, tlo, thi, buf+off, &cnt);
           }
       }
    }
@@ -1141,7 +1146,7 @@ Integer g_range;
 
         /* get and inspect range of bins stored on current processor */
         rlo[0] = 1; rlo[1]= me+1; rhi[0]=2; rhi[1]=rlo[1];
-        nga_get_(&g_range, rlo, rhi, bin_range, rhi); /* local */
+        pnga_get(&g_range, rlo, rhi, bin_range, rhi); /* local */
         nbin = bin_range[1]-bin_range[0]+1;
         if(nbin<1 || nbin> totbin || nbin>(hi-lo+1))
            pnga_error("ga_bin_sorter:bad nbin",nbin);
@@ -1149,7 +1154,7 @@ Integer g_range;
         /* get count of elements in each bin stored on this task */
         if(!(bin_cnt = (Integer*)malloc(nbin*sizeof(Integer))))
            pnga_error("ga_bin_sorter:memory allocation failed",nbin);
-        nga_get_(g_cnt,bin_range,bin_range+1,bin_cnt,&nbin);
+        pnga_get(g_cnt,bin_range,bin_range+1,bin_cnt,&nbin);
 
         /* get access to local bin elements */
         pnga_access_ptr(g_bin, &lo, &hi, &ptr, &crap);
@@ -1205,7 +1210,7 @@ Integer type, ndim, nbin;
        Integer selected = subs[i];
        int elems = all_bin_contrib[selected-1];
 
-       nga_get_(g_off,&selected,&selected, &lo, &selected);
+       pnga_get(g_off,&selected,&selected, &lo, &selected);
        lo += offset[selected-1]+1;
        hi = lo + elems -1;
 /*
@@ -1216,7 +1221,7 @@ Integer type, ndim, nbin;
                 i,elems,(long)lo,(long)hi,(long)values+i,(long)nbin);
          break;   
        }else{
-          nga_put_(g_bin, &lo, &hi, values+i, &selected); 
+          pnga_put(g_bin, &lo, &hi, values+i, &selected); 
        }
        i+=elems;
     }

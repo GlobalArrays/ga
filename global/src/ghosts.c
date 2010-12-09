@@ -4076,7 +4076,7 @@ void FATR nga_nbget_ghost_dir_(Integer *g_a,
   }
   gam_LocationWithGhosts(me, handle, subscript, &ptr_loc, ld);
   /* get data */
-  nga_get_common(g_a,lo_rem,hi_rem,ptr_loc,ld,nbhandle);  
+  pnga_nbget(g_a,lo_rem,hi_rem,ptr_loc,ld,nbhandle);  
   GA_POP_NAME;
 }
 

@@ -301,7 +301,7 @@ int local_sync_begin,local_sync_end,use_put;
          pnga_distribution(g_a, &me_a, lo, hi);
          if(lo[0]>0){
            pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-           nga_put_(g_b, lo, hi, ptr_a, ld);
+           pnga_put(g_b, lo, hi, ptr_a, ld);
          }
        } else {
          if (!pnga_uses_proc_grid(g_a)) {
@@ -309,7 +309,7 @@ int local_sync_begin,local_sync_end,use_put;
              pnga_distribution(g_a, &i, lo, hi);
              if (lo[0]>0) {
                pnga_access_block_ptr(g_a, &i, &ptr_a, ld);
-               nga_put_(g_b, lo, hi, ptr_a, ld);
+               pnga_put(g_b, lo, hi, ptr_a, ld);
              }
            }
          } else {
@@ -330,7 +330,7 @@ int local_sync_begin,local_sync_end,use_put;
              }
              if (chk) {
                pnga_access_block_grid_ptr(g_a, index, &ptr_a, ld);
-               nga_put_(g_b, lo, hi, ptr_a, ld);
+               pnga_put(g_b, lo, hi, ptr_a, ld);
              }
              /* increment index to get next block on processor */
              index[0] += topology[0];
@@ -348,7 +348,7 @@ int local_sync_begin,local_sync_end,use_put;
          pnga_distribution(g_b, &me_b, lo, hi);
          if(lo[0]>0){
            pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-           nga_get_(g_a, lo, hi, ptr_b, ld);
+           pnga_get(g_a, lo, hi, ptr_b, ld);
          }
        } else {
          if (!pnga_uses_proc_grid(g_a)) {
@@ -356,7 +356,7 @@ int local_sync_begin,local_sync_end,use_put;
              pnga_distribution(g_b, &i, lo, hi);
              if (lo[0]>0) {
                pnga_access_block_ptr(g_b, &i, &ptr_b, ld);
-               nga_get_(g_a, lo, hi, ptr_b, ld);
+               pnga_get(g_a, lo, hi, ptr_b, ld);
              }
            }
          } else {
@@ -377,7 +377,7 @@ int local_sync_begin,local_sync_end,use_put;
              }
              if (chk) {
                pnga_access_block_grid_ptr(g_b, index, &ptr_b, ld);
-               nga_get_(g_a, lo, hi, ptr_b, ld);
+               pnga_get(g_a, lo, hi, ptr_b, ld);
              }
              /* increment index to get next block on processor */
              index[0] += topology[0];
@@ -399,7 +399,7 @@ int local_sync_begin,local_sync_end,use_put;
        pnga_distribution(g_b, &me_b, lo, hi);
        if (lo[0]>0) {
          pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-         nga_get_(g_a, lo, hi, ptr_b, ld);
+         pnga_get(g_a, lo, hi, ptr_b, ld);
        } 
      } else {
        /* source array is distributed and destination
@@ -408,7 +408,7 @@ int local_sync_begin,local_sync_end,use_put;
        pnga_distribution(g_a, &me_a, lo, hi);
        if (lo[0] > 0) {
          pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-         nga_put_(g_b, lo, hi, ptr_a, ld);
+         pnga_put(g_b, lo, hi, ptr_a, ld);
        }
        pnga_merge_mirrored(g_b);
      }
@@ -1216,7 +1216,7 @@ char *ptr_tmp, *ptr_a;
 
         nga_release_(g_a, lo, hi); 
 
-        nga_put_(g_b, lob, hib, ptr_tmp ,&ncol);
+        pnga_put(g_b, lob, hib, ptr_tmp ,&ncol);
 
         ga_free(ptr_tmp);
       }
@@ -1248,7 +1248,7 @@ char *ptr_tmp, *ptr_a;
             gai_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
             ptr_a += ld[0]*size;
           }
-          nga_put_(g_b, lob, hib, ptr_tmp ,&ncol);
+          pnga_put(g_b, lob, hib, ptr_tmp ,&ncol);
 
           nga_release_update_block_(g_a, &idx);
         }
@@ -1293,7 +1293,7 @@ char *ptr_tmp, *ptr_a;
                 gai_local_transpose(atype, ptr_a, nrow, block_dims[0]*size, ptr);
                 ptr_a += ld[0]*size;
               }
-              nga_put_(g_b, lob, hib, ptr_tmp ,&block_dims[0]);
+              pnga_put(g_b, lob, hib, ptr_tmp ,&block_dims[0]);
               nga_release_update_block_(g_a, index);
             }
             /* increment index to get next block on processor */

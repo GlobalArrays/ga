@@ -292,12 +292,12 @@ void ngai_copy_patch(char *trans,
         if (use_put) {
           ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
           ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-          nga_put_(g_b, lod, hid, src_data_ptr, ld);
+          pnga_put(g_b, lod, hid, src_data_ptr, ld);
           nga_release_(g_a, los, his);
         } else {
           ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
           ngai_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
-          nga_get_(g_a, lod, hid, src_data_ptr, ld);
+          pnga_get(g_a, lod, hid, src_data_ptr, ld);
           nga_release_(g_b, los, his);
         }
         /*** due to generality of this transformation scatter is required ***/
@@ -583,7 +583,7 @@ void ngai_copy_patch(char *trans,
               }
               ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
               ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-              nga_put_(g_b, lod, hid, src_data_ptr, ld);
+              pnga_put(g_b, lod, hid, src_data_ptr, ld);
               nga_release_block_(g_a, &i);
             }
           }
@@ -648,7 +648,7 @@ void ngai_copy_patch(char *trans,
               }
               ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
               ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-              nga_put_(g_b, lod, hid, src_data_ptr, ld);
+              pnga_put(g_b, lod, hid, src_data_ptr, ld);
               nga_release_block_grid_(g_a, index);
             }
 
@@ -669,7 +669,7 @@ void ngai_copy_patch(char *trans,
           pnga_access_ptr(g_a, los, his, &src_data_ptr, ld); 
           ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
           ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-          nga_put_(g_b, lod, hid, src_data_ptr, ld);
+          pnga_put(g_b, lod, hid, src_data_ptr, ld);
           nga_release_(g_a, los, his);
         }
       }
@@ -723,7 +723,7 @@ void ngai_copy_patch(char *trans,
               }
               ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
               ngai_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
-              nga_get_(g_a, lod, hid, src_data_ptr, ld);
+              pnga_get(g_a, lod, hid, src_data_ptr, ld);
               nga_release_block_(g_b, &i);
             }
           }
@@ -788,7 +788,7 @@ void ngai_copy_patch(char *trans,
               }
               ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
               ngai_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
-              nga_get_(g_a, lod, hid, src_data_ptr, ld);
+              pnga_get(g_a, lod, hid, src_data_ptr, ld);
               nga_release_block_grid_(g_b, index);
             }
 
@@ -809,7 +809,7 @@ void ngai_copy_patch(char *trans,
           pnga_access_ptr(g_b, los, his, &src_data_ptr, ld); 
           ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
           ngai_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
-          nga_get_(g_a, lod, hid, src_data_ptr, ld);
+          pnga_get(g_a, lod, hid, src_data_ptr, ld);
           nga_release_(g_b, los, his);
         }
       }

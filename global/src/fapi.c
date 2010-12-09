@@ -1199,26 +1199,6 @@ void FATR nga_acc_(Integer *g_a, Integer *lo, Integer *hi,
     wnga_acc(g_a, lo, hi, buf, ld, alpha);
 }
 
-#define ga_nbacc_ F77_FUNC_(ga_nbacc,GA_NBACC)
-void FATR ga_nbacc_(Integer *g_a, Integer *ilo, Integer *ihi,
-                  Integer *jlo, Integer *jhi, void *buf, Integer *ld,
-                  void *alpha, Integer *nbhandle)
-{
-    Integer lo[2], hi[2];
-    lo[0]=*ilo;
-    lo[1]=*jlo;
-    hi[0]=*ihi;
-    hi[1]=*jhi;
-    wnga_nbacc(g_a, lo, hi, buf, ld, alpha, nbhandle);
-}
-
-#define nga_nbacc_ F77_FUNC_(nga_nbacc,NGA_NBACC)
-void FATR nga_nbacc_(Integer *g_a, Integer *lo, Integer *hi,
-                   void *buf, Integer *ld, void *alpha, Integer *nbhandle)
-{
-    wnga_nbacc(g_a, lo, hi, buf, ld, alpha, nbhandle);
-}
-
 #define ga_access_ F77_FUNC_(ga_access,GA_ACCESS)
 void FATR ga_access_(Integer *g_a, Integer *ilo, Integer *ihi,
                      Integer *jlo, Integer *jhi, AccessIndex* index,
@@ -1258,6 +1238,104 @@ void FATR nga_access_block_segment_(Integer* g_a, Integer *proc,
                                     AccessIndex* index, Integer *len)
 {
   wnga_access_block_segment_idx(g_a, proc, index, len);
+}
+
+#define ga_fence_ F77_FUNC_(ga_fence,GA_FENCE)
+void FATR ga_fence_()
+{
+  wnga_fence();
+}
+
+#define nga_fence_ F77_FUNC_(nga_fence,NGA_FENCE)
+void FATR nga_fence_()
+{
+  wnga_fence();
+}
+
+#define ga_gather_ F77_FUNC_(ga_gather,GA_GATHER)
+void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
+                      Integer *nv)
+{
+  wnga_gather2d(g_a, v, i, j, nv);
+}
+
+#define nga_gather_ F77_FUNC_(nga_gather,NGA_GATHER)
+void FATR nga_gather_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
+{
+  wnga_gather(g_a, v, subscript, nv);
+}
+
+#define ga_get_ F77_FUNC_(ga_get,GA_GET)
+void FATR ga_get_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo,
+                  Integer *jhi, void *buf, Integer *ld)
+{
+  Integer lo[2], hi[2];
+  lo[0] = *ilo;
+  lo[1] = *jlo;
+  hi[0] = *ihi;
+  hi[1] = *jhi;
+  wnga_get(g_a, lo, hi, buf, ld);
+}
+
+
+#define nga_get_ F77_FUNC_(nga_get,NGA_GET)
+void FATR nga_get_(Integer *g_a, Integer *lo, Integer *hi,
+                   void *buf, Integer *ld)
+{
+  wnga_get(g_a, lo, hi, buf, ld);
+}
+
+#define ga_init_fence_ F77_FUNC_(ga_init_fence,GA_INIT_FENCE)
+void FATR ga_init_fence_()
+{
+  wnga_init_fence();
+}
+
+#define nga_init_fence_ F77_FUNC_(nga_init_fence,NGA_INIT_FENCE)
+void FATR nga_init_fence_()
+{
+  wnga_init_fence();
+}
+
+#define ga_nbacc_ F77_FUNC_(ga_nbacc,GA_NBACC)
+void FATR ga_nbacc_(Integer *g_a, Integer *ilo, Integer *ihi,
+                  Integer *jlo, Integer *jhi, void *buf, Integer *ld,
+                  void *alpha, Integer *nbhandle)
+{
+    Integer lo[2], hi[2];
+    lo[0]=*ilo;
+    lo[1]=*jlo;
+    hi[0]=*ihi;
+    hi[1]=*jhi;
+    wnga_nbacc(g_a, lo, hi, buf, ld, alpha, nbhandle);
+}
+
+#define nga_nbacc_ F77_FUNC_(nga_nbacc,NGA_NBACC)
+void FATR nga_nbacc_(Integer *g_a, Integer *lo, Integer *hi,
+                   void *buf, Integer *ld, void *alpha, Integer *nbhandle)
+{
+    wnga_nbacc(g_a, lo, hi, buf, ld, alpha, nbhandle);
+}
+
+#define ga_nbget_ F77_FUNC_(ga_nbget,GA_NBGET)
+void FATR ga_nbget_(Integer *g_a, Integer *ilo, Integer *ihi,
+                  Integer *jlo, Integer *jhi, void *buf,
+                  Integer *ld, Integer *nbhandle)
+{
+    Integer lo[2], hi[2];
+    lo[0]=*ilo;
+    lo[1]=*jlo;
+    hi[0]=*ihi;
+    hi[1]=*jhi;
+    wnga_nbget(g_a, lo, hi, buf, ld, nbhandle);
+}
+
+#define nga_nbget_ F77_FUNC_(nga_nbget,NGA_NBGET)
+void FATR nga_nbget_(Integer *g_a, Integer *lo,
+                     Integer *hi, void *buf, Integer *ld,
+                     Integer *nbhandle)
+{
+    wnga_nbget(g_a, lo, hi, buf, ld, nbhandle);
 }
 
 #define ga_nbput_ F77_FUNC_(ga_nbput,GA_NBPUT)

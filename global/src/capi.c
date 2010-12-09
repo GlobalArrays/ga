@@ -1561,7 +1561,7 @@ void NGA_Get(int g_a, int lo[], int hi[], void* buf, int ld[])
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_get_common(&a, _ga_lo, _ga_hi, buf, _ga_work,NULL);
+    wnga_get(&a, _ga_lo, _ga_hi, buf, _ga_work);
 }
 
 void NGA_Get64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[])
@@ -1573,7 +1573,7 @@ void NGA_Get64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[])
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_get_common(&a, _ga_lo, _ga_hi, buf, _ga_work,NULL);
+    wnga_get(&a, _ga_lo, _ga_hi, buf, _ga_work);
 }
 
 void NGA_NbGet(int g_a, int lo[], int hi[], void* buf, int ld[],
@@ -1586,7 +1586,7 @@ void NGA_NbGet(int g_a, int lo[], int hi[], void* buf, int ld[],
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_get_common(&a, _ga_lo, _ga_hi, buf, _ga_work,(Integer *)nbhandle);
+    wnga_nbget(&a, _ga_lo, _ga_hi, buf, _ga_work,(Integer *)nbhandle);
 }
 
 void NGA_NbGet64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[],
@@ -1599,7 +1599,7 @@ void NGA_NbGet64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[],
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_get_common(&a, _ga_lo, _ga_hi, buf, _ga_work,(Integer *)nbhandle);
+    wnga_nbget(&a, _ga_lo, _ga_hi, buf, _ga_work,(Integer *)nbhandle);
 }
 
 void NGA_Put(int g_a, int lo[], int hi[], void* buf, int ld[])
@@ -2860,7 +2860,7 @@ void NGA_Gather(int g_a, void *v, int* subsArray[], int n)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+i] = subsArray[idx][i] + 1;
     
-    nga_gather_(&a, v, _subs_array , &nv);
+    wnga_gather(&a, v, _subs_array , &nv);
     
     free(_subs_array);
 }
@@ -2881,7 +2881,7 @@ void NGA_Gather_flat(int g_a, void *v, int subsArray[], int n)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx*ndim+i] + 1;
     
-    nga_gather_(&a, v, _subs_array , &nv);
+    wnga_gather(&a, v, _subs_array , &nv);
     
     free(_subs_array);
 }
@@ -2903,7 +2903,7 @@ void NGA_Gather64(int g_a, void *v, int64_t* subsArray[], int64_t n)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+i] = subsArray[idx][i] + 1;
     
-    nga_gather_(&a, v, _subs_array , &nv);
+    wnga_gather(&a, v, _subs_array , &nv);
     
     free(_subs_array);
 }
@@ -2924,7 +2924,7 @@ void NGA_Gather_flat64(int g_a, void *v, int64_t subsArray[], int64_t n)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx*ndim+i] + 1;
     
-    nga_gather_(&a, v, _subs_array , &nv);
+    wnga_gather(&a, v, _subs_array , &nv);
     
     free(_subs_array);
 }
@@ -4740,12 +4740,22 @@ void GA_Print_stats()
 
 void GA_Init_fence()
 {
-    ga_init_fence_();
+    wnga_init_fence();
+}
+
+void NGA_Init_fence()
+{
+    wnga_init_fence();
 }
 
 void GA_Fence()
 {
-    ga_fence_();
+    wnga_fence();
+}
+
+void NGA_Fence()
+{
+    wnga_fence();
 }
 
 int GA_Nodeid()

@@ -71,6 +71,7 @@ static void GET_BLOCK(Integer *g_x, task_list_t *chunk, void *buf,
 		      Integer *dim_next, Integer *nbhdl) {
 
     Integer i0, i1, j0, j1;
+    Integer lo[2], hi[2];
 
     if(*trans == 'n' || *trans == 'N') {
        *dim_next = chunk->dim[0];
@@ -83,7 +84,11 @@ static void GET_BLOCK(Integer *g_x, task_list_t *chunk, void *buf,
        j0= *xilo+chunk->lo[0]; j1= *xilo+chunk->hi[0];
     }
 
-    ga_nbget_(g_x, &i0, &i1, &j0, &j1, buf, dim_next, nbhdl);
+    lo[0] = i0;
+    lo[1] = j0;
+    hi[0] = i1;
+    hi[1] = j1;
+    pnga_nbget(g_x, lo, hi, buf, dim_next, nbhdl);
 }
 
 static short int
@@ -447,20 +452,28 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
         /* STEP1(a): get matrix "A" chunk */
         i0= *ailo+ilo; i1= *ailo+ihi;
         j0= *ajlo+klo; j1= *ajlo+khi;
+        clo[0] = i0;
+        clo[1] = j0;
+        chi[0] = i1;
+        chi[1] = j1;
         if (*transa == 'n' || *transa == 'N'){
-          adim=idim; ga_get_(g_a, &i0, &i1, &j0, &j1, a, &idim);
+          adim=idim; pnga_get(g_a, clo, chi, a, &idim);
         }else{
-          adim=kdim; ga_get_(g_a, &j0, &j1, &i0, &i1, a, &kdim);
+          adim=kdim; pnga_get(g_a, clo, chi, a, &kdim);
         }
 
         /* STEP1(b): get matrix "B" chunk*/
         if(get_new_B) {/*Avoid rereading B if same patch as last time*/
           i0= *bilo+klo; i1= *bilo+khi;
           j0= *bjlo+jlo; j1= *bjlo+jhi;
+          clo[0] = i0;
+          clo[1] = j0;
+          chi[0] = i1;
+          chi[1] = j1;
           if (*transb == 'n' || *transb == 'N'){ 
-            bdim=kdim; ga_get_(g_b, &i0, &i1, &j0, &j1, b, &kdim);  
+            bdim=kdim; pnga_get(g_b, clo, chi, b, &kdim);  
           }else {
-            bdim=jdim; ga_get_(g_b, &j0, &j1, &i0, &i1, b, &jdim);
+            bdim=jdim; pnga_get(g_b, clo, chi, b, &jdim);
           }
           get_new_B = FALSE; /* Until J or K change again */
         }
@@ -478,25 +491,24 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
           switch(atype) {
             case C_FLOAT:
             case C_SCPL:
+              clo[0] = i0;
+              clo[1] = j0;
+              chi[0] = i1;
+              chi[1] = j1;
               if(do_put==SET) /* i.e.beta == 0.0 */
-                ga_put_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim);
+                pnga_put(g_c, clo, chi, (float *)c, &cdim);
               else {
-                clo[0] = i0;
-                clo[1] = j0;
-                chi[0] = i1;
-                chi[1] = j1;
                 pnga_acc(g_c, clo, chi, (float*)c, &cdim, &ONE_CF);
               }
               break;
             default:
+              clo[0] = i0;
+              clo[1] = j0;
+              chi[0] = i1;
+              chi[1] = j1;
               if(do_put==SET) /* i.e.beta == 0.0 */
-                ga_put_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c,
-                    &cdim);
+                pnga_put(g_c, clo, chi, (DoublePrecision*)c, &cdim);
               else {
-                clo[0] = i0;
-                clo[1] = j0;
-                chi[0] = i1;
-                chi[1] = j1;
                 pnga_acc(g_c, clo, chi, (DoublePrecision*)c,
                     &cdim, (DoublePrecision*)&ONE);
               }
@@ -801,25 +813,24 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
             switch(atype) {
               case C_FLOAT:
               case C_SCPL:
+                clo[0] = i0;
+                clo[1] = j0;
+                chi[0] = i1;
+                chi[1] = j1;
                 if(do_put==SET) /* Note:do_put is UNSET, if beta!=0.0*/
-                  ga_put_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim);
+                  pnga_put(g_c, clo, chi, (float *)c, &cdim);
                 else {
-                  clo[0] = i0;
-                  clo[1] = j0;
-                  chi[0] = i1;
-                  chi[1] = j1;
-                  pnga_acc(g_c, clo, chi,(float *)c, &cdim, &ONE_CF);
+                  pnga_acc(g_c, clo, chi, (float *)c, &cdim, &ONE_CF);
                 }
                 break;
               default:
+                clo[0] = i0;
+                clo[1] = j0;
+                chi[0] = i1;
+                chi[1] = j1;
                 if(do_put==SET) /* i.e.beta ==0.0 */
-                  ga_put_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
-                      &cdim);
+                  pnga_put(g_c, clo, chi, (DoublePrecision*)c, &cdim);
                 else {
-                  clo[0] = i0;
-                  clo[1] = j0;
-                  chi[0] = i1;
-                  chi[1] = j1;
                   pnga_acc(g_c, clo, chi, (DoublePrecision*)c, &cdim,(DoublePrecision*)&ONE);
                 }
                 break;
@@ -918,13 +929,21 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
             adim = idim;
             i0= *ailo+ilo; i1= *ailo+ihi;   
             j0= *ajlo+klo; j1= *ajlo+khi;
-            ga_nbget_(g_a, &i0, &i1, &j0, &j1, a_ar[shiftA], 
+            clo[0] = i0;
+            clo[1] = j0;
+            chi[0] = i1;
+            chi[1] = j1;
+            pnga_nbget(g_a, clo, chi, a_ar[shiftA], 
                 &idim, &gNbhdlA[shiftA]);
           }else{
             adim = kdim;
             i0= *ajlo+klo; i1= *ajlo+khi;   
             j0= *ailo+ilo; j1= *ailo+ihi;
-            ga_nbget_(g_a, &i0, &i1, &j0, &j1, a_ar[shiftA],
+            clo[0] = i0;
+            clo[1] = j0;
+            chi[0] = i1;
+            chi[1] = j1;
+            pnga_nbget(g_a, clo, chi, a_ar[shiftA],
                 &kdim, &gNbhdlA[shiftA]);
           }
 
@@ -934,13 +953,21 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
               bdim = kdim;
               i0= *bilo+klo; i1= *bilo+khi;
               j0= *bjlo+jlo; j1= *bjlo+jhi;
-              ga_nbget_(g_b, &i0, &i1, &j0, &j1, b_ar[shiftB], 
+              clo[0] = i0;
+              clo[1] = j0;
+              chi[0] = i1;
+              chi[1] = j1;
+              pnga_nbget(g_b, clo, chi, b_ar[shiftB], 
                   &kdim, &gNbhdlB[shiftB]);
             }else{
               bdim = jdim;
               i0= *bjlo+jlo; i1= *bjlo+jhi;   
               j0= *bilo+klo; j1= *bilo+khi;
-              ga_nbget_(g_b, &i0, &i1, &j0, &j1, b_ar[shiftB], 
+              clo[0] = i0;
+              clo[1] = j0;
+              chi[0] = i1;
+              chi[1] = j1;
+              pnga_nbget(g_b, clo, chi, b_ar[shiftB], 
                   &jdim, &gNbhdlB[shiftB]);
             }
           }
@@ -1082,6 +1109,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
     Integer i,j,m,n,k,adim,bdim,cdim;
     Integer factor=sizeof(DoubleComplex)/GAsizeofM(atype);
     BlasInt m_t, n_t, k_t, adim_t, bdim_t, cdim_t;
+    Integer alo[2], ahi[2], blo[2], bhi[2], clo[2], chi[2];
     
     m = *aihi - *ailo +1;
     n = *bjhi - *bjlo +1;
@@ -1094,7 +1122,12 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
        if(tmpc_orig==NULL) pnga_error("check_result: malloc failed", 0);
        
        /* get matrix C */
-       ga_get_(g_c, cilo, cihi, cjlo, cjhi, tmpc_orig, &m);
+
+       clo[0] = cilo;
+       clo[1] = cjlo;
+       chi[0] = cihi;
+       chi[1] = cjhi;
+       pnga_get(g_c, clo, chi, tmpc_orig, &m);
     }
     else { /* check for CORRECTNESS */
        
@@ -1125,14 +1158,30 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
        }
        
        /* get matrix A */
+       alo[0] = ailo;
+       alo[1] = ajlo;
+       ahi[0] = aihi;
+       ahi[1] = ajhi;
        if (*transa == 'n' || *transa == 'N'){
-	  adim=m;  ga_get_(g_a, ailo, aihi, ajlo, ajhi, tmpa, &m); }
-       else { adim=k; ga_get_(g_a, ajlo, ajhi, ailo, aihi, tmpa, &k); }
-       
+         adim=m;
+         pnga_get(g_a, alo, ahi, tmpa, &m);
+       } else {
+         adim=k;
+         pnga_get(g_a, alo, ahi, tmpa, &k);
+       }
+
        /* get matrix B */
+       blo[0] = bilo;
+       blo[1] = bjlo;
+       bhi[0] = bihi;
+       bhi[1] = bjhi;
        if (*transb == 'n' || *transb == 'N'){
-	  bdim=k;  ga_get_(g_b, bilo, bihi, bjlo, bjhi, tmpb, &k); }
-       else { bdim=n; ga_get_(g_b, bjlo, bjhi, bilo, bihi, tmpb, &n);}
+         bdim=k;
+         pnga_get(g_b, blo, bhi, tmpb, &k);
+       } else { 
+         bdim=n;
+         pnga_get(g_b, blo, bhi, tmpb, &n);
+       }
        
 
        m_t=m; n_t=n; k_t=k;
@@ -1172,7 +1221,11 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
        /* after computing c locally, verify it with the values in g_c */
        tmpc2 = (DoubleComplex*)malloc( sizeof(DoubleComplex)* (m*n/factor+1));
        if(tmpc2==NULL) pnga_error("check_result: malloc failed for tmpc2", 0);
-       ga_get_(g_c, cilo, cihi, cjlo, cjhi, tmpc2, &m);
+       clo[0] = cilo;
+       clo[1] = cjlo;
+       chi[0] = cihi;
+       chi[1] = cjhi;
+       pnga_get(g_c, clo, chi, tmpc2, &m);
        
 #define _GA_TOL_ 0.1 /* error tolerance */
        
@@ -1734,30 +1787,46 @@ Integer clo[2], chi[2];
 	       adim = idim;
 	       i0= *ailo+ilo; i1= *ailo+ihi;   
 	       j0= *ajlo+klo; j1= *ajlo+khi;
-	       ga_get_(g_a, &i0, &i1, &j0, &j1, a, &idim);
+          clo[0] = i0;
+          clo[1] = j0;
+          chi[0] = i1;
+          chi[1] = j1;
+	       pnga_get(g_a, clo, chi, a, &idim);
 	     }else{
 	       adim = kdim;
 	       i0= *ajlo+klo; i1= *ajlo+khi;   
 	       j0= *ailo+ilo; j1= *ailo+ihi;
-	       ga_get_(g_a, &i0, &i1, &j0, &j1, a, &kdim);
+          clo[0] = i0;
+          clo[1] = j0;
+          chi[0] = i1;
+          chi[1] = j1;
+	       pnga_get(g_a, clo, chi, a, &kdim);
 	     }
 
 
 	     /* Avoid rereading B if it is the same patch as last time. */
-	     if(get_new_B) { 
-	       if (*transb == 'n' || *transb == 'N'){ 
-		 bdim = kdim;
-		 i0= *bilo+klo; i1= *bilo+khi;   
-		 j0= *bjlo+jlo; j1= *bjlo+jhi;
-		 ga_get_(g_b, &i0, &i1, &j0, &j1, b, &kdim);
-	       }else{
-		 bdim = jdim;
-		 i0= *bjlo+jlo; i1= *bjlo+jhi;   
-		 j0= *bilo+klo; j1= *bilo+khi;
-		 ga_get_(g_b, &i0, &i1, &j0, &j1, b, &jdim);
-	       }
-	       get_new_B = FALSE; /* Until J or K change again */
-	     }
+        if(get_new_B) { 
+          if (*transb == 'n' || *transb == 'N'){ 
+            bdim = kdim;
+            i0= *bilo+klo; i1= *bilo+khi;   
+            j0= *bjlo+jlo; j1= *bjlo+jhi;
+            clo[0] = i0;
+            clo[1] = j0;
+            chi[0] = i1;
+            chi[1] = j1;
+            pnga_get(g_b, clo, chi, b, &kdim);
+          }else{
+            bdim = jdim;
+            i0= *bjlo+jlo; i1= *bjlo+jhi;   
+            j0= *bilo+klo; j1= *bilo+khi;
+            clo[0] = i0;
+            clo[1] = j0;
+            chi[0] = i1;
+            chi[1] = j1;
+            pnga_get(g_b, clo, chi, b, &jdim);
+          }
+          get_new_B = FALSE; /* Until J or K change again */
+        }
 
 	     
 	     idim_t=idim; jdim_t=jdim; kdim_t=kdim;
@@ -2142,7 +2211,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	     tmplo[aipos]=i0; tmphi[aipos]=i1;
 	     tmplo[ajpos]=j0; tmphi[ajpos]=j1;
 	     tmpld[aipos]=i1-i0+1;
-	     nga_get_(g_a,tmplo,tmphi,a,tmpld);
+	     pnga_get(g_a,tmplo,tmphi,a,tmpld);
 	     
 	     if(get_new_B) {
 	       if (*transb == 'n' || *transb == 'N'){ 
@@ -2161,7 +2230,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	       tmplo[bipos]=i0; tmphi[bipos]=i1;
 	       tmplo[bjpos]=j0; tmphi[bjpos]=j1;
 	       tmpld[bipos]=i1-i0+1;
-	       nga_get_(g_b,tmplo,tmphi,b,tmpld);
+	       pnga_get(g_b,tmplo,tmphi,b,tmpld);
 	       get_new_B = FALSE;
 	     }
 

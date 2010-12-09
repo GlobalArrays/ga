@@ -211,10 +211,10 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
     if(get_range == IS_REGULAR_PATCH) {
         switch(op_code) {
           case PERIODIC_GET:
-              nga_get_(g_a, lo, hi, buf, ld);
+              pnga_get(g_a, lo, hi, buf, ld);
               break;
           case PERIODIC_PUT:
-              nga_put_(g_a, lo, hi, buf, ld);
+              pnga_put(g_a, lo, hi, buf, ld);
               break;
           case PERIODIC_ACC:    
               pnga_acc(g_a, lo, hi, buf, ld, alpha);
@@ -250,11 +250,11 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
         /* deal with this patch */
         switch(op_code) {
           case PERIODIC_GET:
-              nga_get_(g_a, lop, hip,
+              pnga_get(g_a, lop, hip,
                        (char *)buf+my_offset*GAsizeofM(type), ld);
               break;
           case PERIODIC_PUT:
-              nga_put_(g_a, lop, hip,
+              pnga_put(g_a, lop, hip,
                        (char *)buf+my_offset*GAsizeofM(type), ld);
               break;
           case PERIODIC_ACC:

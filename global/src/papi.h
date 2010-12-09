@@ -117,8 +117,6 @@ extern Integer pnga_verify_handle(Integer *g_a);
 /* Routines from onesided.c */
 extern void pnga_acc(Integer *g_a, Integer *lo, Integer *hi, void *buf,
                      Integer *ld, void *alpha);
-extern void pnga_nbacc(Integer *g_a, Integer *lo, Integer *hi, void *buf,
-                       Integer *ld, void *alpha, Integer *nbhndl);
 extern void pnga_access_idx(Integer *g_a, Integer *lo, Integer *hi,
                             AccessIndex *index, Integer *ld);
 extern void pnga_access_ptr(Integer *g_a, Integer *lo, Integer *hi, void *ptr,
@@ -135,6 +133,17 @@ extern void pnga_access_block_segment_idx(Integer* g_a, Integer *proc,
                                           AccessIndex* index, Integer *len);
 extern void pnga_access_block_segment_ptr(Integer* g_a, Integer *proc,
                                           void* ptr, Integer *len);
+extern void pnga_fence();
+extern void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
+                          Integer *nv);
+extern void pnga_gather(Integer *g_a, void* v, Integer subscript[], Integer *nv);
+extern void pnga_get(Integer *g_a, Integer *lo, Integer *hi,
+                     void *buf, Integer *ld);
+extern void pnga_init_fence();
+extern void pnga_nbacc(Integer *g_a, Integer *lo, Integer *hi, void *buf,
+                       Integer *ld, void *alpha, Integer *nbhndl);
+extern void pnga_nbget(Integer *g_a, Integer *lo, Integer *hi, void *buf,
+                       Integer *ld, Integer *nbhandle);
 extern void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf,
                        Integer *ld, Integer *nbhandle);
 extern void pnga_put(Integer *g_a, Integer *lo, Integer *hi, void *buf,
