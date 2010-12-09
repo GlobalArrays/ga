@@ -337,21 +337,21 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 @NOFORT_FALSE@am__append_56 = gaf2c/testarg$(EXEEXT)
 @NOFORT_FALSE@am__append_57 = ma/testf$(EXEEXT)
 @NOFORT_FALSE@am__append_58 = ma/testf$(EXEEXT)
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_59 = tcgmsg/ipcv4.0/hello$(EXEEXT) \
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/test$(EXEEXT) \
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/testmap$(EXEEXT) \
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/toplot$(EXEEXT) \
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/xdrtest$(EXEEXT)
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_60 = tcgmsg/ipcv4.0/testf$(EXEEXT) \
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@	tcgmsg/ipcv4.0/testpf$(EXEEXT)
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_61 = tcgmsg/ipcv5.0/hello$(EXEEXT) \
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/test$(EXEEXT)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_59 = tcgmsg/ipcv4.0/hello$(EXEEXT)
+#PARALLEL_TESTS += tcgmsg/ipcv4.0/test$(EXEEXT) # requires user input
+#PARALLEL_TESTS += tcgmsg/ipcv4.0/testmap$(EXEEXT) # requires user input
+#PARALLEL_TESTS += tcgmsg/ipcv4.0/toplot$(EXEEXT) # not a test
+#PARALLEL_TESTS += tcgmsg/ipcv4.0/xdrtest$(EXEEXT) # requires user input
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_60 = tcgmsg/ipcv4.0/testf$(EXEEXT)
+#PARALLEL_TESTS += tcgmsg/ipcv4.0/testpf$(EXEEXT) # requires input files
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_61 = tcgmsg/ipcv5.0/hello$(EXEEXT)
+#PARALLEL_TESTS += tcgmsg/ipcv5.0/test$(EXEEXT) # requires user input
 @MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_62 = tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_63 = tcgmsg/ipcv5.0/jacobi$(EXEEXT) \
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@	tcgmsg/ipcv5.0/testf$(EXEEXT)
-@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_64 = tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT)
+#PARALLEL_TESTS += tcgmsg/ipcv5.0/jacobi$(EXEEXT) # requires user input
+#PARALLEL_TESTS += tcgmsg/ipcv5.0/testf$(EXEEXT) # requires user input
+#PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT) # useless test
 #PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test$(EXEEXT) # requires user input
-@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_65 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@@NOFORT_FALSE@am__append_63 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
 #PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
 #PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
 #PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
@@ -359,7 +359,7 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 #PARALLEL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/random$(EXEEXT) # takes too long
-@NOFORT_FALSE@am__append_66 = global/testing/bin$(EXEEXT) \
+@NOFORT_FALSE@am__append_64 = global/testing/bin$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/blktest$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/g2test$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/g3test$(EXEEXT) \
@@ -384,11 +384,11 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 @NOFORT_FALSE@	global/testing/testmatmult$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/testsolve$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/test$(EXEEXT)
-@HAVE_SCALAPACK_TRUE@@NOFORT_FALSE@am__append_67 = global/testing/testspd$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_68 = global/testing/ga-mpi$(EXEEXT) \
+@HAVE_SCALAPACK_TRUE@@NOFORT_FALSE@am__append_65 = global/testing/testspd$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_66 = global/testing/ga-mpi$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT)
-@SYSV_TRUE@am__append_69 = global/testing/ipc_clean$(EXEEXT)
-@NOFORT_FALSE@am__append_70 = global/testing/nga-onesided$(EXEEXT) \
+@SYSV_TRUE@am__append_67 = global/testing/ipc_clean$(EXEEXT)
+@NOFORT_FALSE@am__append_68 = global/testing/nga-onesided$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/nga-patch$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/nga-periodic$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/nga-scatter$(EXEEXT) \
@@ -396,8 +396,8 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 @NOFORT_FALSE@	global/testing/nga-util$(EXEEXT) \
 @NOFORT_FALSE@	global/testing/ngatest$(EXEEXT)
 #PARALLEL_TESTS += global/examples/scf/scf$(EXEEXT) # needs input
-@NOFORT_FALSE@am__append_71 = global/examples/boltzmann/boltz$(EXEEXT)
-@CXX_BINDINGS_TRUE@am__append_72 = ga++/testing/elempatch$(EXEEXT) \
+@NOFORT_FALSE@am__append_69 = global/examples/boltzmann/boltz$(EXEEXT)
+@CXX_BINDINGS_TRUE@am__append_70 = ga++/testing/elempatch$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/ntestc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc$(EXEEXT) \
@@ -416,7 +416,7 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/m4/ax_sys_weak_alias.m4 \
-	$(top_srcdir)/m4/ga_arg_parse.m4 \
+	$(top_srcdir)/m4/ga_ar.m4 $(top_srcdir)/m4/ga_arg_parse.m4 \
 	$(top_srcdir)/m4/ga_armci_network.m4 \
 	$(top_srcdir)/m4/ga_blas.m4 $(top_srcdir)/m4/ga_c_opt.m4 \
 	$(top_srcdir)/m4/ga_check_func.m4 \
@@ -2542,6 +2542,7 @@ ARMCI_NETWORK_CPPFLAGS = @ARMCI_NETWORK_CPPFLAGS@
 ARMCI_NETWORK_LDFLAGS = @ARMCI_NETWORK_LDFLAGS@
 ARMCI_NETWORK_LIBS = @ARMCI_NETWORK_LIBS@
 ARMCI_SRC_DIR = @ARMCI_SRC_DIR@
+AR_FLAGS = @AR_FLAGS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -3253,20 +3254,20 @@ SERIAL_TESTS_XFAIL = $(am__append_58)
 #PARALLEL_TESTS += global/examples/conjugate_gradient/ga_cg$(EXEEXT) # needs user input
 #PARALLEL_TESTS += global/examples/md_cluster/grp_sim$(EXEEXT) # needs input
 PARALLEL_TESTS = $(am__append_59) $(am__append_60) $(am__append_61) \
-	$(am__append_62) $(am__append_63) $(am__append_64) \
-	$(am__append_65) global/testing/elempatch$(EXEEXT) \
+	$(am__append_62) $(am__append_63) \
+	global/testing/elempatch$(EXEEXT) \
 	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
 	global/testing/print$(EXEEXT) global/testing/testc$(EXEEXT) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
-	global/testing/testmultrect$(EXEEXT) $(am__append_66) \
-	$(am__append_67) $(am__append_68) $(am__append_69) \
-	$(am__append_70) \
+	global/testing/testmultrect$(EXEEXT) $(am__append_64) \
+	$(am__append_65) $(am__append_66) $(am__append_67) \
+	$(am__append_68) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_71) pario/dra/bign$(EXEEXT) \
+	$(am__append_69) pario/dra/bign$(EXEEXT) \
 	pario/dra/ntestc$(EXEEXT) pario/dra/perfn$(EXEEXT) \
-	pario/dra/rate$(EXEEXT) $(am__append_72)
+	pario/dra/rate$(EXEEXT) $(am__append_70)
 PARALLEL_TESTS_XFAIL = 
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
@@ -6025,30 +6026,12 @@ ma/testf.log: ma/testf$(EXEEXT)
 	@p='ma/testf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 tcgmsg/ipcv4.0/hello.log: tcgmsg/ipcv4.0/hello$(EXEEXT)
 	@p='tcgmsg/ipcv4.0/hello$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-tcgmsg/ipcv4.0/test.log: tcgmsg/ipcv4.0/test$(EXEEXT)
-	@p='tcgmsg/ipcv4.0/test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-tcgmsg/ipcv4.0/testmap.log: tcgmsg/ipcv4.0/testmap$(EXEEXT)
-	@p='tcgmsg/ipcv4.0/testmap$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-tcgmsg/ipcv4.0/toplot.log: tcgmsg/ipcv4.0/toplot$(EXEEXT)
-	@p='tcgmsg/ipcv4.0/toplot$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-tcgmsg/ipcv4.0/xdrtest.log: tcgmsg/ipcv4.0/xdrtest$(EXEEXT)
-	@p='tcgmsg/ipcv4.0/xdrtest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 tcgmsg/ipcv4.0/testf.log: tcgmsg/ipcv4.0/testf$(EXEEXT)
 	@p='tcgmsg/ipcv4.0/testf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-tcgmsg/ipcv4.0/testpf.log: tcgmsg/ipcv4.0/testpf$(EXEEXT)
-	@p='tcgmsg/ipcv4.0/testpf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 tcgmsg/ipcv5.0/hello.log: tcgmsg/ipcv5.0/hello$(EXEEXT)
 	@p='tcgmsg/ipcv5.0/hello$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-tcgmsg/ipcv5.0/test.log: tcgmsg/ipcv5.0/test$(EXEEXT)
-	@p='tcgmsg/ipcv5.0/test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 tcgmsg/ipcv5.0/pvm.ring.log: tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
 	@p='tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-tcgmsg/ipcv5.0/jacobi.log: tcgmsg/ipcv5.0/jacobi$(EXEEXT)
-	@p='tcgmsg/ipcv5.0/jacobi$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-tcgmsg/ipcv5.0/testf.log: tcgmsg/ipcv5.0/testf$(EXEEXT)
-	@p='tcgmsg/ipcv5.0/testf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-tcgmsg/tcgmsg-mpi/test_asyn.log: tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT)
-	@p='tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 tcgmsg/tcgmsg-mpi/testf.log: tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
 	@p='tcgmsg/tcgmsg-mpi/testf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/elempatch.log: global/testing/elempatch$(EXEEXT)

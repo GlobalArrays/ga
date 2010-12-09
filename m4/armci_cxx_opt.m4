@@ -11,6 +11,8 @@ AS_IF([test "x$ARMCI_CXXOPT" != x], [armci_cv_cxx_opt="$ARMCI_CXXOPT"], [armci_c
 AS_IF([test "x$armci_cv_cxx_opt" = x && test "x$enable_opt" = xyes], [
 AS_CASE([$ga_cv_target:$ax_cv_cxx_compiler_vendor:$host_cpu:$ga_armci_network],
 [LINUX:*:*:*],              [armci_cv_cxx_opt="-O0"],
+[NEC:*:*:*],                [armci_cv_cxx_opt="-Cvsafe"],
+[NEC64:*:*:*],              [armci_cv_cxx_opt="-Cvsafe -size_t64"],
                             [armci_cv_cxx_opt=])
 ])])
 AC_SUBST([ARMCI_CXXOPT],    [$armci_cv_cxx_opt])

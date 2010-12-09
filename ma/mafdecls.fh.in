@@ -124,26 +124,44 @@
 !     variables
 !
 
+#ifdef HPUX
+#  define HP_SHARED_COMMON_
+#endif
+
 !     common blocks
-!$HP$ shared_common /mbc_byte/
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_byte/
+#endif
       common /mbc_byte/ byte_mb(2)
       character*1       byte_mb
-!$HP$ shared_common /mbc_int/
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_int/
+#endif
       common /mbc_int/  int_mb(2)
       integer           int_mb
-!$HP$ shared_common /mbc_log/
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_log/
+#endif
       common /mbc_log/  log_mb(2)
       logical           log_mb
-!$HP$ shared_common /mbc_real/
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_real/
+#endif
       common /mbc_real/ real_mb(2)
       real              real_mb
-!$HP$ shared_common /mbc_dbl/
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_dbl/
+#endif
       common /mbc_dbl/  dbl_mb(2)
       double precision  dbl_mb
-!$HP$ shared_common /mbc_scpl/
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_scpl/
+#endif
       common /mbc_scpl/ scpl_mb(2)
       complex           scpl_mb
-!$HP$ shared_common /mbc_dcpl/
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_dcpl/
+#endif
       common /mbc_dcpl/ dcpl_mb(2)
       double complex    dcpl_mb
 

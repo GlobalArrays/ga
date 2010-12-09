@@ -2,89 +2,87 @@
 #   include "config.h"
 #endif
 
-#if HAVE_STDIO_H
-#include <stdio.h>
-#endif
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/nxtsrv.c,v 1.4 1995-02-24 02:17:33 d3h325 Exp $ */
 
-#include "tcgmsg.h"
+#include <stdio.h>
+#include "sndrcv.h"
 
 #define DEBUG_ 0
 #define TYPE_NXTVAL 32767
 
-
-/**
- * This runs as highest no. process(es).
- */       
-int main(int argc, char **argv)
+int main()
+/*
+  This runs as highest no. process(es)
+*/	   
 {
-    long cnt     = 0;            /* actual counter */
-    long lencnt  = sizeof cnt;   /* length of cnt */
-    long ndone   = 0;            /* no. finished for this loop */
-    long ntermin = 0;            /* no. terminated so far (pend) */
-    long node    = -1;           /* select any node */
-    long type    = TYPE_NXTVAL;  /* message type */
-    long buf[2];                 /* buffer to get values */
-    long lenbuf  = sizeof buf;   /* length of buffer */
-    long mproc;                  /* no. of processes running loop */
-    long nval;                   /* no. of values requested */
-    long done_list[16384];       /* list of processes finished with this loop */
-    long sync = 1;               /* all info goes synchronously */
-    long on=0;
-    long lenmes, nodefrom;
+  long cnt     = 0;            /* actual counter */
+  long lencnt  = sizeof cnt;   /* length of cnt */
+  long ndone   = 0;            /* no. finished for this loop */
+  long ntermin = 0;            /* no. terminated so far (pend) */
+  long node    = -1;           /* select any node */
+  long type    = TYPE_NXTVAL;  /* message type */
+  long buf[2];                 /* buffer to get values */
+  long lenbuf  = sizeof buf;   /* length of buffer */
+  long mproc;                  /* no. of processes running loop */
+  long nval;                   /* no. of values requested */
+  long done_list[16384];       /* list of processes finished with this loop */
+  long sync = 1;               /* all info goes synchronously */
+  long on=0;
+  long lenmes, nodefrom;
 
-    tcg_pbegin();
-    tcg_setdbg(on);
 
-    while (1) {
+  PBEGIN_();
+  SETDBG_(&on);
 
-        /* Wait for input from any node */
+  while (1) {
 
-        tcg_rcv(type, (void*)buf, lenbuf, lenmes, node, nodefrom, sync);
+    /* Wait for input from any node */
+    
+    RCV_(&type, (char *) buf, &lenbuf, &lenmes, &node, &nodefrom, &sync);
 
-        if (lenmes != lenbuf) {
-            Error("NextValueServer: lenmes != lenbuf", lenmes);
-        }
+    if (lenmes != lenbuf) 
+      Error("NextValueServer: lenmes != lenbuf", lenmes);
 
-        mproc = buf[0];
-        nval = buf[1];
-        if (DEBUG_) {
-            (void) printf("NVS: from=%d, mproc=%d, ndone=%d, ntermin=%d\n",
-                          nodefrom, mproc, ndone, ntermin);
-        }
 
-        if (mproc == 0) {
+    mproc = buf[0];
+    nval = buf[1];
+    if (DEBUG_)
+      (void) printf("NVS: from=%d, mproc=%d, ndone=%d, ntermin=%d\n",
+		    nodefrom, mproc, ndone, ntermin);
 
-            /* Sending process is about to terminate. Send reply and disable
-               sending to him. If all processes have finished return. */
+    if (mproc == 0) {
 
-            tcg_snd(type, (void*)&cnt, lencnt, nodefrom, sync);
+      /* Sending process is about to terminate. Send reply and disable
+	 sending to him. If all processes have finished return. */
 
-            if (++ntermin == tcg_nnodes())
-                return 0;
-        }
-        else if (mproc > 0) {
+      SND_(&type, (char *) &cnt, &lencnt, &nodefrom, &sync);
 
-            /* This is what we are here for */
-
-            tcg_snd(type, (void*)&cnt, lencnt, nodefrom, sync);
-            cnt += nval;
-        }
-        else if (mproc < 0) {
-
-            /* This process has finished the loop. Wait until all mproc
-               processes have finished before releasing it */
-
-            done_list[ndone++] = nodefrom;
-
-            if (ndone == -mproc) {
-                while (ndone--) {
-                    nodefrom = done_list[ndone];
-                    tcg_snd(type, (void*)&cnt, lencnt, nodefrom, sync);
-                }
-                cnt = 0;
-                ndone = 0;
-            }
-        }
+      if (++ntermin == NNODES_())
+	return 0;
     }
-    return 0;
+    else if (mproc > 0) {
+      
+      /* This is what we are here for */
+
+      SND_(&type, (char *) &cnt, &lencnt, &nodefrom, &sync);
+      cnt += nval;
+    }
+    else if (mproc < 0) {
+
+      /* This process has finished the loop. Wait until all mproc
+	 processes have finished before releasing it */
+
+      done_list[ndone++] = nodefrom;
+
+      if (ndone == -mproc) {
+	while (ndone--) {
+	  nodefrom = done_list[ndone];
+	  SND_(&type, (char *) &cnt, &lencnt, &nodefrom, &sync);
+	}
+	cnt = 0;
+	ndone = 0;
+      }
+    }
+  }
+  return 0;
 }

@@ -1318,34 +1318,34 @@ endif
 if MSG_COMMS_TCGMSG
 if MSG_COMMS_TCGMSG4
 PARALLEL_TESTS += tcgmsg/ipcv4.0/hello$(EXEEXT)
-PARALLEL_TESTS += tcgmsg/ipcv4.0/test$(EXEEXT)
-PARALLEL_TESTS += tcgmsg/ipcv4.0/testmap$(EXEEXT)
-PARALLEL_TESTS += tcgmsg/ipcv4.0/toplot$(EXEEXT)
-PARALLEL_TESTS += tcgmsg/ipcv4.0/xdrtest$(EXEEXT)
+#PARALLEL_TESTS += tcgmsg/ipcv4.0/test$(EXEEXT) # requires user input
+#PARALLEL_TESTS += tcgmsg/ipcv4.0/testmap$(EXEEXT) # requires user input
+#PARALLEL_TESTS += tcgmsg/ipcv4.0/toplot$(EXEEXT) # not a test
+#PARALLEL_TESTS += tcgmsg/ipcv4.0/xdrtest$(EXEEXT) # requires user input
 if NOFORT
 else
 PARALLEL_TESTS += tcgmsg/ipcv4.0/testf$(EXEEXT)
-PARALLEL_TESTS += tcgmsg/ipcv4.0/testpf$(EXEEXT)
+#PARALLEL_TESTS += tcgmsg/ipcv4.0/testpf$(EXEEXT) # requires input files
 endif
 endif # MSG_COMMS_TCGMSG4
 endif # MSG_COMMS_TCGMSG
 if MSG_COMMS_TCGMSG
 if MSG_COMMS_TCGMSG5
 PARALLEL_TESTS += tcgmsg/ipcv5.0/hello$(EXEEXT)
-PARALLEL_TESTS += tcgmsg/ipcv5.0/test$(EXEEXT)
+#PARALLEL_TESTS += tcgmsg/ipcv5.0/test$(EXEEXT) # requires user input
 if MSG_COMMS_PVM
 PARALLEL_TESTS += tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
 endif
 if NOFORT
 else
-PARALLEL_TESTS += tcgmsg/ipcv5.0/jacobi$(EXEEXT)
-PARALLEL_TESTS += tcgmsg/ipcv5.0/testf$(EXEEXT)
+#PARALLEL_TESTS += tcgmsg/ipcv5.0/jacobi$(EXEEXT) # requires user input
+#PARALLEL_TESTS += tcgmsg/ipcv5.0/testf$(EXEEXT) # requires user input
 endif
 endif # MSG_COMMS_TCGMSG5
 endif # MSG_COMMS_TCGMSG
 if MSG_COMMS_TCGMSG
 if MSG_COMMS_TCGMSGMPI
-PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT)
+#PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT) # useless test
 #PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test$(EXEEXT) # requires user input
 if NOFORT
 else

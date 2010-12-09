@@ -97,10 +97,17 @@ AC_HEADER_ASSERT
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-GA_CHECK_HEADERS([assert.h errno.h fcntl.h ffio.h float.h inttypes.h limits.h malloc.h math.h memory.h netdb.h netinet/in.h netinet/tcp.h nx.h pfs/pfs.h setjmp.h signal.h stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/cnx_types.h sys/errno.h sys/file.h sys/fsid.h sys/fstyp.h sys/ioctl.h sys/iosw.h sys/ipc.h sys/mman.h sys/mount.h sys/param.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/stat.h sys/statfs.h sys/statvfs.h sys/systemcfg.h sys/time.h sys/types.h sys/vfs.h sys/wait.h time.h unistd.h windows.h rpc/rpc.h rpc/types.h rpc/xdr.h], [], [],
-[[#ifdef HAVE_RPC_TYPES_H
-#include <rpc/types.h>
-#endif]])
+GA_CHECK_HEADERS([assert.h errno.h fcntl.h ffio.h float.h inttypes.h limits.h malloc.h math.h memory.h netdb.h netinet/in.h netinet/tcp.h nx.h pfs/pfs.h setjmp.h signal.h stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/cnx_types.h sys/errno.h sys/file.h sys/fsid.h sys/fstyp.h sys/ioctl.h sys/iosw.h sys/ipc.h sys/mman.h sys/mount.h sys/param.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/stat.h sys/statfs.h sys/statvfs.h sys/systemcfg.h sys/time.h sys/vfs.h sys/wait.h time.h unistd.h windows.h rpc/rpc.h rpc/types.h rpc/xdr.h],
+[], [],
+[@%:@ifdef HAVE_RPC_TYPES_H
+@%:@include <rpc/types.h>
+@%:@endif
+@%:@ifdef HAVE_SYS_TYPES_H
+@%:@include <sys/types.h>
+@%:@endif
+@%:@ifdef HAVE_SYS_IPC_H
+@%:@include <sys/ipc.h>
+@%:@endif])
 
 # Checks for C typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -364,6 +371,7 @@ AS_IF([test x$with_mpi_wrappers = xyes], [
     #AS_IF([test "x$ga_cv_mpicxx_naked" != xerror],[CXX="$ga_cv_mpicxx_naked"])
     AS_IF([test "x$ga_cv_mpif77_naked" != xerror],[F77="$ga_cv_mpif77_naked"])
 ])
+GA_AR
 LT_INIT([disable-shared])
 # and now that that's over, put the MPI compilers back
 AS_IF([test x$with_mpi_wrappers = xyes], [
@@ -453,6 +461,8 @@ AC_MSG_NOTICE([                 FLIBS=$FLIBS])
 AC_MSG_NOTICE([          BLAS_LDFLAGS=$BLAS_LDFLAGS])
 AC_MSG_NOTICE([             BLAS_LIBS=$BLAS_LIBS])
 AC_MSG_NOTICE([         BLAS_CPPFLAGS=$BLAS_CPPFLAGS])
+AC_MSG_NOTICE([                    AR=$AR])
+AC_MSG_NOTICE([              AR_FLAGS=$AR_FLAGS])
 AC_MSG_NOTICE([                  DEFS=$DEFS])
 AC_MSG_NOTICE([                 SHELL=$SHELL])
 AC_MSG_NOTICE([])

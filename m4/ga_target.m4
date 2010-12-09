@@ -41,7 +41,8 @@ AH_TEMPLATE([LINUX],        [Define to 1 on generic Linux systems])
 AH_TEMPLATE([LINUX64],      [Define to 1 on generic 64bit Linux systems])
 AH_TEMPLATE([MACX],         [Define to 1 on OSX systems])
 AH_TEMPLATE([MACX64],       [Define to 1 on 64bit OSX systems])
-AH_TEMPLATE([NEC],          [Define to 1 on ??? systems])
+AH_TEMPLATE([NEC],          [Define to 1 on NEC systems])
+AH_TEMPLATE([NEC64],        [Define to 1 on 64bit NEC systems])
 AH_TEMPLATE([SGI],          [Define to 1 on ??? systems])
 AH_TEMPLATE([SGI_N32],      [Define to 1 on ??? systems])
 AH_TEMPLATE([SGITFP],       [Define to 1 on ??? systems])
@@ -73,8 +74,8 @@ AC_CACHE_CHECK([for TARGET base (64bit-ness checked later)],
 AC_DEFINE_UNQUOTED([$ga_cv_target_base], [1],
     [define if this is the TARGET irregardless of whether it is 32/64 bits])
 # A horrible hack that should go away somehow...
-# Only perform this hack for ARMCI build.
-AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
+dnl # Only perform this hack for ARMCI build.
+dnl AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
     AC_CACHE_CHECK([whether we think this system is what we call SYSV],
     [ga_cv_sysv],
     [AS_CASE([$ga_cv_target_base],
@@ -85,7 +86,7 @@ AS_IF([test "x$ARMCI_TOP_BUILDDIR" != x], [
     AS_IF([test x$ga_cv_sysv = xyes],
         [AC_DEFINE([SYSV], [1],
             [Define if we want this system to use SYSV shared memory])])
-])
+dnl ])
 # Hopefully these will never be used and we can remove them soon.
 AM_CONDITIONAL([BGL],          [test "$ga_cv_target_base" = BGL])
 AM_CONDITIONAL([BGP],          [test "$ga_cv_target_base" = BGP])

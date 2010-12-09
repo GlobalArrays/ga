@@ -1,44 +1,43 @@
-/** @file
- * Actual definition of these globals ... need this once in
- * any executable ... included by cluster.c
- */
-#ifndef DEFGLOBALS_H_
-#define DEFGLOBALS_H_
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/defglobals.h,v 1.7 2000-10-12 22:43:45 d3g681 Exp $ */
 
+#ifndef SNDRCVP
 #include "sndrcvP.h"
+#endif
+
+/* Actual definition of these globals ... need this once in
+   any executable ... included by cluster.c */
 
 /*********************************************************
   Global information and structures ... all begin with SR_
   ********************************************************/
 
-Integer SR_n_clus; /**< No. of clusters */
-Integer SR_n_proc; /**< No. of processes excluding dummy master process */
+long SR_n_clus;                   /* No. of clusters */
+long SR_n_proc;                   /* No. of processes excluding dummy
+				     master process */
 
 int  SR_socks[MAX_PROCESS];
 int  SR_socks_proc[MAX_PROCESS];
 int  SR_nsock;
-Integer SR_using_shmem;
+long SR_using_shmem;
 
-Integer SR_clus_id; /**< Logical id of current cluster */
-Integer SR_proc_id; /**< Logical id of current process */
+long SR_clus_id;                  /* Logical id of current cluster */
+long SR_proc_id;                  /* Logical id of current process */
 
-Integer SR_debug; /**< flag for debug output */
+long SR_debug;                    /* flag for debug output */
 
-Integer SR_parallel; /**< True if job started with parallel */
+long SR_parallel;		/* True if job started with parallel */
 
-Integer SR_exit_on_error; /**< flag to exit on error */
-Integer SR_error; /**< flag indicating error has been called
-                  with SR_exit_on_error == FALSE */
+long SR_exit_on_error;            /* flag to exit on error */
+long SR_error;                    /* flag indicating error has been called
+                                     with SR_exit_on_error == FALSE */
 
-Integer SR_numchild; /**< no. of forked processes */
-Integer SR_pids[MAX_SLAVE]; /**< pids of forked processes */
+long SR_numchild;                   /* no. of forked processes */
+long SR_pids[MAX_SLAVE];          /* pids of forked processes */
 
 
-/** This is used to store info from the PROCGRP file about each
- * cluster of processes
- */
+/* This is used to store info from the PROCGRP file about each
+   cluster of processes */
+
 struct cluster_info_struct SR_clus_info[MAX_CLUSTER];
 
 struct process_info_struct SR_proc_info[MAX_PROCESS];
-
-#endif /* DEFGLOBALS_H_ */

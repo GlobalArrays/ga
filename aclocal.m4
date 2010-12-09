@@ -1245,6 +1245,7 @@ AC_SUBST([am__untar])
 
 m4_include([m4/ax_compiler_vendor.m4])
 m4_include([m4/ax_sys_weak_alias.m4])
+m4_include([m4/ga_ar.m4])
 m4_include([m4/ga_arg_parse.m4])
 m4_include([m4/ga_armci_network.m4])
 m4_include([m4/ga_blas.m4])

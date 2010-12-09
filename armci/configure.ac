@@ -105,7 +105,17 @@ GA_ARMCI_NETWORK
 AC_HEADER_ASSERT
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
-GA_CHECK_HEADERS([assert.h c_asm.h errno.h fcntl.h float.h ia64/sys/inline.h limits.h malloc.h math.h memory.h mpp/shmem.h netdb.h netinet/in.h netinet/tcp.h process.h setjmp.h signal.h stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/atomic_op.h sys/file.h sys/ipc.h sys/mman.h sys/param.h sys/sem.h sys/shm.h sys/socket.h sys/stat.h sys/syscall.h sys/time.h sys/types.h sys/uio.h sys/wait.h time.h unistd.h windows.h winsock.h])
+GA_CHECK_HEADERS([assert.h c_asm.h errno.h fcntl.h float.h ia64/sys/inline.h limits.h malloc.h math.h memory.h mpp/shmem.h netdb.h netinet/in.h netinet/tcp.h process.h setjmp.h signal.h stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/atomic_op.h sys/file.h sys/ipc.h sys/mman.h sys/param.h sys/sem.h sys/shm.h sys/socket.h sys/stat.h sys/syscall.h sys/time.h sys/uio.h sys/wait.h time.h unistd.h windows.h winsock.h],
+[], [],
+[@%:@ifdef HAVE_RPC_TYPES_H
+@%:@include <rpc/types.h>
+@%:@endif
+@%:@ifdef HAVE_SYS_TYPES_H
+@%:@include <sys/types.h>
+@%:@endif
+@%:@ifdef HAVE_SYS_IPC_H
+@%:@include <sys/ipc.h>
+@%:@endif])
 
 # Checks for C typedefs, structures, and compiler characteristics.
 AC_C_INLINE
@@ -292,6 +302,7 @@ AS_IF([test x$with_mpi_wrappers = xyes], [
     #AS_IF([test "x$ga_cv_mpicxx_naked" != xerror],[CXX="$ga_cv_mpicxx_naked"])
     AS_IF([test "x$ga_cv_mpif77_naked" != xerror],[F77="$ga_cv_mpif77_naked"])
 ])
+GA_AR
 LT_INIT([disable-shared])
 # and now that that's over, put the MPI compilers back
 AS_IF([test x$with_mpi_wrappers = xyes], [
@@ -360,6 +371,8 @@ AC_MSG_NOTICE([              CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([               LDFLAGS=$LDFLAGS])
 AC_MSG_NOTICE([                  LIBS=$LIBS])
 AC_MSG_NOTICE([                 FLIBS=$FLIBS])
+AC_MSG_NOTICE([                    AR=$AR])
+AC_MSG_NOTICE([              AR_FLAGS=$AR_FLAGS])
 AC_MSG_NOTICE([                  DEFS=$DEFS])
 AC_MSG_NOTICE([                 SHELL=$SHELL])
 AC_MSG_NOTICE([])

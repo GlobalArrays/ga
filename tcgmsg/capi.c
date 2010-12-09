@@ -15,6 +15,7 @@
 
 #include "sndrcv.h"
 #include "tcgmsg.h"
+#include "typesf2c.h"
 
 extern void tcgi_pfilecopy(Integer*,Integer*,char*);
 extern void tcgi_pbegin(int argc, char **argv);

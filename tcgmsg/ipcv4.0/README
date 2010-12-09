@@ -1,84 +1,89 @@
+
 TCGMSG Send/receive subroutines ... version 4.04 (January 1994)
 ---------------------------------------------------------------
 
-:author: Robert J. Harrison
-:address: P.O. Box 999, Richland WA 99352 K1-90
-:tel: 509-375-2037
-:fax: 509-375-6631
-:email: rj_harrison@pnl.gov
+Robert J. Harrison
 
-The programming model and interface is directly modelled after the PARMACS of
-the ANL ACRF (see "Portable Programs for Parallel Processors", J. Boyle, R.
-Butler, T. Disz, B. Glickfeld, E. Lusk, R.  Overbeek, J. Patterson, R.
-Stevens. Holt, Rinehart and Winston, Inc., 1987, ISBN 0-03-014404-3).
-Attention is drawn to the P4 parallel programming system (contact Ewing Lusk,
-lusk@mcs.anl.gov) which is the successor to PARMACS.
+Mail Stop K1-90                             tel: 509-375-2037
+Battelle Pacific Northwest Laboratory       fax: 509-375-6631
+P.O. Box 999, Richland WA 99352          E-mail: rj_harrison@pnl.gov
 
-In the UNIX environment communication is over TCP sockets, unless indentical
-processes are running on a machine with support for shared memory, which is
-then used. Thus applications can be built to run over an entire network of
-machines with local communication running at memory bandwidth (plus
-synchronization overhead) and remote communication running at Ethernet speed
-(close to the maximum of 10 Mbits/s can be seen on quiet networks).  On true
-message-passing machines TCGMSG is just a thin layer over the system
-interface.
+The programming model and interface is directly modelled after the
+PARMACS of the ANL ACRF (see "Portable Programs for Parallel
+Processors", J. Boyle, R. Butler, T. Disz, B. Glickfeld, E. Lusk, R.
+Overbeek, J. Patterson, R. Stevens. Holt, Rinehart and Winston, Inc.,
+1987, ISBN 0-03-014404-3).  Attention is drawn to the P4 parallel
+programming system (contact Ewing Lusk, lusk@mcs.anl.gov) which
+is the successor to PARMACS.
 
-A configuration file specifies the placement of processes over the network.
-The message passing program is then invoked with the command 'parallel' which
-reads the configuration file and invokes the required processes using fork()
-or rsh. This has the benefits of the placement of processes being identical no
-matter from where on the network the command is given, and the 'spare' process
-running the command parallel is used to provide load balancing service in a
-straightfoward fashion.
+In the UNIX environment communication is over TCP sockets, unless
+indentical processes are running on a machine with support for shared
+memory, which is then used. Thus applications can be built to run over
+an entire network of machines with local communication running at
+memory bandwidth (plus synchronization overhead) and remote
+communication running at Ethernet speed (close to the maximum of 10
+Mbits/s can be seen on quiet networks).  On true message-passing
+machines TCGMSG is just a thin layer over the system interface.
 
-Hooks are in the lower level routines for conversion of data between machines
-with different byte ordering/numerical representation. This is currently only
-implemented for FORTRAN integer and double precision (C long and double) data
-types and C character data.
+A configuration file specifies the placement of processes over the
+network. The message passing program is then invoked with the command
+'parallel' which reads the configuration file and invokes the required
+processes using fork() or rsh. This has the benefits of the placement
+of processes being identical no matter from where on the network the
+command is given, and the 'spare' process running the command parallel
+is used to provide load balancing service in a straightfoward fashion.
+
+Hooks are in the lower level routines for conversion of data between
+machines with different byte ordering/numerical representation. This
+is currently only implemented for FORTRAN integer and double precision
+(C long and double) data types and C character data.
 
 Examples
 --------
 
-Associated with this source is a directory ('examples'!) of sample programs,
-including dynamic load balancing.  See the README file in that directory for
-more details.  It is interesting that in only one of the examples was it
-necessary to resort to explict message passing, and only then for efficiency.
-The functionality of DGOP and BRDCST sufficed for the other examples, which
-display respectable speedup.
+Associated with this source is a directory ('examples'!) of sample
+programs, including dynamic load balancing.  See the README file in
+that directory for more details.  It is interesting that in only one
+of the examples was it necessary to resort to explict message passing,
+and only then for efficiency.  The functionality of DGOP and BRDCST
+sufficed for the other examples, which display respectable speedup.
 
 The Model
 ---------
 
-Strong typing is enforced.  The type associated with a message when sent must
-match the type specified on the corresponding receive.  No wildcard types are
-permitted.
+Strong typing is enforced.  The type associated with a message when
+sent must match the type specified on the corresponding receive.
+No wildcard types are permitted.
 
-Processes are connected with ordered, synchronous channels.  On machines that
-explicitly support it (currently the iPSC and DELTA) explicitly asynchronous
-communication is supported.  Otherwise it should be thought that:
+Processes are connected with ordered, synchronous channels.  On
+machines that explicitly support it (currently the iPSC and DELTA)
+explicitly asynchronous communication is supported.  Otherwise it
+should be thought that:
 
   a) sends block until the message is explicitly received
 
   b) messages from a particular process can only be received
      in the order sent.
 
-As far as buffering provided by the transport layer permits, messages are
-actually sent without any synchronization between the sender and receiver.
-However, since the amount of buffering varies greatly from one mechanism to
-another you cannot explicitly use this fact.  On the iPSC and also on the
-Alliant MPP over HIPPI (and perhaps on the KSR over shared memory ... I have
-yet to check this) you can also receive messages from a given process in any
-order (provided that they do not exhaust the system buffering).  But if you
-want portability don't exploit this feature.
+As far as buffering provided by the transport layer permits, messages
+are actually sent without any synchronization between the sender and
+receiver.  However, since the amount of buffering varies greatly from
+one mechanism to another you cannot explicitly use this fact.  On the
+iPSC and also on the Alliant MPP over HIPPI (and perhaps on the KSR
+over shared memory ... I have yet to check this) you can also receive
+messages from a given process in any order (provided that they do not
+exhaust the system buffering).  But if you want portability don't
+exploit this feature.
 
-This fuzzy specification permits significant reduction of latency without
-requiring essentially unbounded buffers.
+This fuzzy specification permits significant reduction of latency
+without requiring essentially unbounded buffers.
 
 Programming
 -----------
 
-Both the C and FORTRAN interfaces are now consistent and fully portable.  Just
-compile and link following the library usage in the example makefiles. 
+Both the C and FORTRAN interfaces are now consistent and fully
+portable.  Just compile and link following the library usage in the 
+example makefiles. 
 
 The following restrictions are important.
 
@@ -115,11 +120,12 @@ NB: On the KSR see the README.KSR file.
 
    C:          PEND_();
 
-   This tidies up any shared resources and notifies the load balancing server
-   that it has completed. PEND does return but only to allow you to exit
-   normally.  It is important that the FORTRAN runtime environment be allowed
-   to tidy up after itself.  Calling PBEGIN or PEND more than once per process
-   is bound to produce some bizarre sort of screw up.
+   This tidies up any shared resources and notifies the load balancing
+   server that it has completed. PEND does return but only to allow you
+   to exit normally.  It is important that the FORTRAN runtime
+   environment be allowed to tidy up after itself.  Calling PBEGIN or
+   PEND more than once per process is bound to produce some bizarre sort
+   of screw up.
 
 3) Data translation when communicating between machines with different
    data representations or byte ordering is enabled by OR-ing your
@@ -200,16 +206,19 @@ NB: On the KSR see the README.KSR file.
        void SND_(long *type, char *buf, long *lenbuf, long *node, 
                  long *sync)
 
-       Send a message of type TYPE to node NODE. LENBUF is the length of the
-       message in bytes. BUF may be any type other than a FORTRAN CHARACTER
-       variable or constant.  SYNC indicates synchronous (1) or asynchronous
-       (0) communication.  If aynchronous communication is requested the
-       buffer may not be modified until WAITCOM is called. This avoids having
-       to waste valuable local memory taking a copy of the message.  If a bit
-       is set in the TYPE matching MSGDBL, MSGINT or MSGCHR then XDR is used
-       if communication is over sockets.  !  ! Requests for asynchronous
-       communication on UNIX machines ! where it is not supported are quietly
-       ignored.  !
+       Send a message of type TYPE to node NODE. LENBUF is the length
+       of the message in bytes. BUF may be any type other than a
+       FORTRAN CHARACTER variable or constant.  SYNC indicates
+       synchronous (1) or asynchronous (0) communication.  If
+       aynchronous communication is requested the buffer may not be
+       modified until WAITCOM is called. This avoids having to waste
+       valuable local memory taking a copy of the message.  If a bit
+       is set in the TYPE matching MSGDBL, MSGINT or MSGCHR then XDR
+       is used if communication is over sockets.
+       !
+       ! Requests for asynchronous communication on UNIX machines
+       ! where it is not supported are quietly ignored.
+       !
 
    h)  SUBROUTINE RCV(TYPE, BUF, LENBUF, LENMES, NODESEL, NODEFROM, SYNC)
        INTEGER TYPE       [input]
@@ -248,10 +257,11 @@ NB: On the KSR see the README.KSR file.
 
        long PROBE_(long *type, long *node)
 
-       Return 1/0 for TRUE/FALSE if a message of the given type is available
-       from the given node.  If node is specified as -1 then a message of the
-       given type from any node will match (note that a wildcard probe is much
-       more expensive than probing a specific node).
+       Return 1/0 for TRUE/FALSE if a message of the given type is
+       available from the given node.  If node is specified as -1 then
+       a message of the given type from any node will match (note that
+       a wildcard probe is much more expensive than probing a
+       specific node).
 
    j)  SUBROUTINE BRDCST(TYPE, BUF, LENBUF, IFROM)
        INTEGER TYPE       [input]
@@ -261,15 +271,15 @@ NB: On the KSR see the README.KSR file.
 
        void BRDCST_(long *type, char *buf, long *lenbuf, long *ifrom)
 
-       Broadcast from process IFROM to all other processes a message of type
-       TYPE and length LENBUF. All processes call this routine which uses an
-       optimized algorithm to distribute the data in O(log p) time.
-
-       If a bit is set in the TYPE matching MSGDBL, MSGINT or MSGCHR then XDR
-       is used if communication is over sockets. Note that LENBUF presently
-       must have the correct value on the originating and receiving nodes.
-       This call may be modified to include an extra parameter with the
-       function of LENMES in the RCV() syntax.
+       Broadcast from process IFROM to all other processes a message
+       of type TYPE and length LENBUF. All processes call this routine
+       which uses an optimized algorithm to distribute the data in
+       O(log p) time.
+       If a bit is set in the TYPE matching MSGDBL, MSGINT or MSGCHR then
+       XDR is used if communication is over sockets. Note that LENBUF
+       presently must have the correct value on the originating and
+       receiving nodes. This call may be modified to include an extra
+       parameter with the function of LENMES in the RCV() syntax.
 
    k)  SUBROUTINE SYNCH(TYPE)
        INTEGER TYPE       [input]
@@ -284,21 +294,21 @@ NB: On the KSR see the README.KSR file.
 
        void SETDBG_(long *onoff)
 
-       Switch debugging output on (ONOFF=1) or off (ONOFF=0). This output is
-       useful to trace messages being passed and also to help debug the
-       message passing software.
+       Switch debugging output on (ONOFF=1) or off (ONOFF=0). This output
+       is useful to trace messages being passed and also to help debug
+       the message passing software.
 
    m)  INTEGER FUNCTION NXTVAL(MPROC)
        INTEGER MPROC      [input]
 
        long NXTVAL_(long *mproc)
 
-       This call simulates a simple shared counter by communicating with a
-       dedicated server process.  It returns the next counter associated with
-       a single active loop (0,1,2,...).  MPROC is the number of processes
-       actively requesting values.  After the end of the loop each process
-       calls NXTVAL(-MPROC) which implements a barrier.  It is used as
-       follows::
+       This call simulates a simple shared counter by communicating with
+       a dedicated server process.  It returns the next counter associated
+       with a single active loop (0,1,2,...).  MPROC is the number of
+       processes actively requesting values.  After the end of the loop
+       each process calls NXTVAL(-MPROC) which implements a barrier.
+       It is used as follows:
 
        FORTRAN
        -------------------------
@@ -307,7 +317,7 @@ NB: On the KSR see the README.KSR file.
          if (i .eq. next) then
            ... do work for iteration i
            next = nxtval(mproc)
-         endif
+ 	 endif
    10  continue
 c
 c      call with negative mproc to indicate end of loop ... processes

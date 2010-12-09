@@ -623,7 +623,6 @@ DSYMUTIL
 MANIFEST_TOOL
 RANLIB
 ac_ct_AR
-AR
 DLLTOOL
 OBJDUMP
 LN_S
@@ -633,6 +632,8 @@ DUMPBIN
 LD
 FGREP
 LIBTOOL
+AR_FLAGS
+AR
 SED
 HAVE_LAPACK_FALSE
 HAVE_LAPACK_TRUE
@@ -961,6 +962,8 @@ F77
 FFLAGS
 FFLAG_INT_4
 ARMCI_FOPT
+AR
+AR_FLAGS
 CXXCPP'
 
 
@@ -1669,6 +1672,8 @@ Some influential environment variables:
   FFLAGS      Fortran 77 compiler flags
   FFLAG_INT_4 Fortran 77 compiler flag to set integer size to 4 bytes
   ARMCI_FOPT  ARMCI Fortran 77 optimization flags
+  AR          archiver used by libtool (default: ar)
+  AR_FLAGS    archiver flags used by libtool (default: cru)
   CXXCPP      C++ preprocessor
 
 Use these variables to override the choices made by `configure' or to help
@@ -3726,6 +3731,7 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for TARGET base (64bit-ness checked later)" >&5
 $as_echo_n "checking for TARGET base (64bit-ness checked later)... " >&6; }
 if test "${ga_cv_target_base+set}" = set; then :
@@ -3772,9 +3778,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 # A horrible hack that should go away somehow...
-# Only perform this hack for ARMCI build.
-if test "x$ARMCI_TOP_BUILDDIR" != x; then :
-
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we think this system is what we call SYSV" >&5
 $as_echo_n "checking whether we think this system is what we call SYSV... " >&6; }
 if test "${ga_cv_sysv+set}" = set; then :
@@ -3793,8 +3796,6 @@ $as_echo "$ga_cv_sysv" >&6; }
     if test x$ga_cv_sysv = xyes; then :
 
 $as_echo "#define SYSV 1" >>confdefs.h
-
-fi
 
 fi
 # Hopefully these will never be used and we can remove them soon.
@@ -9171,10 +9172,19 @@ $as_echo "#define HAVE_SYS_WAIT_H 1" >>confdefs.h
 
 fi
 
-for ac_header in assert.h c_asm.h errno.h fcntl.h float.h ia64/sys/inline.h limits.h malloc.h math.h memory.h mpp/shmem.h netdb.h netinet/in.h netinet/tcp.h process.h setjmp.h signal.h stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/atomic_op.h sys/file.h sys/ipc.h sys/mman.h sys/param.h sys/sem.h sys/shm.h sys/socket.h sys/stat.h sys/syscall.h sys/time.h sys/types.h sys/uio.h sys/wait.h time.h unistd.h windows.h winsock.h
+for ac_header in assert.h c_asm.h errno.h fcntl.h float.h ia64/sys/inline.h limits.h malloc.h math.h memory.h mpp/shmem.h netdb.h netinet/in.h netinet/tcp.h process.h setjmp.h signal.h stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/atomic_op.h sys/file.h sys/ipc.h sys/mman.h sys/param.h sys/sem.h sys/shm.h sys/socket.h sys/stat.h sys/syscall.h sys/time.h sys/uio.h sys/wait.h time.h unistd.h windows.h winsock.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE_RPC_TYPES_H
+#include <rpc/types.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_IPC_H
+#include <sys/ipc.h>
+#endif
+"
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
 
 cat >>confdefs.h <<_ACEOF
@@ -10424,7 +10434,9 @@ case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu:$ga_armci_network in #(
   MACX:*:*:*) :
     armci_cv_c_opt= ;; #(
   NEC:*:*:*) :
-    armci_cv_c_opt="-O nomsg -size_t64 -Nv -Xa" ;; #(
+    armci_cv_c_opt="-Cvsafe" ;; #(
+  NEC64:*:*:*) :
+    armci_cv_c_opt="-Cvsafe -size_t64" ;; #(
   SOLARIS64:fujitsu:*:*) :
     armci_cv_c_opt="-Kfast -KV9FMADD -x0" ;; #(
   SOLARIS64:gnu:*:*) :
@@ -10438,7 +10450,7 @@ case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu:$ga_armci_network in #(
   SOLARIS:gnu:i386:*) :
     armci_cv_c_opt="-dalign -xarch=sse2" ;; #(
   *) :
-    armci_cv_c_opt="-O0" ;;
+    armci_cv_c_opt= ;;
 esac
 
 fi
@@ -11361,6 +11373,10 @@ if test "x$armci_cv_cxx_opt" = x && test "x$enable_opt" = xyes; then :
 case $ga_cv_target:$ax_cv_cxx_compiler_vendor:$host_cpu:$ga_armci_network in #(
   LINUX:*:*:*) :
     armci_cv_cxx_opt="-O0" ;; #(
+  NEC:*:*:*) :
+    armci_cv_cxx_opt="-Cvsafe" ;; #(
+  NEC64:*:*:*) :
+    armci_cv_cxx_opt="-Cvsafe -size_t64" ;; #(
   *) :
     armci_cv_cxx_opt= ;;
 esac
@@ -13774,7 +13790,9 @@ case $ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu:$ga_armci_network in #(
   MACX:*:*:*) :
     armci_cv_f77_opt= ;; #(
   NEC:*:*:*) :
-    armci_cv_f77_opt="-V -Cvopt -Wf\"-pvctl nomsg noassume vwork=stack\"" ;; #(
+    armci_cv_f77_opt="-Cvsafe" ;; #(
+  NEC64:*:*:*) :
+    armci_cv_f77_opt="-Cvsafe" ;; #(
   SOLARIS64:fujitsu:*:*) :
     armci_cv_f77_opt="-fw -Kfast -KV8PFMADD" ;; #(
   SOLARIS64:gnu:*:*) :
@@ -16423,6 +16441,18 @@ if test x$with_mpi_wrappers = xyes; then :
 fi
 
 fi
+
+
+
+if test "x$AR" = x; then :
+  case $ga_cv_target in #(
+  NEC|NEC64) :
+    AR=sxar ;; #(
+  *) :
+     ;;
+esac
+fi
+
 case `pwd` in
   *\ * | *\	*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Libtool does not cope well with whitespace in \`pwd\`" >&5
@@ -33019,6 +33049,10 @@ $as_echo "$as_me:                LDFLAGS=$LDFLAGS" >&6;}
 $as_echo "$as_me:                   LIBS=$LIBS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:                  FLIBS=$FLIBS" >&5
 $as_echo "$as_me:                  FLIBS=$FLIBS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:                     AR=$AR" >&5
+$as_echo "$as_me:                     AR=$AR" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:               AR_FLAGS=$AR_FLAGS" >&5
+$as_echo "$as_me:               AR_FLAGS=$AR_FLAGS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:                   DEFS=$DEFS" >&5
 $as_echo "$as_me:                   DEFS=$DEFS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:                  SHELL=$SHELL" >&5

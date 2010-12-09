@@ -628,7 +628,6 @@ DSYMUTIL
 MANIFEST_TOOL
 RANLIB
 ac_ct_AR
-AR
 DLLTOOL
 OBJDUMP
 LN_S
@@ -638,6 +637,8 @@ DUMPBIN
 LD
 FGREP
 LIBTOOL
+AR_FLAGS
+AR
 NO_X_FALSE
 NO_X_TRUE
 ENABLE_XREGION_FALSE
@@ -991,6 +992,8 @@ FFLAG_INT
 GA_FOPT
 F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 XMKMF
+AR
+AR_FLAGS
 CXXCPP'
 ac_subdirs_all='armci'
 
@@ -1711,6 +1714,8 @@ Some influential environment variables:
               if cross compiling, set to either "yes" (default) or "no" (after
               string)
   XMKMF       Path to xmkmf, Makefile generator for X Window System
+  AR          archiver used by libtool (default: ar)
+  AR_FLAGS    archiver flags used by libtool (default: cru)
   CXXCPP      C++ preprocessor
 
 Use these variables to override the choices made by `configure' or to help
@@ -3746,6 +3751,7 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for TARGET base (64bit-ness checked later)" >&5
 $as_echo_n "checking for TARGET base (64bit-ness checked later)... " >&6; }
 if test "${ga_cv_target_base+set}" = set; then :
@@ -3792,9 +3798,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 # A horrible hack that should go away somehow...
-# Only perform this hack for ARMCI build.
-if test "x$ARMCI_TOP_BUILDDIR" != x; then :
-
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we think this system is what we call SYSV" >&5
 $as_echo_n "checking whether we think this system is what we call SYSV... " >&6; }
 if test "${ga_cv_sysv+set}" = set; then :
@@ -3813,8 +3816,6 @@ $as_echo "$ga_cv_sysv" >&6; }
     if test x$ga_cv_sysv = xyes; then :
 
 $as_echo "#define SYSV 1" >>confdefs.h
-
-fi
 
 fi
 # Hopefully these will never be used and we can remove them soon.
@@ -9252,11 +9253,17 @@ $as_echo "#define HAVE_SYS_WAIT_H 1" >>confdefs.h
 
 fi
 
-for ac_header in assert.h errno.h fcntl.h ffio.h float.h inttypes.h limits.h malloc.h math.h memory.h netdb.h netinet/in.h netinet/tcp.h nx.h pfs/pfs.h setjmp.h signal.h stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/cnx_types.h sys/errno.h sys/file.h sys/fsid.h sys/fstyp.h sys/ioctl.h sys/iosw.h sys/ipc.h sys/mman.h sys/mount.h sys/param.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/stat.h sys/statfs.h sys/statvfs.h sys/systemcfg.h sys/time.h sys/types.h sys/vfs.h sys/wait.h time.h unistd.h windows.h rpc/rpc.h rpc/types.h rpc/xdr.h
+for ac_header in assert.h errno.h fcntl.h ffio.h float.h inttypes.h limits.h malloc.h math.h memory.h netdb.h netinet/in.h netinet/tcp.h nx.h pfs/pfs.h setjmp.h signal.h stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/cnx_types.h sys/errno.h sys/file.h sys/fsid.h sys/fstyp.h sys/ioctl.h sys/iosw.h sys/ipc.h sys/mman.h sys/mount.h sys/param.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/stat.h sys/statfs.h sys/statvfs.h sys/systemcfg.h sys/time.h sys/vfs.h sys/wait.h time.h unistd.h windows.h rpc/rpc.h rpc/types.h rpc/xdr.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE_RPC_TYPES_H
 #include <rpc/types.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_IPC_H
+#include <sys/ipc.h>
 #endif
 "
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
@@ -11349,7 +11356,9 @@ case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu in #(
   MACX:*:*) :
     ga_cv_c_opt= ;; #(
   NEC:*:*) :
-    ga_cv_c_opt="-V -Cvsafe -O nomsg -pvctl,nomsg -Xa" ;; #(
+    ga_cv_c_opt="-Cvsafe" ;; #(
+  NEC64:*:*) :
+    ga_cv_c_opt="-Cvsafe -size_t64" ;; #(
   SOLARIS64:fujitsu:*) :
     ga_cv_c_opt="-Kfast -KV9FMADD" ;; #(
   SOLARIS64:gnu:*) :
@@ -12328,6 +12337,10 @@ if test "x$ga_cv_cxx_opt" = x && test "x$enable_opt" = xyes; then :
 case $ga_cv_target:$ax_cv_cxx_compiler_vendor:$host_cpu in #(
   LINUX:*:*) :
     ga_cv_cxx_opt="-O0" ;; #(
+  NEC:*:*) :
+    ga_cv_cxx_opt="-Cvsafe" ;; #(
+  NEC64:*:*) :
+    ga_cv_cxx_opt="-Cvsafe -size_t64" ;; #(
   *) :
     ga_cv_cxx_opt= ;;
 esac
@@ -15284,7 +15297,9 @@ case $ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu in #(
   MACX:intel:*) :
     ga_cv_f77_opt="-O3 -prefetch -w -cm" ;; #(
   NEC:*:*) :
-    ga_cv_f77_opt="-Cvopt -Wf\"-pvctl nomsg noassume vwork=stack\" -ew -size_t6" ;; #(
+    ga_cv_f77_opt="-Cvsafe" ;; #(
+  NEC64:*:*) :
+    ga_cv_f77_opt="-Cvsafe" ;; #(
   SOLARIS64:fujitsu:*) :
     ga_cv_f77_opt="-fw -Kfast -KV9FMADD" ;; #(
   SOLARIS64:gnu:*) :
@@ -15629,17 +15644,17 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdio.h>
 #include <string.h>
+#define LEN 80
 
 void fix_c_string_for_f(char *s, int len);
 void fix_f_string_for_c(char *s, int len);
 
 void $SUB(char *fname, char *lname, int fname_len, int lname_len)
 {
-    size_t len=80;
-    char result[len];
+    char result[LEN];
     fix_f_string_for_c(fname, fname_len);
     fix_f_string_for_c(lname, lname_len);
-    snprintf(result, len, "The names passed to C:  %s %s\n", fname, lname);
+    snprintf(result, LEN, "The names passed to C:  %s %s\n", fname, lname);
     fix_c_string_for_f(fname, fname_len);
     fix_c_string_for_f(lname, lname_len);
 }
@@ -15742,17 +15757,17 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdio.h>
 #include <string.h>
+#define LEN 80
 
 void fix_c_string_for_f(char *s, int len);
 void fix_f_string_for_c(char *s, int len);
 
 void $SUB(char *fname, int fname_len, char *lname, int lname_len)
 {
-    size_t len=80;
-    char result[len];
+    char result[LEN];
     fix_f_string_for_c(fname, fname_len);
     fix_f_string_for_c(lname, lname_len);
-    snprintf(result, len, "The names passed to C:  %s %s\n", fname, lname);
+    snprintf(result, LEN, "The names passed to C:  %s %s\n", fname, lname);
     fix_c_string_for_f(fname, fname_len);
     fix_c_string_for_f(lname, lname_len);
 }
@@ -19363,6 +19378,18 @@ if test x$with_mpi_wrappers = xyes; then :
 fi
 
 fi
+
+
+
+if test "x$AR" = x; then :
+  case $ga_cv_target in #(
+  NEC|NEC64) :
+    AR=sxar ;; #(
+  *) :
+     ;;
+esac
+fi
+
 case `pwd` in
   *\ * | *\	*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Libtool does not cope well with whitespace in \`pwd\`" >&5
@@ -35949,6 +35976,10 @@ $as_echo "$as_me:           BLAS_LDFLAGS=$BLAS_LDFLAGS" >&6;}
 $as_echo "$as_me:              BLAS_LIBS=$BLAS_LIBS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:          BLAS_CPPFLAGS=$BLAS_CPPFLAGS" >&5
 $as_echo "$as_me:          BLAS_CPPFLAGS=$BLAS_CPPFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:                     AR=$AR" >&5
+$as_echo "$as_me:                     AR=$AR" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:               AR_FLAGS=$AR_FLAGS" >&5
+$as_echo "$as_me:               AR_FLAGS=$AR_FLAGS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:                   DEFS=$DEFS" >&5
 $as_echo "$as_me:                   DEFS=$DEFS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:                  SHELL=$SHELL" >&5

@@ -2,113 +2,149 @@
 #   include "config.h"
 #endif
 
-#if HAVE_SIGNAL_H
-#   include <signal.h>
-#endif
-#if HAVE_SYS_WAIT_H
-#   include <sys/wait.h>
-#endif
-#if HAVE_SYS_TYPES_H
-#   include <sys/types.h>
-#endif
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.11 2004-04-01 02:04:57 manoj Exp $ */
 
+#include <signal.h>
 #include "sndrcvP.h"
+#if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
+    defined(AIX) || defined(NEXT)
+#include <sys/wait.h>
+#else
+#include <sys/types.h>
+#include <sys/wait.h>
+#endif
 
 extern void Error();
 int SR_caught_sigint = 0;
 
+#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
+#   define SigType  int
+#else
+#   define SigType  void
+#endif
+
 #ifndef SIG_ERR
-#   define SIG_ERR (RETSIGTYPE (*)())-1
+#   define SIG_ERR         (SigType (*)())-1
 #endif
 
 
-RETSIGTYPE SigintHandler(int sig)
+#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)) || (defined(SUN) && !defined(SOLARIS))
+SigType SigintHandler(sig, code, scp, addr)
+     int code;
+     struct sigcontext *scp;
+     char *addr;
+#else
+SigType SigintHandler(sig)
+#endif
+     int sig;
 {
-    SR_caught_sigint = 1;
-    Error("SigintHandler: signal was caught",(Integer) sig);
+  SR_caught_sigint = 1;
+  Error("SigintHandler: signal was caught",(long) sig);
 }
 
 
-/**
- * Trap the signal SIGINT so that we can propagate error
- * conditions and also tidy up shared system resources in a
- * manner not possible just by killing everyone
- */
 void TrapSigint()
+/*
+  Trap the signal SIGINT so that we can propagate error
+  conditions and also tidy up shared system resources in a
+  manner not possible just by killing everyone
+*/
 {
-    if ( signal(SIGINT, SigintHandler) == SIG_ERR) {
-        Error("TrapSigint: error from signal setting SIGINT",(Integer) SIGINT);
-    }
+  if ( signal(SIGINT, SigintHandler) == SIG_ERR)
+       Error("TrapSigint: error from signal setting SIGINT",(long) SIGINT);
 }
 
 
-/**
- * kill -SIGINT all of my beloved children
- */
 void ZapChildren()
+/*
+  kill -SIGINT all of my beloved children
+*/
 {
-    while (SR_numchild--) {
-        (void) kill((int) SR_pids[SR_numchild], SIGINT);
-    }
+  while (SR_numchild--)
+    (void) kill((int) SR_pids[SR_numchild], SIGINT);
 }
 
-
-RETSIGTYPE SigchldHandler(int sig)
+#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)) || (defined(SUN) && !defined(SOLARIS))
+SigType SigchldHandler(sig, code, scp, addr)
+     int code;
+     struct sigcontext *scp;
+     char *addr;
+#else
+void SigchldHandler(sig)
+#endif
+     int sig;
 {
-    int status;
+  int status;
+  
+#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
+  union wait ustatus;
+#endif
 
-    (void) wait(&status);
-    SR_caught_sigint = 1;
-    Error("Child process terminated prematurely, status=",(Integer) status);
+#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
+  (void) wait(&ustatus);
+  status = ustatus.w_status;
+#else
+  (void) wait(&status);
+#endif
+  SR_caught_sigint = 1;
+  Error("Child process terminated prematurely, status=",(long) status);
 }
 
-
-/**
- * Trap SIGCHLD so that can tell if children die unexpectedly.
- */
 void TrapSigchld()
+/*
+  Trap SIGCHLD so that can tell if children die unexpectedly.
+*/
 {
-    if ( signal(SIGCHLD, SigchldHandler) == SIG_ERR) {
-        Error("TrapSigchld: error from signal setting SIGCHLD",
-                (Integer) SIGCHLD);
-    }
+  if ( signal(SIGCHLD, SigchldHandler) == SIG_ERR)
+    Error("TrapSigchld: error from signal setting SIGCHLD", (long) SIGCHLD);
+}
+
+#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)) || (defined(SUN) && !defined(SOLARIS))
+SigType SigsegvHandler(sig, code, scp, addr)
+     int code;
+     struct sigcontext *scp;
+     char *addr;
+#else
+SigType SigsegvHandler(sig)
+#endif
+     int sig;
+{
+  SR_caught_sigint = 1;
+  Error("SigsegvHandler: signal was caught",(long) sig);
 }
 
 
-RETSIGTYPE SigsegvHandler(int sig)
-{
-    SR_caught_sigint = 1;
-    Error("SigsegvHandler: signal was caught",(Integer) sig);
-}
-
-
-/**
- * parallel needs to trap the signal SIGSEGV under Solaris 
- * that is generated when interrupted in NxtVal  
- */
 void TrapSigsegv()
+/*
+  parallel needs to trap the signal SIGSEGV under Solaris 
+  that is generated when interrupted in NxtVal  
+*/
 {
-    if ( signal(SIGSEGV, SigsegvHandler) == SIG_ERR) {
-        Error("TrapSigsegv: error from signal setting SIGSEGV",
-                (Integer) SIGSEGV);
-    }
+  if ( signal(SIGSEGV, SigsegvHandler) == SIG_ERR)
+       Error("TrapSigsegv: error from signal setting SIGSEGV", (long) SIGSEGV);
 }
 
-
-RETSIGTYPE SigtermHandler(int sig)
+#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)) || (defined(SUN) && !defined(SOLARIS))
+SigType SigtermHandler(sig, code, scp, addr)
+     int code;
+     struct sigcontext *scp;
+     char *addr;
+#else
+SigType SigtermHandler(sig)
+#endif
+     int sig;
 {
-    SR_caught_sigint = 1;
-    Error("SigtermHandler: signal was caught",(Integer) sig);
+  SR_caught_sigint = 1;
+  Error("SigtermHandler: signal was caught",(long) sig);
 }
 
-
-/**
- * parallel needs to trap the SIGTERM for batch jobs
- */
 void TrapSigterm()
+/*
+  parallel needs to trap the SIGTERM for batch jobs
+*/
 {
-    if ( signal(SIGTERM, SigtermHandler) == SIG_ERR) {
-        Error("TrapSigterm: error from signal setting SIGTERM",
-                (Integer) SIGTERM);
-    }
+  if ( signal(SIGTERM, SigtermHandler) == SIG_ERR)
+       Error("TrapSigterm: error from signal setting SIGTERM", (long) SIGTERM);
 }
+
+

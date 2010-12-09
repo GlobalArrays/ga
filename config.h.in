@@ -504,8 +504,11 @@
 /* Define to 1 if assertions should be disabled. */
 #undef NDEBUG
 
-/* Define to 1 on ??? systems */
+/* Define to 1 on NEC systems */
 #undef NEC
+
+/* Define to 1 on 64bit NEC systems */
+#undef NEC64
 
 /* Define to 1 if not using Fortran */
 #undef NOFORT

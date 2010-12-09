@@ -531,6 +531,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/armci_tas.m4 \
 	$(top_srcdir)/../m4/armci_x86copy.m4 \
 	$(top_srcdir)/../m4/ax_compiler_vendor.m4 \
+	$(top_srcdir)/../m4/ga_ar.m4 \
 	$(top_srcdir)/../m4/ga_arg_parse.m4 \
 	$(top_srcdir)/../m4/ga_armci_network.m4 \
 	$(top_srcdir)/../m4/ga_blas.m4 \
@@ -1966,6 +1967,7 @@ ARMCI_NETWORK_LIBS = @ARMCI_NETWORK_LIBS@
 ARMCI_SRC_DIR = @ARMCI_SRC_DIR@
 ARMCI_TAS_AS = @ARMCI_TAS_AS@
 ARMCI_X86COPY_AS = @ARMCI_X86COPY_AS@
+AR_FLAGS = @AR_FLAGS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
