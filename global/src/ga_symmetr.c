@@ -82,7 +82,7 @@ ga_symmetrize_(Integer *g_a) {
     for(i=1; i<ndim; i++) have_data = have_data && ahi[i]>0;
 
     if(have_data) {
-      nga_access_ptr(g_a, alo, ahi, &a_ptr, lda); 
+      pnga_access_ptr(g_a, alo, ahi, &a_ptr, lda); 
 
       for(i=0; i<ndim; i++) nelem *= ahi[i]-alo[i] +1;
       b_ptr = (void *) ga_malloc(nelem, MT_F_DBL, "v");

@@ -412,8 +412,9 @@ void FATR ga_nbwait_(Integer *nbhandle)
     nga_wait_internal((Integer *)nbhandle);
 } 
 
-/*\ A common routine called by both non-blocking and blocking GA put calls.
-\*/
+/**
+ *  A common routine called by both non-blocking and blocking GA put calls.
+ */
 #ifdef __crayx1
 #pragma _CRI inline pnga_locate_region
 #endif
@@ -905,11 +906,12 @@ void ngai_put_common(Integer *g_a,
 
 
 /**
- * (NON-BLOCKING) PUT AN N-DIMENSIONAL PATCH OF DATA INTO A GLOBAL ARRAY
+ * (Non-blocking) Put an N-dimensional patch of data into a Global Array
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_nbput = pnga_nbput
 #endif
+
 void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer *nbhandle)
 {
     ngai_put_common(g_a,lo,hi,buf,ld,nbhandle); 
@@ -917,11 +919,12 @@ void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, 
 
 
 /**
- * PUT AN N-DIMENSIONAL PATCH OF DATA INTO A GLOBAL ARRAY
+ * Put an N-dimensional patch of data into a Global Array
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_put = pnga_put
 #endif
+
 void pnga_put(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld)
 {
     ngai_put_common(g_a,lo,hi,buf,ld,NULL); 
@@ -1520,7 +1523,10 @@ Integer lo[2], hi[2];
 #endif
 }
 
-void nga_acc_common(Integer *g_a,
+/**
+ *  A common routine called by both non-blocking and blocking GA acc calls.
+ */
+void ngai_acc_common(Integer *g_a,
                    Integer *lo,
                    Integer *hi,
                    void    *buf,
@@ -1997,91 +2003,51 @@ void nga_acc_common(Integer *g_a,
 #endif
 }
 
-/*\ ACCUMULATE OPERATION FOR A N-DIMENSIONAL PATCH OF GLOBAL ARRAY
- *
- *  g_a += alpha * patch
-\*/
-void FATR nga_acc_(Integer *g_a,
-                   Integer *lo,
-                   Integer *hi,
-                   void    *buf,
-                   Integer *ld,
-                   void    *alpha)
+/**
+ *  Accumulate operation for an N-dimensional patch of a Global Array
+ *       g_a += alpha * patch
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_acc = pnga_acc
+#endif
+
+void pnga_acc(Integer *g_a,
+              Integer *lo,
+              Integer *hi,
+              void    *buf,
+              Integer *ld,
+              void    *alpha)
 {
-    nga_acc_common(g_a,lo,hi,buf,ld,alpha,NULL);
+    ngai_acc_common(g_a,lo,hi,buf,ld,alpha,NULL);
 }
 
-void FATR nga_nbacc_(Integer *g_a,
-                   Integer *lo,
-                   Integer *hi,
-                   void    *buf,
-                   Integer *ld,
-                   void    *alpha,
-                   Integer *nbhndl)
+/**
+ *  (Non-blocking) Accumulate operation for an N-dimensional patch of a Global Array
+ *       g_a += alpha * patch
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_nbacc = pnga_nbacc
+#endif
+
+void pnga_nbacc(Integer *g_a,
+                Integer *lo,
+                Integer *hi,
+                void    *buf,
+                Integer *ld,
+                void    *alpha,
+                Integer *nbhndl)
 {
-    nga_acc_common(g_a,lo,hi,buf,ld,alpha,nbhndl);
+    ngai_acc_common(g_a,lo,hi,buf,ld,alpha,nbhndl);
 }
 
-
-void FATR  ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
-   Integer *g_a, *ilo, *ihi, *jlo, *jhi, *ld;
-   void *buf, *alpha;
-{
-Integer lo[2], hi[2];
-#ifdef ENABLE_TRACE
-   trace_stime_();
+/**
+ * Return a pointer to local data in a Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_access_ptr = pnga_access_ptr
 #endif
 
-#ifdef USE_VAMPIR
-   vampir_begin(GA_ACC,__FILE__,__LINE__);
-#endif
-   lo[0]=*ilo;
-   lo[1]=*jlo;
-   hi[0]=*ihi;
-   hi[1]=*jhi;
-   nga_acc_common(g_a,lo,hi,buf,ld,alpha,NULL);
-
-#ifdef ENABLE_TRACE
-   trace_etime_();
-   op_code = GA_OP_ACC;
-   trace_genrec_(g_a, ilo, ihi, jlo, jhi, &op_code);
-#endif
-#ifdef USE_VAMPIR
-   vampir_end(GA_ACC,__FILE__,__LINE__);
-#endif
-}
-
-void FATR  ga_nbacc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha,nbhndl)
-   Integer *g_a, *ilo, *ihi, *jlo, *jhi, *ld, *nbhndl;
-   void *buf, *alpha;
-{
-Integer lo[2], hi[2];
-#ifdef ENABLE_TRACE
-   trace_stime_();
-#endif
-
-#ifdef USE_VAMPIR
-   vampir_begin(GA_ACC,__FILE__,__LINE__);
-#endif
-   lo[0]=*ilo;
-   lo[1]=*jlo;
-   hi[0]=*ihi;
-   hi[1]=*jhi;
-   nga_acc_common(g_a,lo,hi,buf,ld,alpha,nbhndl);
-
-#ifdef ENABLE_TRACE
-   trace_etime_();
-   op_code = GA_OP_ACC;
-   trace_genrec_(g_a, ilo, ihi, jlo, jhi, &op_code);
-#endif
-#ifdef USE_VAMPIR
-   vampir_end(GA_ACC,__FILE__,__LINE__);
-#endif
-}
-
-/*\ RETURN A POINTER TO LOCAL DATA
-\*/
-void nga_access_ptr(Integer* g_a, Integer lo[], Integer hi[],
+void pnga_access_ptr(Integer* g_a, Integer lo[], Integer hi[],
                       void* ptr, Integer ld[])
 {
 char *lptr;
@@ -2119,7 +2085,11 @@ Integer  ow,i,p_handle;
 
 /*\ RETURN A POINTER TO BEGINNING OF LOCAL DATA BLOCK
 \*/
-void nga_access_block_grid_ptr(Integer* g_a, Integer *index, void* ptr, Integer *ld)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_access_block_grid_ptr = pnga_access_block_grid_ptr
+#endif
+
+void pnga_access_block_grid_ptr(Integer* g_a, Integer *index, void* ptr, Integer *ld)
             /* g_a: array handle [input]
              * index: subscript of a particular block  [input]
              * ptr: pointer to data in block [output]
@@ -2264,9 +2234,15 @@ void nga_access_block_grid_ptr(Integer* g_a, Integer *index, void* ptr, Integer 
   GA_POP_NAME;
 }
 
-/*\ RETURN A POINTER TO BEGINNING OF LOCAL DATA BLOCK
-\*/
-void nga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer *ld)
+/**
+ *  Return a pointer to the beginning of a local data block in a block-cyclic
+ *  data distribution
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_access_block_ptr = pnga_access_block_ptr
+#endif
+
+void pnga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer *ld)
             /* g_a: array handle [input]
              * idx: block index  [input]
              * ptr: pointer to data in block [output]
@@ -2308,17 +2284,22 @@ void nga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer *ld)
     /* find block indices */
     gam_find_block_indices(handle,index,indices);
     /* find pointer */
-    nga_access_block_grid_ptr(g_a, indices, &lptr, ld);
+    pnga_access_block_grid_ptr(g_a, indices, &lptr, ld);
   }
   *(char**)ptr = lptr; 
 
   GA_POP_NAME;
 }
 
-/*\ RETURN A POINTER TO BEGINNING OF LOCAL DATA ON A PROCESSOR CONTAINING
- *  BLOCK-CYCLIC DATA
-\*/
-void nga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Integer *len)
+/**
+ *  Return a pointer to the beginning of local data on a processor containing
+ *  block-cyclic data
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_access_block_segment_ptr = pnga_access_block_segment_ptr
+#endif
+
+void pnga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Integer *len)
             /* g_a:  array handle [input]
              * proc: processor for data [input]
              * ptr:  pointer to data start of data on processor [output]
@@ -2347,10 +2328,15 @@ void nga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Intege
   GA_POP_NAME;
 }
 
-/*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
-\*/
-void FATR nga_access_(Integer* g_a, Integer lo[], Integer hi[],
-                      AccessIndex* index, Integer ld[])
+/**
+ * Provide access to a patch of a Global Array using an index
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_access_idx = pnga_access_idx
+#endif
+
+void pnga_access_idx(Integer* g_a, Integer lo[], Integer hi[],
+                     AccessIndex* index, Integer ld[])
 {
 char     *ptr;
 Integer  handle = GA_OFFSET + *g_a;
@@ -2446,7 +2432,11 @@ unsigned long    lref=0, lptr;
 
 /*\ PROVIDE ACCESS TO AN INDIVIDUAL DATA BLOCK OF A GLOBAL ARRAY
 \*/
-void FATR nga_access_block_(Integer* g_a, Integer* idx, AccessIndex* index, Integer *ld)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_access_block_idx = pnga_access_block_idx
+#endif
+
+void pnga_access_block_idx(Integer* g_a, Integer* idx, AccessIndex* index, Integer *ld)
 {
 char     *ptr;
 Integer  handle = GA_OFFSET + *g_a;
@@ -2463,7 +2453,7 @@ unsigned long    lref=0, lptr;
    if (iblock < 0 || iblock >= GA[handle].block_total)
      pnga_error("block index outside allowed values",iblock);
 
-   nga_access_block_ptr(g_a,&iblock,&ptr,ld);
+   pnga_access_block_ptr(g_a,&iblock,&ptr,ld);
    /*
     * return patch address as the distance elements from the reference address
     *
@@ -2523,10 +2513,16 @@ unsigned long    lref=0, lptr;
 #endif
 }
 
-/*\ PROVIDE ACCESS TO AN INDIVIDUAL DATA BLOCK OF A GLOBAL ARRAY
-\*/
-void FATR nga_access_block_grid_(Integer* g_a, Integer* subscript,
-                                 AccessIndex *index, Integer *ld)
+/**
+ *  Provide access to an individual data block of a Global Array
+ *  with a SCALAPACK type block-cyclic data distribution
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_access_block_grid_idx = pnga_access_block_grid_idx
+#endif
+
+void pnga_access_block_grid_idx(Integer* g_a, Integer* subscript,
+                                AccessIndex *index, Integer *ld)
 {
 char     *ptr;
 Integer  handle = GA_OFFSET + *g_a;
@@ -2544,7 +2540,7 @@ unsigned long    lref=0, lptr;
      if (subscript[i]<0 || subscript[i] >= GA[handle].num_blocks[i]) 
        pnga_error("index outside allowed values",subscript[i]);
 
-   nga_access_block_grid_ptr(g_a,subscript,&ptr,ld);
+   pnga_access_block_grid_ptr(g_a,subscript,&ptr,ld);
    /*
     * return patch address as the distance elements from the reference address
     *
@@ -2606,8 +2602,12 @@ unsigned long    lref=0, lptr;
 
 /*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
 \*/
-void FATR nga_access_block_segment_(Integer* g_a, Integer *proc,
-                      AccessIndex* index, Integer *len)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_access_block_segment_idx = pnga_access_block_segment_idx
+#endif
+
+void pnga_access_block_segment_idx(Integer* g_a, Integer *proc,
+                                        AccessIndex* index, Integer *len)
 {
 char     *ptr;
 Integer  handle = GA_OFFSET + *g_a;
@@ -2628,7 +2628,7 @@ unsigned long    lref=0, lptr;
     *  that are elements of COMMON in the the mafdecls.h include file
     * .in C we need both the index and the pointer
     */
-   nga_access_block_segment_ptr(g_a, proc, &ptr, len);
+   pnga_access_block_segment_ptr(g_a, proc, &ptr, len);
 
    elemsize = (unsigned long)GA[handle].elemsize;
 
@@ -2680,32 +2680,6 @@ unsigned long    lref=0, lptr;
    vampir_end(NGA_ACCESS_BLOCK_SEGMENT,__FILE__,__LINE__);
 #endif
 }
-
-/*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
-\*/
-void FATR ga_access_(g_a, ilo, ihi, jlo, jhi, index, ld)
-   Integer *g_a, *ilo, *ihi, *jlo, *jhi, *ld;
-   AccessIndex *index;
-{
-Integer lo[2], hi[2],ndim=pnga_ndim(g_a);
-
-     if(ndim != 2) 
-        pnga_error("ga_access: 2D API cannot be used for array dimension",ndim);
-
-#ifdef USE_VAMPIR
-     vampir_begin(GA_ACCESS,__FILE__,__LINE__);
-#endif
-     lo[0]=*ilo;
-     lo[1]=*jlo;
-     hi[0]=*ihi;
-     hi[1]=*jhi;
-     nga_access_(g_a,lo,hi,index,ld);
-#ifdef USE_VAMPIR
-     vampir_end(GA_ACCESS,__FILE__,__LINE__);
-#endif
-} 
-
-
 
 /*\ RELEASE ACCESS TO A PATCH OF A GLOBAL ARRAY
 \*/
@@ -2811,7 +2785,7 @@ int use_blocks;
     Integer lo[2];
     lo[0] = ilo;
     lo[1] = jlo;
-    nga_access_block_ptr(&g_a, &iproc, &ptr_ref, &ldp);
+    pnga_access_block_ptr(&g_a, &iproc, &ptr_ref, &ldp);
     nga_release_block_(&g_a, &iproc);
     if (GA[handle].block_sl_flag == 0) {
       proc = proc%pnga_nnodes();
@@ -3085,7 +3059,7 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
         jhi[kk] = hi[1];
 
         /* get address of the first element owned by proc */
-        nga_access_block_ptr(g_a, &iproc, &(ptr_ref[kk]), &(ldp[kk]));
+        pnga_access_block_ptr(g_a, &iproc, &(ptr_ref[kk]), &(ldp[kk]));
         nga_release_block_(g_a, &iproc);
       }
     }
@@ -3474,7 +3448,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             iproc = proc[k];
             ptr_dst[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, &iproc, lo, hi);
-            nga_access_block_ptr(g_a, &iproc, &(ptr_src[map[iproc]][count[iproc]]), ld);
+            pnga_access_block_ptr(g_a, &iproc, &(ptr_src[map[iproc]][count[iproc]]), ld);
             nga_release_block_(g_a, &iproc);
             /* calculate remaining offset */
             offset = 0;
@@ -3581,7 +3555,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, &iproc, lo, hi);
-            nga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
+            pnga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
             nga_release_block_(g_a, &iproc);
             /* calculate remaining offset */
             offset = 0;
@@ -3697,7 +3671,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, &iproc, lo, hi);
-            nga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
+            pnga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
             nga_release_block_(g_a, &iproc);
             /* calculate remaining offset */
             offset = 0;
@@ -4030,7 +4004,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
             iproc = proc[k];
             ptr_dst[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, &iproc, lo, hi);
-            nga_access_block_ptr(g_a, &iproc, &(ptr_src[map[iproc]][count[iproc]]), ld);
+            pnga_access_block_ptr(g_a, &iproc, &(ptr_src[map[iproc]][count[iproc]]), ld);
             nga_release_block_(g_a, &iproc);
             /* calculate remaining offset */
             offset = 0;
@@ -4155,7 +4129,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, &iproc, lo, hi);
-            nga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
+            pnga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
             nga_release_block_(g_a, &iproc);
             /* calculate remaining offset */
             offset = 0;
@@ -4289,7 +4263,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, &iproc, lo, hi);
-            nga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
+            pnga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
             nga_release_block_(g_a, &iproc);
             /* calculate remaining offset */
             offset = 0;
@@ -4673,7 +4647,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         jhi[kk] = hi[1];
 
         /* get address of the first element owned by proc */
-        nga_access_block_ptr(g_a, &iproc, &(ptr_ref[kk]), &(ldp[kk]));
+        pnga_access_block_ptr(g_a, &iproc, &(ptr_ref[kk]), &(ldp[kk]));
         nga_release_block_(g_a, &iproc);
       }
     }
@@ -4821,7 +4795,7 @@ void *pval;
       Integer lo[MAXDIM], hi[MAXDIM];
       Integer j, jtot, last, offset;
       pnga_distribution(g_a, &proc, lo, hi);
-      nga_access_block_ptr(g_a, &proc, (char**)&ptr, ldp);
+      pnga_access_block_ptr(g_a, &proc, (char**)&ptr, ldp);
       nga_release_block_(g_a, &proc);
       offset = 0;
       last = ndim - 1;

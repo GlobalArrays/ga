@@ -217,7 +217,7 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
               nga_put_(g_a, lo, hi, buf, ld);
               break;
           case PERIODIC_ACC:    
-              nga_acc_(g_a, lo, hi, buf, ld, alpha);
+              pnga_acc(g_a, lo, hi, buf, ld, alpha);
               break;
           default:
               pnga_error("This operation is invalid ", 0L);
@@ -258,7 +258,7 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
                        (char *)buf+my_offset*GAsizeofM(type), ld);
               break;
           case PERIODIC_ACC:
-              nga_acc_(g_a, lop, hip,
+              pnga_acc(g_a, lop, hip,
                        (char *)buf+my_offset*GAsizeofM(type), ld, alpha);
               break;
           default:

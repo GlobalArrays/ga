@@ -415,7 +415,7 @@ register Integer i;
         if(lop < *lo)lop = *lo;
         if(hip > *hi)hip = *hi;
         off = lop - *lo;
-        nga_access_ptr(g_a, &lop, &hip, &ptr, &ld);
+        pnga_access_ptr(g_a, &lop, &hip, &ptr, &ld);
         
         switch (type){
           int *ia;
@@ -522,7 +522,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
       
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */ 
 
-        nga_access_ptr(g_sbit, &lop, &hip, &ia, &ld);
+        pnga_access_ptr(g_sbit, &lop, &hip, &ia, &ld);
         elems = hip - lop + 1;
         /* find last bit set on given process (store as global index) */
         for(i=0; i<elems; i++) {
@@ -561,8 +561,8 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
        if(hip > *hi) hip = *hi;
       
        /* access the data. g_a is source, g_b is destination */
-       nga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
-       nga_access_ptr(g_a, &lop, &hip, &ptr_a, &ld);
+       pnga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
+       pnga_access_ptr(g_a, &lop, &hip, &ptr_a, &ld);
 
        /* find start bit corresponding to my patch */
        /* case 1: sbit set for the first patch element and check earlier elems*/
@@ -613,8 +613,8 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
     /* fix up scan_add values for segments that cross processor boundaries */
     if (add) {
       Integer ichk = 1;
-      nga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
-      if (*excl) nga_access_ptr(g_a, &lop, &hip, &ptr_a, &ld);
+      pnga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
+      if (*excl) pnga_access_ptr(g_a, &lop, &hip, &ptr_a, &ld);
       ioff = hip - lop;
       switch (type) {
         int *ilast;
@@ -906,7 +906,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
         if(*hi <lop || hip <*lo); /* we have no elements to update */
         else{
 
-          nga_access_ptr(g_sbit, &lop, &hip, &ptr, &elems);
+          pnga_access_ptr(g_sbit, &lop, &hip, &ptr, &elems);
           ia    = (Integer*)ptr;
           elems = hip -lop+1;
 
@@ -935,7 +935,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
      Integer start=lop+first; /* the first element for which sbit is set */
      Integer dst_lo =myplace+1, dst_hi = myplace + counter;
 
-     nga_access_ptr(g_a, &start, &hip, &ptr, &crap);
+     pnga_access_ptr(g_a, &start, &hip, &ptr, &crap);
 
      buf = ga_malloc(counter, type, "ga pack buf");
 
@@ -1054,7 +1054,7 @@ Integer dims[2], nproc=pnga_nnodes(),chunk[2];
       Integer *myoff, bin;
 
       /* get offset values stored on my processor to first and last bin */
-      nga_access_ptr(g_off, &lobin, &hibin, &myoff, &crap);
+      pnga_access_ptr(g_off, &lobin, &hibin, &myoff, &crap);
       first_off = myoff[0]; last_off = myoff[hibin-lobin];
 /*
       nga_get_(g_off,&lobin,&lobin,&first_off,&lo);
@@ -1152,7 +1152,7 @@ Integer g_range;
         nga_get_(g_cnt,bin_range,bin_range+1,bin_cnt,&nbin);
 
         /* get access to local bin elements */
-        nga_access_ptr(g_bin, &lo, &hi, &ptr, &crap);
+        pnga_access_ptr(g_bin, &lo, &hi, &ptr, &crap);
         
         for(i=0;i<nbin;i++){ 
             int elems =(int) bin_cnt[i];

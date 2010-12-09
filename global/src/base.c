@@ -3042,7 +3042,7 @@ void pnga_randomize(Integer *g_a, void* val)
     }
   } else {
     Integer I_elems = (Integer)elems;
-    nga_access_block_segment_ptr(g_a,&GAme,&ptr,&I_elems);
+    pnga_access_block_segment_ptr(g_a,&GAme,&ptr,&I_elems);
     elems = (C_Long)I_elems;
     switch (GA[handle].type){
 /*
@@ -3151,7 +3151,7 @@ void pnga_fill(Integer *g_a, void* val)
     }
   } else {
     Integer I_elems = (Integer)elems;
-    nga_access_block_segment_ptr(g_a,&GAme,&ptr,&I_elems);
+    pnga_access_block_segment_ptr(g_a,&GAme,&ptr,&I_elems);
     elems = (C_Long)I_elems;
     switch (GA[handle].type){
       case C_DCPL: 
@@ -4087,8 +4087,8 @@ void pnga_merge_mirrored(Integer *g_a)
       }
     }
     if (chk) {
-      nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-      nga_acc_(&_ga_tmp, lo, hi, ptr_a, ld, one);
+      pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+      pnga_acc(&_ga_tmp, lo, hi, ptr_a, ld, one);
     }
     /* copy data back to original global array */
     ga_sync_();
@@ -4210,7 +4210,7 @@ void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
     }
 
     /* get pointer to locally held distribution */
-    nga_access_ptr(g_a, mlo, mhi, &src_data_ptr, mld);
+    pnga_access_ptr(g_a, mlo, mhi, &src_data_ptr, mld);
 
     /* find indices in distributed array corresponding to this patch */
     for (i=0; i<adim; i++) {
@@ -4242,7 +4242,7 @@ void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
     } else {
       pnga_error("Type not supported",type);
     }
-    nga_acc_(g_b, dlo, dhi, src_data_ptr, mld, one);
+    pnga_acc(g_b, dlo, dhi, src_data_ptr, mld, one);
   }
   if (local_sync_end) ga_sync_();
   GA_POP_NAME;

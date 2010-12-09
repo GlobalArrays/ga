@@ -268,9 +268,9 @@ void ngai_copy_patch(char *trans,
     }
     if(has_intersection){
       if (use_put) {
-        nga_access_ptr(g_a, los, his, &src_data_ptr, ld); 
+        pnga_access_ptr(g_a, los, his, &src_data_ptr, ld); 
       } else {
-        nga_access_ptr(g_b, los, his, &src_data_ptr, ld); 
+        pnga_access_ptr(g_b, los, his, &src_data_ptr, ld); 
       }
 
       /* calculate the number of elements in the patch that I own */
@@ -547,7 +547,7 @@ void ngai_copy_patch(char *trans,
               hid[j] = his[j];
             }
             if (ngai_patch_intersect(alo,ahi,los,his,andim)) {
-              nga_access_block_ptr(g_a, &i, &src_data_ptr, ld);
+              pnga_access_block_ptr(g_a, &i, &src_data_ptr, ld);
               offset = 0;
               last = andim - 1;
               jtot = 1;
@@ -612,7 +612,7 @@ void ngai_copy_patch(char *trans,
               hid[j] = his[j];
             }
             if (ngai_patch_intersect(alo,ahi,los,his,andim)) {
-              nga_access_block_grid_ptr(g_a, index, &src_data_ptr, ld);
+              pnga_access_block_grid_ptr(g_a, index, &src_data_ptr, ld);
               offset = 0;
               last = andim - 1;
               jtot = 1;
@@ -666,7 +666,7 @@ void ngai_copy_patch(char *trans,
         /* Array b is block-cyclic distributed */
         pnga_distribution(g_a, &me_a, los, his); 
         if (ngai_patch_intersect(alo,ahi,los,his,andim)) {
-          nga_access_ptr(g_a, los, his, &src_data_ptr, ld); 
+          pnga_access_ptr(g_a, los, his, &src_data_ptr, ld); 
           ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
           ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
           nga_put_(g_b, lod, hid, src_data_ptr, ld);
@@ -687,7 +687,7 @@ void ngai_copy_patch(char *trans,
               hid[j] = his[j];
             }
             if (ngai_patch_intersect(blo,bhi,los,his,andim)) {
-              nga_access_block_ptr(g_b, &i, &src_data_ptr, ld);
+              pnga_access_block_ptr(g_b, &i, &src_data_ptr, ld);
               offset = 0;
               last = bndim - 1;
               jtot = 1;
@@ -752,7 +752,7 @@ void ngai_copy_patch(char *trans,
               hid[j] = his[j];
             }
             if (ngai_patch_intersect(blo,bhi,los,his,andim)) {
-              nga_access_block_grid_ptr(g_b, index, &src_data_ptr, ld);
+              pnga_access_block_grid_ptr(g_b, index, &src_data_ptr, ld);
               offset = 0;
               last = bndim - 1;
               jtot = 1;
@@ -806,7 +806,7 @@ void ngai_copy_patch(char *trans,
         /* Array a is block-cyclic distributed */
         pnga_distribution(g_b, &me_b, los, his); 
         if (ngai_patch_intersect(blo,bhi,los,his,bndim)) {
-          nga_access_ptr(g_b, los, his, &src_data_ptr, ld); 
+          pnga_access_ptr(g_b, los, his, &src_data_ptr, ld); 
           ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
           ngai_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
           nga_get_(g_a, lod, hid, src_data_ptr, ld);
@@ -1130,8 +1130,8 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
 
     /*  determine subsets of my patches to access  */
     if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
-      nga_access_ptr(&g_A, loA, hiA, &A_ptr, ldA);
-      nga_access_ptr(&g_B, loA, hiA, &B_ptr, ldB);
+      pnga_access_ptr(&g_A, loA, hiA, &A_ptr, ldA);
+      pnga_access_ptr(&g_B, loA, hiA, &B_ptr, ldB);
 
       ngai_dot_local_patch(atype, andim, loA, hiA, ldA, A_ptr, B_ptr,
           &alen, retval);
@@ -1158,8 +1158,8 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
       /* A[83:125,1:1]  <==> B[83:125] */
       if(andim > bndim) andim = bndim; /* need more work */
       if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
-        nga_access_ptr(&g_A, loA, hiA, &A_ptr, ldA);
-        nga_access_ptr(&g_B, loA, hiA, &B_ptr, ldB);
+        pnga_access_ptr(&g_A, loA, hiA, &A_ptr, ldA);
+        pnga_access_ptr(&g_B, loA, hiA, &B_ptr, ldB);
 
         ngai_dot_local_patch(atype, andim, loA, hiA, ldA, A_ptr, B_ptr,
             &alen, retval);
@@ -1181,8 +1181,8 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
             hi[j] = hiA[j];
           }
           if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
-            nga_access_block_ptr(&g_A, &i, &A_ptr, ldA);
-            nga_access_block_ptr(&g_B, &i, &B_ptr, ldB);
+            pnga_access_block_ptr(&g_A, &i, &A_ptr, ldA);
+            pnga_access_block_ptr(&g_B, &i, &B_ptr, ldB);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -1257,8 +1257,8 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
             hi[j] = hiA[j];
           }
           if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
-            nga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
-            nga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
+            pnga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
+            pnga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -1693,7 +1693,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
 
       /* get data_ptr to corner of patch */
       /* ld are leading dimensions INCLUDING ghost cells */
-      nga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
+      pnga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
 
       /* set all values in patch to *val */
       ngai_set_patch_value(type, ndim, loA, hiA, ld, data_ptr, val);
@@ -1723,7 +1723,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          nga_access_block_ptr(g_a, &i, &data_ptr, ld);
+          pnga_access_block_ptr(g_a, &i, &data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -1806,7 +1806,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          nga_access_block_grid_ptr(g_a, index, &data_ptr, ld);
+          pnga_access_block_grid_ptr(g_a, index, &data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -2046,7 +2046,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
 
     /* determine subset of my patch to access */
     if (ngai_patch_intersect(lo, hi, loA, hiA, ndim)){
-      nga_access_ptr(g_a, loA, hiA, &src_data_ptr, ld);
+      pnga_access_ptr(g_a, loA, hiA, &src_data_ptr, ld);
 
       ngai_scale_patch_value(type, ndim, loA, hiA, ld, src_data_ptr, alpha);
 
@@ -2075,7 +2075,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
 
           /* get src_data_ptr to corner of patch */
           /* ld are leading dimensions INCLUDING ghost cells */
-          nga_access_block_ptr(g_a, &i, &src_data_ptr, ld);
+          pnga_access_block_ptr(g_a, &i, &src_data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -2158,7 +2158,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          nga_access_block_grid_ptr(g_a, index, &src_data_ptr, ld);
+          pnga_access_block_grid_ptr(g_a, index, &src_data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -2504,9 +2504,9 @@ void *alpha, *beta;
 
     /*  determine subsets of my patches to access  */
     if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
-      nga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
-      nga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
-      nga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
+      pnga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
+      pnga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
+      pnga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
 
       ngai_add_patch_values(atype, alpha, beta, cndim,
           loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
@@ -2538,9 +2538,9 @@ void *alpha, *beta;
       if(andim > bndim) cndim = bndim;
       if(andim < bndim) cndim = andim;
       if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
-        nga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
-        nga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
-        nga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
+        pnga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
+        pnga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
+        pnga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
 
         ngai_add_patch_values(atype, alpha, beta, cndim,
             loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
@@ -2564,9 +2564,9 @@ void *alpha, *beta;
             hid[j] = hiC[j];
           }
           if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)) {
-            nga_access_block_ptr(&g_A, &idx, &A_ptr, ldA);
-            nga_access_block_ptr(&g_B, &idx, &B_ptr, ldB);
-            nga_access_block_ptr( g_c, &idx, &C_ptr, ldC);
+            pnga_access_block_ptr(&g_A, &idx, &A_ptr, ldA);
+            pnga_access_block_ptr(&g_B, &idx, &B_ptr, ldB);
+            pnga_access_block_ptr( g_c, &idx, &C_ptr, ldC);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -2652,9 +2652,9 @@ void *alpha, *beta;
             hid[j] = hiC[j];
           }
           if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)) {
-            nga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
-            nga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
-            nga_access_block_grid_ptr( g_c, index, &C_ptr, ldC);
+            pnga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
+            pnga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
+            pnga_access_block_grid_ptr( g_c, index, &C_ptr, ldC);
 
             /* evaluate offsets for system */
             offset = 0;

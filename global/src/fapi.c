@@ -1179,6 +1179,87 @@ Integer FATR nga_verify_handle_(Integer *g_a)
 
 /* Routines from onesided.c */
 
+#define ga_acc_ F77_FUNC_(ga_acc,GA_ACC)
+void FATR ga_acc_(Integer *g_a, Integer *ilo, Integer *ihi,
+                  Integer *jlo, Integer *jhi, void *buf, Integer *ld,
+                  void *alpha)
+{
+    Integer lo[2], hi[2];
+    lo[0]=*ilo;
+    lo[1]=*jlo;
+    hi[0]=*ihi;
+    hi[1]=*jhi;
+    wnga_acc(g_a, lo, hi, buf, ld, alpha);
+}
+
+#define nga_acc_ F77_FUNC_(nga_acc,NGA_ACC)
+void FATR nga_acc_(Integer *g_a, Integer *lo, Integer *hi,
+                   void *buf, Integer *ld, void *alpha)
+{
+    wnga_acc(g_a, lo, hi, buf, ld, alpha);
+}
+
+#define ga_nbacc_ F77_FUNC_(ga_nbacc,GA_NBACC)
+void FATR ga_nbacc_(Integer *g_a, Integer *ilo, Integer *ihi,
+                  Integer *jlo, Integer *jhi, void *buf, Integer *ld,
+                  void *alpha, Integer *nbhandle)
+{
+    Integer lo[2], hi[2];
+    lo[0]=*ilo;
+    lo[1]=*jlo;
+    hi[0]=*ihi;
+    hi[1]=*jhi;
+    wnga_nbacc(g_a, lo, hi, buf, ld, alpha, nbhandle);
+}
+
+#define nga_nbacc_ F77_FUNC_(nga_nbacc,NGA_NBACC)
+void FATR nga_nbacc_(Integer *g_a, Integer *lo, Integer *hi,
+                   void *buf, Integer *ld, void *alpha, Integer *nbhandle)
+{
+    wnga_nbacc(g_a, lo, hi, buf, ld, alpha, nbhandle);
+}
+
+#define ga_access_ F77_FUNC_(ga_access,GA_ACCESS)
+void FATR ga_access_(Integer *g_a, Integer *ilo, Integer *ihi,
+                     Integer *jlo, Integer *jhi, AccessIndex* index,
+                     Integer *ld)
+{
+    Integer lo[2], hi[2];
+    lo[0]=*ilo;
+    lo[1]=*jlo;
+    hi[0]=*ihi;
+    hi[1]=*jhi;
+    wnga_access_idx(g_a, lo, hi, index, ld);
+}
+
+#define nga_access_ F77_FUNC_(nga_access,NGA_ACCESS)
+void FATR nga_access_(Integer* g_a, Integer lo[], Integer hi[],
+                      AccessIndex* index, Integer ld[])
+{
+    wnga_access_idx(g_a, lo, hi, index, ld);
+}
+
+#define nga_access_block_ F77_FUNC_(nga_access_block,NGA_ACCESS_BLOCK)
+void FATR nga_access_block_(Integer* g_a, Integer* idx,
+                            AccessIndex* index, Integer *ld)
+{
+  wnga_access_block_idx(g_a, idx, index, ld);
+}
+
+#define nga_access_block_grid_ F77_FUNC_(nga_access_block_grid,NGA_ACCESS_BLOCK_GRID)
+void FATR nga_access_block_grid_(Integer* g_a, Integer* subscript,
+                                 AccessIndex *index, Integer *ld)
+{
+  wnga_access_block_grid_idx(g_a, subscript, index, ld);
+}
+
+#define nga_access_block_segment_ F77_FUNC_(nga_access_block_segment,NGA_ACCESS_BLOCK_SEGMENT)
+void FATR nga_access_block_segment_(Integer* g_a, Integer *proc,
+                                    AccessIndex* index, Integer *len)
+{
+  wnga_access_block_segment_idx(g_a, proc, index, len);
+}
+
 #define ga_nbput_ F77_FUNC_(ga_nbput,GA_NBPUT)
 void FATR ga_nbput_(Integer *g_a, Integer *ilo, Integer *ihi,
                     Integer *jlo, Integer *jhi, void *buf,

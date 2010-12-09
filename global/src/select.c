@@ -177,7 +177,7 @@ void FATR nga_select_elem_(
 
       /******************* calculate local result ************************/
       void    *ptr;
-      nga_access_ptr(g_a, lo, hi, &ptr, ld);
+      pnga_access_ptr(g_a, lo, hi, &ptr, ld);
       GET_ELEMS(ndim,lo,hi,ld,&elems);
       participate =1;
 
@@ -198,7 +198,7 @@ void FATR nga_select_elem_(
     void *ptr;
     Integer j, offset, jtot, upper;
     Integer nproc = pnga_nnodes();
-    nga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
+    pnga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
     if (elems > 0) {
       participate =1;
 

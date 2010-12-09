@@ -395,109 +395,119 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
      short int need_scaling;
 {
 
-    Integer me = pnga_nodeid();
-    Integer get_new_B, loC[2]={0,0}, hiC[2]={0,0}, ld[2];
-    Integer i0, i1, j0, j1;
-    Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim, adim, bdim=0, cdim;
-    int istart, jstart, kstart, iend, jend, kend;
-    short int do_put=UNSET, single_task_flag=UNSET;
-    DoubleComplex ONE;
-    SingleComplex ONE_CF;
-    ONE.real =1.; ONE.imag =0.; 
-    ONE_CF.real =1.; ONE_CF.imag =0.; 
+  Integer me = pnga_nodeid();
+  Integer get_new_B, loC[2]={0,0}, hiC[2]={0,0}, ld[2];
+  Integer i0, i1, j0, j1;
+  Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim, adim, bdim=0, cdim;
+  int istart, jstart, kstart, iend, jend, kend;
+  short int do_put=UNSET, single_task_flag=UNSET;
+  DoubleComplex ONE;
+  SingleComplex ONE_CF;
+  ONE.real =1.; ONE.imag =0.; 
+  ONE_CF.real =1.; ONE_CF.imag =0.; 
+  Integer clo[2], chi[2];
 
-    GA_PUSH_NAME("ga_matmul_shmem");
+  GA_PUSH_NAME("ga_matmul_shmem");
 
-    /* to skip accumulate and exploit data locality:
-       get chunks according to "C" matrix distribution*/
-    pnga_distribution(g_c, &me, loC, hiC);
-    istart = loC[0]-1; iend = hiC[0]-1;
-    jstart = loC[1]-1; jend = hiC[1]-1;
-    kstart = 0       ; kend = *ajhi-*ajlo;
+  /* to skip accumulate and exploit data locality:
+     get chunks according to "C" matrix distribution*/
+  pnga_distribution(g_c, &me, loC, hiC);
+  istart = loC[0]-1; iend = hiC[0]-1;
+  jstart = loC[1]-1; jend = hiC[1]-1;
+  kstart = 0       ; kend = *ajhi-*ajlo;
 
-    if(DIRECT_ACCESS_OPT_FLAG) {
-       /* check if there is only one task. If so, then it is contiguous */
-       if( (iend-istart+1 <= Ichunk) && (jend-jstart+1 <= Jchunk) &&
-	   (kend-kstart+1 <= Kchunk) ) {
-	  single_task_flag = SET;
-	  nga_access_ptr(g_c, loC, hiC, &c, ld);
-       }
+  if(DIRECT_ACCESS_OPT_FLAG) {
+    /* check if there is only one task. If so, then it is contiguous */
+    if( (iend-istart+1 <= Ichunk) && (jend-jstart+1 <= Jchunk) &&
+        (kend-kstart+1 <= Kchunk) ) {
+      single_task_flag = SET;
+      pnga_access_ptr(g_c, loC, hiC, &c, ld);
     }
+  }
 
-    /* loop through columns of g_c patch */
-    for(jlo = jstart; jlo <= jend; jlo += Jchunk) { 
-       jhi  = GA_MIN(jend, jlo+Jchunk-1);
-       jdim = jhi - jlo +1;
-     
-       /* if beta=0,then for first shot we can do put,instead of accumulate */
-       if(need_scaling == UNSET) do_put = SET;
-   
-       /* loop cols of g_a patch : loop rows of g_b patch*/
-       for(klo = kstart; klo <= kend; klo += Kchunk) { 
-	  khi = GA_MIN(kend, klo+Kchunk-1);
-	  kdim= khi - klo +1;
-	  get_new_B = TRUE; /* Each pass thru' outer 2 loops means we 
-			       need a different patch of B.*/
-	  /*loop through rows of g_c patch */
-	  for(ilo = istart; ilo <= iend; ilo += Ichunk){ 
-	     ihi = GA_MIN(iend, ilo+Ichunk-1);
-	     idim= cdim = ihi - ilo +1;
-	 
-	     /* STEP1(a): get matrix "A" chunk */
-	     i0= *ailo+ilo; i1= *ailo+ihi;
-	     j0= *ajlo+klo; j1= *ajlo+khi;
-	     if (*transa == 'n' || *transa == 'N'){
-		adim=idim; ga_get_(g_a, &i0, &i1, &j0, &j1, a, &idim);
-	     }else{
-		adim=kdim; ga_get_(g_a, &j0, &j1, &i0, &i1, a, &kdim);
-	     }
+  /* loop through columns of g_c patch */
+  for(jlo = jstart; jlo <= jend; jlo += Jchunk) { 
+    jhi  = GA_MIN(jend, jlo+Jchunk-1);
+    jdim = jhi - jlo +1;
 
-	     /* STEP1(b): get matrix "B" chunk*/
-	     if(get_new_B) {/*Avoid rereading B if same patch as last time*/
-		i0= *bilo+klo; i1= *bilo+khi;
-		j0= *bjlo+jlo; j1= *bjlo+jhi;
-		if (*transb == 'n' || *transb == 'N'){ 
-		   bdim=kdim; ga_get_(g_b, &i0, &i1, &j0, &j1, b, &kdim);  
-		}else {
-		   bdim=jdim; ga_get_(g_b, &j0, &j1, &i0, &i1, b, &jdim);
-		}
-		get_new_B = FALSE; /* Until J or K change again */
-	     }
-	 
-	     /* STEP2: Do the sequential matrix multiply - i.e.BLAS dgemm */
-	     GAI_DGEMM(atype, transa, transb, idim, jdim, kdim, alpha, 
-		       a, adim, b, bdim, c, cdim);
+    /* if beta=0,then for first shot we can do put,instead of accumulate */
+    if(need_scaling == UNSET) do_put = SET;
 
-	     /* STEP3: put/accumulate into "C" matrix */
-	     i0= *cilo+ilo; i1= *cilo+ihi;   
-	     j0= *cjlo+jlo; j1= *cjlo+jhi;	 
-	     /* if single_task_flag is SET (i.e =1), then there is no need to 
-		update "C" matrix, as we use pointer directly in GAI_DGEMM */
-	     if(single_task_flag != SET) {
-		switch(atype) {
-		   case C_FLOAT:
-		   case C_SCPL:
-		      if(do_put==SET) /* i.e.beta == 0.0 */
-			 ga_put_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim);
-		      else
-			 ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim, 
-				 &ONE_CF);
-		      break;
-		   default:
-		      if(do_put==SET) /* i.e.beta == 0.0 */
-			 ga_put_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c,
-				 &cdim);
-		      else
-			 ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c,
-				 &cdim, (DoublePrecision*)&ONE);
-		      break;
-		}
-	     }
-	  }
-	  do_put = UNSET; /* In the second loop, accumulate should be done */
-       }
+    /* loop cols of g_a patch : loop rows of g_b patch*/
+    for(klo = kstart; klo <= kend; klo += Kchunk) { 
+      khi = GA_MIN(kend, klo+Kchunk-1);
+      kdim= khi - klo +1;
+      get_new_B = TRUE; /* Each pass thru' outer 2 loops means we 
+                           need a different patch of B.*/
+      /*loop through rows of g_c patch */
+      for(ilo = istart; ilo <= iend; ilo += Ichunk){ 
+        ihi = GA_MIN(iend, ilo+Ichunk-1);
+        idim= cdim = ihi - ilo +1;
+
+        /* STEP1(a): get matrix "A" chunk */
+        i0= *ailo+ilo; i1= *ailo+ihi;
+        j0= *ajlo+klo; j1= *ajlo+khi;
+        if (*transa == 'n' || *transa == 'N'){
+          adim=idim; ga_get_(g_a, &i0, &i1, &j0, &j1, a, &idim);
+        }else{
+          adim=kdim; ga_get_(g_a, &j0, &j1, &i0, &i1, a, &kdim);
+        }
+
+        /* STEP1(b): get matrix "B" chunk*/
+        if(get_new_B) {/*Avoid rereading B if same patch as last time*/
+          i0= *bilo+klo; i1= *bilo+khi;
+          j0= *bjlo+jlo; j1= *bjlo+jhi;
+          if (*transb == 'n' || *transb == 'N'){ 
+            bdim=kdim; ga_get_(g_b, &i0, &i1, &j0, &j1, b, &kdim);  
+          }else {
+            bdim=jdim; ga_get_(g_b, &j0, &j1, &i0, &i1, b, &jdim);
+          }
+          get_new_B = FALSE; /* Until J or K change again */
+        }
+
+        /* STEP2: Do the sequential matrix multiply - i.e.BLAS dgemm */
+        GAI_DGEMM(atype, transa, transb, idim, jdim, kdim, alpha, 
+            a, adim, b, bdim, c, cdim);
+
+        /* STEP3: put/accumulate into "C" matrix */
+        i0= *cilo+ilo; i1= *cilo+ihi;   
+        j0= *cjlo+jlo; j1= *cjlo+jhi;	 
+        /* if single_task_flag is SET (i.e =1), then there is no need to 
+           update "C" matrix, as we use pointer directly in GAI_DGEMM */
+        if(single_task_flag != SET) {
+          switch(atype) {
+            case C_FLOAT:
+            case C_SCPL:
+              if(do_put==SET) /* i.e.beta == 0.0 */
+                ga_put_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim);
+              else {
+                clo[0] = i0;
+                clo[1] = j0;
+                chi[0] = i1;
+                chi[1] = j1;
+                pnga_acc(g_c, clo, chi, (float*)c, &cdim, &ONE_CF);
+              }
+              break;
+            default:
+              if(do_put==SET) /* i.e.beta == 0.0 */
+                ga_put_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c,
+                    &cdim);
+              else {
+                clo[0] = i0;
+                clo[1] = j0;
+                chi[0] = i1;
+                chi[1] = j1;
+                pnga_acc(g_c, clo, chi, (DoublePrecision*)c,
+                    &cdim, (DoublePrecision*)&ONE);
+              }
+              break;
+          }
+        }
+      }
+      do_put = UNSET; /* In the second loop, accumulate should be done */
     }
-    GA_POP_NAME;
+  }
+  GA_POP_NAME;
 }
 
 
@@ -598,225 +608,234 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
      DoubleComplex **a_ar, **b_ar, **c_ar;
      short int need_scaling, irregular;
 {
-  
-    Integer me= pnga_nodeid();
-    Integer get_new_B=TRUE, i0, i1, j0, j1;
-    Integer idim, jdim, kdim;
-    Integer k, adim=0, bdim, cdim, adim_next, bdim_next;
-    Integer clo[2], chi[2], loC[2]={1,1}, hiC[2]={1,1}, ld[2];
-    int max_tasks=0, shiftA=0, shiftB=0;
-    int currA, nextA, currB, nextB=0; /* "current" and "next" task Ids */
-    task_list_t taskListA[MAX_CHUNKS], taskListB[MAX_CHUNKS], state; 
-    short int do_put=UNSET, single_task_flag=UNSET, chunks_left=0;
-    DoubleComplex ONE, *a, *b, *c;
-    SingleComplex ONE_CF;
-    int offset=0, gTaskId=0;
-    int numblocks=0, has_more_blocks=1;
-    Integer ctype, cndim, cdims[2];
-    Integer iblock, proc_index[2], index[2];
-    Integer blocks[2], block_dims[2], topology[2];
-    
-    GA_PUSH_NAME("ga_matmul_regular");
-    if(irregular) pnga_error("irregular flag set", 0L);
 
-    init_task_list(&state);
+  Integer me= pnga_nodeid();
+  Integer get_new_B=TRUE, i0, i1, j0, j1;
+  Integer idim, jdim, kdim;
+  Integer k, adim=0, bdim, cdim, adim_next, bdim_next;
+  Integer clo[2], chi[2], loC[2]={1,1}, hiC[2]={1,1}, ld[2];
+  int max_tasks=0, shiftA=0, shiftB=0;
+  int currA, nextA, currB, nextB=0; /* "current" and "next" task Ids */
+  task_list_t taskListA[MAX_CHUNKS], taskListB[MAX_CHUNKS], state; 
+  short int do_put=UNSET, single_task_flag=UNSET, chunks_left=0;
+  DoubleComplex ONE, *a, *b, *c;
+  SingleComplex ONE_CF;
+  int offset=0, gTaskId=0;
+  int numblocks=0, has_more_blocks=1;
+  Integer ctype, cndim, cdims[2];
+  Integer iblock, proc_index[2], index[2];
+  Integer blocks[2], block_dims[2], topology[2];
+  Integer alo[2], ahi[2];
+
+  GA_PUSH_NAME("ga_matmul_regular");
+  if(irregular) pnga_error("irregular flag set", 0L);
+
+  init_task_list(&state);
 
 #if DEBUG_
-    if(me==0) { printf("@@ga_matmul_regular:m,n,k=%ld %ld %ld\n",*aihi-*ailo+1,
-		       *bjhi-*bjlo+1,*ajhi-*ajlo+1);  fflush(stdout); }
+  if(me==0) { printf("@@ga_matmul_regular:m,n,k=%ld %ld %ld\n",*aihi-*ailo+1,
+      *bjhi-*bjlo+1,*ajhi-*ajlo+1);  fflush(stdout); }
 #endif
 
-    ONE.real =1.;    ONE.imag =0.;   
-    ONE_CF.real =1.; ONE_CF.imag =0.;   
-    clo[0] = *cilo; chi[0] = *cihi;
-    clo[1] = *cjlo; chi[1] = *cjhi;
-    k = *ajhi - *ajlo +1;
-    
-    numblocks = pnga_total_blocks(g_c);
-    if(numblocks>=0) init_block_info(g_c, proc_index, index, blocks,
-                                     block_dims, topology, &iblock);
+  ONE.real =1.;    ONE.imag =0.;   
+  ONE_CF.real =1.; ONE_CF.imag =0.;   
+  clo[0] = *cilo; chi[0] = *cihi;
+  clo[1] = *cjlo; chi[1] = *cjhi;
+  k = *ajhi - *ajlo +1;
 
-    has_more_blocks = 1;
-    while(has_more_blocks) 
-    {
-       /* if block cyclic distribution and loop accordigly. In case of simple
+  numblocks = pnga_total_blocks(g_c);
+  if(numblocks>=0) init_block_info(g_c, proc_index, index, blocks,
+      block_dims, topology, &iblock);
+
+  has_more_blocks = 1;
+  while(has_more_blocks) 
+  {
+    /* if block cyclic distribution and loop accordigly. In case of simple
        block distribution we process this loop only once */
-       if(numblocks<0)
-       { /* simple block distribution */
-          has_more_blocks = 0; 
-          pnga_distribution(g_c, &me, loC, hiC);
-       }
-       else
-       { /* block cyclic */
-          
-          if(!get_next_block_info(g_c, proc_index, index, blocks, block_dims,
-                                  topology, &iblock, loC, hiC))
-             break;
-       }
+    if(numblocks<0)
+    { /* simple block distribution */
+      has_more_blocks = 0; 
+      pnga_distribution(g_c, &me, loC, hiC);
+    }
+    else
+    { /* block cyclic */
 
-       /* If loC and hiC intersects with current patch region, then they will
-        * be updated accordingly. Else it returns FALSE */
-       pnga_inquire(g_c, &ctype, &cndim, cdims);
-       if(!ngai_patch_intersect(clo,chi,loC,hiC,cndim)) continue;
-       
+      if(!get_next_block_info(g_c, proc_index, index, blocks, block_dims,
+            topology, &iblock, loC, hiC))
+        break;
+    }
+
+    /* If loC and hiC intersects with current patch region, then they will
+     * be updated accordingly. Else it returns FALSE */
+    pnga_inquire(g_c, &ctype, &cndim, cdims);
+    if(!ngai_patch_intersect(clo,chi,loC,hiC,cndim)) continue;
+
 #if DEBUG_
-       printf("%d: Processing block #%d [%d,%d] - [%d,%d]\n", GAme, iblock,
-              loC[0], loC[1], hiC[0], hiC[1]);
+    printf("%d: Processing block #%d [%d,%d] - [%d,%d]\n", GAme, iblock,
+        loC[0], loC[1], hiC[0], hiC[1]);
 #endif
-       
-       state.lo[0] = -1; /* just for first do-while loop */
+
+    state.lo[0] = -1; /* just for first do-while loop */
     do {
 
-       /* Inital Settings */
-       a = a_ar[0];
-       b = b_ar[0];
-       c = c_ar[0];
-       do_put = single_task_flag = UNSET;
-       offset = 0;
-       
-       /*****************************************************************
-	* Task list: Collect information of all chunks. Matmul using 
-	* Non-blocking call needs this list 
-	*****************************************************************/
-       gTaskId=0;
-       
-       /* to skip accumulate and exploit data locality:
-	  get chunks according to "C" matrix distribution*/
-       /* pnga_distribution(g_c, &me, loC, hiC); */
-       chunks_left=gai_get_task_list(taskListA, taskListB, &state,loC[0]-1,
-				     loC[1]-1, 0, hiC[0]-1, hiC[1]-1, k-1,
-				     Ichunk,Jchunk,Kchunk, &max_tasks,g_a);
-       currA = nextA = 0;
-       
-       if(chunks_left) { /* then turn OFF this optimization */
-	  if(DIRECT_ACCESS_OPT_FLAG) {
-	     /* check if there is only one task.If so,then it is contiguous */
-	     if(max_tasks == 1) {
-		if( !((hiC[0]-loC[0]+1 <= Ichunk) &&(hiC[1]-loC[1]+1 <=Jchunk)
-		      && (k <= Kchunk))) 
-		   pnga_error("Invalid task list", 0L);
-		single_task_flag = SET;
-		nga_access_ptr(g_c, loC, hiC, &c, ld);
-	     }
-	  }
-       }
-       
-       if(CYCLIC_DISTR_OPT_FLAG) {
-	  int prow,pcol,grp_me;
-	  Integer a_grp=pnga_get_pgroup(g_a);
-          grp_me = (int)pnga_pgroup_nodeid(&a_grp);
-	  prow = GA[GA_OFFSET + *g_a].nblock[0];
-	  pcol = GA[GA_OFFSET + *g_a].nblock[1];
-	  offset = (grp_me/prow + grp_me%prow) % pcol;
-	  currA = nextA = nextA + offset;
-       }
-       
-       /*************************************************
-	* Do the setup & issue non-blocking calls to get 
-	* the first block/chunk I'm gonna work 
-	*************************************************/
-       shiftA=0; shiftB=0;
-       if(nextA < max_tasks) {
-	  currB = nextB = taskListA[currA].chunkBId;
-	  
-	  GET_BLOCK(g_a, &taskListA[nextA], a_ar[shiftA], transa, 
-		    ailo, ajlo, &adim_next, &gNbhdlA[shiftA]);
-	  
-	  GET_BLOCK(g_b, &taskListB[nextB], b_ar[shiftB], transb,
-		    bilo, bjlo, &bdim_next, &gNbhdlB[shiftB]);
-	  
-	  adim=adim_next; bdim=bdim_next;
-	  get_new_B = TRUE;
-       }
-       
-       /*************************************************************
-	* Main Parallel DGEMM Loop.
-	*************************************************************/
-       while(nextA < max_tasks) {
-	  currA = nextA;
-	  currB = taskListA[currA].chunkBId;
-	  
-	  idim = cdim = taskListA[currA].dim[0];
-	  jdim = taskListB[currB].dim[1];
-	  kdim = taskListA[currA].dim[1];
-	  bdim=bdim_next;
-	  
-	  /* if beta=0.0 (i.e.if need_scaling=UNSET), then for first shot,
-	     we can do put, instead of accumulate */
-	  if(need_scaling == UNSET) do_put = taskListA[currA].do_put; 
-	  
-	  nextA = ++gTaskId; /* get the next task id */
-	  
-	  if(CYCLIC_DISTR_OPT_FLAG && nextA < max_tasks) 
-	     nextA = (offset+nextA) % max_tasks;
-	  
-	  
-	  /* ---- WAIT till we get the current A & B block ---- */
-	  a = a_ar[shiftA];
-	  WAIT_GET_BLOCK(&gNbhdlA[shiftA]);
-	  if(get_new_B){/*Avoid rereading B if it is same patch as last time*/
-	     get_new_B = FALSE;
-	     b = b_ar[shiftB];
-	     WAIT_GET_BLOCK(&gNbhdlB[shiftB]);
-	  }
-	  
-	  /* ---- GET the next A & B block ---- */
-	  if(nextA < max_tasks) {
-	     GET_BLOCK(g_a, &taskListA[nextA], a_ar[(shiftA+1)%2], transa, 
-		       ailo, ajlo, &adim_next, &gNbhdlA[(shiftA+1)%2]);
-	     
-	     nextB = taskListA[nextA].chunkBId;
-	     if(currB != nextB) {
-		shiftB=((shiftB+1)%2);
-		
-		GET_BLOCK(g_b, &taskListB[nextB], b_ar[shiftB], transb, 
-			  bilo, bjlo, &bdim_next, &gNbhdlB[shiftB]);
-	     }
-	  }
-	  if(currB != nextB) get_new_B = TRUE;
-	  
-	  /* Do the sequential matrix multiply - i.e.BLAS dgemm */
-	  GAI_DGEMM(atype, transa, transb, idim, jdim, kdim, alpha, 
-		    a, adim, b, bdim, c, cdim);
-	  
-	  /* Non-blocking Accumulate Operation. Note: skip wait in 1st loop*/
-	  i0 = *cilo + taskListA[currA].lo[0];
-	  i1 = *cilo + taskListA[currA].hi[0];
-	  j0 = *cjlo + taskListB[currB].lo[1];
-	  j1 = *cjlo + taskListB[currB].hi[1];
-	  
-	  if(currA < max_tasks) {
-	     if (single_task_flag != SET) {
-		switch(atype) {
-		   case C_FLOAT:
-		   case C_SCPL:
-		      if(do_put==SET) /* Note:do_put is UNSET, if beta!=0.0*/
-			 ga_put_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim);
-		      else
-			 ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, 
-				 &cdim, &ONE_CF);
-		      break;
-		   default:
-		      if(do_put==SET) /* i.e.beta ==0.0 */
-			 ga_put_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
-				 &cdim);
-		      else
-			 ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
-				 &cdim,(DoublePrecision*)&ONE);
-		      break;
-		}
-	     }
-	  }
-	  
-	  /* shift next buffer..toggles between 0 and 1: as we use 2 buffers, 
-	     one for computation and the other for communication (overlap) */
-	  shiftA = ((shiftA+1)%2); 
-	  adim = adim_next;
-       }
+      /* Inital Settings */
+      a = a_ar[0];
+      b = b_ar[0];
+      c = c_ar[0];
+      do_put = single_task_flag = UNSET;
+      offset = 0;
+
+      /*****************************************************************
+       * Task list: Collect information of all chunks. Matmul using 
+       * Non-blocking call needs this list 
+       *****************************************************************/
+      gTaskId=0;
+
+      /* to skip accumulate and exploit data locality:
+         get chunks according to "C" matrix distribution*/
+      /* pnga_distribution(g_c, &me, loC, hiC); */
+      chunks_left=gai_get_task_list(taskListA, taskListB, &state,loC[0]-1,
+          loC[1]-1, 0, hiC[0]-1, hiC[1]-1, k-1,
+          Ichunk,Jchunk,Kchunk, &max_tasks,g_a);
+      currA = nextA = 0;
+
+      if(chunks_left) { /* then turn OFF this optimization */
+        if(DIRECT_ACCESS_OPT_FLAG) {
+          /* check if there is only one task.If so,then it is contiguous */
+          if(max_tasks == 1) {
+            if( !((hiC[0]-loC[0]+1 <= Ichunk) &&(hiC[1]-loC[1]+1 <=Jchunk)
+                  && (k <= Kchunk))) 
+              pnga_error("Invalid task list", 0L);
+            single_task_flag = SET;
+            pnga_access_ptr(g_c, loC, hiC, &c, ld);
+          }
+        }
+      }
+
+      if(CYCLIC_DISTR_OPT_FLAG) {
+        int prow,pcol,grp_me;
+        Integer a_grp=pnga_get_pgroup(g_a);
+        grp_me = (int)pnga_pgroup_nodeid(&a_grp);
+        prow = GA[GA_OFFSET + *g_a].nblock[0];
+        pcol = GA[GA_OFFSET + *g_a].nblock[1];
+        offset = (grp_me/prow + grp_me%prow) % pcol;
+        currA = nextA = nextA + offset;
+      }
+
+      /*************************************************
+       * Do the setup & issue non-blocking calls to get 
+       * the first block/chunk I'm gonna work 
+       *************************************************/
+      shiftA=0; shiftB=0;
+      if(nextA < max_tasks) {
+        currB = nextB = taskListA[currA].chunkBId;
+
+        GET_BLOCK(g_a, &taskListA[nextA], a_ar[shiftA], transa, 
+            ailo, ajlo, &adim_next, &gNbhdlA[shiftA]);
+
+        GET_BLOCK(g_b, &taskListB[nextB], b_ar[shiftB], transb,
+            bilo, bjlo, &bdim_next, &gNbhdlB[shiftB]);
+
+        adim=adim_next; bdim=bdim_next;
+        get_new_B = TRUE;
+      }
+
+      /*************************************************************
+       * Main Parallel DGEMM Loop.
+       *************************************************************/
+      while(nextA < max_tasks) {
+        currA = nextA;
+        currB = taskListA[currA].chunkBId;
+
+        idim = cdim = taskListA[currA].dim[0];
+        jdim = taskListB[currB].dim[1];
+        kdim = taskListA[currA].dim[1];
+        bdim=bdim_next;
+
+        /* if beta=0.0 (i.e.if need_scaling=UNSET), then for first shot,
+           we can do put, instead of accumulate */
+        if(need_scaling == UNSET) do_put = taskListA[currA].do_put; 
+
+        nextA = ++gTaskId; /* get the next task id */
+
+        if(CYCLIC_DISTR_OPT_FLAG && nextA < max_tasks) 
+          nextA = (offset+nextA) % max_tasks;
+
+
+        /* ---- WAIT till we get the current A & B block ---- */
+        a = a_ar[shiftA];
+        WAIT_GET_BLOCK(&gNbhdlA[shiftA]);
+        if(get_new_B){/*Avoid rereading B if it is same patch as last time*/
+          get_new_B = FALSE;
+          b = b_ar[shiftB];
+          WAIT_GET_BLOCK(&gNbhdlB[shiftB]);
+        }
+
+        /* ---- GET the next A & B block ---- */
+        if(nextA < max_tasks) {
+          GET_BLOCK(g_a, &taskListA[nextA], a_ar[(shiftA+1)%2], transa, 
+              ailo, ajlo, &adim_next, &gNbhdlA[(shiftA+1)%2]);
+
+          nextB = taskListA[nextA].chunkBId;
+          if(currB != nextB) {
+            shiftB=((shiftB+1)%2);
+
+            GET_BLOCK(g_b, &taskListB[nextB], b_ar[shiftB], transb, 
+                bilo, bjlo, &bdim_next, &gNbhdlB[shiftB]);
+          }
+        }
+        if(currB != nextB) get_new_B = TRUE;
+
+        /* Do the sequential matrix multiply - i.e.BLAS dgemm */
+        GAI_DGEMM(atype, transa, transb, idim, jdim, kdim, alpha, 
+            a, adim, b, bdim, c, cdim);
+
+        /* Non-blocking Accumulate Operation. Note: skip wait in 1st loop*/
+        i0 = *cilo + taskListA[currA].lo[0];
+        i1 = *cilo + taskListA[currA].hi[0];
+        j0 = *cjlo + taskListB[currB].lo[1];
+        j1 = *cjlo + taskListB[currB].hi[1];
+
+        if(currA < max_tasks) {
+          if (single_task_flag != SET) {
+            switch(atype) {
+              case C_FLOAT:
+              case C_SCPL:
+                if(do_put==SET) /* Note:do_put is UNSET, if beta!=0.0*/
+                  ga_put_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim);
+                else {
+                  clo[0] = i0;
+                  clo[1] = j0;
+                  chi[0] = i1;
+                  chi[1] = j1;
+                  pnga_acc(g_c, clo, chi,(float *)c, &cdim, &ONE_CF);
+                }
+                break;
+              default:
+                if(do_put==SET) /* i.e.beta ==0.0 */
+                  ga_put_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
+                      &cdim);
+                else {
+                  clo[0] = i0;
+                  clo[1] = j0;
+                  chi[0] = i1;
+                  chi[1] = j1;
+                  pnga_acc(g_c, clo, chi, (DoublePrecision*)c, &cdim,(DoublePrecision*)&ONE);
+                }
+                break;
+            }
+          }
+        }
+
+        /* shift next buffer..toggles between 0 and 1: as we use 2 buffers, 
+           one for computation and the other for communication (overlap) */
+        shiftA = ((shiftA+1)%2); 
+        adim = adim_next;
+      }
     } while(chunks_left);
-    } /* while(has_more_blocks) */
-    
-    GA_POP_NAME;
+  } /* while(has_more_blocks) */
+
+  GA_POP_NAME;
 }
 
 
@@ -837,195 +856,210 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
      DoubleComplex **a_ar, **b_ar, **c_ar;
      short int need_scaling, irregular;
 {
-  
+
 #if DEBUG_
-    Integer me= pnga_nodeid();
+  Integer me= pnga_nodeid();
 #endif
-    Integer nproc=pnga_nnodes();
-    Integer get_new_B, i, i0, i1, j0, j1;
-    Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim, ijk=0;
-    Integer n, m, k, adim, bdim=0, cdim;
-    Integer idim_prev=0, jdim_prev=0, kdim_prev=0;
-    Integer adim_prev=0, bdim_prev=0, cdim_prev=0;
-    task_list_t taskListC; 
-    short int compute_flag=0, shiftA=0, shiftB=0;
-    DoubleComplex ONE, *a, *b, *c;
-    SingleComplex ONE_CF; 
-    Integer grp_me, a_grp = pnga_get_pgroup(g_a);
- 
-    GA_PUSH_NAME("ga_matmul_irreg");
-    init_task_list(&taskListC);
-    ONE.real =1.; ONE.imag =0.;
-    ONE_CF.real =1.; ONE_CF.imag =0.;
+  Integer nproc=pnga_nnodes();
+  Integer get_new_B, i, i0, i1, j0, j1;
+  Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim, ijk=0;
+  Integer n, m, k, adim, bdim=0, cdim;
+  Integer idim_prev=0, jdim_prev=0, kdim_prev=0;
+  Integer adim_prev=0, bdim_prev=0, cdim_prev=0;
+  task_list_t taskListC; 
+  short int compute_flag=0, shiftA=0, shiftB=0;
+  DoubleComplex ONE, *a, *b, *c;
+  SingleComplex ONE_CF; 
+  Integer grp_me, a_grp = pnga_get_pgroup(g_a);
+  Integer clo[2], chi[2];
+
+  GA_PUSH_NAME("ga_matmul_irreg");
+  init_task_list(&taskListC);
+  ONE.real =1.; ONE.imag =0.;
+  ONE_CF.real =1.; ONE_CF.imag =0.;
 #if DEBUG_
-    if(me==0) { printf("@@ga_matmul_irreg:m,n,k=%ld %ld %ld\n", *aihi-*ailo+1,
-		       *bjhi-*bjlo+1,*ajhi-*ajlo+1); fflush(stdout); }
+  if(me==0) { printf("@@ga_matmul_irreg:m,n,k=%ld %ld %ld\n", *aihi-*ailo+1,
+      *bjhi-*bjlo+1,*ajhi-*ajlo+1); fflush(stdout); }
 #endif
-    
-    m = *aihi - *ailo +1;
-    n = *bjhi - *bjlo +1;
-    k = *ajhi - *ajlo +1;
-    a = a_ar[0];
-    b = b_ar[0];
-    c = c_ar[0];
-    
-    grp_me = pnga_pgroup_nodeid(&a_grp);
-    if(!need_scaling) ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
 
-    compute_flag=0;     /* take care of the last chunk */
+  m = *aihi - *ailo +1;
+  n = *bjhi - *bjlo +1;
+  k = *ajhi - *ajlo +1;
+  a = a_ar[0];
+  b = b_ar[0];
+  c = c_ar[0];
 
-    for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop thru columns of g_c patch */
-       jhi = GA_MIN(n-1, jlo+Jchunk-1);
-       jdim= jhi - jlo +1;
+  grp_me = pnga_pgroup_nodeid(&a_grp);
+  if(!need_scaling) ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
 
-       for(klo = 0; klo < k; klo += Kchunk){    /* loop cols of g_a patch */
-	  khi = GA_MIN(k-1, klo+Kchunk-1);          /* loop rows of g_b patch */
-	  kdim= khi - klo +1;                                     
-	   
-	  /** Each pass through the outer two loops means we need a
-	      different patch of B.*/
-	  get_new_B = TRUE;
-	   
-	  for(ilo = 0; ilo < m; ilo+=Ichunk){ /* loop thru rows of g_c patch */
-	        
-	     if(ijk%nproc == grp_me){
+  compute_flag=0;     /* take care of the last chunk */
 
-		ihi = GA_MIN(m-1, ilo+Ichunk-1);
-		idim= cdim = ihi - ilo +1;
+  for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop thru columns of g_c patch */
+    jhi = GA_MIN(n-1, jlo+Jchunk-1);
+    jdim= jhi - jlo +1;
+
+    for(klo = 0; klo < k; klo += Kchunk){    /* loop cols of g_a patch */
+      khi = GA_MIN(k-1, klo+Kchunk-1);          /* loop rows of g_b patch */
+      kdim= khi - klo +1;                                     
+
+      /** Each pass through the outer two loops means we need a
+        different patch of B.*/
+      get_new_B = TRUE;
+
+      for(ilo = 0; ilo < m; ilo+=Ichunk){ /* loop thru rows of g_c patch */
+
+        if(ijk%nproc == grp_me){
+
+          ihi = GA_MIN(m-1, ilo+Ichunk-1);
+          idim= cdim = ihi - ilo +1;
 
 
-		if (*transa == 'n' || *transa == 'N'){ 
-		   adim = idim;
-		   i0= *ailo+ilo; i1= *ailo+ihi;   
-		   j0= *ajlo+klo; j1= *ajlo+khi;
-		   ga_nbget_(g_a, &i0, &i1, &j0, &j1, a_ar[shiftA], 
-			     &idim, &gNbhdlA[shiftA]);
-		}else{
-		   adim = kdim;
-		   i0= *ajlo+klo; i1= *ajlo+khi;   
-		   j0= *ailo+ilo; j1= *ailo+ihi;
-		   ga_nbget_(g_a, &i0, &i1, &j0, &j1, a_ar[shiftA],
-			     &kdim, &gNbhdlA[shiftA]);
-		}
-		
-		/* Avoid rereading B if it is same patch as last time. */
-		if(get_new_B) { 
-		   if (*transb == 'n' || *transb == 'N'){ 
-		      bdim = kdim;
-		      i0= *bilo+klo; i1= *bilo+khi;
-		      j0= *bjlo+jlo; j1= *bjlo+jhi;
-		      ga_nbget_(g_b, &i0, &i1, &j0, &j1, b_ar[shiftB], 
-				&kdim, &gNbhdlB[shiftB]);
-		   }else{
-		      bdim = jdim;
-		      i0= *bjlo+jlo; i1= *bjlo+jhi;   
-		      j0= *bilo+klo; j1= *bilo+khi;
-		      ga_nbget_(g_b, &i0, &i1, &j0, &j1, b_ar[shiftB], 
-				&jdim, &gNbhdlB[shiftB]);
-		   }
-		}
+          if (*transa == 'n' || *transa == 'N'){ 
+            adim = idim;
+            i0= *ailo+ilo; i1= *ailo+ihi;   
+            j0= *ajlo+klo; j1= *ajlo+khi;
+            ga_nbget_(g_a, &i0, &i1, &j0, &j1, a_ar[shiftA], 
+                &idim, &gNbhdlA[shiftA]);
+          }else{
+            adim = kdim;
+            i0= *ajlo+klo; i1= *ajlo+khi;   
+            j0= *ailo+ilo; j1= *ailo+ihi;
+            ga_nbget_(g_a, &i0, &i1, &j0, &j1, a_ar[shiftA],
+                &kdim, &gNbhdlA[shiftA]);
+          }
 
-		if(compute_flag) { /* compute loop */
-		   
-		   if(atype == C_FLOAT) 
-		      for(i=0;i<idim_prev*jdim_prev;i++) *(((float*)c)+i)=0;
-		   else if(atype ==  C_DBL)
-		      for(i=0;i<idim_prev*jdim_prev;i++) *(((double*)c)+i)=0;
-		   else if(atype ==  C_SCPL)
-                     for(i=0;i<idim_prev*jdim_prev;i++) {
-                       ((SingleComplex*)c)[i].real=0;
-                       ((SingleComplex*)c)[i].imag=0;
-                     }
-		   else for(i=0;i<idim_prev*jdim_prev;i++) {
-		           c[i].real=0;c[i].imag=0; }
-		   
-		   /* wait till we get the previous block */
-		   a = a_ar[shiftA^1];
-		   WAIT_GET_BLOCK(&gNbhdlA[shiftA^1]);
-		   if(taskListC.chunkBId) {
-		      b = b_ar[shiftB^1];
-		      WAIT_GET_BLOCK(&gNbhdlB[shiftB^1]);
-		   }
-		   
-		   /* Do the sequential matrix multiply - i.e.BLAS dgemm */
-		   GAI_DGEMM(atype, transa, transb, idim_prev, jdim_prev, 
-			     kdim_prev, alpha, a, adim_prev, b, bdim_prev, 
-			     c, cdim_prev);
-		   
-		   i0= *cilo + taskListC.lo[0];
-		   i1= *cilo + taskListC.hi[0];
-		   j0= *cjlo + taskListC.lo[1];
-		   j1= *cjlo + taskListC.hi[1];
+          /* Avoid rereading B if it is same patch as last time. */
+          if(get_new_B) { 
+            if (*transb == 'n' || *transb == 'N'){ 
+              bdim = kdim;
+              i0= *bilo+klo; i1= *bilo+khi;
+              j0= *bjlo+jlo; j1= *bjlo+jhi;
+              ga_nbget_(g_b, &i0, &i1, &j0, &j1, b_ar[shiftB], 
+                  &kdim, &gNbhdlB[shiftB]);
+            }else{
+              bdim = jdim;
+              i0= *bjlo+jlo; i1= *bjlo+jhi;   
+              j0= *bilo+klo; j1= *bilo+khi;
+              ga_nbget_(g_b, &i0, &i1, &j0, &j1, b_ar[shiftB], 
+                  &jdim, &gNbhdlB[shiftB]);
+            }
+          }
 
-		   if(atype == C_FLOAT || atype == C_SCPL)
-		      ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, 
-			      &cdim_prev, &ONE_CF);
-		   else
-		      ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
-			      &cdim_prev, (DoublePrecision*)&ONE);
-		}
-		compute_flag=1;
+          if(compute_flag) { /* compute loop */
 
-		/* meta-data of current block for next compute loop */
-		taskListC.lo[0] = ilo; taskListC.hi[0] = ihi;
-		taskListC.lo[1] = jlo; taskListC.hi[1] = jhi;
-		taskListC.chunkBId = get_new_B;
-		idim_prev = idim;   adim_prev = adim;
-		jdim_prev = jdim;   bdim_prev = bdim;
-		kdim_prev = kdim;   cdim_prev = cdim;
+            if(atype == C_FLOAT) 
+              for(i=0;i<idim_prev*jdim_prev;i++) *(((float*)c)+i)=0;
+            else if(atype ==  C_DBL)
+              for(i=0;i<idim_prev*jdim_prev;i++) *(((double*)c)+i)=0;
+            else if(atype ==  C_SCPL)
+              for(i=0;i<idim_prev*jdim_prev;i++) {
+                ((SingleComplex*)c)[i].real=0;
+                ((SingleComplex*)c)[i].imag=0;
+              }
+            else for(i=0;i<idim_prev*jdim_prev;i++) {
+              c[i].real=0;c[i].imag=0; }
 
-		/* shift bext buffer */
-		shiftA ^= 1;
-		if(get_new_B) shiftB ^= 1;
+            /* wait till we get the previous block */
+            a = a_ar[shiftA^1];
+            WAIT_GET_BLOCK(&gNbhdlA[shiftA^1]);
+            if(taskListC.chunkBId) {
+              b = b_ar[shiftB^1];
+              WAIT_GET_BLOCK(&gNbhdlB[shiftB^1]);
+            }
 
-		get_new_B = FALSE; /* Until J or K change again */
-	     }
-	     ++ijk;
-	  }
-       }
+            /* Do the sequential matrix multiply - i.e.BLAS dgemm */
+            GAI_DGEMM(atype, transa, transb, idim_prev, jdim_prev, 
+                kdim_prev, alpha, a, adim_prev, b, bdim_prev, 
+                c, cdim_prev);
+
+            i0= *cilo + taskListC.lo[0];
+            i1= *cilo + taskListC.hi[0];
+            j0= *cjlo + taskListC.lo[1];
+            j1= *cjlo + taskListC.hi[1];
+
+            if(atype == C_FLOAT || atype == C_SCPL) {
+              clo[0] = i0;
+              clo[1] = j0;
+              chi[0] = i1;
+              chi[1] = j1;
+              pnga_acc(g_c, clo, chi, (float *)c, &cdim_prev, &ONE_CF);
+            } else {
+              clo[0] = i0;
+              clo[1] = j0;
+              chi[0] = i1;
+              chi[1] = j1;
+              pnga_acc(g_c, clo, chi, (DoublePrecision*)c, &cdim_prev, (DoublePrecision*)&ONE);
+            }
+          }
+          compute_flag=1;
+
+          /* meta-data of current block for next compute loop */
+          taskListC.lo[0] = ilo; taskListC.hi[0] = ihi;
+          taskListC.lo[1] = jlo; taskListC.hi[1] = jhi;
+          taskListC.chunkBId = get_new_B;
+          idim_prev = idim;   adim_prev = adim;
+          jdim_prev = jdim;   bdim_prev = bdim;
+          kdim_prev = kdim;   cdim_prev = cdim;
+
+          /* shift bext buffer */
+          shiftA ^= 1;
+          if(get_new_B) shiftB ^= 1;
+
+          get_new_B = FALSE; /* Until J or K change again */
+        }
+        ++ijk;
+      }
+    }
+  }
+
+  /* -------- compute the last chunk --------- */
+  if(compute_flag) {
+    if(atype == C_FLOAT) 
+      for(i=0;i<idim_prev*jdim_prev;i++) *(((float*)c)+i)=0;
+    else if(atype ==  C_DBL)
+      for(i=0;i<idim_prev*jdim_prev;i++) *(((double*)c)+i)=0;
+    else if(atype ==  C_SCPL)
+      for(i=0;i<idim_prev*jdim_prev;i++) {
+        ((SingleComplex*)c)[i].real=0;
+        ((SingleComplex*)c)[i].imag=0;
+      }
+    else for(i=0;i<idim_prev*jdim_prev;i++) {
+      c[i].real=0;c[i].imag=0; }
+
+    /* wait till we get the previous block */
+    a = a_ar[shiftA^1];
+    WAIT_GET_BLOCK(&gNbhdlA[shiftA^1]);
+    if(taskListC.chunkBId) {
+      b = b_ar[shiftB^1];
+      WAIT_GET_BLOCK(&gNbhdlB[shiftB^1]);
     }
 
-    /* -------- compute the last chunk --------- */
-    if(compute_flag) {
-       if(atype == C_FLOAT) 
-	  for(i=0;i<idim_prev*jdim_prev;i++) *(((float*)c)+i)=0;
-       else if(atype ==  C_DBL)
-	  for(i=0;i<idim_prev*jdim_prev;i++) *(((double*)c)+i)=0;
-       else if(atype ==  C_SCPL)
-         for(i=0;i<idim_prev*jdim_prev;i++) {
-           ((SingleComplex*)c)[i].real=0;
-           ((SingleComplex*)c)[i].imag=0;
-         }
-       else for(i=0;i<idim_prev*jdim_prev;i++) {
-	  c[i].real=0;c[i].imag=0; }
-       
-       /* wait till we get the previous block */
-       a = a_ar[shiftA^1];
-       WAIT_GET_BLOCK(&gNbhdlA[shiftA^1]);
-       if(taskListC.chunkBId) {
-	  b = b_ar[shiftB^1];
-	  WAIT_GET_BLOCK(&gNbhdlB[shiftB^1]);
-       }
-       
-       /* Do the sequential matrix multiply - i.e.BLAS dgemm */
-       GAI_DGEMM(atype, transa, transb, idim_prev, jdim_prev, 
-		 kdim_prev, alpha, a, adim_prev, b, bdim_prev, 
-		 c, cdim_prev);
-       
-       i0= *cilo + taskListC.lo[0];
-       i1= *cilo + taskListC.hi[0];
-       j0= *cjlo + taskListC.lo[1];
-       j1= *cjlo + taskListC.hi[1];
-       
-       if(atype == C_FLOAT || atype == C_SCPL)
-	  ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, 
-		  &cdim_prev, &ONE_CF);
-       else
-	  ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
-		  &cdim_prev, (DoublePrecision*)&ONE);
+    /* Do the sequential matrix multiply - i.e.BLAS dgemm */
+    GAI_DGEMM(atype, transa, transb, idim_prev, jdim_prev, 
+        kdim_prev, alpha, a, adim_prev, b, bdim_prev, 
+        c, cdim_prev);
+
+    i0= *cilo + taskListC.lo[0];
+    i1= *cilo + taskListC.hi[0];
+    j0= *cjlo + taskListC.lo[1];
+    j1= *cjlo + taskListC.hi[1];
+
+    if(atype == C_FLOAT || atype == C_SCPL) {
+      clo[0] = i0;
+      clo[1] = j0;
+      chi[0] = i1;
+      chi[1] = j1;
+      pnga_acc(g_c, clo, chi, (float *)c, &cdim_prev, &ONE_CF);
+    } else {
+      clo[0] = i0;
+      clo[1] = j0;
+      chi[0] = i1;
+      chi[1] = j1;
+      pnga_acc(g_c, clo, chi, (DoublePrecision*)c, &cdim_prev, (DoublePrecision*)&ONE);
     }
-    /* ----------------------------------------- */
-    GA_POP_NAME;
+  }
+  /* ----------------------------------------- */
+  GA_POP_NAME;
 }
 
 #if DEBUG_
@@ -1499,7 +1533,7 @@ void ga_matmul(transa, transb, alpha, beta,
 #endif
 }
 
-/* This is the old matmul code. It is enadle now for mirrored matrix multiply. 
+/* This is the old matmul code. It is enabled now for mirrored matrix multiply. 
    It also work for normal matrix/vector multiply with no changes */
 void ga_matmul_mirrored(transa, transb, alpha, beta,
 			g_a, ailo, aihi, ajlo, ajhi,
@@ -1535,6 +1569,7 @@ Integer ZERO_I = 0, inode, iproc;
 Integer get_new_B;
 int local_sync_begin,local_sync_end;
 BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
+Integer clo[2], chi[2];
 
    ONE.real =1.; ONE.imag =0.;
    ONE_CF.real =1.; ONE_CF.imag =0.;
@@ -1803,12 +1838,19 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	     }
 	     
 	     i0= *cilo+ilo; i1= *cilo+ihi;   j0= *cjlo+jlo; j1= *cjlo+jhi;
-	     if(atype == C_FLOAT || atype == C_SCPL) 
-	       ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, 
-		       &cdim, &ONE_CF);
-	     else
-	       ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
-		       &cdim, (DoublePrecision*)&ONE);
+	     if(atype == C_FLOAT || atype == C_SCPL)  {
+          clo[0] = i0;
+          clo[1] = j0;
+          chi[0] = i1;
+          chi[1] = j1;
+	       pnga_acc(g_c, clo, chi, (float *)c, &cdim, &ONE_CF);
+        } else {
+          clo[0] = i0;
+          clo[1] = j0;
+          chi[0] = i1;
+          chi[1] = j1;
+	       pnga_acc(g_c, clo, chi, (DoublePrecision*)c, &cdim, (DoublePrecision*)&ONE);
+        }
 	   }
 	   ++ijk;
 	 }
@@ -2211,9 +2253,9 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 		  tmplo[cjpos]=j0; tmphi[cjpos]=j1;
 		  tmpld[cipos]=i1-i0+1;
 		  if(atype == C_FLOAT || atype == C_SCPL) 
-		    nga_acc_(g_c,tmplo,tmphi,(float *)c,tmpld, &ONE_CF);
+		    pnga_acc(g_c,tmplo,tmphi,(float *)c,tmpld, &ONE_CF);
 		  else
-		    nga_acc_(g_c,tmplo,tmphi,c,tmpld,(DoublePrecision*)&ONE);
+		    pnga_acc(g_c,tmplo,tmphi,c,tmpld,(DoublePrecision*)&ONE);
                }
 	   ++ijk;
 	 }

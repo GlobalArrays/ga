@@ -746,7 +746,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
 
       /* get data_ptr to corner of patch */
       /* ld are leading dimensions INCLUDING ghost cells */
-      nga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
+      pnga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
 
       /* perform operation on all elements in local patch */
       ngai_do_oper_elem(type, ndim, loA, hiA, ld, data_ptr, scalar, op);
@@ -777,7 +777,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          nga_access_block_ptr(g_a, &i, &data_ptr, ld);
+          pnga_access_block_ptr(g_a, &i, &data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -856,7 +856,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          nga_access_block_grid_ptr(g_a, index, &data_ptr, ld);
+          pnga_access_block_grid_ptr(g_a, index, &data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -1851,9 +1851,9 @@ int op; /* operation to be perform between g_a and g_b */
 
     /*  determine subsets of my patches to access  */
     if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
-      nga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
-      nga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
-      nga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
+      pnga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
+      pnga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
+      pnga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
 
       /* compute "local" operation accoording to op */
       ngai_do_elem2_oper(atype, cndim, loC, hiC, ldC, A_ptr, B_ptr, C_ptr, op);
@@ -1886,9 +1886,9 @@ int op; /* operation to be perform between g_a and g_b */
       if(andim > bndim) cndim = bndim;
       if(andim < bndim) cndim = andim;
       if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
-        nga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
-        nga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
-        nga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
+        pnga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
+        pnga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
+        pnga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
 
         /* compute "local" operation accoording to op */
         ngai_do_elem2_oper(atype, cndim, loC, hiC, ldC, A_ptr, B_ptr, C_ptr, op);
@@ -1914,9 +1914,9 @@ int op; /* operation to be perform between g_a and g_b */
           }
 
           if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)) {
-            nga_access_block_ptr(&g_A, &idx, &A_ptr, ldA);
-            nga_access_block_ptr(&g_B, &idx, &B_ptr, ldB);
-            nga_access_block_ptr( g_c, &idx, &C_ptr, ldC);
+            pnga_access_block_ptr(&g_A, &idx, &A_ptr, ldA);
+            pnga_access_block_ptr(&g_B, &idx, &B_ptr, ldB);
+            pnga_access_block_ptr( g_c, &idx, &C_ptr, ldC);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -1997,9 +1997,9 @@ int op; /* operation to be perform between g_a and g_b */
           }
 
           if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)) {
-            nga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
-            nga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
-            nga_access_block_grid_ptr( g_c, index, &C_ptr, ldC);
+            pnga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
+            pnga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
+            pnga_access_block_grid_ptr( g_c, index, &C_ptr, ldC);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -2369,7 +2369,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
 
     /*  determine subsets of my patches to access  */
     if (ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
-      nga_access_ptr(g_a, loA, hiA, &A_ptr, ldA);
+      pnga_access_ptr(g_a, loA, hiA, &A_ptr, ldA);
 
       /* compute "local" operation accoording to op */
       ngai_do_elem3_patch(atype, andim, loA, hiA, ldA, A_ptr, op);
@@ -2399,7 +2399,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          nga_access_block_ptr(g_a, &i, &A_ptr, ldA);
+          pnga_access_block_ptr(g_a, &i, &A_ptr, ldA);
 
           /* Check for partial overlap */
           chk = 1;
@@ -2476,7 +2476,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          nga_access_block_grid_ptr(g_a, index, &A_ptr, ldA);
+          pnga_access_block_grid_ptr(g_a, index, &A_ptr, ldA);
 
           /* Check for partial overlap */
           chk = 1;
@@ -2645,7 +2645,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
     iretval = 0;
     /*  determine subsets of my patches to access  */
     if (ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
-      nga_access_ptr(g_a, loA, hiA, &A_ptr, ldA);
+      pnga_access_ptr(g_a, loA, hiA, &A_ptr, ldA);
 
       ngai_has_negative_element(atype, andim, loA, hiA, ldA, A_ptr, &iretval);
 
@@ -2674,7 +2674,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          nga_access_block_ptr(g_a, &i, &A_ptr, ldA);
+          pnga_access_block_ptr(g_a, &i, &A_ptr, ldA);
 
           /* Check for partial overlap */
           chk = 1;
@@ -2751,7 +2751,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          nga_access_block_grid_ptr(g_a, index, &A_ptr, ldA);
+          pnga_access_block_grid_ptr(g_a, index, &A_ptr, ldA);
 
           /* Check for partial overlap */
           chk = 1;

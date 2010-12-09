@@ -1760,7 +1760,7 @@ void NGA_Acc(int g_a, int lo[], int hi[], void* buf,int ld[], void* alpha)
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_acc_(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha);
+    wnga_acc(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha);
 }    
 
 void NGA_Acc64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[], void* alpha)
@@ -1772,7 +1772,7 @@ void NGA_Acc64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[], voi
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_acc_(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha);
+    wnga_acc(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha);
 }    
 
 void NGA_NbAcc(int g_a, int lo[], int hi[], void* buf,int ld[], void* alpha,
@@ -1785,7 +1785,7 @@ void NGA_NbAcc(int g_a, int lo[], int hi[], void* buf,int ld[], void* alpha,
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_acc_common(&a, _ga_lo,_ga_hi,buf,_ga_work,alpha,(Integer *)nbhandle);
+    pnga_nbacc(&a, _ga_lo,_ga_hi,buf,_ga_work,alpha,(Integer *)nbhandle);
 }
 
 void NGA_NbAcc64(int g_a, int64_t lo[], int64_t hi[], void* buf,int64_t ld[], void* alpha,
@@ -1798,7 +1798,7 @@ void NGA_NbAcc64(int g_a, int64_t lo[], int64_t hi[], void* buf,int64_t ld[], vo
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_acc_common(&a, _ga_lo,_ga_hi,buf,_ga_work,alpha,(Integer *)nbhandle);
+    pnga_nbacc(&a, _ga_lo,_ga_hi,buf,_ga_work,alpha,(Integer *)nbhandle);
 }
 
 void NGA_Periodic_get(int g_a, int lo[], int hi[], void* buf, int ld[])
@@ -2100,7 +2100,7 @@ void NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[])
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
 
-     nga_access_ptr(&a,_ga_lo, _ga_hi, ptr, _ga_work);
+     wnga_access_ptr(&a,_ga_lo, _ga_hi, ptr, _ga_work);
      COPYF2C(_ga_work,ld, ndim-1);
 }
 
@@ -2113,7 +2113,7 @@ void NGA_Access64(int g_a, int64_t lo[], int64_t hi[], void *ptr, int64_t ld[])
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
 
-     nga_access_ptr(&a,_ga_lo, _ga_hi, ptr, _ga_work);
+     wnga_access_ptr(&a,_ga_lo, _ga_hi, ptr, _ga_work);
      COPYF2C_64(_ga_work,ld, ndim-1);
 }
 
@@ -2123,7 +2123,7 @@ void NGA_Access_block(int g_a, int idx, void *ptr, int ld[])
      Integer ndim = wnga_ndim(&a);
      Integer iblock = (Integer)idx;
      Integer _ga_work[MAXDIM];
-     nga_access_block_ptr(&a,&iblock,ptr,_ga_work);
+     wnga_access_block_ptr(&a,&iblock,ptr,_ga_work);
      COPYF2C(_ga_work,ld, ndim-1);
 }
 
@@ -2133,7 +2133,7 @@ void NGA_Access_block64(int g_a, int64_t idx, void *ptr, int64_t ld[])
      Integer ndim = wnga_ndim(&a);
      Integer iblock = (Integer)idx;
      Integer _ga_work[MAXDIM];
-     nga_access_block_ptr(&a,&iblock,ptr,_ga_work);
+     wnga_access_block_ptr(&a,&iblock,ptr,_ga_work);
      COPYF2C_64(_ga_work,ld, ndim-1);
 }
 
@@ -2143,7 +2143,7 @@ void NGA_Access_block_grid(int g_a, int index[], void *ptr, int ld[])
      Integer ndim = wnga_ndim(&a);
      Integer _ga_work[MAXDIM], _ga_lo[MAXDIM];
      COPYC2F(_ga_lo,index, ndim);
-     nga_access_block_grid_ptr(&a,_ga_lo,ptr,_ga_work);
+     wnga_access_block_grid_ptr(&a,_ga_lo,ptr,_ga_work);
      COPYF2C(_ga_work,ld, ndim-1);
 }
 
@@ -2153,7 +2153,7 @@ void NGA_Access_block_grid64(int g_a, int64_t index[], void *ptr, int64_t ld[])
      Integer ndim = wnga_ndim(&a);
      Integer _ga_lo[MAXDIM], _ga_work[MAXDIM];
      COPYC2F(_ga_lo,index, ndim);
-     nga_access_block_grid_ptr(&a,_ga_lo,ptr,_ga_work);
+     wnga_access_block_grid_ptr(&a,_ga_lo,ptr,_ga_work);
      COPYF2C_64(_ga_work,ld, ndim-1);
 }
 
@@ -2162,7 +2162,7 @@ void NGA_Access_block_segment(int g_a, int proc, void *ptr, int *len)
      Integer a=(Integer)g_a;
      Integer iblock = (Integer)proc;
      Integer ilen = (Integer)(*len);
-     nga_access_block_segment_ptr(&a,&iblock,ptr,&ilen);
+     wnga_access_block_segment_ptr(&a,&iblock,ptr,&ilen);
      *len = (int)ilen;
 }
 
@@ -2171,7 +2171,7 @@ void NGA_Access_block_segment64(int g_a, int proc, void *ptr, int64_t *len)
      Integer a=(Integer)g_a;
      Integer iblock = (Integer)proc;
      Integer ilen = (Integer)(*len);
-     nga_access_block_segment_ptr(&a,&iblock,ptr,&ilen);
+     wnga_access_block_segment_ptr(&a,&iblock,ptr,&ilen);
      *len = (int64_t)ilen;
 }
 

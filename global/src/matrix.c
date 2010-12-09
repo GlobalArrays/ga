@@ -474,10 +474,10 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
     /*  determine subsets of my patches to access  */
     if (ngai_patch_intersect (mlo, mhi, loM, hiM, mndim)) {
       offset = 0;
-      nga_access_ptr (&g_A, loM, hiM, &A_ptr, ldA);
-      nga_access_ptr (&g_B, loM, hiM, &B_ptr, ldB);
-      nga_access_ptr (&g_C, loM, hiM, &C_ptr, ldC);
-      nga_access_ptr (&g_M, loM, hiM, &M_ptr, ldM);
+      pnga_access_ptr (&g_A, loM, hiM, &A_ptr, ldA);
+      pnga_access_ptr (&g_B, loM, hiM, &B_ptr, ldB);
+      pnga_access_ptr (&g_C, loM, hiM, &C_ptr, ldC);
+      pnga_access_ptr (&g_M, loM, hiM, &M_ptr, ldM);
 
       gai_median_patch_values(type, mndim, loM, hiM, ldM,
           A_ptr, B_ptr, C_ptr, M_ptr, offset);
@@ -514,10 +514,10 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
       offset = 0;
       pnga_distribution(g_m, &me, loM, hiM);
       if (ngai_patch_intersect (mlo, mhi, loM, hiM, mndim)) {
-        nga_access_ptr (&g_A, loM, hiM, &A_ptr, ldA);
-        nga_access_ptr (&g_B, loM, hiM, &B_ptr, ldB);
-        nga_access_ptr (&g_C, loM, hiM, &C_ptr, ldC);
-        nga_access_ptr (&g_M, loM, hiM, &M_ptr, ldM);
+        pnga_access_ptr (&g_A, loM, hiM, &A_ptr, ldA);
+        pnga_access_ptr (&g_B, loM, hiM, &B_ptr, ldB);
+        pnga_access_ptr (&g_C, loM, hiM, &C_ptr, ldC);
+        pnga_access_ptr (&g_M, loM, hiM, &M_ptr, ldM);
 
         gai_median_patch_values(type, mndim, loM, hiM, ldM,
             A_ptr, B_ptr, C_ptr, M_ptr, offset);
@@ -543,10 +543,10 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
             hid[j] = hiM[j];
           }
           if (ngai_patch_intersect(mlo, mhi, loM, hiM, mndim)) {
-            nga_access_block_ptr(&g_A, &idx, &A_ptr, ldA);
-            nga_access_block_ptr(&g_B, &idx, &B_ptr, ldB);
-            nga_access_block_ptr(&g_C, &idx, &C_ptr, ldC);
-            nga_access_block_ptr( g_m, &idx, &M_ptr, ldM);
+            pnga_access_block_ptr(&g_A, &idx, &A_ptr, ldA);
+            pnga_access_block_ptr(&g_B, &idx, &B_ptr, ldB);
+            pnga_access_block_ptr(&g_C, &idx, &C_ptr, ldC);
+            pnga_access_block_ptr( g_m, &idx, &M_ptr, ldM);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -595,10 +595,10 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
             hid[j] = hiM[j];
           }
           if (ngai_patch_intersect(mlo, mhi, loM, hiM, mndim)) {
-            nga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
-            nga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
-            nga_access_block_grid_ptr(&g_C, index, &C_ptr, ldC);
-            nga_access_block_grid_ptr( g_m, index, &M_ptr, ldM);
+            pnga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
+            pnga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
+            pnga_access_block_grid_ptr(&g_C, index, &C_ptr, ldC);
+            pnga_access_block_grid_ptr( g_m, index, &M_ptr, ldM);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -897,7 +897,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
 
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, lo, hi);
-    nga_access_ptr(g_a, lo, hi, &ptr, &ld);
+    pnga_access_ptr(g_a, lo, hi, &ptr, &ld);
     gai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
     nga_release_update_(g_a, lo, hi);
   } else {
@@ -906,7 +906,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
     if (!pnga_uses_proc_grid(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, lo, hi);
-        nga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
         nga_release_update_block_(g_a, &idx);
       }
@@ -930,7 +930,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
           if (hi[i] < lo[i]) chk = 0;
         }
         if (chk) {
-          nga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
           gai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
           nga_release_update_block_(g_a, index);
         }
@@ -1240,7 +1240,7 @@ ga_norm1_ (Integer * g_a, double *nm)
 
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, lo, hi);
-    nga_access_ptr(g_a, lo, hi, &ptr, &ld);
+    pnga_access_ptr(g_a, lo, hi, &ptr, &ld);
     gai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
     nga_release_update_(g_a, lo, hi);
   } else {
@@ -1249,7 +1249,7 @@ ga_norm1_ (Integer * g_a, double *nm)
     if (!pnga_uses_proc_grid(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, lo, hi);
-        nga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
         nga_release_update_block_(g_a, &idx);
       }
@@ -1273,7 +1273,7 @@ ga_norm1_ (Integer * g_a, double *nm)
           if (hi[i] < lo[i]) chk = 0;
         }
         if (chk) {
-          nga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
           gai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
           nga_release_update_block_grid_(g_a, index);
         }
@@ -1537,7 +1537,7 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
 
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, loA, hiA);
-    nga_access_ptr(g_a, loA, hiA, &ptr, &ld);
+    pnga_access_ptr(g_a, loA, hiA, &ptr, &ld);
     gai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
     nga_release_update_(g_a, loA, hiA);
   } else {
@@ -1546,7 +1546,7 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
     if (!pnga_uses_proc_grid(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, loA, hiA);
-        nga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
         nga_release_update_block_(g_a, &idx);
       }
@@ -1570,7 +1570,7 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
           if (hiA[i] < loA[i]) chk = 0;
         }
         if (chk) {
-          nga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
           gai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
           nga_release_update_block_grid_(g_a, index);
         }
@@ -1756,7 +1756,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
 
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, loA, hiA);
-    nga_access_ptr(g_a, loA, hiA, &ptr, &ld);
+    pnga_access_ptr(g_a, loA, hiA, &ptr, &ld);
     gai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
   } else {
     Integer idx;
@@ -1764,7 +1764,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
     if (!pnga_uses_proc_grid(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, loA, hiA);
-        nga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
         nga_release_update_block_(g_a, &idx);
       }
@@ -1788,7 +1788,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
           if (hiA[i] < loA[i]) chk = 0;
         }
         if (chk) {
-          nga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
           gai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
           nga_release_update_block_grid_(g_a, index);
         }
@@ -1973,7 +1973,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
 
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, loA, hiA);
-    nga_access_ptr(g_a, loA, hiA, &ptr, &ld);
+    pnga_access_ptr(g_a, loA, hiA, &ptr, &ld);
     gai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
     nga_release_update_(g_a, loA, hiA);
   } else {
@@ -1982,7 +1982,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
     if (!pnga_uses_proc_grid(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, loA, hiA);
-        nga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
         nga_release_update_block_(g_a, &idx);
       }
@@ -2006,7 +2006,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
           if (hiA[i] < loA[i]) chk = 0;
         }
         if (chk) {
-          nga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
           gai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
           nga_release_update_block_grid_(g_a, index);
         }
@@ -2149,7 +2149,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
 
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, loA, hiA);
-    nga_access_ptr(g_a, loA, hiA, &ptr, &ld);
+    pnga_access_ptr(g_a, loA, hiA, &ptr, &ld);
     gai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
     nga_release_update_(g_a, loA, hiA);
   } else {
@@ -2158,7 +2158,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
     if (!pnga_uses_proc_grid(g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, loA, hiA);
-        nga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
         nga_release_update_block_(g_a, &idx);
       }
@@ -2182,7 +2182,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
           if (hiA[i] < loA[i]) chk = 0;
         }
         if (chk) {
-          nga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
           gai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
           nga_release_update_block_grid_(g_a, index);
         }
@@ -2297,7 +2297,7 @@ void FATR ga_zero_diagonal_(Integer * g_a)
       hi[1] = GA_MIN (hiA[0], hiA[1]);
       if (hi[0] >= lo[0]) {
                               /* we got a block containing diagonal elements */
-        nga_access_ptr (g_a, lo, hi, &ptr, &ld);
+        pnga_access_ptr (g_a, lo, hi, &ptr, &ld);
         gai_zero_diagonal_block(g_a, ptr, lo, hi, ld, offset, type);
         /* release access to the data */
         nga_release_update_ (g_a, lo, hi);
@@ -2317,7 +2317,7 @@ void FATR ga_zero_diagonal_(Integer * g_a)
         hi[1] = GA_MIN (hiA[0], hiA[1]);
 
         if (hi[0] >= lo[0]) {
-          nga_access_block_ptr(g_a, &idx, &ptr, lld);
+          pnga_access_block_ptr(g_a, &idx, &ptr, lld);
           /* evaluate offsets for system */
           offset = 0;
           last = andim - 1;
@@ -2357,7 +2357,7 @@ void FATR ga_zero_diagonal_(Integer * g_a)
         hi[1] = GA_MIN (hiA[0], hiA[1]);
 
         if (hi[0] >= lo[0]) {
-          nga_access_block_grid_ptr(g_a, index, &ptr, lld);
+          pnga_access_block_grid_ptr(g_a, index, &ptr, lld);
           /* evaluate offsets for system */
           offset = 0;
           last = andim - 1;
@@ -2527,7 +2527,7 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
       if (lo[i]>hi[i]) chk = 0;
     }
     if (chk) {
-      nga_access_ptr (g_a, lo, hi, &ptr, &ld);
+      pnga_access_ptr (g_a, lo, hi, &ptr, &ld);
 
       gai_scale_row_values(type, lo, hi, ld, ptr, g_v);
 
@@ -2541,7 +2541,7 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
       Integer idx;
       for (idx=me; idx<num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, lo, hi);
-        nga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_scale_row_values(type, lo, hi, ld, ptr, g_v);
         nga_release_update_block_(g_a, &idx);
       }
@@ -2564,7 +2564,7 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
           if (hi[i] < lo[i]) chk = 0;
         }
         if (chk) {
-          nga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
           gai_scale_row_values(type, lo, hi, ld, ptr, g_v);
           nga_release_update_block_grid_(g_a, index);
         }
@@ -2725,7 +2725,7 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
       if (lo[i]>hi[i]) chk = 0;
     }
     if (chk) {
-      nga_access_ptr (g_a, lo, hi, &ptr, &ld);
+      pnga_access_ptr (g_a, lo, hi, &ptr, &ld);
 
       gai_scale_col_values(type, lo, hi, ld, ptr, g_v);
 
@@ -2739,7 +2739,7 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
       Integer idx;
       for (idx=me; idx<num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, lo, hi);
-        nga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
         gai_scale_col_values(type, lo, hi, ld, ptr, g_v);
         nga_release_update_block_(g_a, &idx);
       }
@@ -2762,7 +2762,7 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
           if (hi[i] < lo[i]) chk = 0;
         }
         if (chk) {
-          nga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
           gai_scale_col_values(type, lo, hi, ld, ptr, g_v);
           nga_release_update_block_grid_(g_a, index);
         }
