@@ -549,12 +549,12 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
     hi[0] = one;
     hi[1] = dimB2;
     pnga_get(g_b, lo, hi, adrb, &dimB1);
-    
+
     /** LU factorization */
 #if NOFORT
     {  int info_t;
-       LP_dgefa(adra, (int)dimA1, (int)dimA2, (int*)adri, &info_t);
-       info = info_t;
+      LP_dgefa(adra, (int)dimA1, (int)dimA2, (int*)adri, &info_t);
+      info = info_t;
     }
 #else
     DGETRF(&dimA1, &dimA2, adra, &dimA1, adri, &info);
@@ -568,28 +568,32 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
       int job=0;
       if(*trans == 't' || *trans == 'T') job = 1; 
       for(i=0; i<dimB2; i++) {
-	p_b = adrb + i*dimB1;
-	LP_dgesl(adra, (int)dimA1, (int)dimA2, (int*)adri, p_b, job);
+        p_b = adrb + i*dimB1;
+        LP_dgesl(adra, (int)dimA1, (int)dimA2, (int*)adri, p_b, job);
       }
 #else
 #   if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
       DGETRS(trans, &dimA1, &dimB2, adra, &dimA1, 
-	     adri, adrb, &dimB1, &info, (Integer)1);
+          adri, adrb, &dimB1, &info, (Integer)1);
 #   else
       DGETRS(trans, (Integer)1, &dimA1, &dimB2, adra, &dimA1, 
-	     adri, adrb, &dimB1, &info);
+          adri, adrb, &dimB1, &info);
 #   endif
 #endif
 
-      if(info == 0) 
-	ga_put_(g_b, &one, &dimB1, &one, &dimB2, adrb, &dimB1);
-      else
-	pnga_error(" ga_lu_solve: LP_dgesl failed ", -info);
-      
+      if(info == 0) {
+        lo[0] = one;
+        lo[1] = dimB1;
+        hi[0] = one;
+        hi[1] = dimB2;
+        pnga_put(g_b, lo, hi, adrb, &dimB1);
+      } else
+        pnga_error(" ga_lu_solve: LP_dgesl failed ", -info);
+
     }
     else
       pnga_error(" ga_lu_solve: LP_dgefa failed ", -info);
-    
+
     /** deallocate work arrays */
     ga_free(adri);
     ga_free(adrb);

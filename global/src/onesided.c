@@ -95,9 +95,14 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 
 /***************************************************************************/
 
-/*\ SYNCHRONIZE ALL THE PROCESSES
-\*/
-void FATR ga_pgroup_sync_(Integer *grp_id)
+/**
+ *  Synchronize all processes on group
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pgroup_sync = pnga_pgroup_sync
+#endif
+
+void pnga_pgroup_sync(Integer *grp_id)
 {
 #ifdef CHECK_MA
     Integer status;
@@ -163,7 +168,7 @@ Integer status;
 #ifdef BGML
           ARMCI_Barrier();
 #endif
-         ga_pgroup_sync_(&grp_id);
+         pnga_pgroup_sync(&grp_id);
        }
 #ifdef CHECK_MA
        status = MA_verify_allocator_stuff();
@@ -394,30 +399,26 @@ Integer _d, _factor;                                                           \
   }                                                                            \
 }
 
-/*\ A routine to test for a non-blocking call
-\*/
-Integer FATR nga_nbtest_(Integer *nbhandle) 
+/**
+ *  A routine to test for a non-blocking call
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_nbtest = pnga_nbtest
+#endif
+
+Integer pnga_nbtest(Integer *nbhandle) 
 {
     return nga_test_internal((Integer *)nbhandle);
 } 
 
-/*\ A routine to test for a non-blocking call
-\*/
-Integer FATR ga_nbtest_(Integer *nbhandle) 
-{
-    return nga_test_internal((Integer *)nbhandle);
-} 
+/**
+ *  A routine to wait for a non-blocking call to complete
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_nbwait = pnga_nbwait
+#endif
 
-/*\ A routine to wait for a non-blocking call to complete
-\*/
-void FATR nga_nbwait_(Integer *nbhandle) 
-{
-    nga_wait_internal((Integer *)nbhandle);
-} 
-
-/*\ A routine to wait for a non-blocking call to complete
-\*/
-void FATR ga_nbwait_(Integer *nbhandle) 
+void FATR pnga_nbwait(Integer *nbhandle) 
 {
     nga_wait_internal((Integer *)nbhandle);
 } 
@@ -2628,37 +2629,34 @@ unsigned long    lref=0, lptr;
 #endif
 }
 
-/*\ RELEASE ACCESS TO A PATCH OF A GLOBAL ARRAY
-\*/
-void FATR  ga_release_(Integer *g_a, 
-                       Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi)
+/**
+ *  Release access to a patch of a Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_release = pnga_release
+#endif
+
+void pnga_release(Integer *g_a, Integer *lo, Integer *hi)
 {}
 
+/**
+ *  Release access and update a patch of a Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_release_update = pnga_release_update
+#endif
 
-/*\ RELEASE ACCESS TO A PATCH OF A GLOBAL ARRAY
-\*/
-void FATR  nga_release_(Integer *g_a, Integer *lo, Integer *hi)
+void pnga_release_update(Integer *g_a, Integer *lo, Integer *hi)
 {}
 
+/**
+ *  Release access to a block in a block-cyclic Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_release_block = pnga_release_block
+#endif
 
-/*\ RELEASE ACCESS & UPDATE A PATCH OF A GLOBAL ARRAY
-\*/
-void FATR  ga_release_update_(g_a, ilo, ihi, jlo, jhi)
-     Integer *g_a, *ilo, *ihi, *jlo, *jhi;
-{}
-
-
-/*\ RELEASE ACCESS & UPDATE A PATCH OF A GLOBAL ARRAY
-\*/
-void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi)
-{}
-
-void FATR  ngai_release_update(Integer *g_a, Integer *lo, Integer *hi)
-{ nga_release_update_(g_a, lo, hi); }
-
-/*\ RELEASE ACCESS TO A BLOCK IN BLOCK-CYCLIC GLOBAL ARRAY
-\*/
-void FATR nga_release_block_(Integer *g_a, Integer *iblock)
+void pnga_release_block(Integer *g_a, Integer *iblock)
 {
   /*
   Integer i;
@@ -2670,31 +2668,52 @@ void FATR nga_release_block_(Integer *g_a, Integer *iblock)
         */
 }
 
-/*\ RELEASE & UPDATE ACCESS TO A BLOCK IN BLOCK-CYCLIC GLOBAL ARRAY
-\*/
-void FATR nga_release_update_block_(Integer *g_a, Integer *iblock)
+/**
+ *  Release access and update a block in a block-cyclic Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_release_update_block = pnga_release_update_block
+#endif
+
+void pnga_release_update_block(Integer *g_a, Integer *iblock)
 {}
 
-/*\ RELEASE ACCESS TO A BLOCK IN BLOCK-CYCLIC GLOBAL ARRAY WITH PROC GRID
- *  (SCALAPACK) LAYOUT
-\*/
-void FATR nga_release_block_grid_(Integer *g_a, Integer *index)
+/**
+ *  Release access to a block in a block-cyclic Global Array with proc grid
+ *  (SCALAPack) layout
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_release_block_grid = pnga_release_block_grid
+#endif
+
+void pnga_release_block_grid(Integer *g_a, Integer *index)
 {}
 
-/*\ RELEASE ACCESS & UPDATE A BLOCK IN BLOCK-CYCLIC GLOBAL ARRAY WITH
- *  PROC GRID (SCALAPACK) LAYOUT
-\*/
-void FATR nga_release_update_block_grid_(Integer *g_a, Integer *index)
+/**
+ *  Release access and update a block in a block-cyclic Global Array with
+ *  proc grid (SCALAPack) layout
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_release_update_block_grid = pnga_release_update_block_grid
+#endif
+
+void FATR pnga_release_update_block_grid(Integer *g_a, Integer *index)
 {}
 
-/*\ RELEASE ACCESS TO SEGMENT IN BLOCK-CYCLIC GLOBAL ARRAY
-\*/
-void FATR nga_release_block_segment_(Integer *g_a, Integer *iproc)
+/**
+ *  Release access to data segment in a block-cyclic Global Array
+ */
+void pnga_release_block_segment(Integer *g_a, Integer *iproc)
 {}
 
-/*\ RELEASE ACCESS & UPDATE A BLOCK IN BLOCK-CYCLIC GLOBAL ARRAY
-\*/
-void FATR nga_release_update_block_segment_(Integer *g_a, Integer *iproc)
+/**
+ *  Release access and update a block in a block-cyclic Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_release_update_block_segment = pnga_release_update_block_segment
+#endif
+
+void pnga_release_update_block_segment(Integer *g_a, Integer *iproc)
 {}
 
 void ga_scatter_acc_local(Integer g_a, void *v,Integer *i,Integer *j,
@@ -2733,7 +2752,7 @@ int use_blocks;
     lo[0] = ilo;
     lo[1] = jlo;
     pnga_access_block_ptr(&g_a, &iproc, &ptr_ref, &ldp);
-    nga_release_block_(&g_a, &iproc);
+    pnga_release_block(&g_a, &iproc);
     if (GA[handle].block_sl_flag == 0) {
       proc = proc%pnga_nnodes();
     } else {
@@ -3007,7 +3026,7 @@ void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
 
         /* get address of the first element owned by proc */
         pnga_access_block_ptr(g_a, &iproc, &(ptr_ref[kk]), &(ldp[kk]));
-        nga_release_block_(g_a, &iproc);
+        pnga_release_block(g_a, &iproc);
       }
     }
     
@@ -3396,7 +3415,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             ptr_dst[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, &iproc, lo, hi);
             pnga_access_block_ptr(g_a, &iproc, &(ptr_src[map[iproc]][count[iproc]]), ld);
-            nga_release_block_(g_a, &iproc);
+            pnga_release_block(g_a, &iproc);
             /* calculate remaining offset */
             offset = 0;
             last = ndim - 1;
@@ -3503,7 +3522,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, &iproc, lo, hi);
             pnga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
-            nga_release_block_(g_a, &iproc);
+            pnga_release_block(g_a, &iproc);
             /* calculate remaining offset */
             offset = 0;
             last = ndim - 1;
@@ -3619,7 +3638,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, &iproc, lo, hi);
             pnga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
-            nga_release_block_(g_a, &iproc);
+            pnga_release_block(g_a, &iproc);
             /* calculate remaining offset */
             offset = 0;
             last = ndim - 1;
@@ -3952,7 +3971,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
             ptr_dst[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, &iproc, lo, hi);
             pnga_access_block_ptr(g_a, &iproc, &(ptr_src[map[iproc]][count[iproc]]), ld);
-            nga_release_block_(g_a, &iproc);
+            pnga_release_block(g_a, &iproc);
             /* calculate remaining offset */
             offset = 0;
             last = ndim - 1;
@@ -4077,7 +4096,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, &iproc, lo, hi);
             pnga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
-            nga_release_block_(g_a, &iproc);
+            pnga_release_block(g_a, &iproc);
             /* calculate remaining offset */
             offset = 0;
             last = ndim - 1;
@@ -4211,7 +4230,7 @@ void gai_gatscat_c(int op, Integer* g_a, void* v, int *subscript32[],
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
             pnga_distribution(g_a, &iproc, lo, hi);
             pnga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
-            nga_release_block_(g_a, &iproc);
+            pnga_release_block(g_a, &iproc);
             /* calculate remaining offset */
             offset = 0;
             last = ndim - 1;
@@ -4607,7 +4626,7 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
 
         /* get address of the first element owned by proc */
         pnga_access_block_ptr(g_a, &iproc, &(ptr_ref[kk]), &(ldp[kk]));
-        nga_release_block_(g_a, &iproc);
+        pnga_release_block(g_a, &iproc);
       }
     }
     
@@ -4711,13 +4730,15 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
     vampir_end(GA_GATHER,__FILE__,__LINE__);
 #endif
 }
-      
 
+/**
+ *  Read and increment an element of a Global Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_read_inc = pnga_read_inc
+#endif
 
-
-/*\ READ AND INCREMENT AN ELEMENT OF A GLOBAL ARRAY
-\*/
-Integer FATR nga_read_inc_(Integer* g_a, Integer* subscript, Integer* inc)
+Integer pnga_read_inc(Integer* g_a, Integer* subscript, Integer* inc)
 {
 Integer *ptr, ldp[MAXDIM], proc, handle=GA_OFFSET+*g_a, p_handle, ndim;
 int optype,ivalue;
@@ -4755,7 +4776,7 @@ void *pval;
       Integer j, jtot, last, offset;
       pnga_distribution(g_a, &proc, lo, hi);
       pnga_access_block_ptr(g_a, &proc, (char**)&ptr, ldp);
-      nga_release_block_(g_a, &proc);
+      pnga_release_block(g_a, &proc);
       offset = 0;
       last = ndim - 1;
       jtot = 1;
@@ -4819,39 +4840,6 @@ void *pval;
          return (Integer) ivalue;
     else
          return (Integer) lvalue;
-}
-
-
-
-
-/*\ READ AND INCREMENT AN ELEMENT OF A GLOBAL ARRAY
-\*/
-Integer FATR ga_read_inc_(g_a, i, j, inc)
-        Integer *g_a, *i, *j, *inc;
-{
-Integer  value, subscript[2];
-
-#ifdef USE_VAMPIR
-   vampir_begin(GA_READ_INC,__FILE__,__LINE__);
-#endif
-#ifdef ENABLE_TRACE
-       trace_stime_();
-#endif
-
-   subscript[0] =*i;
-   subscript[1] =*j;
-   value = nga_read_inc_(g_a, subscript, inc);
-
-#  ifdef ENABLE_TRACE
-     trace_etime_();
-     op_code = GA_OP_RDI;
-     trace_genrec_(g_a, i, i, j, j, &op_code);
-#  endif
-#ifdef USE_VAMPIR
-   vampir_end(GA_READ_INC,__FILE__,__LINE__);
-#endif
-
-   return(value);
 }
 
 /*\ UTILITY FUNCTION TO CORRECT PATCH INDICES FOR PRESENCE OF

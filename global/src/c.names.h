@@ -322,6 +322,7 @@
 #define nga_pgroup_set_default_            F77_FUNC_(nga_pgroup_set_default, NGA_PGROUP_SET_DEFAULT)
 #define nga_pgroup_split_                  F77_FUNC_(nga_pgroup_split, NGA_PGROUP_SPLIT)
 #define nga_pgroup_split_irreg_            F77_FUNC_(nga_pgroup_split_irreg, NGA_PGROUP_SPLIT_IRREG)
+#define nga_pgroup_sync_                   F77_FUNC_(nga_pgroup_sync, NGA_PGROUP_SYNC)
 #define nga_print_patch_                   F77_FUNC_(nga_print_patch, NGA_PRINT_PATCH)
 #define nga_proc_topology_                 F77_FUNC_(nga_proc_topology, NGA_PROC_TOPOLOGY)
 #define nga_put_                           F77_FUNC_(nga_put, NGA_PUT)

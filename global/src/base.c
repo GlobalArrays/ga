@@ -1034,7 +1034,7 @@ void pnga_pgroup_set_default(Integer *grp)
  
     /* force a hang if default group is not being set correctly */
 #if 0
-    if (local_sync_begin || local_sync_end) ga_pgroup_sync_(grp);
+    if (local_sync_begin || local_sync_end) pnga_pgroup_sync(grp);
 #endif
     GA_Default_Proc_Group = (int)(*grp);
 
@@ -1852,7 +1852,7 @@ logical pnga_allocate( Integer *g_a)
     GA[ga_handle].p_handle = GA_Default_Proc_Group;
     p_handle = GA_Default_Proc_Group;
   }
-  ga_pgroup_sync_(&p_handle);
+  pnga_pgroup_sync(&p_handle);
   GA_PUSH_NAME("ga_allocate");
 
   if (p_handle > 0) {
@@ -1893,7 +1893,7 @@ logical pnga_allocate( Integer *g_a)
  
     if (GAme==0 && DEBUG )
       for (d=0;d<ndim;d++) fprintf(stderr,"b[%ld]=%ld\n",(long)d,(long)blk[d]);
-    ga_pgroup_sync_(&p_handle);
+    pnga_pgroup_sync(&p_handle);
 
     /* ddb(ndim, dims, GAnproc, blk, pe);*/
     if(p_handle == 0) /* for mirrored arrays */
@@ -2082,7 +2082,7 @@ logical pnga_allocate( Integer *g_a)
     /* ngai_get_first_last_indices(g_a); */
   }
 
-  ga_pgroup_sync_(&p_handle);
+  pnga_pgroup_sync(&p_handle);
   if (status) {
     GAstat.curmem += (long)GA[ga_handle].size;
     GAstat.maxmem  = (long)GA_MAX(GAstat.maxmem, GAstat.curmem);
@@ -2633,7 +2633,7 @@ logical pnga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   grp_id = pnga_get_pgroup(g_a);
-  if(local_sync_begin)ga_pgroup_sync_(&grp_id);
+  if(local_sync_begin)pnga_pgroup_sync(&grp_id);
 
   if (grp_id > 0) {
     grp_nproc  = PGRP_LIST[grp_id].map_nproc;
@@ -2702,7 +2702,7 @@ logical pnga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
     GA[ga_handle].ptr[grp_me]=NULL;
   }
 
-  if(local_sync_end)ga_pgroup_sync_(&grp_id);
+  if(local_sync_end)pnga_pgroup_sync(&grp_id);
 
 #     ifdef GA_CREATE_INDEF
   /* This code is incorrect. It needs to fixed if INDEF is ever used */
@@ -2831,7 +2831,7 @@ int local_sync_begin;
     local_sync_begin = _ga_sync_begin; 
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     grp_id = (Integer)GA[ga_handle].p_handle;
-    if(local_sync_begin)ga_pgroup_sync_(&grp_id);
+    if(local_sync_begin)pnga_pgroup_sync(&grp_id);
 
     if (grp_id > 0) grp_me = PGRP_LIST[grp_id].map_proc_list[GAme];
     else grp_me=GAme;
@@ -2997,7 +2997,7 @@ void pnga_randomize(Integer *g_a, void* val)
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
   grp_id = pnga_get_pgroup(g_a);
-  if(local_sync_begin)ga_pgroup_sync_(&grp_id);
+  if(local_sync_begin)pnga_pgroup_sync(&grp_id);
 
 
   ga_check_handleM(g_a, "ga_randomize");
@@ -3071,10 +3071,10 @@ void pnga_randomize(Integer *g_a, void* val)
       default:
         pnga_error("type not supported",GA[handle].type);
     }
-    nga_release_block_segment_(g_a,&GAme);
+    pnga_release_block_segment(g_a,&GAme);
   }
 
-  if(local_sync_end)ga_pgroup_sync_(&grp_id);
+  if(local_sync_end)pnga_pgroup_sync(&grp_id);
 
   GA_POP_NAME;
 
@@ -3108,7 +3108,7 @@ void pnga_fill(Integer *g_a, void* val)
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
   grp_id = pnga_get_pgroup(g_a);
-  if(local_sync_begin)ga_pgroup_sync_(&grp_id);
+  if(local_sync_begin)pnga_pgroup_sync(&grp_id);
 
 
   ga_check_handleM(g_a, "ga_fill");
@@ -3178,10 +3178,10 @@ void pnga_fill(Integer *g_a, void* val)
       default:
         pnga_error("type not supported",GA[handle].type);
     }
-    nga_release_block_segment_(g_a,&GAme);
+    pnga_release_block_segment(g_a,&GAme);
   }
 
-  if(local_sync_end)ga_pgroup_sync_(&grp_id);
+  if(local_sync_end)pnga_pgroup_sync(&grp_id);
 
   GA_POP_NAME;
 

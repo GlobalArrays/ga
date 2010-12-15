@@ -146,8 +146,20 @@ extern void pnga_nbget(Integer *g_a, Integer *lo, Integer *hi, void *buf,
                        Integer *ld, Integer *nbhandle);
 extern void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf,
                        Integer *ld, Integer *nbhandle);
+extern Integer pnga_nbtest(Integer *nbhandle);
+extern void pnga_nbwait(Integer *nbhandle);
 extern void pnga_put(Integer *g_a, Integer *lo, Integer *hi, void *buf,
                      Integer *ld);
+extern void pnga_pgroup_sync(Integer *grp_id);
+extern Integer pnga_read_inc(Integer *g_a, Integer *subscript, Integer *inc);
+extern void pnga_release(Integer *g_a, Integer *lo, Integer *hi);
+extern void pnga_release_block(Integer *g_a, Integer *iblock);
+extern void pnga_release_block_grid(Integer *g_a, Integer *index);
+extern void pnga_release_block_segment(Integer *g_a, Integer *iproc);
+extern void pnga_release_update(Integer *g_a, Integer *lo, Integer *hi);
+extern void pnga_release_update_block(Integer *g_a, Integer *iblock);
+extern void pnga_release_update_block_grid(Integer *g_a, Integer *index);
+extern void pnga_release_update_block_segment(Integer *g_a, Integer *iproc);
 
 /* Routines from global.util.c */
 extern void pnga_error(char *string, Integer icode);

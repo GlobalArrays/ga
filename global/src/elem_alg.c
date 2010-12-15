@@ -752,7 +752,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
       ngai_do_oper_elem(type, ndim, loA, hiA, ld, data_ptr, scalar, op);
 
       /* release access to the data */
-      nga_release_update_(g_a, loA, hiA);
+      pnga_release_update(g_a, loA, hiA);
     }
   } else {
     Integer offset, i, j, jtmp, chk;
@@ -822,7 +822,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
           ngai_do_oper_elem(type, ndim, loA, hiA, ld, data_ptr, scalar, op);
 
           /* release access to the data */
-          nga_release_update_block_(g_a, &i);
+          pnga_release_update_block(g_a, &i);
         }
       }
     } else {
@@ -902,7 +902,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
           ngai_do_oper_elem(type, ndim, loA, hiA, ld, data_ptr, scalar, op);
 
           /* release access to the data */
-          nga_release_update_block_grid_(g_a, index);
+          pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -1859,9 +1859,9 @@ int op; /* operation to be perform between g_a and g_b */
       ngai_do_elem2_oper(atype, cndim, loC, hiC, ldC, A_ptr, B_ptr, C_ptr, op);
 
       /* release access to the data */
-      nga_release_       (&g_A, loC, hiC);
-      nga_release_       (&g_B, loC, hiC); 
-      nga_release_update_( g_c, loC, hiC); 
+      pnga_release       (&g_A, loC, hiC);
+      pnga_release       (&g_B, loC, hiC); 
+      pnga_release_update( g_c, loC, hiC); 
 
     }
   } else {
@@ -1894,9 +1894,9 @@ int op; /* operation to be perform between g_a and g_b */
         ngai_do_elem2_oper(atype, cndim, loC, hiC, ldC, A_ptr, B_ptr, C_ptr, op);
 
         /* release access to the data */
-        nga_release_       (&g_A, loC, hiC);
-        nga_release_       (&g_B, loC, hiC);
-        nga_release_update_( g_c, loC, hiC);
+        pnga_release       (&g_A, loC, hiC);
+        pnga_release       (&g_B, loC, hiC);
+        pnga_release_update( g_c, loC, hiC);
       }
     } else {
       Integer lod[MAXDIM], hid[MAXDIM], chk;
@@ -1966,9 +1966,9 @@ int op; /* operation to be perform between g_a and g_b */
             ngai_do_elem2_oper(atype, cndim, loC, hiC, ldC, A_ptr, B_ptr, C_ptr, op);
 
             /* release access to the data */
-            nga_release_block_       (&g_A, &idx);
-            nga_release_block_       (&g_B, &idx);
-            nga_release_update_block_( g_c, &idx);
+            pnga_release_block       (&g_A, &idx);
+            pnga_release_block       (&g_B, &idx);
+            pnga_release_update_block( g_c, &idx);
           }
         }
       } else {
@@ -2049,9 +2049,9 @@ int op; /* operation to be perform between g_a and g_b */
             ngai_do_elem2_oper(atype, cndim, loC, hiC, ldC, A_ptr, B_ptr, C_ptr, op);
 
             /* release access to the data */
-            nga_release_block_grid_       (&g_A, index);
-            nga_release_block_grid_       (&g_B, index);
-            nga_release_update_block_grid_( g_c, index);
+            pnga_release_block_grid       (&g_A, index);
+            pnga_release_block_grid       (&g_B, index);
+            pnga_release_update_block_grid( g_c, index);
           }
           /* increment index to get next block on processor */
           index[0] += topology[0];
@@ -2375,7 +2375,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
       ngai_do_elem3_patch(atype, andim, loA, hiA, ldA, A_ptr, op);
 
       /* release access to the data */
-      nga_release_ (g_a, loA, hiA);
+      pnga_release (g_a, loA, hiA);
     }
   } else {
     Integer offset, j, jtmp, chk;
@@ -2445,7 +2445,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
           ngai_do_elem3_patch(atype, andim, loA, hiA, ldA, A_ptr, op);
 
           /* release access to the data */
-          nga_release_update_block_(g_a, &i);
+          pnga_release_update_block(g_a, &i);
         }
       }
     } else {
@@ -2522,7 +2522,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
           ngai_do_elem3_patch(atype, andim, loA, hiA, ldA, A_ptr, op);
 
           /* release access to the data */
-          nga_release_update_block_grid_(g_a, index);
+          pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -2650,7 +2650,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
       ngai_has_negative_element(atype, andim, loA, hiA, ldA, A_ptr, &iretval);
 
       /* release access to the data */
-      nga_release_ (g_a, loA, hiA);
+      pnga_release (g_a, loA, hiA);
     }
   } else {
     Integer offset, j, jtmp, chk;
@@ -2720,7 +2720,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
           ngai_has_negative_element(atype, andim, loA, hiA, ldA, A_ptr, &iretval);
 
           /* release access to the data */
-          nga_release_update_block_(g_a, &i);
+          pnga_release_update_block(g_a, &i);
         }
       }
     } else {
@@ -2797,7 +2797,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
           ngai_has_negative_element(atype, andim, loA, hiA, ldA, A_ptr, &iretval);
 
           /* release access to the data */
-          nga_release_update_block_grid_(g_a, index);
+          pnga_release_update_block_grid(g_a, index);
         }
 
         /* increment index to get next block on processor */

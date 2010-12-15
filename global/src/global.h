@@ -387,6 +387,7 @@ EXT INT  FATR nga_pgroup_nodeid_(INT *grp_id);
 EXT void FATR nga_pgroup_set_default_(INT *grp);
 EXT INT  FATR nga_pgroup_split_( INT *grp, INT *num_group);
 EXT INT  FATR nga_pgroup_split_irreg_(INT *grp, INT *mycolor);
+EXT void FATR nga_pgroup_sync_(INT*);
 EXT void FATR nga_print_patch_(INT *g_a, INT *lo, INT *hi, INT *pretty);
 EXT void FATR nga_proc_topology_(INT* g_a, INT* proc, INT* subscr);
 EXT void FATR nga_put_(INT *g_a, INT *lo, INT *hi, void *buf, INT *ld);

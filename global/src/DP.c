@@ -144,7 +144,11 @@ Integer ndim, dims[2];
       }
 	  
       /* Put it where it belongs */
-      ga_put_(g_b, &ilod, &ihid, &jlod, &jhid, dbl_ptrA, &ld);
+      lo[0] = ilod;
+      lo[1] = jlod;
+      hi[0] = ihid;
+      hi[1] = jhid;
+      pnga_put(g_b, lo, hi, dbl_ptrA, &ld);
 
       /* Get rid of local memory if we used it */
       if( transp == 't') ga_free(dbl_ptrB);

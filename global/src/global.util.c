@@ -81,7 +81,7 @@ void ga_file_print_patch(file, g_a, ilo, ihi, jlo, jhi, pretty)
   Integer lo[2], hi[2];
 
   a_grp = pnga_get_pgroup(g_a);
-  ga_pgroup_sync_(&a_grp);
+  pnga_pgroup_sync(&a_grp);
   gai_check_handle(g_a, "ga_print");
   if(pnga_pgroup_nodeid(&a_grp) == 0){
 
@@ -254,7 +254,7 @@ void ga_file_print_patch(file, g_a, ilo, ihi, jlo, jhi, pretty)
     }
   }
 
-  ga_pgroup_sync_(&a_grp);
+  pnga_pgroup_sync(&a_grp);
 }
 
 /*\ PRINT g_a[ilo:ihi, jlo:jhi]

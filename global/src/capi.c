@@ -1654,12 +1654,12 @@ void NGA_NbPut64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[],
 
 int NGA_NbTest(ga_nbhdl_t* nbhandle)
 {
-    return(nga_test_internal((Integer *)nbhandle));
+    return(wnga_nbtest((Integer *)nbhandle));
 }
 
-int NGA_NbWait(ga_nbhdl_t* nbhandle)
+void NGA_NbWait(ga_nbhdl_t* nbhandle)
 {
-    return(nga_wait_internal((Integer *)nbhandle));
+    wnga_nbwait((Integer *)nbhandle);
 }
 
 void NGA_Strided_acc(int g_a, int lo[], int hi[], int skip[],
@@ -1880,7 +1880,7 @@ long NGA_Read_inc(int g_a, int subscript[], long inc)
     Integer in=(Integer)inc;
     Integer _ga_lo[MAXDIM];
     COPYINDEX_C2F(subscript, _ga_lo, ndim);
-    return (long)nga_read_inc_(&a, _ga_lo, &in);
+    return (long)wnga_read_inc(&a, _ga_lo, &in);
 }
 
 long NGA_Read_inc64(int g_a, int64_t subscript[], long inc)
@@ -1890,7 +1890,7 @@ long NGA_Read_inc64(int g_a, int64_t subscript[], long inc)
     Integer in=(Integer)inc;
     Integer _ga_lo[MAXDIM];
     COPYINDEX_C2F(subscript, _ga_lo, ndim);
-    return (long)nga_read_inc_(&a, _ga_lo, &in);
+    return (long)wnga_read_inc(&a, _ga_lo, &in);
 }
 
 void NGA_Distribution(int g_a, int iproc, int lo[], int hi[])
@@ -2230,7 +2230,7 @@ void NGA_Release(int g_a, int lo[], int hi[])
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
 
-     nga_release_(&a,_ga_lo, _ga_hi);
+     wnga_release(&a,_ga_lo, _ga_hi);
 }
 
 void NGA_Release64(int g_a, int64_t lo[], int64_t hi[])
@@ -2241,7 +2241,7 @@ void NGA_Release64(int g_a, int64_t lo[], int64_t hi[])
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
 
-     nga_release_(&a,_ga_lo, _ga_hi);
+     wnga_release(&a,_ga_lo, _ga_hi);
 }
 
 void NGA_Release_block(int g_a, int idx)
@@ -2249,7 +2249,7 @@ void NGA_Release_block(int g_a, int idx)
      Integer a=(Integer)g_a;
      Integer iblock = (Integer)idx;
 
-     nga_release_block_(&a, &iblock);
+     wnga_release_block(&a, &iblock);
 }
 
 void NGA_Release_block_grid(int g_a, int index[])
@@ -2259,7 +2259,7 @@ void NGA_Release_block_grid(int g_a, int index[])
      Integer _ga_lo[MAXDIM];
      COPYINDEX_C2F(index,_ga_lo,ndim);
 
-     nga_release_block_(&a, _ga_lo);
+     wnga_release_block(&a, _ga_lo);
 }
 
 void NGA_Release_block_segment(int g_a, int idx)
@@ -2267,7 +2267,7 @@ void NGA_Release_block_segment(int g_a, int idx)
      Integer a=(Integer)g_a;
      Integer iproc = (Integer)idx;
 
-     nga_release_block_segment_(&a, &iproc);
+     wnga_release_block_segment(&a, &iproc);
 }
 
 void NGA_Release_ghost_element(int g_a, int index[])
@@ -2602,7 +2602,13 @@ void GA_Pgroup_brdcst(int grp_id, void *buf, int lenbuf, int root)
 void GA_Pgroup_sync(int grp_id)
 {
     Integer grp = (Integer)grp_id;
-    ga_pgroup_sync_(&grp);
+    wnga_pgroup_sync(&grp);
+}
+
+void NGA_Pgroup_sync(int grp_id)
+{
+    Integer grp = (Integer)grp_id;
+    wnga_pgroup_sync(&grp);
 }
 
 void GA_Gop(int type, void *x, int n, char *op)
@@ -4041,7 +4047,7 @@ void NGA_Release_update(int g_a, int lo[], int hi[])
   COPYINDEX_C2F(lo,_ga_lo,ndim);
   COPYINDEX_C2F(hi,_ga_hi,ndim);
 
-  nga_release_update_(&a,_ga_lo, _ga_hi);
+  wnga_release_update(&a,_ga_lo, _ga_hi);
 }
 
 void NGA_Release_update64(int g_a, int64_t lo[], int64_t hi[])
@@ -4052,7 +4058,7 @@ void NGA_Release_update64(int g_a, int64_t lo[], int64_t hi[])
   COPYINDEX_C2F(lo,_ga_lo,ndim);
   COPYINDEX_C2F(hi,_ga_hi,ndim);
 
-  nga_release_update_(&a,_ga_lo, _ga_hi);
+  wnga_release_update(&a,_ga_lo, _ga_hi);
 }
 
 void NGA_Release_update_block(int g_a, int idx)
@@ -4060,7 +4066,7 @@ void NGA_Release_update_block(int g_a, int idx)
      Integer a=(Integer)g_a;
      Integer iblock = (Integer)idx;
 
-     nga_release_update_block_(&a, &iblock);
+     wnga_release_update_block(&a, &iblock);
 }
 
 void NGA_Release_update_block_grid(int g_a, int index[])
@@ -4069,7 +4075,7 @@ void NGA_Release_update_block_grid(int g_a, int index[])
      Integer ndim = wnga_ndim(&a);
      Integer _ga_lo[MAXDIM];
      COPYINDEX_C2F(index,_ga_lo,ndim);
-     nga_release_update_block_grid_(&a, _ga_lo);
+     wnga_release_update_block_grid(&a, _ga_lo);
 }
 
 void NGA_Release_update_block_segment(int g_a, int idx)
@@ -4077,7 +4083,7 @@ void NGA_Release_update_block_segment(int g_a, int idx)
      Integer a=(Integer)g_a;
      Integer iproc = (Integer)idx;
 
-     nga_release_update_block_segment_(&a, &iproc);
+     wnga_release_update_block_segment(&a, &iproc);
 }
 
 void NGA_Release_update_ghost_element(int g_a, int index[])

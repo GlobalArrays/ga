@@ -250,7 +250,7 @@ extern void          NGA_NbGet_ghost_dir(int g_a, int mask[], ga_nbhdl_t* handle
 extern void          NGA_NbGet(int g_a, int lo[], int hi[], void* buf, int ld[], ga_nbhdl_t* nbhandle);
 extern void          NGA_NbPut(int g_a, int lo[], int hi[], void* buf, int ld[], ga_nbhdl_t* nbhandle);
 extern int           NGA_NbTest(ga_nbhdl_t* nbhandle);
-extern int           NGA_NbWait(ga_nbhdl_t* nbhandle);
+extern void          NGA_NbWait(ga_nbhdl_t* nbhandle);
 extern int           NGA_Ndim(int g_a);
 extern int           NGA_Nnodes(void);
 extern int           NGA_Nodeid(void);
@@ -268,6 +268,7 @@ extern int           NGA_Pgroup_nodeid(int grp_id);
 extern void          NGA_Pgroup_set_default(int p_handle);
 extern int           NGA_Pgroup_split(int grp_id, int num_group);
 extern int           NGA_Pgroup_split_irreg(int grp_id, int color);
+extern void          NGA_Pgroup_sync(int grp_id);
 extern void          NGA_Print_patch(int g_a, int lo[], int hi[], int pretty);
 extern void          NGA_Proc_topology(int g_a, int proc, int coord[]);
 extern void          NGA_Put(int g_a, int lo[], int hi[], void* buf, int ld[]); 

@@ -185,7 +185,7 @@ void FATR nga_select_elem_(
       ngai_select_elem(type, op, ptr, elems, &info, &ind);
 
       /* release access to the data */
-      nga_release_(g_a, lo, hi);
+      pnga_release(g_a, lo, hi);
 
       /* determine element subscript in the ndim-array */
       for(i = 0; i < ndim; i++){
@@ -206,7 +206,7 @@ void FATR nga_select_elem_(
       ngai_select_elem(type, op, ptr, elems, &info, &ind);
 
       /* release access to the data */
-      nga_release_block_segment_(g_a, &me);
+      pnga_release_block_segment(g_a, &me);
 
       /* convert local index back into a global array index */
       if (!pnga_uses_proc_grid(g_a)) {

@@ -1345,7 +1345,7 @@ void ga_matmul(transa, transb, alpha, beta,
 
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    if(local_sync_begin)ga_pgroup_sync_(&a_grp);
+    if(local_sync_begin)pnga_pgroup_sync(&a_grp);
 
     GA_PUSH_NAME("ga_matmul");
 
@@ -1571,16 +1571,16 @@ void ga_matmul(transa, transb, alpha, beta,
 #if DEBUG_
        Integer grp_me;
        grp_me = pnga_pgroup_nodeid(&a_grp);
-       ga_pgroup_sync_(&a_grp);
+       pnga_pgroup_sync(&a_grp);
        if(me==0) check_result(1, transa, transb, alpha, beta, atype,
 			      g_a, ailo, aihi, ajlo, ajhi,
 			      g_b, bilo, bihi, bjlo, bjhi,
 			      g_c, cilo, cihi, cjlo, cjhi);
-       ga_pgroup_sync_(&a_grp);
+       pnga_pgroup_sync(&a_grp);
 #endif
        
        GA_POP_NAME;   
-       if(local_sync_end)ga_pgroup_sync_(&a_grp);
+       if(local_sync_end)pnga_pgroup_sync(&a_grp);
 #ifdef USE_VAMPIR
   vampir_end(GA_MATMUL,__FILE__,__LINE__);
 #endif

@@ -473,7 +473,7 @@ register Integer i;
           default: pnga_error("ga_patch_enum:wrong data type ",type);
         }
 
-        nga_release_update_(g_a, &lop, &hip);
+        pnga_release_update(g_a, &lop, &hip);
       }
    }
    
@@ -604,9 +604,9 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
            startp = k;
        }
        /* release local access to arrays */
-       nga_release_(g_a, &lop, &hip);
-       nga_release_(g_b, &lop, &hip);
-       if (lops > 0) nga_release_(g_sbit, &lops, &hips);
+       pnga_release(g_a, &lop, &hip);
+       pnga_release(g_b, &lop, &hip);
+       if (lops > 0) pnga_release(g_sbit, &lops, &hips);
 
     }
 
@@ -844,8 +844,8 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
           break;
         default: pnga_error("ga_scan/add:wrong data type",type);
       }
-      nga_release_(g_b, &lop, &hip);
-      if (*excl) nga_release_(g_a, &lop, &hip);
+      pnga_release(g_b, &lop, &hip);
+      if (*excl) pnga_release(g_a, &lop, &hip);
 
    }
 
@@ -1164,7 +1164,7 @@ Integer g_range;
             gai_hsort(ptr, elems);
             ptr+=elems;
         }
-        nga_release_update_(g_bin, &lo, &hi);             
+        pnga_release_update(g_bin, &lo, &hi);             
     }
 
     ga_sync_();

@@ -198,12 +198,12 @@ void ngai_copy_patch(char *trans,
     pnga_error("All matrices must be on same group for ngai_copy_patch", 0L); */
   if(local_sync_begin) {
     if (anproc <= bnproc) {
-      ga_pgroup_sync_(&a_grp);
+      pnga_pgroup_sync(&a_grp);
     } else if (a_grp == pnga_pgroup_get_world() &&
         b_grp == pnga_pgroup_get_world()) {
       ga_sync_();
     } else {
-      ga_pgroup_sync_(&b_grp);
+      pnga_pgroup_sync(&b_grp);
     }
   }
 
@@ -293,12 +293,12 @@ void ngai_copy_patch(char *trans,
           ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
           ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
           pnga_put(g_b, lod, hid, src_data_ptr, ld);
-          nga_release_(g_a, los, his);
+          pnga_release(g_a, los, his);
         } else {
           ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
           ngai_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
           pnga_get(g_a, lod, hid, src_data_ptr, ld);
-          nga_release_(g_b, los, his);
+          pnga_release(g_b, los, his);
         }
         /*** due to generality of this transformation scatter is required ***/
       } else{
@@ -407,7 +407,7 @@ void ngai_copy_patch(char *trans,
                            ((long long *)src_data_ptr)[idx];     
             }
           }
-          nga_release_(g_a, los, his);
+          pnga_release(g_a, los, his);
           nga_scatter_(g_b, tmp_ptr, dst_idx_ptr, &nelem);
           ga_free(dst_idx_ptr);
           ga_free(src_idx_ptr);
@@ -517,7 +517,7 @@ void ngai_copy_patch(char *trans,
                            ((long long *)src_data_ptr)[idx];     
             }
           }
-          nga_release_(g_b, los, his);
+          pnga_release(g_b, los, his);
           nga_gather_(g_a, tmp_ptr, dst_idx_ptr, &nelem);
           ga_free(dst_idx_ptr);
           ga_free(src_idx_ptr);
@@ -584,7 +584,7 @@ void ngai_copy_patch(char *trans,
               ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
               ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
               pnga_put(g_b, lod, hid, src_data_ptr, ld);
-              nga_release_block_(g_a, &i);
+              pnga_release_block(g_a, &i);
             }
           }
         } else {
@@ -649,7 +649,7 @@ void ngai_copy_patch(char *trans,
               ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
               ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
               pnga_put(g_b, lod, hid, src_data_ptr, ld);
-              nga_release_block_grid_(g_a, index);
+              pnga_release_block_grid(g_a, index);
             }
 
             /* increment index to get next block on processor */
@@ -670,7 +670,7 @@ void ngai_copy_patch(char *trans,
           ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
           ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
           pnga_put(g_b, lod, hid, src_data_ptr, ld);
-          nga_release_(g_a, los, his);
+          pnga_release(g_a, los, his);
         }
       }
     } else {
@@ -724,7 +724,7 @@ void ngai_copy_patch(char *trans,
               ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
               ngai_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
               pnga_get(g_a, lod, hid, src_data_ptr, ld);
-              nga_release_block_(g_b, &i);
+              pnga_release_block(g_b, &i);
             }
           }
         } else {
@@ -789,7 +789,7 @@ void ngai_copy_patch(char *trans,
               ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
               ngai_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
               pnga_get(g_a, lod, hid, src_data_ptr, ld);
-              nga_release_block_grid_(g_b, index);
+              pnga_release_block_grid(g_b, index);
             }
 
             /* increment index to get next block on processor */
@@ -810,7 +810,7 @@ void ngai_copy_patch(char *trans,
           ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
           ngai_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
           pnga_get(g_a, lod, hid, src_data_ptr, ld);
-          nga_release_(g_b, los, his);
+          pnga_release(g_b, los, his);
         }
       }
     }
@@ -819,12 +819,12 @@ void ngai_copy_patch(char *trans,
   ARMCI_AllFence();
   if(local_sync_end) {
     if (anproc <= bnproc) {
-      ga_pgroup_sync_(&a_grp);
+      pnga_pgroup_sync(&a_grp);
     } else if (a_grp == pnga_pgroup_get_world() &&
         b_grp == pnga_pgroup_get_world()) {
       ga_sync_();
     } else {
-      ga_pgroup_sync_(&b_grp);
+      pnga_pgroup_sync(&b_grp);
     }
   }
 #ifdef USE_VAMPIR
@@ -1136,8 +1136,8 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
       ngai_dot_local_patch(atype, andim, loA, hiA, ldA, A_ptr, B_ptr,
           &alen, retval);
       /* release access to the data */
-      nga_release_(&g_A, loA, hiA);
-      nga_release_(&g_B, loA, hiA);
+      pnga_release(&g_A, loA, hiA);
+      pnga_release(&g_B, loA, hiA);
     }
   } else {
     /* Create copy of g_b identical with identical distribution as g_a */
@@ -1164,8 +1164,8 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
         ngai_dot_local_patch(atype, andim, loA, hiA, ldA, A_ptr, B_ptr,
             &alen, retval);
         /* release access to the data */
-        nga_release_(&g_A, loA, hiA);
-        nga_release_(&g_B, loA, hiA);
+        pnga_release(&g_A, loA, hiA);
+        pnga_release(&g_B, loA, hiA);
       }
     } else {
       Integer lo[MAXDIM], hi[MAXDIM];
@@ -1228,8 +1228,8 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
             ngai_dot_local_patch(atype, andim, loA, hiA, ldA, A_ptr, B_ptr,
                 &alen, retval);
             /* release access to the data */
-            nga_release_block_(&g_A, &i);
-            nga_release_block_(&g_B, &i);
+            pnga_release_block(&g_A, &i);
+            pnga_release_block(&g_B, &i);
           }
         }
       } else {
@@ -1304,8 +1304,8 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
             ngai_dot_local_patch(atype, andim, loA, hiA, ldA, A_ptr, B_ptr,
                 &alen, retval);
             /* release access to the data */
-            nga_release_block_grid_(&g_A, index);
-            nga_release_block_grid_(&g_B, index);
+            pnga_release_block_grid(&g_A, index);
+            pnga_release_block_grid(&g_B, index);
           }
 
           /* increment index to get next block on processor */
@@ -1699,7 +1699,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
       ngai_set_patch_value(type, ndim, loA, hiA, ld, data_ptr, val);
 
       /* release access to the data */
-      nga_release_update_(g_a, loA, hiA);
+      pnga_release_update(g_a, loA, hiA);
     }
   } else {
     Integer offset, j, jtmp, chk;
@@ -1772,7 +1772,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
           ngai_set_patch_value(type, ndim, loA, hiA, ld, data_ptr, val);
 
           /* release access to the data */
-          nga_release_update_block_(g_a, &i);
+          pnga_release_update_block(g_a, &i);
         }
       }
     } else {
@@ -1855,7 +1855,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
           ngai_set_patch_value(type, ndim, loA, hiA, ld, data_ptr, val);
 
           /* release access to the data */
-          nga_release_update_block_grid_(g_a, index);
+          pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -2051,7 +2051,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
       ngai_scale_patch_value(type, ndim, loA, hiA, ld, src_data_ptr, alpha);
 
       /* release access to the data */
-      nga_release_update_(g_a, loA, hiA); 
+      pnga_release_update(g_a, loA, hiA); 
     }
   } else {
     Integer offset, i, j, jtmp, chk;
@@ -2124,7 +2124,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
           ngai_scale_patch_value(type, ndim, loA, hiA, ld, src_data_ptr, alpha);
 
           /* release access to the data */
-          nga_release_update_block_(g_a, &i);
+          pnga_release_update_block(g_a, &i);
         }
       }
     } else {
@@ -2207,7 +2207,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
           ngai_scale_patch_value(type, ndim, loA, hiA, ld, src_data_ptr, alpha);
 
           /* release access to the data */
-          nga_release_update_block_grid_(g_a, index);
+          pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -2512,9 +2512,9 @@ void *alpha, *beta;
           loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
 
       /* release access to the data */
-      nga_release_       (&g_A, loC, hiC);
-      nga_release_       (&g_B, loC, hiC); 
-      nga_release_update_( g_c, loC, hiC); 
+      pnga_release       (&g_A, loC, hiC);
+      pnga_release       (&g_B, loC, hiC); 
+      pnga_release_update( g_c, loC, hiC); 
     }
   } else {
     /* create copies of arrays A and B that are identically distributed
@@ -2546,9 +2546,9 @@ void *alpha, *beta;
             loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
 
         /* release access to the data */
-        nga_release_       (&g_A, loC, hiC);
-        nga_release_       (&g_B, loC, hiC); 
-        nga_release_update_( g_c, loC, hiC); 
+        pnga_release       (&g_A, loC, hiC);
+        pnga_release       (&g_B, loC, hiC); 
+        pnga_release_update( g_c, loC, hiC); 
       }
     } else {
       Integer idx, lod[MAXDIM], hid[MAXDIM];
@@ -2621,9 +2621,9 @@ void *alpha, *beta;
                 loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
 
             /* release access to the data */
-            nga_release_block_       (&g_A, &idx);
-            nga_release_block_       (&g_B, &idx); 
-            nga_release_update_block_( g_c, &idx); 
+            pnga_release_block       (&g_A, &idx);
+            pnga_release_block       (&g_B, &idx); 
+            pnga_release_update_block( g_c, &idx); 
           }
         }
       } else {
@@ -2709,9 +2709,9 @@ void *alpha, *beta;
                 loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
 
             /* release access to the data */
-            nga_release_block_grid_       (&g_A, index);
-            nga_release_block_grid_       (&g_B, index); 
-            nga_release_update_block_grid_( g_c, index); 
+            pnga_release_block_grid       (&g_A, index);
+            pnga_release_block_grid       (&g_B, index); 
+            pnga_release_update_block_grid( g_c, index); 
           }
 
           /* increment index to get next block on processor */

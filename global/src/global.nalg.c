@@ -64,7 +64,7 @@ void FATR ga_zero_(Integer *g_a)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   p_handle = pnga_get_pgroup(g_a);
 
-  if(local_sync_begin) ga_pgroup_sync_(&p_handle);
+  if(local_sync_begin) pnga_pgroup_sync(&p_handle);
 
   me = pnga_pgroup_nodeid(&p_handle);
 
@@ -123,7 +123,7 @@ void FATR ga_zero_(Integer *g_a)
       }
 
       /* release access to the data */
-      nga_release_update_(g_a, lo, hi);
+      pnga_release_update(g_a, lo, hi);
     } 
   } else {
     pnga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
@@ -161,9 +161,9 @@ void FATR ga_zero_(Integer *g_a)
     }
 
     /* release access to the data */
-    nga_release_update_block_segment_(g_a, &me);
+    pnga_release_update_block_segment(g_a, &me);
   }
-  if(local_sync_end)ga_pgroup_sync_(&p_handle);
+  if(local_sync_end)pnga_pgroup_sync(&p_handle);
   GA_POP_NAME;
 #ifdef USE_VAMPIR
   vampir_end(GA_ZERO,__FILE__,__LINE__);
@@ -223,8 +223,8 @@ void *ptr_a, *ptr_b;
 
      if(elems>0){
         ARMCI_Copy(ptr_a, ptr_b, (int)elems*GAsizeofM(type));
-        nga_release_(g_a,lo,hi);
-        nga_release_(g_b,lo,hi);
+        pnga_release(g_a,lo,hi);
+        pnga_release(g_b,lo,hi);
      }
 
      ga_sync_();
@@ -271,12 +271,12 @@ int local_sync_begin,local_sync_end,use_put;
      pnga_error("Both arrays must be defined on same group",0L); */
    if(local_sync_begin) {
      if (anproc <= bnproc) {
-       ga_pgroup_sync_(&a_grp);
+       pnga_pgroup_sync(&a_grp);
      } else if (a_grp == pnga_pgroup_get_world() &&
                 b_grp == pnga_pgroup_get_world()) {
        ga_sync_();
      } else {
-       ga_pgroup_sync_(&b_grp);
+       pnga_pgroup_sync(&b_grp);
      }
    }
 
@@ -416,12 +416,12 @@ int local_sync_begin,local_sync_end,use_put;
 
    if(local_sync_end) {
      if (anproc <= bnproc) {
-       ga_pgroup_sync_(&a_grp);
+       pnga_pgroup_sync(&a_grp);
      } else if (a_grp == pnga_pgroup_get_world() &&
                 b_grp == pnga_pgroup_get_world()) {
        ga_sync_();
      } else {
-       ga_pgroup_sync_(&b_grp);
+       pnga_pgroup_sync(&b_grp);
      }
    }
    GA_POP_NAME;
@@ -486,7 +486,7 @@ Integer bndim, bdims[MAXDIM];
        return;
    }
    
-   ga_pgroup_sync_(&a_grp);
+   pnga_pgroup_sync(&a_grp);
    pnga_inquire(g_a,  &type, &ndim, dims);
    if(type != Type) pnga_error("type not correct", *g_a);
    pnga_distribution(g_a, &me, lo, hi);
@@ -601,8 +601,8 @@ Integer bndim, bdims[MAXDIM];
    
       /* release access to the data */
       if(elems>0){
-         nga_release_(g_a, lo, hi);
-         if(*g_a != *g_b)nga_release_(g_b, lo, hi);
+         pnga_release(g_a, lo, hi);
+         if(*g_a != *g_b)pnga_release(g_b, lo, hi);
       }
 
     /*convert from C data type to ARMCI type */
@@ -738,7 +738,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   grp_id = pnga_get_pgroup(g_a);
-  if(local_sync_begin)ga_pgroup_sync_(&grp_id);
+  if(local_sync_begin)pnga_pgroup_sync(&grp_id);
 
   me = pnga_pgroup_nodeid(&grp_id);
 
@@ -812,7 +812,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
       }
 
       /* release access to the data */
-      nga_release_update_(g_a, lo, hi);
+      pnga_release_update(g_a, lo, hi);
     }
   } else {
     pnga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
@@ -865,10 +865,10 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
       default: pnga_error(" wrong data type ",type);
     }
     /* release access to the data */
-    nga_release_update_block_segment_(g_a, &me);
+    pnga_release_update_block_segment(g_a, &me);
   }
   GA_POP_NAME;
-  if(local_sync_end)ga_pgroup_sync_(&grp_id); 
+  if(local_sync_end)pnga_pgroup_sync(&grp_id); 
 #ifdef USE_VAMPIR
   vampir_end(GA_SCALE,__FILE__,__LINE__);
 #endif
@@ -955,7 +955,7 @@ int local_sync_begin,local_sync_end;
        return;
    }
 
-   ga_pgroup_sync_(&a_grp);
+   pnga_pgroup_sync(&a_grp);
    pnga_inquire(g_c,  &typeC, &ndim, dims);
    pnga_distribution(g_c, &me, lo, hi);
    if (  lo[0]>0 ){
@@ -1069,14 +1069,14 @@ int local_sync_begin,local_sync_end;
        }
 
        /* release access to the data */
-       nga_release_update_(g_c, lo, hi);
-       if(*g_c != *g_a)nga_release_(g_a, lo, hi);
-       if(*g_c != *g_b)nga_release_(g_b, lo, hi);
+       pnga_release_update(g_c, lo, hi);
+       if(*g_c != *g_a)pnga_release(g_a, lo, hi);
+       if(*g_c != *g_b)pnga_release(g_b, lo, hi);
    }
 
 
    GA_POP_NAME;
-   if(local_sync_end)ga_pgroup_sync_(&a_grp);
+   if(local_sync_end)pnga_pgroup_sync(&a_grp);
 #ifdef USE_VAMPIR
    vampir_end(GA_ADD,__FILE__,__LINE__);
 #endif
@@ -1214,7 +1214,7 @@ char *ptr_tmp, *ptr_a;
           ptr_a += ld[0]*size;
         }
 
-        nga_release_(g_a, lo, hi); 
+        pnga_release(g_a, lo, hi); 
 
         pnga_put(g_b, lob, hib, ptr_tmp ,&ncol);
 
@@ -1250,7 +1250,7 @@ char *ptr_tmp, *ptr_a;
           }
           pnga_put(g_b, lob, hib, ptr_tmp ,&ncol);
 
-          nga_release_update_block_(g_a, &idx);
+          pnga_release_update_block(g_a, &idx);
         }
       } else {
         /* Uses scalapack block-cyclic data distribution */
@@ -1294,7 +1294,7 @@ char *ptr_tmp, *ptr_a;
                 ptr_a += ld[0]*size;
               }
               pnga_put(g_b, lob, hib, ptr_tmp ,&block_dims[0]);
-              nga_release_update_block_(g_a, index);
+              pnga_release_update_block(g_a, index);
             }
             /* increment index to get next block on processor */
             index[0] += topology[0];

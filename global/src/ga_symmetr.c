@@ -103,7 +103,7 @@ ga_symmetrize_(Integer *g_a) {
 
     if(have_data) {
       gai_add(alo, ahi, a_ptr, b_ptr, alpha, type, nelem, ndim);
-      nga_release_update_(g_a, alo, ahi);
+      pnga_release_update(g_a, alo, ahi);
       ga_free(b_ptr);
     }
   } else {

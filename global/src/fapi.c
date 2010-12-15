@@ -1299,35 +1299,35 @@ void FATR nga_init_fence_()
 
 #define ga_nbacc_ F77_FUNC_(ga_nbacc,GA_NBACC)
 void FATR ga_nbacc_(Integer *g_a, Integer *ilo, Integer *ihi,
-                  Integer *jlo, Integer *jhi, void *buf, Integer *ld,
-                  void *alpha, Integer *nbhandle)
+                    Integer *jlo, Integer *jhi, void *buf, Integer *ld,
+                    void *alpha, Integer *nbhandle)
 {
-    Integer lo[2], hi[2];
-    lo[0]=*ilo;
-    lo[1]=*jlo;
-    hi[0]=*ihi;
-    hi[1]=*jhi;
-    wnga_nbacc(g_a, lo, hi, buf, ld, alpha, nbhandle);
+  Integer lo[2], hi[2];
+  lo[0]=*ilo;
+  lo[1]=*jlo;
+  hi[0]=*ihi;
+  hi[1]=*jhi;
+  wnga_nbacc(g_a, lo, hi, buf, ld, alpha, nbhandle);
 }
 
 #define nga_nbacc_ F77_FUNC_(nga_nbacc,NGA_NBACC)
 void FATR nga_nbacc_(Integer *g_a, Integer *lo, Integer *hi,
-                   void *buf, Integer *ld, void *alpha, Integer *nbhandle)
+                     void *buf, Integer *ld, void *alpha, Integer *nbhandle)
 {
-    wnga_nbacc(g_a, lo, hi, buf, ld, alpha, nbhandle);
+  wnga_nbacc(g_a, lo, hi, buf, ld, alpha, nbhandle);
 }
 
 #define ga_nbget_ F77_FUNC_(ga_nbget,GA_NBGET)
 void FATR ga_nbget_(Integer *g_a, Integer *ilo, Integer *ihi,
-                  Integer *jlo, Integer *jhi, void *buf,
-                  Integer *ld, Integer *nbhandle)
+                    Integer *jlo, Integer *jhi, void *buf,
+                    Integer *ld, Integer *nbhandle)
 {
-    Integer lo[2], hi[2];
-    lo[0]=*ilo;
-    lo[1]=*jlo;
-    hi[0]=*ihi;
-    hi[1]=*jhi;
-    wnga_nbget(g_a, lo, hi, buf, ld, nbhandle);
+  Integer lo[2], hi[2];
+  lo[0]=*ilo;
+  lo[1]=*jlo;
+  hi[0]=*ihi;
+  hi[1]=*jhi;
+  wnga_nbget(g_a, lo, hi, buf, ld, nbhandle);
 }
 
 #define nga_nbget_ F77_FUNC_(nga_nbget,NGA_NBGET)
@@ -1335,7 +1335,7 @@ void FATR nga_nbget_(Integer *g_a, Integer *lo,
                      Integer *hi, void *buf, Integer *ld,
                      Integer *nbhandle)
 {
-    wnga_nbget(g_a, lo, hi, buf, ld, nbhandle);
+  wnga_nbget(g_a, lo, hi, buf, ld, nbhandle);
 }
 
 #define ga_nbput_ F77_FUNC_(ga_nbput,GA_NBPUT)
@@ -1343,12 +1343,12 @@ void FATR ga_nbput_(Integer *g_a, Integer *ilo, Integer *ihi,
                     Integer *jlo, Integer *jhi, void *buf,
                     Integer *ld, Integer *nbhandle)
 {
-    Integer lo[2], hi[2];
-    lo[0]=*ilo;
-    lo[1]=*jlo;
-    hi[0]=*ihi;
-    hi[1]=*jhi;
-    wnga_nbput(g_a, lo, hi, buf, ld, nbhandle);
+  Integer lo[2], hi[2];
+  lo[0]=*ilo;
+  lo[1]=*jlo;
+  hi[0]=*ihi;
+  hi[1]=*jhi;
+  wnga_nbput(g_a, lo, hi, buf, ld, nbhandle);
 }
 
 #define nga_nbput_ F77_FUNC_(nga_nbput,NGA_NBPUT)
@@ -1356,26 +1356,151 @@ void FATR nga_nbput_(Integer *g_a, Integer *lo,
                      Integer *hi, void *buf, Integer *ld,
                      Integer *nbhandle)
 {
-    wnga_nbput(g_a, lo, hi, buf, ld, nbhandle);
+  wnga_nbput(g_a, lo, hi, buf, ld, nbhandle);
+}
+
+#define ga_nbtest_ F77_FUNC_(ga_nbtest,GA_NBTEST)
+Integer FATR ga_nbtest_(Integer *nbhandle)
+{
+  return wnga_nbtest(nbhandle);
+}
+
+#define nga_nbtest_ F77_FUNC_(nga_nbtest,NGA_NBTEST)
+Integer FATR nga_nbtest_(Integer *nbhandle)
+{
+  return wnga_nbtest(nbhandle);
+}
+
+#define ga_nbwait_ F77_FUNC_(ga_nbwait,GA_NBWAIT)
+void FATR ga_nbwait_(Integer *nbhandle)
+{
+  wnga_nbwait(nbhandle);
+}
+
+#define nga_nbwait_ F77_FUNC_(nga_nbwait,NGA_NBWAIT)
+void FATR nga_nbwait_(Integer *nbhandle)
+{
+  wnga_nbwait(nbhandle);
+}
+
+#define ga_pgroup_sync_ F77_FUNC_(ga_pgroup_sync,GA_PGROUP_SYNC)
+void FATR ga_pgroup_sync_(Integer *grp_id)
+{
+  wnga_pgroup_sync(grp_id);
+}
+
+#define nga_pgroup_sync_ F77_FUNC_(nga_pgroup_sync,NGA_PGROUP_SYNC)
+void FATR nga_pgroup_sync_(Integer *grp_id)
+{
+  wnga_pgroup_sync(grp_id);
 }
 
 #define ga_put_ F77_FUNC_(ga_put,GA_PUT)
 void FATR ga_put_(Integer *g_a, Integer *ilo, Integer *ihi,
                   Integer *jlo, Integer *jhi, void *buf, Integer *ld)
 {
-    Integer lo[2], hi[2];
-    lo[0]=*ilo;
-    lo[1]=*jlo;
-    hi[0]=*ihi;
-    hi[1]=*jhi;
-    wnga_put(g_a, lo, hi, buf, ld);
+  Integer lo[2], hi[2];
+  lo[0]=*ilo;
+  lo[1]=*jlo;
+  hi[0]=*ihi;
+  hi[1]=*jhi;
+  wnga_put(g_a, lo, hi, buf, ld);
 }
 
 #define nga_put_ F77_FUNC_(nga_put,NGA_PUT)
 void FATR nga_put_(Integer *g_a, Integer *lo,
                    Integer *hi, void *buf, Integer *ld)
 {
-    wnga_put(g_a, lo, hi, buf, ld);
+  wnga_put(g_a, lo, hi, buf, ld);
+}
+
+#define ga_read_inc_ F77_FUNC_(ga_read_inc,GA_READ_INC)
+Integer FATR ga_read_inc_(Integer *g_a, Integer *i, Integer *j,
+                          Integer *inc)
+{
+  Integer subscript[2];
+  subscript[0] = *i;
+  subscript[1] = *j;
+  return wnga_read_inc(g_a, subscript, inc);
+}
+
+#define nga_read_inc_ F77_FUNC_(nga_read_inc,NGA_READ_INC)
+Integer FATR nga_read_inc_(Integer *g_a, Integer *subscript,
+                           Integer *inc)
+{
+  return wnga_read_inc(g_a, subscript, inc);
+}
+
+#define ga_release_ F77_FUNC_(ga_release,GA_RELEASE)
+void FATR ga_release_(Integer *g_a, Integer *ilo, Integer *ihi,
+                      Integer *jlo, Integer *jhi)
+{
+  Integer lo[2], hi[2];
+  lo[0]=*ilo;
+  lo[1]=*jlo;
+  hi[0]=*ihi;
+  hi[1]=*jhi;
+  wnga_release(g_a, lo, hi);
+}
+
+#define nga_release_ F77_FUNC_(nga_release,NGA_RELEASE)
+void FATR nga_release_(Integer *g_a, Integer *lo, Integer *hi)
+{
+  wnga_release(g_a, lo, hi);
+}
+
+#define nga_release_block_ F77_FUNC_(nga_release_block,NGA_RELEASE_BLOCK)
+void FATR nga_release_block_(Integer *g_a, Integer *iblock)
+{
+  wnga_release_block(g_a, iblock);
+}
+
+#define nga_release_block_grid_ F77_FUNC_(nga_release_block_grid,NGA_RELEASE_BLOCK_GRID)
+void FATR nga_release_block_grid_(Integer *g_a, Integer *index)
+{
+  wnga_release_block_grid(g_a, index);
+}
+
+#define nga_release_block_segment_ F77_FUNC_(nga_release_block_segment,NGA_RELEASE_BLOCK_SEGMENT)
+void FATR nga_release_block_segment_(Integer *g_a, Integer *iproc)
+{
+  wnga_release_block_segment(g_a, iproc);
+}
+
+#define ga_release_update_ F77_FUNC_(ga_release_update,GA_RELEASE_UPDATE)
+void FATR ga_release_update_(Integer *g_a, Integer *ilo, Integer *ihi,
+                             Integer *jlo, Integer *jhi)
+{
+  Integer lo[2], hi[2];
+  lo[0]=*ilo;
+  lo[1]=*jlo;
+  hi[0]=*ihi;
+  hi[1]=*jhi;
+  wnga_release_update(g_a, lo, hi);
+}
+
+#define nga_release_update_ F77_FUNC_(nga_release_update,NGA_RELEASE_UPDATE)
+void FATR nga_release_update_(Integer *g_a, Integer *lo, Integer *hi)
+{
+  wnga_release_update(g_a, lo, hi);
+}
+
+#define nga_release_update_block_ F77_FUNC_(nga_release_update_block,NGA_RELEASE_UPDATE_BLOCK)
+void FATR nga_release_update_block_(Integer *g_a, Integer *iblock)
+{
+  wnga_release_update_block(g_a, iblock);
+}
+
+#define nga_release_update_block_grid_ F77_FUNC_(nga_release_update_block_grid,NGA_RELEASE_UPDATE_BLOCK_GRID)
+void FATR nga_release_update_block_grid_(Integer *g_a, Integer *index)
+{
+  wnga_release_update_block_grid(g_a, *index);
+}
+
+#define nga_release_update_block_segment_ F77_FUNC_(nga_release_update_block_segment,NGA_RELEASE_UPDATE_BLOCK_SEGMENT)
+void FATR nga_release_update_block_segment_(Integer *g_a, Integer *iproc)
+{
+  wnga_release_update_block_segment(g_a, *iproc);
 }
 
 /* Routines from global.util.c */

@@ -129,7 +129,6 @@
       external ga_pgroup_destroy, nga_pgroup_destroy
       external ga_wtime
       external ga_nbtest, nga_nbtest
-      external ga_nbwait, nga_nbwait
       external ga_pgroup_absolute_id, nga_pgroup_absolute_id
 
 #define GA_ACCESS_INDEX_TYPE @GA_ACCESS_INDEX_TYPE@
