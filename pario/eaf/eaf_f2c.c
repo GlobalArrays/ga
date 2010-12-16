@@ -151,7 +151,7 @@ Integer FATR eaf_open_(
         int flen
 #else
         char *fname,
-        int flen
+        int flen,
         Integer *type,
         Integer *fd
 #endif

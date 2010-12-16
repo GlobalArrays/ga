@@ -47,7 +47,7 @@ Integer FATR sf_create_suffix_(
         int len
 #else
         char *fname,
-        int len
+        int len,
         SFsize_t *size_hard_limit,
         SFsize_t *size_soft_limit,
         SFsize_t *req_size,
