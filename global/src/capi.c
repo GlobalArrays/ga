@@ -2708,7 +2708,7 @@ void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+i] = subsArray[idx][i] + 1;
     
-    nga_scatter_(&a, v, _subs_array , &nv);
+    wnga_scatter(&a, v, _subs_array , &nv);
     
     free(_subs_array);
 }
@@ -2728,7 +2728,7 @@ void NGA_Scatter_flat(int g_a, void *v, int subsArray[], int n)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx*ndim+i] + 1;
     
-    nga_scatter_(&a, v, _subs_array , &nv);
+    wnga_scatter(&a, v, _subs_array , &nv);
     
     free(_subs_array);
 }
@@ -2748,7 +2748,7 @@ void NGA_Scatter64(int g_a, void *v, int64_t* subsArray[], int64_t n)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+i] = subsArray[idx][i] + 1;
     
-    nga_scatter_(&a, v, _subs_array , &nv);
+    wnga_scatter(&a, v, _subs_array , &nv);
     
     free(_subs_array);
 }
@@ -2768,7 +2768,7 @@ void NGA_Scatter_flat64(int g_a, void *v, int64_t subsArray[], int64_t n)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx*ndim+i] + 1;
     
-    nga_scatter_(&a, v, _subs_array , &nv);
+    wnga_scatter(&a, v, _subs_array , &nv);
     
     free(_subs_array);
 }

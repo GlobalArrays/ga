@@ -2862,10 +2862,16 @@ Integer pindex, phandle;
 }
 
 
-/*\ SCATTER OPERATION elements of v into the global array
-\*/
-void FATR  ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j,
-                       Integer *nv)
+/**
+ *  Scatter nv elements of v into a Global Array at locations specified
+ *  by arrays i and j
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_scatter2d = pnga_scatter2d
+#endif
+
+void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
+                    Integer *nv)
 {
     register Integer k;
     Integer kk;
@@ -4388,8 +4394,15 @@ void pnga_gather(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 #endif
 }
 
+/**
+ *  Scatter elements from a local buffer v into random locations in a Global
+ *  Array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_scatter = pnga_scatter
+#endif
 
-void FATR nga_scatter_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
+void FATR pnga_scatter(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 {
 
   if (*nv < 1) return;

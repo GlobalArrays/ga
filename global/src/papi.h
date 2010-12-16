@@ -160,6 +160,9 @@ extern void pnga_release_update(Integer *g_a, Integer *lo, Integer *hi);
 extern void pnga_release_update_block(Integer *g_a, Integer *iblock);
 extern void pnga_release_update_block_grid(Integer *g_a, Integer *index);
 extern void pnga_release_update_block_segment(Integer *g_a, Integer *iproc);
+extern void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
+                           Integer *nv);
+extern void pnga_scatter(Integer *g_a, void *v, Integer *subscript, Integer *nv);
 
 /* Routines from global.util.c */
 extern void pnga_error(char *string, Integer icode);

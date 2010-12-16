@@ -1494,13 +1494,25 @@ void FATR nga_release_update_block_(Integer *g_a, Integer *iblock)
 #define nga_release_update_block_grid_ F77_FUNC_(nga_release_update_block_grid,NGA_RELEASE_UPDATE_BLOCK_GRID)
 void FATR nga_release_update_block_grid_(Integer *g_a, Integer *index)
 {
-  wnga_release_update_block_grid(g_a, *index);
+  wnga_release_update_block_grid(g_a, index);
 }
 
 #define nga_release_update_block_segment_ F77_FUNC_(nga_release_update_block_segment,NGA_RELEASE_UPDATE_BLOCK_SEGMENT)
 void FATR nga_release_update_block_segment_(Integer *g_a, Integer *iproc)
 {
-  wnga_release_update_block_segment(g_a, *iproc);
+  wnga_release_update_block_segment(g_a, iproc);
+}
+
+#define ga_scatter_ F77_FUNC_(ga_scatter,GA_SCATTER)
+void FATR ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j, Integer *nv)
+{
+  wnga_scatter2d(g_a, v, i, j, nv);
+}
+
+#define nga_scatter_ F77_FUNC_(nga_scatter,NGA_SCATTER)
+void FATR nga_scatter_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
+{
+  wnga_scatter(g_a, v, subscript, nv);
 }
 
 /* Routines from global.util.c */
