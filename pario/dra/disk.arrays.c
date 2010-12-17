@@ -1251,7 +1251,6 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
             if(!MA_push_get(C_INT, nelem, "pindex", &phandle, &pindex))
                 dai_error("DRA move: MA failed-p ", 0L);
             for(i=0; i< nelem; i++) INT_MB[pindex+i] = i; 
-            ga_sort_permut_(&gs_a.handle, INT_MB+pindex, INT_MB+iindex, INT_MB+jindex, &nelem);
             ga_gather_(&gs_a.handle, base_addr, INT_MB+iindex, INT_MB+jindex, &nelem);
             COPY_TYPE(GATHER, type, ds_chunk);
             MA_pop_stack(phandle);
