@@ -197,7 +197,7 @@ void *ptr_a, *ptr_b;
 
    else {
 
-     ga_sync_();
+     pnga_sync();
 
      pnga_distribution(g_a, &me, lo, hi);
      if(lo[0]>0){
@@ -227,7 +227,7 @@ void *ptr_a, *ptr_b;
         pnga_release(g_b,lo,hi);
      }
 
-     ga_sync_();
+     pnga_sync();
    }
 
    GA_POP_NAME;
@@ -274,7 +274,7 @@ int local_sync_begin,local_sync_end,use_put;
        pnga_pgroup_sync(&a_grp);
      } else if (a_grp == pnga_pgroup_get_world() &&
                 b_grp == pnga_pgroup_get_world()) {
-       ga_sync_();
+       pnga_sync();
      } else {
        pnga_pgroup_sync(&b_grp);
      }
@@ -419,7 +419,7 @@ int local_sync_begin,local_sync_end,use_put;
        pnga_pgroup_sync(&a_grp);
      } else if (a_grp == pnga_pgroup_get_world() &&
                 b_grp == pnga_pgroup_get_world()) {
-       ga_sync_();
+       pnga_sync();
      } else {
        pnga_pgroup_sync(&b_grp);
      }
@@ -1176,7 +1176,7 @@ char *ptr_tmp, *ptr_a;
     
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    if(local_sync_begin)ga_sync_();
+    if(local_sync_begin)pnga_sync();
 
     if(*g_a == *g_b) pnga_error("arrays have to be different ", 0L);
 
@@ -1310,7 +1310,7 @@ char *ptr_tmp, *ptr_a;
       ga_free(ptr_tmp);
     }
 
-    if(local_sync_end)ga_sync_();
+    if(local_sync_end)pnga_sync();
     GA_POP_NAME;
 
 #ifdef USE_VAMPIR

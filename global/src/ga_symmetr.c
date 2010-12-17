@@ -58,7 +58,7 @@ ga_symmetrize_(Integer *g_a) {
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if(local_sync_begin)ga_sync_();
+  if(local_sync_begin)pnga_sync();
 
   GA_PUSH_NAME("ga_symmetrize");
   
@@ -99,7 +99,7 @@ ga_symmetrize_(Integer *g_a) {
         ldb[i] = bhi[i] - blo[i] + 1; 
       pnga_get(g_a, blo, bhi, b_ptr, ldb);
     }
-    ga_sync_(); 
+    pnga_sync(); 
 
     if(have_data) {
       gai_add(alo, ahi, a_ptr, b_ptr, alpha, type, nelem, ndim);
@@ -117,5 +117,5 @@ ga_symmetrize_(Integer *g_a) {
     pnga_destroy(&g_b);
   }
   GA_POP_NAME;
-  if(local_sync_end)ga_sync_();
+  if(local_sync_end)pnga_sync();
 }

@@ -526,7 +526,7 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
   else if(typeA != C_DBL || typeB != C_DBL) 
     pnga_error("ga_lu_solve: wrong type(s) of A and/or B ", 1);
   
-  ga_sync_();
+  pnga_sync();
   oactive = (me == 0);
 
   if (oactive) {
@@ -600,7 +600,7 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
     ga_free(adra);
   }
 
-  ga_sync_();
+  pnga_sync();
 #ifdef USE_VAMPIR
   vampir_end(GA_LU_SOLVE_SEQ,__FILE__,__LINE__);
 #endif

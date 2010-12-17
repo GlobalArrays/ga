@@ -441,7 +441,7 @@ int bytes;
     mapALL = (Integer*)malloc((GAnproc+MAXDIM-1)*sizeof(Integer*));
 
 #ifdef PERMUTE_PIDS
-    ga_sync_();
+    pnga_sync();
     ga_hook_();
     if(GA_Proc_list) GAme = (Integer)GA_Proc_list[ga_msg_nodeid_()];
     else
@@ -2126,7 +2126,7 @@ logical pnga_create_ghosts_irreg_config(
 #endif
 
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
-  ga_sync_();
+  pnga_sync();
   GA_PUSH_NAME("pnga_create_ghosts_irreg_config");
 
   *g_a = pnga_create_handle();
@@ -2766,7 +2766,7 @@ int g_b;
 int maplen = calc_maplen(GA_OFFSET + g_a);
 
 
-      ga_sync_();
+      pnga_sync();
 
       GAstat.numcre ++;
 
@@ -2807,7 +2807,7 @@ int maplen = calc_maplen(GA_OFFSET + g_a);
       GAstat.curmem += (long)GA[ga_handle].size;
       GAstat.maxmem  = (long)GA_MAX(GAstat.maxmem, GAstat.curmem);
 
-      ga_sync_();
+      pnga_sync();
 
       return(g_b);
 }
@@ -2932,7 +2932,7 @@ Integer i, handle;
           if(GA[i].ptr) free(GA[i].ptr);
           if(GA[i].mapc) free(GA[i].mapc);
     }
-    ga_sync_();
+    pnga_sync();
 
     GA_total_memory = -1; /* restore "unlimited" memory usage status */
     GA_memory_limited = 0;
@@ -2947,7 +2947,7 @@ Integer i, handle;
 
     ARMCI_Finalize();
     GAinitialized = 0;
-    ga_sync_();
+    pnga_sync();
 
 #ifdef USE_VAMPIR
     vampir_end(GA_TERMINATE,__FILE__,__LINE__);
@@ -3947,7 +3947,7 @@ void pnga_merge_mirrored(Integer *g_a)
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
-  if (local_sync_begin) ga_sync_();
+  if (local_sync_begin) pnga_sync();
   /* don't perform update if node is not mirrored */
   if (!pnga_is_mirrored(g_a)) return;
   GA_PUSH_NAME("ga_merge_mirrored");
@@ -4091,13 +4091,13 @@ void pnga_merge_mirrored(Integer *g_a)
       pnga_acc(&_ga_tmp, lo, hi, ptr_a, ld, one);
     }
     /* copy data back to original global array */
-    ga_sync_();
+    pnga_sync();
     if (chk) {
       pnga_get(&_ga_tmp, lo, hi, ptr_a, ld);
     }
     pnga_destroy(&_ga_tmp);
   }
-  if (local_sync_end) ga_sync_();
+  if (local_sync_end) pnga_sync();
   GA_POP_NAME;
 }
 
@@ -4137,7 +4137,7 @@ void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
   GA_PUSH_NAME("nga_merge_distr_patch");
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
-  if (local_sync_begin) ga_sync_();
+  if (local_sync_begin) pnga_sync();
   gai_check_handle(g_a, "nga_merge_distr_patch");
   gai_check_handle(g_b, "nga_merge_distr_patch");
 
@@ -4244,7 +4244,7 @@ void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
     }
     pnga_acc(g_b, dlo, dhi, src_data_ptr, mld, one);
   }
-  if (local_sync_end) ga_sync_();
+  if (local_sync_end) pnga_sync();
   GA_POP_NAME;
 }
 

@@ -393,7 +393,7 @@ Integer dims[1],lop,hip;
 Integer ndim, type, me, off;
 register Integer i;
 
-   ga_sync_();
+   pnga_sync();
    me = pnga_nodeid();
 
    gai_check_handle(g_a, "ga_patch_enum");
@@ -477,7 +477,7 @@ register Integer i;
       }
    }
    
-   ga_sync_();
+   pnga_sync();
 }
 
 
@@ -500,7 +500,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
    gai_check_handle(g_b, "ga_scan_copy 2");
    gai_check_handle(g_sbit,"ga_scan_copy 3");
 
-   ga_sync_();
+   pnga_sync();
 
 
    ndim = pnga_ndim(g_a);
@@ -849,7 +849,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    }
 
-   ga_sync_();
+   pnga_sync();
    ga_free(lim);
 }
 
@@ -887,7 +887,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
    gai_check_handle(g_b, "ga_pack 2");
    gai_check_handle(g_sbit,"ga_pack 3");
 
-   ga_sync_();
+   pnga_sync();
 
    lim = (Integer *) ga_malloc(nproc, MT_F_INT, "ga_pack lim buf");
 
@@ -956,7 +956,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    }
 
-   ga_sync_();
+   pnga_sync();
 }
 
 
@@ -1167,7 +1167,7 @@ Integer g_range;
         pnga_release_update(g_bin, &lo, &hi);             
     }
 
-    ga_sync_();
+    pnga_sync();
 }
 
 
@@ -1230,6 +1230,6 @@ Integer type, ndim, nbin;
     free(all_bin_contrib);
 
     if(*sortit)ga_bin_sorter_(g_bin, g_cnt, g_off);
-    else ga_sync_();
+    else pnga_sync();
 }
 

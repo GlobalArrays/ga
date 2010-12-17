@@ -201,7 +201,7 @@ void ngai_copy_patch(char *trans,
       pnga_pgroup_sync(&a_grp);
     } else if (a_grp == pnga_pgroup_get_world() &&
         b_grp == pnga_pgroup_get_world()) {
-      ga_sync_();
+      pnga_sync();
     } else {
       pnga_pgroup_sync(&b_grp);
     }
@@ -822,7 +822,7 @@ void ngai_copy_patch(char *trans,
       pnga_pgroup_sync(&a_grp);
     } else if (a_grp == pnga_pgroup_get_world() &&
         b_grp == pnga_pgroup_get_world()) {
-      ga_sync_();
+      pnga_sync();
     } else {
       pnga_pgroup_sync(&b_grp);
     }
@@ -1017,7 +1017,7 @@ void ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
 
   local_sync_begin = _ga_sync_begin; 
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if(local_sync_begin)ga_sync_();
+  if(local_sync_begin)pnga_sync();
 
   GA_PUSH_NAME("ngai_dot_patch");
   a_grp = pnga_get_pgroup(g_a);
@@ -1676,7 +1676,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
 #endif 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if(local_sync_begin)ga_sync_(); 
+  if(local_sync_begin)pnga_sync(); 
 
   GA_PUSH_NAME("nga_fill_patch");
 
@@ -1869,7 +1869,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
     }
   }
   GA_POP_NAME;
-  if(local_sync_end)ga_sync_();
+  if(local_sync_end)pnga_sync();
 #ifdef USE_VAMPIR
   vampir_end(NGA_FILL_PATCH,__FILE__,__LINE__);
 #endif 
@@ -2034,7 +2034,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
 #endif 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if(local_sync_begin)ga_sync_();
+  if(local_sync_begin)pnga_sync();
 
   GA_PUSH_NAME("nga_scal_patch");
 
@@ -2221,7 +2221,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
     }
   }
   GA_POP_NAME;
-  if(local_sync_end)ga_sync_();   
+  if(local_sync_end)pnga_sync();   
 #ifdef USE_VAMPIR
   vampir_end(NGA_SCALE_PATCH,__FILE__,__LINE__);
 #endif 
@@ -2411,7 +2411,7 @@ void *alpha, *beta;
 #endif 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if(local_sync_begin)ga_sync_();
+  if(local_sync_begin)pnga_sync();
 
   GA_PUSH_NAME("nga_add_patch");
 
@@ -2731,7 +2731,7 @@ void *alpha, *beta;
   if(B_created) pnga_destroy(&g_B);
 
   GA_POP_NAME;
-  if(local_sync_end)ga_sync_();
+  if(local_sync_end)pnga_sync();
 #ifdef USE_VAMPIR
   vampir_end(NGA_ADD_PATCH,__FILE__,__LINE__);
 #endif 
@@ -2757,7 +2757,7 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
 
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    if(local_sync_begin)ga_sync_();
+    if(local_sync_begin)pnga_sync();
 
     GA_PUSH_NAME("nga_zero_patch");
     
@@ -2796,7 +2796,7 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
     nga_fill_patch_(g_a, lo, hi, valptr);
     
     GA_POP_NAME;
-    if(local_sync_end)ga_sync_();
+    if(local_sync_end)pnga_sync();
 #ifdef USE_VAMPIR
     vampir_end(NGA_ZERO_PATCH,__FILE__,__LINE__);
 #endif 

@@ -429,7 +429,7 @@ int local_sync_begin,local_sync_end;
 
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    if(local_sync_begin)ga_sync_();
+    if(local_sync_begin)pnga_sync();
 
     if(pnga_nodeid() ==0){
       pnga_inquire(&g_a, &type, &ndim, dims);
@@ -474,7 +474,7 @@ int local_sync_begin,local_sync_end;
       fflush(stdout);
     }
 
-    if(local_sync_end)ga_sync_();
+    if(local_sync_end)pnga_sync();
 }
 
 
@@ -517,7 +517,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
     long long llbuf[BUFSIZE], llbuf_2d[BUFSIZE*BUFSIZE];
     Integer done, status_2d, status_3d;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    ga_sync_();
+    pnga_sync();
     gai_check_handle(g_a, "nga_print");
 
     /* only the first process print the array */
@@ -853,7 +853,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
         fflush(file);
     }
     
-    ga_sync_();
+    pnga_sync();
 }
 
 void FATR nga_print_patch_(Integer *g_a, Integer *lo, Integer *hi, Integer *pretty)

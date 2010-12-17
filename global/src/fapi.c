@@ -1515,6 +1515,53 @@ void FATR nga_scatter_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
   wnga_scatter(g_a, v, subscript, nv);
 }
 
+#define ga_scatter_acc_ F77_FUNC_(ga_scatter_acc,GA_SCATTER_ACC)
+void FATR ga_scatter_acc_(Integer *g_a, void *v, Integer *i, Integer *j,
+                          Integer *nv, void *alpha)
+{
+  wnga_scatter_acc2d(g_a, v, i, j, nv, alpha);
+}
+
+#define nga_scatter_acc_ F77_FUNC_(nga_scatter_acc,NGA_SCATTER_ACC)
+void FATR nga_scatter_acc_(Integer *g_a, void* v, Integer subscript[],
+                           Integer *nv, void *alpha)
+{
+  wnga_scatter_acc(g_a, v, subscript, nv, alpha);
+}
+
+#define nga_strided_acc_ F77_FUNC_(nga_strided_acc,NGA_STRIDED_ACC)
+void FATR nga_strided_acc_(Integer *g_a, Integer *lo, Integer *hi,
+                           Integer *skip, void *buf, Integer *ld, void *alpha)
+{
+  wnga_strided_acc(g_a, lo, hi, skip, buf, ld, alpha);
+}
+
+#define nga_strided_get_ F77_FUNC_(nga_strided_get,NGA_STRIDED_GET)
+void FATR nga_strided_get_(Integer *g_a, Integer *lo, Integer *hi,
+                           Integer *skip, void *buf, Integer *ld)
+{
+  wnga_strided_get(g_a, lo, hi, skip, buf, ld);
+}
+
+#define nga_strided_put_ F77_FUNC_(nga_strided_put,NGA_STRIDED_PUT)
+void FATR nga_strided_put_(Integer *g_a, Integer *lo, Integer *hi,
+                           Integer *skip, void *buf, Integer *ld)
+{
+  wnga_strided_put(g_a, lo, hi, skip, buf, ld);
+}
+
+#define ga_sync_ F77_FUNC_(ga_sync, GA_SYNC)
+void FATR ga_sync_()
+{
+  wnga_sync();
+}
+
+#define nga_sync_ F77_FUNC_(nga_sync, nGA_SYNC)
+void FATR nga_sync_()
+{
+  wnga_sync();
+}
+
 /* Routines from global.util.c */
 
 #define ga_error_ F77_FUNC_(ga_error,GA_ERROR)

@@ -727,7 +727,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if(local_sync_begin)ga_sync_();
+  if(local_sync_begin)pnga_sync();
 
   gai_check_handle(g_a, "gai_oper_elem");
 
@@ -916,7 +916,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
     }
   }
   GA_POP_NAME;
-  if(local_sync_end)ga_sync_();
+  if(local_sync_end)pnga_sync();
 }
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -1758,7 +1758,7 @@ int op; /* operation to be perform between g_a and g_b */
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if(local_sync_begin)ga_sync_();
+  if(local_sync_begin)pnga_sync();
   gai_check_handle(g_a, "gai_elem2_patch_");
   GA_PUSH_NAME("ngai_elem2_patch_");
 
@@ -2070,7 +2070,7 @@ int op; /* operation to be perform between g_a and g_b */
   if(B_created) pnga_destroy(&g_B);
 
   GA_POP_NAME;
-  if(local_sync_end)ga_sync_();
+  if(local_sync_end)pnga_sync();
 }
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -2350,7 +2350,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if(local_sync_begin)ga_sync_();
+  if(local_sync_begin)pnga_sync();
 
   gai_check_handle(g_a, "gai_elem3_patch_");
   GA_PUSH_NAME("ngai_elem3_patch_");
@@ -2537,7 +2537,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
   }
 
   GA_POP_NAME;
-  if(local_sync_end)ga_sync_();
+  if(local_sync_end)pnga_sync();
 }
 
 static void ngai_has_negative_element(Integer atype, Integer andim, Integer *loA, Integer *hiA, Integer *ldA, void *A_ptr, Integer *iretval)
@@ -2627,7 +2627,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
   Integer me= pnga_nodeid();
 
 
-  ga_sync_();
+  pnga_sync();
   gai_check_handle(g_a, "has_negative_elem");
   GA_PUSH_NAME("has_negative_elem");
 
@@ -2813,7 +2813,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
   }
 
   GA_POP_NAME;
-  ga_sync_();
+  pnga_sync();
   return iretval; /*negative element is not found in g_a*/
 }
 
@@ -2875,7 +2875,7 @@ void pnga_step_bound_info_patch(
 
      local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
      _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-     if(local_sync_begin)ga_sync_();
+     if(local_sync_begin)pnga_sync();
 
      /* Check for valid ga handles. */
 
@@ -3200,7 +3200,7 @@ void pnga_step_bound_info_patch(
      pnga_destroy(&g_S); 
      pnga_destroy(&g_T); 
      GA_POP_NAME;
-     if(local_sync_end)ga_sync_();
+     if(local_sync_end)pnga_sync();
 }
 
 /*\ generic  routine for element wise operation between two array
@@ -3243,7 +3243,7 @@ void pnga_step_max_patch(g_a,  alo, ahi, g_b,  blo, bhi, result)
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if(local_sync_begin)ga_sync_();
+  if(local_sync_begin)pnga_sync();
 
   /* Check for valid ga handles. */
 
@@ -3384,7 +3384,7 @@ void pnga_step_max_patch(g_a,  alo, ahi, g_b,  blo, bhi, result)
     pnga_destroy (&g_C);
   }
   GA_POP_NAME;
-  if(local_sync_end)ga_sync_();
+  if(local_sync_end)pnga_sync();
 }
 
 

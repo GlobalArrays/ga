@@ -749,7 +749,7 @@ void FATR ga_update1_ghosts_(Integer *g_a)
       }
     }
     /* synchronize all processors and update increment array */
-    if (idx < ndim-1) ga_sync_();
+    if (idx < ndim-1) pnga_sync();
     if (corner_flag)
       increment[idx] = 2*nwidth;
   }
@@ -1245,7 +1245,7 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
           (int)(ndim - 1), (int)proc_rem);
     }
     /* synchronize all processors and update increment array */
-    if (idx < ndim-1) ga_sync_();
+    if (idx < ndim-1) pnga_sync();
     increment[idx] = 2*nwidth;
   }
 
@@ -2708,7 +2708,7 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   if (!pnga_has_ghosts(g_a)) 
     return TRUE;
   
-  if(local_sync_begin)ga_sync_();
+  if(local_sync_begin)pnga_sync();
   idim = *pdim;
   idir = *pdir;
   flag = *pflag;
@@ -2855,7 +2855,7 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   }
 
   GA_POP_NAME;
-  if(local_sync_end)ga_sync_();
+  if(local_sync_end)pnga_sync();
   return TRUE;
 }
 
@@ -2910,7 +2910,7 @@ logical ga_update5_ghosts_(Integer *g_a)
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if(local_sync_begin)ga_sync_();
+  if(local_sync_begin)pnga_sync();
 
 #ifdef USE_MP_NORTHSOUTH
   strcpy(send_name,"send_buffer");
@@ -3273,7 +3273,7 @@ void ga_update_ghosts_(Integer *g_a)
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   if(local_sync_begin)ga_sync_();
+   if(local_sync_begin)pnga_sync();
 
 #ifdef CRAY_T3D
    if (!ga_update5_ghosts_(g_a)) {
@@ -3283,7 +3283,7 @@ void ga_update_ghosts_(Integer *g_a)
      ga_update1_ghosts_(g_a);
    }
 
-   if(local_sync_end)ga_sync_();
+   if(local_sync_end)pnga_sync();
 }
 
 /* Utility function for ga_update6_ghosts routine */

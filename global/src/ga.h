@@ -308,6 +308,7 @@ extern void          NGA_Set_restricted_range(int g_a, int lo_proc, int hi_proc)
 extern void          NGA_Strided_acc(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[], void *alpha); 
 extern void          NGA_Strided_get(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[]); 
 extern void          NGA_Strided_put(int g_a, int lo[], int hi[], int skip[], void* buf, int ld[]); 
+extern void          NGA_Sync(void);
 extern void          NGA_Terminate(void);
 extern int           NGA_Total_blocks(int g_a);   
 extern void          NGA_Unlock(int mutex);

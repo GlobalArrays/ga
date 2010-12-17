@@ -1673,7 +1673,7 @@ void NGA_Strided_acc(int g_a, int lo[], int hi[], int skip[],
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
     COPYC2F(skip, _ga_skip, ndim);
-    nga_strided_acc_(&a, _ga_lo, _ga_hi, _ga_skip, buf, _ga_work, alpha);
+    wnga_strided_acc(&a, _ga_lo, _ga_hi, _ga_skip, buf, _ga_work, alpha);
 }    
 
 void NGA_Strided_acc64(int g_a, int64_t lo[], int64_t hi[], int64_t skip[],
@@ -1688,7 +1688,7 @@ void NGA_Strided_acc64(int g_a, int64_t lo[], int64_t hi[], int64_t skip[],
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
     COPYC2F(skip, _ga_skip, ndim);
-    nga_strided_acc_(&a, _ga_lo, _ga_hi, _ga_skip, buf, _ga_work, alpha);
+    wnga_strided_acc(&a, _ga_lo, _ga_hi, _ga_skip, buf, _ga_work, alpha);
 }
 
 void NGA_Strided_get(int g_a, int lo[], int hi[], int skip[],
@@ -1703,7 +1703,7 @@ void NGA_Strided_get(int g_a, int lo[], int hi[], int skip[],
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
     COPYC2F(skip, _ga_skip, ndim);
-    nga_strided_get_(&a, _ga_lo, _ga_hi, _ga_skip, buf, _ga_work);
+    wnga_strided_get(&a, _ga_lo, _ga_hi, _ga_skip, buf, _ga_work);
 }    
 
 void NGA_Strided_get64(int g_a, int64_t lo[], int64_t hi[], int64_t skip[],
@@ -1718,7 +1718,7 @@ void NGA_Strided_get64(int g_a, int64_t lo[], int64_t hi[], int64_t skip[],
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
     COPYC2F(skip, _ga_skip, ndim);
-    nga_strided_get_(&a, _ga_lo, _ga_hi, _ga_skip, buf, _ga_work);
+    wnga_strided_get(&a, _ga_lo, _ga_hi, _ga_skip, buf, _ga_work);
 }
 
 void NGA_Strided_put(int g_a, int lo[], int hi[], int skip[],
@@ -1733,7 +1733,7 @@ void NGA_Strided_put(int g_a, int lo[], int hi[], int skip[],
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
     COPYC2F(skip, _ga_skip, ndim);
-    nga_strided_put_(&a, _ga_lo, _ga_hi, _ga_skip, buf, _ga_work);
+    wnga_strided_put(&a, _ga_lo, _ga_hi, _ga_skip, buf, _ga_work);
 }    
 
 void NGA_Strided_put64(int g_a, int64_t lo[], int64_t hi[], int64_t skip[],
@@ -1748,7 +1748,7 @@ void NGA_Strided_put64(int g_a, int64_t lo[], int64_t hi[], int64_t skip[],
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
     COPYC2F(skip, _ga_skip, ndim);
-    nga_strided_put_(&a, _ga_lo, _ga_hi, _ga_skip, buf, _ga_work);
+    wnga_strided_put(&a, _ga_lo, _ga_hi, _ga_skip, buf, _ga_work);
 }
 
 void NGA_Acc(int g_a, int lo[], int hi[], void* buf,int ld[], void* alpha)
@@ -2787,7 +2787,7 @@ void NGA_Scatter_acc(int g_a, void *v, int* subsArray[], int n, void *alpha)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+i] = subsArray[idx][i] + 1;
     
-    nga_scatter_acc_(&a, v, _subs_array , &nv, alpha);
+    wnga_scatter_acc(&a, v, _subs_array , &nv, alpha);
     
     free(_subs_array);
 }
@@ -2807,7 +2807,7 @@ void NGA_Scatter_acc_flat(int g_a, void *v, int subsArray[], int n, void *alpha)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx*ndim+i] + 1;
     
-    nga_scatter_acc_(&a, v, _subs_array , &nv, alpha);
+    wnga_scatter_acc(&a, v, _subs_array , &nv, alpha);
     
     free(_subs_array);
 }
@@ -2826,7 +2826,7 @@ void NGA_Scatter_acc64(int g_a, void *v, int64_t* subsArray[], int64_t n, void *
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+i] = subsArray[idx][i] + 1;
     
-    nga_scatter_acc_(&a, v, _subs_array , &nv, alpha);
+    wnga_scatter_acc(&a, v, _subs_array , &nv, alpha);
     
     free(_subs_array);
 }
@@ -2846,7 +2846,7 @@ void NGA_Scatter_acc_flat64(int g_a, void *v, int64_t subsArray[], int64_t n, vo
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx*ndim+i] + 1;
     
-    nga_scatter_acc_(&a, v, _subs_array , &nv, alpha);
+    wnga_scatter_acc(&a, v, _subs_array , &nv, alpha);
     
     free(_subs_array);
 }
@@ -4726,7 +4726,12 @@ size_t NGA_Inquire_memory()
 
 void GA_Sync()
 {
-    ga_sync_();
+    wnga_sync();
+}
+
+void NGA_Sync()
+{
+    wnga_sync();
 }
 
 int GA_Uses_ma()

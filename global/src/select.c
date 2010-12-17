@@ -156,7 +156,7 @@ void FATR nga_select_elem_(
 
   local_sync_begin = _ga_sync_begin; 
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if(local_sync_begin)ga_sync_();
+  if(local_sync_begin)pnga_sync();
 
   me = pnga_nodeid();
 

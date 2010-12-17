@@ -1411,7 +1411,7 @@ void ga_matmul(transa, transb, alpha, beta,
 			   g_a, ailo, aihi, ajlo, ajhi,
 			   g_b, bilo, bihi, bjlo, bjhi,
 			   g_c, cilo, cihi, cjlo, cjhi);
-    ga_sync_();
+    pnga_sync();
 #endif
 
     /* switch to various matmul algorithms here. more to come */
@@ -1629,7 +1629,7 @@ Integer clo[2], chi[2];
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   if(local_sync_begin)ga_sync_();
+   if(local_sync_begin)pnga_sync();
 
    GA_PUSH_NAME("ga_matmul_patch");
 
@@ -1931,7 +1931,7 @@ Integer clo[2], chi[2];
 #endif
 
    GA_POP_NAME;
-   if(local_sync_end)ga_sync_();
+   if(local_sync_end)pnga_sync();
 
 }
 
@@ -2055,7 +2055,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   if(local_sync_begin)ga_sync_();
+   if(local_sync_begin)pnga_sync();
 
    GA_PUSH_NAME("nga_matmul_patch");
 
@@ -2336,7 +2336,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 #endif
    
    GA_POP_NAME;
-   if(local_sync_end)ga_sync_(); 
+   if(local_sync_end)pnga_sync(); 
 
 #ifdef USE_VAMPIR
   vampir_end(NGA_MATMUL_PATCH,__FILE__,__LINE__);

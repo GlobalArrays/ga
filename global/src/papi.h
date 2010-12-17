@@ -163,6 +163,17 @@ extern void pnga_release_update_block_segment(Integer *g_a, Integer *iproc);
 extern void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
                            Integer *nv);
 extern void pnga_scatter(Integer *g_a, void *v, Integer *subscript, Integer *nv);
+extern void pnga_scatter_acc2d(Integer *g_a, void *v, Integer *i, Integer *j,
+                               Integer *nv, void *alpha);
+extern void pnga_scatter_acc(Integer *g_a, void* v, Integer subscript[],
+                             Integer *nv, void *alpha);
+extern void pnga_strided_acc(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
+                             void *buf, Integer *ld, void *alpha);
+extern void pnga_strided_get(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
+                             void *buf, Integer *ld);
+extern void pnga_strided_put(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
+                             void *buf, Integer *ld);
+extern void pnga_sync();
 
 /* Routines from global.util.c */
 extern void pnga_error(char *string, Integer icode);

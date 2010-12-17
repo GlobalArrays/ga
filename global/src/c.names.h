@@ -361,6 +361,7 @@
 #define nga_strided_acc_                   F77_FUNC_(nga_strided_acc, NGA_STRIDED_ACC)
 #define nga_strided_get_                   F77_FUNC_(nga_strided_get, NGA_STRIDED_GET)
 #define nga_strided_put_                   F77_FUNC_(nga_strided_put, NGA_STRIDED_PUT)
+#define nga_sync_                          F77_FUNC_(nga_sync, NGA_SYNC)
 #define nga_terminate_                     F77_FUNC_(nga_terminate, NGA_TERMINATE)
 #define nga_total_blocks_                  F77_FUNC_(nga_total_blocks, NGA_TOTAL_BLOCKS)
 #define nga_unlock_                        F77_FUNC_(nga_unlock, NGA_UNLOCK)
