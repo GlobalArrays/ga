@@ -193,7 +193,6 @@
 #define ga_sgop_                           F77_FUNC_(ga_sgop, GA_SGOP)
 #define ga_shift_diagonal_                 F77_FUNC_(ga_shift_diagonal, GA_SHIFT_DIAGONAL)
 #define ga_solve_                          F77_FUNC_(ga_solve, GA_SOLVE)
-#define ga_sort_permut_                    F77_FUNC_(ga_sort_permut, GA_SORT_PERMUT)
 #define ga_spd_invert_                     F77_FUNC_(ga_spd_invert, GA_SPD_INVERT)
 #define ga_sscal_                          F77_FUNC_(ga_sscal, GA_SSCAL)
 #define ga_sscal_patch_                    F77_FUNC_(ga_sscal_patch, GA_SSCAL_PATCH)

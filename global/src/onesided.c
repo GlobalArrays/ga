@@ -151,7 +151,7 @@ void pnga_pgroup_sync(Integer *grp_id)
 #   pragma weak wnga_sync = pnga_sync
 #endif
 
-void FATR pnga_sync()
+void pnga_sync()
 {
 #ifdef CHECK_MA
 Integer status;
@@ -213,7 +213,7 @@ void pnga_fence()
 #   pragma weak wnga_init_fence = pnga_init_fence
 #endif
 
-void FATR pnga_init_fence()
+void pnga_init_fence()
 {
 #ifdef USE_VAMPIR
     vampir_begin(GA_INIT_FENCE,__FILE__,__LINE__);
@@ -423,7 +423,7 @@ Integer pnga_nbtest(Integer *nbhandle)
 #   pragma weak wnga_nbwait = pnga_nbwait
 #endif
 
-void FATR pnga_nbwait(Integer *nbhandle) 
+void pnga_nbwait(Integer *nbhandle) 
 {
     nga_wait_internal((Integer *)nbhandle);
 } 
@@ -2702,7 +2702,7 @@ void pnga_release_block_grid(Integer *g_a, Integer *index)
 #   pragma weak wnga_release_update_block_grid = pnga_release_update_block_grid
 #endif
 
-void FATR pnga_release_update_block_grid(Integer *g_a, Integer *index)
+void pnga_release_update_block_grid(Integer *g_a, Integer *index)
 {}
 
 /**
@@ -2821,51 +2821,6 @@ int use_blocks;
 
   GA_POP_NAME;
 }
-
-
-/*\ based on subscripts compute pointers
-\*/
-void gai_sort_proc(Integer* g_a, Integer* sbar, Integer *nv, Integer list[], Integer proc[])
-{
-int k, ndim;
-extern void ga_sort_permutation();
-
-   if (*nv < 1) return;
-
-   ga_check_handleM(g_a, "gai_get_pointers");
-   ndim = GA[*g_a+GA_OFFSET].ndim;
-
-   for(k=0; k< *nv; k++)if(!pnga_locate(g_a, sbar+k*ndim, proc+k)){
-         gai_print_subscript("invalid subscript",ndim, sbar +k*ndim,"\n");
-         pnga_error("failed -element:",k);
-   }
-         
-   /* Sort the entries by processor */
-   ga_sort_permutation(nv, list, proc);
-}
- 
-
-/*\ permutes input index list using sort routine used in scatter/gather
-\*/
-void FATR nga_sort_permut_(Integer* g_a, Integer index[], 
-                           Integer* subscr_arr, Integer *nv)
-{
-    /* The new implementation doesn't change the order of the elements
-     * They are identical
-     */
-    /*
-Integer pindex, phandle;
-
-  if (*nv < 1) return;
-
-  if(!MA_push_get(MT_F_INT,*nv, "nga_sort_permut--p", &phandle, &pindex))
-              pnga_error("MA alloc failed ", *g_a);
-
-  gai_sort_proc(g_a, subscr_arr, nv, index, INT_MB+pindex);
-  if(! MA_pop_stack(phandle)) pnga_error(" pop stack failed!",phandle);
-    */
-}
-
 
 /**
  *  Scatter nv elements of v into a Global Array at locations specified
@@ -3214,46 +3169,6 @@ Integer subscrpt[2];
 
   GA_POP_NAME;
 }
-
-
-
-/*\ permutes input index list using sort routine used in scatter/gather
-\*/
-void FATR  ga_sort_permut_(g_a, index, i, j, nv)
-     Integer *g_a, *nv, *i, *j, *index;
-{
-    /* The new implementation doesn't change the order of the elements
-     * They are identical
-     */
-
-#if 0
-register Integer k;
-Integer *int_ptr;
-Integer subscrpt[2];
-extern void ga_sort_permutation();
-
-  if (*nv < 1) return;
-
-  int_ptr = (Integer*) ga_malloc(*nv, MT_F_INT, "ga_sort_permut--p");
-
-  /* find proc that owns the (i,j) element; store it in temp: int_ptr */
-  for(k=0; k< *nv; k++) {
-    subscrpt[0] = *(i+k);
-    subscrpt[1] = *(j+k);
-    if(!pnga_locate(g_a, subscrpt, int_ptr+k)){
-         sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
-         pnga_error(err_string,*g_a);
-    }
-  }
-
-  /* Sort the entries by processor */
-  ga_sort_permutation(nv, index, int_ptr);
-  ga_free(int_ptr);
-#endif
-}
-
-
-
 
 #define SCATTER -99
 #define GATHER -98
@@ -3810,7 +3725,7 @@ void pnga_gather(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 #   pragma weak wnga_scatter = pnga_scatter
 #endif
 
-void FATR pnga_scatter(Integer *g_a, void* v, Integer subscript[], Integer *nv)
+void pnga_scatter(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 {
 
   if (*nv < 1) return;
@@ -3837,7 +3752,7 @@ void FATR pnga_scatter(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 #   pragma weak wnga_scatter_acc = pnga_scatter_acc
 #endif
 
-void FATR pnga_scatter_acc(Integer *g_a, void* v, Integer subscript[],
+void pnga_scatter_acc(Integer *g_a, void* v, Integer subscript[],
                            Integer *nv, void *alpha)
 {
 

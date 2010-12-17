@@ -1733,8 +1733,8 @@ void ngai_do_elem2_oper(Integer atype, Integer cndim, Integer *loC, Integer *hiC
 
 /*\  generic operation of two patches
 \*/
-static void FATR ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,
-                         g_c, clo, chi, op)
+static void ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,
+                              g_c, clo, chi, op)
 Integer *g_a, *alo, *ahi;    /* patch of g_a */
 Integer *g_b, *blo, *bhi;    /* patch of g_b */
 Integer *g_c, *clo, *chi;    /* patch of g_c */

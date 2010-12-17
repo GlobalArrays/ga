@@ -68,7 +68,7 @@ void pnga_brdcst(Integer *type, void *buf, Integer *len, Integer *originator)
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_pgroup_brdcst = pnga_pgroup_brdcst
 #endif
-void FATR pnga_pgroup_brdcst(Integer *grp_id, Integer *type, void *buf,
+void pnga_pgroup_brdcst(Integer *grp_id, Integer *type, void *buf,
                              Integer *len, Integer *originator)
 {
     int p_grp = (int)*grp_id;

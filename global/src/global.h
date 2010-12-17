@@ -277,7 +277,6 @@ EXT void FATR ga_sfill_patch_(INT *, INT *, INT *, INT *, INT *, REAL *);
 EXT void FATR ga_sgop_(INT*, REAL*, INT*, char*, int);
 EXT void FATR ga_shift_diagonal_(INT *g_a, void *c);
 EXT INT  FATR ga_solve_(INT *, INT *);
-EXT void FATR ga_sort_permut_(INT* g_a, INT* index, INT* i, INT* j, INT* nv);
 EXT INT  FATR ga_spd_invert_(INT *);
 EXT void FATR ga_sscal_(INT *, REAL *);
 EXT void FATR ga_sscal_patch_(INT *, INT *, INT *, INT *, INT *, REAL *);
