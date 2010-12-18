@@ -56,7 +56,10 @@
 #endif
 
 
-void FATR ga_print_stats_()
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_print_stats = pnga_print_stats
+#endif
+void pnga_print_stats()
 {
 int i;
      GAstat_arr = (long*)&GAstat;

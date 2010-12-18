@@ -1010,6 +1010,15 @@ void GA_Set_ghost_corner_flag(int g_a, int flag)
   wnga_set_ghost_corner_flag(&aa, &fflag);
 }
 
+void NGA_Set_ghost_corner_flag(int g_a, int flag)
+{
+  Integer aa;
+  logical fflag;
+  aa = (Integer)g_a;
+  fflag = (logical)flag;
+  wnga_set_ghost_corner_flag(&aa, &fflag);
+}
+
 int GA_Get_dimension(int g_a)
 {
   Integer aa;
@@ -1133,7 +1142,13 @@ int NGA_Pgroup_split_irreg(int grp_id, int color)
 void GA_Update_ghosts(int g_a)
 {
     Integer a=(Integer)g_a;
-    nga_update_ghosts_(&a);
+    wnga_update_ghosts(&a);
+}
+
+void NGA_Update_ghosts(int g_a)
+{
+    Integer a=(Integer)g_a;
+    wnga_update_ghosts(&a);
 }
 
 void GA_Merge_mirrored(int g_a)
@@ -1256,7 +1271,7 @@ int NGA_Update_ghost_dir(int g_a, int dimension, int dir, int flag)
     logical iflag = (logical)flag;
     logical st;
     idim++;
-    st = nga_update_ghost_dir_(&a,&idim,&idir,&iflag);
+    st = wnga_update_ghost_dir(&a,&idim,&idir,&iflag);
     return (int)st;
 }
 
@@ -1266,7 +1281,7 @@ void NGA_NbGet_ghost_dir(int g_a, int mask[], ga_nbhdl_t* nbhandle)
     Integer ndim = wnga_ndim(&a);
     Integer _ga_lo[MAXDIM];
     COPYINDEX_C2F(mask,_ga_lo, ndim);
-    nga_nbget_ghost_dir_(&a, _ga_lo,(Integer *)nbhandle);
+    wnga_nbget_ghost_dir(&a, _ga_lo,(Integer *)nbhandle);
 }
 
 void NGA_NbGet_ghost_dir64(int g_a, int64_t mask[], ga_nbhdl_t* nbhandle)
@@ -1275,7 +1290,7 @@ void NGA_NbGet_ghost_dir64(int g_a, int64_t mask[], ga_nbhdl_t* nbhandle)
     Integer ndim = wnga_ndim(&a);
     Integer _ga_lo[MAXDIM];
     COPYINDEX_C2F(mask,_ga_lo, ndim);
-    nga_nbget_ghost_dir_(&a, _ga_lo,(Integer *)nbhandle);
+    wnga_nbget_ghost_dir(&a, _ga_lo,(Integer *)nbhandle);
 }
 
 int GA_Has_ghosts(int g_a)
@@ -1303,7 +1318,7 @@ void NGA_Get_ghost_block(int g_a, int lo[], int hi[], void *buf, int ld[])
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_get_ghost_block_(&a, _ga_lo, _ga_hi, buf, _ga_work);
+    wnga_get_ghost_block(&a, _ga_lo, _ga_hi, buf, _ga_work);
 }
 
 void NGA_Get_ghost_block64(int g_a, int64_t lo[], int64_t hi[],
@@ -1316,7 +1331,7 @@ void NGA_Get_ghost_block64(int g_a, int64_t lo[], int64_t hi[],
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_get_ghost_block_(&a, _ga_lo, _ga_hi, buf, _ga_work);
+    wnga_get_ghost_block(&a, _ga_lo, _ga_hi, buf, _ga_work);
 }
 
 void GA_Mask_sync(int first, int last)
@@ -1809,7 +1824,7 @@ void NGA_Periodic_get(int g_a, int lo[], int hi[], void* buf, int ld[])
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_periodic_(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_GET);
+    wnga_periodic(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_GET);
 }
 
 void NGA_Periodic_get64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[])
@@ -1821,7 +1836,7 @@ void NGA_Periodic_get64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t 
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_periodic_(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_GET);
+    wnga_periodic(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_GET);
 }
 
 void NGA_Periodic_put(int g_a, int lo[], int hi[], void* buf, int ld[])
@@ -1833,7 +1848,7 @@ void NGA_Periodic_put(int g_a, int lo[], int hi[], void* buf, int ld[])
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_periodic_(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_PUT);
+    wnga_periodic(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_PUT);
 }    
 
 void NGA_Periodic_put64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[])
@@ -1845,7 +1860,7 @@ void NGA_Periodic_put64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t 
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_periodic_(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_PUT);
+    wnga_periodic(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_PUT);
 }
 
 void NGA_Periodic_acc(int g_a, int lo[], int hi[], void* buf,int ld[], void* alpha)
@@ -1857,7 +1872,7 @@ void NGA_Periodic_acc(int g_a, int lo[], int hi[], void* buf,int ld[], void* alp
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_periodic_(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha, PERIODIC_ACC);
+    wnga_periodic(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha, PERIODIC_ACC);
 }
 
 void NGA_Periodic_acc64(int g_a, int64_t lo[], int64_t hi[], void* buf,int64_t ld[], void* alpha)
@@ -1869,7 +1884,7 @@ void NGA_Periodic_acc64(int g_a, int64_t lo[], int64_t hi[], void* buf,int64_t l
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_periodic_(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha, PERIODIC_ACC);
+    wnga_periodic(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha, PERIODIC_ACC);
 }
 
 long NGA_Read_inc(int g_a, int subscript[], long inc)
@@ -2180,7 +2195,7 @@ void NGA_Access_ghosts(int g_a, int dims[], void *ptr, int ld[])
      Integer ndim = wnga_ndim(&a);
      Integer _ga_lo[MAXDIM];
      Integer _ga_work[MAXDIM];
-     nga_access_ghost_ptr(&a, _ga_lo, ptr, _ga_work);
+     wnga_access_ghost_ptr(&a, _ga_lo, ptr, _ga_work);
      COPYF2C(_ga_work,ld, ndim-1);
      COPYF2C(_ga_lo, dims, ndim);
 }
@@ -2192,7 +2207,7 @@ void NGA_Access_ghosts64(int g_a, int64_t dims[], void *ptr, int64_t ld[])
      Integer _ga_lo[MAXDIM];
      Integer _ga_work[MAXDIM];
 
-     nga_access_ghost_ptr(&a, _ga_lo, ptr, _ga_work);
+     wnga_access_ghost_ptr(&a, _ga_lo, ptr, _ga_work);
      COPYF2C_64(_ga_work,ld, ndim-1);
      COPYF2C_64(_ga_lo, dims, ndim);
 }
@@ -2206,7 +2221,7 @@ void NGA_Access_ghost_element(int g_a, void *ptr, int subscript[], int ld[])
 
      COPYINDEX_C2F(subscript, _subscript, ndim);
      COPYINDEX_C2F(ld, _ld, ndim-1);
-     nga_access_ghost_element_ptr(&a, ptr, _subscript, _ld);
+     wnga_access_ghost_element_ptr(&a, ptr, _subscript, _ld);
 }
 
 void NGA_Access_ghost_element64(int g_a, void *ptr, int64_t subscript[], int64_t ld[])
@@ -2218,7 +2233,7 @@ void NGA_Access_ghost_element64(int g_a, void *ptr, int64_t subscript[], int64_t
 
      COPYINDEX_C2F(subscript, _subscript, ndim);
      COPYINDEX_C2F(ld, _ld, ndim-1);
-     nga_access_ghost_element_ptr(&a, ptr, _subscript, _ld);
+     wnga_access_ghost_element_ptr(&a, ptr, _subscript, _ld);
 }
 
 void NGA_Release(int g_a, int lo[], int hi[])
@@ -2229,7 +2244,7 @@ void NGA_Release(int g_a, int lo[], int hi[])
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
 
-     nga_release_(&a,_ga_lo, _ga_hi);
+     wnga_release(&a,_ga_lo, _ga_hi);
 }
 
 void NGA_Release64(int g_a, int64_t lo[], int64_t hi[])
@@ -2240,7 +2255,7 @@ void NGA_Release64(int g_a, int64_t lo[], int64_t hi[])
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
 
-     nga_release_(&a,_ga_lo, _ga_hi);
+     wnga_release(&a,_ga_lo, _ga_hi);
 }
 
 void NGA_Release_block(int g_a, int idx)
@@ -2276,7 +2291,7 @@ void NGA_Release_ghost_element(int g_a, int index[])
      Integer _ga_lo[MAXDIM];
      COPYINDEX_C2F(index,_ga_lo,ndim);
 
-     nga_release_ghost_element_(&a, _ga_lo);
+     wnga_release_ghost_element(&a, _ga_lo);
 }
 
 void NGA_Release_ghost_element64(int g_a, int64_t index[])
@@ -2286,7 +2301,7 @@ void NGA_Release_ghost_element64(int g_a, int64_t index[])
      Integer _ga_lo[MAXDIM];
      COPYINDEX_C2F(index,_ga_lo,ndim);
 
-     nga_release_ghost_element_(&a, _ga_lo);
+     wnga_release_ghost_element(&a, _ga_lo);
 }
 
 
@@ -2294,7 +2309,7 @@ void NGA_Release_ghosts(int g_a)
 {
      Integer a=(Integer)g_a;
 
-     nga_release_ghosts_(&a);
+     wnga_release_ghosts(&a);
 }
 
 int NGA_Locate(int g_a, int subscript[])
@@ -2333,7 +2348,7 @@ int NGA_Locate_nnodes(int g_a, int lo[], int hi[])
 
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
-     st = nga_locate_nnodes_(&a, _ga_lo, _ga_hi, &np);
+     st = wnga_locate_nnodes(&a, _ga_lo, _ga_hi, &np);
      return (int)np;
 }
 
@@ -2347,7 +2362,7 @@ int NGA_Locate_nnodes64(int g_a, int64_t lo[], int64_t hi[])
 
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
-     st = nga_locate_nnodes_(&a, _ga_lo, _ga_hi, &np);
+     st = wnga_locate_nnodes(&a, _ga_lo, _ga_hi, &np);
      return (int)np;
 }
 
@@ -2363,7 +2378,7 @@ int NGA_Locate_region(int g_a,int lo[],int hi[],int map[],int procs[])
      Integer *_ga_map_capi;
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
-     st = nga_locate_nnodes_(&a, _ga_lo, _ga_hi, &np);
+     st = wnga_locate_nnodes(&a, _ga_lo, _ga_hi, &np);
      tmap = (Integer *)malloc( (int)(np*2*ndim *sizeof(Integer)));
      if(!map)GA_Error("NGA_Locate_region: unable to allocate memory",g_a);
      _ga_map_capi = (Integer*)malloc(np*sizeof(Integer));
@@ -2400,7 +2415,7 @@ int NGA_Locate_region64(int g_a,int64_t lo[],int64_t hi[],int64_t map[],int proc
      Integer *_ga_map_capi;
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
-     st = nga_locate_nnodes_(&a, _ga_lo, _ga_hi, &np);
+     st = wnga_locate_nnodes(&a, _ga_lo, _ga_hi, &np);
      tmap = (Integer *)malloc( (int)(np*2*ndim *sizeof(Integer)));
      if(!map)GA_Error("NGA_Locate_region: unable to allocate memory",g_a);
      _ga_map_capi = (Integer*)malloc(np*sizeof(Integer));
@@ -3922,7 +3937,7 @@ void GA_Diag_seq(int g_a, int g_s, int g_v, void *eval)
     Integer s = (Integer)g_s;
     Integer v = (Integer)g_v;
 
-    nga_diag_seq_(&a, &s, &v, eval);
+    ga_diag_seq_(&a, &s, &v, eval);
 }
 
 void GA_Diag_std_seq(int g_a, int g_v, void *eval)
@@ -3930,7 +3945,7 @@ void GA_Diag_std_seq(int g_a, int g_v, void *eval)
     Integer a = (Integer)g_a;
     Integer v = (Integer)g_v;
 
-    nga_diag_std_seq_(&a, &v, eval);
+    ga_diag_std_seq_(&a, &v, eval);
 }
 
 void GA_Diag(int g_a, int g_s, int g_v, void *eval)
@@ -3939,7 +3954,7 @@ void GA_Diag(int g_a, int g_s, int g_v, void *eval)
     Integer s = (Integer)g_s;
     Integer v = (Integer)g_v;
 
-    nga_diag_(&a, &s, &v, eval);
+    ga_diag_(&a, &s, &v, eval);
 }
 
 void GA_Diag_std(int g_a, int g_v, void *eval)
@@ -3947,7 +3962,7 @@ void GA_Diag_std(int g_a, int g_v, void *eval)
     Integer a = (Integer)g_a;
     Integer v = (Integer)g_v;
 
-    nga_diag_std_(&a, &v, eval);
+    ga_diag_std_(&a, &v, eval);
 }
 
 void GA_Diag_reuse(int reuse, int g_a, int g_s, int g_v, void *eval)
@@ -3957,7 +3972,7 @@ void GA_Diag_reuse(int reuse, int g_a, int g_s, int g_v, void *eval)
     Integer s = (Integer)g_s;
     Integer v = (Integer)g_v;
 
-    nga_diag_reuse_(&r, &a, &s, &v, eval);
+    ga_diag_reuse_(&r, &a, &s, &v, eval);
 }
 
 void GA_Lu_solve(char tran, int g_a, int g_b)
@@ -3970,7 +3985,7 @@ void GA_Lu_solve(char tran, int g_a, int g_b)
     if(tran == 't' || tran == 'T') t = 1;
     else t = 0;
 
-    nga_lu_solve_alt_(&t, &a, &b);
+    ga_lu_solve_alt_(&t, &a, &b);
 }
 
 int GA_Llt_solve(int g_a, int g_b)
@@ -3979,7 +3994,7 @@ int GA_Llt_solve(int g_a, int g_b)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
 
-    res = nga_llt_solve_(&a, &b);
+    res = ga_llt_solve_(&a, &b);
 
     return((int)res);
 }
@@ -3990,7 +4005,7 @@ int GA_Solve(int g_a, int g_b)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
 
-    res = nga_solve_(&a, &b);
+    res = ga_solve_(&a, &b);
 
     return((int)res);
 }
@@ -4000,7 +4015,7 @@ int GA_Spd_invert(int g_a)
     Integer res;
     Integer a = (Integer)g_a;
 
-    res = nga_spd_invert_(&a);
+    res = ga_spd_invert_(&a);
 
     return((int)res);
 }
@@ -4009,14 +4024,21 @@ void GA_Summarize(int verbose)
 {
     Integer v = (Integer)verbose;
 
-    nga_summarize_(&v);
+    ga_summarize_(&v);
 }
 
 void GA_Symmetrize(int g_a)
 {
     Integer a = (Integer)g_a;
 
-    nga_symmetrize_(&a);
+    wnga_symmetrize(&a);
+}
+
+void NGA_Symmetrize(int g_a)
+{
+    Integer a = (Integer)g_a;
+
+    wnga_symmetrize(&a);
 }
 
 void GA_Transpose(int g_a, int g_b)
@@ -4091,7 +4113,7 @@ void NGA_Release_update_ghost_element(int g_a, int index[])
      Integer ndim = wnga_ndim(&a);
      Integer _ga_lo[MAXDIM];
      COPYINDEX_C2F(index,_ga_lo,ndim);
-     nga_release_update_ghost_element_(&a, _ga_lo);
+     wnga_release_update_ghost_element(&a, _ga_lo);
 }
 
 void NGA_Release_update_ghost_element64(int g_a, int64_t index[])
@@ -4100,13 +4122,13 @@ void NGA_Release_update_ghost_element64(int g_a, int64_t index[])
      Integer ndim = wnga_ndim(&a);
      Integer _ga_lo[MAXDIM];
      COPYINDEX_C2F(index,_ga_lo,ndim);
-     nga_release_update_ghost_element_(&a, _ga_lo);
+     wnga_release_update_ghost_element(&a, _ga_lo);
 }
 
 void NGA_Release_update_ghosts(int g_a)
 {
      Integer a=(Integer)g_a;
-     nga_release_update_ghosts_(&a);
+     wnga_release_update_ghosts(&a);
 }
 
 int GA_Ndim(int g_a)
@@ -4748,7 +4770,7 @@ int NGA_Uses_ma()
 
 void GA_Print_stats()
 {
-    nga_print_stats_();
+    wnga_print_stats();
 }
 
 void GA_Init_fence()

@@ -1874,7 +1874,7 @@ logical pnga_allocate( Integer *g_a)
       dims[d] = (Integer)GA[ga_handle].dims[d];
       chunk[d] = (Integer)GA[ga_handle].chunk[d];
     }
-    if(chunk && chunk[0]!=0) /* for either NULL or chunk[0]=0 compute all */
+    if(chunk[0]!=0) /* for chunk[0]=0 compute all */
       for(d=0; d< ndim; d++) blk[d]=(Integer)GA_MIN(chunk[d],dims[d]);
     else
       for(d=0; d< ndim; d++) blk[d]=-1;
@@ -1920,7 +1920,7 @@ logical pnga_allocate( Integer *g_a)
       /* RJH ... don't leave some nodes without data if possible
        but respect the users block size */
       
-      if (chunk && chunk[d] > 1) {
+      if (chunk[d] > 1) {
         Integer ddim = ((dims[d]-1)/GA_MIN(chunk[d],dims[d]) + 1);
         pcut = (ddim -(blk[d]-1)*pe[d]) ;
       }
@@ -1933,7 +1933,7 @@ logical pnga_allocate( Integer *g_a)
         if (p >= pcut)
           b = b-1;
         map[nblock] = i+1;
-        if (chunk && chunk[d]>1) b *= GA_MIN(chunk[d],dims[d]);
+        if (chunk[d]>1) b *= GA_MIN(chunk[d],dims[d]);
         i += b;
       }
 
@@ -3313,7 +3313,10 @@ void gai_get_proc_from_block_index_(Integer *g_a, Integer *index, Integer *proc)
  * RETURN HOW MANY PROCESSORS/OWNERS THERE ARE FOR THE SPECIFIED PATCH OF A
  * GLOBAL ARRAY
 \*/
-logical FATR nga_locate_nnodes_( Integer *g_a,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_locate_nnodes = pnga_locate_nnodes
+#endif
+logical pnga_locate_nnodes( Integer *g_a,
                                  Integer *lo,
                                  Integer *hi,
                                  Integer *np)

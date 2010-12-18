@@ -97,7 +97,10 @@ Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
   *(ptr_loc) = GA[handle].ptr[proc] + _offset*GA[handle].elemsize;             \
 }
 
-void nga_access_ghost_ptr(Integer* g_a, Integer dims[],
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_access_ghost_ptr = pnga_access_ghost_ptr
+#endif
+void pnga_access_ghost_ptr(Integer* g_a, Integer dims[],
                       void* ptr, Integer ld[])
 
 {
@@ -107,7 +110,7 @@ Integer  i, lo[MAXDIM], hi[MAXDIM];
 Integer ndim = GA[handle].ndim;
 Integer me = pnga_nodeid();
 
-   GA_PUSH_NAME("nga_access_ghost_ptr");
+   GA_PUSH_NAME("pnga_access_ghost_ptr");
 
    pnga_distribution(g_a, &me, lo, hi);
 
@@ -125,7 +128,10 @@ Integer me = pnga_nodeid();
 /*\  PROVIDE INDEX TO LOCALLY HELD DATA, ACCOUNTING FOR
  *   PRESENCE OF GHOST CELLS
 \*/
-void FATR nga_access_ghost_element_(Integer* g_a, AccessIndex* index,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_access_ghost_element = pnga_access_ghost_element
+#endif
+void pnga_access_ghost_element(Integer* g_a, AccessIndex* index,
                         Integer subscript[], Integer ld[])
 {
 char *ptr=NULL;
@@ -199,7 +205,10 @@ Integer me = pnga_nodeid();
 /*\  PROVIDE POINTER TO LOCALLY HELD DATA, ACCOUNTING FOR 
  *   PRESENCE OF GHOST CELLS 
 \*/ 
-void nga_access_ghost_element_ptr(Integer* g_a, void *ptr, 
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_access_ghost_element_ptr = pnga_access_ghost_element_ptr
+#endif
+void pnga_access_ghost_element_ptr(Integer* g_a, void *ptr, 
                         Integer subscript[], Integer ld[]) 
 { 
   char *lptr; 
@@ -219,7 +228,10 @@ void nga_access_ghost_element_ptr(Integer* g_a, void *ptr,
  
 /*\ PROVIDE ACCESS TO LOCAL PATCH OF A GLOBAL ARRAY WITH GHOST CELLS
 \*/
-void FATR nga_access_ghosts_(Integer* g_a, Integer dims[],
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_access_ghosts = pnga_access_ghosts
+#endif
+void pnga_access_ghosts(Integer* g_a, Integer dims[],
                       AccessIndex* index, Integer ld[])
 {
 char     *ptr=NULL;
@@ -228,7 +240,7 @@ unsigned long    elemsize=0;
 unsigned long    lref=0, lptr=0;
 
    GA_PUSH_NAME("nga_access_ghosts");
-   nga_access_ghost_ptr(g_a, dims, &ptr, ld);
+   pnga_access_ghost_ptr(g_a, dims, &ptr, ld);
 
    /*
     * return patch address as the distance elements from the reference address
@@ -289,31 +301,46 @@ unsigned long    lref=0, lptr=0;
 
 /*\ RELEASE ACCESS TO A GHOST ELEMENT
 \*/
-void FATR nga_release_ghost_element_(Integer* g_a, Integer subscript[])
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_release_ghost_element = pnga_release_ghost_element
+#endif
+void pnga_release_ghost_element(Integer* g_a, Integer subscript[])
 {
 }
 
 /*\ RELEASE ACCESS & UPDATE A GHOST ELEMENT
 \*/
-void FATR nga_release_update_ghost_element_(Integer* g_a, Integer subscript[])
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_release_update_ghost_element = pnga_release_update_ghost_element
+#endif
+void pnga_release_update_ghost_element(Integer* g_a, Integer subscript[])
 {
 }
 
 /*\ RELEASE ACCESS TO A GHOST BLOCK
 \*/
-void FATR nga_release_ghosts_(Integer* g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak
+#endif
+void pnga_release_ghosts(Integer* g_a)
 {
 }
 
 /*\ RELEASE ACCESS & UPDATE A GHOST BLOCK
 \*/
-void FATR nga_release_update_ghosts_(Integer* g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_release_update_ghosts = pnga_release_update_ghosts
+#endif
+void pnga_release_update_ghosts(Integer* g_a)
 {
 }
 
 /*\ GET DATA FROM LOCAL BLOCK
 \*/
-void FATR nga_get_ghost_block_(Integer *g_a,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_ghost_block = pnga_get_ghost_block
+#endif
+void pnga_get_ghost_block(Integer *g_a,
                                Integer *lo,
                                Integer *hi,
                                void *buf,
@@ -379,7 +406,10 @@ void FATR nga_get_ghost_block_(Integer *g_a,
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM
 \*/
-void FATR ga_update1_ghosts_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_update1_ghosts = pnga_update1_ghosts
+#endif
+void pnga_update1_ghosts(Integer *g_a)
 {
   Integer idx, ipx, inx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
   Integer size, ndim, nwidth, offset, slice, increment[MAXDIM];
@@ -761,7 +791,7 @@ void FATR ga_update1_ghosts_(Integer *g_a)
 /*\ UTILITY FUNCTION TO MAKE SURE GHOST CELLS WIDTHS ARE
  *  LESS THAN VISIBLE DATA WIDTHS
 \*/
-logical gai_check_ghost_distr(Integer *g_a)
+static logical gai_check_ghost_distr(Integer *g_a)
 {
   Integer handle=GA_OFFSET + *g_a;
   Integer idx, ndim, np, ipx;
@@ -788,7 +818,10 @@ logical gai_check_ghost_distr(Integer *g_a)
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING PUT CALLS
 \*/
-logical FATR ga_update2_ghosts_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_update2_ghosts = pnga_update2_ghosts
+#endif
+logical pnga_update2_ghosts(Integer *g_a)
 {
   Integer idx, ipx, np, handle=GA_OFFSET + *g_a, proc_rem;
   Integer ntot, mask[MAXDIM];
@@ -950,7 +983,7 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
 
 /*\ GET INDICES ON REMOTE BLOCK IN NEGATIVE DIRECTION FOR UPDATE
 \*/
-void get_remote_block_neg(Integer idx, Integer ndim, Integer *lo_loc,
+static void get_remote_block_neg(Integer idx, Integer ndim, Integer *lo_loc,
                           Integer *hi_loc, Integer *slo_rem, Integer *shi_rem,
                           Integer *dims, Integer *width)
 {
@@ -985,7 +1018,7 @@ void get_remote_block_neg(Integer idx, Integer ndim, Integer *lo_loc,
 
 /*\ GET INDICES ON REMOTE BLOCK IN POSITIVE DIRECTION FOR UPDATE
 \*/
-void get_remote_block_pos(Integer idx, Integer ndim, Integer *lo_loc,
+static void get_remote_block_pos(Integer idx, Integer ndim, Integer *lo_loc,
                           Integer *hi_loc, Integer *slo_rem, Integer *shi_rem,
                           Integer *dims, Integer *width)
 {
@@ -1020,7 +1053,10 @@ void get_remote_block_pos(Integer idx, Integer ndim, Integer *lo_loc,
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM AND PUT CALLS
 \*/
-logical FATR ga_update3_ghosts_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_update3_ghosts = pnga_update3_ghosts
+#endif
+logical pnga_update3_ghosts(Integer *g_a)
 {
   Integer idx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
   Integer size, ndim, nwidth, increment[MAXDIM];
@@ -1258,7 +1294,10 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM AND
  *  MESSAGE PASSING
 \*/
-logical FATR ga_set_update4_info_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_update4_info = pnga_set_update4_info
+#endif
+logical pnga_set_update4_info(Integer *g_a)
 {
   Integer idx, idir, i, np, handle=GA_OFFSET + *g_a;
   Integer size, buflen, buftot, *bufsize, ndim, increment[MAXDIM];
@@ -1634,7 +1673,10 @@ logical FATR ga_set_update4_info_(Integer *g_a)
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM AND
  *  MESSAGE PASSING
 \*/
-logical FATR ga_update4_ghosts_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_update4_ghosts = pnga_update4_ghosts
+#endif
+logical pnga_update4_ghosts(Integer *g_a)
 {
   Integer idx, i, handle=GA_OFFSET + *g_a;
   Integer *size, bufsize, buflen, ndim, elemsize;
@@ -1886,7 +1928,10 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM AND
  *  MESSAGE PASSING
 \*/
-logical FATR ga_update44_ghosts_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_update44_ghosts = pnga_update44_ghosts
+#endif
+logical pnga_update44_ghosts(Integer *g_a)
 {
   Integer idx, idir, i, np, handle=GA_OFFSET + *g_a;
   Integer size, buflen, buftot, bufsize, ndim, increment[MAXDIM];
@@ -2410,7 +2455,10 @@ int ARMCI_PutS_flag__(
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM AND PUT CALLS
  *  WITHOUT ANY BARRIERS
 \*/
-logical FATR ga_update55_ghosts_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_update55_ghosts = pnga_update55_ghosts
+#endif
+logical pnga_update55_ghosts(Integer *g_a)
 {
   Integer idx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
   Integer size, ndim, nwidth, increment[MAXDIM];
@@ -2680,7 +2728,10 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY ALONG ONE SIDE OF ARRAY
 \*/
-logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_update_ghost_dir = pnga_update_ghost_dir
+#endif
+logical pnga_update_ghost_dir(Integer *g_a,    /* GA handle */
                                    Integer *pdim,   /* Dimension of update */
                                    Integer *pdir,   /* Direction of update (+/-1) */
                                    logical *pflag)  /* include corner cells */
@@ -2867,7 +2918,10 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING PUT CALLS WITHOUT CORNERS AND
  *  WITHOUT ANY BARRIERS
 \*/
-logical ga_update5_ghosts_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_update5_ghosts = pnga_update5_ghosts
+#endif
+logical pnga_update5_ghosts(Integer *g_a)
 {
   Integer idx, i, handle=GA_OFFSET + *g_a;
   Integer size, ndim, nwidth;
@@ -2934,7 +2988,7 @@ logical ga_update5_ghosts_(Integer *g_a)
 
   if (!gai_check_ghost_distr(g_a)) return FALSE;
 
-  GA_PUSH_NAME("ga_update5_ghosts_");
+  GA_PUSH_NAME("pnga_update5_ghosts");
 
   /* loop over dimensions for sequential update using shift algorithm */
   msgcnt = 0;
@@ -3034,7 +3088,10 @@ logical ga_update5_ghosts_(Integer *g_a)
 
 /*#define UPDATE_SAMENODE_GHOSTS_FIRST*/
 
-logical ga_set_update5_info_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_update5_info = pnga_set_update5_info
+#endif
+logical pnga_set_update5_info(Integer *g_a)
 {
   int i;
   Integer *proc_rem;
@@ -3265,7 +3322,10 @@ logical ga_set_update5_info_(Integer *g_a)
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM
 \*/
-void ga_update_ghosts_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_update_ghosts = pnga_update_ghosts
+#endif
+void pnga_update_ghosts(Integer *g_a)
 {
   /* Wrapper program for ghost cell update operations. If optimized
      update operation fails then use slow but robust version of
@@ -3277,18 +3337,19 @@ void ga_update_ghosts_(Integer *g_a)
    if(local_sync_begin)pnga_sync();
 
 #ifdef CRAY_T3D
-   if (!ga_update5_ghosts_(g_a)) {
+   if (!pnga_update5_ghosts(g_a))
 #else
-   if (!ga_update4_ghosts_(g_a)) {
+   if (!pnga_update4_ghosts(g_a))
 #endif
-     ga_update1_ghosts_(g_a);
+   {
+     pnga_update1_ghosts(g_a);
    }
 
    if(local_sync_end)pnga_sync();
 }
 
 /* Utility function for ga_update6_ghosts routine */
-double waitformixedflags (int flag1, int flag2, int *ptr1, int *ptr2) {
+static double waitformixedflags (int flag1, int flag2, int *ptr1, int *ptr2) {
   int i = 1;
   double val = 0;
   while ((flag1 && *ptr1 ==  0) ||
@@ -3301,7 +3362,10 @@ double waitformixedflags (int flag1, int flag2, int *ptr1, int *ptr2) {
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM AND
  *  MESSAGE PASSING
 \*/
-logical FATR ga_update6_ghosts_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_update6_ghosts = pnga_update6_ghosts
+#endif
+logical pnga_update6_ghosts(Integer *g_a)
 {
   Integer idx, idir, i, np, handle=GA_OFFSET + *g_a;
   Integer size, buflen, buftot, bufsize, ndim, increment[MAXDIM];
@@ -3847,7 +3911,10 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING GET CALLS
 \*/
-logical FATR ga_update7_ghosts_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_update7_ghosts = pnga_update7_ghosts
+#endif
+logical pnga_update7_ghosts(Integer *g_a)
 {
   Integer idx, ipx, np, handle=GA_OFFSET + *g_a, proc_rem;
   Integer ntot, mask[MAXDIM];
@@ -4000,7 +4067,10 @@ logical FATR ga_update7_ghosts_(Integer *g_a)
   return TRUE;
 }
 
-void FATR ga_ghost_barrier_()
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_ghost_barrier = pnga_ghost_barrier
+#endif
+void pnga_ghost_barrier()
 {
 #ifdef LAPI
   int signal = 1, n = 1;
@@ -4014,7 +4084,10 @@ void FATR ga_ghost_barrier_()
 /*\ UPDATE THE GHOST CELLS ON A PROCESSOR IN A SPECIFIC DIRECTION
  *  USING NON-BLOCKING GET CALLS
 \*/
-void FATR nga_nbget_ghost_dir_(Integer *g_a,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_nbget_ghost_dir = pnga_nbget_ghost_dir
+#endif
+void pnga_nbget_ghost_dir(Integer *g_a,
                                Integer *mask,
                                Integer *nbhandle)
 {

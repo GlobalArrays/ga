@@ -1055,6 +1055,11 @@ void FATR nga_check_handle_(Integer *g_a, char *fstring, int slen)
     wnga_check_handle(g_a, buf);
 }
 
+logical FATR nga_locate_nnodes_(Integer *g_a, Integer *lo, Integer *hi, Integer *np)
+{
+    return wnga_locate_nnodes(g_a, lo, hi, np);
+}
+
 /* Routines from onesided.c */
 
 void FATR ga_acc_(Integer *g_a, Integer *ilo, Integer *ihi,
@@ -1391,6 +1396,16 @@ void FATR nga_sync_()
 }
 
 /* Routines from global.util.c */
+
+void FATR ga_print_stats_()
+{
+    wnga_print_stats();
+}
+
+void FATR nga_print_stats_()
+{
+    wnga_print_stats();
+}
 
 void FATR ga_error_(
 #if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
@@ -1859,6 +1874,181 @@ void FATR nga_print_patch_(Integer *g_a, Integer *lo, Integer *hi, Integer *pret
 }
 
 /* Routines from ghosts.c */
+
+void FATR nga_access_ghost_element_(Integer* g_a, AccessIndex* index, Integer subscript[], Integer ld[])
+{
+    wnga_access_ghost_element(g_a, index, subscript, ld);
+}
+
+void FATR nga_access_ghosts_(Integer* g_a, Integer dims[], AccessIndex* index, Integer ld[])
+{
+    wnga_access_ghosts(g_a, dims, index, ld);
+}
+
+void FATR nga_release_ghost_element_(Integer* g_a, Integer subscript[])
+{
+    wnga_release_ghost_element(g_a, subscript);
+}
+
+void FATR nga_release_update_ghost_element_(Integer* g_a, Integer subscript[])
+{
+    wnga_release_update_ghost_element(g_a, subscript);
+}
+
+void FATR nga_release_ghosts_(Integer* g_a)        
+{
+    wnga_release_ghosts(g_a);
+}
+
+void FATR nga_release_update_ghosts_(Integer* g_a)
+{
+    wnga_release_update_ghosts(g_a);
+}
+
+void FATR nga_get_ghost_block_(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld) 
+{
+    wnga_get_ghost_block(g_a, lo, hi, buf, ld);
+}
+
+void FATR ga_update1_ghosts_(Integer *g_a)
+{
+    wnga_update1_ghosts(g_a);
+}
+
+void FATR nga_update1_ghosts_(Integer *g_a)
+{
+    wnga_update1_ghosts(g_a);
+}
+
+logical FATR ga_update2_ghosts_(Integer *g_a)
+{
+    return wnga_update2_ghosts(g_a);
+}
+
+logical FATR nga_update2_ghosts_(Integer *g_a)
+{
+    return wnga_update2_ghosts(g_a);
+}
+
+logical FATR ga_update3_ghosts_(Integer *g_a)
+{
+    return wnga_update3_ghosts(g_a);
+}
+
+logical FATR nga_update3_ghosts_(Integer *g_a)
+{
+    return wnga_update3_ghosts(g_a);
+}
+
+logical FATR ga_set_update4_info_(Integer *g_a)
+{
+    return wnga_set_update4_info(g_a);
+}
+
+logical FATR nga_set_update4_info_(Integer *g_a)
+{
+    return wnga_set_update4_info(g_a);
+}
+
+logical FATR ga_update4_ghosts_(Integer *g_a)
+{
+    return wnga_update4_ghosts(g_a);
+}
+
+logical FATR nga_update4_ghosts_(Integer *g_a)
+{
+    return wnga_update4_ghosts(g_a);
+}
+
+logical FATR ga_update44_ghosts_(Integer *g_a)
+{
+    return wnga_update44_ghosts(g_a);
+}
+
+logical FATR nga_update44_ghosts_(Integer *g_a)
+{
+    return wnga_update44_ghosts(g_a);
+}
+
+logical FATR ga_update55_ghosts_(Integer *g_a)
+{
+    return wnga_update55_ghosts(g_a);
+}
+
+logical FATR nga_update55_ghosts_(Integer *g_a)
+{
+    return wnga_update55_ghosts(g_a);
+}
+
+logical FATR nga_update_ghost_dir_(Integer *g_a, Integer *pdim, Integer *pdir, logical *pflag)
+{
+    return wnga_update_ghost_dir(g_a, pdim, pdir, pflag);
+}
+
+logical FATR ga_update5_ghosts_(Integer *g_a)
+{
+    return wnga_update5_ghosts(g_a);
+}
+
+logical FATR nga_update5_ghosts_(Integer *g_a)
+{
+    return wnga_update5_ghosts(g_a);
+}
+
+logical FATR ga_set_update5_info_(Integer *g_a)
+{
+    return wnga_set_update5_info(g_a);
+}
+
+logical FATR nga_set_update5_info_(Integer *g_a)
+{
+    return wnga_set_update5_info(g_a);
+}
+
+void FATR ga_update_ghosts_(Integer *g_a)
+{
+    wnga_update_ghosts(g_a);
+}
+
+void FATR nga_update_ghosts_(Integer *g_a)
+{
+    wnga_update_ghosts(g_a);
+}
+
+logical FATR ga_update6_ghosts_(Integer *g_a)
+{
+    return wnga_update6_ghosts(g_a);
+}
+
+logical FATR nga_update6_ghosts_(Integer *g_a)
+{
+    return wnga_update6_ghosts(g_a);
+}
+
+logical FATR ga_update7_ghosts_(Integer *g_a)
+{
+    return wnga_update7_ghosts(g_a);
+}
+
+logical FATR nga_update7_ghosts_(Integer *g_a)
+{
+    return wnga_update7_ghosts(g_a);
+}
+
+void FATR ga_ghost_barrier_()
+{
+    wnga_ghost_barrier();
+}
+
+void FATR nga_ghost_barrier_()
+{
+    wnga_ghost_barrier();
+}
+
+void FATR nga_nbget_ghost_dir_(Integer *g_a, Integer *mask, Integer *nbhandle)
+{
+    wnga_nbget_ghost_dir(g_a, mask, nbhandle);
+}
 
 void FATR ga_set_ghost_corner_flag_(Integer *g_a, logical *flag)
 {
@@ -2934,3 +3124,52 @@ void FATR nga_scale_cols_(Integer *g_a, Integer *g_v)
     wnga_scale_cols(g_a, g_v);
 }
 
+/* Routines from ga_symmetr.c */
+
+void FATR ga_symmetrize_(Integer *g_a)
+{
+    wnga_symmetrize(g_a);
+}
+
+void FATR nga_symmetrize_(Integer *g_a)
+{
+    wnga_symmetrize(g_a);
+}
+
+/* Routines from global.periodic.c */
+
+void FATR nga_periodic_get_(Integer *g_a, Integer *lo, Integer *hi,
+                            void *buf, Integer *ld)
+{
+#ifdef USE_VAMPIR
+    vampir_begin(NGA_PERIODIC_GET,__FILE__,__LINE__);
+#endif
+    wnga_periodic(g_a, lo, hi, buf, ld, NULL, PERIODIC_GET);
+#ifdef USE_VAMPIR
+    vampir_end(NGA_PERIODIC_GET,__FILE__,__LINE__);
+#endif
+}
+
+void FATR nga_periodic_put_(Integer *g_a, Integer *lo, Integer *hi,
+                            void *buf, Integer *ld)
+{
+#ifdef USE_VAMPIR
+    vampir_begin(NGA_PERIODIC_PUT,__FILE__,__LINE__);
+#endif
+    wnga_periodic(g_a, lo, hi, buf, ld, NULL, PERIODIC_PUT);
+#ifdef USE_VAMPIR
+    vampir_end(NGA_PERIODIC_PUT,__FILE__,__LINE__);
+#endif
+}
+
+void FATR nga_periodic_acc_(Integer *g_a, Integer *lo, Integer *hi,
+                            void *buf, Integer *ld, void *alpha)
+{
+#ifdef USE_VAMPIR
+    vampir_begin(NGA_PERIODIC_ACC,__FILE__,__LINE__);
+#endif
+    wnga_periodic(g_a, lo, hi, buf, ld, alpha, PERIODIC_ACC);
+#ifdef USE_VAMPIR
+    vampir_end(NGA_PERIODIC_ACC,__FILE__,__LINE__);
+#endif
+}

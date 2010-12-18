@@ -240,7 +240,7 @@ int reg;
 #       else
           munmap(region_list[reg].addr, region_list[reg].size);
           SET_MAPNAME(reg);
-          (void*)unlink(map_fname);
+          (void)unlink(map_fname);
 #       endif
         region_list[reg].addr = (char*)0;
     }
@@ -346,7 +346,7 @@ char *armci_get_core_from_map_file(int exists, long size)
        h_shm_map = open(map_fname, O_RDWR, S_IRWXU);
        if(h_shm_map <0) return NULL;
     }else{
-       (void*)unlink(map_fname); /* sanity cleanup */
+       (void)unlink(map_fname); /* sanity cleanup */
        h_shm_map = open(map_fname, O_CREAT|O_RDWR, S_IRWXU);
        if(h_shm_map <0) return NULL;
        if(ftruncate(h_shm_map,size) < 0) return NULL;
@@ -364,7 +364,7 @@ char *armci_get_core_from_map_file(int exists, long size)
        h_shm_map = shm_open(map_fname, O_RDWR, S_IRWXU);
        if(h_shm_map == -1) return NULL;
     }else{
-       (void*)shm_unlink(map_fname); /* sanity cleanup */
+       (void)shm_unlink(map_fname); /* sanity cleanup */
        h_shm_map = shm_open(map_fname, O_CREAT|O_RDWR, S_IRWXU);
        if(h_shm_map<0) perror("open");
        if(h_shm_map == -1) return NULL;
@@ -386,7 +386,7 @@ char *armci_get_core_from_map_file(int exists, long size)
        h_shm_map = shm_open(map_fname, O_RDWR, S_IRWXU);
        if(h_shm_map == -1) return NULL;
     }else{
-       (void*)shm_unlink(map_fname); /* sanity cleanup */
+       (void)shm_unlink(map_fname); /* sanity cleanup */
        h_shm_map = shm_open(map_fname, O_CREAT|O_RDWR, S_IRWXU);
        if(h_shm_map) perror("shm_open");
        if(h_shm_map == -1) return NULL;

@@ -64,7 +64,6 @@ Integer ilod, ihid, jlod, jhid, corr, nelem;
 Integer me= pnga_nodeid(), ld, i,j;
 Integer lo[2], hi[2];
 Integer ldT;
-AccessIndex index;
 char transp;
 DoublePrecision *dbl_ptrA=NULL, *dbl_ptrB=NULL;
 Integer ndim, dims[2];
@@ -106,11 +105,9 @@ Integer ndim, dims[2];
    jhis = hi[1];
 
    if(patch_intersect(ailo, aihi, ajlo, ajhi, &ilos, &ihis, &jlos, &jhis)){
-      ga_access_(g_a, &ilos, &ihis, &jlos, &jhis, &index, &ld);
+      pnga_access_ptr(g_a, lo, hi, &dbl_ptrA, &ld);
       
       nelem = (ihis-ilos+1)*(jhis-jlos+1);
-      index --;     /* fortran to C conversion */
-      dbl_ptrA = DBL_MB + index;
       
       if ( transp == 'n' ) {
 	  corr  = *bilo - *ailo;
@@ -131,6 +128,7 @@ Integer ndim, dims[2];
 		  *(dbl_ptrB + i*ldT + j) = *(dbl_ptrA + j*ld + i);
 
 	  /* Now we can reset index to point to the transposed stuff */
+      pnga_release(g_a, lo, hi);
 	  dbl_ptrA = dbl_ptrB;
 	  ld = ldT;
 
@@ -182,13 +180,14 @@ DoublePrecision ga_ddot_patch_dp(g_a, t_a, ailo, aihi, ajlo, ajhi,
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 Integer iloA, ihiA, jloA, jhiA, ldA;
 Integer iloB, ihiB, jloB, jhiB, ldB;
-Integer lo[2], hi[2];
-AccessIndex indexA, indexB;
+Integer alo[2], ahi[2];
+Integer blo[2], bhi[2];
 Integer g_A = *g_a;
 Integer me= pnga_nodeid(), i, j, temp_created=0;
 Integer corr, nelem;
 char    transp, transp_a, transp_b;
 DoublePrecision  sum = 0.;
+DoublePrecision *dbl_ptrA;
 DoublePrecision *dbl_ptrB;
 Integer ndim, dims[2];
 
@@ -224,15 +223,15 @@ Integer ndim, dims[2];
 
 
    /* find out coordinates of patches of g_A and g_B that I own */
-   pnga_distribution(&g_A, &me, lo, hi);
-   iloA = lo[0];
-   jloA = lo[1];
-   ihiA = hi[0];
-   jhiA = hi[1];
+   pnga_distribution(&g_A, &me, alo, ahi);
+   iloA = alo[0];
+   jloA = alo[1];
+   ihiA = ahi[0];
+   jhiA = ahi[1];
 
    if (patch_intersect(ailo, aihi, ajlo, ajhi, &iloA, &ihiA, &jloA, &jhiA)){
-       ga_access_(&g_A, &iloA, &ihiA, &jloA, &jhiA, &indexA, &ldA);
-       indexA --;
+
+       pnga_access_ptr(&g_A, alo, ahi, &dbl_ptrA, &ldA);
        nelem = (ihiA-iloA+1)*(jhiA-jloA+1);
 
        corr  = *bilo - *ailo;
@@ -241,28 +240,30 @@ Integer ndim, dims[2];
        corr  = *bjlo - *ajlo;
        jloB  = jloA + corr;
        jhiB  = jhiA + corr;
+       blo[0] = iloB; blo[1] = jloB;
+       bhi[1] = ihiB; bhi[1] = jhiB;
 
       if(own_patch(g_b, iloB, ihiB, jloB, jhiB)){
          /* all the data is local */
-         ga_access_(g_b, &iloB, &ihiB, &jloB, &jhiB, &indexB, &ldB);
-         indexB--;
-	 dbl_ptrB = DBL_MB+indexB;
+         pnga_access_ptr(g_b, blo, bhi, &dbl_ptrB, &ldB);
       }else{
          /* data is remote -- get it to temp storage*/
          temp_created =1;
 	 dbl_ptrB = (DoublePrecision*)ga_malloc(nelem, MT_F_DBL, "ddot_dp_b");
 
          ldB   = ihiB-iloB+1; 
-         ga_get_(g_b, &iloB, &ihiB, &jloB, &jhiB, dbl_ptrB, &ldB);
+         pnga_get(g_b, blo, bhi, dbl_ptrB, &ldB);
       }
 
       sum = 0.;
       for(j=0; j< jhiA-jloA+1; j++)
           for(i=0; i< ihiA-iloA+1; i++)
-             sum += *(DBL_MB+indexA + j*ldA + i) * 
+             sum += *(dbl_ptrA + j*ldA + i) * 
                     *(dbl_ptrB + j*ldB + i);
+      pnga_release(&g_A, alo, ahi);
 
       if(temp_created) ga_free(dbl_ptrB);
+      else pnga_release(g_b, blo, bhi);
    }
    return sum;
 }

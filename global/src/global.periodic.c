@@ -62,7 +62,7 @@ typedef struct {
 } Range;
 
 
-int ngai_peri_get_range_(Integer ndim, Integer *dims, Integer *lo_orig, Integer *hi_orig,
+static int ngai_peri_get_range_(Integer ndim, Integer *dims, Integer *lo_orig, Integer *hi_orig,
                          Integer range[][RANGE_BOUND], Integer range_num[],
                          Integer offset[][RANGE_BOUND/2], Integer op_code)
 /*
@@ -189,7 +189,10 @@ int ngai_peri_get_range_(Integer ndim, Integer *dims, Integer *lo_orig, Integer 
     return 1;
 }
 
-void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_periodic = pnga_periodic
+#endif
+void pnga_periodic(Integer *g_a, Integer *lo, Integer *hi, void *buf,
                     Integer *ld, void *alpha, Integer op_code)
 {
     int i, j, counter[MAXDIM], done;
@@ -275,38 +278,3 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
     } while(!done);
 }
 
-void FATR nga_periodic_get_(Integer *g_a, Integer *lo, Integer *hi,
-                            void *buf, Integer *ld)
-{
-#ifdef USE_VAMPIR
-    vampir_begin(NGA_PERIODIC_GET,__FILE__,__LINE__);
-#endif
-    ngai_periodic_(g_a, lo, hi, buf, ld, NULL, PERIODIC_GET);
-#ifdef USE_VAMPIR
-    vampir_end(NGA_PERIODIC_GET,__FILE__,__LINE__);
-#endif
-}
-
-void FATR nga_periodic_put_(Integer *g_a, Integer *lo, Integer *hi,
-                            void *buf, Integer *ld)
-{
-#ifdef USE_VAMPIR
-    vampir_begin(NGA_PERIODIC_PUT,__FILE__,__LINE__);
-#endif
-    ngai_periodic_(g_a, lo, hi, buf, ld, NULL, PERIODIC_PUT);
-#ifdef USE_VAMPIR
-    vampir_end(NGA_PERIODIC_PUT,__FILE__,__LINE__);
-#endif
-}
-
-void FATR nga_periodic_acc_(Integer *g_a, Integer *lo, Integer *hi,
-                            void *buf, Integer *ld, void *alpha)
-{
-#ifdef USE_VAMPIR
-    vampir_begin(NGA_PERIODIC_ACC,__FILE__,__LINE__);
-#endif
-    ngai_periodic_(g_a, lo, hi, buf, ld, alpha, PERIODIC_ACC);
-#ifdef USE_VAMPIR
-    vampir_end(NGA_PERIODIC_ACC,__FILE__,__LINE__);
-#endif
-}

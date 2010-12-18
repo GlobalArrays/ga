@@ -3234,6 +3234,10 @@ M4__v_0 = @echo "  M4    " $@;
 SED_V = $(SED__v_$(V))
 SED__v_ = $(SED__v_$(AM_DEFAULT_VERBOSITY))
 SED__v_0 = @echo "  SED   " $@;
+# perl
+PERL_V = $(PERL__v_$(V))
+PERL__v_ = $(PERL__v_$(AM_DEFAULT_VERBOSITY))
+PERL__v_0 = @echo "  PERL  " $@;
 # python
 PYTHON_V = $(PYTHON__v_$(V))
 PYTHON__v_ = $(PYTHON__v_$(AM_DEFAULT_VERBOSITY))
@@ -6566,17 +6570,10 @@ global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
 	       -e "/typedef/d" \
 		   $(top_srcdir)/global/src/papi.h > global/src/wapidefs.h
 
-global/src/c.names.h: $(top_srcdir)/global/src/papi.h
+global/src/c.names.h: $(top_srcdir)/global/src/papi.h $(top_srcdir)/build-aux/f77funcgen.pl
 	@-rm -f global/src/c.names.h
-	$(SED_V) \
-	$(SED) -e "s/PAPI/C_NAMES/g" \
-		   -e "s/^.*pn\(ga_\)\(.*\)(.*$$/#define \1\2_ F77_FUNC_(\1\2,\U\1\2\E)\n#define \1c\2_ F77_FUNC_(\1c\2,\U\1c\2\E)\n#define \1d\2_ F77_FUNC_(\1d\2,\U\1d\2\E)\n#define \1i\2_ F77_FUNC_(\1i\2,\U\1i\2\E)\n#define \1s\2_ F77_FUNC_(\1s\2,\U\1s\2\E)\n#define \1z\2_ F77_FUNC_(\1z\2,\U\1z\2\E)\n#define n\1\2_ F77_FUNC_(n\1\2,N\U\1\2\E)\n#define n\1c\2_ F77_FUNC_(n\1c\2,N\U\1c\2\E)\n#define n\1d\2_ F77_FUNC_(n\1d\2,N\U\1d\2\E)\n#define n\1i\2_ F77_FUNC_(n\1i\2,N\U\1i\2\E)\n#define n\1s\2_ F77_FUNC_(n\1s\2,N\U\1s\2\E)\n#define n\1z\2_ F77_FUNC_(n\1z\2,N\U\1z\2\E)/" \
-		   -e "/^ /d" \
-		   -e "/^\/\*/d" \
-		   -e "/^ \*/d" \
-	       -e "/typedef/d" \
-	       -e "/include/d" \
-		   $(top_srcdir)/global/src/papi.h > global/src/c.names.h
+	$(PERL_V) \
+	$(PERL) $(top_srcdir)/build-aux/f77funcgen.pl $(top_srcdir)/global/src/papi.h > global/src/c.names.h
 
 @HAVE_PYTHON_TRUE@global/src/wapi.c: $(top_srcdir)/global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
 @HAVE_PYTHON_TRUE@	@-rm -f global/src/wapi.c

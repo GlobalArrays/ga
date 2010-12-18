@@ -14,10 +14,10 @@
 #include "papi.h"
 #include "wapi.h"
 
-void FATR 
-gai_add(Integer *lo, Integer *hi, void *a, void *b, DoublePrecision alpha,
-	Integer type, Integer nelem, Integer ndim) {
-
+static void gai_add(
+        Integer *lo, Integer *hi, void *a, void *b, DoublePrecision alpha,
+        Integer type, Integer nelem, Integer ndim)
+{
   Integer i, j, m=0;
   Integer nrow, ncol, indexA=0, indexB=0;
   DoublePrecision *A = (DoublePrecision *)a, *B = (DoublePrecision*)b;
@@ -40,8 +40,10 @@ gai_add(Integer *lo, Integer *hi, void *a, void *b, DoublePrecision alpha,
   }
 }
 
-void FATR 
-ga_symmetrize_(Integer *g_a) {
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_symmetrize = pnga_symmetrize
+#endif
+void pnga_symmetrize(Integer *g_a) {
   
   DoublePrecision alpha = 0.5;
   Integer i, me = pnga_nodeid();

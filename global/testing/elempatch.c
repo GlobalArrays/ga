@@ -1761,7 +1761,7 @@ void FATR nga_vfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
         }
         
         /* release access to the data */
-        nga_release_update_(g_a, loA, hiA);
+        pnga_release_update(g_a, loA, hiA);
     }
     GA_POP_NAME;
     if(local_sync_end)GA_Sync();
@@ -1904,7 +1904,7 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
 
   pnga_inquire(g_a,  &type, &ndim, dims);
 
-  num_blocks = ga_total_blocks_(g_a);
+  num_blocks = pnga_total_blocks(g_a);
 
   if (num_blocks < 0) {
     /* get limits of VISIBLE patch */ 
@@ -1921,14 +1921,14 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
       ngai_do_pnfill_patch(type, ndim, loA, hiA, ld, data_ptr);
 
       /* release access to the data */
-      nga_release_update_(g_a, loA, hiA);
+      pnga_release_update(g_a, loA, hiA);
     }
   } else {
     Integer offset, j, jtmp, chk;
     Integer loS[MAXDIM];
     Integer nproc = pnga_nnodes();
     /* using simple block-cyclic data distribution */
-    if (!ga_uses_proc_grid_(g_a)){
+    if (!pnga_uses_proc_grid(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of patch */
         pnga_distribution(g_a, &i, loA, hiA);
@@ -1990,7 +1990,7 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
           ngai_do_pnfill_patch(type, ndim, loA, hiA, ld, data_ptr);
 
           /* release access to the data */
-          nga_release_update_block_(g_a, &i);
+          pnga_release_update_block(g_a, &i);
         }
       }
     } else {
@@ -2069,7 +2069,7 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
           ngai_do_pnfill_patch(type, ndim, loA, hiA, ld, data_ptr);
 
           /* release access to the data */
-          nga_release_update_block_grid_(g_a, index);
+          pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];

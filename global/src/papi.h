@@ -119,6 +119,7 @@ extern logical pnga_uses_proc_grid(Integer *g_a);
 extern logical pnga_valid_handle(Integer *g_a);
 extern Integer pnga_verify_handle(Integer *g_a);
 extern void pnga_check_handle(Integer *g_a, char *string);
+extern logical pnga_locate_nnodes(Integer *g_a, Integer *lo, Integer *hi, Integer *np);
 
 /* Routines from onesided.c */
 extern void pnga_acc(Integer *g_a, Integer *lo, Integer *hi, void *buf,
@@ -222,6 +223,7 @@ extern void pnga_step_bound_info(Integer *g_xx, Integer *g_vv, Integer *g_xxll, 
 extern void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b);
 
 /* Routines from global.util.c */
+extern void pnga_print_stats();
 extern void pnga_error(char *string, Integer icode);
 extern Integer pnga_cluster_nodeid();
 extern Integer pnga_cluster_nprocs(Integer *node);
@@ -235,8 +237,32 @@ extern void pnga_print_patch(Integer *g_a, Integer *lo, Integer *hi, Integer *pr
 extern void pnga_print_distribution(int fstyle, Integer g_a);
 
 /* Routines from ghosts.c */
-extern void pnga_set_ghost_corner_flag(Integer *g_a, logical *flag);
+extern void pnga_access_ghost_ptr(Integer* g_a, Integer dims[], void* ptr, Integer ld[]);
+extern void pnga_access_ghost_element(Integer* g_a, AccessIndex* index, Integer subscript[], Integer ld[]);
+extern void pnga_access_ghost_element_ptr(Integer* g_a, void *ptr, Integer subscript[], Integer ld[]);
+extern void pnga_access_ghosts(Integer* g_a, Integer dims[], AccessIndex* index, Integer ld[]);
+extern void pnga_release_ghost_element(Integer* g_a, Integer subscript[]);
+extern void pnga_release_update_ghost_element(Integer* g_a, Integer subscript[]);
+extern void pnga_release_ghosts(Integer* g_a);
+extern void pnga_release_update_ghosts(Integer* g_a);
+extern void pnga_get_ghost_block(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld);
+extern void pnga_update1_ghosts(Integer *g_a);
+extern logical pnga_update2_ghosts(Integer *g_a);
+extern logical pnga_update3_ghosts(Integer *g_a);
+extern logical pnga_set_update4_info(Integer *g_a);
+extern logical pnga_update4_ghosts(Integer *g_a);
+extern logical pnga_update44_ghosts(Integer *g_a);
+extern logical pnga_update55_ghosts(Integer *g_a);
+extern logical pnga_update_ghost_dir(Integer *g_a, Integer *pdim, Integer *pdir, logical *pflag);
+extern logical pnga_update5_ghosts(Integer *g_a);
+extern logical pnga_set_update5_info(Integer *g_a);
+extern void pnga_update_ghosts(Integer *g_a);
+extern logical pnga_update6_ghosts(Integer *g_a);
+extern logical pnga_update7_ghosts(Integer *g_a);
+extern void pnga_ghost_barrier();
+extern void pnga_nbget_ghost_dir(Integer *g_a, Integer *mask, Integer *nbhandle);
 extern logical pnga_set_ghost_info(Integer *g_a);
+extern void pnga_set_ghost_corner_flag(Integer *g_a, logical *flag);
 
 /* Routines from global.nalg.c */
 extern void pnga_zero(Integer *g_a);
@@ -288,5 +314,13 @@ extern void pnga_shift_diagonal(Integer * g_a, void *c);
 extern void pnga_zero_diagonal(Integer * g_a);
 extern void pnga_scale_rows(Integer *g_a, Integer *g_v);
 extern void pnga_scale_cols(Integer *g_a, Integer *g_v);
+
+/* Routines from ga_symmetr.c */
+
+extern void pnga_symmetrize(Integer *g_a);
+
+/* Routines from global.periodic.c */
+
+extern void pnga_periodic(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, void *alpha, Integer op_code);
 
 #endif /* PAPI_H_ */
