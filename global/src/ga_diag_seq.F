@@ -30,9 +30,9 @@ c
 #ifdef USE_VAMPIR
       call vampir_begin_galinalg(GA_DIAG_SEQ,__FILE__,__LINE__)
 #endif
-      call ga_check_handle(g_a, 'ga_diag_seq a')
-      call ga_check_handle(g_s, 'ga_diag_seq s')
-      call ga_check_handle(g_v, 'ga_diag_seq v')
+      call pnga_check_handle(g_a, 'ga_diag_seq a')
+      call pnga_check_handle(g_s, 'ga_diag_seq s')
+      call pnga_check_handle(g_v, 'ga_diag_seq v')
       call ga_sync()
 c
 c     Only process 0 does the diag
@@ -128,8 +128,8 @@ c
 #ifdef USE_VAMPIR
       call vampir_begin_galinalg(GA_DIAG_STD_SEQ,__FILE__,__LINE__)
 #endif
-      call ga_check_handle(g_a, 'ga_diag_std a')
-      call ga_check_handle(g_v, 'ga_diag_std v')
+      call pnga_check_handle(g_a, 'ga_diag_std a')
+      call pnga_check_handle(g_v, 'ga_diag_std v')
       call ga_sync()
 c
 c     Only process 0 does the diag

@@ -47,6 +47,7 @@ Revised on February 26, 2002.
 #include "macdecls.h"
 #include "mp3.h"
 #include "../src/globalp.h"
+#include "papi.h"
 
 #define BLOCK_CYCLIC 0
 
@@ -160,7 +161,7 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi);
 void NGA_Vfill_patch(int g_a, int lo[], int hi[])
 {
     Integer a=(Integer)g_a;
-    Integer ndim = ga_ndim_(&a);
+    Integer ndim = pnga_ndim(&a);
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
 
@@ -171,7 +172,7 @@ void NGA_Vfill_patch(int g_a, int lo[], int hi[])
 void NGA_Pnfill_patch(int g_a, int lo[], int hi[])
 {
     Integer a=(Integer)g_a;
-    Integer ndim = ga_ndim_(&a);
+    Integer ndim = pnga_ndim(&a);
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
 
@@ -1633,7 +1634,7 @@ void FATR nga_vfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
     void *data_ptr;
     Integer idx, n1dim;
     Integer bvalue[MAXDIM], bunit[MAXDIM], baseld[MAXDIM];
-    Integer me= ga_nodeid_();
+    Integer me= pnga_nodeid();
     int local_sync_begin,local_sync_end;
    
 #ifdef USE_VAMPIR
@@ -1641,22 +1642,22 @@ void FATR nga_vfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
 #endif 
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    if(local_sync_begin)ga_sync_(); 
+    if(local_sync_begin)GA_Sync(); 
 
     GA_PUSH_NAME("nga_vfill_patch");
     
     pnga_inquire(g_a,  &type, &ndim, dims);
 
     /* get limits of VISIBLE patch */ 
-    nga_distribution_(g_a, &me, loA, hiA);
+    pnga_distribution(g_a, &me, loA, hiA);
     
     /*  determine subset of my local patch to access  */
     /*  Output is in loA and hiA */
-    if(ngai_patch_intersect(lo, hi, loA, hiA, ndim)){
+    if(pnga_patch_intersect(lo, hi, loA, hiA, ndim)){
 
         /* get data_ptr to corner of patch */
         /* ld are leading dimensions INCLUDING ghost cells */
-        nga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
+        pnga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
  
         /* number of n-element of the first dimension */
         n1dim = 1; for(i=1; i<ndim; i++) n1dim *= (hiA[i] - loA[i] + 1);
@@ -1763,7 +1764,7 @@ void FATR nga_vfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
         nga_release_update_(g_a, loA, hiA);
     }
     GA_POP_NAME;
-    if(local_sync_end)ga_sync_();
+    if(local_sync_end)GA_Sync();
 #ifdef USE_VAMPIR
     vampir_end(NGA_VFILL_PATCH,__FILE__,__LINE__);
 #endif 
@@ -1888,7 +1889,7 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
   Integer ndim, dims[MAXDIM], type;
   Integer loA[MAXDIM], hiA[MAXDIM], ld[MAXDIM];
   void *data_ptr;
-  Integer me= ga_nodeid_();
+  Integer me= pnga_nodeid();
   Integer num_blocks;
   int local_sync_begin,local_sync_end;
 
@@ -1897,7 +1898,7 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
 #endif 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if(local_sync_begin)ga_sync_(); 
+  if(local_sync_begin)GA_Sync(); 
 
   GA_PUSH_NAME("nga_pnfill_patch");
 
@@ -1907,15 +1908,15 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
 
   if (num_blocks < 0) {
     /* get limits of VISIBLE patch */ 
-    nga_distribution_(g_a, &me, loA, hiA);
+    pnga_distribution(g_a, &me, loA, hiA);
 
     /*  determine subset of my local patch to access  */
     /*  Output is in loA and hiA */
-    if(ngai_patch_intersect(lo, hi, loA, hiA, ndim)){
+    if(pnga_patch_intersect(lo, hi, loA, hiA, ndim)){
 
       /* get data_ptr to corner of patch */
       /* ld are leading dimensions INCLUDING ghost cells */
-      nga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
+      pnga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
 
       ngai_do_pnfill_patch(type, ndim, loA, hiA, ld, data_ptr);
 
@@ -1925,14 +1926,14 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
   } else {
     Integer offset, j, jtmp, chk;
     Integer loS[MAXDIM];
-    Integer nproc = ga_nnodes_();
+    Integer nproc = pnga_nnodes();
     /* using simple block-cyclic data distribution */
     if (!ga_uses_proc_grid_(g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of patch */
-        nga_distribution_(g_a, &i, loA, hiA);
+        pnga_distribution(g_a, &i, loA, hiA);
 
-        /* loA is changed by ngai_patch_intersect, so
+        /* loA is changed by pnga_patch_intersect, so
            save a copy */
         for (j=0; j<ndim; j++) {
           loS[j] = loA[j];
@@ -1940,11 +1941,11 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
 
         /*  determine subset of my local patch to access  */
         /*  Output is in loA and hiA */
-        if(ngai_patch_intersect(lo, hi, loA, hiA, ndim)){
+        if(pnga_patch_intersect(lo, hi, loA, hiA, ndim)){
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          nga_access_block_ptr(g_a, &i, &data_ptr, ld);
+          pnga_access_block_ptr(g_a, &i, &data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -1997,10 +1998,10 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer topology[MAXDIM];
       Integer blocks[MAXDIM], block_dims[MAXDIM];
-      ga_get_proc_index_(g_a, &me, proc_index);
-      ga_get_proc_index_(g_a, &me, index);
-      ga_get_block_info_(g_a, blocks, block_dims);
-      ga_get_proc_grid_(g_a, topology);
+      pnga_get_proc_index(g_a, &me, proc_index);
+      pnga_get_proc_index(g_a, &me, index);
+      pnga_get_block_info(g_a, blocks, block_dims);
+      pnga_get_proc_grid(g_a, topology);
       while (index[ndim-1] < blocks[ndim-1]) {
         /* find bounding coordinates of block */
         chk = 1;
@@ -2011,7 +2012,7 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
           if (hiA[i] < loA[i]) chk = 0;
         }
 
-        /* loA is changed by ngai_patch_intersect, so
+        /* loA is changed by pnga_patch_intersect, so
            save a copy */
         for (j=0; j<ndim; j++) {
           loS[j] = loA[j];
@@ -2019,11 +2020,11 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
 
         /*  determine subset of my local patch to access  */
         /*  Output is in loA and hiA */
-        if(ngai_patch_intersect(lo, hi, loA, hiA, ndim)){
+        if(pnga_patch_intersect(lo, hi, loA, hiA, ndim)){
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          nga_access_block_grid_ptr(g_a, index, &data_ptr, ld);
+          pnga_access_block_grid_ptr(g_a, index, &data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -2082,7 +2083,7 @@ void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
     }
   }
   GA_POP_NAME;
-  if(local_sync_end)ga_sync_();
+  if(local_sync_end)GA_Sync();
 #ifdef USE_VAMPIR
   vampir_end(NGA_PNFILL_PATCH,__FILE__,__LINE__);
 #endif 

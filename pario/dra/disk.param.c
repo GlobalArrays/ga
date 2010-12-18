@@ -15,7 +15,6 @@
 #endif
 
 #include "drap.h"
-#include "global.h"
 #include "papi.h"
 
 #define MAX_HD_NAME_LEN 100
@@ -33,8 +32,8 @@ int dai_file_config(char* filename)
     char param_filename[MAX_HD_NAME_LEN];
     Integer len;
     char  sum='+';
-    Integer me=ga_nodeid_();
-    Integer nproc = ga_nnodes_();
+    Integer me=pnga_nodeid();
+    Integer nproc = pnga_nnodes();
     Integer status;
     stat_t info;
 
@@ -81,13 +80,13 @@ int dai_read_param(char* filename,Integer d_a)
     FILE *fd;
     char param_filename[MAX_HD_NAME_LEN];
     Integer len, i, ndim;
-    Integer me=ga_nodeid_();
+    Integer me=pnga_nodeid();
     Integer brd_type=DRA_BRD_TYPE, orig, dra_hndl=d_a+DRA_OFFSET;
     long input;
     int rc=0;
     char dummy[HDLEN];
 
-    ga_sync_();
+    pnga_sync();
 
     if(!me){ /* only process 0 reads metafile */
 
@@ -133,12 +132,12 @@ int dai_read_param(char* filename,Integer d_a)
 
 
     orig = 0; len=sizeof(int);
-    ga_brdcst_(&brd_type, &rc, &len, &orig);
+    pnga_brdcst(&brd_type, &rc, &len, &orig);
     if(rc) return(rc);
 
     /* process 0 broadcasts data to everybody else */
     len = sizeof(disk_array_t);
-    ga_brdcst_(&brd_type, DRA + dra_hndl, &len, &orig);
+    pnga_brdcst(&brd_type, DRA + dra_hndl, &len, &orig);
 
     return(rc);
 }
@@ -152,10 +151,10 @@ void dai_write_param(char* filename, Integer d_a)
     Integer len;
     FILE *fd;
     char param_filename[MAX_HD_NAME_LEN];
-    Integer me=ga_nodeid_(), dra_hndl=d_a+DRA_OFFSET;
+    Integer me=pnga_nodeid(), dra_hndl=d_a+DRA_OFFSET;
     Integer i, ndim = DRA[dra_hndl].ndim;
 
-    ga_sync_();
+    pnga_sync();
 
     if(!me){ /* only process 0 writes param file */
 
@@ -198,7 +197,7 @@ void dai_write_param(char* filename, Integer d_a)
         if(fclose(fd))dai_error("dai_write_param: fclose failed",0);
     }
 
-    ga_sync_();
+    pnga_sync();
 }
 
 
@@ -209,9 +208,9 @@ void dai_delete_param(char* filename,Integer d_a)
 {
     char param_filename[MAX_HD_NAME_LEN];
     int len;
-    Integer me=ga_nodeid_();
+    Integer me=pnga_nodeid();
 
-    ga_sync_();
+    pnga_sync();
 
     if(!me){ /* only process 0 reads param file */
 

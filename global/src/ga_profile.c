@@ -46,7 +46,6 @@
 #if HAVE_MATH_H
 #   include <math.h>
 #endif
-#include "global.h"
 #include "globalp.h"
 #include "base.h" 
 #include "ga_profile.h" 

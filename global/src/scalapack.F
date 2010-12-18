@@ -573,8 +573,8 @@ c
 c
 c***  check GA info for input arrays
 c
-      call ga_check_handle(g_a, 'ga_lu_solve: a')
-      call ga_check_handle(g_b, 'ga_lu_solve: b')
+      call pnga_check_handle(g_a, 'ga_lu_solve: a')
+      call pnga_check_handle(g_b, 'ga_lu_solve: b')
       call ga_inquire(g_a, typeA, dimA18, dimA28)
       call ga_inquire(g_b, typeB, dimB18, dimB28)
       dima1=dima18
@@ -792,7 +792,7 @@ c**** Check Environment
       me    = ga_nodeid()
       
 c**** Check GA info for input array A
-      call ga_check_handle(g_A, 'ga_zeroUL: A')
+      call pnga_check_handle(g_A, 'ga_zeroUL: A')
       call ga_inquire(g_A, typeA, dimA1, dimA2)
 c****
       if (dimA1.ne.dimA2) then
@@ -860,7 +860,7 @@ c**** Check Environment
       me    = ga_nodeid()
       
 c**** Check GA info for input array A
-      call ga_check_handle(g_A, 'ga_symUL: A')
+      call pnga_check_handle(g_A, 'ga_symUL: A')
       call ga_inquire(g_A, typeA, dimA1, dimA2)
 c****
       if (dimA1.ne.dimA2) then
@@ -1000,7 +1000,7 @@ c**** Check Environment
       me = ga_nodeid()
 
 c**** Check GA info for input array A
-      call ga_check_handle(g_A, 'ga_llt_f: A')
+      call pnga_check_handle(g_A, 'ga_llt_f: A')
       call ga_inquire(g_A, typeA, dimA18, dimA28)
       dima1=dima18
       dima2=dima28
@@ -1184,8 +1184,8 @@ c**** Check the Environment
       me = ga_nodeid()
       
 c**** Check GA info for input array F, B
-      call ga_check_handle(g_A, 'ga_llt_s: A')
-      call ga_check_handle(g_B, 'ga_llt_s: B')
+      call pnga_check_handle(g_A, 'ga_llt_s: A')
+      call pnga_check_handle(g_B, 'ga_llt_s: B')
       call ga_inquire(g_A, typeA, dimA18, dimA28)
       call ga_inquire(g_B, typeB, dimB18, dimB28)
       dima1=dima18
@@ -1400,7 +1400,7 @@ c**** Check Environment
       me = ga_nodeid()
 
 c**** Check GA info for input array A
-      call ga_check_handle(g_A, 'ga_llt_i: A')
+      call pnga_check_handle(g_A, 'ga_llt_i: A')
       call ga_inquire(g_A, typeA, dimA18, dimA28)
       dima1=dima18
       dima2=dima28
@@ -1753,8 +1753,8 @@ c
 c     
 c***  check GA info for input arrays
 c     
-      call ga_check_handle(g_a, 'ga_pdsyev: a')
-      call ga_check_handle(g_b, 'ga_pdsyev: b')
+      call pnga_check_handle(g_a, 'ga_pdsyev: a')
+      call pnga_check_handle(g_b, 'ga_pdsyev: b')
 c     
       call ga_inquire(g_a, typeA, dimA18, dimA28)
       call ga_inquire(g_b, typeB, dimB18, dimB28)
@@ -2043,8 +2043,8 @@ c
 c     
 c***  check GA info for input arrays
 c     
-      call ga_check_handle(g_a, 'ga_pdsyevx: a')
-      call ga_check_handle(g_b, 'ga_pdsyevx: b')
+      call pnga_check_handle(g_a, 'ga_pdsyevx: a')
+      call pnga_check_handle(g_b, 'ga_pdsyevx: b')
 c     
       call ga_inquire(g_a, typeA, dimA18, dimA28)
       call ga_inquire(g_b, typeB, dimB18, dimB28)
@@ -2356,9 +2356,9 @@ c
 c     
 c***  check GA info for input arrays
 c     
-      call ga_check_handle(g_a, 'ga_pdsygv: a')
-      call ga_check_handle(g_b, 'ga_pdsygv: b')
-      call ga_check_handle(g_s, 'ga_pdsygv: s')
+      call pnga_check_handle(g_a, 'ga_pdsygv: a')
+      call pnga_check_handle(g_b, 'ga_pdsygv: b')
+      call pnga_check_handle(g_s, 'ga_pdsygv: s')
 c     
       call ga_inquire(g_a, typeA, dimA18, dimA28)
       call ga_inquire(g_b, typeB, dimB18, dimB28)
@@ -2726,8 +2726,8 @@ c
 c     
 c***  check GA info for input arrays
 c     
-      call ga_check_handle(g_a, 'ga_pdsyevd: a')
-      call ga_check_handle(g_b, 'ga_pdsyevd: b')
+      call pnga_check_handle(g_a, 'ga_pdsyevd: a')
+      call pnga_check_handle(g_b, 'ga_pdsyevd: b')
 c     
       call ga_inquire(g_a, typeA, dimA18, dimA28)
       call ga_inquire(g_b, typeB, dimB18, dimB28)
@@ -3030,8 +3030,8 @@ c
 c     
 c***  check GA info for input arrays
 c     
-      call ga_check_handle(g_a, 'ga_pdsyevr: a')
-      call ga_check_handle(g_b, 'ga_pdsyevr: b')
+      call pnga_check_handle(g_a, 'ga_pdsyevr: a')
+      call pnga_check_handle(g_b, 'ga_pdsyevr: b')
 c     
       call ga_inquire(g_a, typeA, dimA18, dimA28)
       call ga_inquire(g_b, typeB, dimB18, dimB28)

@@ -7,7 +7,6 @@
  * routines if NOFORT is defined, else uses scalapack.
  */
 
-#include "global.h"
 #include "globalp.h"
 #include "macdecls.h"
 #if HAVE_MATH_H
@@ -491,7 +490,10 @@ function, references to a[i][j] are written a[lda*i+j].  */
  * with possibly multiple rhs stored as columns of matrix B
  * the matrix A is not destroyed
  */
-void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_lu_solve_seq = pnga_lu_solve_seq
+#endif
+void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
 
   logical oactive;  /* true iff this process participates */
   Integer dimA1, dimA2, typeA;
@@ -508,8 +510,8 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
   me     = pnga_nodeid();
   
   /** check GA info for input arrays */
-  gai_check_handle(g_a, "ga_lu_solve: a");
-  gai_check_handle(g_b, "ga_lu_solve: b");
+  pnga_check_handle(g_a, "ga_lu_solve: a");
+  pnga_check_handle(g_b, "ga_lu_solve: b");
   pnga_inquire(g_a, &typeA, &ndim, dims);
   dimA1 = dims[0];
   dimA2 = dims[1];
@@ -606,13 +608,4 @@ void gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
 #endif
   
   GA_POP_NAME;
-}
-
-#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-void FATR ga_lu_solve_seq_(char *trans, Integer *g_a, Integer *g_b, int len) 
-#else
-void FATR ga_lu_solve_seq_(char *trans, int len, Integer *g_a, Integer *g_b) 
-#endif
-{
-    gai_lu_solve_seq(trans, g_a, g_b);
 }

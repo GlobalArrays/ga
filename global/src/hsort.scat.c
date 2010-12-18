@@ -13,11 +13,8 @@
   
 #include "typesf2c.h"
 #include "macommon.h"
-#include "global.h"
 #include "papi.h"
 #include "wapi.h"
-
-extern void pnga_error();
 
 #define GT(a,b) (*(a) > *(b))
 #define GE(a,b) (*(a) >= *(b))
@@ -62,7 +59,7 @@ extern void pnga_error();
 
 
 
-void ga_sort_scat_dcpl_(pn, v, i, j, base)
+static void ga_sort_scat_dcpl_(pn, v, i, j, base)
      Integer *pn;
      DoubleComplex *v;
      Integer *i;
@@ -86,7 +83,7 @@ void ga_sort_scat_dcpl_(pn, v, i, j, base)
   INDEX_SORT(base,pn,SWAP);
 }
 
-void ga_sort_scat_scpl_(pn, v, i, j, base)
+static void ga_sort_scat_scpl_(pn, v, i, j, base)
      Integer *pn;
      SingleComplex *v;
      Integer *i;
@@ -131,7 +128,7 @@ void ga_sort_permutation(pn, index, base)
      
 
 
-void ga_sort_scat_dbl_(pn, v, i, j, base)
+static void ga_sort_scat_dbl_(pn, v, i, j, base)
      Integer *pn;
      DoublePrecision *v;
      Integer *i;
@@ -156,7 +153,7 @@ void ga_sort_scat_dbl_(pn, v, i, j, base)
 }
 
 
-void ga_sort_scat_int_(pn, v, i, j, base)
+static void ga_sort_scat_int_(pn, v, i, j, base)
      Integer *pn;
      int *v;
      Integer *i;
@@ -183,7 +180,7 @@ void ga_sort_scat_int_(pn, v, i, j, base)
 
 
 
-void ga_sort_scat_long_(pn, v, i, j, base)
+static void ga_sort_scat_long_(pn, v, i, j, base)
      Integer *pn;
      long *v;
      Integer *i;
@@ -207,7 +204,7 @@ void ga_sort_scat_long_(pn, v, i, j, base)
   INDEX_SORT(base,pn,SWAP);
 }
 
-void ga_sort_scat_flt_(pn, v, i, j, base)
+static void ga_sort_scat_flt_(pn, v, i, j, base)
      Integer *pn;
      float   *v;
      Integer *i;
@@ -251,7 +248,7 @@ void ga_sort_scat(pn, v, i, j, base, type)
 }
 
 
-void ga_sort_gath_(pn, i, j, base)
+void ga_sort_gath(pn, i, j, base)
      Integer *pn;
      Integer *i;
      Integer *j;

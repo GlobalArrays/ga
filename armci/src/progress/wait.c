@@ -4,6 +4,10 @@
 #define  EXTERN
 #include "armcip.h"
 
+#ifdef ARMCI_PROFILE
+#   include "armci_profile.h"
+#endif
+
 
 int PARMCI_Wait(armci_hdl_t* usr_hdl)
 {

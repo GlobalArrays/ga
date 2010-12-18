@@ -11,14 +11,13 @@
 #if HAVE_STRINGS_H
 #   include <strings.h>
 #endif
-#include "global.h"
 #include "globalp.h"
 #include "macdecls.h"
 #include "message.h"
 #include "papi.h"
 #include "wapi.h"
 
-static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, void* val,
+static void sgai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, void* val,
                             Integer add, Integer excl)
 {
   int i=0;
@@ -285,7 +284,7 @@ static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
 #endif
 
 
-static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sbit, Integer pack, Integer mx)
+static void sgai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sbit, Integer pack, Integer mx)
 {
     int i, cnt=0;
     int         *is, *id;
@@ -386,8 +385,10 @@ static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sb
 
 /*\ sets values for specified array elements by enumerating with stride
 \*/
-void FATR ga_patch_enum_(Integer* g_a, Integer* lo, Integer* hi, 
-                         void* start, void* stride)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_patch_enum = pnga_patch_enum
+#endif
+void pnga_patch_enum(Integer* g_a, Integer* lo, Integer* hi, void* start, void* stride)
 {
 Integer dims[1],lop,hip;
 Integer ndim, type, me, off;
@@ -396,7 +397,7 @@ register Integer i;
    pnga_sync();
    me = pnga_nodeid();
 
-   gai_check_handle(g_a, "ga_patch_enum");
+   pnga_check_handle(g_a, "ga_patch_enum");
 
    ndim = pnga_ndim(g_a);
    if (ndim > 1) pnga_error("ga_patch_enum:applicable to 1-dim arrays",ndim);
@@ -482,7 +483,7 @@ register Integer i;
 
 
 
-static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit, 
+static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit, 
            Integer* lo, Integer* hi, int add, Integer *excl)
 {
    Integer *lim=NULL, *lom=NULL, nproc, me;
@@ -496,9 +497,9 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
    nproc = pnga_nnodes();
       me = pnga_nodeid();
 
-   gai_check_handle(g_a, "ga_scan_copy");
-   gai_check_handle(g_b, "ga_scan_copy 2");
-   gai_check_handle(g_sbit,"ga_scan_copy 3");
+   pnga_check_handle(g_a, "ga_scan_copy");
+   pnga_check_handle(g_b, "ga_scan_copy 2");
+   pnga_check_handle(g_sbit,"ga_scan_copy 3");
 
    pnga_sync();
 
@@ -596,7 +597,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
               If add then assign ptr_b[i] = ptr_b[i-1]+ptr_a[i]
               If add and excl then ptr_b[i] = ptr_b[i-1] + ptr_a[i-1]
               If !add then ptr_b[i] = *buf */
-           gai_combine_val(type, ptr_a, ptr_b, elems, buf, add, *excl); 
+           sgai_combine_val(type, ptr_a, ptr_b, elems, buf, add, *excl); 
 
            ptr_a = (char*)ptr_a + elems*elemsize;
            ptr_b = (char*)ptr_b + elems*elemsize;
@@ -854,25 +855,31 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 }
 
 
-void FATR ga_scan_copy_(Integer* g_a, Integer* g_b, Integer* g_sbit,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_scan_copy = pnga_scan_copy
+#endif
+void pnga_scan_copy(Integer* g_a, Integer* g_b, Integer* g_sbit,
                            Integer* lo, Integer* hi)
 {       
         Integer zero = 0;
-        gai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 0, &zero);
+        sgai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 0, &zero);
 }
 
 
-void FATR ga_scan_add_(Integer* g_a, Integer* g_b, Integer* g_sbit,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_scan_add = pnga_scan_add
+#endif
+void pnga_scan_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
                            Integer* lo, Integer* hi, Integer* excl)
 {       
-        gai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 1, excl);
+        sgai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 1, excl);
 }
 
 /**
  * pack/unpack data from g_a into g_b based on the mask array g_sbit
  * Return total number of bits set in variable icount.
  */
-static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
+static void sgai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
               Integer* lo, Integer* hi, Integer* icount, int pack)
 {
    void *ptr;
@@ -883,9 +890,9 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
    nproc = pnga_nnodes();
       me = pnga_nodeid();
 
-   gai_check_handle(g_a, "ga_pack");
-   gai_check_handle(g_b, "ga_pack 2");
-   gai_check_handle(g_sbit,"ga_pack 3");
+   pnga_check_handle(g_a, "ga_pack");
+   pnga_check_handle(g_b, "ga_pack 2");
+   pnga_check_handle(g_sbit,"ga_pack 3");
 
    pnga_sync();
 
@@ -942,13 +949,13 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
      /* stuff data selected by sbit into(pack) or from(unpack) buffer */
      if(pack){
 
-        gai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter); /* pack data to buf */
+        sgai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter); /* pack data to buf */
         pnga_put(g_b, &dst_lo, &dst_hi,  buf, &counter); /* put it into destination array */
 
      }else{
 
         pnga_get(g_b, &dst_lo, &dst_hi,  buf, &counter); /* get data to buffer*/
-        gai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter);  /* copy data to array*/
+        sgai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter);  /* copy data to array*/
 
      }
 
@@ -961,17 +968,23 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
 
 
-void FATR ga_pack_(Integer* g_a, Integer* g_b, Integer* g_sbit,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_pack = pnga_pack
+#endif
+void pnga_pack(Integer* g_a, Integer* g_b, Integer* g_sbit,
               Integer* lo, Integer* hi, Integer* icount)
 {
-     gai_pack_unpack( g_a, g_b, g_sbit, lo, hi, icount, 1);
+     sgai_pack_unpack( g_a, g_b, g_sbit, lo, hi, icount, 1);
 }
 
 
-void FATR ga_unpack_(Integer* g_a, Integer* g_b, Integer* g_sbit,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_unpack = pnga_unpack
+#endif
+void pnga_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
               Integer* lo, Integer* hi, Integer* icount)
 {
-     gai_pack_unpack( g_a, g_b, g_sbit, lo, hi, icount, 0);
+     sgai_pack_unpack( g_a, g_b, g_sbit, lo, hi, icount, 0);
 }
 
 
@@ -982,13 +995,13 @@ int workR[NWORK], workL[NWORK];
 /*\ compute offset for each of n bins for the given processor to contribute its
  *  elements, number of which for each bin is specified in x
 \*/ 
-void gai_bin_offset(int scope, int *x, int n, int *offset)
+static void sgai_bin_offset(int scope, int *x, int n, int *offset)
 {
 int root, up, left, right;
 int len, lenmes, tag=32100, i, me=armci_msg_me();
 
-    if(!x)pnga_error("gai_bin_offset: NULL pointer", n);
-    if(n>NWORK)pnga_error("gai_bin_offset: >NWORK", n);
+    if(!x)pnga_error("sgai_bin_offset: NULL pointer", n);
+    if(n>NWORK)pnga_error("sgai_bin_offset: >NWORK", n);
     len = sizeof(int)*n;
 
     armci_msg_bintree(scope, &root, &up, &left, &right);
@@ -1024,7 +1037,7 @@ int len, lenmes, tag=32100, i, me=armci_msg_me();
 }
 
 static 
-Integer gai_match_bin2proc(Integer blo, Integer bhi, Integer plo, Integer phi)
+Integer sgai_match_bin2proc(Integer blo, Integer bhi, Integer plo, Integer phi)
 {
 int rc=0;
        if(blo == plo) rc=1;
@@ -1033,7 +1046,10 @@ int rc=0;
 }
 
 
-logical FATR ga_create_bin_range_(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *g_range)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_create_bin_range = pnga_create_bin_range
+#endif
+logical pnga_create_bin_range(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *g_range)
 {
 Integer type, ndim, nbin, lobin, hibin, me=pnga_nodeid(),crap;
 Integer dims[2], nproc=pnga_nnodes(),chunk[2];
@@ -1088,7 +1104,7 @@ Integer tlo[2], thi[2];
               }else
                  bhi = myoff[1]; 
 
-              stat= gai_match_bin2proc(blo, bhi, lo, hi);
+              stat= sgai_match_bin2proc(blo, bhi, lo, hi);
 
               switch (stat) {
               case 0:  /* bin in a middle */ break;
@@ -1127,13 +1143,15 @@ Integer tlo[2], thi[2];
 }
 
 
-void FATR ga_bin_sorter_(Integer *g_bin, Integer *g_cnt, Integer *g_off)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_bin_sorter = pnga_bin_sorter
+#endif
+void pnga_bin_sorter(Integer *g_bin, Integer *g_cnt, Integer *g_off)
 {
-extern void gai_hsort(Integer *list, int n);
 Integer nbin,totbin,type,ndim,lo,hi,me=pnga_nodeid(),crap;
 Integer g_range;
 
-    if(FALSE==ga_create_bin_range_(g_bin, g_cnt, g_off, &g_range))
+    if(FALSE==pnga_create_bin_range(g_bin, g_cnt, g_off, &g_range))
         pnga_error("ga_bin_sorter: failed to create temp bin range array",0); 
 
     pnga_inquire(g_bin, &type, &ndim, &totbin);
@@ -1173,7 +1191,10 @@ Integer g_range;
 
 /*\ note that subs values must be sorted; bins numbered from 1
 \*/
-void FATR ga_bin_index_(Integer *g_bin, Integer *g_cnt, Integer *g_off, 
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_bin_index = pnga_bin_index
+#endif
+void pnga_bin_index(Integer *g_bin, Integer *g_cnt, Integer *g_off, 
                    Integer *values, Integer *subs, Integer *n, Integer *sortit)
 {
 int i, my_nbin=0;
@@ -1202,7 +1223,7 @@ Integer type, ndim, nbin;
     /* process bins in chunks to match available buffer space */
     for(i=0; i<nbin; i+=NWORK){
         int cnbin = ((i+NWORK)<nbin) ? NWORK: nbin -i;
-        gai_bin_offset(SCOPE_ALL, all_bin_contrib+i, cnbin, offset+i);
+        sgai_bin_offset(SCOPE_ALL, all_bin_contrib+i, cnbin, offset+i);
     }
 
     for(i=0; i< *n; ){
@@ -1229,7 +1250,7 @@ Integer type, ndim, nbin;
     free(offset);
     free(all_bin_contrib);
 
-    if(*sortit)ga_bin_sorter_(g_bin, g_cnt, g_off);
+    if(*sortit)pnga_bin_sorter(g_bin, g_cnt, g_off);
     else pnga_sync();
 }
 

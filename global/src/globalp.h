@@ -1,16 +1,9 @@
 #ifndef _GLOBALP_H_
 #define _GLOBALP_H_
 
-#if HAVE_CONFIG_H
-#  include "config.h"
-#endif
-
-#if HAVE_STDIO_H
-#   include <stdio.h>
-#endif
+#include <stdio.h>
 
 #include "gaconfig.h"
-#include "global.h"
 
 #ifdef __crayx1
 #undef CRAY
@@ -147,107 +140,98 @@ extern char ***_ga_argv;
 #define allign_size(n) allign__((long)(n), ALLIGN_SIZE)
 #define allign_page(n) allign__((long)(n), PAGE_SIZE)
 
-/* for brevity */
-#define EXT  extern
-#define DBL  DoublePrecision
-#define FLT  float
-#define INT  Integer
-#define LOG  Logical
-#define SCPL SingleComplex
-#define DCPL DoubleComplex
-#define REAL Real
+extern void    ga_free(void *ptr);
+extern void*   ga_malloc(Integer nelem, int type, char *name);
+extern void    gai_print_subscript(char *pre,int ndim, Integer subscript[], char* post);
+extern Integer GAsizeof(Integer type);
+extern void    ga_sort_gath(Integer *pn, Integer *i, Integer *j, Integer *base);
+extern void    ga_sort_permutation(Integer *pn, Integer *index, Integer *base);
+extern void    ga_sort_scat(Integer *pn, void *v, Integer *i, Integer *j, Integer *base, Integer type);
+extern void    gai_hsort(Integer *list, int num);
+extern void    ga_init_nbhandle(Integer *nbhandle);
+extern int     nga_test_internal(Integer *nbhandle);
+extern int     nga_wait_internal(Integer *nbhandle);
 
-EXT INT   GAsizeof(INT type);
+/* the following are in the process of moving to papi.h */
+#if 0
 
-EXT void  ga_clean_resources( void);
-EXT void  ga_free(void *ptr);
-EXT void  ga_init_nbhandle(INT *nbhandle);
-EXT void* ga_malloc(INT nelem, int type, char *name);
-EXT void  ga_matmul(char *transa, char *transb, void *alpha, void *beta, INT *g_a, INT *ailo, INT *aihi, INT *ajlo, INT *ajhi, INT *g_b, INT *bilo, INT *bihi, INT *bjlo, INT *bjhi, INT *g_c, INT *cilo, INT *cihi, INT *cjlo, INT *cjhi);
-EXT void  ga_matmul_mirrored(char *transa, char *transb, void *alpha, void *beta, INT *g_a, INT *ailo, INT *aihi, INT *ajlo, INT *ajhi, INT *g_b, INT *bilo, INT *bihi, INT *bjlo, INT *bjhi, INT *g_c, INT *cilo, INT *cihi, INT *cjlo, INT *cjhi);
-EXT void  ga_msg_brdcst(INT type, void *buffer, INT len, INT root);
-EXT void  ga_print_file(FILE *, INT *);
-EXT short ga_usesMA;
+extern void    ga_matmul(char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi);
+extern void    ga_matmul_mirrored(char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi);
 
-EXT void  gai_gop(INT type, void *x, INT n, char *op);
+extern void  ga_clean_resources( void);
+extern void  ga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root);
+extern void  ga_print_file(FILE *, Integer *);
+extern short ga_usesMA;
 
-EXT void  gac_igop(int *x, Integer n, char *op);
-EXT void  gac_lgop(long *x, Integer n, char *op);
-EXT void  gac_llgop(long long *x, Integer n, char *op);
-EXT void  gac_fgop(float *x, Integer n, char *op);
-EXT void  gac_dgop(double *x, Integer n, char *op);
-EXT void  gac_cgop(SingleComplex *x, Integer n, char *op);
-EXT void  gac_zgop(DoubleComplex *x, Integer n, char *op);
+extern void  gai_gop(Integer type, void *x, Integer n, char *op);
 
-EXT void  gai_igop(INT type, INT  *x, INT n, char *op);
-EXT void  gai_sgop(INT type, REAL *x, INT n, char *op);
-EXT void  gai_dgop(INT type, DBL  *x, INT n, char *op);
-EXT void  gai_cgop(INT type, SCPL *x, INT n, char *op);
-EXT void  gai_zgop(INT type, DCPL *x, INT n, char *op);
+extern void  gac_igop(int *x, Integer n, char *op);
+extern void  gac_lgop(long *x, Integer n, char *op);
+extern void  gac_llgop(long long *x, Integer n, char *op);
+extern void  gac_fgop(float *x, Integer n, char *op);
+extern void  gac_dgop(double *x, Integer n, char *op);
+extern void  gac_cgop(SingleComplex *x, Integer n, char *op);
+extern void  gac_zgop(DoubleComplex *x, Integer n, char *op);
 
-EXT void  gai_pgroup_gop(INT p_grp, INT type, void *x, INT n, char *op);
+extern void  gai_igop(Integer type, Integer  *x, Integer n, char *op);
+extern void  gai_sgop(Integer type, Real *x, Integer n, char *op);
+extern void  gai_dgop(Integer type, double  *x, Integer n, char *op);
+extern void  gai_cgop(Integer type, SingleComplex *x, Integer n, char *op);
+extern void  gai_zgop(Integer type, DoubleComplex *x, Integer n, char *op);
 
-EXT void  gai_pgroup_igop(INT p_grp, INT type, INT  *x, INT n, char *op);
-EXT void  gai_pgroup_sgop(INT p_grp, INT type, REAL *x, INT n, char *op);
-EXT void  gai_pgroup_dgop(INT p_grp, INT type, DBL  *x, INT n, char *op);
-EXT void  gai_pgroup_cgop(INT p_grp, INT type, SCPL *x, INT n, char *op);
-EXT void  gai_pgroup_zgop(INT p_grp, INT type, DCPL *x, INT n, char *op);
+extern void  gai_pgroup_gop(Integer p_grp, Integer type, void *x, Integer n, char *op);
 
-EXT void  gai_check_handle(INT *, char *);
-EXT void  gai_copy_patch(char *trans, INT *g_a, INT *ailo, INT *aihi, INT *ajlo, INT *ajhi, INT *g_b, INT *bilo, INT *bihi, INT *bjlo, INT *bjhi);
-EXT LOG   gai_create(INT *type, INT *dim1, INT *dim2, char *array_name, INT *chunk1, INT *chunk2, INT *g_a);
-EXT LOG   gai_create_irreg(INT *type, INT *dim1, INT *dim2, char *array_name, INT *map1, INT *nblock1, INT *map2, INT *nblock2, INT *g_a);
-EXT void  gai_dot(int Type, INT *g_a, INT *g_b, void *value);
-EXT LOG   gai_duplicate(INT *g_a, INT *g_b, char* array_name);
-EXT void  gai_inquire(INT* g_a, INT* type, INT* dim1, INT* dim2);
-EXT void  gai_lu_solve_seq(char *trans, INT *g_a, INT *g_b);
-EXT void  gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta, INT *g_a,INT *ailo,INT *aihi,INT *ajlo,INT *ajhi, INT *g_b,INT *bilo,INT *bihi,INT *bjlo,INT *bjhi, INT *g_c,INT *cilo,INT *cihi,INT *cjlo,INT *cjhi);
-EXT INT   gai_memory_avail(INT datatype);
-EXT void  gai_print_distribution(int fstyle, INT g_a);
-EXT void  gai_print_subscript(char *pre,int ndim, INT subscript[], char* post);
-EXT void  gai_set_array_name(INT g_a, char *array_name);
+extern void  gai_pgroup_igop(Integer p_grp, Integer type, Integer  *x, Integer n, char *op);
+extern void  gai_pgroup_sgop(Integer p_grp, Integer type, Real *x, Integer n, char *op);
+extern void  gai_pgroup_dgop(Integer p_grp, Integer type, double  *x, Integer n, char *op);
+extern void  gai_pgroup_cgop(Integer p_grp, Integer type, SingleComplex *x, Integer n, char *op);
+extern void  gai_pgroup_zgop(Integer p_grp, Integer type, DoubleComplex *x, Integer n, char *op);
 
-EXT void  nga_acc_common(INT *g_a, INT *lo, INT *hi, void *buf, INT *ld, void *alpha, INT *nbhandle);
-EXT void  nga_access_block_grid_ptr(INT* g_a, INT *index, void* ptr, INT *ld);
-EXT void  nga_access_block_ptr(INT* g_a, INT *idx, void* ptr, INT *ld);
-EXT void  nga_access_block_segment_ptr(INT* g_a, INT *proc, void* ptr, INT *len);
-EXT void  nga_access_ghost_ptr(INT* g_a, INT dims[], void* ptr, INT ld[]);
-EXT void  nga_access_ghost_element_ptr(INT* g_a, void *ptr, INT subscript[], INT ld[]);
-EXT void  nga_access_ptr(INT* g_a, INT lo[], INT hi[], void* ptr, INT ld[]);
-EXT void  nga_get_common(INT *g_a, INT *lo, INT *hi, void *buf, INT *ld, INT *nbhandle);
-EXT void  nga_put_common(INT *g_a, INT *lo, INT *hi, void *buf, INT *ld, INT *nbhandle);
-EXT int   nga_test_internal(INT *nbhandle);
-EXT int   nga_wait_internal(INT *nbhandle);
+extern void  gai_check_handle(Integer *, char *);
+extern void  gai_copy_patch(char *trans, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi);
+extern logical   gai_create(Integer *type, Integer *dim1, Integer *dim2, char *array_name, Integer *chunk1, Integer *chunk2, Integer *g_a);
+extern logical   gai_create_irreg(Integer *type, Integer *dim1, Integer *dim2, char *array_name, Integer *map1, Integer *nblock1, Integer *map2, Integer *nblock2, Integer *g_a);
+extern void  gai_dot(int Type, Integer *g_a, Integer *g_b, void *value);
+extern logical   gai_duplicate(Integer *g_a, Integer *g_b, char* array_name);
+extern void  gai_inquire(Integer* g_a, Integer* type, Integer* dim1, Integer* dim2);
+extern void  gai_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b);
+extern void  gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta, Integer *g_a,Integer *ailo,Integer *aihi,Integer *ajlo,Integer *ajhi, Integer *g_b,Integer *bilo,Integer *bihi,Integer *bjlo,Integer *bjhi, Integer *g_c,Integer *cilo,Integer *cihi,Integer *cjlo,Integer *cjhi);
+extern Integer   gai_memory_avail(Integer datatype);
+extern void  gai_print_distribution(int fstyle, Integer g_a);
+extern void  gai_set_array_name(Integer g_a, char *array_name);
 
-EXT LOG   ngai_comp_patch(INT andim, INT *alo, INT *ahi, INT bndim, INT *blo, INT *bhi);
-EXT void  ngai_copy_patch(char *trans, INT *g_a, INT *alo, INT *ahi, INT *g_b, INT *blo, INT *bhi);
-EXT void  ngai_dest_indices(INT ndims, INT *los, INT *blos, INT *dimss, INT ndimd, INT *lod, INT *blod, INT *dimsd);
-EXT void  ngai_dot_patch(INT *g_a, char *t_a, INT *alo, INT *ahi, INT *g_b, char *t_b, INT *blo, INT *bhi, void *retval);
-EXT void  ngai_inquire(INT *g_a, INT *type, INT *ndim, INT *dims);
-EXT void  ngai_matmul_patch(char *transa, char *transb, void *alpha, void *beta, INT *g_a, INT alo[], INT ahi[], INT *g_b, INT blo[], INT bhi[], INT *g_c, INT clo[], INT chi[]);
-EXT LOG   ngai_patch_intersect(INT *lo, INT *hi, INT *lop, INT *hip, INT ndim);
-EXT void  ngai_periodic_(INT *g_a, INT *lo, INT *hi, void *buf, INT *ld, void *alpha, INT op_code);
-EXT LOG   ngai_test_shape(INT *alo, INT *ahi, INT *blo, INT *bhi, INT andim, INT bndim);
+extern void  nga_acc_common(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, void *alpha, Integer *nbhandle);
+extern void  nga_access_block_grid_ptr(Integer* g_a, Integer *index, void* ptr, Integer *ld);
+extern void  nga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer *ld);
+extern void  nga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Integer *len);
+extern void  nga_access_ghost_ptr(Integer* g_a, Integer dims[], void* ptr, Integer ld[]);
+extern void  nga_access_ghost_element_ptr(Integer* g_a, void *ptr, Integer subscript[], Integer ld[]);
+extern void  nga_access_ptr(Integer* g_a, Integer lo[], Integer hi[], void* ptr, Integer ld[]);
+extern void  nga_get_common(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer *nbhandle);
+extern void  nga_put_common(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer *nbhandle);
 
-EXT void  xb_dgemm (char *transa, char *transb, int *M, int *N, int *K, double *alpha,const double *a,int *p_lda,const double *b, int *p_ldb, double *beta, double *c, int *p_ldc);
-EXT void  xb_sgemm (char *transa, char *transb, int *M, int *N, int *K, FLT *alpha, const FLT *a, int *p_lda,const FLT *b, int *p_ldb, FLT *beta, FLT *c, int *p_ldc);
-EXT void  xb_zgemm (char * transa, char *transb, int *M, int *N, int *K, const void *alpha,const void *a,int *p_lda,const void *b, int *p_ldb, const void *beta, void *c, int *p_ldc);
+extern logical   ngai_comp_patch(Integer andim, Integer *alo, Integer *ahi, Integer bndim, Integer *blo, Integer *bhi);
+extern void  ngai_copy_patch(char *trans, Integer *g_a, Integer *alo, Integer *ahi, Integer *g_b, Integer *blo, Integer *bhi);
+extern void  ngai_dest_indices(Integer ndims, Integer *los, Integer *blos, Integer *dimss, Integer ndimd, Integer *lod, Integer *blod, Integer *dimsd);
+extern void  ngai_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo, Integer *bhi, void *retval);
+extern void  ngai_inquire(Integer *g_a, Integer *type, Integer *ndim, Integer *dims);
+extern void  ngai_matmul_patch(char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer alo[], Integer ahi[], Integer *g_b, Integer blo[], Integer bhi[], Integer *g_c, Integer clo[], Integer chi[]);
+extern logical   ngai_patch_intersect(Integer *lo, Integer *hi, Integer *lop, Integer *hip, Integer ndim);
+extern void  ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, void *alpha, Integer op_code);
+extern logical   ngai_test_shape(Integer *alo, Integer *ahi, Integer *blo, Integer *bhi, Integer andim, Integer bndim);
 
-EXT DBL   gai_ddot_patch(INT *g_a, char *t_a, INT *ailo, INT *aihi, INT *ajlo, INT *ajhi, INT *g_b, char *t_b, INT *bilo, INT *bihi, INT *bjlo, INT *bjhi);
-EXT INT   gai_idot_patch(INT *g_a, char *t_a, INT *ailo, INT *aihi, INT *ajlo, INT *ajhi, INT *g_b, char *t_b, INT *bilo, INT *bihi, INT *bjlo, INT *bjhi);
-EXT REAL  gai_sdot_patch(INT *g_a, char *t_a, INT *ailo, INT *aihi, INT *ajlo, INT *ajhi, INT *g_b, char *t_b, INT *bilo, INT *bihi, INT *bjlo, INT *bjhi);
+extern void  xb_dgemm (char *transa, char *transb, int *M, int *N, int *K, double *alpha,const double *a,int *p_lda,const double *b, int *p_ldb, double *beta, double *c, int *p_ldc);
+extern void  xb_sgemm (char *transa, char *transb, int *M, int *N, int *K, float *alpha, const float *a, int *p_lda,const float *b, int *p_ldb, float *beta, float *c, int *p_ldc);
+extern void  xb_zgemm (char * transa, char *transb, int *M, int *N, int *K, const void *alpha,const void *a,int *p_lda,const void *b, int *p_ldb, const void *beta, void *c, int *p_ldc);
 
-EXT DBL   ngai_ddot_patch(INT *g_a, char *t_a, INT *alo, INT *ahi, INT *g_b, char *t_b, INT *blo, INT *bhi);
-EXT INT   ngai_idot_patch(INT *g_a, char *t_a, INT *alo, INT *ahi, INT *g_b, char *t_b, INT *blo, INT *bhi);
-EXT REAL  ngai_sdot_patch(INT *g_a, char *t_a, INT *alo, INT *ahi, INT *g_b, char *t_b, INT *blo, INT *bhi);
+extern double   gai_ddot_patch(Integer *g_a, char *t_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, char *t_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi);
+extern Integer   gai_idot_patch(Integer *g_a, char *t_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, char *t_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi);
+extern Real  gai_sdot_patch(Integer *g_a, char *t_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, char *t_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi);
 
-#undef EXT
-#undef DBL
-#undef FLT
-#undef INT
-#undef LOG
-#undef SCPL
-#undef DCPL
-#undef REAL
+extern double   ngai_ddot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo, Integer *bhi);
+extern Integer   ngai_idot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo, Integer *bhi);
+extern Real  ngai_sdot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo, Integer *bhi);
+
+#endif
 
 #endif /* _GLOBALP_H_ */

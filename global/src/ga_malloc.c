@@ -73,7 +73,10 @@ void ga_free(void *ptr)
       (*ga_ext_free)((char *)ptr - handle);
 }
 
-Integer gai_memory_avail(Integer datatype)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_memory_avail_type = pnga_memory_avail_type
+#endif
+Integer pnga_memory_avail_type(Integer datatype)
 {
     if(ga_usesMA)  return MA_inquire_avail(datatype);
     else return GA_MAXMEM_AVAIL;

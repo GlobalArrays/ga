@@ -418,8 +418,9 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/m4/ax_sys_weak_alias.m4 \
 	$(top_srcdir)/m4/ga_ar.m4 $(top_srcdir)/m4/ga_arg_parse.m4 \
 	$(top_srcdir)/m4/ga_armci_network.m4 \
-	$(top_srcdir)/m4/ga_blas.m4 $(top_srcdir)/m4/ga_c_opt.m4 \
-	$(top_srcdir)/m4/ga_check_func.m4 \
+	$(top_srcdir)/m4/ga_blas.m4 \
+	$(top_srcdir)/m4/ga_c_match_types.m4 \
+	$(top_srcdir)/m4/ga_c_opt.m4 $(top_srcdir)/m4/ga_check_func.m4 \
 	$(top_srcdir)/m4/ga_check_header.m4 \
 	$(top_srcdir)/m4/ga_check_libplot.m4 \
 	$(top_srcdir)/m4/ga_cxx.m4 \
@@ -579,14 +580,14 @@ am__libga_la_SOURCES_DIST = compat/random.c gaf2c/gaf2c.c \
 	tcgmsg/tcgmsg-mpi/sizeof.c tcgmsg/tcgmsg-mpi/sndrcv.h \
 	tcgmsg/tcgmsg-mpi/srftoc.h tcgmsg/tcgmsg-mpi/tcgmsgP.h \
 	global/src/base.c global/src/base.h global/src/capi.c \
-	global/src/c.names.h global/src/collect.c \
-	global/src/datatypes.c global/src/decomp.c global/src/diag.fh \
-	global/src/DP.c global/src/elem_alg.c global/src/fapi.c \
-	global/src/ga_ckpt.h global/src/gaconfig.h \
-	global/src/ga_malloc.c global/src/ga_profile.h \
-	global/src/ga_solve_seq.c global/src/ga_symmetr.c \
-	global/src/ga_trace.c global/src/ga_vampir.fh \
-	global/src/ga_vampir.h global/src/ghosts.c global/src/global.h \
+	global/src/collect.c global/src/datatypes.c \
+	global/src/decomp.c global/src/diag.fh global/src/DP.c \
+	global/src/elem_alg.c global/src/fapi.c global/src/ga_ckpt.h \
+	global/src/gaconfig.h global/src/ga_malloc.c \
+	global/src/ga_profile.h global/src/ga_solve_seq.c \
+	global/src/ga_symmetr.c global/src/ga_trace.c \
+	global/src/ga_vampir.fh global/src/ga_vampir.h \
+	global/src/ghosts.c global/src/global.h \
 	global/src/global.nalg.c global/src/global.npatch.c \
 	global/src/global.periodic.c global/src/globalp.h \
 	global/src/global.util.c global/src/hsort.scat.c \
@@ -2563,6 +2564,7 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
+C_POINTER_AS_INTEGER = @C_POINTER_AS_INTEGER@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
@@ -2765,14 +2767,14 @@ libga_la_SOURCES = compat/random.c gaf2c/gaf2c.c gaf2c/drand.c \
 	$(am__append_9) $(am__append_12) $(am__append_17) \
 	$(am__append_18) $(am__append_19) $(am__append_24) \
 	global/src/base.c global/src/base.h global/src/capi.c \
-	global/src/c.names.h global/src/collect.c \
-	global/src/datatypes.c global/src/decomp.c global/src/diag.fh \
-	global/src/DP.c global/src/elem_alg.c global/src/fapi.c \
-	global/src/ga_ckpt.h global/src/gaconfig.h \
-	global/src/ga_malloc.c global/src/ga_profile.h \
-	global/src/ga_solve_seq.c global/src/ga_symmetr.c \
-	global/src/ga_trace.c global/src/ga_vampir.fh \
-	global/src/ga_vampir.h global/src/ghosts.c global/src/global.h \
+	global/src/collect.c global/src/datatypes.c \
+	global/src/decomp.c global/src/diag.fh global/src/DP.c \
+	global/src/elem_alg.c global/src/fapi.c global/src/ga_ckpt.h \
+	global/src/gaconfig.h global/src/ga_malloc.c \
+	global/src/ga_profile.h global/src/ga_solve_seq.c \
+	global/src/ga_symmetr.c global/src/ga_trace.c \
+	global/src/ga_vampir.fh global/src/ga_vampir.h \
+	global/src/ghosts.c global/src/global.h \
 	global/src/global.nalg.c global/src/global.npatch.c \
 	global/src/global.periodic.c global/src/globalp.h \
 	global/src/global.util.c global/src/hsort.scat.c \
@@ -2794,7 +2796,7 @@ libga_la_SOURCES = compat/random.c gaf2c/gaf2c.c gaf2c/drand.c \
 	gparrays/src/gpcapi.c gparrays/src/gpfapi.c \
 	gparrays/src/gponesided.c gparrays/src/gppapi.h
 nodist_libga_la_SOURCES = config.fh global/src/wapidefs.h \
-	$(am__append_28)
+	global/src/c.names.h $(am__append_28)
 
 ##############################################################################
 # tcgmsg/examples
@@ -2854,7 +2856,8 @@ EXTRA_DIST = README build-aux/inside.pl LinAlg/lapack+blas/README \
 # understand.  Therefore, we create a config.fh file which is Fortran-specific
 # and works with all Fortran compilers.
 #
-BUILT_SOURCES = config.fh global/src/wapi.h global/src/wapidefs.h
+BUILT_SOURCES = config.fh global/src/wapi.h global/src/wapidefs.h \
+	global/src/c.names.h
 MOSTLYCLEANFILES = 
 CLEANFILES = config.fh global/src/wapi.c global/src/wapi.h \
 	global/src/wapidefs.h $(am__append_43)
@@ -6549,6 +6552,7 @@ global/src/wapi.h: $(top_srcdir)/global/src/papi.h
 	$(SED_V) \
 	$(SED) -e "s/PAPI/WAPI/g" \
 	       -e "s/pnga_/wnga_/g" \
+	       -e "/typedef/d" \
 		   $(top_srcdir)/global/src/papi.h > global/src/wapi.h
 
 global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
@@ -6559,7 +6563,20 @@ global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
 		   -e "/^ /d" \
 		   -e "/^\/\*/d" \
 		   -e "/^ \*/d" \
+	       -e "/typedef/d" \
 		   $(top_srcdir)/global/src/papi.h > global/src/wapidefs.h
+
+global/src/c.names.h: $(top_srcdir)/global/src/papi.h
+	@-rm -f global/src/c.names.h
+	$(SED_V) \
+	$(SED) -e "s/PAPI/C_NAMES/g" \
+		   -e "s/^.*pn\(ga_\)\(.*\)(.*$$/#define \1\2_ F77_FUNC_(\1\2,\U\1\2\E)\n#define \1c\2_ F77_FUNC_(\1c\2,\U\1c\2\E)\n#define \1d\2_ F77_FUNC_(\1d\2,\U\1d\2\E)\n#define \1i\2_ F77_FUNC_(\1i\2,\U\1i\2\E)\n#define \1s\2_ F77_FUNC_(\1s\2,\U\1s\2\E)\n#define \1z\2_ F77_FUNC_(\1z\2,\U\1z\2\E)\n#define n\1\2_ F77_FUNC_(n\1\2,N\U\1\2\E)\n#define n\1c\2_ F77_FUNC_(n\1c\2,N\U\1c\2\E)\n#define n\1d\2_ F77_FUNC_(n\1d\2,N\U\1d\2\E)\n#define n\1i\2_ F77_FUNC_(n\1i\2,N\U\1i\2\E)\n#define n\1s\2_ F77_FUNC_(n\1s\2,N\U\1s\2\E)\n#define n\1z\2_ F77_FUNC_(n\1z\2,N\U\1z\2\E)/" \
+		   -e "/^ /d" \
+		   -e "/^\/\*/d" \
+		   -e "/^ \*/d" \
+	       -e "/typedef/d" \
+	       -e "/include/d" \
+		   $(top_srcdir)/global/src/papi.h > global/src/c.names.h
 
 @HAVE_PYTHON_TRUE@global/src/wapi.c: $(top_srcdir)/global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
 @HAVE_PYTHON_TRUE@	@-rm -f global/src/wapi.c

@@ -28,7 +28,6 @@
 #if HAVE_MATH_H
 #   include <math.h>
 #endif
-#include "global.h"
 #include "papi.h"
 #include "typesf2c.h"
 

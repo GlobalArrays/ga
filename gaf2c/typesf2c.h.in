@@ -24,4 +24,6 @@ typedef struct {
     Real imag;
 } SingleComplex;
 
+typedef @C_POINTER_AS_INTEGER@ intp;
+
 #endif /* TYPESF2C_H_ */

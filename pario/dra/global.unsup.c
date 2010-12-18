@@ -32,7 +32,7 @@ Integer ga_idot_(Integer *g_a, Integer *g_b)
     Integer  me, sum;
     Integer  index_a, index_b;
 
-    ga_sync_();
+    pnga_sync();
 
     me = ga_nodeid_();
 
@@ -87,7 +87,7 @@ Integer ga_idot_(Integer *g_a, Integer *g_b)
 
     ga_igop((Integer)DRA_TYPE_GSM, &sum, (Integer)1, "+");
 
-    ga_sync_();
+    pnga_sync();
 
     return (sum);
 }

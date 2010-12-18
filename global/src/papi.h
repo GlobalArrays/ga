@@ -1,8 +1,12 @@
 #ifndef PAPI_H_
 #define PAPI_H_
 
+#include <stdio.h>
+
+#include "gacommon.h"
 #include "typesf2c.h"
-#include "global.h"
+
+typedef intp AccessIndex;
 
 /* Routines from base.c */
 extern logical pnga_allocate(Integer *g_a);
@@ -58,6 +62,7 @@ extern void pnga_initialize();
 extern void pnga_initialize_ltd(Integer *limit);
 extern void pnga_inquire(Integer *g_a, Integer *type, Integer *ndim,
                          Integer *dims);
+extern void pnga_inquire_type(Integer *g_a, Integer *type);
 extern Integer pnga_inquire_memory();
 extern void pnga_inquire_name(Integer *g_a, char **array_name);
 extern logical pnga_is_mirrored(Integer *g_a);
@@ -113,6 +118,7 @@ extern logical pnga_uses_ma();
 extern logical pnga_uses_proc_grid(Integer *g_a);
 extern logical pnga_valid_handle(Integer *g_a);
 extern Integer pnga_verify_handle(Integer *g_a);
+extern void pnga_check_handle(Integer *g_a, char *string);
 
 /* Routines from onesided.c */
 extern void pnga_acc(Integer *g_a, Integer *lo, Integer *hi, void *buf,
@@ -174,9 +180,7 @@ extern void pnga_strided_get(Integer *g_a, Integer *lo, Integer *hi, Integer *sk
 extern void pnga_strided_put(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
                              void *buf, Integer *ld);
 extern void pnga_sync();
-
-/* Routines from global.util.c */
-extern void pnga_error(char *string, Integer icode);
+extern DoublePrecision pnga_wtime();
 
 /* Routines from datatypes.c */
 extern Integer pnga_type_f2c(Integer type);
@@ -213,5 +217,76 @@ extern void pnga_step_bound_info_patch(Integer *g_xx, Integer *xxlo, Integer *xx
 extern void pnga_step_max_patch(Integer *g_a, Integer *alo, Integer *ahi, Integer *g_b, Integer *blo, Integer *bhi, void *result);
 extern void pnga_step_max(Integer *g_a, Integer *g_b, void *retval);
 extern void pnga_step_bound_info(Integer *g_xx, Integer *g_vv, Integer *g_xxll, Integer *g_xxuu, void *boundmin, void *wolfemin, void *boundmax);
+
+/* Routines from ga_solve_seq.c */
+extern void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b);
+
+/* Routines from global.util.c */
+extern void pnga_error(char *string, Integer icode);
+extern Integer pnga_cluster_nodeid();
+extern Integer pnga_cluster_nprocs(Integer *node);
+extern Integer pnga_cluster_procid(Integer *node, Integer *loc_proc_id);
+extern Integer pnga_cluster_nnodes();
+extern Integer pnga_cluster_proc_nodeid(Integer *proc);
+extern void pnga_print_file(FILE *file, Integer *g_a);
+extern void pnga_print(Integer *g_a);
+extern void pnga_print_patch_file(FILE *file, Integer *g_a, Integer *lo, Integer *hi, Integer *pretty);
+extern void pnga_print_patch(Integer *g_a, Integer *lo, Integer *hi, Integer *pretty);
+extern void pnga_print_distribution(int fstyle, Integer g_a);
+
+/* Routines from ghosts.c */
+extern void pnga_set_ghost_corner_flag(Integer *g_a, logical *flag);
+extern logical pnga_set_ghost_info(Integer *g_a);
+
+/* Routines from global.nalg.c */
+extern void pnga_zero(Integer *g_a);
+extern void pnga_copy(Integer *g_a, Integer *g_b);
+extern void pnga_dot(int Type, Integer *g_a, Integer *g_b, void *value);
+extern void pnga_scale(Integer *g_a, void* alpha);
+extern void pnga_add(void *alpha, Integer* g_a, void* beta, Integer* g_b, Integer* g_c);
+extern void pnga_transpose(Integer *g_a, Integer *g_b);
+
+/* Routines from global.npatch.c */
+extern void pnga_copy_patch(char *trans, Integer *g_a, Integer *alo, Integer *ahi, Integer *g_b, Integer *blo, Integer *bhi);
+extern void pnga_zero_patch(Integer *g_a, Integer *lo, Integer *hi);
+extern logical pnga_patch_intersect(Integer *lo, Integer *hi, Integer *lop, Integer *hip, Integer ndim);
+extern logical pnga_comp_patch(Integer andim, Integer *alo, Integer *ahi, Integer bndim, Integer *blo, Integer *bhi);
+extern void pnga_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo, Integer *bhi, void *retval);
+extern void pnga_fill_patch(Integer *g_a, Integer *lo, Integer *hi, void* val);
+extern void pnga_scale_patch(Integer *g_a, Integer *lo, Integer *hi, void *alpha);
+extern void pnga_add_patch(void *alpha, Integer *g_a, Integer *alo, Integer *ahi, void *beta, Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c, Integer *clo, Integer *chi);
+
+/* Routines from select.c */
+
+extern void pnga_select_elem(Integer *g_a, char* op, void* val, Integer *subscript);
+
+/* Routines from ga_malloc.c */
+
+extern Integer pnga_memory_avail_type(Integer datatype);
+
+/* Routines from sparse.c */
+
+extern void pnga_patch_enum(Integer* g_a, Integer* lo, Integer* hi, void* start, void* stride);
+extern void pnga_scan_copy(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi);
+extern void pnga_scan_add(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi, Integer* excl);
+extern void pnga_pack(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi, Integer* icount);
+extern void pnga_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi, Integer* icount);
+extern logical pnga_create_bin_range(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *g_range);
+extern void pnga_bin_sorter(Integer *g_bin, Integer *g_cnt, Integer *g_off);
+extern void pnga_bin_index(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *values, Integer *subs, Integer *n, Integer *sortit);
+
+/* Routines from matrix.c */
+
+extern void pnga_median_patch(Integer *g_a, Integer *alo, Integer *ahi, Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c, Integer *clo, Integer *chi, Integer *g_m, Integer *mlo, Integer *mhi);
+extern void pnga_median(Integer * g_a, Integer * g_b, Integer * g_c, Integer * g_m);
+extern void pnga_norm_infinity(Integer * g_a, double *nm);
+extern void pnga_norm1(Integer * g_a, double *nm);
+extern void pnga_get_diag(Integer * g_a, Integer * g_v);
+extern void pnga_add_diagonal(Integer * g_a, Integer * g_v);
+extern void pnga_set_diagonal(Integer * g_a, Integer * g_v);
+extern void pnga_shift_diagonal(Integer * g_a, void *c);
+extern void pnga_zero_diagonal(Integer * g_a);
+extern void pnga_scale_rows(Integer *g_a, Integer *g_v);
+extern void pnga_scale_cols(Integer *g_a, Integer *g_v);
 
 #endif /* PAPI_H_ */

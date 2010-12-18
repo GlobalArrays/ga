@@ -520,6 +520,7 @@ global/src/wapi.h: $(top_srcdir)/global/src/papi.h
 	$(SED_V) \
 	$(SED) -e "s/PAPI/WAPI/g" \
 	       -e "s/pnga_/wnga_/g" \
+	       -e "/typedef/d" \
 		   $(top_srcdir)/global/src/papi.h > global/src/wapi.h
 
 global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
@@ -530,7 +531,20 @@ global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
 		   -e "/^ /d" \
 		   -e "/^\/\*/d" \
 		   -e "/^ \*/d" \
+	       -e "/typedef/d" \
 		   $(top_srcdir)/global/src/papi.h > global/src/wapidefs.h
+
+global/src/c.names.h: $(top_srcdir)/global/src/papi.h
+	@-rm -f global/src/c.names.h
+	$(SED_V) \
+	$(SED) -e "s/PAPI/C_NAMES/g" \
+		   -e "s/^.*pn\(ga_\)\(.*\)(.*$$/#define \1\2_ F77_FUNC_(\1\2,\U\1\2\E)\n#define \1c\2_ F77_FUNC_(\1c\2,\U\1c\2\E)\n#define \1d\2_ F77_FUNC_(\1d\2,\U\1d\2\E)\n#define \1i\2_ F77_FUNC_(\1i\2,\U\1i\2\E)\n#define \1s\2_ F77_FUNC_(\1s\2,\U\1s\2\E)\n#define \1z\2_ F77_FUNC_(\1z\2,\U\1z\2\E)\n#define n\1\2_ F77_FUNC_(n\1\2,N\U\1\2\E)\n#define n\1c\2_ F77_FUNC_(n\1c\2,N\U\1c\2\E)\n#define n\1d\2_ F77_FUNC_(n\1d\2,N\U\1d\2\E)\n#define n\1i\2_ F77_FUNC_(n\1i\2,N\U\1i\2\E)\n#define n\1s\2_ F77_FUNC_(n\1s\2,N\U\1s\2\E)\n#define n\1z\2_ F77_FUNC_(n\1z\2,N\U\1z\2\E)/" \
+		   -e "/^ /d" \
+		   -e "/^\/\*/d" \
+		   -e "/^ \*/d" \
+	       -e "/typedef/d" \
+	       -e "/include/d" \
+		   $(top_srcdir)/global/src/papi.h > global/src/c.names.h
 
 if HAVE_PYTHON
 global/src/wapi.c: $(top_srcdir)/global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
@@ -542,6 +556,7 @@ endif
 EXTRA_DIST += build-aux/wapigen.py
 BUILT_SOURCES += global/src/wapi.h
 BUILT_SOURCES += global/src/wapidefs.h
+BUILT_SOURCES += global/src/c.names.h
 
 CLEANFILES += global/src/wapi.c
 CLEANFILES += global/src/wapi.h
@@ -550,7 +565,6 @@ CLEANFILES += global/src/wapidefs.h
 libga_la_SOURCES += global/src/base.c
 libga_la_SOURCES += global/src/base.h
 libga_la_SOURCES += global/src/capi.c
-libga_la_SOURCES += global/src/c.names.h
 libga_la_SOURCES += global/src/collect.c
 libga_la_SOURCES += global/src/datatypes.c
 libga_la_SOURCES += global/src/decomp.c
@@ -585,6 +599,7 @@ libga_la_SOURCES += global/src/select.c
 libga_la_SOURCES += global/src/sparse.c
 libga_la_SOURCES += global/src/xgemm.c
 nodist_libga_la_SOURCES += global/src/wapidefs.h
+nodist_libga_la_SOURCES += global/src/c.names.h
 if ENABLE_PROFILING
 if HAVE_SYS_WEAK_ALIAS_PRAGMA
 else

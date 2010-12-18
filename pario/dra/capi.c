@@ -150,7 +150,7 @@ int NDRA_Write_section(logical transp, int g_a, int glo[], int ghi[],
     Integer ndim;
     ttransp = (Integer)transp;
     gg_a = (Integer)g_a;
-    ndim = ga_ndim_(&gg_a);
+    ndim = pnga_ndim(&gg_a);
     dd_a = (Integer)d_a;
     rrequest = (Integer)*request;
 
@@ -172,7 +172,7 @@ int NDRA_Read_section(logical transp, int g_a, int glo[], int ghi[],
     Integer ndim;
     ttransp = (Integer)transp;
     gg_a = (Integer)g_a;
-    ndim = ga_ndim_(&gg_a);
+    ndim = pnga_ndim(&gg_a);
     dd_a = (Integer)d_a;
     rrequest = (Integer)*request;
 

@@ -8,7 +8,6 @@
 #if HAVE_STRING_H
 #   include <string.h>
 #endif
-#include "global.h"
 #include "globalp.h"
 #include "message.h"
 #include "papi.h"
@@ -29,7 +28,7 @@ typedef struct {
         SingleComplex extra2;      
 } elem_info_t;
 
-void ngai_select_elem(Integer type, char* op, void *ptr, Integer elems, elem_info_t *info,
+static void snga_select_elem(Integer type, char* op, void *ptr, Integer elems, elem_info_t *info,
                       Integer *ind)
 {
   Integer i;
@@ -138,14 +137,10 @@ void ngai_select_elem(Integer type, char* op, void *ptr, Integer elems, elem_inf
   }
 }
 
-/* note that there is no FATR - on windows and cray we call this though a wrapper below */
-void FATR nga_select_elem_(
-#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-        Integer *g_a, char* op, void* val, Integer *subscript, int oplen
-#else
-        Integer *g_a, char* op, int oplen, void* val, Integer *subscript
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_select_elem = pnga_select_elem
 #endif
-        )
+void pnga_select_elem(Integer *g_a, char* op, void* val, Integer *subscript)
 {
   Integer ndim, type, me, elems, ind=0, i;
   Integer lo[MAXDIM],hi[MAXDIM],dims[MAXDIM],ld[MAXDIM-1];
@@ -160,7 +155,7 @@ void FATR nga_select_elem_(
 
   me = pnga_nodeid();
 
-  gai_check_handle(g_a, "ga_select_elem");
+  pnga_check_handle(g_a, "ga_select_elem");
   GA_PUSH_NAME("ga_elem_op");
 
   if (strncmp(op,"min",3) == 0);
@@ -182,7 +177,7 @@ void FATR nga_select_elem_(
       participate =1;
 
       /* select local element */
-      ngai_select_elem(type, op, ptr, elems, &info, &ind);
+      snga_select_elem(type, op, ptr, elems, &info, &ind);
 
       /* release access to the data */
       pnga_release(g_a, lo, hi);
@@ -203,7 +198,7 @@ void FATR nga_select_elem_(
       participate =1;
 
       /* select local element */
-      ngai_select_elem(type, op, ptr, elems, &info, &ind);
+      snga_select_elem(type, op, ptr, elems, &info, &ind);
 
       /* release access to the data */
       pnga_release_block_segment(g_a, &me);
@@ -237,7 +232,7 @@ void FATR nga_select_elem_(
         Integer proc_index[MAXDIM], topology[MAXDIM];
         Integer l_index[MAXDIM];
         Integer min, max;
-        ga_get_proc_index_(g_a, &me, proc_index);
+        pnga_get_proc_index(g_a, &me, proc_index);
         pnga_get_block_info(g_a, blocks, block_dims);
         pnga_get_proc_grid(g_a, topology);
         /* figure out strides for locally held block of data */

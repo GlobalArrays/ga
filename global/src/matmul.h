@@ -3,7 +3,6 @@
 #define _MATMUL_H_
 
 #include "ga.h"
-#include "global.h"
 #include "globalp.h"
 #include "message.h"
 #include "base.h"
@@ -43,13 +42,6 @@ typedef struct {
   short int do_put;
 }task_list_t;
 
-extern void FATR  ga_nbget_(Integer *g_a, Integer *ilo, Integer *ihi, 
-			    Integer *jlo, Integer *jhi, void *buf, 
-			    Integer *ld, Integer *nbhdl);
-
-extern logical ngai_patch_intersect(Integer *lo, Integer *hi,
-                                    Integer *lop, Integer *hip, Integer ndim);
-    
 #define VECTORCHECK(rank,dims,dim1,dim2, ilo, ihi, jlo, jhi) \
   if(rank>2)  pnga_error("rank is greater than 2",rank); \
   else if(rank==2) {dim1=dims[0]; dim2=dims[1];} \

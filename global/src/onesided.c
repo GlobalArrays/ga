@@ -51,6 +51,7 @@
 #if HAVE_ASSERT_H
 #   include <assert.h>
 #endif
+#include "global.h"
 #include "globalp.h"
 #include "base.h"
 #include "armci.h"
@@ -84,10 +85,6 @@ char *fence_array;
 static int GA_fence_set=0;
 Integer *_ga_map;       /* used in get/put/acc */
 int *ProcListPerm;
-
-extern void ga_sort_scat(Integer*,void*,Integer*,Integer*,Integer*, Integer);
-extern void ga_sort_gath_(Integer*, Integer*, Integer*, Integer*);
-extern void ga_msg_pgroup_sync_(Integer *grp_id);
 
 extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
@@ -2708,6 +2705,10 @@ void pnga_release_update_block_grid(Integer *g_a, Integer *index)
 /**
  *  Release access to data segment in a block-cyclic Global Array
  */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_release_block_segment = pnga_release_block_segment
+#endif
+
 void pnga_release_block_segment(Integer *g_a, Integer *iproc)
 {}
 

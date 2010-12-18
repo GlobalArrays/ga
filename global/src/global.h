@@ -10,12 +10,6 @@
 #include "typesf2c.h"
 #include "c.names.h"
 
-#if SIZEOF_VOIDP==8
-typedef long AccessIndex;
-#else
-typedef int AccessIndex;
-#endif
-  
 /* for brevity */
 #define EXT  extern
 #define DCPL DoubleComplex
@@ -27,6 +21,14 @@ typedef int AccessIndex;
 #define ACCESS_IDX AccessIndex
 #define LOG  Logical
 
+/* the following are in the process of moving to papi.h */
+#if 0
+#if SIZEOF_VOIDP==8
+typedef long AccessIndex;
+#else
+typedef int AccessIndex;
+#endif
+  
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -437,6 +439,7 @@ EXT void FATR nga_zero_patch_(INT *g_a, INT *lo, INT *hi);
 
 #ifdef __cplusplus
 }
+#endif
 #endif
 
 EXT DCPL *DCPL_MB;

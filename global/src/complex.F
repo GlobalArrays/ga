@@ -36,11 +36,28 @@ c defined here following the established convention herein.
       call gai_cdot(g_a,g_b,ga_cdot)
       end
 
+      complex function nga_cdot(g_a,g_b)
+      implicit none
+      integer g_a, g_b
+      external gai_cdot
+      nga_cdot = (0.,0.)
+      call ngai_cdot(g_a,g_b,nga_cdot)
+      end
+
       double complex function ga_zdot(g_a,g_b)
       implicit none
       integer g_a, g_b
+      external gai_zdot
       ga_zdot = (0.,0.)
       call gai_zdot(g_a,g_b,ga_zdot)
+      end
+
+      double complex function nga_zdot(g_a,g_b)
+      implicit none
+      integer g_a, g_b
+      external gai_zdot
+      nga_zdot = (0.,0.)
+      call ngai_zdot(g_a,g_b,nga_zdot)
       end
 
       complex function ga_cdot_patch(
@@ -57,20 +74,6 @@ c defined here following the established convention herein.
      $            g_b, t_b, bilo, bihi, bjlo, bjhi, ga_cdot_patch)
       end
 
-      double complex function ga_zdot_patch(
-     $            g_a, t_a, ailo, aihi, ajlo, ajhi,
-     $            g_b, t_b, bilo, bihi, bjlo, bjhi)
-      implicit none
-      integer g_a, ailo, aihi, ajlo, ajhi
-      integer g_b, bilo, bihi, bjlo, bjhi
-      character*1 t_a, t_b
-      external gai_zdot_patch
-      ga_zdot_patch = (0.,0.)
-      call gai_zdot_patch(
-     $            g_a, t_a, ailo, aihi, ajlo, ajhi,
-     $            g_b, t_b, bilo, bihi, bjlo, bjhi, ga_zdot_patch)
-      end
-
       complex function nga_cdot_patch(
      $            g_a, t_a, alo, ahi,
      $            g_b, t_b, blo, bhi)
@@ -83,6 +86,20 @@ c defined here following the established convention herein.
       call ngai_cdot_patch(
      $            g_a, t_a, alo, ahi, 
      $            g_b, t_b, blo, bhi, nga_cdot_patch)
+      end
+
+      double complex function ga_zdot_patch(
+     $            g_a, t_a, ailo, aihi, ajlo, ajhi,
+     $            g_b, t_b, bilo, bihi, bjlo, bjhi)
+      implicit none
+      integer g_a, ailo, aihi, ajlo, ajhi
+      integer g_b, bilo, bihi, bjlo, bjhi
+      character*1 t_a, t_b
+      external gai_zdot_patch
+      ga_zdot_patch = (0.,0.)
+      call gai_zdot_patch(
+     $            g_a, t_a, ailo, aihi, ajlo, ajhi,
+     $            g_b, t_b, bilo, bihi, bjlo, bjhi, ga_zdot_patch)
       end
 
       double complex function nga_zdot_patch(

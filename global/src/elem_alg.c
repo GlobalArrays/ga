@@ -28,7 +28,6 @@ Modified 3/2004 By Doug Baxter to increase robustness.
 
 **************************************************************/
 
-#include "global.h"
 #include "globalp.h"
 #if HAVE_MATH_H
 #   include <math.h>
@@ -729,7 +728,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  gai_check_handle(g_a, "gai_oper_elem");
+  pnga_check_handle(g_a, "gai_oper_elem");
 
   GA_PUSH_NAME("gai_oper_elem");
 
@@ -742,7 +741,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
 
     /*  determine subset of my local patch to access  */
     /*  Output is in loA and hiA */
-    if(ngai_patch_intersect(lo, hi, loA, hiA, ndim)){
+    if(pnga_patch_intersect(lo, hi, loA, hiA, ndim)){
 
       /* get data_ptr to corner of patch */
       /* ld are leading dimensions INCLUDING ghost cells */
@@ -765,7 +764,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
         /* get limits of patch */
         pnga_distribution(g_a, &i, loA, hiA); 
 
-        /* loA is changed by ngai_patch_intersect, so
+        /* loA is changed by pnga_patch_intersect, so
            save a copy */
         for (j=0; j<ndim; j++) {
           loS[j] = loA[j];
@@ -773,7 +772,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
 
         /*  determine subset of my local patch to access  */
         /*  Output is in loA and hiA */
-        if(ngai_patch_intersect(lo, hi, loA, hiA, ndim)){
+        if(pnga_patch_intersect(lo, hi, loA, hiA, ndim)){
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
@@ -844,7 +843,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
           if (hiA[i] < loA[i]) chk = 0;
         }
 
-        /* loA is changed by ngai_patch_intersect, so
+        /* loA is changed by pnga_patch_intersect, so
            save a copy */
         for (j=0; j<ndim; j++) {
           loS[j] = loA[j];
@@ -852,7 +851,7 @@ static void gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *scalar, 
 
         /*  determine subset of my local patch to access  */
         /*  Output is in loA and hiA */
-        if(ngai_patch_intersect(lo, hi, loA, hiA, ndim)){
+        if(pnga_patch_intersect(lo, hi, loA, hiA, ndim)){
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
@@ -1759,7 +1758,7 @@ int op; /* operation to be perform between g_a and g_b */
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
-  gai_check_handle(g_a, "gai_elem2_patch_");
+  pnga_check_handle(g_a, "gai_elem2_patch_");
   GA_PUSH_NAME("ngai_elem2_patch_");
 
   pnga_inquire(g_a, &atype, &andim, adims);
@@ -1798,8 +1797,8 @@ int op; /* operation to be perform between g_a and g_b */
     pnga_distribution( g_c, &me, loC, hiC);
 
     /* test if the local portion of patches matches */
-    if(ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC) &&
-        ngai_comp_patch(andim, alo, ahi, cndim, clo, chi)) compatible = 1;
+    if(pnga_comp_patch(andim, loA, hiA, cndim, loC, hiC) &&
+        pnga_comp_patch(andim, alo, ahi, cndim, clo, chi)) compatible = 1;
     else compatible = 0;
     pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
     if(!compatible) {
@@ -1808,7 +1807,7 @@ int op; /* operation to be perform between g_a and g_b */
        *        - do C<= A
        */
       if(*g_b != *g_c) {
-        ngai_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
+        pnga_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
         andim = cndim;
         g_A = *g_c;
         pnga_distribution(&g_A, &me, loA, hiA);
@@ -1816,7 +1815,7 @@ int op; /* operation to be perform between g_a and g_b */
       else {
         if (!pnga_duplicate(g_c, &g_A, tempname))
           pnga_error("ga_dadd_patch: dup failed", 0L);
-        ngai_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
+        pnga_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
         andim = cndim;
         A_created = 1;
         pnga_distribution(&g_A, &me, loA, hiA);
@@ -1824,8 +1823,8 @@ int op; /* operation to be perform between g_a and g_b */
     }
 
     /* test if the local portion of patches matches */
-    if(ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC) &&
-        ngai_comp_patch(bndim, blo, bhi, cndim, clo, chi)) compatible = 1;
+    if(pnga_comp_patch(bndim, loB, hiB, cndim, loC, hiC) &&
+        pnga_comp_patch(bndim, blo, bhi, cndim, clo, chi)) compatible = 1;
     else compatible = 0;
     pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
     if(!compatible) {
@@ -1835,7 +1834,7 @@ int op; /* operation to be perform between g_a and g_b */
        */
       if (!pnga_duplicate(g_c, &g_B, tempname))
         pnga_error("ga_dadd_patch: dup failed", 0L);
-      ngai_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
+      pnga_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
       bndim = cndim;
       B_created = 1;
       pnga_distribution(&g_B, &me, loB, hiB);
@@ -1844,13 +1843,13 @@ int op; /* operation to be perform between g_a and g_b */
     if(andim > bndim) cndim = bndim;
     if(andim < bndim) cndim = andim;
 
-    if(!ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC))
+    if(!pnga_comp_patch(andim, loA, hiA, cndim, loC, hiC))
       pnga_error(" A patch mismatch ", g_A); 
-    if(!ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC))
+    if(!pnga_comp_patch(bndim, loB, hiB, cndim, loC, hiC))
       pnga_error(" B patch mismatch ", g_B);
 
     /*  determine subsets of my patches to access  */
-    if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
+    if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)){
       pnga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
       pnga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
       pnga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
@@ -1869,13 +1868,13 @@ int op; /* operation to be perform between g_a and g_b */
        as C*/
     if (!pnga_duplicate(g_c, &g_A, tempname))
       pnga_error("ga_dadd_patch: dup failed", 0L);
-    ngai_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
+    pnga_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
     andim = cndim;
     A_created = 1;
 
     if (!pnga_duplicate(g_c, &g_B, tempname))
       pnga_error("ga_dadd_patch: dup failed", 0L);
-    ngai_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
+    pnga_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
     bndim = cndim;
     B_created = 1;
 
@@ -1885,7 +1884,7 @@ int op; /* operation to be perform between g_a and g_b */
       pnga_distribution( g_c, &me, loC, hiC);
       if(andim > bndim) cndim = bndim;
       if(andim < bndim) cndim = andim;
-      if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
+      if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)){
         pnga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
         pnga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
         pnga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
@@ -1906,14 +1905,14 @@ int op; /* operation to be perform between g_a and g_b */
         for (idx = me; idx < num_blocks_c; idx += nproc) {
 
           pnga_distribution(g_c, &idx, loC, hiC);
-          /* make temporary copies of loC and hiC since ngai_patch_intersect
+          /* make temporary copies of loC and hiC since pnga_patch_intersect
              destroys original versions */
           for (j=0; j<cndim; j++) {
             lod[j] = loC[j];
             hid[j] = hiC[j];
           }
 
-          if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)) {
+          if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)) {
             pnga_access_block_ptr(&g_A, &idx, &A_ptr, ldA);
             pnga_access_block_ptr(&g_B, &idx, &B_ptr, ldB);
             pnga_access_block_ptr( g_c, &idx, &C_ptr, ldC);
@@ -1989,14 +1988,14 @@ int op; /* operation to be perform between g_a and g_b */
             if (hiC[i] > cdims[i]) hiC[i] = cdims[i];
             if (hiC[i] < loC[i]) chk = 0;
           }
-          /* make temporary copies of loC and hiC since ngai_patch_intersect
+          /* make temporary copies of loC and hiC since pnga_patch_intersect
              destroys original versions */
           for (j=0; j<cndim; j++) {
             lod[j] = loC[j];
             hid[j] = hiC[j];
           }
 
-          if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)) {
+          if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)) {
             pnga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
             pnga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
             pnga_access_block_grid_ptr( g_c, index, &C_ptr, ldC);
@@ -2352,7 +2351,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  gai_check_handle(g_a, "gai_elem3_patch_");
+  pnga_check_handle(g_a, "gai_elem3_patch_");
   GA_PUSH_NAME("ngai_elem3_patch_");
 
   pnga_inquire(g_a, &atype, &andim, adims);
@@ -2368,7 +2367,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
     pnga_distribution(g_a, &me, loA, hiA);
 
     /*  determine subsets of my patches to access  */
-    if (ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
+    if (pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
       pnga_access_ptr(g_a, loA, hiA, &A_ptr, ldA);
 
       /* compute "local" operation accoording to op */
@@ -2387,7 +2386,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
         /* get limits of patch */
         pnga_distribution(g_a, &i, loA, hiA);
 
-        /* loA is changed by ngai_patch_intersect, so
+        /* loA is changed by pnga_patch_intersect, so
          *            save a copy */
         for (j=0; j<andim; j++) {
           loS[j] = loA[j];
@@ -2395,7 +2394,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
 
         /*  determine subset of my local patch to access  */
         /*  Output is in loA and hiA */
-        if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
+        if(pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
@@ -2464,7 +2463,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
           hiA[i] = (index[i] + 1)*block_dims[i];
           if (hiA[i] > adims[i]) hiA[i] = adims[i];
         }
-        /* loA is changed by ngai_patch_intersect, so
+        /* loA is changed by pnga_patch_intersect, so
          *            save a copy */
         for (j=0; j<andim; j++) {
           loS[j] = loA[j];
@@ -2472,7 +2471,7 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
 
         /*  determine subset of my local patch to access  */
         /*  Output is in loA and hiA */
-        if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
+        if(pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
@@ -2628,7 +2627,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
 
 
   pnga_sync();
-  gai_check_handle(g_a, "has_negative_elem");
+  pnga_check_handle(g_a, "has_negative_elem");
   GA_PUSH_NAME("has_negative_elem");
 
   pnga_inquire(g_a, &atype, &andim, adims);
@@ -2644,7 +2643,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
     pnga_distribution(g_a, &me, loA, hiA);
     iretval = 0;
     /*  determine subsets of my patches to access  */
-    if (ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
+    if (pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
       pnga_access_ptr(g_a, loA, hiA, &A_ptr, ldA);
 
       ngai_has_negative_element(atype, andim, loA, hiA, ldA, A_ptr, &iretval);
@@ -2662,7 +2661,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
         /* get limits of patch */
         pnga_distribution(g_a, &i, loA, hiA);
 
-        /* loA is changed by ngai_patch_intersect, so
+        /* loA is changed by pnga_patch_intersect, so
          *            save a copy */
         for (j=0; j<andim; j++) {
           loS[j] = loA[j];
@@ -2670,7 +2669,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
 
         /*  determine subset of my local patch to access  */
         /*  Output is in loA and hiA */
-        if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
+        if(pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
@@ -2739,7 +2738,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
           hiA[i] = (index[i] + 1)*block_dims[i];
           if (hiA[i] > adims[i]) hiA[i] = adims[i];
         }
-        /* loA is changed by ngai_patch_intersect, so
+        /* loA is changed by pnga_patch_intersect, so
          *            save a copy */
         for (j=0; j<andim; j++) {
           loS[j] = loA[j];
@@ -2747,7 +2746,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
 
         /*  determine subset of my local patch to access  */
         /*  Output is in loA and hiA */
-        if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
+        if(pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
@@ -2879,10 +2878,10 @@ void pnga_step_bound_info_patch(
 
      /* Check for valid ga handles. */
 
-     gai_check_handle(g_xx, "pnga_step_bound_info_patch");
-     gai_check_handle(g_vv, "pnga_step_bound_info_patch");
-     gai_check_handle(g_xxll, "pnga_step_bound_info_patch");
-     gai_check_handle(g_xxuu, "pnga_step_bound_info_patch");
+     pnga_check_handle(g_xx, "pnga_step_bound_info_patch");
+     pnga_check_handle(g_vv, "pnga_step_bound_info_patch");
+     pnga_check_handle(g_xxll, "pnga_step_bound_info_patch");
+     pnga_check_handle(g_xxuu, "pnga_step_bound_info_patch");
 
      GA_PUSH_NAME("pnga_step_bound_info_patch");
 
@@ -2935,22 +2934,22 @@ void pnga_step_bound_info_patch(
      
 
      /* test if the local portion of patches matches */
-     if(ngai_comp_patch(xxndim, loXX, hiXX, vvndim, loVV, hiVV) &&
-	ngai_comp_patch(xxndim, xxlo, xxhi, vvndim, vvlo, vvhi)) {
+     if(pnga_comp_patch(xxndim, loXX, hiXX, vvndim, loVV, hiVV) &&
+	pnga_comp_patch(xxndim, xxlo, xxhi, vvndim, vvlo, vvhi)) {
        compatible = 1;
      }
      else {
        compatible = 0;
      }
-     if(ngai_comp_patch(xxndim, loXX, hiXX, xlndim, loXL, hiXL) &&
-	ngai_comp_patch(xxndim, xxlo, xxhi, xlndim, xxlllo, xxllhi)) {
+     if(pnga_comp_patch(xxndim, loXX, hiXX, xlndim, loXL, hiXL) &&
+	pnga_comp_patch(xxndim, xxlo, xxhi, xlndim, xxlllo, xxllhi)) {
        compatible2 = 1;
      }
      else {
        compatible2 = 0;
      }
-     if(ngai_comp_patch(xxndim, loXX, hiXX, xundim, loXU, hiXU) &&
-	ngai_comp_patch(xxndim, xxlo, xxhi, xundim, xxuulo, xxuuhi)) {
+     if(pnga_comp_patch(xxndim, loXX, hiXX, xundim, loXU, hiXU) &&
+	pnga_comp_patch(xxndim, xxlo, xxhi, xundim, xxuulo, xxuuhi)) {
        compatible3 = 1;
      }
      else {
@@ -2965,7 +2964,7 @@ void pnga_step_bound_info_patch(
        {
        case C_INT:
 	 /* This should point to iresult but we use lresult
-	    due to the strange implementation if nga_select_elem_.
+	    due to the strange implementation if pnga_select_elem.
 	 */
 	 sresult = &iresult;
 	 sresult2 = &iresult2;
@@ -3020,7 +3019,7 @@ void pnga_step_bound_info_patch(
        pnga_error("pnga_step_bound_info_patch:fail to duplicate array T", g_T);
 
      /*First, compute xu - xx */
-     nga_add_patch_(alpha, g_xxuu, xxuulo, xxuuhi, beta, g_xx, xxlo, xxhi,&g_S, xxlo, xxhi); 
+     pnga_add_patch(alpha, g_xxuu, xxuulo, xxuuhi, beta, g_xx, xxlo, xxhi,&g_S, xxlo, xxhi); 
 
      /*Check for negative elements in g_s, if it has any then xxuu was
        not an upper bound, exit with error message.
@@ -3029,14 +3028,14 @@ void pnga_step_bound_info_patch(
        pnga_error("pnga_step_bound_info_patch: Upper bound is not > xx.", -1);
 
      /* Then compute t = positve elements of vv */
-     ga_zero_(&g_T);
+     pnga_zero(&g_T);
      pnga_elem_maximum(g_vv,&g_T,&g_T);
 
      /* Then, compute (xu-xx)/vv */
      pnga_elem_stepb_divide_patch(&g_S, xxlo, xxhi, &g_T, vvlo, vvhi, &g_T, xxlo, xxhi); 
 
      /* Then, we will select the minimum of the array g_t*/ 
-     nga_select_elem_(&g_T, "min", sresult, &index[0], 1); 
+     pnga_select_elem(&g_T, "min", sresult, &index[0]); 
 
      switch (xxtype)
        {
@@ -3066,7 +3065,7 @@ void pnga_step_bound_info_patch(
 
      /*Now doing the same thing to get (xx-xxll)/dv */
      /*First, compute xl - xx */
-     nga_add_patch_(alpha, g_xx, xxlo, xxhi, beta, g_xxll, xxlllo, xxllhi, &g_Q, xxlo, xxhi); 
+     pnga_add_patch(alpha, g_xx, xxlo, xxhi, beta, g_xxll, xxlllo, xxllhi, &g_Q, xxlo, xxhi); 
      /*Check for negative elements in g_s, if it has any then xxll was
        not a lower bound, exit with error message.
      */
@@ -3074,14 +3073,14 @@ void pnga_step_bound_info_patch(
        pnga_error("pnga_step_bound_info_patch: Lower bound is not < xx.", -1);
 
      /* Then compute r = negative elements of vv */
-     ga_zero_(&g_R);
+     pnga_zero(&g_R);
      pnga_elem_minimum(g_vv,&g_R,&g_R);
      pnga_abs_value(&g_R);
 
      /* Then, compute (xx-xl)/vv */
      pnga_elem_stepb_divide_patch(&g_Q, xxlo, xxhi, &g_R, vvlo, vvhi, &g_R, xxlo, xxhi); 
      /* Then, we will select the minimum of the array g_t*/ 
-     nga_select_elem_(&g_R, "min", sresult2, &index[0], 1); 
+     pnga_select_elem(&g_R, "min", sresult2, &index[0]); 
      switch (xxtype)
        {
        case C_INT:
@@ -3119,14 +3118,14 @@ void pnga_step_bound_info_patch(
      /*
        Set Q to the |vv|.
      */
-     ga_copy_(g_vv,&g_Q);
+     pnga_copy(g_vv,&g_Q);
      pnga_abs_value(&g_Q);
      /* 
        Now add q and s to get a vector that is zero only
        where g_vv was zero and g_xx meets one of the
        boundary vectors.
      */
-     nga_add_patch_(alpha, &g_Q, xxlo, xxhi, alpha, &g_S, xxlo, xxhi, &g_S, xxlo, xxhi); 
+     pnga_add_patch(alpha, &g_Q, xxlo, xxhi, alpha, &g_S, xxlo, xxhi, &g_S, xxlo, xxhi); 
      /* 
        Then use that vector as a mask to set certain
        elements of T to be zero (so we have a collection
@@ -3139,7 +3138,7 @@ void pnga_step_bound_info_patch(
        Then, we will select the minimum of the array g_t, that will
        be boundmin .
      */ 
-     nga_select_elem_(&g_T, "min", sresult, &index[0], 1); 
+     pnga_select_elem(&g_T, "min", sresult, &index[0]); 
      switch (xxtype)
        {
        case C_INT:
@@ -3169,7 +3168,7 @@ void pnga_step_bound_info_patch(
        Then, we will select the maximum of the array g_t, that will
        be boundmax .
      */ 
-     nga_select_elem_(&g_T, "max", sresult, &index[0], 1); 
+     pnga_select_elem(&g_T, "max", sresult, &index[0]); 
      switch (xxtype)
        {
        case C_INT:
@@ -3247,8 +3246,8 @@ void pnga_step_max_patch(g_a,  alo, ahi, g_b,  blo, bhi, result)
 
   /* Check for valid ga handles. */
 
-  gai_check_handle(g_a, "ga_step_max_patch_");
-  gai_check_handle(g_b, "ga_step_max_patch_");
+  pnga_check_handle(g_a, "ga_step_max_patch_");
+  pnga_check_handle(g_b, "ga_step_max_patch_");
 
   GA_PUSH_NAME("ga_step_max_patch_");
 
@@ -3278,7 +3277,7 @@ void pnga_step_max_patch(g_a,  alo, ahi, g_b,  blo, bhi, result)
     pnga_error(" ga_step_max_patch_ capacities of patches do not match ", 0L);
 
   /* test if patches match */
-  if(ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi)) compatible = 1;
+  if(pnga_comp_patch(andim, alo, ahi, bndim, blo, bhi)) compatible = 1;
   else compatible = 0;
   pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
   if(!compatible) {
@@ -3358,7 +3357,7 @@ void pnga_step_max_patch(g_a,  alo, ahi, g_b,  blo, bhi, result)
       then replace it with -GA_INFINITY */ 
     ngai_elem3_patch_(g_c, alo, ahi, OP_STEPMAX);  
     /*Then, we will select the maximum of the array g_c*/ 
-    nga_select_elem_(g_c, "max", sresult, index, 1); 
+    pnga_select_elem(g_c, "max", sresult, index); 
     switch (atype)
     {
       case C_INT:

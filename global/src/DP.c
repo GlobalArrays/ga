@@ -69,8 +69,8 @@ char transp;
 DoublePrecision *dbl_ptrA=NULL, *dbl_ptrB=NULL;
 Integer ndim, dims[2];
 
-   gai_check_handle(g_a, "ga_copy_patch_dp");
-   gai_check_handle(g_b, "ga_copy_patch_dp");
+   pnga_check_handle(g_a, "ga_copy_patch_dp");
+   pnga_check_handle(g_b, "ga_copy_patch_dp");
 
    /* if(*g_a == *g_b) pnga_error("ga_copy_patch_dp: arrays have to different ", 0L); */
 
@@ -192,8 +192,8 @@ DoublePrecision  sum = 0.;
 DoublePrecision *dbl_ptrB;
 Integer ndim, dims[2];
 
-   gai_check_handle(g_a, "ga_ddot_patch_dp");
-   gai_check_handle(g_b, "ga_ddot_patch_dp");
+   pnga_check_handle(g_a, "ga_ddot_patch_dp");
+   pnga_check_handle(g_b, "ga_ddot_patch_dp");
 
    pnga_inquire(g_a, &atype, &ndim, dims);
    adim1 = dims[0];

@@ -274,21 +274,12 @@ void ga_clean_resources()
 
 
 /*\ CHECK GA HANDLE and if it's wrong TERMINATE
- *  Fortran version
-\*/
-void FATR ga_check_handle_(Integer *g_a, char *fstring, int slen)
-{
-    char  buf[FLEN];
-
-    ga_f2cstring(fstring, slen, buf, FLEN);
-    gai_check_handle(g_a, buf);
-}
-
-
-/*\ CHECK GA HANDLE and if it's wrong TERMINATE
  *  C version
 \*/
-void gai_check_handle(Integer *g_a,char * string)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_check_handle = pnga_check_handle
+#endif
+void pnga_check_handle(Integer *g_a,char * string)
 {
   ga_check_handleM(g_a,string);
 }
@@ -469,10 +460,10 @@ int bytes;
     PGRP_LIST[0].inv_map_proc_list = PGRP_LIST[0].map_proc_list + GAnproc;
     for (i=0; i<GAnproc; i++) PGRP_LIST[0].map_proc_list[i] = -1;
     for (i=0; i<GAnproc; i++) PGRP_LIST[0].inv_map_proc_list[i] = -1;
-    nnode = ga_cluster_nodeid_();
-    nproc = ga_cluster_nprocs_((Integer*)&nnode);
+    nnode = pnga_cluster_nodeid();
+    nproc = pnga_cluster_nprocs((Integer*)&nnode);
     zero = 0;
-    j = ga_cluster_procid_((Integer*)&nnode, (Integer*)&zero);
+    j = pnga_cluster_procid((Integer*)&nnode, (Integer*)&zero);
     PGRP_LIST[0].parent = -1;
     PGRP_LIST[0].actv = 1;
     PGRP_LIST[0].map_nproc = nproc;
@@ -657,7 +648,7 @@ void pnga_initialize_ltd(Integer *mem_limit)
 #endif
   GA_total_memory =GA_memory_limit  = *mem_limit; 
   if(*mem_limit >= 0) GA_memory_limited = 1; 
-  ga_initialize_();
+  pnga_initialize();
 #ifdef USE_VAMPIR
   vampir_end(GA_INITIALIZE_LTD,__FILE__,__LINE__);
 #endif
@@ -814,9 +805,9 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
        temporarily */
     Save_default_group = GA_Default_Proc_Group;
     GA_Default_Proc_Group = -1;
-    nnodes = ga_cluster_nnodes_();
-    inode = ga_cluster_nodeid_();
-    nproc = ga_cluster_nprocs_(&inode);
+    nnodes = pnga_cluster_nnodes();
+    inode = pnga_cluster_nodeid();
+    nproc = pnga_cluster_nprocs(&inode);
     grp_id = GA[handle].p_handle;
     ifirst = (Integer)((double)(inode*nelems)/((double)nnodes));
     if (inode != nnodes-1) {
@@ -2012,7 +2003,7 @@ logical pnga_allocate( Integer *g_a)
   GA[ga_handle].actv = 1;
   /* If only one node is being used and array is mirrored,
    * set proc list to world group */
-  if (ga_cluster_nnodes_() == 1 && GA[ga_handle].p_handle == 0) {
+  if (pnga_cluster_nnodes() == 1 && GA[ga_handle].p_handle == 0) {
     GA[ga_handle].p_handle = pnga_pgroup_get_world();
   }
 
@@ -2026,7 +2017,7 @@ logical pnga_allocate( Integer *g_a)
     } else {
        i = GA[ga_handle].corner_flag;
     }
-    ga_set_ghost_corner_flag_(g_a, &i);
+    pnga_set_ghost_corner_flag(g_a, &i);
  
     for( i = 0; i< ndim; i++){
        GA[ga_handle].scale[i] = (double)GA[ga_handle].nblock[i]
@@ -2075,7 +2066,7 @@ logical pnga_allocate( Integer *g_a)
   if (GA[ga_handle].block_flag == 0) {
     /* Finish setting up information for ghost cell updates */
     if (GA[ga_handle].ghosts == 1) {
-      if (!ga_set_ghost_info_(g_a))
+      if (!pnga_set_ghost_info(g_a))
         pnga_error("Could not allocate update information for ghost cells",0);
     }
     /* If array is mirrored, evaluate first and last indices */
@@ -2671,7 +2662,7 @@ logical pnga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
   /*** copy info for restricted arrays, if relevant ***/
   if (GA[GA_OFFSET + *g_a].num_rstrctd > 0) {
     GA[ga_handle].num_rstrctd = GA[GA_OFFSET + *g_a].num_rstrctd;
-    ga_set_restricted_(g_a, GA[GA_OFFSET + *g_a].rstrctd_list,
+    pnga_set_restricted(g_a, GA[GA_OFFSET + *g_a].rstrctd_list,
         &GA[GA_OFFSET + *g_a].num_rstrctd);
   }
 
@@ -3205,6 +3196,21 @@ Integer handle = GA_OFFSET + *g_a,i;
    *type       = GA[handle].type;
    *ndim       = GA[handle].ndim;
    for(i=0;i<*ndim;i++) dims[i]=(Integer)GA[handle].dims[i];
+}
+
+/**
+ *  Get type of Global Array. Note that type variable will be
+ *  using C conventions
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_inquire_type =  pnga_inquire_type
+#endif
+
+void pnga_inquire_type(Integer *g_a, Integer *type)
+{
+Integer handle = GA_OFFSET + *g_a;
+   ga_check_handleM(g_a, "nga_inquire");
+   *type       = GA[handle].type;
 }
 
 /*\ RETURN A POINTER TO LOCAL DATA FOR BLOCK-CYCLIC DISTRIBUTION AND
@@ -3952,12 +3958,12 @@ void pnga_merge_mirrored(Integer *g_a)
   if (!pnga_is_mirrored(g_a)) return;
   GA_PUSH_NAME("ga_merge_mirrored");
 
-  inode = ga_cluster_nodeid_();
-  nnodes = ga_cluster_nnodes_(); 
-  nprocs = ga_cluster_nprocs_(&inode);
+  inode = pnga_cluster_nodeid();
+  nnodes = pnga_cluster_nnodes(); 
+  nprocs = pnga_cluster_nprocs(&inode);
   zero = 0;
 
-  zproc = ga_cluster_procid_(&inode, &zero);
+  zproc = pnga_cluster_procid(&inode, &zero);
   zptr = GA[handle].ptr[zproc];
   map = GA[handle].mapc;
   blocks = GA[handle].nblock;
@@ -4005,11 +4011,11 @@ void pnga_merge_mirrored(Integer *g_a)
            origin of the data on the next processor. If not, then zero data in
            the gap. */
         nelem *= GAsizeof(type);
-        bptr = GA[handle].ptr[ga_cluster_procid_(&inode, &i)];
+        bptr = GA[handle].ptr[pnga_cluster_procid(&inode, &i)];
         bptr += nelem;
         if (i<nblocks-1) {
           j = i+1;
-          nptr = GA[handle].ptr[ga_cluster_procid_(&inode, &j)];
+          nptr = GA[handle].ptr[pnga_cluster_procid(&inode, &j)];
           if (bptr != nptr) {
             bytes = (long)nptr - (long)bptr;
             /* BJP printf("p[%d] Gap on proc %d is %d\n",GAme,i,bytes); */
@@ -4074,7 +4080,7 @@ void pnga_merge_mirrored(Integer *g_a)
     if (!pnga_create_ghosts(type, ndim, idims,
         iwidth, "temporary", ichunk, &_ga_tmp)) 
       pnga_error("Unable to create work array for merge",GAme);
-    ga_zero_(&_ga_tmp);
+    pnga_zero(&_ga_tmp);
     /* Find data on this processor and accumulate in temporary global array */
     inode = GAme - zproc;
     pnga_distribution(g_a,&inode,lo,hi);
@@ -4138,8 +4144,8 @@ void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
   if (local_sync_begin) pnga_sync();
-  gai_check_handle(g_a, "nga_merge_distr_patch");
-  gai_check_handle(g_b, "nga_merge_distr_patch");
+  pnga_check_handle(g_a, "nga_merge_distr_patch");
+  pnga_check_handle(g_b, "nga_merge_distr_patch");
 
   /* check to make sure that both patches lie within global arrays and
      that patches are the same dimensions */
@@ -4147,17 +4153,17 @@ void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
   b_handle = GA_OFFSET + *g_b;
 
   if (!pnga_is_mirrored(g_a)) {
-    if (ga_cluster_nnodes_() > 1) {
+    if (pnga_cluster_nnodes() > 1) {
       pnga_error("Handle to a non-mirrored array passed",0);
     } else {
       trans[0] = 'N';
       trans[1] = '\0';
-      ngai_copy_patch(trans, g_a, alo, ahi, g_b, blo, bhi);
+      pnga_copy_patch(trans, g_a, alo, ahi, g_b, blo, bhi);
       return;
     }
   }
 
-  if (pnga_is_mirrored(g_b) && ga_cluster_nnodes_())
+  if (pnga_is_mirrored(g_b) && pnga_cluster_nnodes())
     pnga_error("Distributed array is mirrored",0);
 
   adim = GA[a_handle].ndim;
@@ -4189,7 +4195,7 @@ void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
     if (ahi[i] - alo[i] != bhi[i] - blo[i])
       pnga_error("Patch dimensions do not match for index ",i);
   }
-  nga_zero_patch_(g_b, blo, bhi);
+  pnga_zero_patch(g_b, blo, bhi);
 
   /* Find coordinates of mirrored array patch that I own */
   i = PGRP_LIST[p_handle].map_proc_list[GAme];

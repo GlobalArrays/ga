@@ -15,7 +15,6 @@
 #   include <stdio.h>
 #endif
 #include "message.h"
-#include "global.h"
 #include "globalp.h"
 #include "armci.h"
 #include "papi.h"
@@ -48,7 +47,10 @@ int _i;\
 }
 
 
-void FATR ga_zero_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_zero = pnga_zero
+#endif
+void pnga_zero(Integer *g_a)
 {
   Integer ndim, type, me, elems, p_handle;
   Integer num_blocks;
@@ -68,7 +70,7 @@ void FATR ga_zero_(Integer *g_a)
 
   me = pnga_pgroup_nodeid(&p_handle);
 
-  gai_check_handle(g_a, "ga_zero");
+  pnga_check_handle(g_a, "ga_zero");
   GA_PUSH_NAME("ga_zero");
 
   num_blocks = pnga_total_blocks(g_a);
@@ -80,7 +82,7 @@ void FATR ga_zero_(Integer *g_a)
     if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
 
       if (pnga_has_ghosts(g_a)) {
-        nga_zero_patch_(g_a,lo,hi);
+        pnga_zero_patch(g_a,lo,hi);
 #ifdef USE_VAMPIR
         vampir_end(GA_ZERO,__FILE__,__LINE__);
 #endif
@@ -174,7 +176,7 @@ void FATR ga_zero_(Integer *g_a)
 
 /*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
 \*/
-void FATR ga_copy_old(Integer *g_a, Integer *g_b)
+static void FATR snga_copy_old(Integer *g_a, Integer *g_b)
 {
 Integer  ndim, ndimb, type, typeb, me, elems=0, elemsb=0;
 Integer dimsb[MAXDIM];
@@ -193,7 +195,7 @@ void *ptr_a, *ptr_b;
 
    if(!pnga_compare_distr(g_a,g_b))
 
-      ngai_copy_patch("n",g_a, one_arr, dims, g_b, one_arr, dimsb);
+      pnga_copy_patch("n",g_a, one_arr, dims, g_b, one_arr, dimsb);
 
    else {
 
@@ -237,7 +239,10 @@ void *ptr_a, *ptr_b;
 
 /*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
 \*/
-void FATR ga_copy_(Integer *g_a, Integer *g_b)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_copy = pnga_copy
+#endif
+void pnga_copy(Integer *g_a, Integer *g_b)
 {
 Integer  ndim, ndimb, type, typeb, me_a, me_b;
 Integer dimsb[MAXDIM],i;
@@ -404,7 +409,7 @@ int local_sync_begin,local_sync_end,use_put;
      } else {
        /* source array is distributed and destination
           array is mirrored */
-       ga_zero_(g_b);
+       pnga_zero(g_b);
        pnga_distribution(g_a, &me_a, lo, hi);
        if (lo[0] > 0) {
          pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
@@ -434,7 +439,10 @@ int local_sync_begin,local_sync_end,use_put;
 
 /*\ internal version of dot product
 \*/
-void gai_dot(int Type, Integer *g_a, Integer *g_b, void *value)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_dot = pnga_dot
+#endif
+void pnga_dot(int Type, Integer *g_a, Integer *g_b, void *value)
 {
 Integer  ndim=0, type=0, atype=0, me=0, elems=0, elemsb=0;
 register Integer i=0;
@@ -467,7 +475,7 @@ Integer bndim, bdims[MAXDIM];
    if (num_blocks_a >= 0 || num_blocks_b >= 0) {
      pnga_inquire(g_a, &type, &andim, adims);
      pnga_inquire(g_b, &type, &bndim, bdims);
-     ngai_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
+     pnga_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
          value);
      GA_POP_NAME;
      return;
@@ -479,7 +487,7 @@ Integer bndim, bdims[MAXDIM];
        pnga_inquire(g_a, &type, &andim, adims);
        pnga_inquire(g_b, &type, &bndim, bdims);
 
-       ngai_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
+       pnga_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
                       value);
        
        GA_POP_NAME;
@@ -614,7 +622,7 @@ Integer bndim, bdims[MAXDIM];
       case C_LONGLONG: atype=ARMCI_LONG_LONG; break;
       case C_DCPL: atype=ARMCI_DOUBLE; break;
       case C_SCPL: atype=ARMCI_FLOAT; break;
-      default: pnga_error("gai_dot: type not supported",type);
+      default: pnga_error("pnga_dot: type not supported",type);
     }
 
    if (pnga_is_mirrored(g_a) && pnga_is_mirrored(g_b)) {
@@ -638,92 +646,10 @@ Integer bndim, bdims[MAXDIM];
 }
 
 
-Integer FATR ga_idot_(g_a, g_b)
-        Integer *g_a, *g_b;
-{
-Integer sum;
-
-#ifdef USE_VAMPIR
-        vampir_begin(GA_IDOT,__FILE__,__LINE__);
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_scale = pnga_scale
 #endif
-
-        gai_dot(pnga_type_f2c(MT_F_INT), g_a, g_b, &sum);
-
-#ifdef USE_VAMPIR
-        vampir_end(GA_IDOT,__FILE__,__LINE__);
-#endif
-
-        return sum;
-}
-
-
-DoublePrecision FATR ga_ddot_(g_a, g_b)
-        Integer *g_a, *g_b;
-{
-DoublePrecision sum;
-
-#ifdef USE_VAMPIR
-        vampir_begin(GA_DDOT,__FILE__,__LINE__);
-#endif
-
-        gai_dot(pnga_type_f2c(MT_F_DBL), g_a, g_b, &sum);
-
-#ifdef USE_VAMPIR
-        vampir_end(GA_DDOT,__FILE__,__LINE__);
-#endif
-
-        return sum;
-}
-
-
-Real FATR ga_sdot_(g_a, g_b)
-        Integer *g_a, *g_b;
-{
-Real sum;
-
-#ifdef USE_VAMPIR
-        vampir_begin(GA_SDOT,__FILE__,__LINE__);
-#endif
-
-        gai_dot(pnga_type_f2c(MT_F_REAL), g_a, g_b, &sum);
-
-#ifdef USE_VAMPIR
-        vampir_end(GA_SDOT,__FILE__,__LINE__);
-#endif
-
-        return sum;
-}            
-
-
-void gai_zdot_(Integer *g_a, Integer *g_b, DoubleComplex *sum)
-{
-#ifdef USE_VAMPIR
-        vampir_begin(GA_ZDOT,__FILE__,__LINE__);
-#endif
-
-        gai_dot(pnga_type_f2c(MT_F_DCPL), g_a, g_b, sum);
-
-#ifdef USE_VAMPIR
-        vampir_end(GA_ZDOT,__FILE__,__LINE__);
-#endif
-}
-
-
-void gai_cdot_(Integer *g_a, Integer *g_b, SingleComplex *sum)
-{
-#ifdef USE_VAMPIR
-        vampir_begin(GA_CDOT,__FILE__,__LINE__);
-#endif
-
-        gai_dot(pnga_type_f2c(MT_F_SCPL), g_a, g_b, sum);
-
-#ifdef USE_VAMPIR
-        vampir_end(GA_CDOT,__FILE__,__LINE__);
-#endif
-}
-
-
-void FATR ga_scale_(Integer *g_a, void* alpha)
+void pnga_scale(Integer *g_a, void* alpha)
 {
   Integer ndim, type, me, elems, grp_id;
   register Integer i;
@@ -742,7 +668,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
 
   me = pnga_pgroup_nodeid(&grp_id);
 
-  gai_check_handle(g_a, "ga_scale");
+  pnga_check_handle(g_a, "ga_scale");
   GA_PUSH_NAME("ga_scale");
   num_blocks = pnga_total_blocks(g_a);
 
@@ -750,7 +676,7 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
   if (num_blocks < 0) {
     pnga_distribution(g_a, &me, lo, hi);
     if (pnga_has_ghosts(g_a)) {
-      nga_scale_patch_(g_a, lo, hi, alpha);
+      pnga_scale_patch(g_a, lo, hi, alpha);
 #ifdef USE_VAMPIR
       vampir_end(GA_SCALE,__FILE__,__LINE__);
 #endif
@@ -874,40 +800,11 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
 #endif
 }
 
-/* (old?) Fortran interface to ga_scale_ */
 
-void FATR ga_cscal_(Integer *g_a, SingleComplex *alpha)
-{
-    ga_scale_(g_a, alpha);
-}
-
-
-void FATR ga_dscal_(Integer *g_a, DoublePrecision *alpha)
-{
-    ga_scale_(g_a, alpha);
-}
-
-
-void FATR ga_iscal_(Integer *g_a, Integer *alpha)
-{
-    ga_scale_(g_a, alpha);
-}
-
-
-void FATR ga_sscal_(Integer *g_a, Real *alpha)
-{
-    ga_scale_(g_a, alpha);
-}
-
-
-void FATR ga_zscal_(Integer *g_a, DoubleComplex *alpha)
-{
-    ga_scale_(g_a, alpha);
-}
-
-
-void FATR ga_add_(void *alpha, Integer* g_a, 
-                  void* beta, Integer* g_b, Integer* g_c)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_add = pnga_add
+#endif
+void pnga_add(void *alpha, Integer* g_a, void* beta, Integer* g_b, Integer* g_c)
 {
 Integer  ndim, type, typeC, me, elems=0, elemsb=0, elemsa=0;
 register Integer i;
@@ -945,7 +842,7 @@ int local_sync_begin,local_sync_end;
        pnga_inquire(g_b, &type, &bndim, bdims);
        pnga_inquire(g_b, &type, &cndim, cdims);
 
-       nga_add_patch_(alpha, g_a, one_arr, adims, beta, g_b, one_arr, bdims,
+       pnga_add_patch(alpha, g_a, one_arr, adims, beta, g_b, one_arr, bdims,
                       g_c, one_arr, cdims);
        
        GA_POP_NAME;
@@ -1082,45 +979,9 @@ int local_sync_begin,local_sync_end;
 #endif
 }
 
-/* (old?) Fortran interface to ga_add */
-
-void FATR ga_cadd_(SingleComplex *alpha, Integer *g_a, SingleComplex *beta,
-        Integer *g_b, Integer *g_c)
-{
-    ga_add_(alpha, g_a, beta, g_b, g_c);
-}
-
-
-void FATR ga_dadd_(DoublePrecision *alpha, Integer *g_a, DoublePrecision *beta,
-        Integer *g_b, Integer *g_c)
-{
-    ga_add_(alpha, g_a, beta, g_b, g_c);
-}
-
-
-void FATR ga_iadd_(Integer *alpha, Integer *g_a, Integer *beta,
-        Integer *g_b, Integer *g_c)
-{
-    ga_add_(alpha, g_a, beta, g_b, g_c);
-}
-
-
-void FATR ga_sadd_(Real *alpha, Integer *g_a, Real *beta,
-        Integer *g_b, Integer *g_c)
-{
-    ga_add_(alpha, g_a, beta, g_b, g_c);
-}
-
-
-void FATR ga_zadd_(DoubleComplex *alpha, Integer *g_a, DoubleComplex *beta,
-        Integer *g_b, Integer *g_c)
-{
-    ga_add_(alpha, g_a, beta, g_b, g_c);
-}
-
 
 static 
-void gai_local_transpose(Integer type, char *ptra, Integer n, Integer stride, char *ptrb)
+void snga_local_transpose(Integer type, char *ptra, Integer n, Integer stride, char *ptrb)
 {
 int i;
     switch(type){
@@ -1158,7 +1019,10 @@ int i;
 }
 
 
-void FATR ga_transpose_(Integer *g_a, Integer *g_b)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_transpose = pnga_transpose
+#endif
+void pnga_transpose(Integer *g_a, Integer *g_b)
 {
 Integer me = pnga_nodeid();
 Integer nproc = pnga_nnodes(); 
@@ -1210,7 +1074,7 @@ char *ptr_tmp, *ptr_a;
         for(i = 0; i < ncol; i++){
           char *ptr = ptr_tmp + i*size;
 
-          gai_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
+          snga_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
           ptr_a += ld[0]*size;
         }
 
@@ -1245,7 +1109,7 @@ char *ptr_tmp, *ptr_a;
           for(i = 0; i < ncol; i++){
             char *ptr = ptr_tmp + i*size;
 
-            gai_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
+            snga_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
             ptr_a += ld[0]*size;
           }
           pnga_put(g_b, lob, hib, ptr_tmp ,&ncol);
@@ -1290,7 +1154,7 @@ char *ptr_tmp, *ptr_a;
               hib[0] = hi[1]; hib[1] = hi[0];
               for(i = 0; i < ncol; i++){
                 char *ptr = ptr_tmp + i*size;
-                gai_local_transpose(atype, ptr_a, nrow, block_dims[0]*size, ptr);
+                snga_local_transpose(atype, ptr_a, nrow, block_dims[0]*size, ptr);
                 ptr_a += ld[0]*size;
               }
               pnga_put(g_b, lob, hib, ptr_tmp ,&block_dims[0]);

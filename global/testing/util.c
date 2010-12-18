@@ -24,14 +24,13 @@
 #include "testutil.h"
 #include "mp3.h"
 
-/* #define MAXDIM 10 */
 #define BASE 100
 
 /***************************** macros ************************/
 #define COPY(src, dst, bytes) memcpy((dst),(src),(bytes))
 #define GA_MAX(a,b) (((a) >= (b)) ? (a) : (b))
 #define GA_MIN(a,b) (((a) <= (b)) ? (a) : (b))
-/* #define GA_ABS(a) (((a) <0) ? -(a) : (a)) */
+#define GA_ABS(a) (((a) <0) ? -(a) : (a))
 
 
 void *ext_malloc(size_t bytes, int align, char *name) {
@@ -138,7 +137,7 @@ int i,j;
 \*/
 void init_array_internal(double *a, int ndim, int dims[])
 {
-    int idx[MAXDIM];
+    int idx[GA_MAX_DIM];
     int i,dim, elems;
 
         elems = 1;
@@ -195,7 +194,7 @@ int compare_patches_internal(int me, double eps, int ndim, double *array1,
                      int dims2[])
 {
     int i,j, elems=1;    
-    int subscr1[MAXDIM], subscr2[MAXDIM];
+    int subscr1[GA_MAX_DIM], subscr2[GA_MAX_DIM];
     double diff,max;
     double *patch1, *patch2;
     Integer idx1, idx2, offset1=0, offset2=0;
@@ -272,10 +271,10 @@ Integer FATR compare_patches_(Integer *me,
                      double *array2, Integer LO2[], Integer HI2[],
                      Integer DIMS2[])
 {
-int hi1[MAXDIM], lo1[MAXDIM], dims1[MAXDIM]; 
-int hi2[MAXDIM], lo2[MAXDIM], dims2[MAXDIM]; 
+int hi1[GA_MAX_DIM], lo1[GA_MAX_DIM], dims1[GA_MAX_DIM]; 
+int hi2[GA_MAX_DIM], lo2[GA_MAX_DIM], dims2[GA_MAX_DIM]; 
 
-    assert((int)*ndim <= MAXDIM);
+    assert((int)*ndim <= GA_MAX_DIM);
 
     f2c_adj_indices(HI1, hi1, (int)*ndim);
     f2c_adj_indices(HI2, hi2, (int)*ndim);
@@ -294,7 +293,7 @@ void scale_patch_internal(double alpha, int ndim, double *patch1,
                  int lo1[], int hi1[], int dims1[])
 {
     int i,j, elems=1;    
-    int subscr1[MAXDIM];
+    int subscr1[GA_MAX_DIM];
     Integer idx1, offset1=0;
 
     for(i=0;i<ndim;i++){   /* count # of elements in patch */
@@ -324,9 +323,9 @@ void scale_patch_internal(double alpha, int ndim, double *patch1,
 void FATR scale_patch_(double *alpha, Integer *ndim, double *patch1, 
                  Integer LO1[], Integer HI1[], Integer DIMS1[])
 {
-int hi1[MAXDIM], lo1[MAXDIM], dims1[MAXDIM];
+int hi1[GA_MAX_DIM], lo1[GA_MAX_DIM], dims1[GA_MAX_DIM];
 
-    assert((int)*ndim <= MAXDIM);
+    assert((int)*ndim <= GA_MAX_DIM);
     f2c_adj_indices(HI1, hi1, (int)*ndim);
     f2c_adj_indices(LO1, lo1, (int)*ndim);
     f2c_copy_indices(DIMS1, dims1, (int)*ndim);
@@ -336,8 +335,8 @@ int hi1[MAXDIM], lo1[MAXDIM], dims1[MAXDIM];
 
 void FATR init_array_(double *a, Integer *ndim, Integer DIMS[])
 {
-int dims[MAXDIM];
-    assert((int)*ndim <= MAXDIM);
+int dims[GA_MAX_DIM];
+    assert((int)*ndim <= GA_MAX_DIM);
 
     f2c_copy_indices(DIMS, dims, (int)*ndim);
     init_array_internal(a, (int)*ndim, dims);
@@ -345,12 +344,12 @@ int dims[MAXDIM];
 
 void FATR print_range_(Integer *me, Integer LO[], Integer HI[], Integer *ndim)
 {
-int hi[MAXDIM], lo[MAXDIM];
+int hi[GA_MAX_DIM], lo[GA_MAX_DIM];
 char msg[100];
 
-    /* MAXDIM is defined for C and Fortran. Fortran routines should use <=
+    /* GA_MAX_DIM is defined for C and Fortran. Fortran routines should use <=
      * whereas C routines should use < for comparisons. */
-    assert((int)*ndim <= MAXDIM);
+    assert((int)*ndim <= GA_MAX_DIM);
     sprintf(msg,"%d: array section ",(int)*me);
     f2c_copy_indices(HI, hi, (int)*ndim);
     f2c_copy_indices(LO, lo, (int)*ndim);
@@ -359,11 +358,11 @@ char msg[100];
 
 void FATR copy_range_(Integer *me, Integer LO1[], Integer HI1[], Integer *ndim1, Integer LO2[], Integer HI2[], Integer *ndim2)
 {
-int hi1[MAXDIM], lo1[MAXDIM], hi2[MAXDIM], lo2[MAXDIM];
+int hi1[GA_MAX_DIM], lo1[GA_MAX_DIM], hi2[GA_MAX_DIM], lo2[GA_MAX_DIM];
 char msg[100];
 
-    assert((int)*ndim1 <= MAXDIM);
-    assert((int)*ndim2 <= MAXDIM);
+    assert((int)*ndim1 <= GA_MAX_DIM);
+    assert((int)*ndim2 <= GA_MAX_DIM);
     sprintf(msg,"%d: copy ",(int)*me);
     f2c_copy_indices(HI1, hi1, (int)*ndim1);
     f2c_copy_indices(LO1, lo1, (int)*ndim1);
@@ -376,11 +375,11 @@ char msg[100];
 
 void FATR add_range_(Integer *me, Integer LO1[], Integer HI1[], Integer *ndim1, Integer LO2[], Integer HI2[], Integer *ndim2)
 {
-int hi1[MAXDIM], lo1[MAXDIM], hi2[MAXDIM], lo2[MAXDIM];
+int hi1[GA_MAX_DIM], lo1[GA_MAX_DIM], hi2[GA_MAX_DIM], lo2[GA_MAX_DIM];
 char msg[100];
 
-    assert((int)*ndim1 <= MAXDIM);
-    assert((int)*ndim2 <= MAXDIM);
+    assert((int)*ndim1 <= GA_MAX_DIM);
+    assert((int)*ndim2 <= GA_MAX_DIM);
     sprintf(msg,"%d: ",(int)*me);
     f2c_copy_indices(HI1, hi1, (int)*ndim1);
     f2c_copy_indices(LO1, lo1, (int)*ndim1);
@@ -393,11 +392,11 @@ char msg[100];
 
 void FATR dot_range_(Integer *me, Integer LO1[], Integer HI1[], Integer *ndim1, Integer LO2[], Integer HI2[], Integer *ndim2)
 {
-int hi1[MAXDIM], lo1[MAXDIM], hi2[MAXDIM], lo2[MAXDIM];
+int hi1[GA_MAX_DIM], lo1[GA_MAX_DIM], hi2[GA_MAX_DIM], lo2[GA_MAX_DIM];
 char msg[100];
 
-    assert((int)*ndim1 <= MAXDIM);
-    assert((int)*ndim2 <= MAXDIM);
+    assert((int)*ndim1 <= GA_MAX_DIM);
+    assert((int)*ndim2 <= GA_MAX_DIM);
     sprintf(msg,"%d: dot ",(int)*me);
     f2c_copy_indices(HI1, hi1, (int)*ndim1);
     f2c_copy_indices(LO1, lo1, (int)*ndim1);

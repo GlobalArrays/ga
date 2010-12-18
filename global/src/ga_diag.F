@@ -66,8 +66,8 @@ c
 c
 c***  check GA info
 c
-      call ga_check_handle(g_a, 'ga_diag: a')
-      call ga_check_handle(g_v, 'ga_diag: v')
+      call pnga_check_handle(g_a, 'ga_diag: a')
+      call pnga_check_handle(g_v, 'ga_diag: v')
       call ga_inquire(g_a,  typeA, dimA1, dimA2)
       call ga_inquire(g_v,  typeV, dimV1, dimV2)
 c
@@ -366,9 +366,9 @@ c
 c
 c***  check GA info
 c
-      call ga_check_handle(g_a, 'ga_diag: a')
-      call ga_check_handle(g_s, 'ga_diag: s')
-      call ga_check_handle(g_v, 'ga_diag: v')
+      call pnga_check_handle(g_a, 'ga_diag: a')
+      call pnga_check_handle(g_s, 'ga_diag: s')
+      call pnga_check_handle(g_v, 'ga_diag: v')
       call ga_inquire(g_a, typeA, dimA1, dimA2)
       call ga_inquire(g_s, typeS, dimS1, dimS2)
       call ga_inquire(g_v, typeV, dimV1, dimV2)
@@ -672,9 +672,9 @@ c
 c
 c***  check GA handles, types and dimensions 
 c
-      call ga_check_handle(g_a, 'ga_diag: a')
-      call ga_check_handle(g_s, 'ga_diag: s')
-      call ga_check_handle(g_v, 'ga_diag: v')
+      call pnga_check_handle(g_a, 'ga_diag: a')
+      call pnga_check_handle(g_s, 'ga_diag: s')
+      call pnga_check_handle(g_v, 'ga_diag: v')
 c
 c...  unless it is the first call, check if g_s has not changed 
 c  

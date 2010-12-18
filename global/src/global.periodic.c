@@ -37,7 +37,6 @@
 #if HAVE_STDLIB_H
 #   include <stdlib.h>
 #endif
-#include "global.h"
 #include "globalp.h"
 #include "papi.h"
 #include "wapi.h"

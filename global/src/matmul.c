@@ -192,7 +192,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     Integer min_tasks = MINTASKS; /* Increase tasks if there is load imbalance.
 				     This controls the granularity of chunks */
     Integer  max_chunk, nproc=pnga_nnodes(), tmpa, tmpb;
-    Integer avail = gai_memory_avail(atype);
+    Integer avail = pnga_memory_avail_type(atype);
 
     tmpa = *Ichunk;
     tmpb = *Jchunk;
@@ -538,8 +538,8 @@ void init_block_info(Integer *g_c, Integer *proc_index, Integer *index,
     else /* Uses scalapack block-cyclic data distribution */ 
     {   
        *iblock = 0;
-       ga_get_proc_index_(g_c, &me, proc_index);
-       ga_get_proc_index_(g_c, &me, index);
+       pnga_get_proc_index(g_c, &me, proc_index);
+       pnga_get_proc_index(g_c, &me, index);
        pnga_get_block_info(g_c, blocks, block_dims);
        pnga_get_proc_grid(g_c, topology);
     }    
@@ -637,7 +637,6 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
   Integer ctype, cndim, cdims[2];
   Integer iblock, proc_index[2], index[2];
   Integer blocks[2], block_dims[2], topology[2];
-  Integer alo[2], ahi[2];
 
   GA_PUSH_NAME("ga_matmul_regular");
   if(irregular) pnga_error("irregular flag set", 0L);
@@ -680,7 +679,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     /* If loC and hiC intersects with current patch region, then they will
      * be updated accordingly. Else it returns FALSE */
     pnga_inquire(g_c, &ctype, &cndim, cdims);
-    if(!ngai_patch_intersect(clo,chi,loC,hiC,cndim)) continue;
+    if(!pnga_patch_intersect(clo,chi,loC,hiC,cndim)) continue;
 
 #if DEBUG_
     printf("%d: Processing block #%d [%d,%d] - [%d,%d]\n", GAme, iblock,
@@ -901,7 +900,9 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
   c = c_ar[0];
 
   grp_me = pnga_pgroup_nodeid(&a_grp);
-  if(!need_scaling) ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
+  clo[0] = *cilo; clo[1] = *cjlo;
+  chi[0] = *cihi; chi[1] = *cjhi;
+  if(!need_scaling) pnga_fill_patch(g_c, clo, chi, beta);
 
   compute_flag=0;     /* take care of the last chunk */
 
@@ -1333,6 +1334,7 @@ void ga_matmul(transa, transb, alpha, beta,
     Integer a_grp=pnga_get_pgroup(g_a), b_grp=pnga_get_pgroup(g_b);
     Integer c_grp=pnga_get_pgroup(g_c);
     Integer numblocks;
+    Integer clo[2], chi[2];
 
 #ifdef USE_VAMPIR
   vampir_begin(GA_MATMUL,__FILE__,__LINE__);
@@ -1529,7 +1531,9 @@ void ga_matmul(transa, transb, alpha, beta,
 	  if(*(DoublePrecision *)beta == 0) need_scaling =0;}
        else if( *(float*)beta ==0) need_scaling =0;
 
-       if(need_scaling) ga_scale_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
+       clo[0] = *cilo; clo[1] = *cjlo;
+       chi[0] = *cihi; chi[1] = *cjhi;
+       if(need_scaling) pnga_scale_patch(g_c, clo, chi, beta);
 
        /********************************************************************
 	* Parallel Matrix Multiplication Starts Here.
@@ -1639,9 +1643,9 @@ Integer clo[2], chi[2];
      pnga_error("Processors do not match for all arrays",pnga_nnodes());
    }
    if (pnga_is_mirrored(g_a)) {
-     inode = ga_cluster_nodeid_();
-     nproc = ga_cluster_nprocs_(&inode);
-     iproc = me - ga_cluster_procid_(&inode, &ZERO_I);
+     inode = pnga_cluster_nodeid();
+     nproc = pnga_cluster_nprocs(&inode);
+     iproc = me - pnga_cluster_procid(&inode, &ZERO_I);
    } else {
      nproc = pnga_nnodes();
      iproc = me;
@@ -1712,7 +1716,7 @@ Integer clo[2], chi[2];
      if ( max_chunk > Ichunk) {       
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
-       Integer avail = gai_memory_avail(atype);
+       Integer avail = pnga_memory_avail_type(atype);
        if (pnga_is_mirrored(g_a)) {
          fflush(stdout);
          if (sizeof(Integer)/sizeof(int) > 1)
@@ -1749,8 +1753,10 @@ Integer clo[2], chi[2];
    else if( *(float*)beta ==0) need_scaling =0;
 
    pnga_mask_sync(&ZERO_I, &ZERO_I);
-   if(need_scaling) ga_scale_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
-   else  ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
+   clo[0] = *cilo; clo[1] = *cjlo;
+   chi[0] = *cihi; chi[1] = *cjhi;
+   if(need_scaling) pnga_scale_patch(g_c, clo, chi, beta);
+   else  pnga_fill_patch(g_c, clo, chi, beta);
 
    for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop through columns of g_c patch */
        jhi = GA_MIN(n-1, jlo+Jchunk-1);
@@ -2065,9 +2071,9 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
      pnga_error("Processors do not match for all arrays",pnga_nnodes());
    }
    if (pnga_is_mirrored(g_a)) {
-     inode = ga_cluster_nodeid_();
-     nproc = ga_cluster_nprocs_(&inode);
-     iproc = me - ga_cluster_procid_(&inode, &ZERO_I);
+     inode = pnga_cluster_nodeid();
+     nproc = pnga_cluster_nprocs(&inode);
+     iproc = me - pnga_cluster_procid(&inode, &ZERO_I);
    } else {
      nproc = pnga_nnodes();
      iproc = me;
@@ -2137,7 +2143,7 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
      if ( max_chunk > Ichunk) {       
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
-       Integer avail = gai_memory_avail(atype);
+       Integer avail = pnga_memory_avail_type(atype);
        pnga_gop(pnga_type_f2c(MT_F_INT), &avail, (Integer)1, "min");
        if(avail<MINMEM && pnga_nodeid()==0) pnga_error("Not enough memory",avail);
        elems = (Integer)(avail*0.9);/* Donot use every last drop */
@@ -2163,8 +2169,8 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0)need_scaling =0;}
    else if( *(float*)beta ==0) need_scaling =0;
 
-   if(need_scaling) nga_scale_patch_(g_c, clo, chi, beta);
-   else      nga_fill_patch_(g_c, clo, chi, beta);
+   if(need_scaling) pnga_scale_patch(g_c, clo, chi, beta);
+   else      pnga_fill_patch(g_c, clo, chi, beta);
   
    for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop through columns of g_c patch */
        jhi = GA_MIN(n-1, jlo+Jchunk-1);

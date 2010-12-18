@@ -9,7 +9,6 @@
 /* $Id: collect.c,v 1.23.2.5 2007-08-03 19:52:28 manoj Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
-#include "global.h"
 #include "message.h"
 #include "base.h"
 #include "papi.h"

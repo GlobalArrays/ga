@@ -141,6 +141,7 @@ AS_IF([test x$ac_cv_type_long_long_int = xyes], [AC_CHECK_SIZEOF([long long])])
 AC_CHECK_SIZEOF([float])
 AC_CHECK_SIZEOF([double])
 AS_IF([test x$ac_cv_type_long_double = xyes], [AC_CHECK_SIZEOF([long double])])
+GA_C_POINTER_AS_INTEGER
 
 # Checks for C library functions.
 AC_FUNC_FORK

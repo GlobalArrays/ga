@@ -22,7 +22,6 @@ Purpose:
       global arrays.
 **************************************************************/
 
-#include "global.h"
 #include "globalp.h"
 #if HAVE_MATH_H
 #   include <math.h>
@@ -81,7 +80,7 @@ Purpose:
 
 /*\ Utility function to find median values of patch
 \*/
-void gai_median_patch_values(Integer type, Integer ndim, Integer *loA,
+static void sgai_median_patch_values(Integer type, Integer ndim, Integer *loA,
                               Integer *hiA, Integer *ldA, void *A_ptr,
                               void *B_ptr, void *C_ptr, void *M_ptr,
                               Integer offset)
@@ -287,8 +286,11 @@ void gai_median_patch_values(Integer type, Integer ndim, Integer *loA,
 
 /*\ median routine
 \*/
-void FATR
-ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_median_patch = pnga_median_patch
+#endif
+void pnga_median_patch(
+        g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
      Integer *g_a, *alo, *ahi;  /* patch of g_a */
      Integer *g_b, *blo, *bhi;  /* patch of g_b */
      Integer *g_c, *clo, *chi;  /* patch of g_c */
@@ -318,7 +320,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  GA_PUSH_NAME ("ga_median_patch_");
+  GA_PUSH_NAME ("pnga_median_patch");
 
   pnga_inquire (g_a, &atype, &andim, adims);
   pnga_inquire (g_b, &btype, &bndim, bdims);
@@ -330,34 +332,34 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
   pnga_inquire(g_m, &type, &mndim, mdims);
 
   if (mtype != atype)
-    pnga_error(" ga_median_patch_:type mismatch ", 0L);
+    pnga_error(" pnga_median_patch:type mismatch ", 0L);
   if (mtype != btype)
-    pnga_error(" ga_median_patch_:type mismatch ", 0L);
+    pnga_error(" pnga_median_patch:type mismatch ", 0L);
   if (mtype != ctype)
-    pnga_error(" ga_median_patch_:type mismatch ", 0L);
+    pnga_error(" pnga_median_patch:type mismatch ", 0L);
 
   /* check if patch indices and g_a dims match */
   for (i = 0; i < andim; i++)
     if (alo[i] <= 0 || ahi[i] > adims[i])
     {
-      pnga_error("ga_median_patch_: g_a indices out of range ", *g_a);
+      pnga_error("pnga_median_patch: g_a indices out of range ", *g_a);
     }
 
   for (i = 0; i < bndim; i++)
     if (blo[i] <= 0 || bhi[i] > bdims[i])
     {
-      pnga_error("ga_median_patch_:g_b indices out of range ", *g_b);
+      pnga_error("pnga_median_patch:g_b indices out of range ", *g_b);
     }
 
   for (i = 0; i < cndim; i++)
     if (clo[i] <= 0 || chi[i] > cdims[i])
     {
-      pnga_error("ga_median_patch_:g_c indices out of range ", *g_c);
+      pnga_error("pnga_median_patch:g_c indices out of range ", *g_c);
     }         
   for (i = 0; i < mndim; i++)
     if (mlo[i] <= 0 || mhi[i] > mdims[i])
     {
-      pnga_error("ga_median_patch_:g_m indices out of range ", *g_m);
+      pnga_error("pnga_median_patch:g_m indices out of range ", *g_m);
     }
 
   /* check if numbers of elements in two patches match each other */
@@ -380,13 +382,13 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
 
 
   if (mtotal != atotal)
-    pnga_error("ga_median_patch_:  capacities of patches do not match ", 0L);
+    pnga_error("pnga_median_patch:  capacities of patches do not match ", 0L);
 
   if (mtotal != btotal)
-    pnga_error("ga_median_patch_:  capacities of patches do not match ", 0L);
+    pnga_error("pnga_median_patch:  capacities of patches do not match ", 0L);
 
   if (mtotal != ctotal)
-    pnga_error("ga_median_patch_:  capacities of patches do not match ", 0L);
+    pnga_error("pnga_median_patch:  capacities of patches do not match ", 0L);
 
   num_blocks_a = pnga_total_blocks(g_a);
   num_blocks_b = pnga_total_blocks(g_b);
@@ -401,7 +403,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
     pnga_distribution (&g_C, &me, loC, hiC);
     pnga_distribution (&g_M, &me, loM, hiM);
 
-    if (!ngai_comp_patch (andim, loA, hiA, mndim, loM, hiM)) compatible = 1;
+    if (!pnga_comp_patch (andim, loA, hiA, mndim, loM, hiM)) compatible = 1;
     else compatible = 0;
     pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
     if (!compatible) {
@@ -410,15 +412,15 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
        *        - copy & reshape patch of g_b into g_B
        */
       if (!pnga_duplicate(g_m, &g_A, tempname))
-        pnga_error("ga_median_patch_:duplicate failed", 0L);
+        pnga_error("pnga_median_patch:duplicate failed", 0L);
 
-      ngai_copy_patch(&transp, g_a, alo, ahi, &g_A, mlo, mhi);
+      pnga_copy_patch(&transp, g_a, alo, ahi, &g_A, mlo, mhi);
       andim = mndim;
       a_temp_created = 1;
       pnga_distribution (&g_A, &me, loA, hiA);
     }
 
-    if (!ngai_comp_patch (bndim, loB, hiB, mndim, loM, hiM)) compatible = 1;
+    if (!pnga_comp_patch (bndim, loB, hiB, mndim, loM, hiM)) compatible = 1;
     else compatible = 0;
     pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
     if (!compatible) {
@@ -427,15 +429,15 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
        *        - copy & reshape patch of g_c into g_C
        */
       if (!pnga_duplicate(g_m, &g_B, tempname))
-        pnga_error("ga_median_patch_:duplicate failed", 0L);
+        pnga_error("pnga_median_patch:duplicate failed", 0L);
 
-      ngai_copy_patch(&transp, g_b, blo, bhi, &g_B, mlo, mhi);
+      pnga_copy_patch(&transp, g_b, blo, bhi, &g_B, mlo, mhi);
       bndim = mndim;
       b_temp_created = 1;
       pnga_distribution (&g_B, &me, loB, hiB);
     }
 
-    if (!ngai_comp_patch (cndim, loC, hiC, mndim, loM, hiM)) compatible = 1;
+    if (!pnga_comp_patch (cndim, loC, hiC, mndim, loM, hiM)) compatible = 1;
     else compatible = 0;
     pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
     if (!compatible) {
@@ -444,21 +446,21 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
        *        - copy & reshape patch of g_m into g_M
        */
       if (!pnga_duplicate(g_m, &g_C, tempname))
-        pnga_error("ga_median_patch_:duplicate failed", 0L);
+        pnga_error("pnga_median_patch:duplicate failed", 0L);
 
       /*no need to copy g_m since it is the output matrix. */
       cndim = mndim;
       c_temp_created = 1;
-      ngai_copy_patch(&transp, g_c, clo, chi, &g_C, mlo, mhi);
+      pnga_copy_patch(&transp, g_c, clo, chi, &g_C, mlo, mhi);
       pnga_distribution (&g_C, &me, loC, hiC);
     }
 
 
-    if (!ngai_comp_patch (mndim, loM, hiM, andim, loA, hiA))
+    if (!pnga_comp_patch (mndim, loM, hiM, andim, loA, hiA))
       pnga_error(" patches mismatch ", 0);
-    if (!ngai_comp_patch (mndim, loM, hiM, bndim, loB, hiB))
+    if (!pnga_comp_patch (mndim, loM, hiM, bndim, loB, hiB))
       pnga_error(" patches mismatch ", 0);
-    if (!ngai_comp_patch (mndim, loM, hiM, cndim, loC, hiC))
+    if (!pnga_comp_patch (mndim, loM, hiM, cndim, loC, hiC))
       pnga_error(" patches mismatch ", 0);
 
 
@@ -472,14 +474,14 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
 
 
     /*  determine subsets of my patches to access  */
-    if (ngai_patch_intersect (mlo, mhi, loM, hiM, mndim)) {
+    if (pnga_patch_intersect (mlo, mhi, loM, hiM, mndim)) {
       offset = 0;
       pnga_access_ptr (&g_A, loM, hiM, &A_ptr, ldA);
       pnga_access_ptr (&g_B, loM, hiM, &B_ptr, ldB);
       pnga_access_ptr (&g_C, loM, hiM, &C_ptr, ldC);
       pnga_access_ptr (&g_M, loM, hiM, &M_ptr, ldM);
 
-      gai_median_patch_values(type, mndim, loM, hiM, ldM,
+      sgai_median_patch_values(type, mndim, loM, hiM, ldM,
           A_ptr, B_ptr, C_ptr, M_ptr, offset);
 
       /* release access to the data */
@@ -493,19 +495,19 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
        as M */
     if (!pnga_duplicate(g_m, &g_A, tempname))
       pnga_error("ga_add_patch: dup failed", 0L);
-    ngai_copy_patch(&transp, g_a, alo, ahi, &g_A, mlo, mhi);
+    pnga_copy_patch(&transp, g_a, alo, ahi, &g_A, mlo, mhi);
     andim = mndim;
     a_temp_created = 1;
 
     if (!pnga_duplicate(g_m, &g_B, tempname))
       pnga_error("ga_add_patch: dup failed", 0L);
-    ngai_copy_patch(&transp, g_b, blo, bhi, &g_B, mlo, mhi);
+    pnga_copy_patch(&transp, g_b, blo, bhi, &g_B, mlo, mhi);
     bndim = mndim;
     b_temp_created = 1;
 
     if (!pnga_duplicate(g_m, &g_C, tempname))
       pnga_error("ga_add_patch: dup failed", 0L);
-        ngai_copy_patch(&transp, g_c, clo, chi, &g_C, mlo, mhi);
+        pnga_copy_patch(&transp, g_c, clo, chi, &g_C, mlo, mhi);
     cndim = mndim;
     c_temp_created = 1;
 
@@ -513,13 +515,13 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
     if (num_blocks_m < 0) {
       offset = 0;
       pnga_distribution(g_m, &me, loM, hiM);
-      if (ngai_patch_intersect (mlo, mhi, loM, hiM, mndim)) {
+      if (pnga_patch_intersect (mlo, mhi, loM, hiM, mndim)) {
         pnga_access_ptr (&g_A, loM, hiM, &A_ptr, ldA);
         pnga_access_ptr (&g_B, loM, hiM, &B_ptr, ldB);
         pnga_access_ptr (&g_C, loM, hiM, &C_ptr, ldC);
         pnga_access_ptr (&g_M, loM, hiM, &M_ptr, ldM);
 
-        gai_median_patch_values(type, mndim, loM, hiM, ldM,
+        sgai_median_patch_values(type, mndim, loM, hiM, ldM,
             A_ptr, B_ptr, C_ptr, M_ptr, offset);
 
         /* release access to the data */
@@ -536,13 +538,13 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
         nproc = pnga_nnodes();
         for (idx = me; idx < num_blocks_m; idx += nproc) {
           pnga_distribution(g_m, &idx, loM, hiM);
-          /* make temporary copies of loM and hiM since ngai_patch_intersect
+          /* make temporary copies of loM and hiM since pnga_patch_intersect
              destroys original versions */
           for (j=0; j<mndim; j++) {
             lod[j] = loM[j];
             hid[j] = hiM[j];
           }
-          if (ngai_patch_intersect(mlo, mhi, loM, hiM, mndim)) {
+          if (pnga_patch_intersect(mlo, mhi, loM, hiM, mndim)) {
             pnga_access_block_ptr(&g_A, &idx, &A_ptr, ldA);
             pnga_access_block_ptr(&g_B, &idx, &B_ptr, ldB);
             pnga_access_block_ptr(&g_C, &idx, &C_ptr, ldC);
@@ -558,7 +560,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
             }
             offset += (loM[last]-lod[last])*jtot;
 
-            gai_median_patch_values(type, mndim, loM, hiM, ldM,
+            sgai_median_patch_values(type, mndim, loM, hiM, ldM,
                 A_ptr, B_ptr, C_ptr, M_ptr, offset);
 
             /* release access to the data */
@@ -588,13 +590,13 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
             if (hiM[i] > mdims[i]) hiM[i] = mdims[i];
             if (hiM[i] < loM[i]) chk = 0;
           }
-          /* make temporary copies of loC and hiC since ngai_patch_intersect
+          /* make temporary copies of loC and hiC since pnga_patch_intersect
              destroys original versions */
           for (j=0; j<mndim; j++) {
             lod[j] = loM[j];
             hid[j] = hiM[j];
           }
-          if (ngai_patch_intersect(mlo, mhi, loM, hiM, mndim)) {
+          if (pnga_patch_intersect(mlo, mhi, loM, hiM, mndim)) {
             pnga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
             pnga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
             pnga_access_block_grid_ptr(&g_C, index, &C_ptr, ldC);
@@ -610,7 +612,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
             }
             offset += (loM[last]-lod[last])*jtot;
 
-            gai_median_patch_values(type, mndim, loM, hiM, ldM,
+            sgai_median_patch_values(type, mndim, loM, hiM, ldM,
                 A_ptr, B_ptr, C_ptr, M_ptr, offset);
 
             /* release access to the data */
@@ -644,8 +646,10 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
 
 
 
-void FATR
-ga_median_ (Integer * g_a, Integer * g_b, Integer * g_c, Integer * g_m){
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_median = pnga_median
+#endif
+void pnga_median(Integer * g_a, Integer * g_b, Integer * g_c, Integer * g_m){
 
 
    Integer atype, andim;
@@ -682,11 +686,11 @@ ga_median_ (Integer * g_a, Integer * g_b, Integer * g_c, Integer * g_m){
         mndim--;
     }
     _ga_sync_begin = 1;
-    ga_median_patch_(g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi);
+    pnga_median_patch(g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi);
 
 }
 
-void gai_norm_infinity_block(Integer *g_a, void *ptr,
+static void sgai_norm_infinity_block(Integer *g_a, void *ptr,
                              Integer *lo, Integer *hi, Integer ld,
                              Integer type,
                              Integer ndim, Integer *dims, void *buf)
@@ -814,13 +818,15 @@ void gai_norm_infinity_block(Integer *g_a, void *ptr,
           dsum[iloA + i - 1] += GA_ABS (pd[j * ld + i]);
       break;
       default:
-      pnga_error("gai_norm_infinity_block: wrong data type ", type);
+      pnga_error("sgai_norm_infinity_block: wrong data type ", type);
     }
   }
 }
 
-void FATR
-ga_norm_infinity_ (Integer * g_a, double *nm)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_norm_infinity = pnga_norm_infinity
+#endif
+void pnga_norm_infinity(Integer * g_a, double *nm)
 {
   Integer dim1, dim2, type, size, nelem;
   Integer me = pnga_nodeid (), i, j, nproc = pnga_nnodes();
@@ -841,7 +847,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  gai_check_handle (g_a, "ga_norm_infinity_");
+  pnga_check_handle (g_a, "ga_norm_infinity_");
   GA_PUSH_NAME ("ga_norm_infinity_");
 
   /*  pnga_inquire (g_a, &type, &dim1, &dim2); */
@@ -898,7 +904,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, lo, hi);
     pnga_access_ptr(g_a, lo, hi, &ptr, &ld);
-    gai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
+    sgai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
     pnga_release_update(g_a, lo, hi);
   } else {
     Integer idx;
@@ -907,7 +913,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, lo, hi);
         pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
-        gai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
+        sgai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
         pnga_release_update_block(g_a, &idx);
       }
     } else {
@@ -931,7 +937,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
         }
         if (chk) {
           pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
-          gai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
+          sgai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
           pnga_release_update_block(g_a, index);
         }
         /* increment index to get next block on processor */
@@ -1029,7 +1035,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
   pnga_sync ();
 }
 
-void gai_norm1_block(Integer *g_a, void *ptr,
+static void sgai_norm1_block(Integer *g_a, void *ptr,
                      Integer *lo, Integer *hi, Integer ld,
                      Integer type,
                      Integer ndim, Integer *dims, void *buf)
@@ -1077,7 +1083,7 @@ void gai_norm1_block(Integer *g_a, void *ptr,
   }
 
   if(ndim<=0)
-    pnga_error("gai_norm1_block: wrong dimension", ndim);
+    pnga_error("sgai_norm1_block: wrong dimension", ndim);
   else if(ndim == 1) { 
     iloA=lo[0];
     ihiA=hi[0];
@@ -1092,7 +1098,7 @@ void gai_norm1_block(Integer *g_a, void *ptr,
     jhiA=hi[1];
   }
   else
-    pnga_error("gai_norm1_block: wrong dimension", ndim);
+    pnga_error("sgai_norm1_block: wrong dimension", ndim);
 
   /* determine subset of my patch to access */
   if (ihiA > 0 && jhiA > 0)
@@ -1159,13 +1165,15 @@ void gai_norm1_block(Integer *g_a, void *ptr,
           dsum[jloA + j - 1 ] += GA_ABS (pd[j * ld + i]);
       break;
       default:
-      pnga_error("gai_norm1_block: wrong data type ", type);
+      pnga_error("sgai_norm1_block: wrong data type ", type);
     }
   }
 }
 
-void FATR
-ga_norm1_ (Integer * g_a, double *nm)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_norm1 = pnga_norm1
+#endif
+void pnga_norm1(Integer * g_a, double *nm)
 {
   Integer dim1=0, dim2=0, type=0, size=0, nelem=0;
   Integer me = pnga_nodeid (), i, j, nproc = pnga_nnodes();
@@ -1185,7 +1193,7 @@ ga_norm1_ (Integer * g_a, double *nm)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  gai_check_handle (g_a, "ga_norm1_");
+  pnga_check_handle (g_a, "ga_norm1_");
   GA_PUSH_NAME ("ga_norm1_");
 
   pnga_inquire (g_a, &type, &ndim, dims);
@@ -1241,7 +1249,7 @@ ga_norm1_ (Integer * g_a, double *nm)
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, lo, hi);
     pnga_access_ptr(g_a, lo, hi, &ptr, &ld);
-    gai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
+    sgai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
     pnga_release_update(g_a, lo, hi);
   } else {
     Integer idx;
@@ -1250,7 +1258,7 @@ ga_norm1_ (Integer * g_a, double *nm)
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, lo, hi);
         pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
-        gai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
+        sgai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
         pnga_release_update_block(g_a, &idx);
       }
     } else {
@@ -1274,7 +1282,7 @@ ga_norm1_ (Integer * g_a, double *nm)
         }
         if (chk) {
           pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
-          gai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
+          sgai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
           pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */
@@ -1372,7 +1380,7 @@ ga_norm1_ (Integer * g_a, double *nm)
   pnga_sync ();
 }
 
-void gai_get_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
+static void sgai_get_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
                             Integer *loA, Integer *hiA, Integer ld,
                             Integer type)
 {
@@ -1490,8 +1498,10 @@ void gai_get_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
   }
 }
 
-void FATR
-ga_get_diag_ (Integer * g_a, Integer * g_v)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_get_diag = pnga_get_diag
+#endif
+void pnga_get_diag(Integer * g_a, Integer * g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type;
   Integer me = pnga_nodeid (), i, nproc = pnga_nnodes();
@@ -1505,8 +1515,8 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  gai_check_handle (g_a, "ga_get_diag_");
-  gai_check_handle (g_v, "ga_get_diag_");
+  pnga_check_handle (g_a, "ga_get_diag_");
+  pnga_check_handle (g_v, "ga_get_diag_");
   GA_PUSH_NAME ("ga_get_diag_");
 
   pnga_inquire (g_a, &atype, &andim, adims);
@@ -1538,7 +1548,7 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, loA, hiA);
     pnga_access_ptr(g_a, loA, hiA, &ptr, &ld);
-    gai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
+    sgai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
     pnga_release_update(g_a, loA, hiA);
   } else {
     Integer idx;
@@ -1547,7 +1557,7 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, loA, hiA);
         pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
-        gai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
+        sgai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
         pnga_release_update_block(g_a, &idx);
       }
     } else {
@@ -1571,7 +1581,7 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
         }
         if (chk) {
           pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
-          gai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
+          sgai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
           pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */
@@ -1591,7 +1601,7 @@ ga_get_diag_ (Integer * g_a, Integer * g_v)
 }
 
 
-void gai_add_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
+static void sgai_add_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
                             Integer *loA, Integer *hiA, Integer ld,
                             Integer type)
 {
@@ -1708,8 +1718,10 @@ void gai_add_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
   }
 }
 
-void FATR
-ga_add_diagonal_ (Integer * g_a, Integer * g_v)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_add_diagonal = pnga_add_diagonal
+#endif
+void pnga_add_diagonal(Integer * g_a, Integer * g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type;
   Integer me = pnga_nodeid (), i, nproc = pnga_nnodes();
@@ -1723,8 +1735,8 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  gai_check_handle (g_a, "ga_add_diagonal_");
-  gai_check_handle (g_v, "ga_add_diagonal_");
+  pnga_check_handle (g_a, "ga_add_diagonal_");
+  pnga_check_handle (g_v, "ga_add_diagonal_");
   GA_PUSH_NAME ("ga_add_diagonal_");
 
   pnga_inquire(g_a, &atype, &andim, adims);
@@ -1757,7 +1769,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, loA, hiA);
     pnga_access_ptr(g_a, loA, hiA, &ptr, &ld);
-    gai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
+    sgai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
   } else {
     Integer idx;
     /* Simple block-cyclic data distribution */
@@ -1765,7 +1777,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, loA, hiA);
         pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
-        gai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
+        sgai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
         pnga_release_update_block(g_a, &idx);
       }
     } else {
@@ -1789,7 +1801,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
         }
         if (chk) {
           pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
-          gai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
+          sgai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
           pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */
@@ -1807,7 +1819,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
   if(local_sync_end)pnga_sync();
 }
 
-void gai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integer *loA,
+static void sgai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integer *loA,
                             Integer *hiA, Integer ld, Integer type)
 {
   Integer nelem, size;
@@ -1929,8 +1941,10 @@ void gai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integer *loA,
   }
 }
 
-void FATR
-ga_set_diagonal_ (Integer * g_a, Integer * g_v)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_diagonal = pnga_set_diagonal
+#endif
+void pnga_set_diagonal(Integer * g_a, Integer * g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type;
   Integer me = pnga_nodeid (), i, nproc = pnga_nnodes();
@@ -1944,8 +1958,8 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  gai_check_handle (g_a, "ga_set_diagonal_");
-  gai_check_handle (g_v, "ga_set_diagonal_");
+  pnga_check_handle (g_a, "ga_set_diagonal_");
+  pnga_check_handle (g_v, "ga_set_diagonal_");
   GA_PUSH_NAME ("ga_set_diagonal_");
 
   pnga_inquire (g_a, &atype, &andim, adims);
@@ -1978,7 +1992,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, loA, hiA);
     pnga_access_ptr(g_a, loA, hiA, &ptr, &ld);
-    gai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
+    sgai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
     pnga_release_update(g_a, loA, hiA);
   } else {
     Integer idx;
@@ -1987,7 +2001,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, loA, hiA);
         pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
-        gai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
+        sgai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
         pnga_release_update_block(g_a, &idx);
       }
     } else {
@@ -2011,7 +2025,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
         }
         if (chk) {
           pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
-          gai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
+          sgai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
           pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */
@@ -2031,7 +2045,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
   if(local_sync_begin)pnga_sync();
 }
 
-void gai_shift_diagonal_block(Integer *g_a, void *ptr, Integer *loA, Integer *hiA,
+static void sgai_shift_diagonal_block(Integer *g_a, void *ptr, Integer *loA, Integer *hiA,
                               Integer ld, void *c, Integer type)
 {
   Integer iloA, ihiA, jloA, jhiA, lo[2], hi[2];
@@ -2125,8 +2139,10 @@ void gai_shift_diagonal_block(Integer *g_a, void *ptr, Integer *loA, Integer *hi
   }
 }
 
-void FATR
-ga_shift_diagonal_ (Integer * g_a, void *c)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_shift_diagonal = pnga_shift_diagonal
+#endif
+void pnga_shift_diagonal(Integer * g_a, void *c)
 {
   Integer loA[2], hiA[2], dim1, dim2, ld;
   Integer andim, adims[2], type, atype;
@@ -2139,7 +2155,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  gai_check_handle (g_a, "ga_shift_diagonal_");
+  pnga_check_handle (g_a, "ga_shift_diagonal_");
   GA_PUSH_NAME ("ga_shift_diagonal_");
 
   pnga_inquire (g_a, &atype, &andim, adims);
@@ -2154,7 +2170,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
   if (num_blocks_a < 0) {
     pnga_distribution(g_a, &me, loA, hiA);
     pnga_access_ptr(g_a, loA, hiA, &ptr, &ld);
-    gai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
+    sgai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
     pnga_release_update(g_a, loA, hiA);
   } else {
     Integer idx;
@@ -2163,7 +2179,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, loA, hiA);
         pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
-        gai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
+        sgai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
         pnga_release_update_block(g_a, &idx);
       }
     } else {
@@ -2187,7 +2203,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
         }
         if (chk) {
           pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
-          gai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
+          sgai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
           pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */
@@ -2206,7 +2222,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
   if(local_sync_end)pnga_sync();
 }
 
-void gai_zero_diagonal_block(Integer *g_a, void *ptr, Integer *lo, Integer *hi,
+static void sgai_zero_diagonal_block(Integer *g_a, void *ptr, Integer *lo, Integer *hi,
                              Integer ld, Integer offset, Integer type)
 {
   Integer i;
@@ -2267,7 +2283,10 @@ void gai_zero_diagonal_block(Integer *g_a, void *ptr, Integer *lo, Integer *hi,
   }
 }
 
-void FATR ga_zero_diagonal_(Integer * g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_zero_diagonal = pnga_zero_diagonal
+#endif
+void pnga_zero_diagonal(Integer * g_a)
 {
   Integer dim1, dim2, type;
   Integer ld, lo[2], hi[2], loA[2], hiA[2];
@@ -2302,7 +2321,7 @@ void FATR ga_zero_diagonal_(Integer * g_a)
       if (hi[0] >= lo[0]) {
                               /* we got a block containing diagonal elements */
         pnga_access_ptr (g_a, lo, hi, &ptr, &ld);
-        gai_zero_diagonal_block(g_a, ptr, lo, hi, ld, offset, type);
+        sgai_zero_diagonal_block(g_a, ptr, lo, hi, ld, offset, type);
         /* release access to the data */
         pnga_release_update (g_a, lo, hi);
       }
@@ -2331,7 +2350,7 @@ void FATR ga_zero_diagonal_(Integer * g_a)
             jtot *= lld[j];
           }
           offset += (lo[last]-loA[last])*jtot;
-          gai_zero_diagonal_block(g_a, ptr, lo, hi, lld[0], offset, type);
+          sgai_zero_diagonal_block(g_a, ptr, lo, hi, lld[0], offset, type);
           pnga_release_update_block(g_a, &idx);
         }
       }
@@ -2371,7 +2390,7 @@ void FATR ga_zero_diagonal_(Integer * g_a)
             jtot *= lld[j];
           }
           offset += (lo[last]-loA[last])*jtot;
-          gai_zero_diagonal_block(g_a, ptr, lo, hi, lld[0], offset, type);
+          sgai_zero_diagonal_block(g_a, ptr, lo, hi, lld[0], offset, type);
           pnga_release_update_block_grid(g_a, index);
         }
 
@@ -2390,7 +2409,7 @@ void FATR ga_zero_diagonal_(Integer * g_a)
   if(local_sync_end)pnga_sync();
 }
 
-void gai_scale_row_values(Integer type, Integer *lo,
+static void sgai_scale_row_values(Integer type, Integer *lo,
                           Integer *hi, Integer ld, void *ptr, Integer *g_v)
 {
   Integer vlo, vhi, size;
@@ -2477,7 +2496,10 @@ void gai_scale_row_values(Integer type, Integer *lo,
   }
 }
 
-void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_scale_rows = pnga_scale_rows
+#endif
+void pnga_scale_rows(Integer *g_a, Integer *g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type;
   Integer ld, lo[2], hi[2];
@@ -2491,8 +2513,8 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  gai_check_handle (g_a, "ga_scale_rows_");
-  gai_check_handle (g_v, "ga_scale_rows_");
+  pnga_check_handle (g_a, "ga_scale_rows_");
+  pnga_check_handle (g_v, "ga_scale_rows_");
   GA_PUSH_NAME ("ga_scale_rows_");
 
   pnga_inquire (g_a, &atype, &andim, adims);
@@ -2533,7 +2555,7 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
     if (chk) {
       pnga_access_ptr (g_a, lo, hi, &ptr, &ld);
 
-      gai_scale_row_values(type, lo, hi, ld, ptr, g_v);
+      sgai_scale_row_values(type, lo, hi, ld, ptr, g_v);
 
       /* release access to the data */
       pnga_release_update (g_a, lo, hi);
@@ -2546,7 +2568,7 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
       for (idx=me; idx<num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, lo, hi);
         pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
-        gai_scale_row_values(type, lo, hi, ld, ptr, g_v);
+        sgai_scale_row_values(type, lo, hi, ld, ptr, g_v);
         pnga_release_update_block(g_a, &idx);
       }
     } else {
@@ -2569,7 +2591,7 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
         }
         if (chk) {
           pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
-          gai_scale_row_values(type, lo, hi, ld, ptr, g_v);
+          sgai_scale_row_values(type, lo, hi, ld, ptr, g_v);
           pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */
@@ -2587,7 +2609,7 @@ void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
   if(local_sync_end)pnga_sync();
 }
 
-void gai_scale_col_values(Integer type, Integer *lo,
+static void sgai_scale_col_values(Integer type, Integer *lo,
                           Integer *hi, Integer ld, void *ptr, Integer *g_v)
 {
   Integer vlo, vhi, size;
@@ -2674,7 +2696,10 @@ void gai_scale_col_values(Integer type, Integer *lo,
   }
 }
 
-void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_scale_cols = pnga_scale_cols
+#endif
+void pnga_scale_cols(Integer *g_a, Integer *g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type;
   Integer ld, lo[2], hi[2];
@@ -2689,8 +2714,8 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
 
-  gai_check_handle (g_a, "ga_scale_cols_");
-  gai_check_handle (g_v, "ga_scale_cols_");
+  pnga_check_handle (g_a, "ga_scale_cols_");
+  pnga_check_handle (g_v, "ga_scale_cols_");
   GA_PUSH_NAME ("ga_scale_cols_");
 
   pnga_inquire(g_a, &atype, &andim, adims);
@@ -2731,7 +2756,7 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
     if (chk) {
       pnga_access_ptr (g_a, lo, hi, &ptr, &ld);
 
-      gai_scale_col_values(type, lo, hi, ld, ptr, g_v);
+      sgai_scale_col_values(type, lo, hi, ld, ptr, g_v);
 
       /* release access to the data */
       pnga_release_update (g_a, lo, hi);
@@ -2744,7 +2769,7 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
       for (idx=me; idx<num_blocks_a; idx += nproc) {
         pnga_distribution(g_a, &idx, lo, hi);
         pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
-        gai_scale_col_values(type, lo, hi, ld, ptr, g_v);
+        sgai_scale_col_values(type, lo, hi, ld, ptr, g_v);
         pnga_release_update_block(g_a, &idx);
       }
     } else {
@@ -2767,7 +2792,7 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
         }
         if (chk) {
           pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
-          gai_scale_col_values(type, lo, hi, ld, ptr, g_v);
+          sgai_scale_col_values(type, lo, hi, ld, ptr, g_v);
           pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */

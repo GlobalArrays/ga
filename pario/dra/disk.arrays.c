@@ -411,12 +411,12 @@ num = (INDEPFILES(d_a)) ? INFINITE_NUM_PROCS: DRA_NUM_IOPROCS;
 #endif
 */
     if (INDEPFILES(d_a)) {
-        num = ga_cluster_nnodes_();
+        num = pnga_cluster_nnodes();
     } else {
         num = DRA[handle].ioprocs;
     }
 
-    return( PARIO_MIN( ga_nnodes_(), num));
+    return( PARIO_MIN( pnga_nnodes(), num));
 }
 
 
@@ -427,9 +427,9 @@ num = (INDEPFILES(d_a)) ? INFINITE_NUM_PROCS: DRA_NUM_IOPROCS;
 Integer dai_io_nodeid(Integer d_a)
 {
     Integer handle = d_a+DRA_OFFSET;
-    Integer me = ga_nodeid_();
+    Integer me = pnga_nodeid();
     Integer pid, id, nid, nnodes,nprocs;
-    Integer nodeid = ga_cluster_nodeid_();
+    Integer nodeid = pnga_cluster_nodeid();
     Integer zero = 0;
 
     /* again, one of many possibilities: 
@@ -437,15 +437,15 @@ Integer dai_io_nodeid(Integer d_a)
      */
 
     if (INDEPFILES(d_a)) {
-        if(me == ga_cluster_procid_(&nodeid, &zero)) me = nodeid;
+        if(me == pnga_cluster_procid(&nodeid, &zero)) me = nodeid;
         else me = -1;
     } else {
         if (DRA[handle].ioprocs == 1) {
             if (me == 0) return me;
             else return -1;
         } else {
-            nnodes = ga_cluster_nnodes_();
-            nprocs = ga_cluster_nprocs_(&nodeid);
+            nnodes = pnga_cluster_nnodes();
+            nprocs = pnga_cluster_nprocs(&nodeid);
             pid = me % nprocs;
             nid = (me - pid)/nprocs;
             id = pid * nnodes + nid;
@@ -537,7 +537,7 @@ Integer FATR dra_init_(
         DoublePrecision *max_memory)
 {
     int i, buf_size;
-    ga_sync_();
+    pnga_sync();
 
     if(*max_arrays<-1 || *max_arrays> DRA_MAX_ARRAYS)
         dai_error("dra_init: incorrect max number of arrays",*max_arrays);
@@ -552,14 +552,14 @@ Integer FATR dra_init_(
     for(i=0; i<MAX_REQ; i++) Requests[i].num_pending=0;
 
     dra_debug_flag = FALSE;
-    _dra_io_procs = ga_cluster_nnodes_();
-    _dra_number_of_files = ga_cluster_nnodes_();
+    _dra_io_procs = pnga_cluster_nnodes();
+    _dra_number_of_files = pnga_cluster_nnodes();
 
     /* initialize Buffer Manager */
     buf_size = sizeof (buf_info) + (int) DBL_BUF_SIZE;
     buffer_init(&buf_ctxt, nbuf, buf_size, &wait_buf);
 
-    ga_sync_();
+    pnga_sync();
 
     return(ELIO_OK);
 }
@@ -648,7 +648,7 @@ void dai_chunking(Integer elem_size, Integer block1, Integer block2,
     }
 #ifdef DEBUG
     printf("\n%d:CREATE chunk=(%d,%d) elem_size=%d req=(%d,%d) buf=%d\n",
-            ga_nodeid_(),*chunk1, *chunk2, elem_size, block1, block2,
+            pnga_nodeid(),*chunk1, *chunk2, elem_size, block1, block2,
             DRA_DBL_BUF_SIZE); 
     fflush(stdout);
 #endif
@@ -866,7 +866,7 @@ Integer drai_open(char *filename, Integer *mode, Integer *d_a)
 {
     Integer handle;
 
-    ga_sync_();
+    pnga_sync();
 
     /*** Get next free DRA handle ***/
     if( (handle = dai_get_handle()) == -1)
@@ -894,20 +894,20 @@ Integer drai_open(char *filename, Integer *mode, Integer *d_a)
         }
 
         if(DRA[handle].fd ==NULL)dai_error("dra_open failed (null)",
-                ga_nodeid_());
+                pnga_nodeid());
         if(DRA[handle].fd->fd ==-1)dai_error("dra_open failed (-1)",
-                ga_nodeid_());  
+                pnga_nodeid());  
     }
 
 
 #ifdef DEBUG
     printf("\n%d:OPEN chunking=(%d,%d) type=%d buf=%d\n",
-            ga_nodeid_(),DRA[handle].chunk[0], DRA[handle].chunk[1], 
+            pnga_nodeid(),DRA[handle].chunk[0], DRA[handle].chunk[1], 
             DRA[handle].type, DRA_DBL_BUF_SIZE);
     fflush(stdout);
 #endif
 
-    ga_sync_();
+    pnga_sync();
 
     /* printf("FILE OPENED!!\n"); */
     return(ELIO_OK);
@@ -922,14 +922,14 @@ Integer FATR dra_close_(Integer* d_a) /* input:DRA handle*/
     Integer handle = *d_a+DRA_OFFSET;
     int rc;
 
-    ga_sync_();
+    pnga_sync();
 
     dai_check_handleM(*d_a, "dra_close");
     if(dai_io_manage(*d_a)) if(ELIO_OK != (rc=elio_close(DRA[handle].fd)))
         dai_error("dra_close: close failed",rc);
     dai_release_handle(d_a); 
 
-    ga_sync_();
+    pnga_sync();
 
     return(ELIO_OK);
 }
@@ -1139,13 +1139,13 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
     Integer index, ldd = gs_a.hi[0] - gs_a.lo[0] + 1, one=1;
     Integer atype, cols, rows, elemsize, ilo, ihi;
     Integer istart, iend, jstart, jend;
-    void  (FATR *f)(Integer*,Integer*,Integer*,Integer*,Integer*,void*,Integer*); 
+    void  (*f)(Integer*,Integer*,Integer*,void*,Integer*); 
     char *buf = (char*)buffer;
 
-    if(op==LOAD) f = ga_get_;
-    else f = ga_put_;
+    if(op==LOAD) f = pnga_get;
+    else f = pnga_put;
 
-    ga_inquire_(&gs_a.handle, &atype, &rows, &cols);     
+    pnga_inquire(&gs_a.handle, &atype, &rows, &cols);     
     elemsize = MA_sizeof(atype, 1, MT_C_CHAR);
 
     /* find where in global array the first dra chunk element in buffer goes*/
@@ -1162,10 +1162,13 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
        .|' incomplete first column, full complete middle column, and
        incomplete last column */
     if(istart != gs_a.lo[0] || jstart==jend ){
+        Integer lo[2], hi[2];
         ilo = istart; 
         ihi = gs_a.hi[0]; 
         if(jstart==jend) ihi=iend;
-        f(&gs_a.handle, &ilo, &ihi, &jstart, &jstart, buf, &one); 
+        lo[0] = ilo; lo[1] = jstart;
+        hi[0] = ihi; hi[1] = jstart;
+        f(&gs_a.handle, lo, hi, buf, &one); 
         buf += elemsize*(ihi -ilo+1);
         if(jstart==jend) return;
         jstart++;
@@ -1174,13 +1177,19 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
     if(iend != gs_a.hi[0]) jend--;
 
     if(jstart <= jend) { 
-        f(&gs_a.handle, &gs_a.lo[0], &gs_a.hi[0], &jstart, &jend, buf, &ldd);
+        Integer lo[2], hi[2];
+        lo[0] = gs_a.lo[0]; lo[1] = jstart;
+        hi[0] = gs_a.hi[0]; hi[1] = jend;
+        f(&gs_a.handle, lo, hi, buf, &ldd);
         buf += elemsize*ldd*(jend-jstart+1); 
     } 
 
     if(iend != gs_a.hi[0]){
+        Integer lo[2], hi[2];
         jend++; /* Since decremented above */  
-        f(&gs_a.handle, &gs_a.lo[0], &iend, &jend, &jend, buf, &one);
+        lo[0] = gs_a.lo[0]; lo[1] = jend;
+        hi[0] = iend;       hi[1] = jend;
+        f(&gs_a.handle, lo, hi, buf, &one);
     }
 }
 
@@ -1219,7 +1228,7 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
         Integer i, j, ii, jj, base,nelem;  
         char    *base_addr;
 
-        if(ga_nodeid_()==0) printf("DRA warning: using scatter/gather\n");
+        if(pnga_nodeid()==0) printf("DRA warning: using scatter/gather\n");
 
         nelem = (ds_chunk.hi[0]-ds_chunk.lo[0]+1)
             * (ds_chunk.hi[1]-ds_chunk.lo[1]+1);
@@ -1287,7 +1296,7 @@ void nga_move(int op, int trans, section_t gs_a, section_t ds_a,
 #if WALLTIME
     double ss0,tt0;
     walltime_(&ss0,&tt0);
-    printf("p[%d] Beginning nga_move: %16.6f\n",ga_nodeid_(),tt0);
+    printf("p[%d] Beginning nga_move: %16.6f\n",pnga_nodeid(),tt0);
 #endif
     if (!trans) {
         for (i=0; i<ndim-1; i++) 
@@ -1475,7 +1484,7 @@ void nga_move(int op, int trans, section_t gs_a, section_t ds_a,
     }
 #if WALLTIME
     walltime_(&ss0,&tt0);
-    printf("p[%d] Ending nga_move: %16.6f\n",ga_nodeid_(),tt0);
+    printf("p[%d] Ending nga_move: %16.6f\n",pnga_nodeid(),tt0);
 #endif
 }
 
@@ -1549,7 +1558,7 @@ Integer FATR dra_wait_(Integer* request)
     if(*request == DRA_REQ_INVALID) return(ELIO_OK);
 #if WALLTIME
     walltime(&ss0,&tt0);
-    printf("p[%d] executing dra_wait: %16.6f\n",ga_nodeid_(),tt0);
+    printf("p[%d] executing dra_wait: %16.6f\n",pnga_nodeid(),tt0);
 #endif
 
     /* complete all outstanding operations and release the corresponding buffers invloved with this request */
@@ -1559,7 +1568,7 @@ Integer FATR dra_wait_(Integer* request)
     /* mark this request to be no longer pending */
     Requests[*request].num_pending=0;
 
-    ga_sync_();
+    pnga_sync();
 
     return(ELIO_OK);
 
@@ -1728,7 +1737,7 @@ Integer FATR dra_delete_(Integer* d_a)
     Integer handle = *d_a+DRA_OFFSET;
     int rc;
 
-    ga_sync_();
+    pnga_sync();
 
     dai_check_handleM(*d_a,"dra_delete");
     dai_delete_param(DRA[handle].fname,*d_a);
@@ -1747,7 +1756,7 @@ Integer FATR dra_delete_(Integer* d_a)
 
     dai_release_handle(d_a); 
 
-    ga_sync_();
+    pnga_sync();
     return(ELIO_OK);
 }
 
@@ -1760,7 +1769,7 @@ Integer FATR dra_terminate_()
     free(DRA);
     buf_terminate(&buf_ctxt);
 
-    ga_sync_();
+    pnga_sync();
     return(ELIO_OK);
 }
 
@@ -2076,7 +2085,7 @@ void dai_set_config(Integer numfiles, Integer numioprocs,
         if (numioprocs > 0) {
             numfiles = numioprocs;
         } else {
-            numfiles = ga_cluster_nnodes_();
+            numfiles = pnga_cluster_nnodes();
         }
     }
     if (numioprocs < 1) {
@@ -2084,17 +2093,17 @@ void dai_set_config(Integer numfiles, Integer numioprocs,
     }
     *number_of_files = numfiles;
     *io_procs = numioprocs;
-    if (*number_of_files > ga_nnodes_()) {
-        if (ga_nodeid_() == 0) {
+    if (*number_of_files > pnga_nnodes()) {
+        if (pnga_nodeid() == 0) {
             printf("WARNING: Number of files requested exceeds number of\n");
             printf("processors. Value is reset to number of processors: %ld\n",
-                    (long)ga_nnodes_());
+                    (long)pnga_nnodes());
         }
-        *number_of_files = ga_nnodes_();
+        *number_of_files = pnga_nnodes();
     }
     if (*io_procs > 1 && *number_of_files > 1) {
         if (*io_procs != *number_of_files) {
-            if (ga_nodeid_() == 0) {
+            if (pnga_nodeid() == 0) {
                 printf("WARNING: Number of IO processors is not equal to the\n");
                 printf("number of files requested. Number of IO processors\n");
                 printf("is reset to number of files: %ld\n",(long)*number_of_files);
@@ -2103,18 +2112,18 @@ void dai_set_config(Integer numfiles, Integer numioprocs,
         }
     }
     if (*number_of_files == 1) {
-        if (*io_procs > ga_nnodes_()) {
-            if (ga_nodeid_() == 0) {
+        if (*io_procs > pnga_nnodes()) {
+            if (pnga_nodeid() == 0) {
                 printf("WARNING: Number of requested IO processors\n");
                 printf("exceeds number of available processors. Number of IO\n");
                 printf("processors reset to the number of available processors %ld\n",
-                        (long)ga_nnodes_());
+                        (long)pnga_nnodes());
             }
-            *io_procs = ga_nnodes_();
+            *io_procs = pnga_nnodes();
         }
     }
     if (*number_of_files > *io_procs) {
-        if (ga_nodeid_() == 0) {
+        if (pnga_nodeid() == 0) {
             printf("WARNING: Number of files is greater than\n");
             printf("number of IO processors. Number of files reset to number of\n");
             printf("IO processors: %ld",(long)*io_procs);
@@ -2146,7 +2155,7 @@ Integer ndrai_create_config(Integer *type, Integer *ndim, Integer dims[],
 
     /* convert Fortran to C data type */
     ctype = pnga_type_f2c(*type);
-    ga_sync_();
+    pnga_sync();
 
     /* if we have an error here, it is fatal */       
     dai_check_typeM(ctype);    
@@ -2210,11 +2219,11 @@ Integer ndrai_create_config(Integer *type, Integer *ndim, Integer dims[],
      *  For multiple component files will stamp every one of them.
      *
      */
-    ga_sync_();
+    pnga_sync();
 
     if(dai_file_master(*d_a) && dai_write_allowed(*d_a)) ndai_zero_eof(*d_a);
 
-    ga_sync_();
+    pnga_sync();
 
     return(ELIO_OK);
 }
@@ -2272,7 +2281,7 @@ Integer drai_create(Integer *type, Integer *dim1, Integer *dim2, char *name,
 
     /* convert Fortran to C data type */
     ctype = pnga_type_f2c(*type);
-    ga_sync_();
+    pnga_sync();
 
     /* if we have an error here, it is fatal        */
     dai_check_typeM(ctype);    
@@ -2332,11 +2341,11 @@ Integer drai_create(Integer *type, Integer *dim1, Integer *dim2, char *name,
     }
 
 
-    ga_sync_();
+    pnga_sync();
 
     if(dai_file_master(*d_a) && dai_write_allowed(*d_a)) dai_zero_eof(*d_a);
 
-    ga_sync_();
+    pnga_sync();
 
     return(ELIO_OK);
 #endif
@@ -2378,8 +2387,8 @@ void ndai_put(section_t ds_a, void *buf, Integer ld[], io_request_t *id)
         dai_error("ndai_put failed", ds_a.handle);
 #if WALLTIME
     walltime_(&ss0,&tt1);
-    printf("p[%d] Beginning ndai_put: %16.6f\n",ga_nodeid_(),tt0);
-    printf("p[%d] Ending ndai_put: %16.6f\n",ga_nodeid_(),tt1);
+    printf("p[%d] Beginning ndai_put: %16.6f\n",pnga_nodeid(),tt0);
+    printf("p[%d] Ending ndai_put: %16.6f\n",pnga_nodeid(),tt1);
 #endif
 }
 
@@ -2422,8 +2431,8 @@ void ndai_get(section_t ds_a, void *buf, Integer ld[], io_request_t *id)
     rc= elio_aread(DRA[handle].fd, offset, buf, bytes, id );
 #if WALLTIME
     walltime_(&ss0,&tt1);
-    printf("p[%d] Beginning ndai_get: %16.6f\n",ga_nodeid_(),tt0);
-    printf("p[%d] Ending ndai_get:    %16.6f\n",ga_nodeid_(),tt1);
+    printf("p[%d] Beginning ndai_get: %16.6f\n",pnga_nodeid(),tt0);
+    printf("p[%d] Ending ndai_get:    %16.6f\n",pnga_nodeid(),tt1);
 #endif
     if(rc !=  ELIO_OK) dai_error("ndai_get failed", rc);
 }
@@ -3075,7 +3084,7 @@ Integer FATR ndra_write_section_(logical *transp,
     Integer i, gelem, delem, ndim;
     section_t d_sect, g_sect;
 
-    ga_sync_();
+    pnga_sync();
 
     /* usual argument/type/range checking stuff */
 
@@ -3125,7 +3134,7 @@ Integer FATR ndra_write_section_(logical *transp,
     /* process aligned subsections */
     ndai_transfer_algn (DRA_OP_WRITE, (int)*transp, d_sect, g_sect, *request);
 
-    ga_sync_();
+    pnga_sync();
 
     return(ELIO_OK);
 }
@@ -3144,7 +3153,7 @@ Integer FATR ndra_write_(Integer *g_a, Integer *d_a, Integer *request)
     logical transp = FALSE;
     Integer lo[MAXDIM], hi[MAXDIM], ndim, i;
 
-    ga_sync_();
+    pnga_sync();
 
     /* usual argument/type/range checking stuff */
 
@@ -3191,8 +3200,8 @@ Integer FATR ndra_read_section_(logical *transp,
     Integer i, gelem, delem, ndim, me;
     section_t d_sect, g_sect;
 
-    ga_sync_();
-    me = ga_nodeid_();
+    pnga_sync();
+    me = pnga_nodeid();
     /* printf("%d: CAME HERE!!!", me); */
     /* usual argument/type/range checking stuff */
     dai_check_handleM(*d_a,"ndra_read_sect");
@@ -3290,13 +3299,13 @@ Integer FATR ndra_read_(Integer* g_a, Integer* d_a, Integer* request)
     logical transp = FALSE;
     Integer lo[MAXDIM], hi[MAXDIM], ndim, i;
 
-    ga_sync_();
-    /* printf("%d: CAME AT ndra_read_!!\n", ga_nodeid_()); */
+    pnga_sync();
+    /* printf("%d: CAME AT ndra_read_!!\n", pnga_nodeid()); */
     /* usual argument/type/range checking stuff */
     dai_check_handleM(*d_a,"ndra_read");
     if(!dai_read_allowed(*d_a))dai_error("ndra_read: read not allowed",*d_a);
     pnga_inquire(g_a, &gtype, &ndim, gdims);
-    /* printf("%d: CAME After pnga_inquire!!\n", ga_nodeid_()); */
+    /* printf("%d: CAME After pnga_inquire!!\n", pnga_nodeid()); */
     if(DRA[handle].type != (int)gtype)dai_error("ndra_read: type mismatch",gtype);
     if(DRA[handle].ndim != ndim)dai_error("ndra_read: dimension mismatch",ndim);
     for (i=0; i<ndim; i++) {
@@ -3352,7 +3361,7 @@ Integer FATR dra_write_section_(logical *transp,
        Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
        section_t d_sect, g_sect;
 
-       ga_sync_();
+       pnga_sync();
 
        dai_check_handleM(*d_a,"dra_write_sect");
        ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
@@ -3391,7 +3400,7 @@ Integer FATR dra_write_section_(logical *transp,
 
        dai_transfer_algn (DRA_OP_WRITE, (int)*transp, d_sect, g_sect, *request);
 
-       ga_sync_();
+       pnga_sync();
 
        return(ELIO_OK);
        */
@@ -3413,7 +3422,7 @@ Integer FATR dra_write_(Integer *g_a, Integer *d_a, Integer *request)
        logical transp = FALSE;
        Integer ilo, ihi, jlo, jhi;
 
-       ga_sync_();     
+       pnga_sync();     
 
        dai_check_handleM(*d_a,"dra_write");
        if( !dai_write_allowed(*d_a))
@@ -3472,7 +3481,7 @@ Integer FATR dra_read_section_(logical *transp,
        Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
        section_t d_sect, g_sect;
 
-       ga_sync_();
+       pnga_sync();
 
        dai_check_handleM(*d_a,"dra_read_sect");
        if(!dai_read_allowed(*d_a))dai_error("dra_read_sect: read not allowed",*d_a);
@@ -3530,7 +3539,7 @@ Integer FATR dra_read_(Integer* g_a, Integer* d_a, Integer* request)
        logical transp = FALSE;
        Integer ilo, ihi, jlo, jhi;
 
-       ga_sync_();
+       pnga_sync();
 
 
        dai_check_handleM(*d_a,"dra_read");
@@ -3585,7 +3594,7 @@ void FATR dra_print_internals_(Integer *d_a)
     Integer *dims, *chunks;
     Integer handle = *d_a + DRA_OFFSET;
     Integer ndim = DRA[handle].ndim;
-    Integer me = ga_nodeid_();
+    Integer me = pnga_nodeid();
     dims = DRA[handle].dims;
     chunks = DRA[handle].chunk;
     if (me == 0) {

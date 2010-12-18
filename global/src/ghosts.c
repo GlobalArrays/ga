@@ -50,6 +50,7 @@
 #if HAVE_ASSERT_H
 #   include <assert.h>
 #endif
+#include "global.h"
 #include "globalp.h"
 #include "base.h"
 #include "armci.h"
@@ -4082,7 +4083,10 @@ void FATR nga_nbget_ghost_dir_(Integer *g_a,
 
 /*\ SET PRECOMPUTED INFO FOR UPDATING GHOST CELLS
 \*/
-logical ga_set_ghost_info_(Integer *g_a)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_ghost_info = pnga_set_ghost_info
+#endif
+logical pnga_set_ghost_info(Integer *g_a)
 {
   Integer handle = *g_a + GA_OFFSET;
   if (GA[handle].cache != NULL)
@@ -4100,12 +4104,15 @@ logical ga_set_ghost_info_(Integer *g_a)
 
 /*\ SET FLAG ON WHETHER OR NOT TO UPDATE GHOST CELL CORNER DATA
 \*/
-void ga_set_ghost_corner_flag_(Integer *g_a, logical *flag)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_ghost_corner_flag = pnga_set_ghost_corner_flag
+#endif
+void pnga_set_ghost_corner_flag(Integer *g_a, logical *flag)
 {
   Integer handle = *g_a + GA_OFFSET;
   GA[handle].corner_flag = (int)*flag;
   if (GA[handle].actv == 1) {
-    (void)ga_set_ghost_info_(g_a);
+    (void)pnga_set_ghost_info(g_a);
   }
 }
 

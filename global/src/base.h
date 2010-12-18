@@ -2,7 +2,6 @@
 #include "armci.h"
 #include "gaconfig.h"
 #include "typesf2c.h"
-#include "global.h"
 
 extern int _max_global_array;
 extern Integer *_ga_map;
