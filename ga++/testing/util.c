@@ -24,6 +24,7 @@
 #  include <tcgmsg.h>
 #endif
 
+#include "ga.h"
 #include "macdecls.h"
 #include "testutil.h"
 #include "globalp.h"

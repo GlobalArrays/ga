@@ -320,7 +320,7 @@ void pnga_release_update_ghost_element(Integer* g_a, Integer subscript[])
 /*\ RELEASE ACCESS TO A GHOST BLOCK
 \*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak
+#   pragma weak wnga_release_ghosts = pnga_release_ghosts
 #endif
 void pnga_release_ghosts(Integer* g_a)
 {
@@ -4167,9 +4167,9 @@ logical pnga_set_ghost_info(Integer *g_a)
   GA[handle].cache = NULL;
   if (GA[handle].actv == 1) {
 #ifdef CRAY_T3D
-    return ga_set_update5_info_(g_a);
+    return pnga_set_update5_info(g_a);
 #else
-    return ga_set_update4_info_(g_a);
+    return pnga_set_update4_info(g_a);
 #endif
   }
   return TRUE;

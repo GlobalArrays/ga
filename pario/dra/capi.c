@@ -13,6 +13,7 @@
 #include "draf2c.h"
 #include "drap.h"
 #include "global.h"
+#include "papi.h"
 
 static Integer _da_lo[MAXDIM], _da_hi[MAXDIM];
 static Integer _da_dims[MAXDIM];

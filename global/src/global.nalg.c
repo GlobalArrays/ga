@@ -174,6 +174,7 @@ void pnga_zero(Integer *g_a)
 
 
 
+#if 0
 /*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
 \*/
 static void FATR snga_copy_old(Integer *g_a, Integer *g_b)
@@ -234,6 +235,7 @@ void *ptr_a, *ptr_b;
 
    GA_POP_NAME;
 }
+#endif
 
 
 

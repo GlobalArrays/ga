@@ -17,6 +17,7 @@
 #include "farg.h"
 #include "globalp.h"
 #include "macommon.h"
+#include "matmul.h"
 
 /* c.names.h does not contain all of the fortran functions */
 /* usually the missing ones are either complex type or strangely named */
@@ -42,6 +43,11 @@
 #define gai_zdot_         F77_FUNC_(gai_zdot,GAI_ZDOT)
 #define ngai_cdot_        F77_FUNC_(ngai_cdot,NGAI_CDOT)
 #define ngai_zdot_        F77_FUNC_(ngai_zdot,NGAI_ZDOT)
+
+#define ga_cgemm_         F77_FUNC_(ga_cgemm,GA_CGEMM)
+#define ga_dgemm_         F77_FUNC_(ga_dgemm,GA_DGEMM)
+#define ga_sgemm_         F77_FUNC_(ga_sgemm,GA_SGEMM)
+#define ga_zgemm_         F77_FUNC_(ga_zgemm,GA_ZGEMM)
 
 #include "papi.h"
 #if ENABLE_PROFILING
@@ -541,6 +547,26 @@ void FATR nga_list_nodeid_(Integer *list, Integer *nprocs)
 Integer FATR nga_locate_num_blocks_(Integer *g_a, Integer *lo, Integer *hi)
 {
   return wnga_locate_num_blocks(g_a,lo,hi);
+}
+
+logical FATR ga_locate_nnodes_( Integer *g_a,
+                                Integer *ilo,
+                                Integer *ihi,
+                                Integer *jlo,
+                                Integer *jhi,
+                                Integer *np)
+{
+  Integer lo[2], hi[2];
+  lo[0] = *ilo;
+  lo[1] = *jlo;
+  hi[0] = *ihi;
+  hi[1] = *jhi;
+  return wnga_locate_nnodes(g_a, lo, hi, np);
+}
+
+logical FATR nga_locate_nnodes_(Integer *g_a, Integer *lo, Integer *hi, Integer *np)
+{
+    return wnga_locate_nnodes(g_a, lo, hi, np);
 }
 
 logical FATR ga_locate_region_( Integer *g_a,
@@ -1053,11 +1079,6 @@ void FATR nga_check_handle_(Integer *g_a, char *fstring, int slen)
 
     ga_f2cstring(fstring , slen, buf, FMSG);
     wnga_check_handle(g_a, buf);
-}
-
-logical FATR nga_locate_nnodes_(Integer *g_a, Integer *lo, Integer *hi, Integer *np)
-{
-    return wnga_locate_nnodes(g_a, lo, hi, np);
 }
 
 /* Routines from onesided.c */
@@ -3173,3 +3194,196 @@ void FATR nga_periodic_acc_(Integer *g_a, Integer *lo, Integer *hi,
     vampir_end(NGA_PERIODIC_ACC,__FILE__,__LINE__);
 #endif
 }
+
+/* Routines from matmul.c */
+
+void FATR ga_matmul_mirrored_(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        transa, transb, alpha, beta, g_a, ailo, aihi, ajlo, ajhi, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi, alen, blen
+#else
+        transa, alen, transb, blen, alpha, beta, g_a, ailo, aihi, ajlo, ajhi, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi
+#endif
+        )
+Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
+Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+Integer *g_c, *cilo, *cihi, *cjlo, *cjhi;    /* patch of g_c */
+void    *alpha, *beta;
+char    *transa, *transb;
+int      alen, blen;
+{
+    wnga_matmul_mirrored(transa, transb, alpha, beta, g_a, ailo, aihi, ajlo, ajhi, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi);
+}
+
+void FATR nga_matmul_patch_(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer alo[], Integer ahi[], Integer *g_b, Integer blo[], Integer bhi[], Integer *g_c, Integer clo[], Integer chi[], int alen, int blen
+#else
+        char *transa, int alen, char *transb, int blen, void *alpha, void *beta, Integer *g_a, Integer alo[], Integer ahi[], Integer *g_b, Integer blo[], Integer bhi[], Integer *g_c, Integer clo[], Integer chi[]
+#endif
+        )
+{
+    wnga_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi);
+}
+
+void FATR ga_matmul_patch_(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        char *transa, char *transb, DoublePrecision *alpha, DoublePrecision *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi, int alen, int blen
+#else
+        char *transa, int alen, char *transb, int blen, DoublePrecision *alpha, DoublePrecision *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi
+#endif
+        )
+{
+#if 0
+Integer alo[2], ahi[2]; 
+Integer blo[2], bhi[2];
+Integer clo[2], chi[2];
+        alo[0]=*ailo; ahi[0]=*aihi; alo[1]=*ajlo; ahi[1]=*ajhi;
+        blo[0]=*bilo; bhi[0]=*bihi; blo[1]=*bjlo; bhi[1]=*bjhi;
+        clo[0]=*cilo; chi[0]=*cihi; clo[1]=*cjlo; chi[1]=*cjhi;
+    pnga_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi,
+                         g_b, blo, bhi, g_c, clo, chi);
+#else
+    if(pnga_is_mirrored(g_a))
+       wnga_matmul_mirrored(transa, transb, (void*)alpha, (void*)beta,
+                  g_a, ailo, aihi, ajlo, ajhi,
+                  g_b, bilo, bihi, bjlo, bjhi,
+                  g_c, cilo, cihi, cjlo, cjhi);
+    else {
+       gai_matmul_patch_flag(SET);
+       wnga_matmul(transa, transb, (void*)alpha, (void*)beta,
+             g_a, ailo, aihi, ajlo, ajhi,
+             g_b, bilo, bihi, bjlo, bjhi,
+             g_c, cilo, cihi, cjlo, cjhi);
+       gai_matmul_patch_flag(UNSET);
+    }
+#endif
+}
+
+void FATR ga_matmul_(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        transa, transb, alpha, beta, g_a, ailo, aihi, ajlo, ajhi, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi, alen, blen
+#else
+        transa, alen, transb, blen, alpha, beta, g_a, ailo, aihi, ajlo, ajhi, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi
+#endif
+        )
+Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
+Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+Integer *g_c, *cilo, *cihi, *cjlo, *cjhi;    /* patch of g_c */
+void    *alpha, *beta;
+char    *transa, *transb;
+int      alen, blen;
+{
+    wnga_matmul(transa, transb, alpha, beta, g_a, ailo, aihi, ajlo, ajhi, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi);
+}
+
+/* use ga_dgemm in ga_dgemmf.F as accumulate is sloooow in CRAY_XT */
+#ifdef CRAY_XT
+#   define GA_DGEMM ga_dgemm_DISABLE 
+#else
+#   define GA_DGEMM ga_dgemm_
+#endif
+
+#define  SET_GEMM_INDICES\
+      Integer ailo = 1;\
+  Integer aihi = *m;\
+  Integer ajlo = 1;\
+  Integer ajhi = *k;\
+\
+  Integer bilo = 1;\
+  Integer bihi = *k;\
+  Integer bjlo = 1;\
+  Integer bjhi = *n;\
+\
+  Integer cilo = 1;\
+  Integer cihi = *m;\
+  Integer cjlo = 1;\
+  Integer cjhi = *n
+
+void FATR GA_DGEMM(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        char *transa, char *transb,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c, int talen, int tblen
+#else
+        char *transa, int talen, char *transb, int tblen,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c
+#endif
+        )
+{
+SET_GEMM_INDICES;
+
+ pnga_matmul(transa, transb, alpha, beta,
+       g_a, &ailo, &aihi, &ajlo, &ajhi,
+       g_b, &bilo, &bihi, &bjlo, &bjhi,
+       g_c, &cilo, &cihi, &cjlo, &cjhi);
+}
+
+void FATR ga_cgemm_(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        char *transa, char *transb,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c, int talen, int tblen
+#else
+        char *transa, int talen, char *transb, int tblen,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c
+#endif
+        )
+{
+SET_GEMM_INDICES;
+
+  pnga_matmul (transa, transb, alpha, beta,
+         g_a, &ailo, &aihi, &ajlo, &ajhi,
+         g_b, &bilo, &bihi, &bjlo, &bjhi,
+         g_c, &cilo, &cihi, &cjlo, &cjhi);
+}
+
+void FATR ga_sgemm_(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        char *transa, char *transb,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c, int talen, int tblen
+#else
+        char *transa, int talen, char *transb, int tblen,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c
+#endif
+        )
+{
+SET_GEMM_INDICES;
+
+  pnga_matmul (transa, transb, alpha, beta,
+         g_a, &ailo, &aihi, &ajlo, &ajhi,
+         g_b, &bilo, &bihi, &bjlo, &bjhi,
+         g_c, &cilo, &cihi, &cjlo, &cjhi);
+}
+
+void FATR ga_zgemm_(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        char *transa, char *transb,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c, int talen, int tblen
+#else
+        char *transa, int talen, char *transb, int tblen,
+        Integer *m, Integer *n, Integer *k,
+        void *alpha, Integer *g_a, Integer *g_b,
+        void *beta, Integer *g_c
+#endif
+        )
+{
+SET_GEMM_INDICES;
+
+  pnga_matmul (transa, transb, alpha, beta,
+         g_a, &ailo, &aihi, &ajlo, &ajhi,
+         g_b, &bilo, &bihi, &bjlo, &bjhi,
+         g_c, &cilo, &cihi, &cjlo, &cjhi);
+}
+

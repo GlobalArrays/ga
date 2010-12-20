@@ -69,6 +69,7 @@ extern logical pnga_is_mirrored(Integer *g_a);
 extern void pnga_list_nodeid(Integer *list, Integer *nprocs);
 extern logical pnga_locate(Integer *g_a, Integer *subscript, Integer *owner);
 extern Integer pnga_locate_num_blocks(Integer *g_a, Integer *lo, Integer *hi);
+extern logical pnga_locate_nnodes(Integer *g_a, Integer *lo, Integer *hi, Integer *np);
 extern logical pnga_locate_region(Integer *g_a, Integer *lo, Integer *hi,
                                   Integer *map, Integer *proclist, Integer *np);
 extern void pnga_lock(Integer *mutex);
@@ -322,5 +323,11 @@ extern void pnga_symmetrize(Integer *g_a);
 /* Routines from global.periodic.c */
 
 extern void pnga_periodic(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, void *alpha, Integer op_code);
+
+/* Routines from matmul.c */
+
+extern void pnga_matmul(char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi);
+extern void pnga_matmul_mirrored(char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi);
+extern void pnga_matmul_patch(char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer alo[], Integer ahi[], Integer *g_b, Integer blo[], Integer bhi[], Integer *g_c, Integer clo[], Integer chi[]);
 
 #endif /* PAPI_H_ */

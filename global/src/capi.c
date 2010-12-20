@@ -20,6 +20,7 @@
 #include "ga.h"
 #include "globalp.h"
 #include "papi.h"
+#include "matmul.h"
 
 #if ENABLE_PROFILING
 #   include "wapi.h"
@@ -2972,7 +2973,7 @@ void GA_Dgemm_c(char ta, char tb, int m, int n, int k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
+  pnga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
 	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
 	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
@@ -3001,7 +3002,7 @@ void GA_Zgemm_c(char ta, char tb, int m, int n, int k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
+  pnga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
 	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
 	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
@@ -3030,7 +3031,7 @@ void GA_Cgemm_c(char ta, char tb, int m, int n, int k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul(&ta, &tb, (float *)&alpha,(float *)&beta,
+  pnga_matmul(&ta, &tb, (float *)&alpha,(float *)&beta,
 	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
 	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
@@ -3059,7 +3060,7 @@ void GA_Sgemm_c(char ta, char tb, int m, int n, int k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul(&ta, &tb, (float*)&alpha, (float*)&beta,
+  pnga_matmul(&ta, &tb, (float*)&alpha, (float*)&beta,
 	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
 	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
@@ -3087,7 +3088,7 @@ void GA_Dgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
+  pnga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
 	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
 	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
@@ -3116,7 +3117,7 @@ void GA_Zgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
+  pnga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
 	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
 	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
@@ -3145,7 +3146,7 @@ void GA_Cgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul(&ta, &tb, (float *)&alpha,(float *)&beta,
+  pnga_matmul(&ta, &tb, (float *)&alpha,(float *)&beta,
 	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
 	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
@@ -3174,7 +3175,7 @@ void GA_Sgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul(&ta, &tb, (float*)&alpha, (float*)&beta,
+  pnga_matmul(&ta, &tb, (float*)&alpha, (float*)&beta,
 	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
 	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
@@ -3182,7 +3183,7 @@ void GA_Sgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
 
 /**
  * When calling GA _dgemm from the C, it is represented as follows (since the
- * underlying GA dgemm implementation ga_matmul is in Fortran style)
+ * underlying GA dgemm implementation pnga_matmul is in Fortran style)
  *   C(m,n) = A(m,k) * B(k,n)
  * Since GA internally creates GAs in Fortran style, we remap the above
  * expression to: C(n,m) = B(n,k) * A(k,m) and pass it to fortran. This
@@ -3291,29 +3292,36 @@ void GA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
 		     int g_c, int cilo, int cihi, int cjlo, int cjhi)
 
 {
-    Integer a=(Integer)g_a;
-    Integer b=(Integer)g_b;
-    Integer c=(Integer)g_c;
-
-    Integer ga_ailo=(Integer)(ailo+1);
-    Integer ga_aihi=(Integer)(aihi+1);
-    Integer ga_ajlo=(Integer)(ajlo+1); 
-    Integer ga_ajhi=(Integer)(ajhi+1);  
-    
-    Integer ga_bilo=(Integer)(bilo+1);
-    Integer ga_bihi=(Integer)(bihi+1);
-    Integer ga_bjlo=(Integer)(bjlo+1); 
-    Integer ga_bjhi=(Integer)(bjhi+1);  
-    
-    Integer ga_cilo=(Integer)(cilo+1);
-    Integer ga_cihi=(Integer)(cihi+1);
-    Integer ga_cjlo=(Integer)(cjlo+1); 
-    Integer ga_cjhi=(Integer)(cjhi+1);  
-   
-    nga_matmul_patch_(&transa, &transb, alpha, beta,
-		    &a, &ga_ailo, &ga_aihi, &ga_ajlo, &ga_ajhi,
-		    &b, &ga_bilo, &ga_bihi, &ga_bjlo, &ga_bjhi,
-		    &c, &ga_cilo, &ga_cihi, &ga_cjlo, &ga_cjhi);
+    Integer Ig_a = g_a;
+    Integer Ig_b = g_b;
+    Integer Ig_c = g_c;
+#if 0
+    Integer alo[2], ahi[2]; 
+    Integer blo[2], bhi[2];
+    Integer clo[2], chi[2];
+    alo[0]=ailo+1; ahi[0]=aihi+1; alo[1]=ajlo+1; ahi[1]=ajhi+1;
+    blo[0]=bilo+1; bhi[0]=bihi+1; blo[1]=bjlo+1; bhi[1]=bjhi+1;
+    clo[0]=cilo+1; chi[0]=cihi+1; clo[1]=cjlo+1; chi[1]=cjhi+1;
+    pnga_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi,
+                         g_b, blo, bhi, g_c, clo, chi);
+#else
+    Integer Iailo=ailo+1, Iaihi=aihi+1, Iajlo=ajlo+1, Iajhi=ajhi+1;
+    Integer Ibilo=bilo+1, Ibihi=bihi+1, Ibjlo=bjlo+1, Ibjhi=bjhi+1;
+    Integer Icilo=cilo+1, Icihi=cihi+1, Icjlo=cjlo+1, Icjhi=cjhi+1;
+    if(pnga_is_mirrored(&Ig_a))
+       wnga_matmul_mirrored(&transa, &transb, (void*)alpha, (void*)beta,
+                  &Ig_a, &Iailo, &Iaihi, &Iajlo, &Iajhi,
+                  &Ig_b, &Ibilo, &Ibihi, &Ibjlo, &Ibjhi,
+                  &Ig_c, &Icilo, &Icihi, &Icjlo, &Icjhi);
+    else {
+       gai_matmul_patch_flag(SET);
+       wnga_matmul(&transa, &transb, (void*)alpha, (void*)beta,
+             &Ig_a, &Iailo, &Iaihi, &Iajlo, &Iajhi,
+             &Ig_b, &Ibilo, &Ibihi, &Ibjlo, &Ibjhi,
+             &Ig_c, &Icilo, &Icihi, &Icjlo, &Icjhi);
+       gai_matmul_patch_flag(UNSET);
+    }
+#endif
 }
 
 void GA_Matmul_patch64(char transa, char transb, void* alpha, void *beta,
@@ -3322,29 +3330,36 @@ void GA_Matmul_patch64(char transa, char transb, void* alpha, void *beta,
                        int g_c, int64_t cilo, int64_t cihi, int64_t cjlo, int64_t cjhi)
 
 {
-    Integer a=(Integer)g_a;
-    Integer b=(Integer)g_b;
-    Integer c=(Integer)g_c;
-
-    Integer ga_ailo=(Integer)(ailo+1);
-    Integer ga_aihi=(Integer)(aihi+1);
-    Integer ga_ajlo=(Integer)(ajlo+1); 
-    Integer ga_ajhi=(Integer)(ajhi+1);  
-    
-    Integer ga_bilo=(Integer)(bilo+1);
-    Integer ga_bihi=(Integer)(bihi+1);
-    Integer ga_bjlo=(Integer)(bjlo+1); 
-    Integer ga_bjhi=(Integer)(bjhi+1);  
-    
-    Integer ga_cilo=(Integer)(cilo+1);
-    Integer ga_cihi=(Integer)(cihi+1);
-    Integer ga_cjlo=(Integer)(cjlo+1); 
-    Integer ga_cjhi=(Integer)(cjhi+1);  
-   
-    nga_matmul_patch_(&transa, &transb, alpha, beta,
-		    &a, &ga_ailo, &ga_aihi, &ga_ajlo, &ga_ajhi,
-		    &b, &ga_bilo, &ga_bihi, &ga_bjlo, &ga_bjhi,
-		    &c, &ga_cilo, &ga_cihi, &ga_cjlo, &ga_cjhi);
+    Integer Ig_a = g_a;
+    Integer Ig_b = g_b;
+    Integer Ig_c = g_c;
+#if 0
+    Integer alo[2], ahi[2]; 
+    Integer blo[2], bhi[2];
+    Integer clo[2], chi[2];
+    alo[0]=ailo+1; ahi[0]=aihi+1; alo[1]=ajlo+1; ahi[1]=ajhi+1;
+    blo[0]=bilo+1; bhi[0]=bihi+1; blo[1]=bjlo+1; bhi[1]=bjhi+1;
+    clo[0]=cilo+1; chi[0]=cihi+1; clo[1]=cjlo+1; chi[1]=cjhi+1;
+    pnga_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi,
+                         g_b, blo, bhi, g_c, clo, chi);
+#else
+    Integer Iailo=ailo+1, Iaihi=aihi+1, Iajlo=ajlo+1, Iajhi=ajhi+1;
+    Integer Ibilo=bilo+1, Ibihi=bihi+1, Ibjlo=bjlo+1, Ibjhi=bjhi+1;
+    Integer Icilo=cilo+1, Icihi=cihi+1, Icjlo=cjlo+1, Icjhi=cjhi+1;
+    if(pnga_is_mirrored(&Ig_a))
+       wnga_matmul_mirrored(&transa, &transb, (void*)alpha, (void*)beta,
+                  &Ig_a, &Iailo, &Iaihi, &Iajlo, &Iajhi,
+                  &Ig_b, &Ibilo, &Ibihi, &Ibjlo, &Ibjhi,
+                  &Ig_c, &Icilo, &Icihi, &Icjlo, &Icjhi);
+    else {
+       gai_matmul_patch_flag(SET);
+       wnga_matmul(&transa, &transb, (void*)alpha, (void*)beta,
+             &Ig_a, &Iailo, &Iaihi, &Iajlo, &Iajhi,
+             &Ig_b, &Ibilo, &Ibihi, &Ibjlo, &Ibjhi,
+             &Ig_c, &Icilo, &Icihi, &Icjlo, &Icjhi);
+       gai_matmul_patch_flag(UNSET);
+    }
+#endif
 }
 
 void NGA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
@@ -3374,7 +3389,7 @@ void NGA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
     
-    ngai_matmul_patch(&transa, &transb, alpha, beta,
+    pnga_matmul_patch(&transa, &transb, alpha, beta,
 		     &a, _ga_alo, _ga_ahi,
 		     &b, _ga_blo, _ga_bhi,
 		     &c, _ga_clo, _ga_chi);
@@ -3407,7 +3422,7 @@ void NGA_Matmul_patch64(char transa, char transb, void* alpha, void *beta,
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
     
-    ngai_matmul_patch(&transa, &transb, alpha, beta,
+    pnga_matmul_patch(&transa, &transb, alpha, beta,
 		     &a, _ga_alo, _ga_ahi,
 		     &b, _ga_blo, _ga_bhi,
 		     &c, _ga_clo, _ga_chi);

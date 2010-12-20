@@ -44,10 +44,16 @@
 /* some optimization macros */
 #define KCHUNK_OPTIMIZATION 0 /* This Opt performing well only for m=1000;n=1000'k=2000 kinda cases and not for the opposite*/
 
-/* Optimization flags: Initialized everytime in ga_matmul() */
+/* Optimization flags: Initialized everytime in pnga_matmul() */
 static short int CYCLIC_DISTR_OPT_FLAG  = SET;
 static short int CONTIG_CHUNKS_OPT_FLAG = SET;
 static short int DIRECT_ACCESS_OPT_FLAG = SET;
+
+static int _gai_matmul_patch_flag = 0;
+void gai_matmul_patch_flag(int flag)
+{
+    _gai_matmul_patch_flag = flag;
+}
 
 static inline int max3(int ichunk, int jchunk, int kchunk) {
   if(ichunk>jchunk) return GA_MAX(ichunk,kchunk);
@@ -1118,7 +1124,7 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
     cdim = m;
  
     if(cond==0) { /* store the original matrix C before matmul starts, as 
-		     matrix C is subject to change during ga_matmul */
+		     matrix C is subject to change during pnga_matmul */
        tmpc_orig= (DoubleComplex*)malloc(sizeof(DoubleComplex)*(m*n/factor+1));
        if(tmpc_orig==NULL) pnga_error("check_result: malloc failed", 0);
        
@@ -1310,7 +1316,10 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
  * PARALLEL DGEMM
  *     i.e.  C = alpha*A*B + beta*C
  ******************************************/
-void ga_matmul(transa, transb, alpha, beta,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_matmul = pnga_matmul
+#endif
+void pnga_matmul(transa, transb, alpha, beta,
 	       g_a, ailo, aihi, ajlo, ajhi,
 	       g_b, bilo, bihi, bjlo, bjhi,
 	       g_c, cilo, cihi, cjlo, cjhi)
@@ -1349,7 +1358,7 @@ void ga_matmul(transa, transb, alpha, beta,
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)pnga_pgroup_sync(&a_grp);
 
-    GA_PUSH_NAME("ga_matmul");
+    GA_PUSH_NAME("pnga_matmul");
 
     if (a_grp != b_grp || a_grp != c_grp)
        pnga_error("Arrays must be defined on same group",0L);
@@ -1592,7 +1601,10 @@ void ga_matmul(transa, transb, alpha, beta,
 
 /* This is the old matmul code. It is enabled now for mirrored matrix multiply. 
    It also work for normal matrix/vector multiply with no changes */
-void ga_matmul_mirrored(transa, transb, alpha, beta,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_matmul_mirrored = pnga_matmul_mirrored
+#endif
+void pnga_matmul_mirrored(transa, transb, alpha, beta,
 			g_a, ailo, aihi, ajlo, ajhi,
 			g_b, bilo, bihi, bjlo, bjhi,
 			g_c, cilo, cihi, cjlo, cjhi)
@@ -1942,6 +1954,7 @@ Integer clo[2], chi[2];
 }
 
 
+#if 0
 void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
         Integer *g_a,Integer *ailo,Integer *aihi,Integer *ajlo,Integer *ajhi,
         Integer *g_b,Integer *bilo,Integer *bihi,Integer *bjlo,Integer *bjhi,
@@ -1951,13 +1964,13 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
   vampir_begin(GA_MATMUL_PATCH,__FILE__,__LINE__);
 #endif
     if(pnga_is_mirrored(g_a)) 
-       ga_matmul_mirrored(transa, transb, alpha, beta,
+       pnga_matmul_mirrored(transa, transb, alpha, beta,
 			  g_a, ailo, aihi, ajlo, ajhi,
 			  g_b, bilo, bihi, bjlo, bjhi,
 			  g_c, cilo, cihi, cjlo, cjhi);
     else {
        _gai_matmul_patch_flag = SET;
-       ga_matmul(transa, transb, alpha, beta,
+       pnga_matmul(transa, transb, alpha, beta,
 		 g_a, ailo, aihi, ajlo, ajhi,
 		 g_b, bilo, bihi, bjlo, bjhi,
 		 g_c, cilo, cihi, cjlo, cjhi);
@@ -1968,6 +1981,7 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
 #endif
 
 }
+#endif
 
 
 /*\ select the 2d plane to be used in matrix multiplication                     
@@ -2021,7 +2035,10 @@ static void  gai_setup_2d_patch(Integer rank, Integer dims[],
  *  [lo:hi,lo:hi] - patch indices _after_ op() operator was applied
  *
 \*/
-void ngai_matmul_patch(char *transa, char *transb, void *alpha, void *beta, 
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_matmul_patch = pnga_matmul_patch
+#endif
+void pnga_matmul_patch(char *transa, char *transb, void *alpha, void *beta, 
 		      Integer *g_a, Integer alo[], Integer ahi[], 
                       Integer *g_b, Integer blo[], Integer bhi[], 
 		      Integer *g_c, Integer clo[], Integer chi[])
@@ -2346,170 +2363,6 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
 #ifdef USE_VAMPIR
   vampir_end(NGA_MATMUL_PATCH,__FILE__,__LINE__);
-#endif
-}
-
-/*\ MATRIX MULTIPLICATION for patches 
- *  Fortran interface
-\*/
-#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-void FATR nga_matmul_patch_(char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer alo[], Integer ahi[], Integer *g_b, Integer blo[], Integer bhi[], Integer *g_c, Integer clo[], Integer chi[], int alen, int blen)
-#else
-void FATR nga_matmul_patch_(char *transa, int alen, char *transb, int blen, void *alpha, void *beta, Integer *g_a, Integer alo[], Integer ahi[], Integer *g_b, Integer blo[], Integer bhi[], Integer *g_c, Integer clo[], Integer chi[])
-#endif
-{    
-	ngai_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi,
-                         g_b, blo, bhi, g_c, clo, chi);
-}
-
-#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-void FATR ga_matmul_patch_(char *transa, char *transb, DoublePrecision *alpha, DoublePrecision *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi, int alen, int blen)
-#else
-void FATR ga_matmul_patch_(char *transa, int alen, char *transb, int blen, DoublePrecision *alpha, DoublePrecision *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi)
-#endif
-{    
-#ifdef USE_VAMPIR
-  vampir_begin(GA_MATMUL_PATCH,__FILE__,__LINE__);
-#endif
-#if 0
-Integer alo[2], ahi[2]; 
-Integer blo[2], bhi[2];
-Integer clo[2], chi[2];
-        alo[0]=*ailo; ahi[0]=*aihi; alo[1]=*ajlo; ahi[1]=*ajhi;
-        blo[0]=*bilo; bhi[0]=*bihi; blo[1]=*bjlo; bhi[1]=*bjhi;
-        clo[0]=*cilo; chi[0]=*cihi; clo[1]=*cjlo; chi[1]=*cjhi;
-	ngai_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi,
-                         g_b, blo, bhi, g_c, clo, chi);
-#else
-	if(pnga_is_mirrored(g_a)) 
-	   ga_matmul_mirrored(transa, transb, (void*)alpha, (void*)beta,
-			      g_a, ailo, aihi, ajlo, ajhi,
-			      g_b, bilo, bihi, bjlo, bjhi,
-			      g_c, cilo, cihi, cjlo, cjhi);
-	else {
-	   _gai_matmul_patch_flag = SET;
-	   ga_matmul(transa, transb, (void*)alpha, (void*)beta,
-		     g_a, ailo, aihi, ajlo, ajhi,
-		     g_b, bilo, bihi, bjlo, bjhi,
-		     g_c, cilo, cihi, cjlo, cjhi);
-	   _gai_matmul_patch_flag = UNSET;
-	}
-#endif
-#ifdef USE_VAMPIR
-  vampir_end(GA_MATMUL_PATCH,__FILE__,__LINE__);
-#endif
-}
-
-
-/*********************** Fortran wrappers for ga_Xgemm ***********************/
-
-/* use ga_dgemm in ga_dgemmf.F as accumulate is sloooow in CRAY_XT */
-#ifdef CRAY_XT
-#   define GA_DGEMM ga_dgemm_DISABLE 
-#else
-#   define GA_DGEMM ga_dgemm_
-#endif
-
-#define  SET_GEMM_INDICES\
-  Integer ailo = 1;\
-  Integer aihi = *m;\
-  Integer ajlo = 1;\
-  Integer ajhi = *k;\
-\
-  Integer bilo = 1;\
-  Integer bihi = *k;\
-  Integer bjlo = 1;\
-  Integer bjhi = *n;\
-\
-  Integer cilo = 1;\
-  Integer cihi = *m;\
-  Integer cjlo = 1;\
-  Integer cjhi = *n
-
-#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-void FATR GA_DGEMM(
-        char *transa, char *transb,
-        Integer *m, Integer *n, Integer *k,
-        void *alpha, Integer *g_a, Integer *g_b,
-        void *beta, Integer *g_c, int talen, int tblen
-        )
-#else
-void FATR GA_DGEMM(
-        char *transa, int talen, char *transb, int tblen,
-        Integer *m, Integer *n, Integer *k,
-        void *alpha, Integer *g_a, Integer *g_b,
-        void *beta, Integer *g_c
-        )
-#endif
-{
-SET_GEMM_INDICES;
- 
-#ifdef USE_VAMPIR
-  vampir_begin(VT_GA_DGEMM,__FILE__,__LINE__);
-#endif
- ga_matmul(transa, transb, alpha, beta,
-	   g_a, &ailo, &aihi, &ajlo, &ajhi,
-	   g_b, &bilo, &bihi, &bjlo, &bjhi,
-	   g_c, &cilo, &cihi, &cjlo, &cjhi);
-#ifdef USE_VAMPIR
-  vampir_end(VT_GA_DGEMM,__FILE__,__LINE__);
-#endif
-}
-
-#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-void FATR ga_sgemm_(
-        char *transa, char *transb,
-        Integer *m, Integer *n, Integer *k,
-        void *alpha, Integer *g_a, Integer *g_b,
-        void *beta, Integer *g_c, int talen, int tblen)
-#else
-void FATR ga_sgemm_(
-        char *transa, int talen, char *transb, int tblen,
-        Integer *m, Integer *n, Integer *k,
-        void *alpha, Integer *g_a, Integer *g_b,
-        void *beta, Integer *g_c)
-#endif
-{
-SET_GEMM_INDICES;
-
-#ifdef USE_VAMPIR
-  vampir_begin(VT_GA_SGEMM,__FILE__,__LINE__);
-#endif
-  ga_matmul (transa, transb, alpha, beta,
-	     g_a, &ailo, &aihi, &ajlo, &ajhi,
-	     g_b, &bilo, &bihi, &bjlo, &bjhi,
-	     g_c, &cilo, &cihi, &cjlo, &cjhi);
-#ifdef USE_VAMPIR
-  vampir_end(VT_GA_SGEMM,__FILE__,__LINE__);
-#endif
-}
-
-
-#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-void FATR ga_zgemm_(
-        char *transa, char *transb,
-        Integer *m, Integer *n, Integer *k,
-        void *alpha, Integer *g_a, Integer *g_b,
-        void *beta, Integer *g_c, int talen, int tblen)
-#else
-void FATR ga_zgemm_(
-        char *transa, int talen, char *transb, int tblen,
-        Integer *m, Integer *n, Integer *k,
-        void *alpha, Integer *g_a, Integer *g_b,
-        void *beta, Integer *g_c)
-#endif
-{
-SET_GEMM_INDICES;
-
-#ifdef USE_VAMPIR
-  vampir_begin(VT_GA_ZGEMM,__FILE__,__LINE__);
-#endif
-  ga_matmul (transa, transb, alpha, beta,
-	     g_a, &ailo, &aihi, &ajlo, &ajhi,
-	     g_b, &bilo, &bihi, &bjlo, &bjhi,
-	     g_c, &cilo, &cihi, &cjlo, &cjhi);
-#ifdef USE_VAMPIR
-  vampir_end(VT_GA_ZGEMM,__FILE__,__LINE__);
 #endif
 }
 

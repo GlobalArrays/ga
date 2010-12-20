@@ -3278,7 +3278,8 @@ void pnga_get_proc_grid(Integer *g_a, Integer *dims)
   }
 }
 
-void gai_get_proc_from_block_index_(Integer *g_a, Integer *index, Integer *proc)
+#if 0
+static void gai_get_proc_from_block_index_(Integer *g_a, Integer *index, Integer *proc)
 {
   Integer ga_handle = GA_OFFSET + *g_a;
   Integer ndim = GA[ga_handle].ndim;
@@ -3308,6 +3309,7 @@ void gai_get_proc_from_block_index_(Integer *g_a, Integer *index, Integer *proc)
     *proc = *proc%pnga_nnodes();
   }
 }
+#endif
 
 /*\
  * RETURN HOW MANY PROCESSORS/OWNERS THERE ARE FOR THE SPECIFIED PATCH OF A

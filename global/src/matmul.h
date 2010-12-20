@@ -32,7 +32,8 @@
 #define SET   1
 #define UNSET 0
 
-static int _gai_matmul_patch_flag = 0; 
+extern void gai_matmul_patch_flag(int flag);
+
 Integer gNbhdlA[2], gNbhdlB[2], gNbhdlC[2];/* for A and B matrix */
 typedef struct {
   int lo[2]; /* 2 elements: ilo and klo */
