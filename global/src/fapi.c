@@ -2642,7 +2642,7 @@ static void sga_fill_patch(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jl
     Integer lo[2], hi[2];
 
     lo[0] = *ilo; lo[1] = *jlo;
-    hi[0] = *ihi; lo[1] = *jhi;
+    hi[0] = *ihi; hi[1] = *jhi;
     wnga_fill_patch(g_a, lo, hi, val);
 }
 
