@@ -1142,6 +1142,16 @@ int PARMCI_Put(void *src, void* dst, int bytes, int proc) {
   return rc;
 }
 
+int PARMCI_Acc(int optype, void *scale, void *src, void* dst, int bytes, int proc) {
+  int rc=0;
+  ARMCI_PROFILE_START_STRIDED(&bytes, 0, proc, ARMCI_PROF_ACC);
+  rc = PARMCI_AccS(optype, scale,
+		   src, NULL, dst, NULL, &bytes, 0, proc);
+  ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_ACC);
+  return rc;
+}
+
+
 int PARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc) {
   return  PARMCI_PutS_flag(src, NULL, dst, NULL, &bytes, 0, f, v, proc);
 }

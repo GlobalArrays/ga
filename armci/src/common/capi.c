@@ -111,6 +111,14 @@ ARMCI_Put (void *src, void *dst, int bytes, int proc)
 }
 
 int
+ARMCI_Acc(int optype, void *scale, void *src, void* dst, int bytes, int proc) 
+{
+  int rval;
+  rval = PARMCI_Acc(optype, scale, src, dst, bytes, proc);
+  return rval;
+}
+
+int
 ARMCI_Destroy_mutexes ()
 {
   int rval;
