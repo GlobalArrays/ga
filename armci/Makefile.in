@@ -299,7 +299,6 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/memlock.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/mp3.fh \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/mp3.h \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/parmci.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/request.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/semaphores.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/shmalloc.h \
@@ -423,6 +422,7 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__append_68 = src/common/x86copy_as.s
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__append_69 = src/tas-sx.s
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_70 = src/include/armci.h \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/parmci.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/message.h
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_71 = -I$(top_srcdir)/src/include
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_72 = src/common/x86copy_as.s \
@@ -663,14 +663,13 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src/include/copy.h src/include/fujitsu-vpp.h src/include/gpc.h \
 	src/include/kr_malloc.h src/include/locks.h \
 	src/include/memlock.h src/include/mp3.fh src/include/mp3.h \
-	src/include/parmci.h src/include/request.h \
-	src/include/semaphores.h src/include/shmalloc.h \
-	src/include/shmem.h src/include/shmlimit.h \
-	src/include/signaltrap.h src/include/spinlock.h \
-	src/include/tas-alpha.h src/include/tas-i386.h \
-	src/include/tas-ia64.h src/include/tas-ppc.h \
-	src/include/utils.h src/locks/locks.c src/locks/memlock.c \
-	src/locks/mutex.c src/locks/semaphores.c \
+	src/include/request.h src/include/semaphores.h \
+	src/include/shmalloc.h src/include/shmem.h \
+	src/include/shmlimit.h src/include/signaltrap.h \
+	src/include/spinlock.h src/include/tas-alpha.h \
+	src/include/tas-i386.h src/include/tas-ia64.h \
+	src/include/tas-ppc.h src/include/utils.h src/locks/locks.c \
+	src/locks/memlock.c src/locks/mutex.c src/locks/semaphores.c \
 	src/memory/kr_malloc.c src/memory/memory.c \
 	src/progress/fence.c src/progress/wait.c \
 	src/xfer/caccumulate.c src/xfer/rmw.c src/xfer/strided.c \
@@ -977,14 +976,13 @@ am__libarmcii_la_SOURCES_DIST = src-portals/acc.h \
 	src/include/copy.h src/include/fujitsu-vpp.h src/include/gpc.h \
 	src/include/kr_malloc.h src/include/locks.h \
 	src/include/memlock.h src/include/mp3.fh src/include/mp3.h \
-	src/include/parmci.h src/include/request.h \
-	src/include/semaphores.h src/include/shmalloc.h \
-	src/include/shmem.h src/include/shmlimit.h \
-	src/include/signaltrap.h src/include/spinlock.h \
-	src/include/tas-alpha.h src/include/tas-i386.h \
-	src/include/tas-ia64.h src/include/tas-ppc.h \
-	src/include/utils.h src/locks/locks.c src/locks/memlock.c \
-	src/locks/mutex.c src/locks/semaphores.c \
+	src/include/request.h src/include/semaphores.h \
+	src/include/shmalloc.h src/include/shmem.h \
+	src/include/shmlimit.h src/include/signaltrap.h \
+	src/include/spinlock.h src/include/tas-alpha.h \
+	src/include/tas-i386.h src/include/tas-ia64.h \
+	src/include/tas-ppc.h src/include/utils.h src/locks/locks.c \
+	src/locks/memlock.c src/locks/mutex.c src/locks/semaphores.c \
 	src/memory/kr_malloc.c src/memory/memory.c \
 	src/progress/fence.c src/progress/wait.c \
 	src/xfer/caccumulate.c src/xfer/rmw.c src/xfer/strided.c \
@@ -1876,7 +1874,7 @@ DIST_SOURCES = $(am__libarmci_la_SOURCES_DIST) \
 am__include_HEADERS_DIST = src-portals/armci.h src-portals/gpc.h \
 	src-portals/message.h src-portals/parmci.h src-gemini/armci.h \
 	src-gemini/gpc.h src-gemini/message.h src/include/armci.h \
-	src/include/message.h
+	src/include/parmci.h src/include/message.h
 HEADERS = $(include_HEADERS)
 ETAGS = etags
 CTAGS = ctags

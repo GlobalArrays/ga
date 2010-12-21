@@ -467,7 +467,6 @@ libarmci_la_SOURCES += src/include/locks.h
 libarmci_la_SOURCES += src/include/memlock.h
 libarmci_la_SOURCES += src/include/mp3.fh
 libarmci_la_SOURCES += src/include/mp3.h
-libarmci_la_SOURCES += src/include/parmci.h
 libarmci_la_SOURCES += src/include/request.h
 libarmci_la_SOURCES += src/include/semaphores.h
 libarmci_la_SOURCES += src/include/shmalloc.h
@@ -657,6 +656,7 @@ src/tas-sx.lo: src/tas-sx.s
 endif
 
 include_HEADERS += src/include/armci.h
+include_HEADERS += src/include/parmci.h
 include_HEADERS += src/include/message.h
 
 AM_CPPFLAGS += -I$(top_srcdir)/src/include
