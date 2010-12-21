@@ -1278,6 +1278,18 @@ PYTHON_V = $(PYTHON__v_$(V))
 PYTHON__v_ = $(PYTHON__v_$(AM_DEFAULT_VERBOSITY))
 PYTHON__v_0 = @echo "  PYTHON" $@;
 
+.PHONY: pfiles clean-pfiles
+if MSG_COMMS_TCGMSG
+pfiles:
+	for p in $(check_PROGRAMS); do \
+		echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
+	done
+all-local: pfiles
+clean-pfiles:
+	find . -name '*.p' -exec rm {} \; ;
+clean-local: clean-pfiles
+endif
+
 ##############################################################################
 # test suite
 #

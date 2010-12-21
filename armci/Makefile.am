@@ -985,6 +985,18 @@ ARMCI_X86COPY_AS_V = $(ARMCI_X86COPY_AS__v_$(V))
 ARMCI_X86COPY_AS__v_ = $(ARMCI_X86COPY_AS__v_$(AM_DEFAULT_VERBOSITY))
 ARMCI_X86COPY_AS__v_0 = @echo "  GCC   " $@;
 
+.PHONY: pfiles clean-pfiles
+if MSG_COMMS_TCGMSG
+pfiles:
+	for p in $(check_PROGRAMS); do \
+	    echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
+	done
+all-local: pfiles
+clean-pfiles:
+	find . -name '*.p' -exec rm {} \; ;
+clean-local: clean-pfiles
+endif
+
 ##############################################################################
 # test suite
 #
