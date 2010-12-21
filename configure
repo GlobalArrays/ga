@@ -4374,14 +4374,20 @@ fi
 
 # Check whether --enable-peigs was given.
 if test "${enable_peigs+set}" = set; then :
-  enableval=$enable_peigs; enable_peigs=yes
-
-$as_echo "#define ENABLE_PEIGS 1" >>confdefs.h
-
+  enableval=$enable_peigs;
 else
   enable_peigs=no
 fi
 
+if test "x$enable_peigs" = xno; then :
+
+$as_echo "#define ENABLE_PEIGS 0" >>confdefs.h
+
+else
+
+$as_echo "#define ENABLE_PEIGS 1" >>confdefs.h
+
+fi
  if test x$enable_peigs = xyes; then
   ENABLE_PEIGS_TRUE=
   ENABLE_PEIGS_FALSE='#'
@@ -5572,8 +5578,8 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpic_naked" >&5
 $as_echo "$ga_cv_mpic_naked" >&6; }
 if test "x$ga_cv_mpic_naked" = x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the C compiler wrapped by MPI" >&5
+$as_echo "$as_me: WARNING: Could not determine the C compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi
@@ -12123,8 +12129,8 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpicxx_naked" >&5
 $as_echo "$ga_cv_mpicxx_naked" >&6; }
 if test "x$ga_cv_mpicxx_naked" = x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the C++ compiler wrapped by MPI" >&5
+$as_echo "$as_me: WARNING: Could not determine the C++ compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi
@@ -13095,8 +13101,8 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpif77_naked" >&5
 $as_echo "$ga_cv_mpif77_naked" >&6; }
 if test "x$ga_cv_mpif77_naked" = x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran 77 compiler wrapped by MPI" >&5
+$as_echo "$as_me: WARNING: Could not determine the Fortran 77 compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi

@@ -48,7 +48,7 @@
 /* Define to 1 if using Fortran */
 #undef ENABLE_F77
 
-/* Define if PeIGS is enabled */
+/* Define to 1 if PeIGS is enabled */
 #undef ENABLE_PEIGS
 
 /* set to 1 if profiling is enabled */

@@ -5608,8 +5608,8 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpic_naked" >&5
 $as_echo "$ga_cv_mpic_naked" >&6; }
 if test "x$ga_cv_mpic_naked" = x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the C compiler wrapped by MPI" >&5
+$as_echo "$as_me: WARNING: Could not determine the C compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi
@@ -11178,8 +11178,8 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpicxx_naked" >&5
 $as_echo "$ga_cv_mpicxx_naked" >&6; }
 if test "x$ga_cv_mpicxx_naked" = x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the C++ compiler wrapped by MPI" >&5
+$as_echo "$as_me: WARNING: Could not determine the C++ compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi
@@ -12288,8 +12288,8 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpif77_naked" >&5
 $as_echo "$ga_cv_mpif77_naked" >&6; }
 if test "x$ga_cv_mpif77_naked" = x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran 77 compiler wrapped by MPI" >&5
+$as_echo "$as_me: WARNING: Could not determine the Fortran 77 compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi

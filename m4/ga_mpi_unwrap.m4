@@ -182,7 +182,7 @@ done
 rm -f mpi.txt mpi.err naked.txt naked.err
 ])
 AS_IF([test "x$ga_cv_mpi_naked" = x],
-    [AC_MSG_WARN([Could not determine the Fortran compiler wrapped by MPI])
+    [AC_MSG_WARN([Could not determine the ]_AC_LANG[ compiler wrapped by MPI])
      AC_MSG_WARN([This is usually okay])])
 AS_VAR_POPDEF([ga_cv_mpi_naked])
 rm -f inside.pl
