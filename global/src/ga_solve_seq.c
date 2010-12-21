@@ -4,9 +4,13 @@
 
 /**
  * GA_Lu_solve_seq.c: Implemented with CLINPACK routines. Uses LINPACK
- * routines if SCALAPACK not found or ENABLE_F77 is not defined,
- * else uses scalapack.
+ * routines if ENABLE_F77 is not defined,
+ * else uses internal or external lapack.
  */
+#ifdef ENABLE_F77
+#   undef ENABLE_F77
+#   define ENABLE_F77 0
+#endif
 
 #include "globalp.h"
 #include "macdecls.h"
@@ -543,18 +547,18 @@ void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
 
     /** Fill local arrays from global arrays */   
     lo[0] = one;
-    lo[1] = dimA1;
-    hi[0] = one;
+    hi[0] = dimA1;
+    lo[1] = one;
     hi[1] = dimA2;
     pnga_get(g_a, lo, hi, adra, &dimA1);
     lo[0] = one;
-    lo[1] = dimB1;
-    hi[0] = one;
+    hi[0] = dimB1;
+    lo[1] = one;
     hi[1] = dimB2;
     pnga_get(g_b, lo, hi, adrb, &dimB1);
 
     /** LU factorization */
-#if HAVE_SCALAPACK && ENABLE_F77
+#if ENABLE_F77
     DGETRF(&dimA1, &dimA2, adra, &dimA1, adri, &info);
 #else
     {  int info_t;
@@ -564,8 +568,8 @@ void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
 #endif
 
     /** SOLVE */
-    if(info == 0)
-#if HAVE_SCALAPACK && ENABLE_F77
+    if(info == 0) {
+#if ENABLE_F77
 #   if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
       DGETRS(trans, &dimA1, &dimB2, adra, &dimA1, 
           adri, adrb, &dimB1, &info, (Integer)1);
@@ -574,7 +578,6 @@ void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
           adri, adrb, &dimB1, &info);
 #   endif
 #else
-      {
       DoublePrecision *p_b;
       Integer i;
       int job=0;
@@ -587,8 +590,8 @@ void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
 
       if(info == 0) {
         lo[0] = one;
-        lo[1] = dimB1;
-        hi[0] = one;
+        hi[0] = dimB1;
+        lo[1] = one;
         hi[1] = dimB2;
         pnga_put(g_b, lo, hi, adrb, &dimB1);
       } else
