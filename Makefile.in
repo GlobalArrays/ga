@@ -417,7 +417,7 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/m4/ax_sys_weak_alias.m4 \
 	$(top_srcdir)/m4/ga_ar.m4 $(top_srcdir)/m4/ga_arg_parse.m4 \
-	$(top_srcdir)/m4/ga_armci_network.m4 \
+	$(top_srcdir)/m4/ga_armci_network.m4 $(top_srcdir)/m4/ga_as.m4 \
 	$(top_srcdir)/m4/ga_blas.m4 \
 	$(top_srcdir)/m4/ga_c_match_types.m4 \
 	$(top_srcdir)/m4/ga_c_opt.m4 $(top_srcdir)/m4/ga_check_func.m4 \

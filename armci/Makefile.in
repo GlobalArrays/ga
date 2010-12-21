@@ -535,7 +535,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/ga_ar.m4 \
 	$(top_srcdir)/../m4/ga_arg_parse.m4 \
 	$(top_srcdir)/../m4/ga_armci_network.m4 \
-	$(top_srcdir)/../m4/ga_blas.m4 \
+	$(top_srcdir)/../m4/ga_as.m4 $(top_srcdir)/../m4/ga_blas.m4 \
 	$(top_srcdir)/../m4/ga_check_func.m4 \
 	$(top_srcdir)/../m4/ga_check_header.m4 \
 	$(top_srcdir)/../m4/ga_enable_checkpoint.m4 \

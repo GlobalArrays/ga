@@ -12429,6 +12429,26 @@ $as_echo "$as_me: Assembler" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: " >&5
 $as_echo "$as_me: " >&6;}
 
+
+if test "x$CCAS" = x; then :
+  case $ga_cv_target in #(
+  NEC|NEC64) :
+    CCAS=sxas ;; #(
+  *) :
+     ;;
+esac
+fi
+if test "x$CCASFLAGS" = x; then :
+  case $ga_cv_target in #(
+  NEC) :
+    CCASFLAGS= ;; #(
+  NEC64) :
+    CCASFLAGS="-h size_t64" ;; #(
+  *) :
+     ;;
+esac
+fi
+
 # By default we simply use the C compiler to build assembly code.
 
 test "${CCAS+set}" = set || CCAS=$CC
