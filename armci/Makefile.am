@@ -644,6 +644,16 @@ endif
 endif
 if NEC
 libarmci_la_SOURCES += src/tas-sx.s
+
+src/tas-sx.o: src/tas-sx.s
+	$(AM_V_CCAS) \
+	$(CCAS) $(AM_CCASFLAGS) $(CCASFLAGS) -c -o src/tas-sx.o src/tas-sx.s
+
+src/tas-sx.lo: src/tas-sx.s
+	$(AM_V_CCAS) \
+	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CCAS) $(AM_CCASFLAGS) \
+	$(CCASFLAGS) -c -o src/tas-sx.lo src/tas-sx.s
 endif
 
 include_HEADERS += src/include/armci.h
