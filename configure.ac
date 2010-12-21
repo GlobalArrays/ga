@@ -346,6 +346,9 @@ AM_CONDITIONAL([HAVE_PYTHON], [test "x$PYTHON" != x])
 AC_PATH_PROG([M4], [m4], [notfound])
 AM_CONDITIONAL([HAVE_M4], [test "x$M4" != xnotfound])
 
+AC_PATH_PROG([PERL], [perl], [notfound])
+AM_CONDITIONAL([HAVE_PERL], [test "x$PERL" != xnotfound])
+
 # X needed for xregion program, but only if desired.
 AC_ARG_ENABLE([xregion],
     [AS_HELP_STRING([--enable-xregion], [build global/X/xregion])],
