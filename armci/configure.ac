@@ -143,7 +143,7 @@ AC_CHECK_SIZEOF([long long])
 # Checks for C library functions.
 AC_FUNC_FORK
 AC_FUNC_MMAP
-GA_CHECK_FUNCS([bzero fastbcopy ftruncate gethostbyname getpagesize gettimeofday memset munmap select socket strchr strdup strerror strstr strtol _lock_try _acquire_lock ts1am_2me])
+GA_CHECK_FUNCS([bzero fastbcopy ftruncate gethostbyname getpagesize gettimeofday memset munmap select socket strchr strdup strerror strstr strtol _lock_try _acquire_lock])
 AC_SEARCH_LIBS([floor], [m],
     [AC_DEFINE([HAVE_FLOOR], [1],
                [Define to 1 if you have the `floor' function.])],

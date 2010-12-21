@@ -421,12 +421,13 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_66 = src/locks/tas_as.s
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_TRUE@am__append_67 = src/common/x86copy.c
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__append_68 = src/common/x86copy_as.s
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_69 = src/include/armci.h \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__append_69 = src/tas-sx.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_70 = src/include/armci.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/message.h
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_70 = -I$(top_srcdir)/src/include
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_71 = src/common/x86copy_as.s \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_71 = -I$(top_srcdir)/src/include
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_72 = src/common/x86copy_as.s \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/locks/tas_as.s
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_72 = testing/msgcheck \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_73 = testing/msgcheck \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/perf_aggr \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/perf_nb \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/perf \
@@ -436,36 +437,36 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/testitr \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/testnotify \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/test
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_73 = testing/fttest
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_74 = testing/gpctest
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_75 = testing/test_groups
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__append_76 = testing/ipctest
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_77 = testing/test_mt
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_78 = testing/acc_test \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_74 = testing/fttest
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_75 = testing/gpctest
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_76 = testing/test_groups
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__append_77 = testing/ipctest
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_78 = testing/test_mt
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_79 = testing/acc_test \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	testing/copy_test
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_79 = examples/features/gpc/hashtable/test_hashtable \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_80 = examples/features/gpc/hashtable/test_hashtable \
 @ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_80 = examples/features/proc_affinity/computation_impact/computation_impact
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_81 = examples/features/proc_affinity/simple/simple
-@MSG_COMMS_MPI_TRUE@am__append_82 = examples/features/concurrency/multidma/multidma \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_81 = examples/features/proc_affinity/computation_impact/computation_impact
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_82 = examples/features/proc_affinity/simple/simple
+@MSG_COMMS_MPI_TRUE@am__append_83 = examples/features/concurrency/multidma/multidma \
 @MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap
-@RANDOM_ACCESS_TRUE@am__append_83 = examples/benchmarks/RandomAccess/simple/simple \
+@RANDOM_ACCESS_TRUE@am__append_84 = examples/benchmarks/RandomAccess/simple/simple \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket
-@THREAD_SAFE_TRUE@am__append_84 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_85 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
+@THREAD_SAFE_TRUE@am__append_85 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_86 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
 @ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_86 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_87 = examples/features/proc_affinity/simple/simple$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_88 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_87 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_88 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_89 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap$(EXEEXT)
-@RANDOM_ACCESS_TRUE@am__append_89 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__append_90 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__append_90 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+@THREAD_SAFE_TRUE@am__append_91 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 XFAIL_TESTS = $(am__EXEEXT_22) $(am__EXEEXT_22)
 #PARALLEL_TESTS += testing-portals/perf_nb$(EXEEXT) # needs bug fixes
 #SERIAL_TESTS += testing-portals/shmclean$(EXEEXT) # not sure we need this
 #SERIAL_TESTS += testing-portals/shmtest$(EXEEXT) # not sure we need this
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_91 =  \
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_92 =  \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/clone$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/fork$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/msgcheck$(EXEEXT) \
@@ -479,14 +480,14 @@ XFAIL_TESTS = $(am__EXEEXT_22) $(am__EXEEXT_22)
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/testnotify$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/test$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/te$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_92 = testing-portals/gpctest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_93 = testing-portals/gpctest$(EXEEXT)
 #PARALLEL_TESTS += testing-portals/ipctest$(EXEEXT) # needs bug fixes
-@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_93 = testing-portals/test_groups$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__append_94 = testing-portals/test_mt$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_94 = testing-portals/test_groups$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__append_95 = testing-portals/test_mt$(EXEEXT)
 #PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
 #SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
 #SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
-@ARMCI_NETWORK_PORTALS_FALSE@am__append_95 =  \
+@ARMCI_NETWORK_PORTALS_FALSE@am__append_96 =  \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/msgcheck$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/perf_aggr$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/perf$(EXEEXT) \
@@ -494,22 +495,22 @@ XFAIL_TESTS = $(am__EXEEXT_22) $(am__EXEEXT_22)
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/testitr$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/testnotify$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@	testing/test$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_96 = testing/fttest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_97 = testing/gpctest$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_98 = testing/test_groups$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_97 = testing/fttest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_98 = testing/gpctest$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_99 = testing/test_groups$(EXEEXT)
 #PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
-@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_99 = testing/test_mt$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_100 = testing/acc_test$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_100 = testing/test_mt$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_101 = testing/acc_test$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	testing/copy_test$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_101 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_102 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
 @ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_102 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_103 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_103 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_104 = examples/features/proc_affinity/simple/simple$(EXEEXT)
 #PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
 #PARALLEL_TESTS += examples/features/non-blocking/overlap/overlap$(EXEEXT) # needs bug fixes
-@RANDOM_ACCESS_TRUE@am__append_104 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__append_105 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__append_105 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+@THREAD_SAFE_TRUE@am__append_106 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -717,7 +718,7 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src/memory/shmem.c src/memory/shmlimit.c src/common/noncont.c \
 	src/util/armci_vampir.c src/util/armci_profile.c \
 	src/common/utils.c src/util/threads.c src/locks/tas.c \
-	src/common/x86copy.c
+	src/common/x86copy.c src/tas-sx.s
 am__dirstamp = $(am__leading_dot)dirstamp
 @ARMCI_NETWORK_PORTALS_TRUE@am__objects_1 = src-portals/aggregate.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/armci.lo \
@@ -888,6 +889,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@	src/util/threads.lo
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__objects_36 = src/locks/tas.lo
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_TRUE@am__objects_37 = src/common/x86copy.lo
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__objects_38 = src/tas-sx.lo
 am_libarmci_la_OBJECTS = $(am__objects_1) $(am__objects_2) \
 	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
 	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
@@ -900,13 +902,13 @@ am_libarmci_la_OBJECTS = $(am__objects_1) $(am__objects_2) \
 	$(am__objects_27) $(am__objects_28) $(am__objects_29) \
 	$(am__objects_30) $(am__objects_31) $(am__objects_32) \
 	$(am__objects_33) $(am__objects_34) $(am__objects_35) \
-	$(am__objects_36) $(am__objects_37)
-@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__objects_38 = src-portals/tas_as.lo
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__objects_39 = src-gemini/tas_as.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__objects_40 = src/locks/tas_as.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__objects_41 = src/common/x86copy_as.lo
-nodist_libarmci_la_OBJECTS = $(am__objects_38) $(am__objects_39) \
-	$(am__objects_40) $(am__objects_41)
+	$(am__objects_36) $(am__objects_37) $(am__objects_38)
+@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__objects_39 = src-portals/tas_as.lo
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__objects_40 = src-gemini/tas_as.lo
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__objects_41 = src/locks/tas_as.lo
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__objects_42 = src/common/x86copy_as.lo
+nodist_libarmci_la_OBJECTS = $(am__objects_39) $(am__objects_40) \
+	$(am__objects_41) $(am__objects_42)
 libarmci_la_OBJECTS = $(am_libarmci_la_OBJECTS) \
 	$(nodist_libarmci_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
@@ -1030,8 +1032,8 @@ am__libarmcii_la_SOURCES_DIST = src-portals/acc.h \
 	src/memory/shmem.c src/memory/shmlimit.c src/common/noncont.c \
 	src/util/armci_vampir.c src/util/armci_profile.c \
 	src/common/utils.c src/util/threads.c src/locks/tas.c \
-	src/common/x86copy.c
-am__objects_42 = $(am__objects_1) $(am__objects_2) $(am__objects_3) \
+	src/common/x86copy.c src/tas-sx.s
+am__objects_43 = $(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
 	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
 	$(am__objects_10) $(am__objects_11) $(am__objects_12) \
@@ -1043,11 +1045,11 @@ am__objects_42 = $(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	$(am__objects_28) $(am__objects_29) $(am__objects_30) \
 	$(am__objects_31) $(am__objects_32) $(am__objects_33) \
 	$(am__objects_34) $(am__objects_35) $(am__objects_36) \
-	$(am__objects_37)
-am_libarmcii_la_OBJECTS = $(am__objects_42)
-am__objects_43 = $(am__objects_38) $(am__objects_39) $(am__objects_40) \
-	$(am__objects_41)
-nodist_libarmcii_la_OBJECTS = $(am__objects_43)
+	$(am__objects_37) $(am__objects_38)
+am_libarmcii_la_OBJECTS = $(am__objects_43)
+am__objects_44 = $(am__objects_39) $(am__objects_40) $(am__objects_41) \
+	$(am__objects_42)
+nodist_libarmcii_la_OBJECTS = $(am__objects_44)
 libarmcii_la_OBJECTS = $(am_libarmcii_la_OBJECTS) \
 	$(nodist_libarmcii_la_OBJECTS)
 @ARMCI_NETWORK_PORTALS_TRUE@am__EXEEXT_1 =  \
@@ -2116,7 +2118,7 @@ ACLOCAL_AMFLAGS = -I m4 -I ../m4
 # All public headers, installed programs, test programs, and example programs
 # are listed in these variables.  Appended to throughout.  These are the
 # automake variables used.
-include_HEADERS = $(am__append_14) $(am__append_28) $(am__append_69)
+include_HEADERS = $(am__append_14) $(am__append_28) $(am__append_70)
 check_LTLIBRARIES = 
 lib_LTLIBRARIES = libarmci.la
 noinst_LTLIBRARIES = libarmcii.la
@@ -2132,7 +2134,7 @@ libarmci_la_SOURCES = $(am__append_5) $(am__append_6) $(am__append_7) \
 	$(am__append_56) $(am__append_57) $(am__append_58) \
 	$(am__append_60) $(am__append_61) $(am__append_62) \
 	$(am__append_63) $(am__append_64) $(am__append_65) \
-	$(am__append_67)
+	$(am__append_67) $(am__append_69)
 nodist_libarmci_la_SOURCES = config.fh $(am__append_13) \
 	$(am__append_27) $(am__append_66) $(am__append_68)
 libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
@@ -2156,7 +2158,7 @@ EXTRA_DIST = README build-aux/inside.pl examples/benchmarks/lu/README \
 BUILT_SOURCES = config.fh
 MOSTLYCLEANFILES = 
 CLEANFILES = config.fh $(am__append_16) $(am__append_31) \
-	$(am__append_71)
+	$(am__append_72)
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
 AM_FFLAGS = $(ARMCI_FOPT) $(FFLAG_INT_4)
@@ -2166,7 +2168,7 @@ AM_CPPFLAGS = $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
 	$(am__append_1) $(am__append_15) $(am__append_29) \
 	$(am__append_39) $(am__append_41) $(am__append_43) \
 	$(am__append_48) $(am__append_50) $(am__append_52) \
-	$(am__append_54) $(am__append_59) $(am__append_70)
+	$(am__append_54) $(am__append_59) $(am__append_71)
 AM_LDFLAGS = $(LDFLAGS_BASE) $(am__append_2)
 LDADD = $(am__append_3) $(am__append_4) $(LTLIBOBJS) $(GA_MP_LIBS) \
 	$(ARMCI_NETWORK_LIBS) $(am__append_30)
@@ -2435,9 +2437,9 @@ EXAMPLES = examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) \
 	examples/features/non-blocking/simple/simple$(EXEEXT) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_85) \
-	$(am__append_86) $(am__append_87) $(am__append_88) \
-	$(am__append_89) $(am__append_90)
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_86) \
+	$(am__append_87) $(am__append_88) $(am__append_89) \
+	$(am__append_90) $(am__append_91)
 
 # support verbose/silent make rules for additional programs
 # sed
@@ -2464,13 +2466,13 @@ TESTS = $(SERIAL_TESTS) $(PARALLEL_TESTS)
 TESTS_ENVIRONMENT = \
 maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
 
-SERIAL_TESTS = $(am__append_100)
+SERIAL_TESTS = $(am__append_101)
 SERIAL_TESTS_XFAIL = 
 #PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
 #PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
-PARALLEL_TESTS = $(am__append_91) $(am__append_92) $(am__append_93) \
-	$(am__append_94) $(am__append_95) $(am__append_96) \
-	$(am__append_97) $(am__append_98) $(am__append_99) \
+PARALLEL_TESTS = $(am__append_92) $(am__append_93) $(am__append_94) \
+	$(am__append_95) $(am__append_96) $(am__append_97) \
+	$(am__append_98) $(am__append_99) $(am__append_100) \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu$(EXEEXT) \
@@ -2482,9 +2484,9 @@ PARALLEL_TESTS = $(am__append_91) $(am__append_92) $(am__append_93) \
 	examples/features/non-blocking/simple/simple$(EXEEXT) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_101) \
-	$(am__append_102) $(am__append_103) $(am__append_104) \
-	$(am__append_105)
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_102) \
+	$(am__append_103) $(am__append_104) $(am__append_105) \
+	$(am__append_106)
 PARALLEL_TESTS_XFAIL = 
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -3025,6 +3027,13 @@ src/locks/tas.lo: src/locks/$(am__dirstamp) \
 	src/locks/$(DEPDIR)/$(am__dirstamp)
 src/common/x86copy.lo: src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
+src/$(am__dirstamp):
+	@$(MKDIR_P) src
+	@: > src/$(am__dirstamp)
+src/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/$(DEPDIR)
+	@: > src/$(DEPDIR)/$(am__dirstamp)
+src/tas-sx.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src-portals/tas_as.lo: src-portals/$(am__dirstamp) \
 	src-portals/$(DEPDIR)/$(am__dirstamp)
 src-gemini/tas_as.lo: src-gemini/$(am__dirstamp) \
@@ -3925,6 +3934,8 @@ mostlyclean-compile:
 	-rm -f src/progress/fence.lo
 	-rm -f src/progress/wait.$(OBJEXT)
 	-rm -f src/progress/wait.lo
+	-rm -f src/tas-sx.$(OBJEXT)
+	-rm -f src/tas-sx.lo
 	-rm -f src/util/armci_profile.$(OBJEXT)
 	-rm -f src/util/armci_profile.lo
 	-rm -f src/util/armci_vampir.$(OBJEXT)
@@ -4305,6 +4316,7 @@ clean-libtool:
 	-rm -rf examples/features/proc_affinity/simple/.libs examples/features/proc_affinity/simple/_libs
 	-rm -rf examples/features/symmetric_memory/simple/.libs examples/features/symmetric_memory/simple/_libs
 	-rm -rf examples/simpleApps/.libs examples/simpleApps/_libs
+	-rm -rf src/.libs src/_libs
 	-rm -rf src-gemini/.libs src-gemini/_libs
 	-rm -rf src-portals/.libs src-portals/_libs
 	-rm -rf src/collectives/.libs src/collectives/_libs
@@ -4889,6 +4901,8 @@ distclean-generic:
 	-rm -f src-gemini/$(am__dirstamp)
 	-rm -f src-portals/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src-portals/$(am__dirstamp)
+	-rm -f src/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/$(am__dirstamp)
 	-rm -f src/collectives/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/collectives/$(am__dirstamp)
 	-rm -f src/common/$(DEPDIR)/$(am__dirstamp)

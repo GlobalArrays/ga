@@ -626,7 +626,6 @@ LIPO
 NMEDIT
 DSYMUTIL
 MANIFEST_TOOL
-RANLIB
 ac_ct_AR
 DLLTOOL
 OBJDUMP
@@ -637,6 +636,7 @@ DUMPBIN
 LD
 FGREP
 LIBTOOL
+RANLIB
 AR_FLAGS
 AR
 NO_X_FALSE
@@ -997,6 +997,7 @@ F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 XMKMF
 AR
 AR_FLAGS
+RANLIB
 CXXCPP'
 ac_subdirs_all='armci'
 
@@ -1719,6 +1720,7 @@ Some influential environment variables:
   XMKMF       Path to xmkmf, Makefile generator for X Window System
   AR          archiver used by libtool (default: ar)
   AR_FLAGS    archiver flags used by libtool (default: cru)
+  RANLIB      generates index to archive (default: ranlib)
   CXXCPP      C++ preprocessor
 
 Use these variables to override the choices made by `configure' or to help
@@ -11399,10 +11401,10 @@ case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu in #(
     ga_cv_c_opt= ;; #(
   MACX:*:*) :
     ga_cv_c_opt= ;; #(
-  NEC:*:*) :
-    ga_cv_c_opt="-Cvsafe" ;; #(
   NEC64:*:*) :
     ga_cv_c_opt="-Cvsafe -size_t64" ;; #(
+  NEC:*:*) :
+    ga_cv_c_opt="-Cvsafe" ;; #(
   SOLARIS64:fujitsu:*) :
     ga_cv_c_opt="-Kfast -KV9FMADD" ;; #(
   SOLARIS64:gnu:*) :
@@ -12381,10 +12383,10 @@ if test "x$ga_cv_cxx_opt" = x && test "x$enable_opt" = xyes; then :
 case $ga_cv_target:$ax_cv_cxx_compiler_vendor:$host_cpu in #(
   LINUX:*:*) :
     ga_cv_cxx_opt="-O0" ;; #(
-  NEC:*:*) :
-    ga_cv_cxx_opt="-Cvsafe" ;; #(
   NEC64:*:*) :
     ga_cv_cxx_opt="-Cvsafe -size_t64" ;; #(
+  NEC:*:*) :
+    ga_cv_cxx_opt="-Cvsafe" ;; #(
   *) :
     ga_cv_cxx_opt= ;;
 esac
@@ -15340,9 +15342,9 @@ case $ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu in #(
     ga_cv_f77_opt="-O3 -funroll-loops" ;; #(
   MACX:intel:*) :
     ga_cv_f77_opt="-O3 -prefetch -w -cm" ;; #(
-  NEC:*:*) :
-    ga_cv_f77_opt="-Cvsafe" ;; #(
   NEC64:*:*) :
+    ga_cv_f77_opt="-Cvsafe" ;; #(
+  NEC:*:*) :
     ga_cv_f77_opt="-Cvsafe" ;; #(
   SOLARIS64:fujitsu:*) :
     ga_cv_f77_opt="-fw -Kfast -KV9FMADD" ;; #(
@@ -19425,10 +19427,19 @@ fi
 
 
 
+
 if test "x$AR" = x; then :
   case $ga_cv_target in #(
   NEC|NEC64) :
     AR=sxar ;; #(
+  *) :
+     ;;
+esac
+fi
+if test "x$RANLIB" = x; then :
+  case $ga_cv_target in #(
+  NEC|NEC64) :
+    RANLIB=true ;; #(
   *) :
      ;;
 esac

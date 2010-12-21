@@ -642,6 +642,9 @@ nodist_libarmci_la_SOURCES += src/common/x86copy_as.s
 endif
 endif
 endif
+if NEC
+libarmci_la_SOURCES += src/tas-sx.s
+endif
 
 include_HEADERS += src/include/armci.h
 include_HEADERS += src/include/message.h

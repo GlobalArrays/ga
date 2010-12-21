@@ -621,7 +621,6 @@ LIPO
 NMEDIT
 DSYMUTIL
 MANIFEST_TOOL
-RANLIB
 ac_ct_AR
 DLLTOOL
 OBJDUMP
@@ -632,6 +631,7 @@ DUMPBIN
 LD
 FGREP
 LIBTOOL
+RANLIB
 AR_FLAGS
 AR
 SED
@@ -966,6 +966,7 @@ FFLAG_INT_4
 ARMCI_FOPT
 AR
 AR_FLAGS
+RANLIB
 CXXCPP'
 
 
@@ -1676,6 +1677,7 @@ Some influential environment variables:
   ARMCI_FOPT  ARMCI Fortran 77 optimization flags
   AR          archiver used by libtool (default: ar)
   AR_FLAGS    archiver flags used by libtool (default: cru)
+  RANLIB      generates index to archive (default: ranlib)
   CXXCPP      C++ preprocessor
 
 Use these variables to override the choices made by `configure' or to help
@@ -10147,7 +10149,7 @@ $as_echo "#define HAVE_MMAP 1" >>confdefs.h
 fi
 rm -f conftest.mmap conftest.txt
 
-for ac_func in bzero fastbcopy ftruncate gethostbyname getpagesize gettimeofday memset munmap select socket strchr strdup strerror strstr strtol _lock_try _acquire_lock ts1am_2me
+for ac_func in bzero fastbcopy ftruncate gethostbyname getpagesize gettimeofday memset munmap select socket strchr strdup strerror strstr strtol _lock_try _acquire_lock
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -10448,10 +10450,10 @@ case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu:$ga_armci_network in #(
     armci_cv_c_opt= ;; #(
   MACX:*:*:*) :
     armci_cv_c_opt= ;; #(
-  NEC:*:*:*) :
-    armci_cv_c_opt="-Cvsafe" ;; #(
   NEC64:*:*:*) :
     armci_cv_c_opt="-Cvsafe -size_t64" ;; #(
+  NEC:*:*:*) :
+    armci_cv_c_opt="-Cvsafe" ;; #(
   SOLARIS64:fujitsu:*:*) :
     armci_cv_c_opt="-Kfast -KV9FMADD -x0" ;; #(
   SOLARIS64:gnu:*:*) :
@@ -11388,10 +11390,10 @@ if test "x$armci_cv_cxx_opt" = x && test "x$enable_opt" = xyes; then :
 case $ga_cv_target:$ax_cv_cxx_compiler_vendor:$host_cpu:$ga_armci_network in #(
   LINUX:*:*:*) :
     armci_cv_cxx_opt="-O0" ;; #(
-  NEC:*:*:*) :
-    armci_cv_cxx_opt="-Cvsafe" ;; #(
   NEC64:*:*:*) :
     armci_cv_cxx_opt="-Cvsafe -size_t64" ;; #(
+  NEC:*:*:*) :
+    armci_cv_cxx_opt="-Cvsafe" ;; #(
   *) :
     armci_cv_cxx_opt= ;;
 esac
@@ -13804,9 +13806,9 @@ case $ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu:$ga_armci_network in #(
     armci_cv_f77_opt="-O3 -prefetch -w -cm" ;; #(
   MACX:*:*:*) :
     armci_cv_f77_opt= ;; #(
-  NEC:*:*:*) :
-    armci_cv_f77_opt="-Cvsafe" ;; #(
   NEC64:*:*:*) :
+    armci_cv_f77_opt="-Cvsafe" ;; #(
+  NEC:*:*:*) :
     armci_cv_f77_opt="-Cvsafe" ;; #(
   SOLARIS64:fujitsu:*:*) :
     armci_cv_f77_opt="-fw -Kfast -KV8PFMADD" ;; #(
@@ -16459,10 +16461,19 @@ fi
 
 
 
+
 if test "x$AR" = x; then :
   case $ga_cv_target in #(
   NEC|NEC64) :
     AR=sxar ;; #(
+  *) :
+     ;;
+esac
+fi
+if test "x$RANLIB" = x; then :
+  case $ga_cv_target in #(
+  NEC|NEC64) :
+    RANLIB=true ;; #(
   *) :
      ;;
 esac
