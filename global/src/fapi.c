@@ -404,6 +404,29 @@ logical FATR nga_get_debug_()
   return wnga_get_debug();
 }
 
+#ifdef ENABLE_CHECKPOINT
+void FATR ga_checkpoint_arrays_(Integer *gas, int *num)
+{
+    wnga_checkpoint_arrays(gas, num);
+}
+
+void FATR nga_checkpoint_arrays_(Integer *gas, int *num)
+{
+    wnga_checkpoint_arrays(gas, num);
+}
+
+Integer FATR ga_recover_arrays_(Integer *gas, int num)
+{
+    return wnga_recover_arrays(gas, num);
+}
+
+Integer FATR nga_recover_arrays_(Integer *gas, int num)
+{
+    return wnga_recover_arrays(gas, num);
+}
+
+#endif
+
 Integer FATR ga_get_dimension_(Integer *g_a)
 {
   return wnga_get_dimension(g_a);
@@ -1894,6 +1917,16 @@ void FATR nga_print_patch_(Integer *g_a, Integer *lo, Integer *hi, Integer *pret
     wnga_print_patch(g_a, lo, hi, pretty);
 }
 
+void FATR ga_summarize_(Integer *verbose)
+{
+    wnga_summarize(verbose);
+}
+
+void FATR nga_summarize_(Integer *verbose)
+{
+    wnga_summarize(verbose);
+}
+
 /* Routines from ghosts.c */
 
 void FATR nga_access_ghost_element_(Integer* g_a, AccessIndex* index, Integer subscript[], Integer ld[])
@@ -3315,7 +3348,7 @@ void FATR GA_DGEMM(
 {
 SET_GEMM_INDICES;
 
- pnga_matmul(transa, transb, alpha, beta,
+ wnga_matmul(transa, transb, alpha, beta,
        g_a, &ailo, &aihi, &ajlo, &ajhi,
        g_b, &bilo, &bihi, &bjlo, &bjhi,
        g_c, &cilo, &cihi, &cjlo, &cjhi);
@@ -3337,7 +3370,7 @@ void FATR ga_cgemm_(
 {
 SET_GEMM_INDICES;
 
-  pnga_matmul (transa, transb, alpha, beta,
+  wnga_matmul (transa, transb, alpha, beta,
          g_a, &ailo, &aihi, &ajlo, &ajhi,
          g_b, &bilo, &bihi, &bjlo, &bjhi,
          g_c, &cilo, &cihi, &cjlo, &cjhi);
@@ -3359,7 +3392,7 @@ void FATR ga_sgemm_(
 {
 SET_GEMM_INDICES;
 
-  pnga_matmul (transa, transb, alpha, beta,
+  wnga_matmul (transa, transb, alpha, beta,
          g_a, &ailo, &aihi, &ajlo, &ajhi,
          g_b, &bilo, &bihi, &bjlo, &bjhi,
          g_c, &cilo, &cihi, &cjlo, &cjhi);
@@ -3381,9 +3414,130 @@ void FATR ga_zgemm_(
 {
 SET_GEMM_INDICES;
 
-  pnga_matmul (transa, transb, alpha, beta,
+  wnga_matmul (transa, transb, alpha, beta,
          g_a, &ailo, &aihi, &ajlo, &ajhi,
          g_b, &bilo, &bihi, &bjlo, &bjhi,
          g_c, &cilo, &cihi, &cjlo, &cjhi);
+}
+
+/* Routines from ga_diag_seqc.c */
+
+void FATR ga_diag_seq_(Integer *g_a, Integer *g_s, Integer *g_v, DoublePrecision *eval)
+{
+    wnga_diag_seq(g_a, g_s, g_v, eval);
+}
+
+void FATR ga_diag_std_seq_(Integer * g_a, Integer * g_v, DoublePrecision *eval)
+{
+    wnga_diag_std_seq(g_a, g_v, eval);
+}
+
+/* Routines from peigstubs.c */
+
+void FATR ga_diag_(Integer * g_a, Integer * g_s, Integer * g_v, DoublePrecision *eval)
+{
+    wnga_diag(g_a, g_s, g_v, eval);
+}
+
+void FATR ga_diag_std_(Integer * g_a, Integer * g_v, DoublePrecision *eval)
+{
+    wnga_diag_std(g_a, g_v, eval);
+}
+
+void FATR ga_diag_reuse_(Integer * reuse, Integer * g_a, Integer * g_s,
+           Integer * g_v, DoublePrecision *eval)
+{
+    wnga_diag_reuse(reuse, g_a, g_s, g_v, eval);
+}
+
+/* Routines from sclstubs.c */
+
+void FATR ga_lu_solve_alt_(Integer *tran, Integer * g_a, Integer * g_b)
+{
+    wnga_lu_solve_alt(tran, g_a, g_b);
+}
+
+void FATR ga_lu_solve_(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        char *tran, Integer * g_a, Integer * g_b, int len
+#else
+        char *tran, int len, Integer * g_a, Integer * g_b
+#endif
+        )
+{
+    wnga_lu_solve(tran, g_a, g_b);
+}
+
+Integer FATR ga_llt_solve_(Integer * g_a, Integer * g_b)
+{
+    return wnga_llt_solve(g_a, g_b);
+}
+
+Integer FATR ga_solve_(Integer * g_a, Integer * g_b)
+{
+    return wnga_solve(g_a, g_b);
+}
+
+Integer FATR ga_spd_invert_(Integer * g_a)
+{
+    return wnga_spd_invert(g_a);
+}
+
+/* Routines from DP.c */
+
+void FATR ga_copy_patch_dp_(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        trans, g_a, ailo, aihi, ajlo, ajhi, g_b, bilo, bihi, bjlo, bjhi, translen
+#else
+        trans, translen, g_a, ailo, aihi, ajlo, ajhi, g_b, bilo, bihi, bjlo, bjhi
+#endif
+        )
+Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;
+Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
+char *trans;
+int translen;
+{
+    wnga_copy_patch_dp(trans,g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi);
+}
+
+DoublePrecision FATR ga_ddot_patch_dp_(
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+        g_a, t_a, ailo, aihi, ajlo, ajhi, g_b, t_b, bilo, bihi, bjlo, bjhi, alen, blen
+#else
+        g_a, t_a, alen, ailo, aihi, ajlo, ajhi, g_b, t_b, blen, bilo, bihi, bjlo, bjhi
+#endif
+        )
+Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
+Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+char    *t_a, *t_b;                          /* transpose operators */
+int alen, blen;
+{
+    return wnga_ddot_patch_dp(g_a, t_a, ailo, aihi, ajlo, ajhi, g_b, t_b, bilo, bihi, bjlo, bjhi);
+}
+
+/* Routines from ga_ckpt.c */
+
+#if ENABLE_CHECKPOINT
+void FATR ga_set_spare_procs_(int *spare)
+{
+    wnga_set_spare_procs(spare);
+}
+
+void FATR nga_set_spare_procs_(int *spare)
+{
+    wnga_set_spare_procs(spare);
+}
+#endif
+
+/* Routines from ga_trace.c */
+
+double FATR ga_timer_()
+{
+    return wnga_timer();
+}
+
+double FATR nga_timer_()
+{
+    return wnga_timer();
 }
 

@@ -3952,7 +3952,7 @@ void GA_Diag_seq(int g_a, int g_s, int g_v, void *eval)
     Integer s = (Integer)g_s;
     Integer v = (Integer)g_v;
 
-    ga_diag_seq_(&a, &s, &v, eval);
+    wnga_diag_seq(&a, &s, &v, eval);
 }
 
 void GA_Diag_std_seq(int g_a, int g_v, void *eval)
@@ -3960,7 +3960,7 @@ void GA_Diag_std_seq(int g_a, int g_v, void *eval)
     Integer a = (Integer)g_a;
     Integer v = (Integer)g_v;
 
-    ga_diag_std_seq_(&a, &v, eval);
+    wnga_diag_std_seq(&a, &v, eval);
 }
 
 void GA_Diag(int g_a, int g_s, int g_v, void *eval)
@@ -3969,7 +3969,7 @@ void GA_Diag(int g_a, int g_s, int g_v, void *eval)
     Integer s = (Integer)g_s;
     Integer v = (Integer)g_v;
 
-    ga_diag_(&a, &s, &v, eval);
+    wnga_diag(&a, &s, &v, eval);
 }
 
 void GA_Diag_std(int g_a, int g_v, void *eval)
@@ -3977,7 +3977,7 @@ void GA_Diag_std(int g_a, int g_v, void *eval)
     Integer a = (Integer)g_a;
     Integer v = (Integer)g_v;
 
-    ga_diag_std_(&a, &v, eval);
+    wnga_diag_std(&a, &v, eval);
 }
 
 void GA_Diag_reuse(int reuse, int g_a, int g_s, int g_v, void *eval)
@@ -3987,7 +3987,7 @@ void GA_Diag_reuse(int reuse, int g_a, int g_s, int g_v, void *eval)
     Integer s = (Integer)g_s;
     Integer v = (Integer)g_v;
 
-    ga_diag_reuse_(&r, &a, &s, &v, eval);
+    wnga_diag_reuse(&r, &a, &s, &v, eval);
 }
 
 void GA_Lu_solve(char tran, int g_a, int g_b)
@@ -4000,7 +4000,7 @@ void GA_Lu_solve(char tran, int g_a, int g_b)
     if(tran == 't' || tran == 'T') t = 1;
     else t = 0;
 
-    ga_lu_solve_alt_(&t, &a, &b);
+    wnga_lu_solve_alt(&t, &a, &b);
 }
 
 int GA_Llt_solve(int g_a, int g_b)
@@ -4009,7 +4009,7 @@ int GA_Llt_solve(int g_a, int g_b)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
 
-    res = ga_llt_solve_(&a, &b);
+    res = wnga_llt_solve(&a, &b);
 
     return((int)res);
 }
@@ -4020,7 +4020,7 @@ int GA_Solve(int g_a, int g_b)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
 
-    res = ga_solve_(&a, &b);
+    res = wnga_solve(&a, &b);
 
     return((int)res);
 }
@@ -4030,7 +4030,7 @@ int GA_Spd_invert(int g_a)
     Integer res;
     Integer a = (Integer)g_a;
 
-    res = ga_spd_invert_(&a);
+    res = wnga_spd_invert(&a);
 
     return((int)res);
 }
@@ -4039,7 +4039,7 @@ void GA_Summarize(int verbose)
 {
     Integer v = (Integer)verbose;
 
-    ga_summarize_(&v);
+    wnga_summarize(&v);
 }
 
 void GA_Symmetrize(int g_a)

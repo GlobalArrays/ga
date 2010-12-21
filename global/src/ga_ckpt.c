@@ -13,12 +13,16 @@
 
 #define DEBUG 0
 
-void FATR ga_set_spare_procs_(int *spare)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_set_spare_procs = pnga_set_spare_procs
+#endif
+void pnga_set_spare_procs(int *spare)
 {
     extern int ga_spare_procs;
     ga_spare_procs=*spare;
     armci_set_spare_procs(*spare);
 }
+
 int ga_icheckpoint_init(Integer *gas, int num)
 {
     int rid,i,hdl;

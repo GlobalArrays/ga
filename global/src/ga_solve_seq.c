@@ -4,7 +4,8 @@
 
 /**
  * GA_Lu_solve_seq.c: Implemented with CLINPACK routines. Uses LINPACK
- * routines if NOFORT is defined, else uses scalapack.
+ * routines if SCALAPACK not found or ENABLE_F77 is not defined,
+ * else uses scalapack.
  */
 
 #include "globalp.h"
@@ -553,18 +554,27 @@ void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
     pnga_get(g_b, lo, hi, adrb, &dimB1);
 
     /** LU factorization */
-#if NOFORT
+#if HAVE_SCALAPACK && ENABLE_F77
+    DGETRF(&dimA1, &dimA2, adra, &dimA1, adri, &info);
+#else
     {  int info_t;
       LP_dgefa(adra, (int)dimA1, (int)dimA2, (int*)adri, &info_t);
       info = info_t;
     }
-#else
-    DGETRF(&dimA1, &dimA2, adra, &dimA1, adri, &info);
 #endif
 
     /** SOLVE */
-    if(info == 0) {
-#if NOFORT
+    if(info == 0)
+#if HAVE_SCALAPACK && ENABLE_F77
+#   if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+      DGETRS(trans, &dimA1, &dimB2, adra, &dimA1, 
+          adri, adrb, &dimB1, &info, (Integer)1);
+#   else
+      DGETRS(trans, (Integer)1, &dimA1, &dimB2, adra, &dimA1, 
+          adri, adrb, &dimB1, &info);
+#   endif
+#else
+      {
       DoublePrecision *p_b;
       Integer i;
       int job=0;
@@ -573,14 +583,6 @@ void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
         p_b = adrb + i*dimB1;
         LP_dgesl(adra, (int)dimA1, (int)dimA2, (int*)adri, p_b, job);
       }
-#else
-#   if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-      DGETRS(trans, &dimA1, &dimB2, adra, &dimA1, 
-          adri, adrb, &dimB1, &info, (Integer)1);
-#   else
-      DGETRS(trans, (Integer)1, &dimA1, &dimB2, adra, &dimA1, 
-          adri, adrb, &dimB1, &info);
-#   endif
 #endif
 
       if(info == 0) {

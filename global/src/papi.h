@@ -54,6 +54,8 @@ extern void pnga_fill(Integer *g_a, void* val);
 extern void pnga_get_block_info(Integer *g_a, Integer *num_blocks,
                                 Integer *block_dims);
 extern logical pnga_get_debug();
+extern void pnga_checkpoint_arrays(Integer *gas, int *num);
+extern Integer pnga_recover_arrays(Integer *gas, int num);
 extern Integer pnga_get_dimension(Integer *g_a);
 extern void pnga_get_proc_grid(Integer *g_a, Integer *dims);
 extern void pnga_get_proc_index(Integer *g_a, Integer *iproc, Integer *index);
@@ -236,6 +238,7 @@ extern void pnga_print(Integer *g_a);
 extern void pnga_print_patch_file(FILE *file, Integer *g_a, Integer *lo, Integer *hi, Integer *pretty);
 extern void pnga_print_patch(Integer *g_a, Integer *lo, Integer *hi, Integer *pretty);
 extern void pnga_print_distribution(int fstyle, Integer g_a);
+extern void pnga_summarize(Integer *verbose);
 
 /* Routines from ghosts.c */
 extern void pnga_access_ghost_ptr(Integer* g_a, Integer dims[], void* ptr, Integer ld[]);
@@ -329,5 +332,37 @@ extern void pnga_periodic(Integer *g_a, Integer *lo, Integer *hi, void *buf, Int
 extern void pnga_matmul(char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi);
 extern void pnga_matmul_mirrored(char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi);
 extern void pnga_matmul_patch(char *transa, char *transb, void *alpha, void *beta, Integer *g_a, Integer alo[], Integer ahi[], Integer *g_b, Integer blo[], Integer bhi[], Integer *g_c, Integer clo[], Integer chi[]);
+
+/* Routines from ga_diag_seqc.c */
+
+extern void pnga_diag_seq(Integer *g_a, Integer *g_s, Integer *g_v, DoublePrecision *eval);
+extern void pnga_diag_std_seq(Integer * g_a, Integer * g_v, DoublePrecision *eval);
+
+/* Routines from peigstubs.c */
+
+extern void pnga_diag(Integer * g_a, Integer * g_s, Integer * g_v, DoublePrecision *eval);
+extern void pnga_diag_std(Integer * g_a, Integer * g_v, DoublePrecision *eval);
+extern void pnga_diag_reuse(Integer * reuse, Integer * g_a, Integer * g_s, Integer * g_v, DoublePrecision *eval);
+
+/* Routines from sclstubs.c */
+
+extern void pnga_lu_solve_alt(Integer *tran, Integer * g_a, Integer * g_b);
+extern void pnga_lu_solve(char *tran, Integer * g_a, Integer * g_b);
+extern Integer pnga_llt_solve(Integer * g_a, Integer * g_b);
+extern Integer pnga_solve(Integer * g_a, Integer * g_b);
+extern Integer pnga_spd_invert(Integer * g_a);
+
+/* Routines from DP.c */
+
+extern void pnga_copy_patch_dp(char *t_a, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi);
+extern DoublePrecision pnga_ddot_patch_dp(Integer *g_a, char *t_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, char *t_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi);
+
+/* Routines from ga_ckpt.c */
+
+extern void pnga_set_spare_procs(int *spare);
+
+/* Routines from ga_trace.c */
+
+extern double pnga_timer();
 
 #endif /* PAPI_H_ */

@@ -501,7 +501,7 @@ c**** ... and at the end
 
 
 c**********************************************************************
-c* Source : ga_lu_solve
+c* Source : gai_lu_solve
 c* Scope  : LU factorization
 c*
 c* 02/16/94  Jarek Nieplocha 
@@ -512,7 +512,7 @@ c
 c length of scalapack array descriptor
 # define DSCLEN 10
 c
-      subroutine ga_lu_solve(trans,g_a, g_b)
+      subroutine gai_lu_solve(trans,g_a, g_b)
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
@@ -573,8 +573,8 @@ c
 c
 c***  check GA info for input arrays
 c
-      call pnga_check_handle(g_a, 'ga_lu_solve: a')
-      call pnga_check_handle(g_b, 'ga_lu_solve: b')
+      call pnga_check_handle(g_a, 'gai_lu_solve: a')
+      call pnga_check_handle(g_b, 'gai_lu_solve: b')
       call ga_inquire(g_a, typeA, dimA18, dimA28)
       call ga_inquire(g_b, typeB, dimB18, dimB28)
       dima1=dima18
@@ -583,9 +583,9 @@ c
       dimb2=dimb28
 c
       if (dimA1 .ne. dimA2) then
-         call ga_error('ga_lu_solve: g_a must be square matrix ', 1)
+         call ga_error('gai_lu_solve: g_a must be square matrix ', 1)
       else if(dimA1 .ne. dimB1) then
-         call ga_error('ga_lu_solve: dims of A and B do not match ',1)
+         call ga_error('gai_lu_solve: dims of A and B do not match ',1)
       endif
 c
 c   Determine whether or not to use GA data directly
@@ -656,7 +656,7 @@ c
          else
            if(elemA.ne.0) status = ma_push_get(MT_DBL,elemA,'a',ha,adra)
            if(.not.status) 
-     &       call ga_error('ga_lu_solve: mem alloc failed A ', -1)
+     &       call ga_error('gai_lu_solve: mem alloc failed A ', -1)
          endif
 c
          elemB= mpB*nqB
@@ -665,13 +665,13 @@ c
          else
            if(elemB.ne.0)status = ma_push_get(MT_DBL,elemB,'b',hb,adrb)
            if(.not.status) 
-     &       call ga_error('ga_lu_solve: mem alloc failed B ', -1)
+     &       call ga_error('gai_lu_solve: mem alloc failed B ', -1)
          endif
 c
          lipiv=mpa+nb
          status = ma_push_get(MT_INT,lipiv,'ipiv',hi,adri)
          if(.not.status) 
-     &       call ga_error('ga_lu_solve: mem alloc failed ipiv ', -1)
+     &       call ga_error('gai_lu_solve: mem alloc failed ipiv ', -1)
 c
 c
 c***     copy g_a to A and g_b to B using the SBS SL format 
@@ -685,11 +685,11 @@ c***     fill SCALAPACK matrices descriptors
 c
 	 call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4, 
      &                 iSLctxt, lda, info)
-         if(info.ne.0) call ga_error(' ga_lu_solve: descinit A failed ',
+         if(info.ne.0) call ga_error('gai_lu_solve: descinit A failed ',
      &                               -info)
          call descinit(descB, dimB1, dimB2, nb, nb, zero4, zero4, 
      &                 iSLctxt, ldb, info)
-         if(info.ne.0) call ga_error(' ga_lu_solve: descinit B failed ',
+         if(info.ne.0) call ga_error('gai_lu_solve: descinit B failed ',
      &                               -info)
 c
 c***     LU factorization
@@ -716,11 +716,11 @@ c
      &                          mpB, ldb, nqB)
               endif
             else
-               call ga_error(' ga_lu_solve: pdgetrs failed ', -info)
+               call ga_error('gai_lu_solve: pdgetrs failed ', -info)
             endif
 c
          else
-            call ga_error(' ga_lu_solve: pdgetrf failed ', -info)
+            call ga_error('gai_lu_solve: pdgetrf failed ', -info)
          endif
 c
 c***     deallocate work/SL arrays
@@ -731,7 +731,7 @@ c
            if(elemA.ne.0) status = status .and. ma_pop_stack(ha)
          endif
          if(.not.status)
-     &       call ga_error('ga_lu_solve:ma_pop_stack failed',0)
+     &       call ga_error('gai_lu_solve:ma_pop_stack failed',0)
       endif
       if (use_direct) then
         call slexit3
@@ -744,13 +744,13 @@ c
 
 c     alt entry point for C that avoids char args
 c
-	subroutine ga_lu_solve_alt(tr, g_a, g_b)
+	subroutine gai_lu_solve_alt(tr, g_a, g_b)
 	implicit none
         INTGR4 g_a, g_b, tr
         if(tr.eq.0) then
-           call ga_lu_solve('n',g_a, g_b) 
+           call gai_lu_solve('n',g_a, g_b) 
         else
-           call ga_lu_solve('y',g_a, g_b) 
+           call gai_lu_solve('y',g_a, g_b) 
         endif
         end
 
@@ -1512,7 +1512,7 @@ c
 
       
 c***********************************************************************
-c* function :  ga_llt_solve
+c* function :  gai_llt_solve
 c*
 c*             Solves a system of linear equations
 c*             
@@ -1534,7 +1534,7 @@ c*                   > 0 : the leading minor of this order
 c*                         is not positive definite and the
 c*                         factorization could not be completed      
 c***********************************************************************      
-      INTGR4 function ga_llt_solve(g_A, g_B)
+      INTGR4 function gai_llt_solve(g_A, g_B)
       implicit none
       character*1 uplo         ! (internal parameter) 'U' or 'L'
       INTGR4     g_A          ! (input)
@@ -1553,16 +1553,16 @@ c**** check if the factorization is OK
 c****    if the factorization is OK then solve the system
 c****    call the ga_llt_s internal interface
          call ga_llt_s(uplo, g_A, g_B, hsA)
-         ga_llt_solve = 0
+         gai_llt_solve = 0
       else
 c****    if the factorization is not OK just return the error
-         ga_llt_solve = irc
+         gai_llt_solve = irc
       endif
       end
 
 
 c***********************************************************************
-c* function :  ga_spd_invert
+c* function :  gai_spd_invert
 c*
 c*             It computes the inverse of a  double precision
 c*             using the Cholesky factorization of a NxN double
@@ -1583,7 +1583,7 @@ c*                   < 0 : it returns the index i of the (i,i)
 c*                         element of the factor L/U that is zero and,
 c*                         so, the inverse could not be computed        
 c***********************************************************************
-      INTGR4 function ga_spd_invert(g_A)
+      INTGR4 function gai_spd_invert(g_A)
       implicit none
       character*1 uplo         ! (internal parameter) 'U' or 'L'
       INTGR4     g_A          ! (input)
@@ -1603,18 +1603,18 @@ c****    if the factorization is OK then invert the matrix
 c****    call the ga_llt_i internal interface
          ircI = ga_llt_i(uplo, g_A, hsA)
          if (ircI.eq.0) then
-            ga_spd_invert = 0
+            gai_spd_invert = 0
          else
-            ga_spd_invert = -ircI
+            gai_spd_invert = -ircI
          endif
       else
 c****    if the factorization is not OK just return the error
-         ga_spd_invert = ircF
+         gai_spd_invert = ircF
       endif
       end
 
 c***********************************************************************
-c* function: ga_solve
+c* function: gai_solve
 c*
 c*             Solves a system of linear equations
 c*             
@@ -1629,7 +1629,7 @@ c*             with forward/backward substitution.
 c*      
 c*             On B will contain the solution X.      
 c*      
-c*             It calls the ga_llt_f and ga_llt_s and ga_lu_solve
+c*             It calls the ga_llt_f and ga_llt_s and gai_lu_solve
 c*             and so it actually refer to PDGETRF/PDGETRS and
 c*             PDPORTF/PDPOTRS ScaLAPACK routines.
 c*
@@ -1640,24 +1640,24 @@ c*                         is not positive definite and Cholesky
 c*                         factorization could not be completed
 c*
 c*    Note: High overhead due to multiple conversions to/from scalapack
-c*          format can be avoided if ga_llt_solve and ga_lu_solve
+c*          format can be avoided if gai_llt_solve and gai_lu_solve
 c*          were not used as building blocks - possible optimization
 c*          for the future (JN) 
 c***********************************************************************
-      INTGR4 function ga_solve(g_A, g_B)
+      INTGR4 function gai_solve(g_A, g_B)
       implicit none
       INTGR4     g_A          ! (input)
       INTGR4     g_B          ! (input/output)
       INTGR4     irc
-      INTGR4     ga_llt_solve
+      INTGR4     gai_llt_solve
 c
 c**** Call Cholesky solver as the first try      
-      ga_solve = ga_llt_solve(g_A, g_B)
-      if (ga_solve.eq.0) then
+      gai_solve = gai_llt_solve(g_A, g_B)
+      if (gai_solve.eq.0) then
 c****    if Cholesky was succcesully just return 
       else
 c****    else if Cholesky failed
-         call ga_lu_solve('N', g_A, g_B)
+         call gai_lu_solve('N', g_A, g_B)
       endif
       end
 c******************************************************************

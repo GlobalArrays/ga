@@ -15,6 +15,7 @@
 #include "mp3.h"
 #include "ga.h"
 #include "macdecls.h"
+#include "xgemm.h"
 
 
 void load_ga(int handle, double *f, int dim1, int dim2);

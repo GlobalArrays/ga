@@ -71,7 +71,7 @@ void pgp_terminate()
 
 Integer pgp_create_handle()
 {
-  Integer i, handle;
+  Integer i, handle=-GP_OFFSET-1;
   for (i=0; i<MAX_GP_ARRAYS; i++) {
     if (!GP[i].active) {
       handle = i-GP_OFFSET;
@@ -156,12 +156,11 @@ logical pgp_allocate(Integer *g_p)
   status = status && pnga_allocate(&GP[handle].gp_ptr_array);
   if (!status) {
      pnga_error("gp_allocate: unable to allocate GP array", 0);
-  } else {
-    me = pnga_nodeid();
-    pnga_distribution(&GP[handle].gp_ptr_array, &me, GP[handle].lo,
-                      GP[handle].hi);
-    return status;
   }
+  me = pnga_nodeid();
+  pnga_distribution(&GP[handle].gp_ptr_array, &me, GP[handle].lo,
+          GP[handle].hi);
+  return status;
 }
 
 /**
@@ -181,9 +180,8 @@ logical pgp_destroy(Integer *g_p)
   status = status && pnga_destroy(&GP[handle].gp_ptr_array);
   if (!status) {
      pnga_error("gp_destroy: unable to destroy GP array", 0);
-  } else {
-    return status;
   }
+  return status;
 }
 
 /**

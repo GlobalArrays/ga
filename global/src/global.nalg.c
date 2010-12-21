@@ -177,7 +177,7 @@ void pnga_zero(Integer *g_a)
 #if 0
 /*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
 \*/
-static void FATR snga_copy_old(Integer *g_a, Integer *g_b)
+static void snga_copy_old(Integer *g_a, Integer *g_b)
 {
 Integer  ndim, ndimb, type, typeb, me, elems=0, elemsb=0;
 Integer dimsb[MAXDIM];

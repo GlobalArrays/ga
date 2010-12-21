@@ -780,6 +780,8 @@ ENABLE_CHECKPOINT_FALSE
 ENABLE_CHECKPOINT_TRUE
 CXX_BINDINGS_FALSE
 CXX_BINDINGS_TRUE
+ENABLE_F77_FALSE
+ENABLE_F77_TRUE
 NOFORT_FALSE
 NOFORT_TRUE
 GA_MP_CPPFLAGS
@@ -4285,22 +4287,35 @@ else
   enable_f77=yes
 fi
 
-if test "x$enable_f77" = xno; then :
-  ga_nofort=1
+if test "x$enable_f77" = xyes; then :
+
+$as_echo "#define NOFORT 0" >>confdefs.h
+
+
+$as_echo "#define ENABLE_F77 1" >>confdefs.h
+
 else
-  ga_nofort=0
+
+$as_echo "#define NOFORT 1" >>confdefs.h
+
+
+$as_echo "#define ENABLE_F77 0" >>confdefs.h
+
 fi
-
-cat >>confdefs.h <<_ACEOF
-#define NOFORT $ga_nofort
-_ACEOF
-
  if test "x$enable_f77" = xno; then
   NOFORT_TRUE=
   NOFORT_FALSE='#'
 else
   NOFORT_TRUE='#'
   NOFORT_FALSE=
+fi
+
+ if test "x$enable_f77" = xyes; then
+  ENABLE_F77_TRUE=
+  ENABLE_F77_FALSE='#'
+else
+  ENABLE_F77_TRUE='#'
+  ENABLE_F77_FALSE=
 fi
 
 
@@ -32875,6 +32890,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${NOFORT_TRUE}" && test -z "${NOFORT_FALSE}"; then
   as_fn_error $? "conditional \"NOFORT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_F77_TRUE}" && test -z "${ENABLE_F77_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_F77\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${CXX_BINDINGS_TRUE}" && test -z "${CXX_BINDINGS_FALSE}"; then

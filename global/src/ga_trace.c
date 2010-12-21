@@ -39,7 +39,10 @@ static int ganum = 0;
 
 #define min(a,b) ((a)<(b) ? (a) : (b))
 
-double FATR ga_timer_()
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_timer = pnga_timer
+#endif
+double pnga_timer()
 {
 #ifdef MPI
        return MPI_Wtime();
@@ -103,12 +106,12 @@ void trace_init_(long *n)
 
 void  trace_stime_()
 {
-    tt0 =  ga_timer_();
+    tt0 =  pnga_timer();
 }
 
 void  trace_etime_()
 {
-    tt1 = ga_timer_();
+    tt1 = pnga_timer();
 }
 
 void trace_genrec_(Integer *ga, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi,

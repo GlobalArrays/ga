@@ -4,7 +4,7 @@
 #ifdef USE_VAMPIR
 #include "ga_vampir.fh"
 #endif
-      subroutine ga_diag_seq(g_a, g_s, g_v, evals)
+      subroutine gai_diag_seq(g_a, g_s, g_v, evals)
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
@@ -103,7 +103,7 @@ c
 c
       end
 c
-      subroutine ga_diag_std_seq(g_a,  g_v, evals)
+      subroutine gai_diag_std_seq(g_a,  g_v, evals)
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"

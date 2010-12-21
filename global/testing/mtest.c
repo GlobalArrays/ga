@@ -1726,17 +1726,12 @@ test_get_diagonal (int g_a, int g_v)
 
   int me = GA_Nodeid ();
   void *val=NULL;
-  int ival = -2, izero = 0;
-  double dval = -2.0, dzero = 0.0;
-  float fval = -2.0, fzero = 0.0;
-  long lval = -2, lzero = 0;
-  DoubleComplex dcval, dczero = {0.0,0.0};
-  SingleComplex fcval, fczero = {0.0,0.0};
-
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-  SingleComplex cdot, cresult;
+  int ival = -2;
+  double dval = -2.0;
+  float fval = -2.0;
+  long lval = -2;
+  DoubleComplex dcval;
+  SingleComplex fcval;
 
   int type, ndim, dims[MAXDIM];
   int vtype, vndim, vdims[MAXDIM];
@@ -1860,11 +1855,6 @@ test_add_diagonal (int g_a, int g_v)
   long lval = -2, lzero = 0;
   DoubleComplex dcval, dczero = {0.0,0.0};
   SingleComplex fcval, fczero = {0.0,0.0};
-
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-  SingleComplex cdot, cresult;
 
   int type, ndim, dims[MAXDIM];
   int vtype, vndim, vdims[MAXDIM];
@@ -2022,11 +2012,6 @@ test_set_diagonal (int g_a, int g_v)
   DoubleComplex dcval, dczero = {0.0,0.0};
   SingleComplex fcval, fczero = {0.0,0.0};
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-  SingleComplex cdot, cresult;
-
   int type, ndim, dims[MAXDIM];
   int vtype, vndim, vdims[MAXDIM];
   int chk;
@@ -2151,15 +2136,12 @@ test_zero_diagonal (int g_a)
   DoubleComplex dcval, dczero = {0.0,0.0};
   SingleComplex fcval, fczero = {0.0,0.0};
 
-  int idot, iresult, ldot, lresult, g_b;
+  int g_b;
   int ialpha, ibeta;
   long lalpha, lbeta;
-  double fdot, ddot, fresult, dresult;
   float falpha, fbeta;
   double dalpha, dbeta;
-  DoubleComplex zdot, zresult;
   DoubleComplex zalpha, zbeta;
-  SingleComplex cdot, cresult;
   SingleComplex calpha, cbeta;
   int vdims;
   void *alpha, *beta;
@@ -2323,10 +2305,6 @@ test_shift_diagonal (int g_a)
   DoubleComplex dcval, dczero = {0.0,0.0};
   SingleComplex fcval, fczero = {0.0,0.0};
 
-  int idot, iresult, ldot, lresult;
-  double fdot, ddot, fresult, dresult;
-  DoubleComplex zdot, zresult;
-  SingleComplex cdot, cresult;
   int type, ndim, dims[MAXDIM];
   int dim;            /*the length of the diagonal */
   int chk;

@@ -154,10 +154,10 @@ int Dra_num_serv=DRA_NUM_IOPROCS;
         dai_error(_err_msg, _dim)
  
 #define ga_get_sectM(sect, _buf, _ld)\
-   ga_get_(&sect.handle, &sect.lo[0], &sect.hi[0], &sect.lo[1], &sect.hi[1], _buf, &_ld)
+   pnga_get(&sect.handle, sect.lo, sect.hi, _buf, &_ld)
 
 #define ga_put_sectM(sect, _buf, _ld)\
-   ga_put_(&sect.handle, &sect.lo[0], &sect.hi[0], &sect.lo[1], &sect.hi[1], _buf, &_ld)
+   pnga_put(&sect.handle, sect.lo, sect.hi, _buf, &_ld)
 
 #define fill_sectionM(sect, _hndl, _ilo, _ihi, _jlo, _jhi) \
 { \
@@ -253,16 +253,16 @@ int Dra_num_serv=DRA_NUM_IOPROCS;
 
 #define nga_get_sectM(sect, _buf, _ld, hdl)\
  if (hdl != NULL)\
- nga_nbget_(&sect.handle, sect.lo, sect.hi, _buf, _ld, hdl);\
+ pnga_nbget(&sect.handle, sect.lo, sect.hi, _buf, _ld, hdl);\
  else\
- nga_get_(&sect.handle, sect.lo, sect.hi, _buf, _ld);
+ pnga_get(&sect.handle, sect.lo, sect.hi, _buf, _ld);
 
 
 #define nga_put_sectM(sect, _buf, _ld, hdl)\
  if (hdl != NULL)\
- nga_nbput_(&sect.handle, sect.lo, sect.hi, _buf, _ld, hdl);\
+ pnga_nbput(&sect.handle, sect.lo, sect.hi, _buf, _ld, hdl);\
  else\
- nga_put_(&sect.handle, sect.lo, sect.hi, _buf, _ld);
+ pnga_put(&sect.handle, sect.lo, sect.hi, _buf, _ld);
 
 
 #define ndai_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a)   \
@@ -1260,14 +1260,14 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
             if(!MA_push_get(C_INT, nelem, "pindex", &phandle, &pindex))
                 dai_error("DRA move: MA failed-p ", 0L);
             for(i=0; i< nelem; i++) INT_MB[pindex+i] = i; 
-            ga_gather_(&gs_a.handle, base_addr, INT_MB+iindex, INT_MB+jindex, &nelem);
+            pnga_gather2d(&gs_a.handle, base_addr, INT_MB+iindex, INT_MB+jindex, &nelem);
             COPY_TYPE(GATHER, type, ds_chunk);
             MA_pop_stack(phandle);
 
         }else{ 
 
             COPY_TYPE(SCATTER, type, ds_chunk);
-            ga_scatter_(&gs_a.handle, base_addr, INT_MB+iindex, INT_MB+jindex, &nelem);
+            pnga_scatter2d(&gs_a.handle, base_addr, INT_MB+iindex, INT_MB+jindex, &nelem);
         }
 
         MA_pop_stack(vhandle);
@@ -2809,7 +2809,7 @@ void wait_buf(char *buf)
 
         case DRA_OP_READ:
             if (bi->align == 0)
-                nga_nbwait_(ga_movhdl);
+                pnga_nbwait(ga_movhdl);
             else {
                 elio_wait(io_req);
                 dai_exec_callback(buf, WAIT);
@@ -2937,7 +2937,7 @@ void ndai_transfer_unlgn(
                         bi->op = DRA_OP_WRITE;
                         /* overwrite a part of buffer with data from g_a */  
                         nga_move(LOAD, transp, gs_a, ds_a, ds_unlg, buffer, chunk_ld, ga_movhdl);
-                        nga_nbwait_(ga_movhdl);
+                        pnga_nbwait(ga_movhdl);
 
                         /* write ENTIRE updated buffer back to disk */
                         ndai_put(ds_chunk, buf, chunk_ld, io_req);
@@ -3023,7 +3023,7 @@ void ndai_transfer_algn(
                         bi->op = DRA_OP_WRITE;
                         /* copy data from g_a to DRA buffer */
                         nga_move(LOAD, transp, gs_a, ds_a, ds_chunk, buf, chunk_ld, ga_movhdl);
-                        nga_nbwait_(ga_movhdl);
+                        pnga_nbwait(ga_movhdl);
 
                         /* copy data from DRA buffer to disk */
                         ndai_put(ds_chunk, buf, chunk_ld, io_req);

@@ -103,7 +103,6 @@ extern proc_list_t *PGRP_LIST;
 
 
 #define ERR_STR_LEN 256               /* length of string for error reporting */
-static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 
 /**************************** MACROS ************************************/
 
@@ -111,10 +110,12 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 #define ga_check_handleM(g_a, string) \
 {\
     if(GA_OFFSET+ (*g_a) < 0 || GA_OFFSET+(*g_a) >=_max_global_array){ \
+      char err_string[ERR_STR_LEN];                                    \
       sprintf(err_string, "%s: INVALID ARRAY HANDLE", string);         \
       pnga_error(err_string, (*g_a));                                  \
     }                                                                  \
     if( ! (GA[GA_OFFSET+(*g_a)].actv) ){                               \
+      char err_string[ERR_STR_LEN];                                    \
       sprintf(err_string, "%s: ARRAY NOT ACTIVE", string);             \
       pnga_error(err_string, (*g_a));                                  \
     }                                                                  \
@@ -293,6 +294,7 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 #define ga_RegionError(ndim, lo, hi, val){                           \
   int _d, _l;                                                        \
   char *str= "cannot locate region: ";                               \
+  char err_string[ERR_STR_LEN];                                      \
   sprintf(err_string, str);                                          \
   _d=0;                                                              \
   _l = strlen(str);                                                  \
@@ -341,6 +343,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
    if (*(ilo) <= 0 || *(ihi) > GA[GA_OFFSET + *(g_a)].dims[0] ||               \
        *(jlo) <= 0 || *(jhi) > GA[GA_OFFSET + *(g_a)].dims[1] ||               \
        *(ihi) < *(ilo) ||  *(jhi) < *(jlo)){                                   \
+       char err_string[ERR_STR_LEN];                                           \
        sprintf(err_string,"%s:req(%ld:%ld,%ld:%ld) out of range (1:%ld,1:%ld)",\
                string, (long)*(ilo), (long)*(ihi), (long)*(jlo), (long)*(jhi), \
                (long)GA[GA_OFFSET + *(g_a)].dims[0],                           \
@@ -355,6 +358,7 @@ Integer _d;                                                                    \
   __CRAYX1_PRAGMA("_CRI novector");                                            \
    for(_d=0; _d<  ndim; _d++)                                                  \
       if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                        \
+        char err_string[ERR_STR_LEN];                                          \
         sprintf(err_string,"check subscript failed:%ld not in (%ld:%ld) dim=", \
                   (long)subscr[_d],  (long)lo[_d],  (long)hi[_d]);             \
           pnga_error(err_string, _d);                                          \

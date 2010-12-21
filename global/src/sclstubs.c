@@ -8,11 +8,25 @@
 
 #define _MAX_PROB_SIZE_ 10000 /* 100x100 */
 
-void FATR ga_lu_solve_alt_(Integer *tran, Integer * g_a, Integer * g_b) {
-  pnga_error("ga_lu_solve:scalapack not interfaced",0L);
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_lu_solve_alt = pnga_lu_solve_alt
+#endif
+void pnga_lu_solve_alt(Integer *tran, Integer * g_a, Integer * g_b) {
+#if HAVE_SCALAPACK
+#   if ENABLE_F77
+    gai_lu_solve_alt(tran, g_a, g_b);
+#   else
+    pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
+#   endif
+#else
+    pnga_error("ga_lu_solve:scalapack not interfaced",0L);
+#endif
 }
 
-void FATR ga_lu_solve_(char *tran, Integer * g_a, Integer * g_b) {
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_lu_solve = pnga_lu_solve
+#endif
+void pnga_lu_solve(char *tran, Integer * g_a, Integer * g_b) {
 
   Integer dimA1, dimA2, typeA;
   Integer dimB1, dimB2, typeB;
@@ -34,18 +48,54 @@ void FATR ga_lu_solve_(char *tran, Integer * g_a, Integer * g_b) {
   pnga_lu_solve_seq(tran, g_a, g_b);
 }
 
-Integer FATR ga_llt_solve_(Integer * g_a, Integer * g_b) {
-  pnga_error("ga_llt_solve:scalapack not interfaced",0L);
-  return 0;
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_llt_solve = pnga_llt_solve
+#endif
+Integer pnga_llt_solve(Integer * g_a, Integer * g_b) {
+#if HAVE_SCALAPACK
+#   if ENABLE_F77
+    return gai_llt_solve(tran, g_a, g_b);
+#   else
+    pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
+    return FALSE;
+#   endif
+#else
+    pnga_error("ga_lu_solve:scalapack not interfaced",0L);
+    return FALSE;
+#endif
 }
 
-Integer FATR ga_solve_(Integer * g_a, Integer * g_b) {
-  pnga_error("ga_solve:scalapack not interfaced",0L);
-  return 0;
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_solve = pnga_solve
+#endif
+Integer pnga_solve(Integer * g_a, Integer * g_b) {
+#if HAVE_SCALAPACK
+#   if ENABLE_F77
+    return gai_solve(tran, g_a, g_b);
+#   else
+    pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
+    return FALSE;
+#   endif
+#else
+    pnga_error("ga_lu_solve:scalapack not interfaced",0L);
+    return FALSE;
+#endif
 }
 
-Integer FATR ga_spd_invert_(Integer * g_a) {
-  pnga_error("ga_spd_invert:scalapack not interfaced",0L);
-  return 0;
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_spd_invert = pnga_spd_invert
+#endif
+Integer pnga_spd_invert(Integer * g_a) {
+#if HAVE_SCALAPACK
+#   if ENABLE_F77
+    return gai_spd_invert(tran, g_a, g_b);
+#   else
+    pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
+    return FALSE;
+#   endif
+#else
+    pnga_error("ga_lu_solve:scalapack not interfaced",0L);
+    return FALSE;
+#endif
 }
 

@@ -52,7 +52,10 @@ static logical patch_intersect(ilo, ihi, jlo, jhi, ilop, ihip, jlop, jhip)
  *  . identical shapes 
  *  . copy by column order - Fortran convention
 \*/
-void ga_copy_patch_dp(t_a, g_a, ailo, aihi, ajlo, ajhi,
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_copy_patch_dp = pnga_copy_patch_dp
+#endif
+void pnga_copy_patch_dp(t_a, g_a, ailo, aihi, ajlo, ajhi,
                    g_b, bilo, bihi, bjlo, bjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
@@ -68,10 +71,10 @@ char transp;
 DoublePrecision *dbl_ptrA=NULL, *dbl_ptrB=NULL;
 Integer ndim, dims[2];
 
-   pnga_check_handle(g_a, "ga_copy_patch_dp");
-   pnga_check_handle(g_b, "ga_copy_patch_dp");
+   pnga_check_handle(g_a, "pnga_copy_patch_dp");
+   pnga_check_handle(g_b, "pnga_copy_patch_dp");
 
-   /* if(*g_a == *g_b) pnga_error("ga_copy_patch_dp: arrays have to different ", 0L); */
+   /* if(*g_a == *g_b) pnga_error("pnga_copy_patch_dp: arrays have to different ", 0L); */
 
    pnga_inquire(g_a, &atype, &ndim, dims);
    adim1 = dims[0];
@@ -81,18 +84,18 @@ Integer ndim, dims[2];
    bdim2 = dims[1];
 
    if(atype != btype || (atype != C_DBL ))
-      pnga_error("ga_copy_patch_dp: wrong types ", 0L);
+      pnga_error("pnga_copy_patch_dp: wrong types ", 0L);
 
    /* check if patch indices and dims match */
    if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
-       pnga_error(" ga_copy_patch_dp: g_a indices out of range ", 0L);
+       pnga_error(" pnga_copy_patch_dp: g_a indices out of range ", 0L);
    if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-       pnga_error(" ga_copy_patch_dp: g_b indices out of range ", 0L);
+       pnga_error(" pnga_copy_patch_dp: g_b indices out of range ", 0L);
 
    /* check if numbers of elements in two patches match each other */
    if (((*bihi - *bilo + 1)  != (*aihi - *ailo + 1)) || 
       ( (*bjhi - *bjlo + 1)  != (*ajhi - *ajlo + 1)) )
-       pnga_error(" ga_copy_patch_dp: shapes two of patches do not match ", 0L);
+       pnga_error(" pnga_copy_patch_dp: shapes two of patches do not match ", 0L);
 
     /* is transpose operation required ? */
    transp = (*t_a == 'n' || *t_a =='N')? 'n' : 't';
@@ -153,25 +156,10 @@ Integer ndim, dims[2];
   }
 }
 
-/*\ COPY A PATCH
- *  Fortran interface
-\*/
-#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-void FATR ga_copy_patch_dp_(trans, g_a, ailo, aihi, ajlo, ajhi,
-                    g_b, bilo, bihi, bjlo, bjhi, translen)
-#else
-void FATR ga_copy_patch_dp_(trans, translen, g_a, ailo, aihi, ajlo, ajhi,
-                    g_b, bilo, bihi, bjlo, bjhi)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_ddot_patch_dp = pnga_ddot_patch_dp
 #endif
-     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;
-     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
-     char *trans;
-     int translen;
-{  ga_copy_patch_dp(trans,g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi); }
-
-
-
-DoublePrecision ga_ddot_patch_dp(g_a, t_a, ailo, aihi, ajlo, ajhi,
+DoublePrecision pnga_ddot_patch_dp(g_a, t_a, ailo, aihi, ajlo, ajhi,
                                   g_b, t_b, bilo, bihi, bjlo, bjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
@@ -191,8 +179,8 @@ DoublePrecision *dbl_ptrA;
 DoublePrecision *dbl_ptrB;
 Integer ndim, dims[2];
 
-   pnga_check_handle(g_a, "ga_ddot_patch_dp");
-   pnga_check_handle(g_b, "ga_ddot_patch_dp");
+   pnga_check_handle(g_a, "pnga_ddot_patch_dp");
+   pnga_check_handle(g_b, "pnga_ddot_patch_dp");
 
    pnga_inquire(g_a, &atype, &ndim, dims);
    adim1 = dims[0];
@@ -202,15 +190,15 @@ Integer ndim, dims[2];
    bdim2 = dims[1];
 
    if(atype != btype || (atype != C_DBL ))
-      pnga_error("ga_ddot_patch_dp: wrong types ", 0L);
+      pnga_error("pnga_ddot_patch_dp: wrong types ", 0L);
 
   /* check if patch indices and g_a dims match */
    if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
-      pnga_error(" ga_ddot_patch_dp: g_a indices out of range ", 0L);
+      pnga_error(" pnga_ddot_patch_dp: g_a indices out of range ", 0L);
 
    /* check if patch indices and g_b dims match */
    if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-       pnga_error(" ga_ddot_patch_dp: g_b indices out of range ", 0L);
+       pnga_error(" pnga_ddot_patch_dp: g_b indices out of range ", 0L);
 
 
    /* is transpose operation required ? */
@@ -219,7 +207,7 @@ Integer ndim, dims[2];
    transp_b = (*t_b == 'n' || *t_b =='N')? 'n' : 't';
    transp   = (transp_a == transp_b)? 'n' : 't';
    if(transp == 't')
-          pnga_error(" ga_ddot_patch_dp: transpose operators don't match: ", me);
+          pnga_error(" pnga_ddot_patch_dp: transpose operators don't match: ", me);
 
 
    /* find out coordinates of patches of g_A and g_B that I own */
@@ -268,20 +256,3 @@ Integer ndim, dims[2];
    return sum;
 }
 
-      
-/*\ compute DOT PRODUCT of two patches
- *  Fortran interface
-\*/
-#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-DoublePrecision FATR ga_ddot_patch_dp_(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                               g_b, t_b, bilo, bihi, bjlo, bjhi, alen, blen)
-#else
-DoublePrecision FATR ga_ddot_patch_dp_(g_a, t_a, alen, ailo, aihi, ajlo, ajhi,
-                               g_b, t_b, blen, bilo, bihi, bjlo, bjhi)
-#endif
-     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
-     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
-     char    *t_a, *t_b;                          /* transpose operators */
-     int alen, blen;
-{ return ga_ddot_patch_dp(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                       g_b, t_b, bilo, bihi, bjlo, bjhi);}

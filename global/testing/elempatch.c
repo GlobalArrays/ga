@@ -155,8 +155,8 @@ Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM], _ga_work[MAXDIM];
 #  define COPYINDEX_C2F(carr, farr, n){\
    int i; for(i=0; i< (n); i++)(farr)[n-i-1]=(Integer)(carr)[i]+1;}
 
-void FATR nga_vfill_patch_(Integer *g_a, Integer *lo, Integer *hi);
-void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi);
+void nga_vfill_patch(Integer *g_a, Integer *lo, Integer *hi);
+void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi);
 
 void NGA_Vfill_patch(int g_a, int lo[], int hi[])
 {
@@ -165,7 +165,7 @@ void NGA_Vfill_patch(int g_a, int lo[], int hi[])
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
 
-    nga_vfill_patch_(&a, _ga_lo, _ga_hi);
+    nga_vfill_patch(&a, _ga_lo, _ga_hi);
 }
 
 
@@ -176,7 +176,7 @@ void NGA_Pnfill_patch(int g_a, int lo[], int hi[])
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
 
-    nga_pnfill_patch_(&a, _ga_lo, _ga_hi);
+    nga_pnfill_patch(&a, _ga_lo, _ga_hi);
 }
 
 int
@@ -1626,7 +1626,7 @@ main (argc, argv)
 /*\ FILL IN ARRAY WITH Varying VALUEs. (from 0 to product of dims-1).
     For complex arrays make the real and imaginary parts equal.
 \*/
-void FATR nga_vfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
+void nga_vfill_patch(Integer *g_a, Integer *lo, Integer *hi)
 {
     Integer i, j;
     Integer ndim, dims[MAXDIM], type;
@@ -1883,7 +1883,7 @@ void ngai_do_pnfill_patch(Integer type, Integer ndim, Integer *loA, Integer *hiA
     (from -2 to 1).
     For complex arrays make the real and imaginary parts equal.
 \*/
-void FATR nga_pnfill_patch_(Integer *g_a, Integer *lo, Integer *hi)
+void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi)
 {
   Integer i;
   Integer ndim, dims[MAXDIM], type;

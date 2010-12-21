@@ -50,6 +50,6 @@ typedef struct {
                     else { dim1=1; dim2=dims[0];}} \
   else pnga_error("rank must be atleast 1",rank);
 
-#define WAIT_GET_BLOCK(nbhdl) ga_nbwait_(nbhdl)
+#define WAIT_GET_BLOCK(nbhdl) pnga_nbwait(nbhdl)
 
 #endif /* _MATMUL_H_ */

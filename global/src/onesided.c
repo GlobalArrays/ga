@@ -325,6 +325,7 @@ void gai_free(void *ptr)
   _jlo = _lo[1]; _jhi=_hi[1];                                                  \
                                                                                \
   if((_i)<_ilo || (_i)>_ihi || (_j)<_jlo || (_j)>_jhi){                        \
+    char err_string[ERR_STR_LEN];                                              \
     sprintf(err_string,"%s:p=%ld invalid i/j (%ld,%ld)><(%ld:%ld,%ld:%ld)",    \
         "gaShmemLocation", (long)proc, (long)(_i),(long)(_j),                  \
         (long)_ilo, (long)_ihi, (long)_jlo, (long)_jhi);                       \
@@ -2780,6 +2781,7 @@ int use_blocks;
 
   for(k=0; k< nv; k++){
      if(i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
+       char err_string[ERR_STR_LEN];
        sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)>< [%ld:%ld,%ld:%ld]",
                (int)proc, (long)i[k], (long)j[k], (long)ilo, 
                (long)ihi, (long)jlo, (long)jhi); 
@@ -2917,6 +2919,7 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
         if(! pnga_locate(g_a, subscrpt, owner+k)){
+          char err_string[ERR_STR_LEN];
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
           pnga_error(err_string,*g_a);
         }
@@ -2928,6 +2931,7 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
         if(! pnga_locate(g_a, subscrpt, owner+k)){
+          char err_string[ERR_STR_LEN];
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
           pnga_error(err_string,*g_a);
         }
@@ -3020,6 +3024,7 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
 
         if(i[k] < ilo[proc] || i[k] > ihi[proc]  ||
            j[k] < jlo[proc] || j[k] > jhi[proc]){
+          char err_string[ERR_STR_LEN];
           sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)><[%ld:%ld,%ld:%ld]",
              (int)proc, (long)i[k], (long)j[k], (long)ilo[proc], 
              (long)ihi[proc], (long)jlo[proc], (long)jhi[proc]);
@@ -3131,6 +3136,7 @@ Integer subscrpt[2];
     subscrpt[0] = *(i+k);
     subscrpt[1] = *(j+k);
     if(! pnga_locate(g_a, subscrpt, int_ptr+k)){
+         char err_string[ERR_STR_LEN];
          sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
          pnga_error(err_string,*g_a);
     }
@@ -3896,6 +3902,7 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
         if(! pnga_locate(g_a, subscrpt, owner+k)){
+          char err_string[ERR_STR_LEN];
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
           pnga_error(err_string, *g_a);
         }
@@ -3907,6 +3914,7 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
         if(! pnga_locate(g_a, subscrpt, owner+k)){
+          char err_string[ERR_STR_LEN];
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
           pnga_error(err_string, *g_a);
         }
@@ -4000,6 +4008,7 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
 
         if(i[k] < ilo[proc] || i[k] > ihi[proc]  ||
            j[k] < jlo[proc] || j[k] > jhi[proc]){
+          char err_string[ERR_STR_LEN];
           sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)><[%ld:%ld,%ld:%ld]",
                  (int)proc,(long)i[k],(long)j[k],
                  (long)ilo[proc],(long)ihi[proc],

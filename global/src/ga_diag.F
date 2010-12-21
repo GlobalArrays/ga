@@ -4,7 +4,7 @@
 #ifdef USE_VAMPIR
 #include "ga_vampir.fh"
 #endif
-      subroutine ga_diag_std(g_a, g_v, eval)
+      subroutine gia_diag_std(g_a, g_v, eval)
 C$Id: ga_diag.F,v 1.26 2004-10-19 22:39:20 edo Exp $
       implicit none
 #include "mafdecls.fh"
@@ -66,18 +66,18 @@ c
 c
 c***  check GA info
 c
-      call pnga_check_handle(g_a, 'ga_diag: a')
-      call pnga_check_handle(g_v, 'ga_diag: v')
+      call pnga_check_handle(g_a, 'gai_diag: a')
+      call pnga_check_handle(g_v, 'gai_diag: v')
       call ga_inquire(g_a,  typeA, dimA1, dimA2)
       call ga_inquire(g_v,  typeV, dimV1, dimV2)
 c
 c
       if (dimA1 .ne. dimA2) then
-         call ga_error('ga_diag_std: can only diag square matrix ',1)
+         call ga_error('gia_diag_std: can only diag square matrix ',1)
       else if (dimV1 .ne. dimV2) then
-         call ga_error('ga_diag_std: can only diag square matrix ',3)
+         call ga_error('gia_diag_std: can only diag square matrix ',3)
       else if(dimA1.ne.dimV1 )then
-         call ga_error('ga_diag_std: A & V dimension mismatch ', 4)
+         call ga_error('gia_diag_std: A & V dimension mismatch ', 4)
       endif
 c
       n = dimA1
@@ -107,11 +107,11 @@ c
          status = status .and. ma_push_get(mt_int,n,'mapa',hma,adrma)
          status = status .and. ma_push_get(mt_int,n,'mapz',hmz,adrmz)
          if (.not. status)
-     $        call ga_error('ga_diag_std: insufficient memory 1', n)
+     $        call ga_error('gia_diag_std: insufficient memory 1', n)
 c
 c        allocate and setup list of TCG nodes
          if( .not. ma_push_get(mt_int, proc,'list',hls,adrls))
-     $        call ga_error('ga_diag_std: insufficient memory 1b', n)
+     $        call ga_error('gia_diag_std: insufficient memory 1b', n)
          call ga_list_nodeid(int_mb(adrls), proc)
 *         print *,myproc,'list ', (int_mb(adrls+k),k=0,proc-1)
 *         call ffflush(6)
@@ -176,11 +176,11 @@ c***     allocate a,b, and z arrays
 c     
          status = .true.
          status = status .and.
-     $        ma_push_get(mt_dbl,myelem,'ga_diag_std:a',ha,adra)
+     $        ma_push_get(mt_dbl,myelem,'gia_diag_std:a',ha,adra)
          status = status .and.
-     $        ma_push_get(mt_dbl,elemz,'ga_diag_std:z',hz,adrz)
+     $        ma_push_get(mt_dbl,elemz,'gia_diag_std:z',hz,adrz)
          if (.not. status)
-     $        call ga_error('ga_diag_std: insufficient mem 2',
+     $        call ga_error('gia_diag_std: insufficient mem 2',
      $        myelem+elemz)
 c
 c***     load  matrix A 
@@ -200,16 +200,16 @@ c
 * temporary patch following george reccomendation to use 6n
 *
          if (.not. ma_push_get(mt_int,6*n,'iscratch',his,adris))
-     $        call ga_error('ga_diag_std: insufficient mem 3', 6*n)
+     $        call ga_error('gia_diag_std: insufficient mem 3', 6*n)
          call fmemreq(1,n,int_mb(adrma),int_mb(adrma),int_mb(adrmz),
      &        isize, rsize, ptr_size,int_mb(adris))
          status = ma_pop_stack(his)
          if(.not. ma_push_get(mt_int,isize,'iscratch',his,adris))
-     &        call ga_error('ga_diag_std allocator',1)
+     &        call ga_error('gia_diag_std allocator',1)
          if(.not. ma_push_get(mt_dbl,rsize,'scratch',hsc,adrsc))
-     &        call ga_error('ga_diag_std allocator',2)
+     &        call ga_error('gia_diag_std allocator',2)
          if(.not. ma_push_get(mt_dbl,ptr_size,'iptr',hip,adrip))
-     &        call ga_error('ga_diag_std allocator',3)
+     &        call ga_error('gia_diag_std allocator',3)
 c     
       endif
 c
@@ -244,7 +244,7 @@ c
 *          print *,myproc,'out: participate in eig: ',proc
 *          call ffflush(6)
          if (info .ne. 0)
-     $        call ga_error('ga_diag_std: ... info non-zero ', myproc)
+     $        call ga_error('gia_diag_std: ... info non-zero ', myproc)
       endif
 c     
       call ga_sync()            ! To reduce message buffering problems      
@@ -271,7 +271,7 @@ c
          status = status .and. ma_pop_stack(hls)
          status = status .and. ma_pop_stack(hmz)
          status = status .and. ma_pop_stack(hma)
-         if (.not. status) call ga_error('ga_diag_std: ma_pop',0)
+         if (.not. status) call ga_error('gia_diag_std: ma_pop',0)
       endif
 c
 c
@@ -296,7 +296,7 @@ c
       end
 
 
-      subroutine ga_diag(g_a, g_s, g_v, eval)
+      subroutine gai_diag(g_a, g_s, g_v, eval)
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
@@ -366,22 +366,22 @@ c
 c
 c***  check GA info
 c
-      call pnga_check_handle(g_a, 'ga_diag: a')
-      call pnga_check_handle(g_s, 'ga_diag: s')
-      call pnga_check_handle(g_v, 'ga_diag: v')
+      call pnga_check_handle(g_a, 'gai_diag: a')
+      call pnga_check_handle(g_s, 'gai_diag: s')
+      call pnga_check_handle(g_v, 'gai_diag: v')
       call ga_inquire(g_a, typeA, dimA1, dimA2)
       call ga_inquire(g_s, typeS, dimS1, dimS2)
       call ga_inquire(g_v, typeV, dimV1, dimV2)
 c
 c
       if (dimA1 .ne. dimA2) then
-         call ga_error('ga_diag: can only diag square matrix ', 1)
+         call ga_error('gai_diag: can only diag square matrix ', 1)
       else if (dimS1 .ne. dimS2) then
-         call ga_error('ga_diag: can only diag square matrix ', 2)
+         call ga_error('gai_diag: can only diag square matrix ', 2)
       else if (dimV1 .ne. dimV2) then
-         call ga_error('ga_diag: can only diag square matrix ', 3)
+         call ga_error('gai_diag: can only diag square matrix ', 3)
       else if(dimA1.ne.dimS1 .or. dimS1 .ne. dimV1)then
-         call ga_error('ga_diag: A, S, V dimension mismatch ', 4)
+         call ga_error('gai_diag: A, S, V dimension mismatch ', 4)
       endif
 c
       n = dimA1
@@ -412,11 +412,11 @@ c
          status = status .and. ma_push_get(mt_int,n,'mapb',hmb,adrmb)
          status = status .and. ma_push_get(mt_int,n,'mapz',hmz,adrmz)
          if (.not. status)
-     $        call ga_error('ga_diag: insufficient memory 1', n)
+     $        call ga_error('gai_diag: insufficient memory 1', n)
 c
 c        allocate and setup list of TCG nodes
          if( .not. ma_push_get(mt_int, proc,'list',hls,adrls))
-     $        call ga_error('ga_diag: insufficient memory 1b', n)
+     $        call ga_error('gai_diag: insufficient memory 1b', n)
          call ga_list_nodeid(int_mb(adrls), proc)
 *         print *,myproc,'list ', (int_mb(adrls+k),k=0,proc-1)
 *         call ffflush(6)
@@ -485,12 +485,12 @@ c        allocate a,b, and z arrays
 c     
          status = .true. 
          status = status .and.
-     $        ma_push_get(mt_dbl,myelem,'ga_diag:a',ha,adra)
+     $        ma_push_get(mt_dbl,myelem,'gai_diag:a',ha,adra)
          status = status .and.
-     $        ma_push_get(mt_dbl,myelem,'ga_diag:b',hb,adrb)
+     $        ma_push_get(mt_dbl,myelem,'gai_diag:b',hb,adrb)
          status = status .and.
-     $        ma_push_get(mt_dbl,elemz,'ga_diag:z',hz,adrz)
-         if (.not. status) call ga_error('ga_diag: memory?', myelem)
+     $        ma_push_get(mt_dbl,elemz,'gai_diag:z',hz,adrz)
+         if (.not. status) call ga_error('gai_diag: memory?', myelem)
 c
 c        load A and S matrices 
 c
@@ -510,11 +510,11 @@ c
 * temporary patch following george reccomendation to use 6n
 *
          if (.not. ma_push_get(mt_int,6*n,'iscratch',his,adris))
-     $        call ga_error('ga_diag: memory 2?', 6*n)
+     $        call ga_error('gai_diag: memory 2?', 6*n)
          call fmemreq(0,n,int_mb(adrma),int_mb(adrmb),int_mb(adrmz),
      &        isize, rsize, ptr_size,int_mb(adris))
          if (.not. ma_pop_stack(his))
-     $        call ga_error('ga_diag: ma pop his', 0)
+     $        call ga_error('gai_diag: ma pop his', 0)
          if(.not. ma_push_get(mt_int,isize,'iscratch',his,adris))
      &        call ga_error('eig allocator',1)
          if(.not. ma_push_get(mt_dbl,rsize,'scratch',hsc,adrsc))
@@ -542,7 +542,7 @@ c
 *          print *,myproc,'out: participate in eig: ',proc
 *          call ffflush(6)
          if (info .ne. 0)
-     $        call ga_error('ga_diag: info non-zero ', info)
+     $        call ga_error('gai_diag: info non-zero ', info)
       endif
 c     
       call ga_sync()            ! To reduce message buffering problems      
@@ -571,7 +571,7 @@ c
          status = status .and. ma_pop_stack(hmz) 
          status = status .and. ma_pop_stack(hmb) 
          status = status .and. ma_pop_stack(hma)
-         if (.not. status) call ga_error('ga_diag: ma_pop?', 0)
+         if (.not. status) call ga_error('gai_diag: ma_pop?', 0)
       endif
 c
 c
@@ -595,7 +595,7 @@ c
 c
       end
 c
-      subroutine ga_diag_reuse(reuse,g_a, g_s, g_v, eval)
+      subroutine gai_diag_reuse(reuse,g_a, g_s, g_v, eval)
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
@@ -672,9 +672,9 @@ c
 c
 c***  check GA handles, types and dimensions 
 c
-      call pnga_check_handle(g_a, 'ga_diag: a')
-      call pnga_check_handle(g_s, 'ga_diag: s')
-      call pnga_check_handle(g_v, 'ga_diag: v')
+      call pnga_check_handle(g_a, 'gai_diag: a')
+      call pnga_check_handle(g_s, 'gai_diag: s')
+      call pnga_check_handle(g_v, 'gai_diag: v')
 c
 c...  unless it is the first call, check if g_s has not changed 
 c  
@@ -682,7 +682,7 @@ c
          g_ps = g_s
       else
          if(g_ps .ne. g_s) 
-     $    call ga_error('ga_diag:attempt to reuse invalid data ',g_ps) 
+     $    call ga_error('gai_diag:attempt to reuse invalid data ',g_ps) 
       endif
 c
       call ga_inquire(g_a, typeA, dimA1, dimA2)
@@ -692,13 +692,13 @@ c
 c...  verify if the dimensions match
 c
       if (dimA1 .ne. dimA2) then
-         call ga_error(' ga_diag: can only diag square matrix ', 1)
+         call ga_error(' gai_diag: can only diag square matrix ', 1)
       else if (dimS1 .ne. dimS2) then
-         call ga_error(' ga_diag: can only diag square matrix ', 2)
+         call ga_error(' gai_diag: can only diag square matrix ', 2)
       else if (dimV1 .ne. dimV2) then
-         call ga_error(' ga_diag: can only diag square matrix ', 3)
+         call ga_error(' gai_diag: can only diag square matrix ', 3)
       else if(dimA1.ne.dimS1 .or. dimS1 .ne. dimV1)then
-         call ga_error(' ga_diag: A, S, V dimension mismatch ', 4)
+         call ga_error(' gai_diag: A, S, V dimension mismatch ', 4)
       endif
 c
 c***  for smallest problems use sequential eigensolver
@@ -717,13 +717,13 @@ c
 c***  test the reuse value and take the proper action
 c
       if((reuse .ne. 0) .and. first_time)
-     $ call ga_error(' ga_diag: cannot reuse uninitialized data',reuse)
+     $ call ga_error(' gai_diag: cannot reuse uninitialized data',reuse)
 c
 c...  detect repeated "first-time" calls -- they are allowed if 
 c...         storage allocated for B is deallocated first
 c
       if((reuse .eq. 0) .and. .not. first_time)
-     $ call ga_error(' ga_diag_reuse: repeated call, memory problem',0)
+     $ call ga_error(' gai_diag_reuse: repeated call, memory problem',0)
 c
 c...  case for < 0 is just a cleanup of storage for B
 c
@@ -762,17 +762,17 @@ c
 c***     allocate storage for map arrays: A & Z from stack and B from heap
 c
          status = ma_push_get(mt_int,n,'mapa',hma,adrma)
-         if(.not.status)call ga_error('ga_diag: mapa not allocated ',0)
+         if(.not.status)call ga_error('gai_diag: mapa not allocated ',0)
 
          if(first_time)status = ma_alloc_get(mt_int,n,'mapb',hmb,adrmb)
-         if(.not.status)call ga_error('ga_diag: mapb not allocated ',0)
+         if(.not.status)call ga_error('gai_diag: mapb not allocated ',0)
 
          status = ma_push_get(mt_int,n,'mapz',hmz,adrmz)
-         if(.not.status)call ga_error('ga_diag: mapc not allocated ',0)
+         if(.not.status)call ga_error('gai_diag: mapc not allocated ',0)
 c
 c        allocate and setup list of TCG nodes
          if( .not. ma_push_get(mt_int, proc,'list',hls,adrls))
-     $        call ga_error('ga_diag_std: insufficient memory 1b', n)
+     $        call ga_error('gia_diag_std: insufficient memory 1b', n)
          call ga_list_nodeid(int_mb(adrls), proc)
 c         
 c         
@@ -838,11 +838,11 @@ c
 c***     allocate arrays: A & Z from stack and B from heap
 c     
          status = ma_push_get(mt_dbl,myelem,'a',ha,adra)
-         if(.not. status)call ga_error('ga_diag: a not allocated ',0)
+         if(.not. status)call ga_error('gai_diag: a not allocated ',0)
          if(first_time)status = ma_alloc_get(mt_dbl,myelem,'b',hb,adrb)
-         if(.not. status)call ga_error('ga_diag: b not allocated ',0)
+         if(.not. status)call ga_error('gai_diag: b not allocated ',0)
          status = ma_push_get(mt_dbl,elemz,'z',hz,adrz)
-         if(.not. status)call ga_error('ga_diag: c not allocated ',0)
+         if(.not. status)call ga_error('gai_diag: c not allocated ',0)
 c
 c***     load A and S matrices 
 c
@@ -891,7 +891,7 @@ c
      &        dbl_mb(adrip), ptr_size,  
      &        dbl_mb(adrsc), rsize, info)  
          if (info .ne. 0)
-     $        call ga_error('ga_diag: info non-zero ', info)
+     $        call ga_error('gai_diag: info non-zero ', info)
       endif
 c     
       call ga_sync()            ! To reduce message buffering problems      

@@ -64,8 +64,7 @@ AM_LDFLAGS += $(LAPACK_LDFLAGS)
 AM_LDFLAGS += $(BLAS_LDFLAGS)
 AM_LDFLAGS += $(GA_MP_LDFLAGS)
 AM_LDFLAGS += $(ARMCI_NETWORK_LDFLAGS)
-if NOFORT
-else
+if ENABLE_F77
 AM_LDFLAGS += $(FLD_NOMAIN)
 endif
 
@@ -84,8 +83,7 @@ LDADD += $(GA_MP_LIBS)
 LDADD += $(ARMCI_NETWORK_LIBS)
 
 # Certain trickery when turning Fortran support on or off.
-if NOFORT
-else
+if ENABLE_F77
 MAYBE_DUMMY_F_LINK = dummy.f
 MAYBE_FLIBS = $(FLIBS)
 endif
@@ -121,8 +119,7 @@ libga_la_SOURCES += compat/random.c
 #
 libga_la_SOURCES += gaf2c/gaf2c.c
 libga_la_SOURCES += gaf2c/drand.c
-if NOFORT
-else
+if ENABLE_F77
 libga_la_SOURCES += gaf2c/farg.F
 endif
 
@@ -132,8 +129,7 @@ include_HEADERS += gaf2c/farg.h
 AM_CPPFLAGS += -I$(top_build_prefix)gaf2c
 AM_CPPFLAGS += -I$(top_srcdir)/gaf2c
 
-if NOFORT
-else
+if ENABLE_F77
 check_PROGRAMS += gaf2c/testarg
 endif
 
@@ -150,8 +146,7 @@ libga_la_SOURCES += ma/ma.h
 libga_la_SOURCES += ma/memcpy.h
 libga_la_SOURCES += ma/string-util.c
 libga_la_SOURCES += ma/table.c
-if NOFORT
-else
+if ENABLE_F77
 libga_la_SOURCES += ma/maf.F
 endif
 
@@ -171,8 +166,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/ma
 check_PROGRAMS += ma/testc
 check_PROGRAMS += ma/test-coalesce
 check_PROGRAMS += ma/test-inquire
-if NOFORT
-else
+if ENABLE_F77
 check_PROGRAMS += ma/testf
 endif
 
@@ -190,8 +184,7 @@ nodist_EXTRA_ma_test_inquire_SOURCES  = $(MAYBE_DUMMY_F_LINK)
 ##############################################################################
 # LinAlg/lapack+blas
 #
-if NOFORT
-else # !NOFORT
+if ENABLE_F77
 libga_la_SOURCES += LinAlg/lapack+blas/testblas.f
 if HAVE_LAPACK
 else # !HAVE_LAPACK
@@ -213,7 +206,7 @@ libga_la_SOURCES += LinAlg/lapack+blas/sgemm.f
 libga_la_SOURCES += LinAlg/lapack+blas/zaxpy.f
 libga_la_SOURCES += LinAlg/lapack+blas/zgemm.f
 endif # HAVE_BLAS
-endif # NOFORT
+endif # ENABLE_F77
 
 EXTRA_DIST += LinAlg/lapack+blas/README
 
@@ -350,8 +343,7 @@ check_PROGRAMS += tcgmsg/ipcv4.0/test
 check_PROGRAMS += tcgmsg/ipcv4.0/testmap
 check_PROGRAMS += tcgmsg/ipcv4.0/toplot
 check_PROGRAMS += tcgmsg/ipcv4.0/xdrtest
-if NOFORT
-else
+if ENABLE_F77
 check_PROGRAMS += tcgmsg/ipcv4.0/testf
 check_PROGRAMS += tcgmsg/ipcv4.0/testpf
 endif
@@ -432,8 +424,7 @@ check_PROGRAMS += tcgmsg/ipcv5.0/test
 if MSG_COMMS_PVM
 check_PROGRAMS += tcgmsg/ipcv5.0/pvm.ring
 endif
-if NOFORT
-else
+if ENABLE_F77
 check_PROGRAMS += tcgmsg/ipcv5.0/jacobi
 check_PROGRAMS += tcgmsg/ipcv5.0/testf
 endif
@@ -488,8 +479,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/tcgmsg/tcgmsg-mpi
 
 check_PROGRAMS += tcgmsg/tcgmsg-mpi/test_asyn
 check_PROGRAMS += tcgmsg/tcgmsg-mpi/test
-if NOFORT
-else
+if ENABLE_F77
 check_PROGRAMS += tcgmsg/tcgmsg-mpi/testf
 endif
 
@@ -567,6 +557,7 @@ libga_la_SOURCES += global/src/elem_alg.c
 libga_la_SOURCES += global/src/fapi.c
 libga_la_SOURCES += global/src/ga_ckpt.h
 libga_la_SOURCES += global/src/gaconfig.h
+libga_la_SOURCES += global/src/ga_diag_seqc.c
 libga_la_SOURCES += global/src/ga_malloc.c
 libga_la_SOURCES += global/src/ga_profile.h
 libga_la_SOURCES += global/src/ga_solve_seq.c
@@ -587,10 +578,13 @@ libga_la_SOURCES += global/src/matmul.h
 libga_la_SOURCES += global/src/matrix.c
 libga_la_SOURCES += global/src/nbutil.c
 libga_la_SOURCES += global/src/onesided.c
+libga_la_SOURCES += global/src/peigstubs.c
 libga_la_SOURCES += global/src/scalapack.fh
+libga_la_SOURCES += global/src/sclstubs.c
 libga_la_SOURCES += global/src/select.c
 libga_la_SOURCES += global/src/sparse.c
 libga_la_SOURCES += global/src/xgemm.c
+libga_la_SOURCES += global/src/xgemm.h
 nodist_libga_la_SOURCES += global/src/wapidefs.h
 nodist_libga_la_SOURCES += global/src/c.names.h
 if ENABLE_PROFILING
@@ -599,27 +593,22 @@ else
 nodist_libga_la_SOURCES += global/src/wapi.c
 endif
 endif
-if NOFORT
-else
+if ENABLE_F77
 libga_la_SOURCES += global/src/complex.F
 libga_la_SOURCES += global/src/ga_diag_seq.F
 libga_la_SOURCES += global/src/rsg.f
-endif
-if ENABLE_CHECKPOINT
-libga_la_SOURCES += global/src/ga_ckpt.c
-endif
 if CRAY_XT_NETWORKS
 libga_la_SOURCES += global/src/ga_dgemmf.F
-endif
+endif # CRAY_XT_NETWORKS
 if ENABLE_PEIGS
 libga_la_SOURCES += global/src/ga_diag.F
-else
-libga_la_SOURCES += global/src/peigstubs.c
-endif
+endif # ENABLE_PEIGS
 if HAVE_SCALAPACK
 libga_la_SOURCES += global/src/scalapack.F
-else
-libga_la_SOURCES += global/src/sclstubs.c
+endif # HAVE_SCALAPACK
+endif # ENABLE_F77
+if ENABLE_CHECKPOINT
+libga_la_SOURCES += global/src/ga_ckpt.c
 endif
 if USE_VAMPIR
 libga_la_SOURCES += global/ga_vt.c
@@ -649,11 +638,10 @@ check_PROGRAMS += global/testing/testc
 check_PROGRAMS += global/testing/testmatmultc
 check_PROGRAMS += global/testing/testmult
 check_PROGRAMS += global/testing/testmultrect
-if NOFORT
 if HAVE_LAPACK
 check_PROGRAMS += global/testing/ga_lu
 endif
-else
+if ENABLE_F77
 check_PROGRAMS += global/testing/bin
 check_PROGRAMS += global/testing/blktest
 check_PROGRAMS += global/testing/d2test
@@ -687,8 +675,8 @@ check_PROGRAMS += global/testing/testsolve
 check_PROGRAMS += global/testing/test
 if HAVE_SCALAPACK
 check_PROGRAMS += global/testing/testspd
-endif
-endif
+endif # HAVE_SCALAPACK
+endif # ENABLE_F77
 if MSG_COMMS_MPI
 check_PROGRAMS += global/testing/ga-mpi
 check_PROGRAMS += global/testing/lock
@@ -742,8 +730,7 @@ CLEANFILES += global/testing/nga-scatter.F
 CLEANFILES += global/testing/nga-util.F
 CLEANFILES += global/testing/ngatest.F
 
-if NOFORT
-else
+if ENABLE_F77
 check_PROGRAMS += global/testing/nga-onesided
 check_PROGRAMS += global/testing/nga-patch
 check_PROGRAMS += global/testing/nga-periodic
@@ -760,8 +747,7 @@ gtsrc =
 gtsrc += global/testing/testutil.fh
 gtsrc += global/testing/testutil.h
 gtsrc += global/testing/util.c
-if NOFORT
-else
+if ENABLE_F77
 gtsrc += global/testing/ffflush.F
 endif
 
@@ -874,8 +860,7 @@ nodist_EXTRA_global_testing_testmatmultc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 # global/examples
 #
 check_PROGRAMS += global/examples/lennard-jones/lennard
-if NOFORT
-else
+if ENABLE_F77
 check_PROGRAMS += global/examples/boltzmann/boltz
 check_PROGRAMS += global/examples/conjugate_gradient/ga_cg
 check_PROGRAMS += global/examples/md_cluster/grp_sim
@@ -1052,8 +1037,7 @@ EXTRA_DIST += pario/dra/dbg_write.c
 EXTRA_DIST += pario/dra/dra2arviz.c
 EXTRA_DIST += pario/dra/global.unsup.c
 
-if NOFORT
-else
+if ENABLE_F77
 check_PROGRAMS += pario/dra/big
 check_PROGRAMS += pario/dra/dra_mxm
 check_PROGRAMS += pario/dra/ntest
@@ -1240,15 +1224,12 @@ examples: examples-recursive
 examples-am: $(EXAMPLES)
 EXAMPLES =
 EXAMPLES += global/examples/lennard-jones/lennard$(EXEEXT)
-if NOFORT
-else
-if MSG_COMMS_TCGMSG
-EXAMPLES += global/examples/scf/scf$(EXEEXT)
-endif
+if ENABLE_F77
 EXAMPLES += global/examples/boltzmann/boltz$(EXEEXT)
 EXAMPLES += global/examples/conjugate_gradient/ga_cg$(EXEEXT)
 EXAMPLES += global/examples/md_cluster/grp_sim$(EXEEXT)
-endif # NOFORT
+EXAMPLES += global/examples/scf/scf$(EXEEXT)
+endif # ENABLE_F77
 
 GA_RECURSIVE_TARGETS = checkprogs-recursive examples-recursive
 # COPIED FROM MAKEFILE GENERATED BY AUTOMAKE 1.11.1
@@ -1315,15 +1296,13 @@ SERIAL_TESTS =
 SERIAL_TESTS_XFAIL =
 PARALLEL_TESTS =
 PARALLEL_TESTS_XFAIL =
-if NOFORT
-else
+if ENABLE_F77
 SERIAL_TESTS += gaf2c/testarg$(EXEEXT)
 endif
-#SERIAL_TESTS += ma/testc$(EXEEXT)
+#SERIAL_TESTS += ma/testc$(EXEEXT) # requires interactive input
 SERIAL_TESTS += ma/test-coalesce$(EXEEXT)
 SERIAL_TESTS += ma/test-inquire$(EXEEXT)
-if NOFORT
-else
+if ENABLE_F77
 SERIAL_TESTS += ma/testf$(EXEEXT)
 SERIAL_TESTS_XFAIL += ma/testf$(EXEEXT)
 endif
@@ -1334,11 +1313,10 @@ PARALLEL_TESTS += tcgmsg/ipcv4.0/hello$(EXEEXT)
 #PARALLEL_TESTS += tcgmsg/ipcv4.0/testmap$(EXEEXT) # requires user input
 #PARALLEL_TESTS += tcgmsg/ipcv4.0/toplot$(EXEEXT) # not a test
 #PARALLEL_TESTS += tcgmsg/ipcv4.0/xdrtest$(EXEEXT) # requires user input
-if NOFORT
-else
+if ENABLE_F77
 PARALLEL_TESTS += tcgmsg/ipcv4.0/testf$(EXEEXT)
 #PARALLEL_TESTS += tcgmsg/ipcv4.0/testpf$(EXEEXT) # requires input files
-endif
+endif # ENABLE_F77
 endif # MSG_COMMS_TCGMSG4
 endif # MSG_COMMS_TCGMSG
 if MSG_COMMS_TCGMSG
@@ -1348,21 +1326,19 @@ PARALLEL_TESTS += tcgmsg/ipcv5.0/hello$(EXEEXT)
 if MSG_COMMS_PVM
 PARALLEL_TESTS += tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
 endif
-if NOFORT
-else
+if ENABLE_F77
 #PARALLEL_TESTS += tcgmsg/ipcv5.0/jacobi$(EXEEXT) # requires user input
 #PARALLEL_TESTS += tcgmsg/ipcv5.0/testf$(EXEEXT) # requires user input
-endif
+endif # ENABLE_F77
 endif # MSG_COMMS_TCGMSG5
 endif # MSG_COMMS_TCGMSG
 if MSG_COMMS_TCGMSG
 if MSG_COMMS_TCGMSGMPI
 #PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT) # useless test
 #PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test$(EXEEXT) # requires user input
-if NOFORT
-else
+if ENABLE_F77
 PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
-endif
+endif # ENABLE_F77
 endif # MSG_COMMS_TCGMSGMPI
 endif # MSG_COMMS_TCGMSG
 PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
@@ -1375,11 +1351,10 @@ PARALLEL_TESTS += global/testing/testc$(EXEEXT)
 PARALLEL_TESTS += global/testing/testmatmultc$(EXEEXT)
 PARALLEL_TESTS += global/testing/testmult$(EXEEXT)
 PARALLEL_TESTS += global/testing/testmultrect$(EXEEXT)
-if NOFORT
 if HAVE_LAPACK
 #PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
 endif
-else
+if ENABLE_F77
 PARALLEL_TESTS += global/testing/bin$(EXEEXT)
 PARALLEL_TESTS += global/testing/blktest$(EXEEXT)
 #PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
@@ -1413,8 +1388,8 @@ PARALLEL_TESTS += global/testing/testsolve$(EXEEXT)
 PARALLEL_TESTS += global/testing/test$(EXEEXT)
 if HAVE_SCALAPACK
 PARALLEL_TESTS += global/testing/testspd$(EXEEXT)
-endif
-endif
+endif # HAVE_SCALAPACK
+endif # ENABLE_F77
 if MSG_COMMS_MPI
 PARALLEL_TESTS += global/testing/ga-mpi$(EXEEXT)
 PARALLEL_TESTS += global/testing/lock$(EXEEXT)
@@ -1422,8 +1397,7 @@ endif
 if SYSV
 PARALLEL_TESTS += global/testing/ipc_clean$(EXEEXT)
 endif
-if NOFORT
-else
+if ENABLE_F77
 PARALLEL_TESTS += global/testing/nga-onesided$(EXEEXT)
 PARALLEL_TESTS += global/testing/nga-patch$(EXEEXT)
 PARALLEL_TESTS += global/testing/nga-periodic$(EXEEXT)
@@ -1431,17 +1405,14 @@ PARALLEL_TESTS += global/testing/nga-scatter$(EXEEXT)
 PARALLEL_TESTS += global/testing/nga-scatter$(EXEEXT)
 PARALLEL_TESTS += global/testing/nga-util$(EXEEXT)
 PARALLEL_TESTS += global/testing/ngatest$(EXEEXT)
-endif
+endif # ENABLE_F77
 PARALLEL_TESTS += global/examples/lennard-jones/lennard$(EXEEXT)
-if NOFORT
-else
-if MSG_COMMS_TCGMSG
-#PARALLEL_TESTS += global/examples/scf/scf$(EXEEXT) # needs input
-endif
+if ENABLE_F77
 PARALLEL_TESTS += global/examples/boltzmann/boltz$(EXEEXT)
 #PARALLEL_TESTS += global/examples/conjugate_gradient/ga_cg$(EXEEXT) # needs user input
 #PARALLEL_TESTS += global/examples/md_cluster/grp_sim$(EXEEXT) # needs input
-endif # NOFORT
+#PARALLEL_TESTS += global/examples/scf/scf$(EXEEXT) # needs input file
+endif # ENABLE_F77
 PARALLEL_TESTS += pario/dra/bign$(EXEEXT)
 PARALLEL_TESTS += pario/dra/ntestc$(EXEEXT)
 PARALLEL_TESTS += pario/dra/perfn$(EXEEXT)

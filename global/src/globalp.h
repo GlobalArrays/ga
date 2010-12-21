@@ -151,6 +151,10 @@ extern void    gai_hsort(Integer *list, int num);
 extern void    ga_init_nbhandle(Integer *nbhandle);
 extern int     nga_test_internal(Integer *nbhandle);
 extern int     nga_wait_internal(Integer *nbhandle);
+extern int     ga_icheckpoint_init(Integer *gas, int num);
+extern int     ga_icheckpoint(Integer *gas, int num);
+extern int     ga_irecover(int rid);
+extern int     ga_icheckpoint_finalize(int g_a);
 
 /* the following are in the process of moving to papi.h */
 #if 0

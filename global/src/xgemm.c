@@ -2,6 +2,8 @@
 #   include "config.h"
 #endif
 
+#include "xgemm.h"
+
 #define COLMAJOR 'c'
 #define ROWMAJOR 'r'
 

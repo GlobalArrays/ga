@@ -651,7 +651,10 @@ void pnga_print_patch(Integer *g_a, Integer *lo, Integer *hi, Integer *pretty)
 
 }
 
-void FATR ga_summarize_(Integer *verbose)
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_summarize = pnga_summarize
+#endif
+void pnga_summarize(Integer *verbose)
 {
 #define DEV stdout
     
@@ -810,7 +813,7 @@ Integer pnga_cluster_nprocs(Integer *node)
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_cluster_procid = pnga_cluster_procid
 #endif
-Integer FATR pnga_cluster_procid(Integer *node, Integer *loc_proc_id)
+Integer pnga_cluster_procid(Integer *node, Integer *loc_proc_id)
 {
         int nodeid, procid;
         nodeid = (int)*node;

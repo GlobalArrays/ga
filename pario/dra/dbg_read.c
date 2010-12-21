@@ -2,6 +2,8 @@
 #   include "config.h"
 #endif
 
+#include <stdlib.h>
+
 #include "macommon.h"
 #include "global.h"
 #include "dra.h"
@@ -13,7 +15,9 @@ int main(int argc, char **argv)
 {
     int from, to, type;
     Integer idata[LEN];
+#if 0
     int fd;
+#endif
     Integer i, ii, imax, offset, status;
     DoublePrecision ddata[LEN];
 

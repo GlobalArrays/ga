@@ -12,26 +12,24 @@
 #include "dra.h"
 #include "ga.h"
 #include "macommon.h"
+#include "macdecls.h"
 #include "mp3.h"
 
-#define ERROR(msg,code){printf("ERROR:%s\0",(msg)); fflush(stdout); exit(1);}
+#define ERROR(msg,code){printf("ERROR:%s\n",(msg)); fflush(stdout); exit(1);}
 
 #define BUFSIZE 8000000
 int main(int argc, char **argv)
 {
     int heap=400000, stack=400000;
     int me, nproc;
-    char buf[BUFSIZE];
     int max_arrays=2;
     double max_sz=1e8, max_disk=2e8, max_mem=1e6;
     int d_a, mode=DRA_R;
-    int g_a,dim1,dim2,rows,cols,block=-1;
+    int g_a,rows,cols;
     char name[1024], fname[1024];
     logical transp=0;
-    int one=1;
     int reqid;
-    int index, ld;
-    int i,j,ilo,ihi,jlo,jhi,type,ndim,glo[2],ghi[2],gld[1],gdims[2];
+    int i,ilo,ihi,jlo,jhi,type,ndim,glo[2],ghi[2],gld[1],gdims[2];
     dra_size_t dlo[2],dhi[2],ddims[2];
     size_t size, nitems;
     void *ptr;
@@ -39,7 +37,7 @@ int main(int argc, char **argv)
     if(argc!=6){
         printf("Usage: dra2arviz <dra_filename> <ilo> <ihi> <jlo> <jhi>\n");
         printf("       dra_filename is the meta-file name for disk resident array\n");
-        printf("       [ilo:ihi, jlo:jhi]  array section to read\0\n\n");
+        printf("       [ilo:ihi, jlo:jhi]  array section to read\n\n\n");
         return(1);
     }
 
@@ -97,7 +95,7 @@ int main(int argc, char **argv)
 
     if(gld[0] != rows) ERROR("ld != rows",gld[0]); 
 
-    fwrite("OK\0",1,3,stdout);
+    fwrite("OK\n",1,3,stdout);
     nitems = (size_t)rows;
     /* write data by columns */
     for(i=0; i<cols; i++){

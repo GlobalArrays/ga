@@ -59,8 +59,7 @@ LDFLAGS_BASE =
 LDFLAGS_BASE += $(GA_MP_LDFLAGS)
 LDFLAGS_BASE += $(ARMCI_NETWORK_LDFLAGS)
 AM_LDFLAGS += $(LDFLAGS_BASE)
-if NOFORT
-else
+if ENABLE_F77
 AM_LDFLAGS += $(FLD_NOMAIN)
 endif
 # You can only build armci with tcgmsg within the ga distribution.
@@ -75,8 +74,7 @@ LDADD += $(GA_MP_LIBS)
 LDADD += $(ARMCI_NETWORK_LIBS)
 
 # Certain trickery when turning Fortran support on or off.
-if NOFORT
-else
+if ENABLE_F77
 MAYBE_DUMMY_F_LINK = dummy.f
 MAYBE_FLIBS = $(FLIBS)
 endif
@@ -160,8 +158,7 @@ libarmci_la_SOURCES += src-portals/vector.c
 if PORTALS_ENABLE_NEW_MALLOC
 libarmci_la_SOURCES += src-portals/new_memory.c
 endif
-if NOFORT
-else
+if ENABLE_F77
 libarmci_la_SOURCES += src-portals/faccumulate.f
 libarmci_la_SOURCES += src-portals/fcopy.f
 endif
@@ -330,8 +327,7 @@ libarmci_la_SOURCES += src-gemini/tas-ia64.h
 libarmci_la_SOURCES += src-gemini/tas-ppc.h
 libarmci_la_SOURCES += src-gemini/utils.h
 libarmci_la_SOURCES += src-gemini/vector.c
-if NOFORT
-else
+if ENABLE_F77
 libarmci_la_SOURCES += src-gemini/faccumulate.f
 libarmci_la_SOURCES += src-gemini/fcopy.f
 endif
@@ -496,11 +492,10 @@ libarmci_la_SOURCES += src/xfer/caccumulate.c
 libarmci_la_SOURCES += src/xfer/rmw.c
 libarmci_la_SOURCES += src/xfer/strided.c
 libarmci_la_SOURCES += src/xfer/vector.c
-if NOFORT
-else # !NOFORT
+if ENABLE_F77
 libarmci_la_SOURCES += src/common/fcopy.f
 libarmci_la_SOURCES += src/xfer/faccumulate.f
-endif # NOFORT
+endif # ENABLE_F77
 if MSG_COMMS_MPI
 libarmci_la_SOURCES += src/common/groups.c
 endif
@@ -695,8 +690,7 @@ endif
 if THREAD_SAFE
 check_PROGRAMS += testing/test_mt
 endif
-if NOFORT
-else
+if ENABLE_F77
 check_PROGRAMS += testing/acc_test
 check_PROGRAMS += testing/copy_test
 endif
@@ -1046,8 +1040,7 @@ endif
 if THREAD_SAFE
 PARALLEL_TESTS += testing/test_mt$(EXEEXT)
 endif
-if NOFORT
-else
+if ENABLE_F77
 SERIAL_TESTS += testing/acc_test$(EXEEXT)
 SERIAL_TESTS += testing/copy_test$(EXEEXT)
 endif
