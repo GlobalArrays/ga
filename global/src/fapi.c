@@ -1902,14 +1902,7 @@ void FATR nga_print_(Integer *g_a)
 
 void FATR ga_print_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, Integer *pretty)
 {
-    Integer lo[2];
-    Integer hi[2];
-
-    lo[0] = *ilo;
-    lo[1] = *jlo;
-    hi[0] = *ihi;
-    hi[1] = *jhi;
-    wnga_print_patch(g_a, lo, hi, pretty);
+    wnga_print_patch2d(g_a, ilo, ihi, jlo, jhi, pretty);
 }
 
 void FATR nga_print_patch_(Integer *g_a, Integer *lo, Integer *hi, Integer *pretty)

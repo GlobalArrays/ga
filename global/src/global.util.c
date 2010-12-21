@@ -55,6 +55,217 @@
   void fflush();
 #endif
 
+/*\ PRINT g_a[ilo:ihi, jlo:jhi]
+\*/
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_print_patch_file2d = pnga_print_patch_file2d
+#endif
+void pnga_print_patch_file2d(file, g_a, ilo, ihi, jlo, jhi, pretty)
+        FILE *file;
+        Integer *g_a, *ilo, *ihi, *jlo, *jhi, *pretty;
+/*
+  Pretty = 0 ... spew output out with no formatting
+  Pretty = 1 ... format output so that it is readable
+*/  
+{
+#define BUFSIZE 6
+#define FLEN 80 
+  Integer i, j,jj, dim1, dim2, type, jmax, ld=1, bufsize ;
+  Integer a_grp;
+  int ibuf[BUFSIZE];
+  DoublePrecision  dbuf[BUFSIZE];
+  float fbuf[BUFSIZE]; 
+  long lbuf[BUFSIZE]; 
+  long long llbuf[BUFSIZE]; 
+  char *name;
+  Integer ndim, dims[2];
+  Integer lo[2], hi[2];
+
+  a_grp = pnga_get_pgroup(g_a);
+  pnga_pgroup_sync(&a_grp);
+  pnga_check_handle(g_a, "ga_print");
+  if(pnga_pgroup_nodeid(&a_grp) == 0){
+
+    pnga_inquire(g_a, &type, &ndim, dims);
+    dim1 = dims[0];
+    dim2 = dims[1];
+    /*     name[FLEN-1]='\0';*/
+    pnga_inquire_name(g_a, &name);
+    if (*ilo <= 0 || *ihi > dim1 || *jlo <= 0 || *jhi > dim2){
+      fprintf(stderr,"%ld %ld %ld %ld dims: [%ld,%ld]\n", 
+          (long)*ilo,(long)*ihi, (long)*jlo,(long)*jhi,
+          (long)dim1, (long)dim2);
+      pnga_error(" ga_print: indices out of range ", *g_a);
+    }
+
+    fprintf(file,"\n global array: %s[%ld:%ld,%ld:%ld],  handle: %d \n",
+        name, (long)*ilo, (long)*ihi, (long)*jlo, (long)*jhi, (int)*g_a);
+
+    bufsize = (type==C_DCPL)? BUFSIZE/2 : BUFSIZE;
+    bufsize = (type==C_SCPL)? BUFSIZE/2 : BUFSIZE;
+
+
+    if (!*pretty) {
+      for (i=*ilo; i <*ihi+1; i++){
+        for (j=*jlo; j <*jhi+1; j+=bufsize){
+          jmax = GA_MIN(j+bufsize-1,*jhi);
+          lo[0] = i;
+          lo[1] = j;
+          hi[0] = i;
+          hi[1] = jmax;
+          switch(type){
+            case C_INT:
+              pnga_get(g_a, lo, hi, ibuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj++)
+                fprintf(file," %8d",ibuf[jj]);
+              break;
+            case C_DBL:
+              pnga_get(g_a, lo, hi, dbuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj++)
+                fprintf(file," %11.5f",dbuf[jj]);
+              break;
+            case C_DCPL:
+              pnga_get(g_a, lo, hi, dbuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj+=2)
+                fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
+              break;
+            case C_SCPL:
+              pnga_get(g_a, lo, hi, dbuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj+=2)
+                fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
+              break;
+            case C_FLOAT:
+              pnga_get(g_a, lo, hi, fbuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj++)
+                fprintf(file," %11.5f",fbuf[jj]);
+              break;       
+            case C_LONG:
+              pnga_get(g_a, lo, hi, lbuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj++)
+                fprintf(file," %8ld",lbuf[jj]);
+              break;
+            case C_LONGLONG:
+              pnga_get(g_a, lo, hi, llbuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj++)
+                fprintf(file," %8lld",llbuf[jj]);
+              break;
+            default: pnga_error("ga_print: wrong type",0);
+          }
+        }
+        fprintf(file,"\n");
+      }
+      fflush(file);
+
+    } else {
+
+      for (j=*jlo; j<*jhi+1; j+=bufsize){
+        jmax = GA_MIN(j+bufsize-1,*jhi);
+
+        fprintf(file, "\n"); fprintf(file, "\n");
+
+        /* Print out column headers */
+
+        fprintf(file, "      ");
+        switch(type){
+          case C_INT:
+            for (jj=j; jj<=jmax; jj++) fprintf(file, "%6ld  ", (long)jj);
+            fprintf(file,"\n      ");
+            for (jj=j; jj<=jmax; jj++) fprintf(file," -------");
+            break;
+          case C_LONG:  
+            for (jj=j; jj<=jmax; jj++) fprintf(file, "%6ld  ", (long)jj);
+            fprintf(file,"\n      ");
+            for (jj=j; jj<=jmax; jj++) fprintf(file," -------");
+            break;
+          case C_LONGLONG:  
+            for (jj=j; jj<=jmax; jj++) fprintf(file, "%6ld  ", (long)jj);
+            fprintf(file,"\n      ");
+            for (jj=j; jj<=jmax; jj++) fprintf(file," -------");
+            break;
+          case C_DCPL:
+            for (jj=j; jj<=jmax; jj++) fprintf(file,"%20ld    ", (long)jj);
+            fprintf(file,"\n      ");
+            for (jj=j; jj<=2*jmax; jj++) fprintf(file," -----------");
+            break;
+          case C_SCPL:
+            for (jj=j; jj<=jmax; jj++) fprintf(file,"%20ld    ", (long)jj);
+            fprintf(file,"\n      ");
+            for (jj=j; jj<=2*jmax; jj++) fprintf(file," -----------");
+            break;
+          case C_DBL:
+            for (jj=j; jj<=jmax; jj++) fprintf(file,"%8ld    ", (long)jj);
+            fprintf(file,"\n      ");
+            for (jj=j; jj<=jmax; jj++) fprintf(file," -----------");         
+          case C_FLOAT:
+            for (jj=j; jj<=jmax; jj++) fprintf(file,"%8ld    ", (long)jj);
+            fprintf(file,"\n      ");
+            for (jj=j; jj<=jmax; jj++) fprintf(file," -----------");
+        }
+        fprintf(file,"\n");
+
+        for(i=*ilo; i <*ihi+1; i++){
+          fprintf(file,"%4ld  ",(long)i);
+
+          lo[0] = i;
+          lo[1] = i;
+          hi[0] = j;
+          hi[1] = jmax;
+          switch(type){
+            case C_INT:
+              pnga_get(g_a, lo, hi, ibuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj++)
+                fprintf(file," %8d",ibuf[jj]);
+              break;
+            case C_LONG: 
+              pnga_get(g_a, lo, hi, lbuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj++)
+                fprintf(file," %8ld",lbuf[jj]);
+              break;
+            case C_LONGLONG: 
+              pnga_get(g_a, lo, hi, llbuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj++)
+                fprintf(file," %8lld",llbuf[jj]);
+              break;
+            case C_DBL:
+              pnga_get(g_a, lo, hi, dbuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj++)
+                fprintf(file," %11.5f",dbuf[jj]);
+              break;
+            case C_FLOAT:
+              pnga_get(g_a, lo, hi, dbuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj++)
+                fprintf(file," %11.5f",fbuf[jj]);
+              break;     
+            case C_DCPL:
+              pnga_get(g_a, lo, hi, dbuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj+=2)
+                fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
+              break;
+            case C_SCPL:
+              pnga_get(g_a, lo, hi, dbuf, &ld);
+              for(jj=0; jj<(jmax-j+1); jj+=2)
+                fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
+              break;
+            default: pnga_error("ga_print: wrong type",0);
+          }
+          fprintf(file,"\n");
+        }
+        fflush(file);
+      }
+    }
+  }
+
+  pnga_pgroup_sync(&a_grp);
+}
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_print_patch2d = pnga_print_patch2d
+#endif
+void pnga_print_patch2d(g_a, ilo, ihi, jlo, jhi, pretty)
+        Integer *g_a, *ilo, *ihi, *jlo, *jhi, *pretty;
+{
+    pnga_print_patch_file2d(stdout, g_a, ilo, ihi, jlo, jhi, pretty);
+}
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_print_stats = pnga_print_stats

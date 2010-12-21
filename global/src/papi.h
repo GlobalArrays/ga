@@ -235,6 +235,8 @@ extern Integer pnga_cluster_nnodes();
 extern Integer pnga_cluster_proc_nodeid(Integer *proc);
 extern void pnga_print_file(FILE *file, Integer *g_a);
 extern void pnga_print(Integer *g_a);
+extern void pnga_print_patch_file2d(FILE *file, Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, Integer *pretty);
+extern void pnga_print_patch2d(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, Integer *pretty);
 extern void pnga_print_patch_file(FILE *file, Integer *g_a, Integer *lo, Integer *hi, Integer *pretty);
 extern void pnga_print_patch(Integer *g_a, Integer *lo, Integer *hi, Integer *pretty);
 extern void pnga_print_distribution(int fstyle, Integer g_a);
