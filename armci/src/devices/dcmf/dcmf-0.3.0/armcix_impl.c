@@ -14,6 +14,9 @@
  * \brief DCMF ARMCI Extension implementation.
  */
 
+/* for the MPI init asserts in ARMCIX_Init */
+#include <mpi.h>
+
 #include "armcix_impl.h"
 #include "strings.h"
 
@@ -310,6 +313,17 @@ ENV_Int(char * env, int * dval)
  */
 int ARMCIX_Init ()
 {
+  int initialized;
+  int provided;
+
+  /* MPI has to be initialized for the next call to work */
+  MPI_Initialized(&initialized);
+  assert(initialized);
+
+  /* MPI must be running in MPI_THREAD_MULTIPLE mode for ARMCI to work on BGP */
+  MPI_Query_thread(&provided);
+  assert(provided==MPI_THREAD_MULTIPLE);
+
   DCMF_CriticalSection_enter(0);
 
   DCMF_Messager_initialize ();
