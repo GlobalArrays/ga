@@ -19502,13 +19502,9 @@ $as_echo "$as_me: " >&6;}
 # names in order to determine features (Fortran only, I think)
 # libtool doesn't recognize MPI compiler names, nor should it
 if test x$with_mpi_wrappers = xyes; then :
-
-    #AS_IF([test "x$ga_cv_mpicc_naked"  != xerror],[CC="$ga_cv_mpicc_naked"])
-    #AS_IF([test "x$ga_cv_mpicxx_naked" != xerror],[CXX="$ga_cv_mpicxx_naked"])
-    if test "x$ga_cv_mpif77_naked" != xerror; then :
+  if test "x$ga_cv_mpif77_naked" != x; then :
   F77="$ga_cv_mpif77_naked"
 fi
-
 fi
 
 
@@ -32614,11 +32610,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 # and now that that's over, put the MPI compilers back
 if test x$with_mpi_wrappers = xyes; then :
-
-    #CC="$MPICC"
-    #CXX="$MPICXX"
-    F77="$MPIF77"
-
+  F77="$MPIF77"
 fi
 
 ###############################################################################

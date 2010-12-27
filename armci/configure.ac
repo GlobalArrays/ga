@@ -298,19 +298,12 @@ AC_MSG_NOTICE
 # this works around a bug where libtool sadly relies on matching compiler
 # names in order to determine features (Fortran only, I think)
 # libtool doesn't recognize MPI compiler names, nor should it
-AS_IF([test x$with_mpi_wrappers = xyes], [
-    #AS_IF([test "x$ga_cv_mpicc_naked"  != xerror],[CC="$ga_cv_mpicc_naked"])
-    #AS_IF([test "x$ga_cv_mpicxx_naked" != xerror],[CXX="$ga_cv_mpicxx_naked"])
-    AS_IF([test "x$ga_cv_mpif77_naked" != xerror],[F77="$ga_cv_mpif77_naked"])
-])
+AS_IF([test x$with_mpi_wrappers = xyes],
+    [AS_IF([test "x$ga_cv_mpif77_naked" != x], [F77="$ga_cv_mpif77_naked"])])
 GA_AR
 LT_INIT([disable-shared])
 # and now that that's over, put the MPI compilers back
-AS_IF([test x$with_mpi_wrappers = xyes], [
-    #CC="$MPICC"
-    #CXX="$MPICXX"
-    F77="$MPIF77"
-])
+AS_IF([test x$with_mpi_wrappers = xyes], [F77="$MPIF77"])
 
 ###############################################################################
 # Remaining setup -- some tests, some individual components
