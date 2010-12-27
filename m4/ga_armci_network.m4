@@ -206,7 +206,9 @@ AC_DEFUN([_GA_ARMCI_NETWORK_GEMINI], [
 AC_MSG_NOTICE([searching for GEMINI...])
 happy=yes
 AS_IF([test "x$happy" = xyes],
-    [AC_CHECK_HEADER([numatoolkit.h], [], [happy=no])])
+    [AC_CHECK_HEADER([numatoolkit.h], [], [happy=no], [
+AC_INCLUDES_DEFAULT
+#include <mpi.h>])])
 AS_IF([test "x$happy" = xyes],
     [AC_SEARCH_LIBS([NTK_Init], [numatoolkit], [], [happy=no])])
 # CPPFLAGS must have CRAY_UGNI before looking for the next headers.

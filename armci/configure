@@ -7627,7 +7627,10 @@ fi
 $as_echo "$as_me: searching for GEMINI..." >&6;}
 happy=yes
 if test "x$happy" = xyes; then :
-  ac_fn_c_check_header_mongrel "$LINENO" "numatoolkit.h" "ac_cv_header_numatoolkit_h" "$ac_includes_default"
+  ac_fn_c_check_header_compile "$LINENO" "numatoolkit.h" "ac_cv_header_numatoolkit_h" "
+$ac_includes_default
+#include <mpi.h>
+"
 if test "x$ac_cv_header_numatoolkit_h" = x""yes; then :
 
 else
@@ -8488,7 +8491,10 @@ fi
 $as_echo "$as_me: searching for GEMINI..." >&6;}
 happy=yes
 if test "x$happy" = xyes; then :
-  ac_fn_c_check_header_mongrel "$LINENO" "numatoolkit.h" "ac_cv_header_numatoolkit_h" "$ac_includes_default"
+  ac_fn_c_check_header_compile "$LINENO" "numatoolkit.h" "ac_cv_header_numatoolkit_h" "
+$ac_includes_default
+#include <mpi.h>
+"
 if test "x$ac_cv_header_numatoolkit_h" = x""yes; then :
 
 else
