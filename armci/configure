@@ -939,6 +939,7 @@ enable_fast_install
 with_gnu_ld
 with_sysroot
 enable_libtool_lock
+with_gnu_ld
 '
       ac_precious_vars='build_alias
 host_alias
@@ -951,10 +952,13 @@ LDFLAGS
 LIBS
 CPPFLAGS
 CPP
+CPPFLAGS
 ARMCI_COPT
 MPICXX
 CXX
 CXXFLAGS
+LIBS
+CPPFLAGS
 CCC
 ARMCI_CXXOPT
 CCAS
@@ -962,12 +966,14 @@ CCASFLAGS
 MPIF77
 F77
 FFLAGS
+LIBS
 FFLAG_INT_4
 ARMCI_FOPT
 AR
 AR_FLAGS
 RANLIB
-CXXCPP'
+CXXCPP
+CPPFLAGS'
 
 
 # Initialize some variables set by options.
