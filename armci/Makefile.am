@@ -197,7 +197,8 @@ endif
 src-portals/tas_as.s: src-portals/tas.c
 	$(ARMCI_TAS_AS_V) \
 	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src-portals/tas.c
+	$(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ \
+	$(top_srcdir)/src-portals/tas.c
 
 CLEANFILES += src-portals/tas_as.s
 
@@ -366,7 +367,8 @@ endif
 src-gemini/tas_as.s: src-gemini/tas.c
 	$(ARMCI_TAS_AS_V) \
 	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ $<
+	$(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ \
+	$(top_srcdir)/src-gemini/tas.c
 
 CLEANFILES += src-gemini/tas_as.s
 
@@ -668,12 +670,14 @@ endif
 src/locks/tas_as.s: src/locks/tas.c
 	$(ARMCI_TAS_AS_V) \
 	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src/locks/tas.c
+	$(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ \
+	$(top_srcdir)/src/locks/tas.c
 
 src/common/x86copy_as.s: src/common/x86copy.c
 	$(ARMCI_X86COPY_AS_V) \
 	$(ARMCI_X86COPY_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	    $(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ src/common/x86copy.c
+	$(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ \
+	$(top_srcdir)/src/common/x86copy.c
 
 CLEANFILES += src/common/x86copy_as.s
 CLEANFILES += src/locks/tas_as.s
