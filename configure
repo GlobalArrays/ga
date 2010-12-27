@@ -14406,9 +14406,7 @@ if test "${ga_cv_f77_integer_size_flag+set}" = set; then :
 else
   case $cross_compiling:$ga_cv_f77_integer_size in #(
   yes:4) :
-    ga_fflag_int4="-fdefault-integer-4 -qintsize=4 \"-integer-size 32\" -CcdII4 \"-s integer32\" -xtypemap=integer:32 -i4 +i4"
-
-ac_ext=f
+    ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
@@ -14435,7 +14433,7 @@ rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 fi
 if test "x$ga_result" = x; then :
-  for flag in $ga_fflag_int4
+  for flag in -fdefault-integer-4 -qintsize=4 "-integer-size 32" -CcdII4 "-s integer32" -xtypemap=integer:32 -i4 +i4
      do
         FFLAGS="$ga_save_suppress_FFLAGS $flag"
         cat > conftest.$ac_ext <<_ACEOF
@@ -14444,7 +14442,18 @@ if test "x$ga_result" = x; then :
       end program
 _ACEOF
 if ac_fn_f77_try_link "$LINENO"; then :
+  ac_ext=F
+             cat > conftest.$ac_ext <<_ACEOF
+      program main
+      integer i
+      end program
+_ACEOF
+if ac_fn_f77_try_link "$LINENO"; then :
   ga_result=$flag; break
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+             ac_ext=f
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -14460,9 +14469,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
  ;; #(
   yes:8) :
-    ga_fflag_int8="-fdefault-integer-8 -qintsize=8 \"-integer-size 64\" -CcdII8 \"-s integer64\" -xtypemap=integer:64 -i8 +i8"
-
-ac_ext=f
+    ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
@@ -14489,7 +14496,7 @@ rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 fi
 if test "x$ga_result" = x; then :
-  for flag in $ga_fflag_int8
+  for flag in -fdefault-integer-8 -qintsize=8 "-integer-size 64" -CcdII8 "-s integer64" -xtypemap=integer:64 -i8 +i8
      do
         FFLAGS="$ga_save_suppress_FFLAGS $flag"
         cat > conftest.$ac_ext <<_ACEOF
@@ -14498,7 +14505,18 @@ if test "x$ga_result" = x; then :
       end program
 _ACEOF
 if ac_fn_f77_try_link "$LINENO"; then :
+  ac_ext=F
+             cat > conftest.$ac_ext <<_ACEOF
+      program main
+      integer i
+      end program
+_ACEOF
+if ac_fn_f77_try_link "$LINENO"; then :
   ga_result=$flag; break
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+             ac_ext=f
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -14514,9 +14532,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
  ;; #(
   *:4) :
-    ga_fflag_int4="-fdefault-integer-4 -qintsize=4 \"-integer-size 32\" -CcdII4 \"-s integer32\" -xtypemap=integer:32 -i4 +i4"
-
-for flag in none $FFLAG_INT $ga_fflag_int4
+    for flag in none $FFLAG_INT -fdefault-integer-4 -qintsize=4 "-integer-size 32" -CcdII4 "-s integer32" -xtypemap=integer:32 -i4 +i4
 do
     ga_save_FFLAGS="$FFLAGS"
     if test "x$flag" != xnone; then :
@@ -14623,9 +14639,7 @@ fi
 done
  ;; #(
   *:8) :
-    ga_fflag_int8="-fdefault-integer-8 -qintsize=8 \"-integer-size 64\" -CcdII8 \"-s integer64\" -xtypemap=integer:64 -i8 +i8"
-
-for flag in none $FFLAG_INT $ga_fflag_int8
+    for flag in none $FFLAG_INT -fdefault-integer-8 -qintsize=8 "-integer-size 64" -CcdII8 "-s integer64" -xtypemap=integer:64 -i8 +i8
 do
     ga_save_FFLAGS="$FFLAGS"
     if test "x$flag" != xnone; then :

@@ -939,7 +939,6 @@ enable_fast_install
 with_gnu_ld
 with_sysroot
 enable_libtool_lock
-with_gnu_ld
 '
       ac_precious_vars='build_alias
 host_alias
@@ -952,13 +951,10 @@ LDFLAGS
 LIBS
 CPPFLAGS
 CPP
-CPPFLAGS
 ARMCI_COPT
 MPICXX
 CXX
 CXXFLAGS
-LIBS
-CPPFLAGS
 CCC
 ARMCI_CXXOPT
 CCAS
@@ -966,14 +962,12 @@ CCASFLAGS
 MPIF77
 F77
 FFLAGS
-LIBS
 FFLAG_INT_4
 ARMCI_FOPT
 AR
 AR_FLAGS
 RANLIB
-CXXCPP
-CPPFLAGS'
+CXXCPP'
 
 
 # Initialize some variables set by options.
@@ -13480,9 +13474,7 @@ if test "${armci_cv_f77_integer_size_flag+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   if test x$cross_compiling = xyes; then :
-  ga_fflag_int4="-fdefault-integer-4 -qintsize=4 \"-integer-size 32\" -CcdII4 \"-s integer32\" -xtypemap=integer:32 -i4 +i4"
-
-ac_ext=f
+  ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
@@ -13509,7 +13501,7 @@ rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 fi
 if test "x$ga_result" = x; then :
-  for flag in $ga_fflag_int4
+  for flag in -fdefault-integer-4 -qintsize=4 "-integer-size 32" -CcdII4 "-s integer32" -xtypemap=integer:32 -i4 +i4
      do
         FFLAGS="$ga_save_suppress_FFLAGS $flag"
         cat > conftest.$ac_ext <<_ACEOF
@@ -13518,7 +13510,18 @@ if test "x$ga_result" = x; then :
       end program
 _ACEOF
 if ac_fn_f77_try_link "$LINENO"; then :
+  ac_ext=F
+             cat > conftest.$ac_ext <<_ACEOF
+      program main
+      integer i
+      end program
+_ACEOF
+if ac_fn_f77_try_link "$LINENO"; then :
   ga_result=$flag; break
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+             ac_ext=f
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -13534,9 +13537,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
 
 else
-  ga_fflag_int4="-fdefault-integer-4 -qintsize=4 \"-integer-size 32\" -CcdII4 \"-s integer32\" -xtypemap=integer:32 -i4 +i4"
-
-for flag in none $FFLAG_INT $ga_fflag_int4
+  for flag in none $FFLAG_INT -fdefault-integer-4 -qintsize=4 "-integer-size 32" -CcdII4 "-s integer32" -xtypemap=integer:32 -i4 +i4
 do
     ga_save_FFLAGS="$FFLAGS"
     if test "x$flag" != xnone; then :

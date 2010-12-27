@@ -2,23 +2,20 @@
 # -----------------------------
 # These are the known flags for promoting INTEGERs to 8 bytes.
 AC_DEFUN([_GA_F77_INTEGER_4_KNOWN_FLAGS],
-[ga_fflag_int4="-fdefault-integer-4 -qintsize=4 \"-integer-size 32\" -CcdII4 \"-s integer32\" -xtypemap=integer:32 -i4 +i4"
-])dnl
+[-fdefault-integer-4 -qintsize=4 "-integer-size 32" -CcdII4 "-s integer32" -xtypemap=integer:32 -i4 +i4])dnl
 
 # _GA_F77_INTEGER_8_KNOWN_FLAGS
 # -----------------------------
 # These are the known flags for promoting INTEGERs to 8 bytes.
 AC_DEFUN([_GA_F77_INTEGER_8_KNOWN_FLAGS],
-[ga_fflag_int8="-fdefault-integer-8 -qintsize=8 \"-integer-size 64\" -CcdII8 \"-s integer64\" -xtypemap=integer:64 -i8 +i8"
-])dnl
+[-fdefault-integer-8 -qintsize=8 "-integer-size 64" -CcdII8 "-s integer64" -xtypemap=integer:64 -i8 +i8])dnl
 
 # _GA_F77_INTEGER_4_FLAG(VARIABLE)
 # --------------------------------
 # What FFLAG, if any, forces INTEGER size to be 4 bytes?
 # Assign result to VARIABLE.
 AC_DEFUN([_GA_F77_INTEGER_4_FLAG],
-[_GA_F77_INTEGER_4_KNOWN_FLAGS()
-for flag in none $FFLAG_INT $ga_fflag_int4
+[for flag in none $FFLAG_INT _GA_F77_INTEGER_4_KNOWN_FLAGS
 do
     ga_save_FFLAGS="$FFLAGS"
     AS_IF([test "x$flag" != xnone], [FFLAGS="$flag $FFLAGS"])
@@ -36,8 +33,7 @@ done
 # What FFLAG, if any, forces INTEGER size to be 8 bytes?
 # Assign result to VARIABLE.
 AC_DEFUN([_GA_F77_INTEGER_8_FLAG],
-[_GA_F77_INTEGER_8_KNOWN_FLAGS()
-for flag in none $FFLAG_INT $ga_fflag_int8
+[for flag in none $FFLAG_INT _GA_F77_INTEGER_8_KNOWN_FLAGS
 do
     ga_save_FFLAGS="$FFLAGS"
     AS_IF([test "x$flag" != xnone], [FFLAGS="$flag $FFLAGS"])
@@ -58,8 +54,7 @@ done
 # in some cases an inccorect size flag will still succeed during
 # compilation. Unfortunately, there's no alternative when cross compiling.
 AC_DEFUN([_GA_F77_INTEGER_4_FLAG_CROSS],
-[_GA_F77_INTEGER_4_KNOWN_FLAGS()
-AC_LANG_PUSH([Fortran 77])
+[AC_LANG_PUSH([Fortran 77])
 ga_result=
 ga_save_FFLAGS="$FFLAGS"
 ga_save_suppress_FFLAGS="$FFLAGS"
@@ -75,14 +70,20 @@ AS_IF([test "x$FFLAG_INT" != x],
       end program]],
         [ga_result=$flag])])
 AS_IF([test "x$ga_result" = x],
-    [for flag in $ga_fflag_int4
+    [for flag in _GA_F77_INTEGER_4_KNOWN_FLAGS
      do
         FFLAGS="$ga_save_suppress_FFLAGS $flag"
         AC_LINK_IFELSE(
 [[      program main
       integer i
       end program]],
-            [ga_result=$flag; break])
+            [ac_ext=F
+             AC_LINK_IFELSE(
+[[      program main
+      integer i
+      end program]],
+             	[ga_result=$flag; break])
+             ac_ext=f])
      done])
 ac_f77_werror_flag=$ga_save_werror_flag
 FFLAGS="$ga_save_FFLAGS"
@@ -99,8 +100,7 @@ AC_LANG_POP([Fortran 77])
 # in some cases an inccorect size flag will still succeed during
 # compilation. Unfortunately, there's no alternative when cross compiling.
 AC_DEFUN([_GA_F77_INTEGER_8_FLAG_CROSS],
-[_GA_F77_INTEGER_8_KNOWN_FLAGS()
-AC_LANG_PUSH([Fortran 77])
+[AC_LANG_PUSH([Fortran 77])
 ga_result=
 ga_save_FFLAGS="$FFLAGS"
 ga_save_suppress_FFLAGS="$FFLAGS"
@@ -116,14 +116,20 @@ AS_IF([test "x$FFLAG_INT" != x],
       end program]],
         [ga_result=$flag])])
 AS_IF([test "x$ga_result" = x],
-    [for flag in $ga_fflag_int8
+    [for flag in _GA_F77_INTEGER_8_KNOWN_FLAGS
      do
         FFLAGS="$ga_save_suppress_FFLAGS $flag"
         AC_LINK_IFELSE(
 [[      program main
       integer i
       end program]],
-            [ga_result=$flag; break])
+            [ac_ext=F
+             AC_LINK_IFELSE(
+[[      program main
+      integer i
+      end program]],
+                [ga_result=$flag; break])
+             ac_ext=f])
      done])
 ac_f77_werror_flag=$ga_save_werror_flag
 FFLAGS="$ga_save_FFLAGS"
