@@ -30,6 +30,9 @@
 int  _a_temp;
 long _a_ltemp;
 
+/* JAD -- DCMF implements its own rmw
+   there were linking errors with missing atomic_fetch_and_add for DCMF */
+#if !ARMCIX
 void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
 {
 #if defined(CLUSTER) && !defined(SGIALTIX)
@@ -77,6 +80,7 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
       PARMCI_Fence(proc); 
     NATIVE_UNLOCK(lock,proc);
 }
+#endif /* ARMCIX */
 
 
 int PARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
