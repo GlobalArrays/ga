@@ -54,7 +54,7 @@ void pnga_lu_solve(char *tran, Integer * g_a, Integer * g_b) {
 Integer pnga_llt_solve(Integer * g_a, Integer * g_b) {
 #if HAVE_SCALAPACK
 #   if ENABLE_F77
-    return gai_llt_solve(tran, g_a, g_b);
+    return gai_llt_solve(g_a, g_b);
 #   else
     pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
     return FALSE;
@@ -71,7 +71,7 @@ Integer pnga_llt_solve(Integer * g_a, Integer * g_b) {
 Integer pnga_solve(Integer * g_a, Integer * g_b) {
 #if HAVE_SCALAPACK
 #   if ENABLE_F77
-    return gai_solve(tran, g_a, g_b);
+    return gai_solve(g_a, g_b);
 #   else
     pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
     return FALSE;
@@ -88,7 +88,7 @@ Integer pnga_solve(Integer * g_a, Integer * g_b) {
 Integer pnga_spd_invert(Integer * g_a) {
 #if HAVE_SCALAPACK
 #   if ENABLE_F77
-    return gai_spd_invert(tran, g_a, g_b);
+    return gai_spd_invert(g_a);
 #   else
     pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
     return FALSE;
