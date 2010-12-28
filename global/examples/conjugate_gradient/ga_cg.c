@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #endif
 
+#include "armci.h"
 #include "ga.h"
 #include "macdecls.h"
 #include "finclude.h"
@@ -40,7 +41,7 @@ static int niter;
 void read_and_create(int,char **);
 void computeminverser(double *,double *, double *);
 void computeminverse(double *,double *, int *,int *);
-void finalize_arrays();
+void finalize_arrays(int);
 extern void matvecmul(double *,int,double *,int,int *,int *);
 extern double *ga_vecptr;
 void conjugate_gradient(int nit,int dopreconditioning)
@@ -198,7 +199,6 @@ void **myptrarrx;
 void **myptrarrd;
 static void create_entire_vecs()
 {
-extern int ARMCI_Malloc(void **, size_t);
 int i,lo,hi;
     myptrarrx = (void **)malloc(sizeof(void*)*nproc);
     myptrarrd = (void **)malloc(sizeof(void*)*nproc);
@@ -293,7 +293,6 @@ double time0,time1;
 
 void finalize_arrays(int dpc)
 {
-     extern int ARMCI_Free(void*);
      GA_Destroy(bvec);
      GA_Destroy(dvec);
      if(isvectormirrored)

@@ -320,6 +320,8 @@ void test_perf_nb(int dry_run) {
 	MP_BARRIER();
       }
 
+#if PORTALS
+      /* See the note below why this part is disabled */
       /* ---------------------- nb-Accumulate ------------------------ */    
       for(i=0; i<elems[1]; i++) dsrc[me][i]=1.0;  MP_BARRIER();
       stride = elems[1]*sizeof(double); scale  = 1.0;
@@ -337,6 +339,7 @@ void test_perf_nb(int dry_run) {
 	for(i=0; i<elems[0]*elems[1]; i++) ddst[me][i]=0.0;
 	MP_BARRIER();
       }
+#endif
 
       /* print timings */
      if(!dry_run) if(me==0) printf("%d\t %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e\n", 
@@ -396,3 +399,6 @@ int main(int argc, char* argv[])
     return(0);
 }
 
+/* 
+   NOTE: ARMCI_NbAcc fails in opus for buffer sizes greater than 400Kb 
+*/

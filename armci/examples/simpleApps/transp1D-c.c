@@ -23,6 +23,7 @@
 #if HAVE_ASSERT_H
 #   include <assert.h>
 #endif
+#include <stdlib.h>
 
 #include "mp3.h"
 #include "armci.h"

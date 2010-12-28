@@ -847,7 +847,7 @@ int main(int argc, char* argv[])
       };
     */
     char * test_name[2] = { "acc_type", "collective" };
-    int test_flags[2]   = { 1, 0 };
+    int test_flags[2]   = { 1, 1 };
 
 #define TEST_ACC_TYPE   0
 #define TEST_COLLECTIVE 1

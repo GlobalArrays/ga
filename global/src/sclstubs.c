@@ -8,13 +8,20 @@
 
 #define _MAX_PROB_SIZE_ 10000 /* 100x100 */
 
+#if ENABLE_F77
+#   define gai_lu_solve_alt_ F77_FUNC_(gai_lu_solve_alt,GAI_LU_SOLVE_ALT)
+#   define gai_llt_solve_ F77_FUNC_(gai_llt_solve,GAI_LLT_SOLVE)
+#   define gai_solve_ F77_FUNC_(gai_solve,GAI_SOLVE)
+#   define gai_spd_invert_ F77_FUNC_(gai_spd_invert,GAI_SPD_INVERT)
+#endif
+
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_lu_solve_alt = pnga_lu_solve_alt
 #endif
 void pnga_lu_solve_alt(Integer *tran, Integer * g_a, Integer * g_b) {
 #if HAVE_SCALAPACK
 #   if ENABLE_F77
-    gai_lu_solve_alt(tran, g_a, g_b);
+    gai_lu_solve_alt_(tran, g_a, g_b);
 #   else
     pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
 #   endif
@@ -54,7 +61,7 @@ void pnga_lu_solve(char *tran, Integer * g_a, Integer * g_b) {
 Integer pnga_llt_solve(Integer * g_a, Integer * g_b) {
 #if HAVE_SCALAPACK
 #   if ENABLE_F77
-    return gai_llt_solve(g_a, g_b);
+    return gai_llt_solve_(g_a, g_b);
 #   else
     pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
     return FALSE;
@@ -71,7 +78,7 @@ Integer pnga_llt_solve(Integer * g_a, Integer * g_b) {
 Integer pnga_solve(Integer * g_a, Integer * g_b) {
 #if HAVE_SCALAPACK
 #   if ENABLE_F77
-    return gai_solve(g_a, g_b);
+    return gai_solve_(g_a, g_b);
 #   else
     pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
     return FALSE;
@@ -88,7 +95,7 @@ Integer pnga_solve(Integer * g_a, Integer * g_b) {
 Integer pnga_spd_invert(Integer * g_a) {
 #if HAVE_SCALAPACK
 #   if ENABLE_F77
-    return gai_spd_invert(g_a);
+    return gai_spd_invert_(g_a);
 #   else
     pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
     return FALSE;

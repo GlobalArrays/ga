@@ -56,11 +56,14 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS =
-check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
-	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
-	$(am__EXEEXT_7) $(am__EXEEXT_8) $(am__EXEEXT_9) \
-	$(am__EXEEXT_10) $(am__EXEEXT_11) $(am__EXEEXT_12) \
-	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15) \
+check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf_aggr$(EXEEXT) \
+	testing/perf_nb$(EXEEXT) testing/perf$(EXEEXT) \
+	testing/shmclean$(EXEEXT) testing/shmtest$(EXEEXT) \
+	testing/simple$(EXEEXT) testing/simplelock$(EXEEXT) \
+	testing/test2$(EXEEXT) testing/testnotify$(EXEEXT) \
+	testing/test$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
+	$(am__EXEEXT_3) $(am__EXEEXT_4) $(am__EXEEXT_5) \
+	$(am__EXEEXT_6) $(am__EXEEXT_7) $(am__EXEEXT_8) \
 	examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
@@ -74,9 +77,9 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 	examples/features/non-blocking/simple/simple$(EXEEXT) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__EXEEXT_16) \
-	$(am__EXEEXT_17) $(am__EXEEXT_18) $(am__EXEEXT_19) \
-	$(am__EXEEXT_20) $(am__EXEEXT_21)
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__EXEEXT_9) \
+	$(am__EXEEXT_10) $(am__EXEEXT_11) $(am__EXEEXT_12) \
+	$(am__EXEEXT_13) $(am__EXEEXT_14)
 @MSG_COMMS_TCGMSG_TRUE@am__append_1 = -I$(top_srcdir)/../tcgmsg
 @ENABLE_F77_TRUE@am__append_2 = $(FLD_NOMAIN)
 # You can only build armci with tcgmsg within the ga distribution.
@@ -158,31 +161,11 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/parmci.h
 @ARMCI_NETWORK_PORTALS_TRUE@am__append_15 = -I$(top_srcdir)/src-portals
 @ARMCI_NETWORK_PORTALS_TRUE@am__append_16 = src-portals/tas_as.s
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_17 = testing-portals/clone \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/fork \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/msgcheck \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/origptl \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/perf_aggr \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/perf_nb \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/perf \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/ptltest \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/shmclean \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/shmtest \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/simplelock \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/simple \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/test2 \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/testnotify \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/test \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/te
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_18 = testing-portals/gpctest
-@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_19 = testing-portals/ipctest \
-@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@	testing-portals/test_groups
-@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__append_20 = testing-portals/test_mt
 
 ##############################################################################
 # src-gemini
 #
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_21 = src-gemini/acc.h \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_17 = src-gemini/acc.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/aggregate.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/armci.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/armci-onesided.c \
@@ -234,48 +217,28 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/tas-ppc.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/utils.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/vector.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_22 = src-gemini/faccumulate.f \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_18 = src-gemini/faccumulate.f \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	src-gemini/fcopy.f
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_23 = src-gemini/gpc.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_PROFILING_TRUE@am__append_24 = src-gemini/armci_profile.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_25 = src-gemini/threads.c \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_19 = src-gemini/gpc.c
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_PROFILING_TRUE@am__append_20 = src-gemini/armci_profile.c
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_21 = src-gemini/threads.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@	src-gemini/utils.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__append_26 = src-gemini/tas.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_27 = src-gemini/tas_as.s
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_28 = src-gemini/armci.h \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__append_22 = src-gemini/tas.c
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_23 = src-gemini/tas_as.s
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_24 = src-gemini/armci.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/gpc.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/message.h
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_29 = -I$(top_srcdir)/src-gemini \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_25 = -I$(top_srcdir)/src-gemini \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/src-gemini/libnumatoolkit \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/src-gemini/libonesided
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_30 = $(top_srcdir)/src-gemini/libnumatoolkit/libnumatoolkit.a \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_26 = $(top_srcdir)/src-gemini/libnumatoolkit/libnumatoolkit.a \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	$(top_srcdir)/src-gemini/libonesided/libonesided.a
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_31 = src-gemini/tas_as.s
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_32 = testing-portals/clone \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/fork \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/msgcheck \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/origptl \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/perf_aggr \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/perf_nb \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/perf \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/ptltest \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/shmclean \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/shmtest \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/simplelock \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/simple \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/test2 \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/testnotify \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/test \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/te
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_33 = testing-portals/gpctest
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_34 = testing-portals/ipctest \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@	testing-portals/test_groups
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_35 = testing-portals/test_mt
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_27 = src-gemini/tas_as.s
 
 ##############################################################################
 # src
 #
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_36 = src/collectives/message.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_28 = src/collectives/message.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/aggregate.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/armci.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/capi.c \
@@ -323,24 +286,24 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/rmw.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/strided.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/vector.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_37 = src/common/fcopy.f \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_29 = src/common/fcopy.f \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	src/xfer/faccumulate.f
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_38 = src/common/groups.c
-@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_39 = -I$(top_srcdir)/src/devices/bgml
-@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_40 = src/collectives/message.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_30 = src/common/groups.c
+@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_31 = -I$(top_srcdir)/src/devices/bgml
+@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_32 = src/collectives/message.c \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/groups.c \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgmlacc.h \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgml.c \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgmldefs.h \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgml.h \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgmltas-ppc.h
-@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_41 = -I$(top_srcdir)/src/devices/cray-shmem
-@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_42 = src/memory/shmalloc.c
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_43 = -I$(top_srcdir)/src/devices/dcmf
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_44 = src/collectives/message.c \
+@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_33 = -I$(top_srcdir)/src/devices/cray-shmem
+@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_34 = src/memory/shmalloc.c
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_35 = -I$(top_srcdir)/src/devices/dcmf
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_36 = src/collectives/message.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/groups.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/dcmf/armcix.h
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@am__append_45 = src/devices/dcmf/dcmf2/armcix_acc.c \
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@am__append_37 = src/devices/dcmf/dcmf2/armcix_acc.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_fence.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_get.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_impl.c \
@@ -348,7 +311,7 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_put.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_rmw.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_wait.c
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@am__append_46 = src/devices/dcmf/dcmf-0.2.0/armcix_acc.c \
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@am__append_38 = src/devices/dcmf/dcmf-0.2.0/armcix_acc.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_fence.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_get.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_impl.c \
@@ -356,7 +319,7 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_put.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_rmw.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_wait.c
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@am__append_47 = src/devices/dcmf/dcmf-0.3.0/armcix_acc.c \
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@am__append_39 = src/devices/dcmf/dcmf-0.3.0/armcix_acc.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_fence.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_get.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_impl.c \
@@ -364,21 +327,21 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_put.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_rmw.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_wait.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_48 = -I$(top_srcdir)/src/devices/lapi
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_49 = src/common/async.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_40 = -I$(top_srcdir)/src/devices/lapi
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_41 = src/common/async.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/lapi/lapi.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/lapi/lapidefs.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_50 = -I$(top_srcdir)/src/devices/mpi
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_51 = src/common/ds-shared.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_42 = -I$(top_srcdir)/src/devices/mpi
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_43 = src/common/ds-shared.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi/mpi2_client.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi/mpi2.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi/mpi2_server.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_52 = -I$(top_srcdir)/src/devices/openib
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_53 = src/common/async.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_44 = -I$(top_srcdir)/src/devices/openib
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_45 = src/common/async.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/ds-shared.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/gpc.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/regions.c \
@@ -392,8 +355,8 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/openib/pendbufs.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/openib/rtinfo.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__append_54 = -I$(top_srcdir)/src/devices/sockets
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__append_55 = src/common/async.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__append_46 = -I$(top_srcdir)/src/devices/sockets
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__append_47 = src/common/async.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/common/ds-shared.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/common/request.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/common/spawn.c \
@@ -401,116 +364,82 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/devices/sockets/sockets.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/devices/sockets/sockets.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_56 = src/ft/armci_chkpt.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_48 = src/ft/armci_chkpt.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@	src/ft/armci_storage.c
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_57 = src/common/gpc.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__append_58 = src/common/signaltrap.c \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_49 = src/common/gpc.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__append_50 = src/common/signaltrap.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@	src/memory/shmalloc.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@	src/memory/winshmem.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__append_59 = -DSHMEM -DMMAP
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@am__append_60 = src/common/signaltrap.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__append_51 = -DSHMEM -DMMAP
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@am__append_52 = src/common/signaltrap.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@	src/memory/shmem.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@	src/memory/shmlimit.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NB_NONCONT_TRUE@am__append_61 = src/common/noncont.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@USE_VAMPIR_TRUE@am__append_62 = src/util/armci_vampir.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_PROFILING_TRUE@am__append_63 = src/util/armci_profile.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_64 = src/common/utils.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NB_NONCONT_TRUE@am__append_53 = src/common/noncont.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@USE_VAMPIR_TRUE@am__append_54 = src/util/armci_vampir.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_PROFILING_TRUE@am__append_55 = src/util/armci_profile.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_56 = src/common/utils.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@	src/util/threads.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__append_65 = src/locks/tas.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_66 = src/locks/tas_as.s
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_TRUE@am__append_67 = src/common/x86copy.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__append_68 = src/common/x86copy_as.s
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__append_69 = src/tas-sx.s
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_70 = src/include/armci.h \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__append_57 = src/locks/tas.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_58 = src/locks/tas_as.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_TRUE@am__append_59 = src/common/x86copy.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__append_60 = src/common/x86copy_as.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__append_61 = src/tas-sx.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_62 = src/include/armci.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/parmci.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/message.h
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_71 = -I$(top_srcdir)/src/include
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_72 = src/common/x86copy_as.s \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_63 = -I$(top_srcdir)/src/include
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_64 = src/common/x86copy_as.s \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/locks/tas_as.s
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_73 = testing/msgcheck \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/perf_aggr \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/perf_nb \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/perf \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/shmclean \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/shmtest \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/test2 \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/testitr \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/testnotify \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/test
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_74 = testing/fttest
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_75 = testing/gpctest
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_76 = testing/test_groups
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__append_77 = testing/ipctest
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_78 = testing/test_mt
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_79 = testing/acc_test \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	testing/copy_test
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_80 = examples/features/gpc/hashtable/test_hashtable \
+@ENABLE_CHECKPOINT_TRUE@am__append_65 = testing/fttest
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_66 = testing/gpctest
+@MSG_COMMS_MPI_TRUE@am__append_67 = testing/test_groups
+@MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__append_68 = testing/ipctest
+@THREAD_SAFE_TRUE@am__append_69 = testing/test_mt
+@ENABLE_F77_TRUE@am__append_70 = testing/acc_test testing/copy_test
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_71 = testing/clone testing/fork \
+@ARMCI_NETWORK_PORTALS_TRUE@	testing/origptl testing/ptltest \
+@ARMCI_NETWORK_PORTALS_TRUE@	testing/te
+@ARMCI_NETWORK_PORTALS_FALSE@am__append_72 = testing/testitr
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_73 = examples/features/gpc/hashtable/test_hashtable \
 @ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_81 = examples/features/proc_affinity/computation_impact/computation_impact
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_82 = examples/features/proc_affinity/simple/simple
-@MSG_COMMS_MPI_TRUE@am__append_83 = examples/features/concurrency/multidma/multidma \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_74 = examples/features/proc_affinity/computation_impact/computation_impact
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_75 = examples/features/proc_affinity/simple/simple
+@MSG_COMMS_MPI_TRUE@am__append_76 = examples/features/concurrency/multidma/multidma \
 @MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap
-@RANDOM_ACCESS_TRUE@am__append_84 = examples/benchmarks/RandomAccess/simple/simple \
+@RANDOM_ACCESS_TRUE@am__append_77 = examples/benchmarks/RandomAccess/simple/simple \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket
-@THREAD_SAFE_TRUE@am__append_85 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_86 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
+@THREAD_SAFE_TRUE@am__append_78 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_79 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
 @ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_87 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_88 = examples/features/proc_affinity/simple/simple$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_89 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_80 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_81 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_82 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap$(EXEEXT)
-@RANDOM_ACCESS_TRUE@am__append_90 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__append_83 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__append_91 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
-XFAIL_TESTS = $(am__EXEEXT_22) $(am__EXEEXT_22)
-#PARALLEL_TESTS += testing-portals/perf_nb$(EXEEXT) # needs bug fixes
-#SERIAL_TESTS += testing-portals/shmclean$(EXEEXT) # not sure we need this
-#SERIAL_TESTS += testing-portals/shmtest$(EXEEXT) # not sure we need this
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_92 =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/clone$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/fork$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/msgcheck$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/origptl$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/perf_aggr$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/perf$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/ptltest$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/simplelock$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/simple$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/test2$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/testnotify$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/test$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/te$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_93 = testing-portals/gpctest$(EXEEXT)
-#PARALLEL_TESTS += testing-portals/ipctest$(EXEEXT) # needs bug fixes
-@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_94 = testing-portals/test_groups$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__append_95 = testing-portals/test_mt$(EXEEXT)
-#PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
-#SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
-#SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
-@ARMCI_NETWORK_PORTALS_FALSE@am__append_96 =  \
-@ARMCI_NETWORK_PORTALS_FALSE@	testing/msgcheck$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_FALSE@	testing/perf_aggr$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_FALSE@	testing/perf$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_FALSE@	testing/test2$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_FALSE@	testing/testitr$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_FALSE@	testing/testnotify$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_FALSE@	testing/test$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_97 = testing/fttest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_98 = testing/gpctest$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_99 = testing/test_groups$(EXEEXT)
+@THREAD_SAFE_TRUE@am__append_84 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+XFAIL_TESTS = $(am__EXEEXT_15) $(am__EXEEXT_15)
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_85 = testing/clone$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_TRUE@	testing/fork$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_TRUE@	testing/origptl$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_TRUE@	testing/ptltest$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_TRUE@	testing/te$(EXEEXT)
+@ENABLE_CHECKPOINT_TRUE@am__append_86 = testing/fttest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_87 = testing/gpctest$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_88 = testing/test_groups$(EXEEXT)
 #PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
-@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_100 = testing/test_mt$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_101 = testing/acc_test$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	testing/copy_test$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_102 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
+@THREAD_SAFE_TRUE@am__append_89 = testing/test_mt$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_90 = testing/acc_test$(EXEEXT) \
+@ENABLE_F77_TRUE@	testing/copy_test$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_91 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
 @ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_103 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_104 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_92 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_93 = examples/features/proc_affinity/simple/simple$(EXEEXT)
 #PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
 #PARALLEL_TESTS += examples/features/non-blocking/overlap/overlap$(EXEEXT) # needs bug fixes
-@RANDOM_ACCESS_TRUE@am__append_105 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__append_94 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__append_106 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+@THREAD_SAFE_TRUE@am__append_95 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -1050,73 +979,29 @@ am__objects_44 = $(am__objects_39) $(am__objects_40) $(am__objects_41) \
 nodist_libarmcii_la_OBJECTS = $(am__objects_44)
 libarmcii_la_OBJECTS = $(am_libarmcii_la_OBJECTS) \
 	$(nodist_libarmcii_la_OBJECTS)
-@ARMCI_NETWORK_PORTALS_TRUE@am__EXEEXT_1 =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/clone$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/fork$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/msgcheck$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/origptl$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/perf_aggr$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/perf_nb$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/perf$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/ptltest$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/shmclean$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/shmtest$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/simplelock$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/simple$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/test2$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/testnotify$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/test$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/te$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__EXEEXT_2 = testing-portals/gpctest$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__EXEEXT_3 = testing-portals/ipctest$(EXEEXT) \
-@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@	testing-portals/test_groups$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__EXEEXT_4 = testing-portals/test_mt$(EXEEXT)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__EXEEXT_5 = testing-portals/clone$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/fork$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/msgcheck$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/origptl$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/perf_aggr$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/perf_nb$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/perf$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/ptltest$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/shmclean$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/shmtest$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/simplelock$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/simple$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/test2$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/testnotify$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/test$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	testing-portals/te$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__EXEEXT_6 = testing-portals/gpctest$(EXEEXT)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__EXEEXT_7 = testing-portals/ipctest$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@	testing-portals/test_groups$(EXEEXT)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__EXEEXT_8 = testing-portals/test_mt$(EXEEXT)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__EXEEXT_9 = testing/msgcheck$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/perf_aggr$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/perf_nb$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/perf$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/shmclean$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/shmtest$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/test2$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/testitr$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/testnotify$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	testing/test$(EXEEXT)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__EXEEXT_10 = testing/fttest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__EXEEXT_11 = testing/gpctest$(EXEEXT)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__EXEEXT_12 = testing/test_groups$(EXEEXT)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__EXEEXT_13 = testing/ipctest$(EXEEXT)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__EXEEXT_14 = testing/test_mt$(EXEEXT)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__EXEEXT_15 = testing/acc_test$(EXEEXT) \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	testing/copy_test$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_16 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
+@ENABLE_CHECKPOINT_TRUE@am__EXEEXT_1 = testing/fttest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_2 = testing/gpctest$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__EXEEXT_3 = testing/test_groups$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__EXEEXT_4 =  \
+@MSG_COMMS_MPI_TRUE@@SYSV_TRUE@	testing/ipctest$(EXEEXT)
+@THREAD_SAFE_TRUE@am__EXEEXT_5 = testing/test_mt$(EXEEXT)
+@ENABLE_F77_TRUE@am__EXEEXT_6 = testing/acc_test$(EXEEXT) \
+@ENABLE_F77_TRUE@	testing/copy_test$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_TRUE@am__EXEEXT_7 = testing/clone$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_TRUE@	testing/fork$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_TRUE@	testing/origptl$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_TRUE@	testing/ptltest$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_TRUE@	testing/te$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_FALSE@am__EXEEXT_8 = testing/testitr$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_9 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
 @ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__EXEEXT_17 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_18 = examples/features/proc_affinity/simple/simple$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__EXEEXT_19 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__EXEEXT_10 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_11 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__EXEEXT_12 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap$(EXEEXT)
-@RANDOM_ACCESS_TRUE@am__EXEEXT_20 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__EXEEXT_13 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__EXEEXT_21 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+@THREAD_SAFE_TRUE@am__EXEEXT_14 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 LIBOBJDIR = compat/
 am_examples_benchmarks_RandomAccess_simple_simple_OBJECTS =  \
@@ -1128,7 +1013,7 @@ examples_benchmarks_RandomAccess_simple_simple_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 examples_benchmarks_RandomAccess_simple_simple_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_OBJECTS = examples/benchmarks/RandomAccess/smp_bucket/smp_bucket.$(OBJEXT) \
 	examples/benchmarks/RandomAccess/timing.$(OBJEXT)
 examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_OBJECTS = $(am_examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_OBJECTS)
@@ -1136,7 +1021,7 @@ examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_LDADD =  \
 	$(LDADD)
 examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_benchmarks_cg_armci_sharedmemory_cg_OBJECTS =  \
 	examples/benchmarks/cg/armci_sharedmemory/cg.$(OBJEXT) \
 	examples/benchmarks/cg/armci_sharedmemory/compute.$(OBJEXT) \
@@ -1147,7 +1032,7 @@ examples_benchmarks_cg_armci_sharedmemory_cg_OBJECTS =  \
 examples_benchmarks_cg_armci_sharedmemory_cg_LDADD = $(LDADD)
 examples_benchmarks_cg_armci_sharedmemory_cg_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_benchmarks_lu_armci_blocking_lu_OBJECTS =  \
 	examples/benchmarks/lu/armci_blocking/lu.$(OBJEXT) \
 	examples/benchmarks/lu/armci_blocking/timing.$(OBJEXT)
@@ -1156,7 +1041,7 @@ examples_benchmarks_lu_armci_blocking_lu_OBJECTS =  \
 examples_benchmarks_lu_armci_blocking_lu_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_blocking_lu_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_benchmarks_lu_armci_blocking_lu_b_bc_OBJECTS =  \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc.$(OBJEXT) \
 	examples/benchmarks/lu/armci_blocking/timing.$(OBJEXT)
@@ -1165,7 +1050,7 @@ examples_benchmarks_lu_armci_blocking_lu_b_bc_OBJECTS =  \
 examples_benchmarks_lu_armci_blocking_lu_b_bc_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_blocking_lu_b_bc_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_benchmarks_lu_armci_blocking_lu_block_OBJECTS =  \
 	examples/benchmarks/lu/armci_blocking/lu-block.$(OBJEXT) \
 	examples/benchmarks/lu/armci_blocking/timing.$(OBJEXT)
@@ -1174,7 +1059,7 @@ examples_benchmarks_lu_armci_blocking_lu_block_OBJECTS =  \
 examples_benchmarks_lu_armci_blocking_lu_block_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_blocking_lu_block_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_benchmarks_lu_armci_multithreaded_lu_block_th_OBJECTS = examples/benchmarks/lu/armci_multithreaded/lu-block-th.$(OBJEXT) \
 	examples/benchmarks/lu/armci_multithreaded/timing.$(OBJEXT)
 examples_benchmarks_lu_armci_multithreaded_lu_block_th_OBJECTS = $(am_examples_benchmarks_lu_armci_multithreaded_lu_block_th_OBJECTS)
@@ -1182,7 +1067,7 @@ examples_benchmarks_lu_armci_multithreaded_lu_block_th_LDADD =  \
 	$(LDADD)
 examples_benchmarks_lu_armci_multithreaded_lu_block_th_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_benchmarks_lu_armci_nonblocking_lu_nb_get_OBJECTS =  \
 	examples/benchmarks/lu/armci_nonblocking/lu_nb_get.$(OBJEXT) \
 	examples/benchmarks/lu/armci_nonblocking/timing.$(OBJEXT)
@@ -1190,7 +1075,7 @@ examples_benchmarks_lu_armci_nonblocking_lu_nb_get_OBJECTS = $(am_examples_bench
 examples_benchmarks_lu_armci_nonblocking_lu_nb_get_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_get_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_benchmarks_lu_armci_nonblocking_lu_nb_put_OBJECTS =  \
 	examples/benchmarks/lu/armci_nonblocking/lu_nb_put.$(OBJEXT) \
 	examples/benchmarks/lu/armci_nonblocking/timing.$(OBJEXT)
@@ -1198,7 +1083,7 @@ examples_benchmarks_lu_armci_nonblocking_lu_nb_put_OBJECTS = $(am_examples_bench
 examples_benchmarks_lu_armci_nonblocking_lu_nb_put_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_put_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_benchmarks_lu_pthreads_lu_thread_OBJECTS =  \
 	examples/benchmarks/lu/pthreads/barrier.$(OBJEXT) \
 	examples/benchmarks/lu/pthreads/lu-thread.$(OBJEXT) \
@@ -1213,14 +1098,14 @@ examples_features_aggregation_simple_simple_OBJECTS =  \
 examples_features_aggregation_simple_simple_LDADD = $(LDADD)
 examples_features_aggregation_simple_simple_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_OBJECTS = examples/features/aggregation/sparse_matvecmul/sparse_matvecmul.$(OBJEXT)
 examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_OBJECTS = $(am_examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_OBJECTS)
 examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_LDADD =  \
 	$(LDADD)
 examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_features_concurrency_multidma_multidma_OBJECTS =  \
 	examples/features/concurrency/multidma/multidma.$(OBJEXT)
 examples_features_concurrency_multidma_multidma_OBJECTS =  \
@@ -1228,7 +1113,7 @@ examples_features_concurrency_multidma_multidma_OBJECTS =  \
 examples_features_concurrency_multidma_multidma_LDADD = $(LDADD)
 examples_features_concurrency_multidma_multidma_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_features_concurrency_simple_comdegree_OBJECTS =  \
 	examples/features/concurrency/simple/comdegree.$(OBJEXT)
 examples_features_concurrency_simple_comdegree_OBJECTS =  \
@@ -1236,7 +1121,7 @@ examples_features_concurrency_simple_comdegree_OBJECTS =  \
 examples_features_concurrency_simple_comdegree_LDADD = $(LDADD)
 examples_features_concurrency_simple_comdegree_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_features_gpc_hashtable_test_hashtable_OBJECTS =  \
 	examples/features/gpc/hashtable/DistHashmap.$(OBJEXT) \
 	examples/features/gpc/hashtable/GPCHashmap.$(OBJEXT) \
@@ -1247,7 +1132,7 @@ am_examples_features_gpc_hashtable_test_hashtable_OBJECTS =  \
 examples_features_gpc_hashtable_test_hashtable_OBJECTS =  \
 	$(am_examples_features_gpc_hashtable_test_hashtable_OBJECTS)
 am__DEPENDENCIES_2 = $(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 @ENABLE_F77_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
 examples_features_gpc_hashtable_test_hashtable_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
@@ -1263,7 +1148,7 @@ examples_features_gpc_simple_gpctest_OBJECTS =  \
 examples_features_gpc_simple_gpctest_LDADD = $(LDADD)
 examples_features_gpc_simple_gpctest_DEPENDENCIES = $(am__append_3) \
 	$(am__append_4) $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_features_non_blocking_overlap_overlap_OBJECTS =  \
 	examples/features/non-blocking/overlap/overlap.$(OBJEXT)
 examples_features_non_blocking_overlap_overlap_OBJECTS =  \
@@ -1271,7 +1156,7 @@ examples_features_non_blocking_overlap_overlap_OBJECTS =  \
 examples_features_non_blocking_overlap_overlap_LDADD = $(LDADD)
 examples_features_non_blocking_overlap_overlap_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_features_non_blocking_simple_simple_OBJECTS =  \
 	examples/features/non-blocking/simple/simple.$(OBJEXT)
 examples_features_non_blocking_simple_simple_OBJECTS =  \
@@ -1279,14 +1164,14 @@ examples_features_non_blocking_simple_simple_OBJECTS =  \
 examples_features_non_blocking_simple_simple_LDADD = $(LDADD)
 examples_features_non_blocking_simple_simple_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_features_notification_simple_testnotify_OBJECTS =  \
 	examples/features/notification/simple/testnotify.$(OBJEXT)
 examples_features_notification_simple_testnotify_OBJECTS = $(am_examples_features_notification_simple_testnotify_OBJECTS)
 examples_features_notification_simple_testnotify_LDADD = $(LDADD)
 examples_features_notification_simple_testnotify_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS = examples/features/proc_affinity/computation_impact/computation_impact.$(OBJEXT)
 examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS = $(am_examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS)
 examples_features_proc_affinity_computation_impact_computation_impact_DEPENDENCIES =  \
@@ -1304,14 +1189,14 @@ examples_features_proc_affinity_simple_simple_OBJECTS =  \
 examples_features_proc_affinity_simple_simple_LDADD = $(LDADD)
 examples_features_proc_affinity_simple_simple_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_features_symmetric_memory_simple_simple_OBJECTS =  \
 	examples/features/symmetric_memory/simple/simple.$(OBJEXT)
 examples_features_symmetric_memory_simple_simple_OBJECTS = $(am_examples_features_symmetric_memory_simple_simple_OBJECTS)
 examples_features_symmetric_memory_simple_simple_LDADD = $(LDADD)
 examples_features_symmetric_memory_simple_simple_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_30)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
 am_examples_simpleApps_transp1D_c_OBJECTS =  \
 	examples/simpleApps/transp1D-c.$(OBJEXT)
 examples_simpleApps_transp1D_c_OBJECTS =  \
@@ -1319,319 +1204,151 @@ examples_simpleApps_transp1D_c_OBJECTS =  \
 examples_simpleApps_transp1D_c_LDADD = $(LDADD)
 examples_simpleApps_transp1D_c_DEPENDENCIES = $(am__append_3) \
 	$(am__append_4) $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__append_30)
-am__testing_portals_clone_SOURCES_DIST = testing-portals/clone.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_clone_OBJECTS = testing-portals/clone.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_clone_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/clone.$(OBJEXT)
-testing_portals_clone_OBJECTS = $(am_testing_portals_clone_OBJECTS)
-testing_portals_clone_LDADD = $(LDADD)
-testing_portals_clone_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_fork_SOURCES_DIST = testing-portals/fork.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_fork_OBJECTS = testing-portals/fork.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_fork_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/fork.$(OBJEXT)
-testing_portals_fork_OBJECTS = $(am_testing_portals_fork_OBJECTS)
-testing_portals_fork_LDADD = $(LDADD)
-testing_portals_fork_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_gpctest_SOURCES_DIST = testing-portals/gpctest.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_gpctest_OBJECTS = testing-portals/gpctest.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_gpctest_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/gpctest.$(OBJEXT)
-testing_portals_gpctest_OBJECTS =  \
-	$(am_testing_portals_gpctest_OBJECTS)
-testing_portals_gpctest_LDADD = $(LDADD)
-testing_portals_gpctest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_ipctest_SOURCES_DIST = testing-portals/ipctest.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_ipctest_OBJECTS = testing-portals/ipctest.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_ipctest_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/ipctest.$(OBJEXT)
-testing_portals_ipctest_OBJECTS =  \
-	$(am_testing_portals_ipctest_OBJECTS)
-testing_portals_ipctest_LDADD = $(LDADD)
-testing_portals_ipctest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_msgcheck_SOURCES_DIST =  \
-	testing-portals/msgcheck.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_msgcheck_OBJECTS = testing-portals/msgcheck.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_msgcheck_OBJECTS = testing-portals/msgcheck.$(OBJEXT)
-testing_portals_msgcheck_OBJECTS =  \
-	$(am_testing_portals_msgcheck_OBJECTS)
-testing_portals_msgcheck_LDADD = $(LDADD)
-testing_portals_msgcheck_DEPENDENCIES = $(am__append_3) \
-	$(am__append_4) $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__append_30)
-am__testing_portals_origptl_SOURCES_DIST = testing-portals/origptl.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_origptl_OBJECTS = testing-portals/origptl.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_origptl_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/origptl.$(OBJEXT)
-testing_portals_origptl_OBJECTS =  \
-	$(am_testing_portals_origptl_OBJECTS)
-testing_portals_origptl_LDADD = $(LDADD)
-testing_portals_origptl_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_perf_SOURCES_DIST = testing-portals/perf.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_perf_OBJECTS = testing-portals/perf.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_perf_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/perf.$(OBJEXT)
-testing_portals_perf_OBJECTS = $(am_testing_portals_perf_OBJECTS)
-testing_portals_perf_LDADD = $(LDADD)
-testing_portals_perf_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_perf_aggr_SOURCES_DIST =  \
-	testing-portals/perf_aggr.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_perf_aggr_OBJECTS = testing-portals/perf_aggr.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_perf_aggr_OBJECTS = testing-portals/perf_aggr.$(OBJEXT)
-testing_portals_perf_aggr_OBJECTS =  \
-	$(am_testing_portals_perf_aggr_OBJECTS)
-testing_portals_perf_aggr_LDADD = $(LDADD)
-testing_portals_perf_aggr_DEPENDENCIES = $(am__append_3) \
-	$(am__append_4) $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__append_30)
-am__testing_portals_perf_nb_SOURCES_DIST = testing-portals/perf_nb.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_perf_nb_OBJECTS = testing-portals/perf_nb.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_perf_nb_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/perf_nb.$(OBJEXT)
-testing_portals_perf_nb_OBJECTS =  \
-	$(am_testing_portals_perf_nb_OBJECTS)
-testing_portals_perf_nb_LDADD = $(LDADD)
-testing_portals_perf_nb_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_ptltest_SOURCES_DIST = testing-portals/ptltest.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_ptltest_OBJECTS = testing-portals/ptltest.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_ptltest_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/ptltest.$(OBJEXT)
-testing_portals_ptltest_OBJECTS =  \
-	$(am_testing_portals_ptltest_OBJECTS)
-testing_portals_ptltest_LDADD = $(LDADD)
-testing_portals_ptltest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_shmclean_SOURCES_DIST =  \
-	testing-portals/shmclean.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_shmclean_OBJECTS = testing-portals/shmclean.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_shmclean_OBJECTS = testing-portals/shmclean.$(OBJEXT)
-testing_portals_shmclean_OBJECTS =  \
-	$(am_testing_portals_shmclean_OBJECTS)
-testing_portals_shmclean_LDADD = $(LDADD)
-testing_portals_shmclean_DEPENDENCIES = $(am__append_3) \
-	$(am__append_4) $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__append_30)
-am__testing_portals_shmtest_SOURCES_DIST = testing-portals/shmtest.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_shmtest_OBJECTS = testing-portals/shmtest.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_shmtest_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/shmtest.$(OBJEXT)
-testing_portals_shmtest_OBJECTS =  \
-	$(am_testing_portals_shmtest_OBJECTS)
-testing_portals_shmtest_LDADD = $(LDADD)
-testing_portals_shmtest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_simple_SOURCES_DIST = testing-portals/simple.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_simple_OBJECTS = testing-portals/simple.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_simple_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/simple.$(OBJEXT)
-testing_portals_simple_OBJECTS = $(am_testing_portals_simple_OBJECTS)
-testing_portals_simple_LDADD = $(LDADD)
-testing_portals_simple_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_simplelock_SOURCES_DIST =  \
-	testing-portals/simplelock.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_simplelock_OBJECTS = testing-portals/simplelock.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_simplelock_OBJECTS = testing-portals/simplelock.$(OBJEXT)
-testing_portals_simplelock_OBJECTS =  \
-	$(am_testing_portals_simplelock_OBJECTS)
-testing_portals_simplelock_LDADD = $(LDADD)
-testing_portals_simplelock_DEPENDENCIES = $(am__append_3) \
-	$(am__append_4) $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__append_30)
-am__testing_portals_te_SOURCES_DIST = testing-portals/te.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_te_OBJECTS = testing-portals/te.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_te_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/te.$(OBJEXT)
-testing_portals_te_OBJECTS = $(am_testing_portals_te_OBJECTS)
-testing_portals_te_LDADD = $(LDADD)
-testing_portals_te_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_test_SOURCES_DIST = testing-portals/test.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_test_OBJECTS = testing-portals/test.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_test_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/test.$(OBJEXT)
-testing_portals_test_OBJECTS = $(am_testing_portals_test_OBJECTS)
-testing_portals_test_LDADD = $(LDADD)
-testing_portals_test_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_test2_SOURCES_DIST = testing-portals/test2.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_test2_OBJECTS = testing-portals/test2.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_test2_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/test2.$(OBJEXT)
-testing_portals_test2_OBJECTS = $(am_testing_portals_test2_OBJECTS)
-testing_portals_test2_LDADD = $(LDADD)
-testing_portals_test2_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_test_groups_SOURCES_DIST =  \
-	testing-portals/test_groups.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_test_groups_OBJECTS = testing-portals/test_groups.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_test_groups_OBJECTS = testing-portals/test_groups.$(OBJEXT)
-testing_portals_test_groups_OBJECTS =  \
-	$(am_testing_portals_test_groups_OBJECTS)
-testing_portals_test_groups_LDADD = $(LDADD)
-testing_portals_test_groups_DEPENDENCIES = $(am__append_3) \
-	$(am__append_4) $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__append_30)
-am__testing_portals_test_mt_SOURCES_DIST = testing-portals/test_mt.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_test_mt_OBJECTS = testing-portals/test_mt.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_test_mt_OBJECTS =  \
-@ARMCI_NETWORK_PORTALS_TRUE@	testing-portals/test_mt.$(OBJEXT)
-testing_portals_test_mt_OBJECTS =  \
-	$(am_testing_portals_test_mt_OBJECTS)
-testing_portals_test_mt_LDADD = $(LDADD)
-testing_portals_test_mt_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_portals_testnotify_SOURCES_DIST =  \
-	testing-portals/testnotify.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_portals_testnotify_OBJECTS = testing-portals/testnotify.$(OBJEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am_testing_portals_testnotify_OBJECTS = testing-portals/testnotify.$(OBJEXT)
-testing_portals_testnotify_OBJECTS =  \
-	$(am_testing_portals_testnotify_OBJECTS)
-testing_portals_testnotify_LDADD = $(LDADD)
-testing_portals_testnotify_DEPENDENCIES = $(am__append_3) \
-	$(am__append_4) $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__append_30)
-am__testing_acc_test_SOURCES_DIST = testing/acc_test.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_acc_test_OBJECTS = testing/acc_test.$(OBJEXT)
+	$(am__DEPENDENCIES_1) $(am__append_26)
+am_testing_acc_test_OBJECTS = testing/acc_test.$(OBJEXT)
 testing_acc_test_OBJECTS = $(am_testing_acc_test_OBJECTS)
 testing_acc_test_LDADD = $(LDADD)
 testing_acc_test_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_copy_test_SOURCES_DIST = testing/copy_test.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_copy_test_OBJECTS = testing/copy_test.$(OBJEXT)
+	$(am__append_26)
+am_testing_clone_OBJECTS = testing/clone.$(OBJEXT)
+testing_clone_OBJECTS = $(am_testing_clone_OBJECTS)
+testing_clone_LDADD = $(LDADD)
+testing_clone_DEPENDENCIES = $(am__append_3) $(am__append_4) \
+	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__append_26)
+am_testing_copy_test_OBJECTS = testing/copy_test.$(OBJEXT)
 testing_copy_test_OBJECTS = $(am_testing_copy_test_OBJECTS)
 testing_copy_test_LDADD = $(LDADD)
 testing_copy_test_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_fttest_SOURCES_DIST = testing/fttest.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_fttest_OBJECTS = testing/fttest.$(OBJEXT)
+	$(am__append_26)
+am_testing_fork_OBJECTS = testing/fork.$(OBJEXT)
+testing_fork_OBJECTS = $(am_testing_fork_OBJECTS)
+testing_fork_LDADD = $(LDADD)
+testing_fork_DEPENDENCIES = $(am__append_3) $(am__append_4) \
+	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__append_26)
+am_testing_fttest_OBJECTS = testing/fttest.$(OBJEXT)
 testing_fttest_OBJECTS = $(am_testing_fttest_OBJECTS)
 testing_fttest_LDADD = $(LDADD)
 testing_fttest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_gpctest_SOURCES_DIST = testing/gpctest.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_gpctest_OBJECTS = testing/gpctest.$(OBJEXT)
+	$(am__append_26)
+am_testing_gpctest_OBJECTS = testing/gpctest.$(OBJEXT)
 testing_gpctest_OBJECTS = $(am_testing_gpctest_OBJECTS)
 testing_gpctest_LDADD = $(LDADD)
 testing_gpctest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_ipctest_SOURCES_DIST = testing/ipctest.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_ipctest_OBJECTS = testing/ipctest.$(OBJEXT)
+	$(am__append_26)
+am_testing_ipctest_OBJECTS = testing/ipctest.$(OBJEXT)
 testing_ipctest_OBJECTS = $(am_testing_ipctest_OBJECTS)
 testing_ipctest_LDADD = $(LDADD)
 testing_ipctest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_msgcheck_SOURCES_DIST = testing/msgcheck.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_msgcheck_OBJECTS = testing/msgcheck.$(OBJEXT)
+	$(am__append_26)
+am_testing_msgcheck_OBJECTS = testing/msgcheck.$(OBJEXT)
 testing_msgcheck_OBJECTS = $(am_testing_msgcheck_OBJECTS)
 testing_msgcheck_LDADD = $(LDADD)
 testing_msgcheck_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_perf_SOURCES_DIST = testing/perf.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_perf_OBJECTS = testing/perf.$(OBJEXT)
+	$(am__append_26)
+am_testing_origptl_OBJECTS = testing/origptl.$(OBJEXT)
+testing_origptl_OBJECTS = $(am_testing_origptl_OBJECTS)
+testing_origptl_LDADD = $(LDADD)
+testing_origptl_DEPENDENCIES = $(am__append_3) $(am__append_4) \
+	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__append_26)
+am_testing_perf_OBJECTS = testing/perf.$(OBJEXT)
 testing_perf_OBJECTS = $(am_testing_perf_OBJECTS)
 testing_perf_LDADD = $(LDADD)
 testing_perf_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_perf_aggr_SOURCES_DIST = testing/perf_aggr.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_perf_aggr_OBJECTS = testing/perf_aggr.$(OBJEXT)
+	$(am__append_26)
+am_testing_perf_aggr_OBJECTS = testing/perf_aggr.$(OBJEXT)
 testing_perf_aggr_OBJECTS = $(am_testing_perf_aggr_OBJECTS)
 testing_perf_aggr_LDADD = $(LDADD)
 testing_perf_aggr_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_perf_nb_SOURCES_DIST = testing/perf_nb.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_perf_nb_OBJECTS = testing/perf_nb.$(OBJEXT)
+	$(am__append_26)
+am_testing_perf_nb_OBJECTS = testing/perf_nb.$(OBJEXT)
 testing_perf_nb_OBJECTS = $(am_testing_perf_nb_OBJECTS)
 testing_perf_nb_LDADD = $(LDADD)
 testing_perf_nb_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_shmclean_SOURCES_DIST = testing/shmclean.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_shmclean_OBJECTS = testing/shmclean.$(OBJEXT)
+	$(am__append_26)
+am_testing_ptltest_OBJECTS = testing/ptltest.$(OBJEXT)
+testing_ptltest_OBJECTS = $(am_testing_ptltest_OBJECTS)
+testing_ptltest_LDADD = $(LDADD)
+testing_ptltest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
+	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__append_26)
+am_testing_shmclean_OBJECTS = testing/shmclean.$(OBJEXT)
 testing_shmclean_OBJECTS = $(am_testing_shmclean_OBJECTS)
 testing_shmclean_LDADD = $(LDADD)
 testing_shmclean_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_shmtest_SOURCES_DIST = testing/shmtest.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_shmtest_OBJECTS = testing/shmtest.$(OBJEXT)
+	$(am__append_26)
+am_testing_shmtest_OBJECTS = testing/shmtest.$(OBJEXT)
 testing_shmtest_OBJECTS = $(am_testing_shmtest_OBJECTS)
 testing_shmtest_LDADD = $(LDADD)
 testing_shmtest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_test_SOURCES_DIST = testing/test.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_test_OBJECTS = testing/test.$(OBJEXT)
+	$(am__append_26)
+am_testing_simple_OBJECTS = testing/simple.$(OBJEXT)
+testing_simple_OBJECTS = $(am_testing_simple_OBJECTS)
+testing_simple_LDADD = $(LDADD)
+testing_simple_DEPENDENCIES = $(am__append_3) $(am__append_4) \
+	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__append_26)
+am_testing_simplelock_OBJECTS = testing/simplelock.$(OBJEXT)
+testing_simplelock_OBJECTS = $(am_testing_simplelock_OBJECTS)
+testing_simplelock_LDADD = $(LDADD)
+testing_simplelock_DEPENDENCIES = $(am__append_3) $(am__append_4) \
+	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__append_26)
+am_testing_te_OBJECTS = testing/te.$(OBJEXT)
+testing_te_OBJECTS = $(am_testing_te_OBJECTS)
+testing_te_LDADD = $(LDADD)
+testing_te_DEPENDENCIES = $(am__append_3) $(am__append_4) $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+am_testing_test_OBJECTS = testing/test.$(OBJEXT)
 testing_test_OBJECTS = $(am_testing_test_OBJECTS)
 testing_test_LDADD = $(LDADD)
 testing_test_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_test2_SOURCES_DIST = testing/test2.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_test2_OBJECTS = testing/test2.$(OBJEXT)
+	$(am__append_26)
+am_testing_test2_OBJECTS = testing/test2.$(OBJEXT)
 testing_test2_OBJECTS = $(am_testing_test2_OBJECTS)
 testing_test2_LDADD = $(LDADD)
 testing_test2_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_test_groups_SOURCES_DIST = testing/test_groups.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_test_groups_OBJECTS = testing/test_groups.$(OBJEXT)
+	$(am__append_26)
+am_testing_test_groups_OBJECTS = testing/test_groups.$(OBJEXT)
 testing_test_groups_OBJECTS = $(am_testing_test_groups_OBJECTS)
 testing_test_groups_LDADD = $(LDADD)
 testing_test_groups_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_test_mt_SOURCES_DIST = testing/test_mt.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_test_mt_OBJECTS = testing/test_mt.$(OBJEXT)
+	$(am__append_26)
+am_testing_test_mt_OBJECTS = testing/test_mt.$(OBJEXT)
 testing_test_mt_OBJECTS = $(am_testing_test_mt_OBJECTS)
 testing_test_mt_LDADD = $(LDADD)
 testing_test_mt_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_testitr_SOURCES_DIST = testing/testitr.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_testitr_OBJECTS = testing/testitr.$(OBJEXT)
+	$(am__append_26)
+am_testing_testitr_OBJECTS =  \
+	testing/testing_testitr-testitr.$(OBJEXT)
 testing_testitr_OBJECTS = $(am_testing_testitr_OBJECTS)
 testing_testitr_LDADD = $(LDADD)
 testing_testitr_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
-am__testing_testnotify_SOURCES_DIST = testing/testnotify.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am_testing_testnotify_OBJECTS = testing/testnotify.$(OBJEXT)
+	$(am__append_26)
+am_testing_testnotify_OBJECTS = testing/testnotify.$(OBJEXT)
 testing_testnotify_OBJECTS = $(am_testing_testnotify_OBJECTS)
 testing_testnotify_LDADD = $(LDADD)
 testing_testnotify_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_30)
+	$(am__append_26)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles
@@ -1738,50 +1455,12 @@ SOURCES = $(libarmci_la_SOURCES) $(nodist_libarmci_la_SOURCES) \
 	$(nodist_EXTRA_examples_features_symmetric_memory_simple_simple_SOURCES) \
 	$(examples_simpleApps_transp1D_c_SOURCES) \
 	$(nodist_EXTRA_examples_simpleApps_transp1D_c_SOURCES) \
-	$(testing_portals_clone_SOURCES) \
-	$(nodist_EXTRA_testing_portals_clone_SOURCES) \
-	$(testing_portals_fork_SOURCES) \
-	$(nodist_EXTRA_testing_portals_fork_SOURCES) \
-	$(testing_portals_gpctest_SOURCES) \
-	$(nodist_EXTRA_testing_portals_gpctest_SOURCES) \
-	$(testing_portals_ipctest_SOURCES) \
-	$(nodist_EXTRA_testing_portals_ipctest_SOURCES) \
-	$(testing_portals_msgcheck_SOURCES) \
-	$(nodist_EXTRA_testing_portals_msgcheck_SOURCES) \
-	$(testing_portals_origptl_SOURCES) \
-	$(nodist_EXTRA_testing_portals_origptl_SOURCES) \
-	$(testing_portals_perf_SOURCES) \
-	$(nodist_EXTRA_testing_portals_perf_SOURCES) \
-	$(testing_portals_perf_aggr_SOURCES) \
-	$(nodist_EXTRA_testing_portals_perf_aggr_SOURCES) \
-	$(testing_portals_perf_nb_SOURCES) \
-	$(nodist_EXTRA_testing_portals_perf_nb_SOURCES) \
-	$(testing_portals_ptltest_SOURCES) \
-	$(nodist_EXTRA_testing_portals_ptltest_SOURCES) \
-	$(testing_portals_shmclean_SOURCES) \
-	$(nodist_EXTRA_testing_portals_shmclean_SOURCES) \
-	$(testing_portals_shmtest_SOURCES) \
-	$(nodist_EXTRA_testing_portals_shmtest_SOURCES) \
-	$(testing_portals_simple_SOURCES) \
-	$(nodist_EXTRA_testing_portals_simple_SOURCES) \
-	$(testing_portals_simplelock_SOURCES) \
-	$(nodist_EXTRA_testing_portals_simplelock_SOURCES) \
-	$(testing_portals_te_SOURCES) \
-	$(nodist_EXTRA_testing_portals_te_SOURCES) \
-	$(testing_portals_test_SOURCES) \
-	$(nodist_EXTRA_testing_portals_test_SOURCES) \
-	$(testing_portals_test2_SOURCES) \
-	$(nodist_EXTRA_testing_portals_test2_SOURCES) \
-	$(testing_portals_test_groups_SOURCES) \
-	$(nodist_EXTRA_testing_portals_test_groups_SOURCES) \
-	$(testing_portals_test_mt_SOURCES) \
-	$(nodist_EXTRA_testing_portals_test_mt_SOURCES) \
-	$(testing_portals_testnotify_SOURCES) \
-	$(nodist_EXTRA_testing_portals_testnotify_SOURCES) \
 	$(testing_acc_test_SOURCES) \
 	$(nodist_EXTRA_testing_acc_test_SOURCES) \
+	$(testing_clone_SOURCES) $(nodist_EXTRA_testing_clone_SOURCES) \
 	$(testing_copy_test_SOURCES) \
 	$(nodist_EXTRA_testing_copy_test_SOURCES) \
+	$(testing_fork_SOURCES) $(nodist_EXTRA_testing_fork_SOURCES) \
 	$(testing_fttest_SOURCES) \
 	$(nodist_EXTRA_testing_fttest_SOURCES) \
 	$(testing_gpctest_SOURCES) \
@@ -1790,15 +1469,24 @@ SOURCES = $(libarmci_la_SOURCES) $(nodist_libarmci_la_SOURCES) \
 	$(nodist_EXTRA_testing_ipctest_SOURCES) \
 	$(testing_msgcheck_SOURCES) \
 	$(nodist_EXTRA_testing_msgcheck_SOURCES) \
+	$(testing_origptl_SOURCES) \
+	$(nodist_EXTRA_testing_origptl_SOURCES) \
 	$(testing_perf_SOURCES) $(nodist_EXTRA_testing_perf_SOURCES) \
 	$(testing_perf_aggr_SOURCES) \
 	$(nodist_EXTRA_testing_perf_aggr_SOURCES) \
 	$(testing_perf_nb_SOURCES) \
 	$(nodist_EXTRA_testing_perf_nb_SOURCES) \
+	$(testing_ptltest_SOURCES) \
+	$(nodist_EXTRA_testing_ptltest_SOURCES) \
 	$(testing_shmclean_SOURCES) \
 	$(nodist_EXTRA_testing_shmclean_SOURCES) \
 	$(testing_shmtest_SOURCES) \
 	$(nodist_EXTRA_testing_shmtest_SOURCES) \
+	$(testing_simple_SOURCES) \
+	$(nodist_EXTRA_testing_simple_SOURCES) \
+	$(testing_simplelock_SOURCES) \
+	$(nodist_EXTRA_testing_simplelock_SOURCES) \
+	$(testing_te_SOURCES) $(nodist_EXTRA_testing_te_SOURCES) \
 	$(testing_test_SOURCES) $(nodist_EXTRA_testing_test_SOURCES) \
 	$(testing_test2_SOURCES) $(nodist_EXTRA_testing_test2_SOURCES) \
 	$(testing_test_groups_SOURCES) \
@@ -1834,43 +1522,18 @@ DIST_SOURCES = $(am__libarmci_la_SOURCES_DIST) \
 	$(examples_features_proc_affinity_simple_simple_SOURCES) \
 	$(examples_features_symmetric_memory_simple_simple_SOURCES) \
 	$(examples_simpleApps_transp1D_c_SOURCES) \
-	$(am__testing_portals_clone_SOURCES_DIST) \
-	$(am__testing_portals_fork_SOURCES_DIST) \
-	$(am__testing_portals_gpctest_SOURCES_DIST) \
-	$(am__testing_portals_ipctest_SOURCES_DIST) \
-	$(am__testing_portals_msgcheck_SOURCES_DIST) \
-	$(am__testing_portals_origptl_SOURCES_DIST) \
-	$(am__testing_portals_perf_SOURCES_DIST) \
-	$(am__testing_portals_perf_aggr_SOURCES_DIST) \
-	$(am__testing_portals_perf_nb_SOURCES_DIST) \
-	$(am__testing_portals_ptltest_SOURCES_DIST) \
-	$(am__testing_portals_shmclean_SOURCES_DIST) \
-	$(am__testing_portals_shmtest_SOURCES_DIST) \
-	$(am__testing_portals_simple_SOURCES_DIST) \
-	$(am__testing_portals_simplelock_SOURCES_DIST) \
-	$(am__testing_portals_te_SOURCES_DIST) \
-	$(am__testing_portals_test_SOURCES_DIST) \
-	$(am__testing_portals_test2_SOURCES_DIST) \
-	$(am__testing_portals_test_groups_SOURCES_DIST) \
-	$(am__testing_portals_test_mt_SOURCES_DIST) \
-	$(am__testing_portals_testnotify_SOURCES_DIST) \
-	$(am__testing_acc_test_SOURCES_DIST) \
-	$(am__testing_copy_test_SOURCES_DIST) \
-	$(am__testing_fttest_SOURCES_DIST) \
-	$(am__testing_gpctest_SOURCES_DIST) \
-	$(am__testing_ipctest_SOURCES_DIST) \
-	$(am__testing_msgcheck_SOURCES_DIST) \
-	$(am__testing_perf_SOURCES_DIST) \
-	$(am__testing_perf_aggr_SOURCES_DIST) \
-	$(am__testing_perf_nb_SOURCES_DIST) \
-	$(am__testing_shmclean_SOURCES_DIST) \
-	$(am__testing_shmtest_SOURCES_DIST) \
-	$(am__testing_test_SOURCES_DIST) \
-	$(am__testing_test2_SOURCES_DIST) \
-	$(am__testing_test_groups_SOURCES_DIST) \
-	$(am__testing_test_mt_SOURCES_DIST) \
-	$(am__testing_testitr_SOURCES_DIST) \
-	$(am__testing_testnotify_SOURCES_DIST)
+	$(testing_acc_test_SOURCES) $(testing_clone_SOURCES) \
+	$(testing_copy_test_SOURCES) $(testing_fork_SOURCES) \
+	$(testing_fttest_SOURCES) $(testing_gpctest_SOURCES) \
+	$(testing_ipctest_SOURCES) $(testing_msgcheck_SOURCES) \
+	$(testing_origptl_SOURCES) $(testing_perf_SOURCES) \
+	$(testing_perf_aggr_SOURCES) $(testing_perf_nb_SOURCES) \
+	$(testing_ptltest_SOURCES) $(testing_shmclean_SOURCES) \
+	$(testing_shmtest_SOURCES) $(testing_simple_SOURCES) \
+	$(testing_simplelock_SOURCES) $(testing_te_SOURCES) \
+	$(testing_test_SOURCES) $(testing_test2_SOURCES) \
+	$(testing_test_groups_SOURCES) $(testing_test_mt_SOURCES) \
+	$(testing_testitr_SOURCES) $(testing_testnotify_SOURCES)
 am__include_HEADERS_DIST = src-portals/armci.h src-portals/gpc.h \
 	src-portals/message.h src-portals/parmci.h src-gemini/armci.h \
 	src-gemini/gpc.h src-gemini/message.h src/include/armci.h \
@@ -1932,7 +1595,7 @@ tst=$$dir$$f; log='$@'; __SAVED_TERM=$$TERM;		\
 $(TESTS_ENVIRONMENT)
 RECHECK_LOGS = $(TEST_LOGS)
 AM_RECURSIVE_TARGETS = check check-html recheck recheck-html
-am__EXEEXT_22 =
+am__EXEEXT_15 =
 TEST_SUITE_LOG = test-suite.log
 TEST_SUITE_HTML = $(TEST_SUITE_LOG:.log=.html)
 TEST_EXTENSIONS = @EXEEXT@ .test
@@ -2116,25 +1779,25 @@ ACLOCAL_AMFLAGS = -I m4 -I ../m4
 # All public headers, installed programs, test programs, and example programs
 # are listed in these variables.  Appended to throughout.  These are the
 # automake variables used.
-include_HEADERS = $(am__append_14) $(am__append_28) $(am__append_70)
+include_HEADERS = $(am__append_14) $(am__append_24) $(am__append_62)
 check_LTLIBRARIES = 
 lib_LTLIBRARIES = libarmci.la
 noinst_LTLIBRARIES = libarmcii.la
 libarmci_la_SOURCES = $(am__append_5) $(am__append_6) $(am__append_7) \
 	$(am__append_8) $(am__append_9) $(am__append_10) \
-	$(am__append_11) $(am__append_12) $(am__append_21) \
-	$(am__append_22) $(am__append_23) $(am__append_24) \
-	$(am__append_25) $(am__append_26) $(am__append_36) \
-	$(am__append_37) $(am__append_38) $(am__append_40) \
-	$(am__append_42) $(am__append_44) $(am__append_45) \
-	$(am__append_46) $(am__append_47) $(am__append_49) \
-	$(am__append_51) $(am__append_53) $(am__append_55) \
-	$(am__append_56) $(am__append_57) $(am__append_58) \
-	$(am__append_60) $(am__append_61) $(am__append_62) \
-	$(am__append_63) $(am__append_64) $(am__append_65) \
-	$(am__append_67) $(am__append_69)
+	$(am__append_11) $(am__append_12) $(am__append_17) \
+	$(am__append_18) $(am__append_19) $(am__append_20) \
+	$(am__append_21) $(am__append_22) $(am__append_28) \
+	$(am__append_29) $(am__append_30) $(am__append_32) \
+	$(am__append_34) $(am__append_36) $(am__append_37) \
+	$(am__append_38) $(am__append_39) $(am__append_41) \
+	$(am__append_43) $(am__append_45) $(am__append_47) \
+	$(am__append_48) $(am__append_49) $(am__append_50) \
+	$(am__append_52) $(am__append_53) $(am__append_54) \
+	$(am__append_55) $(am__append_56) $(am__append_57) \
+	$(am__append_59) $(am__append_61)
 nodist_libarmci_la_SOURCES = config.fh $(am__append_13) \
-	$(am__append_27) $(am__append_66) $(am__append_68)
+	$(am__append_23) $(am__append_58) $(am__append_60)
 libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
 nodist_libarmcii_la_SOURCES = $(nodist_libarmci_la_SOURCES)
 EXTRA_DIST = README build-aux/inside.pl examples/benchmarks/lu/README \
@@ -2155,21 +1818,21 @@ EXTRA_DIST = README build-aux/inside.pl examples/benchmarks/lu/README \
 #
 BUILT_SOURCES = config.fh
 MOSTLYCLEANFILES = 
-CLEANFILES = config.fh $(am__append_16) $(am__append_31) \
-	$(am__append_72)
+CLEANFILES = config.fh $(am__append_16) $(am__append_27) \
+	$(am__append_64)
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
 AM_FFLAGS = $(ARMCI_FOPT) $(FFLAG_INT_4)
 AM_CFLAGS = $(ARMCI_COPT)
 AM_CXXFLAGS = $(ARMCI_CXXOPT)
 AM_CPPFLAGS = $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
-	$(am__append_1) $(am__append_15) $(am__append_29) \
-	$(am__append_39) $(am__append_41) $(am__append_43) \
-	$(am__append_48) $(am__append_50) $(am__append_52) \
-	$(am__append_54) $(am__append_59) $(am__append_71)
+	$(am__append_1) $(am__append_15) $(am__append_25) \
+	$(am__append_31) $(am__append_33) $(am__append_35) \
+	$(am__append_40) $(am__append_42) $(am__append_44) \
+	$(am__append_46) $(am__append_51) $(am__append_63)
 AM_LDFLAGS = $(LDFLAGS_BASE) $(am__append_2)
 LDADD = $(am__append_3) $(am__append_4) $(LTLIBOBJS) $(GA_MP_LIBS) \
-	$(ARMCI_NETWORK_LIBS) $(am__append_30)
+	$(ARMCI_NETWORK_LIBS) $(am__append_26)
 LDFLAGS_BASE = $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS)
 
 # Certain trickery when turning Fortran support on or off.
@@ -2178,120 +1841,55 @@ LDFLAGS_BASE = $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS)
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_SHARED_TRUE@MAYBE_PIC = -fPIC -DPIC
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_SHARED_TRUE@MAYBE_PIC = -fPIC -DPIC
 @ARMCI_NETWORK_PORTALS_TRUE@@ENABLE_SHARED_TRUE@MAYBE_PIC = -fPIC -DPIC
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_clone_SOURCES = testing-portals/clone.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_clone_SOURCES = testing-portals/clone.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_fork_SOURCES = testing-portals/fork.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_fork_SOURCES = testing-portals/fork.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_gpctest_SOURCES = testing-portals/gpctest.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_gpctest_SOURCES = testing-portals/gpctest.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_ipctest_SOURCES = testing-portals/ipctest.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_ipctest_SOURCES = testing-portals/ipctest.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_msgcheck_SOURCES = testing-portals/msgcheck.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_msgcheck_SOURCES = testing-portals/msgcheck.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_origptl_SOURCES = testing-portals/origptl.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_origptl_SOURCES = testing-portals/origptl.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_perf_aggr_SOURCES = testing-portals/perf_aggr.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_perf_aggr_SOURCES = testing-portals/perf_aggr.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_perf_nb_SOURCES = testing-portals/perf_nb.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_perf_nb_SOURCES = testing-portals/perf_nb.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_perf_SOURCES = testing-portals/perf.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_perf_SOURCES = testing-portals/perf.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_ptltest_SOURCES = testing-portals/ptltest.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_ptltest_SOURCES = testing-portals/ptltest.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_shmclean_SOURCES = testing-portals/shmclean.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_shmclean_SOURCES = testing-portals/shmclean.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_shmtest_SOURCES = testing-portals/shmtest.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_shmtest_SOURCES = testing-portals/shmtest.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_simple_SOURCES = testing-portals/simple.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_simple_SOURCES = testing-portals/simple.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_simplelock_SOURCES = testing-portals/simplelock.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_simplelock_SOURCES = testing-portals/simplelock.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_te_SOURCES = testing-portals/te.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_te_SOURCES = testing-portals/te.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_test2_SOURCES = testing-portals/test2.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_test2_SOURCES = testing-portals/test2.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_test_groups_SOURCES = testing-portals/test_groups.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_test_groups_SOURCES = testing-portals/test_groups.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_test_mt_SOURCES = testing-portals/test_mt.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_test_mt_SOURCES = testing-portals/test_mt.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_testnotify_SOURCES = testing-portals/testnotify.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_testnotify_SOURCES = testing-portals/testnotify.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@testing_portals_test_SOURCES = testing-portals/test.c
-@ARMCI_NETWORK_PORTALS_TRUE@testing_portals_test_SOURCES = testing-portals/test.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_clone_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_clone_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_fork_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_fork_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_gpctest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_gpctest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_ipctest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_ipctest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_msgcheck_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_msgcheck_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_origptl_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_origptl_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_perf_aggr_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_perf_aggr_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_perf_nb_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_perf_nb_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_perf_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_perf_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_ptltest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_ptltest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_shmclean_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_shmclean_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_shmtest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_shmtest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_simple_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_simple_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_simplelock_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_simplelock_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_te_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_te_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_test2_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_test2_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_test_groups_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_test_groups_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_test_mt_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_test_mt_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_testnotify_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_testnotify_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_portals_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_PORTALS_TRUE@nodist_EXTRA_testing_portals_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_acc_test_SOURCES = testing/acc_test.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_copy_test_SOURCES = testing/copy_test.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_fttest_SOURCES = testing/fttest.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_gpctest_SOURCES = testing/gpctest.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_ipctest_SOURCES = testing/ipctest.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_msgcheck_SOURCES = testing/msgcheck.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_perf_aggr_SOURCES = testing/perf_aggr.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_perf_nb_SOURCES = testing/perf_nb.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_perf_SOURCES = testing/perf.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_shmclean_SOURCES = testing/shmclean.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_shmtest_SOURCES = testing/shmtest.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_test2_SOURCES = testing/test2.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_test_groups_SOURCES = testing/test_groups.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_testitr_SOURCES = testing/testitr.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_test_mt_SOURCES = testing/test_mt.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_testnotify_SOURCES = testing/testnotify.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@testing_test_SOURCES = testing/test.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_acc_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_copy_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_fttest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_gpctest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_ipctest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_msgcheck_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_perf_aggr_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_perf_nb_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_perf_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_shmclean_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_shmtest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_test2_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_test_groups_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_testitr_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_test_mt_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_testnotify_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@nodist_EXTRA_testing_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
+testing_acc_test_SOURCES = testing/acc_test.c
+testing_clone_SOURCES = testing/clone.c
+testing_copy_test_SOURCES = testing/copy_test.c
+testing_fork_SOURCES = testing/fork.c
+testing_fttest_SOURCES = testing/fttest.c
+testing_gpctest_SOURCES = testing/gpctest.c
+testing_ipctest_SOURCES = testing/ipctest.c
+testing_msgcheck_SOURCES = testing/msgcheck.c
+testing_origptl_SOURCES = testing/origptl.c
+testing_perf_aggr_SOURCES = testing/perf_aggr.c
+testing_perf_nb_SOURCES = testing/perf_nb.c
+testing_perf_SOURCES = testing/perf.c
+testing_ptltest_SOURCES = testing/ptltest.c
+testing_shmclean_SOURCES = testing/shmclean.c
+testing_shmtest_SOURCES = testing/shmtest.c
+testing_simple_SOURCES = testing/simple.c
+testing_simplelock_SOURCES = testing/simplelock.c
+testing_te_SOURCES = testing/te.c
+testing_test2_SOURCES = testing/test2.c
+testing_test_groups_SOURCES = testing/test_groups.c
+testing_testitr_SOURCES = testing/testitr.c
+testing_test_mt_SOURCES = testing/test_mt.c
+testing_testnotify_SOURCES = testing/testnotify.c
+testing_test_SOURCES = testing/test.c
+testing_testitr_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/include
+nodist_EXTRA_testing_acc_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_clone_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_copy_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_fork_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_fttest_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_gpctest_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_ipctest_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_msgcheck_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_origptl_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_perf_aggr_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_perf_nb_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_perf_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_ptltest_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_shmclean_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_shmtest_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_simple_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_simplelock_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_te_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_test2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_test_groups_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_testitr_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_test_mt_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_testnotify_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
 examples_benchmarks_cg_armci_sharedmemory_cg_SOURCES = \
 examples/benchmarks/cg/armci_sharedmemory/cg.c         \
 examples/benchmarks/cg/armci_sharedmemory/compute.c    \
@@ -2435,9 +2033,9 @@ EXAMPLES = examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) \
 	examples/features/non-blocking/simple/simple$(EXEEXT) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_86) \
-	$(am__append_87) $(am__append_88) $(am__append_89) \
-	$(am__append_90) $(am__append_91)
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_79) \
+	$(am__append_80) $(am__append_81) $(am__append_82) \
+	$(am__append_83) $(am__append_84)
 
 # support verbose/silent make rules for additional programs
 # sed
@@ -2464,13 +2062,20 @@ TESTS = $(SERIAL_TESTS) $(PARALLEL_TESTS)
 TESTS_ENVIRONMENT = \
 maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
 
-SERIAL_TESTS = $(am__append_101)
+SERIAL_TESTS = $(am__append_90)
 SERIAL_TESTS_XFAIL = 
+#PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
+#SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
+#SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
 #PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
 #PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
-PARALLEL_TESTS = $(am__append_92) $(am__append_93) $(am__append_94) \
-	$(am__append_95) $(am__append_96) $(am__append_97) \
-	$(am__append_98) $(am__append_99) $(am__append_100) \
+PARALLEL_TESTS = $(am__append_85) testing/msgcheck$(EXEEXT) \
+	testing/perf_aggr$(EXEEXT) testing/perf$(EXEEXT) \
+	testing/simplelock$(EXEEXT) testing/simple$(EXEEXT) \
+	testing/test2$(EXEEXT) testing/testitr$(EXEEXT) \
+	testing/testnotify$(EXEEXT) testing/test$(EXEEXT) \
+	$(am__append_86) $(am__append_87) $(am__append_88) \
+	$(am__append_89) \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu$(EXEEXT) \
@@ -2482,9 +2087,9 @@ PARALLEL_TESTS = $(am__append_92) $(am__append_93) $(am__append_94) \
 	examples/features/non-blocking/simple/simple$(EXEEXT) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_102) \
-	$(am__append_103) $(am__append_104) $(am__append_105) \
-	$(am__append_106)
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_91) \
+	$(am__append_92) $(am__append_93) $(am__append_94) \
+	$(am__append_95)
 PARALLEL_TESTS_XFAIL = 
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -3400,113 +3005,6 @@ examples/simpleApps/transp1D-c.$(OBJEXT):  \
 examples/simpleApps/transp1D-c$(EXEEXT): $(examples_simpleApps_transp1D_c_OBJECTS) $(examples_simpleApps_transp1D_c_DEPENDENCIES) examples/simpleApps/$(am__dirstamp)
 	@rm -f examples/simpleApps/transp1D-c$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(examples_simpleApps_transp1D_c_OBJECTS) $(examples_simpleApps_transp1D_c_LDADD) $(LIBS)
-testing-portals/$(am__dirstamp):
-	@$(MKDIR_P) testing-portals
-	@: > testing-portals/$(am__dirstamp)
-testing-portals/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) testing-portals/$(DEPDIR)
-	@: > testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/clone.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/clone$(EXEEXT): $(testing_portals_clone_OBJECTS) $(testing_portals_clone_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/clone$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_clone_OBJECTS) $(testing_portals_clone_LDADD) $(LIBS)
-testing-portals/fork.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/fork$(EXEEXT): $(testing_portals_fork_OBJECTS) $(testing_portals_fork_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/fork$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_fork_OBJECTS) $(testing_portals_fork_LDADD) $(LIBS)
-testing-portals/gpctest.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/gpctest$(EXEEXT): $(testing_portals_gpctest_OBJECTS) $(testing_portals_gpctest_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/gpctest$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_gpctest_OBJECTS) $(testing_portals_gpctest_LDADD) $(LIBS)
-testing-portals/ipctest.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/ipctest$(EXEEXT): $(testing_portals_ipctest_OBJECTS) $(testing_portals_ipctest_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/ipctest$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_ipctest_OBJECTS) $(testing_portals_ipctest_LDADD) $(LIBS)
-testing-portals/msgcheck.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/msgcheck$(EXEEXT): $(testing_portals_msgcheck_OBJECTS) $(testing_portals_msgcheck_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/msgcheck$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_msgcheck_OBJECTS) $(testing_portals_msgcheck_LDADD) $(LIBS)
-testing-portals/origptl.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/origptl$(EXEEXT): $(testing_portals_origptl_OBJECTS) $(testing_portals_origptl_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/origptl$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_origptl_OBJECTS) $(testing_portals_origptl_LDADD) $(LIBS)
-testing-portals/perf.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/perf$(EXEEXT): $(testing_portals_perf_OBJECTS) $(testing_portals_perf_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/perf$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_perf_OBJECTS) $(testing_portals_perf_LDADD) $(LIBS)
-testing-portals/perf_aggr.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/perf_aggr$(EXEEXT): $(testing_portals_perf_aggr_OBJECTS) $(testing_portals_perf_aggr_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/perf_aggr$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_perf_aggr_OBJECTS) $(testing_portals_perf_aggr_LDADD) $(LIBS)
-testing-portals/perf_nb.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/perf_nb$(EXEEXT): $(testing_portals_perf_nb_OBJECTS) $(testing_portals_perf_nb_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/perf_nb$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_perf_nb_OBJECTS) $(testing_portals_perf_nb_LDADD) $(LIBS)
-testing-portals/ptltest.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/ptltest$(EXEEXT): $(testing_portals_ptltest_OBJECTS) $(testing_portals_ptltest_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/ptltest$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_ptltest_OBJECTS) $(testing_portals_ptltest_LDADD) $(LIBS)
-testing-portals/shmclean.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/shmclean$(EXEEXT): $(testing_portals_shmclean_OBJECTS) $(testing_portals_shmclean_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/shmclean$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_shmclean_OBJECTS) $(testing_portals_shmclean_LDADD) $(LIBS)
-testing-portals/shmtest.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/shmtest$(EXEEXT): $(testing_portals_shmtest_OBJECTS) $(testing_portals_shmtest_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/shmtest$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_shmtest_OBJECTS) $(testing_portals_shmtest_LDADD) $(LIBS)
-testing-portals/simple.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/simple$(EXEEXT): $(testing_portals_simple_OBJECTS) $(testing_portals_simple_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/simple$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_simple_OBJECTS) $(testing_portals_simple_LDADD) $(LIBS)
-testing-portals/simplelock.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/simplelock$(EXEEXT): $(testing_portals_simplelock_OBJECTS) $(testing_portals_simplelock_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/simplelock$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_simplelock_OBJECTS) $(testing_portals_simplelock_LDADD) $(LIBS)
-testing-portals/te.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/te$(EXEEXT): $(testing_portals_te_OBJECTS) $(testing_portals_te_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/te$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_te_OBJECTS) $(testing_portals_te_LDADD) $(LIBS)
-testing-portals/test.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/test$(EXEEXT): $(testing_portals_test_OBJECTS) $(testing_portals_test_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/test$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_test_OBJECTS) $(testing_portals_test_LDADD) $(LIBS)
-testing-portals/test2.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/test2$(EXEEXT): $(testing_portals_test2_OBJECTS) $(testing_portals_test2_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/test2$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_test2_OBJECTS) $(testing_portals_test2_LDADD) $(LIBS)
-testing-portals/test_groups.$(OBJEXT):  \
-	testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/test_groups$(EXEEXT): $(testing_portals_test_groups_OBJECTS) $(testing_portals_test_groups_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/test_groups$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_test_groups_OBJECTS) $(testing_portals_test_groups_LDADD) $(LIBS)
-testing-portals/test_mt.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/test_mt$(EXEEXT): $(testing_portals_test_mt_OBJECTS) $(testing_portals_test_mt_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/test_mt$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_test_mt_OBJECTS) $(testing_portals_test_mt_LDADD) $(LIBS)
-testing-portals/testnotify.$(OBJEXT): testing-portals/$(am__dirstamp) \
-	testing-portals/$(DEPDIR)/$(am__dirstamp)
-testing-portals/testnotify$(EXEEXT): $(testing_portals_testnotify_OBJECTS) $(testing_portals_testnotify_DEPENDENCIES) testing-portals/$(am__dirstamp)
-	@rm -f testing-portals/testnotify$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(testing_portals_testnotify_OBJECTS) $(testing_portals_testnotify_LDADD) $(LIBS)
 testing/$(am__dirstamp):
 	@$(MKDIR_P) testing
 	@: > testing/$(am__dirstamp)
@@ -3518,11 +3016,21 @@ testing/acc_test.$(OBJEXT): testing/$(am__dirstamp) \
 testing/acc_test$(EXEEXT): $(testing_acc_test_OBJECTS) $(testing_acc_test_DEPENDENCIES) testing/$(am__dirstamp)
 	@rm -f testing/acc_test$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(testing_acc_test_OBJECTS) $(testing_acc_test_LDADD) $(LIBS)
+testing/clone.$(OBJEXT): testing/$(am__dirstamp) \
+	testing/$(DEPDIR)/$(am__dirstamp)
+testing/clone$(EXEEXT): $(testing_clone_OBJECTS) $(testing_clone_DEPENDENCIES) testing/$(am__dirstamp)
+	@rm -f testing/clone$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(testing_clone_OBJECTS) $(testing_clone_LDADD) $(LIBS)
 testing/copy_test.$(OBJEXT): testing/$(am__dirstamp) \
 	testing/$(DEPDIR)/$(am__dirstamp)
 testing/copy_test$(EXEEXT): $(testing_copy_test_OBJECTS) $(testing_copy_test_DEPENDENCIES) testing/$(am__dirstamp)
 	@rm -f testing/copy_test$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(testing_copy_test_OBJECTS) $(testing_copy_test_LDADD) $(LIBS)
+testing/fork.$(OBJEXT): testing/$(am__dirstamp) \
+	testing/$(DEPDIR)/$(am__dirstamp)
+testing/fork$(EXEEXT): $(testing_fork_OBJECTS) $(testing_fork_DEPENDENCIES) testing/$(am__dirstamp)
+	@rm -f testing/fork$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(testing_fork_OBJECTS) $(testing_fork_LDADD) $(LIBS)
 testing/fttest.$(OBJEXT): testing/$(am__dirstamp) \
 	testing/$(DEPDIR)/$(am__dirstamp)
 testing/fttest$(EXEEXT): $(testing_fttest_OBJECTS) $(testing_fttest_DEPENDENCIES) testing/$(am__dirstamp)
@@ -3543,6 +3051,11 @@ testing/msgcheck.$(OBJEXT): testing/$(am__dirstamp) \
 testing/msgcheck$(EXEEXT): $(testing_msgcheck_OBJECTS) $(testing_msgcheck_DEPENDENCIES) testing/$(am__dirstamp)
 	@rm -f testing/msgcheck$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(testing_msgcheck_OBJECTS) $(testing_msgcheck_LDADD) $(LIBS)
+testing/origptl.$(OBJEXT): testing/$(am__dirstamp) \
+	testing/$(DEPDIR)/$(am__dirstamp)
+testing/origptl$(EXEEXT): $(testing_origptl_OBJECTS) $(testing_origptl_DEPENDENCIES) testing/$(am__dirstamp)
+	@rm -f testing/origptl$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(testing_origptl_OBJECTS) $(testing_origptl_LDADD) $(LIBS)
 testing/perf.$(OBJEXT): testing/$(am__dirstamp) \
 	testing/$(DEPDIR)/$(am__dirstamp)
 testing/perf$(EXEEXT): $(testing_perf_OBJECTS) $(testing_perf_DEPENDENCIES) testing/$(am__dirstamp)
@@ -3558,6 +3071,11 @@ testing/perf_nb.$(OBJEXT): testing/$(am__dirstamp) \
 testing/perf_nb$(EXEEXT): $(testing_perf_nb_OBJECTS) $(testing_perf_nb_DEPENDENCIES) testing/$(am__dirstamp)
 	@rm -f testing/perf_nb$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(testing_perf_nb_OBJECTS) $(testing_perf_nb_LDADD) $(LIBS)
+testing/ptltest.$(OBJEXT): testing/$(am__dirstamp) \
+	testing/$(DEPDIR)/$(am__dirstamp)
+testing/ptltest$(EXEEXT): $(testing_ptltest_OBJECTS) $(testing_ptltest_DEPENDENCIES) testing/$(am__dirstamp)
+	@rm -f testing/ptltest$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(testing_ptltest_OBJECTS) $(testing_ptltest_LDADD) $(LIBS)
 testing/shmclean.$(OBJEXT): testing/$(am__dirstamp) \
 	testing/$(DEPDIR)/$(am__dirstamp)
 testing/shmclean$(EXEEXT): $(testing_shmclean_OBJECTS) $(testing_shmclean_DEPENDENCIES) testing/$(am__dirstamp)
@@ -3568,6 +3086,21 @@ testing/shmtest.$(OBJEXT): testing/$(am__dirstamp) \
 testing/shmtest$(EXEEXT): $(testing_shmtest_OBJECTS) $(testing_shmtest_DEPENDENCIES) testing/$(am__dirstamp)
 	@rm -f testing/shmtest$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(testing_shmtest_OBJECTS) $(testing_shmtest_LDADD) $(LIBS)
+testing/simple.$(OBJEXT): testing/$(am__dirstamp) \
+	testing/$(DEPDIR)/$(am__dirstamp)
+testing/simple$(EXEEXT): $(testing_simple_OBJECTS) $(testing_simple_DEPENDENCIES) testing/$(am__dirstamp)
+	@rm -f testing/simple$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(testing_simple_OBJECTS) $(testing_simple_LDADD) $(LIBS)
+testing/simplelock.$(OBJEXT): testing/$(am__dirstamp) \
+	testing/$(DEPDIR)/$(am__dirstamp)
+testing/simplelock$(EXEEXT): $(testing_simplelock_OBJECTS) $(testing_simplelock_DEPENDENCIES) testing/$(am__dirstamp)
+	@rm -f testing/simplelock$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(testing_simplelock_OBJECTS) $(testing_simplelock_LDADD) $(LIBS)
+testing/te.$(OBJEXT): testing/$(am__dirstamp) \
+	testing/$(DEPDIR)/$(am__dirstamp)
+testing/te$(EXEEXT): $(testing_te_OBJECTS) $(testing_te_DEPENDENCIES) testing/$(am__dirstamp)
+	@rm -f testing/te$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(testing_te_OBJECTS) $(testing_te_LDADD) $(LIBS)
 testing/test.$(OBJEXT): testing/$(am__dirstamp) \
 	testing/$(DEPDIR)/$(am__dirstamp)
 testing/test$(EXEEXT): $(testing_test_OBJECTS) $(testing_test_DEPENDENCIES) testing/$(am__dirstamp)
@@ -3588,7 +3121,7 @@ testing/test_mt.$(OBJEXT): testing/$(am__dirstamp) \
 testing/test_mt$(EXEEXT): $(testing_test_mt_OBJECTS) $(testing_test_mt_DEPENDENCIES) testing/$(am__dirstamp)
 	@rm -f testing/test_mt$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(testing_test_mt_OBJECTS) $(testing_test_mt_LDADD) $(LIBS)
-testing/testitr.$(OBJEXT): testing/$(am__dirstamp) \
+testing/testing_testitr-testitr.$(OBJEXT): testing/$(am__dirstamp) \
 	testing/$(DEPDIR)/$(am__dirstamp)
 testing/testitr$(EXEEXT): $(testing_testitr_OBJECTS) $(testing_testitr_DEPENDENCIES) testing/$(am__dirstamp)
 	@rm -f testing/testitr$(EXEEXT)
@@ -3950,42 +3483,29 @@ mostlyclean-compile:
 	-rm -f src/xfer/strided.lo
 	-rm -f src/xfer/vector.$(OBJEXT)
 	-rm -f src/xfer/vector.lo
-	-rm -f testing-portals/clone.$(OBJEXT)
-	-rm -f testing-portals/fork.$(OBJEXT)
-	-rm -f testing-portals/gpctest.$(OBJEXT)
-	-rm -f testing-portals/ipctest.$(OBJEXT)
-	-rm -f testing-portals/msgcheck.$(OBJEXT)
-	-rm -f testing-portals/origptl.$(OBJEXT)
-	-rm -f testing-portals/perf.$(OBJEXT)
-	-rm -f testing-portals/perf_aggr.$(OBJEXT)
-	-rm -f testing-portals/perf_nb.$(OBJEXT)
-	-rm -f testing-portals/ptltest.$(OBJEXT)
-	-rm -f testing-portals/shmclean.$(OBJEXT)
-	-rm -f testing-portals/shmtest.$(OBJEXT)
-	-rm -f testing-portals/simple.$(OBJEXT)
-	-rm -f testing-portals/simplelock.$(OBJEXT)
-	-rm -f testing-portals/te.$(OBJEXT)
-	-rm -f testing-portals/test.$(OBJEXT)
-	-rm -f testing-portals/test2.$(OBJEXT)
-	-rm -f testing-portals/test_groups.$(OBJEXT)
-	-rm -f testing-portals/test_mt.$(OBJEXT)
-	-rm -f testing-portals/testnotify.$(OBJEXT)
 	-rm -f testing/acc_test.$(OBJEXT)
+	-rm -f testing/clone.$(OBJEXT)
 	-rm -f testing/copy_test.$(OBJEXT)
+	-rm -f testing/fork.$(OBJEXT)
 	-rm -f testing/fttest.$(OBJEXT)
 	-rm -f testing/gpctest.$(OBJEXT)
 	-rm -f testing/ipctest.$(OBJEXT)
 	-rm -f testing/msgcheck.$(OBJEXT)
+	-rm -f testing/origptl.$(OBJEXT)
 	-rm -f testing/perf.$(OBJEXT)
 	-rm -f testing/perf_aggr.$(OBJEXT)
 	-rm -f testing/perf_nb.$(OBJEXT)
+	-rm -f testing/ptltest.$(OBJEXT)
 	-rm -f testing/shmclean.$(OBJEXT)
 	-rm -f testing/shmtest.$(OBJEXT)
+	-rm -f testing/simple.$(OBJEXT)
+	-rm -f testing/simplelock.$(OBJEXT)
+	-rm -f testing/te.$(OBJEXT)
 	-rm -f testing/test.$(OBJEXT)
 	-rm -f testing/test2.$(OBJEXT)
 	-rm -f testing/test_groups.$(OBJEXT)
 	-rm -f testing/test_mt.$(OBJEXT)
-	-rm -f testing/testitr.$(OBJEXT)
+	-rm -f testing/testing_testitr-testitr.$(OBJEXT)
 	-rm -f testing/testnotify.$(OBJEXT)
 
 distclean-compile:
@@ -4173,42 +3693,29 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/xfer/$(DEPDIR)/rmw.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/xfer/$(DEPDIR)/strided.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/xfer/$(DEPDIR)/vector.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/clone.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/fork.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/gpctest.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/ipctest.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/msgcheck.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/origptl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/perf.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/perf_aggr.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/perf_nb.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/ptltest.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/shmclean.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/shmtest.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/simple.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/simplelock.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/te.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/test.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/test2.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/test_groups.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/test_mt.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing-portals/$(DEPDIR)/testnotify.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/acc_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/clone.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/copy_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/fork.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/fttest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/gpctest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/ipctest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/msgcheck.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/origptl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/perf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/perf_aggr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/perf_nb.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/ptltest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/shmclean.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/shmtest.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/simple.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/simplelock.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/te.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/test2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/test_groups.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/test_mt.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/testitr.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/testing_testitr-testitr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/testnotify.Po@am__quote@
 
 .c.o:
@@ -4237,6 +3744,22 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+testing/testing_testitr-testitr.o: testing/testitr.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testing_testitr_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT testing/testing_testitr-testitr.o -MD -MP -MF testing/$(DEPDIR)/testing_testitr-testitr.Tpo -c -o testing/testing_testitr-testitr.o `test -f 'testing/testitr.c' || echo '$(srcdir)/'`testing/testitr.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testing/$(DEPDIR)/testing_testitr-testitr.Tpo testing/$(DEPDIR)/testing_testitr-testitr.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='testing/testitr.c' object='testing/testing_testitr-testitr.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testing_testitr_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testing/testing_testitr-testitr.o `test -f 'testing/testitr.c' || echo '$(srcdir)/'`testing/testitr.c
+
+testing/testing_testitr-testitr.obj: testing/testitr.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testing_testitr_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT testing/testing_testitr-testitr.obj -MD -MP -MF testing/$(DEPDIR)/testing_testitr-testitr.Tpo -c -o testing/testing_testitr-testitr.obj `if test -f 'testing/testitr.c'; then $(CYGPATH_W) 'testing/testitr.c'; else $(CYGPATH_W) '$(srcdir)/testing/testitr.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testing/$(DEPDIR)/testing_testitr-testitr.Tpo testing/$(DEPDIR)/testing_testitr-testitr.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='testing/testitr.c' object='testing/testing_testitr-testitr.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testing_testitr_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testing/testing_testitr-testitr.obj `if test -f 'testing/testitr.c'; then $(CYGPATH_W) 'testing/testitr.c'; else $(CYGPATH_W) '$(srcdir)/testing/testitr.c'; fi`
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -4334,7 +3857,6 @@ clean-libtool:
 	-rm -rf src/util/.libs src/util/_libs
 	-rm -rf src/xfer/.libs src/xfer/_libs
 	-rm -rf testing/.libs testing/_libs
-	-rm -rf testing-portals/.libs testing-portals/_libs
 
 distclean-libtool:
 	-rm -f libtool config.lt
@@ -4567,44 +4089,26 @@ testing/acc_test.log: testing/acc_test$(EXEEXT)
 	@p='testing/acc_test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/copy_test.log: testing/copy_test$(EXEEXT)
 	@p='testing/copy_test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/clone.log: testing-portals/clone$(EXEEXT)
-	@p='testing-portals/clone$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/fork.log: testing-portals/fork$(EXEEXT)
-	@p='testing-portals/fork$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/msgcheck.log: testing-portals/msgcheck$(EXEEXT)
-	@p='testing-portals/msgcheck$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/origptl.log: testing-portals/origptl$(EXEEXT)
-	@p='testing-portals/origptl$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/perf_aggr.log: testing-portals/perf_aggr$(EXEEXT)
-	@p='testing-portals/perf_aggr$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/perf.log: testing-portals/perf$(EXEEXT)
-	@p='testing-portals/perf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/ptltest.log: testing-portals/ptltest$(EXEEXT)
-	@p='testing-portals/ptltest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/simplelock.log: testing-portals/simplelock$(EXEEXT)
-	@p='testing-portals/simplelock$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/simple.log: testing-portals/simple$(EXEEXT)
-	@p='testing-portals/simple$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/test2.log: testing-portals/test2$(EXEEXT)
-	@p='testing-portals/test2$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/testnotify.log: testing-portals/testnotify$(EXEEXT)
-	@p='testing-portals/testnotify$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/test.log: testing-portals/test$(EXEEXT)
-	@p='testing-portals/test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/te.log: testing-portals/te$(EXEEXT)
-	@p='testing-portals/te$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/gpctest.log: testing-portals/gpctest$(EXEEXT)
-	@p='testing-portals/gpctest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/test_groups.log: testing-portals/test_groups$(EXEEXT)
-	@p='testing-portals/test_groups$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing-portals/test_mt.log: testing-portals/test_mt$(EXEEXT)
-	@p='testing-portals/test_mt$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/clone.log: testing/clone$(EXEEXT)
+	@p='testing/clone$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/fork.log: testing/fork$(EXEEXT)
+	@p='testing/fork$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/origptl.log: testing/origptl$(EXEEXT)
+	@p='testing/origptl$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/ptltest.log: testing/ptltest$(EXEEXT)
+	@p='testing/ptltest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/te.log: testing/te$(EXEEXT)
+	@p='testing/te$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/msgcheck.log: testing/msgcheck$(EXEEXT)
 	@p='testing/msgcheck$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/perf_aggr.log: testing/perf_aggr$(EXEEXT)
 	@p='testing/perf_aggr$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/perf.log: testing/perf$(EXEEXT)
 	@p='testing/perf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/simplelock.log: testing/simplelock$(EXEEXT)
+	@p='testing/simplelock$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/simple.log: testing/simple$(EXEEXT)
+	@p='testing/simple$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/test2.log: testing/test2$(EXEEXT)
 	@p='testing/test2$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/testitr.log: testing/testitr$(EXEEXT)
@@ -4935,8 +4439,6 @@ distclean-generic:
 	-rm -f src/util/$(am__dirstamp)
 	-rm -f src/xfer/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/xfer/$(am__dirstamp)
-	-rm -f testing-portals/$(DEPDIR)/$(am__dirstamp)
-	-rm -f testing-portals/$(am__dirstamp)
 	-rm -f testing/$(DEPDIR)/$(am__dirstamp)
 	-rm -f testing/$(am__dirstamp)
 	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
@@ -4955,7 +4457,7 @@ clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-checkPROGRAMS \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf examples/benchmarks/RandomAccess/$(DEPDIR) examples/benchmarks/RandomAccess/simple/$(DEPDIR) examples/benchmarks/RandomAccess/smp_bucket/$(DEPDIR) examples/benchmarks/cg/armci_sharedmemory/$(DEPDIR) examples/benchmarks/lu/armci_blocking/$(DEPDIR) examples/benchmarks/lu/armci_multithreaded/$(DEPDIR) examples/benchmarks/lu/armci_nonblocking/$(DEPDIR) examples/benchmarks/lu/pthreads/$(DEPDIR) examples/features/aggregation/simple/$(DEPDIR) examples/features/aggregation/sparse_matvecmul/$(DEPDIR) examples/features/concurrency/multidma/$(DEPDIR) examples/features/concurrency/simple/$(DEPDIR) examples/features/gpc/hashtable/$(DEPDIR) examples/features/gpc/simple/$(DEPDIR) examples/features/non-blocking/overlap/$(DEPDIR) examples/features/non-blocking/simple/$(DEPDIR) examples/features/notification/simple/$(DEPDIR) examples/features/proc_affinity/computation_impact/$(DEPDIR) examples/features/proc_affinity/simple/$(DEPDIR) examples/features/symmetric_memory/simple/$(DEPDIR) examples/simpleApps/$(DEPDIR) src-gemini/$(DEPDIR) src-portals/$(DEPDIR) src/collectives/$(DEPDIR) src/common/$(DEPDIR) src/devices/bgml/$(DEPDIR) src/devices/dcmf/dcmf-0.2.0/$(DEPDIR) src/devices/dcmf/dcmf-0.3.0/$(DEPDIR) src/devices/dcmf/dcmf2/$(DEPDIR) src/devices/lapi/$(DEPDIR) src/devices/mpi/$(DEPDIR) src/devices/openib/$(DEPDIR) src/devices/sockets/$(DEPDIR) src/ft/$(DEPDIR) src/locks/$(DEPDIR) src/memory/$(DEPDIR) src/progress/$(DEPDIR) src/util/$(DEPDIR) src/xfer/$(DEPDIR) testing-portals/$(DEPDIR) testing/$(DEPDIR)
+	-rm -rf examples/benchmarks/RandomAccess/$(DEPDIR) examples/benchmarks/RandomAccess/simple/$(DEPDIR) examples/benchmarks/RandomAccess/smp_bucket/$(DEPDIR) examples/benchmarks/cg/armci_sharedmemory/$(DEPDIR) examples/benchmarks/lu/armci_blocking/$(DEPDIR) examples/benchmarks/lu/armci_multithreaded/$(DEPDIR) examples/benchmarks/lu/armci_nonblocking/$(DEPDIR) examples/benchmarks/lu/pthreads/$(DEPDIR) examples/features/aggregation/simple/$(DEPDIR) examples/features/aggregation/sparse_matvecmul/$(DEPDIR) examples/features/concurrency/multidma/$(DEPDIR) examples/features/concurrency/simple/$(DEPDIR) examples/features/gpc/hashtable/$(DEPDIR) examples/features/gpc/simple/$(DEPDIR) examples/features/non-blocking/overlap/$(DEPDIR) examples/features/non-blocking/simple/$(DEPDIR) examples/features/notification/simple/$(DEPDIR) examples/features/proc_affinity/computation_impact/$(DEPDIR) examples/features/proc_affinity/simple/$(DEPDIR) examples/features/symmetric_memory/simple/$(DEPDIR) examples/simpleApps/$(DEPDIR) src-gemini/$(DEPDIR) src-portals/$(DEPDIR) src/collectives/$(DEPDIR) src/common/$(DEPDIR) src/devices/bgml/$(DEPDIR) src/devices/dcmf/dcmf-0.2.0/$(DEPDIR) src/devices/dcmf/dcmf-0.3.0/$(DEPDIR) src/devices/dcmf/dcmf2/$(DEPDIR) src/devices/lapi/$(DEPDIR) src/devices/mpi/$(DEPDIR) src/devices/openib/$(DEPDIR) src/devices/sockets/$(DEPDIR) src/ft/$(DEPDIR) src/locks/$(DEPDIR) src/memory/$(DEPDIR) src/progress/$(DEPDIR) src/util/$(DEPDIR) src/xfer/$(DEPDIR) testing/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -5003,7 +4505,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf examples/benchmarks/RandomAccess/$(DEPDIR) examples/benchmarks/RandomAccess/simple/$(DEPDIR) examples/benchmarks/RandomAccess/smp_bucket/$(DEPDIR) examples/benchmarks/cg/armci_sharedmemory/$(DEPDIR) examples/benchmarks/lu/armci_blocking/$(DEPDIR) examples/benchmarks/lu/armci_multithreaded/$(DEPDIR) examples/benchmarks/lu/armci_nonblocking/$(DEPDIR) examples/benchmarks/lu/pthreads/$(DEPDIR) examples/features/aggregation/simple/$(DEPDIR) examples/features/aggregation/sparse_matvecmul/$(DEPDIR) examples/features/concurrency/multidma/$(DEPDIR) examples/features/concurrency/simple/$(DEPDIR) examples/features/gpc/hashtable/$(DEPDIR) examples/features/gpc/simple/$(DEPDIR) examples/features/non-blocking/overlap/$(DEPDIR) examples/features/non-blocking/simple/$(DEPDIR) examples/features/notification/simple/$(DEPDIR) examples/features/proc_affinity/computation_impact/$(DEPDIR) examples/features/proc_affinity/simple/$(DEPDIR) examples/features/symmetric_memory/simple/$(DEPDIR) examples/simpleApps/$(DEPDIR) src-gemini/$(DEPDIR) src-portals/$(DEPDIR) src/collectives/$(DEPDIR) src/common/$(DEPDIR) src/devices/bgml/$(DEPDIR) src/devices/dcmf/dcmf-0.2.0/$(DEPDIR) src/devices/dcmf/dcmf-0.3.0/$(DEPDIR) src/devices/dcmf/dcmf2/$(DEPDIR) src/devices/lapi/$(DEPDIR) src/devices/mpi/$(DEPDIR) src/devices/openib/$(DEPDIR) src/devices/sockets/$(DEPDIR) src/ft/$(DEPDIR) src/locks/$(DEPDIR) src/memory/$(DEPDIR) src/progress/$(DEPDIR) src/util/$(DEPDIR) src/xfer/$(DEPDIR) testing-portals/$(DEPDIR) testing/$(DEPDIR)
+	-rm -rf examples/benchmarks/RandomAccess/$(DEPDIR) examples/benchmarks/RandomAccess/simple/$(DEPDIR) examples/benchmarks/RandomAccess/smp_bucket/$(DEPDIR) examples/benchmarks/cg/armci_sharedmemory/$(DEPDIR) examples/benchmarks/lu/armci_blocking/$(DEPDIR) examples/benchmarks/lu/armci_multithreaded/$(DEPDIR) examples/benchmarks/lu/armci_nonblocking/$(DEPDIR) examples/benchmarks/lu/pthreads/$(DEPDIR) examples/features/aggregation/simple/$(DEPDIR) examples/features/aggregation/sparse_matvecmul/$(DEPDIR) examples/features/concurrency/multidma/$(DEPDIR) examples/features/concurrency/simple/$(DEPDIR) examples/features/gpc/hashtable/$(DEPDIR) examples/features/gpc/simple/$(DEPDIR) examples/features/non-blocking/overlap/$(DEPDIR) examples/features/non-blocking/simple/$(DEPDIR) examples/features/notification/simple/$(DEPDIR) examples/features/proc_affinity/computation_impact/$(DEPDIR) examples/features/proc_affinity/simple/$(DEPDIR) examples/features/symmetric_memory/simple/$(DEPDIR) examples/simpleApps/$(DEPDIR) src-gemini/$(DEPDIR) src-portals/$(DEPDIR) src/collectives/$(DEPDIR) src/common/$(DEPDIR) src/devices/bgml/$(DEPDIR) src/devices/dcmf/dcmf-0.2.0/$(DEPDIR) src/devices/dcmf/dcmf-0.3.0/$(DEPDIR) src/devices/dcmf/dcmf2/$(DEPDIR) src/devices/lapi/$(DEPDIR) src/devices/mpi/$(DEPDIR) src/devices/openib/$(DEPDIR) src/devices/sockets/$(DEPDIR) src/ft/$(DEPDIR) src/locks/$(DEPDIR) src/memory/$(DEPDIR) src/progress/$(DEPDIR) src/util/$(DEPDIR) src/xfer/$(DEPDIR) testing/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

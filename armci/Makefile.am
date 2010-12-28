@@ -202,75 +202,6 @@ src-portals/tas_as.s: src-portals/tas.c
 
 CLEANFILES += src-portals/tas_as.s
 
-check_PROGRAMS += testing-portals/clone
-check_PROGRAMS += testing-portals/fork
-check_PROGRAMS += testing-portals/msgcheck
-check_PROGRAMS += testing-portals/origptl
-check_PROGRAMS += testing-portals/perf_aggr
-check_PROGRAMS += testing-portals/perf_nb
-check_PROGRAMS += testing-portals/perf
-check_PROGRAMS += testing-portals/ptltest
-check_PROGRAMS += testing-portals/shmclean
-check_PROGRAMS += testing-portals/shmtest
-check_PROGRAMS += testing-portals/simplelock
-check_PROGRAMS += testing-portals/simple
-check_PROGRAMS += testing-portals/test2
-check_PROGRAMS += testing-portals/testnotify
-check_PROGRAMS += testing-portals/test
-check_PROGRAMS += testing-portals/te
-if ARMCI_ENABLE_GPC_CALLS
-check_PROGRAMS += testing-portals/gpctest
-endif
-if MSG_COMMS_MPI
-check_PROGRAMS += testing-portals/ipctest
-check_PROGRAMS += testing-portals/test_groups
-endif
-if THREAD_SAFE
-check_PROGRAMS += testing-portals/test_mt
-endif
-
-testing_portals_clone_SOURCES       = testing-portals/clone.c
-testing_portals_fork_SOURCES        = testing-portals/fork.c
-testing_portals_gpctest_SOURCES     = testing-portals/gpctest.c
-testing_portals_ipctest_SOURCES     = testing-portals/ipctest.c
-testing_portals_msgcheck_SOURCES    = testing-portals/msgcheck.c
-testing_portals_origptl_SOURCES     = testing-portals/origptl.c
-testing_portals_perf_aggr_SOURCES   = testing-portals/perf_aggr.c
-testing_portals_perf_nb_SOURCES     = testing-portals/perf_nb.c
-testing_portals_perf_SOURCES        = testing-portals/perf.c
-testing_portals_ptltest_SOURCES     = testing-portals/ptltest.c
-testing_portals_shmclean_SOURCES    = testing-portals/shmclean.c
-testing_portals_shmtest_SOURCES     = testing-portals/shmtest.c
-testing_portals_simple_SOURCES      = testing-portals/simple.c
-testing_portals_simplelock_SOURCES  = testing-portals/simplelock.c
-testing_portals_te_SOURCES          = testing-portals/te.c
-testing_portals_test2_SOURCES       = testing-portals/test2.c
-testing_portals_test_groups_SOURCES = testing-portals/test_groups.c
-testing_portals_test_mt_SOURCES     = testing-portals/test_mt.c
-testing_portals_testnotify_SOURCES  = testing-portals/testnotify.c
-testing_portals_test_SOURCES        = testing-portals/test.c
-
-nodist_EXTRA_testing_portals_clone_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_fork_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_gpctest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_ipctest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_msgcheck_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_origptl_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_perf_aggr_SOURCES   = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_perf_nb_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_perf_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_ptltest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_shmclean_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_shmtest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_simple_SOURCES      = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_simplelock_SOURCES  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_te_SOURCES          = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_test2_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_test_groups_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_test_mt_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_testnotify_SOURCES  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_test_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-
 ##############################################################################
 # src-gemini
 #
@@ -371,75 +302,6 @@ src-gemini/tas_as.s: src-gemini/tas.c
 	$(top_srcdir)/src-gemini/tas.c
 
 CLEANFILES += src-gemini/tas_as.s
-
-check_PROGRAMS += testing-portals/clone
-check_PROGRAMS += testing-portals/fork
-check_PROGRAMS += testing-portals/msgcheck
-check_PROGRAMS += testing-portals/origptl
-check_PROGRAMS += testing-portals/perf_aggr
-check_PROGRAMS += testing-portals/perf_nb
-check_PROGRAMS += testing-portals/perf
-check_PROGRAMS += testing-portals/ptltest
-check_PROGRAMS += testing-portals/shmclean
-check_PROGRAMS += testing-portals/shmtest
-check_PROGRAMS += testing-portals/simplelock
-check_PROGRAMS += testing-portals/simple
-check_PROGRAMS += testing-portals/test2
-check_PROGRAMS += testing-portals/testnotify
-check_PROGRAMS += testing-portals/test
-check_PROGRAMS += testing-portals/te
-if ARMCI_ENABLE_GPC_CALLS
-check_PROGRAMS += testing-portals/gpctest
-endif
-if MSG_COMMS_MPI
-check_PROGRAMS += testing-portals/ipctest
-check_PROGRAMS += testing-portals/test_groups
-endif
-if THREAD_SAFE
-check_PROGRAMS += testing-portals/test_mt
-endif
-
-testing_portals_clone_SOURCES       = testing-portals/clone.c
-testing_portals_fork_SOURCES        = testing-portals/fork.c
-testing_portals_gpctest_SOURCES     = testing-portals/gpctest.c
-testing_portals_ipctest_SOURCES     = testing-portals/ipctest.c
-testing_portals_msgcheck_SOURCES    = testing-portals/msgcheck.c
-testing_portals_origptl_SOURCES     = testing-portals/origptl.c
-testing_portals_perf_aggr_SOURCES   = testing-portals/perf_aggr.c
-testing_portals_perf_nb_SOURCES     = testing-portals/perf_nb.c
-testing_portals_perf_SOURCES        = testing-portals/perf.c
-testing_portals_ptltest_SOURCES     = testing-portals/ptltest.c
-testing_portals_shmclean_SOURCES    = testing-portals/shmclean.c
-testing_portals_shmtest_SOURCES     = testing-portals/shmtest.c
-testing_portals_simple_SOURCES      = testing-portals/simple.c
-testing_portals_simplelock_SOURCES  = testing-portals/simplelock.c
-testing_portals_te_SOURCES          = testing-portals/te.c
-testing_portals_test2_SOURCES       = testing-portals/test2.c
-testing_portals_test_groups_SOURCES = testing-portals/test_groups.c
-testing_portals_test_mt_SOURCES     = testing-portals/test_mt.c
-testing_portals_testnotify_SOURCES  = testing-portals/testnotify.c
-testing_portals_test_SOURCES        = testing-portals/test.c
-
-nodist_EXTRA_testing_portals_clone_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_fork_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_gpctest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_ipctest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_msgcheck_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_origptl_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_perf_aggr_SOURCES   = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_perf_nb_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_perf_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_ptltest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_shmclean_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_shmtest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_simple_SOURCES      = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_simplelock_SOURCES  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_te_SOURCES          = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_test2_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_test_groups_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_test_mt_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_testnotify_SOURCES  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_portals_test_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 
 ##############################################################################
 # src
@@ -683,14 +545,21 @@ src/common/x86copy_as.s: src/common/x86copy.c
 CLEANFILES += src/common/x86copy_as.s
 CLEANFILES += src/locks/tas_as.s
 
+endif # ARMCI_NETWORK_GEMINI
+endif # ARMCI_NETWORK_PORTALS
+
+##############################################################################
+# testing
+#
 check_PROGRAMS += testing/msgcheck
 check_PROGRAMS += testing/perf_aggr
 check_PROGRAMS += testing/perf_nb
 check_PROGRAMS += testing/perf
 check_PROGRAMS += testing/shmclean
 check_PROGRAMS += testing/shmtest
+check_PROGRAMS += testing/simple
+check_PROGRAMS += testing/simplelock
 check_PROGRAMS += testing/test2
-check_PROGRAMS += testing/testitr
 check_PROGRAMS += testing/testnotify
 check_PROGRAMS += testing/test
 if ENABLE_CHECKPOINT
@@ -712,18 +581,34 @@ if ENABLE_F77
 check_PROGRAMS += testing/acc_test
 check_PROGRAMS += testing/copy_test
 endif
+if ARMCI_NETWORK_PORTALS
+check_PROGRAMS += testing/clone
+check_PROGRAMS += testing/fork
+check_PROGRAMS += testing/origptl
+check_PROGRAMS += testing/ptltest
+check_PROGRAMS += testing/te
+else
+check_PROGRAMS += testing/testitr
+endif
 
 testing_acc_test_SOURCES    = testing/acc_test.c
+testing_clone_SOURCES       = testing/clone.c
 testing_copy_test_SOURCES   = testing/copy_test.c
+testing_fork_SOURCES        = testing/fork.c
 testing_fttest_SOURCES      = testing/fttest.c
 testing_gpctest_SOURCES     = testing/gpctest.c
 testing_ipctest_SOURCES     = testing/ipctest.c
 testing_msgcheck_SOURCES    = testing/msgcheck.c
+testing_origptl_SOURCES     = testing/origptl.c
 testing_perf_aggr_SOURCES   = testing/perf_aggr.c
 testing_perf_nb_SOURCES     = testing/perf_nb.c
 testing_perf_SOURCES        = testing/perf.c
+testing_ptltest_SOURCES     = testing/ptltest.c
 testing_shmclean_SOURCES    = testing/shmclean.c
 testing_shmtest_SOURCES     = testing/shmtest.c
+testing_simple_SOURCES      = testing/simple.c
+testing_simplelock_SOURCES  = testing/simplelock.c
+testing_te_SOURCES          = testing/te.c
 testing_test2_SOURCES       = testing/test2.c
 testing_test_groups_SOURCES = testing/test_groups.c
 testing_testitr_SOURCES     = testing/testitr.c
@@ -731,26 +616,32 @@ testing_test_mt_SOURCES     = testing/test_mt.c
 testing_testnotify_SOURCES  = testing/testnotify.c
 testing_test_SOURCES        = testing/test.c
 
+testing_testitr_CPPFLAGS    = $(AM_CPPFLAGS) -I$(top_srcdir)/src/include
+
 nodist_EXTRA_testing_acc_test_SOURCES    = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_clone_SOURCES       = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_copy_test_SOURCES   = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_fork_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_fttest_SOURCES      = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_gpctest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_ipctest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_msgcheck_SOURCES    = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_origptl_SOURCES     = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_perf_aggr_SOURCES   = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_perf_nb_SOURCES     = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_perf_SOURCES        = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_ptltest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_shmclean_SOURCES    = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_shmtest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_simple_SOURCES      = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_simplelock_SOURCES  = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_testing_te_SOURCES          = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_test2_SOURCES       = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_test_groups_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_testitr_SOURCES     = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_test_mt_SOURCES     = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_testnotify_SOURCES  = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_test_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-
-endif # ARMCI_NETWORK_GEMINI
-endif # ARMCI_NETWORK_PORTALS
 
 ##############################################################################
 # examples
@@ -1018,39 +909,20 @@ SERIAL_TESTS_XFAIL =
 PARALLEL_TESTS =
 PARALLEL_TESTS_XFAIL =
 if ARMCI_NETWORK_PORTALS
-PARALLEL_TESTS += testing-portals/clone$(EXEEXT)
-PARALLEL_TESTS += testing-portals/fork$(EXEEXT)
-PARALLEL_TESTS += testing-portals/msgcheck$(EXEEXT)
-PARALLEL_TESTS += testing-portals/origptl$(EXEEXT)
-PARALLEL_TESTS += testing-portals/perf_aggr$(EXEEXT)
-#PARALLEL_TESTS += testing-portals/perf_nb$(EXEEXT) # needs bug fixes
-PARALLEL_TESTS += testing-portals/perf$(EXEEXT)
-PARALLEL_TESTS += testing-portals/ptltest$(EXEEXT)
-#SERIAL_TESTS += testing-portals/shmclean$(EXEEXT) # not sure we need this
-#SERIAL_TESTS += testing-portals/shmtest$(EXEEXT) # not sure we need this
-PARALLEL_TESTS += testing-portals/simplelock$(EXEEXT)
-PARALLEL_TESTS += testing-portals/simple$(EXEEXT)
-PARALLEL_TESTS += testing-portals/test2$(EXEEXT)
-PARALLEL_TESTS += testing-portals/testnotify$(EXEEXT)
-PARALLEL_TESTS += testing-portals/test$(EXEEXT)
-PARALLEL_TESTS += testing-portals/te$(EXEEXT)
-if ARMCI_ENABLE_GPC_CALLS
-PARALLEL_TESTS += testing-portals/gpctest$(EXEEXT)
-endif
-if MSG_COMMS_MPI
-#PARALLEL_TESTS += testing-portals/ipctest$(EXEEXT) # needs bug fixes
-PARALLEL_TESTS += testing-portals/test_groups$(EXEEXT)
-endif
-if THREAD_SAFE
-PARALLEL_TESTS += testing-portals/test_mt$(EXEEXT)
-endif
-else # !ARMCI_NETWORK_PORTALS
+PARALLEL_TESTS += testing/clone$(EXEEXT)
+PARALLEL_TESTS += testing/fork$(EXEEXT)
+PARALLEL_TESTS += testing/origptl$(EXEEXT)
+PARALLEL_TESTS += testing/ptltest$(EXEEXT)
+PARALLEL_TESTS += testing/te$(EXEEXT)
+endif # !ARMCI_NETWORK_PORTALS
 PARALLEL_TESTS += testing/msgcheck$(EXEEXT)
 PARALLEL_TESTS += testing/perf_aggr$(EXEEXT)
 #PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
 PARALLEL_TESTS += testing/perf$(EXEEXT)
 #SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
 #SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
+PARALLEL_TESTS += testing/simplelock$(EXEEXT)
+PARALLEL_TESTS += testing/simple$(EXEEXT)
 PARALLEL_TESTS += testing/test2$(EXEEXT)
 PARALLEL_TESTS += testing/testitr$(EXEEXT)
 PARALLEL_TESTS += testing/testnotify$(EXEEXT)
@@ -1074,7 +946,6 @@ if ENABLE_F77
 SERIAL_TESTS += testing/acc_test$(EXEEXT)
 SERIAL_TESTS += testing/copy_test$(EXEEXT)
 endif
-endif # ARMCI_NETWORK_PORTALS
 #PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
 PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT)
 PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT)
