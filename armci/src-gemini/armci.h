@@ -40,6 +40,34 @@ extern int ARMCI_PutS(          /* strided put */
                 int proc	      /* remote process(or) ID */
                 );
 
+extern int ARMCI_PutS_flag_dir(       /* put with flag that uses direct put */
+                void *src_ptr,        /* pointer to 1st segment at source*/
+                int src_stride_arr[], /* array of strides at source */
+                void* dst_ptr,        /* pointer to 1st segment at destination*/
+                int dst_stride_arr[], /* array of strides at destination */
+                int count[],          /* number of segments at each stride 
+                                         levels: count[0]=bytes*/
+                int stride_levels,    /* number of stride levels */
+                int *flag,            /* pointer to remote flag */
+                int val,              /* value to set flag upon completion of
+                                         data transfer */
+                int proc              /* remote process(or) ID */
+                );
+
+extern int ARMCI_PutS_flag(
+                void *src_ptr,        /* pointer to 1st segment at source*/
+                int src_stride_arr[], /* array of strides at source */
+                void* dst_ptr,        /* pointer to 1st segment at destination*/
+                int dst_stride_arr[], /* array of strides at destination */
+                int count[],          /* number of segments at each stride 
+                                         levels: count[0]=bytes*/
+                int stride_levels,    /* number of stride levels */
+                int *flag,            /* pointer to remote flag */
+                int val,              /* value to set flag upon completion of
+                                         data transfer */
+                int proc              /* remote process(or) ID */
+                );
+
 extern int ARMCI_AccS(                /* strided accumulate */
                 int  optype,          /* operation */
                 void *scale,          /* scale factor x += scale*y */

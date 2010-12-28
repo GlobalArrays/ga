@@ -539,7 +539,7 @@ static int mytag=1;
       default:
           if(msginfo->format == VECTOR){
               armci_server_vector(msginfo, descr, buffer, buflen);      // point 1
-              if(msginfo->operation==PUT || ACC(msginfo->operation)) {  // point 2
+              if(msginfo->operation==PUT || ARMCI_ACC(msginfo->operation)) {  // point 2
                  armci_server_send_ack(msginfo);
               }
            // the obove if clause and the similar cause below for a strided operation
@@ -553,12 +553,12 @@ static int mytag=1;
            // at point 1 the operation was a get.
           }
           else if(msginfo->format == STRIDED){
-           // if(msginfo->operation != PUT && msginfo->operation != GET && !ACC(msginfo->operation)) {
+           // if(msginfo->operation != PUT && msginfo->operation != GET && !ARMCI_ACC(msginfo->operation)) {
            //    printf("[ds %d]: operation=%d (format==STRIDED) not supported yet\n",armci_me,msginfo->operation);
            //    abort();
            // }
               armci_server(msginfo, descr, buffer, buflen);             // point 1
-              if(msginfo->operation==PUT || ACC(msginfo->operation)){   // point 2
+              if(msginfo->operation==PUT || ARMCI_ACC(msginfo->operation)){   // point 2
                  armci_server_send_ack(msginfo);
               }
           }

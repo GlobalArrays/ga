@@ -63,7 +63,7 @@ extern char **client_buf_ptrs;
 #define GET_SEND_BUFFER _armci_buf_get
 #define FREE_SEND_BUFFER _armci_buf_release
 
-//define CLEAR_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op) if((_op==UNLOCK || _op==PUT || ACC(_op)) && _field!=NULL)x_buf_wait_ack((request_header_t *)((void **)&(_field)+1),((char *)&(_field)-sizeof(BUF_INFO_T)));_field=NULL;
+//define CLEAR_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op) if((_op==UNLOCK || _op==PUT || ARMCI_ACC(_op)) && _field!=NULL)x_buf_wait_ack((request_header_t *)((void **)&(_field)+1),((char *)&(_field)-sizeof(BUF_INFO_T)));_field=NULL;
 //define TEST_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op,_ret)
 
 #define CLEAR_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op)

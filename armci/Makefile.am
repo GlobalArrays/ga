@@ -286,10 +286,8 @@ include_HEADERS += src-gemini/gpc.h
 include_HEADERS += src-gemini/message.h
 
 AM_CPPFLAGS += -I$(top_srcdir)/src-gemini
-AM_CPPFLAGS += -I$(top_srcdir)/src-gemini/libnumatoolkit
-AM_CPPFLAGS += -I$(top_srcdir)/src-gemini/libonesided
-LDADD += $(top_srcdir)/src-gemini/libnumatoolkit/libnumatoolkit.a
-LDADD += $(top_srcdir)/src-gemini/libonesided/libonesided.a
+LDADD += -lnumatoolkit
+LDADD += -lonesided
 
 if ENABLE_SHARED
 MAYBE_PIC = -fPIC -DPIC
@@ -588,7 +586,10 @@ check_PROGRAMS += testing/origptl
 check_PROGRAMS += testing/ptltest
 check_PROGRAMS += testing/te
 else
+if ARMCI_NETWORK_GEMINI
+else
 check_PROGRAMS += testing/testitr
+endif
 endif
 
 testing_acc_test_SOURCES    = testing/acc_test.c

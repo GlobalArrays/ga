@@ -1,5 +1,5 @@
 #ifndef __GPCDEF
-#if defined(ARMCI_ENABLE_GPC_CALLS)
+#if ARMCI_ENABLE_GPC_CALLS
 #define __GPCDEF
 
 #include "armci.h"

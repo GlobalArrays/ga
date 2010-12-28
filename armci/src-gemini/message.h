@@ -20,6 +20,8 @@ extern "C" {
 #if 0
 #define armci_msg_bcast(buffer, len, root)\
         armci_msg_bcast_scope(SCOPE_ALL, (buffer), (len), (root))
+#else
+extern void armci_msg_bcast(void *buffer, int len, int root);
 #endif
 
 extern void armci_msg_sel_scope(int scope, void *x, int n, char* op, 

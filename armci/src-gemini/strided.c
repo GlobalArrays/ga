@@ -584,6 +584,47 @@ int *count=seg_count, tmp_count=0;
 }
 
 
+int ARMCI_PutS_flag(
+      void* src_ptr,        /* pointer to 1st segment at source */
+      int src_stride_arr[], /* array of strides at source */
+      void* dst_ptr,        /* pointer to 1st segment at destination */
+      int dst_stride_arr[], /* array of strides at destination */
+      int count[],          /* number of units at each stride level,
+                               count[0] = #bytes */
+      int stride_levels,    /* number of stride levels */
+      int *flag,            /* pointer to remote flag */
+      int val,              /* value to set flag upon completion of
+                               data transfer */
+      int proc              /* remote process(or) ID */
+      )
+{
+  int bytes;
+  /* Put local data on remote processor */
+  ARMCI_PutS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
+             count, stride_levels, proc);
+
+  /* Send signal to remote processor that data transfer has
+   * been completed. */
+  bytes = sizeof(int);
+  ARMCI_Put(&val, flag, bytes, proc);
+  return 1;
+}
+
+
+int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc) {
+  return  ARMCI_PutS_flag(src, NULL, dst, NULL, &bytes, 0, f, v, proc);
+}
+
+
+int ARMCI_PutS_flag_dir(void *src_ptr,   int src_stride_arr[],
+            void* dst_ptr,   int dst_stride_arr[],
+            int seg_count[], int stride_levels,
+            int *flag, int val, int proc) {
+  return ARMCI_PutS_flag(src_ptr, src_stride_arr,dst_ptr,dst_stride_arr,
+             seg_count, stride_levels, flag, val, proc);
+}
+
+
 int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/ 
 		int src_stride_arr[],   /* array of strides at source */
 		void* dst_ptr,          /* 1st segment at destination*/

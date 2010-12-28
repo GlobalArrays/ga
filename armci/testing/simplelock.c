@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
        sleep(1);
     }
     
-    PARMCI_Init();
+    ARMCI_Init();
 
     test_lock();
 
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
     sleep(2);
 
     MP_BARRIER();
-    PARMCI_Finalize();
+    ARMCI_Finalize();
     MP_FINALIZE();
     return(0);
 }

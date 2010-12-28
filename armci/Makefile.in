@@ -228,11 +228,9 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf_aggr$(EXEEXT) \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_24 = src-gemini/armci.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/gpc.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/message.h
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_25 = -I$(top_srcdir)/src-gemini \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/src-gemini/libnumatoolkit \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/src-gemini/libonesided
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_26 = $(top_srcdir)/src-gemini/libnumatoolkit/libnumatoolkit.a \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	$(top_srcdir)/src-gemini/libonesided/libonesided.a
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_25 = -I$(top_srcdir)/src-gemini
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_26 = -lnumatoolkit \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	-lonesided
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_27 = src-gemini/tas_as.s
 
 ##############################################################################
@@ -399,7 +397,7 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf_aggr$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@am__append_71 = testing/clone testing/fork \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/origptl testing/ptltest \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/te
-@ARMCI_NETWORK_PORTALS_FALSE@am__append_72 = testing/testitr
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_72 = testing/testitr
 @ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_73 = examples/features/gpc/hashtable/test_hashtable \
 @ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest
 @ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_74 = examples/features/proc_affinity/computation_impact/computation_impact
@@ -992,7 +990,7 @@ libarmcii_la_OBJECTS = $(am_libarmcii_la_OBJECTS) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/origptl$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/ptltest$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/te$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_FALSE@am__EXEEXT_8 = testing/testitr$(EXEEXT)
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__EXEEXT_8 = testing/testitr$(EXEEXT)
 @ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_9 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
 @ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
 @ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__EXEEXT_10 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
@@ -1013,7 +1011,8 @@ examples_benchmarks_RandomAccess_simple_simple_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 examples_benchmarks_RandomAccess_simple_simple_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_OBJECTS = examples/benchmarks/RandomAccess/smp_bucket/smp_bucket.$(OBJEXT) \
 	examples/benchmarks/RandomAccess/timing.$(OBJEXT)
 examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_OBJECTS = $(am_examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_OBJECTS)
@@ -1021,7 +1020,8 @@ examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_LDADD =  \
 	$(LDADD)
 examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_benchmarks_cg_armci_sharedmemory_cg_OBJECTS =  \
 	examples/benchmarks/cg/armci_sharedmemory/cg.$(OBJEXT) \
 	examples/benchmarks/cg/armci_sharedmemory/compute.$(OBJEXT) \
@@ -1032,7 +1032,8 @@ examples_benchmarks_cg_armci_sharedmemory_cg_OBJECTS =  \
 examples_benchmarks_cg_armci_sharedmemory_cg_LDADD = $(LDADD)
 examples_benchmarks_cg_armci_sharedmemory_cg_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_armci_blocking_lu_OBJECTS =  \
 	examples/benchmarks/lu/armci_blocking/lu.$(OBJEXT) \
 	examples/benchmarks/lu/armci_blocking/timing.$(OBJEXT)
@@ -1041,7 +1042,8 @@ examples_benchmarks_lu_armci_blocking_lu_OBJECTS =  \
 examples_benchmarks_lu_armci_blocking_lu_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_blocking_lu_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_armci_blocking_lu_b_bc_OBJECTS =  \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc.$(OBJEXT) \
 	examples/benchmarks/lu/armci_blocking/timing.$(OBJEXT)
@@ -1050,7 +1052,8 @@ examples_benchmarks_lu_armci_blocking_lu_b_bc_OBJECTS =  \
 examples_benchmarks_lu_armci_blocking_lu_b_bc_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_blocking_lu_b_bc_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_armci_blocking_lu_block_OBJECTS =  \
 	examples/benchmarks/lu/armci_blocking/lu-block.$(OBJEXT) \
 	examples/benchmarks/lu/armci_blocking/timing.$(OBJEXT)
@@ -1059,7 +1062,8 @@ examples_benchmarks_lu_armci_blocking_lu_block_OBJECTS =  \
 examples_benchmarks_lu_armci_blocking_lu_block_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_blocking_lu_block_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_armci_multithreaded_lu_block_th_OBJECTS = examples/benchmarks/lu/armci_multithreaded/lu-block-th.$(OBJEXT) \
 	examples/benchmarks/lu/armci_multithreaded/timing.$(OBJEXT)
 examples_benchmarks_lu_armci_multithreaded_lu_block_th_OBJECTS = $(am_examples_benchmarks_lu_armci_multithreaded_lu_block_th_OBJECTS)
@@ -1067,7 +1071,8 @@ examples_benchmarks_lu_armci_multithreaded_lu_block_th_LDADD =  \
 	$(LDADD)
 examples_benchmarks_lu_armci_multithreaded_lu_block_th_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_armci_nonblocking_lu_nb_get_OBJECTS =  \
 	examples/benchmarks/lu/armci_nonblocking/lu_nb_get.$(OBJEXT) \
 	examples/benchmarks/lu/armci_nonblocking/timing.$(OBJEXT)
@@ -1075,7 +1080,8 @@ examples_benchmarks_lu_armci_nonblocking_lu_nb_get_OBJECTS = $(am_examples_bench
 examples_benchmarks_lu_armci_nonblocking_lu_nb_get_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_get_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_armci_nonblocking_lu_nb_put_OBJECTS =  \
 	examples/benchmarks/lu/armci_nonblocking/lu_nb_put.$(OBJEXT) \
 	examples/benchmarks/lu/armci_nonblocking/timing.$(OBJEXT)
@@ -1083,7 +1089,8 @@ examples_benchmarks_lu_armci_nonblocking_lu_nb_put_OBJECTS = $(am_examples_bench
 examples_benchmarks_lu_armci_nonblocking_lu_nb_put_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_put_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_pthreads_lu_thread_OBJECTS =  \
 	examples/benchmarks/lu/pthreads/barrier.$(OBJEXT) \
 	examples/benchmarks/lu/pthreads/lu-thread.$(OBJEXT) \
@@ -1098,14 +1105,16 @@ examples_features_aggregation_simple_simple_OBJECTS =  \
 examples_features_aggregation_simple_simple_LDADD = $(LDADD)
 examples_features_aggregation_simple_simple_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_OBJECTS = examples/features/aggregation/sparse_matvecmul/sparse_matvecmul.$(OBJEXT)
 examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_OBJECTS = $(am_examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_OBJECTS)
 examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_LDADD =  \
 	$(LDADD)
 examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_features_concurrency_multidma_multidma_OBJECTS =  \
 	examples/features/concurrency/multidma/multidma.$(OBJEXT)
 examples_features_concurrency_multidma_multidma_OBJECTS =  \
@@ -1113,7 +1122,8 @@ examples_features_concurrency_multidma_multidma_OBJECTS =  \
 examples_features_concurrency_multidma_multidma_LDADD = $(LDADD)
 examples_features_concurrency_multidma_multidma_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_features_concurrency_simple_comdegree_OBJECTS =  \
 	examples/features/concurrency/simple/comdegree.$(OBJEXT)
 examples_features_concurrency_simple_comdegree_OBJECTS =  \
@@ -1121,7 +1131,8 @@ examples_features_concurrency_simple_comdegree_OBJECTS =  \
 examples_features_concurrency_simple_comdegree_LDADD = $(LDADD)
 examples_features_concurrency_simple_comdegree_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_features_gpc_hashtable_test_hashtable_OBJECTS =  \
 	examples/features/gpc/hashtable/DistHashmap.$(OBJEXT) \
 	examples/features/gpc/hashtable/GPCHashmap.$(OBJEXT) \
@@ -1132,7 +1143,8 @@ am_examples_features_gpc_hashtable_test_hashtable_OBJECTS =  \
 examples_features_gpc_hashtable_test_hashtable_OBJECTS =  \
 	$(am_examples_features_gpc_hashtable_test_hashtable_OBJECTS)
 am__DEPENDENCIES_2 = $(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 @ENABLE_F77_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
 examples_features_gpc_hashtable_test_hashtable_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
@@ -1148,7 +1160,7 @@ examples_features_gpc_simple_gpctest_OBJECTS =  \
 examples_features_gpc_simple_gpctest_LDADD = $(LDADD)
 examples_features_gpc_simple_gpctest_DEPENDENCIES = $(am__append_3) \
 	$(am__append_4) $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_features_non_blocking_overlap_overlap_OBJECTS =  \
 	examples/features/non-blocking/overlap/overlap.$(OBJEXT)
 examples_features_non_blocking_overlap_overlap_OBJECTS =  \
@@ -1156,7 +1168,8 @@ examples_features_non_blocking_overlap_overlap_OBJECTS =  \
 examples_features_non_blocking_overlap_overlap_LDADD = $(LDADD)
 examples_features_non_blocking_overlap_overlap_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_features_non_blocking_simple_simple_OBJECTS =  \
 	examples/features/non-blocking/simple/simple.$(OBJEXT)
 examples_features_non_blocking_simple_simple_OBJECTS =  \
@@ -1164,14 +1177,16 @@ examples_features_non_blocking_simple_simple_OBJECTS =  \
 examples_features_non_blocking_simple_simple_LDADD = $(LDADD)
 examples_features_non_blocking_simple_simple_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_features_notification_simple_testnotify_OBJECTS =  \
 	examples/features/notification/simple/testnotify.$(OBJEXT)
 examples_features_notification_simple_testnotify_OBJECTS = $(am_examples_features_notification_simple_testnotify_OBJECTS)
 examples_features_notification_simple_testnotify_LDADD = $(LDADD)
 examples_features_notification_simple_testnotify_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS = examples/features/proc_affinity/computation_impact/computation_impact.$(OBJEXT)
 examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS = $(am_examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS)
 examples_features_proc_affinity_computation_impact_computation_impact_DEPENDENCIES =  \
@@ -1189,14 +1204,16 @@ examples_features_proc_affinity_simple_simple_OBJECTS =  \
 examples_features_proc_affinity_simple_simple_LDADD = $(LDADD)
 examples_features_proc_affinity_simple_simple_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_features_symmetric_memory_simple_simple_OBJECTS =  \
 	examples/features/symmetric_memory/simple/simple.$(OBJEXT)
 examples_features_symmetric_memory_simple_simple_OBJECTS = $(am_examples_features_symmetric_memory_simple_simple_OBJECTS)
 examples_features_symmetric_memory_simple_simple_LDADD = $(LDADD)
 examples_features_symmetric_memory_simple_simple_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_examples_simpleApps_transp1D_c_OBJECTS =  \
 	examples/simpleApps/transp1D-c.$(OBJEXT)
 examples_simpleApps_transp1D_c_OBJECTS =  \
@@ -1204,151 +1221,152 @@ examples_simpleApps_transp1D_c_OBJECTS =  \
 examples_simpleApps_transp1D_c_LDADD = $(LDADD)
 examples_simpleApps_transp1D_c_DEPENDENCIES = $(am__append_3) \
 	$(am__append_4) $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_testing_acc_test_OBJECTS = testing/acc_test.$(OBJEXT)
 testing_acc_test_OBJECTS = $(am_testing_acc_test_OBJECTS)
 testing_acc_test_LDADD = $(LDADD)
 testing_acc_test_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_clone_OBJECTS = testing/clone.$(OBJEXT)
 testing_clone_OBJECTS = $(am_testing_clone_OBJECTS)
 testing_clone_LDADD = $(LDADD)
 testing_clone_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_copy_test_OBJECTS = testing/copy_test.$(OBJEXT)
 testing_copy_test_OBJECTS = $(am_testing_copy_test_OBJECTS)
 testing_copy_test_LDADD = $(LDADD)
 testing_copy_test_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_fork_OBJECTS = testing/fork.$(OBJEXT)
 testing_fork_OBJECTS = $(am_testing_fork_OBJECTS)
 testing_fork_LDADD = $(LDADD)
 testing_fork_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_fttest_OBJECTS = testing/fttest.$(OBJEXT)
 testing_fttest_OBJECTS = $(am_testing_fttest_OBJECTS)
 testing_fttest_LDADD = $(LDADD)
 testing_fttest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_gpctest_OBJECTS = testing/gpctest.$(OBJEXT)
 testing_gpctest_OBJECTS = $(am_testing_gpctest_OBJECTS)
 testing_gpctest_LDADD = $(LDADD)
 testing_gpctest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_ipctest_OBJECTS = testing/ipctest.$(OBJEXT)
 testing_ipctest_OBJECTS = $(am_testing_ipctest_OBJECTS)
 testing_ipctest_LDADD = $(LDADD)
 testing_ipctest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_msgcheck_OBJECTS = testing/msgcheck.$(OBJEXT)
 testing_msgcheck_OBJECTS = $(am_testing_msgcheck_OBJECTS)
 testing_msgcheck_LDADD = $(LDADD)
 testing_msgcheck_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_origptl_OBJECTS = testing/origptl.$(OBJEXT)
 testing_origptl_OBJECTS = $(am_testing_origptl_OBJECTS)
 testing_origptl_LDADD = $(LDADD)
 testing_origptl_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_perf_OBJECTS = testing/perf.$(OBJEXT)
 testing_perf_OBJECTS = $(am_testing_perf_OBJECTS)
 testing_perf_LDADD = $(LDADD)
 testing_perf_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_perf_aggr_OBJECTS = testing/perf_aggr.$(OBJEXT)
 testing_perf_aggr_OBJECTS = $(am_testing_perf_aggr_OBJECTS)
 testing_perf_aggr_LDADD = $(LDADD)
 testing_perf_aggr_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_perf_nb_OBJECTS = testing/perf_nb.$(OBJEXT)
 testing_perf_nb_OBJECTS = $(am_testing_perf_nb_OBJECTS)
 testing_perf_nb_LDADD = $(LDADD)
 testing_perf_nb_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_ptltest_OBJECTS = testing/ptltest.$(OBJEXT)
 testing_ptltest_OBJECTS = $(am_testing_ptltest_OBJECTS)
 testing_ptltest_LDADD = $(LDADD)
 testing_ptltest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_shmclean_OBJECTS = testing/shmclean.$(OBJEXT)
 testing_shmclean_OBJECTS = $(am_testing_shmclean_OBJECTS)
 testing_shmclean_LDADD = $(LDADD)
 testing_shmclean_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_shmtest_OBJECTS = testing/shmtest.$(OBJEXT)
 testing_shmtest_OBJECTS = $(am_testing_shmtest_OBJECTS)
 testing_shmtest_LDADD = $(LDADD)
 testing_shmtest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_simple_OBJECTS = testing/simple.$(OBJEXT)
 testing_simple_OBJECTS = $(am_testing_simple_OBJECTS)
 testing_simple_LDADD = $(LDADD)
 testing_simple_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_simplelock_OBJECTS = testing/simplelock.$(OBJEXT)
 testing_simplelock_OBJECTS = $(am_testing_simplelock_OBJECTS)
 testing_simplelock_LDADD = $(LDADD)
 testing_simplelock_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_te_OBJECTS = testing/te.$(OBJEXT)
 testing_te_OBJECTS = $(am_testing_te_OBJECTS)
 testing_te_LDADD = $(LDADD)
 testing_te_DEPENDENCIES = $(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_26)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_testing_test_OBJECTS = testing/test.$(OBJEXT)
 testing_test_OBJECTS = $(am_testing_test_OBJECTS)
 testing_test_LDADD = $(LDADD)
 testing_test_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_test2_OBJECTS = testing/test2.$(OBJEXT)
 testing_test2_OBJECTS = $(am_testing_test2_OBJECTS)
 testing_test2_LDADD = $(LDADD)
 testing_test2_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_test_groups_OBJECTS = testing/test_groups.$(OBJEXT)
 testing_test_groups_OBJECTS = $(am_testing_test_groups_OBJECTS)
 testing_test_groups_LDADD = $(LDADD)
 testing_test_groups_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_test_mt_OBJECTS = testing/test_mt.$(OBJEXT)
 testing_test_mt_OBJECTS = $(am_testing_test_mt_OBJECTS)
 testing_test_mt_LDADD = $(LDADD)
 testing_test_mt_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_testitr_OBJECTS =  \
 	testing/testing_testitr-testitr.$(OBJEXT)
 testing_testitr_OBJECTS = $(am_testing_testitr_OBJECTS)
 testing_testitr_LDADD = $(LDADD)
 testing_testitr_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 am_testing_testnotify_OBJECTS = testing/testnotify.$(OBJEXT)
 testing_testnotify_OBJECTS = $(am_testing_testnotify_OBJECTS)
 testing_testnotify_LDADD = $(LDADD)
 testing_testnotify_DEPENDENCIES = $(am__append_3) $(am__append_4) \
 	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_26)
+	$(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles

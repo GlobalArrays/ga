@@ -165,7 +165,7 @@ armci_send_req_msg(int proc, void *buf, int bytes, int tag)
         _buf_ackresp_t *ar = &bufinfo->ar;
         cos_request_t *req = &ar->req;
 
-        if(msginfo->operation == PUT || ACC(msginfo->operation)) {
+        if(msginfo->operation == PUT || ARMCI_ACC(msginfo->operation)) {
            armci_onesided_send(buffer, msginfo, cluster, req);
         }
 
@@ -250,7 +250,7 @@ int armci_onesided_ds_handler(void *buffer)
 {
         request_header_t *request = (request_header_t *) buffer;
         size_t length = sizeof(request_header_t) + request->dscrlen + request->datalen;
-        if(request->operation == PUT || ACC(request->operation)) {
+        if(request->operation == PUT || ARMCI_ACC(request->operation)) {
            if(length > ARMCI_MAX_REQUEST_SIZE) {
               char *get_buffer = (char *) MessageRcvBuffer;
               cos_desc_t get_desc;
@@ -366,4 +366,5 @@ x_net_offset(char *buf, int proc)
         }
         ARMCI_PR_DBG("exit",0);
       # endif
+        return 0;
 }
