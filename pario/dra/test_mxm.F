@@ -1,7 +1,7 @@
 #if HAVE_CONFIG_H
 #   include "config.fh"
 #endif
-/*#define USE_SUMMA 1*/
+c #define USE_SUMMA 1
 #ifdef  USE_SUMMA
 #  define GA_CREATE  ga_create2
 #  define GA_DGEMM   ga_summa___
