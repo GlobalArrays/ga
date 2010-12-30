@@ -461,9 +461,9 @@ int bytes;
     for (i=0; i<GAnproc; i++) PGRP_LIST[0].map_proc_list[i] = -1;
     for (i=0; i<GAnproc; i++) PGRP_LIST[0].inv_map_proc_list[i] = -1;
     nnode = pnga_cluster_nodeid();
-    nproc = pnga_cluster_nprocs((Integer*)&nnode);
+    nproc = pnga_cluster_nprocs(nnode);
     zero = 0;
-    j = pnga_cluster_procid((Integer*)&nnode, (Integer*)&zero);
+    j = pnga_cluster_procid(nnode, zero);
     PGRP_LIST[0].parent = -1;
     PGRP_LIST[0].actv = 1;
     PGRP_LIST[0].map_nproc = nproc;
@@ -807,7 +807,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     GA_Default_Proc_Group = -1;
     nnodes = pnga_cluster_nnodes();
     inode = pnga_cluster_nodeid();
-    nproc = pnga_cluster_nprocs(&inode);
+    nproc = pnga_cluster_nprocs(inode);
     grp_id = GA[handle].p_handle;
     ifirst = (Integer)((double)(inode*nelems)/((double)nnodes));
     if (inode != nnodes-1) {
@@ -3965,10 +3965,10 @@ void pnga_merge_mirrored(Integer *g_a)
 
   inode = pnga_cluster_nodeid();
   nnodes = pnga_cluster_nnodes(); 
-  nprocs = pnga_cluster_nprocs(&inode);
+  nprocs = pnga_cluster_nprocs(inode);
   zero = 0;
 
-  zproc = pnga_cluster_procid(&inode, &zero);
+  zproc = pnga_cluster_procid(inode, zero);
   zptr = GA[handle].ptr[zproc];
   map = GA[handle].mapc;
   blocks = GA[handle].nblock;
@@ -4016,11 +4016,11 @@ void pnga_merge_mirrored(Integer *g_a)
            origin of the data on the next processor. If not, then zero data in
            the gap. */
         nelem *= GAsizeof(type);
-        bptr = GA[handle].ptr[pnga_cluster_procid(&inode, &i)];
+        bptr = GA[handle].ptr[pnga_cluster_procid(inode, i)];
         bptr += nelem;
         if (i<nblocks-1) {
           j = i+1;
-          nptr = GA[handle].ptr[pnga_cluster_procid(&inode, &j)];
+          nptr = GA[handle].ptr[pnga_cluster_procid(inode, j)];
           if (bptr != nptr) {
             bytes = (long)nptr - (long)bptr;
             /* BJP printf("p[%d] Gap on proc %d is %d\n",GAme,i,bytes); */

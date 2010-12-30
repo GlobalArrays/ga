@@ -437,7 +437,7 @@ Integer dai_io_nodeid(Integer d_a)
      */
 
     if (INDEPFILES(d_a)) {
-        if(me == pnga_cluster_procid(&nodeid, &zero)) me = nodeid;
+        if(me == pnga_cluster_procid(nodeid, zero)) me = nodeid;
         else me = -1;
     } else {
         if (DRA[handle].ioprocs == 1) {
@@ -445,7 +445,7 @@ Integer dai_io_nodeid(Integer d_a)
             else return -1;
         } else {
             nnodes = pnga_cluster_nnodes();
-            nprocs = pnga_cluster_nprocs(&nodeid);
+            nprocs = pnga_cluster_nprocs(nodeid);
             pid = me % nprocs;
             nid = (me - pid)/nprocs;
             id = pid * nnodes + nid;

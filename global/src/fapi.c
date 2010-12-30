@@ -1511,22 +1511,22 @@ Integer FATR nga_cluster_nodeid_()
 
 Integer FATR ga_cluster_nprocs_(Integer *node)
 {
-    return wnga_cluster_nprocs(node);
+    return wnga_cluster_nprocs(*node);
 }
 
 Integer FATR nga_cluster_nprocs_(Integer *node)
 {
-    return wnga_cluster_nprocs(node);
+    return wnga_cluster_nprocs(*node);
 }
 
 Integer FATR ga_cluster_procid_(Integer *node, Integer *loc_proc_id)
 {
-    return wnga_cluster_procid(node, loc_proc_id);
+    return wnga_cluster_procid(*node, *loc_proc_id);
 }
 
 Integer FATR nga_cluster_procid_(Integer *node, Integer *loc_proc_id)
 {
-    return wnga_cluster_procid(node, loc_proc_id);
+    return wnga_cluster_procid(*node, *loc_proc_id);
 }
 
 Integer FATR ga_cluster_nnodes_()
@@ -1536,12 +1536,12 @@ Integer FATR ga_cluster_nnodes_()
 
 Integer FATR ga_cluster_proc_nodeid_(Integer *proc)
 {
-    return wnga_cluster_proc_nodeid(proc);
+    return wnga_cluster_proc_nodeid(*proc);
 }
 
 Integer FATR nga_cluster_proc_nodeid_(Integer *proc)
 {
-    return wnga_cluster_proc_nodeid(proc);
+    return wnga_cluster_proc_nodeid(*proc);
 }
 
 void FATR ga_print_distribution_(Integer* g_a)
@@ -1914,32 +1914,32 @@ void FATR ga_lu_solve_seq_(
 
 void FATR ga_print_(Integer *g_a)
 {
-    wnga_print(g_a);
+    wnga_print(*g_a);
 }
 
 void FATR nga_print_(Integer *g_a)
 {
-    wnga_print(g_a);
+    wnga_print(*g_a);
 }
 
 void FATR ga_print_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, Integer *pretty)
 {
-    wnga_print_patch2d(g_a, ilo, ihi, jlo, jhi, pretty);
+    wnga_print_patch2d(*g_a, *ilo, *ihi, *jlo, *jhi, *pretty);
 }
 
 void FATR nga_print_patch_(Integer *g_a, Integer *lo, Integer *hi, Integer *pretty)
 {
-    wnga_print_patch(g_a, lo, hi, pretty);
+    wnga_print_patch(*g_a, lo, hi, *pretty);
 }
 
 void FATR ga_summarize_(Integer *verbose)
 {
-    wnga_summarize(verbose);
+    wnga_summarize(*verbose);
 }
 
 void FATR nga_summarize_(Integer *verbose)
 {
-    wnga_summarize(verbose);
+    wnga_summarize(*verbose);
 }
 
 /* Routines from ghosts.c */

@@ -3906,7 +3906,7 @@ void GA_Print_patch(int g_a,int ilo,int ihi,int jlo,int jhi,int pretty)
     hi[0] = ihi; lo[1] = jhi;
     COPYINDEX_C2F(lo,_ga_lo,2);
     COPYINDEX_C2F(hi,_ga_hi,2);
-    wnga_print_patch(&a, _ga_lo, _ga_hi, &p);
+    wnga_print_patch(a, _ga_lo, _ga_hi, p);
 }
 
 
@@ -3919,7 +3919,7 @@ void NGA_Print_patch(int g_a, int lo[], int hi[], int pretty)
 
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
-    wnga_print_patch(&a, _ga_lo, _ga_hi, &p);
+    wnga_print_patch(a, _ga_lo, _ga_hi, p);
 }
 
 void NGA_Print_patch64(int g_a, int64_t lo[], int64_t hi[], int pretty)
@@ -3931,19 +3931,19 @@ void NGA_Print_patch64(int g_a, int64_t lo[], int64_t hi[], int pretty)
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
   
-    wnga_print_patch(&a, _ga_lo, _ga_hi, &p);
+    wnga_print_patch(a, _ga_lo, _ga_hi, p);
 }
 
 void GA_Print(int g_a)
 {
     Integer a=(Integer)g_a;
-    wnga_print(&a);
+    wnga_print(a);
 }
 
 void GA_Print_file(FILE *file, int g_a)
 {
   Integer G_a = g_a;
-  wnga_print_file(file, &G_a);
+  wnga_print_file(file, G_a);
 }
 
 void GA_Diag_seq(int g_a, int g_s, int g_v, void *eval)
@@ -4039,7 +4039,7 @@ void GA_Summarize(int verbose)
 {
     Integer v = (Integer)verbose;
 
-    wnga_summarize(&v);
+    wnga_summarize(v);
 }
 
 void GA_Symmetrize(int g_a)
@@ -4675,14 +4675,14 @@ int GA_Cluster_nodeid()
 int GA_Cluster_proc_nodeid(int proc)
 {
     Integer aproc = proc;
-    return wnga_cluster_proc_nodeid(&aproc);
+    return wnga_cluster_proc_nodeid(aproc);
 }
 
 /* return number of processes being used on the specified node */
 int GA_Cluster_nprocs(int x) 
 {
     Integer ax = x;
-    return wnga_cluster_nprocs(&ax);
+    return wnga_cluster_nprocs(ax);
 }
 
 /* global id of the calling process */
@@ -4690,7 +4690,7 @@ int GA_Cluster_procid(int node, int loc_proc)
 {
     Integer anode = node;
     Integer aloc_proc = loc_proc;
-    return wnga_cluster_procid(&anode, &aloc_proc);
+    return wnga_cluster_procid(anode, aloc_proc);
 }
 
 double GA_Wtime()

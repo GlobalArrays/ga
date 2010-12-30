@@ -1656,8 +1656,8 @@ Integer clo[2], chi[2];
    }
    if (pnga_is_mirrored(g_a)) {
      inode = pnga_cluster_nodeid();
-     nproc = pnga_cluster_nprocs(&inode);
-     iproc = me - pnga_cluster_procid(&inode, &ZERO_I);
+     nproc = pnga_cluster_nprocs(inode);
+     iproc = me - pnga_cluster_procid(inode, ZERO_I);
    } else {
      nproc = pnga_nnodes();
      iproc = me;
@@ -2089,8 +2089,8 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    }
    if (pnga_is_mirrored(g_a)) {
      inode = pnga_cluster_nodeid();
-     nproc = pnga_cluster_nprocs(&inode);
-     iproc = me - pnga_cluster_procid(&inode, &ZERO_I);
+     nproc = pnga_cluster_nprocs(inode);
+     iproc = me - pnga_cluster_procid(inode, ZERO_I);
    } else {
      nproc = pnga_nnodes();
      iproc = me;

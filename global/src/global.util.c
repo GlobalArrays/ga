@@ -62,7 +62,7 @@
 #endif
 void pnga_print_patch_file2d(file, g_a, ilo, ihi, jlo, jhi, pretty)
         FILE *file;
-        Integer *g_a, *ilo, *ihi, *jlo, *jhi, *pretty;
+        Integer g_a, ilo, ihi, jlo, jhi, pretty;
 /*
   Pretty = 0 ... spew output out with no formatting
   Pretty = 1 ... format output so that it is readable
@@ -81,71 +81,71 @@ void pnga_print_patch_file2d(file, g_a, ilo, ihi, jlo, jhi, pretty)
   Integer ndim, dims[2];
   Integer lo[2], hi[2];
 
-  a_grp = pnga_get_pgroup(g_a);
+  a_grp = pnga_get_pgroup(&g_a);
   pnga_pgroup_sync(&a_grp);
-  pnga_check_handle(g_a, "ga_print");
+  pnga_check_handle(&g_a, "ga_print");
   if(pnga_pgroup_nodeid(&a_grp) == 0){
 
-    pnga_inquire(g_a, &type, &ndim, dims);
+    pnga_inquire(&g_a, &type, &ndim, dims);
     dim1 = dims[0];
     dim2 = dims[1];
     /*     name[FLEN-1]='\0';*/
-    pnga_inquire_name(g_a, &name);
-    if (*ilo <= 0 || *ihi > dim1 || *jlo <= 0 || *jhi > dim2){
+    pnga_inquire_name(&g_a, &name);
+    if (ilo <= 0 || ihi > dim1 || jlo <= 0 || jhi > dim2){
       fprintf(stderr,"%ld %ld %ld %ld dims: [%ld,%ld]\n", 
-          (long)*ilo,(long)*ihi, (long)*jlo,(long)*jhi,
+          (long)ilo,(long)ihi, (long)jlo,(long)jhi,
           (long)dim1, (long)dim2);
-      pnga_error(" ga_print: indices out of range ", *g_a);
+      pnga_error(" ga_print: indices out of range ", g_a);
     }
 
     fprintf(file,"\n global array: %s[%ld:%ld,%ld:%ld],  handle: %d \n",
-        name, (long)*ilo, (long)*ihi, (long)*jlo, (long)*jhi, (int)*g_a);
+        name, (long)ilo, (long)ihi, (long)jlo, (long)jhi, (int)g_a);
 
     bufsize = (type==C_DCPL)? BUFSIZE/2 : BUFSIZE;
     bufsize = (type==C_SCPL)? BUFSIZE/2 : BUFSIZE;
 
 
-    if (!*pretty) {
-      for (i=*ilo; i <*ihi+1; i++){
-        for (j=*jlo; j <*jhi+1; j+=bufsize){
-          jmax = GA_MIN(j+bufsize-1,*jhi);
+    if (!pretty) {
+      for (i=ilo; i <ihi+1; i++){
+        for (j=jlo; j <jhi+1; j+=bufsize){
+          jmax = GA_MIN(j+bufsize-1,jhi);
           lo[0] = i;
           lo[1] = j;
           hi[0] = i;
           hi[1] = jmax;
           switch(type){
             case C_INT:
-              pnga_get(g_a, lo, hi, ibuf, &ld);
+              pnga_get(&g_a, lo, hi, ibuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %8d",ibuf[jj]);
               break;
             case C_DBL:
-              pnga_get(g_a, lo, hi, dbuf, &ld);
+              pnga_get(&g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %11.5f",dbuf[jj]);
               break;
             case C_DCPL:
-              pnga_get(g_a, lo, hi, dbuf, &ld);
+              pnga_get(&g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj+=2)
                 fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
               break;
             case C_SCPL:
-              pnga_get(g_a, lo, hi, dbuf, &ld);
+              pnga_get(&g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj+=2)
                 fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
               break;
             case C_FLOAT:
-              pnga_get(g_a, lo, hi, fbuf, &ld);
+              pnga_get(&g_a, lo, hi, fbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %11.5f",fbuf[jj]);
               break;       
             case C_LONG:
-              pnga_get(g_a, lo, hi, lbuf, &ld);
+              pnga_get(&g_a, lo, hi, lbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %8ld",lbuf[jj]);
               break;
             case C_LONGLONG:
-              pnga_get(g_a, lo, hi, llbuf, &ld);
+              pnga_get(&g_a, lo, hi, llbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %8lld",llbuf[jj]);
               break;
@@ -158,8 +158,8 @@ void pnga_print_patch_file2d(file, g_a, ilo, ihi, jlo, jhi, pretty)
 
     } else {
 
-      for (j=*jlo; j<*jhi+1; j+=bufsize){
-        jmax = GA_MIN(j+bufsize-1,*jhi);
+      for (j=jlo; j<jhi+1; j+=bufsize){
+        jmax = GA_MIN(j+bufsize-1,jhi);
 
         fprintf(file, "\n"); fprintf(file, "\n");
 
@@ -203,7 +203,7 @@ void pnga_print_patch_file2d(file, g_a, ilo, ihi, jlo, jhi, pretty)
         }
         fprintf(file,"\n");
 
-        for(i=*ilo; i <*ihi+1; i++){
+        for(i=ilo; i <ihi+1; i++){
           fprintf(file,"%4ld  ",(long)i);
 
           lo[0] = i;
@@ -212,37 +212,37 @@ void pnga_print_patch_file2d(file, g_a, ilo, ihi, jlo, jhi, pretty)
           hi[1] = jmax;
           switch(type){
             case C_INT:
-              pnga_get(g_a, lo, hi, ibuf, &ld);
+              pnga_get(&g_a, lo, hi, ibuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %8d",ibuf[jj]);
               break;
             case C_LONG: 
-              pnga_get(g_a, lo, hi, lbuf, &ld);
+              pnga_get(&g_a, lo, hi, lbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %8ld",lbuf[jj]);
               break;
             case C_LONGLONG: 
-              pnga_get(g_a, lo, hi, llbuf, &ld);
+              pnga_get(&g_a, lo, hi, llbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %8lld",llbuf[jj]);
               break;
             case C_DBL:
-              pnga_get(g_a, lo, hi, dbuf, &ld);
+              pnga_get(&g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %11.5f",dbuf[jj]);
               break;
             case C_FLOAT:
-              pnga_get(g_a, lo, hi, dbuf, &ld);
+              pnga_get(&g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %11.5f",fbuf[jj]);
               break;     
             case C_DCPL:
-              pnga_get(g_a, lo, hi, dbuf, &ld);
+              pnga_get(&g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj+=2)
                 fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
               break;
             case C_SCPL:
-              pnga_get(g_a, lo, hi, dbuf, &ld);
+              pnga_get(&g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj+=2)
                 fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
               break;
@@ -262,7 +262,7 @@ void pnga_print_patch_file2d(file, g_a, ilo, ihi, jlo, jhi, pretty)
 #   pragma weak wnga_print_patch2d = pnga_print_patch2d
 #endif
 void pnga_print_patch2d(g_a, ilo, ihi, jlo, jhi, pretty)
-        Integer *g_a, *ilo, *ihi, *jlo, *jhi, *pretty;
+        Integer g_a, ilo, ihi, jlo, jhi, pretty;
 {
     pnga_print_patch_file2d(stdout, g_a, ilo, ihi, jlo, jhi, pretty);
 }
@@ -491,7 +491,7 @@ int local_sync_begin,local_sync_end;
 /*\ PRINT g_a[ilo, jlo]
 \*/
 void pnga_print_patch_file(file, g_a, lo, hi, pretty)
-        Integer *g_a, *lo, *hi, *pretty;
+        Integer g_a, *lo, *hi, pretty;
         FILE *file;
 /*
   Pretty = 0 ... spew output out with no formatting
@@ -515,18 +515,18 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
     Integer done, status_2d, status_3d;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     pnga_sync();
-    pnga_check_handle(g_a, "nga_print");
+    pnga_check_handle(&g_a, "nga_print");
 
     /* only the first process print the array */
     if(pnga_nodeid() == 0) {
         
-        pnga_inquire(g_a,  &type, &ndim, dims);
-        pnga_inquire_name(g_a, &name);
+        pnga_inquire(&g_a,  &type, &ndim, dims);
+        pnga_inquire_name(&g_a, &name);
         
         /* check the boundary */
         for(i=0; i<ndim; i++)
             if(lo[i] <= 0 || hi[i] > dims[i]) 
-                pnga_error("g_a indices out of range ", *g_a);
+                pnga_error("g_a indices out of range ", g_a);
         
         /* print the general information */
         fprintf(file,"\n global array: %s[", name);
@@ -535,14 +535,14 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
                 fprintf(file, "%ld:%ld,", (long)lo[i], (long)hi[i]);
             else
                 fprintf(file, "%ld:%ld",  (long)lo[i], (long)hi[i]);
-        fprintf(file,"],  handle: %d \n", (int)*g_a);
+        fprintf(file,"],  handle: %d \n", (int)g_a);
         
         bufsize = (type==C_DCPL)? BUFSIZE/2 : BUFSIZE;
         bufsize = (type==C_SCPL)? BUFSIZE/2 : BUFSIZE;
         
         for(i=0; i<ndim; i++) ld[i] = bufsize;
         
-        if(!*pretty) {
+        if(!pretty) {
             done = 1;
             for(i=0; i<ndim; i++) {
                 lop[i] = lo[i]; hip[i] = lo[i];
@@ -550,13 +550,13 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
             hip[0] = GA_MIN(lop[0]+bufsize-1, hi[0]);
             while(done) {
                 switch(type) {
-                    case C_INT:      pnga_get(g_a, lop, hip, ibuf, ld); break;
-                    case C_DBL:      pnga_get(g_a, lop, hip, dbuf, ld); break;
-                    case C_DCPL:     pnga_get(g_a, lop, hip, dbuf, ld); break;
-                    case C_FLOAT:    pnga_get(g_a, lop, hip, fbuf, ld); break; 
-                    case C_SCPL:     pnga_get(g_a, lop, hip, fbuf, ld); break;
-                    case C_LONG:     pnga_get(g_a, lop, hip, lbuf, ld); break; 
-                    case C_LONGLONG: pnga_get(g_a, lop, hip, llbuf,ld); break;
+                    case C_INT:      pnga_get(&g_a, lop, hip, ibuf, ld); break;
+                    case C_DBL:      pnga_get(&g_a, lop, hip, dbuf, ld); break;
+                    case C_DCPL:     pnga_get(&g_a, lop, hip, dbuf, ld); break;
+                    case C_FLOAT:    pnga_get(&g_a, lop, hip, fbuf, ld); break; 
+                    case C_SCPL:     pnga_get(&g_a, lop, hip, fbuf, ld); break;
+                    case C_LONG:     pnga_get(&g_a, lop, hip, lbuf, ld); break; 
+                    case C_LONGLONG: pnga_get(&g_a, lop, hip, llbuf,ld); break;
                     default: pnga_error("ga_print: wrong type",0);
                 }
                 
@@ -719,13 +719,13 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
                 }
                 
                 switch(type) {
-                    case C_INT: pnga_get(g_a, lop, hip, ibuf_2d, ld); break;
-                    case C_LONG: pnga_get(g_a, lop, hip,lbuf_2d, ld); break;
-                    case C_LONGLONG: pnga_get(g_a, lop, hip,llbuf_2d,ld);break;
-                    case C_DBL: pnga_get(g_a, lop, hip, dbuf_2d, ld); break;
-                    case C_DCPL: pnga_get(g_a, lop, hip, dbuf_2d, ld);break;
-                    case C_FLOAT: pnga_get(g_a, lop, hip, fbuf_2d, ld);break;
-                    case C_SCPL: pnga_get(g_a, lop, hip, fbuf_2d, ld);break;  
+                    case C_INT: pnga_get(&g_a, lop, hip, ibuf_2d, ld); break;
+                    case C_LONG: pnga_get(&g_a, lop, hip,lbuf_2d, ld); break;
+                    case C_LONGLONG: pnga_get(&g_a, lop, hip,llbuf_2d,ld);break;
+                    case C_DBL: pnga_get(&g_a, lop, hip, dbuf_2d, ld); break;
+                    case C_DCPL: pnga_get(&g_a, lop, hip, dbuf_2d, ld);break;
+                    case C_FLOAT: pnga_get(&g_a, lop, hip, fbuf_2d, ld);break;
+                    case C_SCPL: pnga_get(&g_a, lop, hip, fbuf_2d, ld);break;  
                    default: pnga_error("ga_print: wrong type",0);
                 }
                 
@@ -856,7 +856,7 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_print_patch = pnga_print_patch
 #endif
-void pnga_print_patch(Integer *g_a, Integer *lo, Integer *hi, Integer *pretty)
+void pnga_print_patch(Integer g_a, Integer *lo, Integer *hi, Integer pretty)
 {
   pnga_print_patch_file(stdout, g_a, lo, hi, pretty);
 
@@ -865,7 +865,7 @@ void pnga_print_patch(Integer *g_a, Integer *lo, Integer *hi, Integer *pretty)
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_summarize = pnga_summarize
 #endif
-void pnga_summarize(Integer *verbose)
+void pnga_summarize(Integer verbose)
 {
 #define DEV stdout
     
@@ -923,7 +923,7 @@ void pnga_summarize(Integer *verbose)
                 else fprintf(DEV, "%ld", (long)dims[i]);
             fprintf(DEV,"),  handle: %d \n",(int) g_a);
 
-            if(*verbose) {
+            if(verbose) {
                 for(i=0; i<nproc; i++){
                     pnga_distribution(&g_a, &i, lop, hip);
                     
@@ -950,25 +950,25 @@ void pnga_summarize(Integer *verbose)
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_print_file = pnga_print_file
 #endif
-void pnga_print_file(FILE *file, Integer *g_a)
+void pnga_print_file(FILE *file, Integer g_a)
 {
     Integer i;
     Integer type, ndim, dims[MAXDIM];
     Integer lo[MAXDIM];
     Integer pretty = 1;
 
-    pnga_inquire(g_a, &type, &ndim, dims);
+    pnga_inquire(&g_a, &type, &ndim, dims);
 
     for(i=0; i<ndim; i++) lo[i] = 1;
 
-    pnga_print_patch_file(file, g_a, lo, dims, &pretty);
+    pnga_print_patch_file(file, g_a, lo, dims, pretty);
 }
   
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_print = pnga_print
 #endif
-void pnga_print(Integer *g_a)
+void pnga_print(Integer g_a)
 {
     pnga_print_file(stdout, g_a);
 }
@@ -979,10 +979,9 @@ void pnga_print(Integer *g_a)
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_cluster_proc_nodeid = pnga_cluster_proc_nodeid
 #endif
-Integer pnga_cluster_proc_nodeid(Integer *proc)
+Integer pnga_cluster_proc_nodeid(Integer proc)
 {
-    int id = armci_domain_id(ARMCI_DOMAIN_SMP, (int)*proc);
-    return (Integer) id;
+    return (Integer) armci_domain_id(ARMCI_DOMAIN_SMP, (int)proc);
 }
 
 /*\ return ClusterNode id of the calling process
@@ -992,8 +991,7 @@ Integer pnga_cluster_proc_nodeid(Integer *proc)
 #endif
 Integer pnga_cluster_nodeid()
 {
-    int id = armci_domain_my_id(ARMCI_DOMAIN_SMP);
-    return (Integer) id;
+    return (Integer) armci_domain_my_id(ARMCI_DOMAIN_SMP);
 }
 
 /*\ number of nodes in a cluster
@@ -1011,11 +1009,9 @@ Integer pnga_cluster_nnodes()
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_cluster_nprocs = pnga_cluster_nprocs
 #endif
-Integer pnga_cluster_nprocs(Integer *node)
+Integer pnga_cluster_nprocs(Integer node)
 {
-    int id;
-    id = (int)*node;
-    return (Integer) armci_domain_nprocs(ARMCI_DOMAIN_SMP, id);
+    return (Integer) armci_domain_nprocs(ARMCI_DOMAIN_SMP, (int)node);
 }
 
 
@@ -1024,13 +1020,10 @@ Integer pnga_cluster_nprocs(Integer *node)
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_cluster_procid = pnga_cluster_procid
 #endif
-Integer pnga_cluster_procid(Integer *node, Integer *loc_proc_id)
+Integer pnga_cluster_procid(Integer node, Integer loc_proc_id)
 {
-        int nodeid, procid;
-        nodeid = (int)*node;
-        procid = (int)*loc_proc_id;
-        return (Integer) armci_domain_glob_proc_id(ARMCI_DOMAIN_SMP, nodeid,
-                                                   procid);
+    return (Integer) armci_domain_glob_proc_id(ARMCI_DOMAIN_SMP, (int)node,
+            (int)loc_proc_id);
 }
 
 #ifdef MPI
