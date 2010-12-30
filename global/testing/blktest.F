@@ -275,6 +275,7 @@ c
           write(6,*) 'GA_Add operation for regular and block-cyclic',
      +               ' arrays is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
           call ffflush(6)
         endif
       endif
@@ -307,6 +308,7 @@ c
           write(6,*) 'GA_Add operation for two block-cyclic arrays',
      +               ' is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
           call ffflush(6)
         endif
       endif
@@ -376,6 +378,7 @@ c
           write(6,*)
           write(6,*) 'GA_Acc is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 
@@ -401,6 +404,7 @@ c
           write(6,*)
           write(6,*) 'GA_Copy is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -426,6 +430,7 @@ c
           write(6,*)
           write(6,*) 'GA_Zero is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -456,6 +461,7 @@ c
           write(6,*)
           write(6,*) 'GA_Scale is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -480,6 +486,7 @@ c
           write(6,*)
           write(6,*) 'GA_Fill is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -505,6 +512,7 @@ c
           write(6,*)
           write(6,*) 'GA_Zero_patch is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -530,6 +538,7 @@ c
           write(6,*)
           write(6,*) 'GA_Fill_patch is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -555,6 +564,7 @@ c
           write(6,*)
           write(6,*) 'GA_Scale_patch is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -584,6 +594,7 @@ c
           write(6,*) 'GA_Copy_patch from block-cyclic to regular is',
      +               ' not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
       call ga_fill(g_a,1)
@@ -605,6 +616,7 @@ c
           write(6,*) 'GA_Copy_patch from regular to block-cyclic is',
      +               ' not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -642,6 +654,7 @@ c
           write(6,*)
           write(6,*) 'GA_Add_patch is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -697,6 +710,7 @@ c
           write(6,*)
           write(6,*) 'GA_Abs_value_patch is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -727,6 +741,7 @@ c
           write(6,*)
           write(6,*) 'GA_Elem_multiply is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -753,6 +768,7 @@ c
           write(6,*)
           write(6,*) 'GA_Elem_divide_patch is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -794,6 +810,7 @@ c
             write(6,*)
             write(6,*) 'GA_Strided_get is not OK'
             write(6,*)
+            call ga_error('exiting', 1)
           endif
         endif
       endif
@@ -828,6 +845,7 @@ c
           write(6,*)
           write(6,*) 'GA_Strided_put is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -860,6 +878,7 @@ c
           write(6,*)
           write(6,*) 'GA_Strided_acc is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -896,6 +915,7 @@ c
           write(6,*)
           write(6,*) 'GA_Transpose is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -925,6 +945,7 @@ c
           write(6,*)
           write(6,*) 'GA_Symmetrize is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -974,6 +995,7 @@ c
             write(6,*)
             write(6,*) 'GA_Periodic_get is not OK'
             write(6,*)
+            call ga_error('exiting', 1)
           endif
         endif
       endif
@@ -1009,6 +1031,7 @@ c
           write(6,*)
           write(6,*) 'GA_Periodic_put is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
 c
@@ -1039,11 +1062,12 @@ c
           write(6,*)
           write(6,*) 'GA_Periodic_acc is not OK'
           write(6,*)
+          call ga_error('exiting', 1)
         endif
       endif
       
   200 format(8i8)
-  300 format(8f8.1)
+c 300 format(8f8.1)
       if (me.eq.0) then
         write(6,302)
       endif

@@ -1702,197 +1702,197 @@ void FATR nga_zgop_(Integer *type, DoubleComplex *x, Integer *n, char *op, int l
 
 void FATR ga_abs_value_patch_(Integer *g_a, Integer *lo, Integer *hi)
 {
-    wnga_abs_value_patch(g_a, lo, hi);
+    wnga_abs_value_patch(*g_a, lo, hi);
 }
 
 void FATR nga_abs_value_patch_(Integer *g_a, Integer *lo, Integer *hi)
 {
-    wnga_abs_value_patch(g_a, lo, hi);
+    wnga_abs_value_patch(*g_a, lo, hi);
 }
 
 void FATR ga_recip_patch_(Integer *g_a, Integer *lo, Integer *hi)
 {
-    wnga_recip_patch(g_a, lo, hi);
+    wnga_recip_patch(*g_a, lo, hi);
 }
 
 void FATR nga_recip_patch_(Integer *g_a, Integer *lo, Integer *hi)
 {
-    wnga_recip_patch(g_a, lo, hi);
+    wnga_recip_patch(*g_a, lo, hi);
 }
 
 void FATR ga_add_constant_patch_(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
 {
-    wnga_add_constant_patch(g_a, lo, hi, alpha);
+    wnga_add_constant_patch(*g_a, lo, hi, alpha);
 }
 
 void FATR nga_add_constant_patch_(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
 {
-    wnga_add_constant_patch(g_a, lo, hi, alpha);
+    wnga_add_constant_patch(*g_a, lo, hi, alpha);
 }
 
 void FATR ga_abs_value_(Integer *g_a)
 {
-    wnga_abs_value(g_a);
+    wnga_abs_value(*g_a);
 }
 
 void FATR nga_abs_value_(Integer *g_a)
 {
-    wnga_abs_value(g_a);
+    wnga_abs_value(*g_a);
 }
 
 void FATR ga_add_constant_(Integer *g_a, void *alpha)
 {
-    wnga_add_constant(g_a, alpha);
+    wnga_add_constant(*g_a, alpha);
 }
 
 void FATR nga_add_constant_(Integer *g_a, void *alpha)
 {
-    wnga_add_constant(g_a, alpha);
+    wnga_add_constant(*g_a, alpha);
 }
 
 void FATR ga_recip_(Integer *g_a)
 {
-    wnga_recip(g_a);
+    wnga_recip(*g_a);
 }
 
 void FATR ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c)
 {
-    wnga_elem_multiply(g_a, g_b, g_c);
+    wnga_elem_multiply(*g_a, *g_b, *g_c);
 }
 
 void FATR nga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c)
 {
-    wnga_elem_multiply(g_a, g_b, g_c);
+    wnga_elem_multiply(*g_a, *g_b, *g_c);
 }
 
 void FATR ga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c)
 {
-    wnga_elem_divide(g_a, g_b, g_c);
+    wnga_elem_divide(*g_a, *g_b, *g_c);
 }
 
 void FATR nga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c)
 {
-    wnga_elem_divide(g_a, g_b, g_c);
+    wnga_elem_divide(*g_a, *g_b, *g_c);
 }
 
 void FATR ga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c)
 {
-    wnga_elem_maximum(g_a, g_b, g_c);
+    wnga_elem_maximum(*g_a, *g_b, *g_c);
 }
 
 void FATR nga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c)
 {
-    wnga_elem_maximum(g_a, g_b, g_c);
+    wnga_elem_maximum(*g_a, *g_b, *g_c);
 }
 
 void FATR ga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c)
 {
-    wnga_elem_minimum(g_a, g_b, g_c);
+    wnga_elem_minimum(*g_a, *g_b, *g_c);
 }
 
 void FATR nga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c)
 {
-    wnga_elem_minimum(g_a, g_b, g_c);
+    wnga_elem_minimum(*g_a, *g_b, *g_c);
 }
 
 void FATR ga_elem_multiply_patch_(Integer *g_a,Integer *alo,Integer *ahi,Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi)
 {
-    wnga_elem_multiply_patch(g_a,alo,ahi,g_b,blo,bhi,g_c,clo,chi);
+    wnga_elem_multiply_patch(*g_a,alo,ahi,*g_b,blo,bhi,*g_c,clo,chi);
 }
 
 void FATR nga_elem_multiply_patch_(Integer *g_a,Integer *alo,Integer *ahi,Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi)
 {
-    wnga_elem_multiply_patch(g_a,alo,ahi,g_b,blo,bhi,g_c,clo,chi);
+    wnga_elem_multiply_patch(*g_a,alo,ahi,*g_b,blo,bhi,*g_c,clo,chi);
 }
 
 void FATR ga_elem_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi)
 {
-    wnga_elem_divide_patch(g_a,alo,ahi, g_b,blo,bhi,g_c, clo,chi);
+    wnga_elem_divide_patch(*g_a,alo,ahi, *g_b,blo,bhi,*g_c, clo,chi);
 }
 
 void FATR nga_elem_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi)
 {
-    wnga_elem_divide_patch(g_a,alo,ahi, g_b,blo,bhi,g_c, clo,chi);
+    wnga_elem_divide_patch(*g_a,alo,ahi, *g_b,blo,bhi,*g_c, clo,chi);
 }
 
 void FATR ga_elem_step_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi)
 {
-    wnga_elem_step_divide_patch(g_a,alo,ahi, g_b,blo,bhi,g_c, clo,chi);
+    wnga_elem_step_divide_patch(*g_a,alo,ahi, *g_b,blo,bhi,*g_c, clo,chi);
 }
 
 void FATR nga_elem_step_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi)
 {
-    wnga_elem_step_divide_patch(g_a,alo,ahi, g_b,blo,bhi,g_c, clo,chi);
+    wnga_elem_step_divide_patch(*g_a,alo,ahi, *g_b,blo,bhi,*g_c, clo,chi);
 }
 
 void FATR ga_elem_stepb_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi)
 {
-    wnga_elem_stepb_divide_patch(g_a,alo,ahi, g_b,blo,bhi,g_c, clo,chi);
+    wnga_elem_stepb_divide_patch(*g_a,alo,ahi, *g_b,blo,bhi,*g_c, clo,chi);
 }
 
 void FATR nga_elem_stepb_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi)
 {
-    wnga_elem_stepb_divide_patch(g_a,alo,ahi, g_b,blo,bhi,g_c, clo,chi);
+    wnga_elem_stepb_divide_patch(*g_a,alo,ahi, *g_b,blo,bhi,*g_c, clo,chi);
 }
 
 void FATR ga_elem_maximum_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi)
 {
-    wnga_elem_maximum_patch(g_a,alo,ahi, g_b,blo,bhi,g_c,clo,chi);
+    wnga_elem_maximum_patch(*g_a,alo,ahi, *g_b,blo,bhi,*g_c,clo,chi);
 }
 
 void FATR nga_elem_maximum_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi)
 {
-    wnga_elem_maximum_patch(g_a,alo,ahi, g_b,blo,bhi,g_c,clo,chi);
+    wnga_elem_maximum_patch(*g_a,alo,ahi, *g_b,blo,bhi,*g_c,clo,chi);
 }
 
 void FATR ga_elem_minimum_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi)
 {
-    wnga_elem_minimum_patch(g_a,alo,ahi, g_b,blo,bhi,g_c,clo,chi);
+    wnga_elem_minimum_patch(*g_a,alo,ahi, *g_b,blo,bhi,*g_c,clo,chi);
 }
 
 void FATR nga_elem_minimum_patch_(Integer *g_a,Integer *alo,Integer *ahi, Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi)
 {
-    wnga_elem_minimum_patch(g_a,alo,ahi, g_b,blo,bhi,g_c,clo,chi);
+    wnga_elem_minimum_patch(*g_a,alo,ahi, *g_b,blo,bhi,*g_c,clo,chi);
 }
 
 void FATR ga_step_bound_info_patch_(Integer *g_xx, Integer *xxlo, Integer *xxhi, Integer *g_vv, Integer *vvlo, Integer *vvhi, Integer *g_xxll, Integer *xxlllo, Integer *xxllhi, Integer *g_xxuu, Integer *xxuulo, Integer *xxuuhi, void *boundmin, void* wolfemin, void *boundmax)
 {
-    wnga_step_bound_info_patch(g_xx, xxlo, xxhi, g_vv, vvlo, vvhi, g_xxll, xxlllo, xxllhi, g_xxuu, xxuulo, xxuuhi, boundmin, wolfemin, boundmax);
+    wnga_step_bound_info_patch(*g_xx, xxlo, xxhi, *g_vv, vvlo, vvhi, *g_xxll, xxlllo, xxllhi, *g_xxuu, xxuulo, xxuuhi, boundmin, wolfemin, boundmax);
 }
 
 void FATR nga_step_bound_info_patch_(Integer *g_xx, Integer *xxlo, Integer *xxhi, Integer *g_vv, Integer *vvlo, Integer *vvhi, Integer *g_xxll, Integer *xxlllo, Integer *xxllhi, Integer *g_xxuu, Integer *xxuulo, Integer *xxuuhi, void *boundmin, void* wolfemin, void *boundmax)
 {
-    wnga_step_bound_info_patch(g_xx, xxlo, xxhi, g_vv, vvlo, vvhi, g_xxll, xxlllo, xxllhi, g_xxuu, xxuulo, xxuuhi, boundmin, wolfemin, boundmax);
+    wnga_step_bound_info_patch(*g_xx, xxlo, xxhi, *g_vv, vvlo, vvhi, *g_xxll, xxlllo, xxllhi, *g_xxuu, xxuulo, xxuuhi, boundmin, wolfemin, boundmax);
 }
 
 void FATR ga_step_max_patch_(Integer *g_a,  Integer *alo, Integer *ahi, Integer *g_b,  Integer *blo, Integer *bhi, void *result)
 {
-    wnga_step_max_patch(g_a, alo, ahi, g_b, blo, bhi, result);
+    wnga_step_max_patch(*g_a, alo, ahi, *g_b, blo, bhi, result);
 }
 
 void FATR nga_step_max_patch_(Integer *g_a,  Integer *alo, Integer *ahi, Integer *g_b,  Integer *blo, Integer *bhi, void *result)
 {
-    wnga_step_max_patch(g_a, alo, ahi, g_b, blo, bhi, result);
+    wnga_step_max_patch(*g_a, alo, ahi, *g_b, blo, bhi, result);
 }
 
 void FATR ga_step_max_(Integer *g_a, Integer *g_b, void *retval)
 {
-    wnga_step_max(g_a, g_b, retval);
+    wnga_step_max(*g_a, *g_b, retval);
 }
 
 void FATR nga_step_max_(Integer *g_a, Integer *g_b, void *retval)
 {
-    wnga_step_max(g_a, g_b, retval);
+    wnga_step_max(*g_a, *g_b, retval);
 }
 
 void FATR ga_step_bound_info_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, Integer *g_xxuu,  void *boundmin, void *wolfemin, void *boundmax)
 {
-    wnga_step_bound_info(g_xx, g_vv, g_xxll, g_xxuu, boundmin, wolfemin, boundmax);
+    wnga_step_bound_info(*g_xx, *g_vv, *g_xxll, *g_xxuu, boundmin, wolfemin, boundmax);
 }
 
 void FATR nga_step_bound_info_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, Integer *g_xxuu,  void *boundmin, void *wolfemin, void *boundmax)
 {
-    wnga_step_bound_info(g_xx, g_vv, g_xxll, g_xxuu, boundmin, wolfemin, boundmax);
+    wnga_step_bound_info(*g_xx, *g_vv, *g_xxll, *g_xxuu, boundmin, wolfemin, boundmax);
 }
 
 /* Routines from ga_solve_seq.c */

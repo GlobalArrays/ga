@@ -4167,7 +4167,7 @@ void GA_Step_bound_info(int g_xx, int g_vv, int g_xxll, int g_xxuu,  void *bound
     Integer vv = (Integer)g_vv;
     Integer xxll = (Integer)g_xxll;
     Integer xxuu = (Integer)g_xxuu;
-    wnga_step_bound_info(&xx, &vv, &xxll, &xxuu, boundmin, wolfemin, boundmax);
+    wnga_step_bound_info(xx, vv, xxll, xxuu, boundmin, wolfemin, boundmax);
 }
 
 void GA_Step_bound_info_patch(int g_xx, int xxlo[], int xxhi[],  int g_vv, int vvlo[], int vvhi[], int g_xxll, int xxlllo[], int xxllhi[], int g_xxuu,  int xxuulo[], int xxuuhi[], void *boundmin, void *wolfemin, void *boundmax)
@@ -4189,7 +4189,7 @@ void GA_Step_bound_info_patch(int g_xx, int xxlo[], int xxhi[],  int g_vv, int v
     COPYINDEX_C2F(xxllhi,_ga_xxllhi, ndim);
     COPYINDEX_C2F(xxuulo,_ga_xxuulo, ndim);
     COPYINDEX_C2F(xxuuhi,_ga_xxuuhi, ndim);
-    wnga_step_bound_info_patch(&xx, _ga_xxlo, _ga_xxhi, &vv, _ga_vvlo, _ga_vvhi, &xxll, _ga_xxlllo, _ga_xxllhi, &xxuu, _ga_xxuulo, _ga_xxuuhi , 
+    wnga_step_bound_info_patch(xx, _ga_xxlo, _ga_xxhi, vv, _ga_vvlo, _ga_vvhi, xxll, _ga_xxlllo, _ga_xxllhi, xxuu, _ga_xxuulo, _ga_xxuuhi , 
     boundmin,wolfemin,boundmax);
 }
 
@@ -4216,7 +4216,7 @@ void GA_Step_bound_info_patch64(int g_xx, int64_t xxlo[], int64_t xxhi[],
     COPYINDEX_C2F(xxllhi,_ga_xxllhi, ndim);
     COPYINDEX_C2F(xxuulo,_ga_xxuulo, ndim);
     COPYINDEX_C2F(xxuuhi,_ga_xxuuhi, ndim);
-    wnga_step_bound_info_patch(&xx, _ga_xxlo, _ga_xxhi, &vv, _ga_vvlo, _ga_vvhi, &xxll, _ga_xxlllo, _ga_xxllhi, &xxuu, _ga_xxuulo, _ga_xxuuhi , 
+    wnga_step_bound_info_patch(xx, _ga_xxlo, _ga_xxhi, vv, _ga_vvlo, _ga_vvhi, xxll, _ga_xxlllo, _ga_xxllhi, xxuu, _ga_xxuulo, _ga_xxuuhi , 
     boundmin,wolfemin,boundmax);
 }
 
@@ -4224,7 +4224,7 @@ void GA_Step_max(int g_a, int g_b, void *step)
 {
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
-    wnga_step_max(&a, &b, step);
+    wnga_step_max(a, b, step);
 }
 
 void GA_Step_max_patch(int g_a, int alo[], int ahi[], int g_b, int blo[], int bhi[], void *step)
@@ -4238,7 +4238,7 @@ void GA_Step_max_patch(int g_a, int alo[], int ahi[], int g_b, int blo[], int bh
     COPYINDEX_C2F(ahi,_ga_ahi, ndim);
     COPYINDEX_C2F(blo,_ga_blo, ndim);
     COPYINDEX_C2F(bhi,_ga_bhi, ndim);
-    wnga_step_max_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, step);
+    wnga_step_max_patch(a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi, step);
 }
 
 void GA_Step_max_patch64(int g_a, int64_t alo[], int64_t  ahi[],
@@ -4253,26 +4253,26 @@ void GA_Step_max_patch64(int g_a, int64_t alo[], int64_t  ahi[],
     COPYINDEX_C2F(ahi,_ga_ahi, ndim);
     COPYINDEX_C2F(blo,_ga_blo, ndim);
     COPYINDEX_C2F(bhi,_ga_bhi, ndim);
-    wnga_step_max_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, step);
+    wnga_step_max_patch(a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi, step);
 }
 
 void GA_Abs_value(int g_a)
 {
     Integer a = (Integer)g_a;
-    wnga_abs_value(&a);
+    wnga_abs_value(a);
 }
 
 void GA_Add_constant(int g_a, void *alpha)
 {
     Integer a = (Integer)g_a;
-    wnga_add_constant(&a, alpha);
+    wnga_add_constant(a, alpha);
 }
 
 
 void GA_Recip(int g_a)
 {
     Integer a = (Integer)g_a;
-    wnga_recip(&a);
+    wnga_recip(a);
 }
 
 void GA_Elem_multiply(int g_a, int g_b, int g_c)
@@ -4280,7 +4280,7 @@ void GA_Elem_multiply(int g_a, int g_b, int g_c)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
     Integer c = (Integer)g_c;
-    wnga_elem_multiply(&a, &b, &c);
+    wnga_elem_multiply(a, b, c);
 }
 
 void GA_Elem_divide(int g_a, int g_b, int g_c)
@@ -4288,7 +4288,7 @@ void GA_Elem_divide(int g_a, int g_b, int g_c)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
     Integer c = (Integer)g_c;
-    wnga_elem_divide(&a, &b, &c);
+    wnga_elem_divide(a, b, c);
 }
 
 void GA_Elem_maximum(int g_a, int g_b, int g_c)
@@ -4296,7 +4296,7 @@ void GA_Elem_maximum(int g_a, int g_b, int g_c)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
     Integer c = (Integer)g_c;
-    wnga_elem_maximum(&a, &b, &c);
+    wnga_elem_maximum(a, b, c);
 }
 
 
@@ -4305,7 +4305,7 @@ void GA_Elem_minimum(int g_a, int g_b, int g_c)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
     Integer c = (Integer)g_c;
-    wnga_elem_minimum(&a, &b, &c);
+    wnga_elem_minimum(a, b, c);
 }
 
 
@@ -4316,7 +4316,7 @@ void GA_Abs_value_patch(int g_a, int *lo, int *hi)
     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
-    wnga_abs_value_patch(&a,_ga_lo, _ga_hi);
+    wnga_abs_value_patch(a,_ga_lo, _ga_hi);
 }
 
 void GA_Abs_value_patch64(int g_a, int64_t *lo, int64_t *hi)
@@ -4326,7 +4326,7 @@ void GA_Abs_value_patch64(int g_a, int64_t *lo, int64_t *hi)
     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
-    wnga_abs_value_patch(&a,_ga_lo, _ga_hi);
+    wnga_abs_value_patch(a,_ga_lo, _ga_hi);
 }
 
 void GA_Add_constant_patch(int g_a, int *lo, int* hi, void *alpha)
@@ -4336,7 +4336,7 @@ void GA_Add_constant_patch(int g_a, int *lo, int* hi, void *alpha)
     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
-    wnga_add_constant_patch(&a, _ga_lo, _ga_hi, alpha);
+    wnga_add_constant_patch(a, _ga_lo, _ga_hi, alpha);
 }
 
 void GA_Add_constant_patch64(int g_a, int64_t *lo, int64_t *hi, void *alpha)
@@ -4346,7 +4346,7 @@ void GA_Add_constant_patch64(int g_a, int64_t *lo, int64_t *hi, void *alpha)
     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
-    wnga_add_constant_patch(&a, _ga_lo, _ga_hi, alpha);
+    wnga_add_constant_patch(a, _ga_lo, _ga_hi, alpha);
 }
 
 void GA_Recip_patch(int g_a, int *lo, int *hi)
@@ -4356,7 +4356,7 @@ void GA_Recip_patch(int g_a, int *lo, int *hi)
     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
-    wnga_recip_patch(&a,_ga_lo, _ga_hi);
+    wnga_recip_patch(a,_ga_lo, _ga_hi);
 }
 
 void GA_Recip_patch64(int g_a, int64_t *lo,  int64_t *hi)
@@ -4366,7 +4366,7 @@ void GA_Recip_patch64(int g_a, int64_t *lo,  int64_t *hi)
     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
-    wnga_recip_patch(&a,_ga_lo, _ga_hi);
+    wnga_recip_patch(a,_ga_lo, _ga_hi);
 }
 
 void GA_Elem_multiply_patch(int g_a, int alo[], int ahi[],
@@ -4388,7 +4388,7 @@ void GA_Elem_multiply_patch(int g_a, int alo[], int ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    wnga_elem_multiply_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_multiply_patch(a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi, c, _ga_clo, _ga_chi);
 }
 
 void GA_Elem_multiply_patch64(int g_a, int64_t alo[], int64_t ahi[],
@@ -4410,7 +4410,7 @@ void GA_Elem_multiply_patch64(int g_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    wnga_elem_multiply_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_multiply_patch(a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi, c, _ga_clo, _ga_chi);
 }
 
 void GA_Elem_divide_patch(int g_a, int alo[], int ahi[],
@@ -4432,7 +4432,7 @@ void GA_Elem_divide_patch(int g_a, int alo[], int ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    wnga_elem_divide_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_divide_patch(a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi, c, _ga_clo, _ga_chi);
 }
 
 void GA_Elem_divide_patch64(int g_a, int64_t alo[], int64_t ahi[],
@@ -4454,7 +4454,7 @@ void GA_Elem_divide_patch64(int g_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    wnga_elem_divide_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_divide_patch(a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi, c, _ga_clo, _ga_chi);
 }
 
 
@@ -4477,7 +4477,7 @@ void GA_Elem_maximum_patch(int g_a, int alo[], int ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    wnga_elem_maximum_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_maximum_patch(a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi, c, _ga_clo, _ga_chi);
 }
 
 void GA_Elem_maximum_patch64(int g_a, int64_t alo[], int64_t ahi[],
@@ -4499,7 +4499,7 @@ void GA_Elem_maximum_patch64(int g_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    wnga_elem_maximum_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_maximum_patch(a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi, c, _ga_clo, _ga_chi);
 }
 
 void GA_Elem_minimum_patch(int g_a, int alo[], int ahi[],
@@ -4521,7 +4521,7 @@ void GA_Elem_minimum_patch(int g_a, int alo[], int ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    wnga_elem_minimum_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_minimum_patch(a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi, c, _ga_clo, _ga_chi);
 }
 
 void GA_Elem_minimum_patch64(int g_a, int64_t alo[], int64_t ahi[],
@@ -4543,7 +4543,7 @@ void GA_Elem_minimum_patch64(int g_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
-    wnga_elem_minimum_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi);
+    wnga_elem_minimum_patch(a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi, c, _ga_clo, _ga_chi);
 }
 
 void GA_Shift_diagonal(int g_a, void *c){
