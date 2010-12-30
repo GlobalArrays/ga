@@ -95,11 +95,8 @@ void test()
 int main(int argc, char** argv)
 {
 #ifdef DCMF
-      int desired = MPI_THREAD_MULTIPLE;
       int provided;
-      printf("using MPI_Init_thread\n"); \
-      MPI_Init_thread(&argc, &argv, desired, &provided);
-      if ( provided != MPI_THREAD_MULTIPLE ) printf("provided != MPI_THREAD_MULTIPLE\n");
+      MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
 #else
       MPI_Init (&argc, &argv);  /* initialize MPI */
 #endif

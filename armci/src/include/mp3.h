@@ -42,15 +42,6 @@
         int status;
         int provided;
         status = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-        if ( provided == MPI_THREAD_MULTIPLE ) {
-            printf("MPI_THREAD_MULTIPLE\n");
-        } else if ( provided == MPI_THREAD_SERIALIZED ) {
-            printf("MPI_THREAD_SERIALIZED\n"); \
-        } else if ( provided == MPI_THREAD_FUNNELED ) {
-            printf("MPI_THREAD_FUNNELED\n"); \
-        } else if ( provided == MPI_THREAD_SINGLE ) {
-            printf("MPI_THREAD_SINGLE\n");
-        }
         return status;
     }
 #   else
