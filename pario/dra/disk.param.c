@@ -132,12 +132,12 @@ int dai_read_param(char* filename,Integer d_a)
 
 
     orig = 0; len=sizeof(int);
-    pnga_brdcst(&brd_type, &rc, &len, &orig);
+    pnga_brdcst(brd_type, &rc, len, orig);
     if(rc) return(rc);
 
     /* process 0 broadcasts data to everybody else */
     len = sizeof(disk_array_t);
-    pnga_brdcst(&brd_type, DRA + dra_hndl, &len, &orig);
+    pnga_brdcst(brd_type, DRA + dra_hndl, len, orig);
 
     return(rc);
 }

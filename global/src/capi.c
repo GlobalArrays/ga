@@ -2611,7 +2611,7 @@ void GA_Pgroup_brdcst(int grp_id, void *buf, int lenbuf, int root)
     Integer len = (Integer)lenbuf;
     Integer orig = (Integer)root;
     Integer grp = (Integer)grp_id;
-    wnga_pgroup_brdcst(&grp, &type, buf, &len, &orig);
+    wnga_pgroup_brdcst(grp, type, buf, len, orig);
 }
 
 void GA_Pgroup_sync(int grp_id)

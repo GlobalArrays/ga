@@ -57,29 +57,29 @@ void pnga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root)
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_brdcst = pnga_brdcst
 #endif
-void pnga_brdcst(Integer *type, void *buf, Integer *len, Integer *originator)
+void pnga_brdcst(Integer type, void *buf, Integer len, Integer originator)
 {
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    pnga_msg_brdcst(*type,buf,*len,*originator);
+    pnga_msg_brdcst(type,buf,len,originator);
 }
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_pgroup_brdcst = pnga_pgroup_brdcst
 #endif
-void pnga_pgroup_brdcst(Integer *grp_id, Integer *type, void *buf,
-                             Integer *len, Integer *originator)
+void pnga_pgroup_brdcst(Integer grp_id, Integer type, void *buf,
+                             Integer len, Integer originator)
 {
-    int p_grp = (int)*grp_id;
+    int p_grp = (int)grp_id;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if (p_grp > 0) {
 #ifdef MPI
-       int aroot = PGRP_LIST[p_grp].inv_map_proc_list[*originator];
-       armci_msg_group_bcast_scope(SCOPE_ALL,buf,(int)*len,aroot,(&(PGRP_LIST[p_grp].group)));
+       int aroot = PGRP_LIST[p_grp].inv_map_proc_list[originator];
+       armci_msg_group_bcast_scope(SCOPE_ALL,buf,(int)len,aroot,(&(PGRP_LIST[p_grp].group)));
 #endif
     } else {
-       int aroot = (int)*originator;
-       armci_msg_bcast(buf, (int)*len, (int)aroot);
+       int aroot = (int)originator;
+       armci_msg_bcast(buf, (int)len, (int)aroot);
     }
 }
 
@@ -117,9 +117,9 @@ void pnga_msg_sync()
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_msg_pgroup_sync = pnga_msg_pgroup_sync
 #endif
-void pnga_msg_pgroup_sync(Integer *grp_id)
+void pnga_msg_pgroup_sync(Integer grp_id)
 {
-    int p_grp = (int)(*grp_id);
+    int p_grp = (int)(grp_id);
     if(p_grp>0) {
 #     ifdef MPI       
         armci_msg_group_barrier(&(PGRP_LIST[p_grp].group));

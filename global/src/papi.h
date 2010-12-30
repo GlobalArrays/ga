@@ -192,10 +192,10 @@ extern Integer pnga_type_c2f(Integer type);
 
 /* Routines from collect.c */
 extern void pnga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root);
-extern void pnga_brdcst(Integer *type, void *buf, Integer *len, Integer *originator);
-extern void pnga_pgroup_brdcst(Integer *grp_id, Integer *type, void *buf, Integer *len, Integer *originator);
+extern void pnga_brdcst(Integer type, void *buf, Integer len, Integer originator);
+extern void pnga_pgroup_brdcst(Integer grp_id, Integer type, void *buf, Integer len, Integer originator);
 extern void pnga_msg_sync();
-extern void pnga_msg_pgroup_sync(Integer *grp_id);
+extern void pnga_msg_pgroup_sync(Integer grp_id);
 extern void pnga_pgroup_gop(Integer p_grp, Integer type, void *x, Integer n, char *op);
 extern void pnga_gop(Integer type, void *x, Integer n, char *op);
 

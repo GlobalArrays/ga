@@ -1564,18 +1564,18 @@ DoublePrecision FATR ga_wtime_()
 void FATR ga_brdcst_(
         Integer *type, void *buf, Integer *len, Integer *originator)
 {
-    wnga_brdcst(type, buf, len, originator);
+    wnga_brdcst(*type, buf, *len, *originator);
 }
 
 void FATR nga_brdcst_(
         Integer *type, void *buf, Integer *len, Integer *originator)
 {
-    wnga_brdcst(type, buf, len, originator);
+    wnga_brdcst(*type, buf, *len, *originator);
 }
 
 void FATR ga_pgroup_brdcst_(Integer *grp_id, Integer *type, void *buf, Integer *len, Integer *originator)
 {
-    wnga_pgroup_brdcst(grp_id, type, buf, len, originator);
+    wnga_pgroup_brdcst(*grp_id, *type, buf, *len, *originator);
 }
 
 void FATR ga_pgroup_gop_(Integer *grp, Integer *type, void *x, Integer *n, char *op, int len)

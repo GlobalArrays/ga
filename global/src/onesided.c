@@ -117,7 +117,7 @@ void pnga_pgroup_sync(Integer *grp_id)
 #ifdef BGML 
        ARMCI_Barrier();
 #endif
-       pnga_msg_pgroup_sync(grp_id);
+       pnga_msg_pgroup_sync(*grp_id);
        if(GA_fence_set)bzero(fence_array,(int)GAnproc);
        GA_fence_set=0;
 #   else
@@ -129,7 +129,7 @@ void pnga_pgroup_sync(Integer *grp_id)
 #ifdef BGML 
        ARMCI_Barrier();
 #endif
-       pnga_msg_pgroup_sync(grp_id);
+       pnga_msg_pgroup_sync(*grp_id);
        if(GA_fence_set)bzero(fence_array,(int)GAnproc);
        GA_fence_set=0;
     }
