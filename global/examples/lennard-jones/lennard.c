@@ -724,14 +724,17 @@ int main(int argc, char **argv) {
   int heap=4000000, stack=4000000;
   int natoms=NATOMS;
   int dims[NDIM];
-  
 
 #ifdef MPI
-  MPI_Init(&argc, &argv);                     /* initialize MPI */
+#   ifdef DCMF
+    int provided;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+#   else
+    MPI_Init (&argc, &argv);	/* initialize MPI */
+#   endif
 #else
-  tcg_pbegin(argc, argv);                     /* initialize TCGMSG */
+    tcg_pbegin(argc, argv);                        /* initialize TCGMSG */
 #endif
-
 
   /**
    * Initialize Global Arrays.
