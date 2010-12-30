@@ -17,7 +17,13 @@ double t0,t1,tget=0,tnbget=0,tput=0,tnbput=0,tnbwait=0,t2=0;
 #if PORTALS
     ARMCI_NetInit();
 #endif
-    MPI_Init(&argc,&argv);
+#ifdef DCMF
+      int provided;
+      MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+#else
+      MPI_Init (&argc, &argv);  /* initialize MPI */
+#endif
+
     MPI_Comm_rank(MPI_COMM_WORLD,&me);
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
     ARMCI_Init();
