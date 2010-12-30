@@ -13,10 +13,12 @@
 
 int main(int argc, char **argv)
 {
-    int desired = MPI_THREAD_MULTIPLE;
+#ifdef DCMF
     int provided;
-    //printf("using MPI_Init_thread\n");
-    MPI_Init_thread(&argc, &argv, desired, &provided);
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+#else
+    MPI_Init (&argc, &argv);	/* initialize MPI */
+#endif
 
     int me;
     int nproc;
@@ -24,33 +26,6 @@ int main(int argc, char **argv)
     MPI_Comm_size(MPI_COMM_WORLD,&nproc);
 
     printf("%d: Hello world!\n",me);
-
-    if ( me == 0 )
-    {
-        switch (provided)
-        {
-            case MPI_THREAD_MULTIPLE:
-                printf("%d: provided = MPI_THREAD_MULTIPLE\n",me);
-                break;
-
-            case MPI_THREAD_SERIALIZED:
-                printf("%d: provided = MPI_THREAD_SERIALIZED\n",me);
-                break;
-
-            case MPI_THREAD_FUNNELED:
-                printf("%d: provided = MPI_THREAD_FUNNELED\n",me);
-                break;
-
-            case MPI_THREAD_SINGLE:
-                printf("%d: provided = MPI_THREAD_SINGLE\n",me);
-                break;
-
-            default:
-                printf("%d: MPI_Init_thread returned an invalid value of <provided>.\n",me);
-                return(provided);
-                
-        }
-    }
 
     if (me==0) printf("%d: GA_Initialize\n",me);
     GA_Initialize();
