@@ -69,6 +69,8 @@ extern int ARMCI_PutS_flag(
                 int proc              /* remote process(or) ID */
                 );
 
+extern int ARMCI_Acc(int optype, void *scale, void *src, void* dst, int bytes, int proc);
+
 extern int ARMCI_AccS(                /* strided accumulate */
                 int  optype,          /* operation */
                 void *scale,          /* scale factor x += scale*y */

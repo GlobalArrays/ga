@@ -1,5 +1,7 @@
 #include "armci.h"
 
+int PARMCI_Acc(int optype, void *scale, void *src, void* dst, int bytes, int proc);
+
 int PARMCI_AccV (int op, void *scale, armci_giov_t * darr, int len, int proc);
 
 void PARMCI_Barrier ();
