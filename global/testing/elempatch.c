@@ -161,7 +161,7 @@ void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi);
 void NGA_Vfill_patch(int g_a, int lo[], int hi[])
 {
     Integer a=(Integer)g_a;
-    Integer ndim = pnga_ndim(&a);
+    Integer ndim = pnga_ndim(a);
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
 
@@ -172,7 +172,7 @@ void NGA_Vfill_patch(int g_a, int lo[], int hi[])
 void NGA_Pnfill_patch(int g_a, int lo[], int hi[])
 {
     Integer a=(Integer)g_a;
-    Integer ndim = pnga_ndim(&a);
+    Integer ndim = pnga_ndim(a);
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
 
@@ -1528,10 +1528,12 @@ test_fun (int type, int dim, int OP)
   }
   if (me == 0)
     {
-      if (MISMATCHED (result, 0))
+      if (MISMATCHED (result, 0)) {
     printf ("is not ok\n");
-      else
+    GA_Error("aborting", 1);
+      } else {
     printf ("is ok.\n");
+      }
     }
 
 /*
@@ -1646,10 +1648,10 @@ void nga_vfill_patch(Integer *g_a, Integer *lo, Integer *hi)
 
     GA_PUSH_NAME("nga_vfill_patch");
     
-    pnga_inquire(g_a,  &type, &ndim, dims);
+    pnga_inquire(*g_a,  &type, &ndim, dims);
 
     /* get limits of VISIBLE patch */ 
-    pnga_distribution(g_a, &me, loA, hiA);
+    pnga_distribution(*g_a, me, loA, hiA);
     
     /*  determine subset of my local patch to access  */
     /*  Output is in loA and hiA */
@@ -1902,13 +1904,13 @@ void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi)
 
   GA_PUSH_NAME("nga_pnfill_patch");
 
-  pnga_inquire(g_a,  &type, &ndim, dims);
+  pnga_inquire(*g_a,  &type, &ndim, dims);
 
-  num_blocks = pnga_total_blocks(g_a);
+  num_blocks = pnga_total_blocks(*g_a);
 
   if (num_blocks < 0) {
     /* get limits of VISIBLE patch */ 
-    pnga_distribution(g_a, &me, loA, hiA);
+    pnga_distribution(*g_a, me, loA, hiA);
 
     /*  determine subset of my local patch to access  */
     /*  Output is in loA and hiA */
@@ -1928,10 +1930,10 @@ void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi)
     Integer loS[MAXDIM];
     Integer nproc = pnga_nnodes();
     /* using simple block-cyclic data distribution */
-    if (!pnga_uses_proc_grid(g_a)){
+    if (!pnga_uses_proc_grid(*g_a)){
       for (i=me; i<num_blocks; i += nproc) {
         /* get limits of patch */
-        pnga_distribution(g_a, &i, loA, hiA);
+        pnga_distribution(*g_a, i, loA, hiA);
 
         /* loA is changed by pnga_patch_intersect, so
            save a copy */
@@ -1998,10 +2000,10 @@ void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi)
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer topology[MAXDIM];
       Integer blocks[MAXDIM], block_dims[MAXDIM];
-      pnga_get_proc_index(g_a, &me, proc_index);
-      pnga_get_proc_index(g_a, &me, index);
-      pnga_get_block_info(g_a, blocks, block_dims);
-      pnga_get_proc_grid(g_a, topology);
+      pnga_get_proc_index(*g_a, me, proc_index);
+      pnga_get_proc_index(*g_a, me, index);
+      pnga_get_block_info(*g_a, blocks, block_dims);
+      pnga_get_proc_grid(*g_a, topology);
       while (index[ndim-1] < blocks[ndim-1]) {
         /* find bounding coordinates of block */
         chk = 1;

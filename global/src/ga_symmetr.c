@@ -63,9 +63,9 @@ void pnga_symmetrize(Integer *g_a) {
 
   GA_PUSH_NAME("ga_symmetrize");
   
-  num_blocks_a = pnga_total_blocks(g_a);
+  num_blocks_a = pnga_total_blocks(*g_a);
 
-  pnga_inquire(g_a, &type, &ndim, dims);
+  pnga_inquire(*g_a, &type, &ndim, dims);
 
   if (type != C_DBL)
     pnga_error("ga_symmetrize: only implemented for double precision",0);
@@ -76,7 +76,7 @@ void pnga_symmetrize(Integer *g_a) {
       pnga_error("ga_sym: can only sym square matrix", 0L);
 
     /* Find the local distribution */
-    pnga_distribution(g_a, &me, alo, ahi);
+    pnga_distribution(*g_a, me, alo, ahi);
 
 
     have_data = ahi[0]>0;
@@ -111,11 +111,11 @@ void pnga_symmetrize(Integer *g_a) {
     /* For block-cyclic data, probably most efficient solution is to
        create duplicate copy, transpose it and add the results together */
     DoublePrecision half = 0.5;
-    if (!pnga_duplicate(g_a, &g_b, tempB))
+    if (!pnga_duplicate(*g_a, &g_b, tempB))
       pnga_error("ga_symmetrize: duplicate failed", 0L);
     pnga_transpose(g_a, &g_b);
     pnga_add(&half, g_a, &half, &g_b, g_a);
-    pnga_destroy(&g_b);
+    pnga_destroy(g_b);
   }
   GA_POP_NAME;
   if(local_sync_end)pnga_sync();

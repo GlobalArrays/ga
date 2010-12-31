@@ -109,15 +109,15 @@ extern proc_list_t *PGRP_LIST;
 
 #define ga_check_handleM(g_a, string) \
 {\
-    if(GA_OFFSET+ (*g_a) < 0 || GA_OFFSET+(*g_a) >=_max_global_array){ \
+    if(GA_OFFSET+ (g_a) < 0 || GA_OFFSET+(g_a) >=_max_global_array){   \
       char err_string[ERR_STR_LEN];                                    \
       sprintf(err_string, "%s: INVALID ARRAY HANDLE", string);         \
-      pnga_error(err_string, (*g_a));                                  \
+      pnga_error(err_string, (g_a));                                   \
     }                                                                  \
-    if( ! (GA[GA_OFFSET+(*g_a)].actv) ){                               \
+    if( ! (GA[GA_OFFSET+(g_a)].actv) ){                                \
       char err_string[ERR_STR_LEN];                                    \
       sprintf(err_string, "%s: ARRAY NOT ACTIVE", string);             \
-      pnga_error(err_string, (*g_a));                                  \
+      pnga_error(err_string, (g_a));                                   \
     }                                                                  \
 }
 

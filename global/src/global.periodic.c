@@ -202,7 +202,7 @@ void pnga_periodic(Integer *g_a, Integer *lo, Integer *hi, void *buf,
     Integer lop[MAXDIM], hip[MAXDIM];
     int get_range;
     
-    pnga_inquire(g_a, &type, &ndim, dims);
+    pnga_inquire(*g_a, &type, &ndim, dims);
 
     get_range = ngai_peri_get_range_(ndim, dims, lo, hi, range, range_num,
                                      offset, op_code);

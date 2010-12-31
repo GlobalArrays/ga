@@ -279,9 +279,9 @@ void ga_clean_resources()
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_check_handle = pnga_check_handle
 #endif
-void pnga_check_handle(Integer *g_a,char * string)
+void pnga_check_handle(Integer g_a, char * string)
 {
-  ga_check_handleM(g_a,string);
+  ga_check_handleM(g_a, string);
 }
 
 
@@ -508,7 +508,7 @@ int bytes;
     for(i=0;i<tmpcount;i++)
             tmplist[i]=i;
     ga_group_is_for_ft=1;
-    GA_Default_Proc_Group = pnga_pgroup_create(tmplist,&tmpcount);
+    GA_Default_Proc_Group = pnga_pgroup_create(tmplist,tmpcount);
     ga_group_is_for_ft=0;
     if(GAme>=tmpcount)
       ga_irecover(0);
@@ -603,14 +603,14 @@ Integer pnga_memory_avail()
 #   pragma weak wnga_set_memory_limit =  pnga_set_memory_limit
 #endif
 
-void pnga_set_memory_limit(Integer *mem_limit)
+void pnga_set_memory_limit(Integer mem_limit)
 {
   if(GA_memory_limited){
 
     /* if we had the limit set we need to adjust the amount available */
-    if (*mem_limit>=0)
+    if (mem_limit>=0)
       /* adjust the current value by diff between old and new limit */
-      GA_total_memory += (*mem_limit - GA_memory_limit);     
+      GA_total_memory += (mem_limit - GA_memory_limit);     
     else{
 
       /* negative values reset limit to "unlimited" */
@@ -620,8 +620,8 @@ void pnga_set_memory_limit(Integer *mem_limit)
 
   }else{
 
-    GA_total_memory = GA_memory_limit  = *mem_limit;
-    if(*mem_limit >= 0) GA_memory_limited = 1;
+    GA_total_memory = GA_memory_limit  = mem_limit;
+    if(mem_limit >= 0) GA_memory_limited = 1;
   }
 }
 
@@ -639,15 +639,15 @@ void pnga_set_memory_limit(Integer *mem_limit)
 #   pragma weak wnga_initialize_ltd = pnga_initialize_ltd
 #endif
 
-void pnga_initialize_ltd(Integer *mem_limit)
+void pnga_initialize_ltd(Integer mem_limit)
 {
 #ifdef USE_VAMPIR
   vampir_init(NULL,NULL,__FILE__,__LINE__);
   ga_vampir_init(__FILE__,__LINE__);
   vampir_begin(GA_INITIALIZE_LTD,__FILE__,__LINE__);
 #endif
-  GA_total_memory =GA_memory_limit  = *mem_limit; 
-  if(*mem_limit >= 0) GA_memory_limited = 1; 
+  GA_total_memory =GA_memory_limit  = mem_limit; 
+  if(mem_limit >= 0) GA_memory_limited = 1; 
   pnga_initialize();
 #ifdef USE_VAMPIR
   vampir_end(GA_INITIALIZE_LTD,__FILE__,__LINE__);
@@ -676,10 +676,10 @@ int _d;\
 #   pragma weak wnga_is_mirrored = pnga_is_mirrored
 #endif
 
-logical pnga_is_mirrored(Integer *g_a)
+logical pnga_is_mirrored(Integer g_a)
 {
   Integer ret = FALSE;
-  Integer handle = GA_OFFSET + *g_a;
+  Integer handle = GA_OFFSET + g_a;
   Integer p_handle = (Integer)GA[handle].p_handle;
   if (p_handle >= 0) {
      if (PGRP_LIST[p_handle].mirrored) ret = TRUE;
@@ -721,9 +721,9 @@ C_Integer *map= (map_ij);\
 #   pragma weak wnga_locate =  pnga_locate
 #endif
 
-logical pnga_locate(Integer *g_a, Integer* subscript, Integer* owner)
+logical pnga_locate(Integer g_a, Integer* subscript, Integer* owner)
 {
-Integer d, proc, dpos, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
+Integer d, proc, dpos, ndim, ga_handle = GA_OFFSET + g_a, proc_s[MAXDIM];
 int use_blocks;
 
    ga_check_handleM(g_a, "nga_locate");
@@ -751,7 +751,7 @@ int use_blocks;
        Integer i, j, chk, lo[MAXDIM], hi[MAXDIM];
        Integer num_blocks = GA[ga_handle].block_total;
        for (i=0; i< num_blocks; i++) {
-         pnga_distribution(g_a, &i, lo, hi);
+         pnga_distribution(g_a, i, lo, hi);
          chk = 1;
          for (j=0; j<ndim; j++) {
            if (subscript[j]<lo[j] || subscript[j] > hi[j]) chk = 0;
@@ -780,7 +780,7 @@ int use_blocks;
 /*\ UTILITY FUNCTION TO LOCATE THE BOUNDING INDICES OF A CONTIGUOUS CHUNK OF
  *  SHARED MEMORY FOR A MIRRORED ARRAY
 \*/
-void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
+void ngai_get_first_last_indices( Integer g_a)  /* array handle (input) */
 {
 
   Integer  lo[MAXDIM], hi[MAXDIM];
@@ -789,7 +789,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
   Integer  i, j, itmp, ndim, map_offset[MAXDIM];
   /* Integer  icheck; */
   Integer  index[MAXDIM], subscript[MAXDIM];
-  Integer  handle = GA_OFFSET + *g_a;
+  Integer  handle = GA_OFFSET + g_a;
   Integer  type, size=0, id, grp_id;
   int Save_default_group;
   char     *fptr, *lptr;
@@ -831,7 +831,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     nlast = -1;
     for (i = 0; i<nproc; i++) {
       /* find block indices corresponding to proc i */
-      pnga_proc_topology(g_a, &i, index);
+      pnga_proc_topology(g_a, i, index);
       nelems = 1;
       for (j = 0; j<ndim; j++) {
         if (index[j] < GA[handle].nblock[j]-1) {
@@ -859,7 +859,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
        adusting the lower index */
     icnt = 0;
     for (i = 0; i<nfirst; i++) {
-      pnga_distribution(g_a, &i, lo, hi);
+      pnga_distribution(g_a, i, lo, hi);
       nelems = 1;
       for (j = 0; j<ndim; j++) {
         if (hi[j] >= lo[j]) {
@@ -874,7 +874,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     ifirst = ifirst - icnt;
     /* find dimensions of data on block nfirst */
     np = nfirst;
-    pnga_distribution(g_a, &np, lo, hi);
+    pnga_distribution(g_a, np, lo, hi);
     nelems = 1;
     for (i=0; i<ndim-1; i++) {
       nelems *= (hi[i] - lo[i] + 1);
@@ -887,7 +887,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     }
     if (ifirst > GA[handle].dims[ndim-1]-1) ifirst=GA[handle].dims[ndim-1]-1;
     /* adjust value of ifirst */
-    pnga_proc_topology(g_a, &nfirst, index);
+    pnga_proc_topology(g_a, nfirst, index);
     subscript[ndim-1] = ifirst;
     for (i=0; i<ndim-1; i++) {
       subscript[i] = 0;
@@ -901,7 +901,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     if (nlast > nfirst) {
       icnt = 0;
       for (i = 0; i<nlast; i++) {
-        pnga_distribution(g_a, &i, lo, hi);
+        pnga_distribution(g_a, i, lo, hi);
         nelems = 1;
         for (j = 0; j<ndim; j++) {
           if (hi[j] >= lo[j]) {
@@ -916,7 +916,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     ilast = ilast - icnt;
     /* find dimensions of data on block nlast */
     np = nlast;
-    pnga_distribution(g_a, &np, lo, hi);
+    pnga_distribution(g_a, np, lo, hi);
     nelems = 1;
     for (i=0; i<ndim-1; i++) {
       nelems *= (hi[i] - lo[i] + 1);
@@ -927,7 +927,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     for (i=0; i<ndim-1; i++) {
       subscript[i] = (hi[i] - lo[i]);
     }
-    pnga_proc_topology(g_a, &nlast, index);
+    pnga_proc_topology(g_a, nlast, index);
     /*
     icheck = 1;
     for (i=1; i<ndim; i++) {
@@ -1016,7 +1016,7 @@ void gai_init_struct(int handle)
 #   pragma weak wnga_pgroup_set_default = pnga_pgroup_set_default
 #endif
 
-void pnga_pgroup_set_default(Integer *grp)
+void pnga_pgroup_set_default(Integer grp)
 {
     int local_sync_begin,local_sync_end;
  
@@ -1027,7 +1027,7 @@ void pnga_pgroup_set_default(Integer *grp)
 #if 0
     if (local_sync_begin || local_sync_end) pnga_pgroup_sync(grp);
 #endif
-    GA_Default_Proc_Group = (int)(*grp);
+    GA_Default_Proc_Group = (int)(grp);
 
 #ifdef MPI
     {
@@ -1050,7 +1050,7 @@ void pnga_pgroup_set_default(Integer *grp)
 #   pragma weak wnga_pgroup_create = pnga_pgroup_create
 #endif
 
-Integer pnga_pgroup_create(Integer *list, Integer *count)
+Integer pnga_pgroup_create(Integer *list, Integer count)
 {
     Integer pgrp_handle, i, j, nprocs, itmp;
     Integer parent;
@@ -1078,10 +1078,10 @@ Integer pnga_pgroup_create(Integer *list, Integer *count)
  
     /* Check list for validity (no duplicates and no out of range entries) */
     nprocs = GAnproc;
-    for (i=0; i<*count; i++) {
+    for (i=0; i<count; i++) {
        if (list[i] <0 || list[i] >= nprocs)
 	  pnga_error(" invalid element in list ", list[i]);
-       for (j=i+1; j<*count; j++) {
+       for (j=i+1; j<count; j++) {
 	  if (list[i] == list[j])
 	     pnga_error(" Duplicate elements in list ", list[i]);
        }
@@ -1098,12 +1098,12 @@ Integer pnga_pgroup_create(Integer *list, Integer *count)
     for (i=0; i<GAnproc; i++)
        PGRP_LIST[pgrp_handle].inv_map_proc_list[i] = -1;
     
-    for (i=0; i<*count; i++) {
+    for (i=0; i<count; i++) {
        tmp2_list[i] = (int)list[i];
     }
     
     /* use a simple sort routine to reorder list into assending order */
-    for (j=1; j<*count; j++) {
+    for (j=1; j<count; j++) {
        itmp = tmp2_list[j];
        i = j-1;
        while(i>=0  && tmp2_list[i] > itmp) {
@@ -1116,18 +1116,18 @@ Integer pnga_pgroup_create(Integer *list, Integer *count)
     /* Remap elements in list to absolute processor indices (if necessary)*/
     if (GA_Default_Proc_Group != -1) {
        parent = GA_Default_Proc_Group;
-       for (i=0; i<*count; i++) {
+       for (i=0; i<count; i++) {
           tmp_list[i] = (int)PGRP_LIST[parent].inv_map_proc_list[tmp2_list[i]];
        }
     } else {
-       for (i=0; i<*count; i++) {
+       for (i=0; i<count; i++) {
           tmp_list[i] = (int)tmp2_list[i];
        }
     }
     
-    tmp_count = (int)(*count);
+    tmp_count = (int)(count);
     /* Create proc list maps */
-    for (i=0; i<*count; i++) {
+    for (i=0; i<count; i++) {
        j = tmp_list[i];
        PGRP_LIST[pgrp_handle].map_proc_list[j] = i;
        PGRP_LIST[pgrp_handle].inv_map_proc_list[i] = j;
@@ -1165,10 +1165,9 @@ Integer pnga_pgroup_create(Integer *list, Integer *count)
 #   pragma weak wnga_pgroup_destroy = pnga_pgroup_destroy
 #endif
 
-logical pnga_pgroup_destroy(Integer *grp)
+logical pnga_pgroup_destroy(Integer grp_id)
 {
   logical ret = TRUE;
-  Integer grp_id = *grp;
 
    GA_PUSH_NAME("ga_pgroup_destroy_");
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
@@ -1234,7 +1233,7 @@ Integer pnga_pgroup_get_world()
 #   pragma weak wnga_pgroup_split = pnga_pgroup_split
 #endif
 
-Integer pnga_pgroup_split(Integer *grp, Integer *grp_num)
+Integer pnga_pgroup_split(Integer grp, Integer grp_num)
 {
   Integer nprocs, me, default_grp;
   Integer ratio, start, end, grp_size;
@@ -1246,21 +1245,21 @@ Integer pnga_pgroup_split(Integer *grp, Integer *grp_num)
   /* Allocate temporary array */
   nodes = (Integer*)malloc(GAnproc*sizeof(Integer));
 
-  if(*grp_num<0) pnga_error("Invalid argument (number of groups < 0)",*grp_num);
-  if(*grp_num==0) return *grp;
+  if(grp_num<0) pnga_error("Invalid argument (number of groups < 0)",grp_num);
+  if(grp_num==0) return grp;
   
   default_grp = pnga_pgroup_get_default();
   pnga_pgroup_set_default(grp);
   
 #if 0 /* This is wrong. Should split only default group and not world group */
   world_grp = pnga_pgroup_get_world();
-  pnga_pgroup_set_default(&world_grp);
+  pnga_pgroup_set_default(world_grp);
 #endif
   nprocs = pnga_nnodes();
   me = pnga_nodeid();
   /* Figure out how big groups are */
-  grp_size = nprocs/(*grp_num);
-  if (nprocs > grp_size*(*grp_num)) grp_size++;
+  grp_size = nprocs/grp_num;
+  if (nprocs > grp_size*grp_num) grp_size++;
   /* Figure out what procs are in my group */
   ratio = me/grp_size;
   start = ratio*grp_size;
@@ -1271,7 +1270,7 @@ Integer pnga_pgroup_split(Integer *grp, Integer *grp_num)
   icnt = 0;
   for (i= 0; i<nprocs; i++) {
     if (icnt%grp_size == 0 && i>0) {
-      grp_id = pnga_pgroup_create(nodes, &grp_size);
+      grp_id = pnga_pgroup_create(nodes, grp_size);
       if (i == end + 1) {
         ret = grp_id;
       }
@@ -1280,11 +1279,11 @@ Integer pnga_pgroup_split(Integer *grp, Integer *grp_num)
     nodes[icnt] = i;
     icnt++;
   }
-  grp_id = pnga_pgroup_create(nodes, &icnt);
+  grp_id = pnga_pgroup_create(nodes, icnt);
   if (end == nprocs-1) {
     ret = grp_id;
   }
-  pnga_pgroup_set_default(&default_grp);
+  pnga_pgroup_set_default(default_grp);
   if(ret==-1) pnga_error("ga_pgroup_split failed",ret);
   /* Free temporary array */
   GA_POP_NAME;
@@ -1300,7 +1299,7 @@ Integer pnga_pgroup_split(Integer *grp, Integer *grp_num)
 #   pragma weak wnga_pgroup_split_irreg = pnga_pgroup_split_irreg
 #endif
 
-Integer pnga_pgroup_split_irreg(Integer *grp, Integer *mycolor)
+Integer pnga_pgroup_split_irreg(Integer grp, Integer mycolor)
 {
   Integer nprocs, me, default_grp, grp_id;
   Integer i, icnt=0;
@@ -1312,7 +1311,7 @@ Integer pnga_pgroup_split_irreg(Integer *grp, Integer *mycolor)
   nodes = (Integer*)malloc(GAnproc*sizeof(Integer));
   color_arr = (Integer*)malloc(GAnproc*sizeof(Integer));
 
-  if(*mycolor<0) pnga_error("Invalid argument (color < 0)",*mycolor);
+  if(mycolor<0) pnga_error("Invalid argument (color < 0)",mycolor);
 
   default_grp = pnga_pgroup_get_default();
   pnga_pgroup_set_default(grp);
@@ -1321,19 +1320,19 @@ Integer pnga_pgroup_split_irreg(Integer *grp, Integer *mycolor)
 
   /* Figure out what procs are in my group */
   for(i=0; i<nprocs; i++) color_arr[i] = 0;
-  color_arr[me] = *mycolor;
+  color_arr[me] = mycolor;
   pnga_gop(pnga_type_f2c(MT_F_INT), color_arr, nprocs, "+");
 
   for (icnt=0, i=0; i<nprocs; i++) {
-     if(color_arr[i] == *mycolor) {
+     if(color_arr[i] == mycolor) {
         nodes[icnt] = i;
         icnt++;
      }
   }
 
-  grp_id = pnga_pgroup_create(nodes, &icnt);
+  grp_id = pnga_pgroup_create(nodes, icnt);
 
-  pnga_pgroup_set_default(&default_grp);
+  pnga_pgroup_set_default(default_grp);
 
   /* Free temporary arrays */
   free(nodes);
@@ -1403,25 +1402,25 @@ Integer pnga_create_handle()
 #   pragma weak wnga_set_data = pnga_set_data
 #endif
 
-void pnga_set_data(Integer *g_a, Integer *ndim, Integer *dims, Integer *type)
+void pnga_set_data(Integer g_a, Integer ndim, Integer *dims, Integer type)
 {
   Integer i;
-  Integer ga_handle = *g_a + GA_OFFSET;
+  Integer ga_handle = g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_data");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set data on array that has been allocated",0);
-  gam_checkdim(*ndim, dims);
-  gam_checktype(pnga_type_f2c(*type));
+  gam_checkdim(ndim, dims);
+  gam_checktype(pnga_type_f2c(type));
 
-  GA[ga_handle].type = pnga_type_f2c((int)(*type));
+  GA[ga_handle].type = pnga_type_f2c((int)(type));
   GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
 
-  for (i=0; i<*ndim; i++) {
+  for (i=0; i<ndim; i++) {
     GA[ga_handle].dims[i] = (C_Integer)dims[i];
     GA[ga_handle].chunk[i] = 0;
     GA[ga_handle].width[i] = 0;
   }
-  GA[ga_handle].ndim = (int)(*ndim);
+  GA[ga_handle].ndim = (int)(ndim);
   GA_POP_NAME;
 }
 
@@ -1432,10 +1431,10 @@ void pnga_set_data(Integer *g_a, Integer *ndim, Integer *dims, Integer *type)
 #   pragma weak wnga_set_chunk = pnga_set_chunk
 #endif
 
-void pnga_set_chunk(Integer *g_a, Integer *chunk)
+void pnga_set_chunk(Integer g_a, Integer *chunk)
 {
   Integer i;
-  Integer ga_handle = *g_a + GA_OFFSET;
+  Integer ga_handle = g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_chunk");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set chunk on array that has been allocated",0);
@@ -1456,9 +1455,9 @@ void pnga_set_chunk(Integer *g_a, Integer *chunk)
 #   pragma weak wnga_set_array_name = pnga_set_array_name
 #endif
 
-void pnga_set_array_name(Integer *g_a, char *array_name)
+void pnga_set_array_name(Integer g_a, char *array_name)
 {
-  Integer ga_handle = *g_a + GA_OFFSET;
+  Integer ga_handle = g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_array_name");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set array name on array that has been allocated",0);
@@ -1473,14 +1472,14 @@ void pnga_set_array_name(Integer *g_a, char *array_name)
 #   pragma weak wnga_set_pgroup = pnga_set_pgroup
 #endif
 
-void pnga_set_pgroup(Integer *g_a, Integer *p_handle)
+void pnga_set_pgroup(Integer g_a, Integer p_handle)
 {
-  Integer ga_handle = *g_a + GA_OFFSET;
+  Integer ga_handle = g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_pgroup");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set processor configuration on array that has been allocated",0);
-  if (*p_handle == GA_World_Proc_Group || PGRP_LIST[*p_handle].actv == 1) {
-    GA[ga_handle].p_handle = (int) (*p_handle);
+  if (p_handle == GA_World_Proc_Group || PGRP_LIST[p_handle].actv == 1) {
+    GA[ga_handle].p_handle = (int) (p_handle);
   } else {
     pnga_error("Processor group does not exist",0);
   }
@@ -1494,9 +1493,9 @@ void pnga_set_pgroup(Integer *g_a, Integer *p_handle)
 #   pragma weak wnga_get_pgroup = pnga_get_pgroup
 #endif
 
-Integer pnga_get_pgroup(Integer *g_a)
+Integer pnga_get_pgroup(Integer g_a)
 {
-    Integer ga_handle = *g_a + GA_OFFSET;
+    Integer ga_handle = g_a + GA_OFFSET;
     return (Integer)GA[ga_handle].p_handle;
 }
 
@@ -1507,9 +1506,9 @@ Integer pnga_get_pgroup(Integer *g_a)
 #   pragma weak wnga_get_pgroup_size = pnga_get_pgroup_size
 #endif
 
-Integer pnga_get_pgroup_size(Integer *grp_id)
+Integer pnga_get_pgroup_size(Integer grp_id)
 {
-    int p_handle = (int)(*grp_id);
+    int p_handle = (int)(grp_id);
     if (p_handle > 0) {
        return (Integer)PGRP_LIST[p_handle].map_nproc;
     } else {
@@ -1524,10 +1523,10 @@ Integer pnga_get_pgroup_size(Integer *grp_id)
 #   pragma weak wnga_set_ghosts = pnga_set_ghosts
 #endif
 
-void pnga_set_ghosts(Integer *g_a, Integer *width)
+void pnga_set_ghosts(Integer g_a, Integer *width)
 {
   Integer i;
-  Integer ga_handle = *g_a + GA_OFFSET;
+  Integer ga_handle = g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_ghosts");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set ghost widths on array that has been allocated",0);
@@ -1553,10 +1552,10 @@ void pnga_set_ghosts(Integer *g_a, Integer *width)
 #   pragma weak wnga_set_irreg_distr = pnga_set_irreg_distr
 #endif
 
-void pnga_set_irreg_distr(Integer *g_a, Integer *mapc, Integer *nblock)
+void pnga_set_irreg_distr(Integer g_a, Integer *mapc, Integer *nblock)
 {
   Integer i, j, ichk, maplen;
-  Integer ga_handle = *g_a + GA_OFFSET;
+  Integer ga_handle = g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_irreg_distr");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set irregular data distribution on array that has been allocated",0);
@@ -1604,11 +1603,11 @@ void pnga_set_irreg_distr(Integer *g_a, Integer *mapc, Integer *nblock)
 #   pragma weak wnga_set_irreg_flag = pnga_set_irreg_flag
 #endif
 
-void pnga_set_irreg_flag(Integer *g_a, logical *flag)
+void pnga_set_irreg_flag(Integer g_a, logical flag)
 {
-  Integer ga_handle = *g_a + GA_OFFSET;
+  Integer ga_handle = g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_irreg_flag");
-  GA[ga_handle].irreg = (int)(*flag);
+  GA[ga_handle].irreg = (int)(flag);
   GA_POP_NAME;
 }
 
@@ -1619,9 +1618,9 @@ void pnga_set_irreg_flag(Integer *g_a, logical *flag)
 #   pragma weak wnga_get_dimension = pnga_get_dimension
 #endif
 
-Integer pnga_get_dimension(Integer *g_a)
+Integer pnga_get_dimension(Integer g_a)
 {
-  Integer ga_handle = *g_a + GA_OFFSET;
+  Integer ga_handle = g_a + GA_OFFSET;
   return (Integer)GA[ga_handle].ndim;
 } 
 
@@ -1632,10 +1631,10 @@ Integer pnga_get_dimension(Integer *g_a)
 #   pragma weak wnga_set_block_cyclic = pnga_set_block_cyclic
 #endif
 
-void pnga_set_block_cyclic(Integer *g_a, Integer *dims)
+void pnga_set_block_cyclic(Integer g_a, Integer *dims)
 {
   Integer i, jsize;
-  Integer ga_handle = *g_a + GA_OFFSET;
+  Integer ga_handle = g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_block_cyclic");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set block-cyclic data distribution on array that has been allocated",0);
@@ -1669,10 +1668,10 @@ void pnga_set_block_cyclic(Integer *g_a, Integer *dims)
 #   pragma weak wnga_set_block_cyclic_proc_grid = pnga_set_block_cyclic_proc_grid
 #endif
 
-void pnga_set_block_cyclic_proc_grid(Integer *g_a, Integer *dims, Integer *proc_grid)
+void pnga_set_block_cyclic_proc_grid(Integer g_a, Integer *dims, Integer *proc_grid)
 {
   Integer i, jsize, tot;
-  Integer ga_handle = *g_a + GA_OFFSET;
+  Integer ga_handle = g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_block_cyclic_proc_grid");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set block-cyclic data distribution on array that has been allocated",0);
@@ -1717,13 +1716,13 @@ void pnga_set_block_cyclic_proc_grid(Integer *g_a, Integer *dims, Integer *proc_
 #   pragma weak wnga_set_restricted = pnga_set_restricted
 #endif
 
-void pnga_set_restricted(Integer *g_a, Integer *list, Integer *size)
+void pnga_set_restricted(Integer g_a, Integer *list, Integer size)
 {
   Integer i, ig, id=0, me, p_handle, has_data, nproc;
-  Integer ga_handle = *g_a + GA_OFFSET;
+  Integer ga_handle = g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_restricted");
-  GA[ga_handle].num_rstrctd = *size;
-  GA[ga_handle].rstrctd_list = (Integer*)malloc((*size)*sizeof(Integer));
+  GA[ga_handle].num_rstrctd = size;
+  GA[ga_handle].rstrctd_list = (Integer*)malloc(size*sizeof(Integer));
   GA[ga_handle].rank_rstrctd = (Integer*)malloc((GAnproc)*sizeof(Integer));
   p_handle = GA[ga_handle].p_handle;
   if (p_handle == -2) p_handle = pnga_pgroup_get_default();
@@ -1740,7 +1739,7 @@ void pnga_set_restricted(Integer *g_a, Integer *list, Integer *size)
     GA[ga_handle].rank_rstrctd[i] = -1;
   }
 
-  for (i=0; i<*size; i++) {
+  for (i=0; i<size; i++) {
     GA[ga_handle].rstrctd_list[i] = list[i];
     /* check if processor is in list */
     if (me == list[i]) {
@@ -1766,11 +1765,11 @@ void pnga_set_restricted(Integer *g_a, Integer *list, Integer *size)
 #   pragma weak wnga_set_restricted_range = pnga_set_restricted_range
 #endif
 
-void pnga_set_restricted_range(Integer *g_a, Integer *lo_proc, Integer *hi_proc)
+void pnga_set_restricted_range(Integer g_a, Integer lo_proc, Integer hi_proc)
 {
   Integer i, ig, id=0, me, p_handle, has_data, icnt, nproc, size;
-  Integer ga_handle = *g_a + GA_OFFSET;
-  size = *hi_proc - *lo_proc + 1;
+  Integer ga_handle = g_a + GA_OFFSET;
+  size = hi_proc - lo_proc + 1;
   GA_PUSH_NAME("ga_set_restricted_range");
   GA[ga_handle].num_rstrctd = size;
   GA[ga_handle].rstrctd_list = (Integer*)malloc((size)*sizeof(Integer));
@@ -1791,7 +1790,7 @@ void pnga_set_restricted_range(Integer *g_a, Integer *lo_proc, Integer *hi_proc)
   }
 
   icnt = 0;
-  for (i=*lo_proc; i<=*hi_proc; i++) {
+  for (i=lo_proc; i<=hi_proc; i++) {
     GA[ga_handle].rstrctd_list[icnt] = i;
     /* check if processor is in list */
     if (me == i) {
@@ -1817,11 +1816,11 @@ void pnga_set_restricted_range(Integer *g_a, Integer *lo_proc, Integer *hi_proc)
 #   pragma weak wnga_allocate = pnga_allocate
 #endif
 
-logical pnga_allocate( Integer *g_a)
+logical pnga_allocate(Integer g_a)
 {
 
   Integer hi[MAXDIM];
-  Integer ga_handle = *g_a + GA_OFFSET;
+  Integer ga_handle = g_a + GA_OFFSET;
   Integer d, width[MAXDIM], ndim;
   Integer mem_size, nelem;
   Integer i, status, maplen=0, p_handle;
@@ -2017,7 +2016,7 @@ logical pnga_allocate( Integer *g_a)
     } else {
        i = GA[ga_handle].corner_flag;
     }
-    pnga_set_ghost_corner_flag(g_a, &i);
+    pnga_set_ghost_corner_flag(&g_a, &i);
  
     for( i = 0; i< ndim; i++){
        GA[ga_handle].scale[i] = (double)GA[ga_handle].nblock[i]
@@ -2026,9 +2025,9 @@ logical pnga_allocate( Integer *g_a)
     /*** determine which portion of the array I am supposed to hold ***/
     if (p_handle == 0) { /* for mirrored arrays */
        Integer me_local = (Integer)PGRP_LIST[p_handle].map_proc_list[GAme];
-       pnga_distribution(g_a, &me_local, GA[ga_handle].lo, hi);
+       pnga_distribution(g_a, me_local, GA[ga_handle].lo, hi);
     } else {
-       pnga_distribution(g_a, &grp_me, GA[ga_handle].lo, hi);
+       pnga_distribution(g_a, grp_me, GA[ga_handle].lo, hi);
     }
     if (GA[ga_handle].num_rstrctd == 0 || GA[ga_handle].has_data == 1) {
       for( i = 0, nelem=1; i< ndim; i++){
@@ -2066,11 +2065,11 @@ logical pnga_allocate( Integer *g_a)
   if (GA[ga_handle].block_flag == 0) {
     /* Finish setting up information for ghost cell updates */
     if (GA[ga_handle].ghosts == 1) {
-      if (!pnga_set_ghost_info(g_a))
+      if (!pnga_set_ghost_info(&g_a))
         pnga_error("Could not allocate update information for ghost cells",0);
     }
     /* If array is mirrored, evaluate first and last indices */
-    /* ngai_get_first_last_indices(g_a); */
+    /* ngai_get_first_last_indices(&g_a); */
   }
 
   pnga_pgroup_sync(&p_handle);
@@ -2103,15 +2102,16 @@ logical pnga_allocate( Integer *g_a)
 logical pnga_create_ghosts_irreg_config(
         Integer type,     /* MA type */
         Integer ndim,     /* number of dimensions */
-        Integer dims[],   /* array of dimensions */
-        Integer width[],  /* width of boundary cells for each dimension */
+        Integer *dims,    /* array of dimensions */
+        Integer *width,   /* width of boundary cells for each dimension */
         char *array_name, /* array name */
-        Integer map[],    /* decomposition map array */ 
-        Integer nblock[], /* number of blocks for each dimension in map */
+        Integer *map,     /* decomposition map array */ 
+        Integer *nblock,  /* number of blocks for each dimension in map */
         Integer p_handle, /* processor list handle */
         Integer *g_a)     /* array handle (output) */
 {
   logical status;
+  Integer g_A;
 #ifdef USE_VAMPIR
   vampir_begin(NGA_CREATE_GHOSTS_IRREG_CONFIG,__FILE__,__LINE__);
 #endif
@@ -2120,13 +2120,14 @@ logical pnga_create_ghosts_irreg_config(
   pnga_sync();
   GA_PUSH_NAME("pnga_create_ghosts_irreg_config");
 
-  *g_a = pnga_create_handle();
-  pnga_set_data(g_a,&ndim,dims,&type);
-  pnga_set_ghosts(g_a,width);
-  pnga_set_array_name(g_a,array_name);
-  pnga_set_irreg_distr(g_a,map,nblock);
-  pnga_set_pgroup(g_a,&p_handle);
-  status = pnga_allocate(g_a);
+  g_A = pnga_create_handle();
+  *g_a = g_A;
+  pnga_set_data(g_A,ndim,dims,type);
+  pnga_set_ghosts(g_A,width);
+  pnga_set_array_name(g_A,array_name);
+  pnga_set_irreg_distr(g_A,map,nblock);
+  pnga_set_pgroup(g_A,p_handle);
+  status = pnga_allocate(g_A);
 
   GA_POP_NAME;
 #ifdef USE_VAMPIR
@@ -2172,13 +2173,15 @@ logical pnga_create_config(Integer type,
                          Integer *g_a)
 {
   logical status;
+  Integer g_A;
   GA_PUSH_NAME("pnga_create_config");
-  *g_a = pnga_create_handle();
-  pnga_set_data(g_a,&ndim,dims,&type);
-  pnga_set_array_name(g_a,array_name);
-  pnga_set_chunk(g_a,chunk);
-  pnga_set_pgroup(g_a,&p_handle);
-  status = pnga_allocate(g_a);
+  g_A = pnga_create_handle();
+  *g_a = g_A;
+  pnga_set_data(g_A,ndim,dims,type);
+  pnga_set_array_name(g_A,array_name);
+  pnga_set_chunk(g_A,chunk);
+  pnga_set_pgroup(g_A,p_handle);
+  status = pnga_allocate(g_A);
   GA_POP_NAME;
   return status;
 }
@@ -2221,14 +2224,16 @@ logical pnga_create_ghosts_config(Integer type,
                    Integer *g_a)
 {
   logical status;
+  Integer g_A;
   GA_PUSH_NAME("nga_create_ghosts_config");
-  *g_a = pnga_create_handle();
-  pnga_set_data(g_a,&ndim,dims,&type);
-  pnga_set_ghosts(g_a,width);
-  pnga_set_array_name(g_a,array_name);
-  pnga_set_chunk(g_a,chunk);
-  pnga_set_pgroup(g_a,&p_handle);
-  status = pnga_allocate(g_a);
+  g_A = pnga_create_handle();
+  *g_a = g_A;
+  pnga_set_data(g_A,ndim,dims,type);
+  pnga_set_ghosts(g_A,width);
+  pnga_set_array_name(g_A,array_name);
+  pnga_set_chunk(g_A,chunk);
+  pnga_set_pgroup(g_A,p_handle);
+  status = pnga_allocate(g_A);
   GA_POP_NAME;
   return status;
 }
@@ -2544,14 +2549,14 @@ char **ptr_arr = (char**)(info+1);
 #   pragma weak wnga_distribution = pnga_distribution
 #endif
 
-void pnga_distribution(Integer *g_a, Integer *proc, Integer *lo, Integer * hi)
+void pnga_distribution(Integer g_a, Integer proc, Integer *lo, Integer * hi)
 {
 Integer ga_handle, lproc;
 
    ga_check_handleM(g_a, "nga_distribution");
-   ga_handle = (GA_OFFSET + *g_a);
+   ga_handle = (GA_OFFSET + g_a);
 
-   lproc = *proc;
+   lproc = proc;
    if (GA[ga_handle].num_rstrctd > 0) {
      lproc = GA[ga_handle].rank_rstrctd[lproc];
    }
@@ -2577,9 +2582,9 @@ Integer ga_handle, lproc;
 #   pragma weak wnga_has_ghosts =  pnga_has_ghosts
 #endif
 
-logical pnga_has_ghosts(Integer* g_a)
+logical pnga_has_ghosts(Integer g_a)
 {
-      int h_a = (int)*g_a + GA_OFFSET;
+      int h_a = (int)g_a + GA_OFFSET;
       return GA[h_a].ghosts;
 }
 /**
@@ -2589,10 +2594,10 @@ logical pnga_has_ghosts(Integer* g_a)
 #   pragma weak wnga_ndim =  pnga_ndim
 #endif
 
-Integer pnga_ndim(Integer *g_a)
+Integer pnga_ndim(Integer g_a)
 {
       ga_check_handleM(g_a,"ga_ndim");       
-      return GA[*g_a +GA_OFFSET].ndim;
+      return GA[g_a +GA_OFFSET].ndim;
 }
  
 
@@ -2608,14 +2613,14 @@ Integer pnga_ndim(Integer *g_a)
 #   pragma weak wnga_duplicate =  pnga_duplicate
 #endif
 
-logical pnga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
+logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
 {
   char     **save_ptr;
   C_Long  mem_size, mem_size_proc;
   Integer  i, ga_handle, status;
   int local_sync_begin,local_sync_end;
   Integer grp_id, grp_me=GAme, grp_nproc=GAnproc;
-  int maplen = calc_maplen(GA_OFFSET + *g_a);
+  int maplen = calc_maplen(GA_OFFSET + g_a);
 
 #ifdef USE_VAMPIR
   vampir_begin(GA_DUPLICATE,__FILE__,__LINE__);
@@ -2650,20 +2655,20 @@ logical pnga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
 
   /*** copy content of the data structure ***/
   save_ptr = GA[ga_handle].ptr;
-  GA[ga_handle] = GA[GA_OFFSET + *g_a];
+  GA[ga_handle] = GA[GA_OFFSET + g_a];
   strcpy(GA[ga_handle].name, array_name);
   GA[ga_handle].ptr = save_ptr;
   if (maplen > 0) {
     GA[ga_handle].mapc = (C_Integer*)malloc((maplen+1)*sizeof(C_Integer*));
-    for(i=0;i<maplen; i++)GA[ga_handle].mapc[i] = GA[GA_OFFSET+ *g_a].mapc[i];
+    for(i=0;i<maplen; i++)GA[ga_handle].mapc[i] = GA[GA_OFFSET+ g_a].mapc[i];
     GA[ga_handle].mapc[maplen] = -1;
   }
 
   /*** copy info for restricted arrays, if relevant ***/
-  if (GA[GA_OFFSET + *g_a].num_rstrctd > 0) {
-    GA[ga_handle].num_rstrctd = GA[GA_OFFSET + *g_a].num_rstrctd;
-    pnga_set_restricted(g_a, GA[GA_OFFSET + *g_a].rstrctd_list,
-        &GA[GA_OFFSET + *g_a].num_rstrctd);
+  if (GA[GA_OFFSET + g_a].num_rstrctd > 0) {
+    GA[ga_handle].num_rstrctd = GA[GA_OFFSET + g_a].num_rstrctd;
+    pnga_set_restricted(g_a, GA[GA_OFFSET + g_a].rstrctd_list,
+        GA[GA_OFFSET + g_a].num_rstrctd);
   }
 
   /*** Memory Allocation & Initialization of GA Addressing Space ***/
@@ -2700,7 +2705,7 @@ logical pnga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
   if(status){
     Integer one = 1; 
     Integer dim1 =(Integer)GA[ga_handle].dims[1], dim2=(Integer)GA[ga_handle].dims[2];
-    if(GAme==0)fprintf(stderr,"duplicate:initializing GA array%ld\n",*g_b);
+    if(GAme==0)fprintf(stderr,"duplicate:initializing GA array%ld\n",g_b);
     if(GA[ga_handle].type == C_DBL) {
       double bad = (double) DBL_MAX;
       ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
@@ -2738,7 +2743,7 @@ logical pnga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
     return(TRUE);
   }else{ 
     if (GA_memory_limited) GA_total_memory += mem_size_proc;
-    pnga_destroy(g_b);
+    pnga_destroy(*g_b);
     return(FALSE);
   }
 }
@@ -2761,7 +2766,7 @@ int maplen = calc_maplen(GA_OFFSET + g_a);
 
       GAstat.numcre ++;
 
-      ga_check_handleM(&g_a,"ga_assemble_duplicate");
+      ga_check_handleM(g_a,"ga_assemble_duplicate");
 
       /* find a free global_array handle for g_b */
       ga_handle =-1; i=0;
@@ -2810,9 +2815,9 @@ int maplen = calc_maplen(GA_OFFSET + g_a);
 #   pragma weak wnga_destroy =  pnga_destroy
 #endif
 
-logical pnga_destroy(Integer *g_a)
+logical pnga_destroy(Integer g_a)
 {
-Integer ga_handle = GA_OFFSET + *g_a, grp_id, grp_me=GAme;
+Integer ga_handle = GA_OFFSET + g_a, grp_id, grp_me=GAme;
 int local_sync_begin;
 
 #ifdef USE_VAMPIR
@@ -2919,7 +2924,7 @@ Integer i, handle;
 #endif
     for (i=0;i<_max_global_array;i++){
           handle = i - GA_OFFSET ;
-          if(GA[i].actv) pnga_destroy(&handle);
+          if(GA[i].actv) pnga_destroy(handle);
           if(GA[i].ptr) free(GA[i].ptr);
           if(GA[i].mapc) free(GA[i].mapc);
     }
@@ -2954,11 +2959,11 @@ Integer i, handle;
 #   pragma weak wnga_verify_handle =  pnga_verify_handle
 #endif
 
-Integer pnga_verify_handle(Integer *g_a)
+Integer pnga_verify_handle(Integer g_a)
 {
   return (Integer)
-    ((*g_a + GA_OFFSET>= 0) && (*g_a + GA_OFFSET< _max_global_array) && 
-             GA[GA_OFFSET + (*g_a)].actv);
+    ((g_a + GA_OFFSET>= 0) && (g_a + GA_OFFSET< _max_global_array) && 
+             GA[GA_OFFSET + (g_a)].actv);
 }
  
 
@@ -2970,9 +2975,9 @@ Integer pnga_verify_handle(Integer *g_a)
 #   pragma weak wnga_randomize =  pnga_randomize
 #endif
 
-void pnga_randomize(Integer *g_a, void* val)
+void pnga_randomize(Integer g_a, void* val)
 {
-  int i,handle=GA_OFFSET + (int)*g_a;
+  int i,handle=GA_OFFSET + (int)g_a;
   char *ptr;
   int local_sync_begin,local_sync_end;
   C_Long elems;
@@ -3033,7 +3038,7 @@ void pnga_randomize(Integer *g_a, void* val)
     }
   } else {
     Integer I_elems = (Integer)elems;
-    pnga_access_block_segment_ptr(g_a,&GAme,&ptr,&I_elems);
+    pnga_access_block_segment_ptr(&g_a,&GAme,&ptr,&I_elems);
     elems = (C_Long)I_elems;
     switch (GA[handle].type){
 /*
@@ -3062,7 +3067,7 @@ void pnga_randomize(Integer *g_a, void* val)
       default:
         pnga_error("type not supported",GA[handle].type);
     }
-    pnga_release_block_segment(g_a,&GAme);
+    pnga_release_block_segment(&g_a,&GAme);
   }
 
   if(local_sync_end)pnga_pgroup_sync(&grp_id);
@@ -3081,9 +3086,9 @@ void pnga_randomize(Integer *g_a, void* val)
 #   pragma weak wnga_fill =  pnga_fill
 #endif
 
-void pnga_fill(Integer *g_a, void* val)
+void pnga_fill(Integer g_a, void* val)
 {
-  int i,handle=GA_OFFSET + (int)*g_a;
+  int i,handle=GA_OFFSET + (int)g_a;
   char *ptr;
   int local_sync_begin,local_sync_end;
   C_Long elems;
@@ -3142,7 +3147,7 @@ void pnga_fill(Integer *g_a, void* val)
     }
   } else {
     Integer I_elems = (Integer)elems;
-    pnga_access_block_segment_ptr(g_a,&GAme,&ptr,&I_elems);
+    pnga_access_block_segment_ptr(&g_a,&GAme,&ptr,&I_elems);
     elems = (C_Long)I_elems;
     switch (GA[handle].type){
       case C_DCPL: 
@@ -3169,7 +3174,7 @@ void pnga_fill(Integer *g_a, void* val)
       default:
         pnga_error("type not supported",GA[handle].type);
     }
-    pnga_release_block_segment(g_a,&GAme);
+    pnga_release_block_segment(&g_a,&GAme);
   }
 
   if(local_sync_end)pnga_pgroup_sync(&grp_id);
@@ -3189,9 +3194,9 @@ void pnga_fill(Integer *g_a, void* val)
 #   pragma weak wnga_inquire =  pnga_inquire
 #endif
 
-void pnga_inquire(Integer *g_a, Integer *type, Integer *ndim, Integer *dims)
+void pnga_inquire(Integer g_a, Integer *type, Integer *ndim, Integer *dims)
 {
-Integer handle = GA_OFFSET + *g_a,i;
+Integer handle = GA_OFFSET + g_a,i;
    ga_check_handleM(g_a, "nga_inquire");
    *type       = GA[handle].type;
    *ndim       = GA[handle].ndim;
@@ -3206,25 +3211,12 @@ Integer handle = GA_OFFSET + *g_a,i;
 #   pragma weak wnga_inquire_type =  pnga_inquire_type
 #endif
 
-void pnga_inquire_type(Integer *g_a, Integer *type)
+void pnga_inquire_type(Integer g_a, Integer *type)
 {
-Integer handle = GA_OFFSET + *g_a;
+Integer handle = GA_OFFSET + g_a;
    ga_check_handleM(g_a, "nga_inquire");
    *type       = GA[handle].type;
 }
-
-/*\ RETURN A POINTER TO LOCAL DATA FOR BLOCK-CYCLIC DISTRIBUTION AND
- *  RETURN THE SIZE OF THE DATA BLOCK
-\*/
-void nga_inquire_block_internal(Integer* g_a, Integer proc, Integer *size, void* ptr)
-{
-  Integer  handle = GA_OFFSET + *g_a;
-
-  ga_check_handleM(g_a, "nga_inquire_block_internal");
-  ptr = GA[handle].ptr[proc];
-  
-}
-
 
 /**
  *  Inquire name of Global Array
@@ -3233,10 +3225,10 @@ void nga_inquire_block_internal(Integer* g_a, Integer proc, Integer *size, void*
 #   pragma weak wnga_inquire_name =  pnga_inquire_name
 #endif
 
-void pnga_inquire_name(Integer *g_a, char **array_name)
+void pnga_inquire_name(Integer g_a, char **array_name)
 {
    ga_check_handleM(g_a, "ga_inquire_name");
-   *array_name = GA[GA_OFFSET + *g_a].name;
+   *array_name = GA[GA_OFFSET + g_a].name;
 }
 
 /**
@@ -3246,14 +3238,14 @@ void pnga_inquire_name(Integer *g_a, char **array_name)
 #   pragma weak wnga_proc_topology =  pnga_proc_topology
 #endif
 
-void pnga_proc_topology(Integer* g_a, Integer* proc, Integer* subscript)
+void pnga_proc_topology(Integer g_a, Integer proc, Integer* subscript)
 {
-Integer d, index, ndim, ga_handle = GA_OFFSET + *g_a;
+Integer d, index, ndim, ga_handle = GA_OFFSET + g_a;
 
    ga_check_handleM(g_a, "nga_proc_topology");
    ndim = GA[ga_handle].ndim;
 
-   index = GA_Proc_list ? GA_Proc_list[*proc]: *proc;
+   index = GA_Proc_list ? GA_Proc_list[proc]: proc;
 
    for(d=0; d<ndim; d++){
        subscript[d] = index% GA[ga_handle].nblock[d];
@@ -3268,9 +3260,9 @@ Integer d, index, ndim, ga_handle = GA_OFFSET + *g_a;
 #   pragma weak wnga_get_proc_grid =  pnga_get_proc_grid
 #endif
 
-void pnga_get_proc_grid(Integer *g_a, Integer *dims)
+void pnga_get_proc_grid(Integer g_a, Integer *dims)
 {
-  Integer i, ndim, ga_handle = GA_OFFSET + *g_a;
+  Integer i, ndim, ga_handle = GA_OFFSET + g_a;
   ga_check_handleM(g_a, "ga_get_proc_grid");
   ndim = GA[ga_handle].ndim;
   for (i=0; i<ndim; i++) {
@@ -3279,9 +3271,9 @@ void pnga_get_proc_grid(Integer *g_a, Integer *dims)
 }
 
 #if 0
-static void gai_get_proc_from_block_index_(Integer *g_a, Integer *index, Integer *proc)
+static void gai_get_proc_from_block_index_(Integer g_a, Integer *index, Integer *proc)
 {
-  Integer ga_handle = GA_OFFSET + *g_a;
+  Integer ga_handle = GA_OFFSET + g_a;
   Integer ndim = GA[ga_handle].ndim;
   Integer i, ld;
   if (pnga_uses_proc_grid(g_a)) {
@@ -3318,7 +3310,7 @@ static void gai_get_proc_from_block_index_(Integer *g_a, Integer *index, Integer
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_locate_nnodes = pnga_locate_nnodes
 #endif
-logical pnga_locate_nnodes( Integer *g_a,
+logical pnga_locate_nnodes( Integer g_a,
                                  Integer *lo,
                                  Integer *hi,
                                  Integer *np)
@@ -3339,7 +3331,7 @@ logical pnga_locate_nnodes( Integer *g_a,
 
   ga_check_handleM(g_a, "nga_locate_nnodes");
 
-  ga_handle = GA_OFFSET + *g_a;
+  ga_handle = GA_OFFSET + g_a;
 #ifdef __crayx1
 #pragma _CRI novector
 #endif
@@ -3404,7 +3396,7 @@ logical pnga_locate_nnodes( Integer *g_a,
        * defined by lo and hi */
       chk = 1;
       /* get limits on block i */
-      pnga_distribution(g_a,&i,tlo,thi);
+      pnga_distribution(g_a,i,tlo,thi);
       for (j=0; j<ndim && chk==1; j++) {
         /* check to see if at least one end point of the interval
          * represented by blo and bhi falls in the interval
@@ -3436,7 +3428,7 @@ logical pnga_locate_nnodes( Integer *g_a,
 #   pragma weak wnga_locate_region =  pnga_locate_region
 #endif
 
-logical pnga_locate_region( Integer *g_a,
+logical pnga_locate_region( Integer g_a,
                             Integer *lo,
                             Integer *hi,
                             Integer *map,
@@ -3471,7 +3463,7 @@ logical pnga_locate_region( Integer *g_a,
 
   ga_check_handleM(g_a, "nga_locate_region");
 
-  ga_handle = GA_OFFSET + *g_a;
+  ga_handle = GA_OFFSET + g_a;
 #ifdef __crayx1
 #pragma _CRI novector
 #endif
@@ -3557,7 +3549,7 @@ logical pnga_locate_region( Integer *g_a,
        * defined by lo and hi */
       chk = 1;
       /* get limits on block i */
-      pnga_distribution(g_a,&i,tlo,thi);
+      pnga_distribution(g_a,i,tlo,thi);
       for (j=0; j<ndim && chk==1; j++) {
         /* check to see if at least one end point of the interval
          * represented by blo and bhi falls in the interval
@@ -3579,7 +3571,7 @@ logical pnga_locate_region( Integer *g_a,
     for (i=0; i<cnt; i++) {
       offset = i*2*ndim;
       j = proclist[i];
-      pnga_distribution(g_a,&j,tlo,thi);
+      pnga_distribution(g_a,j,tlo,thi);
       for (j=0; j<ndim; j++) {
         map[offset + j] = lo[j] < tlo[j] ? tlo[j] : lo[j];
         map[offset + ndim + j] = hi[j] > thi[j] ? thi[j] : hi[j];
@@ -3599,9 +3591,9 @@ logical pnga_locate_region( Integer *g_a,
 #   pragma weak wnga_nblock =  pnga_nblock
 #endif
 
-void pnga_nblock(Integer *g_a, Integer *nblock)
+void pnga_nblock(Integer g_a, Integer *nblock)
 {
-Integer ga_handle = GA_OFFSET + *g_a;
+Integer ga_handle = GA_OFFSET + g_a;
 int i, n;
 
      ga_check_handleM(g_a, "ga_nblock");
@@ -3634,10 +3626,10 @@ Integer pnga_nodeid()
 #   pragma weak wnga_pgroup_nodeid =  pnga_pgroup_nodeid
 #endif
 
-Integer pnga_pgroup_nodeid(Integer *grp)
+Integer pnga_pgroup_nodeid(Integer grp)
 {
-    if (*grp >= 0) {
-       return (Integer)PGRP_LIST[(int)(*grp)].map_proc_list[GAme];
+    if (grp >= 0) {
+       return (Integer)PGRP_LIST[(int)grp].map_proc_list[GAme];
     } else {
        return GAme;
     }
@@ -3666,10 +3658,10 @@ Integer pnga_nnodes()
 #   pragma weak wnga_pgroup_nnodes =  pnga_pgroup_nnodes
 #endif
 
-Integer pnga_pgroup_nnodes(Integer *grp)
+Integer pnga_pgroup_nnodes(Integer grp)
 {
-    if(*grp >=0 )
-       return (Integer)PGRP_LIST[(int)(*grp)].map_nproc;
+    if(grp >=0 )
+       return (Integer)PGRP_LIST[(int)grp].map_nproc;
     else
        return ((Integer)GAnproc);
 }
@@ -3681,10 +3673,10 @@ Integer pnga_pgroup_nnodes(Integer *grp)
 #   pragma weak wnga_compare_distr = pnga_compare_distr
 #endif
 
-logical pnga_compare_distr(Integer *g_a, Integer *g_b)
+logical pnga_compare_distr(Integer g_a, Integer g_b)
 {
-int h_a =(int)*g_a + GA_OFFSET;
-int h_b =(int)*g_b + GA_OFFSET;
+int h_a =(int)g_a + GA_OFFSET;
+int h_b =(int)g_b + GA_OFFSET;
 int h_a_maplen = calc_maplen(h_a);
 int h_b_maplen = calc_maplen(h_b);
 int i;
@@ -3739,7 +3731,7 @@ static int chunk_mutex;
 #   pragma weak wnga_create_mutexes =  pnga_create_mutexes
 #endif
 
-logical pnga_create_mutexes(Integer *num)
+logical pnga_create_mutexes(Integer num)
 {
 int myshare;
 
@@ -3747,10 +3739,10 @@ int myshare;
    vampir_begin(GA_CREATE_MUTEXES,__FILE__,__LINE__);
 #endif
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   if (*num <= 0 || *num > MAX_MUTEXES) return(FALSE);
+   if (num <= 0 || num > MAX_MUTEXES) return(FALSE);
    if(num_mutexes) pnga_error("mutexes already created",num_mutexes);
 
-   num_mutexes= (int)*num;
+   num_mutexes= (int)num;
 
    if(GAnproc == 1){
 #ifdef USE_VAMPIR
@@ -3758,8 +3750,8 @@ int myshare;
 #endif
       return(TRUE);
    }
-   chunk_mutex = (int)((*num + GAnproc-1)/GAnproc);
-   if(GAme * chunk_mutex >= *num)myshare =0;
+   chunk_mutex = (int)((num + GAnproc-1)/GAnproc);
+   if(GAme * chunk_mutex >= num)myshare =0;
    else myshare=chunk_mutex;
 
    /* need work here to use permutation */
@@ -3783,12 +3775,12 @@ int myshare;
 #   pragma weak wnga_lock =  pnga_lock
 #endif
 
-void pnga_lock(Integer *mutex)
+void pnga_lock(Integer mutex)
 {
 int m,p;
 
    if(GAnproc == 1) return;
-   if(num_mutexes< *mutex)pnga_error("invalid mutex",*mutex);
+   if(num_mutexes< mutex)pnga_error("invalid mutex",mutex);
 
 #ifdef USE_VAMPIR
    vampir_begin(GA_LOCK,__FILE__,__LINE__);
@@ -3815,12 +3807,12 @@ int m,p;
 #   pragma weak wnga_unlock =  pnga_unlock
 #endif
 
-void pnga_unlock(Integer *mutex)
+void pnga_unlock(Integer mutex)
 {
 int m,p;
 
    if(GAnproc == 1) return;
-   if(num_mutexes< *mutex)pnga_error("invalid mutex",*mutex);
+   if(num_mutexes< mutex)pnga_error("invalid mutex",mutex);
    
 #ifdef USE_VAMPIR
    vampir_begin(GA_UNLOCK,__FILE__,__LINE__);
@@ -3883,10 +3875,10 @@ logical pnga_destroy_mutexes()
 #   pragma weak wnga_list_nodeid =  pnga_list_nodeid
 #endif
 
-void pnga_list_nodeid(Integer *list, Integer *num_procs)
+void pnga_list_nodeid(Integer *list, Integer num_procs)
 {
   Integer proc;
-  for( proc = 0; proc < *num_procs; proc++)
+  for( proc = 0; proc < num_procs; proc++)
 
 #ifdef PERMUTE_PIDS
     if(GA_Proc_list) list[proc] = GA_inv_Proc_list[proc];
@@ -3902,10 +3894,10 @@ void pnga_list_nodeid(Integer *list, Integer *num_procs)
 #   pragma weak wnga_valid_handle =  pnga_valid_handle
 #endif
 
-logical pnga_valid_handle(Integer *g_a)
+logical pnga_valid_handle(Integer g_a)
 {
-   if(GA_OFFSET+ (*g_a) < 0 || GA_OFFSET+(*g_a) >= _max_global_array ||
-      ! (GA[GA_OFFSET+(*g_a)].actv) ) return FALSE;
+   if(GA_OFFSET+ (g_a) < 0 || GA_OFFSET+(g_a) >= _max_global_array ||
+      ! (GA[GA_OFFSET+(g_a)].actv) ) return FALSE;
    else return TRUE;
 }
 
@@ -3928,12 +3920,12 @@ logical pnga_valid_handle(Integer *g_a)
 #   pragma weak wnga_mask_sync =  pnga_mask_sync
 #endif
 
-void pnga_mask_sync(Integer *begin, Integer *end)
+void pnga_mask_sync(Integer begin, Integer end)
 {
-  if (*begin) _ga_sync_begin = 1;
+  if (begin) _ga_sync_begin = 1;
   else _ga_sync_begin = 0;
 
-  if (*end) _ga_sync_end = 1;
+  if (end) _ga_sync_end = 1;
   else _ga_sync_end = 0;
 }
 
@@ -3944,9 +3936,9 @@ void pnga_mask_sync(Integer *begin, Integer *end)
 #   pragma weak wnga_merge_mirrored =  pnga_merge_mirrored
 #endif
 
-void pnga_merge_mirrored(Integer *g_a)
+void pnga_merge_mirrored(Integer g_a)
 {
-  Integer handle = GA_OFFSET + *g_a;
+  Integer handle = GA_OFFSET + g_a;
   Integer inode, nprocs, nnodes, zero, zproc, nblocks;
   int *blocks;
   C_Integer  *map, *dims, *width;
@@ -4088,7 +4080,7 @@ void pnga_merge_mirrored(Integer *g_a)
     pnga_zero(&_ga_tmp);
     /* Find data on this processor and accumulate in temporary global array */
     inode = GAme - zproc;
-    pnga_distribution(g_a,&inode,lo,hi);
+    pnga_distribution(g_a,inode,lo,hi);
 
     /* Check to make sure processor has data */
     chk = 1;
@@ -4098,7 +4090,7 @@ void pnga_merge_mirrored(Integer *g_a)
       }
     }
     if (chk) {
-      pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+      pnga_access_ptr(&g_a, lo, hi, &ptr_a, ld);
       pnga_acc(&_ga_tmp, lo, hi, ptr_a, ld, one);
     }
     /* copy data back to original global array */
@@ -4106,7 +4098,7 @@ void pnga_merge_mirrored(Integer *g_a)
     if (chk) {
       pnga_get(&_ga_tmp, lo, hi, ptr_a, ld);
     }
-    pnga_destroy(&_ga_tmp);
+    pnga_destroy(_ga_tmp);
   }
   if (local_sync_end) pnga_sync();
   GA_POP_NAME;
@@ -4120,12 +4112,12 @@ void pnga_merge_mirrored(Integer *g_a)
 #   pragma weak wnga_merge_distr_patch =  pnga_merge_distr_patch
 #endif
 
-void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
-                            Integer *g_b, Integer *blo, Integer *bhi)
-/*    Integer *g_a  handle to mirrored array
+void pnga_merge_distr_patch(Integer g_a, Integer *alo, Integer *ahi,
+                            Integer g_b, Integer *blo, Integer *bhi)
+/*    Integer g_a  handle to mirrored array
       Integer *alo  indices of lower corner of mirrored array patch
       Integer *ahi  indices of upper corner of mirrored array patch
-      Integer *g_b  handle to distributed array
+      Integer g_b  handle to distributed array
       Integer *blo  indices of lower corner of distributed array patch
       Integer *bhi  indices of upper corner of distributed array patch
 */
@@ -4154,8 +4146,8 @@ void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
 
   /* check to make sure that both patches lie within global arrays and
      that patches are the same dimensions */
-  a_handle = GA_OFFSET + *g_a;
-  b_handle = GA_OFFSET + *g_b;
+  a_handle = GA_OFFSET + g_a;
+  b_handle = GA_OFFSET + g_b;
 
   if (!pnga_is_mirrored(g_a)) {
     if (pnga_cluster_nnodes() > 1) {
@@ -4163,7 +4155,7 @@ void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
     } else {
       trans[0] = 'N';
       trans[1] = '\0';
-      pnga_copy_patch(trans, g_a, alo, ahi, g_b, blo, bhi);
+      pnga_copy_patch(trans, &g_a, alo, ahi, &g_b, blo, bhi);
       return;
     }
   }
@@ -4200,11 +4192,11 @@ void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
     if (ahi[i] - alo[i] != bhi[i] - blo[i])
       pnga_error("Patch dimensions do not match for index ",i);
   }
-  pnga_zero_patch(g_b, blo, bhi);
+  pnga_zero_patch(&g_b, blo, bhi);
 
   /* Find coordinates of mirrored array patch that I own */
   i = PGRP_LIST[p_handle].map_proc_list[GAme];
-  pnga_distribution(g_a, &i, mlo, mhi);
+  pnga_distribution(g_a, i, mlo, mhi);
   /* Check to see if mirrored array patch intersects my portion of
      mirrored array */
   intersect = 1;
@@ -4221,7 +4213,7 @@ void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
     }
 
     /* get pointer to locally held distribution */
-    pnga_access_ptr(g_a, mlo, mhi, &src_data_ptr, mld);
+    pnga_access_ptr(&g_a, mlo, mhi, &src_data_ptr, mld);
 
     /* find indices in distributed array corresponding to this patch */
     for (i=0; i<adim; i++) {
@@ -4253,7 +4245,7 @@ void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
     } else {
       pnga_error("Type not supported",type);
     }
-    pnga_acc(g_b, dlo, dhi, src_data_ptr, mld, one);
+    pnga_acc(&g_b, dlo, dhi, src_data_ptr, mld, one);
   }
   if (local_sync_end) pnga_sync();
   GA_POP_NAME;
@@ -4266,9 +4258,9 @@ void pnga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
 #   pragma weak wnga_locate_num_blocks =  pnga_locate_num_blocks
 #endif
 
-Integer pnga_locate_num_blocks(Integer *g_a, Integer *lo, Integer *hi)
+Integer pnga_locate_num_blocks(Integer g_a, Integer *lo, Integer *hi)
 {
-  Integer ga_handle = GA_OFFSET + *g_a;
+  Integer ga_handle = GA_OFFSET + g_a;
   Integer ndim = GA[ga_handle].ndim;
   Integer ret = -1, d;
   Integer cnt;
@@ -4287,7 +4279,7 @@ Integer pnga_locate_num_blocks(Integer *g_a, Integer *lo, Integer *hi)
        * defined by lo and hi */
       chk = 1;
       /* get limits on block i */
-      pnga_distribution(g_a,&i,tlo,thi);
+      pnga_distribution(g_a,i,tlo,thi);
       for (j=0; j<ndim && chk==1; j++) {
         /* check to see if at least one end point of the interval
          * represented by blo and bhi falls in the interval
@@ -4317,9 +4309,9 @@ Integer pnga_locate_num_blocks(Integer *g_a, Integer *lo, Integer *hi)
 #   pragma weak wnga_total_blocks =  pnga_total_blocks
 #endif
 
-Integer pnga_total_blocks(Integer *g_a)
+Integer pnga_total_blocks(Integer g_a)
 {
-  Integer ga_handle = GA_OFFSET + *g_a;
+  Integer ga_handle = GA_OFFSET + g_a;
   return GA[ga_handle].block_total;
 }
 
@@ -4330,9 +4322,9 @@ Integer pnga_total_blocks(Integer *g_a)
 #   pragma weak wnga_uses_proc_grid =  pnga_uses_proc_grid
 #endif
 
-logical pnga_uses_proc_grid(Integer *g_a)
+logical pnga_uses_proc_grid(Integer g_a)
 {
-  Integer ga_handle = GA_OFFSET + *g_a;
+  Integer ga_handle = GA_OFFSET + g_a;
   return (logical)GA[ga_handle].block_sl_flag;
 }
 
@@ -4345,13 +4337,12 @@ logical pnga_uses_proc_grid(Integer *g_a)
 #   pragma weak wnga_get_proc_index =  pnga_get_proc_index
 #endif
 
-void pnga_get_proc_index(Integer *g_a, Integer *iproc, Integer *index)
+void pnga_get_proc_index(Integer g_a, Integer iproc, Integer *index)
 {
-  Integer ga_handle = GA_OFFSET + *g_a;
-  Integer proc = *iproc;
+  Integer ga_handle = GA_OFFSET + g_a;
   if (!GA[ga_handle].block_sl_flag)
     pnga_error("Global array does not use ScaLAPACK data distribution",0);
-  gam_find_proc_indices(ga_handle, proc, index);
+  gam_find_proc_indices(ga_handle, iproc, index);
   return;
 }
 
@@ -4363,9 +4354,9 @@ void pnga_get_proc_index(Integer *g_a, Integer *iproc, Integer *index)
 #   pragma weak wnga_get_block_info =  pnga_get_block_info
 #endif
 
-void pnga_get_block_info(Integer *g_a, Integer *num_blocks, Integer *block_dims)
+void pnga_get_block_info(Integer g_a, Integer *num_blocks, Integer *block_dims)
 {
-  Integer ga_handle = GA_OFFSET + *g_a;
+  Integer ga_handle = GA_OFFSET + g_a;
   Integer i, ndim;
   ndim = GA[ga_handle].ndim; 
   if (GA[ga_handle].block_sl_flag) {
@@ -4400,9 +4391,9 @@ void pnga_get_block_info(Integer *g_a, Integer *num_blocks, Integer *block_dims)
 #   pragma weak wnga_set_debug =  pnga_set_debug
 #endif
 
-void pnga_set_debug(logical *flag)
+void pnga_set_debug(logical flag)
 {
-  GA_Debug_flag = (Integer)(*flag);
+  GA_Debug_flag = (Integer)(flag);
 }
 
 /**
@@ -4421,14 +4412,14 @@ logical pnga_get_debug()
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_checkpoint_arrays = pnga_checkpoint_arrays
 #endif
-void pnga_checkpoint_arrays(Integer *gas,int *num)
+void pnga_checkpoint_arrays(Integer *gas,int num)
 {
    int ga = *(gas+0);
    int hdl = GA_OFFSET + ga;
    printf("\n%d:in checkpoint %d %d %d\n",GAme,ga,*(gas+1),*num);fflush(stdout);
    if(GA[hdl].record_id==0)
-     ga_icheckpoint_init(gas,*num);
-   ga_icheckpoint(gas,*num);
+     ga_icheckpoint_init(gas,num);
+   ga_icheckpoint(gas,num);
 }
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -4452,13 +4443,13 @@ int pnga_recover_arrays(Integer *gas, int num)
 #   pragma weak wnga_pgroup_absolute_id = pnga_pgroup_absolute_id
 #endif
 
-Integer pnga_pgroup_absolute_id(Integer *grp, Integer *pid) 
+Integer pnga_pgroup_absolute_id(Integer grp, Integer pid) 
 {
 #ifdef MPI
-  if(*grp == GA_World_Proc_Group) /*a.k.a -1*/
-    return *pid;
+  if(grp == GA_World_Proc_Group) /*a.k.a -1*/
+    return pid;
   else
-    return ARMCI_Absolute_id(&PGRP_LIST[*grp].group, *pid);
+    return ARMCI_Absolute_id(&PGRP_LIST[grp].group, pid);
 #else
   pnga_error("ga_pgroup_absolute_id(): Defined only when using MPI groups",0);
   return -1;

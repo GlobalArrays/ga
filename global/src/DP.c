@@ -18,7 +18,7 @@ static logical own_patch(g_a, ilo, ihi, jlo, jhi)
    Integer ilop, ihip, jlop, jhip, me=pnga_nodeid();
    Integer lo[2],hi[2];
 
-   pnga_distribution(g_a, &me, lo, hi);
+   pnga_distribution(*g_a, me, lo, hi);
    ilop = lo[0];
    jlop = lo[1];
    ihip = hi[0];
@@ -71,15 +71,15 @@ char transp;
 DoublePrecision *dbl_ptrA=NULL, *dbl_ptrB=NULL;
 Integer ndim, dims[2];
 
-   pnga_check_handle(g_a, "pnga_copy_patch_dp");
-   pnga_check_handle(g_b, "pnga_copy_patch_dp");
+   pnga_check_handle(*g_a, "pnga_copy_patch_dp");
+   pnga_check_handle(*g_b, "pnga_copy_patch_dp");
 
    /* if(*g_a == *g_b) pnga_error("pnga_copy_patch_dp: arrays have to different ", 0L); */
 
-   pnga_inquire(g_a, &atype, &ndim, dims);
+   pnga_inquire(*g_a, &atype, &ndim, dims);
    adim1 = dims[0];
    adim2 = dims[1];
-   pnga_inquire(g_b, &btype, &ndim, dims);
+   pnga_inquire(*g_b, &btype, &ndim, dims);
    bdim1 = dims[0];
    bdim2 = dims[1];
 
@@ -101,7 +101,7 @@ Integer ndim, dims[2];
    transp = (*t_a == 'n' || *t_a =='N')? 'n' : 't';
 
    /* now find out cordinates of a patch of g_a that I own */
-   pnga_distribution(g_a, &me, lo, hi);
+   pnga_distribution(*g_a, me, lo, hi);
    ilos = lo[0];
    jlos = lo[1];
    ihis = hi[0];
@@ -179,13 +179,13 @@ DoublePrecision *dbl_ptrA;
 DoublePrecision *dbl_ptrB;
 Integer ndim, dims[2];
 
-   pnga_check_handle(g_a, "pnga_ddot_patch_dp");
-   pnga_check_handle(g_b, "pnga_ddot_patch_dp");
+   pnga_check_handle(*g_a, "pnga_ddot_patch_dp");
+   pnga_check_handle(*g_b, "pnga_ddot_patch_dp");
 
-   pnga_inquire(g_a, &atype, &ndim, dims);
+   pnga_inquire(*g_a, &atype, &ndim, dims);
    adim1 = dims[0];
    adim2 = dims[1];
-   pnga_inquire(g_b, &btype, &ndim, dims);
+   pnga_inquire(*g_b, &btype, &ndim, dims);
    bdim1 = dims[0];
    bdim2 = dims[1];
 
@@ -211,7 +211,7 @@ Integer ndim, dims[2];
 
 
    /* find out coordinates of patches of g_A and g_B that I own */
-   pnga_distribution(&g_A, &me, alo, ahi);
+   pnga_distribution(g_A, me, alo, ahi);
    iloA = alo[0];
    jloA = alo[1];
    ihiA = ahi[0];

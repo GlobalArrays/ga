@@ -515,12 +515,12 @@ void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
   me     = pnga_nodeid();
   
   /** check GA info for input arrays */
-  pnga_check_handle(g_a, "ga_lu_solve: a");
-  pnga_check_handle(g_b, "ga_lu_solve: b");
-  pnga_inquire(g_a, &typeA, &ndim, dims);
+  pnga_check_handle(*g_a, "ga_lu_solve: a");
+  pnga_check_handle(*g_b, "ga_lu_solve: b");
+  pnga_inquire(*g_a, &typeA, &ndim, dims);
   dimA1 = dims[0];
   dimA2 = dims[1];
-  pnga_inquire(g_b, &typeB, &ndim, dims);
+  pnga_inquire(*g_b, &typeB, &ndim, dims);
   dimB1 = dims[0];
   dimB2 = dims[1];
   

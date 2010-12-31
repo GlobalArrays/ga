@@ -1145,7 +1145,7 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
     if(op==LOAD) f = pnga_get;
     else f = pnga_put;
 
-    pnga_inquire(&gs_a.handle, &atype, &rows, &cols);     
+    pnga_inquire(gs_a.handle, &atype, &rows, &cols);     
     elemsize = MA_sizeof(atype, 1, MT_C_CHAR);
 
     /* find where in global array the first dra chunk element in buffer goes*/
@@ -3089,7 +3089,7 @@ Integer FATR ndra_write_section_(logical *transp,
     /* usual argument/type/range checking stuff */
 
     dai_check_handleM(*d_a,"ndra_write_sect");
-    pnga_inquire(g_a, &gtype, &ndim, gdims);
+    pnga_inquire(*g_a, &gtype, &ndim, gdims);
     if(!dai_write_allowed(*d_a))dai_error("ndra_write_sect: write not allowed",*d_a);
     if(DRA[handle].type != (int)gtype)dai_error("ndra_write_sect: type mismatch",gtype);
     if(DRA[handle].ndim != ndim)dai_error("ndra_write_sect: dimension mismatch", ndim);
@@ -3161,7 +3161,7 @@ Integer FATR ndra_write_(Integer *g_a, Integer *d_a, Integer *request)
     if( !dai_write_allowed(*d_a))
         dai_error("ndra_write: write not allowed to this array",*d_a);
 
-    pnga_inquire(g_a, &gtype, &ndim, gdims);
+    pnga_inquire(*g_a, &gtype, &ndim, gdims);
     if(DRA[handle].type != (int)gtype)dai_error("ndra_write: type mismatch",gtype);
     if(DRA[handle].ndim != ndim)dai_error("ndra_write: dimension mismatch",ndim);
     for (i=0; i<ndim; i++) {
@@ -3206,7 +3206,7 @@ Integer FATR ndra_read_section_(logical *transp,
     /* usual argument/type/range checking stuff */
     dai_check_handleM(*d_a,"ndra_read_sect");
     if(!dai_read_allowed(*d_a))dai_error("ndra_read_sect: read not allowed",*d_a);
-    pnga_inquire(g_a, &gtype, &ndim, gdims);
+    pnga_inquire(*g_a, &gtype, &ndim, gdims);
     if(DRA[handle].type != (int)gtype)dai_error("ndra_read_sect: type mismatch",gtype);
     if(DRA[handle].ndim != ndim)dai_error("ndra_read_sect: dimension mismatch", ndim);
 
@@ -3304,7 +3304,7 @@ Integer FATR ndra_read_(Integer* g_a, Integer* d_a, Integer* request)
     /* usual argument/type/range checking stuff */
     dai_check_handleM(*d_a,"ndra_read");
     if(!dai_read_allowed(*d_a))dai_error("ndra_read: read not allowed",*d_a);
-    pnga_inquire(g_a, &gtype, &ndim, gdims);
+    pnga_inquire(*g_a, &gtype, &ndim, gdims);
     /* printf("%d: CAME After pnga_inquire!!\n", pnga_nodeid()); */
     if(DRA[handle].type != (int)gtype)dai_error("ndra_read: type mismatch",gtype);
     if(DRA[handle].ndim != ndim)dai_error("ndra_read: dimension mismatch",ndim);

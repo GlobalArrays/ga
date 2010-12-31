@@ -397,13 +397,13 @@ register Integer i;
    pnga_sync();
    me = pnga_nodeid();
 
-   pnga_check_handle(g_a, "ga_patch_enum");
+   pnga_check_handle(*g_a, "ga_patch_enum");
 
-   ndim = pnga_ndim(g_a);
+   ndim = pnga_ndim(*g_a);
    if (ndim > 1) pnga_error("ga_patch_enum:applicable to 1-dim arrays",ndim);
 
-   pnga_inquire(g_a, &type, &ndim, dims);
-   pnga_distribution(g_a, &me, &lop, &hip);
+   pnga_inquire(*g_a, &type, &ndim, dims);
+   pnga_distribution(*g_a, me, &lop, &hip);
 
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */
 
@@ -497,18 +497,18 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
    nproc = pnga_nnodes();
       me = pnga_nodeid();
 
-   pnga_check_handle(g_a, "ga_scan_copy");
-   pnga_check_handle(g_b, "ga_scan_copy 2");
-   pnga_check_handle(g_sbit,"ga_scan_copy 3");
+   pnga_check_handle(*g_a, "ga_scan_copy");
+   pnga_check_handle(*g_b, "ga_scan_copy 2");
+   pnga_check_handle(*g_sbit,"ga_scan_copy 3");
 
    pnga_sync();
 
 
-   ndim = pnga_ndim(g_a);
+   ndim = pnga_ndim(*g_a);
    if(ndim>1)pnga_error("ga_scan_copy: applicable to 1-dim arrays",ndim);
 
-   pnga_inquire(g_a, &type, &ndim, &dims);
-   pnga_distribution(g_sbit, &me, &lop, &hip);
+   pnga_inquire(*g_a, &type, &ndim, &dims);
+   pnga_distribution(*g_sbit, me, &lop, &hip);
 
    /* create arrays to hold first and last bits set on a given process */
    lim = (Integer *) ga_malloc(2*nproc, MT_F_INT, "ga scan buf");
@@ -516,9 +516,9 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    lom = lim + nproc;
 
-   if(!pnga_compare_distr(g_a, g_sbit))
+   if(!pnga_compare_distr(*g_a, *g_sbit))
        pnga_error("ga_scan_copy: different distribution src",0);
-   if(!pnga_compare_distr(g_b, g_sbit))
+   if(!pnga_compare_distr(*g_b, *g_sbit))
        pnga_error("ga_scan_copy: different distribution dst",0);
       
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */ 
@@ -890,18 +890,18 @@ static void sgai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
    nproc = pnga_nnodes();
       me = pnga_nodeid();
 
-   pnga_check_handle(g_a, "ga_pack");
-   pnga_check_handle(g_b, "ga_pack 2");
-   pnga_check_handle(g_sbit,"ga_pack 3");
+   pnga_check_handle(*g_a, "ga_pack");
+   pnga_check_handle(*g_b, "ga_pack 2");
+   pnga_check_handle(*g_sbit,"ga_pack 3");
 
    pnga_sync();
 
    lim = (Integer *) ga_malloc(nproc, MT_F_INT, "ga_pack lim buf");
 
    bzero(lim,sizeof(Integer)*nproc);
-   pnga_inquire(g_a, &type, &ndim, &dims);
+   pnga_inquire(*g_a, &type, &ndim, &dims);
    if(ndim>1) pnga_error("ga_pack: supports 1-dim arrays only",ndim);
-   pnga_distribution(g_sbit, &me, &lop, &hip);
+   pnga_distribution(*g_sbit, me, &lop, &hip);
 
    /* how many elements we have to copy? */
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */
@@ -1055,7 +1055,7 @@ Integer type, ndim, nbin, lobin, hibin, me=pnga_nodeid(),crap;
 Integer dims[2], nproc=pnga_nnodes(),chunk[2];
 Integer tlo[2], thi[2];
 
-    pnga_inquire(g_bin, &type, &ndim, &nbin);
+    pnga_inquire(*g_bin, &type, &ndim, &nbin);
     if(ndim !=1) pnga_error("ga_bin_index: 1-dim array required",ndim);
     if(type!= C_INT && type!=C_LONG && type!=C_LONGLONG)
        pnga_error("ga_bin_index: not integer type",type);
@@ -1063,7 +1063,7 @@ Integer tlo[2], thi[2];
     chunk[0]=dims[0]=2; dims[1]=nproc; chunk[1]=1;
     if(!pnga_create(MT_F_INT, 2, dims, "bin_proc",chunk,g_range)) return FALSE;
 
-    pnga_distribution(g_off,&me, &lobin,&hibin);
+    pnga_distribution(*g_off,me, &lobin,&hibin);
 
     if(lobin>0){ /* enter this block when we have data */
       Integer first_proc, last_proc, p;
@@ -1082,9 +1082,9 @@ Integer tlo[2], thi[2];
       first_off++; last_off++;
 
       /* find processors on which these bins are located */
-      if(!pnga_locate(g_bin, &first_off, &first_proc))
+      if(!pnga_locate(*g_bin, &first_off, &first_proc))
           pnga_error("ga_bin_sorter: failed to locate region f",first_off);
-      if(!pnga_locate(g_bin, &last_off, &last_proc))
+      if(!pnga_locate(*g_bin, &last_off, &last_proc))
           pnga_error("ga_bin_sorter: failed to locate region l",last_off);
 
       /* inspect range of indices to bin elements stored on these processors */
@@ -1092,7 +1092,7 @@ Integer tlo[2], thi[2];
           Integer lo, hi, buf[2], off, cnt; 
           buf[0] =-1; buf[1]=-1;
 
-          pnga_distribution(g_bin,&p,&lo,&hi);
+          pnga_distribution(*g_bin,p,&lo,&hi);
 
           for(/* start from current bin */; bin<= hibin; bin++, myoff++){ 
               Integer blo,bhi,stat;
@@ -1154,10 +1154,10 @@ Integer g_range;
     if(FALSE==pnga_create_bin_range(g_bin, g_cnt, g_off, &g_range))
         pnga_error("ga_bin_sorter: failed to create temp bin range array",0); 
 
-    pnga_inquire(g_bin, &type, &ndim, &totbin);
+    pnga_inquire(*g_bin, &type, &ndim, &totbin);
     if(ndim !=1) pnga_error("ga_bin_sorter: 1-dim array required",ndim);
      
-    pnga_distribution(g_bin, &me, &lo, &hi);
+    pnga_distribution(*g_bin, me, &lo, &hi);
     if (lo > 0 ){ /* we get 0 if no elements stored on this process */
         Integer bin_range[2], rlo[2],rhi[2];
         Integer *bin_cnt, *ptr, i;
@@ -1201,7 +1201,7 @@ int i, my_nbin=0;
 int *all_bin_contrib, *offset;
 Integer type, ndim, nbin;
 
-    pnga_inquire(g_bin, &type, &ndim, &nbin);
+    pnga_inquire(*g_bin, &type, &ndim, &nbin);
     if(ndim !=1) pnga_error("ga_bin_index: 1-dim array required",ndim);
     if(type!= C_INT && type!=C_LONG && type!=C_LONGLONG)
        pnga_error("ga_bin_index: not integer type",type);

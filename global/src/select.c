@@ -22,7 +22,7 @@ int _i;\
 }
 
 typedef struct { 
-        union val_t {double dval; long lval; long long llval; float fval;}v; 
+        union val_t {double dval; int ival; long lval; long long llval; float fval;}v; 
         Integer subscr[MAXDIM];
         DoubleComplex extra;
         SingleComplex extra2;      
@@ -49,7 +49,7 @@ static void snga_select_elem(Integer type, char* op, void *ptr, Integer elems, e
     else
       for(i=0;i<elems;i++){ if(ival < ia[i]) {ival=ia[i];*ind=i; } }
 
-    info->v.lval = (long) ival;
+    info->v.ival = (int) ival;
     break;
 
     case C_DCPL:
@@ -155,18 +155,18 @@ void pnga_select_elem(Integer *g_a, char* op, void* val, Integer *subscript)
 
   me = pnga_nodeid();
 
-  pnga_check_handle(g_a, "ga_select_elem");
+  pnga_check_handle(*g_a, "ga_select_elem");
   GA_PUSH_NAME("ga_elem_op");
 
   if (strncmp(op,"min",3) == 0);
   else if (strncmp(op,"max",3) == 0);
   else pnga_error("operator not recognized",0);
 
-  pnga_inquire(g_a, &type, &ndim, dims);
-  num_blocks = pnga_total_blocks(g_a);
+  pnga_inquire(*g_a, &type, &ndim, dims);
+  num_blocks = pnga_total_blocks(*g_a);
 
   if (num_blocks < 0) {
-    pnga_distribution(g_a, &me, lo, hi);
+    pnga_distribution(*g_a, me, lo, hi);
 
     if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
 
@@ -204,10 +204,10 @@ void pnga_select_elem(Integer *g_a, char* op, void* val, Integer *subscript)
       pnga_release_block_segment(g_a, &me);
 
       /* convert local index back into a global array index */
-      if (!pnga_uses_proc_grid(g_a)) {
+      if (!pnga_uses_proc_grid(*g_a)) {
         offset = 0;
         for (i=me; i<num_blocks; i += nproc) {
-          pnga_distribution(g_a, &i, lo, hi);
+          pnga_distribution(*g_a, i, lo, hi);
           jtot = 1;
           for (j=0; j<ndim; j++) {
             jtot *= (hi[j]-lo[j]+1);
@@ -232,9 +232,9 @@ void pnga_select_elem(Integer *g_a, char* op, void* val, Integer *subscript)
         Integer proc_index[MAXDIM], topology[MAXDIM];
         Integer l_index[MAXDIM];
         Integer min, max;
-        pnga_get_proc_index(g_a, &me, proc_index);
-        pnga_get_block_info(g_a, blocks, block_dims);
-        pnga_get_proc_grid(g_a, topology);
+        pnga_get_proc_index(*g_a, me, proc_index);
+        pnga_get_block_info(*g_a, blocks, block_dims);
+        pnga_get_proc_grid(*g_a, topology);
         /* figure out strides for locally held block of data */
         for (i=0; i<ndim; i++) {
           stride[i] = 0;
@@ -266,8 +266,8 @@ void pnga_select_elem(Integer *g_a, char* op, void* val, Integer *subscript)
   /* calculate global result */
   if(type==C_INT){
     int size = sizeof(double) + sizeof(Integer)*(int)ndim;
-    armci_msg_sel(&info,size,op,ARMCI_LONG,participate);
-    *(int*)val = (int)info.v.lval;
+    armci_msg_sel(&info,size,op,ARMCI_INT,participate);
+    *(int*)val = (int)info.v.ival;
   }else if(type==C_LONG){
     int size = sizeof(double) + sizeof(Integer)*(int)ndim;
     armci_msg_sel(&info,size,op,ARMCI_LONG,participate);

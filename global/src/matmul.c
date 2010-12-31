@@ -176,8 +176,8 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
 
     if(CYCLIC_DISTR_OPT_FLAG) { /* should not be called for irregular matmul */
        int prow, pcol, offset, grp_me;
-       Integer a_grp = pnga_get_pgroup(g_a);
-       grp_me = (int)pnga_pgroup_nodeid(&a_grp);
+       Integer a_grp = pnga_get_pgroup(*g_a);
+       grp_me = (int)pnga_pgroup_nodeid(a_grp);
        prow = GA[GA_OFFSET + *g_a].nblock[0];
        pcol = GA[GA_OFFSET + *g_a].nblock[1];
        offset = (grp_me/prow + grp_me%prow) % pcol;
@@ -216,7 +216,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     if ( max_chunk > CHUNK_SIZE/nbuf) {
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
-      if(avail<MINMEM && pnga_pgroup_nodeid(&a_grp)==0) pnga_error("NotEnough memory",avail);
+      if(avail<MINMEM && pnga_pgroup_nodeid(a_grp)==0) pnga_error("NotEnough memory",avail);
       *elems = (Integer)(avail*0.9); /* Donot use every last drop */
       
       /* MAX: get the maximum chunk (or, block) size i.e  */
@@ -422,7 +422,7 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
 
   /* to skip accumulate and exploit data locality:
      get chunks according to "C" matrix distribution*/
-  pnga_distribution(g_c, &me, loC, hiC);
+  pnga_distribution(*g_c, me, loC, hiC);
   istart = loC[0]-1; iend = hiC[0]-1;
   jstart = loC[1]-1; jend = hiC[1]-1;
   kstart = 0       ; kend = *ajhi-*ajlo;
@@ -537,17 +537,17 @@ void init_block_info(Integer *g_c, Integer *proc_index, Integer *index,
     Integer me= pnga_nodeid();
 
     /* Uses simple block-cyclic data distribution */
-    if(!pnga_uses_proc_grid(g_c))
+    if(!pnga_uses_proc_grid(*g_c))
     {
        *iblock = me;
     }
     else /* Uses scalapack block-cyclic data distribution */ 
     {   
        *iblock = 0;
-       pnga_get_proc_index(g_c, &me, proc_index);
-       pnga_get_proc_index(g_c, &me, index);
-       pnga_get_block_info(g_c, blocks, block_dims);
-       pnga_get_proc_grid(g_c, topology);
+       pnga_get_proc_index(*g_c, me, proc_index);
+       pnga_get_proc_index(*g_c, me, index);
+       pnga_get_block_info(*g_c, blocks, block_dims);
+       pnga_get_proc_grid(*g_c, topology);
     }    
 }
 
@@ -565,15 +565,15 @@ int get_next_block_info(Integer *g_c, Integer *proc_index, Integer *index,
     int i;
     
     /* works only upto 2 dims - i.e vectors/matrices*/
-    pnga_inquire(g_c,  &type, &ndim, dims);
+    pnga_inquire(*g_c,  &type, &ndim, dims);
     if(ndim>2) pnga_error("get_next_block_info() supports upto 2-d only ", 0L);
     
     /* Uses simple block-cyclic data distribution */
-    if (!pnga_uses_proc_grid(g_c)) 
+    if (!pnga_uses_proc_grid(*g_c)) 
     {
-       if(*iblock < pnga_total_blocks(g_c)) 
+       if(*iblock < pnga_total_blocks(*g_c)) 
        {
-          pnga_distribution(g_c, iblock, blo, bhi);
+          pnga_distribution(*g_c, *iblock, blo, bhi);
           *iblock += pnga_nnodes();
           return 1;
        }
@@ -660,7 +660,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
   clo[1] = *cjlo; chi[1] = *cjhi;
   k = *ajhi - *ajlo +1;
 
-  numblocks = pnga_total_blocks(g_c);
+  numblocks = pnga_total_blocks(*g_c);
   if(numblocks>=0) init_block_info(g_c, proc_index, index, blocks,
       block_dims, topology, &iblock);
 
@@ -672,7 +672,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     if(numblocks<0)
     { /* simple block distribution */
       has_more_blocks = 0; 
-      pnga_distribution(g_c, &me, loC, hiC);
+      pnga_distribution(*g_c, me, loC, hiC);
     }
     else
     { /* block cyclic */
@@ -684,7 +684,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 
     /* If loC and hiC intersects with current patch region, then they will
      * be updated accordingly. Else it returns FALSE */
-    pnga_inquire(g_c, &ctype, &cndim, cdims);
+    pnga_inquire(*g_c, &ctype, &cndim, cdims);
     if(!pnga_patch_intersect(clo,chi,loC,hiC,cndim)) continue;
 
 #if DEBUG_
@@ -710,7 +710,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 
       /* to skip accumulate and exploit data locality:
          get chunks according to "C" matrix distribution*/
-      /* pnga_distribution(g_c, &me, loC, hiC); */
+      /* pnga_distribution(*g_c, me, loC, hiC); */
       chunks_left=gai_get_task_list(taskListA, taskListB, &state,loC[0]-1,
           loC[1]-1, 0, hiC[0]-1, hiC[1]-1, k-1,
           Ichunk,Jchunk,Kchunk, &max_tasks,g_a);
@@ -731,8 +731,8 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 
       if(CYCLIC_DISTR_OPT_FLAG) {
         int prow,pcol,grp_me;
-        Integer a_grp=pnga_get_pgroup(g_a);
-        grp_me = (int)pnga_pgroup_nodeid(&a_grp);
+        Integer a_grp=pnga_get_pgroup(*g_a);
+        grp_me = (int)pnga_pgroup_nodeid(a_grp);
         prow = GA[GA_OFFSET + *g_a].nblock[0];
         pcol = GA[GA_OFFSET + *g_a].nblock[1];
         offset = (grp_me/prow + grp_me%prow) % pcol;
@@ -886,7 +886,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
   short int compute_flag=0, shiftA=0, shiftB=0;
   DoubleComplex ONE, *a, *b, *c;
   SingleComplex ONE_CF; 
-  Integer grp_me, a_grp = pnga_get_pgroup(g_a);
+  Integer grp_me, a_grp = pnga_get_pgroup(*g_a);
   Integer clo[2], chi[2];
 
   GA_PUSH_NAME("ga_matmul_irreg");
@@ -905,7 +905,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
   b = b_ar[0];
   c = c_ar[0];
 
-  grp_me = pnga_pgroup_nodeid(&a_grp);
+  grp_me = pnga_pgroup_nodeid(a_grp);
   clo[0] = *cilo; clo[1] = *cjlo;
   chi[0] = *cihi; chi[1] = *cjhi;
   if(!need_scaling) pnga_fill_patch(g_c, clo, chi, beta);
@@ -1340,8 +1340,8 @@ void pnga_matmul(transa, transb, alpha, beta,
     int local_sync_begin,local_sync_end;
     short int need_scaling=SET,use_NB_matmul=SET;
     short int irregular=UNSET, use_armci_memory=UNSET;
-    Integer a_grp=pnga_get_pgroup(g_a), b_grp=pnga_get_pgroup(g_b);
-    Integer c_grp=pnga_get_pgroup(g_c);
+    Integer a_grp=pnga_get_pgroup(*g_a), b_grp=pnga_get_pgroup(*g_b);
+    Integer c_grp=pnga_get_pgroup(*g_c);
     Integer numblocks;
     Integer clo[2], chi[2];
 
@@ -1373,17 +1373,17 @@ void pnga_matmul(transa, transb, alpha, beta,
      **************************************************/
 
     /* Check to make sure all global arrays are of the same type */
-    if (!(pnga_is_mirrored(g_a) == pnga_is_mirrored(g_b) &&
-	  pnga_is_mirrored(g_a) == pnga_is_mirrored(g_c))) {
+    if (!(pnga_is_mirrored(*g_a) == pnga_is_mirrored(*g_b) &&
+	  pnga_is_mirrored(*g_a) == pnga_is_mirrored(*g_c))) {
        pnga_error("Processors do not match for all arrays",pnga_nnodes());
     }
 
     /* check if ranks are O.K. */
-    pnga_inquire(g_a, &atype, &rank, dims); 
+    pnga_inquire(*g_a, &atype, &rank, dims); 
     VECTORCHECK(rank, dims, adim1, adim2, *ailo, *aihi, *ajlo, *ajhi);
-    pnga_inquire(g_b, &btype, &rank, dims); 
+    pnga_inquire(*g_b, &btype, &rank, dims); 
     VECTORCHECK(rank, dims, bdim1, bdim2, *bilo, *bihi, *bjlo, *bjhi);
-    pnga_inquire(g_c, &ctype, &rank, dims); 
+    pnga_inquire(*g_c, &ctype, &rank, dims); 
     VECTORCHECK(rank, dims, cdim1, cdim2, *cilo, *cihi, *cjlo, *cjhi);
 
     /* check for data-types mismatch */
@@ -1432,7 +1432,7 @@ void pnga_matmul(transa, transb, alpha, beta,
 	_gai_matmul_patch_flag == SET) irregular = SET;
 
     /* even ga_dgemm is called, m,n & k might not match GA dimensions */
-    pnga_inquire(g_c, &ctype, &rank, dims);
+    pnga_inquire(*g_c, &ctype, &rank, dims);
     if(dims[0] != m || dims[1] != n) irregular = SET; /* C matrix dims */
 
     if(!irregular) {
@@ -1449,7 +1449,7 @@ void pnga_matmul(transa, transb, alpha, beta,
 
     /* if block cyclic, then use regular algorithm. This is turned on for now
      * to test block cyclic */ 
-    numblocks = pnga_total_blocks(g_c);
+    numblocks = pnga_total_blocks(*g_c);
     if(numblocks>=0) {
        irregular     = UNSET;
        use_NB_matmul = SET; 
@@ -1461,9 +1461,9 @@ void pnga_matmul(transa, transb, alpha, beta,
 
     /* to skip accumulate and exploit data locality:
        get chunks according to "C" matrix distribution*/
-    pnga_distribution(g_a, &me, loA, hiA);
-    pnga_distribution(g_b, &me, loB, hiB);
-    pnga_distribution(g_c, &me, loC, hiC);
+    pnga_distribution(*g_a, me, loA, hiA);
+    pnga_distribution(*g_b, me, loB, hiB);
+    pnga_distribution(*g_c, me, loC, hiC);
 
        {
 	  Integer elems, factor=sizeof(DoubleComplex)/GAsizeofM(atype);
@@ -1475,9 +1475,9 @@ void pnga_matmul(transa, transb, alpha, beta,
 	  Kchunk = GA_MIN( (hiA[1]-loA[1]+1), (hiB[0]-loB[0]+1) );
 
 #if KCHUNK_OPTIMIZATION /*works great for m=1000,n=1000,k=4000 kinda cases*/
-	  pnga_distribution(g_a, &me, loC, hiC);
+	  pnga_distribution(*g_a, me, loC, hiC);
 	  Kchunk = hiC[1]-loC[1]+1;
-	  pnga_distribution(g_b, &me, loC, hiC);
+	  pnga_distribution(*g_b, me, loC, hiC);
 	  Kchunk = GA_MIN(Kchunk, (hiC[0]-loC[0]+1));
 #endif
 
@@ -1583,7 +1583,7 @@ void pnga_matmul(transa, transb, alpha, beta,
        
 #if DEBUG_
        Integer grp_me;
-       grp_me = pnga_pgroup_nodeid(&a_grp);
+       grp_me = pnga_pgroup_nodeid(a_grp);
        pnga_pgroup_sync(&a_grp);
        if(me==0) check_result(1, transa, transb, alpha, beta, atype,
 			      g_a, ailo, aihi, ajlo, ajhi,
@@ -1650,11 +1650,11 @@ Integer clo[2], chi[2];
    GA_PUSH_NAME("ga_matmul_patch");
 
    /* Check to make sure all global arrays are of the same type */
-   if (!(pnga_is_mirrored(g_a) == pnga_is_mirrored(g_b) &&
-        pnga_is_mirrored(g_a) == pnga_is_mirrored(g_c))) {
+   if (!(pnga_is_mirrored(*g_a) == pnga_is_mirrored(*g_b) &&
+        pnga_is_mirrored(*g_a) == pnga_is_mirrored(*g_c))) {
      pnga_error("Processors do not match for all arrays",pnga_nnodes());
    }
-   if (pnga_is_mirrored(g_a)) {
+   if (pnga_is_mirrored(*g_a)) {
      inode = pnga_cluster_nodeid();
      nproc = pnga_cluster_nprocs(inode);
      iproc = me - pnga_cluster_procid(inode, ZERO_I);
@@ -1663,11 +1663,11 @@ Integer clo[2], chi[2];
      iproc = me;
    }
 
-   pnga_inquire(g_a, &atype, &rank, dims); 
+   pnga_inquire(*g_a, &atype, &rank, dims); 
    VECTORCHECK(rank, dims, adim1, adim2, *ailo, *aihi, *ajlo, *ajhi);
-   pnga_inquire(g_b, &btype, &rank, dims); 
+   pnga_inquire(*g_b, &btype, &rank, dims); 
    VECTORCHECK(rank, dims, bdim1, bdim2, *bilo, *bihi, *bjlo, *bjhi);
-   pnga_inquire(g_c, &ctype, &rank, dims); 
+   pnga_inquire(*g_c, &ctype, &rank, dims); 
    VECTORCHECK(rank, dims, cdim1, cdim2, *cilo, *cihi, *cjlo, *cjhi);
 
    if(atype != btype || atype != ctype ) pnga_error(" types mismatch ", 0L);
@@ -1729,7 +1729,7 @@ Integer clo[2], chi[2];
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
        Integer avail = pnga_memory_avail_type(atype);
-       if (pnga_is_mirrored(g_a)) {
+       if (pnga_is_mirrored(*g_a)) {
          fflush(stdout);
          if (sizeof(Integer)/sizeof(int) > 1)
            armci_msg_gop_scope(SCOPE_NODE, &avail, 1, "min", ARMCI_LONG);
@@ -1764,7 +1764,7 @@ Integer clo[2], chi[2];
    else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0) need_scaling =0;}
    else if( *(float*)beta ==0) need_scaling =0;
 
-   pnga_mask_sync(&ZERO_I, &ZERO_I);
+   pnga_mask_sync(ZERO_I, ZERO_I);
    clo[0] = *cilo; clo[1] = *cjlo;
    chi[0] = *cihi; chi[1] = *cjhi;
    if(need_scaling) pnga_scale_patch(g_c, clo, chi, beta);
@@ -1963,7 +1963,7 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
 #ifdef USE_VAMPIR
   vampir_begin(GA_MATMUL_PATCH,__FILE__,__LINE__);
 #endif
-    if(pnga_is_mirrored(g_a)) 
+    if(pnga_is_mirrored(*g_a)) 
        pnga_matmul_mirrored(transa, transb, alpha, beta,
 			  g_a, ailo, aihi, ajlo, ajhi,
 			  g_b, bilo, bihi, bjlo, bjhi,
@@ -2083,11 +2083,11 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    GA_PUSH_NAME("nga_matmul_patch");
 
    /* Check to make sure all global arrays are of the same type */
-   if (!(pnga_is_mirrored(g_a) == pnga_is_mirrored(g_b) &&
-        pnga_is_mirrored(g_a) == pnga_is_mirrored(g_c))) {
+   if (!(pnga_is_mirrored(*g_a) == pnga_is_mirrored(*g_b) &&
+        pnga_is_mirrored(*g_a) == pnga_is_mirrored(*g_c))) {
      pnga_error("Processors do not match for all arrays",pnga_nnodes());
    }
-   if (pnga_is_mirrored(g_a)) {
+   if (pnga_is_mirrored(*g_a)) {
      inode = pnga_cluster_nodeid();
      nproc = pnga_cluster_nprocs(inode);
      iproc = me - pnga_cluster_procid(inode, ZERO_I);
@@ -2096,9 +2096,9 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
      iproc = me;
    }
 
-   pnga_inquire(g_a, &atype, &arank, adims);
-   pnga_inquire(g_b, &btype, &brank, bdims);
-   pnga_inquire(g_c, &ctype, &crank, cdims);
+   pnga_inquire(*g_a, &atype, &arank, adims);
+   pnga_inquire(*g_b, &btype, &brank, bdims);
+   pnga_inquire(*g_c, &ctype, &crank, cdims);
 
    if(arank<2)  pnga_error("rank of A must be at least 2",arank);
    if(brank<2)  pnga_error("rank of B must be at least 2",brank);

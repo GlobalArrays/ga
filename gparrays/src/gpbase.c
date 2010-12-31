@@ -56,8 +56,8 @@ void pgp_terminate()
   Integer i;
   for (i=0; i<MAX_GP_ARRAYS; i++) {
     if (GP[i].active) {
-      pnga_destroy(&GP[i].gp_size_array);
-      pnga_destroy(&GP[i].gp_ptr_array);
+      pnga_destroy(GP[i].gp_size_array);
+      pnga_destroy(GP[i].gp_ptr_array);
     }
   }
 }
@@ -112,9 +112,9 @@ void pgp_set_dimensions(Integer *g_p, Integer *ndim, Integer *dims)
   }
 
   type = C_INT;
-  pnga_set_data(&GP[handle].gp_size_array, ndim, dims, &type);
+  pnga_set_data(GP[handle].gp_size_array, *ndim, dims, type);
   type = GP_POINTER_TYPE;
-  pnga_set_data(&GP[handle].gp_ptr_array, ndim, dims, &type);
+  pnga_set_data(GP[handle].gp_ptr_array, *ndim, dims, type);
   GP[handle].ndim = *ndim;
   for (i=0; i<*ndim; i++) {
     GP[handle].dims[i] = dims[i];
@@ -135,8 +135,8 @@ void pgp_set_chunk(Integer *g_p, Integer *chunk)
 {
   Integer handle;
   handle = *g_p + GP_OFFSET;
-  pnga_set_chunk(&GP[handle].gp_size_array, chunk);
-  pnga_set_chunk(&GP[handle].gp_ptr_array, chunk);
+  pnga_set_chunk(GP[handle].gp_size_array, chunk);
+  pnga_set_chunk(GP[handle].gp_ptr_array, chunk);
 }
 
 /**
@@ -152,14 +152,13 @@ logical pgp_allocate(Integer *g_p)
   logical status;
   Integer handle, me;
   handle = *g_p + GP_OFFSET;
-  status = pnga_allocate(&GP[handle].gp_size_array);
-  status = status && pnga_allocate(&GP[handle].gp_ptr_array);
+  status = pnga_allocate(GP[handle].gp_size_array);
+  status = status && pnga_allocate(GP[handle].gp_ptr_array);
   if (!status) {
      pnga_error("gp_allocate: unable to allocate GP array", 0);
   }
   me = pnga_nodeid();
-  pnga_distribution(&GP[handle].gp_ptr_array, &me, GP[handle].lo,
-          GP[handle].hi);
+  pnga_distribution(GP[handle].gp_ptr_array, me, GP[handle].lo, GP[handle].hi);
   return status;
 }
 
@@ -176,8 +175,8 @@ logical pgp_destroy(Integer *g_p)
   logical status;
   Integer handle;
   handle = *g_p + GP_OFFSET;
-  status = pnga_destroy(&GP[handle].gp_size_array);
-  status = status && pnga_destroy(&GP[handle].gp_ptr_array);
+  status = pnga_destroy(GP[handle].gp_size_array);
+  status = status && pnga_destroy(GP[handle].gp_ptr_array);
   if (!status) {
      pnga_error("gp_destroy: unable to destroy GP array", 0);
   }

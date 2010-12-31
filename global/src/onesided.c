@@ -456,7 +456,7 @@ void ngai_put_common(Integer *g_a,
 #endif
   GA_PUSH_NAME("ngai_put_common");
 
-  ga_check_handleM(g_a, "ngai_put_common");
+  ga_check_handleM(*g_a, "ngai_put_common");
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -475,8 +475,8 @@ void ngai_put_common(Integer *g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
-      ga_RegionError(pnga_ndim(g_a), lo, hi, *g_a);
+    if(!pnga_locate_region(*g_a, lo, hi, _ga_map, GA_proclist, &np ))
+      ga_RegionError(pnga_ndim(*g_a), lo, hi, *g_a);
 
 #ifndef NO_GA_STATS
     gam_CountElems(ndim, lo, hi, &elems);
@@ -978,7 +978,7 @@ void ngai_get_common(Integer *g_a,
 
   GA_PUSH_NAME("nga_get_common");
 
-  ga_check_handleM(g_a, "nga_get_common");
+  ga_check_handleM(*g_a, "nga_get_common");
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -997,8 +997,8 @@ void ngai_get_common(Integer *g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
-      ga_RegionError(pnga_ndim(g_a), lo, hi, *g_a);
+    if(!pnga_locate_region(*g_a, lo, hi, _ga_map, GA_proclist, &np ))
+      ga_RegionError(pnga_ndim(*g_a), lo, hi, *g_a);
 
     /* get total size of patch */
 #ifndef NO_GA_STATS
@@ -1499,7 +1499,7 @@ void ngai_acc_common(Integer *g_a,
 #endif
   GA_PUSH_NAME("nga_acc_common");
 
-  ga_check_handleM(g_a, "nga_acc_common");
+  ga_check_handleM(*g_a, "nga_acc_common");
 
   size = GA[handle].elemsize;
   type = GA[handle].type;
@@ -1526,8 +1526,8 @@ void ngai_acc_common(Integer *g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
-      ga_RegionError(pnga_ndim(g_a), lo, hi, *g_a);
+    if(!pnga_locate_region(*g_a, lo, hi, _ga_map, GA_proclist, &np ))
+      ga_RegionError(pnga_ndim(*g_a), lo, hi, *g_a);
 
 #ifndef NO_GA_STATS
     gam_CountElems(ndim, lo, hi, &elems);
@@ -2007,12 +2007,12 @@ Integer  ow,i,p_handle;
 
    GA_PUSH_NAME("nga_access_ptr");
    p_handle = GA[handle].p_handle;
-   if (!pnga_locate(g_a,lo,&ow)) pnga_error("locate top failed",0);
+   if (!pnga_locate(*g_a,lo,&ow)) pnga_error("locate top failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme)) 
       pnga_error("cannot access top of the patch",ow);
-   if (!pnga_locate(g_a,hi, &ow)) pnga_error("locate bottom failed",0);
+   if (!pnga_locate(*g_a,hi, &ow)) pnga_error("locate bottom failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme))
@@ -2300,12 +2300,12 @@ unsigned long    lref=0, lptr;
 #endif
    GA_PUSH_NAME("nga_access");
    p_handle = GA[handle].p_handle;
-   if(!pnga_locate(g_a,lo,&ow))pnga_error("locate top failed",0);
+   if(!pnga_locate(*g_a,lo,&ow))pnga_error("locate top failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme)) 
       pnga_error("cannot access top of the patch",ow);
-   if(!pnga_locate(g_a,hi, &ow))pnga_error("locate bottom failed",0);
+   if(!pnga_locate(*g_a,hi, &ow))pnga_error("locate bottom failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme)) 
@@ -2743,7 +2743,7 @@ int use_blocks;
   p_handle = GA[handle].p_handle;
   use_blocks = GA[handle].block_flag;
 
-  pnga_distribution(&g_a, &proc, lo, hi);
+  pnga_distribution(g_a, proc, lo, hi);
   ilo = lo[0];
   jlo = lo[1];
   ihi = hi[0];
@@ -2865,7 +2865,7 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
     vampir_begin(GA_SCATTER,__FILE__,__LINE__);
 #endif
     
-    ga_check_handleM(g_a, "ga_scatter");
+    ga_check_handleM(*g_a, "ga_scatter");
     GA_PUSH_NAME("ga_scatter");
     GAstat.numsca++;
     /* determine how many processors are associated with array */
@@ -2918,7 +2918,7 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
       for(k=0; k< *nv; k++) {
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
-        if(! pnga_locate(g_a, subscrpt, owner+k)){
+        if(! pnga_locate(*g_a, subscrpt, owner+k)){
           char err_string[ERR_STR_LEN];
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
           pnga_error(err_string,*g_a);
@@ -2930,7 +2930,7 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
       for(k=0; k< *nv; k++) {
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
-        if(! pnga_locate(g_a, subscrpt, owner+k)){
+        if(! pnga_locate(*g_a, subscrpt, owner+k)){
           char err_string[ERR_STR_LEN];
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
           pnga_error(err_string,*g_a);
@@ -2976,7 +2976,7 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
         iproc = aproc[kk];
         if (GA[handle].num_rstrctd > 0)
                     iproc = GA[handle].rstrctd_list[iproc];
-        pnga_distribution(g_a, &iproc, lo, hi);
+        pnga_distribution(*g_a, iproc, lo, hi);
         ilo[kk] = lo[0];
         jlo[kk] = lo[1];
         ihi[kk] = hi[0];
@@ -2989,7 +2989,7 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
     } else {
       for(kk=0; kk<naproc; kk++) {
         iproc = aproc[kk];
-        pnga_distribution(g_a, &iproc, lo, hi);
+        pnga_distribution(*g_a, iproc, lo, hi);
         ilo[kk] = lo[0];
         jlo[kk] = lo[1];
         ihi[kk] = hi[0];
@@ -3125,7 +3125,7 @@ Integer subscrpt[2];
 
   if (*nv < 1) return;
 
-  ga_check_handleM(g_a, "ga_scatter_acc");
+  ga_check_handleM(*g_a, "ga_scatter_acc");
   GA_PUSH_NAME("ga_scatter_acc");
   GAstat.numsca++;
 
@@ -3135,7 +3135,7 @@ Integer subscrpt[2];
   for(k=0; k< *nv; k++) {
     subscrpt[0] = *(i+k);
     subscrpt[1] = *(j+k);
-    if(! pnga_locate(g_a, subscrpt, int_ptr+k)){
+    if(! pnga_locate(*g_a, subscrpt, int_ptr+k)){
          char err_string[ERR_STR_LEN];
          sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
          pnga_error(err_string,*g_a);
@@ -3259,7 +3259,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
      */
     if (GA[handle].num_rstrctd == 0) {
       for(k=0; k<*nv; k++) {
-        if(!pnga_locate(g_a, subscript+k*ndim, proc+k)) {
+        if(!pnga_locate(*g_a, subscript+k*ndim, proc+k)) {
           gai_print_subscript("invalid subscript",ndim, subscript+k*ndim,"\n");
           pnga_error("failed -element:",k);
         }
@@ -3268,7 +3268,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
       }
     } else {
       for(k=0; k<*nv; k++) {
-        if(!pnga_locate(g_a, subscript+k*ndim, proc+k)) {
+        if(!pnga_locate(*g_a, subscript+k*ndim, proc+k)) {
           gai_print_subscript("invalid subscript",ndim, subscript+k*ndim,"\n");
           pnga_error("failed -element:",k);
         }
@@ -3350,7 +3350,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
           for(k=0; k<(*nv); k++){
             iproc = proc[k];
             ptr_dst[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            pnga_distribution(g_a, &iproc, lo, hi);
+            pnga_distribution(*g_a, iproc, lo, hi);
             pnga_access_block_ptr(g_a, &iproc, &(ptr_src[map[iproc]][count[iproc]]), ld);
             pnga_release_block(g_a, &iproc);
             /* calculate remaining offset */
@@ -3457,7 +3457,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
           for(k=0; k<(*nv); k++){
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            pnga_distribution(g_a, &iproc, lo, hi);
+            pnga_distribution(*g_a, iproc, lo, hi);
             pnga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
             pnga_release_block(g_a, &iproc);
             /* calculate remaining offset */
@@ -3573,7 +3573,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
           for(k=0; k<(*nv); k++){
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            pnga_distribution(g_a, &iproc, lo, hi);
+            pnga_distribution(*g_a, iproc, lo, hi);
             pnga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
             pnga_release_block(g_a, &iproc);
             /* calculate remaining offset */
@@ -3709,7 +3709,7 @@ void pnga_gather(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 {
 
   if (*nv < 1) return;
-  ga_check_handleM(g_a, "nga_gather");
+  ga_check_handleM(*g_a, "nga_gather");
 #ifdef USE_VAMPIR
   vampir_begin(NGA_GATHER,__FILE__,__LINE__);
 #endif
@@ -3739,7 +3739,7 @@ void pnga_scatter(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 #ifdef USE_VAMPIR
   vampir_begin(NGA_SCATTER,__FILE__,__LINE__);
 #endif
-  ga_check_handleM(g_a, "nga_scatter");
+  ga_check_handleM(*g_a, "nga_scatter");
   GA_PUSH_NAME("nga_scatter");
   GAstat.numsca++;
 
@@ -3764,7 +3764,7 @@ void pnga_scatter_acc(Integer *g_a, void* v, Integer subscript[],
 {
 
   if (*nv < 1) return;
-  ga_check_handleM(g_a, "nga_scatter_acc");
+  ga_check_handleM(*g_a, "nga_scatter_acc");
   GA_PUSH_NAME("nga_scatter_acc");
   GAstat.numsca++;
 
@@ -3847,7 +3847,7 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
 #ifdef USE_VAMPIR
     vampir_begin(GA_GATHER,__FILE__,__LINE__);
 #endif
-    ga_check_handleM(g_a, "ga_gather");
+    ga_check_handleM(*g_a, "ga_gather");
     GA_PUSH_NAME("ga_gather");
     GAstat.numgat++;
 
@@ -3901,7 +3901,7 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
       for(k=0; k< *nv; k++) {
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
-        if(! pnga_locate(g_a, subscrpt, owner+k)){
+        if(! pnga_locate(*g_a, subscrpt, owner+k)){
           char err_string[ERR_STR_LEN];
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
           pnga_error(err_string, *g_a);
@@ -3913,7 +3913,7 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
       for(k=0; k< *nv; k++) {
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
-        if(! pnga_locate(g_a, subscrpt, owner+k)){
+        if(! pnga_locate(*g_a, subscrpt, owner+k)){
           char err_string[ERR_STR_LEN];
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
           pnga_error(err_string, *g_a);
@@ -3958,7 +3958,7 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
         iproc = aproc[kk];
         if (GA[handle].num_rstrctd > 0)
           iproc = GA[handle].rstrctd_list[iproc];
-        pnga_distribution(g_a, &iproc, lo, hi);
+        pnga_distribution(*g_a, iproc, lo, hi);
         ilo[kk] = lo[0];
         jlo[kk] = lo[1];
         ihi[kk] = hi[0];
@@ -3971,7 +3971,7 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
     } else {
       for(kk=0; kk<naproc; kk++) {
         iproc = aproc[kk];
-        pnga_distribution(g_a, &iproc, lo, hi);
+        pnga_distribution(*g_a, iproc, lo, hi);
         ilo[kk] = lo[0];
         jlo[kk] = lo[1];
         ihi[kk] = hi[0];
@@ -4102,7 +4102,7 @@ void *pval;
 #ifdef USE_VAMPIR
     vampir_begin(NGA_READ_INC,__FILE__,__LINE__);
 #endif
-    ga_check_handleM(g_a, "nga_read_inc");
+    ga_check_handleM(*g_a, "nga_read_inc");
     GA_PUSH_NAME("nga_read_inc");
     /* BJP printf("p[%d] g_a: %d subscript: %d inc: %d\n",GAme, *g_a, subscript[0], *inc); */
 
@@ -4116,7 +4116,7 @@ void *pval;
     ndim = GA[handle].ndim;
 
     /* find out who owns it */
-    pnga_locate(g_a, subscript, &proc);
+    pnga_locate(*g_a, subscript, &proc);
 
     /* get an address of the g_a(subscript) element */
     if (!GA[handle].block_flag) {
@@ -4128,7 +4128,7 @@ void *pval;
     } else {
       Integer lo[MAXDIM], hi[MAXDIM];
       Integer j, jtot, last, offset;
-      pnga_distribution(g_a, &proc, lo, hi);
+      pnga_distribution(*g_a, proc, lo, hi);
       pnga_access_block_ptr(g_a, &proc, (char**)&ptr, ldp);
       pnga_release_block(g_a, &proc);
       offset = 0;
@@ -4337,8 +4337,8 @@ void pnga_strided_put(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
-      ga_RegionError(pnga_ndim(g_a), lo, hi, *g_a);
+    if (!pnga_locate_region(*g_a, lo, hi, _ga_map, GA_proclist, &np))
+      ga_RegionError(pnga_ndim(*g_a), lo, hi, *g_a);
 
     /* Loop over all processors containing a portion of patch */
     gaPermuteProcList(np);
@@ -4703,8 +4703,8 @@ void pnga_strided_get(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
-      ga_RegionError(pnga_ndim(g_a), lo, hi, *g_a);
+    if (!pnga_locate_region(*g_a, lo, hi, _ga_map, GA_proclist, &np))
+      ga_RegionError(pnga_ndim(*g_a), lo, hi, *g_a);
 
     /* Loop over all processors containing a portion of patch */
     gaPermuteProcList(np);
@@ -5081,8 +5081,8 @@ void pnga_strided_acc(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
-      ga_RegionError(pnga_ndim(g_a), lo, hi, *g_a);
+    if (!pnga_locate_region(*g_a, lo, hi, _ga_map, GA_proclist, &np))
+      ga_RegionError(pnga_ndim(*g_a), lo, hi, *g_a);
 
     /* Loop over all processors containing a portion of patch */
     gaPermuteProcList(np);

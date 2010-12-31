@@ -81,16 +81,16 @@ void pnga_print_patch_file2d(file, g_a, ilo, ihi, jlo, jhi, pretty)
   Integer ndim, dims[2];
   Integer lo[2], hi[2];
 
-  a_grp = pnga_get_pgroup(&g_a);
+  a_grp = pnga_get_pgroup(g_a);
   pnga_pgroup_sync(&a_grp);
-  pnga_check_handle(&g_a, "ga_print");
-  if(pnga_pgroup_nodeid(&a_grp) == 0){
+  pnga_check_handle(g_a, "ga_print");
+  if(pnga_pgroup_nodeid(a_grp) == 0){
 
-    pnga_inquire(&g_a, &type, &ndim, dims);
+    pnga_inquire(g_a, &type, &ndim, dims);
     dim1 = dims[0];
     dim2 = dims[1];
     /*     name[FLEN-1]='\0';*/
-    pnga_inquire_name(&g_a, &name);
+    pnga_inquire_name(g_a, &name);
     if (ilo <= 0 || ihi > dim1 || jlo <= 0 || jhi > dim2){
       fprintf(stderr,"%ld %ld %ld %ld dims: [%ld,%ld]\n", 
           (long)ilo,(long)ihi, (long)jlo,(long)jhi,
@@ -435,8 +435,8 @@ int local_sync_begin,local_sync_end;
     if(local_sync_begin)pnga_sync();
 
     if(pnga_nodeid() ==0){
-      pnga_inquire(&g_a, &type, &ndim, dims);
-      pnga_inquire_name(&g_a, &name);
+      pnga_inquire(g_a, &type, &ndim, dims);
+      pnga_inquire_name(g_a, &name);
       printf("Array Handle=%d Name:'%s' ",(int)g_a, name);
       printf("Data Type:");
       switch(type){
@@ -460,7 +460,7 @@ int local_sync_begin,local_sync_end;
 
       /* print array range for every processor */
       for(proc = 0; proc < nproc; proc++){
-          pnga_distribution(&g_a,&proc,lo,hi);
+          pnga_distribution(g_a,proc,lo,hi);
           sprintf(msg,"Process=%d\t owns array section: ",(int)proc);
 
           /* for C style need to swap and decremenent by 1 both arrays */
@@ -515,13 +515,13 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
     Integer done, status_2d, status_3d;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     pnga_sync();
-    pnga_check_handle(&g_a, "nga_print");
+    pnga_check_handle(g_a, "nga_print");
 
     /* only the first process print the array */
     if(pnga_nodeid() == 0) {
         
-        pnga_inquire(&g_a,  &type, &ndim, dims);
-        pnga_inquire_name(&g_a, &name);
+        pnga_inquire(g_a,  &type, &ndim, dims);
+        pnga_inquire_name(g_a, &name);
         
         /* check the boundary */
         for(i=0; i<ndim; i++)
@@ -884,12 +884,12 @@ void pnga_summarize(Integer verbose)
     arr_no = 0;
     
     for(g_a=-1000; g_a<-900; g_a++) {
-        active = pnga_verify_handle(&g_a);
+        active = pnga_verify_handle(g_a);
 
         if(active == 1) {
             printed = 1;
-            pnga_inquire(&g_a, &type, &ndim, dims);
-            pnga_inquire_name(&g_a, &name);
+            pnga_inquire(g_a, &type, &ndim, dims);
+            pnga_inquire_name(g_a, &name);
             
             switch(type) {
                 case C_INT:
@@ -925,7 +925,7 @@ void pnga_summarize(Integer verbose)
 
             if(verbose) {
                 for(i=0; i<nproc; i++){
-                    pnga_distribution(&g_a, &i, lop, hip);
+                    pnga_distribution(g_a, i, lop, hip);
                     
                     fprintf(DEV,"    (");
                     for(j=0; j<ndim; j++)
@@ -957,7 +957,7 @@ void pnga_print_file(FILE *file, Integer g_a)
     Integer lo[MAXDIM];
     Integer pretty = 1;
 
-    pnga_inquire(&g_a, &type, &ndim, dims);
+    pnga_inquire(g_a, &type, &ndim, dims);
 
     for(i=0; i<ndim; i++) lo[i] = 1;
 

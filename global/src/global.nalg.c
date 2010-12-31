@@ -64,24 +64,24 @@ void pnga_zero(Integer *g_a)
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  p_handle = pnga_get_pgroup(g_a);
+  p_handle = pnga_get_pgroup(*g_a);
 
   if(local_sync_begin) pnga_pgroup_sync(&p_handle);
 
-  me = pnga_pgroup_nodeid(&p_handle);
+  me = pnga_pgroup_nodeid(p_handle);
 
-  pnga_check_handle(g_a, "ga_zero");
+  pnga_check_handle(*g_a, "ga_zero");
   GA_PUSH_NAME("ga_zero");
 
-  num_blocks = pnga_total_blocks(g_a);
+  num_blocks = pnga_total_blocks(*g_a);
 
-  pnga_inquire(g_a, &type, &ndim, dims);
+  pnga_inquire(*g_a, &type, &ndim, dims);
   if (num_blocks < 0) {
-    pnga_distribution(g_a, &me, lo, hi);
+    pnga_distribution(*g_a, me, lo, hi);
 
     if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
 
-      if (pnga_has_ghosts(g_a)) {
+      if (pnga_has_ghosts(*g_a)) {
         pnga_zero_patch(g_a,lo,hi);
 #ifdef USE_VAMPIR
         vampir_end(GA_ZERO,__FILE__,__LINE__);
@@ -189,12 +189,12 @@ void *ptr_a, *ptr_b;
 
    if(*g_a == *g_b) pnga_error("arrays have to be different ", 0L);
 
-   pnga_inquire(g_a,  &type, &ndim, dims);
-   pnga_inquire(g_b,  &typeb, &ndimb, dimsb);
+   pnga_inquire(*g_a,  &type, &ndim, dims);
+   pnga_inquire(*g_b,  &typeb, &ndimb, dimsb);
 
    if(type != typeb) pnga_error("types not the same", *g_b);
 
-   if(!pnga_compare_distr(g_a,g_b))
+   if(!pnga_compare_distr(*g_a,*g_b))
 
       pnga_copy_patch("n",g_a, one_arr, dims, g_b, one_arr, dimsb);
 
@@ -202,20 +202,20 @@ void *ptr_a, *ptr_b;
 
      pnga_sync();
 
-     pnga_distribution(g_a, &me, lo, hi);
+     pnga_distribution(*g_a, me, lo, hi);
      if(lo[0]>0){
         pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-        if (pnga_has_ghosts(g_a)) {
+        if (pnga_has_ghosts(*g_a)) {
           GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
         } else {
           GET_ELEMS(ndim,lo,hi,ld,&elems);
         }
      }
 
-     pnga_distribution(g_b, &me, lo, hi);
+     pnga_distribution(*g_b, me, lo, hi);
      if(lo[0]>0){
         pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-        if (pnga_has_ghosts(g_b)) {
+        if (pnga_has_ghosts(*g_b)) {
           GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
         } else {
           GET_ELEMS(ndim,lo,hi,ld,&elems);
@@ -261,14 +261,14 @@ int local_sync_begin,local_sync_end,use_put;
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   a_grp = pnga_get_pgroup(g_a);
-   b_grp = pnga_get_pgroup(g_b);
-   me_a = pnga_pgroup_nodeid(&a_grp);
-   me_b = pnga_pgroup_nodeid(&b_grp);
-   anproc = pnga_get_pgroup_size(&a_grp);
-   bnproc = pnga_get_pgroup_size(&b_grp);
-   num_blocks_a = pnga_total_blocks(g_a);
-   num_blocks_b = pnga_total_blocks(g_b);
+   a_grp = pnga_get_pgroup(*g_a);
+   b_grp = pnga_get_pgroup(*g_b);
+   me_a = pnga_pgroup_nodeid(a_grp);
+   me_b = pnga_pgroup_nodeid(b_grp);
+   anproc = pnga_get_pgroup_size(a_grp);
+   bnproc = pnga_get_pgroup_size(b_grp);
+   num_blocks_a = pnga_total_blocks(*g_a);
+   num_blocks_b = pnga_total_blocks(*g_b);
    if (anproc <= bnproc) {
      use_put = 1;
    } else {
@@ -289,8 +289,8 @@ int local_sync_begin,local_sync_end,use_put;
 
    if(*g_a == *g_b) pnga_error("arrays have to be different ", 0L);
 
-   pnga_inquire(g_a,  &type, &ndim, dims);
-   pnga_inquire(g_b,  &typeb, &ndimb, dimsb);
+   pnga_inquire(*g_a,  &type, &ndim, dims);
+   pnga_inquire(*g_b,  &typeb, &ndimb, dimsb);
 
    if(type != typeb) pnga_error("types not the same", *g_b);
    if(ndim != ndimb) pnga_error("dimensions not the same", ndimb);
@@ -298,22 +298,22 @@ int local_sync_begin,local_sync_end,use_put;
    for(i=0; i< ndim; i++)if(dims[i]!=dimsb[i]) 
                           pnga_error("dimensions not the same",i);
 
-   if ((pnga_is_mirrored(g_a) && pnga_is_mirrored(g_b)) ||
-       (!pnga_is_mirrored(g_a) && !pnga_is_mirrored(g_b))) {
+   if ((pnga_is_mirrored(*g_a) && pnga_is_mirrored(*g_b)) ||
+       (!pnga_is_mirrored(*g_a) && !pnga_is_mirrored(*g_b))) {
      /* Both global arrays are mirrored or both global arrays are not mirrored.
         Copy operation is straightforward */
 
      if (use_put) {
        if (num_blocks_a < 0) {
-         pnga_distribution(g_a, &me_a, lo, hi);
+         pnga_distribution(*g_a, me_a, lo, hi);
          if(lo[0]>0){
            pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
            pnga_put(g_b, lo, hi, ptr_a, ld);
          }
        } else {
-         if (!pnga_uses_proc_grid(g_a)) {
+         if (!pnga_uses_proc_grid(*g_a)) {
            for (i=me_a; i<num_blocks_a; i += anproc) {
-             pnga_distribution(g_a, &i, lo, hi);
+             pnga_distribution(*g_a, i, lo, hi);
              if (lo[0]>0) {
                pnga_access_block_ptr(g_a, &i, &ptr_a, ld);
                pnga_put(g_b, lo, hi, ptr_a, ld);
@@ -322,10 +322,10 @@ int local_sync_begin,local_sync_end,use_put;
          } else {
            Integer proc_index[MAXDIM], index[MAXDIM];
            Integer topology[MAXDIM], chk;
-           pnga_get_proc_index(g_a, &me_a, proc_index);
-           pnga_get_proc_index(g_a, &me_a, index);
-           pnga_get_block_info(g_a, blocks, block_dims);
-           pnga_get_proc_grid(g_a, topology);
+           pnga_get_proc_index(*g_a, me_a, proc_index);
+           pnga_get_proc_index(*g_a, me_a, index);
+           pnga_get_block_info(*g_a, blocks, block_dims);
+           pnga_get_proc_grid(*g_a, topology);
            while (index[ndim-1] < blocks[ndim-1]) {
              /* find bounding coordinates of block */
              chk = 1;
@@ -352,15 +352,15 @@ int local_sync_begin,local_sync_end,use_put;
        }
      } else {
        if (num_blocks_b < 0) {
-         pnga_distribution(g_b, &me_b, lo, hi);
+         pnga_distribution(*g_b, me_b, lo, hi);
          if(lo[0]>0){
            pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
            pnga_get(g_a, lo, hi, ptr_b, ld);
          }
        } else {
-         if (!pnga_uses_proc_grid(g_a)) {
+         if (!pnga_uses_proc_grid(*g_a)) {
            for (i=me_b; i<num_blocks_b; i += bnproc) {
-             pnga_distribution(g_b, &i, lo, hi);
+             pnga_distribution(*g_b, i, lo, hi);
              if (lo[0]>0) {
                pnga_access_block_ptr(g_b, &i, &ptr_b, ld);
                pnga_get(g_a, lo, hi, ptr_b, ld);
@@ -369,10 +369,10 @@ int local_sync_begin,local_sync_end,use_put;
          } else {
            Integer proc_index[MAXDIM], index[MAXDIM];
            Integer topology[MAXDIM], chk;
-           pnga_get_proc_index(g_b, &me_b, proc_index);
-           pnga_get_proc_index(g_b, &me_b, index);
-           pnga_get_block_info(g_b, blocks, block_dims);
-           pnga_get_proc_grid(g_b, topology);
+           pnga_get_proc_index(*g_b, me_b, proc_index);
+           pnga_get_proc_index(*g_b, me_b, index);
+           pnga_get_block_info(*g_b, blocks, block_dims);
+           pnga_get_proc_grid(*g_b, topology);
            while (index[ndim-1] < blocks[ndim-1]) {
              /* find bounding coordinates of block */
              chk = 1;
@@ -400,10 +400,10 @@ int local_sync_begin,local_sync_end,use_put;
      }
    } else {
      /* One global array is mirrored and the other is not */
-     if (pnga_is_mirrored(g_a)) {
+     if (pnga_is_mirrored(*g_a)) {
        /* Source array is mirrored and destination
           array is distributed. Assume source array is consistent */
-       pnga_distribution(g_b, &me_b, lo, hi);
+       pnga_distribution(*g_b, me_b, lo, hi);
        if (lo[0]>0) {
          pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
          pnga_get(g_a, lo, hi, ptr_b, ld);
@@ -412,12 +412,12 @@ int local_sync_begin,local_sync_end,use_put;
        /* source array is distributed and destination
           array is mirrored */
        pnga_zero(g_b);
-       pnga_distribution(g_a, &me_a, lo, hi);
+       pnga_distribution(*g_a, me_a, lo, hi);
        if (lo[0] > 0) {
          pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
          pnga_put(g_b, lo, hi, ptr_a, ld);
        }
-       pnga_merge_mirrored(g_b);
+       pnga_merge_mirrored(*g_b);
      }
    }
 
@@ -465,29 +465,29 @@ Integer bndim, bdims[MAXDIM];
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 
    GA_PUSH_NAME("ga_dot");
-   a_grp = pnga_get_pgroup(g_a);
-   b_grp = pnga_get_pgroup(g_b);
+   a_grp = pnga_get_pgroup(*g_a);
+   b_grp = pnga_get_pgroup(*g_b);
    if (a_grp != b_grp)
      pnga_error("Both arrays must be defined on same group",0L);
-   me = pnga_pgroup_nodeid(&a_grp);
+   me = pnga_pgroup_nodeid(a_grp);
 
    /* Check to see if either GA is block cyclic distributed */
-   num_blocks_a = pnga_total_blocks(g_a);
-   num_blocks_b = pnga_total_blocks(g_b);
+   num_blocks_a = pnga_total_blocks(*g_a);
+   num_blocks_b = pnga_total_blocks(*g_b);
    if (num_blocks_a >= 0 || num_blocks_b >= 0) {
-     pnga_inquire(g_a, &type, &andim, adims);
-     pnga_inquire(g_b, &type, &bndim, bdims);
+     pnga_inquire(*g_a, &type, &andim, adims);
+     pnga_inquire(*g_b, &type, &bndim, bdims);
      pnga_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
          value);
      GA_POP_NAME;
      return;
    }
 
-   if(pnga_compare_distr(g_a,g_b) == FALSE ||
-      pnga_has_ghosts(g_a) || pnga_has_ghosts(g_b)) {
+   if(pnga_compare_distr(*g_a,*g_b) == FALSE ||
+      pnga_has_ghosts(*g_a) || pnga_has_ghosts(*g_b)) {
        /* distributions not identical */
-       pnga_inquire(g_a, &type, &andim, adims);
-       pnga_inquire(g_b, &type, &bndim, bdims);
+       pnga_inquire(*g_a, &type, &andim, adims);
+       pnga_inquire(*g_b, &type, &bndim, bdims);
 
        pnga_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
                       value);
@@ -497,12 +497,12 @@ Integer bndim, bdims[MAXDIM];
    }
    
    pnga_pgroup_sync(&a_grp);
-   pnga_inquire(g_a,  &type, &ndim, dims);
+   pnga_inquire(*g_a,  &type, &ndim, dims);
    if(type != Type) pnga_error("type not correct", *g_a);
-   pnga_distribution(g_a, &me, lo, hi);
+   pnga_distribution(*g_a, me, lo, hi);
    if(lo[0]>0){
       pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-      if (pnga_has_ghosts(g_a)) {
+      if (pnga_has_ghosts(*g_a)) {
         GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
       } else {
         GET_ELEMS(ndim,lo,hi,ld,&elems);
@@ -513,12 +513,12 @@ Integer bndim, bdims[MAXDIM];
      elemsb = elems;
      ptr_b = ptr_a;
    }else {  
-     pnga_inquire(g_b,  &type, &ndim, dims);
+     pnga_inquire(*g_b,  &type, &ndim, dims);
      if(type != Type) pnga_error("type not correct", *g_b);
-     pnga_distribution(g_b, &me, lo, hi);
+     pnga_distribution(*g_b, me, lo, hi);
      if(lo[0]>0){
         pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-        if (pnga_has_ghosts(g_b)) {
+        if (pnga_has_ghosts(*g_b)) {
           GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elemsb);
         } else {
           GET_ELEMS(ndim,lo,hi,ld,&elemsb);
@@ -627,7 +627,7 @@ Integer bndim, bdims[MAXDIM];
       default: pnga_error("pnga_dot: type not supported",type);
     }
 
-   if (pnga_is_mirrored(g_a) && pnga_is_mirrored(g_b)) {
+   if (pnga_is_mirrored(*g_a) && pnga_is_mirrored(*g_b)) {
      armci_msg_gop_scope(SCOPE_NODE,value,alen,"+",atype);
    } else {
 #ifdef MPI
@@ -665,19 +665,19 @@ void pnga_scale(Integer *g_a, void* alpha)
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  grp_id = pnga_get_pgroup(g_a);
+  grp_id = pnga_get_pgroup(*g_a);
   if(local_sync_begin)pnga_pgroup_sync(&grp_id);
 
-  me = pnga_pgroup_nodeid(&grp_id);
+  me = pnga_pgroup_nodeid(grp_id);
 
-  pnga_check_handle(g_a, "ga_scale");
+  pnga_check_handle(*g_a, "ga_scale");
   GA_PUSH_NAME("ga_scale");
-  num_blocks = pnga_total_blocks(g_a);
+  num_blocks = pnga_total_blocks(*g_a);
 
-  pnga_inquire(g_a, &type, &ndim, dims);
+  pnga_inquire(*g_a, &type, &ndim, dims);
   if (num_blocks < 0) {
-    pnga_distribution(g_a, &me, lo, hi);
-    if (pnga_has_ghosts(g_a)) {
+    pnga_distribution(*g_a, me, lo, hi);
+    if (pnga_has_ghosts(*g_a)) {
       pnga_scale_patch(g_a, lo, hi, alpha);
 #ifdef USE_VAMPIR
       vampir_end(GA_SCALE,__FILE__,__LINE__);
@@ -827,22 +827,22 @@ int local_sync_begin,local_sync_end;
 
 
    GA_PUSH_NAME("ga_add");
-   a_grp = pnga_get_pgroup(g_a);
-   b_grp = pnga_get_pgroup(g_b);
-   c_grp = pnga_get_pgroup(g_c);
+   a_grp = pnga_get_pgroup(*g_a);
+   b_grp = pnga_get_pgroup(*g_b);
+   c_grp = pnga_get_pgroup(*g_c);
    if (a_grp != b_grp || b_grp != c_grp)
      pnga_error("All three arrays must be on same group for ga_add",0L);
 
-   me = pnga_pgroup_nodeid(&a_grp);
-   if((pnga_compare_distr(g_a,g_b) == FALSE) ||
-      (pnga_compare_distr(g_a,g_c) == FALSE) ||
-       pnga_has_ghosts(g_a) || pnga_has_ghosts(g_b) || pnga_has_ghosts(g_c) ||
-       pnga_total_blocks(g_a) > 0 || pnga_total_blocks(g_b) > 0 ||
-       pnga_total_blocks(g_c) > 0) {
+   me = pnga_pgroup_nodeid(a_grp);
+   if((pnga_compare_distr(*g_a,*g_b) == FALSE) ||
+      (pnga_compare_distr(*g_a,*g_c) == FALSE) ||
+       pnga_has_ghosts(*g_a) || pnga_has_ghosts(*g_b) || pnga_has_ghosts(*g_c) ||
+       pnga_total_blocks(*g_a) > 0 || pnga_total_blocks(*g_b) > 0 ||
+       pnga_total_blocks(*g_c) > 0) {
        /* distributions not identical */
-       pnga_inquire(g_a, &type, &andim, adims);
-       pnga_inquire(g_b, &type, &bndim, bdims);
-       pnga_inquire(g_b, &type, &cndim, cdims);
+       pnga_inquire(*g_a, &type, &andim, adims);
+       pnga_inquire(*g_b, &type, &bndim, bdims);
+       pnga_inquire(*g_b, &type, &cndim, cdims);
 
        pnga_add_patch(alpha, g_a, one_arr, adims, beta, g_b, one_arr, bdims,
                       g_c, one_arr, cdims);
@@ -855,8 +855,8 @@ int local_sync_begin,local_sync_end;
    }
 
    pnga_pgroup_sync(&a_grp);
-   pnga_inquire(g_c,  &typeC, &ndim, dims);
-   pnga_distribution(g_c, &me, lo, hi);
+   pnga_inquire(*g_c,  &typeC, &ndim, dims);
+   pnga_distribution(*g_c, me, lo, hi);
    if (  lo[0]>0 ){
      pnga_access_ptr(g_c, lo, hi, &ptr_c, ld);
      GET_ELEMS(ndim,lo,hi,ld,&elems);
@@ -866,9 +866,9 @@ int local_sync_begin,local_sync_end;
      ptr_a  = ptr_c;
      elemsa = elems;
    }else { 
-     pnga_inquire(g_a,  &type, &ndim, dims);
+     pnga_inquire(*g_a,  &type, &ndim, dims);
      if(type != typeC) pnga_error("types not consistent", *g_a);
-     pnga_distribution(g_a, &me, lo, hi);
+     pnga_distribution(*g_a, me, lo, hi);
      if (  lo[0]>0 ){
        pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
        GET_ELEMS(ndim,lo,hi,ld,&elemsa);
@@ -879,9 +879,9 @@ int local_sync_begin,local_sync_end;
      ptr_b  = ptr_c;
      elemsb = elems;
    }else {
-     pnga_inquire(g_b,  &type, &ndim, dims);
+     pnga_inquire(*g_b,  &type, &ndim, dims);
      if(type != typeC) pnga_error("types not consistent", *g_b);
-     pnga_distribution(g_b, &me, lo, hi);
+     pnga_distribution(*g_b, me, lo, hi);
      if (  lo[0]>0 ){
        pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
        GET_ELEMS(ndim,lo,hi,ld,&elemsb);
@@ -1046,16 +1046,16 @@ char *ptr_tmp, *ptr_a;
 
     if(*g_a == *g_b) pnga_error("arrays have to be different ", 0L);
 
-    pnga_inquire(g_a, &atype, &andim, adims);
-    pnga_inquire(g_b, &btype, &bndim, bdims);
+    pnga_inquire(*g_a, &atype, &andim, adims);
+    pnga_inquire(*g_b, &btype, &bndim, bdims);
 
     if(bndim != 2 || andim != 2) pnga_error("dimension must be 2",0);
     if(atype != btype ) pnga_error("array type mismatch ", 0L);
 
-    num_blocks_a = pnga_total_blocks(g_a);
+    num_blocks_a = pnga_total_blocks(*g_a);
 
     if (num_blocks_a < 0) {
-      pnga_distribution(g_a, &me, lo, hi);
+      pnga_distribution(*g_a, me, lo, hi);
 
       if(lo[0]>0){
         Integer nelem, lob[2], hib[2], nrow, ncol;
@@ -1093,14 +1093,14 @@ char *ptr_tmp, *ptr_a;
       int i, size=GAsizeofM(atype);
 
       /* allocate memory for transposing elements locally */
-      pnga_get_block_info(g_a, blocks, block_dims);
+      pnga_get_block_info(*g_a, blocks, block_dims);
 
       /* Simple block-cyclic data distribution */
       nelem = block_dims[0]*block_dims[1];
       ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
-      if (!pnga_uses_proc_grid(g_a)) {
+      if (!pnga_uses_proc_grid(*g_a)) {
         for (idx = me; idx < num_blocks_a; idx += nproc) {
-          pnga_distribution(g_a, &idx, lo, hi);
+          pnga_distribution(*g_a, idx, lo, hi);
           pnga_access_block_ptr(g_a, &idx, &ptr_a, ld);
 
           nrow   = hi[0] -lo[0]+1;
@@ -1124,10 +1124,10 @@ char *ptr_tmp, *ptr_a;
         Integer proc_index[MAXDIM], index[MAXDIM];
         Integer topology[MAXDIM], ichk;
 
-        pnga_get_proc_index(g_a, &me, proc_index);
-        pnga_get_proc_index(g_a, &me, index);
-        pnga_get_block_info(g_a, blocks, block_dims);
-        pnga_get_proc_grid(g_a, topology);
+        pnga_get_proc_index(*g_a, me, proc_index);
+        pnga_get_proc_index(*g_a, me, index);
+        pnga_get_block_info(*g_a, blocks, block_dims);
+        pnga_get_proc_grid(*g_a, topology);
         /* Verify that processor has data */
         ichk = 1;
         for (i=0; i<andim; i++) {

@@ -40,10 +40,10 @@ void pnga_lu_solve(char *tran, Integer * g_a, Integer * g_b) {
   Integer dimsA[2], dimsB[2], ndim;
 
   /** check GA info for input arrays */
-  pnga_check_handle(g_a, "ga_lu_solve: a");
-  pnga_check_handle(g_b, "ga_lu_solve: b");
-  pnga_inquire (g_a, &typeA, &ndim, dimsA);
-  pnga_inquire (g_b, &typeB, &ndim, dimsB);
+  pnga_check_handle(*g_a, "ga_lu_solve: a");
+  pnga_check_handle(*g_b, "ga_lu_solve: b");
+  pnga_inquire (*g_a, &typeA, &ndim, dimsA);
+  pnga_inquire (*g_b, &typeB, &ndim, dimsB);
   dimA1 = dimsA[0];
   dimA2 = dimsA[1];
   dimB1 = dimsB[0];
