@@ -458,13 +458,17 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
         /* STEP1(a): get matrix "A" chunk */
         i0= *ailo+ilo; i1= *ailo+ihi;
         j0= *ajlo+klo; j1= *ajlo+khi;
-        clo[0] = i0;
-        clo[1] = j0;
-        chi[0] = i1;
-        chi[1] = j1;
         if (*transa == 'n' || *transa == 'N'){
+          clo[0] = i0;
+          clo[1] = j0;
+          chi[0] = i1;
+          chi[1] = j1;
           adim=idim; pnga_get(g_a, clo, chi, a, &idim);
         }else{
+          clo[0] = j0;
+          clo[1] = i0;
+          chi[0] = j1;
+          chi[1] = i1;
           adim=kdim; pnga_get(g_a, clo, chi, a, &kdim);
         }
 
@@ -472,13 +476,17 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
         if(get_new_B) {/*Avoid rereading B if same patch as last time*/
           i0= *bilo+klo; i1= *bilo+khi;
           j0= *bjlo+jlo; j1= *bjlo+jhi;
-          clo[0] = i0;
-          clo[1] = j0;
-          chi[0] = i1;
-          chi[1] = j1;
           if (*transb == 'n' || *transb == 'N'){ 
+            clo[0] = i0;
+            clo[1] = j0;
+            chi[0] = i1;
+            chi[1] = j1;
             bdim=kdim; pnga_get(g_b, clo, chi, b, &kdim);  
           }else {
+            clo[0] = j0;
+            clo[1] = i0;
+            chi[0] = j1;
+            chi[1] = i1;
             bdim=jdim; pnga_get(g_b, clo, chi, b, &jdim);
           }
           get_new_B = FALSE; /* Until J or K change again */
@@ -1165,27 +1173,35 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
        }
        
        /* get matrix A */
-       alo[0] = ailo;
-       alo[1] = ajlo;
-       ahi[0] = aihi;
-       ahi[1] = ajhi;
        if (*transa == 'n' || *transa == 'N'){
+         alo[0] = ailo;
+         alo[1] = ajlo;
+         ahi[0] = aihi;
+         ahi[1] = ajhi;
          adim=m;
          pnga_get(g_a, alo, ahi, tmpa, &m);
        } else {
+         alo[0] = ajlo;
+         alo[1] = ailo;
+         ahi[0] = ajhi;
+         ahi[1] = aihi;
          adim=k;
          pnga_get(g_a, alo, ahi, tmpa, &k);
        }
 
        /* get matrix B */
-       blo[0] = bilo;
-       blo[1] = bjlo;
-       bhi[0] = bihi;
-       bhi[1] = bjhi;
        if (*transb == 'n' || *transb == 'N'){
+         blo[0] = bilo;
+         blo[1] = bjlo;
+         bhi[0] = bihi;
+         bhi[1] = bjhi;
          bdim=k;
          pnga_get(g_b, blo, bhi, tmpb, &k);
        } else { 
+         blo[0] = bjlo;
+         blo[1] = bilo;
+         bhi[0] = bjhi;
+         bhi[1] = bihi;
          bdim=n;
          pnga_get(g_b, blo, bhi, tmpb, &n);
        }
