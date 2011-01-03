@@ -287,7 +287,7 @@ extern void pnga_add_patch(void *alpha, Integer g_a, Integer *alo, Integer *ahi,
 
 /* Routines from select.c */
 
-extern void pnga_select_elem(Integer *g_a, char* op, void* val, Integer *subscript);
+extern void pnga_select_elem(Integer g_a, char* op, void* val, Integer *subscript);
 
 /* Routines from ga_malloc.c */
 

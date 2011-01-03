@@ -3029,7 +3029,7 @@ void pnga_step_bound_info_patch(
      pnga_elem_stepb_divide_patch(g_S, xxlo, xxhi, g_T, vvlo, vvhi, g_T, xxlo, xxhi); 
 
      /* Then, we will select the minimum of the array g_t*/ 
-     pnga_select_elem(&g_T, "min", sresult, &index[0]); 
+     pnga_select_elem(g_T, "min", sresult, &index[0]); 
 
      switch (xxtype)
        {
@@ -3074,7 +3074,7 @@ void pnga_step_bound_info_patch(
      /* Then, compute (xx-xl)/vv */
      pnga_elem_stepb_divide_patch(g_Q, xxlo, xxhi, g_R, vvlo, vvhi, g_R, xxlo, xxhi); 
      /* Then, we will select the minimum of the array g_t*/ 
-     pnga_select_elem(&g_R, "min", sresult2, &index[0]); 
+     pnga_select_elem(g_R, "min", sresult2, &index[0]); 
      switch (xxtype)
        {
        case C_INT:
@@ -3132,7 +3132,7 @@ void pnga_step_bound_info_patch(
        Then, we will select the minimum of the array g_t, that will
        be boundmin .
      */ 
-     pnga_select_elem(&g_T, "min", sresult, &index[0]); 
+     pnga_select_elem(g_T, "min", sresult, &index[0]); 
      switch (xxtype)
        {
        case C_INT:
@@ -3162,7 +3162,7 @@ void pnga_step_bound_info_patch(
        Then, we will select the maximum of the array g_t, that will
        be boundmax .
      */ 
-     pnga_select_elem(&g_T, "max", sresult, &index[0]); 
+     pnga_select_elem(g_T, "max", sresult, &index[0]); 
      switch (xxtype)
        {
        case C_INT:
@@ -3349,7 +3349,7 @@ void pnga_step_max_patch(g_a,  alo, ahi, g_b,  blo, bhi, result)
       then replace it with -GA_INFINITY */ 
     ngai_elem3_patch_(g_c, alo, ahi, OP_STEPMAX);  
     /*Then, we will select the maximum of the array g_c*/ 
-    pnga_select_elem(&g_c, "max", sresult, index); 
+    pnga_select_elem(g_c, "max", sresult, index); 
     switch (atype)
     {
       case C_INT:

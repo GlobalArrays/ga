@@ -1933,7 +1933,7 @@ void NGA_Select_elem(int g_a, char* op, void* val, int* index)
      Integer a=(Integer)g_a;
      Integer ndim = wnga_ndim(a);
      Integer _ga_lo[MAXDIM];
-     wnga_select_elem(&a, op, val, _ga_lo);
+     wnga_select_elem(a, op, val, _ga_lo);
      COPYINDEX_F2C(_ga_lo,index,ndim);
 }
 
@@ -1942,7 +1942,7 @@ void NGA_Select_elem64(int g_a, char* op, void* val, int64_t* index)
      Integer a=(Integer)g_a;
      Integer ndim = wnga_ndim(a);
      Integer _ga_lo[MAXDIM];
-     wnga_select_elem(&a, op, val, _ga_lo);
+     wnga_select_elem(a, op, val, _ga_lo);
      COPYINDEX_F2C_64(_ga_lo,index,ndim);
 }
 

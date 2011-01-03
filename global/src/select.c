@@ -140,7 +140,7 @@ static void snga_select_elem(Integer type, char* op, void *ptr, Integer elems, e
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_select_elem = pnga_select_elem
 #endif
-void pnga_select_elem(Integer *g_a, char* op, void* val, Integer *subscript)
+void pnga_select_elem(Integer g_a, char* op, void* val, Integer *subscript)
 {
   Integer ndim, type, me, elems, ind=0, i;
   Integer lo[MAXDIM],hi[MAXDIM],dims[MAXDIM],ld[MAXDIM-1];
@@ -155,24 +155,24 @@ void pnga_select_elem(Integer *g_a, char* op, void* val, Integer *subscript)
 
   me = pnga_nodeid();
 
-  pnga_check_handle(*g_a, "ga_select_elem");
+  pnga_check_handle(g_a, "ga_select_elem");
   GA_PUSH_NAME("ga_elem_op");
 
   if (strncmp(op,"min",3) == 0);
   else if (strncmp(op,"max",3) == 0);
   else pnga_error("operator not recognized",0);
 
-  pnga_inquire(*g_a, &type, &ndim, dims);
-  num_blocks = pnga_total_blocks(*g_a);
+  pnga_inquire(g_a, &type, &ndim, dims);
+  num_blocks = pnga_total_blocks(g_a);
 
   if (num_blocks < 0) {
-    pnga_distribution(*g_a, me, lo, hi);
+    pnga_distribution(g_a, me, lo, hi);
 
     if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
 
       /******************* calculate local result ************************/
       void    *ptr;
-      pnga_access_ptr(*g_a, lo, hi, &ptr, ld);
+      pnga_access_ptr(g_a, lo, hi, &ptr, ld);
       GET_ELEMS(ndim,lo,hi,ld,&elems);
       participate =1;
 
@@ -180,7 +180,7 @@ void pnga_select_elem(Integer *g_a, char* op, void* val, Integer *subscript)
       snga_select_elem(type, op, ptr, elems, &info, &ind);
 
       /* release access to the data */
-      pnga_release(*g_a, lo, hi);
+      pnga_release(g_a, lo, hi);
 
       /* determine element subscript in the ndim-array */
       for(i = 0; i < ndim; i++){
@@ -193,7 +193,7 @@ void pnga_select_elem(Integer *g_a, char* op, void* val, Integer *subscript)
     void *ptr;
     Integer j, offset, jtot, upper;
     Integer nproc = pnga_nnodes();
-    pnga_access_block_segment_ptr(*g_a, me, &ptr, &elems);
+    pnga_access_block_segment_ptr(g_a, me, &ptr, &elems);
     if (elems > 0) {
       participate =1;
 
@@ -201,13 +201,13 @@ void pnga_select_elem(Integer *g_a, char* op, void* val, Integer *subscript)
       snga_select_elem(type, op, ptr, elems, &info, &ind);
 
       /* release access to the data */
-      pnga_release_block_segment(*g_a, me);
+      pnga_release_block_segment(g_a, me);
 
       /* convert local index back into a global array index */
-      if (!pnga_uses_proc_grid(*g_a)) {
+      if (!pnga_uses_proc_grid(g_a)) {
         offset = 0;
         for (i=me; i<num_blocks; i += nproc) {
-          pnga_distribution(*g_a, i, lo, hi);
+          pnga_distribution(g_a, i, lo, hi);
           jtot = 1;
           for (j=0; j<ndim; j++) {
             jtot *= (hi[j]-lo[j]+1);
@@ -232,9 +232,9 @@ void pnga_select_elem(Integer *g_a, char* op, void* val, Integer *subscript)
         Integer proc_index[MAXDIM], topology[MAXDIM];
         Integer l_index[MAXDIM];
         Integer min, max;
-        pnga_get_proc_index(*g_a, me, proc_index);
-        pnga_get_block_info(*g_a, blocks, block_dims);
-        pnga_get_proc_grid(*g_a, topology);
+        pnga_get_proc_index(g_a, me, proc_index);
+        pnga_get_block_info(g_a, blocks, block_dims);
+        pnga_get_proc_grid(g_a, topology);
         /* figure out strides for locally held block of data */
         for (i=0; i<ndim; i++) {
           stride[i] = 0;

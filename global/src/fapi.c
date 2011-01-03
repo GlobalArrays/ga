@@ -2998,7 +2998,7 @@ void FATR nga_select_elem_(
 #endif
     )
 {
-    wnga_select_elem(g_a, op, val, subscript);
+    wnga_select_elem(*g_a, op, val, subscript);
 }
 
 /* Routines from sparse.c */
