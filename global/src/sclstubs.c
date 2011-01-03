@@ -52,7 +52,7 @@ void pnga_lu_solve(char *tran, Integer * g_a, Integer * g_b) {
   if( (dimA1*dimA2 > _MAX_PROB_SIZE_) || (dimB1*dimB2 > _MAX_PROB_SIZE_) )
     pnga_error("ga_lu_solve:Array size too large. Use scalapack for optimum performance. configure --with-scalapack or --with-scalapack-i8 for ga_lu_solve to use Scalapack interface",0L);
 
-  pnga_lu_solve_seq(tran, g_a, g_b);
+  pnga_lu_solve_seq(tran, *g_a, *g_b);
 }
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA

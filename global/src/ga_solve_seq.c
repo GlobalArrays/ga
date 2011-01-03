@@ -498,7 +498,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_lu_solve_seq = pnga_lu_solve_seq
 #endif
-void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
+void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
 
   logical oactive;  /* true iff this process participates */
   Integer dimA1, dimA2, typeA;
@@ -515,12 +515,12 @@ void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
   me     = pnga_nodeid();
   
   /** check GA info for input arrays */
-  pnga_check_handle(*g_a, "ga_lu_solve: a");
-  pnga_check_handle(*g_b, "ga_lu_solve: b");
-  pnga_inquire(*g_a, &typeA, &ndim, dims);
+  pnga_check_handle(g_a, "ga_lu_solve: a");
+  pnga_check_handle(g_b, "ga_lu_solve: b");
+  pnga_inquire(g_a, &typeA, &ndim, dims);
   dimA1 = dims[0];
   dimA2 = dims[1];
-  pnga_inquire(*g_b, &typeB, &ndim, dims);
+  pnga_inquire(g_b, &typeB, &ndim, dims);
   dimB1 = dims[0];
   dimB2 = dims[1];
   
@@ -550,12 +550,12 @@ void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
     hi[0] = dimA1;
     lo[1] = one;
     hi[1] = dimA2;
-    pnga_get(*g_a, lo, hi, adra, &dimA1);
+    pnga_get(g_a, lo, hi, adra, &dimA1);
     lo[0] = one;
     hi[0] = dimB1;
     lo[1] = one;
     hi[1] = dimB2;
-    pnga_get(*g_b, lo, hi, adrb, &dimB1);
+    pnga_get(g_b, lo, hi, adrb, &dimB1);
 
     /** LU factorization */
 #if ENABLE_F77
@@ -593,7 +593,7 @@ void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
         hi[0] = dimB1;
         lo[1] = one;
         hi[1] = dimB2;
-        pnga_put(*g_b, lo, hi, adrb, &dimB1);
+        pnga_put(g_b, lo, hi, adrb, &dimB1);
       } else
         pnga_error(" ga_lu_solve: LP_dgesl failed ", -info);
 

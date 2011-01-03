@@ -1907,7 +1907,7 @@ void FATR ga_lu_solve_seq_(
 {
     char buf[FNAM];
     ga_f2cstring(trans, len, buf, FNAM);
-    wnga_lu_solve_seq(buf, g_a, g_b);
+    wnga_lu_solve_seq(buf, *g_a, *g_b);
 }
 
 /* Routines from global.util.c */

@@ -220,7 +220,7 @@ extern void pnga_step_max(Integer g_a, Integer g_b, void *retval);
 extern void pnga_step_bound_info(Integer g_xx, Integer g_vv, Integer g_xxll, Integer g_xxuu, void *boundmin, void *wolfemin, void *boundmax);
 
 /* Routines from ga_solve_seq.c */
-extern void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b);
+extern void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b);
 
 /* Routines from global.util.c */
 extern void pnga_print_stats();
