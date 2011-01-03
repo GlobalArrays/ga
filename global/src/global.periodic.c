@@ -213,13 +213,13 @@ void pnga_periodic(Integer *g_a, Integer *lo, Integer *hi, void *buf,
     if(get_range == IS_REGULAR_PATCH) {
         switch(op_code) {
           case PERIODIC_GET:
-              pnga_get(g_a, lo, hi, buf, ld);
+              pnga_get(*g_a, lo, hi, buf, ld);
               break;
           case PERIODIC_PUT:
-              pnga_put(g_a, lo, hi, buf, ld);
+              pnga_put(*g_a, lo, hi, buf, ld);
               break;
           case PERIODIC_ACC:    
-              pnga_acc(g_a, lo, hi, buf, ld, alpha);
+              pnga_acc(*g_a, lo, hi, buf, ld, alpha);
               break;
           default:
               pnga_error("This operation is invalid ", 0L);
@@ -252,15 +252,15 @@ void pnga_periodic(Integer *g_a, Integer *lo, Integer *hi, void *buf,
         /* deal with this patch */
         switch(op_code) {
           case PERIODIC_GET:
-              pnga_get(g_a, lop, hip,
+              pnga_get(*g_a, lop, hip,
                        (char *)buf+my_offset*GAsizeofM(type), ld);
               break;
           case PERIODIC_PUT:
-              pnga_put(g_a, lop, hip,
+              pnga_put(*g_a, lop, hip,
                        (char *)buf+my_offset*GAsizeofM(type), ld);
               break;
           case PERIODIC_ACC:
-              pnga_acc(g_a, lop, hip,
+              pnga_acc(*g_a, lop, hip,
                        (char *)buf+my_offset*GAsizeofM(type), ld, alpha);
               break;
           default:

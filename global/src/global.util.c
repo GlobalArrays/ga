@@ -82,7 +82,7 @@ void pnga_print_patch_file2d(file, g_a, ilo, ihi, jlo, jhi, pretty)
   Integer lo[2], hi[2];
 
   a_grp = pnga_get_pgroup(g_a);
-  pnga_pgroup_sync(&a_grp);
+  pnga_pgroup_sync(a_grp);
   pnga_check_handle(g_a, "ga_print");
   if(pnga_pgroup_nodeid(a_grp) == 0){
 
@@ -115,37 +115,37 @@ void pnga_print_patch_file2d(file, g_a, ilo, ihi, jlo, jhi, pretty)
           hi[1] = jmax;
           switch(type){
             case C_INT:
-              pnga_get(&g_a, lo, hi, ibuf, &ld);
+              pnga_get(g_a, lo, hi, ibuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %8d",ibuf[jj]);
               break;
             case C_DBL:
-              pnga_get(&g_a, lo, hi, dbuf, &ld);
+              pnga_get(g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %11.5f",dbuf[jj]);
               break;
             case C_DCPL:
-              pnga_get(&g_a, lo, hi, dbuf, &ld);
+              pnga_get(g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj+=2)
                 fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
               break;
             case C_SCPL:
-              pnga_get(&g_a, lo, hi, dbuf, &ld);
+              pnga_get(g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj+=2)
                 fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
               break;
             case C_FLOAT:
-              pnga_get(&g_a, lo, hi, fbuf, &ld);
+              pnga_get(g_a, lo, hi, fbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %11.5f",fbuf[jj]);
               break;       
             case C_LONG:
-              pnga_get(&g_a, lo, hi, lbuf, &ld);
+              pnga_get(g_a, lo, hi, lbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %8ld",lbuf[jj]);
               break;
             case C_LONGLONG:
-              pnga_get(&g_a, lo, hi, llbuf, &ld);
+              pnga_get(g_a, lo, hi, llbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %8lld",llbuf[jj]);
               break;
@@ -212,37 +212,37 @@ void pnga_print_patch_file2d(file, g_a, ilo, ihi, jlo, jhi, pretty)
           hi[1] = jmax;
           switch(type){
             case C_INT:
-              pnga_get(&g_a, lo, hi, ibuf, &ld);
+              pnga_get(g_a, lo, hi, ibuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %8d",ibuf[jj]);
               break;
             case C_LONG: 
-              pnga_get(&g_a, lo, hi, lbuf, &ld);
+              pnga_get(g_a, lo, hi, lbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %8ld",lbuf[jj]);
               break;
             case C_LONGLONG: 
-              pnga_get(&g_a, lo, hi, llbuf, &ld);
+              pnga_get(g_a, lo, hi, llbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %8lld",llbuf[jj]);
               break;
             case C_DBL:
-              pnga_get(&g_a, lo, hi, dbuf, &ld);
+              pnga_get(g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %11.5f",dbuf[jj]);
               break;
             case C_FLOAT:
-              pnga_get(&g_a, lo, hi, dbuf, &ld);
+              pnga_get(g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj++)
                 fprintf(file," %11.5f",fbuf[jj]);
               break;     
             case C_DCPL:
-              pnga_get(&g_a, lo, hi, dbuf, &ld);
+              pnga_get(g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj+=2)
                 fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
               break;
             case C_SCPL:
-              pnga_get(&g_a, lo, hi, dbuf, &ld);
+              pnga_get(g_a, lo, hi, dbuf, &ld);
               for(jj=0; jj<(jmax-j+1); jj+=2)
                 fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
               break;
@@ -255,7 +255,7 @@ void pnga_print_patch_file2d(file, g_a, ilo, ihi, jlo, jhi, pretty)
     }
   }
 
-  pnga_pgroup_sync(&a_grp);
+  pnga_pgroup_sync(a_grp);
 }
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
@@ -550,13 +550,13 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
             hip[0] = GA_MIN(lop[0]+bufsize-1, hi[0]);
             while(done) {
                 switch(type) {
-                    case C_INT:      pnga_get(&g_a, lop, hip, ibuf, ld); break;
-                    case C_DBL:      pnga_get(&g_a, lop, hip, dbuf, ld); break;
-                    case C_DCPL:     pnga_get(&g_a, lop, hip, dbuf, ld); break;
-                    case C_FLOAT:    pnga_get(&g_a, lop, hip, fbuf, ld); break; 
-                    case C_SCPL:     pnga_get(&g_a, lop, hip, fbuf, ld); break;
-                    case C_LONG:     pnga_get(&g_a, lop, hip, lbuf, ld); break; 
-                    case C_LONGLONG: pnga_get(&g_a, lop, hip, llbuf,ld); break;
+                    case C_INT:      pnga_get(g_a, lop, hip, ibuf, ld); break;
+                    case C_DBL:      pnga_get(g_a, lop, hip, dbuf, ld); break;
+                    case C_DCPL:     pnga_get(g_a, lop, hip, dbuf, ld); break;
+                    case C_FLOAT:    pnga_get(g_a, lop, hip, fbuf, ld); break; 
+                    case C_SCPL:     pnga_get(g_a, lop, hip, fbuf, ld); break;
+                    case C_LONG:     pnga_get(g_a, lop, hip, lbuf, ld); break; 
+                    case C_LONGLONG: pnga_get(g_a, lop, hip, llbuf,ld); break;
                     default: pnga_error("ga_print: wrong type",0);
                 }
                 
@@ -719,13 +719,13 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
                 }
                 
                 switch(type) {
-                    case C_INT: pnga_get(&g_a, lop, hip, ibuf_2d, ld); break;
-                    case C_LONG: pnga_get(&g_a, lop, hip,lbuf_2d, ld); break;
-                    case C_LONGLONG: pnga_get(&g_a, lop, hip,llbuf_2d,ld);break;
-                    case C_DBL: pnga_get(&g_a, lop, hip, dbuf_2d, ld); break;
-                    case C_DCPL: pnga_get(&g_a, lop, hip, dbuf_2d, ld);break;
-                    case C_FLOAT: pnga_get(&g_a, lop, hip, fbuf_2d, ld);break;
-                    case C_SCPL: pnga_get(&g_a, lop, hip, fbuf_2d, ld);break;  
+                    case C_INT: pnga_get(g_a, lop, hip, ibuf_2d, ld); break;
+                    case C_LONG: pnga_get(g_a, lop, hip,lbuf_2d, ld); break;
+                    case C_LONGLONG: pnga_get(g_a, lop, hip,llbuf_2d,ld);break;
+                    case C_DBL: pnga_get(g_a, lop, hip, dbuf_2d, ld); break;
+                    case C_DCPL: pnga_get(g_a, lop, hip, dbuf_2d, ld);break;
+                    case C_FLOAT: pnga_get(g_a, lop, hip, fbuf_2d, ld);break;
+                    case C_SCPL: pnga_get(g_a, lop, hip, fbuf_2d, ld);break;  
                    default: pnga_error("ga_print: wrong type",0);
                 }
                 

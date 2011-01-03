@@ -83,7 +83,7 @@ void pnga_symmetrize(Integer *g_a) {
     for(i=1; i<ndim; i++) have_data = have_data && ahi[i]>0;
 
     if(have_data) {
-      pnga_access_ptr(g_a, alo, ahi, &a_ptr, lda); 
+      pnga_access_ptr(*g_a, alo, ahi, &a_ptr, lda); 
 
       for(i=0; i<ndim; i++) nelem *= ahi[i]-alo[i] +1;
       b_ptr = (void *) ga_malloc(nelem, MT_F_DBL, "v");
@@ -98,13 +98,13 @@ void pnga_symmetrize(Integer *g_a) {
 
       for (i=0; i < ndim-1; i++) 
         ldb[i] = bhi[i] - blo[i] + 1; 
-      pnga_get(g_a, blo, bhi, b_ptr, ldb);
+      pnga_get(*g_a, blo, bhi, b_ptr, ldb);
     }
     pnga_sync(); 
 
     if(have_data) {
       gai_add(alo, ahi, a_ptr, b_ptr, alpha, type, nelem, ndim);
-      pnga_release_update(g_a, alo, ahi);
+      pnga_release_update(*g_a, alo, ahi);
       ga_free(b_ptr);
     }
   } else {

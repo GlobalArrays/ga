@@ -476,19 +476,19 @@ void pnga_median_patch(
     /*  determine subsets of my patches to access  */
     if (pnga_patch_intersect (mlo, mhi, loM, hiM, mndim)) {
       offset = 0;
-      pnga_access_ptr (&g_A, loM, hiM, &A_ptr, ldA);
-      pnga_access_ptr (&g_B, loM, hiM, &B_ptr, ldB);
-      pnga_access_ptr (&g_C, loM, hiM, &C_ptr, ldC);
-      pnga_access_ptr (&g_M, loM, hiM, &M_ptr, ldM);
+      pnga_access_ptr (g_A, loM, hiM, &A_ptr, ldA);
+      pnga_access_ptr (g_B, loM, hiM, &B_ptr, ldB);
+      pnga_access_ptr (g_C, loM, hiM, &C_ptr, ldC);
+      pnga_access_ptr (g_M, loM, hiM, &M_ptr, ldM);
 
       sgai_median_patch_values(type, mndim, loM, hiM, ldM,
           A_ptr, B_ptr, C_ptr, M_ptr, offset);
 
       /* release access to the data */
-      pnga_release (&g_A, loM, hiM);
-      pnga_release (&g_B, loM, hiM);
-      pnga_release (&g_C, loM, hiM);
-      pnga_release_update (&g_M, loM, hiM);
+      pnga_release (g_A, loM, hiM);
+      pnga_release (g_B, loM, hiM);
+      pnga_release (g_C, loM, hiM);
+      pnga_release_update (g_M, loM, hiM);
     }
   } else {
     /* create copies of A, B, and C that are identically distributed
@@ -516,19 +516,19 @@ void pnga_median_patch(
       offset = 0;
       pnga_distribution(*g_m, me, loM, hiM);
       if (pnga_patch_intersect (mlo, mhi, loM, hiM, mndim)) {
-        pnga_access_ptr (&g_A, loM, hiM, &A_ptr, ldA);
-        pnga_access_ptr (&g_B, loM, hiM, &B_ptr, ldB);
-        pnga_access_ptr (&g_C, loM, hiM, &C_ptr, ldC);
-        pnga_access_ptr (&g_M, loM, hiM, &M_ptr, ldM);
+        pnga_access_ptr (g_A, loM, hiM, &A_ptr, ldA);
+        pnga_access_ptr (g_B, loM, hiM, &B_ptr, ldB);
+        pnga_access_ptr (g_C, loM, hiM, &C_ptr, ldC);
+        pnga_access_ptr (g_M, loM, hiM, &M_ptr, ldM);
 
         sgai_median_patch_values(type, mndim, loM, hiM, ldM,
             A_ptr, B_ptr, C_ptr, M_ptr, offset);
 
         /* release access to the data */
-        pnga_release (&g_A, loM, hiM);
-        pnga_release (&g_B, loM, hiM);
-        pnga_release (&g_C, loM, hiM);
-        pnga_release_update (&g_M, loM, hiM);
+        pnga_release (g_A, loM, hiM);
+        pnga_release (g_B, loM, hiM);
+        pnga_release (g_C, loM, hiM);
+        pnga_release_update (g_M, loM, hiM);
       }
     } else {
       Integer idx, lod[MAXDIM], hid[MAXDIM];
@@ -545,10 +545,10 @@ void pnga_median_patch(
             hid[j] = hiM[j];
           }
           if (pnga_patch_intersect(mlo, mhi, loM, hiM, mndim)) {
-            pnga_access_block_ptr(&g_A, &idx, &A_ptr, ldA);
-            pnga_access_block_ptr(&g_B, &idx, &B_ptr, ldB);
-            pnga_access_block_ptr(&g_C, &idx, &C_ptr, ldC);
-            pnga_access_block_ptr( g_m, &idx, &M_ptr, ldM);
+            pnga_access_block_ptr(g_A, idx, &A_ptr, ldA);
+            pnga_access_block_ptr(g_B, idx, &B_ptr, ldB);
+            pnga_access_block_ptr(g_C, idx, &C_ptr, ldC);
+            pnga_access_block_ptr(*g_m, idx, &M_ptr, ldM);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -564,10 +564,10 @@ void pnga_median_patch(
                 A_ptr, B_ptr, C_ptr, M_ptr, offset);
 
             /* release access to the data */
-            pnga_release_block (&g_A, &idx);
-            pnga_release_block (&g_B, &idx);
-            pnga_release_block (&g_C, &idx);
-            pnga_release_update_block (&g_M, &idx);
+            pnga_release_block (g_A, idx);
+            pnga_release_block (g_B, idx);
+            pnga_release_block (g_C, idx);
+            pnga_release_update_block (g_M, idx);
           }
         }
       } else {
@@ -597,10 +597,10 @@ void pnga_median_patch(
             hid[j] = hiM[j];
           }
           if (pnga_patch_intersect(mlo, mhi, loM, hiM, mndim)) {
-            pnga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
-            pnga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
-            pnga_access_block_grid_ptr(&g_C, index, &C_ptr, ldC);
-            pnga_access_block_grid_ptr( g_m, index, &M_ptr, ldM);
+            pnga_access_block_grid_ptr(g_A, index, &A_ptr, ldA);
+            pnga_access_block_grid_ptr(g_B, index, &B_ptr, ldB);
+            pnga_access_block_grid_ptr(g_C, index, &C_ptr, ldC);
+            pnga_access_block_grid_ptr(*g_m, index, &M_ptr, ldM);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -616,10 +616,10 @@ void pnga_median_patch(
                 A_ptr, B_ptr, C_ptr, M_ptr, offset);
 
             /* release access to the data */
-            pnga_release_block_grid (&g_A, index);
-            pnga_release_block_grid (&g_B, index);
-            pnga_release_block_grid (&g_C, index);
-            pnga_release_update_block_grid (&g_M, index);
+            pnga_release_block_grid (g_A, index);
+            pnga_release_block_grid (g_B, index);
+            pnga_release_block_grid (g_C, index);
+            pnga_release_update_block_grid (g_M, index);
           }
 
           /* increment index to get next block on processor */
@@ -903,18 +903,18 @@ void pnga_norm_infinity(Integer * g_a, double *nm)
 
   if (num_blocks_a < 0) {
     pnga_distribution(*g_a, me, lo, hi);
-    pnga_access_ptr(g_a, lo, hi, &ptr, &ld);
+    pnga_access_ptr(*g_a, lo, hi, &ptr, &ld);
     sgai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
-    pnga_release_update(g_a, lo, hi);
+    pnga_release_update(*g_a, lo, hi);
   } else {
     Integer idx;
     /* Simple block-cyclic data distribution */
     if (!pnga_uses_proc_grid(*g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(*g_a, idx, lo, hi);
-        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(*g_a, idx, &ptr, &ld);
         sgai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
-        pnga_release_update_block(g_a, &idx);
+        pnga_release_update_block(*g_a, idx);
       }
     } else {
       /* Uses scalapack block-cyclic data distribution */
@@ -936,9 +936,9 @@ void pnga_norm_infinity(Integer * g_a, double *nm)
           if (hi[i] < lo[i]) chk = 0;
         }
         if (chk) {
-          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(*g_a, index, &ptr, &ld);
           sgai_norm_infinity_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
-          pnga_release_update_block(g_a, index);
+          pnga_release_update_block_grid(*g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -1248,18 +1248,18 @@ void pnga_norm1(Integer * g_a, double *nm)
 
   if (num_blocks_a < 0) {
     pnga_distribution(*g_a, me, lo, hi);
-    pnga_access_ptr(g_a, lo, hi, &ptr, &ld);
+    pnga_access_ptr(*g_a, lo, hi, &ptr, &ld);
     sgai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
-    pnga_release_update(g_a, lo, hi);
+    pnga_release_update(*g_a, lo, hi);
   } else {
     Integer idx;
     /* Simple block-cyclic data distribution */
     if (!pnga_uses_proc_grid(*g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(*g_a, idx, lo, hi);
-        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(*g_a, idx, &ptr, &ld);
         sgai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
-        pnga_release_update_block(g_a, &idx);
+        pnga_release_update_block(*g_a, idx);
       }
     } else {
       /* Uses scalapack block-cyclic data distribution */
@@ -1281,9 +1281,9 @@ void pnga_norm1(Integer * g_a, double *nm)
           if (hi[i] < lo[i]) chk = 0;
         }
         if (chk) {
-          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(*g_a, index, &ptr, &ld);
           sgai_norm1_block(g_a, ptr, lo, hi, ld, type, ndim, dims, buf);
-          pnga_release_update_block_grid(g_a, index);
+          pnga_release_update_block_grid(*g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -1490,7 +1490,7 @@ static void sgai_get_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
       }
 
       /* copy the local memory buffer buf to g_v */
-      pnga_put(g_v, &vlo, &vhi, buf, &vhi);
+      pnga_put(*g_v, &vlo, &vhi, buf, &vhi);
 
       /*free the memory */
       free (buf);
@@ -1547,18 +1547,18 @@ void pnga_get_diag(Integer * g_a, Integer * g_v)
 
   if (num_blocks_a < 0) {
     pnga_distribution(*g_a, me, loA, hiA);
-    pnga_access_ptr(g_a, loA, hiA, &ptr, &ld);
+    pnga_access_ptr(*g_a, loA, hiA, &ptr, &ld);
     sgai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
-    pnga_release_update(g_a, loA, hiA);
+    pnga_release_update(*g_a, loA, hiA);
   } else {
     Integer idx;
     /* Simple block-cyclic data distribution */
     if (!pnga_uses_proc_grid(*g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(*g_a, idx, loA, hiA);
-        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(*g_a, idx, &ptr, &ld);
         sgai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
-        pnga_release_update_block(g_a, &idx);
+        pnga_release_update_block(*g_a, idx);
       }
     } else {
       /* Uses scalapack block-cyclic data distribution */
@@ -1580,9 +1580,9 @@ void pnga_get_diag(Integer * g_a, Integer * g_v)
           if (hiA[i] < loA[i]) chk = 0;
         }
         if (chk) {
-          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(*g_a, index, &ptr, &ld);
           sgai_get_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
-          pnga_release_update_block_grid(g_a, index);
+          pnga_release_update_block_grid(*g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -1646,7 +1646,7 @@ static void sgai_add_diagonal_block(Integer *g_a, void *ptr, Integer *g_v,
            0);
 
       /* get the vector from the global array to the local memory buffer */
-      pnga_get (g_v, &vlo, &vhi, buf, &vhi);
+      pnga_get (*g_v, &vlo, &vhi, buf, &vhi);
 
       switch (type)
       {
@@ -1768,7 +1768,7 @@ void pnga_add_diagonal(Integer * g_a, Integer * g_v)
 
   if (num_blocks_a < 0) {
     pnga_distribution(*g_a, me, loA, hiA);
-    pnga_access_ptr(g_a, loA, hiA, &ptr, &ld);
+    pnga_access_ptr(*g_a, loA, hiA, &ptr, &ld);
     sgai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
   } else {
     Integer idx;
@@ -1776,9 +1776,9 @@ void pnga_add_diagonal(Integer * g_a, Integer * g_v)
     if (!pnga_uses_proc_grid(*g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(*g_a, idx, loA, hiA);
-        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(*g_a, idx, &ptr, &ld);
         sgai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
-        pnga_release_update_block(g_a, &idx);
+        pnga_release_update_block(*g_a, idx);
       }
     } else {
       /* Uses scalapack block-cyclic data distribution */
@@ -1800,9 +1800,9 @@ void pnga_add_diagonal(Integer * g_a, Integer * g_v)
           if (hiA[i] < loA[i]) chk = 0;
         }
         if (chk) {
-          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(*g_a, index, &ptr, &ld);
           sgai_add_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
-          pnga_release_update_block_grid(g_a, index);
+          pnga_release_update_block_grid(*g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -1862,7 +1862,7 @@ static void sgai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integ
           ("ga_set_diagonal_:failed to allocate memory for local buffer",0);
 
       /* get the vector from the global array to the local memory buffer */
-      pnga_get (g_v, &vlo, &vhi, buf, &vhi);
+      pnga_get (*g_v, &vlo, &vhi, buf, &vhi);
 
       switch (type)
       {
@@ -1936,7 +1936,7 @@ static void sgai_set_diagonal_block(Integer *g_a, void *ptr, Integer *g_v, Integ
       lo[1] = jloA;
       hi[0] = ihiA;
       hi[1] = jhiA;
-      pnga_release_update (g_a, lo, hi);
+      pnga_release_update (*g_a, lo, hi);
     }
   }
 }
@@ -1991,18 +1991,18 @@ void pnga_set_diagonal(Integer * g_a, Integer * g_v)
 
   if (num_blocks_a < 0) {
     pnga_distribution(*g_a, me, loA, hiA);
-    pnga_access_ptr(g_a, loA, hiA, &ptr, &ld);
+    pnga_access_ptr(*g_a, loA, hiA, &ptr, &ld);
     sgai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
-    pnga_release_update(g_a, loA, hiA);
+    pnga_release_update(*g_a, loA, hiA);
   } else {
     Integer idx;
     /* Simple block-cyclic data distribution */
     if (!pnga_uses_proc_grid(*g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(*g_a, idx, loA, hiA);
-        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(*g_a, idx, &ptr, &ld);
         sgai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
-        pnga_release_update_block(g_a, &idx);
+        pnga_release_update_block(*g_a, idx);
       }
     } else {
       /* Uses scalapack block-cyclic data distribution */
@@ -2024,9 +2024,9 @@ void pnga_set_diagonal(Integer * g_a, Integer * g_v)
           if (hiA[i] < loA[i]) chk = 0;
         }
         if (chk) {
-          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(*g_a, index, &ptr, &ld);
           sgai_set_diagonal_block(g_a, ptr, g_v, loA, hiA, ld, type);
-          pnga_release_update_block_grid(g_a, index);
+          pnga_release_update_block_grid(*g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -2169,18 +2169,18 @@ void pnga_shift_diagonal(Integer * g_a, void *c)
 
   if (num_blocks_a < 0) {
     pnga_distribution(*g_a, me, loA, hiA);
-    pnga_access_ptr(g_a, loA, hiA, &ptr, &ld);
+    pnga_access_ptr(*g_a, loA, hiA, &ptr, &ld);
     sgai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
-    pnga_release_update(g_a, loA, hiA);
+    pnga_release_update(*g_a, loA, hiA);
   } else {
     Integer idx;
     /* Simple block-cyclic data distribution */
     if (!pnga_uses_proc_grid(*g_a)) {
       for (idx = me; idx < num_blocks_a; idx += nproc) {
         pnga_distribution(*g_a, idx, loA, hiA);
-        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(*g_a, idx, &ptr, &ld);
         sgai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
-        pnga_release_update_block(g_a, &idx);
+        pnga_release_update_block(*g_a, idx);
       }
     } else {
       /* Uses scalapack block-cyclic data distribution */
@@ -2202,9 +2202,9 @@ void pnga_shift_diagonal(Integer * g_a, void *c)
           if (hiA[i] < loA[i]) chk = 0;
         }
         if (chk) {
-          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(*g_a, index, &ptr, &ld);
           sgai_shift_diagonal_block(g_a, ptr, loA, hiA, ld, c, type);
-          pnga_release_update_block_grid(g_a, index);
+          pnga_release_update_block_grid(*g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -2320,10 +2320,10 @@ void pnga_zero_diagonal(Integer * g_a)
       hi[1] = GA_MIN (hiA[0], hiA[1]);
       if (hi[0] >= lo[0]) {
                               /* we got a block containing diagonal elements */
-        pnga_access_ptr (g_a, lo, hi, &ptr, &ld);
+        pnga_access_ptr (*g_a, lo, hi, &ptr, &ld);
         sgai_zero_diagonal_block(g_a, ptr, lo, hi, ld, offset, type);
         /* release access to the data */
-        pnga_release_update (g_a, lo, hi);
+        pnga_release_update (*g_a, lo, hi);
       }
     }
   } else {
@@ -2340,7 +2340,7 @@ void pnga_zero_diagonal(Integer * g_a)
         hi[1] = GA_MIN (hiA[0], hiA[1]);
 
         if (hi[0] >= lo[0]) {
-          pnga_access_block_ptr(g_a, &idx, &ptr, lld);
+          pnga_access_block_ptr(*g_a, idx, &ptr, lld);
           /* evaluate offsets for system */
           offset = 0;
           last = andim - 1;
@@ -2351,7 +2351,7 @@ void pnga_zero_diagonal(Integer * g_a)
           }
           offset += (lo[last]-loA[last])*jtot;
           sgai_zero_diagonal_block(g_a, ptr, lo, hi, lld[0], offset, type);
-          pnga_release_update_block(g_a, &idx);
+          pnga_release_update_block(*g_a, idx);
         }
       }
     } else {
@@ -2380,7 +2380,7 @@ void pnga_zero_diagonal(Integer * g_a)
         hi[1] = GA_MIN (hiA[0], hiA[1]);
 
         if (hi[0] >= lo[0]) {
-          pnga_access_block_grid_ptr(g_a, index, &ptr, lld);
+          pnga_access_block_grid_ptr(*g_a, index, &ptr, lld);
           /* evaluate offsets for system */
           offset = 0;
           last = andim - 1;
@@ -2391,7 +2391,7 @@ void pnga_zero_diagonal(Integer * g_a)
           }
           offset += (lo[last]-loA[last])*jtot;
           sgai_zero_diagonal_block(g_a, ptr, lo, hi, lld[0], offset, type);
-          pnga_release_update_block_grid(g_a, index);
+          pnga_release_update_block_grid(*g_a, index);
         }
 
         /* increment index to get next block on processor */
@@ -2443,7 +2443,7 @@ static void sgai_scale_row_values(Integer type, Integer *lo,
            0);
 
       /* get the vector from the global array to the local memory buffer */
-      pnga_get (g_v, &vlo, &vhi, buf, &vhi);
+      pnga_get (*g_v, &vlo, &vhi, buf, &vhi);
 
       switch (type) {
         case C_INT:
@@ -2553,12 +2553,12 @@ void pnga_scale_rows(Integer *g_a, Integer *g_v)
       if (lo[i]>hi[i]) chk = 0;
     }
     if (chk) {
-      pnga_access_ptr (g_a, lo, hi, &ptr, &ld);
+      pnga_access_ptr (*g_a, lo, hi, &ptr, &ld);
 
       sgai_scale_row_values(type, lo, hi, ld, ptr, g_v);
 
       /* release access to the data */
-      pnga_release_update (g_a, lo, hi);
+      pnga_release_update (*g_a, lo, hi);
     }
   } else {
     Integer nproc = pnga_nnodes();
@@ -2567,9 +2567,9 @@ void pnga_scale_rows(Integer *g_a, Integer *g_v)
       Integer idx;
       for (idx=me; idx<num_blocks_a; idx += nproc) {
         pnga_distribution(*g_a, idx, lo, hi);
-        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(*g_a, idx, &ptr, &ld);
         sgai_scale_row_values(type, lo, hi, ld, ptr, g_v);
-        pnga_release_update_block(g_a, &idx);
+        pnga_release_update_block(*g_a, idx);
       }
     } else {
       Integer proc_index[MAXDIM], index[MAXDIM];
@@ -2590,9 +2590,9 @@ void pnga_scale_rows(Integer *g_a, Integer *g_v)
           if (hi[i] < lo[i]) chk = 0;
         }
         if (chk) {
-          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(*g_a, index, &ptr, &ld);
           sgai_scale_row_values(type, lo, hi, ld, ptr, g_v);
-          pnga_release_update_block_grid(g_a, index);
+          pnga_release_update_block_grid(*g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -2642,7 +2642,7 @@ static void sgai_scale_col_values(Integer type, Integer *lo,
            0);
 
       /* get the vector from the global array to the local memory buffer */
-      pnga_get (g_v, &vlo, &vhi, buf, &vhi);
+      pnga_get (*g_v, &vlo, &vhi, buf, &vhi);
 
       switch (type) {
         case C_INT:
@@ -2754,12 +2754,12 @@ void pnga_scale_cols(Integer *g_a, Integer *g_v)
       if (lo[i]>hi[i]) chk = 0;
     }
     if (chk) {
-      pnga_access_ptr (g_a, lo, hi, &ptr, &ld);
+      pnga_access_ptr (*g_a, lo, hi, &ptr, &ld);
 
       sgai_scale_col_values(type, lo, hi, ld, ptr, g_v);
 
       /* release access to the data */
-      pnga_release_update (g_a, lo, hi);
+      pnga_release_update (*g_a, lo, hi);
     }
   } else {
     Integer nproc = pnga_nnodes();
@@ -2768,9 +2768,9 @@ void pnga_scale_cols(Integer *g_a, Integer *g_v)
       Integer idx;
       for (idx=me; idx<num_blocks_a; idx += nproc) {
         pnga_distribution(*g_a, idx, lo, hi);
-        pnga_access_block_ptr(g_a, &idx, &ptr, &ld);
+        pnga_access_block_ptr(*g_a, idx, &ptr, &ld);
         sgai_scale_col_values(type, lo, hi, ld, ptr, g_v);
-        pnga_release_update_block(g_a, &idx);
+        pnga_release_update_block(*g_a, idx);
       }
     } else {
       Integer proc_index[MAXDIM], index[MAXDIM];
@@ -2791,9 +2791,9 @@ void pnga_scale_cols(Integer *g_a, Integer *g_v)
           if (hi[i] < lo[i]) chk = 0;
         }
         if (chk) {
-          pnga_access_block_grid_ptr(g_a, index, &ptr, &ld);
+          pnga_access_block_grid_ptr(*g_a, index, &ptr, &ld);
           sgai_scale_col_values(type, lo, hi, ld, ptr, g_v);
-          pnga_release_update_block_grid(g_a, index);
+          pnga_release_update_block_grid(*g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];

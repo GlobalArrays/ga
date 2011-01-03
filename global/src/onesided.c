@@ -99,7 +99,7 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 #   pragma weak wnga_pgroup_sync = pnga_pgroup_sync
 #endif
 
-void pnga_pgroup_sync(Integer *grp_id)
+void pnga_pgroup_sync(Integer grp_id)
 {
 #ifdef CHECK_MA
     Integer status;
@@ -109,15 +109,15 @@ void pnga_pgroup_sync(Integer *grp_id)
 #endif
  
 /*    printf("p[%d] calling ga_pgroup_sync on group: %d\n",GAme,*grp_id); */
-    if (*grp_id > 0) {
+    if (grp_id > 0) {
 #   ifdef MPI
        /* fence on all processes in this group */
-       { int p; for(p=0;p<PGRP_LIST[*grp_id].map_nproc;p++)
-          ARMCI_Fence(ARMCI_Absolute_id(&PGRP_LIST[*grp_id].group, p)); }
+       { int p; for(p=0;p<PGRP_LIST[grp_id].map_nproc;p++)
+          ARMCI_Fence(ARMCI_Absolute_id(&PGRP_LIST[grp_id].group, p)); }
 #ifdef BGML 
        ARMCI_Barrier();
 #endif
-       pnga_msg_pgroup_sync(*grp_id);
+       pnga_msg_pgroup_sync(grp_id);
        if(GA_fence_set)bzero(fence_array,(int)GAnproc);
        GA_fence_set=0;
 #   else
@@ -129,7 +129,7 @@ void pnga_pgroup_sync(Integer *grp_id)
 #ifdef BGML 
        ARMCI_Barrier();
 #endif
-       pnga_msg_pgroup_sync(*grp_id);
+       pnga_msg_pgroup_sync(grp_id);
        if(GA_fence_set)bzero(fence_array,(int)GAnproc);
        GA_fence_set=0;
     }
@@ -170,7 +170,7 @@ Integer status;
 #ifdef BGML
           ARMCI_Barrier();
 #endif
-         pnga_pgroup_sync(&grp_id);
+         pnga_pgroup_sync(grp_id);
        }
 #ifdef CHECK_MA
        status = MA_verify_allocator_stuff();
@@ -432,14 +432,14 @@ void pnga_nbwait(Integer *nbhandle)
 #ifdef __crayx1
 #pragma _CRI inline pnga_locate_region
 #endif
-void ngai_put_common(Integer *g_a, 
+void ngai_put_common(Integer g_a, 
                    Integer *lo,
                    Integer *hi,
                    void    *buf,
                    Integer *ld,
                    Integer *nbhandle)
 {
-  Integer  p, np, handle=GA_OFFSET + *g_a;
+  Integer  p, np, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, p_handle, ga_nbhandle;
   int proc, ndim, loop, cond;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
@@ -456,7 +456,7 @@ void ngai_put_common(Integer *g_a,
 #endif
   GA_PUSH_NAME("ngai_put_common");
 
-  ga_check_handleM(*g_a, "ngai_put_common");
+  ga_check_handleM(g_a, "ngai_put_common");
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -475,8 +475,8 @@ void ngai_put_common(Integer *g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    if(!pnga_locate_region(*g_a, lo, hi, _ga_map, GA_proclist, &np ))
-      ga_RegionError(pnga_ndim(*g_a), lo, hi, *g_a);
+    if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
+      ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
 #ifndef NO_GA_STATS
     gam_CountElems(ndim, lo, hi, &elems);
@@ -926,7 +926,7 @@ void ngai_put_common(Integer *g_a,
 #   pragma weak wnga_nbput = pnga_nbput
 #endif
 
-void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer *nbhandle)
+void pnga_nbput(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer *nbhandle)
 {
     ngai_put_common(g_a,lo,hi,buf,ld,nbhandle); 
 }
@@ -939,7 +939,7 @@ void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, 
 #   pragma weak wnga_put = pnga_put
 #endif
 
-void pnga_put(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld)
+void pnga_put(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld)
 {
     ngai_put_common(g_a,lo,hi,buf,ld,NULL); 
 }
@@ -947,7 +947,7 @@ void pnga_put(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld)
 
 /*\ A common routine called by both non-blocking and blocking GA Get calls.
 \*/
-void ngai_get_common(Integer *g_a,
+void ngai_get_common(Integer g_a,
                    Integer *lo,
                    Integer *hi,
                    void    *buf,
@@ -960,7 +960,7 @@ void ngai_get_common(Integer *g_a,
                       buf[]: Local buffer that array patch will be copied into
                       ld[]:  Array of physical ndim-1 dimensions of local buffer */
 
-  Integer  p, np, handle=GA_OFFSET + *g_a;
+  Integer  p, np, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, p_handle, ga_nbhandle;
   int proc, ndim, loop, cond;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
@@ -978,7 +978,7 @@ void ngai_get_common(Integer *g_a,
 
   GA_PUSH_NAME("nga_get_common");
 
-  ga_check_handleM(*g_a, "nga_get_common");
+  ga_check_handleM(g_a, "nga_get_common");
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -997,8 +997,8 @@ void ngai_get_common(Integer *g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    if(!pnga_locate_region(*g_a, lo, hi, _ga_map, GA_proclist, &np ))
-      ga_RegionError(pnga_ndim(*g_a), lo, hi, *g_a);
+    if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
+      ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
     /* get total size of patch */
 #ifndef NO_GA_STATS
@@ -1453,7 +1453,7 @@ void ngai_get_common(Integer *g_a,
 #   pragma weak wnga_get = pnga_get
 #endif
 
-void pnga_get(Integer *g_a, Integer *lo, Integer *hi,
+void pnga_get(Integer g_a, Integer *lo, Integer *hi,
               void *buf, Integer *ld)
 {
     ngai_get_common(g_a,lo,hi,buf,ld,(Integer *)NULL);
@@ -1463,7 +1463,7 @@ void pnga_get(Integer *g_a, Integer *lo, Integer *hi,
 #   pragma weak wnga_nbget = pnga_nbget
 #endif
 
-void pnga_nbget(Integer *g_a, Integer *lo, Integer *hi,
+void pnga_nbget(Integer g_a, Integer *lo, Integer *hi,
                void *buf, Integer *ld, Integer *nbhandle)
 {
     ngai_get_common(g_a,lo,hi,buf,ld,nbhandle);
@@ -1477,7 +1477,7 @@ void pnga_nbget(Integer *g_a, Integer *lo, Integer *hi,
 /**
  *  A common routine called by both non-blocking and blocking GA acc calls.
  */
-void ngai_acc_common(Integer *g_a,
+void ngai_acc_common(Integer g_a,
                    Integer *lo,
                    Integer *hi,
                    void    *buf,
@@ -1485,7 +1485,7 @@ void ngai_acc_common(Integer *g_a,
                    void    *alpha,
                    Integer *nbhandle)
 {
-  Integer  p, np, handle=GA_OFFSET + *g_a;
+  Integer  p, np, handle=GA_OFFSET + g_a;
   Integer  idx, elems, size, type, p_handle, ga_nbhandle;
   int optype=-1, proc, loop, ndim, cond;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
@@ -1499,7 +1499,7 @@ void ngai_acc_common(Integer *g_a,
 #endif
   GA_PUSH_NAME("nga_acc_common");
 
-  ga_check_handleM(*g_a, "nga_acc_common");
+  ga_check_handleM(g_a, "nga_acc_common");
 
   size = GA[handle].elemsize;
   type = GA[handle].type;
@@ -1526,8 +1526,8 @@ void ngai_acc_common(Integer *g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    if(!pnga_locate_region(*g_a, lo, hi, _ga_map, GA_proclist, &np ))
-      ga_RegionError(pnga_ndim(*g_a), lo, hi, *g_a);
+    if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
+      ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
 #ifndef NO_GA_STATS
     gam_CountElems(ndim, lo, hi, &elems);
@@ -1962,7 +1962,7 @@ void ngai_acc_common(Integer *g_a,
 #   pragma weak wnga_acc = pnga_acc
 #endif
 
-void pnga_acc(Integer *g_a,
+void pnga_acc(Integer g_a,
               Integer *lo,
               Integer *hi,
               void    *buf,
@@ -1980,7 +1980,7 @@ void pnga_acc(Integer *g_a,
 #   pragma weak wnga_nbacc = pnga_nbacc
 #endif
 
-void pnga_nbacc(Integer *g_a,
+void pnga_nbacc(Integer g_a,
                 Integer *lo,
                 Integer *hi,
                 void    *buf,
@@ -1998,21 +1998,21 @@ void pnga_nbacc(Integer *g_a,
 #   pragma weak wnga_access_ptr = pnga_access_ptr
 #endif
 
-void pnga_access_ptr(Integer* g_a, Integer lo[], Integer hi[],
+void pnga_access_ptr(Integer g_a, Integer lo[], Integer hi[],
                       void* ptr, Integer ld[])
 {
 char *lptr;
-Integer  handle = GA_OFFSET + *g_a;
+Integer  handle = GA_OFFSET + g_a;
 Integer  ow,i,p_handle;
 
    GA_PUSH_NAME("nga_access_ptr");
    p_handle = GA[handle].p_handle;
-   if (!pnga_locate(*g_a,lo,&ow)) pnga_error("locate top failed",0);
+   if (!pnga_locate(g_a,lo,&ow)) pnga_error("locate top failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme)) 
       pnga_error("cannot access top of the patch",ow);
-   if (!pnga_locate(*g_a,hi, &ow)) pnga_error("locate bottom failed",0);
+   if (!pnga_locate(g_a,hi, &ow)) pnga_error("locate bottom failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme))
@@ -2020,7 +2020,7 @@ Integer  ow,i,p_handle;
 
    for (i=0; i<GA[handle].ndim; i++)
        if(lo[i]>hi[i]) {
-           ga_RegionError(GA[handle].ndim, lo, hi, *g_a);
+           ga_RegionError(GA[handle].ndim, lo, hi, g_a);
        }
 
    if (p_handle >= 0) {
@@ -2040,7 +2040,7 @@ Integer  ow,i,p_handle;
 #   pragma weak wnga_access_block_grid_ptr = pnga_access_block_grid_ptr
 #endif
 
-void pnga_access_block_grid_ptr(Integer* g_a, Integer *index, void* ptr, Integer *ld)
+void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer *ld)
             /* g_a: array handle [input]
              * index: subscript of a particular block  [input]
              * ptr: pointer to data in block [output]
@@ -2048,7 +2048,7 @@ void pnga_access_block_grid_ptr(Integer* g_a, Integer *index, void* ptr, Integer
              */
 {
   char *lptr;
-  Integer  handle = GA_OFFSET + *g_a;
+  Integer  handle = GA_OFFSET + g_a;
   Integer  i, p_handle, offset, factor, inode;
   Integer ndim;
   C_Integer *num_blocks, *block_dims;
@@ -2193,7 +2193,7 @@ void pnga_access_block_grid_ptr(Integer* g_a, Integer *index, void* ptr, Integer
 #   pragma weak wnga_access_block_ptr = pnga_access_block_ptr
 #endif
 
-void pnga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer *ld)
+void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
             /* g_a: array handle [input]
              * idx: block index  [input]
              * ptr: pointer to data in block [output]
@@ -2201,7 +2201,7 @@ void pnga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer *ld)
              */
 {
   char *lptr;
-  Integer  handle = GA_OFFSET + *g_a;
+  Integer  handle = GA_OFFSET + g_a;
   Integer  i, j, p_handle, nblocks, offset, tsum, inode;
   Integer ndim, lo[MAXDIM], hi[MAXDIM], index;
 
@@ -2209,7 +2209,7 @@ void pnga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer *ld)
   p_handle = GA[handle].p_handle;
   nblocks = GA[handle].block_total;
   ndim = GA[handle].ndim;
-  index = *idx;
+  index = idx;
   if (index < 0 || index >= nblocks)
     pnga_error("block index outside allowed values",index);
 
@@ -2250,7 +2250,7 @@ void pnga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer *ld)
 #   pragma weak wnga_access_block_segment_ptr = pnga_access_block_segment_ptr
 #endif
 
-void pnga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Integer *len)
+void pnga_access_block_segment_ptr(Integer g_a, Integer proc, void* ptr, Integer *len)
             /* g_a:  array handle [input]
              * proc: processor for data [input]
              * ptr:  pointer to data start of data on processor [output]
@@ -2258,7 +2258,7 @@ void pnga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Integ
              */
 {
   char *lptr;
-  Integer  handle = GA_OFFSET + *g_a;
+  Integer  handle = GA_OFFSET + g_a;
   Integer  p_handle, nblocks;
   Integer ndim, index;
 
@@ -2266,7 +2266,7 @@ void pnga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Integ
   p_handle = GA[handle].p_handle;
   nblocks = GA[handle].block_total;
   ndim = GA[handle].ndim;
-  index = *proc;
+  index = proc;
   if (index < 0 || index >= GAnproc)
     pnga_error("processor index outside allowed values",index);
 
@@ -2286,11 +2286,11 @@ void pnga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Integ
 #   pragma weak wnga_access_idx = pnga_access_idx
 #endif
 
-void pnga_access_idx(Integer* g_a, Integer lo[], Integer hi[],
+void pnga_access_idx(Integer g_a, Integer lo[], Integer hi[],
                      AccessIndex* index, Integer ld[])
 {
 char     *ptr;
-Integer  handle = GA_OFFSET + *g_a;
+Integer  handle = GA_OFFSET + g_a;
 Integer  ow,i,p_handle;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
@@ -2300,12 +2300,12 @@ unsigned long    lref=0, lptr;
 #endif
    GA_PUSH_NAME("nga_access");
    p_handle = GA[handle].p_handle;
-   if(!pnga_locate(*g_a,lo,&ow))pnga_error("locate top failed",0);
+   if(!pnga_locate(g_a,lo,&ow))pnga_error("locate top failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme)) 
       pnga_error("cannot access top of the patch",ow);
-   if(!pnga_locate(*g_a,hi, &ow))pnga_error("locate bottom failed",0);
+   if(!pnga_locate(g_a,hi, &ow))pnga_error("locate bottom failed",0);
    if (p_handle != -1)
       ow = PGRP_LIST[p_handle].inv_map_proc_list[ow];
    if ((armci_domain_id(ARMCI_DOMAIN_SMP, ow) != armci_domain_my_id(ARMCI_DOMAIN_SMP)) && (ow != GAme)) 
@@ -2313,7 +2313,7 @@ unsigned long    lref=0, lptr;
 
    for (i=0; i<GA[handle].ndim; i++)
        if(lo[i]>hi[i]) {
-           ga_RegionError(GA[handle].ndim, lo, hi, *g_a);
+           ga_RegionError(GA[handle].ndim, lo, hi, g_a);
        }
 
    
@@ -2387,10 +2387,10 @@ unsigned long    lref=0, lptr;
 #   pragma weak wnga_access_block_idx = pnga_access_block_idx
 #endif
 
-void pnga_access_block_idx(Integer* g_a, Integer* idx, AccessIndex* index, Integer *ld)
+void pnga_access_block_idx(Integer g_a, Integer idx, AccessIndex* index, Integer *ld)
 {
 char     *ptr;
-Integer  handle = GA_OFFSET + *g_a;
+Integer  handle = GA_OFFSET + g_a;
 Integer  p_handle, iblock;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
@@ -2400,11 +2400,11 @@ unsigned long    lref=0, lptr;
 #endif
    GA_PUSH_NAME("nga_access_block");
    p_handle = GA[handle].p_handle;
-   iblock = *idx;
+   iblock = idx;
    if (iblock < 0 || iblock >= GA[handle].block_total)
      pnga_error("block index outside allowed values",iblock);
 
-   pnga_access_block_ptr(g_a,&iblock,&ptr,ld);
+   pnga_access_block_ptr(g_a,iblock,&ptr,ld);
    /*
     * return patch address as the distance elements from the reference address
     *
@@ -2472,11 +2472,11 @@ unsigned long    lref=0, lptr;
 #   pragma weak wnga_access_block_grid_idx = pnga_access_block_grid_idx
 #endif
 
-void pnga_access_block_grid_idx(Integer* g_a, Integer* subscript,
+void pnga_access_block_grid_idx(Integer g_a, Integer* subscript,
                                 AccessIndex *index, Integer *ld)
 {
 char     *ptr;
-Integer  handle = GA_OFFSET + *g_a;
+Integer  handle = GA_OFFSET + g_a;
 Integer  i,ndim,p_handle;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
@@ -2557,11 +2557,11 @@ unsigned long    lref=0, lptr;
 #   pragma weak wnga_access_block_segment_idx = pnga_access_block_segment_idx
 #endif
 
-void pnga_access_block_segment_idx(Integer* g_a, Integer *proc,
+void pnga_access_block_segment_idx(Integer g_a, Integer proc,
                                         AccessIndex* index, Integer *len)
 {
 char     *ptr;
-Integer  handle = GA_OFFSET + *g_a;
+Integer  handle = GA_OFFSET + g_a;
 Integer  p_handle;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
@@ -2639,7 +2639,7 @@ unsigned long    lref=0, lptr;
 #   pragma weak wnga_release = pnga_release
 #endif
 
-void pnga_release(Integer *g_a, Integer *lo, Integer *hi)
+void pnga_release(Integer g_a, Integer *lo, Integer *hi)
 {}
 
 /**
@@ -2649,7 +2649,7 @@ void pnga_release(Integer *g_a, Integer *lo, Integer *hi)
 #   pragma weak wnga_release_update = pnga_release_update
 #endif
 
-void pnga_release_update(Integer *g_a, Integer *lo, Integer *hi)
+void pnga_release_update(Integer g_a, Integer *lo, Integer *hi)
 {}
 
 /**
@@ -2659,11 +2659,11 @@ void pnga_release_update(Integer *g_a, Integer *lo, Integer *hi)
 #   pragma weak wnga_release_block = pnga_release_block
 #endif
 
-void pnga_release_block(Integer *g_a, Integer *iblock)
+void pnga_release_block(Integer g_a, Integer iblock)
 {
   /*
   Integer i;
-  Integer handle = GA_OFFSET + *g_a;
+  Integer handle = GA_OFFSET + g_a;
   for (i=0; i<GA[handle].num_rstrctd; i++) {
     printf("p[%d] location: %d rstrctd_list[%d]: %d\n",GAme,*iblock,
         i,GA[handle].rstrctd_list[i]);
@@ -2678,7 +2678,7 @@ void pnga_release_block(Integer *g_a, Integer *iblock)
 #   pragma weak wnga_release_update_block = pnga_release_update_block
 #endif
 
-void pnga_release_update_block(Integer *g_a, Integer *iblock)
+void pnga_release_update_block(Integer g_a, Integer iblock)
 {}
 
 /**
@@ -2689,7 +2689,7 @@ void pnga_release_update_block(Integer *g_a, Integer *iblock)
 #   pragma weak wnga_release_block_grid = pnga_release_block_grid
 #endif
 
-void pnga_release_block_grid(Integer *g_a, Integer *index)
+void pnga_release_block_grid(Integer g_a, Integer *index)
 {}
 
 /**
@@ -2700,7 +2700,7 @@ void pnga_release_block_grid(Integer *g_a, Integer *index)
 #   pragma weak wnga_release_update_block_grid = pnga_release_update_block_grid
 #endif
 
-void pnga_release_update_block_grid(Integer *g_a, Integer *index)
+void pnga_release_update_block_grid(Integer g_a, Integer *index)
 {}
 
 /**
@@ -2710,7 +2710,7 @@ void pnga_release_update_block_grid(Integer *g_a, Integer *index)
 #   pragma weak wnga_release_block_segment = pnga_release_block_segment
 #endif
 
-void pnga_release_block_segment(Integer *g_a, Integer *iproc)
+void pnga_release_block_segment(Integer g_a, Integer iproc)
 {}
 
 /**
@@ -2720,7 +2720,7 @@ void pnga_release_block_segment(Integer *g_a, Integer *iproc)
 #   pragma weak wnga_release_update_block_segment = pnga_release_update_block_segment
 #endif
 
-void pnga_release_update_block_segment(Integer *g_a, Integer *iproc)
+void pnga_release_update_block_segment(Integer g_a, Integer iproc)
 {}
 
 void gai_scatter_acc_local(Integer g_a, void *v,Integer *i,Integer *j,
@@ -2758,8 +2758,8 @@ int use_blocks;
     Integer lo[2];
     lo[0] = ilo;
     lo[1] = jlo;
-    pnga_access_block_ptr(&g_a, &iproc, &ptr_ref, &ldp);
-    pnga_release_block(&g_a, &iproc);
+    pnga_access_block_ptr(g_a, iproc, &ptr_ref, &ldp);
+    pnga_release_block(g_a, iproc);
     if (GA[handle].block_sl_flag == 0) {
       proc = proc%pnga_nnodes();
     } else {
@@ -2833,20 +2833,19 @@ int use_blocks;
 #   pragma weak wnga_scatter2d = pnga_scatter2d
 #endif
 
-void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
-                    Integer *nv)
+void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
 {
     register Integer k;
     Integer kk;
     Integer item_size;
-    Integer proc, type=GA[GA_OFFSET + *g_a].type;
+    Integer proc, type=GA[GA_OFFSET + g_a].type;
     Integer nproc, p_handle, iproc;
     Integer subscrpt[2];
 
     Integer *aproc, naproc; /* active processes and numbers */
     Integer *map;           /* map the active processes to allocated space */
     char *buf1, *buf2;
-    Integer handle = *g_a + GA_OFFSET;
+    Integer handle = g_a + GA_OFFSET;
     
     Integer *count;   /* counters for each process */
     Integer *nelem;   /* number of elements for each process */
@@ -2860,12 +2859,12 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
     int use_blocks;
     Integer num_blocks=0;
     
-    if (*nv < 1) return;
+    if (nv < 1) return;
 #ifdef USE_VAMPIR
     vampir_begin(GA_SCATTER,__FILE__,__LINE__);
 #endif
     
-    ga_check_handleM(*g_a, "ga_scatter");
+    ga_check_handleM(g_a, "ga_scatter");
     GA_PUSH_NAME("ga_scatter");
     GAstat.numsca++;
     /* determine how many processors are associated with array */
@@ -2882,16 +2881,16 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
     
     /* allocate temp memory */
     if (!use_blocks) {
-      buf1 = gai_malloc((int) (nproc *4 +*nv)* (sizeof(Integer)));
+      buf1 = gai_malloc((int) (nproc *4 +nv)* (sizeof(Integer)));
       if(buf1 == NULL) pnga_error("gai_malloc failed", 3*nproc);
     } else {
       num_blocks = GA[handle].block_total;
-      buf1 = gai_malloc((int) (num_blocks *4 +*nv)* (sizeof(Integer)));
+      buf1 = gai_malloc((int) (num_blocks *4 +nv)* (sizeof(Integer)));
       if(buf1 == NULL) pnga_error("gai_malloc failed", 3*num_blocks);
     }
    
     owner = (Integer *)buf1;  
-    count = owner+ *nv;  
+    count = owner+ nv;  
     if (!use_blocks) {
       nelem =  count + nproc;  
       aproc = count + 2 * nproc;  
@@ -2915,25 +2914,25 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
     
     /* find proc that owns the (i,j) element; store it in temp:  */
     if (GA[handle].num_rstrctd == 0) {
-      for(k=0; k< *nv; k++) {
+      for(k=0; k< nv; k++) {
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
-        if(! pnga_locate(*g_a, subscrpt, owner+k)){
+        if(! pnga_locate(g_a, subscrpt, owner+k)){
           char err_string[ERR_STR_LEN];
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
-          pnga_error(err_string,*g_a);
+          pnga_error(err_string,g_a);
         }
         iproc = owner[k];
         nelem[iproc]++;
       }
     } else {
-      for(k=0; k< *nv; k++) {
+      for(k=0; k< nv; k++) {
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
-        if(! pnga_locate(*g_a, subscrpt, owner+k)){
+        if(! pnga_locate(g_a, subscrpt, owner+k)){
           char err_string[ERR_STR_LEN];
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
-          pnga_error(err_string,*g_a);
+          pnga_error(err_string,g_a);
         }
         iproc = GA[handle].rank_rstrctd[owner[k]];
         nelem[iproc]++;
@@ -2957,14 +2956,14 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
     
     GAstat.numsca_procs += naproc;
 
-    buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *) +
+    buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*nv*sizeof(void *) +
                       5*naproc*sizeof(Integer) + naproc*sizeof(char*)));
     if(buf2 == NULL) pnga_error("gai_malloc failed", naproc);
  
     ptr_src = (void ***)buf2;
     ptr_dst = (void ***)(buf2 + naproc*sizeof(void **));
     ptr_org = (void **)(buf2 + 2*naproc*sizeof(void **));
-    ptr_ref = (char **)(buf2+2*naproc*sizeof(void **)+2*(*nv)*sizeof(void *));
+    ptr_ref = (char **)(buf2+2*naproc*sizeof(void **)+2*nv*sizeof(void *));
     ilo = (Integer *)(((char*)ptr_ref) + naproc*sizeof(char*));
     ihi = ilo + naproc;
     jlo = ihi + naproc;
@@ -2976,43 +2975,43 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
         iproc = aproc[kk];
         if (GA[handle].num_rstrctd > 0)
                     iproc = GA[handle].rstrctd_list[iproc];
-        pnga_distribution(*g_a, iproc, lo, hi);
+        pnga_distribution(g_a, iproc, lo, hi);
         ilo[kk] = lo[0];
         jlo[kk] = lo[1];
         ihi[kk] = hi[0];
         jhi[kk] = hi[1];
 
         /* get address of the first element owned by proc */
-        gaShmemLocation(aproc[kk], *g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),
+        gaShmemLocation(aproc[kk], g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),
             &(ldp[kk]));
       }
     } else {
       for(kk=0; kk<naproc; kk++) {
         iproc = aproc[kk];
-        pnga_distribution(*g_a, iproc, lo, hi);
+        pnga_distribution(g_a, iproc, lo, hi);
         ilo[kk] = lo[0];
         jlo[kk] = lo[1];
         ihi[kk] = hi[0];
         jhi[kk] = hi[1];
 
         /* get address of the first element owned by proc */
-        pnga_access_block_ptr(g_a, &iproc, &(ptr_ref[kk]), &(ldp[kk]));
-        pnga_release_block(g_a, &iproc);
+        pnga_access_block_ptr(g_a, iproc, &(ptr_ref[kk]), &(ldp[kk]));
+        pnga_release_block(g_a, iproc);
       }
     }
     
     /* determine limit for message size --  v,i, & j will travel together */
     item_size = GAsizeofM(type);
-    GAbytes.scatot += (double)item_size**nv ;
+    GAbytes.scatot += (double)item_size*nv ;
     iproc = owner[GAme];
     GAbytes.scaloc += (double)item_size* nelem[iproc];
-    ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
+    ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + nv;
     for(k=1; k<naproc; k++) {
         ptr_src[k] = ptr_src[k-1] + nelem[aproc[k-1]];
         ptr_dst[k] = ptr_dst[k-1] + nelem[aproc[k-1]];
     }
     
-    for(k=0; k<(*nv); k++){
+    for(k=0; k<nv; k++){
         Integer this_count;
         proc = owner[k];
         if (GA[handle].num_rstrctd > 0)
@@ -3028,7 +3027,7 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
           sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)><[%ld:%ld,%ld:%ld]",
              (int)proc, (long)i[k], (long)j[k], (long)ilo[proc], 
              (long)ihi[proc], (long)jlo[proc], (long)jhi[proc]);
-            pnga_error(err_string, *g_a);
+            pnga_error(err_string, g_a);
         }
         ptr_dst[proc][this_count] = ptr_ref[proc] + item_size *
             ((j[k] - jlo[proc])* ldp[proc] + i[k] - ilo[proc]);
@@ -3114,40 +3113,40 @@ void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
 #endif
 
 void pnga_scatter_acc2d(g_a, v, i, j, nv, alpha)
-     Integer *g_a, *nv, *i, *j;
+     Integer g_a, nv, *i, *j;
      void *v, *alpha;
 {
 register Integer k;
 Integer item_size;
-Integer first, nelem, proc, type=GA[GA_OFFSET + *g_a].type;
+Integer first, nelem, proc, type=GA[GA_OFFSET + g_a].type;
 Integer *int_ptr;
 Integer subscrpt[2];
 
-  if (*nv < 1) return;
+  if (nv < 1) return;
 
-  ga_check_handleM(*g_a, "ga_scatter_acc");
+  ga_check_handleM(g_a, "ga_scatter_acc");
   GA_PUSH_NAME("ga_scatter_acc");
   GAstat.numsca++;
 
-  int_ptr = (Integer*) ga_malloc(*nv, MT_F_INT, "ga_scatter_acc--p");
+  int_ptr = (Integer*) ga_malloc(nv, MT_F_INT, "ga_scatter_acc--p");
 
   /* find proc that owns the (i,j) element; store it in temp: int_ptr */
-  for(k=0; k< *nv; k++) {
+  for(k=0; k< nv; k++) {
     subscrpt[0] = *(i+k);
     subscrpt[1] = *(j+k);
-    if(! pnga_locate(*g_a, subscrpt, int_ptr+k)){
+    if(! pnga_locate(g_a, subscrpt, int_ptr+k)){
          char err_string[ERR_STR_LEN];
          sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
-         pnga_error(err_string,*g_a);
+         pnga_error(err_string,g_a);
     }
   }
 
   /* determine limit for message size --  v,i, & j will travel together */
   item_size = GAsizeofM(type);
-  GAbytes.scatot += (double)item_size**nv ;
+  GAbytes.scatot += (double)item_size*nv ;
 
   /* Sort the entries by processor */
-  ga_sort_scat(nv, v, i, j, int_ptr, type );
+  ga_sort_scat(&nv, v, i, j, int_ptr, type );
 
   /* go through the list again executing scatter for each processor */
 
@@ -3157,7 +3156,7 @@ Integer subscrpt[2];
       nelem = 0;
 
       /* count entries for proc from "first" to last */
-      for(k=first; k< *nv; k++){
+      for(k=first; k< nv; k++){
         if(proc == int_ptr[k]) nelem++;
         else break;
       }
@@ -3166,11 +3165,11 @@ Integer subscrpt[2];
              GAbytes.scaloc += (double)item_size* nelem ;
       }
 
-      gai_scatter_acc_local(*g_a, ((char*)v)+item_size*first, i+first,
+      gai_scatter_acc_local(g_a, ((char*)v)+item_size*first, i+first,
                            j+first, nelem, alpha, proc);
       first += nelem;
 
-  }while (first< *nv);
+  }while (first< nv);
 
   ga_free(int_ptr);
 
@@ -3183,10 +3182,10 @@ Integer subscrpt[2];
 
 /*\ GATHER OPERATION elements from the global array into v
 \*/
-void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[], 
-                 Integer* nv, double *locbytes, double* totbytes, void *alpha)
+void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[], 
+                 Integer nv, double *locbytes, double* totbytes, void *alpha)
 {
-    Integer k, handle=*g_a+GA_OFFSET;
+    Integer k, handle=g_a+GA_OFFSET;
     int  ndim, item_size, type;
     Integer *proc;
     Integer nproc, p_handle, iproc;
@@ -3206,12 +3205,12 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     
     GA_PUSH_NAME("gai_gatscat");
 
-    proc=(Integer *)ga_malloc(*nv, MT_F_INT, "ga_gat-p");
+    proc=(Integer *)ga_malloc(nv, MT_F_INT, "ga_gat-p");
 
     ndim = GA[handle].ndim;
     type = GA[handle].type;
     item_size = GA[handle].elemsize;
-    *totbytes += (double)item_size**nv;
+    *totbytes += (double)item_size*nv;
 
     /* determine how many processors are associated with array */
     p_handle = GA[handle].p_handle;
@@ -3258,8 +3257,8 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
      * number of elements for each process
      */
     if (GA[handle].num_rstrctd == 0) {
-      for(k=0; k<*nv; k++) {
-        if(!pnga_locate(*g_a, subscript+k*ndim, proc+k)) {
+      for(k=0; k<nv; k++) {
+        if(!pnga_locate(g_a, subscript+k*ndim, proc+k)) {
           gai_print_subscript("invalid subscript",ndim, subscript+k*ndim,"\n");
           pnga_error("failed -element:",k);
         }
@@ -3267,8 +3266,8 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
         nelem[iproc]++;
       }
     } else {
-      for(k=0; k<*nv; k++) {
-        if(!pnga_locate(*g_a, subscript+k*ndim, proc+k)) {
+      for(k=0; k<nv; k++) {
+        if(!pnga_locate(g_a, subscript+k*ndim, proc+k)) {
           gai_print_subscript("invalid subscript",ndim, subscript+k*ndim,"\n");
           pnga_error("failed -element:",k);
         }
@@ -3293,7 +3292,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
       }
     }
 
-    buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *)));
+    buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*nv*sizeof(void *)));
     if(buf2 == NULL) pnga_error("gai_malloc failed", 2*naproc);
     
     ptr_src = (void ***)buf2;
@@ -3305,10 +3304,10 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
      * ptr_src[0]   ptr_src[1] ...       ptr_dst[0]  ptr_dst[1] ...
      *        \          \                    \          \
      * ptr_org |-------------------------------|---------------------------|
-     *         |              (*nv)            |            (*nv)          |
+     *         |                nv             |              nv           |
      *         | nelem[0] | nelem[1] |...      | nelem[0] | nelem[1] |...
      */
-    ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
+    ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + nv;
     for(k=1; k<naproc; k++) {
         ptr_src[k] = ptr_src[k-1] + nelem[aproc[k-1]];
         ptr_dst[k] = ptr_dst[k-1] + nelem[aproc[k-1]];
@@ -3330,7 +3329,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */  
         if (!use_blocks) {
-          for(k=0; k<(*nv); k++){
+          for(k=0; k<nv; k++){
             iproc = proc[k];
             if (GA[handle].num_rstrctd > 0)
               iproc = GA[handle].rank_rstrctd[iproc];
@@ -3347,12 +3346,12 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
         } else {
           Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
           Integer j, jtot, last, offset;
-          for(k=0; k<(*nv); k++){
+          for(k=0; k<nv; k++){
             iproc = proc[k];
             ptr_dst[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            pnga_distribution(*g_a, iproc, lo, hi);
-            pnga_access_block_ptr(g_a, &iproc, &(ptr_src[map[iproc]][count[iproc]]), ld);
-            pnga_release_block(g_a, &iproc);
+            pnga_distribution(g_a, iproc, lo, hi);
+            pnga_access_block_ptr(g_a, iproc, &(ptr_src[map[iproc]][count[iproc]]), ld);
+            pnga_release_block(g_a, iproc);
             /* calculate remaining offset */
             offset = 0;
             last = ndim - 1;
@@ -3437,7 +3436,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */
         if (!use_blocks) {
-          for(k=0; k<(*nv); k++){
+          for(k=0; k<nv; k++){
             iproc = proc[k];
             if (GA[handle].num_rstrctd > 0)
               iproc = GA[handle].rank_rstrctd[iproc];
@@ -3454,12 +3453,12 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
         } else {
           Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
           Integer j, jtot, last, offset;
-          for(k=0; k<(*nv); k++){
+          for(k=0; k<nv; k++){
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            pnga_distribution(*g_a, iproc, lo, hi);
-            pnga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
-            pnga_release_block(g_a, &iproc);
+            pnga_distribution(g_a, iproc, lo, hi);
+            pnga_access_block_ptr(g_a, iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
+            pnga_release_block(g_a, iproc);
             /* calculate remaining offset */
             offset = 0;
             last = ndim - 1;
@@ -3553,7 +3552,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */
         if (!use_blocks) {
-          for(k=0; k<(*nv); k++){
+          for(k=0; k<nv; k++){
             iproc = proc[k];
             if (GA[handle].num_rstrctd > 0)
               iproc = GA[handle].rank_rstrctd[iproc];
@@ -3570,12 +3569,12 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
         } else {
           Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
           Integer j, jtot, last, offset;
-          for(k=0; k<(*nv); k++){
+          for(k=0; k<nv; k++){
             iproc = proc[k];
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            pnga_distribution(*g_a, iproc, lo, hi);
-            pnga_access_block_ptr(g_a, &iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
-            pnga_release_block(g_a, &iproc);
+            pnga_distribution(g_a, iproc, lo, hi);
+            pnga_access_block_ptr(g_a, iproc, &(ptr_dst[map[iproc]][count[iproc]]), ld);
+            pnga_release_block(g_a, iproc);
             /* calculate remaining offset */
             offset = 0;
             last = ndim - 1;
@@ -3705,11 +3704,11 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
 #   pragma weak wnga_gather = pnga_gather
 #endif
 
-void pnga_gather(Integer *g_a, void* v, Integer subscript[], Integer *nv)
+void pnga_gather(Integer g_a, void* v, Integer subscript[], Integer nv)
 {
 
-  if (*nv < 1) return;
-  ga_check_handleM(*g_a, "nga_gather");
+  if (nv < 1) return;
+  ga_check_handleM(g_a, "nga_gather");
 #ifdef USE_VAMPIR
   vampir_begin(NGA_GATHER,__FILE__,__LINE__);
 #endif
@@ -3732,14 +3731,14 @@ void pnga_gather(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 #   pragma weak wnga_scatter = pnga_scatter
 #endif
 
-void pnga_scatter(Integer *g_a, void* v, Integer subscript[], Integer *nv)
+void pnga_scatter(Integer g_a, void* v, Integer subscript[], Integer nv)
 {
 
-  if (*nv < 1) return;
+  if (nv < 1) return;
 #ifdef USE_VAMPIR
   vampir_begin(NGA_SCATTER,__FILE__,__LINE__);
 #endif
-  ga_check_handleM(*g_a, "nga_scatter");
+  ga_check_handleM(g_a, "nga_scatter");
   GA_PUSH_NAME("nga_scatter");
   GAstat.numsca++;
 
@@ -3759,12 +3758,12 @@ void pnga_scatter(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 #   pragma weak wnga_scatter_acc = pnga_scatter_acc
 #endif
 
-void pnga_scatter_acc(Integer *g_a, void* v, Integer subscript[],
-                           Integer *nv, void *alpha)
+void pnga_scatter_acc(Integer g_a, void* v, Integer subscript[],
+                           Integer nv, void *alpha)
 {
 
-  if (*nv < 1) return;
-  ga_check_handleM(*g_a, "nga_scatter_acc");
+  if (nv < 1) return;
+  ga_check_handleM(g_a, "nga_scatter_acc");
   GA_PUSH_NAME("nga_scatter_acc");
   GAstat.numsca++;
 
@@ -3776,13 +3775,13 @@ void pnga_scatter_acc(Integer *g_a, void* v, Integer subscript[],
 
 #if 000
 void FATR  ga_gather000_(g_a, v, i, j, nv)
-     Integer *g_a, *nv, *i, *j;
+     Integer g_a, nv, *i, *j;
      void *v;
 {
 int k;
-Integer *sbar = (Integer*)malloc(2*sizeof(Integer)*  (int)*nv);
-     if(!sbar) pnga_error("gather:malloc failed",*nv);
-     for(k=0;k<*nv;k++){
+Integer *sbar = (Integer*)malloc(2*sizeof(Integer)*  (int)nv);
+     if(!sbar) pnga_error("gather:malloc failed",nv);
+     for(k=0;k<nv;k++){
           sbar[2*k] = i[k];
           sbar[2*k+1] = j[k];
      }
@@ -3795,13 +3794,13 @@ Integer *sbar = (Integer*)malloc(2*sizeof(Integer)*  (int)*nv);
 /*\ SCATTER OPERATION elements of v into the global array
 \*/
 void FATR  ga_scatter000_(g_a, v, i, j, nv)
-     Integer *g_a, *nv, *i, *j;
+     Integer g_a, nv, *i, *j;
      void *v;
 {
 int k;
-Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* (int) *nv);
-     if(!sbar) pnga_error("scatter:malloc failed",*nv);
-     for(k=0;k<*nv;k++){
+Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* (int) nv);
+     if(!sbar) pnga_error("scatter:malloc failed",nv);
+     for(k=0;k<nv;k++){
           sbar[2*k] = i[k];
           sbar[2*k+1] = j[k];
      }
@@ -3819,14 +3818,14 @@ Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* (int) *nv);
 #   pragma weak wnga_gather2d = pnga_gather2d
 #endif
 
-void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
-                         Integer *nv)
+void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
+                         Integer nv)
 {
     Integer k, kk, proc, item_size;
     Integer *aproc, naproc; /* active processes and numbers */
     Integer *map;           /* map the active processes to allocated space */
     char *buf1, *buf2;
-    Integer handle = *g_a + GA_OFFSET;
+    Integer handle = g_a + GA_OFFSET;
     Integer nproc, p_handle, iproc;
     
     Integer *count;   /* counters for each process */
@@ -3842,12 +3841,12 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
     Integer num_blocks=0;
     Integer subscrpt[2];
     
-    if (*nv < 1) return;
+    if (nv < 1) return;
 
 #ifdef USE_VAMPIR
     vampir_begin(GA_GATHER,__FILE__,__LINE__);
 #endif
-    ga_check_handleM(*g_a, "ga_gather");
+    ga_check_handleM(g_a, "ga_gather");
     GA_PUSH_NAME("ga_gather");
     GAstat.numgat++;
 
@@ -3865,16 +3864,16 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
 
     /* allocate temp memory */
     if (!use_blocks) {
-      buf1 = gai_malloc((int)(nproc *4  + *nv)*  (sizeof(Integer)));
+      buf1 = gai_malloc((int)(nproc *4  + nv)*  (sizeof(Integer)));
       if(buf1 == NULL) pnga_error("gai_malloc failed", 3*nproc);
     } else {
       num_blocks = GA[handle].block_total;
-      buf1 = gai_malloc((int)(num_blocks *4  + *nv)*  (sizeof(Integer)));
+      buf1 = gai_malloc((int)(num_blocks *4  + nv)*  (sizeof(Integer)));
       if(buf1 == NULL) pnga_error("gai_malloc failed", 3*num_blocks);
     }
     
     owner = (Integer *)buf1; 
-    count = owner+ *nv;
+    count = owner+ nv;
     if (!use_blocks) {
       nelem = count + nproc;
       aproc = count + 2 * nproc;
@@ -3898,25 +3897,25 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
 
     /* find proc or block that owns the (i,j) element; store it in temp: */
     if (GA[handle].num_rstrctd == 0) {
-      for(k=0; k< *nv; k++) {
+      for(k=0; k< nv; k++) {
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
-        if(! pnga_locate(*g_a, subscrpt, owner+k)){
+        if(! pnga_locate(g_a, subscrpt, owner+k)){
           char err_string[ERR_STR_LEN];
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
-          pnga_error(err_string, *g_a);
+          pnga_error(err_string, g_a);
         }
         iproc = owner[k];
         nelem[iproc]++;
       }
     } else {
-      for(k=0; k< *nv; k++) {
+      for(k=0; k< nv; k++) {
         subscrpt[0] = *(i+k);
         subscrpt[1] = *(j+k);
-        if(! pnga_locate(*g_a, subscrpt, owner+k)){
+        if(! pnga_locate(g_a, subscrpt, owner+k)){
           char err_string[ERR_STR_LEN];
           sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
-          pnga_error(err_string, *g_a);
+          pnga_error(err_string, g_a);
         }
         iproc = GA[handle].rank_rstrctd[owner[k]];
         nelem[iproc]++;
@@ -3939,14 +3938,14 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
     }
     GAstat.numgat_procs += naproc;
     
-    buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *) +
+    buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*nv*sizeof(void *) +
                       5*naproc*sizeof(Integer) + naproc*sizeof(char*)));
     if(buf2 == NULL) pnga_error("gai_malloc failed", naproc);
  
     ptr_src = (void ***)buf2;
     ptr_dst = (void ***)(buf2 + naproc*sizeof(void **));
     ptr_org = (void **)(buf2 + 2*naproc*sizeof(void **));
-    ptr_ref = (char **)(buf2+2*naproc*sizeof(void **)+2*(*nv)*sizeof(void *));
+    ptr_ref = (char **)(buf2+2*naproc*sizeof(void **)+2*nv*sizeof(void *));
     ilo = (Integer *)(((char*)ptr_ref) + naproc*sizeof(char*));
     ihi = ilo + naproc;
     jlo = ihi + naproc;
@@ -3958,45 +3957,45 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
         iproc = aproc[kk];
         if (GA[handle].num_rstrctd > 0)
           iproc = GA[handle].rstrctd_list[iproc];
-        pnga_distribution(*g_a, iproc, lo, hi);
+        pnga_distribution(g_a, iproc, lo, hi);
         ilo[kk] = lo[0];
         jlo[kk] = lo[1];
         ihi[kk] = hi[0];
         jhi[kk] = hi[1];
 
         /* get address of the first element owned by proc */
-        gaShmemLocation(aproc[kk], *g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),
+        gaShmemLocation(aproc[kk], g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),
             &(ldp[kk]));
       }
     } else {
       for(kk=0; kk<naproc; kk++) {
         iproc = aproc[kk];
-        pnga_distribution(*g_a, iproc, lo, hi);
+        pnga_distribution(g_a, iproc, lo, hi);
         ilo[kk] = lo[0];
         jlo[kk] = lo[1];
         ihi[kk] = hi[0];
         jhi[kk] = hi[1];
 
         /* get address of the first element owned by proc */
-        pnga_access_block_ptr(g_a, &iproc, &(ptr_ref[kk]), &(ldp[kk]));
-        pnga_release_block(g_a, &iproc);
+        pnga_access_block_ptr(g_a, iproc, &(ptr_ref[kk]), &(ldp[kk]));
+        pnga_release_block(g_a, iproc);
       }
     }
     
-    item_size = GA[GA_OFFSET + *g_a].elemsize;
-    GAbytes.gattot += (double)item_size**nv;
+    item_size = GA[GA_OFFSET + g_a].elemsize;
+    GAbytes.gattot += (double)item_size*nv;
     /*This stuff is probably completely wrong. Doesn't affect performance,
      * just statistics. */
     iproc = owner[GAme];
     GAbytes.gatloc += (double)item_size * nelem[iproc];
 
-    ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
+    ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + nv;
     for(k=1; k<naproc; k++) {
         ptr_src[k] = ptr_src[k-1] + nelem[aproc[k-1]];
         ptr_dst[k] = ptr_dst[k-1] + nelem[aproc[k-1]];
     }
     
-    for(k=0; k<(*nv); k++){
+    for(k=0; k<nv; k++){
         Integer this_count;
         proc = owner[k];
         if (GA[handle].num_rstrctd > 0)
@@ -4013,7 +4012,7 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
                  (int)proc,(long)i[k],(long)j[k],
                  (long)ilo[proc],(long)ihi[proc],
                  (long)jlo[proc], (long)jhi[proc]);
-            pnga_error(err_string, *g_a);
+            pnga_error(err_string, g_a);
         }
         ptr_src[proc][this_count] = ptr_ref[proc] + item_size *
             ((j[k] - jlo[proc])* ldp[proc] + i[k] - ilo[proc]);
@@ -4092,9 +4091,9 @@ void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
 #   pragma weak wnga_read_inc = pnga_read_inc
 #endif
 
-Integer pnga_read_inc(Integer* g_a, Integer* subscript, Integer* inc)
+Integer pnga_read_inc(Integer g_a, Integer* subscript, Integer inc)
 {
-Integer *ptr, ldp[MAXDIM], proc, handle=GA_OFFSET+*g_a, p_handle, ndim;
+Integer *ptr, ldp[MAXDIM], proc, handle=GA_OFFSET+g_a, p_handle, ndim;
 int optype,ivalue;
 long lvalue;
 void *pval;
@@ -4102,9 +4101,9 @@ void *pval;
 #ifdef USE_VAMPIR
     vampir_begin(NGA_READ_INC,__FILE__,__LINE__);
 #endif
-    ga_check_handleM(*g_a, "nga_read_inc");
+    ga_check_handleM(g_a, "nga_read_inc");
     GA_PUSH_NAME("nga_read_inc");
-    /* BJP printf("p[%d] g_a: %d subscript: %d inc: %d\n",GAme, *g_a, subscript[0], *inc); */
+    /* BJP printf("p[%d] g_a: %d subscript: %d inc: %d\n",GAme, g_a, subscript[0], inc); */
 
     if(GA[handle].type!=C_INT && GA[handle].type!=C_LONG &&
        GA[handle].type!=C_LONGLONG)
@@ -4116,7 +4115,7 @@ void *pval;
     ndim = GA[handle].ndim;
 
     /* find out who owns it */
-    pnga_locate(*g_a, subscript, &proc);
+    pnga_locate(g_a, subscript, &proc);
 
     /* get an address of the g_a(subscript) element */
     if (!GA[handle].block_flag) {
@@ -4128,9 +4127,9 @@ void *pval;
     } else {
       Integer lo[MAXDIM], hi[MAXDIM];
       Integer j, jtot, last, offset;
-      pnga_distribution(*g_a, proc, lo, hi);
-      pnga_access_block_ptr(g_a, &proc, (char**)&ptr, ldp);
-      pnga_release_block(g_a, &proc);
+      pnga_distribution(g_a, proc, lo, hi);
+      pnga_access_block_ptr(g_a, proc, (char**)&ptr, ldp);
+      pnga_release_block(g_a, proc);
       offset = 0;
       last = ndim - 1;
       jtot = 1;
@@ -4183,7 +4182,7 @@ void *pval;
     if(GA[handle].type==C_LONGLONG) ptr = ((char*)ptr) + 4 ;
 #endif
     
-    ARMCI_Rmw(optype, pval, (int*)ptr, (int)*inc, (int)proc);
+    ARMCI_Rmw(optype, pval, (int*)ptr, (int)inc, (int)proc);
 
    GA_POP_NAME;
 #ifdef USE_VAMPIR
@@ -4296,7 +4295,7 @@ void gai_SetStrideWithSkip(Integer ndim, Integer size, Integer *ld,
 #   pragma weak wnga_strided_put = pnga_strided_put
 #endif
 
-void pnga_strided_put(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
+void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
                      void    *buf, Integer *ld)
 {
   /* g_a:    Global Array handle
@@ -4305,7 +4304,7 @@ void pnga_strided_put(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
      skip[]: Array of skips for each dimension
      buf[]:  Local buffer that patch will be copied from
      ld[]:   ndim-1 physical dimensions of local buffer */
-  Integer p, np, handle = GA_OFFSET + *g_a;
+  Integer p, np, handle = GA_OFFSET + g_a;
   Integer idx, size, nstride, p_handle, nproc;
   int i, proc, ndim;
   int use_blocks;
@@ -4337,8 +4336,8 @@ void pnga_strided_put(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    if (!pnga_locate_region(*g_a, lo, hi, _ga_map, GA_proclist, &np))
-      ga_RegionError(pnga_ndim(*g_a), lo, hi, *g_a);
+    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
+      ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
     /* Loop over all processors containing a portion of patch */
     gaPermuteProcList(np);
@@ -4662,7 +4661,7 @@ void pnga_strided_put(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
 #   pragma weak wnga_strided_get = pnga_strided_get
 #endif
 
-void pnga_strided_get(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
+void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
                    void    *buf, Integer *ld)
 {
   /* g_a:    Global Array handle
@@ -4671,7 +4670,7 @@ void pnga_strided_get(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
      skip[]: Array of skips for each dimension
      buf[]:  Local buffer that patch will be copied from
      ld[]:   ndim-1 physical dimensions of local buffer */
-  Integer p, np, handle = GA_OFFSET + *g_a;
+  Integer p, np, handle = GA_OFFSET + g_a;
   Integer idx, size, nstride, p_handle, nproc;
   int i, proc, ndim;
   int use_blocks;
@@ -4703,8 +4702,8 @@ void pnga_strided_get(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    if (!pnga_locate_region(*g_a, lo, hi, _ga_map, GA_proclist, &np))
-      ga_RegionError(pnga_ndim(*g_a), lo, hi, *g_a);
+    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
+      ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
     /* Loop over all processors containing a portion of patch */
     gaPermuteProcList(np);
@@ -5030,7 +5029,7 @@ void pnga_strided_get(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
 #   pragma weak wnga_strided_acc = pnga_strided_acc
 #endif
 
-void pnga_strided_acc(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
+void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
                       void *buf, Integer *ld, void *alpha)
 {
   /* g_a:    Global Array handle
@@ -5040,7 +5039,7 @@ void pnga_strided_acc(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
      buf[]:  Local buffer that patch will be copied from
      ld[]:   ndim-1 physical dimensions of local buffer
      alpha:  muliplicative scale factor */
-  Integer p, np, handle = GA_OFFSET + *g_a;
+  Integer p, np, handle = GA_OFFSET + g_a;
   Integer idx, size, nstride, type, p_handle, nproc;
   int i, optype=-1, proc, ndim;
   int use_blocks;
@@ -5081,8 +5080,8 @@ void pnga_strided_acc(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    if (!pnga_locate_region(*g_a, lo, hi, _ga_map, GA_proclist, &np))
-      ga_RegionError(pnga_ndim(*g_a), lo, hi, *g_a);
+    if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
+      ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
 
     /* Loop over all processors containing a portion of patch */
     gaPermuteProcList(np);

@@ -550,12 +550,12 @@ void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
     hi[0] = dimA1;
     lo[1] = one;
     hi[1] = dimA2;
-    pnga_get(g_a, lo, hi, adra, &dimA1);
+    pnga_get(*g_a, lo, hi, adra, &dimA1);
     lo[0] = one;
     hi[0] = dimB1;
     lo[1] = one;
     hi[1] = dimB2;
-    pnga_get(g_b, lo, hi, adrb, &dimB1);
+    pnga_get(*g_b, lo, hi, adrb, &dimB1);
 
     /** LU factorization */
 #if ENABLE_F77
@@ -593,7 +593,7 @@ void pnga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
         hi[0] = dimB1;
         lo[1] = one;
         hi[1] = dimB2;
-        pnga_put(g_b, lo, hi, adrb, &dimB1);
+        pnga_put(*g_b, lo, hi, adrb, &dimB1);
       } else
         pnga_error(" ga_lu_solve: LP_dgesl failed ", -info);
 

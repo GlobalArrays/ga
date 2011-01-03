@@ -1659,7 +1659,7 @@ void nga_vfill_patch(Integer *g_a, Integer *lo, Integer *hi)
 
         /* get data_ptr to corner of patch */
         /* ld are leading dimensions INCLUDING ghost cells */
-        pnga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
+        pnga_access_ptr(*g_a, loA, hiA, &data_ptr, ld);
  
         /* number of n-element of the first dimension */
         n1dim = 1; for(i=1; i<ndim; i++) n1dim *= (hiA[i] - loA[i] + 1);
@@ -1763,7 +1763,7 @@ void nga_vfill_patch(Integer *g_a, Integer *lo, Integer *hi)
         }
         
         /* release access to the data */
-        pnga_release_update(g_a, loA, hiA);
+        pnga_release_update(*g_a, loA, hiA);
     }
     GA_POP_NAME;
     if(local_sync_end)GA_Sync();
@@ -1918,12 +1918,12 @@ void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi)
 
       /* get data_ptr to corner of patch */
       /* ld are leading dimensions INCLUDING ghost cells */
-      pnga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
+      pnga_access_ptr(*g_a, loA, hiA, &data_ptr, ld);
 
       ngai_do_pnfill_patch(type, ndim, loA, hiA, ld, data_ptr);
 
       /* release access to the data */
-      pnga_release_update(g_a, loA, hiA);
+      pnga_release_update(*g_a, loA, hiA);
     }
   } else {
     Integer offset, j, jtmp, chk;
@@ -1947,7 +1947,7 @@ void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi)
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          pnga_access_block_ptr(g_a, &i, &data_ptr, ld);
+          pnga_access_block_ptr(*g_a, i, &data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -1992,7 +1992,7 @@ void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi)
           ngai_do_pnfill_patch(type, ndim, loA, hiA, ld, data_ptr);
 
           /* release access to the data */
-          pnga_release_update_block(g_a, &i);
+          pnga_release_update_block(*g_a, i);
         }
       }
     } else {
@@ -2026,7 +2026,7 @@ void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi)
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          pnga_access_block_grid_ptr(g_a, index, &data_ptr, ld);
+          pnga_access_block_grid_ptr(*g_a, index, &data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -2071,7 +2071,7 @@ void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi)
           ngai_do_pnfill_patch(type, ndim, loA, hiA, ld, data_ptr);
 
           /* release access to the data */
-          pnga_release_update_block_grid(g_a, index);
+          pnga_release_update_block_grid(*g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];

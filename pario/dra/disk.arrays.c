@@ -154,10 +154,10 @@ int Dra_num_serv=DRA_NUM_IOPROCS;
         dai_error(_err_msg, _dim)
  
 #define ga_get_sectM(sect, _buf, _ld)\
-   pnga_get(&sect.handle, sect.lo, sect.hi, _buf, &_ld)
+   pnga_get(sect.handle, sect.lo, sect.hi, _buf, &_ld)
 
 #define ga_put_sectM(sect, _buf, _ld)\
-   pnga_put(&sect.handle, sect.lo, sect.hi, _buf, &_ld)
+   pnga_put(sect.handle, sect.lo, sect.hi, _buf, &_ld)
 
 #define fill_sectionM(sect, _hndl, _ilo, _ihi, _jlo, _jhi) \
 { \
@@ -253,16 +253,16 @@ int Dra_num_serv=DRA_NUM_IOPROCS;
 
 #define nga_get_sectM(sect, _buf, _ld, hdl)\
  if (hdl != NULL)\
- pnga_nbget(&sect.handle, sect.lo, sect.hi, _buf, _ld, hdl);\
+ pnga_nbget(sect.handle, sect.lo, sect.hi, _buf, _ld, hdl);\
  else\
- pnga_get(&sect.handle, sect.lo, sect.hi, _buf, _ld);
+ pnga_get(sect.handle, sect.lo, sect.hi, _buf, _ld);
 
 
 #define nga_put_sectM(sect, _buf, _ld, hdl)\
  if (hdl != NULL)\
- pnga_nbput(&sect.handle, sect.lo, sect.hi, _buf, _ld, hdl);\
+ pnga_nbput(sect.handle, sect.lo, sect.hi, _buf, _ld, hdl);\
  else\
- pnga_put(&sect.handle, sect.lo, sect.hi, _buf, _ld);
+ pnga_put(sect.handle, sect.lo, sect.hi, _buf, _ld);
 
 
 #define ndai_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a)   \
@@ -1139,7 +1139,7 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
     Integer index, ldd = gs_a.hi[0] - gs_a.lo[0] + 1, one=1;
     Integer atype, cols, rows, elemsize, ilo, ihi;
     Integer istart, iend, jstart, jend;
-    void  (*f)(Integer*,Integer*,Integer*,void*,Integer*); 
+    void  (*f)(Integer,Integer*,Integer*,void*,Integer*); 
     char *buf = (char*)buffer;
 
     if(op==LOAD) f = pnga_get;
@@ -1168,7 +1168,7 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
         if(jstart==jend) ihi=iend;
         lo[0] = ilo; lo[1] = jstart;
         hi[0] = ihi; hi[1] = jstart;
-        f(&gs_a.handle, lo, hi, buf, &one); 
+        f(gs_a.handle, lo, hi, buf, &one); 
         buf += elemsize*(ihi -ilo+1);
         if(jstart==jend) return;
         jstart++;
@@ -1180,7 +1180,7 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
         Integer lo[2], hi[2];
         lo[0] = gs_a.lo[0]; lo[1] = jstart;
         hi[0] = gs_a.hi[0]; hi[1] = jend;
-        f(&gs_a.handle, lo, hi, buf, &ldd);
+        f(gs_a.handle, lo, hi, buf, &ldd);
         buf += elemsize*ldd*(jend-jstart+1); 
     } 
 
@@ -1189,7 +1189,7 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
         jend++; /* Since decremented above */  
         lo[0] = gs_a.lo[0]; lo[1] = jend;
         hi[0] = iend;       hi[1] = jend;
-        f(&gs_a.handle, lo, hi, buf, &one);
+        f(gs_a.handle, lo, hi, buf, &one);
     }
 }
 
@@ -1260,14 +1260,14 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
             if(!MA_push_get(C_INT, nelem, "pindex", &phandle, &pindex))
                 dai_error("DRA move: MA failed-p ", 0L);
             for(i=0; i< nelem; i++) INT_MB[pindex+i] = i; 
-            pnga_gather2d(&gs_a.handle, base_addr, INT_MB+iindex, INT_MB+jindex, &nelem);
+            pnga_gather2d(gs_a.handle, base_addr, INT_MB+iindex, INT_MB+jindex, nelem);
             COPY_TYPE(GATHER, type, ds_chunk);
             MA_pop_stack(phandle);
 
         }else{ 
 
             COPY_TYPE(SCATTER, type, ds_chunk);
-            pnga_scatter2d(&gs_a.handle, base_addr, INT_MB+iindex, INT_MB+jindex, &nelem);
+            pnga_scatter2d(gs_a.handle, base_addr, INT_MB+iindex, INT_MB+jindex, nelem);
         }
 
         MA_pop_stack(vhandle);

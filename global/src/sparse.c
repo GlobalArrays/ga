@@ -416,7 +416,7 @@ register Integer i;
         if(lop < *lo)lop = *lo;
         if(hip > *hi)hip = *hi;
         off = lop - *lo;
-        pnga_access_ptr(g_a, &lop, &hip, &ptr, &ld);
+        pnga_access_ptr(*g_a, &lop, &hip, &ptr, &ld);
         
         switch (type){
           int *ia;
@@ -474,7 +474,7 @@ register Integer i;
           default: pnga_error("ga_patch_enum:wrong data type ",type);
         }
 
-        pnga_release_update(g_a, &lop, &hip);
+        pnga_release_update(*g_a, &lop, &hip);
       }
    }
    
@@ -523,7 +523,7 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
       
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */ 
 
-        pnga_access_ptr(g_sbit, &lop, &hip, &ia, &ld);
+        pnga_access_ptr(*g_sbit, &lop, &hip, &ia, &ld);
         elems = hip - lop + 1;
         /* find last bit set on given process (store as global index) */
         for(i=0; i<elems; i++) {
@@ -562,8 +562,8 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
        if(hip > *hi) hip = *hi;
       
        /* access the data. g_a is source, g_b is destination */
-       pnga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
-       pnga_access_ptr(g_a, &lop, &hip, &ptr_a, &ld);
+       pnga_access_ptr(*g_b, &lop, &hip, &ptr_b, &ld);
+       pnga_access_ptr(*g_a, &lop, &hip, &ptr_a, &ld);
 
        /* find start bit corresponding to my patch */
        /* case 1: sbit set for the first patch element and check earlier elems*/
@@ -591,7 +591,7 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
            elems = indx- k+lop +1; /* the number of elements that will be updated*/
 
            /* get the current value of A */
-           pnga_get(g_a, &startp, &startp, buf, &one);
+           pnga_get(*g_a, &startp, &startp, buf, &one);
 
            /* assign elements of B
               If add then assign ptr_b[i] = ptr_b[i-1]+ptr_a[i]
@@ -605,17 +605,17 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
            startp = k;
        }
        /* release local access to arrays */
-       pnga_release(g_a, &lop, &hip);
-       pnga_release(g_b, &lop, &hip);
-       if (lops > 0) pnga_release(g_sbit, &lops, &hips);
+       pnga_release(*g_a, &lop, &hip);
+       pnga_release(*g_b, &lop, &hip);
+       if (lops > 0) pnga_release(*g_sbit, &lops, &hips);
 
     }
 
     /* fix up scan_add values for segments that cross processor boundaries */
     if (add) {
       Integer ichk = 1;
-      pnga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
-      if (*excl) pnga_access_ptr(g_a, &lop, &hip, &ptr_a, &ld);
+      pnga_access_ptr(*g_b, &lop, &hip, &ptr_b, &ld);
+      if (*excl) pnga_access_ptr(*g_a, &lop, &hip, &ptr_a, &ld);
       ioff = hip - lop;
       switch (type) {
         int *ilast;
@@ -845,8 +845,8 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
           break;
         default: pnga_error("ga_scan/add:wrong data type",type);
       }
-      pnga_release(g_b, &lop, &hip);
-      if (*excl) pnga_release(g_a, &lop, &hip);
+      pnga_release(*g_b, &lop, &hip);
+      if (*excl) pnga_release(*g_a, &lop, &hip);
 
    }
 
@@ -913,7 +913,7 @@ static void sgai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
         if(*hi <lop || hip <*lo); /* we have no elements to update */
         else{
 
-          pnga_access_ptr(g_sbit, &lop, &hip, &ptr, &elems);
+          pnga_access_ptr(*g_sbit, &lop, &hip, &ptr, &elems);
           ia    = (Integer*)ptr;
           elems = hip -lop+1;
 
@@ -942,7 +942,7 @@ static void sgai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
      Integer start=lop+first; /* the first element for which sbit is set */
      Integer dst_lo =myplace+1, dst_hi = myplace + counter;
 
-     pnga_access_ptr(g_a, &start, &hip, &ptr, &crap);
+     pnga_access_ptr(*g_a, &start, &hip, &ptr, &crap);
 
      buf = ga_malloc(counter, type, "ga pack buf");
 
@@ -950,11 +950,11 @@ static void sgai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
      if(pack){
 
         sgai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter); /* pack data to buf */
-        pnga_put(g_b, &dst_lo, &dst_hi,  buf, &counter); /* put it into destination array */
+        pnga_put(*g_b, &dst_lo, &dst_hi,  buf, &counter); /* put it into destination array */
 
      }else{
 
-        pnga_get(g_b, &dst_lo, &dst_hi,  buf, &counter); /* get data to buffer*/
+        pnga_get(*g_b, &dst_lo, &dst_hi,  buf, &counter); /* get data to buffer*/
         sgai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter);  /* copy data to array*/
 
      }
@@ -1071,11 +1071,11 @@ Integer tlo[2], thi[2];
       Integer *myoff, bin;
 
       /* get offset values stored on my processor to first and last bin */
-      pnga_access_ptr(g_off, &lobin, &hibin, &myoff, &crap);
+      pnga_access_ptr(*g_off, &lobin, &hibin, &myoff, &crap);
       first_off = myoff[0]; last_off = myoff[hibin-lobin];
 /*
-      pnga_get(g_off,&lobin,&lobin,&first_off,&lo);
-      pnga_get(g_off,&hibin,&hibin,&last_off,&hi);
+      pnga_get(*g_off,&lobin,&lobin,&first_off,&lo);
+      pnga_get(*g_off,&hibin,&hibin,&last_off,&hi);
 */
 
       /* since offset starts at 0, add 1 to get index to g_bin */
@@ -1099,7 +1099,7 @@ Integer tlo[2], thi[2];
 
               blo = *myoff +1;
               if(bin == hibin){
-                 pnga_get(g_cnt, &hibin, &hibin, &cnt, &hibin); /* local */
+                 pnga_get(*g_cnt, &hibin, &hibin, &cnt, &hibin); /* local */
                  bhi = blo + cnt-1; 
               }else
                  bhi = myoff[1]; 
@@ -1130,7 +1130,7 @@ Integer tlo[2], thi[2];
                  tlo[1] = p1;
                  thi[0] = hi;
                  thi[1] = p1;
-                 pnga_put(g_range, tlo, thi, buf+off, &cnt);
+                 pnga_put(*g_range, tlo, thi, buf+off, &cnt);
           }
       }
    }
@@ -1164,7 +1164,7 @@ Integer g_range;
 
         /* get and inspect range of bins stored on current processor */
         rlo[0] = 1; rlo[1]= me+1; rhi[0]=2; rhi[1]=rlo[1];
-        pnga_get(&g_range, rlo, rhi, bin_range, rhi); /* local */
+        pnga_get(g_range, rlo, rhi, bin_range, rhi); /* local */
         nbin = bin_range[1]-bin_range[0]+1;
         if(nbin<1 || nbin> totbin || nbin>(hi-lo+1))
            pnga_error("ga_bin_sorter:bad nbin",nbin);
@@ -1172,17 +1172,17 @@ Integer g_range;
         /* get count of elements in each bin stored on this task */
         if(!(bin_cnt = (Integer*)malloc(nbin*sizeof(Integer))))
            pnga_error("ga_bin_sorter:memory allocation failed",nbin);
-        pnga_get(g_cnt,bin_range,bin_range+1,bin_cnt,&nbin);
+        pnga_get(*g_cnt,bin_range,bin_range+1,bin_cnt,&nbin);
 
         /* get access to local bin elements */
-        pnga_access_ptr(g_bin, &lo, &hi, &ptr, &crap);
+        pnga_access_ptr(*g_bin, &lo, &hi, &ptr, &crap);
         
         for(i=0;i<nbin;i++){ 
             int elems =(int) bin_cnt[i];
             gai_hsort(ptr, elems);
             ptr+=elems;
         }
-        pnga_release_update(g_bin, &lo, &hi);             
+        pnga_release_update(*g_bin, &lo, &hi);             
     }
 
     pnga_sync();
@@ -1231,7 +1231,7 @@ Integer type, ndim, nbin;
        Integer selected = subs[i];
        int elems = all_bin_contrib[selected-1];
 
-       pnga_get(g_off,&selected,&selected, &lo, &selected);
+       pnga_get(*g_off,&selected,&selected, &lo, &selected);
        lo += offset[selected-1]+1;
        hi = lo + elems -1;
 /*
@@ -1242,7 +1242,7 @@ Integer type, ndim, nbin;
                 i,elems,(long)lo,(long)hi,(long)values+i,(long)nbin);
          break;   
        }else{
-          pnga_put(g_bin, &lo, &hi, values+i, &selected); 
+          pnga_put(*g_bin, &lo, &hi, values+i, &selected); 
        }
        i+=elems;
     }

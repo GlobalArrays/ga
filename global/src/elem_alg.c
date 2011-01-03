@@ -745,13 +745,13 @@ static void gai_oper_elem(Integer g_a, Integer *lo, Integer *hi, void *scalar, I
 
       /* get data_ptr to corner of patch */
       /* ld are leading dimensions INCLUDING ghost cells */
-      pnga_access_ptr(&g_a, loA, hiA, &data_ptr, ld);
+      pnga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
 
       /* perform operation on all elements in local patch */
       ngai_do_oper_elem(type, ndim, loA, hiA, ld, data_ptr, scalar, op);
 
       /* release access to the data */
-      pnga_release_update(&g_a, loA, hiA);
+      pnga_release_update(g_a, loA, hiA);
     }
   } else {
     Integer offset, i, j, jtmp, chk;
@@ -776,7 +776,7 @@ static void gai_oper_elem(Integer g_a, Integer *lo, Integer *hi, void *scalar, I
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          pnga_access_block_ptr(&g_a, &i, &data_ptr, ld);
+          pnga_access_block_ptr(g_a, i, &data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -821,7 +821,7 @@ static void gai_oper_elem(Integer g_a, Integer *lo, Integer *hi, void *scalar, I
           ngai_do_oper_elem(type, ndim, loA, hiA, ld, data_ptr, scalar, op);
 
           /* release access to the data */
-          pnga_release_update_block(&g_a, &i);
+          pnga_release_update_block(g_a, i);
         }
       }
     } else {
@@ -855,7 +855,7 @@ static void gai_oper_elem(Integer g_a, Integer *lo, Integer *hi, void *scalar, I
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          pnga_access_block_grid_ptr(&g_a, index, &data_ptr, ld);
+          pnga_access_block_grid_ptr(g_a, index, &data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -901,7 +901,7 @@ static void gai_oper_elem(Integer g_a, Integer *lo, Integer *hi, void *scalar, I
           ngai_do_oper_elem(type, ndim, loA, hiA, ld, data_ptr, scalar, op);
 
           /* release access to the data */
-          pnga_release_update_block_grid(&g_a, index);
+          pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -1850,17 +1850,17 @@ int op; /* operation to be perform between g_a and g_b */
 
     /*  determine subsets of my patches to access  */
     if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)){
-      pnga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
-      pnga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
-      pnga_access_ptr(&g_c, loC, hiC, &C_ptr, ldC);
+      pnga_access_ptr(g_A, loC, hiC, &A_ptr, ldA);
+      pnga_access_ptr(g_B, loC, hiC, &B_ptr, ldB);
+      pnga_access_ptr(g_c, loC, hiC, &C_ptr, ldC);
 
       /* compute "local" operation accoording to op */
       ngai_do_elem2_oper(atype, cndim, loC, hiC, ldC, A_ptr, B_ptr, C_ptr, op);
 
       /* release access to the data */
-      pnga_release       (&g_A, loC, hiC);
-      pnga_release       (&g_B, loC, hiC); 
-      pnga_release_update(&g_c, loC, hiC); 
+      pnga_release       (g_A, loC, hiC);
+      pnga_release       (g_B, loC, hiC); 
+      pnga_release_update(g_c, loC, hiC); 
 
     }
   } else {
@@ -1885,17 +1885,17 @@ int op; /* operation to be perform between g_a and g_b */
       if(andim > bndim) cndim = bndim;
       if(andim < bndim) cndim = andim;
       if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)){
-        pnga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
-        pnga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
-        pnga_access_ptr(&g_c, loC, hiC, &C_ptr, ldC);
+        pnga_access_ptr(g_A, loC, hiC, &A_ptr, ldA);
+        pnga_access_ptr(g_B, loC, hiC, &B_ptr, ldB);
+        pnga_access_ptr(g_c, loC, hiC, &C_ptr, ldC);
 
         /* compute "local" operation accoording to op */
         ngai_do_elem2_oper(atype, cndim, loC, hiC, ldC, A_ptr, B_ptr, C_ptr, op);
 
         /* release access to the data */
-        pnga_release       (&g_A, loC, hiC);
-        pnga_release       (&g_B, loC, hiC);
-        pnga_release_update(&g_c, loC, hiC);
+        pnga_release       (g_A, loC, hiC);
+        pnga_release       (g_B, loC, hiC);
+        pnga_release_update(g_c, loC, hiC);
       }
     } else {
       Integer lod[MAXDIM], hid[MAXDIM], chk;
@@ -1913,9 +1913,9 @@ int op; /* operation to be perform between g_a and g_b */
           }
 
           if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)) {
-            pnga_access_block_ptr(&g_A, &idx, &A_ptr, ldA);
-            pnga_access_block_ptr(&g_B, &idx, &B_ptr, ldB);
-            pnga_access_block_ptr(&g_c, &idx, &C_ptr, ldC);
+            pnga_access_block_ptr(g_A, idx, &A_ptr, ldA);
+            pnga_access_block_ptr(g_B, idx, &B_ptr, ldB);
+            pnga_access_block_ptr(g_c, idx, &C_ptr, ldC);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -1965,9 +1965,9 @@ int op; /* operation to be perform between g_a and g_b */
             ngai_do_elem2_oper(atype, cndim, loC, hiC, ldC, A_ptr, B_ptr, C_ptr, op);
 
             /* release access to the data */
-            pnga_release_block       (&g_A, &idx);
-            pnga_release_block       (&g_B, &idx);
-            pnga_release_update_block(&g_c, &idx);
+            pnga_release_block       (g_A, idx);
+            pnga_release_block       (g_B, idx);
+            pnga_release_update_block(g_c, idx);
           }
         }
       } else {
@@ -1996,9 +1996,9 @@ int op; /* operation to be perform between g_a and g_b */
           }
 
           if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)) {
-            pnga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
-            pnga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
-            pnga_access_block_grid_ptr(&g_c, index, &C_ptr, ldC);
+            pnga_access_block_grid_ptr(g_A, index, &A_ptr, ldA);
+            pnga_access_block_grid_ptr(g_B, index, &B_ptr, ldB);
+            pnga_access_block_grid_ptr(g_c, index, &C_ptr, ldC);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -2048,9 +2048,9 @@ int op; /* operation to be perform between g_a and g_b */
             ngai_do_elem2_oper(atype, cndim, loC, hiC, ldC, A_ptr, B_ptr, C_ptr, op);
 
             /* release access to the data */
-            pnga_release_block_grid       (&g_A, index);
-            pnga_release_block_grid       (&g_B, index);
-            pnga_release_update_block_grid(&g_c, index);
+            pnga_release_block_grid       (g_A, index);
+            pnga_release_block_grid       (g_B, index);
+            pnga_release_update_block_grid(g_c, index);
           }
           /* increment index to get next block on processor */
           index[0] += topology[0];
@@ -2368,13 +2368,13 @@ static void ngai_elem3_patch_(Integer g_a, Integer *alo, Integer *ahi, int op)
 
     /*  determine subsets of my patches to access  */
     if (pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
-      pnga_access_ptr(&g_a, loA, hiA, &A_ptr, ldA);
+      pnga_access_ptr(g_a, loA, hiA, &A_ptr, ldA);
 
       /* compute "local" operation accoording to op */
       ngai_do_elem3_patch(atype, andim, loA, hiA, ldA, A_ptr, op);
 
       /* release access to the data */
-      pnga_release (&g_a, loA, hiA);
+      pnga_release (g_a, loA, hiA);
     }
   } else {
     Integer offset, j, jtmp, chk;
@@ -2398,7 +2398,7 @@ static void ngai_elem3_patch_(Integer g_a, Integer *alo, Integer *ahi, int op)
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          pnga_access_block_ptr(&g_a, &i, &A_ptr, ldA);
+          pnga_access_block_ptr(g_a, i, &A_ptr, ldA);
 
           /* Check for partial overlap */
           chk = 1;
@@ -2444,7 +2444,7 @@ static void ngai_elem3_patch_(Integer g_a, Integer *alo, Integer *ahi, int op)
           ngai_do_elem3_patch(atype, andim, loA, hiA, ldA, A_ptr, op);
 
           /* release access to the data */
-          pnga_release_update_block(&g_a, &i);
+          pnga_release_update_block(g_a, i);
         }
       }
     } else {
@@ -2475,7 +2475,7 @@ static void ngai_elem3_patch_(Integer g_a, Integer *alo, Integer *ahi, int op)
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          pnga_access_block_grid_ptr(&g_a, index, &A_ptr, ldA);
+          pnga_access_block_grid_ptr(g_a, index, &A_ptr, ldA);
 
           /* Check for partial overlap */
           chk = 1;
@@ -2521,7 +2521,7 @@ static void ngai_elem3_patch_(Integer g_a, Integer *alo, Integer *ahi, int op)
           ngai_do_elem3_patch(atype, andim, loA, hiA, ldA, A_ptr, op);
 
           /* release access to the data */
-          pnga_release_update_block_grid(&g_a, index);
+          pnga_release_update_block_grid(g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -2644,12 +2644,12 @@ Integer g_a, *alo, *ahi;    /* patch of g_a */
     iretval = 0;
     /*  determine subsets of my patches to access  */
     if (pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
-      pnga_access_ptr(&g_a, loA, hiA, &A_ptr, ldA);
+      pnga_access_ptr(g_a, loA, hiA, &A_ptr, ldA);
 
       ngai_has_negative_element(atype, andim, loA, hiA, ldA, A_ptr, &iretval);
 
       /* release access to the data */
-      pnga_release (&g_a, loA, hiA);
+      pnga_release (g_a, loA, hiA);
     }
   } else {
     Integer offset, j, jtmp, chk;
@@ -2673,7 +2673,7 @@ Integer g_a, *alo, *ahi;    /* patch of g_a */
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          pnga_access_block_ptr(&g_a, &i, &A_ptr, ldA);
+          pnga_access_block_ptr(g_a, i, &A_ptr, ldA);
 
           /* Check for partial overlap */
           chk = 1;
@@ -2719,7 +2719,7 @@ Integer g_a, *alo, *ahi;    /* patch of g_a */
           ngai_has_negative_element(atype, andim, loA, hiA, ldA, A_ptr, &iretval);
 
           /* release access to the data */
-          pnga_release_update_block(&g_a, &i);
+          pnga_release_update_block(g_a, i);
         }
       }
     } else {
@@ -2750,7 +2750,7 @@ Integer g_a, *alo, *ahi;    /* patch of g_a */
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          pnga_access_block_grid_ptr(&g_a, index, &A_ptr, ldA);
+          pnga_access_block_grid_ptr(g_a, index, &A_ptr, ldA);
 
           /* Check for partial overlap */
           chk = 1;
@@ -2796,7 +2796,7 @@ Integer g_a, *alo, *ahi;    /* patch of g_a */
           ngai_has_negative_element(atype, andim, loA, hiA, ldA, A_ptr, &iretval);
 
           /* release access to the data */
-          pnga_release_update_block_grid(&g_a, index);
+          pnga_release_update_block_grid(g_a, index);
         }
 
         /* increment index to get next block on processor */

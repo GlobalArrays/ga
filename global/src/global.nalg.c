@@ -66,7 +66,7 @@ void pnga_zero(Integer *g_a)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   p_handle = pnga_get_pgroup(*g_a);
 
-  if(local_sync_begin) pnga_pgroup_sync(&p_handle);
+  if(local_sync_begin) pnga_pgroup_sync(p_handle);
 
   me = pnga_pgroup_nodeid(p_handle);
 
@@ -88,7 +88,7 @@ void pnga_zero(Integer *g_a)
 #endif
         return;
       }
-      pnga_access_ptr(g_a, lo, hi, &ptr, ld);
+      pnga_access_ptr(*g_a, lo, hi, &ptr, ld);
       GET_ELEMS(ndim,lo,hi,ld,&elems);
 
       switch (type){
@@ -125,10 +125,10 @@ void pnga_zero(Integer *g_a)
       }
 
       /* release access to the data */
-      pnga_release_update(g_a, lo, hi);
+      pnga_release_update(*g_a, lo, hi);
     } 
   } else {
-    pnga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
+    pnga_access_block_segment_ptr(*g_a, me, &ptr, &elems);
     switch (type){
       int *ia;
       double *da;
@@ -163,9 +163,9 @@ void pnga_zero(Integer *g_a)
     }
 
     /* release access to the data */
-    pnga_release_update_block_segment(g_a, &me);
+    pnga_release_update_block_segment(*g_a, me);
   }
-  if(local_sync_end)pnga_pgroup_sync(&p_handle);
+  if(local_sync_end)pnga_pgroup_sync(p_handle);
   GA_POP_NAME;
 #ifdef USE_VAMPIR
   vampir_end(GA_ZERO,__FILE__,__LINE__);
@@ -204,7 +204,7 @@ void *ptr_a, *ptr_b;
 
      pnga_distribution(*g_a, me, lo, hi);
      if(lo[0]>0){
-        pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+        pnga_access_ptr(*g_a, lo, hi, &ptr_a, ld);
         if (pnga_has_ghosts(*g_a)) {
           GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
         } else {
@@ -214,7 +214,7 @@ void *ptr_a, *ptr_b;
 
      pnga_distribution(*g_b, me, lo, hi);
      if(lo[0]>0){
-        pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
+        pnga_access_ptr(*g_b, lo, hi, &ptr_b, ld);
         if (pnga_has_ghosts(*g_b)) {
           GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
         } else {
@@ -226,8 +226,8 @@ void *ptr_a, *ptr_b;
 
      if(elems>0){
         ARMCI_Copy(ptr_a, ptr_b, (int)elems*GAsizeofM(type));
-        pnga_release(g_a,lo,hi);
-        pnga_release(g_b,lo,hi);
+        pnga_release(*g_a,lo,hi);
+        pnga_release(*g_b,lo,hi);
      }
 
      pnga_sync();
@@ -278,12 +278,12 @@ int local_sync_begin,local_sync_end,use_put;
      pnga_error("Both arrays must be defined on same group",0L); */
    if(local_sync_begin) {
      if (anproc <= bnproc) {
-       pnga_pgroup_sync(&a_grp);
+       pnga_pgroup_sync(a_grp);
      } else if (a_grp == pnga_pgroup_get_world() &&
                 b_grp == pnga_pgroup_get_world()) {
        pnga_sync();
      } else {
-       pnga_pgroup_sync(&b_grp);
+       pnga_pgroup_sync(b_grp);
      }
    }
 
@@ -307,16 +307,16 @@ int local_sync_begin,local_sync_end,use_put;
        if (num_blocks_a < 0) {
          pnga_distribution(*g_a, me_a, lo, hi);
          if(lo[0]>0){
-           pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-           pnga_put(g_b, lo, hi, ptr_a, ld);
+           pnga_access_ptr(*g_a, lo, hi, &ptr_a, ld);
+           pnga_put(*g_b, lo, hi, ptr_a, ld);
          }
        } else {
          if (!pnga_uses_proc_grid(*g_a)) {
            for (i=me_a; i<num_blocks_a; i += anproc) {
              pnga_distribution(*g_a, i, lo, hi);
              if (lo[0]>0) {
-               pnga_access_block_ptr(g_a, &i, &ptr_a, ld);
-               pnga_put(g_b, lo, hi, ptr_a, ld);
+               pnga_access_block_ptr(*g_a, i, &ptr_a, ld);
+               pnga_put(*g_b, lo, hi, ptr_a, ld);
              }
            }
          } else {
@@ -336,8 +336,8 @@ int local_sync_begin,local_sync_end,use_put;
                if (hi[i] < lo[i]) chk = 0;
              }
              if (chk) {
-               pnga_access_block_grid_ptr(g_a, index, &ptr_a, ld);
-               pnga_put(g_b, lo, hi, ptr_a, ld);
+               pnga_access_block_grid_ptr(*g_a, index, &ptr_a, ld);
+               pnga_put(*g_b, lo, hi, ptr_a, ld);
              }
              /* increment index to get next block on processor */
              index[0] += topology[0];
@@ -354,16 +354,16 @@ int local_sync_begin,local_sync_end,use_put;
        if (num_blocks_b < 0) {
          pnga_distribution(*g_b, me_b, lo, hi);
          if(lo[0]>0){
-           pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-           pnga_get(g_a, lo, hi, ptr_b, ld);
+           pnga_access_ptr(*g_b, lo, hi, &ptr_b, ld);
+           pnga_get(*g_a, lo, hi, ptr_b, ld);
          }
        } else {
          if (!pnga_uses_proc_grid(*g_a)) {
            for (i=me_b; i<num_blocks_b; i += bnproc) {
              pnga_distribution(*g_b, i, lo, hi);
              if (lo[0]>0) {
-               pnga_access_block_ptr(g_b, &i, &ptr_b, ld);
-               pnga_get(g_a, lo, hi, ptr_b, ld);
+               pnga_access_block_ptr(*g_b, i, &ptr_b, ld);
+               pnga_get(*g_a, lo, hi, ptr_b, ld);
              }
            }
          } else {
@@ -383,8 +383,8 @@ int local_sync_begin,local_sync_end,use_put;
                if (hi[i] < lo[i]) chk = 0;
              }
              if (chk) {
-               pnga_access_block_grid_ptr(g_b, index, &ptr_b, ld);
-               pnga_get(g_a, lo, hi, ptr_b, ld);
+               pnga_access_block_grid_ptr(*g_b, index, &ptr_b, ld);
+               pnga_get(*g_a, lo, hi, ptr_b, ld);
              }
              /* increment index to get next block on processor */
              index[0] += topology[0];
@@ -405,8 +405,8 @@ int local_sync_begin,local_sync_end,use_put;
           array is distributed. Assume source array is consistent */
        pnga_distribution(*g_b, me_b, lo, hi);
        if (lo[0]>0) {
-         pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-         pnga_get(g_a, lo, hi, ptr_b, ld);
+         pnga_access_ptr(*g_b, lo, hi, &ptr_b, ld);
+         pnga_get(*g_a, lo, hi, ptr_b, ld);
        } 
      } else {
        /* source array is distributed and destination
@@ -414,8 +414,8 @@ int local_sync_begin,local_sync_end,use_put;
        pnga_zero(g_b);
        pnga_distribution(*g_a, me_a, lo, hi);
        if (lo[0] > 0) {
-         pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-         pnga_put(g_b, lo, hi, ptr_a, ld);
+         pnga_access_ptr(*g_a, lo, hi, &ptr_a, ld);
+         pnga_put(*g_b, lo, hi, ptr_a, ld);
        }
        pnga_merge_mirrored(*g_b);
      }
@@ -423,12 +423,12 @@ int local_sync_begin,local_sync_end,use_put;
 
    if(local_sync_end) {
      if (anproc <= bnproc) {
-       pnga_pgroup_sync(&a_grp);
+       pnga_pgroup_sync(a_grp);
      } else if (a_grp == pnga_pgroup_get_world() &&
                 b_grp == pnga_pgroup_get_world()) {
        pnga_sync();
      } else {
-       pnga_pgroup_sync(&b_grp);
+       pnga_pgroup_sync(b_grp);
      }
    }
    GA_POP_NAME;
@@ -496,12 +496,12 @@ Integer bndim, bdims[MAXDIM];
        return;
    }
    
-   pnga_pgroup_sync(&a_grp);
+   pnga_pgroup_sync(a_grp);
    pnga_inquire(*g_a,  &type, &ndim, dims);
    if(type != Type) pnga_error("type not correct", *g_a);
    pnga_distribution(*g_a, me, lo, hi);
    if(lo[0]>0){
-      pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+      pnga_access_ptr(*g_a, lo, hi, &ptr_a, ld);
       if (pnga_has_ghosts(*g_a)) {
         GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
       } else {
@@ -517,7 +517,7 @@ Integer bndim, bdims[MAXDIM];
      if(type != Type) pnga_error("type not correct", *g_b);
      pnga_distribution(*g_b, me, lo, hi);
      if(lo[0]>0){
-        pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
+        pnga_access_ptr(*g_b, lo, hi, &ptr_b, ld);
         if (pnga_has_ghosts(*g_b)) {
           GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elemsb);
         } else {
@@ -611,8 +611,8 @@ Integer bndim, bdims[MAXDIM];
    
       /* release access to the data */
       if(elems>0){
-         pnga_release(g_a, lo, hi);
-         if(*g_a != *g_b)pnga_release(g_b, lo, hi);
+         pnga_release(*g_a, lo, hi);
+         if(*g_a != *g_b)pnga_release(*g_b, lo, hi);
       }
 
     /*convert from C data type to ARMCI type */
@@ -666,7 +666,7 @@ void pnga_scale(Integer *g_a, void* alpha)
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   grp_id = pnga_get_pgroup(*g_a);
-  if(local_sync_begin)pnga_pgroup_sync(&grp_id);
+  if(local_sync_begin)pnga_pgroup_sync(grp_id);
 
   me = pnga_pgroup_nodeid(grp_id);
 
@@ -687,7 +687,7 @@ void pnga_scale(Integer *g_a, void* alpha)
 
     if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
 
-      pnga_access_ptr(g_a, lo, hi, &ptr, ld);
+      pnga_access_ptr(*g_a, lo, hi, &ptr, ld);
       GET_ELEMS(ndim,lo,hi,ld,&elems);
 
       switch (type){
@@ -740,10 +740,10 @@ void pnga_scale(Integer *g_a, void* alpha)
       }
 
       /* release access to the data */
-      pnga_release_update(g_a, lo, hi);
+      pnga_release_update(*g_a, lo, hi);
     }
   } else {
-    pnga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
+    pnga_access_block_segment_ptr(*g_a, me, &ptr, &elems);
     switch (type){
       int *ia;
       double *da;
@@ -793,10 +793,10 @@ void pnga_scale(Integer *g_a, void* alpha)
       default: pnga_error(" wrong data type ",type);
     }
     /* release access to the data */
-    pnga_release_update_block_segment(g_a, &me);
+    pnga_release_update_block_segment(*g_a, me);
   }
   GA_POP_NAME;
-  if(local_sync_end)pnga_pgroup_sync(&grp_id); 
+  if(local_sync_end)pnga_pgroup_sync(grp_id); 
 #ifdef USE_VAMPIR
   vampir_end(GA_SCALE,__FILE__,__LINE__);
 #endif
@@ -854,11 +854,11 @@ int local_sync_begin,local_sync_end;
        return;
    }
 
-   pnga_pgroup_sync(&a_grp);
+   pnga_pgroup_sync(a_grp);
    pnga_inquire(*g_c,  &typeC, &ndim, dims);
    pnga_distribution(*g_c, me, lo, hi);
    if (  lo[0]>0 ){
-     pnga_access_ptr(g_c, lo, hi, &ptr_c, ld);
+     pnga_access_ptr(*g_c, lo, hi, &ptr_c, ld);
      GET_ELEMS(ndim,lo,hi,ld,&elems);
    }
 
@@ -870,7 +870,7 @@ int local_sync_begin,local_sync_end;
      if(type != typeC) pnga_error("types not consistent", *g_a);
      pnga_distribution(*g_a, me, lo, hi);
      if (  lo[0]>0 ){
-       pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+       pnga_access_ptr(*g_a, lo, hi, &ptr_a, ld);
        GET_ELEMS(ndim,lo,hi,ld,&elemsa);
      }
    }
@@ -883,7 +883,7 @@ int local_sync_begin,local_sync_end;
      if(type != typeC) pnga_error("types not consistent", *g_b);
      pnga_distribution(*g_b, me, lo, hi);
      if (  lo[0]>0 ){
-       pnga_access_ptr(g_b, lo, hi, &ptr_b, ld);
+       pnga_access_ptr(*g_b, lo, hi, &ptr_b, ld);
        GET_ELEMS(ndim,lo,hi,ld,&elemsb);
      }
    }
@@ -968,14 +968,14 @@ int local_sync_begin,local_sync_end;
        }
 
        /* release access to the data */
-       pnga_release_update(g_c, lo, hi);
-       if(*g_c != *g_a)pnga_release(g_a, lo, hi);
-       if(*g_c != *g_b)pnga_release(g_b, lo, hi);
+       pnga_release_update(*g_c, lo, hi);
+       if(*g_c != *g_a)pnga_release(*g_a, lo, hi);
+       if(*g_c != *g_b)pnga_release(*g_b, lo, hi);
    }
 
 
    GA_POP_NAME;
-   if(local_sync_end)pnga_pgroup_sync(&a_grp);
+   if(local_sync_end)pnga_pgroup_sync(a_grp);
 #ifdef USE_VAMPIR
    vampir_end(GA_ADD,__FILE__,__LINE__);
 #endif
@@ -1071,7 +1071,7 @@ char *ptr_tmp, *ptr_a;
         ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
 
         /* get access to local data */
-        pnga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+        pnga_access_ptr(*g_a, lo, hi, &ptr_a, ld);
 
         for(i = 0; i < ncol; i++){
           char *ptr = ptr_tmp + i*size;
@@ -1080,9 +1080,9 @@ char *ptr_tmp, *ptr_a;
           ptr_a += ld[0]*size;
         }
 
-        pnga_release(g_a, lo, hi); 
+        pnga_release(*g_a, lo, hi); 
 
-        pnga_put(g_b, lob, hib, ptr_tmp ,&ncol);
+        pnga_put(*g_b, lob, hib, ptr_tmp ,&ncol);
 
         ga_free(ptr_tmp);
       }
@@ -1101,7 +1101,7 @@ char *ptr_tmp, *ptr_a;
       if (!pnga_uses_proc_grid(*g_a)) {
         for (idx = me; idx < num_blocks_a; idx += nproc) {
           pnga_distribution(*g_a, idx, lo, hi);
-          pnga_access_block_ptr(g_a, &idx, &ptr_a, ld);
+          pnga_access_block_ptr(*g_a, idx, &ptr_a, ld);
 
           nrow   = hi[0] -lo[0]+1;
           ncol   = hi[1] -lo[1]+1; 
@@ -1114,9 +1114,9 @@ char *ptr_tmp, *ptr_a;
             snga_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
             ptr_a += ld[0]*size;
           }
-          pnga_put(g_b, lob, hib, ptr_tmp ,&ncol);
+          pnga_put(*g_b, lob, hib, ptr_tmp ,&ncol);
 
-          pnga_release_update_block(g_a, &idx);
+          pnga_release_update_block(*g_a, idx);
         }
       } else {
         /* Uses scalapack block-cyclic data distribution */
@@ -1137,7 +1137,7 @@ char *ptr_tmp, *ptr_a;
         }
 
         if (ichk) {
-          pnga_access_block_grid_ptr(g_a, index, &ptr_a, ld);
+          pnga_access_block_grid_ptr(*g_a, index, &ptr_a, ld);
           while (index[andim-1] < blocks[andim-1]) {
             /* find bounding coordinates of block */
             chk = 1;
@@ -1148,7 +1148,7 @@ char *ptr_tmp, *ptr_a;
               if (hi[i] < lo[i]) chk = 0;
             }
             if (chk) {
-              pnga_access_block_grid_ptr(g_a, index, &ptr_a, ld);
+              pnga_access_block_grid_ptr(*g_a, index, &ptr_a, ld);
               nrow   = hi[0] -lo[0]+1;
               ncol   = hi[1] -lo[1]+1; 
               nelem  = nrow*ncol;
@@ -1159,8 +1159,8 @@ char *ptr_tmp, *ptr_a;
                 snga_local_transpose(atype, ptr_a, nrow, block_dims[0]*size, ptr);
                 ptr_a += ld[0]*size;
               }
-              pnga_put(g_b, lob, hib, ptr_tmp ,&block_dims[0]);
-              pnga_release_update_block(g_a, index);
+              pnga_put(*g_b, lob, hib, ptr_tmp ,&block_dims[0]);
+              pnga_release_update_block_grid(*g_a, index);
             }
             /* increment index to get next block on processor */
             index[0] += topology[0];

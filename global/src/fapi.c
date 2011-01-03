@@ -1137,13 +1137,13 @@ void FATR ga_acc_(Integer *g_a, Integer *ilo, Integer *ihi,
     lo[1]=*jlo;
     hi[0]=*ihi;
     hi[1]=*jhi;
-    wnga_acc(g_a, lo, hi, buf, ld, alpha);
+    wnga_acc(*g_a, lo, hi, buf, ld, alpha);
 }
 
 void FATR nga_acc_(Integer *g_a, Integer *lo, Integer *hi,
                    void *buf, Integer *ld, void *alpha)
 {
-    wnga_acc(g_a, lo, hi, buf, ld, alpha);
+    wnga_acc(*g_a, lo, hi, buf, ld, alpha);
 }
 
 void FATR ga_access_(Integer *g_a, Integer *ilo, Integer *ihi,
@@ -1155,31 +1155,31 @@ void FATR ga_access_(Integer *g_a, Integer *ilo, Integer *ihi,
     lo[1]=*jlo;
     hi[0]=*ihi;
     hi[1]=*jhi;
-    wnga_access_idx(g_a, lo, hi, index, ld);
+    wnga_access_idx(*g_a, lo, hi, index, ld);
 }
 
 void FATR nga_access_(Integer* g_a, Integer lo[], Integer hi[],
                       AccessIndex* index, Integer ld[])
 {
-    wnga_access_idx(g_a, lo, hi, index, ld);
+    wnga_access_idx(*g_a, lo, hi, index, ld);
 }
 
 void FATR nga_access_block_(Integer* g_a, Integer* idx,
                             AccessIndex* index, Integer *ld)
 {
-  wnga_access_block_idx(g_a, idx, index, ld);
+  wnga_access_block_idx(*g_a, *idx, index, ld);
 }
 
 void FATR nga_access_block_grid_(Integer* g_a, Integer* subscript,
                                  AccessIndex *index, Integer *ld)
 {
-  wnga_access_block_grid_idx(g_a, subscript, index, ld);
+  wnga_access_block_grid_idx(*g_a, subscript, index, ld);
 }
 
 void FATR nga_access_block_segment_(Integer* g_a, Integer *proc,
                                     AccessIndex* index, Integer *len)
 {
-  wnga_access_block_segment_idx(g_a, proc, index, len);
+  wnga_access_block_segment_idx(*g_a, *proc, index, len);
 }
 
 void FATR ga_fence_()
@@ -1195,12 +1195,12 @@ void FATR nga_fence_()
 void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
                       Integer *nv)
 {
-  wnga_gather2d(g_a, v, i, j, nv);
+  wnga_gather2d(*g_a, v, i, j, *nv);
 }
 
 void FATR nga_gather_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 {
-  wnga_gather(g_a, v, subscript, nv);
+  wnga_gather(*g_a, v, subscript, *nv);
 }
 
 void FATR ga_get_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo,
@@ -1211,14 +1211,14 @@ void FATR ga_get_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo,
   lo[1] = *jlo;
   hi[0] = *ihi;
   hi[1] = *jhi;
-  wnga_get(g_a, lo, hi, buf, ld);
+  wnga_get(*g_a, lo, hi, buf, ld);
 }
 
 
 void FATR nga_get_(Integer *g_a, Integer *lo, Integer *hi,
                    void *buf, Integer *ld)
 {
-  wnga_get(g_a, lo, hi, buf, ld);
+  wnga_get(*g_a, lo, hi, buf, ld);
 }
 
 void FATR ga_init_fence_()
@@ -1240,13 +1240,13 @@ void FATR ga_nbacc_(Integer *g_a, Integer *ilo, Integer *ihi,
   lo[1]=*jlo;
   hi[0]=*ihi;
   hi[1]=*jhi;
-  wnga_nbacc(g_a, lo, hi, buf, ld, alpha, nbhandle);
+  wnga_nbacc(*g_a, lo, hi, buf, ld, alpha, nbhandle);
 }
 
 void FATR nga_nbacc_(Integer *g_a, Integer *lo, Integer *hi,
                      void *buf, Integer *ld, void *alpha, Integer *nbhandle)
 {
-  wnga_nbacc(g_a, lo, hi, buf, ld, alpha, nbhandle);
+  wnga_nbacc(*g_a, lo, hi, buf, ld, alpha, nbhandle);
 }
 
 void FATR ga_nbget_(Integer *g_a, Integer *ilo, Integer *ihi,
@@ -1258,14 +1258,14 @@ void FATR ga_nbget_(Integer *g_a, Integer *ilo, Integer *ihi,
   lo[1]=*jlo;
   hi[0]=*ihi;
   hi[1]=*jhi;
-  wnga_nbget(g_a, lo, hi, buf, ld, nbhandle);
+  wnga_nbget(*g_a, lo, hi, buf, ld, nbhandle);
 }
 
 void FATR nga_nbget_(Integer *g_a, Integer *lo,
                      Integer *hi, void *buf, Integer *ld,
                      Integer *nbhandle)
 {
-  wnga_nbget(g_a, lo, hi, buf, ld, nbhandle);
+  wnga_nbget(*g_a, lo, hi, buf, ld, nbhandle);
 }
 
 void FATR ga_nbput_(Integer *g_a, Integer *ilo, Integer *ihi,
@@ -1277,14 +1277,14 @@ void FATR ga_nbput_(Integer *g_a, Integer *ilo, Integer *ihi,
   lo[1]=*jlo;
   hi[0]=*ihi;
   hi[1]=*jhi;
-  wnga_nbput(g_a, lo, hi, buf, ld, nbhandle);
+  wnga_nbput(*g_a, lo, hi, buf, ld, nbhandle);
 }
 
 void FATR nga_nbput_(Integer *g_a, Integer *lo,
                      Integer *hi, void *buf, Integer *ld,
                      Integer *nbhandle)
 {
-  wnga_nbput(g_a, lo, hi, buf, ld, nbhandle);
+  wnga_nbput(*g_a, lo, hi, buf, ld, nbhandle);
 }
 
 Integer FATR ga_nbtest_(Integer *nbhandle)
@@ -1309,12 +1309,12 @@ void FATR nga_nbwait_(Integer *nbhandle)
 
 void FATR ga_pgroup_sync_(Integer *grp_id)
 {
-  wnga_pgroup_sync(grp_id);
+  wnga_pgroup_sync(*grp_id);
 }
 
 void FATR nga_pgroup_sync_(Integer *grp_id)
 {
-  wnga_pgroup_sync(grp_id);
+  wnga_pgroup_sync(*grp_id);
 }
 
 void FATR ga_put_(Integer *g_a, Integer *ilo, Integer *ihi,
@@ -1325,13 +1325,13 @@ void FATR ga_put_(Integer *g_a, Integer *ilo, Integer *ihi,
   lo[1]=*jlo;
   hi[0]=*ihi;
   hi[1]=*jhi;
-  wnga_put(g_a, lo, hi, buf, ld);
+  wnga_put(*g_a, lo, hi, buf, ld);
 }
 
 void FATR nga_put_(Integer *g_a, Integer *lo,
                    Integer *hi, void *buf, Integer *ld)
 {
-  wnga_put(g_a, lo, hi, buf, ld);
+  wnga_put(*g_a, lo, hi, buf, ld);
 }
 
 Integer FATR ga_read_inc_(Integer *g_a, Integer *i, Integer *j,
@@ -1340,13 +1340,13 @@ Integer FATR ga_read_inc_(Integer *g_a, Integer *i, Integer *j,
   Integer subscript[2];
   subscript[0] = *i;
   subscript[1] = *j;
-  return wnga_read_inc(g_a, subscript, inc);
+  return wnga_read_inc(*g_a, subscript, *inc);
 }
 
 Integer FATR nga_read_inc_(Integer *g_a, Integer *subscript,
                            Integer *inc)
 {
-  return wnga_read_inc(g_a, subscript, inc);
+  return wnga_read_inc(*g_a, subscript, *inc);
 }
 
 void FATR ga_release_(Integer *g_a, Integer *ilo, Integer *ihi,
@@ -1357,27 +1357,27 @@ void FATR ga_release_(Integer *g_a, Integer *ilo, Integer *ihi,
   lo[1]=*jlo;
   hi[0]=*ihi;
   hi[1]=*jhi;
-  wnga_release(g_a, lo, hi);
+  wnga_release(*g_a, lo, hi);
 }
 
 void FATR nga_release_(Integer *g_a, Integer *lo, Integer *hi)
 {
-  wnga_release(g_a, lo, hi);
+  wnga_release(*g_a, lo, hi);
 }
 
 void FATR nga_release_block_(Integer *g_a, Integer *iblock)
 {
-  wnga_release_block(g_a, iblock);
+  wnga_release_block(*g_a, *iblock);
 }
 
 void FATR nga_release_block_grid_(Integer *g_a, Integer *index)
 {
-  wnga_release_block_grid(g_a, index);
+  wnga_release_block_grid(*g_a, index);
 }
 
 void FATR nga_release_block_segment_(Integer *g_a, Integer *iproc)
 {
-  wnga_release_block_segment(g_a, iproc);
+  wnga_release_block_segment(*g_a, *iproc);
 }
 
 void FATR ga_release_update_(Integer *g_a, Integer *ilo, Integer *ihi,
@@ -1388,67 +1388,67 @@ void FATR ga_release_update_(Integer *g_a, Integer *ilo, Integer *ihi,
   lo[1]=*jlo;
   hi[0]=*ihi;
   hi[1]=*jhi;
-  wnga_release_update(g_a, lo, hi);
+  wnga_release_update(*g_a, lo, hi);
 }
 
 void FATR nga_release_update_(Integer *g_a, Integer *lo, Integer *hi)
 {
-  wnga_release_update(g_a, lo, hi);
+  wnga_release_update(*g_a, lo, hi);
 }
 
 void FATR nga_release_update_block_(Integer *g_a, Integer *iblock)
 {
-  wnga_release_update_block(g_a, iblock);
+  wnga_release_update_block(*g_a, *iblock);
 }
 
 void FATR nga_release_update_block_grid_(Integer *g_a, Integer *index)
 {
-  wnga_release_update_block_grid(g_a, index);
+  wnga_release_update_block_grid(*g_a, index);
 }
 
 void FATR nga_release_update_block_segment_(Integer *g_a, Integer *iproc)
 {
-  wnga_release_update_block_segment(g_a, iproc);
+  wnga_release_update_block_segment(*g_a, *iproc);
 }
 
 void FATR ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j, Integer *nv)
 {
-  wnga_scatter2d(g_a, v, i, j, nv);
+  wnga_scatter2d(*g_a, v, i, j, *nv);
 }
 
 void FATR nga_scatter_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 {
-  wnga_scatter(g_a, v, subscript, nv);
+  wnga_scatter(*g_a, v, subscript, *nv);
 }
 
 void FATR ga_scatter_acc_(Integer *g_a, void *v, Integer *i, Integer *j,
                           Integer *nv, void *alpha)
 {
-  wnga_scatter_acc2d(g_a, v, i, j, nv, alpha);
+  wnga_scatter_acc2d(*g_a, v, i, j, *nv, alpha);
 }
 
 void FATR nga_scatter_acc_(Integer *g_a, void* v, Integer subscript[],
                            Integer *nv, void *alpha)
 {
-  wnga_scatter_acc(g_a, v, subscript, nv, alpha);
+  wnga_scatter_acc(*g_a, v, subscript, *nv, alpha);
 }
 
 void FATR nga_strided_acc_(Integer *g_a, Integer *lo, Integer *hi,
                            Integer *skip, void *buf, Integer *ld, void *alpha)
 {
-  wnga_strided_acc(g_a, lo, hi, skip, buf, ld, alpha);
+  wnga_strided_acc(*g_a, lo, hi, skip, buf, ld, alpha);
 }
 
 void FATR nga_strided_get_(Integer *g_a, Integer *lo, Integer *hi,
                            Integer *skip, void *buf, Integer *ld)
 {
-  wnga_strided_get(g_a, lo, hi, skip, buf, ld);
+  wnga_strided_get(*g_a, lo, hi, skip, buf, ld);
 }
 
 void FATR nga_strided_put_(Integer *g_a, Integer *lo, Integer *hi,
                            Integer *skip, void *buf, Integer *ld)
 {
-  wnga_strided_put(g_a, lo, hi, skip, buf, ld);
+  wnga_strided_put(*g_a, lo, hi, skip, buf, ld);
 }
 
 void FATR ga_sync_()

@@ -123,63 +123,62 @@ extern Integer pnga_verify_handle(Integer g_a);
 extern void pnga_check_handle(Integer g_a, char *string);
 
 /* Routines from onesided.c */
-extern void pnga_acc(Integer *g_a, Integer *lo, Integer *hi, void *buf,
+extern void pnga_acc(Integer g_a, Integer *lo, Integer *hi, void *buf,
                      Integer *ld, void *alpha);
-extern void pnga_access_idx(Integer *g_a, Integer *lo, Integer *hi,
+extern void pnga_access_idx(Integer g_a, Integer *lo, Integer *hi,
                             AccessIndex *index, Integer *ld);
-extern void pnga_access_ptr(Integer *g_a, Integer *lo, Integer *hi, void *ptr,
+extern void pnga_access_ptr(Integer g_a, Integer *lo, Integer *hi, void *ptr,
                             Integer *ld);
-extern void pnga_access_block_idx(Integer* g_a, Integer* idx,
+extern void pnga_access_block_idx(Integer g_a, Integer idx,
                                   AccessIndex* index, Integer *ld);
-extern void pnga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr,
+extern void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr,
                                   Integer *ld);
-extern void pnga_access_block_grid_idx(Integer* g_a, Integer* subscript,
+extern void pnga_access_block_grid_idx(Integer g_a, Integer* subscript,
                                        AccessIndex *index, Integer *ld);
-extern void pnga_access_block_grid_ptr(Integer* g_a, Integer *index, void* ptr,
+extern void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr,
                                        Integer *ld);
-extern void pnga_access_block_segment_idx(Integer* g_a, Integer *proc,
+extern void pnga_access_block_segment_idx(Integer g_a, Integer proc,
                                           AccessIndex* index, Integer *len);
-extern void pnga_access_block_segment_ptr(Integer* g_a, Integer *proc,
+extern void pnga_access_block_segment_ptr(Integer g_a, Integer proc,
                                           void* ptr, Integer *len);
 extern void pnga_fence();
-extern void pnga_gather2d(Integer *g_a, void *v, Integer *i, Integer *j,
-                          Integer *nv);
-extern void pnga_gather(Integer *g_a, void* v, Integer subscript[], Integer *nv);
-extern void pnga_get(Integer *g_a, Integer *lo, Integer *hi,
+extern void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
+                          Integer nv);
+extern void pnga_gather(Integer g_a, void* v, Integer subscript[], Integer nv);
+extern void pnga_get(Integer g_a, Integer *lo, Integer *hi,
                      void *buf, Integer *ld);
 extern void pnga_init_fence();
-extern void pnga_nbacc(Integer *g_a, Integer *lo, Integer *hi, void *buf,
+extern void pnga_nbacc(Integer g_a, Integer *lo, Integer *hi, void *buf,
                        Integer *ld, void *alpha, Integer *nbhndl);
-extern void pnga_nbget(Integer *g_a, Integer *lo, Integer *hi, void *buf,
+extern void pnga_nbget(Integer g_a, Integer *lo, Integer *hi, void *buf,
                        Integer *ld, Integer *nbhandle);
-extern void pnga_nbput(Integer *g_a, Integer *lo, Integer *hi, void *buf,
+extern void pnga_nbput(Integer g_a, Integer *lo, Integer *hi, void *buf,
                        Integer *ld, Integer *nbhandle);
 extern Integer pnga_nbtest(Integer *nbhandle);
 extern void pnga_nbwait(Integer *nbhandle);
-extern void pnga_put(Integer *g_a, Integer *lo, Integer *hi, void *buf,
+extern void pnga_put(Integer g_a, Integer *lo, Integer *hi, void *buf,
                      Integer *ld);
-extern void pnga_pgroup_sync(Integer *grp_id);
-extern Integer pnga_read_inc(Integer *g_a, Integer *subscript, Integer *inc);
-extern void pnga_release(Integer *g_a, Integer *lo, Integer *hi);
-extern void pnga_release_block(Integer *g_a, Integer *iblock);
-extern void pnga_release_block_grid(Integer *g_a, Integer *index);
-extern void pnga_release_block_segment(Integer *g_a, Integer *iproc);
-extern void pnga_release_update(Integer *g_a, Integer *lo, Integer *hi);
-extern void pnga_release_update_block(Integer *g_a, Integer *iblock);
-extern void pnga_release_update_block_grid(Integer *g_a, Integer *index);
-extern void pnga_release_update_block_segment(Integer *g_a, Integer *iproc);
-extern void pnga_scatter2d(Integer *g_a, void *v, Integer *i, Integer *j,
-                           Integer *nv);
-extern void pnga_scatter(Integer *g_a, void *v, Integer *subscript, Integer *nv);
-extern void pnga_scatter_acc2d(Integer *g_a, void *v, Integer *i, Integer *j,
-                               Integer *nv, void *alpha);
-extern void pnga_scatter_acc(Integer *g_a, void* v, Integer subscript[],
-                             Integer *nv, void *alpha);
-extern void pnga_strided_acc(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
+extern void pnga_pgroup_sync(Integer grp_id);
+extern Integer pnga_read_inc(Integer g_a, Integer *subscript, Integer inc);
+extern void pnga_release(Integer g_a, Integer *lo, Integer *hi);
+extern void pnga_release_block(Integer g_a, Integer iblock);
+extern void pnga_release_block_grid(Integer g_a, Integer *index);
+extern void pnga_release_block_segment(Integer g_a, Integer iproc);
+extern void pnga_release_update(Integer g_a, Integer *lo, Integer *hi);
+extern void pnga_release_update_block(Integer g_a, Integer iblock);
+extern void pnga_release_update_block_grid(Integer g_a, Integer *index);
+extern void pnga_release_update_block_segment(Integer g_a, Integer iproc);
+extern void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv);
+extern void pnga_scatter(Integer g_a, void *v, Integer *subscript, Integer nv);
+extern void pnga_scatter_acc2d(Integer g_a, void *v, Integer *i, Integer *j,
+                               Integer nv, void *alpha);
+extern void pnga_scatter_acc(Integer g_a, void* v, Integer subscript[],
+                             Integer nv, void *alpha);
+extern void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
                              void *buf, Integer *ld, void *alpha);
-extern void pnga_strided_get(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
+extern void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
                              void *buf, Integer *ld);
-extern void pnga_strided_put(Integer *g_a, Integer *lo, Integer *hi, Integer *skip,
+extern void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
                              void *buf, Integer *ld);
 extern void pnga_sync();
 extern DoublePrecision pnga_wtime();

@@ -200,12 +200,12 @@ void pnga_copy_patch(char *trans,
     pnga_error("All matrices must be on same group for pnga_copy_patch", 0L); */
   if(local_sync_begin) {
     if (anproc <= bnproc) {
-      pnga_pgroup_sync(&a_grp);
+      pnga_pgroup_sync(a_grp);
     } else if (a_grp == pnga_pgroup_get_world() &&
         b_grp == pnga_pgroup_get_world()) {
       pnga_sync();
     } else {
-      pnga_pgroup_sync(&b_grp);
+      pnga_pgroup_sync(b_grp);
     }
   }
 
@@ -270,9 +270,9 @@ void pnga_copy_patch(char *trans,
     }
     if(has_intersection){
       if (use_put) {
-        pnga_access_ptr(g_a, los, his, &src_data_ptr, ld); 
+        pnga_access_ptr(*g_a, los, his, &src_data_ptr, ld); 
       } else {
-        pnga_access_ptr(g_b, los, his, &src_data_ptr, ld); 
+        pnga_access_ptr(*g_b, los, his, &src_data_ptr, ld); 
       }
 
       /* calculate the number of elements in the patch that I own */
@@ -294,13 +294,13 @@ void pnga_copy_patch(char *trans,
         if (use_put) {
           snga_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
           snga_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-          pnga_put(g_b, lod, hid, src_data_ptr, ld);
-          pnga_release(g_a, los, his);
+          pnga_put(*g_b, lod, hid, src_data_ptr, ld);
+          pnga_release(*g_a, los, his);
         } else {
           snga_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
           snga_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
-          pnga_get(g_a, lod, hid, src_data_ptr, ld);
-          pnga_release(g_b, los, his);
+          pnga_get(*g_a, lod, hid, src_data_ptr, ld);
+          pnga_release(*g_b, los, his);
         }
         /*** due to generality of this transformation scatter is required ***/
       } else{
@@ -409,8 +409,8 @@ void pnga_copy_patch(char *trans,
                            ((long long *)src_data_ptr)[idx];     
             }
           }
-          pnga_release(g_a, los, his);
-          pnga_scatter(g_b, tmp_ptr, dst_idx_ptr, &nelem);
+          pnga_release(*g_a, los, his);
+          pnga_scatter(*g_b, tmp_ptr, dst_idx_ptr, nelem);
           ga_free(dst_idx_ptr);
           ga_free(src_idx_ptr);
           ga_free(tmp_ptr);
@@ -519,8 +519,8 @@ void pnga_copy_patch(char *trans,
                            ((long long *)src_data_ptr)[idx];     
             }
           }
-          pnga_release(g_b, los, his);
-          pnga_gather(g_a, tmp_ptr, dst_idx_ptr, &nelem);
+          pnga_release(*g_b, los, his);
+          pnga_gather(*g_a, tmp_ptr, dst_idx_ptr, nelem);
           ga_free(dst_idx_ptr);
           ga_free(src_idx_ptr);
           ga_free(tmp_ptr);
@@ -549,7 +549,7 @@ void pnga_copy_patch(char *trans,
               hid[j] = his[j];
             }
             if (pnga_patch_intersect(alo,ahi,los,his,andim)) {
-              pnga_access_block_ptr(g_a, &i, &src_data_ptr, ld);
+              pnga_access_block_ptr(*g_a, i, &src_data_ptr, ld);
               offset = 0;
               last = andim - 1;
               jtot = 1;
@@ -585,8 +585,8 @@ void pnga_copy_patch(char *trans,
               }
               snga_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
               snga_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-              pnga_put(g_b, lod, hid, src_data_ptr, ld);
-              pnga_release_block(g_a, &i);
+              pnga_put(*g_b, lod, hid, src_data_ptr, ld);
+              pnga_release_block(*g_a, i);
             }
           }
         } else {
@@ -614,7 +614,7 @@ void pnga_copy_patch(char *trans,
               hid[j] = his[j];
             }
             if (pnga_patch_intersect(alo,ahi,los,his,andim)) {
-              pnga_access_block_grid_ptr(g_a, index, &src_data_ptr, ld);
+              pnga_access_block_grid_ptr(*g_a, index, &src_data_ptr, ld);
               offset = 0;
               last = andim - 1;
               jtot = 1;
@@ -650,8 +650,8 @@ void pnga_copy_patch(char *trans,
               }
               snga_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
               snga_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-              pnga_put(g_b, lod, hid, src_data_ptr, ld);
-              pnga_release_block_grid(g_a, index);
+              pnga_put(*g_b, lod, hid, src_data_ptr, ld);
+              pnga_release_block_grid(*g_a, index);
             }
 
             /* increment index to get next block on processor */
@@ -668,11 +668,11 @@ void pnga_copy_patch(char *trans,
         /* Array b is block-cyclic distributed */
         pnga_distribution(*g_a, me_a, los, his); 
         if (pnga_patch_intersect(alo,ahi,los,his,andim)) {
-          pnga_access_ptr(g_a, los, his, &src_data_ptr, ld); 
+          pnga_access_ptr(*g_a, los, his, &src_data_ptr, ld); 
           snga_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
           snga_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-          pnga_put(g_b, lod, hid, src_data_ptr, ld);
-          pnga_release(g_a, los, his);
+          pnga_put(*g_b, lod, hid, src_data_ptr, ld);
+          pnga_release(*g_a, los, his);
         }
       }
     } else {
@@ -689,7 +689,7 @@ void pnga_copy_patch(char *trans,
               hid[j] = his[j];
             }
             if (pnga_patch_intersect(blo,bhi,los,his,andim)) {
-              pnga_access_block_ptr(g_b, &i, &src_data_ptr, ld);
+              pnga_access_block_ptr(*g_b, i, &src_data_ptr, ld);
               offset = 0;
               last = bndim - 1;
               jtot = 1;
@@ -725,8 +725,8 @@ void pnga_copy_patch(char *trans,
               }
               snga_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
               snga_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
-              pnga_get(g_a, lod, hid, src_data_ptr, ld);
-              pnga_release_block(g_b, &i);
+              pnga_get(*g_a, lod, hid, src_data_ptr, ld);
+              pnga_release_block(*g_b, i);
             }
           }
         } else {
@@ -754,7 +754,7 @@ void pnga_copy_patch(char *trans,
               hid[j] = his[j];
             }
             if (pnga_patch_intersect(blo,bhi,los,his,andim)) {
-              pnga_access_block_grid_ptr(g_b, index, &src_data_ptr, ld);
+              pnga_access_block_grid_ptr(*g_b, index, &src_data_ptr, ld);
               offset = 0;
               last = bndim - 1;
               jtot = 1;
@@ -790,8 +790,8 @@ void pnga_copy_patch(char *trans,
               }
               snga_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
               snga_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
-              pnga_get(g_a, lod, hid, src_data_ptr, ld);
-              pnga_release_block_grid(g_b, index);
+              pnga_get(*g_a, lod, hid, src_data_ptr, ld);
+              pnga_release_block_grid(*g_b, index);
             }
 
             /* increment index to get next block on processor */
@@ -808,11 +808,11 @@ void pnga_copy_patch(char *trans,
         /* Array a is block-cyclic distributed */
         pnga_distribution(*g_b, me_b, los, his); 
         if (pnga_patch_intersect(blo,bhi,los,his,bndim)) {
-          pnga_access_ptr(g_b, los, his, &src_data_ptr, ld); 
+          pnga_access_ptr(*g_b, los, his, &src_data_ptr, ld); 
           snga_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
           snga_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
-          pnga_get(g_a, lod, hid, src_data_ptr, ld);
-          pnga_release(g_b, los, his);
+          pnga_get(*g_a, lod, hid, src_data_ptr, ld);
+          pnga_release(*g_b, los, his);
         }
       }
     }
@@ -821,12 +821,12 @@ void pnga_copy_patch(char *trans,
   ARMCI_AllFence();
   if(local_sync_end) {
     if (anproc <= bnproc) {
-      pnga_pgroup_sync(&a_grp);
+      pnga_pgroup_sync(a_grp);
     } else if (a_grp == pnga_pgroup_get_world() &&
         b_grp == pnga_pgroup_get_world()) {
       pnga_sync();
     } else {
-      pnga_pgroup_sync(&b_grp);
+      pnga_pgroup_sync(b_grp);
     }
   }
 #ifdef USE_VAMPIR
@@ -1135,14 +1135,14 @@ void pnga_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
 
     /*  determine subsets of my patches to access  */
     if(pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
-      pnga_access_ptr(&g_A, loA, hiA, &A_ptr, ldA);
-      pnga_access_ptr(&g_B, loA, hiA, &B_ptr, ldB);
+      pnga_access_ptr(g_A, loA, hiA, &A_ptr, ldA);
+      pnga_access_ptr(g_B, loA, hiA, &B_ptr, ldB);
 
       snga_dot_local_patch(atype, andim, loA, hiA, ldA, A_ptr, B_ptr,
           &alen, retval);
       /* release access to the data */
-      pnga_release(&g_A, loA, hiA);
-      pnga_release(&g_B, loA, hiA);
+      pnga_release(g_A, loA, hiA);
+      pnga_release(g_B, loA, hiA);
     }
   } else {
     /* Create copy of g_b identical with identical distribution as g_a */
@@ -1163,14 +1163,14 @@ void pnga_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
       /* A[83:125,1:1]  <==> B[83:125] */
       if(andim > bndim) andim = bndim; /* need more work */
       if(pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
-        pnga_access_ptr(&g_A, loA, hiA, &A_ptr, ldA);
-        pnga_access_ptr(&g_B, loA, hiA, &B_ptr, ldB);
+        pnga_access_ptr(g_A, loA, hiA, &A_ptr, ldA);
+        pnga_access_ptr(g_B, loA, hiA, &B_ptr, ldB);
 
         snga_dot_local_patch(atype, andim, loA, hiA, ldA, A_ptr, B_ptr,
             &alen, retval);
         /* release access to the data */
-        pnga_release(&g_A, loA, hiA);
-        pnga_release(&g_B, loA, hiA);
+        pnga_release(g_A, loA, hiA);
+        pnga_release(g_B, loA, hiA);
       }
     } else {
       Integer lo[MAXDIM], hi[MAXDIM];
@@ -1186,8 +1186,8 @@ void pnga_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
             hi[j] = hiA[j];
           }
           if(pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
-            pnga_access_block_ptr(&g_A, &i, &A_ptr, ldA);
-            pnga_access_block_ptr(&g_B, &i, &B_ptr, ldB);
+            pnga_access_block_ptr(g_A, i, &A_ptr, ldA);
+            pnga_access_block_ptr(g_B, i, &B_ptr, ldB);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -1233,8 +1233,8 @@ void pnga_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
             snga_dot_local_patch(atype, andim, loA, hiA, ldA, A_ptr, B_ptr,
                 &alen, retval);
             /* release access to the data */
-            pnga_release_block(&g_A, &i);
-            pnga_release_block(&g_B, &i);
+            pnga_release_block(g_A, i);
+            pnga_release_block(g_B, i);
           }
         }
       } else {
@@ -1262,8 +1262,8 @@ void pnga_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
             hi[j] = hiA[j];
           }
           if(pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
-            pnga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
-            pnga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
+            pnga_access_block_grid_ptr(g_A, index, &A_ptr, ldA);
+            pnga_access_block_grid_ptr(g_B, index, &B_ptr, ldB);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -1309,8 +1309,8 @@ void pnga_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer
             snga_dot_local_patch(atype, andim, loA, hiA, ldA, A_ptr, B_ptr,
                 &alen, retval);
             /* release access to the data */
-            pnga_release_block_grid(&g_A, index);
-            pnga_release_block_grid(&g_B, index);
+            pnga_release_block_grid(g_A, index);
+            pnga_release_block_grid(g_B, index);
           }
 
           /* increment index to get next block on processor */
@@ -1527,13 +1527,13 @@ void pnga_fill_patch(Integer *g_a, Integer *lo, Integer *hi, void* val)
 
       /* get data_ptr to corner of patch */
       /* ld are leading dimensions INCLUDING ghost cells */
-      pnga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
+      pnga_access_ptr(*g_a, loA, hiA, &data_ptr, ld);
 
       /* set all values in patch to *val */
       snga_set_patch_value(type, ndim, loA, hiA, ld, data_ptr, val);
 
       /* release access to the data */
-      pnga_release_update(g_a, loA, hiA);
+      pnga_release_update(*g_a, loA, hiA);
     }
   } else {
     Integer offset, j, jtmp, chk;
@@ -1557,7 +1557,7 @@ void pnga_fill_patch(Integer *g_a, Integer *lo, Integer *hi, void* val)
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          pnga_access_block_ptr(g_a, &i, &data_ptr, ld);
+          pnga_access_block_ptr(*g_a, i, &data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -1606,7 +1606,7 @@ void pnga_fill_patch(Integer *g_a, Integer *lo, Integer *hi, void* val)
           snga_set_patch_value(type, ndim, loA, hiA, ld, data_ptr, val);
 
           /* release access to the data */
-          pnga_release_update_block(g_a, &i);
+          pnga_release_update_block(*g_a, i);
         }
       }
     } else {
@@ -1640,7 +1640,7 @@ void pnga_fill_patch(Integer *g_a, Integer *lo, Integer *hi, void* val)
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          pnga_access_block_grid_ptr(g_a, index, &data_ptr, ld);
+          pnga_access_block_grid_ptr(*g_a, index, &data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -1689,7 +1689,7 @@ void pnga_fill_patch(Integer *g_a, Integer *lo, Integer *hi, void* val)
           snga_set_patch_value(type, ndim, loA, hiA, ld, data_ptr, val);
 
           /* release access to the data */
-          pnga_release_update_block_grid(g_a, index);
+          pnga_release_update_block_grid(*g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -1882,12 +1882,12 @@ void pnga_scale_patch(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
 
     /* determine subset of my patch to access */
     if (pnga_patch_intersect(lo, hi, loA, hiA, ndim)){
-      pnga_access_ptr(g_a, loA, hiA, &src_data_ptr, ld);
+      pnga_access_ptr(*g_a, loA, hiA, &src_data_ptr, ld);
 
       snga_scale_patch_value(type, ndim, loA, hiA, ld, src_data_ptr, alpha);
 
       /* release access to the data */
-      pnga_release_update(g_a, loA, hiA); 
+      pnga_release_update(*g_a, loA, hiA); 
     }
   } else {
     Integer offset, i, j, jtmp, chk;
@@ -1911,7 +1911,7 @@ void pnga_scale_patch(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
 
           /* get src_data_ptr to corner of patch */
           /* ld are leading dimensions INCLUDING ghost cells */
-          pnga_access_block_ptr(g_a, &i, &src_data_ptr, ld);
+          pnga_access_block_ptr(*g_a, i, &src_data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -1960,7 +1960,7 @@ void pnga_scale_patch(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
           snga_scale_patch_value(type, ndim, loA, hiA, ld, src_data_ptr, alpha);
 
           /* release access to the data */
-          pnga_release_update_block(g_a, &i);
+          pnga_release_update_block(*g_a, i);
         }
       }
     } else {
@@ -1994,7 +1994,7 @@ void pnga_scale_patch(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
 
           /* get data_ptr to corner of patch */
           /* ld are leading dimensions for block */
-          pnga_access_block_grid_ptr(g_a, index, &src_data_ptr, ld);
+          pnga_access_block_grid_ptr(*g_a, index, &src_data_ptr, ld);
 
           /* Check for partial overlap */
           chk = 1;
@@ -2043,7 +2043,7 @@ void pnga_scale_patch(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
           snga_scale_patch_value(type, ndim, loA, hiA, ld, src_data_ptr, alpha);
 
           /* release access to the data */
-          pnga_release_update_block_grid(g_a, index);
+          pnga_release_update_block_grid(*g_a, index);
         }
         /* increment index to get next block on processor */
         index[0] += topology[0];
@@ -2343,17 +2343,17 @@ void *alpha, *beta;
 
     /*  determine subsets of my patches to access  */
     if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)){
-      pnga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
-      pnga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
-      pnga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
+      pnga_access_ptr(g_A, loC, hiC, &A_ptr, ldA);
+      pnga_access_ptr(g_B, loC, hiC, &B_ptr, ldB);
+      pnga_access_ptr(*g_c, loC, hiC, &C_ptr, ldC);
 
       snga_add_patch_values(atype, alpha, beta, cndim,
           loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
 
       /* release access to the data */
-      pnga_release       (&g_A, loC, hiC);
-      pnga_release       (&g_B, loC, hiC); 
-      pnga_release_update( g_c, loC, hiC); 
+      pnga_release       (g_A, loC, hiC);
+      pnga_release       (g_B, loC, hiC); 
+      pnga_release_update(*g_c, loC, hiC); 
     }
   } else {
     /* create copies of arrays A and B that are identically distributed
@@ -2377,17 +2377,17 @@ void *alpha, *beta;
       if(andim > bndim) cndim = bndim;
       if(andim < bndim) cndim = andim;
       if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)){
-        pnga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
-        pnga_access_ptr(&g_B, loC, hiC, &B_ptr, ldB);
-        pnga_access_ptr( g_c, loC, hiC, &C_ptr, ldC);
+        pnga_access_ptr(g_A, loC, hiC, &A_ptr, ldA);
+        pnga_access_ptr(g_B, loC, hiC, &B_ptr, ldB);
+        pnga_access_ptr(*g_c, loC, hiC, &C_ptr, ldC);
 
         snga_add_patch_values(atype, alpha, beta, cndim,
             loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
 
         /* release access to the data */
-        pnga_release       (&g_A, loC, hiC);
-        pnga_release       (&g_B, loC, hiC); 
-        pnga_release_update( g_c, loC, hiC); 
+        pnga_release       (g_A, loC, hiC);
+        pnga_release       (g_B, loC, hiC); 
+        pnga_release_update(*g_c, loC, hiC); 
       }
     } else {
       Integer idx, lod[MAXDIM], hid[MAXDIM];
@@ -2403,9 +2403,9 @@ void *alpha, *beta;
             hid[j] = hiC[j];
           }
           if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)) {
-            pnga_access_block_ptr(&g_A, &idx, &A_ptr, ldA);
-            pnga_access_block_ptr(&g_B, &idx, &B_ptr, ldB);
-            pnga_access_block_ptr( g_c, &idx, &C_ptr, ldC);
+            pnga_access_block_ptr(g_A, idx, &A_ptr, ldA);
+            pnga_access_block_ptr(g_B, idx, &B_ptr, ldB);
+            pnga_access_block_ptr(*g_c, idx, &C_ptr, ldC);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -2460,9 +2460,9 @@ void *alpha, *beta;
                 loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
 
             /* release access to the data */
-            pnga_release_block       (&g_A, &idx);
-            pnga_release_block       (&g_B, &idx); 
-            pnga_release_update_block( g_c, &idx); 
+            pnga_release_block       (g_A, idx);
+            pnga_release_block       (g_B, idx); 
+            pnga_release_update_block(*g_c, idx); 
           }
         }
       } else {
@@ -2491,9 +2491,9 @@ void *alpha, *beta;
             hid[j] = hiC[j];
           }
           if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)) {
-            pnga_access_block_grid_ptr(&g_A, index, &A_ptr, ldA);
-            pnga_access_block_grid_ptr(&g_B, index, &B_ptr, ldB);
-            pnga_access_block_grid_ptr( g_c, index, &C_ptr, ldC);
+            pnga_access_block_grid_ptr(g_A, index, &A_ptr, ldA);
+            pnga_access_block_grid_ptr(g_B, index, &B_ptr, ldB);
+            pnga_access_block_grid_ptr(*g_c, index, &C_ptr, ldC);
 
             /* evaluate offsets for system */
             offset = 0;
@@ -2548,9 +2548,9 @@ void *alpha, *beta;
                 loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
 
             /* release access to the data */
-            pnga_release_block_grid       (&g_A, index);
-            pnga_release_block_grid       (&g_B, index); 
-            pnga_release_update_block_grid( g_c, index); 
+            pnga_release_block_grid       ( g_A, index);
+            pnga_release_block_grid       ( g_B, index); 
+            pnga_release_update_block_grid(*g_c, index); 
           }
 
           /* increment index to get next block on processor */

@@ -108,7 +108,7 @@ Integer ndim, dims[2];
    jhis = hi[1];
 
    if(patch_intersect(ailo, aihi, ajlo, ajhi, &ilos, &ihis, &jlos, &jhis)){
-      pnga_access_ptr(g_a, lo, hi, &dbl_ptrA, &ld);
+      pnga_access_ptr(*g_a, lo, hi, &dbl_ptrA, &ld);
       
       nelem = (ihis-ilos+1)*(jhis-jlos+1);
       
@@ -131,7 +131,7 @@ Integer ndim, dims[2];
 		  *(dbl_ptrB + i*ldT + j) = *(dbl_ptrA + j*ld + i);
 
 	  /* Now we can reset index to point to the transposed stuff */
-      pnga_release(g_a, lo, hi);
+      pnga_release(*g_a, lo, hi);
 	  dbl_ptrA = dbl_ptrB;
 	  ld = ldT;
 
@@ -149,7 +149,7 @@ Integer ndim, dims[2];
       lo[1] = jlod;
       hi[0] = ihid;
       hi[1] = jhid;
-      pnga_put(g_b, lo, hi, dbl_ptrA, &ld);
+      pnga_put(*g_b, lo, hi, dbl_ptrA, &ld);
 
       /* Get rid of local memory if we used it */
       if( transp == 't') ga_free(dbl_ptrB);
@@ -219,7 +219,7 @@ Integer ndim, dims[2];
 
    if (patch_intersect(ailo, aihi, ajlo, ajhi, &iloA, &ihiA, &jloA, &jhiA)){
 
-       pnga_access_ptr(&g_A, alo, ahi, &dbl_ptrA, &ldA);
+       pnga_access_ptr(g_A, alo, ahi, &dbl_ptrA, &ldA);
        nelem = (ihiA-iloA+1)*(jhiA-jloA+1);
 
        corr  = *bilo - *ailo;
@@ -233,14 +233,14 @@ Integer ndim, dims[2];
 
       if(own_patch(g_b, iloB, ihiB, jloB, jhiB)){
          /* all the data is local */
-         pnga_access_ptr(g_b, blo, bhi, &dbl_ptrB, &ldB);
+         pnga_access_ptr(*g_b, blo, bhi, &dbl_ptrB, &ldB);
       }else{
          /* data is remote -- get it to temp storage*/
          temp_created =1;
 	 dbl_ptrB = (DoublePrecision*)ga_malloc(nelem, MT_F_DBL, "ddot_dp_b");
 
          ldB   = ihiB-iloB+1; 
-         pnga_get(g_b, blo, bhi, dbl_ptrB, &ldB);
+         pnga_get(*g_b, blo, bhi, dbl_ptrB, &ldB);
       }
 
       sum = 0.;
@@ -248,10 +248,10 @@ Integer ndim, dims[2];
           for(i=0; i< ihiA-iloA+1; i++)
              sum += *(dbl_ptrA + j*ldA + i) * 
                     *(dbl_ptrB + j*ldB + i);
-      pnga_release(&g_A, alo, ahi);
+      pnga_release(g_A, alo, ahi);
 
       if(temp_created) ga_free(dbl_ptrB);
-      else pnga_release(g_b, blo, bhi);
+      else pnga_release(*g_b, blo, bhi);
    }
    return sum;
 }
