@@ -268,12 +268,12 @@ extern logical pnga_set_ghost_info(Integer g_a);
 extern void pnga_set_ghost_corner_flag(Integer g_a, logical flag);
 
 /* Routines from global.nalg.c */
-extern void pnga_zero(Integer *g_a);
-extern void pnga_copy(Integer *g_a, Integer *g_b);
-extern void pnga_dot(int Type, Integer *g_a, Integer *g_b, void *value);
-extern void pnga_scale(Integer *g_a, void* alpha);
-extern void pnga_add(void *alpha, Integer* g_a, void* beta, Integer* g_b, Integer* g_c);
-extern void pnga_transpose(Integer *g_a, Integer *g_b);
+extern void pnga_zero(Integer g_a);
+extern void pnga_copy(Integer g_a, Integer g_b);
+extern void pnga_dot(int type, Integer g_a, Integer g_b, void *value);
+extern void pnga_scale(Integer g_a, void* alpha);
+extern void pnga_add(void *alpha, Integer g_a, void* beta, Integer g_b, Integer g_c);
+extern void pnga_transpose(Integer g_a, Integer g_b);
 
 /* Routines from global.npatch.c */
 extern void pnga_copy_patch(char *trans, Integer *g_a, Integer *alo, Integer *ahi, Integer *g_b, Integer *blo, Integer *bhi);

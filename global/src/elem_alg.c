@@ -3022,7 +3022,7 @@ void pnga_step_bound_info_patch(
        pnga_error("pnga_step_bound_info_patch: Upper bound is not > xx.", -1);
 
      /* Then compute t = positve elements of vv */
-     pnga_zero(&g_T);
+     pnga_zero(g_T);
      pnga_elem_maximum(g_vv,g_T,g_T);
 
      /* Then, compute (xu-xx)/vv */
@@ -3067,7 +3067,7 @@ void pnga_step_bound_info_patch(
        pnga_error("pnga_step_bound_info_patch: Lower bound is not < xx.", -1);
 
      /* Then compute r = negative elements of vv */
-     pnga_zero(&g_R);
+     pnga_zero(g_R);
      pnga_elem_minimum(g_vv,g_R,g_R);
      pnga_abs_value(g_R);
 
@@ -3112,7 +3112,7 @@ void pnga_step_bound_info_patch(
      /*
        Set Q to the |vv|.
      */
-     pnga_copy(&g_vv,&g_Q);
+     pnga_copy(g_vv,g_Q);
      pnga_abs_value(g_Q);
      /* 
        Now add q and s to get a vector that is zero only

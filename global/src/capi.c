@@ -1396,7 +1396,7 @@ Integer lim = (Integer)limit;
 void GA_Zero(int g_a)
 {
     Integer a=(Integer)g_a;
-    wnga_zero(&a);
+    wnga_zero(a);
 }
 
 int GA_Pgroup_get_default()
@@ -1452,7 +1452,7 @@ int GA_Idot(int g_a, int g_b)
     int value;
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    wnga_dot(C_INT, &a, &b, &value);
+    wnga_dot(C_INT, a, b, &value);
     return value;
 }
 
@@ -1462,7 +1462,7 @@ long GA_Ldot(int g_a, int g_b)
     long value;
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    wnga_dot(C_LONG, &a, &b, &value);
+    wnga_dot(C_LONG, a, b, &value);
     return value;
 }
 
@@ -1472,7 +1472,7 @@ long long GA_Lldot(int g_a, int g_b)
     long long value;
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    wnga_dot(C_LONGLONG, &a, &b, &value);
+    wnga_dot(C_LONGLONG, a, b, &value);
     return value;
 }
 
@@ -1482,7 +1482,7 @@ double GA_Ddot(int g_a, int g_b)
     double value;
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    wnga_dot(C_DBL, &a, &b, &value);
+    wnga_dot(C_DBL, a, b, &value);
     return value;
 }
 
@@ -1492,7 +1492,7 @@ DoubleComplex GA_Zdot(int g_a, int g_b)
     DoubleComplex value;
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    wnga_dot(pnga_type_f2c(MT_F_DCPL),&a,&b,&value);
+    wnga_dot(pnga_type_f2c(MT_F_DCPL),a,b,&value);
     return value;
 }
 
@@ -1502,7 +1502,7 @@ SingleComplex GA_Cdot(int g_a, int g_b)
     SingleComplex value;
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    wnga_dot(pnga_type_f2c(MT_F_SCPL),&a,&b,&value);
+    wnga_dot(pnga_type_f2c(MT_F_SCPL),a,b,&value);
     return value;
 }
 
@@ -1512,7 +1512,7 @@ float GA_Fdot(int g_a, int g_b)
     float sum;
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    wnga_dot(C_FLOAT, &a, &b, &sum);
+    wnga_dot(C_FLOAT, a, b, &sum);
     return sum;
 }    
 
@@ -1544,7 +1544,7 @@ void NGA_Fill(int g_a, void *value)
 void GA_Scale(int g_a, void *value)
 {
     Integer a=(Integer)g_a;
-    wnga_scale(&a,value);
+    wnga_scale(a,value);
 }
 
 
@@ -1553,7 +1553,7 @@ void GA_Add(void *alpha, int g_a, void* beta, int g_b, int g_c)
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
     Integer c=(Integer)g_c;
-    wnga_add(alpha, &a, beta, &b, &c);
+    wnga_add(alpha, a, beta, b, c);
 }
 
 
@@ -1561,7 +1561,7 @@ void GA_Copy(int g_a, int g_b)
 {
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    wnga_copy(&a, &b);
+    wnga_copy(a, b);
 }
 
 
@@ -4059,7 +4059,7 @@ void GA_Transpose(int g_a, int g_b)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
 
-    wnga_transpose(&a, &b);
+    wnga_transpose(a, b);
 }
 
 

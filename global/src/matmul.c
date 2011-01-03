@@ -649,7 +649,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
   int offset=0, gTaskId=0;
   int numblocks=0, has_more_blocks=1;
   Integer ctype, cndim, cdims[2];
-  Integer iblock, proc_index[2], index[2];
+  Integer iblock=0, proc_index[2], index[2];
   Integer blocks[2], block_dims[2], topology[2];
 
   GA_PUSH_NAME("ga_matmul_regular");
@@ -1642,7 +1642,7 @@ Integer atype, btype, ctype, adim1=0, adim2=0, bdim1=0, bdim2=0, cdim1=0, cdim2=
 Integer me= pnga_nodeid(), nproc;
 Integer i, ijk = 0, i0, i1, j0, j1;
 Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
-Integer n, m, k, adim, bdim, cdim;
+Integer n, m, k, adim, bdim=0, cdim;
 Integer Ichunk, Kchunk, Jchunk;
 DoubleComplex ONE;
 SingleComplex ONE_CF;

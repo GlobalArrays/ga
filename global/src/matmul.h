@@ -17,6 +17,18 @@
 #define zgemm_ F77_FUNC(zgemm,ZGEMM)
 #define cgemm_ F77_FUNC(cgemm,CGEMM)
 
+#if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+extern void cgemm_(char*, char*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, int, int);
+extern void dgemm_(char*, char*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, int, int);
+extern void sgemm_(char*, char*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, int, int);
+extern void zgemm_(char*, char*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, int, int);
+#else
+extern void cgemm_(char*, int, char*, int, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*);
+extern void dgemm_(char*, int, char*, int, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*);
+extern void sgemm_(char*, int, char*, int, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*);
+extern void zgemm_(char*, int, char*, int, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*);
+#endif
+
 /* min acceptable amount of memory (in elements) and default chunk size */
 #  define MINMEM 64
 #  define CHUNK_SIZE 256

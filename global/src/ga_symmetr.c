@@ -113,8 +113,8 @@ void pnga_symmetrize(Integer *g_a) {
     DoublePrecision half = 0.5;
     if (!pnga_duplicate(*g_a, &g_b, tempB))
       pnga_error("ga_symmetrize: duplicate failed", 0L);
-    pnga_transpose(g_a, &g_b);
-    pnga_add(&half, g_a, &half, &g_b, g_a);
+    pnga_transpose(*g_a, g_b);
+    pnga_add(&half, *g_a, &half, g_b, *g_a);
     pnga_destroy(g_b);
   }
   GA_POP_NAME;

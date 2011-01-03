@@ -4077,7 +4077,7 @@ void pnga_merge_mirrored(Integer g_a)
     if (!pnga_create_ghosts(type, ndim, idims,
         iwidth, "temporary", ichunk, &_ga_tmp)) 
       pnga_error("Unable to create work array for merge",GAme);
-    pnga_zero(&_ga_tmp);
+    pnga_zero(_ga_tmp);
     /* Find data on this processor and accumulate in temporary global array */
     inode = GAme - zproc;
     pnga_distribution(g_a,inode,lo,hi);
