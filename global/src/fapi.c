@@ -2458,7 +2458,7 @@ void FATR ga_copy_patch_(
     blo[0] = *bilo; blo[1] = *bjlo;
     bhi[0] = *bihi; bhi[1] = *bjhi;
 
-    wnga_copy_patch(trans, g_a, alo, ahi, g_b, blo, bhi);
+    wnga_copy_patch(trans, *g_a, alo, ahi, *g_b, blo, bhi);
 }
 
 void FATR nga_copy_patch_(
@@ -2469,7 +2469,7 @@ void FATR nga_copy_patch_(
 #endif
         )
 {
-    wnga_copy_patch(trans,g_a,alo,ahi,g_b,blo,bhi);
+    wnga_copy_patch(trans,*g_a,alo,ahi,*g_b,blo,bhi);
 }
 
 void FATR ga_zero_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi)
@@ -2478,15 +2478,15 @@ void FATR ga_zero_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo,
 
     lo[0] = *ilo; lo[1] = *jlo;
     hi[0] = *ihi; lo[1] = *jhi;
-    wnga_zero_patch(g_a, lo, hi);
+    wnga_zero_patch(*g_a, lo, hi);
 }
 
 void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
 {
-    wnga_zero_patch(g_a, lo, hi);
+    wnga_zero_patch(*g_a, lo, hi);
 }
 
-static void sga_dot_patch(Integer *g_a, char *t_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, char *t_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, void *retval)
+static void sga_dot_patch(Integer g_a, char *t_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer g_b, char *t_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, void *retval)
 {
     Integer alo[2], ahi[2], blo[2], bhi[2];
 
@@ -2509,7 +2509,7 @@ DoublePrecision ga_ddot_patch_(Integer *g_a, char *t_a, int alen, Integer *ailo,
     pnga_inquire_type(*g_a, &atype);
     pnga_inquire_type(*g_b, &btype);
     if (atype != btype || atype != C_DBL) pnga_error(" wrong types ", 0L);
-    sga_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi, g_b, t_b, bilo, bihi, bjlo, bjhi, &retval);
+    sga_dot_patch(*g_a, t_a, ailo, aihi, ajlo, ajhi, *g_b, t_b, bilo, bihi, bjlo, bjhi, &retval);
 
     return retval;
 }
@@ -2528,7 +2528,7 @@ Integer ga_idot_patch_(Integer *g_a, char *t_a, int alen, Integer *ailo, Integer
     if (atype != btype
             || (atype != C_INT && atype != C_LONG && atype != C_LONGLONG))
         pnga_error(" wrong types ", 0L);
-    sga_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi, g_b, t_b, bilo, bihi, bjlo, bjhi, &retval);
+    sga_dot_patch(*g_a, t_a, ailo, aihi, ajlo, ajhi, *g_b, t_b, bilo, bihi, bjlo, bjhi, &retval);
 
     return retval;
 }
@@ -2545,7 +2545,7 @@ Real ga_sdot_patch_(Integer *g_a, char *t_a, int alen, Integer *ailo, Integer *a
     pnga_inquire_type(*g_a, &atype);
     pnga_inquire_type(*g_b, &btype);
     if (atype != btype || atype != C_FLOAT) pnga_error(" wrong types ", 0L);
-    sga_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi, g_b, t_b, bilo, bihi, bjlo, bjhi, &retval);
+    sga_dot_patch(*g_a, t_a, ailo, aihi, ajlo, ajhi, *g_b, t_b, bilo, bihi, bjlo, bjhi, &retval);
 
     return retval;
 }
@@ -2561,7 +2561,7 @@ void gai_zdot_patch_(Integer *g_a, char *t_a, int alen, Integer *ailo, Integer *
     pnga_inquire_type(*g_a, &atype);
     pnga_inquire_type(*g_b, &btype);
     if (atype != btype || atype != C_DCPL) pnga_error(" wrong types ", 0L);
-    sga_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi, g_b, t_b, bilo, bihi, bjlo, bjhi, retval);
+    sga_dot_patch(*g_a, t_a, ailo, aihi, ajlo, ajhi, *g_b, t_b, bilo, bihi, bjlo, bjhi, retval);
 }
 
 #if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
@@ -2575,7 +2575,7 @@ void gai_cdot_patch_(Integer *g_a, char *t_a, int alen, Integer *ailo, Integer *
     pnga_inquire_type(*g_a, &atype);
     pnga_inquire_type(*g_b, &btype);
     if (atype != btype || atype != C_SCPL) pnga_error(" wrong types ", 0L);
-    sga_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi, g_b, t_b, bilo, bihi, bjlo, bjhi, retval);
+    sga_dot_patch(*g_a, t_a, ailo, aihi, ajlo, ajhi, *g_b, t_b, bilo, bihi, bjlo, bjhi, retval);
 }
 
 #if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
@@ -2590,7 +2590,7 @@ DoublePrecision nga_ddot_patch_(Integer *g_a, char *t_a, int alen, Integer *alo,
     pnga_inquire_type(*g_a, &atype);
     pnga_inquire_type(*g_b, &btype);
     if (atype != btype || atype != C_DBL) pnga_error(" wrong types ", 0L);
-    wnga_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, &retval);
+    wnga_dot_patch(*g_a, t_a, alo, ahi, *g_b, t_b, blo, bhi, &retval);
 
     return retval;
 }
@@ -2609,7 +2609,7 @@ Integer nga_idot_patch_(Integer *g_a, char *t_a, int alen, Integer *alo, Integer
     if (atype != btype
             || (atype != C_INT && atype != C_LONG && atype != C_LONGLONG))
         pnga_error(" wrong types ", 0L);
-    wnga_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, &retval);
+    wnga_dot_patch(*g_a, t_a, alo, ahi, *g_b, t_b, blo, bhi, &retval);
 
     return retval;
 }
@@ -2626,7 +2626,7 @@ Real nga_sdot_patch_(Integer *g_a, char *t_a, int alen, Integer *alo, Integer *a
     pnga_inquire_type(*g_a, &atype);
     pnga_inquire_type(*g_b, &btype);
     if (atype != btype || atype != C_FLOAT) pnga_error(" wrong types ", 0L);
-    wnga_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, &retval);
+    wnga_dot_patch(*g_a, t_a, alo, ahi, *g_b, t_b, blo, bhi, &retval);
 
     return retval;
 }
@@ -2642,7 +2642,7 @@ void ngai_cdot_patch_(Integer *g_a, char *t_a, int alen, Integer *alo, Integer *
     pnga_inquire_type(*g_a, &atype);
     pnga_inquire_type(*g_b, &btype);
     if (atype != btype || atype != C_SCPL) pnga_error(" wrong types ", 0L);
-    wnga_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval);
+    wnga_dot_patch(*g_a, t_a, alo, ahi, *g_b, t_b, blo, bhi, retval);
 }
 
 #if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
@@ -2656,10 +2656,10 @@ void ngai_zdot_patch_(Integer *g_a, char *t_a, int alen, Integer *alo, Integer *
     pnga_inquire_type(*g_a, &atype);
     pnga_inquire_type(*g_b, &btype);
     if (atype != btype || atype != C_DCPL) pnga_error(" wrong types ", 0L);
-    wnga_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval);
+    wnga_dot_patch(*g_a, t_a, alo, ahi, *g_b, t_b, blo, bhi, retval);
 }
 
-static void sga_fill_patch(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, void* val)
+static void sga_fill_patch(Integer g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, void* val)
 {
     Integer lo[2], hi[2];
 
@@ -2670,65 +2670,65 @@ static void sga_fill_patch(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jl
 
 void FATR ga_fill_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, void* val)
 {
-    sga_fill_patch(g_a, ilo, ihi, jlo, jhi, val);
+    sga_fill_patch(*g_a, ilo, ihi, jlo, jhi, val);
 }
 
 void FATR ga_cfill_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, SingleComplex *val)
 {
-    sga_fill_patch(g_a, ilo, ihi, jlo, jhi, val);
+    sga_fill_patch(*g_a, ilo, ihi, jlo, jhi, val);
 }
 
 void FATR ga_dfill_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, DoublePrecision *val)
 {
-    sga_fill_patch(g_a, ilo, ihi, jlo, jhi, val);
+    sga_fill_patch(*g_a, ilo, ihi, jlo, jhi, val);
 }
 
 void FATR ga_ifill_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, Integer *val)
 {
-    sga_fill_patch(g_a, ilo, ihi, jlo, jhi, val);
+    sga_fill_patch(*g_a, ilo, ihi, jlo, jhi, val);
 }
 
 void FATR ga_sfill_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, Real *val)
 {
-    sga_fill_patch(g_a, ilo, ihi, jlo, jhi, val);
+    sga_fill_patch(*g_a, ilo, ihi, jlo, jhi, val);
 }
 
 void FATR ga_zfill_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, DoubleComplex *val)
 {
-    sga_fill_patch(g_a, ilo, ihi, jlo, jhi, val);
+    sga_fill_patch(*g_a, ilo, ihi, jlo, jhi, val);
 }
 
 void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
 {
-    wnga_fill_patch(g_a, lo, hi, val);
+    wnga_fill_patch(*g_a, lo, hi, val);
 }
 
 void FATR nga_cfill_patch_(Integer *g_a, Integer *lo, Integer *hi, SingleComplex* val)
 {
-    wnga_fill_patch(g_a, lo, hi, val);
+    wnga_fill_patch(*g_a, lo, hi, val);
 }
 
 void FATR nga_dfill_patch_(Integer *g_a, Integer *lo, Integer *hi, DoublePrecision* val)
 {
-    wnga_fill_patch(g_a, lo, hi, val);
+    wnga_fill_patch(*g_a, lo, hi, val);
 }
 
 void FATR nga_ifill_patch_(Integer *g_a, Integer *lo, Integer *hi, Integer* val)
 {
-    wnga_fill_patch(g_a, lo, hi, val);
+    wnga_fill_patch(*g_a, lo, hi, val);
 }
 
 void FATR nga_sfill_patch_(Integer *g_a, Integer *lo, Integer *hi, SingleComplex* val)
 {
-    wnga_fill_patch(g_a, lo, hi, val);
+    wnga_fill_patch(*g_a, lo, hi, val);
 }
 
 void FATR nga_zfill_patch_(Integer *g_a, Integer *lo, Integer *hi, DoubleComplex* val)
 {
-    wnga_fill_patch(g_a, lo, hi, val);
+    wnga_fill_patch(*g_a, lo, hi, val);
 }
 
-static void sga_scale_patch(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, void *alpha)
+static void sga_scale_patch(Integer g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, void *alpha)
 {
     Integer lo[2], hi[2];
 
@@ -2739,7 +2739,7 @@ static void sga_scale_patch(Integer *g_a, Integer *ilo, Integer *ihi, Integer *j
 
 void FATR ga_scale_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, void *alpha)
 {
-    sga_scale_patch(g_a, ilo, ihi, jlo, jhi, alpha);
+    sga_scale_patch(*g_a, ilo, ihi, jlo, jhi, alpha);
 }
 
 void FATR ga_cscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, SingleComplex *alpha)
@@ -2748,7 +2748,7 @@ void FATR ga_cscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo
 
     pnga_inquire_type(*g_a, &atype);
     if (atype != C_SCPL) pnga_error(" wrong types ", 0L);
-    sga_scale_patch(g_a, ilo, ihi, jlo, jhi, alpha);
+    sga_scale_patch(*g_a, ilo, ihi, jlo, jhi, alpha);
 }
 
 void FATR ga_dscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, DoublePrecision *alpha)
@@ -2757,7 +2757,7 @@ void FATR ga_dscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo
 
     pnga_inquire_type(*g_a, &atype);
     if (atype != C_DBL) pnga_error(" wrong types ", 0L);
-    sga_scale_patch(g_a, ilo, ihi, jlo, jhi, alpha);
+    sga_scale_patch(*g_a, ilo, ihi, jlo, jhi, alpha);
 }
 
 void FATR ga_iscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, Integer *alpha)
@@ -2767,7 +2767,7 @@ void FATR ga_iscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo
     pnga_inquire_type(*g_a, &atype);
     if (atype != C_INT || atype != C_LONG || atype != C_LONGLONG)
         pnga_error(" wrong types ", 0L);
-    sga_scale_patch(g_a, ilo, ihi, jlo, jhi, alpha);
+    sga_scale_patch(*g_a, ilo, ihi, jlo, jhi, alpha);
 }
 
 void FATR ga_sscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, Real *alpha)
@@ -2776,7 +2776,7 @@ void FATR ga_sscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo
 
     pnga_inquire_type(*g_a, &atype);
     if (atype != C_FLOAT) pnga_error(" wrong types ", 0L);
-    sga_scale_patch(g_a, ilo, ihi, jlo, jhi, alpha);
+    sga_scale_patch(*g_a, ilo, ihi, jlo, jhi, alpha);
 }
 
 void FATR ga_zscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi, DoubleComplex *alpha)
@@ -2785,12 +2785,12 @@ void FATR ga_zscal_patch_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo
 
     pnga_inquire_type(*g_a, &atype);
     if (atype != C_DCPL) pnga_error(" wrong types ", 0L);
-    sga_scale_patch(g_a, ilo, ihi, jlo, jhi, alpha);
+    sga_scale_patch(*g_a, ilo, ihi, jlo, jhi, alpha);
 }
 
 void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
 {
-    wnga_scale_patch(g_a, lo, hi, alpha);
+    wnga_scale_patch(*g_a, lo, hi, alpha);
 }
 
 void FATR nga_cscale_patch_(Integer *g_a, Integer *lo, Integer *hi, SingleComplex *alpha)
@@ -2799,7 +2799,7 @@ void FATR nga_cscale_patch_(Integer *g_a, Integer *lo, Integer *hi, SingleComple
 
     pnga_inquire_type(*g_a, &atype);
     if (atype != C_SCPL) pnga_error(" wrong types ", 0L);
-    wnga_scale_patch(g_a, lo, hi, alpha);
+    wnga_scale_patch(*g_a, lo, hi, alpha);
 }
 
 void FATR nga_dscale_patch_(Integer *g_a, Integer *lo, Integer *hi, DoublePrecision *alpha)
@@ -2808,7 +2808,7 @@ void FATR nga_dscale_patch_(Integer *g_a, Integer *lo, Integer *hi, DoublePrecis
 
     pnga_inquire_type(*g_a, &atype);
     if (atype != C_DBL) pnga_error(" wrong types ", 0L);
-    wnga_scale_patch(g_a, lo, hi, alpha);
+    wnga_scale_patch(*g_a, lo, hi, alpha);
 }
 
 void FATR nga_iscale_patch_(Integer *g_a, Integer *lo, Integer *hi, Integer *alpha)
@@ -2818,7 +2818,7 @@ void FATR nga_iscale_patch_(Integer *g_a, Integer *lo, Integer *hi, Integer *alp
     pnga_inquire_type(*g_a, &atype);
     if (atype != C_INT || atype != C_LONG || atype != C_LONGLONG)
         pnga_error(" wrong types ", 0L);
-    wnga_scale_patch(g_a, lo, hi, alpha);
+    wnga_scale_patch(*g_a, lo, hi, alpha);
 }
 
 void FATR nga_sscale_patch_(Integer *g_a, Integer *lo, Integer *hi, Real *alpha)
@@ -2827,7 +2827,7 @@ void FATR nga_sscale_patch_(Integer *g_a, Integer *lo, Integer *hi, Real *alpha)
 
     pnga_inquire_type(*g_a, &atype);
     if (atype != C_FLOAT) pnga_error(" wrong types ", 0L);
-    wnga_scale_patch(g_a, lo, hi, alpha);
+    wnga_scale_patch(*g_a, lo, hi, alpha);
 }
 
 void FATR nga_zscale_patch_(Integer *g_a, Integer *lo, Integer *hi, DoubleComplex *alpha)
@@ -2836,10 +2836,10 @@ void FATR nga_zscale_patch_(Integer *g_a, Integer *lo, Integer *hi, DoubleComple
 
     pnga_inquire_type(*g_a, &atype);
     if (atype != C_DCPL) pnga_error(" wrong types ", 0L);
-    wnga_scale_patch(g_a, lo, hi, alpha);
+    wnga_scale_patch(*g_a, lo, hi, alpha);
 }
 
-static void sga_add_patch(void *alpha, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, void *beta, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi)
+static void sga_add_patch(void *alpha, Integer g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, void *beta, Integer g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi)
 {
     Integer alo[2], ahi[2], blo[2], bhi[2], clo[2], chi[2];
 
@@ -2854,7 +2854,7 @@ static void sga_add_patch(void *alpha, Integer *g_a, Integer *ailo, Integer *aih
 
 void FATR ga_add_patch_(void *alpha, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, void *beta, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi)
 {
-    sga_add_patch(alpha, g_a, ailo, aihi, ajlo, ajhi, beta, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi);
+    sga_add_patch(alpha, *g_a, ailo, aihi, ajlo, ajhi, beta, *g_b, bilo, bihi, bjlo, bjhi, *g_c, cilo, cihi, cjlo, cjhi);
 }
 
 void FATR ga_cadd_patch_(SingleComplex *alpha, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, SingleComplex *beta, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi, Integer *g_c, Integer *cilo, Integer *cihi, Integer *cjlo, Integer *cjhi)
@@ -2866,7 +2866,7 @@ void FATR ga_cadd_patch_(SingleComplex *alpha, Integer *g_a, Integer *ailo, Inte
     pnga_inquire_type(*g_c, &ctype);
     if (atype != btype || atype != ctype || atype != C_SCPL)
         pnga_error(" wrong types ", 0L);
-    sga_add_patch(alpha, g_a, ailo, aihi, ajlo, ajhi, beta, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi);
+    sga_add_patch(alpha, *g_a, ailo, aihi, ajlo, ajhi, beta, *g_b, bilo, bihi, bjlo, bjhi, *g_c, cilo, cihi, cjlo, cjhi);
 }
 
 
@@ -2879,7 +2879,7 @@ void FATR ga_dadd_patch_(DoublePrecision *alpha, Integer *g_a, Integer *ailo, In
     pnga_inquire_type(*g_c, &ctype);
     if (atype != btype || atype != ctype || atype != C_DBL)
         pnga_error(" wrong types ", 0L);
-    sga_add_patch(alpha, g_a, ailo, aihi, ajlo, ajhi, beta, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi);
+    sga_add_patch(alpha, *g_a, ailo, aihi, ajlo, ajhi, beta, *g_b, bilo, bihi, bjlo, bjhi, *g_c, cilo, cihi, cjlo, cjhi);
 }
 
 
@@ -2893,7 +2893,7 @@ void FATR ga_iadd_patch_(Integer *alpha, Integer *g_a, Integer *ailo, Integer *a
     if (atype != btype || atype != ctype
             || (atype != C_INT && atype != C_LONG && atype != C_LONGLONG))
         pnga_error(" wrong types ", 0L);
-    sga_add_patch(alpha, g_a, ailo, aihi, ajlo, ajhi, beta, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi);
+    sga_add_patch(alpha, *g_a, ailo, aihi, ajlo, ajhi, beta, *g_b, bilo, bihi, bjlo, bjhi, *g_c, cilo, cihi, cjlo, cjhi);
 }
 
 
@@ -2906,7 +2906,7 @@ void FATR ga_sadd_patch_(Real *alpha, Integer *g_a, Integer *ailo, Integer *aihi
     pnga_inquire_type(*g_c, &ctype);
     if (atype != btype || atype != ctype || atype != C_FLOAT)
         pnga_error(" wrong types ", 0L);
-    sga_add_patch(alpha, g_a, ailo, aihi, ajlo, ajhi, beta, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi);
+    sga_add_patch(alpha, *g_a, ailo, aihi, ajlo, ajhi, beta, *g_b, bilo, bihi, bjlo, bjhi, *g_c, cilo, cihi, cjlo, cjhi);
 }
 
 
@@ -2919,12 +2919,12 @@ void FATR ga_zadd_patch_(DoubleComplex *alpha, Integer *g_a, Integer *ailo, Inte
     pnga_inquire_type(*g_c, &ctype);
     if (atype != btype || atype != ctype || atype != C_DCPL)
         pnga_error(" wrong types ", 0L);
-    sga_add_patch(alpha, g_a, ailo, aihi, ajlo, ajhi, beta, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi);
+    sga_add_patch(alpha, *g_a, ailo, aihi, ajlo, ajhi, beta, *g_b, bilo, bihi, bjlo, bjhi, *g_c, cilo, cihi, cjlo, cjhi);
 }
 
 void FATR nga_add_patch_(void *alpha, Integer *g_a, Integer *alo, Integer *ahi, void *beta, Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c, Integer *clo, Integer *chi)
 {
-    wnga_add_patch(alpha, g_a, alo, ahi, beta, g_b, blo, bhi, g_c, clo, chi);
+    wnga_add_patch(alpha, *g_a, alo, ahi, beta, *g_b, blo, bhi, *g_c, clo, chi);
 }
 
 void FATR nga_cadd_patch_(SingleComplex *alpha, Integer *g_a, Integer *alo, Integer *ahi, SingleComplex *beta, Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c, Integer *clo, Integer *chi)
@@ -2936,7 +2936,7 @@ void FATR nga_cadd_patch_(SingleComplex *alpha, Integer *g_a, Integer *alo, Inte
     pnga_inquire_type(*g_c, &ctype);
     if (atype != btype || atype != ctype || atype != C_SCPL)
         pnga_error(" wrong types ", 0L);
-    wnga_add_patch(alpha, g_a, alo, ahi, beta, g_b, blo, bhi, g_c, clo, chi);
+    wnga_add_patch(alpha, *g_a, alo, ahi, beta, *g_b, blo, bhi, *g_c, clo, chi);
 }
 
 void FATR nga_dadd_patch_(DoublePrecision *alpha, Integer *g_a, Integer *alo, Integer *ahi, DoublePrecision *beta, Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c, Integer *clo, Integer *chi)
@@ -2948,7 +2948,7 @@ void FATR nga_dadd_patch_(DoublePrecision *alpha, Integer *g_a, Integer *alo, In
     pnga_inquire_type(*g_c, &ctype);
     if (atype != btype || atype != ctype || atype != C_DBL)
         pnga_error(" wrong types ", 0L);
-    wnga_add_patch(alpha, g_a, alo, ahi, beta, g_b, blo, bhi, g_c, clo, chi);
+    wnga_add_patch(alpha, *g_a, alo, ahi, beta, *g_b, blo, bhi, *g_c, clo, chi);
 }
 
 void FATR nga_iadd_patch_(Integer *alpha, Integer *g_a, Integer *alo, Integer *ahi, Integer *beta, Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c, Integer *clo, Integer *chi)
@@ -2961,7 +2961,7 @@ void FATR nga_iadd_patch_(Integer *alpha, Integer *g_a, Integer *alo, Integer *a
     if (atype != btype || atype != ctype
             || (atype != C_INT && atype != C_LONG && atype != C_LONGLONG))
         pnga_error(" wrong types ", 0L);
-    wnga_add_patch(alpha, g_a, alo, ahi, beta, g_b, blo, bhi, g_c, clo, chi);
+    wnga_add_patch(alpha, *g_a, alo, ahi, beta, *g_b, blo, bhi, *g_c, clo, chi);
 }
 
 void FATR nga_sadd_patch_(Real *alpha, Integer *g_a, Integer *alo, Integer *ahi, Real *beta, Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c, Integer *clo, Integer *chi)
@@ -2973,7 +2973,7 @@ void FATR nga_sadd_patch_(Real *alpha, Integer *g_a, Integer *alo, Integer *ahi,
     pnga_inquire_type(*g_c, &ctype);
     if (atype != btype || atype != ctype || atype != C_FLOAT)
         pnga_error(" wrong types ", 0L);
-    wnga_add_patch(alpha, g_a, alo, ahi, beta, g_b, blo, bhi, g_c, clo, chi);
+    wnga_add_patch(alpha, *g_a, alo, ahi, beta, *g_b, blo, bhi, *g_c, clo, chi);
 }
 
 void FATR nga_zadd_patch_(DoubleComplex *alpha, Integer *g_a, Integer *alo, Integer *ahi, DoubleComplex *beta, Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c, Integer *clo, Integer *chi)
@@ -2985,7 +2985,7 @@ void FATR nga_zadd_patch_(DoubleComplex *alpha, Integer *g_a, Integer *alo, Inte
     pnga_inquire_type(*g_c, &ctype);
     if (atype != btype || atype != ctype || atype != C_DCPL)
         pnga_error(" wrong types ", 0L);
-    wnga_add_patch(alpha, g_a, alo, ahi, beta, g_b, blo, bhi, g_c, clo, chi);
+    wnga_add_patch(alpha, *g_a, alo, ahi, beta, *g_b, blo, bhi, *g_c, clo, chi);
 }
 
 /* Routines from select.c */

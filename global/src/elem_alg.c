@@ -1807,7 +1807,7 @@ int op; /* operation to be perform between g_a and g_b */
        *        - do C<= A
        */
       if(g_b != g_c) {
-        pnga_copy_patch(&notrans, &g_a, alo, ahi, &g_c, clo, chi);
+        pnga_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
         andim = cndim;
         g_A = g_c;
         pnga_distribution(g_A, me, loA, hiA);
@@ -1815,7 +1815,7 @@ int op; /* operation to be perform between g_a and g_b */
       else {
         if (!pnga_duplicate(g_c, &g_A, tempname))
           pnga_error("ga_dadd_patch: dup failed", 0L);
-        pnga_copy_patch(&notrans, &g_a, alo, ahi, &g_A, clo, chi);
+        pnga_copy_patch(&notrans, g_a, alo, ahi, g_A, clo, chi);
         andim = cndim;
         A_created = 1;
         pnga_distribution(g_A, me, loA, hiA);
@@ -1834,7 +1834,7 @@ int op; /* operation to be perform between g_a and g_b */
        */
       if (!pnga_duplicate(g_c, &g_B, tempname))
         pnga_error("ga_dadd_patch: dup failed", 0L);
-      pnga_copy_patch(&notrans, &g_b, blo, bhi, &g_B, clo, chi);
+      pnga_copy_patch(&notrans, g_b, blo, bhi, g_B, clo, chi);
       bndim = cndim;
       B_created = 1;
       pnga_distribution(g_B, me, loB, hiB);
@@ -1868,13 +1868,13 @@ int op; /* operation to be perform between g_a and g_b */
        as C*/
     if (!pnga_duplicate(g_c, &g_A, tempname))
       pnga_error("ga_dadd_patch: dup failed", 0L);
-    pnga_copy_patch(&notrans, &g_a, alo, ahi, &g_A, clo, chi);
+    pnga_copy_patch(&notrans, g_a, alo, ahi, g_A, clo, chi);
     andim = cndim;
     A_created = 1;
 
     if (!pnga_duplicate(g_c, &g_B, tempname))
       pnga_error("ga_dadd_patch: dup failed", 0L);
-    pnga_copy_patch(&notrans, &g_b, blo, bhi, &g_B, clo, chi);
+    pnga_copy_patch(&notrans, g_b, blo, bhi, g_B, clo, chi);
     bndim = cndim;
     B_created = 1;
 
@@ -3013,7 +3013,7 @@ void pnga_step_bound_info_patch(
        pnga_error("pnga_step_bound_info_patch:fail to duplicate array T", g_T);
 
      /*First, compute xu - xx */
-     pnga_add_patch(alpha, &g_xxuu, xxuulo, xxuuhi, beta, &g_xx, xxlo, xxhi,&g_S, xxlo, xxhi); 
+     pnga_add_patch(alpha, g_xxuu, xxuulo, xxuuhi, beta, g_xx, xxlo, xxhi, g_S, xxlo, xxhi); 
 
      /*Check for negative elements in g_s, if it has any then xxuu was
        not an upper bound, exit with error message.
@@ -3059,7 +3059,7 @@ void pnga_step_bound_info_patch(
 
      /*Now doing the same thing to get (xx-xxll)/dv */
      /*First, compute xl - xx */
-     pnga_add_patch(alpha, &g_xx, xxlo, xxhi, beta, &g_xxll, xxlllo, xxllhi, &g_Q, xxlo, xxhi); 
+     pnga_add_patch(alpha, g_xx, xxlo, xxhi, beta, g_xxll, xxlllo, xxllhi, g_Q, xxlo, xxhi); 
      /*Check for negative elements in g_s, if it has any then xxll was
        not a lower bound, exit with error message.
      */
@@ -3119,7 +3119,7 @@ void pnga_step_bound_info_patch(
        where g_vv was zero and g_xx meets one of the
        boundary vectors.
      */
-     pnga_add_patch(alpha, &g_Q, xxlo, xxhi, alpha, &g_S, xxlo, xxhi, &g_S, xxlo, xxhi); 
+     pnga_add_patch(alpha, g_Q, xxlo, xxhi, alpha, g_S, xxlo, xxhi, g_S, xxlo, xxhi); 
      /* 
        Then use that vector as a mask to set certain
        elements of T to be zero (so we have a collection

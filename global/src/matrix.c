@@ -414,7 +414,7 @@ void pnga_median_patch(
       if (!pnga_duplicate(*g_m, &g_A, tempname))
         pnga_error("pnga_median_patch:duplicate failed", 0L);
 
-      pnga_copy_patch(&transp, g_a, alo, ahi, &g_A, mlo, mhi);
+      pnga_copy_patch(&transp, *g_a, alo, ahi, g_A, mlo, mhi);
       andim = mndim;
       a_temp_created = 1;
       pnga_distribution (g_A, me, loA, hiA);
@@ -431,7 +431,7 @@ void pnga_median_patch(
       if (!pnga_duplicate(*g_m, &g_B, tempname))
         pnga_error("pnga_median_patch:duplicate failed", 0L);
 
-      pnga_copy_patch(&transp, g_b, blo, bhi, &g_B, mlo, mhi);
+      pnga_copy_patch(&transp, *g_b, blo, bhi, g_B, mlo, mhi);
       bndim = mndim;
       b_temp_created = 1;
       pnga_distribution (g_B, me, loB, hiB);
@@ -451,7 +451,7 @@ void pnga_median_patch(
       /*no need to copy g_m since it is the output matrix. */
       cndim = mndim;
       c_temp_created = 1;
-      pnga_copy_patch(&transp, g_c, clo, chi, &g_C, mlo, mhi);
+      pnga_copy_patch(&transp, *g_c, clo, chi, g_C, mlo, mhi);
       pnga_distribution (g_C, me, loC, hiC);
     }
 
@@ -495,19 +495,19 @@ void pnga_median_patch(
        as M */
     if (!pnga_duplicate(*g_m, &g_A, tempname))
       pnga_error("ga_add_patch: dup failed", 0L);
-    pnga_copy_patch(&transp, g_a, alo, ahi, &g_A, mlo, mhi);
+    pnga_copy_patch(&transp, *g_a, alo, ahi, g_A, mlo, mhi);
     andim = mndim;
     a_temp_created = 1;
 
     if (!pnga_duplicate(*g_m, &g_B, tempname))
       pnga_error("ga_add_patch: dup failed", 0L);
-    pnga_copy_patch(&transp, g_b, blo, bhi, &g_B, mlo, mhi);
+    pnga_copy_patch(&transp, *g_b, blo, bhi, g_B, mlo, mhi);
     bndim = mndim;
     b_temp_created = 1;
 
     if (!pnga_duplicate(*g_m, &g_C, tempname))
       pnga_error("ga_add_patch: dup failed", 0L);
-        pnga_copy_patch(&transp, g_c, clo, chi, &g_C, mlo, mhi);
+        pnga_copy_patch(&transp, *g_c, clo, chi, g_C, mlo, mhi);
     cndim = mndim;
     c_temp_created = 1;
 

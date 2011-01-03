@@ -3261,7 +3261,7 @@ void NGA_Copy_patch(char trans, int g_a, int alo[], int ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
 
-    wnga_copy_patch(&trans, &a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi);
+    wnga_copy_patch(&trans, a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi);
 }
 
 void NGA_Copy_patch64(char trans, int g_a, int64_t alo[], int64_t ahi[],
@@ -3281,7 +3281,7 @@ void NGA_Copy_patch64(char trans, int g_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
 
-    wnga_copy_patch(&trans, &a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi);
+    wnga_copy_patch(&trans, a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi);
 }
 
 void GA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
@@ -3444,8 +3444,8 @@ int NGA_Idot_patch(int g_a, char t_a, int alo[], int ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
 
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
 
     return res;
 }
@@ -3468,8 +3468,8 @@ long NGA_Ldot_patch(int g_a, char t_a, int alo[], int ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
 
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
 
     return res;
 }
@@ -3492,8 +3492,8 @@ long long NGA_Lldot_patch(int g_a, char t_a, int alo[], int ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
 
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
 
     return res;
 }
@@ -3516,8 +3516,8 @@ double NGA_Ddot_patch(int g_a, char t_a, int alo[], int ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
 
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
 
     return res;
 }
@@ -3541,8 +3541,8 @@ DoubleComplex NGA_Zdot_patch(int g_a, char t_a, int alo[], int ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
     
     return res;
 }
@@ -3566,8 +3566,8 @@ SingleComplex NGA_Cdot_patch(int g_a, char t_a, int alo[], int ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
     
     return res;
 }
@@ -3590,8 +3590,8 @@ float NGA_Fdot_patch(int g_a, char t_a, int alo[], int ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
  
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
  
     return res;
 }                                           
@@ -3614,8 +3614,8 @@ int NGA_Idot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
 
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
 
     return res;
 }
@@ -3638,8 +3638,8 @@ long NGA_Ldot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
 
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
 
     return res;
 }
@@ -3662,8 +3662,8 @@ long long NGA_Lldot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
 
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
 
     return res;
 }
@@ -3686,8 +3686,8 @@ double NGA_Ddot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
 
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
 
     return res;
 }
@@ -3711,8 +3711,8 @@ DoubleComplex NGA_Zdot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
     
     return res;
 }
@@ -3736,8 +3736,8 @@ SingleComplex NGA_Cdot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
     
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
     
     return res;
 }
@@ -3760,8 +3760,8 @@ float NGA_Fdot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
  
-    wnga_dot_patch(&a, &t_a, _ga_alo, _ga_ahi,
-                    &b, &t_b, _ga_blo, _ga_bhi, &res);
+    wnga_dot_patch(a, &t_a, _ga_alo, _ga_ahi,
+                   b, &t_b, _ga_blo, _ga_bhi, &res);
  
     return res;
 }
@@ -3775,7 +3775,7 @@ void NGA_Fill_patch(int g_a, int lo[], int hi[], void *val)
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
 
-    wnga_fill_patch(&a, _ga_lo, _ga_hi, val);
+    wnga_fill_patch(a, _ga_lo, _ga_hi, val);
 }
 
 void NGA_Fill_patch64(int g_a, int64_t lo[], int64_t hi[], void *val)
@@ -3786,7 +3786,7 @@ void NGA_Fill_patch64(int g_a, int64_t lo[], int64_t hi[], void *val)
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
 
-    wnga_fill_patch(&a, _ga_lo, _ga_hi, val);
+    wnga_fill_patch(a, _ga_lo, _ga_hi, val);
 }
 
 void NGA_Zero_patch(int g_a, int lo[], int hi[])
@@ -3797,7 +3797,7 @@ void NGA_Zero_patch(int g_a, int lo[], int hi[])
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
 
-    wnga_zero_patch(&a, _ga_lo, _ga_hi);
+    wnga_zero_patch(a, _ga_lo, _ga_hi);
 }
 
 void NGA_Zero_patch64(int g_a, int64_t lo[], int64_t  hi[])
@@ -3808,7 +3808,7 @@ void NGA_Zero_patch64(int g_a, int64_t lo[], int64_t  hi[])
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
 
-    wnga_zero_patch(&a, _ga_lo, _ga_hi);
+    wnga_zero_patch(a, _ga_lo, _ga_hi);
 }
 
 void NGA_Scale_patch(int g_a, int lo[], int hi[], void *alpha)
@@ -3819,7 +3819,7 @@ void NGA_Scale_patch(int g_a, int lo[], int hi[], void *alpha)
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
 
-    wnga_scale_patch(&a, _ga_lo, _ga_hi, alpha);
+    wnga_scale_patch(a, _ga_lo, _ga_hi, alpha);
 }
 
 void NGA_Scale_patch64(int g_a, int64_t lo[], int64_t hi[], void *alpha)
@@ -3830,7 +3830,7 @@ void NGA_Scale_patch64(int g_a, int64_t lo[], int64_t hi[], void *alpha)
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
 
-    wnga_scale_patch(&a, _ga_lo, _ga_hi, alpha);
+    wnga_scale_patch(a, _ga_lo, _ga_hi, alpha);
 }
 
 void NGA_Add_patch(void * alpha, int g_a, int alo[], int ahi[],
@@ -3858,8 +3858,8 @@ void NGA_Add_patch(void * alpha, int g_a, int alo[], int ahi[],
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
 
-    wnga_add_patch(alpha, &a, _ga_alo, _ga_ahi, beta, &b, _ga_blo, _ga_bhi,
-                   &c, _ga_clo, _ga_chi);
+    wnga_add_patch(alpha, a, _ga_alo, _ga_ahi, beta, b, _ga_blo, _ga_bhi,
+                   c, _ga_clo, _ga_chi);
 }
 
 void NGA_Add_patch64(void * alpha, int g_a, int64_t alo[], int64_t ahi[],
@@ -3887,8 +3887,8 @@ void NGA_Add_patch64(void * alpha, int g_a, int64_t alo[], int64_t ahi[],
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
 
-    wnga_add_patch(alpha, &a, _ga_alo, _ga_ahi, beta, &b, _ga_blo, _ga_bhi,
-                   &c, _ga_clo, _ga_chi);
+    wnga_add_patch(alpha, a, _ga_alo, _ga_ahi, beta, b, _ga_blo, _ga_bhi,
+                   c, _ga_clo, _ga_chi);
 }
 
 

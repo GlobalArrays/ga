@@ -276,14 +276,14 @@ extern void pnga_add(void *alpha, Integer g_a, void* beta, Integer g_b, Integer 
 extern void pnga_transpose(Integer g_a, Integer g_b);
 
 /* Routines from global.npatch.c */
-extern void pnga_copy_patch(char *trans, Integer *g_a, Integer *alo, Integer *ahi, Integer *g_b, Integer *blo, Integer *bhi);
-extern void pnga_zero_patch(Integer *g_a, Integer *lo, Integer *hi);
+extern void pnga_copy_patch(char *trans, Integer g_a, Integer *alo, Integer *ahi, Integer g_b, Integer *blo, Integer *bhi);
+extern void pnga_zero_patch(Integer g_a, Integer *lo, Integer *hi);
 extern logical pnga_patch_intersect(Integer *lo, Integer *hi, Integer *lop, Integer *hip, Integer ndim);
 extern logical pnga_comp_patch(Integer andim, Integer *alo, Integer *ahi, Integer bndim, Integer *blo, Integer *bhi);
-extern void pnga_dot_patch(Integer *g_a, char *t_a, Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo, Integer *bhi, void *retval);
-extern void pnga_fill_patch(Integer *g_a, Integer *lo, Integer *hi, void* val);
-extern void pnga_scale_patch(Integer *g_a, Integer *lo, Integer *hi, void *alpha);
-extern void pnga_add_patch(void *alpha, Integer *g_a, Integer *alo, Integer *ahi, void *beta, Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c, Integer *clo, Integer *chi);
+extern void pnga_dot_patch(Integer g_a, char *t_a, Integer *alo, Integer *ahi, Integer g_b, char *t_b, Integer *blo, Integer *bhi, void *retval);
+extern void pnga_fill_patch(Integer g_a, Integer *lo, Integer *hi, void* val);
+extern void pnga_scale_patch(Integer g_a, Integer *lo, Integer *hi, void *alpha);
+extern void pnga_add_patch(void *alpha, Integer g_a, Integer *alo, Integer *ahi, void *beta, Integer g_b, Integer *blo, Integer *bhi, Integer g_c, Integer *clo, Integer *chi);
 
 /* Routines from select.c */
 

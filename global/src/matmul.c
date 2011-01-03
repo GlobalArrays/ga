@@ -916,7 +916,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
   grp_me = pnga_pgroup_nodeid(a_grp);
   clo[0] = *cilo; clo[1] = *cjlo;
   chi[0] = *cihi; chi[1] = *cjhi;
-  if(!need_scaling) pnga_fill_patch(g_c, clo, chi, beta);
+  if(!need_scaling) pnga_fill_patch(*g_c, clo, chi, beta);
 
   compute_flag=0;     /* take care of the last chunk */
 
@@ -1558,7 +1558,7 @@ void pnga_matmul(transa, transb, alpha, beta,
 
        clo[0] = *cilo; clo[1] = *cjlo;
        chi[0] = *cihi; chi[1] = *cjhi;
-       if(need_scaling) pnga_scale_patch(g_c, clo, chi, beta);
+       if(need_scaling) pnga_scale_patch(*g_c, clo, chi, beta);
 
        /********************************************************************
 	* Parallel Matrix Multiplication Starts Here.
@@ -1783,8 +1783,8 @@ Integer clo[2], chi[2];
    pnga_mask_sync(ZERO_I, ZERO_I);
    clo[0] = *cilo; clo[1] = *cjlo;
    chi[0] = *cihi; chi[1] = *cjhi;
-   if(need_scaling) pnga_scale_patch(g_c, clo, chi, beta);
-   else  pnga_fill_patch(g_c, clo, chi, beta);
+   if(need_scaling) pnga_scale_patch(*g_c, clo, chi, beta);
+   else  pnga_fill_patch(*g_c, clo, chi, beta);
 
    for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop through columns of g_c patch */
        jhi = GA_MIN(n-1, jlo+Jchunk-1);
@@ -2202,8 +2202,8 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0)need_scaling =0;}
    else if( *(float*)beta ==0) need_scaling =0;
 
-   if(need_scaling) pnga_scale_patch(g_c, clo, chi, beta);
-   else      pnga_fill_patch(g_c, clo, chi, beta);
+   if(need_scaling) pnga_scale_patch(*g_c, clo, chi, beta);
+   else      pnga_fill_patch(*g_c, clo, chi, beta);
   
    for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop through columns of g_c patch */
        jhi = GA_MIN(n-1, jlo+Jchunk-1);

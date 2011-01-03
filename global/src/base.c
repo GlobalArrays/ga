@@ -4155,7 +4155,7 @@ void pnga_merge_distr_patch(Integer g_a, Integer *alo, Integer *ahi,
     } else {
       trans[0] = 'N';
       trans[1] = '\0';
-      pnga_copy_patch(trans, &g_a, alo, ahi, &g_b, blo, bhi);
+      pnga_copy_patch(trans, g_a, alo, ahi, g_b, blo, bhi);
       return;
     }
   }
@@ -4192,7 +4192,7 @@ void pnga_merge_distr_patch(Integer g_a, Integer *alo, Integer *ahi,
     if (ahi[i] - alo[i] != bhi[i] - blo[i])
       pnga_error("Patch dimensions do not match for index ",i);
   }
-  pnga_zero_patch(&g_b, blo, bhi);
+  pnga_zero_patch(g_b, blo, bhi);
 
   /* Find coordinates of mirrored array patch that I own */
   i = PGRP_LIST[p_handle].map_proc_list[GAme];

@@ -82,7 +82,7 @@ void pnga_zero(Integer g_a)
     if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
 
       if (pnga_has_ghosts(g_a)) {
-        pnga_zero_patch(&g_a,lo,hi);
+        pnga_zero_patch(g_a,lo,hi);
 #ifdef USE_VAMPIR
         vampir_end(GA_ZERO,__FILE__,__LINE__);
 #endif
@@ -477,7 +477,7 @@ Integer bndim, bdims[MAXDIM];
    if (num_blocks_a >= 0 || num_blocks_b >= 0) {
      pnga_inquire(g_a, &type, &andim, adims);
      pnga_inquire(g_b, &type, &bndim, bdims);
-     pnga_dot_patch(&g_a, "n", one_arr, adims, &g_b, "n", one_arr, bdims,
+     pnga_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
          value);
      GA_POP_NAME;
      return;
@@ -489,7 +489,7 @@ Integer bndim, bdims[MAXDIM];
        pnga_inquire(g_a, &type, &andim, adims);
        pnga_inquire(g_b, &type, &bndim, bdims);
 
-       pnga_dot_patch(&g_a, "n", one_arr, adims, &g_b, "n", one_arr, bdims,
+       pnga_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
                       value);
        
        GA_POP_NAME;
@@ -678,7 +678,7 @@ void pnga_scale(Integer g_a, void* alpha)
   if (num_blocks < 0) {
     pnga_distribution(g_a, me, lo, hi);
     if (pnga_has_ghosts(g_a)) {
-      pnga_scale_patch(&g_a, lo, hi, alpha);
+      pnga_scale_patch(g_a, lo, hi, alpha);
 #ifdef USE_VAMPIR
       vampir_end(GA_SCALE,__FILE__,__LINE__);
 #endif
@@ -844,8 +844,8 @@ int local_sync_begin,local_sync_end;
        pnga_inquire(g_b, &type, &bndim, bdims);
        pnga_inquire(g_b, &type, &cndim, cdims);
 
-       pnga_add_patch(alpha, &g_a, one_arr, adims, beta, &g_b, one_arr, bdims,
-                      &g_c, one_arr, cdims);
+       pnga_add_patch(alpha, g_a, one_arr, adims, beta, g_b, one_arr, bdims,
+                      g_c, one_arr, cdims);
        
        GA_POP_NAME;
 #ifdef USE_VAMPIR
