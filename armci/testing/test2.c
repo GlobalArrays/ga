@@ -292,7 +292,6 @@ void test_gop2_or_reduce(const int datatype, char * op, const int reduce_test)
     switch(datatype)
     {
        case ARMCI_INT:
-       case ARMCI_LONG:
           datatype_size = sizeof(int);
           for(i = 0; i < len_length; i++)
              a[i] = malloc(len[i] * datatype_size);
@@ -302,7 +301,7 @@ void test_gop2_or_reduce(const int datatype, char * op, const int reduce_test)
           for(i = 0; i < len_length; i++)
           {
              if(me == 0 && verbose != 0)
-                printf("testing %s %s message size = %d op = %s\n", test_type, (datatype == ARMCI_INT ? "ARMCI_INT" : "ARMCI_LONG"), len[i], op);
+                printf("testing %s %s message size = %d op = %s\n", test_type, "ARMCI_INT", len[i], op);
              if(reduce_test == 0)
                 armci_msg_igop(a[i], len[i], op);
              else
@@ -312,7 +311,7 @@ void test_gop2_or_reduce(const int datatype, char * op, const int reduce_test)
              for(i = 0; i < len_length; i++)
              {
                 if(me == 0 && verbose != 0)
-                   printf("checking %s %s message size = %d op = %s\n", test_type, (datatype == ARMCI_INT ? "ARMCI_INT" : "ARMCI_LONG"), len[i], op);
+                   printf("checking %s %s message size = %d op = %s\n", test_type, "ARMCI_INT", len[i], op);
                 for(j = 0; j < len[i]; j++)
                    if(strncmp(op, "+", 1) == 0)
                    {
@@ -333,7 +332,7 @@ void test_gop2_or_reduce(const int datatype, char * op, const int reduce_test)
                       }
                       if(((int *) a[i])[j] != compare) 
                       {
-                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, (datatype == ARMCI_INT ? "ARMCI_INT" : "ARMCI_LONG"), op, i, j, ((int *) a[i])[j], compare);
+                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_INT", op, i, j, ((int *) a[i])[j], compare);
                          ARMCI_Error("test_gop2_or_reduce failed\n",0);
                       }
                    }
@@ -345,7 +344,7 @@ void test_gop2_or_reduce(const int datatype, char * op, const int reduce_test)
                          compare *= (k + j) * (((k + j) % 2 == 0) ? 1 : -1);
                       if(((int *) a[i])[j] != compare) 
                       {
-                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, (datatype == ARMCI_INT ? "ARMCI_INT" : "ARMCI_LONG"), op, i, j, ((int *) a[i])[j], compare);
+                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_INT", op, i, j, ((int *) a[i])[j], compare);
                          ARMCI_Error("test_gop2_or_reduce failed\n",0);
                       }
                    }
@@ -356,7 +355,7 @@ void test_gop2_or_reduce(const int datatype, char * op, const int reduce_test)
                          compare = -(j + nproc - 2);
                       if(((int *) a[i])[j] != compare) 
                       {
-                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, (datatype == ARMCI_INT ? "ARMCI_INT" : "ARMCI_LONG"), op, i, j, ((int *) a[i])[j], compare);
+                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_INT", op, i, j, ((int *) a[i])[j], compare);
                          ARMCI_Error("test_gop2_or_reduce failed\n",0);
                       }
                    }
@@ -367,7 +366,7 @@ void test_gop2_or_reduce(const int datatype, char * op, const int reduce_test)
                          compare = j + nproc - 2;
                       if(((int *) a[i])[j] != compare) 
                       {
-                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, (datatype == ARMCI_INT ? "ARMCI_INT" : "ARMCI_LONG"), op, i, j, ((int *) a[i])[j], compare);
+                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_INT", op, i, j, ((int *) a[i])[j], compare);
                          ARMCI_Error("test_gop2_or_reduce failed\n",0);
                       }
                    }
@@ -376,7 +375,7 @@ void test_gop2_or_reduce(const int datatype, char * op, const int reduce_test)
                       int compare = j + nproc - 1;
                       if(((int *) a[i])[j] != compare) 
                       {
-                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, (datatype == ARMCI_INT ? "ARMCI_INT" : "ARMCI_LONG"), op, i, j, ((int *) a[i])[j], compare);
+                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_INT", op, i, j, ((int *) a[i])[j], compare);
                          ARMCI_Error("test_gop2_or_reduce failed\n",0);
                       }
                    }
@@ -385,7 +384,109 @@ void test_gop2_or_reduce(const int datatype, char * op, const int reduce_test)
                       int compare = j;
                       if(((int *) a[i])[j] != compare) 
                       {
-                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, (datatype == ARMCI_INT ? "ARMCI_INT" : "ARMCI_LONG"), op, i, j, ((int *) a[i])[j], compare);
+                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_INT", op, i, j, ((int *) a[i])[j], compare);
+                         ARMCI_Error("test_gop2_or_reduce failed\n",0);
+                      }
+                   }
+                   else if(strncmp(op, "or", 2) == 0)
+                   {
+                   }
+             }
+          break;
+       case ARMCI_LONG:
+          datatype_size = sizeof(long);
+          for(i = 0; i < len_length; i++)
+             a[i] = malloc(len[i] * datatype_size);
+          for(i = 0; i < len_length; i++)
+             for(j = 0; j < len[i]; j++)
+                ((long *) a[i])[j] = (long) (me + j) * (((me + j) % 2 == 0) ? 1 : -1);
+          for(i = 0; i < len_length; i++)
+          {
+             if(me == 0 && verbose != 0)
+                printf("testing %s %s message size = %d op = %s\n", test_type, "ARMCI_LONG", len[i], op);
+             if(reduce_test == 0)
+                armci_msg_lgop(a[i], len[i], op);
+             else
+                armci_msg_reduce(a[i], len[i], op, datatype);
+          }
+          if(me == 0 || reduce_test == 0)
+             for(i = 0; i < len_length; i++)
+             {
+                if(me == 0 && verbose != 0)
+                   printf("checking %s %s message size = %d op = %s\n", test_type, "ARMCI_LONG", len[i], op);
+                for(j = 0; j < len[i]; j++)
+                   if(strncmp(op, "+", 1) == 0)
+                   {
+                      long compare = 0;
+                      if(nproc % 2 == 0)
+                      {
+                         if(j % 2 == 0)
+                            compare = -nproc / 2;
+                         else
+                            compare = nproc / 2;
+                      }
+                      else
+                      {
+                         if(j % 2 == 0)
+                            compare = j + nproc / 2;
+                         else
+                            compare = -(j + nproc / 2);
+                      }
+                      if(((long *) a[i])[j] != compare) 
+                      {
+                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
+                         ARMCI_Error("test_gop2_or_reduce failed\n",0);
+                      }
+                   }
+                   else if(strncmp(op, "*", 1) == 0)
+                   {
+                      long compare = 1;
+                      long k = 0;
+                      for(k = 0; k < nproc; k++)
+                         compare *= (k + j) * (((k + j) % 2 == 0) ? 1 : -1);
+                      if(((long *) a[i])[j] != compare) 
+                      {
+                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
+                         ARMCI_Error("test_gop2_or_reduce failed\n",0);
+                      }
+                   }
+                   else if(strncmp(op, "min", 3) == 0)
+                   {
+                      long compare = -(j + nproc - 1);
+                      if(compare % 2 == 0 && nproc > 1)
+                         compare = -(j + nproc - 2);
+                      if(((long *) a[i])[j] != compare) 
+                      {
+                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
+                         ARMCI_Error("test_gop2_or_reduce failed\n",0);
+                      }
+                   }
+                   else if(strncmp(op, "max", 3) == 0)
+                   {
+                      long compare = j + nproc - 1;
+                      if(compare % 2 != 0 && nproc > 1)
+                         compare = j + nproc - 2;
+                      if(((long *) a[i])[j] != compare) 
+                      {
+                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
+                         ARMCI_Error("test_gop2_or_reduce failed\n",0);
+                      }
+                   }
+                   else if(strncmp(op, "absmax", 6) == 0)
+                   {
+                      long compare = j + nproc - 1;
+                      if(((long *) a[i])[j] != compare) 
+                      {
+                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
+                         ARMCI_Error("test_gop2_or_reduce failed\n",0);
+                      }
+                   }
+                   else if(strncmp(op, "absmin", 6) == 0)
+                   {
+                      long compare = j;
+                      if(((long *) a[i])[j] != compare) 
+                      {
+                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
                          ARMCI_Error("test_gop2_or_reduce failed\n",0);
                       }
                    }
