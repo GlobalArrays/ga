@@ -2016,7 +2016,7 @@ logical pnga_allocate(Integer g_a)
     } else {
        i = GA[ga_handle].corner_flag;
     }
-    pnga_set_ghost_corner_flag(&g_a, &i);
+    pnga_set_ghost_corner_flag(g_a, i);
  
     for( i = 0; i< ndim; i++){
        GA[ga_handle].scale[i] = (double)GA[ga_handle].nblock[i]
@@ -2065,7 +2065,7 @@ logical pnga_allocate(Integer g_a)
   if (GA[ga_handle].block_flag == 0) {
     /* Finish setting up information for ghost cell updates */
     if (GA[ga_handle].ghosts == 1) {
-      if (!pnga_set_ghost_info(&g_a))
+      if (!pnga_set_ghost_info(g_a))
         pnga_error("Could not allocate update information for ghost cells",0);
     }
     /* If array is mirrored, evaluate first and last indices */

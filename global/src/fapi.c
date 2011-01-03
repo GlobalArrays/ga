@@ -1946,162 +1946,162 @@ void FATR nga_summarize_(Integer *verbose)
 
 void FATR nga_access_ghost_element_(Integer* g_a, AccessIndex* index, Integer subscript[], Integer ld[])
 {
-    wnga_access_ghost_element(g_a, index, subscript, ld);
+    wnga_access_ghost_element(*g_a, index, subscript, ld);
 }
 
 void FATR nga_access_ghosts_(Integer* g_a, Integer dims[], AccessIndex* index, Integer ld[])
 {
-    wnga_access_ghosts(g_a, dims, index, ld);
+    wnga_access_ghosts(*g_a, dims, index, ld);
 }
 
 void FATR nga_release_ghost_element_(Integer* g_a, Integer subscript[])
 {
-    wnga_release_ghost_element(g_a, subscript);
+    wnga_release_ghost_element(*g_a, subscript);
 }
 
 void FATR nga_release_update_ghost_element_(Integer* g_a, Integer subscript[])
 {
-    wnga_release_update_ghost_element(g_a, subscript);
+    wnga_release_update_ghost_element(*g_a, subscript);
 }
 
 void FATR nga_release_ghosts_(Integer* g_a)        
 {
-    wnga_release_ghosts(g_a);
+    wnga_release_ghosts(*g_a);
 }
 
 void FATR nga_release_update_ghosts_(Integer* g_a)
 {
-    wnga_release_update_ghosts(g_a);
+    wnga_release_update_ghosts(*g_a);
 }
 
 void FATR nga_get_ghost_block_(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld) 
 {
-    wnga_get_ghost_block(g_a, lo, hi, buf, ld);
+    wnga_get_ghost_block(*g_a, lo, hi, buf, ld);
 }
 
 void FATR ga_update1_ghosts_(Integer *g_a)
 {
-    wnga_update1_ghosts(g_a);
+    wnga_update1_ghosts(*g_a);
 }
 
 void FATR nga_update1_ghosts_(Integer *g_a)
 {
-    wnga_update1_ghosts(g_a);
+    wnga_update1_ghosts(*g_a);
 }
 
 logical FATR ga_update2_ghosts_(Integer *g_a)
 {
-    return wnga_update2_ghosts(g_a);
+    return wnga_update2_ghosts(*g_a);
 }
 
 logical FATR nga_update2_ghosts_(Integer *g_a)
 {
-    return wnga_update2_ghosts(g_a);
+    return wnga_update2_ghosts(*g_a);
 }
 
 logical FATR ga_update3_ghosts_(Integer *g_a)
 {
-    return wnga_update3_ghosts(g_a);
+    return wnga_update3_ghosts(*g_a);
 }
 
 logical FATR nga_update3_ghosts_(Integer *g_a)
 {
-    return wnga_update3_ghosts(g_a);
+    return wnga_update3_ghosts(*g_a);
 }
 
 logical FATR ga_set_update4_info_(Integer *g_a)
 {
-    return wnga_set_update4_info(g_a);
+    return wnga_set_update4_info(*g_a);
 }
 
 logical FATR nga_set_update4_info_(Integer *g_a)
 {
-    return wnga_set_update4_info(g_a);
+    return wnga_set_update4_info(*g_a);
 }
 
 logical FATR ga_update4_ghosts_(Integer *g_a)
 {
-    return wnga_update4_ghosts(g_a);
+    return wnga_update4_ghosts(*g_a);
 }
 
 logical FATR nga_update4_ghosts_(Integer *g_a)
 {
-    return wnga_update4_ghosts(g_a);
+    return wnga_update4_ghosts(*g_a);
 }
 
 logical FATR ga_update44_ghosts_(Integer *g_a)
 {
-    return wnga_update44_ghosts(g_a);
+    return wnga_update44_ghosts(*g_a);
 }
 
 logical FATR nga_update44_ghosts_(Integer *g_a)
 {
-    return wnga_update44_ghosts(g_a);
+    return wnga_update44_ghosts(*g_a);
 }
 
 logical FATR ga_update55_ghosts_(Integer *g_a)
 {
-    return wnga_update55_ghosts(g_a);
+    return wnga_update55_ghosts(*g_a);
 }
 
 logical FATR nga_update55_ghosts_(Integer *g_a)
 {
-    return wnga_update55_ghosts(g_a);
+    return wnga_update55_ghosts(*g_a);
 }
 
 logical FATR nga_update_ghost_dir_(Integer *g_a, Integer *pdim, Integer *pdir, logical *pflag)
 {
-    return wnga_update_ghost_dir(g_a, pdim, pdir, pflag);
+    return wnga_update_ghost_dir(*g_a, *pdim, *pdir, *pflag);
 }
 
 logical FATR ga_update5_ghosts_(Integer *g_a)
 {
-    return wnga_update5_ghosts(g_a);
+    return wnga_update5_ghosts(*g_a);
 }
 
 logical FATR nga_update5_ghosts_(Integer *g_a)
 {
-    return wnga_update5_ghosts(g_a);
+    return wnga_update5_ghosts(*g_a);
 }
 
 logical FATR ga_set_update5_info_(Integer *g_a)
 {
-    return wnga_set_update5_info(g_a);
+    return wnga_set_update5_info(*g_a);
 }
 
 logical FATR nga_set_update5_info_(Integer *g_a)
 {
-    return wnga_set_update5_info(g_a);
+    return wnga_set_update5_info(*g_a);
 }
 
 void FATR ga_update_ghosts_(Integer *g_a)
 {
-    wnga_update_ghosts(g_a);
+    wnga_update_ghosts(*g_a);
 }
 
 void FATR nga_update_ghosts_(Integer *g_a)
 {
-    wnga_update_ghosts(g_a);
+    wnga_update_ghosts(*g_a);
 }
 
 logical FATR ga_update6_ghosts_(Integer *g_a)
 {
-    return wnga_update6_ghosts(g_a);
+    return wnga_update6_ghosts(*g_a);
 }
 
 logical FATR nga_update6_ghosts_(Integer *g_a)
 {
-    return wnga_update6_ghosts(g_a);
+    return wnga_update6_ghosts(*g_a);
 }
 
 logical FATR ga_update7_ghosts_(Integer *g_a)
 {
-    return wnga_update7_ghosts(g_a);
+    return wnga_update7_ghosts(*g_a);
 }
 
 logical FATR nga_update7_ghosts_(Integer *g_a)
 {
-    return wnga_update7_ghosts(g_a);
+    return wnga_update7_ghosts(*g_a);
 }
 
 void FATR ga_ghost_barrier_()
@@ -2116,27 +2116,27 @@ void FATR nga_ghost_barrier_()
 
 void FATR nga_nbget_ghost_dir_(Integer *g_a, Integer *mask, Integer *nbhandle)
 {
-    wnga_nbget_ghost_dir(g_a, mask, nbhandle);
+    wnga_nbget_ghost_dir(*g_a, mask, nbhandle);
 }
 
 void FATR ga_set_ghost_corner_flag_(Integer *g_a, logical *flag)
 {
-    wnga_set_ghost_corner_flag(g_a, flag);
+    wnga_set_ghost_corner_flag(*g_a, *flag);
 }
 
 void FATR nga_set_ghost_corner_flag_(Integer *g_a, logical *flag)
 {
-    wnga_set_ghost_corner_flag(g_a, flag);
+    wnga_set_ghost_corner_flag(*g_a, *flag);
 }
 
 logical FATR ga_set_ghost_info_(Integer *g_a)
 {
-    return wnga_set_ghost_info(g_a);
+    return wnga_set_ghost_info(*g_a);
 }
 
 logical FATR nga_set_ghost_info_(Integer *g_a)
 {
-    return wnga_set_ghost_info(g_a);
+    return wnga_set_ghost_info(*g_a);
 }
 
 /* Routines from global.nalg.c */
