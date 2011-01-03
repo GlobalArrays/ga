@@ -388,7 +388,7 @@ static void sgai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *s
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_patch_enum = pnga_patch_enum
 #endif
-void pnga_patch_enum(Integer* g_a, Integer* lo, Integer* hi, void* start, void* stride)
+void pnga_patch_enum(Integer g_a, Integer lo, Integer hi, void* start, void* stride)
 {
 Integer dims[1],lop,hip;
 Integer ndim, type, me, off;
@@ -397,26 +397,26 @@ register Integer i;
    pnga_sync();
    me = pnga_nodeid();
 
-   pnga_check_handle(*g_a, "ga_patch_enum");
+   pnga_check_handle(g_a, "ga_patch_enum");
 
-   ndim = pnga_ndim(*g_a);
+   ndim = pnga_ndim(g_a);
    if (ndim > 1) pnga_error("ga_patch_enum:applicable to 1-dim arrays",ndim);
 
-   pnga_inquire(*g_a, &type, &ndim, dims);
-   pnga_distribution(*g_a, me, &lop, &hip);
+   pnga_inquire(g_a, &type, &ndim, dims);
+   pnga_distribution(g_a, me, &lop, &hip);
 
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */
 
       /* take product of patch owned and specified by the user */ 
-      if(*hi <lop || hip <*lo); /* we got no elements to update */
+      if(hi <lop || hip <lo); /* we got no elements to update */
       else{
         void *ptr;
         Integer ld;
 
-        if(lop < *lo)lop = *lo;
-        if(hip > *hi)hip = *hi;
-        off = lop - *lo;
-        pnga_access_ptr(*g_a, &lop, &hip, &ptr, &ld);
+        if(lop < lo)lop = lo;
+        if(hip > hi)hip = hi;
+        off = lop - lo;
+        pnga_access_ptr(g_a, &lop, &hip, &ptr, &ld);
         
         switch (type){
           int *ia;
@@ -474,7 +474,7 @@ register Integer i;
           default: pnga_error("ga_patch_enum:wrong data type ",type);
         }
 
-        pnga_release_update(*g_a, &lop, &hip);
+        pnga_release_update(g_a, &lop, &hip);
       }
    }
    
@@ -483,8 +483,8 @@ register Integer i;
 
 
 
-static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit, 
-           Integer* lo, Integer* hi, int add, Integer *excl)
+static void sgai_scan_copy_add(Integer g_a, Integer g_b, Integer g_sbit, 
+           Integer lo, Integer hi, int add, Integer excl)
 {
    Integer *lim=NULL, *lom=NULL, nproc, me;
    Integer lop, hip, ndim, dims, type, ioff;
@@ -497,18 +497,18 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
    nproc = pnga_nnodes();
       me = pnga_nodeid();
 
-   pnga_check_handle(*g_a, "ga_scan_copy");
-   pnga_check_handle(*g_b, "ga_scan_copy 2");
-   pnga_check_handle(*g_sbit,"ga_scan_copy 3");
+   pnga_check_handle(g_a, "ga_scan_copy");
+   pnga_check_handle(g_b, "ga_scan_copy 2");
+   pnga_check_handle(g_sbit,"ga_scan_copy 3");
 
    pnga_sync();
 
 
-   ndim = pnga_ndim(*g_a);
+   ndim = pnga_ndim(g_a);
    if(ndim>1)pnga_error("ga_scan_copy: applicable to 1-dim arrays",ndim);
 
-   pnga_inquire(*g_a, &type, &ndim, &dims);
-   pnga_distribution(*g_sbit, me, &lop, &hip);
+   pnga_inquire(g_a, &type, &ndim, &dims);
+   pnga_distribution(g_sbit, me, &lop, &hip);
 
    /* create arrays to hold first and last bits set on a given process */
    lim = (Integer *) ga_malloc(2*nproc, MT_F_INT, "ga scan buf");
@@ -516,20 +516,20 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    lom = lim + nproc;
 
-   if(!pnga_compare_distr(*g_a, *g_sbit))
+   if(!pnga_compare_distr(g_a, g_sbit))
        pnga_error("ga_scan_copy: different distribution src",0);
-   if(!pnga_compare_distr(*g_b, *g_sbit))
+   if(!pnga_compare_distr(g_b, g_sbit))
        pnga_error("ga_scan_copy: different distribution dst",0);
       
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */ 
 
-        pnga_access_ptr(*g_sbit, &lop, &hip, &ia, &ld);
+        pnga_access_ptr(g_sbit, &lop, &hip, &ia, &ld);
         elems = hip - lop + 1;
         /* find last bit set on given process (store as global index) */
         for(i=0; i<elems; i++) {
           if(ia[i]) {
             ioff = i + lop;
-            if (ioff >= *lo && ioff <= *hi) {
+            if (ioff >= lo && ioff <= hi) {
               lim[me]= ioff;
             }
             /* find first bit set on given process (store as local index) */
@@ -547,23 +547,23 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    /* take intersection of patch owned by process and patch
       specified by the user */ 
-   if(*hi <lop || hip <*lo); /* we have no elements to update */
+   if(hi <lop || hip <lo); /* we have no elements to update */
    else{
        Integer lops=lop, hips=hip;
        Integer startp=0;
 
        /* what part of local data we should be working on */
        ip = ia;
-       if(lop < *lo){
+       if(lop < lo){
            /* user specified patch starts in the middle */
-           ip = ia + (*lo-lop); /*set pointer to first value in sbit array*/
-           lop = *lo;
+           ip = ia + (lo-lop); /*set pointer to first value in sbit array*/
+           lop = lo;
        } 
-       if(hip > *hi) hip = *hi;
+       if(hip > hi) hip = hi;
       
        /* access the data. g_a is source, g_b is destination */
-       pnga_access_ptr(*g_b, &lop, &hip, &ptr_b, &ld);
-       pnga_access_ptr(*g_a, &lop, &hip, &ptr_a, &ld);
+       pnga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
+       pnga_access_ptr(g_a, &lop, &hip, &ptr_a, &ld);
 
        /* find start bit corresponding to my patch */
        /* case 1: sbit set for the first patch element and check earlier elems*/
@@ -591,13 +591,13 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
            elems = indx- k+lop +1; /* the number of elements that will be updated*/
 
            /* get the current value of A */
-           pnga_get(*g_a, &startp, &startp, buf, &one);
+           pnga_get(g_a, &startp, &startp, buf, &one);
 
            /* assign elements of B
               If add then assign ptr_b[i] = ptr_b[i-1]+ptr_a[i]
               If add and excl then ptr_b[i] = ptr_b[i-1] + ptr_a[i-1]
               If !add then ptr_b[i] = *buf */
-           sgai_combine_val(type, ptr_a, ptr_b, elems, buf, add, *excl); 
+           sgai_combine_val(type, ptr_a, ptr_b, elems, buf, add, excl); 
 
            ptr_a = (char*)ptr_a + elems*elemsize;
            ptr_b = (char*)ptr_b + elems*elemsize;
@@ -605,17 +605,17 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
            startp = k;
        }
        /* release local access to arrays */
-       pnga_release(*g_a, &lop, &hip);
-       pnga_release(*g_b, &lop, &hip);
-       if (lops > 0) pnga_release(*g_sbit, &lops, &hips);
+       pnga_release(g_a, &lop, &hip);
+       pnga_release(g_b, &lop, &hip);
+       if (lops > 0) pnga_release(g_sbit, &lops, &hips);
 
     }
 
     /* fix up scan_add values for segments that cross processor boundaries */
     if (add) {
       Integer ichk = 1;
-      pnga_access_ptr(*g_b, &lop, &hip, &ptr_b, &ld);
-      if (*excl) pnga_access_ptr(*g_a, &lop, &hip, &ptr_a, &ld);
+      pnga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
+      if (excl) pnga_access_ptr(g_a, &lop, &hip, &ptr_a, &ld);
       ioff = hip - lop;
       switch (type) {
         int *ilast;
@@ -630,7 +630,7 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
           bzero(ilast,sizeof(int)*nproc);
           if (lim[me] >= 0) { /* This processor contains data */
             ilast[me] = ((int*)ptr_b)[ioff];
-            if (*excl) {
+            if (excl) {
               if (lim[me] - lop == ioff) {
                 ilast[me] = ((int*)ptr_a)[ioff];
               } else {
@@ -661,7 +661,7 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
           if (lim[me] >= 0) { /* This processor contains data */
             cdlast[me].real = ((DoubleComplex*)ptr_b)[ioff].real;
             cdlast[me].imag = ((DoubleComplex*)ptr_b)[ioff].imag;
-            if (*excl) {
+            if (excl) {
               if (lim[me] - lop == ioff) {
                 cdlast[me].real = ((DoubleComplex*)ptr_a)[ioff].real;
                 cdlast[me].imag = ((DoubleComplex*)ptr_a)[ioff].imag;
@@ -695,7 +695,7 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
           if (lim[me] >= 0) { /* This processor contains data */
             cflast[me].real = ((SingleComplex*)ptr_b)[ioff].real;
             cflast[me].imag = ((SingleComplex*)ptr_b)[ioff].imag;
-            if (*excl) {
+            if (excl) {
               if (lim[me] - lop == ioff) {
                 cflast[me].real = ((SingleComplex*)ptr_a)[ioff].real;
                 cflast[me].imag = ((SingleComplex*)ptr_a)[ioff].imag;
@@ -728,7 +728,7 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
           bzero(dlast,sizeof(double)*nproc);
           if (lim[me] >= 0) { /* This processor contains data */
             dlast[me] = ((double*)ptr_b)[ioff];
-            if (*excl) {
+            if (excl) {
               if (lim[me] - lop == ioff) {
                 dlast[me] = ((double*)ptr_a)[ioff];
               } else {
@@ -758,7 +758,7 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
           bzero(flast,sizeof(float)*nproc);
           if (lim[me] >= 0) { /* This processor contains data */
             flast[me] = ((float*)ptr_b)[ioff];
-            if (*excl) {
+            if (excl) {
               if (lim[me] - lop == ioff) {
                 flast[me] = ((float*)ptr_a)[ioff];
               } else {
@@ -788,7 +788,7 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
           bzero(llast,sizeof(long)*nproc);
           if (lim[me] >= 0) { /* This processor contains data */
             llast[me] = ((long*)ptr_b)[ioff];
-            if (*excl) {
+            if (excl) {
               if (lim[me] - lop == ioff) {
                 llast[me] = ((long*)ptr_a)[ioff];
               } else {
@@ -818,7 +818,7 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
           bzero(lllast,sizeof(long long)*nproc);
           if (lim[me] >= 0) { /* This processor contains data */
             lllast[me] = ((long long*)ptr_b)[ioff];
-            if (*excl) {
+            if (excl) {
               if (lim[me] - lop == ioff) {
                 lllast[me] = ((long long*)ptr_a)[ioff];
               } else {
@@ -845,8 +845,8 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
           break;
         default: pnga_error("ga_scan/add:wrong data type",type);
       }
-      pnga_release(*g_b, &lop, &hip);
-      if (*excl) pnga_release(*g_a, &lop, &hip);
+      pnga_release(g_b, &lop, &hip);
+      if (excl) pnga_release(g_a, &lop, &hip);
 
    }
 
@@ -858,19 +858,19 @@ static void sgai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_scan_copy = pnga_scan_copy
 #endif
-void pnga_scan_copy(Integer* g_a, Integer* g_b, Integer* g_sbit,
-                           Integer* lo, Integer* hi)
+void pnga_scan_copy(Integer g_a, Integer g_b, Integer g_sbit,
+                           Integer lo, Integer hi)
 {       
         Integer zero = 0;
-        sgai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 0, &zero);
+        sgai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 0, zero);
 }
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_scan_add = pnga_scan_add
 #endif
-void pnga_scan_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
-                           Integer* lo, Integer* hi, Integer* excl)
+void pnga_scan_add(Integer g_a, Integer g_b, Integer g_sbit,
+                           Integer lo, Integer hi, Integer excl)
 {       
         sgai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 1, excl);
 }
@@ -879,8 +879,8 @@ void pnga_scan_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
  * pack/unpack data from g_a into g_b based on the mask array g_sbit
  * Return total number of bits set in variable icount.
  */
-static void sgai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
-              Integer* lo, Integer* hi, Integer* icount, int pack)
+static void sgai_pack_unpack(Integer g_a, Integer g_b, Integer g_sbit,
+              Integer lo, Integer hi, Integer* icount, int pack)
 {
    void *ptr;
    Integer *lim=NULL, nproc, me;
@@ -890,30 +890,30 @@ static void sgai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
    nproc = pnga_nnodes();
       me = pnga_nodeid();
 
-   pnga_check_handle(*g_a, "ga_pack");
-   pnga_check_handle(*g_b, "ga_pack 2");
-   pnga_check_handle(*g_sbit,"ga_pack 3");
+   pnga_check_handle(g_a, "ga_pack");
+   pnga_check_handle(g_b, "ga_pack 2");
+   pnga_check_handle(g_sbit,"ga_pack 3");
 
    pnga_sync();
 
    lim = (Integer *) ga_malloc(nproc, MT_F_INT, "ga_pack lim buf");
 
    bzero(lim,sizeof(Integer)*nproc);
-   pnga_inquire(*g_a, &type, &ndim, &dims);
+   pnga_inquire(g_a, &type, &ndim, &dims);
    if(ndim>1) pnga_error("ga_pack: supports 1-dim arrays only",ndim);
-   pnga_distribution(*g_sbit, me, &lop, &hip);
+   pnga_distribution(g_sbit, me, &lop, &hip);
 
    /* how many elements we have to copy? */
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */
 
         /* adjust the range of elements to be within <lo,hi> */
-        if(lop < *lo) lop = *lo;
-        if(hip > *hi) hip = *hi;
+        if(lop < lo) lop = lo;
+        if(hip > hi) hip = hi;
 
-        if(*hi <lop || hip <*lo); /* we have no elements to update */
+        if(hi <lop || hip <lo); /* we have no elements to update */
         else{
 
-          pnga_access_ptr(*g_sbit, &lop, &hip, &ptr, &elems);
+          pnga_access_ptr(g_sbit, &lop, &hip, &ptr, &elems);
           ia    = (Integer*)ptr;
           elems = hip -lop+1;
 
@@ -935,14 +935,14 @@ static void sgai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
    }
    ga_free(lim);
 
-   if(*hi <lop || hip <*lo || counter ==0 ); /* we have no elements to update */
+   if(hi <lop || hip <lo || counter ==0 ); /* we have no elements to update */
    else{
 
      void *buf;
      Integer start=lop+first; /* the first element for which sbit is set */
      Integer dst_lo =myplace+1, dst_hi = myplace + counter;
 
-     pnga_access_ptr(*g_a, &start, &hip, &ptr, &crap);
+     pnga_access_ptr(g_a, &start, &hip, &ptr, &crap);
 
      buf = ga_malloc(counter, type, "ga pack buf");
 
@@ -950,11 +950,11 @@ static void sgai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
      if(pack){
 
         sgai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter); /* pack data to buf */
-        pnga_put(*g_b, &dst_lo, &dst_hi,  buf, &counter); /* put it into destination array */
+        pnga_put(g_b, &dst_lo, &dst_hi,  buf, &counter); /* put it into destination array */
 
      }else{
 
-        pnga_get(*g_b, &dst_lo, &dst_hi,  buf, &counter); /* get data to buffer*/
+        pnga_get(g_b, &dst_lo, &dst_hi,  buf, &counter); /* get data to buffer*/
         sgai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter);  /* copy data to array*/
 
      }
@@ -971,8 +971,8 @@ static void sgai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_pack = pnga_pack
 #endif
-void pnga_pack(Integer* g_a, Integer* g_b, Integer* g_sbit,
-              Integer* lo, Integer* hi, Integer* icount)
+void pnga_pack(Integer g_a, Integer g_b, Integer g_sbit,
+              Integer lo, Integer hi, Integer* icount)
 {
      sgai_pack_unpack( g_a, g_b, g_sbit, lo, hi, icount, 1);
 }
@@ -981,8 +981,8 @@ void pnga_pack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_unpack = pnga_unpack
 #endif
-void pnga_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
-              Integer* lo, Integer* hi, Integer* icount)
+void pnga_unpack(Integer g_a, Integer g_b, Integer g_sbit,
+              Integer lo, Integer hi, Integer* icount)
 {
      sgai_pack_unpack( g_a, g_b, g_sbit, lo, hi, icount, 0);
 }
@@ -1049,13 +1049,13 @@ int rc=0;
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_create_bin_range = pnga_create_bin_range
 #endif
-logical pnga_create_bin_range(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *g_range)
+logical pnga_create_bin_range(Integer g_bin, Integer g_cnt, Integer g_off, Integer *g_range)
 {
 Integer type, ndim, nbin, lobin, hibin, me=pnga_nodeid(),crap;
 Integer dims[2], nproc=pnga_nnodes(),chunk[2];
 Integer tlo[2], thi[2];
 
-    pnga_inquire(*g_bin, &type, &ndim, &nbin);
+    pnga_inquire(g_bin, &type, &ndim, &nbin);
     if(ndim !=1) pnga_error("ga_bin_index: 1-dim array required",ndim);
     if(type!= C_INT && type!=C_LONG && type!=C_LONGLONG)
        pnga_error("ga_bin_index: not integer type",type);
@@ -1063,7 +1063,7 @@ Integer tlo[2], thi[2];
     chunk[0]=dims[0]=2; dims[1]=nproc; chunk[1]=1;
     if(!pnga_create(MT_F_INT, 2, dims, "bin_proc",chunk,g_range)) return FALSE;
 
-    pnga_distribution(*g_off,me, &lobin,&hibin);
+    pnga_distribution(g_off,me, &lobin,&hibin);
 
     if(lobin>0){ /* enter this block when we have data */
       Integer first_proc, last_proc, p;
@@ -1071,20 +1071,20 @@ Integer tlo[2], thi[2];
       Integer *myoff, bin;
 
       /* get offset values stored on my processor to first and last bin */
-      pnga_access_ptr(*g_off, &lobin, &hibin, &myoff, &crap);
+      pnga_access_ptr(g_off, &lobin, &hibin, &myoff, &crap);
       first_off = myoff[0]; last_off = myoff[hibin-lobin];
 /*
-      pnga_get(*g_off,&lobin,&lobin,&first_off,&lo);
-      pnga_get(*g_off,&hibin,&hibin,&last_off,&hi);
+      pnga_get(g_off,&lobin,&lobin,&first_off,&lo);
+      pnga_get(g_off,&hibin,&hibin,&last_off,&hi);
 */
 
       /* since offset starts at 0, add 1 to get index to g_bin */
       first_off++; last_off++;
 
       /* find processors on which these bins are located */
-      if(!pnga_locate(*g_bin, &first_off, &first_proc))
+      if(!pnga_locate(g_bin, &first_off, &first_proc))
           pnga_error("ga_bin_sorter: failed to locate region f",first_off);
-      if(!pnga_locate(*g_bin, &last_off, &last_proc))
+      if(!pnga_locate(g_bin, &last_off, &last_proc))
           pnga_error("ga_bin_sorter: failed to locate region l",last_off);
 
       /* inspect range of indices to bin elements stored on these processors */
@@ -1092,14 +1092,14 @@ Integer tlo[2], thi[2];
           Integer lo, hi, buf[2], off, cnt; 
           buf[0] =-1; buf[1]=-1;
 
-          pnga_distribution(*g_bin,p,&lo,&hi);
+          pnga_distribution(g_bin,p,&lo,&hi);
 
           for(/* start from current bin */; bin<= hibin; bin++, myoff++){ 
               Integer blo,bhi,stat;
 
               blo = *myoff +1;
               if(bin == hibin){
-                 pnga_get(*g_cnt, &hibin, &hibin, &cnt, &hibin); /* local */
+                 pnga_get(g_cnt, &hibin, &hibin, &cnt, &hibin); /* local */
                  bhi = blo + cnt-1; 
               }else
                  bhi = myoff[1]; 
@@ -1146,7 +1146,7 @@ Integer tlo[2], thi[2];
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_bin_sorter = pnga_bin_sorter
 #endif
-void pnga_bin_sorter(Integer *g_bin, Integer *g_cnt, Integer *g_off)
+void pnga_bin_sorter(Integer g_bin, Integer g_cnt, Integer g_off)
 {
 Integer nbin,totbin,type,ndim,lo,hi,me=pnga_nodeid(),crap;
 Integer g_range;
@@ -1154,10 +1154,10 @@ Integer g_range;
     if(FALSE==pnga_create_bin_range(g_bin, g_cnt, g_off, &g_range))
         pnga_error("ga_bin_sorter: failed to create temp bin range array",0); 
 
-    pnga_inquire(*g_bin, &type, &ndim, &totbin);
+    pnga_inquire(g_bin, &type, &ndim, &totbin);
     if(ndim !=1) pnga_error("ga_bin_sorter: 1-dim array required",ndim);
      
-    pnga_distribution(*g_bin, me, &lo, &hi);
+    pnga_distribution(g_bin, me, &lo, &hi);
     if (lo > 0 ){ /* we get 0 if no elements stored on this process */
         Integer bin_range[2], rlo[2],rhi[2];
         Integer *bin_cnt, *ptr, i;
@@ -1172,17 +1172,17 @@ Integer g_range;
         /* get count of elements in each bin stored on this task */
         if(!(bin_cnt = (Integer*)malloc(nbin*sizeof(Integer))))
            pnga_error("ga_bin_sorter:memory allocation failed",nbin);
-        pnga_get(*g_cnt,bin_range,bin_range+1,bin_cnt,&nbin);
+        pnga_get(g_cnt,bin_range,bin_range+1,bin_cnt,&nbin);
 
         /* get access to local bin elements */
-        pnga_access_ptr(*g_bin, &lo, &hi, &ptr, &crap);
+        pnga_access_ptr(g_bin, &lo, &hi, &ptr, &crap);
         
         for(i=0;i<nbin;i++){ 
             int elems =(int) bin_cnt[i];
             gai_hsort(ptr, elems);
             ptr+=elems;
         }
-        pnga_release_update(*g_bin, &lo, &hi);             
+        pnga_release_update(g_bin, &lo, &hi);             
     }
 
     pnga_sync();
@@ -1194,14 +1194,14 @@ Integer g_range;
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_bin_index = pnga_bin_index
 #endif
-void pnga_bin_index(Integer *g_bin, Integer *g_cnt, Integer *g_off, 
-                   Integer *values, Integer *subs, Integer *n, Integer *sortit)
+void pnga_bin_index(Integer g_bin, Integer g_cnt, Integer g_off, 
+                   Integer *values, Integer *subs, Integer n, Integer sortit)
 {
 int i, my_nbin=0;
 int *all_bin_contrib, *offset;
 Integer type, ndim, nbin;
 
-    pnga_inquire(*g_bin, &type, &ndim, &nbin);
+    pnga_inquire(g_bin, &type, &ndim, &nbin);
     if(ndim !=1) pnga_error("ga_bin_index: 1-dim array required",ndim);
     if(type!= C_INT && type!=C_LONG && type!=C_LONGLONG)
        pnga_error("ga_bin_index: not integer type",type);
@@ -1212,7 +1212,7 @@ Integer type, ndim, nbin;
     if(!offset)pnga_error("ga_binning:malloc failed",nbin);
 
     /* count how many elements go to each bin */
-    for(i=0; i< *n; i++){
+    for(i=0; i< n; i++){
        int selected = subs[i];
        if(selected <1 || selected> nbin) pnga_error("wrong bin",selected);
 
@@ -1226,12 +1226,12 @@ Integer type, ndim, nbin;
         sgai_bin_offset(SCOPE_ALL, all_bin_contrib+i, cnbin, offset+i);
     }
 
-    for(i=0; i< *n; ){
+    for(i=0; i< n; ){
        Integer lo, hi;
        Integer selected = subs[i];
        int elems = all_bin_contrib[selected-1];
 
-       pnga_get(*g_off,&selected,&selected, &lo, &selected);
+       pnga_get(g_off,&selected,&selected, &lo, &selected);
        lo += offset[selected-1]+1;
        hi = lo + elems -1;
 /*
@@ -1242,7 +1242,7 @@ Integer type, ndim, nbin;
                 i,elems,(long)lo,(long)hi,(long)values+i,(long)nbin);
          break;   
        }else{
-          pnga_put(*g_bin, &lo, &hi, values+i, &selected); 
+          pnga_put(g_bin, &lo, &hi, values+i, &selected); 
        }
        i+=elems;
     }
@@ -1250,7 +1250,7 @@ Integer type, ndim, nbin;
     free(offset);
     free(all_bin_contrib);
 
-    if(*sortit)pnga_bin_sorter(g_bin, g_cnt, g_off);
+    if(sortit)pnga_bin_sorter(g_bin, g_cnt, g_off);
     else pnga_sync();
 }
 

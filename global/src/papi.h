@@ -295,14 +295,14 @@ extern Integer pnga_memory_avail_type(Integer datatype);
 
 /* Routines from sparse.c */
 
-extern void pnga_patch_enum(Integer* g_a, Integer* lo, Integer* hi, void* start, void* stride);
-extern void pnga_scan_copy(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi);
-extern void pnga_scan_add(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi, Integer* excl);
-extern void pnga_pack(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi, Integer* icount);
-extern void pnga_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi, Integer* icount);
-extern logical pnga_create_bin_range(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *g_range);
-extern void pnga_bin_sorter(Integer *g_bin, Integer *g_cnt, Integer *g_off);
-extern void pnga_bin_index(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *values, Integer *subs, Integer *n, Integer *sortit);
+extern void pnga_patch_enum(Integer g_a, Integer lo, Integer hi, void* start, void* stride);
+extern void pnga_scan_copy(Integer g_a, Integer g_b, Integer g_sbit, Integer lo, Integer hi);
+extern void pnga_scan_add(Integer g_a, Integer g_b, Integer g_sbit, Integer lo, Integer hi, Integer excl);
+extern void pnga_pack(Integer g_a, Integer g_b, Integer g_sbit, Integer lo, Integer hi, Integer* icount);
+extern void pnga_unpack(Integer g_a, Integer g_b, Integer g_sbit, Integer lo, Integer hi, Integer* icount);
+extern logical pnga_create_bin_range(Integer g_bin, Integer g_cnt, Integer g_off, Integer *g_range);
+extern void pnga_bin_sorter(Integer g_bin, Integer g_cnt, Integer g_off);
+extern void pnga_bin_index(Integer g_bin, Integer g_cnt, Integer g_off, Integer *values, Integer *subs, Integer n, Integer sortit);
 
 /* Routines from matrix.c */
 

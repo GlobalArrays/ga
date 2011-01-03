@@ -1950,14 +1950,12 @@ void GA_Scan_add(int g_a, int g_b, int g_sbit, int lo,
                  int hi, int excl)
 {
      Integer a = (Integer)g_a;
-     Integer ndim = wnga_ndim(a);
      Integer b = (Integer)g_b;
      Integer s = (Integer)g_sbit;
      Integer x = (Integer)excl;
-     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
-     COPYINDEX_C2F(&lo, _ga_lo, ndim);
-     COPYINDEX_C2F(&hi, _ga_hi, ndim);
-     wnga_scan_add(&a, &b, &s, _ga_lo, _ga_hi, &x);
+     Integer alo = lo+1;
+     Integer ahi = hi+1;
+     wnga_scan_add(a, b, s, alo, ahi, x);
 
 }
 
@@ -1965,14 +1963,12 @@ void GA_Scan_add64(int g_a, int g_b, int g_sbit, int64_t lo,
                  int64_t hi, int excl)
 {
      Integer a = (Integer)g_a;
-     Integer ndim = wnga_ndim(a);
      Integer b = (Integer)g_b;
      Integer s = (Integer)g_sbit;
      Integer x = (Integer)excl;
-     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
-     COPYINDEX_C2F(&lo, _ga_lo, ndim);
-     COPYINDEX_C2F(&hi, _ga_hi, ndim);
-     wnga_scan_add(&a, &b, &s, _ga_lo, _ga_hi, &x);
+     Integer alo = lo+1;
+     Integer ahi = hi+1;
+     wnga_scan_add(a, b, s, alo, ahi, x);
 
 }
 
@@ -1980,13 +1976,11 @@ void GA_Scan_copy(int g_a, int g_b, int g_sbit, int lo,
                   int hi)
 {
      Integer a = (Integer)g_a;
-     Integer ndim = wnga_ndim(a);
      Integer b = (Integer)g_b;
      Integer s = (Integer)g_sbit;
-     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
-     COPYINDEX_C2F(&lo, _ga_lo, ndim);
-     COPYINDEX_C2F(&hi, _ga_hi, ndim);
-     wnga_scan_copy(&a, &b, &s, _ga_lo, _ga_hi);
+     Integer alo = lo+1;
+     Integer ahi = hi+1;
+     wnga_scan_copy(a, b, s, alo, ahi);
 
 }
 
@@ -1994,93 +1988,79 @@ void GA_Scan_copy64(int g_a, int g_b, int g_sbit, int64_t lo,
                     int64_t hi)
 {
      Integer a = (Integer)g_a;
-     Integer ndim = wnga_ndim(a);
      Integer b = (Integer)g_b;
      Integer s = (Integer)g_sbit;
-     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
-     COPYINDEX_C2F(&lo, _ga_lo, ndim);
-     COPYINDEX_C2F(&hi, _ga_hi, ndim);
-     wnga_scan_copy(&a, &b, &s, _ga_lo, _ga_hi);
+     Integer alo = lo+1;
+     Integer ahi = hi+1;
+     wnga_scan_copy(a, b, s, alo, ahi);
 
 }
 
 void GA_Patch_enum(int g_a, int lo, int hi, int istart, int inc)
 {
      Integer a = (Integer)g_a;
-     Integer ndim = wnga_ndim(a);
      Integer aistart = (Integer)istart;
      Integer ainc = (Integer)inc;
-     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
-     COPYINDEX_C2F(&lo, _ga_lo, ndim);
-     COPYINDEX_C2F(&hi, _ga_hi, ndim);
-     wnga_patch_enum(&a, _ga_lo, _ga_hi, &aistart, &ainc);
+     Integer alo = lo+1;
+     Integer ahi = hi+1;
+     wnga_patch_enum(a, alo, ahi, &aistart, &ainc);
 }
 
 void GA_Patch_enum64(int g_a, int64_t lo, int64_t hi, int64_t istart, int64_t inc)
 {
      Integer a = (Integer)g_a;
-     Integer ndim = wnga_ndim(a);
      Integer aistart = (Integer)istart;
      Integer ainc = (Integer)inc;
-     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
-     COPYINDEX_C2F(&lo, _ga_lo, ndim);
-     COPYINDEX_C2F(&hi, _ga_hi, ndim);
-     wnga_patch_enum(&a, _ga_lo, _ga_hi, &aistart, &ainc);
+     Integer alo = lo+1;
+     Integer ahi = hi+1;
+     wnga_patch_enum(a, alo, ahi, &aistart, &ainc);
 }
 
 void GA_Pack(int g_src, int g_dest, int g_mask, int lo, int hi, int *icount)
 {
      Integer a = (Integer)g_src;
-     Integer ndim = wnga_ndim(a);
      Integer b = (Integer)g_dest;
      Integer s = (Integer)g_mask;
      Integer icnt;
-     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
-     COPYINDEX_C2F(&lo, _ga_lo, ndim);
-     COPYINDEX_C2F(&hi, _ga_hi, ndim);
-     wnga_pack(&a, &b, &s, _ga_lo, _ga_hi, &icnt); 
+     Integer alo = lo+1;
+     Integer ahi = hi+1;
+     wnga_pack(a, b, s, alo, ahi, &icnt); 
      *icount = icnt;
 }
 
 void GA_Pack64(int g_src, int g_dest, int g_mask, int64_t lo, int64_t hi, int64_t *icount)
 {
      Integer a = (Integer)g_src;
-     Integer ndim = wnga_ndim(a);
      Integer b = (Integer)g_dest;
      Integer s = (Integer)g_mask;
      Integer icnt;
-     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
-     COPYINDEX_C2F(&lo, _ga_lo, ndim);
-     COPYINDEX_C2F(&hi, _ga_hi, ndim);
-     wnga_pack(&a, &b, &s, _ga_lo, _ga_hi, &icnt); 
+     Integer alo = lo+1;
+     Integer ahi = hi+1;
+     wnga_pack(a, b, s, alo, ahi, &icnt); 
      *icount = icnt;
 }
 
 void GA_Unpack(int g_src, int g_dest, int g_mask, int lo, int hi, int *icount)
 {
      Integer a = (Integer)g_src;
-     Integer ndim = wnga_ndim(a);
      Integer b = (Integer)g_dest;
      Integer s = (Integer)g_mask;
      Integer icnt;
-     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
-     COPYINDEX_C2F(&lo, _ga_lo, ndim);
-     COPYINDEX_C2F(&hi, _ga_hi, ndim);
-     wnga_pack(&a, &b, &s, _ga_lo, _ga_hi, &icnt); 
+     Integer alo = lo+1;
+     Integer ahi = hi+1;
+     wnga_pack(a, b, s, alo, ahi, &icnt); 
      *icount = icnt;
 }
 
 void GA_Unpack64(int g_src, int g_dest, int g_mask, int64_t lo, int64_t hi, int64_t *icount)
 {
      Integer a = (Integer)g_src;
-     Integer ndim = wnga_ndim(a);
      Integer b = (Integer)g_dest;
      Integer s = (Integer)g_mask;
      Integer icnt;
-     Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
-     COPYINDEX_C2F(&lo, _ga_lo, ndim);
-     COPYINDEX_C2F(&hi, _ga_hi, ndim);
-     wnga_pack(&a, &b, &s, _ga_lo, _ga_hi, &icnt); 
+     Integer alo = lo+1;
+     Integer ahi = hi+1;
+     wnga_pack(a, b, s, alo, ahi, &icnt); 
      *icount = icnt;
 }
 

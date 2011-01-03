@@ -3005,82 +3005,82 @@ void FATR nga_select_elem_(
 
 void FATR ga_patch_enum_(Integer* g_a, Integer* lo, Integer* hi, void* start, void* stride)
 {
-    wnga_patch_enum(g_a, lo, hi, start, stride);
+    wnga_patch_enum(*g_a, *lo, *hi, start, stride);
 }
 
 void FATR nga_patch_enum_(Integer* g_a, Integer* lo, Integer* hi, void* start, void* stride)
 {
-    wnga_patch_enum(g_a, lo, hi, start, stride);
+    wnga_patch_enum(*g_a, *lo, *hi, start, stride);
 }
 
 void FATR ga_scan_copy_(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi)
 {
-    wnga_scan_copy(g_a, g_b, g_sbit, lo, hi);
+    wnga_scan_copy(*g_a, *g_b, *g_sbit, *lo, *hi);
 }
 
 void FATR nga_scan_copy_(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi)
 {
-    wnga_scan_copy(g_a, g_b, g_sbit, lo, hi);
+    wnga_scan_copy(*g_a, *g_b, *g_sbit, *lo, *hi);
 }
 
 void FATR ga_scan_add_(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi, Integer* excl)
 {
-    wnga_scan_add(g_a, g_b, g_sbit, lo, hi, excl);
+    wnga_scan_add(*g_a, *g_b, *g_sbit, *lo, *hi, *excl);
 }
 
 void FATR nga_scan_add_(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi, Integer* excl)
 {
-    wnga_scan_add(g_a, g_b, g_sbit, lo, hi, excl);
+    wnga_scan_add(*g_a, *g_b, *g_sbit, *lo, *hi, *excl);
 }
 
 void FATR ga_pack_(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi, Integer* icount)
 {
-    wnga_pack(g_a, g_b, g_sbit, lo, hi, icount);
+    wnga_pack(*g_a, *g_b, *g_sbit, *lo, *hi, icount);
 }
 
 void FATR nga_pack_(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi, Integer* icount)
 {
-    wnga_pack(g_a, g_b, g_sbit, lo, hi, icount);
+    wnga_pack(*g_a, *g_b, *g_sbit, *lo, *hi, icount);
 }
 
 void FATR ga_unpack_(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi, Integer* icount)
 {
-    wnga_unpack(g_a, g_b, g_sbit, lo, hi, icount);
+    wnga_unpack(*g_a, *g_b, *g_sbit, *lo, *hi, icount);
 }
 
 void FATR nga_unpack_(Integer* g_a, Integer* g_b, Integer* g_sbit, Integer* lo, Integer* hi, Integer* icount)
 {
-    wnga_unpack(g_a, g_b, g_sbit, lo, hi, icount);
+    wnga_unpack(*g_a, *g_b, *g_sbit, *lo, *hi, icount);
 }
 
 logical FATR ga_create_bin_range_(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *g_range)
 {
-    return wnga_create_bin_range(g_bin, g_cnt, g_off, g_range);
+    return wnga_create_bin_range(*g_bin, *g_cnt, *g_off, g_range);
 }
 
 logical FATR nga_create_bin_range_(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *g_range)
 {
-    return wnga_create_bin_range(g_bin, g_cnt, g_off, g_range);
+    return wnga_create_bin_range(*g_bin, *g_cnt, *g_off, g_range);
 }
 
 void FATR ga_bin_sorter_(Integer *g_bin, Integer *g_cnt, Integer *g_off)
 {
-    wnga_bin_sorter(g_bin, g_cnt, g_off);
+    wnga_bin_sorter(*g_bin, *g_cnt, *g_off);
 }
 
 void FATR nga_bin_sorter_(Integer *g_bin, Integer *g_cnt, Integer *g_off)
 {
-    wnga_bin_sorter(g_bin, g_cnt, g_off);
+    wnga_bin_sorter(*g_bin, *g_cnt, *g_off);
 }
 
 void FATR ga_bin_index_(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *values, Integer *subs, Integer *n, Integer *sortit)
 {
-    wnga_bin_index(g_bin, g_cnt, g_off, values, subs, n, sortit);
+    wnga_bin_index(*g_bin, *g_cnt, *g_off, values, subs, *n, *sortit);
 }
 
 void FATR nga_bin_index_(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *values, Integer *subs, Integer *n, Integer *sortit)
 {
-    wnga_bin_index(g_bin, g_cnt, g_off, values, subs, n, sortit);
+    wnga_bin_index(*g_bin, *g_cnt, *g_off, values, subs, *n, *sortit);
 }
 
 /* Routines from matrix.c */
