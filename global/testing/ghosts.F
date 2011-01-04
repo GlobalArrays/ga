@@ -43,7 +43,7 @@ c#define TEST_5
       integer proc_group(0:100), my_proc_group, grp, num_grp
       integer midnode, splitnode, color, key
       logical status
-      parameter (heap=1000*1000*4, fudge=1000, stack=1000*1000)
+      parameter (heap=2000*2000*4, fudge=2000, stack=2000*2000)
 c     
 c***  Intitialize a message passing library
 c
@@ -122,9 +122,7 @@ c     split into 2 irregular groups (33:67)
       else
          color=1
       endif
-c     same key for all processes means automatic control of rank assignment
-      key = 0 
-      my_proc_group = ga_pgroup_split_irreg(grp, color, key)
+      my_proc_group = ga_pgroup_split_irreg(grp, color)
       call ga_pgroup_set_default(my_proc_group)
       if(me.lt.splitnode) then
          call runtest
@@ -134,10 +132,8 @@ c     same key for all processes means automatic control of rank assignment
       if(me.ge.splitnode) then
          call runtest
       endif
-      call ga_sync()                  
 #endif
 
-      call ga_sync()
       call ga_pgroup_set_default(ga_pgroup_get_world())
 c
 c***  Check if memory limits are enforced 
