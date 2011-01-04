@@ -1996,24 +1996,20 @@ void GA_Scan_copy64(int g_a, int g_b, int g_sbit, int64_t lo,
 
 }
 
-void GA_Patch_enum(int g_a, int lo, int hi, int istart, int inc)
+void GA_Patch_enum(int g_a, int lo, int hi, void *start, void *inc)
 {
      Integer a = (Integer)g_a;
-     Integer aistart = (Integer)istart;
-     Integer ainc = (Integer)inc;
      Integer alo = lo+1;
      Integer ahi = hi+1;
-     wnga_patch_enum(a, alo, ahi, &aistart, &ainc);
+     wnga_patch_enum(a, alo, ahi, start, inc);
 }
 
-void GA_Patch_enum64(int g_a, int64_t lo, int64_t hi, int64_t istart, int64_t inc)
+void GA_Patch_enum64(int g_a, int64_t lo, int64_t hi, void *start, void *inc)
 {
      Integer a = (Integer)g_a;
-     Integer aistart = (Integer)istart;
-     Integer ainc = (Integer)inc;
      Integer alo = lo+1;
      Integer ahi = hi+1;
-     wnga_patch_enum(a, alo, ahi, &aistart, &ainc);
+     wnga_patch_enum(a, alo, ahi, start, inc);
 }
 
 void GA_Pack(int g_src, int g_dest, int g_mask, int lo, int hi, int *icount)

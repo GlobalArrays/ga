@@ -1265,12 +1265,12 @@ class GlobalArray {
    * @param[in] istart starting value of enumeration
    * @param[in] inc    increment value
    */
-   void patchEnum(int lo, int hi, int istart, int inc);
+   void patchEnum(int lo, int hi, void *istart, void *inc);
 
   /**
    * @copydoc GlobalArray::patchEnum(int,int,int,int)
    */
-   void patchEnum(int64_t lo, int64_t hi, int64_t istart, int64_t inc);
+   void patchEnum(int64_t lo, int64_t hi, void *start, void *inc);
 
   /**  
    * Same as nga_acc except the indices can extend beyond the array 

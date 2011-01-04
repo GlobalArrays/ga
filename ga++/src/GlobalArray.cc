@@ -635,13 +635,13 @@ GA::GlobalArray::pack(const GA::GlobalArray *g_dest,
 }
 
 void
-GA::GlobalArray::patchEnum(int lo, int hi, int istart, int inc) {
-  GA_Patch_enum(mHandle, lo, hi, istart, inc);
+GA::GlobalArray::patchEnum(int lo, int hi, void *start, void *inc) {
+  GA_Patch_enum(mHandle, lo, hi, start, inc);
 }
 
 void
-GA::GlobalArray::patchEnum(int64_t lo, int64_t hi, int64_t istart, int64_t inc) {
-  GA_Patch_enum64(mHandle, lo, hi, istart, inc);
+GA::GlobalArray::patchEnum(int64_t lo, int64_t hi, void *start, void *inc) {
+  GA_Patch_enum64(mHandle, lo, hi, start, inc);
 }
 
 void 

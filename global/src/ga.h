@@ -334,8 +334,8 @@ extern void          GA_Matmul_patch64(char transa, char transb, void* alpha, vo
 extern void          GA_Median_patch64(int g_a, int64_t *alo, int64_t *ahi, int g_b, int64_t *blo, int64_t *bhi, int g_c, int64_t *clo, int64_t *chi, int g_m, int64_t *mlo, int64_t *mhi);
 extern void          GA_Pack64(int g_src, int g_dest, int g_mask, int64_t lo, int64_t hi, int64_t *icount);
 extern void          GA_Pack(int g_src, int g_dest, int g_mask, int lo, int hi, int *icount);
-extern void          GA_Patch_enum64(int g_a, int64_t lo, int64_t hi, int64_t istart, int64_t inc);
-extern void          GA_Patch_enum(int g_a, int lo, int hi, int istart, int inc);
+extern void          GA_Patch_enum64(int g_a, int64_t lo, int64_t hi, void *start, void *inc);
+extern void          GA_Patch_enum(int g_a, int lo, int hi, void *start, void *inc);
 extern void          GA_Recip_patch64(int g_a,int64_t *lo, int64_t *hi);
 extern void          GA_Scan_add64(int g_a, int g_b, int g_sbit, int64_t lo, int64_t hi, int excl);
 extern void          GA_Scan_copy64(int g_a, int g_b, int g_sbit, int64_t lo, int64_t hi);
