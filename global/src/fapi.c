@@ -3087,110 +3087,110 @@ void FATR nga_bin_index_(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer
 
 void FATR ga_median_patch_(Integer *g_a, Integer *alo, Integer *ahi, Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c, Integer *clo, Integer *chi, Integer *g_m, Integer *mlo, Integer *mhi)
 {
-    wnga_median_patch(g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi);
+    wnga_median_patch(*g_a, alo, ahi, *g_b, blo, bhi, *g_c, clo, chi, *g_m, mlo, mhi);
 }
 
 void FATR nga_median_patch_(Integer *g_a, Integer *alo, Integer *ahi, Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c, Integer *clo, Integer *chi, Integer *g_m, Integer *mlo, Integer *mhi)
 {
-    wnga_median_patch(g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi);
+    wnga_median_patch(*g_a, alo, ahi, *g_b, blo, bhi, *g_c, clo, chi, *g_m, mlo, mhi);
 }
 
 void FATR ga_median_(Integer * g_a, Integer * g_b, Integer * g_c, Integer * g_m){
-    wnga_median(g_a, g_b, g_c, g_m);
+    wnga_median(*g_a, *g_b, *g_c, *g_m);
 }
 
 void FATR nga_median_(Integer * g_a, Integer * g_b, Integer * g_c, Integer * g_m){
-    wnga_median(g_a, g_b, g_c, g_m);
+    wnga_median(*g_a, *g_b, *g_c, *g_m);
 }
 
 void FATR ga_norm_infinity_(Integer * g_a, double *nm)
 {
-    wnga_norm_infinity(g_a, nm);
+    wnga_norm_infinity(*g_a, nm);
 }
 
 void FATR nga_norm_infinity_(Integer * g_a, double *nm)
 {
-    wnga_norm_infinity(g_a, nm);
+    wnga_norm_infinity(*g_a, nm);
 }
 
 void FATR ga_norm1_(Integer * g_a, double *nm)
 {
-    wnga_norm1(g_a, nm);
+    wnga_norm1(*g_a, nm);
 }
 
 void FATR nga_norm1_(Integer * g_a, double *nm)
 {
-    wnga_norm1(g_a, nm);
+    wnga_norm1(*g_a, nm);
 }
 
 void FATR ga_get_diag_(Integer * g_a, Integer * g_v)
 {
-    wnga_get_diag(g_a, g_v);
+    wnga_get_diag(*g_a, *g_v);
 }
 
 void FATR nga_get_diag_(Integer * g_a, Integer * g_v)
 {
-    wnga_get_diag(g_a, g_v);
+    wnga_get_diag(*g_a, *g_v);
 }
 
 void FATR ga_add_diagonal_(Integer * g_a, Integer * g_v)
 {
-    wnga_add_diagonal(g_a, g_v);
+    wnga_add_diagonal(*g_a, *g_v);
 }
 
 void FATR nga_add_diagonal_(Integer * g_a, Integer * g_v)
 {
-    wnga_add_diagonal(g_a, g_v);
+    wnga_add_diagonal(*g_a, *g_v);
 }
 
 void FATR ga_set_diagonal_(Integer * g_a, Integer * g_v)
 {
-    wnga_set_diagonal(g_a, g_v);
+    wnga_set_diagonal(*g_a, *g_v);
 }
 
 void FATR nga_set_diagonal_(Integer * g_a, Integer * g_v)
 {
-    wnga_set_diagonal(g_a, g_v);
+    wnga_set_diagonal(*g_a, *g_v);
 }
 
 void FATR ga_shift_diagonal_(Integer * g_a, void *c)
 {
-    wnga_shift_diagonal(g_a, c);
+    wnga_shift_diagonal(*g_a, c);
 }
 
 void FATR nga_shift_diagonal_(Integer * g_a, void *c)
 {
-    wnga_shift_diagonal(g_a, c);
+    wnga_shift_diagonal(*g_a, c);
 }
 
 void FATR ga_zero_diagonal_(Integer * g_a)
 {
-    wnga_zero_diagonal(g_a);
+    wnga_zero_diagonal(*g_a);
 }
 
 void FATR nga_zero_diagonal_(Integer * g_a)
 {
-    wnga_zero_diagonal(g_a);
+    wnga_zero_diagonal(*g_a);
 }
 
 void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
 {
-    wnga_scale_rows(g_a, g_v);
+    wnga_scale_rows(*g_a, *g_v);
 }
 
 void FATR nga_scale_rows_(Integer *g_a, Integer *g_v)
 {
-    wnga_scale_rows(g_a, g_v);
+    wnga_scale_rows(*g_a, *g_v);
 }
 
 void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
 {
-    wnga_scale_cols(g_a, g_v);
+    wnga_scale_cols(*g_a, *g_v);
 }
 
 void FATR nga_scale_cols_(Integer *g_a, Integer *g_v)
 {
-    wnga_scale_cols(g_a, g_v);
+    wnga_scale_cols(*g_a, *g_v);
 }
 
 /* Routines from ga_symmetr.c */

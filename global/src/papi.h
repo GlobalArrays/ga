@@ -306,17 +306,17 @@ extern void pnga_bin_index(Integer g_bin, Integer g_cnt, Integer g_off, Integer 
 
 /* Routines from matrix.c */
 
-extern void pnga_median_patch(Integer *g_a, Integer *alo, Integer *ahi, Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c, Integer *clo, Integer *chi, Integer *g_m, Integer *mlo, Integer *mhi);
-extern void pnga_median(Integer * g_a, Integer * g_b, Integer * g_c, Integer * g_m);
-extern void pnga_norm_infinity(Integer * g_a, double *nm);
-extern void pnga_norm1(Integer * g_a, double *nm);
-extern void pnga_get_diag(Integer * g_a, Integer * g_v);
-extern void pnga_add_diagonal(Integer * g_a, Integer * g_v);
-extern void pnga_set_diagonal(Integer * g_a, Integer * g_v);
-extern void pnga_shift_diagonal(Integer * g_a, void *c);
-extern void pnga_zero_diagonal(Integer * g_a);
-extern void pnga_scale_rows(Integer *g_a, Integer *g_v);
-extern void pnga_scale_cols(Integer *g_a, Integer *g_v);
+extern void pnga_median_patch(Integer g_a, Integer *alo, Integer *ahi, Integer g_b, Integer *blo, Integer *bhi, Integer g_c, Integer *clo, Integer *chi, Integer g_m, Integer *mlo, Integer *mhi);
+extern void pnga_median(Integer g_a, Integer g_b, Integer g_c, Integer g_m);
+extern void pnga_norm_infinity(Integer g_a, double *nm);
+extern void pnga_norm1(Integer g_a, double *nm);
+extern void pnga_get_diag(Integer g_a, Integer g_v);
+extern void pnga_add_diagonal(Integer g_a, Integer g_v);
+extern void pnga_set_diagonal(Integer g_a, Integer g_v);
+extern void pnga_shift_diagonal(Integer g_a, void *c);
+extern void pnga_zero_diagonal(Integer g_a);
+extern void pnga_scale_rows(Integer g_a, Integer g_v);
+extern void pnga_scale_cols(Integer g_a, Integer g_v);
 
 /* Routines from ga_symmetr.c */
 

@@ -4526,50 +4526,50 @@ void GA_Elem_minimum_patch64(int g_a, int64_t alo[], int64_t ahi[],
 
 void GA_Shift_diagonal(int g_a, void *c){
  Integer a = (Integer )g_a;
- wnga_shift_diagonal(&a, c);
+ wnga_shift_diagonal(a, c);
 }
 
 void GA_Set_diagonal(int g_a, int g_v){
  Integer a = (Integer )g_a;
  Integer v = (Integer )g_v;
- wnga_set_diagonal(&a, &v);
+ wnga_set_diagonal(a, v);
 }
 
 void GA_Zero_diagonal(int g_a){
  Integer a = (Integer )g_a;
- wnga_zero_diagonal(&a);
+ wnga_zero_diagonal(a);
 }
 void GA_Add_diagonal(int g_a, int g_v){
  Integer a = (Integer )g_a;
  Integer v = (Integer )g_v;
- wnga_add_diagonal(&a, &v);
+ wnga_add_diagonal(a, v);
 }
 
 void GA_Get_diag(int g_a, int g_v){
  Integer a = (Integer )g_a;
  Integer v = (Integer )g_v;
- wnga_get_diag(&a, &v);
+ wnga_get_diag(a, v);
 }
 
 void GA_Scale_rows(int g_a, int g_v){
  Integer a = (Integer )g_a;
  Integer v = (Integer )g_v;
- wnga_scale_rows(&a, &v);
+ wnga_scale_rows(a, v);
 }
 
 void GA_Scale_cols(int g_a, int g_v){
  Integer a = (Integer )g_a;
  Integer v = (Integer )g_v;
- wnga_scale_cols(&a, &v);
+ wnga_scale_cols(a, v);
 }
 void GA_Norm1(int g_a, double *nm){
  Integer a = (Integer )g_a;
- wnga_norm1(&a, nm);
+ wnga_norm1(a, nm);
 }
 
 void GA_Norm_infinity(int g_a, double *nm){
  Integer a = (Integer )g_a;
- wnga_norm_infinity(&a, nm);
+ wnga_norm_infinity(a, nm);
 }
 
 
@@ -4578,7 +4578,7 @@ void GA_Median(int g_a, int g_b, int g_c, int g_m){
  Integer b = (Integer )g_b;
  Integer c= (Integer )g_c;
  Integer m = (Integer )g_m;
- wnga_median(&a, &b, &c, &m);
+ wnga_median(a, b, c, m);
 }
 
 void GA_Median_patch(int g_a, int *alo, int *ahi,
@@ -4606,7 +4606,7 @@ void GA_Median_patch(int g_a, int *alo, int *ahi,
     COPYINDEX_C2F(chi,_ga_chi, cndim);
     COPYINDEX_C2F(mlo,_ga_mlo, mndim);
     COPYINDEX_C2F(mhi,_ga_mhi, mndim);
-    wnga_median_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi, &m, _ga_mlo, _ga_mhi);
+    wnga_median_patch(a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi, c, _ga_clo, _ga_chi, m, _ga_mlo, _ga_mhi);
 }
 
 void GA_Median_patch64(int g_a, int64_t *alo, int64_t *ahi,
@@ -4634,7 +4634,7 @@ void GA_Median_patch64(int g_a, int64_t *alo, int64_t *ahi,
     COPYINDEX_C2F(chi,_ga_chi, cndim);
     COPYINDEX_C2F(mlo,_ga_mlo, mndim);
     COPYINDEX_C2F(mhi,_ga_mhi, mndim);
-    wnga_median_patch(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi, &m, _ga_mlo, _ga_mhi);
+    wnga_median_patch(a, _ga_alo, _ga_ahi, b, _ga_blo, _ga_bhi, c, _ga_clo, _ga_chi, m, _ga_mlo, _ga_mhi);
 }
 
 /* return number of nodes being used in a cluster */
