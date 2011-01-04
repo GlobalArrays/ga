@@ -400,7 +400,7 @@ void pnga_get_ghost_block(Integer g_a,
     gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
     ARMCI_GetS(ptr,stride_rem,buf,stride_loc,count,ndim-1,me);
   } else {
-    pnga_periodic(&g_a,lo,hi,buf,ld,NULL,PERIODIC_GET);
+    pnga_periodic(g_a,lo,hi,buf,ld,NULL,PERIODIC_GET);
   }
 }
 

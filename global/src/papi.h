@@ -320,11 +320,11 @@ extern void pnga_scale_cols(Integer g_a, Integer g_v);
 
 /* Routines from ga_symmetr.c */
 
-extern void pnga_symmetrize(Integer *g_a);
+extern void pnga_symmetrize(Integer g_a);
 
 /* Routines from global.periodic.c */
 
-extern void pnga_periodic(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, void *alpha, Integer op_code);
+extern void pnga_periodic(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, void *alpha, Integer op_code);
 
 /* Routines from matmul.c */
 

@@ -1823,7 +1823,7 @@ void NGA_Periodic_get(int g_a, int lo[], int hi[], void* buf, int ld[])
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    wnga_periodic(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_GET);
+    wnga_periodic(a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_GET);
 }
 
 void NGA_Periodic_get64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[])
@@ -1835,7 +1835,7 @@ void NGA_Periodic_get64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t 
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    wnga_periodic(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_GET);
+    wnga_periodic(a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_GET);
 }
 
 void NGA_Periodic_put(int g_a, int lo[], int hi[], void* buf, int ld[])
@@ -1847,7 +1847,7 @@ void NGA_Periodic_put(int g_a, int lo[], int hi[], void* buf, int ld[])
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    wnga_periodic(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_PUT);
+    wnga_periodic(a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_PUT);
 }    
 
 void NGA_Periodic_put64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t ld[])
@@ -1859,7 +1859,7 @@ void NGA_Periodic_put64(int g_a, int64_t lo[], int64_t hi[], void* buf, int64_t 
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    wnga_periodic(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_PUT);
+    wnga_periodic(a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_PUT);
 }
 
 void NGA_Periodic_acc(int g_a, int lo[], int hi[], void* buf,int ld[], void* alpha)
@@ -1871,7 +1871,7 @@ void NGA_Periodic_acc(int g_a, int lo[], int hi[], void* buf,int ld[], void* alp
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    wnga_periodic(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha, PERIODIC_ACC);
+    wnga_periodic(a, _ga_lo, _ga_hi, buf, _ga_work, alpha, PERIODIC_ACC);
 }
 
 void NGA_Periodic_acc64(int g_a, int64_t lo[], int64_t hi[], void* buf,int64_t ld[], void* alpha)
@@ -1883,7 +1883,7 @@ void NGA_Periodic_acc64(int g_a, int64_t lo[], int64_t hi[], void* buf,int64_t l
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    wnga_periodic(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha, PERIODIC_ACC);
+    wnga_periodic(a, _ga_lo, _ga_hi, buf, _ga_work, alpha, PERIODIC_ACC);
 }
 
 long NGA_Read_inc(int g_a, int subscript[], long inc)
@@ -4024,14 +4024,14 @@ void GA_Symmetrize(int g_a)
 {
     Integer a = (Integer)g_a;
 
-    wnga_symmetrize(&a);
+    wnga_symmetrize(a);
 }
 
 void NGA_Symmetrize(int g_a)
 {
     Integer a = (Integer)g_a;
 
-    wnga_symmetrize(&a);
+    wnga_symmetrize(a);
 }
 
 void GA_Transpose(int g_a, int g_b)

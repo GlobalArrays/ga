@@ -192,7 +192,7 @@ static int ngai_peri_get_range_(Integer ndim, Integer *dims, Integer *lo_orig, I
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_periodic = pnga_periodic
 #endif
-void pnga_periodic(Integer *g_a, Integer *lo, Integer *hi, void *buf,
+void pnga_periodic(Integer g_a, Integer *lo, Integer *hi, void *buf,
                     Integer *ld, void *alpha, Integer op_code)
 {
     int i, j, counter[MAXDIM], done;
@@ -202,7 +202,7 @@ void pnga_periodic(Integer *g_a, Integer *lo, Integer *hi, void *buf,
     Integer lop[MAXDIM], hip[MAXDIM];
     int get_range;
     
-    pnga_inquire(*g_a, &type, &ndim, dims);
+    pnga_inquire(g_a, &type, &ndim, dims);
 
     get_range = ngai_peri_get_range_(ndim, dims, lo, hi, range, range_num,
                                      offset, op_code);
@@ -213,13 +213,13 @@ void pnga_periodic(Integer *g_a, Integer *lo, Integer *hi, void *buf,
     if(get_range == IS_REGULAR_PATCH) {
         switch(op_code) {
           case PERIODIC_GET:
-              pnga_get(*g_a, lo, hi, buf, ld);
+              pnga_get(g_a, lo, hi, buf, ld);
               break;
           case PERIODIC_PUT:
-              pnga_put(*g_a, lo, hi, buf, ld);
+              pnga_put(g_a, lo, hi, buf, ld);
               break;
           case PERIODIC_ACC:    
-              pnga_acc(*g_a, lo, hi, buf, ld, alpha);
+              pnga_acc(g_a, lo, hi, buf, ld, alpha);
               break;
           default:
               pnga_error("This operation is invalid ", 0L);
@@ -252,15 +252,15 @@ void pnga_periodic(Integer *g_a, Integer *lo, Integer *hi, void *buf,
         /* deal with this patch */
         switch(op_code) {
           case PERIODIC_GET:
-              pnga_get(*g_a, lop, hip,
+              pnga_get(g_a, lop, hip,
                        (char *)buf+my_offset*GAsizeofM(type), ld);
               break;
           case PERIODIC_PUT:
-              pnga_put(*g_a, lop, hip,
+              pnga_put(g_a, lop, hip,
                        (char *)buf+my_offset*GAsizeofM(type), ld);
               break;
           case PERIODIC_ACC:
-              pnga_acc(*g_a, lop, hip,
+              pnga_acc(g_a, lop, hip,
                        (char *)buf+my_offset*GAsizeofM(type), ld, alpha);
               break;
           default:

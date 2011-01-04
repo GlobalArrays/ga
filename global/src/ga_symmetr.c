@@ -43,7 +43,7 @@ static void gai_add(
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_symmetrize = pnga_symmetrize
 #endif
-void pnga_symmetrize(Integer *g_a) {
+void pnga_symmetrize(Integer g_a) {
   
   DoublePrecision alpha = 0.5;
   Integer i, me = pnga_nodeid();
@@ -63,9 +63,9 @@ void pnga_symmetrize(Integer *g_a) {
 
   GA_PUSH_NAME("ga_symmetrize");
   
-  num_blocks_a = pnga_total_blocks(*g_a);
+  num_blocks_a = pnga_total_blocks(g_a);
 
-  pnga_inquire(*g_a, &type, &ndim, dims);
+  pnga_inquire(g_a, &type, &ndim, dims);
 
   if (type != C_DBL)
     pnga_error("ga_symmetrize: only implemented for double precision",0);
@@ -76,14 +76,14 @@ void pnga_symmetrize(Integer *g_a) {
       pnga_error("ga_sym: can only sym square matrix", 0L);
 
     /* Find the local distribution */
-    pnga_distribution(*g_a, me, alo, ahi);
+    pnga_distribution(g_a, me, alo, ahi);
 
 
     have_data = ahi[0]>0;
     for(i=1; i<ndim; i++) have_data = have_data && ahi[i]>0;
 
     if(have_data) {
-      pnga_access_ptr(*g_a, alo, ahi, &a_ptr, lda); 
+      pnga_access_ptr(g_a, alo, ahi, &a_ptr, lda); 
 
       for(i=0; i<ndim; i++) nelem *= ahi[i]-alo[i] +1;
       b_ptr = (void *) ga_malloc(nelem, MT_F_DBL, "v");
@@ -98,23 +98,23 @@ void pnga_symmetrize(Integer *g_a) {
 
       for (i=0; i < ndim-1; i++) 
         ldb[i] = bhi[i] - blo[i] + 1; 
-      pnga_get(*g_a, blo, bhi, b_ptr, ldb);
+      pnga_get(g_a, blo, bhi, b_ptr, ldb);
     }
     pnga_sync(); 
 
     if(have_data) {
       gai_add(alo, ahi, a_ptr, b_ptr, alpha, type, nelem, ndim);
-      pnga_release_update(*g_a, alo, ahi);
+      pnga_release_update(g_a, alo, ahi);
       ga_free(b_ptr);
     }
   } else {
     /* For block-cyclic data, probably most efficient solution is to
        create duplicate copy, transpose it and add the results together */
     DoublePrecision half = 0.5;
-    if (!pnga_duplicate(*g_a, &g_b, tempB))
+    if (!pnga_duplicate(g_a, &g_b, tempB))
       pnga_error("ga_symmetrize: duplicate failed", 0L);
-    pnga_transpose(*g_a, g_b);
-    pnga_add(&half, *g_a, &half, g_b, *g_a);
+    pnga_transpose(g_a, g_b);
+    pnga_add(&half, g_a, &half, g_b, g_a);
     pnga_destroy(g_b);
   }
   GA_POP_NAME;
