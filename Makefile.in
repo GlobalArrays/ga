@@ -356,7 +356,6 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 #PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
 #PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
 #PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
-#PARALLEL_TESTS += global/testing/ghosts$(EXEEXT) # hangs
 #PARALLEL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/random$(EXEEXT) # takes too long
@@ -364,6 +363,7 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 @ENABLE_F77_TRUE@	global/testing/blktest$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g3test$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/ghosts$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/jacobi$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mir_perf2$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mmatrix$(EXEEXT) \
@@ -6078,6 +6078,8 @@ global/testing/g2test.log: global/testing/g2test$(EXEEXT)
 	@p='global/testing/g2test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/g3test.log: global/testing/g3test$(EXEEXT)
 	@p='global/testing/g3test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/ghosts.log: global/testing/ghosts$(EXEEXT)
+	@p='global/testing/ghosts$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/jacobi.log: global/testing/jacobi$(EXEEXT)
 	@p='global/testing/jacobi$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/mir_perf2.log: global/testing/mir_perf2$(EXEEXT)
