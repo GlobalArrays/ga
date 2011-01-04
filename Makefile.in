@@ -6347,9 +6347,8 @@ check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-recursive
-@MSG_COMMS_TCGMSG_FALSE@all-local:
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(DATA) $(HEADERS) \
-		config.h all-local
+		config.h
 install-binPROGRAMS: install-libLTLIBRARIES
 
 installdirs: installdirs-recursive
@@ -6530,8 +6529,8 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 	install-strip recheck recheck-html tags-recursive
 
 .PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
-	all all-am all-local am--refresh check check-TESTS check-am \
-	check-html clean clean-binPROGRAMS clean-checkLTLIBRARIES \
+	all all-am am--refresh check check-TESTS check-am check-html \
+	clean clean-binPROGRAMS clean-checkLTLIBRARIES \
 	clean-checkPROGRAMS clean-generic clean-libLTLIBRARIES \
 	clean-libtool clean-local ctags ctags-recursive dist dist-all \
 	dist-bzip2 dist-gzip dist-lzma dist-shar dist-tarZ dist-xz \
@@ -6652,11 +6651,11 @@ $(GA_RECURSIVE_TARGETS): all
 	fi; test -z "$$fail"
 
 .PHONY: pfiles clean-pfiles
-@MSG_COMMS_TCGMSG_TRUE@pfiles:
+@MSG_COMMS_TCGMSG_TRUE@pfiles: $(check_PROGRAMS)
 @MSG_COMMS_TCGMSG_TRUE@	for p in $(check_PROGRAMS); do \
 @MSG_COMMS_TCGMSG_TRUE@		echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
 @MSG_COMMS_TCGMSG_TRUE@	done
-@MSG_COMMS_TCGMSG_TRUE@all-local: pfiles
+@MSG_COMMS_TCGMSG_TRUE@check: pfiles
 @MSG_COMMS_TCGMSG_TRUE@clean-pfiles:
 @MSG_COMMS_TCGMSG_TRUE@	find . -name '*.p' -exec rm {} \; ;
 @MSG_COMMS_TCGMSG_TRUE@clean-local: clean-pfiles

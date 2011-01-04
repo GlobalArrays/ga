@@ -1280,11 +1280,11 @@ PYTHON__v_0 = @echo "  PYTHON" $@;
 
 .PHONY: pfiles clean-pfiles
 if MSG_COMMS_TCGMSG
-pfiles:
+pfiles: $(check_PROGRAMS)
 	for p in $(check_PROGRAMS); do \
 		echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
 	done
-all-local: pfiles
+check: pfiles
 clean-pfiles:
 	find . -name '*.p' -exec rm {} \; ;
 clean-local: clean-pfiles

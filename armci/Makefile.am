@@ -555,7 +555,6 @@ check_PROGRAMS += testing/perf_nb
 check_PROGRAMS += testing/perf
 check_PROGRAMS += testing/shmclean
 check_PROGRAMS += testing/shmtest
-check_PROGRAMS += testing/simple
 check_PROGRAMS += testing/simplelock
 check_PROGRAMS += testing/test2
 check_PROGRAMS += testing/testnotify
@@ -567,6 +566,7 @@ if ARMCI_ENABLE_GPC_CALLS
 check_PROGRAMS += testing/gpctest
 endif
 if MSG_COMMS_MPI
+check_PROGRAMS += testing/simple
 check_PROGRAMS += testing/test_groups
 if SYSV
 check_PROGRAMS += testing/ipctest
@@ -884,11 +884,11 @@ ARMCI_X86COPY_AS__v_0 = @echo "  GCC   " $@;
 
 .PHONY: pfiles clean-pfiles
 if MSG_COMMS_TCGMSG
-pfiles:
+pfiles: $(check_PROGRAMS)
 	for p in $(check_PROGRAMS); do \
 	    echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
 	done
-all-local: pfiles
+check: pfiles
 clean-pfiles:
 	find . -name '*.p' -exec rm {} \; ;
 clean-local: clean-pfiles
@@ -923,7 +923,6 @@ PARALLEL_TESTS += testing/perf$(EXEEXT)
 #SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
 #SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
 PARALLEL_TESTS += testing/simplelock$(EXEEXT)
-PARALLEL_TESTS += testing/simple$(EXEEXT)
 PARALLEL_TESTS += testing/test2$(EXEEXT)
 PARALLEL_TESTS += testing/testitr$(EXEEXT)
 PARALLEL_TESTS += testing/testnotify$(EXEEXT)
@@ -935,6 +934,7 @@ if ARMCI_ENABLE_GPC_CALLS
 PARALLEL_TESTS += testing/gpctest$(EXEEXT)
 endif
 if MSG_COMMS_MPI
+PARALLEL_TESTS += testing/simple$(EXEEXT)
 PARALLEL_TESTS += testing/test_groups$(EXEEXT)
 if SYSV
 #PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes

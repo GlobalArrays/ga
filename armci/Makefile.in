@@ -59,11 +59,11 @@ bin_PROGRAMS =
 check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf_aggr$(EXEEXT) \
 	testing/perf_nb$(EXEEXT) testing/perf$(EXEEXT) \
 	testing/shmclean$(EXEEXT) testing/shmtest$(EXEEXT) \
-	testing/simple$(EXEEXT) testing/simplelock$(EXEEXT) \
-	testing/test2$(EXEEXT) testing/testnotify$(EXEEXT) \
-	testing/test$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
-	$(am__EXEEXT_3) $(am__EXEEXT_4) $(am__EXEEXT_5) \
-	$(am__EXEEXT_6) $(am__EXEEXT_7) $(am__EXEEXT_8) \
+	testing/simplelock$(EXEEXT) testing/test2$(EXEEXT) \
+	testing/testnotify$(EXEEXT) testing/test$(EXEEXT) \
+	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
+	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
+	$(am__EXEEXT_7) $(am__EXEEXT_8) \
 	examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
@@ -390,7 +390,7 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf_aggr$(EXEEXT) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/locks/tas_as.s
 @ENABLE_CHECKPOINT_TRUE@am__append_65 = testing/fttest
 @ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_66 = testing/gpctest
-@MSG_COMMS_MPI_TRUE@am__append_67 = testing/test_groups
+@MSG_COMMS_MPI_TRUE@am__append_67 = testing/simple testing/test_groups
 @MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__append_68 = testing/ipctest
 @THREAD_SAFE_TRUE@am__append_69 = testing/test_mt
 @ENABLE_F77_TRUE@am__append_70 = testing/acc_test testing/copy_test
@@ -424,7 +424,8 @@ XFAIL_TESTS = $(am__EXEEXT_15) $(am__EXEEXT_15)
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/te$(EXEEXT)
 @ENABLE_CHECKPOINT_TRUE@am__append_86 = testing/fttest$(EXEEXT)
 @ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_87 = testing/gpctest$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_88 = testing/test_groups$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_88 = testing/simple$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	testing/test_groups$(EXEEXT)
 #PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
 @THREAD_SAFE_TRUE@am__append_89 = testing/test_mt$(EXEEXT)
 @ENABLE_F77_TRUE@am__append_90 = testing/acc_test$(EXEEXT) \
@@ -979,7 +980,8 @@ libarmcii_la_OBJECTS = $(am_libarmcii_la_OBJECTS) \
 	$(nodist_libarmcii_la_OBJECTS)
 @ENABLE_CHECKPOINT_TRUE@am__EXEEXT_1 = testing/fttest$(EXEEXT)
 @ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_2 = testing/gpctest$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__EXEEXT_3 = testing/test_groups$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__EXEEXT_3 = testing/simple$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	testing/test_groups$(EXEEXT)
 @MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__EXEEXT_4 =  \
 @MSG_COMMS_MPI_TRUE@@SYSV_TRUE@	testing/ipctest$(EXEEXT)
 @THREAD_SAFE_TRUE@am__EXEEXT_5 = testing/test_mt$(EXEEXT)
@@ -2089,11 +2091,10 @@ SERIAL_TESTS_XFAIL =
 #PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
 PARALLEL_TESTS = $(am__append_85) testing/msgcheck$(EXEEXT) \
 	testing/perf_aggr$(EXEEXT) testing/perf$(EXEEXT) \
-	testing/simplelock$(EXEEXT) testing/simple$(EXEEXT) \
-	testing/test2$(EXEEXT) testing/testitr$(EXEEXT) \
-	testing/testnotify$(EXEEXT) testing/test$(EXEEXT) \
-	$(am__append_86) $(am__append_87) $(am__append_88) \
-	$(am__append_89) \
+	testing/simplelock$(EXEEXT) testing/test2$(EXEEXT) \
+	testing/testitr$(EXEEXT) testing/testnotify$(EXEEXT) \
+	testing/test$(EXEEXT) $(am__append_86) $(am__append_87) \
+	$(am__append_88) $(am__append_89) \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu$(EXEEXT) \
@@ -4125,8 +4126,6 @@ testing/perf.log: testing/perf$(EXEEXT)
 	@p='testing/perf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/simplelock.log: testing/simplelock$(EXEEXT)
 	@p='testing/simplelock$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing/simple.log: testing/simple$(EXEEXT)
-	@p='testing/simple$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/test2.log: testing/test2$(EXEEXT)
 	@p='testing/test2$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/testitr.log: testing/testitr$(EXEEXT)
@@ -4139,6 +4138,8 @@ testing/fttest.log: testing/fttest$(EXEEXT)
 	@p='testing/fttest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/gpctest.log: testing/gpctest$(EXEEXT)
 	@p='testing/gpctest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/simple.log: testing/simple$(EXEEXT)
+	@p='testing/simple$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/test_groups.log: testing/test_groups$(EXEEXT)
 	@p='testing/test_groups$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/test_mt.log: testing/test_mt$(EXEEXT)
@@ -4338,9 +4339,7 @@ check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am
-@MSG_COMMS_TCGMSG_FALSE@all-local:
-all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(HEADERS) config.h \
-		all-local
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(HEADERS) config.h
 install-binPROGRAMS: install-libLTLIBRARIES
 
 installdirs:
@@ -4546,22 +4545,21 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 .MAKE: all check check-am check-html install install-am install-strip \
 	recheck recheck-html
 
-.PHONY: CTAGS GTAGS all all-am all-local am--refresh check check-TESTS \
-	check-am check-html clean clean-binPROGRAMS \
-	clean-checkLTLIBRARIES clean-checkPROGRAMS clean-generic \
-	clean-libLTLIBRARIES clean-libtool clean-local \
-	clean-noinstLTLIBRARIES ctags dist dist-all dist-bzip2 \
-	dist-gzip dist-lzma dist-shar dist-tarZ dist-xz dist-zip \
-	distcheck distclean distclean-compile distclean-generic \
-	distclean-hdr distclean-libtool distclean-tags distcleancheck \
-	distdir distuninstallcheck dvi dvi-am html html-am info \
-	info-am install install-am install-binPROGRAMS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am \
-	install-includeHEADERS install-info install-info-am \
-	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
+.PHONY: CTAGS GTAGS all all-am am--refresh check check-TESTS check-am \
+	check-html clean clean-binPROGRAMS clean-checkLTLIBRARIES \
+	clean-checkPROGRAMS clean-generic clean-libLTLIBRARIES \
+	clean-libtool clean-local clean-noinstLTLIBRARIES ctags dist \
+	dist-all dist-bzip2 dist-gzip dist-lzma dist-shar dist-tarZ \
+	dist-xz dist-zip distcheck distclean distclean-compile \
+	distclean-generic distclean-hdr distclean-libtool \
+	distclean-tags distcleancheck distdir distuninstallcheck dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-binPROGRAMS install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-includeHEADERS install-info \
+	install-info-am install-libLTLIBRARIES install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	recheck recheck-html tags uninstall uninstall-am \
@@ -4621,11 +4619,11 @@ checkprogs: $(check_PROGRAMS)
 examples: $(EXAMPLES)
 
 .PHONY: pfiles clean-pfiles
-@MSG_COMMS_TCGMSG_TRUE@pfiles:
+@MSG_COMMS_TCGMSG_TRUE@pfiles: $(check_PROGRAMS)
 @MSG_COMMS_TCGMSG_TRUE@	for p in $(check_PROGRAMS); do \
 @MSG_COMMS_TCGMSG_TRUE@	    echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
 @MSG_COMMS_TCGMSG_TRUE@	done
-@MSG_COMMS_TCGMSG_TRUE@all-local: pfiles
+@MSG_COMMS_TCGMSG_TRUE@check: pfiles
 @MSG_COMMS_TCGMSG_TRUE@clean-pfiles:
 @MSG_COMMS_TCGMSG_TRUE@	find . -name '*.p' -exec rm {} \; ;
 @MSG_COMMS_TCGMSG_TRUE@clean-local: clean-pfiles
