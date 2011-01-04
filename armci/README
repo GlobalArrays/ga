@@ -372,20 +372,3 @@ HP-UX
 In most HP-UX/11 installations, the default limit  for the largest shared
 memory segment is 64MB. A system administrator should be able to.
 
-Issues related to Myrinet
-+++++++++++++++++++++++++
-
-- On Linux/x86 clusters with Myrinet, the release of GM 1.4 leads to hangs in
-  ARMCI and GA. This problem has been solved  in GM 1.4.1pre6 which is
-  available on the Myricom ftp site. Versions 1.2, 1.3, 1.4pre48 of GM do not
-  have that problem. 
-- With MPICH/GM versions >1.2.3, the GM version 1.4.1pre14 or higher must be
-  used.
-
-Polling mode in GM and VIA
-++++++++++++++++++++++++++
-
-- When ARMCI is run with GM or VIA as the network, defining the variable
-  ARMCI_POLLING_RECV would use polling instead of blocking to receive data.
-
-vim:tw=78:ts=4:ft=help:norl:
