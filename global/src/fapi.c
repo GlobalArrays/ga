@@ -3469,7 +3469,7 @@ void FATR ga_diag_reuse_(Integer * reuse, Integer * g_a, Integer * g_s,
 
 void FATR ga_lu_solve_alt_(Integer *tran, Integer * g_a, Integer * g_b)
 {
-    wnga_lu_solve_alt(tran, g_a, g_b);
+    wnga_lu_solve_alt(*tran, *g_a, *g_b);
 }
 
 void FATR ga_lu_solve_(
@@ -3480,22 +3480,22 @@ void FATR ga_lu_solve_(
 #endif
         )
 {
-    wnga_lu_solve(tran, g_a, g_b);
+    wnga_lu_solve(tran, *g_a, *g_b);
 }
 
 Integer FATR ga_llt_solve_(Integer * g_a, Integer * g_b)
 {
-    return wnga_llt_solve(g_a, g_b);
+    return wnga_llt_solve(*g_a, *g_b);
 }
 
 Integer FATR ga_solve_(Integer * g_a, Integer * g_b)
 {
-    return wnga_solve(g_a, g_b);
+    return wnga_solve(*g_a, *g_b);
 }
 
 Integer FATR ga_spd_invert_(Integer * g_a)
 {
-    return wnga_spd_invert(g_a);
+    return wnga_spd_invert(*g_a);
 }
 
 /* Routines from DP.c */

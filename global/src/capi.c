@@ -3978,7 +3978,7 @@ void GA_Lu_solve(char tran, int g_a, int g_b)
     if(tran == 't' || tran == 'T') t = 1;
     else t = 0;
 
-    wnga_lu_solve_alt(&t, &a, &b);
+    wnga_lu_solve_alt(t, a, b);
 }
 
 int GA_Llt_solve(int g_a, int g_b)
@@ -3987,7 +3987,7 @@ int GA_Llt_solve(int g_a, int g_b)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
 
-    res = wnga_llt_solve(&a, &b);
+    res = wnga_llt_solve(a, b);
 
     return((int)res);
 }
@@ -3998,7 +3998,7 @@ int GA_Solve(int g_a, int g_b)
     Integer a = (Integer)g_a;
     Integer b = (Integer)g_b;
 
-    res = wnga_solve(&a, &b);
+    res = wnga_solve(a, b);
 
     return((int)res);
 }
@@ -4008,7 +4008,7 @@ int GA_Spd_invert(int g_a)
     Integer res;
     Integer a = (Integer)g_a;
 
-    res = wnga_spd_invert(&a);
+    res = wnga_spd_invert(a);
 
     return((int)res);
 }

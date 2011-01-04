@@ -345,11 +345,11 @@ extern void pnga_diag_reuse(Integer reuse, Integer g_a, Integer g_s, Integer g_v
 
 /* Routines from sclstubs.c */
 
-extern void pnga_lu_solve_alt(Integer *tran, Integer * g_a, Integer * g_b);
-extern void pnga_lu_solve(char *tran, Integer * g_a, Integer * g_b);
-extern Integer pnga_llt_solve(Integer * g_a, Integer * g_b);
-extern Integer pnga_solve(Integer * g_a, Integer * g_b);
-extern Integer pnga_spd_invert(Integer * g_a);
+extern void pnga_lu_solve_alt(Integer tran, Integer g_a, Integer g_b);
+extern void pnga_lu_solve(char *tran, Integer g_a, Integer g_b);
+extern Integer pnga_llt_solve(Integer g_a, Integer g_b);
+extern Integer pnga_solve(Integer g_a, Integer g_b);
+extern Integer pnga_spd_invert(Integer g_a);
 
 /* Routines from DP.c */
 
