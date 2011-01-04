@@ -334,8 +334,8 @@ extern void pnga_matmul_patch(char *transa, char *transb, void *alpha, void *bet
 
 /* Routines from ga_diag_seqc.c */
 
-extern void pnga_diag_seq(Integer *g_a, Integer *g_s, Integer *g_v, DoublePrecision *eval);
-extern void pnga_diag_std_seq(Integer * g_a, Integer * g_v, DoublePrecision *eval);
+extern void pnga_diag_seq(Integer g_a, Integer g_s, Integer g_v, DoublePrecision *eval);
+extern void pnga_diag_std_seq(Integer g_a, Integer g_v, DoublePrecision *eval);
 
 /* Routines from peigstubs.c */
 

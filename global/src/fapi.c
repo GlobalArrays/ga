@@ -3439,12 +3439,12 @@ SET_GEMM_INDICES;
 
 void FATR ga_diag_seq_(Integer *g_a, Integer *g_s, Integer *g_v, DoublePrecision *eval)
 {
-    wnga_diag_seq(g_a, g_s, g_v, eval);
+    wnga_diag_seq(*g_a, *g_s, *g_v, eval);
 }
 
 void FATR ga_diag_std_seq_(Integer * g_a, Integer * g_v, DoublePrecision *eval)
 {
-    wnga_diag_std_seq(g_a, g_v, eval);
+    wnga_diag_std_seq(*g_a, *g_v, eval);
 }
 
 /* Routines from peigstubs.c */

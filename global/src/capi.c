@@ -3930,7 +3930,7 @@ void GA_Diag_seq(int g_a, int g_s, int g_v, void *eval)
     Integer s = (Integer)g_s;
     Integer v = (Integer)g_v;
 
-    wnga_diag_seq(&a, &s, &v, eval);
+    wnga_diag_seq(a, s, v, eval);
 }
 
 void GA_Diag_std_seq(int g_a, int g_v, void *eval)
@@ -3938,7 +3938,7 @@ void GA_Diag_std_seq(int g_a, int g_v, void *eval)
     Integer a = (Integer)g_a;
     Integer v = (Integer)g_v;
 
-    wnga_diag_std_seq(&a, &v, eval);
+    wnga_diag_std_seq(a, v, eval);
 }
 
 void GA_Diag(int g_a, int g_s, int g_v, void *eval)
