@@ -3259,7 +3259,7 @@ void    *alpha, *beta;
 char    *transa, *transb;
 int      alen, blen;
 {
-    wnga_matmul_mirrored(transa, transb, alpha, beta, g_a, ailo, aihi, ajlo, ajhi, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi);
+    wnga_matmul_mirrored(transa, transb, alpha, beta, *g_a, *ailo, *aihi, *ajlo, *ajhi, *g_b, *bilo, *bihi, *bjlo, *bjhi, *g_c, *cilo, *cihi, *cjlo, *cjhi);
 }
 
 void FATR nga_matmul_patch_(
@@ -3270,7 +3270,7 @@ void FATR nga_matmul_patch_(
 #endif
         )
 {
-    wnga_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi);
+    wnga_matmul_patch(transa, transb, alpha, beta, *g_a, alo, ahi, *g_b, blo, bhi, *g_c, clo, chi);
 }
 
 void FATR ga_matmul_patch_(
@@ -3293,15 +3293,15 @@ Integer clo[2], chi[2];
 #else
     if(pnga_is_mirrored(*g_a))
        wnga_matmul_mirrored(transa, transb, (void*)alpha, (void*)beta,
-                  g_a, ailo, aihi, ajlo, ajhi,
-                  g_b, bilo, bihi, bjlo, bjhi,
-                  g_c, cilo, cihi, cjlo, cjhi);
+                  *g_a, *ailo, *aihi, *ajlo, *ajhi,
+                  *g_b, *bilo, *bihi, *bjlo, *bjhi,
+                  *g_c, *cilo, *cihi, *cjlo, *cjhi);
     else {
        gai_matmul_patch_flag(SET);
        wnga_matmul(transa, transb, (void*)alpha, (void*)beta,
-             g_a, ailo, aihi, ajlo, ajhi,
-             g_b, bilo, bihi, bjlo, bjhi,
-             g_c, cilo, cihi, cjlo, cjhi);
+             *g_a, *ailo, *aihi, *ajlo, *ajhi,
+             *g_b, *bilo, *bihi, *bjlo, *bjhi,
+             *g_c, *cilo, *cihi, *cjlo, *cjhi);
        gai_matmul_patch_flag(UNSET);
     }
 #endif
@@ -3321,7 +3321,7 @@ void    *alpha, *beta;
 char    *transa, *transb;
 int      alen, blen;
 {
-    wnga_matmul(transa, transb, alpha, beta, g_a, ailo, aihi, ajlo, ajhi, g_b, bilo, bihi, bjlo, bjhi, g_c, cilo, cihi, cjlo, cjhi);
+    wnga_matmul(transa, transb, alpha, beta, *g_a, *ailo, *aihi, *ajlo, *ajhi, *g_b, *bilo, *bihi, *bjlo, *bjhi, *g_c, *cilo, *cihi, *cjlo, *cjhi);
 }
 
 /* use ga_dgemm in ga_dgemmf.F as accumulate is sloooow in CRAY_XT */
@@ -3364,9 +3364,9 @@ void FATR GA_DGEMM(
 SET_GEMM_INDICES;
 
  wnga_matmul(transa, transb, alpha, beta,
-       g_a, &ailo, &aihi, &ajlo, &ajhi,
-       g_b, &bilo, &bihi, &bjlo, &bjhi,
-       g_c, &cilo, &cihi, &cjlo, &cjhi);
+       *g_a, ailo, aihi, ajlo, ajhi,
+       *g_b, bilo, bihi, bjlo, bjhi,
+       *g_c, cilo, cihi, cjlo, cjhi);
 }
 
 void FATR ga_cgemm_(
@@ -3386,9 +3386,9 @@ void FATR ga_cgemm_(
 SET_GEMM_INDICES;
 
   wnga_matmul (transa, transb, alpha, beta,
-         g_a, &ailo, &aihi, &ajlo, &ajhi,
-         g_b, &bilo, &bihi, &bjlo, &bjhi,
-         g_c, &cilo, &cihi, &cjlo, &cjhi);
+         *g_a, ailo, aihi, ajlo, ajhi,
+         *g_b, bilo, bihi, bjlo, bjhi,
+         *g_c, cilo, cihi, cjlo, cjhi);
 }
 
 void FATR ga_sgemm_(
@@ -3408,9 +3408,9 @@ void FATR ga_sgemm_(
 SET_GEMM_INDICES;
 
   wnga_matmul (transa, transb, alpha, beta,
-         g_a, &ailo, &aihi, &ajlo, &ajhi,
-         g_b, &bilo, &bihi, &bjlo, &bjhi,
-         g_c, &cilo, &cihi, &cjlo, &cjhi);
+         *g_a, ailo, aihi, ajlo, ajhi,
+         *g_b, bilo, bihi, bjlo, bjhi,
+         *g_c, cilo, cihi, cjlo, cjhi);
 }
 
 void FATR ga_zgemm_(
@@ -3430,9 +3430,9 @@ void FATR ga_zgemm_(
 SET_GEMM_INDICES;
 
   wnga_matmul (transa, transb, alpha, beta,
-         g_a, &ailo, &aihi, &ajlo, &ajhi,
-         g_b, &bilo, &bihi, &bjlo, &bjhi,
-         g_c, &cilo, &cihi, &cjlo, &cjhi);
+         *g_a, ailo, aihi, ajlo, ajhi,
+         *g_b, bilo, bihi, bjlo, bjhi,
+         *g_c, cilo, cihi, cjlo, cjhi);
 }
 
 /* Routines from ga_diag_seqc.c */

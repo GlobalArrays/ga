@@ -2952,9 +2952,9 @@ void GA_Dgemm_c(char ta, char tb, int m, int n, int k,
   Integer cjhi = n;
   
   pnga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
-	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
-	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
-	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
+	    G_a, ailo, aihi, ajlo, ajhi,
+	    G_b, bilo, bihi, bjlo, bjhi,
+	    G_c, cilo, cihi, cjlo, cjhi);
 }
 
 void GA_Zgemm_c(char ta, char tb, int m, int n, int k,
@@ -2981,9 +2981,9 @@ void GA_Zgemm_c(char ta, char tb, int m, int n, int k,
   Integer cjhi = n;
   
   pnga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
-	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
-	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
-	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
+	    G_a, ailo, aihi, ajlo, ajhi,
+	    G_b, bilo, bihi, bjlo, bjhi,
+	    G_c, cilo, cihi, cjlo, cjhi);
 }
 
 void GA_Cgemm_c(char ta, char tb, int m, int n, int k,
@@ -3010,9 +3010,9 @@ void GA_Cgemm_c(char ta, char tb, int m, int n, int k,
   Integer cjhi = n;
   
   pnga_matmul(&ta, &tb, (float *)&alpha,(float *)&beta,
-	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
-	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
-	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
+	    G_a, ailo, aihi, ajlo, ajhi,
+	    G_b, bilo, bihi, bjlo, bjhi,
+	    G_c, cilo, cihi, cjlo, cjhi);
 }
 
 void GA_Sgemm_c(char ta, char tb, int m, int n, int k,
@@ -3039,9 +3039,9 @@ void GA_Sgemm_c(char ta, char tb, int m, int n, int k,
   Integer cjhi = n;
   
   pnga_matmul(&ta, &tb, (float*)&alpha, (float*)&beta,
-	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
-	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
-	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
+	    G_a, ailo, aihi, ajlo, ajhi,
+	    G_b, bilo, bihi, bjlo, bjhi,
+	    G_c, cilo, cihi, cjlo, cjhi);
 }
 
 void GA_Dgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
@@ -3067,9 +3067,9 @@ void GA_Dgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
   Integer cjhi = n;
   
   pnga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
-	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
-	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
-	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
+	    G_a, ailo, aihi, ajlo, ajhi,
+	    G_b, bilo, bihi, bjlo, bjhi,
+	    G_c, cilo, cihi, cjlo, cjhi);
 }
 
 void GA_Zgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
@@ -3096,9 +3096,9 @@ void GA_Zgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
   Integer cjhi = n;
   
   pnga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
-	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
-	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
-	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
+	    G_a, ailo, aihi, ajlo, ajhi,
+	    G_b, bilo, bihi, bjlo, bjhi,
+	    G_c, cilo, cihi, cjlo, cjhi);
 }
 
 void GA_Cgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
@@ -3125,9 +3125,9 @@ void GA_Cgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
   Integer cjhi = n;
   
   pnga_matmul(&ta, &tb, (float *)&alpha,(float *)&beta,
-	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
-	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
-	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
+	    G_a, ailo, aihi, ajlo, ajhi,
+	    G_b, bilo, bihi, bjlo, bjhi,
+	    G_c, cilo, cihi, cjlo, cjhi);
 }
 
 void GA_Sgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
@@ -3154,9 +3154,9 @@ void GA_Sgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
   Integer cjhi = n;
   
   pnga_matmul(&ta, &tb, (float*)&alpha, (float*)&beta,
-	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
-	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
-	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
+	    G_a, ailo, aihi, ajlo, ajhi,
+	    G_b, bilo, bihi, bjlo, bjhi,
+	    G_c, cilo, cihi, cjlo, cjhi);
 }
 
 /**
@@ -3288,15 +3288,15 @@ void GA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
     Integer Icilo=cilo+1, Icihi=cihi+1, Icjlo=cjlo+1, Icjhi=cjhi+1;
     if(pnga_is_mirrored(Ig_a))
        wnga_matmul_mirrored(&transa, &transb, (void*)alpha, (void*)beta,
-                  &Ig_a, &Iailo, &Iaihi, &Iajlo, &Iajhi,
-                  &Ig_b, &Ibilo, &Ibihi, &Ibjlo, &Ibjhi,
-                  &Ig_c, &Icilo, &Icihi, &Icjlo, &Icjhi);
+                  Ig_a, Iailo, Iaihi, Iajlo, Iajhi,
+                  Ig_b, Ibilo, Ibihi, Ibjlo, Ibjhi,
+                  Ig_c, Icilo, Icihi, Icjlo, Icjhi);
     else {
        gai_matmul_patch_flag(SET);
        wnga_matmul(&transa, &transb, (void*)alpha, (void*)beta,
-             &Ig_a, &Iailo, &Iaihi, &Iajlo, &Iajhi,
-             &Ig_b, &Ibilo, &Ibihi, &Ibjlo, &Ibjhi,
-             &Ig_c, &Icilo, &Icihi, &Icjlo, &Icjhi);
+             Ig_a, Iailo, Iaihi, Iajlo, Iajhi,
+             Ig_b, Ibilo, Ibihi, Ibjlo, Ibjhi,
+             Ig_c, Icilo, Icihi, Icjlo, Icjhi);
        gai_matmul_patch_flag(UNSET);
     }
 #endif
@@ -3326,15 +3326,15 @@ void GA_Matmul_patch64(char transa, char transb, void* alpha, void *beta,
     Integer Icilo=cilo+1, Icihi=cihi+1, Icjlo=cjlo+1, Icjhi=cjhi+1;
     if(pnga_is_mirrored(Ig_a))
        wnga_matmul_mirrored(&transa, &transb, (void*)alpha, (void*)beta,
-                  &Ig_a, &Iailo, &Iaihi, &Iajlo, &Iajhi,
-                  &Ig_b, &Ibilo, &Ibihi, &Ibjlo, &Ibjhi,
-                  &Ig_c, &Icilo, &Icihi, &Icjlo, &Icjhi);
+                  Ig_a, Iailo, Iaihi, Iajlo, Iajhi,
+                  Ig_b, Ibilo, Ibihi, Ibjlo, Ibjhi,
+                  Ig_c, Icilo, Icihi, Icjlo, Icjhi);
     else {
        gai_matmul_patch_flag(SET);
        wnga_matmul(&transa, &transb, (void*)alpha, (void*)beta,
-             &Ig_a, &Iailo, &Iaihi, &Iajlo, &Iajhi,
-             &Ig_b, &Ibilo, &Ibihi, &Ibjlo, &Ibjhi,
-             &Ig_c, &Icilo, &Icihi, &Icjlo, &Icjhi);
+             Ig_a, Iailo, Iaihi, Iajlo, Iajhi,
+             Ig_b, Ibilo, Ibihi, Ibjlo, Ibjhi,
+             Ig_c, Icilo, Icihi, Icjlo, Icjhi);
        gai_matmul_patch_flag(UNSET);
     }
 #endif
@@ -3368,9 +3368,9 @@ void NGA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
     COPYINDEX_C2F(chi,_ga_chi, cndim);
     
     pnga_matmul_patch(&transa, &transb, alpha, beta,
-		     &a, _ga_alo, _ga_ahi,
-		     &b, _ga_blo, _ga_bhi,
-		     &c, _ga_clo, _ga_chi);
+		     a, _ga_alo, _ga_ahi,
+		     b, _ga_blo, _ga_bhi,
+		     c, _ga_clo, _ga_chi);
 }
 
 void NGA_Matmul_patch64(char transa, char transb, void* alpha, void *beta,
@@ -3401,9 +3401,9 @@ void NGA_Matmul_patch64(char transa, char transb, void* alpha, void *beta,
     COPYINDEX_C2F(chi,_ga_chi, cndim);
     
     pnga_matmul_patch(&transa, &transb, alpha, beta,
-		     &a, _ga_alo, _ga_ahi,
-		     &b, _ga_blo, _ga_bhi,
-		     &c, _ga_clo, _ga_chi);
+		     a, _ga_alo, _ga_ahi,
+		     b, _ga_blo, _ga_bhi,
+		     c, _ga_clo, _ga_chi);
 }
 
 int NGA_Idot_patch(int g_a, char t_a, int alo[], int ahi[],
