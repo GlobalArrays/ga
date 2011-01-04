@@ -3947,7 +3947,7 @@ void GA_Diag(int g_a, int g_s, int g_v, void *eval)
     Integer s = (Integer)g_s;
     Integer v = (Integer)g_v;
 
-    wnga_diag(&a, &s, &v, eval);
+    wnga_diag(a, s, v, eval);
 }
 
 void GA_Diag_std(int g_a, int g_v, void *eval)
@@ -3955,7 +3955,7 @@ void GA_Diag_std(int g_a, int g_v, void *eval)
     Integer a = (Integer)g_a;
     Integer v = (Integer)g_v;
 
-    wnga_diag_std(&a, &v, eval);
+    wnga_diag_std(a, v, eval);
 }
 
 void GA_Diag_reuse(int reuse, int g_a, int g_s, int g_v, void *eval)
@@ -3965,7 +3965,7 @@ void GA_Diag_reuse(int reuse, int g_a, int g_s, int g_v, void *eval)
     Integer s = (Integer)g_s;
     Integer v = (Integer)g_v;
 
-    wnga_diag_reuse(&r, &a, &s, &v, eval);
+    wnga_diag_reuse(r, a, s, v, eval);
 }
 
 void GA_Lu_solve(char tran, int g_a, int g_b)

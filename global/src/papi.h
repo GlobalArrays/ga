@@ -339,9 +339,9 @@ extern void pnga_diag_std_seq(Integer g_a, Integer g_v, DoublePrecision *eval);
 
 /* Routines from peigstubs.c */
 
-extern void pnga_diag(Integer * g_a, Integer * g_s, Integer * g_v, DoublePrecision *eval);
-extern void pnga_diag_std(Integer * g_a, Integer * g_v, DoublePrecision *eval);
-extern void pnga_diag_reuse(Integer * reuse, Integer * g_a, Integer * g_s, Integer * g_v, DoublePrecision *eval);
+extern void pnga_diag(Integer g_a, Integer g_s, Integer g_v, DoublePrecision *eval);
+extern void pnga_diag_std(Integer g_a, Integer g_v, DoublePrecision *eval);
+extern void pnga_diag_reuse(Integer reuse, Integer g_a, Integer g_s, Integer g_v, DoublePrecision *eval);
 
 /* Routines from sclstubs.c */
 

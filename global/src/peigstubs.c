@@ -22,10 +22,10 @@ extern gai_diag_reuse_(Integer*,Integer*,Integer*,Integer*,DoublePrecision*);
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_diag = pnga_diag
 #endif
-void pnga_diag(Integer * g_a, Integer * g_s, Integer * g_v, DoublePrecision *eval) {
+void pnga_diag(Integer g_a, Integer g_s, Integer g_v, DoublePrecision *eval) {
 #if ENABLE_PEIGS
 #   if ENABLE_F77
-    gai_diag(g_a, g_s, g_v, eval);
+    gai_diag_(&g_a, &g_s, &g_v, eval);
 #   else
     pnga_error("ga_diag:peigs interfaced, need to configure --enable-f77",0L);
 #   endif
@@ -37,10 +37,10 @@ void pnga_diag(Integer * g_a, Integer * g_s, Integer * g_v, DoublePrecision *eva
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_diag_std = pnga_diag_std
 #endif
-void pnga_diag_std(Integer * g_a, Integer * g_v, DoublePrecision *eval) {
+void pnga_diag_std(Integer g_a, Integer g_v, DoublePrecision *eval) {
 #if ENABLE_PEIGS
 #   if ENABLE_F77
-    gai_diag_std(g_a, g_v, eval);
+    gai_diag_std_(&g_a, &g_v, eval);
 #   else
     pnga_error("ga_diag:peigs interfaced, need to configure --enable-f77",0L);
 #   endif
@@ -52,11 +52,11 @@ void pnga_diag_std(Integer * g_a, Integer * g_v, DoublePrecision *eval) {
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_diag_reuse = pnga_diag_reuse
 #endif
-void pnga_diag_reuse(Integer * reuse, Integer * g_a, Integer * g_s, 
-		   Integer * g_v, DoublePrecision *eval) {
+void pnga_diag_reuse(Integer reuse, Integer g_a, Integer g_s, 
+		   Integer g_v, DoublePrecision *eval) {
 #if ENABLE_PEIGS
 #   if ENABLE_F77
-    gai_diag_reuse(reuse, g_a, g_s, g_v, eval);
+    gai_diag_reuse_(&reuse, &g_a, &g_s, &g_v, eval);
 #   else
     pnga_error("ga_diag:peigs interfaced, need to configure --enable-f77",0L);
 #   endif

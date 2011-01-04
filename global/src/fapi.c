@@ -3451,18 +3451,18 @@ void FATR ga_diag_std_seq_(Integer * g_a, Integer * g_v, DoublePrecision *eval)
 
 void FATR ga_diag_(Integer * g_a, Integer * g_s, Integer * g_v, DoublePrecision *eval)
 {
-    wnga_diag(g_a, g_s, g_v, eval);
+    wnga_diag(*g_a, *g_s, *g_v, eval);
 }
 
 void FATR ga_diag_std_(Integer * g_a, Integer * g_v, DoublePrecision *eval)
 {
-    wnga_diag_std(g_a, g_v, eval);
+    wnga_diag_std(*g_a, *g_v, eval);
 }
 
 void FATR ga_diag_reuse_(Integer * reuse, Integer * g_a, Integer * g_s,
            Integer * g_v, DoublePrecision *eval)
 {
-    wnga_diag_reuse(reuse, g_a, g_s, g_v, eval);
+    wnga_diag_reuse(*reuse, *g_a, *g_s, *g_v, eval);
 }
 
 /* Routines from sclstubs.c */
