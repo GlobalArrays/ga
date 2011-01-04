@@ -3512,7 +3512,7 @@ Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
 char *trans;
 int translen;
 {
-    wnga_copy_patch_dp(trans,g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi);
+    wnga_copy_patch_dp(trans,*g_a,*ailo,*aihi,*ajlo,*ajhi,*g_b,*bilo,*bihi,*bjlo,*bjhi);
 }
 
 DoublePrecision FATR ga_ddot_patch_dp_(
@@ -3527,7 +3527,7 @@ Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
 char    *t_a, *t_b;                          /* transpose operators */
 int alen, blen;
 {
-    return wnga_ddot_patch_dp(g_a, t_a, ailo, aihi, ajlo, ajhi, g_b, t_b, bilo, bihi, bjlo, bjhi);
+    return wnga_ddot_patch_dp(*g_a, t_a, *ailo, *aihi, *ajlo, *ajhi, *g_b, t_b, *bilo, *bihi, *bjlo, *bjhi);
 }
 
 /* Routines from ga_ckpt.c */

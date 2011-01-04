@@ -353,8 +353,8 @@ extern Integer pnga_spd_invert(Integer g_a);
 
 /* Routines from DP.c */
 
-extern void pnga_copy_patch_dp(char *t_a, Integer *g_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi);
-extern DoublePrecision pnga_ddot_patch_dp(Integer *g_a, char *t_a, Integer *ailo, Integer *aihi, Integer *ajlo, Integer *ajhi, Integer *g_b, char *t_b, Integer *bilo, Integer *bihi, Integer *bjlo, Integer *bjhi);
+extern void pnga_copy_patch_dp(char *t_a, Integer g_a, Integer ailo, Integer aihi, Integer ajlo, Integer ajhi, Integer g_b, Integer bilo, Integer bihi, Integer bjlo, Integer bjhi);
+extern DoublePrecision pnga_ddot_patch_dp(Integer g_a, char *t_a, Integer ailo, Integer aihi, Integer ajlo, Integer ajhi, Integer g_b, char *t_b, Integer bilo, Integer bihi, Integer bjlo, Integer bjhi);
 
 /* Routines from ga_ckpt.c */
 
