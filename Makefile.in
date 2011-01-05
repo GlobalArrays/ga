@@ -250,11 +250,10 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @ENABLE_CHECKPOINT_TRUE@am__append_33 = global/src/ga_ckpt.c
 @USE_VAMPIR_TRUE@am__append_34 = global/ga_vt.c global/ga_vt.h \
 @USE_VAMPIR_TRUE@	global/src/ga_vampir.c
-@HAVE_LAPACK_TRUE@am__append_35 = global/testing/ga_lu
-@ENABLE_F77_TRUE@am__append_36 = global/testing/bin \
+@ENABLE_F77_TRUE@am__append_35 = global/testing/bin \
 @ENABLE_F77_TRUE@	global/testing/blktest global/testing/d2test \
-@ENABLE_F77_TRUE@	global/testing/ga_lu global/testing/g2test \
-@ENABLE_F77_TRUE@	global/testing/g3test global/testing/ghosts \
+@ENABLE_F77_TRUE@	global/testing/g2test global/testing/g3test \
+@ENABLE_F77_TRUE@	global/testing/ga_lu global/testing/ghosts \
 @ENABLE_F77_TRUE@	global/testing/jacobi \
 @ENABLE_F77_TRUE@	global/testing/mir_perf2 \
 @ENABLE_F77_TRUE@	global/testing/mmatrix \
@@ -273,7 +272,8 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/stride global/testing/testeig \
 @ENABLE_F77_TRUE@	global/testing/testmatmult \
 @ENABLE_F77_TRUE@	global/testing/testsolve global/testing/test
-@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_37 = global/testing/testspd
+@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_36 = global/testing/testspd
+@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_37 = global/testing/ga_lu
 @MSG_COMMS_MPI_TRUE@am__append_38 = global/testing/ga-mpi \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock
 @SYSV_TRUE@am__append_39 = global/testing/ipc_clean
@@ -353,9 +353,7 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 #PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT) # useless test
 #PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test$(EXEEXT) # requires user input
 @ENABLE_F77_TRUE@@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_60 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
-#PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
 #PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
-#PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
 #PARALLEL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/random$(EXEEXT) # takes too long
@@ -363,6 +361,7 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 @ENABLE_F77_TRUE@	global/testing/blktest$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g3test$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/ga_lu$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ghosts$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/jacobi$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mir_perf2$(EXEEXT) \
@@ -386,18 +385,19 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 @ENABLE_F77_TRUE@	global/testing/testsolve$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/test$(EXEEXT)
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_62 = global/testing/testspd$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_63 = global/testing/ga-mpi$(EXEEXT) \
+@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_63 = global/testing/ga_lu$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_64 = global/testing/ga-mpi$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT)
-@SYSV_TRUE@am__append_64 = global/testing/ipc_clean$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_65 = global/testing/nga-onesided$(EXEEXT) \
+@SYSV_TRUE@am__append_65 = global/testing/ipc_clean$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_66 = global/testing/nga-onesided$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/nga-patch$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/nga-periodic$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/nga-scatter$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/nga-scatter$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/nga-util$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ngatest$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_66 = global/examples/boltzmann/boltz$(EXEEXT)
-@CXX_BINDINGS_TRUE@am__append_67 = ga++/testing/elempatch$(EXEEXT) \
+@ENABLE_F77_TRUE@am__append_67 = global/examples/boltzmann/boltz$(EXEEXT)
+@CXX_BINDINGS_TRUE@am__append_68 = ga++/testing/elempatch$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/ntestc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc$(EXEEXT) \
@@ -767,13 +767,12 @@ libga_la_OBJECTS = $(am_libga_la_OBJECTS) $(nodist_libga_la_OBJECTS)
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__EXEEXT_10 = tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT) \
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/test$(EXEEXT)
 @ENABLE_F77_TRUE@@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__EXEEXT_11 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
-@HAVE_LAPACK_TRUE@am__EXEEXT_12 = global/testing/ga_lu$(EXEEXT)
-@ENABLE_F77_TRUE@am__EXEEXT_13 = global/testing/bin$(EXEEXT) \
+@ENABLE_F77_TRUE@am__EXEEXT_12 = global/testing/bin$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/blktest$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/d2test$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/ga_lu$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g3test$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/ga_lu$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ghosts$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/jacobi$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mir_perf2$(EXEEXT) \
@@ -799,7 +798,8 @@ libga_la_OBJECTS = $(am_libga_la_OBJECTS) $(nodist_libga_la_OBJECTS)
 @ENABLE_F77_TRUE@	global/testing/testmatmult$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testsolve$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/test$(EXEEXT)
-@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__EXEEXT_14 = global/testing/testspd$(EXEEXT)
+@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__EXEEXT_13 = global/testing/testspd$(EXEEXT)
+@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__EXEEXT_14 = global/testing/ga_lu$(EXEEXT)
 @MSG_COMMS_MPI_TRUE@am__EXEEXT_15 = global/testing/ga-mpi$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT)
 @SYSV_TRUE@am__EXEEXT_16 = global/testing/ipc_clean$(EXEEXT)
@@ -3245,7 +3245,7 @@ PERL__v_0 = @echo "  PERL  " $@;
 PYTHON_V = $(PYTHON__v_$(V))
 PYTHON__v_ = $(PYTHON__v_$(AM_DEFAULT_VERBOSITY))
 PYTHON__v_0 = @echo "  PYTHON" $@;
-@MSG_COMMS_TCGMSG_TRUE@MAYBE_PFILES = pfiles
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@MAYBE_PFILES = pfiles
 
 ##############################################################################
 # test suite
@@ -3275,11 +3275,11 @@ PARALLEL_TESTS = $(am__append_56) $(am__append_57) $(am__append_58) \
 	global/testing/testmult$(EXEEXT) \
 	global/testing/testmultrect$(EXEEXT) $(am__append_61) \
 	$(am__append_62) $(am__append_63) $(am__append_64) \
-	$(am__append_65) \
+	$(am__append_65) $(am__append_66) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_66) pario/dra/bign$(EXEEXT) \
+	$(am__append_67) pario/dra/bign$(EXEEXT) \
 	pario/dra/ntestc$(EXEEXT) pario/dra/perfn$(EXEEXT) \
-	pario/dra/rate$(EXEEXT) $(am__append_67)
+	pario/dra/rate$(EXEEXT) $(am__append_68)
 PARALLEL_TESTS_XFAIL = 
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
@@ -6079,6 +6079,8 @@ global/testing/g2test.log: global/testing/g2test$(EXEEXT)
 	@p='global/testing/g2test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/g3test.log: global/testing/g3test$(EXEEXT)
 	@p='global/testing/g3test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/ga_lu.log: global/testing/ga_lu$(EXEEXT)
+	@p='global/testing/ga_lu$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ghosts.log: global/testing/ghosts$(EXEEXT)
 	@p='global/testing/ghosts$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/jacobi.log: global/testing/jacobi$(EXEEXT)
@@ -6448,6 +6450,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
+@MSG_COMMS_MPI_TRUE@clean-local:
 @MSG_COMMS_TCGMSG_FALSE@clean-local:
 clean: clean-recursive
 
@@ -6654,14 +6657,14 @@ $(GA_RECURSIVE_TARGETS): all
 	fi; test -z "$$fail"
 
 .PHONY: pfiles clean-pfiles
-@MSG_COMMS_TCGMSG_TRUE@pfiles: $(check_PROGRAMS)
-@MSG_COMMS_TCGMSG_TRUE@	for p in $(check_PROGRAMS); do \
-@MSG_COMMS_TCGMSG_TRUE@		echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
-@MSG_COMMS_TCGMSG_TRUE@	done
-@MSG_COMMS_TCGMSG_TRUE@check: pfiles
-@MSG_COMMS_TCGMSG_TRUE@clean-pfiles:
-@MSG_COMMS_TCGMSG_TRUE@	find . -name '*.p' -exec rm {} \; ;
-@MSG_COMMS_TCGMSG_TRUE@clean-local: clean-pfiles
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@pfiles: $(check_PROGRAMS)
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	for p in $(check_PROGRAMS); do \
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@		echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	done
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@check: pfiles
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@clean-pfiles:
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	find . -name '*.p' -exec rm {} \; ;
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@clean-local: clean-pfiles
 .PHONY: check-ga
 check-ga: $(all-am) $(check_LTLIBRARIES) $(check_PROGRAMS) $(MAYBE_PFILES)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS

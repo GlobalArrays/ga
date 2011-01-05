@@ -4465,6 +4465,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
+@MSG_COMMS_MPI_TRUE@clean-local:
 @MSG_COMMS_TCGMSG_FALSE@clean-local:
 clean: clean-am
 
@@ -4619,14 +4620,14 @@ checkprogs: $(check_PROGRAMS)
 examples: $(EXAMPLES)
 
 .PHONY: pfiles clean-pfiles
-@MSG_COMMS_TCGMSG_TRUE@pfiles: $(check_PROGRAMS)
-@MSG_COMMS_TCGMSG_TRUE@	for p in $(check_PROGRAMS); do \
-@MSG_COMMS_TCGMSG_TRUE@	    echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
-@MSG_COMMS_TCGMSG_TRUE@	done
-@MSG_COMMS_TCGMSG_TRUE@check: pfiles
-@MSG_COMMS_TCGMSG_TRUE@clean-pfiles:
-@MSG_COMMS_TCGMSG_TRUE@	find . -name '*.p' -exec rm {} \; ;
-@MSG_COMMS_TCGMSG_TRUE@clean-local: clean-pfiles
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@pfiles: $(check_PROGRAMS)
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	for p in $(check_PROGRAMS); do \
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	    echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	done
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@check: pfiles
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@clean-pfiles:
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	find . -name '*.p' -exec rm {} \; ;
+@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@clean-local: clean-pfiles
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -638,16 +638,13 @@ check_PROGRAMS += global/testing/testc
 check_PROGRAMS += global/testing/testmatmultc
 check_PROGRAMS += global/testing/testmult
 check_PROGRAMS += global/testing/testmultrect
-if HAVE_LAPACK
-check_PROGRAMS += global/testing/ga_lu
-endif
 if ENABLE_F77
 check_PROGRAMS += global/testing/bin
 check_PROGRAMS += global/testing/blktest
 check_PROGRAMS += global/testing/d2test
-check_PROGRAMS += global/testing/ga_lu
 check_PROGRAMS += global/testing/g2test
 check_PROGRAMS += global/testing/g3test
+check_PROGRAMS += global/testing/ga_lu
 check_PROGRAMS += global/testing/ghosts
 check_PROGRAMS += global/testing/jacobi
 check_PROGRAMS += global/testing/mir_perf2
@@ -676,6 +673,10 @@ check_PROGRAMS += global/testing/test
 if HAVE_SCALAPACK
 check_PROGRAMS += global/testing/testspd
 endif # HAVE_SCALAPACK
+else # !ENABLE_F77
+if HAVE_LAPACK
+check_PROGRAMS += global/testing/ga_lu
+endif
 endif # ENABLE_F77
 if MSG_COMMS_MPI
 check_PROGRAMS += global/testing/ga-mpi
@@ -1280,6 +1281,8 @@ PYTHON__v_0 = @echo "  PYTHON" $@;
 
 .PHONY: pfiles clean-pfiles
 if MSG_COMMS_TCGMSG
+if MSG_COMMS_MPI
+else
 pfiles: $(check_PROGRAMS)
 	for p in $(check_PROGRAMS); do \
 		echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
@@ -1289,7 +1292,8 @@ clean-pfiles:
 	find . -name '*.p' -exec rm {} \; ;
 clean-local: clean-pfiles
 MAYBE_PFILES = pfiles
-endif
+endif # MSG_COMMS_MPI
+endif # MSG_COMMS_TCGMSG
 
 ##############################################################################
 # test suite
@@ -1364,16 +1368,13 @@ PARALLEL_TESTS += global/testing/testc$(EXEEXT)
 PARALLEL_TESTS += global/testing/testmatmultc$(EXEEXT)
 PARALLEL_TESTS += global/testing/testmult$(EXEEXT)
 PARALLEL_TESTS += global/testing/testmultrect$(EXEEXT)
-if HAVE_LAPACK
-#PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
-endif
 if ENABLE_F77
 PARALLEL_TESTS += global/testing/bin$(EXEEXT)
 PARALLEL_TESTS += global/testing/blktest$(EXEEXT)
 #PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
-#PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT) # requires user input
 PARALLEL_TESTS += global/testing/g2test$(EXEEXT)
 PARALLEL_TESTS += global/testing/g3test$(EXEEXT)
+PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT)
 PARALLEL_TESTS += global/testing/ghosts$(EXEEXT)
 PARALLEL_TESTS += global/testing/jacobi$(EXEEXT)
 PARALLEL_TESTS += global/testing/mir_perf2$(EXEEXT)
@@ -1402,6 +1403,10 @@ PARALLEL_TESTS += global/testing/test$(EXEEXT)
 if HAVE_SCALAPACK
 PARALLEL_TESTS += global/testing/testspd$(EXEEXT)
 endif # HAVE_SCALAPACK
+else # !ENABLE_F77
+if HAVE_LAPACK
+PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT)
+endif
 endif # ENABLE_F77
 if MSG_COMMS_MPI
 PARALLEL_TESTS += global/testing/ga-mpi$(EXEEXT)

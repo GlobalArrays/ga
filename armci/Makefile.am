@@ -884,6 +884,8 @@ ARMCI_X86COPY_AS__v_0 = @echo "  GCC   " $@;
 
 .PHONY: pfiles clean-pfiles
 if MSG_COMMS_TCGMSG
+if MSG_COMMS_MPI
+else
 pfiles: $(check_PROGRAMS)
 	for p in $(check_PROGRAMS); do \
 	    echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
@@ -892,7 +894,8 @@ check: pfiles
 clean-pfiles:
 	find . -name '*.p' -exec rm {} \; ;
 clean-local: clean-pfiles
-endif
+endif # MSG_COMMS_MPI
+endif # MSG_COMMS_TCGMSG
 
 ##############################################################################
 # test suite
