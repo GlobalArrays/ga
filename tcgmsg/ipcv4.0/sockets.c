@@ -234,7 +234,7 @@ void CreateSocketAndBind(sock, port)
   the info so that its port number may be advertised
 */
 {
-  int length;
+  unsigned int length;
   struct sockaddr_in server;
   int size = SR_SOCK_BUF_SIZE;
   int on = 1;
@@ -345,7 +345,7 @@ againsel:
     Error("ListenAndAccept: out of select but not ready!", (long) nready);
 
 againacc:
-  msgsock = accept(sock, (struct sockaddr *) NULL, (int *) NULL);
+  msgsock = accept(sock, (struct sockaddr *) NULL, (unsigned int *) NULL);
   if (msgsock == -1) {
     if (errno == EINTR)
       goto againacc;
@@ -423,7 +423,7 @@ againsel:
     Error("ListenAndAccept: out of select but not ready!", (long) nready);
 
 againacc:
-  msgsock = accept(sock, (struct sockaddr *) NULL, (int *) NULL);
+  msgsock = accept(sock, (struct sockaddr *) NULL, (unsigned int *) NULL);
   if (msgsock == -1) {
     if (errno == EINTR)
       goto againacc;
