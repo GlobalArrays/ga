@@ -417,7 +417,7 @@ void test_gop2_or_reduce(const int datatype, char * op, const int reduce_test)
                 for(j = 0; j < len[i]; j++)
                    if(strncmp(op, "+", 1) == 0)
                    {
-                      long compare = 0;
+                      int compare = 0;
                       if(nproc % 2 == 0)
                       {
                          if(j % 2 == 0)
@@ -434,59 +434,59 @@ void test_gop2_or_reduce(const int datatype, char * op, const int reduce_test)
                       }
                       if(((long *) a[i])[j] != compare) 
                       {
-                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
+                         printf("ERROR %s %s %s a[%d][%d] = %ld != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
                          ARMCI_Error("test_gop2_or_reduce failed\n",0);
                       }
                    }
                    else if(strncmp(op, "*", 1) == 0)
                    {
-                      long compare = 1;
-                      long k = 0;
+                      int compare = 1;
+                      int k = 0;
                       for(k = 0; k < nproc; k++)
                          compare *= (k + j) * (((k + j) % 2 == 0) ? 1 : -1);
                       if(((long *) a[i])[j] != compare) 
                       {
-                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
+                         printf("ERROR %s %s %s a[%d][%d] = %ld != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
                          ARMCI_Error("test_gop2_or_reduce failed\n",0);
                       }
                    }
                    else if(strncmp(op, "min", 3) == 0)
                    {
-                      long compare = -(j + nproc - 1);
+                      int compare = -(j + nproc - 1);
                       if(compare % 2 == 0 && nproc > 1)
                          compare = -(j + nproc - 2);
                       if(((long *) a[i])[j] != compare) 
                       {
-                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
+                         printf("ERROR %s %s %s a[%d][%d] = %ld != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
                          ARMCI_Error("test_gop2_or_reduce failed\n",0);
                       }
                    }
                    else if(strncmp(op, "max", 3) == 0)
                    {
-                      long compare = j + nproc - 1;
+                      int compare = j + nproc - 1;
                       if(compare % 2 != 0 && nproc > 1)
                          compare = j + nproc - 2;
                       if(((long *) a[i])[j] != compare) 
                       {
-                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
+                         printf("ERROR %s %s %s a[%d][%d] = %ld != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
                          ARMCI_Error("test_gop2_or_reduce failed\n",0);
                       }
                    }
                    else if(strncmp(op, "absmax", 6) == 0)
                    {
-                      long compare = j + nproc - 1;
+                      int compare = j + nproc - 1;
                       if(((long *) a[i])[j] != compare) 
                       {
-                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
+                         printf("ERROR %s %s %s a[%d][%d] = %ld != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
                          ARMCI_Error("test_gop2_or_reduce failed\n",0);
                       }
                    }
                    else if(strncmp(op, "absmin", 6) == 0)
                    {
-                      long compare = j;
+                      int compare = j;
                       if(((long *) a[i])[j] != compare) 
                       {
-                         printf("ERROR %s %s %s a[%d][%d] = %d != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
+                         printf("ERROR %s %s %s a[%d][%d] = %ld != %d\n", test_type, "ARMCI_LONG", op, i, j, ((long *) a[i])[j], compare);
                          ARMCI_Error("test_gop2_or_reduce failed\n",0);
                       }
                    }

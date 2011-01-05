@@ -42,8 +42,6 @@ int i,mut;
 
 int main(int argc, char* argv[])
 {
-    int ndim;
-
     MP_INIT(argc, argv);
     MP_PROCS(&nproc);
     MP_MYID(&me);
