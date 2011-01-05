@@ -57,7 +57,7 @@ void SYNCH_(type)
 #ifdef GA_USE_VAMPIR
   vampir_begin(TCGMSG_SYNCH,__FILE__,__LINE__);
 #endif
-  IGOP_(type, &junk, &n, "+");
+  IGOP_(type, &junk, &n, "+", 1);
 #ifdef GA_USE_VAMPIR
   vampir_end(TCGMSG_SYNCH,__FILE__,__LINE__);
 #endif

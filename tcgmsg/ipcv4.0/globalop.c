@@ -107,10 +107,11 @@ static void ddoop(n, op, x, work)
 }
 
 /*ARGSUSED*/
-void DGOP_(ptype, x, pn, op)
+void DGOP_(ptype, x, pn, op, len)
      double *x;
      long *ptype, *pn;
      char *op;
+     int len;
 /*
   Global summation optimized for networks of clusters of processes.
 
@@ -199,10 +200,11 @@ void DGOP_(ptype, x, pn, op)
 #endif
 }
 
-void IGOP_(ptype, x, pn, op)
+void IGOP_(ptype, x, pn, op, len)
      long *x;
      long *ptype, *pn;
      char *op;
+     int len;
 /*
   Global summation optimized for networks of clusters of processes.
 
