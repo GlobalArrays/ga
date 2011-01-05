@@ -45,6 +45,13 @@ privately owned rights.
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#if HAVE_WINDOWS_H
+#   include <windows.h>
+#elif HAVE_SYS_TIME_H
+#   include <sys/time.h>
+#else
+#   warning no timer with high enough resolution -- no timers used
+#endif
 
 #include "copy.h"
 
@@ -53,13 +60,44 @@ privately owned rights.
 #define DCOPY1D_N_ F77_FUNC_(dcopy1d_n,DCOPY1D_N)
 #define DCOPY1D_U_ F77_FUNC_(dcopy1d_u,DCOPY1D_U)
 
+#if HAVE_WINDOWS_H
+LARGE_INTEGER frequency;
+double timer_start()
+{
+    LARGE_INTEGER timer;
+    QueryPerformanceCounter(&timer);
+    return timer.QuadPart * 1000.0 / frequency.QuadPart;
+}
+#elif HAVE_SYS_TIME_H
+double timer_start()
+{
+    struct timeval timer;
+    (void)gettimeofday(&timer, NULL);
+    return timer.tv_sec*1000.0 + timer.tv_usec/1000.0;
+}
+#else
+double timer_start()
+{
+    return 0.0;
+}
+#endif
+double timer_end(double begin)
+{
+    return timer_start()-begin;
+}
+
+
 int main(int argc, char** argv)
 {
-    int dim1  = ( argc>1 ? atoi(argv[1]) : 17 );
-    int dim2  = ( argc>2 ? atoi(argv[2]) : 31 );
-    int dim3  = ( argc>3 ? atoi(argv[3]) : 73 );
+    double timer;
+    int dim1  = ( argc>1 ? atoi(argv[1]) : 353 );
+    int dim2  = ( argc>2 ? atoi(argv[2]) : 419 );
+    int dim3  = ( argc>3 ? atoi(argv[3]) : 467 );
 
     printf("testing ARMCI copy routines\n");
+#if __STDC_VERSION__ >= 199901L
+    printf("restrict keyword is used for C routines\n");
+#endif
 
     /*********************************************************/
 
@@ -85,91 +123,139 @@ int main(int argc, char** argv)
 
     /*********************************************************/
 
-    printf("c_dcopy1d_n_ \n");
+    printf("\n");
 
     for (i=0;i<dim1;i++) cout1[i] = -1.0f;
     for (i=0;i<dim1;i++) fout1[i] = -1.0f;
 
-      DCOPY1D_N_(in1, fout1, &dim1);
+    timer = timer_start();
+    DCOPY1D_N_(in1, fout1, &dim1);
+    timer = timer_end(timer);
+    printf("  DCOPY1D_N_ ms = %f\n", timer);
+    timer = timer_start();
     c_dcopy1d_n_(in1, cout1, &dim1);
+    timer = timer_end(timer);
+    printf("c_dcopy1d_n_ ms = %f\n", timer);
     for (i=0 ;i<dim1;i++) assert(cout1[i]==fout1[i]);
 
-    printf("c_dcopy1d_u_ \n");
+    printf("\n");
 
     for (i=0;i<dim1;i++) cout1[i] = -1.0f;
     for (i=0;i<dim1;i++) fout1[i] = -1.0f;
 
-      DCOPY1D_U_(in1, fout1, &dim1);
+    timer = timer_start();
+    DCOPY1D_U_(in1, fout1, &dim1);
+    timer = timer_end(timer);
+    printf("  DCOPY1D_U_ ms = %f\n", timer);
+    timer = timer_start();
     c_dcopy1d_u_(in1, cout1, &dim1);
+    timer = timer_end(timer);
+    printf("c_dcopy1d_u_ ms = %f\n", timer);
     for (i=0 ;i<dim1;i++) assert(cout1[i]==fout1[i]);
 
-    printf("all 1d tests have passed!\n");
+    /*printf("all 1d tests have passed!\n");*/
 
     /*********************************************************/
 
-    printf("c_dcopy2d_n \n");
+    printf("\n");
 
     for (i=0;i<(dim1*dim2);i++) cout2[i] = -1.0f;
     for (i=0;i<(dim1*dim2);i++) fout2[i] = -1.0f;
 
-      DCOPY2D_N_(&dim1,&dim2,in2,&dim1,fout2,&dim1);
+    timer = timer_start();
+    DCOPY2D_N_(&dim1,&dim2,in2,&dim1,fout2,&dim1);
+    timer = timer_end(timer);
+    printf("  DCOPY2D_N_ ms = %f\n", timer);
+    timer = timer_start();
     c_dcopy2d_n_(&dim1,&dim2,in2,&dim1,cout2,&dim1);
+    timer = timer_end(timer);
+    printf("c_dcopy2d_n_ ms = %f\n", timer);
     for (i=0 ;i<(dim1*dim2);i++) assert(cout2[i]==fout2[i]);
 
-    printf("c_dcopy2d_u \n");
+    printf("\n");
 
     for (i=0;i<(dim1*dim2);i++) cout2[i] = -1.0f;
     for (i=0;i<(dim1*dim2);i++) fout2[i] = -1.0f;
 
-      DCOPY2D_U_(&dim1,&dim2,in2,&dim1,fout2,&dim1);
+    timer = timer_start();
+    DCOPY2D_U_(&dim1,&dim2,in2,&dim1,fout2,&dim1);
+    timer = timer_end(timer);
+    printf("  DCOPY2D_U_ ms = %f\n", timer);
+    timer = timer_start();
     c_dcopy2d_u_(&dim1,&dim2,in2,&dim1,cout2,&dim1);
+    timer = timer_end(timer);
+    printf("c_dcopy2d_u_ ms = %f\n", timer);
     for (i=0 ;i<(dim1*dim2);i++) assert(cout2[i]==fout2[i]);
 
-    printf("c_dcopy21 \n");
+    printf("\n");
 
     for (i=0;i<(dim1*dim2);i++) cout2[i] = -1.0f;
     for (i=0;i<(dim1*dim2);i++) fout2[i] = -1.0f;
 
-      DCOPY21 (&dim1,&dim2,in2,&dim1,fout2,&fcur);
+    timer = timer_start();
+    DCOPY21 (&dim1,&dim2,in2,&dim1,fout2,&fcur);
+    timer = timer_end(timer);
+    printf("   DCOPY21 ms = %f\n", timer);
+    timer = timer_start();
     c_dcopy21_(&dim1,&dim2,in2,&dim1,cout2,&ccur);
+    timer = timer_end(timer);
+    printf("c_dcopy21_ ms = %f\n", timer);
     for (i=0 ;i<(dim1*dim2);i++) assert(cout2[i]==fout2[i]);
     assert(ccur==fcur);
 
-    printf("c_dcopy12 \n");
+    printf("\n");
 
     for (i=0;i<(dim1*dim2);i++) cout2[i] = -1.0f;
     for (i=0;i<(dim1*dim2);i++) fout2[i] = -1.0f;
 
-      DCOPY12 (&dim1,&dim2,fout2,&dim1,in2,&fcur);
+    timer = timer_start();
+    DCOPY12 (&dim1,&dim2,fout2,&dim1,in2,&fcur);
+    timer = timer_end(timer);
+    printf("   DCOPY12 ms = %f\n", timer);
+    timer = timer_start();
     c_dcopy12_(&dim1,&dim2,cout2,&dim1,in2,&ccur);
+    timer = timer_end(timer);
+    printf("c_dcopy12_ ms = %f\n", timer);
     for (i=0 ;i<(dim1*dim2);i++) assert(cout2[i]==fout2[i]);
     assert(ccur==fcur);
 
-    printf("all 2d tests have passed!\n");
+    /*printf("all 2d tests have passed!\n");*/
 
     /*********************************************************/
 
-    printf("c_dcopy31 \n");
+    printf("\n");
 
     for (i=0;i<(dim1*dim2*dim3);i++) cout3[i] = -1.0f;
     for (i=0;i<(dim1*dim2*dim3);i++) fout3[i] = -1.0f;
 
-      DCOPY31 (&dim1,&dim2,&dim3,in3,&dim1,&dim2,fout3,&fcur);
+    timer = timer_start();
+    DCOPY31 (&dim1,&dim2,&dim3,in3,&dim1,&dim2,fout3,&fcur);
+    timer = timer_end(timer);
+    printf("   DCOPY31 ms = %f\n", timer);
+    timer = timer_start();
     c_dcopy31_(&dim1,&dim2,&dim3,in3,&dim1,&dim2,cout3,&ccur);
+    timer = timer_end(timer);
+    printf("c_dcopy31_ ms = %f\n", timer);
     for (i=0 ;i<(dim1*dim2*dim3);i++) assert(cout3[i]==fout3[i]);
     assert(ccur==fcur);
 
-    printf("c_dcopy13 \n");
+    printf("\n");
 
     for (i=0;i<(dim1*dim2*dim3);i++) cout3[i] = -1.0f;
     for (i=0;i<(dim1*dim2*dim3);i++) fout3[i] = -1.0f;
 
-      DCOPY13 (&dim1,&dim2,&dim3,fout3,&dim1,&dim2,in3,&fcur);
+    timer = timer_start();
+    DCOPY13 (&dim1,&dim2,&dim3,fout3,&dim1,&dim2,in3,&fcur);
+    timer = timer_end(timer);
+    printf("   DCOPY13 ms = %f\n", timer);
+    timer = timer_start();
     c_dcopy13_(&dim1,&dim2,&dim3,cout3,&dim1,&dim2,in3,&ccur);
+    timer = timer_end(timer);
+    printf("c_dcopy13_ ms = %f\n", timer);
     for (i=0 ;i<(dim1*dim2*dim3);i++) assert(cout3[i]==fout3[i]);
     assert(ccur==fcur);
 
-    printf("all 3d tests have passed!\n");
+    /*printf("all 3d tests have passed!\n");*/
 
     /*********************************************************/
 
