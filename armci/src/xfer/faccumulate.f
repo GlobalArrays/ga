@@ -258,9 +258,9 @@ c
       enddo
       end
 
-      subroutine fort_dmult2(n, x, work,work2)
+      subroutine fort_dmult2(n, x, work, work2)
       integer n,i
-      double precision x(n), work(n)
+      double precision x(n), work(n), work2(n)
       do i= 1,n
          x(i) = work(i)*work2(i)
       enddo

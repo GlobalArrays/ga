@@ -93,10 +93,13 @@ int main(int argc, char** argv)
     int dim1  = ( argc>1 ? atoi(argv[1]) : 353 );
     int dim2  = ( argc>2 ? atoi(argv[2]) : 419 );
     int dim3  = ( argc>3 ? atoi(argv[3]) : 467 );
+#if HAVE_WINDOWS_H
+    QueryPerformanceFrequency(&frequency);
+#endif
 
     printf("testing ARMCI copy routines\n");
 #if __STDC_VERSION__ >= 199901L
-    printf("restrict keyword is used for C routines\n");
+    printf("\nrestrict keyword is used for C routines\n");
 #endif
 
     /*********************************************************/
