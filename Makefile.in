@@ -3245,6 +3245,7 @@ PERL__v_0 = @echo "  PERL  " $@;
 PYTHON_V = $(PYTHON__v_$(V))
 PYTHON__v_ = $(PYTHON__v_$(AM_DEFAULT_VERBOSITY))
 PYTHON__v_0 = @echo "  PYTHON" $@;
+@MSG_COMMS_TCGMSG_TRUE@MAYBE_PFILES = pfiles
 
 ##############################################################################
 # test suite
@@ -6662,7 +6663,7 @@ $(GA_RECURSIVE_TARGETS): all
 @MSG_COMMS_TCGMSG_TRUE@	find . -name '*.p' -exec rm {} \; ;
 @MSG_COMMS_TCGMSG_TRUE@clean-local: clean-pfiles
 .PHONY: check-ga
-check-ga: $(all-am) $(check_LTLIBRARIES) $(check_PROGRAMS)
+check-ga: $(all-am) $(check_LTLIBRARIES) $(check_PROGRAMS) $(MAYBE_PFILES)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

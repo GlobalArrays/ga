@@ -1288,6 +1288,7 @@ check: pfiles
 clean-pfiles:
 	find . -name '*.p' -exec rm {} \; ;
 clean-local: clean-pfiles
+MAYBE_PFILES = pfiles
 endif
 
 ##############################################################################
@@ -1302,7 +1303,7 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(PARALLEL_TESTS_XFAIL)
 TESTS_ENVIRONMENT = \
 maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
 .PHONY: check-ga
-check-ga: $(all-am) $(check_LTLIBRARIES) $(check_PROGRAMS)
+check-ga: $(all-am) $(check_LTLIBRARIES) $(check_PROGRAMS) $(MAYBE_PFILES)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 SERIAL_TESTS =
 SERIAL_TESTS_XFAIL =
