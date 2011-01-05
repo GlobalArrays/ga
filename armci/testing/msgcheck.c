@@ -176,7 +176,7 @@ int main( int argc, char **argv)
                     "USAGE: 2 <= processes < %d\n", nproc);
         MP_BARRIER();
         MP_FINALIZE();
-        exit(1);
+        exit(0);
     }
 
     if(me == 0){
