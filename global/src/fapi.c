@@ -120,8 +120,8 @@ char* array_name;
   dims[0] = *dim1;
   dims[1] = *dim2;
   ndim = 2;
-  chunk[0] = *chunk1;
-  chunk[1] = *chunk2;
+  chunk[0] = (*chunk1==0)? -1 : *chunk1;
+  chunk[1] = (*chunk2==0)? -1 : *chunk2;
 
   return(wnga_create(*type, ndim, dims, buf, chunk, g_a));
 }
