@@ -597,17 +597,15 @@ int PARMCI_Init()
     return 0;
 }
 
-
+/* ARMCI Finalize is called multiple times, if both GA and TCGMSG are used
+ * */
 void PARMCI_Finalize()
 {
     if(_armci_initialized <= 0 ) {
-        fprintf(stderr,"ARMCI Finalize called multiple times\n");
-        fflush(stderr);
         return;
     }
 
-
-    _armci_initialized=0;
+    _armci_initialized = 0;
 #ifdef ARMCI_PROFILE
     armci_profile_terminate();
 #endif
@@ -624,7 +622,7 @@ void PARMCI_Finalize()
 #if defined(DATA_SERVER)
     if(armci_nclus >1){
         armci_wait_for_server();
-        armci_msg_barrier(); /* need to sync before closing sockets */
+        armci_msg_barrier(); 
     }
 #endif
 
