@@ -35,11 +35,11 @@ gp_array_t *GP;
 void pgp_initialize()
 {
   Integer i;
-  GP = (gp_array_t*)malloc(sizeof(gp_array_t)*MAX_GP_ARRAYS);
+  GP = (gp_array_t*)malloc(sizeof(gp_array_t)*GP_MAX_ARRAYS);
   if (!GP) {
     pnga_error("gp_initialize: malloc GP failed",0);
   }
-  for (i=0; i<MAX_GP_ARRAYS; i++) {
+  for (i=0; i<GP_MAX_ARRAYS; i++) {
     GP[i].active = 0;
   }
 }
@@ -54,10 +54,11 @@ void pgp_initialize()
 void pgp_terminate()
 {
   Integer i;
-  for (i=0; i<MAX_GP_ARRAYS; i++) {
+  for (i=0; i<GP_MAX_ARRAYS; i++) {
     if (GP[i].active) {
-      pnga_destroy(GP[i].gp_size_array);
-      pnga_destroy(GP[i].gp_ptr_array);
+      pnga_destroy(&GP[i].g_size_array);
+      pnga_destroy(&GP[i].g_ptr_array);
+      GP[i].active = 0;
     }
   }
 }
@@ -72,11 +73,11 @@ void pgp_terminate()
 Integer pgp_create_handle()
 {
   Integer i, handle=-GP_OFFSET-1;
-  for (i=0; i<MAX_GP_ARRAYS; i++) {
+  for (i=0; i<GP_MAX_ARRAYS; i++) {
     if (!GP[i].active) {
       handle = i-GP_OFFSET;
-      GP[i].gp_size_array = pnga_create_handle();
-      GP[i].gp_ptr_array = pnga_create_handle();
+      GP[i].g_size_array = pnga_create_handle();
+      GP[i].g_ptr_array = pnga_create_handle();
       break;
     }
   }
@@ -102,7 +103,7 @@ void pgp_set_dimensions(Integer *g_p, Integer *ndim, Integer *dims)
   if (!GP[handle].active) {
     pnga_error("gp_set_dimensions: Global Pointer handle is not active", 0);
   }
-  if (*ndim < 0 || *ndim > MAX_GP_DIM) {
+  if (*ndim < 0 || *ndim > GP_MAX_DIM) {
     pnga_error("gp_set_dimensions: dimension is not valid", *ndim);
   }
   for (i=0; i<*ndim; i++) {
@@ -112,9 +113,9 @@ void pgp_set_dimensions(Integer *g_p, Integer *ndim, Integer *dims)
   }
 
   type = C_INT;
-  pnga_set_data(GP[handle].gp_size_array, *ndim, dims, type);
+  pnga_set_data(&GP[handle].g_size_array, ndim, dims, &type);
   type = GP_POINTER_TYPE;
-  pnga_set_data(GP[handle].gp_ptr_array, *ndim, dims, type);
+  pnga_set_data(&GP[handle].g_ptr_array, ndim, dims, &type);
   GP[handle].ndim = *ndim;
   for (i=0; i<*ndim; i++) {
     GP[handle].dims[i] = dims[i];
@@ -135,8 +136,8 @@ void pgp_set_chunk(Integer *g_p, Integer *chunk)
 {
   Integer handle;
   handle = *g_p + GP_OFFSET;
-  pnga_set_chunk(GP[handle].gp_size_array, chunk);
-  pnga_set_chunk(GP[handle].gp_ptr_array, chunk);
+  pnga_set_chunk(&GP[handle].g_size_array, chunk);
+  pnga_set_chunk(&GP[handle].g_ptr_array, chunk);
 }
 
 /**
@@ -152,13 +153,22 @@ logical pgp_allocate(Integer *g_p)
   logical status;
   Integer handle, me;
   handle = *g_p + GP_OFFSET;
-  status = pnga_allocate(GP[handle].gp_size_array);
-  status = status && pnga_allocate(GP[handle].gp_ptr_array);
+  status = pnga_allocate(&GP[handle].g_size_array);
+  status = status && pnga_allocate(&GP[handle].g_ptr_array);
   if (!status) {
      pnga_error("gp_allocate: unable to allocate GP array", 0);
+  } else {
+    me = pnga_nodeid();
+    pnga_distribution(&GP[handle].g_ptr_array, &me, GP[handle].lo,
+                      GP[handle].hi);
+    GP[handle].active = 1;
+    return status;
   }
+  pnga_zero(&GP[handle].g_size_array);
+  pnga_zero(&GP[handle].g_ptr_array);
   me = pnga_nodeid();
-  pnga_distribution(GP[handle].gp_ptr_array, me, GP[handle].lo, GP[handle].hi);
+  pnga_distribution(&GP[handle].g_ptr_array, &me, GP[handle].lo,
+          GP[handle].hi);
   return status;
 }
 
@@ -175,25 +185,59 @@ logical pgp_destroy(Integer *g_p)
   logical status;
   Integer handle;
   handle = *g_p + GP_OFFSET;
-  status = pnga_destroy(GP[handle].gp_size_array);
-  status = status && pnga_destroy(GP[handle].gp_ptr_array);
+  status = pnga_destroy(&GP[handle].g_size_array);
+  status = status && pnga_destroy(&GP[handle].g_ptr_array);
   if (!status) {
-     pnga_error("gp_destroy: unable to destroy GP array", 0);
+    pnga_error("gp_destroy: unable to destroy GP array", 0);
+  } else {
+    GP[handle].active = 0;
+    return status;
   }
   return status;
 }
 
 /**
- * Assign data object to a pointer array element. Pointer array element
- * must be on the same processor as the data object.
+ *  Return coordinates of a GP patch associated with processor proc
+ *  @param[in] g_p                pointer array handle
+ *  @param[in] proc               processor for which patch coordinates
+ *                                are being requested
+ *  @param[out] lo[ndim],hi[ndim] bounding indices of patch
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wgp_distribution = pgp_distribution
+#endif
+void pgp_distribution(Integer *g_p, Integer *proc, Integer *lo, Integer *hi)
+{
+  Integer handle, ndim, i;
+  handle = *g_p + GP_OFFSET;
+  if (pnga_nodeid() == *proc) {
+  } else {
+  }
+}
+
+/**
+ *  Assign data object to a pointer array element. Pointer array element
+ *  must be on the same processor as the data object.
  *  @param[in] g_p             pointer array handle
  *  @param[in] subscript[ndim] location of element in pointer array
  *  @param[in] ptr             ptr to local data ojbect
+ *  @param[in] size            size of local data ojbect
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak wgp_assign_element = pgp_assign_element
+#   pragma weak wgp_assign_local_element = pgp_assign_local_element
 #endif
-void pgp_assign_element(Integer *g_p, Integer *subscript, void *ptr)
+void pgp_assign_local_element(Integer *g_p, Integer *subscript, void *ptr, Integer *size)
 {
-  /* TODO: Implement this method */
+  void *gp_ptr;
+  Integer handle, ld[GP_MAX_DIM-1], i;
+  handle = *g_p + GP_OFFSET;
+  /* check to make sure that element is located in local block of GP array */
+  for (i=0; i<GP[handle].ndim; i++) {
+    if (subscript[i]<GP[handle].lo[i] || subscript[i]>GP[handle].hi[i]) {
+      pnga_error("gp_assign_local_element: subscript out of bounds", i);
+    }
+  }
+  pnga_access_ptr(&GP[handle].g_ptr_array,subscript,subscript,&gp_ptr,ld);
+  *((GP_INT*)gp_ptr) = (GP_INT)ptr;
+/*  pnga_release_update(&GP[handle].g_ptr_array, subscript, subscript); */
 }
