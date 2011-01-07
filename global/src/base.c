@@ -2941,9 +2941,9 @@ Integer i, handle;
     free(mapALL);
     ARMCI_Free_local(GA_Update_Signal);
 
+    pnga_sync();
     ARMCI_Finalize();
     GAinitialized = 0;
-    pnga_sync();
 
 #ifdef USE_VAMPIR
     vampir_end(GA_TERMINATE,__FILE__,__LINE__);
