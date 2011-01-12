@@ -23,6 +23,9 @@
 #include "papi.h"
 #include "gpbase.h"
 
+extern void gpi_onesided_init();
+extern void gpi_onesided_clean();
+
 gp_array_t *GP;
 
 /**
@@ -42,6 +45,7 @@ void pgp_initialize()
   for (i=0; i<GP_MAX_ARRAYS; i++) {
     GP[i].active = 0;
   }
+  gpi_onesided_init();
 }
 
 /**
@@ -56,11 +60,12 @@ void pgp_terminate()
   Integer i;
   for (i=0; i<GP_MAX_ARRAYS; i++) {
     if (GP[i].active) {
-      pnga_destroy(&GP[i].g_size_array);
-      pnga_destroy(&GP[i].g_ptr_array);
+      pnga_destroy(GP[i].g_size_array);
+      pnga_destroy(GP[i].g_ptr_array);
       GP[i].active = 0;
     }
   }
+  gpi_onesided_clean();
 }
 
 /**
@@ -94,30 +99,30 @@ Integer pgp_create_handle()
 #   pragma weak wgp_set_dimensions = pgp_set_dimensions
 #endif
 
-void pgp_set_dimensions(Integer *g_p, Integer *ndim, Integer *dims)
+void pgp_set_dimensions(Integer g_p, Integer ndim, Integer *dims)
 {
   Integer handle, i, type;
-  handle = *g_p + GP_OFFSET;
+  handle = g_p + GP_OFFSET;
 
   /* Do some basic checks on parameters */
   if (!GP[handle].active) {
     pnga_error("gp_set_dimensions: Global Pointer handle is not active", 0);
   }
-  if (*ndim < 0 || *ndim > GP_MAX_DIM) {
-    pnga_error("gp_set_dimensions: dimension is not valid", *ndim);
+  if (ndim < 0 || ndim > GP_MAX_DIM) {
+    pnga_error("gp_set_dimensions: dimension is not valid", ndim);
   }
-  for (i=0; i<*ndim; i++) {
+  for (i=0; i<ndim; i++) {
     if (dims[i] < 0) {
       pnga_error("gp_set_dimensions: invalid dimension found", dims[i]);
     }
   }
 
   type = C_INT;
-  pnga_set_data(&GP[handle].g_size_array, ndim, dims, &type);
+  pnga_set_data(GP[handle].g_size_array, ndim, dims, type);
   type = GP_POINTER_TYPE;
-  pnga_set_data(&GP[handle].g_ptr_array, ndim, dims, &type);
-  GP[handle].ndim = *ndim;
-  for (i=0; i<*ndim; i++) {
+  pnga_set_data(GP[handle].g_ptr_array, ndim, dims, type);
+  GP[handle].ndim = ndim;
+  for (i=0; i<ndim; i++) {
     GP[handle].dims[i] = dims[i];
   }
 }
@@ -132,12 +137,12 @@ void pgp_set_dimensions(Integer *g_p, Integer *ndim, Integer *dims)
 #   pragma weak wgp_set_chunk = pgp_set_chunk
 #endif
 
-void pgp_set_chunk(Integer *g_p, Integer *chunk)
+void pgp_set_chunk(Integer g_p, Integer *chunk)
 {
   Integer handle;
-  handle = *g_p + GP_OFFSET;
-  pnga_set_chunk(&GP[handle].g_size_array, chunk);
-  pnga_set_chunk(&GP[handle].g_ptr_array, chunk);
+  handle = g_p + GP_OFFSET;
+  pnga_set_chunk(GP[handle].g_size_array, chunk);
+  pnga_set_chunk(GP[handle].g_ptr_array, chunk);
 }
 
 /**
@@ -148,27 +153,25 @@ void pgp_set_chunk(Integer *g_p, Integer *chunk)
 #   pragma weak wgp_allocate = pgp_allocate
 #endif
 
-logical pgp_allocate(Integer *g_p)
+logical pgp_allocate(Integer g_p)
 {
   logical status;
-  Integer handle, me;
-  handle = *g_p + GP_OFFSET;
-  status = pnga_allocate(&GP[handle].g_size_array);
-  status = status && pnga_allocate(&GP[handle].g_ptr_array);
+  Integer handle, me, i;
+  handle = g_p + GP_OFFSET;
+  status = pnga_allocate(GP[handle].g_size_array);
+  status = status && pnga_allocate(GP[handle].g_ptr_array);
   if (!status) {
-     pnga_error("gp_allocate: unable to allocate GP array", 0);
-  } else {
-    me = pnga_nodeid();
-    pnga_distribution(&GP[handle].g_ptr_array, &me, GP[handle].lo,
-                      GP[handle].hi);
-    GP[handle].active = 1;
-    return status;
+    pnga_error("gp_allocate: unable to allocate GP array", 0);
   }
-  pnga_zero(&GP[handle].g_size_array);
-  pnga_zero(&GP[handle].g_ptr_array);
+  pnga_zero(GP[handle].g_size_array);
+  pnga_zero(GP[handle].g_ptr_array);
   me = pnga_nodeid();
-  pnga_distribution(&GP[handle].g_ptr_array, &me, GP[handle].lo,
+  pnga_distribution(GP[handle].g_ptr_array, me, GP[handle].lo,
           GP[handle].hi);
+  GP[handle].active = 1;
+  for (i=0; i<GP[handle].ndim-1; i++) {
+    GP[handle].ld[i] = GP[handle].hi[i] - GP[handle].lo[i] + 1;
+  }
   return status;
 }
 
@@ -180,19 +183,17 @@ logical pgp_allocate(Integer *g_p)
 #   pragma weak wgp_destroy = pgp_destroy
 #endif
 
-logical pgp_destroy(Integer *g_p)
+logical pgp_destroy(Integer g_p)
 {
   logical status;
   Integer handle;
-  handle = *g_p + GP_OFFSET;
-  status = pnga_destroy(&GP[handle].g_size_array);
-  status = status && pnga_destroy(&GP[handle].g_ptr_array);
+  handle = g_p + GP_OFFSET;
+  status = pnga_destroy(GP[handle].g_size_array);
+  status = status && pnga_destroy(GP[handle].g_ptr_array);
   if (!status) {
     pnga_error("gp_destroy: unable to destroy GP array", 0);
-  } else {
-    GP[handle].active = 0;
-    return status;
   }
+  GP[handle].active = 0;
   return status;
 }
 
@@ -206,12 +207,18 @@ logical pgp_destroy(Integer *g_p)
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wgp_distribution = pgp_distribution
 #endif
-void pgp_distribution(Integer *g_p, Integer *proc, Integer *lo, Integer *hi)
+
+void pgp_distribution(Integer g_p, Integer proc, Integer *lo, Integer *hi)
 {
   Integer handle, ndim, i;
-  handle = *g_p + GP_OFFSET;
-  if (pnga_nodeid() == *proc) {
+  handle = g_p + GP_OFFSET;
+  if (pnga_nodeid() == proc) {
+    for (i=0; i<ndim; i++) {
+      lo[i] = GP[handle].lo[i];
+      hi[i] = GP[handle].hi[i];
+    }
   } else {
+    pnga_distribution(GP[handle].g_ptr_array, proc, lo, hi);
   }
 }
 
@@ -226,11 +233,11 @@ void pgp_distribution(Integer *g_p, Integer *proc, Integer *lo, Integer *hi)
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wgp_assign_local_element = pgp_assign_local_element
 #endif
-void pgp_assign_local_element(Integer *g_p, Integer *subscript, void *ptr, Integer *size)
+void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Integer size)
 {
   void *gp_ptr;
   Integer handle, ld[GP_MAX_DIM-1], i;
-  handle = *g_p + GP_OFFSET;
+  handle = g_p + GP_OFFSET;
   /* check to make sure that element is located in local block of GP array */
   for (i=0; i<GP[handle].ndim; i++) {
     if (subscript[i]<GP[handle].lo[i] || subscript[i]>GP[handle].hi[i]) {
