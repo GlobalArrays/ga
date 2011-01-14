@@ -825,13 +825,14 @@ int local_sync_begin,local_sync_end;
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 
-
    GA_PUSH_NAME("ga_add");
    a_grp = pnga_get_pgroup(g_a);
    b_grp = pnga_get_pgroup(g_b);
    c_grp = pnga_get_pgroup(g_c);
    if (a_grp != b_grp || b_grp != c_grp)
      pnga_error("All three arrays must be on same group for ga_add",0L);
+
+   if(local_sync_begin)pnga_pgroup_sync(a_grp);
 
    me = pnga_pgroup_nodeid(a_grp);
    if((pnga_compare_distr(g_a,g_b) == FALSE) ||

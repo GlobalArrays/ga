@@ -433,13 +433,13 @@ static void gather_solution_vector(double **svec) {
 static void test_sparse() {
   
     int *col_ind[MAXPROC];
-    double *values[MAXPROC], *vec[MAXPROC], *svec[MAXPROC], start_time;
+    double *values[MAXPROC], *vec[MAXPROC], *svec[MAXPROC]/*, start_time*/;
     int n, non_zero, *row_ind;
 
     sparse_initialize(&n, &non_zero, &row_ind, col_ind, values, vec, svec);
     MP_BARRIER();
 
-    start_time = MP_TIMER();
+    /*start_time = MP_TIMER();*/
     sparse_multiply(n, non_zero, row_ind, col_ind, values, vec, svec);
     /* printf("%d: Timetaken = %lf\n", me, MP_TIMER()-start_time); */
     MP_BARRIER();

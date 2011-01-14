@@ -281,14 +281,11 @@ double time_acc(double *src_buf, double *dst_buf, int chunk, int loop,
 void test_1D()
 {
     int i;
-    int src, dst;
+    int dst;
     int ierr;
     double *buf = NULL;
     void *ptr[MAXPROC], *get_ptr[MAXPROC];
 
-    /* find who I am and the dst process */
-    src = me;
-    
     /* memory allocation */
 #ifdef MALLOC_LOC 
     if(me == 0) {
@@ -390,14 +387,11 @@ void test_1D()
 void test_2D()
 {
     int i;
-    int src, dst;
+    int dst;
     int ierr;
     double *buf = NULL;
     void *ptr[MAXPROC], *get_ptr[MAXPROC];
 
-    /* find who I am and the dst process */
-    src = me;
-    
 #ifdef MALLOC_LOC
     if(me == 0) {
         buf = (double *)ARMCI_Malloc_local(SIZE * SIZE * sizeof(double));

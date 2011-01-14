@@ -2316,28 +2316,30 @@ int NGA_Locate64(int g_a, int64_t subscript[])
 
 int NGA_Locate_nnodes(int g_a, int lo[], int hi[])
 {
-     logical st;
+     /* logical st; */
      Integer a=(Integer)g_a, np;
      Integer ndim = wnga_ndim(a);
      Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
 
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
-     st = wnga_locate_nnodes(a, _ga_lo, _ga_hi, &np);
+     /* st = wnga_locate_nnodes(a, _ga_lo, _ga_hi, &np); */
+     (void)wnga_locate_nnodes(a, _ga_lo, _ga_hi, &np);
      return (int)np;
 }
 
 
 int NGA_Locate_nnodes64(int g_a, int64_t lo[], int64_t hi[])
 {
-     logical st;
+     /* logical st; */
      Integer a=(Integer)g_a, np;
      Integer ndim = wnga_ndim(a);
      Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM];
 
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
-     st = wnga_locate_nnodes(a, _ga_lo, _ga_hi, &np);
+     /* st = wnga_locate_nnodes(a, _ga_lo, _ga_hi, &np); */
+     (void)wnga_locate_nnodes(a, _ga_lo, _ga_hi, &np);
      return (int)np;
 }
 

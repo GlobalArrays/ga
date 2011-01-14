@@ -531,7 +531,7 @@ void pnga_median_patch(
         pnga_release_update (g_M, loM, hiM);
       }
     } else {
-      Integer idx, lod[MAXDIM], hid[MAXDIM];
+      Integer idx, lod[MAXDIM]/*, hid[MAXDIM]*/;
       Integer jtot, last, nproc;
       /* Simple block-cyclic data distribution */
       if (!pnga_uses_proc_grid(g_m)) {
@@ -542,7 +542,7 @@ void pnga_median_patch(
              destroys original versions */
           for (j=0; j<mndim; j++) {
             lod[j] = loM[j];
-            hid[j] = hiM[j];
+            /*hid[j] = hiM[j];*/
           }
           if (pnga_patch_intersect(mlo, mhi, loM, hiM, mndim)) {
             pnga_access_block_ptr(g_A, idx, &A_ptr, ldA);
@@ -572,7 +572,7 @@ void pnga_median_patch(
         }
       } else {
         /* Uses scalapack block-cyclic data distribution */
-        Integer lod[MAXDIM], hid[MAXDIM], chk;
+        Integer lod[MAXDIM]/*, hid[MAXDIM], chk*/;
         Integer proc_index[MAXDIM], index[MAXDIM];
         Integer topology[MAXDIM];
         Integer blocks[MAXDIM], block_dims[MAXDIM];
@@ -583,18 +583,18 @@ void pnga_median_patch(
 
         while (index[mndim-1] < blocks[mndim-1]) {
           /* find bounding coordinates of block */
-          chk = 1;
+          /*chk = 1;*/
           for (i = 0; i < mndim; i++) {
             loM[i] = index[i]*block_dims[i]+1;
             hiM[i] = (index[i] + 1)*block_dims[i];
             if (hiM[i] > mdims[i]) hiM[i] = mdims[i];
-            if (hiM[i] < loM[i]) chk = 0;
+            /*if (hiM[i] < loM[i]) chk = 0;*/
           }
           /* make temporary copies of loC and hiC since pnga_patch_intersect
              destroys original versions */
           for (j=0; j<mndim; j++) {
             lod[j] = loM[j];
-            hid[j] = hiM[j];
+            /*hid[j] = hiM[j];*/
           }
           if (pnga_patch_intersect(mlo, mhi, loM, hiM, mndim)) {
             pnga_access_block_grid_ptr(g_A, index, &A_ptr, ldA);
@@ -695,7 +695,7 @@ static void sgai_norm_infinity_block(Integer g_a, void *ptr,
                              Integer type,
                              Integer ndim, Integer *dims, void *buf)
 {
-  Integer size, nelem, dim2;
+  /*Integer size, nelem, dim2;*/
   Integer iloA=0, ihiA=0, jloA=0, jhiA=0;
   Integer i, j;
   int *isum = NULL;
@@ -705,6 +705,7 @@ static void sgai_norm_infinity_block(Integer g_a, void *ptr,
   DoubleComplex *zsum = NULL;
   SingleComplex *csum = NULL;
 
+  /*
   if (ndim == 1)
     dim2 = 1;
   else if (ndim == 2)
@@ -712,6 +713,7 @@ static void sgai_norm_infinity_block(Integer g_a, void *ptr,
 
   size = GAsizeof(type);
   nelem = dim2;
+  */
 
   switch (type)
   {
@@ -828,7 +830,7 @@ static void sgai_norm_infinity_block(Integer g_a, void *ptr,
 #endif
 void pnga_norm_infinity(Integer g_a, double *nm)
 {
-  Integer dim1, dim2, type, size, nelem;
+  Integer dim1/*, dim2*/, type, size, nelem;
   Integer me = pnga_nodeid (), i, j, nproc = pnga_nnodes();
   Integer ndim, dims[MAXDIM], lo[2], hi[2], ld;
   Integer num_blocks_a;
@@ -856,11 +858,13 @@ void pnga_norm_infinity(Integer g_a, double *nm)
   dim1 = dims[0];
   if(ndim<=0)
     pnga_error("ga_norm_infinity: wrong dimension", ndim);
+  /*
   else if(ndim == 1)
     dim2 = 1;
   else if(ndim==2)  
     dim2 = dims[1];
-  else
+  */
+  else if (ndim >= 3)
     pnga_error("ga_norm_infinity: wrong dimension", ndim);
 
 
@@ -1032,7 +1036,7 @@ void pnga_norm_infinity(Integer g_a, double *nm)
   buf = NULL;
 
   GA_POP_NAME;
-  pnga_sync ();
+  if (local_sync_end)pnga_sync();
 }
 
 static void sgai_norm1_block(Integer g_a, void *ptr,
@@ -1040,7 +1044,7 @@ static void sgai_norm1_block(Integer g_a, void *ptr,
                      Integer type,
                      Integer ndim, Integer *dims, void *buf)
 {
-  Integer size, nelem, dim2;
+  /*Integer size, nelem, dim2*/;
   Integer iloA=0, ihiA=0, jloA=0, jhiA=0;
   Integer i, j;
   int *isum = NULL;
@@ -1050,6 +1054,7 @@ static void sgai_norm1_block(Integer g_a, void *ptr,
   DoubleComplex *zsum = NULL;
   SingleComplex *csum = NULL;
 
+  /*
   if(ndim == 1) 
     dim2 = 1;
   else if(ndim == 2) 
@@ -1057,6 +1062,7 @@ static void sgai_norm1_block(Integer g_a, void *ptr,
 
   size = GAsizeof (type);
   nelem = dim2;
+  */
 
   switch (type)
   {
@@ -1175,7 +1181,7 @@ static void sgai_norm1_block(Integer g_a, void *ptr,
 #endif
 void pnga_norm1(Integer g_a, double *nm)
 {
-  Integer dim1=0, dim2=0, type=0, size=0, nelem=0;
+  Integer /*dim1=0,*/ dim2=0, type=0, size=0, nelem=0;
   Integer me = pnga_nodeid (), i, j, nproc = pnga_nnodes();
   Integer ndim, dims[MAXDIM], lo[2], hi[2], ld; 
   Integer num_blocks_a;
@@ -1199,7 +1205,7 @@ void pnga_norm1(Integer g_a, double *nm)
   pnga_inquire (g_a, &type, &ndim, dims);
 
 
-  dim1 = dims[0];
+  /*dim1 = dims[0];*/
   if(ndim<=0)
     pnga_error("ga_norm1: wrong dimension", ndim);
   else if(ndim == 1) 
@@ -1377,7 +1383,7 @@ void pnga_norm1(Integer g_a, double *nm)
   buf = NULL;
 
   GA_POP_NAME;
-  pnga_sync ();
+  if(local_sync_end)pnga_sync();
 }
 
 static void sgai_get_diagonal_block(Integer g_a, void *ptr, Integer g_v,
@@ -2042,7 +2048,7 @@ void pnga_set_diagonal(Integer g_a, Integer g_v)
   }
 
   GA_POP_NAME;
-  if(local_sync_begin)pnga_sync();
+  if(local_sync_end)pnga_sync();
 }
 
 static void sgai_shift_diagonal_block(Integer g_a, void *ptr, Integer *loA, Integer *hiA,
@@ -2144,7 +2150,7 @@ static void sgai_shift_diagonal_block(Integer g_a, void *ptr, Integer *loA, Inte
 #endif
 void pnga_shift_diagonal(Integer g_a, void *c)
 {
-  Integer loA[2], hiA[2], dim1, dim2, ld;
+  Integer loA[2], hiA[2]/*, dim1, dim2*/, ld;
   Integer andim, adims[2], type, atype;
   Integer me = pnga_nodeid (), i, nproc = pnga_nnodes();
   void *ptr;
@@ -2159,8 +2165,8 @@ void pnga_shift_diagonal(Integer g_a, void *c)
   GA_PUSH_NAME ("ga_shift_diagonal_");
 
   pnga_inquire (g_a, &atype, &andim, adims);
-  dim1 = adims[0];
-  dim2 = adims[1];
+  /*dim1 = adims[0];*/
+  /*dim2 = adims[1];*/
   type = atype;
   if (andim != 2) 
     pnga_error("Dimension must be 2 for shift diagonal operation",andim);
@@ -2288,7 +2294,7 @@ static void sgai_zero_diagonal_block(Integer g_a, void *ptr, Integer *lo, Intege
 #endif
 void pnga_zero_diagonal(Integer g_a)
 {
-  Integer dim1, dim2, type;
+  Integer /*dim1, dim2,*/ type;
   Integer ld, lo[2], hi[2], loA[2], hiA[2];
   Integer me = pnga_nodeid (), i, offset;
   void *ptr;
@@ -2303,8 +2309,8 @@ void pnga_zero_diagonal(Integer g_a)
   GA_PUSH_NAME ("ga_zero_diagonal_");
 
   pnga_inquire (g_a, &atype, &andim, adims);
-  dim1 = adims[0];
-  dim2 = adims[1];
+  /*dim1 = adims[0];*/
+  /*dim2 = adims[1];*/
   type = atype;
 
   num_blocks_a = pnga_total_blocks(g_a);
@@ -2356,7 +2362,7 @@ void pnga_zero_diagonal(Integer g_a)
       }
     } else {
       /* Uses scalapack block-cyclic data distribution */
-      Integer lld[MAXDIM], chk;
+      Integer lld[MAXDIM]/*, chk*/;
       Integer proc_index[MAXDIM], index[MAXDIM];
       Integer topology[MAXDIM];
       Integer blocks[MAXDIM], block_dims[MAXDIM];
@@ -2367,12 +2373,12 @@ void pnga_zero_diagonal(Integer g_a)
 
       while (index[andim-1] < blocks[andim-1]) {
         /* find bounding coordinates of block */
-        chk = 1;
+        /*chk = 1;*/
         for (i = 0; i < andim; i++) {
           loA[i] = index[i]*block_dims[i]+1;
           hiA[i] = (index[i] + 1)*block_dims[i];
           if (hiA[i] > adims[i]) hiA[i] = adims[i];
-          if (hiA[i] < loA[i]) chk = 0;
+          /*if (hiA[i] < loA[i]) chk = 0;*/
         }
         lo[0] = GA_MAX (loA[0], loA[1]);
         lo[1] = GA_MAX (loA[0], loA[1]);
@@ -2501,7 +2507,7 @@ static void sgai_scale_row_values(Integer type, Integer *lo,
 #endif
 void pnga_scale_rows(Integer g_a, Integer g_v)
 {
-  Integer vndim, vdims, dim1, dim2, vtype, atype, type;
+  Integer vndim, vdims, dim1/*, dim2*/, vtype, atype, type;
   Integer ld, lo[2], hi[2];
   Integer me = pnga_nodeid (), i, chk;
   void *ptr;
@@ -2519,7 +2525,7 @@ void pnga_scale_rows(Integer g_a, Integer g_v)
 
   pnga_inquire (g_a, &atype, &andim, adims);
   dim1 = adims[0];
-  dim2 = adims[1];
+  /*dim2 = adims[1];*/
   type = atype;
   pnga_inquire (g_v, &vtype, &vndim, &vdims);
 
@@ -2701,7 +2707,7 @@ static void sgai_scale_col_values(Integer type, Integer *lo,
 #endif
 void pnga_scale_cols(Integer g_a, Integer g_v)
 {
-  Integer vndim, vdims, dim1, dim2, vtype, atype, type;
+  Integer vndim, vdims/*, dim1*/, dim2, vtype, atype, type;
   Integer ld, lo[2], hi[2];
   Integer me = pnga_nodeid (), i;
   void *ptr;
@@ -2719,7 +2725,7 @@ void pnga_scale_cols(Integer g_a, Integer g_v)
   GA_PUSH_NAME ("ga_scale_cols_");
 
   pnga_inquire(g_a, &atype, &andim, adims);
-  dim1 = adims[0];
+  /*dim1 = adims[0];*/
   dim2 = adims[1];
   type = atype;
   pnga_inquire(g_v, &vtype, &vndim, &vdims);

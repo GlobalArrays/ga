@@ -150,9 +150,8 @@ extern proc_list_t *PGRP_LIST;
 
 /* this macro finds the block indices for a given block */
 #define gam_find_block_indices(ga_handle,nblock,index) {                       \
-  int _tsize, _itmp, _i;                                                       \
+  int _itmp, _i;                                                       \
   int _ndim = GA[ga_handle].ndim;                                              \
-  _tsize = 1;                                                                  \
   _itmp = nblock;                                                              \
   index[0] = _itmp%GA[ga_handle].num_blocks[0];                                \
   for (_i=1; _i<_ndim; _i++) {                                                 \

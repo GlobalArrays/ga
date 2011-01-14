@@ -56,7 +56,7 @@ int GP_Destroy(g_p)
   return (int)wgp_destroy(ag_p);
 }
 
-int GP_Distribution(int g_p, int proc, int *lo, int *hi)
+void GP_Distribution(int g_p, int proc, int *lo, int *hi)
 {
   Integer ag_p = (Integer)g_p;
   Integer p = (Integer)proc;

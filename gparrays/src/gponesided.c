@@ -85,6 +85,7 @@ void pgp_get_size(Integer g_p, Integer *lo, Integer *hi,
   if (!GP[handle].active) {
     pnga_error("gp_get_size: inactive array handle specified", g_p);
   }
+  ndim = pnga_ndim(GP[handle].g_ptr_array);
   for (i=0; i<ndim; i++) {
     if (GP[handle].lo[i] > GP[handle].hi[i])
       pnga_error("gp_get_size: illegal block size specified", g_p);
@@ -164,6 +165,7 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
   if (!GP[handle].active) {
     pnga_error("gp_get_size: inactive array handle specified", g_p);
   }
+  ndim = pnga_ndim(GP[handle].g_ptr_array);
   for (i=0; i<ndim; i++) {
     if (GP[handle].lo[i] > GP[handle].hi[i])
       pnga_error("gp_get_size: illegal block size specified", g_p);
@@ -208,7 +210,7 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
     }
   }
   /* return total size of data set */
-  size = offset_ptr;
+  *size = offset_ptr;
 
   /* locate the processors containing some portion of the patch represented by
    * lo and hi and return the results in _gp_map, gp_proclist, and np.

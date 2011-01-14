@@ -174,7 +174,7 @@ void pnga_copy_patch(char *trans,
   Integer base;
   Integer me_a, me_b;
   Integer a_grp, b_grp, anproc, bnproc;
-  Integer num_blocks_a, num_blocks_b, chk;
+  Integer num_blocks_a, num_blocks_b/*, chk*/;
   int use_put, has_intersection;
   int local_sync_begin,local_sync_end;
 
@@ -600,12 +600,12 @@ void pnga_copy_patch(char *trans,
           pnga_get_proc_grid(g_a, topology);
           while (index[andim-1] < blocks[andim-1]) {
             /* find bounding coordinates of block */
-            chk = 1;
+            /*chk = 1;*/
             for (i = 0; i < andim; i++) {
               los[i] = index[i]*block_dims[i]+1;
               his[i] = (index[i] + 1)*block_dims[i];
               if (his[i] > adims[i]) his[i] = adims[i];
-              if (his[i] < los[i]) chk = 0;
+              /*if (his[i] < los[i]) chk = 0;*/
             }
             /* make temporory copies of los, his since ngai_patch_intersection
                destroys original versions */
@@ -740,12 +740,12 @@ void pnga_copy_patch(char *trans,
           pnga_get_proc_grid(g_b, topology);
           while (index[bndim-1] < blocks[bndim-1]) {
             /* find bounding coordinates of block */
-            chk = 1;
+            /*chk = 1;*/
             for (i = 0; i < bndim; i++) {
               los[i] = index[i]*block_dims[i]+1;
               his[i] = (index[i] + 1)*block_dims[i];
               if (his[i] > bdims[i]) his[i] = bdims[i];
-              if (his[i] < los[i]) chk = 0;
+              /*if (his[i] < los[i]) chk = 0;*/
             }
             /* make temporory copies of los, his since ngai_patch_intersection
                destroys original versions */
@@ -1173,7 +1173,7 @@ void pnga_dot_patch(Integer g_a, char *t_a, Integer *alo, Integer *ahi, Integer 
         pnga_release(g_B, loA, hiA);
       }
     } else {
-      Integer lo[MAXDIM], hi[MAXDIM];
+      Integer lo[MAXDIM]/*, hi[MAXDIM]*/;
       Integer offset, jtot, last;
       /* simple block cyclic data distribution */
       if (!pnga_uses_proc_grid(g_a)) {
@@ -1183,7 +1183,7 @@ void pnga_dot_patch(Integer g_a, char *t_a, Integer *alo, Integer *ahi, Integer 
              original versions */
           for (j=0; j<andim; j++) {
             lo[j] = loA[j];
-            hi[j] = hiA[j];
+            /*hi[j] = hiA[j];*/
           }
           if(pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
             pnga_access_block_ptr(g_A, i, &A_ptr, ldA);
@@ -1240,7 +1240,7 @@ void pnga_dot_patch(Integer g_a, char *t_a, Integer *alo, Integer *ahi, Integer 
       } else {
         /* Uses scalapack block-cyclic data distribution */
         Integer proc_index[MAXDIM], index[MAXDIM];
-        Integer topology[MAXDIM], chk;
+        Integer topology[MAXDIM]/*, chk*/;
         Integer blocks[MAXDIM], block_dims[MAXDIM];
         pnga_get_proc_index(g_a, me, proc_index);
         pnga_get_proc_index(g_a, me, index);
@@ -1248,18 +1248,18 @@ void pnga_dot_patch(Integer g_a, char *t_a, Integer *alo, Integer *ahi, Integer 
         pnga_get_proc_grid(g_a, topology);
         while (index[andim-1] < blocks[andim-1]) {
           /* find bounding coordinates of block */
-          chk = 1;
+          /*chk = 1;*/
           for (i = 0; i < andim; i++) {
             loA[i] = index[i]*block_dims[i]+1;
             hiA[i] = (index[i] + 1)*block_dims[i];
             if (hiA[i] > adims[i]) hiA[i] = adims[i];
-            if (hiA[i] < loA[i]) chk = 0;
+            /*if (hiA[i] < loA[i]) chk = 0;*/
           }
           /* make copies of loA and hiA since pnga_patch_intersect destroys
              original versions */
           for (j=0; j<andim; j++) {
             lo[j] = loA[j];
-            hi[j] = hiA[j];
+            /*hi[j] = hiA[j];*/
           }
           if(pnga_patch_intersect(alo, ahi, loA, hiA, andim)){
             pnga_access_block_grid_ptr(g_A, index, &A_ptr, ldA);
@@ -2390,7 +2390,7 @@ void *alpha, *beta;
         pnga_release_update(g_c, loC, hiC); 
       }
     } else {
-      Integer idx, lod[MAXDIM], hid[MAXDIM];
+      Integer idx, lod[MAXDIM]/*, hid[MAXDIM]*/;
       Integer offset, jtot, last;
       /* Simple block-cyclic data disribution */
       if (!pnga_uses_proc_grid(g_c)) {
@@ -2400,7 +2400,7 @@ void *alpha, *beta;
              destroys original versions */
           for (j=0; j<cndim; j++) {
             lod[j] = loC[j];
-            hid[j] = hiC[j];
+            /*hid[j] = hiC[j];*/
           }
           if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)) {
             pnga_access_block_ptr(g_A, idx, &A_ptr, ldA);
@@ -2467,7 +2467,7 @@ void *alpha, *beta;
         }
       } else {
         /* Uses scalapack block-cyclic data distribution */
-        Integer lod[MAXDIM], hid[MAXDIM], chk;
+        Integer lod[MAXDIM]/*, hid[MAXDIM], chk*/;
         Integer proc_index[MAXDIM], index[MAXDIM];
         Integer topology[MAXDIM];
         Integer blocks[MAXDIM], block_dims[MAXDIM];
@@ -2477,18 +2477,18 @@ void *alpha, *beta;
         pnga_get_proc_grid(g_c, topology);
         while (index[cndim-1] < blocks[cndim-1]) {
           /* find bounding coordinates of block */
-          chk = 1;
+          /*chk = 1;*/
           for (i = 0; i < cndim; i++) {
             loC[i] = index[i]*block_dims[i]+1;
             hiC[i] = (index[i] + 1)*block_dims[i];
             if (hiC[i] > cdims[i]) hiC[i] = cdims[i];
-            if (hiC[i] < loC[i]) chk = 0;
+            /*if (hiC[i] < loC[i]) chk = 0;*/
           }
           /* make temporary copies of loC and hiC since pnga_patch_intersect
              destroys original versions */
           for (j=0; j<cndim; j++) {
             lod[j] = loC[j];
-            hid[j] = hiC[j];
+            /*hid[j] = hiC[j];*/
           }
           if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)) {
             pnga_access_block_grid_ptr(g_A, index, &A_ptr, ldA);

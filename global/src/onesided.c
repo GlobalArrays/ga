@@ -723,20 +723,21 @@ void ngai_put_common(Integer g_a,
       Integer itmp;
 #if COMPACT_SCALAPACK
 #else
-      Integer blk_size[MAXDIM], blk_num[MAXDIM], blk_dim[MAXDIM];
+      Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
       Integer blk_inc[MAXDIM], blk_jinc;
       Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
-      C_Integer *num_blocks, *block_dims;
+      /*C_Integer *num_blocks;*/
+      C_Integer *block_dims;
       int *proc_grid;
 
       /* Calculate some properties associated with data distribution */
       proc_grid = GA[handle].nblock;
-      num_blocks = GA[handle].num_blocks;
+      /*num_blocks = GA[handle].num_blocks;*/
       block_dims = GA[handle].block_dims;
       for (j=0; j<ndim; j++)  {
         blk_dim[j] = block_dims[j]*proc_grid[j];
         blk_num[j] = GA[handle].dims[j]/blk_dim[j];
-        blk_size[j] = block_dims[j]*blk_num[j];
+        /*blk_size[j] = block_dims[j]*blk_num[j];*/
         blk_inc[j] = GA[handle].dims[j]-blk_num[j]*blk_dim[j];
         blk_ld[j] = blk_num[j]*block_dims[j];
         hlf_blk[j] = blk_inc[j]/block_dims[j];
@@ -1250,20 +1251,21 @@ void ngai_get_common(Integer g_a,
 #if COMPACT_SCALAPACK
       Integer itmp;
 #else
-      Integer blk_size[MAXDIM], blk_num[MAXDIM], blk_dim[MAXDIM];
+      Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
       Integer blk_inc[MAXDIM], blk_jinc;
       Integer blk_ld[MAXDIM], hlf_blk[MAXDIM];
-      C_Integer *num_blocks, *block_dims;
+      /*C_Integer *num_blocks;*/
+      C_Integer *block_dims;
       int *proc_grid;
 
       /* Calculate some properties associated with data distribution */
       proc_grid = GA[handle].nblock;
-      num_blocks = GA[handle].num_blocks;
+      /*num_blocks = GA[handle].num_blocks;*/
       block_dims = GA[handle].block_dims;
       for (j=0; j<ndim; j++)  {
         blk_dim[j] = block_dims[j]*proc_grid[j];
         blk_num[j] = GA[handle].dims[j]/blk_dim[j];
-        blk_size[j] = block_dims[j]*blk_num[j];
+        /*blk_size[j] = block_dims[j]*blk_num[j];*/
         blk_inc[j] = GA[handle].dims[j] - blk_num[j]*blk_dim[j];
         blk_ld[j] = blk_num[j]*block_dims[j];
         hlf_blk[j] = blk_inc[j]/block_dims[j];
@@ -1762,20 +1764,21 @@ void ngai_acc_common(Integer g_a,
 #if COMPACT_SCALAPACK
       Integer itmp;
 #else
-      Integer blk_size[MAXDIM], blk_num[MAXDIM], blk_dim[MAXDIM];
+      Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
       Integer blk_inc[MAXDIM], blk_jinc;
       Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
-      C_Integer *num_blocks, *block_dims;
+      /*C_Integer *num_blocks;*/
+      C_Integer *block_dims;
       int *proc_grid;
 
       /* Calculate some properties associated with data distribution */
       proc_grid = GA[handle].nblock;
-      num_blocks = GA[handle].num_blocks;
+      /*num_blocks = GA[handle].num_blocks;*/
       block_dims = GA[handle].block_dims;
       for (j=0; j<ndim; j++)  {
         blk_dim[j] = block_dims[j]*proc_grid[j];
         blk_num[j] = GA[handle].dims[j]/blk_dim[j];
-        blk_size[j] = block_dims[j]*blk_num[j];
+        /*blk_size[j] = block_dims[j]*blk_num[j];*/
         blk_inc[j] = GA[handle].dims[j]-blk_num[j]*blk_dim[j];
         blk_ld[j] = blk_num[j]*block_dims[j];
         hlf_blk[j] = blk_inc[j]/block_dims[j];
@@ -2049,14 +2052,14 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
 {
   char *lptr;
   Integer  handle = GA_OFFSET + g_a;
-  Integer  i, p_handle, offset, factor, inode;
+  Integer  i/*, p_handle*/, offset, factor, inode;
   Integer ndim;
   C_Integer *num_blocks, *block_dims;
   int *proc_grid;
   Integer *dims;
   Integer last;
   Integer proc_index[MAXDIM];
-  Integer blk_size[MAXDIM], blk_num[MAXDIM], blk_dim[MAXDIM], blk_inc[MAXDIM];
+  Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM], blk_inc[MAXDIM];
   Integer blk_ld[MAXDIM],hlf_blk[MAXDIM],blk_jinc;
 #if COMPACT_SCALAPACK
   Integer j, lo, hi;
@@ -2065,7 +2068,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
 #endif
 
   GA_PUSH_NAME("nga_access_block_grid_ptr");
-  p_handle = GA[handle].p_handle;
+  /*p_handle = GA[handle].p_handle;*/
   if (!GA[handle].block_sl_flag) {
     pnga_error("Array is not using ScaLAPACK data distribution",0);
   }
@@ -2098,7 +2101,7 @@ void pnga_access_block_grid_ptr(Integer g_a, Integer *index, void* ptr, Integer 
   for (i=0; i<last; i++)  {
     blk_dim[i] = block_dims[i]*proc_grid[i];
     blk_num[i] = GA[handle].dims[i]/blk_dim[i];
-    blk_size[i] = block_dims[i]*blk_num[i];
+    /*blk_size[i] = block_dims[i]*blk_num[i];*/
     blk_inc[i] = GA[handle].dims[i] - blk_num[i]*blk_dim[i];
     blk_ld[i] = blk_num[i]*block_dims[i];
     hlf_blk[i] = blk_inc[i]/block_dims[i];
@@ -2202,11 +2205,11 @@ void pnga_access_block_ptr(Integer g_a, Integer idx, void* ptr, Integer *ld)
 {
   char *lptr;
   Integer  handle = GA_OFFSET + g_a;
-  Integer  i, j, p_handle, nblocks, offset, tsum, inode;
+  Integer  i, j/*, p_handle*/, nblocks, offset, tsum, inode;
   Integer ndim, lo[MAXDIM], hi[MAXDIM], index;
 
   GA_PUSH_NAME("nga_access_block_ptr");
-  p_handle = GA[handle].p_handle;
+  /*p_handle = GA[handle].p_handle;*/
   nblocks = GA[handle].block_total;
   ndim = GA[handle].ndim;
   index = idx;
@@ -2259,13 +2262,13 @@ void pnga_access_block_segment_ptr(Integer g_a, Integer proc, void* ptr, Integer
 {
   char *lptr;
   Integer  handle = GA_OFFSET + g_a;
-  Integer  p_handle, nblocks;
-  Integer ndim, index;
+  /*Integer  p_handle, nblocks;*/
+  Integer /*ndim,*/ index;
 
   GA_PUSH_NAME("ga_access_block_segment_ptr");
-  p_handle = GA[handle].p_handle;
-  nblocks = GA[handle].block_total;
-  ndim = GA[handle].ndim;
+  /*p_handle = GA[handle].p_handle;*/
+  /*nblocks = GA[handle].block_total;*/
+  /*ndim = GA[handle].ndim;*/
   index = proc;
   if (index < 0 || index >= GAnproc)
     pnga_error("processor index outside allowed values",index);
@@ -2391,7 +2394,7 @@ void pnga_access_block_idx(Integer g_a, Integer idx, AccessIndex* index, Integer
 {
 char     *ptr;
 Integer  handle = GA_OFFSET + g_a;
-Integer  p_handle, iblock;
+Integer  /*p_handle,*/ iblock;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
@@ -2399,7 +2402,7 @@ unsigned long    lref=0, lptr;
    vampir_begin(NGA_ACCESS_BLOCK,__FILE__,__LINE__);
 #endif
    GA_PUSH_NAME("nga_access_block");
-   p_handle = GA[handle].p_handle;
+   /*p_handle = GA[handle].p_handle;*/
    iblock = idx;
    if (iblock < 0 || iblock >= GA[handle].block_total)
      pnga_error("block index outside allowed values",iblock);
@@ -2477,7 +2480,7 @@ void pnga_access_block_grid_idx(Integer g_a, Integer* subscript,
 {
 char     *ptr;
 Integer  handle = GA_OFFSET + g_a;
-Integer  i,ndim,p_handle;
+Integer  i,ndim/*,p_handle*/;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
@@ -2485,7 +2488,7 @@ unsigned long    lref=0, lptr;
    vampir_begin(NGA_ACCESS_BLOCK,__FILE__,__LINE__);
 #endif
    GA_PUSH_NAME("nga_access_block_grid");
-   p_handle = GA[handle].p_handle;
+   /*p_handle = GA[handle].p_handle;*/
    ndim = GA[handle].ndim;
    for (i=0; i<ndim; i++) 
      if (subscript[i]<0 || subscript[i] >= GA[handle].num_blocks[i]) 
@@ -2562,7 +2565,7 @@ void pnga_access_block_segment_idx(Integer g_a, Integer proc,
 {
 char     *ptr;
 Integer  handle = GA_OFFSET + g_a;
-Integer  p_handle;
+/*Integer  p_handle;*/
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
@@ -2570,7 +2573,7 @@ unsigned long    lref=0, lptr;
    vampir_begin(NGA_ACCESS_BLOCK_SEGMENT,__FILE__,__LINE__);
 #endif
    GA_PUSH_NAME("nga_access_block_segment");
-   p_handle = GA[handle].p_handle;
+   /*p_handle = GA[handle].p_handle;*/
 
    /*
     * return patch address as the distance elements from the reference address
@@ -2755,9 +2758,11 @@ int use_blocks;
       iproc = GA[handle].rank_rstrctd[iproc];
     gaShmemLocation(iproc, g_a, ilo, jlo, &ptr_ref, &ldp);
   } else {
+    /*
     Integer lo[2];
     lo[0] = ilo;
     lo[1] = jlo;
+    */
     pnga_access_block_ptr(g_a, iproc, &ptr_ref, &ldp);
     pnga_release_block(g_a, iproc);
     if (GA[handle].block_sl_flag == 0) {
@@ -4494,20 +4499,21 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 #if COMPACT_SCALAPACK
       Integer itmp;
 #else
-      Integer blk_size[MAXDIM], blk_num[MAXDIM], blk_dim[MAXDIM];
+      Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
       Integer blk_inc[MAXDIM], blk_jinc;
       Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
-      C_Integer *num_blocks, *block_dims;
+      /*C_Integer *num_blocks;*/
+      C_Integer *block_dims;
       int *proc_grid;
 
       /* Calculate some properties associated with data distribution */
       proc_grid = GA[handle].nblock;
-      num_blocks = GA[handle].num_blocks;
+      /*num_blocks = GA[handle].num_blocks;*/
       block_dims = GA[handle].block_dims;
       for (j=0; j<ndim; j++)  {
         blk_dim[j] = block_dims[j]*proc_grid[j];
         blk_num[j] = GA[handle].dims[j]/blk_dim[j];
-        blk_size[j] = block_dims[j]*blk_num[j];
+        /*blk_size[j] = block_dims[j]*blk_num[j];*/
         blk_inc[j] = GA[handle].dims[j]-blk_num[j]*blk_dim[j];
         blk_ld[j] = blk_num[j]*block_dims[j];
         hlf_blk[j] = blk_inc[j]/block_dims[j];
@@ -4860,20 +4866,21 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 #if COMPACT_SCALAPACK
       Integer itmp;
 #else
-      Integer blk_size[MAXDIM], blk_num[MAXDIM], blk_dim[MAXDIM];
+      Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
       Integer blk_inc[MAXDIM], blk_jinc;
       Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
-      C_Integer *num_blocks, *block_dims;
+      /*C_Integer *num_blocks;*/
+      C_Integer *block_dims;
       int *proc_grid;
 
       /* Calculate some properties associated with data distribution */
       proc_grid = GA[handle].nblock;
-      num_blocks = GA[handle].num_blocks;
+      /*num_blocks = GA[handle].num_blocks;*/
       block_dims = GA[handle].block_dims;
       for (j=0; j<ndim; j++)  {
         blk_dim[j] = block_dims[j]*proc_grid[j];
         blk_num[j] = GA[handle].dims[j]/blk_dim[j];
-        blk_size[j] = block_dims[j]*blk_num[j];
+        /*blk_size[j] = block_dims[j]*blk_num[j];*/
         blk_inc[j] = GA[handle].dims[j]-blk_num[j]*blk_dim[j];
         blk_ld[j] = blk_num[j]*block_dims[j];
         hlf_blk[j] = blk_inc[j]/block_dims[j];
@@ -5240,20 +5247,21 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
 #if COMPACT_SCALAPACK
       Integer itmp;
 #else
-      Integer blk_size[MAXDIM], blk_num[MAXDIM], blk_dim[MAXDIM];
+      Integer /*blk_size[MAXDIM],*/ blk_num[MAXDIM], blk_dim[MAXDIM];
       Integer blk_inc[MAXDIM], blk_jinc;
       Integer blk_ld[MAXDIM],hlf_blk[MAXDIM];
-      C_Integer *num_blocks, *block_dims;
+      /*C_Integer *num_blocks;*/
+      C_Integer *block_dims;
       int *proc_grid;
 
       /* Calculate some properties associated with data distribution */
       proc_grid = GA[handle].nblock;
-      num_blocks = GA[handle].num_blocks;
+      /*num_blocks = GA[handle].num_blocks;*/
       block_dims = GA[handle].block_dims;
       for (j=0; j<ndim; j++)  {
         blk_dim[j] = block_dims[j]*proc_grid[j];
         blk_num[j] = GA[handle].dims[j]/blk_dim[j];
-        blk_size[j] = block_dims[j]*blk_num[j];
+        /*blk_size[j] = block_dims[j]*blk_num[j];*/
         blk_inc[j] = GA[handle].dims[j]-blk_num[j]*blk_dim[j];
         blk_ld[j] = blk_num[j]*block_dims[j];
         hlf_blk[j] = blk_inc[j]/block_dims[j];

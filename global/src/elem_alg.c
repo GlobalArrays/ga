@@ -244,8 +244,10 @@ static void do_stepmax(void *ptr, int nelem, int type)
 static void do_abs(void *ptr, int nelem, int type)
 {
     int i;
-    double magi, magr, x2;
-    float smagi, smagr, sx2;
+    /* double magi, magr; */
+    double x2;
+    /* float smagi, smagr; */
+    float sx2;
     switch (type){
          int *ia;
          double *da;
@@ -269,8 +271,8 @@ static void do_abs(void *ptr, int nelem, int type)
 		ca[i].imag = 0.0;
 		   Better (but slower) is:
 		*/
-		magi = GA_ABS(val.imag);
-		magr = GA_ABS(val.real);
+		/* magi = GA_ABS(val.imag); */
+		/* magr = GA_ABS(val.real); */
 		if (GA_ABS(val.real) >= GA_ABS(val.imag)) {
 		  if (val.real == (double)0.0) {
 		    ca[i].real = (double)0.0;
@@ -295,8 +297,8 @@ static void do_abs(void *ptr, int nelem, int type)
 		cfa[i].imag = 0.0;
 		   Better (but slower) is:
 		*/
-		smagi = GA_ABS(cval.imag);
-		smagr = GA_ABS(cval.real);
+		/* smagi = GA_ABS(cval.imag); */
+		/* smagr = GA_ABS(cval.real); */
 		if (GA_ABS(cval.real) >= GA_ABS(cval.imag)) {
 		  if (cval.real == (float)0.0) {
 		    cfa[i].real = (float)0.0;
@@ -1898,7 +1900,9 @@ int op; /* operation to be perform between g_a and g_b */
         pnga_release_update(g_c, loC, hiC);
       }
     } else {
-      Integer lod[MAXDIM], hid[MAXDIM], chk;
+      Integer lod[MAXDIM];
+      /* Integer hid[MAXDIM]; */
+      /* Integer chk; */
       Integer offset, last, jtot;
       if (!pnga_uses_proc_grid(g_c)) {
         Integer nproc = pnga_nnodes();
@@ -1909,7 +1913,7 @@ int op; /* operation to be perform between g_a and g_b */
              destroys original versions */
           for (j=0; j<cndim; j++) {
             lod[j] = loC[j];
-            hid[j] = hiC[j];
+            /* hid[j] = hiC[j]; */
           }
 
           if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)) {
@@ -1981,18 +1985,18 @@ int op; /* operation to be perform between g_a and g_b */
         pnga_get_proc_grid(g_c, topology);
         while (index[cndim-1] < blocks[cndim-1]) {
           /* find bounding coordinates of block */
-          chk = 1;
+          /* chk = 1; */
           for (i = 0; i < cndim; i++) {
             loC[i] = index[i]*block_dims[i]+1;
             hiC[i] = (index[i] + 1)*block_dims[i];
             if (hiC[i] > cdims[i]) hiC[i] = cdims[i];
-            if (hiC[i] < loC[i]) chk = 0;
+            /* if (hiC[i] < loC[i]) chk = 0; */
           }
           /* make temporary copies of loC and hiC since pnga_patch_intersect
              destroys original versions */
           for (j=0; j<cndim; j++) {
             lod[j] = loC[j];
-            hid[j] = hiC[j];
+            /* hid[j] = hiC[j]; */
           }
 
           if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)) {
@@ -2827,7 +2831,7 @@ void pnga_step_bound_info_patch(
      Integer g_xxuu, Integer *xxuulo, Integer *xxuuhi,    /* patch of g_xxuu */
      void *boundmin, void* wolfemin, void *boundmax)
 {
-     double  result1;/*,result2;*/
+     /*double  result1,result2;*/
      double  dresult,dresult2;
      long    lresult,lresult2;
 
@@ -3037,7 +3041,7 @@ void pnga_step_bound_info_patch(
 	 /* This should be iresult but is lresult because of
 	    the strange implementation of nga_select_elem.
 	 */
-           result1 = (double)(iresult);
+           /* result1 = (double)(iresult); */
            break;
        case C_DCPL:
        case C_SCPL:
@@ -3045,13 +3049,13 @@ void pnga_step_bound_info_patch(
 		   xxtype);
 	 break;
        case C_DBL:
-	 result1 = dresult;
+	 /* result1 = dresult; */
 	 break;
        case C_FLOAT:
-	 result1 = (double)fresult;
+	 /* result1 = (double)fresult; */
 	 break;
        case C_LONG:
-	 result1 = (double)lresult;
+	 /* result1 = (double)lresult; */
 	 break;
        default:
 	 pnga_error("Ga_step_bound_info_patch_: result set: wrong data type.", xxtype);
@@ -3222,7 +3226,7 @@ void pnga_step_max_patch(g_a,  alo, ahi, g_b,  blo, bhi, result)
   Integer btype;
   Integer bndim, bdims[MAXDIM];
   Integer index[MAXDIM];
-  Integer num_blocks_a, num_blocks_b;
+  /* Integer num_blocks_a, num_blocks_b; */
   /* double result = -1; */
   Integer g_c;
   int iresult;
@@ -3248,8 +3252,8 @@ void pnga_step_max_patch(g_a,  alo, ahi, g_b,  blo, bhi, result)
 
   pnga_inquire(g_a, &atype, &andim, adims);
   pnga_inquire(g_b, &btype, &bndim, bdims);
-  num_blocks_a = pnga_total_blocks(g_a);
-  num_blocks_b = pnga_total_blocks(g_b);
+  /* num_blocks_a = pnga_total_blocks(g_a); */
+  /* num_blocks_b = pnga_total_blocks(g_b); */
 
   /* Check for matching types. */
   if(atype != btype) pnga_error(" ga_step_max_patch_: types mismatch ", 0L); 

@@ -64,5 +64,5 @@ double t0,t1,tget=0,tnbget=0,tput=0,tnbput=0,tnbwait=0,t2=0;
     ARMCI_Finalize();
     ARMCI_Finalize();
     MPI_Finalize();
-    
+    return 0;    
 }

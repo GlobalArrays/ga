@@ -831,11 +831,11 @@ Fd_t  elio_open(const char* fname, int type, int mode)
 #ifdef USE_LUSTRE
   struct lov_mds_md stripecfg;
   int    lustre_file;
-#endif
-  int  pagesize;
   int  lustre_stripe_count;
+  int  pagesize;
   pagesize = 1048576;
   lustre_stripe_count = 32;
+#endif
 
 #ifdef PABLO
   int pablo_code = PABLO_elio_open;

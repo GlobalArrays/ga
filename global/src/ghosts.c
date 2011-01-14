@@ -416,7 +416,7 @@ void pnga_update1_ghosts(Integer g_a)
   Integer width[MAXDIM];
   Integer dims[MAXDIM], imax=0;
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
-  Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
+  Integer plo_loc[MAXDIM]/*, phi_loc[MAXDIM]*/;
   Integer lo_rem[MAXDIM], hi_rem[MAXDIM];
   Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
   Integer slo_rem[MAXDIM], shi_rem[MAXDIM];
@@ -602,7 +602,7 @@ void pnga_update1_ghosts(Integer g_a)
                   plo_rem[i] = thi_rem[i] - tlo_rem[i] + 1;
                   phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
                   plo_loc[i] = 0;
-                  phi_loc[i] = width[i] - 1;
+                  /*phi_loc[i] = width[i] - 1;*/
                 } else {
                   if (tlo_rem[i] >= slo_rem[i]) {
                     offset = tlo_rem[i] - lo_rem[i];
@@ -616,19 +616,19 @@ void pnga_update1_ghosts(Integer g_a)
                   plo_rem[i] = thi_rem[i] - tlo_rem[i] + width[i] - slice;
                   phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
                   plo_loc[i] = offset;
-                  phi_loc[i] = offset + slice;
+                  /*phi_loc[i] = offset + slice;*/
                 }
               } else {
                 plo_rem[i] = width[i];
                 phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
                 plo_loc[i] = width[i];
-                phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+                /*phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];*/
               }
             } else {
               plo_rem[i] = 0;
               phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
               plo_loc[i] = 0;
-              phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+              /*phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];*/
             }
           }
 
@@ -725,7 +725,7 @@ void pnga_update1_ghosts(Integer g_a)
                   plo_rem[i] = width[i];
                   phi_rem[i] = 2*width[i] - 1;
                   plo_loc[i] = hi_loc[i] - lo_loc[i] + 1 + width[i];
-                  phi_loc[i] = hi_loc[i] - lo_loc[i] + 2*width[i];
+                  /*phi_loc[i] = hi_loc[i] - lo_loc[i] + 2*width[i];*/
                 } else {
                   offset = tlo_rem[i] - hi_loc[i] - 1;
                   if (thi_rem[i] <= shi_rem[i]) {
@@ -738,20 +738,20 @@ void pnga_update1_ghosts(Integer g_a)
                   plo_rem[i] = width[i];
                   phi_rem[i] = width[i] + slice;
                   plo_loc[i] = hi_loc[i] - lo_loc[i] + width[i] + 1 + offset;
-                  phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i] + 1
-                    + offset + slice;
+                  /*phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i] + 1
+                    + offset + slice;*/
                 }
               } else {
                 plo_rem[i] = width[i];
                 phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
                 plo_loc[i] = width[i];
-                phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+                /*phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];*/
               }
             } else {
               plo_rem[i] = 0;
               phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
               plo_loc[i] = 0;
-              phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+              /*phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];*/
             }
           }
 
@@ -828,7 +828,7 @@ logical pnga_update2_ghosts(Integer g_a)
   Integer size, ndim, i, itmp;
   Integer width[MAXDIM], dims[MAXDIM];
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
-  Integer tlo_loc[MAXDIM], thi_loc[MAXDIM];
+  /*Integer tlo_loc[MAXDIM], thi_loc[MAXDIM];*/
   Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
   Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
   Integer plo_rem[MAXDIM];
@@ -896,13 +896,13 @@ logical pnga_update2_ghosts(Integer g_a)
      * around, if necessary */
     for (idx = 0; idx < ndim; idx++) {
       if (mask[idx] == 0) {
-        tlo_loc[idx] = lo_loc[idx];
-        thi_loc[idx] = hi_loc[idx];
+        /*tlo_loc[idx] = lo_loc[idx];*/
+        /*thi_loc[idx] = hi_loc[idx];*/
         tlo_rem[idx] = lo_loc[idx];
         thi_rem[idx] = hi_loc[idx];
       } else if (mask[idx] == -1) {
-        tlo_loc[idx] = lo_loc[idx];
-        thi_loc[idx] = lo_loc[idx]+width[idx]-1;
+        /*tlo_loc[idx] = lo_loc[idx];*/
+        /*thi_loc[idx] = lo_loc[idx]+width[idx]-1;*/
         if (lo_loc[idx] > 1) {
           tlo_rem[idx] = lo_loc[idx]-width[idx];
           thi_rem[idx] = lo_loc[idx]-1;
@@ -911,8 +911,8 @@ logical pnga_update2_ghosts(Integer g_a)
           thi_rem[idx] = dims[idx];
         }
       } else if (mask[idx] == 1) {
-        tlo_loc[idx] = hi_loc[idx]-width[idx]+1;
-        thi_loc[idx] = hi_loc[idx];
+        /*tlo_loc[idx] = hi_loc[idx]-width[idx]+1;*/
+        /*thi_loc[idx] = hi_loc[idx];*/
         if (hi_loc[idx] < dims[idx]) {
           tlo_rem[idx] = hi_loc[idx] + 1;
           thi_rem[idx] = hi_loc[idx] + width[idx];
@@ -1063,7 +1063,7 @@ logical pnga_update3_ghosts(Integer g_a)
   Integer width[MAXDIM];
   Integer dims[MAXDIM];
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
-  Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
+  Integer plo_loc[MAXDIM]/*, phi_loc[MAXDIM]*/;
   Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
   Integer slo_rem[MAXDIM], shi_rem[MAXDIM];
   Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
@@ -1185,18 +1185,18 @@ logical pnga_update3_ghosts(Integer g_a)
             plo_rem[i] = thi_rem[i] - tlo_rem[i] + width[i] + 1;
             phi_rem[i] = thi_rem[i] - tlo_rem[i] + 2*width[i];
             plo_loc[i] = width[i];
-            phi_loc[i] = 2*width[i] - 1;
+            /*phi_loc[i] = 2*width[i] - 1;*/
           } else {
             plo_rem[i] = width[i];
             phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
             plo_loc[i] = width[i];
-            phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+            /*phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];*/
           }
         } else {
           plo_rem[i] = 0;
           phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
           plo_loc[i] = 0;
-          phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+          /*phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];*/
         }
       }
 
@@ -1244,18 +1244,18 @@ logical pnga_update3_ghosts(Integer g_a)
             plo_rem[i] = 0;
             phi_rem[i] = width[i] - 1;
             plo_loc[i] = hi_loc[i] - lo_loc[i] + width[i] - 1;
-            phi_loc[i] = hi_loc[i] - lo_loc[i] + 2*width[i] - 1;
+            /*phi_loc[i] = hi_loc[i] - lo_loc[i] + 2*width[i] - 1;*/
           } else {
             plo_rem[i] = width[i];
             phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
             plo_loc[i] = width[i];
-            phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+            /*phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];*/
           }
         } else {
           plo_rem[i] = 0;
           phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
           plo_loc[i] = 0;
-          phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+          /*phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];*/
         }
       }
 
@@ -1311,7 +1311,7 @@ logical pnga_set_update4_info(Integer g_a)
   Integer plo_rcv[MAXDIM], phi_rcv[MAXDIM];
   Integer ld_loc[MAXDIM];
   int *stride_snd, *stride_rcv, *count, cache_size;
-  int corner_flag;
+  /*int corner_flag;*/
   char **ptr_snd, **ptr_rcv, *cache;
   char *current;
   Integer me = pnga_nodeid();
@@ -1363,7 +1363,7 @@ logical pnga_set_update4_info(Integer g_a)
   cache_size = 2* ndim *((cache_size/8) + 1) + 1;
   GA[handle].cache = (double *)malloc(sizeof(double)*cache_size);
   cache = (char *)GA[handle].cache;
-  corner_flag = GA[handle].corner_flag;
+  /*corner_flag = GA[handle].corner_flag;*/
 #if GHOST_PRINT
       printf("p[%d]a cache_size: %d\n",GAme,cache_size);
 #endif
@@ -1688,7 +1688,7 @@ logical pnga_update4_ghosts(Integer g_a)
   char send_name[32], rcv_name[32];
   void *snd_ptr, *rcv_ptr, *snd_ptr_orig, *rcv_ptr_orig;
   Integer me = pnga_nodeid();
-  Integer p_handle;
+  /*Integer p_handle;*/
 
   /* This routine makes use of the shift algorithm to update data in the
    * ghost cells bounding the local block of visible data. The shift
@@ -1718,7 +1718,7 @@ logical pnga_update4_ghosts(Integer g_a)
   if (!pnga_has_ghosts(g_a)) return TRUE;
 
   ndim = GA[handle].ndim;
-  p_handle = GA[handle].p_handle;
+  /*p_handle = GA[handle].p_handle;*/
   cache = (char *)GA[handle].cache;
   elemsize = GA[handle].elemsize;
   for (i=0; i<ndim; i++) {
@@ -2467,7 +2467,7 @@ logical pnga_update55_ghosts(Integer g_a)
   Integer width[MAXDIM];
   Integer dims[MAXDIM];
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
-  Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
+  Integer plo_loc[MAXDIM]/*, phi_loc[MAXDIM]*/;
   Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
   Integer slo_rem[MAXDIM], shi_rem[MAXDIM];
   Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
@@ -2596,18 +2596,18 @@ logical pnga_update55_ghosts(Integer g_a)
             plo_rem[i] = thi_rem[i] - tlo_rem[i] + width[i] + 1;
             phi_rem[i] = thi_rem[i] - tlo_rem[i] + 2*width[i];
             plo_loc[i] = width[i];
-            phi_loc[i] = 2*width[i] - 1;
+            /*phi_loc[i] = 2*width[i] - 1;*/
           } else {
             plo_rem[i] = width[i];
             phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
             plo_loc[i] = width[i];
-            phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+            /*phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];*/
           }
         } else {
           plo_rem[i] = 0;
           phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
           plo_loc[i] = 0;
-          phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+          /*phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];*/
         }
       }
 
@@ -2664,18 +2664,18 @@ logical pnga_update55_ghosts(Integer g_a)
             plo_rem[i] = 0;
             phi_rem[i] = width[i] - 1;
             plo_loc[i] = hi_loc[i] - lo_loc[i] + width[i] - 1;
-            phi_loc[i] = hi_loc[i] - lo_loc[i] + 2*width[i] - 1;
+            /*phi_loc[i] = hi_loc[i] - lo_loc[i] + 2*width[i] - 1;*/
           } else {
             plo_rem[i] = width[i];
             phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
             plo_loc[i] = width[i];
-            phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+            /*phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];*/
           }
         } else {
           plo_rem[i] = 0;
           phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
           plo_loc[i] = 0;
-          phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+          /*phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];*/
         }
       }
 
@@ -2745,7 +2745,7 @@ logical pnga_update_ghost_dir(Integer g_a,    /* GA handle */
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
   Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
   Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
-  Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
+  Integer plo_rem[MAXDIM]/*, phi_rem[MAXDIM]*/;
   Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
   logical flag;
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
@@ -2872,17 +2872,17 @@ logical pnga_update_ghost_dir(Integer g_a,    /* GA handle */
         plo_loc[idx] = width[idx];
         phi_loc[idx] = hi_loc[idx]-lo_loc[idx]+width[idx];
         plo_rem[idx] = plo_loc[idx];
-        phi_rem[idx] = phi_loc[idx];
+        /*phi_rem[idx] = phi_loc[idx];*/
       } else if (mask[idx] == -1) {
         plo_loc[idx] = 0;
         phi_loc[idx] = width[idx]-1;
         plo_rem[idx] = thi_rem[idx]-tlo_rem[idx]+1;
-        phi_rem[idx] = thi_rem[idx]-tlo_rem[idx]+width[idx];
+        /*phi_rem[idx] = thi_rem[idx]-tlo_rem[idx]+width[idx];*/
       } else if (mask[idx] == 1) {
         plo_loc[idx] = hi_loc[idx]-lo_loc[idx]+width[idx]+1;
         phi_loc[idx] = hi_loc[idx]-lo_loc[idx]+2*width[idx];
         plo_rem[idx] = width[idx];
-        phi_rem[idx] = 2*width[idx]-1;
+        /*phi_rem[idx] = 2*width[idx]-1;*/
       }
     }
     /* Get pointer to local data buffer and remote data
@@ -2926,7 +2926,7 @@ logical pnga_update_ghost_dir(Integer g_a,    /* GA handle */
 logical pnga_update5_ghosts(Integer g_a)
 {
   Integer idx, i, handle=GA_OFFSET + g_a;
-  Integer size, ndim, nwidth;
+  Integer /*size,*/ ndim, nwidth;
   Integer width[MAXDIM];
   Integer* proc_rem_ptr;
   int *stride_loc, *stride_rem,*count;
@@ -2981,7 +2981,7 @@ logical pnga_update5_ghosts(Integer g_a)
   /* if global array has no ghost cells, just return */
   if (!pnga_has_ghosts(g_a)) return TRUE;
 
-  size = GA[handle].elemsize;
+  /*size = GA[handle].elemsize;*/
   ndim = GA[handle].ndim;
   p_handle = GA[handle].p_handle;
   for (i=0; i<ndim; i++) {
@@ -3085,6 +3085,7 @@ logical pnga_update5_ghosts(Integer g_a)
   }
 #endif 
   GA_POP_NAME;
+  if(local_sync_end)pnga_sync();
   return TRUE;
 }
 
@@ -3101,7 +3102,7 @@ logical pnga_set_update5_info(Integer g_a)
   Integer width[MAXDIM];
   Integer dims[MAXDIM];
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
-  Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
+  Integer plo_loc[MAXDIM]/*, phi_loc[MAXDIM]*/;
   Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
   Integer slo_rem[MAXDIM], shi_rem[MAXDIM];
   Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
@@ -3220,18 +3221,18 @@ logical pnga_set_update5_info(Integer g_a)
               plo_rem[i] = thi_rem[i] - tlo_rem[i] + width[i] + 1;
               phi_rem[i] = thi_rem[i] - tlo_rem[i] + 2*width[i];
               plo_loc[i] = width[i];
-              phi_loc[i] = 2*width[i] - 1;
+              /*phi_loc[i] = 2*width[i] - 1;*/
             } else {
               plo_rem[i] = width[i];
               phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
               plo_loc[i] = width[i];
-              phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+              /*phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];*/
             }
           } else {
             plo_rem[i] = 0;
             phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
             plo_loc[i] = 0;
-            phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+            /*phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];*/
           }
         }
         gam_LocationWithGhosts(me, handle, plo_loc, ptr_loc, ld_loc);
@@ -3287,18 +3288,18 @@ logical pnga_set_update5_info(Integer g_a)
               plo_rem[i] = 0;
               phi_rem[i] = width[i] - 1;
               plo_loc[i] = hi_loc[i] - lo_loc[i] + width[i] - 1;
-              phi_loc[i] = hi_loc[i] - lo_loc[i] + 2*width[i] - 1;
+              /*phi_loc[i] = hi_loc[i] - lo_loc[i] + 2*width[i] - 1;*/
             } else {
               plo_rem[i] = width[i];
               phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
               plo_loc[i] = width[i];
-              phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+              /*phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];*/
             }
           } else {
             plo_rem[i] = 0;
             phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
             plo_loc[i] = 0;
-            phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+            /*phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];*/
           }
         }
 
@@ -3375,7 +3376,7 @@ logical pnga_update6_ghosts(Integer g_a)
   Integer msgcnt, length;
   Integer width[MAXDIM], dims[MAXDIM], index[MAXDIM];
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
-  Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
+  Integer plo_rem[MAXDIM]/*, phi_rem[MAXDIM]*/;
   Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
   Integer plo_snd[MAXDIM], phi_snd[MAXDIM];
   Integer lo_rcv[MAXDIM], hi_rcv[MAXDIM];
@@ -3387,7 +3388,7 @@ logical pnga_update6_ghosts(Integer g_a)
   int stride_rem[MAXDIM];
   int flag1=0, flag2=0, sprocflag, rprocflag;
   char *ptr_snd, *ptr_rcv;
-  char *ptr_loc, *ptr_rem;
+  char /* *ptr_loc,*/ *ptr_rem;
   char send_name[32], rcv_name[32];
   void *snd_ptr, *rcv_ptr, *snd_ptr_orig, *rcv_ptr_orig;
   Integer me = pnga_nodeid();
@@ -3480,7 +3481,7 @@ logical pnga_update6_ghosts(Integer g_a)
   msgcnt = 0;
 
   /* Get pointer to local memory */
-  ptr_loc = GA[handle].ptr[me];
+  /*ptr_loc = GA[handle].ptr[me];*/
   /* obtain range of data that is held by local processor */
   pnga_distribution(g_a,me,lo_loc,hi_loc);
   /* Get indices of processor in virtual grid */
@@ -3578,14 +3579,14 @@ logical pnga_update6_ghosts(Integer g_a)
             plo_rcv[i] = hi_loc[i] - lo_loc[i] + width[i] + 1;
             phi_rcv[i] = hi_loc[i] - lo_loc[i] + 2*width[i];
             plo_rem[i] = thi_rem[i] - tlo_rem[i] + width[i] + 1;
-            phi_rem[i] = thi_rem[i] - tlo_rem[i] + 2*width[i];
+            /*phi_rem[i] = thi_rem[i] - tlo_rem[i] + 2*width[i];*/
           } else {
             plo_snd[i] = width[i];
             phi_snd[i] = hi_loc[i] - lo_loc[i] + width[i];
             plo_rcv[i] = width[i];
             phi_rcv[i] = hi_loc[i] - lo_loc[i] + width[i];
             plo_rem[i] = width[i];
-            phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
+            /*phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];*/
           }
         } else {
           plo_snd[i] = 0;
@@ -3593,7 +3594,7 @@ logical pnga_update6_ghosts(Integer g_a)
           plo_rcv[i] = 0;
           phi_rcv[i] = hi_loc[i] - lo_loc[i] + increment[i];
           plo_rem[i] = 0;
-          phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
+          /*phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];*/
         }
       }
 
@@ -3767,14 +3768,14 @@ logical pnga_update6_ghosts(Integer g_a)
             plo_rcv[i] = 0;
             phi_rcv[i] = width[i] - 1;
             plo_rem[i] = 0;
-            phi_rem[i] = width[i] - 1;
+            /*phi_rem[i] = width[i] - 1;*/
           } else {
             plo_snd[i] = width[i];
             phi_snd[i] = hi_loc[i] - lo_loc[i] + width[i];
             plo_rcv[i] = width[i];
             phi_rcv[i] = hi_loc[i] - lo_loc[i] + width[i];
             plo_rem[i] = width[i];
-            phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
+            /*phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];*/
           }
         } else {
           plo_snd[i] = 0;
@@ -3782,7 +3783,7 @@ logical pnga_update6_ghosts(Integer g_a)
           plo_rcv[i] = 0;
           phi_rcv[i] = hi_loc[i] - lo_loc[i] + increment[i];
           plo_rem[i] = 0;
-          phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
+          /*phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];*/
         }
       }
 
@@ -4099,10 +4100,10 @@ void pnga_nbget_ghost_dir(Integer g_a,
   Integer i, ndim, dim, width;
   char *ptr_loc;
   Integer me = pnga_nodeid();
-  Integer p_handle;
+  /*Integer p_handle;*/
   GA_PUSH_NAME("nga_nbget_ghost_dir");
   ndim = GA[handle].ndim;
-  p_handle = GA[handle].p_handle;
+  /*p_handle = GA[handle].p_handle;*/
   /* check mask to see that it corresponds to a valid direction */
   for (i=0; i<ndim; i++) {
     if (abs(mask[i]) != 0 && abs(mask[i]) != 1)

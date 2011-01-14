@@ -229,6 +229,7 @@ void pgp_distribution(Integer g_p, Integer proc, Integer *lo, Integer *hi)
   Integer handle, ndim, i;
   handle = g_p + GP_OFFSET;
   if (pnga_nodeid() == proc) {
+    ndim = pnga_ndim(GP[handle].g_ptr_array);
     for (i=0; i<ndim; i++) {
       lo[i] = GP[handle].lo[i];
       hi[i] = GP[handle].hi[i];
@@ -260,7 +261,7 @@ void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Intege
       pnga_error("gp_assign_local_element: subscript out of bounds", i);
     }
   }
-  pnga_access_ptr(&GP[handle].g_ptr_array,subscript,subscript,&gp_ptr,ld);
+  pnga_access_ptr(GP[handle].g_ptr_array,subscript,subscript,&gp_ptr,ld);
   *((GP_INT*)gp_ptr) = (GP_INT)ptr;
 /*  pnga_release_update(&GP[handle].g_ptr_array, subscript, subscript); */
 }

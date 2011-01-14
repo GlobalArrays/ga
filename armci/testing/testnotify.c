@@ -439,7 +439,7 @@ int loopcnt=1, less=2, strl; /* less>1 takes a partial plane */
     strl    = (ndim>1)? ndim-2: 0; /* strides of the subpatch to transfer */
 
     for(i=0;i<loopcnt;i++){
-        int lc, rc,wc;
+        int wc;
 
         if(me==0){
 
@@ -449,20 +449,20 @@ int loopcnt=1, less=2, strl; /* less>1 takes a partial plane */
           printf("%d-%d: ps=%p pd=%p i=%d idx=%d count=%d\n",me,left,(double*)
               a[me]+idx, (double*)b[left]+idx,i, idx,count[0]); fflush(stdout); 
 #endif
-          lc=armci_notify(left);
-          rc = armci_notify_wait(right,&wc); 
+          (void)armci_notify(left);
+          (void)armci_notify_wait(right,&wc); 
 
         } else{
 
 
-          rc = armci_notify_wait(right,&wc); 
+          (void)armci_notify_wait(right,&wc); 
           ARMCI_PutS((double*)b[me]+idx, stride, 
                      (double*)b[left]+idx, stride, count, strl, left);
 #if DEBUG_ 
           printf("%d: ps=%p pd=%p i=%d idx=%d count=%d\n",me,(double*)b[me]+idx,
                       (double*)b[left]+idx,i, idx,count[0]); fflush(stdout); 
 #endif
-          lc=armci_notify(left);
+          (void)armci_notify(left);
         }
 
         idx += Idx; /* advance to the next slab */

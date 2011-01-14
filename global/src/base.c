@@ -790,7 +790,8 @@ void ngai_get_first_last_indices( Integer g_a)  /* array handle (input) */
   /* Integer  icheck; */
   Integer  index[MAXDIM], subscript[MAXDIM];
   Integer  handle = GA_OFFSET + g_a;
-  Integer  type, size=0, id, grp_id;
+  Integer  type, size=0, id;
+  /* Integer  grp_id; */
   int Save_default_group;
   char     *fptr, *lptr;
 
@@ -808,7 +809,7 @@ void ngai_get_first_last_indices( Integer g_a)  /* array handle (input) */
     nnodes = pnga_cluster_nnodes();
     inode = pnga_cluster_nodeid();
     nproc = pnga_cluster_nprocs(inode);
-    grp_id = GA[handle].p_handle;
+    /* grp_id = GA[handle].p_handle; */
     ifirst = (Integer)((double)(inode*nelems)/((double)nnodes));
     if (inode != nnodes-1) {
       ilast = (Integer)((double)((inode+1)*nelems)/((double)nnodes))-1;
@@ -1018,9 +1019,11 @@ void gai_init_struct(int handle)
 
 void pnga_pgroup_set_default(Integer grp)
 {
+#if 0
     int local_sync_begin,local_sync_end;
  
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+#endif
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
  
     /* force a hang if default group is not being set correctly */
@@ -2619,7 +2622,8 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
   C_Long  mem_size, mem_size_proc;
   Integer  i, ga_handle, status;
   int local_sync_begin,local_sync_end;
-  Integer grp_id, grp_me=GAme, grp_nproc=GAnproc;
+  Integer grp_id, grp_me=GAme;
+  /* Integer grp_nproc=GAnproc; */
   int maplen = calc_maplen(GA_OFFSET + g_a);
 
 #ifdef USE_VAMPIR
@@ -2632,7 +2636,7 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
   if(local_sync_begin)pnga_pgroup_sync(grp_id);
 
   if (grp_id > 0) {
-    grp_nproc  = PGRP_LIST[grp_id].map_nproc;
+    /* grp_nproc  = PGRP_LIST[grp_id].map_nproc; */
     grp_me = PGRP_LIST[grp_id].map_proc_list[GAme];
   }
 
@@ -2818,13 +2822,13 @@ int maplen = calc_maplen(GA_OFFSET + g_a);
 logical pnga_destroy(Integer g_a)
 {
 Integer ga_handle = GA_OFFSET + g_a, grp_id, grp_me=GAme;
-int local_sync_begin;
+int local_sync_begin,local_sync_end;
 
 #ifdef USE_VAMPIR
     vampir_begin(GA_DESTROY,__FILE__,__LINE__);
 #endif
 
-    local_sync_begin = _ga_sync_begin; 
+    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     grp_id = (Integer)GA[ga_handle].p_handle;
     if(local_sync_begin)pnga_pgroup_sync(grp_id);
@@ -2894,6 +2898,7 @@ int local_sync_begin;
     vampir_end(GA_DESTROY,__FILE__,__LINE__);
 #endif
 
+    if(local_sync_end)pnga_pgroup_sync(grp_id);
     return(TRUE);
 }
 
@@ -3327,7 +3332,8 @@ logical pnga_locate_nnodes( Integer g_a,
 {
   int  procT[MAXDIM], procB[MAXDIM], proc_subscript[MAXDIM];
   Integer  proc, i, ga_handle;
-  Integer  d, dpos, ndim, elems, p_handle, use_blocks;
+  Integer  d, dpos, ndim, elems, use_blocks;
+  /* Integer  p_handle; */
 
   ga_check_handleM(g_a, "nga_locate_nnodes");
 
@@ -3372,7 +3378,7 @@ logical pnga_locate_nnodes( Integer g_a,
      */
     ga_InitLoopM(&elems, ndim, proc_subscript, procT,procB,GA[ga_handle].nblock);
 
-    p_handle = (Integer)GA[ga_handle].p_handle;
+    /* p_handle = (Integer)GA[ga_handle].p_handle; */
     for(i= 0; i< elems; i++){ 
       Integer _lo[MAXDIM], _hi[MAXDIM];
 
@@ -3459,7 +3465,8 @@ logical pnga_locate_region( Integer g_a,
 {
   int  procT[MAXDIM], procB[MAXDIM], proc_subscript[MAXDIM];
   Integer  proc, owner, i, ga_handle;
-  Integer  d, dpos, ndim, elems, p_handle, use_blocks;
+  Integer  d, dpos, ndim, elems, use_blocks;
+  /* Integer  p_handle; */
 
   ga_check_handleM(g_a, "nga_locate_region");
 
@@ -3504,7 +3511,7 @@ logical pnga_locate_region( Integer g_a,
      */
     ga_InitLoopM(&elems, ndim, proc_subscript, procT,procB,GA[ga_handle].nblock);
 
-    p_handle = (Integer)GA[ga_handle].p_handle;
+    /* p_handle = (Integer)GA[ga_handle].p_handle; */
     for(i= 0; i< elems; i++){ 
       Integer _lo[MAXDIM], _hi[MAXDIM];
       Integer  offset;

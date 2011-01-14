@@ -110,13 +110,13 @@ int i,j;
 void *b[MAXPROC], *a[MAXPROC];
 int left = (me+nproc-1) % nproc;
 int right = (me+1) % nproc;
-int sendersright=0,sendersleft=0;
+/*int sendersright=0,sendersleft=0;*/
 int loopcnt=10, itercount=5;
-double tt, t0[LCC],t1[LCC],t2[LCC],t3[LCC];
+double tt/*, t0[LCC]*/,t1[LCC],t2[LCC],t3[LCC];
 armci_hdl_t hdl1,hdl2;
 
     for(i=0;i<LCC;i++){
-       t0[i]=0;
+       /*t0[i]=0;*/
        t1[i]=0;
        t2[i]=0;
        t3[i]=0;
@@ -141,8 +141,8 @@ armci_hdl_t hdl1,hdl2;
        for(i=0;i<loopcnt;i++){
          int bytes;
         
-         sendersright = (j+1)%nproc;
-         sendersleft = (j+nproc-1)%nproc;
+         /*sendersright = (j+1)%nproc;*/
+         /*sendersleft = (j+nproc-1)%nproc;*/
 
          bytes = 1024*pow(2,i);
 
@@ -233,9 +233,9 @@ int i,j;
 void *b[MAXPROC], *a[MAXPROC];
 int left = (me+nproc-1) % nproc;
 int right = (me+1) % nproc;
-int sendersright=0,sendersleft=0;
+/*int sendersright=0,sendersleft=0;*/
 int loopcnt=LCC, itercount=1000;
-double tt, t0[LCC],t1[LCC],t2[LCC],t3[LCC];
+double tt/*, t0[LCC]*/,t1[LCC],t2[LCC],t3[LCC];
 armci_hdl_t hdl1,hdl2;
 
 
@@ -243,7 +243,7 @@ armci_hdl_t hdl1,hdl2;
     create_array(b, 1024*1024*10);
     create_array(a, 1024*1024*10);
     for(i=0;i<LCC;i++){
-       t0[i]=0;
+       /*t0[i]=0;*/
        t1[i]=0;
        t2[i]=0;
        t3[i]=0;
@@ -252,11 +252,11 @@ armci_hdl_t hdl1,hdl2;
     ARMCI_Barrier();
     for(j=0;j<itercount;j++){
        for(i=0;i<loopcnt;i++){
-         int lc,rc,wc,bytes;
+         int wc,bytes;
          /* int lc1,rc1,wc1; */
         
-         sendersright = (j+1)%nproc;
-         sendersleft = (j+nproc-1)%nproc;
+         /*sendersright = (j+1)%nproc;*/
+         /*sendersleft = (j+nproc-1)%nproc;*/
 
          bytes = 1024*pow(2,i)/8;
 
@@ -274,9 +274,9 @@ armci_hdl_t hdl1,hdl2;
          ARMCI_NbPut((double*)a[me],(double*)b[left],bytes, left,&hdl1);
          ARMCI_Wait(&hdl1);
          t1[i] += (MP_TIMER()-tt);
-         /* lc=armci_notify(left); */
+         /* (void)armci_notify(left); */
          /* tt = MP_TIMER(); */
-         /* rc = armci_notify_wait(right,&wc);  */
+         /* (void)armci_notify_wait(right,&wc);  */
          /* t1[i] += (MP_TIMER()-tt); */
 
          ARMCI_INIT_HANDLE(&hdl1);
@@ -289,11 +289,11 @@ armci_hdl_t hdl1,hdl2;
                          right,&hdl2);
          ARMCI_Wait(&hdl1);
          t2[i] += (MP_TIMER()-tt);
-         /* lc=armci_notify(left); */
+         /* (void)armci_notify(left); */
          /* lc1=armci_notify(right); */
          /* tt = MP_TIMER(); */
          /* rc1 = armci_notify_wait(left,&wc1);  */
-         /* rc = armci_notify_wait(right,&wc);  */
+         /* (void)armci_notify_wait(right,&wc);  */
          /* t2[i] += (MP_TIMER()-tt); */
          /* ARMCI_Wait(&hdl1); */
          ARMCI_Wait(&hdl2);
@@ -309,9 +309,9 @@ armci_hdl_t hdl1,hdl2;
          /* ARMCI_Wait(&hdl1); */
          /* ARMCI_Wait(&hdl2); */
          t3[i] += ( MP_TIMER()-tt);
-         lc=armci_notify(left);
+         (void)armci_notify(left);
          tt = MP_TIMER();
-         rc = armci_notify_wait(right,&wc); 
+         (void)armci_notify_wait(right,&wc); 
          t3[i] += ( MP_TIMER()-tt);
          ARMCI_Wait(&hdl1);
          ARMCI_Wait(&hdl2);

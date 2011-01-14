@@ -241,7 +241,7 @@ int retval = 0;
     else
        free_armci_handle_list(inbhandle->ihdl_index);
     
-    return(0);
+    return(retval);
 }
 
 
@@ -281,7 +281,7 @@ int retval = 0;
     else
        return (test_armci_handle_list(inbhandle->ihdl_index));
     
-    return(0);
+    return(retval);
 }
 
 /*\ unlike in ARMCI, user doesnt have to initialize handle in GA.
