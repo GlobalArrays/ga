@@ -28,20 +28,20 @@ static logical own_patch(g_a, ilo, ihi, jlo, jhi)
 }
 
 static logical patch_intersect(ilo, ihi, jlo, jhi, ilop, ihip, jlop, jhip)
-     Integer *ilo, *ihi, *jlo, *jhi;
+     Integer ilo, ihi, jlo, jhi;
      Integer *ilop, *ihip, *jlop, *jhip;
 {
      /* check consistency of patch coordinates */
-     if( *ihi < *ilo || *jhi < *jlo)     return FALSE; /* inconsistent */
+     if( ihi < ilo || jhi < jlo)     return FALSE; /* inconsistent */
      if( *ihip < *ilop || *jhip < *jlop) return FALSE; /* inconsistent */
 
      /* find the intersection and update (ilop: ihip, jlop: jhip) */
-     if( *ihi < *ilop || *ihip < *ilo) return FALSE; /* don't intersect */
-     if( *jhi < *jlop || *jhip < *jlo) return FALSE; /* don't intersect */
-     *ilop = GA_MAX(*ilo,*ilop);
-     *ihip = GA_MIN(*ihi,*ihip);
-     *jlop = GA_MAX(*jlo,*jlop);
-     *jhip = GA_MIN(*jhi,*jhip);
+     if( ihi < *ilop || *ihip < ilo) return FALSE; /* don't intersect */
+     if( jhi < *jlop || *jhip < jlo) return FALSE; /* don't intersect */
+     *ilop = GA_MAX(ilo,*ilop);
+     *ihip = GA_MIN(ihi,*ihip);
+     *jlop = GA_MAX(jlo,*jlop);
+     *jhip = GA_MIN(jhi,*jhip);
 
      return TRUE;
 }
@@ -229,7 +229,7 @@ Integer ndim, dims[2];
        jloB  = jloA + corr;
        jhiB  = jhiA + corr;
        blo[0] = iloB; blo[1] = jloB;
-       bhi[1] = ihiB; bhi[1] = jhiB;
+       bhi[0] = ihiB; bhi[1] = jhiB;
 
       if(own_patch(g_b, iloB, ihiB, jloB, jhiB)){
          /* all the data is local */
