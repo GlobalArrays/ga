@@ -128,6 +128,22 @@ void pgp_set_dimensions(Integer g_p, Integer ndim, Integer *dims)
 }
 
 /**
+ * Return the dimension of the pointer array. This is mostly useful for setting
+ * up the C interface.
+ * @param[in] g_p         pointer array handle
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wgp_get_dimension = pgp_get_dimension
+#endif
+
+Integer pgp_get_dimension(g_p)
+{
+  Integer handle;
+  handle = g_p + GP_OFFSET;
+  return (Integer)GP[handle].ndim;
+}
+
+/**
  *  Set chunk array dimensions. This determines the minimum dimension of a
  *  local block of data
  *  @param[in] g_p         pointer array handle

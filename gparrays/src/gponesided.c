@@ -149,7 +149,7 @@ void pgp_get_size(Integer g_p, Integer *lo, Integer *hi,
 
 void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
              void **buf_ptr, Integer *ld, void *buf_size, Integer *ld_sz,
-             Integer size, Integer intsize)
+             Integer *size, Integer intsize)
 {
   Integer handle, ndim, i, j, d, itmp, offset_sz, np;
   Integer idx, offset_d, offset_ptr, offset_rem;
