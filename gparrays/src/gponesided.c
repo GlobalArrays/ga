@@ -20,8 +20,9 @@
 
 #include "gacommon.h"
 #include "typesf2c.h"
-#include "papi.h"
 #include "gpbase.h"
+#include "armci.h"
+#include "papi.h"
 
 #define gpm_GetRangeFromMap(p, ndim, plo, phi){                           \
   Integer   _mloc = p* ndim *2;                                           \
@@ -147,16 +148,18 @@ void pgp_get_size(Integer g_p, Integer *lo, Integer *hi,
 #endif
 
 void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
-             void *buf_ptr, Integer *ld, void *buf_size, Integer *ld_sz,
+             void **buf_ptr, Integer *ld, void *buf_size, Integer *ld_sz,
              Integer size, Integer intsize)
 {
-  Integer handle, ndim, i, d, itmp, offset, np;
-  Integer idx;
+  Integer handle, ndim, i, j, d, itmp, offset_sz, np;
+  Integer idx, offset_d, offset_ptr, offset_rem;
   Integer nelems, index[GP_MAX_DIM];
-  Integer block_ld[GP_MAX_DIM-1];
+  Integer block_ld[GP_MAX_DIM], block_ld_loc[GP_MAX_DIM];
   int *int_ptr;
   long *long_ptr;
-  GP_INT *rem_ptr;
+  void **rem_ptr;
+  int rc;
+  armci_giov_t *desc;
   handle = g_p + GP_OFFSET;
   if (!GP[handle].active) {
     pnga_error("gp_get_size: inactive array handle specified", g_p);
@@ -168,39 +171,44 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
 
   pnga_get(GP[handle].g_size_array, lo, hi, buf, ld);
   
-  /* Find total number of elements in block and get strides of requested block */
+  /* Get strides of requested block */
   ndim = GP[handle].ndim;
-  nelems = 1;
   for (i=0; i<ndim; i++) {
-    nelems *= (hi[i] - lo[i] + 1);
-    if (i<ndim-1) {
-      block_ld[i] = (hi[i] - lo[i] + 1);
-    }
+    block_ld[i] = (hi[i] - lo[i] + 1);
   }
 
-  /* Find total size of elements in block */
-  size = 0;
+  /* Based on sizes, construct buf_ptr array */
   int_ptr = (int*)buf;
   long_ptr = (long*)buf;
-  for (i=0; i<nelems; i++) {
-    /* get local coordinate in block */
-    itmp = i;
-    for (d=0; d<ndim-1; d++) {
-      index[d] = itmp%block_ld[i];
-      itmp = (itmp - index[i])/block_ld[i];
-    }
-    index[ndim] = itmp;
-    /* evaluate offset in buffer */
-    offset = index[ndim-1];
-    for (d=ndim-2; d>=0; d--) {
-      offset = offset*block_ld[d] + index[d];
-    }
-    if (intsize == 4) {
-      size += (Integer)int_ptr[offset];
-    } else {
-      size += (Integer)long_ptr[offset];
+  idx = 0;
+  offset_ptr = 0;
+  for (d=0; d<ndim; d++) {
+    for (i=0; i<block_ld[d]; i++) {
+      itmp = idx;
+      for (j=0; j<ndim-1; j++) {
+        index[d] = itmp%block_ld[j];
+        itmp = (itmp - index[i])/block_ld[i];
+      }
+      index[ndim] = itmp;
+      /* evaluate offsets in size and ptr buffers */
+      offset_sz = index[ndim-1];
+      offset_d = index[ndim-1];
+      for (d=ndim-2; d>=0; d--) {
+        offset_sz = offset_sz*ld_sz[d] + index[d];
+        offset_d = offset_d*ld[d] + index[d];
+      }
+      /* evaluate offset in data buffer */
+      if (intsize == 4) {
+        offset_ptr += (Integer)int_ptr[offset_sz];
+      } else {
+        offset_ptr += (Integer)long_ptr[offset_sz];
+      }
+      buf_ptr[offset_d] = buf+offset_ptr;
+      idx++;
     }
   }
+  /* return total size of data set */
+  size = offset_ptr;
 
   /* locate the processors containing some portion of the patch represented by
    * lo and hi and return the results in _gp_map, gp_proclist, and np.
@@ -220,14 +228,51 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
     /* Find out how big patch is */
     for (i=0; i<ndim; i++) {
       nelems *= (phi[i]-plo[i] + 1);
-      if (i<ndim-1) {
-        block_ld[i] = phi[i]-plo[i] + 1;
+      block_ld_loc[i] = phi[i]-plo[i] + 1;
+    }
+    /* Allocate a buffer to hold remote pointers for patch and and
+       array of descriptors for GetV operation */
+    rem_ptr = (void**)malloc((size_t)(nelems)*sizeof(void*));
+    desc = (armci_giov_t*)malloc((size_t)(nelems)*sizeof(armci_giov_t));
+
+    /* Get remote pointers */
+    pnga_get(GP[handle].g_ptr_array, plo, phi, rem_ptr, block_ld);
+
+    /* Construct descriptors */
+    idx = 0;
+    for (d=0; d<ndim; d++) {
+      for (i=0; i<block_ld_loc[d]; i++) {
+        itmp = idx;
+        for (j=0; j<ndim-1; j++) {
+          index[d] = itmp%block_ld_loc[j];
+          itmp = (itmp - index[i])/block_ld_loc[i];
+        }
+        index[ndim] = itmp;
+        /* evaluate offsets in buf_ptr, rem_ptr, and buf_size buffers */
+        offset_sz = index[ndim-1];
+        offset_d = index[ndim-1]+plo[ndim-1];
+        offset_rem = index[ndim-1];
+        for (d=ndim-2; d>=0; d--) {
+          offset_sz = offset_sz*ld_sz[d] + index[d];
+          offset_d = offset_d*ld[d] + index[d]+plo[d];
+          offset_rem = offset_rem*block_ld_loc[d] + index[d];
+        }
+        desc[idx].src_ptr_array = rem_ptr[offset_rem];
+        desc[idx].dst_ptr_array = buf_ptr[offset_d];
+        if (intsize == 4) {
+          desc[idx].bytes = (int)((int*)buf_size)[offset_sz];
+        } else {
+          desc[idx].bytes = (int)((long*)buf_size)[offset_sz];
+        }
+        desc[idx].ptr_array_len = 1;
+        idx++;
       }
     }
-    /* Allocate a buffer to hold remote pointers for patch */
-    rem_ptr = (GP_INT*)malloc((size_t)(nelems)*sizeof(void*));
 
-    /* Copy remote pointers to local buffer */
-    pnga_get(GP[handle].g_ptr_array, plo, phi, rem_ptr, block_ld);
+    rc = ARCI_GetV(desc, (int)nelems, (int)p);
+    if (rc) pnga_error("ARMCI_GetV failure in gp_get",rc);
+    /* Free temporary buffers */
+    free(rem_ptr);
+    free(desc);
   }
 }
