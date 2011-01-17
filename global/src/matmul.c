@@ -49,6 +49,8 @@ static short int CYCLIC_DISTR_OPT_FLAG  = SET;
 static short int CONTIG_CHUNKS_OPT_FLAG = SET;
 static short int DIRECT_ACCESS_OPT_FLAG = SET;
 
+Integer gNbhdlA[2], gNbhdlB[2], gNbhdlC[2];/* for A and B matrix */
+
 static int _gai_matmul_patch_flag = 0;
 void gai_matmul_patch_flag(int flag)
 {
