@@ -1,5 +1,11 @@
 /* Test algorithm parameters */
 
+#include "ga.h"
+#include "macdecls.h"
+#include "mp3.h"
+
+#include <stdlib.h>
+
 #define N_I  567
 #define N_J  789
 
@@ -31,7 +37,7 @@ void get_range( int ndim, int dims[], int lo[], int hi[])
 void do_work()
 {
   int g_p, me, i, ii, j, jj, l, k;
-  int m_k_ij, m_l_iji, idx;
+  int m_k_ij, m_l_ij, idx;
   int dims[2],lo[2],hi[2],ndim;
   int idim, jdim, subscript[2], size;
   int *ptr;
@@ -40,7 +46,7 @@ void do_work()
   dims[0] = N_I;
   dims[1] = N_J;
   ndim = 2;
-  me = ga_nodeid();
+  me = GA_Nodeid();
 
   g_p = GP_Create_handle();
   GP_Set_dimensions(g_p, ndim, dims);
@@ -69,8 +75,8 @@ void do_work()
           ptr[l*m_k_ij+k+2] = l*m_k_ij+k+idx;
         }
       }
-      subscript[0] = i
-      subscript[1] = j
+      subscript[0] = i;
+      subscript[1] = j;
       GP_Assign_local_element(g_p, subscript, (void*)ptr, size);
     }
   }
@@ -95,7 +101,7 @@ int main(int argc, char **argv)
   NGA_Initialize();
   GP_Initialize();
   me = NGA_Nodeid();
-  nprocs = NGA_Nnodes();
+  nproc = NGA_Nnodes();
 
   if (me==0) {
     if (GA_Uses_fapi()) NGA_Error("Program runs with C array API only",0);
@@ -106,7 +112,7 @@ int main(int argc, char **argv)
   heap /= nproc;
   stack /= nproc;
 
-  If (!MA_init(MT_F_DBL, stack, heap))
+  if (!MA_init(MT_F_DBL, stack, heap))
     NGA_Error("MA_init failed",stack+heap);
 
   do_work();

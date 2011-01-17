@@ -1187,10 +1187,12 @@ libga_la_SOURCES += gparrays/src/gponesided.c
 libga_la_SOURCES += gparrays/src/gppapi.h
 
 check_PROGRAMS += gparrays/testing/test
+check_PROGRAMS += gparrays/testing/testc
 
-gparrays_testing_test_SOURCES = gparrays/testing/test.F
+gparrays_testing_test_SOURCES  = gparrays/testing/test.F
+gparrays_testing_testc_SOURCES = gparrays/testing/testc.c
 
-gparrays_testing_test_LDFLAGS = $(FLDFLAGS)
+gparrays_testing_test_LDFLAGS  = $(FLDFLAGS)
 
 ##############################################################################
 # armci

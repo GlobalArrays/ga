@@ -78,7 +78,8 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 	pario/dra/dbg_read$(EXEEXT) pario/dra/dbg_write$(EXEEXT) \
 	pario/dra/dra2arviz$(EXEEXT) pario/dra/ntestc$(EXEEXT) \
 	pario/dra/perfn$(EXEEXT) pario/dra/rate$(EXEEXT) \
-	$(am__EXEEXT_19) gparrays/testing/test$(EXEEXT)
+	$(am__EXEEXT_19) gparrays/testing/test$(EXEEXT) \
+	gparrays/testing/testc$(EXEEXT)
 @ENABLE_F77_TRUE@am__append_1 = $(FLD_NOMAIN)
 @ENABLE_F77_TRUE@am__append_2 = gaf2c/farg.F
 @ENABLE_F77_TRUE@am__append_3 = gaf2c/testarg
@@ -1770,6 +1771,13 @@ gparrays_testing_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(gparrays_testing_test_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am_gparrays_testing_testc_OBJECTS = gparrays/testing/testc.$(OBJEXT)
+gparrays_testing_testc_OBJECTS = $(am_gparrays_testing_testc_OBJECTS)
+gparrays_testing_testc_LDADD = $(LDADD)
+gparrays_testing_testc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_ma_test_coalesce_OBJECTS = ma/test-coalesce.$(OBJEXT)
 ma_test_coalesce_OBJECTS = $(am_ma_test_coalesce_OBJECTS)
 ma_test_coalesce_LDADD = $(LDADD)
@@ -2273,7 +2281,8 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(global_testing_testspd_SOURCES) \
 	$(global_trace_adjust_SOURCES) \
 	$(global_trace_collisions_SOURCES) \
-	$(gparrays_testing_test_SOURCES) $(ma_test_coalesce_SOURCES) \
+	$(gparrays_testing_test_SOURCES) \
+	$(gparrays_testing_testc_SOURCES) $(ma_test_coalesce_SOURCES) \
 	$(nodist_EXTRA_ma_test_coalesce_SOURCES) \
 	$(ma_test_inquire_SOURCES) \
 	$(nodist_EXTRA_ma_test_inquire_SOURCES) $(ma_testc_SOURCES) \
@@ -2382,7 +2391,8 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_testspd_SOURCES_DIST) \
 	$(global_trace_adjust_SOURCES) \
 	$(global_trace_collisions_SOURCES) \
-	$(gparrays_testing_test_SOURCES) $(ma_test_coalesce_SOURCES) \
+	$(gparrays_testing_test_SOURCES) \
+	$(gparrays_testing_testc_SOURCES) $(ma_test_coalesce_SOURCES) \
 	$(ma_test_inquire_SOURCES) $(ma_testc_SOURCES) \
 	$(ma_testf_SOURCES) $(am__parallel_SOURCES_DIST) \
 	$(pario_dra_big_SOURCES) $(pario_dra_bign_SOURCES) \
@@ -3215,6 +3225,7 @@ pario_sf_test_LDFLAGS = $(FLDFLAGS)
 @CXX_BINDINGS_TRUE@ga___testing_testc_LDFLAGS = $(FLDFLAGS)
 @CXX_BINDINGS_TRUE@ga___testing_testmult_LDFLAGS = $(FLDFLAGS)
 gparrays_testing_test_SOURCES = gparrays/testing/test.F
+gparrays_testing_testc_SOURCES = gparrays/testing/testc.c
 gparrays_testing_test_LDFLAGS = $(FLDFLAGS)
 
 ##############################################################################
@@ -4405,6 +4416,11 @@ gparrays/testing/test.$(OBJEXT): gparrays/testing/$(am__dirstamp) \
 gparrays/testing/test$(EXEEXT): $(gparrays_testing_test_OBJECTS) $(gparrays_testing_test_DEPENDENCIES) gparrays/testing/$(am__dirstamp)
 	@rm -f gparrays/testing/test$(EXEEXT)
 	$(AM_V_F77LD)$(gparrays_testing_test_LINK) $(gparrays_testing_test_OBJECTS) $(gparrays_testing_test_LDADD) $(LIBS)
+gparrays/testing/testc.$(OBJEXT): gparrays/testing/$(am__dirstamp) \
+	gparrays/testing/$(DEPDIR)/$(am__dirstamp)
+gparrays/testing/testc$(EXEEXT): $(gparrays_testing_testc_OBJECTS) $(gparrays_testing_testc_DEPENDENCIES) gparrays/testing/$(am__dirstamp)
+	@rm -f gparrays/testing/testc$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(gparrays_testing_testc_OBJECTS) $(gparrays_testing_testc_LDADD) $(LIBS)
 ma/test-coalesce.$(OBJEXT): ma/$(am__dirstamp) \
 	ma/$(DEPDIR)/$(am__dirstamp)
 ma/test-coalesce$(EXEEXT): $(ma_test_coalesce_OBJECTS) $(ma_test_coalesce_DEPENDENCIES) ma/$(am__dirstamp)
@@ -4864,6 +4880,7 @@ mostlyclean-compile:
 	-rm -f gparrays/src/gponesided.$(OBJEXT)
 	-rm -f gparrays/src/gponesided.lo
 	-rm -f gparrays/testing/test.$(OBJEXT)
+	-rm -f gparrays/testing/testc.$(OBJEXT)
 	-rm -f ma/error.$(OBJEXT)
 	-rm -f ma/error.lo
 	-rm -f ma/f2c.$(OBJEXT)
@@ -5193,6 +5210,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@gparrays/src/$(DEPDIR)/gpcapi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@gparrays/src/$(DEPDIR)/gpfapi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@gparrays/src/$(DEPDIR)/gponesided.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@gparrays/testing/$(DEPDIR)/testc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ma/$(DEPDIR)/error.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ma/$(DEPDIR)/f2c.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ma/$(DEPDIR)/ma.Plo@am__quote@
@@ -6460,7 +6478,7 @@ clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-checkPROGRAMS \
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR)
+	-rm -rf compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -6509,7 +6527,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR)
+	-rm -rf compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
