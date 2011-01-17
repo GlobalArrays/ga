@@ -271,7 +271,7 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
       }
     }
 
-    rc = ARCI_GetV(desc, (int)nelems, (int)p);
+    rc = ARMCI_GetV(desc, (int)nelems, (int)p);
     if (rc) pnga_error("ARMCI_GetV failure in gp_get",rc);
     /* Free temporary buffers */
     free(rem_ptr);
