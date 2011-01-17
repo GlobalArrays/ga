@@ -2282,7 +2282,9 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(global_trace_adjust_SOURCES) \
 	$(global_trace_collisions_SOURCES) \
 	$(gparrays_testing_test_SOURCES) \
-	$(gparrays_testing_testc_SOURCES) $(ma_test_coalesce_SOURCES) \
+	$(gparrays_testing_testc_SOURCES) \
+	$(nodist_EXTRA_gparrays_testing_testc_SOURCES) \
+	$(ma_test_coalesce_SOURCES) \
 	$(nodist_EXTRA_ma_test_coalesce_SOURCES) \
 	$(ma_test_inquire_SOURCES) \
 	$(nodist_EXTRA_ma_test_inquire_SOURCES) $(ma_testc_SOURCES) \
@@ -3226,6 +3228,7 @@ pario_sf_test_LDFLAGS = $(FLDFLAGS)
 @CXX_BINDINGS_TRUE@ga___testing_testmult_LDFLAGS = $(FLDFLAGS)
 gparrays_testing_test_SOURCES = gparrays/testing/test.F
 gparrays_testing_testc_SOURCES = gparrays/testing/testc.c
+nodist_EXTRA_gparrays_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 gparrays_testing_test_LDFLAGS = $(FLDFLAGS)
 
 ##############################################################################
@@ -4420,7 +4423,7 @@ gparrays/testing/testc.$(OBJEXT): gparrays/testing/$(am__dirstamp) \
 	gparrays/testing/$(DEPDIR)/$(am__dirstamp)
 gparrays/testing/testc$(EXEEXT): $(gparrays_testing_testc_OBJECTS) $(gparrays_testing_testc_DEPENDENCIES) gparrays/testing/$(am__dirstamp)
 	@rm -f gparrays/testing/testc$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(gparrays_testing_testc_OBJECTS) $(gparrays_testing_testc_LDADD) $(LIBS)
+	$(AM_V_F77LD)$(F77LINK) $(gparrays_testing_testc_OBJECTS) $(gparrays_testing_testc_LDADD) $(LIBS)
 ma/test-coalesce.$(OBJEXT): ma/$(am__dirstamp) \
 	ma/$(DEPDIR)/$(am__dirstamp)
 ma/test-coalesce$(EXEEXT): $(ma_test_coalesce_OBJECTS) $(ma_test_coalesce_DEPENDENCIES) ma/$(am__dirstamp)

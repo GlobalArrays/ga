@@ -1192,6 +1192,8 @@ check_PROGRAMS += gparrays/testing/testc
 gparrays_testing_test_SOURCES  = gparrays/testing/test.F
 gparrays_testing_testc_SOURCES = gparrays/testing/testc.c
 
+nodist_EXTRA_gparrays_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+
 gparrays_testing_test_LDFLAGS  = $(FLDFLAGS)
 
 ##############################################################################
