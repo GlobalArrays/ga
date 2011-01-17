@@ -25,6 +25,8 @@
 #  pghpf/pgf95  Portland Group F95 compiler
 #  xlf95        IBM (AIX) F95 compiler
 #  pathf95      PathScale
+#  openf95      AMD's x86 open64
+#  sunf95       Sun's Studio
 #
 # Known MPI Fortran 95 compilers:
 #  cmpifc       ?? not sure if this is even F95
@@ -44,6 +46,8 @@
 #  xlf90        IBM (AIX) F90 compiler
 #  pathf90      PathScale
 #  sxf90        NEC SX Fortran 90
+#  openf90      AMD's x86 open64
+#  sunf90       Sun's Studio
 #
 # Known MPI Fortran 90 compilers:
 #  cmpif90c     ??
@@ -101,8 +105,8 @@ AS_IF([test x$with_mpi_wrappers = xyes],
 ga_mpif95="mpif95 mpxlf95_r mpxlf95 ftn"
 ga_mpif90="mpif90 mpxlf90_r mpxlf90 mpf90 cmpif90c sxmpif90"
 ga_mpif77="mpif77 hf77 mpxlf_r mpxlf mpifrt mpf77 cmpifc"
-ga_f95="xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc gfortran lf95 ftn"
-ga_f90="xlf90 f90 pgf90 pghpf pathf90 epcf90 sxf90"
+ga_f95="xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc openf95 sunf95 gfortran lf95 ftn"
+ga_f90="xlf90 f90 pgf90 pghpf pathf90 epcf90 sxf90 openf90 sunf90"
 ga_f77="xlf f77 frt pgf77 pathf77 g77 cf77 fort77 fl32 af77"
 AS_IF([test x$with_mpi_wrappers = xyes],
     [F77_TO_TEST="$ga_mpif77_pref $ga_mpif95 $ga_mpif90 $ga_mpif77"],

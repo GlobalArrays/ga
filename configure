@@ -4593,7 +4593,7 @@ $as_echo "$as_me: WARNING: Perhaps you meant to set MPICC instead?" >&2;}
 fi
 fi
 fi
-ga_cc="bgxlc_r bgxlc xlc pgcc pathcc icc sxcc fcc gcc cc ecc cl ccc"
+ga_cc="bgxlc_r bgxlc xlc_r xlc pgcc pathcc icc sxcc fcc opencc suncc gcc cc ecc cl ccc"
 ga_mpicc="mpicc mpixlc_r mpixlc hcc mpxlc_r mpxlc sxmpicc mpifcc mpgcc mpcc cmpicc cc"
 if test x$with_mpi_wrappers = xyes; then :
   CC_TO_TEST="$ga_mpicc_pref $ga_mpicc"
@@ -11489,7 +11489,7 @@ $as_echo "$as_me: WARNING: Perhaps you mean to set MPICXX instead?" >&2;}
 fi
 fi
 fi
-ga_cxx="icpc pgCC pathCC sxc++ g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC xlC_r xlC"
+ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
 ga_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ mpiFCC CC"
 if test x$with_mpi_wrappers = xyes; then :
   CXX_TO_TEST="$ga_mpicxx_pref $ga_mpicxx"
@@ -12656,8 +12656,8 @@ fi
 ga_mpif95="mpif95 mpxlf95_r mpxlf95 ftn"
 ga_mpif90="mpif90 mpxlf90_r mpxlf90 mpf90 cmpif90c sxmpif90"
 ga_mpif77="mpif77 hf77 mpxlf_r mpxlf mpifrt mpf77 cmpifc"
-ga_f95="xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc gfortran lf95 ftn"
-ga_f90="xlf90 f90 pgf90 pghpf pathf90 epcf90 sxf90"
+ga_f95="xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc openf95 sunf95 gfortran lf95 ftn"
+ga_f90="xlf90 f90 pgf90 pghpf pathf90 epcf90 sxf90 openf90 sunf90"
 ga_f77="xlf f77 frt pgf77 pathf77 g77 cf77 fort77 fl32 af77"
 if test x$with_mpi_wrappers = xyes; then :
   F77_TO_TEST="$ga_mpif77_pref $ga_mpif95 $ga_mpif90 $ga_mpif77"
