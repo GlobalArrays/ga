@@ -663,7 +663,6 @@ check_PROGRAMS += examples/features/symmetric_memory/simple/simple
 check_PROGRAMS += examples/simpleApps/transp1D-c
 if ARMCI_ENABLE_GPC_CALLS
 check_PROGRAMS += examples/features/gpc/hashtable/test_hashtable
-check_PROGRAMS += examples/features/gpc/simple/gpctest
 if HAVE_BLAS
 if HAVE_LAPACK
 check_PROGRAMS += examples/features/proc_affinity/computation_impact/computation_impact
@@ -756,9 +755,6 @@ examples/features/gpc/hashtable/Util.h
 examples_features_gpc_hashtable_test_hashtable_LDFLAGS = $(LDFLAGS_BASE)
 examples_features_gpc_hashtable_test_hashtable_LDADD = $(LDADD) $(MAYBE_FLIBS)
 
-examples_features_gpc_simple_gpctest_SOURCES = \
-examples/features/gpc/simple/gpctest.c
-
 examples_features_non_blocking_overlap_overlap_SOURCES = \
 examples/features/non-blocking/overlap/overlap.c
 
@@ -803,7 +799,6 @@ nodist_EXTRA_examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_SOU
 nodist_EXTRA_examples_features_concurrency_multidma_multidma_SOURCES                       = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_features_concurrency_simple_comdegree_SOURCES                        = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_features_gpc_hashtable_test_hashtable_SOURCES                        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_gpc_simple_gpctest_SOURCES                                  = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_features_non_blocking_overlap_overlap_SOURCES                        = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_features_non_blocking_simple_simple_SOURCES                          = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_features_notification_simple_testnotify_SOURCES                      = $(MAYBE_DUMMY_F_LINK)
@@ -848,7 +843,6 @@ EXAMPLES += examples/features/symmetric_memory/simple/simple$(EXEEXT)
 EXAMPLES += examples/simpleApps/transp1D-c$(EXEEXT)
 if ARMCI_ENABLE_GPC_CALLS
 EXAMPLES += examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
-EXAMPLES += examples/features/gpc/simple/gpctest$(EXEEXT)
 if HAVE_BLAS
 if HAVE_LAPACK
 EXAMPLES += examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
@@ -966,7 +960,6 @@ PARALLEL_TESTS += examples/features/symmetric_memory/simple/simple$(EXEEXT)
 PARALLEL_TESTS += examples/simpleApps/transp1D-c$(EXEEXT)
 if ARMCI_ENABLE_GPC_CALLS
 PARALLEL_TESTS += examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
-PARALLEL_TESTS += examples/features/gpc/simple/gpctest$(EXEEXT)
 if HAVE_BLAS
 if HAVE_LAPACK
 PARALLEL_TESTS += examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)

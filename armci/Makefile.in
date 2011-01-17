@@ -398,8 +398,7 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf_aggr$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/origptl testing/ptltest \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/te
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_72 = testing/testitr
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_73 = examples/features/gpc/hashtable/test_hashtable \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_73 = examples/features/gpc/hashtable/test_hashtable
 @ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_74 = examples/features/proc_affinity/computation_impact/computation_impact
 @ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_75 = examples/features/proc_affinity/simple/simple
 @MSG_COMMS_MPI_TRUE@am__append_76 = examples/features/concurrency/multidma/multidma \
@@ -407,8 +406,7 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf_aggr$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@am__append_77 = examples/benchmarks/RandomAccess/simple/simple \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket
 @THREAD_SAFE_TRUE@am__append_78 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_79 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_79 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
 @ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_80 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
 @ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_81 = examples/features/proc_affinity/simple/simple$(EXEEXT)
 @MSG_COMMS_MPI_TRUE@am__append_82 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
@@ -430,8 +428,7 @@ XFAIL_TESTS = $(am__EXEEXT_15) $(am__EXEEXT_15)
 @THREAD_SAFE_TRUE@am__append_89 = testing/test_mt$(EXEEXT)
 @ENABLE_F77_TRUE@am__append_90 = testing/acc_test$(EXEEXT) \
 @ENABLE_F77_TRUE@	testing/copy_test$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_91 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_91 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
 @ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_92 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
 @ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_93 = examples/features/proc_affinity/simple/simple$(EXEEXT)
 #PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
@@ -993,8 +990,7 @@ libarmcii_la_OBJECTS = $(am_libarmcii_la_OBJECTS) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/ptltest$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/te$(EXEEXT)
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__EXEEXT_8 = testing/testitr$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_9 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT) \
-@ARMCI_ENABLE_GPC_CALLS_TRUE@	examples/features/gpc/simple/gpctest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_9 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
 @ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__EXEEXT_10 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
 @ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_11 = examples/features/proc_affinity/simple/simple$(EXEEXT)
 @MSG_COMMS_MPI_TRUE@am__EXEEXT_12 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
@@ -1155,14 +1151,6 @@ examples_features_gpc_hashtable_test_hashtable_LINK = $(LIBTOOL) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(examples_features_gpc_hashtable_test_hashtable_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am_examples_features_gpc_simple_gpctest_OBJECTS =  \
-	examples/features/gpc/simple/gpctest.$(OBJEXT)
-examples_features_gpc_simple_gpctest_OBJECTS =  \
-	$(am_examples_features_gpc_simple_gpctest_OBJECTS)
-examples_features_gpc_simple_gpctest_LDADD = $(LDADD)
-examples_features_gpc_simple_gpctest_DEPENDENCIES = $(am__append_3) \
-	$(am__append_4) $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_features_non_blocking_overlap_overlap_OBJECTS =  \
 	examples/features/non-blocking/overlap/overlap.$(OBJEXT)
 examples_features_non_blocking_overlap_overlap_OBJECTS =  \
@@ -1459,8 +1447,6 @@ SOURCES = $(libarmci_la_SOURCES) $(nodist_libarmci_la_SOURCES) \
 	$(nodist_EXTRA_examples_features_concurrency_simple_comdegree_SOURCES) \
 	$(examples_features_gpc_hashtable_test_hashtable_SOURCES) \
 	$(nodist_EXTRA_examples_features_gpc_hashtable_test_hashtable_SOURCES) \
-	$(examples_features_gpc_simple_gpctest_SOURCES) \
-	$(nodist_EXTRA_examples_features_gpc_simple_gpctest_SOURCES) \
 	$(examples_features_non_blocking_overlap_overlap_SOURCES) \
 	$(nodist_EXTRA_examples_features_non_blocking_overlap_overlap_SOURCES) \
 	$(examples_features_non_blocking_simple_simple_SOURCES) \
@@ -1534,7 +1520,6 @@ DIST_SOURCES = $(am__libarmci_la_SOURCES_DIST) \
 	$(examples_features_concurrency_multidma_multidma_SOURCES) \
 	$(examples_features_concurrency_simple_comdegree_SOURCES) \
 	$(examples_features_gpc_hashtable_test_hashtable_SOURCES) \
-	$(examples_features_gpc_simple_gpctest_SOURCES) \
 	$(examples_features_non_blocking_overlap_overlap_SOURCES) \
 	$(examples_features_non_blocking_simple_simple_SOURCES) \
 	$(examples_features_notification_simple_testnotify_SOURCES) \
@@ -1983,9 +1968,6 @@ examples/features/gpc/hashtable/Util.h
 
 examples_features_gpc_hashtable_test_hashtable_LDFLAGS = $(LDFLAGS_BASE)
 examples_features_gpc_hashtable_test_hashtable_LDADD = $(LDADD) $(MAYBE_FLIBS)
-examples_features_gpc_simple_gpctest_SOURCES = \
-examples/features/gpc/simple/gpctest.c
-
 examples_features_non_blocking_overlap_overlap_SOURCES = \
 examples/features/non-blocking/overlap/overlap.c
 
@@ -2032,7 +2014,6 @@ nodist_EXTRA_examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_SOU
 nodist_EXTRA_examples_features_concurrency_multidma_multidma_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_features_concurrency_simple_comdegree_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_features_gpc_hashtable_test_hashtable_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_gpc_simple_gpctest_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_features_non_blocking_overlap_overlap_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_features_non_blocking_simple_simple_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_features_notification_simple_testnotify_SOURCES = $(MAYBE_DUMMY_F_LINK)
@@ -2929,18 +2910,6 @@ examples/features/gpc/hashtable/test_hashtable.$(OBJEXT):  \
 examples/features/gpc/hashtable/test_hashtable$(EXEEXT): $(examples_features_gpc_hashtable_test_hashtable_OBJECTS) $(examples_features_gpc_hashtable_test_hashtable_DEPENDENCIES) examples/features/gpc/hashtable/$(am__dirstamp)
 	@rm -f examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
 	$(AM_V_CXXLD)$(examples_features_gpc_hashtable_test_hashtable_LINK) $(examples_features_gpc_hashtable_test_hashtable_OBJECTS) $(examples_features_gpc_hashtable_test_hashtable_LDADD) $(LIBS)
-examples/features/gpc/simple/$(am__dirstamp):
-	@$(MKDIR_P) examples/features/gpc/simple
-	@: > examples/features/gpc/simple/$(am__dirstamp)
-examples/features/gpc/simple/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) examples/features/gpc/simple/$(DEPDIR)
-	@: > examples/features/gpc/simple/$(DEPDIR)/$(am__dirstamp)
-examples/features/gpc/simple/gpctest.$(OBJEXT):  \
-	examples/features/gpc/simple/$(am__dirstamp) \
-	examples/features/gpc/simple/$(DEPDIR)/$(am__dirstamp)
-examples/features/gpc/simple/gpctest$(EXEEXT): $(examples_features_gpc_simple_gpctest_OBJECTS) $(examples_features_gpc_simple_gpctest_DEPENDENCIES) examples/features/gpc/simple/$(am__dirstamp)
-	@rm -f examples/features/gpc/simple/gpctest$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(examples_features_gpc_simple_gpctest_OBJECTS) $(examples_features_gpc_simple_gpctest_LDADD) $(LIBS)
 examples/features/non-blocking/overlap/$(am__dirstamp):
 	@$(MKDIR_P) examples/features/non-blocking/overlap
 	@: > examples/features/non-blocking/overlap/$(am__dirstamp)
@@ -3182,7 +3151,6 @@ mostlyclean-compile:
 	-rm -f examples/features/gpc/hashtable/HashFunctions.$(OBJEXT)
 	-rm -f examples/features/gpc/hashtable/HashUtil.$(OBJEXT)
 	-rm -f examples/features/gpc/hashtable/test_hashtable.$(OBJEXT)
-	-rm -f examples/features/gpc/simple/gpctest.$(OBJEXT)
 	-rm -f examples/features/non-blocking/overlap/overlap.$(OBJEXT)
 	-rm -f examples/features/non-blocking/simple/simple.$(OBJEXT)
 	-rm -f examples/features/notification/simple/testnotify.$(OBJEXT)
@@ -3559,7 +3527,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/gpc/hashtable/$(DEPDIR)/HashFunctions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/gpc/hashtable/$(DEPDIR)/HashUtil.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/gpc/hashtable/$(DEPDIR)/test_hashtable.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@examples/features/gpc/simple/$(DEPDIR)/gpctest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/non-blocking/overlap/$(DEPDIR)/overlap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/non-blocking/simple/$(DEPDIR)/simple.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/notification/simple/$(DEPDIR)/testnotify.Po@am__quote@
@@ -3848,7 +3815,6 @@ clean-libtool:
 	-rm -rf examples/features/concurrency/multidma/.libs examples/features/concurrency/multidma/_libs
 	-rm -rf examples/features/concurrency/simple/.libs examples/features/concurrency/simple/_libs
 	-rm -rf examples/features/gpc/hashtable/.libs examples/features/gpc/hashtable/_libs
-	-rm -rf examples/features/gpc/simple/.libs examples/features/gpc/simple/_libs
 	-rm -rf examples/features/non-blocking/overlap/.libs examples/features/non-blocking/overlap/_libs
 	-rm -rf examples/features/non-blocking/simple/.libs examples/features/non-blocking/simple/_libs
 	-rm -rf examples/features/notification/simple/.libs examples/features/notification/simple/_libs
@@ -4170,8 +4136,6 @@ examples/simpleApps/transp1D-c.log: examples/simpleApps/transp1D-c$(EXEEXT)
 	@p='examples/simpleApps/transp1D-c$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 examples/features/gpc/hashtable/test_hashtable.log: examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
 	@p='examples/features/gpc/hashtable/test_hashtable$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-examples/features/gpc/simple/gpctest.log: examples/features/gpc/simple/gpctest$(EXEEXT)
-	@p='examples/features/gpc/simple/gpctest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 examples/features/proc_affinity/computation_impact/computation_impact.log: examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
 	@p='examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 examples/features/proc_affinity/simple/simple.log: examples/features/proc_affinity/simple/simple$(EXEEXT)
@@ -4402,8 +4366,6 @@ distclean-generic:
 	-rm -f examples/features/concurrency/simple/$(am__dirstamp)
 	-rm -f examples/features/gpc/hashtable/$(DEPDIR)/$(am__dirstamp)
 	-rm -f examples/features/gpc/hashtable/$(am__dirstamp)
-	-rm -f examples/features/gpc/simple/$(DEPDIR)/$(am__dirstamp)
-	-rm -f examples/features/gpc/simple/$(am__dirstamp)
 	-rm -f examples/features/non-blocking/overlap/$(DEPDIR)/$(am__dirstamp)
 	-rm -f examples/features/non-blocking/overlap/$(am__dirstamp)
 	-rm -f examples/features/non-blocking/simple/$(DEPDIR)/$(am__dirstamp)
@@ -4475,7 +4437,7 @@ clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-checkPROGRAMS \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf examples/benchmarks/RandomAccess/$(DEPDIR) examples/benchmarks/RandomAccess/simple/$(DEPDIR) examples/benchmarks/RandomAccess/smp_bucket/$(DEPDIR) examples/benchmarks/cg/armci_sharedmemory/$(DEPDIR) examples/benchmarks/lu/armci_blocking/$(DEPDIR) examples/benchmarks/lu/armci_multithreaded/$(DEPDIR) examples/benchmarks/lu/armci_nonblocking/$(DEPDIR) examples/benchmarks/lu/pthreads/$(DEPDIR) examples/features/aggregation/simple/$(DEPDIR) examples/features/aggregation/sparse_matvecmul/$(DEPDIR) examples/features/concurrency/multidma/$(DEPDIR) examples/features/concurrency/simple/$(DEPDIR) examples/features/gpc/hashtable/$(DEPDIR) examples/features/gpc/simple/$(DEPDIR) examples/features/non-blocking/overlap/$(DEPDIR) examples/features/non-blocking/simple/$(DEPDIR) examples/features/notification/simple/$(DEPDIR) examples/features/proc_affinity/computation_impact/$(DEPDIR) examples/features/proc_affinity/simple/$(DEPDIR) examples/features/symmetric_memory/simple/$(DEPDIR) examples/simpleApps/$(DEPDIR) src-gemini/$(DEPDIR) src-portals/$(DEPDIR) src/collectives/$(DEPDIR) src/common/$(DEPDIR) src/devices/bgml/$(DEPDIR) src/devices/dcmf/dcmf-0.2.0/$(DEPDIR) src/devices/dcmf/dcmf-0.3.0/$(DEPDIR) src/devices/dcmf/dcmf2/$(DEPDIR) src/devices/lapi/$(DEPDIR) src/devices/mpi/$(DEPDIR) src/devices/openib/$(DEPDIR) src/devices/sockets/$(DEPDIR) src/ft/$(DEPDIR) src/locks/$(DEPDIR) src/memory/$(DEPDIR) src/progress/$(DEPDIR) src/util/$(DEPDIR) src/xfer/$(DEPDIR) testing/$(DEPDIR)
+	-rm -rf examples/benchmarks/RandomAccess/$(DEPDIR) examples/benchmarks/RandomAccess/simple/$(DEPDIR) examples/benchmarks/RandomAccess/smp_bucket/$(DEPDIR) examples/benchmarks/cg/armci_sharedmemory/$(DEPDIR) examples/benchmarks/lu/armci_blocking/$(DEPDIR) examples/benchmarks/lu/armci_multithreaded/$(DEPDIR) examples/benchmarks/lu/armci_nonblocking/$(DEPDIR) examples/benchmarks/lu/pthreads/$(DEPDIR) examples/features/aggregation/simple/$(DEPDIR) examples/features/aggregation/sparse_matvecmul/$(DEPDIR) examples/features/concurrency/multidma/$(DEPDIR) examples/features/concurrency/simple/$(DEPDIR) examples/features/gpc/hashtable/$(DEPDIR) examples/features/non-blocking/overlap/$(DEPDIR) examples/features/non-blocking/simple/$(DEPDIR) examples/features/notification/simple/$(DEPDIR) examples/features/proc_affinity/computation_impact/$(DEPDIR) examples/features/proc_affinity/simple/$(DEPDIR) examples/features/symmetric_memory/simple/$(DEPDIR) examples/simpleApps/$(DEPDIR) src-gemini/$(DEPDIR) src-portals/$(DEPDIR) src/collectives/$(DEPDIR) src/common/$(DEPDIR) src/devices/bgml/$(DEPDIR) src/devices/dcmf/dcmf-0.2.0/$(DEPDIR) src/devices/dcmf/dcmf-0.3.0/$(DEPDIR) src/devices/dcmf/dcmf2/$(DEPDIR) src/devices/lapi/$(DEPDIR) src/devices/mpi/$(DEPDIR) src/devices/openib/$(DEPDIR) src/devices/sockets/$(DEPDIR) src/ft/$(DEPDIR) src/locks/$(DEPDIR) src/memory/$(DEPDIR) src/progress/$(DEPDIR) src/util/$(DEPDIR) src/xfer/$(DEPDIR) testing/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -4523,7 +4485,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf examples/benchmarks/RandomAccess/$(DEPDIR) examples/benchmarks/RandomAccess/simple/$(DEPDIR) examples/benchmarks/RandomAccess/smp_bucket/$(DEPDIR) examples/benchmarks/cg/armci_sharedmemory/$(DEPDIR) examples/benchmarks/lu/armci_blocking/$(DEPDIR) examples/benchmarks/lu/armci_multithreaded/$(DEPDIR) examples/benchmarks/lu/armci_nonblocking/$(DEPDIR) examples/benchmarks/lu/pthreads/$(DEPDIR) examples/features/aggregation/simple/$(DEPDIR) examples/features/aggregation/sparse_matvecmul/$(DEPDIR) examples/features/concurrency/multidma/$(DEPDIR) examples/features/concurrency/simple/$(DEPDIR) examples/features/gpc/hashtable/$(DEPDIR) examples/features/gpc/simple/$(DEPDIR) examples/features/non-blocking/overlap/$(DEPDIR) examples/features/non-blocking/simple/$(DEPDIR) examples/features/notification/simple/$(DEPDIR) examples/features/proc_affinity/computation_impact/$(DEPDIR) examples/features/proc_affinity/simple/$(DEPDIR) examples/features/symmetric_memory/simple/$(DEPDIR) examples/simpleApps/$(DEPDIR) src-gemini/$(DEPDIR) src-portals/$(DEPDIR) src/collectives/$(DEPDIR) src/common/$(DEPDIR) src/devices/bgml/$(DEPDIR) src/devices/dcmf/dcmf-0.2.0/$(DEPDIR) src/devices/dcmf/dcmf-0.3.0/$(DEPDIR) src/devices/dcmf/dcmf2/$(DEPDIR) src/devices/lapi/$(DEPDIR) src/devices/mpi/$(DEPDIR) src/devices/openib/$(DEPDIR) src/devices/sockets/$(DEPDIR) src/ft/$(DEPDIR) src/locks/$(DEPDIR) src/memory/$(DEPDIR) src/progress/$(DEPDIR) src/util/$(DEPDIR) src/xfer/$(DEPDIR) testing/$(DEPDIR)
+	-rm -rf examples/benchmarks/RandomAccess/$(DEPDIR) examples/benchmarks/RandomAccess/simple/$(DEPDIR) examples/benchmarks/RandomAccess/smp_bucket/$(DEPDIR) examples/benchmarks/cg/armci_sharedmemory/$(DEPDIR) examples/benchmarks/lu/armci_blocking/$(DEPDIR) examples/benchmarks/lu/armci_multithreaded/$(DEPDIR) examples/benchmarks/lu/armci_nonblocking/$(DEPDIR) examples/benchmarks/lu/pthreads/$(DEPDIR) examples/features/aggregation/simple/$(DEPDIR) examples/features/aggregation/sparse_matvecmul/$(DEPDIR) examples/features/concurrency/multidma/$(DEPDIR) examples/features/concurrency/simple/$(DEPDIR) examples/features/gpc/hashtable/$(DEPDIR) examples/features/non-blocking/overlap/$(DEPDIR) examples/features/non-blocking/simple/$(DEPDIR) examples/features/notification/simple/$(DEPDIR) examples/features/proc_affinity/computation_impact/$(DEPDIR) examples/features/proc_affinity/simple/$(DEPDIR) examples/features/symmetric_memory/simple/$(DEPDIR) examples/simpleApps/$(DEPDIR) src-gemini/$(DEPDIR) src-portals/$(DEPDIR) src/collectives/$(DEPDIR) src/common/$(DEPDIR) src/devices/bgml/$(DEPDIR) src/devices/dcmf/dcmf-0.2.0/$(DEPDIR) src/devices/dcmf/dcmf-0.3.0/$(DEPDIR) src/devices/dcmf/dcmf2/$(DEPDIR) src/devices/lapi/$(DEPDIR) src/devices/mpi/$(DEPDIR) src/devices/openib/$(DEPDIR) src/devices/sockets/$(DEPDIR) src/ft/$(DEPDIR) src/locks/$(DEPDIR) src/memory/$(DEPDIR) src/progress/$(DEPDIR) src/util/$(DEPDIR) src/xfer/$(DEPDIR) testing/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
