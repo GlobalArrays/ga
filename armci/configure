@@ -13383,21 +13383,25 @@ ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
-for symbol in -D -WF,-D -Wp,-D ; do
-    ga_save_CPPFLAGS=$CPPFLAGS
+ac_ext=F
+for symbol in -D -WF,-D -Wp,-D
+do
+    ga_save_CPPFLAGS="$CPPFLAGS"
+    ga_save_FFLAGS="$FFLAGS"
     CPPFLAGS="$CPPFLAGS ${symbol}GABLAHBLAH"
+    FFLAGS="$CPPFLAGS $FFLAGS"
     cat > conftest.$ac_ext <<_ACEOF
 #ifndef GABLAHBLAH
 this is an error
 #endif
       end program
 _ACEOF
-    mv conftest.$ac_ext conftest.F
-    if $F77 $CPPFLAGS $FFLAGS -c conftest.F 1>&5 2>&5; then :
-  ga_cv_f77_cpp_symbol=$symbol
+if ac_fn_f77_try_compile "$LINENO"; then :
+  ga_cv_f77_cpp_symbol="$symbol"
 fi
-    rm -f conftest.F conftest.$ac_objext
-    CPPFLAGS=$ga_save_CPPFLAGS
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    CPPFLAGS="$ga_save_CPPFLAGS"
+    FFLAGS="$ga_save_FFLAGS"
     if test "x$ga_cv_f77_cpp_symbol" != x; then :
   break
 fi

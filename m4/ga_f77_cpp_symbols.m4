@@ -11,19 +11,21 @@ AC_DEFUN([GA_F77_CPP_SYMBOL],
 [AC_CACHE_CHECK([how to pass symbols to preprocessed $F77],
 [ga_cv_f77_cpp_symbol],
 [AC_LANG_PUSH([Fortran 77])
-for symbol in -D -WF,-D -Wp,-D ; do
-    ga_save_CPPFLAGS=$CPPFLAGS
+ac_ext=F
+for symbol in -D -WF,-D -Wp,-D
+do
+    ga_save_CPPFLAGS="$CPPFLAGS"
+    ga_save_FFLAGS="$FFLAGS"
     CPPFLAGS="$CPPFLAGS ${symbol}GABLAHBLAH"
-    AC_LANG_CONFTEST(
+    FFLAGS="$CPPFLAGS $FFLAGS"
+    AC_COMPILE_IFELSE(
 [[#ifndef GABLAHBLAH
 this is an error
 #endif
-      end program]])
-    mv conftest.$ac_ext conftest.F
-    AS_IF([$F77 $CPPFLAGS $FFLAGS -c conftest.F 1>&5 2>&5],
-        [ga_cv_f77_cpp_symbol=$symbol])
-    rm -f conftest.F conftest.$ac_objext
-    CPPFLAGS=$ga_save_CPPFLAGS
+      end program]],
+        [ga_cv_f77_cpp_symbol="$symbol"])
+    CPPFLAGS="$ga_save_CPPFLAGS"
+    FFLAGS="$ga_save_FFLAGS"
     AS_IF([test "x$ga_cv_f77_cpp_symbol" != x], [break])
 done
 AC_LANG_POP([Fortran 77])
