@@ -393,6 +393,7 @@ void pnga_patch_enum(Integer g_a, Integer lo, Integer hi, void* start, void* str
 Integer dims[1],lop,hip;
 Integer ndim, type, me, off;
 register Integer i;
+register Integer nelem;
 
    pnga_sync();
    me = pnga_nodeid();
@@ -412,66 +413,47 @@ register Integer i;
       else{
         void *ptr;
         Integer ld;
+        nelem = hip-lop+1;
 
         if(lop < lo)lop = lo;
         if(hip > hi)hip = hi;
         off = lop - lo;
         pnga_access_ptr(g_a, &lop, &hip, &ptr, &ld);
         
-        switch (type){
-          int *ia;
-          double *da;
-          DoubleComplex *ca;
-          SingleComplex *cfa;
-          float *fa;
-          long *la;
-          long long *lla;
-          case C_INT:
-             ia = (int*)ptr;
-             for(i=0; i< hip-lop+1; i++)
-                 ia[i] = *(int*)start+(off+i)* *(int*)stride; 
-             break;
-          case C_DCPL:
-             ca = (DoubleComplex*)ptr;
-             for(i=0; i< hip-lop+1; i++){
-                 ca[i].real = ((DoubleComplex*)start)->real +
-                         (off+i)* ((DoubleComplex*)stride)->real; 
-                 ca[i].imag = ((DoubleComplex*)start)->imag +
-                         (off+i)* ((DoubleComplex*)stride)->imag; 
-             }
-             break;
-
-          case C_SCPL:
-             cfa = (SingleComplex*)ptr;
-             for(i=0; i< hip-lop+1; i++){
-                 cfa[i].real = ((SingleComplex*)start)->real +
-                         (off+i)* ((SingleComplex*)stride)->real; 
-                 cfa[i].imag = ((SingleComplex*)start)->imag +
-                         (off+i)* ((SingleComplex*)stride)->imag; 
-             }
-             break;
-          case C_DBL:
-             da = (double*)ptr;
-             for(i=0; i< hip-lop+1; i++)
-                 da[i] = *(double*)start+
-                         (off+i)* *(double*)stride; 
-             break;
-          case C_FLOAT:
-             fa = (float*)ptr;
-             for(i=0; i< hip-lop+1; i++)
-                 fa[i] = *(float*)start+(off+i)* *(float*)stride;
-             break;   
-          case C_LONG:
-             la = (long*)ptr;
-             for(i=0; i< hip-lop+1; i++)
-                 la[i] = *(long*)start+(off+i)* *(long*)stride;
-             break;              
-          case C_LONGLONG:
-             lla = (long long*)ptr;
-             for(i=0; i< hip-lop+1; i++)
-                 lla[i] = *(long long*)start+(off+i)* *(long long*)stride;
-             break;              
-          default: pnga_error("ga_patch_enum:wrong data type ",type);
+        switch (type) {
+#define ga_patch_enum_case(MT,T) \
+            case MT: \
+                { \
+                    T *aptr = (T*)ptr; \
+                    T astart = *((T*)start); \
+                    T astride = *((T*)stride); \
+                    for (i=0; i<nelem; i++) { \
+                        aptr[i] = astart + ((off+i)*astride); \
+                    } \
+                    break; \
+                }
+            ga_patch_enum_case(C_INT,int)
+            ga_patch_enum_case(C_LONG,long)
+            ga_patch_enum_case(C_LONGLONG,long long)
+            ga_patch_enum_case(C_FLOAT,float)
+            ga_patch_enum_case(C_DBL,double)
+#undef ga_patch_enum_case
+#define ga_patch_enum_case_cpl(MT,T) \
+            case MT: \
+                { \
+                    T *aptr = (T*)ptr; \
+                    T astart = *((T*)start); \
+                    T astride = *((T*)stride); \
+                    for (i=0; i<nelem; i++) { \
+                        aptr[i].real = astart.real + ((off+i)*astride.real); \
+                        aptr[i].imag = astart.imag + ((off+i)*astride.imag); \
+                    } \
+                    break; \
+                }
+            ga_patch_enum_case_cpl(C_SCPL,SingleComplex)
+            ga_patch_enum_case_cpl(C_DCPL,DoubleComplex)
+#undef ga_patch_enum_case
+            default: pnga_error("ga_patch_enum:wrong data type ",type);
         }
 
         pnga_release_update(g_a, &lop, &hip);

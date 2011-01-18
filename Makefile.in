@@ -67,6 +67,7 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 	global/testing/elempatch$(EXEEXT) \
 	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
+	global/testing/patch_enumc$(EXEEXT) \
 	global/testing/print$(EXEEXT) global/testing/testc$(EXEEXT) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
@@ -260,8 +261,10 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mmatrix \
 @ENABLE_F77_TRUE@	global/testing/mulmatpatch \
 @ENABLE_F77_TRUE@	global/testing/nb2test global/testing/ndim \
-@ENABLE_F77_TRUE@	global/testing/patch global/testing/perfmod \
-@ENABLE_F77_TRUE@	global/testing/perform global/testing/perf \
+@ENABLE_F77_TRUE@	global/testing/patch \
+@ENABLE_F77_TRUE@	global/testing/patch_enumf \
+@ENABLE_F77_TRUE@	global/testing/perfmod global/testing/perform \
+@ENABLE_F77_TRUE@	global/testing/perf \
 @ENABLE_F77_TRUE@	global/testing/pg2testmatmult \
 @ENABLE_F77_TRUE@	global/testing/pg2test \
 @ENABLE_F77_TRUE@	global/testing/pgtestmatmult \
@@ -371,6 +374,7 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 @ENABLE_F77_TRUE@	global/testing/nb2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ndim$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/patch$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/patch_enumf$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perfmod$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perform$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perf$(EXEEXT) \
@@ -782,6 +786,7 @@ libga_la_OBJECTS = $(am_libga_la_OBJECTS) $(nodist_libga_la_OBJECTS)
 @ENABLE_F77_TRUE@	global/testing/nb2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ndim$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/patch$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/patch_enumf$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perfmod$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perform$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perf$(EXEEXT) \
@@ -1401,6 +1406,36 @@ global_testing_patch_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 global_testing_patch_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_patch_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am__global_testing_patch_enumc_SOURCES_DIST =  \
+	global/testing/patch_enumc.c global/testing/testutil.fh \
+	global/testing/testutil.h global/testing/util.c \
+	global/testing/ffflush.F
+am_global_testing_patch_enumc_OBJECTS =  \
+	global/testing/patch_enumc.$(OBJEXT) $(am__objects_20)
+global_testing_patch_enumc_OBJECTS =  \
+	$(am_global_testing_patch_enumc_OBJECTS)
+global_testing_patch_enumc_LDADD = $(LDADD)
+global_testing_patch_enumc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__global_testing_patch_enumf_SOURCES_DIST =  \
+	global/testing/patch_enumf.F global/testing/testutil.fh \
+	global/testing/testutil.h global/testing/util.c \
+	global/testing/ffflush.F
+am_global_testing_patch_enumf_OBJECTS =  \
+	global/testing/patch_enumf.$(OBJEXT) $(am__objects_20)
+global_testing_patch_enumf_OBJECTS =  \
+	$(am_global_testing_patch_enumf_OBJECTS)
+global_testing_patch_enumf_LDADD = $(LDADD)
+global_testing_patch_enumf_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+global_testing_patch_enumf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(global_testing_patch_enumf_LDFLAGS) \
 	$(LDFLAGS) -o $@
 am__global_testing_perf_SOURCES_DIST = global/testing/perf.F \
 	global/testing/testutil.fh global/testing/testutil.h \
@@ -2252,7 +2287,11 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(nodist_EXTRA_global_testing_ntestc_SOURCES) \
 	$(global_testing_ntestfc_SOURCES) \
 	$(nodist_EXTRA_global_testing_ntestfc_SOURCES) \
-	$(global_testing_patch_SOURCES) $(global_testing_perf_SOURCES) \
+	$(global_testing_patch_SOURCES) \
+	$(global_testing_patch_enumc_SOURCES) \
+	$(nodist_EXTRA_global_testing_patch_enumc_SOURCES) \
+	$(global_testing_patch_enumf_SOURCES) \
+	$(global_testing_perf_SOURCES) \
 	$(global_testing_perfmod_SOURCES) \
 	$(global_testing_perform_SOURCES) \
 	$(global_testing_pg2test_SOURCES) \
@@ -2368,6 +2407,8 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_ntestc_SOURCES_DIST) \
 	$(am__global_testing_ntestfc_SOURCES_DIST) \
 	$(am__global_testing_patch_SOURCES_DIST) \
+	$(am__global_testing_patch_enumc_SOURCES_DIST) \
+	$(am__global_testing_patch_enumf_SOURCES_DIST) \
 	$(am__global_testing_perf_SOURCES_DIST) \
 	$(am__global_testing_perfmod_SOURCES_DIST) \
 	$(am__global_testing_perform_SOURCES_DIST) \
@@ -3003,6 +3044,8 @@ global_testing_ndim_SOURCES = global/testing/ndim.F $(gtsrc)
 global_testing_ntestc_SOURCES = global/testing/ntestc.c $(gtsrc)
 global_testing_ntestfc_SOURCES = global/testing/ntestfc.c $(gtsrc)
 global_testing_patch_SOURCES = global/testing/patch.F $(gtsrc)
+global_testing_patch_enumc_SOURCES = global/testing/patch_enumc.c $(gtsrc)
+global_testing_patch_enumf_SOURCES = global/testing/patch_enumf.F $(gtsrc)
 global_testing_perfmod_SOURCES = global/testing/perfmod.F $(gtsrc)
 global_testing_perform_SOURCES = global/testing/perform.F $(gtsrc)
 global_testing_perf_SOURCES = global/testing/perf.F $(gtsrc)
@@ -3051,6 +3094,7 @@ global_testing_nga_scatter_LDFLAGS = $(FLDFLAGS)
 global_testing_nga_util_LDFLAGS = $(FLDFLAGS)
 global_testing_ngatest_LDFLAGS = $(FLDFLAGS)
 global_testing_patch_LDFLAGS = $(FLDFLAGS)
+global_testing_patch_enumf_LDFLAGS = $(FLDFLAGS)
 global_testing_perfmod_LDFLAGS = $(FLDFLAGS)
 global_testing_perform_LDFLAGS = $(FLDFLAGS)
 global_testing_perf_LDFLAGS = $(FLDFLAGS)
@@ -3078,6 +3122,7 @@ nodist_EXTRA_global_testing_lock_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_mtest_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ntestc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ntestfc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_patch_enumc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_print_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmult_SOURCES = $(MAYBE_DUMMY_F_LINK)
@@ -3284,6 +3329,7 @@ PARALLEL_TESTS = $(am__append_56) $(am__append_57) $(am__append_58) \
 	global/testing/elempatch$(EXEEXT) \
 	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
+	global/testing/patch_enumc$(EXEEXT) \
 	global/testing/print$(EXEEXT) global/testing/testc$(EXEEXT) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
@@ -4274,6 +4320,16 @@ global/testing/patch.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/patch$(EXEEXT): $(global_testing_patch_OBJECTS) $(global_testing_patch_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/patch$(EXEEXT)
 	$(AM_V_F77LD)$(global_testing_patch_LINK) $(global_testing_patch_OBJECTS) $(global_testing_patch_LDADD) $(LIBS)
+global/testing/patch_enumc.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/patch_enumc$(EXEEXT): $(global_testing_patch_enumc_OBJECTS) $(global_testing_patch_enumc_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/patch_enumc$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_patch_enumc_OBJECTS) $(global_testing_patch_enumc_LDADD) $(LIBS)
+global/testing/patch_enumf.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/patch_enumf$(EXEEXT): $(global_testing_patch_enumf_OBJECTS) $(global_testing_patch_enumf_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/patch_enumf$(EXEEXT)
+	$(AM_V_F77LD)$(global_testing_patch_enumf_LINK) $(global_testing_patch_enumf_OBJECTS) $(global_testing_patch_enumf_LDADD) $(LIBS)
 global/testing/perf.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/perf$(EXEEXT): $(global_testing_perf_OBJECTS) $(global_testing_perf_DEPENDENCIES) global/testing/$(am__dirstamp)
@@ -4848,6 +4904,8 @@ mostlyclean-compile:
 	-rm -f global/testing/ntestc.$(OBJEXT)
 	-rm -f global/testing/ntestfc.$(OBJEXT)
 	-rm -f global/testing/patch.$(OBJEXT)
+	-rm -f global/testing/patch_enumc.$(OBJEXT)
+	-rm -f global/testing/patch_enumf.$(OBJEXT)
 	-rm -f global/testing/perf.$(OBJEXT)
 	-rm -f global/testing/perfmod.$(OBJEXT)
 	-rm -f global/testing/perform.$(OBJEXT)
@@ -5201,6 +5259,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/mtest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ntestc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ntestfc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/patch_enumc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/print.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testmatmultc.Po@am__quote@
@@ -6082,6 +6141,8 @@ global/testing/ntestc.log: global/testing/ntestc$(EXEEXT)
 	@p='global/testing/ntestc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ntestfc.log: global/testing/ntestfc$(EXEEXT)
 	@p='global/testing/ntestfc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/patch_enumc.log: global/testing/patch_enumc$(EXEEXT)
+	@p='global/testing/patch_enumc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/print.log: global/testing/print$(EXEEXT)
 	@p='global/testing/print$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testc.log: global/testing/testc$(EXEEXT)
@@ -6118,6 +6179,8 @@ global/testing/ndim.log: global/testing/ndim$(EXEEXT)
 	@p='global/testing/ndim$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/patch.log: global/testing/patch$(EXEEXT)
 	@p='global/testing/patch$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/patch_enumf.log: global/testing/patch_enumf$(EXEEXT)
+	@p='global/testing/patch_enumf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/perfmod.log: global/testing/perfmod$(EXEEXT)
 	@p='global/testing/perfmod$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/perform.log: global/testing/perform$(EXEEXT)
