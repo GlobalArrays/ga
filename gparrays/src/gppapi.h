@@ -10,6 +10,7 @@ extern void    pgp_assign_element(Integer *g_p, Integer *subscript,
                                   void *ptr);
 extern Integer pgp_create_handle();
 extern logical pgp_destroy(Integer *g_p);
+extern void    pgp_free_local_element(Integer g_p, Integer *subscript);
 extern void    pgp_initialize();
 extern void    pgp_set_chunk(Integer *g_p, Integer *chunk);
 extern void    pgp_set_dimensions(Integer *g_p, Integer *ndim,

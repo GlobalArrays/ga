@@ -250,6 +250,7 @@ void pgp_distribution(Integer g_p, Integer proc, Integer *lo, Integer *hi)
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wgp_assign_local_element = pgp_assign_local_element
 #endif
+
 void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Integer size)
 {
   void *gp_ptr;
@@ -263,5 +264,38 @@ void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Intege
   }
   pnga_access_ptr(GP[handle].g_ptr_array,subscript,subscript,&gp_ptr,ld);
   *((GP_INT*)gp_ptr) = (GP_INT)ptr;
-/*  pnga_release_update(&GP[handle].g_ptr_array, subscript, subscript); */
+  pnga_release_update(GP[handle].g_ptr_array, subscript, subscript);
+}
+
+/**
+ * Free local data element using access via the Global Pointer array.
+ *  @param[in] g_p             pointer array handle
+ *  @param[in] subscript[ndim] location of element in pointer array
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wgp_free_local_element = pgp_free_local_element
+#endif
+
+void pgp_free_local_element(Integer g_p, Integer *subscript)
+{
+  void *gp_ptr;
+  Integer handle, ld[GP_MAX_DIM-1], i;
+  Integer one;
+  GP_INT buf;
+  handle = g_p + GP_OFFSET;
+  /* check to make sure that element is located in local block of GP array */
+  for (i=0; i<GP[handle].ndim; i++) {
+    if (subscript[i]<GP[handle].lo[i] || subscript[i]>GP[handle].hi[i]) {
+      pnga_error("gp_free_local_element: subscript out of bounds", i);
+    }
+  }
+  pnga_access_ptr(GP[handle].g_ptr_array,subscript,subscript,&gp_ptr,ld);
+  free((void*)((GP_INT*)gp_ptr));
+  *((GP_INT*)gp_ptr) = NULL;
+  pnga_release_update(GP[handle].g_ptr_array, subscript, subscript);
+
+  /* set corresponding element of size array to zero */
+  buf = 0;
+  one = 1;
+  pnga_put(GP[handle].g_size_array, subscript, subscript, &buf, &one);
 }

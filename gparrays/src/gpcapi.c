@@ -67,10 +67,20 @@ void GP_Distribution(int g_p, int proc, int *lo, int *hi)
   COPYINDEX_F2C(_gp_hi, hi, ndim);
 }
 
+void GP_Free_local_element(int g_p, int *subscript)
+{
+  Integer ag_p = (Integer)g_p;
+  int ndim = wgp_get_dimension(ag_p);
+  Integer _gp_idx[GP_MAX_DIM];
+  COPYINDEX_C2F(subscript, _gp_idx, ndim);
+  wgp_free_local_element(ag_p, _gp_idx);
+}
+
 int GP_Get_dimension(int g_p)
 {
   return wgp_get_dimension(g_p);
 }
+
 void GP_Get_size(int g_p, int *lo, int *hi, int *size)
 {
   Integer ag_p = (Integer)g_p;
