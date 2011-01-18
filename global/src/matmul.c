@@ -2004,7 +2004,7 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
 
 /*\ select the 2d plane to be used in matrix multiplication                     
   \*/
-static void  gai_setup_2d_patch(Integer rank, Integer dims[],
+  static void  gai_setup_2d_patch(Integer rank, char *trans, Integer dims[],
                                 Integer lo[], Integer hi[],
                                 Integer* ilo, Integer* ihi,
                                 Integer* jlo, Integer* jhi,
@@ -2012,7 +2012,8 @@ static void  gai_setup_2d_patch(Integer rank, Integer dims[],
                                 int* ipos, int* jpos)
 {
     int d,e=0;
-
+    char t='n';
+    
     for(d=0; d<rank; d++)
        if( (hi[d]-lo[d])>0 && ++e>2 ) pnga_error("3-D Patch Detected", 0L);
     *ipos = *jpos = -1;
@@ -2029,10 +2030,19 @@ static void  gai_setup_2d_patch(Integer rank, Integer dims[],
     else{
        
        /* handle almost trivial case of only one dimension with >1 elements */
-       if(*ipos == rank-1) (*ipos)--; /* i cannot be the last dimension */
-       if(*ipos <0) *ipos = *jpos-1; /* select i dimension based on j */
-       if(*jpos <0) *jpos = *ipos+1; /* select j dimenison based on i */
-       
+       if(trans == NULL) trans = &t;      
+       if(*trans == 'n' || *trans == 'N') {
+          if(*ipos == rank-1) (*ipos)--; /* i cannot be the last dimension */
+          if(*ipos <0) *ipos = *jpos-1; /* select i dimension based on j */
+          if(*jpos <0) *jpos = *ipos+1; /* select j dimenison based on i */
+       }
+       else {
+          if(*ipos <0) *ipos = *jpos-1; 
+          if(*jpos <0) {
+             if(*ipos==0) *jpos = *ipos + 1; 
+             else         *jpos = (*ipos)--;
+          }
+       }
     }
     
     *ilo = lo[*ipos]; *ihi = hi[*ipos];
@@ -2126,12 +2136,12 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT && atype != C_SCPL)
      pnga_error(" type error",atype);
    
-   gai_setup_2d_patch(arank, adims, alo, ahi, &ailo, &aihi, &ajlo, &ajhi, 
-		                  &adim1, &adim2, &aipos, &ajpos);
-   gai_setup_2d_patch(brank, bdims, blo, bhi, &bilo, &bihi, &bjlo, &bjhi, 
-		                  &bdim1, &bdim2, &bipos, &bjpos);
-   gai_setup_2d_patch(crank, cdims, clo, chi, &cilo, &cihi, &cjlo, &cjhi, 
-		                  &cdim1, &cdim2, &cipos, &cjpos);
+   gai_setup_2d_patch(arank, transa, adims, alo, ahi, &ailo, &aihi,
+                      &ajlo, &ajhi, &adim1, &adim2, &aipos, &ajpos);
+   gai_setup_2d_patch(brank, transb, bdims, blo, bhi, &bilo, &bihi,
+                      &bjlo, &bjhi, &bdim1, &bdim2, &bipos, &bjpos);
+   gai_setup_2d_patch(crank, NULL, cdims, clo, chi, &cilo, &cihi,
+                      &cjlo, &cjhi, &cdim1, &cdim2, &cipos, &cjpos);
 
    /* check if patch indices and dims match */
    if (*transa == 'n' || *transa == 'N'){
