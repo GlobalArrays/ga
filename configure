@@ -6467,8 +6467,8 @@ fi
 
 
 
-if test "x$with_bgml" != x
-    for arg in $with_bgml ; do
+if test "x$with_bgml" != x; then :
+  for arg in $with_bgml ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6508,8 +6508,7 @@ fi
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
-done; then :
-
+done
 fi
 if test "x$with_bgml" != xno && test "x$with_bgml" != x; then :
   ga_armci_network=BGML
@@ -6527,8 +6526,8 @@ fi
 
 
 
-if test "x$with_cray_shmem" != x
-    for arg in $with_cray_shmem ; do
+if test "x$with_cray_shmem" != x; then :
+  for arg in $with_cray_shmem ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6568,8 +6567,7 @@ fi
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
-done; then :
-
+done
 fi
 if test "x$with_cray_shmem" != xno && test "x$with_cray_shmem" != x; then :
   ga_armci_network=CRAY_SHMEM
@@ -6587,8 +6585,8 @@ fi
 
 
 
-if test "x$with_dcmf" != x
-    for arg in $with_dcmf ; do
+if test "x$with_dcmf" != x; then :
+  for arg in $with_dcmf ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6628,8 +6626,7 @@ fi
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
-done; then :
-
+done
 fi
 if test "x$with_dcmf" != xno && test "x$with_dcmf" != x; then :
   ga_armci_network=DCMF
@@ -6647,8 +6644,8 @@ fi
 
 
 
-if test "x$with_lapi" != x
-    for arg in $with_lapi ; do
+if test "x$with_lapi" != x; then :
+  for arg in $with_lapi ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6688,8 +6685,7 @@ fi
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
-done; then :
-
+done
 fi
 if test "x$with_lapi" != xno && test "x$with_lapi" != x; then :
   ga_armci_network=LAPI
@@ -6707,8 +6703,8 @@ fi
 
 
 
-if test "x$with_mpi_spawn" != x
-    for arg in $with_mpi_spawn ; do
+if test "x$with_mpi_spawn" != x; then :
+  for arg in $with_mpi_spawn ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6748,8 +6744,7 @@ fi
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
-done; then :
-
+done
 fi
 if test "x$with_mpi_spawn" != xno && test "x$with_mpi_spawn" != x; then :
   ga_armci_network=MPI_SPAWN
@@ -6767,8 +6762,8 @@ fi
 
 
 
-if test "x$with_openib" != x
-    for arg in $with_openib ; do
+if test "x$with_openib" != x; then :
+  for arg in $with_openib ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6808,8 +6803,7 @@ fi
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
-done; then :
-
+done
 fi
 if test "x$with_openib" != xno && test "x$with_openib" != x; then :
   ga_armci_network=OPENIB
@@ -6827,8 +6821,8 @@ fi
 
 
 
-if test "x$with_portals" != x
-    for arg in $with_portals ; do
+if test "x$with_portals" != x; then :
+  for arg in $with_portals ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6868,8 +6862,7 @@ fi
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
-done; then :
-
+done
 fi
 if test "x$with_portals" != xno && test "x$with_portals" != x; then :
   ga_armci_network=PORTALS
@@ -6887,8 +6880,8 @@ fi
 
 
 
-if test "x$with_gemini" != x
-    for arg in $with_gemini ; do
+if test "x$with_gemini" != x; then :
+  for arg in $with_gemini ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6928,8 +6921,7 @@ fi
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
-done; then :
-
+done
 fi
 if test "x$with_gemini" != xno && test "x$with_gemini" != x; then :
   ga_armci_network=GEMINI
@@ -6947,8 +6939,8 @@ fi
 
 
 
-if test "x$with_sockets" != x
-    for arg in $with_sockets ; do
+if test "x$with_sockets" != x; then :
+  for arg in $with_sockets ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6988,8 +6980,7 @@ fi
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
 fi ;;
 esac
-done; then :
-
+done
 fi
 if test "x$with_sockets" != xno && test "x$with_sockets" != x; then :
   ga_armci_network=SOCKETS

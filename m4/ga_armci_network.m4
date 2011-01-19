@@ -11,7 +11,7 @@ AS_VAR_PUSHDEF([with_key],            m4_translit([with_$1], [-.], [__]))
 dnl Can't have AM_CONDITIONAL here in case configure must find armci network
 dnl without user intervention.
 dnl AM_CONDITIONAL([ARMCI_NETWORK_]KEY, [test "x$with_key" != x])
-AS_IF([test "x$with_key" != x]
+AS_IF([test "x$with_key" != x],
     [GA_ARG_PARSE([with_key], [ARMCI_NETWORK_LIBS], [ARMCI_NETWORK_LDFLAGS],
                   [ARMCI_NETWORK_CPPFLAGS])])
 AS_IF([test "x$with_key" != xno && test "x$with_key" != x],
