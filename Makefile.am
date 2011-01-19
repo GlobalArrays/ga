@@ -544,6 +544,7 @@ BUILT_SOURCES += global/src/c.names.h
 CLEANFILES += global/src/wapi.c
 CLEANFILES += global/src/wapi.h
 CLEANFILES += global/src/wapidefs.h
+CLEANFILES += global/src/c.names.h
 
 libga_la_SOURCES += global/src/base.c
 libga_la_SOURCES += global/src/base.h
@@ -1191,6 +1192,51 @@ libga_la_SOURCES += gparrays/src/gpcapi.c
 libga_la_SOURCES += gparrays/src/gpfapi.c
 libga_la_SOURCES += gparrays/src/gponesided.c
 libga_la_SOURCES += gparrays/src/gppapi.h
+nodist_libga_la_SOURCES += gparrays/src/gpwapidefs.h
+if ENABLE_PROFILING
+if HAVE_SYS_WEAK_ALIAS_PRAGMA
+else
+nodist_libga_la_SOURCES += gparrays/src/gpwapi.c
+endif
+endif
+
+include_HEADERS += gparrays/src/gppapi.h
+nodist_include_HEADERS += gparrays/src/gpwapi.h
+
+gparrays/src/gpwapi.h: $(top_srcdir)/gparrays/src/gppapi.h
+	@-rm -f gparrays/src/gpwapi.h
+	$(SED_V) \
+	$(SED) -e "s/GPPAPI/GPWAPI/g" \
+	       -e "s/pgp_/wgp_/g" \
+	       -e "/typedef/d" \
+		   $(top_srcdir)/gparrays/src/gppapi.h > gparrays/src/gpwapi.h
+
+gparrays/src/gpwapidefs.h: $(top_srcdir)/gparrays/src/gppapi.h
+	@-rm -f gparrays/src/gpwapidefs.h
+	$(SED_V) \
+	$(SED) -e "s/GPPAPI/GPWAPIDEFS/g" \
+		   -e "s/^.*p\(gp_.*\)(.*$$/#define w\1 p\1/g" \
+		   -e "/^ /d" \
+		   -e "/^\/\*/d" \
+		   -e "/^ \*/d" \
+	       -e "/typedef/d" \
+	       -e "/include/d" \
+		   $(top_srcdir)/gparrays/src/gppapi.h > gparrays/src/gpwapidefs.h
+
+if HAVE_PYTHON
+gparrays/src/gpwapi.c: $(top_srcdir)/gparrays/src/gppapi.h $(top_srcdir)/build-aux/gpwapigen.py
+	@-rm -f gparrays/src/gpwapi.c
+	$(PYTHON_V) \
+	$(PYTHON) $(top_srcdir)/build-aux/gpwapigen.py $(top_srcdir)/gparrays/src/gppapi.h > gparrays/src/gpwapi.c
+endif
+
+EXTRA_DIST += build-aux/gpwapigen.py
+BUILT_SOURCES += gparrays/src/gpwapi.h
+BUILT_SOURCES += gparrays/src/gpwapidefs.h
+
+CLEANFILES += gparrays/src/gpwapi.c
+CLEANFILES += gparrays/src/gpwapi.h
+CLEANFILES += gparrays/src/gpwapidefs.h
 
 check_PROGRAMS += gparrays/testing/test
 check_PROGRAMS += gparrays/testing/testc
@@ -1201,6 +1247,9 @@ gparrays_testing_testc_SOURCES = gparrays/testing/testc.c
 nodist_EXTRA_gparrays_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 
 gparrays_testing_test_LDFLAGS  = $(FLDFLAGS)
+
+AM_CPPFLAGS += -I$(top_build_prefix)gparrays/src
+AM_CPPFLAGS += -I$(top_srcdir)/gparrays/src
 
 ##############################################################################
 # armci

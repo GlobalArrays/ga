@@ -136,7 +136,7 @@ void pgp_set_dimensions(Integer g_p, Integer ndim, Integer *dims)
 #   pragma weak wgp_get_dimension = pgp_get_dimension
 #endif
 
-Integer pgp_get_dimension(g_p)
+Integer pgp_get_dimension(Integer g_p)
 {
   Integer handle;
   handle = g_p + GP_OFFSET;
@@ -291,7 +291,7 @@ void pgp_free_local_element(Integer g_p, Integer *subscript)
   }
   pnga_access_ptr(GP[handle].g_ptr_array,subscript,subscript,&gp_ptr,ld);
   free((void*)((GP_INT*)gp_ptr));
-  *((GP_INT*)gp_ptr) = NULL;
+  gp_ptr = NULL;
   pnga_release_update(GP[handle].g_ptr_array, subscript, subscript);
 
   /* set corresponding element of size array to zero */

@@ -12,6 +12,12 @@
 #include "gpbase.h"
 #include "gppapi.h"
 
+#if ENABLE_PROFILING
+#   include "gpwapi.h"
+#else
+#   include "gpwapidefs.h"
+#endif
+
 #ifdef USE_FAPI
 #  define COPYC2F(carr, farr, n){\
    int i; for(i=0; i< (n); i++)(farr)[i]=(Integer)(carr)[i];}
@@ -60,7 +66,7 @@ void GP_Distribution(int g_p, int proc, int *lo, int *hi)
 {
   Integer ag_p = (Integer)g_p;
   Integer p = (Integer)proc;
-  int ndim = (int)wnga_get_dimension(ag_p);
+  int ndim = (int)wgp_get_dimension(ag_p);
   Integer _gp_lo[GP_MAX_DIM], _gp_hi[GP_MAX_DIM];
   wgp_distribution(ag_p, p, _gp_lo, _gp_hi);
   COPYINDEX_F2C(_gp_lo, lo, ndim);
