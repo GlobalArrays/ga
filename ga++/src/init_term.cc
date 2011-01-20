@@ -4,18 +4,20 @@
 
 #ifdef MPIPP
 #   include "mpi.h"
+#else
+#   include "tcgmsg.h"
 #endif
 
 #include "ga++.h"
 
 void
 GA::Initialize(int argc, char *argv[], size_t limit) {
-#ifndef MPIPP
-  tcg_pbegin(argc, argv);
-#else
+#ifdef MPIPP
   int val;
   if((val=MPI_Init(&argc, &argv)) < 0) 
     fprintf(stderr, "MPI_Init() failed\n");
+#else
+  tcg_pbegin(argc, argv);
 #endif
 
   // GA Initialization
@@ -29,12 +31,12 @@ void
 GA::Initialize(int argc, char *argv[], unsigned long heapSize, 
 	   unsigned long stackSize, int type, size_t limit) {
   // Initialize MPI/TCGMSG  
-#ifndef MPIPP
-  tcg_pbegin(argc, argv);
-#else
+#ifdef MPIPP
   int val;
   if((val=MPI_Init(&argc, &argv)) < 0) 
     fprintf(stderr, "MPI_Init() failed\n");
+#else
+  tcg_pbegin(argc, argv);
 #endif
   
   // GA Initialization
