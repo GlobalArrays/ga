@@ -421,38 +421,30 @@ register Integer nelem;
         pnga_access_ptr(g_a, &lop, &hip, &ptr, &ld);
         
         switch (type) {
-#define ga_patch_enum_case(MT,T) \
+#define ga_patch_enum_reg aptr[i] = astart + ((off+i)*astride)
+#define ga_patch_enum_cpl aptr[i].real = astart.real + ((off+i)*astride.real); \
+                          aptr[i].imag = astart.imag + ((off+i)*astride.imag)
+#define ga_patch_enum_case(MT,T,INNER) \
             case MT: \
                 { \
                     T *aptr = (T*)ptr; \
                     T astart = *((T*)start); \
                     T astride = *((T*)stride); \
                     for (i=0; i<nelem; i++) { \
-                        aptr[i] = astart + ((off+i)*astride); \
+                        ga_patch_enum_##INNER; \
                     } \
                     break; \
                 }
-            ga_patch_enum_case(C_INT,int)
-            ga_patch_enum_case(C_LONG,long)
-            ga_patch_enum_case(C_LONGLONG,long long)
-            ga_patch_enum_case(C_FLOAT,float)
-            ga_patch_enum_case(C_DBL,double)
+            ga_patch_enum_case(C_INT,int,reg)
+            ga_patch_enum_case(C_LONG,long,reg)
+            ga_patch_enum_case(C_LONGLONG,long long,reg)
+            ga_patch_enum_case(C_FLOAT,float,reg)
+            ga_patch_enum_case(C_DBL,double,reg)
+            ga_patch_enum_case(C_SCPL,SingleComplex,cpl)
+            ga_patch_enum_case(C_DCPL,DoubleComplex,cpl)
 #undef ga_patch_enum_case
-#define ga_patch_enum_case_cpl(MT,T) \
-            case MT: \
-                { \
-                    T *aptr = (T*)ptr; \
-                    T astart = *((T*)start); \
-                    T astride = *((T*)stride); \
-                    for (i=0; i<nelem; i++) { \
-                        aptr[i].real = astart.real + ((off+i)*astride.real); \
-                        aptr[i].imag = astart.imag + ((off+i)*astride.imag); \
-                    } \
-                    break; \
-                }
-            ga_patch_enum_case_cpl(C_SCPL,SingleComplex)
-            ga_patch_enum_case_cpl(C_DCPL,DoubleComplex)
-#undef ga_patch_enum_case
+#undef ga_patch_enum_reg
+#undef ga_patch_enum_cpl
             default: pnga_error("ga_patch_enum:wrong data type ",type);
         }
 
