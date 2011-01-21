@@ -112,9 +112,4 @@ AS_IF([test x$with_mpi_wrappers = xyes],
     [F77_TO_TEST="$ga_mpif77_pref $ga_mpif95 $ga_mpif90 $ga_mpif77"],
     [F77_TO_TEST="$ga_f77_pref $ga_f95 $ga_f90 $ga_f77"])
 AC_PROG_F77([$F77_TO_TEST])
-# AC_PROG_F77 only sets F77 (which is what we want),
-# but override MPIF77 for the UNWRAP macro.
-AS_IF([test x$with_mpi_wrappers = xyes],
-    [MPIF77="$F77"
-     GA_MPI_UNWRAP])
 ])dnl

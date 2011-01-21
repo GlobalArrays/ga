@@ -61,30 +61,30 @@ else {
 }
 EOF]
 inside="$PERL inside.pl"
+wrapped="$_AC_CC"
 AC_LANG_CASE(
-[C], [
-    wrapped="$CC"
-    AS_CASE([$wrapped],
-        [*_r],  [compilers="bgxlc_r xlc_r"],
-        [*],    [compilers="bgxlc xlc gcc pgcc pathcc icc ecc cl ccc cc"])
+[C], [AS_CASE([$wrapped],
+    [*_r],  [compilers="bgxlc_r xlc_r"],
+    [*],    [compilers="bgxlc xlc pgcc pathcc icc sxcc fcc opencc suncc gcc ecc cl ccc cc"])
 ],
-[C++], [
-    wrapped="$CXX"
-    AS_CASE([$wrapped],
-        [*_r],  [compilers="bgxlC_r"],
-        [*],    [compilers="g++ c++ icpc pgCC pathCC gpp aCC cxx cc++ cl.exe FCC KCC RCC bgxlC_r bgxlC xlC_r xlC CC"])
+[C++], [AS_CASE([$wrapped],
+    [*_r],  [compilers="bgxlC_r xlC_r"],
+    [*],    [compilers="icpc pgCC pathCC sxc++ xlC bgxlC openCC sunCC g++ c++ gpp aCC cxx cc++ cl.exe FCC KCC RCC CC"])
 ],
-[Fortran 77], [
-    wrapped="$F77"
-    AS_CASE([$wrapped],
-        [*_r],  [compilers="bgxlf95_r xlf95_r bgxlf90_r xlf90_r bgxlf_r xlf_r"],
-        [*],    [compilers="gfortran g95 bgxlf95 xlf95 f95 fort ifort ifc efc pgf95 pathf95 lf95 bgxlf90 xlf90 f90 pgf90 pathf90 pghpf epcf90 g77 bgxlf xlf f77 frt pgf77 pathf77 cf77 fort77 fl32 af77"])
+[Fortran 77], [AS_CASE([$wrapped],
+    [*_r],  [compilers="bgxlf95_r xlf95_r bgxlf90_r xlf90_r bgxlf_r xlf_r"],
+    [*],    [compilers="gfortran g95 bgxlf95 xlf95 f95 fort ifort ifc efc pgf95 pathf95 lf95 openf95 sunf95 bgxlf90 xlf90 f90 pgf90 pathf90 pghpf epcf90 sxf90 openf90 sunf90 g77 bgxlf xlf f77 frt pgf77 pathf77 cf77 fort77 fl32 af77"])
     ],
 [Fortran], [
-    wrapped="$FC"
 ])
+AS_VAR_PUSHDEF([ga_save_comp], [ga_save_[]_AC_CC[]])
 AS_VAR_PUSHDEF([ga_cv_mpi_naked], [ga_cv_mpi[]_AC_LANG_ABBREV[]_naked])
 AC_CACHE_CHECK([for base $wrapped compiler], [ga_cv_mpi_naked], [
+base="`$wrapped -show | sed 's/@<:@ \t@:>@.*@S|@//' | head -1`"
+ga_save_comp="$_AC_CC"
+_AC_CC="$base"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])], [ga_cv_mpi_naked=$base])
+_AC_CC="$ga_save_comp"
 versions="--version -v -V -qversion"
 found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
@@ -184,6 +184,7 @@ rm -f mpi.txt mpi.err naked.txt naked.err
 AS_IF([test "x$ga_cv_mpi_naked" = x],
     [AC_MSG_WARN([Could not determine the ]_AC_LANG[ compiler wrapped by MPI])
      AC_MSG_WARN([This is usually okay])])
+AS_VAR_POPDEF([ga_save_comp])
 AS_VAR_POPDEF([ga_cv_mpi_naked])
 rm -f inside.pl
 ])dnl

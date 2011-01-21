@@ -58,9 +58,4 @@ AS_IF([test x$with_mpi_wrappers = xyes],
     [CC_TO_TEST="$ga_mpicc_pref $ga_mpicc"],
     [CC_TO_TEST="$ga_cc_pref $ga_cc"])
 AC_PROG_CC([$CC_TO_TEST])
-# AC_PROG_CC only sets "CC" (which is what we want),
-# but override MPICC for the UNWRAP macro.
-AS_IF([test x$with_mpi_wrappers = xyes],
-    [MPICC="$CC"
-     GA_MPI_UNWRAP])
 ])dnl

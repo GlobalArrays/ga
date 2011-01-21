@@ -65,10 +65,4 @@ AS_IF([test x$with_mpi_wrappers = xyes],
     [CXX_TO_TEST="$ga_mpicxx_pref $ga_mpicxx"],
     [CXX_TO_TEST="$ga_cxx_pref $ga_cxx"])
 AC_PROG_CXX([$CXX_TO_TEST])
-AS_IF([test "x$enable_cxx" = xyes], [
-    # AC_PROG_CXX only sets "CXX" (which is what we want),
-    # but override MPICXX for the UNWRAP macro.
-    AS_IF([test x$with_mpi_wrappers = xyes],
-        [MPICXX="$CXX"
-         GA_MPI_UNWRAP])])
 ])dnl
