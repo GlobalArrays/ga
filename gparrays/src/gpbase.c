@@ -83,6 +83,7 @@ Integer pgp_create_handle()
       handle = i-GP_OFFSET;
       GP[i].g_size_array = pnga_create_handle();
       GP[i].g_ptr_array = pnga_create_handle();
+      GP[i].active = 1;
       break;
     }
   }
@@ -214,6 +215,50 @@ logical pgp_destroy(Integer g_p)
 }
 
 /**
+ *  Shell that can be used to insert debug code
+ *  @param[in] g_p                pointer array handle
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wgp_debug = pgp_debug
+#endif
+
+void pgp_debug(Integer g_p)
+{
+  Integer handle;
+  int *ptr;
+  Integer lo[2],hi[2],ld;
+  Integer i, j, idim, jdim, size;
+  handle = g_p + GP_OFFSET;
+    printf("Got to 1\n");
+  lo[0] = 1;
+  lo[1] = 1;
+  idim = GP[handle].dims[0];
+  jdim = GP[handle].dims[1];
+  hi[0] = idim;
+  hi[1] = jdim;
+  ld = idim;
+    printf("Got to 2\n");
+  if (pnga_nodeid() == 0) {
+    size = idim*jdim;
+    printf("p[%d] Got to 3 size: %d\n",pnga_nodeid(),size);
+    ptr = (int*)malloc(size*sizeof(int));
+    printf("p[%d] Got to 4\n",pnga_nodeid());
+    pnga_get(GP[handle].g_size_array, lo, hi, ptr, &ld);
+    printf("p[%d] Got to 5\n",pnga_nodeid());
+    size = 0;
+    for (i=0; i<idim; i++) {
+      for (j=0; j<jdim; j++) {
+        printf("  %5d",ptr[j*idim+i]);
+        size += ptr[j*idim+i];
+      }
+      printf("\n");
+    }
+    printf("total size of array: %d\n",size);
+    free(ptr);
+  }
+}
+
+/**
  *  Return coordinates of a GP patch associated with processor proc
  *  @param[in] g_p                pointer array handle
  *  @param[in] proc               processor for which patch coordinates
@@ -262,6 +307,11 @@ void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Intege
       pnga_error("gp_assign_local_element: subscript out of bounds", i);
     }
   }
+  pnga_access_ptr(GP[handle].g_size_array,subscript,subscript,&gp_ptr,ld);
+  *((int*)gp_ptr) = size;
+  printf("p[%d] (internal) size %d ad location [%d:%d]\n",pnga_nodeid(),
+      *((int*)gp_ptr),subscript[0],subscript[1]);
+  pnga_release_update(GP[handle].g_size_array, subscript, subscript);
   pnga_access_ptr(GP[handle].g_ptr_array,subscript,subscript,&gp_ptr,ld);
   *((GP_INT*)gp_ptr) = (GP_INT)ptr;
   pnga_release_update(GP[handle].g_ptr_array, subscript, subscript);

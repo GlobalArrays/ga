@@ -5,6 +5,7 @@
 
 /* Routines from gpbase.c */
 
+extern void    pgp_debug(Integer g_p);
 extern void    pgp_initialize();
 extern void    pgp_terminate();
 extern Integer pgp_create_handle();
