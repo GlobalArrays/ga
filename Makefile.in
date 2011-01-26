@@ -68,7 +68,10 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
 	global/testing/patch_enumc$(EXEEXT) \
-	global/testing/print$(EXEEXT) global/testing/testc$(EXEEXT) \
+	global/testing/print$(EXEEXT) \
+	global/testing/scan_addc$(EXEEXT) \
+	global/testing/scan_copyc$(EXEEXT) \
+	global/testing/testc$(EXEEXT) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
 	global/testing/testmultrect$(EXEEXT) $(am__EXEEXT_12) \
@@ -1589,6 +1592,32 @@ global_testing_scan_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_scan_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am__global_testing_scan_addc_SOURCES_DIST =  \
+	global/testing/scan_addc.c global/testing/testutil.fh \
+	global/testing/testutil.h global/testing/util.c \
+	global/testing/ffflush.F
+am_global_testing_scan_addc_OBJECTS =  \
+	global/testing/scan_addc.$(OBJEXT) $(am__objects_21)
+global_testing_scan_addc_OBJECTS =  \
+	$(am_global_testing_scan_addc_OBJECTS)
+global_testing_scan_addc_LDADD = $(LDADD)
+global_testing_scan_addc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__global_testing_scan_copyc_SOURCES_DIST =  \
+	global/testing/scan_copyc.c global/testing/testutil.fh \
+	global/testing/testutil.h global/testing/util.c \
+	global/testing/ffflush.F
+am_global_testing_scan_copyc_OBJECTS =  \
+	global/testing/scan_copyc.$(OBJEXT) $(am__objects_21)
+global_testing_scan_copyc_OBJECTS =  \
+	$(am_global_testing_scan_copyc_OBJECTS)
+global_testing_scan_copyc_LDADD = $(LDADD)
+global_testing_scan_copyc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__global_testing_simple_groups_SOURCES_DIST =  \
 	global/testing/simple_groups.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
@@ -2304,6 +2333,10 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(nodist_EXTRA_global_testing_print_SOURCES) \
 	$(global_testing_random_SOURCES) \
 	$(global_testing_scan_SOURCES) \
+	$(global_testing_scan_addc_SOURCES) \
+	$(nodist_EXTRA_global_testing_scan_addc_SOURCES) \
+	$(global_testing_scan_copyc_SOURCES) \
+	$(nodist_EXTRA_global_testing_scan_copyc_SOURCES) \
 	$(global_testing_simple_groups_SOURCES) \
 	$(global_testing_sparse_SOURCES) \
 	$(global_testing_sprsmatmult_SOURCES) \
@@ -2421,6 +2454,8 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_print_SOURCES_DIST) \
 	$(am__global_testing_random_SOURCES_DIST) \
 	$(am__global_testing_scan_SOURCES_DIST) \
+	$(am__global_testing_scan_addc_SOURCES_DIST) \
+	$(am__global_testing_scan_copyc_SOURCES_DIST) \
 	$(am__global_testing_simple_groups_SOURCES_DIST) \
 	$(am__global_testing_sparse_SOURCES_DIST) \
 	$(am__global_testing_sprsmatmult_SOURCES_DIST) \
@@ -3065,6 +3100,8 @@ global_testing_pgtest_SOURCES = global/testing/pgtest.F $(gtsrc)
 global_testing_print_SOURCES = global/testing/print.c $(gtsrc)
 global_testing_random_SOURCES = global/testing/random.F $(gtsrc)
 global_testing_scan_SOURCES = global/testing/scan.F $(gtsrc)
+global_testing_scan_addc_SOURCES = global/testing/scan_addc.c $(gtsrc)
+global_testing_scan_copyc_SOURCES = global/testing/scan_copyc.c $(gtsrc)
 global_testing_simple_groups_SOURCES = global/testing/simple_groups.F $(gtsrc)
 global_testing_sparse_SOURCES = global/testing/sparse.F $(gtsrc)
 global_testing_sprsmatmult_SOURCES = global/testing/sprsmatmult.F $(gtsrc)
@@ -3133,6 +3170,8 @@ nodist_EXTRA_global_testing_ntestc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ntestfc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_patch_enumc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_print_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_scan_addc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_scan_copyc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmult_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmultrect_SOURCES = $(MAYBE_DUMMY_F_LINK)
@@ -3339,7 +3378,10 @@ PARALLEL_TESTS = $(am__append_57) $(am__append_58) $(am__append_59) \
 	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
 	global/testing/patch_enumc$(EXEEXT) \
-	global/testing/print$(EXEEXT) global/testing/testc$(EXEEXT) \
+	global/testing/print$(EXEEXT) \
+	global/testing/scan_addc$(EXEEXT) \
+	global/testing/scan_copyc$(EXEEXT) \
+	global/testing/testc$(EXEEXT) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
 	global/testing/testmultrect$(EXEEXT) $(am__append_62) \
@@ -4393,6 +4435,16 @@ global/testing/scan.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/scan$(EXEEXT): $(global_testing_scan_OBJECTS) $(global_testing_scan_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/scan$(EXEEXT)
 	$(AM_V_F77LD)$(global_testing_scan_LINK) $(global_testing_scan_OBJECTS) $(global_testing_scan_LDADD) $(LIBS)
+global/testing/scan_addc.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/scan_addc$(EXEEXT): $(global_testing_scan_addc_OBJECTS) $(global_testing_scan_addc_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/scan_addc$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_scan_addc_OBJECTS) $(global_testing_scan_addc_LDADD) $(LIBS)
+global/testing/scan_copyc.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/scan_copyc$(EXEEXT): $(global_testing_scan_copyc_OBJECTS) $(global_testing_scan_copyc_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/scan_copyc$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_scan_copyc_OBJECTS) $(global_testing_scan_copyc_LDADD) $(LIBS)
 global/testing/simple_groups.$(OBJEXT):  \
 	global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
@@ -4927,6 +4979,8 @@ mostlyclean-compile:
 	-rm -f global/testing/print.$(OBJEXT)
 	-rm -f global/testing/random.$(OBJEXT)
 	-rm -f global/testing/scan.$(OBJEXT)
+	-rm -f global/testing/scan_addc.$(OBJEXT)
+	-rm -f global/testing/scan_copyc.$(OBJEXT)
 	-rm -f global/testing/simple_groups.$(OBJEXT)
 	-rm -f global/testing/sparse.$(OBJEXT)
 	-rm -f global/testing/sprsmatmult.$(OBJEXT)
@@ -5274,6 +5328,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ntestfc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/patch_enumc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/print.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/scan_addc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/scan_copyc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testmatmultc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testmult.Po@am__quote@
@@ -6159,6 +6215,10 @@ global/testing/patch_enumc.log: global/testing/patch_enumc$(EXEEXT)
 	@p='global/testing/patch_enumc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/print.log: global/testing/print$(EXEEXT)
 	@p='global/testing/print$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/scan_addc.log: global/testing/scan_addc$(EXEEXT)
+	@p='global/testing/scan_addc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/scan_copyc.log: global/testing/scan_copyc$(EXEEXT)
+	@p='global/testing/scan_copyc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testc.log: global/testing/testc$(EXEEXT)
 	@p='global/testing/testc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testmatmultc.log: global/testing/testmatmultc$(EXEEXT)
