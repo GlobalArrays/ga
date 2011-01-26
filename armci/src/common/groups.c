@@ -228,7 +228,7 @@ armci_grp_attr_t *ARMCI_Group_getattr(ARMCI_Group *group)
 #ifdef ARMCI_GROUP
 void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Group *group) {
   armci_msg_group_bcast_scope(SCOPE_ALL, buffer, len, 
-			      ARMCI_Absolute_id(group, root), 
+			      ARMCI_Absolute_id(group, root),
 			      group);
 }
 #else
@@ -242,11 +242,26 @@ void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm) {
 
 void ARMCI_Group_free(ARMCI_Group *group) {
 
-    int rv;
+  int rv, world_me, i;
     
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
-    
+
+#ifdef ARMCI_GROUP
+    world_me = armci_msg_me();
+    for(i=0; i<igroup->grp_attr.nproc; i++) {
+      if(igroup->grp_attr.proc_list[i] == world_me) {
+	break;
+      }
+    }
+    if(i==igroup->grp_attr.nproc) {
+      return; /*not in group to be freed*/
+    }
+#endif
+
+
+    assert(igroup);
     free(igroup->grp_attr.grp_clus_info);
+    
 #ifdef ARMCI_GROUP
     free(igroup->grp_attr.proc_list);
     igroup->grp_attr.nproc = 0;
@@ -255,8 +270,10 @@ void ARMCI_Group_free(ARMCI_Group *group) {
     rv=MPI_Group_free(&(igroup->igroup));
     if(rv != MPI_SUCCESS) armci_die("MPI_Group_free: Failed ",armci_me);
     
-    rv = MPI_Comm_free( (MPI_Comm*)&(igroup->icomm) );
-    if(rv != MPI_SUCCESS) armci_die("MPI_Comm_free: Failed ",armci_me);
+    if(igroup->icomm != MPI_COMM_NULL) {
+      rv = MPI_Comm_free( (MPI_Comm*)&(igroup->icomm) );
+      if(rv != MPI_SUCCESS) armci_die("MPI_Comm_free: Failed ",armci_me);
+    }
 #endif
 }
 
@@ -273,12 +290,28 @@ void ARMCI_Group_create_child(int n, int *pid_list, ARMCI_Group *group_out,
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)group_out;
 #ifdef ARMCI_GROUP
     armci_grp_attr_t *grp_attr = &igroup->grp_attr;
-    int world_me;
+    int world_me, parent_grp_me;
 #else
     int rv;
     ARMCI_iGroup *igroup_parent = (ARMCI_iGroup *)grp_parent;
     MPI_Group *group_parent;
     MPI_Comm *comm_parent;
+#endif
+
+
+#ifdef ARMCI_GROUP
+    ARMCI_Group_rank(grp_parent, &parent_grp_me);
+    for(i=0; i<n; i++) {
+      if(pid_list[i] == parent_grp_me) {
+	break;
+      }
+    }
+    if(i==n) {
+      /*this initialization is used in group free*/
+      grp_attr->nproc=0;
+      grp_attr->proc_list = NULL; 
+      return; /*not in group to be created*/
+    }
 #endif
     
     for(i=0; i<n-1;i++) {
@@ -319,9 +352,10 @@ void ARMCI_Group_create_child(int n, int *pid_list, ARMCI_Group *group_out,
     rv = MPI_Comm_create(*comm_parent, (MPI_Group)(igroup->igroup), 
                          (MPI_Comm*)&(igroup->icomm));
     if(rv != MPI_SUCCESS) armci_die("MPI_Comm_create: Failed ",armci_me);
-    
+
     /* processes belong to this group should cache attributes */
     MPI_Group_rank((MPI_Group)(igroup->igroup), &grp_me);
+    igroup->grp_attr.grp_clus_info=NULL;
     if(grp_me != MPI_UNDEFINED) armci_cache_attr(group_out);
 #endif
 }
