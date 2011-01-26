@@ -12,13 +12,13 @@
 #include "msgtypesc.h"
 #include "srftoc.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* for brevity */
 #define DBL DoublePrecision
 #define INT long
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern void BRDCST_(INT *type, char *buf, INT *lenbuf, INT *originator);
 extern void DGOP_(INT *type, DBL *x, INT *n, char *op, int oplen);
@@ -50,18 +50,18 @@ extern INT  TCGREADY_();
 extern DBL  TCGTIME_();
 extern void WAITCOM_(INT *node);
 
-#undef DBL
-#undef INT
-
 #ifdef __cplusplus
 }
 #endif
 
-extern void Error(char *string, Integer integer);
+extern void Error(char *string, INT integer);
 extern void tcgi_pbegin(int argc, char **argv);
 extern void PrintProcInfo();
-extern void RemoteConnect(Integer a, Integer b, Integer c);
+extern void RemoteConnect(INT a, INT b, INT c);
 extern void MtimeReset();
-extern void USleep(Integer us);
+extern void USleep(INT us);
+
+#undef DBL
+#undef INT
 
 #endif /* SNDRCV_H_ */
