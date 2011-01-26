@@ -309,7 +309,7 @@ void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Intege
   }
   pnga_access_ptr(GP[handle].g_size_array,subscript,subscript,&gp_ptr,ld);
   *((int*)gp_ptr) = size;
-  printf("p[%d] (internal) size %d ad location [%d:%d]\n",pnga_nodeid(),
+  printf("p[%d] (internal) size %d at location [%d:%d]\n",pnga_nodeid(),
       *((int*)gp_ptr),subscript[0],subscript[1]);
   pnga_release_update(GP[handle].g_size_array, subscript, subscript);
   pnga_access_ptr(GP[handle].g_ptr_array,subscript,subscript,&gp_ptr,ld);

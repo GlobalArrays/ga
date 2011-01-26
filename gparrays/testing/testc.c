@@ -6,17 +6,17 @@
 
 #include <stdlib.h>
 
-#define N_I  567
-#define N_J  789
+#define N_I  4
+#define N_J  4
 
-#define Q_I 13
-#define Q_J 17
+#define Q_I 2
+#define Q_J 2
 
 /* get random patch for GP */
 void get_range( int ndim, int dims[], int lo[], int hi[])
 {
   int dim, nproc, i, itmp;
-  nproc = GA_Nnodes();
+  nproc = GA_Nodeid();
   /* Mix up values on different processors */
   for (i=0; i<nproc; i++) itmp = rand();
 
@@ -81,21 +81,27 @@ void do_work()
           ptr[l*m_k_ij+k+2] = l*m_k_ij+k+idx;
         }
       }
-      subscript[0] = i;
-      subscript[1] = j;
+      subscript[0] = ii;
+      subscript[1] = jj;
+      printf("p[%d] size is: %d location is [%d:%d] ptr: %p\n",me,size,
+          subscript[0],subscript[1], ptr);
       GP_Assign_local_element(g_p, subscript, (void*)ptr, size);
     }
   }
   
   /* Guarantee data consistency */
   NGA_Sync();
+  GP_Debug(g_p);
 
   /* Generate bounding coordinates to an arbitrary patch in GP array */
   get_range(ndim, dims, lo, hi);
+  printf("p[%d] Getting patch [%d:%d] [%d:%d]\n",me,lo[0],hi[0],lo[1],hi[1]);
 
   /* Find the total amount of data contained in the patch */
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+  printf("p[%d] Total size of patch: %d\n",me,nsize);
   GP_Get_size(g_p, lo, hi, &size);
+  printf("p[%d] Total size of patch data: %d\n",me,size);
 
   /* Allocate buffers and retrieve data */
   buf = (void*)malloc(size);
@@ -105,8 +111,12 @@ void do_work()
   ld[1] = hi[1]-lo[1]+1;
   ld_sz[0] = hi[0]-lo[0]+1;
   ld_sz[1] = hi[1]-lo[1]+1;
+  GA_Set_debug(1);
   GP_Get(g_p, lo, hi, buf, buf_ptr, ld, buf_size, ld_sz, &size);
+  GA_Set_debug(0);
+  printf("p[%d] Returned from GP_Get size: %d\n",me,size);
   
+#if 0
   /* Check contents of buffers to see if data is as expected */
   for (i=lo[0]; i<=hi[0]; i++) {
     ii = i - lo[0];
@@ -147,6 +157,7 @@ void do_work()
 
   /* destroy Global Pointer array */
   GP_Destroy(g_p);
+#endif
 }
 
 int main(int argc, char **argv)

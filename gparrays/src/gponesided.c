@@ -42,7 +42,7 @@ Integer *_gp_proclist;
 void gpi_onesided_init()
 {
   Integer nproc;
-  nproc = pnga_pgroup_nodeid(pnga_pgroup_get_world());
+  nproc = pnga_pgroup_nnodes(pnga_pgroup_get_world());
   _gp_proclist = (Integer*)malloc((size_t)nproc*sizeof(Integer));
   _gp_map = (Integer*)malloc((size_t)(nproc*2*GP_MAX_DIM)*sizeof(Integer));
 }
@@ -141,7 +141,7 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
   Integer nelems, index[GP_MAX_DIM];
   Integer block_ld[GP_MAX_DIM], block_ld_loc[GP_MAX_DIM];
   int *int_ptr;
-  void **rem_ptr;
+  GP_INT *rem_ptr;
   int rc;
   armci_giov_t *desc;
   handle = g_p + GP_OFFSET;
@@ -154,43 +154,42 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
       pnga_error("gp_get_size: illegal block size specified", g_p);
   }
 
-  pnga_get(GP[handle].g_size_array, lo, hi, buf, ld);
+  pnga_get(GP[handle].g_size_array, lo, hi, buf_size, ld_sz);
   
   /* Get strides of requested block */
   ndim = GP[handle].ndim;
+  nelems = 1;
   for (i=0; i<ndim; i++) {
     block_ld[i] = (hi[i] - lo[i] + 1);
+    nelems *= block_ld[i];
   }
-  printf("p[%d] Got to 1\n",pnga_nodeid());
 
   /* Based on sizes, construct buf_ptr array */
   int_ptr = (int*)buf;
   idx = 0;
   offset_ptr = 0;
-  for (d=0; d<ndim; d++) {
-    for (i=0; i<block_ld[d]; i++) {
-      itmp = idx;
-      for (j=0; j<ndim-1; j++) {
-        index[d] = itmp%block_ld[j];
-        itmp = (itmp - index[i])/block_ld[i];
-      }
-      index[ndim] = itmp;
-      /* evaluate offsets in size and ptr buffers */
-      offset_sz = index[ndim-1];
-      offset_d = index[ndim-1];
-      for (d=ndim-2; d>=0; d--) {
-        offset_sz = offset_sz*ld_sz[d] + index[d];
-        offset_d = offset_d*ld[d] + index[d];
-      }
-      /* evaluate offset in data buffer */
-      offset_ptr += (Integer)int_ptr[offset_sz];
-      buf_ptr[offset_d] = buf+offset_ptr;
-      idx++;
+  while(idx<nelems) {
+    /* find corresponding index for idx */
+    itmp = idx;
+    for (j=0; j<ndim-1; j++) {
+      index[j] = itmp%block_ld[j];
+      itmp = (itmp - index[j])/block_ld[j];
     }
+    index[ndim-1] = itmp;
+    /* use index to evaluate offset in size array and
+       buf_ptr array */
+    offset_sz = index[ndim-1];
+    offset_d = index[ndim-1];
+    for (d=ndim-2; d>=0; d--) {
+      offset_sz = offset_sz*ld_sz[d] + index[d];
+      offset_d = offset_d*ld[d] + index[d];
+    }
+    /* evaluate offset in data buffer */
+    buf_ptr[offset_d] = buf+offset_ptr;
+    offset_ptr += ((int*)buf_size)[offset_sz];
+    idx++;
   }
-  /* return total size of data set */
   *size = offset_ptr;
-  printf("p[%d] Got to 2\n",pnga_nodeid());
 
   /* locate the processors containing some portion of the patch represented by
    * lo and hi and return the results in _gp_map, gp_proclist, and np.
@@ -201,11 +200,13 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
    */
   pnga_locate_region(GP[handle].g_size_array, lo, hi, _gp_map, _gp_proclist,
                      &np);
+  /*printf("\n");*/
   /* Loop over processors containing data */
   for (idx=0; idx<np; idx++) {
     Integer p = _gp_proclist[idx];
     Integer *plo, *phi;
-    gpm_GetRangeFromMap(p, ndim, &plo, &phi);
+    Integer jcnt;
+    gpm_GetRangeFromMap(idx, ndim, &plo, &phi);
     nelems = 1;
     /* Find out how big patch is */
     for (i=0; i<ndim; i++) {
@@ -218,44 +219,50 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
     desc = (armci_giov_t*)malloc((size_t)(nelems)*sizeof(armci_giov_t));
 
     /* Get remote pointers */
-    pnga_get(GP[handle].g_ptr_array, plo, phi, rem_ptr, block_ld);
-  printf("p[%d] Got to 4\n",pnga_nodeid());
-
+    pnga_get(GP[handle].g_ptr_array, plo, phi, rem_ptr, block_ld_loc);
     /* Construct descriptors */
-    idx = 0;
-    for (d=0; d<ndim; d++) {
-      for (i=0; i<block_ld_loc[d]; i++) {
-        itmp = idx;
-        for (j=0; j<ndim-1; j++) {
-          index[d] = itmp%block_ld_loc[j];
-          itmp = (itmp - index[i])/block_ld_loc[i];
-        }
-        index[ndim] = itmp;
-        /* evaluate offsets in buf_ptr, rem_ptr, and buf_size buffers */
-        offset_sz = index[ndim-1];
-        offset_d = index[ndim-1]+plo[ndim-1];
-        offset_rem = index[ndim-1];
-        for (d=ndim-2; d>=0; d--) {
-          offset_sz = offset_sz*ld_sz[d] + index[d];
-          offset_d = offset_d*ld[d] + index[d]+plo[d];
-          offset_rem = offset_rem*block_ld_loc[d] + index[d];
-        }
-        desc[idx].src_ptr_array = rem_ptr[offset_rem];
-        desc[idx].dst_ptr_array = buf_ptr[offset_d];
+    jcnt = 0;
+    for (j=0; j<nelems; j++) {
+      itmp = j;
+      for (d=0; d<ndim-1; d++) {
+        index[d] = itmp%block_ld_loc[d];
+        itmp = (itmp - index[d])/block_ld_loc[d];
+      }
+      index[ndim-1] = itmp;
+      offset_rem = index[ndim-1];
+      offset_sz = index[ndim-1] + plo[ndim-1] - lo[ndim-1];
+      offset_d = index[ndim-1] + plo[ndim-1] - lo[ndim-1];
+      for (d=ndim-2; d>=0; d--) {
+        offset_rem = offset_rem*block_ld_loc[d] + index[d];
+        offset_sz = offset_sz*ld_sz[d] + index[d] + plo[d] - lo[d];
+        offset_d = offset_d*ld[d] + index[d] + plo[d] - lo[d];
+      }
+      if (((int*)buf_size)[offset_sz] > 0) {
+        desc[jcnt].src_ptr_array = (void*)rem_ptr[offset_rem];
+        desc[jcnt].dst_ptr_array = buf_ptr[offset_d];
         if (intsize == 4) {
-          desc[idx].bytes = (int)((int*)buf_size)[offset_sz];
+          desc[jcnt].bytes = (int)((int*)buf_size)[offset_sz];
         } else {
-          desc[idx].bytes = (int)((long*)buf_size)[offset_sz];
+          desc[jcnt].bytes = (int)((long*)buf_size)[offset_sz];
         }
-        desc[idx].ptr_array_len = 1;
-        idx++;
+        desc[jcnt].ptr_array_len = 1;
+        printf("p[%d] nelems: %d index[%d,%d] bytes: %d src_ptr: %p dst_ptr: %p\n",pnga_nodeid(),
+            nelems,index[1]+plo[1]-1,index[0]+plo[0]-1,desc[jcnt].bytes,desc[jcnt].src_ptr_array,
+            desc[jcnt].dst_ptr_array);
+        jcnt++;
+      } else {
+        printf("p[%d] null pointer at i: %d j: %d\n",pnga_nodeid(),
+            index[0]+plo[0],index[1]+plo[1]);
       }
     }
   printf("p[%d] Got to 5\n",pnga_nodeid());
-
-    rc = ARMCI_GetV(desc, (int)nelems, (int)p);
-  printf("p[%d] Got to 6\n",pnga_nodeid());
+  if (jcnt > 0) {
+    rc = ARMCI_GetV(desc, (int)jcnt, (int)p);
+printf("p[%d] Got to 6\n",pnga_nodeid());
     if (rc) pnga_error("ARMCI_GetV failure in gp_get",rc);
+  }
+#if 0
+#endif
     /* Free temporary buffers */
     free(rem_ptr);
     free(desc);
