@@ -83,7 +83,7 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
 #endif /* ARMCIX */
 
 
-int PARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
+int PARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
 {
 #ifdef LAPI64
     extern int LAPI_Rmw64(lapi_handle_t hndl, RMW_ops_t op, uint tgt, 
