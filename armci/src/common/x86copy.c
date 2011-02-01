@@ -271,7 +271,7 @@ CPUTYPE cpu_check()
 }
 
 
-inline int asmcpy_works()
+static inline int asmcpy_works()
 {
         CPUTYPE type = cpu_check();
 
