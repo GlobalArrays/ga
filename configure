@@ -15613,8 +15613,15 @@ cat >>confdefs.h <<_ACEOF
 #define F77_FLUSH $ga_cv_f77_flush
 _ACEOF
 
+
+$as_echo "#define HAVE_F77_FLUSH 1" >>confdefs.h
+
 else
-  as_fn_error $? "Could not determine name of $F77 flush routine" "$LINENO" 5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine name of $F77 flush routine" >&5
+$as_echo "$as_me: WARNING: Could not determine name of $F77 flush routine" >&2;}
+
+$as_echo "#define HAVE_F77_FLUSH 0" >>confdefs.h
+
 fi
 if test "x$ga_cv_f77_flush" = xflush; then :
   if test "x$ga_cv_f77_flush_flag" != xnone; then :

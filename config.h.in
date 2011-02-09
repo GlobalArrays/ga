@@ -135,6 +135,9 @@
 /* Define to 1 if you have the `etime' function. */
 #undef HAVE_ETIME
 
+/* whether F77 flush routine is available */
+#undef HAVE_F77_FLUSH
+
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 

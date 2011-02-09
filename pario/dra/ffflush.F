@@ -11,7 +11,7 @@ c
 *     else
 *       call flush(unit)
 *     endif
-#else
+#elif HAVE_F77_FLUSH
       call F77_FLUSH(unit)
 #endif
 c
