@@ -453,6 +453,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/m4/ga_f77_integer_size.m4 \
 	$(top_srcdir)/m4/ga_f77_ld_override.m4 \
 	$(top_srcdir)/m4/ga_f77_library_ldflags.m4 \
+	$(top_srcdir)/m4/ga_f77_mismatch_type.m4 \
 	$(top_srcdir)/m4/ga_f77_opt.m4 \
 	$(top_srcdir)/m4/ga_f77_underscore.m4 \
 	$(top_srcdir)/m4/ga_function.m4 $(top_srcdir)/m4/ga_lapack.m4 \

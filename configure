@@ -14752,6 +14752,60 @@ fi
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $F77 needs a flag to compile inconsistent types" >&5
+$as_echo_n "checking whether $F77 needs a flag to compile inconsistent types... " >&6; }
+if test "${ga_cv_f77_mismatch_type_flag+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+for testflag in none -mismatch_all
+do
+    ga_save_FFLAGS="$FFLAGS"
+    if test "x$testflag" != xnone; then :
+  FFLAGS="$FFLAGS $testflag"
+fi
+    cat > conftest.$ac_ext <<_ACEOF
+      integer function the_test ()
+      implicit none
+      logical foo
+      external foo
+      character*1       byte_mb
+      integer           int_mb
+      the_test = 0
+      if (foo(byte_mb)) return
+      if (foo( int_mb)) return
+      the_test = 1
+      return
+      end
+_ACEOF
+if ac_fn_f77_try_compile "$LINENO"; then :
+  ga_cv_f77_mismatch_type_flag="$testflag"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    FFLAGS="$ga_save_FFLAGS"
+    if test "x$ga_cv_f77_mismatch_type_flag" != x; then :
+  break
+fi
+done
+ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_mismatch_type_flag" >&5
+$as_echo "$ga_cv_f77_mismatch_type_flag" >&6; }
+if test "x$ga_cv_f77_mismatch_type_flag" != xnone; then :
+  if test "x$ga_cv_f77_mismatch_type_flag" != x; then :
+  FFLAGS="$FFLAGS $ga_cv_f77_mismatch_type_flag"
+fi
+fi
+
+
 # Check whether --enable-i4 was given.
 if test "${enable_i4+set}" = set; then :
   enableval=$enable_i4; enable_i4=yes

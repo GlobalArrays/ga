@@ -265,6 +265,7 @@ AC_F77_DUMMY_MAIN
 AC_F77_WRAPPERS
 GA_F77_CPP_SYMBOL
 GA_F77_FIXED
+GA_F77_MISMATCH_TYPE
 GA_F77_INTEGER_SIZE
 
 # Checks for Fortran typedefs, structures, and compiler characteristics.
