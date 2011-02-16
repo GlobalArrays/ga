@@ -1,4 +1,7 @@
 /* Test algorithm parameters */
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
 
 #include "ga.h"
 #include "macdecls.h"

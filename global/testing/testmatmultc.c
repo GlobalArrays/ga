@@ -6,7 +6,7 @@
  * hopefully.
  */
 #if HAVE_CONFIG_H
-#   include "config.fh"
+#   include "config.h"
 #endif
 
 #include <math.h>
