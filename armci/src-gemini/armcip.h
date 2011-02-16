@@ -21,6 +21,8 @@
 #include "armci-onesided.h"
 #endif
 
+#define DATA_SERVER
+#define SERVER_THREAD
 /*#define ARMCI_CHECK_STATE*/
 
 #define ARMCI_STAMP 11214
