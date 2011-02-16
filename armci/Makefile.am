@@ -80,6 +80,26 @@ MAYBE_FLIBS = $(FLIBS)
 endif
 
 ##############################################################################
+# compiler and linker flags
+#
+# Important for external tools wanting to know how to link to ARMCI.
+SED_NORMALIZE_WHITESPACE = $(SED) 's/ [ ]*/ /g;s/" /"/g;s/ "/"/g'
+.PHONY: flags
+flags:
+	@echo ' =========================================================================== '
+	@echo ' Suggested compiler/linker options are as follows.'
+	@echo ' ARMCI libraries are installed in $(libdir)' 
+	@echo ' ARMCI headers are installed in $(includedir)' 
+	@echo ' '
+	@echo ' CPPFLAGS="$(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) -I$(includedir)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo ' '
+	@echo ' LDFLAGS="$(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) -L$(libdir)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo ' '
+	@echo ' For C/C++ Programs: '
+	@echo ' LIBS="-larmci $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo ' =========================================================================== '
+
+##############################################################################
 # config
 #
 # The config.h file is automatically generated from config.h.in at configure
