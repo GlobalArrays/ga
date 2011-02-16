@@ -87,12 +87,12 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @ENABLE_F77_TRUE@am__append_1 = $(FLD_NOMAIN)
 @ENABLE_F77_TRUE@am__append_2 = gaf2c/farg.F
 @ENABLE_F77_TRUE@am__append_3 = gaf2c/testarg
+@ENABLE_F77_TRUE@am__append_4 = ma/maf.F
+@ENABLE_F77_TRUE@am__append_5 = ma/testf
 
 ##############################################################################
 # LinAlg/lapack+blas
 #
-@ENABLE_F77_TRUE@am__append_4 = ma/maf.F LinAlg/lapack+blas/testblas.f
-@ENABLE_F77_TRUE@am__append_5 = ma/testf
 @ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@am__append_6 = LinAlg/lapack+blas/dgetf2.f \
 @ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@	LinAlg/lapack+blas/dgetrf.f \
 @ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@	LinAlg/lapack+blas/dgetrs.f \
@@ -299,7 +299,8 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-util \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/ngatest
-@ENABLE_F77_TRUE@am__append_43 = global/testing/ffflush.F
+@ENABLE_F77_TRUE@am__append_43 = global/testing/ffflush.F \
+@ENABLE_F77_TRUE@	global/testing/testblas.f
 @ENABLE_F77_TRUE@am__append_44 = global/examples/boltzmann/boltz \
 @ENABLE_F77_TRUE@	global/examples/conjugate_gradient/ga_cg \
 @ENABLE_F77_TRUE@	global/examples/md_cluster/grp_sim \
@@ -531,15 +532,14 @@ libga_la_DEPENDENCIES = armci/libarmcii.la
 am__libga_la_SOURCES_DIST = compat/random.c gaf2c/gaf2c.c \
 	gaf2c/drand.c gaf2c/farg.F ma/error.c ma/f2c.c ma/ma.c ma/ma.h \
 	ma/memcpy.h ma/string-util.c ma/table.c ma/maf.F \
-	LinAlg/lapack+blas/testblas.f LinAlg/lapack+blas/dgetf2.f \
-	LinAlg/lapack+blas/dgetrf.f LinAlg/lapack+blas/dgetrs.f \
-	LinAlg/lapack+blas/dlacpy.f LinAlg/lapack+blas/dlaset.f \
-	LinAlg/lapack+blas/dlaswp.f LinAlg/lapack+blas/ilaenv.f \
-	LinAlg/lapack+blas/lsame.f LinAlg/lapack+blas/xerbla.f \
-	LinAlg/lapack+blas/cgemm.f LinAlg/lapack+blas/dblas.f \
-	LinAlg/lapack+blas/sgemm.f LinAlg/lapack+blas/zaxpy.f \
-	LinAlg/lapack+blas/zgemm.f tcgmsg/capi.c \
-	tcgmsg/tcgmsg_vampir.c tcgmsg/tcgmsg_vampir.h \
+	LinAlg/lapack+blas/dgetf2.f LinAlg/lapack+blas/dgetrf.f \
+	LinAlg/lapack+blas/dgetrs.f LinAlg/lapack+blas/dlacpy.f \
+	LinAlg/lapack+blas/dlaset.f LinAlg/lapack+blas/dlaswp.f \
+	LinAlg/lapack+blas/ilaenv.f LinAlg/lapack+blas/lsame.f \
+	LinAlg/lapack+blas/xerbla.f LinAlg/lapack+blas/cgemm.f \
+	LinAlg/lapack+blas/dblas.f LinAlg/lapack+blas/sgemm.f \
+	LinAlg/lapack+blas/zaxpy.f LinAlg/lapack+blas/zgemm.f \
+	tcgmsg/capi.c tcgmsg/tcgmsg_vampir.c tcgmsg/tcgmsg_vampir.h \
 	tcgmsg/ipcv4.0/brdcst.c tcgmsg/ipcv4.0/checkbyte.c \
 	tcgmsg/ipcv4.0/cluster.c tcgmsg/ipcv4.0/cluster.h \
 	tcgmsg/ipcv4.0/defglobals.h tcgmsg/ipcv4.0/drand48.c \
@@ -620,8 +620,7 @@ am__libga_la_SOURCES_DIST = compat/random.c gaf2c/gaf2c.c \
 	gparrays/src/gpcapi.c gparrays/src/gpfapi.c \
 	gparrays/src/gponesided.c gparrays/src/gppapi.h
 @ENABLE_F77_TRUE@am__objects_1 = gaf2c/farg.lo
-@ENABLE_F77_TRUE@am__objects_2 = ma/maf.lo \
-@ENABLE_F77_TRUE@	LinAlg/lapack+blas/testblas.lo
+@ENABLE_F77_TRUE@am__objects_2 = ma/maf.lo
 @ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@am__objects_3 = LinAlg/lapack+blas/dgetf2.lo \
 @ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@	LinAlg/lapack+blas/dgetrf.lo \
 @ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@	LinAlg/lapack+blas/dgetrs.lo \
@@ -1032,8 +1031,10 @@ global_examples_scf_scf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_bin_SOURCES_DIST = global/testing/bin.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
-@ENABLE_F77_TRUE@am__objects_20 = global/testing/ffflush.$(OBJEXT)
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
+@ENABLE_F77_TRUE@am__objects_20 = global/testing/ffflush.$(OBJEXT) \
+@ENABLE_F77_TRUE@	global/testing/testblas.$(OBJEXT)
 am__objects_21 = global/testing/util.$(OBJEXT) $(am__objects_20)
 am_global_testing_bin_OBJECTS = global/testing/bin.$(OBJEXT) \
 	$(am__objects_21)
@@ -1049,7 +1050,8 @@ global_testing_bin_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_blktest_SOURCES_DIST = global/testing/blktest.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_blktest_OBJECTS = global/testing/blktest.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_blktest_OBJECTS = $(am_global_testing_blktest_OBJECTS)
@@ -1064,7 +1066,8 @@ global_testing_blktest_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_d2test_SOURCES_DIST = global/testing/d2test.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_d2test_OBJECTS = global/testing/d2test.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_d2test_OBJECTS = $(am_global_testing_d2test_OBJECTS)
@@ -1080,7 +1083,7 @@ global_testing_d2test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 am__global_testing_elempatch_SOURCES_DIST =  \
 	global/testing/elempatch.c global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_elempatch_OBJECTS =  \
 	global/testing/elempatch.$(OBJEXT) $(am__objects_21)
 global_testing_elempatch_OBJECTS =  \
@@ -1092,7 +1095,8 @@ global_testing_elempatch_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am__global_testing_g2test_SOURCES_DIST = global/testing/g2test.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_g2test_OBJECTS = global/testing/g2test.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_g2test_OBJECTS = $(am_global_testing_g2test_OBJECTS)
@@ -1107,7 +1111,8 @@ global_testing_g2test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_g3test_SOURCES_DIST = global/testing/g3test.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_g3test_OBJECTS = global/testing/g3test.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_g3test_OBJECTS = $(am_global_testing_g3test_OBJECTS)
@@ -1122,7 +1127,8 @@ global_testing_g3test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_ga_mpi_SOURCES_DIST = global/testing/ga-mpi.c \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_ga_mpi_OBJECTS = global/testing/ga-mpi.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_ga_mpi_OBJECTS = $(am_global_testing_ga_mpi_OBJECTS)
@@ -1133,7 +1139,8 @@ global_testing_ga_mpi_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am__global_testing_ga_lu_SOURCES_DIST = global/testing/ga_lu.c \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_ga_lu_OBJECTS = global/testing/ga_lu.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_ga_lu_OBJECTS = $(am_global_testing_ga_lu_OBJECTS)
@@ -1144,7 +1151,8 @@ global_testing_ga_lu_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am__global_testing_getmem_SOURCES_DIST = global/testing/getmem.c \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_getmem_OBJECTS = global/testing/getmem.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_getmem_OBJECTS = $(am_global_testing_getmem_OBJECTS)
@@ -1155,7 +1163,8 @@ global_testing_getmem_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am__global_testing_ghosts_SOURCES_DIST = global/testing/ghosts.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_ghosts_OBJECTS = global/testing/ghosts.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_ghosts_OBJECTS = $(am_global_testing_ghosts_OBJECTS)
@@ -1171,7 +1180,7 @@ global_testing_ghosts_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 am__global_testing_ipc_clean_SOURCES_DIST =  \
 	global/testing/ipc.clean.c global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_ipc_clean_OBJECTS =  \
 	global/testing/ipc.clean.$(OBJEXT) $(am__objects_21)
 global_testing_ipc_clean_OBJECTS =  \
@@ -1183,7 +1192,8 @@ global_testing_ipc_clean_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am__global_testing_jacobi_SOURCES_DIST = global/testing/jacobi.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_jacobi_OBJECTS = global/testing/jacobi.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_jacobi_OBJECTS = $(am_global_testing_jacobi_OBJECTS)
@@ -1198,7 +1208,8 @@ global_testing_jacobi_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_lock_SOURCES_DIST = global/testing/lock.c \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_lock_OBJECTS = global/testing/lock.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_lock_OBJECTS = $(am_global_testing_lock_OBJECTS)
@@ -1210,7 +1221,7 @@ global_testing_lock_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 am__global_testing_mir_perf2_SOURCES_DIST =  \
 	global/testing/mir_perf2.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_mir_perf2_OBJECTS =  \
 	global/testing/mir_perf2.$(OBJEXT) $(am__objects_21)
 global_testing_mir_perf2_OBJECTS =  \
@@ -1226,7 +1237,8 @@ global_testing_mir_perf2_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_mmatrix_SOURCES_DIST = global/testing/mmatrix.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_mmatrix_OBJECTS = global/testing/mmatrix.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_mmatrix_OBJECTS = $(am_global_testing_mmatrix_OBJECTS)
@@ -1241,7 +1253,8 @@ global_testing_mmatrix_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_mtest_SOURCES_DIST = global/testing/mtest.c \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_mtest_OBJECTS = global/testing/mtest.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_mtest_OBJECTS = $(am_global_testing_mtest_OBJECTS)
@@ -1253,7 +1266,7 @@ global_testing_mtest_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 am__global_testing_mulmatpatch_SOURCES_DIST =  \
 	global/testing/mulmatpatch.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_mulmatpatch_OBJECTS =  \
 	global/testing/mulmatpatch.$(OBJEXT) $(am__objects_21)
 global_testing_mulmatpatch_OBJECTS =  \
@@ -1269,7 +1282,8 @@ global_testing_mulmatpatch_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_nb2test_SOURCES_DIST = global/testing/nb2test.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_nb2test_OBJECTS = global/testing/nb2test.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_nb2test_OBJECTS = $(am_global_testing_nb2test_OBJECTS)
@@ -1284,7 +1298,8 @@ global_testing_nb2test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_ndim_SOURCES_DIST = global/testing/ndim.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_ndim_OBJECTS = global/testing/ndim.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_ndim_OBJECTS = $(am_global_testing_ndim_OBJECTS)
@@ -1377,7 +1392,8 @@ global_testing_ngatest_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_ntestc_SOURCES_DIST = global/testing/ntestc.c \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_ntestc_OBJECTS = global/testing/ntestc.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_ntestc_OBJECTS = $(am_global_testing_ntestc_OBJECTS)
@@ -1388,7 +1404,8 @@ global_testing_ntestc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am__global_testing_ntestfc_SOURCES_DIST = global/testing/ntestfc.c \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_ntestfc_OBJECTS = global/testing/ntestfc.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_ntestfc_OBJECTS = $(am_global_testing_ntestfc_OBJECTS)
@@ -1399,7 +1416,8 @@ global_testing_ntestfc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am__global_testing_patch_SOURCES_DIST = global/testing/patch.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_patch_OBJECTS = global/testing/patch.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_patch_OBJECTS = $(am_global_testing_patch_OBJECTS)
@@ -1415,7 +1433,7 @@ global_testing_patch_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 am__global_testing_patch_enumc_SOURCES_DIST =  \
 	global/testing/patch_enumc.c global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_patch_enumc_OBJECTS =  \
 	global/testing/patch_enumc.$(OBJEXT) $(am__objects_21)
 global_testing_patch_enumc_OBJECTS =  \
@@ -1428,7 +1446,7 @@ global_testing_patch_enumc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 am__global_testing_patch_enumf_SOURCES_DIST =  \
 	global/testing/patch_enumf.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_patch_enumf_OBJECTS =  \
 	global/testing/patch_enumf.$(OBJEXT) $(am__objects_21)
 global_testing_patch_enumf_OBJECTS =  \
@@ -1444,7 +1462,8 @@ global_testing_patch_enumf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_perf_SOURCES_DIST = global/testing/perf.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_perf_OBJECTS = global/testing/perf.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_perf_OBJECTS = $(am_global_testing_perf_OBJECTS)
@@ -1459,7 +1478,8 @@ global_testing_perf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_perfmod_SOURCES_DIST = global/testing/perfmod.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_perfmod_OBJECTS = global/testing/perfmod.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_perfmod_OBJECTS = $(am_global_testing_perfmod_OBJECTS)
@@ -1474,7 +1494,8 @@ global_testing_perfmod_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_perform_SOURCES_DIST = global/testing/perform.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_perform_OBJECTS = global/testing/perform.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_perform_OBJECTS = $(am_global_testing_perform_OBJECTS)
@@ -1489,7 +1510,8 @@ global_testing_perform_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_pg2test_SOURCES_DIST = global/testing/pg2test.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_pg2test_OBJECTS = global/testing/pg2test.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_pg2test_OBJECTS = $(am_global_testing_pg2test_OBJECTS)
@@ -1505,7 +1527,7 @@ global_testing_pg2test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 am__global_testing_pg2testmatmult_SOURCES_DIST =  \
 	global/testing/pg2testmatmult.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_pg2testmatmult_OBJECTS =  \
 	global/testing/pg2testmatmult.$(OBJEXT) $(am__objects_21)
 global_testing_pg2testmatmult_OBJECTS =  \
@@ -1521,7 +1543,8 @@ global_testing_pg2testmatmult_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(global_testing_pg2testmatmult_LDFLAGS) $(LDFLAGS) -o $@
 am__global_testing_pgtest_SOURCES_DIST = global/testing/pgtest.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_pgtest_OBJECTS = global/testing/pgtest.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_pgtest_OBJECTS = $(am_global_testing_pgtest_OBJECTS)
@@ -1537,7 +1560,7 @@ global_testing_pgtest_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 am__global_testing_pgtestmatmult_SOURCES_DIST =  \
 	global/testing/pgtestmatmult.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_pgtestmatmult_OBJECTS =  \
 	global/testing/pgtestmatmult.$(OBJEXT) $(am__objects_21)
 global_testing_pgtestmatmult_OBJECTS =  \
@@ -1553,7 +1576,8 @@ global_testing_pgtestmatmult_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_print_SOURCES_DIST = global/testing/print.c \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_print_OBJECTS = global/testing/print.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_print_OBJECTS = $(am_global_testing_print_OBJECTS)
@@ -1564,7 +1588,8 @@ global_testing_print_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am__global_testing_random_SOURCES_DIST = global/testing/random.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_random_OBJECTS = global/testing/random.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_random_OBJECTS = $(am_global_testing_random_OBJECTS)
@@ -1579,7 +1604,8 @@ global_testing_random_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_scan_SOURCES_DIST = global/testing/scan.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_scan_OBJECTS = global/testing/scan.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_scan_OBJECTS = $(am_global_testing_scan_OBJECTS)
@@ -1595,7 +1621,7 @@ global_testing_scan_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 am__global_testing_scan_addc_SOURCES_DIST =  \
 	global/testing/scan_addc.c global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_scan_addc_OBJECTS =  \
 	global/testing/scan_addc.$(OBJEXT) $(am__objects_21)
 global_testing_scan_addc_OBJECTS =  \
@@ -1608,7 +1634,7 @@ global_testing_scan_addc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 am__global_testing_scan_copyc_SOURCES_DIST =  \
 	global/testing/scan_copyc.c global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_scan_copyc_OBJECTS =  \
 	global/testing/scan_copyc.$(OBJEXT) $(am__objects_21)
 global_testing_scan_copyc_OBJECTS =  \
@@ -1621,7 +1647,7 @@ global_testing_scan_copyc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 am__global_testing_simple_groups_SOURCES_DIST =  \
 	global/testing/simple_groups.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_simple_groups_OBJECTS =  \
 	global/testing/simple_groups.$(OBJEXT) $(am__objects_21)
 global_testing_simple_groups_OBJECTS =  \
@@ -1637,7 +1663,8 @@ global_testing_simple_groups_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_sparse_SOURCES_DIST = global/testing/sparse.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_sparse_OBJECTS = global/testing/sparse.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_sparse_OBJECTS = $(am_global_testing_sparse_OBJECTS)
@@ -1653,7 +1680,7 @@ global_testing_sparse_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 am__global_testing_sprsmatmult_SOURCES_DIST =  \
 	global/testing/sprsmatmult.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_sprsmatmult_OBJECTS =  \
 	global/testing/sprsmatmult.$(OBJEXT) $(am__objects_21)
 global_testing_sprsmatmult_OBJECTS =  \
@@ -1669,7 +1696,8 @@ global_testing_sprsmatmult_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_stride_SOURCES_DIST = global/testing/stride.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_stride_OBJECTS = global/testing/stride.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_stride_OBJECTS = $(am_global_testing_stride_OBJECTS)
@@ -1684,7 +1712,8 @@ global_testing_stride_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_test_SOURCES_DIST = global/testing/test.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_test_OBJECTS = global/testing/test.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_test_OBJECTS = $(am_global_testing_test_OBJECTS)
@@ -1699,7 +1728,8 @@ global_testing_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_testc_SOURCES_DIST = global/testing/testc.c \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_testc_OBJECTS = global/testing/testc.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_testc_OBJECTS = $(am_global_testing_testc_OBJECTS)
@@ -1710,7 +1740,8 @@ global_testing_testc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am__global_testing_testeig_SOURCES_DIST = global/testing/testeig.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_testeig_OBJECTS = global/testing/testeig.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_testeig_OBJECTS = $(am_global_testing_testeig_OBJECTS)
@@ -1726,7 +1757,7 @@ global_testing_testeig_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 am__global_testing_testmatmult_SOURCES_DIST =  \
 	global/testing/testmatmult.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_testmatmult_OBJECTS =  \
 	global/testing/testmatmult.$(OBJEXT) $(am__objects_21)
 global_testing_testmatmult_OBJECTS =  \
@@ -1743,7 +1774,7 @@ global_testing_testmatmult_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 am__global_testing_testmatmultc_SOURCES_DIST =  \
 	global/testing/testmatmultc.c global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_testmatmultc_OBJECTS =  \
 	global/testing/testmatmultc.$(OBJEXT) $(am__objects_21)
 global_testing_testmatmultc_OBJECTS =  \
@@ -1755,7 +1786,8 @@ global_testing_testmatmultc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am__global_testing_testmult_SOURCES_DIST = global/testing/testmult.c \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_testmult_OBJECTS =  \
 	global/testing/testmult.$(OBJEXT) $(am__objects_21)
 global_testing_testmult_OBJECTS =  \
@@ -1768,7 +1800,7 @@ global_testing_testmult_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 am__global_testing_testmultrect_SOURCES_DIST =  \
 	global/testing/testmultrect.c global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_testmultrect_OBJECTS =  \
 	global/testing/testmultrect.$(OBJEXT) $(am__objects_21)
 global_testing_testmultrect_OBJECTS =  \
@@ -1781,7 +1813,7 @@ global_testing_testmultrect_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 am__global_testing_testsolve_SOURCES_DIST =  \
 	global/testing/testsolve.F global/testing/testutil.fh \
 	global/testing/testutil.h global/testing/util.c \
-	global/testing/ffflush.F
+	global/testing/ffflush.F global/testing/testblas.f
 am_global_testing_testsolve_OBJECTS =  \
 	global/testing/testsolve.$(OBJEXT) $(am__objects_21)
 global_testing_testsolve_OBJECTS =  \
@@ -1797,7 +1829,8 @@ global_testing_testsolve_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(LDFLAGS) -o $@
 am__global_testing_testspd_SOURCES_DIST = global/testing/testspd.F \
 	global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c global/testing/ffflush.F
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
 am_global_testing_testspd_OBJECTS = global/testing/testspd.$(OBJEXT) \
 	$(am__objects_21)
 global_testing_testspd_OBJECTS = $(am_global_testing_testspd_OBJECTS)
@@ -3555,8 +3588,6 @@ LinAlg/lapack+blas/$(am__dirstamp):
 LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) LinAlg/lapack+blas/$(DEPDIR)
 	@: > LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
-LinAlg/lapack+blas/testblas.lo: LinAlg/lapack+blas/$(am__dirstamp) \
-	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
 LinAlg/lapack+blas/dgetf2.lo: LinAlg/lapack+blas/$(am__dirstamp) \
 	LinAlg/lapack+blas/$(DEPDIR)/$(am__dirstamp)
 LinAlg/lapack+blas/dgetrf.lo: LinAlg/lapack+blas/$(am__dirstamp) \
@@ -4235,6 +4266,8 @@ global/testing/util.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/ffflush.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/testblas.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/bin$(EXEEXT): $(global_testing_bin_OBJECTS) $(global_testing_bin_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/bin$(EXEEXT)
 	$(AM_V_F77LD)$(global_testing_bin_LINK) $(global_testing_bin_OBJECTS) $(global_testing_bin_LDADD) $(LIBS)
@@ -4771,8 +4804,6 @@ mostlyclean-compile:
 	-rm -f LinAlg/lapack+blas/lsame.lo
 	-rm -f LinAlg/lapack+blas/sgemm.$(OBJEXT)
 	-rm -f LinAlg/lapack+blas/sgemm.lo
-	-rm -f LinAlg/lapack+blas/testblas.$(OBJEXT)
-	-rm -f LinAlg/lapack+blas/testblas.lo
 	-rm -f LinAlg/lapack+blas/xerbla.$(OBJEXT)
 	-rm -f LinAlg/lapack+blas/xerbla.lo
 	-rm -f LinAlg/lapack+blas/zaxpy.$(OBJEXT)
@@ -4986,6 +5017,7 @@ mostlyclean-compile:
 	-rm -f global/testing/sprsmatmult.$(OBJEXT)
 	-rm -f global/testing/stride.$(OBJEXT)
 	-rm -f global/testing/test.$(OBJEXT)
+	-rm -f global/testing/testblas.$(OBJEXT)
 	-rm -f global/testing/testc.$(OBJEXT)
 	-rm -f global/testing/testeig.$(OBJEXT)
 	-rm -f global/testing/testmatmult.$(OBJEXT)

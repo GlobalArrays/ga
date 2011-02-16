@@ -185,7 +185,6 @@ nodist_EXTRA_ma_test_inquire_SOURCES  = $(MAYBE_DUMMY_F_LINK)
 # LinAlg/lapack+blas
 #
 if ENABLE_F77
-libga_la_SOURCES += LinAlg/lapack+blas/testblas.f
 if HAVE_LAPACK
 else # !HAVE_LAPACK
 libga_la_SOURCES += LinAlg/lapack+blas/dgetf2.f
@@ -755,6 +754,7 @@ gtsrc += global/testing/testutil.h
 gtsrc += global/testing/util.c
 if ENABLE_F77
 gtsrc += global/testing/ffflush.F
+gtsrc += global/testing/testblas.f
 endif
 
 global_testing_bin_SOURCES            = global/testing/bin.F $(gtsrc)
