@@ -27,10 +27,9 @@ char *_armci_fence_arr;
 #endif
 void armci_init_fence()
 {
-#if defined (DATA_SERVER)
      _armci_fence_arr=calloc(armci_nproc,1);
-     if(!_armci_fence_arr)armci_die("armci_init_fence: calloc failed",0);
-#endif
+     if(!_armci_fence_arr)
+         armci_die("armci_init_fence: calloc failed",0);
 }
 
 void ARMCI_DoFence(int proc)
