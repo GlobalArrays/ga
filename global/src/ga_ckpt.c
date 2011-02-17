@@ -13,10 +13,7 @@
 
 #define DEBUG 0
 
-#if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak wnga_set_spare_procs = pnga_set_spare_procs
-#endif
-void pnga_set_spare_procs(int *spare)
+void ga_set_spare_procs(int *spare)
 {
     extern int ga_spare_procs;
     ga_spare_procs=*spare;

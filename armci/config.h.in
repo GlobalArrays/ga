@@ -320,6 +320,9 @@
 /* Define to 1 if you have the <sys/wait.h> header file. */
 #undef HAVE_SYS_WAIT_H
 
+/* Define this if weak aliases may be created with #pragma weak */
+#undef HAVE_SYS_WEAK_ALIAS_PRAGMA
+
 /* Define to 1 if you have the <time.h> header file. */
 #undef HAVE_TIME_H
 

@@ -457,6 +457,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/armci_tas.m4 \
 	$(top_srcdir)/../m4/armci_x86copy.m4 \
 	$(top_srcdir)/../m4/ax_compiler_vendor.m4 \
+	$(top_srcdir)/../m4/ax_sys_weak_alias.m4 \
 	$(top_srcdir)/../m4/ga_ar.m4 \
 	$(top_srcdir)/../m4/ga_arg_parse.m4 \
 	$(top_srcdir)/../m4/ga_armci_network.m4 \
@@ -485,6 +486,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/ga_mpif77_test.m4 \
 	$(top_srcdir)/../m4/ga_msg_comms.m4 \
 	$(top_srcdir)/../m4/ga_suppress_msg.m4 \
+	$(top_srcdir)/../m4/ga_sys_weak_alias.m4 \
 	$(top_srcdir)/../m4/ga_target.m4 \
 	$(top_srcdir)/../m4/ga_thread_safe.m4 \
 	$(top_srcdir)/../m4/ga_with_help.m4 \

@@ -533,16 +533,25 @@ EXTRA_DIST += global/README
 ##############################################################################
 # global/src
 #
-global/src/wapi.h: $(top_srcdir)/global/src/papi.h
-	@-rm -f global/src/wapi.h
+PAPI_H             = $(top_srcdir)/global/src/papi.h
+F77FUNCGEN_PL      = $(top_srcdir)/build-aux/f77funcgen.pl
+WAPI_C             = $(top_srcdir)/build-aux/generated/wapi.c
+WAPIGEN_PY         = $(top_srcdir)/build-aux/wapigen.py
+WAPI_C_DEPS        = $(PAPI_H) $(WAPIGEN_PY)
+WAPI_COUNTS_C      = $(top_srcdir)/build-aux/generated/wapi_counts.c
+WAPIGEN_COUNTS_PY  = $(top_srcdir)/build-aux/wapigen_counts.py
+WAPI_COUNTS_C_DEPS = $(PAPI_H) $(WAPIGEN_COUNTS_PY)
+
+global/src/wapi.h: $(PAPI_H)
+	@-rm -f $@
 	$(SED_V) \
 	$(SED) -e "s/PAPI/WAPI/g" \
 	       -e "s/pnga_/wnga_/g" \
 	       -e "/typedef/d" \
-		   $(top_srcdir)/global/src/papi.h > global/src/wapi.h
+		   $(PAPI_H) > $@
 
-global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
-	@-rm -f global/src/wapidefs.h
+global/src/wapidefs.h: $(PAPI_H)
+	@-rm -f $@
 	$(SED_V) \
 	$(SED) -e "s/PAPI/WAPIDEFS/g" \
 		   -e "s/^.*p\(nga_.*\)(.*$$/#define w\1 p\1/g" \
@@ -550,21 +559,44 @@ global/src/wapidefs.h: $(top_srcdir)/global/src/papi.h
 		   -e "/^\/\*/d" \
 		   -e "/^ \*/d" \
 	       -e "/typedef/d" \
-		   $(top_srcdir)/global/src/papi.h > global/src/wapidefs.h
+		   $(PAPI_H) > $@
 
-global/src/c.names.h: $(top_srcdir)/global/src/papi.h $(top_srcdir)/build-aux/f77funcgen.pl
-	@-rm -f global/src/c.names.h
+global/src/c.names.h: $(PAPI_H) $(F77FUNCGEN_PL)
+	@-rm -f $@
 	$(PERL_V) \
-	$(PERL) $(top_srcdir)/build-aux/f77funcgen.pl $(top_srcdir)/global/src/papi.h > global/src/c.names.h
+	$(PERL) $(F77FUNCGEN_PL) $(PAPI_H) > $@
 
 if HAVE_PYTHON
-global/src/wapi.c: $(top_srcdir)/global/src/papi.h $(top_srcdir)/build-aux/wapigen.py
-	@-rm -f global/src/wapi.c
+$(WAPI_C): $(WAPI_C_DEPS)
+	@-rm -f $@
 	$(PYTHON_V) \
-	$(PYTHON) $(top_srcdir)/build-aux/wapigen.py $(top_srcdir)/global/src/papi.h > global/src/wapi.c
+	$(PYTHON) $(WAPIGEN_PY) $(PAPI_H) > $@
+$(WAPI_COUNTS_C): $(WAPI_COUNTS_C_DEPS)
+	@-rm -f $@
+	$(PYTHON_V) \
+	$(PYTHON) $(WAPIGEN_COUNTS_PY) $(PAPI_H) > $@
+else
+$(WAPI_C): $(WAPI_C_DEPS)
+	@echo "$@ is out-of-date but cannot be regenerated without python"
+	@touch $@
+$(WAPI_COUNTS_C): $(WAPI_COUNTS_C_DEPS)
+	@echo "$@ is out-of-date but cannot be regenerated without python"
+	@touch $@
 endif
 
-EXTRA_DIST += build-aux/wapigen.py
+global/src/wapi.c: $(WAPI_C)
+	@-rm -f $@
+	$(CP_V) \
+	$(CP) $(WAPI_C) $@
+
+global/src/wapi_counts.c: $(WAPI_COUNTS_C)
+	@-rm -f $@
+	$(CP_V) \
+	$(CP) $(WAPI_COUNTS_C) $@
+
+EXTRA_DIST += $(WAPI_C)
+EXTRA_DIST += $(WAPIGEN_PY)
+EXTRA_DIST += $(F77FUNCGEN_PL)
 BUILT_SOURCES += global/src/wapi.h
 BUILT_SOURCES += global/src/wapidefs.h
 BUILT_SOURCES += global/src/c.names.h
@@ -618,6 +650,10 @@ nodist_libga_la_SOURCES += global/src/wapidefs.h
 nodist_libga_la_SOURCES += global/src/c.names.h
 if ENABLE_PROFILING
 if HAVE_SYS_WEAK_ALIAS_PRAGMA
+lib_LTLIBRARIES += libwapi.la
+libwapi_la_SOURCES = global/src/wapi.c
+lib_LTLIBRARIES += libwapi_counts.la
+libwapi_counts_la_SOURCES = global/src/wapi_counts.c
 else
 nodist_libga_la_SOURCES += global/src/wapi.c
 endif
@@ -1221,6 +1257,56 @@ endif
 ##############################################################################
 # gparrays
 #
+GPPAPI_H      = $(top_srcdir)/gparrays/src/gppapi.h
+GPWAPI_C      = $(top_srcdir)/build-aux/generated/gpwapi.c
+GPWAPIGEN_PY  = $(top_srcdir)/build-aux/gpwapigen.py
+GPWAPI_C_DEPS = $(GPPAPI_H) $(GPWAPIGEN_PY)
+
+gparrays/src/gpwapi.h: $(GPPAPI_H)
+	@-rm -f $@
+	$(SED_V) \
+	$(SED) -e "s/GPPAPI/GPWAPI/g" \
+	       -e "s/pgp_/wgp_/g" \
+	       -e "/typedef/d" \
+		   $(GPPAPI_H) > $@
+
+gparrays/src/gpwapidefs.h: $(GPPAPI_H)
+	@-rm -f $@
+	$(SED_V) \
+	$(SED) -e "s/GPPAPI/GPWAPIDEFS/g" \
+		   -e "s/^.*p\(gp_.*\)(.*$$/#define w\1 p\1/g" \
+		   -e "/^ /d" \
+		   -e "/^\/\*/d" \
+		   -e "/^ \*/d" \
+	       -e "/typedef/d" \
+	       -e "/include/d" \
+		   $(GPPAPI_H) > $@
+
+if HAVE_PYTHON
+$(GPWAPI_C): $(GPWAPI_C_DEPS)
+	@-rm -f $@
+	$(PYTHON_V) \
+	$(PYTHON) $(GPWAPIGEN_PY) $(GPPAPI_H) > $@
+else
+$(GPWAPI_C): $(GPWAPI_C_DEPS)
+	@echo "$@ is out-of-date but cannot be regenerated without python"
+	@touch $@
+endif
+
+gparrays/src/gpwapi.c: $(GPWAPI_C)
+	@-rm -f $@
+	$(CP_V) \
+	$(CP) $(GPWAPI_C) $@
+
+EXTRA_DIST += $(GPWAPI_C)
+EXTRA_DIST += $(GPWAPIGEN_PY)
+BUILT_SOURCES += gparrays/src/gpwapi.h
+BUILT_SOURCES += gparrays/src/gpwapidefs.h
+
+CLEANFILES += gparrays/src/gpwapi.c
+CLEANFILES += gparrays/src/gpwapi.h
+CLEANFILES += gparrays/src/gpwapidefs.h
+
 libga_la_SOURCES += gparrays/src/gpbase.c
 libga_la_SOURCES += gparrays/src/gpbase.h
 libga_la_SOURCES += gparrays/src/gpcapi.c
@@ -1230,6 +1316,7 @@ libga_la_SOURCES += gparrays/src/gppapi.h
 nodist_libga_la_SOURCES += gparrays/src/gpwapidefs.h
 if ENABLE_PROFILING
 if HAVE_SYS_WEAK_ALIAS_PRAGMA
+libwapi_la_SOURCES += gparrays/src/gpwapi.c
 else
 nodist_libga_la_SOURCES += gparrays/src/gpwapi.c
 endif
@@ -1237,41 +1324,6 @@ endif
 
 include_HEADERS += gparrays/src/gppapi.h
 nodist_include_HEADERS += gparrays/src/gpwapi.h
-
-gparrays/src/gpwapi.h: $(top_srcdir)/gparrays/src/gppapi.h
-	@-rm -f gparrays/src/gpwapi.h
-	$(SED_V) \
-	$(SED) -e "s/GPPAPI/GPWAPI/g" \
-	       -e "s/pgp_/wgp_/g" \
-	       -e "/typedef/d" \
-		   $(top_srcdir)/gparrays/src/gppapi.h > gparrays/src/gpwapi.h
-
-gparrays/src/gpwapidefs.h: $(top_srcdir)/gparrays/src/gppapi.h
-	@-rm -f gparrays/src/gpwapidefs.h
-	$(SED_V) \
-	$(SED) -e "s/GPPAPI/GPWAPIDEFS/g" \
-		   -e "s/^.*p\(gp_.*\)(.*$$/#define w\1 p\1/g" \
-		   -e "/^ /d" \
-		   -e "/^\/\*/d" \
-		   -e "/^ \*/d" \
-	       -e "/typedef/d" \
-	       -e "/include/d" \
-		   $(top_srcdir)/gparrays/src/gppapi.h > gparrays/src/gpwapidefs.h
-
-if HAVE_PYTHON
-gparrays/src/gpwapi.c: $(top_srcdir)/gparrays/src/gppapi.h $(top_srcdir)/build-aux/gpwapigen.py
-	@-rm -f gparrays/src/gpwapi.c
-	$(PYTHON_V) \
-	$(PYTHON) $(top_srcdir)/build-aux/gpwapigen.py $(top_srcdir)/gparrays/src/gppapi.h > gparrays/src/gpwapi.c
-endif
-
-EXTRA_DIST += build-aux/gpwapigen.py
-BUILT_SOURCES += gparrays/src/gpwapi.h
-BUILT_SOURCES += gparrays/src/gpwapidefs.h
-
-CLEANFILES += gparrays/src/gpwapi.c
-CLEANFILES += gparrays/src/gpwapi.h
-CLEANFILES += gparrays/src/gpwapidefs.h
 
 check_PROGRAMS += gparrays/testing/test
 check_PROGRAMS += gparrays/testing/testc
@@ -1372,6 +1424,11 @@ PERL__v_0 = @echo "  PERL  " $@;
 PYTHON_V = $(PYTHON__v_$(V))
 PYTHON__v_ = $(PYTHON__v_$(AM_DEFAULT_VERBOSITY))
 PYTHON__v_0 = @echo "  PYTHON" $@;
+# cp
+CP = cp
+CP_V = $(CP__v_$(V))
+CP__v_ = $(CP__v_$(AM_DEFAULT_VERBOSITY))
+CP__v_0 = @echo "  CP    " $@;
 
 .PHONY: pfiles clean-pfiles
 if MSG_COMMS_TCGMSG

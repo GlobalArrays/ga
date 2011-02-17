@@ -155,5 +155,9 @@ extern int     ga_icheckpoint_init(Integer *gas, int num);
 extern int     ga_icheckpoint(Integer *gas, int num);
 extern int     ga_irecover(int rid);
 extern int     ga_icheckpoint_finalize(int g_a);
+extern void    ga_checkpoint_arrays(Integer *gas,int num);
+extern int     ga_recover_arrays(Integer *gas, int num);
+extern void    set_ga_group_is_for_ft(int val);
+extern void    ga_set_spare_procs(int *spare);
 
 #endif /* _GLOBALP_H_ */

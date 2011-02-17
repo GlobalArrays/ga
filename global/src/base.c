@@ -4416,10 +4416,7 @@ logical pnga_get_debug()
 }
 
 #ifdef ENABLE_CHECKPOINT
-#if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak wnga_checkpoint_arrays = pnga_checkpoint_arrays
-#endif
-void pnga_checkpoint_arrays(Integer *gas,int num)
+void ga_checkpoint_arrays(Integer *gas,int num)
 {
    int ga = *(gas+0);
    int hdl = GA_OFFSET + ga;
@@ -4429,10 +4426,7 @@ void pnga_checkpoint_arrays(Integer *gas,int num)
    ga_icheckpoint(gas,num);
 }
 
-#if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak wnga_recover_arrays = pnga_recover_arrays
-#endif
-int pnga_recover_arrays(Integer *gas, int num)
+int ga_recover_arrays(Integer *gas, int num)
 {
     int i;
     for(i=0;i<num;i++){

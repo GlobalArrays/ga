@@ -54,8 +54,6 @@ extern void pnga_fill(Integer g_a, void* val);
 extern void pnga_get_block_info(Integer g_a, Integer *num_blocks,
                                 Integer *block_dims);
 extern logical pnga_get_debug();
-extern void pnga_checkpoint_arrays(Integer *gas, int num);
-extern Integer pnga_recover_arrays(Integer *gas, int num);
 extern Integer pnga_get_dimension(Integer g_a);
 extern void pnga_get_proc_grid(Integer g_a, Integer *dims);
 extern void pnga_get_proc_index(Integer g_a, Integer iproc, Integer *index);
@@ -355,10 +353,6 @@ extern Integer pnga_spd_invert(Integer g_a);
 
 extern void pnga_copy_patch_dp(char *t_a, Integer g_a, Integer ailo, Integer aihi, Integer ajlo, Integer ajhi, Integer g_b, Integer bilo, Integer bihi, Integer bjlo, Integer bjhi);
 extern DoublePrecision pnga_ddot_patch_dp(Integer g_a, char *t_a, Integer ailo, Integer aihi, Integer ajlo, Integer ajhi, Integer g_b, char *t_b, Integer bilo, Integer bihi, Integer bjlo, Integer bjhi);
-
-/* Routines from ga_ckpt.c */
-
-extern void pnga_set_spare_procs(int *spare);
 
 /* Routines from ga_trace.c */
 

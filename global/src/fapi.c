@@ -426,29 +426,6 @@ logical FATR nga_get_debug_()
   return wnga_get_debug();
 }
 
-#ifdef ENABLE_CHECKPOINT
-void FATR ga_checkpoint_arrays_(Integer *gas, int *num)
-{
-    wnga_checkpoint_arrays(gas, num);
-}
-
-void FATR nga_checkpoint_arrays_(Integer *gas, int *num)
-{
-    wnga_checkpoint_arrays(gas, num);
-}
-
-Integer FATR ga_recover_arrays_(Integer *gas, int num)
-{
-    return wnga_recover_arrays(gas, num);
-}
-
-Integer FATR nga_recover_arrays_(Integer *gas, int num)
-{
-    return wnga_recover_arrays(gas, num);
-}
-
-#endif
-
 Integer FATR ga_get_dimension_(Integer *g_a)
 {
   return wnga_get_dimension(*g_a);
@@ -3529,20 +3506,6 @@ int alen, blen;
 {
     return wnga_ddot_patch_dp(*g_a, t_a, *ailo, *aihi, *ajlo, *ajhi, *g_b, t_b, *bilo, *bihi, *bjlo, *bjhi);
 }
-
-/* Routines from ga_ckpt.c */
-
-#if ENABLE_CHECKPOINT
-void FATR ga_set_spare_procs_(int *spare)
-{
-    wnga_set_spare_procs(spare);
-}
-
-void FATR nga_set_spare_procs_(int *spare)
-{
-    wnga_set_spare_procs(spare);
-}
-#endif
 
 /* Routines from ga_trace.c */
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''Generate the wapi.c source from the papi.h header.'''
+'''Generate the wapi_counts.c source from the papi.h header.'''
 
 import sys
 
@@ -99,7 +99,7 @@ class Function(object):
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         print 'incorrect number of arguments'
-        print 'usage: wapigen.py <papi.h> > <wapi.c>'
+        print 'usage: wapigen_counts.py <papi.h> > <wapi_counts.c>'
         sys.exit(len(sys.argv))
 
     # print headers
@@ -118,9 +118,16 @@ if __name__ == '__main__':
         function = Function(sig)
         functions[function.name] = function
 
+    # for each function, generate a static count
+    for name in sorted(functions):
+        print 'static long count_%s = 0;' % name
+    print ''
+
     # now process the functions
     for name in sorted(functions):
         func = functions[name]
+        if 'terminate' in name:
+            continue
         maybe_return = ''
         if 'void' not in func.return_type:
             maybe_return = 'return '
@@ -129,6 +136,31 @@ if __name__ == '__main__':
         print '''
 %s
 {
+    ++count_%s;
     %s%s;
 }
-''' % (func.get_signature(wnga_name), maybe_return, func.get_call())
+''' % (func.get_signature(wnga_name), name, maybe_return, func.get_call())
+
+    # prepare to output the terminate function
+    name = 'pnga_terminate'
+    wnga_name = name.replace('pnga_','wnga_')
+    func = functions[name]
+    the_code = ''
+    # establish 'the_code' to use in the body of terminate
+    # it's printing the count of each function if it was called at least once
+    for name in sorted(functions):
+        the_code += '''
+        if (count_%s) {
+            printf("%s %%ld\\n", count_%s);
+        }
+''' % (name, name, name)
+    # output the terminate function
+    print '''%s
+{
+    ++count_pnga_terminate;
+    /* don't dump info if terminate more than once */
+    if (1 == count_pnga_terminate) {
+%s
+    }
+}
+''' % (func.get_signature(wnga_name), the_code) 

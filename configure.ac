@@ -129,6 +129,7 @@ AC_CHECK_TYPES([ptrdiff_t])
 #AC_CHECK_MEMBERS([struct stat.st_vfstype, struct statfs.f_secnfree, struct statvfs.f_secnfree, struct statfs.f_frsize, struct statvfs.f_frsize])
 GA_FUNCTION
 GA_PRAGMA_OPERATOR
+GA_DISABLE_SYS_WEAK_ALIAS
 GA_SYS_WEAK_ALIAS
 GA_UNION_SEMUN
 

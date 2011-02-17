@@ -953,6 +953,7 @@ with_portals
 with_gemini
 with_sockets
 enable_assert
+enable_weak
 enable_underscoring
 enable_i4
 enable_i8
@@ -1642,6 +1643,7 @@ Optional Features:
   --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-autodetect     attempt to locate ARMCI_NETWORK besides SOCKETS
   --disable-assert        turn off assertions
+  --disable-weak          don't use weak symbols for profiling
   --enable-underscoring   force single underscore for all external Fortran
                           symbols [default: use compiler defaults for external
                           Fortran symbols]
@@ -10035,8 +10037,18 @@ fi
 
 
 
-ax_sys_weak_alias=no
- # Test whether compiler accepts #pragma form of weak aliasing
+# Check whether --enable-weak was given.
+if test "${enable_weak+set}" = set; then :
+  enableval=$enable_weak;
+else
+  enable_weak=yes
+fi
+
+
+
+if test "x$enable_weak" = xyes; then :
+  ax_sys_weak_alias=no
+      # Test whether compiler accepts #pragma form of weak aliasing
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports #pragma weak" >&5
 $as_echo_n "checking whether $CC supports #pragma weak... " >&6; }
 if test "${ax_cv_sys_weak_alias_pragma+set}" = set; then :
@@ -10083,6 +10095,12 @@ $as_echo "#define HAVE_SYS_WEAK_ALIAS_PRAGMA 1" >>confdefs.h
 
 fi
 
+else
+  ax_cv_sys_weak_alias_pragma=no
+
+$as_echo "#define HAVE_SYS_WEAK_ALIAS_PRAGMA 0" >>confdefs.h
+
+fi
  if test "x$ax_cv_sys_weak_alias_pragma" = xyes; then
   HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE=
   HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE='#'
@@ -10091,6 +10109,10 @@ else
   HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE=
 fi
 
+# enable shared libs automatically if profiling using weak symbols
+if test "x$ax_cv_sys_weak_alias_pragma" = xyes; then :
+  enable_shared=yes
+fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for union semun in sys/sem.h" >&5
 $as_echo_n "checking for union semun in sys/sem.h... " >&6; }

@@ -1,58 +1,134 @@
 #!/usr/bin/env python
 
-"""Generate the wapi.c source from the papi.h header."""
+'''Generate the gpwapi.c source from the gppapi.h header.'''
 
-import re
 import sys
 
-if len(sys.argv) != 2:
-    print "incorrect number of arguments"
-    print "usage: wapi.py <papi.h> > <wapi.c>"
-    sys.exit(len(sys.argv))
+def get_signatures(header):
+    # first, gather all function signatures from gppapi.h aka argv[1]
+    accumulating = False
+    signatures = []
+    current_signature = ''
+    EXTERN = 'extern'
+    SEMICOLON = ';'
+    for line in open(header):
+        line = line.strip() # remove whitespace before and after line
+        if not line:
+            continue # skip blank lines
+        if EXTERN in line and SEMICOLON in line:
+            signatures.append(line)
+        elif EXTERN in line:
+            current_signature = line
+            accumulating = True
+        elif SEMICOLON in line and accumulating:
+            current_signature += line
+            signatures.append(current_signature)
+            accumulating = False
+        elif accumulating:
+            current_signature += line
+    return signatures
 
-# first, gather all function signatures from papi.h aka argv[1]
-accumulating = False
-signatures = []
-current_signature = ""
-EXTERN = 'extern'
-SEMICOLON = ';'
-for line in open(sys.argv[1]):
-    line = line.strip() # remove whitespace before and after line
-    if not line:
-        continue # skip blank lines
-    if EXTERN in line and SEMICOLON in line:
-        signatures.append(line)
-    elif EXTERN in line:
-        current_signature = line
-        accumulating = True
-    elif SEMICOLON in line and accumulating:
-        current_signature += line
-        signatures.append(current_signature)
-        accumulating = False
-    elif accumulating:
-        current_signature += line
+class FunctionArgument(object):
+    def __init__(self, signature):
+        self.pointer = signature.count('*')
+        self.array = '[' in signature
+        signature = signature.replace('*','').strip()
+        signature = signature.replace('[','').strip()
+        signature = signature.replace(']','').strip()
+        self.type,self.name = signature.split()
 
-# print headers
-print '#if HAVE_CONFIG_H'
-print '#   include "config.h"'
-print '#endif'
-print ''
-print '#include "gppapi.h"'
-print '#include "typesf2c.h"'
-print ''
+    def __str__(self):
+        ret = self.type[:]
+        ret += ' '
+        for p in range(self.pointer):
+            ret += '*'
+        ret += self.name
+        if self.array:
+            ret += '[]'
+        return ret
 
-# now process the signatures
-call_remove = r'void|char|short|int|long|float|double|Integer|logical|Logical|SingleComplex|DoubleComplex|Real|DoublePrecision|AccessIndex|\*|\[|\]|FILE'
-for sig in signatures:
-    sig_wgp = re.sub('pgp', 'wgp', sig[:-1].split(None, 1)[-1])
-    sig_wgp = re.sub('extern', '', sig_wgp)
-    pgp_func = sig.split('(',1)[0].strip().split()[-1]
-    args      = sig.split('(',1)[1].strip()
-    wgp_func = re.sub('pgp', 'wgp', pgp_func)
-    call_pgp = pgp_func + "(" + re.sub(call_remove, '', args).strip()
-    print sig_wgp,'{'
-    if sig.split()[1].startswith('void'):
-        print '    %s' % call_pgp
-    else:
-        print '    return %s' % call_pgp
-    print '}'
+class Function(object):
+    def __init__(self, signature):
+        signature = signature.replace('extern','').strip()
+        self.return_type,signature = signature.split(None,1)
+        self.return_type = self.return_type.strip()
+        signature = signature.strip()
+        self.name,signature = signature.split('(',1)
+        self.name = self.name.strip()
+        signature = signature.replace(')','').strip()
+        signature = signature.replace(';','').strip()
+        self.args = []
+        if signature:
+            for arg in signature.split(','):
+                self.args.append(FunctionArgument(arg.strip()))
+
+    def get_call(self, name=None):
+        sig = ''
+        if not name:
+            sig += self.name
+        else:
+            sig += name
+        sig += '('
+        if self.args:
+            for arg in self.args:
+                sig += arg.name
+                sig += ', '
+            sig = sig[:-2] # remove last ', '
+        sig += ')'
+        return sig
+
+    def get_signature(self, name=None):
+        sig = self.return_type[:]
+        sig += ' '
+        if not name:
+            sig += self.name
+        else:
+            sig += name
+        sig += '('
+        if self.args:
+            for arg in self.args:
+                sig += str(arg)
+                sig += ', '
+            sig = sig[:-2] # remove last ', '
+        sig += ')'
+        return sig
+
+    def __str__(self):
+        return self.get_signature()
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print 'incorrect number of arguments'
+        print 'usage: gpwapigen.py <gppapi.h> > <gpwapi.c>'
+        sys.exit(len(sys.argv))
+
+    # print headers
+    print '''
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#include "gppapi.h"
+#include "typesf2c.h"
+'''
+
+    functions = {}
+    # parse signatures into the Function class
+    for sig in get_signatures(sys.argv[1]):
+        function = Function(sig)
+        functions[function.name] = function
+
+    # now process the functions
+    for name in sorted(functions):
+        func = functions[name]
+        maybe_return = ''
+        if 'void' not in func.return_type:
+            maybe_return = 'return '
+        func = functions[name]
+        wnga_name = name.replace('pgp_','wgp_')
+        print '''
+%s
+{
+    %s%s;
+}
+''' % (func.get_signature(wnga_name), maybe_return, func.get_call())
