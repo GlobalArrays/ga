@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''Generate the wapi_counts.c source from the papi.h header.'''
+'''Generate the wapi_trace.c source from the papi.h header.'''
 
 import sys
 
@@ -28,7 +28,19 @@ def get_signatures(header):
             current_signature += line
     return signatures
 
+format_from_type = {
+        "char":         "%c", 
+        "int":          "%d",
+        "long":         "%ld",
+        "long long":    "%lld",
+        "float":        "%f",
+        "double":       "%lf",
+        "Integer":      "%ld",
+        "logical":      "%ld",
+        }
+
 class FunctionArgument(object):
+
     def __init__(self, signature):
         self.pointer = signature.count('*')
         self.array = '[' in signature
@@ -93,13 +105,49 @@ class Function(object):
         sig += ')'
         return sig
 
+    def get_tracer_body(self):
+        tracer = ''
+        if 'void' not in func.return_type:
+            tracer += '    %s retval;\n' % self.return_type
+        tracer += '    %s;\n' % self.get_tracer_printf(False)
+        tracer += '    '
+        if 'void' not in func.return_type:
+            tracer += 'retval = '
+        tracer += '%s;\n' % self.get_call()
+        tracer += '    %s;\n' % self.get_tracer_printf(True)
+        if 'void' not in func.return_type:
+            tracer += '    return retval;\n'
+        return tracer
+
+    def get_tracer_printf(self, end=False):
+        tracer = 'printf("%lf,'
+        if end: tracer += '/'
+        tracer += self.name + ','
+        if self.args:
+            tracer += '('
+            for arg in self.args:
+                if arg.pointer and 'char' in arg.type:
+                    tracer += '%s,'
+                elif arg.pointer or arg.array:
+                    tracer += '%p,'
+                else:
+                    tracer += '%s,' % format_from_type[arg.type]
+            tracer = tracer[:-1]
+            tracer += ')'
+        tracer += '\\n",MPI_Wtime()'
+        if self.args:
+            for arg in self.args:
+                tracer += ',%s' % arg.name
+        tracer += ')'
+        return tracer
+
     def __str__(self):
         return self.get_signature()
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         print 'incorrect number of arguments'
-        print 'usage: wapigen_counts.py <papi.h> > <wapi_counts.c>'
+        print 'usage: wapigen_trace.py <papi.h> > <wapi_trace.c>'
         sys.exit(len(sys.argv))
 
     # print headers
@@ -110,6 +158,7 @@ if __name__ == '__main__':
 
 #include "papi.h"
 #include "typesf2c.h"
+#include <mpi.h>
 '''
 
     functions = {}
@@ -118,45 +167,48 @@ if __name__ == '__main__':
         function = Function(sig)
         functions[function.name] = function
 
-    # for each function, generate a static count
-    for name in sorted(functions):
-        print 'static long count_%s = 0;' % name
-    print ''
-
     # now process the functions
     for name in sorted(functions):
         func = functions[name]
-        if 'terminate' in name:
+        if name in ['pnga_initialize','pnga_terminate']:
             continue
-        maybe_return = ''
-        if 'void' not in func.return_type:
-            maybe_return = 'return '
         func = functions[name]
         wnga_name = name.replace('pnga_','wnga_')
         print '''
 %s
 {
-    ++count_%s;
-    %s%s;
+%s
 }
-''' % (func.get_signature(wnga_name), name, maybe_return, func.get_call())
+''' % (func.get_signature(wnga_name), func.get_tracer_body())
+
+    # output the initialize function
+    name = 'pnga_initialize'
+    wnga_name = name.replace('pnga_','wnga_')
+    func = functions[name]
+    print '''%s
+{
+    %s;
+}
+''' % (func.get_signature(wnga_name), func.get_call())
 
     # prepare to output the terminate function
     name = 'pnga_terminate'
     wnga_name = name.replace('pnga_','wnga_')
     func = functions[name]
     the_code = ''
-    # establish 'the_code' to use in the body of terminate
-    # it's printing the count of each function if it was called at least once
-    for name in sorted(functions):
-        the_code += '''
-        if (count_%s) {
-            printf("%s %%ld\\n", count_%s);
-        }
-''' % (name, name, name)
+    #the_code = ''
+    ## establish 'the_code' to use in the body of terminate
+    ## it's printing the count of each function if it was called at least once
+    #for name in sorted(functions):
+    #    the_code += '''
+    #    if (count_%s) {
+    #        printf("%s %%ld\\n", count_%s);
+    #    }''' % (name, name, name)
     # output the terminate function
     print '''%s
 {
+    static int count_pnga_terminate=0;
+
     ++count_pnga_terminate;
     %s;
     /* don't dump info if terminate more than once */
