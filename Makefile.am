@@ -531,16 +531,34 @@ EXTRA_DIST += tcgmsg/tcgmsg-mpi/README
 EXTRA_DIST += global/README
 
 ##############################################################################
+# tools
+#
+# The following to support tracing, profiling, etc.
+#
+if ENABLE_PROFILING
+if HAVE_SYS_WEAK_ALIAS_PRAGMA
+lib_LTLIBRARIES += libwapi.la
+libwapi_la_SOURCES =
+libwapi_la_SOURCES += tools/wapi.c
+libwapi_la_SOURCES += tools/gpwapi.c
+libwapi_la_SOURCES += tools/armci_trace.c
+else
+nodist_libga_la_SOURCES += tools/wapi.c
+nodist_libga_la_SOURCES += tools/gpwapi.c
+nodist_libga_la_SOURCES += tools/armci_trace.c
+endif
+endif
+
+EXTRA_DIST += tools/gpwapigen.py
+EXTRA_DIST += tools/wapigen.py
+EXTRA_DIST += tools/wapigen_counts.py
+EXTRA_DIST += tools/wapigen_trace.py
+
+##############################################################################
 # global/src
 #
-PAPI_H             = $(top_srcdir)/global/src/papi.h
-F77FUNCGEN_PL      = $(top_srcdir)/build-aux/f77funcgen.pl
-WAPI_C             = $(top_srcdir)/build-aux/generated/wapi.c
-WAPIGEN_PY         = $(top_srcdir)/build-aux/wapigen.py
-WAPI_C_DEPS        = $(PAPI_H) $(WAPIGEN_PY)
-WAPI_COUNTS_C      = $(top_srcdir)/build-aux/generated/wapi_counts.c
-WAPIGEN_COUNTS_PY  = $(top_srcdir)/build-aux/wapigen_counts.py
-WAPI_COUNTS_C_DEPS = $(PAPI_H) $(WAPIGEN_COUNTS_PY)
+PAPI_H        = $(top_srcdir)/global/src/papi.h
+F77FUNCGEN_PL = $(top_srcdir)/build-aux/f77funcgen.pl
 
 global/src/wapi.h: $(PAPI_H)
 	@-rm -f $@
@@ -566,42 +584,11 @@ global/src/c.names.h: $(PAPI_H) $(F77FUNCGEN_PL)
 	$(PERL_V) \
 	$(PERL) $(F77FUNCGEN_PL) $(PAPI_H) > $@
 
-if HAVE_PYTHON
-$(WAPI_C): $(WAPI_C_DEPS)
-	@-rm -f $@
-	$(PYTHON_V) \
-	$(PYTHON) $(WAPIGEN_PY) $(PAPI_H) > $@
-$(WAPI_COUNTS_C): $(WAPI_COUNTS_C_DEPS)
-	@-rm -f $@
-	$(PYTHON_V) \
-	$(PYTHON) $(WAPIGEN_COUNTS_PY) $(PAPI_H) > $@
-else
-$(WAPI_C): $(WAPI_C_DEPS)
-	@echo "$@ is out-of-date but cannot be regenerated without python"
-	@touch $@
-$(WAPI_COUNTS_C): $(WAPI_COUNTS_C_DEPS)
-	@echo "$@ is out-of-date but cannot be regenerated without python"
-	@touch $@
-endif
-
-global/src/wapi.c: $(WAPI_C)
-	@-rm -f $@
-	$(CP_V) \
-	$(CP) $(WAPI_C) $@
-
-global/src/wapi_counts.c: $(WAPI_COUNTS_C)
-	@-rm -f $@
-	$(CP_V) \
-	$(CP) $(WAPI_COUNTS_C) $@
-
-EXTRA_DIST += $(WAPI_C)
-EXTRA_DIST += $(WAPIGEN_PY)
 EXTRA_DIST += $(F77FUNCGEN_PL)
 BUILT_SOURCES += global/src/wapi.h
 BUILT_SOURCES += global/src/wapidefs.h
 BUILT_SOURCES += global/src/c.names.h
 
-CLEANFILES += global/src/wapi.c
 CLEANFILES += global/src/wapi.h
 CLEANFILES += global/src/wapidefs.h
 CLEANFILES += global/src/c.names.h
@@ -648,16 +635,6 @@ libga_la_SOURCES += global/src/xgemm.c
 libga_la_SOURCES += global/src/xgemm.h
 nodist_libga_la_SOURCES += global/src/wapidefs.h
 nodist_libga_la_SOURCES += global/src/c.names.h
-if ENABLE_PROFILING
-if HAVE_SYS_WEAK_ALIAS_PRAGMA
-lib_LTLIBRARIES += libwapi.la
-libwapi_la_SOURCES = global/src/wapi.c
-lib_LTLIBRARIES += libwapi_counts.la
-libwapi_counts_la_SOURCES = global/src/wapi_counts.c
-else
-nodist_libga_la_SOURCES += global/src/wapi.c
-endif
-endif
 if ENABLE_F77
 libga_la_SOURCES += global/src/complex.F
 libga_la_SOURCES += global/src/ga_diag_seq.F
@@ -1258,9 +1235,6 @@ endif
 # gparrays
 #
 GPPAPI_H      = $(top_srcdir)/gparrays/src/gppapi.h
-GPWAPI_C      = $(top_srcdir)/build-aux/generated/gpwapi.c
-GPWAPIGEN_PY  = $(top_srcdir)/build-aux/gpwapigen.py
-GPWAPI_C_DEPS = $(GPPAPI_H) $(GPWAPIGEN_PY)
 
 gparrays/src/gpwapi.h: $(GPPAPI_H)
 	@-rm -f $@
@@ -1282,28 +1256,9 @@ gparrays/src/gpwapidefs.h: $(GPPAPI_H)
 	       -e "/include/d" \
 		   $(GPPAPI_H) > $@
 
-if HAVE_PYTHON
-$(GPWAPI_C): $(GPWAPI_C_DEPS)
-	@-rm -f $@
-	$(PYTHON_V) \
-	$(PYTHON) $(GPWAPIGEN_PY) $(GPPAPI_H) > $@
-else
-$(GPWAPI_C): $(GPWAPI_C_DEPS)
-	@echo "$@ is out-of-date but cannot be regenerated without python"
-	@touch $@
-endif
-
-gparrays/src/gpwapi.c: $(GPWAPI_C)
-	@-rm -f $@
-	$(CP_V) \
-	$(CP) $(GPWAPI_C) $@
-
-EXTRA_DIST += $(GPWAPI_C)
-EXTRA_DIST += $(GPWAPIGEN_PY)
 BUILT_SOURCES += gparrays/src/gpwapi.h
 BUILT_SOURCES += gparrays/src/gpwapidefs.h
 
-CLEANFILES += gparrays/src/gpwapi.c
 CLEANFILES += gparrays/src/gpwapi.h
 CLEANFILES += gparrays/src/gpwapidefs.h
 

@@ -246,9 +246,16 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_26 = tcgmsg/tcgmsg-mpi/test_asyn \
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/test
 @ENABLE_F77_TRUE@@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_27 = tcgmsg/tcgmsg-mpi/testf
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_28 = libwapi.la \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	libwapi_counts.la
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_29 = global/src/wapi.c
+
+##############################################################################
+# tools
+#
+# The following to support tracing, profiling, etc.
+#
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_28 = libwapi.la
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_29 = tools/wapi.c \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@	tools/gpwapi.c \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@	tools/armci_trace.c
 @ENABLE_F77_TRUE@am__append_30 = global/src/complex.F \
 @ENABLE_F77_TRUE@	global/src/ga_diag_seq.F global/src/rsg.f
 @CRAY_XT_NETWORKS_TRUE@@ENABLE_F77_TRUE@am__append_31 = global/src/ga_dgemmf.F
@@ -755,22 +762,21 @@ am_libga_la_OBJECTS = compat/random.lo gaf2c/gaf2c.lo gaf2c/drand.lo \
 	pario/sf/sf_fortran.lo pario/sf/shared.files.lo \
 	gparrays/src/gpbase.lo gparrays/src/gpcapi.lo \
 	gparrays/src/gpfapi.lo gparrays/src/gponesided.lo
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__objects_18 = global/src/wapi.lo
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__objects_18 = tools/wapi.lo \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@	tools/gpwapi.lo \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@	tools/armci_trace.lo
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__objects_19 = gparrays/src/gpwapi.lo
 nodist_libga_la_OBJECTS = $(am__objects_18) $(am__objects_19)
 libga_la_OBJECTS = $(am_libga_la_OBJECTS) $(nodist_libga_la_OBJECTS)
 libwapi_la_LIBADD =
-am__libwapi_la_SOURCES_DIST = global/src/wapi.c gparrays/src/gpwapi.c
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libwapi_la_OBJECTS = global/src/wapi.lo \
+am__libwapi_la_SOURCES_DIST = tools/wapi.c tools/gpwapi.c \
+	tools/armci_trace.c gparrays/src/gpwapi.c
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libwapi_la_OBJECTS = tools/wapi.lo \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/gpwapi.lo \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/armci_trace.lo \
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	gparrays/src/gpwapi.lo
 libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libwapi_la_rpath = -rpath \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	$(libdir)
-libwapi_counts_la_LIBADD =
-am__libwapi_counts_la_SOURCES_DIST = global/src/wapi_counts.c
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libwapi_counts_la_OBJECTS = global/src/wapi_counts.lo
-libwapi_counts_la_OBJECTS = $(am_libwapi_counts_la_OBJECTS)
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libwapi_counts_la_rpath = -rpath \
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	$(libdir)
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__EXEEXT_1 = parallel$(EXEEXT)
 @ENABLE_XREGION_TRUE@@NO_X_FALSE@am__EXEEXT_2 =  \
@@ -2322,7 +2328,7 @@ am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(nodist_libga_la_SOURCES) $(libwapi_la_SOURCES) \
-	$(libwapi_counts_la_SOURCES) $(ga___testing_elempatch_SOURCES) \
+	$(ga___testing_elempatch_SOURCES) \
 	$(ga___testing_mtest_SOURCES) $(ga___testing_ntestc_SOURCES) \
 	$(ga___testing_testc_SOURCES) $(ga___testing_testmult_SOURCES) \
 	$(gaf2c_testarg_SOURCES) $(global_X_xregion_SOURCES) \
@@ -2459,7 +2465,6 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(tcgmsg_tcgmsg_mpi_testf_SOURCES)
 DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__libga_la_SOURCES_DIST) $(am__libwapi_la_SOURCES_DIST) \
-	$(am__libwapi_counts_la_SOURCES_DIST) \
 	$(am__ga___testing_elempatch_SOURCES_DIST) \
 	$(am__ga___testing_mtest_SOURCES_DIST) \
 	$(am__ga___testing_ntestc_SOURCES_DIST) \
@@ -2937,8 +2942,8 @@ libga_la_SOURCES = compat/random.c gaf2c/gaf2c.c gaf2c/drand.c \
 	gparrays/src/gpbase.c gparrays/src/gpbase.h \
 	gparrays/src/gpcapi.c gparrays/src/gpfapi.c \
 	gparrays/src/gponesided.c gparrays/src/gppapi.h
-nodist_libga_la_SOURCES = config.fh global/src/wapidefs.h \
-	global/src/c.names.h $(am__append_29) \
+nodist_libga_la_SOURCES = config.fh $(am__append_29) \
+	global/src/wapidefs.h global/src/c.names.h \
 	gparrays/src/gpwapidefs.h $(am__append_51)
 
 ##############################################################################
@@ -2979,7 +2984,8 @@ EXTRA_DIST = README build-aux/inside.pl LinAlg/lapack+blas/README \
 	tcgmsg/examples/scf.f tcgmsg/examples/timer.f \
 	tcgmsg/examples/trace.out tcgmsg/examples/xpix.shar \
 	tcgmsg/ipcv4.0/README tcgmsg/tcgmsg-mpi/README global/README \
-	$(WAPI_C) $(WAPIGEN_PY) $(F77FUNCGEN_PL) $(am__append_41) \
+	tools/gpwapigen.py tools/wapigen.py tools/wapigen_counts.py \
+	tools/wapigen_trace.py $(F77FUNCGEN_PL) $(am__append_41) \
 	global/examples/boltzmann/README \
 	global/examples/lennard-jones/README \
 	global/examples/md_cluster/atom.inp \
@@ -2989,7 +2995,7 @@ EXTRA_DIST = README build-aux/inside.pl LinAlg/lapack+blas/README \
 	global/doc/README global/doc/Supercomputing94.pdf \
 	global/doc/user.pdf pario/dra/dbg_read.c pario/dra/dbg_write.c \
 	pario/dra/dra2arviz.c pario/dra/global.unsup.c \
-	pario/dra/README ga++/README $(GPWAPI_C) $(GPWAPIGEN_PY)
+	pario/dra/README ga++/README
 
 ##############################################################################
 # config
@@ -3003,9 +3009,8 @@ BUILT_SOURCES = config.fh global/src/wapi.h global/src/wapidefs.h \
 	global/src/c.names.h gparrays/src/gpwapi.h \
 	gparrays/src/gpwapidefs.h
 MOSTLYCLEANFILES = 
-CLEANFILES = config.fh global/src/wapi.c global/src/wapi.h \
-	global/src/wapidefs.h global/src/c.names.h $(am__append_42) \
-	gparrays/src/gpwapi.c gparrays/src/gpwapi.h \
+CLEANFILES = config.fh global/src/wapi.h global/src/wapidefs.h \
+	global/src/c.names.h $(am__append_42) gparrays/src/gpwapi.h \
 	gparrays/src/gpwapidefs.h
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
@@ -3092,21 +3097,16 @@ nodist_EXTRA_ma_test_inquire_SOURCES = $(MAYBE_DUMMY_F_LINK)
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_tcgmsg_mpi_testf_LDFLAGS = $(FLDFLAGS)
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_tcgmsg_mpi_test_asyn_SOURCES = $(MAYBE_DUMMY_F_LINK)
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_tcgmsg_mpi_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@libwapi_la_SOURCES = tools/wapi.c \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/gpwapi.c \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/armci_trace.c \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	gparrays/src/gpwapi.c
 
 ##############################################################################
 # global/src
 #
 PAPI_H = $(top_srcdir)/global/src/papi.h
 F77FUNCGEN_PL = $(top_srcdir)/build-aux/f77funcgen.pl
-WAPI_C = $(top_srcdir)/build-aux/generated/wapi.c
-WAPIGEN_PY = $(top_srcdir)/build-aux/wapigen.py
-WAPI_C_DEPS = $(PAPI_H) $(WAPIGEN_PY)
-WAPI_COUNTS_C = $(top_srcdir)/build-aux/generated/wapi_counts.c
-WAPIGEN_COUNTS_PY = $(top_srcdir)/build-aux/wapigen_counts.py
-WAPI_COUNTS_C_DEPS = $(PAPI_H) $(WAPIGEN_COUNTS_PY)
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@libwapi_la_SOURCES = global/src/wapi.c \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	gparrays/src/gpwapi.c
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@libwapi_counts_la_SOURCES = global/src/wapi_counts.c
 @HAVE_M4_TRUE@GLOBAL_TESTING_M4_DEPS =  \
 @HAVE_M4_TRUE@	global/testing/ngatest_src/ndim_GA_FILL.src \
 @HAVE_M4_TRUE@	global/testing/ngatest_src/ndim_main.src \
@@ -3393,9 +3393,6 @@ pario_sf_test_LDFLAGS = $(FLDFLAGS)
 # gparrays
 #
 GPPAPI_H = $(top_srcdir)/gparrays/src/gppapi.h
-GPWAPI_C = $(top_srcdir)/build-aux/generated/gpwapi.c
-GPWAPIGEN_PY = $(top_srcdir)/build-aux/gpwapigen.py
-GPWAPI_C_DEPS = $(GPPAPI_H) $(GPWAPIGEN_PY)
 gparrays_testing_test_SOURCES = gparrays/testing/test.F
 gparrays_testing_testc_SOURCES = gparrays/testing/testc.c
 nodist_EXTRA_gparrays_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
@@ -3997,18 +3994,22 @@ gparrays/src/gpfapi.lo: gparrays/src/$(am__dirstamp) \
 	gparrays/src/$(DEPDIR)/$(am__dirstamp)
 gparrays/src/gponesided.lo: gparrays/src/$(am__dirstamp) \
 	gparrays/src/$(DEPDIR)/$(am__dirstamp)
-global/src/wapi.lo: global/src/$(am__dirstamp) \
-	global/src/$(DEPDIR)/$(am__dirstamp)
+tools/$(am__dirstamp):
+	@$(MKDIR_P) tools
+	@: > tools/$(am__dirstamp)
+tools/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tools/$(DEPDIR)
+	@: > tools/$(DEPDIR)/$(am__dirstamp)
+tools/wapi.lo: tools/$(am__dirstamp) tools/$(DEPDIR)/$(am__dirstamp)
+tools/gpwapi.lo: tools/$(am__dirstamp) tools/$(DEPDIR)/$(am__dirstamp)
+tools/armci_trace.lo: tools/$(am__dirstamp) \
+	tools/$(DEPDIR)/$(am__dirstamp)
 gparrays/src/gpwapi.lo: gparrays/src/$(am__dirstamp) \
 	gparrays/src/$(DEPDIR)/$(am__dirstamp)
 libga.la: $(libga_la_OBJECTS) $(libga_la_DEPENDENCIES) 
 	$(AM_V_F77LD)$(F77LINK) -rpath $(libdir) $(libga_la_OBJECTS) $(libga_la_LIBADD) $(LIBS)
 libwapi.la: $(libwapi_la_OBJECTS) $(libwapi_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) $(am_libwapi_la_rpath) $(libwapi_la_OBJECTS) $(libwapi_la_LIBADD) $(LIBS)
-global/src/wapi_counts.lo: global/src/$(am__dirstamp) \
-	global/src/$(DEPDIR)/$(am__dirstamp)
-libwapi_counts.la: $(libwapi_counts_la_OBJECTS) $(libwapi_counts_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(LINK) $(am_libwapi_counts_la_rpath) $(libwapi_counts_la_OBJECTS) $(libwapi_counts_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
@@ -5020,10 +5021,6 @@ mostlyclean-compile:
 	-rm -f global/src/select.lo
 	-rm -f global/src/sparse.$(OBJEXT)
 	-rm -f global/src/sparse.lo
-	-rm -f global/src/wapi.$(OBJEXT)
-	-rm -f global/src/wapi.lo
-	-rm -f global/src/wapi_counts.$(OBJEXT)
-	-rm -f global/src/wapi_counts.lo
 	-rm -f global/src/xgemm.$(OBJEXT)
 	-rm -f global/src/xgemm.lo
 	-rm -f global/testing/bin.$(OBJEXT)
@@ -5339,6 +5336,12 @@ mostlyclean-compile:
 	-rm -f tcgmsg/tcgmsg-mpi/testf.$(OBJEXT)
 	-rm -f tcgmsg/tcgmsg_vampir.$(OBJEXT)
 	-rm -f tcgmsg/tcgmsg_vampir.lo
+	-rm -f tools/armci_trace.$(OBJEXT)
+	-rm -f tools/armci_trace.lo
+	-rm -f tools/gpwapi.$(OBJEXT)
+	-rm -f tools/gpwapi.lo
+	-rm -f tools/wapi.$(OBJEXT)
+	-rm -f tools/wapi.lo
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -5404,8 +5407,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/sclstubs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/select.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/sparse.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/wapi.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/wapi_counts.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/xgemm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/elempatch.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ga-mpi.Po@am__quote@
@@ -5554,6 +5555,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/sizeof.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/test_asyn.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/armci_trace.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/gpwapi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/wapi.Plo@am__quote@
 
 .F.o:
 	$(AM_V_PPF77) @AM_BACKSLASH@
@@ -5922,6 +5926,7 @@ clean-libtool:
 	-rm -rf tcgmsg/ipcv4.0/.libs tcgmsg/ipcv4.0/_libs
 	-rm -rf tcgmsg/ipcv5.0/.libs tcgmsg/ipcv5.0/_libs
 	-rm -rf tcgmsg/tcgmsg-mpi/.libs tcgmsg/tcgmsg-mpi/_libs
+	-rm -rf tools/.libs tools/_libs
 
 distclean-libtool:
 	-rm -f libtool config.lt
@@ -6691,6 +6696,8 @@ distclean-generic:
 	-rm -f tcgmsg/ipcv5.0/$(am__dirstamp)
 	-rm -f tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tcgmsg/tcgmsg-mpi/$(am__dirstamp)
+	-rm -f tools/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tools/$(am__dirstamp)
 	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
@@ -6708,7 +6715,7 @@ clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-checkPROGRAMS \
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR)
+	-rm -rf compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR) tools/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -6757,7 +6764,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR)
+	-rm -rf compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR) tools/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -6856,31 +6863,6 @@ global/src/c.names.h: $(PAPI_H) $(F77FUNCGEN_PL)
 	$(PERL_V) \
 	$(PERL) $(F77FUNCGEN_PL) $(PAPI_H) > $@
 
-@HAVE_PYTHON_TRUE@$(WAPI_C): $(WAPI_C_DEPS)
-@HAVE_PYTHON_TRUE@	@-rm -f $@
-@HAVE_PYTHON_TRUE@	$(PYTHON_V) \
-@HAVE_PYTHON_TRUE@	$(PYTHON) $(WAPIGEN_PY) $(PAPI_H) > $@
-@HAVE_PYTHON_TRUE@$(WAPI_COUNTS_C): $(WAPI_COUNTS_C_DEPS)
-@HAVE_PYTHON_TRUE@	@-rm -f $@
-@HAVE_PYTHON_TRUE@	$(PYTHON_V) \
-@HAVE_PYTHON_TRUE@	$(PYTHON) $(WAPIGEN_COUNTS_PY) $(PAPI_H) > $@
-@HAVE_PYTHON_FALSE@$(WAPI_C): $(WAPI_C_DEPS)
-@HAVE_PYTHON_FALSE@	@echo "$@ is out-of-date but cannot be regenerated without python"
-@HAVE_PYTHON_FALSE@	@touch $@
-@HAVE_PYTHON_FALSE@$(WAPI_COUNTS_C): $(WAPI_COUNTS_C_DEPS)
-@HAVE_PYTHON_FALSE@	@echo "$@ is out-of-date but cannot be regenerated without python"
-@HAVE_PYTHON_FALSE@	@touch $@
-
-global/src/wapi.c: $(WAPI_C)
-	@-rm -f $@
-	$(CP_V) \
-	$(CP) $(WAPI_C) $@
-
-global/src/wapi_counts.c: $(WAPI_COUNTS_C)
-	@-rm -f $@
-	$(CP_V) \
-	$(CP) $(WAPI_COUNTS_C) $@
-
 @HAVE_M4_TRUE@global/testing/nga-onesided.F: $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@global/testing/nga-patch.F:    $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@global/testing/nga-periodic.F: $(GLOBAL_TESTING_M4_DEPS)
@@ -6918,19 +6900,6 @@ gparrays/src/gpwapidefs.h: $(GPPAPI_H)
 	       -e "/typedef/d" \
 	       -e "/include/d" \
 		   $(GPPAPI_H) > $@
-
-@HAVE_PYTHON_TRUE@$(GPWAPI_C): $(GPWAPI_C_DEPS)
-@HAVE_PYTHON_TRUE@	@-rm -f $@
-@HAVE_PYTHON_TRUE@	$(PYTHON_V) \
-@HAVE_PYTHON_TRUE@	$(PYTHON) $(GPWAPIGEN_PY) $(GPPAPI_H) > $@
-@HAVE_PYTHON_FALSE@$(GPWAPI_C): $(GPWAPI_C_DEPS)
-@HAVE_PYTHON_FALSE@	@echo "$@ is out-of-date but cannot be regenerated without python"
-@HAVE_PYTHON_FALSE@	@touch $@
-
-gparrays/src/gpwapi.c: $(GPWAPI_C)
-	@-rm -f $@
-	$(CP_V) \
-	$(CP) $(GPWAPI_C) $@
 
 armci/libarmcii.la:
 	($(am__cd) armci && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
