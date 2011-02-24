@@ -21,5 +21,7 @@ AS_IF([test "x$enable_weak" = xyes],
 AM_CONDITIONAL([HAVE_SYS_WEAK_ALIAS_PRAGMA],
     [test "x$ax_cv_sys_weak_alias_pragma" = xyes])
 # enable shared libs automatically if profiling using weak symbols
-AS_IF([test "x$ax_cv_sys_weak_alias_pragma" = xyes], [enable_shared=yes])
+AS_IF([test "x$ax_cv_sys_weak_alias_pragma" = xyes],
+    [AS_IF([test "x$enable_profiling" = xyes],
+        [enable_shared=yes])])
 ])dnl

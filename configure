@@ -10111,7 +10111,9 @@ fi
 
 # enable shared libs automatically if profiling using weak symbols
 if test "x$ax_cv_sys_weak_alias_pragma" = xyes; then :
+  if test "x$enable_profiling" = xyes; then :
   enable_shared=yes
+fi
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for union semun in sys/sem.h" >&5
