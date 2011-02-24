@@ -10510,9 +10510,9 @@ case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu:$ga_armci_network in #(
   LINUX64:gnu:x86_64:*) :
     armci_cv_c_opt="-O3 -funroll-loops" ;; #(
   LINUX64:ibm:powerpc64:*) :
-    armci_cv_c_opt="-O3 -qlanglvl=extended -qinline=100 -qstrict -qarch=auto -qtune=auto" ;; #(
+    armci_cv_c_opt="-O3 -qinline=100 -qstrict -qarch=auto -qtune=auto" ;; #(
   LINUX64:ibm:ppc64:*) :
-    armci_cv_c_opt="-O3 -qlanglvl=extended -qinline=100 -qstrict -qarch=auto -qtune=auto" ;; #(
+    armci_cv_c_opt="-O3 -qinline=100 -qstrict -qarch=auto -qtune=auto" ;; #(
   LINUX64:ibm:x86_64:*) :
     armci_cv_c_opt="" ;; #(
   LINUX64:intel:ia64:*) :
@@ -10540,7 +10540,7 @@ case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu:$ga_armci_network in #(
   LINUX:gnu:x86:OPENIB) :
     armci_cv_c_opt="-O2 -finline-functions -funroll-loops " ;; #(
   LINUX:ibm:*:*) :
-    armci_cv_c_opt="-q32 -qlanglvl=extended" ;; #(
+    armci_cv_c_opt="-q32" ;; #(
   LINUX:intel:*:*) :
     armci_cv_c_opt="-O3 -prefetch" ;; #(
   MACX64:*:*:*) :

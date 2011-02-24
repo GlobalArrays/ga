@@ -11417,9 +11417,9 @@ case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu in #(
   LINUX64:gnu:x86_64) :
     ga_cv_c_opt="-O2 -funroll-loops" ;; #(
   LINUX64:ibm:powerpc64) :
-    ga_cv_c_opt="-qlanglvl=extended -qinline=100 -qstrict -qarch=auto -qtune=auto" ;; #(
+    ga_cv_c_opt="-qinline=100 -qstrict -qarch=auto -qtune=auto" ;; #(
   LINUX64:ibm:ppc64) :
-    ga_cv_c_opt="-qlanglvl=extended -qinline=100 -qstrict -qarch=auto -qtune=auto" ;; #(
+    ga_cv_c_opt="-qinline=100 -qstrict -qarch=auto -qtune=auto" ;; #(
   LINUX64:ibm:x86_64) :
     ga_cv_c_opt= ;; #(
   LINUX64:intel:ia64) :
@@ -11433,7 +11433,7 @@ case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu in #(
   LINUX:gnu:x86) :
     ga_cv_c_opt="-O2 -funroll-loops -malign-double" ;; #(
   LINUX:ibm:*) :
-    ga_cv_c_opt="-q32 -qlanglvl=extended" ;; #(
+    ga_cv_c_opt="-q32" ;; #(
   LINUX:intel:*) :
     ga_cv_c_opt="-O3 -prefetch" ;; #(
   MACX64:*:*) :
