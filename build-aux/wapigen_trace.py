@@ -127,11 +127,11 @@ class Function(object):
             tracer += '('
             for arg in self.args:
                 if arg.pointer and 'char' in arg.type:
-                    tracer += '%s,'
+                    tracer += '%s;'
                 elif arg.pointer or arg.array:
-                    tracer += '%p,'
+                    tracer += '%p;'
                 else:
-                    tracer += '%s,' % format_from_type[arg.type]
+                    tracer += '%s;' % format_from_type[arg.type]
             tracer = tracer[:-1]
             tracer += ')'
         tracer += '\\n",MPI_Wtime()'
@@ -150,15 +150,52 @@ if __name__ == '__main__':
         print 'usage: wapigen_trace.py <papi.h> > <wapi_trace.c>'
         sys.exit(len(sys.argv))
 
-    # print headers
+    # print headers and other static stuff
     print '''
 #if HAVE_CONFIG_H
 #   include "config.h"
 #endif
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <mpi.h>
+
 #include "papi.h"
 #include "typesf2c.h"
-#include <mpi.h>
+
+static FILE *fplog=NULL;
+int me, nproc;
+
+static void log_init() {
+    PMPI_Barrier(MPI_COMM_WORLD);
+    PMPI_Comm_rank(MPI_COMM_WORLD, &me);
+    PMPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    /* create files to write trace data */
+    char *profile_dir;
+    char *file_name;
+    struct stat f_stat;
+
+    profile_dir = getenv("PNGA_PROFILE_DIR");
+    if (0 == me) {
+        if (!profile_dir) {
+            pnga_error("You need to set PNGA_PROFILE_DIR env var", 1);
+        }
+        fprintf(stderr, "PNGA_PROFILE_DIR=%s\\n", profile_dir);
+        if (-1 == stat(profile_dir, &f_stat)) {
+            perror("stat");
+            fprintf(stderr, "Cannot successfully stat to PNGA_PROFILE_DIR.\\n");
+            fprintf(stderr, "Check %s profile dir\\n", profile_dir);
+            pnga_error("aborting", 1);
+        }
+    }
+    PMPI_Barrier(MPI_COMM_WORLD);
+    /* TODO finish per-process trace file */
+}
+
 '''
 
     functions = {}
