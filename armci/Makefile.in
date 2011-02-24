@@ -341,7 +341,6 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf_aggr$(EXEEXT) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_44 = -I$(top_srcdir)/src/devices/openib
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_45 = src/common/async.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/ds-shared.c \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/gpc.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/regions.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/spawn.c \
@@ -633,13 +632,13 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src/devices/lapi/lapidefs.h src/memory/buffers.c \
 	src/common/ds-shared.c src/devices/mpi/mpi2_client.c \
 	src/devices/mpi/mpi2.h src/devices/mpi/mpi2_server.c \
-	src/common/gpc.c src/common/regions.c src/common/spawn.c \
+	src/common/regions.c src/common/spawn.c \
 	src/devices/openib/armci-vapi.h src/devices/openib/cbuf.c \
 	src/devices/openib/cbuf.h src/devices/openib/openib.c \
 	src/devices/openib/pendbufs.c src/devices/openib/pendbufs.h \
 	src/devices/openib/rtinfo.c src/devices/sockets/dataserv.c \
 	src/devices/sockets/sockets.c src/devices/sockets/sockets.h \
-	src/ft/armci_chkpt.c src/ft/armci_storage.c \
+	src/ft/armci_chkpt.c src/ft/armci_storage.c src/common/gpc.c \
 	src/common/signaltrap.c src/memory/winshmem.c \
 	src/memory/shmem.c src/memory/shmlimit.c src/common/noncont.c \
 	src/util/armci_vampir.c src/util/armci_profile.c \
@@ -783,7 +782,6 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.lo
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_26 = src/common/async.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/ds-shared.lo \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/gpc.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/regions.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/spawn.lo \
@@ -946,13 +944,13 @@ am__libarmcii_la_SOURCES_DIST = src-portals/acc.h \
 	src/devices/lapi/lapidefs.h src/memory/buffers.c \
 	src/common/ds-shared.c src/devices/mpi/mpi2_client.c \
 	src/devices/mpi/mpi2.h src/devices/mpi/mpi2_server.c \
-	src/common/gpc.c src/common/regions.c src/common/spawn.c \
+	src/common/regions.c src/common/spawn.c \
 	src/devices/openib/armci-vapi.h src/devices/openib/cbuf.c \
 	src/devices/openib/cbuf.h src/devices/openib/openib.c \
 	src/devices/openib/pendbufs.c src/devices/openib/pendbufs.h \
 	src/devices/openib/rtinfo.c src/devices/sockets/dataserv.c \
 	src/devices/sockets/sockets.c src/devices/sockets/sockets.h \
-	src/ft/armci_chkpt.c src/ft/armci_storage.c \
+	src/ft/armci_chkpt.c src/ft/armci_storage.c src/common/gpc.c \
 	src/common/signaltrap.c src/memory/winshmem.c \
 	src/memory/shmem.c src/memory/shmlimit.c src/common/noncont.c \
 	src/util/armci_vampir.c src/util/armci_profile.c \
@@ -2570,8 +2568,6 @@ src/devices/mpi/mpi2_client.lo: src/devices/mpi/$(am__dirstamp) \
 	src/devices/mpi/$(DEPDIR)/$(am__dirstamp)
 src/devices/mpi/mpi2_server.lo: src/devices/mpi/$(am__dirstamp) \
 	src/devices/mpi/$(DEPDIR)/$(am__dirstamp)
-src/common/gpc.lo: src/common/$(am__dirstamp) \
-	src/common/$(DEPDIR)/$(am__dirstamp)
 src/common/regions.lo: src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
 src/common/spawn.lo: src/common/$(am__dirstamp) \
@@ -2610,6 +2606,8 @@ src/ft/armci_chkpt.lo: src/ft/$(am__dirstamp) \
 	src/ft/$(DEPDIR)/$(am__dirstamp)
 src/ft/armci_storage.lo: src/ft/$(am__dirstamp) \
 	src/ft/$(DEPDIR)/$(am__dirstamp)
+src/common/gpc.lo: src/common/$(am__dirstamp) \
+	src/common/$(DEPDIR)/$(am__dirstamp)
 src/common/signaltrap.lo: src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
 src/memory/winshmem.lo: src/memory/$(am__dirstamp) \

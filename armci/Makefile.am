@@ -451,7 +451,6 @@ if ARMCI_NETWORK_OPENIB
 AM_CPPFLAGS += -I$(top_srcdir)/src/devices/openib
 libarmci_la_SOURCES += src/common/async.c
 libarmci_la_SOURCES += src/common/ds-shared.c
-libarmci_la_SOURCES += src/common/gpc.c
 libarmci_la_SOURCES += src/common/regions.c
 libarmci_la_SOURCES += src/common/request.c
 libarmci_la_SOURCES += src/common/spawn.c
