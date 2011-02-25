@@ -10036,6 +10036,65 @@ $as_echo "#define HAVE_PRAGMA_OPERATOR 1" >>confdefs.h
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for C global variable containing the name of the program" >&5
+$as_echo_n "checking for C global variable containing the name of the program... " >&6; }
+if test "${ga_cv_progname+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+     ga_cv_progname=none
+     for name in __progname program_invocation_short_name __progname_full program_invocation_name
+     do
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdio.h>
+#include <errno.h>
+extern const char * $name;
+int
+main ()
+{
+printf("%s\n", $name);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ga_cv_progname=$name
+             break
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+     done
+     ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_progname" >&5
+$as_echo "$ga_cv_progname" >&6; }
+if test x$ga_cv_progname != xnone; then :
+  val=1
+else
+  val=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PROGNAME $val
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define PROGNAME $ga_cv_progname
+_ACEOF
+
+
 
 # Check whether --enable-weak was given.
 if test "${enable_weak+set}" = set; then :

@@ -126,7 +126,7 @@ class Function(object):
         if self.args:
             tracer += '('
             for arg in self.args:
-                if arg.pointer and 'char' in arg.type:
+                if arg.pointer == 1 and 'char' in arg.type:
                     tracer += '%s;'
                 elif arg.pointer or arg.array:
                     tracer += '%p;'
@@ -156,6 +156,7 @@ if __name__ == '__main__':
 #   include "config.h"
 #endif
 
+#include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -167,19 +168,33 @@ if __name__ == '__main__':
 #include "papi.h"
 #include "typesf2c.h"
 
-static FILE *fplog=NULL;
+static FILE *fptrace=NULL;
 int me, nproc;
 
-static void log_init() {
+#if HAVE_PROGNAME
+extern const char * PROGNAME;
+#endif
+
+static void trace_finalize() {
+    fclose(fptrace);
+}
+
+static void trace_initialize() {
     PMPI_Barrier(MPI_COMM_WORLD);
     PMPI_Comm_rank(MPI_COMM_WORLD, &me);
     PMPI_Comm_size(MPI_COMM_WORLD, &nproc);
     /* create files to write trace data */
-    char *profile_dir;
-    char *file_name;
+    char *profile_dir=NULL;
+    const char *program_name=NULL;
+    char *file_name=NULL;
     struct stat f_stat;
 
     profile_dir = getenv("PNGA_PROFILE_DIR");
+#if HAVE_PROGNAME
+    program_name = PROGNAME;
+#else
+    program_name = "unknown";
+#endif
     if (0 == me) {
         if (!profile_dir) {
             pnga_error("You need to set PNGA_PROFILE_DIR env var", 1);
@@ -193,7 +208,22 @@ static void log_init() {
         }
     }
     PMPI_Barrier(MPI_COMM_WORLD);
-    /* TODO finish per-process trace file */
+    file_name = (char *)malloc(strlen(profile_dir)
+            +1  /* / */
+            + strlen(program_name)
+            + 1 /* / */
+            + 7 /* mpi id */
+            + 6 /* .trace */
+            + 2 /* NULL termination */);
+    assert(file_name);
+    sprintf(file_name,"%s/%s/%07d.trace%c",profile_dir,program_name,me,'\\0');
+    fptrace = fopen(file_name,"w");
+    if(!fptrace) {
+        perror("fopen");
+        printf("%d: Context summary file creation failed. file_name=%s Exiting\\n", me, file_name);
+        exit(0);
+    }
+    free(file_name);
 }
 
 '''
@@ -224,7 +254,13 @@ static void log_init() {
     func = functions[name]
     print '''%s
 {
+    static int count_pnga_initialize=0;
+
+    ++count_pnga_initialize;
     %s;
+    if (1 == count_pnga_initialize) {
+        trace_initialize();
+    }
 }
 ''' % (func.get_signature(wnga_name), func.get_call())
 
@@ -232,15 +268,6 @@ static void log_init() {
     name = 'pnga_terminate'
     wnga_name = name.replace('pnga_','wnga_')
     func = functions[name]
-    the_code = ''
-    #the_code = ''
-    ## establish 'the_code' to use in the body of terminate
-    ## it's printing the count of each function if it was called at least once
-    #for name in sorted(functions):
-    #    the_code += '''
-    #    if (count_%s) {
-    #        printf("%s %%ld\\n", count_%s);
-    #    }''' % (name, name, name)
     # output the terminate function
     print '''%s
 {
@@ -250,7 +277,7 @@ static void log_init() {
     %s;
     /* don't dump info if terminate more than once */
     if (1 == count_pnga_terminate) {
-%s
+        trace_finalize();
     }
 }
-''' % (func.get_signature(wnga_name), func.get_call(), the_code) 
+''' % (func.get_signature(wnga_name), func.get_call()) 

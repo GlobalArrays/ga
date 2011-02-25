@@ -3,6 +3,7 @@
 #   include "config.h"
 #endif
 
+#include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -14,19 +15,33 @@
 #include "papi.h"
 #include "typesf2c.h"
 
-static FILE *fplog=NULL;
+static FILE *fptrace=NULL;
 int me, nproc;
 
-static void log_init() {
+#if HAVE_PROGNAME
+extern const char * PROGNAME;
+#endif
+
+static void trace_finalize() {
+    fclose(fptrace);
+}
+
+static void trace_initialize() {
     PMPI_Barrier(MPI_COMM_WORLD);
     PMPI_Comm_rank(MPI_COMM_WORLD, &me);
     PMPI_Comm_size(MPI_COMM_WORLD, &nproc);
     /* create files to write trace data */
-    char *profile_dir;
-    char *file_name;
+    char *profile_dir=NULL;
+    const char *program_name=NULL;
+    char *file_name=NULL;
     struct stat f_stat;
 
     profile_dir = getenv("PNGA_PROFILE_DIR");
+#if HAVE_PROGNAME
+    program_name = PROGNAME;
+#else
+    program_name = "unknown";
+#endif
     if (0 == me) {
         if (!profile_dir) {
             pnga_error("You need to set PNGA_PROFILE_DIR env var", 1);
@@ -40,7 +55,22 @@ static void log_init() {
         }
     }
     PMPI_Barrier(MPI_COMM_WORLD);
-    /* TODO finish per-process trace file */
+    file_name = (char *)malloc(strlen(profile_dir)
+            +1  /* / */
+            + strlen(program_name)
+            + 1 /* / */
+            + 7 /* mpi id */
+            + 6 /* .trace */
+            + 2 /* NULL termination */);
+    assert(file_name);
+    sprintf(file_name,"%s/%s/%07d.trace%c",profile_dir,program_name,me,'\0');
+    fptrace = fopen(file_name,"w");
+    if(!fptrace) {
+        perror("fopen");
+        printf("%d: Context summary file creation failed. file_name=%s Exiting\n", me, file_name);
+        exit(0);
+    }
+    free(file_name);
 }
 
 
@@ -924,9 +954,9 @@ Integer wnga_inquire_memory()
 
 void wnga_inquire_name(Integer g_a, char **array_name)
 {
-    printf("%lf,pnga_inquire_name,(%ld;%s)\n",MPI_Wtime(),g_a,array_name);
+    printf("%lf,pnga_inquire_name,(%ld;%p)\n",MPI_Wtime(),g_a,array_name);
     pnga_inquire_name(g_a, array_name);
-    printf("%lf,/pnga_inquire_name,(%ld;%s)\n",MPI_Wtime(),g_a,array_name);
+    printf("%lf,/pnga_inquire_name,(%ld;%p)\n",MPI_Wtime(),g_a,array_name);
 
 }
 
@@ -2387,7 +2417,13 @@ void wnga_zero_patch(Integer g_a, Integer *lo, Integer *hi)
 
 void wnga_initialize()
 {
+    static int count_pnga_initialize=0;
+
+    ++count_pnga_initialize;
     pnga_initialize();
+    if (1 == count_pnga_initialize) {
+        trace_initialize();
+    }
 }
 
 void wnga_terminate()
@@ -2398,7 +2434,7 @@ void wnga_terminate()
     pnga_terminate();
     /* don't dump info if terminate more than once */
     if (1 == count_pnga_terminate) {
-
+        trace_finalize();
     }
 }
 

@@ -29,7 +29,6 @@ static int compute_vector_bytes(int len, armci_giov_t * darr)
 
 #include <mpi.h>
 #include "parmci.h"
-static FILE *fp = stdin;
     /*
        Functions not handled: set(['ARMCI_Memget', 'ARMCI_Memat'])
      */

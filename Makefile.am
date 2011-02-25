@@ -540,11 +540,11 @@ if HAVE_SYS_WEAK_ALIAS_PRAGMA
 lib_LTLIBRARIES += libwapi.la
 libwapi_la_SOURCES =
 libwapi_la_SOURCES += tools/wapi.c
-libwapi_la_SOURCES += tools/gpwapi.c
+#libwapi_la_SOURCES += tools/gpwapi.c
 libwapi_la_SOURCES += tools/armci_trace.c
 else
 nodist_libga_la_SOURCES += tools/wapi.c
-nodist_libga_la_SOURCES += tools/gpwapi.c
+#nodist_libga_la_SOURCES += tools/gpwapi.c
 nodist_libga_la_SOURCES += tools/armci_trace.c
 endif
 endif
@@ -1269,13 +1269,6 @@ libga_la_SOURCES += gparrays/src/gpfapi.c
 libga_la_SOURCES += gparrays/src/gponesided.c
 libga_la_SOURCES += gparrays/src/gppapi.h
 nodist_libga_la_SOURCES += gparrays/src/gpwapidefs.h
-if ENABLE_PROFILING
-if HAVE_SYS_WEAK_ALIAS_PRAGMA
-libwapi_la_SOURCES += gparrays/src/gpwapi.c
-else
-nodist_libga_la_SOURCES += gparrays/src/gpwapi.c
-endif
-endif
 
 include_HEADERS += gparrays/src/gppapi.h
 nodist_include_HEADERS += gparrays/src/gpwapi.h
