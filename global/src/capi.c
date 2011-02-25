@@ -3169,34 +3169,34 @@ void GA_Sgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
 void GA_Dgemm(char ta, char tb, int m, int n, int k,
               double alpha, int g_a, int g_b, double beta, int g_c )
 {
-    GA_Dgemm_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+    GA_Dgemm_c(tb, ta, n, m, k, alpha, g_b, g_a, beta, g_c);
 }
 
 void GA_Zgemm(char ta, char tb, int m, int n, int k,
               DoubleComplex alpha, int g_a, int g_b, 
 	      DoubleComplex beta, int g_c )
 {
-    GA_Zgemm_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+    GA_Zgemm_c(tb, ta, n, m, k, alpha, g_b, g_a, beta, g_c);
 }
 
 void GA_Cgemm(char ta, char tb, int m, int n, int k,
               SingleComplex alpha, int g_a, int g_b, 
 	      SingleComplex beta, int g_c )
 {
-    GA_Cgemm_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+    GA_Cgemm_c(tb, ta, n, m, k, alpha, g_b, g_a, beta, g_c);
 }
 
 void GA_Sgemm(char ta, char tb, int m, int n, int k,
               float alpha, int g_a, int g_b, 
 	      float beta,  int g_c )
 {
-    GA_Sgemm_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+    GA_Sgemm_c(tb, ta, n, m, k, alpha, g_b, g_a, beta, g_c);
 }
 
 void GA_Dgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
                 double alpha, int g_a, int g_b, double beta, int g_c )
 {
-    GA_Dgemm64_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+    GA_Dgemm64_c(tb, ta, n, m, k, alpha, g_b, g_a, beta, g_c);
 }
 
 void GA_Zgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
@@ -3210,14 +3210,14 @@ void GA_Cgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
                 SingleComplex alpha, int g_a, int g_b, 
                 SingleComplex beta, int g_c )
 {
-    GA_Cgemm64_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+    GA_Cgemm64_c(tb, ta, n, m, k, alpha, g_b, g_a, beta, g_c);
 }
 
 void GA_Sgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
                 float alpha, int g_a, int g_b, 
                 float beta,  int g_c )
 {
-    GA_Sgemm64_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+    GA_Sgemm64_c(tb, ta, n, m, k, alpha, g_b, g_a, beta, g_c);
 }
 
 /* Patch related */
