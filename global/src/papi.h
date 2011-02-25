@@ -105,7 +105,7 @@ extern void pnga_set_chunk(Integer g_a, Integer *chunk);
 extern void pnga_set_data(Integer g_a, Integer ndim, Integer *dims, Integer type);
 extern void pnga_set_debug(logical flag);
 extern void pnga_set_ghosts(Integer g_a, Integer *width);
-extern void pnga_set_irreg_distr(Integer g_a, Integer *mapc, Integer *nblock);
+extern void pnga_set_irreg_distr(Integer g_a, Integer *map, Integer *block);
 extern void pnga_set_irreg_flag(Integer g_a, logical flag);
 extern void pnga_set_memory_limit(Integer mem_limit);
 extern void pnga_set_pgroup(Integer g_a, Integer p_handle);

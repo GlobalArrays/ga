@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include "armci.h"
 
+extern FILE *fptrace;
+extern double first_wtime;
+
 static int compute_strided_bytes(int stride_levels, int *count)
 {
     int bytes = count[0];
@@ -37,9 +40,9 @@ static int compute_vector_bytes(int len, armci_giov_t * darr)
 int ARMCI_AccV(int op, void *scale, armci_giov_t * darr, int len, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_AccV(op, scale, darr, len, proc);
-    fprintf(stdout, "%lf,ARMCI_AccV,(%d;%d;%d)\n", tstamp, len,
+    fprintf(fptrace, "%lf,ARMCI_AccV,(%d;%d;%d)\n", tstamp, len,
 	    compute_vector_bytes(len, darr), proc);
     return rval;
 }
@@ -48,9 +51,9 @@ int ARMCI_AccV(int op, void *scale, armci_giov_t * darr, int len, int proc)
 void ARMCI_Barrier()
 {
 
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     PARMCI_Barrier();
-    fprintf(stdout, "%lf,ARMCI_Barrier,\n", tstamp);
+    fprintf(fptrace, "%lf,ARMCI_Barrier,\n", tstamp);
 }
 
 
@@ -59,11 +62,11 @@ int ARMCI_AccS(int optype, void *scale, void *src_ptr, int *src_stride_arr,
 	       int stride_levels, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval =
 	PARMCI_AccS(optype, scale, src_ptr, src_stride_arr, dst_ptr,
 		    dst_stride_arr, count, stride_levels, proc);
-    fprintf(stdout, "%lf,ARMCI_AccS,(%d;%d;%d)\n", tstamp, stride_levels,
+    fprintf(fptrace, "%lf,ARMCI_AccS,(%d;%d;%d)\n", tstamp, stride_levels,
 	    compute_strided_bytes(stride_levels, count), proc);
     return rval;
 }
@@ -72,9 +75,9 @@ int ARMCI_AccS(int optype, void *scale, void *src_ptr, int *src_stride_arr,
 void ARMCI_Finalize()
 {
 
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     PARMCI_Finalize();
-    fprintf(stdout, "%lf,ARMCI_Finalize,\n", tstamp);
+    fprintf(fptrace, "%lf,ARMCI_Finalize,\n", tstamp);
 }
 
 
@@ -82,9 +85,9 @@ int ARMCI_NbPut(void *src, void *dst, int bytes, int proc,
 		armci_hdl_t * nb_handle)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_NbPut(src, dst, bytes, proc, nb_handle);
-    fprintf(stdout, "%lf,ARMCI_NbPut,(%d;%d)\n", tstamp, bytes, proc);
+    fprintf(fptrace, "%lf,ARMCI_NbPut,(%d;%d)\n", tstamp, bytes, proc);
     return rval;
 }
 
@@ -92,9 +95,9 @@ int ARMCI_NbPut(void *src, void *dst, int bytes, int proc,
 int ARMCI_GetValueInt(void *src, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_GetValueInt(src, proc);
-    fprintf(stdout, "%lf,ARMCI_GetValueInt,(%p,%d)\n", tstamp, src, proc);
+    fprintf(fptrace, "%lf,ARMCI_GetValueInt,(%p,%d)\n", tstamp, src, proc);
     return rval;
 }
 
@@ -103,9 +106,9 @@ int ARMCI_Put_flag(void *src, void *dst, int bytes, int *f, int v,
 		   int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Put_flag(src, dst, bytes, f, v, proc);
-    fprintf(stdout, "%lf,ARMCI_Put_flag,(%d;%d;%d)\n", tstamp, bytes, proc,
+    fprintf(fptrace, "%lf,ARMCI_Put_flag,(%d;%d;%d)\n", tstamp, bytes, proc,
 	    v);
     return rval;
 }
@@ -116,11 +119,11 @@ int ARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr,
 		 int proc, armci_hdl_t * nb_handle)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval =
 	PARMCI_NbGetS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
 		      count, stride_levels, proc, nb_handle);
-    fprintf(stdout, "%lf,ARMCI_NbGetS,(%d;%d;%d)\n", tstamp, stride_levels,
+    fprintf(fptrace, "%lf,ARMCI_NbGetS,(%d;%d;%d)\n", tstamp, stride_levels,
 	    compute_strided_bytes(stride_levels, count), proc);
     return rval;
 }
@@ -129,9 +132,9 @@ int ARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr,
 void *ARMCI_Malloc_local(armci_size_t bytes)
 {
     void *rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Malloc_local(bytes);
-    fprintf(stdout, "%lf,ARMCI_Malloc_local,(%d)\n", tstamp, (int) bytes);
+    fprintf(fptrace, "%lf,ARMCI_Malloc_local,(%d)\n", tstamp, (int) bytes);
     return rval;
 }
 
@@ -139,9 +142,9 @@ void *ARMCI_Malloc_local(armci_size_t bytes)
 int ARMCI_Free_local(void *ptr)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Free_local(ptr);
-    fprintf(stdout, "%lf,ARMCI_Free_local,(%p)\n", tstamp, ptr);
+    fprintf(fptrace, "%lf,ARMCI_Free_local,(%p)\n", tstamp, ptr);
     return rval;
 }
 
@@ -149,9 +152,9 @@ int ARMCI_Free_local(void *ptr)
 int ARMCI_Get(void *src, void *dst, int bytes, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Get(src, dst, bytes, proc);
-    fprintf(stdout, "%lf,ARMCI_Get,(%d;%d)\n", tstamp, bytes, proc);
+    fprintf(fptrace, "%lf,ARMCI_Get,(%d;%d)\n", tstamp, bytes, proc);
     return rval;
 }
 
@@ -159,9 +162,9 @@ int ARMCI_Get(void *src, void *dst, int bytes, int proc)
 int ARMCI_Put(void *src, void *dst, int bytes, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Put(src, dst, bytes, proc);
-    fprintf(stdout, "%lf,ARMCI_Put,(%d;%d)\n", tstamp, bytes, proc);
+    fprintf(fptrace, "%lf,ARMCI_Put,(%d;%d)\n", tstamp, bytes, proc);
     return rval;
 }
 
@@ -169,9 +172,9 @@ int ARMCI_Put(void *src, void *dst, int bytes, int proc)
 int ARMCI_Destroy_mutexes()
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Destroy_mutexes();
-    fprintf(stdout, "%lf,ARMCI_Destroy_mutexes,\n", tstamp);
+    fprintf(fptrace, "%lf,ARMCI_Destroy_mutexes,\n", tstamp);
     return rval;
 }
 
@@ -181,11 +184,11 @@ int ARMCI_GetS(void *src_ptr, int *src_stride_arr, void *dst_ptr,
 	       int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval =
 	PARMCI_GetS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
 		    count, stride_levels, proc);
-    fprintf(stdout, "%lf,ARMCI_GetS,(%d;%d;%d)\n", tstamp, stride_levels,
+    fprintf(fptrace, "%lf,ARMCI_GetS,(%d;%d;%d)\n", tstamp, stride_levels,
 	    compute_strided_bytes(stride_levels, count), proc);
     return rval;
 }
@@ -195,9 +198,9 @@ int ARMCI_NbAccV(int op, void *scale, armci_giov_t * darr, int len,
 		 int proc, armci_hdl_t * nb_handle)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_NbAccV(op, scale, darr, len, proc, nb_handle);
-    fprintf(stdout, "%lf,ARMCI_NbAccV,(%d;%d;%d)\n", tstamp, len,
+    fprintf(fptrace, "%lf,ARMCI_NbAccV,(%d;%d;%d)\n", tstamp, len,
 	    compute_vector_bytes(len, darr), proc);
     return rval;
 }
@@ -206,9 +209,9 @@ int ARMCI_NbAccV(int op, void *scale, armci_giov_t * darr, int len,
 float ARMCI_GetValueFloat(void *src, int proc)
 {
     float rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_GetValueFloat(src, proc);
-    fprintf(stdout, "%lf,ARMCI_GetValueFloat,(%p,%d)\n", tstamp, src,
+    fprintf(fptrace, "%lf,ARMCI_GetValueFloat,(%p,%d)\n", tstamp, src,
 	    proc);
     return rval;
 }
@@ -217,9 +220,9 @@ float ARMCI_GetValueFloat(void *src, int proc)
 int ARMCI_Malloc(void **ptr_arr, armci_size_t bytes)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Malloc(ptr_arr, bytes);
-    fprintf(stdout, "%lf,ARMCI_Malloc,(%d)\n", tstamp, (int) bytes);
+    fprintf(fptrace, "%lf,ARMCI_Malloc,(%d)\n", tstamp, (int) bytes);
     return rval;
 }
 
@@ -230,12 +233,12 @@ int ARMCI_NbAccS(int optype, void *scale, void *src_ptr,
 		 armci_hdl_t * nb_handle)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval =
 	PARMCI_NbAccS(optype, scale, src_ptr, src_stride_arr, dst_ptr,
 		      dst_stride_arr, count, stride_levels, proc,
 		      nb_handle);
-    fprintf(stdout, "%lf,ARMCI_NbAccS,(%d;%d;%d)\n", tstamp, stride_levels,
+    fprintf(fptrace, "%lf,ARMCI_NbAccS,(%d;%d;%d)\n", tstamp, stride_levels,
 	    compute_strided_bytes(stride_levels, count), proc);
     return rval;
 }
@@ -246,11 +249,11 @@ int ARMCI_PutS(void *src_ptr, int *src_stride_arr, void *dst_ptr,
 	       int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval =
 	PARMCI_PutS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
 		    count, stride_levels, proc);
-    fprintf(stdout, "%lf,ARMCI_PutS,(%d;%d;%d)\n", tstamp, stride_levels,
+    fprintf(fptrace, "%lf,ARMCI_PutS,(%d;%d;%d)\n", tstamp, stride_levels,
 	    compute_strided_bytes(stride_levels, count), proc);
     return rval;
 }
@@ -267,9 +270,9 @@ void *ARMCI_Memat(armci_meminfo_t * meminfo, int memflg)
 int ARMCI_PutV(armci_giov_t * darr, int len, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_PutV(darr, len, proc);
-    fprintf(stdout, "%lf,ARMCI_PutV,(%d;%d;%d)\n", tstamp, len,
+    fprintf(fptrace, "%lf,ARMCI_PutV,(%d;%d;%d)\n", tstamp, len,
 	    compute_vector_bytes(len, darr), proc);
     return rval;
 }
@@ -278,9 +281,9 @@ int ARMCI_PutV(armci_giov_t * darr, int len, int proc)
 int ARMCI_Free(void *ptr)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Free(ptr);
-    fprintf(stdout, "%lf,ARMCI_Free,(%p)\n", tstamp, ptr);
+    fprintf(fptrace, "%lf,ARMCI_Free,(%p)\n", tstamp, ptr);
     return rval;
 }
 
@@ -288,9 +291,9 @@ int ARMCI_Free(void *ptr)
 int ARMCI_Init_args(int *argc, char ***argv)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Init_args(argc, argv);
-    fprintf(stdout, "%lf,ARMCI_Init_args,\n", tstamp);
+    fprintf(fptrace, "%lf,ARMCI_Init_args,\n", tstamp);
     return rval;
 }
 
@@ -298,9 +301,9 @@ int ARMCI_Init_args(int *argc, char ***argv)
 int ARMCI_PutValueInt(int src, void *dst, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_PutValueInt(src, dst, proc);
-    fprintf(stdout, "%lf,ARMCI_PutValueInt,(%ld,%p,%d)\n", tstamp,
+    fprintf(fptrace, "%lf,ARMCI_PutValueInt,(%ld,%p,%d)\n", tstamp,
 	    (long) src, dst, proc);
     return rval;
 }
@@ -315,9 +318,9 @@ void ARMCI_Memget(size_t bytes, armci_meminfo_t * meminfo, int memflg)
 void ARMCI_AllFence()
 {
 
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     PARMCI_AllFence();
-    fprintf(stdout, "%lf,ARMCI_AllFence,\n", tstamp);
+    fprintf(fptrace, "%lf,ARMCI_AllFence,\n", tstamp);
 }
 
 
@@ -325,9 +328,9 @@ int ARMCI_NbPutV(armci_giov_t * darr, int len, int proc,
 		 armci_hdl_t * nb_handle)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_NbPutV(darr, len, proc, nb_handle);
-    fprintf(stdout, "%lf,ARMCI_NbPutV,(%d;%d;%d)\n", tstamp, len,
+    fprintf(fptrace, "%lf,ARMCI_NbPutV,(%d;%d;%d)\n", tstamp, len,
 	    compute_vector_bytes(len, darr), proc);
     return rval;
 }
@@ -336,9 +339,9 @@ int ARMCI_NbPutV(armci_giov_t * darr, int len, int proc,
 int ARMCI_PutValueDouble(double src, void *dst, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_PutValueDouble(src, dst, proc);
-    fprintf(stdout, "%lf,ARMCI_PutValueDouble,(%lf,%p,%d)\n", tstamp,
+    fprintf(fptrace, "%lf,ARMCI_PutValueDouble,(%lf,%p,%d)\n", tstamp,
 	    (double) src, dst, proc);
     return rval;
 }
@@ -347,9 +350,9 @@ int ARMCI_PutValueDouble(double src, void *dst, int proc)
 int ARMCI_GetV(armci_giov_t * darr, int len, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_GetV(darr, len, proc);
-    fprintf(stdout, "%lf,ARMCI_GetV,(%d;%d;%d)\n", tstamp, len,
+    fprintf(fptrace, "%lf,ARMCI_GetV,(%d;%d;%d)\n", tstamp, len,
 	    compute_vector_bytes(len, darr), proc);
     return rval;
 }
@@ -358,9 +361,9 @@ int ARMCI_GetV(armci_giov_t * darr, int len, int proc)
 int ARMCI_Test(armci_hdl_t * nb_handle)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Test(nb_handle);
-    fprintf(stdout, "%lf,ARMCI_Test,(%p)\n", tstamp, nb_handle);
+    fprintf(fptrace, "%lf,ARMCI_Test,(%p)\n", tstamp, nb_handle);
     return rval;
 }
 
@@ -368,27 +371,27 @@ int ARMCI_Test(armci_hdl_t * nb_handle)
 void ARMCI_Unlock(int mutex, int proc)
 {
 
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     PARMCI_Unlock(mutex, proc);
-    fprintf(stdout, "%lf,ARMCI_Unlock,(%d;%d)\n", tstamp, mutex, proc);
+    fprintf(fptrace, "%lf,ARMCI_Unlock,(%d;%d)\n", tstamp, mutex, proc);
 }
 
 
 void ARMCI_Fence(int proc)
 {
 
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     PARMCI_Fence(proc);
-    fprintf(stdout, "%lf,ARMCI_Fence,(%d)\n", tstamp, proc);
+    fprintf(fptrace, "%lf,ARMCI_Fence,(%d)\n", tstamp, proc);
 }
 
 
 int ARMCI_Create_mutexes(int num)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Create_mutexes(num);
-    fprintf(stdout, "%lf,ARMCI_Create_mutexes,(%d)\n", tstamp, num);
+    fprintf(fptrace, "%lf,ARMCI_Create_mutexes,(%d)\n", tstamp, num);
     return rval;
 }
 
@@ -398,11 +401,11 @@ int ARMCI_PutS_flag(void *src_ptr, int *src_stride_arr, void *dst_ptr,
 		    int *flag, int val, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval =
 	PARMCI_PutS_flag(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
 			 count, stride_levels, flag, val, proc);
-    fprintf(stdout, "%lf,ARMCI_PutS_flag,(%d;%d;%d,%d)\n", tstamp,
+    fprintf(fptrace, "%lf,ARMCI_PutS_flag,(%d;%d;%d,%d)\n", tstamp,
 	    stride_levels, compute_strided_bytes(stride_levels, count),
 	    proc, val);
     return rval;
@@ -412,9 +415,9 @@ int ARMCI_PutS_flag(void *src_ptr, int *src_stride_arr, void *dst_ptr,
 int ARMCI_WaitProc(int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_WaitProc(proc);
-    fprintf(stdout, "%lf,ARMCI_WaitProc,(%d)\n", tstamp, proc);
+    fprintf(fptrace, "%lf,ARMCI_WaitProc,(%d)\n", tstamp, proc);
     return rval;
 }
 
@@ -422,18 +425,18 @@ int ARMCI_WaitProc(int proc)
 void ARMCI_Lock(int mutex, int proc)
 {
 
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     PARMCI_Lock(mutex, proc);
-    fprintf(stdout, "%lf,ARMCI_Lock,(%d;%d)\n", tstamp, mutex, proc);
+    fprintf(fptrace, "%lf,ARMCI_Lock,(%d;%d)\n", tstamp, mutex, proc);
 }
 
 
 double ARMCI_GetValueDouble(void *src, int proc)
 {
     double rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_GetValueDouble(src, proc);
-    fprintf(stdout, "%lf,ARMCI_GetValueDouble,(%p,%d)\n", tstamp, src,
+    fprintf(fptrace, "%lf,ARMCI_GetValueDouble,(%p,%d)\n", tstamp, src,
 	    proc);
     return rval;
 }
@@ -443,9 +446,9 @@ int ARMCI_NbGetV(armci_giov_t * darr, int len, int proc,
 		 armci_hdl_t * nb_handle)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_NbGetV(darr, len, proc, nb_handle);
-    fprintf(stdout, "%lf,ARMCI_NbGetV,(%d;%d;%d)\n", tstamp, len,
+    fprintf(fptrace, "%lf,ARMCI_NbGetV,(%d;%d;%d)\n", tstamp, len,
 	    compute_vector_bytes(len, darr), proc);
     return rval;
 }
@@ -454,9 +457,9 @@ int ARMCI_NbGetV(armci_giov_t * darr, int len, int proc,
 int ARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Rmw(op, ploc, prem, extra, proc);
-    fprintf(stdout, "%lf,ARMCI_Rmw,(%d,%d,%d)\n", tstamp, op, extra, proc);
+    fprintf(fptrace, "%lf,ARMCI_Rmw,(%d,%d,%d)\n", tstamp, op, extra, proc);
     return rval;
 }
 
@@ -464,9 +467,9 @@ int ARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
 int ARMCI_Init()
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Init();
-    fprintf(stdout, "%lf,ARMCI_Init,\n", tstamp);
+    fprintf(fptrace, "%lf,ARMCI_Init,\n", tstamp);
     return rval;
 }
 
@@ -474,9 +477,9 @@ int ARMCI_Init()
 int ARMCI_WaitAll()
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_WaitAll();
-    fprintf(stdout, "%lf,ARMCI_WaitAll,\n", tstamp);
+    fprintf(fptrace, "%lf,ARMCI_WaitAll,\n", tstamp);
     return rval;
 }
 
@@ -485,9 +488,9 @@ int ARMCI_NbGet(void *src, void *dst, int bytes, int proc,
 		armci_hdl_t * nb_handle)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_NbGet(src, dst, bytes, proc, nb_handle);
-    fprintf(stdout, "%lf,ARMCI_NbGet,(%d;%d)\n", tstamp, bytes, proc);
+    fprintf(fptrace, "%lf,ARMCI_NbGet,(%d;%d)\n", tstamp, bytes, proc);
     return rval;
 }
 
@@ -495,9 +498,9 @@ int ARMCI_NbGet(void *src, void *dst, int bytes, int proc,
 int ARMCI_PutValueFloat(float src, void *dst, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_PutValueFloat(src, dst, proc);
-    fprintf(stdout, "%lf,ARMCI_PutValueFloat,(%lf,%p,%d)\n", tstamp,
+    fprintf(fptrace, "%lf,ARMCI_PutValueFloat,(%lf,%p,%d)\n", tstamp,
 	    (double) src, dst, proc);
     return rval;
 }
@@ -508,11 +511,11 @@ int ARMCI_NbPutS(void *src_ptr, int *src_stride_arr, void *dst_ptr,
 		 int proc, armci_hdl_t * nb_handle)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval =
 	PARMCI_NbPutS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
 		      count, stride_levels, proc, nb_handle);
-    fprintf(stdout, "%lf,ARMCI_NbPutS,(%d;%d;%d)\n", tstamp, stride_levels,
+    fprintf(fptrace, "%lf,ARMCI_NbPutS,(%d;%d;%d)\n", tstamp, stride_levels,
 	    compute_strided_bytes(stride_levels, count), proc);
     return rval;
 }
@@ -523,12 +526,12 @@ int ARMCI_PutS_flag_dir(void *src_ptr, int *src_stride_arr, void *dst_ptr,
 			int *flag, int val, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval =
 	PARMCI_PutS_flag_dir(src_ptr, src_stride_arr, dst_ptr,
 			     dst_stride_arr, count, stride_levels, flag,
 			     val, proc);
-    fprintf(stdout, "%lf,ARMCI_PutS_flag_dir,(%d;%d;%d,%d)\n", tstamp,
+    fprintf(fptrace, "%lf,ARMCI_PutS_flag_dir,(%d;%d;%d,%d)\n", tstamp,
 	    stride_levels, compute_strided_bytes(stride_levels, count),
 	    proc, val);
     return rval;
@@ -538,9 +541,9 @@ int ARMCI_PutS_flag_dir(void *src_ptr, int *src_stride_arr, void *dst_ptr,
 int ARMCI_PutValueLong(long src, void *dst, int proc)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_PutValueLong(src, dst, proc);
-    fprintf(stdout, "%lf,ARMCI_PutValueLong,(%ld,%p,%d)\n", tstamp,
+    fprintf(fptrace, "%lf,ARMCI_PutValueLong,(%ld,%p,%d)\n", tstamp,
 	    (long) src, dst, proc);
     return rval;
 }
@@ -549,9 +552,9 @@ int ARMCI_PutValueLong(long src, void *dst, int proc)
 int ARMCI_Wait(armci_hdl_t * nb_handle)
 {
     int rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_Wait(nb_handle);
-    fprintf(stdout, "%lf,ARMCI_Wait,(%p)\n", tstamp, nb_handle);
+    fprintf(fptrace, "%lf,ARMCI_Wait,(%p)\n", tstamp, nb_handle);
     return rval;
 }
 
@@ -559,8 +562,8 @@ int ARMCI_Wait(armci_hdl_t * nb_handle)
 long ARMCI_GetValueLong(void *src, int proc)
 {
     long rval;
-    double tstamp = MPI_Wtime();
+    double tstamp = MPI_Wtime()-first_wtime;
     rval = PARMCI_GetValueLong(src, proc);
-    fprintf(stdout, "%lf,ARMCI_GetValueLong,(%p,%d)\n", tstamp, src, proc);
+    fprintf(fptrace, "%lf,ARMCI_GetValueLong,(%p,%d)\n", tstamp, src, proc);
     return rval;
 }
