@@ -141,7 +141,10 @@ def _lohi(int g_a, lo, hi):
         raise ValueError, 'len(lo_nd) != ndim; len(%s) != %s' % (lo_nd,ndim)
     if len(hi_nd) != ndim:
         raise ValueError, 'len(hi_nd) != ndim; len(%s) != %s' % (hi_nd,ndim)
-    hi_nd -= 1 # prep hi for GA's inclusive indexing
+    # We must make a copy of hi_nd. If user passes in an ndarray, the
+    # following "prep" operation will change the user's 'hi'.
+    #hi_nd -= 1 # <----- don't do that!
+    hi_nd = hi_nd-1 # prep hi for GA's inclusive indexing
     return lo_nd,hi_nd
 
 cdef void* _convert_multiplier(int gtype, value,
