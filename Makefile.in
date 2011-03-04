@@ -544,7 +544,10 @@ AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
 @CXX_BINDINGS_TRUE@am_libga___la_rpath = -rpath $(libdir)
-libga_la_DEPENDENCIES = armci/libarmcii.la
+am__DEPENDENCIES_1 =
+libga_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) armci/libarmcii.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__libga_la_SOURCES_DIST = compat/random.c gaf2c/gaf2c.c \
 	gaf2c/drand.c gaf2c/farg.F ma/error.c ma/f2c.c ma/ma.c ma/ma.h \
 	ma/memcpy.h ma/string-util.c ma/table.c ma/maf.F \
@@ -872,7 +875,6 @@ am__ga___testing_elempatch_SOURCES_DIST = ga++/testing/elempatch.cc
 @CXX_BINDINGS_TRUE@am_ga___testing_elempatch_OBJECTS =  \
 @CXX_BINDINGS_TRUE@	ga++/testing/elempatch.$(OBJEXT)
 ga___testing_elempatch_OBJECTS = $(am_ga___testing_elempatch_OBJECTS)
-am__DEPENDENCIES_1 =
 am__DEPENDENCIES_2 = $(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
@@ -3007,6 +3009,10 @@ libga_la_SOURCES = compat/random.c gaf2c/gaf2c.c gaf2c/drand.c \
 	gparrays/src/gpbase.c gparrays/src/gpbase.h \
 	gparrays/src/gpcapi.c gparrays/src/gpfapi.c \
 	gparrays/src/gponesided.c gparrays/src/gppapi.h
+
+# This is the "noinst" libarmci so that libtool combines it with libga.
+libga_la_LIBADD = $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) \
+	armci/libarmcii.la $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
 nodist_libga_la_SOURCES = config.fh $(am__append_29) \
 	global/src/wapidefs.h global/src/c.names.h \
 	gparrays/src/gpwapidefs.h
@@ -3471,9 +3477,6 @@ gparrays_testing_test_LDFLAGS = $(FLDFLAGS)
 ##############################################################################
 # armci
 SUBDIRS = armci .
-
-# This is the "noinst" libarmci so that libtool combines it with libga.
-libga_la_LIBADD = armci/libarmcii.la
 EXAMPLES = global/examples/lennard-jones/lennard$(EXEEXT) \
 	$(am__append_53)
 GA_RECURSIVE_TARGETS = checkprogs-recursive examples-recursive

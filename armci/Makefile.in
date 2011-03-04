@@ -526,7 +526,8 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
-libarmci_la_LIBADD =
+am__DEPENDENCIES_1 =
+libarmci_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src-portals/aggregate.c src-portals/armci.c \
 	src-portals/armcip.h src-portals/armci_portals.c \
@@ -1006,7 +1007,6 @@ am_examples_benchmarks_RandomAccess_simple_simple_OBJECTS =  \
 examples_benchmarks_RandomAccess_simple_simple_OBJECTS =  \
 	$(am_examples_benchmarks_RandomAccess_simple_simple_OBJECTS)
 examples_benchmarks_RandomAccess_simple_simple_LDADD = $(LDADD)
-am__DEPENDENCIES_1 =
 examples_benchmarks_RandomAccess_simple_simple_DEPENDENCIES =  \
 	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
@@ -1803,6 +1803,7 @@ libarmci_la_SOURCES = $(am__append_5) $(am__append_6) $(am__append_7) \
 	$(am__append_59) $(am__append_61)
 nodist_libarmci_la_SOURCES = config.fh $(am__append_13) \
 	$(am__append_23) $(am__append_58) $(am__append_60)
+libarmci_la_LIBADD = $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
 libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
 nodist_libarmcii_la_SOURCES = $(nodist_libarmci_la_SOURCES)
 EXTRA_DIST = README build-aux/inside.pl examples/benchmarks/lu/README \

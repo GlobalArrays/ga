@@ -31,6 +31,7 @@ lib_LTLIBRARIES = libarmci.la
 noinst_LTLIBRARIES = libarmcii.la
 libarmci_la_SOURCES =
 nodist_libarmci_la_SOURCES =
+libarmci_la_LIBADD =
 libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
 nodist_libarmcii_la_SOURCES = $(nodist_libarmci_la_SOURCES)
 EXTRA_DIST = README build-aux/inside.pl
@@ -72,6 +73,9 @@ endif
 LDADD += $(LTLIBOBJS)
 LDADD += $(GA_MP_LIBS)
 LDADD += $(ARMCI_NETWORK_LIBS)
+
+libarmci_la_LIBADD += $(GA_MP_LIBS)
+libarmci_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 
 # Certain trickery when turning Fortran support on or off.
 if ENABLE_F77

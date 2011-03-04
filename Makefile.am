@@ -31,6 +31,7 @@ check_PROGRAMS =
 check_LTLIBRARIES =
 lib_LTLIBRARIES = libga.la
 libga_la_SOURCES =
+libga_la_LIBADD =
 nodist_libga_la_SOURCES =
 EXTRA_DIST = README build-aux/inside.pl
 BUILT_SOURCES =
@@ -1319,7 +1320,12 @@ endif
 
 
 # This is the "noinst" libarmci so that libtool combines it with libga.
-libga_la_LIBADD = armci/libarmcii.la
+libga_la_LIBADD += $(SCALAPACK_LIBS)
+libga_la_LIBADD += $(LAPACK_LIBS)
+libga_la_LIBADD += $(BLAS_LIBS)
+libga_la_LIBADD += armci/libarmcii.la
+libga_la_LIBADD += $(GA_MP_LIBS)
+libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 
 ##############################################################################
 # the end
