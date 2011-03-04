@@ -467,8 +467,8 @@ def access_block_segment(int g_a, int proc):
     The data  inside this segment has a lot of additional structure so this
     function is not generally useful to developers. It is primarily used
     inside the GA library to implement other GA routines. Each call to
-    ga_access_block_segment should be followed by a call to either
-    NGA_Release_block_segment or NGA_Release_update_block_segment.
+    ga.access_block_segment should be followed by a call to either
+    ga.release_block_segment or ga.release_update_block_segment.
 
     This is a local operation.
 
@@ -2644,7 +2644,7 @@ def periodic_acc(int g_a, buffer, lo=None, hi=None, alpha=None):
     """
     _acc_common(g_a, buffer, lo, hi, alpha, False, True)
 
-def periodic_get(int g_a, lo, hi, buffer, alpha=None):
+def periodic_get(int g_a, lo=None, hi=None, np.ndarray buffer=None):
     """Periodic version of ga.get.
     
     The indices can extend beyond the array boundary/dimensions in which case
@@ -2671,7 +2671,7 @@ def periodic_get(int g_a, lo, hi, buffer, alpha=None):
     :returns: The local array buffer.
     
     """
-    _get_common(g_a, lo, hi, buffer, alpha, False, True)
+    _get_common(g_a, lo, hi, buffer, False, True)
 
 def periodic_put(int g_a, buffer, lo=None, hi=None):
     """Periodic version of ga.put.
