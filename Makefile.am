@@ -716,6 +716,8 @@ check_PROGRAMS += global/testing/testeig
 check_PROGRAMS += global/testing/testmatmult
 check_PROGRAMS += global/testing/testsolve
 check_PROGRAMS += global/testing/test
+check_PROGRAMS += global/testing/types_test
+check_PROGRAMS += global/testing/field_test
 if HAVE_SCALAPACK
 check_PROGRAMS += global/testing/testspd
 endif # HAVE_SCALAPACK
@@ -848,6 +850,8 @@ global_testing_testmultrect_SOURCES   = global/testing/testmultrect.c $(gtsrc)
 global_testing_testsolve_SOURCES      = global/testing/testsolve.F $(gtsrc)
 global_testing_testspd_SOURCES        = global/testing/testspd.F $(gtsrc)
 global_testing_test_SOURCES           = global/testing/test.F $(gtsrc)
+global_testing_types_test_SOURCES           = global/testing/types-test.F $(gtsrc)
+global_testing_field_test_SOURCES           = global/testing/field-test.F $(gtsrc)
 nodist_global_testing_nga_onesided_SOURCES = global/testing/nga-onesided.F $(gtsrc)
 nodist_global_testing_nga_patch_SOURCES    = global/testing/nga-patch.F $(gtsrc)
 nodist_global_testing_nga_periodic_SOURCES = global/testing/nga-periodic.F $(gtsrc)
@@ -1503,6 +1507,8 @@ PARALLEL_TESTS += global/testing/testeig$(EXEEXT)
 PARALLEL_TESTS += global/testing/testmatmult$(EXEEXT)
 PARALLEL_TESTS += global/testing/testsolve$(EXEEXT)
 PARALLEL_TESTS += global/testing/test$(EXEEXT)
+PARALLEL_TESTS += global/testing/types-test$(EXEEXT)
+PARALLEL_TESTS += global/testing/field-test$(EXEEXT)
 if HAVE_SCALAPACK
 PARALLEL_TESTS += global/testing/testspd$(EXEEXT)
 endif # HAVE_SCALAPACK

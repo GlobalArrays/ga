@@ -4851,3 +4851,59 @@ static Integer* copy_map64(int64_t block[], int block_ndim, int64_t map[])
 
     return _ga_map_capi;
 }
+
+int NGA_Register_type(size_t bytes) {
+  return wnga_register_type(bytes);
+}
+
+int NGA_Deregister_type(int type) {
+  return wnga_deregister_type(type);
+}
+
+
+void NGA_Get_field(int g_a, int *lo, int *hi, int foff, int fsize,
+		   void *buf, int *ld) {
+  Integer a = (Integer)g_a;
+  Integer andim = wnga_ndim(a);
+  Integer _alo[MAXDIM], _ahi[MAXDIM];
+  COPYINDEX_C2F(lo,_alo, andim);
+  COPYINDEX_C2F(hi,_ahi, andim);
+
+  wnga_get_field(a, _alo, _ahi, foff, fsize, buf, ld);
+}
+
+void NGA_Nbget_field(int g_a, int *lo, int *hi, int foff, int fsize,
+		     void *buf, int *ld, int *nbhandle) {
+  Integer a = (Integer)g_a;
+  Integer andim = wnga_ndim(a);
+  Integer _alo[MAXDIM], _ahi[MAXDIM];
+  COPYINDEX_C2F(lo,_alo, andim);
+  COPYINDEX_C2F(hi,_ahi, andim);
+
+  wnga_nbget_field(a, _alo, _ahi, foff, fsize, buf, ld, nbhandle);
+}
+
+void NGA_Nbput_field(int g_a, int *lo, int *hi, int foff, int fsize,
+		     void *buf, int *ld, int *nbhandle) {
+  Integer a = (Integer)g_a;
+  Integer andim = wnga_ndim(a);
+  Integer _alo[MAXDIM], _ahi[MAXDIM];
+  COPYINDEX_C2F(lo,_alo, andim);
+  COPYINDEX_C2F(hi,_ahi, andim);
+
+  wnga_nbput_field(a, _alo, _ahi, foff, fsize, buf, ld, nbhandle);
+}
+
+void NGA_Put_field(int g_a, int *lo, int *hi, int foff, int fsize,
+		   void *buf, int *ld) {
+  Integer a = (Integer)g_a;
+  Integer andim = wnga_ndim(a);
+  Integer _alo[MAXDIM], _ahi[MAXDIM];
+  COPYINDEX_C2F(lo,_alo, andim);
+  COPYINDEX_C2F(hi,_ahi, andim);
+
+  wnga_put_field(a, _alo, _ahi, foff, fsize, buf, ld);
+}
+
+
+

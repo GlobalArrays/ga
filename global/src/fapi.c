@@ -3519,3 +3519,30 @@ double FATR nga_timer_()
     return wnga_timer();
 }
 
+Integer nga_register_type_(Integer *size) {
+  return wnga_register_type((size_t)*size);
+}
+
+Integer nga_deregister_type_(Integer *type) {
+  return wnga_deregister_type((int)*type);
+}
+
+void nga_get_field_(Integer *g_a, Integer *lo, Integer *hi, Integer *foff, Integer *fsize,
+		   void *buf, Integer *ld) {
+  wnga_get_field(*g_a, lo, hi, *foff, *fsize, buf, ld);
+}
+
+void nga_nbget_field_(Integer *g_a, Integer *lo, Integer *hi, Integer *foff, Integer *fsize,
+		     void *buf, Integer *ld, Integer *nbhandle) {
+  wnga_nbget_field(*g_a, lo, hi, *foff, *fsize, buf, ld, nbhandle);
+}
+
+void nga_nbput_field_(Integer *g_a, Integer *lo, Integer *hi, Integer *foff, Integer *fsize,
+		     void *buf, Integer *ld, Integer *nbhandle) {
+  wnga_nbput_field(*g_a, lo, hi, *foff, *fsize, buf, ld, nbhandle);
+}
+
+void nga_put_field_(Integer *g_a, Integer *lo, Integer *hi, Integer *foff, Integer *fsize,
+		   void *buf, Integer *ld) {
+  wnga_put_field(*g_a, lo, hi, *foff, *fsize, buf, ld);
+}

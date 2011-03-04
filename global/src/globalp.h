@@ -64,13 +64,19 @@
 #define GA_MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define GA_ABS(a)   (((a) >= 0) ? (a) : (-(a)))
 
-#define GAsizeofM(type)  ( (type)==C_DBL? sizeof(double): \
-                           (type)==C_INT? sizeof(int): \
-                           (type)==C_DCPL? sizeof(DoubleComplex): \
-                           (type)==C_SCPL? sizeof(SingleComplex): \
-                           (type)==C_LONG? sizeof(long): \
-                           (type)==C_LONGLONG? sizeof(long long): \
-                           (type)==C_FLOAT? sizeof(float):0)
+typedef struct ga_typeinfo_t {
+  int active;
+  size_t size;
+} ga_typeinfo_t;
+
+extern ga_typeinfo_t ga_types[];
+
+#define GA_TYPES_MAX 256
+#define GA_TYPES_RESERVED 17 /**Should match num lines initialized in ga_types struct*/
+
+#define GAtypebuiltinM(_type) ((_type)>=MT_BASE && (_type)<(MT_BASE+GA_TYPES_RESERVED))
+#define GAsizeofM(_type)   ga_types[(_type)-MT_BASE].size
+#define GAvalidtypeM(_type) ((_type)>=MT_BASE && (_type)<(MT_BASE+GA_TYPES_MAX) && ga_types[(_type)-MT_BASE].active!=0)
 
 #define NAME_STACK_LEN 10
 #define PAGE_SIZE  4096

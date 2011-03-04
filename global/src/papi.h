@@ -358,4 +358,19 @@ extern DoublePrecision pnga_ddot_patch_dp(Integer g_a, char *t_a, Integer ailo, 
 
 extern double pnga_timer();
 
+/*Routines for types from base.c*/
+
+extern int pnga_register_type(size_t size);
+extern int pnga_deregister_type(int type);
+
+/*Routines for field-wise GA operations*/
+
+extern void pnga_get_field(Integer g_a, Integer *lo, Integer *hi, Integer foff, Integer fsize, void *buf, Integer *ld);
+extern void pnga_nbget_field(Integer g_a, Integer *lo, Integer *hi, Integer foff, Integer fsize,void *buf, Integer *ld, Integer *nbhandle);
+extern void pnga_nbput_field(Integer g_a, Integer *lo, Integer *hi, Integer foff, Integer fsize,void *buf, Integer *ld, Integer *nbhandle);
+extern void pnga_put_field(Integer g_a, Integer *lo, Integer *hi, Integer foff, Integer fsize,void *buf, Integer *ld);
+
+
+
 #endif /* PAPI_H_ */
+;

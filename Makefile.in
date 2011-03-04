@@ -287,7 +287,9 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/sprsmatmult \
 @ENABLE_F77_TRUE@	global/testing/stride global/testing/testeig \
 @ENABLE_F77_TRUE@	global/testing/testmatmult \
-@ENABLE_F77_TRUE@	global/testing/testsolve global/testing/test
+@ENABLE_F77_TRUE@	global/testing/testsolve global/testing/test \
+@ENABLE_F77_TRUE@	global/testing/types_test \
+@ENABLE_F77_TRUE@	global/testing/field_test
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_37 = global/testing/testspd
 @ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_38 = global/testing/ga_lu
 @MSG_COMMS_MPI_TRUE@am__append_39 = global/testing/ga-mpi \
@@ -401,7 +403,9 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 @ENABLE_F77_TRUE@	global/testing/testeig$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testmatmult$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testsolve$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/test$(EXEEXT)
+@ENABLE_F77_TRUE@	global/testing/test$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/types-test$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/field-test$(EXEEXT)
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_63 = global/testing/testspd$(EXEEXT)
 @ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_64 = global/testing/ga_lu$(EXEEXT)
 @MSG_COMMS_MPI_TRUE@am__append_65 = global/testing/ga-mpi$(EXEEXT) \
@@ -824,7 +828,9 @@ libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_F77_TRUE@	global/testing/testeig$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testmatmult$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testsolve$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/test$(EXEEXT)
+@ENABLE_F77_TRUE@	global/testing/test$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/types_test$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/field_test$(EXEEXT)
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__EXEEXT_13 = global/testing/testspd$(EXEEXT)
 @ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__EXEEXT_14 = global/testing/ga_lu$(EXEEXT)
 @MSG_COMMS_MPI_TRUE@am__EXEEXT_15 = global/testing/ga-mpi$(EXEEXT) \
@@ -1107,6 +1113,19 @@ global_testing_elempatch_OBJECTS =  \
 	$(am_global_testing_elempatch_OBJECTS)
 global_testing_elempatch_LDADD = $(LDADD)
 global_testing_elempatch_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__global_testing_field_test_SOURCES_DIST =  \
+	global/testing/field-test.F global/testing/testutil.fh \
+	global/testing/testutil.h global/testing/util.c \
+	global/testing/ffflush.F global/testing/testblas.f
+am_global_testing_field_test_OBJECTS =  \
+	global/testing/field-test.$(OBJEXT) $(am__objects_20)
+global_testing_field_test_OBJECTS =  \
+	$(am_global_testing_field_test_OBJECTS)
+global_testing_field_test_LDADD = $(LDADD)
+global_testing_field_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
@@ -1860,6 +1879,19 @@ global_testing_testspd_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_testspd_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am__global_testing_types_test_SOURCES_DIST =  \
+	global/testing/types-test.F global/testing/testutil.fh \
+	global/testing/testutil.h global/testing/util.c \
+	global/testing/ffflush.F global/testing/testblas.f
+am_global_testing_types_test_OBJECTS =  \
+	global/testing/types-test.$(OBJEXT) $(am__objects_20)
+global_testing_types_test_OBJECTS =  \
+	$(am_global_testing_types_test_OBJECTS)
+global_testing_types_test_LDADD = $(LDADD)
+global_testing_types_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_global_trace_adjust_OBJECTS = global/trace/adjust.$(OBJEXT)
 global_trace_adjust_OBJECTS = $(am_global_trace_adjust_OBJECTS)
 global_trace_adjust_DEPENDENCIES =
@@ -2338,6 +2370,7 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(global_testing_d2test_SOURCES) \
 	$(global_testing_elempatch_SOURCES) \
 	$(nodist_EXTRA_global_testing_elempatch_SOURCES) \
+	$(global_testing_field_test_SOURCES) \
 	$(global_testing_g2test_SOURCES) \
 	$(global_testing_g3test_SOURCES) \
 	$(global_testing_ga_mpi_SOURCES) \
@@ -2404,6 +2437,7 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(nodist_EXTRA_global_testing_testmultrect_SOURCES) \
 	$(global_testing_testsolve_SOURCES) \
 	$(global_testing_testspd_SOURCES) \
+	$(global_testing_types_test_SOURCES) \
 	$(global_trace_adjust_SOURCES) \
 	$(global_trace_collisions_SOURCES) \
 	$(gparrays_testing_test_SOURCES) \
@@ -2475,6 +2509,7 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_blktest_SOURCES_DIST) \
 	$(am__global_testing_d2test_SOURCES_DIST) \
 	$(am__global_testing_elempatch_SOURCES_DIST) \
+	$(am__global_testing_field_test_SOURCES_DIST) \
 	$(am__global_testing_g2test_SOURCES_DIST) \
 	$(am__global_testing_g3test_SOURCES_DIST) \
 	$(am__global_testing_ga_mpi_SOURCES_DIST) \
@@ -2520,6 +2555,7 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_testmultrect_SOURCES_DIST) \
 	$(am__global_testing_testsolve_SOURCES_DIST) \
 	$(am__global_testing_testspd_SOURCES_DIST) \
+	$(am__global_testing_types_test_SOURCES_DIST) \
 	$(global_trace_adjust_SOURCES) \
 	$(global_trace_collisions_SOURCES) \
 	$(gparrays_testing_test_SOURCES) \
@@ -3178,6 +3214,8 @@ global_testing_testmultrect_SOURCES = global/testing/testmultrect.c $(gtsrc)
 global_testing_testsolve_SOURCES = global/testing/testsolve.F $(gtsrc)
 global_testing_testspd_SOURCES = global/testing/testspd.F $(gtsrc)
 global_testing_test_SOURCES = global/testing/test.F $(gtsrc)
+global_testing_types_test_SOURCES = global/testing/types-test.F $(gtsrc)
+global_testing_field_test_SOURCES = global/testing/field-test.F $(gtsrc)
 nodist_global_testing_nga_onesided_SOURCES = global/testing/nga-onesided.F $(gtsrc)
 nodist_global_testing_nga_patch_SOURCES = global/testing/nga-patch.F $(gtsrc)
 nodist_global_testing_nga_periodic_SOURCES = global/testing/nga-periodic.F $(gtsrc)
@@ -4333,6 +4371,11 @@ global/testing/elempatch.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/elempatch$(EXEEXT): $(global_testing_elempatch_OBJECTS) $(global_testing_elempatch_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/elempatch$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(global_testing_elempatch_OBJECTS) $(global_testing_elempatch_LDADD) $(LIBS)
+global/testing/field-test.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/field_test$(EXEEXT): $(global_testing_field_test_OBJECTS) $(global_testing_field_test_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/field_test$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_field_test_OBJECTS) $(global_testing_field_test_LDADD) $(LIBS)
 global/testing/g2test.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/g2test$(EXEEXT): $(global_testing_g2test_OBJECTS) $(global_testing_g2test_DEPENDENCIES) global/testing/$(am__dirstamp)
@@ -4591,6 +4634,11 @@ global/testing/testspd.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/testspd$(EXEEXT): $(global_testing_testspd_OBJECTS) $(global_testing_testspd_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/testspd$(EXEEXT)
 	$(AM_V_F77LD)$(global_testing_testspd_LINK) $(global_testing_testspd_OBJECTS) $(global_testing_testspd_LDADD) $(LIBS)
+global/testing/types-test.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/types_test$(EXEEXT): $(global_testing_types_test_OBJECTS) $(global_testing_types_test_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/types_test$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_types_test_OBJECTS) $(global_testing_types_test_LDADD) $(LIBS)
 global/trace/$(am__dirstamp):
 	@$(MKDIR_P) global/trace
 	@: > global/trace/$(am__dirstamp)
@@ -5019,6 +5067,7 @@ mostlyclean-compile:
 	-rm -f global/testing/d2test.$(OBJEXT)
 	-rm -f global/testing/elempatch.$(OBJEXT)
 	-rm -f global/testing/ffflush.$(OBJEXT)
+	-rm -f global/testing/field-test.$(OBJEXT)
 	-rm -f global/testing/g2test.$(OBJEXT)
 	-rm -f global/testing/g3test.$(OBJEXT)
 	-rm -f global/testing/ga-mpi.$(OBJEXT)
@@ -5071,6 +5120,7 @@ mostlyclean-compile:
 	-rm -f global/testing/testmultrect.$(OBJEXT)
 	-rm -f global/testing/testsolve.$(OBJEXT)
 	-rm -f global/testing/testspd.$(OBJEXT)
+	-rm -f global/testing/types-test.$(OBJEXT)
 	-rm -f global/testing/util.$(OBJEXT)
 	-rm -f global/trace/adjust.$(OBJEXT)
 	-rm -f global/trace/collisions.$(OBJEXT)
@@ -6363,6 +6413,10 @@ global/testing/testsolve.log: global/testing/testsolve$(EXEEXT)
 	@p='global/testing/testsolve$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/test.log: global/testing/test$(EXEEXT)
 	@p='global/testing/test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/types-test.log: global/testing/types-test$(EXEEXT)
+	@p='global/testing/types-test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/field-test.log: global/testing/field-test$(EXEEXT)
+	@p='global/testing/field-test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testspd.log: global/testing/testspd$(EXEEXT)
 	@p='global/testing/testspd$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ga-mpi.log: global/testing/ga-mpi$(EXEEXT)

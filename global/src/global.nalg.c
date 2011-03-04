@@ -14,6 +14,9 @@
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
 #include "message.h"
 #include "globalp.h"
 #include "armci.h"
@@ -91,76 +94,78 @@ void pnga_zero(Integer g_a)
       pnga_access_ptr(g_a, lo, hi, &ptr, ld);
       GET_ELEMS(ndim,lo,hi,ld,&elems);
 
-      switch (type){
-        int *ia;
-        double *da;
-        float *fa;
-        long *la;
-        long long *lla;
-        case C_INT:
-        ia = (int*)ptr;
-        for(i=0;i<elems;i++) ia[i]  = 0;
-        break;
-        case C_DCPL:
-        elems *=2;
-        case C_DBL:
-        da = (double*)ptr;
-        for(i=0;i<elems;i++) da[i] = 0;
-        break;
-        case C_SCPL:
-        elems *=2;
-        case C_FLOAT:
-        fa = (float*)ptr;
-        for(i=0;i<elems;i++) fa[i]  = 0;
-        break;
-        case C_LONG:
-        la = (long*)ptr;
-        for(i=0;i<elems;i++) la[i]  = 0;
-        break;                                 
-        case C_LONGLONG:
-        lla = (long long*)ptr;
-        for(i=0;i<elems;i++) lla[i]  = 0;
-        break;                                 
-        default: pnga_error(" wrong data type ",type);
-      }
+      /* switch (type){ */
+/*         int *ia; */
+/*         double *da; */
+/*         float *fa; */
+/*         long *la; */
+/*         long long *lla; */
+/*         case C_INT: */
+/*         ia = (int*)ptr; */
+/*         for(i=0;i<elems;i++) ia[i]  = 0; */
+/*         break; */
+/*         case C_DCPL: */
+/*         elems *=2; */
+/*         case C_DBL: */
+/*         da = (double*)ptr; */
+/*         for(i=0;i<elems;i++) da[i] = 0; */
+/*         break; */
+/*         case C_SCPL: */
+/*         elems *=2; */
+/*         case C_FLOAT: */
+/*         fa = (float*)ptr; */
+/*         for(i=0;i<elems;i++) fa[i]  = 0; */
+/*         break; */
+/*         case C_LONG: */
+/*         la = (long*)ptr; */
+/*         for(i=0;i<elems;i++) la[i]  = 0; */
+/*         break; */
+/*         case C_LONGLONG: */
+/*         lla = (long long*)ptr; */
+/*         for(i=0;i<elems;i++) lla[i]  = 0; */
+/*         break; */
+/*         default: pnga_error(" wrong data type ",type); */
+/*       } */
+      memset(ptr, 0, GAsizeofM(type)*elems);
 
       /* release access to the data */
       pnga_release_update(g_a, lo, hi);
     } 
   } else {
     pnga_access_block_segment_ptr(g_a, me, &ptr, &elems);
-    switch (type){
-      int *ia;
-      double *da;
-      float *fa;
-      long *la;
-      long long *lla;
-      case C_INT:
-        ia = (int*)ptr;
-        for(i=0;i<elems;i++) ia[i]  = 0;
-        break;
-      case C_DCPL:
-        elems *=2;
-      case C_DBL:
-        da = (double*)ptr;
-        for(i=0;i<elems;i++) da[i] = 0;
-        break;
-      case C_SCPL:
-        elems *=2;
-      case C_FLOAT:
-        fa = (float*)ptr;
-        for(i=0;i<elems;i++) fa[i]  = 0;
-        break;
-      case C_LONG:
-      la = (long*)ptr;
-      for(i=0;i<elems;i++) la[i]  = 0;
-      break;                                 
-      case C_LONGLONG:
-      lla = (long long*)ptr;
-      for(i=0;i<elems;i++) lla[i]  = 0;
-      break;                                 
-      default: pnga_error(" wrong data type ",type);
-    }
+/*     switch (type){ */
+/*       int *ia; */
+/*       double *da; */
+/*       float *fa; */
+/*       long *la; */
+/*       long long *lla; */
+/*       case C_INT: */
+/*         ia = (int*)ptr; */
+/*         for(i=0;i<elems;i++) ia[i]  = 0; */
+/*         break; */
+/*       case C_DCPL: */
+/*         elems *=2; */
+/*       case C_DBL: */
+/*         da = (double*)ptr; */
+/*         for(i=0;i<elems;i++) da[i] = 0; */
+/*         break; */
+/*       case C_SCPL: */
+/*         elems *=2; */
+/*       case C_FLOAT: */
+/*         fa = (float*)ptr; */
+/*         for(i=0;i<elems;i++) fa[i]  = 0; */
+/*         break; */
+/*       case C_LONG: */
+/*       la = (long*)ptr; */
+/*       for(i=0;i<elems;i++) la[i]  = 0; */
+/*       break; */
+/*       case C_LONGLONG: */
+/*       lla = (long long*)ptr; */
+/*       for(i=0;i<elems;i++) lla[i]  = 0; */
+/*       break; */
+/*       default: pnga_error(" wrong data type ",type); */
+/*     } */
+      memset(ptr, 0, GAsizeofM(type)*elems);
 
     /* release access to the data */
     pnga_release_update_block_segment(g_a, me);

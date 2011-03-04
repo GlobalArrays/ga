@@ -654,11 +654,13 @@ void pnga_initialize_ltd(Integer mem_limit)
 #endif
 }
 
-#define gam_checktype(_type)\
-       if(_type != C_DBL  && _type != C_INT &&  \
-          _type != C_DCPL && _type != C_SCPL && _type != C_FLOAT && \
-          _type != C_LONG &&_type != C_LONGLONG)\
-         pnga_error("ttype not yet supported ",  _type)
+/* #define gam_checktype(_type)\ */
+/*        if(_type != C_DBL  && _type != C_INT &&  \ */
+/*           _type != C_DCPL && _type != C_SCPL && _type != C_FLOAT && \ */
+/*           _type != C_LONG &&_type != C_LONGLONG)\ */
+/*          pnga_error("ttype not yet supported ",  _type) */
+
+#define gam_checktype(_type) GAvalidtypeM(_type)
 
 #define gam_checkdim(ndim, dims)\
 {\
@@ -4467,4 +4469,57 @@ static int calc_maplen(int handle)
         return len;
     }
     return 0;
+}
+
+
+/***************************************************************
+ *
+ * GA types related functions
+ *
+ ***************************************************************/
+
+ga_typeinfo_t ga_types[GA_TYPES_MAX] = {
+  {1, sizeof(char)},
+  {1, sizeof(int)},
+  {1, sizeof(long)},
+  {1, sizeof(float)},
+  {1, sizeof(double)},
+  {1, sizeof(long double)},
+  {1, sizeof(SingleComplex)},
+  {1, sizeof(DoubleComplex)},
+  {1, -1 /*sizeof(LongDoubleComplex)*/},                     
+  {1, sizeof(char)},
+  {1, sizeof(Integer)},
+  {1, sizeof(logical)},
+  {1, sizeof(Real)},
+  {1, sizeof(DoublePrecision)},
+  {1, sizeof(SingleComplex)},
+  {1, sizeof(DoubleComplex)},
+  {1, sizeof(long long)},
+};
+
+/* #define GAsizeofM(_type)   ga_types[_type-MT_BASE]  */
+
+int pnga_register_type(size_t bytes) {
+  int i;
+  for(i=GA_TYPES_RESERVED; i<GA_TYPES_MAX && ga_types[i].active==1; i++);
+  if(i==GA_TYPES_MAX) {
+    return -1;
+  }
+  ga_types[i].active = 1;
+  ga_types[i].size = bytes;
+  return i+MT_BASE;
+}
+
+int pnga_deregister_type(int type) {
+  int tp = type-MT_BASE;
+  if(tp<GA_TYPES_RESERVED) {
+    return -1;
+  }
+  if(ga_types[tp].active==0) {
+    return -2;
+  }
+  ga_types[tp].active = 0;
+  ga_types[tp].size = 0;
+  return 0;  
 }
