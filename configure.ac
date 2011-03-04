@@ -295,7 +295,7 @@ GA_F2C_MATCH_TYPES([DOUBLE PRECISION], [float, double, long double])
 else
 
 # enable_f77=no version of AC_F77_WRAPPERS
-AC_DEFINE([F77_FUNC(name,NAME)], [name])
+AC_DEFINE([F77_FUNC(name,NAME)], [name @%:@@%:@ _])
 AC_DEFINE([F77_FUNC_(name,NAME)],[name @%:@@%:@ _])
 # enable_f77=no version of GA_F77_CHECK_SIZEOF
 AC_DEFINE_UNQUOTED(AS_TR_CPP(sizeof_f77_INTEGER), [$ac_cv_sizeof_voidp],

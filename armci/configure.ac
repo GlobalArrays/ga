@@ -266,7 +266,7 @@ ARMCI_F77_OPT
 else
 
 # enable_f77=no version of AC_F77_WRAPPERS
-AC_DEFINE([F77_FUNC(name,NAME)], [name])
+AC_DEFINE([F77_FUNC(name,NAME)], [name @%:@@%:@ _])
 AC_DEFINE([F77_FUNC_(name,NAME)],[name @%:@@%:@ _])
 # enable_f77=no version of GA_F2C_NOMAIN
 AC_SUBST([FLD_NOMAIN], [])

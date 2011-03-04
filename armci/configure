@@ -14350,7 +14350,7 @@ ARMCI_FOPT=$armci_cv_f77_opt
 else
 
 # enable_f77=no version of AC_F77_WRAPPERS
-$as_echo "#define F77_FUNC(name,NAME) name" >>confdefs.h
+$as_echo "#define F77_FUNC(name,NAME) name ## _" >>confdefs.h
 
 $as_echo "#define F77_FUNC_(name,NAME) name ## _" >>confdefs.h
 

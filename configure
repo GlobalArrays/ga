@@ -16612,7 +16612,7 @@ F2C_DOUBLE_PRECISION_C_TYPE=$ga_cv_f2c_DOUBLE_PRECISION
 else
 
 # enable_f77=no version of AC_F77_WRAPPERS
-$as_echo "#define F77_FUNC(name,NAME) name" >>confdefs.h
+$as_echo "#define F77_FUNC(name,NAME) name ## _" >>confdefs.h
 
 $as_echo "#define F77_FUNC_(name,NAME) name ## _" >>confdefs.h
 
