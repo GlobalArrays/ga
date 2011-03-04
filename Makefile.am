@@ -1527,8 +1527,8 @@ PARALLEL_TESTS += global/testing/testeig$(EXEEXT)
 PARALLEL_TESTS += global/testing/testmatmult$(EXEEXT)
 PARALLEL_TESTS += global/testing/testsolve$(EXEEXT)
 PARALLEL_TESTS += global/testing/test$(EXEEXT)
-PARALLEL_TESTS += global/testing/types-test$(EXEEXT)
-PARALLEL_TESTS += global/testing/field-test$(EXEEXT)
+PARALLEL_TESTS += global/testing/types_test$(EXEEXT)
+PARALLEL_TESTS += global/testing/field_test$(EXEEXT)
 if HAVE_SCALAPACK
 PARALLEL_TESTS += global/testing/testspd$(EXEEXT)
 endif # HAVE_SCALAPACK

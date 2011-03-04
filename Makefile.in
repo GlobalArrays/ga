@@ -406,8 +406,8 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 @ENABLE_F77_TRUE@	global/testing/testmatmult$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testsolve$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/test$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/types-test$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/field-test$(EXEEXT)
+@ENABLE_F77_TRUE@	global/testing/types_test$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/field_test$(EXEEXT)
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_63 = global/testing/testspd$(EXEEXT)
 @ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_64 = global/testing/ga_lu$(EXEEXT)
 @MSG_COMMS_MPI_TRUE@am__append_65 = global/testing/ga-mpi$(EXEEXT) \
@@ -6474,10 +6474,10 @@ global/testing/testsolve.log: global/testing/testsolve$(EXEEXT)
 	@p='global/testing/testsolve$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/test.log: global/testing/test$(EXEEXT)
 	@p='global/testing/test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-global/testing/types-test.log: global/testing/types-test$(EXEEXT)
-	@p='global/testing/types-test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-global/testing/field-test.log: global/testing/field-test$(EXEEXT)
-	@p='global/testing/field-test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/types_test.log: global/testing/types_test$(EXEEXT)
+	@p='global/testing/types_test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/field_test.log: global/testing/field_test$(EXEEXT)
+	@p='global/testing/field_test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testspd.log: global/testing/testspd$(EXEEXT)
 	@p='global/testing/testspd$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ga-mpi.log: global/testing/ga-mpi$(EXEEXT)
