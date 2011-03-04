@@ -2044,7 +2044,7 @@ void GA_Unpack(int g_src, int g_dest, int g_mask, int lo, int hi, int *icount)
      Integer icnt;
      Integer alo = lo+1;
      Integer ahi = hi+1;
-     wnga_pack(a, b, s, alo, ahi, &icnt); 
+     wnga_unpack(a, b, s, alo, ahi, &icnt); 
      *icount = icnt;
 }
 
@@ -2056,7 +2056,7 @@ void GA_Unpack64(int g_src, int g_dest, int g_mask, int64_t lo, int64_t hi, int6
      Integer icnt;
      Integer alo = lo+1;
      Integer ahi = hi+1;
-     wnga_pack(a, b, s, alo, ahi, &icnt); 
+     wnga_unpack(a, b, s, alo, ahi, &icnt); 
      *icount = icnt;
 }
 

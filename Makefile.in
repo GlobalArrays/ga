@@ -67,6 +67,7 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 	global/testing/elempatch$(EXEEXT) \
 	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
+	global/testing/packc$(EXEEXT) \
 	global/testing/patch_enumc$(EXEEXT) \
 	global/testing/print$(EXEEXT) \
 	global/testing/scan_addc$(EXEEXT) \
@@ -74,7 +75,8 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 	global/testing/testc$(EXEEXT) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
-	global/testing/testmultrect$(EXEEXT) $(am__EXEEXT_12) \
+	global/testing/testmultrect$(EXEEXT) \
+	global/testing/unpackc$(EXEEXT) $(am__EXEEXT_12) \
 	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15) \
 	$(am__EXEEXT_16) $(am__EXEEXT_17) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
@@ -602,8 +604,8 @@ am__libga_la_SOURCES_DIST = compat/random.c gaf2c/gaf2c.c \
 	tcgmsg/tcgmsg-mpi/pbeginf.c tcgmsg/tcgmsg-mpi/pfilecopy.c \
 	tcgmsg/tcgmsg-mpi/sizeof.c tcgmsg/tcgmsg-mpi/sndrcv.h \
 	tcgmsg/tcgmsg-mpi/srftoc.h tcgmsg/tcgmsg-mpi/tcgmsgP.h \
-	global/src/base.c global/src/base.h global/src/capi.c \
-	global/src/collect.c global/src/datatypes.c \
+	global/src/abstract_ops.h global/src/base.c global/src/base.h \
+	global/src/capi.c global/src/collect.c global/src/datatypes.c \
 	global/src/decomp.c global/src/diag.fh global/src/DP.c \
 	global/src/elem_alg.c global/src/fapi.c global/src/ga_ckpt.h \
 	global/src/gaconfig.h global/src/ga_diag_seqc.c \
@@ -618,7 +620,8 @@ am__libga_la_SOURCES_DIST = compat/random.c gaf2c/gaf2c.c \
 	global/src/nbutil.c global/src/onesided.c \
 	global/src/peigstubs.c global/src/scalapack.fh \
 	global/src/sclstubs.c global/src/select.c global/src/sparse.c \
-	global/src/xgemm.c global/src/xgemm.h global/src/complex.F \
+	global/src/types.xh global/src/types2.xh global/src/xgemm.c \
+	global/src/xgemm.h global/src/complex.F \
 	global/src/ga_diag_seq.F global/src/rsg.f \
 	global/src/ga_dgemmf.F global/src/ga_diag.F \
 	global/src/scalapack.F global/src/ga_ckpt.c global/ga_vt.c \
@@ -1450,6 +1453,18 @@ global_testing_ntestfc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
+am__global_testing_packc_SOURCES_DIST = global/testing/packc.c \
+	global/testing/testutil.fh global/testing/testutil.h \
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
+am_global_testing_packc_OBJECTS = global/testing/packc.$(OBJEXT) \
+	$(am__objects_20)
+global_testing_packc_OBJECTS = $(am_global_testing_packc_OBJECTS)
+global_testing_packc_LDADD = $(LDADD)
+global_testing_packc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__global_testing_patch_SOURCES_DIST = global/testing/patch.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1889,6 +1904,18 @@ global_testing_types_test_OBJECTS =  \
 	$(am_global_testing_types_test_OBJECTS)
 global_testing_types_test_LDADD = $(LDADD)
 global_testing_types_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__global_testing_unpackc_SOURCES_DIST = global/testing/unpackc.c \
+	global/testing/testutil.fh global/testing/testutil.h \
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.f
+am_global_testing_unpackc_OBJECTS = global/testing/unpackc.$(OBJEXT) \
+	$(am__objects_20)
+global_testing_unpackc_OBJECTS = $(am_global_testing_unpackc_OBJECTS)
+global_testing_unpackc_LDADD = $(LDADD)
+global_testing_unpackc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
@@ -2402,6 +2429,8 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(nodist_EXTRA_global_testing_ntestc_SOURCES) \
 	$(global_testing_ntestfc_SOURCES) \
 	$(nodist_EXTRA_global_testing_ntestfc_SOURCES) \
+	$(global_testing_packc_SOURCES) \
+	$(nodist_EXTRA_global_testing_packc_SOURCES) \
 	$(global_testing_patch_SOURCES) \
 	$(global_testing_patch_enumc_SOURCES) \
 	$(nodist_EXTRA_global_testing_patch_enumc_SOURCES) \
@@ -2438,6 +2467,8 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(global_testing_testsolve_SOURCES) \
 	$(global_testing_testspd_SOURCES) \
 	$(global_testing_types_test_SOURCES) \
+	$(global_testing_unpackc_SOURCES) \
+	$(nodist_EXTRA_global_testing_unpackc_SOURCES) \
 	$(global_trace_adjust_SOURCES) \
 	$(global_trace_collisions_SOURCES) \
 	$(gparrays_testing_test_SOURCES) \
@@ -2527,6 +2558,7 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_ndim_SOURCES_DIST) \
 	$(am__global_testing_ntestc_SOURCES_DIST) \
 	$(am__global_testing_ntestfc_SOURCES_DIST) \
+	$(am__global_testing_packc_SOURCES_DIST) \
 	$(am__global_testing_patch_SOURCES_DIST) \
 	$(am__global_testing_patch_enumc_SOURCES_DIST) \
 	$(am__global_testing_patch_enumf_SOURCES_DIST) \
@@ -2556,6 +2588,7 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_testsolve_SOURCES_DIST) \
 	$(am__global_testing_testspd_SOURCES_DIST) \
 	$(am__global_testing_types_test_SOURCES_DIST) \
+	$(am__global_testing_unpackc_SOURCES_DIST) \
 	$(global_trace_adjust_SOURCES) \
 	$(global_trace_collisions_SOURCES) \
 	$(gparrays_testing_test_SOURCES) \
@@ -2944,8 +2977,8 @@ libga_la_SOURCES = compat/random.c gaf2c/gaf2c.c gaf2c/drand.c \
 	$(am__append_6) $(am__append_7) $(am__append_8) \
 	$(am__append_9) $(am__append_12) $(am__append_17) \
 	$(am__append_18) $(am__append_19) $(am__append_24) \
-	global/src/base.c global/src/base.h global/src/capi.c \
-	global/src/collect.c global/src/datatypes.c \
+	global/src/abstract_ops.h global/src/base.c global/src/base.h \
+	global/src/capi.c global/src/collect.c global/src/datatypes.c \
 	global/src/decomp.c global/src/diag.fh global/src/DP.c \
 	global/src/elem_alg.c global/src/fapi.c global/src/ga_ckpt.h \
 	global/src/gaconfig.h global/src/ga_diag_seqc.c \
@@ -2960,10 +2993,11 @@ libga_la_SOURCES = compat/random.c gaf2c/gaf2c.c gaf2c/drand.c \
 	global/src/nbutil.c global/src/onesided.c \
 	global/src/peigstubs.c global/src/scalapack.fh \
 	global/src/sclstubs.c global/src/select.c global/src/sparse.c \
-	global/src/xgemm.c global/src/xgemm.h $(am__append_30) \
-	$(am__append_31) $(am__append_32) $(am__append_33) \
-	$(am__append_34) $(am__append_35) pario/dra/buffers.c \
-	pario/dra/buffers.h pario/dra/capi.c pario/dra/disk.arrays.c \
+	global/src/types.xh global/src/types2.xh global/src/xgemm.c \
+	global/src/xgemm.h $(am__append_30) $(am__append_31) \
+	$(am__append_32) $(am__append_33) $(am__append_34) \
+	$(am__append_35) pario/dra/buffers.c pario/dra/buffers.h \
+	pario/dra/capi.c pario/dra/disk.arrays.c \
 	pario/dra/disk.param.c pario/dra/draf2c.h pario/dra/drap.h \
 	pario/dra/env.c pario/dra/fortran.c pario/dra/patch.util.c \
 	pario/eaf/eaf.c pario/eaf/eaf_f2c.c pario/eaf/eafP.h \
@@ -3169,6 +3203,7 @@ global_testing_bin_SOURCES = global/testing/bin.F $(gtsrc)
 global_testing_blktest_SOURCES = global/testing/blktest.F $(gtsrc)
 global_testing_d2test_SOURCES = global/testing/d2test.F $(gtsrc)
 global_testing_elempatch_SOURCES = global/testing/elempatch.c $(gtsrc)
+global_testing_field_test_SOURCES = global/testing/field-test.F $(gtsrc)
 global_testing_g2test_SOURCES = global/testing/g2test.F $(gtsrc)
 global_testing_g3test_SOURCES = global/testing/g3test.F $(gtsrc)
 global_testing_ga_lu_SOURCES = global/testing/ga_lu.c $(gtsrc)
@@ -3186,16 +3221,17 @@ global_testing_nb2test_SOURCES = global/testing/nb2test.F $(gtsrc)
 global_testing_ndim_SOURCES = global/testing/ndim.F $(gtsrc)
 global_testing_ntestc_SOURCES = global/testing/ntestc.c $(gtsrc)
 global_testing_ntestfc_SOURCES = global/testing/ntestfc.c $(gtsrc)
+global_testing_packc_SOURCES = global/testing/packc.c $(gtsrc)
 global_testing_patch_SOURCES = global/testing/patch.F $(gtsrc)
 global_testing_patch_enumc_SOURCES = global/testing/patch_enumc.c $(gtsrc)
 global_testing_patch_enumf_SOURCES = global/testing/patch_enumf.F $(gtsrc)
+global_testing_perf_SOURCES = global/testing/perf.F $(gtsrc)
 global_testing_perfmod_SOURCES = global/testing/perfmod.F $(gtsrc)
 global_testing_perform_SOURCES = global/testing/perform.F $(gtsrc)
-global_testing_perf_SOURCES = global/testing/perf.F $(gtsrc)
-global_testing_pg2testmatmult_SOURCES = global/testing/pg2testmatmult.F $(gtsrc)
 global_testing_pg2test_SOURCES = global/testing/pg2test.F $(gtsrc)
-global_testing_pgtestmatmult_SOURCES = global/testing/pgtestmatmult.F $(gtsrc)
+global_testing_pg2testmatmult_SOURCES = global/testing/pg2testmatmult.F $(gtsrc)
 global_testing_pgtest_SOURCES = global/testing/pgtest.F $(gtsrc)
+global_testing_pgtestmatmult_SOURCES = global/testing/pgtestmatmult.F $(gtsrc)
 global_testing_print_SOURCES = global/testing/print.c $(gtsrc)
 global_testing_random_SOURCES = global/testing/random.F $(gtsrc)
 global_testing_scan_SOURCES = global/testing/scan.F $(gtsrc)
@@ -3205,6 +3241,7 @@ global_testing_simple_groups_SOURCES = global/testing/simple_groups.F $(gtsrc)
 global_testing_sparse_SOURCES = global/testing/sparse.F $(gtsrc)
 global_testing_sprsmatmult_SOURCES = global/testing/sprsmatmult.F $(gtsrc)
 global_testing_stride_SOURCES = global/testing/stride.F $(gtsrc)
+global_testing_test_SOURCES = global/testing/test.F $(gtsrc)
 global_testing_testc_SOURCES = global/testing/testc.c $(gtsrc)
 global_testing_testeig_SOURCES = global/testing/testeig.F $(gtsrc)
 global_testing_testmatmult_SOURCES = global/testing/testmatmult.F $(gtsrc)
@@ -3213,9 +3250,8 @@ global_testing_testmult_SOURCES = global/testing/testmult.c $(gtsrc)
 global_testing_testmultrect_SOURCES = global/testing/testmultrect.c $(gtsrc)
 global_testing_testsolve_SOURCES = global/testing/testsolve.F $(gtsrc)
 global_testing_testspd_SOURCES = global/testing/testspd.F $(gtsrc)
-global_testing_test_SOURCES = global/testing/test.F $(gtsrc)
 global_testing_types_test_SOURCES = global/testing/types-test.F $(gtsrc)
-global_testing_field_test_SOURCES = global/testing/field-test.F $(gtsrc)
+global_testing_unpackc_SOURCES = global/testing/unpackc.c $(gtsrc)
 nodist_global_testing_nga_onesided_SOURCES = global/testing/nga-onesided.F $(gtsrc)
 nodist_global_testing_nga_patch_SOURCES = global/testing/nga-patch.F $(gtsrc)
 nodist_global_testing_nga_periodic_SOURCES = global/testing/nga-periodic.F $(gtsrc)
@@ -3269,14 +3305,16 @@ nodist_EXTRA_global_testing_lock_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_mtest_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ntestc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ntestfc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_packc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_patch_enumc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_print_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_scan_addc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_scan_copyc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_testmatmultc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmult_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmultrect_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_global_testing_testmatmultc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unpackc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 global_examples_boltzmann_boltz_SOURCES = \
 global/examples/boltzmann/boltzmann.F     \
 global/examples/boltzmann/common          \
@@ -3488,6 +3526,7 @@ PARALLEL_TESTS = $(am__append_57) $(am__append_58) $(am__append_59) \
 	global/testing/elempatch$(EXEEXT) \
 	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
+	global/testing/packc$(EXEEXT) \
 	global/testing/patch_enumc$(EXEEXT) \
 	global/testing/print$(EXEEXT) \
 	global/testing/scan_addc$(EXEEXT) \
@@ -3495,7 +3534,8 @@ PARALLEL_TESTS = $(am__append_57) $(am__append_58) $(am__append_59) \
 	global/testing/testc$(EXEEXT) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
-	global/testing/testmultrect$(EXEEXT) $(am__append_62) \
+	global/testing/testmultrect$(EXEEXT) \
+	global/testing/unpackc$(EXEEXT) $(am__append_62) \
 	$(am__append_63) $(am__append_64) $(am__append_65) \
 	$(am__append_66) $(am__append_67) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
@@ -4491,6 +4531,11 @@ global/testing/ntestfc.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/ntestfc$(EXEEXT): $(global_testing_ntestfc_OBJECTS) $(global_testing_ntestfc_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/ntestfc$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(global_testing_ntestfc_OBJECTS) $(global_testing_ntestfc_LDADD) $(LIBS)
+global/testing/packc.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/packc$(EXEEXT): $(global_testing_packc_OBJECTS) $(global_testing_packc_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/packc$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_packc_OBJECTS) $(global_testing_packc_LDADD) $(LIBS)
 global/testing/patch.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/patch$(EXEEXT): $(global_testing_patch_OBJECTS) $(global_testing_patch_DEPENDENCIES) global/testing/$(am__dirstamp)
@@ -4639,6 +4684,11 @@ global/testing/types-test.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/types_test$(EXEEXT): $(global_testing_types_test_OBJECTS) $(global_testing_types_test_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/types_test$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(global_testing_types_test_OBJECTS) $(global_testing_types_test_LDADD) $(LIBS)
+global/testing/unpackc.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/unpackc$(EXEEXT): $(global_testing_unpackc_OBJECTS) $(global_testing_unpackc_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/unpackc$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unpackc_OBJECTS) $(global_testing_unpackc_LDADD) $(LIBS)
 global/trace/$(am__dirstamp):
 	@$(MKDIR_P) global/trace
 	@: > global/trace/$(am__dirstamp)
@@ -5091,6 +5141,7 @@ mostlyclean-compile:
 	-rm -f global/testing/ngatest.$(OBJEXT)
 	-rm -f global/testing/ntestc.$(OBJEXT)
 	-rm -f global/testing/ntestfc.$(OBJEXT)
+	-rm -f global/testing/packc.$(OBJEXT)
 	-rm -f global/testing/patch.$(OBJEXT)
 	-rm -f global/testing/patch_enumc.$(OBJEXT)
 	-rm -f global/testing/patch_enumf.$(OBJEXT)
@@ -5121,6 +5172,7 @@ mostlyclean-compile:
 	-rm -f global/testing/testsolve.$(OBJEXT)
 	-rm -f global/testing/testspd.$(OBJEXT)
 	-rm -f global/testing/types-test.$(OBJEXT)
+	-rm -f global/testing/unpackc.$(OBJEXT)
 	-rm -f global/testing/util.$(OBJEXT)
 	-rm -f global/trace/adjust.$(OBJEXT)
 	-rm -f global/trace/collisions.$(OBJEXT)
@@ -5454,6 +5506,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/mtest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ntestc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ntestfc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/packc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/patch_enumc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/print.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/scan_addc.Po@am__quote@
@@ -5462,6 +5515,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testmatmultc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testmult.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testmultrect.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/unpackc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/trace/$(DEPDIR)/adjust.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/trace/$(DEPDIR)/collisions.Po@am__quote@
@@ -6341,6 +6395,8 @@ global/testing/ntestc.log: global/testing/ntestc$(EXEEXT)
 	@p='global/testing/ntestc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ntestfc.log: global/testing/ntestfc$(EXEEXT)
 	@p='global/testing/ntestfc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/packc.log: global/testing/packc$(EXEEXT)
+	@p='global/testing/packc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/patch_enumc.log: global/testing/patch_enumc$(EXEEXT)
 	@p='global/testing/patch_enumc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/print.log: global/testing/print$(EXEEXT)
@@ -6357,6 +6413,8 @@ global/testing/testmult.log: global/testing/testmult$(EXEEXT)
 	@p='global/testing/testmult$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testmultrect.log: global/testing/testmultrect$(EXEEXT)
 	@p='global/testing/testmultrect$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/unpackc.log: global/testing/unpackc$(EXEEXT)
+	@p='global/testing/unpackc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/bin.log: global/testing/bin$(EXEEXT)
 	@p='global/testing/bin$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/blktest.log: global/testing/blktest$(EXEEXT)

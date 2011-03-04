@@ -11,111 +11,13 @@
 #if HAVE_STRINGS_H
 #   include <strings.h>
 #endif
+
+#include "abstract_ops.h"
 #include "globalp.h"
 #include "macdecls.h"
 #include "message.h"
 #include "papi.h"
 #include "wapi.h"
-
-
-static void sgai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sbit, Integer pack, Integer mx)
-{
-    int i, cnt=0;
-    int         *is, *id;
-    double *ds, *dd;
-    DoubleComplex   *cs, *cd;
-    SingleComplex   *cfs, *cfd;
-    float           *fs, *fd;
-    long            *ls, *ld;
-    long long      *lls, *lld;
-    if(pack)
-        switch (type){
-         case C_INT:
-             is = (int*)a; id = (int*)b;
-             for(i=0; i< n; i++) if(sbit[i]) { 
-                     *id = is[i]; id++;
-                     cnt++;
-          }
-             break;
-          case C_DCPL:
-             cs = (DoubleComplex*)a; cd = (DoubleComplex*)b;
-             for(i=0; i< n; i++)if(sbit[i]){
-                 cd->real  = cs[i].real; cd->imag  = cs[i].imag; cd ++;
-                 cnt++;
-         }
-             break;
-          case C_SCPL:
-             cfs = (SingleComplex*)a; cfd = (SingleComplex*)b;
-             for(i=0; i< n; i++)if(sbit[i]){
-                 cfd->real  = cfs[i].real; cfd->imag  = cfs[i].imag; cfd ++;
-                 cnt++;
-         }
-             break;
-          case C_DBL:
-             ds = (double*)a; dd = (double*)b;
-             for(i=0; i< n; i++)if(sbit[i]){ *dd = ds[i]; dd++; cnt++; }
-             break;
-          case C_FLOAT:
-             fs = (float*)a; fd = (float*)b;
-             for(i=0; i< n; i++) if(sbit[i]) {
-                     *fd = fs[i]; fd++; cnt++;
-          }
-             break;   
-          case C_LONG:
-             ls = (long*)a; ld = (long*)b;
-             for(i=0; i< n; i++) if(sbit[i]) {
-                     *ld = ls[i]; ld++; cnt++;
-          }
-             break;    
-          case C_LONGLONG:
-             lls = (long long*)a; lld = (long long*)b;
-             for(i=0; i< n; i++) if(sbit[i]) {
-                     *lld = lls[i]; lld++; cnt++;
-          }
-             break;    
-          default: pnga_error("ga_copy_sbit:wrong data type",type);
-        }
-    else
-        switch (type){
-          case C_INT:
-             is = (int*)b; id = (int*)a;
-             for(i=0; i< n; i++) if(sbit[i]) { id[i] = *is; is++;  cnt++; }
-             break;
-          case C_DCPL:
-             cs = (DoubleComplex*)b; cd = (DoubleComplex*)a;
-             for(i=0; i< n; i++)if(sbit[i]){
-                 cd[i].real  = cs->real; cd[i].imag  = cs->imag; cs++; cnt++; }
-             break;
-          case C_SCPL:
-             cfs = (SingleComplex*)b; cfd = (SingleComplex*)a;
-             for(i=0; i< n; i++)if(sbit[i]){
-                 cfd[i].real  = cfs->real; cfd[i].imag  = cfs->imag; cfs++; cnt++; }
-             break;
-          case C_DBL:
-             ds = (double*)b; dd = (double*)a;
-             for(i=0; i< n; i++)if(sbit[i]){ dd[i] = *ds; ds++; cnt++; }
-             break;
-          case C_FLOAT:
-             fs = (float*)b; fd = (float*)a;
-             for(i=0; i< n; i++) if(sbit[i]) { fd[i] = *fs; fs++;  cnt++; }
-             break;   
-          case C_LONG:
-             ls = (long*)b; ld = (long*)a;
-             for(i=0; i< n; i++) if(sbit[i]) { ld[i] = *ls; ls++;  cnt++; }
-             break;     
-          case C_LONGLONG:
-             lls = (long long*)b; lld = (long long*)a;
-             for(i=0; i< n; i++) if(sbit[i]) { lld[i] = *lls; lls++;  cnt++; }
-             break; 
-          default: pnga_error("ga_copy_sbit:wrong data type",type);
-        }
-    if(cnt!=mx){
-        printf("\nga_copy_sbit: cnt=%d should be%ld\n",cnt,(long)mx);
-        pnga_error("ga_copy_sbit mismatch",0);
-    }
-}
-
-
 
 /*\ sets values for specified array elements by enumerating with stride
 \*/
@@ -155,30 +57,21 @@ register Integer nelem;
         pnga_access_ptr(g_a, &lop, &hip, &ptr, &ld);
         
         switch (type) {
-#define ga_patch_enum_reg aptr[i] = astart + ((off+i)*astride)
-#define ga_patch_enum_cpl aptr[i].real = astart.real + ((off+i)*astride.real); \
-                          aptr[i].imag = astart.imag + ((off+i)*astride.imag)
-#define ga_patch_enum_case(MT,T,INNER) \
-            case MT: \
-                { \
-                    T *aptr = (T*)ptr; \
-                    T astart = *((T*)start); \
-                    T astride = *((T*)stride); \
-                    for (i=0; i<nelem; i++) { \
-                        ga_patch_enum_##INNER; \
-                    } \
-                    break; \
+#define TYPE_CASE(MT,T,AT)                                                  \
+            case MT:                                                        \
+                {                                                           \
+                    T *aptr = (T*)ptr;                                      \
+                    T astart = *((T*)start);                                \
+                    T astride = *((T*)stride);                              \
+                    for (i=0; i<nelem; i++) {                               \
+                        T offset;                                           \
+                        assign_mul_constant_##AT(offset,off+i,astride);     \
+                        assign_add_##AT(aptr[i],astart,offset);             \
+                    }                                                       \
+                    break;                                                  \
                 }
-            ga_patch_enum_case(C_INT,int,reg)
-            ga_patch_enum_case(C_LONG,long,reg)
-            ga_patch_enum_case(C_LONGLONG,long long,reg)
-            ga_patch_enum_case(C_FLOAT,float,reg)
-            ga_patch_enum_case(C_DBL,double,reg)
-            ga_patch_enum_case(C_SCPL,SingleComplex,cpl)
-            ga_patch_enum_case(C_DCPL,DoubleComplex,cpl)
-#undef ga_patch_enum_case
-#undef ga_patch_enum_reg
-#undef ga_patch_enum_cpl
+#include "types.xh"
+#undef TYPE_CASE
             default: pnga_error("ga_patch_enum:wrong data type ",type);
         }
 
@@ -241,34 +134,22 @@ void pnga_scan_copy(Integer g_src, Integer g_dst, Integer g_msk,
         elems = hip - lop + 1;
         pnga_access_ptr(g_msk, &lop, &hip, &ptr_msk, &ld);
         switch (type_msk) {
-#define neq_zero_reg(a) 0 != (a)
-#define neq_zero_cpl(a) 0 != (a).real || 0 != (a).imag
-#define ga_scan_copy_reg buf[i] != 0
-#define ga_scan_copy_cpl buf[i].real != 0
-#define ga_scan_copy_case(MT,T,AT) \
-            case MT: \
-                { \
-                    T * restrict buf = (T*)ptr_msk; \
-                    for(i=0; i<elems; i++) { \
-                        if (neq_zero_##AT(buf[i])) { \
-                            ioff = i + lop; \
-                            if (ioff >= lo && ioff <= hi) { \
-                                lim[me]= ioff; \
-                            } \
-                        } \
-                    } \
-                    break; \
+#define TYPE_CASE(MT,T,AT)                                      \
+            case MT:                                            \
+                {                                               \
+                    T * restrict buf = (T*)ptr_msk;             \
+                    for(i=0; i<elems; i++) {                    \
+                        if (neq_zero_##AT(buf[i])) {            \
+                            ioff = i + lop;                     \
+                            if (ioff >= lo && ioff <= hi) {     \
+                                lim[me]= ioff;                  \
+                            }                                   \
+                        }                                       \
+                    }                                           \
+                    break;                                      \
                 }
-            ga_scan_copy_case(C_INT,int,reg)
-            ga_scan_copy_case(C_LONG,long,reg)
-            ga_scan_copy_case(C_LONGLONG,long long,reg)
-            ga_scan_copy_case(C_FLOAT,float,reg)
-            ga_scan_copy_case(C_DBL,double,reg)
-            ga_scan_copy_case(C_SCPL,SingleComplex,cpl)
-            ga_scan_copy_case(C_DCPL,DoubleComplex,cpl)
-#undef neq_zero_reg
-#undef neq_zero_cpl
-#undef ga_scan_copy_case
+#include "types.xh"
+#undef TYPE_CASE
         }
         pnga_release(g_msk, &lop, &hip);
     }
@@ -306,89 +187,27 @@ void pnga_scan_copy(Integer g_src, Integer g_dst, Integer g_msk,
         pnga_access_ptr(g_msk, &lop, &hip, &ptr_msk, &ld);
         combined_type = MT_NUMTYPES*type_src + type_msk;
         switch (combined_type) {
-#define assign_zero_reg(a) (a) = 0
-#define assign_zero_cpl(a) (a).real = 0; (a).imag = 0
-#define assign_reg(a,b) (a) = (b)
-#define assign_cpl(a,b) (a).real = (b).real; (a).imag = (b).imag
-#define neq_zero_reg(a) 0 != (a)
-#define neq_zero_cpl(a) 0 != (a).real || 0 != (a).imag
-#define ga_scan_copy_case(MT,T,AT,MT_MSK,T_MSK,AT_MSK) \
-            case (MT_NUMTYPES*MT) + MT_MSK: \
-                { \
-                    T * restrict src = (T*)ptr_src; \
-                    T * restrict dst = (T*)ptr_dst; \
-                    T_MSK * restrict msk = (T_MSK*)ptr_msk; \
-                    T last_val; \
-                    assign_zero_##AT(last_val); \
-                    if (-1 != rmt_idx) { \
-                        pnga_get(g_src, &rmt_idx, &rmt_idx, &last_val, &ld); \
-                    } \
-                    for (i=start; i<stop; i++) { \
-                        if (neq_zero_##AT_MSK(msk[i])) { \
-                            assign_##AT(last_val, src[i]); \
-                        } \
-                        assign_##AT(dst[i], last_val); \
-                    } \
-                    break; \
+#define TYPE_CASE(MT,T,AT,MT_MSK,T_MSK,AT_MSK)                              \
+            case (MT_NUMTYPES*MT) + MT_MSK:                                 \
+                {                                                           \
+                    T * restrict src = (T*)ptr_src;                         \
+                    T * restrict dst = (T*)ptr_dst;                         \
+                    T_MSK * restrict msk = (T_MSK*)ptr_msk;                 \
+                    T last_val;                                             \
+                    assign_zero_##AT(last_val);                             \
+                    if (-1 != rmt_idx) {                                    \
+                        pnga_get(g_src, &rmt_idx, &rmt_idx, &last_val, &ld);\
+                    }                                                       \
+                    for (i=start; i<stop; i++) {                            \
+                        if (neq_zero_##AT_MSK(msk[i])) {                    \
+                            assign_##AT(last_val, src[i]);                  \
+                        }                                                   \
+                        assign_##AT(dst[i], last_val);                      \
+                    }                                                       \
+                    break;                                                  \
                 }
-            ga_scan_copy_case(C_INT,int,reg,           C_INT,int,reg)
-            ga_scan_copy_case(C_LONG,long,reg,         C_INT,int,reg)
-            ga_scan_copy_case(C_LONGLONG,long long,reg,C_INT,int,reg)
-            ga_scan_copy_case(C_FLOAT,float,reg,       C_INT,int,reg)
-            ga_scan_copy_case(C_DBL,double,reg,        C_INT,int,reg)
-            ga_scan_copy_case(C_SCPL,SingleComplex,cpl,C_INT,int,reg)
-            ga_scan_copy_case(C_DCPL,DoubleComplex,cpl,C_INT,int,reg)
-            ga_scan_copy_case(C_INT,int,reg,           C_LONG,long,reg)
-            ga_scan_copy_case(C_LONG,long,reg,         C_LONG,long,reg)
-            ga_scan_copy_case(C_LONGLONG,long long,reg,C_LONG,long,reg)
-            ga_scan_copy_case(C_FLOAT,float,reg,       C_LONG,long,reg)
-            ga_scan_copy_case(C_DBL,double,reg,        C_LONG,long,reg)
-            ga_scan_copy_case(C_SCPL,SingleComplex,cpl,C_LONG,long,reg)
-            ga_scan_copy_case(C_DCPL,DoubleComplex,cpl,C_LONG,long,reg)
-            ga_scan_copy_case(C_INT,int,reg,           C_LONGLONG,long long,reg)
-            ga_scan_copy_case(C_LONG,long,reg,         C_LONGLONG,long long,reg)
-            ga_scan_copy_case(C_LONGLONG,long long,reg,C_LONGLONG,long long,reg)
-            ga_scan_copy_case(C_FLOAT,float,reg,       C_LONGLONG,long long,reg)
-            ga_scan_copy_case(C_DBL,double,reg,        C_LONGLONG,long long,reg)
-            ga_scan_copy_case(C_SCPL,SingleComplex,cpl,C_LONGLONG,long long,reg)
-            ga_scan_copy_case(C_DCPL,DoubleComplex,cpl,C_LONGLONG,long long,reg)
-            ga_scan_copy_case(C_INT,int,reg,           C_FLOAT,float,reg)
-            ga_scan_copy_case(C_LONG,long,reg,         C_FLOAT,float,reg)
-            ga_scan_copy_case(C_LONGLONG,long long,reg,C_FLOAT,float,reg)
-            ga_scan_copy_case(C_FLOAT,float,reg,       C_FLOAT,float,reg)
-            ga_scan_copy_case(C_DBL,double,reg,        C_FLOAT,float,reg)
-            ga_scan_copy_case(C_SCPL,SingleComplex,cpl,C_FLOAT,float,reg)
-            ga_scan_copy_case(C_DCPL,DoubleComplex,cpl,C_FLOAT,float,reg)
-            ga_scan_copy_case(C_INT,int,reg,           C_DBL,double,reg)
-            ga_scan_copy_case(C_LONG,long,reg,         C_DBL,double,reg)
-            ga_scan_copy_case(C_LONGLONG,long long,reg,C_DBL,double,reg)
-            ga_scan_copy_case(C_FLOAT,float,reg,       C_DBL,double,reg)
-            ga_scan_copy_case(C_DBL,double,reg,        C_DBL,double,reg)
-            ga_scan_copy_case(C_SCPL,SingleComplex,cpl,C_DBL,double,reg)
-            ga_scan_copy_case(C_DCPL,DoubleComplex,cpl,C_DBL,double,reg)
-            ga_scan_copy_case(C_INT,int,reg,           C_SCPL,SingleComplex,cpl)
-            ga_scan_copy_case(C_LONG,long,reg,         C_SCPL,SingleComplex,cpl)
-            ga_scan_copy_case(C_LONGLONG,long long,reg,C_SCPL,SingleComplex,cpl)
-            ga_scan_copy_case(C_FLOAT,float,reg,       C_SCPL,SingleComplex,cpl)
-            ga_scan_copy_case(C_DBL,double,reg,        C_SCPL,SingleComplex,cpl)
-            ga_scan_copy_case(C_SCPL,SingleComplex,cpl,C_SCPL,SingleComplex,cpl)
-            ga_scan_copy_case(C_DCPL,DoubleComplex,cpl,C_SCPL,SingleComplex,cpl)
-            ga_scan_copy_case(C_INT,int,reg,           C_DCPL,DoubleComplex,cpl)
-            ga_scan_copy_case(C_LONG,long,reg,         C_DCPL,DoubleComplex,cpl)
-            ga_scan_copy_case(C_LONGLONG,long long,reg,C_DCPL,DoubleComplex,cpl)
-            ga_scan_copy_case(C_FLOAT,float,reg,       C_DCPL,DoubleComplex,cpl)
-            ga_scan_copy_case(C_DBL,double,reg,        C_DCPL,DoubleComplex,cpl)
-            ga_scan_copy_case(C_SCPL,SingleComplex,cpl,C_DCPL,DoubleComplex,cpl)
-            ga_scan_copy_case(C_DCPL,DoubleComplex,cpl,C_DCPL,DoubleComplex,cpl)
-#undef ga_scan_copy_reg_0
-#undef ga_scan_copy_reg_1
-#undef ga_scan_copy_reg_2
-#undef ga_scan_copy_reg_3
-#undef ga_scan_copy_cpl_0
-#undef ga_scan_copy_cpl_1
-#undef ga_scan_copy_cpl_2
-#undef ga_scan_copy_cpl_3
-#undef ga_scan_copy_case
+#include "types2.xh"
+#undef TYPE_CASE
             default: pnga_error("ga_scan_copy:wrong data type",combined_type);
         }
         /* release local access to arrays */
@@ -452,32 +271,22 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
         elems = hip - lop + 1;
         pnga_access_ptr(g_msk, &lop, &hip, &ptr_msk, &ld);
         switch (type_msk) {
-#define ga_scan_add_reg buf[i] != 0
-#define ga_scan_add_cpl buf[i].real != 0 || buf[i].imag != 0
-#define ga_scan_add_case(MT,T,INNER) \
-            case MT: \
-                { \
-                    T * restrict buf = (T*)ptr_msk; \
-                    for(i=0; i<elems; i++) { \
-                        if (ga_scan_add_##INNER) { \
-                            ioff = i + lop; \
-                            if (ioff >= lo && ioff <= hi) { \
-                                lim[me]= ioff; \
-                            } \
-                        } \
-                    } \
-                    break; \
+#define TYPE_CASE(MT,T,AT)                                      \
+            case MT:                                            \
+                {                                               \
+                    T * restrict buf = (T*)ptr_msk;             \
+                    for(i=0; i<elems; i++) {                    \
+                        if (neq_zero_##AT(buf[i])) {            \
+                            ioff = i + lop;                     \
+                            if (ioff >= lo && ioff <= hi) {     \
+                                lim[me]= ioff;                  \
+                            }                                   \
+                        }                                       \
+                    }                                           \
+                    break;                                      \
                 }
-            ga_scan_add_case(C_INT,int,reg)
-            ga_scan_add_case(C_LONG,long,reg)
-            ga_scan_add_case(C_LONGLONG,long long,reg)
-            ga_scan_add_case(C_FLOAT,float,reg)
-            ga_scan_add_case(C_DBL,double,reg)
-            ga_scan_add_case(C_SCPL,SingleComplex,cpl)
-            ga_scan_add_case(C_DCPL,DoubleComplex,cpl)
-#undef ga_scan_add_reg
-#undef ga_scan_add_cpl
-#undef ga_scan_add_case
+#include "types.xh"
+#undef TYPE_CASE
         }
         pnga_release(g_msk, &lop, &hip);
     }
@@ -535,158 +344,97 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
         pnga_access_ptr(g_msk, &lop, &hip, &ptr_msk, &ld);
         combined_type = MT_NUMTYPES*type_src + type_msk;
         switch (combined_type) {
-#define eq_zero_reg(a) 0 == (a)
-#define eq_zero_cpl(a) 0 == (a).real && 0 == (a).imag
-#define neq_zero_reg(a) 0 != (a)
-#define neq_zero_cpl(a) 0 != (a).real || 0 != (a).imag
-#define assign_reg(a,b) (a) = (b)
-#define assign_cpl(a,b) (a).real = (b).real; (a).imag = (b).imag
-#define assign_zero_reg(a) (a) = 0
-#define assign_zero_cpl(a) (a).real = 0; (a).imag = 0
-#define assign_add_reg(a,b,c) (a) = ((b) + (c))
-#define assign_add_cpl(a,b,c) (a).real = ((b).real + (c).real); \
-                              (a).imag = ((b).imag + (c).imag)
-#define add_assign_reg(a,b) (a) += (b)
-#define add_assign_cpl(a,b) (a).real += (b).real; (a).imag += (b).imag
-#define ga_scan_add_case(MT,T,AT,MT_MSK,T_MSK,AT_MSK) \
-            case (MT_NUMTYPES*MT) + MT_MSK: \
-                { \
-                    T * restrict src = (T*)ptr_src; \
-                    T * restrict dst = (T*)ptr_dst; \
-                    T_MSK * restrict msk = (T_MSK*)ptr_msk; \
-                    int found_bit = 0; \
-                    /* find first set bit on first segment */ \
-                    if (lop <= lo) { \
-                        while (eq_zero_##AT_MSK(msk[start]) && start<stop) { \
-                            start++; \
-                        } \
-                    } \
-                    /* set first index then use for subsequent indices */ \
-                    if (start < stop) { \
-                        i = start; \
-                        if (neq_zero_##AT_MSK(msk[i])) { \
-                            found_bit = 1; \
-                            if (excl != 0) { \
-                                assign_zero_##AT(dst[i]); \
-                            } else { \
-                                assign_##AT(dst[i], src[i]); \
-                            } \
-                        } else if (-1 != rmt_idx) { \
-                            found_bit = 1; \
-                            if (excl != 0) { \
-                                Integer loc = i+lop - 1; \
-                                if (loc > 0) { \
-                                    pnga_get(g_src, &loc, &loc, &dst[i], NULL); \
-                                } \
-                            } else { \
-                                assign_##AT(dst[i], src[i]); \
-                            } \
-                        } \
-                    } \
-                    if (excl != 0) { \
-                        for (i=start+1; i<stop; i++) { \
-                            if (neq_zero_##AT_MSK(msk[i])) { \
-                                assign_zero_##AT(dst[i]); \
-                                found_bit = 1; \
-                            } else if (1 == found_bit) { \
-                                assign_add_##AT(dst[i], dst[i-1], src[i-1]); \
-                            } \
-                        } \
-                    } else { \
-                        for (i=start+1; i<stop; i++) { \
-                            if (neq_zero_##AT_MSK(msk[i])) { \
-                                assign_##AT(dst[i], src[i]); \
-                                found_bit = 1; \
-                            } else if (1 == found_bit) { \
-                                assign_add_##AT(dst[i], dst[i-1], src[i]); \
-                            } \
-                        } \
-                    } \
-                    pnga_sync(); \
-                    /* lastly, reconcile segment boundaries on other procs */ \
-                    if (eq_zero_##AT_MSK(msk[start]) && -1 != rmt_idx) { \
-                        Integer np, *map, *proclist, *subs, rmt_hi; \
-                        T *v, sum; \
-                        rmt_hi = lop-1; \
-                        pnga_locate_nnodes(g_dst, &rmt_idx, &rmt_hi, &np); \
-                        map = ga_malloc(4*np, MT_F_INT, "ga scan add locate"); \
+#define TYPE_CASE(MT,T,AT,MT_MSK,T_MSK,AT_MSK)                              \
+            case (MT_NUMTYPES*MT) + MT_MSK:                                 \
+                {                                                           \
+                    T * restrict src = (T*)ptr_src;                         \
+                    T * restrict dst = (T*)ptr_dst;                         \
+                    T_MSK * restrict msk = (T_MSK*)ptr_msk;                 \
+                    int found_bit = 0;                                      \
+                    /* find first set bit on first segment */               \
+                    if (lop <= lo) {                                        \
+                        while (eq_zero_##AT_MSK(msk[start]) && start<stop) {\
+                            start++;                                        \
+                        }                                                   \
+                    }                                                       \
+                    /* set first index then use for subsequent indices */   \
+                    if (start < stop) {                                     \
+                        i = start;                                          \
+                        if (neq_zero_##AT_MSK(msk[i])) {                    \
+                            found_bit = 1;                                  \
+                            if (excl != 0) {                                \
+                                assign_zero_##AT(dst[i]);                   \
+                            } else {                                        \
+                                assign_##AT(dst[i], src[i]);                \
+                            }                                               \
+                        } else if (-1 != rmt_idx) {                         \
+                            found_bit = 1;                                  \
+                            if (excl != 0) {                                \
+                                Integer loc = i+lop - 1;                    \
+                                if (loc > 0) {                              \
+                                    pnga_get(g_src, &loc, &loc, &dst[i], NULL);\
+                                }                                           \
+                            } else {                                        \
+                                assign_##AT(dst[i], src[i]);                \
+                            }                                               \
+                        }                                                   \
+                    }                                                       \
+                    if (excl != 0) {                                        \
+                        for (i=start+1; i<stop; i++) {                      \
+                            if (neq_zero_##AT_MSK(msk[i])) {                \
+                                assign_zero_##AT(dst[i]);                   \
+                                found_bit = 1;                              \
+                            } else if (1 == found_bit) {                    \
+                                assign_add_##AT(dst[i], dst[i-1], src[i-1]);\
+                            }                                               \
+                        }                                                   \
+                    } else {                                                \
+                        for (i=start+1; i<stop; i++) {                      \
+                            if (neq_zero_##AT_MSK(msk[i])) {                \
+                                assign_##AT(dst[i], src[i]);                \
+                                found_bit = 1;                              \
+                            } else if (1 == found_bit) {                    \
+                                assign_add_##AT(dst[i], dst[i-1], src[i]);  \
+                            }                                               \
+                        }                                                   \
+                    }                                                       \
+                    pnga_sync();                                            \
+                    /* lastly, reconcile segment boundaries on other procs */\
+                    if (eq_zero_##AT_MSK(msk[start]) && -1 != rmt_idx) {    \
+                        Integer np, *map, *proclist, *subs, rmt_hi;         \
+                        T *v, sum;                                          \
+                        rmt_hi = lop-1;                                     \
+                        pnga_locate_nnodes(g_dst, &rmt_idx, &rmt_hi, &np);  \
+                        map = ga_malloc(4*np, MT_F_INT, "ga scan add locate");\
                         v = ga_malloc(np, MT, "ga scan add gather values"); \
-                        proclist = map+(2*np); \
-                        subs = map+(3*np); \
-                        pnga_locate_region(g_dst, &rmt_idx, &rmt_hi, map, proclist, &np); \
-                        for (i=0; i<np; i++) { \
-                            subs[i] = map[i*2+1]; \
-                        } \
-                        pnga_gather(g_dst, v, subs, np); \
-                        pnga_sync(); \
-                        assign_zero_##AT(sum); \
-                        for (i=0; i<np; i++) { \
-                            add_assign_##AT(sum, v[i]); \
-                        } \
-                        for (i=start; i<stop; i++) { \
-                            if (eq_zero_##AT_MSK(msk[i])) { \
-                                add_assign_##AT(dst[i], sum); \
-                            } else { \
-                                break; \
-                            } \
-                        } \
-                        ga_free(v); \
-                        ga_free(map); \
-                    } else { \
-                        pnga_sync(); \
-                    } \
-                    break; \
+                        proclist = map+(2*np);                              \
+                        subs = map+(3*np);                                  \
+                        pnga_locate_region(g_dst, &rmt_idx, &rmt_hi, map, proclist, &np);\
+                        for (i=0; i<np; i++) {                              \
+                            subs[i] = map[i*2+1];                           \
+                        }                                                   \
+                        pnga_gather(g_dst, v, subs, np);                    \
+                        pnga_sync();                                        \
+                        assign_zero_##AT(sum);                              \
+                        for (i=0; i<np; i++) {                              \
+                            add_assign_##AT(sum, v[i]);                     \
+                        }                                                   \
+                        for (i=start; i<stop; i++) {                        \
+                            if (eq_zero_##AT_MSK(msk[i])) {                 \
+                                add_assign_##AT(dst[i], sum);               \
+                            } else {                                        \
+                                break;                                      \
+                            }                                               \
+                        }                                                   \
+                        ga_free(v);                                         \
+                        ga_free(map);                                       \
+                    } else {                                                \
+                        pnga_sync();                                        \
+                    }                                                       \
+                    break;                                                  \
                 }
-            ga_scan_add_case(C_INT,int,reg,           C_INT,int,reg)
-            ga_scan_add_case(C_LONG,long,reg,         C_INT,int,reg)
-            ga_scan_add_case(C_LONGLONG,long long,reg,C_INT,int,reg)
-            ga_scan_add_case(C_FLOAT,float,reg,       C_INT,int,reg)
-            ga_scan_add_case(C_DBL,double,reg,        C_INT,int,reg)
-            ga_scan_add_case(C_SCPL,SingleComplex,cpl,C_INT,int,reg)
-            ga_scan_add_case(C_DCPL,DoubleComplex,cpl,C_INT,int,reg)
-            ga_scan_add_case(C_INT,int,reg,           C_LONG,long,reg)
-            ga_scan_add_case(C_LONG,long,reg,         C_LONG,long,reg)
-            ga_scan_add_case(C_LONGLONG,long long,reg,C_LONG,long,reg)
-            ga_scan_add_case(C_FLOAT,float,reg,       C_LONG,long,reg)
-            ga_scan_add_case(C_DBL,double,reg,        C_LONG,long,reg)
-            ga_scan_add_case(C_SCPL,SingleComplex,cpl,C_LONG,long,reg)
-            ga_scan_add_case(C_DCPL,DoubleComplex,cpl,C_LONG,long,reg)
-            ga_scan_add_case(C_INT,int,reg,           C_LONGLONG,long long,reg)
-            ga_scan_add_case(C_LONG,long,reg,         C_LONGLONG,long long,reg)
-            ga_scan_add_case(C_LONGLONG,long long,reg,C_LONGLONG,long long,reg)
-            ga_scan_add_case(C_FLOAT,float,reg,       C_LONGLONG,long long,reg)
-            ga_scan_add_case(C_DBL,double,reg,        C_LONGLONG,long long,reg)
-            ga_scan_add_case(C_SCPL,SingleComplex,cpl,C_LONGLONG,long long,reg)
-            ga_scan_add_case(C_DCPL,DoubleComplex,cpl,C_LONGLONG,long long,reg)
-            ga_scan_add_case(C_INT,int,reg,           C_FLOAT,float,reg)
-            ga_scan_add_case(C_LONG,long,reg,         C_FLOAT,float,reg)
-            ga_scan_add_case(C_LONGLONG,long long,reg,C_FLOAT,float,reg)
-            ga_scan_add_case(C_FLOAT,float,reg,       C_FLOAT,float,reg)
-            ga_scan_add_case(C_DBL,double,reg,        C_FLOAT,float,reg)
-            ga_scan_add_case(C_SCPL,SingleComplex,cpl,C_FLOAT,float,reg)
-            ga_scan_add_case(C_DCPL,DoubleComplex,cpl,C_FLOAT,float,reg)
-            ga_scan_add_case(C_INT,int,reg,           C_DBL,double,reg)
-            ga_scan_add_case(C_LONG,long,reg,         C_DBL,double,reg)
-            ga_scan_add_case(C_LONGLONG,long long,reg,C_DBL,double,reg)
-            ga_scan_add_case(C_FLOAT,float,reg,       C_DBL,double,reg)
-            ga_scan_add_case(C_DBL,double,reg,        C_DBL,double,reg)
-            ga_scan_add_case(C_SCPL,SingleComplex,cpl,C_DBL,double,reg)
-            ga_scan_add_case(C_DCPL,DoubleComplex,cpl,C_DBL,double,reg)
-            ga_scan_add_case(C_INT,int,reg,           C_SCPL,SingleComplex,cpl)
-            ga_scan_add_case(C_LONG,long,reg,         C_SCPL,SingleComplex,cpl)
-            ga_scan_add_case(C_LONGLONG,long long,reg,C_SCPL,SingleComplex,cpl)
-            ga_scan_add_case(C_FLOAT,float,reg,       C_SCPL,SingleComplex,cpl)
-            ga_scan_add_case(C_DBL,double,reg,        C_SCPL,SingleComplex,cpl)
-            ga_scan_add_case(C_SCPL,SingleComplex,cpl,C_SCPL,SingleComplex,cpl)
-            ga_scan_add_case(C_DCPL,DoubleComplex,cpl,C_SCPL,SingleComplex,cpl)
-            ga_scan_add_case(C_INT,int,reg,           C_DCPL,DoubleComplex,cpl)
-            ga_scan_add_case(C_LONG,long,reg,         C_DCPL,DoubleComplex,cpl)
-            ga_scan_add_case(C_LONGLONG,long long,reg,C_DCPL,DoubleComplex,cpl)
-            ga_scan_add_case(C_FLOAT,float,reg,       C_DCPL,DoubleComplex,cpl)
-            ga_scan_add_case(C_DBL,double,reg,        C_DCPL,DoubleComplex,cpl)
-            ga_scan_add_case(C_SCPL,SingleComplex,cpl,C_DCPL,DoubleComplex,cpl)
-            ga_scan_add_case(C_DCPL,DoubleComplex,cpl,C_DCPL,DoubleComplex,cpl)
-#undef ga_scan_add_case
+#include "types2.xh"
+#undef TYPE_CASE
             default: pnga_error("ga_scan_add:wrong data type",combined_type);
         }
         /* release local access to arrays */
@@ -699,95 +447,216 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
     ga_free(lim);
 }
 
-/**
- * pack/unpack data from g_a into g_b based on the mask array g_sbit
- * Return total number of bits set in variable icount.
- */
-static void sgai_pack_unpack(Integer g_a, Integer g_b, Integer g_sbit,
-              Integer lo, Integer hi, Integer* icount, int pack)
+
+static void sga_pack(Integer first, long lim, Integer elems,
+                     Integer type_src, Integer type_msk,
+                     void *ptr_src, void *ptr_dst, void *ptr_msk)
 {
-   void *ptr;
-   Integer *lim=NULL, nproc, me;
-   Integer lop, hip, ndim, dims, type,crap;
-   Integer *ia=NULL, elems=0, i=0, first=0, myplace =0, counter=0;
+    Integer combined_type, i, pck_idx=0;
+    combined_type = MT_NUMTYPES*type_src + type_msk;
+    switch (combined_type) {
+#define TYPE_CASE(MT,T,AT,MT_MSK,T_MSK,AT_MSK)                          \
+        case (MT_NUMTYPES*MT) + MT_MSK:                                 \
+            {                                                           \
+                T * restrict pck = (T*)ptr_dst;                         \
+                T * restrict src = (T*)ptr_src;                         \
+                T_MSK * restrict msk = (T_MSK*)ptr_msk;                 \
+                for (i=first; i<elems&&pck_idx<lim; i++) {              \
+                    if (neq_zero_##AT_MSK(msk[i])) {                    \
+                        assign_##AT(pck[pck_idx], src[i]);              \
+                        ++pck_idx;                                      \
+                    }                                                   \
+                }                                                       \
+                break;                                                  \
+            }
+#include "types2.xh"
+#undef TYPE_CASE
+    }
+}
 
-   nproc = pnga_nnodes();
-      me = pnga_nodeid();
 
-   pnga_check_handle(g_a, "ga_pack");
-   pnga_check_handle(g_b, "ga_pack 2");
-   pnga_check_handle(g_sbit,"ga_pack 3");
+static void sga_unpack(Integer first, long lim, Integer elems,
+                       Integer type_src, Integer type_msk,
+                       void *ptr_src, void *ptr_dst, void *ptr_msk)
+{
+    Integer combined_type, i, pck_idx=0;
+    combined_type = MT_NUMTYPES*type_src + type_msk;
+    switch (combined_type) {
+#define ga_unpack_case(MT,T,AT,MT_MSK,T_MSK,AT_MSK)                     \
+        case (MT_NUMTYPES*MT) + MT_MSK:                                 \
+            {                                                           \
+                T * restrict pck = (T*)ptr_src;                         \
+                T * restrict dst = (T*)ptr_dst;                         \
+                T_MSK * restrict msk = (T_MSK*)ptr_msk;                 \
+                for (i=first; i<elems&&pck_idx<lim; i++) {              \
+                    if (neq_zero_##AT_MSK(msk[i])) {                    \
+                        assign_##AT(dst[i], pck[pck_idx]);              \
+                        ++pck_idx;                                      \
+                    }                                                   \
+                }                                                       \
+                break;                                                  \
+            }
+        ga_unpack_case(C_INT,int,reg,           C_INT,int,reg)
+        ga_unpack_case(C_LONG,long,reg,         C_INT,int,reg)
+        ga_unpack_case(C_LONGLONG,long long,reg,C_INT,int,reg)
+        ga_unpack_case(C_FLOAT,float,reg,       C_INT,int,reg)
+        ga_unpack_case(C_DBL,double,reg,        C_INT,int,reg)
+        ga_unpack_case(C_SCPL,SingleComplex,cpl,C_INT,int,reg)
+        ga_unpack_case(C_DCPL,DoubleComplex,cpl,C_INT,int,reg)
+        ga_unpack_case(C_INT,int,reg,           C_LONG,long,reg)
+        ga_unpack_case(C_LONG,long,reg,         C_LONG,long,reg)
+        ga_unpack_case(C_LONGLONG,long long,reg,C_LONG,long,reg)
+        ga_unpack_case(C_FLOAT,float,reg,       C_LONG,long,reg)
+        ga_unpack_case(C_DBL,double,reg,        C_LONG,long,reg)
+        ga_unpack_case(C_SCPL,SingleComplex,cpl,C_LONG,long,reg)
+        ga_unpack_case(C_DCPL,DoubleComplex,cpl,C_LONG,long,reg)
+        ga_unpack_case(C_INT,int,reg,           C_LONGLONG,long long,reg)
+        ga_unpack_case(C_LONG,long,reg,         C_LONGLONG,long long,reg)
+        ga_unpack_case(C_LONGLONG,long long,reg,C_LONGLONG,long long,reg)
+        ga_unpack_case(C_FLOAT,float,reg,       C_LONGLONG,long long,reg)
+        ga_unpack_case(C_DBL,double,reg,        C_LONGLONG,long long,reg)
+        ga_unpack_case(C_SCPL,SingleComplex,cpl,C_LONGLONG,long long,reg)
+        ga_unpack_case(C_DCPL,DoubleComplex,cpl,C_LONGLONG,long long,reg)
+        ga_unpack_case(C_INT,int,reg,           C_FLOAT,float,reg)
+        ga_unpack_case(C_LONG,long,reg,         C_FLOAT,float,reg)
+        ga_unpack_case(C_LONGLONG,long long,reg,C_FLOAT,float,reg)
+        ga_unpack_case(C_FLOAT,float,reg,       C_FLOAT,float,reg)
+        ga_unpack_case(C_DBL,double,reg,        C_FLOAT,float,reg)
+        ga_unpack_case(C_SCPL,SingleComplex,cpl,C_FLOAT,float,reg)
+        ga_unpack_case(C_DCPL,DoubleComplex,cpl,C_FLOAT,float,reg)
+        ga_unpack_case(C_INT,int,reg,           C_DBL,double,reg)
+        ga_unpack_case(C_LONG,long,reg,         C_DBL,double,reg)
+        ga_unpack_case(C_LONGLONG,long long,reg,C_DBL,double,reg)
+        ga_unpack_case(C_FLOAT,float,reg,       C_DBL,double,reg)
+        ga_unpack_case(C_DBL,double,reg,        C_DBL,double,reg)
+        ga_unpack_case(C_SCPL,SingleComplex,cpl,C_DBL,double,reg)
+        ga_unpack_case(C_DCPL,DoubleComplex,cpl,C_DBL,double,reg)
+        ga_unpack_case(C_INT,int,reg,           C_SCPL,SingleComplex,cpl)
+        ga_unpack_case(C_LONG,long,reg,         C_SCPL,SingleComplex,cpl)
+        ga_unpack_case(C_LONGLONG,long long,reg,C_SCPL,SingleComplex,cpl)
+        ga_unpack_case(C_FLOAT,float,reg,       C_SCPL,SingleComplex,cpl)
+        ga_unpack_case(C_DBL,double,reg,        C_SCPL,SingleComplex,cpl)
+        ga_unpack_case(C_SCPL,SingleComplex,cpl,C_SCPL,SingleComplex,cpl)
+        ga_unpack_case(C_DCPL,DoubleComplex,cpl,C_SCPL,SingleComplex,cpl)
+        ga_unpack_case(C_INT,int,reg,           C_DCPL,DoubleComplex,cpl)
+        ga_unpack_case(C_LONG,long,reg,         C_DCPL,DoubleComplex,cpl)
+        ga_unpack_case(C_LONGLONG,long long,reg,C_DCPL,DoubleComplex,cpl)
+        ga_unpack_case(C_FLOAT,float,reg,       C_DCPL,DoubleComplex,cpl)
+        ga_unpack_case(C_DBL,double,reg,        C_DCPL,DoubleComplex,cpl)
+        ga_unpack_case(C_SCPL,SingleComplex,cpl,C_DCPL,DoubleComplex,cpl)
+        ga_unpack_case(C_DCPL,DoubleComplex,cpl,C_DCPL,DoubleComplex,cpl)
+    }
+#undef ga_unpack_case
+}
 
-   pnga_sync();
 
-   lim = (Integer *) ga_malloc(nproc, MT_F_INT, "ga_pack lim buf");
+static void sga_pack_unpack(Integer g_src, Integer g_dst, Integer g_msk,
+                            Integer lo, Integer hi, Integer* icount,
+                            Integer pack)
+{
+    void *ptr;
+    long *lim=NULL;
+    Integer nproc, me, i, myplace, np=0, first=-1;
+    Integer lop, hip, dims;
+    Integer ndim_src, ndim_dst, ndim_msk;
+    Integer type_src, type_dst, type_msk;
 
-   bzero(lim,sizeof(Integer)*nproc);
-   pnga_inquire(g_a, &type, &ndim, &dims);
-   if(ndim>1) pnga_error("ga_pack: supports 1-dim arrays only",ndim);
-   pnga_distribution(g_sbit, me, &lop, &hip);
+    nproc = pnga_nnodes();
+    me = pnga_nodeid();
 
-   /* how many elements we have to copy? */
-   if ( lop > 0 ){ /* we get 0 if no elements stored on this process */
+    pnga_check_handle(g_src, "ga_pack src");
+    pnga_check_handle(g_dst, "ga_pack dst");
+    pnga_check_handle(g_msk, "ga_pack msk");
+    pnga_inquire(g_src, &type_src, &ndim_src, &dims);
+    pnga_inquire(g_dst, &type_dst, &ndim_dst, &dims);
+    pnga_inquire(g_msk, &type_msk, &ndim_msk, &dims);
+    if (1 != ndim_src) {
+        pnga_error("ga_pack: supports 1-dim arrays only: src", ndim_src);
+    }
+    if (1 != ndim_dst) {
+        pnga_error("ga_pack: supports 1-dim arrays only: dst", ndim_dst);
+    }
+    if (1 != ndim_msk) {
+        pnga_error("ga_pack: supports 1-dim arrays only: msk", ndim_msk);
+    }
+    if (type_src != type_dst) {
+        pnga_error("ga_pack: src and dst must be same type", 0);
+    }
+    if(!pnga_compare_distr(g_src, g_msk)) {
+        pnga_error("ga_pack: src and msk distributions differ",0);
+    }
 
+    pnga_sync();
+
+    lim = (long*) ga_malloc(nproc, MT_C_LONGINT, "ga_pack lim buf");
+    bzero(lim,sizeof(long)*nproc);
+    pnga_distribution(g_msk, me, &lop, &hip);
+
+    /* how many elements do we have to copy? */
+    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */
+        Integer lop_1 = lop-1;
         /* adjust the range of elements to be within <lo,hi> */
         if(lop < lo) lop = lo;
         if(hip > hi) hip = hi;
-
         if(hi <lop || hip <lo); /* we have no elements to update */
         else{
-
-          pnga_access_ptr(g_sbit, &lop, &hip, &ptr, &elems);
-          ia    = (Integer*)ptr;
-          elems = hip -lop+1;
-
-          /* find number of elements to be contributed */
-          for(i=counter=0,first=-1; i<elems; i++) if(ia[i]){
-              counter++;
-              if(first==-1) first=i;
-          }
-          lim[me] = counter;
+            Integer elems, ONE=1;
+            pnga_locate_nnodes(g_msk, &ONE, &lop_1, &np);
+            pnga_access_ptr(g_msk, &lop, &hip, &ptr, &elems);
+            elems = hip-lop+1;
+            switch (type_msk) {
+#define TYPE_CASE(MT,T,AT) case MT:                                         \
+                {                                                           \
+                    T * restrict aptr = (T*)ptr;                            \
+                    for (i=0; i<elems; i++) {                               \
+                        if (neq_zero_##AT(aptr[i])) {                       \
+                            if (first<0) first=i;                           \
+                            lim[np]++;                                      \
+                        }                                                   \
+                    }                                                       \
+                    break;                                                  \
+                }
+#include "types.xh"
+#undef TYPE_CASE
+            }
         }
-   }
+    }
 
-   /* find number of elements everybody else is contributing */
-   pnga_gop(pnga_type_f2c(MT_F_INT), lim, nproc,"+");
+    /* find number of elements everybody else is contributing */
+    pnga_gop(C_LONG,lim,nproc,"+");
 
-   for(i= myplace= *icount= 0; i<nproc; i++){
-        if( i<me && lim[i]) myplace += lim[i];
+    for(i= myplace= *icount= 0; i<nproc; i++){
+        if(i<np) myplace += lim[i];
         *icount += lim[i];
-   }
-   ga_free(lim);
+    }
 
-   if(hi <lop || hip <lo || counter ==0 ); /* we have no elements to update */
-   else{
-
-     void *buf;
-     Integer start=lop+first; /* the first element for which sbit is set */
-     Integer dst_lo =myplace+1, dst_hi = myplace + counter;
-
-     pnga_access_ptr(g_a, &start, &hip, &ptr, &crap);
-
-     buf = ga_malloc(counter, type, "ga pack buf");
-
-     /* stuff data selected by sbit into(pack) or from(unpack) buffer */
-     if(pack){
-
-        sgai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter); /* pack data to buf */
-        pnga_put(g_b, &dst_lo, &dst_hi,  buf, &counter); /* put it into destination array */
-
-     }else{
-
-        pnga_get(g_b, &dst_lo, &dst_hi,  buf, &counter); /* get data to buffer*/
-        sgai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter);  /* copy data to array*/
-
-     }
-
-     ga_free(buf); 
-
-   }
-
-   pnga_sync();
+    if(hi<lop || hip<lo || lim[np]==0 ); /* we have no elements to update */
+    else{
+        Integer ignore;
+        void *buf=NULL, *msk=NULL;
+        buf = ga_malloc(lim[np], type_dst, "ga pack buf");
+        pnga_access_ptr(g_msk, &lop, &hip, &msk, &ignore);
+        if (1 == pack) {
+            void *src=NULL;
+            Integer dst_lo=myplace+1, dst_hi=myplace+lim[np];
+            pnga_access_ptr(g_src, &lop, &hip, &src, &ignore);
+            sga_pack(first, lim[np], hip-lop+1,
+                     type_src, type_msk, src, buf, msk);
+            pnga_put(g_dst, &dst_lo, &dst_hi, buf, &ignore);
+            pnga_release(g_src, &lop, &hip);
+        } else if (0 == pack) {
+            void *dst=NULL;
+            Integer src_lo=myplace+1, src_hi=myplace+lim[np];
+            pnga_access_ptr(g_dst, &lop, &hip, &dst, &ignore);
+            pnga_get(g_src, &src_lo, &src_hi, buf, &ignore);
+            sga_unpack(first, lim[np], hip-lop+1,
+                       type_src, type_msk, buf, dst, msk);
+            pnga_release_update(g_dst, &lop, &hip);
+        }
+        ga_free(buf);
+    }
+    ga_free(lim);
+    pnga_sync();
 }
 
 
@@ -795,20 +664,20 @@ static void sgai_pack_unpack(Integer g_a, Integer g_b, Integer g_sbit,
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_pack = pnga_pack
 #endif
-void pnga_pack(Integer g_a, Integer g_b, Integer g_sbit,
+void pnga_pack(Integer g_src, Integer g_dst, Integer g_msk,
               Integer lo, Integer hi, Integer* icount)
 {
-     sgai_pack_unpack( g_a, g_b, g_sbit, lo, hi, icount, 1);
+     sga_pack_unpack(g_src, g_dst, g_msk, lo, hi, icount, 1);
 }
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_unpack = pnga_unpack
 #endif
-void pnga_unpack(Integer g_a, Integer g_b, Integer g_sbit,
+void pnga_unpack(Integer g_src, Integer g_dst, Integer g_msk,
               Integer lo, Integer hi, Integer* icount)
 {
-     sgai_pack_unpack( g_a, g_b, g_sbit, lo, hi, icount, 0);
+     sga_pack_unpack(g_src, g_dst, g_msk, lo, hi, icount, 0);
 }
 
 
@@ -958,11 +827,6 @@ Integer tlo[2], thi[2];
           }
       }
    }
-/*
-   ga_print_(g_range);
-   ga_print_(g_bin);
-   ga_print_distribution_(g_bin);
-*/
    return TRUE;
 }
 
