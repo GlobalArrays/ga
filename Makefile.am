@@ -96,26 +96,29 @@ endif
 SED_NORMALIZE_WHITESPACE = $(SED) 's/ [ ]*/ /g;s/" /"/g;s/ "/"/g'
 .PHONY: flags
 flags:
-	@echo ' =========================================================================== '
-	@echo ' Suggested compiler/linker options are as follows.'
-	@echo ' GA libraries are installed in $(libdir)' 
-	@echo ' GA headers are installed in $(includedir)' 
-	@echo ' '
-	@echo ' CPPFLAGS="$(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) $(BLAS_CPPFLAGS) $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) -I$(includedir)"' | $(SED_NORMALIZE_WHITESPACE)
-	@echo ' '
-	@echo ' LDFLAGS="$(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) -L$(libdir)"' | $(SED_NORMALIZE_WHITESPACE)
-	@echo ' '
-	@echo ' For Fortran Programs: '
-	@echo ' LIBS="-lga $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)"' | $(SED_NORMALIZE_WHITESPACE)
-	@echo ' '
-	@echo ' For C Programs: '
-	@echo ' LIBS="-lga $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo '# =========================================================================== '
+	@echo '# Suggested compiler/linker options are as follows.'
+	@echo '# GA libraries are installed in $(libdir)' 
+	@echo '# GA headers are installed in $(includedir)' 
+	@echo '#'
+	@echo 'CPPFLAGS="$(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) $(BLAS_CPPFLAGS) $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) -I$(includedir)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo '#'
+	@echo 'LDFLAGS="$(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) -L$(libdir)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo '#'
+	@echo '# For Fortran Programs: '
+	@echo 'FFLAGS="$(AM_FFLAGS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo 'LIBS="-lga $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo '#'
+	@echo '# For C Programs: '
+	@echo 'CFLAGS="$(AM_CFLAGS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo 'LIBS="-lga $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
 if CXX_BINDINGS
-	@echo ' '
-	@echo ' For C++ Programs: '
-	@echo ' LIBS="-lga++ -lga $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo '#'
+	@echo '# For C++ Programs: '
+	@echo 'CXXFLAGS="$(AM_CXXFLAGS)"' | $(SED_NORMALIZE_WHITESPACE)
+	@echo 'LIBS="-lga++ -lga $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
 endif
-	@echo ' =========================================================================== '
+	@echo '# =========================================================================== '
 
 ##############################################################################
 # config
