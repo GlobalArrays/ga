@@ -90,6 +90,48 @@ cdef void _gapy_free(void *ptr):
     """Wrapper around C stdlib free()."""
     free(ptr)
 
+cdef np.ndarray[np.int32_t, ndim=1] _inta32(array_like):
+    """Converts an integer array-like to an ndarray of 32bit integers.
+
+    Functions which take a dimension shape or subscript can use this to
+    convert what the user passes to a numpy.ndarray using numpy.asarray.
+
+    As a convenience, single values can be passed as well.
+
+    :Parameters:
+        array_like : integer array-like
+
+    :returns: The converted array_like to an ndarray.
+
+    """
+    cdef np.ndarray[np.int32_t, ndim=1] array_like_nd
+    try:
+        array_like_nd = np.asarray(array_like, dtype=np.int32)
+    except ValueError: # try again in case array_like is a single value
+        array_like_nd = np.asarray([array_like], dtype=np.int32)
+    return array_like_nd
+
+cdef np.ndarray[np.int64_t, ndim=1] _inta64(array_like):
+    """Converts an integer array-like to an ndarray of 64bit integers.
+
+    Functions which take a dimension shape or subscript can use this to
+    convert what the user passes to a numpy.ndarray using numpy.asarray.
+
+    As a convenience, single values can be passed as well.
+
+    :Parameters:
+        array_like : integer array-like
+
+    :returns: The converted array_like to an ndarray.
+
+    """
+    cdef np.ndarray[np.int64_t, ndim=1] array_like_nd
+    try:
+        array_like_nd = np.asarray(array_like, dtype=np.int64)
+    except ValueError: # try again in case array_like is a single value
+        array_like_nd = np.asarray([array_like], dtype=np.int64)
+    return array_like_nd
+
 def _lohi(int g_a, lo, hi):
     """Converts and/or prepares a lo/hi combination.
 
@@ -121,22 +163,13 @@ def _lohi(int g_a, lo, hi):
         lo_nd = np.zeros((ndim), dtype=np.int64)
         hi_nd = inquire_dims(g_a)
     elif lo is not None and hi is None:
-        try:
-            lo_nd = np.asarray(lo, dtype=np.int64)
-        except ValueError: # try again in case lo is a single value
-            lo_nd = np.asarray([lo], dtype=np.int64)
+        lo_nd = _inta64(lo)
         hi_nd = lo_nd+1
     elif lo is None and hi is not None:
         raise ValueError, 'lo cannot be None if hi is None'
     else: # lo and hi are not None
-        try:
-            lo_nd = np.asarray(lo, dtype=np.int64)
-        except ValueError: # try again in case lo is a single value
-            lo_nd = np.asarray([lo], dtype=np.int64)
-        try:
-            hi_nd = np.asarray(hi, dtype=np.int64)
-        except ValueError: # try again in case hi is a single value
-            hi_nd = np.asarray([hi], dtype=np.int64)
+        lo_nd = _inta64(lo)
+        hi_nd = _inta64(hi)
     if len(lo_nd) != ndim:
         raise ValueError, 'len(lo_nd) != ndim; len(%s) != %s' % (lo_nd,ndim)
     if len(hi_nd) != ndim:
@@ -328,7 +361,7 @@ def _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
         NGA_Periodic_acc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data, valpha)
     elif skip is not None:
-        skip_nd = np.asarray(skip, np.int64)
+        skip_nd = _inta64(skip)
         NGA_Strided_acc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <int64_t*>skip_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data, valpha)
@@ -380,7 +413,7 @@ def access(int g_a, lo=None, hi=None):
     # always access the entire local data
     ld_nd = np.zeros(dimlen-1, dtype=np.int64)
     NGA_Access64(g_a, <int64_t*>lo_dst.data, <int64_t*>hi_dst.data, &ptr,
-            <int64_t*>ld_nd.data);
+            <int64_t*>ld_nd.data)
     dims_nd = hi_dst-lo_dst+1
     # must convert int64_t ndarray shape to npy_intp array
     dims = <np.npy_intp*>malloc(dimlen*sizeof(np.npy_intp))
@@ -390,11 +423,11 @@ def access(int g_a, lo=None, hi=None):
     free(dims)
     if lo is not None or hi is not None:
         if lo is not None:
-            lo_nd = np.asarray(lo, dtype=np.int64)
+            lo_nd = _inta64(lo)
         else:
             lo_nd = lo_dst
         if hi is not None:
-            hi_nd = np.asarray(hi, dtype=np.int64)
+            hi_nd = _inta64(hi)
         else:
             hi_nd = hi_dst
         # sanity checks
@@ -432,7 +465,28 @@ def access_block(int g_a, int idx):
     :returns: ndarray representing local block
 
     """
-    raise NotImplementedError
+    cdef np.ndarray[np.int64_t, ndim=1] ld_nd, lo_dst, hi_dst, dims_nd
+    cdef int i, gtype=inquire_type(g_a)
+    cdef int dimlen=GA_Ndim(g_a), typenum=_to_typenum[gtype]
+    cdef void *ptr
+    cdef np.npy_intp *dims = NULL
+    # first things first, if no data is owned, return None
+    lo_dst,hi_dst = distribution(g_a, idx)
+    if lo_dst[0] < 0 or hi_dst[0] < 0:
+        return None
+    # put hi_dst back to GA inclusive indexing convention
+    hi_dst -= 1
+    # always access the entire local data
+    ld_nd = np.zeros(dimlen-1, dtype=np.int64)
+    NGA_Access_block64(g_a, idx, &ptr, <int64_t*>ld_nd.data)
+    dims_nd = hi_dst-lo_dst+1
+    # must convert int64_t ndarray shape to npy_intp array
+    dims = <np.npy_intp*>malloc(dimlen*sizeof(np.npy_intp))
+    for i in range(dimlen):
+        dims[i] = dims_nd[i]
+    array = np.PyArray_SimpleNewFromData(dimlen, dims, typenum, ptr)
+    free(dims)
+    return array
 
 def access_block_grid(int g_a, subscript):
     """Returns local array patch for a SCALAPACK block-cyclic distribution.
@@ -484,7 +538,19 @@ def access_block_segment(int g_a, int proc):
     :returns: ndarray representing local block
 
     """
-    raise NotImplementedError
+    cdef np.ndarray[np.int64_t, ndim=1] elems
+    cdef int gtype=inquire_type(g_a)
+    cdef int typenum=_to_typenum[gtype]
+    cdef void *ptr
+    cdef np.npy_intp *dims = NULL
+    # always access the entire local data
+    NGA_Access_block_segment64(g_a, proc, &ptr, <int64_t*>elems.data)
+    # must convert int64_t ndarray shape to npy_intp array
+    dims = <np.npy_intp*>malloc(sizeof(np.npy_intp))
+    dims[0] = elems[0]
+    array = np.PyArray_SimpleNewFromData(1, dims, typenum, ptr)
+    free(dims)
+    return array
 
 def access_ghost_element(int g_a, subscript, ld):
     """Returns a scalar ndarray representing the requested ghost element.
@@ -855,9 +921,9 @@ def create(int gtype, dims, char *name="", chunk=None, int pgroup=-1):
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] dims_nd, chunk_nd=None
-    dims_nd = np.asarray(dims, dtype=np.int64)
+    dims_nd = _inta64(dims)
     if chunk:
-        chunk_nd = np.asarray(chunk, dtype=np.int64)
+        chunk_nd = _inta64(chunk)
         return NGA_Create_config64(gtype, len(dims_nd), <int64_t*>dims_nd.data,
                 name, <int64_t*>chunk_nd.data, pgroup)
     else:
@@ -902,10 +968,10 @@ def create_ghosts(int gtype, dims, width, char *name="", chunk=None,
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] dims_nd, chunk_nd, width_nd
-    dims_nd = np.asarray(dims, dtype=np.int64)
-    width_nd = np.asarray(width, dtype=np.int64)
+    dims_nd = _inta64(dims)
+    width_nd = _inta64(width)
     if chunk:
-        chunk_nd = np.asarray(chunk, dtype=np.int64)
+        chunk_nd = _inta64(chunk)
         return NGA_Create_ghosts_config64(gtype, len(dims_nd),
                 <int64_t*>dims_nd.data, <int64_t*>width_nd.data, name,
                 <int64_t*>chunk_nd.data, pgroup)
@@ -961,9 +1027,9 @@ def create_irreg(int gtype, dims, block, map, char *name="", int pgroup=-1):
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] dims_nd, block_nd, map_nd
-    dims_nd = np.asarray(dims, dtype=np.int64)
-    block_nd = np.asarray(block, dtype=np.int64)
-    map_nd = np.asarray(map, dtype=np.int64)
+    dims_nd = _inta64(dims)
+    block_nd = _inta64(block)
+    map_nd = _inta64(map)
     return NGA_Create_irreg_config64(gtype, len(dims_nd),
             <int64_t*>dims_nd.data, name,
             <int64_t*>block_nd.data, <int64_t*>map_nd.data, pgroup)
@@ -1008,10 +1074,10 @@ def create_ghosts_irreg(int gtype, dims, width, block, map, char *name="",
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] dims_nd, width_nd, block_nd, map_nd
-    dims_nd = np.asarray(dims, dtype=np.int64)
-    width_nd = np.asarray(width, dtype=np.int64)
-    block_nd = np.asarray(block, dtype=np.int64)
-    map_nd = np.asarray(map, dtype=np.int64)
+    dims_nd = _inta64(dims)
+    width_nd = _inta64(width)
+    block_nd = _inta64(block)
+    map_nd = _inta64(map)
     return NGA_Create_ghosts_irreg_config64(gtype, len(dims_nd),
             <int64_t*>dims_nd.data, <int64_t*>width_nd.data, name,
             <int64_t*>block_nd.data, <int64_t*>map_nd.data, pgroup)
@@ -1801,7 +1867,7 @@ def _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
                 <void*>buffer.data, <int64_t*>ld_nd.data)
         return buffer
     elif skip is not None:
-        skip_nd = np.asarray(skip, dtype=np.int64)
+        skip_nd = _inta64(skip)
         NGA_Strided_get64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <int64_t*>skip_nd.data,
                 <void*>buffer.data, <int64_t*>ld_nd.data)
@@ -2056,7 +2122,7 @@ def locate(int g_a, subscript):
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] subscript_nd
-    subscript_nd = np.asarray(subscript, dtype=np.int64)
+    subscript_nd = _inta64(subscript)
     return NGA_Locate64(g_a, <int64_t*>subscript_nd.data)
 
 cpdef int locate_nnodes(int g_a, lo, hi):
@@ -2721,6 +2787,10 @@ def periodic_put(int g_a, buffer, lo=None, hi=None):
     """
     _put_common(g_a, buffer, lo, hi, False, True)
 
+def pgroup_absolute_id(int pgroup, int pid):
+    """TODO"""
+    return GA_Pgroup_absolute_id(pgroup, pid)
+
 def pgroup_brdcst(int pgroup, np.ndarray buffer, int root):
     """Broadcast from process root to all other processes in the same group.
 
@@ -2765,7 +2835,7 @@ def pgroup_create(list):
 
     """
     cdef np.ndarray[np.int32_t, ndim=1] list_nd
-    list_nd = np.asarray(list, dtype=np.intc)
+    list_nd = _inta32(list)
     return GA_Pgroup_create(<int*>list_nd.data, len(list_nd))
 
 def pgroup_destroy(int pgroup):
@@ -3097,7 +3167,7 @@ def _put_common(int g_a, buffer, lo=None, hi=None,
         NGA_Periodic_put64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data)
     elif skip is not None:
-        skip_nd = np.asarray(skip, dtype=np.int64)
+        skip_nd = _inta64(skip)
         NGA_Strided_put64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <int64_t*>skip_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data)
@@ -3140,7 +3210,7 @@ def read_inc(int g_a, subscript, long inc=1):
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] subscript_nd
-    subscript_nd = np.asarray(subscript, dtype=np.int64)
+    subscript_nd = _inta64(subscript)
     return NGA_Read_inc64(g_a, <int64_t*>subscript_nd.data, inc)
 
 def recip(int g_a, lo=None, hi=None):
@@ -3193,7 +3263,7 @@ def release_block_grid(int g_a, subscript):
 
     """
     cdef np.ndarray[np.int32_t, ndim=1] subscript_nd
-    subscript_nd = np.asarray(subscript, dtype=np.int32)
+    subscript_nd = _inta32(subscript)
     NGA_Release_block_grid(g_a, <int*>subscript_nd.data)
 
 def release_block_segment(int g_a, int iproc):
@@ -3215,11 +3285,11 @@ cdef _release_common(int g_a, lo, hi, bint update):
     if lo_dst[0] < 0 or hi_dst[0] < 0:
         return
     if lo is not None:
-        lo_nd = np.asarray(lo, dtype=np.int64)
+        lo_nd = _inta64(lo)
     else:
         lo_nd = lo_dst
     if hi is not None:
-        hi_nd = np.asarray(hi, dtype=np.int64)
+        hi_nd = _inta64(hi)
     else:
         hi_nd = hi_dst
     # sanity checks
@@ -3242,7 +3312,7 @@ def release_ghost_element(int g_a, subscript):
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] subscript_nd
-    subscript_nd = np.asarray(subscript, dtype=np.int64)
+    subscript_nd = _inta64(subscript)
     NGA_Release_ghost_element64(g_a, <int64_t*>subscript_nd.data)
 
 def release_ghosts(int g_a):
@@ -3288,7 +3358,7 @@ def release_update_block_grid(int g_a, subscript):
 
     """
     cdef np.ndarray[np.int32_t, ndim=1] subscript_nd
-    subscript_nd = np.asarray(subscript, dtype=np.int32)
+    subscript_nd = _inta32(subscript)
     NGA_Release_update_block_grid(g_a, <int*>subscript_nd.data)
 
 def release_update_block_segment(int g_a, int iproc):
@@ -3308,7 +3378,7 @@ def release_update_ghost_element(int g_a, subscript):
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] subscript_nd
-    subscript_nd = np.asarray(subscript, dtype=np.int64)
+    subscript_nd = _inta64(subscript)
     NGA_Release_update_ghost_element64(g_a, <int64_t*>subscript_nd.data)
     pass
 
@@ -3602,7 +3672,7 @@ def select_elem(int g_a, char *op):
             &ialpha,  &lalpha,  &llalpha,
             &falpha,  &dalpha,  &ldalpha,
             &fcalpha, &dcalpha)
-    index = np.ndarray(GA_Ndim(g_a), dype=np.int64)
+    index = np.ndarray(GA_Ndim(g_a), dtype=np.int64)
     NGA_Select_elem64(g_a, op, valpha, <int64_t*>index.data)
     if gtype == C_INT:
         return ialpha,index
@@ -3660,7 +3730,7 @@ def set_block_cyclic(int g_a, dims):
 
     """
     cdef np.ndarray[np.int32_t, ndim=1] dims_nd
-    dims_nd = np.asarray(dims, dtype=np.int32)
+    dims_nd = _inta32(dims)
     GA_Set_block_cyclic(g_a, <int*>dims_nd.data)
 
 def set_block_cyclic_proc_grid(int g_a, block, proc_grid):
@@ -3686,8 +3756,8 @@ def set_block_cyclic_proc_grid(int g_a, block, proc_grid):
 
     """
     cdef np.ndarray[np.int32_t, ndim=1] block_nd, proc_grid_nd
-    block_nd = np.asarray(block, dtype=np.int32)
-    proc_grid_nd = np.asarray(proc_grid, dtype=np.int32)
+    block_nd = _inta32(block)
+    proc_grid_nd = _inta32(proc_grid)
     GA_Set_block_cyclic_proc_grid(g_a,
             <int*>block_nd.data,
             <int*>proc_grid_nd.data)
@@ -3702,7 +3772,7 @@ def set_chunk(int g_a, chunk):
     
     """
     cdef np.ndarray[np.int64_t, ndim=1] chunk_nd
-    chunk_nd = np.asarray(chunk, dype=np.int64)
+    chunk_nd = _inta64(chunk)
     GA_Set_chunk64(g_a, <int64_t*>chunk_nd.data)
 
 def set_data(int g_a, dims, int type):
@@ -3714,7 +3784,7 @@ def set_data(int g_a, dims, int type):
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] dims_nd
-    dims_nd = np.asarray(dims, dtype=np.int64)
+    dims_nd = _inta64(dims)
     GA_Set_data64(g_a, len(dims_nd), <int64_t*>dims_nd.data, type)
 
 def set_debug(bint debug):
@@ -3752,7 +3822,7 @@ def set_ghosts(int g_a, width):
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] width_nd
-    width_nd = np.asarray(width, dtype=np.int64)
+    width_nd = _inta64(width)
     GA_Set_ghosts64(g_a, <int64_t*>width_nd.data)
 
 def set_irreg_distr(int g_a, mapc, nblock):
@@ -3784,8 +3854,8 @@ def set_irreg_distr(int g_a, mapc, nblock):
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] mapc_nd, nblock_nd
-    mapc_nd = np.asarray(mapc, dtype=np.int64)
-    nblock_nd = np.asarray(nblock, dtype=np.int64)
+    mapc_nd = _inta64(mapc)
+    nblock_nd = _inta64(nblock)
     GA_Set_irreg_distr64(g_a, <int64_t*>mapc_nd.data, <int64_t*>nblock_nd.data)
 
 def set_memory_limit(size_t limit):

@@ -139,7 +139,7 @@ def create_local_a(gatype):
             a = np.fromfunction(lambda i,j: i,   (n,n), dtype=np.float64)
             b = np.fromfunction(lambda i,j: j*n, (n,n), dtype=np.float64)
             return np.vectorize(complex)(a,b)
-    elif gatype in [ga.C_DBL,ga.C_FLT]:
+    elif gatype in [ga.C_DBL,ga.C_FLOAT]:
         if MIRROR:
             return np.fromfunction(lambda i,j: inode+i+j*n, (n,n), dtype=nptype)
         else:
@@ -548,7 +548,7 @@ def check(gatype):
     check_scatter(gatype)
 
 def check_float():
-    check(ga.C_FLT)
+    check(ga.C_FLOAT)
 
 def check_double():
     check(ga.C_DBL)
