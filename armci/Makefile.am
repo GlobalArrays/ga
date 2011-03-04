@@ -573,15 +573,15 @@ endif # ARMCI_NETWORK_PORTALS
 # testing
 #
 check_PROGRAMS += testing/msgcheck
+check_PROGRAMS += testing/perf
 check_PROGRAMS += testing/perf_aggr
 check_PROGRAMS += testing/perf_nb
-check_PROGRAMS += testing/perf
 check_PROGRAMS += testing/shmclean
 check_PROGRAMS += testing/shmtest
 check_PROGRAMS += testing/simplelock
+check_PROGRAMS += testing/test
 check_PROGRAMS += testing/test2
 check_PROGRAMS += testing/testnotify
-check_PROGRAMS += testing/test
 if ENABLE_CHECKPOINT
 check_PROGRAMS += testing/fttest
 endif
@@ -935,6 +935,11 @@ PARALLEL_TESTS += testing/fork$(EXEEXT)
 PARALLEL_TESTS += testing/origptl$(EXEEXT)
 PARALLEL_TESTS += testing/ptltest$(EXEEXT)
 PARALLEL_TESTS += testing/te$(EXEEXT)
+else
+if ARMCI_NETWORK_GEMINI
+else
+PARALLEL_TESTS += testing/testitr$(EXEEXT)
+endif # !ARMCI_NETWORK_GEMINI
 endif # !ARMCI_NETWORK_PORTALS
 PARALLEL_TESTS += testing/msgcheck$(EXEEXT)
 PARALLEL_TESTS += testing/perf_aggr$(EXEEXT)
@@ -944,7 +949,6 @@ PARALLEL_TESTS += testing/perf$(EXEEXT)
 #SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
 PARALLEL_TESTS += testing/simplelock$(EXEEXT)
 PARALLEL_TESTS += testing/test2$(EXEEXT)
-PARALLEL_TESTS += testing/testitr$(EXEEXT)
 PARALLEL_TESTS += testing/testnotify$(EXEEXT)
 PARALLEL_TESTS += testing/test$(EXEEXT)
 if ENABLE_CHECKPOINT

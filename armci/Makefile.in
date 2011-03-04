@@ -56,11 +56,11 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS =
-check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf_aggr$(EXEEXT) \
-	testing/perf_nb$(EXEEXT) testing/perf$(EXEEXT) \
+check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
+	testing/perf_aggr$(EXEEXT) testing/perf_nb$(EXEEXT) \
 	testing/shmclean$(EXEEXT) testing/shmtest$(EXEEXT) \
-	testing/simplelock$(EXEEXT) testing/test2$(EXEEXT) \
-	testing/testnotify$(EXEEXT) testing/test$(EXEEXT) \
+	testing/simplelock$(EXEEXT) testing/test$(EXEEXT) \
+	testing/test2$(EXEEXT) testing/testnotify$(EXEEXT) \
 	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
 	$(am__EXEEXT_7) $(am__EXEEXT_8) \
@@ -419,22 +419,23 @@ XFAIL_TESTS = $(am__EXEEXT_15) $(am__EXEEXT_15)
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/origptl$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/ptltest$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/te$(EXEEXT)
-@ENABLE_CHECKPOINT_TRUE@am__append_86 = testing/fttest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_87 = testing/gpctest$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_88 = testing/simple$(EXEEXT) \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_86 = testing/testitr$(EXEEXT)
+@ENABLE_CHECKPOINT_TRUE@am__append_87 = testing/fttest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_88 = testing/gpctest$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_89 = testing/simple$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	testing/test_groups$(EXEEXT)
 #PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
-@THREAD_SAFE_TRUE@am__append_89 = testing/test_mt$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_90 = testing/acc_test$(EXEEXT) \
+@THREAD_SAFE_TRUE@am__append_90 = testing/test_mt$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_91 = testing/acc_test$(EXEEXT) \
 @ENABLE_F77_TRUE@	testing/copy_test$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_91 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_92 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_93 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_92 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_93 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_94 = examples/features/proc_affinity/simple/simple$(EXEEXT)
 #PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
 #PARALLEL_TESTS += examples/features/non-blocking/overlap/overlap$(EXEEXT) # needs bug fixes
-@RANDOM_ACCESS_TRUE@am__append_94 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__append_95 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__append_95 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+@THREAD_SAFE_TRUE@am__append_96 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -2070,19 +2071,19 @@ TESTS = $(SERIAL_TESTS) $(PARALLEL_TESTS)
 TESTS_ENVIRONMENT = \
 maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
 
-SERIAL_TESTS = $(am__append_90)
+SERIAL_TESTS = $(am__append_91)
 SERIAL_TESTS_XFAIL = 
 #PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
 #SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
 #SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
 #PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
 #PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
-PARALLEL_TESTS = $(am__append_85) testing/msgcheck$(EXEEXT) \
-	testing/perf_aggr$(EXEEXT) testing/perf$(EXEEXT) \
-	testing/simplelock$(EXEEXT) testing/test2$(EXEEXT) \
-	testing/testitr$(EXEEXT) testing/testnotify$(EXEEXT) \
-	testing/test$(EXEEXT) $(am__append_86) $(am__append_87) \
-	$(am__append_88) $(am__append_89) \
+PARALLEL_TESTS = $(am__append_85) $(am__append_86) \
+	testing/msgcheck$(EXEEXT) testing/perf_aggr$(EXEEXT) \
+	testing/perf$(EXEEXT) testing/simplelock$(EXEEXT) \
+	testing/test2$(EXEEXT) testing/testnotify$(EXEEXT) \
+	testing/test$(EXEEXT) $(am__append_87) $(am__append_88) \
+	$(am__append_89) $(am__append_90) \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu$(EXEEXT) \
@@ -2094,9 +2095,9 @@ PARALLEL_TESTS = $(am__append_85) testing/msgcheck$(EXEEXT) \
 	examples/features/non-blocking/simple/simple$(EXEEXT) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_91) \
-	$(am__append_92) $(am__append_93) $(am__append_94) \
-	$(am__append_95)
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_92) \
+	$(am__append_93) $(am__append_94) $(am__append_95) \
+	$(am__append_96)
 PARALLEL_TESTS_XFAIL = 
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -4091,6 +4092,8 @@ testing/ptltest.log: testing/ptltest$(EXEEXT)
 	@p='testing/ptltest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/te.log: testing/te$(EXEEXT)
 	@p='testing/te$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/testitr.log: testing/testitr$(EXEEXT)
+	@p='testing/testitr$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/msgcheck.log: testing/msgcheck$(EXEEXT)
 	@p='testing/msgcheck$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/perf_aggr.log: testing/perf_aggr$(EXEEXT)
@@ -4101,8 +4104,6 @@ testing/simplelock.log: testing/simplelock$(EXEEXT)
 	@p='testing/simplelock$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/test2.log: testing/test2$(EXEEXT)
 	@p='testing/test2$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing/testitr.log: testing/testitr$(EXEEXT)
-	@p='testing/testitr$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/testnotify.log: testing/testnotify$(EXEEXT)
 	@p='testing/testnotify$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/test.log: testing/test$(EXEEXT)
