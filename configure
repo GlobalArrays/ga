@@ -33155,8 +33155,11 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 # and now that that's over, put the MPI compilers back
+# also, the above hack incorrectly sets the base compiler as the linker
 if test x$with_mpi_wrappers = xyes; then :
-  F77="$ga_save_F77"
+  if test "x$ga_cv_mpif77_naked" != x; then :
+  F77="$ga_save_F77"; compiler_F77="$ga_save_F77"
+fi
 fi
 
 ###############################################################################

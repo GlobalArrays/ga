@@ -385,7 +385,10 @@ AS_IF([test x$with_mpi_wrappers = xyes],
 GA_AR
 LT_INIT([disable-shared])
 # and now that that's over, put the MPI compilers back
-AS_IF([test x$with_mpi_wrappers = xyes], [F77="$ga_save_F77"])
+# also, the above hack incorrectly sets the base compiler as the linker
+AS_IF([test x$with_mpi_wrappers = xyes],
+    [AS_IF([test "x$ga_cv_mpif77_naked" != x],
+           [F77="$ga_save_F77"; compiler_F77="$ga_save_F77"])])
 
 ###############################################################################
 # Remaining setup -- some tests, some individual components
