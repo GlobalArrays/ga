@@ -399,7 +399,7 @@ void armci_serv_register_req(void *ptr,long sz,ARMCI_MEMHDL_T *memhdl)
 {
 char *buf;
 int bufsize = sizeof(request_header_t)+sizeof(long)+sizeof(void *)+sizeof(ARMCI_MEMHDL_T);
-request_header_t *msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize,ATTACH,armci_me);
+request_header_t *msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize,REGISTER,armci_me);
     bzero(msginfo,sizeof(request_header_t));
 
     msginfo->from  = armci_me;
@@ -448,7 +448,6 @@ request_header_t *msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize,ATTACH,ar
     *(int*)(buf+ sizeof(long)) =rlen;
     armci_send_req(armci_master, msginfo, bufsize);
     if(rlen){
-      msginfo->datalen = rlen;
       buf= armci_rcv_data(armci_master, msginfo);  /* receive response */
       armci_copy(buf, resp, rlen);
       FREE_SEND_BUFFER(msginfo);
@@ -513,8 +512,12 @@ void armci_server_ipc(request_header_t* msginfo, void* descr,
       armci_die("armci_server_ipc: bad msginfo->datalen ",msginfo->datalen);
 
    if(rlen==sizeof(ptr)){
-     msginfo->datalen = rlen;
+#if defined(PEND_BUFS)
+     memcpy(buffer, &ptr, sizeof(&ptr));
+     armci_send_data(msginfo, buffer);
+#else
      armci_send_data(msginfo, &ptr);
+#endif
    }else armci_die("armci_server_ipc: bad rlen",rlen);
 }
 
