@@ -24,7 +24,7 @@ TYPE_BASE  = 1000
 C_CHAR     = (TYPE_BASE + 0)
 C_INT      = (TYPE_BASE + 1)
 C_LONG     = (TYPE_BASE + 2)
-C_FLT      = (TYPE_BASE + 3)
+C_FLOAT    = (TYPE_BASE + 3)
 C_DBL      = (TYPE_BASE + 4)
 C_LDBL     = (TYPE_BASE + 5)
 C_SCPL     = (TYPE_BASE + 6)
@@ -46,7 +46,7 @@ _to_typenum = {
         C_INT: np.NPY_INT,
         C_LONG: np.NPY_LONG,
         C_LONGLONG: np.NPY_LONGLONG,
-        C_FLT: np.NPY_FLOAT,
+        C_FLOAT: np.NPY_FLOAT,
         C_DBL: np.NPY_DOUBLE,
         C_LDBL: np.NPY_LONGDOUBLE,
         C_SCPL: np.NPY_CFLOAT,
@@ -59,7 +59,7 @@ _to_dtype = {
         C_INT: np.intc,
         C_LONG: np.long,
         C_LONGLONG: np.longlong,
-        C_FLT: np.single,
+        C_FLOAT: np.single,
         C_DBL: np.double,
         C_LDBL: np.longfloat,
         C_SCPL: np.csingle,
@@ -172,7 +172,7 @@ cdef void* _convert_multiplier(int gtype, value,
     elif gtype == C_LONGLONG:
         llv[0] = value
         return llv
-    elif gtype == C_FLT:
+    elif gtype == C_FLOAT:
         fv[0] = value
         return fv
     elif gtype == C_DBL:
@@ -1205,7 +1205,7 @@ def dot(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None,
             return GA_Ldot(g_a, g_b)
         elif gtype == C_LONGLONG:
             return GA_Lldot(g_a, g_b)
-        elif gtype == C_FLT:
+        elif gtype == C_FLOAT:
             return GA_Fdot(g_a, g_b)
         elif gtype == C_DBL:
             return GA_Ddot(g_a, g_b)
@@ -1244,7 +1244,7 @@ def dot(int g_a, int g_b, alo=None, ahi=None, blo=None, bhi=None,
             return NGA_Lldot_patch64(
                     g_a, ta_c, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
                     g_b, tb_c, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data)
-        elif gtype == C_FLT:
+        elif gtype == C_FLOAT:
             return NGA_Fdot_patch64(
                     g_a, ta_c, <int64_t*>alo_nd.data, <int64_t*>ahi_nd.data,
                     g_b, tb_c, <int64_t*>blo_nd.data, <int64_t*>bhi_nd.data)
@@ -1691,7 +1691,7 @@ def gemm(bint ta, bint tb, int64_t m, int64_t n, int64_t k,
         raise TypeError, "C_LONG not supported"
     elif gtype == C_LONGLONG:
         raise TypeError, "C_LONGLONG not supported"
-    elif gtype == C_FLT:
+    elif gtype == C_FLOAT:
         falpha = alpha
         fbeta = beta
         GA_Sgemm64(ta_char, tb_char, m, n, k, falpha, g_a, g_b, fbeta, g_c)
@@ -2567,16 +2567,34 @@ def enum(int g_a, lo=None, hi=None, start=None, inc=None):
 
     """
     cdef np.ndarray[np.int64_t, ndim=1] hi_nd = inquire_dims(g_a)-1
-    cdef int64_t c_lo=0, c_hi=hi_nd[0], c_start=0, c_inc=1
+    cdef int64_t c_lo=0, c_hi=hi_nd[0]
+    cdef int gtype=inquire_type(g_a)
+    cdef int            istart, iinc
+    cdef long           lstart, linc
+    cdef long long      llstart, llinc
+    cdef float          fstart, finc
+    cdef double         dstart, dinc
+    cdef long double    ldstart, ldinc
+    cdef SingleComplex  fcstart, fcinc
+    cdef DoubleComplex  dcstart, dcinc
+    cdef void          *vstart=NULL, *vinc=NULL
     if lo is not None:
         c_lo = lo
     if hi is not None:
         c_hi = hi
-    if start is not None:
-        c_start = start
-    if inc is not None:
-        c_inc = inc
-    GA_Patch_enum64(g_a, c_lo, c_hi, c_start, c_inc)
+    if start is None:
+        start = 1
+    if inc is None:
+        inc = 1
+    vstart = _convert_multiplier(gtype, start,
+            &istart,  &lstart,  &llstart,
+            &fstart,  &dstart,  &ldstart,
+            &fcstart, &dcstart)
+    vinc = _convert_multiplier(gtype, inc,
+            &iinc,  &linc,  &llinc,
+            &finc,  &dinc,  &ldinc,
+            &fcinc, &dcinc)
+    GA_Patch_enum64(g_a, c_lo, c_hi, vstart, vinc)
 
 def pack(int g_src, int g_dst, int g_msk, lo=None, hi=None):
     """The pack subroutine is designed to compress the values in the source
@@ -3536,7 +3554,7 @@ def select_elem(int g_a, char *op):
         return lalpha,index
     elif gtype == C_LONGLONG:
         return llalpha,index
-    elif gtype == C_FLT:
+    elif gtype == C_FLOAT:
         return falpha,index
     elif gtype == C_DBL:
         return dalpha,index
