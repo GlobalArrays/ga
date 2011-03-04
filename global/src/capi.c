@@ -2668,6 +2668,12 @@ void GA_Pgroup_fgop(int grp_id, float x[], int n, char *op)
 void GA_Pgroup_dgop(int grp_id, double x[], int n, char *op)
 { wnga_pgroup_gop(grp_id, C_DBL, x, n, op); }
  
+void GA_Pgroup_cgop(int grp_id, SingleComplex x[], int n, char *op)
+{ wnga_pgroup_gop(grp_id, C_SCPL, x, n, op); }
+ 
+void GA_Pgroup_zgop(int grp_id, DoubleComplex x[], int n, char *op)
+{ wnga_pgroup_gop(grp_id, C_DCPL, x, n, op); }
+ 
 void NGA_Pgroup_gop(int grp_id, int type, double x[], int n, char *op)
 { wnga_pgroup_gop(grp_id, type, x, n, op); }
 
@@ -2685,6 +2691,12 @@ void NGA_Pgroup_fgop(int grp_id, float x[], int n, char *op)
  
 void NGA_Pgroup_dgop(int grp_id, double x[], int n, char *op)
 { wnga_pgroup_gop(grp_id, C_DBL, x, n, op); }
+ 
+void NGA_Pgroup_cgop(int grp_id, SingleComplex x[], int n, char *op)
+{ wnga_pgroup_gop(grp_id, C_SCPL, x, n, op); }
+ 
+void NGA_Pgroup_zgop(int grp_id, DoubleComplex x[], int n, char *op)
+{ wnga_pgroup_gop(grp_id, C_DCPL, x, n, op); }
  
 void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
 {
@@ -4866,32 +4878,38 @@ void NGA_Get_field(int g_a, int *lo, int *hi, int foff, int fsize,
   Integer a = (Integer)g_a;
   Integer andim = wnga_ndim(a);
   Integer _alo[MAXDIM], _ahi[MAXDIM];
+  Integer _ld[MAXDIM];
   COPYINDEX_C2F(lo,_alo, andim);
   COPYINDEX_C2F(hi,_ahi, andim);
+  COPYINDEX_C2F(ld, _ld, andim-1);
 
-  wnga_get_field(a, _alo, _ahi, foff, fsize, buf, ld);
+  wnga_get_field(a, _alo, _ahi, foff, fsize, buf, _ld);
 }
 
 void NGA_Nbget_field(int g_a, int *lo, int *hi, int foff, int fsize,
-		     void *buf, int *ld, int *nbhandle) {
+		     void *buf, int *ld, ga_nbhdl_t *nbhandle) {
   Integer a = (Integer)g_a;
   Integer andim = wnga_ndim(a);
   Integer _alo[MAXDIM], _ahi[MAXDIM];
+  Integer _ld[MAXDIM];
   COPYINDEX_C2F(lo,_alo, andim);
   COPYINDEX_C2F(hi,_ahi, andim);
+  COPYINDEX_C2F(ld, _ld, andim-1);
 
-  wnga_nbget_field(a, _alo, _ahi, foff, fsize, buf, ld, nbhandle);
+  wnga_nbget_field(a, _alo, _ahi, foff, fsize, buf, _ld, (Integer*)nbhandle);
 }
 
 void NGA_Nbput_field(int g_a, int *lo, int *hi, int foff, int fsize,
-		     void *buf, int *ld, int *nbhandle) {
+		     void *buf, int *ld, ga_nbhdl_t *nbhandle) {
   Integer a = (Integer)g_a;
   Integer andim = wnga_ndim(a);
   Integer _alo[MAXDIM], _ahi[MAXDIM];
+  Integer _ld[MAXDIM];
   COPYINDEX_C2F(lo,_alo, andim);
   COPYINDEX_C2F(hi,_ahi, andim);
+  COPYINDEX_C2F(ld, _ld, andim-1);
 
-  wnga_nbput_field(a, _alo, _ahi, foff, fsize, buf, ld, nbhandle);
+  wnga_nbput_field(a, _alo, _ahi, foff, fsize, buf, _ld, (Integer*)nbhandle);
 }
 
 void NGA_Put_field(int g_a, int *lo, int *hi, int foff, int fsize,
@@ -4899,10 +4917,12 @@ void NGA_Put_field(int g_a, int *lo, int *hi, int foff, int fsize,
   Integer a = (Integer)g_a;
   Integer andim = wnga_ndim(a);
   Integer _alo[MAXDIM], _ahi[MAXDIM];
+  Integer _ld[MAXDIM];
   COPYINDEX_C2F(lo,_alo, andim);
   COPYINDEX_C2F(hi,_ahi, andim);
+  COPYINDEX_C2F(ld, _ld, andim-1);
 
-  wnga_put_field(a, _alo, _ahi, foff, fsize, buf, ld);
+  wnga_put_field(a, _alo, _ahi, foff, fsize, buf, _ld);
 }
 
 

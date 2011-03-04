@@ -2813,8 +2813,64 @@ def pgroup_get_world():
     """
     return GA_Pgroup_get_world()
 
-def pgroup_gop():
-    raise NotImplementedError
+def pgroup_gop(int pgroup, X, char *op):
+    """Global operation.
+
+    X(1:N) is a vector present on each process in the group. gop 'sums'
+    elements of X accross all nodes using the commutative operator op. The
+    result is broadcast to all nodes. Supported operations include '+', '*',
+    'max', 'min', 'absmax', 'absmin'. The use of lowerecase for operators is
+    necessary.
+
+    X must be a contiguous array-like.  X is not guaranteed to be modified
+    in-place so use as:
+
+    >>> value = ga.gop((1,2,3), "+")
+
+    This operation is provided only for convenience purposes: it is available
+    regardless of the message-passing library that GA is running with.
+
+    This is a collective operation. 
+
+    """
+    cdef np.ndarray X_nd = np.asarray(X)
+    if not X_nd.flags['C_CONTIGUOUS']:
+        raise ValueError, "X must be contiguous"
+    if X_nd.dtype == np.intc:
+        GA_Pgroup_igop(pgroup, <int*>X_nd.data, len(X_nd), op)
+    elif X_nd.dtype == np.long:
+        GA_Pgroup_lgop(pgroup, <long*>X_nd.data, len(X_nd), op)
+    elif X_nd.dtype == np.longlong:
+        GA_Pgroup_llgop(pgroup, <long long*>X_nd.data, len(X_nd), op)
+    elif X_nd.dtype == np.single:
+        GA_Pgroup_fgop(pgroup, <float*>X_nd.data, len(X_nd), op)
+    elif X_nd.dtype == np.double:
+        GA_Pgroup_dgop(pgroup, <double*>X_nd.data, len(X_nd), op)
+    elif X_nd.dtype == np.complex64:
+        GA_Pgroup_cgop(pgroup, <SingleComplex*>X_nd.data, len(X_nd), op)
+    elif X_nd.dtype == np.complex128:
+        GA_Pgroup_zgop(pgroup, <DoubleComplex*>X_nd.data, len(X_nd), op)
+    else:
+        raise TypeError, "type not supported by ga.pgroup_gop %s" % X_nd.dtype
+    return X_nd
+
+def pgroup_gop_add(int pgroup, X):
+    return pgroup_gop(pgroup, X, "+")
+
+def pgroup_gop_multiply(int pgroup, X):
+    return pgroup_gop(pgroup, X, "*")
+
+def pgroup_gop_max(int pgroup, X):
+    return pgroup_gop(pgroup, X, "max")
+
+def pgroup_gop_min(int pgroup, X):
+    return pgroup_gop(pgroup, X, "min")
+
+def pgroup_gop_absmax(int pgroup, X):
+    return pgroup_gop(pgroup, X, "absmax")
+
+def pgroup_gop_absmin(int pgroup, X):
+    return pgroup_gop(pgroup, X, "absmin")
 
 def pgroup_nnodes(int pgroup):
     """Returns the number of processors contained in the group specified by
