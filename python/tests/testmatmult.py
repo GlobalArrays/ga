@@ -11,7 +11,7 @@ Note:
 import time
 
 import mpi4py.MPI
-import ga
+from ga import ga
 
 import numpy as np
 
@@ -105,6 +105,9 @@ def main():
         if 0 == me:
             print '\nMatrix Multiplication C = A[%d,%d] x B[%d,%d]\n' % (
                     num_m, num_k, num_k, num_n)
+            print ' %4s  %12s  %12s  %7s  %7s'%(
+                    "Run#", "Time (seconds)", "mflops/proc",
+                    "A trans", "B trans")
         avg_t[:] = 0
         avg_mf[:] = 0
         for itime in range(ntimes):
@@ -119,7 +122,7 @@ def main():
                     mf = 2*num_m*num_n*num_k/t1*10**-6/nproc
                     avg_t[i] += t1
                     avg_mf[i] += mf
-                    print ' Run# %2d %12.4f seconds %12.1f mflops/proc %s %s'%(
+                    print ' %4d  %12.4f  %12.1f  %7s  %7s'%(
                             itime+1, t1, mf, ta, tb)
                     if VERIFY and itime == 0:
                         verify_ga_gemm(ta, tb, num_m, num_n, num_k,
@@ -140,24 +143,6 @@ def load_ga(handle, h0, num_m, num_k):
         a = np.arange(num_m*num_k, dtype=np.float64)
         ga.put(handle, a)
 
-def wtf(alpha,tmpa,tmpb,beta):
-    print "NO NO ########################################"
-    for ta,tb in zip([True,True,False,False],[True,False,True,False]):
-        print ta,tb
-        print dgemm(alpha, tmpa, tmpb, beta=beta, trans_a=ta, trans_b=tb)
-    print "T  NO ########################################"
-    for ta,tb in zip([True,True,False,False],[True,False,True,False]):
-        print ta,tb
-        print dgemm(alpha, tmpa.T, tmpb, beta=beta, trans_a=ta, trans_b=tb)
-    print "NO  T ########################################"
-    for ta,tb in zip([True,True,False,False],[True,False,True,False]):
-        print ta,tb
-        print dgemm(alpha, tmpa, tmpb.T, beta=beta, trans_a=ta, trans_b=tb)
-    print "T   T ########################################"
-    for ta,tb in zip([True,True,False,False],[True,False,True,False]):
-        print ta,tb
-        print dgemm(alpha, tmpa.T, tmpb.T, beta=beta, trans_a=ta, trans_b=tb)
-
 def verify_ga_gemm(ta, tb, num_m, num_n, num_k, alpha, g_a, g_b, beta, g_c):
     tmpa = np.ndarray((num_m, num_k), dtype=np.float64)
     tmpb = np.ndarray((num_k, num_n), dtype=np.float64)
@@ -168,12 +153,8 @@ def verify_ga_gemm(ta, tb, num_m, num_n, num_k, alpha, g_a, g_b, beta, g_c):
     if not ta and not tb:
         result = dgemm(alpha, tmpa, tmpb, beta=beta, trans_a=ta, trans_b=tb)
     elif ta and not tb:
-        # for some reason to interface with this dgemm we need to swap ta,tb
-        ta,tb=tb,ta
         result = dgemm(alpha, tmpa, tmpb, beta=beta, trans_a=ta, trans_b=tb)
     elif not ta and tb:
-        # for some reason to interface with this dgemm we need to swap ta,tb
-        ta,tb=tb,ta
         result = dgemm(alpha, tmpa, tmpb, beta=beta, trans_a=ta, trans_b=tb)
     elif ta and tb:
         result = dgemm(alpha, tmpa, tmpb, beta=beta, trans_a=ta, trans_b=tb)
