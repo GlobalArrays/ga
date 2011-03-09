@@ -59,3 +59,15 @@ AS_IF([test x$with_mpi_wrappers = xyes],
     [CC_TO_TEST="$ga_cc_pref $ga_cc"])
 AC_PROG_CC([$CC_TO_TEST])
 ])dnl
+
+# GA_PROG_CC_NOMPI
+# ----------------
+# In at least one case, GA needs a standard C compiler i.e. not an MPI
+# wrapper. Find one and set it to CC_NOMPI (not CC). Defaults to the CC found
+# by GA_PROG_MPICC.
+AC_DEFUN([GA_PROG_CC_NOMPI],
+[AS_IF([test "x$ga_cv_mpic_naked" != x],
+    [CC_NOMPI="$ga_cv_mpic_naked"
+     AC_SUBST([CC_NOMPI])],
+    [AC_CHECK_PROGS([CC_NOMPI], [$ga_cc], [$CC])])
+])dnl

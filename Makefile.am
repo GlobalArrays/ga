@@ -98,6 +98,11 @@ SED_NORMALIZE_WHITESPACE = $(SED) 's/ [ ]*/ /g;s/" /"/g;s/ "/"/g'
 .PHONY: flags
 flags:
 	@echo '# =========================================================================== '
+	@echo 'F77="$(F77)"'
+	@echo 'CC="$(CC)"'
+if CXX_BINDINGS
+	@echo 'CXX="$(CXX)"'
+endif
 	@echo '# Suggested compiler/linker options are as follows.'
 	@echo '# GA libraries are installed in $(libdir)' 
 	@echo '# GA headers are installed in $(includedir)' 
@@ -121,6 +126,12 @@ if CXX_BINDINGS
 endif
 	@echo '# =========================================================================== '
 
+bin_PROGRAMS += ga-config
+ga-config$(EXEEXT): tools/ga-config.c
+	@-rm -f $@
+	$(CC_NOMPI_V) \
+	$(CC_NOMPI) tools/ga-config.c -o $@
+
 ##############################################################################
 # config
 #
@@ -134,9 +145,9 @@ CLEANFILES += config.fh
 nodist_libga_la_SOURCES += config.fh
 
 config.fh: config.h
-	@-rm -f config.fh
+	@-rm -f $@
 	$(SED_V) \
-	$(SED) "/^#/!d" config.h > config.fh
+	$(SED) "/^#/!d" config.h > $@
 
 ##############################################################################
 # compat
@@ -1399,6 +1410,10 @@ CP = cp
 CP_V = $(CP__v_$(V))
 CP__v_ = $(CP__v_$(AM_DEFAULT_VERBOSITY))
 CP__v_0 = @echo "  CP    " $@;
+# cc w/o mpi
+CC_NOMPI_V = $(CC_NOMPI__v_$(V))
+CC_NOMPI__v_ = $(CC_NOMPI__v_$(AM_DEFAULT_VERBOSITY))
+CC_NOMPI__v_0 = @echo "  CC_NOMPI" $@;
 
 .PHONY: pfiles clean-pfiles
 if MSG_COMMS_TCGMSG

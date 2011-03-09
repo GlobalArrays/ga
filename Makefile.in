@@ -57,7 +57,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) \
+bin_PROGRAMS = ga-config$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
 	global/trace/adjust$(EXEEXT) global/trace/collisions$(EXEEXT)
 check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 	ma/test-coalesce$(EXEEXT) ma/test-inquire$(EXEEXT) \
@@ -434,9 +434,9 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(top_srcdir)/gaf2c/typesf2c.h.in \
 	$(top_srcdir)/global/src/global.fh.in \
 	$(top_srcdir)/ma/mafdecls.fh.in $(top_srcdir)/ma/matypes.h.in \
-	INSTALL NEWS build-aux/config.guess build-aux/config.sub \
-	build-aux/depcomp build-aux/install-sh build-aux/ltmain.sh \
-	build-aux/missing
+	$(top_srcdir)/tools/ga-config.c.in INSTALL NEWS \
+	build-aux/config.guess build-aux/config.sub build-aux/depcomp \
+	build-aux/install-sh build-aux/ltmain.sh build-aux/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/m4/ax_sys_weak_alias.m4 \
@@ -502,7 +502,8 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES = ga.pc gaf2c/farg.h gaf2c/typesf2c.h \
-	global/src/global.fh ma/mafdecls.fh ma/matypes.h
+	global/src/global.fh ma/mafdecls.fh ma/matypes.h \
+	tools/ga-config.c
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -927,6 +928,12 @@ ga___testing_testmult_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(ga___testing_testmult_LDFLAGS) \
 	$(LDFLAGS) -o $@
+ga_config_SOURCES = ga-config.c
+ga_config_OBJECTS = ga-config.$(OBJEXT)
+ga_config_LDADD = $(LDADD)
+ga_config_DEPENDENCIES = $(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_gaf2c_testarg_OBJECTS = gaf2c/testarg.$(OBJEXT) \
 	gaf2c/testargf.$(OBJEXT)
 gaf2c_testarg_OBJECTS = $(am_gaf2c_testarg_OBJECTS)
@@ -2387,7 +2394,8 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(ga___testing_elempatch_SOURCES) \
 	$(ga___testing_mtest_SOURCES) $(ga___testing_ntestc_SOURCES) \
 	$(ga___testing_testc_SOURCES) $(ga___testing_testmult_SOURCES) \
-	$(gaf2c_testarg_SOURCES) $(global_X_xregion_SOURCES) \
+	ga-config.c $(gaf2c_testarg_SOURCES) \
+	$(global_X_xregion_SOURCES) \
 	$(global_examples_boltzmann_boltz_SOURCES) \
 	$(global_examples_conjugate_gradient_ga_cg_SOURCES) \
 	$(global_examples_lennard_jones_lennard_SOURCES) \
@@ -2531,7 +2539,7 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__ga___testing_mtest_SOURCES_DIST) \
 	$(am__ga___testing_ntestc_SOURCES_DIST) \
 	$(am__ga___testing_testc_SOURCES_DIST) \
-	$(am__ga___testing_testmult_SOURCES_DIST) \
+	$(am__ga___testing_testmult_SOURCES_DIST) ga-config.c \
 	$(gaf2c_testarg_SOURCES) $(am__global_X_xregion_SOURCES_DIST) \
 	$(global_examples_boltzmann_boltz_SOURCES) \
 	$(global_examples_conjugate_gradient_ga_cg_SOURCES) \
@@ -2772,6 +2780,7 @@ CCAS = @CCAS@
 CCASDEPMODE = @CCASDEPMODE@
 CCASFLAGS = @CCASFLAGS@
 CCDEPMODE = @CCDEPMODE@
+CC_NOMPI = @CC_NOMPI@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -3504,6 +3513,10 @@ CP = cp
 CP_V = $(CP__v_$(V))
 CP__v_ = $(CP__v_$(AM_DEFAULT_VERBOSITY))
 CP__v_0 = @echo "  CP    " $@;
+# cc w/o mpi
+CC_NOMPI_V = $(CC_NOMPI__v_$(V))
+CC_NOMPI__v_ = $(CC_NOMPI__v_$(AM_DEFAULT_VERBOSITY))
+CC_NOMPI__v_0 = @echo "  CC_NOMPI" $@;
 @MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@MAYBE_PFILES = pfiles
 
 ##############################################################################
@@ -3613,6 +3626,8 @@ global/src/global.fh: $(top_builddir)/config.status $(top_srcdir)/global/src/glo
 ma/mafdecls.fh: $(top_builddir)/config.status $(top_srcdir)/ma/mafdecls.fh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 ma/matypes.h: $(top_builddir)/config.status $(top_srcdir)/ma/matypes.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+tools/ga-config.c: $(top_builddir)/config.status $(top_srcdir)/tools/ga-config.c.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 clean-checkLTLIBRARIES:
@@ -5438,6 +5453,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ga-config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/random.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ga++/src/$(DEPDIR)/GAServices.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ga++/src/$(DEPDIR)/GlobalArray.Plo@am__quote@
@@ -6815,7 +6831,7 @@ clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-checkPROGRAMS \
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR) tools/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR) tools/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -6864,7 +6880,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR) tools/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR) tools/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -6916,6 +6932,9 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 .PHONY: flags
 flags:
 	@echo '# =========================================================================== '
+	@echo 'F77="$(F77)"'
+	@echo 'CC="$(CC)"'
+@CXX_BINDINGS_TRUE@	@echo 'CXX="$(CXX)"'
 	@echo '# Suggested compiler/linker options are as follows.'
 	@echo '# GA libraries are installed in $(libdir)' 
 	@echo '# GA headers are installed in $(includedir)' 
@@ -6936,11 +6955,15 @@ flags:
 @CXX_BINDINGS_TRUE@	@echo 'CXXFLAGS="$(AM_CXXFLAGS)"' | $(SED_NORMALIZE_WHITESPACE)
 @CXX_BINDINGS_TRUE@	@echo 'LIBS="-lga++ -lga $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo '# =========================================================================== '
+ga-config$(EXEEXT): tools/ga-config.c
+	@-rm -f $@
+	$(CC_NOMPI_V) \
+	$(CC_NOMPI) tools/ga-config.c -o $@
 
 config.fh: config.h
-	@-rm -f config.fh
+	@-rm -f $@
 	$(SED_V) \
-	$(SED) "/^#/!d" config.h > config.fh
+	$(SED) "/^#/!d" config.h > $@
 
 global/src/wapi.h: $(PAPI_H)
 	@-rm -f $@
