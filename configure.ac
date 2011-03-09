@@ -426,7 +426,6 @@ AC_SUBST([MA_ACCESS_INDEX_TYPE], [$ga_access_index_type])
 AC_SUBST([MA_ACCESS_INDEX_TYPE_C], [$ga_access_index_type_c])
 
 AC_CONFIG_FILES([Makefile
-                 ga.pc
                  gaf2c/farg.h
                  gaf2c/typesf2c.h
                  global/src/global.fh
