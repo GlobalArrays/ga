@@ -46,8 +46,6 @@ AM_CPPFLAGS =
 AM_LDFLAGS =
 FLDFLAGS =
 LDADD =
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = ga.pc
 
 AM_FFLAGS += $(GA_FOPT)
 AM_FFLAGS += $(FFLAG_INT)
