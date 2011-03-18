@@ -4464,6 +4464,12 @@ int gai_ComputeCountWithSkip(Integer ndim, Integer *lo, Integer *hi,
 {
   Integer idx;
   int i, istride = 0;
+  /*
+  if (GAme==0) {
+    printf("p[%d] ComputeCount lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",GAme,
+        lo[0],hi[0],lo[1],hi[1]);
+  }
+  */
   for (i=0; i<(int)ndim; i++) {
     idx = hi[i] - lo[i];
     if (idx < 0) return 0;
@@ -4490,9 +4496,7 @@ void gai_SetStrideWithSkip(Integer ndim, Integer size, Integer *ld,
                           int *stride_loc, Integer *skip, Integer *nstride)
 {
   int i, istride;
-  int ts_loc[MAXDIM], ts_rem[MAXDIM];
   stride_rem[0] = stride_loc[0] = (int)size;
-  ts_loc[0] = ts_rem[0] = (int)size;
   istride = 0;
   for (i=0; i<ndim; i++) {
     if (skip[i] > 1) {
@@ -4984,12 +4988,24 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       /* get pointer in local buffer to point indexed by plo given that
          the corner of the buffer corresponds to the point indexed by lo */
       gai_ComputePatchIndexWithSkip(ndim, lo, plo, skip, ld, &idx_buf);
+      /*
+      if (GAme==0) {
+        printf("p[%d] Get patch at plo[0]: %d plo[1]: %d idx_buf: %d\n",
+               GAme,plo[0],plo[1],idx_buf);
+      }
+      */
       pbuf = size*idx_buf + (char*)buf;
 
       /* Compute number of elements in each stride region and compute the
          number of stride regions. Store the results in count and nstride */
       if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
         continue;
+      /*
+      if (GAme==0) {
+        printf("p[%d] count[0]: %d count[1]: %d count[2]: %d count[3]: %d nstride: %d\n",
+            GAme,count[0],count[1],count[2],count[3],nstride);
+      }
+      */
 
       /* Scale first element in count by element size. The ARMCI_PutS routine
          uses this convention to figure out memory sizes. */
@@ -4999,6 +5015,14 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
          local buffer */ 
       gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
           skip, &nstride);
+      /*
+      if (GAme==0) {
+        printf("p[%d] stride_loc[0]: %d stride_loc[1]: %d stride_loc[2]: %d stride_loc[3]: %d\n",
+            GAme,stride_loc[0],stride_loc[1],stride_loc[2],stride_loc[3]);
+        printf("p[%d] stride_rem[0]: %d stride_rem[1]: %d stride_rem[2]: %d stride_rem[3]: %d\n",
+            GAme,stride_rem[0],stride_rem[1],stride_rem[2],stride_rem[3]);
+      }
+      */
 
       /* BJP */
       if (p_handle != -1) {
