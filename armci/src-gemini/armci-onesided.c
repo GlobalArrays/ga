@@ -26,6 +26,10 @@ static aptl_reginfo_t *_tmp_rem_reginfo;
                 && (_ptr__) <= ( (char *)(_reg__.serv_ptr)+_reg__.size))
 #endif
 
+static cos_mdesc_t _send_mdesc, _recv_mdesc;
+static cos_mdesc_t *send_mdesc = NULL;
+static cos_mdesc_t *recv_mdesc = NULL;
+
 char **client_buf_ptrs;
 
 int 
@@ -237,10 +241,14 @@ armci_WriteToDirect(int proc, request_header_t *msginfo, void *buf)
 {
      // this is a DS function
         cos_desc_t resp_desc;
-        cos_mdesc_t *resp_mdesc = &msginfo->tag.response_mdesc; 
+        cos_mdesc_t *resp_mdesc = &msginfo->tag.response_mdesc;
         dsDescInit(resp_mdesc, &resp_desc);
         resp_desc.event_type = EVENT_LOCAL | EVENT_REMOTE;
-        cosPut(buf, msginfo->datalen, &resp_desc);
+        memcpy(&resp_desc.local_mdesc, send_mdesc, sizeof(cos_mdesc_t));
+        resp_desc.local_mdesc.addr   = (uint64_t) buf;
+        resp_desc.local_mdesc.length = (uint64_t) msginfo->datalen;
+     // cosPut(buf, msginfo->datalen, &resp_desc);
+        cosPutWithDesc(&resp_desc);
         dsDescWait(&resp_desc);
 }
 
@@ -253,13 +261,21 @@ int armci_onesided_ds_handler(void *buffer)
         if(request->operation == PUT || ARMCI_ACC(request->operation)) {
            if(length > ARMCI_MAX_REQUEST_SIZE) {
               char *get_buffer = (char *) MessageRcvBuffer;
+              if(recv_mdesc == NULL) {
+                 recv_mdesc = &_recv_mdesc;
+                 dsMemRegister(MessageRcvBuffer, sizeof(double)*MSG_BUFLEN_DBL, recv_mdesc);
+              }
               cos_desc_t get_desc;
               cos_mdesc_t *mdesc = &request->tag.response_mdesc;
               dsDescInit(mdesc, &get_desc);
           //  printf("%d: get remote data not tested\n",armci_me);
           //  abort();
               get_desc.event_type = EVENT_LOCAL;
-              cosGet(get_buffer, length, &get_desc);
+              memcpy(&get_desc.local_mdesc, recv_mdesc, sizeof(cos_mdesc_t));
+              get_desc.local_mdesc.length = length;
+              assert(length <= sizeof(double)*MSG_BUFLEN_DBL);
+              cosGetWithDesc(&get_desc);
+          //  cosGet(get_buffer, length, &get_desc);
           //  dsGetRemoteData(get_buffer, length, &get_desc);
               dsDescWait(&get_desc);
               buffer = (void *) get_buffer;
@@ -308,12 +324,22 @@ double *tmp;
           // use the MessageRcvBuffer
           *(void**) pdata = MessageSndBuffer;
 //        printf("%s (server) overriding pdata in rcv_req\n",Portals_ID());
+          if(send_mdesc == NULL) {
+             send_mdesc = &_send_mdesc;
+             dsMemRegister(MessageSndBuffer, sizeof(double)*MSG_BUFLEN_DBL, send_mdesc);
+          // printf("send_mdesc registered\n");
+          // fflush(stdout);
+          }
        }     
     }
     else {
     // printf("%d [ds]: hit this\n",armci_me);
        *(void**) pdescr = NULL;
        *(void**) pdata = MessageRcvBuffer;
+       if(recv_mdesc == NULL) {
+          recv_mdesc = &_recv_mdesc;
+          dsMemRegister(MessageRcvBuffer, sizeof(double)*MSG_BUFLEN_DBL, recv_mdesc);
+       }
     }
     ARMCI_PR_SDBG("exit",msginfo->operation);
 }

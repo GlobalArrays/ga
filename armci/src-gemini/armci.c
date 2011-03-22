@@ -117,7 +117,6 @@ armci_notify_t **_armci_notify_arr;
 
 void ARMCI_Cleanup()
 {
-
 #if defined(DATA_SERVER)
 #if defined(LIBONESIDED)
     dsTurnOff();

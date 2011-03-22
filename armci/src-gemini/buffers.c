@@ -155,6 +155,8 @@ int smallbuf_size = sizeof(buf_smext_t)*(MAX_SMALL_BUFS);
      bzero(tmp,MAX_BUFS*sizeof(buf_ext_t) + 64 + smallbuf_size + 64);
      extra= ALIGN64ADD(tmp);
 
+  /* libonesided: register buffer memory */
+
      _armci_buffers = (buf_ext_t *) (tmp + extra); 
 
      tmp = (char *)(_armci_buffers + MAX_BUFS);

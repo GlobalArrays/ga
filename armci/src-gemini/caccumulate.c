@@ -750,7 +750,7 @@ void c_dmult2_(const int* const n,
 }
 
 
-// specific to src-portals
+// specific to src-portals && to src-gemini
 void  RA_ACCUMULATE_2D_(long* alpha, int* rows, int* cols, long* a,
                       int* lda, long* b, int* ldb)
 {
