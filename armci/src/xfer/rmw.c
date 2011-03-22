@@ -271,7 +271,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
                         parg, &ival, &req_id)) armci_die("rmw failed",rc);
           if( rc = LAPI_Waitcntr(lapi_handle, &req_id, 1, NULL))
                         armci_die("rmw wait failed",rc);
-          *ploc  = ival;
+          * (int *)ploc  = ival;
         break;
 #   else
       case ARMCI_FETCH_AND_ADD:
