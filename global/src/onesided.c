@@ -4462,6 +4462,33 @@ Integer gai_correct_strided_patch(Integer ndim,
 int gai_ComputeCountWithSkip(Integer ndim, Integer *lo, Integer *hi,
                              Integer *skip, int *count, Integer *nstride)
 {
+#if 1
+  Integer idx;
+  int i, istride = 0;
+  /*
+  if (GAme==0) {
+    printf("p[%d] ComputeCount lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",GAme,
+        lo[0],hi[0],lo[1],hi[1]);
+  }
+  */
+  if (skip[0] > 1) {
+    count[0]=1;
+    istride++;
+  }
+  for (i=0; i<(int)ndim; i++) {
+    idx = hi[i] - lo[i];
+    if (idx < 0) return 0;
+    if (skip[i] > 1) {
+      count[istride] = (int)(idx/skip[i]+1);
+      istride++;
+    } else {
+      count[istride] = (int)idx+1;
+      istride++;
+    }
+  }
+  *nstride = istride;
+  return 1;
+#else
   Integer idx;
   int i, istride = 0;
   /*
@@ -4485,6 +4512,7 @@ int gai_ComputeCountWithSkip(Integer ndim, Integer *lo, Integer *hi,
   }
   *nstride = istride;
   return 1;
+#endif
 }
 
 /**
@@ -4493,8 +4521,19 @@ int gai_ComputeCountWithSkip(Integer ndim, Integer *lo, Integer *hi,
  */
 void gai_SetStrideWithSkip(Integer ndim, Integer size, Integer *ld,
                           Integer *ldrem, int *stride_rem,
-                          int *stride_loc, Integer *skip, Integer *nstride)
+                          int *stride_loc, Integer *skip)
 {
+#if 1
+  int i, istride, tmp_stride_rem, ioffset;
+  stride_rem[0] = stride_loc[0] = (int)size;
+  for (i=0; i<ndim; i++) {
+    stride_rem[i+1] = stride_rem[i];
+    stride_rem[i] *= skip[i];
+    stride_rem[i+1] *= (int)ldrem[i];
+    stride_loc[i+1] = stride_loc[i];
+    stride_loc[i+1] *= (int)ld[i];
+  }
+#else
   int i, istride;
   stride_rem[0] = stride_loc[0] = (int)size;
   istride = 0;
@@ -4520,7 +4559,7 @@ void gai_SetStrideWithSkip(Integer ndim, Integer size, Integer *ld,
     }
     istride++;
   }
-  *nstride = istride;
+#endif
 }
 
 void gai_ComputePatchIndexWithSkip(Integer ndim, Integer *lo, Integer *plo,
@@ -4635,7 +4674,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       /* Calculate strides in memory for remote processor indexed by proc and
          local buffer */ 
       gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-          skip, &nstride);
+          skip);
 
       /* BJP */
       if (p_handle != -1) {
@@ -4727,7 +4766,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
             /* Calculate strides in memory for remote processor indexed by proc and
                local buffer */
             gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-                skip, &nstride);
+                skip);
 
             proc = pinv;
 
@@ -4875,7 +4914,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
             /* Calculate strides in memory for remote processor indexed by proc and
                local buffer */
             gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-                skip, &nstride);
+                skip);
 
             proc = pinv;
 
@@ -5014,13 +5053,13 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       /* Calculate strides in memory for remote processor indexed by proc and
          local buffer */ 
       gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-          skip, &nstride);
+          skip);
       /*
       if (GAme==0) {
-        printf("p[%d] stride_loc[0]: %d stride_loc[1]: %d stride_loc[2]: %d stride_loc[3]: %d\n",
-            GAme,stride_loc[0],stride_loc[1],stride_loc[2],stride_loc[3]);
-        printf("p[%d] stride_rem[0]: %d stride_rem[1]: %d stride_rem[2]: %d stride_rem[3]: %d\n",
-            GAme,stride_rem[0],stride_rem[1],stride_rem[2],stride_rem[3]);
+        printf("p[%d] stride_loc[0]: %d stride_loc[1]: %d stride_loc[2]: %d nstride: %d\n",
+            GAme,stride_loc[0],stride_loc[1],stride_loc[2],nstride);
+        printf("p[%d] stride_rem[0]: %d stride_rem[1]: %d stride_rem[2]: %d nstride: %d\n",
+            GAme,stride_rem[0],stride_rem[1],stride_rem[2],nstride);
       }
       */
 
@@ -5114,7 +5153,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
             /* Calculate strides in memory for remote processor indexed by proc and
                local buffer */
             gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-                skip, &nstride);
+                skip);
 
             proc = pinv;
 
@@ -5262,7 +5301,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
             /* Calculate strides in memory for remote processor indexed by proc and
                local buffer */
             gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-                skip, &nstride);
+                skip);
 
             proc = pinv;
 
@@ -5401,7 +5440,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
       /* Calculate strides in memory for remote processor indexed by proc and
          local buffer */ 
       gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-          skip, &nstride);
+          skip);
 
       /* BJP */
       if (p_handle != -1) {
@@ -5494,7 +5533,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
             /* Calculate strides in memory for remote processor indexed by proc and
                local buffer */
             gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-                skip, &nstride);
+                skip);
 
             proc = pinv;
 
@@ -5643,7 +5682,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
             /* Calculate strides in memory for remote processor indexed by proc and
                local buffer */
             gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
-                skip, &nstride);
+                skip);
 
             proc = pinv;
 
