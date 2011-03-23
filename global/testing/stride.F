@@ -23,15 +23,16 @@ c vector boxes lack arithmetic precision
 c#include "tcgmsg.fh"
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM, nwidth, MAXPROC, nloop, nskip
-      parameter (nmax = 8, DIM = 2, nwidth = 0, MAXPROC = 2000)
+      parameter (nmax = 174, DIM = 2, nwidth = 0, MAXPROC = 2000)
       parameter (nloop = 1, nskip = 2)
       integer ndim, nproc, pdims(7), type, g_a, maxval
-      integer i, j, dims(7), width(7)
+      integer i, j, ichk, ii, jj, ival, dims(7), width(7)
       integer lo(7), hi(7), ld(7)
-      integer chunk(7)
+      integer chunk(7), dim_strided(7), lop(7), hip(7)
       integer a(nmax, nmax), skip(7)
-      parameter (heap=60*60*4, fudge=100, stack=100*100)
+      parameter (heap=500*500*4, fudge=100, stack=500*500)
       logical status
+      integer one
 c     
 c***  Intitialize a message passing library
 c
@@ -53,7 +54,7 @@ c
       call GA_set_memory_limit(util_mdtob(ma_heap))
 c
       if(ga_nodeid().eq.0)then
-         print *,' GA initialized '
+         write(6,'(a)') ' GA initialized '
          call ffflush(6)
       endif
 c
@@ -64,47 +65,42 @@ c
       if (.not. status) call ga_error('ma_init failed',-1) 
 c
       if(me.eq.0)then
-        print *, 'using ', nproc, ' process(es)'
+        write(6,'(a,i8,a)') 'using ', nproc, ' process(es)'
         call ffflush(6)
       endif
 c
 c   Test strided put, get, acc calls
 c
       ndim = DIM
-c
-c   Create distribution on all nodes
-c
-      call factor(nproc,ndim,pdims)
-      dims(1) = pdims(1) * nmax
-      dims(2) = pdims(2) * nmax
+      dims(1) = nmax
+      dims(2) = nmax
       maxval = 1
       do i = 1, ndim
         maxval = dims(i)*maxval
       end do
       maxval = maxval - 1
+      do j = 1, nmax
+        do i = 1, nmax
+          a(i,j) = 0
+        end do
+      end do
 c
       do i = 1, ndim
         width(i) = nwidth
-        skip(i) = nskip
+        skip(i) = nskip + (i-1)
         chunk(i) = 1
-        if (pdims(i).gt.dims(i)) pdims(i) = dims(i)
-        if (me.eq.0) then
-          write(6,*) 'Value of pdims(',i,') is ',pdims(i)
-        endif
-        call ffflush(6)
         ld(i) = nmax
       end do
-c      skip(2) = 1
 
       type = MT_INT
       status = nga_create_ghosts(type, ndim, dims, width,
      +                           "test_array", chunk, g_a)
       if (status.and.me.eq.0) then
-        write(6,*) '*'
-        write(6,*) '* Global array creation was successful'
-        write(6,*) '*'
+        write(6,'(a)') '*'
+        write(6,'(a)') '* Global array creation was successful'
+        write(6,'(a)') '*'
       elseif (.not.status) then
-        write(6,*) 'Global array creation failure on ',me
+        write(6,'(a,i8)') 'Global array creation failure on ',me
       endif
       call ga_zero(g_a)
 c
@@ -112,26 +108,107 @@ c     initialize g_a
 c
       call ga_sync
       call nga_distribution(g_a, me, lo, hi)
+c      write(6,'(i4,a,i8,a,i8,a,i8,a,i8)') me, ' (dist) lo(1): ',lo(1),
+c     +  ' hi(1): ',hi(1),' lo(2): ',lo(2),' hi(2): ',hi(2)
+c
+c     fill local array a with unique values for each element
+c
       do i = 1, hi(1) - lo(1) + 1
         do j = 1, hi(2) - lo(2) + 1
-          a(i,j) = (i + lo(1) - 2)*dims(1) + (j + lo(2) - 2)
+          a(i,j) = (j + lo(2) - 2)*dims(1) + (i + lo(1) - 2) + 1
         end do
       end do
       call nga_put(g_a, lo, hi, a, ld)
+      call ga_sync
+c
+c     reset all values in local array a to zero
+c
       do i = 1, hi(1) - lo(1) + 1
         do j = 1, hi(2) - lo(2) + 1
           a(i,j) = 0
         end do
       end do
-      call nga_strided_get(g_a, lo, hi, skip, a, ld)
+      do i = 1, ndim
+        lo(i) = 1
+        hi(i) = dims(i)
+      end do
+      call random_range(lo,hi,lop,hip,ndim)
+c      write(6,'(i4,a,i8,a,i8,a,i8,a,i8)') me, ' lop(1): ',lop(1),
+c     +  ' hip(1): ',hip(1),' lop(2): ',lop(2),' hip(2): ',hip(2)
+      call nga_strided_get(g_a, lop, hip, skip, a, ld)
+c
+c  check results
+c
+      do i = 1, ndim
+        dim_strided(i) = hip(i) - lop(i)
+        dim_strided(i) = dim_strided(i) - mod(dim_strided(i),skip(i))
+        dim_strided(i) = dim_strided(i)/skip(i) + 1
+      end do
+      ichk = 0
+      do j = 1, dim_strided(2)
+        jj = (j-1)*skip(2) + lop(2)
+        do i = 1, dim_strided(1)
+          ii = (i-1)*skip(1) + lop(1)
+          ival = (ii-1) + (jj-1)*dims(1) + 1
+          if (a(i,j).ne.ival.and.me.eq.0) then
+            write(6,'(a,i4,a,i4,a,i8,a,i8,a,i8)') 'a(',ii,',',jj,'): ',
+     +                        a(i,j),' ival: ',ival,' dims(1): ',dims(1)
+            ichk = ichk + 1
+          endif
+        end do
+      end do
+      if (ichk.eq.0.and.me.eq.0) then
+        write(6,'(a)') '*'
+        write(6,'(a)') '* nga_strided_get is 0K'
+        write(6,'(a)') '*'
+      endif
+c
+#if 1
+      call ga_sync
       call ga_zero(g_a)
-      call nga_put(g_a, lo, hi, a, ld)
-      call nga_strided_acc(g_a, lo, hi, skip, a, ld, 1)
-       
+      if (me.eq.1) then
+        call nga_strided_put(g_a, lop, hip, skip, a, ld)
+        one = 1
+        call nga_strided_acc(g_a, lop, hip, skip, a, ld, one)
+      endif
+      call ga_sync
+      do i = 1, hi(1) - lo(1) + 1
+        do j = 1, hi(2) - lo(2) + 1
+          a(i,j) = 0
+        end do
+      end do
+      call nga_get(g_a, lop, hip, a, ld)
+      do i = 1, ndim
+        dim_strided(i) = hip(i) - lop(i)
+      end do
+      ichk = 0
+      do j = 1, dim_strided(2)
+        jj = (j-1) + lop(2)
+        do i = 1, dim_strided(1)
+          ii = (i-1) + lop(1)
+          ival = (ii-1) + (jj-1)*dims(1) + 1
+          ival = 2*ival
+          if (mod(i-1,skip(1)).eq.0.and.mod(j-1,skip(2)).eq.0) then
+            if (a(i,j).ne.ival.and.me.eq.0) then
+              write(6,'(a,i4,a,i4,a,i8,a,i8,a,i8)') 'a2(',ii,',',jj,
+     +             '): ',a(i,j),' ival: ',ival,' dims(1): ',dims(1)
+              ichk = ichk + 1
+            endif
+          else
+            if (a(i,j).ne.0.0d00) ichk = ichk + 1
+          endif
+        end do
+      end do
+      if (ichk.eq.0.and.me.eq.0) then
+        write(6,'(a)') '*'
+        write(6,'(a)') '* nga_strided_put and nga_strided_acc is 0K'
+        write(6,'(a)') '*'
+      endif
+#endif
 c
 c   print out values of a
 c
-      call ga_print(g_a)
+c     call ga_print(g_a)
 c
 c***  Tidy up the GA package
 c
@@ -262,4 +339,28 @@ c
       end do
 c
       return
+      end
+c
+c    create a random patch
+c
+      subroutine random_range(lo,hi,lop,hip,ndim)
+      implicit none
+#include "testutil.fh"
+      integer lo(1),hi(1),lop(1),hip(1),ndim
+      integer i, range, swap, val,iran
+      iran(range) = int(drand(0)*dble(range)) + 1
+      do i = 1, ndim
+         range = hi(i)-lo(i)+1
+         val = iran(range)
+         lop(i) = lo(i) + val
+         val = iran(range)
+         hip(i) = hi(i) - val
+         if(hip(i) .lt. lop(i))then
+            swap =hip(i)
+            hip(i)=lop(i)
+            lop(i)=swap
+         endif
+         hip(i)=MIN(hip(i),hi(i))
+         lop(i)=MAX(lop(i),lo(i))
+      enddo
       end
