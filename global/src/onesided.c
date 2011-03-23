@@ -4471,10 +4471,8 @@ int gai_ComputeCountWithSkip(Integer ndim, Integer *lo, Integer *hi,
         lo[0],hi[0],lo[1],hi[1]);
   }
   */
-  if (skip[0] > 1) {
-    count[0]=1;
-    istride++;
-  }
+  count[0]=1;
+  istride++;
   for (i=0; i<(int)ndim; i++) {
     idx = hi[i] - lo[i];
     if (idx < 0) return 0;
@@ -5062,6 +5060,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
             GAme,stride_rem[0],stride_rem[1],stride_rem[2],nstride);
       }
       */
+      
 
       /* BJP */
       if (p_handle != -1) {
