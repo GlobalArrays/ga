@@ -426,9 +426,9 @@ void pnga_nbwait(Integer *nbhandle)
     nga_wait_internal((Integer *)nbhandle);
 } 
 
-static void ngai_puts(char *loc_base_ptr, char *pbuf,Integer *stride_loc, char *prem, Integer *stride_rem,
-		      Integer *count, Integer nstrides, Integer proc, Integer field_off, 
-		      Integer field_size, int type_size) {
+static void ngai_puts(char *loc_base_ptr, char *pbuf, int *stride_loc, char *prem, int *stride_rem,
+		      int *count, int nstrides, int proc, int field_off, 
+		      int field_size, int type_size) {
   if(field_size<0 || field_size == type_size) {
     ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,nstrides,proc);
   }
@@ -458,9 +458,9 @@ static void ngai_puts(char *loc_base_ptr, char *pbuf,Integer *stride_loc, char *
 }
 
 
-static void ngai_nbputs(char *loc_base_ptr, char *pbuf,Integer *stride_loc, char *prem, Integer *stride_rem,
-		      Integer *count, Integer nstrides, Integer proc, Integer field_off, 
-			Integer field_size, int type_size, armci_hdl_t *nbhandle) {
+static void ngai_nbputs(char *loc_base_ptr, char *pbuf,int *stride_loc, char *prem, int *stride_rem,
+		      int *count, int nstrides, int proc, int field_off, 
+			int field_size, int type_size, armci_hdl_t *nbhandle) {
   if(field_size<0 || field_size == type_size) {
     ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count,nstrides,proc,nbhandle);
   }
@@ -489,9 +489,9 @@ static void ngai_nbputs(char *loc_base_ptr, char *pbuf,Integer *stride_loc, char
   }
 }
 
-static void ngai_nbgets(char *loc_base_ptr, char *prem,Integer *stride_rem, char *pbuf, Integer *stride_loc,
-			Integer *count, Integer nstrides, Integer proc, Integer field_off, 
-			Integer field_size, int type_size, armci_hdl_t *nbhandle) {
+static void ngai_nbgets(char *loc_base_ptr, char *prem,int *stride_rem, char *pbuf, int *stride_loc,
+			int *count, int nstrides, int proc, int field_off, 
+			int field_size, int type_size, armci_hdl_t *nbhandle) {
   if(field_size<0 || field_size == type_size) {
     ARMCI_NbGetS(prem,stride_rem,pbuf,stride_loc,count,nstrides,proc,nbhandle);
   }
@@ -540,9 +540,9 @@ static void ngai_nbgets(char *loc_base_ptr, char *prem,Integer *stride_rem, char
   }
 }
 
-static void ngai_gets(char *loc_base_ptr, char *prem,Integer *stride_rem, char *pbuf, Integer *stride_loc,
-		      Integer *count, Integer nstrides, Integer proc, Integer field_off, 
-		      Integer field_size, int type_size) {
+static void ngai_gets(char *loc_base_ptr, char *prem,int *stride_rem, char *pbuf, int *stride_loc,
+		      int *count, int nstrides, int proc, int field_off, 
+		      int field_size, int type_size) {
   armci_hdl_t nbhandle;
   ARMCI_INIT_HANDLE(&nbhandle);
   ngai_nbgets(loc_base_ptr, prem, stride_rem, pbuf, stride_loc, count, nstrides, proc, 
