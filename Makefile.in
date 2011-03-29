@@ -437,7 +437,8 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	build-aux/config.guess build-aux/config.sub build-aux/depcomp \
 	build-aux/install-sh build-aux/ltmain.sh build-aux/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/armci_setup.m4 \
+	$(top_srcdir)/m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/m4/ax_sys_weak_alias.m4 \
 	$(top_srcdir)/m4/ga_ar.m4 $(top_srcdir)/m4/ga_arg_parse.m4 \
 	$(top_srcdir)/m4/ga_armci_network.m4 $(top_srcdir)/m4/ga_as.m4 \

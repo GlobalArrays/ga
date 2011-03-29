@@ -33222,8 +33222,256 @@ $as_echo "$as_me: Miscellaneous remaining setup" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: " >&5
 $as_echo "$as_me: " >&6;}
 
-# Establish the underlying network infrastructure (SOCKETS, OPENIB, etc)
-#GA_ARMCI_NETWORK
+# Establish some preprocessor symbols.
+
+case $ga_armci_network in #(
+  BGML) :
+
+
+$as_echo "#define NO_SHM 1" >>confdefs.h
+
+
+$as_echo "#define USE_MALLOC 1" >>confdefs.h
+
+
+$as_echo "#define BGML 1" >>confdefs.h
+
+     ;; #(
+  CRAY_SHMEM) :
+
+
+$as_echo "#define CLUSTER 1" >>confdefs.h
+
+
+$as_echo "#define CRAY_XT 1" >>confdefs.h
+
+
+$as_echo "#define CRAY_SHMEM 1" >>confdefs.h
+
+     ;; #(
+  DCMF) :
+
+
+$as_echo "#define NO_SHM 1" >>confdefs.h
+
+
+$as_echo "#define ARMCIX 1" >>confdefs.h
+
+
+$as_echo "#define DCMF 1" >>confdefs.h
+
+     ;; #(
+  ELAN3) :
+
+
+$as_echo "#define PTHREADS 1" >>confdefs.h
+
+
+$as_echo "#define SERVER_THREAD 1" >>confdefs.h
+
+
+$as_echo "#define _REENTRANT 1" >>confdefs.h
+
+
+$as_echo "#define ACC_SMP 1" >>confdefs.h
+
+
+$as_echo "#define QUADRICS 1" >>confdefs.h
+
+    if test x$LIBELAN_NATTACH != x; then :
+
+$as_echo "#define MULTI_CTX 1" >>confdefs.h
+
+else
+
+$as_echo "#define ALLOC_MUNMAP 1" >>confdefs.h
+
+fi
+     ;; #(
+  ELAN4) :
+
+
+$as_echo "#define PTHREADS 1" >>confdefs.h
+
+
+$as_echo "#define SERVER_THREAD 1" >>confdefs.h
+
+
+$as_echo "#define _REENTRANT 1" >>confdefs.h
+
+
+$as_echo "#define ACC_SMP 1" >>confdefs.h
+
+
+$as_echo "#define QUADRICS 1" >>confdefs.h
+
+
+$as_echo "#define DOELAN4 1" >>confdefs.h
+
+     ;; #(
+  GM) :
+
+
+$as_echo "#define PTHREADS 1" >>confdefs.h
+
+
+$as_echo "#define DATA_SERVER 1" >>confdefs.h
+
+
+$as_echo "#define ALLOW_PIN 1" >>confdefs.h
+
+
+$as_echo "#define SERVER_THREAD 1" >>confdefs.h
+
+
+$as_echo "#define _REENTRANT 1" >>confdefs.h
+
+
+$as_echo "#define GM 1" >>confdefs.h
+
+     ;; #(
+  LAPI) :
+
+
+$as_echo "#define LAPI 1" >>confdefs.h
+
+    if test x$LAPI_RDMA != x; then :
+
+$as_echo "#define ALLOW_PIN 1" >>confdefs.h
+
+
+$as_echo "#define LAPI_RDMA 1" >>confdefs.h
+
+fi
+     ;; #(
+  MELLANOX) :
+
+
+$as_echo "#define PTHREADS 1" >>confdefs.h
+
+
+$as_echo "#define DATA_SERVER 1" >>confdefs.h
+
+
+$as_echo "#define SERVER_THREAD 1" >>confdefs.h
+
+
+$as_echo "#define _REENTRANT 1" >>confdefs.h
+
+
+$as_echo "#define VAPI 1" >>confdefs.h
+
+
+$as_echo "#define ALLOW_PIN 1" >>confdefs.h
+
+
+$as_echo "#define MELLANOX 1" >>confdefs.h
+
+     ;; #(
+  MPI_SPAWN) :
+
+
+$as_echo "#define DATA_SERVER 1" >>confdefs.h
+
+
+$as_echo "#define MPI_SPAWN 1" >>confdefs.h
+
+    if test x$ARMCI_SPAWN_CRAY_XT != x; then :
+
+$as_echo "#define SPAWN_CRAY_XT 1" >>confdefs.h
+
+fi
+     ;; #(
+  OPENIB) :
+
+
+$as_echo "#define PTHREADS 1" >>confdefs.h
+
+
+$as_echo "#define DATA_SERVER 1" >>confdefs.h
+
+
+$as_echo "#define SERVER_THREAD 1" >>confdefs.h
+
+
+$as_echo "#define _REENTRANT 1" >>confdefs.h
+
+
+$as_echo "#define VAPI 1" >>confdefs.h
+
+
+$as_echo "#define ALLOW_PIN 1" >>confdefs.h
+
+
+$as_echo "#define PEND_BUFS 1" >>confdefs.h
+
+
+$as_echo "#define OPENIB 1" >>confdefs.h
+
+     ;; #(
+  PORTALS) :
+
+
+$as_echo "#define DATA_SERVER 1" >>confdefs.h
+
+
+$as_echo "#define _REENTRANT 1" >>confdefs.h
+
+
+$as_echo "#define SERVER_THREAD 1" >>confdefs.h
+
+
+$as_echo "#define CRAY_XT 1" >>confdefs.h
+
+
+$as_echo "#define PORTALS 1" >>confdefs.h
+
+     ;; #(
+  SOCKETS) :
+
+
+$as_echo "#define DATA_SERVER 1" >>confdefs.h
+
+
+$as_echo "#define SOCKETS 1" >>confdefs.h
+
+     ;; #(
+  VIA) :
+
+
+$as_echo "#define PTHREADS 1" >>confdefs.h
+
+
+$as_echo "#define DATA_SERVER 1" >>confdefs.h
+
+
+$as_echo "#define SERVER_THREAD 1" >>confdefs.h
+
+
+$as_echo "#define _REENTRANT 1" >>confdefs.h
+
+
+$as_echo "#define VIA 1" >>confdefs.h
+
+
+ ;; #(
+  *) :
+     ;;
+esac
+if test x$REPORT_SHMMAX != x; then :
+
+$as_echo "#define REPORT_SHMMAX 1" >>confdefs.h
+
+fi
+if test x$thread_safety = xyes; then :
+
+$as_echo "#define POSIX_THREADS 1" >>confdefs.h
+
+
+$as_echo "#define _REENTRANT 1" >>confdefs.h
+
+fi
+
 
 # Set up TCGMSG.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for remote shell" >&5

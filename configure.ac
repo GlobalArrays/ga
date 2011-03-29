@@ -398,8 +398,8 @@ AC_MSG_NOTICE
 AC_MSG_NOTICE([Miscellaneous remaining setup])
 AC_MSG_NOTICE
 
-# Establish the underlying network infrastructure (SOCKETS, OPENIB, etc)
-#GA_ARMCI_NETWORK
+# Establish some preprocessor symbols.
+ARMCI_SETUP
 
 # Set up TCGMSG.
 TCGMSG_REMOTE_SHELL

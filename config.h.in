@@ -1,7 +1,22 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* TODO */
+#undef ACC_SMP
+
+/* TODO */
+#undef ALLOC_MUNMAP
+
+/* TODO */
+#undef ALLOW_PIN
+
+/* Defined when using DCMF */
+#undef ARMCIX
+
 /* Define to 1 on BlueGene/L systems */
 #undef BGL
+
+/* TODO */
+#undef BGML
 
 /* Define to 1 on BlueGene/P systems */
 #undef BGP
@@ -11,6 +26,12 @@
 
 /* Define to 1 on Cray XT systems using Catamount */
 #undef CATAMOUNT
+
+/* TODO */
+#undef CLUSTER
+
+/* TODO */
+#undef CRAY_SHMEM
 
 /* Define to 1 on Cray SV1 systems */
 #undef CRAY_SV1
@@ -24,7 +45,7 @@
 /* for Gemini */
 #undef CRAY_UGNI
 
-/* Define to 1 on Cray XT systems */
+/* TODO */
 #undef CRAY_XT
 
 /* Define to 1 on Cray YMP systems */
@@ -36,8 +57,17 @@
 /* Define to 1 on Cygwin systems */
 #undef CYGWIN
 
+/* TODO */
+#undef DATA_SERVER
+
+/* Defined when using DCMF */
+#undef DCMF
+
 /* Define to 1 on DEC OSF */
 #undef DECOSF
+
+/* TODO */
+#undef DOELAN4
 
 /* enables ARMCI in MA */
 #undef ENABLE_ARMCI_MEM_OPTION
@@ -100,6 +130,9 @@
 
 /* Module command when using Fortran 90 compiler e.g. use f90_unix */
 #undef FXX_MODULE
+
+/* TODO */
+#undef GM
 
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
@@ -467,11 +500,14 @@
 /* Define to 1 on ??? systems */
 #undef INTERIX
 
-/* tcgmsg 5 requires this when using LAPI */
+/* TODO */
 #undef LAPI
 
 /* Define to 1 on 64bit IBM systems with LAPI */
 #undef LAPI64
+
+/* TODO */
+#undef LAPI_RDMA
 
 /* for Gemini */
 #undef LIBONESIDED
@@ -492,7 +528,10 @@
 /* Define to 1 on 64bit OSX systems */
 #undef MACX64
 
-/* defined to 1 when ARMCI_NETWORK=MPI_SPAWN */
+/* TODO */
+#undef MELLANOX
+
+/* TODO */
 #undef MPI_SPAWN
 
 /* Use MPI for messaging */
@@ -509,6 +548,9 @@
 
 /* Use TCGMSG over MPI for messaging */
 #undef MSG_COMMS_TCGMSGMPI
+
+/* TODO */
+#undef MULTI_CTX
 
 /* Define to 1 if assertions should be disabled. */
 #undef NDEBUG
@@ -527,6 +569,12 @@
 
 /* Set some mallopt options */
 #undef NOUSE_MMAP
+
+/* Disables use of shared memory */
+#undef NO_SHM
+
+/* TODO */
+#undef OPENIB
 
 /* Name of package */
 #undef PACKAGE
@@ -549,8 +597,26 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* TODO */
+#undef PEND_BUFS
+
+/* TODO */
+#undef PORTALS
+
+/* TODO */
+#undef POSIX_THREADS
+
 /* define to the name of the program name global variable */
 #undef PROGNAME
+
+/* TODO */
+#undef PTHREADS
+
+/* TODO */
+#undef QUADRICS
+
+/* TODO */
+#undef REPORT_SHMMAX
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
@@ -563,6 +629,9 @@
 
 /* Define to the type of arg 5 for `select'. */
 #undef SELECT_TYPE_ARG5
+
+/* TODO */
+#undef SERVER_THREAD
 
 /* Define to 1 on ??? systems */
 #undef SGI
@@ -609,11 +678,17 @@
 /* The size of `void*', as computed by sizeof. */
 #undef SIZEOF_VOIDP
 
+/* TODO */
+#undef SOCKETS
+
 /* Define to 1 on Solaris systems */
 #undef SOLARIS
 
 /* Define to 1 on 64bit Solaris systems */
 #undef SOLARIS64
+
+/* TODO */
+#undef SPAWN_CRAY_XT
 
 /* This is always defined. Dunno why. */
 #undef STATS
@@ -638,6 +713,9 @@
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
+
+/* TODO */
+#undef USE_MALLOC
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
@@ -664,11 +742,17 @@
 /* define when using vampir */
 #undef USE_VAMPIR
 
+/* TODO */
+#undef VAPI
+
 /* This is always defined. Dunno why. */
 #undef VERIFY
 
 /* Version number of package */
 #undef VERSION
+
+/* TODO */
+#undef VIA
 
 /* Define to 1 if on MINIX. */
 #undef _MINIX
@@ -679,6 +763,9 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
+
+/* TODO */
+#undef _REENTRANT
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
