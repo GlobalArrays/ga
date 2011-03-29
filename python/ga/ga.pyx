@@ -19,6 +19,7 @@ DEF EXCLUSIVE = 0
 
 np.import_array()
 initialize()
+_initialized = None
 
 TYPE_BASE  = 1000
 C_CHAR     = (TYPE_BASE + 0)
@@ -1848,13 +1849,22 @@ def _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
     shape = hi_nd-lo_nd+1
     ld_nd = shape[1:]
+    if skip is None:
+        skip_nd = None
+    else:
+        skip_nd = _inta64(skip)
     if buffer is None:
         buffer = np.ndarray(shape, dtype=dtype)
     else:
-        if buffer.size != np.prod(shape):
+        bufsize = None
+        if skip_nd is None:
+            bufsize = np.prod(shape)
+        else:
+            bufsize = np.prod((hi_nd-lo_nd)/skip_nd+1)
+        if buffer.size != bufsize:
             raise ValueError, ('buffer size does not match shape :: '
-                    'buffer.size=%s != np.prod(shape)=%s' % (
-                    buffer.size, np.prod(shape)))
+                    'buffer.size=%s != expected=%s' % (
+                    buffer.size, bufsize))
         if buffer.dtype != dtype:
             raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
                     buffer.dtype, dtype)
@@ -1867,7 +1877,6 @@ def _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
                 <void*>buffer.data, <int64_t*>ld_nd.data)
         return buffer
     elif skip is not None:
-        skip_nd = _inta64(skip)
         NGA_Strided_get64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <int64_t*>skip_nd.data,
                 <void*>buffer.data, <int64_t*>ld_nd.data)
@@ -2015,6 +2024,7 @@ def initialize():
     GA_Initialize()
     GA_Register_stack_memory(_gapy_malloc, _gapy_free)
     atexit.register(terminate)
+    _initialized = True
 
 def initialize_ltd(size_t limit):
     """Allocates and initializes internal data structures and sets limit for
@@ -2032,6 +2042,11 @@ def initialize_ltd(size_t limit):
 
     """
     GA_Initialize_ltd(limit)
+    _initialized = True
+
+def initialized():
+    """Returns whether ga has been initialized."""
+    return _initialized
 
 def inquire(int g_a):
     cdef int gtype
@@ -2758,7 +2773,7 @@ def periodic_get(int g_a, lo=None, hi=None, np.ndarray buffer=None):
     :returns: The local array buffer.
     
     """
-    _get_common(g_a, lo, hi, buffer, False, True)
+    return _get_common(g_a, lo, hi, buffer, False, True)
 
 def periodic_put(int g_a, buffer, lo=None, hi=None):
     """Periodic version of ga.put.
@@ -4014,7 +4029,7 @@ def strided_get(int g_a, lo=None, hi=None, skip=None, np.ndarray buffer=None):
     :returns: The local array buffer.
     
     """
-    _get_common(g_a, lo, hi, buffer, False, False, skip)
+    return _get_common(g_a, lo, hi, buffer, False, False, skip)
 
 def strided_put(int g_a, buffer, lo=None, hi=None, skip=None):
     """Strided version of ga.put.
@@ -4069,6 +4084,7 @@ def terminate():
     This is a collective operation. 
 
     """
+    _initialized = False
     GA_Terminate()
 
 def total_blocks(int g_a):

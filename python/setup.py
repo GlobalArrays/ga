@@ -74,8 +74,10 @@ library_dirs.extend(linalg_library)
 libraries.extend(linalg_lib)
 
 ga_ga_sources = ["ga/ga.c"]
+ga_gain_sources = ["ga/gain.c"]
 if cythonize:
     ga_ga_sources = ["ga/ga.pyx"]
+    ga_gain_sources = ["ga/gain.pyx"]
 
 include_dirs.append(".")
 
@@ -86,7 +88,14 @@ ext_modules = [
         include_dirs=include_dirs,
         library_dirs=library_dirs,
         libraries=libraries
-    )
+    ),
+    Extension(
+        name="ga.gain",
+        sources=ga_gain_sources,
+        include_dirs=include_dirs,
+        library_dirs=library_dirs,
+        libraries=libraries
+    ),
 ]
 
 cmdclass = {}
