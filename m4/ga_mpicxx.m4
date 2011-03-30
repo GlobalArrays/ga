@@ -24,6 +24,7 @@
 #  sxc++    NEC SX
 #  openCC   AMD's x86 open64
 #  sunCC    Sun's Studio
+#  crayCC   Cray
 #
 # Known MPI C++ compilers
 #  mpic++
@@ -59,7 +60,7 @@ AS_IF([test x$with_mpi_wrappers = xyes],
         [AS_IF([test "x$ga_save_CXX" != x],
             [AC_MSG_WARN([MPI compilers desired but CXX is set, ignoring])
              AC_MSG_WARN([Perhaps you mean to set MPICXX instead?])])])])
-ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
+ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC crayCC g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
 ga_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ mpiFCC CC"
 AS_IF([test x$with_mpi_wrappers = xyes],
     [CXX_TO_TEST="$ga_mpicxx_pref $ga_mpicxx"],

@@ -19,6 +19,7 @@
 #  fcc      Fujitsu
 #  opencc   AMD's x86 open64
 #  suncc    Sun's Studio
+#  craycc   Cray
 #
 # Known MPI C compilers:
 #  mpicc
@@ -52,7 +53,7 @@ AS_IF([test x$with_mpi_wrappers = xyes],
         [AS_IF([test "x$ga_save_CC" != x],
             [AC_MSG_WARN([MPI compilers desired but CC is set, ignoring])
              AC_MSG_WARN([Perhaps you meant to set MPICC instead?])])])])
-ga_cc="bgxlc_r bgxlc xlc_r xlc pgcc pathcc icc sxcc fcc opencc suncc gcc cc ecc cl ccc"
+ga_cc="bgxlc_r bgxlc xlc_r xlc pgcc pathcc icc sxcc fcc opencc suncc craycc gcc cc ecc cl ccc"
 ga_mpicc="mpicc mpixlc_r mpixlc hcc mpxlc_r mpxlc sxmpicc mpifcc mpgcc mpcc cmpicc cc"
 AS_IF([test x$with_mpi_wrappers = xyes],
     [CC_TO_TEST="$ga_mpicc_pref $ga_mpicc"],

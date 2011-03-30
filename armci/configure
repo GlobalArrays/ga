@@ -4625,7 +4625,7 @@ $as_echo "$as_me: WARNING: Perhaps you meant to set MPICC instead?" >&2;}
 fi
 fi
 fi
-ga_cc="bgxlc_r bgxlc xlc_r xlc pgcc pathcc icc sxcc fcc opencc suncc gcc cc ecc cl ccc"
+ga_cc="bgxlc_r bgxlc xlc_r xlc pgcc pathcc icc sxcc fcc opencc suncc craycc gcc cc ecc cl ccc"
 ga_mpicc="mpicc mpixlc_r mpixlc hcc mpxlc_r mpxlc sxmpicc mpifcc mpgcc mpcc cmpicc cc"
 if test x$with_mpi_wrappers = xyes; then :
   CC_TO_TEST="$ga_mpicc_pref $ga_mpicc"
@@ -5459,7 +5459,7 @@ case $wrapped in #(
   *_r) :
     compilers="bgxlc_r xlc_r" ;; #(
   *) :
-    compilers="bgxlc xlc pgcc pathcc icc sxcc fcc opencc suncc gcc ecc cl ccc cc" ;; #(
+    compilers="bgxlc xlc pgcc pathcc icc sxcc fcc opencc suncc craycc gcc ecc cl ccc cc" ;; #(
   *) :
      ;;
 esac
@@ -5472,7 +5472,7 @@ if test "${ga_cv_mpic_naked+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
 
-base="`$wrapped -show | sed 's/[ \t].*$//' | head -1`"
+base="`$wrapped -show 2>/dev/null | sed 's/[ \t].*$//' | head -1`"
 ga_save_CC="$CC"
 CC="$base"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -10629,7 +10629,7 @@ $as_echo "$as_me: WARNING: Perhaps you mean to set MPICXX instead?" >&2;}
 fi
 fi
 fi
-ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
+ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC crayCC g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
 ga_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ mpiFCC CC"
 if test x$with_mpi_wrappers = xyes; then :
   CXX_TO_TEST="$ga_mpicxx_pref $ga_mpicxx"
@@ -11122,7 +11122,7 @@ case $wrapped in #(
   *_r) :
     compilers="bgxlC_r xlC_r" ;; #(
   *) :
-    compilers="icpc pgCC pathCC sxc++ xlC bgxlC openCC sunCC g++ c++ gpp aCC cxx cc++ cl.exe FCC KCC RCC CC" ;; #(
+    compilers="icpc pgCC pathCC sxc++ xlC bgxlC openCC sunCC crayCC g++ c++ gpp aCC cxx cc++ cl.exe FCC KCC RCC CC" ;; #(
   *) :
      ;;
 esac
@@ -11135,7 +11135,7 @@ if test "${ga_cv_mpicxx_naked+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
 
-base="`$wrapped -show | sed 's/[ \t].*$//' | head -1`"
+base="`$wrapped -show 2>/dev/null | sed 's/[ \t].*$//' | head -1`"
 ga_save_CXX="$CXX"
 CXX="$base"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -11949,7 +11949,7 @@ fi
 ga_mpif95="mpif95 mpxlf95_r mpxlf95 ftn"
 ga_mpif90="mpif90 mpxlf90_r mpxlf90 mpf90 cmpif90c sxmpif90"
 ga_mpif77="mpif77 hf77 mpxlf_r mpxlf mpifrt mpf77 cmpifc"
-ga_f95="xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc openf95 sunf95 gfortran lf95 ftn"
+ga_f95="xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc openf95 sunf95 crayftn gfortran lf95 ftn"
 ga_f90="xlf90 f90 pgf90 pghpf pathf90 epcf90 sxf90 openf90 sunf90"
 ga_f77="xlf f77 frt pgf77 pathf77 g77 cf77 fort77 fl32 af77"
 if test x$with_mpi_wrappers = xyes; then :
@@ -12269,7 +12269,7 @@ case $wrapped in #(
   *_r) :
     compilers="bgxlf95_r xlf95_r bgxlf90_r xlf90_r bgxlf_r xlf_r" ;; #(
   *) :
-    compilers="gfortran g95 bgxlf95 xlf95 f95 fort ifort ifc efc pgf95 pathf95 lf95 openf95 sunf95 bgxlf90 xlf90 f90 pgf90 pathf90 pghpf epcf90 sxf90 openf90 sunf90 g77 bgxlf xlf f77 frt pgf77 pathf77 cf77 fort77 fl32 af77" ;; #(
+    compilers="gfortran g95 bgxlf95 xlf95 f95 fort ifort ifc efc pgf95 pathf95 lf95 openf95 sunf95 crayftn bgxlf90 xlf90 f90 pgf90 pathf90 pghpf epcf90 sxf90 openf90 sunf90 g77 bgxlf xlf f77 frt pgf77 pathf77 cf77 fort77 fl32 af77" ;; #(
   *) :
      ;;
 esac
@@ -12282,7 +12282,7 @@ if test "${ga_cv_mpif77_naked+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
 
-base="`$wrapped -show | sed 's/[ \t].*$//' | head -1`"
+base="`$wrapped -show 2>/dev/null | sed 's/[ \t].*$//' | head -1`"
 ga_save_F77="$F77"
 F77="$base"
 cat > conftest.$ac_ext <<_ACEOF

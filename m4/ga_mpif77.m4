@@ -3,8 +3,6 @@
 # If desired, replace F77 with MPIF77 while searching for a Fortran 77 compiler.
 # We look for 95/90 compilers first so that we can control the INTEGER size.
 # The search order changes depending on the TARGET.
-# This replaces AC_PROG_F77 because we must verify that the compiler works
-# and if not the search continues.
 #
 # NOTE: We prefer "FC" and "FCFLAGS" over "F77" and "FFLAGS", respectively.
 # But our Fortran source is only Fortran 77.  If FC/MPIFC is set, it is
@@ -27,6 +25,7 @@
 #  pathf95      PathScale
 #  openf95      AMD's x86 open64
 #  sunf95       Sun's Studio
+#  crayftn      Cray
 #
 # Known MPI Fortran 95 compilers:
 #  cmpifc       ?? not sure if this is even F95
@@ -105,7 +104,7 @@ AS_IF([test x$with_mpi_wrappers = xyes],
 ga_mpif95="mpif95 mpxlf95_r mpxlf95 ftn"
 ga_mpif90="mpif90 mpxlf90_r mpxlf90 mpf90 cmpif90c sxmpif90"
 ga_mpif77="mpif77 hf77 mpxlf_r mpxlf mpifrt mpf77 cmpifc"
-ga_f95="xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc openf95 sunf95 gfortran lf95 ftn"
+ga_f95="xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc openf95 sunf95 crayftn gfortran lf95 ftn"
 ga_f90="xlf90 f90 pgf90 pghpf pathf90 epcf90 sxf90 openf90 sunf90"
 ga_f77="xlf f77 frt pgf77 pathf77 g77 cf77 fort77 fl32 af77"
 AS_IF([test x$with_mpi_wrappers = xyes],

@@ -65,22 +65,22 @@ wrapped="$_AC_CC"
 AC_LANG_CASE(
 [C], [AS_CASE([$wrapped],
     [*_r],  [compilers="bgxlc_r xlc_r"],
-    [*],    [compilers="bgxlc xlc pgcc pathcc icc sxcc fcc opencc suncc gcc ecc cl ccc cc"])
+    [*],    [compilers="bgxlc xlc pgcc pathcc icc sxcc fcc opencc suncc craycc gcc ecc cl ccc cc"])
 ],
 [C++], [AS_CASE([$wrapped],
     [*_r],  [compilers="bgxlC_r xlC_r"],
-    [*],    [compilers="icpc pgCC pathCC sxc++ xlC bgxlC openCC sunCC g++ c++ gpp aCC cxx cc++ cl.exe FCC KCC RCC CC"])
+    [*],    [compilers="icpc pgCC pathCC sxc++ xlC bgxlC openCC sunCC crayCC g++ c++ gpp aCC cxx cc++ cl.exe FCC KCC RCC CC"])
 ],
 [Fortran 77], [AS_CASE([$wrapped],
     [*_r],  [compilers="bgxlf95_r xlf95_r bgxlf90_r xlf90_r bgxlf_r xlf_r"],
-    [*],    [compilers="gfortran g95 bgxlf95 xlf95 f95 fort ifort ifc efc pgf95 pathf95 lf95 openf95 sunf95 bgxlf90 xlf90 f90 pgf90 pathf90 pghpf epcf90 sxf90 openf90 sunf90 g77 bgxlf xlf f77 frt pgf77 pathf77 cf77 fort77 fl32 af77"])
+    [*],    [compilers="gfortran g95 bgxlf95 xlf95 f95 fort ifort ifc efc pgf95 pathf95 lf95 openf95 sunf95 crayftn bgxlf90 xlf90 f90 pgf90 pathf90 pghpf epcf90 sxf90 openf90 sunf90 g77 bgxlf xlf f77 frt pgf77 pathf77 cf77 fort77 fl32 af77"])
     ],
 [Fortran], [
 ])
 AS_VAR_PUSHDEF([ga_save_comp], [ga_save_[]_AC_CC[]])
 AS_VAR_PUSHDEF([ga_cv_mpi_naked], [ga_cv_mpi[]_AC_LANG_ABBREV[]_naked])
 AC_CACHE_CHECK([for base $wrapped compiler], [ga_cv_mpi_naked], [
-base="`$wrapped -show | sed 's/@<:@ \t@:>@.*@S|@//' | head -1`"
+base="`$wrapped -show 2>/dev/null | sed 's/@<:@ \t@:>@.*@S|@//' | head -1`"
 ga_save_comp="$_AC_CC"
 _AC_CC="$base"
 AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])], [ga_cv_mpi_naked=$base])
