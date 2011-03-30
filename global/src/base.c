@@ -660,7 +660,7 @@ void pnga_initialize_ltd(Integer mem_limit)
 /*           _type != C_LONG &&_type != C_LONGLONG)\ */
 /*          pnga_error("ttype not yet supported ",  _type) */
 
-#define gam_checktype(_type) GAvalidtypeM(_type)
+#define gam_checktype(_type) if(!GAvalidtypeM(_type))pnga_error("type not yet supported", (_type))
 
 #define gam_checkdim(ndim, dims)\
 {\

@@ -246,19 +246,21 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
           desc[jcnt].bytes = (int)((long*)buf_size)[offset_sz];
         }
         desc[jcnt].ptr_array_len = 1;
-        printf("p[%d] nelems: %d index[%d,%d] bytes: %d src_ptr: %p dst_ptr: %p\n",pnga_nodeid(),
-            nelems,index[1]+plo[1]-1,index[0]+plo[0]-1,desc[jcnt].bytes,desc[jcnt].src_ptr_array,
-            desc[jcnt].dst_ptr_array);
+        printf("p[%ld] nelems: %ld index[%ld,%ld] bytes: %d src_ptr: %p dst_ptr: %p\n",
+                (long)pnga_nodeid(), (long)nelems,
+                (long)(index[1]+plo[1]-1), (long)(index[0]+plo[0]-1),
+                desc[jcnt].bytes, desc[jcnt].src_ptr_array,
+                desc[jcnt].dst_ptr_array);
         jcnt++;
       } else {
-        printf("p[%d] null pointer at i: %d j: %d\n",pnga_nodeid(),
-            index[0]+plo[0],index[1]+plo[1]);
+        printf("p[%ld] null pointer at i: %ld j: %ld\n", (long)pnga_nodeid(),
+                (long)(index[0]+plo[0]), (long)(index[1]+plo[1]));
       }
     }
-  printf("p[%d] Got to 5\n",pnga_nodeid());
+  printf("p[%ld] Got to 5\n",(long)pnga_nodeid());
   if (jcnt > 0) {
     rc = ARMCI_GetV(desc, (int)jcnt, (int)p);
-printf("p[%d] Got to 6\n",pnga_nodeid());
+printf("p[%ld] Got to 6\n",(long)pnga_nodeid());
     if (rc) pnga_error("ARMCI_GetV failure in gp_get",rc);
   }
 #if 0
@@ -267,5 +269,5 @@ printf("p[%d] Got to 6\n",pnga_nodeid());
     free(rem_ptr);
     free(desc);
   }
-  printf("p[%d] Got to 7\n",pnga_nodeid());
+  printf("p[%ld] Got to 7\n",(long)pnga_nodeid());
 }

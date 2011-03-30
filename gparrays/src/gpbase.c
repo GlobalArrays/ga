@@ -240,11 +240,11 @@ void pgp_debug(Integer g_p)
     printf("Got to 2\n");
   if (pnga_nodeid() == 0) {
     size = idim*jdim;
-    printf("p[%d] Got to 3 size: %d\n",pnga_nodeid(),size);
+    printf("p[%ld] Got to 3 size: %ld\n",(long)pnga_nodeid(),(long)size);
     ptr = (int*)malloc(size*sizeof(int));
-    printf("p[%d] Got to 4\n",pnga_nodeid());
+    printf("p[%ld] Got to 4\n",(long)pnga_nodeid());
     pnga_get(GP[handle].g_size_array, lo, hi, ptr, &ld);
-    printf("p[%d] Got to 5\n",pnga_nodeid());
+    printf("p[%ld] Got to 5\n",(long)pnga_nodeid());
     size = 0;
     for (i=0; i<idim; i++) {
       for (j=0; j<jdim; j++) {
@@ -253,7 +253,7 @@ void pgp_debug(Integer g_p)
       }
       printf("\n");
     }
-    printf("total size of array: %d\n",size);
+    printf("total size of array: %ld\n",(long)size);
     free(ptr);
   }
 }
@@ -309,8 +309,9 @@ void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Intege
   }
   pnga_access_ptr(GP[handle].g_size_array,subscript,subscript,&gp_ptr,ld);
   *((int*)gp_ptr) = size;
-  printf("p[%d] (internal) size %d at location [%d:%d]\n",pnga_nodeid(),
-      *((int*)gp_ptr),subscript[0],subscript[1]);
+  printf("p[%ld] (internal) size %d at location [%ld:%ld]\n",
+          (long)pnga_nodeid(), *((int*)gp_ptr),
+          (long)subscript[0],(long)subscript[1]);
   pnga_release_update(GP[handle].g_size_array, subscript, subscript);
   pnga_access_ptr(GP[handle].g_ptr_array,subscript,subscript,&gp_ptr,ld);
   *((GP_INT*)gp_ptr) = (GP_INT)ptr;

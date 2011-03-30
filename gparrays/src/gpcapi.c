@@ -55,7 +55,7 @@ int GP_Create_handle()
   return (int)wgp_create_handle();
 }
 
-int GP_Debug(int g_p)
+void GP_Debug(int g_p)
 {
   Integer ag_p;
   ag_p = (Integer)g_p;
