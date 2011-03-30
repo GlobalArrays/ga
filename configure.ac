@@ -196,10 +196,9 @@ AC_LANG_PUSH([C++])
 ga_save_CXXFLAGS="$CXXFLAGS"
 GA_PROG_MPICXX
 CXXFLAGS="$ga_save_CXXFLAGS"
+AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 
 AS_IF([test "x$enable_cxx" = xyes], [
-
-AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 
 AX_COMPILER_VENDOR
 AS_IF([test "x$with_mpi" != xno], [GA_MPICXX_TEST])
@@ -245,14 +244,13 @@ AC_LANG_PUSH([Fortran 77])
 ga_save_FFLAGS="$FFLAGS"
 GA_PROG_MPIF77
 FFLAGS="$ga_save_FFLAGS"
+AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 
 # If Fortran 77 compiler was not found, we disable support for it.
 AS_IF([test "x$F77" = x], [enable_f77=no])
 
 # Perform Fortran 77 tests only if enabled.
 if test "x$enable_f77" = xyes; then :
-
-AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 
 AX_COMPILER_VENDOR
 # Perform a simple link test for MPI.
@@ -380,16 +378,19 @@ AC_MSG_NOTICE
 # this works around a bug where libtool sadly relies on matching compiler
 # names in order to determine features (Fortran only, I think)
 # libtool doesn't recognize MPI compiler names, nor should it
-AS_IF([test x$with_mpi_wrappers = xyes],
-    [AS_IF([test "x$ga_cv_mpif77_naked" != x],
-           [ga_save_F77="$F77"; F77="$ga_cv_mpif77_naked"])])
+AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP_PUSH])
 GA_AR
 LT_INIT([disable-shared])
 # and now that that's over, put the MPI compilers back
 # also, the above hack incorrectly sets the base compiler as the linker
 AS_IF([test x$with_mpi_wrappers = xyes],
-    [AS_IF([test "x$ga_cv_mpif77_naked" != x],
-           [F77="$ga_save_F77"; compiler_F77="$ga_save_F77"])])
+    [GA_MPI_UNWRAP_POP
+     compiler="$CC"
+     LTCC="$CC"
+     lt_save_CC="$CC"
+     compiler_DEFAULT="$CC"
+     compiler_CXX="$CXX"
+     compiler_F77="$F77"])
 
 ###############################################################################
 # Remaining setup -- some tests, some individual components

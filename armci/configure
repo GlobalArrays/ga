@@ -11023,10 +11023,6 @@ fi
 
 CXXFLAGS="$ga_save_CXXFLAGS"
 
-
-if test "x$enable_cxx" = xyes; then :
-
-
 if test x$with_mpi_wrappers = xyes; then :
 
 # Find perl.
@@ -11311,6 +11307,9 @@ fi
 rm -f inside.pl
 
 fi
+
+if test "x$enable_cxx" = xyes; then :
+
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C++ compiler vendor" >&5
@@ -12171,15 +12170,6 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
 FFLAGS="$ga_save_FFLAGS"
 
-# If Fortran 77 compiler was not found, we disable support for it.
-if test "x$F77" = x; then :
-  enable_f77=no
-fi
-
-# Perform Fortran 77 tests only if enabled.
-if test "x$enable_f77" = xyes; then :
-
-
 if test x$with_mpi_wrappers = xyes; then :
 
 # Find perl.
@@ -12458,6 +12448,14 @@ fi
 rm -f inside.pl
 
 fi
+
+# If Fortran 77 compiler was not found, we disable support for it.
+if test "x$F77" = x; then :
+  enable_f77=no
+fi
+
+# Perform Fortran 77 tests only if enabled.
+if test "x$enable_f77" = xyes; then :
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran 77 compiler vendor" >&5
@@ -16963,9 +16961,24 @@ $as_echo "$as_me: " >&6;}
 # names in order to determine features (Fortran only, I think)
 # libtool doesn't recognize MPI compiler names, nor should it
 if test x$with_mpi_wrappers = xyes; then :
-  if test "x$ga_cv_mpif77_naked" != x; then :
-  ga_save_F77="$F77"; F77="$ga_cv_mpif77_naked"
+
+ga_mpi_unwrap_push_save_CC="$CC"
+ga_mpi_unwrap_push_save_CXX="$CXX"
+ga_mpi_unwrap_push_save_F77="$F77"
+ga_mpi_unwrap_push_save_FC="$FC"
+if test "x$ga_cv_mpic_naked"   != x; then :
+   CC="$ga_cv_mpic_naked"
 fi
+if test "x$ga_cv_mpicxx_naked" != x; then :
+  CXX="$ga_cv_mpicxx_naked"
+fi
+if test "x$ga_cv_mpif77_naked" != x; then :
+  F77="$ga_cv_mpif77_naked"
+fi
+if test "x$ga_cv_mpifc_naked"  != x; then :
+   FC="$ga_cv_mpifc_naked"
+fi
+
 fi
 
 
@@ -30072,9 +30085,18 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # and now that that's over, put the MPI compilers back
 # also, the above hack incorrectly sets the base compiler as the linker
 if test x$with_mpi_wrappers = xyes; then :
-  if test "x$ga_cv_mpif77_naked" != x; then :
-  F77="$ga_save_F77"; compiler_F77="$ga_save_F77"
-fi
+
+ CC="$ga_mpi_unwrap_push_save_CC"
+CXX="$ga_mpi_unwrap_push_save_CXX"
+F77="$ga_mpi_unwrap_push_save_F77"
+ FC="$ga_mpi_unwrap_push_save_FC"
+
+     compiler="$CC"
+     LTCC="$CC"
+     lt_save_CC="$CC"
+     compiler_DEFAULT="$CC"
+     compiler_CXX="$CXX"
+     compiler_F77="$F77"
 fi
 
 ###############################################################################
