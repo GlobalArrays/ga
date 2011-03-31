@@ -32,13 +32,11 @@ volatile int armcix_advance_active;
 void *armcix_advance(void * dummy)
 {
     DCMF_CriticalSection_enter (0);
-    //fprintf(stdout,"entered armcix_advance\n");
     while (armcix_advance_active)
     {
         DCMF_Messager_advance (0);
         DCMF_CriticalSection_cycle (0);
     }
-    //fprintf(stdout,"exited armcix_advance\n");
     DCMF_CriticalSection_exit(0); 
 }
 
@@ -318,7 +316,7 @@ int ARMCIX_Init ()
 
   /* MPI has to be initialized for the next call to work */
   MPI_Initialized(&initialized);
-  assert(initialized);
+  assert(initialized==1);
 
   /* MPI must be running in MPI_THREAD_MULTIPLE mode for ARMCI to work on BGP */
   MPI_Query_thread(&provided);
