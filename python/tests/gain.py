@@ -44,8 +44,10 @@ results = []
 def foo(module):
     if not me: print "using module %s" % module
     d = module.arange(100, dtype=module.float32)
-    d_lower = d[:50:2]
-    d_upper = d[50::2]
+    #d_lower = d[:50:2]
+    d_lower = d[49::-2]
+    #d_upper = d[99:49:-2]
+    d_upper = d[50:100:2]
     if not me: print d_lower
     if not me: print d_upper
     e = module.sin(d_lower,d_upper)

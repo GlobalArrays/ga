@@ -1,5 +1,9 @@
 """Contains index- and slice-related operations needed for bookkeeping."""
 
+def print_debug(s):
+    if False:
+        print s
+
 def is_canonical_slice(sliceobj):
     """Return True if the slice instance does not contain None."""
     return (sliceobj.start is not None
@@ -260,8 +264,9 @@ def subindex(sliceobj, lo, hi):
     slice(5, 9, 2)
 
     """
+    new_start = 0
+    new_stop = 0
     if sliceobj.step > 0:
-        new_start = 0
         if sliceobj.start >= hi:
             raise IndexError, "start >= hi (out of bounds)"
         elif sliceobj.start >= lo: # start < hi is implied
@@ -272,16 +277,13 @@ def subindex(sliceobj, lo, hi):
             while new_start < lo:
                 guess += 1
                 new_start = guess*sliceobj.step + sliceobj.start
-        new_stop = 0
         if sliceobj.stop <= lo:
             raise IndexError, "stop <= lo (out of bounds)"
         elif sliceobj.stop <= hi: # lo < stop is implied
             new_stop = sliceobj.stop
         else: # lo < hi < stop is implied
             new_stop = hi # this should be good enough
-        return slice(new_start, new_stop, sliceobj.step)
     else:
-        new_start = 0 
         if sliceobj.start < lo:
             raise IndexError, "negative step, start < lo (out of bounds)"
         elif sliceobj.start < hi:
@@ -292,14 +294,15 @@ def subindex(sliceobj, lo, hi):
             while new_start >= hi:
                 guess += 1
                 new_start = guess*sliceobj.step + sliceobj.start
-        new_stop = 0
         if sliceobj.stop >= hi:
             raise IndexError, "negative step, stop >= hi (out of bounds)"
         elif sliceobj.stop >= (lo-1):
             new_stop = sliceobj.stop
         else:
             new_stop = lo-1 # this should be good enough
-        return slice(new_start, new_stop, sliceobj.step)
+    if length(new_start, new_stop, sliceobj.step) <= 0:
+        raise IndexError, "slice arithmetic resulted in 0 length"
+    return slice(new_start, new_stop, sliceobj.step)
 
 def access_slice(global_slice, lo, hi):
     """Converts from global_slice to a local slice appropriate for ga.access().
@@ -309,6 +312,8 @@ def access_slice(global_slice, lo, hi):
 
     """
     result = calc_index_lohi(global_slice, lo, hi)
+    print_debug("![?] in access_slice(%s,%s,%s) calc_index_lohi=%s" % (
+            global_slice, lo, hi, result))
     # None as a value in the global_slice is otherwise ignored.
     item_key = []
     idx = 0
@@ -317,12 +322,19 @@ def access_slice(global_slice, lo, hi):
             item_key.append(op-lo[idx])
             idx += 1
         elif isinstance(op, slice):
-            item_key.append(slice(op.start-lo[idx], op.stop-lo[idx], op.step))
+            start = op.start-lo[idx]
+            stop = op.stop-lo[idx]
+            # if start or stop are negative after translation replace with None
+            if start < 0: start = None
+            if stop < 0: stop = None
+            item_key.append(slice(start, stop, op.step))
             idx += 1
         elif op is None:
             pass
         else:
             raise ValueError, "global_slice contained unknown object"
+    print_debug("![?] access_slice(%s,%s,%s)=%s" % (
+            global_slice, lo, hi, item_key))
     return item_key
 
 def slicelength(sliceobj):
@@ -365,8 +377,8 @@ def get_slice(global_slice, lo, hi):
 
     """
     restricted_slice = calc_index_lohi(global_slice, lo, hi)
-    #print "![?] in get_slice(%s,%s,%s) restricted_slice=%s" % (
-    #        global_slice, lo, hi, restricted_slice)
+    print_debug("![?] in get_slice(%s,%s,%s) restricted_slice=%s" % (
+            global_slice, lo, hi, restricted_slice))
     # None as a value in the global_slice is otherwise ignored.
     item_key = []
     idx = 0
@@ -382,7 +394,8 @@ def get_slice(global_slice, lo, hi):
             pass
         else:
             raise ValueError, "global_slice contained unknown object"
-    #print "![?] get_slice(%s,%s,%s)=%s" % (global_slice, lo, hi, item_key)
+    print_debug("![?] get_slice(%s,%s,%s)=%s" % (
+            global_slice, lo, hi, item_key))
     return item_key
 
 if __name__ == '__main__':

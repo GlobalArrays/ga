@@ -192,9 +192,9 @@ class ndarray(object):
             self.handle = base.handle
             self.global_slice = base.global_slice
             self._strides = strides
-            print_sync("view: handle=%s type=%s shape=%s distribution=%s"%(
-                self.handle, self._dtype, self._shape,
-                str(ga.distribution(self.handle))))
+            print_debug("![%d] view: hndl=%s typ=%s shp=%s dstrbtn=%s"%(
+                    me, self.handle, self._dtype, self._shape,
+                    str(ga.distribution(self.handle))))
 
     def __del__(self):
         if self.base is None:
@@ -205,47 +205,70 @@ class ndarray(object):
     ################################################################
     ### ndarray methods added for Global Arrays
     ################################################################
+    def owns(self):
+        lo,hi = ga.distribution(self.handle)
+        return np.all(hi>=0)
+
     def access(self):
         """Access the local array. Return None if no data is owned."""
-        a = ga.access(self.handle)
-        if a is not None:
+        if self.owns():
             lo,hi = ga.distribution(self.handle)
+            access_slice = None
             try:
-                return a[util.access_slice(self.global_slice, lo, hi)]
+                access_slice = util.access_slice(self.global_slice, lo, hi)
             except IndexError:
-                return None
-        else:
-            return None
+                pass
+            if access_slice:
+                a = ga.access(self.handle)
+                print_sync("ndarray.access(%s) shape=%s" % (
+                        self.handle, a.shape))
+                ret = a[access_slice]
+                print_debug("![%d] a[access_slice].shape=%s" % (me,ret.shape))
+                return ret
+        print_sync("ndarray.access None")
+        return None
 
     def get(self):
         """Get remote copy of ndarray based on current global_slice."""
         # We must translate global_slice into a strided get
-        #print "![%d] inside gainarray.get()" % me
-        #print "![%d] self.global_slice = %s" % (me,self.global_slice)
+        print_debug("![%d] inside gainarray.get()" % me)
+        print_debug("![%d] self.global_slice = %s" % (me,self.global_slice))
         shape = util.slices_to_shape(self.global_slice)
+        print_debug("![%d] inside gainarray.get() shape=%s" % (me,shape))
         nd_buffer = np.zeros(shape, dtype=self.dtype)
         _lo = []
         _hi = []
         _skip = []
-        new_slice = []
+        adjust = []
         for item in self.global_slice:
             if isinstance(item, slice):
                 if item.step < 0:
-                    raise NotImplementedError, "TODO step < 0 strided get"
-                _lo.append(item.start)
-                _hi.append(item.stop)
-                _skip.append(item.step)
+                    adjust.append(slice(None,None,-1))
+                    length = util.slicelength(item)-1
+                    _lo.append(item.step*length + item.start)
+                    _hi.append(item.start+1)
+                    _skip.append(-item.step)
+                else:
+                    adjust.append(slice(0,None,None))
+                    _lo.append(item.start)
+                    _hi.append(item.stop)
+                    _skip.append(item.step)
             elif isinstance(item, (int,long)):
                 _lo.append(item)
                 _hi.append(item+1)
                 _skip.append(1)
             elif item is None:
-                pass
+                adjust.append(None)
             else:
                 raise IndexError, "invalid index item"
-        #print "![%d] ga.strided_get(%s, %s, %s, %s, nd_buffer)" % (
-        #        me, self.handle, _lo, _hi, _skip)
-        return ga.strided_get(self.handle, _lo, _hi, _skip, nd_buffer)
+        print_debug("![%d] ga.strided_get(%s, %s, %s, %s, nd_buffer)" % (
+                me, self.handle, _lo, _hi, _skip))
+        print_debug("![%d] adjust=%s" % (me,adjust))
+        ret = ga.strided_get(self.handle, _lo, _hi, _skip, nd_buffer)
+        print_debug("![%d] ret.shape=%s" % (me,ret.shape))
+        ret = ret[adjust]
+        print_debug("![%d] adjusted ret.shape=%s" % (me,ret.shape))
+        return ret
 
     ################################################################
     ### ndarray properties
@@ -526,13 +549,9 @@ def asarray(a, dtype=None, order=None):
         g_a = ndarray(npa.shape, npa.dtype, npa)
         return g_a
 
-cdef int _get_precision():
-    cdef int precision = 1
-    cdef int _nproc = nproc
-    while _nproc > 10:
-        precision += 1
-        _nproc /= 10
-    return precision
+def print_debug(s):
+    if False:
+        print s
 
 def print_sync(what):
     if False:
