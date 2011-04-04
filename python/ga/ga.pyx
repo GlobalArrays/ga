@@ -42,46 +42,22 @@ C_LONGLONG = (TYPE_BASE + 16)
 
 WORLD_PROC_GROUP = -1
 
-_to_typenum = {
-        C_CHAR: np.NPY_BYTE,
-        C_INT: np.NPY_INT,
-        C_LONG: np.NPY_LONG,
-        C_LONGLONG: np.NPY_LONGLONG,
-        C_FLOAT: np.NPY_FLOAT,
-        C_DBL: np.NPY_DOUBLE,
-        C_LDBL: np.NPY_LONGDOUBLE,
-        C_SCPL: np.NPY_CFLOAT,
-        C_DCPL: np.NPY_CDOUBLE,
-        C_LDCPL: np.NPY_CLONGDOUBLE
-        }
-
 _to_dtype = {
-        C_CHAR: np.byte,
-        C_INT: np.intc,
-        C_LONG: np.long,
-        C_LONGLONG: np.longlong,
-        C_FLOAT: np.single,
-        C_DBL: np.double,
-        C_LDBL: np.longfloat,
-        C_SCPL: np.csingle,
-        C_DCPL: np.cdouble,
-        C_LDCPL: np.clongfloat
+        C_CHAR:     np.dtype(np.int8),
+        C_INT:      np.dtype(np.int32),
+        C_LONG:     np.dtype(np.int64),
+        C_LONGLONG: np.dtype(np.int64),
+        C_FLOAT:    np.dtype(np.float32),
+        C_DBL:      np.dtype(np.float64),
+        C_LDBL:     np.dtype(np.float128),
+        C_SCPL:     np.dtype(np.complex64),
+        C_DCPL:     np.dtype(np.complex128),
+        C_LDCPL:    np.dtype(np.complex256),
         }
 
 #############################################################################
 # utility functions
 #############################################################################
-
-def dtype(int gatype):
-    """Converts the given GA type to a numpy dtype."""
-    if gatype in _to_dtype:
-        return _to_dtype[gatype]
-    raise ValueError, "%d was not a recognized GA type" % gatype
-
-def inquire_dtype(int g_a):
-    """Returns the numpy dtype of the given GA."""
-    gatype = inquire_type(g_a)
-    return dtype(gatype)
 
 cdef void* _gapy_malloc(size_t bytes, int align, char *name):
     """Wrapper around C stdlib malloc()."""
@@ -402,7 +378,7 @@ def access(int g_a, lo=None, hi=None):
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
     cdef np.ndarray[np.int64_t, ndim=1] ld_nd, lo_dst, hi_dst, dims_nd
     cdef int i, gtype=inquire_type(g_a)
-    cdef int dimlen=GA_Ndim(g_a), typenum=_to_typenum[gtype]
+    cdef int dimlen=GA_Ndim(g_a), typenum=_to_dtype[gtype].num
     cdef void *ptr
     cdef np.npy_intp *dims = NULL
     # first things first, if no data is owned, return None
@@ -468,7 +444,7 @@ def access_block(int g_a, int idx):
     """
     cdef np.ndarray[np.int64_t, ndim=1] ld_nd, lo_dst, hi_dst, dims_nd
     cdef int i, gtype=inquire_type(g_a)
-    cdef int dimlen=GA_Ndim(g_a), typenum=_to_typenum[gtype]
+    cdef int dimlen=GA_Ndim(g_a), typenum=_to_dtype[gtype].num
     cdef void *ptr
     cdef np.npy_intp *dims = NULL
     # first things first, if no data is owned, return None
@@ -541,7 +517,7 @@ def access_block_segment(int g_a, int proc):
     """
     cdef np.ndarray[np.int64_t, ndim=1] elems
     cdef int gtype=inquire_type(g_a)
-    cdef int typenum=_to_typenum[gtype]
+    cdef int typenum=_to_dtype[gtype].num
     cdef void *ptr
     cdef np.npy_intp *dims = NULL
     # always access the entire local data
@@ -1105,6 +1081,16 @@ def create_mutexes(int number):
         return True
     return False
 
+def deregister_type(int type):
+    """Removes the data type previously registered using register_type.
+
+    :Parameters:
+        type : int
+            the data type handle
+
+    """
+    return NGA_Deregister_type(type)
+    
 def destroy(int g_a):
     """Deallocates the array and frees any associated resources.
 
@@ -3228,6 +3214,30 @@ def read_inc(int g_a, subscript, long inc=1):
     subscript_nd = _inta64(subscript)
     return NGA_Read_inc64(g_a, <int64_t*>subscript_nd.data, inc)
 
+def register_dtype(dtype):
+    """Creates a new data type based on the given dtype.
+
+    :Parameters:
+        dtype : dtype
+            the numpy dtype to register
+
+    """
+    cdef int gatype
+    dtype = np.dtype(dtype) # just in case it's not really a dtype instance
+    gatype = NGA_Register_type(dtype.itemsize)
+    _to_dtype[gatype] = dtype
+    return gatype
+    
+def register_type(size_t bytes):
+    """Creates a new data type of size bytes.
+
+    :Parameters:
+        bytes : size_t
+            the size of the new data type
+
+    """
+    return NGA_Register_type(bytes)
+    
 def recip(int g_a, lo=None, hi=None):
     """Take element-wise reciprocal of the array or patch.
 

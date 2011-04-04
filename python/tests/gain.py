@@ -53,6 +53,10 @@ def foo(module):
     e = module.sin(d_lower,d_upper)
     if not me: print e
     results.append(e)
+    a = module.ones(10, dtype=module.int16)
+    #b = module.ones(10, dtype=module.int16)
+    #print module.sin(a,b)
+    print module.sin(a)
 
 if __name__ == '__main__':
     ga.sync()

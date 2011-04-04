@@ -14,16 +14,16 @@ me = ga.nodeid()
 nproc = ga.nnodes()
 
 gatypes = {
-np.dtype(np.int32): ga.C_INT,
-np.dtype(np.int64): ga.C_LONG,
-np.dtype(np.float32): ga.C_FLOAT,
-np.dtype(np.float64): ga.C_DBL,
-np.dtype(np.complex64): ga.C_SCPL,
+np.dtype(np.int8):       ga.C_CHAR,
+np.dtype(np.int32):      ga.C_INT,
+np.dtype(np.int64):      ga.C_LONG,
+np.dtype(np.float32):    ga.C_FLOAT,
+np.dtype(np.float64):    ga.C_DBL,
+np.dtype(np.float128):   ga.C_LDBL,
+np.dtype(np.complex64):  ga.C_SCPL,
 np.dtype(np.complex128): ga.C_DCPL,
+np.dtype(np.complex256): ga.C_LDCPL,
 }
-
-def _lohi_slice(lo, hi):
-    return map(lambda x,y: slice(x,y), lo, hi)
 
 class ndarray(object):
     """ndarray(shape, dtype=float, buffer=None, offset=0,
@@ -165,6 +165,10 @@ class ndarray(object):
     """
     def __init__(self, shape, dtype=float, buffer=None, offset=0,
             strides=None, order=None, base=None):
+        try:
+            iter(shape)
+        except:
+            shape = [shape]
         self._shape = shape
         self._dtype = np.dtype(dtype)
         self._order = order
@@ -172,7 +176,14 @@ class ndarray(object):
         if order is not None:
             raise NotImplementedError, "order parameter not supported"
         if base is None:
-            self.handle = ga.create(gatypes[np.dtype(dtype)], shape)
+            dtype_ = np.dtype(dtype)
+            gatype = None
+            if dtype_ in gatypes:
+                gatype = gatypes[dtype_]
+            else:
+                gatype = ga.register_dtype(dtype_)
+                gatypes[dtype_] = gatype
+            self.handle = ga.create(gatype, shape)
             print_sync("created: handle=%s type=%s shape=%s distribution=%s"%(
                 self.handle, self._dtype, self._shape,
                 str(ga.distribution(self.handle))))
@@ -181,7 +192,7 @@ class ndarray(object):
                 if local is not None:
                     lo,hi = ga.distribution(self.handle)
                     a = np.ndarray(shape, dtype, buffer, offset, strides, order)
-                    a = a[_lohi_slice(lo,hi)]
+                    a = a[map(lambda x,y: slice(x,y), lo, hi)]
                     local[:] = a
                     ga.release_update(self.handle)
             self.global_slice = map(lambda x:slice(0,x,1), shape)
@@ -379,13 +390,17 @@ class _UnaryOperation(object):
 
     def __init__(self, func):
         self.func = func
+        self.__doc__ = func.__doc__
 
     def __call__(self, input, out=None, *args, **kwargs):
         print_sync("_UnaryOperation.__call__ %s" % self.func)
         ga.sync()
         input = asarray(input)
         if out is None:
-            out = ndarray(input.shape, input.dtype)
+            # TODO okay, is there something better than this?
+            ignore = np.ones(1, dtype=input.dtype)
+            out_type = self.func(ignore).dtype
+            out = ndarray(input.shape, out_type)
         elif input.shape != out.shape:
             # broadcasting doesn't apply to unary operations
             raise ValueError, 'invalid return array shape'
@@ -454,12 +469,18 @@ arctanh = _UnaryOperation(umath.arctanh)
 
 def zeros(shape, dtype=np.float, order='C'):
     a = ndarray(shape, dtype)
-    ga.zero(a.handle)
+    buf = a.access()
+    if buf is not None:
+        buf[:] = 0
+        ga.release_update(a.handle)
     return a
 
 def ones(shape, dtype=np.float, order='C'):
     a = ndarray(shape, dtype)
-    ga.fill(a.handle, 1)
+    buf = a.access()
+    if buf is not None:
+        buf[:] = 1
+        ga.release_update(a.handle)
     return a
 
 def fromfunction(func, shape, **kwargs):
@@ -519,26 +540,24 @@ def dot(first, second):
         dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
 
     """
-    """
-    #print "dot"
-    # We cheat for now. Only supports 1D dot
-    if not (isinstance(first, (gainarray, flatiter))
-            or isinstance(second, (gainarray, flatiter))):
-        # numpy pass through
-        return np.dot(first,second)
-    if isinstance(first, flatiter):
-        #print "before flatten attempt first"
-        first = first.base.flatten()
-    if isinstance(second, flatiter):
-        #print "before flatten attempt second"
-        second = second.base.flatten()
-    assert first.ndim == second.ndim
-    assert first.ndim == 1, "TODO. Only supports 1D dot for now."
-    tmp = first * second
-    a = tmp.access()
-    result = np.add.reduce(a)
-    return MPI.COMM_WORLD.Allreduce(result,MPI.SUM)
-    """
+    ##print "dot"
+    ## We cheat for now. Only supports 1D dot
+    #if not (isinstance(first, (gainarray, flatiter))
+    #        or isinstance(second, (gainarray, flatiter))):
+    #    # numpy pass through
+    #    return np.dot(first,second)
+    #if isinstance(first, flatiter):
+    #    #print "before flatten attempt first"
+    #    first = first.base.flatten()
+    #if isinstance(second, flatiter):
+    #    #print "before flatten attempt second"
+    #    second = second.base.flatten()
+    #assert first.ndim == second.ndim
+    #assert first.ndim == 1, "TODO. Only supports 1D dot for now."
+    #tmp = first * second
+    #a = tmp.access()
+    #result = np.add.reduce(a)
+    #return MPI.COMM_WORLD.Allreduce(result,MPI.SUM)
     raise NotImplementedError
 
 def asarray(a, dtype=None, order=None):
@@ -566,17 +585,11 @@ def print_sync(what):
         ga.sync()
 
 # imports from 'numpy' module every missing attribute from 'gain' module
-# replaces 'gain' docstrings from 'numpy' module
 if __name__ != '__main__':
     self_module = sys.modules[__name__]
     for attr in dir(np):
         np_obj = getattr(np, attr)
         if hasattr(self_module, attr):
             if not me: print "gain override exists for: %s" % attr
-            try:
-                self_obj = getattr(self_module, attr)
-                self_obj.__doc__ = np_obj.__doc__
-            except AttributeError:
-                pass
         else:
             setattr(self_module, attr, getattr(np, attr))
