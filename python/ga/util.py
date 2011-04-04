@@ -398,6 +398,17 @@ def get_slice(global_slice, lo, hi):
             global_slice, lo, hi, item_key))
     return item_key
 
+def broadcast_shape(first, second):
+    """Return the broadcasted version of shapes first and second."""
+    def worker(x,y):
+        if x is None: x = 1
+        if y is None: y = 1
+        if x != 1 and y != 1 and x != y:
+            raise ValueError, "shape mismatch:" \
+                    " objects cannot be broadcast to a single shape"
+        return max(x,y)
+    return tuple(reversed(map(worker, reversed(first), reversed(second))))
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()

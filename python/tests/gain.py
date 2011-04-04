@@ -39,24 +39,30 @@ if not me: print "test gain"
 #print x
 #print y
 
-results = []
+results = {}
+results[np] = []
+results[gain] = []
 
 def foo(module):
     if not me: print "using module %s" % module
     d = module.arange(100, dtype=module.float32)
+    e = module.arange(100, dtype=module.float32)
     #d_lower = d[:50:2]
     d_lower = d[49::-2]
     #d_upper = d[99:49:-2]
     d_upper = d[50:100:2]
+    e_quarter = e[::4]
     if not me: print d_lower
     if not me: print d_upper
     e = module.sin(d_lower,d_upper)
     if not me: print e
-    results.append(e)
+    results[module].append(e)
     a = module.ones(10, dtype=module.int16)
     #b = module.ones(10, dtype=module.int16)
     #print module.sin(a,b)
     print module.sin(a)
+    results[module].append(module.add(d_lower,d_upper))
+    results[module].append(module.add(d_lower,d_upper,e_quarter))
 
 if __name__ == '__main__':
     ga.sync()
@@ -64,13 +70,14 @@ if __name__ == '__main__':
     ga.sync()
     foo(gain)
     ga.sync()
-    #if not me: print (results[0]-results[1])
     if not me: print len(results)
     if not me:
-        for result in results:
+        for result_np,result_gain in zip(results[np],results[gain]):
             print "RESULT---------------------------------"
-            print type(result)
-            print result
-    if not me:
-        print "difference ---------------------------------"
-        print results[0]-results[1].get()
+            print type(result_np)
+            print result_np
+            print "RESULT---------------------------------"
+            print type(result_gain)
+            print result_gain
+            print "difference ---------------------------------"
+            print result_np-result_gain.get()

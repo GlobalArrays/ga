@@ -467,6 +467,128 @@ arccos = _UnaryOperation(umath.arccos)
 arccosh = _UnaryOperation(umath.arccosh)
 arctanh = _UnaryOperation(umath.arctanh)
 
+class _BinaryOperation(object):
+
+    def __init__(self, func):
+        self.func = func
+        self.__doc__ = func.__doc__
+
+    def __call__(self, first, second, out=None, *args, **kwargs):
+        print_sync("_BinaryOperation.__call__ %s" % self.func)
+        ga.sync()
+        # just in case
+        first = asarray(first)
+        second = asarray(second)
+        if out is None:
+            # TODO okay, is there something better than this?
+            ignore1 = np.ones(1, dtype=first.dtype)
+            ignore2 = np.ones(1, dtype=second.dtype)
+            out_type = self.func(ignore1,ignore2).dtype
+            shape = util.broadcast_shape(first.shape, second.shape)
+            out = ndarray(shape, out_type)
+        # get out as an ndarray first
+        npout = out.access()
+        if npout is None:
+            print_sync("npout is None")
+            print_sync("NA")
+            print_sync("NA")
+            print_sync("NA")
+        # get matching and compatible portions of input arrays
+        # broadcasting rules (may) apply
+        npfirst = None
+        release_first = False
+        if first is out:
+            npfirst = npout
+            print_sync("same object first out")
+            print_sync("NA")
+        elif (ga.compare_distr(first.handle, out.handle)
+                and first.global_slice == out.global_slice):
+            # second opt: same distributions and same slicing
+            # in practice this might not happen all that often
+            print_sync("same distributions")
+            print_sync("NA")
+            npfirst = first.access()
+            release_first = True
+        else:
+            lo,hi = ga.distribution(out.handle)
+            result = util.get_slice(out.global_slice, lo, hi)
+            print_sync("local_slice=%s" % str(result))
+            matching_input = first[result]
+            npfirst = matching_input.get()
+            print_sync("npfirst.shape=%s, npout.shape=%s" % (
+                npfirst.shape, npout.shape))
+        npsecond = None
+        release_second = False
+        if second is out:
+            npsecond = npout
+            print_sync("same object second out")
+            print_sync("NA")
+        elif (ga.compare_distr(second.handle, out.handle)
+                and second.global_slice == out.global_slice):
+            # second opt: same distributions and same slicing
+            # in practice this might not happen all that often
+            print_sync("same distributions")
+            print_sync("NA")
+            npsecond = second.access()
+            release_second = True
+        else:
+            lo,hi = ga.distribution(out.handle)
+            result = util.get_slice(out.global_slice, lo, hi)
+            print_sync("local_slice=%s" % str(result))
+            matching_input = second[result]
+            npsecond = matching_input.get()
+            print_sync("npsecond.shape=%s, npout.shape=%s" % (
+                npsecond.shape, npout.shape))
+        self.func(npfirst, npsecond, npout, *args, **kwargs)
+        if release_first: ga.release(first.handle)
+        if release_second: ga.release(second.handle)
+        ga.release_update(out.handle)
+        ga.sync()
+        return out
+
+    def reduce(self, *args, **kwargs):
+        raise NotImplementedError, "TODO, sorry"
+    def accumulate(self, *args, **kwargs):
+        raise NotImplementedError, "TODO, sorry"
+    def outer(self, *args, **kwargs):
+        raise NotImplementedError, "TODO, sorry"
+    def reduceat(self, *args, **kwargs):
+        raise NotImplementedError, "TODO, sorry"
+
+# Binary ufuncs ...............................................................
+add = _BinaryOperation(umath.add)
+subtract = _BinaryOperation(umath.subtract)
+multiply = _BinaryOperation(umath.multiply)
+power = _BinaryOperation(umath.power)
+arctan2 = _BinaryOperation(umath.arctan2)
+equal = _BinaryOperation(umath.equal)
+equal.reduce = None
+not_equal = _BinaryOperation(umath.not_equal)
+not_equal.reduce = None
+less_equal = _BinaryOperation(umath.less_equal)
+less_equal.reduce = None
+greater_equal = _BinaryOperation(umath.greater_equal)
+greater_equal.reduce = None
+less = _BinaryOperation(umath.less)
+less.reduce = None
+greater = _BinaryOperation(umath.greater)
+greater.reduce = None
+logical_and = _BinaryOperation(umath.logical_and)
+alltrue = _BinaryOperation(umath.logical_and)
+logical_or = _BinaryOperation(umath.logical_or)
+sometrue = logical_or.reduce
+logical_xor = _BinaryOperation(umath.logical_xor)
+bitwise_and = _BinaryOperation(umath.bitwise_and)
+bitwise_or = _BinaryOperation(umath.bitwise_or)
+bitwise_xor = _BinaryOperation(umath.bitwise_xor)
+hypot = _BinaryOperation(umath.hypot)
+# Domained binary ufuncs ......................................................
+divide = _BinaryOperation(umath.divide)
+true_divide = _BinaryOperation(umath.true_divide)
+floor_divide = _BinaryOperation(umath.floor_divide)
+remainder = _BinaryOperation(umath.remainder)
+fmod = _BinaryOperation(umath.fmod)
+
 def zeros(shape, dtype=np.float, order='C'):
     a = ndarray(shape, dtype)
     buf = a.access()
