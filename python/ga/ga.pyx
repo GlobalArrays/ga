@@ -18,8 +18,8 @@ import __builtin__
 DEF EXCLUSIVE = 0
 
 np.import_array()
-initialize()
-_initialized = None
+
+cdef bint _initialized = False
 
 TYPE_BASE  = 1000
 C_CHAR     = (TYPE_BASE + 0)
@@ -70,15 +70,15 @@ def inquire_dtype(int g_a):
     gatype = inquire_type(g_a)
     return dtype(gatype)
 
-cdef void* _gapy_malloc(size_t bytes, int align, char *name):
+cdef inline void* _gapy_malloc(size_t bytes, int align, char *name):
     """Wrapper around C stdlib malloc()."""
     return malloc(bytes)
 
-cdef void _gapy_free(void *ptr):
+cdef inline void _gapy_free(void *ptr):
     """Wrapper around C stdlib free()."""
     free(ptr)
 
-cdef np.ndarray[np.int32_t, ndim=1] _inta32(array_like):
+cdef inline np.ndarray[np.int32_t, ndim=1] _inta32(array_like):
     """Converts an integer array-like to an ndarray of 32bit integers.
 
     Functions which take a dimension shape or subscript can use this to
@@ -99,7 +99,7 @@ cdef np.ndarray[np.int32_t, ndim=1] _inta32(array_like):
         array_like_nd = np.asarray([array_like], dtype=np.int32)
     return array_like_nd
 
-cdef np.ndarray[np.int64_t, ndim=1] _inta64(array_like):
+cdef inline np.ndarray[np.int64_t, ndim=1] _inta64(array_like):
     """Converts an integer array-like to an ndarray of 64bit integers.
 
     Functions which take a dimension shape or subscript can use this to
@@ -120,7 +120,7 @@ cdef np.ndarray[np.int64_t, ndim=1] _inta64(array_like):
         array_like_nd = np.asarray([array_like], dtype=np.int64)
     return array_like_nd
 
-def _lohi(int g_a, lo, hi):
+cdef inline _lohi(int g_a, lo, hi):
     """Converts and/or prepares a lo/hi combination.
 
     Functions which take a patch specification can use this to convert the
@@ -270,8 +270,8 @@ def acc(int g_a, buffer, lo=None, hi=None, alpha=None):
     """
     _acc_common(g_a, buffer, lo, hi, alpha)
 
-def _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
-        nb=False, periodic=False, skip=None):
+cdef _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
+        bint nb=False, bint periodic=False, skip=None):
     """Combines data from buffer with data in the global array patch.
     
     The buffer array is assumed to be have the same number of
@@ -1206,7 +1206,7 @@ def diag_std(int g_a, int g_v, evalues=None):
     GA_Diag_std(g_a, g_v, <void*>evalues.data)
     return evalues
 
-def distribution(int g_a, int iproc=-1):
+cpdef distribution(int g_a, int iproc=-1):
     """Return the distribution given to iproc.
 
     If iproc is not specified, then ga.nodeid() is used.  The range is
@@ -1810,8 +1810,8 @@ def get(int g_a, lo=None, hi=None, np.ndarray buffer=None):
     """
     return _get_common(g_a, lo, hi, buffer)
 
-def _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None, nb=False,
-        periodic=False, skip=None):
+cdef _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None,
+        bint nb=False, bint periodic=False, skip=None):
     """Copies data from global array section to the local array buffer.
     
     The local array is assumed to be have the same number of dimensions as the
@@ -2045,7 +2045,7 @@ def initialized():
     """Returns whether ga has been initialized."""
     return _initialized
 
-def inquire(int g_a):
+cpdef inquire(int g_a):
     cdef int gtype
     cdef int ndim = GA_Ndim(g_a)
     cdef np.ndarray[np.int64_t, ndim=1] dims=np.zeros((ndim), dtype=np.int64)
@@ -3123,8 +3123,8 @@ def put(int g_a, buffer, lo=None, hi=None):
     """
     _put_common(g_a, buffer, lo, hi)
 
-def _put_common(int g_a, buffer, lo=None, hi=None,
-        nb=False, periodic=False, skip=None):
+cdef _put_common(int g_a, buffer, lo=None, hi=None,
+        bint nb=False, bint periodic=False, skip=None):
     """Copies data from local array buffer to the global array section.
     
     The local array is assumed to be have the same number of dimensions as the
@@ -3474,8 +3474,8 @@ def scale_cols(int g_a, int g_v):
     """
     GA_Scale_cols(g_a, g_v)
 
-def scan_add(int g_src, int g_dst, int g_msk, lo=None, hi=None, bint
-        excl=False):
+def scan_add(int g_src, int g_dst, int g_msk, lo=None, hi=None,
+        bint excl=False):
     """Adds successive elements in a source vector g_src and put the results
     in a destination vector g_dst.
     
@@ -4257,3 +4257,5 @@ def zero_diagonal(int g_a):
 
     """
     GA_Zero_diagonal(g_a)
+
+initialize()
