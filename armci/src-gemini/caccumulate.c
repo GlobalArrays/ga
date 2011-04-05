@@ -54,9 +54,6 @@ privately owned rights.
 // *         original and unrolled loops.
 // *
 // ***********************************************************************
-#if HAVE_CONFIG_H
-#   include "config.h"
-#endif
 
 #include "acc.h"
 

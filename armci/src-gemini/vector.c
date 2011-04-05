@@ -41,6 +41,7 @@
         else;\
         armci_prot_switch_fence[__proc]=__prot
 
+/* defined in acc.h so don't redefine here
 #ifndef ARMCI_COMPLEX_TYPES
 typedef struct {
     float real;
@@ -52,6 +53,7 @@ typedef struct {
     double imag;
 } dcomplex_t;
 #endif
+*/
 
 /*
 void I_ACCUMULATE(void* scale, int elems, void*src, void* dst)
