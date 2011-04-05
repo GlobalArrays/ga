@@ -27,6 +27,7 @@ ACLOCAL_AMFLAGS = -I m4
 include_HEADERS =
 nodist_include_HEADERS =
 bin_PROGRAMS =
+bin_SCRIPTS =
 check_PROGRAMS =
 check_LTLIBRARIES =
 lib_LTLIBRARIES = libga.la
@@ -124,11 +125,8 @@ if CXX_BINDINGS
 endif
 	@echo '# =========================================================================== '
 
-bin_PROGRAMS += ga-config
-ga-config$(EXEEXT): tools/ga-config.c
-	@-rm -f $@
-	$(CC_NOMPI_V) \
-	$(CC_NOMPI) tools/ga-config.c -o $@
+bin_SCRIPTS += tools/ga-config
+CLEANFILES += $(bin_SCRIPTS)
 
 ##############################################################################
 # config

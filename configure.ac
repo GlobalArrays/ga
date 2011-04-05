@@ -74,7 +74,6 @@ ga_save_CFLAGS="$CFLAGS"
 GA_PROG_MPICC
 CFLAGS="$ga_save_CFLAGS"
 AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
-GA_PROG_CC_NOMPI
 AC_USE_SYSTEM_EXTENSIONS
 AX_COMPILER_VENDOR
 # If F77 is enabled, only perform a simple compilation test.
@@ -431,8 +430,8 @@ AC_CONFIG_FILES([Makefile
                  gaf2c/typesf2c.h
                  global/src/global.fh
                  ma/mafdecls.fh
-                 ma/matypes.h
-                 tools/ga-config.c])
+                 ma/matypes.h])
+AC_CONFIG_FILES([tools/ga-config], [chmod +x tools/ga-config])
 AC_CONFIG_SUBDIRS([armci])
 AC_OUTPUT
 
