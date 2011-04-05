@@ -1,7 +1,9 @@
 """Contains index- and slice-related operations needed for bookkeeping."""
 
+DEBUG = False
+
 def print_debug(s):
-    if False:
+    if DEBUG:
         print s
 
 def is_canonical_slice(sliceobj):
@@ -87,6 +89,7 @@ def canonicalize_indices(shape, indices):
     # ran out of indices; fill remaining with full slices
     for dim_max in shape_iter:
         canonicalized_indices.append(slice(0,dim_max,1))
+    print_debug("canonicalize_indices(%s, %s)=%s" % (shape,indices,canonicalized_indices))
     return canonicalized_indices
 
 def slice_of_a_slice(original_slice, slice_operand):
@@ -192,7 +195,8 @@ def slice_arithmetic(original_ops, ops):
     new_op = []
     idx = 0
     for op in ops:
-        while isinstance(original_ops[idx], (int,long)):
+        while (idx < len(original_ops)
+                and isinstance(original_ops[idx], (int,long))):
             new_op.append(original_ops[idx])
             idx += 1
         if op is None:
@@ -201,6 +205,7 @@ def slice_arithmetic(original_ops, ops):
             original_op = original_ops[idx]
             new_op.append(slice_of_a_slice(original_op, op))
             idx += 1
+    print_debug("slice_arithmetic(%s,%s)=%s" % (original_ops,ops,new_op))
     return new_op
 
 def calc_index_lohi(global_slice, lo, hi):
@@ -408,6 +413,17 @@ def broadcast_shape(first, second):
                     " objects cannot be broadcast to a single shape"
         return max(x,y)
     return tuple(reversed(map(worker, reversed(first), reversed(second))))
+
+def broadcast_chomp(smaller_key, larger_key):
+    """Return a key appropriate for the given shape."""
+    new_key = []
+    for s,l in zip(reversed(smaller_key),reversed(larger_key)):
+        if s == 1:
+            new_key.append(slice(0,1,1))
+        else:
+            new_key.append(l)
+    new_key.reverse()
+    return new_key
 
 if __name__ == '__main__':
     import doctest

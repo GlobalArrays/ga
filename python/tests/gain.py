@@ -1,9 +1,13 @@
 from mpi4py import MPI
 from ga import ga
 from ga import gain
+from ga import util
 import numpy as np
 
 me = gain.me
+util.DEBUG = False
+gain.DEBUG = False
+gain.DEBUG_SYNC = True
 
 if not me: print "test gain"
 
@@ -45,24 +49,36 @@ results[gain] = []
 
 def foo(module):
     if not me: print "using module %s" % module
-    d = module.arange(100, dtype=module.float32)
-    e = module.arange(100, dtype=module.float32)
-    #d_lower = d[:50:2]
-    d_lower = d[49::-2]
-    #d_upper = d[99:49:-2]
-    d_upper = d[50:100:2]
-    e_quarter = e[::4]
-    if not me: print d_lower
-    if not me: print d_upper
-    e = module.sin(d_lower,d_upper)
-    if not me: print e
-    results[module].append(e)
-    a = module.ones(10, dtype=module.int16)
-    #b = module.ones(10, dtype=module.int16)
-    #print module.sin(a,b)
-    print module.sin(a)
-    results[module].append(module.add(d_lower,d_upper))
-    results[module].append(module.add(d_lower,d_upper,e_quarter))
+    #d = module.arange(100, dtype=module.float32)
+    #e = module.arange(100, dtype=module.float32)
+    ##d_lower = d[:50:2]
+    #d_lower = d[49::-2]
+    ##d_upper = d[99:49:-2]
+    #d_upper = d[50:100:2]
+    #e_quarter = e[::4]
+    #if not me: print d_lower
+    #if not me: print d_upper
+    #e = module.sin(d_lower,d_upper)
+    #if not me: print e
+    #results[module].append(e)
+    #results[module].append(module.sin(1))
+    #results[module].append(module.sin([1,2,3]))
+    #z = module.asarray([0,0,0], dtype=module.float32)
+    #results[module].append(module.sin([1,2,3], z))
+    #a = module.ones(10, dtype=module.int16)
+    ##b = module.ones(10, dtype=module.int16)
+    ##print module.sin(a,b)
+    #print module.sin(a)
+    #results[module].append(module.add(d_lower,d_upper))
+    #results[module].append(module.add(d_lower,d_upper,e_quarter))
+    #results[module].append(module.add(d_upper,5))
+    #results[module].append(module.add(5,d_lower))
+    #s = module.ones((3,4,5), dtype=module.float32)
+    #t = module.ones((3,4,5), dtype=module.float32)
+    #results[module].append(module.sin(s,t))
+    x = module.ones((2,3,4))
+    y = module.ones((3,4))
+    results[module].append(module.add(x,y))
 
 if __name__ == '__main__':
     ga.sync()
@@ -74,10 +90,17 @@ if __name__ == '__main__':
     if not me:
         for result_np,result_gain in zip(results[np],results[gain]):
             print "RESULT---------------------------------"
-            print type(result_np)
+            print type(result_np), result_np.dtype
             print result_np
             print "RESULT---------------------------------"
-            print type(result_gain)
+            print type(result_gain), result_gain.dtype
             print result_gain
             print "difference ---------------------------------"
-            print result_np-result_gain.get()
+            diff = None
+            if isinstance(result_gain, gain.ndarray):
+                diff = result_np-result_gain.get()
+            else:
+                diff = result_np-result_gain
+            print diff
+            if not np.all(diff == 0):
+                print "---------------------------------WARNING DIFF FAILED"

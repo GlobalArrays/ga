@@ -13,6 +13,11 @@ import numpy.core.umath as umath
 me = ga.nodeid()
 nproc = ga.nnodes()
 
+# at what point do we distribute arrays versus leaving as np.ndarray?
+SIZE_THRESHOLD = 1
+DEBUG = False
+DEBUG_SYNC = False
+
 gatypes = {
 np.dtype(np.int8):       ga.C_CHAR,
 np.dtype(np.int32):      ga.C_INT,
@@ -251,8 +256,11 @@ class ndarray(object):
         _hi = []
         _skip = []
         adjust = []
+        need_strided = False
         for item in self.global_slice:
             if isinstance(item, slice):
+                if item.step > 1 or item.step < -1:
+                    need_strided = True
                 if item.step < 0:
                     adjust.append(slice(None,None,-1))
                     length = util.slicelength(item)-1
@@ -269,13 +277,16 @@ class ndarray(object):
                 _hi.append(item+1)
                 _skip.append(1)
             elif item is None:
-                adjust.append(None)
+                adjust.append(slice(0,1,1))
             else:
                 raise IndexError, "invalid index item"
         print_debug("![%d] ga.strided_get(%s, %s, %s, %s, nd_buffer)" % (
                 me, self.handle, _lo, _hi, _skip))
         print_debug("![%d] adjust=%s" % (me,adjust))
-        ret = ga.strided_get(self.handle, _lo, _hi, _skip, nd_buffer)
+        if need_strided:
+            ret = ga.strided_get(self.handle, _lo, _hi, _skip, nd_buffer)
+        else:
+            ret = ga.get(self.handle, _lo, _hi, nd_buffer)
         print_debug("![%d] ret.shape=%s" % (me,ret.shape))
         ret = ret[adjust]
         print_debug("![%d] adjusted ret.shape=%s" % (me,ret.shape))
@@ -394,47 +405,78 @@ class _UnaryOperation(object):
 
     def __call__(self, input, out=None, *args, **kwargs):
         print_sync("_UnaryOperation.__call__ %s" % self.func)
-        ga.sync()
         input = asarray(input)
+        if not (isinstance(input, ndarray) or isinstance(out, ndarray)):
+            print_sync("_UnaryOperation.__call__ %s pass through" % self.func)
+            # no ndarray instances used, pass through immediately to numpy
+            return self.func(input, out, *args, **kwargs)
+        # since we have an ndarray somewhere
+        ga.sync()
         if out is None:
+            # input must be an ndarray given previous conditionals
             # TODO okay, is there something better than this?
             ignore = np.ones(1, dtype=input.dtype)
             out_type = self.func(ignore).dtype
-            out = ndarray(input.shape, out_type)
+            print_debug("out_type = %s" % out_type)
+            out = ndarray(input.shape, out_type) # distribute
+        # sanity checks
+        if not isinstance(out, (ndarray, np.ndarray)):
+            raise TypeError, "return arrays must be of ArrayType"
         elif input.shape != out.shape:
             # broadcasting doesn't apply to unary operations
             raise ValueError, 'invalid return array shape'
-        # get out as an ndarray first
-        npout = out.access()
-        if npout is None:
-            print_sync("npout is None")
-            print_sync("NA")
-        # first opt: input and out are same object
-        elif input is out:
-            print_sync("same object")
-            print_sync("NA")
-            self.func(npout, npout, *args, **kwargs)
-            ga.release_update(out.handle)
-        # second opt: same distributions and same slicing
-        # in practice this might not happen all that often
-        elif (ga.compare_distr(input.handle, out.handle)
-                and input.global_slice == out.global_slice):
-            print_sync("same distributions")
-            print_sync("NA")
-            npin = input.access()
+        # Now figure out what to do...
+        if isinstance(out, ndarray):
+            # get out as an ndarray first
+            npout = out.access()
+            if npout is None:
+                print_sync("npout is None")
+                print_sync("NA")
+                ga.sync()
+                return out
+            npin = None
+            release_in = False
+            # first opt: input and out are same object
+            if input is out:
+                print_sync("same object")
+                print_sync("NA")
+                npin = npout
+            elif isinstance(input, ndarray):
+                # second opt: same distributions and same slicing
+                # in practice this might not happen all that often
+                if (ga.compare_distr(input.handle, out.handle)
+                        and input.global_slice == out.global_slice):
+                    print_sync("same distributions")
+                    print_sync("NA")
+                    npin = input.access()
+                    release_in = True
+                else:
+                    lo,hi = ga.distribution(out.handle)
+                    result = util.get_slice(out.global_slice, lo, hi)
+                    print_sync("local_slice=%s" % str(result))
+                    matching_input = input[result]
+                    npin = matching_input.get()
+                    print_sync("npin.shape=%s, npout.shape=%s" % (
+                        npin.shape, npout.shape))
+            else:
+                lo,hi = ga.distribution(out.handle)
+                result = util.get_slice(out.global_slice, lo, hi)
+                print_sync("np.ndarray slice=%s" % str(result))
+                npin = input[result]
+                print_sync("npin.shape=%s, npout.shape=%s" % (
+                        npin.shape, npout.shape))
             self.func(npin, npout, *args, **kwargs)
+            if release_in: ga.release(input.handle)
             ga.release_update(out.handle)
-            ga.release(input.handle)
         else:
-            lo,hi = ga.distribution(out.handle)
-            result = util.get_slice(out.global_slice, lo, hi)
-            print_sync("local_slice=%s" % str(result))
-            matching_input = input[result]
-            npin = matching_input.get()
-            print_sync("npin.shape=%s, npout.shape=%s" % (
-                npin.shape, npout.shape))
-            self.func(npin, npout, *args, **kwargs)
-            ga.release_update(out.handle)
+            print_sync("out is not ndarray")
+            print_sync("NA")
+            # out is not an ndarray
+            npin = input
+            if isinstance(input, ndarray):
+                # input is an ndarray, so get entire thing
+                npin = input.get()
+            self.func(npin, out, *args, **kwargs)
         ga.sync()
         return out
             
@@ -475,74 +517,128 @@ class _BinaryOperation(object):
 
     def __call__(self, first, second, out=None, *args, **kwargs):
         print_sync("_BinaryOperation.__call__ %s" % self.func)
-        ga.sync()
         # just in case
         first = asarray(first)
         second = asarray(second)
+        if not (isinstance(first, ndarray)
+                or isinstance(second, ndarray)
+                or isinstance(out, ndarray)):
+            # no ndarray instances used, pass through immediately to numpy
+            print_sync("_BinaryOperation.__call__ %s pass through" % self.func)
+            return self.func(first, second, out, *args, **kwargs)
+        # since we have an ndarray somewhere
+        ga.sync()
         if out is None:
+            # first and/or second must be ndarrays given previous conditionals
             # TODO okay, is there something better than this?
             ignore1 = np.ones(1, dtype=first.dtype)
             ignore2 = np.ones(1, dtype=second.dtype)
             out_type = self.func(ignore1,ignore2).dtype
             shape = util.broadcast_shape(first.shape, second.shape)
+            print_sync("broadcast_shape = %s" % str(shape))
             out = ndarray(shape, out_type)
-        # get out as an ndarray first
-        npout = out.access()
-        if npout is None:
+        # sanity checks
+        if not isinstance(out, (ndarray, np.ndarray)):
+            raise TypeError, "return arrays must be of ArrayType"
+        # Now figure out what to do...
+        if isinstance(out, ndarray):
+            # get out as an ndarray first
+            npout = out.access()
+            if npout is None:
+                print_sync("npout is None")
+                print_sync("NA")
+                print_sync("NA")
+                print_sync("NA")
+                ga.sync()
+                return out
+            # get matching and compatible portions of input arrays
+            # broadcasting rules (may) apply
+            npfirst = None
+            release_first = False
+            if first is out:
+                # first opt: first and out are same object
+                npfirst = npout
+                print_sync("same object first out")
+                print_sync("NA")
+            elif isinstance(first, ndarray):
+                if (ga.compare_distr(first.handle, out.handle)
+                        and first.global_slice == out.global_slice):
+                    # second opt: same distributions and same slicing
+                    # in practice this might not happen all that often
+                    print_sync("same distributions")
+                    print_sync("NA")
+                    npfirst = first.access()
+                    release_first = True
+                else:
+                    lo,hi = ga.distribution(out.handle)
+                    result = util.get_slice(out.global_slice, lo, hi)
+                    print_sync("local_slice=%s" % str(result))
+                    matching_input = first[result]
+                    npfirst = matching_input.get()
+                    print_sync("npfirst.shape=%s, npout.shape=%s" % (
+                        npfirst.shape, npout.shape))
+            else:
+                if len(first.shape) > 0:
+                    lo,hi = ga.distribution(out.handle)
+                    result = util.get_slice(out.global_slice, lo, hi)
+                    print_sync("local_slice=%s" % str(result))
+                    npfirst = first[result]
+                    print_sync("npfirst.shape=%s, npout.shape=%s" % (
+                        npfirst.shape, npout.shape))
+                else:
+                    npfirst = first
+            npsecond = None
+            release_second = False
+            if second is out:
+                # first opt: second and out are same object
+                npsecond = npout
+                print_sync("same object second out")
+                print_sync("NA")
+            elif isinstance(second, ndarray):
+                if (ga.compare_distr(second.handle, out.handle)
+                        and second.global_slice == out.global_slice):
+                    # second opt: same distributions and same slicing
+                    # in practice this might not happen all that often
+                    print_sync("same distributions")
+                    print_sync("NA")
+                    npsecond = second.access()
+                    release_second = True
+                else:
+                    lo,hi = ga.distribution(out.handle)
+                    result = util.get_slice(out.global_slice, lo, hi)
+                    result = util.broadcast_chomp(second.shape, result)
+                    print_sync("local_slice=%s" % str(result))
+                    matching_input = second[result]
+                    npsecond = matching_input.get()
+                    print_sync("npsecond.shape=%s, npout.shape=%s" % (
+                        npsecond.shape, npout.shape))
+            else:
+                if len(second.shape) > 0:
+                    lo,hi = ga.distribution(out.handle)
+                    result = util.get_slice(out.global_slice, lo, hi)
+                    print_sync("local_slice=%s" % str(result))
+                    npsecond = second[result]
+                    print_sync("npsecond.shape=%s, npout.shape=%s" % (
+                        npsecond.shape, npout.shape))
+                else:
+                    npsecond = second
+            self.func(npfirst, npsecond, npout, *args, **kwargs)
+            if release_first: ga.release(first.handle)
+            if release_second: ga.release(second.handle)
+            ga.release_update(out.handle)
+        else:
             print_sync("npout is None")
             print_sync("NA")
             print_sync("NA")
             print_sync("NA")
-        # get matching and compatible portions of input arrays
-        # broadcasting rules (may) apply
-        npfirst = None
-        release_first = False
-        if first is out:
-            npfirst = npout
-            print_sync("same object first out")
-            print_sync("NA")
-        elif (ga.compare_distr(first.handle, out.handle)
-                and first.global_slice == out.global_slice):
-            # second opt: same distributions and same slicing
-            # in practice this might not happen all that often
-            print_sync("same distributions")
-            print_sync("NA")
-            npfirst = first.access()
-            release_first = True
-        else:
-            lo,hi = ga.distribution(out.handle)
-            result = util.get_slice(out.global_slice, lo, hi)
-            print_sync("local_slice=%s" % str(result))
-            matching_input = first[result]
-            npfirst = matching_input.get()
-            print_sync("npfirst.shape=%s, npout.shape=%s" % (
-                npfirst.shape, npout.shape))
-        npsecond = None
-        release_second = False
-        if second is out:
-            npsecond = npout
-            print_sync("same object second out")
-            print_sync("NA")
-        elif (ga.compare_distr(second.handle, out.handle)
-                and second.global_slice == out.global_slice):
-            # second opt: same distributions and same slicing
-            # in practice this might not happen all that often
-            print_sync("same distributions")
-            print_sync("NA")
-            npsecond = second.access()
-            release_second = True
-        else:
-            lo,hi = ga.distribution(out.handle)
-            result = util.get_slice(out.global_slice, lo, hi)
-            print_sync("local_slice=%s" % str(result))
-            matching_input = second[result]
-            npsecond = matching_input.get()
-            print_sync("npsecond.shape=%s, npout.shape=%s" % (
-                npsecond.shape, npout.shape))
-        self.func(npfirst, npsecond, npout, *args, **kwargs)
-        if release_first: ga.release(first.handle)
-        if release_second: ga.release(second.handle)
-        ga.release_update(out.handle)
+            # out is not an ndarray
+            ndfirst = first
+            if isinstance(first, ndarray):
+                ndfirst = first.get()
+            ndsecond = second
+            if isinstance(second, ndarray):
+                ndsecond = second.get()
+            self.func(ndfirst, ndsecond, out, *args, **kwargs)
         ga.sync()
         return out
 
@@ -686,16 +782,19 @@ def asarray(a, dtype=None, order=None):
     if isinstance(a, ndarray):
         return a
     else:
-        npa = np.asarray(a)
-        g_a = ndarray(npa.shape, npa.dtype, npa)
-        return g_a
+        npa = np.asarray(a, dtype=dtype)
+        if np.size(npa) > SIZE_THRESHOLD:
+            g_a = ndarray(npa.shape, npa.dtype, npa)
+            return g_a # distributed using Global Arrays ndarray
+        else:
+            return npa # scalar or zero rank array
 
 def print_debug(s):
-    if False:
+    if DEBUG:
         print s
 
 def print_sync(what):
-    if False:
+    if DEBUG_SYNC:
         ga.sync()
         if 0 == me:
             print "[0] %s" % str(what)
