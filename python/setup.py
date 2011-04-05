@@ -21,10 +21,10 @@ try:
 except:
     pass
 
-# need to find 'ga-config.x' to gather how GA was configured
-ga_config = find_executable("ga-config.x", None)
+# need to find 'ga-config' to gather how GA was configured
+ga_config = find_executable("ga-config", None)
 if not ga_config:
-    raise ValueError, "ga-config.x not found in path -- required"
+    raise ValueError, "ga-config not found in path -- required"
 p = Popen("%s --cppflags" % ga_config, shell=True, stdout=PIPE, stderr=PIPE,
         close_fds=True)
 ga_cppflags,ignore = p.communicate()
