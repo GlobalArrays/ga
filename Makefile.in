@@ -1911,6 +1911,10 @@ global_testing_types_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
+global_testing_types_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(global_testing_types_test_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__global_testing_unpackc_SOURCES_DIST = global/testing/unpackc.c \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -3302,6 +3306,7 @@ global_testing_testeig_LDFLAGS = $(FLDFLAGS)
 global_testing_testmatmult_LDFLAGS = $(FLDFLAGS)
 global_testing_testsolve_LDFLAGS = $(FLDFLAGS)
 global_testing_testspd_LDFLAGS = $(FLDFLAGS)
+global_testing_types_test_LDFLAGS = $(FLDFLAGS)
 global_testing_test_LDFLAGS = $(FLDFLAGS)
 nodist_EXTRA_global_testing_elempatch_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ga_lu_SOURCES = $(MAYBE_DUMMY_F_LINK)
@@ -4691,7 +4696,7 @@ global/testing/types-test.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/types_test$(EXEEXT): $(global_testing_types_test_OBJECTS) $(global_testing_types_test_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/types_test$(EXEEXT)
-	$(AM_V_F77LD)$(F77LINK) $(global_testing_types_test_OBJECTS) $(global_testing_types_test_LDADD) $(LIBS)
+	$(AM_V_F77LD)$(global_testing_types_test_LINK) $(global_testing_types_test_OBJECTS) $(global_testing_types_test_LDADD) $(LIBS)
 global/testing/unpackc.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/unpackc$(EXEEXT): $(global_testing_unpackc_OBJECTS) $(global_testing_unpackc_DEPENDENCIES) global/testing/$(am__dirstamp)

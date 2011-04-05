@@ -914,6 +914,7 @@ global_testing_testeig_LDFLAGS        = $(FLDFLAGS)
 global_testing_testmatmult_LDFLAGS    = $(FLDFLAGS)
 global_testing_testsolve_LDFLAGS      = $(FLDFLAGS)
 global_testing_testspd_LDFLAGS        = $(FLDFLAGS)
+global_testing_types_test_LDFLAGS     = $(FLDFLAGS)
 global_testing_test_LDFLAGS           = $(FLDFLAGS)
 
 nodist_EXTRA_global_testing_elempatch_SOURCES    = $(MAYBE_DUMMY_F_LINK)
