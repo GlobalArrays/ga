@@ -30,6 +30,56 @@ np.dtype(np.complex128): ga.C_DCPL,
 np.dtype(np.complex256): ga.C_LDCPL,
 }
 
+class flagsobj(object):
+    def __init__(self):
+        self._c = True
+        self._f = False
+        self._o = True
+        self._w = True
+        self._a = True
+        self._u = False
+    def _get_c(self):
+        return self._c
+    c_contiguous = property(_get_c)
+    def _get_f(self):
+        return self._f
+    f_contiguous = property(_get_f)
+    def _get_o(self):
+        return self._o
+    owndata = property(_get_o)
+    def _get_w(self):
+        return self._w
+    writeable = property(_get_w)
+    def _get_a(self):
+        return self._a
+    aligned = property(_get_a)
+    def _get_u(self):
+        return self._u
+    updateifcopy = property(_get_u)
+    def __getitem__(self, item):
+        if isinstance(item, str):
+            if item == "C" or item == "C_CONTIGUOUS":
+                return self._c
+            if item == "F" or item == "F_CONTIGUOUS":
+                return self._f
+            if item == "O" or item == "OWNDATA":
+                return self._o
+            if item == "W" or item == "WRITEABLE":
+                return self._w
+            if item == "A" or item == "ALIGNED":
+                return self._a
+            if item == "U" or item == "UPDATEIFCOPY":
+                return self._u
+        raise KeyError, "Unknown flag"
+    def __repr__(self):
+        return """  C_CONTIGUOUS : %s
+  F_CONTIGUOUS : %s
+  OWNDATA : %s
+  WRITEABLE : %s
+  ALIGNED : %s
+  UPDATEIFCOPY : %s""" % (self._c, self._f, self._o,
+                          self._w, self._a, self._u)
+
 class ndarray(object):
     """ndarray(shape, dtype=float, buffer=None, offset=0,
             strides=None, order=None)
@@ -127,6 +177,10 @@ class ndarray(object):
         accessed or converted to an ndarray, the global_slice is used to turn
         the ndarray into its correct shape/strides before returning to the
         caller.
+    _is_real : bool
+        Whether this is a 'real' view of a complex ndarray.
+    _is_imag : bool
+        Whether this is an 'imag' view of a complex ndarray.
 
     See Also
     --------
@@ -178,9 +232,12 @@ class ndarray(object):
         self._dtype = np.dtype(dtype)
         self._order = order
         self._base = base
+        self._is_real = False
+        self._is_imag = False
         if order is not None:
             raise NotImplementedError, "order parameter not supported"
         if base is None:
+            self._flags = flagsobj()
             dtype_ = np.dtype(dtype)
             gatype = None
             if dtype_ in gatypes:
@@ -195,8 +252,14 @@ class ndarray(object):
             if buffer is not None:
                 local = ga.access(self.handle)
                 if local is not None:
+                    a = None
+                    if isinstance(buffer, np.ndarray):
+                        buffer.shape = shape
+                        a = buffer
+                    else:
+                        a = np.ndarray(shape, dtype, buffer, offset,
+                                strides, order)
                     lo,hi = ga.distribution(self.handle)
-                    a = np.ndarray(shape, dtype, buffer, offset, strides, order)
                     a = a[map(lambda x,y: slice(x,y), lo, hi)]
                     local[:] = a
                     ga.release_update(self.handle)
@@ -205,6 +268,9 @@ class ndarray(object):
             for size in shape[-1:0:-1]:
                 self._strides = [size*self._strides[0]] + self._strides
         else:
+            self._flags = base._flags
+            self._flags._c = False
+            self._flags._o = False
             self.handle = base.handle
             self.global_slice = base.global_slice
             self._strides = strides
@@ -239,6 +305,10 @@ class ndarray(object):
                 print_sync("ndarray.access(%s) shape=%s" % (
                         self.handle, a.shape))
                 ret = a[access_slice]
+                if self._is_real:
+                    ret = ret.real
+                elif self._is_imag:
+                    ret = ret.imag
                 print_debug("![%d] a[access_slice].shape=%s" % (me,ret.shape))
                 return ret
         print_sync("ndarray.access None")
@@ -251,7 +321,10 @@ class ndarray(object):
         print_debug("![%d] self.global_slice = %s" % (me,self.global_slice))
         shape = util.slices_to_shape(self.global_slice)
         print_debug("![%d] inside gainarray.get() shape=%s" % (me,shape))
-        nd_buffer = np.zeros(shape, dtype=self.dtype)
+        dtype = self._dtype
+        if self._is_real or self._is_imag:
+            dtype = np.dtype("complex%s" % (self._dtype.itemsize*2*8))
+        nd_buffer = np.zeros(shape, dtype=dtype)
         _lo = []
         _hi = []
         _skip = []
@@ -283,12 +356,17 @@ class ndarray(object):
         print_debug("![%d] ga.strided_get(%s, %s, %s, %s, nd_buffer)" % (
                 me, self.handle, _lo, _hi, _skip))
         print_debug("![%d] adjust=%s" % (me,adjust))
+        ret = None
         if need_strided:
             ret = ga.strided_get(self.handle, _lo, _hi, _skip, nd_buffer)
         else:
             ret = ga.get(self.handle, _lo, _hi, nd_buffer)
         print_debug("![%d] ret.shape=%s" % (me,ret.shape))
         ret = ret[adjust]
+        if self._is_real:
+            ret = ret.real
+        elif self._is_imag:
+            ret = ret.imag
         print_debug("![%d] adjusted ret.shape=%s" % (me,ret.shape))
         return ret
 
@@ -298,12 +376,13 @@ class ndarray(object):
 
     def _get_T(self):
         raise NotImplementedError, "TODO"
-    def _set_T(self):
-        raise NotImplementedError, "TODO"
-    T = property(_get_T, _set_T)
+    T = property(_get_T)
 
     def _get_data(self):
-        raise NotImplementedError, "TODO"
+        a = self.access()
+        if a is not None:
+            return a.data
+        return None
     data = property(_get_data)
 
     def _get_dtype(self):
@@ -311,7 +390,7 @@ class ndarray(object):
     dtype = property(_get_dtype)
 
     def _get_flags(self):
-        raise NotImplementedError, "TODO"
+        return self._flags
     flags = property(_get_flags)
 
     def _get_flat(self):
@@ -319,12 +398,31 @@ class ndarray(object):
     flat = property(_get_flat)
 
     def _get_imag(self):
-        raise NotImplementedError, "TODO"
-    imag = property(_get_imag)
+        if self._dtype.kind != 'c':
+            return zeros(self.shape, self.dtype)
+        else:
+            ret = self[:]
+            ret._is_imag = True
+            ret._dtype = np.dtype("float%s" % (self._dtype.itemsize/2*8))
+            return ret
+    def _set_imag(self, value):
+        if self._dtype.kind != 'c':
+            raise TypeError, "array does not have imaginary part to set"
+        else:
+            self._get_imag()[:] = value
+    imag = property(_get_imag,_set_imag)
 
     def _get_real(self):
-        raise NotImplementedError, "TODO"
-    real = property(_get_real)
+        if self._dtype.kind != 'c':
+            return self
+        else:
+            ret = self[:]
+            ret._is_real = True
+            ret._dtype = np.dtype("float%s" % (self._dtype.itemsize/2*8))
+            return ret
+    def _set_real(self, value):
+        self._get_real()[:] = value
+    real = property(_get_real,_set_real)
 
     def _get_size(self):
         return reduce(lambda x,y: x*y, self.shape)
@@ -369,6 +467,12 @@ class ndarray(object):
             result = str(self.get())
         return result
 
+    def __repr__(self):
+        result = ""
+        if 0 == me:
+            result = repr(self.get())
+        return result
+
     ################################################################
     ### ndarray operator overloading
     ################################################################
@@ -396,6 +500,49 @@ class ndarray(object):
         a = ndarray(new_shape, self.dtype, base=self)
         a.global_slice = util.slice_arithmetic(self.global_slice, key)
         return a
+
+    def __setitem__(self, key, value):
+        new_self = self[key]
+        value = asarray(value)
+        npvalue = None
+        release_value = False
+        # get new_self as an ndarray first
+        npself = new_self.access()
+        if npself is None:
+            print_sync("npself is None")
+            print_sync("NA")
+            ga.sync()
+            return
+        if isinstance(value, ndarray):
+            if (ga.compare_distr(value.handle, new_self.handle)
+                    and value.global_slice == new_self.global_slice):
+                # opt: same distributions and same slicing
+                # in practice this might not happen all that often
+                print_sync("same distributions")
+                print_sync("NA")
+                npvalue = value.access()
+                release_value = True
+            else:
+                lo,hi = ga.distribution(new_self.handle)
+                result = util.get_slice(new_self.global_slice, lo, hi)
+                result = util.broadcast_chomp(value.shape, result)
+                print_sync("local_slice=%s" % str(result))
+                matching_input = value[result]
+                npvalue = matching_input.get()
+                print_sync("npvalue.shape=%s, npself.shape=%s" % (
+                    npvalue.shape, npself.shape))
+        else:
+            if value.ndim > 0:
+                lo,hi = ga.distribution(new_self.handle)
+                result = util.get_slice(new_self.global_slice, lo, hi)
+                result = util.broadcast_chomp(value.shape, result)
+                print_sync("local_slice=%s" % str(result))
+                npvalue = value[result]
+                print_sync("npvalue.shape=%s, npself.shape=%s" % (
+                    npvalue.shape, npself.shape))
+            else:
+                npvalue = value
+        npself[:] = npvalue
 
 class _UnaryOperation(object):
 
@@ -572,15 +719,17 @@ class _BinaryOperation(object):
                 else:
                     lo,hi = ga.distribution(out.handle)
                     result = util.get_slice(out.global_slice, lo, hi)
+                    result = util.broadcast_chomp(first.shape, result)
                     print_sync("local_slice=%s" % str(result))
                     matching_input = first[result]
                     npfirst = matching_input.get()
                     print_sync("npfirst.shape=%s, npout.shape=%s" % (
                         npfirst.shape, npout.shape))
             else:
-                if len(first.shape) > 0:
+                if first.ndim > 0:
                     lo,hi = ga.distribution(out.handle)
                     result = util.get_slice(out.global_slice, lo, hi)
+                    result = util.broadcast_chomp(first.shape, result)
                     print_sync("local_slice=%s" % str(result))
                     npfirst = first[result]
                     print_sync("npfirst.shape=%s, npout.shape=%s" % (
@@ -613,9 +762,10 @@ class _BinaryOperation(object):
                     print_sync("npsecond.shape=%s, npout.shape=%s" % (
                         npsecond.shape, npout.shape))
             else:
-                if len(second.shape) > 0:
+                if second.ndim > 0:
                     lo,hi = ga.distribution(out.handle)
                     result = util.get_slice(out.global_slice, lo, hi)
+                    result = util.broadcast_chomp(second.shape, result)
                     print_sync("local_slice=%s" % str(result))
                     npsecond = second[result]
                     print_sync("npsecond.shape=%s, npout.shape=%s" % (
@@ -686,6 +836,56 @@ remainder = _BinaryOperation(umath.remainder)
 fmod = _BinaryOperation(umath.fmod)
 
 def zeros(shape, dtype=np.float, order='C'):
+    """zeros(shape, dtype=float, order='C')
+
+    Return a new array of given shape and type, filled with zeros.
+
+    Parameters
+    ----------
+    shape : int or sequence of ints
+        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
+    dtype : data-type, optional
+        The desired data-type for the array, e.g., `numpy.int8`.  Default is
+        `numpy.float64`.
+    order : {'C', 'F'}, optional
+        Whether to store multidimensional data in C- or Fortran-contiguous
+        (row- or column-wise) order in memory.
+
+    Returns
+    -------
+    out : ndarray
+        Array of zeros with the given shape, dtype, and order.
+
+    See Also
+    --------
+    zeros_like : Return an array of zeros with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    empty_like : Return an empty array with shape and type of input.
+    ones : Return a new array setting values to one.
+    empty : Return a new uninitialized array.
+
+    Examples
+    --------
+    >>> np.zeros(5)
+    array([ 0.,  0.,  0.,  0.,  0.])
+
+    >>> np.zeros((5,), dtype=numpy.int)
+    array([0, 0, 0, 0, 0])
+
+    >>> np.zeros((2, 1))
+    array([[ 0.],
+           [ 0.]])
+
+    >>> s = (2,2)
+    >>> np.zeros(s)
+    array([[ 0.,  0.],
+           [ 0.,  0.]])
+
+    >>> np.zeros((2,), dtype=[('x', 'i4'), ('y', 'i4')]) # custom dtype
+    array([(0, 0), (0, 0)],
+          dtype=[('x', '<i4'), ('y', '<i4')])
+
+    """
     a = ndarray(shape, dtype)
     buf = a.access()
     if buf is not None:
@@ -694,6 +894,32 @@ def zeros(shape, dtype=np.float, order='C'):
     return a
 
 def ones(shape, dtype=np.float, order='C'):
+    """Return a new array of given shape and type, filled with ones.
+
+    Please refer to the documentation for `zeros`.
+
+    See Also
+    --------
+    zeros
+
+    Examples
+    --------
+    >>> np.ones(5)
+    array([ 1.,  1.,  1.,  1.,  1.])
+
+    >>> np.ones((5,), dtype=np.int)
+    array([1, 1, 1, 1, 1])
+
+    >>> np.ones((2, 1))
+    array([[ 1.],
+           [ 1.]])
+
+    >>> s = (2,2)
+    >>> np.ones(s)
+    array([[ 1.,  1.],
+           [ 1.,  1.]])
+    
+    """
     a = ndarray(shape, dtype)
     buf = a.access()
     if buf is not None:
@@ -702,6 +928,55 @@ def ones(shape, dtype=np.float, order='C'):
     return a
 
 def fromfunction(func, shape, **kwargs):
+    """Construct an array by executing a function over each coordinate.
+
+    The resulting array therefore has a value ``fn(x, y, z)`` at
+    coordinate ``(x, y, z)``.
+
+    Parameters
+    ----------
+    function : callable
+        The function is called with N parameters, each of which
+        represents the coordinates of the array varying along a
+        specific axis.  For example, if `shape` were ``(2, 2)``, then
+        the parameters would be two arrays, ``[[0, 0], [1, 1]]`` and
+        ``[[0, 1], [0, 1]]``.  `function` must be capable of operating on
+        arrays, and should return a scalar value.
+    shape : (N,) tuple of ints
+        Shape of the output array, which also determines the shape of
+        the coordinate arrays passed to `function`.
+    dtype : data-type, optional
+        Data-type of the coordinate arrays passed to `function`.
+        By default, `dtype` is float.
+
+    Returns
+    -------
+    out : any
+        The result of the call to `function` is passed back directly.
+        Therefore the type and shape of `out` is completely determined by
+        `function`.
+
+    See Also
+    --------
+    indices, meshgrid
+
+    Notes
+    -----
+    Keywords other than `shape` and `dtype` are passed to `function`.
+
+    Examples
+    --------
+    >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=int)
+    array([[ True, False, False],
+           [False,  True, False],
+           [False, False,  True]], dtype=bool)
+
+    >>> np.fromfunction(lambda i, j: i + j, (3, 3), dtype=int)
+    array([[0, 1, 2],
+           [1, 2, 3],
+           [2, 3, 4]])
+    
+    """
     dtype = kwargs.pop('dtype', np.float32)
     # create the new GA (collective operation)
     a = ndarray(shape, dtype)
@@ -723,6 +998,57 @@ def fromfunction(func, shape, **kwargs):
     return a
 
 def arange(start, stop=None, step=None, dtype=None):
+    """Return evenly spaced values within a given interval.
+
+    Values are generated within the half-open interval ``[start, stop)``
+    (in other words, the interval including `start` but excluding `stop`).
+    For integer arguments the function is equivalent to the Python built-in
+    `range <http://docs.python.org/lib/built-in-funcs.html>`_ function,
+    but returns a ndarray rather than a list.
+
+    Parameters
+    ----------
+    start : number, optional
+        Start of interval.  The interval includes this value.  The default
+        start value is 0.
+    stop : number
+        End of interval.  The interval does not include this value.
+    step : number, optional
+        Spacing between values.  For any output `out`, this is the distance
+        between two adjacent values, ``out[i+1] - out[i]``.  The default
+        step size is 1.  If `step` is specified, `start` must also be given.
+    dtype : dtype
+        The type of the output array.  If `dtype` is not given, infer the data
+        type from the other input arguments.
+
+    Returns
+    -------
+    out : ndarray
+        Array of evenly spaced values.
+
+        For floating point arguments, the length of the result is
+        ``ceil((stop - start)/step)``.  Because of floating point overflow,
+        this rule may result in the last element of `out` being greater
+        than `stop`.
+
+    See Also
+    --------
+    linspace : Evenly spaced numbers with careful handling of endpoints.
+    ogrid: Arrays of evenly spaced numbers in N-dimensions
+    mgrid: Grid-shaped arrays of evenly spaced numbers in N-dimensions
+
+    Examples
+    --------
+    >>> np.arange(3)
+    array([0, 1, 2])
+    >>> np.arange(3.0)
+    array([ 0.,  1.,  2.])
+    >>> np.arange(3,7)
+    array([3, 4, 5, 6])
+    >>> np.arange(3,7,2)
+    array([3, 5])
+    
+    """
     if step == 0:
         raise ValueError, "step size of 0 not allowed"
     if not step:
@@ -732,12 +1058,17 @@ def arange(start, stop=None, step=None, dtype=None):
     length = 0
     if ((step < 0 and stop >= start) or (step > 0 and start >= stop)):
         length = 0
-    length = math.ceil((stop-start)/step) # true division, otherwise off by one
+    else:
+        # true division, otherwise off by one
+        length = math.ceil((stop-start)/step)
+    # bail if threshold not met
+    if length < SIZE_THRESHOLD:
+        return np.arange(start,stop,step,dtype)
     if dtype is None:
         if (isinstance(start, (int,long))
                 and isinstance(stop, (int,long))
                 and isinstance(step, (int,long))):
-            dtype = np.int32
+            dtype = np.int64
         else:
             dtype = np.float64
     a = ndarray((int(length),), dtype)
@@ -749,34 +1080,274 @@ def arange(start, stop=None, step=None, dtype=None):
         a_local += start
     return a
 
-def dot(first, second):
-    """Dot product of two arrays.
+def linspace(start, stop, num=50, endpoint=True, retstep=False):
+    """Return evenly spaced numbers over a specified interval.
 
-    For 2-D arrays it is equivalent to matrix multiplication, and for 1-D arrays
-    to inner product of vectors (without complex conjugation). For N dimensions
-    it is a sum product over the last axis of a and the second-to-last of b:
-        dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
+    Returns `num` evenly spaced samples, calculated over the
+    interval [`start`, `stop` ].
+
+    The endpoint of the interval can optionally be excluded.
+
+    Parameters
+    ----------
+    start : scalar
+        The starting value of the sequence.
+    stop : scalar
+        The end value of the sequence, unless `endpoint` is set to False.
+        In that case, the sequence consists of all but the last of ``num + 1``
+        evenly spaced samples, so that `stop` is excluded.  Note that the step
+        size changes when `endpoint` is False.
+    num : int, optional
+        Number of samples to generate. Default is 50.
+    endpoint : bool, optional
+        If True, `stop` is the last sample. Otherwise, it is not included.
+        Default is True.
+    retstep : bool, optional
+        If True, return (`samples`, `step`), where `step` is the spacing
+        between samples.
+
+    Returns
+    -------
+    samples : ndarray
+        There are `num` equally spaced samples in the closed interval
+        ``[start, stop]`` or the half-open interval ``[start, stop)``
+        (depending on whether `endpoint` is True or False).
+    step : float (only if `retstep` is True)
+        Size of spacing between samples.
+
+
+    See Also
+    --------
+    arange : Similiar to `linspace`, but uses a step size (instead of the
+             number of samples).
+    logspace : Samples uniformly distributed in log space.
+
+    Examples
+    --------
+    >>> np.linspace(2.0, 3.0, num=5)
+        array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ])
+    >>> np.linspace(2.0, 3.0, num=5, endpoint=False)
+        array([ 2. ,  2.2,  2.4,  2.6,  2.8])
+    >>> np.linspace(2.0, 3.0, num=5, retstep=True)
+        (array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ]), 0.25)
+
+    Graphical illustration:
+
+    >>> import matplotlib.pyplot as plt
+    >>> N = 8
+    >>> y = np.zeros(N)
+    >>> x1 = np.linspace(0, 10, N, endpoint=True)
+    >>> x2 = np.linspace(0, 10, N, endpoint=False)
+    >>> plt.plot(x1, y, 'o')
+    >>> plt.plot(x2, y + 0.5, 'o')
+    >>> plt.ylim([-0.5, 1])
+    >>> plt.show()
 
     """
-    ##print "dot"
-    ## We cheat for now. Only supports 1D dot
-    #if not (isinstance(first, (gainarray, flatiter))
-    #        or isinstance(second, (gainarray, flatiter))):
-    #    # numpy pass through
-    #    return np.dot(first,second)
-    #if isinstance(first, flatiter):
-    #    #print "before flatten attempt first"
-    #    first = first.base.flatten()
-    #if isinstance(second, flatiter):
-    #    #print "before flatten attempt second"
-    #    second = second.base.flatten()
-    #assert first.ndim == second.ndim
-    #assert first.ndim == 1, "TODO. Only supports 1D dot for now."
-    #tmp = first * second
-    #a = tmp.access()
-    #result = np.add.reduce(a)
-    #return MPI.COMM_WORLD.Allreduce(result,MPI.SUM)
-    raise NotImplementedError
+    # bail if threshold not met
+    if num < SIZE_THRESHOLD:
+        return np.linspace(start,stop,num,endpoint,retstep)
+    a = ndarray(num)
+    step = None
+    if endpoint:
+        step = (stop-start)/(num-1)
+    else:
+        step = (stop-start)/num
+    buf = a.access()
+    if buf is not None:
+        lo,hi = ga.distribution(a.handle)
+        lo,hi = lo[0],hi[0]
+        buf[:] = np.arange(lo,hi)*step+start
+        ga.release_update(a.handle)
+    ga.sync()
+    if retstep:
+        return a,step
+    return a
+
+def logspace(start, stop, num=50, endpoint=True, base=10.0):
+    """Return numbers spaced evenly on a log scale.
+
+    In linear space, the sequence starts at ``base ** start``
+    (`base` to the power of `start`) and ends with ``base ** stop``
+    (see `endpoint` below).
+
+    Parameters
+    ----------
+    start : float
+        ``base ** start`` is the starting value of the sequence.
+    stop : float
+        ``base ** stop`` is the final value of the sequence, unless `endpoint`
+        is False.  In that case, ``num + 1`` values are spaced over the
+        interval in log-space, of which all but the last (a sequence of
+        length ``num``) are returned.
+    num : integer, optional
+        Number of samples to generate.  Default is 50.
+    endpoint : boolean, optional
+        If true, `stop` is the last sample. Otherwise, it is not included.
+        Default is True.
+    base : float, optional
+        The base of the log space. The step size between the elements in
+        ``ln(samples) / ln(base)`` (or ``log_base(samples)``) is uniform.
+        Default is 10.0.
+
+    Returns
+    -------
+    samples : ndarray
+        `num` samples, equally spaced on a log scale.
+
+    See Also
+    --------
+    arange : Similiar to linspace, with the step size specified instead of the
+             number of samples. Note that, when used with a float endpoint, the
+             endpoint may or may not be included.
+    linspace : Similar to logspace, but with the samples uniformly distributed
+               in linear space, instead of log space.
+
+    Notes
+    -----
+    Logspace is equivalent to the code
+
+    >>> y = linspace(start, stop, num=num, endpoint=endpoint)
+    >>> power(base, y)
+
+    Examples
+    --------
+    >>> np.logspace(2.0, 3.0, num=4)
+        array([  100.        ,   215.443469  ,   464.15888336,  1000.        ])
+    >>> np.logspace(2.0, 3.0, num=4, endpoint=False)
+        array([ 100.        ,  177.827941  ,  316.22776602,  562.34132519])
+    >>> np.logspace(2.0, 3.0, num=4, base=2.0)
+        array([ 4.        ,  5.0396842 ,  6.34960421,  8.        ])
+
+    Graphical illustration:
+
+    >>> import matplotlib.pyplot as plt
+    >>> N = 10
+    >>> x1 = np.logspace(0.1, 1, N, endpoint=True)
+    >>> x2 = np.logspace(0.1, 1, N, endpoint=False)
+    >>> y = np.zeros(N)
+    >>> plt.plot(x1, y, 'o')
+    >>> plt.plot(x2, y + 0.5, 'o')
+    >>> plt.ylim([-0.5, 1])
+    >>> plt.show()
+    
+    """
+    # bail if threshold not met
+    if num < SIZE_THRESHOLD:
+        return np.logspace(start,stop,num,endpoint,base)
+    a = ndarray(num)
+    step = None
+    if endpoint:
+        step = (stop-start)/(num-1)
+    else:
+        step = (stop-start)/num
+    buf = a.access()
+    if buf is not None:
+        lo,hi = ga.distribution(a.handle)
+        lo,hi = lo[0],hi[0]
+        buf[:] = base**(np.arange(lo,hi)*step+start)
+        ga.release_update(a.handle)
+    ga.sync()
+    return a
+
+def dot(a, b, out=None):
+    """dot(a, b)
+
+    Dot product of two arrays.
+
+    For 2-D arrays it is equivalent to matrix multiplication, and for 1-D
+    arrays to inner product of vectors (without complex conjugation). For
+    N dimensions it is a sum product over the last axis of `a` and
+    the second-to-last of `b`::
+
+        dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
+
+    Parameters
+    ----------
+    a : array_like
+        First argument.
+    b : array_like
+        Second argument.
+
+    Returns
+    -------
+    output : ndarray
+        Returns the dot product of `a` and `b`.  If `a` and `b` are both
+        scalars or both 1-D arrays then a scalar is returned; otherwise
+        an array is returned.
+
+    Raises
+    ------
+    ValueError
+        If the last dimension of `a` is not the same size as
+        the second-to-last dimension of `b`.
+
+    See Also
+    --------
+    vdot : Complex-conjugating dot product.
+    tensordot : Sum products over arbitrary axes.
+
+    Examples
+    --------
+    >>> np.dot(3, 4)
+    12
+
+    Neither argument is complex-conjugated:
+
+    >>> np.dot([2j, 3j], [2j, 3j])
+    (-13+0j)
+
+    For 2-D arrays it's the matrix product:
+
+    >>> a = [[1, 0], [0, 1]]
+    >>> b = [[4, 1], [2, 2]]
+    >>> np.dot(a, b)
+    array([[4, 1],
+           [2, 2]])
+
+    >>> a = np.arange(3*4*5*6).reshape((3,4,5,6))
+    >>> b = np.arange(3*4*5*6)[::-1].reshape((5,4,6,3))
+    >>> np.dot(a, b)[2,3,2,1,2,2]
+    499128
+    >>> sum(a[2,3,2,:] * b[1,2,:,2])
+    499128
+
+    """
+    if not (isinstance(a, ndarray) or isinstance(b, ndarray)):
+        # numpy pass through
+        return np.dot(a,b)
+    a = asarray(a)
+    b = asarray(b)
+    if a.ndim == 1:
+        if len(a) != len(b):
+            raise ValueError, "objects are not aligned"
+        tmp = multiply(a,b)
+        a = tmp.access()
+        local_sum = None
+        if a is None:
+            local_sum = np.add.redcue(np.asarray([0], dtype=tmp.dtype))
+        else:
+            local_sum = np.add.reduce(a)
+        return ga.gop_add(local_sum)
+    elif a.ndim == 2:
+        if a.shape[1] != b.shape[0]:
+            raise ValueError, "objects are not aligned"
+        out = zeros((a.shape[0],b.shape[1]), a.dtype)
+        # use GA gemm if certain conditions apply
+        valid_types = [np.dtype(np.float32),
+                np.dtype(np.float64),
+                np.dtype(np.float128),
+                np.dtype(np.complex64),
+                np.dtype(np.complex128)]
+        if (a.base is None and b.base is None
+                and a.dtype == b.dtype and a.dtype in valid_types):
+            ga.gemm(False, False, a.shape[0], b.shape[1], b.shape[0],
+                    1, a.handle, b.handle, 1, out.handle)
+            return out
+        else:
+            raise NotImplementedError
+    else:
+        raise NotImplementedError
 
 def asarray(a, dtype=None, order=None):
     if isinstance(a, ndarray):

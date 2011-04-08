@@ -1949,22 +1949,27 @@ def gop(X, char *op):
 
     """
     cdef np.ndarray X_nd = np.asarray(X)
+    cdef int size = 0
     if not X_nd.flags['C_CONTIGUOUS']:
         raise ValueError, "X must be contiguous"
-    if X_nd.dtype == np.intc:
-        GA_Igop(<int*>X_nd.data, len(X_nd), op)
-    elif X_nd.dtype == np.long:
-        GA_Lgop(<long*>X_nd.data, len(X_nd), op)
-    elif X_nd.dtype == np.longlong:
-        GA_Llgop(<long long*>X_nd.data, len(X_nd), op)
-    elif X_nd.dtype == np.single:
-        GA_Fgop(<float*>X_nd.data, len(X_nd), op)
-    elif X_nd.dtype == np.double:
-        GA_Dgop(<double*>X_nd.data, len(X_nd), op)
-    elif X_nd.dtype == np.complex64:
-        GA_Cgop(<SingleComplex*>X_nd.data, len(X_nd), op)
-    elif X_nd.dtype == np.complex128:
-        GA_Zgop(<DoubleComplex*>X_nd.data, len(X_nd), op)
+    try:
+        size = len(X_nd)
+    except TypeError:
+        size = 1
+    if X_nd.dtype == np.dtype(np.intc):
+        GA_Igop(<int*>X_nd.data, size, op)
+    elif X_nd.dtype == np.dtype(np.long):
+        GA_Lgop(<long*>X_nd.data, size, op)
+    elif X_nd.dtype == np.dtype(np.longlong):
+        GA_Llgop(<long long*>X_nd.data, size, op)
+    elif X_nd.dtype == np.dtype(np.single):
+        GA_Fgop(<float*>X_nd.data, size, op)
+    elif X_nd.dtype == np.dtype(np.double):
+        GA_Dgop(<double*>X_nd.data, size, op)
+    elif X_nd.dtype == np.dtype(np.complex64):
+        GA_Cgop(<SingleComplex*>X_nd.data, size, op)
+    elif X_nd.dtype == np.dtype(np.complex128):
+        GA_Zgop(<DoubleComplex*>X_nd.data, size, op)
     else:
         raise TypeError, "type not supported by ga.gop %s" % X_nd.dtype
     return X_nd

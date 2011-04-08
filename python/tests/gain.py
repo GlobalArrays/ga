@@ -47,8 +47,16 @@ results = {}
 results[np] = []
 results[gain] = []
 
+# quick test of ga.gemm
+g_a = ga.create(ga.C_DBL, (10,20))
+g_b = ga.create(ga.C_DBL, (20,30))
+g_c = ga.create(ga.C_DBL, (10,30))
+ga.gemm(False, False, 10, 30, 20, 1, g_a, g_b, 1, g_c)
+
 def foo(module):
     if not me: print "using module %s" % module
+    results[module].append(module.arange(100, dtype=module.float32))
+    results[module].append(module.arange(100, dtype=module.float32))
     #d = module.arange(100, dtype=module.float32)
     #e = module.arange(100, dtype=module.float32)
     ##d_lower = d[:50:2]
@@ -76,9 +84,20 @@ def foo(module):
     #s = module.ones((3,4,5), dtype=module.float32)
     #t = module.ones((3,4,5), dtype=module.float32)
     #results[module].append(module.sin(s,t))
-    x = module.ones((2,3,4))
-    y = module.ones((3,4))
-    results[module].append(module.add(x,y))
+    #x = module.ones((2,3,4))
+    #y = module.ones((3,4))
+    #results[module].append(module.add(x,y))
+    results[module].append(module.linspace(2.0,3.0,num=5))
+    results[module].append(module.linspace(2.0,3.0,num=5,endpoint=False))
+    results[module].append(module.linspace(2.0,3.0,num=5,retstep=True))
+    results[module].append(module.logspace(2.0,3.0,num=4))
+    results[module].append(module.logspace(2.0,3.0,num=4,endpoint=False))
+    results[module].append(module.logspace(2.0,3.0,num=4,base=2.0))
+    a = module.ones((10,20), dtype=float)
+    b = module.ones((20,30), dtype=float)
+    results[module].append(module.dot(a,b))
+    d = module.arange(100, dtype=module.float32)
+    results[module].append(module.dot(d,d))
 
 if __name__ == '__main__':
     ga.sync()
@@ -90,17 +109,25 @@ if __name__ == '__main__':
     if not me:
         for result_np,result_gain in zip(results[np],results[gain]):
             print "RESULT---------------------------------"
-            print type(result_np), result_np.dtype
+            print type(result_np)
+            if hasattr(result_np, "dtype"): print result_np.dtype
             print result_np
             print "RESULT---------------------------------"
-            print type(result_gain), result_gain.dtype
+            print type(result_gain)
+            if hasattr(result_gain, "dtype"): print result_gain.dtype
             print result_gain
             print "difference ---------------------------------"
             diff = None
+            diff_warn = "---------------------------------WARNING DIFF FAILED"
             if isinstance(result_gain, gain.ndarray):
                 diff = result_np-result_gain.get()
+                print diff
+                if not np.all(diff == 0): print diff_warn
+                if not result_np.dtype == result_gain.dtype: print diff_warn
+            elif isinstance(result_gain, tuple):
+                pass
             else:
                 diff = result_np-result_gain
-            print diff
-            if not np.all(diff == 0):
-                print "---------------------------------WARNING DIFF FAILED"
+                print diff
+                if not np.all(diff == 0): print diff_warn
+                if not result_np.dtype == result_gain.dtype: print diff_warn

@@ -31,7 +31,7 @@ ga_cppflags,ignore = p.communicate()
 p = Popen("%s --ldflags" % ga_config, shell=True, stdout=PIPE, stderr=PIPE,
         close_fds=True)
 ga_ldflags,ignore = p.communicate()
-p = Popen("%s --clibs" % ga_config, shell=True, stdout=PIPE, stderr=PIPE,
+p = Popen("%s --libs" % ga_config, shell=True, stdout=PIPE, stderr=PIPE,
         close_fds=True)
 ga_clibs,ignore = p.communicate()
 
