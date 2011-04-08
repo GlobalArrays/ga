@@ -350,35 +350,39 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@am__append_52 =  \
 @ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src \
 @ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src/include
-@ENABLE_F77_TRUE@am__append_53 =  \
+
+##############################################################################
+# tascel
+@ENABLE_TASCEL_TRUE@am__append_53 = tascel
+@ENABLE_F77_TRUE@am__append_54 =  \
 @ENABLE_F77_TRUE@	global/examples/boltzmann/boltz$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/examples/conjugate_gradient/ga_cg$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/examples/md_cluster/grp_sim$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/examples/scf/scf$(EXEEXT)
 XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
-@ENABLE_F77_TRUE@am__append_54 = gaf2c/testarg$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_55 = ma/testf$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_55 = gaf2c/testarg$(EXEEXT)
 @ENABLE_F77_TRUE@am__append_56 = ma/testf$(EXEEXT)
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_57 = tcgmsg/ipcv4.0/hello$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_57 = ma/testf$(EXEEXT)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_58 = tcgmsg/ipcv4.0/hello$(EXEEXT)
 #PARALLEL_TESTS += tcgmsg/ipcv4.0/test$(EXEEXT) # requires user input
 #PARALLEL_TESTS += tcgmsg/ipcv4.0/testmap$(EXEEXT) # requires user input
 #PARALLEL_TESTS += tcgmsg/ipcv4.0/toplot$(EXEEXT) # not a test
 #PARALLEL_TESTS += tcgmsg/ipcv4.0/xdrtest$(EXEEXT) # requires user input
-@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_58 = tcgmsg/ipcv4.0/testf$(EXEEXT)
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_59 = tcgmsg/ipcv4.0/testf$(EXEEXT)
 #PARALLEL_TESTS += tcgmsg/ipcv4.0/testpf$(EXEEXT) # requires input files
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_59 = tcgmsg/ipcv5.0/hello$(EXEEXT)
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_60 = tcgmsg/ipcv5.0/hello$(EXEEXT)
 #PARALLEL_TESTS += tcgmsg/ipcv5.0/test$(EXEEXT) # requires user input
-@MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_60 = tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
+@MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_61 = tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
 #PARALLEL_TESTS += tcgmsg/ipcv5.0/jacobi$(EXEEXT) # requires user input
 #PARALLEL_TESTS += tcgmsg/ipcv5.0/testf$(EXEEXT) # requires user input
 #PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT) # useless test
 #PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test$(EXEEXT) # requires user input
-@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_61 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_62 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
 #PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
 #PARALLEL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
 #PARALLEL_TESTS += global/testing/random$(EXEEXT) # takes too long
-@ENABLE_F77_TRUE@am__append_62 = global/testing/bin$(EXEEXT) \
+@ENABLE_F77_TRUE@am__append_63 = global/testing/bin$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/blktest$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g3test$(EXEEXT) \
@@ -408,20 +412,20 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 @ENABLE_F77_TRUE@	global/testing/test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/types_test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/field_test$(EXEEXT)
-@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_63 = global/testing/testspd$(EXEEXT)
-@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_64 = global/testing/ga_lu$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_65 = global/testing/ga-mpi$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_64 = global/testing/testspd$(EXEEXT)
+@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_65 = global/testing/ga_lu$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_66 = global/testing/ga-mpi$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT)
-@SYSV_TRUE@am__append_66 = global/testing/ipc_clean$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_67 = global/testing/nga-onesided$(EXEEXT) \
+@SYSV_TRUE@am__append_67 = global/testing/ipc_clean$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_68 = global/testing/nga-onesided$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/nga-patch$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/nga-periodic$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/nga-scatter$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/nga-scatter$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/nga-util$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ngatest$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_68 = global/examples/boltzmann/boltz$(EXEEXT)
-@CXX_BINDINGS_TRUE@am__append_69 = ga++/testing/elempatch$(EXEEXT) \
+@ENABLE_F77_TRUE@am__append_69 = global/examples/boltzmann/boltz$(EXEEXT)
+@CXX_BINDINGS_TRUE@am__append_70 = ga++/testing/elempatch$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/ntestc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc$(EXEEXT) \
@@ -2724,7 +2728,7 @@ TEST_LOGS = $(am__test_logs2:.test.log=.log)
 TEST_LOG_COMPILE = $(TEST_LOG_COMPILER) $(AM_TEST_LOG_FLAGS) \
 	$(TEST_LOG_FLAGS)
 TEST_LOGS_TMP = $(TEST_LOGS:.log=.log-t)
-DIST_SUBDIRS = $(SUBDIRS)
+DIST_SUBDIRS = armci . tascel
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -3487,9 +3491,9 @@ gparrays_testing_test_LDFLAGS = $(FLDFLAGS)
 
 ##############################################################################
 # armci
-SUBDIRS = armci .
+SUBDIRS = armci . $(am__append_53)
 EXAMPLES = global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_53)
+	$(am__append_54)
 GA_RECURSIVE_TARGETS = checkprogs-recursive examples-recursive
 # END COPY
 
@@ -3533,14 +3537,14 @@ TESTS_ENVIRONMENT = \
 maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
 
 #SERIAL_TESTS += ma/testc$(EXEEXT) # requires interactive input
-SERIAL_TESTS = $(am__append_54) ma/test-coalesce$(EXEEXT) \
-	ma/test-inquire$(EXEEXT) $(am__append_55)
-SERIAL_TESTS_XFAIL = $(am__append_56)
+SERIAL_TESTS = $(am__append_55) ma/test-coalesce$(EXEEXT) \
+	ma/test-inquire$(EXEEXT) $(am__append_56)
+SERIAL_TESTS_XFAIL = $(am__append_57)
 #PARALLEL_TESTS += global/examples/conjugate_gradient/ga_cg$(EXEEXT) # needs user input
 #PARALLEL_TESTS += global/examples/md_cluster/grp_sim$(EXEEXT) # needs input
 #PARALLEL_TESTS += global/examples/scf/scf$(EXEEXT) # needs input file
-PARALLEL_TESTS = $(am__append_57) $(am__append_58) $(am__append_59) \
-	$(am__append_60) $(am__append_61) \
+PARALLEL_TESTS = $(am__append_58) $(am__append_59) $(am__append_60) \
+	$(am__append_61) $(am__append_62) \
 	global/testing/elempatch$(EXEEXT) \
 	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
@@ -3553,13 +3557,13 @@ PARALLEL_TESTS = $(am__append_57) $(am__append_58) $(am__append_59) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
 	global/testing/testmultrect$(EXEEXT) \
-	global/testing/unpackc$(EXEEXT) $(am__append_62) \
-	$(am__append_63) $(am__append_64) $(am__append_65) \
-	$(am__append_66) $(am__append_67) \
+	global/testing/unpackc$(EXEEXT) $(am__append_63) \
+	$(am__append_64) $(am__append_65) $(am__append_66) \
+	$(am__append_67) $(am__append_68) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_68) pario/dra/bign$(EXEEXT) \
+	$(am__append_69) pario/dra/bign$(EXEEXT) \
 	pario/dra/ntestc$(EXEEXT) pario/dra/perfn$(EXEEXT) \
-	pario/dra/rate$(EXEEXT) $(am__append_69)
+	pario/dra/rate$(EXEEXT) $(am__append_70)
 PARALLEL_TESTS_XFAIL = 
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive

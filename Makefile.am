@@ -1337,6 +1337,12 @@ libga_la_LIBADD += $(GA_MP_LIBS)
 libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 
 ##############################################################################
+# tascel
+if ENABLE_TASCEL
+SUBDIRS += tascel
+endif
+
+##############################################################################
 # the end
 #
 .PHONY: checkprogs checkprogs-recursive checkprogs-am
