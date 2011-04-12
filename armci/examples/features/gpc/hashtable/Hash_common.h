@@ -19,6 +19,7 @@ typedef struct hash_hdr {
 using std::string;
 
 /* #include "UnicodeString.h" */
+#define USE_MAP
 #ifdef USE_MAP
 #   include <map>
     typedef std::map<string, int> VocabIntMap;
