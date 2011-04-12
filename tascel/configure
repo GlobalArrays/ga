@@ -614,9 +614,7 @@ LIPO
 NMEDIT
 DSYMUTIL
 MANIFEST_TOOL
-RANLIB
 ac_ct_AR
-AR
 DLLTOOL
 OBJDUMP
 LN_S
@@ -635,6 +633,9 @@ build_vendor
 build_cpu
 build
 LIBTOOL
+RANLIB
+AR_FLAGS
+AR
 HAVE_SCALAPACK_FALSE
 HAVE_SCALAPACK_TRUE
 SCALAPACK_CPPFLAGS
@@ -695,9 +696,9 @@ LDFLAGS
 CFLAGS
 CC
 MPICC
-TASCEL_MPI_CPPFLAGS
-TASCEL_MPI_LDFLAGS
-TASCEL_MPI_LIBS
+GA_MP_CPPFLAGS
+GA_MP_LDFLAGS
+GA_MP_LIBS
 TASCEL_STANDALONE_FALSE
 TASCEL_STANDALONE_TRUE
 MAINT
@@ -771,9 +772,11 @@ ac_user_opts='
 enable_option_checking
 enable_silent_rules
 enable_maintainer_mode
+with_PACKAGE
 with_mpi
 enable_mpi_tests
 enable_dependency_tracking
+enable_underscoring
 enable_i4
 enable_i8
 with_ga
@@ -809,7 +812,10 @@ F77
 FFLAGS
 FFLAG_INT
 F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-CPP'
+CPP
+AR
+AR_FLAGS
+RANLIB'
 
 
 # Initialize some variables set by options.
@@ -1437,6 +1443,9 @@ Optional Features:
   --disable-mpi-tests     disable MPI linker tests
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
+  --enable-underscoring   force single underscore for all external Fortran
+                          symbols [default: use compiler defaults for external
+                          Fortran symbols]
   --enable-i4             enable 4-byte integers [default: sizeof(void*)]
   --enable-i8             enable 8-byte integers [default: sizeof(void*)]
   --enable-shared[=PKGS]  build shared libraries [default=no]
@@ -1448,6 +1457,10 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-PACKAGE[=ARG]    for most of the external software packages, ARG can
+                          be one or more whitespace-separated directories,
+                          linker or preprocessor directives; for example,
+                          --with-PACKAGE="/path/to/PACKAGE -lmylib -I/mydir"
   --with-mpi[=ARG]        select MPI as the messaging library (default); leave
                           ARG blank to use MPI compiler wrappers
   --with-ga[=ARG]         specify location of ga install and/or other flags
@@ -1486,6 +1499,9 @@ Some influential environment variables:
               if cross compiling, set to either "yes" (default) or "no" (after
               string)
   CPP         C preprocessor
+  AR          archiver used by libtool (default: ar)
+  AR_FLAGS    archiver flags used by libtool (default: cru)
+  RANLIB      generates index to archive (default: ranlib)
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -1605,6 +1621,52 @@ fi
   as_fn_set_status $ac_retval
 
 } # ac_fn_c_try_compile
+
+# ac_fn_c_try_link LINENO
+# -----------------------
+# Try to link conftest.$ac_ext, and return whether this succeeded.
+ac_fn_c_try_link ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  rm -f conftest.$ac_objext conftest$ac_exeext
+  if { { ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_link") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    grep -v '^ *+' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+    mv -f conftest.er1 conftest.err
+  fi
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then :
+  ac_retval=0
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_retval=1
+fi
+  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
+  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
+  # interfere with the next link command; also delete a directory that is
+  # left behind by Apple's compiler.  We do this before executing the actions.
+  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
+  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
+  as_fn_set_status $ac_retval
+
+} # ac_fn_c_try_link
 
 # ac_fn_cxx_try_compile LINENO
 # ----------------------------
@@ -2144,10 +2206,10 @@ fi
 
 } # ac_fn_f77_try_compile
 
-# ac_fn_c_try_link LINENO
-# -----------------------
+# ac_fn_f77_try_link LINENO
+# -------------------------
 # Try to link conftest.$ac_ext, and return whether this succeeded.
-ac_fn_c_try_link ()
+ac_fn_f77_try_link ()
 {
   as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
   rm -f conftest.$ac_objext conftest$ac_exeext
@@ -2167,7 +2229,7 @@ $as_echo "$ac_try_echo"; } >&5
   fi
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; } && {
-	 test -z "$ac_c_werror_flag" ||
+	 test -z "$ac_f77_werror_flag" ||
 	 test ! -s conftest.err
        } && test -s conftest$ac_exeext && {
 	 test "$cross_compiling" = yes ||
@@ -2188,7 +2250,7 @@ fi
   eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
   as_fn_set_status $ac_retval
 
-} # ac_fn_c_try_link
+} # ac_fn_f77_try_link
 
 # ac_fn_c_try_run LINENO
 # ----------------------
@@ -2245,6 +2307,14 @@ ac_fn_c_compute_int ()
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 $4
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
 int
 main ()
 {
@@ -2261,6 +2331,14 @@ if ac_fn_c_try_compile "$LINENO"; then :
     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 $4
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
 int
 main ()
 {
@@ -2287,6 +2365,14 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 $4
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
 int
 main ()
 {
@@ -2303,6 +2389,14 @@ if ac_fn_c_try_compile "$LINENO"; then :
     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 $4
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
 int
 main ()
 {
@@ -2337,6 +2431,14 @@ while test "x$ac_lo" != "x$ac_hi"; do
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 $4
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
 int
 main ()
 {
@@ -2366,6 +2468,14 @@ static long int longval () { return $2; }
 static unsigned long int ulongval () { return $2; }
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
 int
 main ()
 {
@@ -2409,52 +2519,6 @@ rm -f conftest.val
   as_fn_set_status $ac_retval
 
 } # ac_fn_c_compute_int
-
-# ac_fn_f77_try_link LINENO
-# -------------------------
-# Try to link conftest.$ac_ext, and return whether this succeeded.
-ac_fn_f77_try_link ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  rm -f conftest.$ac_objext conftest$ac_exeext
-  if { { ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
-$as_echo "$ac_try_echo"; } >&5
-  (eval "$ac_link") 2>conftest.err
-  ac_status=$?
-  if test -s conftest.err; then
-    grep -v '^ *+' conftest.err >conftest.er1
-    cat conftest.er1 >&5
-    mv -f conftest.er1 conftest.err
-  fi
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; } && {
-	 test -z "$ac_f77_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then :
-  ac_retval=0
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_retval=1
-fi
-  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
-  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
-  # interfere with the next link command; also delete a directory that is
-  # left behind by Apple's compiler.  We do this before executing the actions.
-  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
-  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
-  as_fn_set_status $ac_retval
-
-} # ac_fn_f77_try_link
 
 # ac_fn_f77_try_run LINENO
 # ------------------------
@@ -3639,6 +3703,15 @@ fi
 ###############################################################################
 # Misc. information and package setup.
 ###############################################################################
+#GA_TARGET # tascel doesn't (yet?) depend on target platform
+
+
+# Check whether --with-PACKAGE was given.
+if test "${with_PACKAGE+set}" = set; then :
+  withval=$with_PACKAGE;
+fi
+
+
 TASCEL_TOP_BUILDDIR="`pwd`"
 cd "$srcdir"
 TASCEL_TOP_SRCDIR="`pwd`"
@@ -3647,6 +3720,7 @@ if test "$TASCEL_TOP_BUILDDIR" != "TASCEL_TOP_SRCDIR"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: Detected VPATH build" >&5
 $as_echo "$as_me: Detected VPATH build" >&6;}
 fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether tascel is built outside of GA" >&5
 $as_echo_n "checking whether tascel is built outside of GA... " >&6; }
 if test "${tascel_cv_standalone+set}" = set; then :
@@ -3672,11 +3746,13 @@ fi
 # If MPI is desired we use the MPI compiler wrappers instead of the standard
 # compilers.
 
-# TASCEL_MPI_* vars might exist in environment, but they are really internal.
+# GA_MP_* vars might exist in environment, but they are really internal.
 # Reset them.
-TASCEL_MPI_LIBS=
-TASCEL_MPI_LDFLAGS=
-TASCEL_MPI_CPPFLAGS=
+GA_MP_LIBS=
+GA_MP_LDFLAGS=
+GA_MP_CPPFLAGS=
+# First of all, which messaging library do we want?
+
 
 # Check whether --with-mpi was given.
 if test "${with_mpi+set}" = set; then :
@@ -3685,7 +3761,9 @@ else
   with_mpi=yes
 fi
 
+
 need_parse=no
+
 case $with_mpi in #(
   yes) :
     with_mpi_wrappers=yes ;; #(
@@ -3696,6 +3774,7 @@ case $with_mpi in #(
   *) :
      ;;
 esac
+
 # Sanity check for --with-mpi and environment var interplay.
 if test "x$with_mpi_wrappers" = xyes; then :
   if test "x$CC" != x; then :
@@ -3718,6 +3797,8 @@ fi
         (F77=) as part of the configure invocation." "$LINENO" 5
 fi
 fi
+     if test "x$enable_cxx" = xyes; then :
+
      if test "x$CXX" != x; then :
   if test "x$CXX" != "x$MPICXX"; then :
   as_fn_error $? "MPI compilers wanted (--with-mpi was specified without
@@ -3726,6 +3807,7 @@ fi
         meant to specify the path to an MPI installation such as
         --with-mpi=/path/to/mpi?  The easiest thing to try is to unset CXX
         (CXX=) as part of the configure invocation." "$LINENO" 5
+fi
 fi
 fi
 
@@ -3738,37 +3820,37 @@ if test x$need_parse = xyes; then :
   no) :
      ;; #(
   -l*) :
-    TASCEL_MPI_LIBS="$TASCEL_MPI_LIBS $arg" ;; #(
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
   -L*) :
-    TASCEL_MPI_LDFLAGS="$TASCEL_MPI_LDFLAGS $arg" ;; #(
+    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
   -WL*) :
-    TASCEL_MPI_LDFLAGS="$TASCEL_MPI_LDFLAGS $arg" ;; #(
+    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
   -Wl*) :
-    TASCEL_MPI_LDFLAGS="$TASCEL_MPI_LDFLAGS $arg" ;; #(
+    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
   -I*) :
-    TASCEL_MPI_CPPFLAGS="$TASCEL_MPI_CPPFLAGS $arg" ;; #(
+    GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
   -*lib*) :
-    TASCEL_MPI_LDFLAGS="$TASCEL_MPI_LDFLAGS $arg" ;; #(
+    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
   *.a) :
-    TASCEL_MPI_LIBS="$TASCEL_MPI_LIBS $arg" ;; #(
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
   *.so) :
-    TASCEL_MPI_LIBS="$TASCEL_MPI_LIBS $arg" ;; #(
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
   *lib*) :
     if test -d $arg; then :
-  TASCEL_MPI_LDFLAGS="$TASCEL_MPI_LDFLAGS -L$arg"
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
 fi ;; #(
   -*include*) :
-    TASCEL_MPI_CPPFLAGS="$TASCEL_MPI_CPPFLAGS $arg" ;; #(
+    GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
   *include*) :
     if test -d $arg; then :
-  TASCEL_MPI_CPPFLAGS="$TASCEL_MPI_CPPFLAGS -I$arg"
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
     if test -d $arg/lib; then :
-  TASCEL_MPI_LDFLAGS="$TASCEL_MPI_LDFLAGS -L$arg/lib"
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"
 fi
          if test -d $arg/include; then :
-  TASCEL_MPI_CPPFLAGS="$TASCEL_MPI_CPPFLAGS -I$arg/include"
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"
 fi ;;
 esac
 done
@@ -3778,6 +3860,11 @@ fi
 
 
 
+
+# F77 and C++ are always enabled for tascel
+enable_f77=yes
+enable_cxx=yes
+
 # Check whether --enable-mpi-tests was given.
 if test "${enable_mpi_tests+set}" = set; then :
   enableval=$enable_mpi_tests;
@@ -3786,10 +3873,6 @@ else
 fi
 
 
-
-# F77 and C++ are always enabled for tascel
-enable_f77=yes
-enable_cxx=yes
 
 ###############################################################################
 # C compiler
@@ -3865,9 +3948,9 @@ fi
 
 
 
-case $tascel_cv_target_base in #(
+case $ga_cv_target_base in #(
   BGP) :
-    tascel_mpicc_pref=mpixlc_r; tascel_cc_pref=bgxlc_r ;; #(
+    ga_mpicc_pref=mpixlc_r; ga_cc_pref=bgxlc_r ;; #(
   *) :
      ;;
 esac
@@ -3875,17 +3958,17 @@ esac
 # absolutely everything in our list of compilers.
 # Save CC, just in case.
 if test x$with_mpi_wrappers = xyes; then :
-  tascel_save_CC="$CC"
+  ga_save_CC="$CC"
      CC="$MPICC"
      if test "x$MPICC" != x; then :
-  if test "x$tascel_save_CC" != x; then :
+  if test "x$ga_save_CC" != x; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPICC is set and CC is set" >&5
 $as_echo "$as_me: WARNING: MPI compilers desired, MPICC is set and CC is set" >&2;}
              { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICC over CC" >&5
 $as_echo "$as_me: WARNING: Choosing MPICC over CC" >&2;}
 fi
 else
-  if test "x$tascel_save_CC" != x; then :
+  if test "x$ga_save_CC" != x; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired but CC is set, ignoring" >&5
 $as_echo "$as_me: WARNING: MPI compilers desired but CC is set, ignoring" >&2;}
              { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Perhaps you meant to set MPICC instead?" >&5
@@ -3893,12 +3976,12 @@ $as_echo "$as_me: WARNING: Perhaps you meant to set MPICC instead?" >&2;}
 fi
 fi
 fi
-tascel_cc="bgxlc_r bgxlc xlc pgcc pathcc icc sxcc fcc gcc cc ecc cl ccc"
-tascel_mpicc="mpicc mpixlc_r mpixlc hcc mpxlc_r mpxlc sxmpicc mpifcc mpgcc mpcc cmpicc cc"
+ga_cc="bgxlc_r bgxlc xlc_r xlc pgcc pathcc icc sxcc fcc opencc suncc craycc gcc cc ecc cl ccc"
+ga_mpicc="mpicc mpixlc_r mpixlc hcc mpxlc_r mpxlc sxmpicc mpifcc mpgcc mpcc cmpicc cc"
 if test x$with_mpi_wrappers = xyes; then :
-  CC_TO_TEST="$tascel_mpicc_pref $tascel_mpicc"
+  CC_TO_TEST="$ga_mpicc_pref $ga_mpicc"
 else
-  CC_TO_TEST="$tascel_cc_pref $tascel_cc"
+  CC_TO_TEST="$ga_cc_pref $ga_cc"
 fi
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -4625,10 +4708,10 @@ else
 fi
 
 
-# AC_PROG_CC only sets "CC" (which is what we want),
-# but override MPICC for the UNWRAP macro.
+
+CFLAGS="$tascel_save_CFLAGS"
+
 if test x$with_mpi_wrappers = xyes; then :
-  MPICC="$CC"
 
 # Find perl.
 # Extract the first word of "perl", so it can be a program name with args.
@@ -4722,28 +4805,48 @@ else {
 }
 EOF
 inside="$PERL inside.pl"
-
-    wrapped="$CC"
-    case $wrapped in #(
+wrapped="$CC"
+case $wrapped in #(
   *_r) :
     compilers="bgxlc_r xlc_r" ;; #(
   *) :
-    compilers="bgxlc xlc gcc pgcc pathcc icc ecc cl ccc cc" ;; #(
+    compilers="bgxlc xlc pgcc pathcc icc sxcc fcc opencc suncc craycc gcc ecc cl ccc cc" ;; #(
   *) :
      ;;
 esac
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $wrapped compiler" >&5
 $as_echo_n "checking for base $wrapped compiler... " >&6; }
-if test "${tascel_cv_mpic_naked+set}" = set; then :
+if test "${ga_cv_mpic_naked+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
 
+base="`$wrapped -show 2>/dev/null | sed 's/[ \t].*$//' | head -1`"
+ga_save_CC="$CC"
+CC="$base"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ga_cv_mpic_naked=$base
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CC="$ga_save_CC"
 versions="--version -v -V -qversion"
 found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
-if test "x$tascel_cv_mpic_naked" = x; then :
+if test "x$ga_cv_mpic_naked" = x; then :
 
 echo "only comparing stdout" >&5
 for version in $versions
@@ -4757,7 +4860,7 @@ do
             if test "x$naked_compiler" != "x$wrapped"; then :
   if $naked_compiler $version 1>naked.txt 2>naked.err; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
-  tascel_cv_mpic_naked=$naked_compiler; break
+  ga_cv_mpic_naked=$naked_compiler; break
 else
   echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
 fi
@@ -4769,7 +4872,7 @@ fi
 else
   echo "$wrapped $version failed, skipping" >&5
 fi
-    if test "x$tascel_cv_mpic_naked" != x; then :
+    if test "x$ga_cv_mpic_naked" != x; then :
   break
 fi
 done
@@ -4780,7 +4883,7 @@ fi
 if test "x$found_wrapped_version" = x0; then :
 
 echo "no zero exit status found for MPI compilers" >&5
-if test "x$tascel_cv_mpic_naked" = x; then :
+if test "x$ga_cv_mpic_naked" = x; then :
 
 for version in $versions
 do
@@ -4793,7 +4896,7 @@ do
   rm -f naked.txt naked.err
              if $naked_compiler $version 1>naked.txt 2>naked.err; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
-  tascel_cv_mpic_naked=$naked_compiler; break
+  ga_cv_mpic_naked=$naked_compiler; break
 else
   echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
 fi
@@ -4802,7 +4905,7 @@ else
 fi
 fi
     done
-    if test "x$tascel_cv_mpic_naked" != x; then :
+    if test "x$ga_cv_mpic_naked" != x; then :
   break
 fi
 done
@@ -4811,7 +4914,7 @@ fi
 
 fi
 # Try by combining stdout/err into one file.
-if test "x$tascel_cv_mpic_naked" = x; then :
+if test "x$ga_cv_mpic_naked" = x; then :
 
 echo "try combining stdout and stderr into one file" >&5
 for version in $versions
@@ -4824,7 +4927,7 @@ do
             if test "x$naked_compiler" != "x$wrapped"; then :
   if $naked_compiler $version 1>naked.txt 2>&1; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
-  tascel_cv_mpic_naked=$naked_compiler; break
+  ga_cv_mpic_naked=$naked_compiler; break
 else
   echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
 fi
@@ -4836,7 +4939,7 @@ fi
 else
   echo "$wrapped $version failed, skipping" >&5
 fi
-    if test "x$tascel_cv_mpic_naked" != x; then :
+    if test "x$ga_cv_mpic_naked" != x; then :
   break
 fi
 done
@@ -4847,7 +4950,7 @@ fi
 # exit status for a flag it shouldn't have.  One false positive hid a false
 # negative.  In this case, brute force compare all MPI compiler output against
 # all compiler output.
-if test "x$tascel_cv_mpic_naked" = x; then :
+if test "x$ga_cv_mpic_naked" = x; then :
 
 echo "we have a very badly behaving MPI compiler" >&5
 for version in $versions
@@ -4861,7 +4964,7 @@ do
   rm -f naked.txt naked.err
              if $naked_compiler $version 1>naked.txt 2>naked.err; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
-  tascel_cv_mpic_naked=$naked_compiler; break
+  ga_cv_mpic_naked=$naked_compiler; break
 else
   echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
 fi
@@ -4870,32 +4973,28 @@ else
 fi
 fi
     done
-    if test "x$tascel_cv_mpic_naked" != x; then :
+    if test "x$ga_cv_mpic_naked" != x; then :
   break
 fi
 done
 
 fi
 rm -f mpi.txt mpi.err naked.txt naked.err
-if test "x$tascel_cv_mpic_naked" = x; then :
-  tascel_cv_mpic_naked=error
-fi
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_cv_mpic_naked" >&5
-$as_echo "$tascel_cv_mpic_naked" >&6; }
-
-rm -f inside.pl
-if test "x$tascel_cv_mpi_naked" = xerror; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpic_naked" >&5
+$as_echo "$ga_cv_mpic_naked" >&6; }
+if test "x$ga_cv_mpic_naked" = x; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the C compiler wrapped by MPI" >&5
+$as_echo "$as_me: WARNING: Could not determine the C compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi
 
-fi
 
-CFLAGS="$tascel_save_CFLAGS"
+rm -f inside.pl
+
+fi
 
 
 ac_ext=c
@@ -4931,20 +5030,20 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether a simple C MPI program compiles" >&5
 $as_echo_n "checking whether a simple C MPI program compiles... " >&6; }
-if test "${tascel_cv_c_mpi_test_compile+set}" = set; then :
+if test "${ga_cv_c_mpi_test_compile+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  tascel_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $TASCEL_MP_CPPFLAGS"
+  ga_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $GA_MP_CPPFLAGS"
      if ac_fn_c_try_compile "$LINENO"; then :
-  tascel_cv_c_mpi_test_compile=yes
+  ga_cv_c_mpi_test_compile=yes
 else
-  tascel_cv_c_mpi_test_compile=no
+  ga_cv_c_mpi_test_compile=no
 fi
 rm -f core conftest.err conftest.$ac_objext
-     CPPFLAGS="$tascel_save_CPPFLAGS"
+     CPPFLAGS="$ga_save_CPPFLAGS"
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_cv_c_mpi_test_compile" >&5
-$as_echo "$tascel_cv_c_mpi_test_compile" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_c_mpi_test_compile" >&5
+$as_echo "$ga_cv_c_mpi_test_compile" >&6; }
 rm -f conftest.$ac_ext
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -4952,7 +5051,7 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-if test "x$tascel_cv_c_mpi_test_compile" = xno; then :
+if test "x$ga_cv_c_mpi_test_compile" = xno; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "could not compile simple C MPI program
@@ -4960,15 +5059,17 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
+# Hack to append .x to executables.
+EXEEXT=.x$EXEEXT
+
+
+#GA_TARGET64 # tascel doesn't (yet?) depend on target platform
+
 # Checks for C header files.
 
 # Checks for C typedefs, structures, and compiler characteristics.
 
 # Checks for C library functions.
-
-# Hack to append .x to executables.
-EXEEXT=.x$EXEEXT
-
 
 ###############################################################################
 # C++ compiler
@@ -4988,26 +5089,26 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 tascel_save_CXXFLAGS="$CXXFLAGS"
 
-case $tascel_cv_target_base in #(
+case $ga_cv_target_base in #(
   BGP) :
-    tascel_mpicxx_pref=mpixlcxx_r; tascel_cxx_pref=bgxlC_r ;; #(
+    ga_mpicxx_pref=mpixlcxx_r; ga_cxx_pref=bgxlC_r ;; #(
   *) :
      ;;
 esac
 # In the case of using MPI wrappers, set CXX=MPICXX since CXX will override
 # absolutely everything in our list of compilers.
 if test x$with_mpi_wrappers = xyes; then :
-  tascel_save_CXX="$CXX"
+  ga_save_CXX="$CXX"
      CXX="$MPICXX"
      if test "x$MPICXX" != x; then :
-  if test "x$tascel_save_CXX" != x; then :
+  if test "x$ga_save_CXX" != x; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPICXX is set and CXX is set" >&5
 $as_echo "$as_me: WARNING: MPI compilers desired, MPICXX is set and CXX is set" >&2;}
              { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICXX over CXX" >&5
 $as_echo "$as_me: WARNING: Choosing MPICXX over CXX" >&2;}
 fi
 else
-  if test "x$tascel_save_CXX" != x; then :
+  if test "x$ga_save_CXX" != x; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired but CXX is set, ignoring" >&5
 $as_echo "$as_me: WARNING: MPI compilers desired but CXX is set, ignoring" >&2;}
              { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Perhaps you mean to set MPICXX instead?" >&5
@@ -5015,12 +5116,12 @@ $as_echo "$as_me: WARNING: Perhaps you mean to set MPICXX instead?" >&2;}
 fi
 fi
 fi
-tascel_cxx="icpc pgCC pathCC sxc++ g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC xlC_r xlC"
-tascel_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ mpiFCC CC"
+ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC crayCC g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
+ga_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ mpiFCC CC"
 if test x$with_mpi_wrappers = xyes; then :
-  CXX_TO_TEST="$tascel_mpicxx_pref $tascel_mpicxx"
+  CXX_TO_TEST="$ga_mpicxx_pref $ga_mpicxx"
 else
-  CXX_TO_TEST="$tascel_cxx_pref $tascel_cxx"
+  CXX_TO_TEST="$ga_cxx_pref $ga_cxx"
 fi
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -5406,12 +5507,10 @@ else
 fi
 
 
-if test "x$enable_cxx" = xyes; then :
 
-    # AC_PROG_CXX only sets "CXX" (which is what we want),
-    # but override MPICXX for the UNWRAP macro.
-    if test x$with_mpi_wrappers = xyes; then :
-  MPICXX="$CXX"
+CXXFLAGS="$tascel_save_CXXFLAGS"
+
+if test x$with_mpi_wrappers = xyes; then :
 
 # Find perl.
 # Extract the first word of "perl", so it can be a program name with args.
@@ -5505,28 +5604,48 @@ else {
 }
 EOF
 inside="$PERL inside.pl"
-
-    wrapped="$CXX"
-    case $wrapped in #(
+wrapped="$CXX"
+case $wrapped in #(
   *_r) :
-    compilers="bgxlC_r" ;; #(
+    compilers="bgxlC_r xlC_r" ;; #(
   *) :
-    compilers="g++ c++ icpc pgCC pathCC gpp aCC cxx cc++ cl.exe FCC KCC RCC bgxlC_r bgxlC xlC_r xlC CC" ;; #(
+    compilers="icpc pgCC pathCC sxc++ xlC bgxlC openCC sunCC crayCC g++ c++ gpp aCC cxx cc++ cl.exe FCC KCC RCC CC" ;; #(
   *) :
      ;;
 esac
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $wrapped compiler" >&5
 $as_echo_n "checking for base $wrapped compiler... " >&6; }
-if test "${tascel_cv_mpicxx_naked+set}" = set; then :
+if test "${ga_cv_mpicxx_naked+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
 
+base="`$wrapped -show 2>/dev/null | sed 's/[ \t].*$//' | head -1`"
+ga_save_CXX="$CXX"
+CXX="$base"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ga_cv_mpicxx_naked=$base
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CXX="$ga_save_CXX"
 versions="--version -v -V -qversion"
 found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
-if test "x$tascel_cv_mpicxx_naked" = x; then :
+if test "x$ga_cv_mpicxx_naked" = x; then :
 
 echo "only comparing stdout" >&5
 for version in $versions
@@ -5540,7 +5659,7 @@ do
             if test "x$naked_compiler" != "x$wrapped"; then :
   if $naked_compiler $version 1>naked.txt 2>naked.err; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
-  tascel_cv_mpicxx_naked=$naked_compiler; break
+  ga_cv_mpicxx_naked=$naked_compiler; break
 else
   echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
 fi
@@ -5552,7 +5671,7 @@ fi
 else
   echo "$wrapped $version failed, skipping" >&5
 fi
-    if test "x$tascel_cv_mpicxx_naked" != x; then :
+    if test "x$ga_cv_mpicxx_naked" != x; then :
   break
 fi
 done
@@ -5563,7 +5682,7 @@ fi
 if test "x$found_wrapped_version" = x0; then :
 
 echo "no zero exit status found for MPI compilers" >&5
-if test "x$tascel_cv_mpicxx_naked" = x; then :
+if test "x$ga_cv_mpicxx_naked" = x; then :
 
 for version in $versions
 do
@@ -5576,7 +5695,7 @@ do
   rm -f naked.txt naked.err
              if $naked_compiler $version 1>naked.txt 2>naked.err; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
-  tascel_cv_mpicxx_naked=$naked_compiler; break
+  ga_cv_mpicxx_naked=$naked_compiler; break
 else
   echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
 fi
@@ -5585,7 +5704,7 @@ else
 fi
 fi
     done
-    if test "x$tascel_cv_mpicxx_naked" != x; then :
+    if test "x$ga_cv_mpicxx_naked" != x; then :
   break
 fi
 done
@@ -5594,7 +5713,7 @@ fi
 
 fi
 # Try by combining stdout/err into one file.
-if test "x$tascel_cv_mpicxx_naked" = x; then :
+if test "x$ga_cv_mpicxx_naked" = x; then :
 
 echo "try combining stdout and stderr into one file" >&5
 for version in $versions
@@ -5607,7 +5726,7 @@ do
             if test "x$naked_compiler" != "x$wrapped"; then :
   if $naked_compiler $version 1>naked.txt 2>&1; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
-  tascel_cv_mpicxx_naked=$naked_compiler; break
+  ga_cv_mpicxx_naked=$naked_compiler; break
 else
   echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
 fi
@@ -5619,7 +5738,7 @@ fi
 else
   echo "$wrapped $version failed, skipping" >&5
 fi
-    if test "x$tascel_cv_mpicxx_naked" != x; then :
+    if test "x$ga_cv_mpicxx_naked" != x; then :
   break
 fi
 done
@@ -5630,7 +5749,7 @@ fi
 # exit status for a flag it shouldn't have.  One false positive hid a false
 # negative.  In this case, brute force compare all MPI compiler output against
 # all compiler output.
-if test "x$tascel_cv_mpicxx_naked" = x; then :
+if test "x$ga_cv_mpicxx_naked" = x; then :
 
 echo "we have a very badly behaving MPI compiler" >&5
 for version in $versions
@@ -5644,7 +5763,7 @@ do
   rm -f naked.txt naked.err
              if $naked_compiler $version 1>naked.txt 2>naked.err; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
-  tascel_cv_mpicxx_naked=$naked_compiler; break
+  ga_cv_mpicxx_naked=$naked_compiler; break
 else
   echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
 fi
@@ -5653,34 +5772,28 @@ else
 fi
 fi
     done
-    if test "x$tascel_cv_mpicxx_naked" != x; then :
+    if test "x$ga_cv_mpicxx_naked" != x; then :
   break
 fi
 done
 
 fi
 rm -f mpi.txt mpi.err naked.txt naked.err
-if test "x$tascel_cv_mpicxx_naked" = x; then :
-  tascel_cv_mpicxx_naked=error
-fi
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_cv_mpicxx_naked" >&5
-$as_echo "$tascel_cv_mpicxx_naked" >&6; }
-
-rm -f inside.pl
-if test "x$tascel_cv_mpi_naked" = xerror; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpicxx_naked" >&5
+$as_echo "$ga_cv_mpicxx_naked" >&6; }
+if test "x$ga_cv_mpicxx_naked" = x; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the C++ compiler wrapped by MPI" >&5
+$as_echo "$as_me: WARNING: Could not determine the C++ compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi
 
-fi
-fi
 
-CXXFLAGS="$tascel_save_CXXFLAGS"
+rm -f inside.pl
 
+fi
 
 if test "x$with_mpi" != xno; then :
 
@@ -5692,7 +5805,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether a simple C++ MPI program works" >&5
 $as_echo_n "checking whether a simple C++ MPI program works... " >&6; }
-if test "${tascel_cv_cxx_mpi_test+set}" = set; then :
+if test "${ga_cv_cxx_mpi_test+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
 
@@ -5708,18 +5821,18 @@ int myargc; char **myargv; MPI_Init(&myargc, &myargv); MPI_Finalize();
 }
 _ACEOF
 if ac_fn_cxx_try_link "$LINENO"; then :
-  tascel_cv_cxx_mpi_test=yes
+  ga_cv_cxx_mpi_test=yes
 else
-  tascel_cv_cxx_mpi_test=no
+  ga_cv_cxx_mpi_test=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-# That didn't work, so now let's try with our TASCEL_MP_* flags.
-        if test "x$tascel_cv_cxx_mpi_test" = xno; then :
+# That didn't work, so now let's try with our GA_MP_* flags.
+        if test "x$ga_cv_cxx_mpi_test" = xno; then :
 
-        tascel_save_LIBS="$LIBS";           LIBS="$LIBS $TASCEL_MP_LIBS"
-        tascel_save_CPPFLAGS="$CPPFLAGS";   CPPFLAGS="$CPPFLAGS $TASCEL_MP_CPPFLAGS"
-        tascel_save_LDFLAGS="$LDFLAGS";     LDFLAGS="$LDFLAGS $TASCEL_MP_LDFLAGS"
+        ga_save_LIBS="$LIBS";           LIBS="$LIBS $GA_MP_LIBS"
+        ga_save_CPPFLAGS="$CPPFLAGS";   CPPFLAGS="$CPPFLAGS $GA_MP_CPPFLAGS"
+        ga_save_LDFLAGS="$LDFLAGS";     LDFLAGS="$LDFLAGS $GA_MP_LDFLAGS"
         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <mpi.h>
@@ -5732,24 +5845,24 @@ int myargc; char **myargv; MPI_Init(&myargc, &myargv); MPI_Finalize();
 }
 _ACEOF
 if ac_fn_cxx_try_link "$LINENO"; then :
-  tascel_cv_cxx_mpi_test=yes
+  ga_cv_cxx_mpi_test=yes
 else
-  tascel_cv_cxx_mpi_test=no
+  ga_cv_cxx_mpi_test=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-        LIBS="$tascel_save_LIBS"
-        CPPFLAGS="$tascel_save_CPPFLAGS"
-        LDFLAGS="$tascel_save_LDFLAGS"
+        LIBS="$ga_save_LIBS"
+        CPPFLAGS="$ga_save_CPPFLAGS"
+        LDFLAGS="$ga_save_LDFLAGS"
 
 fi
-# That didn't work, so now let's try with our TASCEL_MP_* flags and various libs.
-        if test "x$tascel_cv_cxx_mpi_test" = xno; then :
+# That didn't work, so now let's try with our GA_MP_* flags and various libs.
+        if test "x$ga_cv_cxx_mpi_test" = xno; then :
 
         for lib in -lmpi -lmpich; do
-        tascel_save_LIBS="$LIBS";           LIBS="$LIBS $TASCEL_MP_LIBS $lib"
-        tascel_save_CPPFLAGS="$CPPFLAGS";   CPPFLAGS="$CPPFLAGS $TASCEL_MP_CPPFLAGS"
-        tascel_save_LDFLAGS="$LDFLAGS";     LDFLAGS="$LDFLAGS $TASCEL_MP_LDFLAGS"
+        ga_save_LIBS="$LIBS";           LIBS="$LIBS $GA_MP_LIBS $lib"
+        ga_save_CPPFLAGS="$CPPFLAGS";   CPPFLAGS="$CPPFLAGS $GA_MP_CPPFLAGS"
+        ga_save_LDFLAGS="$LDFLAGS";     LDFLAGS="$LDFLAGS $GA_MP_LDFLAGS"
         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <mpi.h>
@@ -5762,32 +5875,32 @@ int myargc; char **myargv; MPI_Init(&myargc, &myargv); MPI_Finalize();
 }
 _ACEOF
 if ac_fn_cxx_try_link "$LINENO"; then :
-  tascel_cv_cxx_mpi_test=$lib; break
+  ga_cv_cxx_mpi_test=$lib; break
 else
-  tascel_cv_cxx_mpi_test=no
+  ga_cv_cxx_mpi_test=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-        LIBS="$tascel_save_LIBS"
-        CPPFLAGS="$tascel_save_CPPFLAGS"
-        LDFLAGS="$tascel_save_LDFLAGS"
+        LIBS="$ga_save_LIBS"
+        CPPFLAGS="$ga_save_CPPFLAGS"
+        LDFLAGS="$ga_save_LDFLAGS"
         done
-        LIBS="$tascel_save_LIBS"
-        CPPFLAGS="$tascel_save_CPPFLAGS"
-        LDFLAGS="$tascel_save_LDFLAGS"
+        LIBS="$ga_save_LIBS"
+        CPPFLAGS="$ga_save_CPPFLAGS"
+        LDFLAGS="$ga_save_LDFLAGS"
 
 fi
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_cv_cxx_mpi_test" >&5
-$as_echo "$tascel_cv_cxx_mpi_test" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_cxx_mpi_test" >&5
+$as_echo "$ga_cv_cxx_mpi_test" >&6; }
     ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
-    case $tascel_cv_cxx_mpi_test in #(
+    case $ga_cv_cxx_mpi_test in #(
   yes) :
      ;; #(
   no) :
@@ -5796,7 +5909,7 @@ $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "could not link simple C++ MPI program
 See \`config.log' for more details" "$LINENO" 5; } ;; #(
   *) :
-    TASCEL_MP_LIBS="$tascel_cv_cxx_mpi_test" ;; #(
+    GA_MP_LIBS="$ga_cv_cxx_mpi_test" ;; #(
   *) :
      ;;
 esac
@@ -6738,11 +6851,11 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
 tascel_save_FFLAGS="$FFLAGS"
 
-case $tascel_cv_target_base in #(
+case $ga_cv_target_base in #(
   BGP) :
-    tascel_mpif77_pref=mpixlf77_r;tascel_f77_pref=bgxlf_r ;; #(
+    ga_mpif77_pref=mpixlf77_r;ga_f77_pref=bgxlf_r ;; #(
   BGL) :
-    tascel_mpif77_pref=mpxlf95;   tascel_f77_pref=blrts_xlf95 ;; #(
+    ga_mpif77_pref=mpxlf95;   ga_f77_pref=blrts_xlf95 ;; #(
   *) :
      ;;
 esac
@@ -6760,17 +6873,17 @@ fi
 # absolutely everything in our list of compilers.
 # Save F77, just in case.
 if test x$with_mpi_wrappers = xyes; then :
-  tascel_save_F77="$F77"
+  ga_save_F77="$F77"
      F77="$MPIF77"
      if test "x$MPIF77" != x; then :
-  if test "x$tascel_save_F77" != x; then :
+  if test "x$ga_save_F77" != x; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPIF77 is set and F77 is set" >&5
 $as_echo "$as_me: WARNING: MPI compilers desired, MPIF77 is set and F77 is set" >&2;}
              { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPIF77 over F77" >&5
 $as_echo "$as_me: WARNING: Choosing MPIF77 over F77" >&2;}
 fi
 else
-  if test "x$tascel_save_F77" != x; then :
+  if test "x$ga_save_F77" != x; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired but F77 is set, ignoring" >&5
 $as_echo "$as_me: WARNING: MPI compilers desired but F77 is set, ignoring" >&2;}
              { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Perhaps you meant to set MPIF77 instead?" >&5
@@ -6779,16 +6892,16 @@ fi
 fi
 
 fi
-tascel_mpif95="mpif95 mpxlf95_r mpxlf95 ftn"
-tascel_mpif90="mpif90 mpxlf90_r mpxlf90 mpf90 cmpif90c sxmpif90"
-tascel_mpif77="mpif77 hf77 mpxlf_r mpxlf mpifrt mpf77 cmpifc"
-tascel_f95="xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc gfortran lf95 ftn"
-tascel_f90="xlf90 f90 pgf90 pghpf pathf90 epcf90 sxf90"
-tascel_f77="xlf f77 frt pgf77 pathf77 g77 cf77 fort77 fl32 af77"
+ga_mpif95="mpif95 mpxlf95_r mpxlf95 ftn"
+ga_mpif90="mpif90 mpxlf90_r mpxlf90 mpf90 cmpif90c sxmpif90"
+ga_mpif77="mpif77 hf77 mpxlf_r mpxlf mpifrt mpf77 cmpifc"
+ga_f95="xlf95 pgf95 pathf95 ifort g95 f95 fort ifc efc openf95 sunf95 crayftn gfortran lf95 ftn"
+ga_f90="xlf90 f90 pgf90 pghpf pathf90 epcf90 sxf90 openf90 sunf90"
+ga_f77="xlf f77 frt pgf77 pathf77 g77 cf77 fort77 fl32 af77"
 if test x$with_mpi_wrappers = xyes; then :
-  F77_TO_TEST="$tascel_mpif77_pref $tascel_mpif95 $tascel_mpif90 $tascel_mpif77"
+  F77_TO_TEST="$ga_mpif77_pref $ga_mpif95 $ga_mpif90 $ga_mpif77"
 else
-  F77_TO_TEST="$tascel_f77_pref $tascel_f95 $tascel_f90 $tascel_f77"
+  F77_TO_TEST="$ga_f77_pref $ga_f95 $ga_f90 $ga_f77"
 fi
 ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
@@ -7000,10 +7113,10 @@ ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
-# AC_PROG_F77 only sets F77 (which is what we want),
-# but override MPIF77 for the UNWRAP macro.
+
+FFLAGS="$tascel_save_FFLAGS"
+
 if test x$with_mpi_wrappers = xyes; then :
-  MPIF77="$F77"
 
 # Find perl.
 # Extract the first word of "perl", so it can be a program name with args.
@@ -7097,28 +7210,42 @@ else {
 }
 EOF
 inside="$PERL inside.pl"
-
-    wrapped="$F77"
-    case $wrapped in #(
+wrapped="$F77"
+case $wrapped in #(
   *_r) :
     compilers="bgxlf95_r xlf95_r bgxlf90_r xlf90_r bgxlf_r xlf_r" ;; #(
   *) :
-    compilers="gfortran g95 bgxlf95 xlf95 f95 fort ifort ifc efc pgf95 pathf95 lf95 bgxlf90 xlf90 f90 pgf90 pathf90 pghpf epcf90 g77 bgxlf xlf f77 frt pgf77 pathf77 cf77 fort77 fl32 af77" ;; #(
+    compilers="gfortran g95 bgxlf95 xlf95 f95 fort ifort ifc efc pgf95 pathf95 lf95 openf95 sunf95 crayftn bgxlf90 xlf90 f90 pgf90 pathf90 pghpf epcf90 sxf90 openf90 sunf90 g77 bgxlf xlf f77 frt pgf77 pathf77 cf77 fort77 fl32 af77" ;; #(
   *) :
      ;;
 esac
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $wrapped compiler" >&5
 $as_echo_n "checking for base $wrapped compiler... " >&6; }
-if test "${tascel_cv_mpif77_naked+set}" = set; then :
+if test "${ga_cv_mpif77_naked+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
 
+base="`$wrapped -show 2>/dev/null | sed 's/[ \t].*$//' | head -1`"
+ga_save_F77="$F77"
+F77="$base"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+      end
+_ACEOF
+if ac_fn_f77_try_link "$LINENO"; then :
+  ga_cv_mpif77_naked=$base
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+F77="$ga_save_F77"
 versions="--version -v -V -qversion"
 found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
-if test "x$tascel_cv_mpif77_naked" = x; then :
+if test "x$ga_cv_mpif77_naked" = x; then :
 
 echo "only comparing stdout" >&5
 for version in $versions
@@ -7132,7 +7259,7 @@ do
             if test "x$naked_compiler" != "x$wrapped"; then :
   if $naked_compiler $version 1>naked.txt 2>naked.err; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
-  tascel_cv_mpif77_naked=$naked_compiler; break
+  ga_cv_mpif77_naked=$naked_compiler; break
 else
   echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
 fi
@@ -7144,7 +7271,7 @@ fi
 else
   echo "$wrapped $version failed, skipping" >&5
 fi
-    if test "x$tascel_cv_mpif77_naked" != x; then :
+    if test "x$ga_cv_mpif77_naked" != x; then :
   break
 fi
 done
@@ -7155,7 +7282,7 @@ fi
 if test "x$found_wrapped_version" = x0; then :
 
 echo "no zero exit status found for MPI compilers" >&5
-if test "x$tascel_cv_mpif77_naked" = x; then :
+if test "x$ga_cv_mpif77_naked" = x; then :
 
 for version in $versions
 do
@@ -7168,7 +7295,7 @@ do
   rm -f naked.txt naked.err
              if $naked_compiler $version 1>naked.txt 2>naked.err; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
-  tascel_cv_mpif77_naked=$naked_compiler; break
+  ga_cv_mpif77_naked=$naked_compiler; break
 else
   echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
 fi
@@ -7177,7 +7304,7 @@ else
 fi
 fi
     done
-    if test "x$tascel_cv_mpif77_naked" != x; then :
+    if test "x$ga_cv_mpif77_naked" != x; then :
   break
 fi
 done
@@ -7186,7 +7313,7 @@ fi
 
 fi
 # Try by combining stdout/err into one file.
-if test "x$tascel_cv_mpif77_naked" = x; then :
+if test "x$ga_cv_mpif77_naked" = x; then :
 
 echo "try combining stdout and stderr into one file" >&5
 for version in $versions
@@ -7199,7 +7326,7 @@ do
             if test "x$naked_compiler" != "x$wrapped"; then :
   if $naked_compiler $version 1>naked.txt 2>&1; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
-  tascel_cv_mpif77_naked=$naked_compiler; break
+  ga_cv_mpif77_naked=$naked_compiler; break
 else
   echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
 fi
@@ -7211,7 +7338,7 @@ fi
 else
   echo "$wrapped $version failed, skipping" >&5
 fi
-    if test "x$tascel_cv_mpif77_naked" != x; then :
+    if test "x$ga_cv_mpif77_naked" != x; then :
   break
 fi
 done
@@ -7222,7 +7349,7 @@ fi
 # exit status for a flag it shouldn't have.  One false positive hid a false
 # negative.  In this case, brute force compare all MPI compiler output against
 # all compiler output.
-if test "x$tascel_cv_mpif77_naked" = x; then :
+if test "x$ga_cv_mpif77_naked" = x; then :
 
 echo "we have a very badly behaving MPI compiler" >&5
 for version in $versions
@@ -7236,7 +7363,7 @@ do
   rm -f naked.txt naked.err
              if $naked_compiler $version 1>naked.txt 2>naked.err; then :
   if $inside mpi.txt naked.txt >/dev/null; then :
-  tascel_cv_mpif77_naked=$naked_compiler; break
+  ga_cv_mpif77_naked=$naked_compiler; break
 else
   echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
 fi
@@ -7245,33 +7372,28 @@ else
 fi
 fi
     done
-    if test "x$tascel_cv_mpif77_naked" != x; then :
+    if test "x$ga_cv_mpif77_naked" != x; then :
   break
 fi
 done
 
 fi
 rm -f mpi.txt mpi.err naked.txt naked.err
-if test "x$tascel_cv_mpif77_naked" = x; then :
-  tascel_cv_mpif77_naked=error
-fi
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_cv_mpif77_naked" >&5
-$as_echo "$tascel_cv_mpif77_naked" >&6; }
-
-rm -f inside.pl
-if test "x$tascel_cv_mpi_naked" = xerror; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the Fortran compiler wrapped by MPI" >&2;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpif77_naked" >&5
+$as_echo "$ga_cv_mpif77_naked" >&6; }
+if test "x$ga_cv_mpif77_naked" = x; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran 77 compiler wrapped by MPI" >&5
+$as_echo "$as_me: WARNING: Could not determine the Fortran 77 compiler wrapped by MPI" >&2;}
      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
 $as_echo "$as_me: WARNING: This is usually okay" >&2;}
 fi
 
+
+rm -f inside.pl
+
 fi
-
-FFLAGS="$tascel_save_FFLAGS"
-
 
 ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
@@ -7300,27 +7422,27 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether a simple Fortran MPI program compiles" >&5
 $as_echo_n "checking whether a simple Fortran MPI program compiles... " >&6; }
-if test "${tascel_cv_f77_mpi_test_compile+set}" = set; then :
+if test "${ga_cv_f77_mpi_test_compile+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  tascel_save_FFLAGS="$FFLAGS"; FFLAGS="$FFLAGS $TASCEL_MP_CPPFLAGS"
+  ga_save_FFLAGS="$FFLAGS"; FFLAGS="$FFLAGS $GA_MP_CPPFLAGS"
      if ac_fn_f77_try_compile "$LINENO"; then :
-  tascel_cv_f77_mpi_test_compile=yes
+  ga_cv_f77_mpi_test_compile=yes
 else
-  tascel_cv_f77_mpi_test_compile=no
+  ga_cv_f77_mpi_test_compile=no
 fi
 rm -f core conftest.err conftest.$ac_objext
-     FFLAGS="$tascel_save_FFLAGS"
+     FFLAGS="$ga_save_FFLAGS"
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_cv_f77_mpi_test_compile" >&5
-$as_echo "$tascel_cv_f77_mpi_test_compile" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_mpi_test_compile" >&5
+$as_echo "$ga_cv_f77_mpi_test_compile" >&6; }
 rm -f conftest.$ac_ext
 ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
-if test "x$tascel_cv_f77_mpi_test_compile" = xno; then :
+if test "x$ga_cv_f77_mpi_test_compile" = xno; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "could not compile simple Fortran MPI program
@@ -7328,27 +7450,57 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran 77 flag to suppress info messages" >&5
+$as_echo_n "checking for Fortran 77 flag to suppress info messages... " >&6; }
+if test "${ga_cv_f77_suppress+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ga_save_FFLAGS="$FFLAGS"
+     ga_save_werror_flag=$ac_f77_werror_flag
+     ac_f77_werror_flag=yes
+     for flag in none -qsuppress=cmpmsg ; do
+        FFLAGS=$ga_save_FFLAGS
+        if test "x$flag" != xnone; then :
+  FFLAGS="$FFLAGS $flag"
+fi
+        cat > conftest.$ac_ext <<_ACEOF
+      program main
 
-if test "x$enable_f77" = xyes; then :
+      end
+_ACEOF
+if ac_fn_f77_try_link "$LINENO"; then :
+  ga_cv_f77_suppress="$flag"; break
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+     done
+     FFLAGS=$ga_save_FFLAGS
+     ac_f77_werror_flag=$ga_save_werror_flag
 
-pagoda_mpi_unwrap_push_save_CC="$CC"
-pagoda_mpi_unwrap_push_save_CXX="$CXX"
-pagoda_mpi_unwrap_push_save_F77="$F77"
-pagoda_mpi_unwrap_push_save_FC="$FC"
-if test "x$tascel_cv_mpic_naked"   != xerror; then :
-   CC="$tascel_cv_mpic_naked"
 fi
-if test "x$tascel_cv_mpicxx_naked" != xerror; then :
-  CXX="$tascel_cv_mpicxx_naked"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_suppress" >&5
+$as_echo "$ga_cv_f77_suppress" >&6; }
+
+
+
+ga_mpi_unwrap_push_save_CC="$CC"
+ga_mpi_unwrap_push_save_CXX="$CXX"
+ga_mpi_unwrap_push_save_F77="$F77"
+ga_mpi_unwrap_push_save_FC="$FC"
+if test "x$ga_cv_mpic_naked"   != x; then :
+   CC="$ga_cv_mpic_naked"
 fi
-if test "x$tascel_cv_mpif77_naked" != xerror; then :
-  F77="$tascel_cv_mpif77_naked"
+if test "x$ga_cv_mpicxx_naked" != x; then :
+  CXX="$ga_cv_mpicxx_naked"
 fi
-if test "x$tascel_cv_mpifc_naked"  != xerror; then :
-   FC="$tascel_cv_mpifc_naked"
+if test "x$ga_cv_mpif77_naked" != x; then :
+  F77="$ga_cv_mpif77_naked"
+fi
+if test "x$ga_cv_mpifc_naked"  != x; then :
+   FC="$ga_cv_mpifc_naked"
 fi
 
-     ac_ext=f
+    ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
@@ -7655,18 +7807,19 @@ ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
 
- CC="$pagoda_mpi_unwrap_push_save_CC"
-CXX="$pagoda_mpi_unwrap_push_save_CXX"
-F77="$pagoda_mpi_unwrap_push_save_F77"
- FC="$pagoda_mpi_unwrap_push_save_FC"
+ CC="$ga_mpi_unwrap_push_save_CC"
+CXX="$ga_mpi_unwrap_push_save_CXX"
+F77="$ga_mpi_unwrap_push_save_F77"
+ FC="$ga_mpi_unwrap_push_save_FC"
 
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether FLIBS needs -lgcc_s" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether FLIBS needs -lgcc_s" >&5
 $as_echo_n "checking whether FLIBS needs -lgcc_s... " >&6; }
-if test "${tascel_cv_flibs_gcc_s+set}" = set; then :
+if test "${ga_cv_flibs_gcc_s+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  tascel_save_LIBS="$LIBS";  LIBS="$LIBS $FLIBS"
-         tascel_save_FLIBS="$FLIBS"
+  happy=yes
+         ga_save_LIBS="$LIBS";  LIBS="$LIBS $FLIBS"
+         ga_save_FLIBS="$FLIBS"
          ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -7685,7 +7838,7 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  tascel_cv_flibs_gcc_s=no
+  ga_cv_flibs_gcc_s=no
 else
   LIBS="$LIBS -lgcc_s"
              cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -7701,27 +7854,454 @@ main ()
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   FLIBS="$FLIBS -lgcc_s"
-                 tascel_cv_flibs_gcc_s=yes
+                 ga_cv_flibs_gcc_s=yes
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: FLIBS does not work" >&5
-$as_echo "$as_me: WARNING: FLIBS does not work" >&2;}
-                 FLIBS="$tascel_save_FLIBS"
-                 tascel_cv_flibs_gcc_s=no
+  happy=no
+                 FLIBS="$ga_save_FLIBS"
+                 ga_cv_flibs_gcc_s=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-         LIBS="$tascel_save_LIBS"
+         LIBS="$ga_save_LIBS"
          ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_cv_flibs_gcc_s" >&5
-$as_echo "$tascel_cv_flibs_gcc_s" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_flibs_gcc_s" >&5
+$as_echo "$ga_cv_flibs_gcc_s" >&6; }
+    if test "x$happy" = xno; then :
+  { ac_cv_f77_libs=; unset ac_cv_f77_libs;}
+         { FLIBS=; unset FLIBS;}
+         { $as_echo "$as_me:${as_lineno-$LINENO}: checking how to get verbose linking output from $F77" >&5
+$as_echo_n "checking how to get verbose linking output from $F77... " >&6; }
+if test "${ac_cv_prog_f77_v+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+      end
+_ACEOF
+if ac_fn_f77_try_compile "$LINENO"; then :
+  ac_cv_prog_f77_v=
+# Try some options frequently used verbose output
+for ac_verb in -v -verbose --verbose -V -\#\#\#; do
+  cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+      end
+_ACEOF
+
+# Compile and link our simple test program by passing a flag (argument
+# 1 to this macro) to the Fortran compiler in order to get
+# "verbose" output that we can then parse for the Fortran linker
+# flags.
+ac_save_FFLAGS=$FFLAGS
+FFLAGS="$FFLAGS $ac_verb"
+eval "set x $ac_link"
+shift
+$as_echo "$as_me:${as_lineno-$LINENO}: $*" >&5
+# gfortran 4.3 outputs lines setting COLLECT_GCC_OPTIONS, COMPILER_PATH,
+# LIBRARY_PATH; skip all such settings.
+ac_f77_v_output=`eval $ac_link 5>&1 2>&1 |
+  grep -v 'Driving:' | grep -v "^[_$as_cr_Letters][_$as_cr_alnum]*="`
+$as_echo "$ac_f77_v_output" >&5
+FFLAGS=$ac_save_FFLAGS
+
+rm -rf conftest*
+
+# On HP/UX there is a line like: "LPATH is: /foo:/bar:/baz" where
+# /foo, /bar, and /baz are search directories for the Fortran linker.
+# Here, we change these into -L/foo -L/bar -L/baz (and put it first):
+ac_f77_v_output="`echo $ac_f77_v_output |
+	grep 'LPATH is:' |
+	sed 's|.*LPATH is\(: *[^ ]*\).*|\1|;s|: */| -L/|g'` $ac_f77_v_output"
+
+# FIXME: we keep getting bitten by quoted arguments; a more general fix
+#        that detects unbalanced quotes in FLIBS should be implemented
+#        and (ugh) tested at some point.
+case $ac_f77_v_output in
+  # If we are using xlf then replace all the commas with spaces.
+  *xlfentry*)
+    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/,/ /g'` ;;
+
+  # With Intel ifc, ignore the quoted -mGLOB_options_string stuff (quoted
+  # $LIBS confuse us, and the libraries appear later in the output anyway).
+  *mGLOB_options_string*)
+    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/"-mGLOB[^"]*"/ /g'` ;;
+
+  # Portland Group compiler has singly- or doubly-quoted -cmdline argument
+  # Singly-quoted arguments were reported for versions 5.2-4 and 6.0-4.
+  # Doubly-quoted arguments were reported for "PGF90/x86 Linux/x86 5.0-2".
+  *-cmdline\ * | *-ignore\ * | *-def\ *)
+    ac_f77_v_output=`echo $ac_f77_v_output | sed "\
+	s/-cmdline  *'[^']*'/ /g; s/-cmdline  *\"[^\"]*\"/ /g
+	s/-ignore  *'[^']*'/ /g; s/-ignore  *\"[^\"]*\"/ /g
+	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g"` ;;
+
+  # If we are using Cray Fortran then delete quotes.
+  *cft90*)
+    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/"//g'` ;;
+esac
+
+
+  # look for -l* and *.a constructs in the output
+  for ac_arg in $ac_f77_v_output; do
+     case $ac_arg in
+	[\\/]*.a | ?:[\\/]*.a | -[lLRu]*)
+	  ac_cv_prog_f77_v=$ac_verb
+	  break 2 ;;
+     esac
+  done
+done
+if test -z "$ac_cv_prog_f77_v"; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cannot determine how to obtain linking information from $F77" >&5
+$as_echo "$as_me: WARNING: cannot determine how to obtain linking information from $F77" >&2;}
+fi
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: compilation failed" >&5
+$as_echo "$as_me: WARNING: compilation failed" >&2;}
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_f77_v" >&5
+$as_echo "$ac_cv_prog_f77_v" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran 77 libraries of $F77" >&5
+$as_echo_n "checking for Fortran 77 libraries of $F77... " >&6; }
+if test "${ac_cv_f77_libs+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "x$FLIBS" != "x"; then
+  ac_cv_f77_libs="$FLIBS" # Let the user override the test.
+else
+
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+      end
+_ACEOF
+
+# Compile and link our simple test program by passing a flag (argument
+# 1 to this macro) to the Fortran compiler in order to get
+# "verbose" output that we can then parse for the Fortran linker
+# flags.
+ac_save_FFLAGS=$FFLAGS
+FFLAGS="$FFLAGS $ac_cv_prog_f77_v"
+eval "set x $ac_link"
+shift
+$as_echo "$as_me:${as_lineno-$LINENO}: $*" >&5
+# gfortran 4.3 outputs lines setting COLLECT_GCC_OPTIONS, COMPILER_PATH,
+# LIBRARY_PATH; skip all such settings.
+ac_f77_v_output=`eval $ac_link 5>&1 2>&1 |
+  grep -v 'Driving:' | grep -v "^[_$as_cr_Letters][_$as_cr_alnum]*="`
+$as_echo "$ac_f77_v_output" >&5
+FFLAGS=$ac_save_FFLAGS
+
+rm -rf conftest*
+
+# On HP/UX there is a line like: "LPATH is: /foo:/bar:/baz" where
+# /foo, /bar, and /baz are search directories for the Fortran linker.
+# Here, we change these into -L/foo -L/bar -L/baz (and put it first):
+ac_f77_v_output="`echo $ac_f77_v_output |
+	grep 'LPATH is:' |
+	sed 's|.*LPATH is\(: *[^ ]*\).*|\1|;s|: */| -L/|g'` $ac_f77_v_output"
+
+# FIXME: we keep getting bitten by quoted arguments; a more general fix
+#        that detects unbalanced quotes in FLIBS should be implemented
+#        and (ugh) tested at some point.
+case $ac_f77_v_output in
+  # If we are using xlf then replace all the commas with spaces.
+  *xlfentry*)
+    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/,/ /g'` ;;
+
+  # With Intel ifc, ignore the quoted -mGLOB_options_string stuff (quoted
+  # $LIBS confuse us, and the libraries appear later in the output anyway).
+  *mGLOB_options_string*)
+    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/"-mGLOB[^"]*"/ /g'` ;;
+
+  # Portland Group compiler has singly- or doubly-quoted -cmdline argument
+  # Singly-quoted arguments were reported for versions 5.2-4 and 6.0-4.
+  # Doubly-quoted arguments were reported for "PGF90/x86 Linux/x86 5.0-2".
+  *-cmdline\ * | *-ignore\ * | *-def\ *)
+    ac_f77_v_output=`echo $ac_f77_v_output | sed "\
+	s/-cmdline  *'[^']*'/ /g; s/-cmdline  *\"[^\"]*\"/ /g
+	s/-ignore  *'[^']*'/ /g; s/-ignore  *\"[^\"]*\"/ /g
+	s/-def  *'[^']*'/ /g; s/-def  *\"[^\"]*\"/ /g"` ;;
+
+  # If we are using Cray Fortran then delete quotes.
+  *cft90*)
+    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/"//g'` ;;
+esac
+
+
+
+ac_cv_f77_libs=
+
+# Save positional arguments (if any)
+ac_save_positional="$@"
+
+set X $ac_f77_v_output
+while test $# != 1; do
+  shift
+  ac_arg=$1
+  case $ac_arg in
+	[\\/]*.a | ?:[\\/]*.a)
+	    ac_exists=false
+  for ac_i in $ac_cv_f77_libs; do
+    if test x"$ac_arg" = x"$ac_i"; then
+      ac_exists=true
+      break
+    fi
+  done
+
+  if test x"$ac_exists" = xtrue; then :
+
+else
+  ac_cv_f77_libs="$ac_cv_f77_libs $ac_arg"
+fi
+	  ;;
+	-bI:*)
+	    ac_exists=false
+  for ac_i in $ac_cv_f77_libs; do
+    if test x"$ac_arg" = x"$ac_i"; then
+      ac_exists=true
+      break
+    fi
+  done
+
+  if test x"$ac_exists" = xtrue; then :
+
+else
+  if test "$ac_compiler_gnu" = yes; then
+  for ac_link_opt in $ac_arg; do
+    ac_cv_f77_libs="$ac_cv_f77_libs -Xlinker $ac_link_opt"
+  done
+else
+  ac_cv_f77_libs="$ac_cv_f77_libs $ac_arg"
+fi
+fi
+	  ;;
+	  # Ignore these flags.
+	-lang* | -lcrt*.o | -lc | -lgcc* | -lSystem | -libmil | -little \
+	  |-LANG:=* | -LIST:* | -LNO:* | -link)
+	  ;;
+	-lkernel32)
+	  test x"$CYGWIN" != xyes && ac_cv_f77_libs="$ac_cv_f77_libs $ac_arg"
+	  ;;
+	-[LRuYz])
+	  # These flags, when seen by themselves, take an argument.
+	  # We remove the space between option and argument and re-iterate
+	  # unless we find an empty arg or a new option (starting with -)
+	  case $2 in
+	     "" | -*);;
+	     *)
+		ac_arg="$ac_arg$2"
+		shift; shift
+		set X $ac_arg "$@"
+		;;
+	  esac
+	  ;;
+	-YP,*)
+	  for ac_j in `$as_echo "$ac_arg" | sed -e 's/-YP,/-L/;s/:/ -L/g'`; do
+	      ac_exists=false
+  for ac_i in $ac_cv_f77_libs; do
+    if test x"$ac_j" = x"$ac_i"; then
+      ac_exists=true
+      break
+    fi
+  done
+
+  if test x"$ac_exists" = xtrue; then :
+
+else
+  ac_arg="$ac_arg $ac_j"
+			       ac_cv_f77_libs="$ac_cv_f77_libs $ac_j"
+fi
+	  done
+	  ;;
+	-Y*)
+	  for ac_j in `$as_echo "$ac_arg" | sed -e 's/-Y/-L/;s/"//g;s/:/ -L/g'`; do
+	      ac_exists=false
+  for ac_i in $ac_cv_f77_libs; do
+    if test x"$ac_j" = x"$ac_i"; then
+      ac_exists=true
+      break
+    fi
+  done
+
+  if test x"$ac_exists" = xtrue; then :
+
+else
+  ac_arg="$ac_arg $ac_j"
+			       ac_cv_f77_libs="$ac_cv_f77_libs $ac_j"
+fi
+	  done
+	  ;;
+	-[lLR]*)
+	    ac_exists=false
+  for ac_i in $ac_cv_f77_libs; do
+    if test x"$ac_arg" = x"$ac_i"; then
+      ac_exists=true
+      break
+    fi
+  done
+
+  if test x"$ac_exists" = xtrue; then :
+
+else
+  ac_cv_f77_libs="$ac_cv_f77_libs $ac_arg"
+fi
+	  ;;
+	-zallextract*| -zdefaultextract)
+	  ac_cv_f77_libs="$ac_cv_f77_libs $ac_arg"
+	  ;;
+	  # Ignore everything else.
+  esac
+done
+# restore positional arguments
+set X $ac_save_positional; shift
+
+# We only consider "LD_RUN_PATH" on Solaris systems.  If this is seen,
+# then we insist that the "run path" must be an absolute path (i.e. it
+# must begin with a "/").
+case `(uname -sr) 2>/dev/null` in
+   "SunOS 5"*)
+      ac_ld_run_path=`$as_echo "$ac_f77_v_output" |
+			sed -n 's,^.*LD_RUN_PATH *= *\(/[^ ]*\).*$,-R\1,p'`
+      test "x$ac_ld_run_path" != x &&
+	if test "$ac_compiler_gnu" = yes; then
+  for ac_link_opt in $ac_ld_run_path; do
+    ac_cv_f77_libs="$ac_cv_f77_libs -Xlinker $ac_link_opt"
+  done
+else
+  ac_cv_f77_libs="$ac_cv_f77_libs $ac_ld_run_path"
+fi
+      ;;
+esac
+fi # test "x$[]_AC_LANG_PREFIX[]LIBS" = "x"
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_f77_libs" >&5
+$as_echo "$ac_cv_f77_libs" >&6; }
+FLIBS="$ac_cv_f77_libs"
+
+
+         ga_save_LIBS="$LIBS";  LIBS="$LIBS $FLIBS"
+         ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  happy=yes
+else
+  happy=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+         LIBS="$ga_save_LIBS"
+         ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+fi
+    if test "x$happy" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: FLIBS does not work" >&5
+$as_echo "$as_me: WARNING: FLIBS does not work" >&2;}
+fi
+
+# Check whether --enable-underscoring was given.
+if test "${enable_underscoring+set}" = set; then :
+  enableval=$enable_underscoring;
+fi
+
+if test "x$enable_underscoring" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $F77 flag to add single underscore to external names" >&5
+$as_echo_n "checking for $F77 flag to add single underscore to external names... " >&6; }
+if test "${ga_cv_f77_underscore_flag+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void my_sub_() {}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  mv conftest.$ac_objext cfortran_test.$ac_objext
+    ga_save_LIBS="$LIBS"
+    LIBS="cfortran_test.$ac_objext $LIBS"
+    ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+    for ga_flag in none -qextname -qEXTNAME -funderscoring -fno-second-underscore -f +ppu ; do
+        ga_save_FFLAGS="$FFLAGS"
+        if test "x$ga_flag" != xnone; then :
+  FFLAGS="$FFLAGS $ga_flag"
+fi
+        cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call my_sub
+      end program
+_ACEOF
+if ac_fn_f77_try_link "$LINENO"; then :
+  ga_cv_f77_underscore_flag="$ga_flag"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+        FFLAGS="$ga_save_FFLAGS"
+        if test "x$ga_cv_f77_underscore_flag" != x; then :
+  break
+fi
+    done
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    LIBS="$ga_save_LIBS"
+    rm -f cfortran_test.$ac_objext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_underscore_flag" >&5
+$as_echo "$ga_cv_f77_underscore_flag" >&6; }
+if test "x$ga_cv_f77_underscore_flag" != xnone; then :
+  if test "x$ga_cv_f77_underscore_flag" != x; then :
+  FFLAGS="$FFLAGS $ga_cv_f77_underscore_flag"
+fi
+fi
 
 fi
 
@@ -8002,6 +8582,211 @@ ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+case $ac_cv_f77_mangling in
+  "lower case, no underscore, no extra underscore")
+	  $as_echo "#define F77_FUNC(name,NAME) name" >>confdefs.h
+
+	  $as_echo "#define F77_FUNC_(name,NAME) name" >>confdefs.h
+ ;;
+  "lower case, no underscore, extra underscore")
+	  $as_echo "#define F77_FUNC(name,NAME) name" >>confdefs.h
+
+	  $as_echo "#define F77_FUNC_(name,NAME) name ## _" >>confdefs.h
+ ;;
+  "lower case, underscore, no extra underscore")
+	  $as_echo "#define F77_FUNC(name,NAME) name ## _" >>confdefs.h
+
+	  $as_echo "#define F77_FUNC_(name,NAME) name ## _" >>confdefs.h
+ ;;
+  "lower case, underscore, extra underscore")
+	  $as_echo "#define F77_FUNC(name,NAME) name ## _" >>confdefs.h
+
+	  $as_echo "#define F77_FUNC_(name,NAME) name ## __" >>confdefs.h
+ ;;
+  "upper case, no underscore, no extra underscore")
+	  $as_echo "#define F77_FUNC(name,NAME) NAME" >>confdefs.h
+
+	  $as_echo "#define F77_FUNC_(name,NAME) NAME" >>confdefs.h
+ ;;
+  "upper case, no underscore, extra underscore")
+	  $as_echo "#define F77_FUNC(name,NAME) NAME" >>confdefs.h
+
+	  $as_echo "#define F77_FUNC_(name,NAME) NAME ## _" >>confdefs.h
+ ;;
+  "upper case, underscore, no extra underscore")
+	  $as_echo "#define F77_FUNC(name,NAME) NAME ## _" >>confdefs.h
+
+	  $as_echo "#define F77_FUNC_(name,NAME) NAME ## _" >>confdefs.h
+ ;;
+  "upper case, underscore, extra underscore")
+	  $as_echo "#define F77_FUNC(name,NAME) NAME ## _" >>confdefs.h
+
+	  $as_echo "#define F77_FUNC_(name,NAME) NAME ## __" >>confdefs.h
+ ;;
+  *)
+	  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unknown Fortran name-mangling scheme" >&5
+$as_echo "$as_me: WARNING: unknown Fortran name-mangling scheme" >&2;}
+	  ;;
+esac
+
+ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking how to pass symbols to preprocessed $F77" >&5
+$as_echo_n "checking how to pass symbols to preprocessed $F77... " >&6; }
+if test "${ga_cv_f77_cpp_symbol+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+ac_ext=F
+for symbol in -D -WF,-D -Wp,-D
+do
+    ga_save_CPPFLAGS="$CPPFLAGS"
+    ga_save_FFLAGS="$FFLAGS"
+    CPPFLAGS="$CPPFLAGS ${symbol}GABLAHBLAH"
+    FFLAGS="$CPPFLAGS $FFLAGS"
+    cat > conftest.$ac_ext <<_ACEOF
+#ifndef GABLAHBLAH
+this is an error
+#endif
+      end program
+_ACEOF
+if ac_fn_f77_try_compile "$LINENO"; then :
+  ga_cv_f77_cpp_symbol="$symbol"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    CPPFLAGS="$ga_save_CPPFLAGS"
+    FFLAGS="$ga_save_FFLAGS"
+    if test "x$ga_cv_f77_cpp_symbol" != x; then :
+  break
+fi
+done
+ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_cpp_symbol" >&5
+$as_echo "$ga_cv_f77_cpp_symbol" >&6; }
+if test "x$ga_cv_f77_cpp_symbol" = x; then :
+  as_fn_error $? "don't know how to pass symbols to preprocessed Fortran" "$LINENO" 5
+fi
+case $ga_cv_f77_cpp_symbol in #(
+  -D) :
+     ;; #(
+  *) :
+    FFLAGS="$FFLAGS ${ga_cv_f77_cpp_symbol}HAVE_CONFIG_H" ;;
+esac
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $F77 needs a flag to compile fixed format source" >&5
+$as_echo_n "checking whether $F77 needs a flag to compile fixed format source... " >&6; }
+if test "${ga_cv_f77_fixed_flag+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+for testflag in none -ffixed-form -qfixed -Mfixed -fixedform "-f fixed" +source=fixed -fix ; do
+    ga_save_FFLAGS=$FFLAGS
+    if test "x$testflag" != xnone; then :
+  FFLAGS="$FFLAGS $testflag"
+fi
+    cat > conftest.$ac_ext <<_ACEOF
+c some comment
+      end program
+_ACEOF
+if ac_fn_f77_try_compile "$LINENO"; then :
+  ga_cv_f77_fixed_flag=$testflag
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    FFLAGS=$ga_save_FFLAGS
+    if test "x$ga_cv_f77_fixed_flag" != x; then :
+  break
+fi
+done
+ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_fixed_flag" >&5
+$as_echo "$ga_cv_f77_fixed_flag" >&6; }
+if test "x$ga_cv_f77_fixed_flag" != xnone; then :
+  if test "x$ga_cv_f77_fixed_flag" != x; then :
+  FFLAGS="$FFLAGS $ga_cv_f77_fixed_flag"
+fi
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $F77 needs a flag to compile inconsistent types" >&5
+$as_echo_n "checking whether $F77 needs a flag to compile inconsistent types... " >&6; }
+if test "${ga_cv_f77_mismatch_type_flag+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+for testflag in none -mismatch_all
+do
+    ga_save_FFLAGS="$FFLAGS"
+    if test "x$testflag" != xnone; then :
+  FFLAGS="$FFLAGS $testflag"
+fi
+    cat > conftest.$ac_ext <<_ACEOF
+      integer function the_test ()
+      implicit none
+      logical foo
+      external foo
+      character*1       byte_mb
+      integer           int_mb
+      the_test = 0
+      if (foo(byte_mb)) return
+      if (foo( int_mb)) return
+      the_test = 1
+      return
+      end
+_ACEOF
+if ac_fn_f77_try_compile "$LINENO"; then :
+  ga_cv_f77_mismatch_type_flag="$testflag"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    FFLAGS="$ga_save_FFLAGS"
+    if test "x$ga_cv_f77_mismatch_type_flag" != x; then :
+  break
+fi
+done
+ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_mismatch_type_flag" >&5
+$as_echo "$ga_cv_f77_mismatch_type_flag" >&6; }
+if test "x$ga_cv_f77_mismatch_type_flag" != xnone; then :
+  if test "x$ga_cv_f77_mismatch_type_flag" != x; then :
+  FFLAGS="$FFLAGS $ga_cv_f77_mismatch_type_flag"
+fi
+fi
 
 
 # Check whether --enable-i4 was given.
@@ -8424,7 +9209,6 @@ $as_echo "$as_me: WARNING: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&2;
 fi
 fi
 
-GA_F77_WRAPPERS
 
 #Checks for Fortran typedefs, structures, and compiler characteristics.
 
@@ -9731,7 +10515,7 @@ esac
 done ;;
 esac
 # Check for header.
-tascel_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $GA_CPPFLAGS"
+ga_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $GA_CPPFLAGS"
 ac_fn_c_check_header_mongrel "$LINENO" "ga.h" "ac_cv_header_ga_h" "$ac_includes_default"
 if test "x$ac_cv_header_ga_h" = x""yes; then :
 
@@ -9802,7 +10586,7 @@ esac
 done ;;
 esac
 # Check for header.
-tascel_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $GA_CPPFLAGS"
+ga_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $GA_CPPFLAGS"
 ac_fn_c_check_header_mongrel "$LINENO" "ga.h" "ac_cv_header_ga_h" "$ac_includes_default"
 if test "x$ac_cv_header_ga_h" = x""yes; then :
 
@@ -9814,10 +10598,10 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-CPPFLAGS="$tascel_save_CPPFLAGS"
+CPPFLAGS="$ga_save_CPPFLAGS"
 # Check for library.
-tascel_save_LIBS="$LIBS"; LIBS="$GA_LIBS $LIBS"
-tascel_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $GA_LDFLAGS"
+ga_save_LIBS="$LIBS"; LIBS="$GA_LIBS $LIBS"
+ga_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $GA_LDFLAGS"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing GA_Initialize" >&5
 $as_echo_n "checking for library containing GA_Initialize... " >&6; }
 if test "${ac_cv_search_GA_Initialize+set}" = set; then :
@@ -9882,8 +10666,8 @@ if test "$ac_res" != no; then :
 
 fi
 
-LIBS="$tascel_save_LIBS"
-LDFLAGS="$tascel_save_LDFLAGS"
+LIBS="$ga_save_LIBS"
+LDFLAGS="$ga_save_LDFLAGS"
 if test "x$ac_cv_search_GA_Initialize" != xno; then :
   GA_LIBS="-lglobal -lma -larmci -llinalg"
 
@@ -9903,10 +10687,10 @@ fi
 fi
 
 
-CPPFLAGS="$tascel_save_CPPFLAGS"
+CPPFLAGS="$ga_save_CPPFLAGS"
 # Check for library.
-tascel_save_LIBS="$LIBS"; LIBS="$GA_LIBS $LIBS"
-tascel_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $GA_LDFLAGS"
+ga_save_LIBS="$LIBS"; LIBS="$GA_LIBS $LIBS"
+ga_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $GA_LDFLAGS"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing GA_Initialize" >&5
 $as_echo_n "checking for library containing GA_Initialize... " >&6; }
 if test "${ac_cv_search_GA_Initialize+set}" = set; then :
@@ -9971,8 +10755,8 @@ if test "$ac_res" != no; then :
 
 fi
 
-LIBS="$tascel_save_LIBS"
-LDFLAGS="$tascel_save_LDFLAGS"
+LIBS="$ga_save_LIBS"
+LDFLAGS="$ga_save_LDFLAGS"
 if test "x$ac_cv_search_GA_Initialize" != xno; then :
   GA_LIBS="-lga"
 
@@ -10045,7 +10829,7 @@ esac
 done ;;
 esac
 # Check for header.
-tascel_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $GA_CPPFLAGS"
+ga_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $GA_CPPFLAGS"
 ac_fn_c_check_header_mongrel "$LINENO" "ga.h" "ac_cv_header_ga_h" "$ac_includes_default"
 if test "x$ac_cv_header_ga_h" = x""yes; then :
 
@@ -10057,10 +10841,10 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-CPPFLAGS="$tascel_save_CPPFLAGS"
+CPPFLAGS="$ga_save_CPPFLAGS"
 # Check for library.
-tascel_save_LIBS="$LIBS"; LIBS="$GA_LIBS $LIBS"
-tascel_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $GA_LDFLAGS"
+ga_save_LIBS="$LIBS"; LIBS="$GA_LIBS $LIBS"
+ga_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $GA_LDFLAGS"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing GA_Initialize" >&5
 $as_echo_n "checking for library containing GA_Initialize... " >&6; }
 if test "${ac_cv_search_GA_Initialize+set}" = set; then :
@@ -10125,8 +10909,8 @@ if test "$ac_res" != no; then :
 
 fi
 
-LIBS="$tascel_save_LIBS"
-LDFLAGS="$tascel_save_LDFLAGS"
+LIBS="$ga_save_LIBS"
+LDFLAGS="$ga_save_LDFLAGS"
 if test "x$ac_cv_search_GA_Initialize" != xno; then :
   GA_LIBS="-lglobal -lma -larmci -llinalg"
 
@@ -10182,9 +10966,9 @@ if test "${with_blas8+set}" = set; then :
 fi
 
 
-tascel_blas_ok=no
+ga_blas_ok=no
 if test "x$with_blas" = xno; then :
-  tascel_blas_ok=skip
+  ga_blas_ok=skip
 fi
 
 # Parse --with-blas argument. Clear previous values first.
@@ -10311,16 +11095,16 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-tascel_save_LIBS="$LIBS"
-tascel_save_LDFLAGS="$LDFLAGS";     LDFLAGS="$BLAS_LDFLAGS $LDFLAGS"
-tascel_save_CPPFLAGS="$CPPFLAGS";   CPPFLAGS="$BLAS_CPPFLAGS $CPPFLAGS"
+ga_save_LIBS="$LIBS"
+ga_save_LDFLAGS="$LDFLAGS";     LDFLAGS="$BLAS_LDFLAGS $LDFLAGS"
+ga_save_CPPFLAGS="$CPPFLAGS";   CPPFLAGS="$BLAS_CPPFLAGS $CPPFLAGS"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: Attempting to locate BLAS library" >&5
 $as_echo "$as_me: Attempting to locate BLAS library" >&6;}
 
 # First, check environment/command-line variables.
 # If failed, erase BLAS_LIBS but maintain BLAS_LDFLAGS and BLAS_CPPFLAGS.
-if test $tascel_blas_ok = no; then :
+if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS with user-supplied flags" >&5
 $as_echo_n "checking for BLAS with user-supplied flags... " >&6; }
      LIBS="$BLAS_LIBS $LIBS"
@@ -10367,7 +11151,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -10419,7 +11203,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -10433,8 +11217,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-     LIBS="$tascel_save_LIBS"
-     if test $tascel_blas_ok = yes; then :
+     LIBS="$ga_save_LIBS"
+     if test $ga_blas_ok = yes; then :
   if test $blas_size_hack = yes; then :
   case "$BLAS_LIBS $LIBS $LDFLAGS $CPPFLAGS" in #(
   *ilp64*) :
@@ -10447,12 +11231,12 @@ fi
 esac
 fi
 fi # AMD ACML
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_blas_ok" >&5
-$as_echo "$tascel_blas_ok" >&6; }
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
 fi
 
 # BLAS in AMD Core Math Library? (ACML)
-if test $tascel_blas_ok = no; then :
+if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in AMD Core Math Library" >&5
 $as_echo_n "checking for BLAS in AMD Core Math Library... " >&6; }
      # add -lacml to BLAS_LIBS if missing from LIBS
@@ -10506,7 +11290,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -10558,7 +11342,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -10572,8 +11356,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-     LIBS="$tascel_save_LIBS"
-     if test "x$tascel_blas_ok" = xyes; then :
+     LIBS="$ga_save_LIBS"
+     if test "x$ga_blas_ok" = xyes; then :
   if test $blas_size_hack = yes; then :
   case "$BLAS_LIBS $LIBS $LDFLAGS $CPPFLAGS" in #(
   *_int64*) :
@@ -10583,12 +11367,12 @@ fi
 esac
 fi
 fi
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_blas_ok" >&5
-$as_echo "$tascel_blas_ok" >&6; }
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
 fi
 
 # BLAS in Intel MKL library?
-if test $tascel_blas_ok = no; then :
+if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Intel Math Kernel Library" >&5
 $as_echo_n "checking for BLAS in Intel Math Kernel Library... " >&6; }
      # add -lmkl to BLAS_LIBS if missing from LIBS
@@ -10642,7 +11426,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -10694,7 +11478,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -10708,8 +11492,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-     LIBS="$tascel_save_LIBS"
-     if test "x$tascel_blas_ok" = xyes; then :
+     LIBS="$ga_save_LIBS"
+     if test "x$ga_blas_ok" = xyes; then :
   if test $blas_size_hack = yes; then :
   case "$BLAS_LIBS $LIBS $LDFLAGS $CPPFLAGS" in #(
   *ilp64*) :
@@ -10719,12 +11503,12 @@ fi
 esac
 fi
 fi
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_blas_ok" >&5
-$as_echo "$tascel_blas_ok" >&6; }
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
 fi
 
 # BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
-if test $tascel_blas_ok = no; then :
+if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in ATLAS" >&5
 $as_echo_n "checking for BLAS in ATLAS... " >&6; }
      if test "x$enable_f77" = xno; then :
@@ -10795,7 +11579,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -10847,7 +11631,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -10861,13 +11645,13 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-     LIBS="$tascel_save_LIBS"
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_blas_ok" >&5
-$as_echo "$tascel_blas_ok" >&6; }
+     LIBS="$ga_save_LIBS"
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
 fi
 
 # BLAS in PhiPACK libraries? (requires generic BLAS lib, too)
-if test $tascel_blas_ok = no; then :
+if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in PhiPACK libraries" >&5
 $as_echo_n "checking for BLAS in PhiPACK libraries... " >&6; }
      # add -lblas to BLAS_LIBS if missing from LIBS
@@ -10935,7 +11719,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -10987,7 +11771,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11001,15 +11785,141 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-     LIBS="$tascel_save_LIBS"
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_blas_ok" >&5
-$as_echo "$tascel_blas_ok" >&6; }
+     LIBS="$ga_save_LIBS"
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
 fi
 
-# BLAS in Apple vecLib library?
-if test $tascel_blas_ok = no; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Apple vecLib library" >&5
-$as_echo_n "checking for BLAS in Apple vecLib library... " >&6; }
+# BLAS in Apple Accelerate.framework?
+if test $ga_blas_ok = no; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Apple Accelerate.framework" >&5
+$as_echo_n "checking for BLAS in Apple Accelerate.framework... " >&6; }
+     # add -framework Accelerate to BLAS_LIBS if missing from LIBS
+     case $LIBS in #(
+  *Accelerate*) :
+     ;; #(
+  *) :
+    BLAS_LIBS="-framework Accelerate" ;;
+esac
+     LIBS="$BLAS_LIBS $LIBS"
+
+if test "x$enable_f77" = xno; then :
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char cgemm ();
+char dgemm ();
+char sgemm ();
+char zgemm ();
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+char cresult =  cgemm ();
+char dresult =  dgemm ();
+char sresult =  sgemm ();
+char zresult =  zgemm ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+    if ac_fn_c_try_link "$LINENO"; then :
+  ga_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+else
+  ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+    cat > conftest.$ac_ext <<_ACEOF
+      program main
+      implicit none
+      INTEGER M, N, K, LDA, LDB, LDC
+      COMPLEX CA(20,40), CB(20,30), CC(40,30), Calpha, Cbeta
+      DOUBLE COMPLEX ZA(20,40), ZB(20,30), ZC(40,30), Zalpha, Zbeta
+      REAL SA(20,40), SB(20,30), SC(40,30), Salpha, Sbeta
+      DOUBLE PRECISION DA(20,40), DB(20,30), DC(40,30), Dalpha, Dbeta
+      external CGEMM
+      external ZGEMM
+      external SGEMM
+      external DGEMM
+      M = 10
+      N = 20
+      K = 15
+      LDA = 20
+      LDB = 20
+      LDC = 40
+      Calpha = 2.0
+      Cbeta = 2.0
+      Zalpha = 2.0
+      Zbeta = 2.0
+      Salpha = 2.0
+      Sbeta = 2.0
+      Dalpha = 2.0
+      Dbeta = 2.0
+      CALL CGEMM ('T','N',M,N,K,Calpha,CA,LDA,CB,LDB,Cbeta,CC,LDC)
+      CALL ZGEMM ('T','N',M,N,K,Zalpha,ZA,LDA,ZB,LDB,Zbeta,ZC,LDC)
+      CALL SGEMM ('T','N',M,N,K,Salpha,SA,LDA,SB,LDB,Sbeta,SC,LDC)
+      CALL DGEMM ('T','N',M,N,K,Dalpha,DA,LDA,DB,LDB,Dbeta,DC,LDC)
+      end
+_ACEOF
+
+    if ac_fn_f77_try_link "$LINENO"; then :
+  ga_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
+
+     LIBS="$ga_save_LIBS"
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
+fi
+
+# BLAS in Apple vecLib.framework?
+if test $ga_blas_ok = no; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Apple vecLib.framework" >&5
+$as_echo_n "checking for BLAS in Apple vecLib.framework... " >&6; }
      # add -framework vecLib to BLAS_LIBS if missing from LIBS
      case $LIBS in #(
   *vecLib*) :
@@ -11061,7 +11971,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11113,7 +12023,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11127,13 +12037,13 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-     LIBS="$tascel_save_LIBS"
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_blas_ok" >&5
-$as_echo "$tascel_blas_ok" >&6; }
+     LIBS="$ga_save_LIBS"
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
 fi
 
 # BLAS in Alpha CXML library? CXML=Compaq Extended Math Library
-if test $tascel_blas_ok = no; then :
+if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Alpha CXML library" >&5
 $as_echo_n "checking for BLAS in Alpha CXML library... " >&6; }
      # add -lcxml to BLAS_LIBS if missing from LIBS
@@ -11187,7 +12097,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11239,7 +12149,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11253,8 +12163,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-     LIBS="$tascel_save_LIBS"
-     if test $tascel_blas_ok = no; then :
+     LIBS="$ga_save_LIBS"
+     if test $ga_blas_ok = no; then :
   # add -lcxml to BLAS_LIBS if missing from LIBS
          case $LIBS in #(
   *cxml*) :
@@ -11313,7 +12223,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11365,7 +12275,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11379,16 +12289,16 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-         LIBS="$tascel_save_LIBS"
+         LIBS="$ga_save_LIBS"
 fi
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_blas_ok" >&5
-$as_echo "$tascel_blas_ok" >&6; }
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
 fi
 
 # BLAS in Alpha DXML library? (now called CXML, see above)
 
 # BLAS in Sun Performance library?
-if test $tascel_blas_ok = no; then :
+if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Sun Performance Library" >&5
 $as_echo_n "checking for BLAS in Sun Performance Library... " >&6; }
      # add -xlic_lib=sunperf to BLAS_LIBS if missing from LIBS
@@ -11442,7 +12352,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11494,7 +12404,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11508,8 +12418,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-     LIBS="$tascel_save_LIBS"
-     if test $tascel_blas_ok = no; then :
+     LIBS="$ga_save_LIBS"
+     if test $ga_blas_ok = no; then :
   # add -xlic_lib=sunperf to BLAS_LIBS if missing from LIBS
          case $LIBS in #(
   *sunperf*) :
@@ -11568,7 +12478,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11620,7 +12530,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11634,14 +12544,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-         LIBS="$tascel_save_LIBS"
+         LIBS="$ga_save_LIBS"
 fi
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_blas_ok" >&5
-$as_echo "$tascel_blas_ok" >&6; }
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
 fi
 
 # BLAS in SCSL library?  (SGI/Cray Scientific Library)
-if test $tascel_blas_ok = no; then :
+if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in SGI/Cray Scientific Library" >&5
 $as_echo_n "checking for BLAS in SGI/Cray Scientific Library... " >&6; }
      # add -lscs to BLAS_LIBS if missing from LIBS
@@ -11695,7 +12605,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11747,7 +12657,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11761,13 +12671,13 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-     LIBS="$tascel_save_LIBS"
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_blas_ok" >&5
-$as_echo "$tascel_blas_ok" >&6; }
+     LIBS="$ga_save_LIBS"
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
 fi
 
 # BLAS in SGIMATH library?
-if test $tascel_blas_ok = no; then :
+if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in SGIMATH library" >&5
 $as_echo_n "checking for BLAS in SGIMATH library... " >&6; }
      # add -lcomplib.sgimath to BLAS_LIBS if missing from LIBS
@@ -11821,7 +12731,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11873,7 +12783,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -11887,13 +12797,13 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-     LIBS="$tascel_save_LIBS"
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_blas_ok" >&5
-$as_echo "$tascel_blas_ok" >&6; }
+     LIBS="$ga_save_LIBS"
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
 fi
 
 # BLAS in IBM ESSL library? (requires generic BLAS lib, too)
-if test $tascel_blas_ok = no; then :
+if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in IBM ESSL library" >&5
 $as_echo_n "checking for BLAS in IBM ESSL library... " >&6; }
      # add -lessl to BLAS_LIBS if missing from LIBS
@@ -11954,7 +12864,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -12006,7 +12916,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -12020,13 +12930,13 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-     LIBS="$tascel_save_LIBS"
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_blas_ok" >&5
-$as_echo "$tascel_blas_ok" >&6; }
+     LIBS="$ga_save_LIBS"
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
 fi
 
 # Generic BLAS library?
-if test $tascel_blas_ok = no; then :
+if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in generic library" >&5
 $as_echo_n "checking for BLAS in generic library... " >&6; }
      BLAS_LIBS="-lblas"
@@ -12074,7 +12984,7 @@ char zresult =  zgemm ();
 _ACEOF
 
     if ac_fn_c_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -12126,7 +13036,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
     if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_blas_ok=yes
+  ga_blas_ok=yes
 else
   BLAS_LIBS=
 fi
@@ -12140,26 +13050,26 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
-     LIBS="$tascel_save_LIBS"
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_blas_ok" >&5
-$as_echo "$tascel_blas_ok" >&6; }
+     LIBS="$ga_save_LIBS"
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_blas_ok" >&5
+$as_echo "$ga_blas_ok" >&6; }
 fi
 
-CPPFLAGS="$tascel_save_CPPFLAGS"
-LDFLAGS="$tascel_save_LDFLAGS"
+CPPFLAGS="$ga_save_CPPFLAGS"
+LDFLAGS="$ga_save_LDFLAGS"
 
 
 
 
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
-if test $tascel_blas_ok = yes; then :
+if test $ga_blas_ok = yes; then :
   have_blas=1
 
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: BLAS library not found, using internal BLAS" >&5
 $as_echo "$as_me: WARNING: BLAS library not found, using internal BLAS" >&2;}
-     blas_size=$tascel_cv_f77_integer_size # reset blas integer size to desired
+     blas_size=$ga_cv_f77_integer_size # reset blas integer size to desired
      have_blas=0
 
 fi
@@ -12173,7 +13083,7 @@ cat >>confdefs.h <<_ACEOF
 #define BLAS_SIZE $blas_size
 _ACEOF
 
- if test $tascel_blas_ok = yes; then
+ if test $ga_blas_ok = yes; then
   HAVE_BLAS_TRUE=
   HAVE_BLAS_FALSE='#'
 else
@@ -12190,9 +13100,9 @@ if test "${with_lapack+set}" = set; then :
 fi
 
 
-tascel_lapack_ok=no
+ga_lapack_ok=no
 if test "x$with_lapack" = xno; then :
-  tascel_lapack_ok=skip
+  ga_lapack_ok=skip
 fi
 
 # Parse --with-lapack argument. Clear previous values first.
@@ -12262,9 +13172,9 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-tascel_save_LIBS="$LIBS"
-tascel_save_LDFLAGS="$LDFLAGS"
-tascel_save_CPPFLAGS="$CPPFLAGS"
+ga_save_LIBS="$LIBS"
+ga_save_LDFLAGS="$LDFLAGS"
+ga_save_CPPFLAGS="$CPPFLAGS"
 
 LDFLAGS="$LAPACK_LDFLAGS $BLAS_LDFLAGS $LDFLAGS"
 CPPFLAGS="$LAPACK_CPPFLAGS $BLAS_CPPFLAGS $CPPFLAGS"
@@ -12273,13 +13183,13 @@ CPPFLAGS="$LAPACK_CPPFLAGS $BLAS_CPPFLAGS $CPPFLAGS"
 $as_echo "$as_me: Attempting to locate LAPACK library" >&6;}
 
 # We cannot use LAPACK if BLAS is not found
-if test $tascel_blas_ok != yes; then :
-  tascel_lapack_ok=noblas
+if test $ga_blas_ok != yes; then :
+  ga_lapack_ok=noblas
 fi
 
 # First, check environment/command-line variables.
 # If failed, erase LAPACK_LIBS but maintain LAPACK_LDFLAGS and LAPACK_CPPFLAGS.
-if test $tascel_lapack_ok = no; then :
+if test $ga_lapack_ok = no; then :
   LIBS="$LAPACK_LIBS $BLAS_LIBS $LIBS"
      if test "x$enable_f77" = xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C LAPACK with user-supplied flags" >&5
@@ -12319,7 +13229,7 @@ char result = dgetrs ();
 _ACEOF
 
          if ac_fn_c_try_link "$LINENO"; then :
-  tascel_lapack_ok=yes
+  ga_lapack_ok=yes
 else
   LAPACK_LIBS=
 fi
@@ -12348,7 +13258,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
          if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_lapack_ok=yes
+  ga_lapack_ok=yes
 else
   LAPACK_LIBS=
 fi
@@ -12361,15 +13271,15 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_lapack_ok" >&5
-$as_echo "$tascel_lapack_ok" >&6; }
-     LIBS="$tascel_save_LIBS"
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_lapack_ok" >&5
+$as_echo "$ga_lapack_ok" >&6; }
+     LIBS="$ga_save_LIBS"
 fi
 
 # Generic LAPACK library?
 for lib in lapack lapack_rs6k; do
-if test $tascel_lapack_ok = no; then :
-  tascel_save_LIBS="$LIBS"; LIBS="$BLAS_LIBS $LIBS"
+if test $ga_lapack_ok = no; then :
+  ga_save_LIBS="$LIBS"; LIBS="$BLAS_LIBS $LIBS"
      as_ac_Lib=`$as_echo "ac_cv_lib_$lib''_$dgetrs" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $dgetrs in -l$lib" >&5
 $as_echo_n "checking for $dgetrs in -l$lib... " >&6; }
@@ -12417,22 +13327,22 @@ eval ac_res=\$$as_ac_Lib
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  tascel_lapack_ok=yes; LAPACK_LIBS="-l$lib"
+  ga_lapack_ok=yes; LAPACK_LIBS="-l$lib"
 fi
 
-     LIBS="$tascel_save_LIBS"
+     LIBS="$ga_save_LIBS"
 fi
 done
 
-CPPFLAGS="$tascel_save_CPPFLAGS"
-LDFLAGS="$tascel_save_LDFLAGS"
+CPPFLAGS="$ga_save_CPPFLAGS"
+LDFLAGS="$ga_save_LDFLAGS"
 
 
 
 
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
-if test $tascel_lapack_ok = yes; then :
+if test $ga_lapack_ok = yes; then :
   have_lapack=1
 
 else
@@ -12446,7 +13356,7 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_LAPACK $have_lapack
 _ACEOF
 
- if test $tascel_lapack_ok = yes; then
+ if test $ga_lapack_ok = yes; then
   HAVE_LAPACK_TRUE=
   HAVE_LAPACK_FALSE='#'
 else
@@ -12463,9 +13373,9 @@ if test "${with_scalapack+set}" = set; then :
 fi
 
 
-tascel_scalapack_ok=no
+ga_scalapack_ok=no
 if test "x$with_scalapack" = xno; then :
-  tascel_scalapack_ok=skip
+  ga_scalapack_ok=skip
 fi
 
 # Parse --with-scalapack argument. Clear previous values first.
@@ -12535,9 +13445,9 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-tascel_save_LIBS="$LIBS"
-tascel_save_LDFLAGS="$LDFLAGS"
-tascel_save_CPPFLAGS="$CPPFLAGS"
+ga_save_LIBS="$LIBS"
+ga_save_LDFLAGS="$LDFLAGS"
+ga_save_CPPFLAGS="$CPPFLAGS"
 
 LDFLAGS="$LAPACK_LDFLAGS $BLAS_LDFLAGS $LDFLAGS"
 CPPFLAGS="$LAPACK_CPPFLAGS $BLAS_CPPFLAGS $CPPFLAGS"
@@ -12548,7 +13458,7 @@ $as_echo "$as_me: Attempting to locate SCALAPACK library" >&6;}
 # First, check environment/command-line variables.
 # If failed, erase SCALAPACK_LIBS but maintain SCALAPACK_LDFLAGS and
 # SCALAPACK_CPPFLAGS.
-if test $tascel_scalapack_ok = no; then :
+if test $ga_scalapack_ok = no; then :
   LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $LIBS"
      if test "x$enable_f77" = xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C SCALAPACK with user-supplied flags" >&5
@@ -12588,7 +13498,7 @@ char result = pdgetrs ();
 _ACEOF
 
          if ac_fn_c_try_link "$LINENO"; then :
-  tascel_scalapack_ok=yes
+  ga_scalapack_ok=yes
 else
   SCALAPACK_LIBS=
 fi
@@ -12617,7 +13527,7 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 _ACEOF
 
          if ac_fn_f77_try_link "$LINENO"; then :
-  tascel_scalapack_ok=yes
+  ga_scalapack_ok=yes
 else
   SCALAPACK_LIBS=
 fi
@@ -12630,13 +13540,13 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tascel_scalapack_ok" >&5
-$as_echo "$tascel_scalapack_ok" >&6; }
-     LIBS="$tascel_save_LIBS"
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_scalapack_ok" >&5
+$as_echo "$ga_scalapack_ok" >&6; }
+     LIBS="$ga_save_LIBS"
 fi
 
 # Generic ScaLAPACK library?
-if test $tascel_scalapack_ok = no; then :
+if test $ga_scalapack_ok = no; then :
   as_ac_Lib=`$as_echo "ac_cv_lib_scalapack_$pdgetrs" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $pdgetrs in -lscalapack" >&5
 $as_echo_n "checking for $pdgetrs in -lscalapack... " >&6; }
@@ -12684,24 +13594,24 @@ eval ac_res=\$$as_ac_Lib
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  tascel_scalapack_ok=yes; SCALAPACK_LIBS="-lscalapack"
+  ga_scalapack_ok=yes; SCALAPACK_LIBS="-lscalapack"
 fi
 
-     LIBS="$tascel_save_LIBS"
+     LIBS="$ga_save_LIBS"
 fi
 
 # TODO tests for PBLAS and BLACS to enable ScaLAPACK just in case all
 # packages are separate...
 
-CPPFLAGS="$tascel_save_CPPFLAGS"
-LDFLAGS="$tascel_save_LDFLAGS"
+CPPFLAGS="$ga_save_CPPFLAGS"
+LDFLAGS="$ga_save_LDFLAGS"
 
 
 
 
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
-if test $tascel_scalapack_ok = yes; then :
+if test $ga_scalapack_ok = yes; then :
   have_scalapack=1
 
 else
@@ -12715,7 +13625,7 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_SCALAPACK $have_scalapack
 _ACEOF
 
- if test $tascel_scalapack_ok = yes; then
+ if test $ga_scalapack_ok = yes; then
   HAVE_SCALAPACK_TRUE=
   HAVE_SCALAPACK_FALSE='#'
 else
@@ -12734,6 +13644,50 @@ $as_echo "$as_me: " >&6;}
 $as_echo "$as_me: Libtool setup" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: " >&5
 $as_echo "$as_me: " >&6;}
+# temporarily restore unwrapped compilers
+# this works around a bug where libtool sadly relies on matching compiler
+# names in order to determine features (Fortran only, I think)
+# libtool doesn't recognize MPI compiler names, nor should it
+if test x$with_mpi_wrappers = xyes; then :
+
+ga_mpi_unwrap_push_save_CC="$CC"
+ga_mpi_unwrap_push_save_CXX="$CXX"
+ga_mpi_unwrap_push_save_F77="$F77"
+ga_mpi_unwrap_push_save_FC="$FC"
+if test "x$ga_cv_mpic_naked"   != x; then :
+   CC="$ga_cv_mpic_naked"
+fi
+if test "x$ga_cv_mpicxx_naked" != x; then :
+  CXX="$ga_cv_mpicxx_naked"
+fi
+if test "x$ga_cv_mpif77_naked" != x; then :
+  F77="$ga_cv_mpif77_naked"
+fi
+if test "x$ga_cv_mpifc_naked"  != x; then :
+   FC="$ga_cv_mpifc_naked"
+fi
+
+fi
+
+
+
+
+if test "x$AR" = x; then :
+  case $ga_cv_target in #(
+  NEC|NEC64) :
+    AR=sxar ;; #(
+  *) :
+     ;;
+esac
+fi
+if test "x$RANLIB" = x; then :
+  case $ga_cv_target in #(
+  NEC|NEC64) :
+    RANLIB=true ;; #(
+  *) :
+     ;;
+esac
+fi
 
 case `pwd` in
   *\ * | *\	*)
@@ -25887,6 +26841,22 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # Only expand once:
 
 
+# and now that that's over, put the MPI compilers back
+# also, the above hack incorrectly sets the base compiler as the linker
+if test x$with_mpi_wrappers = xyes; then :
+
+ CC="$ga_mpi_unwrap_push_save_CC"
+CXX="$ga_mpi_unwrap_push_save_CXX"
+F77="$ga_mpi_unwrap_push_save_F77"
+ FC="$ga_mpi_unwrap_push_save_FC"
+
+     compiler="$CC"
+     LTCC="$CC"
+     lt_save_CC="$CC"
+     compiler_DEFAULT="$CC"
+     compiler_CXX="$CXX"
+     compiler_F77="$F77"
+fi
 
 ###############################################################################
 # The End
@@ -28800,43 +29770,43 @@ $as_echo "$as_me:  $PACKAGE_NAME configured as follows:" >&6;}
 $as_echo "$as_me: **************************************************************" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: " >&5
 $as_echo "$as_me: " >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: TASCEL_MPI_CPPFLAGS=$TASCEL_MPI_CPPFLAGS" >&5
-$as_echo "$as_me: TASCEL_MPI_CPPFLAGS=$TASCEL_MPI_CPPFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:  TASCEL_MPI_LDFLAGS=$TASCEL_MPI_LDFLAGS" >&5
-$as_echo "$as_me:  TASCEL_MPI_LDFLAGS=$TASCEL_MPI_LDFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:     TASCEL_MPI_LIBS=$TASCEL_MPI_LIBS" >&5
-$as_echo "$as_me:     TASCEL_MPI_LIBS=$TASCEL_MPI_LIBS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:         GA_CPPFLAGS=$GA_CPPFLAGS" >&5
-$as_echo "$as_me:         GA_CPPFLAGS=$GA_CPPFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:          GA_LDFLAGS=$GA_LDFLAGS" >&5
-$as_echo "$as_me:          GA_LDFLAGS=$GA_LDFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:             GA_LIBS=$GA_LIBS" >&5
-$as_echo "$as_me:             GA_LIBS=$GA_LIBS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                 F77=$F77" >&5
-$as_echo "$as_me:                 F77=$F77" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                  CC=$CC" >&5
-$as_echo "$as_me:                  CC=$CC" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                 CXX=$CXX" >&5
-$as_echo "$as_me:                 CXX=$CXX" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                 CPP=$CPP" >&5
-$as_echo "$as_me:                 CPP=$CPP" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:              FFLAGS=$FFLAGS" >&5
-$as_echo "$as_me:              FFLAGS=$FFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:              CFLAGS=$CFLAGS" >&5
-$as_echo "$as_me:              CFLAGS=$CFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:            CXXFLAGS=$CXXFLAGS" >&5
-$as_echo "$as_me:            CXXFLAGS=$CXXFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:            CPPFLAGS=$CPPFLAGS" >&5
-$as_echo "$as_me:            CPPFLAGS=$CPPFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:             LDFLAGS=$LDFLAGS" >&5
-$as_echo "$as_me:             LDFLAGS=$LDFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                LIBS=$LIBS" >&5
-$as_echo "$as_me:                LIBS=$LIBS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:               FLIBS=$FLIBS" >&5
-$as_echo "$as_me:               FLIBS=$FLIBS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:                DEFS=$DEFS" >&5
-$as_echo "$as_me:                DEFS=$DEFS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:               SHELL=$SHELL" >&5
-$as_echo "$as_me:               SHELL=$SHELL" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:     GA_MP_LIBS=$GA_MP_LIBS" >&5
+$as_echo "$as_me:     GA_MP_LIBS=$GA_MP_LIBS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:  GA_MP_LDFLAGS=$GA_MP_LDFLAGS" >&5
+$as_echo "$as_me:  GA_MP_LDFLAGS=$GA_MP_LDFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: GA_MP_CPPFLAGS=$GA_MP_CPPFLAGS" >&5
+$as_echo "$as_me: GA_MP_CPPFLAGS=$GA_MP_CPPFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:            F77=$F77" >&5
+$as_echo "$as_me:            F77=$F77" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:         FFLAGS=$FFLAGS" >&5
+$as_echo "$as_me:         FFLAGS=$FFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:      FFLAG_INT=$FFLAG_INT" >&5
+$as_echo "$as_me:      FFLAG_INT=$FFLAG_INT" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:             CC=$CC" >&5
+$as_echo "$as_me:             CC=$CC" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:         CFLAGS=$CFLAGS" >&5
+$as_echo "$as_me:         CFLAGS=$CFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:            CXX=$CXX" >&5
+$as_echo "$as_me:            CXX=$CXX" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:       CXXFLAGS=$CXXFLAGS" >&5
+$as_echo "$as_me:       CXXFLAGS=$CXXFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:            CPP=$CPP" >&5
+$as_echo "$as_me:            CPP=$CPP" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:       CPPFLAGS=$CPPFLAGS" >&5
+$as_echo "$as_me:       CPPFLAGS=$CPPFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:        LDFLAGS=$LDFLAGS" >&5
+$as_echo "$as_me:        LDFLAGS=$LDFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:           LIBS=$LIBS" >&5
+$as_echo "$as_me:           LIBS=$LIBS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:          FLIBS=$FLIBS" >&5
+$as_echo "$as_me:          FLIBS=$FLIBS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:             AR=$AR" >&5
+$as_echo "$as_me:             AR=$AR" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:       AR_FLAGS=$AR_FLAGS" >&5
+$as_echo "$as_me:       AR_FLAGS=$AR_FLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:           DEFS=$DEFS" >&5
+$as_echo "$as_me:           DEFS=$DEFS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}:          SHELL=$SHELL" >&5
+$as_echo "$as_me:          SHELL=$SHELL" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: " >&5
 $as_echo "$as_me: " >&6;}

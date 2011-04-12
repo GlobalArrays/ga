@@ -36,8 +36,10 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 check_PROGRAMS = test/TestSharedQueue$(EXEEXT) \
-	test/TestSplitQueue$(EXEEXT) examples/scf/scf$(EXEEXT)
-TESTS = $(am__EXEEXT_1) $(PARALLEL_TESTS)
+	test/TestSplitQueue$(EXEEXT) $(am__EXEEXT_1)
+@HAVE_BLAS_TRUE@am__append_1 = examples/scf/scf
+TESTS = $(am__EXEEXT_2) $(PARALLEL_TESTS)
+@HAVE_BLAS_TRUE@am__append_2 = examples/scf/scf$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(include_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -45,31 +47,37 @@ DIST_COMMON = README $(am__configure_deps) $(include_HEADERS) \
 	build-aux/config.guess build-aux/config.sub build-aux/depcomp \
 	build-aux/install-sh build-aux/ltmain.sh build-aux/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/../m4/ga_f2c_cmdargs.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/../m4/ga_ar.m4 \
+	$(top_srcdir)/../m4/ga_arg_parse.m4 \
+	$(top_srcdir)/../m4/ga_blas.m4 \
+	$(top_srcdir)/../m4/ga_check_package.m4 \
+	$(top_srcdir)/../m4/ga_f2c_cmdargs.m4 \
 	$(top_srcdir)/../m4/ga_f2c_match_types.m4 \
 	$(top_srcdir)/../m4/ga_f2c_nomain.m4 \
 	$(top_srcdir)/../m4/ga_f2c_string.m4 \
 	$(top_srcdir)/../m4/ga_f77_check_sizeof.m4 \
+	$(top_srcdir)/../m4/ga_f77_cpp_symbols.m4 \
+	$(top_srcdir)/../m4/ga_f77_fixed.m4 \
 	$(top_srcdir)/../m4/ga_f77_integer_size.m4 \
+	$(top_srcdir)/../m4/ga_f77_library_ldflags.m4 \
+	$(top_srcdir)/../m4/ga_f77_mismatch_type.m4 \
+	$(top_srcdir)/../m4/ga_f77_underscore.m4 \
+	$(top_srcdir)/../m4/ga_lapack.m4 \
+	$(top_srcdir)/../m4/ga_mpi_test_disable.m4 \
+	$(top_srcdir)/../m4/ga_mpi_unwrap.m4 \
+	$(top_srcdir)/../m4/ga_mpicc.m4 \
+	$(top_srcdir)/../m4/ga_mpicc_test.m4 \
+	$(top_srcdir)/../m4/ga_mpicxx.m4 \
+	$(top_srcdir)/../m4/ga_mpicxx_test.m4 \
+	$(top_srcdir)/../m4/ga_mpif77.m4 \
+	$(top_srcdir)/../m4/ga_mpif77_test.m4 \
+	$(top_srcdir)/../m4/ga_msg_comms.m4 \
+	$(top_srcdir)/../m4/ga_scalapack.m4 \
+	$(top_srcdir)/../m4/ga_suppress_msg.m4 \
+	$(top_srcdir)/../m4/ga_with_help.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/lt_obsolete.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/tascel_arg_parse.m4 \
-	$(top_srcdir)/m4/tascel_blas.m4 \
-	$(top_srcdir)/m4/tascel_check_package.m4 \
-	$(top_srcdir)/m4/tascel_f77_library_ldflags.m4 \
-	$(top_srcdir)/m4/tascel_lapack.m4 \
-	$(top_srcdir)/m4/tascel_mpi.m4 \
-	$(top_srcdir)/m4/tascel_mpi_test_disable.m4 \
-	$(top_srcdir)/m4/tascel_mpi_unwrap.m4 \
-	$(top_srcdir)/m4/tascel_mpicc.m4 \
-	$(top_srcdir)/m4/tascel_mpicc_test.m4 \
-	$(top_srcdir)/m4/tascel_mpicxx.m4 \
-	$(top_srcdir)/m4/tascel_mpicxx_test.m4 \
-	$(top_srcdir)/m4/tascel_mpif77.m4 \
-	$(top_srcdir)/m4/tascel_mpif77_test.m4 \
-	$(top_srcdir)/m4/tascel_scalapack.m4 \
-	$(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -116,6 +124,7 @@ libtascel_la_OBJECTS = $(am_libtascel_la_OBJECTS) \
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
+@HAVE_BLAS_TRUE@am__EXEEXT_1 = examples/scf/scf$(EXEEXT)
 am_examples_scf_scf_OBJECTS = examples/scf/input.$(OBJEXT) \
 	examples/scf/integ.$(OBJEXT) examples/scf/main.$(OBJEXT) \
 	examples/scf/output.$(OBJEXT) examples/scf/scf.$(OBJEXT) \
@@ -260,7 +269,7 @@ tst=$$dir$$f; log='$@'; __SAVED_TERM=$$TERM;		\
 $(TESTS_ENVIRONMENT)
 RECHECK_LOGS = $(TEST_LOGS)
 AM_RECURSIVE_TARGETS = check check-html recheck recheck-html
-am__EXEEXT_1 =
+am__EXEEXT_2 =
 TEST_SUITE_LOG = test-suite.log
 TEST_SUITE_HTML = $(TEST_SUITE_LOG:.log=.html)
 TEST_EXTENSIONS = @EXEEXT@ .test
@@ -286,6 +295,7 @@ ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
+AR_FLAGS = @AR_FLAGS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -328,6 +338,9 @@ FLIBS = @FLIBS@
 GA_CPPFLAGS = @GA_CPPFLAGS@
 GA_LDFLAGS = @GA_LDFLAGS@
 GA_LIBS = @GA_LIBS@
+GA_MP_CPPFLAGS = @GA_MP_CPPFLAGS@
+GA_MP_LDFLAGS = @GA_MP_LDFLAGS@
+GA_MP_LIBS = @GA_MP_LIBS@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -375,9 +388,6 @@ SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
-TASCEL_MPI_CPPFLAGS = @TASCEL_MPI_CPPFLAGS@
-TASCEL_MPI_LDFLAGS = @TASCEL_MPI_LDFLAGS@
-TASCEL_MPI_LIBS = @TASCEL_MPI_LIBS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -441,11 +451,11 @@ AM_FFLAGS = $(FFLAG_INT)
 AM_CFLAGS = 
 AM_CXXFLAGS = 
 AM_CPPFLAGS = -I$(top_srcdir)/src $(GA_CPPFLAGS) $(LAPACK_CPPFLAGS) \
-	$(BLAS_CPPFLAGS) $(TASCEL_MPI_CPPFLAGS)
+	$(BLAS_CPPFLAGS) $(GA_MP_CPPFLAGS)
 LDADD = libtascel.la $(GA_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) \
-	$(TASCEL_MPI_LIBS) $(FLIBS)
+	$(GA_MP_LIBS) $(FLIBS)
 AM_LDFLAGS = $(GA_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
-	$(TASCEL_MPI_LDFLAGS)
+	$(GA_MP_LDFLAGS)
 include_HEADERS = src/AccessMode.h src/Comm.h src/DataColl.h \
 	src/DenseArray.h src/FuncReg.h src/massert.h src/SharedQueue.h \
 	src/Sleep.h src/SplitQueue.h src/SplitQueueOpt.h \
@@ -475,7 +485,7 @@ maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; 
 
 SERIAL_TESTS = 
 PARALLEL_TESTS = test/TestSharedQueue$(EXEEXT) \
-	test/TestSplitQueue$(EXEEXT) examples/scf/scf$(EXEEXT)
+	test/TestSplitQueue$(EXEEXT) $(am__append_2)
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 

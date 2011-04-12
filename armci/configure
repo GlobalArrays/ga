@@ -4039,6 +4039,7 @@ GA_MP_LDFLAGS=
 GA_MP_CPPFLAGS=
 # First of all, which messaging library do we want?
 
+
 # Check whether --with-mpi was given.
 if test "${with_mpi+set}" = set; then :
   withval=$with_mpi;
@@ -4054,7 +4055,9 @@ else
   with_tcgmsg=no
 fi
 
+
 need_parse=no
+
 case $with_mpi:$with_tcgmsg in #(
   maybe:yes) :
     ga_msg_comms=TCGMSG; with_mpi=no ;; #(
@@ -4084,6 +4087,7 @@ case $ga_cv_target_base:$ga_msg_comms in #(
   *) :
      ;;
 esac
+
 # Sanity check for --with-mpi and environment var interplay.
 if test "x$with_mpi_wrappers" = xyes; then :
   if test "x$CC" != x; then :
@@ -4164,6 +4168,7 @@ fi ;;
 esac
 done
 fi
+
 # TCGMSG is no longer supported for ARMCI development.
 if test "x$ARMCI_TOP_SRCDIR" != x; then :
   if test ! -d "$ARMCI_TOP_SRCDIR/../global"; then :
@@ -4270,6 +4275,7 @@ $as_echo "#define MSG_COMMS_MPI 1" >>confdefs.h
   *) :
      ;;
 esac
+
 
 
 

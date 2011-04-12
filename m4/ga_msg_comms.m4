@@ -1,5 +1,5 @@
-# GA_MSG_COMMS
-# ------------
+# GA_MSG_COMMS([any text here disables tcgmsg output])
+# ----------------------------------------------------
 # Establishes all things related to messageing libraries.
 # This includes the compilers to use (either standard or MPI wrappers)
 # or the proper linker flags (-L), libs (-l) or preprocessor directives (-I).
@@ -12,6 +12,7 @@ GA_MP_LIBS=
 GA_MP_LDFLAGS=
 GA_MP_CPPFLAGS=
 # First of all, which messaging library do we want?
+m4_ifblank([$1], [
 AC_ARG_WITH([mpi],
     [AS_HELP_STRING([--with-mpi[[=ARG]]],
         [select MPI as the messaging library (default); leave ARG blank to use MPI compiler wrappers])],
@@ -22,7 +23,15 @@ AC_ARG_WITH([tcgmsg],
         [select TCGMSG as the messaging library; if --with-mpi is also specified then TCGMSG over MPI is used])],
     [],
     [with_tcgmsg=no])
+],[
+AC_ARG_WITH([mpi],
+    [AS_HELP_STRING([--with-mpi[[=ARG]]],
+        [select MPI as the messaging library (default); leave ARG blank to use MPI compiler wrappers])],
+    [],
+    [with_mpi=yes])
+])
 need_parse=no
+m4_ifblank([$1], [
 AS_CASE([$with_mpi:$with_tcgmsg],
 [maybe:yes],[ga_msg_comms=TCGMSG; with_mpi=no],
 [maybe:no], [ga_msg_comms=MPI; with_mpi_wrappers=yes; with_mpi=yes],
@@ -36,6 +45,12 @@ AS_CASE([$with_mpi:$with_tcgmsg],
 # Hack. If TARGET=MACX and MSG_COMMS=TCGMSG, we really want TCGMSG5.
 AS_CASE([$ga_cv_target_base:$ga_msg_comms],
     [MACX:TCGMSG], [ga_msg_comms=TCGMSG5])
+],[
+AS_CASE([$with_mpi],
+    [yes],  [with_mpi_wrappers=yes],
+    [no],   [],
+    [*],    [need_parse=yes])
+])
 # Sanity check for --with-mpi and environment var interplay.
 AS_IF([test "x$with_mpi_wrappers" = xyes],
     [AS_IF([test "x$CC" != x],
@@ -66,6 +81,7 @@ AS_IF([test "x$with_mpi_wrappers" = xyes],
     ])
 AS_IF([test x$need_parse = xyes],
     [GA_ARG_PARSE([with_mpi], [GA_MP_LIBS], [GA_MP_LDFLAGS], [GA_MP_CPPFLAGS])])
+m4_ifblank([$1], [
 # TCGMSG is no longer supported for ARMCI development.
 AS_IF([test "x$ARMCI_TOP_SRCDIR" != x],
     [AS_IF([test ! -d "$ARMCI_TOP_SRCDIR/../global"],
@@ -106,6 +122,7 @@ AS_CASE([$ga_msg_comms],
                     [Use TCGMSG over MPI for messaging])
                  AC_DEFINE([MSG_COMMS_MPI], [1],
                     [Use MPI for messaging])])
+])
 AC_SUBST([GA_MP_LIBS])
 AC_SUBST([GA_MP_LDFLAGS])
 AC_SUBST([GA_MP_CPPFLAGS])

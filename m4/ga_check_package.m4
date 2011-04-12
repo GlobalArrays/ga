@@ -1,8 +1,8 @@
-# TASCEL_CHECK_PACKAGE(pkg, header, library, function, [extra-libs],
-#                      [action-if-found], [action-if-not-found])
-# -----------------------------------------------------------------
+# GA_CHECK_PACKAGE(pkg, header, library, function, [extra-libs],
+#                  [action-if-found], [action-if-not-found])
+# --------------------------------------------------------------
 #
-AC_DEFUN([TASCEL_CHECK_PACKAGE], [
+AC_DEFUN([GA_CHECK_PACKAGE], [
 AS_VAR_PUSHDEF([HAVE_PKG],    m4_toupper(m4_translit([HAVE_$1], [-.], [__])))
 AS_VAR_PUSHDEF([PKG_LIBS],    m4_toupper(m4_translit([$1_LIBS], [-.], [__])))
 AS_VAR_PUSHDEF([PKG_LDFLAGS], m4_toupper(m4_translit([$1_LDFLAGS], [-.], [__])))
@@ -18,21 +18,21 @@ AC_ARG_WITH([$1],
 AS_CASE([$with_$1],
     [yes],  [],
     [no],   [],
-            [TASCEL_ARG_PARSE(
+            [GA_ARG_PARSE(
                 [with_$1],
                 [PKG_LIBS],
                 [PKG_LDFLAGS],
                 [PKG_CPPFLAGS])])
 # Check for header.
-tascel_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $PKG_CPPFLAGS"
+ga_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $PKG_CPPFLAGS"
 AC_CHECK_HEADER([$2], [], [$7])
-CPPFLAGS="$tascel_save_CPPFLAGS"
+CPPFLAGS="$ga_save_CPPFLAGS"
 # Check for library.
-tascel_save_LIBS="$LIBS"; LIBS="$PKG_LIBS $LIBS"
-tascel_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $PKG_LDFLAGS"
+ga_save_LIBS="$LIBS"; LIBS="$PKG_LIBS $LIBS"
+ga_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $PKG_LDFLAGS"
 AC_SEARCH_LIBS([$4], [$3], [], [], [$5])
-LIBS="$tascel_save_LIBS"
-LDFLAGS="$tascel_save_LDFLAGS"
+LIBS="$ga_save_LIBS"
+LDFLAGS="$ga_save_LDFLAGS"
 AS_IF([test "x$ac_cv_search_$4" != xno],
     [$6
      AC_DEFINE([HAVE_PKG], [1], [set to 1 if we have the indicated package])],

@@ -3,7 +3,7 @@
 ###############################################################################
 # Init autoconf
 ###############################################################################
-AC_PREREQ([2.64])
+AC_PREREQ([2.67])
 AC_INIT([Aggregate Remote Memory Copy Interface (ARMCI)], [1.4],
         [hpctools@pnl.gov], [armci],
         [http://www.emsl.pnl.gov/docs/parsoft/armci/])

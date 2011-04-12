@@ -1,8 +1,7 @@
-###############################################################################
-# -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
+
 ###############################################################################
-AC_PREREQ([2.63])
+AC_PREREQ([2.67])
 AC_INIT([Task Scheduling Library (tascel)], [0.0.1], [hpctools@pnl.gov],
         [tascel], [http://www.emsl.pnl.gov/docs/global/])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -21,12 +20,17 @@ AM_MAINTAINER_MODE
 ###############################################################################
 # Misc. information and package setup.
 ###############################################################################
+#GA_TARGET # tascel doesn't (yet?) depend on target platform
+
+GA_WITH_HELP
+
 TASCEL_TOP_BUILDDIR="`pwd`"
 cd "$srcdir"
 TASCEL_TOP_SRCDIR="`pwd`"
 cd "$TASCEL_TOP_BUILDDIR"
 AS_IF([test "$TASCEL_TOP_BUILDDIR" != "TASCEL_TOP_SRCDIR"],
-    [AC_MSG_NOTICE([Detected VPATH build])])
+      [AC_MSG_NOTICE([Detected VPATH build])])
+
 AC_CACHE_CHECK([whether tascel is built outside of GA], [tascel_cv_standalone],
     [AS_IF([test -f "$TASCEL_TOP_BUILDDIR/../armci/config.status"],
         [tascel_cv_standalone=no],
@@ -35,13 +39,13 @@ AM_CONDITIONAL([TASCEL_STANDALONE], [test x$tascel_cv_standalone = xyes])
 
 # If MPI is desired we use the MPI compiler wrappers instead of the standard
 # compilers.
-TASCEL_MPI
-
-TASCEL_DISABLE_MPI_TESTS
+GA_MSG_COMMS([no-tcgmsg])
 
 # F77 and C++ are always enabled for tascel
 enable_f77=yes
 enable_cxx=yes
+
+GA_DISABLE_MPI_TESTS
 
 ###############################################################################
 # C compiler
@@ -51,18 +55,22 @@ AC_MSG_NOTICE([C compiler])
 AC_MSG_NOTICE
 
 tascel_save_CFLAGS="$CFLAGS"
-TASCEL_PROG_MPICC
+GA_PROG_MPICC
 CFLAGS="$tascel_save_CFLAGS"
-TASCEL_MPICC_TEST_COMPILE
+AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
+
+GA_MPICC_TEST_COMPILE
+
+# Hack to append .x to executables.
+AC_SUBST([EXEEXT], [.x$EXEEXT])
+
+#GA_TARGET64 # tascel doesn't (yet?) depend on target platform
 
 # Checks for C header files.
 
 # Checks for C typedefs, structures, and compiler characteristics.
 
 # Checks for C library functions.
-
-# Hack to append .x to executables.
-AC_SUBST([EXEEXT], [.x$EXEEXT])
 
 ###############################################################################
 # C++ compiler
@@ -73,9 +81,10 @@ AC_MSG_NOTICE
 AC_LANG_PUSH([C++])
 
 tascel_save_CXXFLAGS="$CXXFLAGS"
-TASCEL_PROG_MPICXX
+GA_PROG_MPICXX
 CXXFLAGS="$tascel_save_CXXFLAGS"
-TASCEL_MPICXX_TEST
+AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
+GA_MPICXX_TEST
 
 # Checks for C++ header files.
 
@@ -110,13 +119,20 @@ AC_MSG_NOTICE
 AC_LANG_PUSH([Fortran 77])
 
 tascel_save_FFLAGS="$FFLAGS"
-TASCEL_PROG_MPIF77
+GA_PROG_MPIF77
 FFLAGS="$tascel_save_FFLAGS"
-TASCEL_MPIF77_TEST_COMPILE
+AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
+GA_MPIF77_TEST_COMPILE
 
-TASCEL_F77_LIBRARY_LDFLAGS
+GA_SUPPRESS_MESSAGE
+GA_F77_LIBRARY_LDFLAGS
+GA_F77_MAYBE_UNDERSCORING
+AC_F77_DUMMY_MAIN
+AC_F77_WRAPPERS
+GA_F77_CPP_SYMBOL
+GA_F77_FIXED
+GA_F77_MISMATCH_TYPE
 GA_F77_INTEGER_SIZE
-GA_F77_WRAPPERS
 
 #Checks for Fortran typedefs, structures, and compiler characteristics.
 
@@ -143,10 +159,10 @@ AC_LANG_POP([Fortran 77])
 AS_IF([test "x$tascel_cv_standalone" = xno],
     [GA_LIBS="../libga.la"
      GA_CPPFLAGS="-I$srcdir/../global/src -I../global/src -I$srcdir/../ma -I../ma -I../gaf2c -I$srcdir/../armci/src/include"],
-    [TASCEL_CHECK_PACKAGE([ga], [ga.h], [ga], [GA_Initialize], [$FLIBS],
+    [GA_CHECK_PACKAGE([ga], [ga.h], [ga], [GA_Initialize], [$FLIBS],
         [GA_LIBS="-lga"],
         [AS_UNSET([ac_cv_search_GA_Initialize])
-         TASCEL_CHECK_PACKAGE([ga], [ga.h], [global], [GA_Initialize],
+         GA_CHECK_PACKAGE([ga], [ga.h], [global], [GA_Initialize],
             [-lma -larmci -llinalg $FLIBS],
             [GA_LIBS="-lglobal -lma -larmci -llinalg"],
             [AC_MSG_FAILURE([Could not locate Global Arrays 5.x nor 4.x])])])])
@@ -160,9 +176,9 @@ AC_SUBST([GA_LIBS])
 # NOTE: We only look for BLAS and LAPACK because GA does.  We will get linker
 # errors if GA was built with an external BLAS and LAPACK.
 ###############################################################################
-TASCEL_BLAS
-TASCEL_LAPACK
-TASCEL_SCALAPACK
+GA_BLAS
+GA_LAPACK
+GA_SCALAPACK
 
 ###############################################################################
 # Libtool setup -- no compiler/linker tests after this
@@ -170,8 +186,23 @@ TASCEL_SCALAPACK
 AC_MSG_NOTICE
 AC_MSG_NOTICE([Libtool setup])
 AC_MSG_NOTICE
-
+# temporarily restore unwrapped compilers
+# this works around a bug where libtool sadly relies on matching compiler
+# names in order to determine features (Fortran only, I think)
+# libtool doesn't recognize MPI compiler names, nor should it
+AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP_PUSH])
+GA_AR
 LT_INIT([disable-shared])
+# and now that that's over, put the MPI compilers back
+# also, the above hack incorrectly sets the base compiler as the linker
+AS_IF([test x$with_mpi_wrappers = xyes],
+    [GA_MPI_UNWRAP_POP
+     compiler="$CC"
+     LTCC="$CC"
+     lt_save_CC="$CC"
+     compiler_DEFAULT="$CC"
+     compiler_CXX="$CXX"
+     compiler_F77="$F77"])
 
 ###############################################################################
 # The End
@@ -185,23 +216,23 @@ AC_MSG_NOTICE([**************************************************************])
 AC_MSG_NOTICE([ $PACKAGE_NAME configured as follows:])
 AC_MSG_NOTICE([**************************************************************])
 AC_MSG_NOTICE([])
-AC_MSG_NOTICE([TASCEL_MPI_CPPFLAGS=$TASCEL_MPI_CPPFLAGS])
-AC_MSG_NOTICE([ TASCEL_MPI_LDFLAGS=$TASCEL_MPI_LDFLAGS])
-AC_MSG_NOTICE([    TASCEL_MPI_LIBS=$TASCEL_MPI_LIBS])
-AC_MSG_NOTICE([        GA_CPPFLAGS=$GA_CPPFLAGS])
-AC_MSG_NOTICE([         GA_LDFLAGS=$GA_LDFLAGS])
-AC_MSG_NOTICE([            GA_LIBS=$GA_LIBS])
-AC_MSG_NOTICE([                F77=$F77])
-AC_MSG_NOTICE([                 CC=$CC])
-AC_MSG_NOTICE([                CXX=$CXX])
-AC_MSG_NOTICE([                CPP=$CPP])
-AC_MSG_NOTICE([             FFLAGS=$FFLAGS])
-AC_MSG_NOTICE([             CFLAGS=$CFLAGS])
-AC_MSG_NOTICE([           CXXFLAGS=$CXXFLAGS])
-AC_MSG_NOTICE([           CPPFLAGS=$CPPFLAGS])
-AC_MSG_NOTICE([            LDFLAGS=$LDFLAGS])
-AC_MSG_NOTICE([               LIBS=$LIBS])
-AC_MSG_NOTICE([              FLIBS=$FLIBS])
-AC_MSG_NOTICE([               DEFS=$DEFS])
-AC_MSG_NOTICE([              SHELL=$SHELL])
+AC_MSG_NOTICE([    GA_MP_LIBS=$GA_MP_LIBS])
+AC_MSG_NOTICE([ GA_MP_LDFLAGS=$GA_MP_LDFLAGS])
+AC_MSG_NOTICE([GA_MP_CPPFLAGS=$GA_MP_CPPFLAGS])
+AC_MSG_NOTICE([           F77=$F77])
+AC_MSG_NOTICE([        FFLAGS=$FFLAGS])
+AC_MSG_NOTICE([     FFLAG_INT=$FFLAG_INT])
+AC_MSG_NOTICE([            CC=$CC])
+AC_MSG_NOTICE([        CFLAGS=$CFLAGS])
+AC_MSG_NOTICE([           CXX=$CXX])
+AC_MSG_NOTICE([      CXXFLAGS=$CXXFLAGS])
+AC_MSG_NOTICE([           CPP=$CPP])
+AC_MSG_NOTICE([      CPPFLAGS=$CPPFLAGS])
+AC_MSG_NOTICE([       LDFLAGS=$LDFLAGS])
+AC_MSG_NOTICE([          LIBS=$LIBS])
+AC_MSG_NOTICE([         FLIBS=$FLIBS])
+AC_MSG_NOTICE([            AR=$AR])
+AC_MSG_NOTICE([      AR_FLAGS=$AR_FLAGS])
+AC_MSG_NOTICE([          DEFS=$DEFS])
+AC_MSG_NOTICE([         SHELL=$SHELL])
 AC_MSG_NOTICE([])

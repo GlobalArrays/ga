@@ -3,7 +3,7 @@
 ###############################################################################
 # Init autoconf
 ###############################################################################
-AC_PREREQ([2.64])
+AC_PREREQ([2.67])
 AC_INIT([Global Arrays (GA)],[5.1],[hpctools@pnl.gov], [ga],
         [http://www.emsl.pnl.gov/docs/global/])
 AC_CONFIG_AUX_DIR([build-aux])
