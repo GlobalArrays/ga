@@ -1,4 +1,4 @@
-dnl run "autom4te -l m4sh ga-config.in.m4 > ga-config.in"
+dnl run "autom4te -l m4sh ga-config.in.m4sh > ga-config.in"
 AS_INIT
 
 f77="@F77@"
