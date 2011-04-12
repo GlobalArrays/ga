@@ -7395,6 +7395,15 @@ rm -f inside.pl
 
 fi
 
+# If Fortran 77 compiler was not found, we disable support for it.
+if test "x$F77" = x; then :
+  enable_f77=no
+fi
+
+# Perform Fortran 77 tests only if enabled.
+if test "x$enable_f77" = xyes; then :
+
+
 ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -7448,7 +7457,6 @@ $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "could not compile simple Fortran MPI program
 See \`config.log' for more details" "$LINENO" 5; }
 fi
-
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran 77 flag to suppress info messages" >&5
 $as_echo_n "checking for Fortran 77 flag to suppress info messages... " >&6; }
@@ -10298,6 +10306,52 @@ F2C_DOUBLE_PRECISION_C_TYPE=$ga_cv_f2c_DOUBLE_PRECISION
 
 
 
+else
+
+# enable_f77=no version of AC_F77_WRAPPERS
+
+$as_echo "#define F77_FUNC(name,NAME) name" >>confdefs.h
+
+
+$as_echo "#define F77_FUNC_(name,NAME) name ## _" >>confdefs.h
+
+# enable_f77=no version of GA_F77_CHECK_SIZEOF
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_F77_INTEGER $ac_cv_sizeof_voidp
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_F77_REAL 4
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_F77_DOUBLE_PRECISION 8
+_ACEOF
+
+# enable_f77=no version of GA_F2C_NOMAIN
+
+# enable_f77=no version of GA_F2C_CMDARGS
+F2C_GETARG="F2C_GETARG"
+F2C_IARGC="F2C_IARGC"
+
+
+# enable_f77=no version of GA_F2C_HIDDEN_STRING_LENGTH_CONVENTION
+
+$as_echo "#define F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS 1" >>confdefs.h
+
+# enable_f77=no version of GA_F2C_MATCH_TYPES
+F2C_INTEGER_C_TYPE=long
+
+F2C_REAL_C_TYPE=float
+
+F2C_DOUBLE_PRECISION_C_TYPE=double
+
+
+fi
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -10944,6 +10998,13 @@ fi
 # NOTE: We only look for BLAS and LAPACK because GA does.  We will get linker
 # errors if GA was built with an external BLAS and LAPACK.
 ###############################################################################
+{ $as_echo "$as_me:${as_lineno-$LINENO}: " >&5
+$as_echo "$as_me: " >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Checks for BLAS,LAPACK,ScaLAPACK" >&5
+$as_echo "$as_me: Checks for BLAS,LAPACK,ScaLAPACK" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: " >&5
+$as_echo "$as_me: " >&6;}
+
 
 blas_size=4
 blas_size_hack=no

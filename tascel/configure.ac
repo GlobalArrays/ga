@@ -122,8 +122,14 @@ tascel_save_FFLAGS="$FFLAGS"
 GA_PROG_MPIF77
 FFLAGS="$tascel_save_FFLAGS"
 AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
-GA_MPIF77_TEST_COMPILE
 
+# If Fortran 77 compiler was not found, we disable support for it.
+AS_IF([test "x$F77" = x], [enable_f77=no])
+
+# Perform Fortran 77 tests only if enabled.
+if test "x$enable_f77" = xyes; then :
+
+GA_MPIF77_TEST_COMPILE
 GA_SUPPRESS_MESSAGE
 GA_F77_LIBRARY_LDFLAGS
 GA_F77_MAYBE_UNDERSCORING
@@ -151,6 +157,35 @@ GA_F2C_MATCH_TYPES([INTEGER], [short, int, long, long long])
 GA_F2C_MATCH_TYPES([REAL], [float, double, long double])
 GA_F2C_MATCH_TYPES([DOUBLE PRECISION], [float, double, long double])
 
+else
+
+# enable_f77=no version of AC_F77_WRAPPERS
+AC_DEFINE([F77_FUNC(name,NAME)], [name], [F77 name mangling])
+AC_DEFINE([F77_FUNC_(name,NAME)],[name @%:@@%:@ _], [F77 name mangling])
+# enable_f77=no version of GA_F77_CHECK_SIZEOF
+AC_DEFINE_UNQUOTED(AS_TR_CPP(sizeof_f77_INTEGER), [$ac_cv_sizeof_voidp],
+    [The size of 'INTEGER' as computed by C's sizeof.])
+AC_DEFINE_UNQUOTED(AS_TR_CPP(sizeof_f77_REAL), [4],
+    [The size of 'REAL' as computed by C's sizeof.])
+AC_DEFINE_UNQUOTED(AS_TR_CPP(sizeof_f77_DOUBLE PRECISION), [8],
+    [The size of 'DOUBLE PRECISION' as computed by C's sizeof.])
+# enable_f77=no version of GA_F2C_NOMAIN
+AC_SUBST([FLD_NOMAIN], [])
+# enable_f77=no version of GA_F2C_CMDARGS
+F2C_GETARG="F2C_GETARG"
+F2C_IARGC="F2C_IARGC"
+AC_SUBST([F2C_GETARG])
+AC_SUBST([F2C_IARGC])
+# enable_f77=no version of GA_F2C_HIDDEN_STRING_LENGTH_CONVENTION
+AC_DEFINE([F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS], [1],
+    [whether the hidden string length comes after all other args])
+# enable_f77=no version of GA_F2C_MATCH_TYPES
+AC_SUBST([F2C_INTEGER_C_TYPE], [long])
+AC_SUBST([F2C_REAL_C_TYPE], [float])
+AC_SUBST([F2C_DOUBLE_PRECISION_C_TYPE], [double])
+
+fi
+
 AC_LANG_POP([Fortran 77])
 
 ###############################################################################
@@ -176,6 +211,10 @@ AC_SUBST([GA_LIBS])
 # NOTE: We only look for BLAS and LAPACK because GA does.  We will get linker
 # errors if GA was built with an external BLAS and LAPACK.
 ###############################################################################
+AC_MSG_NOTICE
+AC_MSG_NOTICE([Checks for BLAS,LAPACK,ScaLAPACK])
+AC_MSG_NOTICE
+
 GA_BLAS
 GA_LAPACK
 GA_SCALAPACK
