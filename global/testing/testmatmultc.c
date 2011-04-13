@@ -194,9 +194,11 @@ int main(int argc, char **argv)
                     printf("%15s%2d: %12.4f seconds %12.1f mflops/proc  %c %c\n",
                             "Run#", itime, t1, mf, ta, tb);
                     fflush(stdout);
-                    if (dgemm_verify && itime == 1) {
-                        verify_ga_dgemm(ta, tb, num_m, num_n, num_k, 1.0,
-                                g_a, g_b, 0.0, g_c, tmpa, tmpb, tmpc);
+                    if (dgemm_verify && itime == 0) {
+                        /* recall the C API swaps the matrix order */
+                        /* we swap it here for the Fortran-based verify */
+                        verify_ga_dgemm(tb, ta, num_n, num_m, num_k, 1.0,
+                                g_b, g_a, 0.0, g_c, tmpb, tmpa, tmpc);
                     }
                 }
             }
