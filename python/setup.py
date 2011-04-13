@@ -20,7 +20,6 @@ try:
     use_cython = True
 except:
     pass
-print "use_cython=%s" % use_cython
 
 # need to find 'ga-config' to gather how GA was configured
 ga_config = find_executable("ga-config", None)
@@ -75,9 +74,11 @@ library_dirs.extend(linalg_library)
 libraries.extend(linalg_lib)
 
 ga_ga_sources = ["ga/ga.c"]
+ga_util_sources = ["ga/util.c"]
 ga_gain_sources = ["ga/gain.c"]
 if use_cython:
     ga_ga_sources = ["ga/ga.pyx"]
+    ga_util_sources = ["ga/util.pyx"]
     ga_gain_sources = ["ga/gain.pyx"]
 
 include_dirs.append(".")
@@ -86,6 +87,13 @@ ext_modules = [
     Extension(
         name="ga.ga",
         sources=ga_ga_sources,
+        include_dirs=include_dirs,
+        library_dirs=library_dirs,
+        libraries=libraries
+    ),
+    Extension(
+        name="ga.util",
+        sources=ga_util_sources,
         include_dirs=include_dirs,
         library_dirs=library_dirs,
         libraries=libraries

@@ -673,6 +673,8 @@ class _BinaryOperation(object):
 
     def __call__(self, first, second, out=None, *args, **kwargs):
         print_sync("_BinaryOperation.__call__ %s" % self.func)
+        first_isscalar = np.isscalar(first)
+        second_isscalar = np.isscalar(second)
         # just in case
         first = asarray(first)
         second = asarray(second)
@@ -687,12 +689,28 @@ class _BinaryOperation(object):
         if out is None:
             # first and/or second must be ndarrays given previous conditionals
             # TODO okay, is there something better than this?
-            ignore1 = np.ones(1, dtype=first.dtype)
-            ignore2 = np.ones(1, dtype=second.dtype)
-            out_type = self.func(ignore1,ignore2).dtype
+            dtype = None
+            if first_isscalar:
+                if second_isscalar:
+                    dtype = np.find_common_type([],[first.dtype,second.dtype])
+                    #print "%s = np.find_common_type([],[%s,%s])" % (
+                    #        dtype,first.dtype,second.dtype)
+                else:
+                    dtype = np.find_common_type([second.dtype],[first.dtype])
+                    #print "%s = np.find_common_type([%s],[%s])" % (
+                    #        dtype,second.dtype,first.dtype)
+            else:
+                if second_isscalar:
+                    dtype = np.find_common_type([first.dtype],[second.dtype])
+                    #print "%s = np.find_common_type([%s],[%s])" % (
+                    #        dtype,first.dtype,second.dtype)
+                else:
+                    dtype = np.find_common_type([first.dtype,second.dtype],[])
+                    #print "%s = np.find_common_type([%s,%s],[])" % (
+                    #        dtype,first.dtype,second.dtype)
             shape = util.broadcast_shape(first.shape, second.shape)
-            print_sync("broadcast_shape = %s" % str(shape))
-            out = ndarray(shape, out_type)
+            print_sync("broadcast_shape=%s, type=%s" % (str(shape),dtype))
+            out = ndarray(shape, dtype)
         # sanity checks
         if not isinstance(out, (ndarray, np.ndarray)):
             raise TypeError, "return arrays must be of ArrayType"
@@ -1700,6 +1718,7 @@ if __name__ != '__main__':
     for attr in dir(np):
         np_obj = getattr(np, attr)
         if hasattr(self_module, attr):
-            if not me: print "gain override exists for: %s" % attr
+            #if not me: print "gain override exists for: %s" % attr
+            pass
         else:
             setattr(self_module, attr, getattr(np, attr))
