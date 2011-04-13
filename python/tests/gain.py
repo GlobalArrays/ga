@@ -7,7 +7,7 @@ import numpy as np
 me = gain.me
 util.DEBUG = False
 gain.DEBUG = False
-gain.DEBUG_SYNC = True
+gain.DEBUG_SYNC = False
 
 if not me: print "test gain"
 
@@ -98,6 +98,10 @@ def foo(module):
     results[module].append(module.dot(a,b))
     d = module.arange(100, dtype=module.float32)
     results[module].append(module.dot(d,d))
+    results[module].append(module.eye(24,25))
+    results[module].append(module.eye(24,25,4))
+    results[module].append(module.eye(24,25,-8))
+    results[module].append(module.identity(11))
 
 if __name__ == '__main__':
     ga.sync()

@@ -14,12 +14,13 @@ except ImportError:
     raise
 
 # cython is optional -- attempt import
-cythonize = False
+use_cython = False
 try:
-    from Cython.Distutils import build_ext
-    cythonize = True
+    from Cython.Build import cythonize
+    use_cython = True
 except:
     pass
+print "use_cython=%s" % use_cython
 
 # need to find 'ga-config' to gather how GA was configured
 ga_config = find_executable("ga-config", None)
@@ -75,7 +76,7 @@ libraries.extend(linalg_lib)
 
 ga_ga_sources = ["ga/ga.c"]
 ga_gain_sources = ["ga/gain.c"]
-if cythonize:
+if use_cython:
     ga_ga_sources = ["ga/ga.pyx"]
     ga_gain_sources = ["ga/gain.pyx"]
 
@@ -98,13 +99,11 @@ ext_modules = [
     ),
 ]
 
-cmdclass = {}
-if cythonize:
-    cmdclass = {"build_ext":build_ext}
+if use_cython:
+    ext_modules = cythonize(ext_modules)
 
 setup(
     name = "Global Arrays",
     packages = ["ga"],
     ext_modules = ext_modules,
-    cmdclass = cmdclass,
 )

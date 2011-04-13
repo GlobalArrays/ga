@@ -248,7 +248,7 @@ class ndarray(object):
             self.handle = ga.create(gatype, shape)
             print_sync("created: handle=%s type=%s shape=%s distribution=%s"%(
                 self.handle, self._dtype, self._shape,
-                str(ga.distribution(self.handle))))
+                str(self.distribution())))
             if buffer is not None:
                 local = ga.access(self.handle)
                 if local is not None:
@@ -259,10 +259,10 @@ class ndarray(object):
                     else:
                         a = np.ndarray(shape, dtype, buffer, offset,
                                 strides, order)
-                    lo,hi = ga.distribution(self.handle)
+                    lo,hi = self.distribution()
                     a = a[map(lambda x,y: slice(x,y), lo, hi)]
                     local[:] = a
-                    ga.release_update(self.handle)
+                    self.release_update()
             self.global_slice = map(lambda x:slice(0,x,1), shape)
             self._strides = [self.itemsize]
             for size in shape[-1:0:-1]:
@@ -276,7 +276,7 @@ class ndarray(object):
             self._strides = strides
             print_debug("![%d] view: hndl=%s typ=%s shp=%s dstrbtn=%s"%(
                     me, self.handle, self._dtype, self._shape,
-                    str(ga.distribution(self.handle))))
+                    str(self.distribution())))
 
     def __del__(self):
         if self.base is None:
@@ -287,14 +287,17 @@ class ndarray(object):
     ################################################################
     ### ndarray methods added for Global Arrays
     ################################################################
+    def distribution(self):
+        return ga.distribution(self.handle)
+
     def owns(self):
-        lo,hi = ga.distribution(self.handle)
+        lo,hi = self.distribution()
         return np.all(hi>=0)
 
     def access(self):
         """Access the local array. Return None if no data is owned."""
         if self.owns():
-            lo,hi = ga.distribution(self.handle)
+            lo,hi = self.distribution()
             access_slice = None
             try:
                 access_slice = util.access_slice(self.global_slice, lo, hi)
@@ -369,6 +372,12 @@ class ndarray(object):
             ret = ret.imag
         print_debug("![%d] adjusted ret.shape=%s" % (me,ret.shape))
         return ret
+
+    def release(self):
+        ga.release(self.handle)
+
+    def release_update(self):
+        ga.release_update(self.handle)
 
     ################################################################
     ### ndarray properties
@@ -523,7 +532,7 @@ class ndarray(object):
                 npvalue = value.access()
                 release_value = True
             else:
-                lo,hi = ga.distribution(new_self.handle)
+                lo,hi = new_self.distribution()
                 result = util.get_slice(new_self.global_slice, lo, hi)
                 result = util.broadcast_chomp(value.shape, result)
                 print_sync("local_slice=%s" % str(result))
@@ -533,7 +542,7 @@ class ndarray(object):
                     npvalue.shape, npself.shape))
         else:
             if value.ndim > 0:
-                lo,hi = ga.distribution(new_self.handle)
+                lo,hi = new_self.distribution()
                 result = util.get_slice(new_self.global_slice, lo, hi)
                 result = util.broadcast_chomp(value.shape, result)
                 print_sync("local_slice=%s" % str(result))
@@ -598,7 +607,7 @@ class _UnaryOperation(object):
                     npin = input.access()
                     release_in = True
                 else:
-                    lo,hi = ga.distribution(out.handle)
+                    lo,hi = out.distribution()
                     result = util.get_slice(out.global_slice, lo, hi)
                     print_sync("local_slice=%s" % str(result))
                     matching_input = input[result]
@@ -606,15 +615,15 @@ class _UnaryOperation(object):
                     print_sync("npin.shape=%s, npout.shape=%s" % (
                         npin.shape, npout.shape))
             else:
-                lo,hi = ga.distribution(out.handle)
+                lo,hi = out.distribution()
                 result = util.get_slice(out.global_slice, lo, hi)
                 print_sync("np.ndarray slice=%s" % str(result))
                 npin = input[result]
                 print_sync("npin.shape=%s, npout.shape=%s" % (
                         npin.shape, npout.shape))
             self.func(npin, npout, *args, **kwargs)
-            if release_in: ga.release(input.handle)
-            ga.release_update(out.handle)
+            if release_in: input.release()
+            out.release_update()
         else:
             print_sync("out is not ndarray")
             print_sync("NA")
@@ -717,7 +726,7 @@ class _BinaryOperation(object):
                     npfirst = first.access()
                     release_first = True
                 else:
-                    lo,hi = ga.distribution(out.handle)
+                    lo,hi = out.distribution()
                     result = util.get_slice(out.global_slice, lo, hi)
                     result = util.broadcast_chomp(first.shape, result)
                     print_sync("local_slice=%s" % str(result))
@@ -727,7 +736,7 @@ class _BinaryOperation(object):
                         npfirst.shape, npout.shape))
             else:
                 if first.ndim > 0:
-                    lo,hi = ga.distribution(out.handle)
+                    lo,hi = out.distribution()
                     result = util.get_slice(out.global_slice, lo, hi)
                     result = util.broadcast_chomp(first.shape, result)
                     print_sync("local_slice=%s" % str(result))
@@ -753,7 +762,7 @@ class _BinaryOperation(object):
                     npsecond = second.access()
                     release_second = True
                 else:
-                    lo,hi = ga.distribution(out.handle)
+                    lo,hi = out.distribution()
                     result = util.get_slice(out.global_slice, lo, hi)
                     result = util.broadcast_chomp(second.shape, result)
                     print_sync("local_slice=%s" % str(result))
@@ -763,7 +772,7 @@ class _BinaryOperation(object):
                         npsecond.shape, npout.shape))
             else:
                 if second.ndim > 0:
-                    lo,hi = ga.distribution(out.handle)
+                    lo,hi = out.distribution()
                     result = util.get_slice(out.global_slice, lo, hi)
                     result = util.broadcast_chomp(second.shape, result)
                     print_sync("local_slice=%s" % str(result))
@@ -773,9 +782,9 @@ class _BinaryOperation(object):
                 else:
                     npsecond = second
             self.func(npfirst, npsecond, npout, *args, **kwargs)
-            if release_first: ga.release(first.handle)
-            if release_second: ga.release(second.handle)
-            ga.release_update(out.handle)
+            if release_first: first.release()
+            if release_second: second.release()
+            out.release_update()
         else:
             print_sync("npout is None")
             print_sync("NA")
@@ -890,8 +899,52 @@ def zeros(shape, dtype=np.float, order='C'):
     buf = a.access()
     if buf is not None:
         buf[:] = 0
-        ga.release_update(a.handle)
+        a.release_update()
     return a
+
+def zeros_like(a, dtype=None, order='K', subok=True):
+    """Return an array of zeros with the same shape and type as a given array.
+
+    Equivalent to ``a.copy().fill(0)``.
+
+    Parameters
+    ----------
+    a : array_like
+        The shape and data-type of `a` define the parameters of
+        the returned array.
+
+    Returns
+    -------
+    out : ndarray
+        Array of zeros with same shape and type as `a`.
+
+    See Also
+    --------
+    ones_like : Return an array of ones with shape and type of input.
+    empty_like : Return an empty array with shape and type of input.
+    zeros : Return a new array setting values to zero.
+    ones : Return a new array setting values to one.
+    empty : Return a new uninitialized array.
+
+    Examples
+    --------
+    >>> x = np.arange(6)
+    >>> x = x.reshape((2, 3))
+    >>> x
+    array([[0, 1, 2],
+           [3, 4, 5]])
+    >>> np.zeros_like(x)
+    array([[0, 0, 0],
+           [0, 0, 0]])
+
+    >>> y = np.arange(3, dtype=np.float)
+    >>> y
+    array([ 0.,  1.,  2.])
+    >>> np.zeros_like(y)
+    array([ 0.,  0.,  0.])
+
+    """
+    return a.copy().fill(0)
 
 def ones(shape, dtype=np.float, order='C'):
     """Return a new array of given shape and type, filled with ones.
@@ -924,8 +977,193 @@ def ones(shape, dtype=np.float, order='C'):
     buf = a.access()
     if buf is not None:
         buf[:] = 1
-        ga.release_update(a.handle)
+        a.release_update()
     return a
+
+def ones_like(x):
+    """ones_like(x[, out])
+
+    Returns an array of ones with the same shape and type as a given array.
+
+    Equivalent to ``a.copy().fill(1)``.
+
+    Please refer to the documentation for `zeros_like`.
+
+    See Also
+    --------
+    zeros_like
+
+    Examples
+    --------
+    >>> a = np.array([[1, 2, 3], [4, 5, 6]])
+    >>> np.ones_like(a)
+    array([[1, 1, 1],
+           [1, 1, 1]])
+
+    """
+    return x.copy().fill(1)
+
+def empty(shape, dtype=float, order='C'):
+    """empty(shape, dtype=float, order='C')
+
+    Return a new array of given shape and type, without initializing entries.
+
+    Parameters
+    ----------
+    shape : int or tuple of int
+        Shape of the empty array
+    dtype : data-type, optional
+        Desired output data-type.
+    order : {'C', 'F'}, optional
+        Whether to store multi-dimensional data in C (row-major) or
+        Fortran (column-major) order in memory.
+
+    See Also
+    --------
+    empty_like, zeros, ones
+
+    Notes
+    -----
+    `empty`, unlike `zeros`, does not set the array values to zero,
+    and may therefore be marginally faster.  On the other hand, it requires
+    the user to manually set all the values in the array, and should be
+    used with caution.
+
+    Examples
+    --------
+    >>> np.empty([2, 2])
+    array([[ -9.74499359e+001,   6.69583040e-309],  #random data
+           [  2.13182611e-314,   3.06959433e-309]])
+
+    >>> np.empty([2, 2], dtype=int)
+    array([[-1073741821, -1067949133],  #random data
+           [  496041986,    19249760]])
+
+    """
+    return ndarray(shape, dtype)
+
+def empty_like(a, dtype=None, order='K', subok=True):
+    """    Return a new array with the same shape and type as a given array.
+
+    Parameters
+    ----------
+    a : array_like
+        The shape and data-type of `a` define the parameters of the
+        returned array.
+
+    Returns
+    -------
+    out : ndarray
+        Array of random data with the same shape and type as `a`.
+
+    See Also
+    --------
+    ones_like : Return an array of ones with shape and type of input.
+    zeros_like : Return an array of zeros with shape and type of input.
+    empty : Return a new uninitialized array.
+    ones : Return a new array setting values to one.
+    zeros : Return a new array setting values to zero.
+
+    Notes
+    -----
+    This function does *not* initialize the returned array; to do that use
+    `zeros_like` or `ones_like` instead. It may be marginally faster than the
+    functions that do set the array values.
+
+    Examples
+    --------
+    >>> a = ([1,2,3], [4,5,6])                         # a is array-like
+    >>> np.empty_like(a)
+    array([[-1073741821, -1073741821,           3],    #random
+           [          0,           0, -1073741821]])
+    >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
+    >>> np.empty_like(a)
+    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], #random
+           [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
+    
+    """
+    return empty(a.shape, dtype or a.dtype)
+
+def eye(N, M=None, k=0, dtype=float):
+    """Return a 2-D array with ones on the diagonal and zeros elsewhere.
+
+    Parameters
+    ----------
+    N : int
+      Number of rows in the output.
+    M : int, optional
+      Number of columns in the output. If None, defaults to `N`.
+    k : int, optional
+      Index of the diagonal: 0 refers to the main diagonal, a positive value
+      refers to an upper diagonal, and a negative value to a lower diagonal.
+    dtype : dtype, optional
+      Data-type of the returned array.
+
+    Returns
+    -------
+    I : ndarray (N,M)
+      An array where all elements are equal to zero, except for the `k`-th
+      diagonal, whose values are equal to one.
+
+    See Also
+    --------
+    diag : Return a diagonal 2-D array using a 1-D array specified by the user.
+
+    Examples
+    --------
+    >>> np.eye(2, dtype=int)
+    array([[1, 0],
+           [0, 1]])
+    >>> np.eye(3, k=1)
+    array([[ 0.,  1.,  0.],
+           [ 0.,  0.,  1.],
+           [ 0.,  0.,  0.]])
+    
+    """
+    if M is None:
+        M = N
+    a = zeros((N,M), dtype=dtype)
+    nda = a.access()
+    if nda is not None:
+        lo,hi = a.distribution()
+        indices = np.indices(nda.shape)
+        indices[0] += lo[0]
+        indices[1] += lo[1]-k
+        bindex = (indices[0] == indices[1])
+        nda[bindex] = 1
+        a.release_update()
+    return a
+
+def identity(n, dtype=None):
+    """Return the identity array.
+
+    The identity array is a square array with ones on
+    the main diagonal.
+
+    Parameters
+    ----------
+    n : int
+        Number of rows (and columns) in `n` x `n` output.
+    dtype : data-type, optional
+        Data-type of the output.  Defaults to ``float``.
+
+    Returns
+    -------
+    out : ndarray
+        `n` x `n` array with its main diagonal set to one,
+        and all other elements 0.
+
+    Examples
+    --------
+    >>> np.identity(3)
+    array([[ 1.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0.,  1.]])
+
+    """
+    if dtype is None:
+        dtype = np.dtype(float)
+    return eye(n,n,dtype=dtype)
 
 def fromfunction(func, shape, **kwargs):
     """Construct an array by executing a function over each coordinate.
@@ -983,7 +1221,7 @@ def fromfunction(func, shape, **kwargs):
     # determine which part of 'a' we maintain
     local_array = ga.access(a.handle)
     if local_array is not None:
-        lo,hi = ga.distribution(a.handle)
+        lo,hi = a.distribution()
         local_shape = hi-lo
         # create a numpy indices array
         args = np.indices(local_shape, dtype=dtype)
@@ -1074,7 +1312,7 @@ def arange(start, stop=None, step=None, dtype=None):
     a = ndarray((int(length),), dtype)
     a_local = a.access()
     if a_local is not None:
-        lo,hi = ga.distribution(a.handle)
+        lo,hi = a.distribution()
         a_local[...] = np.arange(lo[0],hi[0])
         a_local *= step
         a_local += start
@@ -1155,10 +1393,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
         step = (stop-start)/num
     buf = a.access()
     if buf is not None:
-        lo,hi = ga.distribution(a.handle)
+        lo,hi = a.distribution()
         lo,hi = lo[0],hi[0]
         buf[:] = np.arange(lo,hi)*step+start
-        ga.release_update(a.handle)
+        a.release_update()
     ga.sync()
     if retstep:
         return a,step
@@ -1243,10 +1481,10 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0):
         step = (stop-start)/num
     buf = a.access()
     if buf is not None:
-        lo,hi = ga.distribution(a.handle)
+        lo,hi = a.distribution()
         lo,hi = lo[0],hi[0]
         buf[:] = base**(np.arange(lo,hi)*step+start)
-        ga.release_update(a.handle)
+        a.release_update()
     ga.sync()
     return a
 
@@ -1359,6 +1597,86 @@ def asarray(a, dtype=None, order=None):
             return g_a # distributed using Global Arrays ndarray
         else:
             return npa # scalar or zero rank array
+
+def diag(v, k=0):
+    """Extract a diagonal or construct a diagonal array.
+
+    Parameters
+    ----------
+    v : array_like
+        If `v` is a 2-D array, return a copy of its `k`-th diagonal.
+        If `v` is a 1-D array, return a 2-D array with `v` on the `k`-th
+        diagonal.
+    k : int, optional
+        Diagonal in question. The default is 0. Use `k>0` for diagonals
+        above the main diagonal, and `k<0` for diagonals below the main
+        diagonal.
+
+    Returns
+    -------
+    out : ndarray
+        The extracted diagonal or constructed diagonal array.
+
+    See Also
+    --------
+    diagonal : Return specified diagonals.
+    diagflat : Create a 2-D array with the flattened input as a diagonal.
+    trace : Sum along diagonals.
+    triu : Upper triangle of an array.
+    tril : Lower triange of an array.
+
+    Examples
+    --------
+    >>> x = np.arange(9).reshape((3,3))
+    >>> x
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+
+    >>> np.diag(x)
+    array([0, 4, 8])
+    >>> np.diag(x, k=1)
+    array([1, 5])
+    >>> np.diag(x, k=-1)
+    array([3, 7])
+
+    >>> np.diag(np.diag(x))
+    array([[0, 0, 0],
+           [0, 4, 0],
+           [0, 0, 8]])
+
+    """
+    v = asarray(v)
+    if isinstance(v, ndarray):
+        raise NotImplementedError, "TODO"
+        # the following isn't right.
+        # We want to scatter the values from the given diagonal into a brand
+        # new distributed array, but how to compute the indices for the
+        # scatter operation?  Or should we "access" the newly created array
+        # and "gather" values from the given diagonal?
+        #if v.ndim == 1:
+        #    k_fabs = math.fabs(k)
+        #    N = k_fabs + len(v)
+        #    a = zeros((N,N), dtype=v.dtype)
+        #    ndv = v.access()
+        #    if ndv is not None:
+        #        lo,hi = v.distribution()
+        #        count = hi[0]-lo[0]
+        #        indices = np.ndarray(count*2,dtype=int)
+        #        if k >= 0:
+        #            indices[0::2] = np.arange(count)+lo[0]
+        #            indices[1::2] = np.arange(count)+lo[0]+k
+        #        else:
+        #            indices[0::2] = np.arange(count)+lo[0]+k_fabs
+        #            indices[1::2] = np.arange(count)+lo[0]
+        #        a.scatter(
+        #    return a
+        #elif v.ndim == 2:
+        #    pass
+        #else:
+        #    raise ValueError, "Input must be 1- or 2-d."
+    else:
+        return np.diag(v,k)
 
 def print_debug(s):
     if DEBUG:
