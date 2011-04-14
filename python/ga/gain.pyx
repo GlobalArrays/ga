@@ -7,7 +7,6 @@ import util
 
 import numpy as np
 cimport numpy as np
-import numpy.core.umath as umath
 
 # because it's just useful to have around
 me = ga.nodeid()
@@ -470,23 +469,87 @@ class ndarray(object):
         return self._base
     base = property(_get_base)
 
-    def __str__(self):
-        result = ""
-        if 0 == me:
-            result = str(self.get())
-        return result
-
-    def __repr__(self):
-        result = ""
-        if 0 == me:
-            result = repr(self.get())
-        return result
-
     ################################################################
     ### ndarray operator overloading
     ################################################################
-    def __len__(self):
-        return self.shape[0]
+    def __abs__(self):
+        return abs(self)
+
+    def __add__(self, y):
+        return add(self,y)
+
+    def __and__(self, y):
+        return logical_and(self,y)
+
+    def __array__(self, dtype):
+        raise NotImplementedError
+
+    def __array_finalize__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __array_interface__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __array_prepare__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __array_priority__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __array_struct__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __array_wrap__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __contains__(self, y):
+        raise NotImplementedError
+
+    def __copy__(self, order=None):
+        """Return a copy of the array.
+
+    Parameters
+    ----------
+    order : {'C', 'F', 'A'}, optional
+        If order is 'C' (False) then the result is contiguous (default).
+        If order is 'Fortran' (True) then the result has fortran order.
+        If order is 'Any' (None) then the result has fortran order
+        only if the array already is in fortran order.
+
+        """
+        raise NotImplementedError
+
+    def __deepcopy__(self):
+        raise NotImplementedError
+
+    #def __delattr__
+    #def __delitem__
+    #def __delslice__
+
+    def __div__(self, y):
+        return divide(self,y)
+
+    def __divmod__(self, y):
+        t = mod(self,y)
+        s = subtract(self,t)
+        s = divide(s,y,s)
+        return s,t
+
+    def __eq__(self, y):
+        return equal(self,y)
+
+    def __float__(self):
+        raise NotImplementedError
+
+    def __floordiv__(self,y):
+        return floor_divide(self,y)
+
+    #def __format__
+
+    def __ge__(self,y):
+        return greater_equal(self,y)
+
+    #def __getattribute__
 
     def __getitem__(self, key):
         if isinstance(key, (str,unicode)):
@@ -509,6 +572,169 @@ class ndarray(object):
         a = ndarray(new_shape, self.dtype, base=self)
         a.global_slice = util.slice_arithmetic(self.global_slice, key)
         return a
+
+    #def __getslice__
+
+    def __gt__(self,y):
+        return greater(self,y)
+
+    #def __hash__
+    #def __hex__
+
+    def __iadd__(self,y):
+        add(self,y,self)
+
+    def __iand__(self,y):
+        logical_and(self,y,self)
+
+    def __idiv__(self,y):
+        divide(self,y,self)
+
+    def __ifloordiv__(self,y):
+        floor_divide(self,y,self)
+
+    def __ilshift__(self,y):
+        left_shift(self,y,self)
+
+    def __imod__(self,y):
+        mod(self,y,self)
+
+    def __imul__(self,y):
+        multiply(self,y,self)
+
+    #def __index__
+
+    def __int__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __invert__(self):
+        return invert(self)
+
+    def __ior__(self,y):
+        logical_or(self,y,self)
+
+    def __ipow__(self,y):
+        power(self,y,self)
+
+    def __irshift__(self,y):
+        right_shift(self,y,self)
+
+    def __isub__(self,y):
+        subtract(self,y,self)
+
+    def __iter__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __itruediv__(self,y):
+        true_divide(self,y,self)
+
+    def __ixor__(self,y):
+        logical_xor(self,y,self)
+
+    def __le__(self,y):
+        return less_equal(self,y)
+
+    def __len__(self):
+        return self.shape[0]
+
+    def __long__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __lshift__(self,y):
+        return left_shift(self,y)
+
+    def __lt__(self,y):
+        return less(self,y)
+
+    def __mod__(self,y):
+        return mod(self,y)
+
+    def __mul__(self,y):
+        return multiply(self,y)
+
+    def __ne__(self,y):
+        return not_equal(self,y)
+
+    def __neg__(self):
+        return negative(self)
+
+    def __nonzero__(self):
+        raise ValueError, ("The truth value of an array with more than one"
+            " element is ambiguous. Use a.any() or a.all()")
+
+    def __oct__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __or__(self,y):
+        return logical_or(self,y)
+
+    def __pos__(self):
+        return self.copy()
+
+    def __pow__(self,y):
+        return power(self,y)
+
+    def __radd__(self,y):
+        return add(y,self)
+
+    def __rand__(self,y):
+        return logical_and(y,self)
+
+    def __rdiv__(self,y):
+        return divide(y,self)
+
+    def __rdivmod__(self,y):
+        t = mod(y,self)
+        s = subtract(y,t)
+        s = divide(s,self,s)
+        return s,t
+
+    def __reduce__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __reduce_ex__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __repr__(self):
+        result = ""
+        if 0 == me:
+            result = repr(self.get())
+        return result
+
+    def __rfloordiv__(self,y):
+        return floor_divide(y,self)
+
+    def __rlshift__(self,y):
+        return left_shift(y,self)
+
+    def __rmod__(self,y):
+        return mod(y,self)
+
+    def __rmul__(self,y):
+        return multiply(y,self)
+
+    def __ror__(self,y):
+        return logical_or(y,self)
+
+    def __rpow__(self,y):
+        return power(y,self)
+
+    def __rrshift__(self,y):
+        return right_shift(y,self)
+
+    def __rshift__(self,y):
+        return right_shift(self,y)
+
+    def __rsub__(self,y):
+        return subtract(y,self)
+
+    def __rtruediv__(self,y):
+        return true_divide(y,self)
+
+    def __rxor__(self,y):
+        return logical_xor(y,self)
+
+    #def __setattr__
 
     def __setitem__(self, key, value):
         new_self = self[key]
@@ -553,11 +779,60 @@ class ndarray(object):
                 npvalue = value
         npself[:] = npvalue
 
+    #def __setslice__
+    #def __setstate__
+    #def __sizeof__
+    
+    def __str__(self):
+        result = ""
+        if 0 == me:
+            result = str(self.get())
+        return result
+
+    def __sub__(self,y):
+        return subtract(self,y)
+
+    #def __subclasshook__
+
+    def __truediv__(self,y):
+        return true_divide(self,y)
+
+    def __xor__(self,y):
+        return logical_xor(self,y)
+
 class _UnaryOperation(object):
 
     def __init__(self, func):
         self.func = func
         self.__doc__ = func.__doc__
+
+    def _get_identity(self):
+        return self.func.identity
+    identity = property(_get_identity)
+
+    def _get_nargs(self):
+        return self.func.nargs
+    nargs = property(_get_nargs)
+
+    def _get_nin(self):
+        return self.func.nin
+    nin = property(_get_nin)
+
+    def _get_nout(self):
+        return self.func.nout
+    nout = property(_get_nout)
+
+    def _get_ntypes(self):
+        return self.func.ntypes
+    ntypes = property(_get_ntypes)
+
+    def _get_signature(self):
+        return self.func.signature
+    signature = property(_get_signature)
+
+    def _get_types(self):
+        return self.func.types
+    types = property(_get_types)
 
     def __call__(self, input, out=None, *args, **kwargs):
         print_sync("_UnaryOperation.__call__ %s" % self.func)
@@ -635,41 +910,96 @@ class _UnaryOperation(object):
             self.func(npin, out, *args, **kwargs)
         ga.sync()
         return out
-            
-#..............................................................................
-# Unary ufuncs
-exp = _UnaryOperation(umath.exp)
-conjugate = _UnaryOperation(umath.conjugate)
-sin = _UnaryOperation(umath.sin)
-cos = _UnaryOperation(umath.cos)
-tan = _UnaryOperation(umath.tan)
-arctan = _UnaryOperation(umath.arctan)
-arcsinh = _UnaryOperation(umath.arcsinh)
-sinh = _UnaryOperation(umath.sinh)
-cosh = _UnaryOperation(umath.cosh)
-tanh = _UnaryOperation(umath.tanh)
-abs = absolute = _UnaryOperation(umath.absolute)
-fabs = _UnaryOperation(umath.fabs)
-negative = _UnaryOperation(umath.negative)
-floor = _UnaryOperation(umath.floor)
-ceil = _UnaryOperation(umath.ceil)
-around = _UnaryOperation(np.round_)
-logical_not = _UnaryOperation(umath.logical_not)
-# Domained unary ufuncs .......................................................
-sqrt = _UnaryOperation(umath.sqrt)
-log = _UnaryOperation(umath.log)
-log10 = _UnaryOperation(umath.log10)
-tan = _UnaryOperation(umath.tan)
-arcsin = _UnaryOperation(umath.arcsin)
-arccos = _UnaryOperation(umath.arccos)
-arccosh = _UnaryOperation(umath.arccosh)
-arctanh = _UnaryOperation(umath.arctanh)
+
+    def reduce(self, *args, **kwargs):
+        raise ValueError, "reduce only supported for binary functions"
+    def accumulate(self, *args, **kwargs):
+        raise ValueError, "accumulate only supported for binary functions"
+    def outer(self, *args, **kwargs):
+        raise ValueError, "outer product only supported for binary functions"
+    def reduceat(self, *args, **kwargs):
+        raise ValueError, "reduceat only supported for binary functions"
+
+abs = _UnaryOperation(np.abs)
+absolute = _UnaryOperation(np.absolute)
+arccos = _UnaryOperation(np.arccos)
+arccosh = _UnaryOperation(np.arccosh)
+arcsin = _UnaryOperation(np.arcsin)
+arcsinh = _UnaryOperation(np.arcsinh)
+arctan = _UnaryOperation(np.arctan)
+arctanh = _UnaryOperation(np.arctanh)
+bitwise_not = _UnaryOperation(np.bitwise_not)
+ceil = _UnaryOperation(np.ceil)
+conj = _UnaryOperation(np.conj)
+conjugate = _UnaryOperation(np.conjugate)
+cos = _UnaryOperation(np.cos)
+cosh = _UnaryOperation(np.cosh)
+deg2rad = _UnaryOperation(np.deg2rad)
+degrees = _UnaryOperation(np.degrees)
+exp = _UnaryOperation(np.exp)
+exp2 = _UnaryOperation(np.exp2)
+expm1 = _UnaryOperation(np.expm1)
+fabs = _UnaryOperation(np.fabs)
+floor = _UnaryOperation(np.floor)
+frexp = _UnaryOperation(np.frexp)
+invert = _UnaryOperation(np.invert)
+isfinite = _UnaryOperation(np.isfinite)
+isinf = _UnaryOperation(np.isinf)
+isnan = _UnaryOperation(np.isnan)
+log = _UnaryOperation(np.log)
+log10 = _UnaryOperation(np.log10)
+log1p = _UnaryOperation(np.log1p)
+logical_not = _UnaryOperation(np.logical_not)
+modf = _UnaryOperation(np.modf)
+negative = _UnaryOperation(np.negative)
+rad2deg = _UnaryOperation(np.rad2deg)
+radians = _UnaryOperation(np.radians)
+reciprocal = _UnaryOperation(np.reciprocal)
+rint = _UnaryOperation(np.rint)
+sign = _UnaryOperation(np.sign)
+signbit = _UnaryOperation(np.signbit)
+sin = _UnaryOperation(np.sin)
+sinh = _UnaryOperation(np.sinh)
+spacing = _UnaryOperation(np.spacing)
+sqrt = _UnaryOperation(np.sqrt)
+square = _UnaryOperation(np.square)
+tan = _UnaryOperation(np.tan)
+tanh = _UnaryOperation(np.tanh)
+trunc = _UnaryOperation(np.trunc)
 
 class _BinaryOperation(object):
 
     def __init__(self, func):
         self.func = func
         self.__doc__ = func.__doc__
+
+    def _get_identity(self):
+        return self.func.identity
+    identity = property(_get_identity)
+
+    def _get_nargs(self):
+        return self.func.nargs
+    nargs = property(_get_nargs)
+
+    def _get_nin(self):
+        return self.func.nin
+    nin = property(_get_nin)
+
+    def _get_nout(self):
+        return self.func.nout
+    nout = property(_get_nout)
+
+    def _get_ntypes(self):
+        return self.func.ntypes
+    ntypes = property(_get_ntypes)
+
+    def _get_signature(self):
+        return self.func.signature
+    signature = property(_get_signature)
+
+    def _get_types(self):
+        return self.func.types
+    types = property(_get_types)
 
     def __call__(self, first, second, out=None, *args, **kwargs):
         print_sync("_BinaryOperation.__call__ %s" % self.func)
@@ -819,48 +1149,150 @@ class _BinaryOperation(object):
         ga.sync()
         return out
 
-    def reduce(self, *args, **kwargs):
-        raise NotImplementedError, "TODO, sorry"
+    def reduce(self, a, axis=0, dtype=None, out=None, *args, **kwargs):
+        """reduce(a, axis=0, dtype=None, out=None)
+
+    Reduces `a`'s dimension by one, by applying ufunc along one axis.
+
+    Let :math:`a.shape = (N_0, ..., N_i, ..., N_{M-1})`.  Then
+    :math:`ufunc.reduce(a, axis=i)[k_0, ..,k_{i-1}, k_{i+1}, .., k_{M-1}]` =
+    the result of iterating `j` over :math:`range(N_i)`, cumulatively applying
+    ufunc to each :math:`a[k_0, ..,k_{i-1}, j, k_{i+1}, .., k_{M-1}]`.
+    For a one-dimensional array, reduce produces results equivalent to:
+    ::
+
+     r = op.identity # op = ufunc
+     for i in xrange(len(A)):
+       r = op(r, A[i])
+     return r
+
+    For example, add.reduce() is equivalent to sum().
+
+    Parameters
+    ----------
+    a : array_like
+        The array to act on.
+    axis : int, optional
+        The axis along which to apply the reduction.
+    dtype : data-type code, optional
+        The type used to represent the intermediate results. Defaults
+        to the data-type of the output array if this is provided, or
+        the data-type of the input array if no output array is provided.
+    out : ndarray, optional
+        A location into which the result is stored. If not provided, a
+        freshly-allocated array is returned.
+
+    Returns
+    -------
+    r : ndarray
+        The reduced array. If `out` was supplied, `r` is a reference to it.
+
+    Examples
+    --------
+    >>> np.multiply.reduce([2,3,5])
+    30
+
+    A multi-dimensional array example:
+
+    >>> X = np.arange(8).reshape((2,2,2))
+    >>> X
+    array([[[0, 1],
+            [2, 3]],
+           [[4, 5],
+            [6, 7]]])
+    >>> np.add.reduce(X, 0)
+    array([[ 4,  6],
+           [ 8, 10]])
+    >>> np.add.reduce(X) # confirm: default axis value is 0
+    array([[ 4,  6],
+           [ 8, 10]])
+    >>> np.add.reduce(X, 1)
+    array([[ 2,  4],
+           [10, 12]])
+    >>> np.add.reduce(X, 2)
+    array([[ 1,  5],
+           [ 9, 13]])
+
+        """
+        if not (isinstance(a, ndarray) or isinstance(out, ndarray)):
+            # no ndarray instances used, pass through immediately to numpy
+            print_sync("_BinaryOperation.reduce %s pass through" % self.func)
+            return self.func.reduce(a, axis, dtype, out, *args, **kwargs)
+        a = asarray(a)
+        if out is None:
+            shape = list(a.shape)
+            del shape[axis]
+            if dtype is None:
+                dtype = a.dtype
+            if len(shape) > 0:
+                out = ndarray(shape, dtype=dtype)
+            else:
+                out = np.ndarray(shape, dtype=dtype)
+        if out.ndim == 0:
+            # optimize the 1d reduction
+            nda = a.access()
+            value = None
+            if a is not None:
+                value = self.func.reduce(nda)
+            everything = MPI.COMM_WORLD.allgather(value)
+            self.func.reduce(everything, out=out)
+        else:
+            slicer = [slice(0,None,None)]*a.ndim
+            axis_iterator = iter(xrange(a.shape[axis]))
+            # copy first loop iteration to 'out'
+            slicer[axis] = axis_iterator.next()
+            out[:] = a[slicer]
+            # remaining loop iterations are appropriately reduced
+            for i in axis_iterator:
+                slicer[axis] = i
+                ai = a[slicer]
+                self.__call__(out,ai,out)
+        return out
+
     def accumulate(self, *args, **kwargs):
         raise NotImplementedError, "TODO, sorry"
+
     def outer(self, *args, **kwargs):
         raise NotImplementedError, "TODO, sorry"
+
     def reduceat(self, *args, **kwargs):
         raise NotImplementedError, "TODO, sorry"
 
-# Binary ufuncs ...............................................................
-add = _BinaryOperation(umath.add)
-subtract = _BinaryOperation(umath.subtract)
-multiply = _BinaryOperation(umath.multiply)
-power = _BinaryOperation(umath.power)
-arctan2 = _BinaryOperation(umath.arctan2)
-equal = _BinaryOperation(umath.equal)
-equal.reduce = None
-not_equal = _BinaryOperation(umath.not_equal)
-not_equal.reduce = None
-less_equal = _BinaryOperation(umath.less_equal)
-less_equal.reduce = None
-greater_equal = _BinaryOperation(umath.greater_equal)
-greater_equal.reduce = None
-less = _BinaryOperation(umath.less)
-less.reduce = None
-greater = _BinaryOperation(umath.greater)
-greater.reduce = None
-logical_and = _BinaryOperation(umath.logical_and)
-alltrue = _BinaryOperation(umath.logical_and)
-logical_or = _BinaryOperation(umath.logical_or)
-sometrue = logical_or.reduce
-logical_xor = _BinaryOperation(umath.logical_xor)
-bitwise_and = _BinaryOperation(umath.bitwise_and)
-bitwise_or = _BinaryOperation(umath.bitwise_or)
-bitwise_xor = _BinaryOperation(umath.bitwise_xor)
-hypot = _BinaryOperation(umath.hypot)
-# Domained binary ufuncs ......................................................
-divide = _BinaryOperation(umath.divide)
-true_divide = _BinaryOperation(umath.true_divide)
-floor_divide = _BinaryOperation(umath.floor_divide)
-remainder = _BinaryOperation(umath.remainder)
-fmod = _BinaryOperation(umath.fmod)
+add = _BinaryOperation(np.add)
+arctan2 = _BinaryOperation(np.arctan2)
+bitwise_and = _BinaryOperation(np.bitwise_and)
+bitwise_or = _BinaryOperation(np.bitwise_or)
+bitwise_xor = _BinaryOperation(np.bitwise_xor)
+copysign = _BinaryOperation(np.copysign)
+divide = _BinaryOperation(np.divide)
+equal = _BinaryOperation(np.equal)
+floor_divide = _BinaryOperation(np.floor_divide)
+fmax = _BinaryOperation(np.fmax)
+fmin = _BinaryOperation(np.fmin)
+fmod = _BinaryOperation(np.fmod)
+greater = _BinaryOperation(np.greater)
+greater_equal = _BinaryOperation(np.greater_equal)
+hypot = _BinaryOperation(np.hypot)
+ldexp = _BinaryOperation(np.ldexp)
+left_shift = _BinaryOperation(np.left_shift)
+less = _BinaryOperation(np.less)
+less_equal = _BinaryOperation(np.less_equal)
+logaddexp = _BinaryOperation(np.logaddexp)
+logaddexp2 = _BinaryOperation(np.logaddexp2)
+logical_and = _BinaryOperation(np.logical_and)
+logical_or = _BinaryOperation(np.logical_or)
+logical_xor = _BinaryOperation(np.logical_xor)
+maximum = _BinaryOperation(np.maximum)
+minimum = _BinaryOperation(np.minimum)
+mod = _BinaryOperation(np.mod)
+multiply = _BinaryOperation(np.multiply)
+nextafter = _BinaryOperation(np.nextafter)
+not_equal = _BinaryOperation(np.not_equal)
+power = _BinaryOperation(np.power)
+remainder = _BinaryOperation(np.remainder)
+right_shift = _BinaryOperation(np.right_shift)
+subtract = _BinaryOperation(np.subtract)
+true_divide = _BinaryOperation(np.true_divide)
 
 def zeros(shape, dtype=np.float, order='C'):
     """zeros(shape, dtype=float, order='C')
@@ -1607,6 +2039,10 @@ def dot(a, b, out=None):
 
 def asarray(a, dtype=None, order=None):
     if isinstance(a, ndarray):
+        return a
+    elif isinstance(a, np.ndarray):
+        # we return numpy.ndarray instances because they already exist in
+        # whole on all procs -- no need to distribute pieces
         return a
     else:
         npa = np.asarray(a, dtype=dtype)

@@ -17,7 +17,7 @@ help = False
 
 imgOutput = True
 rawOutput = False
-img_name = "distmap.gif"
+img_name = "distmap.png"
 raw_name = "distmap.dat"
 usage = """
 distmap.py [options]
@@ -25,7 +25,7 @@ distmap.py [options]
   -h        help (prints this message)
   -g        use gain instead of numpy
   -e expo   set exponent (default: 2 (Euclidean))
-  -o out    output filename (default: distmap.gif)
+  -o out    output filename (default: distmap.png)
   -r raw    raw output filename (default: distmap.dat)
   -p points number of points (default: 8)
   -s seed   for random number generation
@@ -91,7 +91,7 @@ def dist_array((x0, y0)):
     rows and columns) to a given point (x0, y0)."""
 
     f = lambda x, y, x0=x0, y0=y0: dist((x, y), (x0, y0))
-    a = np.fromfunction(f, (nGrid, nGrid), dtype=my_dtype)
+    return np.fromfunction(f, (nGrid, nGrid), dtype=my_dtype)
 
 def main():
     # distMin[i,j] is the distance from pixel (i,j) to the closest 'pt'.
@@ -109,8 +109,8 @@ def main():
     pxls = 255 * distMinScaled
     
     if (imgOutput or rawOutput) and useGain:
-        if nodeid() == 0:
-            pxls = pxls.__array__()
+        if me == 0:
+            pxls = pxls.get()
         else:
             return
     
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     if profile:
         import cProfile
         if useGain:
-            cProfile.run("main()", "distmap.prof" + str(nodeid()))
+            cProfile.run("main()", "distmap.prof" + str(me))
         else:
             cProfile.run("main()", "distmap.prof")
     else:

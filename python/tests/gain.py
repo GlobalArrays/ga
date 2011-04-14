@@ -70,6 +70,9 @@ def test(module):
     check(module.eye(24,25,4))
     check(module.eye(24,25,-8))
     check(module.identity(11))
+    check(module.add.reduce([1,2,3,4]))
+    check(module.add.reduce(module.arange(100)))
+    check(module.add.reduce(module.ones((100,200))))
 
 if __name__ == '__main__':
     ga.sync()
