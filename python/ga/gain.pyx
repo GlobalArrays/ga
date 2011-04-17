@@ -800,8 +800,59 @@ class ndarray(object):
     def __xor__(self,y):
         return logical_xor(self,y)
 
-class _UnaryOperation(object):
+class ufunc(object):
+    """Functions that operate element by element on whole arrays.
 
+    A detailed explanation of ufuncs can be found in the "ufuncs.rst"
+    file in the NumPy reference guide.
+
+    Unary ufuncs:
+    =============
+
+    op(X, out=None)
+    Apply op to X elementwise
+
+    Parameters
+    ----------
+    X : array_like
+        Input array.
+    out : array_like
+        An array to store the output. Must be the same shape as `X`.
+
+    Returns
+    -------
+    r : array_like
+        `r` will have the same shape as `X`; if out is provided, `r`
+        will be equal to out.
+
+    Binary ufuncs:
+    ==============
+
+    op(X, Y, out=None)
+    Apply `op` to `X` and `Y` elementwise. May "broadcast" to make
+    the shapes of `X` and `Y` congruent.
+
+    The broadcasting rules are:
+
+    * Dimensions of length 1 may be prepended to either array.
+    * Arrays may be repeated along dimensions of length 1.
+
+    Parameters
+    ----------
+    X : array_like
+        First input array.
+    Y : array_like
+        Second input array.
+    out : array_like
+        An array to store the output. Must be the same shape as the
+        output would have.
+
+    Returns
+    -------
+    r : array_like
+        The return value; if out is provided, `r` will be equal to out.
+
+    """
     def __init__(self, func):
         self.func = func
         self.__doc__ = func.__doc__
@@ -834,11 +885,19 @@ class _UnaryOperation(object):
         return self.func.types
     types = property(_get_types)
 
-    def __call__(self, input, out=None, *args, **kwargs):
-        print_sync("_UnaryOperation.__call__ %s" % self.func)
+    def __call__(self, *args, **kwargs):
+        if self.func.nin == 1:
+            return self._unary_call(*args, **kwargs)
+        elif self.func.nin == 2:
+            return self._binary_call(*args, **kwargs)
+        else:
+            raise ValueError, "only unary and binary ufuncs supported"
+
+    def _unary_call(self, input, out=None, *args, **kwargs):
+        print_sync("_unary_call %s" % self.func)
         input = asarray(input)
         if not (isinstance(input, ndarray) or isinstance(out, ndarray)):
-            print_sync("_UnaryOperation.__call__ %s pass through" % self.func)
+            print_sync("_unary_call %s pass through" % self.func)
             # no ndarray instances used, pass through immediately to numpy
             return self.func(input, out, *args, **kwargs)
         # since we have an ndarray somewhere
@@ -911,98 +970,8 @@ class _UnaryOperation(object):
         ga.sync()
         return out
 
-    def reduce(self, *args, **kwargs):
-        raise ValueError, "reduce only supported for binary functions"
-    def accumulate(self, *args, **kwargs):
-        raise ValueError, "accumulate only supported for binary functions"
-    def outer(self, *args, **kwargs):
-        raise ValueError, "outer product only supported for binary functions"
-    def reduceat(self, *args, **kwargs):
-        raise ValueError, "reduceat only supported for binary functions"
-
-abs = _UnaryOperation(np.abs)
-absolute = _UnaryOperation(np.absolute)
-arccos = _UnaryOperation(np.arccos)
-arccosh = _UnaryOperation(np.arccosh)
-arcsin = _UnaryOperation(np.arcsin)
-arcsinh = _UnaryOperation(np.arcsinh)
-arctan = _UnaryOperation(np.arctan)
-arctanh = _UnaryOperation(np.arctanh)
-bitwise_not = _UnaryOperation(np.bitwise_not)
-ceil = _UnaryOperation(np.ceil)
-conj = _UnaryOperation(np.conj)
-conjugate = _UnaryOperation(np.conjugate)
-cos = _UnaryOperation(np.cos)
-cosh = _UnaryOperation(np.cosh)
-deg2rad = _UnaryOperation(np.deg2rad)
-degrees = _UnaryOperation(np.degrees)
-exp = _UnaryOperation(np.exp)
-exp2 = _UnaryOperation(np.exp2)
-expm1 = _UnaryOperation(np.expm1)
-fabs = _UnaryOperation(np.fabs)
-floor = _UnaryOperation(np.floor)
-frexp = _UnaryOperation(np.frexp)
-invert = _UnaryOperation(np.invert)
-isfinite = _UnaryOperation(np.isfinite)
-isinf = _UnaryOperation(np.isinf)
-isnan = _UnaryOperation(np.isnan)
-log = _UnaryOperation(np.log)
-log10 = _UnaryOperation(np.log10)
-log1p = _UnaryOperation(np.log1p)
-logical_not = _UnaryOperation(np.logical_not)
-modf = _UnaryOperation(np.modf)
-negative = _UnaryOperation(np.negative)
-rad2deg = _UnaryOperation(np.rad2deg)
-radians = _UnaryOperation(np.radians)
-reciprocal = _UnaryOperation(np.reciprocal)
-rint = _UnaryOperation(np.rint)
-sign = _UnaryOperation(np.sign)
-signbit = _UnaryOperation(np.signbit)
-sin = _UnaryOperation(np.sin)
-sinh = _UnaryOperation(np.sinh)
-spacing = _UnaryOperation(np.spacing)
-sqrt = _UnaryOperation(np.sqrt)
-square = _UnaryOperation(np.square)
-tan = _UnaryOperation(np.tan)
-tanh = _UnaryOperation(np.tanh)
-trunc = _UnaryOperation(np.trunc)
-
-class _BinaryOperation(object):
-
-    def __init__(self, func):
-        self.func = func
-        self.__doc__ = func.__doc__
-
-    def _get_identity(self):
-        return self.func.identity
-    identity = property(_get_identity)
-
-    def _get_nargs(self):
-        return self.func.nargs
-    nargs = property(_get_nargs)
-
-    def _get_nin(self):
-        return self.func.nin
-    nin = property(_get_nin)
-
-    def _get_nout(self):
-        return self.func.nout
-    nout = property(_get_nout)
-
-    def _get_ntypes(self):
-        return self.func.ntypes
-    ntypes = property(_get_ntypes)
-
-    def _get_signature(self):
-        return self.func.signature
-    signature = property(_get_signature)
-
-    def _get_types(self):
-        return self.func.types
-    types = property(_get_types)
-
-    def __call__(self, first, second, out=None, *args, **kwargs):
-        print_sync("_BinaryOperation.__call__ %s" % self.func)
+    def _binary_call(self, first, second, out=None, *args, **kwargs):
+        print_sync("_binary_call %s" % self.func)
         first_isscalar = np.isscalar(first)
         second_isscalar = np.isscalar(second)
         # just in case
@@ -1012,7 +981,7 @@ class _BinaryOperation(object):
                 or isinstance(second, ndarray)
                 or isinstance(out, ndarray)):
             # no ndarray instances used, pass through immediately to numpy
-            print_sync("_BinaryOperation.__call__ %s pass through" % self.func)
+            print_sync("_binary_call %s pass through" % self.func)
             return self.func(first, second, out, *args, **kwargs)
         # since we have an ndarray somewhere
         ga.sync()
@@ -1214,9 +1183,11 @@ class _BinaryOperation(object):
            [ 9, 13]])
 
         """
+        if self.func.nin != 2:
+            raise ValueError, "reduce only supported for binary functions"
         if not (isinstance(a, ndarray) or isinstance(out, ndarray)):
             # no ndarray instances used, pass through immediately to numpy
-            print_sync("_BinaryOperation.reduce %s pass through" % self.func)
+            print_sync("_binary_call.reduce %s pass through" % self.func)
             return self.func.reduce(a, axis, dtype, out, *args, **kwargs)
         a = asarray(a)
         if out is None:
@@ -1250,49 +1221,103 @@ class _BinaryOperation(object):
         return out
 
     def accumulate(self, *args, **kwargs):
-        raise NotImplementedError, "TODO, sorry"
+        if self.func.nin != 2:
+            raise ValueError, "accumulate only supported for binary functions"
+        raise NotImplementedError
 
     def outer(self, *args, **kwargs):
-        raise NotImplementedError, "TODO, sorry"
+        if self.func.nin != 2:
+            raise ValueError, "outer product only supported for binary functions"
+        raise NotImplementedError
 
     def reduceat(self, *args, **kwargs):
-        raise NotImplementedError, "TODO, sorry"
+        if self.func.nin != 2:
+            raise ValueError, "reduceat only supported for binary functions"
+        raise NotImplementedError
 
-add = _BinaryOperation(np.add)
-arctan2 = _BinaryOperation(np.arctan2)
-bitwise_and = _BinaryOperation(np.bitwise_and)
-bitwise_or = _BinaryOperation(np.bitwise_or)
-bitwise_xor = _BinaryOperation(np.bitwise_xor)
-copysign = _BinaryOperation(np.copysign)
-divide = _BinaryOperation(np.divide)
-equal = _BinaryOperation(np.equal)
-floor_divide = _BinaryOperation(np.floor_divide)
-fmax = _BinaryOperation(np.fmax)
-fmin = _BinaryOperation(np.fmin)
-fmod = _BinaryOperation(np.fmod)
-greater = _BinaryOperation(np.greater)
-greater_equal = _BinaryOperation(np.greater_equal)
-hypot = _BinaryOperation(np.hypot)
-ldexp = _BinaryOperation(np.ldexp)
-left_shift = _BinaryOperation(np.left_shift)
-less = _BinaryOperation(np.less)
-less_equal = _BinaryOperation(np.less_equal)
-logaddexp = _BinaryOperation(np.logaddexp)
-logaddexp2 = _BinaryOperation(np.logaddexp2)
-logical_and = _BinaryOperation(np.logical_and)
-logical_or = _BinaryOperation(np.logical_or)
-logical_xor = _BinaryOperation(np.logical_xor)
-maximum = _BinaryOperation(np.maximum)
-minimum = _BinaryOperation(np.minimum)
-mod = _BinaryOperation(np.mod)
-multiply = _BinaryOperation(np.multiply)
-nextafter = _BinaryOperation(np.nextafter)
-not_equal = _BinaryOperation(np.not_equal)
-power = _BinaryOperation(np.power)
-remainder = _BinaryOperation(np.remainder)
-right_shift = _BinaryOperation(np.right_shift)
-subtract = _BinaryOperation(np.subtract)
-true_divide = _BinaryOperation(np.true_divide)
+# unary ufuncs
+abs = ufunc(np.abs)
+absolute = ufunc(np.absolute)
+arccos = ufunc(np.arccos)
+arccosh = ufunc(np.arccosh)
+arcsin = ufunc(np.arcsin)
+arcsinh = ufunc(np.arcsinh)
+arctan = ufunc(np.arctan)
+arctanh = ufunc(np.arctanh)
+bitwise_not = ufunc(np.bitwise_not)
+ceil = ufunc(np.ceil)
+conj = ufunc(np.conj)
+conjugate = ufunc(np.conjugate)
+cos = ufunc(np.cos)
+cosh = ufunc(np.cosh)
+deg2rad = ufunc(np.deg2rad)
+degrees = ufunc(np.degrees)
+exp = ufunc(np.exp)
+exp2 = ufunc(np.exp2)
+expm1 = ufunc(np.expm1)
+fabs = ufunc(np.fabs)
+floor = ufunc(np.floor)
+frexp = ufunc(np.frexp)
+invert = ufunc(np.invert)
+isfinite = ufunc(np.isfinite)
+isinf = ufunc(np.isinf)
+isnan = ufunc(np.isnan)
+log = ufunc(np.log)
+log10 = ufunc(np.log10)
+log1p = ufunc(np.log1p)
+logical_not = ufunc(np.logical_not)
+modf = ufunc(np.modf)
+negative = ufunc(np.negative)
+rad2deg = ufunc(np.rad2deg)
+radians = ufunc(np.radians)
+reciprocal = ufunc(np.reciprocal)
+rint = ufunc(np.rint)
+sign = ufunc(np.sign)
+signbit = ufunc(np.signbit)
+sin = ufunc(np.sin)
+sinh = ufunc(np.sinh)
+spacing = ufunc(np.spacing)
+sqrt = ufunc(np.sqrt)
+square = ufunc(np.square)
+tan = ufunc(np.tan)
+tanh = ufunc(np.tanh)
+trunc = ufunc(np.trunc)
+# binary ufuncs
+add = ufunc(np.add)
+arctan2 = ufunc(np.arctan2)
+bitwise_and = ufunc(np.bitwise_and)
+bitwise_or = ufunc(np.bitwise_or)
+bitwise_xor = ufunc(np.bitwise_xor)
+copysign = ufunc(np.copysign)
+divide = ufunc(np.divide)
+equal = ufunc(np.equal)
+floor_divide = ufunc(np.floor_divide)
+fmax = ufunc(np.fmax)
+fmin = ufunc(np.fmin)
+fmod = ufunc(np.fmod)
+greater = ufunc(np.greater)
+greater_equal = ufunc(np.greater_equal)
+hypot = ufunc(np.hypot)
+ldexp = ufunc(np.ldexp)
+left_shift = ufunc(np.left_shift)
+less = ufunc(np.less)
+less_equal = ufunc(np.less_equal)
+logaddexp = ufunc(np.logaddexp)
+logaddexp2 = ufunc(np.logaddexp2)
+logical_and = ufunc(np.logical_and)
+logical_or = ufunc(np.logical_or)
+logical_xor = ufunc(np.logical_xor)
+maximum = ufunc(np.maximum)
+minimum = ufunc(np.minimum)
+mod = ufunc(np.mod)
+multiply = ufunc(np.multiply)
+nextafter = ufunc(np.nextafter)
+not_equal = ufunc(np.not_equal)
+power = ufunc(np.power)
+remainder = ufunc(np.remainder)
+right_shift = ufunc(np.right_shift)
+subtract = ufunc(np.subtract)
+true_divide = ufunc(np.true_divide)
 
 def zeros(shape, dtype=np.float, order='C'):
     """zeros(shape, dtype=float, order='C')
@@ -2148,13 +2173,45 @@ def print_sync(what):
             MPI.COMM_WORLD.send(what, dest=0, tag=11)
         ga.sync()
 
-# imports from 'numpy' module every missing attribute from 'gain' module
 if __name__ != '__main__':
+    # reports how much of numpy as been overridden
+    if False:
+        import inspect
+        np_function_count = 0
+        ov_function_count = 0
+        np_class_count = 0
+        ov_class_count = 0
+        np_ufunc_count = 0
+        ov_ufunc_count = 0
+        self_module = sys.modules[__name__]
+        for attr in dir(np):
+            np_obj = getattr(np, attr)
+            override = False
+            if hasattr(self_module, attr):
+                #if not me: print "gain override exists for: %s" % attr
+                override = True
+            else:
+                setattr(self_module, attr, getattr(np, attr))
+            if inspect.isfunction(np_obj):
+                np_function_count += 1
+                if override:
+                    ov_function_count += 1
+            elif type(np_obj) is type(np.add):
+                np_ufunc_count += 1
+                if override:
+                    ov_ufunc_count += 1
+            elif inspect.isclass(np_obj):
+                np_class_count += 1
+                if override:
+                    ov_class_count += 1
+        print "%d/%d numpy functions overridden by gain" % (
+                ov_function_count,np_function_count)
+        print "%d/%d numpy classes overridden by gain" % (
+                ov_class_count,np_class_count)
+        print "%d/%d numpy ufuncs overridden by gain" % (
+                ov_ufunc_count,np_ufunc_count)
+    # imports from 'numpy' module every missing attribute into 'gain' module
     self_module = sys.modules[__name__]
     for attr in dir(np):
-        np_obj = getattr(np, attr)
-        if hasattr(self_module, attr):
-            #if not me: print "gain override exists for: %s" % attr
-            pass
-        else:
+        if not hasattr(self_module, attr):
             setattr(self_module, attr, getattr(np, attr))
