@@ -523,7 +523,10 @@ class ndarray(object):
         raise NotImplementedError
 
     #def __delattr__
-    #def __delitem__
+
+    def __delitem__(self, *args, **kwargs):
+        raise ValueError, "cannot delete array elements"
+
     #def __delslice__
 
     def __div__(self, y):
@@ -746,7 +749,7 @@ class ndarray(object):
         if npself is None:
             print_sync("npself is None")
             print_sync("NA")
-            ga.sync()
+            print_sync("NA")
             return
         if isinstance(value, ndarray):
             if (ga.compare_distr(value.handle, new_self.handle)
@@ -1044,9 +1047,11 @@ class ufunc(object):
                     release_first = True
                 else:
                     lo,hi = out.distribution()
+                    print_debug("out.global_slice=%s" % str(out.global_slice))
                     result = util.get_slice(out.global_slice, lo, hi)
+                    print_debug("util.get_slice=%s" % str(result))
                     result = util.broadcast_chomp(first.shape, result)
-                    print_sync("local_slice=%s" % str(result))
+                    print_sync("util.broadcast_chomp=%s" % str(result))
                     matching_input = first[result]
                     npfirst = matching_input.get()
                     print_sync("npfirst.shape=%s, npout.shape=%s" % (
@@ -1185,11 +1190,15 @@ class ufunc(object):
         """
         if self.func.nin != 2:
             raise ValueError, "reduce only supported for binary functions"
+        a = asarray(a)
         if not (isinstance(a, ndarray) or isinstance(out, ndarray)):
             # no ndarray instances used, pass through immediately to numpy
             print_sync("_binary_call.reduce %s pass through" % self.func)
             return self.func.reduce(a, axis, dtype, out, *args, **kwargs)
-        a = asarray(a)
+        if axis < 0:
+            axis += a.ndim
+        if a.ndim < axis < 0:
+            raise ValueError, "axis not in array"
         if out is None:
             shape = list(a.shape)
             del shape[axis]
@@ -1202,8 +1211,8 @@ class ufunc(object):
         if out.ndim == 0:
             # optimize the 1d reduction
             nda = a.access()
-            value = None
-            if a is not None:
+            value = self.func.identity
+            if nda is not None:
                 value = self.func.reduce(nda)
             everything = MPI.COMM_WORLD.allgather(value)
             self.func.reduce(everything, out=out)
@@ -1220,10 +1229,67 @@ class ufunc(object):
                 self.__call__(out,ai,out)
         return out
 
-    def accumulate(self, *args, **kwargs):
+    def accumulate(self, a, axis=0, dtype=None, out=None, *args, **kwargs):
         if self.func.nin != 2:
             raise ValueError, "accumulate only supported for binary functions"
-        raise NotImplementedError
+        a = asarray(a)
+        if not (isinstance(a, ndarray) or isinstance(out, ndarray)):
+            # no ndarray instances used, pass through immediately to numpy
+            print_sync("_binary_call.reduce %s pass through" % self.func)
+            return self.func.accumulate(a, axis, dtype, out, *args, **kwargs)
+        if axis < 0:
+            axis += a.ndim
+        if a.ndim < axis < 0:
+            raise ValueError, "axis not in array"
+        if out is None:
+            if dtype is None:
+                dtype = a.dtype
+            if a.size < SIZE_THRESHOLD:
+                out = np.ndarray(a.shape, dtype=dtype)
+            else:
+                out = ndarray(a.shape, dtype=dtype)
+        if out.ndim == 1:
+            # optimize the 1d accumulate
+            if isinstance(out, ndarray):
+                ndout = out.access()
+                if ndout is not None:
+                    lo,hi = util.calc_distribution_lohi(
+                            out.global_slice, *out.distribution())
+                    lo,hi = lo[0],hi[0]
+                    piece = a[lo:hi]
+                    if isinstance(piece, ndarray):
+                        piece = piece.get()
+                    self.func.accumulate(piece, out=ndout)
+                    # probably more efficient to use allgather and exchange last
+                    # values among all procs. We also need ordering information,
+                    # so we exchange the 'lo' value.
+                    everything = MPI.COMM_WORLD.allgather((ndout[-1],lo))
+                    reduction = self.func.identity
+                    for lvalue,llo in everything:
+                        if lvalue is not None and llo < lo:
+                            reduction = self.func(reduction,lvalue)
+                    self.func(ndout,reduction,ndout)
+                else:
+                    everything = MPI.COMM_WORLD.allgather((None,None))
+            else:
+                raise NotImplementedError
+        else:
+            slicer_i = [slice(0,None,None)]*a.ndim
+            slicer_i_1 = [slice(0,None,None)]*a.ndim
+            axis_iterator = iter(xrange(a.shape[axis]))
+            # copy first loop iteration to 'out'
+            slicer_i[axis] = axis_iterator.next()
+            out[slicer_i] = a[slicer_i]
+            # remaining loop iterations are appropriately accumulated
+            for i in axis_iterator:
+                slicer_i[axis] = i
+                slicer_i_1[axis] = i-1
+                x = out[slicer_i_1]
+                y = a[slicer_i]
+                z = out[slicer_i]
+                self.__call__(x,y,z)
+                #self.__call__(out[slicer_i_1],a[slicer_i],out[slicer_i])
+        return out
 
     def outer(self, *args, **kwargs):
         if self.func.nin != 2:
@@ -1237,7 +1303,7 @@ class ufunc(object):
 
 # unary ufuncs
 abs = ufunc(np.abs)
-absolute = ufunc(np.absolute)
+absolute = abs
 arccos = ufunc(np.arccos)
 arccosh = ufunc(np.arccosh)
 arcsin = ufunc(np.arcsin)

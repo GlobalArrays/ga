@@ -73,6 +73,14 @@ def test(module):
     check(module.add.reduce([1,2,3,4]))
     check(module.add.reduce(module.arange(100)))
     check(module.add.reduce(module.ones((100,200))))
+    check(module.add.accumulate(module.ones(7)))
+    check(module.add.accumulate(module.ones((7,7))))
+    check(module.add.accumulate(module.ones((7,7,7)), axis=0))
+    check(module.add.accumulate(module.ones((7,7,7)), axis=1))
+    check(module.add.accumulate(module.ones((7,7,7)), axis=2))
+    check(module.add.accumulate(module.ones((7,7,7)), axis=0))
+    check(module.add.accumulate(module.ones((7,7,7)), axis=1))
+    check(module.add.accumulate(module.ones((7,7,7)), axis=2))
 
 if __name__ == '__main__':
     ga.sync()

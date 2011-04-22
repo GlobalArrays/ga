@@ -205,6 +205,10 @@ def slice_arithmetic(original_ops, ops):
             original_op = original_ops[idx]
             new_op.append(slice_of_a_slice(original_op, op))
             idx += 1
+    while (idx < len(original_ops)
+            and isinstance(original_ops[idx], (int,long))):
+        new_op.append(original_ops[idx])
+        idx += 1
     print_debug("slice_arithmetic(%s,%s)=%s" % (original_ops,ops,new_op))
     return new_op
 
@@ -228,7 +232,7 @@ def calc_index_lohi(global_slice, lo, hi):
     idx = 0
     for op in global_slice:
         if isinstance(op, (int,long)):
-            if not (lo[idx] <= op < hi):
+            if not (lo[idx] <= op < hi[idx]):
                 raise IndexError, "lo/hi out of bounds"
             item_key.append(op)
             idx += 1
@@ -308,6 +312,18 @@ def subindex(sliceobj, lo, hi):
     if length(new_start, new_stop, sliceobj.step) <= 0:
         raise IndexError, "slice arithmetic resulted in 0 length"
     return slice(new_start, new_stop, sliceobj.step)
+
+def calc_distribution_lohi(global_slice, lo, hi):
+    """Return lo,hi distribution based on current global_slice."""
+    result = calc_index_lohi(global_slice, lo, hi)
+    lo = []
+    hi = []
+    for gop,op in zip(global_slice,result):
+        if isinstance(op, slice):
+            lo.append((op.start-gop.start)/op.step)
+            hi.append(((op.start+(op.step*(slicelength(op)-1)))-gop.start)/op.step)
+            hi[-1]+=1
+    return lo,hi
 
 def access_slice(global_slice, lo, hi):
     """Converts from global_slice to a local slice appropriate for ga.access().
@@ -423,6 +439,8 @@ def broadcast_chomp(smaller_key, larger_key):
         else:
             new_key.append(l)
     new_key.reverse()
+    print_debug("![?] broadcast_chomp(%s,%s)=%s" % (
+            smaller_key, larger_key, new_key))
     return new_key
 
 if __name__ == '__main__':
