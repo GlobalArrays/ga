@@ -4500,6 +4500,9 @@ ga_typeinfo_t ga_types[GA_TYPES_MAX] = {
 
 /* #define GAsizeofM(_type)   ga_types[_type-MT_BASE]  */
 
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_register_type = pnga_register_type
+#endif
 int pnga_register_type(size_t bytes) {
   int i;
   for(i=GA_TYPES_RESERVED; i<GA_TYPES_MAX && ga_types[i].active==1; i++);
@@ -4511,6 +4514,9 @@ int pnga_register_type(size_t bytes) {
   return i+MT_BASE;
 }
 
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_deregister_type = pnga_deregister_type
+#endif
 int pnga_deregister_type(int type) {
   int tp = type-MT_BASE;
   if(tp<GA_TYPES_RESERVED) {
