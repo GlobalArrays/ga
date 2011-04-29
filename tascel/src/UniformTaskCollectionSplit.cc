@@ -37,13 +37,15 @@ UniformTaskCollectionSplit::process() {
   barrier();
   TslFunc_t fn = frt.get(tfn);
   char buf[tsk_size];
-  int tasksDone = 0, stealAttempts = 0, steals = 0;
 
   while (!sq.hasTerminated())  {
     while (sq.getTask(buf, tsk_size)) {
-      tasksDone += 1;
+      stt.taskTime.startTimer();
       fn(this, buf, tsk_size, pldata, pldata_len, vector<void *>());
+      stt.taskTime.stopTimer();
+      stt.numTasks.inc();
     }
+    stt.tdTime.startTimer();
     sq.td_progress();
     got_work = false;
     while(got_work == false && !sq.hasTerminated()) {
@@ -51,14 +53,20 @@ UniformTaskCollectionSplit::process() {
         p = rand() % nproc();
       }
       while (p == me());
+      
+      stt.stealTime.startTimer();
       got_work = sq.steal(p);
-      stealAttempts += 1;
+      stt.stealTime.stopTimer();
+      stt.numStealAttempts.inc();
     }
     if(got_work) {
-      steals += 1;
+      stt.numSteals.inc();
+    }
+    
+    if(sq.hasTerminated()) {
+      stt.tdTime.stopTimer();
     }
   }
-  //printf("%d: processed %d tasks attempts=%d steals=%d\n", me(), tasksDone, stealAttempts, steals);
   barrier();
 }
 

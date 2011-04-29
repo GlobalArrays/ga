@@ -1,5 +1,5 @@
-#ifndef __TaskCollProps_h__
-#define __TaskCollProps_h__
+#ifndef __tascel_TaskCollProps_h__
+#define __tascel_TaskCollProps_h__
 
 #include "FuncReg.h"
 #include "TaskCollProps.h"
@@ -34,4 +34,4 @@ namespace tascel {
 
 }; /* tascel */
 
-#endif /* __TaskCollProps_h__ */
+#endif /* __tascel_TaskCollProps_h__ */

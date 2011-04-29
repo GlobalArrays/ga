@@ -3,6 +3,7 @@
 
 #include "FuncReg.h"
 #include "TaskCollProps.h"
+#include "StealingStats.h"
 
 namespace tascel {
 
@@ -21,6 +22,7 @@ namespace tascel {
       TslFunc              tfn;        /**< task function */
       char                *pldata;     /**< Process local data shared across tasks*/
       const int            pldata_len; /**< length of pldata buffer */
+      StealingStats        stt;        /**< Stealing statistics*/
     public:
       /**
        * Constructs the task collection.
@@ -57,6 +59,12 @@ namespace tascel {
        * @pre dlen == tsk_size
        */
       virtual void addTask(void *data, int dlen) = 0;
+
+      /**
+       * Print stealing statistics
+       */
+      virtual void printStats() const;
+
   }; /*UniformTaskCollection*/
 
 }; /*tascel*/

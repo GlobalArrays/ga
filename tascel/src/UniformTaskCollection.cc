@@ -34,3 +34,8 @@ UniformTaskCollection::~UniformTaskCollection() {
   delete [] pldata;
 }
 
+/* virtual */
+void UniformTaskCollection::printStats() const {
+  stt.print();
+}
+
