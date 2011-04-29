@@ -113,7 +113,7 @@ libtascel_la_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
 am_libtascel_la_OBJECTS = src/Comm.lo src/DenseArray.lo src/FuncReg.lo \
 	src/SharedQueue.lo src/Sleep.lo src/SplitQueue.lo \
-	src/SplitQueueOpt.lo src/TaskCollProps.lo \
+	src/SplitQueueOpt.lo src/StealingStats.lo src/TaskCollProps.lo \
 	src/TerminationDetector.lo src/UniformTaskCollection.lo \
 	src/UniformTaskCollectionShared.lo \
 	src/UniformTaskCollectionSplit.lo \
@@ -456,10 +456,11 @@ LDADD = libtascel.la $(GA_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) \
 	$(GA_MP_LIBS) $(FLIBS)
 AM_LDFLAGS = $(GA_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
 	$(GA_MP_LDFLAGS)
-include_HEADERS = src/AccessMode.h src/Comm.h src/DataColl.h \
-	src/DenseArray.h src/FuncReg.h src/massert.h src/SharedQueue.h \
-	src/Sleep.h src/SplitQueue.h src/SplitQueueOpt.h \
-	src/TaskCollProps.h src/TerminationDetector.h \
+include_HEADERS = src/AccessMode.h src/Comm.h src/Counter.h \
+	src/DataColl.h src/DenseArray.h src/FuncReg.h src/massert.h \
+	src/SharedQueue.h src/Sleep.h src/SplitQueue.h \
+	src/SplitQueueOpt.h src/StealingStats.h src/TaskCollProps.h \
+	src/Timer.h src/TerminationDetector.h \
 	src/UniformTaskCollection.h src/UniformTaskCollectionShared.h \
 	src/UniformTaskCollectionSplit.h \
 	src/UniformTaskCollSplitData.h
@@ -467,7 +468,7 @@ lib_LTLIBRARIES = libtascel.la
 nodist_libtascel_la_SOURCES = config.fh
 libtascel_la_SOURCES = src/Comm.cc src/DenseArray.cc src/FuncReg.cc \
 	src/SharedQueue.cc src/Sleep.cc src/SplitQueue.cc \
-	src/SplitQueueOpt.cc src/TaskCollProps.cc \
+	src/SplitQueueOpt.cc src/StealingStats.cc src/TaskCollProps.cc \
 	src/TerminationDetector.cc src/UniformTaskCollection.cc \
 	src/UniformTaskCollectionShared.cc \
 	src/UniformTaskCollectionSplit.cc \
@@ -587,6 +588,8 @@ src/Sleep.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/SplitQueue.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/SplitQueueOpt.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/StealingStats.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/TaskCollProps.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/TerminationDetector.lo: src/$(am__dirstamp) \
@@ -673,6 +676,8 @@ mostlyclean-compile:
 	-rm -f src/SplitQueue.lo
 	-rm -f src/SplitQueueOpt.$(OBJEXT)
 	-rm -f src/SplitQueueOpt.lo
+	-rm -f src/StealingStats.$(OBJEXT)
+	-rm -f src/StealingStats.lo
 	-rm -f src/TaskCollProps.$(OBJEXT)
 	-rm -f src/TaskCollProps.lo
 	-rm -f src/TerminationDetector.$(OBJEXT)
@@ -700,6 +705,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/Sleep.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/SplitQueue.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/SplitQueueOpt.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/StealingStats.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/TaskCollProps.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/TerminationDetector.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/UniformTaskCollSplitData.Plo@am__quote@
