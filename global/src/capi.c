@@ -3181,7 +3181,8 @@ void GA_Sgemm64_c(char ta, char tb, int64_t m, int64_t n, int64_t k,
 void GA_Dgemm(char ta, char tb, int m, int n, int k,
               double alpha, int g_a, int g_b, double beta, int g_c )
 {
-    GA_Dgemm_c(tb, ta, n, m, k, alpha, g_b, g_a, beta, g_c);
+  // GA_Dgemm_c(tb, ta, n, m, k, alpha, g_b, g_a, beta, g_c);
+  GA_Dgemm_c(ta, tb, m, n, k, alpha, g_a, g_b, beta, g_c);
 }
 
 void GA_Zgemm(char ta, char tb, int m, int n, int k,

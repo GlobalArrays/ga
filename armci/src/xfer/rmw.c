@@ -45,9 +45,18 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
 
     switch (op) {
       case ARMCI_FETCH_AND_ADD:
+#if (defined(__GNUC__) || defined(__INTEL_COMPILER__) ||defined(__PGIC__)) && !defined(PORTALS) && !defined(NO_I386ASM)
+        if(SERVER_CONTEXT || armci_nclus == 1){
+/* 	  *(int*)ploc = __sync_fetch_and_add((int*)prem, extra); */
+	  atomic_fetch_and_add(prem, ploc, extra, sizeof(int));
+	}
+	else 
+#endif
+	  {
                 armci_get(prem,ploc,sizeof(int),proc);
                 _a_temp = *(int*)ploc + extra;
                 armci_put(&_a_temp,prem,sizeof(int),proc);
+	  }
            break;
       case ARMCI_FETCH_AND_ADD_LONG:
                 armci_get(prem,ploc,sizeof(long),proc);
