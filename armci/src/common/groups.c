@@ -349,14 +349,41 @@ void ARMCI_Group_create_child(int n, int *pid_list, ARMCI_Group *group_out,
     rv=MPI_Group_incl(*group_parent, n, pid_list, &(igroup->igroup));
     if(rv != MPI_SUCCESS) armci_die("MPI_Group_incl: Failed ",armci_me);
     
-    rv = MPI_Comm_create(*comm_parent, (MPI_Group)(igroup->igroup), 
-                         (MPI_Comm*)&(igroup->icomm));
-    if(rv != MPI_SUCCESS) armci_die("MPI_Comm_create: Failed ",armci_me);
+    {
+      MPI_Comm comm, comm1, comm2;
+      int lvl=1, local_ldr_pos;
+      MPI_Group_rank((MPI_Group)(igroup->igroup), &grp_me);
+      if(grp_me == MPI_UNDEFINED) {
+	igroup->icomm = MPI_COMM_NULL; /*FIXME: keeping the group around for now*/	
+	return;
+      }
+      assert(grp_me>=0); /*SK: sanity check for the following bitwise operations*/
+      MPI_Comm_dup(MPI_COMM_SELF, &comm); /*FIXME: can be optimized away*/
+      local_ldr_pos = grp_me;
+      while(n> lvl) {
+	int tag=0;
+	int remote_ldr_pos = local_ldr_pos^lvl;
+	if(remote_ldr_pos < n) {
+	  int remote_leader = pid_list[remote_ldr_pos];
+	  MPI_Comm peer_comm = *comm_parent;
+	  int high = (local_ldr_pos<remote_ldr_pos)?0:1;
+	  MPI_Intercomm_create(comm, 0, peer_comm, remote_leader, tag, &comm1);
+	  MPI_Comm_free(&comm);
+	  MPI_Intercomm_merge(comm1, high, &comm2);
+	  MPI_Comm_free(&comm1);
+	  comm = comm2;
+	}
+	local_ldr_pos &= ((~0)^lvl);
+	lvl<<=1;
+      }
+      igroup->icomm = comm;
+      MPI_Group_free(&igroup->igroup); /*cleanup temporary group*/
+      MPI_Comm_group(igroup->icomm, &igroup->igroup); /*the group associated with comm*/
+      igroup->grp_attr.grp_clus_info=NULL;
+      /* processes belong to this group should cache attributes */
+      armci_cache_attr(group_out);
+    }    
 
-    /* processes belong to this group should cache attributes */
-    MPI_Group_rank((MPI_Group)(igroup->igroup), &grp_me);
-    igroup->grp_attr.grp_clus_info=NULL;
-    if(grp_me != MPI_UNDEFINED) armci_cache_attr(group_out);
 #endif
 }
 
