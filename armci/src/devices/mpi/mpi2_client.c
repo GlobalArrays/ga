@@ -364,7 +364,7 @@ static void armci_gather_hostnames(char **hostname_arr)
     MPI_Check(
        MPI_Allgather(hostname,  MPI_MAX_PROCESSOR_NAME, MPI_CHAR,
                      hostnames, MPI_MAX_PROCESSOR_NAME, MPI_CHAR,
-                     MPI_COMM_WORLD)
+                     ARMCI_COMM_WORLD)
        );
 
     if(armci_me == armci_master) 
@@ -377,7 +377,7 @@ static void armci_gather_hostnames(char **hostname_arr)
     }
 
     MPI_Check(MPI_Allgather(&is_master, 1, MPI_INT, master_arr, 1, MPI_INT,
-                            MPI_COMM_WORLD));
+                            ARMCI_COMM_WORLD));
 
     {
        /* get only the hostname of armci master processes */
@@ -477,7 +477,7 @@ static void armci_mpi2_spawn()
      */
     MPI_Check(
        MPI_Comm_spawn_multiple(armci_nserver, command_arr, MPI_ARGVS_NULL,
-                               size_arr, info_arr, ARMCI_ROOT, MPI_COMM_WORLD,
+                               size_arr, info_arr, ARMCI_ROOT, ARMCI_COMM_WORLD,
                                &MPI_COMM_CLIENT2SERVER, MPI_ERRCODES_IGNORE)
        );
 
@@ -507,8 +507,8 @@ void armci_create_server_MPIprocess ()
     if (flag == 0)
        armci_die("ARMCI error: MPI_Init must be called before PARMCI_Init()",0);
     
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(ARMCI_COMM_WORLD, &rank);
+    MPI_Comm_size(ARMCI_COMM_WORLD, &size);
 
     /* spawn one data server process (i.e. additional MPI proc) on each node */
     armci_mpi2_spawn();
@@ -560,7 +560,7 @@ void armci_create_server_MPIprocess ()
        _armci_mpi_tag[i]=ARMCI_MPI_SPAWN_TAG_BEGIN;
     
     /* makesure all processes sync here. CHECK: does it ensure global sync ? */
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(ARMCI_COMM_WORLD);
     
     armci_mpi2_debug(0, "armci_create_server_MPIprocess: Servers spawned!\n");
 }

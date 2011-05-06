@@ -502,8 +502,8 @@ void armci_mpi2_server_init()
     long shm_info[3];
     MPI_Status status;
     
-    MPI_Comm_rank(MPI_COMM_WORLD, &armci_server_me);
-    MPI_Comm_size(MPI_COMM_WORLD, &armci_nserver);
+    MPI_Comm_rank(ARMCI_COMM_WORLD, &armci_server_me);
+    MPI_Comm_size(ARMCI_COMM_WORLD, &armci_nserver);
     MPI_Get_processor_name(processor_name, &namelen);
     MPI_Get_version(&version, &subversion);
     
@@ -569,7 +569,7 @@ void armci_mpi2_server_init()
      * End of PARMCI_Init() emulation.
      * *******************************************************************/
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(ARMCI_COMM_WORLD);
 }
 
 void armci_mpi2_server() 

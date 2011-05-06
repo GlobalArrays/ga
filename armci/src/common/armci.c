@@ -408,6 +408,12 @@ int PARMCI_Init()
 	     ("Group handle sizes: internal(%d) should be <= external(%d)\n",
 	      sizeof(ARMCI_iGroup), sizeof(ARMCI_Group)));
 #endif
+
+#ifdef MPI
+    /*SK: initialize duplicate communicator before anything else*/
+    MPI_Comm_dup(MPI_COMM_WORLD, &ARMCI_COMM_WORLD);
+#endif
+
 #ifdef MPI_SPAWN
     if(!_armci_initialized_args)
        armci_die("ARMCI is built w/ ARMCI_NETWORK=MPI-SPAWN. For this network "
@@ -639,9 +645,13 @@ void PARMCI_Finalize()
     armci_msg_barrier();
 #ifdef MPI
     armci_group_finalize();
+    
 #endif
 #ifdef ARMCIX
     ARMCIX_Finalize ();
+#endif
+#ifdef MPI
+    MPI_Comm_free(&ARMCI_COMM_WORLD); /*SK: free at last*/
 #endif
 }
 

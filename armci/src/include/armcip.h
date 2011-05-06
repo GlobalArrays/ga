@@ -61,7 +61,6 @@ extern void armci_elan_fence(int p);
 /**Symbol to stamp end of buffers in certain networks*/
 #define ARMCI_STAMP 20080528
 
-
 /*\GPC call stuff
 \*/
 typedef struct {
@@ -443,6 +442,7 @@ extern void armci_global_region_exchange(void *, long);
 #define   PCLASS 3
 #endif
 #ifdef MPI
+
 typedef int ARMCI_Datatype;
 
 extern int ATTR_KEY; /* attribute key */
@@ -463,6 +463,9 @@ typedef struct {
 }armci_grp_attr_t;
  
 #include "mpi.h"
+
+/**dup of MPI_COMM_WORLD for internal MPI communication*/
+extern MPI_Comm ARMCI_COMM_WORLD;
  
 typedef MPI_Comm ARMCI_Comm;
 typedef struct {

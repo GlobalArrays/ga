@@ -1265,7 +1265,7 @@ void armci_init_connections()
             }
         }
         MPI_Alltoall(tmpbuf,sizeof(uint32_t),MPI_CHAR,SRV_rqpnums,
-                sizeof(uint32_t),MPI_CHAR,MPI_COMM_WORLD);
+                sizeof(uint32_t),MPI_CHAR,ARMCI_COMM_WORLD);
         free(tmpbuf);
 
         if(armci_me != armci_master) {
@@ -1349,7 +1349,7 @@ static void vapi_connect_client()
         }
         dassert(1, CLN_rqpnumtmpbuf);
         MPI_Alltoall(CLN_rqpnumtmpbuf, sizeof(uint32_t), MPI_CHAR,
-                CLN_rqpnums, sizeof(uint32_t), MPI_CHAR, MPI_COMM_WORLD);
+                CLN_rqpnums, sizeof(uint32_t), MPI_CHAR, ARMCI_COMM_WORLD);
         free(CLN_rqpnumtmpbuf);
         CLN_rqpnumtmpbuf=NULL;
 #endif
@@ -4705,9 +4705,9 @@ int exch_addr(void)
     int i;
 
     MPI_Allgather((void *)conn.qp_num, sizeof(uint32_t), MPI_BYTE,
-            (void *)rbuf.qp_num, sizeof(uint32_t), MPI_BYTE, MPI_COMM_WORLD);
+            (void *)rbuf.qp_num, sizeof(uint32_t), MPI_BYTE, ARMCI_COMM_WORLD);
     MPI_Alltoall((void *)conn.lid, sizeof(uint16_t), MPI_BYTE,
-            (void *)rbuf.lid, sizeof(uint16_t), MPI_BYTE, MPI_COMM_WORLD);
+            (void *)rbuf.lid, sizeof(uint16_t), MPI_BYTE, ARMCI_COMM_WORLD);
 
 #ifdef DEBUG
     for (i = 0; i < nprocs; i++) {
@@ -4912,12 +4912,12 @@ void setup_ud_channel()
     if(connect_qp()) {
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(ARMCI_COMM_WORLD);
 
     if(post_buffers()) {
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(ARMCI_COMM_WORLD);
 }
 
 

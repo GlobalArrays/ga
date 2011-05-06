@@ -38,6 +38,8 @@ void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group);
 int  ARMCI_Group_rank(ARMCI_Group *group, int *rank);
 void ARMCI_Group_size(ARMCI_Group *group, int *size);
 
+MPI_Comm ARMCI_COMM_WORLD; /*dup of MPI_COMM_WORLD. Initialized first thing in ARMCI_Init*/
+
 static void get_group_clus_id(ARMCI_iGroup *igroup, int grp_nproc, 
                               int *grp_clus_id) {
     int i, *ranks1, *ranks2;
@@ -50,12 +52,12 @@ static void get_group_clus_id(ARMCI_iGroup *igroup, int grp_nproc,
     MPI_Group group2;
     
     /* Takes the list of processes from one group and attempts to determine
-     * the corresponding ranks in a second group (here, MPI_COMM_WORLD) */
+     * the corresponding ranks in a second group (here, ARMCI_COMM_WORLD) */
 
     ranks1 = (int *)malloc(2*grp_nproc*sizeof(int));
     ranks2 = ranks1 + grp_nproc;
     for(i=0; i<grp_nproc; i++) ranks1[i] = i;
-    MPI_Comm_group(MPI_COMM_WORLD, &group2);
+    MPI_Comm_group(ARMCI_COMM_WORLD, &group2);
     MPI_Group_translate_ranks(igroup->igroup, grp_nproc, ranks1, group2, ranks2);
     
     /* get the clus_id of processes */
@@ -234,7 +236,7 @@ void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Group *group) {
 #else
 void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm) {
     int result;
-    MPI_Comm_compare(comm, MPI_COMM_WORLD, &result);
+    MPI_Comm_compare(comm, ARMCI_COMM_WORLD, &result);
     if(result == MPI_IDENT)  armci_msg_brdcst(buffer, len, root); 
     else MPI_Bcast(buffer, len, MPI_BYTE, root, (MPI_Comm)comm);
 }
@@ -420,7 +422,7 @@ int ARMCI_Absolute_id(ARMCI_Group *group,int group_rank)
     return igroup->grp_attr.proc_list[group_rank];
 #else
     MPI_Group grp;
-    status = MPI_Comm_group(MPI_COMM_WORLD,&grp);
+    status = MPI_Comm_group(ARMCI_COMM_WORLD,&grp);
     MPI_Group_translate_ranks(igroup->igroup,1,&group_rank,grp,&abs_rank);
     return(abs_rank);
 #endif
@@ -472,8 +474,8 @@ void armci_group_init()
     armci_cache_attr((ARMCI_Group*)&ARMCI_World_Proc_Group);
 #else
     /* save MPI world group and communicatior in ARMCI_World_Proc_Group */
-    igroup->icomm = MPI_COMM_WORLD;
-    MPI_Comm_group(MPI_COMM_WORLD, &(igroup->igroup));
+    igroup->icomm = ARMCI_COMM_WORLD;
+    MPI_Comm_group(ARMCI_COMM_WORLD, &(igroup->igroup));
 
     /* processes belong to this group should cache attributes */
     MPI_Group_rank((MPI_Group)(igroup->igroup), &grp_me);
