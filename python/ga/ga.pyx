@@ -357,7 +357,7 @@ cdef _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
         NGA_Acc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data, valpha)
 
-def access(int g_a, lo=None, hi=None):
+def access(int g_a, lo=None, hi=None, int proc=-1):
     """Returns local array patch.
     
     This routine allows to access directly, in place elements in the local
@@ -367,6 +367,8 @@ def access(int g_a, lo=None, hi=None):
     
     Note: The entire local data is always accessed, but if a smaller patch is
     requested, an appropriately sliced ndarray is returned.
+
+    If proc is not specified, then ga.nodeid() is used.
 
     Each call to ga.access has to be followed by a call to either ga.release
     or ga.release_update. You can access in this fashion only local data.
@@ -382,6 +384,9 @@ def access(int g_a, lo=None, hi=None):
             lower bound patch coordinates, inclusive
         hi : 1D array-like
             higher bound patch coordinates, exclusive
+        proc : int
+            defaults to ga.nodeid(), but can specify a proc within the same
+            SMP node to access its data instead
     
     :returns: ndarray representing local patch
 
@@ -392,17 +397,21 @@ def access(int g_a, lo=None, hi=None):
     cdef int dimlen=GA_Ndim(g_a), typenum=_to_dtype[gtype].num
     cdef void *ptr
     cdef np.npy_intp *dims = NULL
+    if proc < 0:
+        proc = GA_Nodeid()
     # first things first, if no data is owned, return None
-    lo_dst,hi_dst = distribution(g_a)
+    lo_dst,hi_dst = distribution(g_a, proc)
     if lo_dst[0] < 0 or hi_dst[0] < 0:
         return None
-    # put hi_dst back to GA inclusive indexing convention
-    hi_dst -= 1
     # always access the entire local data
     ld_nd = np.zeros(dimlen-1, dtype=np.int64)
+    # put hi_dst back to GA inclusive indexing convention
+    hi_dst -= 1
     NGA_Access64(g_a, <int64_t*>lo_dst.data, <int64_t*>hi_dst.data, &ptr,
             <int64_t*>ld_nd.data)
-    dims_nd = hi_dst-lo_dst+1
+    # put hi_dst back to Python exclusive indexing convention
+    hi_dst += 1
+    dims_nd = hi_dst-lo_dst
     # must convert int64_t ndarray shape to npy_intp array
     dims = <np.npy_intp*>malloc(dimlen*sizeof(np.npy_intp))
     for i in range(dimlen):
@@ -427,7 +436,7 @@ def access(int g_a, lo=None, hi=None):
             raise ValueError,"hi out of bounds hi_dst=%s hi=%s"%(hi_dst,hi_nd)
         slices = []
         for i in range(dimlen):
-            slices.append(slice(lo_nd[i]-lo_dst[i],hi_nd[i]-hi_dst[i]))
+            slices.append(slice(lo_nd[i]-lo_dst[i],hi_nd[i]-lo_dst[i]))
         return array[slices]
     return array
 
@@ -797,24 +806,35 @@ def cluster_nodeid(int proc=-1):
         return GA_Cluster_proc_nodeid(proc)
     return GA_Cluster_nodeid()
 
-def cluster_nprocs(int inode):
+def cluster_proc_nodeid(int proc):
+    """Returns the node ID of the specified process.
+
+    On SMP architectures with more than one processor per node, several
+    processors may return the same node id.
+
+    This is a local operation.
+
+    """
+    return GA_Cluster_proc_nodeid(proc)
+
+def cluster_nprocs(int node):
     """Returns the number of processors available on the given node.
 
     This is a local operation.
 
     """
-    return GA_Cluster_nprocs(inode)
+    return GA_Cluster_nprocs(node)
 
-def cluster_procid(int inode, int iproc):
-    """Returns the proc ID associated with node inode and local proc ID iproc.
+def cluster_procid(int node, int proc):
+    """Returns the proc ID associated with node and local proc ID.
 
-    If node inode has N processors, then the value of iproc lies between 0 and
+    If node has N processors, then the value of proc lies between 0 and
     N-1.
 
     This is a  local operation. 
 
     """
-    return GA_Cluster_procid(inode, iproc)
+    return GA_Cluster_procid(node, proc)
 
 def compare_distr(int g_a, int g_b):
     """Compares the distributions of two global arrays.
@@ -1206,20 +1226,20 @@ def diag_std(int g_a, int g_v, evalues=None):
     GA_Diag_std(g_a, g_v, <void*>evalues.data)
     return evalues
 
-cpdef distribution(int g_a, int iproc=-1):
-    """Return the distribution given to iproc.
+cpdef distribution(int g_a, int proc=-1):
+    """Return the distribution given to proc.
 
-    If iproc is not specified, then ga.nodeid() is used.  The range is
+    If proc is not specified, then ga.nodeid() is used.  The range is
     returned as -1 for lo and -2 for hi if no elements are owned by
-    iproc.
+    proc.
     
     """
     cdef int ndim = GA_Ndim(g_a)
     cdef np.ndarray[np.int64_t, ndim=1] lo = np.zeros((ndim), dtype=np.int64)
     cdef np.ndarray[np.int64_t, ndim=1] hi = np.zeros((ndim), dtype=np.int64)
-    if iproc < 0:
-        iproc = GA_Nodeid()
-    NGA_Distribution64(g_a, iproc, <int64_t*>lo.data, <int64_t*>hi.data)
+    if proc < 0:
+        proc = GA_Nodeid()
+    NGA_Distribution64(g_a, proc, <int64_t*>lo.data, <int64_t*>hi.data)
     # convert hi to python exclusive indexing convetion
     hi += 1
     return lo,hi
@@ -3307,14 +3327,14 @@ def release_block_grid(int g_a, subscript):
     subscript_nd = _inta32(subscript)
     NGA_Release_block_grid(g_a, <int*>subscript_nd.data)
 
-def release_block_segment(int g_a, int iproc):
+def release_block_segment(int g_a, int proc):
     """Releases access to the block of locally held data for a block-cyclic
     array, when data was accessed as read-only.
     
     This is a local operation.
 
     """
-    NGA_Release_block_segment(g_a, iproc)
+    NGA_Release_block_segment(g_a, proc)
 
 cdef _release_common(int g_a, lo, hi, bint update):
     """TODO"""
@@ -3402,14 +3422,14 @@ def release_update_block_grid(int g_a, subscript):
     subscript_nd = _inta32(subscript)
     NGA_Release_update_block_grid(g_a, <int*>subscript_nd.data)
 
-def release_update_block_segment(int g_a, int iproc):
+def release_update_block_segment(int g_a, int proc):
     """Releases access to the block of locally held data for a block-cyclic
     array, when data was accessed as read-only.
     
     This is a local operation.
 
     """
-    NGA_Release_update_block_segment(g_a, iproc)
+    NGA_Release_update_block_segment(g_a, proc)
 
 def release_update_ghost_element(int g_a, subscript):
     """Releases access to the locally held data for an array with ghost
