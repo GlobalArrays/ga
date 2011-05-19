@@ -8,7 +8,7 @@
 typedef long dra_size_t;
 #define DRA_RW ELIO_RW
 #define DRA_R  ELIO_R
-#define DRA_W  ELIO_W
+#define DRA_W  ELIO_RW
 #define DRA_REQ_INVALID -333
 
 #ifdef __cplusplus
