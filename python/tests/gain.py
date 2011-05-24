@@ -1,7 +1,7 @@
 from mpi4py import MPI
 from ga import ga
 from ga import gain
-from ga import util
+from ga.gain import util
 import numpy as np
 import inspect
 
@@ -81,6 +81,8 @@ def test(module):
     check(module.add.accumulate(module.ones((7,7,7)), axis=0))
     check(module.add.accumulate(module.ones((7,7,7)), axis=1))
     check(module.add.accumulate(module.ones((7,7,7)), axis=2))
+    check(module.alen((1,2,3)))
+    check(module.alen(module.zeros((4,5,6))))
 
 if __name__ == '__main__':
     ga.sync()
@@ -116,9 +118,10 @@ if __name__ == '__main__':
             if not np.all(diff == 0):
                 print_result(result_np,result_gain,diff)
                 err = True
-            if not result_np.dtype == result_gain.dtype:
-                print "different types np=%s gain=%s" % (
-                        result_np.dtype, result_gain.dtype)
-                err = True
+            if hasattr(result_np,'dtype'):
+                if not result_np.dtype == result_gain.dtype:
+                    print "different types np=%s gain=%s" % (
+                            result_np.dtype, result_gain.dtype)
+                    err = True
             if err:
                 raise ValueError, "something bad at %s" % i

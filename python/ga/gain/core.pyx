@@ -2,7 +2,7 @@ import math
 import sys
 
 from mpi4py import MPI
-import ga
+from ga import ga
 import util
 
 import numpy as np
@@ -12,10 +12,17 @@ cimport numpy as np
 me = ga.nodeid()
 nproc = ga.nnodes()
 
-# at what point do we distribute arrays versus leaving as np.ndarray?
-SIZE_THRESHOLD = 1
 DEBUG = False
 DEBUG_SYNC = False
+
+# at what point do we distribute arrays versus leaving as np.ndarray?
+cdef int SIZE_THRESHOLD = 1
+cpdef int get_size_threshold():
+    global SIZE_THRESHOLD
+    return SIZE_THRESHOLD
+def set_size_threshold(int threshold):
+    global SIZE_THRESHOLD
+    SIZE_THRESHOLD = threshold
 
 gatypes = {
 np.dtype(np.int8):       ga.C_CHAR,
@@ -468,6 +475,1228 @@ class ndarray(object):
     def _get_base(self):
         return self._base
     base = property(_get_base)
+
+    ################################################################
+    ### ndarray methods
+    ################################################################
+    def all(self, axis=None, out=None):
+        """Returns True if all elements evaluate to True.
+
+        Refer to `numpy.all` for full documentation.
+
+        See Also
+        --------
+        numpy.all : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def any(self, axis=None, out=None):
+        """    Returns True if any of the elements of `a` evaluate to True.
+
+        Refer to `numpy.any` for full documentation.
+
+        See Also
+        --------
+        numpy.any : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def argmax(self, axis=None, out=None):
+        """Return indices of the maximum values along the given axis.
+
+        Refer to `numpy.argmax` for full documentation.
+
+        See Also
+        --------
+        numpy.argmax : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def argmin(self, axis=None, out=None):
+        """Return indices of the minimum values along the given axis of `a`.
+
+        Refer to `numpy.argmin` for detailed documentation.
+
+        See Also
+        --------
+        numpy.argmin : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def argsort(self, axis=-1, kind='quicksort', order=None):
+        """Returns the indices that would sort this array.
+
+        Refer to `numpy.argsort` for full documentation.
+
+        See Also
+        --------
+        numpy.argsort : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def astype(self, t):
+        """Copy of the array, cast to a specified type.
+
+        Parameters
+        ----------
+        t : string or dtype
+            Typecode or data-type to which the array is cast.
+
+        Examples
+        --------
+        >>> x = np.array([1, 2, 2.5])
+        >>> x
+        array([ 1. ,  2. ,  2.5])
+
+        >>> x.astype(int)
+        array([1, 2, 2])
+
+        """
+        raise NotImplementedError
+
+    def byteswap(self, inplace=False):
+        """Swap the bytes of the array elements
+
+        Toggle between low-endian and big-endian data representation by
+        returning a byteswapped array, optionally swapped in-place.
+
+        Parameters
+        ----------
+        inplace: bool, optional
+            If ``True``, swap bytes in-place, default is ``False``.
+
+        Returns
+        -------
+        out: ndarray
+            The byteswapped array. If `inplace` is ``True``, this is
+            a view to self.
+
+        Examples
+        --------
+        >>> A = np.array([1, 256, 8755], dtype=np.int16)
+        >>> map(hex, A)
+        ['0x1', '0x100', '0x2233']
+        >>> A.byteswap(True)
+        array([  256,     1, 13090], dtype=int16)
+        >>> map(hex, A)
+        ['0x100', '0x1', '0x3322']
+
+        Arrays of strings are not swapped
+
+        >>> A = np.array(['ceg', 'fac'])
+        >>> A.byteswap()
+        array(['ceg', 'fac'],
+              dtype='|S3')
+            
+        """
+        raise NotImplementedError
+
+    def choose(self, choices, out=None, mode='raise'):
+        """Use an index array to construct a new array from a set of choices.
+
+        Refer to `numpy.choose` for full documentation.
+
+        See Also
+        --------
+        numpy.choose : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def clip(self, a_min, a_max, out=None):
+        """Use an index array to construct a new array from a set of choices.
+
+        Refer to `numpy.choose` for full documentation.
+
+        See Also
+        --------
+        numpy.choose : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def compress(self, condition, axis=None, out=None):
+        """Return selected slices of this array along given axis.
+
+        Refer to `numpy.compress` for full documentation.
+
+        See Also
+        --------
+        numpy.compress : equivalent function
+
+        """
+        return NotImplementedError
+
+    def conj(self):
+        """Complex-conjugate all elements.
+
+        Refer to `numpy.conjugate` for full documentation.
+
+        See Also
+        --------
+        numpy.conjugate : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def conjugate(self):
+        """Return the complex conjugate, element-wise.
+
+        Refer to `numpy.conjugate` for full documentation.
+
+        See Also
+        --------
+        numpy.conjugate : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def copy(self, order='C'):
+        """Return a copy of the array.
+
+        Parameters
+        ----------
+        order : {'C', 'F', 'A'}, optional
+            By default, the result is stored in C-contiguous (row-major) order in
+            memory.  If `order` is `F`, the result has 'Fortran' (column-major)
+            order.  If order is 'A' ('Any'), then the result has the same order
+            as the input.
+
+        Examples
+        --------
+        >>> x = np.array([[1,2,3],[4,5,6]], order='F')
+
+        >>> y = x.copy()
+
+        >>> x.fill(0)
+
+        >>> x
+        array([[0, 0, 0],
+               [0, 0, 0]])
+
+        >>> y
+        array([[1, 2, 3],
+               [4, 5, 6]])
+
+        >>> y.flags['C_CONTIGUOUS']
+        True
+
+        """
+        raise NotImplementedError
+
+    def cumprod(self, axis=None, dtype=None, out=None):
+        """Return the cumulative product of the elements along the given axis.
+
+        Refer to `numpy.cumprod` for full documentation.
+
+        See Also
+        --------
+        numpy.cumprod : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def cumsum(self, axis=None, dtype=None, out=None):
+        """Return the cumulative sum of the elements along the given axis.
+
+        Refer to `numpy.cumsum` for full documentation.
+
+        See Also
+        --------
+        numpy.cumsum : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def diagonal(self, offset=0, axis1=0, axis2=1):
+        """Return specified diagonals.
+
+        Refer to `numpy.diagonal` for full documentation.
+
+        See Also
+        --------
+        numpy.diagonal : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def dot(self):
+        raise NotImplementedError
+
+    def dump(self, file):
+        """Dump a pickle of the array to the specified file.
+
+        The array can be read back with pickle.load or numpy.load.
+
+        Parameters
+        ----------
+        file : str
+            A string naming the dump file.
+
+        """
+        raise NotImplementedError
+
+    def dumps(self):
+        """Returns the pickle of the array as a string.
+
+        pickle.loads or numpy.loads will convert the string back to an array.
+
+        Parameters
+        ----------
+        None
+
+        """
+        raise NotImplementedError
+
+    def fill(self, value):
+        """Fill the array with a scalar value.
+
+        Parameters
+        ----------
+        value : scalar
+            All elements of `a` will be assigned this value.
+
+        Examples
+        --------
+        >>> a = np.array([1, 2])
+        >>> a.fill(0)
+        >>> a
+        array([0, 0])
+        >>> a = np.empty(2)
+        >>> a.fill(1)
+        >>> a
+        array([ 1.,  1.])
+
+        """
+        raise NotImplementedError
+
+    def flatten(self, order='C'):
+        """Return a copy of the array collapsed into one dimension.
+
+        Parameters
+        ----------
+        order : {'C', 'F'}, optional
+            Whether to flatten in C (row-major) or Fortran (column-major) order.
+            The default is 'C'.
+
+        Returns
+        -------
+        y : ndarray
+            A copy of the input array, flattened to one dimension.
+
+        See Also
+        --------
+        ravel : Return a flattened array.
+        flat : A 1-D flat iterator over the array.
+
+        Examples
+        --------
+        >>> a = np.array([[1,2], [3,4]])
+        >>> a.flatten()
+        array([1, 2, 3, 4])
+        >>> a.flatten('F')
+        array([1, 3, 2, 4])
+
+        """
+        raise NotImplementedError
+
+    def getfield(self, dtype, offset):
+        """Returns a field of the given array as a certain type.
+
+        A field is a view of the array data with each itemsize determined
+        by the given type and the offset into the current array, i.e. from
+        ``offset * dtype.itemsize`` to ``(offset+1) * dtype.itemsize``.
+
+        Parameters
+        ----------
+        dtype : str
+            String denoting the data type of the field.
+        offset : int
+            Number of `dtype.itemsize`'s to skip before beginning the element view.
+
+        Examples
+        --------
+        >>> x = np.diag([1.+1.j]*2)
+        >>> x
+        array([[ 1.+1.j,  0.+0.j],
+               [ 0.+0.j,  1.+1.j]])
+        >>> x.dtype
+        dtype('complex128')
+
+        >>> x.getfield('complex64', 0) # Note how this != x
+        array([[ 0.+1.875j,  0.+0.j   ],
+               [ 0.+0.j   ,  0.+1.875j]], dtype=complex64)
+
+        >>> x.getfield('complex64',1) # Note how different this is than x
+        array([[ 0. +5.87173204e-39j,  0. +0.00000000e+00j],
+               [ 0. +0.00000000e+00j,  0. +5.87173204e-39j]], dtype=complex64)
+
+        >>> x.getfield('complex128', 0) # == x
+        array([[ 1.+1.j,  0.+0.j],
+               [ 0.+0.j,  1.+1.j]])
+
+        If the argument dtype is the same as x.dtype, then offset != 0 raises
+        a ValueError:
+
+        >>> x.getfield('complex128', 1)
+        Traceback (most recent call last):
+          File "<stdin>", line 1, in <module>
+        ValueError: Need 0 <= offset <= 0 for requested type but received offset = 1
+
+        >>> x.getfield('float64', 0)
+        array([[ 1.,  0.],
+               [ 0.,  1.]])
+
+        >>> x.getfield('float64', 1)
+        array([[  1.77658241e-307,   0.00000000e+000],
+               [  0.00000000e+000,   1.77658241e-307]])
+
+        """
+        raise NotImplementedError
+
+    def item(self, *args):
+        """Copy an element of an array to a standard Python scalar and return it.
+
+        Parameters
+        ----------
+        \*args : Arguments (variable number and type)
+
+            * none: in this case, the method only works for arrays
+              with one element (`a.size == 1`), which element is
+              copied into a standard Python scalar object and returned.
+
+            * int_type: this argument is interpreted as a flat index into
+              the array, specifying which element to copy and return.
+
+            * tuple of int_types: functions as does a single int_type argument,
+              except that the argument is interpreted as an nd-index into the
+              array.
+
+        Returns
+        -------
+        z : Standard Python scalar object
+            A copy of the specified element of the array as a suitable
+            Python scalar
+
+        Notes
+        -----
+        When the data type of `a` is longdouble or clongdouble, item() returns
+        a scalar array object because there is no available Python scalar that
+        would not lose information. Void arrays return a buffer object for item(),
+        unless fields are defined, in which case a tuple is returned.
+
+        `item` is very similar to a[args], except, instead of an array scalar,
+        a standard Python scalar is returned. This can be useful for speeding up
+        access to elements of the array and doing arithmetic on elements of the
+        array using Python's optimized math.
+
+        Examples
+        --------
+        >>> x = np.random.randint(9, size=(3, 3))
+        >>> x
+        array([[3, 1, 7],
+               [2, 8, 3],
+               [8, 5, 3]])
+        >>> x.item(3)
+        2
+        >>> x.item(7)
+        5
+        >>> x.item((0, 1))
+        1
+        >>> x.item((2, 2))
+        3
+
+        """
+        raise NotImplementedError
+
+    def itemset(self, *args):
+        """Insert scalar into an array (scalar is cast to array's dtype, if possible)
+
+        There must be at least 1 argument, and define the last argument
+        as *item*.  Then, ``a.itemset(*args)`` is equivalent to but faster
+        than ``a[args] = item``.  The item should be a scalar value and `args`
+        must select a single item in the array `a`.
+
+        Parameters
+        ----------
+        \*args : Arguments
+            If one argument: a scalar, only used in case `a` is of size 1.
+            If two arguments: the last argument is the value to be set
+            and must be a scalar, the first argument specifies a single array
+            element location. It is either an int or a tuple.
+
+        Notes
+        -----
+        Compared to indexing syntax, `itemset` provides some speed increase
+        for placing a scalar into a particular location in an `ndarray`,
+        if you must do this.  However, generally this is discouraged:
+        among other problems, it complicates the appearance of the code.
+        Also, when using `itemset` (and `item`) inside a loop, be sure
+        to assign the methods to a local variable to avoid the attribute
+        look-up at each loop iteration.
+
+        Examples
+        --------
+        >>> x = np.random.randint(9, size=(3, 3))
+        >>> x
+        array([[3, 1, 7],
+               [2, 8, 3],
+               [8, 5, 3]])
+        >>> x.itemset(4, 0)
+        >>> x.itemset((2, 2), 9)
+        >>> x
+        array([[3, 1, 7],
+               [2, 0, 3],
+               [8, 5, 9]])
+
+        """
+        raise NotImplementedError
+
+    def max(self, axis=None, out=None):
+        """Return the maximum along a given axis.
+
+        Refer to `numpy.amax` for full documentation.
+
+        See Also
+        --------
+        numpy.amax : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def mean(self, axis=None, dtype=None, out=None):
+        """Returns the average of the array elements along given axis.
+
+        Refer to `numpy.mean` for full documentation.
+
+        See Also
+        --------
+        numpy.mean : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def min(self, axis=None, out=None):
+        """Return the minimum along a given axis.
+
+        Refer to `numpy.amin` for full documentation.
+
+        See Also
+        --------
+        numpy.amin : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def newbyteorder(self, new_order='S'):
+        """Return the array with the same data viewed with a different byte order.
+
+        Equivalent to::
+
+            arr.view(arr.dtype.newbytorder(new_order))
+
+        Changes are also made in all fields and sub-arrays of the array data
+        type.
+
+
+
+        Parameters
+        ----------
+        new_order : string, optional
+            Byte order to force; a value from the byte order specifications
+            above. `new_order` codes can be any of::
+
+             * 'S' - swap dtype from current to opposite endian
+             * {'<', 'L'} - little endian
+             * {'>', 'B'} - big endian
+             * {'=', 'N'} - native order
+             * {'|', 'I'} - ignore (no change to byte order)
+
+            The default value ('S') results in swapping the current
+            byte order. The code does a case-insensitive check on the first
+            letter of `new_order` for the alternatives above.  For example,
+            any of 'B' or 'b' or 'biggish' are valid to specify big-endian.
+
+
+        Returns
+        -------
+        new_arr : array
+            New array object with the dtype reflecting given change to the
+            byte order.
+
+        """
+        raise NotImplementedError
+
+    def nonzero(self):
+        """Return the indices of the elements that are non-zero.
+
+        Refer to `numpy.nonzero` for full documentation.
+
+        See Also
+        --------
+        numpy.nonzero : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def prod(self, axis=None, dtype=None, out=None):
+        """Return the product of the array elements over the given axis
+
+        Refer to `numpy.prod` for full documentation.
+
+        See Also
+        --------
+        numpy.prod : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def ptp(self, axis=None, out=None):
+        """Peak to peak (maximum - minimum) value along a given axis.
+
+        Refer to `numpy.ptp` for full documentation.
+
+        See Also
+        --------
+        numpy.ptp : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def put(self, indices, values, mode='raise'):
+        """Set ``a.flat[n] = values[n]`` for all `n` in indices.
+
+        Refer to `numpy.put` for full documentation.
+
+        See Also
+        --------
+        numpy.put : equivalent function
+        
+        """
+        raise NotImplementedError
+
+    def ravel(self, order=None):
+        """Return a flattened array.
+
+        Refer to `numpy.ravel` for full documentation.
+
+        See Also
+        --------
+        numpy.ravel : equivalent function
+
+        ndarray.flat : a flat iterator on the array.
+
+        """
+        raise NotImplementedError
+
+    def repeat(self, repeats, axis=None):
+        """Repeat elements of an array.
+
+        Refer to `numpy.repeat` for full documentation.
+
+        See Also
+        --------
+        numpy.repeat : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def reshape(self, shape, order='C'):
+        """Returns an array containing the same data with a new shape.
+
+        Refer to `numpy.reshape` for full documentation.
+
+        See Also
+        --------
+        numpy.reshape : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def resize(self, new_shape, refcheck=True):
+        """Change shape and size of array in-place.
+
+        Parameters
+        ----------
+        new_shape : tuple of ints, or `n` ints
+            Shape of resized array.
+        refcheck : bool, optional
+            If False, reference count will not be checked. Default is True.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If `a` does not own its own data or references or views to it exist,
+            and the data memory must be changed.
+
+        SystemError
+            If the `order` keyword argument is specified. This behaviour is a
+            bug in NumPy.
+
+        See Also
+        --------
+        resize : Return a new array with the specified shape.
+
+        Notes
+        -----
+        This reallocates space for the data area if necessary.
+
+        Only contiguous arrays (data elements consecutive in memory) can be
+        resized.
+
+        The purpose of the reference count check is to make sure you
+        do not use this array as a buffer for another Python object and then
+        reallocate the memory. However, reference counts can increase in
+        other ways so if you are sure that you have not shared the memory
+        for this array with another Python object, then you may safely set
+        `refcheck` to False.
+
+        Examples
+        --------
+        Shrinking an array: array is flattened (in the order that the data are
+        stored in memory), resized, and reshaped:
+
+        >>> a = np.array([[0, 1], [2, 3]], order='C')
+        >>> a.resize((2, 1))
+        >>> a
+        array([[0],
+               [1]])
+
+        >>> a = np.array([[0, 1], [2, 3]], order='F')
+        >>> a.resize((2, 1))
+        >>> a
+        array([[0],
+               [2]])
+
+        Enlarging an array: as above, but missing entries are filled with zeros:
+
+        >>> b = np.array([[0, 1], [2, 3]])
+        >>> b.resize(2, 3) # new_shape parameter doesn't have to be a tuple
+        >>> b
+        array([[0, 1, 2],
+               [3, 0, 0]])
+
+        Referencing an array prevents resizing...
+
+        >>> c = a
+        >>> a.resize((1, 1))
+        Traceback (most recent call last):
+        ...
+        ValueError: cannot resize an array that has been referenced ...
+
+        Unless `refcheck` is False:
+
+        >>> a.resize((1, 1), refcheck=False)
+        >>> a
+        array([[0]])
+        >>> c
+        array([[0]])
+
+        """
+        raise NotImplementedError
+
+    def round(self, decimals=0, out=None):
+        """Return `a` with each element rounded to the given number of decimals.
+
+        Refer to `numpy.around` for full documentation.
+
+        See Also
+        --------
+        numpy.around : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def searchsorted(self, v, side='left'):
+        """Find indices where elements of v should be inserted in a to maintain order.
+
+        For full documentation, see `numpy.searchsorted`
+
+        See Also
+        --------
+        numpy.searchsorted : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def setfield(self, val, dtype, offset=0):
+        """Put a value into a specified place in a field defined by a data-type.
+
+        Place `val` into `a`'s field defined by `dtype` and beginning `offset`
+        bytes into the field.
+
+        Parameters
+        ----------
+        val : object
+            Value to be placed in field.
+        dtype : dtype object
+            Data-type of the field in which to place `val`.
+        offset : int, optional
+            The number of bytes into the field at which to place `val`.
+
+        Returns
+        -------
+        None
+
+        See Also
+        --------
+        getfield
+
+        Examples
+        --------
+        >>> x = np.eye(3)
+        >>> x.getfield(np.float64)
+        array([[ 1.,  0.,  0.],
+               [ 0.,  1.,  0.],
+               [ 0.,  0.,  1.]])
+        >>> x.setfield(3, np.int32)
+        >>> x.getfield(np.int32)
+        array([[3, 3, 3],
+               [3, 3, 3],
+               [3, 3, 3]])
+        >>> x
+        array([[  1.00000000e+000,   1.48219694e-323,   1.48219694e-323],
+               [  1.48219694e-323,   1.00000000e+000,   1.48219694e-323],
+               [  1.48219694e-323,   1.48219694e-323,   1.00000000e+000]])
+        >>> x.setfield(np.eye(3), np.int32)
+        >>> x
+        array([[ 1.,  0.,  0.],
+               [ 0.,  1.,  0.],
+               [ 0.,  0.,  1.]])
+
+        """
+        raise NotImplementedError
+
+    def setflags(self, write=None, align=None, uic=None):
+        """Set array flags WRITEABLE, ALIGNED, and UPDATEIFCOPY, respectively.
+
+        These Boolean-valued flags affect how numpy interprets the memory
+        area used by `a` (see Notes below). The ALIGNED flag can only
+        be set to True if the data is actually aligned according to the type.
+        The UPDATEIFCOPY flag can never be set to True. The flag WRITEABLE
+        can only be set to True if the array owns its own memory, or the
+        ultimate owner of the memory exposes a writeable buffer interface,
+        or is a string. (The exception for string is made so that unpickling
+        can be done without copying memory.)
+
+        Parameters
+        ----------
+        write : bool, optional
+            Describes whether or not `a` can be written to.
+        align : bool, optional
+            Describes whether or not `a` is aligned properly for its type.
+        uic : bool, optional
+            Describes whether or not `a` is a copy of another "base" array.
+
+        Notes
+        -----
+        Array flags provide information about how the memory area used
+        for the array is to be interpreted. There are 6 Boolean flags
+        in use, only three of which can be changed by the user:
+        UPDATEIFCOPY, WRITEABLE, and ALIGNED.
+
+        WRITEABLE (W) the data area can be written to;
+
+        ALIGNED (A) the data and strides are aligned appropriately for the hardware
+        (as determined by the compiler);
+
+        UPDATEIFCOPY (U) this array is a copy of some other array (referenced
+        by .base). When this array is deallocated, the base array will be
+        updated with the contents of this array.
+
+        All flags can be accessed using their first (upper case) letter as well
+        as the full name.
+
+        Examples
+        --------
+        >>> y
+        array([[3, 1, 7],
+               [2, 0, 0],
+               [8, 5, 9]])
+        >>> y.flags
+          C_CONTIGUOUS : True
+          F_CONTIGUOUS : False
+          OWNDATA : True
+          WRITEABLE : True
+          ALIGNED : True
+          UPDATEIFCOPY : False
+        >>> y.setflags(write=0, align=0)
+        >>> y.flags
+          C_CONTIGUOUS : True
+          F_CONTIGUOUS : False
+          OWNDATA : True
+          WRITEABLE : False
+          ALIGNED : False
+          UPDATEIFCOPY : False
+        >>> y.setflags(uic=1)
+        Traceback (most recent call last):
+          File "<stdin>", line 1, in <module>
+        ValueError: cannot set UPDATEIFCOPY flag to True
+
+        """
+        raise NotImplementedError
+
+    def sort(self, axis=-1, kind='quicksort', order=None):
+        """Sort an array, in-place.
+
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to sort. Default is -1, which means sort along the
+            last axis.
+        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+            Sorting algorithm. Default is 'quicksort'.
+        order : list, optional
+            When `a` is an array with fields defined, this argument specifies
+            which fields to compare first, second, etc.  Not all fields need be
+            specified.
+
+        See Also
+        --------
+        numpy.sort : Return a sorted copy of an array.
+        argsort : Indirect sort.
+        lexsort : Indirect stable sort on multiple keys.
+        searchsorted : Find elements in sorted array.
+
+        Notes
+        -----
+        See ``sort`` for notes on the different sorting algorithms.
+
+        Examples
+        --------
+        >>> a = np.array([[1,4], [3,1]])
+        >>> a.sort(axis=1)
+        >>> a
+        array([[1, 4],
+               [1, 3]])
+        >>> a.sort(axis=0)
+        >>> a
+        array([[1, 3],
+               [1, 4]])
+
+        Use the `order` keyword to specify a field to use when sorting a
+        structured array:
+
+        >>> a = np.array([('a', 2), ('c', 1)], dtype=[('x', 'S1'), ('y', int)])
+        >>> a.sort(order='y')
+        >>> a
+        array([('c', 1), ('a', 2)],
+              dtype=[('x', '|S1'), ('y', '<i4')])
+
+        """
+        raise NotImplementedError
+
+    def squeeze(self):
+        """Remove single-dimensional entries from the shape of `a`.
+
+        Refer to `numpy.squeeze` for full documentation.
+
+        See Also
+        --------
+        numpy.squeeze : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def std(self, axis=None, dtype=None, out=None, ddof=0):
+        """Remove single-dimensional entries from the shape of `a`.
+
+        Refer to `numpy.squeeze` for full documentation.
+
+        See Also
+        --------
+        numpy.squeeze : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def sum(self, axis=None, dtype=None, out=None):
+        """Return the sum of the array elements over the given axis.
+
+        Refer to `numpy.sum` for full documentation.
+
+        See Also
+        --------
+        numpy.sum : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def swapaxes(self, axis1, axis2):
+        """Return a view of the array with `axis1` and `axis2` interchanged.
+
+        Refer to `numpy.swapaxes` for full documentation.
+
+        See Also
+        --------
+        numpy.swapaxes : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def take(self, indices, axis=None, out=None, mode='raise'):
+        """Return an array formed from the elements of `a` at the given indices.
+
+        Refer to `numpy.take` for full documentation.
+
+        See Also
+        --------
+        numpy.take : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def tofile(self, fid, sep="", format="%s"):
+        """Write array to a file as text or binary (default).
+
+        Data is always written in 'C' order, independent of the order of `a`.
+        The data produced by this method can be recovered using the function
+        fromfile().
+
+        Parameters
+        ----------
+        fid : file or str
+            An open file object, or a string containing a filename.
+        sep : str
+            Separator between array items for text output.
+            If "" (empty), a binary file is written, equivalent to
+            ``file.write(a.tostring())``.
+        format : str
+            Format string for text file output.
+            Each entry in the array is formatted to text by first converting
+            it to the closest Python type, and then using "format" % item.
+
+        Notes
+        -----
+        This is a convenience function for quick storage of array data.
+        Information on endianness and precision is lost, so this method is not a
+        good choice for files intended to archive data or transport data between
+        machines with different endianness. Some of these problems can be overcome
+        by outputting the data as text files, at the expense of speed and file
+        size.
+
+        """
+        raise NotImplementedError
+
+    def tolist(self):
+        """Return the array as a (possibly nested) list.
+
+        Return a copy of the array data as a (nested) Python list.
+        Data items are converted to the nearest compatible Python type.
+
+        Parameters
+        ----------
+        none
+
+        Returns
+        -------
+        y : list
+            The possibly nested list of array elements.
+
+        Notes
+        -----
+        The array may be recreated, ``a = np.array(a.tolist())``.
+
+        Examples
+        --------
+        >>> a = np.array([1, 2])
+        >>> a.tolist()
+        [1, 2]
+        >>> a = np.array([[1, 2], [3, 4]])
+        >>> list(a)
+        [array([1, 2]), array([3, 4])]
+        >>> a.tolist()
+        [[1, 2], [3, 4]]
+
+        """
+        raise NotImplementedError
+
+    def tostring(self, order='C'):
+        """Construct a Python string containing the raw data bytes in the array.
+
+        Constructs a Python string showing a copy of the raw contents of
+        data memory. The string can be produced in either 'C' or 'Fortran',
+        or 'Any' order (the default is 'C'-order). 'Any' order means C-order
+        unless the F_CONTIGUOUS flag in the array is set, in which case it
+        means 'Fortran' order.
+
+        Parameters
+        ----------
+        order : {'C', 'F', None}, optional
+            Order of the data for multidimensional arrays:
+            C, Fortran, or the same as for the original array.
+
+        Returns
+        -------
+        s : str
+            A Python string exhibiting a copy of `a`'s raw data.
+
+        Examples
+        --------
+        >>> x = np.array([[0, 1], [2, 3]])
+        >>> x.tostring()
+        '\x00\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00'
+        >>> x.tostring('C') == x.tostring()
+        True
+        >>> x.tostring('F')
+        '\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00'
+
+        """
+        raise NotImplementedError
+
+    def trace(self, offset=0, axis1=0, axis2=1, dtype=None, out=None):
+        """Return the sum along diagonals of the array.
+
+        Refer to `numpy.trace` for full documentation.
+
+        See Also
+        --------
+        numpy.trace : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def transpose(*axes):
+        """Returns a view of the array with axes transposed.
+
+        For a 1-D array, this has no effect. (To change between column and
+        row vectors, first cast the 1-D array into a matrix object.)
+        For a 2-D array, this is the usual matrix transpose.
+        For an n-D array, if axes are given, their order indicates how the
+        axes are permuted (see Examples). If axes are not provided and
+        ``a.shape = (i[0], i[1], ... i[n-2], i[n-1])``, then
+        ``a.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0])``.
+
+        Parameters
+        ----------
+        axes : None, tuple of ints, or `n` ints
+
+         * None or no argument: reverses the order of the axes.
+
+         * tuple of ints: `i` in the `j`-th place in the tuple means `a`'s
+           `i`-th axis becomes `a.transpose()`'s `j`-th axis.
+
+         * `n` ints: same as an n-tuple of the same ints (this form is
+           intended simply as a "convenience" alternative to the tuple form)
+
+        Returns
+        -------
+        out : ndarray
+            View of `a`, with axes suitably permuted.
+
+        See Also
+        --------
+        ndarray.T : Array property returning the array transposed.
+
+        Examples
+        --------
+        >>> a = np.array([[1, 2], [3, 4]])
+        >>> a
+        array([[1, 2],
+               [3, 4]])
+        >>> a.transpose()
+        array([[1, 3],
+               [2, 4]])
+        >>> a.transpose((1, 0))
+        array([[1, 3],
+               [2, 4]])
+        >>> a.transpose(1, 0)
+        array([[1, 3],
+               [2, 4]])
+
+        """
+        raise NotImplementedError
+
+    def var(self, axis=None, dtype=None, out=None, ddof=0):
+        """Returns the variance of the array elements, along given axis.
+
+        Refer to `numpy.var` for full documentation.
+
+        See Also
+        --------
+        numpy.var : equivalent function
+
+        """
+        raise NotImplementedError
+
+    def view(self, dtype=None, type=None):
+        """New view of array with the same data.
+
+        Parameters
+        ----------
+        dtype : data-type, optional
+            Data-type descriptor of the returned view, e.g., float32 or int16.
+            The default, None, results in the view having the same data-type
+            as `a`.
+        type : Python type, optional
+            Type of the returned view, e.g., ndarray or matrix.  Again, the
+            default None results in type preservation.
+
+        Notes
+        -----
+        ``a.view()`` is used two different ways:
+
+        ``a.view(some_dtype)`` or ``a.view(dtype=some_dtype)`` constructs a view
+        of the array's memory with a different data-type.  This can cause a
+        reinterpretation of the bytes of memory.
+
+        ``a.view(ndarray_subclass)`` or ``a.view(type=ndarray_subclass)`` just
+        returns an instance of `ndarray_subclass` that looks at the same array
+        (same shape, dtype, etc.)  This does not cause a reinterpretation of the
+        memory.
+
+
+        Examples
+        --------
+        >>> x = np.array([(1, 2)], dtype=[('a', np.int8), ('b', np.int8)])
+
+        Viewing array data using a different type and dtype:
+
+        >>> y = x.view(dtype=np.int16, type=np.matrix)
+        >>> y
+        matrix([[513]], dtype=int16)
+        >>> print type(y)
+        <class 'numpy.matrixlib.defmatrix.matrix'>
+
+        Creating a view on a structured array so it can be used in calculations
+
+        >>> x = np.array([(1, 2),(3,4)], dtype=[('a', np.int8), ('b', np.int8)])
+        >>> xv = x.view(dtype=np.int8).reshape(-1,2)
+        >>> xv
+        array([[1, 2],
+               [3, 4]], dtype=int8)
+        >>> xv.mean(0)
+        array([ 2.,  3.])
+
+        Making changes to the view changes the underlying array
+
+        >>> xv[0,1] = 20
+        >>> print x
+        [(1, 20) (3, 4)]
+
+        Using a view to convert an array to a record array:
+
+        >>> z = x.view(np.recarray)
+        >>> z.a
+        array([1], dtype=int8)
+
+        Views share data:
+
+        >>> x[0] = (9, 10)
+        >>> z[0]
+        (9, 10)
+
+        """
+        raise NotImplementedError
 
     ################################################################
     ### ndarray operator overloading
@@ -1244,7 +2473,7 @@ class ufunc(object):
         if out is None:
             if dtype is None:
                 dtype = a.dtype
-            if a.size < SIZE_THRESHOLD:
+            if a.size < get_size_threshold():
                 out = np.ndarray(a.shape, dtype=dtype)
             else:
                 out = ndarray(a.shape, dtype=dtype)
@@ -1841,7 +3070,7 @@ def arange(start, stop=None, step=None, dtype=None):
         # true division, otherwise off by one
         length = math.ceil((stop-start)/step)
     # bail if threshold not met
-    if length < SIZE_THRESHOLD:
+    if length < get_size_threshold():
         return np.arange(start,stop,step,dtype)
     if dtype is None:
         if (isinstance(start, (int,long))
@@ -1924,7 +3153,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
 
     """
     # bail if threshold not met
-    if num < SIZE_THRESHOLD:
+    if num < get_size_threshold():
         return np.linspace(start,stop,num,endpoint,retstep)
     a = ndarray(num)
     step = None
@@ -2012,7 +3241,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0):
     
     """
     # bail if threshold not met
-    if num < SIZE_THRESHOLD:
+    if num < get_size_threshold():
         return np.logspace(start,stop,num,endpoint,base)
     a = ndarray(num)
     step = None
@@ -2137,7 +3366,7 @@ def asarray(a, dtype=None, order=None):
         return a
     else:
         npa = np.asarray(a, dtype=dtype)
-        if np.size(npa) > SIZE_THRESHOLD:
+        if np.size(npa) > get_size_threshold():
             g_a = ndarray(npa.shape, npa.dtype, npa)
             return g_a # distributed using Global Arrays ndarray
         else:
@@ -2223,6 +3452,50 @@ def diag(v, k=0):
     else:
         return np.diag(v,k)
 
+class flatiter(object):
+    """Flat iterator object to iterate over arrays.
+
+    A `flatiter` iterator is returned by ``x.flat`` for any array `x`.
+    It allows iterating over the array as if it were a 1-D array,
+    either in a for-loop or by calling its `next` method.
+
+    Iteration is done in C-contiguous style, with the last index varying the
+    fastest. The iterator can also be indexed using basic slicing or
+    advanced indexing.
+
+    See Also
+    --------
+    ndarray.flat : Return a flat iterator over an array.
+    ndarray.flatten : Returns a flattened copy of an array.
+
+    Notes
+    -----
+    A `flatiter` iterator can not be constructed directly from Python code
+    by calling the `flatiter` constructor.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2, 3)
+    >>> fl = x.flat
+    >>> type(fl)
+    <type 'numpy.flatiter'>
+    >>> for item in fl:
+    ...     print item
+    ...
+    0
+    1
+    2
+    3
+    4
+    5
+
+    >>> fl[2:4]
+    array([2, 3])
+
+    """
+    def __init__(self):
+        raise NotImplementedError
+
 def print_debug(s):
     if DEBUG:
         print s
@@ -2238,46 +3511,3 @@ def print_sync(what):
         else:
             MPI.COMM_WORLD.send(what, dest=0, tag=11)
         ga.sync()
-
-if __name__ != '__main__':
-    # reports how much of numpy as been overridden
-    if False:
-        import inspect
-        np_function_count = 0
-        ov_function_count = 0
-        np_class_count = 0
-        ov_class_count = 0
-        np_ufunc_count = 0
-        ov_ufunc_count = 0
-        self_module = sys.modules[__name__]
-        for attr in dir(np):
-            np_obj = getattr(np, attr)
-            override = False
-            if hasattr(self_module, attr):
-                #if not me: print "gain override exists for: %s" % attr
-                override = True
-            else:
-                setattr(self_module, attr, getattr(np, attr))
-            if inspect.isfunction(np_obj):
-                np_function_count += 1
-                if override:
-                    ov_function_count += 1
-            elif type(np_obj) is type(np.add):
-                np_ufunc_count += 1
-                if override:
-                    ov_ufunc_count += 1
-            elif inspect.isclass(np_obj):
-                np_class_count += 1
-                if override:
-                    ov_class_count += 1
-        print "%d/%d numpy functions overridden by gain" % (
-                ov_function_count,np_function_count)
-        print "%d/%d numpy classes overridden by gain" % (
-                ov_class_count,np_class_count)
-        print "%d/%d numpy ufuncs overridden by gain" % (
-                ov_ufunc_count,np_ufunc_count)
-    # imports from 'numpy' module every missing attribute into 'gain' module
-    self_module = sys.modules[__name__]
-    for attr in dir(np):
-        if not hasattr(self_module, attr):
-            setattr(self_module, attr, getattr(np, attr))
