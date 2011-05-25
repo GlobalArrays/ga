@@ -2,6 +2,10 @@
 
 DEBUG = False
 
+def set_debug(val):
+    global DEBUG
+    DEBUG = val
+
 def print_debug(s):
     if DEBUG:
         print s

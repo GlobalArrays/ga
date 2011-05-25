@@ -12,9 +12,6 @@ cimport numpy as np
 me = ga.nodeid()
 nproc = ga.nnodes()
 
-DEBUG = False
-DEBUG_SYNC = False
-
 # at what point do we distribute arrays versus leaving as np.ndarray?
 cdef int SIZE_THRESHOLD = 1
 cpdef int get_size_threshold():
@@ -23,6 +20,19 @@ cpdef int get_size_threshold():
 def set_size_threshold(int threshold):
     global SIZE_THRESHOLD
     SIZE_THRESHOLD = threshold
+def should_distribute(shape):
+    the_shape = shape
+    try:
+        iter(shape)
+    except:
+        the_shape = [shape]
+    if len(the_shape) == 0:
+        return False
+    try:
+        return np.multiply.reduce(shape) >= get_size_threshold()
+    except TypeError:
+        # cannot reduce on a scalar, so compare directly
+        return shape >= get_size_threshold()
 
 gatypes = {
 np.dtype(np.int8):       ga.C_CHAR,
@@ -228,6 +238,12 @@ class ndarray(object):
     array([2, 3])
 
     """
+    def __new__(cls, shape, dtype=float, buffer=None, offset=0,
+            strides=None, order=None, base=None):
+        if base is None and not should_distribute(shape):
+            return np.ndarray(shape, dtype, buffer, offset, strides, order)
+        return super(ndarray, cls).__new__(cls)
+
     def __init__(self, shape, dtype=float, buffer=None, offset=0,
             strides=None, order=None, base=None):
         try:
@@ -371,7 +387,8 @@ class ndarray(object):
         else:
             ret = ga.get(self.handle, _lo, _hi, nd_buffer)
         print_debug("![%d] ret.shape=%s" % (me,ret.shape))
-        ret = ret[adjust]
+        if ret.ndim > 0:
+            ret = ret[adjust]
         if self._is_real:
             ret = ret.real
         elif self._is_imag:
@@ -456,7 +473,7 @@ class ndarray(object):
     ndim = property(_get_ndim)
 
     def _get_shape(self):
-        return self._shape
+        return tuple(self._shape)
     def _set_shape(self, value):
         raise NotImplementedError, "TODO"
     shape = property(_get_shape, _set_shape)
@@ -1803,6 +1820,9 @@ class ndarray(object):
         new_shape = util.slices_to_shape(key)
         a = ndarray(new_shape, self.dtype, base=self)
         a.global_slice = util.slice_arithmetic(self.global_slice, key)
+        if a.ndim == 0:
+            a = a.get()
+            return a.dtype.type(a) # convert single item to np.generic (scalar)
         return a
 
     #def __getslice__
@@ -2140,7 +2160,7 @@ class ufunc(object):
             ignore = np.ones(1, dtype=input.dtype)
             out_type = self.func(ignore).dtype
             print_debug("out_type = %s" % out_type)
-            out = ndarray(input.shape, out_type) # distribute
+            out = ndarray(input.shape, out_type)
         # sanity checks
         if not isinstance(out, (ndarray, np.ndarray)):
             raise TypeError, "return arrays must be of ArrayType"
@@ -2149,7 +2169,7 @@ class ufunc(object):
             raise ValueError, 'invalid return array shape'
         # Now figure out what to do...
         if isinstance(out, ndarray):
-            # get out as an ndarray first
+            # get out as an np.ndarray first
             npout = out.access()
             if npout is None:
                 print_sync("npout is None")
@@ -2190,16 +2210,17 @@ class ufunc(object):
             self.func(npin, npout, *args, **kwargs)
             if release_in: input.release()
             out.release_update()
+            ga.sync()
         else:
-            print_sync("out is not ndarray")
+            print_sync("out is not distributed")
             print_sync("NA")
-            # out is not an ndarray
+            # out is not distributed
             npin = input
             if isinstance(input, ndarray):
                 # input is an ndarray, so get entire thing
                 npin = input.get()
             self.func(npin, out, *args, **kwargs)
-        ga.sync()
+        #ga.sync() # moved to the cond. where 'out' is distributed
         return out
 
     def _binary_call(self, first, second, out=None, *args, **kwargs):
@@ -2247,7 +2268,7 @@ class ufunc(object):
             raise TypeError, "return arrays must be of ArrayType"
         # Now figure out what to do...
         if isinstance(out, ndarray):
-            # get out as an ndarray first
+            # get out as an np.ndarray first
             npout = out.access()
             if npout is None:
                 print_sync("npout is None")
@@ -2336,12 +2357,13 @@ class ufunc(object):
             if release_first: first.release()
             if release_second: second.release()
             out.release_update()
+            ga.sync()
         else:
             print_sync("npout is None")
             print_sync("NA")
             print_sync("NA")
             print_sync("NA")
-            # out is not an ndarray
+            # out is not distributed
             ndfirst = first
             if isinstance(first, ndarray):
                 ndfirst = first.get()
@@ -2349,7 +2371,7 @@ class ufunc(object):
             if isinstance(second, ndarray):
                 ndsecond = second.get()
             self.func(ndfirst, ndsecond, out, *args, **kwargs)
-        ga.sync()
+        #ga.sync() # moved to the cond. where 'out' is distributed
         return out
 
     def reduce(self, a, axis=0, dtype=None, out=None, *args, **kwargs):
@@ -2433,10 +2455,7 @@ class ufunc(object):
             del shape[axis]
             if dtype is None:
                 dtype = a.dtype
-            if len(shape) > 0:
-                out = ndarray(shape, dtype=dtype)
-            else:
-                out = np.ndarray(shape, dtype=dtype)
+            out = ndarray(shape, dtype=dtype)
         if out.ndim == 0:
             # optimize the 1d reduction
             nda = a.access()
@@ -2473,10 +2492,7 @@ class ufunc(object):
         if out is None:
             if dtype is None:
                 dtype = a.dtype
-            if a.size < get_size_threshold():
-                out = np.ndarray(a.shape, dtype=dtype)
-            else:
-                out = ndarray(a.shape, dtype=dtype)
+            out = ndarray(a.shape, dtype=dtype)
         if out.ndim == 1:
             # optimize the 1d accumulate
             if isinstance(out, ndarray):
@@ -2665,6 +2681,8 @@ def zeros(shape, dtype=np.float, order='C'):
           dtype=[('x', '<i4'), ('y', '<i4')])
 
     """
+    if not should_distribute(shape):
+        return np.zeros(shape, dtype, order)
     a = ndarray(shape, dtype)
     buf = a.access()
     if buf is not None:
@@ -2743,6 +2761,8 @@ def ones(shape, dtype=np.float, order='C'):
            [ 1.,  1.]])
     
     """
+    if not should_distribute(shape):
+        return np.ones(shape, dtype, order)
     a = ndarray(shape, dtype)
     buf = a.access()
     if buf is not None:
@@ -2892,6 +2912,8 @@ def eye(N, M=None, k=0, dtype=float):
     """
     if M is None:
         M = N
+    if not should_distribute((N,M)):
+        return np.eye(N,M,k,dtype)
     a = zeros((N,M), dtype=dtype)
     nda = a.access()
     if nda is not None:
@@ -2985,6 +3007,8 @@ def fromfunction(func, shape, **kwargs):
            [2, 3, 4]])
     
     """
+    if not should_distribute(shape):
+        return np.fromfunction(func, shape, **kwargs)
     dtype = kwargs.pop('dtype', np.float32)
     # create the new GA (collective operation)
     a = ndarray(shape, dtype)
@@ -3068,9 +3092,9 @@ def arange(start, stop=None, step=None, dtype=None):
         length = 0
     else:
         # true division, otherwise off by one
-        length = math.ceil((stop-start)/step)
+        length = int(math.ceil((stop-start)/step))
     # bail if threshold not met
-    if length < get_size_threshold():
+    if not should_distribute(length):
         return np.arange(start,stop,step,dtype)
     if dtype is None:
         if (isinstance(start, (int,long))
@@ -3079,7 +3103,7 @@ def arange(start, stop=None, step=None, dtype=None):
             dtype = np.int64
         else:
             dtype = np.float64
-    a = ndarray((int(length),), dtype)
+    a = ndarray(length, dtype)
     a_local = a.access()
     if a_local is not None:
         lo,hi = a.distribution()
@@ -3153,7 +3177,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
 
     """
     # bail if threshold not met
-    if num < get_size_threshold():
+    if not should_distribute(num):
         return np.linspace(start,stop,num,endpoint,retstep)
     a = ndarray(num)
     step = None
@@ -3241,7 +3265,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0):
     
     """
     # bail if threshold not met
-    if num < get_size_threshold():
+    if not should_distribute(num):
         return np.logspace(start,stop,num,endpoint,base)
     a = ndarray(num)
     step = None
@@ -3321,11 +3345,11 @@ def dot(a, b, out=None):
     499128
 
     """
+    a = asarray(a)
+    b = asarray(b)
     if not (isinstance(a, ndarray) or isinstance(b, ndarray)):
         # numpy pass through
         return np.dot(a,b)
-    a = asarray(a)
-    b = asarray(b)
     if a.ndim == 1:
         if len(a) != len(b):
             raise ValueError, "objects are not aligned"
@@ -3358,19 +3382,18 @@ def dot(a, b, out=None):
         raise NotImplementedError
 
 def asarray(a, dtype=None, order=None):
-    if isinstance(a, ndarray):
-        return a
-    elif isinstance(a, np.ndarray):
-        # we return numpy.ndarray instances because they already exist in
+    if isinstance(a, (ndarray,np.ndarray,np.generic)):
+        # we return ga.gain.ndarray instances for obvious reasons, but we
+        # also return numpy.ndarray instances because they already exist in
         # whole on all procs -- no need to distribute pieces
         return a
     else:
         npa = np.asarray(a, dtype=dtype)
-        if np.size(npa) > get_size_threshold():
+        if should_distribute(npa.size):
             g_a = ndarray(npa.shape, npa.dtype, npa)
             return g_a # distributed using Global Arrays ndarray
         else:
-            return npa # scalar or zero rank array
+            return npa # possibly a scalar or zero rank array
 
 def diag(v, k=0):
     """Extract a diagonal or construct a diagonal array.
@@ -3495,6 +3518,16 @@ class flatiter(object):
     """
     def __init__(self):
         raise NotImplementedError
+
+DEBUG = False
+DEBUG_SYNC = False
+def set_debug(val):
+    global DEBUG
+    DEBUG = val
+
+def set_debug_sync(val):
+    global DEBUG_SYNC
+    DEBUG_SYNC = val
 
 def print_debug(s):
     if DEBUG:

@@ -4,11 +4,13 @@ from ga import gain
 from ga.gain import util
 import numpy as np
 import inspect
+from getopt import getopt
+import sys
 
 me = gain.me
-util.DEBUG = False
-gain.DEBUG = False
-gain.DEBUG_SYNC = False
+util.set_debug(False)
+gain.set_debug(False)
+gain.set_debug_sync(False)
 
 results = {}
 results[np] = []
@@ -84,7 +86,7 @@ def test(module):
     check(module.alen((1,2,3)))
     check(module.alen(module.zeros((4,5,6))))
 
-if __name__ == '__main__':
+def main():
     ga.sync()
     test(np)
     ga.sync()
@@ -125,3 +127,17 @@ if __name__ == '__main__':
                     err = True
             if err:
                 raise ValueError, "something bad at %s" % i
+
+if __name__ == '__main__':
+    profile = False
+    (optsvals,args) = getopt(sys.argv[1:],'p')
+    for (opt,val) in optsvals:
+        if opt == '-p':
+            profile = True
+    if profile:
+        import cProfile
+        if not me:
+            print "Profiling enabled"
+        cProfile.run("main()", "gaintest.%s.prof" % str(me))
+    else:
+        main()

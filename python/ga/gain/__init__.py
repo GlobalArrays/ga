@@ -1,4 +1,5 @@
 from core import *
+import random
 
 if __name__ != '__main__':
     # reports how much of numpy as been overridden

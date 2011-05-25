@@ -75,12 +75,12 @@ libraries.extend(linalg_lib)
 
 ga_ga_sources = ["ga/ga.c"]
 ga_gain_core_sources = ["ga/gain/core.c"]
-ga_gain_everything_sources = ["ga/gain/everything.c"]
+ga_gain_random_sources = ["ga/gain/random.c"]
 ga_gain_util_sources = ["ga/gain/util.c"]
 if use_cython:
     ga_ga_sources = ["ga/ga.pyx"]
     ga_gain_core_sources = ["ga/gain/core.pyx"]
-    ga_gain_everything_sources = ["ga/gain/everything.pyx"]
+    ga_gain_random_sources = ["ga/gain/random.pyx"]
     ga_gain_util_sources = ["ga/gain/util.pyx"]
 
 include_dirs.append(".")
@@ -101,8 +101,8 @@ ext_modules = [
         libraries=libraries
     ),
     Extension(
-        name="ga.gain.everything",
-        sources=ga_gain_everything_sources,
+        name="ga.gain.random",
+        sources=ga_gain_random_sources,
         include_dirs=include_dirs,
         library_dirs=library_dirs,
         libraries=libraries

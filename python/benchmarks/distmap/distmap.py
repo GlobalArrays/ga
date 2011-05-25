@@ -5,16 +5,14 @@ import sys
 # 3rd party libs
 from PIL import Image
 
-# my libs
-from random_values import *
-
+# command-line options
 nPt = 8 # default
 expo = 2 # default distance exponent (Euclidean)
 nGrid = 512 # image size (in each dimension)
+seed = 0 # default seed
 useGain = False
 profile = False
 help = False
-
 imgOutput = True
 rawOutput = False
 img_name = "distmap.png"
@@ -51,7 +49,7 @@ for (opt, val) in optsvals:
     elif opt == '-p':
         nPt = int(val)
     elif opt == '-s':
-        myrandseed(int(val));
+        seed = int(val)
     elif opt == '-w':
         nGrid = int(val)
     elif opt == '-d':
@@ -71,29 +69,38 @@ else:
         sys.exit()
 my_dtype = np.float32
 
+# seed the random number generator
+np.random.seed(seed)
 
 # generate nPt random points within the grid
-pt = []
-for k in range(nPt):
-    x = nGrid * myrandf()
-    y = nGrid * myrandf()
-    pt.append((x, y))
+def generate_random_points():
+    pt = None
+    if False:
+        pt = []
+        for k in range(nPt):
+            x = nGrid * np.random.random_sample()
+            y = nGrid * np.random.random_sample()
+            pt.append((x, y))
+    else:
+        pt = np.random.random_sample((nPt,2))
+        pt[:,0] *= nGrid
+        pt[:,1] *= nGrid
+    return pt
 
 def dist((x, y), (x0, y0)):
-
     """Returns the Euclidean distance between two (2D) points."""
-
     return ((x-x0)**expo + (y-y0)**expo)**(1.0/expo)
 
-def dist_array((x0, y0)):
-
+def dist_array(pt):
     """Returns an array whose elements are the distance (in units of
     rows and columns) to a given point (x0, y0)."""
-
+    x0 = pt[0]
+    y0 = pt[1]
     f = lambda x, y, x0=x0, y0=y0: dist((x, y), (x0, y0))
     return np.fromfunction(f, (nGrid, nGrid), dtype=my_dtype)
 
 def main():
+    pt = generate_random_points()
     # distMin[i,j] is the distance from pixel (i,j) to the closest 'pt'.
     distMin = dist_array(pt[0])
     for i in range(1, nPt):
@@ -115,11 +122,10 @@ def main():
             return
     
     #print pxls
-    
     if imgOutput:
-        im_r = Image.frombuffer("F", pxls.shape, pxls, "raw", "F", 0, 1).convert("L")
+        im_r = Image.frombuffer("F", pxls.shape, pxls, "raw", "F", 0, 1)
+        im_r = im_r.convert("L")
         im_r.save(img_name)
-    
     if rawOutput:
         f = open(raw_name, "wb")
         f.write(buffer(pxls.astype(np.float32)))
@@ -134,4 +140,3 @@ if __name__ == '__main__':
             cProfile.run("main()", "distmap.prof")
     else:
         main()
-
