@@ -254,7 +254,6 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/atomics-i386.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/copy.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/fujitsu-vpp.h \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/gpc.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/kr_malloc.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/locks.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/memlock.h \
@@ -382,6 +381,7 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__append_60 = src/common/x86copy_as.s
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__append_61 = src/tas-sx.s
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_62 = src/include/armci.h \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/gpc.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/parmci.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/message.h
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_63 = -I$(top_srcdir)/src/include
@@ -588,7 +588,7 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src/ft/armci_chkpt.h src/ft/armci_storage.h src/include/acc.h \
 	src/include/armcip.h src/include/armci_profile.h \
 	src/include/armci_vampir.h src/include/atomics-i386.h \
-	src/include/copy.h src/include/fujitsu-vpp.h src/include/gpc.h \
+	src/include/copy.h src/include/fujitsu-vpp.h \
 	src/include/kr_malloc.h src/include/locks.h \
 	src/include/memlock.h src/include/mp3.fh src/include/mp3.h \
 	src/include/request.h src/include/semaphores.h \
@@ -900,7 +900,7 @@ am__libarmcii_la_SOURCES_DIST = src-portals/acc.h \
 	src/ft/armci_chkpt.h src/ft/armci_storage.h src/include/acc.h \
 	src/include/armcip.h src/include/armci_profile.h \
 	src/include/armci_vampir.h src/include/atomics-i386.h \
-	src/include/copy.h src/include/fujitsu-vpp.h src/include/gpc.h \
+	src/include/copy.h src/include/fujitsu-vpp.h \
 	src/include/kr_malloc.h src/include/locks.h \
 	src/include/memlock.h src/include/mp3.fh src/include/mp3.h \
 	src/include/request.h src/include/semaphores.h \
@@ -1543,7 +1543,7 @@ DIST_SOURCES = $(am__libarmci_la_SOURCES_DIST) \
 am__include_HEADERS_DIST = src-portals/armci.h src-portals/gpc.h \
 	src-portals/message.h src-portals/parmci.h src-gemini/armci.h \
 	src-gemini/gpc.h src-gemini/message.h src/include/armci.h \
-	src/include/parmci.h src/include/message.h
+	src/include/gpc.h src/include/parmci.h src/include/message.h
 HEADERS = $(include_HEADERS)
 ETAGS = etags
 CTAGS = ctags

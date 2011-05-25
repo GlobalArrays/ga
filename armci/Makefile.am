@@ -347,7 +347,6 @@ libarmci_la_SOURCES += src/include/armci_vampir.h
 libarmci_la_SOURCES += src/include/atomics-i386.h
 libarmci_la_SOURCES += src/include/copy.h
 libarmci_la_SOURCES += src/include/fujitsu-vpp.h
-libarmci_la_SOURCES += src/include/gpc.h
 libarmci_la_SOURCES += src/include/kr_malloc.h
 libarmci_la_SOURCES += src/include/locks.h
 libarmci_la_SOURCES += src/include/memlock.h
@@ -542,6 +541,7 @@ src/tas-sx.lo: src/tas-sx.s
 endif
 
 include_HEADERS += src/include/armci.h
+include_HEADERS += src/include/gpc.h
 include_HEADERS += src/include/parmci.h
 include_HEADERS += src/include/message.h
 
