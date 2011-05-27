@@ -1807,7 +1807,7 @@ int armci_send_req_msg(int proc, void *buf, int bytes,int tag)
          # endif 
         }
 
-        else {
+        else if(msginfo->operation!=ATTACH) {
            printf("%s cp: msginfo->operation=%d not supported yet\n",Portals_ID(),msginfo->operation);
            abort();
         }
