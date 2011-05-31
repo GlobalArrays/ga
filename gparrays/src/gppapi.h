@@ -2,12 +2,15 @@
 #define GPPAPI_H
 
 #include "typesf2c.h"
+#include <stdlib.h>
 
 /* Routines from gpbase.c */
 
 extern void    pgp_debug(Integer g_p);
 extern void    pgp_initialize();
 extern void    pgp_terminate();
+extern void*   pgp_malloc(size_t size);
+extern void    pgp_free(void* ptr);
 extern Integer pgp_create_handle();
 extern void    pgp_set_dimensions(Integer g_p, Integer ndim, Integer *dims);
 extern Integer pgp_get_dimension(Integer g_p);

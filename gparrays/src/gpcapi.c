@@ -40,14 +40,14 @@ int GP_Allocate(int g_p)
   return (int)wgp_allocate(ag_p);
 }
 
-void* GP_Assign_local_element(int g_p, int *subscript, void *ptr, int size)
+void GP_Assign_local_element(int g_p, int *subscript, void *ptr, int size)
 {
   Integer ag_p = (Integer)g_p;
   Integer _gp_idx[GP_MAX_DIM];
   Integer asize = (Integer)size;
   int ndim = wgp_get_dimension(ag_p);
   COPYINDEX_C2F(subscript,_gp_idx,ndim);
-  return wgp_assign_local_element(ag_p, _gp_idx, ptr, asize);
+  wgp_assign_local_element(ag_p, _gp_idx, ptr, asize);
 }
 
 int GP_Create_handle()
@@ -80,13 +80,13 @@ void GP_Distribution(int g_p, int proc, int *lo, int *hi)
   COPYINDEX_F2C(_gp_hi, hi, ndim);
 }
 
-void GP_Free_local_element(int g_p, int *subscript)
+void* GP_Free_local_element(int g_p, int *subscript)
 {
   Integer ag_p = (Integer)g_p;
   int ndim = wgp_get_dimension(ag_p);
   Integer _gp_idx[GP_MAX_DIM];
   COPYINDEX_C2F(subscript, _gp_idx, ndim);
-  wgp_free_local_element(ag_p, _gp_idx);
+  return wgp_free_local_element(ag_p, _gp_idx);
 }
 
 int GP_Get_dimension(int g_p)
