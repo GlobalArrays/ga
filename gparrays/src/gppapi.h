@@ -18,7 +18,7 @@ extern void    pgp_distribution(Integer g_p, Integer proc,
                                 Integer *lo, Integer *hi);
 extern void    pgp_assign_local_element(Integer g_p, Integer *subscript,
                                         void *ptr, Integer size);
-extern void    pgp_free_local_element(Integer g_p, Integer *subscript);
+extern void*   pgp_free_local_element(Integer g_p, Integer *subscript);
 
 /* Routines from gponesided.c */
 extern void    pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
