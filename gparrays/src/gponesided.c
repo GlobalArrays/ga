@@ -22,6 +22,7 @@
 #include "typesf2c.h"
 #include "gpbase.h"
 #include "armci.h"
+#include "message.h"
 #include "papi.h"
 
 #define gpm_GetRangeFromMap(p, ndim, plo, phi){                           \
@@ -140,8 +141,9 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
   Integer idx, offset_d, offset_ptr, offset_rem;
   Integer nelems, index[GP_MAX_DIM];
   Integer block_ld[GP_MAX_DIM], block_ld_loc[GP_MAX_DIM];
+  Integer me = (Integer)armci_msg_me();
   int *int_ptr;
-  GP_INT *rem_ptr;
+  armci_meminfo_t *rem_ptr;
   int rc;
   armci_giov_t *desc;
   handle = g_p + GP_OFFSET;
@@ -215,7 +217,7 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
     }
     /* Allocate a buffer to hold remote pointers for patch and and
        array of descriptors for GetV operation */
-    rem_ptr = (void**)malloc((size_t)(nelems)*sizeof(void*));
+    rem_ptr = (armci_meminfo_t*)malloc((size_t)(nelems)*sizeof(armci_meminfo_t));
     desc = (armci_giov_t*)malloc((size_t)(nelems)*sizeof(armci_giov_t));
 
     /* Get remote pointers */
@@ -238,7 +240,11 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
         offset_d = offset_d*ld[d] + index[d] + plo[d] - lo[d];
       }
       if (((int*)buf_size)[offset_sz] > 0) {
-        desc[jcnt].src_ptr_array = (void*)rem_ptr[offset_rem];
+        if (rem_ptr[offset_rem].cpid == me) {
+          desc[jcnt].src_ptr_array = ((void*)(rem_ptr[offset_rem].addr));
+        } else { /* handle remote and SMP case */
+          desc[jcnt].src_ptr_array = ARMCI_Memat(&rem_ptr[offset_rem],0);
+        }
         desc[jcnt].dst_ptr_array = buf_ptr[offset_d];
         if (intsize == 4) {
           desc[jcnt].bytes = (int)((int*)buf_size)[offset_sz];

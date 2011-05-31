@@ -22,11 +22,13 @@
 #include "typesf2c.h"
 #include "papi.h"
 #include "gpbase.h"
+#include "armci.h"
 
 extern void gpi_onesided_init();
 extern void gpi_onesided_clean();
 
 gp_array_t *GP;
+int GP_pointer_type;
 
 /**
  *  Initialize internal library structures for Global Pointer Arrays
@@ -39,6 +41,7 @@ void pgp_initialize()
 {
   Integer i;
   GP = (gp_array_t*)malloc(sizeof(gp_array_t)*GP_MAX_ARRAYS);
+  GP_pointer_type = pnga_register_type(sizeof(armci_meminfo_t));
   if (!GP) {
     pnga_error("gp_initialize: malloc GP failed",0);
   }
@@ -65,7 +68,46 @@ void pgp_terminate()
       GP[i].active = 0;
     }
   }
+  pnga_deregister_type(GP_pointer_type);
   gpi_onesided_clean();
+}
+
+/**
+ *  Special malloc() for Global Pointer Arrays
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wgp_malloc = pgp_malloc
+#endif
+
+void* pgp_malloc(size_t size)
+{
+    armci_meminfo_t meminfo;
+    size_t meminfo_sz = sizeof(armci_meminfo_t);
+    
+    ARMCI_Memget(size+meminfo_sz, &meminfo, 0);
+
+    /* store the meminfo handle at the end of segment */
+    memcpy( ((char*)meminfo.addr)+size, &meminfo, meminfo_sz);
+    
+    return meminfo.addr;
+}
+
+/**
+ *  Special free() for Global Pointer Arrays
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wgp_free = pgp_free
+#endif
+
+void pgp_free(void* ptr)
+{
+    armci_meminfo_t meminfo;
+    size_t meminfo_sz = sizeof(armci_meminfo_t);
+    
+    if(!ptr) pnga_error("gp_free: Invalid pointer",0);
+    
+    /* memcpy( &meminfo, ((char*)ptr)+size, meminfo_sz);
+       ARMCI_Memctl(&meminfo);  */
 }
 
 /**
@@ -120,7 +162,7 @@ void pgp_set_dimensions(Integer g_p, Integer ndim, Integer *dims)
 
   type = C_INT;
   pnga_set_data(GP[handle].g_size_array, ndim, dims, type);
-  type = GP_POINTER_TYPE;
+  type = GP_pointer_type;
   pnga_set_data(GP[handle].g_ptr_array, ndim, dims, type);
   GP[handle].ndim = ndim;
   for (i=0; i<ndim; i++) {
@@ -314,7 +356,8 @@ void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Intege
           (long)subscript[0],(long)subscript[1]);
   pnga_release_update(GP[handle].g_size_array, subscript, subscript);
   pnga_access_ptr(GP[handle].g_ptr_array,subscript,subscript,&gp_ptr,ld);
-  *((GP_INT*)gp_ptr) = (GP_INT)ptr;
+  *((armci_meminfo_t*)gp_ptr) =
+    *((armci_meminfo_t*)(((char*)ptr)-sizeof(armci_meminfo_t)));
   pnga_release_update(GP[handle].g_ptr_array, subscript, subscript);
 }
 
@@ -327,9 +370,10 @@ void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Intege
 #   pragma weak wgp_free_local_element = pgp_free_local_element
 #endif
 
-void pgp_free_local_element(Integer g_p, Integer *subscript)
+void* pgp_free_local_element(Integer g_p, Integer *subscript)
 {
-  void *gp_ptr;
+  armci_meminfo_t *gp_ptr;
+  void *ptr;
   Integer handle, ld[GP_MAX_DIM-1], i;
   Integer one;
   GP_INT buf;
@@ -341,12 +385,13 @@ void pgp_free_local_element(Integer g_p, Integer *subscript)
     }
   }
   pnga_access_ptr(GP[handle].g_ptr_array,subscript,subscript,&gp_ptr,ld);
-  free((void*)((GP_INT*)gp_ptr));
-  gp_ptr = NULL;
+  ptr = (*gp_ptr).addr;
+  memset((void*)gp_ptr,0,sizeof(armci_meminfo_t));
   pnga_release_update(GP[handle].g_ptr_array, subscript, subscript);
 
   /* set corresponding element of size array to zero */
   buf = 0;
   one = 1;
   pnga_put(GP[handle].g_size_array, subscript, subscript, &buf, &one);
+  return ptr;
 }

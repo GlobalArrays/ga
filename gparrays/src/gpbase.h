@@ -5,10 +5,8 @@
 #include "typesf2c.h"
 
 #if SIZEOF_VOIDP == SIZEOF_INT
-#   define GP_POINTER_TYPE C_INT
 #   define GP_INT int
 #elif SIZEOF_VOIDP == SIZEOF_LONG
-#   define GP_POINTER_TYPE C_LONG
 #   define GP_INT long
 #else
 #   error sizeof(void*) is not sizeof(int) nor sizeof(long)
