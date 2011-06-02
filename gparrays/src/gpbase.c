@@ -90,9 +90,9 @@ void* pgp_malloc(size_t size)
     memcpy( meminfo.addr, &meminfo, meminfo_sz);
 
     /* update the meminfo structure */
-    meminfo->armci_addr = ((char*)meminfo->armci_addr) + meminfo_sz;
-    meminfo->addr       = ((char*)meminfo->addr) + meminfo_sz;
-    meminfo->size      -= meminfo_sz;
+    meminfo.armci_addr = ((char*)meminfo.armci_addr) + meminfo_sz;
+    meminfo.addr       = ((char*)meminfo.addr) + meminfo_sz;
+    meminfo.size      -= meminfo_sz;
     
     return meminfo.addr;
 }
@@ -114,9 +114,9 @@ void pgp_free(void* ptr)
     memcpy( &meminfo, ((char*)ptr)-meminfo_sz, meminfo_sz);
     
     /* update the meminfo structure */
-    meminfo->armci_addr = ((char*)meminfo->armci_addr) - meminfo_sz;
-    meminfo->addr       = ((char*)meminfo->addr) - meminfo_sz;
-    meminfo->size       += meminfo_sz;
+    meminfo.armci_addr = ((char*)meminfo.armci_addr) - meminfo_sz;
+    meminfo.addr       = ((char*)meminfo.addr) - meminfo_sz;
+    meminfo.size       += meminfo_sz;
     ARMCI_Memctl(&meminfo);
 }
 
