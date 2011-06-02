@@ -81,20 +81,23 @@ void pgp_terminate()
 
 void* pgp_malloc(size_t size)
 {
-    armci_meminfo_t meminfo;
+  armci_meminfo_t meminfo, *meminfo_ptr=NULL;
     size_t meminfo_sz = sizeof(armci_meminfo_t);
     
     ARMCI_Memget(size+meminfo_sz, &meminfo, 0);
+    printf("%d: GP_Malloc: ptr = %p\n", pnga_nodeid(), meminfo.addr);fflush(stdout);
 
     /* store the meminfo handle at the beginning of segment */
     memcpy( meminfo.addr, &meminfo, meminfo_sz);
+    meminfo_ptr = (armci_meminfo_t*)meminfo.addr;
 
     /* update the meminfo structure */
-    meminfo.armci_addr = ((char*)meminfo.armci_addr) + meminfo_sz;
-    meminfo.addr       = ((char*)meminfo.addr) + meminfo_sz;
-    meminfo.size      -= meminfo_sz;
+    meminfo_ptr->armci_addr = ((char*)meminfo_ptr->armci_addr) + meminfo_sz;
+    meminfo_ptr->addr       = ((char*)meminfo_ptr->addr) + meminfo_sz;
+    meminfo_ptr->size      -= meminfo_sz;
+    printf("%d: GP_Malloc: ptr = %p\n", pnga_nodeid(), meminfo_ptr->addr);fflush(stdout);
     
-    return meminfo.addr;
+    return meminfo_ptr->addr;
 }
 
 /**

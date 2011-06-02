@@ -76,7 +76,9 @@ void do_work()
       m_l_ij = jj%Q_J + 1;
       /* Allocate local memory for object and assign it values */
       size = sizeof(int)*(m_k_ij*m_l_ij+2);
-      ptr = (int*)malloc(size);
+      printf("p[%d] allocating data of size: %d (ptr=%p)\n",GA_Nodeid(),size,ptr);
+      ptr = (int*)GP_Malloc(size);
+      printf("p[%d] finished allocating data of size: %d (ptr=%p)\n",GA_Nodeid(),size, ptr);
       ptr[0] = m_k_ij;
       ptr[1] = m_l_ij;
       for (k=0; k<m_k_ij; k++) {
@@ -154,7 +156,7 @@ void do_work()
     subscript[0] = i;
     for (j=lo[1]; j<hi[1]; j++) {
       subscript[1] = j;
-      GP_Free_local_element(g_p, subscript);
+      GP_Free(GP_Free_local_element(g_p, subscript));
     }
   }
 

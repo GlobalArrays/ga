@@ -80,6 +80,11 @@ void GP_Distribution(int g_p, int proc, int *lo, int *hi)
   COPYINDEX_F2C(_gp_hi, hi, ndim);
 }
 
+void GP_Free(void* ptr)
+{
+  wgp_free(ptr);
+}
+
 void* GP_Free_local_element(int g_p, int *subscript)
 {
   Integer ag_p = (Integer)g_p;
@@ -127,6 +132,11 @@ void GP_Get(int g_p, int *lo, int *hi, void *buf, void **buf_ptr, int *ld,
 void GP_Initialize()
 {
   wgp_initialize();
+}
+
+void* GP_Malloc(size_t size)
+{
+  return wgp_malloc(size);
 }
 
 void GP_Set_chunk(int g_p, int *chunk)
