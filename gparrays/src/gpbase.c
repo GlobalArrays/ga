@@ -86,8 +86,13 @@ void* pgp_malloc(size_t size)
     
     ARMCI_Memget(size+meminfo_sz, &meminfo, 0);
 
-    /* store the meminfo handle at the end of segment */
-    memcpy( ((char*)meminfo.addr)+size, &meminfo, meminfo_sz);
+    /* store the meminfo handle at the beginning of segment */
+    memcpy( meminfo.addr, &meminfo, meminfo_sz);
+
+    /* update the meminfo structure */
+    meminfo->armci_addr = ((char*)meminfo->armci_addr) + meminfo_sz;
+    meminfo->addr       = ((char*)meminfo->addr) + meminfo_sz;
+    meminfo->size      -= meminfo_sz;
     
     return meminfo.addr;
 }
@@ -106,8 +111,13 @@ void pgp_free(void* ptr)
     
     if(!ptr) pnga_error("gp_free: Invalid pointer",0);
     
-    /* memcpy( &meminfo, ((char*)ptr)+size, meminfo_sz);
-       ARMCI_Memctl(&meminfo);  */
+    memcpy( &meminfo, ((char*)ptr)-meminfo_sz, meminfo_sz);
+    
+    /* update the meminfo structure */
+    meminfo->armci_addr = ((char*)meminfo->armci_addr) - meminfo_sz;
+    meminfo->addr       = ((char*)meminfo->addr) - meminfo_sz;
+    meminfo->size       += meminfo_sz;
+    ARMCI_Memctl(&meminfo);
 }
 
 /**

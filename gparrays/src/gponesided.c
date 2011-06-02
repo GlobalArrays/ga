@@ -243,7 +243,8 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
         if (rem_ptr[offset_rem].cpid == me) {
           desc[jcnt].src_ptr_array = ((void*)(rem_ptr[offset_rem].addr));
         } else { /* handle remote and SMP case */
-          desc[jcnt].src_ptr_array = ARMCI_Memat(&rem_ptr[offset_rem],0);
+          desc[jcnt].src_ptr_array = ARMCI_Memat(&rem_ptr[offset_rem],
+                                                 sizeof(armci_meminfo_t));
         }
         desc[jcnt].dst_ptr_array = buf_ptr[offset_d];
         if (intsize == 4) {
