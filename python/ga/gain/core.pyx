@@ -20,7 +20,7 @@ cpdef int get_size_threshold():
 def set_size_threshold(int threshold):
     global SIZE_THRESHOLD
     SIZE_THRESHOLD = threshold
-def should_distribute(shape):
+cdef bint should_distribute(shape):
     the_shape = shape
     try:
         iter(shape)
@@ -33,6 +33,20 @@ def should_distribute(shape):
     except TypeError:
         # cannot reduce on a scalar, so compare directly
         return shape >= get_size_threshold()
+cdef bint is_distributed(thing):
+    return isinstance(thing, (ndarray,flatiter))
+cdef bint is_array(thing):
+    return isinstance(thing, (ndarray,flatiter,np.ndarray,np.flatiter))
+cdef _get_shape(thing):
+    try:
+        return thing.shape # an ndarray
+    except AttributeError:
+        return (len(thing),) # a flatiter
+cdef _get_dtype(thing):
+    try:
+        return thing.dtype # an ndarray
+    except AttributeError:
+        return thing.base.dtype # a flatiter
 
 gatypes = {
 np.dtype(np.int8):       ga.C_CHAR,
@@ -268,9 +282,6 @@ class ndarray(object):
                 gatype = ga.register_dtype(dtype_)
                 gatypes[dtype_] = gatype
             self.handle = ga.create(gatype, shape)
-            print_sync("created: handle=%s type=%s shape=%s distribution=%s"%(
-                self.handle, self._dtype, self._shape,
-                str(self.distribution())))
             if buffer is not None:
                 local = ga.access(self.handle)
                 if local is not None:
@@ -296,14 +307,10 @@ class ndarray(object):
             self.handle = base.handle
             self.global_slice = base.global_slice
             self._strides = strides
-            print_debug("![%d] view: hndl=%s typ=%s shp=%s dstrbtn=%s"%(
-                    me, self.handle, self._dtype, self._shape,
-                    str(self.distribution())))
 
     def __del__(self):
         if self.base is None:
             if ga.initialized():
-                print_sync("deleting %s %s" % (self.shape, self.handle))
                 ga.destroy(self.handle)
 
     ################################################################
@@ -327,25 +334,18 @@ class ndarray(object):
                 pass
             if access_slice:
                 a = ga.access(self.handle)
-                print_sync("ndarray.access(%s) shape=%s" % (
-                        self.handle, a.shape))
                 ret = a[access_slice]
                 if self._is_real:
                     ret = ret.real
                 elif self._is_imag:
                     ret = ret.imag
-                print_debug("![%d] a[access_slice].shape=%s" % (me,ret.shape))
                 return ret
-        print_sync("ndarray.access None")
         return None
 
     def get(self):
         """Get remote copy of ndarray based on current global_slice."""
         # We must translate global_slice into a strided get
-        print_debug("![%d] inside gainarray.get()" % me)
-        print_debug("![%d] self.global_slice = %s" % (me,self.global_slice))
         shape = util.slices_to_shape(self.global_slice)
-        print_debug("![%d] inside gainarray.get() shape=%s" % (me,shape))
         dtype = self._dtype
         if self._is_real or self._is_imag:
             dtype = np.dtype("complex%s" % (self._dtype.itemsize*2*8))
@@ -370,30 +370,24 @@ class ndarray(object):
                     _lo.append(item.start)
                     _hi.append(item.stop)
                     _skip.append(item.step)
-            elif isinstance(item, (int,long)):
-                _lo.append(item)
-                _hi.append(item+1)
-                _skip.append(1)
             elif item is None:
                 adjust.append(slice(0,1,1))
             else:
-                raise IndexError, "invalid index item"
-        print_debug("![%d] ga.strided_get(%s, %s, %s, %s, nd_buffer)" % (
-                me, self.handle, _lo, _hi, _skip))
-        print_debug("![%d] adjust=%s" % (me,adjust))
+                # assumes item is int, long, np.int64, etc
+                _lo.append(item)
+                _hi.append(item+1)
+                _skip.append(1)
         ret = None
         if need_strided:
             ret = ga.strided_get(self.handle, _lo, _hi, _skip, nd_buffer)
         else:
             ret = ga.get(self.handle, _lo, _hi, nd_buffer)
-        print_debug("![%d] ret.shape=%s" % (me,ret.shape))
         if ret.ndim > 0:
             ret = ret[adjust]
         if self._is_real:
             ret = ret.real
         elif self._is_imag:
             ret = ret.imag
-        print_debug("![%d] adjusted ret.shape=%s" % (me,ret.shape))
         return ret
 
     def release(self):
@@ -426,8 +420,10 @@ class ndarray(object):
     flags = property(_get_flags)
 
     def _get_flat(self):
+        return flatiter(self)
+    def _set_flat(self, value):
         raise NotImplementedError, "TODO"
-    flat = property(_get_flat)
+    flat = property(_get_flat,_set_flat)
 
     def _get_imag(self):
         if self._dtype.kind != 'c':
@@ -704,7 +700,16 @@ class ndarray(object):
         True
 
         """
-        raise NotImplementedError
+        the_copy = ndarray(self.shape, dtype=self.dtype)
+        if should_distribute(the_copy.size):
+            local = the_copy.access()
+            if local is not None:
+                lo,hi = the_copy.distribution()
+                local[:] = self[ga.zip(lo,hi)].get()
+        else:
+            # case where the copy is not distributed but the original was
+            raise NotImplementedError
+        return the_copy
 
     def cumprod(self, axis=None, dtype=None, out=None):
         """Return the cumulative product of the elements along the given axis.
@@ -1446,7 +1451,16 @@ class ndarray(object):
         numpy.sum : equivalent function
 
         """
-        raise NotImplementedError
+        if axis is None:
+            local = self.access()
+            if local is not None:
+                value = np.sum(local)
+                value = MPI.COMM_WORLD.allreduce(value, MPI.SUM)
+            else:
+                value = MPI.COMM_WORLD.allreduce(0, MPI.SUM)
+            return value
+        else:
+            raise NotImplementedError
 
     def swapaxes(self, axis1, axis2):
         """Return a view of the array with `axis1` and `axis2` interchanged.
@@ -1996,37 +2010,26 @@ class ndarray(object):
         # get new_self as an ndarray first
         npself = new_self.access()
         if npself is None:
-            print_sync("npself is None")
-            print_sync("NA")
-            print_sync("NA")
             return
         if isinstance(value, ndarray):
             if (ga.compare_distr(value.handle, new_self.handle)
                     and value.global_slice == new_self.global_slice):
                 # opt: same distributions and same slicing
                 # in practice this might not happen all that often
-                print_sync("same distributions")
-                print_sync("NA")
                 npvalue = value.access()
                 release_value = True
             else:
                 lo,hi = new_self.distribution()
                 result = util.get_slice(new_self.global_slice, lo, hi)
                 result = util.broadcast_chomp(value.shape, result)
-                print_sync("local_slice=%s" % str(result))
                 matching_input = value[result]
                 npvalue = matching_input.get()
-                print_sync("npvalue.shape=%s, npself.shape=%s" % (
-                    npvalue.shape, npself.shape))
         else:
             if value.ndim > 0:
                 lo,hi = new_self.distribution()
                 result = util.get_slice(new_self.global_slice, lo, hi)
                 result = util.broadcast_chomp(value.shape, result)
-                print_sync("local_slice=%s" % str(result))
                 npvalue = value[result]
-                print_sync("npvalue.shape=%s, npself.shape=%s" % (
-                    npvalue.shape, npself.shape))
             else:
                 npvalue = value
         npself[:] = npvalue
@@ -2146,232 +2149,204 @@ class ufunc(object):
             raise ValueError, "only unary and binary ufuncs supported"
 
     def _unary_call(self, input, out=None, *args, **kwargs):
-        print_sync("_unary_call %s" % self.func)
         input = asarray(input)
-        if not (isinstance(input, ndarray) or isinstance(out, ndarray)):
-            print_sync("_unary_call %s pass through" % self.func)
+        input_shape = _get_shape(input)
+        input_dtype = _get_dtype(input)
+        if not (is_distributed(input) or is_distributed(out)):
             # no ndarray instances used, pass through immediately to numpy
             return self.func(input, out, *args, **kwargs)
-        # since we have an ndarray somewhere
-        ga.sync()
         if out is None:
             # input must be an ndarray given previous conditionals
             # TODO okay, is there something better than this?
-            ignore = np.ones(1, dtype=input.dtype)
+            ignore = np.ones(1, dtype=input_dtype)
             out_type = self.func(ignore).dtype
-            print_debug("out_type = %s" % out_type)
-            out = ndarray(input.shape, out_type)
+            out = ndarray(input_shape, out_type)
         # sanity checks
-        if not isinstance(out, (ndarray, np.ndarray)):
+        if not is_array(out):
             raise TypeError, "return arrays must be of ArrayType"
-        elif input.shape != out.shape:
+        out_shape = _get_shape(out)
+        if input_shape != out_shape:
             # broadcasting doesn't apply to unary operations
             raise ValueError, 'invalid return array shape'
         # Now figure out what to do...
         if isinstance(out, ndarray):
+            ga.sync()
             # get out as an np.ndarray first
             npout = out.access()
-            if npout is None:
-                print_sync("npout is None")
-                print_sync("NA")
-                ga.sync()
-                return out
-            npin = None
-            release_in = False
-            # first opt: input and out are same object
-            if input is out:
-                print_sync("same object")
-                print_sync("NA")
-                npin = npout
-            elif isinstance(input, ndarray):
+            if npout is not None: # this proc owns data
+                npin = None
+                release_in = False
+                # first opt: input and out are same object
+                #   we can use local data exclusively
+                if input is out:
+                    npin = npout
                 # second opt: same distributions and same slicing
-                # in practice this might not happen all that often
-                if (ga.compare_distr(input.handle, out.handle)
+                #   we can use local data exclusively
+                #   in practice this might not happen all that often
+                elif (isinstance(input, ndarray)
+                        and ga.compare_distr(input.handle, out.handle)
                         and input.global_slice == out.global_slice):
-                    print_sync("same distributions")
-                    print_sync("NA")
-                    npin = input.access()
+                    npin = input.access() # don't need to check for None
                     release_in = True
+                # no opt: requires copy of remote data
                 else:
                     lo,hi = out.distribution()
                     result = util.get_slice(out.global_slice, lo, hi)
-                    print_sync("local_slice=%s" % str(result))
-                    matching_input = input[result]
-                    npin = matching_input.get()
-                    print_sync("npin.shape=%s, npout.shape=%s" % (
-                        npin.shape, npout.shape))
+                    npin = input[result]
+                    if isinstance(input, ndarray):
+                        npin = npin.get()
+                self.func(npin, npout, *args, **kwargs)
+                if release_in:
+                    input.release()
+                out.release_update()
+            ga.sync()
+        elif isinstance(out, flatiter):
+            ga.sync()
+            # first opt: input and out are same object
+            #   we call _unary_call over again with the bases
+            #   NOT SURE THAT THIS IS ACTUALLY OPTIMAL -- NEED TO TEST
+            if input is out:
+                self._unary_call(out.base, out.base, *args, **kwargs)
+                return out.copy() # differs from NumPy (should be view)
             else:
-                lo,hi = out.distribution()
-                result = util.get_slice(out.global_slice, lo, hi)
-                print_sync("np.ndarray slice=%s" % str(result))
-                npin = input[result]
-                print_sync("npin.shape=%s, npout.shape=%s" % (
-                        npin.shape, npout.shape))
-            self.func(npin, npout, *args, **kwargs)
-            if release_in: input.release()
-            out.release_update()
+                npout = out.access()
+                if npout is not None: # this proc 'owns' data
+                    npin = input[out._range]
+                    if isinstance(input, ndarray):
+                        npin = npin.get()
+                    self.func(npin, npout, *args, **kwargs)
+                    out.release_update()
             ga.sync()
         else:
-            print_sync("out is not distributed")
-            print_sync("NA")
             # out is not distributed
             npin = input
-            if isinstance(input, ndarray):
-                # input is an ndarray, so get entire thing
+            if is_distributed(input):
                 npin = input.get()
             self.func(npin, out, *args, **kwargs)
-        #ga.sync() # moved to the cond. where 'out' is distributed
         return out
 
     def _binary_call(self, first, second, out=None, *args, **kwargs):
-        print_sync("_binary_call %s" % self.func)
         first_isscalar = np.isscalar(first)
         second_isscalar = np.isscalar(second)
         # just in case
         first = asarray(first)
         second = asarray(second)
-        if not (isinstance(first, ndarray)
-                or isinstance(second, ndarray)
-                or isinstance(out, ndarray)):
+        if not (is_distributed(first)
+                or is_distributed(second)
+                or is_distributed(out)):
             # no ndarray instances used, pass through immediately to numpy
-            print_sync("_binary_call %s pass through" % self.func)
             return self.func(first, second, out, *args, **kwargs)
-        # since we have an ndarray somewhere
-        ga.sync()
+        first_dtype = _get_dtype(first)
+        second_dtype = _get_dtype(second)
+        first_shape = _get_shape(first)
+        second_shape = _get_shape(second)
         if out is None:
             # first and/or second must be ndarrays given previous conditionals
             # TODO okay, is there something better than this?
             dtype = None
             if first_isscalar:
                 if second_isscalar:
-                    dtype = np.find_common_type([],[first.dtype,second.dtype])
-                    #print "%s = np.find_common_type([],[%s,%s])" % (
-                    #        dtype,first.dtype,second.dtype)
+                    dtype = np.find_common_type([],[first_dtype,second_dtype])
                 else:
-                    dtype = np.find_common_type([second.dtype],[first.dtype])
-                    #print "%s = np.find_common_type([%s],[%s])" % (
-                    #        dtype,second.dtype,first.dtype)
+                    dtype = np.find_common_type([second_dtype],[first_dtype])
             else:
                 if second_isscalar:
-                    dtype = np.find_common_type([first.dtype],[second.dtype])
-                    #print "%s = np.find_common_type([%s],[%s])" % (
-                    #        dtype,first.dtype,second.dtype)
+                    dtype = np.find_common_type([first_dtype],[second_dtype])
                 else:
-                    dtype = np.find_common_type([first.dtype,second.dtype],[])
-                    #print "%s = np.find_common_type([%s,%s],[])" % (
-                    #        dtype,first.dtype,second.dtype)
-            shape = util.broadcast_shape(first.shape, second.shape)
-            print_sync("broadcast_shape=%s, type=%s" % (str(shape),dtype))
+                    dtype = np.find_common_type([first_dtype,second_dtype],[])
+            shape = util.broadcast_shape(first_shape, second_shape)
             out = ndarray(shape, dtype)
         # sanity checks
-        if not isinstance(out, (ndarray, np.ndarray)):
+        if not is_array(out):
             raise TypeError, "return arrays must be of ArrayType"
         # Now figure out what to do...
         if isinstance(out, ndarray):
+            ga.sync()
             # get out as an np.ndarray first
             npout = out.access()
-            if npout is None:
-                print_sync("npout is None")
-                print_sync("NA")
-                print_sync("NA")
-                print_sync("NA")
-                ga.sync()
-                return out
-            # get matching and compatible portions of input arrays
-            # broadcasting rules (may) apply
-            npfirst = None
-            release_first = False
-            if first is out:
-                # first opt: first and out are same object
-                npfirst = npout
-                print_sync("same object first out")
-                print_sync("NA")
-            elif isinstance(first, ndarray):
-                if (ga.compare_distr(first.handle, out.handle)
+            if npout is not None: # this proc owns data
+                # get matching and compatible portions of input arrays
+                # broadcasting rules (may) apply
+                npfirst = None
+                release_first = False
+                if first is out:
+                    # first opt: first and out are same object
+                    npfirst = npout
+                elif (isinstance(first, ndarray)
+                        and ga.compare_distr(first.handle, out.handle)
                         and first.global_slice == out.global_slice):
                     # second opt: same distributions and same slicing
                     # in practice this might not happen all that often
-                    print_sync("same distributions")
-                    print_sync("NA")
                     npfirst = first.access()
                     release_first = True
-                else:
-                    lo,hi = out.distribution()
-                    print_debug("out.global_slice=%s" % str(out.global_slice))
-                    result = util.get_slice(out.global_slice, lo, hi)
-                    print_debug("util.get_slice=%s" % str(result))
-                    result = util.broadcast_chomp(first.shape, result)
-                    print_sync("util.broadcast_chomp=%s" % str(result))
-                    matching_input = first[result]
-                    npfirst = matching_input.get()
-                    print_sync("npfirst.shape=%s, npout.shape=%s" % (
-                        npfirst.shape, npout.shape))
-            else:
-                if first.ndim > 0:
+                elif len(first_shape) > 0:
                     lo,hi = out.distribution()
                     result = util.get_slice(out.global_slice, lo, hi)
-                    result = util.broadcast_chomp(first.shape, result)
-                    print_sync("local_slice=%s" % str(result))
+                    result = util.broadcast_chomp(first_shape, result)
                     npfirst = first[result]
-                    print_sync("npfirst.shape=%s, npout.shape=%s" % (
-                        npfirst.shape, npout.shape))
+                    if isinstance(first, ndarray):
+                        npfirst = npfirst.get()
                 else:
                     npfirst = first
-            npsecond = None
-            release_second = False
-            if second is out:
-                # first opt: second and out are same object
-                npsecond = npout
-                print_sync("same object second out")
-                print_sync("NA")
-            elif isinstance(second, ndarray):
-                if (ga.compare_distr(second.handle, out.handle)
+                npsecond = None
+                release_second = False
+                if second is first:
+                    # zeroth opt: first and second are same object, so do the
+                    # same thing for second that we did for first
+                    npsecond = npfirst
+                elif second is out:
+                    # first opt: second and out are same object
+                    npsecond = npout
+                elif (isinstance(second, ndarray)
+                        and ga.compare_distr(second.handle, out.handle)
                         and second.global_slice == out.global_slice):
                     # second opt: same distributions and same slicing
                     # in practice this might not happen all that often
-                    print_sync("same distributions")
-                    print_sync("NA")
                     npsecond = second.access()
                     release_second = True
-                else:
+                elif len(second_shape) > 0:
                     lo,hi = out.distribution()
                     result = util.get_slice(out.global_slice, lo, hi)
-                    result = util.broadcast_chomp(second.shape, result)
-                    print_sync("local_slice=%s" % str(result))
-                    matching_input = second[result]
-                    npsecond = matching_input.get()
-                    print_sync("npsecond.shape=%s, npout.shape=%s" % (
-                        npsecond.shape, npout.shape))
-            else:
-                if second.ndim > 0:
-                    lo,hi = out.distribution()
-                    result = util.get_slice(out.global_slice, lo, hi)
-                    result = util.broadcast_chomp(second.shape, result)
-                    print_sync("local_slice=%s" % str(result))
+                    result = util.broadcast_chomp(second_shape, result)
                     npsecond = second[result]
-                    print_sync("npsecond.shape=%s, npout.shape=%s" % (
-                        npsecond.shape, npout.shape))
+                    if isinstance(second, ndarray):
+                        npsecond = npsecond.get()
                 else:
                     npsecond = second
-            self.func(npfirst, npsecond, npout, *args, **kwargs)
-            if release_first: first.release()
-            if release_second: second.release()
-            out.release_update()
+                self.func(npfirst, npsecond, npout, *args, **kwargs)
+                if release_first:
+                    first.release()
+                if release_second:
+                    second.release()
+                out.release_update()
+            ga.sync()
+        elif isinstance(out, flatiter):
+            ga.sync()
+            # first op: first and out are same object
+            if first is second is out:
+                self._binary_call(out.base,out.base,out.base,*args,**kwargs)
+                return out.copy()
+            else:
+                npout = out.access()
+                if npout is not None: # this proc 'owns' data
+                    npfirst = first[out._range]
+                    if isinstance(first, ndarray):
+                        npfirst = npfirst.get()
+                    npsecond = second[out._range]
+                    if isinstance(second, ndarray):
+                        npsecond = npsecond.get()
+                    self.func(npfirst, npsecond, npout, *args, **kwargs)
+                    out.release_update()
             ga.sync()
         else:
-            print_sync("npout is None")
-            print_sync("NA")
-            print_sync("NA")
-            print_sync("NA")
             # out is not distributed
             ndfirst = first
-            if isinstance(first, ndarray):
+            if is_distributed(first):
                 ndfirst = first.get()
             ndsecond = second
-            if isinstance(second, ndarray):
+            if is_distributed(second):
                 ndsecond = second.get()
             self.func(ndfirst, ndsecond, out, *args, **kwargs)
-        #ga.sync() # moved to the cond. where 'out' is distributed
         return out
 
     def reduce(self, a, axis=0, dtype=None, out=None, *args, **kwargs):
@@ -2444,7 +2419,6 @@ class ufunc(object):
         a = asarray(a)
         if not (isinstance(a, ndarray) or isinstance(out, ndarray)):
             # no ndarray instances used, pass through immediately to numpy
-            print_sync("_binary_call.reduce %s pass through" % self.func)
             return self.func.reduce(a, axis, dtype, out, *args, **kwargs)
         if axis < 0:
             axis += a.ndim
@@ -2483,7 +2457,6 @@ class ufunc(object):
         a = asarray(a)
         if not (isinstance(a, ndarray) or isinstance(out, ndarray)):
             # no ndarray instances used, pass through immediately to numpy
-            print_sync("_binary_call.reduce %s pass through" % self.func)
             return self.func.accumulate(a, axis, dtype, out, *args, **kwargs)
         if axis < 0:
             axis += a.ndim
@@ -3347,24 +3320,29 @@ def dot(a, b, out=None):
     """
     a = asarray(a)
     b = asarray(b)
-    if not (isinstance(a, ndarray) or isinstance(b, ndarray)):
+    if not (is_distributed(a) or is_distributed(b)):
         # numpy pass through
         return np.dot(a,b)
-    if a.ndim == 1:
+    # working with flatiter instances can be expensive, try this opt
+    if (isinstance(a,flatiter)
+            and isinstance(b,flatiter)
+            and a._base is b._base):
+        return (a._base * b._base).sum()
+    if ((isinstance(a,flatiter) or a.ndim == 1)
+            and (isinstance(b,flatiter) or b.ndim == 1)):
         if len(a) != len(b):
             raise ValueError, "objects are not aligned"
         tmp = multiply(a,b)
-        a = tmp.access()
+        ndtmp = tmp.access()
         local_sum = None
-        if a is None:
-            local_sum = np.add.redcue(np.asarray([0], dtype=tmp.dtype))
+        if ndtmp is None:
+            local_sum = np.add.reduce(np.asarray([0], dtype=tmp.dtype))
         else:
-            local_sum = np.add.reduce(a)
+            local_sum = np.add.reduce(ndtmp)
         return ga.gop_add(local_sum)
-    elif a.ndim == 2:
+    elif a.ndim == 2 and b.ndim == 2:
         if a.shape[1] != b.shape[0]:
             raise ValueError, "objects are not aligned"
-        out = zeros((a.shape[0],b.shape[1]), a.dtype)
         # use GA gemm if certain conditions apply
         valid_types = [np.dtype(np.float32),
                 np.dtype(np.float64),
@@ -3373,16 +3351,22 @@ def dot(a, b, out=None):
                 np.dtype(np.complex128)]
         if (a.base is None and b.base is None
                 and a.dtype == b.dtype and a.dtype in valid_types):
+            out = zeros((a.shape[0],b.shape[1]), a.dtype)
             ga.gemm(False, False, a.shape[0], b.shape[1], b.shape[0],
                     1, a.handle, b.handle, 1, out.handle)
             return out
         else:
             raise NotImplementedError
+    elif isinstance(a,(ndarray,flatiter)) and isinstance(b,(ndarray,flatiter)):
+        if a.shape[1] != b.shape[0]:
+            raise ValueError, "objects are not aligned"
+        raise NotImplementedError, "arbitrary dot"
     else:
-        raise NotImplementedError
+        # assume we have a scalar somewhere, so just multiply
+        return multiply(a,b)
 
 def asarray(a, dtype=None, order=None):
-    if isinstance(a, (ndarray,np.ndarray,np.generic)):
+    if isinstance(a, (ndarray,flatiter,np.ndarray,np.generic)):
         # we return ga.gain.ndarray instances for obvious reasons, but we
         # also return numpy.ndarray instances because they already exist in
         # whole on all procs -- no need to distribute pieces
@@ -3516,8 +3500,123 @@ class flatiter(object):
     array([2, 3])
 
     """
-    def __init__(self):
+    def __init__(self, base):
+        self._base = base
+        self._index = 0
+        self._len = np.multiply.reduce(self._base.shape)
+        self__len = self._len
+        count = self__len//nproc
+        if me*count < self__len:
+            if (me+1)*count > self__len:
+                self._range = slice(me*count,self__len,1)
+            else:
+                self._range = slice(me*count,(me+1)*count,1)
+        else:
+            self._range = None
+    
+    def _get_base(self):
+        return self._base
+    base = property(_get_base)
+
+    def _get_coords(self):
+        return np.unravel_index(self._index, self._base.shape)
+    coords = property(_get_coords)
+
+    def copy(self):
+        """Get a copy of the iterator as a 1-D array.
+
+        Examples
+        --------
+        >>> x = np.arange(6).reshape(2, 3)
+        >>> x
+        array([[0, 1, 2],
+               [3, 4, 5]])
+        >>> fl = x.flat
+        >>> fl.copy()
+        array([0, 1, 2, 3, 4, 5])
+
+        """
+        return self._base.flatten()
+    
+    def _get_index(self):
+        return self._index
+    index = property(_get_index)
+
+    def __getitem__(self, key):
+        # we expect key to be a single value or a slice, but might also be an
+        # iterable of length 1
+        try:
+            key = key[0]
+        except:
+            pass
+        if isinstance(key, slice):
+            result = []
+            key = slice(*key.indices(self._len)) # canonicalize the slice
+            #key = util.canonicalize_indices([self._len], key)[0]
+            for i in range(key.start,key.stop,key.step):
+                current_result = []
+                index = iter(np.unravel_index(i, self._base.shape))
+                for gs in self._base.global_slice:
+                    if gs is None:
+                        pass
+                    elif isinstance(gs, slice):
+                        current_result.append(gs.start + gs.step*index.next())
+                    else:
+                        # assume int,long,etc
+                        current_result.append(gs)
+                result.append(current_result)
+            return ga.gather(self._base.handle, result)
+        else:
+            # assumes int,long,etc
+            try:
+                index = np.unravel_index(key, self._base.shape)
+                return self._base[index]
+            except:
+                raise IndexError, "unsupported iterator index (%s)" % str(key)
+
+    def __len__(self):
+        return self._len
+
+    def __setitem__(self, key, value):
         raise NotImplementedError
+
+    def next(self):
+        if self._index < self._len:
+            tmp = self.base[self.coords]
+            self._index += 1
+            return tmp
+        else:
+            raise StopIteration
+
+    def get(self):
+        """Return a local copy of entire array.
+
+        This differs from the copy() routine which may end up distributing the
+        copy whereas get() will always generate a copy on each local process.
+
+        """
+        # TODO this doesn't feel right -- communicate and then a local copy
+        # operation? The answer is correct, but seems like too much extra
+        # work.  Although, using get() instead of ga.gather() might be better?
+        return self.base.get().flatten()
+
+    def access(self):
+        """Return a copy of a 'local' portion."""
+        if self._range_values is not None:
+            raise ValueError, "call release or release_update before access"
+        if self._range is None:
+            self._range_values = None
+        else:
+            self._range_values = self[self._range]
+        return self._range_values
+
+    def release(self):
+        self._range_values = None
+
+    def release_update(self):
+        if self._range is not None and self._range_values is not None:
+            self[self._range] = self._range_values
+        self._range_values = None
 
 DEBUG = False
 DEBUG_SYNC = False

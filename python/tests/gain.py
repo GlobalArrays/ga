@@ -56,6 +56,7 @@ def test(module):
     check(module.sin(s,t))
     x = module.ones((2,3,4))
     y = module.ones((3,4))
+    check(module.add(x,x))
     check(module.add(x,y))
     check(module.linspace(2.0,3.0,num=5))
     check(module.linspace(2.0,3.0,num=5,endpoint=False))
@@ -68,6 +69,8 @@ def test(module):
     check(module.dot(f,g))
     h = module.arange(100, dtype=module.float32)
     check(module.dot(h,h))
+    check(module.dot(6,10))
+    check(module.dot(6,h))
     check(module.eye(24,25))
     check(module.eye(24,25,4))
     check(module.eye(24,25,-8))
@@ -85,6 +88,13 @@ def test(module):
     check(module.add.accumulate(module.ones((7,7,7)), axis=2))
     check(module.alen((1,2,3)))
     check(module.alen(module.zeros((4,5,6))))
+    foo = np.arange(4*25).reshape(4,25)
+    i = module.zeros((4,25))
+    i[:] = foo
+    check(i)
+    j = i.flat
+    check(j[2])
+    check(j[2:19])
 
 def main():
     ga.sync()

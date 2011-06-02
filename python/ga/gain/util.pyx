@@ -80,16 +80,14 @@ def canonicalize_indices(shape, indices):
                 canonicalized_indices.append(index)
             else:
                 canonicalized_indices.append(slice(*index.indices(dim_max)))
-        elif isinstance(index, (int,long)):
+        else:
+            # assumes an int, long, np.int64, etc
             dim_max = shape_iter.next()
             if index < 0:
                 index += dim_max
             if index >= dim_max or index < 0:
                 raise IndexError, "invalid index"
             canonicalized_indices.append(index)
-        else:
-            raise IndexError, ("each subindex must be either a slice, "
-                    "an integer, Ellipsis, or newaxis")
     # ran out of indices; fill remaining with full slices
     for dim_max in shape_iter:
         canonicalized_indices.append(slice(0,dim_max,1))
@@ -122,22 +120,7 @@ def slice_of_a_slice(original_slice, slice_operand):
     10
 
     """
-    if isinstance(slice_operand, (int,long)):
-        if original_slice is None:
-            if slice_operand not in [0,1]:
-                raise IndexError
-            return None
-        elif isinstance(original_slice, slice):
-            shifted = (slice_operand*original_slice.step) + original_slice.start
-            if (original_slice.step < 0
-                    and shifted <= original_slice.stop
-                    or original_slice.step > 0
-                    and shifted >= original_slice.stop):
-                raise IndexError
-            return shifted
-        else:
-            raise IndexError
-    elif isinstance(slice_operand, slice):
+    if isinstance(slice_operand, slice):
         if original_slice is None:
             if (slice_operand.start != 0
                     or slice_operand.stop != 1
@@ -152,7 +135,21 @@ def slice_of_a_slice(original_slice, slice_operand):
             step = slice_operand.step * original_slice.step
             return slice(start,stop,step)
     else:
-        raise IndexError
+        # assumes slice_operand is int, long, etc
+        if original_slice is None:
+            if slice_operand not in [0,1]:
+                raise IndexError
+            return None
+        elif isinstance(original_slice, slice):
+            shifted = (slice_operand*original_slice.step) + original_slice.start
+            if (original_slice.step < 0
+                    and shifted <= original_slice.stop
+                    or original_slice.step > 0
+                    and shifted >= original_slice.stop):
+                raise IndexError
+            return shifted
+        else:
+            raise IndexError
 
 def slice_arithmetic(original_ops, ops):
     """Take slices of slices.
@@ -188,7 +185,8 @@ def slice_arithmetic(original_ops, ops):
     # of the number of non-integer values in original_ops.
     count_original_ops = 0
     for op in original_ops:
-        if not isinstance(op, (int,long)):
+        if isinstance(op,slice) or op is None:
+        #if not isinstance(op, (int,long)):
             count_original_ops += 1
     count_ops = 0
     for op in ops:
@@ -386,11 +384,10 @@ def slices_to_shape(items):
             new_shape.append(1)
         elif isinstance(item, slice):
             new_shape.append(slicelength(item))
-        elif isinstance(item, (int,long)):
+        else:
+            # assume int/long etc
             # we don't count int/long as part of shape
             pass
-        else:
-            raise IndexError, "invalid index"
     return new_shape
 
 def get_slice(global_slice, lo, hi):
