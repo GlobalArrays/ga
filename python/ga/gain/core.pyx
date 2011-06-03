@@ -2004,6 +2004,8 @@ class ndarray(object):
 
     def __setitem__(self, key, value):
         new_self = self[key]
+        if isinstance(new_self, np.generic):
+            raise NotImplementedError, "single-value assignment"
         value = asarray(value)
         npvalue = None
         release_value = False
@@ -3550,22 +3552,21 @@ class flatiter(object):
         except:
             pass
         if isinstance(key, slice):
-            result = []
-            key = slice(*key.indices(self._len)) # canonicalize the slice
-            #key = util.canonicalize_indices([self._len], key)[0]
-            for i in range(key.start,key.stop,key.step):
-                current_result = []
-                index = iter(np.unravel_index(i, self._base.shape))
-                for gs in self._base.global_slice:
-                    if gs is None:
-                        pass
-                    elif isinstance(gs, slice):
-                        current_result.append(gs.start + gs.step*index.next())
-                    else:
-                        # assume int,long,etc
-                        current_result.append(gs)
-                result.append(current_result)
-            return ga.gather(self._base.handle, result)
+            # get shape of global_slice
+            shape = []
+            offsets = []
+            for gs in self._base.global_slice:
+                if gs is None:
+                    pass
+                elif isinstance(gs, slice):
+                    shape.append(util.slicelength(gs))
+                    offsets.append(0)
+                else:
+                    shape.append(1)
+                    offsets.append(gs)
+            # create index coordinates
+            i = (np.indices(shape).reshape(len(shape),-1).T + offsets)[key]
+            return ga.gather(self._base.handle, i)
         else:
             # assumes int,long,etc
             try:

@@ -116,25 +116,29 @@ def main():
             print diff
             print "---------------------------------WARNING DIFF FAILED"
         for i,result in enumerate(zip(results[np],results[gain])):
-            result_np,result_gain = result
-            diff = None
-            if isinstance(result_gain, gain.ndarray):
-                diff = result_np-result_gain.get()
-            elif isinstance(result_gain, tuple):
-                result_np = result_np[0]
-                result_gain = result_gain[0]
-                diff = result_np-result_gain.get()
-            else:
-                diff = result_np-result_gain
             err = False
-            if not np.all(diff == 0):
-                print_result(result_np,result_gain,diff)
-                err = True
-            if hasattr(result_np,'dtype'):
-                if not result_np.dtype == result_gain.dtype:
-                    print "different types np=%s gain=%s" % (
-                            result_np.dtype, result_gain.dtype)
+            try:
+                result_np,result_gain = result
+                diff = None
+                if isinstance(result_gain, gain.ndarray):
+                    diff = result_np-result_gain.get()
+                elif isinstance(result_gain, tuple):
+                    result_np = result_np[0]
+                    result_gain = result_gain[0]
+                    diff = result_np-result_gain.get()
+                else:
+                    diff = result_np-result_gain
+                if not np.all(diff == 0):
+                    print_result(result_np,result_gain,diff)
                     err = True
+                if hasattr(result_np,'dtype'):
+                    if not result_np.dtype == result_gain.dtype:
+                        print "different types np=%s gain=%s" % (
+                                result_np.dtype, result_gain.dtype)
+                        err = True
+            except Exception,e:
+                print "caught exception:", e
+                err = True
             if err:
                 raise ValueError, "something bad at %s" % i
 

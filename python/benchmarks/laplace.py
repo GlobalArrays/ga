@@ -24,9 +24,22 @@ License: BSD
 Last modified: Sep. 18, 2004
 """
 
-import numpy
-#import ga.gain as numpy
+#import numpy
+import ga.gain as numpy
 import sys, time
+
+class PrintZero(object):
+    def __init__(self):
+        from ga.gain import me
+        self.me = me
+        self.stdout = sys.stdout
+    def write(self, something):
+        if not self.me:
+            self.stdout.write(something)
+    def flush(self):
+        if not self.me:
+            self.stdout.flush()
+sys.stdout = PrintZero()
 
 class Grid:
     
@@ -89,7 +102,9 @@ class LaplaceSolver:
         nx, ny = g.u.shape        
         dx2, dy2 = g.dx**2, g.dy**2
         dnr_inv = 0.5/(dx2 + dy2)
-        u = g.u
+        # small change here so we can see gain vs numpy slow
+        #u = g.u
+        u = g.u.get()
 
         err = 0.0
         for i in range(1, nx-1):
