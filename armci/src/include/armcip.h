@@ -103,8 +103,9 @@ void *ptr;
 #endif
 
 extern thread_id_t armci_usr_tid;
+extern thread_id_t armci_serv_tid;
 #ifdef SERVER_THREAD
-#  define SERVER_CONTEXT (armci_usr_tid != THREAD_ID_SELF())
+#  define SERVER_CONTEXT (armci_serv_tid == THREAD_ID_SELF())
 #else
 #  define SERVER_CONTEXT (armci_me<0)
 #endif
