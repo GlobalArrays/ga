@@ -8,6 +8,7 @@ from getopt import getopt
 import sys
 
 me = gain.me
+count = 0
 util.set_debug(False)
 gain.set_debug(False)
 gain.set_debug_sync(False)
@@ -24,7 +25,11 @@ g_c = ga.create(ga.C_DBL, (10,30))
 ga.gemm(False, False, 10, 30, 20, 1, g_a, g_b, 1, g_c)
 
 def check(what):
+    global count
     global results
+    count += 1
+    if not me:
+        print "test %s" % count
     results[current_module].append(what)
 
 def test(module):
@@ -32,7 +37,13 @@ def test(module):
     current_module = module
     check(module.arange(100, dtype=module.float32))
     a = module.arange(100, dtype=module.float32)
+    check(a.copy())
+    check(a[9:17].copy())
     check(module.sin(a[49::-2],a[50::2]))
+    a[5:15] = module.arange(10, dtype=module.float32)
+    check(a)
+    a[5:15] = np.arange(10, dtype=np.float32)
+    check(a)
     check(module.sin(1))
     check(module.sin([1,2,3]))
     b = module.asarray([0,0,0], dtype=module.float32)
@@ -95,12 +106,22 @@ def test(module):
     j = i.flat
     check(j[2])
     check(j[2:19])
+    check(module.add(s,t,np.ones((3,4,5), dtype=np.float32)))
 
 def main():
+    global count
+    if not me:
+        print "=========== TESTING numpy =============================="
     ga.sync()
+    count = 0
     test(np)
+    if not me:
+        print "=========== TESTING gain ==============================="
     ga.sync()
+    count = 0
     test(gain)
+    if not me:
+        print "=========== COMPARING RESULTS =========================="
     ga.sync()
     if not me:
         def print_result(result_np,result_gain,diff):
@@ -115,7 +136,8 @@ def main():
             print "difference ---------------------------------"
             print diff
             print "---------------------------------WARNING DIFF FAILED"
-        for i,result in enumerate(zip(results[np],results[gain])):
+        for num,result in enumerate(zip(results[np],results[gain])):
+            print "result %s" % (num+1)
             err = False
             try:
                 result_np,result_gain = result
@@ -140,7 +162,7 @@ def main():
                 print "caught exception:", e
                 err = True
             if err:
-                raise ValueError, "something bad at %s" % i
+                raise ValueError, "something bad at %s" % num
 
 if __name__ == '__main__':
     profile = False

@@ -292,9 +292,10 @@ class ndarray(object):
                     else:
                         a = np.ndarray(shape, dtype, buffer, offset,
                                 strides, order)
-                    lo,hi = self.distribution()
-                    a = a[map(lambda x,y: slice(x,y), lo, hi)]
-                    local[:] = a
+                    local[:] = a[ga.zip(*self.distribution())]
+                    #lo,hi = self.distribution()
+                    #a = a[map(lambda x,y: slice(x,y), lo, hi)]
+                    #local[:] = a
                     self.release_update()
             self.global_slice = map(lambda x:slice(0,x,1), shape)
             self._strides = [self.itemsize]
@@ -317,19 +318,35 @@ class ndarray(object):
     ### ndarray methods added for Global Arrays
     ################################################################
     def distribution(self):
+        """Return the bounds of the distribution.
+
+        This operation is local.
+
+        """
         return ga.distribution(self.handle)
 
     def owns(self):
+        """Return True if this process owns some of the data.
+
+        This operation is local.
+
+        """
         lo,hi = self.distribution()
         return np.all(hi>=0)
 
-    def access(self):
-        """Access the local array. Return None if no data is owned."""
+    def access(self, global_slice=None):
+        """Access the local array. Return None if no data is owned.
+        
+        This operation is local.
+        
+        """
+        if global_slice is None:
+            global_slice = self.global_slice
         if self.owns():
             lo,hi = self.distribution()
             access_slice = None
             try:
-                access_slice = util.access_slice(self.global_slice, lo, hi)
+                access_slice = util.access_slice(global_slice, lo, hi)
             except IndexError:
                 pass
             if access_slice:
@@ -342,10 +359,27 @@ class ndarray(object):
                 return ret
         return None
 
-    def get(self):
-        """Get remote copy of ndarray based on current global_slice."""
+    def get(self, key=None):
+        """Similar to the __getitem__ built-in, but one-sided (not collective.)
+
+        We sometimes want the semantics of "slicing" an ndarray and then
+        immediately calling ga.get() to fetch the result.  We can't use the
+        __getitem__ built-in because it is a collective operation.  For
+        example, during a ufunc we need to get() the corresponding pieces of
+        the arrays and that is where this function is handy.
+
+        This operation is one-sided.
+
+        """
+        # first, use the key to create a new global_slice
+        # TODO we *might* save a tiny bit of time if we assume the key is
+        # already in its canonical form
+        global_slice = self.global_slice
+        if key is not None:
+            key = util.canonicalize_indices(self.shape, key)
+            global_slice = util.slice_arithmetic(self.global_slice, key)
         # We must translate global_slice into a strided get
-        shape = util.slices_to_shape(self.global_slice)
+        shape = util.slices_to_shape(global_slice)
         dtype = self._dtype
         if self._is_real or self._is_imag:
             dtype = np.dtype("complex%s" % (self._dtype.itemsize*2*8))
@@ -355,7 +389,7 @@ class ndarray(object):
         _skip = []
         adjust = []
         need_strided = False
-        for item in self.global_slice:
+        for item in global_slice:
             if isinstance(item, slice):
                 if item.step > 1 or item.step < -1:
                     need_strided = True
@@ -389,6 +423,24 @@ class ndarray(object):
         elif self._is_imag:
             ret = ret.imag
         return ret
+        # TODO not sure whether we need to convert 0d arrays to scalars
+        #if ret.ndim == 0:
+        #    # convert single item to np.generic (scalar)
+        #    return ret.dtype.type(ret)
+
+    def allget(self, key=None):
+        """Like get(), but when all processes need the same piece.
+        
+        This operation is collective.
+        
+        """
+        # TODO it's not clear whether this approach is better than having all
+        # P processors ga.get() the same piece.
+        if not me:
+            result = self.get(key)
+            return MPI.COMM_WORLD.bcast(result)
+        else:
+            return MPI.COMM_WORLD.bcast()
 
     def release(self):
         ga.release(self.handle)
@@ -700,15 +752,17 @@ class ndarray(object):
         True
 
         """
+        # TODO we can optimize a copy if new and old ndarray instances align
         the_copy = ndarray(self.shape, dtype=self.dtype)
         if should_distribute(the_copy.size):
             local = the_copy.access()
             if local is not None:
                 lo,hi = the_copy.distribution()
-                local[:] = self[ga.zip(lo,hi)].get()
+                local[:] = self.get(ga.zip(lo,hi))
+                the_copy.release_update()
         else:
             # case where the copy is not distributed but the original was
-            raise NotImplementedError
+            the_copy[:] = self.allget()
         return the_copy
 
     def cumprod(self, axis=None, dtype=None, out=None):
@@ -1815,6 +1869,7 @@ class ndarray(object):
     #def __getattribute__
 
     def __getitem__(self, key):
+        # THIS IS A COLLECTIVE OPERATION
         if isinstance(key, (str,unicode)):
             raise NotImplementedError, "str or unicode key"
         if self.ndim == 0:
@@ -1835,7 +1890,7 @@ class ndarray(object):
         a = ndarray(new_shape, self.dtype, base=self)
         a.global_slice = util.slice_arithmetic(self.global_slice, key)
         if a.ndim == 0:
-            a = a.get()
+            a = a.allget()
             return a.dtype.type(a) # convert single item to np.generic (scalar)
         return a
 
@@ -2003,38 +2058,54 @@ class ndarray(object):
     #def __setattr__
 
     def __setitem__(self, key, value):
-        new_self = self[key]
-        if isinstance(new_self, np.generic):
-            raise NotImplementedError, "single-value assignment"
+        # THIS IS A COLLECTIVE OPERATION
+        if isinstance(key, (str,unicode)):
+            raise NotImplementedError, "str or unicode key"
+        if self.ndim == 0:
+            raise IndexError, "0-d arrays can't be indexed"
+        try:
+            iter(key)
+        except:
+            key = [key]
+        fancy = False
+        for arg in key:
+            if isinstance(arg, (ndarray,np.ndarray,list,tuple)):
+                fancy = True
+                break
+        if fancy:
+            raise NotImplementedError, "TODO: fancy indexing"
+        key = util.canonicalize_indices(self.shape, key)
+        new_shape = util.slices_to_shape(key)
+        global_slice = util.slice_arithmetic(self.global_slice, key)
         value = asarray(value)
         npvalue = None
         release_value = False
-        # get new_self as an ndarray first
-        npself = new_self.access()
-        if npself is None:
-            return
-        if isinstance(value, ndarray):
-            if (ga.compare_distr(value.handle, new_self.handle)
-                    and value.global_slice == new_self.global_slice):
-                # opt: same distributions and same slicing
-                # in practice this might not happen all that often
-                npvalue = value.access()
-                release_value = True
-            else:
-                lo,hi = new_self.distribution()
-                result = util.get_slice(new_self.global_slice, lo, hi)
-                result = util.broadcast_chomp(value.shape, result)
-                matching_input = value[result]
-                npvalue = matching_input.get()
-        else:
-            if value.ndim > 0:
-                lo,hi = new_self.distribution()
-                result = util.get_slice(new_self.global_slice, lo, hi)
-                result = util.broadcast_chomp(value.shape, result)
-                npvalue = value[result]
+        # access based on new global_slice as an ndarray first
+        npself = self.access(global_slice)
+        if npself is not None:
+            if isinstance(value, ndarray):
+                if (ga.compare_distr(value.handle, self.handle)
+                        and value.global_slice == global_slice):
+                    # opt: same distributions and same slicing
+                    # in practice this might not happen all that often
+                    npvalue = value.access()
+                    release_value = True
+                else:
+                    lo,hi = self.distribution()
+                    result = util.get_slice(global_slice, lo, hi)
+                    result = util.broadcast_chomp(value.shape, result)
+                    npvalue = value.get(result)
+            elif isinstance(value, flatiter):
+                raise NotImplementedError
+            elif value.ndim > 0:
+                    lo,hi = self.distribution()
+                    result = util.get_slice(global_slice, lo, hi)
+                    result = util.broadcast_chomp(value.shape, result)
+                    npvalue = value[result]
             else:
                 npvalue = value
-        npself[:] = npvalue
+            npself[:] = npvalue
+        ga.sync()
 
     #def __setslice__
     #def __setstate__
@@ -2194,9 +2265,10 @@ class ufunc(object):
                 else:
                     lo,hi = out.distribution()
                     result = util.get_slice(out.global_slice, lo, hi)
-                    npin = input[result]
-                    if isinstance(input, ndarray):
-                        npin = npin.get()
+                    if is_distributed(input):
+                        npin = input.get(result)
+                    else:
+                        npin = input[result]
                 self.func(npin, npout, *args, **kwargs)
                 if release_in:
                     input.release()
@@ -2213,18 +2285,21 @@ class ufunc(object):
             else:
                 npout = out.access()
                 if npout is not None: # this proc 'owns' data
-                    npin = input[out._range]
-                    if isinstance(input, ndarray):
-                        npin = npin.get()
+                    if is_distributed(input):
+                        npin = input.get(out._range)
+                    else:
+                        npin = input[out._range]
                     self.func(npin, npout, *args, **kwargs)
                     out.release_update()
             ga.sync()
         else:
+            ga.sync()
             # out is not distributed
             npin = input
             if is_distributed(input):
-                npin = input.get()
+                npin = input.allget()
             self.func(npin, out, *args, **kwargs)
+            #ga.sync() # I don't think we need this one
         return out
 
     def _binary_call(self, first, second, out=None, *args, **kwargs):
@@ -2285,9 +2360,10 @@ class ufunc(object):
                     lo,hi = out.distribution()
                     result = util.get_slice(out.global_slice, lo, hi)
                     result = util.broadcast_chomp(first_shape, result)
-                    npfirst = first[result]
-                    if isinstance(first, ndarray):
-                        npfirst = npfirst.get()
+                    if is_distributed(first):
+                        npfirst = first.get(result)
+                    else:
+                        npfirst = first[result]
                 else:
                     npfirst = first
                 npsecond = None
@@ -2310,9 +2386,10 @@ class ufunc(object):
                     lo,hi = out.distribution()
                     result = util.get_slice(out.global_slice, lo, hi)
                     result = util.broadcast_chomp(second_shape, result)
-                    npsecond = second[result]
-                    if isinstance(second, ndarray):
-                        npsecond = npsecond.get()
+                    if is_distributed(second):
+                        npsecond = second.get(result)
+                    else:
+                        npsecond = second[result]
                 else:
                     npsecond = second
                 self.func(npfirst, npsecond, npout, *args, **kwargs)
@@ -2324,31 +2401,39 @@ class ufunc(object):
             ga.sync()
         elif isinstance(out, flatiter):
             ga.sync()
-            # first op: first and out are same object
+            # first op: first and second and out are same object
             if first is second is out:
                 self._binary_call(out.base,out.base,out.base,*args,**kwargs)
                 return out.copy()
             else:
                 npout = out.access()
                 if npout is not None: # this proc 'owns' data
-                    npfirst = first[out._range]
-                    if isinstance(first, ndarray):
-                        npfirst = npfirst.get()
-                    npsecond = second[out._range]
-                    if isinstance(second, ndarray):
-                        npsecond = npsecond.get()
+                    if is_distributed(first):
+                        npfirst = first.get(out._range)
+                    else:
+                        npfirst = first[out._range]
+                    if second is first:
+                        npsecond = npfirst
+                    elif is_distributed(second):
+                        npsecond = second.get(out._range)
+                    else:
+                        npsecond = second[out._range]
                     self.func(npfirst, npsecond, npout, *args, **kwargs)
                     out.release_update()
             ga.sync()
         else:
+            ga.sync()
             # out is not distributed
             ndfirst = first
             if is_distributed(first):
-                ndfirst = first.get()
+                ndfirst = first.allget()
             ndsecond = second
-            if is_distributed(second):
-                ndsecond = second.get()
+            if second is first:
+                ndsecond = ndfirst
+            elif is_distributed(second):
+                ndsecond = second.allget()
             self.func(ndfirst, ndsecond, out, *args, **kwargs)
+            #ga.sync() # I don't think we need this one
         return out
 
     def reduce(self, a, axis=0, dtype=None, out=None, *args, **kwargs):
@@ -3544,7 +3629,8 @@ class flatiter(object):
         return self._index
     index = property(_get_index)
 
-    def __getitem__(self, key):
+    def get(self, key):
+        # THIS OPERATION IS ONE-SIDED
         # we expect key to be a single value or a slice, but might also be an
         # iterable of length 1
         try:
@@ -3566,6 +3652,39 @@ class flatiter(object):
                     offsets.append(gs)
             # create index coordinates
             i = (np.indices(shape).reshape(len(shape),-1).T + offsets)[key]
+            return ga.gather(self._base.handle, i)
+        else:
+            # assumes int,long,etc
+            try:
+                index = np.unravel_index(key, self._base.shape)
+                return self._base.get(index)
+            except:
+                raise IndexError, "unsupported iterator index (%s)" % str(key)
+
+    def __getitem__(self, key):
+        # THIS OPERATION IS COLLECTIVE
+        # we expect key to be a single value or a slice, but might also be an
+        # iterable of length 1
+        try:
+            key = key[0]
+        except:
+            pass
+        if isinstance(key, slice):
+            # get shape of global_slice
+            shape = []
+            offsets = []
+            for gs in self._base.global_slice:
+                if gs is None:
+                    pass
+                elif isinstance(gs, slice):
+                    shape.append(util.slicelength(gs))
+                    offsets.append(0)
+                else:
+                    shape.append(1)
+                    offsets.append(gs)
+            # create index coordinates
+            i = (np.indices(shape).reshape(len(shape),-1).T + offsets)[key]
+            # TODO optimize the gather since this is a collective
             return ga.gather(self._base.handle, i)
         else:
             # assumes int,long,etc
@@ -3595,11 +3714,13 @@ class flatiter(object):
         This differs from the copy() routine which may end up distributing the
         copy whereas get() will always generate a copy on each local process.
 
+        This operation is one-sided.
+
         """
         # TODO this doesn't feel right -- communicate and then a local copy
         # operation? The answer is correct, but seems like too much extra
-        # work.  Although, using get() instead of ga.gather() might be better?
-        return self.base.get().flatten()
+        # work.
+        return self._base.get().flatten()
 
     def access(self):
         """Return a copy of a 'local' portion."""
