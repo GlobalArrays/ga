@@ -582,8 +582,16 @@ static void sga_pack_unpack(Integer g_src, Integer g_dst, Integer g_msk,
     if (type_src != type_dst) {
         pnga_error("ga_pack: src and dst must be same type", 0);
     }
-    if(!pnga_compare_distr(g_src, g_msk)) {
-        pnga_error("ga_pack: src and msk distributions differ",0);
+    if (1 == pack) {
+        if(!pnga_compare_distr(g_src, g_msk)) {
+            pnga_error("ga_pack: src and msk distributions differ",0);
+        }
+    } else if (0 == pack) {
+        if(!pnga_compare_distr(g_dst, g_msk)) {
+            pnga_error("ga_unpack: dst and msk distributions differ",0);
+        }
+    } else {
+        pnga_error("ga_pack/unpack bad pack flag",0);
     }
 
     pnga_sync();
