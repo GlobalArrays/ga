@@ -621,6 +621,9 @@
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
 
+/* ScaLAPACK is using 8-byte integers */
+#undef SCALAPACK_I8
+
 /* Define to the type of arg 1 for `select'. */
 #undef SELECT_TYPE_ARG1
 

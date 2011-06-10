@@ -785,6 +785,7 @@ with_blas4
 with_blas8
 with_lapack
 with_scalapack
+with_scalapack8
 enable_shared
 enable_static
 with_pic
@@ -1471,7 +1472,10 @@ Optional Packages:
   --with-blas8[=ARG]      use external BLAS library compiled with
                           sizeof(INTEGER)==8
   --with-lapack=[ARG]     use external LAPACK library
-  --with-scalapack=[ARG]  use ScaLAPACK library
+  --with-scalapack=[ARG]  use ScaLAPACK library compiled with
+                          sizeof(INTEGER)==4
+  --with-scalapack8=[ARG] use ScaLAPACK library compiled with
+                          sizeof(INTEGER)==8
   --with-pic              try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
@@ -13427,10 +13431,17 @@ fi
 
 
 
+scalapack_size=4
 
 # Check whether --with-scalapack was given.
 if test "${with_scalapack+set}" = set; then :
-  withval=$with_scalapack;
+  withval=$with_scalapack; scalapack_size=4
+fi
+
+
+# Check whether --with-scalapack8 was given.
+if test "${with_scalapack8+set}" = set; then :
+  withval=$with_scalapack8; scalapack_size=8; with_scalapack="$with_scalapack8"
 fi
 
 
@@ -13670,6 +13681,11 @@ LDFLAGS="$ga_save_LDFLAGS"
 
 
 
+if test "x$scalapack_size" = x8; then :
+
+$as_echo "#define SCALAPACK_I8 1" >>confdefs.h
+
+fi
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test $ga_scalapack_ok = yes; then :

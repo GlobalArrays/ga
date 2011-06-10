@@ -35,8 +35,15 @@ char pdgetrs ();
 # combination of libraries necessary to use ScaLAPACK.
 AC_DEFUN([GA_SCALAPACK],
 [AC_REQUIRE([GA_LAPACK])
+scalapack_size=4
 AC_ARG_WITH([scalapack],
-    [AS_HELP_STRING([--with-scalapack=[[ARG]]], [use ScaLAPACK library])])
+    [AS_HELP_STRING([--with-scalapack=[[ARG]]],
+        [use ScaLAPACK library compiled with sizeof(INTEGER)==4])],
+    [scalapack_size=4])
+AC_ARG_WITH([scalapack8],
+    [AS_HELP_STRING([--with-scalapack8=[[ARG]]],
+        [use ScaLAPACK library compiled with sizeof(INTEGER)==8])],
+    [scalapack_size=8; with_scalapack="$with_scalapack8"])
 
 ga_scalapack_ok=no
 AS_IF([test "x$with_scalapack" = xno], [ga_scalapack_ok=skip])
@@ -94,6 +101,8 @@ LDFLAGS="$ga_save_LDFLAGS"
 AC_SUBST([SCALAPACK_LIBS])
 AC_SUBST([SCALAPACK_LDFLAGS])
 AC_SUBST([SCALAPACK_CPPFLAGS])
+AS_IF([test "x$scalapack_size" = x8],
+    [AC_DEFINE([SCALAPACK_I8], [1], [ScaLAPACK is using 8-byte integers])])
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 AS_IF([test $ga_scalapack_ok = yes],
