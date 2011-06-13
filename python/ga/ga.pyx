@@ -274,9 +274,10 @@ cdef _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
         bint nb=False, bint periodic=False, skip=None):
     """Combines data from buffer with data in the global array patch.
     
-    The buffer array is assumed to be have the same number of
-    dimensions as the global array.  If the buffer is not contiguous, a
-    contiguous copy will be made.
+    The local array is assumed to have the same shape as the requested region,
+    or the local array can be 1-dimensional so long as it has the same number
+    of elements as the requested region. Any detected inconsitencies raise a
+    ValueError.
     
         global array section (lo[],hi[]) += alpha * buffer
 
@@ -286,7 +287,10 @@ cdef _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
         g_a : int
             the array handle
         buffer : array-like
-            must be contiguous and have same number of elements as patch
+            the data to put;
+            should either be 1D and len(buffer)==np.prod(hi-lo), or
+            np.all(buffer.shape == hi-lo) i.e. buffer is 1D and same size as
+            requested region or buffer is the same shape as requested region
         lo : 1D array-like
             lower bound patch coordinates, inclusive
         hi : 1D array-like
@@ -323,18 +327,28 @@ cdef _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
     dtype = _to_dtype[gtype]
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
     shape = hi_nd-lo_nd+1
-    ld_nd = shape[1:]
     buffer_nd = np.asarray(buffer, dtype=dtype)
-    if not buffer_nd.flags['C_CONTIGUOUS']:
-        buffer_nd = np.ascontiguousarray(buffer_nd, dtype=dtype)
-        assert(buffer_nd.flags['C_CONTIGUOUS'])
-    if buffer_nd.size != np.prod(shape):
-        raise ValueError, ('buffer size does not match shape :: '
-                'buffer.size=%s != np.prod(shape)=%s' % (
-                buffer_nd.size, np.prod(shape)))
     if buffer_nd.dtype != dtype:
         raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
                 buffer.dtype, dtype)
+    # we allow 1-d "flat" buffers in addition to buffers matching the shape of
+    # the requested region
+    if buffer_nd.ndim == 1:
+        if buffer_nd.size != np.prod(shape):
+            raise ValueError, ('buffer size does not match shape :: '
+                    'buffer.size=%s != np.prod(shape)=%s' % (
+                    buffer_nd.size, np.prod(shape)))
+        ld_nd = shape[1:]
+    else:
+        buffer_shape = [buffer_nd.shape[i] for i in range(buffer_nd.ndim)]
+        if not np.all(buffer_shape == shape):
+            raise ValueError, ('buffer shape does not match request shape :: '
+                    'buffer_shape=%s != shape=%s' % (
+                    buffer_shape, np.prod(shape)))
+        strides = [buffer_nd.strides[i]/buffer_nd.itemsize
+                for i in range(buffer_nd.ndim)]
+        ld_nd = np.asarray([strides[i]/strides[i+1]
+                for i in range(buffer_nd.ndim-1)], dtype=np.int64)
     if alpha is None:
         alpha = 1
     valpha = _convert_multiplier(gtype, alpha,
@@ -1834,9 +1848,10 @@ cdef _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None,
         bint nb=False, bint periodic=False, skip=None):
     """Copies data from global array section to the local array buffer.
     
-    The local array is assumed to be have the same number of dimensions as the
-    global array. Any detected inconsitencies/errors in the input arguments
-    are fatal.
+    The local array is assumed to have the same shape as the requested region,
+    or the local array can be 1-dimensional so long as it has the same number
+    of elements as the requested region. Any detected inconsitencies raise a
+    ValueError.
 
     This is a one-sided operation.
 
@@ -1848,7 +1863,9 @@ cdef _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None,
         hi : 1D array-like of integers
             higher bound patch coordinates, exclusive
         buffer : ndarray
-            should be the appropriate type and large enough to hold lo,hi
+            should either be 1D and len(buffer)==np.prod(hi-lo), or
+            np.all(buffer.shape == hi-lo) i.e. buffer is 1D and same size as
+            requested region or buffer is the same shape as requested region
         nb : bool
             whether this call is non-blocking (see ga.nbget)
         periodic : bool
@@ -1865,26 +1882,34 @@ cdef _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None,
     dtype = _to_dtype[gtype]
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
     shape = hi_nd-lo_nd+1
-    ld_nd = shape[1:]
     if skip is None:
         skip_nd = None
     else:
         skip_nd = _inta64(skip)
+        shape = (hi_nd-lo_nd)/skip_nd+1
     if buffer is None:
         buffer = np.ndarray(shape, dtype=dtype)
-    else:
-        bufsize = None
-        if skip_nd is None:
-            bufsize = np.prod(shape)
-        else:
-            bufsize = np.prod((hi_nd-lo_nd)/skip_nd+1)
-        if buffer.size != bufsize:
+    elif buffer.dtype != dtype:
+        raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
+                buffer.dtype, dtype)
+    # we allow 1-d "flat" buffers in addition to buffers matching the shape of
+    # requested region
+    if buffer.ndim == 1:
+        if buffer.size != np.prod(shape):
             raise ValueError, ('buffer size does not match shape :: '
-                    'buffer.size=%s != expected=%s' % (
-                    buffer.size, bufsize))
-        if buffer.dtype != dtype:
-            raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
-                    buffer.dtype, dtype)
+                    'buffer.size=%s != np.prod(shape)=%s' % (
+                    buffer.size, np.prod(shape)))
+        ld_nd = shape[1:]
+    else:
+        buffer_shape = [buffer.shape[i] for i in range(buffer.ndim)]
+        if not np.all(buffer_shape == shape):
+            raise ValueError, ('buffer shape does not match request shape :: '
+                    'buffer_shape=%s != shape=%s' % (
+                    buffer_shape, np.prod(shape)))
+        strides = [buffer.strides[i]/buffer.itemsize
+                for i in range(buffer.ndim)]
+        ld_nd = np.asarray([strides[i]/strides[i+1]
+                for i in range(buffer.ndim-1)], dtype=np.int64)
     if nb:
         NGA_NbGet64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer.data, <int64_t*>ld_nd.data, &nbhandle)
@@ -3152,9 +3177,10 @@ cdef _put_common(int g_a, buffer, lo=None, hi=None,
         bint nb=False, bint periodic=False, skip=None):
     """Copies data from local array buffer to the global array section.
     
-    The local array is assumed to be have the same number of dimensions as the
-    global array.  Any detected inconsitencies/errors in input arguments are
-    fatal.
+    The local array is assumed to have the same shape as the requested region,
+    or the local array can be 1-dimensional so long as it has the same number
+    of elements as the requested region. Any detected inconsitencies raise a
+    ValueError.
 
     This is a one-sided operation. 
 
@@ -3162,7 +3188,10 @@ cdef _put_common(int g_a, buffer, lo=None, hi=None,
         g_a : int
             the array handle
         buffer : array-like
-            the data to put
+            the data to put;
+            should either be 1D and len(buffer)==np.prod(hi-lo), or
+            np.all(buffer.shape == hi-lo) i.e. buffer is 1D and same size as
+            requested region or buffer is the same shape as requested region
         lo : 1D array-like of integers
             lower bound patch coordinates, inclusive
         hi : array-like of integers
@@ -3184,18 +3213,28 @@ cdef _put_common(int g_a, buffer, lo=None, hi=None,
     dtype = _to_dtype[gtype]
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
     shape = hi_nd-lo_nd+1
-    ld_nd = shape[1:]
     buffer_nd = np.asarray(buffer, dtype=dtype)
-    if not buffer_nd.flags['C_CONTIGUOUS']:
-        buffer_nd = np.ascontiguousarray(buffer_nd, dtype=dtype)
-        assert(buffer_nd.flags['C_CONTIGUOUS'])
-    if buffer_nd.size != np.prod(shape):
-        raise ValueError, ('buffer size does not match shape :: '
-                'buffer.size=%s != np.prod(shape)=%s' % (
-                buffer_nd.size, np.prod(shape)))
     if buffer_nd.dtype != dtype:
         raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
                 buffer.dtype, dtype)
+    # we allow 1-d "flat" buffers in addition to buffers matching the shape of
+    # the requested region
+    if buffer_nd.ndim == 1:
+        if buffer_nd.size != np.prod(shape):
+            raise ValueError, ('buffer size does not match shape :: '
+                    'buffer.size=%s != np.prod(shape)=%s' % (
+                    buffer_nd.size, np.prod(shape)))
+        ld_nd = shape[1:]
+    else:
+        buffer_shape = [buffer_nd.shape[i] for i in range(buffer_nd.ndim)]
+        if not np.all(buffer_shape == shape):
+            raise ValueError, ('buffer shape does not match request shape :: '
+                    'buffer_shape=%s != shape=%s' % (
+                    buffer_shape, np.prod(shape)))
+        strides = [buffer_nd.strides[i]/buffer_nd.itemsize
+                for i in range(buffer_nd.ndim)]
+        ld_nd = np.asarray([strides[i]/strides[i+1]
+                for i in range(buffer_nd.ndim-1)], dtype=np.int64)
     if nb:
         NGA_NbPut64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data, &nbhandle)
