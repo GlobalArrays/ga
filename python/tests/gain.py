@@ -107,6 +107,9 @@ def test(module):
     check(j[2])
     check(j[2:19])
     check(module.add(s,t,np.ones((3,4,5), dtype=np.float32)))
+    check(module.clip(module.arange(10), 1, 8))
+    check(module.clip(module.arange(100), 10, 80))
+    check(module.clip(module.arange(10), [3,4,1,1,1,4,4,4,4,4], 8))
 
 def main():
     global count

@@ -2128,6 +2128,27 @@ class ndarray(object):
     def __xor__(self,y):
         return logical_xor(self,y)
 
+def _npin_piece_based_on_out(input, out, shape=None):
+    # opt: same distributions and same slicing
+    #   we can use local data exclusively
+    #   in practice this might not happen all that often
+    if (isinstance(input, ndarray)
+            and ga.compare_distr(input.handle, out.handle)
+            and input.global_slice == out.global_slice):
+        return input.access(),True
+    # no opt: requires copy of remote data
+    elif shape is None or len(shape) > 0:
+        lo,hi = out.distribution()
+        result = util.get_slice(out.global_slice, lo, hi)
+        if shape is not None:
+            result = util.broadcast_chomp(shape, result)
+        if is_distributed(input):
+            return input.get(result),False
+        else:
+            return input[result],False
+    else:
+        return input,False
+
 class ufunc(object):
     """Functions that operate element by element on whole arrays.
 
@@ -2247,28 +2268,10 @@ class ufunc(object):
             # get out as an np.ndarray first
             npout = out.access()
             if npout is not None: # this proc owns data
-                npin = None
-                release_in = False
-                # first opt: input and out are same object
-                #   we can use local data exclusively
                 if input is out:
-                    npin = npout
-                # second opt: same distributions and same slicing
-                #   we can use local data exclusively
-                #   in practice this might not happen all that often
-                elif (isinstance(input, ndarray)
-                        and ga.compare_distr(input.handle, out.handle)
-                        and input.global_slice == out.global_slice):
-                    npin = input.access() # don't need to check for None
-                    release_in = True
-                # no opt: requires copy of remote data
+                    npin,release_in = npout,False
                 else:
-                    lo,hi = out.distribution()
-                    result = util.get_slice(out.global_slice, lo, hi)
-                    if is_distributed(input):
-                        npin = input.get(result)
-                    else:
-                        npin = input[result]
+                    npin,release_in = _npin_piece_based_on_out(input,out)
                 self.func(npin, npout, *args, **kwargs)
                 if release_in:
                     input.release()
@@ -2344,54 +2347,20 @@ class ufunc(object):
             if npout is not None: # this proc owns data
                 # get matching and compatible portions of input arrays
                 # broadcasting rules (may) apply
-                npfirst = None
-                release_first = False
                 if first is out:
-                    # first opt: first and out are same object
-                    npfirst = npout
-                elif (isinstance(first, ndarray)
-                        and ga.compare_distr(first.handle, out.handle)
-                        and first.global_slice == out.global_slice):
-                    # second opt: same distributions and same slicing
-                    # in practice this might not happen all that often
-                    npfirst = first.access()
-                    release_first = True
-                elif len(first_shape) > 0:
-                    lo,hi = out.distribution()
-                    result = util.get_slice(out.global_slice, lo, hi)
-                    result = util.broadcast_chomp(first_shape, result)
-                    if is_distributed(first):
-                        npfirst = first.get(result)
-                    else:
-                        npfirst = first[result]
+                    npfirst,release_first = npout,False
                 else:
-                    npfirst = first
-                npsecond = None
-                release_second = False
+                    npfirst,release_first = _npin_piece_based_on_out(
+                            first,out,first_shape)
                 if second is first:
                     # zeroth opt: first and second are same object, so do the
                     # same thing for second that we did for first
-                    npsecond = npfirst
+                    npsecond,release_second = npfirst,False
                 elif second is out:
-                    # first opt: second and out are same object
-                    npsecond = npout
-                elif (isinstance(second, ndarray)
-                        and ga.compare_distr(second.handle, out.handle)
-                        and second.global_slice == out.global_slice):
-                    # second opt: same distributions and same slicing
-                    # in practice this might not happen all that often
-                    npsecond = second.access()
-                    release_second = True
-                elif len(second_shape) > 0:
-                    lo,hi = out.distribution()
-                    result = util.get_slice(out.global_slice, lo, hi)
-                    result = util.broadcast_chomp(second_shape, result)
-                    if is_distributed(second):
-                        npsecond = second.get(result)
-                    else:
-                        npsecond = second[result]
+                    npsecond,release_second = npout,False
                 else:
-                    npsecond = second
+                    npsecond,release_second = _npin_piece_based_on_out(
+                            second,out,second_shape)
                 self.func(npfirst, npsecond, npout, *args, **kwargs)
                 if release_first:
                     first.release()
@@ -3629,10 +3598,15 @@ class flatiter(object):
         return self._index
     index = property(_get_index)
 
-    def get(self, key):
+    def get(self, key=None):
         # THIS OPERATION IS ONE-SIDED
         # we expect key to be a single value or a slice, but might also be an
         # iterable of length 1
+        if key is None:
+            # TODO this doesn't feel right -- communicate and then a local copy
+            # operation? The answer is correct, but seems like too much extra
+            # work.
+            return self._base.get().flatten()
         try:
             key = key[0]
         except:
@@ -3708,20 +3682,6 @@ class flatiter(object):
         else:
             raise StopIteration
 
-    def get(self):
-        """Return a local copy of entire array.
-
-        This differs from the copy() routine which may end up distributing the
-        copy whereas get() will always generate a copy on each local process.
-
-        This operation is one-sided.
-
-        """
-        # TODO this doesn't feel right -- communicate and then a local copy
-        # operation? The answer is correct, but seems like too much extra
-        # work.
-        return self._base.get().flatten()
-
     def access(self):
         """Return a copy of a 'local' portion."""
         if self._range_values is not None:
@@ -3739,6 +3699,158 @@ class flatiter(object):
         if self._range is not None and self._range_values is not None:
             self[self._range] = self._range_values
         self._range_values = None
+
+def clip(a, a_min, a_max, out=None):
+    """Clip (limit) the values in an array.
+
+    Given an interval, values outside the interval are clipped to
+    the interval edges.  For example, if an interval of ``[0, 1]``
+    is specified, values smaller than 0 become 0, and values larger
+    than 1 become 1.
+
+    Parameters
+    ----------
+    a : array_like
+        Array containing elements to clip.
+    a_min : scalar or array_like
+        Minimum value.
+    a_max : scalar or array_like
+        Maximum value.  If `a_min` or `a_max` are array_like, then they will
+        be broadcasted to the shape of `a`.
+    out : ndarray, optional
+        The results will be placed in this array. It may be the input
+        array for in-place clipping.  `out` must be of the right shape
+        to hold the output.  Its type is preserved.
+
+    Returns
+    -------
+    clipped_array : ndarray
+        An array with the elements of `a`, but where values
+        < `a_min` are replaced with `a_min`, and those > `a_max`
+        with `a_max`.
+
+    See Also
+    --------
+    numpy.doc.ufuncs : Section "Output arguments"
+
+    Examples
+    --------
+    >>> a = np.arange(10)
+    >>> np.clip(a, 1, 8)
+    array([1, 1, 2, 3, 4, 5, 6, 7, 8, 8])
+    >>> a
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> np.clip(a, 3, 6, out=a)
+    array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
+    >>> a = np.arange(10)
+    >>> a
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> np.clip(a, [3,4,1,1,1,4,4,4,4,4], 8)
+    array([3, 4, 2, 3, 4, 5, 6, 7, 8, 8])
+
+    """
+    # just in case
+    a = asarray(a)
+    a_min = asarray(a_min)
+    a_max = asarray(a_max)
+    if not (is_distributed(a)
+            or is_distributed(a_min)
+            or is_distributed(a_max)
+            or is_distributed(out)):
+        # no ndarray instances used, pass through immediately to numpy
+        return np.clip(a, a_min, a_max, out)
+    a_shape = _get_shape(a)
+    a_min_shape = _get_shape(a_min)
+    a_max_shape = _get_shape(a_max)
+    if out is None:
+        out = ndarray(a_shape, _get_dtype(a))
+    # sanity checks
+    if not is_array(out):
+        raise TypeError, "output must be an array"
+    if out.shape != a.shape:
+        raise ValueError, ("clip: Output array must have thesame shape as "
+                "the input.")
+    # Now figure out what to do...
+    if isinstance(out, ndarray):
+        ga.sync()
+        # get out as an np.ndarray first
+        npout = out.access()
+        if npout is not None: # this proc owns data
+            # get matching and compatible portions of input arrays
+            # broadcasting rules (may) apply
+            if a is out:
+                npa,release_a = npout,False
+            else:
+                npa,release_a = _npin_piece_based_on_out(a,out,a_shape)
+            if a_min is out:
+                npa_min,release_a_min = npout,False
+            elif a_min is a:
+                npa_min,release_a_min = npa,False
+            else:
+                npa_min,release_a_min = _npin_piece_based_on_out(
+                        a_min,out,a_min_shape)
+            if a_max is out:
+                npa_max,release_a_max = npout,False
+            elif a_max is a:
+                npa_max,release_a_max = npa,False
+            elif a_max is a_min:
+                npa_max,release_a_max = npa_min,False
+            else:
+                npa_max,release_a_max = _npin_piece_based_on_out(
+                        a_max,out,a_max_shape)
+            np.clip(npa, npa_min, npa_max, npout)
+            if release_a:
+                a.release()
+            if release_a_min:
+                a_min.release()
+            if release_a_max:
+                a_max.release()
+            out.release_update()
+        ga.sync()
+    elif isinstance(out, flatiter):
+        raise NotImplementedError, "flatiter version of clip"
+        #ga.sync()
+        ## first op: first and second and out are same object
+        #if first is second is out:
+        #    self._binary_call(out.base,out.base,out.base,*args,**kwargs)
+        #    return out.copy()
+        #else:
+        #    npout = out.access()
+        #    if npout is not None: # this proc 'owns' data
+        #        if is_distributed(first):
+        #            npfirst = first.get(out._range)
+        #        else:
+        #            npfirst = first[out._range]
+        #        if second is first:
+        #            npsecond = npfirst
+        #        elif is_distributed(second):
+        #            npsecond = second.get(out._range)
+        #        else:
+        #            npsecond = second[out._range]
+        #        self.func(npfirst, npsecond, npout, *args, **kwargs)
+        #        out.release_update()
+        #ga.sync()
+    else:
+        ga.sync()
+        # out is not distributed
+        nda = a
+        if is_distributed(a):
+            nda = a.allget()
+        nda_min = a_min
+        if a is a_min:
+            nda_min = nda
+        elif is_distributed(a_min):
+            nda_min = a_min.allget()
+        nda_max = a_max
+        if a is a_max:
+            nda_max = nda
+        elif a_max is a_min:
+            nda_max = nda_min
+        elif is_distributed(a_max):
+            nda_max = a_max.allget()
+        np.clip(a, nda_min, nda_max, out)
+        #ga.sync() # I don't think we need this one
+    return out
 
 DEBUG = False
 DEBUG_SYNC = False
