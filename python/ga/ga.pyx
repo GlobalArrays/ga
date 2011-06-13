@@ -344,7 +344,7 @@ cdef _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
         if not np.all(buffer_shape == shape):
             raise ValueError, ('buffer shape does not match request shape :: '
                     'buffer_shape=%s != shape=%s' % (
-                    buffer_shape, np.prod(shape)))
+                    buffer_shape, shape))
         strides = [buffer_nd.strides[i]/buffer_nd.itemsize
                 for i in range(buffer_nd.ndim)]
         ld_nd = np.asarray([strides[i]/strides[i+1]
@@ -1905,7 +1905,7 @@ cdef _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None,
         if not np.all(buffer_shape == shape):
             raise ValueError, ('buffer shape does not match request shape :: '
                     'buffer_shape=%s != shape=%s' % (
-                    buffer_shape, np.prod(shape)))
+                    buffer_shape, shape))
         strides = [buffer.strides[i]/buffer.itemsize
                 for i in range(buffer.ndim)]
         ld_nd = np.asarray([strides[i]/strides[i+1]
@@ -3230,7 +3230,7 @@ cdef _put_common(int g_a, buffer, lo=None, hi=None,
         if not np.all(buffer_shape == shape):
             raise ValueError, ('buffer shape does not match request shape :: '
                     'buffer_shape=%s != shape=%s' % (
-                    buffer_shape, np.prod(shape)))
+                    buffer_shape, shape))
         strides = [buffer_nd.strides[i]/buffer_nd.itemsize
                 for i in range(buffer_nd.ndim)]
         ld_nd = np.asarray([strides[i]/strides[i+1]

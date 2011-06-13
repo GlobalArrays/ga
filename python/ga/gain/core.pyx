@@ -379,11 +379,9 @@ class ndarray(object):
             key = util.canonicalize_indices(self.shape, key)
             global_slice = util.slice_arithmetic(self.global_slice, key)
         # We must translate global_slice into a strided get
-        shape = util.slices_to_shape(global_slice)
         dtype = self._dtype
         if self._is_real or self._is_imag:
             dtype = np.dtype("complex%s" % (self._dtype.itemsize*2*8))
-        nd_buffer = np.zeros(shape, dtype=dtype)
         _lo = []
         _hi = []
         _skip = []
@@ -405,17 +403,18 @@ class ndarray(object):
                     _hi.append(item.stop)
                     _skip.append(item.step)
             elif item is None:
-                adjust.append(slice(0,1,1))
+                adjust.append(None)
             else:
                 # assumes item is int, long, np.int64, etc
+                adjust.append(0)
                 _lo.append(item)
                 _hi.append(item+1)
                 _skip.append(1)
         ret = None
         if need_strided:
-            ret = ga.strided_get(self.handle, _lo, _hi, _skip, nd_buffer)
+            ret = ga.strided_get(self.handle, _lo, _hi, _skip)
         else:
-            ret = ga.get(self.handle, _lo, _hi, nd_buffer)
+            ret = ga.get(self.handle, _lo, _hi)
         if ret.ndim > 0:
             ret = ret[adjust]
         if self._is_real:
