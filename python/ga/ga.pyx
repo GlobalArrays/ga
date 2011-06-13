@@ -327,6 +327,11 @@ cdef _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
     dtype = _to_dtype[gtype]
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
     shape = hi_nd-lo_nd+1
+    if skip is None:
+        skip_nd = None
+    else:
+        skip_nd = _inta64(skip)
+        shape = (hi_nd-lo_nd)/skip_nd+1
     buffer_nd = np.asarray(buffer, dtype=dtype)
     if buffer_nd.dtype != dtype:
         raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
@@ -363,7 +368,6 @@ cdef _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
         NGA_Periodic_acc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data, valpha)
     elif skip is not None:
-        skip_nd = _inta64(skip)
         NGA_Strided_acc64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <int64_t*>skip_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data, valpha)
@@ -3213,6 +3217,11 @@ cdef _put_common(int g_a, buffer, lo=None, hi=None,
     dtype = _to_dtype[gtype]
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
     shape = hi_nd-lo_nd+1
+    if skip is None:
+        skip_nd = None
+    else:
+        skip_nd = _inta64(skip)
+        shape = (hi_nd-lo_nd)/skip_nd+1
     buffer_nd = np.asarray(buffer, dtype=dtype)
     if buffer_nd.dtype != dtype:
         raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
@@ -3243,7 +3252,6 @@ cdef _put_common(int g_a, buffer, lo=None, hi=None,
         NGA_Periodic_put64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data)
     elif skip is not None:
-        skip_nd = _inta64(skip)
         NGA_Strided_put64(g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
                 <int64_t*>skip_nd.data,
                 <void*>buffer_nd.data, <int64_t*>ld_nd.data)
