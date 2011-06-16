@@ -82,29 +82,31 @@ elements per dimension. ``shape`` can be modified while ``ndim`` and
 programmer may help in developing certain algorithms.
 
 The creation of ``ndarray`` instances is complicated by the various ways in
-which they can be created such as explicit constructor calls, view casting, or
-creating new instances from template instances. To this end, the ``ndarray``
-does not implement Python’s ``__init__()`` object constructor.  Instead,
-``ndarrays`` use the ``__new__()`` classmethod. Recall that ``__new__()`` is
-Python’s hook for subclassing its built-in objects. If ``__new__()`` returns
-an instance of the class on which it is defined, then the class's
-``__init__()`` method is also called. Otherwise, the ``__init__()`` method is
-not called. But since views of ``ndarray`` instances can be created based on
-subtypes, the ``__new__()`` classmethod might not always get called to
-properly initialize the instance. ``__array_finalize__()`` is called instead
-of ``__init__()`` for ndarray subclasses to avoid this limitation.
+which it can be done such as explicit constructor calls, view casting, or
+creating new instances from template instances (e.g. slicing). To this end,
+the ``ndarray`` does not implement Python’s ``__init__()`` object constructor.
+Instead, ``ndarrays`` use the ``__new__()`` classmethod. Recall that
+``__new__()`` is Python’s hook for subclassing its built-in objects. If
+``__new__()`` returns an instance of the class on which it is defined, then
+the class's ``__init__()`` method is also called. Otherwise, the
+``__init__()`` method is not called. Given the various ways that ``ndarray``
+instances can be created, the ``__new__()`` classmethod might not always get
+called to properly initialize the instance.  ``__array_finalize__()`` is
+called instead of ``__init__()`` for ndarray subclasses to avoid this
+limitation.
 
 NumPy's Universal Functions
 ===========================
 
 The element-wise operators in NumPy are known as *Universal Functions*, or
 *ufuncs*. Many of the methods of the ``ndarray`` simply invoke the
-corresponding ufunc. For example, the operator + calls ``ndarray.__add__()``
-which invokes the ufunc ``add``. Ufuncs are either unary or binary, taking
-either one or two arrays as input, respectively. Ufuncs always return the
-result of the operation as an array. Optionally, an additional array may be
-specified to receive the results of the operation. Specifying this output
-array to the ufunc avoids the sometimes unnecessary creation of a new array.
+corresponding ufunc. For example, the operator ``+`` calls
+``ndarray.__add__()`` which invokes the ufunc ``add``. Ufuncs are either unary
+or binary, taking either one or two arrays as input, respectively. Ufuncs
+always return the result of the operation as an array. Optionally, an
+additional output array may be specified to receive the results of the
+operation.  Specifying this output array to the ufunc avoids the sometimes
+unnecessary creation of a new array.
 
 Ufuncs are more than just callable functions. They also have some special
 methods such as ``reduce`` and ``accumulate``. ``reduce`` is similar to
@@ -117,8 +119,8 @@ ufunc defines the function that is used for the reduction. For example,
 running product.  ``accumulate`` is similar to reduce, but it returns the
 intermediate results of the reduction.
 
-Ufuncs can operate on objects that are not ``ndarrays``. In order for
-subclasses of the ``ndarray`` or array-like objects to utilize the ufuncs,
+Ufuncs can operate on ``ndarray`` subclasses or array-like objects. In order
+for subclasses of the ``ndarray`` or array-like objects to utilize the ufuncs,
 they may define three methods or one attribute which are
 ``__array_prepare__()``, ``__array_wrap__()``, ``__array__()``, and
 ``__array_priority__``, respectively.  The ``__array_prepare__()`` and
@@ -126,9 +128,11 @@ they may define three methods or one attribute which are
 specified, or the input with the highest ``__array_priority__``.
 ``__array_prepare__()`` is called on the way into the ufunc after the output
 array is created but before any computation has been performed and
-``__array_wrap__()`` is called on the way out of the ufunc. If an output is
-specified and defines ``__array__()`` method, results will be written to the
-object returned by calling ``__array__()``.
+``__array_wrap__()`` is called on the way out of the ufunc. Those two
+functions exist so that ``ndarray`` subclasses can properly modify any
+attributes or properties specific to their subclass. Lastly, if an output is
+specified which defines an ``__array__()`` method, results will be written to
+the object returned by calling ``__array__()``.
 
 Parallel Programming Paradigms
 ==============================
@@ -254,14 +258,16 @@ parallel shared-memory programming interface to manipulate physically
 distributed dense multidimensional arrays, without the need for explicit
 cooperation by other processes. GA compliments the message-passing programming
 model and is compatible with MPI so that the programmer can use both in the
-same program. The GA library handles the distribution of arrays across
-processes and recognizes that accessing local memory is faster than accessing
-remote memory. However, the library allows access mechanisms for any part of
-the entire distributed array regardless of where its data is located. Local
-memory is acquired via ``NGA_Access()`` returning a pointer while remote
-memory is retrieved via ``NGA_Get()`` filling an already allocated array
-buffer. GA has been leveraged in several large computational chemistry codes
-and has been shown to scale well [Apr09]_.
+same program. Arrays are created by calling one of the creation routines such
+as ``NGA_Create()``, returning an integer handle which is passed to subsequent
+operations. The GA library handles the distribution of arrays across processes
+and recognizes that accessing local memory is faster than accessing remote
+memory. However, the library allows access mechanisms for any part of the
+entire distributed array regardless of where its data is located. Local memory
+is acquired via ``NGA_Access()`` returning a pointer to the data on the local
+process, while remote memory is retrieved via ``NGA_Get()`` filling an already
+allocated array buffer. GA has been leveraged in several large computational
+chemistry codes and has been shown to scale well [Apr09]_.
 
 Aggregate Remote Memory Copy Interface (ARMCI)
 ==============================================
@@ -279,7 +285,11 @@ Rice University [Dot04]_.
 Cython
 ======
 
-TODO
+Cython [Beh11]_ is both a langage which closely resembles Python as well as a
+compiler which generates C code based on Python's C API. The Cython language
+additionally supports calling C functions as well as static typing. This makes
+writing C extensions or wrapping external C libraries for the Python language
+as easy as Python itself.
 
 Previous Work
 -------------
@@ -421,16 +431,16 @@ support both.
 There are a few assumptions which govern the design of GAiN. First, all public
 GAiN functions are collective. Since Python and NumPy were designed to run
 serially on workstations, it naturally follows that GAiN -- running in an SPMD
-fashion -- will execute every public function collectively. Second, not all
-arrays should be distributed. If we assume that the cost of communication is
-high such that communication should be avoided, cetain design goals become
-clear. Small arrays and scalar values should be replicated on each process
-rather than distributed, and data locality should be emphasized over
-communiation. It follows, then, that GAiN operations should allow
-mixed inputs of both distributed and local array-like objects. Further, NumPy
-represents an extensive, useful, and hardened API. Every effort to reuse NumPy
-should be made. Lastly, GA has its own strengths to offer such as processor
-groups and custom data distributions. In order to maximize scalability of this
+fashion -- will execute every public function collectively. Second, only
+certain arrays should be distributed. If we assume that the cost of
+communication is high such that communication should be avoided, it's clear
+that small arrays and scalar values should be replicated on each process
+rather than distributed and that data locality should be emphasized over
+communiation. It follows, then, that GAiN operations should allow mixed inputs
+of both distributed and local array-like objects. Further, NumPy represents an
+extensive, useful, and hardened API. Every effort to reuse NumPy should be
+made. Lastly, GA has its own strengths to offer such as processor groups and
+custom data distributions. In order to maximize scalability of this
 implementation, we should enable the use of processor groups [Nie05]_.
 
 Both NumPy and GA provide multidimensional arrays and implement, among other
@@ -441,10 +451,14 @@ translating from NumPy to Global Arrays, each process must translate NumPy
 calls into calls with respect to their local array portions.
 
 A distributed array representation must acknowledge the duality of a global
-array and the many local arrays. Figure :ref:`fig1` will help illustrate.
-Each local piece of the ``gain.ndarray`` has its own shape (in parenthesis)
-and knows its portion of the distribution (in square brackets). Each local
-piece also knows the global shape.
+array and the physically distributed memory of the array. Array attributes
+such as ``shape`` should return the global, coalesced representation of the
+array which hides the fact the array is distributed. But when operataions such
+as ``add()`` are requested, the corresponding pieces of the input arrays must
+be operated over. Figure :ref:`fig1` will help illustrate.  Each local piece
+of the array has its own shape (in parenthesis) and knows its portion of the
+distribution (in square brackets). Each local piece also knows the global
+shape.
 
 .. figure:: image1_crop.png
 
@@ -453,39 +467,143 @@ piece also knows the global shape.
     parenthesis) and knows its portion of the distribution (in square
     brackets). Each local piece also knows the global shape.
 
-In order to handle the bookkeeping required for the distributed nature of
-these arrays, a fundamental design decision was whether to subclass the
-``ndarray`` or to provide a work-alike replacement module. The NumPy
+A fundamental design decision was whether to subclass the ``ndarray`` or to
+provide a work-alike replacement for the entire ``numpy`` module. The NumPy
 documentation states that the ``ndarray`` implements ``__new__()`` in order to
 control array creation via constructor calls, view casting, and slicing.
-Subclasses implement ``__new__()`` for when the constructor is called directly, and ``__array_finalize__()`` in order to set additional
-attributes or further modify the object from which the view has been taken.
-The problem is that properly subclassing the ``ndarray`` will always result in
-the allocation of memory. 
-
-Implementation
---------------
+Subclasses implement ``__new__()`` for when the constructor is called
+directly, and ``__array_finalize__()`` in order to set additional attributes
+or further modify the object from which a view has been taken. One can imagine
+an ``ndarray`` subclass called ``gainarray`` circumventing the usual
+``ndarray`` base class memory allocation and instead allocating a smaller
+``ndarray`` per process while retaining the global ``shape``. One problem
+occurs with view casting -- the other ``ndarray`` subclasses know nothing of
+the distributed nature of the memory within the ``gainarray``. There might be
+a clever solution to that problem, but on a related note, NumPy itself is not
+designed to handle distributed arrays. By design, ufuncs create an output
+array when one is not specified. The first hook which NumPy provides is
+``__array_prepare__()`` which is called *after the output array has been
+created*. This means any ufunc operation on one or more ``gainarray``
+instances without a specified output would automatically allocate the entire
+output on each process. For this reason alone, we opted to reimplement the
+entire ``numpy`` module, controlling all aspects of array creation and
+manipulation to take into account distributed arrays.
 
 We present a new Python module, ``gain``, developed as part of the main Global
 Arrays software distribution. The release of GA v5.0 contained Python bindings
 based on the complete GA C API, available in the extension module ``ga``. The
-bindings were developed using Cython. With the upcoming release of GA v5.1,
-the module ``ga.gain`` is available as a drop-in replacement for NumPy.  The
-goal of the implementation is to allow users to write:
+GA bindings as well as the ``gain`` module were developed using Cython. With
+the upcoming release of GA v5.1, the module ``ga.gain`` is available as a
+drop-in replacement for NumPy.  The goal of the implementation is to allow
+users to write:
 
 .. code-block:: python
 
     from ga import gain as numpy
 
-Cython was also used to develop ``gain``. The implementation details for how
-GA was used for distributed computation of NumPy arrays follows.
+In order to succeed as a drop-in replacement, all attributes, functions,
+modules, and classes which exist in ``numpy`` must also exist within ``gain``.
+The design details for how GA was used for distributed computation of NumPy
+arrays follow.
+
+GAiN follows the owner-computes rule [Zim88]_. The rule assigns each
+computation to the processor that owns the data being computed. Figures
+:ref:`fig2` and :ref:`fig3` illustrate the concept. For any array computation,
+GAiN bases the computation on the output array. The processes owning portions
+of the output array will acquire the corresponding pieces of the input
+array(s) and then perform the computation locally, *calling the original NumPy
+routine* on the corresponding array portions. In some cases, for example if
+the output array is a view created by a slicing operation, certain processors
+will have no computation to perform.
+
+.. figure:: image3_crop.png
+
+    :label:`fig2`
+    Add two arrays with the same data distribution. There are eight processors
+    for this computation.  Following the owner-computes rule, each process
+    owning a piece of the output array (far right) retrieves the corresponding
+    pieces from the sliced input arrays (left and middle). For example, the
+    corresponding gold elements will be computed locally on the owning
+    process.  Note that for this computation, the data distribution is the
+    same for both input arrays as well as the output array such that
+    communication can be avoided by using local data access.
+
+.. figure:: image2_crop.png
+
+    :label:`fig3`
+    Add two sliced arrays. There are eight processors for this computation.
+    The elements in blue were removed by a slice operation. Following the
+    owner-computes rule, each process owning a piece of the output array (far
+    right) retrieves the corresponding pieces from the sliced input arrays
+    (left and middle). For example, the corresponding gold elements will be
+    computed locally on the owning process. Similarly for the copper elements.
+    Note that for this computation, the data is not distributed such that
+    communication can be avoided.
 
 ``gain.ndarray``
 ================
 
-. Slice arithemetic
-. Access
-. Get (strided_get)
+The GAiN implementation of the ``ndarray`` implements a few important concepts
+including the dual nature of a global array and its individual distributed
+pieces, slice arithmetic, and separating collective operations from one-sided
+operations. When a ``gain.ndarray`` is created, it creates a Global Array of
+the same shape and type and stores the GA integer handle. The distribution on
+a given process can be queried using ``ga.distribution()``. The other
+important attribute of the ``gain.ndarray`` is the *global_slice*.  The
+global_slice begins as a list of ``slice`` objects based on the original
+``shape`` of the array.
+
+.. code-block:: python
+
+    self.global_slice = [slice(0,x,1) for x in shape]
+
+Slicing a ``gain.ndarray`` must return a view just like slicing a
+``numpy.ndarray`` returns a view. The approach taken is to apply the ``key``
+of the ``__getitem__(key)`` request to the ``global_slice`` and store the new
+``global_slice`` on the newly created view. We call this type of operation
+*slice arithemetic*.
+
+When performing calculations on a ``gain.ndarray``, the current
+``global_slice`` is queried when accessing the local data or fetching remote
+data such that the appropriate ``ndarray`` data block is returned.  Accessing
+local data and fetching remote data is performed by the
+``gain.ndarray.access()`` and ``gain.ndarray.get()`` methods, respectively.
+
+Recall that GA allows the contiguous, process-local data to be accessed using
+``ga.access()`` which returns a C-contiguous ``ndarray``. However, if the
+``gain.ndarray`` is a view created by a slice, the data which is accessed will
+be contiguous while the view is not. Based on the distribution of the
+process-local data, a new slice object is created from the ``global_slice``
+and applied to the accessed ``ndarray``, effectively having applied first the
+``global_slice`` on the global representation of the distributed array
+followed by a slice representing the process-local portion.
+
+After process-local data has been accessed and sliced as needed, it must then
+fetch the remote data. This is done using ``ga.get()`` or ``ga.strided_get()``
+which utilize one-sided communication. Recall that one-sided communication, as
+opposed to two-sided communication, does not require the cooperation of the
+remote process(es). The local process simply fetches the corresponding array
+section by performing a similar transformation to the target array's
+``global_slice`` as was done to access the local data, and then translates the
+modified ``global_slice`` into the proper arguments for ``ga.get()`` if the
+``global_slice`` does not contain any ``step`` values greater than one, or
+``ga.strided_get()`` if the ``global_slice`` contained ``step`` values greater
+than one.
+
+One limitation of using GA is that GA does not allow negative stride values
+corresponding to the negative ``step`` values allowed for Python sequences and
+NumPy arrays. Supporting negative ``step`` values for GAiN required special
+care -- when a negative ``step`` is encountered during a slice operation, the
+slice is applied as usual. However, prior to accessing or fetching data, the
+slice is inverted from a negative ``step`` to a positive ``step`` and the
+``start`` and ``stop`` values are updated appropriately. The ``ndarray`` which
+results from accessing or fetching based on the inverted slice is then
+re-inverted, creating the correct view of the new data.
+
+Another limitation of using GA is that the data distribution cannot be changed
+once an array is created. This complicates such useful functionality as
+``numpy.reshape()``. Currently, GAiN must make a copy of the array instead of
+a view when altering the shape of an array.
 
 ``gain.flatiter``
 =================
@@ -587,3 +705,6 @@ TODO
             Language*, Euro-Par, 632-637, 2004.
 .. [Tha04]  R. Thakur, E. Lusk, and W. Gropp. *Users guide for romio: A
             high-performance, portable, mpi-io implementation*, May 2004.
+.. [Zim88]  H. P. Zima, H. Bast, and M. Gerndt. *SUPERB: A tool for
+            semi-automatic MIMD/SIMD Parallelization*, Parallel Computing,
+            6:1-18, 1988.
