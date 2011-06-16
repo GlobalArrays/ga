@@ -503,8 +503,11 @@ users to write:
 
 In order to succeed as a drop-in replacement, all attributes, functions,
 modules, and classes which exist in ``numpy`` must also exist within ``gain``.
-The design details for how GA was used for distributed computation of NumPy
-arrays follow.
+Efforts were made to reuse as much of ``numpy`` as possible, such as with
+regard to the type system. As of GA v5.1, arrays of arbitrary fixed-size
+element types and sizes can be created and individual fields of C struct data
+types accessed directly. GAiN is able to use the ``numpy`` types when creating
+the GA instances which back the ``gain.ndarray`` instances.
 
 GAiN follows the owner-computes rule [Zim88]_. The rule assigns each
 computation to the processor that owns the data being computed. Figures
@@ -537,11 +540,11 @@ will have no computation to perform.
     right) retrieves the corresponding pieces from the sliced input arrays
     (left and middle). For example, the corresponding gold elements will be
     computed locally on the owning process. Similarly for the copper elements.
-    Note that for this computation, the data is not distributed such that
-    communication can be avoided.
+    Note that for this computation, the data for each array is not
+    equivalently distributed such that communication can be avoided.
 
-``gain.ndarray``
-================
+``gain.ndarray`` and array operations
+=====================================
 
 The GAiN implementation of the ``ndarray`` implements a few important concepts
 including the dual nature of a global array and its individual distributed
@@ -561,13 +564,61 @@ Slicing a ``gain.ndarray`` must return a view just like slicing a
 ``numpy.ndarray`` returns a view. The approach taken is to apply the ``key``
 of the ``__getitem__(key)`` request to the ``global_slice`` and store the new
 ``global_slice`` on the newly created view. We call this type of operation
-*slice arithemetic*.
+*slice arithemetic*. First, the ``key`` is *canonicalized* meaning
+``Ellipsis`` are replaced with ``slice(0,dim_max,1)`` for each dimension
+represented by the ``Ellipsis``, all ``slice`` instances are replaced with
+the results of calling ``slice.indices()``, and all negative index values are
+replaced with their positive equivalents. This step ensures that the length of
+the ``key`` is compatible with and based on the current shape of the array.
+This enables consistent slice arithmetic on the canonicalized keys. Slice
+arithemetic effectively produces a new ``key`` which, when applied to the same
+original array, produces the same results had the same sequence of keys been
+applied in order. Figures :ref:`figslice1` and :ref:`figslice2` illustrate
+this concept.
+
+.. figure:: image4a_crop.png
+
+    :label:`figslice1`
+    Slice arithmetic example 1. Array ``b`` could be created either using the
+    standard notation (top middle) or using the *canonicalized* form (bottom
+    middle). Array ``c`` could be created by applying the standard notation
+    (top right) or by applying the equivalent canonical form to the original
+    array ``a``.
+
+.. figure:: image4b_crop.png
+
+    :label:`figslice2`
+    Slice arithmetic example 2. See the caption of Figure :ref:`figslice1` for
+    details.
 
 When performing calculations on a ``gain.ndarray``, the current
 ``global_slice`` is queried when accessing the local data or fetching remote
-data such that the appropriate ``ndarray`` data block is returned.  Accessing
+data such that an appropriate ``ndarray`` data block is returned.  Accessing
 local data and fetching remote data is performed by the
 ``gain.ndarray.access()`` and ``gain.ndarray.get()`` methods, respectively.
+Figure :ref:`figaccessget` illustrates how ``access()`` and ``get()`` are
+used. The ``ga.access()`` function on which ``gain.ndarray.access()`` is based
+will always return the entire block owned by the calling process. The returned
+piece must be further sliced to appropriately match the current
+``global_slice``. The ``ga.strided_get()`` function on which
+``gain.ndarray.get()`` method is based will fetch data from other processes
+without the remote processes' cooperation i.e. using one-sided communication.
+The calling process specifies the region to fetch based on the current view's
+``shape`` of the array. The ``global_slice`` is adjusted to match the
+requested region using slice arithmetic and then transformed into a
+``ga.strided_get()`` request based on the global, original shape of the array.
+
+.. figure:: image5_crop.png
+
+    :label:`figaccessget`
+    ``access()`` and ``get()`` examples. The current ``global_slice``,
+    indicated by blue array elements, is respected in either case. A process
+    can access its local data block for a given array (red highlight). Note
+    that ``access()`` returns the entire block, including the sliced elements.
+    Any process can fetch any other processes' data using ``get()`` with
+    respect to the current ``shape`` of the array (blue highlight).  Note that
+    the fetched block will not contain the sliced elements, reducing the
+    amount of data communicated.
 
 Recall that GA allows the contiguous, process-local data to be accessed using
 ``ga.access()`` which returns a C-contiguous ``ndarray``. However, if the
@@ -608,20 +659,61 @@ a view when altering the shape of an array.
 ``gain.flatiter``
 =================
 
-. Gather/scatter
+Translating the ``numpy.flatiter``, which assumes a single address space while
+translating an N-dimensional array into a 1D array, into a distributed form
+was made simpler by the use of ``ga.gather()`` and ``ga.scatter()``. These two
+routines allow individual data elements within a GA to be fetched or updated.
+Flattening a distributed N-dimensional array which had been distributed in
+blocked fashion will cause the blocks to become discontiguous. Figure
+:ref:`figflatten` shows how a 6x6 array might be distributed and flattened.
+The ``ga.get()`` operation assumes the requested patch has the same number of
+dimensions as the array from which the patch is requested. Reshaping, in
+general, is made difficult by GA and its lack of a redistribute capability.
+However, in this case, we can use ``ga.gather()`` and ``ga.scatter()`` to
+fetch and update, respectively, any array elements in any order.
+``ga.gather()`` takes a 1D array-like of indices to fetch and returns a 1D
+``ndarray`` of values. Similarly, ``ga.scatter()`` takes a 1D array-like of
+indices to update and a 1D array-like buffer containing the values to use for
+the update. If a ``gain.flatiter`` is used as the output of an operation,
+following the owner-computes rule is difficult. Instead, pseudo-owners are
+assigned to contiguous slices of the of 1D view. These pseudo-owners gather
+their own elements as well as the corresponding elements of the other inputs,
+compute the result, and scatter the result back to their own elements. This
+results in additional communication which is otherwise avoided by true
+adherence to the owner-computes rule. To avoid this inefficiency, there are
+some cases where operating over ``gain.flatiter`` instances can be optimized,
+for example with ``gain.dot()`` if the same ``flatiter`` is passed as both
+inputs, the ``base`` of the ``flatiter`` is instead multiplied together
+elementwise and then the ``gain.sum()`` is taken of the resulting array.
 
-``gain.ufunc``
-==============
+.. figure:: image6_crop.png
 
- . Access the output, get the rest
- . Optimizations
- . . When inputs are the same object
- . . When inputs have the same distribution and slicing
+    :label:`figflatten`
+    Flattening a 2D distributed array. The block owned by a process becomes
+    discontiguous when representing the 2D array in 1 dimension.
 
 Evaluation
 ----------
 
-TODO
+The success of GAiN hinges on its ability to enable distributed array
+processing in NumPy, to transparently enable this processing, and most
+importantly to efficiently accomplish those goals. Performance Python [Ram08]_
+“perfpy” was conceived to demonstrate the ways Python can be used for high
+performance computing. It evaluates NumPy and the relative performance of
+various Python extensions to NumPy including SciPy’s weave (blitz and inline)
+[Tru08]_, Pyrex [Ewi08]_, and f2py [Pet05]_. It represents an important
+benchmark by which any additional high performance numerical Python module
+should be measured. The original program ``laplace.py`` was modified by
+
+.. code-block:: python
+
+    # import numpy
+    from ga import gain as numpy
+
+and then stripped of the additional test codes so that only the ``gain``
+(``numpy``) test remained. The latter modification makes no impact on the
+timing results since all tests are run independently but was necessary because
+``gain`` is run on multiple processes while the original test suite is serial.
 
 Conclusion
 ----------
@@ -663,6 +755,9 @@ TODO
             Processing, April 2007.
 .. [Eit07]  B. Eitzen. *Gpupy: Efficiently using a gpu with python*, Master's
             thesis, Washington State University, Richland, WA, August 2007.
+.. [Ewi08]  G. Ewing. *Pyrex, a language for writing python extension
+            modules*, http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex,
+            2008.
 .. [Gra09]  B. Granger and F. Perez. *Distributed Data Structures, Parallel
             Computing and IPython*, SIAM CSE 2009.
 .. [Gro99a] W. Gropp, E. Lusk, and A. Skjellum. *Using MPI: Portable Parallel
@@ -699,12 +794,18 @@ TODO
 .. [Per07]  F. Perez and B. E. Granger. *IPython: a System for Interactive
             Scientific Computing*, Computing in Science Engineering,
             9(3):21-29, May 2007.
+.. [Pet05]  P. Peterson. *F2py users guide and reference manual*,
+            http://cens.ioc.ee/projects/f2py2e/usersguide/f2py_usersguide.pdf,
+            January 2005.
 .. [Pnl11]  Global Arrays Webpage. http://www.emsl.pnl.gov/docs/global/
+.. [Ram08]  P. Ramachandran. *Performance Python*,
+            http://www.scipy.org/PerformancePython, May 2008.
 .. [Ras04]  C. E. Rasmussen, M. J. Sottile, J. Nieplocha, R. W. Numrich, and E.
             Jones. *Co-array Python: A Parallel Extension to the Python
             Language*, Euro-Par, 632-637, 2004.
 .. [Tha04]  R. Thakur, E. Lusk, and W. Gropp. *Users guide for romio: A
             high-performance, portable, mpi-io implementation*, May 2004.
+.. [Tru08]  M. Trumpis. *Weave*, http://www.scipy.org/Weave, 2008.
 .. [Zim88]  H. P. Zima, H. Bast, and M. Gerndt. *SUPERB: A tool for
             semi-automatic MIMD/SIMD Parallelization*, Parallel Computing,
             6:1-18, 1988.
