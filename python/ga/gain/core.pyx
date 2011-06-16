@@ -297,7 +297,8 @@ class ndarray(object):
                     #a = a[map(lambda x,y: slice(x,y), lo, hi)]
                     #local[:] = a
                     self.release_update()
-            self.global_slice = map(lambda x:slice(0,x,1), shape)
+            #self.global_slice = map(lambda x:slice(0,x,1), shape)
+            self.global_slice = [slice(0,x,1) for x in shape]
             self._strides = [self.itemsize]
             for size in shape[-1:0:-1]:
                 self._strides = [size*self._strides[0]] + self._strides
@@ -374,14 +375,23 @@ class ndarray(object):
         # first, use the key to create a new global_slice
         # TODO we *might* save a tiny bit of time if we assume the key is
         # already in its canonical form
+        # NOTE: ga.get() et al expect either a contiguous 1D array or a
+        # buffer with the same shape as the requested region (contiguous or
+        # not, but no striding). Since the array may have had dimensions added
+        # (via None) or removed, we can't simply create a buffer of the
+        # current shape.  Instead, we createa  1D buffer, then reshape it
+        # after the call to ga.get() or ga.strided_get().
         global_slice = self.global_slice
         if key is not None:
             key = util.canonicalize_indices(self.shape, key)
             global_slice = util.slice_arithmetic(self.global_slice, key)
         # We must translate global_slice into a strided get
+        shape = util.slices_to_shape(global_slice)
+        size = np.prod(shape)
         dtype = self._dtype
         if self._is_real or self._is_imag:
             dtype = np.dtype("complex%s" % (self._dtype.itemsize*2*8))
+        nd_buffer = np.zeros(size, dtype=dtype)
         _lo = []
         _hi = []
         _skip = []
@@ -406,15 +416,15 @@ class ndarray(object):
                 adjust.append(None)
             else:
                 # assumes item is int, long, np.int64, etc
-                adjust.append(0)
                 _lo.append(item)
                 _hi.append(item+1)
                 _skip.append(1)
         ret = None
         if need_strided:
-            ret = ga.strided_get(self.handle, _lo, _hi, _skip)
+            ret = ga.strided_get(self.handle, _lo, _hi, _skip, nd_buffer)
         else:
-            ret = ga.get(self.handle, _lo, _hi)
+            ret = ga.get(self.handle, _lo, _hi, nd_buffer)
+        nd_buffer.shape = shape
         if ret.ndim > 0:
             ret = ret[adjust]
         if self._is_real:
