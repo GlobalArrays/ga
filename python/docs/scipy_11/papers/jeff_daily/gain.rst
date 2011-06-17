@@ -16,7 +16,7 @@ Using the Global Arrays Toolkit to Reimplement NumPy for Distributed Computation
    Laboratory that enables an efficient, portable, and parallel shared-memory
    programming interface to manipulate distributed dense arrays. Using a
    combination of GA and NumPy, we have reimplemented NumPy as a distributed
-   drop-in replacement called Global Arrays in Numpy (GAiN). Scalability
+   drop-in replacement called Global Arrays in NumPy (GAiN). Scalability
    studies will be presented showing the utility of developing serial NumPy
    codes which can later run on more capable clusters or supercomputers.
 
@@ -175,7 +175,7 @@ the form of one-to-one, one-to-many, many-to-one, or many-to-many.
 
 Message passing libraries allow efficient parallel programs to be written for
 distributed memory systems. MPI [Gro99a]_, also known as MPI-1, is a library
-specification for message- passing that was standardized in May 1994 by the
+specification for message-passing that was standardized in May 1994 by the
 MPI Forum. It is designed for high performance on both massively parallel
 machines and on workstation clusters. An MPI implementation exists on nearly
 all modern parallel systems and there are a number of freely available,
@@ -192,9 +192,9 @@ processes were specified. Further, each process can query to determine which
 process they are out of the total number specified.
 
 MPI programs are typically conform to the SPMD paradigm [Buy99]_. The mpiexec
-pro- grams by default launch programs for this type of parallelism. A single
+programs by default launch programs for this type of parallelism. A single
 program is specified on the command line which gets replicated to all
-participating processes. This same pro- gram is then executed within its own
+participating processes. This same program is then executed within its own
 address space on each process, such that any process knows only its own data
 until it communicates with other processes, passing messages (data) around. A
 “hello world” program executed in this fashion would print ”hello world” once
@@ -214,24 +214,24 @@ Before MPI-2, all communication required explicit handshaking between the
 sender and receiver via MPI_Send() and MPI_Recv() in addition to non-blocking
 variants.  MPI-2’s one-sided communication model allows reads, writes, and
 accumulates of remote memory without the explicit cooperation of the process
-owning the memory. If synchro- nization is required at a later time, it can be
+owning the memory. If synchronization is required at a later time, it can be
 requested via MPI_Barrier(). Otherwise, there is no strict guarantee that a
 one-sided operation will complete before the data segment it accessed is used
 by another process.
 
 Parallel I/O in MPI-2, sometimes referred to as MPI-IO, allows for single,
 collective files to be output by an MPI process. Before MPI-IO, one such I/O
-model for SPMD pro- grams was to have each process write to its own file.
+model for SPMD programs was to have each process write to its own file.
 Having each process write to its own file may be fast, however in most cases
 it requires substantial post-processing in order to stitch those files back
-together into a coherent, single-file representation thus diminish- ing the
+together into a coherent, single-file representation thus diminishing the
 benefit of parallel computation. Other forms of parallel I/O before MPI-IO was
 introduced included having all other processes send their data to a single
-process for out- put. However, any computational speed-ups from the
-parallelism are reduced by having to communicate all data back to a single
-node. MPI-IO hides the I/O model behind calls to the API, allowing efficient
-I/O routines to be developed independently of the calling MPI programs. One
-such popular implementation of MPI-IO is ROMIO [Tha04]_.
+process for output. However, any computational speed-ups from the parallelism
+are reduced by having to communicate all data back to a single node. MPI-IO
+hides the I/O model behind calls to the API, allowing efficient I/O routines
+to be developed independently of the calling MPI programs. One such popular
+implementation of MPI-IO is ROMIO [Tha04]_.
 
 mpi4py
 ======
@@ -274,18 +274,18 @@ Aggregate Remote Memory Copy Interface (ARMCI)
 
 ARMCI provides general-purpose, efficient, and widely portable remote memory
 access (RMA) operations (one-sided communication). ARMCI operations are
-optimized for contiguous and noncontiguous (strided, scatter/gather, I/O
+optimized for contiguous and non-contiguous (strided, scatter/gather, I/O
 vector) data transfers. It also exploits native network communication in-
 terfaces and system resources such as shared memory [Nie00]_.  ARMCI provides
 simpler progress rules and a less synchronous model of RMA than MPI-2. ARMCI
 has been used to implement the Global Arrays library, GPSHMEM - a portable
-version of Cray SHMEM library, and the portable Co-Array FORTAN compiler from
+version of Cray SHMEM library, and the portable Co-Array FORTRAN compiler from
 Rice University [Dot04]_.
 
 Cython
 ======
 
-Cython [Beh11]_ is both a langage which closely resembles Python as well as a
+Cython [Beh11]_ is both a language which closely resembles Python as well as a
 compiler which generates C code based on Python's C API. The Cython language
 additionally supports calling C functions as well as static typing. This makes
 writing C extensions or wrapping external C libraries for the Python language
@@ -302,9 +302,9 @@ GAiN was to be developed.
 Star-P
 ======
 
-MITMatlab [Hus98]_, which was later rebranded as Star-P [Ede07]_, provids a
+MITMatlab [Hus98]_, which was later rebranded as Star-P [Ede07]_, provides a
 client-server model for interactive, large-scale scientific computation. It
-provids a transparently parallel front-en through the popular MATLAB [Pal07]_
+provides a transparently parallel front-en through the popular MATLAB [Pal07]_
 numerical package and sends the parallel computations to its Parallel Problem
 Server workhorse. Separating the interactive, serial nature of MATLAB from the
 parallel computation server allows the user to leverage both of their
@@ -436,7 +436,7 @@ certain arrays should be distributed. If we assume that the cost of
 communication is high such that communication should be avoided, it's clear
 that small arrays and scalar values should be replicated on each process
 rather than distributed and that data locality should be emphasized over
-communiation. It follows, then, that GAiN operations should allow mixed inputs
+communication. It follows, then, that GAiN operations should allow mixed inputs
 of both distributed and local array-like objects. Further, NumPy represents an
 extensive, useful, and hardened API. Every effort to reuse NumPy should be
 made. Lastly, GA has its own strengths to offer such as processor groups and
@@ -446,14 +446,14 @@ implementation, we should enable the use of processor groups [Nie05]_.
 Both NumPy and GA provide multidimensional arrays and implement, among other
 things, element-wise operations and linear algebra routines. Although they
 have a number of differences, the primary one is that NumPy programs run
-within a single address space while Global Arrys are distributed. When
+within a single address space while Global Arrays are distributed. When
 translating from NumPy to Global Arrays, each process must translate NumPy
 calls into calls with respect to their local array portions.
 
 A distributed array representation must acknowledge the duality of a global
 array and the physically distributed memory of the array. Array attributes
 such as ``shape`` should return the global, coalesced representation of the
-array which hides the fact the array is distributed. But when operataions such
+array which hides the fact the array is distributed. But when operations such
 as ``add()`` are requested, the corresponding pieces of the input arrays must
 be operated over. Figure :ref:`fig1` will help illustrate.  Each local piece
 of the array has its own shape (in parenthesis) and knows its portion of the
@@ -564,14 +564,14 @@ Slicing a ``gain.ndarray`` must return a view just like slicing a
 ``numpy.ndarray`` returns a view. The approach taken is to apply the ``key``
 of the ``__getitem__(key)`` request to the ``global_slice`` and store the new
 ``global_slice`` on the newly created view. We call this type of operation
-*slice arithemetic*. First, the ``key`` is *canonicalized* meaning
+*slice arithmetic*. First, the ``key`` is *canonicalized* meaning
 ``Ellipsis`` are replaced with ``slice(0,dim_max,1)`` for each dimension
 represented by the ``Ellipsis``, all ``slice`` instances are replaced with
 the results of calling ``slice.indices()``, and all negative index values are
 replaced with their positive equivalents. This step ensures that the length of
 the ``key`` is compatible with and based on the current shape of the array.
 This enables consistent slice arithmetic on the canonicalized keys. Slice
-arithemetic effectively produces a new ``key`` which, when applied to the same
+arithmetic effectively produces a new ``key`` which, when applied to the same
 original array, produces the same results had the same sequence of keys been
 applied in order. Figures :ref:`figslice1` and :ref:`figslice2` illustrate
 this concept.
@@ -684,7 +684,7 @@ adherence to the owner-computes rule. To avoid this inefficiency, there are
 some cases where operating over ``gain.flatiter`` instances can be optimized,
 for example with ``gain.dot()`` if the same ``flatiter`` is passed as both
 inputs, the ``base`` of the ``flatiter`` is instead multiplied together
-elementwise and then the ``gain.sum()`` is taken of the resulting array.
+element-wise and then the ``gain.sum()`` is taken of the resulting array.
 
 .. figure:: image6_crop.png
 
@@ -714,16 +714,51 @@ and then stripped of the additional test codes so that only the ``gain``
 (``numpy``) test remained. The latter modification makes no impact on the
 timing results since all tests are run independently but was necessary because
 ``gain`` is run on multiple processes while the original test suite is serial.
+The program was run on a homogeneous cluster of dual 3.2GHz P4 processors, 1GB
+main memory, using 1GBit Ethernet, TCP/IP socket communication, running Ubuntu
+8.10. GAiN utilized 8 nodes of the cluster while NumPy and others ran serially
+on a single node (as they must.)
+
+As shown in Figure :ref:`figscaling`, using 8 or more nodes, GAiN scaled
+better than NumPy and its related just-in-time compiled or pre-compiled codes.
+All codes appeared to scale uniformly with each other.  GAiN was able to run
+much larger sizes of N while the other tests thrashed due to a lack of memory.
+The perfpy code represents in general a more realistic use case for GAiN
+whereas the distmap program is idealized with very little communication.
+
+.. figure:: perfpy500.png
+
+    :label:`figscaling`
+    Performance Python Running Times for N × N Grid. This plot compares the
+    running times of GAiN and various NumPy or Python extensions. GAiN was run
+    using 1, 2, 4, 8, and 16 nodes. GAiN scales only as well as the best
+    compiled implementation but does extend beyond the system resource
+    limitations.
 
 Conclusion
 ----------
 
-TODO
+GAiN succeeds in its ability to grow problem sizes beyond a single compute
+node, however its performance in all cases does not scale as anticipated. The
+performance of the perfpy code leaves room for improvement. As described
+previously, GAiN allows certain classes of existing NumPy programs to run
+using GAiN with sometimes as little effort as changing the import statement,
+immediately taking advantage of the ability to run in a cluster environment.
+Further, GAiN seamlessly allows parallel codes to be developed interactively.
+Once a smaller-sized program has been developed and tested on a desktop
+computer, it can then be run on a cluster with very little effort. GAiN
+provides the groundwork for large distributed multidimensional arrays within
+NumPy.
 
 Future Work
 -----------
 
-TODO
+GAiN is not a complete implementation of the NumPy API nor does it represent
+the only way in which distributed arrays can be achieved for NumPy.
+Alternative parallelization strategies besides the owner-computes rule should
+be explored. GA allows for the get-compute-put model of computation where
+ownership of data is largely ignored, but data movement costs are increased.
+Task parallelism could also be explored if load balancing becomes an issue.
 
 .. [Apr09]  E. Apra, A. P. Rendell, R. J. Harrison, V. Tipparaju, W. A.
             deJong, and S. S. Xantheas. *Liquid water: obtaining the right
