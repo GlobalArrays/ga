@@ -385,8 +385,6 @@ libarmci_la_SOURCES += src/common/groups.c
 endif
 if ARMCI_NETWORK_BGML
 AM_CPPFLAGS += -I$(top_srcdir)/src/devices/bgml
-libarmci_la_SOURCES += src/collectives/message.c
-libarmci_la_SOURCES += src/common/groups.c
 libarmci_la_SOURCES += src/devices/bgml/bgmlacc.h
 libarmci_la_SOURCES += src/devices/bgml/bgml.c
 libarmci_la_SOURCES += src/devices/bgml/bgmldefs.h
@@ -399,8 +397,6 @@ libarmci_la_SOURCES += src/memory/shmalloc.c
 endif
 if ARMCI_NETWORK_DCMF
 AM_CPPFLAGS += -I$(top_srcdir)/src/devices/dcmf
-libarmci_la_SOURCES += src/collectives/message.c
-libarmci_la_SOURCES += src/common/groups.c
 libarmci_la_SOURCES += src/devices/dcmf/armcix.h
 if DCMF_VER_2
 libarmci_la_SOURCES += src/devices/dcmf/dcmf2/armcix_acc.c
