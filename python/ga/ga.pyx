@@ -2072,6 +2072,7 @@ def initialize():
 
     """
     import atexit
+    global _initialized
     GA_Initialize()
     GA_Register_stack_memory(_gapy_malloc, _gapy_free)
     atexit.register(terminate)
@@ -2092,6 +2093,7 @@ def initialize_ltd(size_t limit):
     This is a collective operation. 
 
     """
+    global _initialized
     GA_Initialize_ltd(limit)
     _initialized = True
 
@@ -4177,6 +4179,7 @@ def terminate():
     This is a collective operation. 
 
     """
+    global _initialized
     _initialized = False
     GA_Terminate()
 

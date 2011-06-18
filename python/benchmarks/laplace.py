@@ -126,9 +126,26 @@ class LaplaceSolver:
         g.old_u = u.copy()
 
         # The actual iteration
-        u[1:-1, 1:-1] = ((u[0:-2, 1:-1] + u[2:, 1:-1])*dy2 + 
-                         (u[1:-1,0:-2] + u[1:-1, 2:])*dx2)*dnr_inv
-        
+        #u[1:-1, 1:-1] = ((u[0:-2, 1:-1] + u[2:, 1:-1])*dy2 + 
+        #                 (u[1:-1,0:-2] + u[1:-1, 2:])*dx2)*dnr_inv
+
+        # first op, assign directly to result
+        numpy.multiply(g.old_u[0:-2, 1:-1], dy2, u[1:-1, 1:-1])
+        # creates a temporary array
+        tmp = g.old_u[2:, 1:-1]*dy2
+        # accumulate temporary array into result
+        numpy.add(tmp, u[1:-1, 1:-1], u[1:-1, 1:-1])
+        # does NOT create a temporary array since we have one already
+        numpy.multiply(g.old_u[1:-1,0:-2], dx2, tmp)
+        # accumulate temporary array into result
+        numpy.add(tmp, u[1:-1, 1:-1], u[1:-1, 1:-1])
+        # does NOT create a temporary array since we have one already
+        numpy.multiply(g.old_u[1:-1, 2:], dx2, tmp)
+        # accumulate temporary array into result
+        numpy.add(tmp, u[1:-1, 1:-1], u[1:-1, 1:-1])
+        # last operation, replace result
+        numpy.multiply(dnr_inv, u[1:-1, 1:-1], u[1:-1, 1:-1])
+
         return g.computeError()
 
     def setTimeStepper(self, stepper='numeric'):        
@@ -199,11 +216,16 @@ def main(n=500, n_iter=100):
     sys.stdout.flush()
     print "took", time_test(n, n, stepper=i, n_iter=n_iter), "seconds"
 
-    print "slow (1 iteration)",
-    sys.stdout.flush()
-    s = time_test(n, n, stepper='slow', n_iter=1)
-    print "took", s, "seconds"
-    print "%d iterations should take about %f seconds"%(n_iter, s*n_iter)
+    #print "slow (1 iteration)",
+    #sys.stdout.flush()
+    #s = time_test(n, n, stepper='slow', n_iter=1)
+    #print "took", s, "seconds"
+    #print "%d iterations should take about %f seconds"%(n_iter, s*n_iter)
 
 if __name__ == "__main__":
-    main()
+    import tau
+    tau.run('main()')
+    #main()
+    from ga import ga
+    if ga.nodeid() == 0:
+        ga.print_stats()

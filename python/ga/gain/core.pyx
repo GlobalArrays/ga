@@ -60,6 +60,9 @@ np.dtype(np.complex128): ga.C_DCPL,
 np.dtype(np.complex256): ga.C_LDCPL,
 }
 
+cdef inline sync():
+    ga.sync()
+
 class flagsobj(object):
     def __init__(self):
         self._c = True
@@ -109,6 +112,9 @@ class flagsobj(object):
   ALIGNED : %s
   UPDATEIFCOPY : %s""" % (self._c, self._f, self._o,
                           self._w, self._a, self._u)
+
+ga_cache1 = {}
+ga_cache2 = {}
 
 class ndarray(object):
     """ndarray(shape, dtype=float, buffer=None, offset=0,
@@ -274,14 +280,23 @@ class ndarray(object):
             raise NotImplementedError, "order parameter not supported"
         if base is None:
             self._flags = flagsobj()
-            dtype_ = np.dtype(dtype)
+            dtype_ = self._dtype
             gatype = None
             if dtype_ in gatypes:
                 gatype = gatypes[dtype_]
             else:
                 gatype = ga.register_dtype(dtype_)
                 gatypes[dtype_] = gatype
-            self.handle = ga.create(gatype, shape)
+            #self.handle = ga.create(gatype, shape)
+            if (self.shape,self.dtype.num) in ga_cache2:
+                self.handle = ga_cache2.pop((self.shape,self.dtype.num))
+                #print "acquired from cache", self.shape, self.dtype.num
+            elif (self.shape,self.dtype.num) in ga_cache1:
+                self.handle = ga_cache1.pop((self.shape,self.dtype.num))
+                #print "acquired from cache", self.shape, self.dtype.num
+            else:
+                #print "cache miss"
+                self.handle = ga.create(gatype, shape)
             if buffer is not None:
                 local = ga.access(self.handle)
                 if local is not None:
@@ -311,9 +326,18 @@ class ndarray(object):
             self._strides = strides
 
     def __del__(self):
-        if self.base is None:
+        if self._base is None:
             if ga.initialized():
-                ga.destroy(self.handle)
+                #ga.destroy(self.handle)
+                if (self.shape,self.dtype.num) in ga_cache2:
+                    ga.destroy(self.handle)
+                    #print "destroying", self.shape, self.dtype
+                elif (self.shape,self.dtype.num) in ga_cache1:
+                    ga_cache2[(self.shape,self.dtype.num)] = self.handle
+                    #print "destroying", self.shape, self.dtype
+                else:
+                    #print "caching", self.shape, self.dtype.num
+                    ga_cache1[(self.shape,self.dtype.num)] = self.handle
 
     ################################################################
     ### ndarray methods added for Global Arrays
@@ -2114,7 +2138,7 @@ class ndarray(object):
             else:
                 npvalue = value
             npself[:] = npvalue
-        ga.sync()
+        sync()
 
     #def __setslice__
     #def __setstate__
@@ -2273,7 +2297,7 @@ class ufunc(object):
             raise ValueError, 'invalid return array shape'
         # Now figure out what to do...
         if isinstance(out, ndarray):
-            ga.sync()
+            sync()
             # get out as an np.ndarray first
             npout = out.access()
             if npout is not None: # this proc owns data
@@ -2285,9 +2309,9 @@ class ufunc(object):
                 if release_in:
                     input.release()
                 out.release_update()
-            ga.sync()
+            sync()
         elif isinstance(out, flatiter):
-            ga.sync()
+            sync()
             # first opt: input and out are same object
             #   we call _unary_call over again with the bases
             #   NOT SURE THAT THIS IS ACTUALLY OPTIMAL -- NEED TO TEST
@@ -2303,15 +2327,15 @@ class ufunc(object):
                         npin = input[out._range]
                     self.func(npin, npout, *args, **kwargs)
                     out.release_update()
-            ga.sync()
+            sync()
         else:
-            ga.sync()
+            sync()
             # out is not distributed
             npin = input
             if is_distributed(input):
                 npin = input.allget()
             self.func(npin, out, *args, **kwargs)
-            #ga.sync() # I don't think we need this one
+            #sync() # I don't think we need this one
         return out
 
     def _binary_call(self, first, second, out=None, *args, **kwargs):
@@ -2350,7 +2374,7 @@ class ufunc(object):
             raise TypeError, "return arrays must be of ArrayType"
         # Now figure out what to do...
         if isinstance(out, ndarray):
-            ga.sync()
+            sync()
             # get out as an np.ndarray first
             npout = out.access()
             if npout is not None: # this proc owns data
@@ -2376,9 +2400,9 @@ class ufunc(object):
                 if release_second:
                     second.release()
                 out.release_update()
-            ga.sync()
+            sync()
         elif isinstance(out, flatiter):
-            ga.sync()
+            sync()
             # first op: first and second and out are same object
             if first is second is out:
                 self._binary_call(out.base,out.base,out.base,*args,**kwargs)
@@ -2398,9 +2422,9 @@ class ufunc(object):
                         npsecond = second[out._range]
                     self.func(npfirst, npsecond, npout, *args, **kwargs)
                     out.release_update()
-            ga.sync()
+            sync()
         else:
-            ga.sync()
+            sync()
             # out is not distributed
             ndfirst = first
             if is_distributed(first):
@@ -2411,7 +2435,7 @@ class ufunc(object):
             elif is_distributed(second):
                 ndsecond = second.allget()
             self.func(ndfirst, ndsecond, out, *args, **kwargs)
-            #ga.sync() # I don't think we need this one
+            #sync() # I don't think we need this one
         return out
 
     def reduce(self, a, axis=0, dtype=None, out=None, *args, **kwargs):
@@ -3064,7 +3088,7 @@ def fromfunction(func, shape, **kwargs):
         buf = func(*args, **kwargs)
         # now put the data into the global array
         local_array[:] = buf
-    ga.sync()
+    sync()
     return a
 
 def arange(start, stop=None, step=None, dtype=None):
@@ -3229,7 +3253,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
         lo,hi = lo[0],hi[0]
         buf[:] = np.arange(lo,hi)*step+start
         a.release_update()
-    ga.sync()
+    sync()
     if retstep:
         return a,step
     return a
@@ -3317,7 +3341,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0):
         lo,hi = lo[0],hi[0]
         buf[:] = base**(np.arange(lo,hi)*step+start)
         a.release_update()
-    ga.sync()
+    sync()
     return a
 
 def dot(a, b, out=None):
@@ -3781,7 +3805,7 @@ def clip(a, a_min, a_max, out=None):
                 "the input.")
     # Now figure out what to do...
     if isinstance(out, ndarray):
-        ga.sync()
+        sync()
         # get out as an np.ndarray first
         npout = out.access()
         if npout is not None: # this proc owns data
@@ -3815,10 +3839,10 @@ def clip(a, a_min, a_max, out=None):
             if release_a_max:
                 a_max.release()
             out.release_update()
-        ga.sync()
+        sync()
     elif isinstance(out, flatiter):
         raise NotImplementedError, "flatiter version of clip"
-        #ga.sync()
+        #sync()
         ## first op: first and second and out are same object
         #if first is second is out:
         #    self._binary_call(out.base,out.base,out.base,*args,**kwargs)
@@ -3838,9 +3862,9 @@ def clip(a, a_min, a_max, out=None):
         #            npsecond = second[out._range]
         #        self.func(npfirst, npsecond, npout, *args, **kwargs)
         #        out.release_update()
-        #ga.sync()
+        #sync()
     else:
-        ga.sync()
+        sync()
         # out is not distributed
         nda = a
         if is_distributed(a):
@@ -3858,7 +3882,7 @@ def clip(a, a_min, a_max, out=None):
         elif is_distributed(a_max):
             nda_max = a_max.allget()
         np.clip(a, nda_min, nda_max, out)
-        #ga.sync() # I don't think we need this one
+        #sync() # I don't think we need this one
     return out
 
 DEBUG = False
@@ -3877,7 +3901,7 @@ def print_debug(s):
 
 def print_sync(what):
     if DEBUG_SYNC:
-        ga.sync()
+        sync()
         if 0 == me:
             print "[0] %s" % str(what)
             for proc in xrange(1,nproc):
@@ -3885,4 +3909,4 @@ def print_sync(what):
                 print "[%d] %s" % (proc, str(data))
         else:
             MPI.COMM_WORLD.send(what, dest=0, tag=11)
-        ga.sync()
+        sync()
