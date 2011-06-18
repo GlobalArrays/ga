@@ -223,9 +223,7 @@ def main(n=500, n_iter=100):
     #print "%d iterations should take about %f seconds"%(n_iter, s*n_iter)
 
 if __name__ == "__main__":
-    import tau
-    tau.run('main()')
-    #main()
+    main()
     from ga import ga
     if ga.nodeid() == 0:
         ga.print_stats()
