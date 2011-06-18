@@ -2092,6 +2092,7 @@ class ndarray(object):
 
     def __setitem__(self, key, value):
         # THIS IS A COLLECTIVE OPERATION
+        sync()
         if isinstance(key, (str,unicode)):
             raise NotImplementedError, "str or unicode key"
         if self.ndim == 0:
@@ -2309,7 +2310,7 @@ class ufunc(object):
                 if release_in:
                     input.release()
                 out.release_update()
-            sync()
+            #sync()
         elif isinstance(out, flatiter):
             sync()
             # first opt: input and out are same object
@@ -2327,7 +2328,7 @@ class ufunc(object):
                         npin = input[out._range]
                     self.func(npin, npout, *args, **kwargs)
                     out.release_update()
-            sync()
+            #sync()
         else:
             sync()
             # out is not distributed
@@ -2400,7 +2401,7 @@ class ufunc(object):
                 if release_second:
                     second.release()
                 out.release_update()
-            sync()
+            #sync()
         elif isinstance(out, flatiter):
             sync()
             # first op: first and second and out are same object
@@ -2422,7 +2423,7 @@ class ufunc(object):
                         npsecond = second[out._range]
                     self.func(npfirst, npsecond, npout, *args, **kwargs)
                     out.release_update()
-            sync()
+            #sync()
         else:
             sync()
             # out is not distributed
@@ -3088,7 +3089,7 @@ def fromfunction(func, shape, **kwargs):
         buf = func(*args, **kwargs)
         # now put the data into the global array
         local_array[:] = buf
-    sync()
+    #sync()
     return a
 
 def arange(start, stop=None, step=None, dtype=None):
@@ -3253,7 +3254,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
         lo,hi = lo[0],hi[0]
         buf[:] = np.arange(lo,hi)*step+start
         a.release_update()
-    sync()
+    #sync()
     if retstep:
         return a,step
     return a
@@ -3341,7 +3342,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0):
         lo,hi = lo[0],hi[0]
         buf[:] = base**(np.arange(lo,hi)*step+start)
         a.release_update()
-    sync()
+    #sync()
     return a
 
 def dot(a, b, out=None):
@@ -3839,7 +3840,7 @@ def clip(a, a_min, a_max, out=None):
             if release_a_max:
                 a_max.release()
             out.release_update()
-        sync()
+        #sync()
     elif isinstance(out, flatiter):
         raise NotImplementedError, "flatiter version of clip"
         #sync()
