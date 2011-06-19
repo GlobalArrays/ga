@@ -735,6 +735,32 @@ whereas the distmap program is idealized with very little communication.
     compiled implementation but does extend beyond the system resource
     limitations.
 
+.. table:: This is the caption for the table. :label:`mtable`
+
+    +----------+---------------+---------------+---------------+
+    | No Cache | 1-Level Cache | 2-Level Cache | 3-Level Cache |
+    +----------+---------------+---------------+---------------+
+    | 912/910  | 311/306       | 110/102       | 11/1          |
+    +----------+---------------+---------------+---------------+
+
+We show the things in Table :ref:`mtable`.
+
+.. table:: This is the caption for the table N=10000. :label:`strongtable`
+
+    +-------+-------+---------+----------+
+    | Cores | N     | Step (s)| Wall (s) |
+    +-------+-------+---------+----------+
+    | 32    | 10000 | 183.74  | 95       |
+    | 64    | 10000 | 99.31   | 53       |
+    | 128   | 10000 | 53.33   | 34       |
+    | 256   | 10000 | 29.67   | 28       |
+    | 512   | 10000 | 18.01   | 33       |
+    | 1024  | 10000 | 13.17   | 57       |
+    | 2048  | 10000 | 11.78   | 111      |
+    +-------+-------+---------+----------+
+
+We show the things in Table :ref:`strongtable`.
+
 Conclusion
 ----------
 

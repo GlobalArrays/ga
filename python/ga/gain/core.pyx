@@ -115,6 +115,7 @@ class flagsobj(object):
 
 ga_cache1 = {}
 ga_cache2 = {}
+ga_cache3 = {}
 
 class ndarray(object):
     """ndarray(shape, dtype=float, buffer=None, offset=0,
@@ -288,7 +289,10 @@ class ndarray(object):
                 gatype = ga.register_dtype(dtype_)
                 gatypes[dtype_] = gatype
             #self.handle = ga.create(gatype, shape)
-            if (self.shape,self.dtype.num) in ga_cache2:
+            if (self.shape,self.dtype.num) in ga_cache3:
+                self.handle = ga_cache3.pop((self.shape,self.dtype.num))
+                #print "acquired from cache", self.shape, self.dtype.num
+            elif (self.shape,self.dtype.num) in ga_cache2:
                 self.handle = ga_cache2.pop((self.shape,self.dtype.num))
                 #print "acquired from cache", self.shape, self.dtype.num
             elif (self.shape,self.dtype.num) in ga_cache1:
@@ -329,8 +333,11 @@ class ndarray(object):
         if self._base is None:
             if ga.initialized():
                 #ga.destroy(self.handle)
-                if (self.shape,self.dtype.num) in ga_cache2:
+                if (self.shape,self.dtype.num) in ga_cache3:
                     ga.destroy(self.handle)
+                    #print "destroying", self.shape, self.dtype
+                elif (self.shape,self.dtype.num) in ga_cache2:
+                    ga_cache3[(self.shape,self.dtype.num)] = self.handle
                     #print "destroying", self.shape, self.dtype
                 elif (self.shape,self.dtype.num) in ga_cache1:
                     ga_cache2[(self.shape,self.dtype.num)] = self.handle

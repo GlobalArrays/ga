@@ -126,25 +126,25 @@ class LaplaceSolver:
         g.old_u = u.copy()
 
         # The actual iteration
-        #u[1:-1, 1:-1] = ((u[0:-2, 1:-1] + u[2:, 1:-1])*dy2 + 
-        #                 (u[1:-1,0:-2] + u[1:-1, 2:])*dx2)*dnr_inv
+        u[1:-1, 1:-1] = ((u[0:-2, 1:-1] + u[2:, 1:-1])*dy2 + 
+                         (u[1:-1,0:-2] + u[1:-1, 2:])*dx2)*dnr_inv
 
-        # first op, assign directly to result
-        numpy.multiply(g.old_u[0:-2, 1:-1], dy2, u[1:-1, 1:-1])
-        # creates a temporary array
-        tmp = g.old_u[2:, 1:-1]*dy2
-        # accumulate temporary array into result
-        numpy.add(tmp, u[1:-1, 1:-1], u[1:-1, 1:-1])
-        # does NOT create a temporary array since we have one already
-        numpy.multiply(g.old_u[1:-1,0:-2], dx2, tmp)
-        # accumulate temporary array into result
-        numpy.add(tmp, u[1:-1, 1:-1], u[1:-1, 1:-1])
-        # does NOT create a temporary array since we have one already
-        numpy.multiply(g.old_u[1:-1, 2:], dx2, tmp)
-        # accumulate temporary array into result
-        numpy.add(tmp, u[1:-1, 1:-1], u[1:-1, 1:-1])
-        # last operation, replace result
-        numpy.multiply(dnr_inv, u[1:-1, 1:-1], u[1:-1, 1:-1])
+        ## first op, assign directly to result
+        #numpy.multiply(g.old_u[0:-2, 1:-1], dy2, u[1:-1, 1:-1])
+        ## creates a temporary array
+        #tmp = g.old_u[2:, 1:-1]*dy2
+        ## accumulate temporary array into result
+        #numpy.add(tmp, u[1:-1, 1:-1], u[1:-1, 1:-1])
+        ## does NOT create a temporary array since we have one already
+        #numpy.multiply(g.old_u[1:-1,0:-2], dx2, tmp)
+        ## accumulate temporary array into result
+        #numpy.add(tmp, u[1:-1, 1:-1], u[1:-1, 1:-1])
+        ## does NOT create a temporary array since we have one already
+        #numpy.multiply(g.old_u[1:-1, 2:], dx2, tmp)
+        ## accumulate temporary array into result
+        #numpy.add(tmp, u[1:-1, 1:-1], u[1:-1, 1:-1])
+        ## last operation, replace result
+        #numpy.multiply(dnr_inv, u[1:-1, 1:-1], u[1:-1, 1:-1])
 
         return g.computeError()
 
