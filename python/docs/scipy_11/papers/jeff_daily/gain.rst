@@ -108,16 +108,16 @@ additional output array may be specified to receive the results of the
 operation.  Specifying this output array to the ufunc avoids the sometimes
 unnecessary creation of a new array.
 
-Ufuncs are more than just callable functions. They also have some special
-methods such as ``reduce`` and ``accumulate``. ``reduce`` is similar to
-Python’s built-in function of the same name that repeatedly applies a callable
-object to its last result and the next item of the sequence. This effectively
-reduces a sequence to a single value. When applied to arrays the reduction
-occurs along the first axis by default, but other axes may be specified. Each
-ufunc defines the function that is used for the reduction. For example,
-``add`` will sum the values along an axis while ``multiply`` will generate the
-running product.  ``accumulate`` is similar to reduce, but it returns the
-intermediate results of the reduction.
+.. Ufuncs are more than just callable functions. They also have some special
+.. methods such as ``reduce`` and ``accumulate``. ``reduce`` is similar to
+.. Python’s built-in function of the same name that repeatedly applies a callable
+.. object to its last result and the next item of the sequence. This effectively
+.. reduces a sequence to a single value. When applied to arrays the reduction
+.. occurs along the first axis by default, but other axes may be specified. Each
+.. ufunc defines the function that is used for the reduction. For example,
+.. ``add`` will sum the values along an axis while ``multiply`` will generate the
+.. running product.  ``accumulate`` is similar to reduce, but it returns the
+.. intermediate results of the reduction.
 
 Ufuncs can operate on ``ndarray`` subclasses or array-like objects. In order
 for subclasses of the ``ndarray`` or array-like objects to utilize the ufuncs,
@@ -141,37 +141,21 @@ Parallel applications can be classified into a few well defined programming
 paradigms. Each paradigm is a class of algorithms that have the same control
 structure. The literature differs in how these paradigms are classified and
 the boundaries between paradigms can sometimes be fuzzy or intentionally
-blended into hybrid models [Buy99]_. The Master/Slave and Single Program
-Multiple Data (SPMD) paradigms are discussed further.
+blended into hybrid models [Buy99]_. The Single Program Multiple Data (SPMD)
+paradigm is one example.  With SPMD, each process executes essentially the
+same code but on a different part of the data. The communication pattern is
+highly structured and predictable. Occasionally, a global synchronization may
+be needed. The efficiency of these types of programs depends on the
+decomposition of the data and the degree to which the data is independent of
+its neighbors. These programs are also highly susceptible to process failure.
+If any single process fails, generally it causes deadlock since global
+synchronizations thereafter would fail.
 
-The master/slave paradigm, also known as task-farming, is where a single
-master process farms out tasks to multiple slave processes. The control is
-always maintained by the master, dispatching commands to the slaves. Usually,
-the communication takes place only between the master and slaves. This model
-may either use static or dynamic load-balancing. The former involves the
-allocation of tasks to happen when the computation begins whereas the latter
-allows the application to adjust to changing conditions within the
-computation. Dynamic load-balancing may involve recovering after the failure
-of a subset of slave processes or handling the case where the number of tasks
-is not known at the start of the application.
+Utilized Software
+=================
 
-With SPMD, each process executes essentially the same code but on a different
-part of the data. The communication pattern is highly structured and
-predictable. Occasionally, a global synchronization may be needed. The
-efficiency of these types of programs depends on the decomposition of the data
-and the degree to which the data is independent of its neighbors. These
-programs are also highly susceptible to process failure. If any single process
-fails, generally it causes deadlock since global synchronizations thereafter
-would fail.
-
-Message Passing Interface (MPI)
-===============================
-
-Message passing is one form of inter-process communication. Each process is
-considered to have access only to its local memory. Data is transferred
-between processes by the sending and receiving of messages which usually
-requires the cooperation of participating processes. Communication can take
-the form of one-to-one, one-to-many, many-to-one, or many-to-many.
+.. Message Passing Interface (MPI)
+.. ===============================
 
 Message passing libraries allow efficient parallel programs to be written for
 distributed memory systems. MPI [Gro99a]_, also known as MPI-1, is a library
@@ -183,74 +167,39 @@ portable implementations for those systems that do not [Buy99]_.  As such, MPI
 is the de facto standard for writing massively parallel application codes in
 either FORTRAN, C, or C++.
 
-MPI programs are typically started with either mpirun or mpiexec, specifying
-the number of processes to invoke. If the MPI program is run without the use
-of those, then it is run as if only one process was specified. Not all MPI
-implementations support running without the use of the mpirun or mpiexec
-programs. MPI programs can query their environment to determine how many
-processes were specified. Further, each process can query to determine which
-process they are out of the total number specified.
-
-MPI programs are typically conform to the SPMD paradigm [Buy99]_. The mpiexec
-programs by default launch programs for this type of parallelism. A single
-program is specified on the command line which gets replicated to all
-participating processes. This same program is then executed within its own
-address space on each process, such that any process knows only its own data
-until it communicates with other processes, passing messages (data) around. A
-“hello world” program executed in this fashion would print ”hello world” once
-per process.
-
-MPI-2
-=====
+.. MPI-2
+.. =====
 
 The MPI-2 standard [Gro99b]_ was first completed in 1997 and added a number of
-important additions to MPI including, but not limited to, process creation and
-management, one-sided communication, parallel file I/O, and the C++ language
-binding. With MPI-2, any single MPI process or group of processes can invoke
-additional MPI processes. This is useful when the total number of processes
-required for the problem at hand cannot be known a priori.
+important additions to MPI including, but not limited to, one-sided
+communication and the C++ language binding. Before MPI-2, all communication
+required explicit handshaking between the sender and receiver via MPI_Send()
+and MPI_Recv() in addition to non-blocking variants.  MPI-2’s one-sided
+communication model allows reads, writes, and accumulates of remote memory
+without the explicit cooperation of the process owning the memory. If
+synchronization is required at a later time, it can be requested via
+MPI_Barrier(). Otherwise, there is no strict guarantee that a one-sided
+operation will complete before the data segment it accessed is used by another
+process.
 
-Before MPI-2, all communication required explicit handshaking between the
-sender and receiver via MPI_Send() and MPI_Recv() in addition to non-blocking
-variants.  MPI-2’s one-sided communication model allows reads, writes, and
-accumulates of remote memory without the explicit cooperation of the process
-owning the memory. If synchronization is required at a later time, it can be
-requested via MPI_Barrier(). Otherwise, there is no strict guarantee that a
-one-sided operation will complete before the data segment it accessed is used
-by another process.
+.. mpi4py
+.. ======
 
-Parallel I/O in MPI-2, sometimes referred to as MPI-IO, allows for single,
-collective files to be output by an MPI process. Before MPI-IO, one such I/O
-model for SPMD programs was to have each process write to its own file.
-Having each process write to its own file may be fast, however in most cases
-it requires substantial post-processing in order to stitch those files back
-together into a coherent, single-file representation thus diminishing the
-benefit of parallel computation. Other forms of parallel I/O before MPI-IO was
-introduced included having all other processes send their data to a single
-process for output. However, any computational speed-ups from the parallelism
-are reduced by having to communicate all data back to a single node. MPI-IO
-hides the I/O model behind calls to the API, allowing efficient I/O routines
-to be developed independently of the calling MPI programs. One such popular
-implementation of MPI-IO is ROMIO [Tha04]_.
+mpi4py is a Python wrapper around MPI. It is written to mimic the C++ language
+bindings. It supports point-to-point communication, one-sided communication,
+as well as the collective communication models. Typical communication of
+arbitrary objects in the FORTRAN or C bindings of MPI require the programmer
+to define new MPI datatypes. These datatypes describe the number and order of
+the bytes to be communicated. On the other hand, strings could be sent without
+defining a new datatype so long as the length of the string was understood by
+the recipient.  mpi4py is able to communicate any pickleable Python object
+since pickled objects are just byte streams. mpi4py also has special
+enhancements to efficiently communicate any object implementing Python’s
+buffer protocol, such as NumPy arrays. It also supports dynamic process
+management and parallel I/O [Dal05]_ [Dal08]_.
 
-mpi4py
-======
-
-mpi4py is a Python wrapper around MPI written to mimic the C++ language
-bindings. It supports point-to-point communication as well as the collective
-communication models. Typical communication of arbitrary objects in the
-FORTRAN or C bindings of MPI require the programmer to define new MPI
-datatypes. These datatypes describe the number and order of the bytes to be
-communicated. On the other hand, strings could be sent without defining a new
-datatype so long as the length of the string was understood by the recipient.
-mpi4py is able to communicate any pickleable Python object since pickled
-objects are just byte streams. mpi4py also has special enhancements to
-efficiently communicate any object implementing Python’s buffer protocol, such
-as NumPy arrays. It also supports dynamic process management and parallel I/O
-[Dal05]_ [Dal08]_.
-
-Global Arrays
-=============
+.. Global Arrays
+.. =============
 
 The GA toolkit [Nie06]_ [Nie10]_ [Pnl11]_ is a software system from Battelle
 Pacific Northwest National Laboratory that enables an efficient, portable, and
@@ -259,31 +208,33 @@ distributed dense multidimensional arrays, without the need for explicit
 cooperation by other processes. GA compliments the message-passing programming
 model and is compatible with MPI so that the programmer can use both in the
 same program. Arrays are created by calling one of the creation routines such
-as ``NGA_Create()``, returning an integer handle which is passed to subsequent
+as ``ga.ceate()``, returning an integer handle which is passed to subsequent
 operations. The GA library handles the distribution of arrays across processes
 and recognizes that accessing local memory is faster than accessing remote
 memory. However, the library allows access mechanisms for any part of the
 entire distributed array regardless of where its data is located. Local memory
-is acquired via ``NGA_Access()`` returning a pointer to the data on the local
-process, while remote memory is retrieved via ``NGA_Get()`` filling an already
-allocated array buffer. GA has been leveraged in several large computational
-chemistry codes and has been shown to scale well [Apr09]_.
+is acquired via ``ga.access()`` returning a pointer to the data on the local
+process, while remote memory is retrieved via ``ga.get()`` filling an already
+allocated array buffer. Individual discontiguous sets of array elements can be
+updated or retrieved using ``ga.scatter()`` or ``ga.gather()``, respectively.
+GA has been leveraged in several large computational chemistry codes and has
+been shown to scale well [Apr09]_.
 
-Aggregate Remote Memory Copy Interface (ARMCI)
-==============================================
+.. Aggregate Remote Memory Copy Interface (ARMCI)
+.. ==============================================
 
 ARMCI provides general-purpose, efficient, and widely portable remote memory
 access (RMA) operations (one-sided communication). ARMCI operations are
 optimized for contiguous and non-contiguous (strided, scatter/gather, I/O
-vector) data transfers. It also exploits native network communication in-
-terfaces and system resources such as shared memory [Nie00]_.  ARMCI provides
-simpler progress rules and a less synchronous model of RMA than MPI-2. ARMCI
-has been used to implement the Global Arrays library, GPSHMEM - a portable
-version of Cray SHMEM library, and the portable Co-Array FORTRAN compiler from
-Rice University [Dot04]_.
+vector) data transfers. It also exploits native network communication
+interfaces and system resources such as shared memory [Nie00]_.  ARMCI
+provides simpler progress rules and a less synchronous model of RMA than
+MPI-2. ARMCI has been used to implement the Global Arrays library, GPSHMEM - a
+portable version of Cray SHMEM library, and the portable Co-Array FORTRAN
+compiler from Rice University [Dot04]_.
 
-Cython
-======
+.. Cython
+.. ======
 
 Cython [Beh11]_ is both a language which closely resembles Python as well as a
 compiler which generates C code based on Python's C API. The Cython language
@@ -299,30 +250,28 @@ It attempts to leverage the best ideas for transparent, parallel processing
 found in current systems. The following packages provided insight into how
 GAiN was to be developed.
 
-Star-P
-======
+.. Star-P
+.. ======
 
 MITMatlab [Hus98]_, which was later rebranded as Star-P [Ede07]_, provides a
 client-server model for interactive, large-scale scientific computation. It
 provides a transparently parallel front-en through the popular MATLAB [Pal07]_
 numerical package and sends the parallel computations to its Parallel Problem
-Server workhorse. Separating the interactive, serial nature of MATLAB from the
-parallel computation server allows the user to leverage both of their
-strengths. This also allows much larger arrays to be operated over than is
-allowed by a single compute node.
+Server workhorse. Star-P briefly had a Python interface. Separating the
+interactive, serial nature of MATLAB from the parallel computation server
+allows the user to leverage both of their strengths. This also allows much
+larger arrays to be operated over than is allowed by a single compute node.
 
-Global Arrays Meets MATLAB
-==========================
+.. Global Arrays Meets MATLAB
+.. ==========================
 
 Global Arrays Meets MATLAB (GAMMA) [Pan06]_ provides a MATLAB binding to the
 GA toolkit, thus allowing for larger problem sizes and parallel computation.
-MATLAB provides an interactive interpreter, however to fully utilize GAMMA one
-must run within a parallel environment such as provided by MPI and a cluster
-of compute nodes.  GAMMA was shown to scale well even within an interpreted
-environment like MATLAB.
+GAMMA can be viewed as a GA implementation of MITMatlab and was shown to scale
+well even within an interpreted environment like MATLAB.
 
-IPython
-=======
+.. IPython
+.. =======
 
 IPython [Per07]_ provides an enhanced interactive Python shell as well as an
 architecture for interactive parallel computing. IPython supports practically
@@ -331,8 +280,8 @@ instance, a single interactive Python shell could be controlling a parallel
 program running on a super computer. This is done by having a Python engine
 running on a remote machine which is able to receive Python commands.
 
-IPython's distarray
-===================
+.. IPython's distarray
+.. ===================
 
 distarray [Gra09]_ is an experimental package for the IPython project.
 distarray uses IPython’s architecture as well as MPI extensively in order to
@@ -341,8 +290,8 @@ computation is supported, unlike other parallel models supported directly by
 IPython.  Further, the status of distarray is that of a proof of concept and
 not production ready.
 
-GpuPy
-=====
+.. GpuPy
+.. =====
 
 A Graphics Process Unit (GPU) is a powerful parallel processor that is capable
 of more floating point calculations per second than a traditional CPU.
@@ -354,8 +303,8 @@ by providing a NumPy-like interface for the GPU. Preliminary results
 demonstrate considerable speedups for certain single-precision floating point
 operations.
 
-pyGA
-====
+.. pyGA
+.. ====
 
 The Global Arrays toolkit was wrapped in Python for the 3.x series of GA by
 Robert Harrison [Har99]. It was written as a C extension to Python and only
@@ -363,19 +312,21 @@ wrapped a subset of the complete GA functionality. It illustrated some
 important concepts such as the benefits of integration with NumPy and the
 difficulty of compiling GA on certain systems. In pyGA, the local or remote
 portions of the global arrays were retrieved as NumPy arrays at which point
-they could be used as inputs to NumPy functions like the ufuncs. However, the
-burden was still on the programmer to understand the SPMD nature of the
-program. For example, when accessing the global array as an ndarray, the array
-shape and dimensions would match that of the local array maintained by the
-process calling the access function. Such an implementation is entirely
-correct, however there was no attempt to handle slicing at the global level as
-it is implemented in NumPy. In short, pyGA recognized the benefit of
-returning portions of the global array wrapped in a NumPy array, but it did
-not treat the global arrays as if they were themselves a subclass of the
-ndarray.
+they could be used as inputs to NumPy functions like the ufuncs.
 
-Co-Array Python
-===============
+.. However, the
+.. burden was still on the programmer to understand the SPMD nature of the
+.. program. For example, when accessing the global array as an ndarray, the array
+.. shape and dimensions would match that of the local array maintained by the
+.. process calling the access function. Such an implementation is entirely
+.. correct, however there was no attempt to handle slicing at the global level as
+.. it is implemented in NumPy. In short, pyGA recognized the benefit of
+.. returning portions of the global array wrapped in a NumPy array, but it did
+.. not treat the global arrays as if they were themselves a subclass of the
+.. ndarray.
+
+.. Co-Array Python
+.. ===============
 
 Co-Array Python [Ras04]_ is modeled after the Co-Array FORTRAN extensions to
 FORTRAN 95. It allows the programmer to access data elements on non-local
@@ -397,37 +348,6 @@ do this for certain Python programs utilizing the NumPy module. It will be
 shown that some NumPy program can be parallelized in a nearly transparent way
 with GAiN.
 
-Both NumPy and Global Arrays are well established in their respective
-communities. However, NumPy is inherently serial.  Also, the size of its
-arrays are limited by the resources of a single compute node. NumPy’s
-computational capabilities may be efficient, however parallelizing them using
-the SPMD paradigm will allow for larger problem sizes and may also see
-performance gains. This design attempts to leverage the substantial work that
-is Global Arrays in support of large parallel array computation within the
-NumPy framework.
-
-Python is known for among other things its ease of use, elegant syntax, and
-its interactive interpreter. Python users would expect these capabilities to
-remain intact for any extension written for it. The IPython project is a good
-example of supporting the interactive interpreter and parallel computation
-simultaneously. Users familiar with NumPy would expect its syntax and
-semantics to remain intact if large parallel array computation were added to
-its feature set.
-
-High performance computing users are familiar with writing codes that optimize
-every last bit of performance out of the system where they are are being run.
-Although message-passing is a useful and widely adopted computation model,
-Global Arrays users have come to appreciate the abstraction of a shared-memory
-interface to a distributed memory array. In either case, users are familiar
-with the challenges involved in maintaining scalability as problem sizes
-increase or as additional hardware is added. Maintaining these codes may be
-difficult if they are muddled with FORTRAN and/or C and various
-message-passing API calls. If one of these users were to switch to NumPy in
-order to leverage its strengths, they would hope to not sacrifice the
-performance and scalability they once may have enjoyed. Given the two user
-communities discussed above, our GAiN module attempts to bridge the gap and
-support both.
-
 There are a few assumptions which govern the design of GAiN. First, all public
 GAiN functions are collective. Since Python and NumPy were designed to run
 serially on workstations, it naturally follows that GAiN -- running in an SPMD
@@ -443,13 +363,6 @@ made. Lastly, GA has its own strengths to offer such as processor groups and
 custom data distributions. In order to maximize scalability of this
 implementation, we should enable the use of processor groups [Nie05]_.
 
-Both NumPy and GA provide multidimensional arrays and implement, among other
-things, element-wise operations and linear algebra routines. Although they
-have a number of differences, the primary one is that NumPy programs run
-within a single address space while Global Arrays are distributed. When
-translating from NumPy to Global Arrays, each process must translate NumPy
-calls into calls with respect to their local array portions.
-
 A distributed array representation must acknowledge the duality of a global
 array and the physically distributed memory of the array. Array attributes
 such as ``shape`` should return the global, coalesced representation of the
@@ -461,6 +374,7 @@ distribution (in square brackets). Each local piece also knows the global
 shape.
 
 .. figure:: image1_crop.png
+    :scale: 50%
 
     :label:`fig1`
     Each local piece of the ``gain.ndarray`` has its own shape (in
@@ -543,8 +457,8 @@ will have no computation to perform.
     Note that for this computation, the data for each array is not
     equivalently distributed such that communication can be avoided.
 
-``gain.ndarray`` and array operations
-=====================================
+.. ``gain.ndarray`` and array operations
+.. =====================================
 
 The GAiN implementation of the ``ndarray`` implements a few important concepts
 including the dual nature of a global array and its individual distributed
@@ -609,6 +523,7 @@ requested region using slice arithmetic and then transformed into a
 ``ga.strided_get()`` request based on the global, original shape of the array.
 
 .. figure:: image5_crop.png
+    :scale: 60%
 
     :label:`figaccessget`
     ``access()`` and ``get()`` examples. The current ``global_slice``,
@@ -656,8 +571,8 @@ once an array is created. This complicates such useful functionality as
 ``numpy.reshape()``. Currently, GAiN must make a copy of the array instead of
 a view when altering the shape of an array.
 
-``gain.flatiter``
-=================
+.. ``gain.flatiter``
+.. =================
 
 Translating the ``numpy.flatiter``, which assumes a single address space while
 translating an N-dimensional array into a 1D array, into a distributed form
@@ -700,10 +615,9 @@ processing in NumPy, to transparently enable this processing, and most
 importantly to efficiently accomplish those goals. Performance Python [Ram08]_
 “perfpy” was conceived to demonstrate the ways Python can be used for high
 performance computing. It evaluates NumPy and the relative performance of
-various Python extensions to NumPy including SciPy’s weave (blitz and inline)
-[Tru08]_, Pyrex [Ewi08]_, and f2py [Pet05]_. It represents an important
-benchmark by which any additional high performance numerical Python module
-should be measured. The original program ``laplace.py`` was modified by
+various Python extensions to NumPy. It represents an important benchmark by
+which any additional high performance numerical Python module should be
+measured. The original program ``laplace.py`` was modified by
 
 .. code-block:: python
 
@@ -714,28 +628,80 @@ and then stripped of the additional test codes so that only the ``gain``
 (``numpy``) test remained. The latter modification makes no impact on the
 timing results since all tests are run independently but was necessary because
 ``gain`` is run on multiple processes while the original test suite is serial.
-The program was run on a homogeneous cluster of dual 3.2GHz P4 processors, 1GB
-main memory, using 1GBit Ethernet, TCP/IP socket communication, running Ubuntu
-8.10. GAiN utilized 8 nodes of the cluster while NumPy and others ran serially
-on a single node (as they must.)
+The program was run on the chinook supercomputer at the Environmental
+Molecular Sciences Laboratory, part of Pacific Northwest National Laboratory.
+Chinook consists of 2310 HP DL185 nodes with dual socket, 64-bit, Quad-core
+AMD 2.2 GHz Opteron processors. Each node has 32 Gbytes of memory for 4 Gbytes
+per core. Fast communication between the nodes is obtained using a single rail
+Infiniband interconnect from Voltaire (switches) and Melanox (NICs). The
+system runs a version of Linux based on Red Hat Linux Advanced Server.  GAiN
+utilized up to 1024 nodes of the cluster while NumPy ran serially on a single
+node (as it must.)
 
-As shown in Figure :ref:`figscaling`, using 8 or more nodes, GAiN scaled
-better than NumPy and its related just-in-time compiled or pre-compiled codes.
-All codes appeared to scale uniformly with each other.  GAiN was able to run
-much larger sizes of N while the other tests thrashed due to a lack of memory.
-The perfpy code represents in general a more realistic use case for GAiN
-whereas the distmap program is idealized with very little communication.
+In :ref:`tabscaling`, GAiN is shown to scale up to 2K cores on a modest
+problem size. As shown in :ref:`tabbig`, GAiN is able to run on problems which
+are not feasible on workstations. For example, to store one 100000x100000
+matrix of double-precision numbers requires approximately 75GB. ``numpy`` was
+unable to complete the N=1e4 case.
 
-.. figure:: perfpy500.png
+.. table:: laplace.py for N=1e4. One matrix of double-precision numbers is
+    approximately 0.75GB. For this problem, GAiN scales up to 2K cores. The
+    results for native NumPy are shown for the first, single-core row. Even
+    for a modest number of cores, GAiN is much faster. :label:`tabscaling`
 
-    :label:`figscaling`
-    Performance Python Running Times for N × N Grid. This plot compares the
-    running times of GAiN and various NumPy or Python extensions. GAiN was run
-    using 1, 2, 4, 8, and 16 nodes. GAiN scales only as well as the best
-    compiled implementation but does extend beyond the system resource
-    limitations.
+    +-------+---------+
+    | Cores | Seconds |
+    +-------+---------+
+    | 1     | 843.43  |
+    +-------+---------+
+    | 32    | 183.74  |
+    +-------+---------+
+    | 64    | 99.31   |
+    +-------+---------+
+    | 128   | 53.33   |
+    +-------+---------+
+    | 256   | 29.67   |
+    +-------+---------+
+    | 512   | 18.01   |
+    +-------+---------+
+    | 1024  | 13.17   |
+    +-------+---------+
+    | 2048  | 11.78   |
+    +-------+---------+
 
-.. table:: This is the caption for the table. :label:`mtable`
+.. table:: laplace.py for N=1e5. One matrix of double-precision numbers is
+    approximately 75GB. In addition to handling this large-scale problem, GAiN
+    continues to scale again up to 2K cores. :label:`tabbig`
+
+    +-------+---------+
+    | Cores | Seconds |
+    +-------+---------+
+    | 512   | 1348.93 |
+    +-------+---------+
+    | 1024  |  670.04 |
+    +-------+---------+
+    | 2048  |  353.70 |
+    +-------+---------+
+
+During the evaluation, it was noted that a lot of time was spent within global
+synchronization calls e.g. ``ga.sync()``. The source of the calls was traced
+to, among other places, the vast number of temporary arrays getting created.
+The original laplace.py code created 912 arrays. Given this staggering figure,
+an array cache was created. The cache is a Python ``dict`` using the shape and
+type of the arrays as the keys and stores discarded Global Array instances
+represented by the GA integer handle. The ``gain.ndarray`` instances are
+discarded as usual.  Utilizing the cache keeps the GA memory from many
+allocations and deallocations but primarily avoids many synchronization calls.
+Three levels of caches were tested, as shown in :ref:`tabcache`. The trade-off
+of using this cache is that if the arrays used by an application vary wildly
+in size or type, this cache will consume too much memory. Other hueristics
+could be developed to keep the cache from using too much memory e.g. a maximum
+size of the cache, remove the least used arrays, remove the least recently
+used. Based on the success of the GA cache, it is currently used by GAiN.
+
+.. table:: GA cache create/destroy counts. The smaller numbers indicate better
+    reuse of GA memory and avoidance of global synchronization calls, at the
+    expense of using additional memory. :label:`tabcache`
 
     +----------+---------------+---------------+---------------+
     | No Cache | 1-Level Cache | 2-Level Cache | 3-Level Cache |
@@ -743,38 +709,19 @@ whereas the distmap program is idealized with very little communication.
     | 912/910  | 311/306       | 110/102       | 11/1          |
     +----------+---------------+---------------+---------------+
 
-We show the things in Table :ref:`mtable`.
-
-.. table:: This is the caption for the table N=10000. :label:`strongtable`
-
-    +-------+-------+---------+----------+
-    | Cores | N     | Step (s)| Wall (s) |
-    +-------+-------+---------+----------+
-    | 32    | 10000 | 183.74  | 95       |
-    | 64    | 10000 | 99.31   | 53       |
-    | 128   | 10000 | 53.33   | 34       |
-    | 256   | 10000 | 29.67   | 28       |
-    | 512   | 10000 | 18.01   | 33       |
-    | 1024  | 10000 | 13.17   | 57       |
-    | 2048  | 10000 | 11.78   | 111      |
-    +-------+-------+---------+----------+
-
-We show the things in Table :ref:`strongtable`.
-
 Conclusion
 ----------
 
 GAiN succeeds in its ability to grow problem sizes beyond a single compute
-node, however its performance in all cases does not scale as anticipated. The
-performance of the perfpy code leaves room for improvement. As described
-previously, GAiN allows certain classes of existing NumPy programs to run
-using GAiN with sometimes as little effort as changing the import statement,
-immediately taking advantage of the ability to run in a cluster environment.
-Further, GAiN seamlessly allows parallel codes to be developed interactively.
-Once a smaller-sized program has been developed and tested on a desktop
-computer, it can then be run on a cluster with very little effort. GAiN
-provides the groundwork for large distributed multidimensional arrays within
-NumPy.
+node. The performance of the perfpy code and the ability to drop-in GAiN
+without modification of the core implementation demonstrates its utility. As
+described previously, GAiN allows certain classes of existing NumPy programs
+to run using GAiN with sometimes as little effort as changing the import
+statement, immediately taking advantage of the ability to run in a cluster
+environment. Once a smaller-sized program has been developed and tested on a
+desktop computer, it can then be run on a cluster with very little effort.
+GAiN provides the groundwork for large distributed multidimensional arrays
+within NumPy.
 
 Future Work
 -----------
@@ -785,6 +732,8 @@ Alternative parallelization strategies besides the owner-computes rule should
 be explored. GA allows for the get-compute-put model of computation where
 ownership of data is largely ignored, but data movement costs are increased.
 Task parallelism could also be explored if load balancing becomes an issue.
+The GA cache should be exposed as a tunable parameter. Alternative temporary
+array creation strategies could be developed such as lazy evaluation.
 
 .. [Apr09]  E. Apra, A. P. Rendell, R. J. Harrison, V. Tipparaju, W. A.
             deJong, and S. S. Xantheas. *Liquid water: obtaining the right
@@ -816,9 +765,6 @@ Task parallelism could also be explored if load balancing becomes an issue.
             Processing, April 2007.
 .. [Eit07]  B. Eitzen. *Gpupy: Efficiently using a gpu with python*, Master's
             thesis, Washington State University, Richland, WA, August 2007.
-.. [Ewi08]  G. Ewing. *Pyrex, a language for writing python extension
-            modules*, http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex,
-            2008.
 .. [Gra09]  B. Granger and F. Perez. *Distributed Data Structures, Parallel
             Computing and IPython*, SIAM CSE 2009.
 .. [Gro99a] W. Gropp, E. Lusk, and A. Skjellum. *Using MPI: Portable Parallel
@@ -855,9 +801,6 @@ Task parallelism could also be explored if load balancing becomes an issue.
 .. [Per07]  F. Perez and B. E. Granger. *IPython: a System for Interactive
             Scientific Computing*, Computing in Science Engineering,
             9(3):21-29, May 2007.
-.. [Pet05]  P. Peterson. *F2py users guide and reference manual*,
-            http://cens.ioc.ee/projects/f2py2e/usersguide/f2py_usersguide.pdf,
-            January 2005.
 .. [Pnl11]  Global Arrays Webpage. http://www.emsl.pnl.gov/docs/global/
 .. [Ram08]  P. Ramachandran. *Performance Python*,
             http://www.scipy.org/PerformancePython, May 2008.
@@ -866,7 +809,6 @@ Task parallelism could also be explored if load balancing becomes an issue.
             Language*, Euro-Par, 632-637, 2004.
 .. [Tha04]  R. Thakur, E. Lusk, and W. Gropp. *Users guide for romio: A
             high-performance, portable, mpi-io implementation*, May 2004.
-.. [Tru08]  M. Trumpis. *Weave*, http://www.scipy.org/Weave, 2008.
 .. [Zim88]  H. P. Zima, H. Bast, and M. Gerndt. *SUPERB: A tool for
             semi-automatic MIMD/SIMD Parallelization*, Parallel Computing,
             6:1-18, 1988.
