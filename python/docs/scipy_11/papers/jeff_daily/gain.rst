@@ -201,8 +201,8 @@ management and parallel I/O [Dal05]_ [Dal08]_.
 .. Global Arrays
 .. =============
 
-The GA toolkit [Nie06]_ [Nie10]_ [Pnl11]_ is a software system from Battelle
-Pacific Northwest National Laboratory that enables an efficient, portable, and
+The GA toolkit [Nie06]_ [Nie10]_ [Pnl11]_ is a software system from Pacific
+Northwest National Laboratory that enables an efficient, portable, and
 parallel shared-memory programming interface to manipulate physically
 distributed dense multidimensional arrays, without the need for explicit
 cooperation by other processes. GA compliments the message-passing programming
@@ -277,7 +277,7 @@ IPython [Per07]_ provides an enhanced interactive Python shell as well as an
 architecture for interactive parallel computing. IPython supports practically
 all models of parallelism but more importantly in an interactive way. For
 instance, a single interactive Python shell could be controlling a parallel
-program running on a super computer. This is done by having a Python engine
+program running on a supercomputer. This is done by having a Python engine
 running on a remote machine which is able to receive Python commands.
 
 .. IPython's distarray
@@ -345,7 +345,7 @@ efficiently programming for a parallel environment can be a daunting task. One
 area of research is to automatically parallelize otherwise serial programs and
 to do so with the least amount of user intervention [Buy99]_. GAiN attempts to
 do this for certain Python programs utilizing the NumPy module. It will be
-shown that some NumPy program can be parallelized in a nearly transparent way
+shown that some NumPy programs can be parallelized in a nearly transparent way
 with GAiN.
 
 There are a few assumptions which govern the design of GAiN. First, all public
@@ -417,11 +417,11 @@ users to write:
 
 In order to succeed as a drop-in replacement, all attributes, functions,
 modules, and classes which exist in ``numpy`` must also exist within ``gain``.
-Efforts were made to reuse as much of ``numpy`` as possible, such as with
-regard to the type system. As of GA v5.1, arrays of arbitrary fixed-size
-element types and sizes can be created and individual fields of C struct data
-types accessed directly. GAiN is able to use the ``numpy`` types when creating
-the GA instances which back the ``gain.ndarray`` instances.
+Efforts were made to reuse as much of ``numpy`` as possible, such as its type
+system. As of GA v5.1, arrays of arbitrary fixed-size element types and sizes
+can be created and individual fields of C struct data types accessed directly.
+GAiN is able to use the ``numpy`` types when creating the GA instances which
+back the ``gain.ndarray`` instances.
 
 GAiN follows the owner-computes rule [Zim88]_. The rule assigns each
 computation to the processor that owns the data being computed. Figures
@@ -455,7 +455,7 @@ will have no computation to perform.
     (left and middle). For example, the corresponding gold elements will be
     computed locally on the owning process. Similarly for the copper elements.
     Note that for this computation, the data for each array is not
-    equivalently distributed such that communication can be avoided.
+    equivalently distributed which will result in communication.
 
 .. ``gain.ndarray`` and array operations
 .. =====================================
@@ -496,8 +496,8 @@ this concept.
     Slice arithmetic example 1. Array ``b`` could be created either using the
     standard notation (top middle) or using the *canonicalized* form (bottom
     middle). Array ``c`` could be created by applying the standard notation
-    (top right) or by applying the equivalent canonical form to the original
-    array ``a``.
+    (top right) or by applying the equivalent canonical form (bottom right) to
+    the original array ``a``.
 
 .. figure:: image4b_crop.png
 
@@ -635,14 +635,13 @@ AMD 2.2 GHz Opteron processors. Each node has 32 Gbytes of memory for 4 Gbytes
 per core. Fast communication between the nodes is obtained using a single rail
 Infiniband interconnect from Voltaire (switches) and Melanox (NICs). The
 system runs a version of Linux based on Red Hat Linux Advanced Server.  GAiN
-utilized up to 1024 nodes of the cluster while NumPy ran serially on a single
-node (as it must.)
+utilized up to 512 nodes of the cluster, using 4 cores per node,  while NumPy
+ran serially on a single node (as it must.)
 
-In :ref:`tabscaling`, GAiN is shown to scale up to 2K cores on a modest
-problem size. As shown in :ref:`tabbig`, GAiN is able to run on problems which
-are not feasible on workstations. For example, to store one 100000x100000
-matrix of double-precision numbers requires approximately 75GB. ``numpy`` was
-unable to complete the N=1e4 case.
+In Table :ref:`tabscaling`, GAiN is shown to scale up to 2K cores on a modest
+problem size. As shown in Table :ref:`tabbig`, GAiN is able to run on problems
+which are not feasible on workstations. For example, to store one
+100000x100000 matrix of double-precision numbers requires approximately 75GB.
 
 .. table:: laplace.py for N=1e4. One matrix of double-precision numbers is
     approximately 0.75GB. For this problem, GAiN scales up to 2K cores. The
@@ -692,12 +691,13 @@ type of the arrays as the keys and stores discarded Global Array instances
 represented by the GA integer handle. The ``gain.ndarray`` instances are
 discarded as usual.  Utilizing the cache keeps the GA memory from many
 allocations and deallocations but primarily avoids many synchronization calls.
-Three levels of caches were tested, as shown in :ref:`tabcache`. The trade-off
-of using this cache is that if the arrays used by an application vary wildly
-in size or type, this cache will consume too much memory. Other hueristics
-could be developed to keep the cache from using too much memory e.g. a maximum
-size of the cache, remove the least used arrays, remove the least recently
-used. Based on the success of the GA cache, it is currently used by GAiN.
+Three levels of caches were tested, as shown in Table :ref:`tabcache`. The
+trade-off of using this cache is that if the arrays used by an application
+vary wildly in size or type, this cache will consume too much memory. Other
+hueristics could be developed to keep the cache from using too much memory
+e.g. a maximum size of the cache, remove the least used arrays, remove the
+least recently used. Based on the success of the GA cache, it is currently
+used by GAiN.
 
 .. table:: GA cache create/destroy counts. The smaller numbers indicate better
     reuse of GA memory and avoidance of global synchronization calls, at the
