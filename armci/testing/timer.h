@@ -2,6 +2,7 @@
 #define ARMCI_TESTING_TIMER_H_
 
 #if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__)
+#   define HAVE_RDTSC 1
 #   if defined(__i386__)
 static __inline__ unsigned long long rdtsc(void)
 {
@@ -37,24 +38,25 @@ static __inline__ unsigned long long rdtsc(void)
     return(result);
 }
 #   endif
-#elif HAVE_WINDOWS_H
-#   include <windows.h>
 #elif HAVE_SYS_TIME_H
 #   include <sys/time.h>
+#elif HAVE_WINDOWS_H
+#   include <windows.h>
+static LARGE_INTEGER frequency;
 #endif
 
 static unsigned long long timer_start()
 {
-#if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__)
+#if HAVE_RDTSC
     return rdtsc();
-#elif HAVE_WINDOWS_H
-    LARGE_INTEGER timer;
-    QueryPerformanceCounter(&timer);
-    return timer.QuadPart * 1000 / frequency.QuadPart;
 #elif HAVE_SYS_TIME_H
     struct timeval timer;
     (void)gettimeofday(&timer, NULL);
     return timer.tv_sec*1000000 + timer.tv_usec;
+#elif HAVE_WINDOWS_H
+    LARGE_INTEGER timer;
+    QueryPerformanceCounter(&timer);
+    return timer.QuadPart * 1000 / frequency.QuadPart;
 #else
     return 0;
 #endif
@@ -67,19 +69,22 @@ static unsigned long long timer_end(unsigned long long begin)
 
 static void timer_init()
 {
-#if HAVE_WINDOWS_H
+#if HAVE_RDTSC
+#elif HAVE_SYS_TIME_H
+#elif HAVE_WINDOWS_H
     QueryPerformanceFrequency(&frequency);
+#else
 #endif
 }
 
 static const char* timer_name()
 {
-#if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__)
+#if HAVE_RDTSC
     return "rdtsc";
-#elif HAVE_WINDOWS_H
-    return "windows QueryPerformanceCounter";
 #elif HAVE_SYS_TIME_H
     return "gettimeofday";
+#elif HAVE_WINDOWS_H
+    return "windows QueryPerformanceCounter";
 #else
     return "no timers";
 #endif

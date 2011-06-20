@@ -20,14 +20,6 @@
 #   include <errno.h>
 #endif
 
-#if HAVE_WINSOCK_H
-#  include <winsock.h>
-#  define bcopy(s1,s2,n) memcpy(s2,s1,n)
-#  define sleep(x) Sleep(1000*(x))
-#  define CLOSE closesocket
-#else
-#  define CLOSE close
-#endif
 #if HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
@@ -52,6 +44,12 @@
 #endif
 #if HAVE_UNISTD_H
 #  include <unistd.h>
+#  define CLOSE close
+#elif HAVE_WINSOCK_H
+#  include <winsock.h>
+#  define bcopy(s1,s2,n) memcpy(s2,s1,n)
+#  define sleep(x) Sleep(1000*(x))
+#  define CLOSE closesocket
 #endif
 
 #include "armcip.h"

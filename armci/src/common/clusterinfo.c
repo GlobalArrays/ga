@@ -20,13 +20,13 @@
 #endif
 #if HAVE_UNISTD_H
 #   include <unistd.h>
+#elif HAVE_WINSOCK_H
+#   include <winsock.h> /* this is where gethostbyname is declared */
 #endif
+
 #include "message.h"
 #include "armcip.h"
 
-#if HAVE_WINSOCK_H
-#   include <winsock.h> /* this is where gethostbyname is declared */
-#endif
 
 /* NO_SHMEM enables to simulate cluster environment on a single workstation.
  * Must define NO_SHMMAX_SEARCH in shmem.c to prevent depleting shared memory
