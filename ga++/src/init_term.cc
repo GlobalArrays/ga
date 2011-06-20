@@ -2,22 +2,39 @@
 #   include "config.h"
 #endif
 
-#ifdef MPIPP
-#   include "mpi.h"
-#else
+#if MSG_COMMS_TCGMSG || MSG_COMMS_TCGMSG5 || MSG_COMMS_TCGMSGMPI
 #   include "tcgmsg.h"
+#elif MSG_COMMS_MPI
+#   include "mpi.h"
 #endif
 
 #include "ga++.h"
 
 void
 GA::Initialize(int argc, char *argv[], size_t limit) {
-#ifdef MPIPP
+#if MSG_COMMS_TCGMSG || MSG_COMMS_TCGMSG5 || MSG_COMMS_TCGMSGMPI
+  tcg_pbegin(argc, argv);
+#elif MSG_COMMS_MPI
+#   ifdef DCMF
+  int status;
+  int desired = MPI_THREAD_MULTIPLE;
+  int provided;
+  printf("using MPI_Init_thread\n");
+  status = MPI_Init_thread(&argc, &argv, desired, &provided);
+  if ( provided != MPI_THREAD_MULTIPLE ) {
+      printf("provided != MPI_THREAD_MULTIPLE\n");
+  } else if ( provided == MPI_THREAD_SERIALIZED ) {
+      printf("provided = MPI_THREAD_SERIALIZED\n"); \
+  } else if ( provided == MPI_THREAD_FUNNELED ) {
+      printf("provided = MPI_THREAD_FUNNELED\n"); \
+  } else if ( provided == MPI_THREAD_SINGLE ) {
+      printf("provided = MPI_THREAD_SINGLE\n");
+  }
+#   else
   int val;
   if((val=MPI_Init(&argc, &argv)) < 0) 
     fprintf(stderr, "MPI_Init() failed\n");
-#else
-  tcg_pbegin(argc, argv);
+#   endif
 #endif
 
   // GA Initialization
@@ -31,12 +48,29 @@ void
 GA::Initialize(int argc, char *argv[], unsigned long heapSize, 
 	   unsigned long stackSize, int type, size_t limit) {
   // Initialize MPI/TCGMSG  
-#ifdef MPIPP
+#if MSG_COMMS_TCGMSG || MSG_COMMS_TCGMSG5 || MSG_COMMS_TCGMSGMPI
+  tcg_pbegin(argc, argv);
+#elif MSG_COMMS_MPI
+#   ifdef DCMF
+  int status;
+  int desired = MPI_THREAD_MULTIPLE;
+  int provided;
+  printf("using MPI_Init_thread\n");
+  status = MPI_Init_thread(&argc, &argv, desired, &provided);
+  if ( provided != MPI_THREAD_MULTIPLE ) {
+      printf("provided != MPI_THREAD_MULTIPLE\n");
+  } else if ( provided == MPI_THREAD_SERIALIZED ) {
+      printf("provided = MPI_THREAD_SERIALIZED\n"); \
+  } else if ( provided == MPI_THREAD_FUNNELED ) {
+      printf("provided = MPI_THREAD_FUNNELED\n"); \
+  } else if ( provided == MPI_THREAD_SINGLE ) {
+      printf("provided = MPI_THREAD_SINGLE\n");
+  }
+#   else
   int val;
   if((val=MPI_Init(&argc, &argv)) < 0) 
     fprintf(stderr, "MPI_Init() failed\n");
-#else
-  tcg_pbegin(argc, argv);
+#   endif
 #endif
   
   // GA Initialization
@@ -66,9 +100,9 @@ GA::Terminate()
   /* Terminate GA */
   GA_Terminate();    
   
-#ifndef MPIPP
+#if MSG_COMMS_TCGMSG || MSG_COMMS_TCGMSG5 || MSG_COMMS_TCGMSGMPI
   tcg_pend();
-#else
+#elif MSG_COMMS_MPI
   MPI_Finalize();
 #endif    
 }
