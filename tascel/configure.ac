@@ -20,7 +20,7 @@ AM_MAINTAINER_MODE
 ###############################################################################
 # Misc. information and package setup.
 ###############################################################################
-#GA_TARGET # tascel doesn't (yet?) depend on target platform
+GA_TARGET
 
 GA_WITH_HELP
 
@@ -64,7 +64,8 @@ GA_MPICC_TEST_COMPILE
 # Hack to append .x to executables.
 AC_SUBST([EXEEXT], [.x$EXEEXT])
 
-#GA_TARGET64 # tascel doesn't (yet?) depend on target platform
+GA_TARGET64
+GA_CROSS_COMPILING
 
 # Checks for C header files.
 

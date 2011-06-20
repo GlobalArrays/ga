@@ -393,45 +393,37 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/origptl testing/ptltest \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/te
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_72 = testing/testitr
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_73 = examples/features/gpc/hashtable/test_hashtable
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_74 = examples/features/proc_affinity/computation_impact/computation_impact
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_75 = examples/features/proc_affinity/simple/simple
-@MSG_COMMS_MPI_TRUE@am__append_76 = examples/features/concurrency/multidma/multidma \
-@MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap
-@RANDOM_ACCESS_TRUE@am__append_77 = examples/benchmarks/RandomAccess/simple/simple \
-@RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket
-@THREAD_SAFE_TRUE@am__append_78 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_79 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_80 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_81 = examples/features/proc_affinity/simple/simple$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_82 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
-@MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap$(EXEEXT)
-@RANDOM_ACCESS_TRUE@am__append_83 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
-@RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__append_84 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
-XFAIL_TESTS = $(am__EXEEXT_15) $(am__EXEEXT_15)
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_85 = testing/clone$(EXEEXT) \
+@ENABLE_CHECKPOINT_TRUE@am__append_73 = testing/fttest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_74 = testing/gpctest$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_75 = testing/simple$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	testing/test_groups$(EXEEXT)
+#PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
+@THREAD_SAFE_TRUE@am__append_76 = testing/test_mt$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_77 = testing/acc_test$(EXEEXT) \
+@ENABLE_F77_TRUE@	testing/copy_test$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_78 = testing/clone$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/fork$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/origptl$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/ptltest$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/te$(EXEEXT)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_86 = testing/testitr$(EXEEXT)
-@ENABLE_CHECKPOINT_TRUE@am__append_87 = testing/fttest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_88 = testing/gpctest$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_89 = testing/simple$(EXEEXT) \
-@MSG_COMMS_MPI_TRUE@	testing/test_groups$(EXEEXT)
-#PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
-@THREAD_SAFE_TRUE@am__append_90 = testing/test_mt$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_91 = testing/acc_test$(EXEEXT) \
-@ENABLE_F77_TRUE@	testing/copy_test$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_92 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_93 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_94 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_79 = testing/testitr$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_80 = examples/features/gpc/hashtable/test_hashtable
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_81 = examples/features/proc_affinity/computation_impact/computation_impact
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_82 = examples/features/proc_affinity/simple/simple
+@MSG_COMMS_MPI_TRUE@am__append_83 = examples/features/concurrency/multidma/multidma \
+@MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap
+@RANDOM_ACCESS_TRUE@am__append_84 = examples/benchmarks/RandomAccess/simple/simple \
+@RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket
+@THREAD_SAFE_TRUE@am__append_85 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_86 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_87 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_88 = examples/features/proc_affinity/simple/simple$(EXEEXT)
 #PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
 #PARALLEL_TESTS += examples/features/non-blocking/overlap/overlap$(EXEEXT) # needs bug fixes
-@RANDOM_ACCESS_TRUE@am__append_95 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__append_89 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__append_96 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+@THREAD_SAFE_TRUE@am__append_90 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+XFAIL_TESTS = $(am__EXEEXT_15) $(am__EXEEXT_15)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -460,6 +452,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/ga_as.m4 $(top_srcdir)/../m4/ga_blas.m4 \
 	$(top_srcdir)/../m4/ga_check_func.m4 \
 	$(top_srcdir)/../m4/ga_check_header.m4 \
+	$(top_srcdir)/../m4/ga_cross_compiling.m4 \
 	$(top_srcdir)/../m4/ga_enable_checkpoint.m4 \
 	$(top_srcdir)/../m4/ga_enable_opt.m4 \
 	$(top_srcdir)/../m4/ga_enable_trace.m4 \
@@ -1693,9 +1686,11 @@ MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
 MPICC = @MPICC@
 MPICXX = @MPICXX@
+MPIEXEC = @MPIEXEC@
 MPIF77 = @MPIF77@
 NM = @NM@
 NMEDIT = @NMEDIT@
+NPROCS = @NPROCS@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OTOOL = @OTOOL@
@@ -1714,6 +1709,7 @@ SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+TCGEXEC = @TCGEXEC@
 THREAD_LIBRARY = @THREAD_LIBRARY@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
@@ -1847,6 +1843,34 @@ SED_NORMALIZE_WHITESPACE = $(SED) 's/ [ ]*/ /g;s/" /"/g;s/ "/"/g'
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_SHARED_TRUE@MAYBE_PIC = -fPIC -DPIC
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_SHARED_TRUE@MAYBE_PIC = -fPIC -DPIC
 @ARMCI_NETWORK_PORTALS_TRUE@@ENABLE_SHARED_TRUE@MAYBE_PIC = -fPIC -DPIC
+SERIAL_TESTS = $(am__append_77) $(am__append_79)
+SERIAL_TESTS_XFAIL = 
+#PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
+#SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
+#SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
+
+#PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
+#PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
+PARALLEL_TESTS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
+	testing/perf_aggr$(EXEEXT) testing/simplelock$(EXEEXT) \
+	testing/test$(EXEEXT) testing/test2$(EXEEXT) \
+	testing/testnotify$(EXEEXT) $(am__append_73) $(am__append_74) \
+	$(am__append_75) $(am__append_76) $(am__append_78) \
+	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
+	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
+	examples/benchmarks/lu/armci_blocking/lu$(EXEEXT) \
+	examples/benchmarks/lu/armci_nonblocking/lu_nb_get$(EXEEXT) \
+	examples/benchmarks/lu/armci_nonblocking/lu_nb_put$(EXEEXT) \
+	examples/benchmarks/lu/pthreads/lu-thread$(EXEEXT) \
+	examples/features/aggregation/simple/simple$(EXEEXT) \
+	examples/features/concurrency/simple/comdegree$(EXEEXT) \
+	examples/features/non-blocking/simple/simple$(EXEEXT) \
+	examples/features/notification/simple/testnotify$(EXEEXT) \
+	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_86) \
+	$(am__append_87) $(am__append_88) $(am__append_89) \
+	$(am__append_90)
+PARALLEL_TESTS_XFAIL = 
 testing_acc_test_SOURCES = testing/acc_test.c
 testing_clone_SOURCES = testing/clone.c
 testing_copy_test_SOURCES = testing/copy_test.c
@@ -2022,22 +2046,6 @@ nodist_EXTRA_examples_features_proc_affinity_computation_impact_computation_impa
 nodist_EXTRA_examples_features_proc_affinity_simple_simple_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_features_symmetric_memory_simple_simple_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_simpleApps_transp1D_c_SOURCES = $(MAYBE_DUMMY_F_LINK)
-EXAMPLES = examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) \
-	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
-	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
-	examples/benchmarks/lu/armci_blocking/lu$(EXEEXT) \
-	examples/benchmarks/lu/armci_nonblocking/lu_nb_get$(EXEEXT) \
-	examples/benchmarks/lu/armci_nonblocking/lu_nb_put$(EXEEXT) \
-	examples/benchmarks/lu/pthreads/lu-thread$(EXEEXT) \
-	examples/features/aggregation/simple/simple$(EXEEXT) \
-	examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) \
-	examples/features/concurrency/simple/comdegree$(EXEEXT) \
-	examples/features/non-blocking/simple/simple$(EXEEXT) \
-	examples/features/notification/simple/testnotify$(EXEEXT) \
-	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_79) \
-	$(am__append_80) $(am__append_81) $(am__append_82) \
-	$(am__append_83) $(am__append_84)
 
 # support verbose/silent make rules for additional programs
 # sed
@@ -2056,42 +2064,23 @@ ARMCI_X86COPY_AS__v_0 = @echo "  GCC   " $@;
 ##############################################################################
 # test suite
 #
-# some tests were commented out either because they required an input file
-# (some examples do) or they were failing for unknown reasons and we didn't
-# want to further debug
+# Some tests were commented out either because they required an input file or
+# they were failing for unknown reasons and we didn't want to further debug.
+# Some tests were based on old versions of GA which no longer applied but we
+# kept anyway (see pario).
+#
+# We leave pario tests out of the main set of tests because not all systems
+# can handle the disk requirements.
 #
 TESTS = $(SERIAL_TESTS) $(PARALLEL_TESTS)
-TESTS_ENVIRONMENT = \
-maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
+@CROSS_COMPILING_FALSE@@MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_FALSE@LOG_COMPILER = \
+@CROSS_COMPILING_FALSE@@MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_FALSE@maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; $$maybe_mpiexec
 
-SERIAL_TESTS = $(am__append_91)
-SERIAL_TESTS_XFAIL = 
-#PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
-#SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
-#SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
-#PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
-#PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
-PARALLEL_TESTS = $(am__append_85) $(am__append_86) \
-	testing/msgcheck$(EXEEXT) testing/perf_aggr$(EXEEXT) \
-	testing/perf$(EXEEXT) testing/simplelock$(EXEEXT) \
-	testing/test2$(EXEEXT) testing/testnotify$(EXEEXT) \
-	testing/test$(EXEEXT) $(am__append_87) $(am__append_88) \
-	$(am__append_89) $(am__append_90) \
-	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
-	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
-	examples/benchmarks/lu/armci_blocking/lu$(EXEEXT) \
-	examples/benchmarks/lu/armci_nonblocking/lu_nb_get$(EXEEXT) \
-	examples/benchmarks/lu/armci_nonblocking/lu_nb_put$(EXEEXT) \
-	examples/benchmarks/lu/pthreads/lu-thread$(EXEEXT) \
-	examples/features/aggregation/simple/simple$(EXEEXT) \
-	examples/features/concurrency/simple/comdegree$(EXEEXT) \
-	examples/features/non-blocking/simple/simple$(EXEEXT) \
-	examples/features/notification/simple/testnotify$(EXEEXT) \
-	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_92) \
-	$(am__append_93) $(am__append_94) $(am__append_95) \
-	$(am__append_96)
-PARALLEL_TESTS_XFAIL = 
+@MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_TRUE@LOG_COMPILER = tst="$$dir$$f -np $(NPROCS)"; eval
+@MSG_COMMS_TCGMSG4_TRUE@LOG_COMPILER = \
+@MSG_COMMS_TCGMSG4_TRUE@maybe_parexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(PAREXEC)"; fi`; $$maybe_parexec
+
+@CROSS_COMPILING_TRUE@@MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_FALSE@maybe_mpiexec = `if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; $$maybe_mpiexec
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -4075,32 +4064,22 @@ testing/acc_test.log: testing/acc_test$(EXEEXT)
 	@p='testing/acc_test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/copy_test.log: testing/copy_test$(EXEEXT)
 	@p='testing/copy_test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing/clone.log: testing/clone$(EXEEXT)
-	@p='testing/clone$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing/fork.log: testing/fork$(EXEEXT)
-	@p='testing/fork$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing/origptl.log: testing/origptl$(EXEEXT)
-	@p='testing/origptl$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing/ptltest.log: testing/ptltest$(EXEEXT)
-	@p='testing/ptltest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing/te.log: testing/te$(EXEEXT)
-	@p='testing/te$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/testitr.log: testing/testitr$(EXEEXT)
 	@p='testing/testitr$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/msgcheck.log: testing/msgcheck$(EXEEXT)
 	@p='testing/msgcheck$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing/perf_aggr.log: testing/perf_aggr$(EXEEXT)
-	@p='testing/perf_aggr$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/perf.log: testing/perf$(EXEEXT)
 	@p='testing/perf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/perf_aggr.log: testing/perf_aggr$(EXEEXT)
+	@p='testing/perf_aggr$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/simplelock.log: testing/simplelock$(EXEEXT)
 	@p='testing/simplelock$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/test.log: testing/test$(EXEEXT)
+	@p='testing/test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/test2.log: testing/test2$(EXEEXT)
 	@p='testing/test2$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/testnotify.log: testing/testnotify$(EXEEXT)
 	@p='testing/testnotify$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-testing/test.log: testing/test$(EXEEXT)
-	@p='testing/test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/fttest.log: testing/fttest$(EXEEXT)
 	@p='testing/fttest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/gpctest.log: testing/gpctest$(EXEEXT)
@@ -4111,6 +4090,16 @@ testing/test_groups.log: testing/test_groups$(EXEEXT)
 	@p='testing/test_groups$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/test_mt.log: testing/test_mt$(EXEEXT)
 	@p='testing/test_mt$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/clone.log: testing/clone$(EXEEXT)
+	@p='testing/clone$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/fork.log: testing/fork$(EXEEXT)
+	@p='testing/fork$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/origptl.log: testing/origptl$(EXEEXT)
+	@p='testing/origptl$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/ptltest.log: testing/ptltest$(EXEEXT)
+	@p='testing/ptltest$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+testing/te.log: testing/te$(EXEEXT)
+	@p='testing/te$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 examples/benchmarks/lu/armci_blocking/lu-b-bc.log: examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT)
 	@p='examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 examples/benchmarks/lu/armci_blocking/lu-block.log: examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT)
@@ -4428,8 +4417,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
-@MSG_COMMS_MPI_TRUE@clean-local:
-@MSG_COMMS_TCGMSG_FALSE@clean-local:
+@MSG_COMMS_TCGMSG4_FALSE@clean-local:
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-checkPROGRAMS \
@@ -4591,20 +4579,15 @@ config.fh: config.h
 .PHONY: checkprogs
 checkprogs: $(check_PROGRAMS)
 
-# automake does not append $(EXEEXT) to user-defined make variables
-# so we must duplicate all examples here to get this custom target... yuck
-.PHONY: examples
-examples: $(EXAMPLES)
-
 .PHONY: pfiles clean-pfiles
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@pfiles: $(check_PROGRAMS)
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	for p in $(check_PROGRAMS); do \
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	    echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	done
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@check: pfiles
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@clean-pfiles:
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	find . -name '*.p' -exec rm {} \; ;
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@clean-local: clean-pfiles
+@MSG_COMMS_TCGMSG4_TRUE@pfiles: $(check_PROGRAMS)
+@MSG_COMMS_TCGMSG4_TRUE@	for p in $(check_PROGRAMS); do \
+@MSG_COMMS_TCGMSG4_TRUE@	    echo "`whoami` `hostname` $(NPROCS) `pwd`/$$p /tmp" > $$p.p; \
+@MSG_COMMS_TCGMSG4_TRUE@	done
+@MSG_COMMS_TCGMSG4_TRUE@check: pfiles
+@MSG_COMMS_TCGMSG4_TRUE@clean-pfiles:
+@MSG_COMMS_TCGMSG4_TRUE@	find . -name '*.p' -exec rm {} \; ;
+@MSG_COMMS_TCGMSG4_TRUE@clean-local: clean-pfiles
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

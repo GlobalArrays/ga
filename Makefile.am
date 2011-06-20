@@ -173,6 +173,12 @@ if ENABLE_F77
 check_PROGRAMS += gaf2c/testarg
 endif
 
+GAF2C_TESTS =
+
+if ENABLE_F77
+GAF2C_TESTS += gaf2c/testarg$(EXEEXT)
+endif
+
 gaf2c_testarg_SOURCES = gaf2c/testarg.c gaf2c/testargf.f
 gaf2c_testarg_LDFLAGS = $(FLDFLAGS)
 
@@ -208,6 +214,17 @@ check_PROGRAMS += ma/test-coalesce
 check_PROGRAMS += ma/test-inquire
 if ENABLE_F77
 check_PROGRAMS += ma/testf
+endif
+
+MA_TESTS =
+MA_XFAIL_TESTS =
+
+#MA_TESTS += ma/testc$(EXEEXT) # iteractive prompt
+MA_TESTS += ma/test-coalesce$(EXEEXT)
+MA_TESTS += ma/test-inquire$(EXEEXT)
+if ENABLE_F77
+MA_TESTS += ma/testf$(EXEEXT)
+MA_XFAIL_TESTS += ma/testf$(EXEEXT)
 endif
 
 ma_testf_SOURCES         = ma/testf.F
@@ -387,6 +404,19 @@ check_PROGRAMS += tcgmsg/ipcv4.0/testf
 check_PROGRAMS += tcgmsg/ipcv4.0/testpf
 endif
 
+TCGMSG_TESTS =
+TCGMSG_XFAIL_TESTS =
+
+TCGMSG_TESTS += tcgmsg/ipcv4.0/hello$(EXEEXT)
+#TCGMSG_TESTS += tcgmsg/ipcv4.0/test$(EXEEXT) # requires user input
+#TCGMSG_TESTS += tcgmsg/ipcv4.0/testmap$(EXEEXT) # requires user input
+#TCGMSG_TESTS += tcgmsg/ipcv4.0/toplot$(EXEEXT) # not a test
+#TCGMSG_TESTS += tcgmsg/ipcv4.0/xdrtest$(EXEEXT) # requires user input
+if ENABLE_F77
+TCGMSG_TESTS += tcgmsg/ipcv4.0/testf$(EXEEXT)
+#TCGMSG_TESTS += tcgmsg/ipcv4.0/testpf$(EXEEXT) # requires input files
+endif
+
 tcgmsg_ipcv4_0_hello_SOURCES   = tcgmsg/ipcv4.0/hello.c
 tcgmsg_ipcv4_0_test_SOURCES    = tcgmsg/ipcv4.0/test.c
 tcgmsg_ipcv4_0_testf_SOURCES   = tcgmsg/ipcv4.0/testf.F
@@ -468,6 +498,19 @@ check_PROGRAMS += tcgmsg/ipcv5.0/jacobi
 check_PROGRAMS += tcgmsg/ipcv5.0/testf
 endif
 
+TCGMSG_TESTS =
+TCGMSG_XFAIL_TESTS =
+
+TCGMSG_TESTS += tcgmsg/ipcv5.0/hello$(EXEEXT)
+#TCGMSG_TESTS += tcgmsg/ipcv5.0/test$(EXEEXT) # requires user input
+if MSG_COMMS_PVM
+TCGMSG_TESTS += tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
+endif
+if ENABLE_F77
+#TCGMSG_TESTS += tcgmsg/ipcv5.0/jacobi$(EXEEXT) # requires user input
+#TCGMSG_TESTS += tcgmsg/ipcv5.0/testf$(EXEEXT) # requires user input
+endif
+
 tcgmsg_ipcv5_0_hello_SOURCES    = tcgmsg/ipcv5.0/hello.c
 tcgmsg_ipcv5_0_jacobi_SOURCES   = tcgmsg/ipcv5.0/fexit.f       \
                                   tcgmsg/ipcv5.0/getmem.c      \
@@ -520,6 +563,15 @@ check_PROGRAMS += tcgmsg/tcgmsg-mpi/test_asyn
 check_PROGRAMS += tcgmsg/tcgmsg-mpi/test
 if ENABLE_F77
 check_PROGRAMS += tcgmsg/tcgmsg-mpi/testf
+endif
+
+TCGMSG_TESTS =
+TCGMSG_XFAIL_TESTS =
+
+#TCGMSG_TESTS += tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT) # useless test
+#TCGMSG_TESTS += tcgmsg/tcgmsg-mpi/test$(EXEEXT) # requires user input
+if ENABLE_F77
+TCGMSG_TESTS += tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
 endif
 
 tcgmsg_tcgmsg_mpi_test_asyn_SOURCES = tcgmsg/tcgmsg-mpi/test_asyn.c
@@ -750,6 +802,71 @@ if SYSV
 check_PROGRAMS += global/testing/ipc_clean
 endif
 
+GLOBAL_TESTS =
+GLOBAL_XFAIL_TESTS =
+
+GLOBAL_TESTS += global/testing/elempatch$(EXEEXT)
+GLOBAL_TESTS += global/testing/getmem$(EXEEXT)
+GLOBAL_TESTS += global/testing/mtest$(EXEEXT)
+GLOBAL_TESTS += global/testing/ntestc$(EXEEXT)
+GLOBAL_TESTS += global/testing/ntestfc$(EXEEXT)
+GLOBAL_TESTS += global/testing/packc$(EXEEXT)
+GLOBAL_TESTS += global/testing/patch_enumc$(EXEEXT)
+GLOBAL_TESTS += global/testing/print$(EXEEXT)
+GLOBAL_TESTS += global/testing/scan_addc$(EXEEXT)
+GLOBAL_TESTS += global/testing/scan_copyc$(EXEEXT)
+GLOBAL_TESTS += global/testing/testc$(EXEEXT)
+GLOBAL_TESTS += global/testing/testmult$(EXEEXT)
+GLOBAL_TESTS += global/testing/unpackc$(EXEEXT)
+if ENABLE_F77
+GLOBAL_TESTS += global/testing/bin$(EXEEXT)
+GLOBAL_TESTS += global/testing/blktest$(EXEEXT)
+#GLOBAL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
+GLOBAL_TESTS += global/testing/g2test$(EXEEXT)
+GLOBAL_TESTS += global/testing/g3test$(EXEEXT)
+GLOBAL_TESTS += global/testing/ga_lu$(EXEEXT)
+GLOBAL_TESTS += global/testing/ghosts$(EXEEXT)
+GLOBAL_TESTS += global/testing/jacobi$(EXEEXT)
+GLOBAL_TESTS += global/testing/mir_perf2$(EXEEXT)
+GLOBAL_TESTS += global/testing/mmatrix$(EXEEXT)
+GLOBAL_TESTS += global/testing/mulmatpatch$(EXEEXT)
+GLOBAL_TESTS += global/testing/nb2test$(EXEEXT)
+GLOBAL_TESTS += global/testing/ndim$(EXEEXT)
+GLOBAL_TESTS += global/testing/patch$(EXEEXT)
+GLOBAL_TESTS += global/testing/patch_enumf$(EXEEXT)
+GLOBAL_TESTS += global/testing/perfmod$(EXEEXT)
+GLOBAL_TESTS += global/testing/perform$(EXEEXT)
+GLOBAL_TESTS += global/testing/perf$(EXEEXT)
+#GLOBAL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
+GLOBAL_TESTS += global/testing/pg2test$(EXEEXT)
+#GLOBAL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
+GLOBAL_TESTS += global/testing/pgtest$(EXEEXT)
+#GLOBAL_TESTS += global/testing/random$(EXEEXT) # takes too long
+GLOBAL_TESTS += global/testing/scan$(EXEEXT)
+GLOBAL_TESTS += global/testing/simple_groups$(EXEEXT)
+GLOBAL_TESTS += global/testing/sparse$(EXEEXT)
+GLOBAL_TESTS += global/testing/sprsmatmult$(EXEEXT)
+GLOBAL_TESTS += global/testing/stride$(EXEEXT)
+GLOBAL_TESTS += global/testing/testeig$(EXEEXT)
+GLOBAL_TESTS += global/testing/testmatmult$(EXEEXT)
+GLOBAL_TESTS += global/testing/testsolve$(EXEEXT)
+GLOBAL_TESTS += global/testing/test$(EXEEXT)
+if HAVE_SCALAPACK
+GLOBAL_TESTS += global/testing/testspd$(EXEEXT)
+endif
+else
+if HAVE_LAPACK
+GLOBAL_TESTS += global/testing/ga_lu$(EXEEXT)
+endif
+endif
+if MSG_COMMS_MPI
+GLOBAL_TESTS += global/testing/ga-mpi$(EXEEXT)
+GLOBAL_TESTS += global/testing/lock$(EXEEXT)
+endif
+if SYSV
+GLOBAL_TESTS += global/testing/ipc_clean$(EXEEXT)
+endif
+
 if HAVE_M4
 GLOBAL_TESTING_M4_DEPS =
 GLOBAL_TESTING_M4_DEPS += global/testing/ngatest_src/ndim_GA_FILL.src
@@ -803,6 +920,17 @@ check_PROGRAMS += global/testing/nga-scatter
 check_PROGRAMS += global/testing/nga-util
 check_PROGRAMS += global/testing/ngatest
 endif
+
+if ENABLE_F77
+GLOBAL_TESTS += global/testing/nga-onesided$(EXEEXT)
+GLOBAL_TESTS += global/testing/nga-patch$(EXEEXT)
+GLOBAL_TESTS += global/testing/nga-periodic$(EXEEXT)
+GLOBAL_TESTS += global/testing/nga-scatter$(EXEEXT)
+GLOBAL_TESTS += global/testing/nga-scatter$(EXEEXT)
+GLOBAL_TESTS += global/testing/nga-util$(EXEEXT)
+GLOBAL_TESTS += global/testing/ngatest$(EXEEXT)
+endif
+
 .m4.F:
 	$(M4_V) \
 	$(M4) -I$(top_srcdir)/global/testing $< > $@ 
@@ -947,7 +1075,15 @@ check_PROGRAMS += global/examples/boltzmann/boltz
 check_PROGRAMS += global/examples/conjugate_gradient/ga_cg
 check_PROGRAMS += global/examples/md_cluster/grp_sim
 check_PROGRAMS += global/examples/scf/scf
-endif # NOFORT
+endif
+
+GLOBAL_TESTS += global/examples/lennard-jones/lennard$(EXEEXT)
+if ENABLE_F77
+GLOBAL_TESTS += global/examples/boltzmann/boltz$(EXEEXT)
+#GLOBAL_TESTS += global/examples/conjugate_gradient/ga_cg$(EXEEXT) # needs input
+#GLOBAL_TESTS += global/examples/md_cluster/grp_sim$(EXEEXT) # needs input
+#GLOBAL_TESTS += global/examples/scf/scf$(EXEEXT) # needs input
+endif
 
 global_examples_boltzmann_boltz_SOURCES = \
 global/examples/boltzmann/boltzmann.F     \
@@ -1141,6 +1277,17 @@ check_PROGRAMS += pario/dra/ntestc
 check_PROGRAMS += pario/dra/perfn
 check_PROGRAMS += pario/dra/rate
 
+PARIO_TESTS =
+PARIO_XFAIL_TESTS =
+
+PARIO_TESTS += pario/dra/bign$(EXEEXT)
+#PARIO_TESTS += pario/dra/dbg_read$(EXEEXT) # barely compiles, wrong test
+#PARIO_TESTS += pario/dra/dbg_write$(EXEEXT) # barely compiles, wrong test
+#PARIO_TESTS += pario/dra/dra2arviz$(EXEEXT) # not a test?
+PARIO_TESTS += pario/dra/ntestc$(EXEEXT)
+PARIO_TESTS += pario/dra/perfn$(EXEEXT)
+PARIO_TESTS += pario/dra/rate$(EXEEXT)
+
 dtsrc =
 dtsrc += pario/dra/ffflush.F
 dtsrc += pario/dra/util.c
@@ -1224,6 +1371,15 @@ check_PROGRAMS += ga++/testing/mtest
 check_PROGRAMS += ga++/testing/ntestc
 check_PROGRAMS += ga++/testing/testc
 check_PROGRAMS += ga++/testing/testmult
+
+CXX_TESTS =
+CXX_XFAIL_TESTS =
+
+CXX_TESTS += ga++/testing/elempatch$(EXEEXT)
+CXX_TESTS += ga++/testing/mtest$(EXEEXT)
+CXX_TESTS += ga++/testing/ntestc$(EXEEXT)
+CXX_TESTS += ga++/testing/testc$(EXEEXT)
+CXX_TESTS += ga++/testing/testmult$(EXEEXT)
 
 ga___testing_elempatch_SOURCES = ga++/testing/elempatch.cc
 ga___testing_mtest_SOURCES     = ga++/testing/mtest.cc
@@ -1349,21 +1505,7 @@ endif
 checkprogs: checkprogs-recursive
 checkprogs-am: $(check_PROGRAMS)
 
-# automake does not append $(EXEEXT) to user-defined make variables
-# so we must duplicate all examples here to get this custom target... yuck
-.PHONY: examples examples-recursive examples-am
-examples: examples-recursive
-examples-am: $(EXAMPLES)
-EXAMPLES =
-EXAMPLES += global/examples/lennard-jones/lennard$(EXEEXT)
-if ENABLE_F77
-EXAMPLES += global/examples/boltzmann/boltz$(EXEEXT)
-EXAMPLES += global/examples/conjugate_gradient/ga_cg$(EXEEXT)
-EXAMPLES += global/examples/md_cluster/grp_sim$(EXEEXT)
-EXAMPLES += global/examples/scf/scf$(EXEEXT)
-endif # ENABLE_F77
-
-GA_RECURSIVE_TARGETS = checkprogs-recursive examples-recursive
+GA_RECURSIVE_TARGETS = checkprogs-recursive
 # COPIED FROM MAKEFILE GENERATED BY AUTOMAKE 1.11.1
 # Modified to use our own recursive targets.
 $(GA_RECURSIVE_TARGETS): all
@@ -1420,173 +1562,108 @@ CC_NOMPI__v_ = $(CC_NOMPI__v_$(AM_DEFAULT_VERBOSITY))
 CC_NOMPI__v_0 = @echo "  CC_NOMPI" $@;
 
 .PHONY: pfiles clean-pfiles
-if MSG_COMMS_TCGMSG
-if MSG_COMMS_MPI
-else
+if MSG_COMMS_TCGMSG4
 pfiles: $(check_PROGRAMS)
 	for p in $(check_PROGRAMS); do \
-		echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
+		echo "`whoami` `hostname` $(NPROCS) `pwd`/$$p /tmp" > $$p.p; \
 	done
 check: pfiles
 clean-pfiles:
 	find . -name '*.p' -exec rm {} \; ;
 clean-local: clean-pfiles
 MAYBE_PFILES = pfiles
-endif # MSG_COMMS_MPI
-endif # MSG_COMMS_TCGMSG
+endif # MSG_COMMS_TCGMSG4
 
 ##############################################################################
 # test suite
 #
-# some tests were commented out either because they required an input file
-# (some examples do) or they were failing for unknown reasons and we didn't
-# want to further debug
+# Tests were broken up into groups depending on the piece of the distribution
+# which they tested.  The test variables are GAF2C_TESTS, MA_TESTS,
+# TCGMSG_TESTS, GLOBAL_TESTS, and CXX_TESTS.
 #
-TESTS = $(SERIAL_TESTS) $(PARALLEL_TESTS)
-XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(PARALLEL_TESTS_XFAIL)
-TESTS_ENVIRONMENT = \
-maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
+# Some tests were commented out either because they required an input file or
+# they were failing for unknown reasons and we didn't want to further debug.
+# Some tests were based on old versions of GA which no longer applied but we
+# kept anyway (see pario).
+#
+# We leave pario tests out of the main set of tests because not all systems
+# can handle the disk requirements.
+#
+SERIAL_TESTS =
+SERIAL_TESTS += $(GAF2C_TESTS)
+SERIAL_TESTS += $(MA_TESTS)
+
+SERIAL_TESTS_XFAIL =
+SERIAL_TESTS_XFAIL += $(GAF2C_XFAIL_TESTS)
+SERIAL_TESTS_XFAIL += $(MA_XFAIL_TESTS)
+
+PARALLEL_TESTS =
+PARALLEL_TESTS += $(TCGMSG_TESTS)
+PARALLEL_TESTS += $(GLOBAL_TESTS)
+PARALLEL_TESTS += $(CXX_TESTS)
+
+PARALLEL_TESTS_XFAIL =
+PARALLEL_TESTS_XFAIL += $(TCGMSG_XFAIL_TESTS)
+PARALLEL_TESTS_XFAIL += $(GLOBAL_XFAIL_TESTS)
+PARALLEL_TESTS_XFAIL += $(CXX_XFAIL_TESTS)
+
+TESTS =
+TESTS += $(SERIAL_TESTS)
+TESTS += $(PARALLEL_TESTS)
+
+XFAIL_TESTS =
+XFAIL_TESTS += $(SERIAL_TESTS_XFAIL)
+XFAIL_TESTS += $(PARALLEL_TESTS_XFAIL)
+
+if MSG_COMMS_TCGMSG4
+LOG_COMPILER = \
+maybe_tcgexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(TCGEXEC)"; fi`; $$maybe_tcgexec
+else
+if MSG_COMMS_TCGMSG5
+LOG_COMPILER = tst="$$dir$$f -np $(NPROCS)"; eval
+else
+if CROSS_COMPILING
+maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; $$maybe_mpiexec
+else
+LOG_COMPILER = \
+maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; $$maybe_mpiexec
+endif # CROSS_COMPILING
+endif # MSG_COMMS_TCGMSG5
+endif # MSG_COMMS_TCGMSG4
+
 .PHONY: check-ga
 check-ga: $(all-am) $(check_LTLIBRARIES) $(check_PROGRAMS) $(MAYBE_PFILES)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
-SERIAL_TESTS =
-SERIAL_TESTS_XFAIL =
-PARALLEL_TESTS =
-PARALLEL_TESTS_XFAIL =
-if ENABLE_F77
-SERIAL_TESTS += gaf2c/testarg$(EXEEXT)
-endif
-#SERIAL_TESTS += ma/testc$(EXEEXT) # requires interactive input
-SERIAL_TESTS += ma/test-coalesce$(EXEEXT)
-SERIAL_TESTS += ma/test-inquire$(EXEEXT)
-if ENABLE_F77
-SERIAL_TESTS += ma/testf$(EXEEXT)
-SERIAL_TESTS_XFAIL += ma/testf$(EXEEXT)
-endif
-if MSG_COMMS_TCGMSG
-if MSG_COMMS_TCGMSG4
-PARALLEL_TESTS += tcgmsg/ipcv4.0/hello$(EXEEXT)
-#PARALLEL_TESTS += tcgmsg/ipcv4.0/test$(EXEEXT) # requires user input
-#PARALLEL_TESTS += tcgmsg/ipcv4.0/testmap$(EXEEXT) # requires user input
-#PARALLEL_TESTS += tcgmsg/ipcv4.0/toplot$(EXEEXT) # not a test
-#PARALLEL_TESTS += tcgmsg/ipcv4.0/xdrtest$(EXEEXT) # requires user input
-if ENABLE_F77
-PARALLEL_TESTS += tcgmsg/ipcv4.0/testf$(EXEEXT)
-#PARALLEL_TESTS += tcgmsg/ipcv4.0/testpf$(EXEEXT) # requires input files
-endif # ENABLE_F77
-endif # MSG_COMMS_TCGMSG4
-endif # MSG_COMMS_TCGMSG
-if MSG_COMMS_TCGMSG
-if MSG_COMMS_TCGMSG5
-PARALLEL_TESTS += tcgmsg/ipcv5.0/hello$(EXEEXT)
-#PARALLEL_TESTS += tcgmsg/ipcv5.0/test$(EXEEXT) # requires user input
-if MSG_COMMS_PVM
-PARALLEL_TESTS += tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
-endif
-if ENABLE_F77
-#PARALLEL_TESTS += tcgmsg/ipcv5.0/jacobi$(EXEEXT) # requires user input
-#PARALLEL_TESTS += tcgmsg/ipcv5.0/testf$(EXEEXT) # requires user input
-endif # ENABLE_F77
-endif # MSG_COMMS_TCGMSG5
-endif # MSG_COMMS_TCGMSG
-if MSG_COMMS_TCGMSG
-if MSG_COMMS_TCGMSGMPI
-#PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT) # useless test
-#PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test$(EXEEXT) # requires user input
-if ENABLE_F77
-PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
-endif # ENABLE_F77
-endif # MSG_COMMS_TCGMSGMPI
-endif # MSG_COMMS_TCGMSG
-PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
-PARALLEL_TESTS += global/testing/getmem$(EXEEXT)
-PARALLEL_TESTS += global/testing/mtest$(EXEEXT)
-PARALLEL_TESTS += global/testing/ntestc$(EXEEXT)
-PARALLEL_TESTS += global/testing/ntestfc$(EXEEXT)
-PARALLEL_TESTS += global/testing/packc$(EXEEXT)
-PARALLEL_TESTS += global/testing/patch_enumc$(EXEEXT)
-PARALLEL_TESTS += global/testing/print$(EXEEXT)
-PARALLEL_TESTS += global/testing/scan_addc$(EXEEXT)
-PARALLEL_TESTS += global/testing/scan_copyc$(EXEEXT)
-PARALLEL_TESTS += global/testing/testc$(EXEEXT)
-PARALLEL_TESTS += global/testing/testmatmultc$(EXEEXT)
-PARALLEL_TESTS += global/testing/testmult$(EXEEXT)
-PARALLEL_TESTS += global/testing/testmultrect$(EXEEXT)
-PARALLEL_TESTS += global/testing/unpackc$(EXEEXT)
-if ENABLE_F77
-PARALLEL_TESTS += global/testing/bin$(EXEEXT)
-PARALLEL_TESTS += global/testing/blktest$(EXEEXT)
-#PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
-PARALLEL_TESTS += global/testing/g2test$(EXEEXT)
-PARALLEL_TESTS += global/testing/g3test$(EXEEXT)
-PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT)
-PARALLEL_TESTS += global/testing/ghosts$(EXEEXT)
-PARALLEL_TESTS += global/testing/jacobi$(EXEEXT)
-PARALLEL_TESTS += global/testing/mir_perf2$(EXEEXT)
-PARALLEL_TESTS += global/testing/mmatrix$(EXEEXT)
-PARALLEL_TESTS += global/testing/mulmatpatch$(EXEEXT)
-PARALLEL_TESTS += global/testing/nb2test$(EXEEXT)
-PARALLEL_TESTS += global/testing/ndim$(EXEEXT)
-PARALLEL_TESTS += global/testing/patch$(EXEEXT)
-PARALLEL_TESTS += global/testing/patch_enumf$(EXEEXT)
-PARALLEL_TESTS += global/testing/perfmod$(EXEEXT)
-PARALLEL_TESTS += global/testing/perform$(EXEEXT)
-PARALLEL_TESTS += global/testing/perf$(EXEEXT)
-#PARALLEL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
-PARALLEL_TESTS += global/testing/pg2test$(EXEEXT)
-#PARALLEL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
-PARALLEL_TESTS += global/testing/pgtest$(EXEEXT)
-#PARALLEL_TESTS += global/testing/random$(EXEEXT) # takes too long
-PARALLEL_TESTS += global/testing/scan$(EXEEXT)
-PARALLEL_TESTS += global/testing/simple_groups$(EXEEXT)
-PARALLEL_TESTS += global/testing/sparse$(EXEEXT)
-PARALLEL_TESTS += global/testing/sprsmatmult$(EXEEXT)
-PARALLEL_TESTS += global/testing/stride$(EXEEXT)
-PARALLEL_TESTS += global/testing/testeig$(EXEEXT)
-PARALLEL_TESTS += global/testing/testmatmult$(EXEEXT)
-PARALLEL_TESTS += global/testing/testsolve$(EXEEXT)
-PARALLEL_TESTS += global/testing/test$(EXEEXT)
-PARALLEL_TESTS += global/testing/types_test$(EXEEXT)
-PARALLEL_TESTS += global/testing/field_test$(EXEEXT)
-if HAVE_SCALAPACK
-PARALLEL_TESTS += global/testing/testspd$(EXEEXT)
-endif # HAVE_SCALAPACK
-else # !ENABLE_F77
-if HAVE_LAPACK
-PARALLEL_TESTS += global/testing/ga_lu$(EXEEXT)
-endif
-endif # ENABLE_F77
-if MSG_COMMS_MPI
-PARALLEL_TESTS += global/testing/ga-mpi$(EXEEXT)
-PARALLEL_TESTS += global/testing/lock$(EXEEXT)
-endif
-if SYSV
-PARALLEL_TESTS += global/testing/ipc_clean$(EXEEXT)
-endif
-if ENABLE_F77
-PARALLEL_TESTS += global/testing/nga-onesided$(EXEEXT)
-PARALLEL_TESTS += global/testing/nga-patch$(EXEEXT)
-PARALLEL_TESTS += global/testing/nga-periodic$(EXEEXT)
-PARALLEL_TESTS += global/testing/nga-scatter$(EXEEXT)
-PARALLEL_TESTS += global/testing/nga-scatter$(EXEEXT)
-PARALLEL_TESTS += global/testing/nga-util$(EXEEXT)
-PARALLEL_TESTS += global/testing/ngatest$(EXEEXT)
-endif # ENABLE_F77
-PARALLEL_TESTS += global/examples/lennard-jones/lennard$(EXEEXT)
-if ENABLE_F77
-PARALLEL_TESTS += global/examples/boltzmann/boltz$(EXEEXT)
-#PARALLEL_TESTS += global/examples/conjugate_gradient/ga_cg$(EXEEXT) # needs user input
-#PARALLEL_TESTS += global/examples/md_cluster/grp_sim$(EXEEXT) # needs input
-#PARALLEL_TESTS += global/examples/scf/scf$(EXEEXT) # needs input file
-endif # ENABLE_F77
-PARALLEL_TESTS += pario/dra/bign$(EXEEXT)
-PARALLEL_TESTS += pario/dra/ntestc$(EXEEXT)
-PARALLEL_TESTS += pario/dra/perfn$(EXEEXT)
-PARALLEL_TESTS += pario/dra/rate$(EXEEXT)
+
+.PHONY: check-gaf2c
+check-gaf2c: $(all-am) $(check_LTLIBRARIES) $(GAF2C_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(GAF2C_TESTS)" XFAIL_TESTS="$(GAF2C_XFAIL_TESTS)" check-TESTS
+
+.PHONY: check-ma
+check-ma: $(all-am) $(check_LTLIBRARIES) $(MA_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(MA_TESTS)" XFAIL_TESTS="$(MA_XFAIL_TESTS)" check-TESTS
+
+.PHONY: check-global
+check-global: $(all-am) $(check_LTLIBRARIES) $(GLOBAL_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(GLOBAL_TESTS)" XFAIL_TESTS="$(GLOBAL_XFAIL_TESTS)" check-TESTS
+
+.PHONY: check-pario
+check-pario: $(all-am) $(check_LTLIBRARIES) $(PARIO_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(PARIO_TESTS)" XFAIL_TESTS="$(PARIO_XFAIL_TESTS)" check-TESTS
+
+.PHONY: check-ga++
 if CXX_BINDINGS
-PARALLEL_TESTS += ga++/testing/elempatch$(EXEEXT)
-PARALLEL_TESTS += ga++/testing/mtest$(EXEEXT)
-PARALLEL_TESTS += ga++/testing/ntestc$(EXEEXT)
-PARALLEL_TESTS += ga++/testing/testc$(EXEEXT)
-PARALLEL_TESTS += ga++/testing/testmult$(EXEEXT)
+check-ga++: $(all-am) $(check_LTLIBRARIES) $(CXX_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(CXX_TESTS)" XFAIL_TESTS="$(CXX_XFAIL_TESTS)" check-TESTS
 endif
+
+# Because pario tests are not listed in the TESTS variable, the log targets
+# are not generated by automake. Do them manually here.
+pario/dra/bign.log: pario/dra/bign$(EXEEXT)
+	@p='pario/dra/bign$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+pario/dra/ntestc.log: pario/dra/ntestc$(EXEEXT)
+	@p='pario/dra/ntestc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+pario/dra/perfn.log: pario/dra/perfn$(EXEEXT)
+	@p='pario/dra/perfn$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+pario/dra/rate.log: pario/dra/rate$(EXEEXT)
+	@p='pario/dra/rate$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)

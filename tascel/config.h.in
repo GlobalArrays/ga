@@ -1,7 +1,40 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to 1 on BlueGene/L systems */
+#undef BGL
+
+/* Define to 1 on BlueGene/P systems */
+#undef BGP
+
 /* Define to sizeof(INTEGER) used to compile BLAS */
 #undef BLAS_SIZE
+
+/* Define to 1 on Cray XT systems using Catamount */
+#undef CATAMOUNT
+
+/* Define to 1 on Cray SV1 systems */
+#undef CRAY_SV1
+
+/* Define to 1 on Cray SV2 systems */
+#undef CRAY_SV2
+
+/* Define to 1 on Cray T3E systems */
+#undef CRAY_T3E
+
+/* Define to 1 on Cray XT systems */
+#undef CRAY_XT
+
+/* Define to 1 on Cray YMP systems */
+#undef CRAY_YMP
+
+/* Define to 1 on Cygnus systems */
+#undef CYGNUS
+
+/* Define to 1 on Cygwin systems */
+#undef CYGWIN
+
+/* Define to 1 on DEC OSF */
+#undef DECOSF
 
 /* whether the hidden string length comes after all other args */
 #undef F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
@@ -30,6 +63,12 @@
 
 /* Define if F77 and FC dummy `main' functions are identical. */
 #undef FC_DUMMY_MAIN_EQ_F77
+
+/* Define to 1 on fujitsu systems */
+#undef FUJITSU_VPP
+
+/* Define to 1 on fujitsu systems */
+#undef FUJITSU_VPP64
 
 /* Module command when using Fortran 90 compiler e.g. use f90_unix */
 #undef FXX_MODULE
@@ -85,9 +124,51 @@
 /* Define to 1 if the system has the type `unsigned long long int'. */
 #undef HAVE_UNSIGNED_LONG_LONG_INT
 
+/* Define to 1 on hitachi systems */
+#undef HITACHI
+
+/* Define to 1 on HP-UX systems */
+#undef HPUX
+
+/* Define to 1 on 64bit HP-UX systems */
+#undef HPUX64
+
+/* Define to 1 on IBM SP systems */
+#undef IBM
+
+/* Define to 1 on 64bit IBM SP systems */
+#undef IBM64
+
+/* Define to 1 on ??? systems */
+#undef INTERIX
+
+/* Define to 1 on IBM systems with LAPI */
+#undef LAPI
+
+/* Define to 1 on 64bit IBM systems with LAPI */
+#undef LAPI64
+
+/* Define to 1 on generic Linux systems */
+#undef LINUX
+
+/* Define to 1 on generic 64bit Linux systems */
+#undef LINUX64
+
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #undef LT_OBJDIR
+
+/* Define to 1 on OSX systems */
+#undef MACX
+
+/* Define to 1 on 64bit OSX systems */
+#undef MACX64
+
+/* Define to 1 on NEC systems */
+#undef NEC
+
+/* Define to 1 on 64bit NEC systems */
+#undef NEC64
 
 /* Name of package */
 #undef PACKAGE
@@ -112,6 +193,15 @@
 
 /* ScaLAPACK is using 8-byte integers */
 #undef SCALAPACK_I8
+
+/* Define to 1 on ??? systems */
+#undef SGI
+
+/* Define to 1 on ??? systems */
+#undef SGITFP
+
+/* Define to 1 on ??? systems */
+#undef SGI_N32
 
 /* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR
@@ -149,8 +239,17 @@
 /* The size of `void*', as computed by sizeof. */
 #undef SIZEOF_VOIDP
 
+/* Define to 1 on Solaris systems */
+#undef SOLARIS
+
+/* Define to 1 on 64bit Solaris systems */
+#undef SOLARIS64
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* Define if we want this system to use SYSV shared memory */
+#undef SYSV
 
 /* Version number of package */
 #undef VERSION

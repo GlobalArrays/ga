@@ -78,7 +78,9 @@ BUILT_SOURCES += config.fh
 nodist_libtascel_la_SOURCES += config.fh
 
 config.fh: $(top_build_prefix)config.h
-	-rm -f config.fh && $(SED) "/^#/!d" $(top_build_prefix)config.h > config.fh
+	@-rm -f config.fh
+	$(AM_V_SED) \
+	$(SED) "/^#/!d" $(top_build_prefix)config.h > config.fh
 
 clean-config:
 	-rm -f config.fh
@@ -113,8 +115,6 @@ EXTRA_DIST += examples/scf/be16.inpt
 checkprogs: $(check_PROGRAMS)
 
 TESTS = $(SERIAL_TESTS) $(PARALLEL_TESTS)
-TESTS_ENVIRONMENT = \
-maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
 SERIAL_TESTS =
 PARALLEL_TESTS =
 PARALLEL_TESTS += test/TestSharedQueue$(EXEEXT)
@@ -122,3 +122,17 @@ PARALLEL_TESTS += test/TestSplitQueue$(EXEEXT)
 if HAVE_BLAS
 PARALLEL_TESTS += examples/scf/scf$(EXEEXT)
 endif
+
+if CROSS_COMPILING
+LOG_COMPILER = \
+maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; $$maybe_mpiexec
+else
+LOG_COMPILER = \
+maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; $$maybe_mpiexec
+endif # CROSS_COMPILING
+
+# support verbose/silent make rules for additional programs
+# sed
+AM_V_SED = $(am__v_SED_$(V))
+am__v_SED_ = $(am__v_SED_$(AM_DEFAULT_VERBOSITY))
+am__v_SED_0 = @echo "  SED   " $@;

@@ -52,25 +52,30 @@ AC_REQUIRE([AC_CANONICAL_BUILD])
 AC_REQUIRE([AC_CANONICAL_HOST])
 AC_CACHE_CHECK([for TARGET base (64bit-ness checked later)],
 [ga_cv_target_base],
-[AS_CASE([$host],
-[*bgl*],            [ga_cv_target_base=BGL],
-[*bgp*],            [ga_cv_target_base=BGP],
-#[TODO],            [ga_cv_target_base=CATAMOUNT],
-#[TODO],            [ga_cv_target_base=CRAY_XT],
-[*cygwin*],         [ga_cv_target_base=CYGWIN],
-[*fujitsu*],        [ga_cv_target_base=FUJITSU_VPP],
-[*hpux*],           [ga_cv_target_base=HPUX],
-[*ibm*],            [ga_cv_target_base=IBM],
-#[TODO],            [ga_cv_target_base=LAPI],
-[*linux*],          [ga_cv_target_base=LINUX],
-[*darwin*],         [ga_cv_target_base=MACX],
-[*apple*],          [ga_cv_target_base=MACX],
-[*superux*],        [ga_cv_target_base=NEC],
-[*solaris*],        [ga_cv_target_base=SOLARIS],
-[ga_cv_target_base=UNKNOWN]
-)
-# NOTE: There might be other ways to determine TARGET such as the existence of certain directorties e.g. BGL, BGP
-])
+[ga_cv_target_base=UNKNOWN
+AS_IF([test "x$ga_cv_target_base" = xUNKNOWN],
+    [AS_IF([test -f /bgsys/drivers/ppcfloor/arch/include/common/bgp_personality.h],
+        [ga_cv_target_base=BGP])])
+AS_IF([test "x$ga_cv_target_base" = xUNKNOWN],
+    [AS_IF([test -d /bgl/BlueLight/ppcfloor/bglsys/include],
+        [ga_cv_target_base=BGL])])
+AS_IF([test "x$ga_cv_target_base" = xUNKNOWN],
+    [AS_CASE([$host],
+        [*bgl*],            [ga_cv_target_base=BGL],
+        [*bgp*],            [ga_cv_target_base=BGP],
+        #[TODO],            [ga_cv_target_base=CATAMOUNT],
+        #[TODO],            [ga_cv_target_base=CRAY_XT],
+        [*cygwin*],         [ga_cv_target_base=CYGWIN],
+        [*fujitsu*],        [ga_cv_target_base=FUJITSU_VPP],
+        [*hpux*],           [ga_cv_target_base=HPUX],
+        [*ibm*],            [ga_cv_target_base=IBM],
+        #[TODO],            [ga_cv_target_base=LAPI],
+        [*linux*],          [ga_cv_target_base=LINUX],
+        [*darwin*],         [ga_cv_target_base=MACX],
+        [*apple*],          [ga_cv_target_base=MACX],
+        [*superux*],        [ga_cv_target_base=NEC],
+        [*solaris*],        [ga_cv_target_base=SOLARIS])])
+])dnl
 AC_DEFINE_UNQUOTED([$ga_cv_target_base], [1],
     [define if this is the TARGET irregardless of whether it is 32/64 bits])
 # A horrible hack that should go away somehow...

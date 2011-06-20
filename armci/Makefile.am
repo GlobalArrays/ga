@@ -611,6 +611,54 @@ check_PROGRAMS += testing/testitr
 endif
 endif
 
+SERIAL_TESTS =
+SERIAL_TESTS_XFAIL =
+PARALLEL_TESTS =
+PARALLEL_TESTS_XFAIL =
+
+PARALLEL_TESTS += testing/msgcheck$(EXEEXT)
+PARALLEL_TESTS += testing/perf$(EXEEXT)
+PARALLEL_TESTS += testing/perf_aggr$(EXEEXT)
+#PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
+#SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
+#SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
+PARALLEL_TESTS += testing/simplelock$(EXEEXT)
+PARALLEL_TESTS += testing/test$(EXEEXT)
+PARALLEL_TESTS += testing/test2$(EXEEXT)
+PARALLEL_TESTS += testing/testnotify$(EXEEXT)
+if ENABLE_CHECKPOINT
+PARALLEL_TESTS += testing/fttest$(EXEEXT)
+endif
+if ARMCI_ENABLE_GPC_CALLS
+PARALLEL_TESTS += testing/gpctest$(EXEEXT)
+endif
+if MSG_COMMS_MPI
+PARALLEL_TESTS += testing/simple$(EXEEXT)
+PARALLEL_TESTS += testing/test_groups$(EXEEXT)
+if SYSV
+#PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
+endif
+endif
+if THREAD_SAFE
+PARALLEL_TESTS += testing/test_mt$(EXEEXT)
+endif
+if ENABLE_F77
+SERIAL_TESTS += testing/acc_test$(EXEEXT)
+SERIAL_TESTS += testing/copy_test$(EXEEXT)
+endif
+if ARMCI_NETWORK_PORTALS
+PARALLEL_TESTS += testing/clone$(EXEEXT)
+PARALLEL_TESTS += testing/fork$(EXEEXT)
+PARALLEL_TESTS += testing/origptl$(EXEEXT)
+PARALLEL_TESTS += testing/ptltest$(EXEEXT)
+PARALLEL_TESTS += testing/te$(EXEEXT)
+else
+if ARMCI_NETWORK_GEMINI
+else
+SERIAL_TESTS += testing/testitr$(EXEEXT)
+endif
+endif
+
 testing_acc_test_SOURCES    = testing/acc_test.c
 testing_clone_SOURCES       = testing/clone.c
 testing_copy_test_SOURCES   = testing/copy_test.c
@@ -699,6 +747,41 @@ check_PROGRAMS += examples/benchmarks/RandomAccess/smp_bucket/smp_bucket
 endif
 if THREAD_SAFE
 check_PROGRAMS += examples/benchmarks/lu/armci_multithreaded/lu-block-th
+endif
+
+#PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
+PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT)
+PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT)
+PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu$(EXEEXT)
+PARALLEL_TESTS += examples/benchmarks/lu/armci_nonblocking/lu_nb_get$(EXEEXT)
+PARALLEL_TESTS += examples/benchmarks/lu/armci_nonblocking/lu_nb_put$(EXEEXT)
+PARALLEL_TESTS += examples/benchmarks/lu/pthreads/lu-thread$(EXEEXT)
+PARALLEL_TESTS += examples/features/aggregation/simple/simple$(EXEEXT)
+#PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
+PARALLEL_TESTS += examples/features/concurrency/simple/comdegree$(EXEEXT)
+PARALLEL_TESTS += examples/features/non-blocking/simple/simple$(EXEEXT)
+PARALLEL_TESTS += examples/features/notification/simple/testnotify$(EXEEXT)
+PARALLEL_TESTS += examples/features/symmetric_memory/simple/simple$(EXEEXT)
+PARALLEL_TESTS += examples/simpleApps/transp1D-c$(EXEEXT)
+if ARMCI_ENABLE_GPC_CALLS
+PARALLEL_TESTS += examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
+if HAVE_BLAS
+if HAVE_LAPACK
+PARALLEL_TESTS += examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+endif # HAVE_LAPACK
+endif # HAVE_BLAS
+PARALLEL_TESTS += examples/features/proc_affinity/simple/simple$(EXEEXT)
+endif # ARMCI_ENABLE_GPC_CALLS
+if MSG_COMMS_MPI
+#PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
+#PARALLEL_TESTS += examples/features/non-blocking/overlap/overlap$(EXEEXT) # needs bug fixes
+endif
+if RANDOM_ACCESS
+PARALLEL_TESTS += examples/benchmarks/RandomAccess/simple/simple$(EXEEXT)
+PARALLEL_TESTS += examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
+endif
+if THREAD_SAFE
+PARALLEL_TESTS += examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 endif
 
 examples_benchmarks_cg_armci_sharedmemory_cg_SOURCES = \
@@ -841,46 +924,6 @@ EXTRA_DIST += examples/README
 .PHONY: checkprogs
 checkprogs: $(check_PROGRAMS)
 
-# automake does not append $(EXEEXT) to user-defined make variables
-# so we must duplicate all examples here to get this custom target... yuck
-.PHONY: examples
-examples: $(EXAMPLES)
-EXAMPLES =
-EXAMPLES += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT)
-EXAMPLES += examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT)
-EXAMPLES += examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT)
-EXAMPLES += examples/benchmarks/lu/armci_blocking/lu$(EXEEXT)
-EXAMPLES += examples/benchmarks/lu/armci_nonblocking/lu_nb_get$(EXEEXT)
-EXAMPLES += examples/benchmarks/lu/armci_nonblocking/lu_nb_put$(EXEEXT)
-EXAMPLES += examples/benchmarks/lu/pthreads/lu-thread$(EXEEXT)
-EXAMPLES += examples/features/aggregation/simple/simple$(EXEEXT)
-EXAMPLES += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT)
-EXAMPLES += examples/features/concurrency/simple/comdegree$(EXEEXT)
-EXAMPLES += examples/features/non-blocking/simple/simple$(EXEEXT)
-EXAMPLES += examples/features/notification/simple/testnotify$(EXEEXT)
-EXAMPLES += examples/features/symmetric_memory/simple/simple$(EXEEXT)
-EXAMPLES += examples/simpleApps/transp1D-c$(EXEEXT)
-if ARMCI_ENABLE_GPC_CALLS
-EXAMPLES += examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
-if HAVE_BLAS
-if HAVE_LAPACK
-EXAMPLES += examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-endif # HAVE_LAPACK
-endif # HAVE_BLAS
-EXAMPLES += examples/features/proc_affinity/simple/simple$(EXEEXT)
-endif
-if MSG_COMMS_MPI
-EXAMPLES += examples/features/concurrency/multidma/multidma$(EXEEXT)
-EXAMPLES += examples/features/non-blocking/overlap/overlap$(EXEEXT)
-endif
-if RANDOM_ACCESS
-EXAMPLES += examples/benchmarks/RandomAccess/simple/simple$(EXEEXT)
-EXAMPLES += examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-endif
-if THREAD_SAFE
-EXAMPLES += examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
-endif
-
 # support verbose/silent make rules for additional programs
 # sed
 SED_V = $(SED__v_$(V))
@@ -896,108 +939,48 @@ ARMCI_X86COPY_AS__v_ = $(ARMCI_X86COPY_AS__v_$(AM_DEFAULT_VERBOSITY))
 ARMCI_X86COPY_AS__v_0 = @echo "  GCC   " $@;
 
 .PHONY: pfiles clean-pfiles
-if MSG_COMMS_TCGMSG
-if MSG_COMMS_MPI
-else
+if MSG_COMMS_TCGMSG4
 pfiles: $(check_PROGRAMS)
 	for p in $(check_PROGRAMS); do \
-	    echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
+	    echo "`whoami` `hostname` $(NPROCS) `pwd`/$$p /tmp" > $$p.p; \
 	done
 check: pfiles
 clean-pfiles:
 	find . -name '*.p' -exec rm {} \; ;
 clean-local: clean-pfiles
-endif # MSG_COMMS_MPI
-endif # MSG_COMMS_TCGMSG
+endif # MSG_COMMS_TCGMSG4
 
 ##############################################################################
 # test suite
 #
-# some tests were commented out either because they required an input file
-# (some examples do) or they were failing for unknown reasons and we didn't
-# want to further debug
+# Some tests were commented out either because they required an input file or
+# they were failing for unknown reasons and we didn't want to further debug.
+# Some tests were based on old versions of GA which no longer applied but we
+# kept anyway (see pario).
 #
-TESTS = $(SERIAL_TESTS) $(PARALLEL_TESTS)
-XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(PARALLEL_TESTS_XFAIL)
-TESTS_ENVIRONMENT = \
-maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
-SERIAL_TESTS =
-SERIAL_TESTS_XFAIL =
-PARALLEL_TESTS =
-PARALLEL_TESTS_XFAIL =
-if ARMCI_NETWORK_PORTALS
-PARALLEL_TESTS += testing/clone$(EXEEXT)
-PARALLEL_TESTS += testing/fork$(EXEEXT)
-PARALLEL_TESTS += testing/origptl$(EXEEXT)
-PARALLEL_TESTS += testing/ptltest$(EXEEXT)
-PARALLEL_TESTS += testing/te$(EXEEXT)
+# We leave pario tests out of the main set of tests because not all systems
+# can handle the disk requirements.
+#
+TESTS =
+TESTS += $(SERIAL_TESTS)
+TESTS += $(PARALLEL_TESTS)
+
+XFAIL_TESTS =
+XFAIL_TESTS += $(SERIAL_TESTS_XFAIL)
+XFAIL_TESTS += $(PARALLEL_TESTS_XFAIL)
+
+if MSG_COMMS_TCGMSG4
+LOG_COMPILER = \
+maybe_parexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(PAREXEC)"; fi`; $$maybe_parexec
 else
-if ARMCI_NETWORK_GEMINI
+if MSG_COMMS_TCGMSG5
+LOG_COMPILER = tst="$$dir$$f -np $(NPROCS)"; eval
 else
-PARALLEL_TESTS += testing/testitr$(EXEEXT)
-endif # !ARMCI_NETWORK_GEMINI
-endif # !ARMCI_NETWORK_PORTALS
-PARALLEL_TESTS += testing/msgcheck$(EXEEXT)
-PARALLEL_TESTS += testing/perf_aggr$(EXEEXT)
-#PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
-PARALLEL_TESTS += testing/perf$(EXEEXT)
-#SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
-#SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
-PARALLEL_TESTS += testing/simplelock$(EXEEXT)
-PARALLEL_TESTS += testing/test2$(EXEEXT)
-PARALLEL_TESTS += testing/testnotify$(EXEEXT)
-PARALLEL_TESTS += testing/test$(EXEEXT)
-if ENABLE_CHECKPOINT
-PARALLEL_TESTS += testing/fttest$(EXEEXT)
-endif
-if ARMCI_ENABLE_GPC_CALLS
-PARALLEL_TESTS += testing/gpctest$(EXEEXT)
-endif
-if MSG_COMMS_MPI
-PARALLEL_TESTS += testing/simple$(EXEEXT)
-PARALLEL_TESTS += testing/test_groups$(EXEEXT)
-if SYSV
-#PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
-endif
-endif
-if THREAD_SAFE
-PARALLEL_TESTS += testing/test_mt$(EXEEXT)
-endif
-if ENABLE_F77
-SERIAL_TESTS += testing/acc_test$(EXEEXT)
-SERIAL_TESTS += testing/copy_test$(EXEEXT)
-endif
-#PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
-PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT)
-PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT)
-PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu$(EXEEXT)
-PARALLEL_TESTS += examples/benchmarks/lu/armci_nonblocking/lu_nb_get$(EXEEXT)
-PARALLEL_TESTS += examples/benchmarks/lu/armci_nonblocking/lu_nb_put$(EXEEXT)
-PARALLEL_TESTS += examples/benchmarks/lu/pthreads/lu-thread$(EXEEXT)
-PARALLEL_TESTS += examples/features/aggregation/simple/simple$(EXEEXT)
-#PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
-PARALLEL_TESTS += examples/features/concurrency/simple/comdegree$(EXEEXT)
-PARALLEL_TESTS += examples/features/non-blocking/simple/simple$(EXEEXT)
-PARALLEL_TESTS += examples/features/notification/simple/testnotify$(EXEEXT)
-PARALLEL_TESTS += examples/features/symmetric_memory/simple/simple$(EXEEXT)
-PARALLEL_TESTS += examples/simpleApps/transp1D-c$(EXEEXT)
-if ARMCI_ENABLE_GPC_CALLS
-PARALLEL_TESTS += examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
-if HAVE_BLAS
-if HAVE_LAPACK
-PARALLEL_TESTS += examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-endif # HAVE_LAPACK
-endif # HAVE_BLAS
-PARALLEL_TESTS += examples/features/proc_affinity/simple/simple$(EXEEXT)
-endif
-if MSG_COMMS_MPI
-#PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
-#PARALLEL_TESTS += examples/features/non-blocking/overlap/overlap$(EXEEXT) # needs bug fixes
-endif
-if RANDOM_ACCESS
-PARALLEL_TESTS += examples/benchmarks/RandomAccess/simple/simple$(EXEEXT)
-PARALLEL_TESTS += examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-endif
-if THREAD_SAFE
-PARALLEL_TESTS += examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
-endif
+if CROSS_COMPILING
+maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; $$maybe_mpiexec
+else
+LOG_COMPILER = \
+maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; $$maybe_mpiexec
+endif # CROSS_COMPILING
+endif # MSG_COMMS_TCGMSG5
+endif # MSG_COMMS_TCGMSG4

@@ -92,6 +92,7 @@ AS_IF([test "x$with_mpi" != xno], [
 AC_SUBST([EXEEXT], [.x$EXEEXT])
 
 GA_TARGET64
+GA_CROSS_COMPILING
 
 # Establish the underlying network infrastructure (SOCKETS, OPENIB, etc)
 GA_ARMCI_NETWORK
@@ -431,6 +432,27 @@ AC_SUBST([GA_ACCESS_INDEX_TYPE], [$ga_access_index_type])
 AC_SUBST([MA_ACCESS_INDEX_TYPE], [$ga_access_index_type])
 AC_SUBST([MA_ACCESS_INDEX_TYPE_C], [$ga_access_index_type_c])
 
+###############################################################################
+# Test suite setup
+###############################################################################
+AC_ARG_VAR([NPROCS], [number of procs to use for parallel tests (default 4)])
+AS_IF([test "x$NPROCS" = x], [NPROCS=4])
+AC_SUBST([NPROCS])
+AC_ARG_VAR([MPIEXEC],
+           [how to run parallel tests if built with MPI e.g. "mpiexec -np %NP%"])
+AS_CASE([$ga_msg_comms],
+    [TCGMSG],  [TCGEXEC="`pwd`/parallel.x"],
+    [TCGMSG5], [TCGEXEC=],
+    [MPI|TCGMSGMPI],
+        [AS_IF([test "x$MPIEXEC" = x],
+            [AC_PATH_PROGS([MPIEXEC], [mpirun mpiexec])
+             MPIEXEC="$MPIEXEC -n %NP%"])])
+AC_SUBST([MPIEXEC])
+AC_SUBST([TCGEXEC])
+
+###############################################################################
+# The End
+###############################################################################
 AC_CONFIG_FILES([Makefile
                  gaf2c/farg.h
                  gaf2c/typesf2c.h
@@ -460,15 +482,24 @@ AC_MSG_NOTICE([    ARMCI_NETWORK_LIBS=$ARMCI_NETWORK_LIBS])
 AC_MSG_NOTICE([ARMCI_NETWORK_CPPFLAGS=$ARMCI_NETWORK_CPPFLAGS])
 AS_IF([test "x$enable_f77" = xyes], [
 AC_MSG_NOTICE([                   F77=$F77])
+AS_IF([test "x$with_mpi_wrappers" = xyes], [
+AC_MSG_NOTICE([         unwrapped F77=$ga_cv_mpif77_naked])
+])
 AC_MSG_NOTICE([                FFLAGS=$FFLAGS])
 AC_MSG_NOTICE([             FFLAG_INT=$FFLAG_INT])
 AC_MSG_NOTICE([               GA_FOPT=$GA_FOPT])
 ])
 AC_MSG_NOTICE([                    CC=$CC])
+AS_IF([test "x$with_mpi_wrappers" = xyes], [
+AC_MSG_NOTICE([          unwrapped CC=$ga_cv_mpic_naked])
+])
 AC_MSG_NOTICE([                CFLAGS=$CFLAGS])
 AC_MSG_NOTICE([               GA_COPT=$GA_COPT])
 AS_IF([test "x$enable_cxx" = xyes], [
 AC_MSG_NOTICE([                   CXX=$CXX])
+AS_IF([test "x$with_mpi_wrappers" = xyes], [
+AC_MSG_NOTICE([         unwrapped CXX=$ga_cv_mpicxx_naked])
+])
 AC_MSG_NOTICE([              CXXFLAGS=$CXXFLAGS])
 AC_MSG_NOTICE([             GA_CXXOPT=$GA_CXXOPT])
 ])
@@ -486,4 +517,8 @@ AC_MSG_NOTICE([                  CCAS=$CCAS])
 AC_MSG_NOTICE([            CCAS_FLAGS=$CCAS_FLAGS])
 AC_MSG_NOTICE([                  DEFS=$DEFS])
 AC_MSG_NOTICE([                 SHELL=$SHELL])
+AS_CASE([$ga_msg_comms], [MPI|TCGMSGMPI], [
+AC_MSG_NOTICE([               MPIEXEC=$MPIEXEC])
+])
+AC_MSG_NOTICE([                NPROCS=$NPROCS])
 AC_MSG_NOTICE([])

@@ -89,13 +89,16 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @ENABLE_F77_TRUE@am__append_1 = $(FLD_NOMAIN)
 @ENABLE_F77_TRUE@am__append_2 = gaf2c/farg.F
 @ENABLE_F77_TRUE@am__append_3 = gaf2c/testarg
-@ENABLE_F77_TRUE@am__append_4 = ma/maf.F
-@ENABLE_F77_TRUE@am__append_5 = ma/testf
+@ENABLE_F77_TRUE@am__append_4 = gaf2c/testarg$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_5 = ma/maf.F
+@ENABLE_F77_TRUE@am__append_6 = ma/testf
+@ENABLE_F77_TRUE@am__append_7 = ma/testf$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_8 = ma/testf$(EXEEXT)
 
 ##############################################################################
 # LinAlg/lapack+blas
 #
-@ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@am__append_6 = LinAlg/lapack+blas/dgetf2.f \
+@ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@am__append_9 = LinAlg/lapack+blas/dgetf2.f \
 @ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@	LinAlg/lapack+blas/dgetrf.f \
 @ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@	LinAlg/lapack+blas/dgetrs.f \
 @ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@	LinAlg/lapack+blas/dlacpy.f \
@@ -104,7 +107,7 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@	LinAlg/lapack+blas/ilaenv.f \
 @ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@	LinAlg/lapack+blas/lsame.f \
 @ENABLE_F77_TRUE@@HAVE_LAPACK_FALSE@	LinAlg/lapack+blas/xerbla.f
-@ENABLE_F77_TRUE@@HAVE_BLAS_FALSE@am__append_7 =  \
+@ENABLE_F77_TRUE@@HAVE_BLAS_FALSE@am__append_10 =  \
 @ENABLE_F77_TRUE@@HAVE_BLAS_FALSE@	LinAlg/lapack+blas/cgemm.f \
 @ENABLE_F77_TRUE@@HAVE_BLAS_FALSE@	LinAlg/lapack+blas/dblas.f \
 @ENABLE_F77_TRUE@@HAVE_BLAS_FALSE@	LinAlg/lapack+blas/sgemm.f \
@@ -114,18 +117,18 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 ##############################################################################
 # tcgmsg
 #
-@MSG_COMMS_TCGMSG_TRUE@am__append_8 = tcgmsg/capi.c
-@MSG_COMMS_TCGMSG_TRUE@@USE_VAMPIR_TRUE@am__append_9 = tcgmsg/tcgmsg_vampir.c \
+@MSG_COMMS_TCGMSG_TRUE@am__append_11 = tcgmsg/capi.c
+@MSG_COMMS_TCGMSG_TRUE@@USE_VAMPIR_TRUE@am__append_12 = tcgmsg/tcgmsg_vampir.c \
 @MSG_COMMS_TCGMSG_TRUE@@USE_VAMPIR_TRUE@	tcgmsg/tcgmsg_vampir.h
-@MSG_COMMS_TCGMSG_TRUE@am__append_10 = tcgmsg/msgtypesc.h \
+@MSG_COMMS_TCGMSG_TRUE@am__append_13 = tcgmsg/msgtypesc.h \
 @MSG_COMMS_TCGMSG_TRUE@	tcgmsg/msgtypesf.h tcgmsg/tcgmsg.fh \
 @MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg.h
-@MSG_COMMS_TCGMSG_TRUE@am__append_11 = -I$(top_srcdir)/tcgmsg
+@MSG_COMMS_TCGMSG_TRUE@am__append_14 = -I$(top_srcdir)/tcgmsg
 
 ##############################################################################
 # tcgmsg/ipcv4.0
 #
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_12 = tcgmsg/ipcv4.0/brdcst.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_15 = tcgmsg/ipcv4.0/brdcst.c \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/checkbyte.c \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/cluster.c \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/cluster.h \
@@ -170,20 +173,25 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/waitcom.c \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/xdrstuff.c \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/xdrstuff.h
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_13 = -I$(top_srcdir)/tcgmsg/ipcv4.0
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_14 = tcgmsg/ipcv4.0/hello \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_16 = -I$(top_srcdir)/tcgmsg/ipcv4.0
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_17 = tcgmsg/ipcv4.0/hello \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/test \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/testmap \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/toplot \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/xdrtest
-@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_15 = tcgmsg/ipcv4.0/testf \
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_18 = tcgmsg/ipcv4.0/testf \
 @ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/testpf
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_16 = parallel
+#TCGMSG_TESTS += tcgmsg/ipcv4.0/test$(EXEEXT) # requires user input
+#TCGMSG_TESTS += tcgmsg/ipcv4.0/testmap$(EXEEXT) # requires user input
+#TCGMSG_TESTS += tcgmsg/ipcv4.0/toplot$(EXEEXT) # not a test
+#TCGMSG_TESTS += tcgmsg/ipcv4.0/xdrtest$(EXEEXT) # requires user input
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_19 = tcgmsg/ipcv4.0/testf$(EXEEXT)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_20 = parallel
 
 ##############################################################################
 # tcgmsg/ipcv5.0
 #
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_17 = tcgmsg/ipcv5.0/drand48.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_21 = tcgmsg/ipcv5.0/drand48.c \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/evlog.h \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/globalop.c \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/llog.c \
@@ -207,26 +215,28 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/tcgmsgP.h \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/usleep.c \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/waitall.c
-@ARMCI_NETWORK_LAPI_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_18 = tcgmsg/ipcv5.0/async_send_lapi.c \
+@ARMCI_NETWORK_LAPI_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_22 = tcgmsg/ipcv5.0/async_send_lapi.c \
 @ARMCI_NETWORK_LAPI_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/lapi_putget.c
-@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_19 = tcgmsg/ipcv5.0/async_send.c \
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_23 = tcgmsg/ipcv5.0/async_send.c \
 @ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/busy.c \
 @ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/error.c \
 @ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/nxtval.shm.c \
 @ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/pbeginf.c \
 @ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/shmem.c \
 @ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/synch.c
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_20 = -I$(top_srcdir)/tcgmsg/ipcv5.0
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_21 = tcgmsg/ipcv5.0/hello \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_24 = -I$(top_srcdir)/tcgmsg/ipcv5.0
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_25 = tcgmsg/ipcv5.0/hello \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/test
-@MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_22 = tcgmsg/ipcv5.0/pvm.ring
-@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_23 = tcgmsg/ipcv5.0/jacobi \
+@MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_26 = tcgmsg/ipcv5.0/pvm.ring
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_27 = tcgmsg/ipcv5.0/jacobi \
 @ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/testf
+#TCGMSG_TESTS += tcgmsg/ipcv5.0/test$(EXEEXT) # requires user input
+@MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_28 = tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
 
 ##############################################################################
 # tcgmsg/tcgmsg-mpi
 #
-@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_24 = tcgmsg/tcgmsg-mpi/checkbyte.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_29 = tcgmsg/tcgmsg-mpi/checkbyte.c \
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/clustercheck.c \
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/collect.c \
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/drand48.c \
@@ -244,29 +254,33 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/sndrcv.h \
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/srftoc.h \
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/tcgmsgP.h
-@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_25 = -I$(top_srcdir)/tcgmsg/tcgmsg-mpi
-@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_26 = tcgmsg/tcgmsg-mpi/test_asyn \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_30 = -I$(top_srcdir)/tcgmsg/tcgmsg-mpi
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_31 = tcgmsg/tcgmsg-mpi/test_asyn \
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/test
-@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_27 = tcgmsg/tcgmsg-mpi/testf
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_32 = tcgmsg/tcgmsg-mpi/testf
+
+#TCGMSG_TESTS += tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT) # useless test
+#TCGMSG_TESTS += tcgmsg/tcgmsg-mpi/test$(EXEEXT) # requires user input
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_33 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
 
 ##############################################################################
 # tools
 #
 # The following to support tracing, profiling, etc.
 #
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_28 = libwapi.la
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_34 = libwapi.la
 #nodist_libga_la_SOURCES += tools/gpwapi.c
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_29 = tools/wapi.c \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_35 = tools/wapi.c \
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@	tools/armci_trace.c
-@ENABLE_F77_TRUE@am__append_30 = global/src/complex.F \
+@ENABLE_F77_TRUE@am__append_36 = global/src/complex.F \
 @ENABLE_F77_TRUE@	global/src/ga_diag_seq.F global/src/rsg.f
-@CRAY_XT_NETWORKS_TRUE@@ENABLE_F77_TRUE@am__append_31 = global/src/ga_dgemmf.F
-@ENABLE_F77_TRUE@@ENABLE_PEIGS_TRUE@am__append_32 = global/src/ga_diag.F
-@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_33 = global/src/scalapack.F
-@ENABLE_CHECKPOINT_TRUE@am__append_34 = global/src/ga_ckpt.c
-@USE_VAMPIR_TRUE@am__append_35 = global/ga_vt.c global/ga_vt.h \
+@CRAY_XT_NETWORKS_TRUE@@ENABLE_F77_TRUE@am__append_37 = global/src/ga_dgemmf.F
+@ENABLE_F77_TRUE@@ENABLE_PEIGS_TRUE@am__append_38 = global/src/ga_diag.F
+@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_39 = global/src/scalapack.F
+@ENABLE_CHECKPOINT_TRUE@am__append_40 = global/src/ga_ckpt.c
+@USE_VAMPIR_TRUE@am__append_41 = global/ga_vt.c global/ga_vt.h \
 @USE_VAMPIR_TRUE@	global/src/ga_vampir.c
-@ENABLE_F77_TRUE@am__append_36 = global/testing/bin \
+@ENABLE_F77_TRUE@am__append_42 = global/testing/bin \
 @ENABLE_F77_TRUE@	global/testing/blktest global/testing/d2test \
 @ENABLE_F77_TRUE@	global/testing/g2test global/testing/g3test \
 @ENABLE_F77_TRUE@	global/testing/ga_lu global/testing/ghosts \
@@ -292,97 +306,16 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testsolve global/testing/test \
 @ENABLE_F77_TRUE@	global/testing/types_test \
 @ENABLE_F77_TRUE@	global/testing/field_test
-@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_37 = global/testing/testspd
-@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_38 = global/testing/ga_lu
-@MSG_COMMS_MPI_TRUE@am__append_39 = global/testing/ga-mpi \
+@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_43 = global/testing/testspd
+@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_44 = global/testing/ga_lu
+@MSG_COMMS_MPI_TRUE@am__append_45 = global/testing/ga-mpi \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock
-@SYSV_TRUE@am__append_40 = global/testing/ipc_clean
-@HAVE_M4_TRUE@am__append_41 = $(GLOBAL_TESTING_M4_DEPS) \
-@HAVE_M4_TRUE@	global/testing/README
-@HAVE_M4_TRUE@am__append_42 = global/testing/nga-onesided.F \
-@HAVE_M4_TRUE@	global/testing/nga-patch.F \
-@HAVE_M4_TRUE@	global/testing/nga-periodic.F \
-@HAVE_M4_TRUE@	global/testing/nga-scatter.F \
-@HAVE_M4_TRUE@	global/testing/nga-util.F \
-@HAVE_M4_TRUE@	global/testing/ngatest.F
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_43 =  \
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-onesided \
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-patch \
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-periodic \
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter \
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-util \
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/ngatest
-@ENABLE_F77_TRUE@am__append_44 = global/testing/ffflush.F \
-@ENABLE_F77_TRUE@	global/testing/testblas.f
-@ENABLE_F77_TRUE@am__append_45 = global/examples/boltzmann/boltz \
-@ENABLE_F77_TRUE@	global/examples/conjugate_gradient/ga_cg \
-@ENABLE_F77_TRUE@	global/examples/md_cluster/grp_sim \
-@ENABLE_F77_TRUE@	global/examples/scf/scf pario/dra/big \
-@ENABLE_F77_TRUE@	pario/dra/dra_mxm pario/dra/ntest \
-@ENABLE_F77_TRUE@	pario/dra/perf pario/dra/perf2 \
-@ENABLE_F77_TRUE@	pario/dra/perf3 pario/dra/test \
-@ENABLE_F77_TRUE@	pario/dra/test_mxm pario/dra/time_mxm \
-@ENABLE_F77_TRUE@	pario/eaf/test pario/sf/test
-
-##############################################################################
-# global/X
-#
-@ENABLE_XREGION_TRUE@@NO_X_FALSE@am__append_46 = global/X/xregion
-
-##############################################################################
-# ga++/src
-#
-@CXX_BINDINGS_TRUE@am__append_47 = libga++.la
-@CXX_BINDINGS_TRUE@am__append_48 = ga++/src/ga++.h \
-@CXX_BINDINGS_TRUE@	ga++/src/GAServices.h \
-@CXX_BINDINGS_TRUE@	ga++/src/GlobalArray.h ga++/src/init_term.h \
-@CXX_BINDINGS_TRUE@	ga++/src/PGroup.h ga++/src/services.h
-@CXX_BINDINGS_TRUE@am__append_49 = -I$(top_srcdir)/ga++/src
-
-##############################################################################
-# ga++/testing
-#
-@CXX_BINDINGS_TRUE@am__append_50 = ga++/testing/elempatch \
-@CXX_BINDINGS_TRUE@	ga++/testing/mtest ga++/testing/ntestc \
-@CXX_BINDINGS_TRUE@	ga++/testing/testc ga++/testing/testmult
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_51 = -I$(top_srcdir)/armci/src-portals
-# remove the former CPPFLAG once the ARMCI refactoring is finished
-@ARMCI_NETWORK_PORTALS_FALSE@am__append_52 =  \
-@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src \
-@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src/include
-
-##############################################################################
-# tascel
-@ENABLE_TASCEL_TRUE@am__append_53 = tascel
-@ENABLE_F77_TRUE@am__append_54 =  \
-@ENABLE_F77_TRUE@	global/examples/boltzmann/boltz$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/examples/conjugate_gradient/ga_cg$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/examples/md_cluster/grp_sim$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/examples/scf/scf$(EXEEXT)
-XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
-@ENABLE_F77_TRUE@am__append_55 = gaf2c/testarg$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_56 = ma/testf$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_57 = ma/testf$(EXEEXT)
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_58 = tcgmsg/ipcv4.0/hello$(EXEEXT)
-#PARALLEL_TESTS += tcgmsg/ipcv4.0/test$(EXEEXT) # requires user input
-#PARALLEL_TESTS += tcgmsg/ipcv4.0/testmap$(EXEEXT) # requires user input
-#PARALLEL_TESTS += tcgmsg/ipcv4.0/toplot$(EXEEXT) # not a test
-#PARALLEL_TESTS += tcgmsg/ipcv4.0/xdrtest$(EXEEXT) # requires user input
-@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_59 = tcgmsg/ipcv4.0/testf$(EXEEXT)
-#PARALLEL_TESTS += tcgmsg/ipcv4.0/testpf$(EXEEXT) # requires input files
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_60 = tcgmsg/ipcv5.0/hello$(EXEEXT)
-#PARALLEL_TESTS += tcgmsg/ipcv5.0/test$(EXEEXT) # requires user input
-@MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_61 = tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
-#PARALLEL_TESTS += tcgmsg/ipcv5.0/jacobi$(EXEEXT) # requires user input
-#PARALLEL_TESTS += tcgmsg/ipcv5.0/testf$(EXEEXT) # requires user input
-#PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT) # useless test
-#PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test$(EXEEXT) # requires user input
-@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_62 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
-#PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
-#PARALLEL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
-#PARALLEL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
-#PARALLEL_TESTS += global/testing/random$(EXEEXT) # takes too long
-@ENABLE_F77_TRUE@am__append_63 = global/testing/bin$(EXEEXT) \
+@SYSV_TRUE@am__append_46 = global/testing/ipc_clean
+#GLOBAL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
+#GLOBAL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
+#GLOBAL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
+#GLOBAL_TESTS += global/testing/random$(EXEEXT) # takes too long
+@ENABLE_F77_TRUE@am__append_47 = global/testing/bin$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/blktest$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g3test$(EXEEXT) \
@@ -409,27 +342,78 @@ XFAIL_TESTS = $(SERIAL_TESTS_XFAIL) $(am__EXEEXT_20)
 @ENABLE_F77_TRUE@	global/testing/testeig$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testmatmult$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testsolve$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/test$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/types_test$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/field_test$(EXEEXT)
-@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_64 = global/testing/testspd$(EXEEXT)
-@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_65 = global/testing/ga_lu$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_66 = global/testing/ga-mpi$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/test$(EXEEXT)
+@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_48 = global/testing/testspd$(EXEEXT)
+@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_49 = global/testing/ga_lu$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_50 = global/testing/ga-mpi$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT)
-@SYSV_TRUE@am__append_67 = global/testing/ipc_clean$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_68 = global/testing/nga-onesided$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/nga-patch$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/nga-periodic$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/nga-scatter$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/nga-scatter$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/nga-util$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/ngatest$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_69 = global/examples/boltzmann/boltz$(EXEEXT)
-@CXX_BINDINGS_TRUE@am__append_70 = ga++/testing/elempatch$(EXEEXT) \
-@CXX_BINDINGS_TRUE@	ga++/testing/mtest$(EXEEXT) \
-@CXX_BINDINGS_TRUE@	ga++/testing/ntestc$(EXEEXT) \
-@CXX_BINDINGS_TRUE@	ga++/testing/testc$(EXEEXT) \
-@CXX_BINDINGS_TRUE@	ga++/testing/testmult$(EXEEXT)
+@SYSV_TRUE@am__append_51 = global/testing/ipc_clean$(EXEEXT)
+@HAVE_M4_TRUE@am__append_52 = $(GLOBAL_TESTING_M4_DEPS) \
+@HAVE_M4_TRUE@	global/testing/README
+@HAVE_M4_TRUE@am__append_53 = global/testing/nga-onesided.F \
+@HAVE_M4_TRUE@	global/testing/nga-patch.F \
+@HAVE_M4_TRUE@	global/testing/nga-periodic.F \
+@HAVE_M4_TRUE@	global/testing/nga-scatter.F \
+@HAVE_M4_TRUE@	global/testing/nga-util.F \
+@HAVE_M4_TRUE@	global/testing/ngatest.F
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_54 =  \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-onesided \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-patch \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-periodic \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-util \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/ngatest
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_55 = global/testing/nga-onesided$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-patch$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-periodic$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-util$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/ngatest$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_56 = global/testing/ffflush.F \
+@ENABLE_F77_TRUE@	global/testing/testblas.f
+@ENABLE_F77_TRUE@am__append_57 = global/examples/boltzmann/boltz \
+@ENABLE_F77_TRUE@	global/examples/conjugate_gradient/ga_cg \
+@ENABLE_F77_TRUE@	global/examples/md_cluster/grp_sim \
+@ENABLE_F77_TRUE@	global/examples/scf/scf pario/dra/big \
+@ENABLE_F77_TRUE@	pario/dra/dra_mxm pario/dra/ntest \
+@ENABLE_F77_TRUE@	pario/dra/perf pario/dra/perf2 \
+@ENABLE_F77_TRUE@	pario/dra/perf3 pario/dra/test \
+@ENABLE_F77_TRUE@	pario/dra/test_mxm pario/dra/time_mxm \
+@ENABLE_F77_TRUE@	pario/eaf/test pario/sf/test
+@ENABLE_F77_TRUE@am__append_58 = global/examples/boltzmann/boltz$(EXEEXT)
+
+##############################################################################
+# global/X
+#
+@ENABLE_XREGION_TRUE@@NO_X_FALSE@am__append_59 = global/X/xregion
+
+##############################################################################
+# ga++/src
+#
+@CXX_BINDINGS_TRUE@am__append_60 = libga++.la
+@CXX_BINDINGS_TRUE@am__append_61 = ga++/src/ga++.h \
+@CXX_BINDINGS_TRUE@	ga++/src/GAServices.h \
+@CXX_BINDINGS_TRUE@	ga++/src/GlobalArray.h ga++/src/init_term.h \
+@CXX_BINDINGS_TRUE@	ga++/src/PGroup.h ga++/src/services.h
+@CXX_BINDINGS_TRUE@am__append_62 = -I$(top_srcdir)/ga++/src
+
+##############################################################################
+# ga++/testing
+#
+@CXX_BINDINGS_TRUE@am__append_63 = ga++/testing/elempatch \
+@CXX_BINDINGS_TRUE@	ga++/testing/mtest ga++/testing/ntestc \
+@CXX_BINDINGS_TRUE@	ga++/testing/testc ga++/testing/testmult
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_64 = -I$(top_srcdir)/armci/src-portals
+# remove the former CPPFLAG once the ARMCI refactoring is finished
+@ARMCI_NETWORK_PORTALS_FALSE@am__append_65 =  \
+@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src \
+@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src/include
+
+##############################################################################
+# tascel
+@ENABLE_TASCEL_TRUE@am__append_66 = tascel
+XFAIL_TESTS = $(am__EXEEXT_20) $(am__EXEEXT_22)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -452,6 +436,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/armci_setup.m4 \
 	$(top_srcdir)/m4/ga_c_opt.m4 $(top_srcdir)/m4/ga_check_func.m4 \
 	$(top_srcdir)/m4/ga_check_header.m4 \
 	$(top_srcdir)/m4/ga_check_libplot.m4 \
+	$(top_srcdir)/m4/ga_cross_compiling.m4 \
 	$(top_srcdir)/m4/ga_cxx.m4 \
 	$(top_srcdir)/m4/ga_cxx_namespaces.m4 \
 	$(top_srcdir)/m4/ga_cxx_opt.m4 \
@@ -2717,7 +2702,9 @@ else dir="$(srcdir)/"; fi;				\
 tst=$$dir$$f; log='$@'; __SAVED_TERM=$$TERM;		\
 $(TESTS_ENVIRONMENT)
 RECHECK_LOGS = $(TEST_LOGS)
-am__EXEEXT_20 =
+am__EXEEXT_20 = $(MA_XFAIL_TESTS)
+am__EXEEXT_21 =
+am__EXEEXT_22 = $(am__EXEEXT_21) $(am__EXEEXT_21) $(am__EXEEXT_21)
 TEST_SUITE_LOG = test-suite.log
 TEST_SUITE_HTML = $(TEST_SUITE_LOG:.log=.html)
 TEST_EXTENSIONS = @EXEEXT@ .test
@@ -2852,9 +2839,11 @@ MA_LONG_DOUBLE = @MA_LONG_DOUBLE@
 MKDIR_P = @MKDIR_P@
 MPICC = @MPICC@
 MPICXX = @MPICXX@
+MPIEXEC = @MPIEXEC@
 MPIF77 = @MPIF77@
 NM = @NM@
 NMEDIT = @NMEDIT@
+NPROCS = @NPROCS@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OTOOL = @OTOOL@
@@ -2882,6 +2871,7 @@ SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+TCGEXEC = @TCGEXEC@
 THREAD_LIBRARY = @THREAD_LIBRARY@
 VERSION = @VERSION@
 XMKMF = @XMKMF@
@@ -2958,16 +2948,16 @@ ACLOCAL_AMFLAGS = -I m4
 include_HEADERS = gaf2c/typesf2c.h gaf2c/farg.h ma/error.h \
 	ma/macdecls.h ma/macommon.h ma/maf2c.fh ma/mafdecls.fh \
 	ma/matypes.h ma/scope.h ma/string-util.h ma/table.h \
-	$(am__append_10) global/src/gacommon.h global/src/ga.h \
+	$(am__append_13) global/src/gacommon.h global/src/ga.h \
 	global/src/global.fh global/src/papi.h pario/dra/dra.fh \
 	pario/dra/dra.h pario/eaf/eaf.fh pario/eaf/eaf.h \
 	pario/elio/chemio.h pario/elio/elio.h pario/sf/coms.h \
-	pario/sf/sf.fh pario/sf/sf.h $(am__append_48) \
+	pario/sf/sf.fh pario/sf/sf.h $(am__append_61) \
 	gparrays/src/gppapi.h
 nodist_include_HEADERS = global/src/wapi.h gparrays/src/gpwapi.h
 bin_SCRIPTS = tools/ga-config
 check_LTLIBRARIES = 
-lib_LTLIBRARIES = libga.la $(am__append_28) $(am__append_47)
+lib_LTLIBRARIES = libga.la $(am__append_34) $(am__append_60)
 
 ##############################################################################
 # compat
@@ -2990,10 +2980,10 @@ lib_LTLIBRARIES = libga.la $(am__append_28) $(am__append_47)
 #
 libga_la_SOURCES = compat/random.c gaf2c/gaf2c.c gaf2c/drand.c \
 	$(am__append_2) ma/error.c ma/f2c.c ma/ma.c ma/ma.h \
-	ma/memcpy.h ma/string-util.c ma/table.c $(am__append_4) \
-	$(am__append_6) $(am__append_7) $(am__append_8) \
-	$(am__append_9) $(am__append_12) $(am__append_17) \
-	$(am__append_18) $(am__append_19) $(am__append_24) \
+	ma/memcpy.h ma/string-util.c ma/table.c $(am__append_5) \
+	$(am__append_9) $(am__append_10) $(am__append_11) \
+	$(am__append_12) $(am__append_15) $(am__append_21) \
+	$(am__append_22) $(am__append_23) $(am__append_29) \
 	global/src/abstract_ops.h global/src/base.c global/src/base.h \
 	global/src/capi.c global/src/collect.c global/src/datatypes.c \
 	global/src/decomp.c global/src/diag.fh global/src/DP.c \
@@ -3011,9 +3001,9 @@ libga_la_SOURCES = compat/random.c gaf2c/gaf2c.c gaf2c/drand.c \
 	global/src/peigstubs.c global/src/scalapack.fh \
 	global/src/sclstubs.c global/src/select.c global/src/sparse.c \
 	global/src/types.xh global/src/types2.xh global/src/xgemm.c \
-	global/src/xgemm.h $(am__append_30) $(am__append_31) \
-	$(am__append_32) $(am__append_33) $(am__append_34) \
-	$(am__append_35) pario/dra/buffers.c pario/dra/buffers.h \
+	global/src/xgemm.h $(am__append_36) $(am__append_37) \
+	$(am__append_38) $(am__append_39) $(am__append_40) \
+	$(am__append_41) pario/dra/buffers.c pario/dra/buffers.h \
 	pario/dra/capi.c pario/dra/disk.arrays.c \
 	pario/dra/disk.param.c pario/dra/draf2c.h pario/dra/drap.h \
 	pario/dra/env.c pario/dra/fortran.c pario/dra/patch.util.c \
@@ -3028,7 +3018,7 @@ libga_la_SOURCES = compat/random.c gaf2c/gaf2c.c gaf2c/drand.c \
 # This is the "noinst" libarmci so that libtool combines it with libga.
 libga_la_LIBADD = $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) \
 	armci/libarmcii.la $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
-nodist_libga_la_SOURCES = config.fh $(am__append_29) \
+nodist_libga_la_SOURCES = config.fh $(am__append_35) \
 	global/src/wapidefs.h global/src/c.names.h \
 	gparrays/src/gpwapidefs.h
 
@@ -3071,7 +3061,7 @@ EXTRA_DIST = README build-aux/inside.pl LinAlg/lapack+blas/README \
 	tcgmsg/examples/trace.out tcgmsg/examples/xpix.shar \
 	tcgmsg/ipcv4.0/README tcgmsg/tcgmsg-mpi/README global/README \
 	tools/gpwapigen.py tools/wapigen.py tools/wapigen_counts.py \
-	tools/wapigen_trace.py $(F77FUNCGEN_PL) $(am__append_41) \
+	tools/wapigen_trace.py $(F77FUNCGEN_PL) $(am__append_52) \
 	global/examples/boltzmann/README \
 	global/examples/lennard-jones/README \
 	global/examples/md_cluster/atom.inp \
@@ -3096,7 +3086,7 @@ BUILT_SOURCES = config.fh global/src/wapi.h global/src/wapidefs.h \
 	gparrays/src/gpwapidefs.h
 MOSTLYCLEANFILES = 
 CLEANFILES = $(bin_SCRIPTS) config.fh global/src/wapi.h \
-	global/src/wapidefs.h global/src/c.names.h $(am__append_42) \
+	global/src/wapidefs.h global/src/c.names.h $(am__append_53) \
 	gparrays/src/gpwapi.h gparrays/src/gpwapidefs.h
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
@@ -3106,13 +3096,13 @@ AM_CXXFLAGS = $(GA_CXXOPT)
 AM_CPPFLAGS = $(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) \
 	$(BLAS_CPPFLAGS) $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
 	-I$(top_build_prefix)gaf2c -I$(top_srcdir)/gaf2c \
-	-I$(top_build_prefix)ma -I$(top_srcdir)/ma $(am__append_11) \
-	$(am__append_13) $(am__append_20) $(am__append_25) \
+	-I$(top_build_prefix)ma -I$(top_srcdir)/ma $(am__append_14) \
+	$(am__append_16) $(am__append_24) $(am__append_30) \
 	-I$(top_build_prefix)global/src -I$(top_srcdir)/global/src \
 	-I$(top_srcdir)/pario/dra -I$(top_srcdir)/pario/eaf \
 	-I$(top_srcdir)/pario/elio -I$(top_srcdir)/pario/sf \
-	$(am__append_49) -I$(top_build_prefix)gparrays/src \
-	-I$(top_srcdir)/gparrays/src $(am__append_51) $(am__append_52)
+	$(am__append_62) -I$(top_build_prefix)gparrays/src \
+	-I$(top_srcdir)/gparrays/src $(am__append_64) $(am__append_65)
 AM_LDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
 	$(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) $(am__append_1)
 FLDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
@@ -3130,8 +3120,14 @@ LDADD = $(LTLIBOBJS) libga.la $(SCALAPACK_LIBS) $(LAPACK_LIBS) \
 # Important for external tools wanting to know how to link to GA. This
 # functionality caries over from the pre-autotools GA build.
 SED_NORMALIZE_WHITESPACE = $(SED) 's/ [ ]*/ /g;s/" /"/g;s/ "/"/g'
+GAF2C_TESTS = $(am__append_4)
 gaf2c_testarg_SOURCES = gaf2c/testarg.c gaf2c/testargf.f
 gaf2c_testarg_LDFLAGS = $(FLDFLAGS)
+
+#MA_TESTS += ma/testc$(EXEEXT) # iteractive prompt
+MA_TESTS = ma/test-coalesce$(EXEEXT) ma/test-inquire$(EXEEXT) \
+	$(am__append_7)
+MA_XFAIL_TESTS = $(am__append_8)
 ma_testf_SOURCES = ma/testf.F
 ma_testc_SOURCES = ma/testc.c
 ma_test_coalesce_SOURCES = ma/test-coalesce.c
@@ -3140,6 +3136,18 @@ ma_testf_LDFLAGS = $(FLDFLAGS)
 nodist_EXTRA_ma_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_ma_test_coalesce_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_ma_test_inquire_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@TCGMSG_TESTS = tcgmsg/ipcv4.0/hello$(EXEEXT) \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	$(am__append_19) \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	$(am__append_28) \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	$(am__append_33)
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@TCGMSG_TESTS = tcgmsg/ipcv5.0/hello$(EXEEXT) \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	$(am__append_28) \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	$(am__append_33)
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@TCGMSG_TESTS = $(am__append_33)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@TCGMSG_XFAIL_TESTS = 
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@TCGMSG_XFAIL_TESTS = 
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@TCGMSG_XFAIL_TESTS = 
+#TCGMSG_TESTS += tcgmsg/ipcv4.0/testpf$(EXEEXT) # requires input files
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv4_0_hello_SOURCES = tcgmsg/ipcv4.0/hello.c
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv4_0_test_SOURCES = tcgmsg/ipcv4.0/test.c
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv4_0_testf_SOURCES = tcgmsg/ipcv4.0/testf.F
@@ -3156,6 +3164,8 @@ nodist_EXTRA_ma_test_inquire_SOURCES = $(MAYBE_DUMMY_F_LINK)
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_ipcv4_0_xdrtest_SOURCES = $(MAYBE_DUMMY_F_LINK)
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@parallel_SOURCES = tcgmsg/ipcv4.0/parallel.c
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_parallel_SOURCES = $(MAYBE_DUMMY_F_LINK)
+#TCGMSG_TESTS += tcgmsg/ipcv5.0/jacobi$(EXEEXT) # requires user input
+#TCGMSG_TESTS += tcgmsg/ipcv5.0/testf$(EXEEXT) # requires user input
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv5_0_hello_SOURCES = tcgmsg/ipcv5.0/hello.c
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv5_0_jacobi_SOURCES = tcgmsg/ipcv5.0/fexit.f       \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@                                  tcgmsg/ipcv5.0/getmem.c      \
@@ -3190,6 +3200,21 @@ nodist_EXTRA_ma_test_inquire_SOURCES = $(MAYBE_DUMMY_F_LINK)
 #
 PAPI_H = $(top_srcdir)/global/src/papi.h
 F77FUNCGEN_PL = $(top_srcdir)/build-aux/f77funcgen.pl
+GLOBAL_TESTS = global/testing/elempatch$(EXEEXT) \
+	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
+	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
+	global/testing/packc$(EXEEXT) \
+	global/testing/patch_enumc$(EXEEXT) \
+	global/testing/print$(EXEEXT) \
+	global/testing/scan_addc$(EXEEXT) \
+	global/testing/scan_copyc$(EXEEXT) \
+	global/testing/testc$(EXEEXT) global/testing/testmult$(EXEEXT) \
+	global/testing/unpackc$(EXEEXT) $(am__append_47) \
+	$(am__append_48) $(am__append_49) $(am__append_50) \
+	$(am__append_51) $(am__append_55) \
+	global/examples/lennard-jones/lennard$(EXEEXT) \
+	$(am__append_58)
+GLOBAL_XFAIL_TESTS = 
 @HAVE_M4_TRUE@GLOBAL_TESTING_M4_DEPS =  \
 @HAVE_M4_TRUE@	global/testing/ngatest_src/ndim_GA_FILL.src \
 @HAVE_M4_TRUE@	global/testing/ngatest_src/ndim_main.src \
@@ -3217,7 +3242,7 @@ F77FUNCGEN_PL = $(top_srcdir)/build-aux/f77funcgen.pl
 @HAVE_M4_TRUE@	global/testing/ngatest.m4 \
 @HAVE_M4_TRUE@	global/testing/nga-util.m4
 gtsrc = global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c $(am__append_44)
+	global/testing/util.c $(am__append_56)
 global_testing_bin_SOURCES = global/testing/bin.F $(gtsrc)
 global_testing_blktest_SOURCES = global/testing/blktest.F $(gtsrc)
 global_testing_d2test_SOURCES = global/testing/d2test.F $(gtsrc)
@@ -3336,6 +3361,9 @@ nodist_EXTRA_global_testing_testmatmultc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmult_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmultrect_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_unpackc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+#GLOBAL_TESTS += global/examples/conjugate_gradient/ga_cg$(EXEEXT) # needs input
+#GLOBAL_TESTS += global/examples/md_cluster/grp_sim$(EXEEXT) # needs input
+#GLOBAL_TESTS += global/examples/scf/scf$(EXEEXT) # needs input
 global_examples_boltzmann_boltz_SOURCES = \
 global/examples/boltzmann/boltzmann.F     \
 global/examples/boltzmann/common          \
@@ -3421,6 +3449,12 @@ global_trace_adjust_LDADD =
 global_trace_collisions_SOURCES = global/trace/collisions.c
 global_trace_collisions_LDFLAGS = 
 global_trace_collisions_LDADD = 
+#PARIO_TESTS += pario/dra/dbg_read$(EXEEXT) # barely compiles, wrong test
+#PARIO_TESTS += pario/dra/dbg_write$(EXEEXT) # barely compiles, wrong test
+#PARIO_TESTS += pario/dra/dra2arviz$(EXEEXT) # not a test?
+PARIO_TESTS = pario/dra/bign$(EXEEXT) pario/dra/ntestc$(EXEEXT) \
+	pario/dra/perfn$(EXEEXT) pario/dra/rate$(EXEEXT)
+PARIO_XFAIL_TESTS = 
 dtsrc = pario/dra/ffflush.F pario/dra/util.c
 pario_dra_big_SOURCES = pario/dra/big.F $(dtsrc)
 pario_dra_bign_SOURCES = pario/dra/bign.c
@@ -3462,6 +3496,12 @@ pario_sf_test_LDFLAGS = $(FLDFLAGS)
 @CXX_BINDINGS_TRUE@	ga++/src/GlobalArray.cc ga++/src/PGroup.cc \
 @CXX_BINDINGS_TRUE@	ga++/src/init_term.cc ga++/src/overload.cc \
 @CXX_BINDINGS_TRUE@	ga++/src/services.cc
+@CXX_BINDINGS_TRUE@CXX_TESTS = ga++/testing/elempatch$(EXEEXT) \
+@CXX_BINDINGS_TRUE@	ga++/testing/mtest$(EXEEXT) \
+@CXX_BINDINGS_TRUE@	ga++/testing/ntestc$(EXEEXT) \
+@CXX_BINDINGS_TRUE@	ga++/testing/testc$(EXEEXT) \
+@CXX_BINDINGS_TRUE@	ga++/testing/testmult$(EXEEXT)
+@CXX_BINDINGS_TRUE@CXX_XFAIL_TESTS = 
 @CXX_BINDINGS_TRUE@ga___testing_elempatch_SOURCES = ga++/testing/elempatch.cc
 @CXX_BINDINGS_TRUE@ga___testing_mtest_SOURCES = ga++/testing/mtest.cc
 @CXX_BINDINGS_TRUE@ga___testing_ntestc_SOURCES = ga++/testing/ntestc.cc \
@@ -3491,10 +3531,8 @@ gparrays_testing_test_LDFLAGS = $(FLDFLAGS)
 
 ##############################################################################
 # armci
-SUBDIRS = armci . $(am__append_53)
-EXAMPLES = global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_54)
-GA_RECURSIVE_TARGETS = checkprogs-recursive examples-recursive
+SUBDIRS = armci . $(am__append_66)
+GA_RECURSIVE_TARGETS = checkprogs-recursive
 # END COPY
 
 # support verbose/silent make rules for additional programs
@@ -3523,48 +3561,37 @@ CP__v_0 = @echo "  CP    " $@;
 CC_NOMPI_V = $(CC_NOMPI__v_$(V))
 CC_NOMPI__v_ = $(CC_NOMPI__v_$(AM_DEFAULT_VERBOSITY))
 CC_NOMPI__v_0 = @echo "  CC_NOMPI" $@;
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@MAYBE_PFILES = pfiles
+@MSG_COMMS_TCGMSG4_TRUE@MAYBE_PFILES = pfiles
 
 ##############################################################################
 # test suite
 #
-# some tests were commented out either because they required an input file
-# (some examples do) or they were failing for unknown reasons and we didn't
-# want to further debug
+# Tests were broken up into groups depending on the piece of the distribution
+# which they tested.  The test variables are GAF2C_TESTS, MA_TESTS,
+# TCGMSG_TESTS, GLOBAL_TESTS, and CXX_TESTS.
 #
+# Some tests were commented out either because they required an input file or
+# they were failing for unknown reasons and we didn't want to further debug.
+# Some tests were based on old versions of GA which no longer applied but we
+# kept anyway (see pario).
+#
+# We leave pario tests out of the main set of tests because not all systems
+# can handle the disk requirements.
+#
+SERIAL_TESTS = $(GAF2C_TESTS) $(MA_TESTS)
+SERIAL_TESTS_XFAIL = $(GAF2C_XFAIL_TESTS) $(MA_XFAIL_TESTS)
+PARALLEL_TESTS = $(TCGMSG_TESTS) $(GLOBAL_TESTS) $(CXX_TESTS)
+PARALLEL_TESTS_XFAIL = $(TCGMSG_XFAIL_TESTS) $(GLOBAL_XFAIL_TESTS) \
+	$(CXX_XFAIL_TESTS)
 TESTS = $(SERIAL_TESTS) $(PARALLEL_TESTS)
-TESTS_ENVIRONMENT = \
-maybe_mpi=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(MPIEXEC)"; fi`; $$maybe_mpi
+@CROSS_COMPILING_FALSE@@MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_FALSE@LOG_COMPILER = \
+@CROSS_COMPILING_FALSE@@MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_FALSE@maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; $$maybe_mpiexec
 
-#SERIAL_TESTS += ma/testc$(EXEEXT) # requires interactive input
-SERIAL_TESTS = $(am__append_55) ma/test-coalesce$(EXEEXT) \
-	ma/test-inquire$(EXEEXT) $(am__append_56)
-SERIAL_TESTS_XFAIL = $(am__append_57)
-#PARALLEL_TESTS += global/examples/conjugate_gradient/ga_cg$(EXEEXT) # needs user input
-#PARALLEL_TESTS += global/examples/md_cluster/grp_sim$(EXEEXT) # needs input
-#PARALLEL_TESTS += global/examples/scf/scf$(EXEEXT) # needs input file
-PARALLEL_TESTS = $(am__append_58) $(am__append_59) $(am__append_60) \
-	$(am__append_61) $(am__append_62) \
-	global/testing/elempatch$(EXEEXT) \
-	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
-	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
-	global/testing/packc$(EXEEXT) \
-	global/testing/patch_enumc$(EXEEXT) \
-	global/testing/print$(EXEEXT) \
-	global/testing/scan_addc$(EXEEXT) \
-	global/testing/scan_copyc$(EXEEXT) \
-	global/testing/testc$(EXEEXT) \
-	global/testing/testmatmultc$(EXEEXT) \
-	global/testing/testmult$(EXEEXT) \
-	global/testing/testmultrect$(EXEEXT) \
-	global/testing/unpackc$(EXEEXT) $(am__append_63) \
-	$(am__append_64) $(am__append_65) $(am__append_66) \
-	$(am__append_67) $(am__append_68) \
-	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_69) pario/dra/bign$(EXEEXT) \
-	pario/dra/ntestc$(EXEEXT) pario/dra/perfn$(EXEEXT) \
-	pario/dra/rate$(EXEEXT) $(am__append_70)
-PARALLEL_TESTS_XFAIL = 
+@MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_TRUE@LOG_COMPILER = tst="$$dir$$f -np $(NPROCS)"; eval
+@MSG_COMMS_TCGMSG4_TRUE@LOG_COMPILER = \
+@MSG_COMMS_TCGMSG4_TRUE@maybe_tcgexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(TCGEXEC)"; fi`; $$maybe_tcgexec
+
+@CROSS_COMPILING_TRUE@@MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_FALSE@maybe_mpiexec = `if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; $$maybe_mpiexec
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -6415,12 +6442,12 @@ tcgmsg/ipcv4.0/hello.log: tcgmsg/ipcv4.0/hello$(EXEEXT)
 	@p='tcgmsg/ipcv4.0/hello$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 tcgmsg/ipcv4.0/testf.log: tcgmsg/ipcv4.0/testf$(EXEEXT)
 	@p='tcgmsg/ipcv4.0/testf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-tcgmsg/ipcv5.0/hello.log: tcgmsg/ipcv5.0/hello$(EXEEXT)
-	@p='tcgmsg/ipcv5.0/hello$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 tcgmsg/ipcv5.0/pvm.ring.log: tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
 	@p='tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 tcgmsg/tcgmsg-mpi/testf.log: tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
 	@p='tcgmsg/tcgmsg-mpi/testf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+tcgmsg/ipcv5.0/hello.log: tcgmsg/ipcv5.0/hello$(EXEEXT)
+	@p='tcgmsg/ipcv5.0/hello$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/elempatch.log: global/testing/elempatch$(EXEEXT)
 	@p='global/testing/elempatch$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/getmem.log: global/testing/getmem$(EXEEXT)
@@ -6443,12 +6470,8 @@ global/testing/scan_copyc.log: global/testing/scan_copyc$(EXEEXT)
 	@p='global/testing/scan_copyc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testc.log: global/testing/testc$(EXEEXT)
 	@p='global/testing/testc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-global/testing/testmatmultc.log: global/testing/testmatmultc$(EXEEXT)
-	@p='global/testing/testmatmultc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testmult.log: global/testing/testmult$(EXEEXT)
 	@p='global/testing/testmult$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-global/testing/testmultrect.log: global/testing/testmultrect$(EXEEXT)
-	@p='global/testing/testmultrect$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/unpackc.log: global/testing/unpackc$(EXEEXT)
 	@p='global/testing/unpackc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/bin.log: global/testing/bin$(EXEEXT)
@@ -6507,10 +6530,6 @@ global/testing/testsolve.log: global/testing/testsolve$(EXEEXT)
 	@p='global/testing/testsolve$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/test.log: global/testing/test$(EXEEXT)
 	@p='global/testing/test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-global/testing/types_test.log: global/testing/types_test$(EXEEXT)
-	@p='global/testing/types_test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-global/testing/field_test.log: global/testing/field_test$(EXEEXT)
-	@p='global/testing/field_test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testspd.log: global/testing/testspd$(EXEEXT)
 	@p='global/testing/testspd$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ga-mpi.log: global/testing/ga-mpi$(EXEEXT)
@@ -6535,14 +6554,6 @@ global/examples/lennard-jones/lennard.log: global/examples/lennard-jones/lennard
 	@p='global/examples/lennard-jones/lennard$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/examples/boltzmann/boltz.log: global/examples/boltzmann/boltz$(EXEEXT)
 	@p='global/examples/boltzmann/boltz$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-pario/dra/bign.log: pario/dra/bign$(EXEEXT)
-	@p='pario/dra/bign$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-pario/dra/ntestc.log: pario/dra/ntestc$(EXEEXT)
-	@p='pario/dra/ntestc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-pario/dra/perfn.log: pario/dra/perfn$(EXEEXT)
-	@p='pario/dra/perfn$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-pario/dra/rate.log: pario/dra/rate$(EXEEXT)
-	@p='pario/dra/rate$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 ga++/testing/elempatch.log: ga++/testing/elempatch$(EXEEXT)
 	@p='ga++/testing/elempatch$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 ga++/testing/mtest.log: ga++/testing/mtest$(EXEEXT)
@@ -6838,8 +6849,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
-@MSG_COMMS_MPI_TRUE@clean-local:
-@MSG_COMMS_TCGMSG_FALSE@clean-local:
+@MSG_COMMS_TCGMSG4_FALSE@clean-local:
 clean: clean-recursive
 
 clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-checkPROGRAMS \
@@ -7009,6 +7019,7 @@ global/src/c.names.h: $(PAPI_H) $(F77FUNCGEN_PL)
 @HAVE_M4_TRUE@global/testing/nga-scatter.F:  $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@global/testing/nga-util.F:     $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@global/testing/ngatest.F:      $(GLOBAL_TESTING_M4_DEPS)
+
 @HAVE_M4_TRUE@.m4.F:
 @HAVE_M4_TRUE@	$(M4_V) \
 @HAVE_M4_TRUE@	$(M4) -I$(top_srcdir)/global/testing $< > $@ 
@@ -7050,12 +7061,6 @@ armci/libarmcii.la:
 .PHONY: checkprogs checkprogs-recursive checkprogs-am
 checkprogs: checkprogs-recursive
 checkprogs-am: $(check_PROGRAMS)
-
-# automake does not append $(EXEEXT) to user-defined make variables
-# so we must duplicate all examples here to get this custom target... yuck
-.PHONY: examples examples-recursive examples-am
-examples: examples-recursive
-examples-am: $(EXAMPLES)
 # COPIED FROM MAKEFILE GENERATED BY AUTOMAKE 1.11.1
 # Modified to use our own recursive targets.
 $(GA_RECURSIVE_TARGETS): all
@@ -7084,17 +7089,49 @@ $(GA_RECURSIVE_TARGETS): all
 	fi; test -z "$$fail"
 
 .PHONY: pfiles clean-pfiles
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@pfiles: $(check_PROGRAMS)
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	for p in $(check_PROGRAMS); do \
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@		echo "`whoami` `hostname` 4 `pwd`/$$p /tmp" > $$p.p; \
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	done
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@check: pfiles
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@clean-pfiles:
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@	find . -name '*.p' -exec rm {} \; ;
-@MSG_COMMS_MPI_FALSE@@MSG_COMMS_TCGMSG_TRUE@clean-local: clean-pfiles
+@MSG_COMMS_TCGMSG4_TRUE@pfiles: $(check_PROGRAMS)
+@MSG_COMMS_TCGMSG4_TRUE@	for p in $(check_PROGRAMS); do \
+@MSG_COMMS_TCGMSG4_TRUE@		echo "`whoami` `hostname` $(NPROCS) `pwd`/$$p /tmp" > $$p.p; \
+@MSG_COMMS_TCGMSG4_TRUE@	done
+@MSG_COMMS_TCGMSG4_TRUE@check: pfiles
+@MSG_COMMS_TCGMSG4_TRUE@clean-pfiles:
+@MSG_COMMS_TCGMSG4_TRUE@	find . -name '*.p' -exec rm {} \; ;
+@MSG_COMMS_TCGMSG4_TRUE@clean-local: clean-pfiles
+
 .PHONY: check-ga
 check-ga: $(all-am) $(check_LTLIBRARIES) $(check_PROGRAMS) $(MAYBE_PFILES)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
+
+.PHONY: check-gaf2c
+check-gaf2c: $(all-am) $(check_LTLIBRARIES) $(GAF2C_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(GAF2C_TESTS)" XFAIL_TESTS="$(GAF2C_XFAIL_TESTS)" check-TESTS
+
+.PHONY: check-ma
+check-ma: $(all-am) $(check_LTLIBRARIES) $(MA_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(MA_TESTS)" XFAIL_TESTS="$(MA_XFAIL_TESTS)" check-TESTS
+
+.PHONY: check-global
+check-global: $(all-am) $(check_LTLIBRARIES) $(GLOBAL_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(GLOBAL_TESTS)" XFAIL_TESTS="$(GLOBAL_XFAIL_TESTS)" check-TESTS
+
+.PHONY: check-pario
+check-pario: $(all-am) $(check_LTLIBRARIES) $(PARIO_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(PARIO_TESTS)" XFAIL_TESTS="$(PARIO_XFAIL_TESTS)" check-TESTS
+
+.PHONY: check-ga++
+@CXX_BINDINGS_TRUE@check-ga++: $(all-am) $(check_LTLIBRARIES) $(CXX_TESTS) $(MAYBE_PFILES)
+@CXX_BINDINGS_TRUE@	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(CXX_TESTS)" XFAIL_TESTS="$(CXX_XFAIL_TESTS)" check-TESTS
+
+# Because pario tests are not listed in the TESTS variable, the log targets
+# are not generated by automake. Do them manually here.
+pario/dra/bign.log: pario/dra/bign$(EXEEXT)
+	@p='pario/dra/bign$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+pario/dra/ntestc.log: pario/dra/ntestc$(EXEEXT)
+	@p='pario/dra/ntestc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+pario/dra/perfn.log: pario/dra/perfn$(EXEEXT)
+	@p='pario/dra/perfn$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+pario/dra/rate.log: pario/dra/rate$(EXEEXT)
+	@p='pario/dra/rate$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
