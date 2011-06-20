@@ -91,16 +91,23 @@ AS_IF([test "x$FCFLAGS" != x],  [FFLAGS="$FCFLAGS"])
 # absolutely everything in our list of compilers.
 # Save F77, just in case.
 AS_IF([test x$with_mpi_wrappers = xyes],
-    [ga_save_F77="$F77"
-     F77="$MPIF77"
-     AS_IF([test "x$MPIF77" != x],
-        [AS_IF([test "x$ga_save_F77" != x],
-            [AC_MSG_WARN([MPI compilers desired, MPIF77 is set and F77 is set])
-             AC_MSG_WARN([Choosing MPIF77 over F77])])],
-        [AS_IF([test "x$ga_save_F77" != x],
-            [AC_MSG_WARN([MPI compilers desired but F77 is set, ignoring])
-             AC_MSG_WARN([Perhaps you meant to set MPIF77 instead?])])])
-])
+    [AS_IF([test "x$F77" != "x$MPIF77"], [ga_orig_F77="$F77"])
+     AS_CASE([x$F77:x$MPIF77],
+        [x:x],  [],
+        [x:x*], [F77="$MPIF77"],
+        [x*:x],
+[AC_MSG_WARN([MPI compilers desired but F77 is set while MPIF77 is unset.])
+ AC_MSG_WARN([F77 will be ignored during compiler selection, but will be])
+ AC_MSG_WARN([tested first during MPI compiler unwrapping. Perhaps you])
+ AC_MSG_WARN([meant to set MPIF77 instead of or in addition to F77?])
+ F77=],
+        [x*:x*], 
+[AS_IF([test "x$F77" != "x$MPIF77"],
+[AC_MSG_WARN([MPI compilers desired, MPIF77 and F77 are set, and MPIF77!=F77.])
+ AC_MSG_WARN([Choosing MPIF77 over F77.])
+ AC_MSG_WARN([F77 will be tested first during MPI compiler unwrapping.])])
+ F77="$MPIF77"],
+[AC_MSG_ERROR([F77/MPIF77 case failure])])])
 ga_mpif95="mpif95 mpxlf95_r mpxlf95 ftn"
 ga_mpif90="mpif90 mpxlf90_r mpxlf90 mpf90 cmpif90c sxmpif90"
 ga_mpif77="mpif77 hf77 mpxlf_r mpxlf mpifrt mpf77 cmpifc"

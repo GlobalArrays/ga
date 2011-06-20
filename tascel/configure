@@ -4156,43 +4156,6 @@ case $with_mpi in #(
      ;;
 esac
 
-# Sanity check for --with-mpi and environment var interplay.
-if test "x$with_mpi_wrappers" = xyes; then :
-  if test "x$CC" != x; then :
-  if test "x$CC" != "x$MPICC"; then :
-  as_fn_error $? "MPI compilers wanted (--with-mpi was specified without
-        arguments (or was assumed by default)), but CC was also specified and
-        CC != MPICC.  Perhaps you meant to set MPICC instead?  Or perhaps you
-        meant to specify the path to an MPI installation such as
-        --with-mpi=/path/to/mpi?  The easiest thing to try is to unset CC
-        (CC=) as part of the configure invocation." "$LINENO" 5
-fi
-fi
-     if test "x$F77" != x; then :
-  if test "x$F77" != "x$MPIF77"; then :
-  as_fn_error $? "MPI compilers wanted (--with-mpi was specified without
-        arguments (or was assumed by default)), but F77 was also specified and
-        F77 != MPIF77.  Perhaps you meant to set MPIF77 instead?  Or perhaps you
-        meant to specify the path to an MPI installation such as
-        --with-mpi=/path/to/mpi?  The easiest thing to try is to unset F77
-        (F77=) as part of the configure invocation." "$LINENO" 5
-fi
-fi
-     if test "x$enable_cxx" = xyes; then :
-
-     if test "x$CXX" != x; then :
-  if test "x$CXX" != "x$MPICXX"; then :
-  as_fn_error $? "MPI compilers wanted (--with-mpi was specified without
-        arguments (or was assumed by default)), but CXX was also specified and
-        CXX != MPICXX.  Perhaps you meant to set MPICXX instead?  Or perhaps you
-        meant to specify the path to an MPI installation such as
-        --with-mpi=/path/to/mpi?  The easiest thing to try is to unset CXX
-        (CXX=) as part of the configure invocation." "$LINENO" 5
-fi
-fi
-fi
-
-fi
 if test x$need_parse = xyes; then :
   for arg in $with_mpi ; do
     case $arg in #(
@@ -4339,23 +4302,37 @@ esac
 # absolutely everything in our list of compilers.
 # Save CC, just in case.
 if test x$with_mpi_wrappers = xyes; then :
-  ga_save_CC="$CC"
-     CC="$MPICC"
-     if test "x$MPICC" != x; then :
-  if test "x$ga_save_CC" != x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPICC is set and CC is set" >&5
-$as_echo "$as_me: WARNING: MPI compilers desired, MPICC is set and CC is set" >&2;}
-             { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICC over CC" >&5
-$as_echo "$as_me: WARNING: Choosing MPICC over CC" >&2;}
+  if test "x$CC" != "x$MPICC"; then :
+  ga_orig_CC="$CC"
 fi
-else
-  if test "x$ga_save_CC" != x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired but CC is set, ignoring" >&5
-$as_echo "$as_me: WARNING: MPI compilers desired but CC is set, ignoring" >&2;}
-             { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Perhaps you meant to set MPICC instead?" >&5
-$as_echo "$as_me: WARNING: Perhaps you meant to set MPICC instead?" >&2;}
+     case x$CC:x$MPICC in #(
+  x:x) :
+     ;; #(
+  x:x*) :
+    CC="$MPICC" ;; #(
+  x*:x) :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired but CC is set while MPICC is unset." >&5
+$as_echo "$as_me: WARNING: MPI compilers desired but CC is set while MPICC is unset." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CC will be ignored during compiler selection, but will be" >&5
+$as_echo "$as_me: WARNING: CC will be ignored during compiler selection, but will be" >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: tested first during MPI compiler unwrapping. Perhaps you" >&5
+$as_echo "$as_me: WARNING: tested first during MPI compiler unwrapping. Perhaps you" >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: meant to set MPICC instead of or in addition to CC?" >&5
+$as_echo "$as_me: WARNING: meant to set MPICC instead of or in addition to CC?" >&2;}
+ CC= ;; #(
+  x*:x*) :
+    if test "x$CC" != "x$MPICC"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPICC and CC are set, and MPICC!=CC." >&5
+$as_echo "$as_me: WARNING: MPI compilers desired, MPICC and CC are set, and MPICC!=CC." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICC over CC." >&5
+$as_echo "$as_me: WARNING: Choosing MPICC over CC." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CC will be tested first during MPI compiler unwrapping." >&5
+$as_echo "$as_me: WARNING: CC will be tested first during MPI compiler unwrapping." >&2;}
 fi
-fi
+ CC="$MPICC" ;; #(
+  *) :
+    as_fn_error $? "CC/MPICC case failure" "$LINENO" 5 ;;
+esac
 fi
 ga_cc="bgxlc_r bgxlc xlc_r xlc pgcc pathcc icc sxcc fcc opencc suncc craycc gcc cc ecc cl ccc"
 ga_mpicc="mpicc mpixlc_r mpixlc hcc mpxlc_r mpxlc sxmpicc mpifcc mpgcc mpcc cmpicc cc"
@@ -5198,6 +5175,7 @@ esac
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $wrapped compiler" >&5
 $as_echo_n "checking for base $wrapped compiler... " >&6; }
 if test "${ga_cv_mpic_naked+set}" = set; then :
@@ -5219,7 +5197,7 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ga_cv_mpic_naked=$base
+  ga_cv_mpic_naked="$base"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -5229,6 +5207,8 @@ found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
 if test "x$ga_cv_mpic_naked" = x; then :
 
+# prepend any CC/CXX/F77 the user may have specified
+compilers="$ga_orig_CC $compilers"
 echo "only comparing stdout" >&5
 for version in $versions
 do
@@ -5366,10 +5346,12 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpic_naked" >&5
 $as_echo "$ga_cv_mpic_naked" >&6; }
 if test "x$ga_cv_mpic_naked" = x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the C compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the C compiler wrapped by MPI" >&2;}
-     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
-$as_echo "$as_me: WARNING: This is usually okay" >&2;}
+  as_fn_error $? "Could not determine the C compiler wrapped by MPI" "$LINENO" 5
+else
+  if test "x$ga_orig_CC" != x && test "x$ga_orig_CC" != "x$ga_cv_mpic_naked"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_CC" >&5
+$as_echo "$as_me: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_CC" >&2;}
+fi
 fi
 
 
@@ -5525,23 +5507,37 @@ esac
 # In the case of using MPI wrappers, set CXX=MPICXX since CXX will override
 # absolutely everything in our list of compilers.
 if test x$with_mpi_wrappers = xyes; then :
-  ga_save_CXX="$CXX"
-     CXX="$MPICXX"
-     if test "x$MPICXX" != x; then :
-  if test "x$ga_save_CXX" != x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPICXX is set and CXX is set" >&5
-$as_echo "$as_me: WARNING: MPI compilers desired, MPICXX is set and CXX is set" >&2;}
-             { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICXX over CXX" >&5
-$as_echo "$as_me: WARNING: Choosing MPICXX over CXX" >&2;}
+  if test "x$CXX" != "x$MPICXX"; then :
+  ga_orig_CXX="$CXX"
 fi
-else
-  if test "x$ga_save_CXX" != x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired but CXX is set, ignoring" >&5
-$as_echo "$as_me: WARNING: MPI compilers desired but CXX is set, ignoring" >&2;}
-             { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Perhaps you mean to set MPICXX instead?" >&5
-$as_echo "$as_me: WARNING: Perhaps you mean to set MPICXX instead?" >&2;}
+     case x$CXX:x$MPICXX in #(
+  x:x) :
+     ;; #(
+  x:x*) :
+    CXX="$MPICXX" ;; #(
+  x*:x) :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired but CXX is set while MPICXX is unset." >&5
+$as_echo "$as_me: WARNING: MPI compilers desired but CXX is set while MPICXX is unset." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CXX will be ignored during compiler selection, but will be" >&5
+$as_echo "$as_me: WARNING: CXX will be ignored during compiler selection, but will be" >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: tested first during MPI compiler unwrapping. Perhaps you" >&5
+$as_echo "$as_me: WARNING: tested first during MPI compiler unwrapping. Perhaps you" >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: meant to set MPICXX instead of or in addition to CXX?" >&5
+$as_echo "$as_me: WARNING: meant to set MPICXX instead of or in addition to CXX?" >&2;}
+ CXX= ;; #(
+  x*:x*) :
+    if test "x$CXX" != "x$MPICXX"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPICXX and CXX are set, and MPICXX!=CXX." >&5
+$as_echo "$as_me: WARNING: MPI compilers desired, MPICXX and CXX are set, and MPICXX!=CXX." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPICXX over CXX." >&5
+$as_echo "$as_me: WARNING: Choosing MPICXX over CXX." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CXX will be tested first during MPI compiler unwrapping." >&5
+$as_echo "$as_me: WARNING: CXX will be tested first during MPI compiler unwrapping." >&2;}
 fi
-fi
+ CXX="$MPICXX" ;; #(
+  *) :
+    as_fn_error $? "CXX/MPICXX case failure" "$LINENO" 5 ;;
+esac
 fi
 ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC crayCC g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
 ga_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ mpiFCC CC"
@@ -6043,6 +6039,7 @@ esac
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $wrapped compiler" >&5
 $as_echo_n "checking for base $wrapped compiler... " >&6; }
 if test "${ga_cv_mpicxx_naked+set}" = set; then :
@@ -6064,7 +6061,7 @@ main ()
 }
 _ACEOF
 if ac_fn_cxx_try_link "$LINENO"; then :
-  ga_cv_mpicxx_naked=$base
+  ga_cv_mpicxx_naked="$base"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -6074,6 +6071,8 @@ found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
 if test "x$ga_cv_mpicxx_naked" = x; then :
 
+# prepend any CC/CXX/F77 the user may have specified
+compilers="$ga_orig_CXX $compilers"
 echo "only comparing stdout" >&5
 for version in $versions
 do
@@ -6211,10 +6210,12 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpicxx_naked" >&5
 $as_echo "$ga_cv_mpicxx_naked" >&6; }
 if test "x$ga_cv_mpicxx_naked" = x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the C++ compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the C++ compiler wrapped by MPI" >&2;}
-     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
-$as_echo "$as_me: WARNING: This is usually okay" >&2;}
+  as_fn_error $? "Could not determine the C++ compiler wrapped by MPI" "$LINENO" 5
+else
+  if test "x$ga_orig_CXX" != x && test "x$ga_orig_CXX" != "x$ga_cv_mpicxx_naked"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_CXX" >&5
+$as_echo "$as_me: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_CXX" >&2;}
+fi
 fi
 
 
@@ -7300,24 +7301,37 @@ fi
 # absolutely everything in our list of compilers.
 # Save F77, just in case.
 if test x$with_mpi_wrappers = xyes; then :
-  ga_save_F77="$F77"
-     F77="$MPIF77"
-     if test "x$MPIF77" != x; then :
-  if test "x$ga_save_F77" != x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPIF77 is set and F77 is set" >&5
-$as_echo "$as_me: WARNING: MPI compilers desired, MPIF77 is set and F77 is set" >&2;}
-             { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPIF77 over F77" >&5
-$as_echo "$as_me: WARNING: Choosing MPIF77 over F77" >&2;}
+  if test "x$F77" != "x$MPIF77"; then :
+  ga_orig_F77="$F77"
 fi
-else
-  if test "x$ga_save_F77" != x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired but F77 is set, ignoring" >&5
-$as_echo "$as_me: WARNING: MPI compilers desired but F77 is set, ignoring" >&2;}
-             { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Perhaps you meant to set MPIF77 instead?" >&5
-$as_echo "$as_me: WARNING: Perhaps you meant to set MPIF77 instead?" >&2;}
+     case x$F77:x$MPIF77 in #(
+  x:x) :
+     ;; #(
+  x:x*) :
+    F77="$MPIF77" ;; #(
+  x*:x) :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired but F77 is set while MPIF77 is unset." >&5
+$as_echo "$as_me: WARNING: MPI compilers desired but F77 is set while MPIF77 is unset." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: F77 will be ignored during compiler selection, but will be" >&5
+$as_echo "$as_me: WARNING: F77 will be ignored during compiler selection, but will be" >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: tested first during MPI compiler unwrapping. Perhaps you" >&5
+$as_echo "$as_me: WARNING: tested first during MPI compiler unwrapping. Perhaps you" >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: meant to set MPIF77 instead of or in addition to F77?" >&5
+$as_echo "$as_me: WARNING: meant to set MPIF77 instead of or in addition to F77?" >&2;}
+ F77= ;; #(
+  x*:x*) :
+    if test "x$F77" != "x$MPIF77"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: MPI compilers desired, MPIF77 and F77 are set, and MPIF77!=F77." >&5
+$as_echo "$as_me: WARNING: MPI compilers desired, MPIF77 and F77 are set, and MPIF77!=F77." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Choosing MPIF77 over F77." >&5
+$as_echo "$as_me: WARNING: Choosing MPIF77 over F77." >&2;}
+ { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: F77 will be tested first during MPI compiler unwrapping." >&5
+$as_echo "$as_me: WARNING: F77 will be tested first during MPI compiler unwrapping." >&2;}
 fi
-fi
-
+ F77="$MPIF77" ;; #(
+  *) :
+    as_fn_error $? "F77/MPIF77 case failure" "$LINENO" 5 ;;
+esac
 fi
 ga_mpif95="mpif95 mpxlf95_r mpxlf95 ftn"
 ga_mpif90="mpif90 mpxlf90_r mpxlf90 mpf90 cmpif90c sxmpif90"
@@ -7649,6 +7663,7 @@ esac
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $wrapped compiler" >&5
 $as_echo_n "checking for base $wrapped compiler... " >&6; }
 if test "${ga_cv_mpif77_naked+set}" = set; then :
@@ -7664,7 +7679,7 @@ cat > conftest.$ac_ext <<_ACEOF
       end
 _ACEOF
 if ac_fn_f77_try_link "$LINENO"; then :
-  ga_cv_mpif77_naked=$base
+  ga_cv_mpif77_naked="$base"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -7674,6 +7689,8 @@ found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
 if test "x$ga_cv_mpif77_naked" = x; then :
 
+# prepend any CC/CXX/F77 the user may have specified
+compilers="$ga_orig_F77 $compilers"
 echo "only comparing stdout" >&5
 for version in $versions
 do
@@ -7811,10 +7828,12 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpif77_naked" >&5
 $as_echo "$ga_cv_mpif77_naked" >&6; }
 if test "x$ga_cv_mpif77_naked" = x; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not determine the Fortran 77 compiler wrapped by MPI" >&5
-$as_echo "$as_me: WARNING: Could not determine the Fortran 77 compiler wrapped by MPI" >&2;}
-     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This is usually okay" >&5
-$as_echo "$as_me: WARNING: This is usually okay" >&2;}
+  as_fn_error $? "Could not determine the Fortran 77 compiler wrapped by MPI" "$LINENO" 5
+else
+  if test "x$ga_orig_F77" != x && test "x$ga_orig_F77" != "x$ga_cv_mpif77_naked"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_F77" >&5
+$as_echo "$as_me: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_F77" >&2;}
+fi
 fi
 
 

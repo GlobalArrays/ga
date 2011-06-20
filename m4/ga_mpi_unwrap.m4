@@ -78,17 +78,20 @@ AC_LANG_CASE(
 [Fortran], [
 ])
 AS_VAR_PUSHDEF([ga_save_comp], [ga_save_[]_AC_CC[]])
+AS_VAR_PUSHDEF([ga_orig_comp], [ga_orig_[]_AC_CC[]])
 AS_VAR_PUSHDEF([ga_cv_mpi_naked], [ga_cv_mpi[]_AC_LANG_ABBREV[]_naked])
 AC_CACHE_CHECK([for base $wrapped compiler], [ga_cv_mpi_naked], [
 base="`$wrapped -show 2>/dev/null | sed 's/@<:@ \t@:>@.*@S|@//' | head -1`"
 ga_save_comp="$_AC_CC"
 _AC_CC="$base"
-AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])], [ga_cv_mpi_naked=$base])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])], [ga_cv_mpi_naked="$base"])
 _AC_CC="$ga_save_comp"
 versions="--version -v -V -qversion"
 found_wrapped_version=0
 # Try separating stdout and stderr. Only compare stdout.
 AS_IF([test "x$ga_cv_mpi_naked" = x], [
+# prepend any CC/CXX/F77 the user may have specified
+compilers="$ga_orig_comp $compilers"
 echo "only comparing stdout" >&AS_MESSAGE_LOG_FD
 for version in $versions
 do
@@ -182,8 +185,9 @@ done
 rm -f mpi.txt mpi.err naked.txt naked.err
 ])
 AS_IF([test "x$ga_cv_mpi_naked" = x],
-    [AC_MSG_WARN([Could not determine the ]_AC_LANG[ compiler wrapped by MPI])
-     AC_MSG_WARN([This is usually okay])])
+    [AC_MSG_ERROR([Could not determine the ]_AC_LANG[ compiler wrapped by MPI])],
+    [AS_IF([test "x$ga_orig_comp" != x && test "x$ga_orig_comp" != "x$ga_cv_mpi_naked"],
+        [AC_MSG_WARN([unwrapped $wrapped ($base) does not match user-specified $ga_orig_comp])])])
 AS_VAR_POPDEF([ga_save_comp])
 AS_VAR_POPDEF([ga_cv_mpi_naked])
 rm -f inside.pl
