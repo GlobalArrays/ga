@@ -59,7 +59,7 @@ void tcg_dgop(long type, double *x, long n, char *op)
 
 double tcg_drand48()
 {
-    return DRAND48_();
+    return ( (double) random() ) * 4.6566128752458e-10;
 }
 
 
@@ -241,9 +241,9 @@ void tcg_snd(long type, void *buf, long lenbuf, long node, long sync)
 
 void tcg_srand48(long seed)
 {
-    Integer aseed = seed;
+    unsigned int aseed = seed;
 
-    SRAND48_(&aseed);
+    srandom(aseed);
 }
 
 

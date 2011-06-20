@@ -22,7 +22,7 @@ extern "C" {
 
 extern void BRDCST_(INT *type, char *buf, INT *lenbuf, INT *originator);
 extern void DGOP_(INT *type, DBL *x, INT *n, char *op, int oplen);
-extern DBL  DRAND48_();
+/*extern DBL  DRAND48_();*/
 extern void IGOP_(INT *type, INT *x, INT *n, char *op, int oplen);
 extern void LLOG_();
 extern INT  MDTOB_(INT *n);
@@ -43,7 +43,7 @@ extern INT  PROBE_(INT *type, INT *node);
 extern void RCV_(INT *type, char *buf, INT *lenbuf, INT *lenmes, INT *nodeselect, INT * nodefrom, INT *sync);
 extern void SETDBG_(INT *value);
 extern void SND_(INT *type, char *buf, INT *lenbuf, INT *node, INT *sync);
-extern void SRAND48_(INT *seed);
+/*extern void SRAND48_(INT *seed);*/
 extern void STATS_();
 extern void SYNCH_(INT *type);
 extern INT  TCGREADY_();

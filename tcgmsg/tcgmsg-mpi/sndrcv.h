@@ -166,12 +166,12 @@ void PARERR_(Integer *code);
 /**
  * returns DoublePrecision precision random no. in [0.0,1.0]
  */
-extern DoublePrecision FATR DRAND48_();
+/*extern DoublePrecision FATR DRAND48_();*/
 
 /**
  * sets seed of DRAND48 ... seed a positive integer
  */
-extern void FATR SRAND48_(Integer *seed);
+/*extern void FATR SRAND48_(Integer *seed);*/
 
 /**
  * returns no. of bytes that *n DoublePrecision occupy
