@@ -27,7 +27,7 @@
 /* deallocate bytes */
 #define bytefree(pointer)    (void)free((char *)(pointer))
 
-#ifdef STDC_HEADERS
+#if HAVE_STRING_H
 #   include <string.h>
 #else
 #   ifndef HAVE_STRCHR
