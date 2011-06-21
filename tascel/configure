@@ -670,8 +670,6 @@ ac_ct_CXX
 CXXFLAGS
 CXX
 MPICXX
-CROSS_COMPILING_FALSE
-CROSS_COMPILING_TRUE
 PERL
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
@@ -695,6 +693,36 @@ GA_MP_LDFLAGS
 GA_MP_LIBS
 TASCEL_STANDALONE_FALSE
 TASCEL_STANDALONE_TRUE
+MAINT
+MAINTAINER_MODE_FALSE
+MAINTAINER_MODE_TRUE
+AM_BACKSLASH
+AM_DEFAULT_VERBOSITY
+am__untar
+am__tar
+AMTAR
+am__leading_dot
+SET_MAKE
+AWK
+mkdir_p
+MKDIR_P
+INSTALL_STRIP_PROGRAM
+STRIP
+install_sh
+MAKEINFO
+AUTOHEADER
+AUTOMAKE
+AUTOCONF
+ACLOCAL
+VERSION
+PACKAGE
+CYGPATH_W
+am__isrc
+INSTALL_DATA
+INSTALL_SCRIPT
+INSTALL_PROGRAM
+CROSS_COMPILING_FALSE
+CROSS_COMPILING_TRUE
 SOLARIS_FALSE
 SOLARIS_TRUE
 SGITFP_FALSE
@@ -751,34 +779,6 @@ build_os
 build_vendor
 build_cpu
 build
-MAINT
-MAINTAINER_MODE_FALSE
-MAINTAINER_MODE_TRUE
-AM_BACKSLASH
-AM_DEFAULT_VERBOSITY
-am__untar
-am__tar
-AMTAR
-am__leading_dot
-SET_MAKE
-AWK
-mkdir_p
-MKDIR_P
-INSTALL_STRIP_PROGRAM
-STRIP
-install_sh
-MAKEINFO
-AUTOHEADER
-AUTOMAKE
-AUTOCONF
-ACLOCAL
-VERSION
-PACKAGE
-CYGPATH_W
-am__isrc
-INSTALL_DATA
-INSTALL_SCRIPT
-INSTALL_PROGRAM
 target_alias
 host_alias
 build_alias
@@ -3188,6 +3188,409 @@ ac_config_headers="$ac_config_headers config.h"
 
 
 ###############################################################################
+# Must occur before automake init
+###############################################################################
+# Make sure we can run config.sub.
+$SHELL "$ac_aux_dir/config.sub" sun4 >/dev/null 2>&1 ||
+  as_fn_error $? "cannot run $SHELL $ac_aux_dir/config.sub" "$LINENO" 5
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking build system type" >&5
+$as_echo_n "checking build system type... " >&6; }
+if test "${ac_cv_build+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_build_alias=$build_alias
+test "x$ac_build_alias" = x &&
+  ac_build_alias=`$SHELL "$ac_aux_dir/config.guess"`
+test "x$ac_build_alias" = x &&
+  as_fn_error $? "cannot guess build type; you must specify one" "$LINENO" 5
+ac_cv_build=`$SHELL "$ac_aux_dir/config.sub" $ac_build_alias` ||
+  as_fn_error $? "$SHELL $ac_aux_dir/config.sub $ac_build_alias failed" "$LINENO" 5
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_build" >&5
+$as_echo "$ac_cv_build" >&6; }
+case $ac_cv_build in
+*-*-*) ;;
+*) as_fn_error $? "invalid value of canonical build" "$LINENO" 5;;
+esac
+build=$ac_cv_build
+ac_save_IFS=$IFS; IFS='-'
+set x $ac_cv_build
+shift
+build_cpu=$1
+build_vendor=$2
+shift; shift
+# Remember, the first character of IFS is used to create $*,
+# except with old shells:
+build_os=$*
+IFS=$ac_save_IFS
+case $build_os in *\ *) build_os=`echo "$build_os" | sed 's/ /-/g'`;; esac
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking host system type" >&5
+$as_echo_n "checking host system type... " >&6; }
+if test "${ac_cv_host+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "x$host_alias" = x; then
+  ac_cv_host=$ac_cv_build
+else
+  ac_cv_host=`$SHELL "$ac_aux_dir/config.sub" $host_alias` ||
+    as_fn_error $? "$SHELL $ac_aux_dir/config.sub $host_alias failed" "$LINENO" 5
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_host" >&5
+$as_echo "$ac_cv_host" >&6; }
+case $ac_cv_host in
+*-*-*) ;;
+*) as_fn_error $? "invalid value of canonical host" "$LINENO" 5;;
+esac
+host=$ac_cv_host
+ac_save_IFS=$IFS; IFS='-'
+set x $ac_cv_host
+shift
+host_cpu=$1
+host_vendor=$2
+shift; shift
+# Remember, the first character of IFS is used to create $*,
+# except with old shells:
+host_os=$*
+IFS=$ac_save_IFS
+case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
+
+
+# AH_TEMPLATE for all known TARGETs
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for TARGET base (64bit-ness checked later)" >&5
+$as_echo_n "checking for TARGET base (64bit-ness checked later)... " >&6; }
+if test "${ga_cv_target_base+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ga_cv_target_base=UNKNOWN
+if test "x$ga_cv_target_base" = xUNKNOWN; then :
+  if test -f /bgsys/drivers/ppcfloor/arch/include/common/bgp_personality.h; then :
+  ga_cv_target_base=BGP
+fi
+fi
+if test "x$ga_cv_target_base" = xUNKNOWN; then :
+  if test -d /bgl/BlueLight/ppcfloor/bglsys/include; then :
+  ga_cv_target_base=BGL
+fi
+fi
+if test "x$ga_cv_target_base" = xUNKNOWN; then :
+  case $host in #(
+  *bgl*) :
+    ga_cv_target_base=BGL ;; #(
+  *bgp*) :
+    ga_cv_target_base=BGP ;; #(
+  #[TODO],            [ga_cv_target_base=CATAMOUNT],
+        #[TODO],            [ga_cv_target_base=CRAY_XT],
+        *cygwin*) :
+    ga_cv_target_base=CYGWIN ;; #(
+  *fujitsu*) :
+    ga_cv_target_base=FUJITSU_VPP ;; #(
+  *hpux*) :
+    ga_cv_target_base=HPUX ;; #(
+  *ibm*) :
+    ga_cv_target_base=IBM ;; #(
+  #[TODO],            [ga_cv_target_base=LAPI],
+        *linux*) :
+    ga_cv_target_base=LINUX ;; #(
+  *darwin*) :
+    ga_cv_target_base=MACX ;; #(
+  *apple*) :
+    ga_cv_target_base=MACX ;; #(
+  *superux*) :
+    ga_cv_target_base=NEC ;; #(
+  *solaris*) :
+    ga_cv_target_base=SOLARIS ;; #(
+  *) :
+     ;;
+esac
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_target_base" >&5
+$as_echo "$ga_cv_target_base" >&6; }
+cat >>confdefs.h <<_ACEOF
+#define $ga_cv_target_base 1
+_ACEOF
+
+# A horrible hack that should go away somehow...
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we think this system is what we call SYSV" >&5
+$as_echo_n "checking whether we think this system is what we call SYSV... " >&6; }
+if test "${ga_cv_sysv+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ga_cv_target_base in #(
+  SUN|SOLARIS|SGI|SGI_N32|SGITFP|HPUX|IBM|DECOSF|LINUX|INTERIX|NEC|LAPI) :
+    ga_cv_sysv=yes ;; #(
+  *) :
+    ga_cv_sysv=no ;;
+esac
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_sysv" >&5
+$as_echo "$ga_cv_sysv" >&6; }
+    if test x$ga_cv_sysv = xyes; then :
+
+$as_echo "#define SYSV 1" >>confdefs.h
+
+fi
+# Hopefully these will never be used and we can remove them soon.
+ if test "$ga_cv_target_base" = BGL; then
+  BGL_TRUE=
+  BGL_FALSE='#'
+else
+  BGL_TRUE='#'
+  BGL_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = BGP; then
+  BGP_TRUE=
+  BGP_FALSE='#'
+else
+  BGP_TRUE='#'
+  BGP_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = CATAMOUNT; then
+  CATAMOUNT_TRUE=
+  CATAMOUNT_FALSE='#'
+else
+  CATAMOUNT_TRUE='#'
+  CATAMOUNT_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = CRAY_SV1; then
+  CRAY_SV1_TRUE=
+  CRAY_SV1_FALSE='#'
+else
+  CRAY_SV1_TRUE='#'
+  CRAY_SV1_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = CRAY_SV2; then
+  CRAY_SV2_TRUE=
+  CRAY_SV2_FALSE='#'
+else
+  CRAY_SV2_TRUE='#'
+  CRAY_SV2_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = CRAY_T3E; then
+  CRAY_T3E_TRUE=
+  CRAY_T3E_FALSE='#'
+else
+  CRAY_T3E_TRUE='#'
+  CRAY_T3E_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = CRAY_XT; then
+  CRAY_XT_TRUE=
+  CRAY_XT_FALSE='#'
+else
+  CRAY_XT_TRUE='#'
+  CRAY_XT_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = CRAY_YMP; then
+  CRAY_YMP_TRUE=
+  CRAY_YMP_FALSE='#'
+else
+  CRAY_YMP_TRUE='#'
+  CRAY_YMP_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = CYGNUS; then
+  CYGNUS_TRUE=
+  CYGNUS_FALSE='#'
+else
+  CYGNUS_TRUE='#'
+  CYGNUS_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = CYGWIN; then
+  CYGWIN_TRUE=
+  CYGWIN_FALSE='#'
+else
+  CYGWIN_TRUE='#'
+  CYGWIN_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = DECOSF; then
+  DECOSF_TRUE=
+  DECOSF_FALSE='#'
+else
+  DECOSF_TRUE='#'
+  DECOSF_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = FUJITSU_VPP; then
+  FUJITSU_VPP_TRUE=
+  FUJITSU_VPP_FALSE='#'
+else
+  FUJITSU_VPP_TRUE='#'
+  FUJITSU_VPP_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = HITACHI; then
+  HITACHI_TRUE=
+  HITACHI_FALSE='#'
+else
+  HITACHI_TRUE='#'
+  HITACHI_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = HPUX; then
+  HPUX_TRUE=
+  HPUX_FALSE='#'
+else
+  HPUX_TRUE='#'
+  HPUX_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = IBM; then
+  IBM_TRUE=
+  IBM_FALSE='#'
+else
+  IBM_TRUE='#'
+  IBM_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = INTERIX; then
+  INTERIX_TRUE=
+  INTERIX_FALSE='#'
+else
+  INTERIX_TRUE='#'
+  INTERIX_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = LAPI; then
+  LAPI_TRUE=
+  LAPI_FALSE='#'
+else
+  LAPI_TRUE='#'
+  LAPI_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = LINUX; then
+  LINUX_TRUE=
+  LINUX_FALSE='#'
+else
+  LINUX_TRUE='#'
+  LINUX_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = MACX; then
+  MACX_TRUE=
+  MACX_FALSE='#'
+else
+  MACX_TRUE='#'
+  MACX_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = NEC; then
+  NEC_TRUE=
+  NEC_FALSE='#'
+else
+  NEC_TRUE='#'
+  NEC_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = SGI; then
+  SGI_TRUE=
+  SGI_FALSE='#'
+else
+  SGI_TRUE='#'
+  SGI_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = SGI_N32; then
+  SGI_N32_TRUE=
+  SGI_N32_FALSE='#'
+else
+  SGI_N32_TRUE='#'
+  SGI_N32_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = SGITFP; then
+  SGITFP_TRUE=
+  SGITFP_FALSE='#'
+else
+  SGITFP_TRUE='#'
+  SGITFP_FALSE=
+fi
+
+ if test "$ga_cv_target_base" = SOLARIS; then
+  SOLARIS_TRUE=
+  SOLARIS_FALSE='#'
+else
+  SOLARIS_TRUE='#'
+  SOLARIS_FALSE=
+fi
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we are cross compiling" >&5
+$as_echo_n "checking whether we are cross compiling... " >&6; }
+if test "${ga_cv_cross_compiling+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "x$ga_cv_target_base" = xBGP; then :
+  cross_compiling=yes
+fi
+     ga_cv_cross_compiling=$cross_compiling
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_cross_compiling" >&5
+$as_echo "$ga_cv_cross_compiling" >&6; }
+ if test "x$cross_compiling" = xyes; then
+  CROSS_COMPILING_TRUE=
+  CROSS_COMPILING_FALSE='#'
+else
+  CROSS_COMPILING_TRUE='#'
+  CROSS_COMPILING_FALSE=
+fi
+
+
+
+###############################################################################
 # Init automake
 ###############################################################################
 am__api_version='1.11'
@@ -3709,383 +4112,6 @@ fi
 ###############################################################################
 # Misc. information and package setup.
 ###############################################################################
-# Make sure we can run config.sub.
-$SHELL "$ac_aux_dir/config.sub" sun4 >/dev/null 2>&1 ||
-  as_fn_error $? "cannot run $SHELL $ac_aux_dir/config.sub" "$LINENO" 5
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking build system type" >&5
-$as_echo_n "checking build system type... " >&6; }
-if test "${ac_cv_build+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_build_alias=$build_alias
-test "x$ac_build_alias" = x &&
-  ac_build_alias=`$SHELL "$ac_aux_dir/config.guess"`
-test "x$ac_build_alias" = x &&
-  as_fn_error $? "cannot guess build type; you must specify one" "$LINENO" 5
-ac_cv_build=`$SHELL "$ac_aux_dir/config.sub" $ac_build_alias` ||
-  as_fn_error $? "$SHELL $ac_aux_dir/config.sub $ac_build_alias failed" "$LINENO" 5
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_build" >&5
-$as_echo "$ac_cv_build" >&6; }
-case $ac_cv_build in
-*-*-*) ;;
-*) as_fn_error $? "invalid value of canonical build" "$LINENO" 5;;
-esac
-build=$ac_cv_build
-ac_save_IFS=$IFS; IFS='-'
-set x $ac_cv_build
-shift
-build_cpu=$1
-build_vendor=$2
-shift; shift
-# Remember, the first character of IFS is used to create $*,
-# except with old shells:
-build_os=$*
-IFS=$ac_save_IFS
-case $build_os in *\ *) build_os=`echo "$build_os" | sed 's/ /-/g'`;; esac
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking host system type" >&5
-$as_echo_n "checking host system type... " >&6; }
-if test "${ac_cv_host+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "x$host_alias" = x; then
-  ac_cv_host=$ac_cv_build
-else
-  ac_cv_host=`$SHELL "$ac_aux_dir/config.sub" $host_alias` ||
-    as_fn_error $? "$SHELL $ac_aux_dir/config.sub $host_alias failed" "$LINENO" 5
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_host" >&5
-$as_echo "$ac_cv_host" >&6; }
-case $ac_cv_host in
-*-*-*) ;;
-*) as_fn_error $? "invalid value of canonical host" "$LINENO" 5;;
-esac
-host=$ac_cv_host
-ac_save_IFS=$IFS; IFS='-'
-set x $ac_cv_host
-shift
-host_cpu=$1
-host_vendor=$2
-shift; shift
-# Remember, the first character of IFS is used to create $*,
-# except with old shells:
-host_os=$*
-IFS=$ac_save_IFS
-case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
-
-
-# AH_TEMPLATE for all known TARGETs
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for TARGET base (64bit-ness checked later)" >&5
-$as_echo_n "checking for TARGET base (64bit-ness checked later)... " >&6; }
-if test "${ga_cv_target_base+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ga_cv_target_base=UNKNOWN
-if test "x$ga_cv_target_base" = xUNKNOWN; then :
-  if test -f /bgsys/drivers/ppcfloor/arch/include/common/bgp_personality.h; then :
-  ga_cv_target_base=BGP
-fi
-fi
-if test "x$ga_cv_target_base" = xUNKNOWN; then :
-  if test -d /bgl/BlueLight/ppcfloor/bglsys/include; then :
-  ga_cv_target_base=BGL
-fi
-fi
-if test "x$ga_cv_target_base" = xUNKNOWN; then :
-  case $host in #(
-  *bgl*) :
-    ga_cv_target_base=BGL ;; #(
-  *bgp*) :
-    ga_cv_target_base=BGP ;; #(
-  #[TODO],            [ga_cv_target_base=CATAMOUNT],
-        #[TODO],            [ga_cv_target_base=CRAY_XT],
-        *cygwin*) :
-    ga_cv_target_base=CYGWIN ;; #(
-  *fujitsu*) :
-    ga_cv_target_base=FUJITSU_VPP ;; #(
-  *hpux*) :
-    ga_cv_target_base=HPUX ;; #(
-  *ibm*) :
-    ga_cv_target_base=IBM ;; #(
-  #[TODO],            [ga_cv_target_base=LAPI],
-        *linux*) :
-    ga_cv_target_base=LINUX ;; #(
-  *darwin*) :
-    ga_cv_target_base=MACX ;; #(
-  *apple*) :
-    ga_cv_target_base=MACX ;; #(
-  *superux*) :
-    ga_cv_target_base=NEC ;; #(
-  *solaris*) :
-    ga_cv_target_base=SOLARIS ;; #(
-  *) :
-     ;;
-esac
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_target_base" >&5
-$as_echo "$ga_cv_target_base" >&6; }
-cat >>confdefs.h <<_ACEOF
-#define $ga_cv_target_base 1
-_ACEOF
-
-# A horrible hack that should go away somehow...
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we think this system is what we call SYSV" >&5
-$as_echo_n "checking whether we think this system is what we call SYSV... " >&6; }
-if test "${ga_cv_sysv+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $ga_cv_target_base in #(
-  SUN|SOLARIS|SGI|SGI_N32|SGITFP|HPUX|IBM|DECOSF|LINUX|INTERIX|NEC|LAPI) :
-    ga_cv_sysv=yes ;; #(
-  *) :
-    ga_cv_sysv=no ;;
-esac
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_sysv" >&5
-$as_echo "$ga_cv_sysv" >&6; }
-    if test x$ga_cv_sysv = xyes; then :
-
-$as_echo "#define SYSV 1" >>confdefs.h
-
-fi
-# Hopefully these will never be used and we can remove them soon.
- if test "$ga_cv_target_base" = BGL; then
-  BGL_TRUE=
-  BGL_FALSE='#'
-else
-  BGL_TRUE='#'
-  BGL_FALSE=
-fi
-
- if test "$ga_cv_target_base" = BGP; then
-  BGP_TRUE=
-  BGP_FALSE='#'
-else
-  BGP_TRUE='#'
-  BGP_FALSE=
-fi
-
- if test "$ga_cv_target_base" = CATAMOUNT; then
-  CATAMOUNT_TRUE=
-  CATAMOUNT_FALSE='#'
-else
-  CATAMOUNT_TRUE='#'
-  CATAMOUNT_FALSE=
-fi
-
- if test "$ga_cv_target_base" = CRAY_SV1; then
-  CRAY_SV1_TRUE=
-  CRAY_SV1_FALSE='#'
-else
-  CRAY_SV1_TRUE='#'
-  CRAY_SV1_FALSE=
-fi
-
- if test "$ga_cv_target_base" = CRAY_SV2; then
-  CRAY_SV2_TRUE=
-  CRAY_SV2_FALSE='#'
-else
-  CRAY_SV2_TRUE='#'
-  CRAY_SV2_FALSE=
-fi
-
- if test "$ga_cv_target_base" = CRAY_T3E; then
-  CRAY_T3E_TRUE=
-  CRAY_T3E_FALSE='#'
-else
-  CRAY_T3E_TRUE='#'
-  CRAY_T3E_FALSE=
-fi
-
- if test "$ga_cv_target_base" = CRAY_XT; then
-  CRAY_XT_TRUE=
-  CRAY_XT_FALSE='#'
-else
-  CRAY_XT_TRUE='#'
-  CRAY_XT_FALSE=
-fi
-
- if test "$ga_cv_target_base" = CRAY_YMP; then
-  CRAY_YMP_TRUE=
-  CRAY_YMP_FALSE='#'
-else
-  CRAY_YMP_TRUE='#'
-  CRAY_YMP_FALSE=
-fi
-
- if test "$ga_cv_target_base" = CYGNUS; then
-  CYGNUS_TRUE=
-  CYGNUS_FALSE='#'
-else
-  CYGNUS_TRUE='#'
-  CYGNUS_FALSE=
-fi
-
- if test "$ga_cv_target_base" = CYGWIN; then
-  CYGWIN_TRUE=
-  CYGWIN_FALSE='#'
-else
-  CYGWIN_TRUE='#'
-  CYGWIN_FALSE=
-fi
-
- if test "$ga_cv_target_base" = DECOSF; then
-  DECOSF_TRUE=
-  DECOSF_FALSE='#'
-else
-  DECOSF_TRUE='#'
-  DECOSF_FALSE=
-fi
-
- if test "$ga_cv_target_base" = FUJITSU_VPP; then
-  FUJITSU_VPP_TRUE=
-  FUJITSU_VPP_FALSE='#'
-else
-  FUJITSU_VPP_TRUE='#'
-  FUJITSU_VPP_FALSE=
-fi
-
- if test "$ga_cv_target_base" = HITACHI; then
-  HITACHI_TRUE=
-  HITACHI_FALSE='#'
-else
-  HITACHI_TRUE='#'
-  HITACHI_FALSE=
-fi
-
- if test "$ga_cv_target_base" = HPUX; then
-  HPUX_TRUE=
-  HPUX_FALSE='#'
-else
-  HPUX_TRUE='#'
-  HPUX_FALSE=
-fi
-
- if test "$ga_cv_target_base" = IBM; then
-  IBM_TRUE=
-  IBM_FALSE='#'
-else
-  IBM_TRUE='#'
-  IBM_FALSE=
-fi
-
- if test "$ga_cv_target_base" = INTERIX; then
-  INTERIX_TRUE=
-  INTERIX_FALSE='#'
-else
-  INTERIX_TRUE='#'
-  INTERIX_FALSE=
-fi
-
- if test "$ga_cv_target_base" = LAPI; then
-  LAPI_TRUE=
-  LAPI_FALSE='#'
-else
-  LAPI_TRUE='#'
-  LAPI_FALSE=
-fi
-
- if test "$ga_cv_target_base" = LINUX; then
-  LINUX_TRUE=
-  LINUX_FALSE='#'
-else
-  LINUX_TRUE='#'
-  LINUX_FALSE=
-fi
-
- if test "$ga_cv_target_base" = MACX; then
-  MACX_TRUE=
-  MACX_FALSE='#'
-else
-  MACX_TRUE='#'
-  MACX_FALSE=
-fi
-
- if test "$ga_cv_target_base" = NEC; then
-  NEC_TRUE=
-  NEC_FALSE='#'
-else
-  NEC_TRUE='#'
-  NEC_FALSE=
-fi
-
- if test "$ga_cv_target_base" = SGI; then
-  SGI_TRUE=
-  SGI_FALSE='#'
-else
-  SGI_TRUE='#'
-  SGI_FALSE=
-fi
-
- if test "$ga_cv_target_base" = SGI_N32; then
-  SGI_N32_TRUE=
-  SGI_N32_FALSE='#'
-else
-  SGI_N32_TRUE='#'
-  SGI_N32_FALSE=
-fi
-
- if test "$ga_cv_target_base" = SGITFP; then
-  SGITFP_TRUE=
-  SGITFP_FALSE='#'
-else
-  SGITFP_TRUE='#'
-  SGITFP_FALSE=
-fi
-
- if test "$ga_cv_target_base" = SOLARIS; then
-  SOLARIS_TRUE=
-  SOLARIS_FALSE='#'
-else
-  SOLARIS_TRUE='#'
-  SOLARIS_FALSE=
-fi
-
-
-
 
 # Check whether --with-PACKAGE was given.
 if test "${with_PACKAGE+set}" = set; then :
@@ -5448,29 +5474,6 @@ $as_echo "$ga_cv_target" >&6; }
 cat >>confdefs.h <<_ACEOF
 #define $ga_cv_target 1
 _ACEOF
-
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we are cross compiling" >&5
-$as_echo_n "checking whether we are cross compiling... " >&6; }
-if test "${ga_cv_cross_compiling+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "x$ga_cv_target_base" = xBGP; then :
-  cross_compiling=yes
-fi
-     ga_cv_cross_compiling=$cross_compiling
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_cross_compiling" >&5
-$as_echo "$ga_cv_cross_compiling" >&6; }
- if test "x$cross_compiling" = xyes; then
-  CROSS_COMPILING_TRUE=
-  CROSS_COMPILING_FALSE='#'
-else
-  CROSS_COMPILING_TRUE='#'
-  CROSS_COMPILING_FALSE=
-fi
 
 
 
@@ -27409,18 +27412,6 @@ LIBOBJS=$ac_libobjs
 LTLIBOBJS=$ac_ltlibobjs
 
 
- if test -n "$EXEEXT"; then
-  am__EXEEXT_TRUE=
-  am__EXEEXT_FALSE='#'
-else
-  am__EXEEXT_TRUE='#'
-  am__EXEEXT_FALSE=
-fi
-
-if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then
-  as_fn_error $? "conditional \"MAINTAINER_MODE\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${BGL_TRUE}" && test -z "${BGL_FALSE}"; then
   as_fn_error $? "conditional \"BGL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -27517,6 +27508,22 @@ if test -z "${SOLARIS_TRUE}" && test -z "${SOLARIS_FALSE}"; then
   as_fn_error $? "conditional \"SOLARIS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${CROSS_COMPILING_TRUE}" && test -z "${CROSS_COMPILING_FALSE}"; then
+  as_fn_error $? "conditional \"CROSS_COMPILING\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+ if test -n "$EXEEXT"; then
+  am__EXEEXT_TRUE=
+  am__EXEEXT_FALSE='#'
+else
+  am__EXEEXT_TRUE='#'
+  am__EXEEXT_FALSE=
+fi
+
+if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then
+  as_fn_error $? "conditional \"MAINTAINER_MODE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${TASCEL_STANDALONE_TRUE}" && test -z "${TASCEL_STANDALONE_FALSE}"; then
   as_fn_error $? "conditional \"TASCEL_STANDALONE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -27527,10 +27534,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${CROSS_COMPILING_TRUE}" && test -z "${CROSS_COMPILING_FALSE}"; then
-  as_fn_error $? "conditional \"CROSS_COMPILING\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then

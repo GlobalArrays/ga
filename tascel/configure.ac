@@ -10,6 +10,12 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/Comm.h])
 
 ###############################################################################
+# Must occur before automake init
+###############################################################################
+GA_TARGET
+GA_CROSS_COMPILING
+
+###############################################################################
 # Init automake
 ###############################################################################
 AM_INIT_AUTOMAKE([color-tests foreign parallel-tests silent-rules subdir-objects])
@@ -20,8 +26,6 @@ AM_MAINTAINER_MODE
 ###############################################################################
 # Misc. information and package setup.
 ###############################################################################
-GA_TARGET
-
 GA_WITH_HELP
 
 TASCEL_TOP_BUILDDIR="`pwd`"
@@ -65,7 +69,6 @@ GA_MPICC_TEST_COMPILE
 AC_SUBST([EXEEXT], [.x$EXEEXT])
 
 GA_TARGET64
-GA_CROSS_COMPILING
 
 # Checks for C header files.
 

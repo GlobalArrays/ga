@@ -14,6 +14,12 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/common/armci.c])
 
 ###############################################################################
+# Must occur before automake init
+###############################################################################
+GA_TARGET
+GA_CROSS_COMPILING
+
+###############################################################################
 # Init automake
 ###############################################################################
 AM_INIT_AUTOMAKE([color-tests foreign parallel-tests silent-rules subdir-objects])
@@ -24,8 +30,6 @@ AM_MAINTAINER_MODE
 ###############################################################################
 # Misc. information and package setup.
 ###############################################################################
-GA_TARGET
-
 GA_WITH_HELP
 
 ARMCI_TOP_BUILDDIR="`pwd`"
@@ -98,7 +102,6 @@ AS_IF([test "x$with_mpi" != xno], [
 AC_SUBST([EXEEXT], [.x$EXEEXT])
 
 GA_TARGET64
-GA_CROSS_COMPILING
 
 # Establish the underlying network infrastructure (SOCKETS, OPENIB, etc)
 GA_ARMCI_NETWORK
