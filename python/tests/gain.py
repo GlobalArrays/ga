@@ -1,9 +1,8 @@
 from mpi4py import MPI
-from ga import ga
+import ga
 from ga import gain
 from ga.gain import util
 import numpy as np
-import inspect
 from getopt import getopt
 import sys
 

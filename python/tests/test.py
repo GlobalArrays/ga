@@ -7,7 +7,7 @@ import random
 import sys
 
 from mpi4py import MPI
-from ga import ga
+import ga
 import numpy as np
 
 me = ga.nodeid()

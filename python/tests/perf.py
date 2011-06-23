@@ -7,7 +7,7 @@ import time
 import sys
 
 import mpi4py.MPI
-from ga import ga
+import ga
 
 import numpy as np
 
