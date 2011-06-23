@@ -3680,6 +3680,7 @@ class flatiter(object):
         # THIS OPERATION IS COLLECTIVE
         # we expect key to be a single value or a slice, but might also be an
         # iterable of length 1
+        sync()
         try:
             key = key[0]
         except:

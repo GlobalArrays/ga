@@ -1698,12 +1698,12 @@ def gather(int g_a, subsarray, np.ndarray values=None):
     cdef int64_t n
     # prepare subsarray
     try:
-        subsarray1_nd = np.asarray(subsarray, dtype=np.int64)
+        subsarray1_nd = np.ascontiguousarray(subsarray, dtype=np.int64)
         n = len(subsarray1_nd) / ndim
     except ValueError:
         subsarray1_nd = None
         try:
-            subsarray2_nd = np.asarray(subsarray, dtype=np.int64)
+            subsarray2_nd = np.ascontiguousarray(subsarray, dtype=np.int64)
             n = len(subsarray2_nd) # length of first dimension of subsarray2_nd
         except ValueError:
             raise ValueError, "subsarray must be either 1- or 2-dimensional"
