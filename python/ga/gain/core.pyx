@@ -218,6 +218,12 @@ class ndarray(object):
         Whether this is a 'real' view of a complex ndarray.
     _is_imag : bool
         Whether this is an 'imag' view of a complex ndarray.
+    _T : None, tuple of ints
+        None, or a tuple of ints If a transpose has been applied. 'i' in the
+        'j'-th place in the tuple means 'a's 'i'-th axis becomes
+        'a.transpose()'s 'j'-th axis.
+    _T_inv : None, tuple of ints
+        The inverse of _T, or how to reverse the current transpose
 
     See Also
     --------
@@ -271,15 +277,18 @@ class ndarray(object):
             iter(shape)
         except:
             shape = [shape]
-        self._shape = shape
+        shape = tuple(shape)
         self._dtype = np.dtype(dtype)
         self._order = order
         self._base = base
         self._is_real = False
         self._is_imag = False
+        self._T = None
+        self._T_inv = None
         if order is not None:
             raise NotImplementedError, "order parameter not supported"
         if base is None:
+            self.global_slice = [slice(0,x,1) for x in shape]
             self._flags = flagsobj()
             dtype_ = self._dtype
             gatype = None
@@ -288,18 +297,14 @@ class ndarray(object):
             else:
                 gatype = ga.register_dtype(dtype_)
                 gatypes[dtype_] = gatype
-            #self.handle = ga.create(gatype, shape)
-            if (self.shape,self.dtype.num) in ga_cache3:
-                self.handle = ga_cache3.pop((self.shape,self.dtype.num))
-                #print "acquired from cache", self.shape, self.dtype.num
-            elif (self.shape,self.dtype.num) in ga_cache2:
-                self.handle = ga_cache2.pop((self.shape,self.dtype.num))
-                #print "acquired from cache", self.shape, self.dtype.num
-            elif (self.shape,self.dtype.num) in ga_cache1:
-                self.handle = ga_cache1.pop((self.shape,self.dtype.num))
-                #print "acquired from cache", self.shape, self.dtype.num
+            dtype_num = dtype_.num
+            if (shape,dtype_num) in ga_cache3:
+                self.handle = ga_cache3.pop((shape,dtype_num))
+            elif (shape,dtype_num) in ga_cache2:
+                self.handle = ga_cache2.pop((shape,dtype_num))
+            elif (shape,dtype_num) in ga_cache1:
+                self.handle = ga_cache1.pop((shape,dtype_num))
             else:
-                #print "cache miss"
                 self.handle = ga.create(gatype, shape)
             if buffer is not None:
                 local = ga.access(self.handle)
@@ -312,39 +317,31 @@ class ndarray(object):
                         a = np.ndarray(shape, dtype, buffer, offset,
                                 strides, order)
                     local[:] = a[ga.zip(*self.distribution())]
-                    #lo,hi = self.distribution()
-                    #a = a[map(lambda x,y: slice(x,y), lo, hi)]
-                    #local[:] = a
                     self.release_update()
-            #self.global_slice = map(lambda x:slice(0,x,1), shape)
-            self.global_slice = [slice(0,x,1) for x in shape]
             self._strides = [self.itemsize]
             for size in shape[-1:0:-1]:
                 self._strides = [size*self._strides[0]] + self._strides
         else:
+            self.global_slice = base.global_slice
+            self.handle = base.handle
+            self._strides = strides
             self._flags = base._flags
             self._flags._c = False
             self._flags._o = False
-            self.handle = base.handle
-            self.global_slice = base.global_slice
-            self._strides = strides
 
     def __del__(self):
         if self._base is None:
             if ga.initialized():
-                #ga.destroy(self.handle)
-                if (self.shape,self.dtype.num) in ga_cache3:
+                dtype_num = self.dtype.num
+                shape = self.shape
+                if (shape,dtype_num) in ga_cache3:
                     ga.destroy(self.handle)
-                    #print "destroying", self.shape, self.dtype
-                elif (self.shape,self.dtype.num) in ga_cache2:
-                    ga_cache3[(self.shape,self.dtype.num)] = self.handle
-                    #print "destroying", self.shape, self.dtype
-                elif (self.shape,self.dtype.num) in ga_cache1:
-                    ga_cache2[(self.shape,self.dtype.num)] = self.handle
-                    #print "destroying", self.shape, self.dtype
+                elif (shape,dtype_num) in ga_cache2:
+                    ga_cache3[(shape,dtype_num)] = self.handle
+                elif (shape,dtype_num) in ga_cache1:
+                    ga_cache2[(shape,dtype_num)] = self.handle
                 else:
-                    #print "caching", self.shape, self.dtype.num
-                    ga_cache1[(self.shape,self.dtype.num)] = self.handle
+                    ga_cache1[(shape,dtype_num)] = self.handle
 
     ################################################################
     ### ndarray methods added for Global Arrays
@@ -355,7 +352,11 @@ class ndarray(object):
         This operation is local.
 
         """
-        return ga.distribution(self.handle)
+        lo,hi = ga.distribution(self.handle)
+        if self._T is not None:
+            return util.transpose_lohi(self.global_slice, lo, hi, self._T)
+        else:
+            return lo,hi
 
     def owns(self):
         """Return True if this process owns some of the data.
@@ -383,6 +384,8 @@ class ndarray(object):
                 pass
             if access_slice:
                 a = ga.access(self.handle)
+                if self._T is not None:
+                    a = a.transpose(self._T)
                 ret = a[access_slice]
                 if self._is_real:
                     ret = ret.real
@@ -412,10 +415,14 @@ class ndarray(object):
         # (via None) or removed, we can't simply create a buffer of the
         # current shape.  Instead, we createa  1D buffer, then reshape it
         # after the call to ga.get() or ga.strided_get().
+        # Further, if this is a transposed array, we un-transpose the
+        # global_slice, ga.get() as usual, then transpose the result
         global_slice = self.global_slice
         if key is not None:
             key = util.canonicalize_indices(self.shape, key)
             global_slice = util.slice_arithmetic(self.global_slice, key)
+        if self._T is not None:
+            ignore,global_slice = util.transpose(global_slice,self._T_inv)
         # We must translate global_slice into a strided get
         shape = util.slices_to_shape(global_slice)
         size = np.prod(shape)
@@ -462,11 +469,9 @@ class ndarray(object):
             ret = ret.real
         elif self._is_imag:
             ret = ret.imag
+        if self._T is not None:
+            ret = ret.transpose(self._T)
         return ret
-        # TODO not sure whether we need to convert 0d arrays to scalars
-        #if ret.ndim == 0:
-        #    # convert single item to np.generic (scalar)
-        #    return ret.dtype.type(ret)
 
     def allget(self, key=None):
         """Like get(), but when all processes need the same piece.
@@ -493,7 +498,7 @@ class ndarray(object):
     ################################################################
 
     def _get_T(self):
-        raise NotImplementedError, "TODO"
+        return self.transpose()
     T = property(_get_T)
 
     def _get_data(self):
@@ -514,7 +519,8 @@ class ndarray(object):
     def _get_flat(self):
         return flatiter(self)
     def _set_flat(self, value):
-        raise NotImplementedError, "TODO"
+        a = flatiter(self)
+        a[:] = value
     flat = property(_get_flat,_set_flat)
 
     def _get_imag(self):
@@ -557,11 +563,11 @@ class ndarray(object):
     nbytes = property(_get_nbytes)
 
     def _get_ndim(self):
-        return len(self._shape)
+        return len(self.shape)
     ndim = property(_get_ndim)
 
     def _get_shape(self):
-        return tuple(self._shape)
+        return tuple(util.slices_to_shape(self.global_slice))
     def _set_shape(self, value):
         raise NotImplementedError, "TODO"
     shape = property(_get_shape, _set_shape)
@@ -1690,7 +1696,7 @@ class ndarray(object):
         """
         raise NotImplementedError
 
-    def transpose(*axes):
+    def transpose(self, *axes):
         """Returns a view of the array with axes transposed.
 
         For a 1-D array, this has no effect. (To change between column and
@@ -1739,7 +1745,28 @@ class ndarray(object):
                [2, 4]])
 
         """
-        raise NotImplementedError
+        ret = self[:]
+        if self.ndim < 2:
+            return ret
+        if not axes:
+            # empty axes tuple i.e. no axes were passed
+            axes = np.arange(self.ndim)[::-1]
+        elif len(axes) == 1:
+            # we have either None or a tuple of ints
+            if axes[0] is None:
+                axes = np.arange(self.ndim)[::-1]
+            elif isinstance(axes[0], tuple):
+                axes = axes[0]
+            else:
+                raise ValueError, "invalid axis for this array"
+        else:
+            # assume axes is a tuple of ints
+            axes = np.asarray(axes, dtype=np.int64)
+        if len(axes) != self.ndim:
+            raise ValueError, "axes don't match array"
+        ret._T = axes
+        ret._T_inv,ret.global_slice = util.transpose(self.global_slice,axes)
+        return ret
 
     def var(self, axis=None, dtype=None, out=None, ddof=0):
         """Returns the variance of the array elements, along given axis.
@@ -2126,7 +2153,8 @@ class ndarray(object):
         if npself is not None:
             if isinstance(value, ndarray):
                 if (ga.compare_distr(value.handle, self.handle)
-                        and value.global_slice == global_slice):
+                        and value.global_slice == global_slice
+                        and value._T == self._T):
                     # opt: same distributions and same slicing
                     # in practice this might not happen all that often
                     npvalue = value.access()
@@ -2175,7 +2203,8 @@ def _npin_piece_based_on_out(input, out, shape=None):
     #   in practice this might not happen all that often
     if (isinstance(input, ndarray)
             and ga.compare_distr(input.handle, out.handle)
-            and input.global_slice == out.global_slice):
+            and input.global_slice == out.global_slice
+            and input._T == out._T):
         return input.access(),True
     # no opt: requires copy of remote data
     elif shape is None or len(shape) > 0:
@@ -3610,6 +3639,7 @@ class flatiter(object):
                 self._range = slice(me*count,(me+1)*count,1)
         else:
             self._range = None
+        self._range_values = None
     
     def _get_base(self):
         return self._base
@@ -3678,6 +3708,15 @@ class flatiter(object):
 
     def __getitem__(self, key):
         # THIS OPERATION IS COLLECTIVE
+        sync()
+        # TODO optimize the gather since this is a collective
+        return self.get(key)
+
+    def __len__(self):
+        return self._len
+
+    def put(self, key, value):
+        # THIS OPERATION IS ONE-SIDED
         # we expect key to be a single value or a slice, but might also be an
         # iterable of length 1
         sync()
@@ -3700,21 +3739,60 @@ class flatiter(object):
                     offsets.append(gs)
             # create index coordinates
             i = (np.indices(shape).reshape(len(shape),-1).T + offsets)[key]
-            # TODO optimize the gather since this is a collective
-            return ga.gather(self._base.handle, i)
+            value = asarray(value)
+            values = None
+            if value.size == 1:
+                values = np.zeros(len(i), dtype=self._base.dtype)
+                values[:] = value
+            else:
+                assert value.ndim == 1 and len(value) == len(i)
+                if isinstance(value, (ndarray,flatiter)):
+                    values = value.get()
+                else:
+                    values = value
+            ga.scatter(self._base.handle, values, i)
         else:
             # assumes int,long,etc
+            # the following isn't correct. we need a 'ga.put'-like
+            # operation defined for ndarrays
+            raise NotImplementedError
             try:
                 index = np.unravel_index(key, self._base.shape)
-                return self._base[index]
+                #self._base[index] = value
             except:
                 raise IndexError, "unsupported iterator index (%s)" % str(key)
 
-    def __len__(self):
-        return self._len
-
     def __setitem__(self, key, value):
-        raise NotImplementedError
+        # THIS OPERATION IS COLLECTIVE
+        # we expect key to be a single value or a slice, but might also be an
+        # iterable of length 1
+        sync()
+        try:
+            key = key[0]
+        except:
+            pass
+        if isinstance(key, slice):
+            if not util.is_canonical_slice(key):
+                key = slice(*key.indices(self._len))
+            len_key = util.slicelength(key)
+            count = len_key//nproc or 1
+            remainder = len_key%nproc
+            if count*me+me < len_key or count*me+remainder < len_key:
+                if me < remainder:
+                    my_range = slice(count*me+me, count*me+me+count+2, 1)
+                else:
+                    my_range = slice(count*me+remainder,
+                            count*me+remainder+count, 1)
+                my_range = util.slice_of_a_slice(key,my_range)
+                value = asarray(value)
+                if value.ndim == 1:
+                    self.put(my_range, value[my_range])
+                else:
+                    self.put(my_range, value)
+        else:
+            # assumes int,long,etc
+            raise NotImplementedError
+        sync()
 
     def next(self):
         if self._index < self._len:
@@ -3724,6 +3802,14 @@ class flatiter(object):
         else:
             raise StopIteration
 
+    def distribution(self):
+        """Return the bounds of the distribution.
+
+        This operation is local.
+
+        """
+        return self._range.start,self._range.stop
+
     def access(self):
         """Return a copy of a 'local' portion."""
         if self._range_values is not None:
@@ -3731,7 +3817,7 @@ class flatiter(object):
         if self._range is None:
             self._range_values = None
         else:
-            self._range_values = self[self._range]
+            self._range_values = self.get(self._range)
         return self._range_values
 
     def release(self):
@@ -3739,8 +3825,9 @@ class flatiter(object):
 
     def release_update(self):
         if self._range is not None and self._range_values is not None:
-            self[self._range] = self._range_values
+            self.put(self._range, self._range_values)
         self._range_values = None
+
 
 def clip(a, a_min, a_max, out=None):
     """Clip (limit) the values in an array.

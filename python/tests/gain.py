@@ -8,9 +8,6 @@ import sys
 
 me = gain.me
 count = 0
-util.set_debug(False)
-gain.set_debug(False)
-gain.set_debug_sync(False)
 
 results = {}
 results[np] = []
@@ -105,10 +102,30 @@ def test(module):
     j = i.flat
     check(j[2])
     check(j[2:19])
+    j[:] = 6
+    check(j)
+    j[2:19] = 7
+    check(j)
+    foo = module.zeros((3,4,5))
+    bar = module.arange(3*4*5)
+    foo.flat = bar
+    check(foo)
+    foo.flat = 6
+    check(foo)
+    # works for GAiN but not NumPy
+    # raises TypeError return arrays must be ArrayType
+    #check(module.add(foo,bar,i.flat))
     check(module.add(s,t,np.ones((3,4,5), dtype=np.float32)))
     check(module.clip(module.arange(10), 1, 8))
     check(module.clip(module.arange(100), 10, 80))
     check(module.clip(module.arange(10), [3,4,1,1,1,4,4,4,4,4], 8))
+    check(i.transpose())
+    foo = np.arange(4*5*77).reshape(4,5,77)
+    k = module.zeros((4,5,77))
+    k[:] = foo
+    check(k.transpose())
+    check(k.transpose(1,2,0).shape)
+    check(k.transpose(1,2,0))
 
 def main():
     global count
@@ -146,10 +163,16 @@ def main():
                 diff = None
                 if isinstance(result_gain, gain.ndarray):
                     diff = result_np-result_gain.get()
-                elif isinstance(result_gain, tuple):
-                    result_np = result_np[0]
-                    result_gain = result_gain[0]
+                elif isinstance(result_gain, gain.flatiter):
                     diff = result_np-result_gain.get()
+                elif isinstance(result_gain, tuple):
+                    if (len(result_gain) > 1
+                        and type(result_gain[0]) is type(result_gain[1])):
+                        diff = np.asarray(result_np)-np.asarray(result_gain)
+                    else:
+                        result_np = result_np[0]
+                        result_gain = result_gain[0]
+                        diff = result_np-result_gain.get()
                 else:
                     diff = result_np-result_gain
                 if not np.all(diff == 0):

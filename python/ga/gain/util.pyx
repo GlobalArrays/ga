@@ -1,15 +1,5 @@
 """Contains index- and slice-related operations needed for bookkeeping."""
 
-DEBUG = False
-
-def set_debug(val):
-    global DEBUG
-    DEBUG = val
-
-def print_debug(s):
-    if DEBUG:
-        print s
-
 def is_canonical_slice(sliceobj):
     """Return True if the slice instance does not contain None."""
     return (sliceobj.start is not None
@@ -91,7 +81,6 @@ def canonicalize_indices(shape, indices):
     # ran out of indices; fill remaining with full slices
     for dim_max in shape_iter:
         canonicalized_indices.append(slice(0,dim_max,1))
-    print_debug("canonicalize_indices(%s, %s)=%s" % (shape,indices,canonicalized_indices))
     return canonicalized_indices
 
 def slice_of_a_slice(original_slice, slice_operand):
@@ -211,7 +200,6 @@ def slice_arithmetic(original_ops, ops):
             and isinstance(original_ops[idx], (int,long))):
         new_op.append(original_ops[idx])
         idx += 1
-    print_debug("slice_arithmetic(%s,%s)=%s" % (original_ops,ops,new_op))
     return new_op
 
 def calc_index_lohi(global_slice, lo, hi):
@@ -335,8 +323,6 @@ def access_slice(global_slice, lo, hi):
 
     """
     result = calc_index_lohi(global_slice, lo, hi)
-    print_debug("![?] in access_slice(%s,%s,%s) calc_index_lohi=%s" % (
-            global_slice, lo, hi, result))
     # None as a value in the global_slice is otherwise ignored.
     item_key = []
     idx = 0
@@ -356,11 +342,19 @@ def access_slice(global_slice, lo, hi):
             pass
         else:
             raise ValueError, "global_slice contained unknown object"
-    print_debug("![?] access_slice(%s,%s,%s)=%s" % (
-            global_slice, lo, hi, item_key))
     return item_key
 
 def slicelength(sliceobj):
+    """Returns the length of the given slice instance.
+
+    Examples
+    -------
+    >>> slicelength(slice(2,19,1))
+    17
+    >>> slicelength(slice(2,19,2))
+    9
+
+    """
     return length(sliceobj.start, sliceobj.stop, sliceobj.step)
 
 def length(start, stop, step):
@@ -399,8 +393,6 @@ def get_slice(global_slice, lo, hi):
 
     """
     restricted_slice = calc_index_lohi(global_slice, lo, hi)
-    print_debug("![?] in get_slice(%s,%s,%s) restricted_slice=%s" % (
-            global_slice, lo, hi, restricted_slice))
     # None as a value in the global_slice is otherwise ignored.
     item_key = []
     idx = 0
@@ -416,8 +408,6 @@ def get_slice(global_slice, lo, hi):
             pass
         else:
             raise ValueError, "global_slice contained unknown object"
-    print_debug("![?] get_slice(%s,%s,%s)=%s" % (
-            global_slice, lo, hi, item_key))
     return item_key
 
 def broadcast_shape(first, second):
@@ -440,9 +430,102 @@ def broadcast_chomp(smaller_key, larger_key):
         else:
             new_key.append(l)
     new_key.reverse()
-    print_debug("![?] broadcast_chomp(%s,%s)=%s" % (
-            smaller_key, larger_key, new_key))
     return new_key
+
+def transpose(global_slice, axes):
+    """Swap the axes of the given global_slice.
+
+    Returns the inverse of the transpose in addition to the new global_slice.
+
+    Parameters
+    ----------
+    global_slice: tuple of integers and/or slice objects
+        The slice to take from an ndarray.
+    axes : list of ints
+        `i` in the `j`-th place in the tuple means `a`'s `i`-th axis becomes
+        `a.transpose()`'s `j`-th axis.
+    
+    Examples
+    --------
+    >>> transpose([slice(2,34,1), 4, None, slice(10,2,-1)], (1,2,0))
+    ([2, 0, 1], [None, 4, slice(10, 2, -1), slice(2, 34, 1)])
+    >>> transpose([1, 2, 3, slice(4,14,4)], [0])
+    ([0], [1, 2, 3, slice(4, 14, 4)])
+    >>> transpose([slice(0,10,1),slice(0,20,1)], [1,0])
+    ([1, 0], [slice(0, 20, 1), slice(0, 10, 1)])
+
+    """
+    # create mapping for global_slice indices to actual indices, used later
+    s = []
+    for i,val in enumerate(global_slice):
+        if val is None or isinstance(val, slice):
+            s.append(i)
+    if len(s) != len(axes):
+        raise ValueError, "axes don't match array"
+    # create the inverse of the given axes
+    inverse = [None]*len(axes)
+    for i,val in enumerate(axes):
+        if val >= len(s):
+            raise ValueError, "invalid axis for this array"
+        inverse[val] = i
+    # create the transpose of the global_slice now that we have mapping s
+    ret = [None]*len(global_slice)
+    count = 0
+    for val in axes:
+        while not (global_slice[count] is None
+                or isinstance(global_slice[count], slice)):
+            ret[count] = global_slice[count]
+            count += 1
+        ret[count] = global_slice[s[val]]
+        count += 1
+    return inverse,ret
+    
+class slh(object):
+    def __init__(self, val, lo, hi):
+        self.val = val
+        self.lo = lo
+        self.hi = hi
+
+def transpose_lohi(global_slice, lo, hi, axes):
+    """Reorder lo/hi based on the given axes and global_slice."""
+    # create mapping for global_slice indices to actual indices, used later
+    s = []
+    for i,val in enumerate(global_slice):
+        if val is None or isinstance(val, slice):
+            s.append(i)
+    if len(s) != len(axes):
+        raise ValueError, "axes don't match array"
+    # create a new list of slh instances
+    ilo = iter(lo)
+    ihi = iter(hi)
+    things = [None]*len(global_slice)
+    for i,val in enumerate(global_slice):
+        if val is None:
+            things[i] = slh(None,None,None)
+        else:
+            things[i] = slh(val,ilo.next(),ihi.next())
+    # create the transpose of the global_slice now that we have mapping s
+    ret = [None]*len(global_slice)
+    count = 0
+    for val in axes:
+        while not (things[count].val is None
+                or isinstance(things[count].val, slice)):
+            ret[count] = things[count]
+            count += 1
+        ret[count] = things[s[val]]
+        count += 1
+    # create the return lo/hi values
+    rlo = [None]*len(lo)
+    rhi = [None]*len(hi)
+    count = 0
+    for val in ret:
+        if val.val is None:
+            pass
+        else:
+            rlo[count] = val.lo
+            rhi[count] = val.hi
+            count += 1
+    return rlo,rhi
 
 if __name__ == '__main__':
     import doctest
