@@ -93,8 +93,8 @@ def test(module):
     check(module.add.accumulate(module.ones((7,7,7)), axis=0))
     check(module.add.accumulate(module.ones((7,7,7)), axis=1))
     check(module.add.accumulate(module.ones((7,7,7)), axis=2))
-    check(module.alen((1,2,3)))
-    check(module.alen(module.zeros((4,5,6))))
+    #check(module.alen((1,2,3)))
+    #check(module.alen(module.zeros((4,5,6))))
     foo = np.arange(4*25).reshape(4,25)
     i = module.zeros((4,25))
     i[:] = foo
