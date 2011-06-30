@@ -113,9 +113,52 @@ class flagsobj(object):
   UPDATEIFCOPY : %s""" % (self._c, self._f, self._o,
                           self._w, self._a, self._u)
 
-ga_cache1 = {}
-ga_cache2 = {}
-ga_cache3 = {}
+class GlobalArrayCache(object):
+    """When ndarray instances are removed, their GA handles are preserved.
+
+    This class abstracts away various caching schemes in use and proides a
+    consistent interface. The scheme that inspired this cache was to preserve
+    the last three arrays with the same shape and type. Using the cache avoids
+    many create/destroy cycles for GAs which occur as part of temporary array
+    creation during numpy codes.
+
+    """
+    def __init__(self):
+        self.cache = {}
+        self.level = 3
+
+    def __contains__(self, item):
+        return (item in self.cache and self.cache[item])
+
+    def __getitem__(self, item):
+        if item in self.cache and self.cache[item]:
+            return self.cache[item].pop()
+        raise KeyError, item
+
+    def __setitem__(self, item, value):
+        if item in self.cache:
+            self.cache[item].append(value)
+        else:
+            self.cache[item] = [value]
+
+    def count(self, item):
+        if item in self.cache:
+            return len(self.cache[item])
+        return 0
+
+    def empty(self, item):
+        return self.count(item) == 0
+
+    def full(self, item):
+        return self.count(item) == self.level
+
+    def pop(self, item):
+        return self[item]
+
+    def size(self):
+        """Return the size of the cache in bytes."""
+        
+ga_cache = GlobalArrayCache()
 
 class ndarray(object):
     """ndarray(shape, dtype=float, buffer=None, offset=0,
@@ -301,13 +344,8 @@ class ndarray(object):
             else:
                 gatype = ga.register_dtype(dtype_)
                 gatypes[dtype_] = gatype
-            dtype_num = dtype_.num
-            if (shape,dtype_num) in ga_cache3:
-                self.handle = ga_cache3.pop((shape,dtype_num))
-            elif (shape,dtype_num) in ga_cache2:
-                self.handle = ga_cache2.pop((shape,dtype_num))
-            elif (shape,dtype_num) in ga_cache1:
-                self.handle = ga_cache1.pop((shape,dtype_num))
+            if (shape,dtype_.str) in ga_cache:
+                self.handle = ga_cache.pop((shape,dtype_.str))
             else:
                 self.handle = ga.create(gatype, shape,
                         pgroup=ga.pgroup_get_default())
@@ -319,7 +357,7 @@ class ndarray(object):
                         buffer.shape = shape
                         a = buffer
                     else:
-                        a = np.ndarray(shape, dtype, buffer, offset,
+                        a = np.ndarray(shape, dtype_, buffer, offset,
                                 strides, order)
                     local[:] = a[ga.zip(*self.distribution())]
                     self.release_update()
@@ -337,16 +375,11 @@ class ndarray(object):
     def __del__(self):
         if self._base is None:
             if ga.initialized():
-                dtype_num = self.dtype.num
                 shape = self.shape
-                if (shape,dtype_num) in ga_cache3:
+                if ga_cache.full((shape,self.dtype.str)):
                     ga.destroy(self.handle)
-                elif (shape,dtype_num) in ga_cache2:
-                    ga_cache3[(shape,dtype_num)] = self.handle
-                elif (shape,dtype_num) in ga_cache1:
-                    ga_cache2[(shape,dtype_num)] = self.handle
                 else:
-                    ga_cache1[(shape,dtype_num)] = self.handle
+                    ga_cache[(shape,self.dtype.str)] = self.handle
 
     ################################################################
     ### ndarray methods added for Global Arrays

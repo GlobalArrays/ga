@@ -1,9 +1,162 @@
-from mpi4py import MPI
+import mpi4py.MPI as MPI
 import ga
-from ga import gain
+import ga.gain as gain
 import numpy as np
 from getopt import getopt
 import sys
+
+try:
+    import colorama
+    colorama.init()
+    RED = colorama.Fore.RED
+    GREEN = colorama.Fore.GREEN
+    RESET = colorama.Fore.RESET
+except Exception:
+    RED = ""
+    GREEN = ""
+
+# each test is exec'd by twice, once for numpy and once for gain
+# 'm' is the current module
+tests = [
+    "result = m.arange(100, dtype=m.float32)",
+    "result = m.arange(100, dtype=m.float32).copy()",
+    "result = m.arange(100, dtype=m.float32)[9:17].copy()",
+    """a = m.arange(100, dtype=m.float32)
+       result = m.sin(a[49::-2],a[50::2])""",
+    """a = m.arange(100, dtype=m.float32)
+       result = m.sin(a[49::-2],a[50::2])""",
+    """a = m.arange(100, dtype=m.float32)
+       a[5:15] = m.arange(10, dtype=m.float32)
+       result = a""",
+    """a = m.arange(100, dtype=m.float32)
+       a[5:15] = np.arange(10, dtype=m.float32)
+       result = a""",
+    "result = m.sin(1)",
+    "result = m.sin([1,2,3])",
+    "result = m.sin([1,2,3], m.asarray([0,0,0], dtype=m.float32))""",
+    """c = m.ones(10, dtype=m.int16)
+       d = m.ones(10, dtype=m.int16)
+       result = m.sin(c,d)""",
+    "result = m.sin(m.ones(10, dtype=m.int16))",
+    """a = m.arange(100, dtype=m.float32)
+       b = a[:50:2]
+       c = a[50::2]
+       result = m.add(b,c)""",
+    # commented out because numpy produces inconsistent results
+    # whereas gain produces the 'correct' results due to internal copies
+    #"""a = m.arange(100, dtype=m.float32)
+    #   b = a[:50:2]
+    #   c = a[50::2]
+    #   d = a[::4]
+    #   result = m.add(b,c,d)""",
+    """a = m.arange(100, dtype=m.float32)
+       b = a[:50:2]
+       result = m.add(b,5)""",
+    """a = m.arange(100, dtype=m.float32)
+       b = a[50:::2]
+       result = m.add(5,b)""",
+    "result = m.ones((3,4,5), dtype=m.float32)",
+    """s = m.ones((3,4,5), dtype=m.float32)
+       t = m.ones((3,4,5), dtype=m.float32)
+       result = m.sin(s,t)""",
+    """x = m.ones((2,3,4))
+       result = m.add(x,x)""",
+    """x = m.ones((2,3,4))
+       y = m.ones((3,4))
+       result = m.add(x,y)""",
+    "result = m.linspace(2.0,3.0,num=5)",
+    "result = m.linspace(2.0,3.0,num=5,endpoint=False)",
+    "result = m.linspace(2.0,3.0,num=5,retstep=True)",
+    "result = m.logspace(2.0,3.0,num=4)",
+    "result = m.logspace(2.0,3.0,num=4,endpoint=False)",
+    "result = m.logspace(2.0,3.0,num=4,base=2.0)",
+    """f = m.ones((100,200), dtype=float)
+       g = m.ones((200,300), dtype=float)
+       result = m.dot(f,g)""",
+    """h = m.arange(100, dtype=m.float32)
+       result = m.dot(h,h)""",
+    "result = m.dot(6,10)",
+    """h = m.arange(100, dtype=m.float32)
+       result = m.dot(6,h)""",
+    "result = m.eye(24,25)",
+    "result = m.eye(24,25,4)",
+    "result = m.eye(24,25,-8)",
+    "result = m.identity(11)",
+    "result = m.add.reduce([1,2,3,4])",
+    "result = m.add.reduce(m.arange(100))",
+    "result = m.add.reduce(m.ones((100,200)))",
+    "result = m.add.accumulate(m.ones(7))",
+    "result = m.add.accumulate(m.ones((7,7)))",
+    "result = m.add.accumulate(m.ones((7,7,7)), axis=0)",
+    "result = m.add.accumulate(m.ones((7,7,7)), axis=1)",
+    "result = m.add.accumulate(m.ones((7,7,7)), axis=2)",
+    "result = m.add.accumulate(m.ones((7,7,7)), axis=0)",
+    "result = m.add.accumulate(m.ones((7,7,7)), axis=1)",
+    "result = m.add.accumulate(m.ones((7,7,7)), axis=2)",
+    "result = m.alen((1,2,3))",
+    "result = m.alen(m.zeros((4,5,6)))",
+    """foo = np.arange(4*25).reshape(4,25)
+       i = m.zeros((4,25))
+       i[:] = foo
+       result = i""",
+    """foo = np.arange(4*25).reshape(4,25)
+       i = m.zeros((4,25))
+       i[:] = foo
+       result = i.flat""",
+    """foo = np.arange(4*25).reshape(4,25)
+       i = m.zeros((4,25))
+       i[:] = foo
+       j = i.flat
+       result = j[2]""",
+    """foo = np.arange(4*25).reshape(4,25)
+       i = m.zeros((4,25))
+       i[:] = foo
+       j = i.flat
+       result = j[2:19]""",
+    """foo = np.arange(4*25).reshape(4,25)
+       i = m.zeros((4,25))
+       i[:] = foo
+       j = i.flat
+       j[:] = 6
+       result = j""",
+    """foo = np.arange(4*25).reshape(4,25)
+       i = m.zeros((4,25))
+       i[:] = foo
+       j = i.flat
+       j[:] = 6
+       j[3:19] = 7
+       result = j""",
+    """foo = m.zeros((3,4,5))
+       bar = m.arange(3*4*5)
+       foo.flat = bar
+       result = foo""",
+    """foo = m.zeros((3,4,5))
+       foo.flat = 6
+       result = foo""",
+    """foo = m.zeros((3,4,5))
+       bar = m.arange(3*4*5)
+       i = m.zeros((3,4,5))
+       result = m.add(foo.flat,bar,i.flat)""",
+    "result = m.clip(m.arange(10), 1, 8)",
+    "result = m.clip(m.arange(100), 10, 80)",
+    "result = m.clip(m.arange(10), [3,4,1,1,1,4,4,4,4,4], 8)",
+    """foo = np.arange(4*25).reshape(4,25)
+       i = m.zeros((4,25))
+       i[:] = foo
+       result = i.transpose()""",
+    """foo = np.arange(4*5*77).reshape(4,5,77)
+       k = m.zeros((4,5,77))
+       k[:] = foo
+       result = k.transpose()""",
+    """foo = np.arange(4*5*77).reshape(4,5,77)
+       k = m.zeros((4,5,77))
+       k[:] = foo
+       result = k.transpose(1,2,0).shape""",
+    """foo = np.arange(4*5*77).reshape(4,5,77)
+       k = m.zeros((4,5,77))
+       k[:] = foo
+       result = k.transpose(1,2,0)""",
+]
 
 def me():
     return ga.pgroup_nodeid(ga.pgroup_get_default())
@@ -12,214 +165,185 @@ def nproc():
 def sync():
     ga.pgroup_sync(ga.pgroup_get_default())
 
-count = 0
+# the current module, either numpy or gain
+m = None
 
-results = {}
-results[np] = []
-results[gain] = []
-current_module = None
+# count test results
+passes = 0
+failures = 0
+xfailures = 0
+epicfailures = 0
 
-# quick test of ga.gemm
-g_a = ga.create(ga.C_DBL, (10,20))
-g_b = ga.create(ga.C_DBL, (20,30))
-g_c = ga.create(ga.C_DBL, (10,30))
-ga.gemm(False, False, 10, 30, 20, 1, g_a, g_b, 1, g_c)
+class PrintZero(object):
+    def __init__(self):
+        self.stdout = sys.stdout
+    def write(self, something):
+        if not me():
+            self.stdout.write(something)
+    def flush(self):
+        if not me():
+            self.stdout.flush()
+sys.stdout = PrintZero()
 
-def check(what):
-    global count
-    global results
-    count += 1
-    if not me():
-        print "test %s" % count
-    results[current_module].append(what)
+def _dtype(thing):
+    return getattr(thing,'dtype',None) or getattr(getattr(thing,'base',None),'dtype',None)
+    #try:
+    #    return thing.dtype
+    #except:
+    #    try:
+    #        return thing.base.dtype
+    #    except:
+    #        return None
 
-def test(module):
-    global current_module
-    current_module = module
-    check(module.arange(100, dtype=module.float32))
-    a = module.arange(100, dtype=module.float32)
-    check(a.copy())
-    check(a[9:17].copy())
-    check(module.sin(a[49::-2],a[50::2]))
-    a[5:15] = module.arange(10, dtype=module.float32)
-    check(a)
-    a[5:15] = np.arange(10, dtype=np.float32)
-    check(a)
-    check(module.sin(1))
-    check(module.sin([1,2,3]))
-    b = module.asarray([0,0,0], dtype=module.float32)
-    check(module.sin([1,2,3], b))
-    c = module.ones(10, dtype=module.int16)
-    d = module.ones(10, dtype=module.int16)
-    check(module.sin(c,d))
-    check(module.sin(c))
-    e = module.arange(100, dtype=module.float32)
-    e_lower = e[:50:2]
-    e_upper = e[50::2]
-    e_quarter = e[::4]
-    check(module.add(e_lower,e_upper))
-    # commented out because numpy produces inconsistent result
-    #check(module.add(e_lower,e_upper,e_quarter))
-    check(module.add(e_upper,5))
-    check(module.add(5,e_lower))
-    s = module.ones((3,4,5), dtype=module.float32)
-    t = module.ones((3,4,5), dtype=module.float32)
-    check(s)
-    check(module.sin(s,t))
-    x = module.ones((2,3,4))
-    y = module.ones((3,4))
-    check(module.add(x,x))
-    check(module.add(x,y))
-    check(module.linspace(2.0,3.0,num=5))
-    check(module.linspace(2.0,3.0,num=5,endpoint=False))
-    check(module.linspace(2.0,3.0,num=5,retstep=True))
-    check(module.logspace(2.0,3.0,num=4))
-    check(module.logspace(2.0,3.0,num=4,endpoint=False))
-    check(module.logspace(2.0,3.0,num=4,base=2.0))
-    f = module.ones((100,200), dtype=float)
-    g = module.ones((200,300), dtype=float)
-    check(module.dot(f,g))
-    h = module.arange(100, dtype=module.float32)
-    check(module.dot(h,h))
-    check(module.dot(6,10))
-    check(module.dot(6,h))
-    check(module.eye(24,25))
-    check(module.eye(24,25,4))
-    check(module.eye(24,25,-8))
-    check(module.identity(11))
-    check(module.add.reduce([1,2,3,4]))
-    check(module.add.reduce(module.arange(100)))
-    check(module.add.reduce(module.ones((100,200))))
-    check(module.add.accumulate(module.ones(7)))
-    check(module.add.accumulate(module.ones((7,7))))
-    check(module.add.accumulate(module.ones((7,7,7)), axis=0))
-    check(module.add.accumulate(module.ones((7,7,7)), axis=1))
-    check(module.add.accumulate(module.ones((7,7,7)), axis=2))
-    check(module.add.accumulate(module.ones((7,7,7)), axis=0))
-    check(module.add.accumulate(module.ones((7,7,7)), axis=1))
-    check(module.add.accumulate(module.ones((7,7,7)), axis=2))
-    #check(module.alen((1,2,3)))
-    #check(module.alen(module.zeros((4,5,6))))
-    foo = np.arange(4*25).reshape(4,25)
-    i = module.zeros((4,25))
-    i[:] = foo
-    check(i)
-    j = i.flat
-    check(j[2])
-    check(j[2:19])
-    j[:] = 6
-    check(j)
-    j[2:19] = 7
-    check(j)
-    foo = module.zeros((3,4,5))
-    bar = module.arange(3*4*5)
-    foo.flat = bar
-    check(foo)
-    foo.flat = 6
-    check(foo)
-    # works for GAiN but not NumPy
-    # raises TypeError return arrays must be ArrayType
-    #check(module.add(foo,bar,i.flat))
-    check(module.add(s,t,np.ones((3,4,5), dtype=np.float32)))
-    check(module.clip(module.arange(10), 1, 8))
-    check(module.clip(module.arange(100), 10, 80))
-    check(module.clip(module.arange(10), [3,4,1,1,1,4,4,4,4,4], 8))
-    check(i.transpose())
-    foo = np.arange(4*5*77).reshape(4,5,77)
-    k = module.zeros((4,5,77))
-    k[:] = foo
-    check(k.transpose())
-    check(k.transpose(1,2,0).shape)
-    check(k.transpose(1,2,0))
+def print_result(result_np,result_gain,diff):
+    print """%s
+---------------------- numpy ---------------------------------
+%s
+%s
+%s
+---------------------- gain ----------------------------------
+%s
+%s
+%s
+---------------------- difference ----------------------------
+%s
+%s
+""" % (RED,
+    type(result_np),   getattr(result_np,"dtype",None), result_np,
+    type(result_gain), getattr(result_gain,"dtype",None), result_gain,
+    diff, RESET)
 
-def main():
-    global count
-    if not me():
-        print "=========== TESTING numpy =============================="
+def run_tests():
+    global m
+    for test in tests:
+        run_test(test)
+
+def run_test(test):
+    global passes,failures,xfailures,epicfailures
+    # sanity check that the test is correctly written
+    if test.count("result") != 1:
+        raise SyntaxError, "TEST ERROR: %s" % test
+    # clean up whitespace and pretty print the test string
+    test_lines = [line.strip() for line in test.splitlines()]
+    print "TESTING: %s" % test_lines[0]
+    for line in test_lines[1:]:
+        print "         %s" % line
+    test = '\n'.join(test_lines)
+    e_np = None
+    e_gain = None
+    result = None
+    result_np = None
+    result_gain = None
+    m = np
+    # some temporary labels for results
+    try:
+        exec test
+        result_np = result
+    except Exception,e:
+        e_np = e
+    m = gain
+    try:
+        exec test
+        result_gain = result
+    except Exception,e:
+        e_gain = e
+    # sync now since most operations sync on the way in, not on the way out
     sync()
-    count = 0
-    test(np)
-    if not me():
-        print "=========== TESTING gain ==============================="
-    sync()
-    count = 0
-    test(gain)
-    if not me():
-        print "=========== COMPARING RESULTS =========================="
-    sync()
-    if not me():
-        def print_result(result_np,result_gain,diff):
-            print "RESULT---------------------------------"
-            print type(result_np)
-            if hasattr(result_np, "dtype"): print result_np.dtype
-            print result_np
-            print "RESULT---------------------------------"
-            print type(result_gain)
-            if hasattr(result_gain, "dtype"): print result_gain.dtype
-            print result_gain
-            print "difference ---------------------------------"
-            print diff
-            print "---------------------------------WARNING DIFF FAILED"
-        for num,result in enumerate(zip(results[np],results[gain])):
-            print "result %s" % (num+1)
-            err = False
-            try:
-                result_np,result_gain = result
-                diff = None
-                if isinstance(result_gain, gain.ndarray):
-                    diff = result_np-result_gain.get()
-                elif isinstance(result_gain, gain.flatiter):
-                    diff = result_np-result_gain.get()
-                elif isinstance(result_gain, tuple):
-                    if (len(result_gain) > 1
-                        and type(result_gain[0]) is type(result_gain[1])):
-                        diff = np.asarray(result_np)-np.asarray(result_gain)
-                    else:
-                        result_np = result_np[0]
-                        result_gain = result_gain[0]
-                        diff = result_np-result_gain.get()
+    if e_np is None and e_gain is None:
+        err = False
+        hard_err = False
+        try:
+            diff = None
+            if isinstance(result_gain, (gain.ndarray,gain.flatiter)):
+                diff = result_np-result_gain.get()
+            elif isinstance(result_gain, tuple):
+                if (len(result_gain) > 1
+                    and type(result_gain[0]) is type(result_gain[1])):
+                    diff = np.asarray(result_np)-np.asarray(result_gain)
                 else:
-                    diff = result_np-result_gain
-                if not np.all(diff == 0):
-                    print_result(result_np,result_gain,diff)
-                    err = True
-                if hasattr(result_np,'dtype'):
-                    if not result_np.dtype == result_gain.dtype:
-                        print "different types np=%s gain=%s" % (
-                                result_np.dtype, result_gain.dtype)
-                        err = True
-            except Exception,e:
-                print "caught exception:", e
+                    result_np = result_np[0]
+                    result_gain = result_gain[0]
+                    diff = result_np-result_gain.get()
+            else:
+                diff = result_np-result_gain
+            if not np.all(diff == 0):
+                print_result(result_np,result_gain,diff)
                 err = True
-            if err:
-                raise ValueError, "something bad at %s" % num
+            if not (_dtype(result_np) == _dtype(result_gain)):
+                print RED + "different types np=%s gain=%s" % (
+                        result_np.dtype, result_gain.dtype) + RESET
+                err = True
+        except Exception,e:
+            print "%scaught exception: %s%s" % (RED,e,RESET)
+            hard_err = True
+        if hard_err:
+            print " RESULT: %sEPIC FAIL%s" % (RED,RESET)
+            epicfailures += 1
+        elif err:
+            print " RESULT: %sFAIL%s" % (RED,RESET)
+            failures += 1
+        else:
+            print " RESULT: %sPASS%s" % (GREEN,RESET)
+            passes += 1
+    elif e_np is None:
+        print " RESULT: %sFAIL -- gain exception only: %s%s" % (
+                RED,e_gain,RESET)
+        failures += 1
+    elif e_gain is None:
+        print " RESULT: %sFAIL -- numpy exception only: %s%s" % (
+                RED,e_np,RESET)
+        failures += 1
+    else: # both errors are set
+        if str(e_np) != str(e_gain):
+            print " RESULT: %sFAIL (dffering exceptions)\n%s\n%s%s" % (
+                    RED,e_np,e_gain,RESET)
+            failures += 1
+        else:
+            print " RESULT: %sXFAIL%s" % (GREEN,RESET)
+            xfailures += 1
 
 if __name__ == '__main__':
     profile = False
     use_groups = False
-    (optsvals,args) = getopt(sys.argv[1:],'pg')
+    use_color = True
+    (optsvals,args) = getopt(sys.argv[1:],'pgc')
     for (opt,val) in optsvals:
         if opt == '-p':
             profile = True
         elif opt == '-g':
             use_groups= True
+        elif opt == '-c':
+            use_color = False
+    if not use_color:
+        RED = ""
+        GREEN = ""
     if profile:
         import cProfile
-        if not me():
-            print "Profiling enabled"
-        cProfile.run("main()", "gaintest.%s.prof" % str(me()))
+        print "Profiling enabled"
+        cProfile.run("run_tests()", "gaintest.%s.prof" % str(me()))
     elif use_groups:
         midproc = nproc()//2
         proclist_first = range(0,midproc)
         proclist_last  = range(midproc,nproc())
         group_id_first = ga.pgroup_create(proclist_first)
         group_id_last  = ga.pgroup_create(proclist_last)
-        if me() in proclist_last:
-            ga.pgroup_set_default(group_id_last)
-            main()
+        if me() in proclist_first:
+            ga.pgroup_set_default(group_id_first)
+            run_tests()
         ga.pgroup_set_default(ga.pgroup_get_world())
         sync()
-        if not me():
-            print "All done with groups"
+        if me() in proclist_last:
+            ga.pgroup_set_default(group_id_last)
+            run_tests()
+        ga.pgroup_set_default(ga.pgroup_get_world())
+        sync()
+        print "All done with groups"
     else:
-        main()
+        run_tests()
+    if not me():
+        ga.print_stats()
+    print ""
+    print "%s           Passed: %s%s" % (GREEN,passes,RESET)
+    print "%sExpected Failures: %s%s" % (GREEN,xfailures,RESET)
+    print "%s           Failed: %s%s" % (RED,failures,RESET)
+    print "%s    Epic Failures: %s%s" % (RED,epicfailures,RESET)
