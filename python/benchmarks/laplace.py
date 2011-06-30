@@ -25,13 +25,13 @@ Last modified: Sep. 18, 2004
 """
 
 #import numpy
+import ga
 import ga.gain as numpy
 import sys, time
 
 class PrintZero(object):
     def __init__(self):
-        from ga.gain import me
-        self.me = me
+        self.me = ga.nodeid()
         self.stdout = sys.stdout
     def write(self, something):
         if not self.me:
@@ -40,6 +40,10 @@ class PrintZero(object):
         if not self.me:
             self.stdout.flush()
 sys.stdout = PrintZero()
+
+def timer():
+    #return time.clock()
+    return time.time()
 
 class Grid:
     
@@ -174,6 +178,7 @@ class LaplaceSolver:
                 return err
             err = self.timeStep()
             count = count + 1
+            print count
 
         return count
 
@@ -192,9 +197,9 @@ def test(nmin=5, nmax=30, dn=5, eps=1.0e-16, n_iter=0, stepper='numeric'):
         g = Grid(nx=i, ny=i)
         g.setBCFunc(BC)
         s = LaplaceSolver(g, stepper)
-        t1 = time.clock()
+        t1 = timer()
         iters.append(s.solve(n_iter=n_iter, eps=eps))
-        dt = time.clock() - t1
+        dt = timer() - t1
         times.append(dt)
         print "Solution for nx = ny = %d, took %f seconds"%(i, dt)
     return (n_grd**2, iters, times)
@@ -204,12 +209,12 @@ def time_test(nx=500, ny=500, eps=1.0e-16, n_iter=100, stepper='numeric'):
     g = Grid(nx, ny)
     g.setBCFunc(BC)
     s = LaplaceSolver(g, stepper)
-    t = time.clock()
+    t = timer()
     s.solve(n_iter=n_iter, eps=eps)
-    return time.clock() - t
+    return timer() - t
     
 
-def main(n=500, n_iter=100):
+def main(n=10000, n_iter=100):
     print "Doing %d iterations on a %dx%d grid"%(n_iter, n, n)
     i = 'numeric'
     print i,
@@ -223,7 +228,11 @@ def main(n=500, n_iter=100):
     #print "%d iterations should take about %f seconds"%(n_iter, s*n_iter)
 
 if __name__ == "__main__":
-    main()
-    from ga import ga
-    if ga.nodeid() == 0:
-        ga.print_stats()
+    if False:
+        import cProfile
+        me = ga.nodeid()
+        cProfile.run("main()", "profile_%s.prof" % me)
+    else:
+        main()
+    #if me == 0:
+    #    ga.print_stats()

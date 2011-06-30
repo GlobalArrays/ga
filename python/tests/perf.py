@@ -16,7 +16,7 @@ me = ga.nodeid()
 
 def main():
     if 4 != nproc and 0 == me:
-        ga.error('Program requires 4 GA processes')
+        ga.error('Program requires 4 GA processes; nproc=%s' % nproc)
     test2D()
     test1D()
     if 0 == me:

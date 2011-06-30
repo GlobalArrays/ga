@@ -1,7 +1,6 @@
 import mpi4py.MPI
 from core import *
-from creation import *
-from everything import *
+from misc import *
 import random
 
 if __name__ != '__main__':
