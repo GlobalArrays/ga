@@ -13,10 +13,18 @@ except ImportError:
     print "numpy is required"
     raise
 
+# mpi4py is required -- attempt import
+try:
+    import mpi4py
+except ImportError:
+    print "mpi4py is required"
+    raise
+
 # cython is optional -- attempt import
 use_cython = False
 try:
     from Cython.Build import cythonize
+    from Cython.Distutils import build_ext
     use_cython = True
 except:
     pass
@@ -25,6 +33,9 @@ except:
 ga_config = find_executable("ga-config", None)
 if not ga_config:
     raise ValueError, "ga-config not found in path -- required"
+p = Popen("%s --cc" % ga_config, shell=True, stdout=PIPE, stderr=PIPE,
+        close_fds=True)
+ga_cc,ignore = p.communicate()
 p = Popen("%s --cppflags" % ga_config, shell=True, stdout=PIPE, stderr=PIPE,
         close_fds=True)
 ga_cppflags,ignore = p.communicate()
@@ -34,6 +45,8 @@ ga_ldflags,ignore = p.communicate()
 p = Popen("%s --libs" % ga_config, shell=True, stdout=PIPE, stderr=PIPE,
         close_fds=True)
 ga_clibs,ignore = p.communicate()
+
+os.environ['CC'] = ga_cc
 
 # On osx, '-framework Accelerate' doesn't link the actual LAPACK and BLAS
 # libraries. Locate them manually if GA was configured to use them.
@@ -51,7 +64,7 @@ if 'Accelerate' in ga_clibs or 'vecLib' in ga_clibs:
     ga_clibs = ga_clibs.replace("Accelerate","")
     ga_clibs = ga_clibs.replace("vecLib","")
 
-include_dirs = [numpy.get_include()]
+include_dirs = [numpy.get_include(), mpi4py.get_include()]
 library_dirs = []
 libraries = []
 
@@ -135,10 +148,14 @@ ext_modules = [
 ]
 
 if use_cython:
-    ext_modules = cythonize(ext_modules)
+    #ext_modules = cythonize(ext_modules)
+    cmdclass = {'build_ext': build_ext}
+else:
+    cmdclass = {}
 
 setup(
     name = "Global Arrays",
     packages = ["ga","ga.gain"],
     ext_modules = ext_modules,
+    cmdclass = cmdclass
 )

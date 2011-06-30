@@ -87,8 +87,8 @@ def seed(seed=None):
     if seed is None:
         np.random.seed()
     elif isinstance(seed,int):
-        np.random.seed(seed+me)
+        np.random.seed(seed+me())
     else:
         a = np.asarray(seed)
-        a += me
+        a += me()
         np.random.seed(a)

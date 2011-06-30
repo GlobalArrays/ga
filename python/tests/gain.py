@@ -1,12 +1,17 @@
 from mpi4py import MPI
 import ga
 from ga import gain
-from ga.gain import util
 import numpy as np
 from getopt import getopt
 import sys
 
-me = gain.me
+def me():
+    return ga.pgroup_nodeid(ga.pgroup_get_default())
+def nproc():
+    return ga.pgroup_nnodes(ga.pgroup_get_default())
+def sync():
+    ga.pgroup_sync(ga.pgroup_get_default())
+
 count = 0
 
 results = {}
@@ -24,7 +29,7 @@ def check(what):
     global count
     global results
     count += 1
-    if not me:
+    if not me():
         print "test %s" % count
     results[current_module].append(what)
 
@@ -129,20 +134,20 @@ def test(module):
 
 def main():
     global count
-    if not me:
+    if not me():
         print "=========== TESTING numpy =============================="
-    ga.sync()
+    sync()
     count = 0
     test(np)
-    if not me:
+    if not me():
         print "=========== TESTING gain ==============================="
-    ga.sync()
+    sync()
     count = 0
     test(gain)
-    if not me:
+    if not me():
         print "=========== COMPARING RESULTS =========================="
-    ga.sync()
-    if not me:
+    sync()
+    if not me():
         def print_result(result_np,result_gain,diff):
             print "RESULT---------------------------------"
             print type(result_np)
@@ -191,14 +196,30 @@ def main():
 
 if __name__ == '__main__':
     profile = False
-    (optsvals,args) = getopt(sys.argv[1:],'p')
+    use_groups = False
+    (optsvals,args) = getopt(sys.argv[1:],'pg')
     for (opt,val) in optsvals:
         if opt == '-p':
             profile = True
+        elif opt == '-g':
+            use_groups= True
     if profile:
         import cProfile
-        if not me:
+        if not me():
             print "Profiling enabled"
-        cProfile.run("main()", "gaintest.%s.prof" % str(me))
+        cProfile.run("main()", "gaintest.%s.prof" % str(me()))
+    elif use_groups:
+        midproc = nproc()//2
+        proclist_first = range(0,midproc)
+        proclist_last  = range(midproc,nproc())
+        group_id_first = ga.pgroup_create(proclist_first)
+        group_id_last  = ga.pgroup_create(proclist_last)
+        if me() in proclist_last:
+            ga.pgroup_set_default(group_id_last)
+            main()
+        ga.pgroup_set_default(ga.pgroup_get_world())
+        sync()
+        if not me():
+            print "All done with groups"
     else:
         main()

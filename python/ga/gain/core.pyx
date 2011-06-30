@@ -1,13 +1,18 @@
-from mpi4py import MPI
-from ga import ga
+cimport mpi4py.MPI as MPI
+from mpi4py.mpi_c cimport *
+import mpi4py.MPI as MPI
+
+import ga
 import util
 
 import numpy as np
 cimport numpy as np
 
-# because it's just useful to have around
-me = ga.nodeid()
-nproc = ga.nnodes()
+cpdef int me():
+    return ga.pgroup_nodeid(ga.pgroup_get_default())
+
+cpdef int nproc():
+    return ga.pgroup_nnodes(ga.pgroup_get_default())
 
 # at what point do we distribute arrays versus leaving as np.ndarray?
 cdef int SIZE_THRESHOLD = 1
@@ -54,7 +59,9 @@ np.dtype(np.complex256): ga.C_LDCPL,
 }
 
 cpdef inline sync():
-    ga.sync()
+    #print "syncing over group %s" % ga.pgroup_get_default()
+    #ga.pgroup_sync(ga.pgroup_get_default())
+    ga.sync() # internally it checks for the default group
 
 class flagsobj(object):
     def __init__(self):
@@ -271,6 +278,12 @@ class ndarray(object):
         except:
             shape = [shape]
         shape = tuple(shape)
+        if order not in [None,'C','F']:
+            raise TypeError, "order not understood"
+        if order is None:
+            order = 'C'
+        if order is 'F':
+            raise NotImplementedError, "Fortran order not supported"
         self._dtype = np.dtype(dtype)
         self._order = order
         self._base = base
@@ -278,8 +291,6 @@ class ndarray(object):
         self._is_imag = False
         self._T = None
         self._T_inv = None
-        if order is not None:
-            raise NotImplementedError, "order parameter not supported"
         if base is None:
             self.global_slice = [slice(0,x,1) for x in shape]
             self._flags = flagsobj()
@@ -298,7 +309,8 @@ class ndarray(object):
             elif (shape,dtype_num) in ga_cache1:
                 self.handle = ga_cache1.pop((shape,dtype_num))
             else:
-                self.handle = ga.create(gatype, shape)
+                self.handle = ga.create(gatype, shape,
+                        pgroup=ga.pgroup_get_default())
             if buffer is not None:
                 local = ga.access(self.handle)
                 if local is not None:
@@ -474,11 +486,11 @@ class ndarray(object):
         """
         # TODO it's not clear whether this approach is better than having all
         # P processors ga.get() the same piece.
-        if not me:
+        if not me():
             result = self.get(key)
-            return MPI.COMM_WORLD.bcast(result)
+            return comm().bcast(result)
         else:
-            return MPI.COMM_WORLD.bcast()
+            return comm().bcast()
 
     def release(self):
         ga.release(self.handle)
@@ -1548,9 +1560,9 @@ class ndarray(object):
             local = self.access()
             if local is not None:
                 value = np.sum(local)
-                value = MPI.COMM_WORLD.allreduce(value, MPI.SUM)
+                value = comm().allreduce(value, MPI.SUM)
             else:
-                value = MPI.COMM_WORLD.allreduce(0, MPI.SUM)
+                value = comm().allreduce(0, MPI.SUM)
             return value
         else:
             raise NotImplementedError
@@ -2078,7 +2090,7 @@ class ndarray(object):
 
     def __repr__(self):
         result = ""
-        if 0 == me:
+        if 0 == me():
             result = repr(self.get())
         return result
 
@@ -2175,7 +2187,7 @@ class ndarray(object):
     
     def __str__(self):
         result = ""
-        if 0 == me:
+        if 0 == me():
             result = str(self.get())
         return result
 
@@ -2555,7 +2567,7 @@ class ufunc(object):
             value = self.func.identity
             if nda is not None:
                 value = self.func.reduce(nda)
-            everything = MPI.COMM_WORLD.allgather(value)
+            everything = comm().allgather(value)
             self.func.reduce(everything, out=out)
         else:
             slicer = [slice(0,None,None)]*a.ndim
@@ -2600,14 +2612,14 @@ class ufunc(object):
                     # probably more efficient to use allgather and exchange last
                     # values among all procs. We also need ordering information,
                     # so we exchange the 'lo' value.
-                    everything = MPI.COMM_WORLD.allgather((ndout[-1],lo))
+                    everything = comm().allgather((ndout[-1],lo))
                     reduction = self.func.identity
                     for lvalue,llo in everything:
                         if lvalue is not None and llo < lo:
                             reduction = self.func(reduction,lvalue)
                     self.func(ndout,reduction,ndout)
                 else:
-                    everything = MPI.COMM_WORLD.allgather((None,None))
+                    everything = comm().allgather((None,None))
             else:
                 raise NotImplementedError
         else:
@@ -2769,12 +2781,12 @@ class flatiter(object):
         self._index = 0
         self._len = np.multiply.reduce(self._base.shape)
         self__len = self._len
-        count = self__len//nproc
-        if me*count < self__len:
-            if (me+1)*count > self__len:
-                self._range = slice(me*count,self__len,1)
+        count = self__len//nproc()
+        if me()*count < self__len:
+            if (me()+1)*count > self__len:
+                self._range = slice(me()*count,self__len,1)
             else:
-                self._range = slice(me*count,(me+1)*count,1)
+                self._range = slice(me()*count,(me()+1)*count,1)
         else:
             self._range = None
         self._range_values = None
@@ -2913,14 +2925,14 @@ class flatiter(object):
             if not util.is_canonical_slice(key):
                 key = slice(*key.indices(self._len))
             len_key = util.slicelength(key)
-            count = len_key//nproc or 1
-            remainder = len_key%nproc
-            if count*me+me < len_key or count*me+remainder < len_key:
-                if me < remainder:
-                    my_range = slice(count*me+me, count*me+me+count+2, 1)
+            count = len_key//nproc() or 1
+            remainder = len_key%nproc()
+            if count*me()+me() < len_key or count*me()+remainder < len_key:
+                if me() < remainder:
+                    my_range = slice(count*me()+me(), count*me()+me()+count+2, 1)
                 else:
-                    my_range = slice(count*me+remainder,
-                            count*me+remainder+count, 1)
+                    my_range = slice(count*me()+remainder,
+                            count*me()+remainder+count, 1)
                 my_range = util.slice_of_a_slice(key,my_range)
                 value = asarray(value)
                 if value.ndim == 1:
@@ -3040,6 +3052,13 @@ def asarray(a, dtype=None, order=None):
         else:
             return npa # possibly a scalar or zero rank array
 
+cdef extern MPI_Comm ga_mpi_pgroup_default_communicator()
+def comm():
+    """Returns the MPI_Comm instance associated with the process group."""
+    cdef MPI.Comm communicator = MPI.Comm()
+    communicator.ob_mpi = ga_mpi_pgroup_default_communicator()
+    return communicator
+
 cdef bint DEBUG = False
 cdef bint DEBUG_SYNC = False
 
@@ -3058,11 +3077,11 @@ def print_debug(s):
 def print_sync(what):
     if DEBUG_SYNC:
         sync()
-        if 0 == me:
+        if 0 == me():
             print "[0] %s" % str(what)
-            for proc in xrange(1,nproc):
-                data = MPI.COMM_WORLD.recv(source=proc, tag=11)
+            for proc in xrange(1,nproc()):
+                data = comm().recv(source=proc, tag=11)
                 print "[%d] %s" % (proc, str(data))
         else:
-            MPI.COMM_WORLD.send(what, dest=0, tag=11)
+            comm().send(what, dest=0, tag=11)
         sync()
