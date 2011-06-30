@@ -527,6 +527,36 @@ def transpose_lohi(global_slice, lo, hi, axes):
             count += 1
     return rlo,rhi
 
+def unravel_index(x,dims):
+    """Like np.unravel_index, but 'x' can be an integer array.
+
+    Yeah, I know, numpy 1.6.0 has this already, but we're based on 1.5.1.
+    I copied the code and modified it from 1.5.1.
+
+    """
+    import numpy as _nx
+    x = _nx.asarray(x)
+    if x.ndim == 0:
+        return _nx.unravel_index(x,dims)
+    max = _nx.prod(dims)-1
+    if _nx.any(x>max) or _nx.any(x<0):
+        raise ValueError("Invalid index, must be 0 <= x <= number of elements.")
+    idx = _nx.empty_like(dims)
+
+    # Take dimensions
+    # [a,b,c,d]
+    # Reverse and drop first element
+    # [d,c,b]
+    # Prepend [1]
+    # [1,d,c,b]
+    # Calculate cumulative product
+    # [1,d,dc,dcb]
+    # Reverse
+    # [dcb,dc,d,1]
+    dim_prod = _nx.cumprod([1] + list(dims)[:0:-1])[::-1]
+    # Indices become [x/dcb % a, x/dc % b, x/d % c, x/1 % d]
+    return tuple(x[:,None]//dim_prod % dims)
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
