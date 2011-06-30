@@ -2880,6 +2880,7 @@ class flatiter(object):
                     offsets.append(gs)
             # create index coordinates
             i = (np.indices(shape).reshape(len(shape),-1).T + offsets)[key]
+            # TODO this won't work if base has been sliced
             return ga.gather(self._base.handle, i)
         else:
             # assumes int,long,etc

@@ -356,7 +356,7 @@ def fromfunction(func, shape, **kwargs):
     #sync()
     return a
 
-def arange(start, stop=None, step=None, dtype=None):
+def arange(start, stop=None, step=None, dtype=None, shape=None):
     """Return evenly spaced values within a given interval.
 
     Values are generated within the half-open interval ``[start, stop)``
@@ -379,6 +379,11 @@ def arange(start, stop=None, step=None, dtype=None):
     dtype : dtype
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
+
+    Hack Parameters
+    ---------------
+    shape : tuple of ints
+        Useful shortcut when doing something like np.arange(...).reshape(...)
 
     Returns
     -------
@@ -430,13 +435,30 @@ def arange(start, stop=None, step=None, dtype=None):
             dtype = np.int64
         else:
             dtype = np.float64
-    a = ndarray(length, dtype)
-    a_local = a.access()
-    if a_local is not None:
-        lo,hi = a.distribution()
-        a_local[...] = np.arange(lo[0],hi[0])
-        a_local *= step
-        a_local += start
+    a = None
+    if shape is not None:
+        shape = np.asarray(shape,dtype=np.int64)
+        if np.prod(shape) != length:
+            raise ValueError, "total size of new array must be unchanged"
+        a = ndarray(shape, dtype)
+        a_local = a.access()
+        if a_local is not None:
+            lo,hi = a.distribution()
+            lshape = hi-lo
+            v = np.add.reduce(
+                    (np.indices(lshape).reshape(len(lshape),-1).T + lo)
+                    * (np.asarray(a.strides)/a.itemsize), axis=1)
+            a_local.flat = v*step + start
+            a.release_update()
+    else:
+        a = ndarray(length, dtype)
+        a_local = a.access()
+        if a_local is not None:
+            lo,hi = a.distribution()
+            a_local[...] = np.arange(lo[0],hi[0])
+            a_local *= step
+            a_local += start
+            a.release_update()
     return a
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False):
