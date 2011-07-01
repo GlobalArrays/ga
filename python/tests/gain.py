@@ -14,6 +14,7 @@ try:
 except Exception:
     RED = ""
     GREEN = ""
+    RESET = ""
 
 # each test is exec'd by twice, once for numpy and once for gain
 # 'm' is the current module

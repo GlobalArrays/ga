@@ -46,7 +46,15 @@ p = Popen("%s --libs" % ga_config, shell=True, stdout=PIPE, stderr=PIPE,
         close_fds=True)
 ga_clibs,ignore = p.communicate()
 
-os.environ['CC'] = ga_cc
+if 'CC' not in os.environ:
+    os.environ['CC'] = ga_cc
+if 'LDSHARED' not in os.environ:
+    os.environ['LDSHARED'] = ga_cc
+if 'ARCHFLAGS' not in os.environ:
+    os.environ['ARCHFLAGS'] = ''
+if sys.platform == 'darwin':
+    if 'LDFLAGS' not in os.environ:
+        os.environ['LDFLAGS'] = "-bundle -undefined dynamic_lookup"
 
 # On osx, '-framework Accelerate' doesn't link the actual LAPACK and BLAS
 # libraries. Locate them manually if GA was configured to use them.
@@ -148,8 +156,9 @@ ext_modules = [
 ]
 
 if use_cython:
-    #ext_modules = cythonize(ext_modules)
-    cmdclass = {'build_ext': build_ext}
+    ext_modules = cythonize(ext_modules, include_path=include_dirs)
+    cmdclass = {}
+    #cmdclass = {'build_ext': build_ext}
 else:
     cmdclass = {}
 
