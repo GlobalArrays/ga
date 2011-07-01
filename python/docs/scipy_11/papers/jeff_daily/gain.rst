@@ -307,7 +307,7 @@ operations.
 .. ====
 
 The Global Arrays toolkit was wrapped in Python for the 3.x series of GA by
-Robert Harrison [Har99]. It was written as a C extension to Python and only
+Robert Harrison [Har99]_. It was written as a C extension to Python and only
 wrapped a subset of the complete GA functionality. It illustrated some
 important concepts such as the benefits of integration with NumPy and the
 difficulty of compiling GA on certain systems. In pyGA, the local or remote
@@ -648,39 +648,47 @@ which are not feasible on workstations. For example, to store one
     results for native NumPy are shown for the first, single-core row. Even
     for a modest number of cores, GAiN is much faster. :label:`tabscaling`
 
-    +-------+---------+
-    | Cores | Seconds |
-    +-------+---------+
-    | 1     | 843.43  |
-    +-------+---------+
-    | 32    | 183.74  |
-    +-------+---------+
-    | 64    | 99.31   |
-    +-------+---------+
-    | 128   | 53.33   |
-    +-------+---------+
-    | 256   | 29.67   |
-    +-------+---------+
-    | 512   | 18.01   |
-    +-------+---------+
-    | 1024  | 13.17   |
-    +-------+---------+
-    | 2048  | 11.78   |
-    +-------+---------+
+    +-------+-----------------+---------------+
+    | Cores | Solver Time (s) | Wall Tiem (s) |
+    +-------+-----------------+---------------+
+    | 1     | 843.43          |               |
+    +-------+-----------------+---------------+
+    | 4     | 560.03          | 564           |
+    +-------+-----------------+---------------+
+    | 8     | 322.81          | 333           |
+    +-------+-----------------+---------------+
+    | 16    | 180.35          | 191           |
+    +-------+-----------------+---------------+
+    | 32    | 86.71           | 97            |
+    +-------+-----------------+---------------+
+    | 64    | 44.43           | 56            |
+    +-------+-----------------+---------------+
+    | 128   | 28.67           | 38            |
+    +-------+-----------------+---------------+
+    | 256   | 12.15           | 34            |
+    +-------+-----------------+---------------+
+    | 512   | 7.38            | 43            |
+    +-------+-----------------+---------------+
+    | 1024  | 5.31            | 72            |
+    +-------+-----------------+---------------+
+    | 2048  | 4.84            | 131           |
+    +-------+-----------------+---------------+
 
 .. table:: laplace.py for N=1e5. One matrix of double-precision numbers is
     approximately 75GB. In addition to handling this large-scale problem, GAiN
     continues to scale again up to 2K cores. :label:`tabbig`
 
-    +-------+---------+
-    | Cores | Seconds |
-    +-------+---------+
-    | 512   | 1348.93 |
-    +-------+---------+
-    | 1024  |  670.04 |
-    +-------+---------+
-    | 2048  |  353.70 |
-    +-------+---------+
+    +-------+-----------------+---------------+
+    | Cores | Solver Time (s) | Wall Time (s) |
+    +-------+-----------------+---------------+
+    | 512   |  567.46         |  602          |
+    +-------+-----------------+---------------+
+    | 1024  |  299.48         |  366          |
+    +-------+-----------------+---------------+
+    | 2048  |  150.36         |  270          |
+    +-------+-----------------+---------------+
+    | 4096  |                 |               |
+    +-------+-----------------+---------------+
 
 During the evaluation, it was noted that a lot of time was spent within global
 synchronization calls e.g. ``ga.sync()``. The source of the calls was traced
