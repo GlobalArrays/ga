@@ -2881,6 +2881,7 @@ class flatiter(object):
             # create index coordinates
             i = (np.indices(shape).reshape(len(shape),-1).T + offsets)[key]
             # TODO this won't work if base has been sliced
+            # need to adjust index coordinates to match the global_slice
             return ga.gather(self._base.handle, i)
         else:
             # assumes int,long,etc
@@ -3011,6 +3012,18 @@ class flatiter(object):
         if self._range is not None and self._range_values is not None:
             self.put(self._range, self._range_values)
         self._range_values = None
+
+    def __repr__(self):
+        result = ""
+        if 0 == me():
+            result = repr(self.get())
+        return result
+
+    def __str__(self):
+        result = ""
+        if 0 == me():
+            result = str(self.get())
+        return result
 
 def zeros(shape, dtype=np.float, order='C'):
     """zeros(shape, dtype=float, order='C')

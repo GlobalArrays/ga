@@ -210,8 +210,8 @@ def print_result(result_np,result_gain,diff):
 %s
 %s
 """ % (RED,
-    type(result_np),   getattr(result_np,"dtype",None), result_np,
-    type(result_gain), getattr(result_gain,"dtype",None), result_gain,
+    type(result_np),   _dtype(result_np),   result_np,
+    type(result_gain), _dtype(result_gain), result_gain,
     diff, RESET)
 
 def run_tests():
