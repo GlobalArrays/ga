@@ -22,6 +22,7 @@
 
 #ifdef MPI
 #  include <mpi.h>
+extern MPI_Comm ARMCI_COMM_WORLD;
 #else
 #  include <tcgmsg.h>
 #endif
@@ -44,7 +45,7 @@ void pnga_msg_brdcst(Integer type, void *buffer, Integer len, Integer root)
     }
 #else
 #   ifdef MPI
-    MPI_Bcast(buffer, (int)len, MPI_CHAR, (int)root, MPI_COMM_WORLD);
+    MPI_Bcast(buffer, (int)len, MPI_CHAR, (int)root, ARMCI_COMM_WORLD);
 #   else
     tcg_brdcst(type, buffer, len, root);
 #   endif
@@ -88,7 +89,22 @@ void pnga_pgroup_brdcst(Integer grp_id, Integer type, void *buf,
 void ga_mpi_communicator(GA_COMM)
 MPI_Comm *GA_COMM;
 {
-       *GA_COMM = MPI_COMM_WORLD;
+       *GA_COMM = ARMCI_COMM_WORLD;
+}
+MPI_Comm ga_mpi_pgroup_communicator(int p_grp)
+{
+    if (p_grp > 0) {
+        ARMCI_Group *group = &(PGRP_LIST[p_grp].group);
+        return armci_group_comm(group);
+    } else {
+        return ARMCI_COMM_WORLD;
+    }
+}
+
+MPI_Comm ga_mpi_pgroup_default_communicator()
+{
+    int p_grp = (int)pnga_pgroup_get_default();
+    return ga_mpi_pgroup_communicator(p_grp);
 }
 #endif
 

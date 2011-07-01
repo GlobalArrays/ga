@@ -1850,6 +1850,16 @@ void armci_exchange_address(void *ptr_ar[], int n)
  * NOTE: This part is MPI dependent (i.e. ifdef MPI)
  */
 #  ifdef MPI
+MPI_Comm armci_group_comm(ARMCI_Group *group)
+{
+#ifdef ARMCI_GROUP
+    return MPI_COMM_NULL;
+#else
+    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
+    return (MPI_Comm)igroup->icomm;
+#endif
+}
+
 void armci_msg_group_barrier(ARMCI_Group *group)
 {
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
