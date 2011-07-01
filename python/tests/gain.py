@@ -318,6 +318,7 @@ if __name__ == '__main__':
     if not use_color:
         RED = ""
         GREEN = ""
+        RESET = ""
     if profile:
         import cProfile
         print "Profiling enabled"
