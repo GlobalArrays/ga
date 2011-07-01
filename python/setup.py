@@ -5,6 +5,7 @@ import sys
 from distutils.core import setup
 from distutils.extension import Extension
 from distutils.spawn import find_executable
+from distutils.sysconfig import get_config_vars
 
 # numpy is required -- attempt import
 try:
@@ -49,12 +50,13 @@ ga_clibs,ignore = p.communicate()
 if 'CC' not in os.environ:
     os.environ['CC'] = ga_cc
 if 'LDSHARED' not in os.environ:
-    os.environ['LDSHARED'] = ga_cc
+    # take a lucky guess and reuse the same flags Python used
+    flags = get_config_vars('LDSHARED')[0].strip().split()
+    assert(flags)
+    flags[0] = ga_cc
+    os.environ['LDSHARED'] = ' '.join(flags)
 if 'ARCHFLAGS' not in os.environ:
     os.environ['ARCHFLAGS'] = ''
-if sys.platform == 'darwin':
-    if 'LDFLAGS' not in os.environ:
-        os.environ['LDFLAGS'] = "-bundle -undefined dynamic_lookup"
 
 # On osx, '-framework Accelerate' doesn't link the actual LAPACK and BLAS
 # libraries. Locate them manually if GA was configured to use them.
