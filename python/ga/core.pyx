@@ -2868,7 +2868,7 @@ def pgroup_absolute_id(int pgroup, int pid):
     """TODO"""
     return GA_Pgroup_absolute_id(pgroup, pid)
 
-def pgroup_brdcst(int pgroup, np.ndarray buffer, int root):
+def pgroup_brdcst(int pgroup, buffer, int root=0):
     """Broadcast from process root to all other processes in the same group.
 
     If the buffer is not contiguous, an error is raised.  This operation is
@@ -2892,10 +2892,10 @@ def pgroup_brdcst(int pgroup, np.ndarray buffer, int root):
     buffer_nd = np.asarray(buffer)
     if not buffer_nd.flags['C_CONTIGUOUS']:
         raise ValueError, "the buffer must be contiguous"
-    if buffer_nd.ndim != 1:
-        raise ValueError, "the buffer must be one-dimensional"
+    #if buffer_nd.ndim != 1:
+    #    raise ValueError, "the buffer must be one-dimensional"
     GA_Pgroup_brdcst(pgroup, buffer_nd.data,
-            len(buffer_nd)*buffer_nd.itemsize, root)
+            buffer_nd.size*buffer_nd.itemsize, root)
     return buffer_nd
 
 def pgroup_create(list):
