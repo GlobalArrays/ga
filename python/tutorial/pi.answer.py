@@ -41,18 +41,14 @@ def prn_pi(pi, PI):
 nprocs = ga.nnodes()
 myrank = ga.nodeid()
 
-g_n  = ga.create(ga.C_INT, [1])
 g_pi = ga.create(ga.C_DBL, [1])
 
 while True:
-    n = 0
     if myrank == 0:
         n = get_n()
-        ga.put(g_n, n)
-    ga.sync()
-    if myrank != 0:
-        n = ga.get(g_n)[0]
-    ga.sync()
+        n = ga.brdcst(n)
+    else:
+        n = ga.brdcst(0)
     if n == 0:
         break
     ga.zero(g_pi)
@@ -63,5 +59,4 @@ while True:
         pi = ga.get(g_pi)[0]
         prn_pi(pi, PI)
 
-ga.destroy(g_n)
 ga.destroy(g_pi)

@@ -41,18 +41,14 @@ def prn_pi(pi, PI):
 ### assign total number of processors to variable 'nprocs'
 ### assign processor ID to the variable 'myrank'
 
-### create a global array 'g_n' of type int and a single value
 ### create a global array 'g_pi' of type double and a single value
 
 while True:
-    n = 0
     if myrank == 0:
         n = get_n()
-        ### assign the value of 'n' to the global array 'g_n'
-    ga.sync()
-    if myrank != 0:
-        ### get the value of 'n' from the global array 'g_n'
-    ga.sync()
+        ### broadcast the value of 'n'
+    else:
+        ### receive the broadcast of the value of 'n'
     if n == 0:
         break
     ### zero the global array 'g_pi'
@@ -63,5 +59,4 @@ while True:
         ### get value of 'pi' from global array 'g_pi'
         prn_pi(pi, PI)
 
-### destroy the global array 'g_n'
 ### destroy the global array 'g_pi'

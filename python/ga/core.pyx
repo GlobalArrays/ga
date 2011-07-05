@@ -763,7 +763,7 @@ def allocate(int g_a):
         return True
     return False
 
-def brdcst(buffer, int root):
+def brdcst(buffer, int root=0):
     """Broadcast from process root to all other processes.
 
     If the buffer is not contiguous, an error is raised.  This operation is
@@ -785,9 +785,9 @@ def brdcst(buffer, int root):
     buffer_nd = np.asarray(buffer)
     if not buffer_nd.flags['C_CONTIGUOUS']:
         raise ValueError, "the buffer must be contiguous"
-    if buffer_nd.ndim != 1:
-        raise ValueError, "the buffer must be one-dimensional"
-    GA_Brdcst(buffer_nd.data, len(buffer_nd)*buffer_nd.itemsize, root)
+    #if buffer_nd.ndim != 1:
+    #    raise ValueError, "the buffer must be one-dimensional"
+    GA_Brdcst(buffer_nd.data, buffer_nd.size*buffer_nd.itemsize, root)
     return buffer_nd
 
 def check_handle(int g_a, char *message):
