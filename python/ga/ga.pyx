@@ -336,6 +336,12 @@ cdef _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
     if buffer_nd.dtype != dtype:
         raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
                 buffer.dtype, dtype)
+    # Due to GA restrictions, buffer must not have negative strides
+    # and buffer's last stride must be same as itemsize
+    strides = [buffer_nd.strides[i]/buffer_nd.itemsize
+            for i in range(buffer_nd.ndim)]
+    if (strides and (strides[-1] != 1 or np.any(np.asarray(strides) < 0))):
+        buffer_nd = np.ascontiguousarray(buffer_nd)
     # we allow 1-d "flat" buffers in addition to buffers matching the shape of
     # the requested region
     if buffer_nd.ndim == 1:
@@ -350,8 +356,6 @@ cdef _acc_common(int g_a, buffer, lo=None, hi=None, alpha=None,
             raise ValueError, ('buffer shape does not match request shape :: '
                     'buffer_shape=%s != shape=%s' % (
                     buffer_shape, shape))
-        strides = [buffer_nd.strides[i]/buffer_nd.itemsize
-                for i in range(buffer_nd.ndim)]
         ld_nd = np.asarray([strides[i]/strides[i+1]
                 for i in range(buffer_nd.ndim-1)], dtype=np.int64)
     if alpha is None:
@@ -1896,6 +1900,13 @@ cdef _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None,
     elif buffer.dtype != dtype:
         raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
                 buffer.dtype, dtype)
+    # Due to GA restrictions, buffer must not have negative strides
+    # and buffer's last stride must be same as itemsize
+    strides = [buffer.strides[i]/buffer.itemsize for i in range(buffer.ndim)]
+    if strides[-1] != 1:
+        raise ValueError, "first dimension of buffer cannot be strided"
+    if np.any(np.asarray(strides) < 0):
+        raise ValueError, "buffer cannot have negative strides"
     # we allow 1-d "flat" buffers in addition to buffers matching the shape of
     # requested region
     if buffer.ndim == 1:
@@ -1910,8 +1921,6 @@ cdef _get_common(int g_a, lo=None, hi=None, np.ndarray buffer=None,
             raise ValueError, ('buffer shape does not match request shape :: '
                     'buffer_shape=%s != shape=%s' % (
                     buffer_shape, shape))
-        strides = [buffer.strides[i]/buffer.itemsize
-                for i in range(buffer.ndim)]
         ld_nd = np.asarray([strides[i]/strides[i+1]
                 for i in range(buffer.ndim-1)], dtype=np.int64)
     if nb:
@@ -3228,6 +3237,12 @@ cdef _put_common(int g_a, buffer, lo=None, hi=None,
     if buffer_nd.dtype != dtype:
         raise ValueError, "buffer is wrong type :: buffer=%s != %s" % (
                 buffer.dtype, dtype)
+    # Due to GA restrictions, buffer must not have negative strides
+    # and buffer's last stride must be same as itemsize
+    strides = [buffer_nd.strides[i]/buffer_nd.itemsize
+            for i in range(buffer_nd.ndim)]
+    if (strides and (strides[-1] != 1 or np.any(np.asarray(strides) < 0))):
+        buffer_nd = np.ascontiguousarray(buffer_nd)
     # we allow 1-d "flat" buffers in addition to buffers matching the shape of
     # the requested region
     if buffer_nd.ndim == 1:
@@ -3242,8 +3257,6 @@ cdef _put_common(int g_a, buffer, lo=None, hi=None,
             raise ValueError, ('buffer shape does not match request shape :: '
                     'buffer_shape=%s != shape=%s' % (
                     buffer_shape, shape))
-        strides = [buffer_nd.strides[i]/buffer_nd.itemsize
-                for i in range(buffer_nd.ndim)]
         ld_nd = np.asarray([strides[i]/strides[i+1]
                 for i in range(buffer_nd.ndim-1)], dtype=np.int64)
     if nb:
@@ -3724,12 +3737,12 @@ def scatter_acc(int g_a, values, subsarray, alpha=None):
     cdef void          *valpha=NULL
     # prepare subsarray
     try:
-        subsarray1_nd = np.asarray(subsarray, dtype=np.int64)
+        subsarray1_nd = np.ascontiguousarray(subsarray, dtype=np.int64)
         n = len(subsarray1_nd) / ndim
     except ValueError:
         subsarray1_nd = None
         try:
-            subsarray2_nd = np.asarray(subsarray, dtype=np.int64)
+            subsarray2_nd = np.ascontiguousarray(subsarray, dtype=np.int64)
             n = len(subsarray2_nd) # length of first dimension of subsarray2_nd
         except ValueError:
             raise ValueError, "subsarray must be either 1- or 2-dimensional"
