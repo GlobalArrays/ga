@@ -38,30 +38,30 @@ def prn_pi(pi, PI):
     message = "pi is approximately %.16f, error is %.16f"
     print  (message % (pi, abs(pi - PI)))
 
-### assign total number of processors to variable 'nprocs'
-### assign processor ID to the variable 'myrank'
+nprocs = ga.nnodes()
+myrank = ga.nodeid()
 
-### create a global array 'g_n' of type int and a single value
-### create a global array 'g_pi' of type double and a single value
+g_n  = ga.create(ga.C_INT, [1])
+g_pi = ga.create(ga.C_DBL, [1])
 
 while True:
     n = 0
     if myrank == 0:
         n = get_n()
-        ### assign the value of 'n' to the global array 'g_n'
+        ga.put(g_n, n)
     ga.sync()
     if myrank != 0:
-        ### get the value of 'n' from the global array 'g_n'
+        n = ga.get(g_n)[0]
     ga.sync()
     if n == 0:
         break
-    ### zero the global array 'g_pi'
+    ga.zero(g_pi)
     mypi = comp_pi(n, myrank, nprocs)
-    ### accumulate local value 'mypi' into global array 'g_pi'
+    ga.acc(g_pi, mypi)
     ga.sync()
     if myrank == 0:
-        ### get value of 'pi' from global array 'g_pi'
+        pi = ga.get(g_pi)[0]
         prn_pi(pi, PI)
 
-### destroy the global array 'g_n'
-### destroy the global array 'g_pi'
+ga.destroy(g_n)
+ga.destroy(g_pi)

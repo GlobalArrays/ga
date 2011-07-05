@@ -5,7 +5,6 @@ me = ga.nodeid()
 
 def print_distribution(g_a):
     for i in range(ga.nnodes()):
-        print "Printing g_a info for processor", i
         lo,hi = ga.distribution(g_a, i)
         print "%s lo=%s hi=%s" % (i,lo,hi)
 
