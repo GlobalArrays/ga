@@ -259,10 +259,10 @@ int ARMCI_PutS(void *src_ptr, int *src_stride_arr, void *dst_ptr,
 }
 
 
-void *ARMCI_Memat(armci_meminfo_t * meminfo, int memflg)
+void *ARMCI_Memat(armci_meminfo_t * meminfo, long offset)
 {
     void *rval;
-    rval = PARMCI_Memat(meminfo, memflg);
+    rval = PARMCI_Memat(meminfo, offset);
     return rval;
 }
 

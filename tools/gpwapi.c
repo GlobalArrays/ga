@@ -43,7 +43,13 @@ void wgp_distribution(Integer g_p, Integer proc, Integer *lo, Integer *hi)
 }
 
 
-void wgp_free_local_element(Integer g_p, Integer *subscript)
+void wgp_free(void *ptr)
+{
+    pgp_free(ptr);
+}
+
+
+void* wgp_free_local_element(Integer g_p, Integer *subscript)
 {
     pgp_free_local_element(g_p, subscript);
 }
@@ -70,6 +76,12 @@ void wgp_get_size(Integer g_p, Integer *lo, Integer *hi, Integer *size, Integer 
 void wgp_initialize()
 {
     pgp_initialize();
+}
+
+
+void* wgp_malloc(size_t size)
+{
+    pgp_malloc(size);
 }
 
 
