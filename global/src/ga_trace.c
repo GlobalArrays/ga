@@ -28,6 +28,9 @@
 #  include "mpi.h"
 #endif
 
+#include "papi.h"
+#include "wapi.h"
+
 static double tt0, tt1;
 static Integer *tlog, thandle;
 static Integer *indlog, ihandle, gahandle;

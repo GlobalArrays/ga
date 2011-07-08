@@ -525,6 +525,65 @@ class ndarray(object):
         else:
             return comm().bcast()
 
+    def gather(self, i):
+        """Use ga.gather() but modify the indicies `i' based on global_slice.
+
+        Parameters
+        ----------
+        i : 1D or 2D array of indices
+            see ga.gather() documentation)
+
+        """
+        # we need to modify the indices based on the global_slice
+        # the underlying GA instance might not have the same shape, may be a
+        # view, etc
+        # make sure we're always working with a 2D index array
+        i = np.asarray(i, dtype=np.int64)
+        if i.ndim == 1:
+            i.shape = (-1,self.ndim)
+        if not me(): print i
+        ## split index array into its columns
+        #columns = np.split(i, self.ndim, 1)
+        #col_iter = iter(columns)
+        #step = []
+        #start = []
+        #new_columns = []
+        ## we toss out any index columns referring to a None dimension
+        #for gs in self.global_slice:
+        #    if isinstance(gs, slice):
+        #        step.append(slice.step)
+        #        start.append(slice.start)
+        #        new_columns.append(col_iter.next())
+        #    elif gs is None:
+        #        # skip the associated column
+        #        col_iter.next()
+        #    else:
+        #        step.append(1)
+        #        start.append(0)
+        #        fake_col = np.ndarray(columns[0].shape[0], dtype=np.int64)
+        #        fake_col[:] = gs
+        #        new_columns.append(fake_col)
+        ## combine the remaining columns and any new columns
+        #new_i = np.hstack(new_columns)
+        step = []
+        start = []
+        for gs in self.global_slice:
+            if isinstance(gs, slice):
+                step.append(gs.step)
+                start.append(gs.start)
+            elif gs is None:
+                step.append(1)
+                start.append(0)
+            else:
+                step.append(1)
+                start.append(0)
+        # modify new index array based on global_slice
+        if not me(): print step,start
+        new_i = (i*np.asarray(step,dtype=np.int64)[None,:]
+                + np.asarray(start, dtype=np.int64)[None,:])
+        if not me(): print new_i
+        return ga.gather(self.handle, new_i)
+
     def release(self):
         ga.release(self.handle)
 
@@ -2880,9 +2939,7 @@ class flatiter(object):
                     offsets.append(gs)
             # create index coordinates
             i = (np.indices(shape).reshape(len(shape),-1).T + offsets)[key]
-            # TODO this won't work if base has been sliced
-            # need to adjust index coordinates to match the global_slice
-            return ga.gather(self._base.handle, i)
+            return self._base.gather(i)
         else:
             # assumes int,long,etc
             try:

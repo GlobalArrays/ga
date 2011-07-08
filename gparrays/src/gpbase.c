@@ -21,6 +21,8 @@
 #include "gacommon.h"
 #include "typesf2c.h"
 #include "papi.h"
+#include "gppapi.h"
+#include "gpwapi.h"
 #include "gpbase.h"
 #include "armci.h"
 

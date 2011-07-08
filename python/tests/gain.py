@@ -138,6 +138,16 @@ tests = [
        bar = m.arange(3*4*5)
        i = m.zeros((3,4,5))
        result = m.add(foo.flat,bar,i.flat)""",
+    """foo = m.zeros((3,4,5))
+       bar = m.arange(3*4*5)
+       foo.flat = bar
+       baz = foo[1:,::2,2:5]
+       result = baz.flat[2:7]""",
+    """foo = m.zeros((3,4,5))
+       bar = m.arange(3*4*5)
+       foo.flat = bar
+       baz = foo[1,1:,2:]
+       result = baz.flat[2:7]""",
     "result = m.clip(m.arange(10), 1, 8)",
     "result = m.clip(m.arange(100), 10, 80)",
     "result = m.clip(m.arange(10), [3,4,1,1,1,4,4,4,4,4], 8)",
@@ -157,6 +167,7 @@ tests = [
        k = m.zeros((4,5,77))
        k[:] = foo
        result = k.transpose(1,2,0)""",
+    #"result = m.arange(3*4*5).reshape((3,4,5))",
 ]
 
 def me():

@@ -24,6 +24,8 @@
 #include "armci.h"
 #include "message.h"
 #include "papi.h"
+#include "gppapi.h"
+#include "gpwapi.h"
 
 #define gpm_GetRangeFromMap(p, ndim, plo, phi){                           \
   Integer   _mloc = p* ndim *2;                                           \
