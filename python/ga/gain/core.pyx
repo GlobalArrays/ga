@@ -364,13 +364,21 @@ class ndarray(object):
             self._strides = [self.itemsize]
             for size in shape[-1:0:-1]:
                 self._strides = [size*self._strides[0]] + self._strides
-        else:
+        elif isinstance(base, ndarray):
             self.global_slice = base.global_slice
             self.handle = base.handle
             self._strides = strides
             self._flags = base._flags
             self._flags._c = False
             self._flags._o = False
+        else:
+            # assume base is a g_a handle
+            self.handle = base
+            self.global_slice = [slice(0,x,1) for x in shape]
+            self._flags = flagsobj()
+            self._strides = [self.itemsize]
+            for size in shape[-1:0:-1]:
+                self._strides = [size*self._strides[0]] + self._strides
 
     def __del__(self):
         if self._base is None:
@@ -3139,6 +3147,12 @@ def asarray(a, dtype=None, order=None):
             return g_a # distributed using Global Arrays ndarray
         else:
             return npa # possibly a scalar or zero rank array
+
+def from_ga(g_a):
+    """Create ndarray from a global array."""
+    dtype = ga.inquire_dtype(g_a)
+    shape = ga.inquire_dims(g_a)
+    return ndarray(shape, dtype, base=g_a)
 
 cdef extern MPI_Comm ga_mpi_pgroup_default_communicator()
 def comm():
