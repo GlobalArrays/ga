@@ -11,8 +11,8 @@ CHUNK_SIZE = 256
 MULTIPLIER = 3
 N = CHUNK_SIZE*MULTIPLIER
 
-### assign to 'me' this processor's ID
-### assign to 'nproc' how many processors in the world
+me = ga.nodeid()
+nproc = ga.nnodes()
 
 class Task(object):
     def __init__(self, alo, ahi, blo, bhi, clo, chi):
@@ -52,30 +52,24 @@ def srumma(g_a, g_b, g_c, chunk_size, multiplier):
         stop += multiplier**3 % nproc
     # the srumma algorithm, more or less
     task_prev = task_list[start]
-    ### use a nonblocking get to request first block and nb handle from 'g_a'
-    ###     and assign to 'a_prev' and 'a_nb_prev'
-    ### use a nonblocking get to request first block and nb handle from 'g_b'
-    ###     and assign to 'b_prev' and 'b_nb_prev'
+    a_prev,a_nb_prev = ga.nbget(g_a, task_prev.alo, task_prev.ahi)
+    b_prev,b_nb_prev = ga.nbget(g_b, task_prev.blo, task_prev.bhi)
     for i in range(start+1,stop):
         task_next = task_list[i]
-        ### use a nonblocking get to request next block and nb handle from 'g_a'
-        ###     and assign to 'a_next' and 'a_nb_next'
-        ### use a nonblocking get to request next block and nb handle from 'g_b'
-        ###     and assign to 'b_next' and 'b_nb_next'
-        ### wait on the previoius nb handle for 'g_a'
-        ### wait on the previoius nb handle for 'g_b'
+        a_next,a_nb_next = ga.nbget(g_a, task_next.alo, task_next.ahi)
+        b_next,b_nb_next = ga.nbget(g_b, task_next.blo, task_next.bhi)
+        ga.nbwait(a_nb_prev)
+        ga.nbwait(b_nb_prev)
         result = np.dot(a_prev,b_prev)
-        ### accumulate the result into 'g_c' at the previous block location
+        ga.acc(g_c, result, task_prev.clo, task_prev.chi)
         task_prev = task_next
         a_prev,a_nb_prev = a_next,a_nb_next
         b_prev,b_nb_prev = b_next,b_nb_next
-    ### wait on the previoius nb handle for 'g_a'
-    ### wait on the previoius nb handle for 'g_b'
     ga.nbwait(a_nb_prev)
     ga.nbwait(b_nb_prev)
     result = np.dot(a_prev,b_prev)
-    ### accumulate the result into 'g_c' at the previous block location
-    ### synchronize
+    ga.acc(g_c, result, task_prev.clo, task_prev.chi)
+    ga.sync()
 
 def verify_using_ga(g_a, g_b, g_c):
     g_v = ga.duplicate(g_c)

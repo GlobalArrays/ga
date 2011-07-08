@@ -1,6 +1,7 @@
 """A way over-simplified SRUMMA matrix multiplication implementation.
 
 Assumes square matrices with the shape as a multiple of the block size.
+This one utilizes ga.read_inc() for load balancing.
 
 """
 import mpi4py.MPI
@@ -11,8 +12,8 @@ CHUNK_SIZE = 256
 MULTIPLIER = 3
 N = CHUNK_SIZE*MULTIPLIER
 
-### assign to 'me' this processor's ID
-### assign to 'nproc' how many processors in the world
+me = ga.nodeid()
+nproc = ga.nnodes()
 
 class Task(object):
     def __init__(self, alo, ahi, blo, bhi, clo, chi):
@@ -42,40 +43,31 @@ def get_task_list(chunk_size, multiplier):
                 count += 1
     return task_list
 
-def srumma(g_a, g_b, g_c, chunk_size, multiplier):
-    # statically partition the task list among nprocs
+def srumma(g_a, g_b, g_c, chunk_size, multiplier, g_counter):
     task_list = get_task_list(chunk_size, multiplier)
-    ntasks = multiplier**3 // nproc
-    start = me*ntasks
-    stop = (me+1)*ntasks
-    if me+1 == nproc:
-        stop += multiplier**3 % nproc
+    ### get first integer from g_counter and assign to 'task_id'
     # the srumma algorithm, more or less
-    task_prev = task_list[start]
-    ### use a nonblocking get to request first block and nb handle from 'g_a'
-    ###     and assign to 'a_prev' and 'a_nb_prev'
-    ### use a nonblocking get to request first block and nb handle from 'g_b'
-    ###     and assign to 'b_prev' and 'b_nb_prev'
-    for i in range(start+1,stop):
-        task_next = task_list[i]
-        ### use a nonblocking get to request next block and nb handle from 'g_a'
-        ###     and assign to 'a_next' and 'a_nb_next'
-        ### use a nonblocking get to request next block and nb handle from 'g_b'
-        ###     and assign to 'b_next' and 'b_nb_next'
-        ### wait on the previoius nb handle for 'g_a'
-        ### wait on the previoius nb handle for 'g_b'
+    task_prev = task_list[task_id]
+    a_prev,a_nb_prev = ga.nbget(g_a, task_prev.alo, task_prev.ahi)
+    b_prev,b_nb_prev = ga.nbget(g_b, task_prev.blo, task_prev.bhi)
+    ### get next integer from g_counter and assign to 'task_id'
+    while task_id < multiplier**3:
+        task_next = task_list[task_id]
+        a_next,a_nb_next = ga.nbget(g_a, task_next.alo, task_next.ahi)
+        b_next,b_nb_next = ga.nbget(g_b, task_next.blo, task_next.bhi)
+        ga.nbwait(a_nb_prev)
+        ga.nbwait(b_nb_prev)
         result = np.dot(a_prev,b_prev)
-        ### accumulate the result into 'g_c' at the previous block location
+        ga.acc(g_c, result, task_prev.clo, task_prev.chi)
         task_prev = task_next
         a_prev,a_nb_prev = a_next,a_nb_next
         b_prev,b_nb_prev = b_next,b_nb_next
-    ### wait on the previoius nb handle for 'g_a'
-    ### wait on the previoius nb handle for 'g_b'
+        ### get next integer from g_counter and assign to 'task_id'
     ga.nbwait(a_nb_prev)
     ga.nbwait(b_nb_prev)
     result = np.dot(a_prev,b_prev)
-    ### accumulate the result into 'g_c' at the previous block location
-    ### synchronize
+    ga.acc(g_c, result, task_prev.clo, task_prev.chi)
+    ga.sync()
 
 def verify_using_ga(g_a, g_b, g_c):
     g_v = ga.duplicate(g_c)
@@ -107,6 +99,8 @@ if __name__ == '__main__':
         g_a = ga.create(ga.C_DBL, [N,N])
         g_b = ga.create(ga.C_DBL, [N,N])
         g_c = ga.create(ga.C_DBL, [N,N])
+        g_counter = ga.create(ga.C_INT, [1])
+        ga.zero(g_counter)
         # put some fake data into input arrays A and B
         if me == 0:
             ga.put(g_a, np.random.random(N*N))
@@ -114,7 +108,7 @@ if __name__ == '__main__':
         ga.sync()
         if me == 0:
             print "srumma...",
-        srumma(g_a, g_b, g_c, CHUNK_SIZE, MULTIPLIER)
+        srumma(g_a, g_b, g_c, CHUNK_SIZE, MULTIPLIER, g_counter)
         if me == 0:
             print "done"
         if me == 0:
@@ -136,3 +130,4 @@ if __name__ == '__main__':
         ga.destroy(g_a)
         ga.destroy(g_b)
         ga.destroy(g_c)
+        ga.destroy(g_counter)

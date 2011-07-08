@@ -952,6 +952,8 @@ def create(int gtype, dims, char *name="", chunk=None, int pgroup=-1):
     """
     cdef np.ndarray[np.int64_t, ndim=1] dims_nd, chunk_nd=None
     dims_nd = _inta64(dims)
+    if pgroup < 0:
+        pgroup = pgroup_get_default()
     if chunk:
         chunk_nd = _inta64(chunk)
         return NGA_Create_config64(gtype, len(dims_nd), <int64_t*>dims_nd.data,
@@ -1000,6 +1002,8 @@ def create_ghosts(int gtype, dims, width, char *name="", chunk=None,
     cdef np.ndarray[np.int64_t, ndim=1] dims_nd, chunk_nd, width_nd
     dims_nd = _inta64(dims)
     width_nd = _inta64(width)
+    if pgroup < 0:
+        pgroup = pgroup_get_default()
     if chunk:
         chunk_nd = _inta64(chunk)
         return NGA_Create_ghosts_config64(gtype, len(dims_nd),
@@ -1060,6 +1064,8 @@ def create_irreg(int gtype, dims, block, map, char *name="", int pgroup=-1):
     dims_nd = _inta64(dims)
     block_nd = _inta64(block)
     map_nd = _inta64(map)
+    if pgroup < 0:
+        pgroup = pgroup_get_default()
     return NGA_Create_irreg_config64(gtype, len(dims_nd),
             <int64_t*>dims_nd.data, name,
             <int64_t*>block_nd.data, <int64_t*>map_nd.data, pgroup)
@@ -1108,6 +1114,8 @@ def create_ghosts_irreg(int gtype, dims, width, block, map, char *name="",
     width_nd = _inta64(width)
     block_nd = _inta64(block)
     map_nd = _inta64(map)
+    if pgroup < 0:
+        pgroup = pgroup_get_default()
     return NGA_Create_ghosts_irreg_config64(gtype, len(dims_nd),
             <int64_t*>dims_nd.data, <int64_t*>width_nd.data, name,
             <int64_t*>block_nd.data, <int64_t*>map_nd.data, pgroup)
@@ -3019,7 +3027,7 @@ def pgroup_gop_absmax(int pgroup, X):
 def pgroup_gop_absmin(int pgroup, X):
     return pgroup_gop(pgroup, X, "absmin")
 
-def pgroup_nnodes(int pgroup):
+def pgroup_nnodes(int pgroup=-1):
     """Returns the number of processors contained in the group specified by
     pgroup.
 
@@ -3030,9 +3038,11 @@ def pgroup_nnodes(int pgroup):
             the group handle
 
     """
+    if pgroup < 0:
+        pgroup = pgroup_get_default()
     return GA_Pgroup_nnodes(pgroup)
 
-def pgroup_nodeid(int pgroup):
+def pgroup_nodeid(int pgroup=-1):
     """Returns the relative index of the processor in the processor group
     specified by pgroup.
     
@@ -3046,9 +3056,11 @@ def pgroup_nodeid(int pgroup):
             the group handle
 
     """
+    if pgroup < 0:
+        pgroup = pgroup_get_default()
     return GA_Pgroup_nodeid(pgroup)
 
-def pgroup_set_default(int pgroup):
+def pgroup_set_default(int pgroup=-1):
     """Resets the default processor group on a collection of processors.
     
     All processors in the group referenced by p_handle must make a call to
@@ -3067,6 +3079,8 @@ def pgroup_set_default(int pgroup):
     pgroup. 
 
     """
+    if pgroup < 0:
+        pgroup = pgroup_get_world()
     GA_Pgroup_set_default(pgroup)
 
 def pgroup_split(int pgroup, int num_group):
@@ -3077,7 +3091,7 @@ def pgroup_split_irreg(int pgroup, int color):
     """TODO"""
     return GA_Pgroup_split_irreg(pgroup, color)
 
-def pgroup_sync(int pgroup):
+def pgroup_sync(int pgroup=-1):
     """Executes a synchronization group across the processors in the processor
     group specified by pgroup.
     
@@ -3087,6 +3101,8 @@ def pgroup_sync(int pgroup):
     pgroup.  
 
     """
+    if pgroup < 0:
+        pgroup = pgroup_get_default()
     GA_Pgroup_sync(pgroup)
 
 def print_distribution(int g_a):
