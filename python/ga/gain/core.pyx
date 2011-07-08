@@ -541,30 +541,7 @@ class ndarray(object):
         i = np.asarray(i, dtype=np.int64)
         if i.ndim == 1:
             i.shape = (-1,self.ndim)
-        if not me(): print i
-        ## split index array into its columns
-        #columns = np.split(i, self.ndim, 1)
-        #col_iter = iter(columns)
-        #step = []
-        #start = []
-        #new_columns = []
-        ## we toss out any index columns referring to a None dimension
-        #for gs in self.global_slice:
-        #    if isinstance(gs, slice):
-        #        step.append(slice.step)
-        #        start.append(slice.start)
-        #        new_columns.append(col_iter.next())
-        #    elif gs is None:
-        #        # skip the associated column
-        #        col_iter.next()
-        #    else:
-        #        step.append(1)
-        #        start.append(0)
-        #        fake_col = np.ndarray(columns[0].shape[0], dtype=np.int64)
-        #        fake_col[:] = gs
-        #        new_columns.append(fake_col)
-        ## combine the remaining columns and any new columns
-        #new_i = np.hstack(new_columns)
+        #if not me(): print i
         step = []
         start = []
         for gs in self.global_slice:
@@ -575,13 +552,30 @@ class ndarray(object):
                 step.append(1)
                 start.append(0)
             else:
-                step.append(1)
-                start.append(0)
+                pass
         # modify new index array based on global_slice
-        if not me(): print step,start
+        #if not me(): print step,start
         new_i = (i*np.asarray(step,dtype=np.int64)[None,:]
                 + np.asarray(start, dtype=np.int64)[None,:])
-        if not me(): print new_i
+        # get rid of index columns which don't refer to an actual GA dimension
+        # add index columns which were missing, single-valued GA dimensions
+        columns = np.hsplit(new_i,self.ndim) # returns a list
+        column_iter = iter(columns)
+        new_columns = []
+        for gs in self.global_slice:
+            if isinstance(gs, slice):
+                # no change to column
+                new_columns.append(column_iter.next())
+            elif gs is None:
+                # skip column
+                column_iter.next()
+            else:
+                # add missing column
+                new_column = np.zeros((len(new_i),1),dtype=np.int64)
+                new_column[:] = gs
+                new_columns.append(new_column)
+        new_i = np.hstack(new_columns)
+        #if not me(): print new_i
         return ga.gather(self.handle, new_i)
 
     def release(self):
@@ -2926,19 +2920,9 @@ class flatiter(object):
             pass
         if isinstance(key, slice):
             # get shape of global_slice
-            shape = []
-            offsets = []
-            for gs in self._base.global_slice:
-                if gs is None:
-                    pass
-                elif isinstance(gs, slice):
-                    shape.append(util.slicelength(gs))
-                    offsets.append(0)
-                else:
-                    shape.append(1)
-                    offsets.append(gs)
+            shape = util.slices_to_shape(self._base.global_slice)
             # create index coordinates
-            i = (np.indices(shape).reshape(len(shape),-1).T + offsets)[key]
+            i = (np.indices(shape).reshape(len(shape),-1).T)[key]
             return self._base.gather(i)
         else:
             # assumes int,long,etc
