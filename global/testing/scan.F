@@ -99,6 +99,10 @@ c
 c***  check parallel environment
       me = ga_nodeid()
       nproc = ga_nnodes()
+      if(me.eq.0)then
+        print *, 'testing pack/unpack'
+        call ffflush(6)
+      endif
 c
       nelements=20000
       nen=4
@@ -146,6 +150,14 @@ c     *** ielm1: 1 2 3 4 5 ... nelements ... 0 0 0 0 0
 c
 c***  compute local ilo, ihi, num for each processor
       call nga_distribution(g_ielm1,me,ilo,ihi,chunk)
+      do i=0,nproc-1
+         if(me.eq.i) then
+            write(6,'(a,i4,a,i8,a,i8)') 'me: ',me,
+     +            ' lo: ', ilo,' hi: ',ihi
+            call ffflush(6)
+         endif
+         call ga_sync()
+      enddo
       num=ihi-ilo+1
       if(ihi.le.0) num=0
       if(ihi.gt.nelements) then
@@ -157,8 +169,14 @@ c***  compute local ilo, ihi, num for each processor
          goto 9999
       endif
 cbjp      print *, 'me=',me, num,ilo,ihi
-      write(6,'(a,i4,a,i8,a,i8,a,i8)') 'me: ',me,' num: ',num,' lo: ',
-     +                                 ilo,' hi: ',ihi
+      do i=0,nproc-1
+         if(me.eq.i) then
+            write(6,'(a,i4,a,i8,a,i8,a,i8)') 'me: ',me,
+     +            ' num: ',num, ' lo: ', ilo,' hi: ',ihi
+            call ffflush(6)
+         endif
+         call ga_sync()
+      enddo
 c
 c***  scatter some values into the global array
       call ga_fill(g_sbit2,0)
@@ -201,7 +219,7 @@ c***  Find the minimum value and the index of the minimum value
            print *,"Pack successful"
          endif
       else
-         print *,"Pack unsuccessful"
+         call ga_error("Pack unsuccessful",0)
       endif
       call ga_sync()
 C
@@ -210,14 +228,14 @@ C     TEST THE "UNPACK" FUNCTION.
 C
       itoff=nen*nelements
       call ga_fill(g_src2,0)
-      call ga_unpack(g_src2,g_sink2,g_sbit2,1,itoff,count)
+      call ga_unpack(g_sink2,g_src2,g_sbit2,1,itoff,count)
 C     *** sink2: 1 2 3 4 5 ... icount ... 0 0 0 0 0 0 0 0 0 ..... 0
 C     *** sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
 C     ***  src2: 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 5 0 0 0 6 .....
       call ga_fill(g_sink2,0)
       call ga_pack(g_src2, g_sink2,g_sbit2,1,itoff,icount)
-C     *** sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
 C     ***  src2: 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 5 0 0 0 6 .....
+C     *** sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
 C     *** sink2: 1 2 3 4 5 ... icount ... 0 0 0 0 0 0 0 0 0 ..... 0
 C         [NOTE: icount should equal nelements.]
       if(icount.ne.nelements) then
@@ -240,6 +258,7 @@ c***  Find the minimum value and the index of the minimum value
       else
          print *,"Unpack unsuccessful", imin_ga,ilocmin_ga
          print *,"Unpack unsuccessful", imax_ga,ilocmax_ga
+         call ga_error("Unpack unsuccessful", -1)
       endif
       call ga_sync()
 C
@@ -263,7 +282,7 @@ C
 C
       integer ilo, ihi, num
       integer ilo4, ihi4, num4
-      integer i, it, count
+      integer i, j, it, count
       integer me, nproc                       ! my processor & number of procs 
       integer ndim,dims(1),chunk(1)
 C
@@ -342,6 +361,14 @@ c     *** ielm1: 1 2 3 4 5 ... nelements ... 0 0 0 0 0
 c
 c***  compute local ilo, ihi, num for each processor
       call nga_distribution(g_ielm1,me,ilo,ihi,chunk)
+      do i=0,nproc-1
+         if(me.eq.i) then
+            write(6,'(a,i4,a,i8,a,i8)') 'me: ',me,
+     +            ' lo: ', ilo,' hi: ',ihi
+            call ffflush(6)
+         endif
+         call ga_sync()
+      enddo
       num=ihi-ilo+1
       if(ihi.le.0) num=0
       if(ihi.gt.nelements) then
@@ -353,8 +380,14 @@ c***  compute local ilo, ihi, num for each processor
          goto 9999
       endif
 cbjp      print *, 'me=',me, num,ilo,ihi
-      write(6,'(a,i4,a,i8,a,i8,a,i8)') 'me: ',me,' num: ',num,' lo: ',
-     +                                 ilo,' hi: ',ihi
+      do i=0,nproc-1
+         if(me.eq.i) then
+            write(6,'(a,i4,a,i8,a,i8,a,i8)') 'me: ',me,
+     +            ' num: ',num, ' lo: ', ilo,' hi: ',ihi
+            call ffflush(6)
+         endif
+         call ga_sync()
+      enddo
 c
 c***  scatter some values into the global array
       call ga_fill(g_sbit2,0)
@@ -397,7 +430,7 @@ c***  Find the minimum value and the index of the minimum value
            print *,"Pack successful"
          endif
       else
-         print *,"Pack unsuccessful"
+         call ga_error("Pack unsuccessful",-1)
       endif
       call ga_sync()
 c
@@ -406,7 +439,7 @@ c     TEST THE "UNPACK" FUNCTION.
 c
       itoff=nen*nelements
       call ga_fill(g_src2,0)
-      call ga_unpack(g_src2,g_sink2,g_sbit2,1,itoff,count)
+      call ga_unpack(g_sink2,g_src2,g_sbit2,1,itoff,count)
 *      call ga_unpack(g_src2,g_sink2,g_sbit2,1,nelements,count)
 C     *** sink2: 1 2 3 4 5 ... icount ... 0 0 0 0 0 0 0 0 0 ..... 0
 C     *** sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
@@ -435,7 +468,7 @@ c***  Find the minimum value and the index of the minimum value
            print *,"Unpack successful"
          endif
       else
-         print *,"Unpack unsuccessful"
+         call ga_error("Unpack unsuccessful",-1)
       endif
       call ga_sync()
 *     call ga_print(g_src2)
@@ -452,8 +485,14 @@ c***  compute local ilo, ihi, num for each processor
          goto 9999
       endif
 cbjp      print *, 'me=',me, num4,ilo4,ihi4
-      write(6,'(a,i4,a,i8,a,i8,a,i8)') 'me: ',me,' num4: ',num4,
-     +                                 ' lo4: ',ilo4,' hi4: ',ihi4
+      do i=0,nproc-1
+         if(me.eq.i) then
+            write(6,'(a,i4,a,i8,a,i8,a,i8)') 'me: ',me,
+     +            ' num4: ',num4, ' lo4: ', ilo4,' h4i: ',ihi4
+            call ffflush(6)
+         endif
+         call ga_sync()
+      enddo
       call ga_fill(g_irowmat,-1)
       call GA_scan_copy(g_src2, g_irowmat, g_sbit2,1,itoff)
 c     ***   sbit2: 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 .....
@@ -466,8 +505,14 @@ c
       enddo
       call ga_fill(g_velm4,0.0d+00)
 cbjp      print *, num4, (ielm4(i),i=1,min(4,num4))
-      write(6,'(a,i4,a,i8,a,4i8)') 'me: ',me,' num4: ',num4,' ielm4: ',
-     +                                 (ielm4(i),i=1,min(4,num4))
+      do j=0,nproc-1
+         if(me.eq.j) then
+            write(6,'(a,i4,a,i8,a,i8,a,i8)') 'me: ',me, ' num4: ',num4,
+     +            ' ielm4: ', (ielm4(i),i=1,min(4,num4))
+            call ffflush(6)
+         endif
+         call ga_sync()
+      enddo
       call nga_scatter_acc(g_velm4,velm4,ielm4,num4,1.0d+00)
 C     *** velm4: 4 4 4 4 4 4 4 4 4 4 ... nelements
       result=ga_ddot(g_velm4,g_velm4)
@@ -476,7 +521,7 @@ C     *** velm4: 4 4 4 4 4 4 4 4 4 4 ... nelements
            print *,"Scan_copy successful."
          endif
       else
-         print *,"Scan_copy failed."
+         call ga_error("Scan_copy failed.",-1)
       endif
       call ga_sync()
 c
@@ -528,7 +573,7 @@ c     *** result = sum(velm4 * velm5) = (1+2+3+4+...+nen)*nelements
            print *,"Scan_add successful."
          endif
       else
-         print *,"Scan_add failed."
+         call ga_error("Scan_add failed.",-1)
       endif
       call ga_sync()
       call ga_sync
@@ -568,7 +613,7 @@ cc      if (ichk.eq.nelements*isum) then
           print *,"Exclusive scan_add successful."
         endif
       else
-       print *,"Exclusive scan_add failed."
+       call ga_error("Exclusive scan_add failed.",-1)
       endif
 c
       goto 9999

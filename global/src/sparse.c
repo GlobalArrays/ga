@@ -28,8 +28,6 @@ void pnga_patch_enum(Integer g_a, Integer lo, Integer hi, void* start, void* str
 {
 Integer dims[1],lop,hip;
 Integer ndim, type, me, off;
-register Integer i;
-register Integer nelem;
 
    pnga_sync();
    me = pnga_nodeid();
@@ -49,10 +47,12 @@ register Integer nelem;
       else{
         void *ptr;
         Integer ld;
-        nelem = hip-lop+1;
+        register Integer i;
+        register Integer nelem;
 
         if(lop < lo)lop = lo;
         if(hip > hi)hip = hi;
+        nelem = hip-lop+1;
         off = lop - lo;
         pnga_access_ptr(g_a, &lop, &hip, &ptr, &ld);
         
