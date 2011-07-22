@@ -84,7 +84,7 @@ Other programs may require slight modification. This allows those programs to
 take advantage of the additional cores available on single compute nodes and
 to increase problem sizes by distributing across clustered environments.
 
-This manuscript builds on \cite{Dai11} by expanding both the design dicussion
+This manuscript builds on \cite{Dai11} by expanding both the design discussion
 and background such that this paper may stand on its own. The previous
 manuscript was prepared for the Python community and as such relevant
 background material on the Python language and related modules was omitted. An
@@ -104,7 +104,7 @@ references or as otherwise noted.
 \subsection{Python}
 
 Python \cite{Lun01,Pyt11} is a machine-independent, bytecode interpreted,
-object-oriented program- ming (OOP) language. It can be used for rapid
+object-oriented programming (OOP) language. It can be used for rapid
 application development, shell scripting, or scientific computing to name a
 few. It gives programmers and end users the ability to extend the language
 with new features or functionality. Such extensions can be written in C, C++,
@@ -166,7 +166,7 @@ indexing.
 To illustrate both index and \texttt{slice} access to Python sequences assume
 we have the \texttt{list} of \texttt{int}s \texttt{A=[0,1,2,3,4,5,6,7,8,9]}.
 An example of single-item access would be \texttt{A[1]=1}. Using slice syntax
-would looke like \texttt{A[1:2]=[1]}. A negative single-item index looks like
+would look like \texttt{A[1:2]=[1]}. A negative single-item index looks like
 \texttt{A[-1]=9}.  Finally, an example of slice syntax that includes a step is
 \texttt{A[2:9:3]=[2,5,8]}.  Note in these examples how single-item access
 returns an int whereas slicing notation returns a list.
@@ -183,7 +183,7 @@ Python this is also called pickling and unpickling.
 pickle is part of the Python Standard Library \cite{Lun01} and can serialize
 nearly everything in Python. It is designed to be backwards compatible with
 earlier versions of Python. Certain Python objects, such as modules or
-functions, are serialized by name only rather thanby their state. They can
+functions, are serialized by name only rather than by their state. They can
 only be de-serialized so long as the same module or function exists within the
 scope where the de-serialization occurs. There is no guarantee that the same
 function will result from the de-serialization or that the function exists in
@@ -377,7 +377,7 @@ distributed dense multidimensional arrays, without the need for explicit
 cooperation by other processes. GA compliments the message-passing programming
 model and is compatible with MPI so that the programmer can use both in the
 same program. GA has supported Python bindings since version 5.0. Arrays are
-created by calling one of the creation routines such as \verb=ga.ceate()=,
+created by calling one of the creation routines such as \verb=ga.create()=,
 returning an integer handle which is passed to subsequent operations. The GA
 library handles the distribution of arrays across processes and recognizes
 that accessing local memory is faster than accessing remote memory. However,
@@ -858,7 +858,7 @@ from many allocations and deallocations but primarily avoids many
 synchronization calls. Three cache depths were tested, as shown in Table
 \ref{tab:cache}. The trade-off of using this cache is that if the arrays used
 by an application vary wildly in size or type, this cache will consume too
-much memory. Other hueristics could be developed to keep the cache from using
+much memory. Other heuristics could be developed to keep the cache from using
 too much memory e.g. a maximum size of the cache, remove the least used
 arrays, remove the least recently used.  Based on the success of the GA cache,
 it is currently used by GAiN.
@@ -911,7 +911,7 @@ be explored. GA allows for the get-compute-put model of computation where
 ownership of data is largely ignored while data movement costs are increased.
 However, the get-compute-put model of computation may allow an algorithm to
 mix communication and computation, improving overall performance as is done
-with the SRUMMA dense matrix multiplication algoritm \cite{Kri04}.
+with the SRUMMA dense matrix multiplication algorithm \cite{Kri04}.
 
 Task parallelism could also be explored if load balancing becomes an issue.
 The scioto framework \cite{Din08} interoperates with MPI and GA and provides
@@ -921,11 +921,11 @@ parallelism instead of owner-computes. Task parallelism decouples data
 ownership from the computation and is more akin to the get-compute-put model.
 
 The GA cache should be exposed as a tunable parameter since the current
-hueristic of reusing arrays with the same type and shape does not apply to
+heuristic of reusing arrays with the same type and shape does not apply to
 dynamic applications. For example, while not a true application, the current
 test suite for GAiN creates many arrays of different shapes and types. Most of
 those arrays are not reused. Applications of this nature may wish to disable
-GA caching.  Alternative temporary array creation strategies and hueristics
+GA caching.  Alternative temporary array creation strategies and heuristics
 could also be developed.
 
 Although the GA cache is meant to solve the problem of temporary array
@@ -937,7 +937,7 @@ works by combining arithmetic operations, reducing temporary array creation,
 and utilizing vectorizing libraries. A similar approach could be utilized by
 GAiN. The approach taken by numexpr is similar to the approach used by GpuPy
 discussed earlier. GpuPy utilizes lazy evaluation to store NumPy functions as
-an abstrat syntax tree to combine arithmetic operations on a GPU.
+an abstract syntax tree to combine arithmetic operations on a GPU.
 
 Although the master/slave capabilities of GAiN allow for most NumPy
 applications to parallelize their NumPy portions alone, utilizing the MPI-2
@@ -952,7 +952,7 @@ The scalability of the Python interpreter remains an open problem. This is the
 single greatest hurdle to running Python applications at scale. There is a
 potential solution for diskless systems such as BlueGene/P machines provided
 by \cite{Scu11}. Clusters with local disks mounted to their compute nodes may
-find other approaches valueable, as well.
+find other approaches valuable, as well.
 
 %\appendix
 %\section{Appendix Title}
