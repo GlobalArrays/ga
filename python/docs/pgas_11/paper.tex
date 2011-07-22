@@ -1,4 +1,4 @@
-\documentclass[preprint]{sigplanconf}
+\documentclass{sigplanconf}
 
 % The following \documentclass options may be useful:
 %
@@ -22,7 +22,7 @@
 
 \title{Automatic Parallelization of Numerical Python Applications Using the
 Global Arrays Toolkit}
-\subtitle{Subtitle Text, if any}
+%\subtitle{Subtitle Text, if any}
 
 \authorinfo{Jeff Daily}
            {Pacific Northwest National Laboratory}
@@ -54,10 +54,10 @@ showing the utility of developing serial NumPy codes which can later run on
 more capable clusters or supercomputers.
 \end{abstract}
 
-\category{CR-number}{subcategory}{third-level}
+%\category{CR-number}{subcategory}{third-level}
 
-\terms
-Global Arrays, PGAS, NumPy, Python, GAiN
+%\terms
+%Global Arrays, PGAS, NumPy, Python, GAiN
 
 \keywords
 Global Arrays, PGAS, NumPy, Python, GAiN
@@ -83,6 +83,15 @@ NumPy they may be able to take advantage of parallel processing transparently.
 Other programs may require slight modification. This allows those programs to
 take advantage of the additional cores available on single compute nodes and
 to increase problem sizes by distributing across clustered environments.
+
+This manuscript builds on \cite{Dai11} by expanding both the design dicussion
+and background such that this paper may stand on its own. The previous
+manuscript was prepared for the Python community and as such relevant
+background material on the Python language and related modules was omitted. An
+alternative parallelization strategy is also implemented and discussed while
+other parallelization strategies are additionally proposed while discussing
+future work. Lastly, the difficulty in scaling the Python interpreter has been
+added to the evaluation.
 
 \section{Background}
 
@@ -463,17 +472,6 @@ such as the benefits of integration with NumPy -- the local or remote portions
 of the global arrays were retrieved as NumPy arrays at which point they could
 be used as inputs to NumPy functions like the ufuncs.
 
-% However, the
-% burden was still on the programmer to understand the SPMD nature of the
-% program. For example, when accessing the global array as an \verb=ndarray=, the array
-% shape and dimensions would match that of the local array maintained by the
-% process calling the access function. Such an implementation is entirely
-% correct, however there was no attempt to handle slicing at the global level as
-% it is implemented in NumPy. In short, pyGA recognized the benefit of
-% returning portions of the global array wrapped in a NumPy array, but it did
-% not treat the global arrays as if they were themselves a subclass of the
-% \verb=ndarray=.
-
 \subsection{Co-Array Python}
 
 Co-Array Python \cite{Ras04} is modeled after the Co-Array FORTRAN extensions
@@ -484,9 +482,6 @@ processors executing in a SPMD fashion. The CoArray was designed as an
 extension to Numeric Python \cite{Asc99}.
 
 \section{Design}
-
-% There comes a point at which a single compute node does not have the resources
-% necessary for executing a given problem.
 
 The need for parallel programming and running these programs on parallel
 architectures is obvious, however, efficiently programming for a parallel
@@ -545,7 +540,7 @@ One problem occurs with view casting -- with this approach the other
 within the \verb=gainarray=. NumPy itself is not designed to handle
 distributed arrays. By design, ufuncs create an output array when one is not
 specified. The first hook which NumPy provides is \verb=__array_prepare__()=
-which is called *after the output array has been created*. This means any
+which is called \emph{after the output array has been created}. This means any
 ufunc operation on one or more \verb=gainarray= instances without a specified
 output would automatically allocate the entire output on each process. For
 this reason alone, we opted to reimplement the entire \verb=numpy= module,
@@ -616,9 +611,6 @@ which will result in communication.
 }
 \label{fig:3}
 \end{figure}
-
-% \verb=gain.ndarray= and array operations
-% =====================================
 
 The GAiN implementation of the \verb=ndarray= implements a few important
 concepts including the dual nature of a global array and its individual
@@ -745,9 +737,6 @@ once an array is created. This complicates such useful functionality as
 \verb=numpy.reshape()=. Currently, GAiN must make a copy of the array instead
 of a view when altering the shape of an array.
 
-% \verb=gain.flatiter=
-% =================
-
 Translating the \verb=numpy.flatiter= class, which assumes a single address
 space while translating an N-dimensional array into a 1D array, into a
 distributed form was made simpler by the use of \verb=ga.gather()= and
@@ -829,68 +818,31 @@ version of Linux based on Red Hat Linux Advanced Server.  GAiN utilized up to
 512 nodes of the cluster, using 4 cores per node.
 
 In Figure \ref{fig:laplace}, GAiN is shown to scale up to 2K cores on a modest
-problem size. GAiN is also able to run on problems which are not feasible on
-workstations. For example, to store one 100,000x100,000 matrix of
-double-precision numbers requires approximately 75GB.
+problem size. However, the startup cost of the Python interpreter became
+prohibitively large such that a 4K core test could not be run in a reasonable
+amount of time. It is encouraging that the implementation of GAiN allows the
+algorithm to scale so long as the Python interpreter can be sufficiently
+modified to scale, as well.
+
+GAiN is also able to run on problems which are not feasible on workstations.
+For example, to store one 100,000x100,000 matrix of double-precision numbers
+requires approximately 75GB. 
 
 \begin{figure}[htb]
 \centering
 \includegraphics[width=0.47\textwidth]{laplace.eps}
 \caption{
-\texttt{laplace.py} for N=10,000 and N=100,000. For N=10,000, one matrix of
-double-precision numbers is approximately 0.75GB. For this problem, GAiN
-scales up to 2K cores. For N=100,000, one matrix of double-precision numbers
-is approximately 75GB. In addition to handling this large-scale problem, GAiN
-continues to scale up to 2K cores.
+\texttt{laplace.py} for N=10,000 and N=100,000. For N=10,000, one matrix
+of double-precision numbers is approximately 0.75GB. For this problem, GAiN
+scales up to 2K cores in terms of the solver algorithm, however, the Python
+interpreter fails to scale beyond a few hundred cores in this case. For
+N=100,000, one matrix of double-precision numbers is approximately 75GB. In
+addition to handling this large-scale problem, GAiN continues to scale up to
+2K cores. Again, the startup cost of the Python interpreter prohibited the 4K
+run from starting in a reasonable amount of time.
 }
 \label{fig:laplace}
 \end{figure}
-
-% .. table:: \verb=laplace.py= for N=10,000. One matrix of double-precision
-%     numbers is approximately 0.75GB. For this problem, GAiN scales up to 2K
-%     cores. The results for native NumPy are shown for the first, single-core
-%     row. Even for a modest number of cores, GAiN is much
-%     faster. :label:`tabscaling` 
-% 
-%     +-------+-----------------+---------------+
-%     | Cores | Solver Time (s) | Wall Time (s) |
-%     +-------+-----------------+---------------+
-%     | 1     | 843.43          | 845           |
-%     +-------+-----------------+---------------+
-%     | 4     | 560.03          | 564           |
-%     +-------+-----------------+---------------+
-%     | 8     | 322.81          | 333           |
-%     +-------+-----------------+---------------+
-%     | 16    | 180.35          | 191           |
-%     +-------+-----------------+---------------+
-%     | 32    | 86.71           | 97            |
-%     +-------+-----------------+---------------+
-%     | 64    | 44.43           | 56            |
-%     +-------+-----------------+---------------+
-%     | 128   | 28.67           | 38            |
-%     +-------+-----------------+---------------+
-%     | 256   | 12.15           | 34            |
-%     +-------+-----------------+---------------+
-%     | 512   | 7.38            | 43            |
-%     +-------+-----------------+---------------+
-%     | 1024  | 5.31            | 72            |
-%     +-------+-----------------+---------------+
-%     | 2048  | 4.84            | 131           |
-%     +-------+-----------------+---------------+
-% 
-% .. table:: \verb=laplace.py= for N=100,000. One matrix of double-precision
-%     numbers is approximately 75GB. In addition to handling this large-scale
-%     problem, GAiN continues to scale again up to 2K cores. :label:`tabbig`
-% 
-%     +-------+-----------------+---------------+
-%     | Cores | Solver Time (s) | Wall Time (s) |
-%     +-------+-----------------+---------------+
-%     | 512   |  567.46         |  602          |
-%     +-------+-----------------+---------------+
-%     | 1024  |  299.48         |  366          |
-%     +-------+-----------------+---------------+
-%     | 2048  |  150.36         |  270          |
-%     +-------+-----------------+---------------+
 
 During the evaluation, it was noted that a lot of time was spent within global
 synchronization calls e.g. \verb=ga.sync()=. The source of the calls was
@@ -910,21 +862,6 @@ much memory. Other hueristics could be developed to keep the cache from using
 too much memory e.g. a maximum size of the cache, remove the least used
 arrays, remove the least recently used.  Based on the success of the GA cache,
 it is currently used by GAiN.
-
-%\begin{center}
-%\begin{tabular}{|l|l|l|l|l|l|l|l|}
-%\hline
-%\multicolumn{2}{|c|}{No Cache} &
-%\multicolumn{2}{|c|}{Depth-1 Cache} &
-%\multicolumn{2}{|c|}{Depth-2 Cache} &
-%\multicolumn{2}{|c|}{Depth-3 Cache} \\
-%\hline
-%Create & Destroy & Create & Destroy & Create & Destroy & Create & Destroy \\
-%\hline
-%912 & 910 & 311 & 306 & 110 & 102 & 11 & 1 \\
-%\hline
-%\end{tabular}
-%\end{center}
 
 \begin{table}
 \begin{center}
@@ -1011,6 +948,12 @@ from the parallel which don't involve dynamic process management such as
 processor groups or careful use of branching within the code effectively
 emulating a master/slave situation.
 
+The scalability of the Python interpreter remains an open problem. This is the
+single greatest hurdle to running Python applications at scale. There is a
+potential solution for diskless systems such as BlueGene/P machines provided
+by \cite{Scu11}. Clusters with local disks mounted to their compute nodes may
+find other approaches valueable, as well.
+
 %\appendix
 %\section{Appendix Title}
 %
@@ -1029,6 +972,251 @@ Battelle for the U.S. Department of Energy under contract DE-AC05-76RL01830.
 \bibliographystyle{abbrvnat}
 \bibliography{bibliography}
 
+\begin{thebibliography}{35}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Pnl(2011)]{Pnl11}
+Global arrays webpage.
+\newblock http://www.emsl.pnl.gov/docs/global/, 2011.
+
+\bibitem[Pyt(2011)]{Pyt11}
+Python v2.7.2 documentation.
+\newblock http://docs.python.org/, 2011.
+
+\bibitem[Apr\'{a} et~al.(2009)Apr\'{a}, Rendell, Harrison, Tipparaju, deJong,
+  and Xantheas]{Apr09}
+E.~Apr\'{a}, A.~P. Rendell, R.~J. Harrison, V.~Tipparaju, W.~A. deJong, and
+  S.~S. Xantheas.
+\newblock Liquid water: obtaining the right answer for the right reasons.
+\newblock In \emph{SC}. ACM, 2009.
+\newblock ISBN 978-1-60558-744-8.
+
+\bibitem[Ascher et~al.(1999)Ascher, Dubois, Hinsen, Hugunin, , and
+  Oliphant]{Asc99}
+D.~Ascher, P.~F. Dubois, K.~Hinsen, J.~Hugunin, , and T.~Oliphant.
+\newblock Numerical python.
+\newblock Technical Report UCRL-MA-128569, Lawrence Livermore National
+  Laboratory, 1999.
+
+\bibitem[Behnel et~al.(2011)Behnel, Bradshaw, Citro, Dalcin, Seljebotn, and
+  Smith]{Beh11}
+S.~Behnel, R.~Bradshaw, C.~Citro, L.~Dalcin, D.~S. Seljebotn, and K.~Smith.
+\newblock Cython: The best of both worlds.
+\newblock \emph{Computing in Science Engineering}, 13\penalty0 (2):\penalty0
+  31--39, 2011.
+
+\bibitem[Buyya(1999)]{Buy99}
+R.~Buyya.
+\newblock \emph{High Performance Cluster Computing: Architectures and Systems}.
+\newblock Prentice Hall PTR, Upper Saddle River, NJ, USA, 1999.
+\newblock ISBN 0130137847.
+
+\bibitem[Cooke and Hochberg()]{Coo11}
+D.~Cooke and T.~Hochberg.
+\newblock numexpr.
+\newblock http://code.google.com/p/numexpr/.
+
+\bibitem[Daily and Lewis(2011)]{Dai11}
+J.~Daily and R.~R. Lewis.
+\newblock Using the global arrays toolkit to reimplement numpy for distributed
+  computation.
+\newblock In \emph{Proceedings of the 10th Python in Science Conference}, 2011.
+
+\bibitem[Dalc\'{\i}n et~al.(2005)Dalc\'{\i}n, Paz, and Storti]{Dal05}
+L.~Dalc\'{\i}n, R.~Paz, and M.~Storti.
+\newblock Mpi for python.
+\newblock \emph{J. Parallel Distrib. Comput.}, 65:\penalty0 1108--1115,
+  September 2005.
+\newblock ISSN 0743-7315.
+\newblock \doi{http://dx.doi.org/10.1016/j.jpdc.2005.03.010}.
+
+\bibitem[Dalc\'{\i}n et~al.(2008)Dalc\'{\i}n, Paz, Storti, and
+  D'El\'{\i}a]{Dal08}
+L.~Dalc\'{\i}n, R.~Paz, M.~Storti, and J.~D'El\'{\i}a.
+\newblock Mpi for python: Performance improvements and mpi-2 extensions.
+\newblock \emph{J. Parallel Distrib. Comput.}, 68:\penalty0 655--662, May 2008.
+\newblock ISSN 0743-7315.
+\newblock \doi{10.1016/j.jpdc.2007.09.005}.
+
+\bibitem[Dinan et~al.(2008)Dinan, Krishnamoorthy, Larkins, Nieplocha, and
+  Sadayappan]{Din08}
+J.~Dinan, S.~Krishnamoorthy, D.~B. Larkins, J.~Nieplocha, and P.~Sadayappan.
+\newblock Scioto: A framework for global-view task parallelism.
+\newblock In \emph{ICPP}, pages 586--593. IEEE Computer Society, 2008.
+
+\bibitem[Dotsenko et~al.(2004)Dotsenko, Coarfa, and Mellor-Crummey]{Dot04}
+Y.~Dotsenko, C.~Coarfa, and J.~Mellor-Crummey.
+\newblock A multi-platform co-array fortran compiler.
+\newblock In \emph{Proceedings of the 13th International Conference on Parallel
+  Architectures and Compilation Techniques}, PACT '04, pages 29--40,
+  Washington, DC, USA, 2004. IEEE Computer Society.
+\newblock ISBN 0-7695-2229-7.
+\newblock \doi{http://dx.doi.org/10.1109/PACT.2004.3}.
+
+\bibitem[Dubois et~al.(1996)Dubois, Hinsen, and Hugunin]{Dub96}
+P.~F. Dubois, K.~Hinsen, and J.~Hugunin.
+\newblock Numerical python.
+\newblock \emph{Computers in Physics}, 10, May/June 1996.
+
+\bibitem[Edelman(2007)]{Ede07}
+A.~Edelman.
+\newblock The star-p high performance computing platform.
+\newblock In \emph{Acoustics, Speech and Signal Processing, 2007. ICASSP 2007.
+  IEEE International Conference on}, volume~4, pages IV--1197 --IV--1200, april
+  2007.
+\newblock \doi{10.1109/ICASSP.2007.367290}.
+
+\bibitem[Eitzen(2007)]{Eit07}
+B.~Eitzen.
+\newblock Gpupy: Efficiently using a gpu with python.
+\newblock Master's thesis, Washington State University, 2007.
+
+\bibitem[Gropp et~al.(1999{\natexlab{a}})Gropp, Lusk, and Skjellum]{Gro99a}
+W.~Gropp, E.~Lusk, and A.~Skjellum.
+\newblock \emph{Using MPI: Portable Parallel Programming with the
+  Message-Passing Interface}.
+\newblock MIT Press, 2 edition, November 1999{\natexlab{a}}.
+\newblock ISBN 978-0-262-57132-6.
+
+\bibitem[Gropp et~al.(1999{\natexlab{b}})Gropp, Lusk, and Thakur]{Gro99b}
+W.~Gropp, E.~Lusk, and R.~Thakur.
+\newblock \emph{Using MPI-2: Advanced Features of the Message-Passing
+  Interface}.
+\newblock MIT Press, November 1999{\natexlab{b}}.
+\newblock ISBN 978-0-262-57133-3.
+
+\bibitem[Harrison(1999)]{Har99}
+R.~J. Harrison.
+\newblock Global arrays python interface.
+\newblock http://www.emsl.pnl.gov/docs/global/old/pyGA, December 1999.
+
+\bibitem[Husbands and Isbell(1999)]{Hus98}
+P.~Husbands and C.~Isbell.
+\newblock The parallel problems server: A client-server model for interactive
+  large scale scientific computation.
+\newblock In \emph{Selected Papers and Invited Talks from the Third
+  International Conference on Vector and Parallel Processing}, VECPAR '98,
+  pages 156--169, London, UK, 1999. Springer-Verlag.
+\newblock ISBN 3-540-66228-6.
+
+\bibitem[III(2007)]{Pal07}
+W.~P. III.
+\newblock \emph{A Concise Introduction to Matlab}.
+\newblock McGraw-Hill Science/Engineering/Math, October 2007.
+\newblock ISBN 978-0073385839.
+
+\bibitem[Krishnan and Nieplocha(2004)]{Kri04}
+M.~Krishnan and J.~Nieplocha.
+\newblock Srumma: a matrix multiplication algorithm suitable for clusters and
+  scalable shared memory systems.
+\newblock In \emph{in proceedings of Parallel and Distributed Processing
+  Symposium}, 2004.
+
+\bibitem[Lundh(2001)]{Lun01}
+F.~Lundh.
+\newblock \emph{Python Standard Library}.
+\newblock O'Reilly Media, May 2001.
+\newblock ISBN 978-0-596-00096-7.
+
+\bibitem[Nieplocha et~al.(2000)Nieplocha, Ju, and Straatsma]{Nie00}
+J.~Nieplocha, J.~Ju, and T.~P. Straatsma.
+\newblock A multiprotocol communication support for the global address space
+  programming model on the ibm sp.
+\newblock In \emph{Proceedings from the 6th International Euro-Par Conference
+  on Parallel Processing}, Euro-Par '00, pages 718--728, London, UK, 2000.
+  Springer-Verlag.
+\newblock ISBN 3-540-67956-1.
+\newblock URL \url{http://portal.acm.org/citation.cfm?id=646665.699092}.
+
+\vfill\eject
+
+\bibitem[Nieplocha et~al.(2005{\natexlab{a}})Nieplocha, Krishnan, Palmer,
+  Tipparaju, and Zhang]{Nie05}
+J.~Nieplocha, M.~Krishnan, B.~Palmer, V.~Tipparaju, and Y.~Zhang.
+\newblock Exploiting processor groups to extend scalability of the ga shared
+  memory programming model.
+\newblock In \emph{Proceedings of the 2nd conference on Computing frontiers},
+  CF '05, pages 262--272, New York, NY, USA, 2005{\natexlab{a}}. ACM.
+\newblock ISBN 1-59593-019-1.
+\newblock \doi{http://doi.acm.org/10.1145/1062261.1062305}.
+\newblock URL \url{http://doi.acm.org/10.1145/1062261.1062305}.
+
+\bibitem[Nieplocha et~al.(2005{\natexlab{b}})Nieplocha, Palmer, Krishnan,
+  Trease, and Apr\'{a}]{Nie06}
+J.~Nieplocha, B.~Palmer, M.~Krishnan, H.~Trease, and E.~Apr\'{a}.
+\newblock Advances, applications and performance of the global arrays shared
+  memory programming toolkit.
+\newblock \emph{Intern. J. High Perf. Comp. Applications}, 20,
+  2005{\natexlab{b}}.
+
+\bibitem[Nieplocha et~al.(2010)Nieplocha, Krishnan, Palmer, Tipparaju, and
+  Ju]{Nie10}
+J.~Nieplocha, M.~Krishnan, B.~Palmer, V.~Tipparaju, and J.~Ju.
+\newblock The gobal arrays user's manual.
+\newblock http://www.emsl.pnl.gov/docs/global/um/UG-PDF/GA-UserManual-Main.pdf,
+  2010.
+
+\bibitem[Oliphant(2006)]{Oli06}
+T.~E. Oliphant.
+\newblock Guide to numpy.
+\newblock http://www.tramy.us/, 2006.
+
+\bibitem[Panuganti et~al.(2006)Panuganti, Baskaran, Hudak, Krishnamurthy,
+  Nieplocha, Rountev, , and Sadayappan]{Pan06}
+R.~Panuganti, M.~M. Baskaran, D.~E. Hudak, A.~Krishnamurthy, J.~Nieplocha,
+  A.~Rountev, , and P.~Sadayappan.
+\newblock Gamma: Global arrays meets matlab.
+\newblock Technical Report OSU-CISRC-1/06-TR15, Ohio State University, 2006.
+
+\bibitem[Perez et~al.(2009)Perez, Langtangen, and LeVeque]{Per09}
+F.~Perez, H.~P. Langtangen, and R.~LeVeque.
+\newblock {CSE 2009: Python for Scientific Computing at CSE 2009}.
+\newblock SIAM News, 2009.
+\newblock URL \url{http://www.siam.org/news/news.php?id=1595}.
+
+\bibitem[P\i{e}rez and Granger(2007)]{Per07}
+F.~P\i{e}rez and B.~E. Granger.
+\newblock Ipython: A system for interactive scientific computing.
+\newblock \emph{Computing in Science and Engineering}, 9:\penalty0 21--29,
+  2007.
+\newblock ISSN 1521-9615.
+\newblock \doi{http://doi.ieeecomputersociety.org/10.1109/MCSE.2007.53}.
+
+\bibitem[Ramachandran(2008)]{Ram08}
+P.~Ramachandran.
+\newblock Performance python.
+\newblock http://www.scipy.org/PerformancePython, May 2008.
+
+\bibitem[Rasmussen et~al.(2004)Rasmussen, Sottile, Nieplocha, Numrich, and
+  Jones]{Ras04}
+C.~E. Rasmussen, M.~J. Sottile, J.~Nieplocha, R.~W. Numrich, and E.~Jones.
+\newblock Co-array python: A parallel extension to the python language.
+\newblock In \emph{Euro-Par 2004}, pages 632--637. Springer-Verlag Berlin
+  Heidelberg, 2004.
+
+\bibitem[Scullin and Ahmadia()]{Scu11}
+W.~Scullin and A.~Ahmadia.
+\newblock walla.
+\newblock https://bitbucket.org/wscullin/walla/overview.
+
+\bibitem[Wang(2011)]{Wan11}
+P.~Wang.
+\newblock Metagraph: A declarative graphing system for python.
+\newblock In \emph{Proceedings of the 10th Python in Science Conference}.
+  SciPy, 2011.
+\newblock To appear.
+
+\bibitem[Zima et~al.(1988)Zima, Bast, and Gerndt]{Zim88}
+H.~P. Zima, H.-J. Bast, and M.~Gerndt.
+\newblock Superb: A tool for semi-automatic mimd/simd parallelization.
+\newblock \emph{Parallel Computing}, 6:\penalty0 1--18, 1988.
+\newblock \doi{10.1016/0167-8191(88)90002-6}.
+
+\end{thebibliography}
 % The bibliography should be embedded for final submission.
 
 \end{document}

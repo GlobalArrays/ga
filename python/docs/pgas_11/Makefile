@@ -2,7 +2,7 @@ all: paper.pdf
 
 paper.dvi: paper.tex bibliography.bib
 	latex -shell-escape paper
-	bibtex paper
+	#bibtex paper
 	latex -shell-escape paper
 	latex -shell-escape paper
 
