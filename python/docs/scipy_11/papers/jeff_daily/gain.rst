@@ -69,8 +69,8 @@ Fourier transform support. *NumPy* is the de facto standard for scientific
 computing in Python and the successor of the other numerical Python packages
 Numarray [Dub96]_ and numeric [Asc99]_.
 
-*NumPy*'s ndarray
-=================
+.. *NumPy*'s ndarray
+.. =================
 
 The primary class defined by *NumPy* is ``ndarray``. The ``ndarray`` is
 implemented as a contiguous memory segment. Internally, all ``ndarray``
@@ -98,8 +98,8 @@ get called to properly initialize the instance.  ``__array_finalize__()`` is
 called instead of ``__init__()`` for ``ndarray`` subclasses to avoid this
 limitation.
 
-*NumPy*'s Universal Functions
-=============================
+.. *NumPy*'s Universal Functions
+.. =============================
 
 The element-wise operators in *NumPy* are known as *Universal Functions*, or
 *ufuncs*. Many of the methods of ``ndarray`` simply invoke the corresponding
@@ -400,11 +400,17 @@ based on the complete GA C API, available in the extension module ``ga``. The
 GA bindings as well as the ``gain`` module were developed using Cython. With
 the upcoming release of GA v5.1, the module ``ga.gain`` is available as a
 drop-in replacement for *NumPy*.  The goal of the implementation is to allow
-users to write:
+users to write
 
 .. code-block:: python
 
-    from ga import gain as numpy
+    import ga.gain as numpy
+
+and then to execute their code using the MPI process manager
+
+.. code-block:: bash
+
+    mpiexec -np 4 python script.py
 
 In order to succeed as a drop-in replacement, all attributes, functions,
 modules, and classes which exist in ``numpy`` must also exist within ``gain``.
@@ -607,26 +613,20 @@ importantly to efficiently accomplish those goals. Performance Python [Ram08]_
 performance computing. It evaluates *NumPy* and the relative performance of
 various Python extensions to *NumPy*. It represents an important benchmark by
 which any additional high performance numerical Python module should be
-measured. The original program ``laplace.py`` was modified by
-
-.. code-block:: python
-
-    # import numpy
-    from ga import gain as numpy
-
-and then stripped of the additional test codes so that only the ``gain``
-(``numpy``) test remained. The latter modification makes no impact on the
-timing results since all tests are run independently but was necessary because
-``gain`` is run on multiple processes while the original test suite is serial.
-The program was run on the chinook supercomputer at the Environmental
-Molecular Sciences Laboratory, part of Pacific Northwest National Laboratory.
-Chinook consists of 2310 HP DL185 nodes with dual socket, 64-bit, Quad-core
-AMD 2.2 GHz Opteron processors. Each node has 32 Gbytes of memory for 4 Gbytes
-per core. Fast communication between the nodes is obtained using a single rail
-Infiniband interconnect from Voltaire (switches) and Melanox (NICs). The
-system runs a version of Linux based on Red Hat Linux Advanced Server.  *GAiN*
-utilized up to 512 nodes of the cluster, using 4 cores per node,  while
-*NumPy* ran serially on a single node (as it must.)
+measured. The original program ``laplace.py`` was modified by importing
+``ga.gain`` in place of ``numpy`` and then stripping the additional test codes
+so that only the ``gain`` (``numpy``) test remained. The latter modification
+makes no impact on the timing results since all tests are run independently
+but was necessary because ``gain`` is run on multiple processes while the
+original test suite is serial.  The program was run on the chinook
+supercomputer at the Environmental Molecular Sciences Laboratory, part of
+Pacific Northwest National Laboratory.  Chinook consists of 2310 HP DL185
+nodes with dual socket, 64-bit, Quad-core AMD 2.2 GHz Opteron processors. Each
+node has 32 Gbytes of memory for 4 Gbytes per core. Fast communication between
+the nodes is obtained using a single rail Infiniband interconnect from
+Voltaire (switches) and Melanox (NICs). The system runs a version of Linux
+based on Red Hat Linux Advanced Server.  *GAiN* utilized up to 512 nodes of
+the cluster, using 4 cores per node.
 
 In Figure :ref:`figlaplace`, *GAiN* is shown to scale up to 2K cores on a
 modest problem size. *GAiN* is also able to run on problems which are not
@@ -634,6 +634,7 @@ feasible on workstations. For example, to store one 100,000x100,000 matrix of
 double-precision numbers requires approximately 75GB.
 
 .. figure:: laplace.png
+    :scale: 35%
 
     :label:`figlaplace`
     ``laplace.py`` for N=10,000 and N=100,000. For N=10,000, one matrix of
@@ -742,6 +743,15 @@ ownership of data is largely ignored, but data movement costs are increased.
 Task parallelism could also be explored if load balancing becomes an issue.
 The GA cache should be exposed as a tunable parameter. Alternative temporary
 array creation strategies could be developed such as lazy evaluation.
+
+Acknowledgment
+--------------
+
+A portion of the research was performed using the Molecular Science Computing
+(MSC) capability at EMSL, a national scientific user facility sponsored by the
+Department of Energy’s Office of Biological and Environmental Research and
+located at Pacific Northwest National Laboratory (PNNL). PNNL is operated by
+Battelle for the U.S. Department of Energy under contract DE-AC05-76RL01830.
 
 .. [Apr09]  E. Apra, A. P. Rendell, R. J. Harrison, V. Tipparaju, W. A.
             deJong, and S. S. Xantheas. *Liquid water: obtaining the right
