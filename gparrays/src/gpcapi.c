@@ -9,6 +9,7 @@
 #   include "config.h"
 #endif
 
+#include "gp.h"
 #include "gpbase.h"
 #include "gppapi.h"
 
@@ -62,7 +63,7 @@ void GP_Debug(int g_p)
   wgp_debug(ag_p);
 }
 
-int GP_Destroy(g_p)
+int GP_Destroy(int g_p)
 {
   Integer ag_p;
   ag_p = (Integer)g_p;

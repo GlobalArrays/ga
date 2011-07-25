@@ -5,6 +5,19 @@ import numpy as np
 cimport numpy as np
 
 
+def docstring(obj, docstring):
+    """docstring(obj, docstring)
+
+    Add a docstring to a built-in obj if possible.
+    If the obj already has a docstring raise a RuntimeError
+    If this routine does not know how to add a docstring to the object
+    raise a TypeError
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def add_newdoc(place, obj, doc):
     """Adds documentation to obj which is in module place.
 
@@ -19,35 +32,6 @@ def add_newdoc(place, obj, doc):
        (method2, docstring2), ...]
 
     This routine never raises an error.
-    
-    """
-    raise NotImplementedError
-
-
-def alen(a):
-    """Return the length of the first dimension of the input array.
-
-    Parameters
-    ----------
-    a : array_like
-       Input array.
-
-    Returns
-    -------
-    l : int
-       Length of the first dimension of `a`.
-
-    See Also
-    --------
-    shape, size
-
-    Examples
-    --------
-    >>> a = np.zeros((7,4,5))
-    >>> a.shape[0]
-    7
-    >>> np.alen(a)
-    7
     
     """
     raise NotImplementedError
@@ -196,6 +180,7 @@ def alterdot():
     restoredot : `restoredot` undoes the effects of `alterdot`.
     
     """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -215,8 +200,10 @@ def amax(a, axis=None, out=None):
 
     Returns
     -------
-    amax : ndarray
-        A new array or scalar array with the result.
+    amax : ndarray or scalar
+        Maximum of `a`. If `axis` is None, the result is a scalar value.
+        If `axis` is given, the result is an array of dimension
+        ``a.ndim - 1``.
 
     See Also
     --------
@@ -822,6 +809,100 @@ def around(a, decimals=0, out=None):
     raise NotImplementedError
 
 
+def array(object, dtype=None, copy=True, order=None, subok=False, ndmin=0):
+    """array(object, dtype=None, copy=True, order=None, subok=False, ndmin=0)
+
+    Create an array.
+
+    Parameters
+    ----------
+    object : array_like
+        An array, any object exposing the array interface, an
+        object whose __array__ method returns an array, or any
+        (nested) sequence.
+    dtype : data-type, optional
+        The desired data-type for the array.  If not given, then
+        the type will be determined as the minimum type required
+        to hold the objects in the sequence.  This argument can only
+        be used to 'upcast' the array.  For downcasting, use the
+        .astype(t) method.
+    copy : bool, optional
+        If true (default), then the object is copied.  Otherwise, a copy
+        will only be made if __array__ returns a copy, if obj is a
+        nested sequence, or if a copy is needed to satisfy any of the other
+        requirements (`dtype`, `order`, etc.).
+    order : {'C', 'F', 'A'}, optional
+        Specify the order of the array.  If order is 'C' (default), then the
+        array will be in C-contiguous order (last-index varies the
+        fastest).  If order is 'F', then the returned array
+        will be in Fortran-contiguous order (first-index varies the
+        fastest).  If order is 'A', then the returned array may
+        be in any order (either C-, Fortran-contiguous, or even
+        discontiguous).
+    subok : bool, optional
+        If True, then sub-classes will be passed-through, otherwise
+        the returned array will be forced to be a base-class array (default).
+    ndmin : int, optional
+        Specifies the minimum number of dimensions that the resulting
+        array should have.  Ones will be pre-pended to the shape as
+        needed to meet this requirement.
+
+    Returns
+    -------
+    out : ndarray
+        An array object satisfying the specified requirements.
+
+    See Also
+    --------
+    empty, empty_like, zeros, zeros_like, ones, ones_like, fill
+
+    Examples
+    --------
+    >>> np.array([1, 2, 3])
+    array([1, 2, 3])
+
+    Upcasting:
+
+    >>> np.array([1, 2, 3.0])
+    array([ 1.,  2.,  3.])
+
+    More than one dimension:
+
+    >>> np.array([[1, 2], [3, 4]])
+    array([[1, 2],
+           [3, 4]])
+
+    Minimum dimensions 2:
+
+    >>> np.array([1, 2, 3], ndmin=2)
+    array([[1, 2, 3]])
+
+    Type provided:
+
+    >>> np.array([1, 2, 3], dtype=complex)
+    array([ 1.+0.j,  2.+0.j,  3.+0.j])
+
+    Data-type consisting of more than one element:
+
+    >>> x = np.array([(1,2),(3,4)],dtype=[('a','<i4'),('b','<i4')])
+    >>> x['a']
+    array([1, 3])
+
+    Creating an array from sub-classes:
+
+    >>> np.array(np.mat('1 2; 3 4'))
+    array([[1, 2],
+           [3, 4]])
+
+    >>> np.array(np.mat('1 2; 3 4'), subok=True)
+    matrix([[1, 2],
+            [3, 4]])
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def array2string(a, max_line_width=None, precision=None, suppress_small=None, separator=' ', prefix='', style=repr):
     """Return a string representation of an array.
 
@@ -1400,18 +1481,18 @@ def atleast_3d():
     Parameters
     ----------
     array1, array2, ... : array_like
-        One or more array-like sequences.  Non-array inputs are converted
-        to arrays. Arrays that already have three or more dimensions are
+        One or more array-like sequences.  Non-array inputs are converted to
+        arrays.  Arrays that already have three or more dimensions are
         preserved.
 
     Returns
     -------
     res1, res2, ... : ndarray
-        An array, or tuple of arrays, each with ``a.ndim >= 3``.
-        Copies are avoided where possible, and views with three or more
-        dimensions are returned.  For example, a 1-D array of shape ``N``
-        becomes a view of shape ``(1, N, 1)``.  A 2-D array of shape ``(M, N)``
-        becomes a view of shape ``(M, N, 1)``.
+        An array, or tuple of arrays, each with ``a.ndim >= 3``.  Copies are
+        avoided where possible, and views with three or more dimensions are
+        returned.  For example, a 1-D array of shape ``(N,)`` becomes a view
+        of shape ``(1, N, 1)``, and a 2-D array of shape ``(M, N)`` becomes a
+        view of shape ``(M, N, 1)``.
 
     See Also
     --------
@@ -1724,6 +1805,81 @@ def binary_repr(num, width=None):
     raise NotImplementedError
 
 
+def bincount(x, weights=None, minlength=None):
+    """bincount(x, weights=None, minlength=None)
+
+    Count number of occurrences of each value in array of non-negative ints.
+
+    The number of bins (of size 1) is one larger than the largest value in
+    `x`. If `minlength` is specified, there will be at least this number
+    of bins in the output array (though it will be longer if necessary,
+    depending on the contents of `x`).
+    Each bin gives the number of occurrences of its index value in `x`.
+    If `weights` is specified the input array is weighted by it, i.e. if a
+    value ``n`` is found at position ``i``, ``out[n] += weight[i]`` instead
+    of ``out[n] += 1``.
+
+    Parameters
+    ----------
+    x : array_like, 1 dimension, nonnegative ints
+        Input array.
+    weights : array_like, optional
+        Weights, array of the same shape as `x`.
+    minlength : int, optional
+        .. versionadded:: 1.6.0
+
+        A minimum number of bins for the output array.
+
+    Returns
+    -------
+    out : ndarray of ints
+        The result of binning the input array.
+        The length of `out` is equal to ``np.amax(x)+1``.
+
+    Raises
+    ------
+    ValueError
+        If the input is not 1-dimensional, or contains elements with negative
+        values, or if `minlength` is non-positive.
+    TypeError
+        If the type of the input is float or complex.
+
+    See Also
+    --------
+    histogram, digitize, unique
+
+    Examples
+    --------
+    >>> np.bincount(np.arange(5))
+    array([1, 1, 1, 1, 1])
+    >>> np.bincount(np.array([0, 1, 1, 3, 2, 1, 7]))
+    array([1, 3, 1, 1, 0, 0, 0, 1])
+
+    >>> x = np.array([0, 1, 1, 3, 2, 1, 7, 23])
+    >>> np.bincount(x).size == np.amax(x)+1
+    True
+
+    The input array needs to be of integer dtype, otherwise a
+    TypeError is raised:
+
+    >>> np.bincount(np.arange(5, dtype=np.float))
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    TypeError: array cannot be safely cast to required type
+
+    A possible use of ``bincount`` is to perform sums over
+    variable-size chunks of an array, using the ``weights`` keyword.
+
+    >>> w = np.array([0.3, 0.5, 0.2, 0.7, 1., -0.6]) # weights
+    >>> x = np.array([0, 1, 1, 2, 2, 2])
+    >>> np.bincount(x,  weights=w)
+    array([ 0.3,  0.7,  1.1])
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def blackman(M):
     """Return the Blackman window.
 
@@ -1940,6 +2096,109 @@ def byte_bounds(a):
     raise NotImplementedError
 
 
+def can_cast():
+    """can_cast(from, totype, casting = 'safe')
+
+    Returns True if cast between data types can occur according to the
+    casting rule.  If from is a scalar or array scalar, also returns
+    True if the scalar value can be cast without overflow or truncation
+    to an integer.
+
+    Parameters
+    ----------
+    from : dtype, dtype specifier, scalar, or array
+        Data type, scalar, or array to cast from.
+    totype : dtype or dtype specifier
+        Data type to cast to.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
+
+    Returns
+    -------
+    out : bool
+        True if cast can occur according to the casting rule.
+
+    See also
+    --------
+    dtype, result_type
+
+    Examples
+    --------
+
+    Basic examples
+
+    >>> np.can_cast(np.int32, np.int64)
+    True
+    >>> np.can_cast(np.float64, np.complex)
+    True
+    >>> np.can_cast(np.complex, np.float)
+    False
+
+    >>> np.can_cast('i8', 'f8')
+    True
+    >>> np.can_cast('i8', 'f4')
+    False
+    >>> np.can_cast('i4', 'S4')
+    True
+
+    Casting scalars
+
+    >>> np.can_cast(100, 'i1')
+    True
+    >>> np.can_cast(150, 'i1')
+    False
+    >>> np.can_cast(150, 'u1')
+    True
+
+    >>> np.can_cast(3.5e100, np.float32)
+    False
+    >>> np.can_cast(1000.0, np.float32)
+    True
+
+    Array scalar checks the value, array does not
+
+    >>> np.can_cast(np.array(1000.0), np.float32)
+    True
+    >>> np.can_cast(np.array([1000.0]), np.float32)
+    False
+
+    Using the casting rules
+
+    >>> np.can_cast('i8', 'i8', 'no')
+    True
+    >>> np.can_cast('<i8', '>i8', 'no')
+    False
+
+    >>> np.can_cast('<i8', '>i8', 'equiv')
+    True
+    >>> np.can_cast('<i4', '>i8', 'equiv')
+    False
+
+    >>> np.can_cast('<i4', '>i8', 'safe')
+    True
+    >>> np.can_cast('<i8', '>i4', 'safe')
+    False
+
+    >>> np.can_cast('<i8', '>i4', 'same_kind')
+    True
+    >>> np.can_cast('<i8', '>u4', 'same_kind')
+    False
+
+    >>> np.can_cast('<i8', '>u4', 'unsafe')
+    True
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def choose(a, choices, out=None, mode='raise'):
     """Construct an array from an index array and a set of arrays to choose from.
 
@@ -2138,6 +2397,14 @@ def common_type():
     raise NotImplementedError
 
 
+def compare_chararrays():
+    """
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def compress(condition, a, axis=None, out=None):
     """Return selected slices of an array along given axis.
 
@@ -2196,6 +2463,82 @@ def compress(condition, a, axis=None, out=None):
     array([2])
     
     """
+    raise NotImplementedError
+
+
+def concatenate():
+    """concatenate((a1, a2, ...), axis=0)
+
+    Join a sequence of arrays together.
+
+    Parameters
+    ----------
+    a1, a2, ... : sequence of array_like
+        The arrays must have the same shape, except in the dimension
+        corresponding to `axis` (the first, by default).
+    axis : int, optional
+        The axis along which the arrays will be joined.  Default is 0.
+
+    Returns
+    -------
+    res : ndarray
+        The concatenated array.
+
+    See Also
+    --------
+    ma.concatenate : Concatenate function that preserves input masks.
+    array_split : Split an array into multiple sub-arrays of equal or
+                  near-equal size.
+    split : Split array into a list of multiple sub-arrays of equal size.
+    hsplit : Split array into multiple sub-arrays horizontally (column wise)
+    vsplit : Split array into multiple sub-arrays vertically (row wise)
+    dsplit : Split array into multiple sub-arrays along the 3rd axis (depth).
+    hstack : Stack arrays in sequence horizontally (column wise)
+    vstack : Stack arrays in sequence vertically (row wise)
+    dstack : Stack arrays in sequence depth wise (along third dimension)
+
+    Notes
+    -----
+    When one or more of the arrays to be concatenated is a MaskedArray,
+    this function will return a MaskedArray object instead of an ndarray,
+    but the input masks are *not* preserved. In cases where a MaskedArray
+    is expected as input, use the ma.concatenate function from the masked
+    array module instead.
+
+    Examples
+    --------
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> b = np.array([[5, 6]])
+    >>> np.concatenate((a, b), axis=0)
+    array([[1, 2],
+           [3, 4],
+           [5, 6]])
+    >>> np.concatenate((a, b.T), axis=1)
+    array([[1, 2, 5],
+           [3, 4, 6]])
+
+    This function will not preserve masking of MaskedArray inputs.
+
+    >>> a = np.ma.arange(3)
+    >>> a[1] = np.ma.masked
+    >>> b = np.arange(2, 5)
+    >>> a
+    masked_array(data = [0 -- 2],
+                 mask = [False  True False],
+           fill_value = 999999)
+    >>> b
+    array([2, 3, 4])
+    >>> np.concatenate([a, b])
+    masked_array(data = [0 1 2 2 3 4],
+                 mask = False,
+           fill_value = 999999)
+    >>> np.ma.concatenate([a, b])
+    masked_array(data = [0 -- 2 2 3 4],
+                 mask = [False  True False False False False],
+           fill_value = 999999)
+    
+    """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -2336,7 +2679,7 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
 
     Parameters
     ----------
-    m : array_like
+    x : array_like
         A 1-D or 2-D array containing multiple variables and observations.
         Each row of `m` represents a variable, and each column a single
         observation of all those variables. Also see `rowvar` below.
@@ -2409,6 +2752,38 @@ def correlate(a, v, mode='valid', old_behavior=False):
     array([ 0.5,  2. ,  3.5,  3. ,  0. ])
     
     """
+    raise NotImplementedError
+
+
+def count_nonzero(a):
+    """count_nonzero(a)
+
+    Counts the number of non-zero values in the array ``a``.
+
+    Parameters
+    ----------
+    a : array_like
+        The array for which to count non-zeros.
+
+    Returns
+    -------
+    count : int
+        Number of non-zero values in the array.
+
+    See Also
+    --------
+    nonzero : Return the coordinates of all the non-zero values.
+
+    Examples
+    --------
+    >>> np.count_nonzero(np.eye(4))
+    4
+
+    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]])
+    5
+    
+    """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -3099,6 +3474,65 @@ def diff(a, n=1, axis=-1):
     raise NotImplementedError
 
 
+def digitize(x, bins):
+    """digitize(x, bins)
+
+    Return the indices of the bins to which each value in input array belongs.
+
+    Each index ``i`` returned is such that ``bins[i-1] <= x < bins[i]`` if
+    `bins` is monotonically increasing, or ``bins[i-1] > x >= bins[i]`` if
+    `bins` is monotonically decreasing. If values in `x` are beyond the
+    bounds of `bins`, 0 or ``len(bins)`` is returned as appropriate.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array to be binned. It has to be 1-dimensional.
+    bins : array_like
+        Array of bins. It has to be 1-dimensional and monotonic.
+
+    Returns
+    -------
+    out : ndarray of ints
+        Output array of indices, of same shape as `x`.
+
+    Raises
+    ------
+    ValueError
+        If the input is not 1-dimensional, or if `bins` is not monotonic.
+    TypeError
+        If the type of the input is complex.
+
+    See Also
+    --------
+    bincount, histogram, unique
+
+    Notes
+    -----
+    If values in `x` are such that they fall outside the bin range,
+    attempting to index `bins` with the indices that `digitize` returns
+    will result in an IndexError.
+
+    Examples
+    --------
+    >>> x = np.array([0.2, 6.4, 3.0, 1.6])
+    >>> bins = np.array([0.0, 1.0, 2.5, 4.0, 10.0])
+    >>> inds = np.digitize(x, bins)
+    >>> inds
+    array([1, 4, 3, 2])
+    >>> for n in range(x.size):
+    ...   print bins[inds[n]-1], "<=", x[n], "<", bins[inds[n]]
+    ...
+    0.0 <= 0.2 < 1.0
+    4.0 <= 6.4 < 10.0
+    2.5 <= 3.0 < 4.0
+    1.0 <= 1.6 < 2.5
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def disp(mesg, device=None, linefeed=True):
     """Display a message on a device.
 
@@ -3271,6 +3705,198 @@ def ediff1d(ary, to_end=None, to_begin=None):
     raise NotImplementedError
 
 
+def einsum():
+    """einsum(subscripts, *operands, out=None, dtype=None, order='K', casting='safe')
+
+    Evaluates the Einstein summation convention on the operands.
+
+    Using the Einstein summation convention, many common multi-dimensional
+    array operations can be represented in a simple fashion.  This function
+    provides a way compute such summations. The best way to understand this
+    function is to try the examples below, which show how many common NumPy
+    functions can be implemented as calls to `einsum`.
+
+    Parameters
+    ----------
+    subscripts : str
+        Specifies the subscripts for summation.
+    operands : list of array_like
+        These are the arrays for the operation.
+    out : ndarray, optional
+        If provided, the calculation is done into this array.
+    dtype : data-type, optional
+        If provided, forces the calculation to use the data type specified.
+        Note that you may have to also give a more liberal `casting`
+        parameter to allow the conversions.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Controls the memory layout of the output. 'C' means it should
+        be C contiguous. 'F' means it should be Fortran contiguous,
+        'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
+        'K' means it should be as close to the layout as the inputs as
+        is possible, including arbitrarily permuted axes.
+        Default is 'K'.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur.  Setting this to
+        'unsafe' is not recommended, as it can adversely affect accumulations.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
+
+    Returns
+    -------
+    output : ndarray
+        The calculation based on the Einstein summation convention.
+
+    See Also
+    --------
+    dot, inner, outer, tensordot
+
+    Notes
+    -----
+    .. versionadded:: 1.6.0
+
+    The subscripts string is a comma-separated list of subscript labels,
+    where each label refers to a dimension of the corresponding operand.
+    Repeated subscripts labels in one operand take the diagonal.  For example,
+    ``np.einsum('ii', a)`` is equivalent to ``np.trace(a)``.
+
+    Whenever a label is repeated, it is summed, so ``np.einsum('i,i', a, b)``
+    is equivalent to ``np.inner(a,b)``.  If a label appears only once,
+    it is not summed, so ``np.einsum('i', a)`` produces a view of ``a``
+    with no changes.
+
+    The order of labels in the output is by default alphabetical.  This
+    means that ``np.einsum('ij', a)`` doesn't affect a 2D array, while
+    ``np.einsum('ji', a)`` takes its transpose.
+
+    The output can be controlled by specifying output subscript labels
+    as well.  This specifies the label order, and allows summing to
+    be disallowed or forced when desired.  The call ``np.einsum('i->', a)``
+    is like ``np.sum(a, axis=-1)``, and ``np.einsum('ii->i', a)``
+    is like ``np.diag(a)``.  The difference is that `einsum` does not
+    allow broadcasting by default.
+
+    To enable and control broadcasting, use an ellipsis.  Default
+    NumPy-style broadcasting is done by adding an ellipsis
+    to the left of each term, like ``np.einsum('...ii->...i', a)``.
+    To take the trace along the first and last axes,
+    you can do ``np.einsum('i...i', a)``, or to do a matrix-matrix
+    product with the left-most indices instead of rightmost, you can do
+    ``np.einsum('ij...,jk...->ik...', a, b)``.
+
+    When there is only one operand, no axes are summed, and no output
+    parameter is provided, a view into the operand is returned instead
+    of a new array.  Thus, taking the diagonal as ``np.einsum('ii->i', a)``
+    produces a view.
+
+    An alternative way to provide the subscripts and operands is as
+    ``einsum(op0, sublist0, op1, sublist1, ..., [sublistout])``. The examples
+    below have corresponding `einsum` calls with the two parameter methods.
+
+    Examples
+    --------
+    >>> a = np.arange(25).reshape(5,5)
+    >>> b = np.arange(5)
+    >>> c = np.arange(6).reshape(2,3)
+
+    >>> np.einsum('ii', a)
+    60
+    >>> np.einsum(a, [0,0])
+    60
+    >>> np.trace(a)
+    60
+
+    >>> np.einsum('ii->i', a)
+    array([ 0,  6, 12, 18, 24])
+    >>> np.einsum(a, [0,0], [0])
+    array([ 0,  6, 12, 18, 24])
+    >>> np.diag(a)
+    array([ 0,  6, 12, 18, 24])
+
+    >>> np.einsum('ij,j', a, b)
+    array([ 30,  80, 130, 180, 230])
+    >>> np.einsum(a, [0,1], b, [1])
+    array([ 30,  80, 130, 180, 230])
+    >>> np.dot(a, b)
+    array([ 30,  80, 130, 180, 230])
+
+    >>> np.einsum('ji', c)
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
+    >>> np.einsum(c, [1,0])
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
+    >>> c.T
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
+
+    >>> np.einsum('..., ...', 3, c)
+    array([[ 0,  3,  6],
+           [ 9, 12, 15]])
+    >>> np.einsum(3, [Ellipsis], c, [Ellipsis])
+    array([[ 0,  3,  6],
+           [ 9, 12, 15]])
+    >>> np.multiply(3, c)
+    array([[ 0,  3,  6],
+           [ 9, 12, 15]])
+
+    >>> np.einsum('i,i', b, b)
+    30
+    >>> np.einsum(b, [0], b, [0])
+    30
+    >>> np.inner(b,b)
+    30
+
+    >>> np.einsum('i,j', np.arange(2)+1, b)
+    array([[0, 1, 2, 3, 4],
+           [0, 2, 4, 6, 8]])
+    >>> np.einsum(np.arange(2)+1, [0], b, [1])
+    array([[0, 1, 2, 3, 4],
+           [0, 2, 4, 6, 8]])
+    >>> np.outer(np.arange(2)+1, b)
+    array([[0, 1, 2, 3, 4],
+           [0, 2, 4, 6, 8]])
+
+    >>> np.einsum('i...->...', a)
+    array([50, 55, 60, 65, 70])
+    >>> np.einsum(a, [0,Ellipsis], [Ellipsis])
+    array([50, 55, 60, 65, 70])
+    >>> np.sum(a, axis=0)
+    array([50, 55, 60, 65, 70])
+
+    >>> a = np.arange(60.).reshape(3,4,5)
+    >>> b = np.arange(24.).reshape(4,3,2)
+    >>> np.einsum('ijk,jil->kl', a, b)
+    array([[ 4400.,  4730.],
+           [ 4532.,  4874.],
+           [ 4664.,  5018.],
+           [ 4796.,  5162.],
+           [ 4928.,  5306.]])
+    >>> np.einsum(a, [0,1,2], b, [1,0,3], [2,3])
+    array([[ 4400.,  4730.],
+           [ 4532.,  4874.],
+           [ 4664.,  5018.],
+           [ 4796.,  5162.],
+           [ 4928.,  5306.]])
+    >>> np.tensordot(a,b, axes=([1,0],[0,1]))
+    array([[ 4400.,  4730.],
+           [ 4532.,  4874.],
+           [ 4664.,  5018.],
+           [ 4796.,  5162.],
+           [ 4928.,  5306.]])
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def expand_dims(a, axis):
     """Expand the shape of an array.
 
@@ -3364,6 +3990,14 @@ def extract(condition, arr):
     array([0, 3, 6, 9])
     
     """
+    raise NotImplementedError
+
+
+def _fastCopyAndTranspose(a):
+    """_fastCopyAndTranspose(a)
+    
+    """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -3653,6 +4287,201 @@ def flipud(m):
     raise NotImplementedError
 
 
+def frombuffer(buffer, dtype=float, count=-1, offset=0):
+    """frombuffer(buffer, dtype=float, count=-1, offset=0)
+
+    Interpret a buffer as a 1-dimensional array.
+
+    Parameters
+    ----------
+    buffer : buffer_like
+        An object that exposes the buffer interface.
+    dtype : data-type, optional
+        Data-type of the returned array; default: float.
+    count : int, optional
+        Number of items to read. ``-1`` means all data in the buffer.
+    offset : int, optional
+        Start reading the buffer from this offset; default: 0.
+
+    Notes
+    -----
+    If the buffer has data that is not in machine byte-order, this should
+    be specified as part of the data-type, e.g.::
+
+      >>> dt = np.dtype(int)
+      >>> dt = dt.newbyteorder('>')
+      >>> np.frombuffer(buf, dtype=dt)
+
+    The data of the resulting array will not be byteswapped, but will be
+    interpreted correctly.
+
+    Examples
+    --------
+    >>> s = 'hello world'
+    >>> np.frombuffer(s, dtype='S1', count=5, offset=6)
+    array(['w', 'o', 'r', 'l', 'd'],
+          dtype='|S1')
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
+def fromfile(file, dtype=float, count=-1, sep=''):
+    """fromfile(file, dtype=float, count=-1, sep='')
+
+    Construct an array from data in a text or binary file.
+
+    A highly efficient way of reading binary data with a known data-type,
+    as well as parsing simply formatted text files.  Data written using the
+    `tofile` method can be read using this function.
+
+    Parameters
+    ----------
+    file : file or str
+        Open file object or filename.
+    dtype : data-type
+        Data type of the returned array.
+        For binary files, it is used to determine the size and byte-order
+        of the items in the file.
+    count : int
+        Number of items to read. ``-1`` means all items (i.e., the complete
+        file).
+    sep : str
+        Separator between items if file is a text file.
+        Empty ("") separator means the file should be treated as binary.
+        Spaces (" ") in the separator match zero or more whitespace characters.
+        A separator consisting only of spaces must match at least one
+        whitespace.
+
+    See also
+    --------
+    load, save
+    ndarray.tofile
+    loadtxt : More flexible way of loading data from a text file.
+
+    Notes
+    -----
+    Do not rely on the combination of `tofile` and `fromfile` for
+    data storage, as the binary files generated are are not platform
+    independent.  In particular, no byte-order or data-type information is
+    saved.  Data can be stored in the platform independent ``.npy`` format
+    using `save` and `load` instead.
+
+    Examples
+    --------
+    Construct an ndarray:
+
+    >>> dt = np.dtype([('time', [('min', int), ('sec', int)]),
+    ...                ('temp', float)])
+    >>> x = np.zeros((1,), dtype=dt)
+    >>> x['time']['min'] = 10; x['temp'] = 98.25
+    >>> x
+    array([((10, 0), 98.25)],
+          dtype=[('time', [('min', '<i4'), ('sec', '<i4')]), ('temp', '<f8')])
+
+    Save the raw data to disk:
+
+    >>> import os
+    >>> fname = os.tmpnam()
+    >>> x.tofile(fname)
+
+    Read the raw data from disk:
+
+    >>> np.fromfile(fname, dtype=dt)
+    array([((10, 0), 98.25)],
+          dtype=[('time', [('min', '<i4'), ('sec', '<i4')]), ('temp', '<f8')])
+
+    The recommended way to store and load data:
+
+    >>> np.save(fname, x)
+    >>> np.load(fname + '.npy')
+    array([((10, 0), 98.25)],
+          dtype=[('time', [('min', '<i4'), ('sec', '<i4')]), ('temp', '<f8')])
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
+def fromiter(iterable, dtype, count=-1):
+    """fromiter(iterable, dtype, count=-1)
+
+    Create a new 1-dimensional array from an iterable object.
+
+    Parameters
+    ----------
+    iterable : iterable object
+        An iterable object providing data for the array.
+    dtype : data-type
+        The data-type of the returned array.
+    count : int, optional
+        The number of items to read from *iterable*.  The default is -1,
+        which means all data is read.
+
+    Returns
+    -------
+    out : ndarray
+        The output array.
+
+    Notes
+    -----
+    Specify `count` to improve performance.  It allows ``fromiter`` to
+    pre-allocate the output array, instead of resizing it on demand.
+
+    Examples
+    --------
+    >>> iterable = (x*x for x in range(5))
+    >>> np.fromiter(iterable, np.float)
+    array([  0.,   1.,   4.,   9.,  16.])
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
+def frompyfunc(func, nin, nout):
+    """frompyfunc(func, nin, nout)
+
+    Takes an arbitrary Python function and returns a Numpy ufunc.
+
+    Can be used, for example, to add broadcasting to a built-in Python
+    function (see Examples section).
+
+    Parameters
+    ----------
+    func : Python function object
+        An arbitrary Python function.
+    nin : int
+        The number of input arguments.
+    nout : int
+        The number of objects returned by `func`.
+
+    Returns
+    -------
+    out : ufunc
+        Returns a Numpy universal function (``ufunc``) object.
+
+    Notes
+    -----
+    The returned ufunc always returns PyObject arrays.
+
+    Examples
+    --------
+    Use frompyfunc to add broadcasting to the Python function ``oct``:
+
+    >>> oct_array = np.frompyfunc(oct, 1, 1)
+    >>> oct_array(np.array((10, 30, 100)))
+    array([012, 036, 0144], dtype=object)
+    >>> np.array((oct(10), oct(30), oct(100))) # for comparison
+    array(['012', '036', '0144'],
+          dtype='|S4')
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def fromregex(file, regexp, dtype):
     """Construct an array from a text file, using regular expression parsing.
 
@@ -3707,6 +4536,60 @@ def fromregex(file, regexp, dtype):
     array([1312, 1534,  444], dtype=int64)
     
     """
+    raise NotImplementedError
+
+
+def fromstring(string, dtype=float, count=-1, sep=''):
+    """fromstring(string, dtype=float, count=-1, sep='')
+
+    A new 1-D array initialized from raw binary or text data in a string.
+
+    Parameters
+    ----------
+    string : str
+        A string containing the data.
+    dtype : data-type, optional
+        The data type of the array; default: float.  For binary input data,
+        the data must be in exactly this format.
+    count : int, optional
+        Read this number of `dtype` elements from the data.  If this is
+        negative (the default), the count will be determined from the
+        length of the data.
+    sep : str, optional
+        If not provided or, equivalently, the empty string, the data will
+        be interpreted as binary data; otherwise, as ASCII text with
+        decimal numbers.  Also in this latter case, this argument is
+        interpreted as the string separating numbers in the data; extra
+        whitespace between elements is also ignored.
+
+    Returns
+    -------
+    arr : ndarray
+        The constructed array.
+
+    Raises
+    ------
+    ValueError
+        If the string is not the correct size to satisfy the requested
+        `dtype` and `count`.
+
+    See Also
+    --------
+    frombuffer, fromfile, fromiter
+
+    Examples
+    --------
+    >>> np.fromstring('\x01\x02', dtype=np.uint8)
+    array([1, 2], dtype=uint8)
+    >>> np.fromstring('1 2', dtype=int, sep=' ')
+    array([1, 2])
+    >>> np.fromstring('1, 2', dtype=int, sep=',')
+    array([1, 2])
+    >>> np.fromstring('\x01\x02\x03\x04\x05', dtype=np.uint8, count=3)
+    array([1, 2, 3], dtype=uint8)
+    
+    """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -3796,14 +4679,15 @@ def fv(rate, nper, pmt, pv, when='end'):
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0, skip_header=0, skip_footer=0, converters=None, missing='', missing_values=None, filling_values=None, usecols=None, names=None, excludelist=None, deletechars=None, replace_space='_', autostrip=False, case_sensitive=True, defaultfmt='f%i', unpack=None, usemask=False, loose=True, invalid_raise=True):
     """Load data from a text file, with missing values handled as specified.
 
-    Each line past the first `skiprows` lines is split at the `delimiter`
+    Each line past the first `skip_header` lines is split at the `delimiter`
     character, and characters following the `comments` character are discarded.
 
     Parameters
     ----------
     fname : file or str
-        File or filename to read.  If the filename extension is `.gz` or
-        `.bz2`, the file is first decompressed.
+        File, filename, or generator to read.  If the filename extension is
+        `.gz` or `.bz2`, the file is first decompressed. Note that
+        generators must return byte strings in Python 3k.
     dtype : dtype, optional
         Data type of the resulting array.
         If None, the dtypes will be determined by the contents of each
@@ -3819,20 +4703,20 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0, ski
         The numbers of lines to skip at the beginning of the file.
     skip_footer : int, optional
         The numbers of lines to skip at the end of the file
-    converters : variable or None, optional
+    converters : variable, optional
         The set of functions that convert the data of a column to a value.
         The converters can also be used to provide a default value
         for missing data: ``converters = {3: lambda s: float(s or 0)}``.
-    missing_values : variable or None, optional
+    missing_values : variable, optional
         The set of strings corresponding to missing data.
-    filling_values : variable or None, optional
+    filling_values : variable, optional
         The set of values to be used as default when the data are missing.
-    usecols : sequence or None, optional
+    usecols : sequence, optional
         Which columns to read, with 0 being the first.  For example,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first valid line
-        after the first `skiprows` lines.
+        after the first `skip_header` lines.
         If `names` is a sequence or a single-string of comma-separated names,
         the names will be used to define the field names in a structured dtype.
         If `names` is None, the names of the dtype fields will be used, if any.
@@ -3996,30 +4880,6 @@ def get_numarray_include(type=None):
     raise NotImplementedError
 
 
-def get_numpy_include():
-    """`get_numpy_include` is deprecated, use `get_include` instead!
-
-
-    Return the directory that contains the NumPy \*.h header files.
-
-    Extension modules that need to compile against NumPy should use this
-    function to locate the appropriate include directory.
-
-    Notes
-    -----
-    When using ``distutils``, for example in ``setup.py``.
-    ::
-
-        import numpy as np
-        ...
-        Extension('extension_name', ...
-                include_dirs=[np.get_include()])
-        ...
-    
-    """
-    raise NotImplementedError
-
-
 def get_printoptions():
     """Return the current print options.
 
@@ -4043,6 +4903,42 @@ def get_printoptions():
     set_printoptions, set_string_function
     
     """
+    raise NotImplementedError
+
+
+def getbuffer():
+    """getbuffer(obj [,offset[, size]])
+
+    Create a buffer object from the given object referencing a slice of
+    length size starting at offset.
+
+    Default is the entire buffer. A read-write buffer is attempted followed
+    by a read-only buffer.
+
+    Parameters
+    ----------
+    obj : object
+
+    offset : int, optional
+
+    size : int, optional
+
+    Returns
+    -------
+    buffer_obj : buffer
+
+    Examples
+    --------
+    >>> buf = np.getbuffer(np.ones(5), 1, 3)
+    >>> len(buf)
+    3
+    >>> buf[0]
+    '\x00'
+    >>> buf
+    <read-write buffer for 0x8af1e70, size 3, offset 1 at 0x8ba4ec0>
+    
+    """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -4075,8 +4971,8 @@ def geterr():
 
     Examples
     --------
-    >>> np.geterr()  # default is all set to 'ignore'
-    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
+    >>> np.geterr()
+    {'over': 'warn', 'divide': 'warn', 'invalid': 'warn',
     'under': 'ignore'}
     >>> np.arange(3.) / np.arange(3.)
     array([ NaN,   1.,   1.])
@@ -4133,6 +5029,72 @@ def geterrcall():
     True
     
     """
+    raise NotImplementedError
+
+
+def geterrobj():
+    """geterrobj()
+
+    Return the current object that defines floating-point error handling.
+
+    The error object contains all information that defines the error handling
+    behavior in Numpy. `geterrobj` is used internally by the other
+    functions that get and set error handling behavior (`geterr`, `seterr`,
+    `geterrcall`, `seterrcall`).
+
+    Returns
+    -------
+    errobj : list
+        The error object, a list containing three elements:
+        [internal numpy buffer size, error mask, error callback function].
+
+        The error mask is a single integer that holds the treatment information
+        on all four floating point errors. The information for each error type
+        is contained in three bits of the integer. If we print it in base 8, we
+        can see what treatment is set for "invalid", "under", "over", and
+        "divide" (in that order). The printed string can be interpreted with
+
+        * 0 : 'ignore'
+        * 1 : 'warn'
+        * 2 : 'raise'
+        * 3 : 'call'
+        * 4 : 'print'
+        * 5 : 'log'
+
+    See Also
+    --------
+    seterrobj, seterr, geterr, seterrcall, geterrcall
+    getbufsize, setbufsize
+
+    Notes
+    -----
+    For complete documentation of the types of floating-point exceptions and
+    treatment options, see `seterr`.
+
+    Examples
+    --------
+    >>> np.geterrobj()  # first get the defaults
+    [10000, 0, None]
+
+    >>> def err_handler(type, flag):
+    ...     print "Floating point error (%s), with flag %s" % (type, flag)
+    ...
+    >>> old_bufsize = np.setbufsize(20000)
+    >>> old_err = np.seterr(divide='raise')
+    >>> old_handler = np.seterrcall(err_handler)
+    >>> np.geterrobj()
+    [20000, 2, <function err_handler at 0x91dcaac>]
+
+    >>> old_err = np.seterr(all='ignore')
+    >>> np.base_repr(np.geterrobj()[1], 8)
+    '0'
+    >>> old_err = np.seterr(divide='warn', over='log', under='call',
+                            invalid='print')
+    >>> np.base_repr(np.geterrobj()[1], 8)
+    '4351'
+    
+    """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -4366,7 +5328,7 @@ def hanning(M):
     raise NotImplementedError
 
 
-def histogram(a, bins=10, range=None, normed=False, weights=None):
+def histogram(a, bins=10, range=None, normed=False, weights=None, density=None):
     """Compute the histogram of a set of data.
 
     Parameters
@@ -4383,17 +5345,27 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
         is simply ``(a.min(), a.max())``.  Values outside the range are
         ignored.
     normed : bool, optional
+        This keyword is deprecated in Numpy 1.6 due to confusing/buggy
+        behavior. It will be removed in Numpy 2.0. Use the density keyword
+        instead.
+        If False, the result will contain the number of samples
+        in each bin.  If True, the result is the value of the
+        probability *density* function at the bin, normalized such that
+        the *integral* over the range is 1. Note that this latter behavior is
+        known to be buggy with unequal bin widths; use `density` instead.
+    weights : array_like, optional
+        An array of weights, of the same shape as `a`.  Each value in `a`
+        only contributes its associated weight towards the bin count
+        (instead of 1).  If `normed` is True, the weights are normalized,
+        so that the integral of the density over the range remains 1
+    density : bool, optional
         If False, the result will contain the number of samples
         in each bin.  If True, the result is the value of the
         probability *density* function at the bin, normalized such that
         the *integral* over the range is 1. Note that the sum of the
         histogram values will not be equal to 1 unless bins of unity
         width are chosen; it is not a probability *mass* function.
-    weights : array_like, optional
-        An array of weights, of the same shape as `a`.  Each value in `a`
-        only contributes its associated weight towards the bin count
-        (instead of 1).  If `normed` is True, the weights are normalized,
-        so that the integral of the density over the range remains 1
+        Overrides the `normed` keyword if given.
 
     Returns
     -------
@@ -4406,7 +5378,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
 
     See Also
     --------
-    histogramdd, bincount, searchsorted
+    histogramdd, bincount, searchsorted, digitize
 
     Notes
     -----
@@ -4423,13 +5395,13 @@ def histogram(a, bins=10, range=None, normed=False, weights=None):
     --------
     >>> np.histogram([1, 2, 1], bins=[0, 1, 2, 3])
     (array([0, 2, 1]), array([0, 1, 2, 3]))
-    >>> np.histogram(np.arange(4), bins=np.arange(5), normed=True)
+    >>> np.histogram(np.arange(4), bins=np.arange(5), density=True)
     (array([ 0.25,  0.25,  0.25,  0.25]), array([0, 1, 2, 3, 4]))
     >>> np.histogram([[1, 2, 1], [1, 0, 1]], bins=[0,1,2,3])
     (array([1, 4, 1]), array([0, 1, 2, 3]))
 
     >>> a = np.arange(5)
-    >>> hist, bin_edges = np.histogram(a, normed=True)
+    >>> hist, bin_edges = np.histogram(a, density=True)
     >>> hist
     array([ 0.5,  0. ,  0.5,  0. ,  0. ,  0.5,  0. ,  0.5,  0. ,  0.5])
     >>> hist.sum()
@@ -4546,7 +5518,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         A sequence of lower and upper bin edges to be used if the edges are
         not given explicitely in `bins`. Defaults to the minimum and maximum
         values along each dimension.
-    normed : boolean, optional
+    normed : bool, optional
         If False, returns the number of samples in each bin. If True, returns
         the bin density, ie, the bin count divided by the bin hypervolume.
     weights : array_like (N,), optional
@@ -4565,8 +5537,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     See Also
     --------
-    histogram: 1D histogram
-    histogram2d: 2D histogram
+    histogram: 1-D histogram
+    histogram2d: 2-D histogram
 
     Examples
     --------
@@ -4927,6 +5899,82 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
     raise NotImplementedError
 
 
+def inner(a, b):
+    """inner(a, b)
+
+    Inner product of two arrays.
+
+    Ordinary inner product of vectors for 1-D arrays (without complex
+    conjugation), in higher dimensions a sum product over the last axes.
+
+    Parameters
+    ----------
+    a, b : array_like
+        If `a` and `b` are nonscalar, their last dimensions of must match.
+
+    Returns
+    -------
+    out : ndarray
+        `out.shape = a.shape[:-1] + b.shape[:-1]`
+
+    Raises
+    ------
+    ValueError
+        If the last dimension of `a` and `b` has different size.
+
+    See Also
+    --------
+    tensordot : Sum products over arbitrary axes.
+    dot : Generalised matrix product, using second last dimension of `b`.
+    einsum : Einstein summation convention.
+
+    Notes
+    -----
+    For vectors (1-D arrays) it computes the ordinary inner-product::
+
+        np.inner(a, b) = sum(a[:]*b[:])
+
+    More generally, if `ndim(a) = r > 0` and `ndim(b) = s > 0`::
+
+        np.inner(a, b) = np.tensordot(a, b, axes=(-1,-1))
+
+    or explicitly::
+
+        np.inner(a, b)[i0,...,ir-1,j0,...,js-1]
+             = sum(a[i0,...,ir-1,:]*b[j0,...,js-1,:])
+
+    In addition `a` or `b` may be scalars, in which case::
+
+       np.inner(a,b) = a*b
+
+    Examples
+    --------
+    Ordinary inner product for vectors:
+
+    >>> a = np.array([1,2,3])
+    >>> b = np.array([0,1,0])
+    >>> np.inner(a, b)
+    2
+
+    A multidimensional example:
+
+    >>> a = np.arange(24).reshape((2,3,4))
+    >>> b = np.arange(4)
+    >>> np.inner(a, b)
+    array([[ 14,  38,  62],
+           [ 86, 110, 134]])
+
+    An example where `b` is a scalar:
+
+    >>> np.inner(np.eye(2), 7)
+    array([[ 7.,  0.],
+           [ 0.,  7.]])
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def insert(arr, obj, values, axis=None):
     """Insert values along the given axis before the given indices.
 
@@ -4989,6 +6037,14 @@ def insert(arr, obj, values, axis=None):
            [  4, 999,   5,   6, 999,   7]])
     
     """
+    raise NotImplementedError
+
+
+def int_asbuffer():
+    """
+    
+    """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -5090,17 +6146,6 @@ def intersect1d(ar1, ar2, assume_unique=False):
     --------
     >>> np.intersect1d([1, 3, 4, 3], [3, 1, 2, 1])
     array([1, 3])
-    
-    """
-    raise NotImplementedError
-
-
-def intersect1d_nu():
-    """`intersect1d_nu` is deprecated!
-
-
-    This function is deprecated.  Use intersect1d()
-    instead.
     
     """
     raise NotImplementedError
@@ -5558,13 +6603,46 @@ def issctype(rep):
     False
     >>> np.issctype(1.1)
     False
+
+    Strings are also a scalar type:
+
+    >>> np.issctype(np.dtype('str'))
+    True
     
     """
     raise NotImplementedError
 
 
 def issubclass_(arg1, arg2):
-    """
+    """Determine if a class is a subclass of a second class.
+
+    `issubclass_` is equivalent to the Python built-in ``issubclass``,
+    except that it returns False instead of raising a TypeError is one
+    of the arguments is not a class.
+
+    Parameters
+    ----------
+    arg1 : class
+        Input class. True is returned if `arg1` is a subclass of `arg2`.
+    arg2 : class or tuple of classes.
+        Input class. If a tuple of classes, True is returned if `arg1` is a
+        subclass of any of the tuple elements.
+
+    Returns
+    -------
+    out : bool
+        Whether `arg1` is a subclass of `arg2` or not.
+
+    See Also
+    --------
+    issubsctype, issubdtype, issctype
+
+    Examples
+    --------
+    >>> np.issubclass_(np.int32, np.int)
+    True
+    >>> np.issubclass_(np.int32, np.float)
+    False
     
     """
     raise NotImplementedError
@@ -5899,6 +6977,84 @@ def kron(a, b):
     raise NotImplementedError
 
 
+def lexsort(keys, axis=-1):
+    """lexsort(keys, axis=-1)
+
+    Perform an indirect sort using a sequence of keys.
+
+    Given multiple sorting keys, which can be interpreted as columns in a
+    spreadsheet, lexsort returns an array of integer indices that describes
+    the sort order by multiple columns. The last key in the sequence is used
+    for the primary sort order, the second-to-last key for the secondary sort
+    order, and so on. The keys argument must be a sequence of objects that
+    can be converted to arrays of the same shape. If a 2D array is provided
+    for the keys argument, it's rows are interpreted as the sorting keys and
+    sorting is according to the last row, second last row etc.
+
+    Parameters
+    ----------
+    keys : (k,N) array or tuple containing k (N,)-shaped sequences
+        The `k` different "columns" to be sorted.  The last column (or row if
+        `keys` is a 2D array) is the primary sort key.
+    axis : int, optional
+        Axis to be indirectly sorted.  By default, sort over the last axis.
+
+    Returns
+    -------
+    indices : (N,) ndarray of ints
+        Array of indices that sort the keys along the specified axis.
+
+    See Also
+    --------
+    argsort : Indirect sort.
+    ndarray.sort : In-place sort.
+    sort : Return a sorted copy of an array.
+
+    Examples
+    --------
+    Sort names: first by surname, then by name.
+
+    >>> surnames =    ('Hertz',    'Galilei', 'Hertz')
+    >>> first_names = ('Heinrich', 'Galileo', 'Gustav')
+    >>> ind = np.lexsort((first_names, surnames))
+    >>> ind
+    array([1, 2, 0])
+
+    >>> [surnames[i] + ", " + first_names[i] for i in ind]
+    ['Galilei, Galileo', 'Hertz, Gustav', 'Hertz, Heinrich']
+
+    Sort two columns of numbers:
+
+    >>> a = [1,5,1,4,3,4,4] # First column
+    >>> b = [9,4,0,4,0,2,1] # Second column
+    >>> ind = np.lexsort((b,a)) # Sort by a, then by b
+    >>> print ind
+    [2 0 4 6 5 3 1]
+
+    >>> [(a[i],b[i]) for i in ind]
+    [(1, 0), (1, 9), (3, 0), (4, 1), (4, 2), (4, 4), (5, 4)]
+
+    Note that sorting is first according to the elements of ``a``.
+    Secondary sorting is according to the elements of ``b``.
+
+    A normal ``argsort`` would have yielded:
+
+    >>> [(a[i],b[i]) for i in np.argsort(a)]
+    [(1, 9), (1, 0), (3, 0), (4, 4), (4, 2), (4, 1), (5, 4)]
+
+    Structured arrays are sorted lexically by ``argsort``:
+
+    >>> x = np.array([(1,9), (5,4), (1,0), (4,4), (3,0), (4,2), (4,1)],
+    ...              dtype=np.dtype([('x', int), ('y', int)]))
+
+    >>> np.argsort(x) # or np.argsort(x, order=('x', 'y'))
+    array([2, 0, 4, 6, 5, 3, 1])
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def load(file, mmap_mode=None):
     """Load a pickled, ``.npy``, or ``.npz`` binary file.
 
@@ -5961,7 +7117,15 @@ def load(file, mmap_mode=None):
     raise NotImplementedError
 
 
-def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None, skiprows=0, usecols=None, unpack=False):
+def loads():
+    """loads(string) -- Load a pickle from the given string
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
+def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None, skiprows=0, usecols=None, unpack=False, ndmin=0):
     """Load data from a text file.
 
     Each row in the text file must have the same number of values.
@@ -5969,16 +7133,18 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None, s
     Parameters
     ----------
     fname : file or str
-        File or filename to read.  If the filename extension is ``.gz`` or
-        ``.bz2``, the file is first decompressed.
+        File, filename, or generator to read.  If the filename extension is
+        ``.gz`` or ``.bz2``, the file is first decompressed. Note that
+        generators should return byte strings for Python 3k.
     dtype : data-type, optional
-        Data-type of the resulting array; default: float.  If this is a record
-        data-type, the resulting array will be 1-dimensional, and each row
-        will be interpreted as an element of the array.  In this case, the
-        number of columns used must match the number of fields in the
-        data-type.
+        Data-type of the resulting array; default: float.  If this is a
+        record data-type, the resulting array will be 1-dimensional, and
+        each row will be interpreted as an element of the array.  In this
+        case, the number of columns used must match the number of fields in
+        the data-type.
     comments : str, optional
-        The character used to indicate the start of a comment; default: '#'.
+        The character used to indicate the start of a comment;
+        default: '#'.
     delimiter : str, optional
         The string used to separate values.  By default, this is any
         whitespace.
@@ -5986,8 +7152,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None, s
         A dictionary mapping column number to a function that will convert
         that column to a float.  E.g., if column 0 is a date string:
         ``converters = {0: datestr2num}``.  Converters can also be used to
-        provide a default value for missing data:
-        ``converters = {3: lambda s: float(s or 0)}``.  Default: None.
+        provide a default value for missing data (but see also `genfromtxt`):
+        ``converters = {3: lambda s: float(s.strip() or 0)}``.  Default: None.
     skiprows : int, optional
         Skip the first `skiprows` lines; default: 0.
     usecols : sequence, optional
@@ -5996,7 +7162,13 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None, s
         The default, None, results in all columns being read.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
-        unpacked using ``x, y, z = loadtxt(...)``.  The default is False.
+        unpacked using ``x, y, z = loadtxt(...)``.  When used with a record
+        data-type, arrays are returned for each field.  Default is False.
+    ndmin : int, optional
+        The returned array will have at least `ndmin` dimensions.
+        Otherwise mono-dimensional axes will be squeezed. 
+        Legal values: 0 (default), 1 or 2.
+        .. versionadded:: 1.6.0
 
     Returns
     -------
@@ -6215,8 +7387,10 @@ def max(a, axis=None, out=None):
 
     Returns
     -------
-    amax : ndarray
-        A new array or scalar array with the result.
+    amax : ndarray or scalar
+        Maximum of `a`. If `axis` is None, the result is a scalar value.
+        If `axis` is given, the result is an array of dimension
+        ``a.ndim - 1``.
 
     See Also
     --------
@@ -6574,6 +7748,56 @@ def min(a, axis=None, out=None):
     raise NotImplementedError
 
 
+def min_scalar_type(a):
+    """min_scalar_type(a)
+
+    For scalar ``a``, returns the data type with the smallest size
+    and smallest scalar kind which can hold its value.  For non-scalar
+    array ``a``, returns the vector's dtype unmodified.
+
+    Floating point values are not demoted to integers,
+    and complex values are not demoted to floats.
+
+    Parameters
+    ----------
+    a : scalar or array_like
+        The value whose minimal data type is to be found.
+
+    Returns
+    -------
+    out : dtype
+        The minimal data type.
+
+    Notes
+    -----
+    .. versionadded:: 1.6.0
+
+    See Also
+    --------
+    result_type, promote_types, dtype, can_cast
+
+    Examples
+    --------
+    >>> np.min_scalar_type(10)
+    dtype('uint8')
+
+    >>> np.min_scalar_type(-260)
+    dtype('int16')
+
+    >>> np.min_scalar_type(3.1)
+    dtype('float16')
+
+    >>> np.min_scalar_type(1e50)
+    dtype('float64')
+
+    >>> np.min_scalar_type(np.arange(4,dtype='f8'))
+    dtype('float64')
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def mintypecode(typechars, typeset='GDFgdf', default='d'):
     """Return the character for the minimum-size type to which given types can
     be safely cast.
@@ -6817,8 +8041,7 @@ def nanmax(a, axis=None):
     Positive infinity is treated as a very large number and negative infinity
     is treated as a very small (i.e. negative) number.
 
-    If the input has a integer type, an integer type is returned unless
-    the input contains NaNs and infinity.
+    If the input has a integer type the function is equivalent to np.max.
 
     Examples
     --------
@@ -6872,8 +8095,7 @@ def nanmin(a, axis=None):
     Positive infinity is treated as a very large number and negative infinity
     is treated as a very small (i.e. negative) number.
 
-    If the input has a integer type, an integer type is returned unless
-    the input contains NaNs and infinity.
+    If the input has a integer type the function is equivalent to np.min.
 
 
     Examples
@@ -7012,6 +8234,24 @@ def ndim(a):
     raise NotImplementedError
 
 
+def nested_iters():
+    """
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
+def newbuffer(size):
+    """newbuffer(size)
+
+    Return a new uninitialized buffer object of size bytes
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def nonzero(a):
     """Return the indices of the elements that are non-zero.
 
@@ -7045,6 +8285,8 @@ def nonzero(a):
         array.
     ndarray.nonzero :
         Equivalent ndarray method.
+    count_nonzero :
+        Counts the number of non-zero elements in the input array.
 
     Examples
     --------
@@ -7181,7 +8423,41 @@ def npv(rate, values):
 
 
 def obj2sctype(rep, default=None):
-    """
+    """Return the scalar dtype or NumPy equivalent of Python type of an object.
+
+    Parameters
+    ----------
+    rep : any
+        The object of which the type is returned.
+    default : any, optional
+        If given, this is returned for objects whose types can not be
+        determined. If not given, None is returned for those objects.
+
+    Returns
+    -------
+    dtype : dtype or Python type
+        The data type of `rep`.
+
+    See Also
+    --------
+    sctype2char, issctype, issubsctype, issubdtype, maximum_sctype
+
+    Examples
+    --------
+    >>> np.obj2sctype(np.int32)
+    <type 'numpy.int32'>
+    >>> np.obj2sctype(np.array([1., 2.]))
+    <type 'numpy.float64'>
+    >>> np.obj2sctype(np.array([1.j]))
+    <type 'numpy.complex128'>
+
+    >>> np.obj2sctype(dict)
+    <type 'numpy.object_'>
+    >>> np.obj2sctype('string')
+    <type 'numpy.string_'>
+
+    >>> np.obj2sctype(1, default=list)
+    <type 'list'>
     
     """
     raise NotImplementedError
@@ -7209,6 +8485,10 @@ def outer(a, b):
     -------
     out : ndarray, shape (M, N)
         ``out[i, j] = a[i] * b[j]``
+
+    See also
+    --------
+    inner, einsum
 
     References
     ----------
@@ -7254,6 +8534,52 @@ def outer(a, b):
     raise NotImplementedError
 
 
+def packbits(myarray, axis=None):
+    """packbits(myarray, axis=None)
+
+    Packs the elements of a binary-valued array into bits in a uint8 array.
+
+    The result is padded to full bytes by inserting zero bits at the end.
+
+    Parameters
+    ----------
+    myarray : array_like
+        An integer type array whose elements should be packed to bits.
+    axis : int, optional
+        The dimension over which bit-packing is done.
+        ``None`` implies packing the flattened array.
+
+    Returns
+    -------
+    packed : ndarray
+        Array of type uint8 whose elements represent bits corresponding to the
+        logical (0 or nonzero) value of the input elements. The shape of
+        `packed` has the same number of dimensions as the input (unless `axis`
+        is None, in which case the output is 1-D).
+
+    See Also
+    --------
+    unpackbits: Unpacks elements of a uint8 array into a binary-valued output
+                array.
+
+    Examples
+    --------
+    >>> a = np.array([[[1,0,1],
+    ...                [0,1,0]],
+    ...               [[1,1,0],
+    ...                [0,0,1]]])
+    >>> b = np.packbits(a, axis=-1)
+    >>> b
+    array([[[160],[64]],[[192],[32]]], dtype=uint8)
+
+    Note that in binary 160 = 1010 0000, 64 = 0100 0000, 192 = 1100 0000,
+    and 32 = 0010 0000.
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def percentile(a, q, axis=None, out=None, overwrite_input=False):
     """Compute the qth percentile of the data along the specified axis.
 
@@ -7264,22 +8590,22 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
     a : array_like
         Input array or object that can be converted to an array.
     q : float in range of [0,100] (or sequence of floats)
-        percentile to compute which must be between 0 and 100 inclusive
-    axis : {None, int}, optional
-        Axis along which the percentiles are computed. The default (axis=None)
+        Percentile to compute which must be between 0 and 100 inclusive.
+    axis : int, optional
+        Axis along which the percentiles are computed. The default (None)
         is to compute the median along a flattened version of the array.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
         but the type (of the output) will be cast if necessary.
-    overwrite_input : {False, True}, optional
-       If True, then allow use of memory of input array (a) for
+    overwrite_input : bool, optional
+       If True, then allow use of memory of input array `a` for
        calculations. The input array will be modified by the call to
        median. This will save memory when you do not need to preserve
        the contents of the input array. Treat the input as undefined,
-       but it will probably be fully or partially sorted. Default is
-       False. Note that, if `overwrite_input` is True and the input
-       is not already an ndarray, an error will be raised.
+       but it will probably be fully or partially sorted.
+       Default is False. Note that, if `overwrite_input` is True and the
+       input is not already an array, an error will be raised.
 
     Returns
     -------
@@ -7297,10 +8623,10 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
     Notes
     -----
     Given a vector V of length N, the qth percentile of V is the qth ranked
-    value in a sorted copy of V.  A weighted average of the two nearest neighbors
-    is used if the normalized ranking does not match q exactly.
-    The same as the median if q is 0.5; the same as the min if q is 0;
-    and the same as the max if q is 1
+    value in a sorted copy of V.  A weighted average of the two nearest
+    neighbors is used if the normalized ranking does not match q exactly.
+    The same as the median if ``q=0.5``, the same as the minimum if ``q=0``
+    and the same as the maximum if ``q=1``.
 
     Examples
     --------
@@ -7308,26 +8634,27 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
     >>> a
     array([[10,  7,  4],
            [ 3,  2,  1]])
-    >>> np.percentile(a, 0.5)
+    >>> np.percentile(a, 50)
     3.5
     >>> np.percentile(a, 0.5, axis=0)
     array([ 6.5,  4.5,  2.5])
-    >>> np.percentile(a, 0.5, axis=1)
+    >>> np.percentile(a, 50, axis=1)
     array([ 7.,  2.])
-    >>> m = np.percentile(a, 0.5, axis=0)
+
+    >>> m = np.percentile(a, 50, axis=0)
     >>> out = np.zeros_like(m)
-    >>> np.percentile(a, 0.5, axis=0, out=m)
+    >>> np.percentile(a, 50, axis=0, out=m)
     array([ 6.5,  4.5,  2.5])
     >>> m
     array([ 6.5,  4.5,  2.5])
+
     >>> b = a.copy()
-    >>> np.percentile(b, 0.5, axis=1, overwrite_input=True)
+    >>> np.percentile(b, 50, axis=1, overwrite_input=True)
     array([ 7.,  2.])
     >>> assert not np.all(a==b)
     >>> b = a.copy()
-    >>> np.percentile(b, 0.5, axis=None, overwrite_input=True)
+    >>> np.percentile(b, 50, axis=None, overwrite_input=True)
     3.5
-    >>> assert not np.all(a==b)
     
     """
     raise NotImplementedError
@@ -8278,6 +9605,56 @@ def product(a, axis=None, dtype=None, out=None):
     raise NotImplementedError
 
 
+def promote_types(type1, type2):
+    """promote_types(type1, type2)
+
+    Returns the data type with the smallest size and smallest scalar
+    kind to which both ``type1`` and ``type2`` may be safely cast.
+    The returned data type is always in native byte order.
+
+    This function is symmetric and associative.
+
+    Parameters
+    ----------
+    type1 : dtype or dtype specifier
+        First data type.
+    type2 : dtype or dtype specifier
+        Second data type.
+
+    Returns
+    -------
+    out : dtype
+        The promoted data type.
+
+    Notes
+    -----
+    .. versionadded:: 1.6.0
+
+    See Also
+    --------
+    result_type, dtype, can_cast
+
+    Examples
+    --------
+    >>> np.promote_types('f4', 'f8')
+    dtype('float64')
+
+    >>> np.promote_types('i8', 'f4')
+    dtype('float64')
+
+    >>> np.promote_types('>i8', '<c8')
+    dtype('complex128')
+
+    >>> np.promote_types('i1', 'S8')
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    TypeError: invalid type promotion
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+
+
 def ptp(a, axis=None, out=None):
     """Range of values (maximum - minimum) along an axis.
 
@@ -8365,6 +9742,50 @@ def put(a, ind, v, mode='raise'):
     array([ 0,  1,  2,  3, -5])
     
     """
+    raise NotImplementedError
+
+
+def putmask(a, mask, values):
+    """putmask(a, mask, values)
+
+    Changes elements of an array based on conditional and input values.
+
+    Sets ``a.flat[n] = values[n]`` for each n where ``mask.flat[n]==True``.
+
+    If `values` is not the same size as `a` and `mask` then it will repeat.
+    This gives behavior different from ``a[mask] = values``.
+
+    Parameters
+    ----------
+    a : array_like
+        Target array.
+    mask : array_like
+        Boolean mask array. It has to be the same shape as `a`.
+    values : array_like
+        Values to put into `a` where `mask` is True. If `values` is smaller
+        than `a` it will be repeated.
+
+    See Also
+    --------
+    place, put, take
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2, 3)
+    >>> np.putmask(x, x>2, x**2)
+    >>> x
+    array([[ 0,  1,  2],
+           [ 9, 16, 25]])
+
+    If `values` is smaller than `a` it is repeated:
+
+    >>> x = np.arange(5)
+    >>> np.putmask(x, x>1, [-33, -44])
+    >>> x
+    array([  0,   1, -33, -44, -33])
+    
+    """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -8552,12 +9973,16 @@ def ravel(a, order='C'):
     Parameters
     ----------
     a : array_like
-        Input array.  The elements in `a` are read in the order specified by
+        Input array.  The elements in ``a`` are read in the order specified by
         `order`, and packed as a 1-D array.
-    order : {'C','F'}, optional
-        The elements of `a` are read in this order.  It can be either
-        'C' for row-major order, or `F` for column-major order.
-        By default, row-major order is used.
+    order : {'C','F', 'A', 'K'}, optional
+        The elements of ``a`` are read in this order. 'C' means to view
+        the elements in C (row-major) order. 'F' means to view the elements
+        in Fortran (column-major) order. 'A' means to view the elements
+        in 'F' order if a is Fortran contiguous, 'C' order otherwise.
+        'K' means to view the elements in the order they occur in memory,
+        except for reversing the data when strides are negative.
+        By default, 'C' order is used.
 
     Returns
     -------
@@ -8580,22 +10005,106 @@ def ravel(a, order='C'):
 
     Examples
     --------
-    If an array is in C-order (default), then `ravel` is equivalent
-    to ``reshape(-1)``:
+    It is equivalent to ``reshape(-1, order=order)``.
 
     >>> x = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> print x.reshape(-1)
-    [1  2  3  4  5  6]
-
     >>> print np.ravel(x)
-    [1  2  3  4  5  6]
+    [1 2 3 4 5 6]
 
-    When flattening using Fortran-order, however, we see
+    >>> print x.reshape(-1)
+    [1 2 3 4 5 6]
 
     >>> print np.ravel(x, order='F')
     [1 4 2 5 3 6]
+
+    When ``order`` is 'A', it will preserve the array's 'C' or 'F' ordering:
+
+    >>> print np.ravel(x.T)
+    [1 4 2 5 3 6]
+    >>> print np.ravel(x.T, order='A')
+    [1 2 3 4 5 6]
+
+    When ``order`` is 'K', it will preserve orderings that are neither 'C'
+    nor 'F', but won't reverse axes:
+
+    >>> a = np.arange(3)[::-1]; a
+    array([2, 1, 0])
+    >>> a.ravel(order='C')
+    array([2, 1, 0])
+    >>> a.ravel(order='K')
+    array([2, 1, 0])
+
+    >>> a = np.arange(12).reshape(2,3,2).swapaxes(1,2); a
+    array([[[ 0,  2,  4],
+            [ 1,  3,  5]],
+           [[ 6,  8, 10],
+            [ 7,  9, 11]]])
+    >>> a.ravel(order='C')
+    array([ 0,  2,  4,  1,  3,  5,  6,  8, 10,  7,  9, 11])
+    >>> a.ravel(order='K')
+    array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])
     
     """
+    raise NotImplementedError
+
+
+def ravel_multi_index(multi_index, dims, mode='raise', order='C'):
+    """ravel_multi_index(multi_index, dims, mode='raise', order='C')
+
+    Converts a tuple of index arrays into an array of flat
+    indices, applying boundary modes to the multi-index.
+
+    Parameters
+    ----------
+    multi_index : tuple of array_like
+        A tuple of integer arrays, one array for each dimension.
+    dims : tuple of ints
+        The shape of array into which the indices from ``multi_index`` apply.
+    mode : {'raise', 'wrap', 'clip'}, optional
+        Specifies how out-of-bounds indices are handled.  Can specify
+        either one mode or a tuple of modes, one mode per index.
+
+        * 'raise' -- raise an error (default)
+        * 'wrap' -- wrap around
+        * 'clip' -- clip to the range
+
+        In 'clip' mode, a negative index which would normally
+        wrap will clip to 0 instead.
+    order : {'C', 'F'}, optional
+        Determines whether the multi-index should be viewed as indexing in
+        C (row-major) order or FORTRAN (column-major) order.
+
+    Returns
+    -------
+    raveled_indices : ndarray
+        An array of indices into the flattened version of an array
+        of dimensions ``dims``.
+
+    See Also
+    --------
+    unravel_index
+
+    Notes
+    -----
+    .. versionadded:: 1.6.0
+
+    Examples
+    --------
+    >>> arr = np.array([[3,6,6],[4,5,1]])
+    >>> np.ravel_multi_index(arr, (7,6))
+    array([22, 41, 37])
+    >>> np.ravel_multi_index(arr, (7,6), order='F')
+    array([31, 41, 13])
+    >>> np.ravel_multi_index(arr, (4,6), mode='clip')
+    array([22, 23, 19])
+    >>> np.ravel_multi_index(arr, (4,4), mode=('clip','wrap'))
+    array([12, 13, 13])
+
+    >>> np.ravel_multi_index((3,1,4,1), (6,7,8,9))
+    1621
+    
+    """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -8829,9 +10338,10 @@ def reshape(a, newshape, order='C'):
         an integer, then the result will be a 1-D array of that length.
         One shape dimension can be -1. In this case, the value is inferred
         from the length of the array and remaining dimensions.
-    order : {'C', 'F'}, optional
+    order : {'C', 'F', 'A'}, optional
         Determines whether the array data should be viewed as in C
-        (row-major) order or FORTRAN (column-major) order.
+        (row-major) order, FORTRAN (column-major) order, or the C/FORTRAN
+        order should be preserved.
 
     Returns
     -------
@@ -8932,6 +10442,78 @@ def restoredot():
     alterdot : `restoredot` undoes the effects of `alterdot`.
     
     """
+    # BUILTIN
+    raise NotImplementedError
+
+
+def result_type(*arrays_and_dtypes):
+    """result_type(*arrays_and_dtypes)
+
+    Returns the type that results from applying the NumPy
+    type promotion rules to the arguments.
+
+    Type promotion in NumPy works similarly to the rules in languages
+    like C++, with some slight differences.  When both scalars and
+    arrays are used, the array's type takes precedence and the actual value
+    of the scalar is taken into account.
+
+    For example, calculating 3*a, where a is an array of 32-bit floats,
+    intuitively should result in a 32-bit float output.  If the 3 is a
+    32-bit integer, the NumPy rules indicate it can't convert losslessly
+    into a 32-bit float, so a 64-bit float should be the result type.
+    By examining the value of the constant, '3', we see that it fits in
+    an 8-bit integer, which can be cast losslessly into the 32-bit float.
+
+    Parameters
+    ----------
+    arrays_and_dtypes : list of arrays and dtypes
+        The operands of some operation whose result type is needed.
+
+    Returns
+    -------
+    out : dtype
+        The result type.
+
+    See also
+    --------
+    dtype, promote_types, min_scalar_type, can_cast
+
+    Notes
+    -----
+    .. versionadded:: 1.6.0
+
+    The specific algorithm used is as follows.
+
+    Categories are determined by first checking which of boolean,
+    integer (int/uint), or floating point (float/complex) the maximum
+    kind of all the arrays and the scalars are.
+    
+    If there are only scalars or the maximum category of the scalars
+    is higher than the maximum category of the arrays,
+    the data types are combined with :func:`promote_types`
+    to produce the return value.
+
+    Otherwise, `min_scalar_type` is called on each array, and
+    the resulting data types are all combined with :func:`promote_types`
+    to produce the return value.
+
+    The set of int values is not a subset of the uint values for types
+    with the same number of bits, something not reflected in
+    :func:`min_scalar_type`, but handled as a special case in `result_type`.
+
+    Examples
+    --------
+    >>> np.result_type(3, np.arange(7, dtype='i1'))
+    dtype('int8')
+
+    >>> np.result_type('i4', 'c8')
+    dtype('complex128')
+
+    >>> np.result_type(3.0, -2)
+    dtype('float64')
+    
+    """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -9028,13 +10610,14 @@ def roots(p):
     """Return the roots of a polynomial with coefficients given in p.
 
     The values in the rank-1 array `p` are coefficients of a polynomial.
-    If the length of `p` is n+1 then the polynomial is described by
-    p[0] * x**n + p[1] * x**(n-1) + ... + p[n-1]*x + p[n]
+    If the length of `p` is n+1 then the polynomial is described by::
+
+      p[0] * x**n + p[1] * x**(n-1) + ... + p[n-1]*x + p[n]
 
     Parameters
     ----------
-    p : array_like of shape(M,)
-        Rank-1 array of polynomial co-efficients.
+    p : array_like
+        Rank-1 array of polynomial coefficients.
 
     Returns
     -------
@@ -9043,32 +10626,29 @@ def roots(p):
 
     Raises
     ------
-    ValueError:
+    ValueError :
         When `p` cannot be converted to a rank-1 array.
 
     See also
     --------
-
-    poly : Find the coefficients of a polynomial with
-         a given sequence of roots.
+    poly : Find the coefficients of a polynomial with a given sequence
+           of roots.
     polyval : Evaluate a polynomial at a point.
     polyfit : Least squares polynomial fit.
     poly1d : A one-dimensional polynomial class.
 
     Notes
     -----
-
     The algorithm relies on computing the eigenvalues of the
     companion matrix [1]_.
 
     References
     ----------
-    .. [1] Wikipedia, "Companion matrix",
-           http://en.wikipedia.org/wiki/Companion_matrix
+    .. [1] R. A. Horn & C. R. Johnson, *Matrix Analysis*.  Cambridge, UK:
+        Cambridge University Press, 1999, pp. 146-7.
 
     Examples
     --------
-
     >>> coeff = [3.2, 2, 1]
     >>> np.roots(coeff)
     array([-0.3125+0.46351241j, -0.3125-0.46351241j])
@@ -9254,7 +10834,7 @@ def save(file, arr):
 
     See Also
     --------
-    savez : Save several arrays into a ``.npz`` compressed archive
+    savez : Save several arrays into a ``.npz`` archive
     savetxt, load
 
     Notes
@@ -9369,7 +10949,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
 
 
 def savez(file):
-    """Save several arrays into a single, archive file in ``.npz`` format.
+    """Save several arrays into a single file in uncompressed ``.npz`` format.
 
     If arguments are passed in with no keywords, the corresponding variable
     names, in the .npz file, are 'arr_0', 'arr_1', etc. If keyword arguments
@@ -9439,6 +11019,34 @@ def savez(file):
     ['y', 'x']
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+    See Also
+    --------
+    numpy.savez_compressed : Save several arrays into a compressed .npz file format
+    
+    """
+    raise NotImplementedError
+
+
+def savez_compressed(file):
+    """Save several arrays into a single file in compressed ``.npz`` format.
+
+    If keyword arguments are given, then filenames are taken from the keywords.
+    If arguments are passed in with no keywords, then stored file names are
+    arr_0, arr_1, etc.
+
+    Parameters
+    ----------
+    file : str
+        File name of .npz file.
+    args : Arguments
+        Function arguments.
+    kwds : Keyword arguments
+        Keywords.
+
+    See Also
+    --------
+    numpy.savez : Save several arrays into an uncompressed .npz file format
     
     """
     raise NotImplementedError
@@ -9572,6 +11180,52 @@ def select(condlist, choicelist, default=0):
     array([ 0,  1,  2,  0,  0,  0, 36, 49, 64, 81])
     
     """
+    raise NotImplementedError
+
+
+def set_numeric_ops():
+    """set_numeric_ops(op1=func1, op2=func2, ...)
+
+    Set numerical operators for array objects.
+
+    Parameters
+    ----------
+    op1, op2, ... : callable
+        Each ``op = func`` pair describes an operator to be replaced.
+        For example, ``add = lambda x, y: np.add(x, y) % 5`` would replace
+        addition by modulus 5 addition.
+
+    Returns
+    -------
+    saved_ops : list of callables
+        A list of all operators, stored before making replacements.
+
+    Notes
+    -----
+    .. WARNING::
+       Use with care!  Incorrect usage may lead to memory errors.
+
+    A function replacing an operator cannot make use of that operator.
+    For example, when replacing add, you may not use ``+``.  Instead,
+    directly call ufuncs.
+
+    Examples
+    --------
+    >>> def add_mod5(x, y):
+    ...     return np.add(x, y) % 5
+    ...
+    >>> old_funcs = np.set_numeric_ops(add=add_mod5)
+
+    >>> x = np.arange(12).reshape((3, 4))
+    >>> x + x
+    array([[0, 2, 4, 1],
+           [3, 0, 2, 4],
+           [1, 3, 0, 2]])
+
+    >>> ignore = np.set_numeric_ops(**old_funcs) # restore operators
+    
+    """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -9903,14 +11557,64 @@ def seterrcall(func):
     raise NotImplementedError
 
 
-def setmember1d():
-    """`setmember1d` is deprecated!
+def seterrobj(errobj):
+    """seterrobj(errobj)
 
+    Set the object that defines floating-point error handling.
 
-    This function is deprecated.  Use in1d(assume_unique=True)
-    instead.
+    The error object contains all information that defines the error handling
+    behavior in Numpy. `seterrobj` is used internally by the other
+    functions that set error handling behavior (`seterr`, `seterrcall`).
+
+    Parameters
+    ----------
+    errobj : list
+        The error object, a list containing three elements:
+        [internal numpy buffer size, error mask, error callback function].
+
+        The error mask is a single integer that holds the treatment information
+        on all four floating point errors. The information for each error type
+        is contained in three bits of the integer. If we print it in base 8, we
+        can see what treatment is set for "invalid", "under", "over", and
+        "divide" (in that order). The printed string can be interpreted with
+
+        * 0 : 'ignore'
+        * 1 : 'warn'
+        * 2 : 'raise'
+        * 3 : 'call'
+        * 4 : 'print'
+        * 5 : 'log'
+
+    See Also
+    --------
+    geterrobj, seterr, geterr, seterrcall, geterrcall
+    getbufsize, setbufsize
+
+    Notes
+    -----
+    For complete documentation of the types of floating-point exceptions and
+    treatment options, see `seterr`.
+
+    Examples
+    --------
+    >>> old_errobj = np.geterrobj()  # first get the defaults
+    >>> old_errobj
+    [10000, 0, None]
+
+    >>> def err_handler(type, flag):
+    ...     print "Floating point error (%s), with flag %s" % (type, flag)
+    ...
+    >>> new_errobj = [20000, 12, err_handler]
+    >>> np.seterrobj(new_errobj)
+    >>> np.base_repr(12, 8)  # int for divide=4 ('print') and over=1 ('warn')
+    '14'
+    >>> np.geterr()
+    {'over': 'warn', 'divide': 'print', 'invalid': 'ignore', 'under': 'ignore'}
+    >>> np.geterrcall() is err_handler
+    True
     
     """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -10660,7 +12364,7 @@ def tensordot(a, b, axes=2):
 
     See Also
     --------
-    numpy.dot
+    dot, einsum
 
     Notes
     -----
@@ -11444,57 +13148,93 @@ def unique(ar, return_index=False, return_inverse=False):
     raise NotImplementedError
 
 
-def unique1d():
-    """`unique1d` is deprecated!
+def unpackbits(myarray, axis=None):
+    """unpackbits(myarray, axis=None)
 
+    Unpacks elements of a uint8 array into a binary-valued output array.
 
-    This function is deprecated. Use unique() instead.
-    
-    """
-    raise NotImplementedError
-
-
-def unravel_index(x, dims):
-    """Convert a flat index to an index tuple for an array of given shape.
+    Each element of `myarray` represents a bit-field that should be unpacked
+    into a binary-valued output array. The shape of the output array is either
+    1-D (if `axis` is None) or the same shape as the input array with unpacking
+    done along the axis specified.
 
     Parameters
     ----------
-    x : int
-        Flattened index.
-    dims : tuple of ints
-        Input shape, the shape of an array into which indexing is
-        required.
+    myarray : ndarray, uint8 type
+       Input array.
+    axis : int, optional
+       Unpacks along this axis.
 
     Returns
     -------
-    idx : tuple of ints
-        Tuple of the same shape as `dims`, containing the unraveled index.
+    unpacked : ndarray, uint8 type
+       The elements are binary-valued (0 or 1).
 
-    Notes
-    -----
-    In the Examples section, since ``arr.flat[x] == arr.max()`` it may be
-    easier to use flattened indexing than to re-map the index to a tuple.
+    See Also
+    --------
+    packbits : Packs the elements of a binary-valued array into bits in a uint8
+               array.
 
     Examples
     --------
-    >>> arr = np.arange(20).reshape(5, 4)
-    >>> arr
-    array([[ 0,  1,  2,  3],
-           [ 4,  5,  6,  7],
-           [ 8,  9, 10, 11],
-           [12, 13, 14, 15],
-           [16, 17, 18, 19]])
-    >>> x = arr.argmax()
-    >>> x
-    19
-    >>> dims = arr.shape
-    >>> idx = np.unravel_index(x, dims)
-    >>> idx
-    (4, 3)
-    >>> arr[idx] == arr.max()
-    True
+    >>> a = np.array([[2], [7], [23]], dtype=np.uint8)
+    >>> a
+    array([[ 2],
+           [ 7],
+           [23]], dtype=uint8)
+    >>> b = np.unpackbits(a, axis=1)
+    >>> b
+    array([[0, 0, 0, 0, 0, 0, 1, 0],
+           [0, 0, 0, 0, 0, 1, 1, 1],
+           [0, 0, 0, 1, 0, 1, 1, 1]], dtype=uint8)
     
     """
+    # BUILTIN
+    raise NotImplementedError
+
+
+def unravel_index(indices, dims, order='C'):
+    """unravel_index(indices, dims, order='C')
+
+    Converts a flat index or array of flat indices into a tuple
+    of coordinate arrays.
+
+    Parameters
+    ----------
+    indices : array_like
+        An integer array whose elements are indices into the flattened
+        version of an array of dimensions ``dims``. Before version 1.6.0,
+        this function accepted just one index value.
+    dims : tuple of ints
+        The shape of the array to use for unraveling ``indices``.
+    order : {'C', 'F'}, optional
+        .. versionadded:: 1.6.0
+
+        Determines whether the indices should be viewed as indexing in
+        C (row-major) order or FORTRAN (column-major) order.
+
+    Returns
+    -------
+    unraveled_coords : tuple of ndarray
+        Each array in the tuple has the same shape as the ``indices``
+        array.
+
+    See Also
+    --------
+    ravel_multi_index
+
+    Examples
+    --------
+    >>> np.unravel_index([22, 41, 37], (7,6))
+    (array([3, 6, 6]), array([4, 5, 1]))
+    >>> np.unravel_index([31, 41, 13], (7,6), order='F')
+    (array([3, 6, 6]), array([4, 5, 1]))
+
+    >>> np.unravel_index(1621, (6,7,8,9))
+    (3, 1, 4, 1)
+    
+    """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -11689,7 +13429,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     raise NotImplementedError
 
 
-def vdot(a, b):
+def vdot():
     """Return the dot product of two vectors.
 
     The vdot(`a`, `b`) function handles complex numbers differently than
@@ -11740,6 +13480,7 @@ def vdot(a, b):
     30
     
     """
+    # BUILTIN
     raise NotImplementedError
 
 
@@ -11840,6 +13581,68 @@ def vstack(tup):
            [4]])
     
     """
+    raise NotImplementedError
+
+
+def where():
+    """where(condition, [x, y])
+
+    Return elements, either from `x` or `y`, depending on `condition`.
+
+    If only `condition` is given, return ``condition.nonzero()``.
+
+    Parameters
+    ----------
+    condition : array_like, bool
+        When True, yield `x`, otherwise yield `y`.
+    x, y : array_like, optional
+        Values from which to choose. `x` and `y` need to have the same
+        shape as `condition`.
+
+    Returns
+    -------
+    out : ndarray or tuple of ndarrays
+        If both `x` and `y` are specified, the output array contains
+        elements of `x` where `condition` is True, and elements from
+        `y` elsewhere.
+
+        If only `condition` is given, return the tuple
+        ``condition.nonzero()``, the indices where `condition` is True.
+
+    See Also
+    --------
+    nonzero, choose
+
+    Notes
+    -----
+    If `x` and `y` are given and input arrays are 1-D, `where` is
+    equivalent to::
+
+        [xv if c else yv for (c,xv,yv) in zip(condition,x,y)]
+
+    Examples
+    --------
+    >>> np.where([[True, False], [True, True]],
+    ...          [[1, 2], [3, 4]],
+    ...          [[9, 8], [7, 6]])
+    array([[1, 8],
+           [3, 4]])
+
+    >>> np.where([[0, 1], [1, 0]])
+    (array([0, 1]), array([1, 0]))
+
+    >>> x = np.arange(9.).reshape(3, 3)
+    >>> np.where( x > 5 )
+    (array([2, 2, 2]), array([0, 1, 2]))
+    >>> x[np.where( x > 3.0 )]               # Note: result is 1D.
+    array([ 4.,  5.,  6.,  7.,  8.])
+    >>> np.where(x < 5, x, -1)               # Note: broadcasting.
+    array([[ 0.,  1.,  2.],
+           [ 3.,  4., -1.],
+           [-1., -1., -1.]])
+    
+    """
+    # BUILTIN
     raise NotImplementedError
 
 

@@ -4,15 +4,29 @@ import ga.gain as gain
 import numpy as np
 from getopt import getopt
 import sys
+import traceback
+
+def me():
+    return ga.pgroup_nodeid(ga.pgroup_get_default())
+def nproc():
+    return ga.pgroup_nnodes(ga.pgroup_get_default())
+def sync():
+    ga.pgroup_sync(ga.pgroup_get_default())
+
+PREPRINT = False
+PRINTERS = [0]
+#PRINTERS = [i for i in range(nproc())]
 
 try:
     import colorama
     colorama.init()
     RED = colorama.Fore.RED
+    YELLOW = colorama.Fore.YELLOW
     GREEN = colorama.Fore.GREEN
     RESET = colorama.Fore.RESET
 except Exception:
     RED = ""
+    YELLOW = ""
     GREEN = ""
     RESET = ""
 
@@ -54,7 +68,7 @@ tests = [
        b = a[:50:2]
        result = m.add(b,5)""",
     """a = m.arange(100, dtype=m.float32)
-       b = a[50:::2]
+       b = a[50::2]
        result = m.add(5,b)""",
     "result = m.ones((3,4,5), dtype=m.float32)",
     """s = m.ones((3,4,5), dtype=m.float32)
@@ -91,9 +105,6 @@ tests = [
     "result = m.add.accumulate(m.ones((7,7,7)), axis=0)",
     "result = m.add.accumulate(m.ones((7,7,7)), axis=1)",
     "result = m.add.accumulate(m.ones((7,7,7)), axis=2)",
-    "result = m.add.accumulate(m.ones((7,7,7)), axis=0)",
-    "result = m.add.accumulate(m.ones((7,7,7)), axis=1)",
-    "result = m.add.accumulate(m.ones((7,7,7)), axis=2)",
     "result = m.alen((1,2,3))",
     "result = m.alen(m.zeros((4,5,6)))",
     """foo = np.arange(4*25).reshape(4,25)
@@ -107,16 +118,12 @@ tests = [
     """foo = np.arange(4*25).reshape(4,25)
        i = m.zeros((4,25))
        i[:] = foo
-       j = i.flat
-       result = j[2]""",
+       result = i.flat[2]""",
     """foo = np.arange(4*25).reshape(4,25)
        i = m.zeros((4,25))
        i[:] = foo
-       j = i.flat
-       result = j[2:19]""",
-    """foo = np.arange(4*25).reshape(4,25)
-       i = m.zeros((4,25))
-       i[:] = foo
+       result = i.flat[2:19]""",
+    """i = m.zeros((4,25))
        j = i.flat
        j[:] = 6
        result = j""",
@@ -172,49 +179,77 @@ tests = [
        k = m.zeros((4,5,77))
        k[:] = foo
        result = k.transpose(1,2,0)""",
-    #"result = m.arange(3*4*5).reshape((3,4,5))",
+    "result = m.arange(3*4*5).reshape((3,4,5))",
+    "result = m.arange(3*4*5).reshape((3,4,5))[1:,2:,::2].reshape((2,3,2))",
+    """a = m.zeros((10,2))
+       a.shape = (20)
+       result = a""",
+    """a = m.empty((4,2,6,92), dtype=m.float32)
+       a.fill(6789.0)
+       result = a""",
+    """a = m.empty((4,2,6,92), dtype=m.int32)
+       a.fill(6789.0)
+       result = a""",
+    "result = m.indices((3,4,5))",
+    "result = m.indices((3,4,5)).max()",
+    "result = m.indices((3,4,5)).max(0)",
+    "result = m.arange(3*4*5).reshape((5,4,3))",
+    "result = m.arange(3*4*5).reshape((5,4,3)).T",
+    "result = m.arange(3*4*5).reshape((5,4,3)).T[1:,2:,3:]",
+    "result = m.arange(3*4*5).reshape((5,4,3)).T[0,2:,3:]",
+    "result = m.arange(3*4*5).reshape((5,4,3)).T[1:,0,3:]",
+    "result = m.arange(3*4*5).reshape((5,4,3)).T[1:,2:,0]",
+    "result = m.arange(3*4*5).reshape((5,4,3)).T[1:,None,2:,0]",
+    "result = m.arange(3*4*5).reshape((5,4,3)).T[None,1:,None,2:,None,0,None]",
+    "result = m.add.reduce(m.arange(3*4*5).reshape((5,4,3)).T)",
 ]
-
-def me():
-    return ga.pgroup_nodeid(ga.pgroup_get_default())
-def nproc():
-    return ga.pgroup_nnodes(ga.pgroup_get_default())
-def sync():
-    ga.pgroup_sync(ga.pgroup_get_default())
 
 # the current module, either numpy or gain
 m = None
 
 # count test results
 passes = 0
-failures = 0
-xfailures = 0
-epicfailures = 0
+x_failures = 0
+np_failures = 0
+gain_failures = 0
+epic_failures = 0
 
 class PrintZero(object):
     def __init__(self):
         self.stdout = sys.stdout
     def write(self, something):
-        if not me():
+        if me() in PRINTERS:
             self.stdout.write(something)
     def flush(self):
-        if not me():
+        if me() in PRINTERS:
             self.stdout.flush()
 sys.stdout = PrintZero()
 
 def _dtype(thing):
-    return getattr(thing,'dtype',None) or getattr(getattr(thing,'base',None),'dtype',None)
-    #try:
-    #    return thing.dtype
-    #except:
-    #    try:
-    #        return thing.base.dtype
-    #    except:
-    #        return None
+    try:
+        return thing.dtype
+    except:
+        try:
+            return thing.base.dtype
+        except:
+            return None
+def _shape(thing):
+    try:
+        return thing.shape
+    except:
+        try:
+            return thing.base.size # it's a flatiter
+        except:
+            return None
 
 def print_result(result_np,result_gain,diff):
+    if isinstance(result_np, np.flatiter):
+        _result_np = result_np.copy()
+    else:
+        _result_np = result_np
     print """%s
 ---------------------- numpy ---------------------------------
+%s
 %s
 %s
 %s
@@ -222,12 +257,13 @@ def print_result(result_np,result_gain,diff):
 %s
 %s
 %s
+%s
 ---------------------- difference ----------------------------
 %s
 %s
 """ % (RED,
-    type(result_np),   _dtype(result_np),   result_np,
-    type(result_gain), _dtype(result_gain), result_gain,
+    type(result_np),   _dtype(result_np),   _shape(result_np),   _result_np,
+    type(result_gain), _dtype(result_gain), _shape(result_gain),  result_gain,
     diff, RESET)
 
 def run_tests():
@@ -236,16 +272,17 @@ def run_tests():
         run_test(test)
 
 def run_test(test):
-    global passes,failures,xfailures,epicfailures
+    global passes,x_failures,np_failures,gain_failures,epic_failures
     # sanity check that the test is correctly written
     if test.count("result") != 1:
         raise SyntaxError, "TEST ERROR: %s" % test
     # clean up whitespace and pretty print the test string
     test_lines = [line.strip() for line in test.splitlines()]
-    print "TESTING: %s" % test_lines[0]
-    for line in test_lines[1:]:
-        print "         %s" % line
     test = '\n'.join(test_lines)
+    if PREPRINT:
+        print " TESTING:"
+        print '    ' + '\n    '.join(test_lines)
+    any_err = False
     e_np = None
     e_gain = None
     result = None
@@ -258,17 +295,20 @@ def run_test(test):
         result_np = result
     except Exception,e:
         e_np = e
+        tb_np = sys.exc_info()
     m = gain
     try:
         exec test
         result_gain = result
     except Exception,e:
         e_gain = e
+        tb_gain = sys.exc_info()
     # sync now since most operations sync on the way in, not on the way out
     sync()
     if e_np is None and e_gain is None:
         err = False
         hard_err = False
+        hard_err_tb = None
         try:
             diff = None
             if isinstance(result_gain, (gain.ndarray,gain.flatiter)):
@@ -288,36 +328,54 @@ def run_test(test):
                 err = True
             if not (_dtype(result_np) == _dtype(result_gain)):
                 print RED + "different types np=%s gain=%s" % (
-                        result_np.dtype, result_gain.dtype) + RESET
+                        _dtype(result_np), _dtype(result_gain)) + RESET
                 err = True
         except Exception,e:
             print "%scaught exception: %s%s" % (RED,e,RESET)
             hard_err = True
+            hard_err_tb = sys.exc_info()
         if hard_err:
             print " RESULT: %sEPIC FAIL%s" % (RED,RESET)
-            epicfailures += 1
+            print "".join(traceback.format_exception(*hard_err_tb))
+            epic_failures += 1
+            any_err = True
         elif err:
             print " RESULT: %sFAIL%s" % (RED,RESET)
-            failures += 1
+            gain_failures += 1
+            any_err = True
         else:
-            print " RESULT: %sPASS%s" % (GREEN,RESET)
+            #print " RESULT: %sPASS%s" % (GREEN,RESET)
             passes += 1
     elif e_np is None:
         print " RESULT: %sFAIL -- gain exception only: %s%s" % (
                 RED,e_gain,RESET)
-        failures += 1
+        print "".join(traceback.format_exception(*tb_gain))
+        gain_failures += 1
+        any_err = True
     elif e_gain is None:
         print " RESULT: %sFAIL -- numpy exception only: %s%s" % (
                 RED,e_np,RESET)
-        failures += 1
+        print "".join(traceback.format_exception(*tb_np))
+        np_failures += 1
+        any_err = True
     else: # both errors are set
         if str(e_np) != str(e_gain):
-            print " RESULT: %sFAIL (dffering exceptions)\n%s\n%s%s" % (
-                    RED,e_np,e_gain,RESET)
-            failures += 1
+            print " RESULT: %sFAIL (dffering exceptions)%s" % (RED,RESET)
+            print "   %snp:%s'%s'%s" % (RED,type(e_np),e_np,RESET)
+            print " %sgain:%s'%s'%s" % (RED,type(e_gain),e_gain,RESET)
+            print " --- NumPy traceback ---"
+            print "".join(traceback.format_exception(*tb_np))
+            print " --- GAiN traceback ---"
+            print "".join(traceback.format_exception(*tb_gain))
+            gain_failures += 1
         else:
-            print " RESULT: %sXFAIL%s" % (GREEN,RESET)
+            #print " RESULT: %sXFAIL%s" % (GREEN,RESET)
             xfailures += 1
+        any_err = True
+    if any_err:
+        print "TEST WAS: %s" % test_lines[0]
+        for line in test_lines[1:]:
+            print "         %s" % line
 
 if __name__ == '__main__':
     profile = False
@@ -333,6 +391,7 @@ if __name__ == '__main__':
             use_color = False
     if not use_color:
         RED = ""
+        YELLOW = ""
         GREEN = ""
         RESET = ""
     if profile:
@@ -358,10 +417,11 @@ if __name__ == '__main__':
         print "All done with groups"
     else:
         run_tests()
-    if not me():
-        ga.print_stats()
     print ""
     print "%s           Passed: %s%s" % (GREEN,passes,RESET)
-    print "%sExpected Failures: %s%s" % (GREEN,xfailures,RESET)
-    print "%s           Failed: %s%s" % (RED,failures,RESET)
-    print "%s    Epic Failures: %s%s" % (RED,epicfailures,RESET)
+    print "%sExpected Failures: %s%s" % (GREEN,x_failures,RESET)
+    print "%s   NumPy Failures: %s%s" % (YELLOW,np_failures,RESET)
+    print "%s    GAiN Failures: %s%s" % (RED,gain_failures,RESET)
+    print "%s    Epic Failures: %s%s" % (RED,epic_failures,RESET)
+    if not me():
+        ga.print_stats()

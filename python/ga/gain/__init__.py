@@ -17,3 +17,17 @@ if __name__ != '__main__':
                 setattr(self_module, name, attr)
     # import some other numpy functions directly
     from numpy import alen
+
+class PrintZero(object):
+    def __init__(self):
+        self.me = ga.nodeid()
+        self.stdout = sys.stdout
+    def write(self, something):
+        if not self.me:
+            self.stdout.write(something)
+    def flush(self):
+        if not self.me:
+            self.stdout.flush()
+import sys
+_stdout = sys.stdout
+sys.stdout = PrintZero()

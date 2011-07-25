@@ -232,13 +232,23 @@ AC_LANG_PUSH([Fortran 77])
 ga_save_FFLAGS="$FFLAGS"
 GA_PROG_MPIF77
 FFLAGS="$ga_save_FFLAGS"
-AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 
 # If Fortran 77 compiler was not found, we disable support for it.
 AS_IF([test "x$F77" = x], [enable_f77=no])
 
+# If Fortran 77 compiler does not work, we disable support for it.
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([],[])], [],
+    [AC_MSG_WARN([Fortran compiler does not work, disabling])
+     enable_f77=no
+     F77=])
+
+GA_F77_DISABLE_RESULTS
+
 # Perform Fortran 77 tests only if enabled.
 if test "x$enable_f77" = xyes; then :
+
+AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 
 AX_COMPILER_VENDOR
 # If F77 is enabled, perform a simple link test.

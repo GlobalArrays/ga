@@ -58,6 +58,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/ga_ar.m4 \
 	$(top_srcdir)/../m4/ga_f2c_string.m4 \
 	$(top_srcdir)/../m4/ga_f77_check_sizeof.m4 \
 	$(top_srcdir)/../m4/ga_f77_cpp_symbols.m4 \
+	$(top_srcdir)/../m4/ga_f77_disable.m4 \
 	$(top_srcdir)/../m4/ga_f77_fixed.m4 \
 	$(top_srcdir)/../m4/ga_f77_integer_size.m4 \
 	$(top_srcdir)/../m4/ga_f77_library_ldflags.m4 \

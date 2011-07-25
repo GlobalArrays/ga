@@ -13,10 +13,36 @@ import numpy as np
 cimport numpy as np
 '''
 
+#failed_signatures = []
+
 for name in dir(np):
     np_attr = getattr(np,name)
     gain_attr = getattr(gain,name,None)
-    if inspect.isfunction(np_attr) and gain_attr is None:
+    if gain_attr is None and inspect.isbuiltin(np_attr):
+        sig = "%s()" % name
+        doc = ""
+        if np_attr.__doc__:
+            doc = np_attr.__doc__
+            first_line = doc.splitlines()[0]
+            if '(' in first_line and ')' in first_line:
+                # see if the first line is valid python syntax
+                maybe_sig = first_line.strip()
+                sig_test = 'def %s: pass' % maybe_sig
+                try:
+                    exec(sig_test)
+                    sig = maybe_sig
+                except Exception, e:
+                    #failed_signatures.append(maybe_sig)
+                    pass
+        print '''
+def %s:
+    """%s
+    
+    """
+    # BUILTIN
+    raise NotImplementedError
+''' % (sig, doc.strip().replace('"""',"'''"))
+    elif gain_attr is None and inspect.isfunction(np_attr):
         args,varargs,keywords,defaults = inspect.getargspec(np_attr)
         newdefaults = [empty]*len(args)
         if defaults is not None:
@@ -67,3 +93,6 @@ def %s:
     """
     raise NotImplementedError
 ''' % (sig, doc.strip().replace('"""',"'''"))
+
+#for sig in failed_signatures:
+#    print sig

@@ -36,6 +36,9 @@
 /* Define to 1 on DEC OSF */
 #undef DECOSF
 
+/* Define to 1 if using Fortran */
+#undef ENABLE_F77
+
 /* whether the hidden string length comes after all other args */
 #undef F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 
@@ -169,6 +172,9 @@
 
 /* Define to 1 on 64bit NEC systems */
 #undef NEC64
+
+/* Define to 1 if not using Fortran */
+#undef NOFORT
 
 /* Name of package */
 #undef PACKAGE

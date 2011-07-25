@@ -1455,7 +1455,10 @@ nodist_libga_la_SOURCES += gparrays/src/gpwapidefs.h
 include_HEADERS += gparrays/src/gppapi.h
 nodist_include_HEADERS += gparrays/src/gpwapi.h
 
+if ENABLE_F77
 check_PROGRAMS += gparrays/testing/test
+endif
+
 check_PROGRAMS += gparrays/testing/testc
 
 gparrays_testing_test_SOURCES  = gparrays/testing/test.F

@@ -722,7 +722,6 @@ def dot(a, b, out=None):
         # use GA gemm if certain conditions apply
         valid_types = [np.dtype(np.float32),
                 np.dtype(np.float64),
-                np.dtype(np.float128),
                 np.dtype(np.complex64),
                 np.dtype(np.complex128)]
         if (a.base is None and b.base is None
@@ -973,3 +972,80 @@ def clip(a, a_min, a_max, out=None):
         #sync() # I don't think we need this one
     return out
 
+def indices(dimensions, dtype=int):
+    """Return an array representing the indices of a grid.
+
+    Compute an array where the subarrays contain index values 0,1,...
+    varying only along the corresponding axis.
+
+    Parameters
+    ----------
+    dimensions : sequence of ints
+        The shape of the grid.
+    dtype : dtype, optional
+        Data type of the result.
+
+    Returns
+    -------
+    grid : ndarray
+        The array of grid indices,
+        ``grid.shape = (len(dimensions),) + tuple(dimensions)``.
+
+    See Also
+    --------
+    mgrid, meshgrid
+
+    Notes
+    -----
+    The output shape is obtained by prepending the number of dimensions
+    in front of the tuple of dimensions, i.e. if `dimensions` is a tuple
+    ``(r0, ..., rN-1)`` of length ``N``, the output shape is
+    ``(N,r0,...,rN-1)``.
+
+    The subarrays ``grid[k]`` contains the N-D array of indices along the
+    ``k-th`` axis. Explicitly::
+
+        grid[k,i0,i1,...,iN-1] = ik
+
+    Examples
+    --------
+    >>> grid = np.indices((2, 3))
+    >>> grid.shape
+    (2, 2, 3)
+    >>> grid[0]        # row indices
+    array([[0, 0, 0],
+           [1, 1, 1]])
+    >>> grid[1]        # column indices
+    array([[0, 1, 2],
+           [0, 1, 2]])
+
+    The indices can be used as an index into an array.
+
+    >>> x = np.arange(20).reshape(5, 4)
+    >>> row, col = np.indices((2, 3))
+    >>> x[row, col]
+    array([[0, 1, 2],
+           [4, 5, 6]])
+
+    Note that it would be more straightforward in the above example to
+    extract the required elements directly with ``x[:2, :3]``.
+
+    """
+    orig_shape = [dim for dim in dimensions]
+    shape = [len(orig_shape)] + orig_shape
+    if should_distribute(shape):
+        a = zeros(shape, dtype=dtype)
+        buf = a.access()
+        if buf is not None:
+            lo,hi = a.distribution()
+            lohi_shape = hi-lo
+            for i in range(lo[0],hi[0]):
+                vec = np.arange(lohi_shape[i+1])+lo[i+1]
+                vec_mod = [None]*len(orig_shape)
+                vec_mod[i] = slice(None,None,None)
+                values = vec[vec_mod]
+                buf[i-lo[0]][:] = values
+            a.release_update()
+    else:
+        return np.indices(orig_shape,dtype)
+    return a

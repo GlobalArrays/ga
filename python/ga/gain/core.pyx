@@ -23,11 +23,7 @@ cpdef set_size_threshold(int threshold):
     global SIZE_THRESHOLD
     SIZE_THRESHOLD = threshold
 cpdef bint should_distribute(shape):
-    the_shape = shape
-    try:
-        iter(shape)
-    except:
-        the_shape = [shape]
+    the_shape = listify(shape)
     if len(the_shape) == 0:
         return False
     return np.multiply.reduce(the_shape) >= get_size_threshold()
@@ -46,17 +42,34 @@ cpdef get_dtype(thing):
     except AttributeError:
         return thing.base.dtype # a flatiter
 
+cpdef list listify(thing):
+    try:
+        return list(thing)
+    except:
+        return [thing]
+
+cpdef tuple tuplify(thing):
+    try:
+        return tuple(thing)
+    except:
+        return (thing,)
+
 gatypes = {
 np.dtype(np.int8):       ga.C_CHAR,
 np.dtype(np.int32):      ga.C_INT,
 np.dtype(np.int64):      ga.C_LONG,
 np.dtype(np.float32):    ga.C_FLOAT,
 np.dtype(np.float64):    ga.C_DBL,
-np.dtype(np.float128):   ga.C_LDBL,
 np.dtype(np.complex64):  ga.C_SCPL,
 np.dtype(np.complex128): ga.C_DCPL,
-np.dtype(np.complex256): ga.C_LDCPL,
 }
+# numpy doesn't always have these types depending on the system
+cdef bint float128_in_np = ('float128' in dir(np))
+cdef bint complex256_in_np = ('complex256' in dir(np))
+if float128_in_np:
+    gatypes[np.dtype(np.float128)] = ga.C_LDBL
+if complex256_in_np:
+    gatypes[np.dtype(np.complex256)] = ga.C_LDCPL
 
 cpdef inline sync():
     #print "syncing over group %s" % ga.pgroup_get_default()
@@ -123,9 +136,14 @@ class GlobalArrayCache(object):
     creation during numpy codes.
 
     """
-    def __init__(self):
+    def __init__(self, level=3):
         self.cache = {}
-        self.level = 3
+        self.level = level
+
+    def __del__(self):
+        for value in self.cache.values():
+            for g_a in value:
+                ga.destroy(g_a)
 
     def __contains__(self, item):
         return (item in self.cache and self.cache[item])
@@ -316,11 +334,7 @@ class ndarray(object):
 
     def __init__(self, shape, dtype=float, buffer=None, offset=0,
             strides=None, order=None, base=None):
-        try:
-            iter(shape)
-        except:
-            shape = [shape]
-        shape = tuple(shape)
+        shape = tuplify(shape)
         if order not in [None,'C','F']:
             raise TypeError, "order not understood"
         if order is None:
@@ -332,10 +346,8 @@ class ndarray(object):
         self._base = base
         self._is_real = False
         self._is_imag = False
-        self._T = None
-        self._T_inv = None
         if base is None:
-            self.global_slice = [slice(0,x,1) for x in shape]
+            self.global_slice = util.MasterKey(shape)
             self._flags = flagsobj()
             dtype_ = self._dtype
             gatype = None
@@ -368,13 +380,15 @@ class ndarray(object):
             self.global_slice = base.global_slice
             self.handle = base.handle
             self._strides = strides
+            self._is_real = base._is_real
+            self._is_imag = base._is_imag
             self._flags = base._flags
             self._flags._c = False
             self._flags._o = False
         else:
             # assume base is a g_a handle
             self.handle = base
-            self.global_slice = [slice(0,x,1) for x in shape]
+            self.global_slice = util.MasterKey(shape)
             self._flags = flagsobj()
             self._strides = [self.itemsize]
             for size in shape[-1:0:-1]:
@@ -395,14 +409,13 @@ class ndarray(object):
     def distribution(self):
         """Return the bounds of the distribution.
 
+        Always returns the lo/hi distribution based on the original shape of
+        the array.
+
         This operation is local.
 
         """
-        lo,hi = ga.distribution(self.handle)
-        if self._T is not None:
-            return util.transpose_lohi(self.global_slice, lo, hi, self._T)
-        else:
-            return lo,hi
+        return ga.distribution(self.handle)
 
     def owns(self):
         """Return True if this process owns some of the data.
@@ -419,26 +432,28 @@ class ndarray(object):
         This operation is local.
         
         """
+        # we access the entire block for this process
+        a = ga.access(self.handle)
+        if a is None:
+            return None # bail; this process doesn't own any data
+        # get the original GA distribution
+        lo,hi = ga.distribution(self.handle)
+        # caller may pass in a different global_slice
         if global_slice is None:
             global_slice = self.global_slice
-        if self.owns():
-            lo,hi = self.distribution()
-            access_slice = None
-            try:
-                access_slice = util.access_slice(global_slice, lo, hi)
-            except IndexError:
-                pass
-            if access_slice:
-                a = ga.access(self.handle)
-                if self._T is not None:
-                    a = a.transpose(self._T)
-                ret = a[access_slice]
-                if self._is_real:
-                    ret = ret.real
-                elif self._is_imag:
-                    ret = ret.imag
-                return ret
-        return None
+        # transpose, if needed
+        b = a.transpose(global_slice.lohi_T())
+        # slice away any fixed dimensions
+        try:
+            fixed_slice = global_slice.access_key(lo,hi)
+        except IndexError:
+            self.release()
+            return None # bail; this process doesn't own relevant piece
+        c = b[fixed_slice]
+        # at this point the shape of c should match the global_slice shape
+        # except for any None/newaxis added
+        d = c[global_slice.None_key()]
+        return d
 
     def get(self, key=None):
         """Similar to the __getitem__ built-in, but one-sided (not collective.)
@@ -452,71 +467,28 @@ class ndarray(object):
         This operation is one-sided.
 
         """
-        # first, use the key to create a new global_slice
-        # TODO we *might* save a tiny bit of time if we assume the key is
-        # already in its canonical form
-        # NOTE: ga.get() et al expect either a contiguous 1D array or a
-        # buffer with the same shape as the requested region (contiguous or
-        # not, but no striding). Since the array may have had dimensions added
-        # (via None) or removed, we can't simply create a buffer of the
-        # current shape.  Instead, we createa  1D buffer, then reshape it
-        # after the call to ga.get() or ga.strided_get().
-        # Further, if this is a transposed array, we un-transpose the
-        # global_slice, ga.get() as usual, then transpose the result
+        # caller may modify the global_slice
         global_slice = self.global_slice
         if key is not None:
-            key = util.canonicalize_indices(self.shape, key)
-            global_slice = util.slice_arithmetic(self.global_slice, key)
-        if self._T is not None:
-            ignore,global_slice = util.transpose(global_slice,self._T_inv)
-        # We must translate global_slice into a strided get
-        shape = util.slices_to_shape(global_slice)
-        size = np.prod(shape)
-        dtype = self._dtype
-        if self._is_real or self._is_imag:
-            dtype = np.dtype("complex%s" % (self._dtype.itemsize*2*8))
-        nd_buffer = np.zeros(size, dtype=dtype)
-        _lo = []
-        _hi = []
-        _skip = []
-        adjust = []
-        need_strided = False
-        for item in global_slice:
-            if isinstance(item, slice):
-                if item.step > 1 or item.step < -1:
-                    need_strided = True
-                if item.step < 0:
-                    adjust.append(slice(None,None,-1))
-                    length = util.slicelength(item)-1
-                    _lo.append(item.step*length + item.start)
-                    _hi.append(item.start+1)
-                    _skip.append(-item.step)
-                else:
-                    adjust.append(slice(0,None,None))
-                    _lo.append(item.start)
-                    _hi.append(item.stop)
-                    _skip.append(item.step)
-            elif item is None:
-                adjust.append(None)
-            else:
-                # assumes item is int, long, np.int64, etc
-                _lo.append(item)
-                _hi.append(item+1)
-                _skip.append(1)
-        ret = None
+            global_slice = self.global_slice[key]
+        # determine the lo/hi/skip for the ga.strided_get()
+        _lo,_hi,_skip,adjust,need_strided = global_slice.get_lo_hi_skip_adjust()
         if need_strided:
-            ret = ga.strided_get(self.handle, _lo, _hi, _skip, nd_buffer)
+            ret = ga.strided_get(self.handle, _lo, _hi, _skip)
         else:
-            ret = ga.get(self.handle, _lo, _hi, nd_buffer)
-        nd_buffer.shape = shape
+            ret = ga.get(self.handle, _lo, _hi)
+        # transpose the result, if needed
+        ret = ret.transpose(global_slice.lohi_T())
         if ret.ndim > 0:
+            # transpose the adjustment
+            adjust = [adjust[i] for i in global_slice.lohi_T()]
             ret = ret[adjust]
         if self._is_real:
             ret = ret.real
         elif self._is_imag:
             ret = ret.imag
-        if self._T is not None:
-            ret = ret.transpose(self._T)
+        # add the None's in
+        ret = ret[global_slice.None_key()]
         return ret
 
     def allget(self, key=None):
@@ -549,41 +521,43 @@ class ndarray(object):
         i = np.asarray(i, dtype=np.int64)
         if i.ndim == 1:
             i.shape = (-1,self.ndim)
-        #if not me(): print i
         step = []
         start = []
         for gs in self.global_slice:
-            if isinstance(gs, slice):
+            if isinstance(gs, util.RangeKey):
                 step.append(gs.step)
                 start.append(gs.start)
-            elif gs is None:
+            elif isinstance(gs, util.NoneKey):
                 step.append(1)
                 start.append(0)
-            else:
+            elif isinstance(gs, util.FixedKey):
                 pass
+            else:
+                raise TypeError, "unhandled piece of global_slice"
         # modify new index array based on global_slice
-        #if not me(): print step,start
         new_i = (i*np.asarray(step,dtype=np.int64)[None,:]
                 + np.asarray(start, dtype=np.int64)[None,:])
         # get rid of index columns which don't refer to an actual GA dimension
         # add index columns which were missing, single-valued GA dimensions
         columns = np.hsplit(new_i,self.ndim) # returns a list
         column_iter = iter(columns)
-        new_columns = []
-        for gs in self.global_slice:
-            if isinstance(gs, slice):
+        new_columns = [None]*self.global_slice.get_original_ndim()
+        for fixed in self.global_slice.fixed:
+            new_column = np.empty((len(new_i),1),dtype=np.int64)
+            new_column[:] = fixed.value
+            new_columns[fixed.origin] = new_column
+        for col,gs in zip(columns,self.global_slice.data):
+            if isinstance(gs, util.RangeKey):
                 # no change to column
-                new_columns.append(column_iter.next())
-            elif gs is None:
+                new_columns[gs.origin] = col
+            elif isinstance(gs, util.NoneKey):
                 # skip column
-                column_iter.next()
+                pass
+            elif isinstance(gs, util.FixedKey):
+                raise TypeError, "FixedKey found in MasterKey"
             else:
-                # add missing column
-                new_column = np.zeros((len(new_i),1),dtype=np.int64)
-                new_column[:] = gs
-                new_columns.append(new_column)
+                raise TypeError, "unhandled piece of global_slice"
         new_i = np.hstack(new_columns)
-        #if not me(): print new_i
         return ga.gather(self.handle, new_i)
 
     def release(self):
@@ -666,9 +640,19 @@ class ndarray(object):
     ndim = property(_get_ndim)
 
     def _get_shape(self):
-        return tuple(util.slices_to_shape(self.global_slice))
+        return self.global_slice.shape
     def _set_shape(self, value):
-        raise NotImplementedError, "TODO"
+        if self.base is None:
+            # we can change the underlying GA
+            # we do this by creating a new ndarray and copying properties
+            a = self.reshape(value)
+            ga.destroy(self.handle)
+            self.handle = a.handle
+            self.global_slice = a.global_slice
+            self._strides = a.strides
+            self._flags = a._flags
+        else:
+            raise AttributeError, "incompatible shape for a non-contiguous array"
     shape = property(_get_shape, _set_shape)
 
     def _get_strides(self):
@@ -767,7 +751,18 @@ class ndarray(object):
         array([1, 2, 2])
 
         """
-        raise NotImplementedError
+        # TODO we can optimize a copy if new and old ndarray instances align
+        the_copy = ndarray(self.shape, dtype=t)
+        if should_distribute(the_copy.size):
+            local = the_copy.access()
+            if local is not None:
+                lo,hi = the_copy.distribution()
+                local[:] = self.get(ga.zip(lo,hi))
+                the_copy.release_update()
+        else:
+            # case where the copy is not distributed but the original was
+            the_copy[:] = self.allget()
+        return the_copy
 
     def byteswap(self, inplace=False):
         """Swap the bytes of the array elements
@@ -819,13 +814,13 @@ class ndarray(object):
         raise NotImplementedError
 
     def clip(self, a_min, a_max, out=None):
-        """Use an index array to construct a new array from a set of choices.
+        """Return an array whose values are limited to ``[a_min, a_max]``.
 
-        Refer to `numpy.choose` for full documentation.
+        Refer to `numpy.clip` for full documentation.
 
         See Also
         --------
-        numpy.choose : equivalent function
+        numpy.clip : equivalent function
 
         """
         raise NotImplementedError
@@ -946,7 +941,32 @@ class ndarray(object):
         """
         raise NotImplementedError
 
-    def dot(self):
+    def dot(self, b, out=None):
+        """a.dot(b, out=None)
+
+        Dot product of two arrays.
+
+        Refer to `numpy.dot` for full documentation.
+
+        See Also
+        --------
+        numpy.dot : equivalent function
+
+        Examples
+        --------
+        >>> a = np.eye(2)
+        >>> b = np.ones((2, 2)) * 2
+        >>> a.dot(b)
+        array([[ 2.,  2.],
+               [ 2.,  2.]])
+
+        This array method can be conveniently chained:
+
+        >>> a.dot(b).dot(b)
+        array([[ 8.,  8.],
+               [ 8.,  8.]])
+
+        """
         raise NotImplementedError
 
     def dump(self, file):
@@ -994,7 +1014,10 @@ class ndarray(object):
         array([ 1.,  1.])
 
         """
-        raise NotImplementedError
+        a = self.access()
+        if a is not None:
+            a.fill(value)
+            self.release_update()
 
     def flatten(self, order='C'):
         """Return a copy of the array collapsed into one dimension.
@@ -1024,7 +1047,7 @@ class ndarray(object):
         array([1, 3, 2, 4])
 
         """
-        raise NotImplementedError
+        return self.reshape(self.size)
 
     def getfield(self, dtype, offset):
         """Returns a field of the given array as a certain type.
@@ -1188,7 +1211,26 @@ class ndarray(object):
         numpy.amax : equivalent function
 
         """
-        raise NotImplementedError
+        if axis is None:
+            a = self.access()
+            if a is not None:
+                result = np.maximum.reduce(a)
+                while result.ndim > 0:
+                    result = np.maximum.reduce(result)
+                result = comm().allgather(result)
+                result = np.maximum.reduce(result)
+            else:
+                # we don't own anything, so get an actual value from the array
+                result = self.get([0]*self.ndim)
+                result = comm().allgather(result)
+                result = np.maximum.reduce(result)
+            if out is None:
+                return result
+            else:
+                out[:] = result
+                return out
+        else:
+            return maximum.reduce(self, axis, out)
 
     def mean(self, axis=None, dtype=None, out=None):
         """Returns the average of the array elements along given axis.
@@ -1212,7 +1254,26 @@ class ndarray(object):
         numpy.amin : equivalent function
 
         """
-        raise NotImplementedError
+        if axis is None:
+            a = self.access()
+            if a is not None:
+                result = np.minimum.reduce(a)
+                while result.ndim > 0:
+                    result = np.minimum.reduce(result)
+                result = comm().allgather(result)
+                result = np.minimum.reduce(result)
+            else:
+                # we don't own anything, so get an actual value from the array
+                result = self.get([0]*self.ndim)
+                result = comm().allgather(result)
+                result = np.minimum.reduce(result)
+            if out is None:
+                return result
+            else:
+                out[:] = result
+                return out
+        else:
+            return minimum.reduce(self, axis, out)
 
     def newbyteorder(self, new_order='S'):
         """Return the array with the same data viewed with a different byte order.
@@ -1337,7 +1398,34 @@ class ndarray(object):
         numpy.reshape : equivalent function
 
         """
-        raise NotImplementedError
+        shape = listify(shape)
+        shape = np.asarray(shape, dtype=np.int64)
+        count_neg_ones = shape[shape==-1].size
+        if count_neg_ones > 1:
+            raise ValueError, "can only specify one unknown dimension"
+        if count_neg_ones == 1:
+            shape_product = np.prod(shape)*(-1)
+            if np.size%shape_product != 0:
+                raise ValueError, "total size of new array must be unchanged"
+            shape[shape==-1] = np.size//shape_product
+        # now that shape is established, create new array
+        a = ndarray(shape, dtype=self.dtype)
+        # based on distribution, gather same indices from self
+        nda = a.access()
+        if nda is not None:
+            lo,hi = a.distribution()
+            lohi_shape = hi-lo
+            i = np.indices(lohi_shape).reshape(len(lohi_shape),-1).T + lo
+            # get the flattened indices
+            strides = [1]
+            for size in shape[-1:0:-1]:
+                strides = [size*strides[0]] + strides
+            i_flat = np.sum(i*strides, axis=1)
+            # unravel the flattened indices based on the original array
+            i_unravel = util.unravel_index(i_flat, self.shape)
+            nda.flat = self.gather(i_unravel)
+            a.release_update()
+        return a
 
     def resize(self, new_shape, refcheck=True):
         """Change shape and size of array in-place.
@@ -1863,8 +1951,7 @@ class ndarray(object):
             axes = np.asarray(axes, dtype=np.int64)
         if len(axes) != self.ndim:
             raise ValueError, "axes don't match array"
-        ret._T = axes
-        ret._T_inv,ret.global_slice = util.transpose(self.global_slice,axes)
+        ret.global_slice = self.global_slice.transpose(axes)
         return ret
 
     def var(self, axis=None, dtype=None, out=None, ddof=0):
@@ -2040,10 +2127,7 @@ class ndarray(object):
             raise NotImplementedError, "str or unicode key"
         if self.ndim == 0:
             raise IndexError, "0-d arrays can't be indexed"
-        try:
-            iter(key)
-        except:
-            key = [key]
+        key = listify(key)
         fancy = False
         for arg in key:
             if isinstance(arg, (ndarray,np.ndarray,list,tuple)):
@@ -2051,10 +2135,10 @@ class ndarray(object):
                 break
         if fancy:
             raise NotImplementedError, "TODO: fancy indexing"
-        key = util.canonicalize_indices(self.shape, key)
-        new_shape = util.slices_to_shape(key)
+        new_global_slice = self.global_slice[key]
+        new_shape = new_global_slice.shape
         a = ndarray(new_shape, self.dtype, base=self)
-        a.global_slice = util.slice_arithmetic(self.global_slice, key)
+        a.global_slice = new_global_slice
         if a.ndim == 0:
             a = a.allget()
             return a.dtype.type(a) # convert single item to np.generic (scalar)
@@ -2230,10 +2314,7 @@ class ndarray(object):
             raise NotImplementedError, "str or unicode key"
         if self.ndim == 0:
             raise IndexError, "0-d arrays can't be indexed"
-        try:
-            iter(key)
-        except:
-            key = [key]
+        key = listify(key)
         fancy = False
         for arg in key:
             if isinstance(arg, (ndarray,np.ndarray,list,tuple)):
@@ -2241,9 +2322,8 @@ class ndarray(object):
                 break
         if fancy:
             raise NotImplementedError, "TODO: fancy indexing"
-        key = util.canonicalize_indices(self.shape, key)
-        new_shape = util.slices_to_shape(key)
-        global_slice = util.slice_arithmetic(self.global_slice, key)
+        global_slice = self.global_slice[key]
+        new_shape = global_slice.shape
         value = asarray(value)
         npvalue = None
         release_value = False
@@ -2253,26 +2333,29 @@ class ndarray(object):
             if isinstance(value, ndarray):
                 if (ga.compare_distr(value.handle, self.handle)
                         and value.global_slice == global_slice
-                        and value._T == self._T):
+                        and value.global_slice.T == self.global_slice.T):
                     # opt: same distributions and same slicing
                     # in practice this might not happen all that often
                     npvalue = value.access()
                     release_value = True
                 else:
                     lo,hi = self.distribution()
-                    result = util.get_slice(global_slice, lo, hi)
+                    result = global_slice.get_key(lo,hi)
                     result = util.broadcast_chomp(value.shape, result)
                     npvalue = value.get(result)
             elif isinstance(value, flatiter):
                 raise NotImplementedError
             elif value.ndim > 0:
                     lo,hi = self.distribution()
-                    result = util.get_slice(global_slice, lo, hi)
+                    result = global_slice.get_key(lo,hi)
                     result = util.broadcast_chomp(value.shape, result)
                     npvalue = value[result]
             else:
                 npvalue = value
             npself[:] = npvalue
+            if release_value:
+                value.release()
+            self.release_update()
         sync()
 
     #def __setslice__
@@ -2303,12 +2386,12 @@ def _npin_piece_based_on_out(input, out, shape=None):
     if (isinstance(input, ndarray)
             and ga.compare_distr(input.handle, out.handle)
             and input.global_slice == out.global_slice
-            and input._T == out._T):
+            and input.global_slice.T == out.global_slice.T):
         return input.access(),True
     # no opt: requires copy of remote data
     elif shape is None or len(shape) > 0:
         lo,hi = out.distribution()
-        result = util.get_slice(out.global_slice, lo, hi)
+        result = out.global_slice.get_key(lo,hi)
         if shape is not None:
             result = util.broadcast_chomp(shape, result)
         if is_distributed(input):
@@ -2457,10 +2540,12 @@ class ufunc(object):
             else:
                 npout = out.access()
                 if npout is not None: # this proc 'owns' data
+                    lo,hi = out.distribution()
+                    result = out.global_slice.get_key(lo,hi)
                     if is_distributed(input):
-                        npin = input.get(out._range)
+                        npin = input.get(result)
                     else:
-                        npin = input[out._range]
+                        npin = input[result]
                     self.func(npin, npout, *args, **kwargs)
                     out.release_update()
             #sync()
@@ -2546,16 +2631,18 @@ class ufunc(object):
             else:
                 npout = out.access()
                 if npout is not None: # this proc 'owns' data
+                    lo,hi = out.distribution()
+                    result = out.global_slice.get_key(lo,hi)
                     if is_distributed(first):
-                        npfirst = first.get(out._range)
+                        npfirst = first.get(result)
                     else:
-                        npfirst = first[out._range]
+                        npfirst = first[result]
                     if second is first:
                         npsecond = npfirst
                     elif is_distributed(second):
-                        npsecond = second.get(out._range)
+                        npsecond = second.get(result)
                     else:
-                        npsecond = second[out._range]
+                        npsecond = second[result]
                     self.func(npfirst, npsecond, npout, *args, **kwargs)
                     out.release_update()
             #sync()
@@ -2696,9 +2783,8 @@ class ufunc(object):
             if isinstance(out, ndarray):
                 ndout = out.access()
                 if ndout is not None:
-                    lo,hi = util.calc_distribution_lohi(
-                            out.global_slice, *out.distribution())
-                    lo,hi = lo[0],hi[0]
+                    result = out.global_slice.get_key(*out.distribution())
+                    lo,hi = result[0].start,result[0].stop
                     piece = a[lo:hi]
                     if isinstance(piece, ndarray):
                         piece = piece.get()
@@ -2873,17 +2959,21 @@ class flatiter(object):
     def __init__(self, base):
         self._base = base
         self._index = 0
-        self._len = np.multiply.reduce(self._base.shape)
-        self__len = self._len
-        count = self__len//nproc()
-        if me()*count < self__len:
-            if (me()+1)*count > self__len:
-                self._range = slice(me()*count,self__len,1)
-            else:
-                self._range = slice(me()*count,(me()+1)*count,1)
+        self._values = None
+        size = base.global_slice.size
+        self.global_slice = util.MasterKey([size])
+        size_per_proc = size//nproc()
+        remainder = size%nproc() # remainder gets distributed
+        if me() < remainder:
+            self._lo = [size_per_proc*me() + me()]
+            self._hi = [size_per_proc*me() + me() + size_per_proc + 1]
         else:
-            self._range = None
-        self._range_values = None
+            self._lo = [size_per_proc*me() + remainder]
+            self._hi = [size_per_proc*me() + remainder + size_per_proc]
+        # if lo,hi are the same, this indicates no data on this proc
+        if self._lo == self._hi:
+            self._lo = [-1]
+            self._hi = [-1]
     
     def _get_base(self):
         return self._base
@@ -2913,6 +3003,12 @@ class flatiter(object):
         return self._index
     index = property(_get_index)
 
+    def distribution(self):
+        return self._lo,self._hi
+
+    def owns(self):
+        return self._hi[0]>=0
+
     def get(self, key=None):
         # THIS OPERATION IS ONE-SIDED
         # we expect key to be a single value or a slice, but might also be an
@@ -2922,57 +3018,60 @@ class flatiter(object):
             # operation? The answer is correct, but seems like too much extra
             # work.
             return self._base.get().flatten()
-        try:
+        if isinstance(key, (list,tuple)):
             key = key[0]
-        except:
-            pass
-        if isinstance(key, slice):
-            # get shape of global_slice
-            shape = util.slices_to_shape(self._base.global_slice)
+        if isinstance(key, (slice,util.RangeKey)):
+            # get shape of base's global_slice
+            shape = self._base.global_slice.shape
             # create index coordinates
+            if isinstance(key, util.RangeKey):
+                key = key.pyobj()
             i = (np.indices(shape).reshape(len(shape),-1).T)[key]
             return self._base.gather(i)
         else:
-            # assumes int,long,etc
-            try:
-                index = np.unravel_index(key, self._base.shape)
-                return self._base.get(index)
-            except:
-                raise IndexError, "unsupported iterator index (%s)" % str(key)
+            key = long(key)
+            index = np.unravel_index(key, self._base.shape)
+            return self._base.gather(index)
+
+    def allget(self, key=None):
+        """Like get(), but when all processes need the same piece.
+        
+        This operation is collective.
+        
+        """
+        # TODO it's not clear whether this approach is better than having all
+        # P processors ga.get() the same piece.
+        if not me():
+            result = self.get(key)
+            return comm().bcast(result)
+        else:
+            return comm().bcast()
 
     def __getitem__(self, key):
         # THIS OPERATION IS COLLECTIVE
         sync()
+        if isinstance(key, (list,tuple)):
+            if len(key) > 1:
+                raise IndexError, "unsupported iterator index"
         # TODO optimize the gather since this is a collective
-        return self.get(key)
+        return self.allget(key)
 
     def __len__(self):
-        return self._len
+        return self.global_slice.size
 
     def put(self, key, value):
         # THIS OPERATION IS ONE-SIDED
         # we expect key to be a single value or a slice, but might also be an
         # iterable of length 1
-        sync()
-        try:
+        if isinstance(key, (list,tuple)):
             key = key[0]
-        except:
-            pass
-        if isinstance(key, slice):
+        if isinstance(key, (slice,util.RangeKey)):
+            if isinstance(key, util.RangeKey):
+                key = key.pyobj()
             # get shape of global_slice
-            shape = []
-            offsets = []
-            for gs in self._base.global_slice:
-                if gs is None:
-                    pass
-                elif isinstance(gs, slice):
-                    shape.append(util.slicelength(gs))
-                    offsets.append(0)
-                else:
-                    shape.append(1)
-                    offsets.append(gs)
+            shape = self._base.global_slice.shape
             # create index coordinates
-            i = (np.indices(shape).reshape(len(shape),-1).T + offsets)[key]
+            i = (np.indices(shape).reshape(len(shape),-1).T)[key]
             value = asarray(value)
             values = None
             if value.size == 1:
@@ -2980,52 +3079,34 @@ class flatiter(object):
                 values[:] = value
             else:
                 assert value.ndim == 1 and len(value) == len(i)
-                if isinstance(value, (ndarray,flatiter)):
+                if is_distributed(value):
                     values = value.get()
                 else:
                     values = value
             ga.scatter(self._base.handle, values, i)
         else:
-            # assumes int,long,etc
-            # the following isn't correct. we need a 'ga.put'-like
-            # operation defined for ndarrays
-            raise NotImplementedError
-            try:
-                index = np.unravel_index(key, self._base.shape)
-                #self._base[index] = value
-            except:
-                raise IndexError, "unsupported iterator index (%s)" % str(key)
+            key = long(key)
+            index = np.unravel_index(key, self._base.shape)
+            ga.scatter(self._base.handle, values, i)
 
     def __setitem__(self, key, value):
         # THIS OPERATION IS COLLECTIVE
-        # we expect key to be a single value or a slice, but might also be an
-        # iterable of length 1
         sync()
-        try:
-            key = key[0]
-        except:
-            pass
-        if isinstance(key, slice):
-            if not util.is_canonical_slice(key):
-                key = slice(*key.indices(self._len))
-            len_key = util.slicelength(key)
-            count = len_key//nproc() or 1
-            remainder = len_key%nproc()
-            if count*me()+me() < len_key or count*me()+remainder < len_key:
-                if me() < remainder:
-                    my_range = slice(count*me()+me(), count*me()+me()+count+2, 1)
-                else:
-                    my_range = slice(count*me()+remainder,
-                            count*me()+remainder+count, 1)
-                my_range = util.slice_of_a_slice(key,my_range)
+        if self.owns():
+            global_slice = self.global_slice[key]
+            if isinstance(key, (slice,util.RangeKey)):
+                try:
+                    my_range = global_slice.bound_by_lohi(self._lo,self._hi)
+                except IndexError:
+                    sync()
+                    return
                 value = asarray(value)
                 if value.ndim == 1:
                     self.put(my_range, value[my_range])
                 else:
                     self.put(my_range, value)
-        else:
-            # assumes int,long,etc
-            raise NotImplementedError
+            else:
+                self.put(key, value)
         sync()
 
     def next(self):
@@ -3036,31 +3117,27 @@ class flatiter(object):
         else:
             raise StopIteration
 
-    def distribution(self):
-        """Return the bounds of the distribution.
-
-        This operation is local.
-
-        """
-        return self._range.start,self._range.stop
-
     def access(self):
         """Return a copy of a 'local' portion."""
-        if self._range_values is not None:
+        if self._values is not None:
             raise ValueError, "call release or release_update before access"
-        if self._range is None:
-            self._range_values = None
+        if not self.owns():
+            self._values = None
         else:
-            self._range_values = self.get(self._range)
-        return self._range_values
+            lo,hi = self.distribution()
+            result = self.global_slice.get_key(lo,hi)
+            self._values = self.get(result)
+        return self._values
 
     def release(self):
-        self._range_values = None
+        self._values = None
 
     def release_update(self):
-        if self._range is not None and self._range_values is not None:
-            self.put(self._range, self._range_values)
-        self._range_values = None
+        if self._values is not None:
+            lo,hi = self.distribution()
+            result = self.global_slice.get_key(lo,hi)
+            self.put(result, self._values)
+        self._values = None
 
     def __repr__(self):
         result = ""
@@ -3161,29 +3238,29 @@ def comm():
     communicator.ob_mpi = ga_mpi_pgroup_default_communicator()
     return communicator
 
-cdef bint DEBUG = False
-cdef bint DEBUG_SYNC = False
-
-def set_debug(val):
-    global DEBUG
-    DEBUG = val
-
-def set_debug_sync(val):
-    global DEBUG_SYNC
-    DEBUG_SYNC = val
-
-def print_debug(s):
-    if DEBUG:
-        print s
-
-def print_sync(what):
-    if DEBUG_SYNC:
-        sync()
-        if 0 == me():
-            print "[0] %s" % str(what)
-            for proc in xrange(1,nproc()):
-                data = comm().recv(source=proc, tag=11)
-                print "[%d] %s" % (proc, str(data))
-        else:
-            comm().send(what, dest=0, tag=11)
-        sync()
+#cdef bint DEBUG = False
+#cdef bint DEBUG_SYNC = False
+#
+#def set_debug(val):
+#    global DEBUG
+#    DEBUG = val
+#
+#def set_debug_sync(val):
+#    global DEBUG_SYNC
+#    DEBUG_SYNC = val
+#
+#def print_debug(s):
+#    if DEBUG:
+#        print s
+#
+#def print_sync(what):
+#    if DEBUG:
+#        sync()
+#        if 0 == me():
+#            print "[0] %s" % str(what)
+#            for proc in xrange(1,nproc()):
+#                data = comm().recv(source=proc, tag=11)
+#                print "[%d] %s" % (proc, str(data))
+#        else:
+#            comm().send(what, dest=0, tag=11)
+#        sync()

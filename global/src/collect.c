@@ -86,6 +86,7 @@ void pnga_pgroup_brdcst(Integer grp_id, Integer type, void *buf,
 
 
 #ifdef MPI
+extern MPI_Comm armci_group_comm(ARMCI_Group *group);
 void ga_mpi_communicator(GA_COMM)
 MPI_Comm *GA_COMM;
 {

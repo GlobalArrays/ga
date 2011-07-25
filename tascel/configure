@@ -656,6 +656,10 @@ F2C_GETARG
 FLD_NOMAIN
 FFLAG_INT
 FLIBS
+ENABLE_F77_FALSE
+ENABLE_F77_TRUE
+NOFORT_FALSE
+NOFORT_TRUE
 ac_ct_F77
 FFLAGS
 F77
@@ -7560,6 +7564,66 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
 FFLAGS="$tascel_save_FFLAGS"
 
+# If Fortran 77 compiler was not found, we disable support for it.
+if test "x$F77" = x; then :
+  enable_f77=no
+fi
+
+# If Fortran 77 compiler does not work, we disable support for it.
+
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+      end
+_ACEOF
+if ac_fn_f77_try_link "$LINENO"; then :
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Fortran compiler does not work, disabling" >&5
+$as_echo "$as_me: WARNING: Fortran compiler does not work, disabling" >&2;}
+     enable_f77=no
+     F77=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
+if test "x$enable_f77" = xyes; then :
+
+$as_echo "#define NOFORT 0" >>confdefs.h
+
+
+$as_echo "#define ENABLE_F77 1" >>confdefs.h
+
+else
+
+$as_echo "#define NOFORT 1" >>confdefs.h
+
+
+$as_echo "#define ENABLE_F77 0" >>confdefs.h
+
+fi
+ if test "x$enable_f77" = xno; then
+  NOFORT_TRUE=
+  NOFORT_FALSE='#'
+else
+  NOFORT_TRUE='#'
+  NOFORT_FALSE=
+fi
+
+ if test "x$enable_f77" = xyes; then
+  ENABLE_F77_TRUE=
+  ENABLE_F77_FALSE='#'
+else
+  ENABLE_F77_TRUE='#'
+  ENABLE_F77_FALSE=
+fi
+
+
+
+# Perform Fortran 77 tests only if enabled.
+if test "x$enable_f77" = xyes; then :
+
 if test x$with_mpi_wrappers = xyes; then :
 
 # Find perl.
@@ -7843,14 +7907,6 @@ fi
 rm -f inside.pl
 
 fi
-
-# If Fortran 77 compiler was not found, we disable support for it.
-if test "x$F77" = x; then :
-  enable_f77=no
-fi
-
-# Perform Fortran 77 tests only if enabled.
-if test "x$enable_f77" = xyes; then :
 
 
 ac_ext=f
@@ -27538,6 +27594,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCXX\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${NOFORT_TRUE}" && test -z "${NOFORT_FALSE}"; then
+  as_fn_error $? "conditional \"NOFORT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_F77_TRUE}" && test -z "${ENABLE_F77_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_F77\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HAVE_BLAS_TRUE}" && test -z "${HAVE_BLAS_FALSE}"; then

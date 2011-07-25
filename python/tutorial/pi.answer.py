@@ -16,6 +16,7 @@ import ga
 
 from math   import pi as PI
 from numpy  import ndarray
+import sys
 
 def get_n():
     prompt  = "Enter the number of intervals: (0 quits) "
@@ -43,14 +44,20 @@ myrank = ga.nodeid()
 
 g_pi = ga.create(ga.C_DBL, [1])
 
+one_time = False
+if len(sys.argv) == 2:
+    n = int(sys.argv[1])
+    one_time = True
+
 while True:
-    if myrank == 0:
-        n = get_n()
-        n = ga.brdcst(n)
-    else:
-        n = ga.brdcst(0)
-    if n == 0:
-        break
+    if not one_time:
+        if myrank == 0:
+            n = get_n()
+            n = ga.brdcst(n)
+        else:
+            n = ga.brdcst(0)
+        if n == 0:
+            break
     ga.zero(g_pi)
     mypi = comp_pi(n, myrank, nprocs)
     ga.acc(g_pi, mypi)
@@ -58,5 +65,7 @@ while True:
     if myrank == 0:
         pi = ga.get(g_pi)[0]
         prn_pi(pi, PI)
+    if one_time:
+        break
 
 ga.destroy(g_pi)

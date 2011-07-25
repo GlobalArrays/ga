@@ -84,7 +84,7 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 	pario/dra/dbg_read$(EXEEXT) pario/dra/dbg_write$(EXEEXT) \
 	pario/dra/dra2arviz$(EXEEXT) pario/dra/ntestc$(EXEEXT) \
 	pario/dra/perfn$(EXEEXT) pario/dra/rate$(EXEEXT) \
-	$(am__EXEEXT_19) gparrays/testing/test$(EXEEXT) \
+	$(am__EXEEXT_19) $(am__EXEEXT_20) \
 	gparrays/testing/testc$(EXEEXT)
 @ENABLE_F77_TRUE@am__append_1 = $(FLD_NOMAIN)
 @ENABLE_F77_TRUE@am__append_2 = gaf2c/farg.F
@@ -403,16 +403,17 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@am__append_63 = ga++/testing/elempatch \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest ga++/testing/ntestc \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc ga++/testing/testmult
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_64 = -I$(top_srcdir)/armci/src-portals
+@ENABLE_F77_TRUE@am__append_64 = gparrays/testing/test
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_65 = -I$(top_srcdir)/armci/src-portals
 # remove the former CPPFLAG once the ARMCI refactoring is finished
-@ARMCI_NETWORK_PORTALS_FALSE@am__append_65 =  \
+@ARMCI_NETWORK_PORTALS_FALSE@am__append_66 =  \
 @ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src \
 @ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src/include
 
 ##############################################################################
 # tascel
-@ENABLE_TASCEL_TRUE@am__append_66 = tascel
-XFAIL_TESTS = $(am__EXEEXT_20) $(am__EXEEXT_22)
+@ENABLE_TASCEL_TRUE@am__append_67 = tascel
+XFAIL_TESTS = $(am__EXEEXT_21) $(am__EXEEXT_23)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -861,6 +862,7 @@ libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @CXX_BINDINGS_TRUE@	ga++/testing/ntestc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/testmult$(EXEEXT)
+@ENABLE_F77_TRUE@am__EXEEXT_20 = gparrays/testing/test$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 LIBOBJDIR = compat/
 am__ga___testing_elempatch_SOURCES_DIST = ga++/testing/elempatch.cc
@@ -2703,9 +2705,9 @@ else dir="$(srcdir)/"; fi;				\
 tst=$$dir$$f; log='$@'; __SAVED_TERM=$$TERM;		\
 $(TESTS_ENVIRONMENT)
 RECHECK_LOGS = $(TEST_LOGS)
-am__EXEEXT_20 = $(MA_XFAIL_TESTS)
-am__EXEEXT_21 =
-am__EXEEXT_22 = $(am__EXEEXT_21) $(am__EXEEXT_21) $(am__EXEEXT_21)
+am__EXEEXT_21 = $(MA_XFAIL_TESTS)
+am__EXEEXT_22 =
+am__EXEEXT_23 = $(am__EXEEXT_22) $(am__EXEEXT_22) $(am__EXEEXT_22)
 TEST_SUITE_LOG = test-suite.log
 TEST_SUITE_HTML = $(TEST_SUITE_LOG:.log=.html)
 TEST_EXTENSIONS = @EXEEXT@ .test
@@ -3104,7 +3106,7 @@ AM_CPPFLAGS = $(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) \
 	-I$(top_srcdir)/pario/dra -I$(top_srcdir)/pario/eaf \
 	-I$(top_srcdir)/pario/elio -I$(top_srcdir)/pario/sf \
 	$(am__append_62) -I$(top_build_prefix)gparrays/src \
-	-I$(top_srcdir)/gparrays/src $(am__append_64) $(am__append_65)
+	-I$(top_srcdir)/gparrays/src $(am__append_65) $(am__append_66)
 AM_LDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
 	$(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) $(am__append_1)
 FLDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
@@ -3533,7 +3535,7 @@ gparrays_testing_test_LDFLAGS = $(FLDFLAGS)
 
 ##############################################################################
 # armci
-SUBDIRS = armci . $(am__append_66)
+SUBDIRS = armci . $(am__append_67)
 GA_RECURSIVE_TARGETS = checkprogs-recursive
 # END COPY
 

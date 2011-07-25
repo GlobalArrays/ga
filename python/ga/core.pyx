@@ -49,11 +49,16 @@ _to_dtype = {
         C_LONGLONG: np.dtype(np.int64),
         C_FLOAT:    np.dtype(np.float32),
         C_DBL:      np.dtype(np.float64),
-        C_LDBL:     np.dtype(np.float128),
         C_SCPL:     np.dtype(np.complex64),
         C_DCPL:     np.dtype(np.complex128),
-        C_LDCPL:    np.dtype(np.complex256),
         }
+# numpy doesn't always have these types depending on the system
+cdef bint float128_in_np = ('float128' in dir(np))
+cdef bint complex256_in_np = ('complex256' in dir(np))
+if float128_in_np:
+    _to_dtype[C_LDBL] = np.dtype(np.float128)
+if complex256_in_np:
+    _to_dtype[C_LDCPL] = np.dtype(np.complex256)
 
 #############################################################################
 # utility functions
@@ -199,7 +204,7 @@ cdef void* _convert_multiplier(int gtype, value,
     elif gtype == C_DBL:
         dv[0] = value
         return dv
-    elif gtype == C_LDBL:
+    elif gtype == C_LDBL and float128_in_np:
         ldv[0] = value
         return ldv
     elif gtype == C_SCPL:

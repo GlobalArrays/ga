@@ -4,6 +4,7 @@
 #endif
 
 #include "ga.h"
+#include "gp.h"
 #include "macdecls.h"
 #include "mp3.h"
 
