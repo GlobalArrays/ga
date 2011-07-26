@@ -477,18 +477,18 @@ class ndarray(object):
             ret = ga.strided_get(self.handle, _lo, _hi, _skip)
         else:
             ret = ga.get(self.handle, _lo, _hi)
-        # transpose the result, if needed
-        ret = ret.transpose(global_slice.lohi_T())
-        if ret.ndim > 0:
-            # transpose the adjustment
-            adjust = [adjust[i] for i in global_slice.lohi_T()]
-            ret = ret[adjust]
+        # pull out real or imag parts, if needed
         if self._is_real:
             ret = ret.real
         elif self._is_imag:
             ret = ret.imag
-        # add the None's in
-        ret = ret[global_slice.None_key()]
+        # apply the adjustment (which only reverses some dimensions, if needed)
+        ret = ret[adjust]
+        # transpose the result, if needed
+        ret = ret.transpose(global_slice.lohi_T())
+        # reshape the array based on global_slice
+        # this will add any newaxis and remove any fixed dimensions
+        ret.shape = global_slice.shape
         return ret
 
     def allget(self, key=None):
@@ -624,7 +624,7 @@ class ndarray(object):
     real = property(_get_real,_set_real)
 
     def _get_size(self):
-        return reduce(lambda x,y: x*y, self.shape)
+        return reduce(lambda x,y: x*y, self.shape, 1)
     size = property(_get_size)
 
     def _get_itemsize(self):
@@ -2139,9 +2139,10 @@ class ndarray(object):
         new_shape = new_global_slice.shape
         a = ndarray(new_shape, self.dtype, base=self)
         a.global_slice = new_global_slice
-        if a.ndim == 0:
+        if a.size == 1:
             a = a.allget()
-            return a.dtype.type(a) # convert single item to np.generic (scalar)
+            # convert single item to np.generic (scalar)
+            a = a.dtype.type(a)
         return a
 
     #def __getslice__
@@ -2153,25 +2154,25 @@ class ndarray(object):
     #def __hex__
 
     def __iadd__(self,y):
-        add(self,y,self)
+        return add(self,y,self)
 
     def __iand__(self,y):
-        logical_and(self,y,self)
+        return logical_and(self,y,self)
 
     def __idiv__(self,y):
-        divide(self,y,self)
+        return divide(self,y,self)
 
     def __ifloordiv__(self,y):
-        floor_divide(self,y,self)
+        return floor_divide(self,y,self)
 
     def __ilshift__(self,y):
-        left_shift(self,y,self)
+        return left_shift(self,y,self)
 
     def __imod__(self,y):
-        mod(self,y,self)
+        return mod(self,y,self)
 
     def __imul__(self,y):
-        multiply(self,y,self)
+        return multiply(self,y,self)
 
     #def __index__
 
@@ -2182,25 +2183,25 @@ class ndarray(object):
         return invert(self)
 
     def __ior__(self,y):
-        logical_or(self,y,self)
+        return logical_or(self,y,self)
 
     def __ipow__(self,y):
-        power(self,y,self)
+        return power(self,y,self)
 
     def __irshift__(self,y):
-        right_shift(self,y,self)
+        return right_shift(self,y,self)
 
     def __isub__(self,y):
-        subtract(self,y,self)
+        return subtract(self,y,self)
 
     def __iter__(self, *args, **kwargs):
         raise NotImplementedError
 
     def __itruediv__(self,y):
-        true_divide(self,y,self)
+        return true_divide(self,y,self)
 
     def __ixor__(self,y):
-        logical_xor(self,y,self)
+        return logical_xor(self,y,self)
 
     def __le__(self,y):
         return less_equal(self,y)
@@ -2785,9 +2786,10 @@ class ufunc(object):
                 if ndout is not None:
                     result = out.global_slice.get_key(*out.distribution())
                     lo,hi = result[0].start,result[0].stop
-                    piece = a[lo:hi]
-                    if isinstance(piece, ndarray):
-                        piece = piece.get()
+                    if is_distributed(a):
+                        piece = a.get(result)
+                    else:
+                        piece = a[lo:hi]
                     self.func.accumulate(piece, out=ndout)
                     # probably more efficient to use allgather and exchange last
                     # values among all procs. We also need ordering information,
@@ -3253,14 +3255,15 @@ def comm():
 #    if DEBUG:
 #        print s
 #
-#def print_sync(what):
-#    if DEBUG:
-#        sync()
-#        if 0 == me():
-#            print "[0] %s" % str(what)
-#            for proc in xrange(1,nproc()):
-#                data = comm().recv(source=proc, tag=11)
-#                print "[%d] %s" % (proc, str(data))
-#        else:
-#            comm().send(what, dest=0, tag=11)
-#        sync()
+def print_sync(what):
+    #if DEBUG:
+    if True:
+        sync()
+        if 0 == me():
+            print "[0] %s" % str(what)
+            for proc in xrange(1,nproc()):
+                data = comm().recv(source=proc, tag=11)
+                print "[%d] %s" % (proc, str(data))
+        else:
+            comm().send(what, dest=0, tag=11)
+        sync()

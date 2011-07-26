@@ -202,6 +202,17 @@ tests = [
     "result = m.arange(3*4*5).reshape((5,4,3)).T[1:,None,2:,0]",
     "result = m.arange(3*4*5).reshape((5,4,3)).T[None,1:,None,2:,None,0,None]",
     "result = m.add.reduce(m.arange(3*4*5).reshape((5,4,3)).T)",
+    """result = m.ones((15,2))
+       result = m.multiply(result,5,result)""",
+    """a = m.ones((15,2))
+       b = a[:,0]
+       result = m.multiply(b,5,b)""",
+    """result = m.ones((15,2)) * 5""",
+    """result = m.ones((15,2))
+       result *= 5""",
+    """result = m.ones((15,2))[:,0] * 5""",
+    """result = m.ones((15,2))
+       result[:,0] *= 5""",
 ]
 
 # the current module, either numpy or gain
@@ -274,7 +285,7 @@ def run_tests():
 def run_test(test):
     global passes,x_failures,np_failures,gain_failures,epic_failures
     # sanity check that the test is correctly written
-    if test.count("result") != 1:
+    if test.count("result") < 1:
         raise SyntaxError, "TEST ERROR: %s" % test
     # clean up whitespace and pretty print the test string
     test_lines = [line.strip() for line in test.splitlines()]

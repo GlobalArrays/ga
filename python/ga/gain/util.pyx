@@ -321,7 +321,7 @@ class RangeKey(Key):
             if (self.step < 0 and shifted <= self.stop
                     or self.step > 0 and shifted >= self.stop):
                 raise IndexError
-            return FixedKey(shifted, origin=self.origin)
+            return FixedKey(shifted, self.origin)
 
     def __str__(self):
         return "RangeKey(%s,%s,%s)" % (self.start,self.stop,self.step)
@@ -514,7 +514,7 @@ class MasterKey(object):
     shape = property(get_shape)
 
     def get_size(self):
-        return reduce(lambda x,y: x*y, self.shape)
+        return reduce(lambda x,y: x*y, self.shape, 1)
     size = property(get_size)
 
     def get_ndim(self):
@@ -663,7 +663,7 @@ class MasterKey(object):
                 lo.append(item.value)
                 hi.append(item.value+1)
                 sk.append(1)
-                ad.append(0)
+                ad.append(slice(0,None,None))
             elif isinstance(item, RangeKey):
                 if item.step > 1 or item.step < -1:
                     need_strided = True

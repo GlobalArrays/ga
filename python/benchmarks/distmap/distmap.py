@@ -28,7 +28,7 @@ def dist_array(shape, pt, expo):
     rows and columns) to a given point (x0, y0)."""
     x0 = pt[0]
     y0 = pt[1]
-    f = lambda x, y, x0=x0, y0=y0: dist((x, y), (x0, y0), expo)
+    f = lambda x, y: dist((x, y), (x0, y0), expo)
     return np.fromfunction(f, shape, dtype=np.float32)
 
 def distmap(shape, nPt, expo):
@@ -51,7 +51,8 @@ def main():
     import sys
 
     # 3rd party libs
-    from PIL import Image
+    #from PIL import Image
+    import Image
 
     # command-line options
     nPt = 8 # default
@@ -101,11 +102,11 @@ def main():
             nGrid = int(val)
 
     if useGain:
-        from ga import gain as np
+        import ga.gain as np
         from ga.gain import me
         set_np(np)
         if help:
-            if not me:
+            if not me():
                 print usage
             sys.exit()
     else:
@@ -122,7 +123,7 @@ def main():
     pxls = distmap(shape, nPt, expo)
     # write pxls to file
     if (imgOutput or rawOutput) and useGain:
-        if me == 0:
+        if me() == 0:
             pxls = pxls.get()
         else:
             return
@@ -140,7 +141,7 @@ if __name__ == '__main__':
     if profile:
         import cProfile
         if useGain:
-            cProfile.run("main()", "distmap.prof" + str(me))
+            cProfile.run("main()", "distmap.prof" + str(me()))
         else:
             cProfile.run("main()", "distmap.prof")
     else:
