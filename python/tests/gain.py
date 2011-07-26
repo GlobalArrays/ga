@@ -100,6 +100,7 @@ tests = [
     "result = m.add.reduce([1,2,3,4])",
     "result = m.add.reduce(m.arange(100))",
     "result = m.add.reduce(m.ones((100,200)))",
+    "result = m.add.reduce(m.ones((100,200,300)))",
     "result = m.add.accumulate(m.ones(7))",
     "result = m.add.accumulate(m.ones((7,7)))",
     "result = m.add.accumulate(m.ones((7,7,7)), axis=0)",
@@ -213,6 +214,9 @@ tests = [
     """result = m.ones((15,2))[:,0] * 5""",
     """result = m.ones((15,2))
        result[:,0] *= 5""",
+    "result = m.arange(3*4).reshape(3,4).diagonal()",
+    "result = m.arange(3*4).reshape(3,4).diagonal(1)",
+    "result = m.arange(3*4).reshape(3,4).diagonal(-1)",
 ]
 
 # the current module, either numpy or gain

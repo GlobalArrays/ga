@@ -214,7 +214,7 @@ def time_test(nx=500, ny=500, eps=1.0e-16, n_iter=100, stepper='numeric'):
     return timer() - t
     
 
-def main(n=10000, n_iter=100):
+def main(n=1000, n_iter=100):
     print "Doing %d iterations on a %dx%d grid"%(n_iter, n, n)
     i = 'numeric'
     print i,

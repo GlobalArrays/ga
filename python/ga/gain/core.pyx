@@ -1,3 +1,4 @@
+# cython: profile=True
 cimport mpi4py.MPI as MPI
 from mpi4py.mpi_c cimport *
 import mpi4py.MPI as MPI
@@ -939,7 +940,33 @@ class ndarray(object):
         numpy.diagonal : equivalent function
 
         """
-        raise NotImplementedError
+        if self.ndim < 2:
+            raise ValueError, "array.ndim must be >= 2"
+        if self.ndim != 2:
+            raise NotImplementedError, "diagonal for a.ndim > 2"
+        nrow,ncol = self.shape
+        if offset >= 0:
+            size = min(ncol-offset,nrow)
+        else:
+            size = min(nrow+offset,ncol)
+        out = ndarray(size, dtype=self.dtype)
+        if not is_distributed(out):
+            raise NotImplementedError, "resulting diagonal is not distributed"
+        npout = out.access()
+        if npout is not None:
+            indices = np.empty((size,2), dtype=np.int64)
+            if offset >= 0:
+                indices[:,0] = np.arange(size, dtype=np.int64)
+                indices[:,1] = np.arange(offset, size+offset, dtype=np.int64)
+            else:
+                offset = -offset
+                indices[:,0] = np.arange(offset, size+offset, dtype=np.int64)
+                indices[:,1] = np.arange(size, dtype=np.int64)
+            my_range = out.global_slice.bound_by_lohi(*out.distribution())
+            my_range = my_range[0].pyobj()
+            my_indices = indices[my_range]
+            npout[:] = self.gather(my_indices)
+        return out
 
     def dot(self, b, out=None):
         """a.dot(b, out=None)
@@ -1388,7 +1415,7 @@ class ndarray(object):
         """
         raise NotImplementedError
 
-    def reshape(self, shape, order='C'):
+    def reshape(self, shape, order='C', *args):
         """Returns an array containing the same data with a new shape.
 
         Refer to `numpy.reshape` for full documentation.
@@ -1398,7 +1425,13 @@ class ndarray(object):
         numpy.reshape : equivalent function
 
         """
-        shape = listify(shape)
+        if type(order) == type(""):
+            # assume user specified a shape tuple
+            shape = listify(shape)
+        else:
+            # assume user specified an unpacked shape e.g. reshape(3,4,5)
+            shape = listify([shape]+[order]+list(args))
+            order = 'C'
         shape = np.asarray(shape, dtype=np.int64)
         count_neg_ones = shape[shape==-1].size
         if count_neg_ones > 1:
@@ -2751,6 +2784,17 @@ class ufunc(object):
                 value = self.func.reduce(nda)
             everything = comm().allgather(value)
             self.func.reduce(everything, out=out)
+        elif out.ndim == 1:
+            # optimize the 2d reduction
+            ndout = out.access()
+            if ndout is not None:
+                my_range = out.global_slice.bound_by_lohi(*out.distribution())
+                if axis == 0: # rows
+                    my_range = [slice(None,None,None)]+my_range
+                elif axis == 1: # cols
+                    my_range = my_range+[slice(None,None,None)]
+                piece = a.get(my_range)
+                self.func.reduce(piece, axis, dtype, ndout, *args, **kwargs)
         else:
             slicer = [slice(0,None,None)]*a.ndim
             axis_iterator = iter(xrange(a.shape[axis]))

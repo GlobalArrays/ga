@@ -3346,89 +3346,6 @@ def diagflat(v, k=0):
     raise NotImplementedError
 
 
-def diagonal(a, offset=0, axis1=0, axis2=1):
-    """Return specified diagonals.
-
-    If `a` is 2-D, returns the diagonal of `a` with the given offset,
-    i.e., the collection of elements of the form ``a[i, i+offset]``.  If
-    `a` has more than two dimensions, then the axes specified by `axis1`
-    and `axis2` are used to determine the 2-D sub-array whose diagonal is
-    returned.  The shape of the resulting array can be determined by
-    removing `axis1` and `axis2` and appending an index to the right equal
-    to the size of the resulting diagonals.
-
-    Parameters
-    ----------
-    a : array_like
-        Array from which the diagonals are taken.
-    offset : int, optional
-        Offset of the diagonal from the main diagonal.  Can be positive or
-        negative.  Defaults to main diagonal (0).
-    axis1 : int, optional
-        Axis to be used as the first axis of the 2-D sub-arrays from which
-        the diagonals should be taken.  Defaults to first axis (0).
-    axis2 : int, optional
-        Axis to be used as the second axis of the 2-D sub-arrays from
-        which the diagonals should be taken. Defaults to second axis (1).
-
-    Returns
-    -------
-    array_of_diagonals : ndarray
-        If `a` is 2-D, a 1-D array containing the diagonal is returned.
-        If the dimension of `a` is larger, then an array of diagonals is
-        returned, "packed" from left-most dimension to right-most (e.g.,
-        if `a` is 3-D, then the diagonals are "packed" along rows).
-
-    Raises
-    ------
-    ValueError
-        If the dimension of `a` is less than 2.
-
-    See Also
-    --------
-    diag : MATLAB work-a-like for 1-D and 2-D arrays.
-    diagflat : Create diagonal arrays.
-    trace : Sum along diagonals.
-
-    Examples
-    --------
-    >>> a = np.arange(4).reshape(2,2)
-    >>> a
-    array([[0, 1],
-           [2, 3]])
-    >>> a.diagonal()
-    array([0, 3])
-    >>> a.diagonal(1)
-    array([1])
-
-    A 3-D example:
-
-    >>> a = np.arange(8).reshape(2,2,2); a
-    array([[[0, 1],
-            [2, 3]],
-           [[4, 5],
-            [6, 7]]])
-    >>> a.diagonal(0, # Main diagonals of two arrays created by skipping
-    ...            0, # across the outer(left)-most axis last and
-    ...            1) # the "middle" (row) axis first.
-    array([[0, 6],
-           [1, 7]])
-
-    The sub-arrays whose main diagonals we just obtained; note that each
-    corresponds to fixing the right-most (column) axis, and that the
-    diagonals are "packed" in rows.
-
-    >>> a[:,:,0] # main diagonal is [0 6]
-    array([[0, 2],
-           [4, 6]])
-    >>> a[:,:,1] # main diagonal is [1 7]
-    array([[1, 3],
-           [5, 7]])
-    
-    """
-    raise NotImplementedError
-
-
 def diff(a, n=1, axis=-1):
     """Calculate the n-th order discrete difference along given axis.
 
@@ -11644,46 +11561,6 @@ def setxor1d(ar1, ar2, assume_unique=False):
     >>> b = np.array([2, 3, 5, 7, 5])
     >>> np.setxor1d(a,b)
     array([1, 4, 5, 7])
-    
-    """
-    raise NotImplementedError
-
-
-def shape(a):
-    """Return the shape of an array.
-
-    Parameters
-    ----------
-    a : array_like
-        Input array.
-
-    Returns
-    -------
-    shape : tuple of ints
-        The elements of the shape tuple give the lengths of the
-        corresponding array dimensions.
-
-    See Also
-    --------
-    alen
-    ndarray.shape : Equivalent array method.
-
-    Examples
-    --------
-    >>> np.shape(np.eye(3))
-    (3, 3)
-    >>> np.shape([[1, 2]])
-    (1, 2)
-    >>> np.shape([0])
-    (1,)
-    >>> np.shape(0)
-    ()
-
-    >>> a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
-    >>> np.shape(a)
-    (2,)
-    >>> a.shape
-    (2,)
     
     """
     raise NotImplementedError

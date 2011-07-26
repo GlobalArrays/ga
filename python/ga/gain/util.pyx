@@ -1,3 +1,4 @@
+# cython: profile=True
 """Contains index- and slice-related operations needed for bookkeeping.
 
 Probably the most import set of classes are the Key-related ones including
@@ -317,6 +318,10 @@ class RangeKey(Key):
             except TypeError:
                 raise TypeError, ("long() argument must be a string or a "
                         "number, not %s" % key)
+            if key < 0:
+                key += self.size
+            if key >= self.size or key < 0:
+                raise IndexError, "invalid index"
             shifted = (key*self.step) + self.start
             if (self.step < 0 and shifted <= self.stop
                     or self.step > 0 and shifted >= self.stop):
