@@ -137,8 +137,10 @@ class NoneKey(Key):
         """
         if isinstance(key, (RangeKey,slice)):
             if isinstance(key, slice):
-                key = RangeKey(*key.indices(self.size))
-            if key.start != 0 or key.stop != 1 or key.step != 1:
+                start,stop,step = key.indices(self.size)
+            else:
+                start,stop,step = key.start,key.stop,key.step
+            if start != 0 or stop != 1 or step != 1:
                 raise IndexError, "bad slice for NoneKey: %s" % key
             return self
         else:

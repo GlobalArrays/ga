@@ -2210,7 +2210,9 @@ class ndarray(object):
     #def __index__
 
     def __int__(self, *args, **kwargs):
-        raise NotImplementedError
+        if self.size != 1:
+            raise TypeError, "only length-1 arrays can be converted to Python scalars"
+        return np.dtype(np.int32).type(self.allget())
 
     def __invert__(self):
         return invert(self)

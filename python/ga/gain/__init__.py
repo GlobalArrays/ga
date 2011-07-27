@@ -17,6 +17,7 @@ if __name__ != '__main__':
                 setattr(self_module, name, attr)
     # import some other numpy functions directly
     from numpy import alen
+    from numpy import newaxis
 
 class PrintZero(object):
     def __init__(self):
