@@ -84,14 +84,15 @@ Other programs may require slight modification. This allows those programs to
 take advantage of the additional cores available on single compute nodes and
 to increase problem sizes by distributing across clustered environments.
 
-This manuscript builds on \cite{Dai11} by expanding both the design discussion
-and background such that this paper may stand on its own. The previous
-manuscript was prepared for the Python community and as such relevant
-background material on the Python language and related modules was omitted. An
-alternative parallelization strategy is also implemented and discussed while
-other parallelization strategies are additionally proposed while discussing
-future work. Lastly, the difficulty in scaling the Python interpreter has been
-added to the evaluation.
+This work builds on \cite{Dai09} by increasing the scalability of the approach
+from from 16 cores to 2K cores. This manuscript also builds on \cite{Dai11} by
+expanding both the design discussion and background such that this paper may
+stand on its own. The previous manuscript was prepared for the Python
+community and as such relevant background material on the Python language and
+related modules was omitted. An alternative parallelization strategy is also
+implemented and discussed while other parallelization strategies are
+additionally proposed while discussing future work. Lastly, the difficulty of
+scaling the Python interpreter has been added to the evaluation.
 
 \section{Background}
 
@@ -103,14 +104,16 @@ references or as otherwise noted.
 
 \subsection{Python}
 
-Python \cite{Lun01,Pyt11} is a machine-independent, bytecode interpreted,
+Python \cite{Lun01,Pyt11a} is a machine-independent, bytecode interpreted,
 object-oriented programming (OOP) language. It can be used for rapid
 application development, shell scripting, or scientific computing to name a
 few. It gives programmers and end users the ability to extend the language
 with new features or functionality. Such extensions can be written in C, C++,
 FORTRAN, or Python. It is also a highly introspective language, allowing code
 to examine various features of the Python interpreter at run-time and adapt as
-needed.
+needed. Although Python v3.2 exists, the following sections explain specific
+features of Python 2.7 as it is the version most commonly used by the
+scientific Python community \cite{Pyt11b}.
 
 \subsubsection{Operator Overloading}
 
@@ -142,11 +145,11 @@ immutable sequences are the \texttt{string}s, \texttt{unicode}s, and
 \texttt{tuple}s while the only mutable type is the \texttt{list}. Python
 sequences generally support access to their items via bracket “[]” notation
 and accept either an integer $k$ where $0 <= k < N$ and $N$ is the length of
-the sequence, or a \texttt{slice} object. Out-of-bounds indices will result in
-an error, however negative indices are supported by the built-in Python
-sequences by calculating offsets from the end of the sequence.  It is up to
-the implementing class whether to support negative indices when overloading
-the sequence operators.
+the sequence, or a \texttt{slice} object. Out-of-bounds indices, as opposed to
+out-of-bounds slices, will result in an error. However, negative indices and
+slices are supported by the built-in Python sequences by calculating offsets
+from the end of the sequence.  It is up to the implementing class whether to
+support negative indices and slices when overloading the sequence operators.
 
 \texttt{slice} objects are used for describing \emph{extended slice syntax}.
 \texttt{slice} objects describe the beginning, end, and increment of a
@@ -180,14 +183,14 @@ persist or be transmitted. It can then be de-serialized back into its original
 object. This is also commonly known as marshalling and unmarshalling. In
 Python this is also called pickling and unpickling.
 
-pickle is part of the Python Standard Library \cite{Lun01} and can serialize
-nearly everything in Python. It is designed to be backwards compatible with
-earlier versions of Python. Certain Python objects, such as modules or
-functions, are serialized by name only rather than by their state. They can
-only be de-serialized so long as the same module or function exists within the
-scope where the de-serialization occurs. There is no guarantee that the same
-function will result from the de-serialization or that the function exists in
-the target namespace.
+The \texttt{pickle} module is part of the Python Standard Library \cite{Lun01}
+and can serialize nearly everything in Python. It is designed to be backwards
+compatible with earlier versions of Python. Certain Python objects, such as
+modules or functions, are serialized by name only rather than by their state.
+They can only be de-serialized so long as the same module or function exists
+within the scope where the de-serialization occurs. There is no guarantee that
+the same function will result from the de-serialization or that the function
+exists in the target namespace.
 
 \subsection{NumPy}
 
@@ -256,15 +259,16 @@ operation.  Specifying this output parameter to the ufunc avoids the sometimes
 unnecessary creation of a new \verb=ndarray=.
 
 Ufuncs are more than just callable functions. They also have some special
-methods such as \verb=reduce= and \verb=accumulate=. \verb=reduce= is similar
-to Python’s built-in function of the same name that repeatedly applies a
-callable object to its last result and the next item of the sequence. This
+methods such as \verb=reduce()= and \verb=accumulate()=. \verb=reduce()= is
+similar to Python’s built-in function of the same name that repeatedly applies
+a callable object to its last result and the next item of the sequence. This
 effectively reduces a sequence to a single value. When applied to arrays the
 reduction occurs along the first axis by default, but other axes may be
 specified. Each ufunc defines the function that is used for the reduction. For
-example, \verb=add= will sum the values along an axis while \verb=multiply=
-will generate the running product.  \verb=accumulate= is similar to reduce,
-but it returns the intermediate results of the reduction.
+example, \verb=add.reduce()= will sum the values along an axis while
+\verb=multiply.reduce()= will generate the running product.
+\verb=accumulate()= is similar to \verb=reduce()=, but it returns the
+intermediate results of the reduction.
 
 Ufuncs can operate on \verb=ndarray= subclasses or array-like objects. In
 order for subclasses of the \verb=ndarray= or array-like objects to utilize
@@ -408,7 +412,7 @@ language additionally supports calling C functions as well as static typing.
 This makes writing C extensions or wrapping external C libraries for the
 Python language as easy as Python itself.
 
-\section{Previous Work}
+\section{Related Work}
 
 GAiN is similar in many ways to other parallel computation software packages.
 It attempts to leverage the best ideas for transparent, parallel processing
@@ -449,8 +453,25 @@ distarray \cite{Per09} is an experimental package for the IPython project.
 distarray uses IPython’s architecture as well as MPI extensively in order to
 look and feel like NumPy \verb=ndarray= instances. Only the SPMD model of
 parallel computation is supported, unlike other parallel models supported
-directly by IPython.  Further, the status of distarray is that of a proof of
-concept and not production ready.
+directly by IPython.  Further, the status of distarray is that of a
+proof-of-concept and not production ready.
+
+\subsection{DistNumPy}
+
+DistNumPy \cite{Kri10} extends the NumPy module with a new, distributed
+backend for NumPy arrays. The distributed nature of DistNumPy is almost fully
+transparent to the user, must like the work described in this paper. It is
+able to parallelize any NumPy application by having the master process
+dispatch parallel NumPy operations to the slaves while the master is able to
+execute any serial user code. However, certain features limit its utility.
+DistNumPy cannot be used in conjunction with a standard NumPy installation
+because it implements the same \texttt{numpy} namespace. DistNumPy is a fork
+of v1.3 of the NumPy codebase and it is unclear how much effort would be
+involved in bringing it up-to-date with the ehancements found in the latest
+NumPy v1.6 release. The block cyclic distribution used by DistNumPy works well
+for some packages, but it is not ideal for all problem types. The user is not
+allowed to alter the distribution scheme used by DistNumPy. Lastly, DistNumPy
+does not adequately handle problems that involve non-aligned array views.
 
 \subsection{GpuPy}
 
@@ -568,7 +589,9 @@ modules, and classes which exist in \verb=numpy= must also exist within
 such as its type system. As of GA v5.1, arrays of arbitrary fixed-size element
 types and sizes can be created and individual fields of C \verb=struct= data
 types accessed directly.  GAiN is able to use the \verb=numpy= types when
-creating the GA instances which back the \verb=gain.ndarray= instances.
+creating the GA instances which back the \verb=gain.ndarray= instances. GAiN
+is able to use an unmodified NumPy installation and will work with any
+sufficiently recent NumPy release.
 
 GAiN follows the owner-computes rule \cite{Zim88}. The rule assigns each
 computation to the processor that owns the data being computed. Figures
@@ -919,6 +942,9 @@ locality-aware dynamic load balancing via management of shared collections of
 task objects. Certain NumPy functionality may better lend itself to task
 parallelism instead of owner-computes. Task parallelism decouples data
 ownership from the computation and is more akin to the get-compute-put model.
+Further, GAiN does not support block cyclic data distributions. Block cyclic
+distributions may alleviate load imbalance but may also incur additional
+overhead.
 
 The GA cache should be exposed as a tunable parameter since the current
 heuristic of reusing arrays with the same type and shape does not apply to
@@ -943,10 +969,13 @@ Although the master/slave capabilities of GAiN allow for most NumPy
 applications to parallelize their NumPy portions alone, utilizing the MPI-2
 specification may not be the preferred approach. The distributed computing
 capabilities of the IPython project may provide another means of separating
-the serial from the parallel. There may be other ways to separate the serial
-from the parallel which don't involve dynamic process management such as
-processor groups or careful use of branching within the code effectively
-emulating a master/slave situation.
+the serial from the parallel. The approach taken by DistNumPy does not
+involve MPI-2 dynamic process management but rather has all processes besides
+the master process block for task messages during the module import. There may
+be other ways to separate the serial from the parallel which don't involve
+dynamic process management such as processor groups or careful use of
+branching within the code effectively emulating a master/slave situation like
+DistNumPy.
 
 The scalability of the Python interpreter remains an open problem. This is the
 single greatest hurdle to running Python applications at scale. There is a
@@ -969,10 +998,10 @@ Battelle for the U.S. Department of Energy under contract DE-AC05-76RL01830.
 
 % We recommend abbrvnat bibliography style.
 
-\bibliographystyle{abbrvnat}
-\bibliography{bibliography}
+%\bibliographystyle{abbrvnat}
+%\bibliography{bibliography}
 
-\begin{thebibliography}{35}
+\begin{thebibliography}{36}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -982,10 +1011,6 @@ Battelle for the U.S. Department of Energy under contract DE-AC05-76RL01830.
 \bibitem[Pnl(2011)]{Pnl11}
 Global arrays webpage.
 \newblock http://www.emsl.pnl.gov/docs/global/, 2011.
-
-\bibitem[Pyt(2011)]{Pyt11}
-Python v2.7.2 documentation.
-\newblock http://docs.python.org/, 2011.
 
 \bibitem[Apr\'{a} et~al.(2009)Apr\'{a}, Rendell, Harrison, Tipparaju, deJong,
   and Xantheas]{Apr09}
@@ -1019,6 +1044,12 @@ R.~Buyya.
 D.~Cooke and T.~Hochberg.
 \newblock numexpr.
 \newblock http://code.google.com/p/numexpr/.
+
+\bibitem[Daily(2009)]{Dai09}
+J.~Daily.
+\newblock Gain: Distributed array computation with python.
+\newblock Technical Report PNNL-18355, Pacific Northwest National Laboratory,
+  2009.
 
 \bibitem[Daily and Lewis(2011)]{Dai11}
 J.~Daily and R.~R. Lewis.
@@ -1103,6 +1134,8 @@ P.~Husbands and C.~Isbell.
   pages 156--169, London, UK, 1999. Springer-Verlag.
 \newblock ISBN 3-540-66228-6.
 
+\vfill\eject
+
 \bibitem[III(2007)]{Pal07}
 W.~P. III.
 \newblock \emph{A Concise Introduction to Matlab}.
@@ -1115,6 +1148,12 @@ M.~Krishnan and J.~Nieplocha.
   scalable shared memory systems.
 \newblock In \emph{in proceedings of Parallel and Distributed Processing
   Symposium}, 2004.
+
+\bibitem[Kristensen and Vinter(2010)]{Kri10}
+M.~R.~B. Kristensen and B.~Vinter.
+\newblock {Numerical Python for Scalable Architectures}.
+\newblock In \emph{Fourth Conference on Partitioned Global Address Space
+  Programming Model, PGAS{'}10}. ACM, 2010.
 
 \bibitem[Lundh(2001)]{Lun01}
 F.~Lundh.
@@ -1131,8 +1170,6 @@ J.~Nieplocha, J.~Ju, and T.~P. Straatsma.
   Springer-Verlag.
 \newblock ISBN 3-540-67956-1.
 \newblock URL \url{http://portal.acm.org/citation.cfm?id=646665.699092}.
-
-\vfill\eject
 
 \bibitem[Nieplocha et~al.(2005{\natexlab{a}})Nieplocha, Krishnan, Palmer,
   Tipparaju, and Zhang]{Nie05}
