@@ -278,7 +278,7 @@ void compare_patches(double eps, int ndim, double *patch1, int lo1[], int hi1[],
 	
 	/* compare element values in both patches */ 
 	for(j=0; j< elems; j++){ 
-		int idx1=0, idx2=0, offset1=0, offset2=0;
+		int idx1, idx2, offset1, offset2;
 		
 		idx1 = Index(ndim, subscr1, dims1);	 /* calculate element Index from a subscript */
 		idx2 = Index(ndim, subscr2, dims2);
@@ -336,7 +336,7 @@ void scale_patch(double alpha, int ndim, double *patch1, int lo1[], int hi1[], i
 
 	/* scale element values in both patches */ 
 	for(j=0; j< elems; j++){ 
-		int idx1=0, offset1=0;
+		int idx1, offset1;
 		
 		idx1 = Index(ndim, subscr1, dims1);	 /* calculate element Index from a subscript */
 
