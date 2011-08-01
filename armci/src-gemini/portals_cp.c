@@ -66,8 +66,8 @@ portals_cp_init(void)
         }
 
      /* creating an smp/intra-node communicator */
-        MPI_Comm_rank(MPI_COMM_WORLD,&me);
-        MPI_Comm_split(MPI_COMM_WORLD,id.nid,me,&portals_smp_comm);
+        MPI_Comm_rank(ARMCI_COMM_WORLD,&me);
+        MPI_Comm_split(ARMCI_COMM_WORLD,id.nid,me,&portals_smp_comm);
 
      /* set affinity */
       # ifdef PORTALS_AFFINITY
@@ -154,7 +154,7 @@ portals_cp_finalize()
            printf("error freeing cp_eqh; err %d\n",rc);
         }
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(ARMCI_COMM_WORLD);
         MPI_Finalize();
 
         portals_cp_finished = 1;

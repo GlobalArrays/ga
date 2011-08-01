@@ -132,7 +132,7 @@
 #       define armcill_nb_wait(_hdl)\
                shmem_wait_nb(_hdl)
 /*VT:this should be ifdef'ed based on if shmem_handle is defined or not*/
-#       if defined (XT3)
+#       if defined (CRAY_XT)
 #           define armcill_nb_put(_dst, _src, _sz, _proc, _hdl)\
                    shmem_putmem(_dst, _src, (size_t)_sz, _proc)
 #           define armcill_nb_get(_dst, _src, _sz, _proc, _hdl)\
@@ -175,7 +175,7 @@
 
 #elif defined(_CRAYMPP) || defined(QUADRICS) || defined(__crayx1)\
    || defined(CRAY_SHMEM)
-#if defined(CRAY) || defined(XT3)
+#if defined(CRAY) || defined(CRAY_XT)
 #   include <mpp/shmem.h>
 #else
 #   include <unistd.h>

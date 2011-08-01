@@ -548,7 +548,7 @@ void armci_krmalloc_init_localmem() {
     kr_malloc_init(0, 0, 0, reg_malloc, 0, &ctx_localmem);
     kr_malloc_init(0, 0, 0, malloc, 0, &ctx_mlocalmem);
     ctx_mlocalmem.ctx_type = KR_CTX_LOCALMEM;
-#elif defined(CRAY_SHMEM) && defined(XT3)
+#elif defined(CRAY_SHMEM) && defined(CRAY_XT)
 #   ifdef CATAMOUNT
     int units_avail = (cnos_shmem_size() - 1024 * 1024) / SHM_UNIT;
 #   else

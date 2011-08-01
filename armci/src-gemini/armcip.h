@@ -464,6 +464,9 @@ typedef struct {
  
 #include "mpi.h"
  
+/**dup of MPI_COMM_WORLD for internal MPI communication*/
+extern MPI_Comm ARMCI_COMM_WORLD;
+
 #ifdef PORTALS
 #include "portals.h"
 #endif

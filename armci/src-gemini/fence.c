@@ -103,7 +103,7 @@ void ARMCI_Barrier()
 #endif
     ARMCI_AllFence();
 #  ifdef MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(ARMCI_COMM_WORLD);
 #  else
     {
        long type=ARMCI_TAG;

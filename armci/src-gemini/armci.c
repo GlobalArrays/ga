@@ -65,7 +65,7 @@ extern void armci_msg_barrier(void);
 #endif
 
 #ifdef CRAY_SHMEM
-#  ifdef XT3
+#  ifdef CRAY_XT
 #    include <mpp/shmem.h>
 #  else
 #    include <shmem.h>
@@ -370,6 +370,11 @@ caddr_t atbeginbrval = (caddr_t)sbrk(0);
     mallopt(M_TRIM_THRESHOLD, -1);
 #endif
 
+#ifdef MPI
+    /*JD: initialize duplicate communicator before anything else*/
+    MPI_Comm_dup(MPI_COMM_WORLD, &ARMCI_COMM_WORLD);
+#endif
+
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();
     armci_usr_tid = THREAD_ID_SELF(); /*remember the main user thread id */
@@ -443,7 +448,9 @@ void ARMCI_Finalize()
     armci_group_finalize();
     free(armci_prot_switch_fence);
 #endif
-
+#ifdef MPI
+    MPI_Comm_free(&ARMCI_COMM_WORLD); /*JD: free at last*/
+#endif
 }
 
 

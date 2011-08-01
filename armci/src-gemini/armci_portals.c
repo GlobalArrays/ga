@@ -499,8 +499,8 @@ int armci_init_portals(caddr_t atbeginbrval)
         ptl_process_id_t id;
         ptl_process_id_t clone_id;
 
-        MPI_Comm_size(MPI_COMM_WORLD,&np);
-        MPI_Comm_rank(MPI_COMM_WORLD,&me);
+        MPI_Comm_size(ARMCI_COMM_WORLD,&np);
+        MPI_Comm_rank(ARMCI_COMM_WORLD,&me);
 
         if(armci_me != me) {
            printf("[mpi %d]: armci_me=%d ... this is a problem\n",me,armci_me);
@@ -509,14 +509,14 @@ int armci_init_portals(caddr_t atbeginbrval)
         
         portals_cp_init();
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(ARMCI_COMM_WORLD);
 
         portals_ds_ready = 0;
         if(armci_me == armci_master) {
            portalsCloneDataServer( portals_ds_thread );
            portalsSpinLockOnInt( &portals_ds_ready,1,10000 );
         }
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(ARMCI_COMM_WORLD);
 
         i=0;
         if((rc=PMI_Initialized(&i))!=PMI_SUCCESS){
@@ -534,9 +534,9 @@ int armci_init_portals(caddr_t atbeginbrval)
         }
 
      /* create intra-node communicator */
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(ARMCI_COMM_WORLD);
         portals_cp_init_throttle(armci_nclus);
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(ARMCI_COMM_WORLD);
 
    /* stuff from old code ... */
     bzero(portals,sizeof(armci_portals_proc_t));
