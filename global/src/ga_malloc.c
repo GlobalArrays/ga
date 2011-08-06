@@ -31,6 +31,10 @@ void* ga_malloc(Integer nelem, int type, char *name)
     Integer handle, adjust=0, bytes, item_size=GAsizeofM(pnga_type_f2c(type));
     Integer extra;
 
+#if NOFORT
+    type = pnga_type_f2c(type);
+#endif
+
     /* extra space for 1.ALIGNMENT and 2.storing handle */
     if(ALIGNMENT%item_size)
        pnga_error("ga_malloc: GA datatype cannot be aligned.Adjust ALIGNMENT",0);
