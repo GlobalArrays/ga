@@ -473,9 +473,7 @@ AC_CONFIG_FILES([Makefile
                  ma/mafdecls.fh
                  ma/matypes.h])
 AC_CONFIG_FILES([tools/ga-config], [chmod +x tools/ga-config])
-AC_CONFIG_SUBDIRS([armci])
-AS_IF([test "x$enable_tascel" = xyes],
-      [AC_CONFIG_SUBDIRS([tascel])])
+AC_CONFIG_SUBDIRS([armci tascel])
 AC_OUTPUT
 
 # Report on what we found.

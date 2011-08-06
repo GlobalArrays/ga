@@ -1013,8 +1013,7 @@ RANLIB
 CXXCPP
 NPROCS
 MPIEXEC'
-ac_subdirs_all='armci
-tascel'
+ac_subdirs_all='armci tascel'
 
 # Initialize some variables set by options.
 ac_init_help=
@@ -33772,12 +33771,8 @@ ac_config_files="$ac_config_files tools/ga-config"
 
 
 
-subdirs="$subdirs armci"
+subdirs="$subdirs armci tascel"
 
-if test "x$enable_tascel" = xyes; then :
-  subdirs="$subdirs tascel"
-
-fi
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
