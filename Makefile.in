@@ -3012,7 +3012,7 @@ libga_la_SOURCES = compat/random.c gaf2c/gaf2c.c gaf2c/drand.c \
 libga_la_LIBADD = $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) \
 	armci/libarmcii.la $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
 nodist_libga_la_SOURCES = config.fh $(am__append_34) \
-	global/src/wapidefs.h global/src/c.names.h \
+	global/src/wapidefs.h global/src/cnames.h \
 	gparrays/src/gpwapidefs.h
 
 ##############################################################################
@@ -3076,11 +3076,11 @@ EXTRA_DIST = README build-aux/inside.pl LinAlg/lapack+blas/README \
 # and works with all Fortran compilers.
 #
 BUILT_SOURCES = config.fh global/src/wapi.h global/src/wapidefs.h \
-	global/src/c.names.h gparrays/src/gpwapi.h \
+	global/src/cnames.h gparrays/src/gpwapi.h \
 	gparrays/src/gpwapidefs.h
 MOSTLYCLEANFILES = 
 CLEANFILES = $(bin_SCRIPTS) config.fh global/src/wapi.h \
-	global/src/wapidefs.h global/src/c.names.h $(am__append_51) \
+	global/src/wapidefs.h global/src/cnames.h $(am__append_51) \
 	gparrays/src/gpwapi.h gparrays/src/gpwapidefs.h
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
@@ -6982,7 +6982,7 @@ global/src/wapidefs.h: $(PAPI_H)
 	       -e "/typedef/d" \
 		   $(PAPI_H) > $@
 
-global/src/c.names.h: $(PAPI_H) $(F77FUNCGEN_PL)
+global/src/cnames.h: $(PAPI_H) $(F77FUNCGEN_PL)
 	@-rm -f $@
 	$(PERL_V) \
 	$(PERL) $(F77FUNCGEN_PL) $(PAPI_H) > $@

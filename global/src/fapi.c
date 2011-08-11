@@ -13,13 +13,13 @@
 #   include <stdlib.h>
 #endif
 
-#include "c.names.h"
+#include "cnames.h"
 #include "farg.h"
 #include "globalp.h"
 #include "macommon.h"
 #include "matmul.h"
 
-/* c.names.h does not contain all of the fortran functions */
+/* cnames.h does not contain all of the fortran functions */
 /* usually the missing ones are either complex type or strangely named */
 
 #define gai_cdot_patch_     F77_FUNC_(gai_cdot_patch,GAI_CDOT_PATCH)

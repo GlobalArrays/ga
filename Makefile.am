@@ -638,7 +638,7 @@ global/src/wapidefs.h: $(PAPI_H)
 	       -e "/typedef/d" \
 		   $(PAPI_H) > $@
 
-global/src/c.names.h: $(PAPI_H) $(F77FUNCGEN_PL)
+global/src/cnames.h: $(PAPI_H) $(F77FUNCGEN_PL)
 	@-rm -f $@
 	$(PERL_V) \
 	$(PERL) $(F77FUNCGEN_PL) $(PAPI_H) > $@
@@ -646,11 +646,11 @@ global/src/c.names.h: $(PAPI_H) $(F77FUNCGEN_PL)
 EXTRA_DIST += $(F77FUNCGEN_PL)
 BUILT_SOURCES += global/src/wapi.h
 BUILT_SOURCES += global/src/wapidefs.h
-BUILT_SOURCES += global/src/c.names.h
+BUILT_SOURCES += global/src/cnames.h
 
 CLEANFILES += global/src/wapi.h
 CLEANFILES += global/src/wapidefs.h
-CLEANFILES += global/src/c.names.h
+CLEANFILES += global/src/cnames.h
 
 libga_la_SOURCES += global/src/abstract_ops.h
 libga_la_SOURCES += global/src/base.c
@@ -694,7 +694,7 @@ libga_la_SOURCES += global/src/types2.xh
 libga_la_SOURCES += global/src/xgemm.c
 libga_la_SOURCES += global/src/xgemm.h
 nodist_libga_la_SOURCES += global/src/wapidefs.h
-nodist_libga_la_SOURCES += global/src/c.names.h
+nodist_libga_la_SOURCES += global/src/cnames.h
 if ENABLE_F77
 libga_la_SOURCES += global/src/complex.F
 libga_la_SOURCES += global/src/ga_diag_seq.F
