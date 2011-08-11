@@ -14,9 +14,6 @@
 #   include <assert.h>
 #endif
 
-#ifdef GA_USE_VAMPIR
-#include "armci_vampir.h"
-#endif
 #ifdef ARMCI_PROFILE
 #include "armci_profile.h"
 #endif
@@ -361,11 +358,6 @@ int PARMCI_PutV( armci_giov_t darr[], /* descriptor array */
     int totvec=0;
 #endif
 
-#ifdef GA_USE_VAMPIR
-    int tot=0;
-    for(i=0;i<len;i++) tot+=darr[i].bytes;
-#endif
-
     if(len<1) return FAIL;
     for(i=0;i<len;i++){
         if(darr[i].src_ptr_array == NULL || darr[i].dst_ptr_array ==NULL) return FAIL2;
@@ -378,11 +370,6 @@ int PARMCI_PutV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-#ifdef GA_USE_VAMPIR
-    vampir_begin(ARMCI_PUTV,__FILE__,__LINE__);
-    if (armci_me != proc)
-       vampir_start_comm(armci_me,proc,tot,ARMCI_PUTV);
-#endif
 #ifdef ARMCI_PROFILE
     armci_profile_start_vector(darr, len, proc, ARMCI_PROF_PUTV);
 #endif
@@ -426,11 +413,6 @@ int PARMCI_PutV( armci_giov_t darr[], /* descriptor array */
 #ifdef ARMCI_PROFILE
     armci_profile_stop_vector(ARMCI_PROF_PUTV);
 #endif
-#ifdef GA_USE_VAMPIR
-    if (armci_me != proc)
-       vampir_end_comm(armci_me,proc,tot,ARMCI_PUTV);
-    vampir_end(ARMCI_PUTV,__FILE__,__LINE__);
-#endif
 
     if(rc) return FAIL6;
     else return 0;
@@ -448,11 +430,6 @@ int PARMCI_GetV( armci_giov_t darr[], /* descriptor array */
     int totvec=0;
 #endif
 
-#ifdef GA_USE_VAMPIR
-    int tot=0;
-    for(i=0;i<len;i++) tot+=darr[i].bytes;
-#endif
-
     if(len<1) return FAIL;
     for(i=0;i<len;i++){
       if(darr[i].src_ptr_array==NULL ||darr[i].dst_ptr_array==NULL)return FAIL2;
@@ -465,11 +442,6 @@ int PARMCI_GetV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-#ifdef GA_USE_VAMPIR
-    vampir_begin(ARMCI_GETV,__FILE__,__LINE__);
-    if (armci_me != proc)
-       vampir_start_comm(proc,armci_me,tot,ARMCI_GETV);
-#endif
 #ifdef ARMCI_PROFILE
     armci_profile_start_vector(darr, len, proc, ARMCI_PROF_GETV);
 #endif
@@ -513,11 +485,6 @@ int PARMCI_GetV( armci_giov_t darr[], /* descriptor array */
 #ifdef ARMCI_PROFILE
     armci_profile_stop_vector(ARMCI_PROF_GETV);
 #endif
-#ifdef GA_USE_VAMPIR
-    if (armci_me != proc)
-       vampir_end_comm(proc,armci_me,tot,ARMCI_GETV);
-    vampir_end(ARMCI_GETV,__FILE__,__LINE__);
-#endif
 
     if(rc) return FAIL6;
     else return 0;
@@ -535,11 +502,6 @@ int PARMCI_AccV( int op,              /* oeration code */
 {
     int rc=0, i,direct=1;
 
-#ifdef GA_USE_VAMPIR
-    int tot=0;
-    for(i=0;i<len;i++) tot+=darr[i].bytes;
-#endif
-
     if(len<1) return FAIL;
     for(i=0;i<len;i++){
       if(darr[i].src_ptr_array==NULL ||darr[i].dst_ptr_array==NULL)return FAIL2;
@@ -549,11 +511,6 @@ int PARMCI_AccV( int op,              /* oeration code */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-#ifdef GA_USE_VAMPIR
-    vampir_begin(ARMCI_ACCV,__FILE__,__LINE__);
-    if (armci_me != proc)
-       vampir_start_comm(armci_me,proc,tot,ARMCI_ACCV);
-#endif
 #ifdef ARMCI_PROFILE
     armci_profile_start_vector(darr, len, proc, ARMCI_PROF_ACCV);
 #endif
@@ -581,11 +538,6 @@ int PARMCI_AccV( int op,              /* oeration code */
 #endif
 #ifdef ARMCI_PROFILE
     armci_profile_stop_vector(ARMCI_PROF_ACCV);
-#endif
-#ifdef GA_USE_VAMPIR
-    if (armci_me != proc)
-       vampir_end_comm(armci_me,proc,tot,ARMCI_ACCV);
-    vampir_end(ARMCI_ACCV,__FILE__,__LINE__);
 #endif
 
     if(rc) return FAIL6;
@@ -797,11 +749,6 @@ int PARMCI_NbAccV( int op,              /* oeration code */
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
     int rc=0, i,direct=1;
-
-#ifdef GA_USE_VAMPIR
-    int tot=0;
-    for(i=0;i<len;i++) tot+=darr[i].bytes;
-#endif
 
     if(len<1) return FAIL;
     for(i=0;i<len;i++)

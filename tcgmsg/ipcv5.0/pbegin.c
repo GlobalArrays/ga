@@ -28,10 +28,6 @@
 #include "typesf2c.h"
 #include "tcgmsgP.h"
 
-#ifdef USE_VAMPIR
-#   include "tcgmsg_vampir.h"
-#endif
-
 #ifdef LAPI
 ShmemBuf  TCGMSG_receive_buffer[MAX_PROC];
 void lapi_initialize();
@@ -74,12 +70,6 @@ void tcgi_pbegin(int argc, char **argv)
     TCGMSG_nodeid = 0;
     TCGMSG_nnodes = 1;        /* By default just sequential */
 
-#ifdef USE_VAMPIR
-    vampir_init(argc,argv,__FILE__,__LINE__);
-    tcgmsg_vampir_init(__FILE__,__LINE__);
-    vampir_begin(TCGMSG_PBEGINF,__FILE__,__LINE__);
-#endif
-
     if(SR_initialized)Error("TCGMSG initialized already???",-1);
     else SR_initialized=1;
 
@@ -105,9 +95,6 @@ void tcgi_pbegin(int argc, char **argv)
         Error("aborting ... ",0);
     }
     if (TCGMSG_nnodes == 1) {
-#ifdef USE_VAMPIR
-        vampir_end(TCGMSG_PBEGINF,__FILE__,__LINE__);
-#endif
         return;
     };
 
@@ -210,10 +197,6 @@ void tcgi_pbegin(int argc, char **argv)
 
         SYNCH_(&type);
     }
-
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_PBEGINF,__FILE__,__LINE__);
-#endif
 }
 
 
@@ -226,9 +209,6 @@ void tcgi_alt_pbegin(int *argc, char **argv[])
 void PEND_(void)
 {
     Integer type = 999;
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_PEND,__FILE__,__LINE__);
-#endif
 #ifndef LAPI
     (void) signal(SIGCHLD, SIG_DFL); /* Death of children now OK */
 #endif
@@ -245,9 +225,5 @@ void PEND_(void)
         if(rc)printf("DeleteSharedMem returned %d\n",rc);
         if (status) exit(1);
     }
-#endif
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_PEND,__FILE__,__LINE__);
-    vampir_finalize(__FILE__,__LINE__);
 #endif
 }

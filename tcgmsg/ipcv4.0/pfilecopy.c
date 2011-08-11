@@ -13,10 +13,6 @@
 #include "sndrcv.h"
 #include "msgtypesc.h"
 
-#ifdef GA_USE_VAMPIR
-#include "tcgmsg_vampir.h"
-#endif
-
 #if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX) || \
     defined(KSR)    || defined(DECOSF)
 extern void *malloc();
@@ -166,9 +162,6 @@ void PFCOPY_(type, node0, fname, len)
 
   char *filename;
 
-#ifdef GA_USE_VAMPIR
-  vampir_begin(TCGMSG_PFCOPY,__FILE__,__LINE__);
-#endif
 #ifdef DEBUG 
   (void) printf("me=%d, type=%d, node0=%d, fname=%x, fname=%.8s, len=%d\n",
 		NODEID_(), *type, *node0, fname, fname, len);
@@ -196,8 +189,5 @@ void PFCOPY_(type, node0, fname, len)
   tcgi_pfilecopy(type, node0, filename);
 
   (void) free(filename);
-#ifdef GA_USE_VAMPIR
-  vampir_end(TCGMSG_PFCOPY,__FILE__,__LINE__);
-#endif
 }
 

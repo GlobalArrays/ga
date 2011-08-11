@@ -22,10 +22,6 @@
 #endif
 
 
-#ifdef GA_USE_VAMPIR
-#include "armci_vampir.h"
-#endif
-
 /* global scope to prevent compiler optimization of volatile code */
 int  _a_temp;
 long _a_ltemp;
@@ -109,10 +105,6 @@ int PARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
 #elif defined(_CRAYMPP) || defined(QUADRICS) || defined(CRAY_SHMEM)
     int  ival;
     long lval;
-#endif
-
-#ifdef GA_USE_VAMPIR
-    vampir_begin(ARMCI_RMW,__FILE__,__LINE__);
 #endif
 
 #if defined(LAPI64) && defined(RMWBROKEN)
@@ -293,9 +285,6 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
       default: armci_die("rmw: operation not supported",op);
     }
 #endif /*bgml*/
-#ifdef GA_USE_VAMPIR
-    vampir_end(ARMCI_RMW,__FILE__,__LINE__);
-#endif
 
     return 0;
 }

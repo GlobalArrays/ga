@@ -3187,37 +3187,19 @@ void FATR nga_symmetrize_(Integer *g_a)
 void FATR nga_periodic_get_(Integer *g_a, Integer *lo, Integer *hi,
                             void *buf, Integer *ld)
 {
-#ifdef USE_VAMPIR
-    vampir_begin(NGA_PERIODIC_GET,__FILE__,__LINE__);
-#endif
     wnga_periodic(*g_a, lo, hi, buf, ld, NULL, PERIODIC_GET);
-#ifdef USE_VAMPIR
-    vampir_end(NGA_PERIODIC_GET,__FILE__,__LINE__);
-#endif
 }
 
 void FATR nga_periodic_put_(Integer *g_a, Integer *lo, Integer *hi,
                             void *buf, Integer *ld)
 {
-#ifdef USE_VAMPIR
-    vampir_begin(NGA_PERIODIC_PUT,__FILE__,__LINE__);
-#endif
     wnga_periodic(*g_a, lo, hi, buf, ld, NULL, PERIODIC_PUT);
-#ifdef USE_VAMPIR
-    vampir_end(NGA_PERIODIC_PUT,__FILE__,__LINE__);
-#endif
 }
 
 void FATR nga_periodic_acc_(Integer *g_a, Integer *lo, Integer *hi,
                             void *buf, Integer *ld, void *alpha)
 {
-#ifdef USE_VAMPIR
-    vampir_begin(NGA_PERIODIC_ACC,__FILE__,__LINE__);
-#endif
     wnga_periodic(*g_a, lo, hi, buf, ld, alpha, PERIODIC_ACC);
-#ifdef USE_VAMPIR
-    vampir_end(NGA_PERIODIC_ACC,__FILE__,__LINE__);
-#endif
 }
 
 /* Routines from matmul.c */

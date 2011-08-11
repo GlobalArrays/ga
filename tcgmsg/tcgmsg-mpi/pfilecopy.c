@@ -20,9 +20,6 @@ extern void free(void *ptr);
 #include "msgtypesc.h"
 #include "sndrcv.h"
 #include "tcgmsgP.h"
-#ifdef USE_VAMPIR
-#   include "tcgmsg_vampir.h"
-#endif
 
 /**
  * Process node0 has a file (assumed unopened) named fname.
@@ -48,10 +45,6 @@ void tcgi_pfilecopy(Integer *type, Integer *node0, char *filename)
     if (!(buffer = malloc((unsigned) nread))) {
         Error("pfilecopy: failed to allocate the I/O buffer",nread);
     }
-
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_PFCOPY,__FILE__,__LINE__);
-#endif
 
     if (*node0 == NODEID_()) {
 
@@ -114,9 +107,6 @@ void tcgi_pfilecopy(Integer *type, Integer *node0, char *filename)
     (void) fflush(file);
     (void) fclose(file);
     (void) free(buffer);
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_PFCOPY,__FILE__,__LINE__);
-#endif
 }
 
 /** The original C interface to PFCOPY_. */
@@ -135,9 +125,6 @@ void PFCOPY_(Integer *type, Integer *node0, char *fname, int len)
     (void) printf("me=%d, type=%d, node0=%d, fname=%x, fname=%.8s, len=%d\n",
                   NODEID_(), *type, *node0, fname, fname, len);
 #endif 
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_PFCOPY,__FILE__,__LINE__);
-#endif
 
     /* Strip trailing blanks off the file name */
 
@@ -164,7 +151,4 @@ void PFCOPY_(Integer *type, Integer *node0, char *fname, int len)
     tcgi_pfilecopy(type, node0, filename);
 
     (void) free(filename);
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_PFCOPY,__FILE__,__LINE__);
-#endif
 }

@@ -12,10 +12,6 @@ extern void qsort(void *base, size_t nmemb, size_t size, int(*compar)(const void
 #include "sndrcv.h"
 #include "tcgmsgP.h"
 
-#ifdef USE_VAMPIR
-#   include "tcgmsg_vampir.h"
-#endif
-
 extern Integer MatchShmMessage();
 extern void msg_wait();
 extern long DEBUG_;
@@ -88,15 +84,7 @@ Integer PROBE_(Integer *type, Integer *node)
     Integer nnode = *node;
     Integer result;
 
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_PROBE,__FILE__,__LINE__);
-#endif
-
     result = ProbeNode(type, &nnode);
-
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_PROBE,__FILE__,__LINE__);
-#endif
 
     return(result);
 }
@@ -121,10 +109,6 @@ void RCV_(Integer *type, void *buf, Integer *lenbuf, Integer *lenmes, Integer *n
     Integer   me = NODEID_();
     void msg_rcv();
 
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_RCV,__FILE__,__LINE__);
-#endif
-
     node = *nodeselect;
 
     ttype = *type;
@@ -145,10 +129,6 @@ void RCV_(Integer *type, void *buf, Integer *lenbuf, Integer *lenmes, Integer *n
                       (long)me, (long)*nodeselect, (long)*lenbuf);
         (void) fflush(stdout);
     }
-#ifdef USE_VAMPIR
-    vampir_recv(me,*nodefrom,*lenmes,*type);
-    vampir_end(TCGMSG_RCV,__FILE__,__LINE__);
-#endif
 }
 
 
@@ -169,11 +149,6 @@ void SND_(Integer *type, void *buf, Integer *lenbuf, Integer *node, Integer *syn
     Integer block = 1;
 #else
     Integer block = *sync;
-#endif
-
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_SND,__FILE__,__LINE__);
-    vampir_send(me,*node,*lenbuf,*type);
 #endif
 
     if (DEBUG_) {
@@ -201,10 +176,6 @@ void SND_(Integer *type, void *buf, Integer *lenbuf, Integer *node, Integer *syn
                       (long)me, (long)*node, (long)*lenbuf);
         (void) fflush(stdout);
     }
-
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_SND,__FILE__,__LINE__);
-#endif
 }
 
 
@@ -226,10 +197,6 @@ int compare_msg_q_entries(const void* entry1, const void* entry2)
 void WAITCOM_(Integer *nodesel)
 {
     Integer i, found = 0;
-
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_WAITCOM,__FILE__,__LINE__);
-#endif
 
     for (i=0; i<n_in_msg_q; i++) if(*nodesel==msg_q[i].node || *nodesel ==-1){
 
@@ -259,8 +226,4 @@ void WAITCOM_(Integer *nodesel)
         n_in_msg_q = i;
 
     }
-
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_WAITCOM,__FILE__,__LINE__);
-#endif
 }

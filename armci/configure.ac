@@ -67,7 +67,6 @@ GA_ENABLE_CHECKPOINT
 GA_ENABLE_OPT
 GA_ENABLE_TRACE
 GA_THREAD_SAFE
-GA_WITH_VAMPIR
 
 # Unless we rename all preprocessor references to MPI and MPIPP
 # in the source code, this hack is necessary.

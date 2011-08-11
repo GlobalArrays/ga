@@ -5,9 +5,6 @@
 #include <mpi.h>
 
 #include "tcgmsgP.h"
-#ifdef USE_VAMPIR
-#   include "tcgmsg_vampir.h"
-#endif
 
 #define LEN 2
 Integer nxtval_counter=0;
@@ -116,10 +113,6 @@ Integer NXTVAL_(Integer *mproc)
     int server = (int)NNODES_() -1; /**< id of server process */
 #endif
 
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
-#endif
-
     if (SR_parallel) {
         buf[0] = *mproc;
         buf[1] = INCR;
@@ -150,9 +143,6 @@ Integer NXTVAL_(Integer *mproc)
         }
     }
 
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
-#endif
     return local;
 }
 

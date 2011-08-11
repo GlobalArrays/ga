@@ -19,10 +19,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
-#ifdef GA_USE_VAMPIR
-#include "tcgmsg_vampir.h"
-#endif
-
 #if defined(SHMEM) || defined(SYSV)
 #   if (defined(SGI_N32) || defined(SGITFP))
 #       define PARTIALSPIN
@@ -509,10 +505,6 @@ void SND_(type, buf, lenbuf, node, sync)
 #ifdef TIMINGS
   double start;
 #endif
-#ifdef GA_USE_VAMPIR
-  vampir_begin(TCGMSG_SND,__FILE__,__LINE__);
-  vampir_send(me,*node,*lenbuf,*type);
-#endif
 
   /* Error checking */
 
@@ -566,9 +558,6 @@ void SND_(type, buf, lenbuf, node, sync)
 
 #ifdef EVENTLOG
   evlog(EVKEY_END, EVENT_SND, EVKEY_LAST_ARG);
-#endif
-#ifdef GA_USE_VAMPIR
-  vampir_end(TCGMSG_SND,__FILE__,__LINE__);
 #endif
 }    
     
@@ -716,10 +705,6 @@ long PROBE_(type, node)
   long  me = NODEID_();
   int i, proclo, prochi;
 
-#ifdef GA_USE_VAMPIR
-  vampir_begin(TCGMSG_PROBE,__FILE__,__LINE__);
-#endif
-  
   if (*node == me)
     Error("PROBE_ : cannot recv message from self, msgtype=", *type);
       
@@ -780,9 +765,6 @@ long PROBE_(type, node)
     }
   }
 
-#ifdef GA_USE_VAMPIR
-  vampir_end(TCGMSG_PROBE,__FILE__,__LINE__);
-#endif
   if (i <= prochi)
     return 1;
   else
@@ -941,9 +923,6 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 #ifdef TIMINGS
   double start;
 #endif
-#ifdef GA_USE_VAMPIR
-  vampir_begin(TCGMSG_RCV,__FILE__,__LINE__);
-#endif
 
 #ifdef EVENTLOG
   evlog(EVKEY_BEGIN,     EVENT_RCV,
@@ -1004,10 +983,6 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 	EVKEY_MSG_FROM, (int) node,
 	EVKEY_MSG_LEN, (int) *lenmes,
 	EVKEY_LAST_ARG);
-#endif
-#ifdef GA_USE_VAMPIR
-  vampir_recv(me,node,*lenmes,*type);
-  vampir_end(TCGMSG_RCV,__FILE__,__LINE__);
 #endif
 }    
   

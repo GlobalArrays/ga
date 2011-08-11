@@ -52,9 +52,6 @@
 #ifdef ARMCIX
 #include "x/armcix.h"
 #endif
-#ifdef GA_USE_VAMPIR
-#include "armci_vampir.h"
-#endif
 #ifdef ARMCI_PROFILE
 #include "armci_profile.h"
 #endif
@@ -452,13 +449,7 @@ void ARMCI_Set_shmem_limit(unsigned long shmemlimit)
 
 void ARMCI_Copy(void *src, void *dst, int n)
 {
-#ifdef GA_USE_VAMPIR
- vampir_begin(ARMCI_COPY,__FILE__,__LINE__);
-#endif
  armci_copy(src,dst,n);
-#ifdef GA_USE_VAMPIR
- vampir_end(ARMCI_COPY,__FILE__,__LINE__);
-#endif
 }
 
 extern void cpu_yield();

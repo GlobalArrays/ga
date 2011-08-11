@@ -59,9 +59,6 @@
 #ifdef ARMCIX
 #include "armcix.h"
 #endif
-#ifdef GA_USE_VAMPIR
-#include "armci_vampir.h"
-#endif
 #ifdef ARMCI_PROFILE
 #include "armci_profile.h"
 #endif
@@ -127,9 +124,6 @@ int _armci_malloc_local_region;
 
 void ARMCI_Cleanup()
 {
-#ifdef GA_USE_VAMPIR
-  vampir_begin(ARMCI_CLEANUP,__FILE__,__LINE__);
-#endif
 #if (defined(SYSV) || defined(WIN32) || defined(MMAP))&& !defined(HITACHI) 
     Delete_All_Regions();
     if(armci_nproc>1)
@@ -148,9 +142,6 @@ void ARMCI_Cleanup()
 #ifndef WIN32
     ARMCI_RestoreSignals();
 #endif
-#endif
-#ifdef GA_USE_VAMPIR
-  vampir_end(ARMCI_CLEANUP,__FILE__,__LINE__);
 #endif
 }
 
@@ -395,11 +386,6 @@ int PARMCI_Init()
     int th_idx;
 #endif
     if(_armci_initialized>0) return 0;
-#ifdef GA_USE_VAMPIR
-    vampir_init(NULL,NULL,__FILE__,__LINE__);
-    armci_vampir_init(__FILE__,__LINE__);
-    vampir_begin(ARMCI_INIT,__FILE__,__LINE__);
-#endif
     dassertp(1,sizeof(armci_ireq_t) <= sizeof(armci_hdl_t),
 	     ("nb handle sizes: internal(%d) should be <= external(%d)\n",
 	      sizeof(armci_ireq_t), sizeof(armci_hdl_t)));
@@ -587,9 +573,6 @@ int PARMCI_Init()
 #ifdef ARMCI_PROFILE
     armci_profile_init();
 #endif
-#ifdef GA_USE_VAMPIR
-    vampir_end(ARMCI_INIT,__FILE__,__LINE__);
-#endif    
 
     _armci_initialized=1;
 #ifdef ENABLE_CHECKPOINT
@@ -669,13 +652,7 @@ void ARMCI_Set_shmem_limit(unsigned long shmemlimit)
 
 void ARMCI_Copy(void *src, void *dst, int n)
 {
-#ifdef GA_USE_VAMPIR
- vampir_begin(ARMCI_COPY,__FILE__,__LINE__);
-#endif
  armci_copy(src,dst,n);
-#ifdef GA_USE_VAMPIR
- vampir_end(ARMCI_COPY,__FILE__,__LINE__);
-#endif
 }
 
 extern void cpu_yield();

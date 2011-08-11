@@ -45,10 +45,6 @@
 #include "papi.h"
 #include "wapi.h"
 
-#ifdef USE_VAMPIR
-#   include "ga_vampir.h"
-#endif
-
 /**********************************************************
  *  n-dimensional utilities                               *
  **********************************************************/
@@ -177,10 +173,6 @@ void pnga_copy_patch(char *trans,
   Integer num_blocks_a, num_blocks_b/*, chk*/;
   int use_put, has_intersection;
   int local_sync_begin,local_sync_end;
-
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_COPY_PATCH,__FILE__,__LINE__);
-#endif    
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -829,9 +821,6 @@ void pnga_copy_patch(char *trans,
       pnga_pgroup_sync(b_grp);
     }
   }
-#ifdef USE_VAMPIR
-  vampir_end(NGA_COPY_PATCH,__FILE__,__LINE__);
-#endif    
 }
 
 
@@ -1505,9 +1494,6 @@ void pnga_fill_patch(Integer g_a, Integer *lo, Integer *hi, void* val)
   Integer me= pnga_nodeid();
   int local_sync_begin,local_sync_end;
 
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_FILL_PATCH,__FILE__,__LINE__);
-#endif 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync(); 
@@ -1704,9 +1690,6 @@ void pnga_fill_patch(Integer g_a, Integer *lo, Integer *hi, void* val)
   }
   GA_POP_NAME;
   if(local_sync_end)pnga_sync();
-#ifdef USE_VAMPIR
-  vampir_end(NGA_FILL_PATCH,__FILE__,__LINE__);
-#endif 
 }
 
 
@@ -1865,9 +1848,6 @@ void pnga_scale_patch(Integer g_a, Integer *lo, Integer *hi, void *alpha)
   Integer me= pnga_nodeid();
   int local_sync_begin,local_sync_end;
 
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_SCALE_PATCH,__FILE__,__LINE__);
-#endif 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
@@ -2058,9 +2038,6 @@ void pnga_scale_patch(Integer g_a, Integer *lo, Integer *hi, void *alpha)
   }
   GA_POP_NAME;
   if(local_sync_end)pnga_sync();   
-#ifdef USE_VAMPIR
-  vampir_end(NGA_SCALE_PATCH,__FILE__,__LINE__);
-#endif 
 }
 
 
@@ -2245,9 +2222,6 @@ void *alpha, *beta;
   char *tempname = "temp", notrans='n';
   int local_sync_begin,local_sync_end;
 
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_ADD_PATCH,__FILE__,__LINE__);
-#endif 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)pnga_sync();
@@ -2571,9 +2545,6 @@ void *alpha, *beta;
 
   GA_POP_NAME;
   if(local_sync_end)pnga_sync();
-#ifdef USE_VAMPIR
-  vampir_end(NGA_ADD_PATCH,__FILE__,__LINE__);
-#endif 
 }
 
 
@@ -2593,10 +2564,6 @@ void pnga_zero_patch(Integer g_a, Integer *lo, Integer *hi)
     void *valptr = NULL;
     int local_sync_begin,local_sync_end;
     
-#ifdef USE_VAMPIR
-    vampir_begin(NGA_ZERO_PATCH,__FILE__,__LINE__);
-#endif 
-
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)pnga_sync();
@@ -2639,7 +2606,4 @@ void pnga_zero_patch(Integer g_a, Integer *lo, Integer *hi)
     
     GA_POP_NAME;
     if(local_sync_end)pnga_sync();
-#ifdef USE_VAMPIR
-    vampir_end(NGA_ZERO_PATCH,__FILE__,__LINE__);
-#endif 
 }

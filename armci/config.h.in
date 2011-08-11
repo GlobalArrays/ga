@@ -571,9 +571,6 @@
 #endif
 
 
-/* define when using vampir */
-#undef USE_VAMPIR
-
 /* TODO */
 #undef VAPI
 

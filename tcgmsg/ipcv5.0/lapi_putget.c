@@ -17,10 +17,6 @@
 
 #include "tcgmsgP.h"
 
-#ifdef USE_VAMPIR
-#   include "tcgmsg_vampir.h"
-#endif
-
 lapi_handle_t lapi_handle;
 lapi_info_t   lapi_info;
 extern ShmemBuf TCGMSG_receive_buffer[];
@@ -180,11 +176,6 @@ Integer NXTVAL_(Integer *mproc)
 
     int  server = (int)NNODES_() -1;         /* id of server process */
 
-#ifdef USE_VAMPIR
-    int me = (int)NODEID_();
-    vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
-#endif
-
     if (server>0) { 
         /* parallel execution */
         if (DEBUG_) {
@@ -200,10 +191,6 @@ Integer NXTVAL_(Integer *mproc)
         }
         if (*mproc > 0) {
             /* use atomic swap operation to increment nxtval counter */
-#ifdef USE_VAMPIR
-            vampir_start_comm(server,me,sizeof(int),TCGMSG_NXTVAL);
-#endif
-
             rc = LAPI_Setcntr(lapi_handle, &req_id, 0);
             if(rc)Error("nxtval: setcntr failed",rc);
             rc = LAPI_Rmw(lapi_handle, FETCH_AND_ADD, server, nxtval_cnt_adr,
@@ -211,10 +198,6 @@ Integer NXTVAL_(Integer *mproc)
             if(rc)Error("nxtval: rmw failed",rc);
             rc = LAPI_Waitcntr(lapi_handle, &req_id, 1, NULL);
             if(rc)Error("nxtval: waitcntr failed",rc);
-
-#ifdef USE_VAMPIR
-            vampir_end_comm(server,me,sizeof(int),TCGMSG_NXTVAL);
-#endif
         }
     } else {
         /* Not running in parallel ... just do a simulation */
@@ -230,10 +213,6 @@ Integer NXTVAL_(Integer *mproc)
         else
             Error("nxtval: sequential version with silly mproc ", (Integer) *mproc);
     }
-
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
-#endif
 
     return (Integer)local;
 }
@@ -315,16 +294,9 @@ void Busy(int n)
 void SYNCH_(Integer* type)
 {
     int rc;
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_SYNCH,__FILE__,__LINE__);
-#endif
 
     rc=LAPI_Gfence(lapi_handle);
     if(rc) Error("lapi_gfence failed",rc);
-
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_SYNCH,__FILE__,__LINE__);
-#endif
 }
 
 

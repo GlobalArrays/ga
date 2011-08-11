@@ -20,11 +20,6 @@
 #include "papi.h"
 #include "wapi.h"
 
-#ifdef USE_VAMPIR
-#include "../ga_vt.h"
-#include "ga_vampir.h"
-#endif
-
 #if NOFORT
 #   define BlasInt int
 #elif BLAS_SIZE == SIZEOF_F77_INTEGER
@@ -1363,10 +1358,6 @@ void pnga_matmul(transa, transb, alpha, beta,
     Integer numblocks;
     Integer clo[2], chi[2];
 
-#ifdef USE_VAMPIR
-  vampir_begin(GA_MATMUL,__FILE__,__LINE__);
-#endif
-
     /* OPTIMIZATIONS FLAGS. To unset an optimization, replace SET by UNSET) */
     CYCLIC_DISTR_OPT_FLAG  = UNSET;
     CONTIG_CHUNKS_OPT_FLAG = SET;
@@ -1612,9 +1603,6 @@ void pnga_matmul(transa, transb, alpha, beta,
        
        GA_POP_NAME;   
        if(local_sync_end)pnga_pgroup_sync(a_grp);
-#ifdef USE_VAMPIR
-  vampir_end(GA_MATMUL,__FILE__,__LINE__);
-#endif
 }
 
 /* This is the old matmul code. It is enabled now for mirrored matrix multiply. 
@@ -1978,9 +1966,6 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
         Integer g_b,Integer bilo,Integer bihi,Integer bjlo,Integer bjhi,
         Integer g_c,Integer cilo,Integer cihi,Integer cjlo,Integer cjhi)
 {
-#ifdef USE_VAMPIR
-  vampir_begin(GA_MATMUL_PATCH,__FILE__,__LINE__);
-#endif
     if(pnga_is_mirrored(g_a)) 
        pnga_matmul_mirrored(transa, transb, alpha, beta,
 			  g_a, ailo, aihi, ajlo, ajhi,
@@ -1994,10 +1979,6 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
 		 g_c, cilo, cihi, cjlo, cjhi);
        _gai_matmul_patch_flag = UNSET;
     }
-#ifdef USE_VAMPIR
-  vampir_end(GA_MATMUL_PATCH,__FILE__,__LINE__);
-#endif
-
 }
 #endif
 
@@ -2096,10 +2077,6 @@ DoublePrecision chunk_cube;
 Integer min_tasks = 10, max_chunk;
 int local_sync_begin,local_sync_end;
 BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
-
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_MATMUL_PATCH,__FILE__,__LINE__);
-#endif
 
    ONE.real =1.; ONE.imag =0.;
    ONE_CF.real =1.; ONE_CF.imag =0.;
@@ -2388,10 +2365,6 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    
    GA_POP_NAME;
    if(local_sync_end)pnga_sync(); 
-
-#ifdef USE_VAMPIR
-  vampir_end(NGA_MATMUL_PATCH,__FILE__,__LINE__);
-#endif
 }
 
 /**

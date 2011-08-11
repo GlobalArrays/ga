@@ -6,10 +6,6 @@
 
 #include "tcgmsgP.h"
 
-#ifdef USE_VAMPIR
-#   include "tcgmsg_vampir.h"
-#endif
-
 /* size of internal buffer for global ops */
 #define DGOP_BUF_SIZE 65536 
 #define IGOP_BUF_SIZE (sizeof(DoublePrecision)/sizeof(Integer))*DGOP_BUF_SIZE 
@@ -26,10 +22,6 @@ void IGOP_(Integer *ptype, Integer *x, Integer *pn, char *op, Integer oplen)
     Integer buflen = TCG_MIN(nleft,IGOP_BUF_SIZE); /**< Try to get even sized buffers */
     Integer nbuf   = (nleft-1) / buflen + 1;
     Integer n;
-
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_IGOP,__FILE__,__LINE__);
-#endif
 
 /* #ifdef ARMCI */
     if(!_tcg_initialized){
@@ -79,9 +71,6 @@ void IGOP_(Integer *ptype, Integer *x, Integer *pn, char *op, Integer oplen)
 
         nleft -= ndo; x+= ndo;
     }
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_IGOP,__FILE__,__LINE__);
-#endif
 }
 
 
@@ -97,9 +86,6 @@ void DGOP_(Integer *ptype, DoublePrecision *x, Integer *pn, char *op, Integer op
     Integer nbuf   = (nleft-1) / buflen + 1;
     Integer n;
 
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_DGOP,__FILE__,__LINE__);
-#endif
     buflen = (nleft-1) / nbuf + 1;
 
     if (strncmp(op,"abs",3) == 0) {
@@ -137,9 +123,6 @@ void DGOP_(Integer *ptype, DoublePrecision *x, Integer *pn, char *op, Integer op
 
         nleft -= ndo; x+= ndo;
     }
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_DGOP,__FILE__,__LINE__);
-#endif
 }
 
 

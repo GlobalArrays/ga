@@ -68,9 +68,6 @@
 #define BYTE_ADDRESSABLE_MEMORY
 #endif
 
-#ifdef USE_VAMPIR
-#include "ga_vampir.h"
-#endif
 #ifdef PROFILE_OLD
 #include "ga_profile.h"
 #endif
@@ -104,9 +101,6 @@ void pnga_pgroup_sync(Integer grp_id)
 #ifdef CHECK_MA
     Integer status;
 #endif
-#ifdef USE_VAMPIR
-    vampir_begin(GA_PGROUP_SYNC,__FILE__,__LINE__);
-#endif
  
 /*    printf("p[%d] calling ga_pgroup_sync on group: %d\n",GAme,*grp_id); */
     if (grp_id > 0) {
@@ -136,9 +130,6 @@ void pnga_pgroup_sync(Integer grp_id)
 #ifdef CHECK_MA
     status = MA_verify_allocator_stuff();
 #endif
-#ifdef USE_VAMPIR
-    vampir_end(GA_PGROUP_SYNC,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -152,9 +143,6 @@ void pnga_sync()
 {
 #ifdef CHECK_MA
 Integer status;
-#endif
-#ifdef USE_VAMPIR
-       vampir_begin(GA_SYNC,__FILE__,__LINE__);
 #endif
        
        if (GA_Default_Proc_Group == -1) {
@@ -175,9 +163,6 @@ Integer status;
 #ifdef CHECK_MA
        status = MA_verify_allocator_stuff();
 #endif
-#ifdef USE_VAMPIR
-       vampir_end(GA_SYNC,__FILE__,__LINE__);
-#endif
 }
 
 
@@ -191,16 +176,10 @@ Integer status;
 void pnga_fence()
 {
     int proc;
-#ifdef USE_VAMPIR
-    vampir_begin(GA_FENCE,__FILE__,__LINE__);
-#endif
     if(GA_fence_set<1)pnga_error("ga_fence: fence not initialized",0);
     GA_fence_set--;
     for(proc=0;proc<GAnproc;proc++)if(fence_array[proc])ARMCI_Fence(proc);
     bzero(fence_array,(int)GAnproc);
-#ifdef USE_VAMPIR
-    vampir_end(GA_FENCE,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -212,13 +191,7 @@ void pnga_fence()
 
 void pnga_init_fence()
 {
-#ifdef USE_VAMPIR
-    vampir_begin(GA_INIT_FENCE,__FILE__,__LINE__);
-#endif
     GA_fence_set++;
-#ifdef USE_VAMPIR
-    vampir_end(GA_INIT_FENCE,__FILE__,__LINE__);
-#endif
 }
 
 void gai_init_onesided()
@@ -580,9 +553,6 @@ void ngai_put_common(Integer g_a,
   int _stride_rem[MAXDIM+1], _stride_loc[MAXDIM+1], _count[MAXDIM+1];
   int *stride_rem=&_stride_rem[1], *stride_loc=&_stride_loc[1], *count=&_count[1];
 
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_NBPUT,__FILE__,__LINE__);
-#endif
   GA_PUSH_NAME("ngai_put_common");
 
   ga_check_handleM(g_a, "ngai_put_common");
@@ -1068,9 +1038,6 @@ void ngai_put_common(Integer g_a,
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
-#ifdef USE_VAMPIR
-  vampir_end(NGA_NBPUT,__FILE__,__LINE__);
-#endif
 }
 
 
@@ -1157,10 +1124,6 @@ void ngai_get_common(Integer g_a,
 
   int _stride_rem[MAXDIM+1], _stride_loc[MAXDIM+1], _count[MAXDIM+1];
   int *stride_rem=&_stride_rem[1], *stride_loc=&_stride_loc[1], *count=&_count[1];
-
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_GET,__FILE__,__LINE__);
-#endif
 
   GA_PUSH_NAME("nga_get_common");
 
@@ -1649,9 +1612,6 @@ void ngai_get_common(Integer g_a,
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
-#ifdef USE_VAMPIR
-  vampir_end(NGA_GET,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -1725,9 +1685,6 @@ void ngai_acc_common(Integer g_a,
   Integer *rank_rstrctd;
 
 
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_ACC,__FILE__,__LINE__);
-#endif
   GA_PUSH_NAME("nga_acc_common");
 
   ga_check_handleM(g_a, "nga_acc_common");
@@ -2181,9 +2138,6 @@ void ngai_acc_common(Integer g_a,
 #ifdef PROFILE_OLD
   ga_profile_stop();
 #endif
-#ifdef USE_VAMPIR
-  vampir_end(NGA_ACC,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -2527,9 +2481,6 @@ Integer  ow,i,p_handle;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
-#ifdef USE_VAMPIR
-   vampir_begin(NGA_ACCESS,__FILE__,__LINE__);
-#endif
    GA_PUSH_NAME("nga_access");
    p_handle = GA[handle].p_handle;
    if(!pnga_locate(g_a,lo,&ow))pnga_error("locate top failed",0);
@@ -2608,9 +2559,6 @@ unsigned long    lref=0, lptr;
    FLUSH_CACHE;
 
    GA_POP_NAME;
-#ifdef USE_VAMPIR
-   vampir_end(NGA_ACCESS,__FILE__,__LINE__);
-#endif
 }
 
 /*\ PROVIDE ACCESS TO AN INDIVIDUAL DATA BLOCK OF A GLOBAL ARRAY
@@ -2627,9 +2575,6 @@ Integer  /*p_handle,*/ iblock;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
-#ifdef USE_VAMPIR
-   vampir_begin(NGA_ACCESS_BLOCK,__FILE__,__LINE__);
-#endif
    GA_PUSH_NAME("nga_access_block");
    /*p_handle = GA[handle].p_handle;*/
    iblock = idx;
@@ -2691,9 +2636,6 @@ unsigned long    lref=0, lptr;
    FLUSH_CACHE;
 
    GA_POP_NAME;
-#ifdef USE_VAMPIR
-   vampir_end(NGA_ACCESS_BLOCK,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -2713,9 +2655,6 @@ Integer  i,ndim/*,p_handle*/;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
-#ifdef USE_VAMPIR
-   vampir_begin(NGA_ACCESS_BLOCK,__FILE__,__LINE__);
-#endif
    GA_PUSH_NAME("nga_access_block_grid");
    /*p_handle = GA[handle].p_handle;*/
    ndim = GA[handle].ndim;
@@ -2778,9 +2717,6 @@ unsigned long    lref=0, lptr;
    FLUSH_CACHE;
 
    GA_POP_NAME;
-#ifdef USE_VAMPIR
-   vampir_end(NGA_ACCESS_BLOCK,__FILE__,__LINE__);
-#endif
 }
 
 /*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
@@ -2798,9 +2734,6 @@ Integer  handle = GA_OFFSET + g_a;
 unsigned long    elemsize;
 unsigned long    lref=0, lptr;
 
-#ifdef USE_VAMPIR
-   vampir_begin(NGA_ACCESS_BLOCK_SEGMENT,__FILE__,__LINE__);
-#endif
    GA_PUSH_NAME("nga_access_block_segment");
    /*p_handle = GA[handle].p_handle;*/
 
@@ -2859,9 +2792,6 @@ unsigned long    lref=0, lptr;
    FLUSH_CACHE;
 
    GA_POP_NAME;
-#ifdef USE_VAMPIR
-   vampir_end(NGA_ACCESS_BLOCK_SEGMENT,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -3094,9 +3024,6 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
     Integer num_blocks=0;
     
     if (nv < 1) return;
-#ifdef USE_VAMPIR
-    vampir_begin(GA_SCATTER,__FILE__,__LINE__);
-#endif
     
     ga_check_handleM(g_a, "ga_scatter");
     GA_PUSH_NAME("ga_scatter");
@@ -3333,9 +3260,6 @@ void pnga_scatter2d(Integer g_a, void *v, Integer *i, Integer *j, Integer nv)
     gai_free(buf1);
 
     GA_POP_NAME;
-#ifdef USE_VAMPIR
-    vampir_end(GA_SCATTER,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -3943,18 +3867,12 @@ void pnga_gather(Integer g_a, void* v, Integer subscript[], Integer nv)
 
   if (nv < 1) return;
   ga_check_handleM(g_a, "nga_gather");
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_GATHER,__FILE__,__LINE__);
-#endif
   GA_PUSH_NAME("nga_gather");
   GAstat.numgat++;
 
   gai_gatscat(GATHER,g_a,v,subscript,nv,&GAbytes.gattot,&GAbytes.gatloc, NULL);
 
   GA_POP_NAME;
-#ifdef USE_VAMPIR
-  vampir_end(NGA_GATHER,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -3969,9 +3887,6 @@ void pnga_scatter(Integer g_a, void* v, Integer subscript[], Integer nv)
 {
 
   if (nv < 1) return;
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_SCATTER,__FILE__,__LINE__);
-#endif
   ga_check_handleM(g_a, "nga_scatter");
   GA_PUSH_NAME("nga_scatter");
   GAstat.numsca++;
@@ -3979,9 +3894,6 @@ void pnga_scatter(Integer g_a, void* v, Integer subscript[], Integer nv)
   gai_gatscat(SCATTER,g_a,v,subscript,nv,&GAbytes.scatot,&GAbytes.scaloc, NULL);
 
   GA_POP_NAME;
-#ifdef USE_VAMPIR
-  vampir_end(NGA_SCATTER,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -4077,9 +3989,6 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
     
     if (nv < 1) return;
 
-#ifdef USE_VAMPIR
-    vampir_begin(GA_GATHER,__FILE__,__LINE__);
-#endif
     ga_check_handleM(g_a, "ga_gather");
     GA_PUSH_NAME("ga_gather");
     GAstat.numgat++;
@@ -4313,9 +4222,6 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
     gai_free(buf2);
     gai_free(buf1);
     GA_POP_NAME;
-#ifdef USE_VAMPIR
-    vampir_end(GA_GATHER,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -4332,9 +4238,6 @@ int optype,ivalue;
 long lvalue;
 void *pval;
 
-#ifdef USE_VAMPIR
-    vampir_begin(NGA_READ_INC,__FILE__,__LINE__);
-#endif
     ga_check_handleM(g_a, "nga_read_inc");
     GA_PUSH_NAME("nga_read_inc");
     /* BJP printf("p[%d] g_a: %d subscript: %d inc: %d\n",GAme, g_a, subscript[0], inc); */
@@ -4419,9 +4322,6 @@ void *pval;
     ARMCI_Rmw(optype, pval, (int*)ptr, (int)inc, (int)proc);
 
    GA_POP_NAME;
-#ifdef USE_VAMPIR
-   vampir_end(NGA_READ_INC,__FILE__,__LINE__);
-#endif
 
     if(GA[handle].type==C_INT)
          return (Integer) ivalue;
@@ -4599,10 +4499,6 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   Integer idx, size, nstride, p_handle, nproc;
   int i, proc, ndim;
   int use_blocks;
-
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_STRIDED_PUT,__FILE__,__LINE__);
-#endif
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -4941,9 +4837,6 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     }
   }
   GA_POP_NAME;
-#ifdef USE_VAMPIR
-  vampir_end(NGA_STRIDED_PUT,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -4966,10 +4859,6 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   Integer idx, size, nstride, p_handle, nproc;
   int i, proc, ndim;
   int use_blocks;
-
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_STRIDED_GET,__FILE__,__LINE__);
-#endif
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -5329,9 +5218,6 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     }
   }
   GA_POP_NAME;
-#ifdef USE_VAMPIR
-  vampir_end(NGA_STRIDED_GET,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -5357,10 +5243,6 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   Integer idx, size, nstride, type, p_handle, nproc;
   int i, optype=-1, proc, ndim;
   int use_blocks;
-
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_STRIDED_ACC,__FILE__,__LINE__);
-#endif
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -5711,7 +5593,4 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
     }
   }
   GA_POP_NAME;
-#ifdef USE_VAMPIR
-  vampir_end(NGA_STRIDED_GET,__FILE__,__LINE__);
-#endif
 }

@@ -20,9 +20,6 @@
 
 char *_armci_fence_arr;
 
-#ifdef GA_USE_VAMPIR
-#include "armci_vampir.h"
-#endif
 #ifdef ARMCI_PROFILE
 #include "armci_profile.h"
 #endif
@@ -52,11 +49,6 @@ void armci_update_fence_array(int proc, int inc)
 
 void PARMCI_Fence(int proc)
 {
-#ifdef GA_USE_VAMPIR
-     vampir_begin(ARMCI_FENCE,__FILE__,__LINE__);
- if (armci_me != proc)
-        vampir_start_comm(proc,armci_me,0,ARMCI_FENCE);
-#endif
 #ifdef ARMCI_PROFILE
  if (!SAMECLUSNODE(proc))
  armci_profile_start(ARMCI_PROF_FENCE);
@@ -86,19 +78,11 @@ void PARMCI_Fence(int proc)
  if (!SAMECLUSNODE(proc))
  armci_profile_stop(ARMCI_PROF_FENCE);
 #endif
-#ifdef GA_USE_VAMPIR
-     if (armci_me != proc)
-        vampir_end_comm(proc,armci_me,0,ARMCI_FENCE);
-     vampir_end(ARMCI_FENCE,__FILE__,__LINE__);
-#endif
 }
 
 
 void PARMCI_AllFence()
 {
-#ifdef GA_USE_VAMPIR
-    vampir_begin(ARMCI_ALLFENCE,__FILE__,__LINE__);
-#endif
 #ifdef ARMCI_PROFILE
     armci_profile_start(ARMCI_PROF_ALLFENCE);
 #endif
@@ -115,9 +99,6 @@ void PARMCI_AllFence()
 #endif
 #ifdef ARMCI_PROFILE
     armci_profile_stop(ARMCI_PROF_ALLFENCE);
-#endif
-#ifdef GA_USE_VAMPIR
-    vampir_end(ARMCI_ALLFENCE,__FILE__,__LINE__);
 #endif
     MEM_FENCE;
 }

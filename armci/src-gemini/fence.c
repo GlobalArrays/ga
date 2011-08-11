@@ -19,9 +19,6 @@
 
 char *_armci_fence_arr;
 
-#ifdef GA_USE_VAMPIR
-#include "armci_vampir.h"
-#endif
 #ifdef ARMCI_PROFILE
 #include "armci_profile.h"
 #endif

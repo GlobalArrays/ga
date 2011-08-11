@@ -6,10 +6,6 @@
 #   include <stdio.h>
 #endif
 
-#ifdef USE_VAMPIR
-#   include "tcgmsg_vampir.h"
-#endif
-
 #include <pvm3.h>
 
 #define MAX_PROC 128
@@ -62,16 +58,8 @@ void SND_(type, buf, lenbuf, node, sync)
     long *sync;
 {
     long tid=pvm_gettid("", *node);
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_SND,__FILE__,__LINE__);
-    vampir_send(me,*node,*lenbuf,*type);
-#endif
 
     pvm_psend(tid, *type, buf, *lenbuf, PVM_BYTE); 
-
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_SND,__FILE__,__LINE__);
-#endif
 }
 
 
@@ -86,16 +74,9 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 {
     int tid=*nodeselect, tidfrom;
 
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_RCV,__FILE__,__LINE__);
-#endif
     if(tid >-1) tid=pvm_gettid("", *nodeselect);
     pvm_precv(tid, *type, buf, *lenbuf, PVM_BYTE, &tidfrom, 0, 0);
     *nodefrom = pvm_get_PE(tidfrom);
-#ifdef USE_VAMPIR
-    vampir_recv(me,*nodefrom,*lenmes,*type);
-    vampir_begin(TCGMSG_RCV,__FILE__,__LINE__);
-#endif
 }
 
 

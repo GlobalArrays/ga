@@ -62,9 +62,6 @@
 
 static int calc_maplen(int handle);
 
-#ifdef USE_VAMPIR
-#include "ga_vampir.h"
-#endif
 #ifdef PROFILE_OLD
 #include "ga_profile.h"
 #endif
@@ -382,11 +379,6 @@ Integer  i, j,nproc, nnode, zero;
 int bytes;
 
     if(GAinitialized) return;
-#ifdef USE_VAMPIR
-    vampir_init(NULL,NULL,__FILE__,__LINE__);
-    ga_vampir_init(__FILE__,__LINE__);
-    vampir_begin(GA_INITIALIZE,__FILE__,__LINE__);
-#endif
 
 #ifndef MPI_SPAWN
     ARMCI_Init(); /* initialize GA run-time library */
@@ -516,12 +508,8 @@ int bytes;
                  
     }
 #endif
-    
-#ifdef USE_VAMPIR
-    vampir_end(GA_INITIALIZE,__FILE__,__LINE__);
-#endif
-
 }
+
 #if ENABLE_CHECKPOINT
 void set_ga_group_is_for_ft(int val)
 {
@@ -641,17 +629,9 @@ void pnga_set_memory_limit(Integer mem_limit)
 
 void pnga_initialize_ltd(Integer mem_limit)
 {
-#ifdef USE_VAMPIR
-  vampir_init(NULL,NULL,__FILE__,__LINE__);
-  ga_vampir_init(__FILE__,__LINE__);
-  vampir_begin(GA_INITIALIZE_LTD,__FILE__,__LINE__);
-#endif
   GA_total_memory =GA_memory_limit  = mem_limit; 
   if(mem_limit >= 0) GA_memory_limited = 1; 
   pnga_initialize();
-#ifdef USE_VAMPIR
-  vampir_end(GA_INITIALIZE_LTD,__FILE__,__LINE__);
-#endif
 }
 
 /* #define gam_checktype(_type)\ */
@@ -1834,9 +1814,6 @@ logical pnga_allocate(Integer g_a)
   Integer blk[MAXDIM];
   Integer grp_me=GAme, grp_nproc=GAnproc;
   Integer block_size = 0;
-#ifdef USE_VAMPIR
-  vampir_begin(GA_ALLOCATE,__FILE__,__LINE__);
-#endif
 
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
   if (GA[ga_handle].ndim == -1)
@@ -2088,9 +2065,6 @@ logical pnga_allocate(Integer g_a)
     status = FALSE;
   }
   GA_POP_NAME;
-#ifdef USE_VAMPIR
-  vampir_end(GA_ALLOCATE,__FILE__,__LINE__);
-#endif
   return status;
 }
 
@@ -2117,9 +2091,6 @@ logical pnga_create_ghosts_irreg_config(
 {
   logical status;
   Integer g_A;
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_CREATE_GHOSTS_IRREG_CONFIG,__FILE__,__LINE__);
-#endif
 
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
   pnga_sync();
@@ -2135,9 +2106,6 @@ logical pnga_create_ghosts_irreg_config(
   status = pnga_allocate(g_A);
 
   GA_POP_NAME;
-#ifdef USE_VAMPIR
-  vampir_end(NGA_CREATE_IRREG_CONFIG,__FILE__,__LINE__);
-#endif
   return status;
 }
 
@@ -2628,10 +2596,6 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
   /* Integer grp_nproc=GAnproc; */
   int maplen = calc_maplen(GA_OFFSET + g_a);
 
-#ifdef USE_VAMPIR
-  vampir_begin(GA_DUPLICATE,__FILE__,__LINE__);
-#endif
-
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   grp_id = pnga_get_pgroup(g_a);
@@ -2739,10 +2703,6 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
   }
 #     endif
 
-#ifdef USE_VAMPIR
-  vampir_end(GA_DUPLICATE,__FILE__,__LINE__);
-#endif
-
   if(status){
     GAstat.curmem += (long)GA[ga_handle].size;
     GAstat.maxmem  = (long)GA_MAX(GAstat.maxmem, GAstat.curmem);
@@ -2826,10 +2786,6 @@ logical pnga_destroy(Integer g_a)
 Integer ga_handle = GA_OFFSET + g_a, grp_id, grp_me=GAme;
 int local_sync_begin,local_sync_end;
 
-#ifdef USE_VAMPIR
-    vampir_begin(GA_DESTROY,__FILE__,__LINE__);
-#endif
-
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     grp_id = (Integer)GA[ga_handle].p_handle;
@@ -2841,15 +2797,9 @@ int local_sync_begin,local_sync_end;
     GAstat.numdes ++; /*regardless of array status we count this call */
     /* fails if handle is out of range or array not active */
     if(ga_handle < 0 || ga_handle >= _max_global_array){
-#ifdef USE_VAMPIR
-       vampir_end(GA_DESTROY,__FILE__,__LINE__);
-#endif
        return FALSE;
     }
     if(GA[ga_handle].actv==0){
-#ifdef USE_VAMPIR
-       vampir_end(GA_DESTROY,__FILE__,__LINE__);
-#endif
        return FALSE;
     }
     if (GA[ga_handle].cache)
@@ -2870,9 +2820,6 @@ int local_sync_begin,local_sync_end;
     }
 
     if(GA[ga_handle].ptr[grp_me]==NULL){
-#ifdef USE_VAMPIR
-       vampir_end(GA_DESTROY,__FILE__,__LINE__);
-#endif
        return TRUE;
     } 
 #ifndef AVOID_MA_STORAGE
@@ -2895,10 +2842,6 @@ int local_sync_begin,local_sync_end;
 
     if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
     GAstat.curmem -= GA[ga_handle].size;
-
-#ifdef USE_VAMPIR
-    vampir_end(GA_DESTROY,__FILE__,__LINE__);
-#endif
 
     if(local_sync_end)pnga_pgroup_sync(grp_id);
     return(TRUE);
@@ -2923,9 +2866,6 @@ Integer i, handle;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(!GAinitialized) return;
 
-#ifdef USE_VAMPIR
-    vampir_begin(GA_TERMINATE,__FILE__,__LINE__);
-#endif
 #ifdef PROFILE_OLD 
     ga_profile_terminate();
 #endif
@@ -2951,11 +2891,6 @@ Integer i, handle;
     pnga_sync();
     ARMCI_Finalize();
     GAinitialized = 0;
-
-#ifdef USE_VAMPIR
-    vampir_end(GA_TERMINATE,__FILE__,__LINE__);
-    vampir_finalize(__FILE__,__LINE__);
-#endif
 }   
 
     
@@ -2990,10 +2925,6 @@ void pnga_randomize(Integer g_a, void* val)
   C_Long elems;
   Integer grp_id;
   Integer num_blocks;
-
-#ifdef GA_USE_VAMPIR
-  vampir_begin(GA_RANDOMIZE,__FILE__,__LINE__);
-#endif
 
   GA_PUSH_NAME("ga_randomize");
 
@@ -3080,10 +3011,6 @@ void pnga_randomize(Integer g_a, void* val)
   if(local_sync_end)pnga_pgroup_sync(grp_id);
 
   GA_POP_NAME;
-
-#ifdef GA_USE_VAMPIR
-  vampir_end(GA_RANDOMIZE,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -3101,10 +3028,6 @@ void pnga_fill(Integer g_a, void* val)
   C_Long elems;
   Integer grp_id;
   Integer num_blocks;
-
-#ifdef USE_VAMPIR
-  vampir_begin(GA_FILL,__FILE__,__LINE__);
-#endif
 
   GA_PUSH_NAME("ga_fill");
 
@@ -3187,10 +3110,6 @@ void pnga_fill(Integer g_a, void* val)
   if(local_sync_end)pnga_pgroup_sync(grp_id);
 
   GA_POP_NAME;
-
-#ifdef USE_VAMPIR
-  vampir_end(GA_FILL,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -3744,9 +3663,6 @@ logical pnga_create_mutexes(Integer num)
 {
 int myshare;
 
-#ifdef USE_VAMPIR
-   vampir_begin(GA_CREATE_MUTEXES,__FILE__,__LINE__);
-#endif
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if (num <= 0 || num > MAX_MUTEXES) return(FALSE);
    if(num_mutexes) pnga_error("mutexes already created",num_mutexes);
@@ -3754,9 +3670,6 @@ int myshare;
    num_mutexes= (int)num;
 
    if(GAnproc == 1){
-#ifdef USE_VAMPIR
-      vampir_end(GA_CREATE_MUTEXES,__FILE__,__LINE__);
-#endif
       return(TRUE);
    }
    chunk_mutex = (int)((num + GAnproc-1)/GAnproc);
@@ -3765,14 +3678,8 @@ int myshare;
 
    /* need work here to use permutation */
    if(ARMCI_Create_mutexes(myshare)){
-#ifdef USE_VAMPIR
-      vampir_end(GA_CREATE_MUTEXES,__FILE__,__LINE__);
-#endif
       return FALSE;
    }
-#ifdef USE_VAMPIR
-   vampir_end(GA_CREATE_MUTEXES,__FILE__,__LINE__);
-#endif
    return TRUE;
 }
 
@@ -3791,10 +3698,6 @@ int m,p;
    if(GAnproc == 1) return;
    if(num_mutexes< mutex)pnga_error("invalid mutex",mutex);
 
-#ifdef USE_VAMPIR
-   vampir_begin(GA_LOCK,__FILE__,__LINE__);
-#endif
-
    p = num_mutexes/chunk_mutex -1;
    m = num_mutexes%chunk_mutex;
 
@@ -3803,10 +3706,6 @@ int m,p;
 #endif
 
    ARMCI_Lock(m,p);
- 
-#ifdef USE_VAMPIR
-   vampir_end(GA_LOCK,__FILE__,__LINE__);
-#endif
 }
 
 /**
@@ -3823,10 +3722,6 @@ int m,p;
    if(GAnproc == 1) return;
    if(num_mutexes< mutex)pnga_error("invalid mutex",mutex);
    
-#ifdef USE_VAMPIR
-   vampir_begin(GA_UNLOCK,__FILE__,__LINE__);
-#endif
-
    p = num_mutexes/chunk_mutex -1;
    m = num_mutexes%chunk_mutex;
 
@@ -3835,10 +3730,6 @@ int m,p;
 #endif
 
    ARMCI_Unlock(m,p);
-
-#ifdef USE_VAMPIR
-   vampir_end(GA_UNLOCK,__FILE__,__LINE__);
-#endif
 }              
    
 
@@ -3854,26 +3745,13 @@ logical pnga_destroy_mutexes()
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if(num_mutexes<1) pnga_error("mutexes destroyed",0);
 
-#ifdef USE_VAMPIR
-   vampir_begin(GA_DESTROY_MUTEXES,__FILE__,__LINE__);
-#endif
-
    num_mutexes= 0;
    if(GAnproc == 1){
-#ifdef USE_VAMPIR
-      vampir_end(GA_DESTROY_MUTEXES,__FILE__,__LINE__);
-#endif
       return TRUE;
    }
    if(ARMCI_Destroy_mutexes()){
-#ifdef USE_VAMPIR
-      vampir_end(GA_DESTROY_MUTEXES,__FILE__,__LINE__);
-#endif
       return FALSE;
    }
-#ifdef USE_VAMPIR
-   vampir_end(GA_DESTROY_MUTEXES,__FILE__,__LINE__);
-#endif
    return TRUE;
 }
 

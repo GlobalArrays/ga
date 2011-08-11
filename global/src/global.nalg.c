@@ -23,10 +23,6 @@
 #include "papi.h"
 #include "wapi.h"
 
-#ifdef USE_VAMPIR
-#include "ga_vampir.h"
-#endif
-
 /* work arrays used in all routines */
 static Integer dims[MAXDIM], ld[MAXDIM-1];
 static Integer lo[MAXDIM],hi[MAXDIM];
@@ -61,10 +57,6 @@ void pnga_zero(Integer g_a)
   register Integer i;
   int local_sync_begin,local_sync_end;
 
-#ifdef USE_VAMPIR
-  vampir_begin(GA_ZERO,__FILE__,__LINE__);
-#endif
-
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   p_handle = pnga_get_pgroup(g_a);
@@ -86,9 +78,6 @@ void pnga_zero(Integer g_a)
 
       if (pnga_has_ghosts(g_a)) {
         pnga_zero_patch(g_a,lo,hi);
-#ifdef USE_VAMPIR
-        vampir_end(GA_ZERO,__FILE__,__LINE__);
-#endif
         return;
       }
       pnga_access_ptr(g_a, lo, hi, &ptr, ld);
@@ -172,9 +161,6 @@ void pnga_zero(Integer g_a)
   }
   if(local_sync_end)pnga_pgroup_sync(p_handle);
   GA_POP_NAME;
-#ifdef USE_VAMPIR
-  vampir_end(GA_ZERO,__FILE__,__LINE__);
-#endif
 }
 
 
@@ -259,9 +245,6 @@ Integer blocks[MAXDIM], block_dims[MAXDIM];
 void *ptr_a, *ptr_b;
 int local_sync_begin,local_sync_end,use_put;
 
-#ifdef USE_VAMPIR
-   vampir_begin(GA_COPY,__FILE__,__LINE__);
-#endif
    GA_PUSH_NAME("ga_copy");
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -437,9 +420,6 @@ int local_sync_begin,local_sync_end,use_put;
      }
    }
    GA_POP_NAME;
-#ifdef USE_VAMPIR
-   vampir_end(GA_COPY,__FILE__,__LINE__);
-#endif
 }
 
 
@@ -664,10 +644,6 @@ void pnga_scale(Integer g_a, void* alpha)
   void *ptr;
   int local_sync_begin,local_sync_end;
 
-#ifdef USE_VAMPIR
-  vampir_begin(GA_SCALE,__FILE__,__LINE__);
-#endif
-
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   grp_id = pnga_get_pgroup(g_a);
@@ -684,9 +660,6 @@ void pnga_scale(Integer g_a, void* alpha)
     pnga_distribution(g_a, me, lo, hi);
     if (pnga_has_ghosts(g_a)) {
       pnga_scale_patch(g_a, lo, hi, alpha);
-#ifdef USE_VAMPIR
-      vampir_end(GA_SCALE,__FILE__,__LINE__);
-#endif
       return;
     }
 
@@ -802,9 +775,6 @@ void pnga_scale(Integer g_a, void* alpha)
   }
   GA_POP_NAME;
   if(local_sync_end)pnga_pgroup_sync(grp_id); 
-#ifdef USE_VAMPIR
-  vampir_end(GA_SCALE,__FILE__,__LINE__);
-#endif
 }
 
 
@@ -823,10 +793,6 @@ int local_sync_begin,local_sync_end;
  Integer bndim, bdims[MAXDIM];
  Integer cndim, cdims[MAXDIM];
  
-#ifdef USE_VAMPIR
-   vampir_begin(GA_ADD,__FILE__,__LINE__);
-#endif
-
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 
@@ -854,9 +820,6 @@ int local_sync_begin,local_sync_end;
                       g_c, one_arr, cdims);
        
        GA_POP_NAME;
-#ifdef USE_VAMPIR
-       vampir_end(GA_ADD,__FILE__,__LINE__);
-#endif
        return;
    }
 
@@ -982,9 +945,6 @@ int local_sync_begin,local_sync_end;
 
    GA_POP_NAME;
    if(local_sync_end)pnga_pgroup_sync(a_grp);
-#ifdef USE_VAMPIR
-   vampir_end(GA_ADD,__FILE__,__LINE__);
-#endif
 }
 
 
@@ -1039,10 +999,6 @@ Integer lo[2],hi[2];
 int local_sync_begin,local_sync_end;
 Integer num_blocks_a;
 char *ptr_tmp, *ptr_a;
-
-#ifdef USE_VAMPIR
-    vampir_begin(GA_TRANSPOSE,__FILE__,__LINE__);
-#endif
 
     GA_PUSH_NAME("ga_transpose");
     
@@ -1184,9 +1140,4 @@ char *ptr_tmp, *ptr_a;
 
     if(local_sync_end)pnga_sync();
     GA_POP_NAME;
-
-#ifdef USE_VAMPIR
-    vampir_end(GA_TRANSPOSE,__FILE__,__LINE__);
-#endif
-
 }

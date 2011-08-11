@@ -271,10 +271,6 @@ EXTRA_DIST += LinAlg/lapack+blas/README
 #
 if MSG_COMMS_TCGMSG
 libga_la_SOURCES += tcgmsg/capi.c
-if USE_VAMPIR
-libga_la_SOURCES += tcgmsg/tcgmsg_vampir.c
-libga_la_SOURCES += tcgmsg/tcgmsg_vampir.h
-endif
 
 include_HEADERS += tcgmsg/msgtypesc.h
 include_HEADERS += tcgmsg/msgtypesf.h
@@ -675,8 +671,6 @@ libga_la_SOURCES += global/src/ga_profile.h
 libga_la_SOURCES += global/src/ga_solve_seq.c
 libga_la_SOURCES += global/src/ga_symmetr.c
 libga_la_SOURCES += global/src/ga_trace.c
-libga_la_SOURCES += global/src/ga_vampir.fh
-libga_la_SOURCES += global/src/ga_vampir.h
 libga_la_SOURCES += global/src/ghosts.c
 libga_la_SOURCES += global/src/global.h
 libga_la_SOURCES += global/src/global.nalg.c
@@ -717,11 +711,6 @@ endif # HAVE_SCALAPACK
 endif # ENABLE_F77
 if ENABLE_CHECKPOINT
 libga_la_SOURCES += global/src/ga_ckpt.c
-endif
-if USE_VAMPIR
-libga_la_SOURCES += global/ga_vt.c
-libga_la_SOURCES += global/ga_vt.h
-libga_la_SOURCES += global/src/ga_vampir.c
 endif
 
 include_HEADERS += global/src/gacommon.h

@@ -15,10 +15,6 @@
 #define USE_SHMEM_
 #define SHM_UNIT 1024
 
-#ifdef GA_USE_VAMPIR
-#include "armci_vampir.h"
-#endif
-
 void  armci_print_ptr(void **ptr_arr, int bytes, int size, void* myptr, int off)
 {
 int i;
@@ -271,9 +267,6 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
     ARMCI_PR_DBG("enter",0);
     
     if(!ptr)return 1;
-#ifdef GA_USE_VAMPIR
-    vampir_begin(ARMCI_FREE_GROUP,__FILE__,__LINE__);
-#endif
 
     ARMCI_Group_size(group, &grp_nproc);
     ARMCI_Group_rank(group, &grp_me);

@@ -10,9 +10,6 @@
 
 #include "armci.h"
 #include "tcgmsgP.h"
-#ifdef USE_VAMPIR
-#   include "tcgmsg_vampir.h"
-#endif
 
 #define LEN 2
 static Integer pnxtval_counter_val;
@@ -34,10 +31,6 @@ Integer NXTVAL_(Integer *mproc)
     Integer local;
     int rc;
     int server = NXTV_SERVER;         /* id of server process */
-
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
-#endif
 
     if (SR_parallel) {
         if (DEBUG_) {
@@ -78,9 +71,6 @@ Integer NXTVAL_(Integer *mproc)
         }
     }
 
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
-#endif
     return local;
 }
 

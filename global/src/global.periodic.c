@@ -41,10 +41,6 @@
 #include "papi.h"
 #include "wapi.h"
 
-#ifdef USE_VAMPIR
-#include "ga_vampir.h"
-#endif
-
 #define RANGE_NUM 3
 #define RANGE_BOUND 6
 #define IS_REGULAR_PATCH 100

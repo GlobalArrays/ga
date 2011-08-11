@@ -6,10 +6,6 @@
 
 #include "sndrcv.h"
 
-#ifdef GA_USE_VAMPIR
-#include "tcgmsg_vampir.h"
-#endif
-
 #ifdef OLDSYNC
 void SYNCH_(type)
      long *type;
@@ -25,10 +21,6 @@ void SYNCH_(type)
   long sync = 1;
   long from, lenmes, i;
 
-#ifdef GA_USE_VAMPIR
-  vampir_begin(TCGMSG_SYNCH,__FILE__,__LINE__);
-#endif
-
   /* First everyone sends null message to zero */
 
   if (me == 0)
@@ -40,9 +32,6 @@ void SYNCH_(type)
   /* Zero broadcasts message null message to everyone */
 
   BRDCST_(type, buf, &zero, &zero);
-#ifdef GA_USE_VAMPIR
-  vampir_end(TCGMSG_SYNCH,__FILE__,__LINE__);
-#endif
 }
 #else
 /*ARGSUSED*/
@@ -54,12 +43,6 @@ void SYNCH_(type)
 */
 {
   long junk = 0, n = 1;
-#ifdef GA_USE_VAMPIR
-  vampir_begin(TCGMSG_SYNCH,__FILE__,__LINE__);
-#endif
   IGOP_(type, &junk, &n, "+", 1);
-#ifdef GA_USE_VAMPIR
-  vampir_end(TCGMSG_SYNCH,__FILE__,__LINE__);
-#endif
 }
 #endif

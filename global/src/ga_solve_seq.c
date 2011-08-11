@@ -17,9 +17,6 @@
 #if HAVE_MATH_H
 #   include <math.h>
 #endif
-#ifdef USE_VAMPIR
-#  include "ga_vampir.h"
-#endif
 #include "papi.h"
 #include "wapi.h"
 
@@ -509,9 +506,6 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
   Integer lo[2], hi[2];
 
   /** check environment */
-#ifdef USE_VAMPIR
-  vampir_begin(GA_LU_SOLVE_SEQ,__FILE__,__LINE__);
-#endif
   me     = pnga_nodeid();
   
   /** check GA info for input arrays */
@@ -608,9 +602,6 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
   }
 
   pnga_sync();
-#ifdef USE_VAMPIR
-  vampir_end(GA_LU_SOLVE_SEQ,__FILE__,__LINE__);
-#endif
   
   GA_POP_NAME;
 }

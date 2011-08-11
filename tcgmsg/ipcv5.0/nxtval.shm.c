@@ -14,10 +14,6 @@
 long nxtval_counter=0;
 long *nxtval_shmem = &nxtval_counter;
 
-#ifdef USE_VAMPIR
-#   include "tcgmsg_vampir.h"
-#endif
-
 #define LEN 2
 #define INCR 1   /* increment for NXTVAL */
 #define BUSY -1L /* indicates somebody else updating counter*/
@@ -104,11 +100,6 @@ Integer NXTVAL_(Integer *mproc)
     Integer nproc=  NNODES_(); 
     Integer server=nproc-1; 
 
-#ifdef USE_VAMPIR
-    Integer me = NODEID_();
-    vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
-#endif
-
     if (DEBUG_) {
         (void) printf("%2ld: nxtval: mproc=%ld\n",(long)NODEID_(),(long)*mproc);
         (void) fflush(stdout);
@@ -121,22 +112,11 @@ Integer NXTVAL_(Integer *mproc)
         SYNCH_(&sync_type);
     }
     if (*mproc > 0) {
-#ifdef USE_VAMPIR
-        vampir_start_comm(server,me,sizeof(Integer),TCGMSG_NXTVAL);
-#endif
-
         LOCK;
         local = *nxtval_shmem;
         *nxtval_shmem += INCR;
         UNLOCK;
-
-#ifdef USE_VAMPIR
-        vampir_end_comm(server,me,sizeof(Integer),TCGMSG_NXTVAL);
-#endif
     }
 
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
-#endif
     return local;
 }

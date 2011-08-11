@@ -67,10 +67,6 @@ int elan_long_swap(long *target, long value, int vp)
 #endif
 
 
-#ifdef GA_USE_VAMPIR
-#include "armci_vampir.h"
-#endif
-
 /* global scope to prevent compiler optimization of volatile code */
 int  _a_temp;
 long _a_ltemp;

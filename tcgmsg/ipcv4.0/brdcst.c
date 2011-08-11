@@ -8,9 +8,6 @@
 
 #include <stdio.h>
 #include "sndrcvP.h"
-#ifdef GA_USE_VAMPIR
-#include "tcgmsg_vampir.h"
-#endif
 
 void BRDCST_(type, buf, lenbuf, originator)
      long *type;
@@ -32,10 +29,6 @@ void BRDCST_(type, buf, lenbuf, originator)
   long slaveid = me - master;
   long synch = 1;
   long lenmes, from, up, left, right;
-
-#ifdef GA_USE_VAMPIR
-  vampir_begin(TCGMSG_BRDCST,__FILE__,__LINE__);
-#endif
 
   /* Process zero is at the top of the broadcast tree */
 
@@ -79,8 +72,4 @@ void BRDCST_(type, buf, lenbuf, originator)
     SND_(type, buf, lenbuf, &left, &synch);
   if (right < (master+nslave))
     SND_(type, buf, lenbuf, &right, &synch);
-
-#ifdef GA_USE_VAMPIR
-  vampir_end(TCGMSG_BRDCST,__FILE__,__LINE__);
-#endif
 }  

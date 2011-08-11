@@ -8,9 +8,6 @@ extern void exit(int status);
 
 #include "tcgmsgP.h"
 #include "srftoc.h"
-#ifdef USE_VAMPIR
-#   include "tcgmsg_vampir.h"
-#endif
 
 char     tcgmsg_err_string[ERR_STR_LEN];
 MPI_Comm TCGMSG_Comm;
@@ -134,15 +131,8 @@ void tcgi_alt_pbegin(int *argc, char **argv[])
         MPI_Init(argc, argv);
 #endif
 
-#ifdef USE_VAMPIR
-        tcgmsg_vampir_init(__FILE__,__LINE__);
-#endif
         MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
     }
-
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_PBEGINF,__FILE__,__LINE__);
-#endif
 
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
@@ -152,9 +142,6 @@ void tcgi_alt_pbegin(int *argc, char **argv[])
     MPI_Barrier(MPI_COMM_WORLD);
     /* printf("%d:ready to go\n",NODEID_()); */
     install_nxtval(argc, argv);
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_PBEGINF,__FILE__,__LINE__);
-#endif
 }
 
 
@@ -172,9 +159,6 @@ void tcgi_pbegin(int argc, char* argv[])
  */ 
 void FATR PEND_()
 {
-#ifdef USE_VAMPIR
-    vampir_begin(TCGMSG_PEND,__FILE__,__LINE__);
-#endif
 #ifdef NXTVAL_SERVER
     Integer zero=0;
     if( SR_parallel ) {
@@ -183,9 +167,6 @@ void FATR PEND_()
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     finalize_nxtval();
-#ifdef USE_VAMPIR
-    vampir_end(TCGMSG_PEND,__FILE__,__LINE__);
-#endif
     MPI_Finalize();
     exit(0);
 }

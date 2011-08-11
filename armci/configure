@@ -739,8 +739,6 @@ LDFLAGS
 CFLAGS
 CC
 MPICC
-USE_VAMPIR_FALSE
-USE_VAMPIR_TRUE
 THREAD_LIBRARY
 THREAD_SAFE_FALSE
 THREAD_SAFE_TRUE
@@ -922,7 +920,6 @@ enable_checkpoint
 enable_opt
 enable_trace
 enable_thread_safety
-with_vampir
 enable_dependency_tracking
 enable_autodetect
 with_bgml
@@ -1637,7 +1634,6 @@ Optional Packages:
   --with-tcgmsg           select TCGMSG as the messaging library; if
                           --with-mpi is also specified then TCGMSG over MPI is
                           used
-  --with-vampir[=ARG]     optionally located at DIR
   --with-bgml[=ARG]       select armci network as IBM BG/L
   --with-cray-shmem[=ARG] select armci network as Cray XT shmem
   --with-dcmf[=ARG]       select armci network as IBM BG/P Deep Computing
@@ -4511,26 +4507,6 @@ else
 fi
 
 
-
-
-
-# Check whether --with-vampir was given.
-if test "${with_vampir+set}" = set; then :
-  withval=$with_vampir; with_vampir=yes
-
-$as_echo "#define USE_VAMPIR 1" >>confdefs.h
-
-else
-  with_vampir=no
-fi
-
- if test x$with_vampir = xyes; then
-  USE_VAMPIR_TRUE=
-  USE_VAMPIR_FALSE='#'
-else
-  USE_VAMPIR_TRUE='#'
-  USE_VAMPIR_FALSE=
-fi
 
 
 
@@ -30869,10 +30845,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${THREAD_SAFE_TRUE}" && test -z "${THREAD_SAFE_FALSE}"; then
   as_fn_error $? "conditional \"THREAD_SAFE\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${USE_VAMPIR_TRUE}" && test -z "${USE_VAMPIR_FALSE}"; then
-  as_fn_error $? "conditional \"USE_VAMPIR\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${AMDEP_TRUE}" && test -z "${AMDEP_FALSE}"; then

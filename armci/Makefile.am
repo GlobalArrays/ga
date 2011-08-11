@@ -343,7 +343,6 @@ libarmci_la_SOURCES += src/ft/armci_storage.h
 libarmci_la_SOURCES += src/include/acc.h
 libarmci_la_SOURCES += src/include/armcip.h
 libarmci_la_SOURCES += src/include/armci_profile.h
-libarmci_la_SOURCES += src/include/armci_vampir.h
 libarmci_la_SOURCES += src/include/atomics-i386.h
 libarmci_la_SOURCES += src/include/copy.h
 libarmci_la_SOURCES += src/include/fujitsu-vpp.h
@@ -494,9 +493,6 @@ endif
 endif
 if NB_NONCONT
 libarmci_la_SOURCES += src/common/noncont.c
-endif
-if USE_VAMPIR
-libarmci_la_SOURCES += src/util/armci_vampir.c
 endif
 if ENABLE_PROFILING
 libarmci_la_SOURCES += src/util/armci_profile.c

@@ -31,10 +31,6 @@ static context_t ctx_mlocalmem;
 #define RMA_NEEDS_SHMEM
 #endif
 
-#ifdef GA_USE_VAMPIR
-#include "armci_vampir.h"
-#endif
-
 void kr_check_local()
 {
 #if 0
@@ -675,9 +671,6 @@ int ARMCI_Free(void *ptr)
 #               endif
                 }
                 ptr = NULL;
-#               ifdef GA_USE_VAMPIR
-                vampir_end(ARMCI_FREE,__FILE__,__LINE__);
-#               endif
                 return 0;
              }
 #    endif
@@ -752,9 +745,6 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
        ptr = kr_malloc((size_t) bytes, &ctx_localmem, 0, NULL, NULL);
        if(bytes) if(!ptr) armci_die("armci_malloc_group:malloc 1 failed",(int)bytes);
        ptr_arr[grp_me] = ptr;
-#      ifdef GA_USE_VAMPIR
-            vampir_end(ARMCI_MALLOC_GROUP,__FILE__,__LINE__);
-#      endif
        ARMCI_PR_DBG("exit",0);
        return (0);
     }
@@ -795,9 +785,6 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
     ARMCI_PR_DBG("enter",0);
     
     if(!ptr)return 1;
-#ifdef GA_USE_VAMPIR
-    vampir_begin(ARMCI_FREE_GROUP,__FILE__,__LINE__);
-#endif
 
     ARMCI_Group_size(group, &grp_nproc);
     ARMCI_Group_rank(group, &grp_me);
@@ -823,9 +810,6 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
 #            endif
           }
           ptr = NULL;
-#         ifdef GA_USE_VAMPIR
-          vampir_end(ARMCI_FREE_GROUP,__FILE__,__LINE__);
-#         endif
           ARMCI_PR_DBG("exit",0);
           return 0;
        }

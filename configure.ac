@@ -54,7 +54,6 @@ GA_ENABLE_PEIGS
 GA_ENABLE_PROFILING
 GA_ENABLE_TRACE
 GA_THREAD_SAFE
-GA_WITH_VAMPIR
 AC_ARG_ENABLE([tascel],
     [AS_HELP_STRING([--enable-tascel],
         [build tascel library and install alongside GA])],

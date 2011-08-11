@@ -1639,9 +1639,6 @@ void nga_vfill_patch(Integer *g_a, Integer *lo, Integer *hi)
     Integer me= pnga_nodeid();
     int local_sync_begin,local_sync_end;
    
-#ifdef USE_VAMPIR
-    vampir_begin(NGA_VFILL_PATCH,__FILE__,__LINE__);
-#endif 
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)GA_Sync(); 
@@ -1767,9 +1764,6 @@ void nga_vfill_patch(Integer *g_a, Integer *lo, Integer *hi)
     }
     GA_POP_NAME;
     if(local_sync_end)GA_Sync();
-#ifdef USE_VAMPIR
-    vampir_end(NGA_VFILL_PATCH,__FILE__,__LINE__);
-#endif 
 }
 /*\ Utility function to actually set positive/negative values
 \*/
@@ -1895,9 +1889,6 @@ void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi)
   Integer num_blocks;
   int local_sync_begin,local_sync_end;
 
-#ifdef USE_VAMPIR
-  vampir_begin(NGA_PNFILL_PATCH,__FILE__,__LINE__);
-#endif 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)GA_Sync(); 
@@ -2086,9 +2077,6 @@ void nga_pnfill_patch(Integer *g_a, Integer *lo, Integer *hi)
   }
   GA_POP_NAME;
   if(local_sync_end)GA_Sync();
-#ifdef USE_VAMPIR
-  vampir_end(NGA_PNFILL_PATCH,__FILE__,__LINE__);
-#endif 
 }
 
 

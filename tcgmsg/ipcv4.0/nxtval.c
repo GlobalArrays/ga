@@ -11,10 +11,6 @@
 #include "sndrcvP.h"
 #include "sndrcv.h"
 
-#ifdef GA_USE_VAMPIR
-#include "tcgmsg_vampir.h"
-#endif
-
 jmp_buf SR_jmp_buf;   /* Jumped to on soft error */
 
 void NextValueServer()
@@ -136,10 +132,6 @@ long NXTVAL_(mproc)
   long sync = 1;
   long result=0;
 
-#ifdef GA_USE_VAMPIR
-  vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
-#endif
-
   if (SR_parallel) {
     buf[0] = *mproc;
     buf[1] = 1;
@@ -165,10 +157,6 @@ long NXTVAL_(mproc)
     else
       Error("nxtval: sequential version with silly mproc ", (long) *mproc);
   }
-
-#ifdef GA_USE_VAMPIR
-  vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
-#endif
 
   return result;
 }

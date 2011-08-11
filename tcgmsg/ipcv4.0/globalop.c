@@ -23,10 +23,6 @@ extern void free();
 
 #define GOP_BUF_SIZE 81920
 
-#ifdef GA_USE_VAMPIR
-#include "tcgmsg_vampir.h"
-#endif
-
 static void idoop(n, op, x, work)
      long n;
      char *op;
@@ -133,9 +129,6 @@ void DGOP_(ptype, x, pn, op, len)
   double *work;
   long nb, ndo, lenmes, from, up, left, right;
 
-#ifdef GA_USE_VAMPIR
-  vampir_begin(TCGMSG_DGOP,__FILE__,__LINE__);
-#endif
   buflen = (nleft-1) / nbuf + 1;
   if (!(work = (double *) malloc((unsigned) (buflen*sizeof(double)))))
      Error("DGOP: failed to malloc workspace", nleft);
@@ -194,10 +187,6 @@ void DGOP_(ptype, x, pn, op, len)
   /* Zero has the results ... broadcast them back */
   nb = *pn * sizeof(double);
   BRDCST_(&type, (char *) tmp, &nb, &zero);
-
-#ifdef GA_USE_VAMPIR
-  vampir_end(TCGMSG_DGOP,__FILE__,__LINE__);
-#endif
 }
 
 void IGOP_(ptype, x, pn, op, len)
@@ -223,10 +212,6 @@ void IGOP_(ptype, x, pn, op, len)
   long *tmp = x;
   long *work;
   long nb, ndo, lenmes, from, up, left, right;
-
-#ifdef GA_USE_VAMPIR
-  vampir_begin(TCGMSG_IGOP,__FILE__,__LINE__);
-#endif
 
   if (!(work = (long *) 
 	malloc((unsigned) (TCG_MIN(nleft,GOP_BUF_SIZE)*sizeof(long)))))
@@ -285,10 +270,6 @@ void IGOP_(ptype, x, pn, op, len)
   /* Zero has the results ... broadcast them back */
   nb = *pn * sizeof(long);
   BRDCST_(&type, (char *) tmp, &nb, &zero);
-
-#ifdef GA_USE_VAMPIR
-  vampir_end(TCGMSG_IGOP,__FILE__,__LINE__);
-#endif
 }
 
 #endif

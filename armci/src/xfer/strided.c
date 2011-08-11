@@ -16,9 +16,6 @@
 #   include <assert.h>
 #endif
 
-#ifdef GA_USE_VAMPIR
-#include "armci_vampir.h"
-#endif
 #ifdef ARMCI_PROFILE
 #include "armci_profile.h"
 #define ARMCI_PROFILE_START_STRIDED(_pbytes,_strides,_proc,_type)	\
@@ -648,11 +645,6 @@ static int _armci_puts(void *src_ptr,
   if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
   if(proc<0)return FAIL5;
 
-#ifdef GA_USE_VAMPIR
-  vampir_begin(ARMCI_PUTS,__FILE__,__LINE__);
-  if (armci_me != proc)
-    vampir_start_comm(armci_me,proc,count[0],ARMCI_PUTS);
-#endif /*GA_USE_VAMPIR*/
   ARMCI_PROFILE_START_STRIDED(seg_count, stride_levels, proc, proftype);
 
 #ifdef __crayx1
@@ -897,11 +889,6 @@ static int _armci_puts(void *src_ptr,
 #endif /*BGML*/
   POSTPROCESS_STRIDED(tmp_count);
   ARMCI_PROFILE_STOP_STRIDED(proftype);
-#ifdef GA_USE_VAMPIR
-  if (armci_me != proc)
-    vampir_end_comm(armci_me,proc,count[0],ARMCI_PUTS);
-  vampir_end(ARMCI_PUTS,__FILE__,__LINE__);
-#endif /*GA_USE_VAMPIR*/
   if(rc) return FAIL6;
   else return 0;
 }
@@ -961,11 +948,6 @@ int PARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
                 )
 {
   armci_hdl_t nbh;
-#ifdef GA_USE_VAMPIR
-  vampir_begin(ARMCI_GETS,__FILE__,__LINE__);
-  if (armci_me != proc)
-    vampir_start_comm(proc,armci_me,count[0],ARMCI_GETS);
-#endif
   
   ARMCI_PROFILE_START_STRIDED(seg_count, stride_levels, proc, ARMCI_PROF_GETS);
   ORDER(GET,proc);
@@ -973,11 +955,6 @@ int PARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
   PARMCI_NbGetS(src_ptr,src_stride_arr,dst_ptr,dst_stride_arr,seg_count,stride_levels,proc,&nbh);
   PARMCI_Wait(&nbh);
   ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_GETS);
-#ifdef GA_USE_VAMPIR
-  if (armci_me != proc)
-    vampir_end_comm(proc,armci_me,count[0],ARMCI_GETS);
-  vampir_end(ARMCI_GETS,__FILE__,__LINE__);
-#endif
   return 0;
 }
 
@@ -1013,11 +990,6 @@ static int _armci_accs( int  optype,    void *scale,
   if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
   if(proc<0)return FAIL5;
 
-#ifdef GA_USE_VAMPIR
-  vampir_begin(ARMCI_ACCS,__FILE__,__LINE__);
-  if (armci_me != proc)
-    vampir_start_comm(armci_me,proc,count[0],ARMCI_ACCS);
-#endif /*GA_USE_VAMPIR*/
   ARMCI_PROFILE_START_STRIDED(seg_count,stride_levels,proc,proftype);
 
   if(!nbh) { ORDER(optype,proc); }
@@ -1106,11 +1078,6 @@ static int _armci_accs( int  optype,    void *scale,
 #endif /*BGML*/
   POSTPROCESS_STRIDED(tmp_count);
   ARMCI_PROFILE_STOP_STRIDED(proftype);
-#ifdef GA_USE_VAMPIR
-  if (armci_me != proc)
-    vampir_end_comm(armci_me,proc,count[0],ARMCI_ACCS);
-  vampir_end(ARMCI_ACCS,__FILE__,__LINE__);
-#endif /*GA_USE_VAMPIR*/
   if(rc) return FAIL6;
   else return 0;  
 }
