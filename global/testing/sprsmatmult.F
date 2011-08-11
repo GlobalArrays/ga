@@ -45,7 +45,7 @@ c#   define LMAX 9031
       double precision rdot
 #endif
       logical status
-      integer idim, jdim, rmin, rmax, ierr, idum
+      integer idim, jdim, rmin, rmax, idum
       integer jmin, jmax, lsize
       parameter (heap=200000, fudge=100, stack=200000)
       integer i_chk(MAXVEC)
