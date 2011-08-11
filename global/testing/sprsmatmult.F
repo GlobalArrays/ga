@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
 #define USE_PETSC 0
 #define TEST_MULT 0
 #if TEST_MULT
@@ -67,7 +70,7 @@ c
 c
 c***  Intitialize a message passing library
 c
-      call mpi_init(ierr)
+#include "mp3.fh"
 c
 c***  Initialize GA
 c
@@ -446,7 +449,7 @@ c
 c
 c***  Tidy up after message-passing library
 c
-      call mpi_finalize(ierr)
+      call MP_FINALIZE()
 
 c
       stop
