@@ -447,6 +447,7 @@ int armci_domain_nprocs(armci_domain_t domain, int id)
     /* This is an error condition */
     if(id < 0) {
         fprintf(stderr,"[%d] Returned domain is invalid\n", armci_me);
+        id = armci_clus_me;
     }
     return armci_clus_info[id].nslave;
 }
