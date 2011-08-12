@@ -1136,6 +1136,9 @@ logical pnga_update3_ghosts(Integer g_a)
   ndim = GA[handle].ndim;
   p_handle = GA[handle].p_handle;
 
+  /* obtain range of data that is held by local processor */
+  pnga_distribution(g_a,me,lo_loc,hi_loc);
+
   /* initialize range increments and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
@@ -1153,8 +1156,6 @@ logical pnga_update3_ghosts(Integer g_a)
 
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[me];
-  /* obtain range of data that is held by local processor */
-  pnga_distribution(g_a,me,lo_loc,hi_loc);
 
   /* loop over dimensions for sequential update using shift algorithm */
   for (idx=0; idx < ndim; idx++) {
