@@ -910,7 +910,7 @@ c         generate unique i,j pairs
 10        continue
           i = iran(n)
           j=iran(n)
-          if (found(i,j, iv, jv, loop-1) ) goto 10
+c         if (found(i,j, iv, jv, loop-1) ) goto 10
 #ifndef NGA_GATSCAT
           iv(loop) = i
           jv(loop) = j
