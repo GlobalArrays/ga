@@ -182,6 +182,7 @@ c
 c      go to 122
 c      update array using the non-blocking directional update
 c
+      t1 = util_timer()
       k = 0
       do i = -1, 1
         mask(1) = i
@@ -200,6 +201,7 @@ c
         call nga_nbwait(handles(i))
       end do
       call ga_sync
+      t1 = util_timer() - t1
 
       if (me.eq.0) then
         write(6,*) '*'

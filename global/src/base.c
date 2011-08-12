@@ -1998,12 +1998,12 @@ logical pnga_allocate(Integer g_a)
     } else {
        i = GA[ga_handle].corner_flag;
     }
-    pnga_set_ghost_corner_flag(g_a, i);
- 
     for( i = 0; i< ndim; i++){
        GA[ga_handle].scale[i] = (double)GA[ga_handle].nblock[i]
          / (double)GA[ga_handle].dims[i];
     }
+    pnga_set_ghost_corner_flag(g_a, i);
+ 
     /*** determine which portion of the array I am supposed to hold ***/
     if (p_handle == 0) { /* for mirrored arrays */
        Integer me_local = (Integer)PGRP_LIST[p_handle].map_proc_list[GAme];
