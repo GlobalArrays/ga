@@ -1029,7 +1029,7 @@ void ngai_put_common(Integer g_a,
         }
       }
     }
-#ifndef __crayx1
+#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
     if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 #endif
   }
@@ -1603,7 +1603,7 @@ void ngai_get_common(Integer g_a,
       }
 
     }
-#ifndef __crayx1
+#if !defined(__crayx1) && !defined(DISABLE_NBOPT)
     if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 #endif
   }
