@@ -3623,18 +3623,24 @@ int i;
 
    if (GA[h_a].block_flag != GA[h_b].block_flag) return FALSE;
    if (GA[h_a].block_sl_flag != GA[h_b].block_sl_flag) return FALSE;
-   if (!GA[h_a].block_flag) {
+   if (GA[h_a].block_flag == 0) {
      if (h_a_maplen != h_b_maplen) return FALSE;
      for(i=0; i <h_a_maplen; i++){
        if(GA[h_a].mapc[i] != GA[h_b].mapc[i]) return FALSE;
        if(GA[h_a].mapc[i] == -1) break;
      }
-   } else {
+   }
+   else if (GA[h_a].block_flag == 1) {
      for (i=0; i<GA[h_a].ndim; i++) {
        if (GA[h_a].block_dims[i] != GA[h_b].block_dims[i]) return FALSE;
      }
      for (i=0; i<GA[h_a].ndim; i++) {
-       if (GA[h_a].nblock[i] != GA[h_b].nblock[i]) return FALSE;
+       if (GA[h_a].num_blocks[i] != GA[h_b].num_blocks[i]) return FALSE;
+     }
+     if (GA[h_a].block_sl_flag == 1) {
+       for (i=0; i<GA[h_a].ndim; i++) {
+         if (GA[h_a].nblock[i] != GA[h_b].nblock[i]) return FALSE;
+       }
      }
    }
    if (GA[h_a].num_rstrctd == GA[h_b].num_rstrctd) {
