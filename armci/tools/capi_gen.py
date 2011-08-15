@@ -131,7 +131,11 @@ if __name__ == '__main__':
         if '*' in func.return_type or 'void' not in func.return_type:
             maybe_return = 'return '
         func = functions[name]
-        new_name = name.replace('PARMCI_','ARMCI_')
+        new_name = None
+        if 'PARMCI_' in name:
+            new_name = name.replace('PARMCI_','ARMCI_')
+        elif 'parmci_' in name:
+            new_name = name.replace('parmci_','armci_')
         print '''
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak %s

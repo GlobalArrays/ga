@@ -52,5 +52,8 @@ extern void   PARMCI_Unlock(int mutex, int proc);
 extern int    PARMCI_WaitAll();
 extern int    PARMCI_Wait(armci_hdl_t * nb_handle);
 extern int    PARMCI_WaitProc(int proc);
+extern void   parmci_msg_barrier();
+extern void   parmci_msg_group_barrier(ARMCI_Group *group);
+extern int    parmci_notify_wait(int proc, int *pval);
 
 #endif /* _PARMCI_H_ */

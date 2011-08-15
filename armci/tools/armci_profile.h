@@ -1,3 +1,5 @@
+#ifndef _ARMCI_PROFILING_H_
+#define _ARMCI_PROFILING_H_
 /* $Id: armci_profile.h,v 1.5 2005-11-30 10:20:53 vinod Exp $ */
 
 enum events {ARMCI_PROF_GET=0, ARMCI_PROF_PUT, ARMCI_PROF_ACC, /* get/put/acc */
@@ -20,3 +22,5 @@ extern void armci_profile_start_vector(armci_giov_t darr[], int len, int proc,
 extern void armci_profile_stop_vector(int event_type);
 extern void armci_profile_start(int event_type);
 extern void armci_profile_stop(int event_type);
+
+#endif /* _ARMCI_PROFILING_H_ */

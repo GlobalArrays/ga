@@ -702,7 +702,7 @@ int armci_notify(int proc)
 /* blocks until received count becomes >= waited count
  *  return received count and store waited count in *pval
  */
-int armci_notify_wait(int proc,int *pval)
+int parmci_notify_wait(int proc,int *pval)
 {
   int retval;
      long loop=0;

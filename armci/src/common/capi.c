@@ -449,3 +449,30 @@ int ARMCI_WaitProc(int proc)
     return PARMCI_WaitProc(proc);
 }
 
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak armci_msg_barrier
+#endif
+void armci_msg_barrier()
+{
+    parmci_msg_barrier();
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak armci_msg_group_barrier
+#endif
+void armci_msg_group_barrier(ARMCI_Group *group)
+{
+    parmci_msg_group_barrier(group);
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak armci_notify_wait
+#endif
+int armci_notify_wait(int proc, int *pval)
+{
+    return parmci_notify_wait(proc, pval);
+}
+

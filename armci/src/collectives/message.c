@@ -403,7 +403,7 @@ static void _armci_msg_barrier(){
 }
        
 #endif /*barrier enabled only for lapi*/
-void armci_msg_barrier()
+void parmci_msg_barrier()
 {
 #ifdef BGML
   bgml_barrier (3); /* this is always faster than MPI_Barrier() */
@@ -1847,7 +1847,7 @@ MPI_Comm armci_group_comm(ARMCI_Group *group)
 #endif
 }
 
-void armci_msg_group_barrier(ARMCI_Group *group)
+void parmci_msg_group_barrier(ARMCI_Group *group)
 {
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
     

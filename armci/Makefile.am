@@ -324,7 +324,6 @@ else # !ARMCI_NETWORK_GEMINI
 libarmci_la_SOURCES += src/collectives/message.c
 libarmci_la_SOURCES += src/common/aggregate.c
 libarmci_la_SOURCES += src/common/armci.c
-libarmci_la_SOURCES += src/common/capi.c
 libarmci_la_SOURCES += src/common/ccopy.c
 libarmci_la_SOURCES += src/common/clusterinfo.c
 libarmci_la_SOURCES += src/common/pack.c
@@ -548,6 +547,22 @@ CLEANFILES += src/locks/tas_as.s
 
 endif # ARMCI_NETWORK_GEMINI
 endif # ARMCI_NETWORK_PORTALS
+
+##############################################################################
+# profiling
+#
+if ENABLE_PROFILING
+if HAVE_SYS_WEAK_ALIAS_PRAGMA
+lib_LTLIBRARIES += libarmci_prof.la
+libarmci_prof_la_SOURCES = 
+libarmci_prof_la_SOURCES += tools/armci_prof.c
+libarmci_la_SOURCES += src/common/capi.c
+else # HAVE_SYS_WEAK_ALIAS_PRAGMA
+libarmci_la_SOURCES += tools/armci_prof.c
+endif # HAVE_SYS_WEAK_ALIAS_PRAGMA
+else # ENABLE_PROFILING
+libarmci_la_SOURCES += src/common/capi.c
+endif
 
 ##############################################################################
 # testing

@@ -5,22 +5,18 @@
 /* $Id: armci_profile.c,v 1.8 2005-11-30 10:20:53 vinod Exp $ */
 
 /**
- * Set an environment variable as follows to enable ARMCI profiling
- *    export ARMCI_PROFILE=YES (bash)
- *    setenv ARMCI_PROFILE YES (csh/tcsh)
- * 
  * Profiler can profile the following ARMCI Calls:
- *    PARMCI_Get,PARMCI_Put,ARMCI_Acc,PARMCI_NbGet,PARMCI_NbPut,ARMCI_NbAcc,
- *    PARMCI_GetS,PARMCI_PutS,PARMCI_AccS,PARMCI_NbGetS,PARMCI_NbPutS,PARMCI_NbAccS,
- *    PARMCI_GetV,PARMCI_PutV,PARMCI_AccV,PARMCI_NbGetV,PARMCI_NbPutV,PARMCI_NbAccV,
- *    PARMCI_Wait, armci_wait_notify
- *      (NOTE: As armci_notify is same as PARMCI_Put, it is not profiled.)
+ *    ARMCI_Get,ARMCI_Put,ARMCI_Acc,ARMCI_NbGet,ARMCI_NbPut,ARMCI_NbAcc,
+ *    ARMCI_GetS,ARMCI_PutS,ARMCI_AccS,ARMCI_NbGetS,ARMCI_NbPutS,ARMCI_NbAccS,
+ *    ARMCI_GetV,ARMCI_PutV,ARMCI_AccV,ARMCI_NbGetV,ARMCI_NbPutV,ARMCI_NbAccV,
+ *    ARMCI_Wait, armci_wait_notify
+ *      (NOTE: As armci_notify is same as ARMCI_Put, it is not profiled.)
  *   
  * 
  * Note #1: Right now, only process 0's profile is printed.
  * Each and every process saves its profile in the correspoding data struture.
  * Each process prints its profile to an output file armci_profile.<myrank> 
- * when armci_profile_terminate() is called (called in PARMCI_Finalize()).
+ * when armci_profile_terminate() is called (called in ARMCI_Finalize()).
  *
  * Note #2: By default profiler prints msg ranges 0 to 21. Example: range 10
  * corresponds to message ranges from 1024 bytes to 2047 bytes.
@@ -45,14 +41,19 @@
  *
  * Note #4: There is no profiling support for non-blocking operations yet!!
  */
-
-
-#ifdef ARMCI_PROFILE
 #define DEBUG_ 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
+#if HAVE_STRING_H
+#   include <string.h>
+#endif
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
 #include "armci.h"
 #include "armcip.h"
 #include "armci_profile.h" 
@@ -520,26 +521,26 @@ static void armci_print_nbnoncontig(FILE *fp) {
     }
 }
 
-/* Profile of armci_notify_wait(), PARMCI_Wait() and PARMCI_Barrier() */
+/* Profile of armci_notify_wait(), ARMCI_Wait() and ARMCI_Barrier() */
 static void armci_print_misc(FILE *fp) {
     ARMCI_HDR9(fp);
     fprintf(fp, "#calls\t time\t   EVENT\n\n");
-    fprintf(fp, "%d\t %.2e  PARMCI_Wait()\n", 
+    fprintf(fp, "%d\t %.2e  ARMCI_Wait()\n", 
 	    ARMCI_PROF[ARMCI_PROF_WAIT][0].count, 
 	    ARMCI_PROF[ARMCI_PROF_WAIT][0].time);
     fprintf(fp, "%d\t %.2e  armci_notify_wait()\n", 
 	    ARMCI_PROF[ARMCI_PROF_NOTIFY][0].count, 
 	    ARMCI_PROF[ARMCI_PROF_NOTIFY][0].time);
-    fprintf(fp, "%d\t %.2e  PARMCI_Barrier()\n", 
+    fprintf(fp, "%d\t %.2e  ARMCI_Barrier()\n", 
 	    ARMCI_PROF[ARMCI_PROF_BARRIER][0].count, 
 	    ARMCI_PROF[ARMCI_PROF_BARRIER][0].time);
-    fprintf(fp, "%d\t %.2e  PARMCI_Fence()\n", 
+    fprintf(fp, "%d\t %.2e  ARMCI_Fence()\n", 
 	    ARMCI_PROF[ARMCI_PROF_FENCE][0].count, 
 	    ARMCI_PROF[ARMCI_PROF_FENCE][0].time);
     fprintf(fp, "%d\t %.2e  ARMCI_Allfence()\n", 
 	    ARMCI_PROF[ARMCI_PROF_ALLFENCE][0].count, 
 	    ARMCI_PROF[ARMCI_PROF_ALLFENCE][0].time);
-    fprintf(fp, "%d\t %.2e  PARMCI_Rmw()\n", 
+    fprintf(fp, "%d\t %.2e  ARMCI_Rmw()\n", 
 	    ARMCI_PROF[ARMCI_PROF_RMW][0].count, 
 	    ARMCI_PROF[ARMCI_PROF_RMW][0].time);
 }
@@ -670,6 +671,3 @@ void armci_profile_terminate() {
 #endif
     fclose(fp);
 }
-
-#endif /* end of ARMCI_PROFILE */
-
