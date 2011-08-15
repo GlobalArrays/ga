@@ -59,9 +59,6 @@
 #ifdef ARMCIX
 #include "armcix.h"
 #endif
-#ifdef ARMCI_PROFILE
-#include "armci_profile.h"
-#endif
 #ifdef BGML
 #include "bgml.h"
 #if HAVE_ASSERT_H
@@ -570,10 +567,6 @@ int PARMCI_Init()
     armci_msg_barrier();
     armci_msg_gop_init();
 
-#ifdef ARMCI_PROFILE
-    armci_profile_init();
-#endif
-
     _armci_initialized=1;
 #ifdef ENABLE_CHECKPOINT
     armci_init_checkpoint(armci_ft_spare_procs);
@@ -595,10 +588,6 @@ void PARMCI_Finalize()
     }
 
     _armci_initialized = 0;
-#ifdef ARMCI_PROFILE
-    armci_profile_terminate();
-#endif
-
     _armci_terminating =1;
     _armci_initialized_args=0;
     _armci_argc = NULL;
@@ -716,10 +705,6 @@ int armci_notify(int proc)
 int armci_notify_wait(int proc,int *pval)
 {
   int retval;
-#ifdef ARMCI_PROFILE
-  armci_profile_start(ARMCI_PROF_NOTIFY);
-#endif
-
      long loop=0;
      armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
      pnotify->waited++;
@@ -729,9 +714,6 @@ int armci_notify_wait(int proc,int *pval)
      }
      *pval = pnotify->waited;
      retval=pnotify->received;
-#ifdef ARMCI_PROFILE
-  armci_profile_stop(ARMCI_PROF_NOTIFY);
-#endif
   return retval;
 }
 

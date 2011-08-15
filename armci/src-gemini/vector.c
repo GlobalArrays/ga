@@ -10,11 +10,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-#ifdef ARMCI_PROFILE
-#include "armci_profile.h"
-#endif
-
-
 #define SERVER_GET 1
 #define SERVER_NBGET 2
 #define DIRECT_GET 3
@@ -357,10 +352,6 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-#ifdef ARMCI_PROFILE
-    armci_profile_start_vector(darr, len, proc, ARMCI_PROF_PUTV);
-#endif
-
     ORDER(PUT,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
 
@@ -372,10 +363,6 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
          DO_FENCE(proc,SERVER_PUT);
          rc = armci_pack_vector(PUT, NULL, darr, len, proc,NULL);
     }
-
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_vector(ARMCI_PROF_PUTV);
-#endif
 
     if(rc) return FAIL6;
     else return 0;
@@ -399,10 +386,6 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-#ifdef ARMCI_PROFILE
-    armci_profile_start_vector(darr, len, proc, ARMCI_PROF_GETV);
-#endif
-
     ORDER(GET,proc); /* ensure ordering */
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
@@ -417,9 +400,6 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
        rc = armci_pack_vector(GET, NULL, darr, len, proc,NULL);
     }
 
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_vector(ARMCI_PROF_GETV);
-#endif
     if(rc) return FAIL6;
     else return 0;
 }
@@ -445,10 +425,6 @@ int ARMCI_AccV( int op,              /* oeration code */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-#ifdef ARMCI_PROFILE
-    armci_profile_start_vector(darr, len, proc, ARMCI_PROF_ACCV);
-#endif
-
     ORDER(op,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
 #   if defined(ACC_COPY) && !defined(ACC_SMP)
@@ -462,9 +438,6 @@ int ARMCI_AccV( int op,              /* oeration code */
          rc = armci_pack_vector(op, scale, darr, len, proc,NULL);
     }
 
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_vector(ARMCI_PROF_ACCV);
-#endif
     if(rc) return FAIL6;
     else return 0;
 }
@@ -492,17 +465,11 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
     
-#ifdef ARMCI_PROFILE
-    armci_profile_start_vector(darr, len, proc, ARMCI_PROF_NBPUTV);
-#endif
     direct=SAMECLUSNODE(proc);
     /* aggregate put */
     if(nb_handle && nb_handle->agg_flag == SET) {
        if(!direct) {
 	  rc=armci_agg_save_giov_descriptor(darr, len, proc, PUT, nb_handle);
-#         ifdef ARMCI_PROFILE
-	  armci_profile_stop_vector(ARMCI_PROF_NBPUTV);
-#         endif	  
 	  return rc;
        }
     }
@@ -531,10 +498,6 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
          rc = armci_pack_vector(PUT, NULL, darr, len, proc,nb_handle);
     }
     
-
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_vector(ARMCI_PROF_NBPUTV);
-#endif
     if(rc) return FAIL6;
     else return 0;
 }
@@ -557,19 +520,12 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-#ifdef ARMCI_PROFILE
-    armci_profile_start_vector(darr, len, proc, ARMCI_PROF_NBGETV);
-#endif
-
     direct=SAMECLUSNODE(proc);
 
     /* aggregate get */
     if(nb_handle && nb_handle->agg_flag == SET) {
        if(!direct) {
 	  rc=armci_agg_save_giov_descriptor(darr, len, proc, GET, nb_handle);
-#         ifdef ARMCI_PROFILE
-	  armci_profile_stop_vector(ARMCI_PROF_NBGETV);
-#         endif 	
 	  return rc;
        }
     }
@@ -594,9 +550,6 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
        rc = armci_pack_vector(GET, NULL, darr, len, proc,nb_handle);
     }
 
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_vector(ARMCI_PROF_NBGETV);
-#endif
     if(rc) return FAIL6;
     else return 0;
 }
@@ -623,10 +576,6 @@ int ARMCI_NbAccV( int op,              /* oeration code */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-#ifdef ARMCI_PROFILE
-    armci_profile_start_vector(darr, len, proc, ARMCI_PROF_NBACCV);
-#endif
-
     UPDATE_FENCE_INFO(proc);
     direct=SAMECLUSNODE(proc);
     
@@ -650,9 +599,6 @@ int ARMCI_NbAccV( int op,              /* oeration code */
          rc = armci_pack_vector(op, scale, darr, len, proc,nb_handle);
     }
 
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_vector(ARMCI_PROF_NBACCV);
-#endif
     if(rc) return FAIL6;
     else return 0;
 }

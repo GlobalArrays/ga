@@ -16,16 +16,6 @@
 #   include <assert.h>
 #endif
 
-#ifdef ARMCI_PROFILE
-#include "armci_profile.h"
-#define ARMCI_PROFILE_START_STRIDED(_pbytes,_strides,_proc,_type)	\
-  armci_profile_start_strided((_pbytes),(_strides),(_proc),(_type))
-#define ARMCI_PROFILE_STOP_STRIDED(_type) armci_profile_stop_strided(_type)
-#else
-#define ARMCI_PROFILE_START_STRIDED(_pbytes,_strides,_proc,_type) 
-#define ARMCI_PROFILE_STOP_STRIDED(_type)
-#endif
-
 #define ARMCI_OP_2D(op, scale, proc, src, dst, bytes, count, src_stride, dst_stride,lockit) \
   if(op == GET || op ==PUT)						\
     armci_copy_2D(op, proc, src, dst, bytes, count, src_stride,dst_stride); \
@@ -636,21 +626,15 @@ static int _armci_puts(void *src_ptr,
 		       armci_flag_t *put_flag) {
   int *count=seg_count, tmp_count=0;
   int rc=0, direct=1;
-#ifdef ARMCI_PROFILE
-  const int proftype = nbh?ARMCI_PROF_NBPUTS:ARMCI_PROF_PUTS;
-#endif /*ARMCI_PROFILE*/
   
   if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
   if(count[0]<0)return FAIL3;
   if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
   if(proc<0)return FAIL5;
 
-  ARMCI_PROFILE_START_STRIDED(seg_count, stride_levels, proc, proftype);
-
 #ifdef __crayx1
   if(!stride_levels) {
     memcpy(dst_ptr, src_ptr,count[0]);
-    ARMCI_PROFILE_STOP_STRIDED(proftype);
     return 0;
   }
 #endif
@@ -673,7 +657,6 @@ static int _armci_puts(void *src_ptr,
 					      count, stride_levels, proc, 
 					      PUT, nbh);
 	POSTPROCESS_STRIDED(tmp_count);
-	ARMCI_PROFILE_STOP_STRIDED(proftype);
 	return(rc);
       }
     } else {
@@ -772,7 +755,6 @@ static int _armci_puts(void *src_ptr,
 	PARMCI_Fence(proc);
 	PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
       }
-      ARMCI_PROFILE_STOP_STRIDED(proftype);
       return 0;
     }
 #      if  0 && defined(VAPI)
@@ -788,7 +770,6 @@ static int _armci_puts(void *src_ptr,
 	PARMCI_Fence(proc);
 	PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
       }
-      ARMCI_PROFILE_STOP_STRIDED(proftype);
       return 0;  
     }
 #        else /*!PEND_BUFS*/
@@ -825,7 +806,6 @@ static int _armci_puts(void *src_ptr,
 	  PARMCI_Fence(proc);
 	  PARMCI_Put(&put_flag->val,put_flag->ptr,sizeof(int),proc);
 	}
-	ARMCI_PROFILE_STOP_STRIDED(proftype);
 	return 0;
       }
     }
@@ -888,7 +868,6 @@ static int _armci_puts(void *src_ptr,
     }
 #endif /*BGML*/
   POSTPROCESS_STRIDED(tmp_count);
-  ARMCI_PROFILE_STOP_STRIDED(proftype);
   if(rc) return FAIL6;
   else return 0;
 }
@@ -949,12 +928,10 @@ int PARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 {
   armci_hdl_t nbh;
   
-  ARMCI_PROFILE_START_STRIDED(seg_count, stride_levels, proc, ARMCI_PROF_GETS);
   ORDER(GET,proc);
   ARMCI_INIT_HANDLE(&nbh);
   PARMCI_NbGetS(src_ptr,src_stride_arr,dst_ptr,dst_stride_arr,seg_count,stride_levels,proc,&nbh);
   PARMCI_Wait(&nbh);
-  ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_GETS);
   return 0;
 }
 
@@ -980,17 +957,12 @@ static int _armci_accs( int  optype,    void *scale,
 			int proc,       armci_ihdl_t nbh) {
   int rc, direct=1;
   int *count=seg_count, tmp_count=0;
-#ifdef ARMCI_PROFILE
-  const int proftype = nbh?ARMCI_PROF_NBACCS:ARMCI_PROF_ACCS;
-#endif /*ARMCI_PROFILE*/
 
   if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
   if(src_stride_arr == NULL || dst_stride_arr ==NULL) return FAIL2;
   if(count[0]<0)return FAIL3;
   if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
   if(proc<0)return FAIL5;
-
-  ARMCI_PROFILE_START_STRIDED(seg_count,stride_levels,proc,proftype);
 
   if(!nbh) { ORDER(optype,proc); }
   else { 
@@ -1077,7 +1049,6 @@ static int _armci_accs( int  optype,    void *scale,
   }
 #endif /*BGML*/
   POSTPROCESS_STRIDED(tmp_count);
-  ARMCI_PROFILE_STOP_STRIDED(proftype);
   if(rc) return FAIL6;
   else return 0;  
 }
@@ -1103,18 +1074,13 @@ int PARMCI_AccS( int  optype,            /* operation */
 
 int PARMCI_Put(void *src, void* dst, int bytes, int proc) {
   int rc=0;
-  ARMCI_PROFILE_START_STRIDED(&bytes, 0, proc, ARMCI_PROF_PUT);
   rc = PARMCI_PutS(src, NULL, dst, NULL, &bytes, 0, proc);
-  ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_PUT);
   return rc;
 }
 
 int PARMCI_Acc(int optype, void *scale, void *src, void* dst, int bytes, int proc) {
   int rc=0;
-  ARMCI_PROFILE_START_STRIDED(&bytes, 0, proc, ARMCI_PROF_ACC);
-  rc = PARMCI_AccS(optype, scale,
-		   src, NULL, dst, NULL, &bytes, 0, proc);
-  ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_ACC);
+  rc = PARMCI_AccS(optype, scale, src, NULL, dst, NULL, &bytes, 0, proc);
   return rc;
 }
 
@@ -1125,7 +1091,6 @@ int PARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc) {
 
 int PARMCI_Get(void *src, void* dst, int bytes, int proc) {
   int rc=0;
-  ARMCI_PROFILE_START_STRIDED(&bytes, 0, proc, ARMCI_PROF_GET);
   
 #ifdef __crayx1
   memcpy(dst,src,bytes);   
@@ -1133,7 +1098,6 @@ int PARMCI_Get(void *src, void* dst, int bytes, int proc) {
   rc = PARMCI_GetS(src, NULL, dst, NULL, &bytes, 0, proc);
 #endif
   
-  ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_GET);
   dassert(1,rc==0);
   return rc;
 }
@@ -1371,7 +1335,6 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
   if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
   if(proc<0)return FAIL5;
 
-  ARMCI_PROFILE_START_STRIDED(seg_count, stride_levels, proc,ARMCI_PROF_NBGETS);
 #ifdef BGML
   armci_ihdl_t nbh;
   set_nbhandle(&nbh, usr_hdl, PUT, proc);
@@ -1398,7 +1361,6 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 					    count, stride_levels, proc, 
 					    GET, nb_handle);
       POSTPROCESS_STRIDED(tmp_count);
-      ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_NBGETS);
       return(rc);
     }
   } 
@@ -1437,7 +1399,6 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
       DO_FENCE(proc,DIRECT_NBGET);
       ARMCI_NBREM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, nb_handle);
       POSTPROCESS_STRIDED(tmp_count);
-      ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_NBGETS);
       return 0;
     }
 #     endif
@@ -1484,7 +1445,6 @@ int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
   POSTPROCESS_STRIDED(tmp_count);
 #endif /*bgml*/
 
-  ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_NBGETS);
   if(rc) return FAIL6;
   else return 0;
 }
@@ -1525,18 +1485,14 @@ void set_nbhandle(armci_ihdl_t *nbh, armci_hdl_t *nb_handle, int op,
 
 int PARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle) {
   int rc;
-  ARMCI_PROFILE_START_STRIDED(&bytes, 0, proc, ARMCI_PROF_NBPUT);
   rc = PARMCI_NbPutS(src,NULL,dst,NULL,&bytes,0,proc,uhandle);
-  ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_NBPUT);
   return(rc);
 }
 
 
 int PARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle) {
   int rc;
-  ARMCI_PROFILE_START_STRIDED(&bytes, 0, proc, ARMCI_PROF_NBGET);
   rc=PARMCI_NbGetS(src,NULL,dst,NULL,&bytes,0,proc,uhandle);
-  ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_NBGET);
   return(rc);
 }
 

@@ -4,42 +4,25 @@
 #define  EXTERN
 #include "armcip.h"
 
-#ifdef ARMCI_PROFILE
-#   include "armci_profile.h"
-#endif
-
-
 int PARMCI_Wait(armci_hdl_t* usr_hdl)
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
     int success=0;
     int direct = SAMECLUSNODE(nb_handle->proc);
-#ifdef ARMCI_PROFILE
-    armci_profile_start(ARMCI_PROF_WAIT);
-#endif
 
 #ifdef BGML
     assert(nb_handle->cmpl_info);
     BGML_Wait(&(nb_handle->count));
-#ifdef ARMCI_PROFILE
-    armci_profile_stop(ARMCI_PROF_WAIT);
-#endif
     return(success);
 #else
 
     if(direct) {
-#ifdef ARMCI_PROFILE
-        armci_profile_stop(ARMCI_PROF_WAIT);
-#endif
         return(success);
     }
 
     if(nb_handle) {
         if(nb_handle->agg_flag) {
             armci_agg_complete(nb_handle, UNSET);
-#ifdef ARMCI_PROFILE
-            armci_profile_stop(ARMCI_PROF_WAIT);
-#endif
             return (success);
         }
     }
@@ -50,17 +33,11 @@ int PARMCI_Wait(armci_hdl_t* usr_hdl)
 
         if(nb_handle->tag==0){
             ARMCI_NB_WAIT(nb_handle->cmpl_info);
-#ifdef ARMCI_PROFILE
-            armci_profile_stop(ARMCI_PROF_WAIT);
-#endif
             return(success);
         }
 #if defined(LAPI) || defined(ALLOW_PIN) || defined(ARMCIX)
         if(nb_handle->tag!=0 && nb_handle->bufid==NB_NONE){
             ARMCI_NB_WAIT(nb_handle->cmpl_info);
-#ifdef ARMCI_PROFILE
-            armci_profile_stop(ARMCI_PROF_WAIT);
-#endif
             return(success);
         }
 #endif
@@ -72,9 +49,6 @@ int PARMCI_Wait(armci_hdl_t* usr_hdl)
     }
 #endif
 
-#ifdef ARMCI_PROFILE
-    armci_profile_stop(ARMCI_PROF_WAIT);
-#endif
     return(success);
 }
 

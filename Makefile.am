@@ -600,11 +600,9 @@ lib_LTLIBRARIES += libwapi.la
 libwapi_la_SOURCES =
 libwapi_la_SOURCES += tools/wapi.c
 libwapi_la_SOURCES += tools/gpwapi.c
-libwapi_la_SOURCES += tools/armci_trace.c
 else
 nodist_libga_la_SOURCES += tools/wapi.c
 nodist_libga_la_SOURCES += tools/gpwapi.c
-#nodist_libga_la_SOURCES += tools/armci_trace.c
 endif
 endif
 

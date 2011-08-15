@@ -759,11 +759,9 @@ am_libga_la_OBJECTS = compat/random.lo gaf2c/gaf2c.lo gaf2c/drand.lo \
 nodist_libga_la_OBJECTS = $(am__objects_16)
 libga_la_OBJECTS = $(am_libga_la_OBJECTS) $(nodist_libga_la_OBJECTS)
 libwapi_la_LIBADD =
-am__libwapi_la_SOURCES_DIST = tools/wapi.c tools/gpwapi.c \
-	tools/armci_trace.c
+am__libwapi_la_SOURCES_DIST = tools/wapi.c tools/gpwapi.c
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libwapi_la_OBJECTS = tools/wapi.lo \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/gpwapi.lo \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/armci_trace.lo
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/gpwapi.lo
 libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libwapi_la_rpath = -rpath \
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	$(libdir)
@@ -3025,7 +3023,6 @@ nodist_libga_la_SOURCES = config.fh $(am__append_34) \
 ##############################################################################
 # global
 #
-#nodist_libga_la_SOURCES += tools/armci_trace.c
 
 ##############################################################################
 # global/doc
@@ -3186,8 +3183,7 @@ nodist_EXTRA_ma_test_inquire_SOURCES = $(MAYBE_DUMMY_F_LINK)
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_tcgmsg_mpi_test_asyn_SOURCES = $(MAYBE_DUMMY_F_LINK)
 @MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_tcgmsg_mpi_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@libwapi_la_SOURCES = tools/wapi.c \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/gpwapi.c \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/armci_trace.c
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/gpwapi.c
 
 ##############################################################################
 # global/src
@@ -4107,8 +4103,6 @@ tools/wapi.lo: tools/$(am__dirstamp) tools/$(DEPDIR)/$(am__dirstamp)
 tools/gpwapi.lo: tools/$(am__dirstamp) tools/$(DEPDIR)/$(am__dirstamp)
 libga.la: $(libga_la_OBJECTS) $(libga_la_DEPENDENCIES) 
 	$(AM_V_F77LD)$(F77LINK) -rpath $(libdir) $(libga_la_OBJECTS) $(libga_la_LIBADD) $(LIBS)
-tools/armci_trace.lo: tools/$(am__dirstamp) \
-	tools/$(DEPDIR)/$(am__dirstamp)
 libwapi.la: $(libwapi_la_OBJECTS) $(libwapi_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) $(am_libwapi_la_rpath) $(libwapi_la_OBJECTS) $(libwapi_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
@@ -5487,8 +5481,6 @@ mostlyclean-compile:
 	-rm -f tcgmsg/tcgmsg-mpi/test.$(OBJEXT)
 	-rm -f tcgmsg/tcgmsg-mpi/test_asyn.$(OBJEXT)
 	-rm -f tcgmsg/tcgmsg-mpi/testf.$(OBJEXT)
-	-rm -f tools/armci_trace.$(OBJEXT)
-	-rm -f tools/armci_trace.lo
 	-rm -f tools/gpwapi.$(OBJEXT)
 	-rm -f tools/gpwapi.lo
 	-rm -f tools/wapi.$(OBJEXT)
@@ -5704,7 +5696,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/sizeof.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/test_asyn.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/armci_trace.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/gpwapi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/wapi.Plo@am__quote@
 

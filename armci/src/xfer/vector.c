@@ -14,10 +14,6 @@
 #   include <assert.h>
 #endif
 
-#ifdef ARMCI_PROFILE
-#include "armci_profile.h"
-#endif
-
 /*
 void I_ACCUMULATE(void* scale, int elems, void*src, void* dst)
 {
@@ -370,10 +366,6 @@ int PARMCI_PutV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-#ifdef ARMCI_PROFILE
-    armci_profile_start_vector(darr, len, proc, ARMCI_PROF_PUTV);
-#endif
-
     ORDER(PUT,proc); /* ensure ordering */
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
@@ -410,9 +402,6 @@ int PARMCI_PutV( armci_giov_t darr[], /* descriptor array */
     }
 
 #endif
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_vector(ARMCI_PROF_PUTV);
-#endif
 
     if(rc) return FAIL6;
     else return 0;
@@ -441,10 +430,6 @@ int PARMCI_GetV( armci_giov_t darr[], /* descriptor array */
     }
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
-
-#ifdef ARMCI_PROFILE
-    armci_profile_start_vector(darr, len, proc, ARMCI_PROF_GETV);
-#endif
 
     ORDER(GET,proc); /* ensure ordering */
 #ifndef QUADRICS
@@ -482,9 +467,6 @@ int PARMCI_GetV( armci_giov_t darr[], /* descriptor array */
     }
 
 #endif
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_vector(ARMCI_PROF_GETV);
-#endif
 
     if(rc) return FAIL6;
     else return 0;
@@ -511,10 +493,6 @@ int PARMCI_AccV( int op,              /* oeration code */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-#ifdef ARMCI_PROFILE
-    armci_profile_start_vector(darr, len, proc, ARMCI_PROF_ACCV);
-#endif
-
     ORDER(op,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
 #ifdef BGML
@@ -535,9 +513,6 @@ int PARMCI_AccV( int op,              /* oeration code */
     else
          rc = armci_pack_vector(op, scale, darr, len, proc,NULL);
 
-#endif
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_vector(ARMCI_PROF_ACCV);
 #endif
 
     if(rc) return FAIL6;
@@ -572,9 +547,6 @@ int PARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
     
-#ifdef ARMCI_PROFILE
-    armci_profile_start_vector(darr, len, proc, ARMCI_PROF_NBPUTV);
-#endif
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
@@ -583,9 +555,6 @@ int PARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
     if(nb_handle && nb_handle->agg_flag == SET) {
        if(!direct) {
 	  rc=armci_agg_save_giov_descriptor(darr, len, proc, PUT, nb_handle);
-#         ifdef ARMCI_PROFILE
-	  armci_profile_stop_vector(ARMCI_PROF_NBPUTV);
-#         endif	  
 	  return rc;
        }
     }
@@ -638,9 +607,6 @@ int PARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
 #endif /* BGML */
     }
 
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_vector(ARMCI_PROF_NBPUTV);
-#endif
     if(rc) return FAIL6;
     else return 0;
 }
@@ -669,10 +635,6 @@ int PARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-#ifdef ARMCI_PROFILE
-    armci_profile_start_vector(darr, len, proc, ARMCI_PROF_NBGETV);
-#endif
-
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
@@ -685,9 +647,6 @@ int PARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
     if(nb_handle && nb_handle->agg_flag == SET) {
        if(!direct) {
 	  rc=armci_agg_save_giov_descriptor(darr, len, proc, GET, nb_handle);
-#         ifdef ARMCI_PROFILE
-	  armci_profile_stop_vector(ARMCI_PROF_NBGETV);
-#         endif 	
 	  return rc;
        }
     }
@@ -731,9 +690,6 @@ int PARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
 #endif /* BGML */
     }
 
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_vector(ARMCI_PROF_NBGETV);
-#endif
     if(rc) return FAIL6;
     else return 0;
 }
@@ -759,10 +715,6 @@ int PARMCI_NbAccV( int op,              /* oeration code */
     }
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
-
-#ifdef ARMCI_PROFILE
-    armci_profile_start_vector(darr, len, proc, ARMCI_PROF_NBACCV);
-#endif
 
 #ifdef BGML
     if(nb_handle){
@@ -843,9 +795,6 @@ int PARMCI_NbAccV( int op,              /* oeration code */
     }
 #endif /* BGML */
 
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_vector(ARMCI_PROF_NBACCV);
-#endif
     if(rc) return FAIL6;
     else return 0;
 }

@@ -130,7 +130,6 @@ libarmci_la_SOURCES += src-portals/armci.c
 libarmci_la_SOURCES += src-portals/armcip.h
 libarmci_la_SOURCES += src-portals/armci_portals.c
 libarmci_la_SOURCES += src-portals/armci_portals.h
-libarmci_la_SOURCES += src-portals/armci_profile.h
 libarmci_la_SOURCES += src-portals/atomics-i386.h
 libarmci_la_SOURCES += src-portals/buffers.c
 libarmci_la_SOURCES += src-portals/caccumulate.c
@@ -192,9 +191,6 @@ endif
 if ARMCI_ENABLE_GPC_CALLS
 libarmci_la_SOURCES += src-portals/gpc.c
 endif
-if ENABLE_PROFILING
-libarmci_la_SOURCES += src-portals/armci_profile.c
-endif
 if THREAD_SAFE
 libarmci_la_SOURCES += src-portals/threads.c
 libarmci_la_SOURCES += src-portals/utils.c
@@ -237,7 +233,6 @@ libarmci_la_SOURCES += src-gemini/armci.c
 libarmci_la_SOURCES += src-gemini/armci-onesided.c
 libarmci_la_SOURCES += src-gemini/armci-onesided.h
 libarmci_la_SOURCES += src-gemini/armcip.h
-libarmci_la_SOURCES += src-gemini/armci_profile.h
 libarmci_la_SOURCES += src-gemini/atomics-i386.h
 libarmci_la_SOURCES += src-gemini/buffers.c
 libarmci_la_SOURCES += src-gemini/caccumulate.c
@@ -290,9 +285,6 @@ endif
 if ARMCI_ENABLE_GPC_CALLS
 libarmci_la_SOURCES += src-gemini/gpc.c
 endif
-if ENABLE_PROFILING
-libarmci_la_SOURCES += src-gemini/armci_profile.c
-endif
 if THREAD_SAFE
 libarmci_la_SOURCES += src-gemini/threads.c
 libarmci_la_SOURCES += src-gemini/utils.c
@@ -342,7 +334,6 @@ libarmci_la_SOURCES += src/ft/armci_chkpt.h
 libarmci_la_SOURCES += src/ft/armci_storage.h
 libarmci_la_SOURCES += src/include/acc.h
 libarmci_la_SOURCES += src/include/armcip.h
-libarmci_la_SOURCES += src/include/armci_profile.h
 libarmci_la_SOURCES += src/include/atomics-i386.h
 libarmci_la_SOURCES += src/include/copy.h
 libarmci_la_SOURCES += src/include/fujitsu-vpp.h
@@ -493,9 +484,6 @@ endif
 endif
 if NB_NONCONT
 libarmci_la_SOURCES += src/common/noncont.c
-endif
-if ENABLE_PROFILING
-libarmci_la_SOURCES += src/util/armci_profile.c
 endif
 if THREAD_SAFE
 libarmci_la_SOURCES += src/common/utils.c

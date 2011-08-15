@@ -19,9 +19,6 @@
 
 char *_armci_fence_arr;
 
-#ifdef ARMCI_PROFILE
-#include "armci_profile.h"
-#endif
 void armci_init_fence()
 {
      _armci_fence_arr=calloc(armci_nproc,1);
@@ -42,10 +39,6 @@ void ARMCI_Fence(int proc)
 {
 int i;
 
-#ifdef ARMCI_PROFILE
- if (!SAMECLUSNODE(proc))
- armci_profile_start(ARMCI_PROF_FENCE);
-#endif
 #if defined(DATA_SERVER) && !(defined(GM) && defined(ACK_FENCE))
 //   printf("%d [cp] fence_arr(%d)=%d\n",armci_me,proc,FENCE_ARR(proc));
      if(FENCE_ARR(proc) && (armci_nclus >1)){
@@ -66,10 +59,6 @@ int i;
      FENCE_NODE(proc);
      MEM_FENCE;
 #endif
-#ifdef ARMCI_PROFILE
- if (!SAMECLUSNODE(proc))
- armci_profile_stop(ARMCI_PROF_FENCE);
-#endif
 }
 
 
@@ -80,14 +69,8 @@ int i;
 */
 void ARMCI_AllFence()
 {
-#ifdef ARMCI_PROFILE
-     armci_profile_start(ARMCI_PROF_ALLFENCE);
-#endif
 #if defined(CLUSTER)
      { int p; for(p=0;p<armci_nproc;p++)ARMCI_Fence(p); }
-#endif
-#ifdef ARMCI_PROFILE
-     armci_profile_stop(ARMCI_PROF_ALLFENCE);
 #endif
      MEM_FENCE;
 }
@@ -95,9 +78,6 @@ void ARMCI_AllFence()
 void ARMCI_Barrier()
 {
     if(armci_nproc==1)return;
-#ifdef ARMCI_PROFILE
-    armci_profile_start(ARMCI_PROF_BARRIER);
-#endif
     ARMCI_AllFence();
 #  ifdef MPI
     MPI_Barrier(ARMCI_COMM_WORLD);
@@ -108,8 +88,4 @@ void ARMCI_Barrier()
     }
 #  endif
     MEM_FENCE;
-#ifdef ARMCI_PROFILE
-    armci_profile_stop(ARMCI_PROF_BARRIER);
-#endif
-
 }

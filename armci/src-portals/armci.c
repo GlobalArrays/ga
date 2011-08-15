@@ -52,9 +52,6 @@
 #ifdef ARMCIX
 #include "x/armcix.h"
 #endif
-#ifdef ARMCI_PROFILE
-#include "armci_profile.h"
-#endif
 #ifdef BGML
 #include "bgml.h"
 #include <assert.h>
@@ -390,9 +387,6 @@ caddr_t atbeginbrval = (caddr_t)sbrk(0);
     //if(armci_me == 0) code_summary();
     armci_msg_barrier();
     armci_msg_gop_init();
-#ifdef ARMCI_PROFILE
-    armci_profile_init();
-#endif
     _armci_initialized++;
     return 0;
 }
@@ -403,10 +397,6 @@ void PARMCI_Finalize()
     if(!_armci_initialized)return;
     _armci_initialized--;
     if(_armci_initialized)return;
-
-#ifdef ARMCI_PROFILE
-    armci_profile_terminate();
-#endif
 
     _armci_terminating =1;
     armci_msg_barrier();
@@ -503,29 +493,17 @@ int PARMCI_Wait(armci_hdl_t* usr_hdl){
 armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
 int success=0;
 int direct=SAMECLUSNODE(nb_handle->proc);
-#ifdef ARMCI_PROFILE
-    armci_profile_start(ARMCI_PROF_WAIT);
-#endif
 
     if(direct) {
-#      ifdef ARMCI_PROFILE
-       armci_profile_stop(ARMCI_PROF_WAIT);
-#      endif
        return(success);
     }
     if(nb_handle) {
       if(nb_handle->agg_flag) {
         armci_agg_complete(nb_handle, UNSET);
-#       ifdef ARMCI_PROFILE
-        armci_profile_stop(ARMCI_PROF_WAIT);
-#       endif
         return (success);
       }
       if(nb_handle->tag!=0 && nb_handle->bufid==NB_NONE){
         ARMCI_NB_WAIT(nb_handle->cmpl_info);
-#       ifdef ARMCI_PROFILE
-        armci_profile_stop(ARMCI_PROF_WAIT);
-#       endif
                __asm__ __volatile__ ("mfence" ::: "memory");
                __asm__ __volatile__ ("sfence" ::: "memory");
         return(success);
@@ -535,9 +513,6 @@ int direct=SAMECLUSNODE(nb_handle->proc);
 #     endif
     }
 
-#ifdef ARMCI_PROFILE
-    armci_profile_stop(ARMCI_PROF_WAIT);
-#endif
                __asm__ __volatile__ ("mfence" ::: "memory");
                __asm__ __volatile__ ("sfence" ::: "memory");
     return(success);
@@ -655,16 +630,10 @@ int armci_notify(int proc)
 int armci_notify_wait(int proc,int *pval)
 {
   int retval;
-#ifdef ARMCI_PROFILE
-  armci_profile_start(ARMCI_PROF_NOTIFY);
-#endif
 #ifdef DOELAN4
   if(proc==armci_me){
 #ifdef MEM_FENCE
        MEM_FENCE;
-#endif
-#ifdef ARMCI_PROFILE
-    armci_profile_stop(ARMCI_PROF_NOTIFY);
 #endif
     return 0;
   }
@@ -689,9 +658,6 @@ int armci_notify_wait(int proc,int *pval)
   }
 #endif
 
-#ifdef ARMCI_PROFILE
-  armci_profile_stop(ARMCI_PROF_NOTIFY);
-#endif
   return retval;
 }
 

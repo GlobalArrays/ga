@@ -20,9 +20,6 @@
 
 char *_armci_fence_arr;
 
-#ifdef ARMCI_PROFILE
-#include "armci_profile.h"
-#endif
 void armci_init_fence()
 {
 #if defined (DATA_SERVER) || defined(PORTALS)
@@ -49,11 +46,6 @@ void armci_update_fence_array(int proc, int inc)
 
 void PARMCI_Fence(int proc)
 {
-#ifdef ARMCI_PROFILE
- if (!SAMECLUSNODE(proc))
- armci_profile_start(ARMCI_PROF_FENCE);
-#endif
-
 #if defined(DATA_SERVER) && !(defined(GM) && defined(ACK_FENCE))
      if(FENCE_ARR(proc) && (armci_nclus >1)){
 
@@ -74,18 +66,11 @@ void PARMCI_Fence(int proc)
      FENCE_NODE(proc);
      MEM_FENCE;
 #endif
-#ifdef ARMCI_PROFILE
- if (!SAMECLUSNODE(proc))
- armci_profile_stop(ARMCI_PROF_FENCE);
-#endif
 }
 
 
 void PARMCI_AllFence()
 {
-#ifdef ARMCI_PROFILE
-    armci_profile_start(ARMCI_PROF_ALLFENCE);
-#endif
 #if defined(ARMCIX)
     ARMCIX_AllFence ();
 #elif defined(BGML)
@@ -97,9 +82,6 @@ void PARMCI_AllFence()
         PARMCI_Fence(p); 
     }
 #endif
-#ifdef ARMCI_PROFILE
-    armci_profile_stop(ARMCI_PROF_ALLFENCE);
-#endif
     MEM_FENCE;
 }
 
@@ -107,9 +89,6 @@ void PARMCI_Barrier()
 {
     if (armci_nproc==1)
         return;
-#ifdef ARMCI_PROFILE
-    armci_profile_start(ARMCI_PROF_BARRIER);
-#endif
 #if defined(BGML)
     BGML_WaitAll();
     bgml_barrier(3);
@@ -125,8 +104,4 @@ void PARMCI_Barrier()
 #  endif
 #endif
     MEM_FENCE;
-#ifdef ARMCI_PROFILE
-    armci_profile_stop(ARMCI_PROF_BARRIER);
-#endif
-
 }

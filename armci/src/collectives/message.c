@@ -37,10 +37,6 @@
 #    include "shmem.h"
 #endif
 
-#ifdef ARMCI_PROFILE
-#include "armci_profile.h"
-#endif
-
 /* global operations are use buffer size of BUF_SIZE doubles */ 
 #define BUF_SIZE  (4*2048)
 #define INFO_BUF_SIZE  (BUF_SIZE*sizeof(BUF_SIZE) - sizeof(double))
@@ -409,10 +405,6 @@ static void _armci_msg_barrier(){
 #endif /*barrier enabled only for lapi*/
 void armci_msg_barrier()
 {
-#ifdef ARMCI_PROFILE
-    armci_profile_start(ARMCI_PROF_BARRIER);    
-#endif
-    
 #ifdef BGML
   bgml_barrier (3); /* this is always faster than MPI_Barrier() */
 #elif defined(MPI)
@@ -433,11 +425,6 @@ void armci_msg_barrier()
         tcg_synch(ARMCI_TAG);
      }
 #  endif
-     
-#ifdef ARMCI_PROFILE
-     armci_profile_stop(ARMCI_PROF_BARRIER);     
-#endif
-     
 }
 /***********************End Barrier Code*************************************/
 
@@ -1863,9 +1850,6 @@ MPI_Comm armci_group_comm(ARMCI_Group *group)
 void armci_msg_group_barrier(ARMCI_Group *group)
 {
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
-#ifdef ARMCI_PROFILE
-    armci_profile_start(ARMCI_PROF_BARRIER);    
-#endif
     
 #ifdef ARMCI_GROUP
  {
@@ -1875,11 +1859,8 @@ void armci_msg_group_barrier(ARMCI_Group *group)
 #else
     MPI_Barrier((MPI_Comm)(igroup->icomm));
 #endif
-
-#ifdef ARMCI_PROFILE
-     armci_profile_stop(ARMCI_PROF_BARRIER);     
-#endif    
 }
+
 void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
                            int grp_clus_nproc, ARMCI_Group *mastergroup) {
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)mastergroup;

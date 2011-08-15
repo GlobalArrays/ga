@@ -12,10 +12,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-#ifdef ARMCI_PROFILE
-#include "armci_profile.h"
-#endif
-
 #define DATA_SERVER_ 1
 
 #ifdef ORNL_USE_DS_FOR_REMOTE_GETS
@@ -538,11 +534,6 @@ int *count=seg_count, tmp_count=0;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
-#ifdef ARMCI_PROFILE
-    armci_profile_start_strided(seg_count, stride_levels, proc, 
-				ARMCI_PROF_PUTS);
-#endif
-
     ORDER(PUT,proc); /* ensure ordering */
     PREPROCESS_STRIDED(tmp_count);
 
@@ -568,10 +559,6 @@ int *count=seg_count, tmp_count=0;
 				 0,NULL);
     }
     POSTPROCESS_STRIDED(tmp_count);
-
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_strided(ARMCI_PROF_PUTS);
-#endif
 
     ARMCI_PR_DBG("exit",proc);
     if(rc) return FAIL6;
@@ -639,11 +626,6 @@ int *count=seg_count, tmp_count=0;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0||proc>=armci_nproc){printf("\n%d:%s:proc=%d",armci_me,FUNCTION_NAME,proc);fflush(stdout);return FAIL5;}
     
-#ifdef ARMCI_PROFILE
-    armci_profile_start_strided(seg_count, stride_levels, proc, 
-				ARMCI_PROF_GETS);
-#endif
-
     ORDER(GET,proc); /* ensure ordering */
     PREPROCESS_STRIDED(tmp_count);
 
@@ -664,9 +646,6 @@ int *count=seg_count, tmp_count=0;
     }
 
     POSTPROCESS_STRIDED(tmp_count);
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_strided(ARMCI_PROF_GETS);
-#endif
     ARMCI_PR_DBG("exit",proc);
     if(rc) return FAIL6;
     else return 0;
@@ -697,11 +676,6 @@ int *count=seg_count, tmp_count=0;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
-#ifdef ARMCI_PROFILE
-    armci_profile_start_strided(seg_count, stride_levels, proc, 
-				ARMCI_PROF_ACCS);
-#endif
-
     ORDER(optype,proc); /* ensure ordering */
     PREPROCESS_STRIDED(tmp_count);
 
@@ -721,9 +695,6 @@ int *count=seg_count, tmp_count=0;
                       dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,NULL);
     }
     POSTPROCESS_STRIDED(tmp_count);
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_strided(ARMCI_PROF_ACCS);
-#endif
     ARMCI_PR_DBG("exit",proc);
     if(rc) return FAIL6;
     else return 0;
@@ -963,12 +934,6 @@ int rc=0, direct=1;
 
     PREPROCESS_STRIDED(tmp_count);
 
-#ifdef ARMCI_PROFILE
-    armci_profile_start_strided(seg_count, stride_levels, proc,
-				ARMCI_PROF_NBPUTS);
-#endif
-
-
 #if DATA_SERVER_
     if(stride_levels)direct=SAMECLUSNODE(proc);
     direct=SAMECLUSNODE(proc);
@@ -982,9 +947,6 @@ int rc=0, direct=1;
 						 count, stride_levels, proc, 
 						 PUT, nb_handle);
         POSTPROCESS_STRIDED(tmp_count);
-#       ifdef ARMCI_PROFILE
-	  armci_profile_stop_strided(ARMCI_PROF_NBPUTS);
-#       endif
         return(rc);
       }
     } 
@@ -1014,9 +976,6 @@ int rc=0, direct=1;
     }
     
     POSTPROCESS_STRIDED(tmp_count);
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_strided(ARMCI_PROF_NBPUTS);
-#endif 
     ARMCI_PR_DBG("exit",proc);
     if(rc) return FAIL6;
     else return 0;
@@ -1043,11 +1002,6 @@ int *count=seg_count, tmp_count=0;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
-#ifdef ARMCI_PROFILE
-    armci_profile_start_strided(seg_count, stride_levels, proc,
-				ARMCI_PROF_NBGETS);
-#endif
-
 #if DATA_SERVER_GET_
     if(stride_levels)direct=SAMECLUSNODE(proc);
     direct=SAMECLUSNODE(proc);
@@ -1062,9 +1016,6 @@ int *count=seg_count, tmp_count=0;
 					 count, stride_levels, proc, 
 					 GET, nb_handle);
         POSTPROCESS_STRIDED(tmp_count);
-#       ifdef ARMCI_PROFILE
-	  armci_profile_stop_strided(ARMCI_PROF_NBGETS);
-#       endif	
         return(rc);
       }
     } 
@@ -1095,9 +1046,6 @@ int *count=seg_count, tmp_count=0;
 
     POSTPROCESS_STRIDED(tmp_count);
 
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_strided(ARMCI_PROF_NBGETS);
-#endif
     ARMCI_PR_DBG("exit",proc);
     if(rc) return FAIL6;
     else return 0;
@@ -1127,11 +1075,6 @@ int rc, direct=1;
     if(count[0]<0)return FAIL3;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
-
-#ifdef ARMCI_PROFILE
-    armci_profile_start_strided(seg_count, stride_levels, proc,
-				ARMCI_PROF_NBACCS);
-#endif
 
     UPDATE_FENCE_INFO(proc);
     PREPROCESS_STRIDED(tmp_count);
@@ -1167,9 +1110,6 @@ int rc, direct=1;
 
     POSTPROCESS_STRIDED(tmp_count);
 
-#   ifdef ARMCI_PROFILE
-    armci_profile_stop_strided(ARMCI_PROF_NBACCS);
-#   endif
     ARMCI_PR_DBG("exit",proc);
     if(rc) return FAIL6;
     else return 0;
@@ -1208,9 +1148,6 @@ armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
     ARMCI_PR_DBG("enter",proc);
     
     if(src == NULL || dst == NULL) return FAIL;
-#ifdef ARMCI_PROFILE
-    armci_profile_start_strided(&bytes, 0, proc, ARMCI_PROF_NBPUT);
-#endif
 
     direct =SAMECLUSNODE(proc);
 
@@ -1219,9 +1156,6 @@ armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
       if(direct) { armci_copy(src,dst,bytes); rc=0; }
       else
 	rc=armci_agg_save_descriptor(src,dst,bytes,proc,PUT,0,nb_handle); 
-#     ifdef ARMCI_PROFILE
-        armci_profile_stop_strided(ARMCI_PROF_NBPUT);
-#     endif
       return rc;
     }
 
@@ -1244,9 +1178,6 @@ armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
     # endif
     }
 
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_strided(ARMCI_PROF_NBPUT);
-#endif
     ARMCI_PR_DBG("exit",proc);
     return(rc);
 }
@@ -1260,9 +1191,6 @@ armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
     ARMCI_PR_DBG("enter",proc);
     
     if(src == NULL || dst == NULL) return FAIL;
-#ifdef ARMCI_PROFILE
-    armci_profile_start_strided(&bytes, 0, proc, ARMCI_PROF_NBGET);
-#endif    
 
     direct =SAMECLUSNODE(proc);
 
@@ -1270,9 +1198,6 @@ armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
       if(direct) { armci_copy(src,dst,bytes); rc=0; }
       else
 	rc=armci_agg_save_descriptor(src,dst,bytes,proc,GET,0,nb_handle);
-#     ifdef ARMCI_PROFILE
-        armci_profile_stop_strided(ARMCI_PROF_NBGET); 
-#     endif
       return rc;
     }
 
@@ -1295,9 +1220,6 @@ armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
 #     endif
     # endif
     }
-#ifdef ARMCI_PROFILE
-    armci_profile_stop_strided(ARMCI_PROF_NBGET);
-#endif
     ARMCI_PR_DBG("exit",proc);
     return(rc);
 }
