@@ -387,6 +387,10 @@ c  123 continue
       if (has_data(me).and.safe_get)
      +    call nga_periodic_get(g_a, lo2, hi2, b, ld2)
       call atest(int_mb(index3),dims3,ld3(1),b,nmax+2*nwidth,has_data)
+#else
+      t13 = 0.0d00
+      t14 = 0.0d00
+      t15 = 0.0d00
 #endif
 
       t16 = 0.0d00
