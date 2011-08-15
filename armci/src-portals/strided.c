@@ -732,6 +732,12 @@ int PARMCI_Get(void *src, void* dst, int bytes, int proc) {
   return rc;
 }
 
+int PARMCI_Acc(int optype, void *scale, void *src, void* dst, int bytes, int proc) {
+  int rc=0;
+  rc = PARMCI_AccS(optype, scale, src, NULL, dst, NULL, &bytes, 0, proc);
+  return rc;
+}
+
 #define PACK1D 1
 
 #if PACK1D 

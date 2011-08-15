@@ -396,12 +396,12 @@ static void _armci_msg_barrier(){
 }
        
 #endif /*barrier enabled only for lapi*/
-void armci_msg_barrier()
+void parmci_msg_barrier()
 {
 #ifdef BGML
   bgml_barrier (3); /* this is always faster than MPI_Barrier() */
 #elif defined(MPI)
-     MPI_Barrier(MPI_COMM_WORLD);
+     MPI_Barrier(ARMCI_COMM_WORLD);
 #  elif defined(PVM)
      pvm_barrier(mp_group_name, armci_nproc);
 #  elif defined(LAPI)
@@ -428,7 +428,7 @@ int armci_msg_me()
      return(BGML_Messager_rank());
 #  elif defined(MPI)
      int me;
-     MPI_Comm_rank(MPI_COMM_WORLD, &me);
+     MPI_Comm_rank(ARMCI_COMM_WORLD, &me);
      return(me);
 #  elif defined(PVM)
        return(pvm_getinst(mp_group_name,pvm_mytid()));
@@ -444,7 +444,7 @@ int armci_msg_nproc()
    return(BGML_Messager_size());
 #elif defined(MPI)
      int nproc;
-     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+     MPI_Comm_size(ARMCI_COMM_WORLD, &nproc);
      return nproc;
 #  elif defined(PVM)
      return(pvm_gsize(mp_group_name));
@@ -478,7 +478,7 @@ void armci_msg_abort(int code)
    fprintf(stderr,"ARMCI aborting [%d]\n", code);
 #elif defined(MPI)
 #    ifndef BROKEN_MPI_ABORT
-         MPI_Abort(MPI_COMM_WORLD,code);
+         MPI_Abort(ARMCI_COMM_WORLD,code);
 #    endif
 #  elif defined(PVM)
      char error_msg[25];
@@ -731,7 +731,7 @@ void armci_msg_brdcst(void* buffer, int len, int root)
 #ifdef BGML
    BGTr_Bcast(root, buffer, len, PCLASS);
 # elif defined(MPI)
-      MPI_Bcast(buffer, len, MPI_CHAR, root, MPI_COMM_WORLD);
+      MPI_Bcast(buffer, len, MPI_CHAR, root, ARMCI_COMM_WORLD);
 #  elif defined(PVM)
       armci_msg_bcast(buffer, len, root);
 #  else
@@ -746,7 +746,7 @@ void armci_msg_brdcst(void* buffer, int len, int root)
 void armci_msg_snd(int tag, void* buffer, int len, int to)
 {
 #  ifdef MPI
-      MPI_Send(buffer, len, MPI_CHAR, to, tag, MPI_COMM_WORLD);
+      MPI_Send(buffer, len, MPI_CHAR, to, tag, ARMCI_COMM_WORLD);
 #  elif defined(PVM)
       pvm_psend(pvm_gettid(mp_group_name, to), tag, buffer, len, PVM_BYTE);
 # elif defined(BGML)
@@ -770,7 +770,7 @@ void armci_msg_rcv(int tag, void* buffer, int buflen, int *msglen, int from)
 {
 #  ifdef MPI
       MPI_Status status;
-      MPI_Recv(buffer, buflen, MPI_CHAR, from, tag, MPI_COMM_WORLD, &status);
+      MPI_Recv(buffer, buflen, MPI_CHAR, from, tag, ARMCI_COMM_WORLD, &status);
       if(msglen) MPI_Get_count(&status, MPI_CHAR, msglen);
 #  elif defined(PVM)
       int src, rtag,mlen;
@@ -794,7 +794,7 @@ int armci_msg_rcvany(int tag, void* buffer, int buflen, int *msglen)
       MPI_Status status;
 
       ierr = MPI_Recv(buffer, buflen, MPI_CHAR, MPI_ANY_SOURCE, tag,
-             MPI_COMM_WORLD, &status);
+             ARMCI_COMM_WORLD, &status);
       if(ierr != MPI_SUCCESS) armci_die("armci_msg_rcvany: Recv failed ", tag);
 
       if(msglen)if(MPI_SUCCESS!=MPI_Get_count(&status, MPI_CHAR, msglen))
@@ -1771,7 +1771,17 @@ void armci_exchange_address(void *ptr_ar[], int n)
  * NOTE: This part is MPI dependent (i.e. ifdef MPI)
  */
 #  ifdef MPI
-void armci_msg_group_barrier(ARMCI_Group *group)
+MPI_Comm armci_group_comm(ARMCI_Group *group)
+{
+#ifdef ARMCI_GROUP
+    return MPI_COMM_NULL;
+#else
+    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
+    return (MPI_Comm)igroup->icomm;
+#endif
+}
+
+void parmci_msg_group_barrier(ARMCI_Group *group)
 {
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
 #ifdef ARMCI_GROUP

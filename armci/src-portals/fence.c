@@ -81,7 +81,7 @@ void PARMCI_Barrier()
     if(armci_nproc==1)return;
     PARMCI_AllFence();
 #  ifdef MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(ARMCI_COMM_WORLD);
 #  else
     {
        long type=ARMCI_TAG;

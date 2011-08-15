@@ -52,7 +52,7 @@ int PARMCI_PutS (void *src_ptr, int *src_stride_arr, void *dst_ptr,
 		 int *dst_stride_arr, int *count, int stride_levels,
 		 int proc);
 
-void *PARMCI_Memat (armci_meminfo_t * meminfo, int memflg);
+void *PARMCI_Memat (armci_meminfo_t * meminfo, long offset);
 
 int PARMCI_PutV (armci_giov_t * darr, int len, int proc);
 

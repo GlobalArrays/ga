@@ -358,6 +358,10 @@ caddr_t atbeginbrval = (caddr_t)sbrk(0);
     mallopt(M_TRIM_THRESHOLD, -1);
 #endif
 
+#ifdef MPI
+    MPI_Comm_dup(MPI_COMM_WORLD, &ARMCI_COMM_WORLD);
+#endif
+
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();
     armci_usr_tid = THREAD_ID_SELF(); /*remember the main user thread id */
@@ -422,7 +426,9 @@ void PARMCI_Finalize()
     armci_group_finalize();
     free(armci_prot_switch_fence);
 #endif
-
+#ifdef MPI
+    MPI_Comm_free(&ARMCI_COMM_WORLD);
+#endif
 }
 
 
@@ -627,7 +633,7 @@ int armci_notify(int proc)
 /*\ blocks until received count becomes >= waited count
  *  return received count and store waited count in *pval
 \*/
-int armci_notify_wait(int proc,int *pval)
+int parmci_notify_wait(int proc,int *pval)
 {
   int retval;
 #ifdef DOELAN4

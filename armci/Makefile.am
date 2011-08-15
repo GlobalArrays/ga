@@ -133,7 +133,6 @@ libarmci_la_SOURCES += src-portals/armci_portals.h
 libarmci_la_SOURCES += src-portals/atomics-i386.h
 libarmci_la_SOURCES += src-portals/buffers.c
 libarmci_la_SOURCES += src-portals/caccumulate.c
-libarmci_la_SOURCES += src-portals/capi.c
 libarmci_la_SOURCES += src-portals/ccopy.c
 libarmci_la_SOURCES += src-portals/clusterinfo.c
 libarmci_la_SOURCES += src-portals/copy.h
