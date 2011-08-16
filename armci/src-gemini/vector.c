@@ -337,7 +337,7 @@ char *ptr = (char*)buf;
       }
 }
 
-int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
+int PARMCI_PutV( armci_giov_t darr[], /* descriptor array */
                 int len,  /* length of descriptor array */
                 int proc  /* remote process(or) ID */
               )
@@ -370,7 +370,7 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
 }
 
 
-int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
+int PARMCI_GetV( armci_giov_t darr[], /* descriptor array */
                 int len,  /* length of descriptor array */
                 int proc  /* remote process(or) ID */
               )
@@ -407,7 +407,7 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
 
 
 
-int ARMCI_AccV( int op,              /* oeration code */
+int PARMCI_AccV( int op,              /* oeration code */
                 void *scale,         /*scaling factor for accumulate */
                 armci_giov_t darr[], /* descriptor array */
                 int len,             /* length of descriptor array */
@@ -447,7 +447,7 @@ int ARMCI_AccV( int op,              /* oeration code */
 
 /*\ Non-blocking vector API
 \*/
-int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
+int PARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
                 int len,  /* length of descriptor array */
                 int proc, /* remote process(or) ID */
                 armci_hdl_t* usr_hdl  /*non-blocking request handle*/
@@ -502,7 +502,7 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
     else return 0;
 }
 
-int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
+int PARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
                 int len,  /* length of descriptor array */
                 int proc, /* remote process(or) ID */
                 armci_hdl_t* usr_hdl  /*non-blocking request handle*/
@@ -555,7 +555,7 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
 }
 
 
-int ARMCI_NbAccV( int op,              /* oeration code */
+int PARMCI_NbAccV( int op,              /* oeration code */
                 void *scale,         /*scaling factor for accumulate */
                 armci_giov_t darr[], /* descriptor array */
                 int len,             /* length of descriptor array */

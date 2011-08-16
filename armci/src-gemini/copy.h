@@ -459,8 +459,8 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
             (dst),(n),cmplt,nb_handle->tag)
 
 #elif defined(BGML)
-#define armci_get(src, dst, n, p)   ARMCI_Get(src, dst, n, p)
-#define armci_put(src, dst, n, p)   ARMCI_Put(src, dst, n, p)
+#define armci_get(src, dst, n, p)   PARMCI_Get(src, dst, n, p)
+#define armci_put(src, dst, n, p)   PARMCI_Put(src, dst, n, p)
 
 #else
 

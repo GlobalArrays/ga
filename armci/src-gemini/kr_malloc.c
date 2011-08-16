@@ -32,7 +32,7 @@ static void kr_free_shmem(char *ap, context_t *ctx);
 static int lock_mode=UNLOCKED;
 
 /* enable locking only after armci is initailized as locks (and lock
-   data structures) are initialized in ARMCI_Init */
+   data structures) are initialized in PARMCI_Init */
 #define  LOCKIT(p) \
     if(_armci_initialized && lock_mode==UNLOCKED) { \
        NAT_LOCK(0,p); lock_mode=LOCKED;             \

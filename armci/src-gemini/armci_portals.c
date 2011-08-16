@@ -1652,7 +1652,7 @@ int i;
     if(!ptr_arr) armci_die("armci_shmalloc_get_offsets: malloc failed", 0);
     bzero((char*)ptr_arr,armci_nproc*sizeof(void*));
 
-    ARMCI_Malloc(ptr_arr,bytes);
+    PARMCI_Malloc(ptr_arr,bytes);
     ARMCI_PR_DBG("exit",0);
     
     return;

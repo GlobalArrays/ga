@@ -519,7 +519,7 @@ int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
 }
 
 
-int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/ 
+int PARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/ 
 		int src_stride_arr[], /* array of strides at source */
 		void* dst_ptr,        /* pointer to 1st segment at destination*/
 		int dst_stride_arr[], /* array of strides at destination */
@@ -550,14 +550,14 @@ int *count=seg_count, tmp_count=0;
 
     if(!direct){
        DO_FENCE(proc,SERVER_PUT);
-//     printf("%s calling pack_strided in ARMCI_PutS\n",Portals_ID());
+//     printf("%s calling pack_strided in PARMCI_PutS\n",Portals_ID());
        rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,dst_ptr,
                   dst_stride_arr, count, stride_levels, NULL, -1, -1, -1,NULL);
     }
     else
     {
        if(!SAMECLUSNODE(proc))DO_FENCE(proc,DIRECT_PUT);
-//     printf("%s calling op_strided in ARMCI_PutS\n",Portals_ID());
+//     printf("%s calling op_strided in PARMCI_PutS\n",Portals_ID());
        rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
 				 dst_ptr, dst_stride_arr,count,stride_levels, 
 				 0,NULL);
@@ -571,7 +571,7 @@ int *count=seg_count, tmp_count=0;
 }
 
 
-int ARMCI_PutS_flag(
+int PARMCI_PutS_flag(
       void* src_ptr,        /* pointer to 1st segment at source */
       int src_stride_arr[], /* array of strides at source */
       void* dst_ptr,        /* pointer to 1st segment at destination */
@@ -587,32 +587,32 @@ int ARMCI_PutS_flag(
 {
   int bytes;
   /* Put local data on remote processor */
-  ARMCI_PutS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
+  PARMCI_PutS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
              count, stride_levels, proc);
 
   /* Send signal to remote processor that data transfer has
    * been completed. */
   bytes = sizeof(int);
-  ARMCI_Put(&val, flag, bytes, proc);
+  PARMCI_Put(&val, flag, bytes, proc);
   return 1;
 }
 
 
-int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc) {
-  return  ARMCI_PutS_flag(src, NULL, dst, NULL, &bytes, 0, f, v, proc);
+int PARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc) {
+  return  PARMCI_PutS_flag(src, NULL, dst, NULL, &bytes, 0, f, v, proc);
 }
 
 
-int ARMCI_PutS_flag_dir(void *src_ptr,   int src_stride_arr[],
+int PARMCI_PutS_flag_dir(void *src_ptr,   int src_stride_arr[],
             void* dst_ptr,   int dst_stride_arr[],
             int seg_count[], int stride_levels,
             int *flag, int val, int proc) {
-  return ARMCI_PutS_flag(src_ptr, src_stride_arr,dst_ptr,dst_stride_arr,
+  return PARMCI_PutS_flag(src_ptr, src_stride_arr,dst_ptr,dst_stride_arr,
              seg_count, stride_levels, flag, val, proc);
 }
 
 
-int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/ 
+int PARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/ 
 		int src_stride_arr[],   /* array of strides at source */
 		void* dst_ptr,          /* 1st segment at destination*/
 		int dst_stride_arr[],   /* array of strides at destination */
@@ -659,7 +659,7 @@ int *count=seg_count, tmp_count=0;
 
 
 
-int ARMCI_AccS( int  optype,            /* operation */
+int PARMCI_AccS( int  optype,            /* operation */
                 void *scale,            /* scale factor x += scale*y */
                 void *src_ptr,          /* pointer to 1st segment at source*/ 
 		int src_stride_arr[],   /* array of strides at source */
@@ -705,6 +705,11 @@ int *count=seg_count, tmp_count=0;
     else return 0;
 }
 
+int PARMCI_Acc(int optype, void *scale, void *src, void* dst, int bytes, int proc) {
+  int rc=0;
+  rc = PARMCI_AccS(optype, scale, src, NULL, dst, NULL, &bytes, 0, proc);
+  return rc;
+}
 
 /* 
    whatever original put and get functions were here have been
@@ -713,23 +718,23 @@ int *count=seg_count, tmp_count=0;
    test_vector_acc test to fail in test.x
 */
     
-int ARMCI_Put(void *src, void* dst, int bytes, int proc) {
+int PARMCI_Put(void *src, void* dst, int bytes, int proc) {
   int rc=0;
 //ARMCI_PROFILE_START_STRIDED(&bytes, 0, proc, ARMCI_PROF_PUT);
-  rc = ARMCI_PutS(src, NULL, dst, NULL, &bytes, 0, proc);
+  rc = PARMCI_PutS(src, NULL, dst, NULL, &bytes, 0, proc);
 //ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_PUT);
   assert(rc==0);
   return rc;
 }
 
-int ARMCI_Get(void *src, void* dst, int bytes, int proc) {
+int PARMCI_Get(void *src, void* dst, int bytes, int proc) {
   int rc=0;
 //ARMCI_PROFILE_START_STRIDED(&bytes, 0, proc, ARMCI_PROF_GET);
 
 #ifdef __crayx1
   memcpy(dst,src,bytes);
 #else
-  rc = ARMCI_GetS(src, NULL, dst, NULL, &bytes, 0, proc);
+  rc = PARMCI_GetS(src, NULL, dst, NULL, &bytes, 0, proc);
 #endif
 //ARMCI_PROFILE_STOP_STRIDED(ARMCI_PROF_GET);
 //dassert(1,rc==0);
@@ -917,7 +922,7 @@ void armci_read_strided2(void *ptr, int stride_levels, int stride_arr[],
 
 /*\Non-Blocking API
 \*/
-int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/ 
+int PARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/ 
 		int src_stride_arr[], /* array of strides at source */
 		void* dst_ptr,        /* pointer to 1st segment at destination*/
 		int dst_stride_arr[], /* array of strides at destination */
@@ -986,7 +991,7 @@ int rc=0, direct=1;
     else return 0;
 }
 
-int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/ 
+int PARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/ 
 		int src_stride_arr[],   /* array of strides at source */
 		void* dst_ptr,          /* 1st segment at destination*/
 		int dst_stride_arr[],   /* array of strides at destination */
@@ -1057,7 +1062,7 @@ int *count=seg_count, tmp_count=0;
 }
 
 
-int ARMCI_NbAccS( int  optype,            /* operation */
+int PARMCI_NbAccS( int  optype,            /* operation */
                 void *scale,            /* scale factor x += scale*y */
                 void *src_ptr,          /* pointer to 1st segment at source*/ 
 		int src_stride_arr[],   /* array of strides at source */
@@ -1145,7 +1150,7 @@ void set_nbhandle(armci_ihdl_t *nbh, armci_hdl_t *nb_handle, int op,
 }
 
 
-int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
+int PARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 {
 
 int rc=0, direct=0;
@@ -1171,14 +1176,14 @@ armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
     }
     else{
     # ifdef PORTALS
-      rc=ARMCI_NbPutS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
+      rc=PARMCI_NbPutS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
     # else
 #     ifdef ARMCI_NB_PUT
       INIT_NB_HANDLE(nb_handle,PUT,proc);
       UPDATE_FENCE_STATE(proc, PUT, 1);
       ARMCI_NB_PUT(src, dst, bytes, proc, &nb_handle->cmpl_info);
 #     else
-      rc=ARMCI_NbPutS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
+      rc=PARMCI_NbPutS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
 #     endif
     # endif
     }
@@ -1188,7 +1193,7 @@ armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
 }
 
 
-int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
+int PARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 {
 
 int rc=0, direct=0;
@@ -1213,7 +1218,7 @@ armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
     }else{
     
     # ifdef PORTALS
-      rc=ARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
+      rc=PARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
     # else
 #     ifdef ARMCI_NB_GET
       /*set tag and op in the nb handle*/
@@ -1221,7 +1226,7 @@ armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
       
       ARMCI_NB_GET(src, dst, bytes, proc, &nb_handle->cmpl_info);
 #     else
-      rc=ARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
+      rc=PARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
 #     endif
     # endif
     }
@@ -1356,18 +1361,18 @@ static void _armci_nb_rem_value(int op, void *src, void *dst, int proc,
 
 
 #define CHK_ERR(dst, proc)       \
-    if(dst==NULL) armci_die("ARMCI_PutValue: NULL pointer passed",FAIL);  \
-    if(proc<0) armci_die("ARMCI_PutValue: Invalid process rank", proc);
+    if(dst==NULL) armci_die("PARMCI_PutValue: NULL pointer passed",FAIL);  \
+    if(proc<0) armci_die("PARMCI_PutValue: Invalid process rank", proc);
 
 #define CHK_ERR_GET(src, dst, proc, bytes)       \
-    if(src==NULL || dst==NULL) armci_die("ARMCI_GetValue: NULL pointer passed",FAIL);  \
-    if(proc<0) armci_die("ARMCI_GetValue: Invalid process rank", proc); \
-    if(bytes<0) armci_die("ARMCI_GetValue: Invalid size", bytes);
+    if(src==NULL || dst==NULL) armci_die("PARMCI_GetValue: NULL pointer passed",FAIL);  \
+    if(proc<0) armci_die("PARMCI_GetValue: Invalid process rank", proc); \
+    if(bytes<0) armci_die("PARMCI_GetValue: Invalid size", bytes);
 
 /** 
  * Register-Originated Put.
  */
-int ARMCI_PutValueInt(int src, void *dst, int proc) 
+int PARMCI_PutValueInt(int src, void *dst, int proc) 
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(int *)dst = src;
@@ -1375,7 +1380,7 @@ int ARMCI_PutValueInt(int src, void *dst, int proc)
     return 0;
 }
 
-int ARMCI_PutValueLong(long src, void *dst, int proc) 
+int PARMCI_PutValueLong(long src, void *dst, int proc) 
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(long *)dst = src;
@@ -1383,7 +1388,7 @@ int ARMCI_PutValueLong(long src, void *dst, int proc)
     return 0;
 }
 
-int ARMCI_PutValueFloat(float src, void *dst, int proc) 
+int PARMCI_PutValueFloat(float src, void *dst, int proc) 
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(float *)dst = src;
@@ -1391,7 +1396,7 @@ int ARMCI_PutValueFloat(float src, void *dst, int proc)
     return 0;
 }
 
-int ARMCI_PutValueDouble(double src, void *dst, int proc) 
+int PARMCI_PutValueDouble(double src, void *dst, int proc) 
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(double *)dst = src;
@@ -1402,7 +1407,7 @@ int ARMCI_PutValueDouble(double src, void *dst, int proc)
 /**
  * Non-Blocking register-originated put.
  */
-int ARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t* usr_hdl) 
+int PARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t* usr_hdl) 
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(int *)dst = src;
@@ -1410,7 +1415,7 @@ int ARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t* usr_hdl)
     return 0;
 }
 
-int ARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t* usr_hdl) 
+int PARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t* usr_hdl) 
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(long *)dst = src;
@@ -1418,7 +1423,7 @@ int ARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t* usr_hdl)
     return 0;
 }
 
-int ARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t* usr_hdl)
+int PARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t* usr_hdl)
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(float *)dst = src;
@@ -1426,7 +1431,7 @@ int ARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t* usr_hdl)
     return 0;
 }
 
-int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t* usr_hdl)
+int PARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t* usr_hdl)
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(double *)dst = src;
@@ -1438,7 +1443,7 @@ int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t* usr_hdl
 /** 
  * Register-Originated Get.
  */
-int ARMCI_GetValueInt(void *src, int proc) 
+int PARMCI_GetValueInt(void *src, int proc) 
 {
     int dst;
     if( SAMECLUSNODE(proc) ) return *(int *)src;
@@ -1446,7 +1451,7 @@ int ARMCI_GetValueInt(void *src, int proc)
     return dst;
 }
 
-long ARMCI_GetValueLong(void *src, int proc) 
+long PARMCI_GetValueLong(void *src, int proc) 
 {
     long dst;
     if( SAMECLUSNODE(proc) ) return *(long *)src;
@@ -1454,7 +1459,7 @@ long ARMCI_GetValueLong(void *src, int proc)
     return dst;
 }
 
-float ARMCI_GetValueFloat(void *src, int proc) 
+float PARMCI_GetValueFloat(void *src, int proc) 
 {
     float dst;
     if( SAMECLUSNODE(proc) ) return *(float *)src;
@@ -1462,7 +1467,7 @@ float ARMCI_GetValueFloat(void *src, int proc)
     return dst;
 }
 
-double ARMCI_GetValueDouble(void *src, int proc) 
+double PARMCI_GetValueDouble(void *src, int proc) 
 {
     double dst;
     if( SAMECLUSNODE(proc) ) return *(double *)src;
@@ -1476,7 +1481,7 @@ double ARMCI_GetValueDouble(void *src, int proc)
 /**
  * Register-Originated Get.
  */
-int ARMCI_GetValue(void *src, void *dst, int proc, int bytes) 
+int PARMCI_GetValue(void *src, void *dst, int proc, int bytes) 
 {
     CHK_ERR_GET(src, dst, proc, bytes);
     if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }
@@ -1487,7 +1492,7 @@ int ARMCI_GetValue(void *src, void *dst, int proc, int bytes)
 /**
  * Non-Blocking register-originated get.
  */
-int ARMCI_NbGetValue(void *src, void *dst, int proc, int bytes, armci_hdl_t* usr_hdl) 
+int PARMCI_NbGetValue(void *src, void *dst, int proc, int bytes, armci_hdl_t* usr_hdl) 
 {
     CHK_ERR_GET(src, dst, proc, bytes);
     if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }

@@ -30,8 +30,8 @@ extern int ARMCI_Gpc_trylock(int proc);
 extern int ARMCI_Gpc_exec(int h,int p, void *hdr, int hlen, void *data,int dlen,
 			  void *rhdr, int rhlen, void *rdata, int rdlen,
 			  gpc_hdl_t* nbh);
-extern int ARMCI_Get_gpc_hlen();
-extern int ARMCI_Get_gpc_dlen();
+extern int PARMCI_Get_gpc_hlen();
+extern int PARMCI_Get_gpc_dlen();
 
 extern void ARMCI_Gpc_init_handle(gpc_hdl_t *nbh);
 extern void ARMCI_Gpc_wait(gpc_hdl_t *nbh);

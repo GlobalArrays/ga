@@ -572,7 +572,7 @@ void armci_krmalloc_init_localmem() {
 /**
  * Local Memory Allocation and Free
  */
-void *ARMCI_Malloc_local(armci_size_t bytes) {
+void *PARMCI_Malloc_local(armci_size_t bytes) {
     void *rptr;
     ARMCI_PR_DBG("enter",0);
     ARMCI_PR_DBG("exit",0);
@@ -581,7 +581,7 @@ void *ARMCI_Malloc_local(armci_size_t bytes) {
     return rptr;
 }
 
-int ARMCI_Free_local(void *ptr) {
+int PARMCI_Free_local(void *ptr) {
     ARMCI_PR_DBG("enter",0);
     kr_free((char *)ptr, &ctx_localmem);
     ARMCI_PR_DBG("exit",0);
@@ -597,7 +597,7 @@ int ARMCI_Free_local(void *ptr) {
  *        and can be used in the ARMCI data transfer operations.
  *        ptr_arr[nproc]
 \*/
-int ARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
+int PARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 {
     void *ptr;
     char *new_base;
@@ -651,7 +651,7 @@ int ARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 /*\ shared memory is released to kr_malloc only on process 0
  *  with data server malloc cannot be used
 \*/
-int ARMCI_Free(void *ptr)
+int PARMCI_Free(void *ptr)
 {
     ARMCI_PR_DBG("enter",0);
     if(!ptr)return 1;
@@ -832,20 +832,20 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
  * our problem...
  * NOTE: "int memflg" option for future optimiztions.
  */
-void ARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg) {
+void PARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg) {
 
     void *myptr=NULL;
     void *armci_ptr=NULL; /* legal ARCMI ptr used in ARMCI data xfer ops*/
     size_t size = bytes;
     
-    if(size<=0) armci_die("ARMCI_Memget: size must be > 0", (int)size);
-    if(meminfo==NULL) armci_die("ARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
-    if(memflg!=0) armci_die("ARMCI_Memget: Invalid memflg", memflg);
+    if(size<=0) armci_die("PARMCI_Memget: size must be > 0", (int)size);
+    if(meminfo==NULL) armci_die("PARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
+    if(memflg!=0) armci_die("PARMCI_Memget: Invalid memflg", memflg);
 
     if( !ARMCI_Uses_shm() )
     {
        armci_ptr = myptr = kr_malloc(size, &ctx_localmem, 0, NULL, NULL);
-       if(size) if(!myptr) armci_die("ARMCI_Memget failed", (int)size);
+       if(size) if(!myptr) armci_die("PARMCI_Memget failed", (int)size);
 
        /* fill the meminfo structure */
        meminfo->armci_addr = armci_ptr;
@@ -860,17 +860,17 @@ void ARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg) {
     }
     
     if(DEBUG_){
-       printf("%d: ARMCI_Memget: addresses server=%p myptr=%p bytes=%ld\n",
+       printf("%d: PARMCI_Memget: addresses server=%p myptr=%p bytes=%ld\n",
               armci_me, meminfo->armci_addr, meminfo->addr, bytes);
        fflush(stdout);
     }    
 }
 
-void* ARMCI_Memat(armci_meminfo_t *meminfo, int memflg) {
+void* PARMCI_Memat(armci_meminfo_t *meminfo, long memflg) {
     void *ptr=NULL;
     
-    if(meminfo==NULL) armci_die("ARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
-    if(memflg!=0) armci_die("ARMCI_Memget: Invalid memflg", memflg);
+    if(meminfo==NULL) armci_die("PARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
+    if(memflg!=0) armci_die("PARMCI_Memget: Invalid memflg", memflg);
 
     if(meminfo->cpid==armci_me) { ptr = meminfo->addr; return ptr; }
 
@@ -885,7 +885,7 @@ void* ARMCI_Memat(armci_meminfo_t *meminfo, int memflg) {
     
     if(DEBUG_)
     {
-       printf("%d:ARMCI_Memat: attached addr mptr=%p size=%ld\n",
+       printf("%d:PARMCI_Memat: attached addr mptr=%p size=%ld\n",
               armci_me, ptr, meminfo->size); fflush(stdout);
     }
     
@@ -903,7 +903,7 @@ void ARMCI_Memdt(armci_meminfo_t *meminfo, int memflg) {
 
 void ARMCI_Memctl(armci_meminfo_t *meminfo) {
 
-    if(meminfo==NULL) armci_die("ARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
+    if(meminfo==NULL) armci_die("PARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
 
     /* only the creator can delete the segment */
     if(meminfo->cpid == armci_me)

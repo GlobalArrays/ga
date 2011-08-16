@@ -30,7 +30,7 @@ void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group);
 int  ARMCI_Group_rank(ARMCI_Group *group, int *rank);
 void ARMCI_Group_size(ARMCI_Group *group, int *size);
 
-MPI_Comm ARMCI_COMM_WORLD; /*dup of MPI_COMM_WORLD. Initialized first thing in ARMCI_Init*/
+MPI_Comm ARMCI_COMM_WORLD; /*dup of MPI_COMM_WORLD. Initialized first thing in PARMCI_Init*/
 
 static void get_group_clus_id(ARMCI_iGroup *igroup, int grp_nproc, 
                               int *grp_clus_id) {

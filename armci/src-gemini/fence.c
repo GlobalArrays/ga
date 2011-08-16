@@ -35,7 +35,7 @@ int i;
   }
 }
 
-void ARMCI_Fence(int proc)
+void PARMCI_Fence(int proc)
 {
 int i;
 
@@ -67,18 +67,18 @@ int i;
     armci fence is not guaranteed to be correct unless PUT_START events are captured
     PUT_ENDs do NOT guarantee order; only PUT_STARTs
 */
-void ARMCI_AllFence()
+void PARMCI_AllFence()
 {
 #if defined(CLUSTER)
-     { int p; for(p=0;p<armci_nproc;p++)ARMCI_Fence(p); }
+     { int p; for(p=0;p<armci_nproc;p++)PARMCI_Fence(p); }
 #endif
      MEM_FENCE;
 }
 
-void ARMCI_Barrier()
+void PARMCI_Barrier()
 {
     if(armci_nproc==1)return;
-    ARMCI_AllFence();
+    PARMCI_AllFence();
 #  ifdef MPI
     MPI_Barrier(ARMCI_COMM_WORLD);
 #  else

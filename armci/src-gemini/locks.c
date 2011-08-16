@@ -26,7 +26,7 @@ extern void armci_set_serv_mutex_arr(void *);
   ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
   locks_per_proc = (num_locks*armci_nclus)/armci_nproc + 1;
   size=locks_per_proc*sizeof(PAD_LOCK_T);
-  ARMCI_Malloc(ptr_arr, size);
+  PARMCI_Malloc(ptr_arr, size);
   _armci_int_mutexes = (PAD_LOCK_T*) ptr_arr[armci_master];
 # ifdef PORTALS_SPECIFIC_QUESTION
   if(armci_me==armci_master)armci_set_serv_mutex_arr(_armci_int_mutexes);

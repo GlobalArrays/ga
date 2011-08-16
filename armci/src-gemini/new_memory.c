@@ -59,14 +59,14 @@ void armci_shmem_memctl(armci_meminfo_t *meminfo) {
 /**
  * Local Memory Allocation and Free
  */
-void *ARMCI_Malloc_local(armci_size_t bytes) {
+void *PARMCI_Malloc_local(armci_size_t bytes) {
     void *rptr;
     ARMCI_PR_DBG("enter",0);
     ARMCI_PR_DBG("exit",0);
 		return malloc(bytes);
 }
 
-int ARMCI_Free_local(void *ptr) {
+int PARMCI_Free_local(void *ptr) {
     ARMCI_PR_DBG("enter",0);
 		free(ptr);
     ARMCI_PR_DBG("exit",0);
@@ -109,7 +109,7 @@ int id;
  *        ptr_arr[nproc]
 \*/
 #define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm shm %d",id);
-int ARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
+int PARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 {
 int mynslave = armci_clus_info[armci_clus_me].nslave;
 void *servptr,*mynodeptrs[mynslave];
@@ -128,7 +128,7 @@ int id,nodeids[mynslave],mynodeid=armci_me-armci_master;
         printf("\n%d:%s:mynslave is %d",armci_me,__FUNCTION__,mynslave);fflush(stdout);
 #endif
         bzero((void *)nodeids,sizeof(int)*mynslave);
-        id =nodeids[mynodeid]= armci_shmget(bytes,"ARMCI_Malloc");
+        id =nodeids[mynodeid]= armci_shmget(bytes,"PARMCI_Malloc");
         armci_msg_gop_scope(SCOPE_NODE,nodeids,mynslave,"+",ARMCI_INT);
         for(int i=0;i<mynslave;i++){
           if((long)((mynodeptrs[i] = shmat(nodeids[i],mynodeptrs[i],0))) == -1L){
@@ -186,7 +186,7 @@ int id,nodeids[mynslave],mynodeid=armci_me-armci_master;
 
 
 
-int ARMCI_Free(void *ptr)
+int PARMCI_Free(void *ptr)
 {
     ARMCI_PR_DBG("enter",0);
     if(!ptr)return 1;
@@ -293,15 +293,15 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
  * our problem...
  * NOTE: "int memflg" option for future optimiztions.
  */
-void ARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg) {
+void PARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg) {
 
     void *myptr=NULL;
     void *armci_ptr=NULL; /* legal ARCMI ptr used in ARMCI data xfer ops*/
     size_t size = bytes;
     
-    if(size<=0) armci_die("ARMCI_Memget: size must be > 0", (int)size);
-    if(meminfo==NULL) armci_die("ARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
-    if(memflg!=0) armci_die("ARMCI_Memget: Invalid memflg", memflg);
+    if(size<=0) armci_die("PARMCI_Memget: size must be > 0", (int)size);
+    if(meminfo==NULL) armci_die("PARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
+    if(memflg!=0) armci_die("PARMCI_Memget: Invalid memflg", memflg);
 
     if( !ARMCI_Uses_shm() )
     {
@@ -319,17 +319,17 @@ void ARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg) {
     }
     
     if(DEBUG_){
-       printf("%d: ARMCI_Memget: addresses server=%p myptr=%p bytes=%ld\n",
+       printf("%d: PARMCI_Memget: addresses server=%p myptr=%p bytes=%ld\n",
               armci_me, meminfo->armci_addr, meminfo->addr, bytes);
        fflush(stdout);
     }    
 }
 
-void* ARMCI_Memat(armci_meminfo_t *meminfo, int memflg) {
+void* PARMCI_Memat(armci_meminfo_t *meminfo, long memflg) {
     void *ptr=NULL;
     
-    if(meminfo==NULL) armci_die("ARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
-    if(memflg!=0) armci_die("ARMCI_Memget: Invalid memflg", memflg);
+    if(meminfo==NULL) armci_die("PARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
+    if(memflg!=0) armci_die("PARMCI_Memget: Invalid memflg", memflg);
 
     if(meminfo->cpid==armci_me) { ptr = meminfo->addr; return ptr; }
 
@@ -344,7 +344,7 @@ void* ARMCI_Memat(armci_meminfo_t *meminfo, int memflg) {
     
     if(DEBUG_)
     {
-       printf("%d:ARMCI_Memat: attached addr mptr=%p size=%ld\n",
+       printf("%d:PARMCI_Memat: attached addr mptr=%p size=%ld\n",
               armci_me, ptr, meminfo->size); fflush(stdout);
     }
     
@@ -362,7 +362,7 @@ void ARMCI_Memdt(armci_meminfo_t *meminfo, int memflg) {
 
 void ARMCI_Memctl(armci_meminfo_t *meminfo) {
 
-    if(meminfo==NULL) armci_die("ARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
+    if(meminfo==NULL) armci_die("PARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
 
     /* only the creator can delete the segment */
     if(meminfo->cpid == armci_me)

@@ -692,7 +692,7 @@ char *_armci_buf_ptr_from_id(int id)
 
 
 
-/*\function called from ARMCI_Wait to wait for non-blocking ops
+/*\function called from PARMCI_Wait to wait for non-blocking ops
 \*/
 void _armci_buf_complete_nb_request(int bufid,unsigned int tag, int *retcode) 
 {
@@ -728,7 +728,7 @@ int i=0;
 }
 
 
-/*\function called from ARMCI_Test to test completion of non-blocking ops
+/*\function called from PARMCI_Test to test completion of non-blocking ops
 \*/
 void _armci_buf_test_nb_request(int bufid,unsigned int tag, int *retcode) 
 {

@@ -118,7 +118,7 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
 }
 
 
-int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
+int PARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
 {
     if(!SAMECLUSNODE(proc)){
       armci_rem_rmw(op, ploc, prem,  extra, proc);

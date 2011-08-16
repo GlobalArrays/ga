@@ -43,7 +43,7 @@ int armci_malloc_mt(void *ptr[], int bytes)
 
     th_size = mt_size * mt_tpp;
     if (thread_barrier_wait(&mt_barrier)==-1) {
-        rc = ARMCI_Malloc(ptr, bytes * mt_tpp);
+        rc = PARMCI_Malloc(ptr, bytes * mt_tpp);
 #ifdef DEBUG
         printf("bytes=%d\n", bytes);
         for (i = 0; i < mt_size; i++) printf("ptr[%d]=%p\n",i,ptr[i]);

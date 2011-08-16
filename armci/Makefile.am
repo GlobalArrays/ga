@@ -205,9 +205,9 @@ endif
 include_HEADERS += src-portals/armci.h
 include_HEADERS += src-portals/gpc.h
 include_HEADERS += src-portals/message.h
-include_HEADERS += src-portals/parmci.h
 
 AM_CPPFLAGS += -I$(top_srcdir)/src-portals
+AM_CPPFLAGS += -I$(top_srcdir)/src/include
 
 if ENABLE_SHARED
 MAYBE_PIC = -fPIC -DPIC
@@ -301,6 +301,7 @@ include_HEADERS += src-gemini/gpc.h
 include_HEADERS += src-gemini/message.h
 
 AM_CPPFLAGS += -I$(top_srcdir)/src-gemini
+AM_CPPFLAGS += -I$(top_srcdir)/src/include
 LDADD += -lnumatoolkit
 LDADD += -lonesided
 
@@ -520,7 +521,6 @@ endif
 
 include_HEADERS += src/include/armci.h
 include_HEADERS += src/include/gpc.h
-include_HEADERS += src/include/parmci.h
 include_HEADERS += src/include/message.h
 
 AM_CPPFLAGS += -I$(top_srcdir)/src/include
@@ -562,6 +562,8 @@ endif # HAVE_SYS_WEAK_ALIAS_PRAGMA
 else # ENABLE_PROFILING
 libarmci_la_SOURCES += src/common/capi.c
 endif
+
+include_HEADERS += src/include/parmci.h
 
 ##############################################################################
 # testing

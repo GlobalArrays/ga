@@ -155,7 +155,7 @@ void armci_notify_init()
         (armci_notify_t**)malloc(armci_nproc*sizeof(armci_notify_t*));
   if(!_armci_notify_arr)armci_die("armci_notify_ini:malloc failed",armci_nproc);
 
-  if((rc=ARMCI_Malloc((void **)_armci_notify_arr, bytes))) 
+  if((rc=PARMCI_Malloc((void **)_armci_notify_arr, bytes))) 
         armci_die(" armci_notify_init: armci_malloc failed",bytes); 
   bzero(_armci_notify_arr[armci_me], bytes);
 }
@@ -285,7 +285,7 @@ void armci_init_memlock()
     memlock_table_array = malloc(armci_nproc*sizeof(void*));
     if(!memlock_table_array) armci_die("malloc failed for ARMCI lock array",0);
 
-    rc = ARMCI_Malloc(memlock_table_array, bytes);
+    rc = PARMCI_Malloc(memlock_table_array, bytes);
     if(rc) armci_die("failed to allocate ARMCI memlock array",rc);
 
     armci_msg_barrier();
@@ -344,17 +344,17 @@ void ARMCI_NetInit()
   /*armci_portals_net_init();*/
 }
 
-int ARMCI_Init_args(int *argc, char ***argv)
+int PARMCI_Init_args(int *argc, char ***argv)
 {
     _armci_argc = argc;
     _armci_argv = argv;
     _armci_initialized_args=1;
-    ARMCI_Init();
+    PARMCI_Init();
 }
 
 
 extern void code_summary();
-int ARMCI_Init()
+int PARMCI_Init()
 {
 extern void *sbrk(intptr_t);
 caddr_t atbeginbrval = (caddr_t)sbrk(0);
@@ -405,7 +405,7 @@ caddr_t atbeginbrval = (caddr_t)sbrk(0);
 }
 
 
-void ARMCI_Finalize()
+void PARMCI_Finalize()
 {
     if(!_armci_initialized)return;
     _armci_initialized--;
@@ -504,7 +504,7 @@ int ARMCI_Same_node(int proc)
 /*\ blocks the calling process until a nonblocking operation represented
  *  by the user handle completes
 \*/
-int ARMCI_Wait(armci_hdl_t* usr_hdl){
+int PARMCI_Wait(armci_hdl_t* usr_hdl){
 armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
 int success=0;
 int direct=SAMECLUSNODE(nb_handle->proc);
@@ -542,7 +542,7 @@ armci_ihdl_t armci_set_implicit_handle (int op, int proc) {
  
   int i=impcount%ARMCI_MAX_IMPLICIT;
   if(hdl_flag[i]=='1')
-    ARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
+    PARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
 
 #ifdef BGML
    armci_inb_handle[i].count=0;
@@ -559,7 +559,7 @@ armci_ihdl_t armci_set_implicit_handle (int op, int proc) {
  
  
 /* wait for all non-blocking operations to finish */
-int ARMCI_WaitAll (void) {
+int PARMCI_WaitAll (void) {
 #ifdef BGML
   BGML_WaitAll();
 #elif ARMCIX
@@ -569,7 +569,7 @@ int ARMCI_WaitAll (void) {
   if(impcount) {
     for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
       if(hdl_flag[i] == '1') {
-        ARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
+        PARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
         hdl_flag[i]='0';
       }
     }
@@ -580,7 +580,7 @@ int ARMCI_WaitAll (void) {
 }
  
 /* wait for all non-blocking operations to a particular process to finish */
-int ARMCI_WaitProc (int proc) {
+int PARMCI_WaitProc (int proc) {
 #ifdef BGML
   BGML_WaitProc(proc);
 #elif ARMCIX
@@ -590,7 +590,7 @@ int ARMCI_WaitProc (int proc) {
   if(impcount) {
     for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
       if(hdl_flag[i]=='1' && armci_inb_handle[i].proc==proc) {
-        ARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
+        PARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
         hdl_flag[i]='0';
       }
     }
@@ -632,7 +632,7 @@ int armci_notify(int proc)
 # ifdef MEM_FENCE
    if(SAMECLUSNODE(proc)) MEM_FENCE;
 # endif
-   ARMCI_Put(&pnotify->sent,&(_armci_notify_arr[proc]+armci_me)->received, 
+   PARMCI_Put(&pnotify->sent,&(_armci_notify_arr[proc]+armci_me)->received, 
              sizeof(pnotify->sent),proc);
    return(pnotify->sent);
 #endif
@@ -642,7 +642,7 @@ int armci_notify(int proc)
 /*\ blocks until received count becomes >= waited count
  *  return received count and store waited count in *pval
 \*/
-int armci_notify_wait(int proc,int *pval)
+int parmci_notify_wait(int proc,int *pval)
 {
   int retval;
 #ifdef DOELAN4
@@ -687,7 +687,7 @@ int armci_util_int_getval(int* p)
 }
 
 
-int ARMCI_Test(armci_hdl_t *usr_hdl)
+int PARMCI_Test(armci_hdl_t *usr_hdl)
 {
 armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
 int success=0;

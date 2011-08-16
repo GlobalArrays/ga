@@ -310,26 +310,26 @@ void armci_agg_complete(armci_ihdl_t nb_handle, int condition) {
 	armci_hdl_t usr_hdl;
       case PUT:
 	ARMCI_INIT_HANDLE(&usr_hdl);       
-	if((rc=ARMCI_NbPutV(aggr[index]->darr, aggr[index]->request_len, 
+	if((rc=PARMCI_NbPutV(aggr[index]->darr, aggr[index]->request_len, 
 			    nb_handle->proc, (armci_hdl_t*)&usr_hdl)))
 	  ARMCI_Error("armci_agg_complete: nbputv failed",rc);
-	ARMCI_Wait((armci_hdl_t*)&usr_hdl);
+	PARMCI_Wait((armci_hdl_t*)&usr_hdl);
 	break;
       case GET:
 	ARMCI_INIT_HANDLE(&usr_hdl);       
-	if((rc=ARMCI_NbGetV(aggr[index]->darr, aggr[index]->request_len, 
+	if((rc=PARMCI_NbGetV(aggr[index]->darr, aggr[index]->request_len, 
 			    nb_handle->proc, (armci_hdl_t*)&usr_hdl)))
 	  ARMCI_Error("armci_agg_complete: nbgetv failed",rc);  
-	ARMCI_Wait((armci_hdl_t*)&usr_hdl);
+	PARMCI_Wait((armci_hdl_t*)&usr_hdl);
 	break;
 #else
       case PUT:
-	if((rc=ARMCI_PutV(aggr[index]->darr, aggr[index]->request_len, 
+	if((rc=PARMCI_PutV(aggr[index]->darr, aggr[index]->request_len, 
 			  nb_handle->proc)))
 	  ARMCI_Error("armci_agg_complete: putv failed",rc);
 	break;
       case GET:
-	if((rc=ARMCI_GetV(aggr[index]->darr, aggr[index]->request_len, 
+	if((rc=PARMCI_GetV(aggr[index]->darr, aggr[index]->request_len, 
 			  nb_handle->proc)))
 	  ARMCI_Error("armci_agg_complete: getv failed",rc);  
 	break;
@@ -342,7 +342,7 @@ void armci_agg_complete(armci_ihdl_t nb_handle, int condition) {
     aggr[index]->ptr_array_len = 0;
     aggr[index]->buf_pos_end   = _MAX_AGG_BUFSIZE;
     
-    /* If armci_agg_complete() is called ARMCI_Wait(), then unset nb_handle*/
+    /* If armci_agg_complete() is called PARMCI_Wait(), then unset nb_handle*/
     if(condition==UNSET) { 
       nb_handle->proc = -1;
       _armci_agg_update_lists(index);

@@ -375,7 +375,7 @@ typedef struct armci_meminfo_ds {
 
 extern void ARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg);
   
-extern void* ARMCI_Memat(armci_meminfo_t *meminfo, int memflg);
+extern void* ARMCI_Memat(armci_meminfo_t *meminfo, long offset);
   
 extern void ARMCI_Memdt(armci_meminfo_t *meminfo, int memflg);
   

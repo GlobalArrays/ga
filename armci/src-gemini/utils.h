@@ -102,8 +102,8 @@
 #   define TH_INIT(p_,t_)
 #   define TH_FINALIZE()
 #   define MT_BARRIER MP_BARRIER
-#   define ARMCI_MALLOC_MT ARMCI_Malloc
-#   define ARMCI_FREE_MT(p_,th_) ARMCI_Free(p_)
+#   define ARMCI_MALLOC_MT PARMCI_Malloc
+#   define ARMCI_FREE_MT(p_,th_) PARMCI_Free(p_)
 #endif
 
 

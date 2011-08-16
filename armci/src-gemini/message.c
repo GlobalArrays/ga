@@ -185,7 +185,7 @@ void armci_msg_gop_init()
        ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
        if(armci_me==armci_master) bytes += 128;
        else bytes=0;
-       ARMCI_Malloc(ptr_arr, bytes);
+       PARMCI_Malloc(ptr_arr, bytes);
        tmp = (char*)ptr_arr[armci_master];
 
        if(DEBUG_){
@@ -215,8 +215,8 @@ void armci_msg_gop_init()
        barr_snd_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
        barr_rcv_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
 
-       if(ARMCI_Malloc(barr_snd_ptr,size))armci_die("malloc barrinit failed",0);
-       if(ARMCI_Malloc(barr_rcv_ptr,size))armci_die("malloc barrinit failed",0);
+       if(PARMCI_Malloc(barr_snd_ptr,size))armci_die("malloc barrinit failed",0);
+       if(PARMCI_Malloc(barr_rcv_ptr,size))armci_die("malloc barrinit failed",0);
        if(barr_rcv_ptr[armci_me]==NULL || barr_snd_ptr[armci_me]==NULL)
          armci_die("problems in malloc barr_init",0);
        powof2nodes=1;
@@ -275,7 +275,7 @@ void armci_msg_barr_init(){
     ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
     if(armci_me==armci_master) size = size+128;
     else size=0;
-    ARMCI_Malloc(ptr_arr, size);
+    PARMCI_Malloc(ptr_arr, size);
     tmp = (char*)ptr_arr[armci_master];
     size=2*sizeof(int);
 
@@ -289,8 +289,8 @@ void armci_msg_barr_init(){
     barr_snd_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
     barr_rcv_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
 
-    if(ARMCI_Malloc(barr_snd_ptr,size))armci_die("malloc barr_init failed",0);
-    if(ARMCI_Malloc(barr_rcv_ptr,size))armci_die("malloc barr_init failed",0);
+    if(PARMCI_Malloc(barr_snd_ptr,size))armci_die("malloc barr_init failed",0);
+    if(PARMCI_Malloc(barr_rcv_ptr,size))armci_die("malloc barr_init failed",0);
     if(barr_rcv_ptr[armci_me]==NULL || barr_snd_ptr[armci_me]==NULL)
        armci_die("problems in malloc barr_init",0);
 
@@ -396,7 +396,7 @@ static void _armci_msg_barrier(){
 }
        
 #endif /*barrier enabled only for lapi*/
-void armci_msg_barrier()
+void parmci_msg_barrier()
 {
 #ifdef BGML
   bgml_barrier (3); /* this is always faster than MPI_Barrier() */
@@ -1781,7 +1781,7 @@ MPI_Comm armci_group_comm(ARMCI_Group *group)
 #endif
 }
 
-void armci_msg_group_barrier(ARMCI_Group *group)
+void parmci_msg_group_barrier(ARMCI_Group *group)
 {
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
 #ifdef ARMCI_GROUP

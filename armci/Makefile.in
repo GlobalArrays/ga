@@ -154,9 +154,10 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_12 = src-portals/tas_as.s
 @ARMCI_NETWORK_PORTALS_TRUE@am__append_13 = src-portals/armci.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/gpc.h \
-@ARMCI_NETWORK_PORTALS_TRUE@	src-portals/message.h \
-@ARMCI_NETWORK_PORTALS_TRUE@	src-portals/parmci.h
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_14 = -I$(top_srcdir)/src-portals
+@ARMCI_NETWORK_PORTALS_TRUE@	src-portals/message.h
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_14 =  \
+@ARMCI_NETWORK_PORTALS_TRUE@	-I$(top_srcdir)/src-portals \
+@ARMCI_NETWORK_PORTALS_TRUE@	-I$(top_srcdir)/src/include
 @ARMCI_NETWORK_PORTALS_TRUE@am__append_15 = src-portals/tas_as.s
 
 ##############################################################################
@@ -223,7 +224,8 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_22 = src-gemini/armci.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/gpc.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/message.h
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_23 = -I$(top_srcdir)/src-gemini
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_23 = -I$(top_srcdir)/src-gemini \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/src/include
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_24 = -lnumatoolkit \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	-lonesided
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_25 = src-gemini/tas_as.s
@@ -368,7 +370,6 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__append_57 = src/tas-sx.s
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_58 = src/include/armci.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/gpc.h \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/parmci.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/message.h
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_59 = -I$(top_srcdir)/src/include
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_60 = src/common/x86copy_as.s \
@@ -1520,9 +1521,9 @@ DIST_SOURCES = $(am__libarmci_la_SOURCES_DIST) \
 	$(testing_test_groups_SOURCES) $(testing_test_mt_SOURCES) \
 	$(testing_testitr_SOURCES) $(testing_testnotify_SOURCES)
 am__include_HEADERS_DIST = src-portals/armci.h src-portals/gpc.h \
-	src-portals/message.h src-portals/parmci.h src-gemini/armci.h \
-	src-gemini/gpc.h src-gemini/message.h src/include/armci.h \
-	src/include/gpc.h src/include/parmci.h src/include/message.h
+	src-portals/message.h src-gemini/armci.h src-gemini/gpc.h \
+	src-gemini/message.h src/include/armci.h src/include/gpc.h \
+	src/include/message.h src/include/parmci.h
 HEADERS = $(include_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -1767,7 +1768,8 @@ ACLOCAL_AMFLAGS = -I m4 -I ../m4
 # All public headers, installed programs, test programs, and example programs
 # are listed in these variables.  Appended to throughout.  These are the
 # automake variables used.
-include_HEADERS = $(am__append_13) $(am__append_22) $(am__append_58)
+include_HEADERS = $(am__append_13) $(am__append_22) $(am__append_58) \
+	src/include/parmci.h
 check_LTLIBRARIES = 
 lib_LTLIBRARIES = libarmci.la $(am__append_61)
 noinst_LTLIBRARIES = libarmcii.la
