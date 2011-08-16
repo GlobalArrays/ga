@@ -307,6 +307,42 @@ int ARMCI_NbPutV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_NbPutValueDouble
+#endif
+int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t *nb_handle)
+{
+    return PARMCI_NbPutValueDouble(src, dst, proc, nb_handle);
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_NbPutValueFloat
+#endif
+int ARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t *nb_handle)
+{
+    return PARMCI_NbPutValueFloat(src, dst, proc, nb_handle);
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_NbPutValueInt
+#endif
+int ARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t *nb_handle)
+{
+    return PARMCI_NbPutValueInt(src, dst, proc, nb_handle);
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_NbPutValueLong
+#endif
+int ARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t *nb_handle)
+{
+    return PARMCI_NbPutValueLong(src, dst, proc, nb_handle);
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak ARMCI_Put
 #endif
 int ARMCI_Put(void *src, void *dst, int bytes, int proc)

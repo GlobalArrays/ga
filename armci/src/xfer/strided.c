@@ -1626,28 +1626,28 @@ int PARMCI_PutValueDouble(double src, void *dst, int proc) {
 /**
  * Non-Blocking register-originated put.
  */
-int ARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t* usr_hdl) {
+int PARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t* usr_hdl) {
   CHK_ERR(dst, proc);
   if( SAMECLUSNODE(proc) ) *(int *)dst = src;
   else _armci_nb_rem_value(PUT,&src,dst,proc,sizeof(int),usr_hdl);
   return 0;
 }
 
-int ARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t* usr_hdl) {
+int PARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t* usr_hdl) {
   CHK_ERR(dst, proc);
   if( SAMECLUSNODE(proc) ) *(long *)dst = src;
   else _armci_nb_rem_value(PUT,&src,dst,proc,sizeof(long),usr_hdl);
   return 0;
 }
 
-int ARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t* usr_hdl) {
+int PARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t* usr_hdl) {
   CHK_ERR(dst, proc);
   if( SAMECLUSNODE(proc) ) *(float *)dst = src;
   else  _armci_nb_rem_value(PUT,&src,dst,proc,sizeof(float),usr_hdl);
   return 0;
 }
 
-int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t* usr_hdl) {
+int PARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t* usr_hdl) {
   CHK_ERR(dst, proc);
   if( SAMECLUSNODE(proc) ) *(double *)dst = src;
   else  _armci_nb_rem_value(PUT,&src,dst,proc,sizeof(double),usr_hdl);

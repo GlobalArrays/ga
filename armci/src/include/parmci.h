@@ -34,6 +34,10 @@ extern int    PARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, i
 extern int    PARMCI_NbGetV(armci_giov_t * darr, int len, int proc, armci_hdl_t * nb_handle);
 extern int    PARMCI_NbGet(void *src, void *dst, int bytes, int proc, armci_hdl_t * nb_handle);
 extern int    PARMCI_NbPutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t * nb_handle);
+extern int    PARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t* nb_handle);
+extern int    PARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t* nb_handle);
+extern int    PARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t* nb_handle);
+extern int    PARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t* nb_handle);
 extern int    PARMCI_NbPutV(armci_giov_t * darr, int len, int proc, armci_hdl_t * nb_handle);
 extern int    PARMCI_NbPut(void *src, void *dst, int bytes, int proc, armci_hdl_t * nb_handle);
 extern int    PARMCI_Put_flag(void *src, void *dst, int bytes, int *f, int v, int proc);

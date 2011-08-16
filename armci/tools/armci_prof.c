@@ -310,6 +310,38 @@ int ARMCI_NbPutV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
 }
 
 
+int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t *nb_handle)
+{
+    int ret;
+    ret = PARMCI_NbPutValueDouble(src, dst, proc, nb_handle);
+    return ret;
+}
+
+
+int ARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t *nb_handle)
+{
+    int ret;
+    ret = PARMCI_NbPutValueFloat(src, dst, proc, nb_handle);
+    return ret;
+}
+
+
+int ARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t *nb_handle)
+{
+    int ret;
+    ret = PARMCI_NbPutValueInt(src, dst, proc, nb_handle);
+    return ret;
+}
+
+
+int ARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t *nb_handle)
+{
+    int ret;
+    ret = PARMCI_NbPutValueLong(src, dst, proc, nb_handle);
+    return ret;
+}
+
+
 int ARMCI_Put(void *src, void *dst, int bytes, int proc)
 {
     int ret;
