@@ -185,7 +185,7 @@ int main( int argc, char **argv)
     }
    
     /* initialize ARMCI */
-    ARMCI_Init();
+    ARMCI_Init_args(&argc, &argv);
 
     MP_BARRIER();
    
