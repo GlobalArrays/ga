@@ -562,16 +562,16 @@ def access_block_segment(int g_a, int proc):
     :returns: ndarray representing local block
 
     """
-    cdef np.ndarray[np.int64_t, ndim=1] elems
+    cdef int64_t elems
     cdef int gtype=inquire_type(g_a)
     cdef int typenum=_to_dtype[gtype].num
     cdef void *ptr
     cdef np.npy_intp *dims = NULL
     # always access the entire local data
-    NGA_Access_block_segment64(g_a, proc, &ptr, <int64_t*>elems.data)
+    NGA_Access_block_segment64(g_a, proc, &ptr, &elems)
     # must convert int64_t ndarray shape to npy_intp array
     dims = <np.npy_intp*>malloc(sizeof(np.npy_intp))
-    dims[0] = elems[0]
+    dims[0] = elems
     array = np.PyArray_SimpleNewFromData(1, dims, typenum, ptr)
     free(dims)
     return array
