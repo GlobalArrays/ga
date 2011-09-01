@@ -3134,8 +3134,8 @@ class flatiter(object):
             ga.scatter(self._base.handle, values, i)
         else:
             key = long(key)
-            index = np.unravel_index(key, self._base.shape)
-            ga.scatter(self._base.handle, values, i)
+            i = np.unravel_index(key, self._base.shape)
+            ga.scatter(self._base.handle, value, i)
 
     def __setitem__(self, key, value):
         # THIS OPERATION IS COLLECTIVE
