@@ -56,7 +56,7 @@ typedef struct malloc_context {
    context shuld be stored in shared memory and is stored in the first shared
    memory segment created (i.e.armci_krmalloc_init_ctxshmem) */
 #define SHMEM_CTX_MEM   (sizeof(context_t)+sizeof(void*))
-#define SHMEM_CTX_BYTES ((SHMEM_CTX_MEM + sizeof(Header) - 1)>>LOG_ALIGN) + 1; 
+#define SHMEM_CTX_UNITS ((SHMEM_CTX_MEM + sizeof(Header) - 1)>>LOG_ALIGN) + 1; 
 
 extern void kr_malloc_init(size_t usize, /* unit size in bytes */
 			   size_t nalloc,

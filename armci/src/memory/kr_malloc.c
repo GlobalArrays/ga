@@ -518,7 +518,7 @@ static void kr_free_shmem(char *ap, context_t *ctx) {
 
          p = ctx->freep = bp;
          p->s.ptr  = bp;
-         p->s.size-=SHMEM_CTX_BYTES; /*memory to store shmem info in context*/
+         p->s.size-=SHMEM_CTX_UNITS; /*memory to store shmem info in context*/
          p->s.shmid     = ctx->shmid;
 	 p->s.shmsize   = ctx->shmsize;
 	 p->s.shmoffset = ctx->shmoffset;
