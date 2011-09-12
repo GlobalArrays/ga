@@ -38,13 +38,16 @@ static void test_scan_copy_##MT##_##MT_MSK(int llo, int lhi, int q) \
     int g_src, g_dst, g_msk; \
     int ndim = 1; \
     int dims[] = {NELEM}; \
-    int lo[] = {llo}; \
-    int hi[] = {lhi}; \
+    int lo[1]; \
+    int hi[1]; \
     int alo[] = {0}; \
     int ahi[] = {NELEM-1}; \
     int i; \
     T *local_src, *local_dst, *buf_dst, last_val; \
     T_MSK *local_msk; \
+ \
+    lo[0] = llo; \
+    hi[0] = lhi; \
  \
     g_src = NGA_Create(MT,    ndim, dims, "g_src", NULL); \
     g_dst = NGA_Create(MT,    ndim, dims, "g_dst", NULL); \
@@ -157,7 +160,7 @@ test_scan_copy(C_DCPL,DoubleComplex,cpl,C_DCPL,DoubleComplex,cpl)
 
 int main(int argc, char **argv)
 {
-    int i,lo,hi,q;
+    int i=0,lo=0,hi=0,q=0;
 
     MP_INIT(argc,argv);
     GA_Initialize();
