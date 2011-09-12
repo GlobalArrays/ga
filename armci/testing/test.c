@@ -78,7 +78,7 @@ extern void armci_unlockmem(void);
 
 /***************************** global data *******************/
 int me, nproc;
-void* work[MAXPROC]; /* work array for propagating addresses */
+int work[MAXPROC]; /* work array for propagating addresses */
 
 
 
@@ -840,7 +840,7 @@ void test_acc(int ndim)
         void *a, *c;
         double alpha=0.1, scale;
 	int idx1, idx2;
-        int *proclist = (int*)work;
+        int *proclist = work;
 
         elems = 1;   
         strideA[0]=sizeof(double); 
@@ -1087,7 +1087,7 @@ void test_vector_acc()
         void *psrc[ELEMS/2], *pdst[ELEMS/2];
         void *a, *c;
         double alpha=0.1, scale;
-        int *proclist = (int*)work;
+        int *proclist = work;
         armci_giov_t dsc;
 
         elems = ELEMS;
@@ -1302,7 +1302,7 @@ void test_memlock()
         double *b[MAXPROC];
         double *a, *c;
 #if 0
-        int *proclist = (int*)work;
+        int *proclist = work;
 #endif
                 void *pstart, *pend;
                 int first, last;

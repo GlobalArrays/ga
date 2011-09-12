@@ -4233,7 +4233,8 @@ void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
 
 Integer pnga_read_inc(Integer g_a, Integer* subscript, Integer inc)
 {
-Integer *ptr, ldp[MAXDIM], proc, handle=GA_OFFSET+g_a, p_handle, ndim;
+char *ptr;
+Integer ldp[MAXDIM], proc, handle=GA_OFFSET+g_a, p_handle, ndim;
 int optype,ivalue;
 long lvalue;
 void *pval;
@@ -4275,7 +4276,7 @@ void *pval;
         jtot *= ldp[j];
       }
       offset += (subscript[last]-lo[last])*jtot;
-      ptr += offset;
+      ptr += offset*GA[handle].elemsize;
     }
 
     if(GA[handle].type==C_INT){

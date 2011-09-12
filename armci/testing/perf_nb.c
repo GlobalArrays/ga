@@ -124,21 +124,23 @@ usage:
 }
 #endif
           
-void create_array(void *a[], int elem_size, int ndim, int dims[])
+/*void create_array(void *a[], int elem_size, int ndim, int dims[])*/
+void create_array(double *a[], int ndim, int dims[])
 {
-     int bytes=elem_size, i, rc;
+     int bytes=sizeof(double), i, rc;
 
      assert(ndim<=MAXDIMS);
      for(i=0;i<ndim;i++)bytes*=dims[i];
 
-     rc = ARMCI_Malloc(a, bytes);
+     rc = ARMCI_Malloc((void**)a, bytes);
      assert(rc==0);
      
      assert(a[me]);
      
 }
 
-void destroy_array(void *ptr[])
+/*void destroy_array(void *ptr[])*/
+void destroy_array(double *ptr[])
 {
     MP_BARRIER();
 
@@ -202,8 +204,8 @@ void test_perf_nb(int dry_run) {
     double *dsrc[MAXPROC], scale=1.0;
     armci_hdl_t hdl_get, hdl_put, hdl_acc;
         
-    create_array((void**)ddst, sizeof(double),2, elems);
-    create_array((void**)dsrc, sizeof(double),1, &elems[1]);
+    create_array(ddst, 2, elems);
+    create_array(dsrc, 1, &elems[1]);
 
     if(!dry_run)if(me == 0) {
       printf("\n\t\t\tRemote 1-D Array Section\n");
@@ -351,8 +353,8 @@ void test_perf_nb(int dry_run) {
     MP_BARRIER();
     
     if(!dry_run)if(me==0){printf("O.K.\n"); fflush(stdout);}
-    destroy_array((void **)ddst);
-    destroy_array((void **)dsrc);
+    destroy_array(ddst);
+    destroy_array(dsrc);
 }
 
 

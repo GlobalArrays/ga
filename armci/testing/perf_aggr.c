@@ -114,21 +114,23 @@ usage:
 }
 #endif
           
-void create_array(void *a[], int elem_size, int ndim, int dims[])
+/*void create_array(void *a[], int elem_size, int ndim, int dims[])*/
+void create_array(double *a[], int ndim, int dims[])
 {
-     int bytes=elem_size, i, rc;
+     int bytes=sizeof(double), i, rc;
 
      assert(ndim<=MAXDIMS);
      for(i=0;i<ndim;i++)bytes*=dims[i];
 
-     rc = ARMCI_Malloc(a, bytes);
+     rc = ARMCI_Malloc((void**)a, bytes);
      assert(rc==0);
      
      assert(a[me]);
      
 }
 
-void destroy_array(void *ptr[])
+/*void destroy_array(void *ptr[])*/
+void destroy_array(double *ptr[])
 {
     MP_BARRIER();
 
@@ -153,9 +155,9 @@ void test_aggregate(int dryrun) {
     int start = 0, end = 0;
     double start_time;
         
-    create_array((void**)ddst_put, sizeof(double),2, elems);
-    create_array((void**)ddst_get, sizeof(double),2, elems);
-    create_array((void**)dsrc, sizeof(double),1, &elems[1]);
+    create_array(ddst_put, 2, elems);
+    create_array(ddst_get, 2, elems);
+    create_array(dsrc, 1, &elems[1]);
     
     for(i=0; i<elems[1]; i++) dsrc[me][i]=i*1.001*(me+1);
     for(i=0; i<elems[0]*elems[1]; i++) {
@@ -310,9 +312,9 @@ void test_aggregate(int dryrun) {
     MP_BARRIER();
     
     if(!dryrun)if(me==0){printf("O.K.\n"); fflush(stdout);}
-    destroy_array((void **)ddst_put);
-    destroy_array((void **)ddst_get);
-    destroy_array((void **)dsrc);
+    destroy_array(ddst_put);
+    destroy_array(ddst_get);
+    destroy_array(dsrc);
 }
 
 
