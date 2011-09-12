@@ -200,7 +200,7 @@ void TRANSPOSE1D() {
       src_offset = cmin - min;
       src_ptr = (void*)(buf + src_offset);
       dst_offset = cmin - lmin;
-      dst_ptr = b_ptr[i] + sizeof(int)*dst_offset;
+      dst_ptr = ((char*)b_ptr[i]) + sizeof(int)*dst_offset;
       
       /* Find length of data (in bytes) to be sent to processor i */
       length = sizeof(int)*(cmax-cmin+1);
