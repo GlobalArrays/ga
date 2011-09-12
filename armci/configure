@@ -14436,7 +14436,7 @@ case $ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu:$ga_armci_network in #(
   MACX:*:*:*) :
     armci_cv_f77_opt= ;; #(
   NEC64:*:*:*) :
-    armci_cv_f77_opt="-Cvsafe" ;; #(
+    armci_cv_f77_opt="-Cvsafe -size_t64" ;; #(
   NEC:*:*:*) :
     armci_cv_f77_opt="-Cvsafe" ;; #(
   SOLARIS64:fujitsu:*:*) :

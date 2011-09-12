@@ -15978,7 +15978,7 @@ case $ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu in #(
   MACX:intel:*) :
     ga_cv_f77_opt="-O3 -prefetch -w -cm" ;; #(
   NEC64:*:*) :
-    ga_cv_f77_opt="-Cvsafe" ;; #(
+    ga_cv_f77_opt="-Cvsafe -size_t64" ;; #(
   NEC:*:*) :
     ga_cv_f77_opt="-Cvsafe" ;; #(
   SOLARIS64:fujitsu:*) :
