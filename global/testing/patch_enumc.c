@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 {
     int me, nproc;
     MP_INIT(argc,argv);
-    GA_Initialize();
+    GA_INIT(argc,argv);
 
     me = GA_Nodeid();
     nproc = GA_Nnodes();

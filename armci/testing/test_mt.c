@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
         prndbg(i, "proc %d, thread %d(%d):\n", rank, i, th_rank[i]);
 
     /* init ARMCI */
-    ARMCI_Init();
+    ARMCI_Init_args(&argc, &argv);
 
     /* set global seed (to ensure same random sequence across procs) */
     time_seed = (unsigned)time(NULL);

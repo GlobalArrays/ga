@@ -161,18 +161,8 @@ char **argv;
 int heap=20000, stack=20000;
 int me, nproc;
 
-#ifdef MPI
-#   ifdef DCMF
-    int provided;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-#   else
-    MPI_Init (&argc, &argv);	/* initialize MPI */
-#   endif
-#else
-    tcg_pbegin(argc, argv);                        /* initialize TCGMSG */
-#endif
-
-    GA_Initialize();                            /* initialize GA */
+    MP_INIT(argc,argv);
+    GA_INIT(argc,argv);                            /* initialize GA */
     me=GA_Nodeid();
     nproc=GA_Nnodes();
     if(me==0) printf("Using %ld processes\n",(long)nproc);

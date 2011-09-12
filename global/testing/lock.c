@@ -10,6 +10,7 @@
 #include "macdecls.h"
 #include "ga.h"
 #include "armci.h"
+#include "mp3.h"
 
 #define NDIM 1
 
@@ -30,13 +31,8 @@ int main(int argc, char **argv)
     int lo[1];
     int hi[1];
     int ld[1]={1};
-#ifdef DCMF
-    int desired = MPI_THREAD_MULTIPLE;
-    int provided;
-    MPI_Init_thread(&argc, &argv, desired, &provided);
-#else
-    MPI_Init (&argc, &argv);	/* initialize MPI */
-#endif
+
+    MP_INIT(argc,argv);
 
     MPI_Comm_rank(MPI_COMM_WORLD,&me);
     MPI_Comm_size(MPI_COMM_WORLD,&nproc);
@@ -44,7 +40,7 @@ int main(int argc, char **argv)
     printf("%d: Hello world!\n",me);
 
     if (me==0) printf("%d: GA_Initialize\n",me);
-    GA_Initialize();
+    GA_INIT(argc,argv);
     /*if (me==0) printf("%d: ARMCI_Init\n",me);*/
     /*ARMCI_Init();*/
     /*if (me==0) printf("%d: MA_Init\n",me);*/

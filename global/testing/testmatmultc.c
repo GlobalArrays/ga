@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     if (!MA_init(MT_DBL,1,20000000)) {
         GA_Error("failed: ma_init(MT_DBL,1,20000000)",10);
     }
-    GA_Initialize();
+    GA_INIT(argc,argv);
     me = GA_Nodeid();
 
     h0 = (double*)malloc(sizeof(double) * nummax*nummax);

@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
        
     }
     armci_init_checkpoint2();
-    ARMCI_Init();
+    ARMCI_Init_args(&argc, &argv);
     ARMCI_Group_get_world(&grp);
     size = SIZE_;
     rc=ARMCI_Malloc((void **)ptr_arr,size*8);

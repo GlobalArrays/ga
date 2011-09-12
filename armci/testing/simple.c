@@ -26,8 +26,8 @@ double t0,t1,tget=0,tnbget=0,tput=0,tnbput=0,tnbwait=0,t2=0;
 
     MPI_Comm_rank(MPI_COMM_WORLD,&me);
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
-    ARMCI_Init();
-    ARMCI_Init();
+    ARMCI_Init_args(&argc, &argv);
+    ARMCI_Init_args(&argc, &argv);
     for(k=0;k<10;k++){
       myptrs[k] = (double **)malloc(sizeof(double *)*nprocs);
       ARMCI_Malloc((void **)myptrs[k],400000*LOOP*sizeof(double)); 

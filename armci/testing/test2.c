@@ -954,7 +954,7 @@ int main(int argc, char* argv[])
 #define TEST_COLLECTIVE 1
 
     MP_INIT(argc, argv);
-    ARMCI_Init();
+    ARMCI_Init_args(&argc, &argv);
     MP_PROCS(&nproc);
     MP_MYID(&me);
 

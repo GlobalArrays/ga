@@ -38,12 +38,13 @@
 #   define MP_BARRIER()         MPI_Barrier(MPI_COMM_WORLD)
 #   define MP_FINALIZE()        MPI_Finalize()
 #   ifdef DCMF
-    static inline int MP_INIT(int argc, char **argv) {
+    static inline int MP_INIT_THREAD(int *argc, char ***argv) {
         int status;
         int provided;
-        status = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+        status = MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &provided);
         return status;
     }
+#       define MP_INIT(argc,argv)   MPI_INIT_THREAD(&(argc),&(argv))
 #   else
 #       define MP_INIT(argc,argv)   MPI_Init(&(argc),&(argv))
 #   endif
@@ -56,3 +57,10 @@
         } \
     } while (0)
 #endif
+#ifdef MPI_SPAWN 
+#   define GA_INIT(argc,argv) GA_Initialize_args(&(argc),&(argv)) 
+#   define ARMCI_INIT(argc,argv) ARMCI_Init_args(&(argc),&(argv)) 
+#else 
+#   define GA_INIT(argc,argv) GA_Initialize() 
+#   define ARMCI_INIT(argc,argv) ARMCI_Init() 
+#endif 

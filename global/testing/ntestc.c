@@ -242,7 +242,7 @@ int me, nproc;
 
     MP_INIT(argc,argv);
 
-    GA_Initialize();                           /* initialize GA */
+    GA_INIT(argc,argv);                           /* initialize GA */
 
     nproc = GA_Nnodes();
     me = GA_Nodeid();

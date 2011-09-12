@@ -413,7 +413,7 @@ int main(int argc, char **argv) {
      * *****************************************************************/
     MP_INIT(argc,argv);
     
-    GA_Initialize();        /* initialize GA */
+    GA_INIT(argc,argv);        /* initialize GA */
 
     me     = GA_Nodeid();
     nprocs = GA_Nnodes();

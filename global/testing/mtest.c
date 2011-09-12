@@ -2758,7 +2758,7 @@ main (argc, argv)
 
   MP_INIT(argc,argv);
 
-  GA_Initialize ();        /* initialize GA */
+  GA_INIT(argc,argv);        /* initialize GA */
   me = GA_Nodeid ();
   nproc = GA_Nnodes ();
   if (me == 0)

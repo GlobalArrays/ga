@@ -103,7 +103,7 @@ int main(int argc, char** argv)
       MPI_Comm_size(MPI_COMM_WORLD, &nproc);
       MPI_Comm_rank(MPI_COMM_WORLD, &me);
       if(me==0)printf("Testing IPCs (%d MPI processes)\n\n",nproc);
-      ARMCI_Init();
+      ARMCI_Init_args(&argc, &argv);
       test();
       ARMCI_Finalize();
       MPI_Finalize();

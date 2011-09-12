@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
     MP_INIT(argc,argv);
 
-    GA_Initialize();
+    GA_INIT(argc,argv);
 
     for (i=0; i<3; ++i) {
         if (0 == i) {
