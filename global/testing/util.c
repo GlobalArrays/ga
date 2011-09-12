@@ -234,9 +234,9 @@ int compare_patches_internal(int me, double eps, int ndim, double *array1,
         if(eps < GA_ABS(diff)/max){
             char msg[48], val[48];
             sprintf(msg,"ERROR (proc=%d): a",me);
-            sprintf(val,"=%lf, ",patch1[idx1]);
+            sprintf(val,"=%f, ",patch1[idx1]);
             print_subscript(msg,ndim,subscr1,val);
-            sprintf(msg,"=%lf\n",patch2[idx2]);
+            sprintf(msg,"=%f\n",patch2[idx2]);
             print_subscript(" b",ndim,subscr2,msg);
                         sleep(1);
                         return(1);

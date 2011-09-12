@@ -277,7 +277,7 @@ static int sparse_initialize(int *n, int *non_zero, int **row_ind,
 #if 0
   if(me==0) {
     printf("max = %d\n", max);
-    for(i=0; i<max; i++)  printf("%.1lf ", values[me][i]);
+    for(i=0; i<max; i++)  printf("%.1f ", values[me][i]);
     printf("\n");
   }
 #endif
@@ -362,10 +362,10 @@ static void sparse_multiply(int n, int non_zero, int *row_ind, int **col_ind,
        j = col_ind[me][k];
        v = values[me][k];
        svec[me][i] += v*vec[me][j];
-       printf("%.1lf %.1lf\n", v, vec[me][j]);
+       printf("%.1f %.1f\n", v, vec[me][j]);
      }
    }
-   for(i=0; i<n; i++) printf("%.1lf ", svec[me][i]);
+   for(i=0; i<n; i++) printf("%.1f ", svec[me][i]);
    printf("\n");
 #else
 
@@ -416,7 +416,7 @@ static void sparse_multiply(int n, int non_zero, int *row_ind, int **col_ind,
     }
   }
   comp_time = MP_TIMER()-start_time;
-  printf("%d: %lf + %lf = %lf  (count = %d)\n", me, comm_time, comp_time, 
+  printf("%d: %f + %f = %f  (count = %d)\n", me, comm_time, comp_time, 
      comm_time+comp_time, count+1);
 #endif
 }
@@ -441,7 +441,7 @@ static void test_sparse() {
 
     /*start_time = MP_TIMER();*/
     sparse_multiply(n, non_zero, row_ind, col_ind, values, vec, svec);
-    /* printf("%d: Timetaken = %lf\n", me, MP_TIMER()-start_time); */
+    /* printf("%d: Timetaken = %f\n", me, MP_TIMER()-start_time); */
     MP_BARRIER();
     
     if(me==0) gather_solution_vector(svec);

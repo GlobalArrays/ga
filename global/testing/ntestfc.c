@@ -233,7 +233,7 @@ double *buf;
              int p = NGA_Locate(g_a, lo);
              if((double)p != buf[i]) {
                 char msg[100];
-                sprintf(msg,"%d: wrong value: %d != %lf a",me, p, buf[i]);
+                sprintf(msg,"%d: wrong value: %d != %f a",me, p, buf[i]);
                 print_subscript(msg,ndim,lo,"\n");
                 GA_Error("Error - bye",i);  
              }

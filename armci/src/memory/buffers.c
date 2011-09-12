@@ -195,8 +195,8 @@ int smallbuf_size = sizeof(buf_smext_t)*(MAX_SMALL_BUFS);
 
      if(DEBUG2_){
 	printf("%d:armci_init_bufs: pointer %p, before align ptr=%p bufptr=%p end of region is %p  size=%lu extra=%d\n",
-               armci_me, _armci_buffers, tmp, _armci_buffers->buffer,
-               (_armci_buffers+MAX_BUFS),
+               armci_me, (void*)_armci_buffers, tmp, _armci_buffers->buffer,
+               (void*)(_armci_buffers+MAX_BUFS),
                (long unsigned)MAX_BUFS*sizeof(buf_ext_t), extra);
 	fflush(stdout);
      }

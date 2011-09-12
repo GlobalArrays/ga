@@ -216,7 +216,8 @@ int i,lo,hi;
     xvecptr=entirexvecptr+lo;
     dvecptr=entiredvecptr+lo;
 
-    printf("me: %d, entiredvecptr: %p, dvecptr: %p\n", me, entiredvecptr, dvecptr);
+    printf("me: %d, entiredvecptr: %p, dvecptr: %p\n",
+            me, (void*)entiredvecptr, (void*)dvecptr);
 }
 
 int main(argc, argv)

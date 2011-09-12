@@ -205,6 +205,6 @@ private:
   PGroup(void);
 };
 
-};
+}
 
-#endif // _PGROUP_H
+#endif /* _PGROUP_H */

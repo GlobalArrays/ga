@@ -198,7 +198,7 @@ main(int argc, char *argv[]) {
 	int p = g_a->locate(lo);
 	if((double)p != buf[i]) {
 	  char msg[100];
-	  sprintf(msg,(char *)"%d: wrong value: %d != %lf a",me, p, buf[i]);
+	  sprintf(msg,(char *)"%d: wrong value: %d != %f a",me, p, buf[i]);
 	  print_subscript(msg,ndim,lo,(char *)"\n");
 	  GA_Error((char *)"Error - bye",i);  
 	}

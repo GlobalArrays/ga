@@ -67,7 +67,7 @@ int main(int argc, char **argv)
                 status = 1;
 #endif
                 if(!status)printf("error read failed\n");
-                for(ii=0;ii<imax-i+1;ii++) printf("%lf ",ddata[ii]);
+                for(ii=0;ii<imax-i+1;ii++) printf("%f ",ddata[ii]);
                 printf("\n");
             }
             break;

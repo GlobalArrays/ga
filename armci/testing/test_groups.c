@@ -142,7 +142,7 @@ void test_one_group(ARMCI_Group *group, int *pid_list) {
   if(grp_me==dst_proc) {
     for(j=0; j<ELEMS; j++) {
       if(ARMCI_ABS(ddst_put[grp_me][j]-j*1.001*(src_proc+1)) > 0.1) {
-	printf("\t%d: ddst_put[%d][%d] = %lf and expected value is %lf\n",
+	printf("\t%d: ddst_put[%d][%d] = %f and expected value is %f\n",
 	       me, grp_me, j, ddst_put[grp_me][j], j*1.001*(src_proc+1));
 	ARMCI_Error("groups: armci put failed...1", 0);
       }

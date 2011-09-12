@@ -360,7 +360,7 @@ Integer  off_dbl, off_int, off_dcpl, off_flt,off_scpl;
 #   endif
 
     if(DEBUG) printf("%d INT_MB=%p DBL_MB=%p DCPL_MB=%p FLT_MB=%p SCPL_MB=%p\n",
-                     (int)GAme, INT_MB,DBL_MB, DCPL_MB, FLT_MB, SCPL_MB);
+                     (int)GAme, (void*)INT_MB, (void*)DBL_MB, (void*)DCPL_MB, (void*)FLT_MB, (void*)SCPL_MB);
 }
 
 

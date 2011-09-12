@@ -2654,6 +2654,6 @@ class GlobalArray {
   int mHandle; /**<< g_a handle */
 };
 
-};
+}
 
-#endif // _GLOBALARRAY_H 
+#endif /* _GLOBALARRAY_H */

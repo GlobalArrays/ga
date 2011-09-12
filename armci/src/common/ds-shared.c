@@ -425,7 +425,7 @@ void armci_rcv_data_hdlr(int bufid)
     if(datalen > (MSG_BUFLEN-sizeof(request_header_t)-sizeof(long)))
         armci_die("armci_rcv_data_hdlr: data overflowing rcv buffer",datalen);
 
-    // fills msginfo buffer
+    /* fills msginfo buffer */
     buf = armci_ReadFromDirect(proc, msginfo, datalen);
 
     if ((char *)(msginfo+1) != buf)
@@ -476,14 +476,14 @@ void armci_rcv_vector_data_hdlr(int bufid)
     /* obtain buffer and buffer info associated with this receive */
     msginfo = (request_header_t *)_armci_buf_ptr_from_id(bufid);
     proc = msginfo->to;
-//    datalen = msginfo->datalen;
+    /*datalen = msginfo->datalen;*/
     buf = (char *)(msginfo + 1);
 
     /* receive vector as cont block, data is in buf */
     armci_rcv_data_hdlr(bufid);
 
     /* unpack vector */
-    // armci_giov_t darr[], int len)
+    /* armci_giov_t darr[], int len) */
      armci_vector_from_buf(darr, len, buf);
 }
 #endif

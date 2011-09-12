@@ -14,7 +14,7 @@
 
 #define BASE_NAME "dra.file"
 #ifdef  HPIODIR
-#   define FNAME HPIODIR//BASE_NAME
+#   define FNAME HPIODIR/*BASE_NAME*/
 #else
 #   define FNAME BASE_NAME
 #endif

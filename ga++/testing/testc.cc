@@ -73,7 +73,7 @@ main(int argc, char *argv[]) {
   g_b->add(&alpha, g_a, &beta, g_b);  /* B= A - B */
   err= g_b->ddot(g_b);
   
-  if(me==0)printf("Error=%lf\n",(double)err);
+  if(me==0)printf("Error=%f\n",(double)err);
   
   if(me==0)printf("\nChecking atomic accumulate \n");
   	

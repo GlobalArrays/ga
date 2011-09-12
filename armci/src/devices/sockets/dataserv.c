@@ -477,7 +477,7 @@ armci_giov_t *mydarr;
     bytes = msginfo->dscrlen;
     if(DEBUG1){
       printf("\n in armci_tcp_read_vector_data reading bytes=%d infonext=%p\n",
-      bytes,(msginfo+1));fflush(stdout);
+      bytes,(void*)(msginfo+1));fflush(stdout);
     }
     stat = armci_ReadFromSocket(CLN_sock[p],
                 (MessageRcvBuffer+sizeof(request_header_t)),bytes);
@@ -511,7 +511,7 @@ int stride_levels, *stride_arr,*count,stat;
     bytes = msginfo->dscrlen;
     if(DEBUG1){
        printf("\n in armci tcp read strided data reading bytes=%d infonext=%p\n"
-             ,bytes,(msginfo+1));fflush(stdout);
+             ,bytes,(void*)(msginfo+1));fflush(stdout);
     }
     stat = armci_ReadFromSocket(CLN_sock[p],
                 (MessageRcvBuffer+sizeof(request_header_t)),bytes);

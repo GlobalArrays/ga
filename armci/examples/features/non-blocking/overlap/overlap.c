@@ -69,7 +69,7 @@ extern double exp2(double);
 extern double round(double);
 extern double log2(double);
 #define NDEBUG
-#define LOG2FILE
+/*#define LOG2FILE*/
 
 typedef int t_elem; /* type of an array element */
 #define SIZE_ELEM   sizeof(t_elem)
@@ -127,12 +127,12 @@ FILE *log_file = NULL;
 
 void start_logging(const char *fname)
 {
+#ifdef  LOG2FILE
     char exe_name[255];
     char log_path[255];
     int i;
     char k;
 
-#ifdef  LOG2FILE
     strcpy(exe_name, fname);
     if (exe_name[strlen(exe_name) - 2] == '.') /* remove .x */
         exe_name[strlen(exe_name) - 2] = 0;
@@ -225,7 +225,7 @@ double * benchmark(int op, int msg_size, int size2)
 {
     static double stats[STATS_COUNT]; /* return statistics in static array */
 
-    void *array_ptrs[size];
+    void **array_ptrs;
     int stride_dist, block_sizes[2], scale = 2;
     int i=0, j=0, k=0, l=0, less=0, more=0;
     double time_start=0, time_after_start=0, time_after_call=0,
@@ -234,6 +234,7 @@ double * benchmark(int op, int msg_size, int size2)
     double time2call_fw, time2work_fw, time2wait_fw, time_total_fw;
     armci_hdl_t handle;
 
+    array_ptrs = malloc(sizeof(void*)*size);
 
     log_debug("barrier O\n");
     MP_ASSERT(MP_BARRIER());
@@ -616,7 +617,8 @@ double * benchmark(int op, int msg_size, int size2)
     }
 
 
-    /*ARMCI_ASSERT(ARMCI_Free(array_ptrs[rank]));*/
+    ARMCI_ASSERT(ARMCI_Free(array_ptrs[rank]));
+    free(array_ptrs);
 
     log_debug("barrier D\n");
     MP_ASSERT(MP_BARRIER());

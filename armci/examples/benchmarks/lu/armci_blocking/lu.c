@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 
     /* Timer Stops here */
     if(me == 0) 
-        printf("\nRunning time = %lf milliseconds.\n\n",  elapsed_time()/nloop);
+        printf("\nRunning time = %f milliseconds.\n\n",  elapsed_time()/nloop);
     printf("%d: (ngets=%d) Communication (get) time = %e milliseconds\n", me, get_cntr, comm_time*1000/nloop);
     
     if(doprint) {        

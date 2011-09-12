@@ -52,4 +52,4 @@ int main(int argc, char **argv)
     GA_Terminate();
     MP_FINALIZE();
     exit(EXIT_SUCCESS);
-};
+}

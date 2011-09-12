@@ -705,6 +705,6 @@ int usesFAPI();
  */
 double wtime();
 
-};
+}
 
-#endif // _SERVICES_H 
+#endif /* _SERVICES_H */

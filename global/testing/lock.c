@@ -11,15 +11,16 @@
 #include "ga.h"
 #include "armci.h"
 
+#define NDIM 1
+
 int main(int argc, char **argv)
 {
     int me;
     int nproc;
-    const int ndim=1;
     int status;
     int g_a;
-    int dims[ndim];
-    int chunk[ndim];
+    int dims[NDIM];
+    int chunk[NDIM];
     int pg_world;
     size_t num = 10;
     double *p1 = NULL;
@@ -44,10 +45,10 @@ int main(int argc, char **argv)
 
     if (me==0) printf("%d: GA_Initialize\n",me);
     GA_Initialize();
-    //if (me==0) printf("%d: ARMCI_Init\n",me);
-    //ARMCI_Init();
-    //if (me==0) printf("%d: MA_Init\n",me);
-    //MA_init(MT_DBL, 8*1024*1024, 2*1024*1024);
+    /*if (me==0) printf("%d: ARMCI_Init\n",me);*/
+    /*ARMCI_Init();*/
+    /*if (me==0) printf("%d: MA_Init\n",me);*/
+    /*MA_init(MT_DBL, 8*1024*1024, 2*1024*1024);*/
 
     if (me==0) printf("%d: GA_Create_handle\n",me);
     g_a = GA_Create_handle();
@@ -55,12 +56,10 @@ int main(int argc, char **argv)
     if (me==0) printf("%d: GA_Set_array_name\n",me);
     GA_Set_array_name(g_a,"test array A");
 
-    dims[ndim];
     dims[0] = 30;
     if (me==0) printf("%d: GA_Set_data\n",me);
-    GA_Set_data(g_a,ndim,dims,MT_DBL);
+    GA_Set_data(g_a,NDIM,dims,MT_DBL);
 
-    chunk[ndim];
     chunk[0] = -1;
     if (me==0) printf("%d: GA_Set_chunk\n",me);
     GA_Set_chunk(g_a,chunk);
@@ -82,10 +81,10 @@ int main(int argc, char **argv)
 
     num = 10;
     p1 = malloc(num*sizeof(double));
-    //double* p1 = ARMCI_Malloc_local(num*sizeof(double));
+    /*double* p1 = ARMCI_Malloc_local(num*sizeof(double));*/
     if (p1==NULL) MPI_Abort(MPI_COMM_WORLD,1000);
     p2 = malloc(num*sizeof(double));
-    //double* p2 = ARMCI_Malloc_local(num*sizeof(double));
+    /*double* p2 = ARMCI_Malloc_local(num*sizeof(double));*/
     if (p2==NULL) MPI_Abort(MPI_COMM_WORLD,2000);
 
     i;
@@ -129,16 +128,16 @@ int main(int argc, char **argv)
     status = GA_Destroy_mutexes();
     if (me==0) printf("%d: GA_Destroy_mutexes = %d\n",me,status);
 
-    //ARMCI_Free(p2);
-    //ARMCI_Free(p1);
+    /*ARMCI_Free(p2);*/
+    /*ARMCI_Free(p1);*/
     free(p2);
     free(p1);
 
     if (me==0) printf("%d: GA_Destroy\n",me);
     GA_Destroy(g_a);
 
-    //if (me==0) printf("%d: ARMCI_Finalize\n",me);
-    //ARMCI_Finalize();
+    /*if (me==0) printf("%d: ARMCI_Finalize\n",me);*/
+    /*ARMCI_Finalize();*/
     if (me==0) printf("%d: GA_Terminate\n",me);
     GA_Terminate();
     if (me==0) printf("%d: MPI_Finalize\n",me);

@@ -32,7 +32,8 @@
 
 #define DEBUG /* note: a TBUFSIZE (per thread) buffer is used to print arrays */
 #define TBUFSIZE 65535
-#define LOG2FILE /* prints debug information to files named test_mt.th<#th_rank>*/
+/* prints debug information to files named test_mt.th<#th_rank>*/
+/*#define LOG2FILE*/
 #define NOTHREADS_ /* debug: does not spawn threads if set */
 
 typedef double atype_t; /* type of the element of the array */

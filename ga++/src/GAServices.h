@@ -731,6 +731,6 @@ public:
 
 extern GAServices SERVICES;
 
-};
+}
 
-#endif // _GA_SERVICES_H 
+#endif /* _GA_SERVICES_H */

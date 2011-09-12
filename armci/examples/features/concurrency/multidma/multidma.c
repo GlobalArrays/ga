@@ -69,7 +69,7 @@
 #include "armci.h"
 
 #define NDEBUG
-#define LOG2FILE
+/*#define LOG2FILE*/
 
 typedef int t_elem; /* type of an array element */
 #define SIZE_ELEM   sizeof(t_elem)
@@ -131,12 +131,12 @@ FILE *log_file = NULL;
 
 void start_logging(const char *fname)
 {
+#ifdef  LOG2FILE
     char exe_name[255];
     char log_path[255];
     int i;
     char k;
 
-#ifdef  LOG2FILE
     strcpy(exe_name, fname);
     if (exe_name[strlen(exe_name) - 2] == '.') /* remove .x */
         exe_name[strlen(exe_name) - 2] = 0;
@@ -203,11 +203,14 @@ struct stats {
 
 void benchmark(int msg_size, struct stats *st)
 {
-    void *out_ptrs[size], *in_ptrs[size];
+    void **out_ptrs, **in_ptrs;
     double time_start, time_after_start, time_after_call, time_after_wait;
     double time2put, time2get;
     int i, j;
     armci_hdl_t handle;
+
+    out_ptrs = malloc(sizeof(void*)*size);
+    in_ptrs = malloc(sizeof(void*)*size); 
 
     log_debug("testing message size %d bytes\n", msg_size);
 
@@ -358,6 +361,8 @@ void benchmark(int msg_size, struct stats *st)
     ARMCI_Free(out_ptrs[rank]);
     ARMCI_Free(in_ptrs[rank]);
 
+    free(out_ptrs);
+    free(in_ptrs);
 }
 
 
@@ -431,10 +436,12 @@ int main (int argc, char *argv[])
 
     for (i = 0; i < MSG_COUNT; i++) {
         benchmark(msg_sizes[i], st);
-        MP_ASSERT(MPI_Gather(st->nb_put_b + rank, 1, MPI_DOUBLE,
-                    st->nb_put_b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD));
-        MP_ASSERT(MPI_Gather(st->nb_get_b + rank, 1, MPI_DOUBLE,
-                    st->nb_get_b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD));
+        if (rank != 0) {
+            MP_ASSERT(MPI_Gather(st->nb_put_b + rank, 1, MPI_DOUBLE,
+                        st->nb_put_b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD));
+            MP_ASSERT(MPI_Gather(st->nb_get_b + rank, 1, MPI_DOUBLE,
+                        st->nb_get_b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD));
+        }
     if (!rank) {
         double min_put, max_put, mean_put;
         double min_get, max_get, mean_get;

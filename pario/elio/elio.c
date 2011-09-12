@@ -29,9 +29,9 @@
  * distribute to other US Government contractors.
  */
 #ifdef USE_LUSTRE
-#include <lustre/lustre_user.h> // for O_LOV_DELAY_CREATE, LL_IOC_LOV_SETSTRIPE
-#include <linux/lustre_idl.h> // for struct lov_mds_md, LOV_MAGIC
-#include <sys/ioctl.h> // for ioctl
+#include <lustre/lustre_user.h> /* for O_LOV_DELAY_CREATE, LL_IOC_LOV_SETSTRIPE */
+#include <linux/lustre_idl.h> /* for struct lov_mds_md, LOV_MAGIC */
+#include <sys/ioctl.h> /* for ioctl */
 #endif
 
 #include "eliop.h"
@@ -938,8 +938,8 @@ Fd_t  elio_open(const char* fname, int type, int mode)
 #ifdef USE_LUSTRE
     if (lustre_file) {
       stripecfg.lmm_magic = LOV_MAGIC;
-      stripecfg.lmm_pattern = 0; // Only available option for now.
-      stripecfg.lmm_stripe_size = pagesize; // Stripe size in bytes.
+      stripecfg.lmm_pattern = 0; /* Only available option for now. */
+      stripecfg.lmm_stripe_size = pagesize; /* Stripe size in bytes. */
       stripecfg.lmm_stripe_count  = lustre_stripe_count;
       if (ioctl((int)fd->fd, LL_IOC_LOV_SETSTRIPE, &stripecfg) < 0) {
         fprintf(stderr,

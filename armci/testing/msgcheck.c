@@ -33,7 +33,7 @@ double t;
   t /= LOOP;
 
   if(me==0){
-     printf("Time per gop %lf len=%d doubles\n",t, len);
+     printf("Time per gop %f len=%d doubles\n",t, len);
      fflush(stdout);
   }
 }
@@ -53,7 +53,7 @@ double t;
   t /= LOOP;
 
   if(me==0){
-     printf("Time per reduce %lf len=%d doubles\n",t, len);
+     printf("Time per reduce %f len=%d doubles\n",t, len);
      fflush(stdout);
   }
 }

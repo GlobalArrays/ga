@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 
     /* Timer Stops here */
     if(me == 0) 
-        printf("\nRunning time = %lf milliseconds.\n\n",  elapsed_time());
+        printf("\nRunning time = %f milliseconds.\n\n",  elapsed_time());
 
     if(doprint) {        
         if(me == 0) {

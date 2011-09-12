@@ -483,7 +483,8 @@ int i;
                       (char*) memlock_table_array[armci_clus_last]);
     
     if(DEBUG_)
-      fprintf(stderr,"server initialized memlock %p\n",armci_use_memlock_table);
+      fprintf(stderr,"server initialized memlock %p\n",
+              (void*)armci_use_memlock_table);
 #endif
 }
 
@@ -745,7 +746,7 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
 
     /* for put and accumulate copy data into buffer */
     if(op != GET){
-/*       fprintf(stderr,"sending %lf\n",*(double*)darr[0].src_ptr_array[0]);*/
+/*       fprintf(stderr,"sending %f\n",*(double*)darr[0].src_ptr_array[0]);*/
        armci_vector_to_buf(darr, len, buf);
     }
 /* #ifdef VAPI */
@@ -943,7 +944,7 @@ int armci_rem_strided(int op, void* scale, int proc,
     }
 
     /*
-	if(ARMCI_ACC(op))printf("%d client len=%d alpha=%lf data=%lf,%lf\n",
+	if(ARMCI_ACC(op))printf("%d client len=%d alpha=%f data=%f,%f\n",
 	     armci_me, buf-(char*)msginfo,((double*)buf)[0],*((double*)src_ptr),             ((double*)buf)[1]);
     */
 
@@ -1400,7 +1401,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 	scale = dscr_save+ (msginfo->dscrlen - slen -msginfo->ehlen);
 /*
     if(ARMCI_ACC(msginfo->operation))
-      fprintf(stderr,"%d in server len=%d slen=%d alpha=%lf data=%lf\n", 
+      fprintf(stderr,"%d in server len=%d slen=%d alpha=%f data=%f\n", 
                armci_me, msginfo->dscrlen, slen, *(double*)scale,*(double*)buf);
 */
 
@@ -1491,7 +1492,7 @@ void armci_server_vector( request_header_t *msginfo,
 
     proc = msginfo->to;
 
-    /*fprintf(stderr,"scale=%lf\n",*(double*)scale);*/
+    /*fprintf(stderr,"scale=%f\n",*(double*)scale);*/
     /* execute the operation */
 
     switch(msginfo->operation) {
@@ -1529,7 +1530,7 @@ void armci_server_vector( request_header_t *msginfo,
 
     case PUT:
 
-/*    fprintf(stderr,"received in buffer %lf\n",*(double*)buf);*/
+/*    fprintf(stderr,"received in buffer %f\n",*(double*)buf);*/
       for(i = 0; i< len; i++){
         int parlen, bytes;
         void **ptr;
@@ -1552,7 +1553,7 @@ void armci_server_vector( request_header_t *msginfo,
       if(!ARMCI_ACC(msginfo->operation))
                armci_die("v server: wrong op code",msginfo->operation);
 
-/*      fprintf(stderr,"received first=%lf last =%lf in buffer\n",*/
+/*      fprintf(stderr,"received first=%f last =%f in buffer\n",*/
 /*                     *((double*)buf),((double*)buf)[99]);*/
 
       for(i = 0; i< len; i++){

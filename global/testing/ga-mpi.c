@@ -141,7 +141,7 @@ int root=0, grp_me=-1;
     lo[0]=ZERO; hi[0]=n-1;
         NGA_Get(g_b, lo, hi, buf, &n); 
         for(i=0; i< n; i++)if(buf[i] != (double)n+i){
-            fprintf(stderr,"error:%d max=%lf should be:%d\n",i,buf[i],n+i);
+            fprintf(stderr,"error:%d max=%f should be:%d\n",i,buf[i],n+i);
             GA_Error("terminating...",0);
         }
      }

@@ -323,7 +323,7 @@ int dostats;
 
     /* Timer Stops here */
     if(MyNum == 0)
-        printf("\nRunning time = %lf milliseconds.\n\n",  elapsed_time());
+        printf("\nRunning time = %f milliseconds.\n\n",  elapsed_time());
 }
 
 

@@ -64,7 +64,7 @@ double buf[N], err, alpha, beta;
      GA_Add(&alpha, g_a, &beta, g_b, g_b);  /* B= A - B */
      err= GA_Ddot(g_b, g_b);
      
-     if(me==0)printf("Error=%lf\n",(double)err);
+     if(me==0)printf("Error=%f\n",(double)err);
      
      if(me==0)printf("\nChecking atomic accumulate \n");
 

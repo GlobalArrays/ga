@@ -50,6 +50,6 @@ void Initialize(int argc, char *argv[], unsigned long heapSize,
  */
 void Terminate();
 
-};
+}
 
-#endif // _INITTERM_H  
+#endif /* _INITTERM_H */

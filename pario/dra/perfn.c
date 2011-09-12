@@ -69,9 +69,9 @@
 */
 
 #define SWITCH 0
-//#define MAXDIM 7
-//#define TRUE (logical)1
-//#define FALSE (logical)0
+/*#define MAXDIM 7*/
+/*#define TRUE (logical)1*/
+/*#define FALSE (logical)0*/
 
 #define MULTFILES 0
 
