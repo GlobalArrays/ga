@@ -256,7 +256,7 @@ c
       logical status
       integer req, req_b, req_c, prefetch_next
       integer nxt_idx, cur_idx
-      double precision MP_TIMER, tot, t0
+      double precision tot, t0
       logical ga_create2
       integer LO, HI, NEXT
       LO(i)  = (i-1)*nb +1
