@@ -1,4 +1,4 @@
-      SUBROUTINE DLASWP( N, A, LDA, K1, K2, IPIV, INCX )
+      SUBROUTINE GAL_DLASWP( N, A, LDA, K1, K2, IPIV, INCX )
 *
 *  -- LAPACK auxiliary routine (version 1.1) --
 *     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
@@ -16,7 +16,7 @@
 *  Purpose
 *  =======
 *
-*  DLASWP performs a series of row interchanges on the matrix A.
+*  GAL_DLASWP performs a series of row interchanges on the matrix A.
 *  One row interchange is initiated for each of rows K1 through K2 of A.
 *
 *  Arguments
@@ -56,7 +56,7 @@
       INTEGER            I, IP, IX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DSWAP
+      EXTERNAL           GAL_DSWAP
 *     ..
 *     .. Executable Statements ..
 *
@@ -73,26 +73,26 @@
          DO 10 I = K1, K2
             IP = IPIV( I )
             IF( IP.NE.I )
-     $         CALL DSWAP( N, A( I, 1 ), LDA, A( IP, 1 ), LDA )
+     $         CALL GAL_DSWAP( N, A( I, 1 ), LDA, A( IP, 1 ), LDA )
    10    CONTINUE
       ELSE IF( INCX.GT.1 ) THEN
          DO 20 I = K1, K2
             IP = IPIV( IX )
             IF( IP.NE.I )
-     $         CALL DSWAP( N, A( I, 1 ), LDA, A( IP, 1 ), LDA )
+     $         CALL GAL_DSWAP( N, A( I, 1 ), LDA, A( IP, 1 ), LDA )
             IX = IX + INCX
    20    CONTINUE
       ELSE IF( INCX.LT.0 ) THEN
          DO 30 I = K2, K1, -1
             IP = IPIV( IX )
             IF( IP.NE.I )
-     $         CALL DSWAP( N, A( I, 1 ), LDA, A( IP, 1 ), LDA )
+     $         CALL GAL_DSWAP( N, A( I, 1 ), LDA, A( IP, 1 ), LDA )
             IX = IX + INCX
    30    CONTINUE
       END IF
 *
       RETURN
 *
-*     End of DLASWP
+*     End of GAL_DLASWP
 *
       END

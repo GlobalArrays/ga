@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.fh"
+#endif
+#include "galinalg.fh"
       SUBROUTINE TEST_DGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,
      $                      LDB,BETA,C,LDC)
 C     .. Parameters ..

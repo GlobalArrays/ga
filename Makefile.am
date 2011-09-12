@@ -241,9 +241,10 @@ nodist_EXTRA_ma_test_inquire_SOURCES  = $(MAYBE_DUMMY_F_LINK)
 ##############################################################################
 # LinAlg/lapack+blas
 #
+# Since we gave all linalg routines a gal_ prefix, we can unconditionally
+# compile our internal linalg routines.
+#
 if ENABLE_F77
-if HAVE_LAPACK
-else # !HAVE_LAPACK
 libga_la_SOURCES += LinAlg/lapack+blas/dgetf2.f
 libga_la_SOURCES += LinAlg/lapack+blas/dgetrf.f
 libga_la_SOURCES += LinAlg/lapack+blas/dgetrs.f
@@ -253,16 +254,18 @@ libga_la_SOURCES += LinAlg/lapack+blas/dlaswp.f
 libga_la_SOURCES += LinAlg/lapack+blas/ilaenv.f
 libga_la_SOURCES += LinAlg/lapack+blas/lsame.f
 libga_la_SOURCES += LinAlg/lapack+blas/xerbla.f
-endif # HAVE_LAPACK
-if HAVE_BLAS
-else # !HAVE_BLAS
 libga_la_SOURCES += LinAlg/lapack+blas/cgemm.f
 libga_la_SOURCES += LinAlg/lapack+blas/dblas.f
 libga_la_SOURCES += LinAlg/lapack+blas/sgemm.f
 libga_la_SOURCES += LinAlg/lapack+blas/zaxpy.f
 libga_la_SOURCES += LinAlg/lapack+blas/zgemm.f
-endif # HAVE_BLAS
-endif # ENABLE_F77
+endif
+libga_la_SOURCES += LinAlg/lapack+blas/xgemm.c
+libga_la_SOURCES += LinAlg/lapack+blas/xgemm.h
+libga_la_SOURCES += LinAlg/lapack+blas/galinalg.h
+libga_la_SOURCES += LinAlg/lapack+blas/galinalg.fh
+
+AM_CPPFLAGS += -I$(top_srcdir)/LinAlg/lapack+blas
 
 EXTRA_DIST += LinAlg/lapack+blas/README
 
@@ -689,8 +692,6 @@ libga_la_SOURCES += global/src/select.c
 libga_la_SOURCES += global/src/sparse.c
 libga_la_SOURCES += global/src/types.xh
 libga_la_SOURCES += global/src/types2.xh
-libga_la_SOURCES += global/src/xgemm.c
-libga_la_SOURCES += global/src/xgemm.h
 nodist_libga_la_SOURCES += global/src/wapidefs.h
 nodist_libga_la_SOURCES += global/src/cnames.h
 if ENABLE_F77
@@ -929,7 +930,7 @@ gtsrc += global/testing/testutil.h
 gtsrc += global/testing/util.c
 if ENABLE_F77
 gtsrc += global/testing/ffflush.F
-gtsrc += global/testing/testblas.f
+gtsrc += global/testing/testblas.F
 endif
 
 global_testing_bin_SOURCES            = global/testing/bin.F $(gtsrc)

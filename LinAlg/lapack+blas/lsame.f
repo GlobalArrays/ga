@@ -1,4 +1,4 @@
-      LOGICAL FUNCTION LSAME( CA, CB )
+      LOGICAL FUNCTION GAL_LSAME( CA, CB )
 *
 *  -- LAPACK auxiliary routine (version 1.0) --
 *     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
@@ -12,7 +12,7 @@
 *  Purpose
 *  =======
 *
-*  LSAME returns .TRUE. if CA is the same letter as CB regardless of
+*  GAL_LSAME returns .TRUE. if CA is the same letter as CB regardless of
 *  case.
 *
 *  Arguments
@@ -32,8 +32,8 @@
 *
 *     Test if the characters are equal
 *
-      LSAME = CA.EQ.CB
-      IF( LSAME )
+      GAL_LSAME = CA.EQ.CB
+      IF( GAL_LSAME )
      $   RETURN
 *
 *     Now test for equivalence if both characters are alphabetic.
@@ -76,10 +76,10 @@
          IF( INTA.GE.225 .AND. INTA.LE.250 ) INTA = INTA - 32
          IF( INTB.GE.225 .AND. INTB.LE.250 ) INTB = INTB - 32
       END IF
-      LSAME = INTA.EQ.INTB
+      GAL_LSAME = INTA.EQ.INTB
 *
 *     RETURN
 *
-*     End of LSAME
+*     End of GAL_LSAME
 *
       END

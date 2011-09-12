@@ -1,4 +1,4 @@
-      SUBROUTINE DLASET( UPLO, M, N, ALPHA, BETA, A, LDA )
+      SUBROUTINE GAL_DLASET( UPLO, M, N, ALPHA, BETA, A, LDA )
 *
 *  -- LAPACK auxiliary routine (version 1.1) --
 *     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
@@ -17,7 +17,7 @@
 *  Purpose
 *  =======
 *
-*  DLASET initializes an m-by-n matrix A to BETA on the diagonal and
+*  GAL_DLASET initializes an m-by-n matrix A to BETA on the diagonal and
 *  ALPHA on the offdiagonals.
 *
 *  Arguments
@@ -61,15 +61,15 @@
       INTEGER            I, J
 *     ..
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     ..
 *     .. Intrinsic Functions ..
       INTRINSIC          MIN
 *     ..
 *     .. Executable Statements ..
 *
-      IF( LSAME( UPLO, 'U' ) ) THEN
+      IF( GAL_LSAME( UPLO, 'U' ) ) THEN
 *
 *        Set the strictly upper triangular or trapezoidal part of the
 *        array to ALPHA.
@@ -80,7 +80,7 @@
    10       CONTINUE
    20    CONTINUE
 *
-      ELSE IF( LSAME( UPLO, 'L' ) ) THEN
+      ELSE IF( GAL_LSAME( UPLO, 'L' ) ) THEN
 *
 *        Set the strictly lower triangular or trapezoidal part of the
 *        array to ALPHA.
@@ -110,6 +110,6 @@
 *
       RETURN
 *
-*     End of DLASET
+*     End of GAL_DLASET
 *
       END

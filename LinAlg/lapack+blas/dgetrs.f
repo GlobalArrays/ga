@@ -1,4 +1,5 @@
-      SUBROUTINE DGETRS( TRANS, N, NRHS, A, LDA, IPIV, B, LDB, INFO )
+      SUBROUTINE GAL_DGETRS( TRANS, N, NRHS, A, LDA, IPIV, B, LDB,
+     $                       INFO )
 *
 *  -- LAPACK routine (version 1.1) --
 *     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
@@ -17,10 +18,10 @@
 *  Purpose
 *  =======
 *
-*  DGETRS solves a system of linear equations
+*  GAL_DGETRS solves a system of linear equations
 *     A * X = B  or  A' * X = B
 *  with a general N-by-N matrix A using the LU factorization computed
-*  by DGETRF.
+*  by GAL_DGETRF.
 *
 *  Arguments
 *  =========
@@ -40,13 +41,13 @@
 *
 *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
 *          The factors L and U from the factorization A = P*L*U
-*          as computed by DGETRF.
+*          as computed by GAL_DGETRF.
 *
 *  LDA     (input) INTEGER
 *          The leading dimension of the array A.  LDA >= max(1,N).
 *
 *  IPIV    (input) INTEGER array, dimension (N)
-*          The pivot indices from DGETRF; for 1<=i<=N, row i of the
+*          The pivot indices from GAL_DGETRF; for 1<=i<=N, row i of the
 *          matrix was interchanged with row IPIV(i).
 *
 *  B       (input/output) DOUBLE PRECISION array, dimension (LDB,NRHS)
@@ -70,11 +71,11 @@
       LOGICAL            NOTRAN
 *     ..
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DLASWP, DTRSM, XERBLA
+      EXTERNAL           GAL_DLASWP, GAL_DTRSM, GAL_XERBLA
 *     ..
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
@@ -84,9 +85,9 @@
 *     Test the input parameters.
 *
       INFO = 0
-      NOTRAN = LSAME( TRANS, 'N' )
-      IF( .NOT.NOTRAN .AND. .NOT.LSAME( TRANS, 'T' ) .AND. .NOT.
-     $    LSAME( TRANS, 'C' ) ) THEN
+      NOTRAN = GAL_LSAME( TRANS, 'N' )
+      IF( .NOT.NOTRAN .AND. .NOT.GAL_LSAME( TRANS, 'T' ) .AND. .NOT.
+     $    GAL_LSAME( TRANS, 'C' ) ) THEN
          INFO = -1
       ELSE IF( N.LT.0 ) THEN
          INFO = -2
@@ -98,7 +99,7 @@
          INFO = -8
       END IF
       IF( INFO.NE.0 ) THEN
-         CALL XERBLA( 'DGETRS', -INFO )
+         CALL GAL_XERBLA( 'GAL_DGETRS', -INFO )
          RETURN
       END IF
 *
@@ -113,16 +114,16 @@
 *
 *        Apply row interchanges to the right hand sides.
 *
-         CALL DLASWP( NRHS, B, LDB, 1, N, IPIV, 1 )
+         CALL GAL_DLASWP( NRHS, B, LDB, 1, N, IPIV, 1 )
 *
 *        Solve L*X = B, overwriting B with X.
 *
-         CALL DTRSM( 'Left', 'Lower', 'No transpose', 'Unit', N, NRHS,
+         CALL GAL_DTRSM( 'Left', 'Lower', 'No transpose', 'Unit', N, NRHS,
      $               ONE, A, LDA, B, LDB )
 *
 *        Solve U*X = B, overwriting B with X.
 *
-         CALL DTRSM( 'Left', 'Upper', 'No transpose', 'Non-unit', N,
+         CALL GAL_DTRSM( 'Left', 'Upper', 'No transpose', 'Non-unit', N,
      $               NRHS, ONE, A, LDA, B, LDB )
       ELSE
 *
@@ -130,21 +131,21 @@
 *
 *        Solve U'*X = B, overwriting B with X.
 *
-         CALL DTRSM( 'Left', 'Upper', 'Transpose', 'Non-unit', N, NRHS,
+         CALL GAL_DTRSM( 'Left', 'Upper', 'Transpose', 'Non-unit', N, NRHS,
      $               ONE, A, LDA, B, LDB )
 *
 *        Solve L'*X = B, overwriting B with X.
 *
-         CALL DTRSM( 'Left', 'Lower', 'Transpose', 'Unit', N, NRHS, ONE,
+         CALL GAL_DTRSM( 'Left', 'Lower', 'Transpose', 'Unit', N, NRHS, ONE,
      $               A, LDA, B, LDB )
 *
 *        Apply row interchanges to the solution vectors.
 *
-         CALL DLASWP( NRHS, B, LDB, 1, N, IPIV, -1 )
+         CALL GAL_DLASWP( NRHS, B, LDB, 1, N, IPIV, -1 )
       END IF
 *
       RETURN
 *
-*     End of DGETRS
+*     End of GAL_DGETRS
 *
       END

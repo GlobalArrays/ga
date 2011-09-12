@@ -1,4 +1,4 @@
-      SUBROUTINE DGETF2( M, N, A, LDA, IPIV, INFO )
+      SUBROUTINE GAL_DGETF2( M, N, A, LDA, IPIV, INFO )
 *
 *  -- LAPACK routine (version 1.1) --
 *     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
@@ -16,7 +16,7 @@
 *  Purpose
 *  =======
 *
-*  DGETF2 computes an LU factorization of a general m-by-n matrix A
+*  GAL_DGETF2 computes an LU factorization of a general m-by-n matrix A
 *  using partial pivoting with row interchanges.
 *
 *  The factorization has the form
@@ -66,11 +66,11 @@
       INTEGER            J, JP
 *     ..
 *     .. External Functions ..
-      INTEGER            IDAMAX
-      EXTERNAL           IDAMAX
+      INTEGER            GAL_IDAMAX
+      EXTERNAL           GAL_IDAMAX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DGER, DSCAL, DSWAP, XERBLA
+      EXTERNAL           GAL_DGER, GAL_DSCAL, GAL_DSWAP, GAL_XERBLA
 *     ..
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX, MIN
@@ -88,7 +88,7 @@
          INFO = -4
       END IF
       IF( INFO.NE.0 ) THEN
-         CALL XERBLA( 'DGETF2', -INFO )
+         CALL GAL_XERBLA( 'GAL_DGETF2', -INFO )
          RETURN
       END IF
 *
@@ -101,19 +101,19 @@
 *
 *        Find pivot and test for singularity.
 *
-         JP = J - 1 + IDAMAX( M-J+1, A( J, J ), 1 )
+         JP = J - 1 + GAL_IDAMAX( M-J+1, A( J, J ), 1 )
          IPIV( J ) = JP
          IF( A( JP, J ).NE.ZERO ) THEN
 *
 *           Apply the interchange to columns 1:N.
 *
             IF( JP.NE.J )
-     $         CALL DSWAP( N, A( J, 1 ), LDA, A( JP, 1 ), LDA )
+     $         CALL GAL_DSWAP( N, A( J, 1 ), LDA, A( JP, 1 ), LDA )
 *
 *           Compute elements J+1:M of J-th column.
 *
             IF( J.LT.M )
-     $         CALL DSCAL( M-J, ONE / A( J, J ), A( J+1, J ), 1 )
+     $         CALL GAL_DSCAL( M-J, ONE / A( J, J ), A( J+1, J ), 1 )
 *
          ELSE IF( INFO.EQ.0 ) THEN
 *
@@ -124,12 +124,12 @@
 *
 *           Update trailing submatrix.
 *
-            CALL DGER( M-J, N-J, -ONE, A( J+1, J ), 1, A( J, J+1 ), LDA,
+            CALL GAL_DGER( M-J, N-J, -ONE, A( J+1, J ), 1, A( J, J+1 ), LDA,
      $                 A( J+1, J+1 ), LDA )
          END IF
    10 CONTINUE
       RETURN
 *
-*     End of DGETF2
+*     End of GAL_DGETF2
 *
       END

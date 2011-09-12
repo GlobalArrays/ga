@@ -1,4 +1,4 @@
-      SUBROUTINE DLACPY( UPLO, M, N, A, LDA, B, LDB )
+      SUBROUTINE GAL_DLACPY( UPLO, M, N, A, LDA, B, LDB )
 *
 *  -- LAPACK auxiliary routine (version 1.1) --
 *     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
@@ -6,7 +6,7 @@
 *     February 29, 1992
 *
 *     .. Scalar Arguments ..
-C$Id: dlacpy.f,v 1.1.1.1 1999-05-28 00:46:53 d3h325 Exp $
+C$Id: gal_dlacpy.f,v 1.1.1.1 1999-05-28 00:46:53 d3h325 Exp $
       CHARACTER          UPLO
       INTEGER            LDA, LDB, M, N
 *     ..
@@ -17,7 +17,7 @@ C$Id: dlacpy.f,v 1.1.1.1 1999-05-28 00:46:53 d3h325 Exp $
 *  Purpose
 *  =======
 *
-*  DLACPY copies all or part of a two-dimensional matrix A to another
+*  GAL_DLACPY copies all or part of a two-dimensional matrix A to another
 *  matrix B.
 *
 *  Arguments
@@ -55,21 +55,21 @@ C$Id: dlacpy.f,v 1.1.1.1 1999-05-28 00:46:53 d3h325 Exp $
       INTEGER            I, J
 *     ..
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     ..
 *     .. Intrinsic Functions ..
       INTRINSIC          MIN
 *     ..
 *     .. Executable Statements ..
 *
-      IF( LSAME( UPLO, 'U' ) ) THEN
+      IF( GAL_LSAME( UPLO, 'U' ) ) THEN
          DO 20 J = 1, N
             DO 10 I = 1, MIN( J, M )
                B( I, J ) = A( I, J )
    10       CONTINUE
    20    CONTINUE
-      ELSE IF( LSAME( UPLO, 'L' ) ) THEN
+      ELSE IF( GAL_LSAME( UPLO, 'L' ) ) THEN
          DO 40 J = 1, N
             DO 30 I = J, M
                B( I, J ) = A( I, J )
@@ -84,7 +84,7 @@ C$Id: dlacpy.f,v 1.1.1.1 1999-05-28 00:46:53 d3h325 Exp $
       END IF
       RETURN
 *
-*     End of DLACPY
+*     End of GAL_DLACPY
 *
       END
 

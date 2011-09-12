@@ -1,13 +1,13 @@
-      subroutine zaxpy(n,za,zx,incx,zy,incy)
+      subroutine gal_zaxpy(n,za,zx,incx,zy,incy)
 c
 c     constant times a vector plus a vector.
 c     jack dongarra, 3/11/78.
 c
       double complex zx(1),zy(1),za
       integer i,incx,incy,ix,iy,n
-      double precision dcabs1
+      double precision gal_dcabs1
       if(n.le.0)return
-      if (dcabs1(za) .eq. 0.0d0) return
+      if (gal_dcabs1(za) .eq. 0.0d0) return
       if (incx.eq.1.and.incy.eq.1)go to 20
 c
 c        code for unequal increments or equal increments

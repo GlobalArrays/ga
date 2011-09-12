@@ -1,4 +1,4 @@
-      SUBROUTINE DGETRF( M, N, A, LDA, IPIV, INFO )
+      SUBROUTINE GAL_DGETRF( M, N, A, LDA, IPIV, INFO )
 *
 *  -- LAPACK routine (version 1.1) --
 *     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
@@ -16,7 +16,7 @@
 *  Purpose
 *  =======
 *
-*  DGETRF computes an LU factorization of a general M-by-N matrix A
+*  GAL_DGETRF computes an LU factorization of a general M-by-N matrix A
 *  using partial pivoting with row interchanges.
 *
 *  The factorization has the form
@@ -66,11 +66,11 @@
       INTEGER            I, IINFO, J, JB, NB
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DGEMM, DGETF2, DLASWP, DTRSM, XERBLA
+      EXTERNAL           GAL_DGEMM, GAL_DGETF2, GAL_DLASWP, GAL_DTRSM, GAL_XERBLA
 *     ..
 *     .. External Functions ..
-      INTEGER            ILAENV
-      EXTERNAL           ILAENV
+      INTEGER            GAL_ILAENV
+      EXTERNAL           GAL_ILAENV
 *     ..
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX, MIN
@@ -88,7 +88,7 @@
          INFO = -4
       END IF
       IF( INFO.NE.0 ) THEN
-         CALL XERBLA( 'DGETRF', -INFO )
+         CALL GAL_XERBLA( 'GAL_DGETRF', -INFO )
          RETURN
       END IF
 *
@@ -99,12 +99,12 @@
 *
 *     Determine the block size for this environment.
 *
-      NB = ILAENV( 1, 'DGETRF', ' ', M, N, -1, -1 )
+      NB = GAL_ILAENV( 1, 'GAL_DGETRF', ' ', M, N, -1, -1 )
       IF( NB.LE.1 .OR. NB.GE.MIN( M, N ) ) THEN
 *
 *        Use unblocked code.
 *
-         CALL DGETF2( M, N, A, LDA, IPIV, INFO )
+         CALL GAL_DGETF2( M, N, A, LDA, IPIV, INFO )
       ELSE
 *
 *        Use blocked code.
@@ -115,7 +115,8 @@
 *           Factor diagonal and subdiagonal blocks and test for exact
 *           singularity.
 *
-            CALL DGETF2( M-J+1, JB, A( J, J ), LDA, IPIV( J ), IINFO )
+            CALL GAL_DGETF2( M-J+1, JB, A( J, J ), LDA, IPIV( J ),
+     $                       IINFO )
 *
 *           Adjust INFO and the pivot indices.
 *
@@ -127,25 +128,27 @@
 *
 *           Apply interchanges to columns 1:J-1.
 *
-            CALL DLASWP( J-1, A, LDA, J, J+JB-1, IPIV, 1 )
+            CALL GAL_DLASWP( J-1, A, LDA, J, J+JB-1, IPIV, 1 )
 *
             IF( J+JB.LE.N ) THEN
 *
 *              Apply interchanges to columns J+JB:N.
 *
-               CALL DLASWP( N-J-JB+1, A( 1, J+JB ), LDA, J, J+JB-1,
+               CALL GAL_DLASWP( N-J-JB+1, A( 1, J+JB ), LDA, J, J+JB-1,
      $                      IPIV, 1 )
 *
 *              Compute block row of U.
 *
-               CALL DTRSM( 'Left', 'Lower', 'No transpose', 'Unit', JB,
+               CALL GAL_DTRSM( 'Left', 'Lower', 'No transpose', 'Unit',
+     $                     JB,
      $                     N-J-JB+1, ONE, A( J, J ), LDA, A( J, J+JB ),
      $                     LDA )
                IF( J+JB.LE.M ) THEN
 *
 *                 Update trailing submatrix.
 *
-                  CALL DGEMM( 'No transpose', 'No transpose', M-J-JB+1,
+                  CALL GAL_DGEMM( 'No transpose', 'No transpose',
+     $                        M-J-JB+1,
      $                        N-J-JB+1, JB, -ONE, A( J+JB, J ), LDA,
      $                        A( J, J+JB ), LDA, ONE, A( J+JB, J+JB ),
      $                        LDA )
@@ -155,6 +158,6 @@
       END IF
       RETURN
 *
-*     End of DGETRF
+*     End of GAL_DGETRF
 *
       END

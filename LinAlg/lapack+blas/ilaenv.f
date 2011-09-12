@@ -1,4 +1,4 @@
-      INTEGER          FUNCTION ILAENV( ISPEC, NAME, OPTS, N1, N2, N3,
+      INTEGER          FUNCTION GAL_ILAENV( ISPEC, NAME, OPTS, N1, N2, N3,
      $                 N4 )
 *
 *  -- LAPACK auxiliary routine (preliminary version) --
@@ -14,7 +14,7 @@
 *  Purpose
 *  =======
 *
-*  ILAENV is called from the LAPACK routines to choose problem-dependent
+*  GAL_ILAENV is called from the LAPACK routines to choose problem-dependent
 *  parameters for the local environment.  See ISPEC for a description of
 *  the parameters.
 *
@@ -32,7 +32,7 @@
 *
 *  ISPEC   (input) INTEGER
 *          Specifies the parameter to be returned as the value of
-*          ILAENV.
+*          GAL_ILAENV.
 *          = 1: the optimal blocksize; if this value is 1, an unblocked
 *               algorithm will give the best performance.
 *          = 2: the minimum block size for which the block routine
@@ -44,7 +44,7 @@
 *               eigenvalue routines
 *          = 5: the minimum column dimension for blocking to be used;
 *               rectangular blocks must have dimension at least k by m,
-*               where k is given by ILAENV(2,...) and m by ILAENV(5,...)
+*               where k is given by GAL_ILAENV(2,...) and m by GAL_ILAENV(5,...)
 *          = 6: the crossover point for the SVD (when reducing an m by n
 *               matrix to bidiagonal form, if max(m,n)/min(m,n) exceeds
 *               this value, a QR factorization is used first to reduce
@@ -70,14 +70,14 @@
 *          Problem dimensions for the subroutine NAME; these may not all
 *          be required.
 *
-* (ILAENV) (output) INTEGER
+* (GAL_ILAENV) (output) INTEGER
 *          >= 0: the value of the parameter specified by ISPEC
-*          < 0:  if ILAENV = -k, the k-th argument had an illegal value.
+*          < 0:  if GAL_ILAENV = -k, the k-th argument had an illegal value.
 *
 *  Further Details
 *  ===============
 *
-*  The following conventions have been used when calling ILAENV from the
+*  The following conventions have been used when calling GAL_ILAENV from the
 *  LAPACK routines:
 *  1)  OPTS is a concatenation of all of the character options to
 *      subroutine NAME, in the same order that they appear in the
@@ -87,11 +87,11 @@
 *      that they appear in the argument list for NAME.  N1 is used
 *      first, N2 second, and so on, and unused problem dimensions are
 *      passed a value of -1.
-*  3)  The parameter value returned by ILAENV is checked for validity in
-*      the calling subroutine.  For example, ILAENV is used to retrieve
+*  3)  The parameter value returned by GAL_ILAENV is checked for validity in
+*      the calling subroutine.  For example, GAL_ILAENV is used to retrieve
 *      the optimal blocksize for STRTRI as follows:
 *
-*      NB = ILAENV( 1, 'STRTRI', UPLO // DIAG, N, -1, -1, -1 )
+*      NB = GAL_ILAENV( 1, 'STRTRI', UPLO // DIAG, N, -1, -1, -1 )
 *      IF( NB.LE.1 ) NB = MAX( 1, N )
 *
 *  =====================================================================
@@ -113,14 +113,14 @@
 *
 *     Invalid value for ISPEC
 *
-      ILAENV = -1
+      GAL_ILAENV = -1
       RETURN
 *
   100 CONTINUE
 *
 *     Convert NAME to upper case if the first character is lower case.
 *
-      ILAENV = 1
+      GAL_ILAENV = 1
       SUBNAM = NAME
       IC = ICHAR( SUBNAM( 1:1 ) )
       IZ = ICHAR( 'Z' )
@@ -331,7 +331,7 @@
             NB = 1
          END IF
       END IF
-      ILAENV = NB
+      GAL_ILAENV = NB
       RETURN
 *
   200 CONTINUE
@@ -409,7 +409,7 @@
             END IF
          END IF
       END IF
-      ILAENV = NBMIN
+      GAL_ILAENV = NBMIN
       RETURN
 *
   300 CONTINUE
@@ -463,44 +463,44 @@
             END IF
          END IF
       END IF
-      ILAENV = NX
+      GAL_ILAENV = NX
       RETURN
 *
   400 CONTINUE
 *
 *     ISPEC = 4:  number of shifts (used by xHSEQR)
 *
-      ILAENV = 6
+      GAL_ILAENV = 6
       RETURN
 *
   500 CONTINUE
 *
 *     ISPEC = 5:  minimum column dimension (not used)
 *
-      ILAENV = 2
+      GAL_ILAENV = 2
       RETURN
 *
-  600 CONTINUE 
+  600 CONTINUE
 *
 *     ISPEC = 6:  crossover point for SVD (used by xGELSS and xGESVD)
 *
-      ILAENV = INT( REAL( MIN( N1, N2 ) )*1.6E0 )
+      GAL_ILAENV = INT( REAL( MIN( N1, N2 ) )*1.6E0 )
       RETURN
 *
   700 CONTINUE
 *
 *     ISPEC = 7:  number of processors (not used)
 *
-      ILAENV = 1
+      GAL_ILAENV = 1
       RETURN
 *
   800 CONTINUE
 *
 *     ISPEC = 8:  crossover point for multishift (used by xHSEQR)
 *
-      ILAENV = 50
+      GAL_ILAENV = 50
       RETURN
 *
-*     End of ILAENV
+*     End of GAL_ILAENV
 *
       END

@@ -1,4 +1,4 @@
-      double precision function dasum(n,dx,incx)
+      double precision function gal_dasum(n,dx,incx)
 c
 c     takes the sum of the absolute values.
 c     uses unrolled loops for increment equal to one.
@@ -8,7 +8,7 @@ c
       double precision dx(1),dtemp
       integer i,incx,ix,m,mp1,n
 c
-      dasum = 0.0d0
+      gal_dasum = 0.0d0
       dtemp = 0.0d0
       if(n.le.0)return
       if(incx.eq.1)go to 20
@@ -21,7 +21,7 @@ c
         dtemp = dtemp + dabs(dx(ix))
         ix = ix + incx
    10 continue
-      dasum = dtemp
+      gal_dasum = dtemp
       return
 c
 c        code for increment equal to 1
@@ -40,10 +40,10 @@ c
         dtemp = dtemp + dabs(dx(i)) + dabs(dx(i + 1)) + dabs(dx(i + 2))
      *  + dabs(dx(i + 3)) + dabs(dx(i + 4)) + dabs(dx(i + 5))
    50 continue
-   60 dasum = dtemp
+   60 gal_dasum = dtemp
       return
       end
-      subroutine daxpy(n,da,dx,incx,dy,incy)
+      subroutine gal_daxpy(n,da,dx,incx,dy,incy)
 c
 c     constant times a vector plus a vector.
 c     uses unrolled loops for increments equal to one.
@@ -90,15 +90,15 @@ c
    50 continue
       return
       end
-      double precision function dcabs1(z)
+      double precision function gal_dcabs1(z)
       double complex z,zz
       double precision t(2)
       equivalence (zz,t(1))
       zz = z
-      dcabs1 = dabs(t(1)) + dabs(t(2))
+      gal_dcabs1 = dabs(t(1)) + dabs(t(2))
       return
       end
-      subroutine  dcopy(n,dx,incx,dy,incy)
+      subroutine  gal_dcopy(n,dx,incx,dy,incy)
 c
 c     copies a vector, x, to a vector, y.
 c     uses unrolled loops for increments equal to one.
@@ -147,7 +147,7 @@ c
    50 continue
       return
       end
-      double precision function ddot(n,dx,incx,dy,incy)
+      double precision function gal_ddot(n,dx,incx,dy,incy)
 c
 c     forms the dot product of two vectors.
 c     uses unrolled loops for increments equal to one.
@@ -156,7 +156,7 @@ c
       double precision dx(1),dy(1),dtemp
       integer i,incx,incy,ix,iy,m,mp1,n
 c
-      ddot = 0.0d0
+      gal_ddot = 0.0d0
       dtemp = 0.0d0
       if(n.le.0)return
       if(incx.eq.1.and.incy.eq.1)go to 20
@@ -173,7 +173,7 @@ c
         ix = ix + incx
         iy = iy + incy
    10 continue
-      ddot = dtemp
+      gal_ddot = dtemp
       return
 c
 c        code for both increments equal to 1
@@ -192,11 +192,11 @@ c
         dtemp = dtemp + dx(i)*dy(i) + dx(i + 1)*dy(i + 1) +
      *   dx(i + 2)*dy(i + 2) + dx(i + 3)*dy(i + 3) + dx(i + 4)*dy(i + 4)
    50 continue
-   60 ddot = dtemp
+   60 gal_ddot = dtemp
       return
       end
-      SUBROUTINE DGBMV ( TRANS, M, N, KL, KU, ALPHA, A, LDA, X, INCX,
-     $                   BETA, Y, INCY )
+      SUBROUTINE GAL_DGBMV ( TRANS, M, N, KL, KU, ALPHA, A, LDA,
+     $                   X, INCX, BETA, Y, INCY )
 *     .. Scalar Arguments ..
       DOUBLE PRECISION   ALPHA, BETA
       INTEGER            INCX, INCY, KL, KU, LDA, M, N
@@ -208,7 +208,7 @@ c
 *  Purpose
 *  =======
 *
-*  DGBMV  performs one of the matrix-vector operations
+*  GAL_DGBMV  performs one of the matrix-vector operations
 *
 *     y := alpha*A*x + beta*y,   or   y := alpha*A'*x + beta*y,
 *
@@ -329,10 +329,10 @@ c
       INTEGER            I, INFO, IX, IY, J, JX, JY, K, KUP1, KX, KY,
      $                   LENX, LENY
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX, MIN
 *     ..
@@ -341,9 +341,9 @@ c
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( TRANS, 'N' ).AND.
-     $         .NOT.LSAME( TRANS, 'T' ).AND.
-     $         .NOT.LSAME( TRANS, 'C' )      )THEN
+      IF     ( .NOT.GAL_LSAME( TRANS, 'N' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'T' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'C' )      )THEN
          INFO = 1
       ELSE IF( M.LT.0 )THEN
          INFO = 2
@@ -361,7 +361,7 @@ c
          INFO = 13
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DGBMV ', INFO )
+         CALL GAL_XERBLA( 'GAL_DGBMV ', INFO )
          RETURN
       END IF
 *
@@ -374,7 +374,7 @@ c
 *     Set  LENX  and  LENY, the lengths of the vectors x and y, and set
 *     up the start points in  X  and  Y.
 *
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
          LENX = N
          LENY = M
       ELSE
@@ -426,7 +426,7 @@ c
       IF( ALPHA.EQ.ZERO )
      $   RETURN
       KUP1 = KU + 1
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
 *
 *        Form  y := alpha*A*x + y.
 *
@@ -492,10 +492,11 @@ c
 *
       RETURN
 *
-*     End of DGBMV .
+*     End of GAL_DGBMV .
 *
       END
-      SUBROUTINE DGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+      SUBROUTINE GAL_DGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,
+     $                     B,LDB,BETA,C,LDC)
 C     .. Parameters ..
       DOUBLE PRECISION ONE, ZERO
       PARAMETER        (ONE=1.0D+0,ZERO=0.0D+0)
@@ -510,7 +511,7 @@ C
 C     Purpose
 C     =======
 C
-C     DGEMM  performs one of the matrix-matrix operations
+C     GAL_DGEMM  performs one of the matrix-matrix operations
 C
 C     C := alpha*op( A )*op( B ) + beta*C,
 C
@@ -634,10 +635,10 @@ C
 C
       DOUBLE PRECISION A(LDA,*), B(LDB,*), C(LDC,*)
 C     .. External Functions ..
-      LOGICAL          LSAME
-      EXTERNAL         LSAME
+      LOGICAL          GAL_LSAME
+      EXTERNAL         GAL_LSAME
 C     .. External Subroutines ..
-      EXTERNAL         XERBLA
+      EXTERNAL         GAL_XERBLA
 C     .. Intrinsic Functions ..
       INTRINSIC        MAX, MIN
 C     .. Local Scalars ..
@@ -653,8 +654,8 @@ C     Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
 C     transposed and set  NROWA, NCOLA and  NROWB  as the number of rows
 C     and  columns of  A  and the  number of  rows  of  B  respectively.
 C
-      NOTA = LSAME(TRANSA,'N')
-      NOTB = LSAME(TRANSB,'N')
+      NOTA = GAL_LSAME(TRANSA,'N')
+      NOTB = GAL_LSAME(TRANSB,'N')
       IF (NOTA) THEN
          NROWA = M
          NCOLA = K
@@ -671,11 +672,11 @@ C
 C     Test the input parameters.
 C
       INFO = 0
-      IF (( .NOT. NOTA) .AND. ( .NOT. LSAME(TRANSA,'C'))
-     *    .AND. ( .NOT. LSAME(TRANSA,'T'))) THEN
+      IF (( .NOT. NOTA) .AND. ( .NOT. GAL_LSAME(TRANSA,'C'))
+     *    .AND. ( .NOT. GAL_LSAME(TRANSA,'T'))) THEN
          INFO = 1
-      ELSE IF (( .NOT. NOTB) .AND. ( .NOT. LSAME(TRANSB,'C'))
-     *         .AND. ( .NOT. LSAME(TRANSB,'T'))) THEN
+      ELSE IF (( .NOT. NOTB) .AND. ( .NOT. GAL_LSAME(TRANSB,'C'))
+     *         .AND. ( .NOT. GAL_LSAME(TRANSB,'T'))) THEN
          INFO = 2
       ELSE IF (M.LT.0) THEN
          INFO = 3
@@ -691,7 +692,7 @@ C
          INFO = 13
       END IF
       IF (INFO.NE.0) THEN
-         CALL XERBLA('DGEMM ',INFO)
+         CALL GAL_XERBLA('GAL_DGEMM ',INFO)
          RETURN
       END IF
 C
@@ -1039,10 +1040,10 @@ C
 C
       RETURN
 C
-C     End of DGEMM .
+C     End of GAL_DGEMM .
 C
       END
-      SUBROUTINE DGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX,
+      SUBROUTINE GAL_DGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX,
      $                   BETA, Y, INCY )
 *     .. Scalar Arguments ..
       DOUBLE PRECISION   ALPHA, BETA
@@ -1055,7 +1056,7 @@ C
 *  Purpose
 *  =======
 *
-*  DGEMV  performs one of the matrix-vector operations
+*  GAL_DGEMV  performs one of the matrix-vector operations
 *
 *     y := alpha*A*x + beta*y,   or   y := alpha*A'*x + beta*y,
 *
@@ -1150,10 +1151,10 @@ C
       DOUBLE PRECISION   TEMP
       INTEGER            I, INFO, IX, IY, J, JX, JY, KX, KY, LENX, LENY
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
 *     ..
@@ -1162,9 +1163,9 @@ C
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( TRANS, 'N' ).AND.
-     $         .NOT.LSAME( TRANS, 'T' ).AND.
-     $         .NOT.LSAME( TRANS, 'C' )      )THEN
+      IF     ( .NOT.GAL_LSAME( TRANS, 'N' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'T' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'C' )      )THEN
          INFO = 1
       ELSE IF( M.LT.0 )THEN
          INFO = 2
@@ -1178,7 +1179,7 @@ C
          INFO = 11
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DGEMV ', INFO )
+         CALL GAL_XERBLA( 'GAL_DGEMV ', INFO )
          RETURN
       END IF
 *
@@ -1191,7 +1192,7 @@ C
 *     Set  LENX  and  LENY, the lengths of the vectors x and y, and set
 *     up the start points in  X  and  Y.
 *
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
          LENX = N
          LENY = M
       ELSE
@@ -1242,7 +1243,7 @@ C
       END IF
       IF( ALPHA.EQ.ZERO )
      $   RETURN
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
 *
 *        Form  y := alpha*A*x + y.
 *
@@ -1300,10 +1301,10 @@ C
 *
       RETURN
 *
-*     End of DGEMV .
+*     End of GAL_DGEMV .
 *
       END
-      SUBROUTINE DGER  ( M, N, ALPHA, X, INCX, Y, INCY, A, LDA )
+      SUBROUTINE GAL_DGER  ( M, N, ALPHA, X, INCX, Y, INCY, A, LDA )
 *     .. Scalar Arguments ..
       DOUBLE PRECISION   ALPHA
       INTEGER            INCX, INCY, LDA, M, N
@@ -1314,7 +1315,7 @@ C
 *  Purpose
 *  =======
 *
-*  DGER   performs the rank 1 operation
+*  GAL_DGER   performs the rank 1 operation
 *
 *     A := alpha*x*y' + A,
 *
@@ -1388,7 +1389,7 @@ C
       DOUBLE PRECISION   TEMP
       INTEGER            I, INFO, IX, J, JY, KX
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
 *     ..
@@ -1409,7 +1410,7 @@ C
          INFO = 9
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DGER  ', INFO )
+         CALL GAL_XERBLA( 'GAL_DGER  ', INFO )
          RETURN
       END IF
 *
@@ -1457,10 +1458,10 @@ C
 *
       RETURN
 *
-*     End of DGER  .
+*     End of GAL_DGER  .
 *
       END
-      double precision function dnrm2 ( n, dx, incx)
+      double precision function gal_dnrm2 ( n, dx, incx)
       integer i, incx, ix, j, n, next
       double precision   dx(1), cutlo, cuthi, hitest, sum, xmax,zero,one
       data   zero, one /0.0d0, 1.0d0/
@@ -1507,7 +1508,7 @@ c     data cutlo, cuthi / 4.441e-16,  1.304e19 /
       data cutlo, cuthi / 8.232d-11,  1.304d19 /
 c
       if(n .gt. 0) go to 10
-         dnrm2  = zero
+         gal_dnrm2  = zero
          go to 300
 c
    10 assign 30 to next
@@ -1573,7 +1574,7 @@ c
          sum = sum + dx(i)**2
          i = i + incx
    95 continue
-      dnrm2 = dsqrt( sum )
+      gal_dnrm2 = dsqrt( sum )
       go to 300
 c
   200 continue
@@ -1585,11 +1586,11 @@ c              end of main loop.
 c
 c              compute square root and adjust for scaling.
 c
-      dnrm2 = xmax * dsqrt(sum)
+      gal_dnrm2 = xmax * dsqrt(sum)
   300 continue
       return
       end
-      subroutine  drot (n,dx,incx,dy,incy,c,s)
+      subroutine  gal_drot (n,dx,incx,dy,incy,c,s)
 c
 c     applies a plane rotation.
 c     jack dongarra, linpack, 3/11/78.
@@ -1625,7 +1626,7 @@ c
    30 continue
       return
       end
-      subroutine drotg(da,db,c,s)
+      subroutine gal_gal_drotg(da,db,c,s)
 c
 c     construct givens plane rotation.
 c     jack dongarra, linpack, 3/11/78.
@@ -1652,7 +1653,7 @@ c
       db = z
       return
       end
-      SUBROUTINE DSBMV ( UPLO, N, K, ALPHA, A, LDA, X, INCX,
+      SUBROUTINE GAL_DSBMV ( UPLO, N, K, ALPHA, A, LDA, X, INCX,
      $                   BETA, Y, INCY )
 *     .. Scalar Arguments ..
       DOUBLE PRECISION   ALPHA, BETA
@@ -1665,7 +1666,7 @@ c
 *  Purpose
 *  =======
 *
-*  DSBMV  performs the matrix-vector  operation
+*  GAL_DSBMV  performs the matrix-vector  operation
 *
 *     y := alpha*A*x + beta*y,
 *
@@ -1789,10 +1790,10 @@ c
       DOUBLE PRECISION   TEMP1, TEMP2
       INTEGER            I, INFO, IX, IY, J, JX, JY, KPLUS1, KX, KY, L
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX, MIN
 *     ..
@@ -1801,8 +1802,8 @@ c
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.
-     $         .NOT.LSAME( UPLO, 'L' )      )THEN
+      IF     ( .NOT.GAL_LSAME( UPLO, 'U' ).AND.
+     $         .NOT.GAL_LSAME( UPLO, 'L' )      )THEN
          INFO = 1
       ELSE IF( N.LT.0 )THEN
          INFO = 2
@@ -1816,7 +1817,7 @@ c
          INFO = 11
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DSBMV ', INFO )
+         CALL GAL_XERBLA( 'GAL_DSBMV ', INFO )
          RETURN
       END IF
 *
@@ -1871,7 +1872,7 @@ c
       END IF
       IF( ALPHA.EQ.ZERO )
      $   RETURN
-      IF( LSAME( UPLO, 'U' ) )THEN
+      IF( GAL_LSAME( UPLO, 'U' ) )THEN
 *
 *        Form  y  when upper triangle of A is stored.
 *
@@ -1952,10 +1953,10 @@ c
 *
       RETURN
 *
-*     End of DSBMV .
+*     End of GAL_DSBMV .
 *
       END
-      subroutine  dscal(n,da,dx,incx)
+      subroutine  gal_dscal(n,da,dx,incx)
 c
 c     scales a vector by a constant.
 c     uses unrolled loops for increment equal to one.
@@ -1999,7 +2000,8 @@ c
    50 continue
       return
       end
-      SUBROUTINE DSPMV ( UPLO, N, ALPHA, AP, X, INCX, BETA, Y, INCY )
+      SUBROUTINE GAL_DSPMV ( UPLO, N, ALPHA, AP, X, INCX, BETA,
+     $                       Y, INCY )
 *     .. Scalar Arguments ..
       DOUBLE PRECISION   ALPHA, BETA
       INTEGER            INCX, INCY, N
@@ -2011,7 +2013,7 @@ c
 *  Purpose
 *  =======
 *
-*  DSPMV  performs the matrix-vector operation
+*  GAL_DSPMV  performs the matrix-vector operation
 *
 *     y := alpha*A*x + beta*y,
 *
@@ -2101,18 +2103,18 @@ c
       DOUBLE PRECISION   TEMP1, TEMP2
       INTEGER            I, INFO, IX, IY, J, JX, JY, K, KK, KX, KY
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     ..
 *     .. Executable Statements ..
 *
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.
-     $         .NOT.LSAME( UPLO, 'L' )      )THEN
+      IF     ( .NOT.GAL_LSAME( UPLO, 'U' ).AND.
+     $         .NOT.GAL_LSAME( UPLO, 'L' )      )THEN
          INFO = 1
       ELSE IF( N.LT.0 )THEN
          INFO = 2
@@ -2122,7 +2124,7 @@ c
          INFO = 9
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DSPMV ', INFO )
+         CALL GAL_XERBLA( 'GAL_DSPMV ', INFO )
          RETURN
       END IF
 *
@@ -2178,7 +2180,7 @@ c
       IF( ALPHA.EQ.ZERO )
      $   RETURN
       KK = 1
-      IF( LSAME( UPLO, 'U' ) )THEN
+      IF( GAL_LSAME( UPLO, 'U' ) )THEN
 *
 *        Form  y  when AP contains the upper triangle.
 *
@@ -2258,10 +2260,10 @@ c
 *
       RETURN
 *
-*     End of DSPMV .
+*     End of GAL_DSPMV .
 *
       END
-      SUBROUTINE DSPR  ( UPLO, N, ALPHA, X, INCX, AP )
+      SUBROUTINE GAL_DSPR  ( UPLO, N, ALPHA, X, INCX, AP )
 *     .. Scalar Arguments ..
       DOUBLE PRECISION   ALPHA
       INTEGER            INCX, N
@@ -2273,7 +2275,7 @@ c
 *  Purpose
 *  =======
 *
-*  DSPR    performs the symmetric rank 1 operation
+*  GAL_DSPR    performs the symmetric rank 1 operation
 *
 *     A := alpha*x*x' + A,
 *
@@ -2350,18 +2352,18 @@ c
       DOUBLE PRECISION   TEMP
       INTEGER            I, INFO, IX, J, JX, K, KK, KX
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     ..
 *     .. Executable Statements ..
 *
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.
-     $         .NOT.LSAME( UPLO, 'L' )      )THEN
+      IF     ( .NOT.GAL_LSAME( UPLO, 'U' ).AND.
+     $         .NOT.GAL_LSAME( UPLO, 'L' )      )THEN
          INFO = 1
       ELSE IF( N.LT.0 )THEN
          INFO = 2
@@ -2369,7 +2371,7 @@ c
          INFO = 5
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DSPR  ', INFO )
+         CALL GAL_XERBLA( 'GAL_DSPR  ', INFO )
          RETURN
       END IF
 *
@@ -2390,7 +2392,7 @@ c
 *     are accessed sequentially with one pass through AP.
 *
       KK = 1
-      IF( LSAME( UPLO, 'U' ) )THEN
+      IF( GAL_LSAME( UPLO, 'U' ) )THEN
 *
 *        Form  A  when upper triangle is stored in AP.
 *
@@ -2456,10 +2458,10 @@ c
 *
       RETURN
 *
-*     End of DSPR  .
+*     End of GAL_DSPR  .
 *
       END
-      SUBROUTINE DSPR2 ( UPLO, N, ALPHA, X, INCX, Y, INCY, AP )
+      SUBROUTINE GAL_GAL_DSPR2 ( UPLO, N, ALPHA, X, INCX, Y, INCY, AP )
 *     .. Scalar Arguments ..
       DOUBLE PRECISION   ALPHA
       INTEGER            INCX, INCY, N
@@ -2471,7 +2473,7 @@ c
 *  Purpose
 *  =======
 *
-*  DSPR2  performs the symmetric rank 2 operation
+*  GAL_GAL_DSPR2  performs the symmetric rank 2 operation
 *
 *     A := alpha*x*y' + alpha*y*x' + A,
 *
@@ -2559,18 +2561,18 @@ c
       DOUBLE PRECISION   TEMP1, TEMP2
       INTEGER            I, INFO, IX, IY, J, JX, JY, K, KK, KX, KY
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     ..
 *     .. Executable Statements ..
 *
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.
-     $         .NOT.LSAME( UPLO, 'L' )      )THEN
+      IF     ( .NOT.GAL_LSAME( UPLO, 'U' ).AND.
+     $         .NOT.GAL_LSAME( UPLO, 'L' )      )THEN
          INFO = 1
       ELSE IF( N.LT.0 )THEN
          INFO = 2
@@ -2580,7 +2582,7 @@ c
          INFO = 7
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DSPR2 ', INFO )
+         CALL GAL_XERBLA( 'GAL_GAL_DSPR2 ', INFO )
          RETURN
       END IF
 *
@@ -2611,7 +2613,7 @@ c
 *     are accessed sequentially with one pass through AP.
 *
       KK = 1
-      IF( LSAME( UPLO, 'U' ) )THEN
+      IF( GAL_LSAME( UPLO, 'U' ) )THEN
 *
 *        Form  A  when upper triangle is stored in AP.
 *
@@ -2685,10 +2687,10 @@ c
 *
       RETURN
 *
-*     End of DSPR2 .
+*     End of GAL_GAL_DSPR2 .
 *
       END
-      subroutine  dswap (n,dx,incx,dy,incy)
+      subroutine  gal_dswap (n,dx,incx,dy,incy)
 c
 c     interchanges two vectors.
 c     uses unrolled loops for increments equal one.
@@ -2743,7 +2745,7 @@ c
    50 continue
       return
       end
-      SUBROUTINE DSYMM ( SIDE, UPLO, M, N, ALPHA, A, LDA, B, LDB,
+      SUBROUTINE GAL_DSYMM ( SIDE, UPLO, M, N, ALPHA, A, LDA, B, LDB,
      $                   BETA, C, LDC )
 *     .. Scalar Arguments ..
       CHARACTER*1        SIDE, UPLO
@@ -2756,7 +2758,7 @@ c
 *  Purpose
 *  =======
 *
-*  DSYMM  performs one of the matrix-matrix operations
+*  GAL_DSYMM  performs one of the matrix-matrix operations
 *
 *     C := alpha*A*B + beta*C,
 *
@@ -2878,10 +2880,10 @@ c
 *
 *
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
 *     .. Local Scalars ..
@@ -2896,21 +2898,21 @@ c
 *
 *     Set NROWA as the number of rows of A.
 *
-      IF( LSAME( SIDE, 'L' ) )THEN
+      IF( GAL_LSAME( SIDE, 'L' ) )THEN
          NROWA = M
       ELSE
          NROWA = N
       END IF
-      UPPER = LSAME( UPLO, 'U' )
+      UPPER = GAL_LSAME( UPLO, 'U' )
 *
 *     Test the input parameters.
 *
       INFO = 0
-      IF(      ( .NOT.LSAME( SIDE, 'L' ) ).AND.
-     $         ( .NOT.LSAME( SIDE, 'R' ) )      )THEN
+      IF(      ( .NOT.GAL_LSAME( SIDE, 'L' ) ).AND.
+     $         ( .NOT.GAL_LSAME( SIDE, 'R' ) )      )THEN
          INFO = 1
       ELSE IF( ( .NOT.UPPER              ).AND.
-     $         ( .NOT.LSAME( UPLO, 'L' ) )      )THEN
+     $         ( .NOT.GAL_LSAME( UPLO, 'L' ) )      )THEN
          INFO = 2
       ELSE IF( M  .LT.0               )THEN
          INFO = 3
@@ -2924,7 +2926,7 @@ c
          INFO = 12
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DSYMM ', INFO )
+         CALL GAL_XERBLA( 'GAL_DSYMM ', INFO )
          RETURN
       END IF
 *
@@ -2955,7 +2957,7 @@ c
 *
 *     Start the operations.
 *
-      IF( LSAME( SIDE, 'L' ) )THEN
+      IF( GAL_LSAME( SIDE, 'L' ) )THEN
 *
 *        Form  C := alpha*A*B + beta*C.
 *
@@ -3034,10 +3036,10 @@ c
 *
       RETURN
 *
-*     End of DSYMM .
+*     End of GAL_DSYMM .
 *
       END
-      SUBROUTINE DSYMV ( UPLO, N, ALPHA, A, LDA, X, INCX,
+      SUBROUTINE GAL_DSYMV ( UPLO, N, ALPHA, A, LDA, X, INCX,
      $                   BETA, Y, INCY )
 *     .. Scalar Arguments ..
       DOUBLE PRECISION   ALPHA, BETA
@@ -3050,7 +3052,7 @@ c
 *  Purpose
 *  =======
 *
-*  DSYMV  performs the matrix-vector  operation
+*  GAL_DSYMV  performs the matrix-vector  operation
 *
 *     y := alpha*A*x + beta*y,
 *
@@ -3143,10 +3145,10 @@ c
       DOUBLE PRECISION   TEMP1, TEMP2
       INTEGER            I, INFO, IX, IY, J, JX, JY, KX, KY
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
 *     ..
@@ -3155,8 +3157,8 @@ c
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.
-     $         .NOT.LSAME( UPLO, 'L' )      )THEN
+      IF     ( .NOT.GAL_LSAME( UPLO, 'U' ).AND.
+     $         .NOT.GAL_LSAME( UPLO, 'L' )      )THEN
          INFO = 1
       ELSE IF( N.LT.0 )THEN
          INFO = 2
@@ -3168,7 +3170,7 @@ c
          INFO = 10
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DSYMV ', INFO )
+         CALL GAL_XERBLA( 'GAL_DSYMV ', INFO )
          RETURN
       END IF
 *
@@ -3224,7 +3226,7 @@ c
       END IF
       IF( ALPHA.EQ.ZERO )
      $   RETURN
-      IF( LSAME( UPLO, 'U' ) )THEN
+      IF( GAL_LSAME( UPLO, 'U' ) )THEN
 *
 *        Form  y  when A is stored in upper triangle.
 *
@@ -3296,10 +3298,10 @@ c
 *
       RETURN
 *
-*     End of DSYMV .
+*     End of GAL_DSYMV .
 *
       END
-      SUBROUTINE DSYR  ( UPLO, N, ALPHA, X, INCX, A, LDA )
+      SUBROUTINE GAL_DSYR  ( UPLO, N, ALPHA, X, INCX, A, LDA )
 *     .. Scalar Arguments ..
       DOUBLE PRECISION   ALPHA
       INTEGER            INCX, LDA, N
@@ -3311,7 +3313,7 @@ c
 *  Purpose
 *  =======
 *
-*  DSYR   performs the symmetric rank 1 operation
+*  GAL_DSYR   performs the symmetric rank 1 operation
 *
 *     A := alpha*x*x' + A,
 *
@@ -3391,10 +3393,10 @@ c
       DOUBLE PRECISION   TEMP
       INTEGER            I, INFO, IX, J, JX, KX
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
 *     ..
@@ -3403,8 +3405,8 @@ c
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.
-     $         .NOT.LSAME( UPLO, 'L' )      )THEN
+      IF     ( .NOT.GAL_LSAME( UPLO, 'U' ).AND.
+     $         .NOT.GAL_LSAME( UPLO, 'L' )      )THEN
          INFO = 1
       ELSE IF( N.LT.0 )THEN
          INFO = 2
@@ -3414,7 +3416,7 @@ c
          INFO = 7
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DSYR  ', INFO )
+         CALL GAL_XERBLA( 'GAL_DSYR  ', INFO )
          RETURN
       END IF
 *
@@ -3435,7 +3437,7 @@ c
 *     accessed sequentially with one pass through the triangular part
 *     of A.
 *
-      IF( LSAME( UPLO, 'U' ) )THEN
+      IF( GAL_LSAME( UPLO, 'U' ) )THEN
 *
 *        Form  A  when A is stored in upper triangle.
 *
@@ -3493,10 +3495,11 @@ c
 *
       RETURN
 *
-*     End of DSYR  .
+*     End of GAL_DSYR  .
 *
       END
-      SUBROUTINE DSYR2 ( UPLO, N, ALPHA, X, INCX, Y, INCY, A, LDA )
+      SUBROUTINE GAL_GAL_DSYR2 ( UPLO, N, ALPHA, X, INCX, Y, INCY,
+     $                           A, LDA )
 *     .. Scalar Arguments ..
       DOUBLE PRECISION   ALPHA
       INTEGER            INCX, INCY, LDA, N
@@ -3508,7 +3511,7 @@ c
 *  Purpose
 *  =======
 *
-*  DSYR2  performs the symmetric rank 2 operation
+*  GAL_GAL_DSYR2  performs the symmetric rank 2 operation
 *
 *     A := alpha*x*y' + alpha*y*x' + A,
 *
@@ -3599,10 +3602,10 @@ c
       DOUBLE PRECISION   TEMP1, TEMP2
       INTEGER            I, INFO, IX, IY, J, JX, JY, KX, KY
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
 *     ..
@@ -3611,8 +3614,8 @@ c
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.
-     $         .NOT.LSAME( UPLO, 'L' )      )THEN
+      IF     ( .NOT.GAL_LSAME( UPLO, 'U' ).AND.
+     $         .NOT.GAL_LSAME( UPLO, 'L' )      )THEN
          INFO = 1
       ELSE IF( N.LT.0 )THEN
          INFO = 2
@@ -3624,7 +3627,7 @@ c
          INFO = 9
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DSYR2 ', INFO )
+         CALL GAL_XERBLA( 'GAL_GAL_DSYR2 ', INFO )
          RETURN
       END IF
 *
@@ -3655,7 +3658,7 @@ c
 *     accessed sequentially with one pass through the triangular part
 *     of A.
 *
-      IF( LSAME( UPLO, 'U' ) )THEN
+      IF( GAL_LSAME( UPLO, 'U' ) )THEN
 *
 *        Form  A  when A is stored in the upper triangle.
 *
@@ -3723,11 +3726,11 @@ c
 *
       RETURN
 *
-*     End of DSYR2 .
+*     End of GAL_GAL_DSYR2 .
 *
       END
-      SUBROUTINE DSYR2K( UPLO, TRANS, N, K, ALPHA, A, LDA, B, LDB,
-     $                   BETA, C, LDC )
+      SUBROUTINE GAL_GAL_GAL_DSYR2K( UPLO, TRANS, N, K,
+     $                   ALPHA, A, LDA, B, LDB, BETA, C, LDC )
 *     .. Scalar Arguments ..
       CHARACTER*1        UPLO, TRANS
       INTEGER            N, K, LDA, LDB, LDC
@@ -3739,7 +3742,7 @@ c
 *  Purpose
 *  =======
 *
-*  DSYR2K  performs one of the symmetric rank 2k operations
+*  GAL_GAL_GAL_DSYR2K  performs one of the symmetric rank 2k operations
 *
 *     C := alpha*A*B' + alpha*B*A' + beta*C,
 *
@@ -3864,10 +3867,10 @@ c
 *
 *
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
 *     .. Local Scalars ..
@@ -3882,20 +3885,20 @@ c
 *
 *     Test the input parameters.
 *
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
          NROWA = N
       ELSE
          NROWA = K
       END IF
-      UPPER = LSAME( UPLO, 'U' )
+      UPPER = GAL_LSAME( UPLO, 'U' )
 *
       INFO = 0
       IF(      ( .NOT.UPPER               ).AND.
-     $         ( .NOT.LSAME( UPLO , 'L' ) )      )THEN
+     $         ( .NOT.GAL_LSAME( UPLO , 'L' ) )      )THEN
          INFO = 1
-      ELSE IF( ( .NOT.LSAME( TRANS, 'N' ) ).AND.
-     $         ( .NOT.LSAME( TRANS, 'T' ) ).AND.
-     $         ( .NOT.LSAME( TRANS, 'C' ) )      )THEN
+      ELSE IF( ( .NOT.GAL_LSAME( TRANS, 'N' ) ).AND.
+     $         ( .NOT.GAL_LSAME( TRANS, 'T' ) ).AND.
+     $         ( .NOT.GAL_LSAME( TRANS, 'C' ) )      )THEN
          INFO = 2
       ELSE IF( N  .LT.0               )THEN
          INFO = 3
@@ -3909,7 +3912,7 @@ c
          INFO = 12
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DSYR2K', INFO )
+         CALL GAL_XERBLA( 'GAL_GAL_GAL_DSYR2K', INFO )
          RETURN
       END IF
 *
@@ -3956,7 +3959,7 @@ c
 *
 *     Start the operations.
 *
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
 *
 *        Form  C := alpha*A*B' + alpha*B*A' + C.
 *
@@ -4050,10 +4053,10 @@ c
 *
       RETURN
 *
-*     End of DSYR2K.
+*     End of GAL_GAL_GAL_DSYR2K.
 *
       END
-      SUBROUTINE DSYRK ( UPLO, TRANS, N, K, ALPHA, A, LDA,
+      SUBROUTINE GAL_GAL_DSYRK ( UPLO, TRANS, N, K, ALPHA, A, LDA,
      $                   BETA, C, LDC )
 *     .. Scalar Arguments ..
       CHARACTER*1        UPLO, TRANS
@@ -4066,7 +4069,7 @@ c
 *  Purpose
 *  =======
 *
-*  DSYRK  performs one of the symmetric rank k operations
+*  GAL_GAL_DSYRK  performs one of the symmetric rank k operations
 *
 *     C := alpha*A*A' + beta*C,
 *
@@ -4172,10 +4175,10 @@ c
 *
 *
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
 *     .. Local Scalars ..
@@ -4190,20 +4193,20 @@ c
 *
 *     Test the input parameters.
 *
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
          NROWA = N
       ELSE
          NROWA = K
       END IF
-      UPPER = LSAME( UPLO, 'U' )
+      UPPER = GAL_LSAME( UPLO, 'U' )
 *
       INFO = 0
       IF(      ( .NOT.UPPER               ).AND.
-     $         ( .NOT.LSAME( UPLO , 'L' ) )      )THEN
+     $         ( .NOT.GAL_LSAME( UPLO , 'L' ) )      )THEN
          INFO = 1
-      ELSE IF( ( .NOT.LSAME( TRANS, 'N' ) ).AND.
-     $         ( .NOT.LSAME( TRANS, 'T' ) ).AND.
-     $         ( .NOT.LSAME( TRANS, 'C' ) )      )THEN
+      ELSE IF( ( .NOT.GAL_LSAME( TRANS, 'N' ) ).AND.
+     $         ( .NOT.GAL_LSAME( TRANS, 'T' ) ).AND.
+     $         ( .NOT.GAL_LSAME( TRANS, 'C' ) )      )THEN
          INFO = 2
       ELSE IF( N  .LT.0               )THEN
          INFO = 3
@@ -4215,7 +4218,7 @@ c
          INFO = 10
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DSYRK ', INFO )
+         CALL GAL_XERBLA( 'GAL_GAL_DSYRK ', INFO )
          RETURN
       END IF
 *
@@ -4262,7 +4265,7 @@ c
 *
 *     Start the operations.
 *
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
 *
 *        Form  C := alpha*A*A' + beta*C.
 *
@@ -4344,10 +4347,10 @@ c
 *
       RETURN
 *
-*     End of DSYRK .
+*     End of GAL_GAL_DSYRK .
 *
       END
-      SUBROUTINE DTBMV ( UPLO, TRANS, DIAG, N, K, A, LDA, X, INCX )
+      SUBROUTINE GAL_DTBMV ( UPLO, TRANS, DIAG, N, K, A, LDA, X, INCX )
 *     .. Scalar Arguments ..
       INTEGER            INCX, K, LDA, N
       CHARACTER*1        DIAG, TRANS, UPLO
@@ -4358,7 +4361,7 @@ c
 *  Purpose
 *  =======
 *
-*  DTBMV  performs one of the matrix-vector operations
+*  GAL_DTBMV  performs one of the matrix-vector operations
 *
 *     x := A*x,   or   x := A'*x,
 *
@@ -4491,10 +4494,10 @@ c
       INTEGER            I, INFO, IX, J, JX, KPLUS1, KX, L
       LOGICAL            NOUNIT
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX, MIN
 *     ..
@@ -4503,15 +4506,15 @@ c
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO , 'U' ).AND.
-     $         .NOT.LSAME( UPLO , 'L' )      )THEN
+      IF     ( .NOT.GAL_LSAME( UPLO , 'U' ).AND.
+     $         .NOT.GAL_LSAME( UPLO , 'L' )      )THEN
          INFO = 1
-      ELSE IF( .NOT.LSAME( TRANS, 'N' ).AND.
-     $         .NOT.LSAME( TRANS, 'T' ).AND.
-     $         .NOT.LSAME( TRANS, 'C' )      )THEN
+      ELSE IF( .NOT.GAL_LSAME( TRANS, 'N' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'T' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'C' )      )THEN
          INFO = 2
-      ELSE IF( .NOT.LSAME( DIAG , 'U' ).AND.
-     $         .NOT.LSAME( DIAG , 'N' )      )THEN
+      ELSE IF( .NOT.GAL_LSAME( DIAG , 'U' ).AND.
+     $         .NOT.GAL_LSAME( DIAG , 'N' )      )THEN
          INFO = 3
       ELSE IF( N.LT.0 )THEN
          INFO = 4
@@ -4523,7 +4526,7 @@ c
          INFO = 9
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DTBMV ', INFO )
+         CALL GAL_XERBLA( 'GAL_DTBMV ', INFO )
          RETURN
       END IF
 *
@@ -4532,7 +4535,7 @@ c
       IF( N.EQ.0 )
      $   RETURN
 *
-      NOUNIT = LSAME( DIAG, 'N' )
+      NOUNIT = GAL_LSAME( DIAG, 'N' )
 *
 *     Set up the start point in X if the increment is not unity. This
 *     will be  ( N - 1 )*INCX   too small for descending loops.
@@ -4546,11 +4549,11 @@ c
 *     Start the operations. In this version the elements of A are
 *     accessed sequentially with one pass through A.
 *
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
 *
 *         Form  x := A*x.
 *
-         IF( LSAME( UPLO, 'U' ) )THEN
+         IF( GAL_LSAME( UPLO, 'U' ) )THEN
             KPLUS1 = K + 1
             IF( INCX.EQ.1 )THEN
                DO 20, J = 1, N
@@ -4621,7 +4624,7 @@ c
 *
 *        Form  x := A'*x.
 *
-         IF( LSAME( UPLO, 'U' ) )THEN
+         IF( GAL_LSAME( UPLO, 'U' ) )THEN
             KPLUS1 = K + 1
             IF( INCX.EQ.1 )THEN
                DO 100, J = N, 1, -1
@@ -4686,10 +4689,10 @@ c
 *
       RETURN
 *
-*     End of DTBMV .
+*     End of GAL_DTBMV .
 *
       END
-      SUBROUTINE DTBSV ( UPLO, TRANS, DIAG, N, K, A, LDA, X, INCX )
+      SUBROUTINE GAL_DTBSV ( UPLO, TRANS, DIAG, N, K, A, LDA, X, INCX )
 *     .. Scalar Arguments ..
       INTEGER            INCX, K, LDA, N
       CHARACTER*1        DIAG, TRANS, UPLO
@@ -4700,7 +4703,7 @@ c
 *  Purpose
 *  =======
 *
-*  DTBSV  solves one of the systems of equations
+*  GAL_DTBSV  solves one of the systems of equations
 *
 *     A*x = b,   or   A'*x = b,
 *
@@ -4837,10 +4840,10 @@ c
       INTEGER            I, INFO, IX, J, JX, KPLUS1, KX, L
       LOGICAL            NOUNIT
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX, MIN
 *     ..
@@ -4849,15 +4852,15 @@ c
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO , 'U' ).AND.
-     $         .NOT.LSAME( UPLO , 'L' )      )THEN
+      IF     ( .NOT.GAL_LSAME( UPLO , 'U' ).AND.
+     $         .NOT.GAL_LSAME( UPLO , 'L' )      )THEN
          INFO = 1
-      ELSE IF( .NOT.LSAME( TRANS, 'N' ).AND.
-     $         .NOT.LSAME( TRANS, 'T' ).AND.
-     $         .NOT.LSAME( TRANS, 'C' )      )THEN
+      ELSE IF( .NOT.GAL_LSAME( TRANS, 'N' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'T' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'C' )      )THEN
          INFO = 2
-      ELSE IF( .NOT.LSAME( DIAG , 'U' ).AND.
-     $         .NOT.LSAME( DIAG , 'N' )      )THEN
+      ELSE IF( .NOT.GAL_LSAME( DIAG , 'U' ).AND.
+     $         .NOT.GAL_LSAME( DIAG , 'N' )      )THEN
          INFO = 3
       ELSE IF( N.LT.0 )THEN
          INFO = 4
@@ -4869,7 +4872,7 @@ c
          INFO = 9
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DTBSV ', INFO )
+         CALL GAL_XERBLA( 'GAL_DTBSV ', INFO )
          RETURN
       END IF
 *
@@ -4878,7 +4881,7 @@ c
       IF( N.EQ.0 )
      $   RETURN
 *
-      NOUNIT = LSAME( DIAG, 'N' )
+      NOUNIT = GAL_LSAME( DIAG, 'N' )
 *
 *     Set up the start point in X if the increment is not unity. This
 *     will be  ( N - 1 )*INCX  too small for descending loops.
@@ -4892,11 +4895,11 @@ c
 *     Start the operations. In this version the elements of A are
 *     accessed by sequentially with one pass through A.
 *
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
 *
 *        Form  x := inv( A )*x.
 *
-         IF( LSAME( UPLO, 'U' ) )THEN
+         IF( GAL_LSAME( UPLO, 'U' ) )THEN
             KPLUS1 = K + 1
             IF( INCX.EQ.1 )THEN
                DO 20, J = N, 1, -1
@@ -4965,7 +4968,7 @@ c
 *
 *        Form  x := inv( A')*x.
 *
-         IF( LSAME( UPLO, 'U' ) )THEN
+         IF( GAL_LSAME( UPLO, 'U' ) )THEN
             KPLUS1 = K + 1
             IF( INCX.EQ.1 )THEN
                DO 100, J = 1, N
@@ -5032,10 +5035,10 @@ c
 *
       RETURN
 *
-*     End of DTBSV .
+*     End of GAL_DTBSV .
 *
       END
-      SUBROUTINE DTPMV ( UPLO, TRANS, DIAG, N, AP, X, INCX )
+      SUBROUTINE GAL_DTPMV ( UPLO, TRANS, DIAG, N, AP, X, INCX )
 *     .. Scalar Arguments ..
       INTEGER            INCX, N
       CHARACTER*1        DIAG, TRANS, UPLO
@@ -5046,7 +5049,7 @@ c
 *  Purpose
 *  =======
 *
-*  DTPMV  performs one of the matrix-vector operations
+*  GAL_DTPMV  performs one of the matrix-vector operations
 *
 *     x := A*x,   or   x := A'*x,
 *
@@ -5139,25 +5142,25 @@ c
       INTEGER            I, INFO, IX, J, JX, K, KK, KX
       LOGICAL            NOUNIT
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     ..
 *     .. Executable Statements ..
 *
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO , 'U' ).AND.
-     $         .NOT.LSAME( UPLO , 'L' )      )THEN
+      IF     ( .NOT.GAL_LSAME( UPLO , 'U' ).AND.
+     $         .NOT.GAL_LSAME( UPLO , 'L' )      )THEN
          INFO = 1
-      ELSE IF( .NOT.LSAME( TRANS, 'N' ).AND.
-     $         .NOT.LSAME( TRANS, 'T' ).AND.
-     $         .NOT.LSAME( TRANS, 'C' )      )THEN
+      ELSE IF( .NOT.GAL_LSAME( TRANS, 'N' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'T' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'C' )      )THEN
          INFO = 2
-      ELSE IF( .NOT.LSAME( DIAG , 'U' ).AND.
-     $         .NOT.LSAME( DIAG , 'N' )      )THEN
+      ELSE IF( .NOT.GAL_LSAME( DIAG , 'U' ).AND.
+     $         .NOT.GAL_LSAME( DIAG , 'N' )      )THEN
          INFO = 3
       ELSE IF( N.LT.0 )THEN
          INFO = 4
@@ -5165,7 +5168,7 @@ c
          INFO = 7
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DTPMV ', INFO )
+         CALL GAL_XERBLA( 'GAL_DTPMV ', INFO )
          RETURN
       END IF
 *
@@ -5174,7 +5177,7 @@ c
       IF( N.EQ.0 )
      $   RETURN
 *
-      NOUNIT = LSAME( DIAG, 'N' )
+      NOUNIT = GAL_LSAME( DIAG, 'N' )
 *
 *     Set up the start point in X if the increment is not unity. This
 *     will be  ( N - 1 )*INCX  too small for descending loops.
@@ -5188,11 +5191,11 @@ c
 *     Start the operations. In this version the elements of AP are
 *     accessed sequentially with one pass through AP.
 *
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
 *
 *        Form  x:= A*x.
 *
-         IF( LSAME( UPLO, 'U' ) )THEN
+         IF( GAL_LSAME( UPLO, 'U' ) )THEN
             KK =1
             IF( INCX.EQ.1 )THEN
                DO 20, J = 1, N
@@ -5264,7 +5267,7 @@ c
 *
 *        Form  x := A'*x.
 *
-         IF( LSAME( UPLO, 'U' ) )THEN
+         IF( GAL_LSAME( UPLO, 'U' ) )THEN
             KK = ( N*( N + 1 ) )/2
             IF( INCX.EQ.1 )THEN
                DO 100, J = N, 1, -1
@@ -5331,10 +5334,10 @@ c
 *
       RETURN
 *
-*     End of DTPMV .
+*     End of GAL_DTPMV .
 *
       END
-      SUBROUTINE DTPSV ( UPLO, TRANS, DIAG, N, AP, X, INCX )
+      SUBROUTINE GAL_DTPSV ( UPLO, TRANS, DIAG, N, AP, X, INCX )
 *     .. Scalar Arguments ..
       INTEGER            INCX, N
       CHARACTER*1        DIAG, TRANS, UPLO
@@ -5345,7 +5348,7 @@ c
 *  Purpose
 *  =======
 *
-*  DTPSV  solves one of the systems of equations
+*  GAL_DTPSV  solves one of the systems of equations
 *
 *     A*x = b,   or   A'*x = b,
 *
@@ -5441,25 +5444,25 @@ c
       INTEGER            I, INFO, IX, J, JX, K, KK, KX
       LOGICAL            NOUNIT
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     ..
 *     .. Executable Statements ..
 *
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO , 'U' ).AND.
-     $         .NOT.LSAME( UPLO , 'L' )      )THEN
+      IF     ( .NOT.GAL_LSAME( UPLO , 'U' ).AND.
+     $         .NOT.GAL_LSAME( UPLO , 'L' )      )THEN
          INFO = 1
-      ELSE IF( .NOT.LSAME( TRANS, 'N' ).AND.
-     $         .NOT.LSAME( TRANS, 'T' ).AND.
-     $         .NOT.LSAME( TRANS, 'C' )      )THEN
+      ELSE IF( .NOT.GAL_LSAME( TRANS, 'N' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'T' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'C' )      )THEN
          INFO = 2
-      ELSE IF( .NOT.LSAME( DIAG , 'U' ).AND.
-     $         .NOT.LSAME( DIAG , 'N' )      )THEN
+      ELSE IF( .NOT.GAL_LSAME( DIAG , 'U' ).AND.
+     $         .NOT.GAL_LSAME( DIAG , 'N' )      )THEN
          INFO = 3
       ELSE IF( N.LT.0 )THEN
          INFO = 4
@@ -5467,7 +5470,7 @@ c
          INFO = 7
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DTPSV ', INFO )
+         CALL GAL_XERBLA( 'GAL_DTPSV ', INFO )
          RETURN
       END IF
 *
@@ -5476,7 +5479,7 @@ c
       IF( N.EQ.0 )
      $   RETURN
 *
-      NOUNIT = LSAME( DIAG, 'N' )
+      NOUNIT = GAL_LSAME( DIAG, 'N' )
 *
 *     Set up the start point in X if the increment is not unity. This
 *     will be  ( N - 1 )*INCX  too small for descending loops.
@@ -5490,11 +5493,11 @@ c
 *     Start the operations. In this version the elements of AP are
 *     accessed sequentially with one pass through AP.
 *
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
 *
 *        Form  x := inv( A )*x.
 *
-         IF( LSAME( UPLO, 'U' ) )THEN
+         IF( GAL_LSAME( UPLO, 'U' ) )THEN
             KK = ( N*( N + 1 ) )/2
             IF( INCX.EQ.1 )THEN
                DO 20, J = N, 1, -1
@@ -5565,7 +5568,7 @@ c
 *
 *        Form  x := inv( A' )*x.
 *
-         IF( LSAME( UPLO, 'U' ) )THEN
+         IF( GAL_LSAME( UPLO, 'U' ) )THEN
             KK = 1
             IF( INCX.EQ.1 )THEN
                DO 100, J = 1, N
@@ -5633,11 +5636,11 @@ c
 *
       RETURN
 *
-*     End of DTPSV .
+*     End of GAL_DTPSV .
 *
       END
-      SUBROUTINE DTRMM ( SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA,
-     $                   B, LDB )
+      SUBROUTINE GAL_DTRMM ( SIDE, UPLO, TRANSA, DIAG, M, N,
+     $                   ALPHA, A, LDA, B, LDB )
 *     .. Scalar Arguments ..
       CHARACTER*1        SIDE, UPLO, TRANSA, DIAG
       INTEGER            M, N, LDA, LDB
@@ -5649,7 +5652,7 @@ c
 *  Purpose
 *  =======
 *
-*  DTRMM  performs one of the matrix-matrix operations
+*  GAL_DTRMM  performs one of the matrix-matrix operations
 *
 *     B := alpha*op( A )*B,   or   B := alpha*B*op( A ),
 *
@@ -5763,10 +5766,10 @@ c
 *
 *
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
 *     .. Local Scalars ..
@@ -5781,28 +5784,28 @@ c
 *
 *     Test the input parameters.
 *
-      LSIDE  = LSAME( SIDE  , 'L' )
+      LSIDE  = GAL_LSAME( SIDE  , 'L' )
       IF( LSIDE )THEN
          NROWA = M
       ELSE
          NROWA = N
       END IF
-      NOUNIT = LSAME( DIAG  , 'N' )
-      UPPER  = LSAME( UPLO  , 'U' )
+      NOUNIT = GAL_LSAME( DIAG  , 'N' )
+      UPPER  = GAL_LSAME( UPLO  , 'U' )
 *
       INFO   = 0
       IF(      ( .NOT.LSIDE                ).AND.
-     $         ( .NOT.LSAME( SIDE  , 'R' ) )      )THEN
+     $         ( .NOT.GAL_LSAME( SIDE  , 'R' ) )      )THEN
          INFO = 1
       ELSE IF( ( .NOT.UPPER                ).AND.
-     $         ( .NOT.LSAME( UPLO  , 'L' ) )      )THEN
+     $         ( .NOT.GAL_LSAME( UPLO  , 'L' ) )      )THEN
          INFO = 2
-      ELSE IF( ( .NOT.LSAME( TRANSA, 'N' ) ).AND.
-     $         ( .NOT.LSAME( TRANSA, 'T' ) ).AND.
-     $         ( .NOT.LSAME( TRANSA, 'C' ) )      )THEN
+      ELSE IF( ( .NOT.GAL_LSAME( TRANSA, 'N' ) ).AND.
+     $         ( .NOT.GAL_LSAME( TRANSA, 'T' ) ).AND.
+     $         ( .NOT.GAL_LSAME( TRANSA, 'C' ) )      )THEN
          INFO = 3
-      ELSE IF( ( .NOT.LSAME( DIAG  , 'U' ) ).AND.
-     $         ( .NOT.LSAME( DIAG  , 'N' ) )      )THEN
+      ELSE IF( ( .NOT.GAL_LSAME( DIAG  , 'U' ) ).AND.
+     $         ( .NOT.GAL_LSAME( DIAG  , 'N' ) )      )THEN
          INFO = 4
       ELSE IF( M  .LT.0               )THEN
          INFO = 5
@@ -5814,7 +5817,7 @@ c
          INFO = 11
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DTRMM ', INFO )
+         CALL GAL_XERBLA( 'GAL_DTRMM ', INFO )
          RETURN
       END IF
 *
@@ -5837,7 +5840,7 @@ c
 *     Start the operations.
 *
       IF( LSIDE )THEN
-         IF( LSAME( TRANSA, 'N' ) )THEN
+         IF( GAL_LSAME( TRANSA, 'N' ) )THEN
 *
 *           Form  B := alpha*A*B.
 *
@@ -5901,7 +5904,7 @@ c
             END IF
          END IF
       ELSE
-         IF( LSAME( TRANSA, 'N' ) )THEN
+         IF( GAL_LSAME( TRANSA, 'N' ) )THEN
 *
 *           Form  B := alpha*B*A.
 *
@@ -5988,10 +5991,10 @@ c
 *
       RETURN
 *
-*     End of DTRMM .
+*     End of GAL_DTRMM .
 *
       END
-      SUBROUTINE DTRMV ( UPLO, TRANS, DIAG, N, A, LDA, X, INCX )
+      SUBROUTINE GAL_DTRMV ( UPLO, TRANS, DIAG, N, A, LDA, X, INCX )
 *     .. Scalar Arguments ..
       INTEGER            INCX, LDA, N
       CHARACTER*1        DIAG, TRANS, UPLO
@@ -6002,7 +6005,7 @@ c
 *  Purpose
 *  =======
 *
-*  DTRMV  performs one of the matrix-vector operations
+*  GAL_DTRMV  performs one of the matrix-vector operations
 *
 *     x := A*x,   or   x := A'*x,
 *
@@ -6098,10 +6101,10 @@ c
       INTEGER            I, INFO, IX, J, JX, KX
       LOGICAL            NOUNIT
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
 *     ..
@@ -6110,15 +6113,15 @@ c
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO , 'U' ).AND.
-     $         .NOT.LSAME( UPLO , 'L' )      )THEN
+      IF     ( .NOT.GAL_LSAME( UPLO , 'U' ).AND.
+     $         .NOT.GAL_LSAME( UPLO , 'L' )      )THEN
          INFO = 1
-      ELSE IF( .NOT.LSAME( TRANS, 'N' ).AND.
-     $         .NOT.LSAME( TRANS, 'T' ).AND.
-     $         .NOT.LSAME( TRANS, 'C' )      )THEN
+      ELSE IF( .NOT.GAL_LSAME( TRANS, 'N' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'T' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'C' )      )THEN
          INFO = 2
-      ELSE IF( .NOT.LSAME( DIAG , 'U' ).AND.
-     $         .NOT.LSAME( DIAG , 'N' )      )THEN
+      ELSE IF( .NOT.GAL_LSAME( DIAG , 'U' ).AND.
+     $         .NOT.GAL_LSAME( DIAG , 'N' )      )THEN
          INFO = 3
       ELSE IF( N.LT.0 )THEN
          INFO = 4
@@ -6128,7 +6131,7 @@ c
          INFO = 8
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DTRMV ', INFO )
+         CALL GAL_XERBLA( 'GAL_DTRMV ', INFO )
          RETURN
       END IF
 *
@@ -6137,7 +6140,7 @@ c
       IF( N.EQ.0 )
      $   RETURN
 *
-      NOUNIT = LSAME( DIAG, 'N' )
+      NOUNIT = GAL_LSAME( DIAG, 'N' )
 *
 *     Set up the start point in X if the increment is not unity. This
 *     will be  ( N - 1 )*INCX  too small for descending loops.
@@ -6151,11 +6154,11 @@ c
 *     Start the operations. In this version the elements of A are
 *     accessed sequentially with one pass through A.
 *
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
 *
 *        Form  x := A*x.
 *
-         IF( LSAME( UPLO, 'U' ) )THEN
+         IF( GAL_LSAME( UPLO, 'U' ) )THEN
             IF( INCX.EQ.1 )THEN
                DO 20, J = 1, N
                   IF( X( J ).NE.ZERO )THEN
@@ -6217,7 +6220,7 @@ c
 *
 *        Form  x := A'*x.
 *
-         IF( LSAME( UPLO, 'U' ) )THEN
+         IF( GAL_LSAME( UPLO, 'U' ) )THEN
             IF( INCX.EQ.1 )THEN
                DO 100, J = N, 1, -1
                   TEMP = X( J )
@@ -6274,11 +6277,11 @@ c
 *
       RETURN
 *
-*     End of DTRMV .
+*     End of GAL_DTRMV .
 *
       END
-      SUBROUTINE DTRSM ( SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA,
-     $                   B, LDB )
+      SUBROUTINE GAL_DTRSM ( SIDE, UPLO, TRANSA, DIAG, M, N,
+     $                   ALPHA, A, LDA, B, LDB )
 *     .. Scalar Arguments ..
       CHARACTER*1        SIDE, UPLO, TRANSA, DIAG
       INTEGER            M, N, LDA, LDB
@@ -6290,7 +6293,7 @@ c
 *  Purpose
 *  =======
 *
-*  DTRSM  solves one of the matrix equations
+*  GAL_DTRSM  solves one of the matrix equations
 *
 *     op( A )*X = alpha*B,   or   X*op( A ) = alpha*B,
 *
@@ -6407,10 +6410,10 @@ c
 *
 *
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
 *     .. Local Scalars ..
@@ -6425,28 +6428,28 @@ c
 *
 *     Test the input parameters.
 *
-      LSIDE  = LSAME( SIDE  , 'L' )
+      LSIDE  = GAL_LSAME( SIDE  , 'L' )
       IF( LSIDE )THEN
          NROWA = M
       ELSE
          NROWA = N
       END IF
-      NOUNIT = LSAME( DIAG  , 'N' )
-      UPPER  = LSAME( UPLO  , 'U' )
+      NOUNIT = GAL_LSAME( DIAG  , 'N' )
+      UPPER  = GAL_LSAME( UPLO  , 'U' )
 *
       INFO   = 0
       IF(      ( .NOT.LSIDE                ).AND.
-     $         ( .NOT.LSAME( SIDE  , 'R' ) )      )THEN
+     $         ( .NOT.GAL_LSAME( SIDE  , 'R' ) )      )THEN
          INFO = 1
       ELSE IF( ( .NOT.UPPER                ).AND.
-     $         ( .NOT.LSAME( UPLO  , 'L' ) )      )THEN
+     $         ( .NOT.GAL_LSAME( UPLO  , 'L' ) )      )THEN
          INFO = 2
-      ELSE IF( ( .NOT.LSAME( TRANSA, 'N' ) ).AND.
-     $         ( .NOT.LSAME( TRANSA, 'T' ) ).AND.
-     $         ( .NOT.LSAME( TRANSA, 'C' ) )      )THEN
+      ELSE IF( ( .NOT.GAL_LSAME( TRANSA, 'N' ) ).AND.
+     $         ( .NOT.GAL_LSAME( TRANSA, 'T' ) ).AND.
+     $         ( .NOT.GAL_LSAME( TRANSA, 'C' ) )      )THEN
          INFO = 3
-      ELSE IF( ( .NOT.LSAME( DIAG  , 'U' ) ).AND.
-     $         ( .NOT.LSAME( DIAG  , 'N' ) )      )THEN
+      ELSE IF( ( .NOT.GAL_LSAME( DIAG  , 'U' ) ).AND.
+     $         ( .NOT.GAL_LSAME( DIAG  , 'N' ) )      )THEN
          INFO = 4
       ELSE IF( M  .LT.0               )THEN
          INFO = 5
@@ -6458,7 +6461,7 @@ c
          INFO = 11
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DTRSM ', INFO )
+         CALL GAL_XERBLA( 'GAL_DTRSM ', INFO )
          RETURN
       END IF
 *
@@ -6481,7 +6484,7 @@ c
 *     Start the operations.
 *
       IF( LSIDE )THEN
-         IF( LSAME( TRANSA, 'N' ) )THEN
+         IF( GAL_LSAME( TRANSA, 'N' ) )THEN
 *
 *           Form  B := alpha*inv( A )*B.
 *
@@ -6551,7 +6554,7 @@ c
             END IF
          END IF
       ELSE
-         IF( LSAME( TRANSA, 'N' ) )THEN
+         IF( GAL_LSAME( TRANSA, 'N' ) )THEN
 *
 *           Form  B := alpha*B*inv( A ).
 *
@@ -6652,10 +6655,10 @@ c
 *
       RETURN
 *
-*     End of DTRSM .
+*     End of GAL_DTRSM .
 *
       END
-      SUBROUTINE DTRSV ( UPLO, TRANS, DIAG, N, A, LDA, X, INCX )
+      SUBROUTINE GAL_DTRSV ( UPLO, TRANS, DIAG, N, A, LDA, X, INCX )
 *     .. Scalar Arguments ..
       INTEGER            INCX, LDA, N
       CHARACTER*1        DIAG, TRANS, UPLO
@@ -6666,7 +6669,7 @@ c
 *  Purpose
 *  =======
 *
-*  DTRSV  solves one of the systems of equations
+*  GAL_DTRSV  solves one of the systems of equations
 *
 *     A*x = b,   or   A'*x = b,
 *
@@ -6765,10 +6768,10 @@ c
       INTEGER            I, INFO, IX, J, JX, KX
       LOGICAL            NOUNIT
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
 *     ..
@@ -6777,15 +6780,15 @@ c
 *     Test the input parameters.
 *
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO , 'U' ).AND.
-     $         .NOT.LSAME( UPLO , 'L' )      )THEN
+      IF     ( .NOT.GAL_LSAME( UPLO , 'U' ).AND.
+     $         .NOT.GAL_LSAME( UPLO , 'L' )      )THEN
          INFO = 1
-      ELSE IF( .NOT.LSAME( TRANS, 'N' ).AND.
-     $         .NOT.LSAME( TRANS, 'T' ).AND.
-     $         .NOT.LSAME( TRANS, 'C' )      )THEN
+      ELSE IF( .NOT.GAL_LSAME( TRANS, 'N' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'T' ).AND.
+     $         .NOT.GAL_LSAME( TRANS, 'C' )      )THEN
          INFO = 2
-      ELSE IF( .NOT.LSAME( DIAG , 'U' ).AND.
-     $         .NOT.LSAME( DIAG , 'N' )      )THEN
+      ELSE IF( .NOT.GAL_LSAME( DIAG , 'U' ).AND.
+     $         .NOT.GAL_LSAME( DIAG , 'N' )      )THEN
          INFO = 3
       ELSE IF( N.LT.0 )THEN
          INFO = 4
@@ -6795,7 +6798,7 @@ c
          INFO = 8
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'DTRSV ', INFO )
+         CALL GAL_XERBLA( 'GAL_DTRSV ', INFO )
          RETURN
       END IF
 *
@@ -6804,7 +6807,7 @@ c
       IF( N.EQ.0 )
      $   RETURN
 *
-      NOUNIT = LSAME( DIAG, 'N' )
+      NOUNIT = GAL_LSAME( DIAG, 'N' )
 *
 *     Set up the start point in X if the increment is not unity. This
 *     will be  ( N - 1 )*INCX  too small for descending loops.
@@ -6818,11 +6821,11 @@ c
 *     Start the operations. In this version the elements of A are
 *     accessed sequentially with one pass through A.
 *
-      IF( LSAME( TRANS, 'N' ) )THEN
+      IF( GAL_LSAME( TRANS, 'N' ) )THEN
 *
 *        Form  x := inv( A )*x.
 *
-         IF( LSAME( UPLO, 'U' ) )THEN
+         IF( GAL_LSAME( UPLO, 'U' ) )THEN
             IF( INCX.EQ.1 )THEN
                DO 20, J = N, 1, -1
                   IF( X( J ).NE.ZERO )THEN
@@ -6883,7 +6886,7 @@ c
 *
 *        Form  x := inv( A' )*x.
 *
-         IF( LSAME( UPLO, 'U' ) )THEN
+         IF( GAL_LSAME( UPLO, 'U' ) )THEN
             IF( INCX.EQ.1 )THEN
                DO 100, J = 1, N
                   TEMP = X( J )
@@ -6941,20 +6944,20 @@ c
 *
       RETURN
 *
-*     End of DTRSV .
+*     End of GAL_DTRSV .
 *
       END
-      double precision function dzasum(n,zx,incx)
+      double precision function gal_dzasum(n,zx,incx)
 c
 c     takes the sum of the absolute values.
 c     jack dongarra, 3/11/78.
 c     modified to correct problem with negative increment, 8/21/90.
 c
       double complex zx(1)
-      double precision stemp,dcabs1
+      double precision stemp,gal_dcabs1
       integer i,incx,ix,n
 c
-      dzasum = 0.0d0
+      gal_dzasum = 0.0d0
       stemp = 0.0d0
       if(n.le.0)return
       if(incx.eq.1)go to 20
@@ -6964,21 +6967,21 @@ c
       ix = 1
       if(incx.lt.0)ix = (-n+1)*incx + 1
       do 10 i = 1,n
-        stemp = stemp + dcabs1(zx(ix))
+        stemp = stemp + gal_dcabs1(zx(ix))
         ix = ix + incx
    10 continue
-      dzasum = stemp
+      gal_dzasum = stemp
       return
 c
 c        code for increment equal to 1
 c
    20 do 30 i = 1,n
-        stemp = stemp + dcabs1(zx(i))
+        stemp = stemp + gal_dcabs1(zx(i))
    30 continue
-      dzasum = stemp
+      gal_dzasum = stemp
       return
       end
-      double precision function dznrm2( n, zx, incx)
+      double precision function gal_dznrm2( n, zx, incx)
       logical imag, scale
       integer i, incx, ix, n, next
       double precision cutlo, cuthi, hitest, sum, xmax, absx, zero, one
@@ -7030,7 +7033,7 @@ c     data cutlo, cuthi / 4.441e-16,  1.304e19 /
       data cutlo, cuthi / 8.232d-11,  1.304d19 /
 c
       if(n .gt. 0) go to 10
-         dznrm2  = zero
+         gal_dznrm2  = zero
          go to 300
 c
    10 assign 30 to next
@@ -7111,12 +7114,12 @@ c
 c              end of main loop.
 c              compute square root and adjust for scaling.
 c
-      dznrm2 = dsqrt(sum)
-      if(scale) dznrm2 = dznrm2 * xmax
+      gal_dznrm2 = dsqrt(sum)
+      if(scale) gal_dznrm2 = gal_dznrm2 * xmax
   300 continue
       return
       end
-      integer function idamax(n,dx,incx)
+      integer function gal_idamax(n,dx,incx)
 c
 c     finds the index of element having max. absolute value.
 c     jack dongarra, linpack, 3/11/78.
@@ -7125,9 +7128,9 @@ c
       double precision dx(1),dmax
       integer i,incx,ix,n
 c
-      idamax = 0
+      gal_idamax = 0
       if( n .lt. 1 ) return
-      idamax = 1
+      gal_idamax = 1
       if(n.eq.1)return
       if(incx.eq.1)go to 20
 c
@@ -7139,7 +7142,7 @@ c
       ix = ix + incx
       do 10 i = 2,n
          if(dabs(dx(ix)).le.dmax) go to 5
-         idamax = i
+         gal_idamax = i
          dmax = dabs(dx(ix))
     5    ix = ix + incx
    10 continue
@@ -7150,7 +7153,7 @@ c
    20 dmax = dabs(dx(1))
       do 30 i = 2,n
          if(dabs(dx(i)).le.dmax) go to 30
-         idamax = i
+         gal_idamax = i
          dmax = dabs(dx(i))
    30 continue
       return

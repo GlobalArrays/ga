@@ -13,23 +13,13 @@
 #include "ga.h"
 #include "macdecls.h"
 #include "mp3.h"
+#include "galinalg.h"
 
 #define BLOCK_CYCLIC
 #define BLOCK_SIZE 500
 /*#define USE_SCALAPACK_DISTR*/
 
 #define DEBUG 0
-typedef long Integer_t;
-
-/* lapack routines */
-#define dgetrf_ F77_FUNC(dgetrf,DGETRF)
-extern void dgetrf_( Integer_t *m, Integer_t *n, double *a, Integer_t *ld,
-                     Integer_t *ipiv, Integer_t *info );
-#define dtrsm_  F77_FUNC(dtrsm,DTRSM)
-extern void dtrsm_(char *side, char *uplo, char *transa, char *diag,
-                   Integer_t *m, Integer_t *n, double *alpha,
-                   double *a, Integer_t *lda,
-                   double *b, Integer_t *ldb );
 
 static int nprocs, me;
 
@@ -160,12 +150,12 @@ int lu_lapack(double *a, int n)
 {
     int i, j;
     double *aa=NULL;
-    Integer_t *ipiv=NULL, info;
-    Integer_t ld=(Integer_t)n;
-    Integer_t N=(Integer_t)n;
+    BlasInt *ipiv=NULL, info;
+    BlasInt ld=(BlasInt)n;
+    BlasInt N=(BlasInt)n;
     
     aa = (double*)malloc(n*n*sizeof(double));
-    ipiv = (Integer_t*)malloc(n*sizeof(Integer_t));
+    ipiv = (BlasInt*)malloc(n*sizeof(BlasInt));
 
     /* row-major to column-major (NOTE: dgetrf_ is a fortran function) */
     for(i=0; i<n; i++) 
@@ -176,7 +166,7 @@ int lu_lapack(double *a, int n)
        }
     }
     
-    dgetrf_(&N, &N, aa, &ld, ipiv, &info); /* LAPACK's LU */
+    LAPACK_DGETRF(&N, &N, aa, &ld, ipiv, &info); /* LAPACK's LU */
     
     /* column-major to row-major */
     for(i=0; i<n; i++) 
@@ -248,8 +238,8 @@ void dtrsm_lapack(double *a, double *b, int n,
     int i, j;
     double *aa=NULL;
     double *bb=NULL;
-    Integer_t ld = (Integer_t)n;
-    Integer_t N  = (Integer_t)n;
+    BlasInt ld = (BlasInt)n;
+    BlasInt N  = (BlasInt)n;
 
     aa = (double*)malloc(n*n*sizeof(double));
     bb = (double*)malloc(n*n*sizeof(double));
@@ -267,7 +257,7 @@ void dtrsm_lapack(double *a, double *b, int n,
     {
        double alpha= 1.0;
        
-       dtrsm_(&side, &uplo, &transa, &diag, &N, &N, &alpha, aa, &ld, bb, &ld);
+       LAPACK_DTRSM(&side, &uplo, &transa, &diag, &N, &N, &alpha, aa, &ld, bb, &ld);
     }   
     
     /* column-major to row-major */

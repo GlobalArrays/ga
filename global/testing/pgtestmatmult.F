@@ -1,15 +1,6 @@
 #if HAVE_CONFIG_H
 #   include "config.fh"
 #endif
-#if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
-c
-#   define xgemm SGEMM
-#   define ygemm CGEMM
-#else
-#   define xgemm DGEMM
-#   define ygemm ZGEMM
-#endif
-
       program ga_test
 c $Id: pgtestmatmult.F,v 1.2.6.1 2007-04-25 21:49:59 manoj Exp $
 c
@@ -235,6 +226,7 @@ c
       real *8 abs_value
 #include "mafdecls.fh"
 #include "testutil.fh"
+#include "galinalg.fh"
 
       do i = 1,num_n
          do j = 1, num_m
@@ -250,7 +242,7 @@ c
       call ga_get(g_b, 1, dim1, 1, dim2, tmpb, dim1)
 
 c     compute dgemm sequentially
-      call xgemm(xt1, xt2, num_m, num_n, num_k, alpha,
+      call dgemm(xt1, xt2, num_m, num_n, num_k, alpha,
      &     tmpa, num_m, tmpb, num_k, beta, tmpc, num_m)
       
 c     after computing c locally, verify it with the values in g_c

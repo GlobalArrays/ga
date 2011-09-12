@@ -1,5 +1,5 @@
-      SUBROUTINE CGEMM ( TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB,
-     $                   BETA, C, LDC )
+      SUBROUTINE GAL_CGEMM ( TRANSA, TRANSB, M, N, K, ALPHA, A, LDA,
+     $                   B, LDB, BETA, C, LDC )
 *     .. Scalar Arguments ..
       CHARACTER*1        TRANSA, TRANSB
       INTEGER            M, N, K, LDA, LDB, LDC
@@ -11,7 +11,7 @@
 *  Purpose
 *  =======
 *
-*  CGEMM  performs one of the matrix-matrix operations
+*  GAL_CGEMM  performs one of the matrix-matrix operations
 *
 *     C := alpha*op( A )*op( B ) + beta*C,
 *
@@ -129,10 +129,10 @@
 *
 *
 *     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+      LOGICAL            GAL_LSAME
+      EXTERNAL           GAL_LSAME
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA
+      EXTERNAL           GAL_XERBLA
 *     .. Intrinsic Functions ..
       INTRINSIC          CONJG, MAX
 *     .. Local Scalars ..
@@ -153,10 +153,10 @@
 *     NROWA, NCOLA and  NROWB  as the number of rows and  columns  of  A
 *     and the number of rows of  B  respectively.
 *
-      NOTA  = LSAME( TRANSA, 'N' )
-      NOTB  = LSAME( TRANSB, 'N' )
-      CONJA = LSAME( TRANSA, 'C' )
-      CONJB = LSAME( TRANSB, 'C' )
+      NOTA  = GAL_LSAME( TRANSA, 'N' )
+      NOTB  = GAL_LSAME( TRANSB, 'N' )
+      CONJA = GAL_LSAME( TRANSA, 'C' )
+      CONJB = GAL_LSAME( TRANSB, 'C' )
       IF( NOTA )THEN
          NROWA = M
          NCOLA = K
@@ -175,11 +175,11 @@
       INFO = 0
       IF(      ( .NOT.NOTA                 ).AND.
      $         ( .NOT.CONJA                ).AND.
-     $         ( .NOT.LSAME( TRANSA, 'T' ) )      )THEN
+     $         ( .NOT.GAL_LSAME( TRANSA, 'T' ) )      )THEN
          INFO = 1
       ELSE IF( ( .NOT.NOTB                 ).AND.
      $         ( .NOT.CONJB                ).AND.
-     $         ( .NOT.LSAME( TRANSB, 'T' ) )      )THEN
+     $         ( .NOT.GAL_LSAME( TRANSB, 'T' ) )      )THEN
          INFO = 2
       ELSE IF( M  .LT.0               )THEN
          INFO = 3
@@ -195,7 +195,7 @@
          INFO = 13
       END IF
       IF( INFO.NE.0 )THEN
-         CALL XERBLA( 'CGEMM ', INFO )
+         CALL GAL_XERBLA( 'GAL_CGEMM ', INFO )
          RETURN
       END IF
 *
@@ -409,6 +409,6 @@
 *
       RETURN
 *
-*     End of CGEMM .
+*     End of GAL_CGEMM .
 *
       END

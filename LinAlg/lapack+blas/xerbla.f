@@ -1,4 +1,4 @@
-      SUBROUTINE XERBLA( SRNAME, INFO )
+      SUBROUTINE GAL_XERBLA( SRNAME, INFO )
 *
 *  -- LAPACK auxiliary routine (preliminary version) --
 *     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
@@ -13,7 +13,7 @@
 *  Purpose
 *  =======
 *
-*  XERBLA  is an error handler for the LAPACK routines.
+*  GAL_XERBLA  is an error handler for the LAPACK routines.
 *  It is called by an LAPACK routine if an input parameter has an
 *  invalid value.  A message is printed and execution stops.
 *
@@ -24,7 +24,7 @@
 *  =========
 *
 *  SRNAME  (input) CHARACTER*6
-*          The name of the routine which called XERBLA.
+*          The name of the routine which called GAL_XERBLA.
 *
 *  INFO    (input) INTEGER
 *          The position of the invalid parameter in the parameter list
@@ -33,11 +33,11 @@
 *
       WRITE( *, FMT = 9999 )SRNAME, INFO
 *
-       
+
 *
  9999 FORMAT( ' ** On entry to ', A6, ' parameter number ', I2, ' had ',
      $      'an illegal value' )
 *
-*     End of XERBLA
+*     End of GAL_XERBLA
 *
       END
