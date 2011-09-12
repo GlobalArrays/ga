@@ -228,9 +228,13 @@ int main(int argc, char **argv)
         PrintA();
     }
 
+#if HAVE_PTHREAD_SETCONCURRENCY
     pthread_setconcurrency(P);
+#endif
     
+#if HAVE_PTHREAD_GETCONCURRENCY
     printf("the concurrency level is %d \n", pthread_getconcurrency());
+#endif
     /*pthread_setscope_np(4);*/
     
     SlaveStart(MyNum);

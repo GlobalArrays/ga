@@ -216,6 +216,12 @@
 /* Define to 1 if you have the <process.h> header file. */
 #undef HAVE_PROCESS_H
 
+/* Define to 1 if you have the `pthread_getconcurrency' function. */
+#undef HAVE_PTHREAD_GETCONCURRENCY
+
+/* Define to 1 if you have the `pthread_setconcurrency' function. */
+#undef HAVE_PTHREAD_SETCONCURRENCY
+
 /* Define to 1 if the system has the type `ptrdiff_t'. */
 #undef HAVE_PTRDIFF_T
 
