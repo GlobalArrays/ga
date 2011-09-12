@@ -115,8 +115,8 @@ done
 # Perhaps none of the MPI compilers had a zero exit status (this is bad).
 # In this case we have to do a brute force match regardless of exit status.
 AS_IF([test "x$found_wrapped_version" = x0], [
-echo "no zero exit status found for MPI compilers" >&AS_MESSAGE_LOG_FD
 AS_IF([test "x$ga_cv_mpi_naked" = x], [
+echo "no zero exit status found for MPI compilers" >&AS_MESSAGE_LOG_FD
 for version in $versions
 do
     echo "trying version=$version" >&AS_MESSAGE_LOG_FD

@@ -5273,9 +5273,9 @@ fi
 # In this case we have to do a brute force match regardless of exit status.
 if test "x$found_wrapped_version" = x0; then :
 
-echo "no zero exit status found for MPI compilers" >&5
 if test "x$ga_cv_mpic_naked" = x; then :
 
+echo "no zero exit status found for MPI compilers" >&5
 for version in $versions
 do
     echo "trying version=$version" >&5
@@ -6114,9 +6114,9 @@ fi
 # In this case we have to do a brute force match regardless of exit status.
 if test "x$found_wrapped_version" = x0; then :
 
-echo "no zero exit status found for MPI compilers" >&5
 if test "x$ga_cv_mpicxx_naked" = x; then :
 
+echo "no zero exit status found for MPI compilers" >&5
 for version in $versions
 do
     echo "trying version=$version" >&5
@@ -7792,9 +7792,9 @@ fi
 # In this case we have to do a brute force match regardless of exit status.
 if test "x$found_wrapped_version" = x0; then :
 
-echo "no zero exit status found for MPI compilers" >&5
 if test "x$ga_cv_mpif77_naked" = x; then :
 
+echo "no zero exit status found for MPI compilers" >&5
 for version in $versions
 do
     echo "trying version=$version" >&5
