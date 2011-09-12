@@ -23,6 +23,10 @@
 #include "papi.h"
 #include "wapi.h"
 
+#ifdef MPI
+extern ARMCI_Group* ga_get_armci_group_(int);
+#endif
+
 /* work arrays used in all routines */
 static Integer dims[MAXDIM], ld[MAXDIM-1];
 static Integer lo[MAXDIM],hi[MAXDIM];
@@ -615,9 +619,6 @@ Integer bndim, bdims[MAXDIM];
    if (pnga_is_mirrored(g_a) && pnga_is_mirrored(g_b)) {
      armci_msg_gop_scope(SCOPE_NODE,value,alen,"+",atype);
    } else {
-#ifdef MPI
-     extern ARMCI_Group* ga_get_armci_group_(int);
-#endif
      if (a_grp == -1) {
        armci_msg_gop_scope(SCOPE_ALL,value,alen,"+",atype);
 #ifdef MPI

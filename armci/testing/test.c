@@ -22,6 +22,9 @@
 #include "mp3.h"
 #include "armci.h"
 
+extern void armci_lockmem(void*, void*, int);
+extern void armci_unlockmem(void);
+
 #define DIM1 5
 #define DIM2 3
 #ifdef __sun
@@ -1292,8 +1295,6 @@ void test_swap()
 }
 
 
-
-
 void test_memlock()
 {
         int dim,elems,bytes;
@@ -1305,8 +1306,6 @@ void test_memlock()
 #endif
                 void *pstart, *pend;
                 int first, last;
-                void armci_lockmem(void*, void*, int);
-                void armci_unlockmem(void);
 
         elems = ELEMS;
         dim =1;

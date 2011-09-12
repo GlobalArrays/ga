@@ -45,6 +45,10 @@
 #include "papi.h"
 #include "wapi.h"
 
+#ifdef MPI
+extern ARMCI_Group* ga_get_armci_group_(int);
+#endif
+
 /**********************************************************
  *  n-dimensional utilities                               *
  **********************************************************/
@@ -1330,9 +1334,6 @@ void pnga_dot_patch(Integer g_a, char *t_a, Integer *alo, Integer *ahi, Integer 
   if (pnga_is_mirrored(g_a) && pnga_is_mirrored(g_b)) {
     armci_msg_gop_scope(SCOPE_NODE,retval,alen,"+",ctype);
   } else {
-#ifdef MPI
-    extern ARMCI_Group* ga_get_armci_group_(int);
-#endif
     if (a_grp == -1) {
       armci_msg_gop_scope(SCOPE_ALL,retval,alen,"+",ctype);
 #ifdef MPI

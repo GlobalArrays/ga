@@ -25,6 +25,10 @@
 #include "scope.h"
 #include "table.h"
 
+#ifdef ENABLE_ARMCI_MEM_OPTION
+extern void* ARMCI_Malloc_local(long bytes);
+#endif
+
 /*
  * Memory layout:
  *
@@ -2501,7 +2505,6 @@ public Boolean MA_init(
 #ifdef ENABLE_ARMCI_MEM_OPTION
     if(getenv("MA_USE_ARMCI_MEM"))
     {
-        void* ARMCI_Malloc_local(long bytes);
         ma_segment = (Pointer)ARMCI_Malloc_local(total_bytes);
     }
     else

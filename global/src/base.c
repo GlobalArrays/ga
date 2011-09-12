@@ -88,6 +88,16 @@ static int calc_maplen(int handle);
   of a GA when the region spans in more than 1 process within SMP */
 #define GA_ELEM_PADDING yes
 
+#define OLD_DISTRIBUTION 1
+#if OLD_DISTRIBUTION
+    extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,
+                    double threshold, Integer bias, Integer blk[],
+                    Integer pedims[]);
+#else
+    extern void ddb(Integer ndims, Integer dims[], Integer npes,
+                    Integer blk[], Integer pedims[]);
+#endif
+
 global_array_t *_ga_main_data_structure;
 global_array_t *GA;
 proc_list_t *_proc_list_main_data_structure;
@@ -1842,16 +1852,6 @@ logical pnga_allocate(Integer g_a)
   /* The data distribution has not been specified by the user. Create
      default distribution */
   if (GA[ga_handle].mapc == NULL && GA[ga_handle].block_flag == 0) {
-#define OLD_DISTRIBUTION 1
-#if OLD_DISTRIBUTION
-    extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,
-                    double threshold, Integer bias, Integer blk[],
-                    Integer pedims[]);
-#else
-    extern void ddb(Integer ndims, Integer dims[], Integer npes,
-                    Integer blk[], Integer pedims[]);
-#endif
-
     for (d=0; d<ndim; d++) {
       dims[d] = (Integer)GA[ga_handle].dims[d];
       chunk[d] = (Integer)GA[ga_handle].chunk[d];

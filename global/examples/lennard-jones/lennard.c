@@ -304,7 +304,6 @@ commandLine(int argc, char **argv) {
 #if 0
   int n;
 #endif
-  extern char *optarg;   
  
   /* default options */
   gBlockSize   = BLOCK_SIZE; /* size of the sub-block (force matrix) */

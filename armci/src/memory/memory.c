@@ -46,6 +46,10 @@ static context_t ctx_mlocalmem;
 #define RMA_NEEDS_SHMEM
 #endif
 
+#if defined(DATA_SERVER) && !defined(SERVER_THREAD)
+extern int _armci_server_started;
+#endif
+
 /****************************************************************************
  * Memory Allocator called by kr_malloc on SGI Altix to get more core from OS
  */
@@ -284,7 +288,6 @@ void armci_shmem_malloc(void *ptr_arr[], armci_size_t bytes)
                /* ask dataserver process to attach to the region and get
                 * ptr*/
                {
-                  extern int _armci_server_started;
                   if(_armci_server_started) {
                      armci_serv_attach_req(idlist, SHMIDLEN*sizeof(long), size,
                                            &ptr, sizeof(void*));
@@ -407,7 +410,6 @@ void armci_shmem_memget(armci_meminfo_t *meminfo, size_t size) {
 #   else
        /* ask dataserver process to attach to region and get ptr*/
        {
-          extern int _armci_server_started;
           if(_armci_server_started) {
              armci_serv_attach_req(idlist, SHMIDLEN*sizeof(long), size,
                                    &armci_ptr, sizeof(void*));
@@ -589,7 +591,6 @@ void armci_shmem_malloc_group(void *ptr_arr[], armci_size_t bytes,
 #            else
           /* ask data server process to attach to the region and get ptr */
           {
-             extern int _armci_server_started;
              if(_armci_server_started) {
                 armci_serv_attach_req(idlist, SHMIDLEN*sizeof(long), size,
                                       &ptr, sizeof(void*));

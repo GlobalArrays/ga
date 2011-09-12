@@ -822,6 +822,19 @@ void dai_zero_eof(Integer d_a)
 }
 
 
+#ifdef CLEAR_BUF
+static void dai_clear_buffer()
+{
+    /* int i, j; */
+    /*
+       for (j = 0; j < DRA_NBUF; j++) 
+       for (i=0;i<DRA_DBL_BUF_SIZE;i++)
+       ((double*)_dra_buffer_state[j].buffer)[i]=0.;
+       */
+}
+#endif
+
+
 /**
  * read aligned block of data from d_a to memory buffer
  */
@@ -830,7 +843,6 @@ void dai_get(section_t ds_a, void *buf, Integer ld, io_request_t *id)
     Integer handle = ds_a.handle + DRA_OFFSET, elem, rc;
     Off_t   offset;
     Size_t  bytes;
-    void    dai_clear_buffer();
 
     /* find location in a file where data should be read from */
     dai_file_location(ds_a, &offset);
@@ -1791,16 +1803,6 @@ Integer FATR dra_terminate_()
     return(ELIO_OK);
 }
 
-void dai_clear_buffer()
-{
-    /* int i, j; */
-    /*
-       for (j = 0; j < DRA_NBUF; j++) 
-       for (i=0;i<DRA_DBL_BUF_SIZE;i++)
-       ((double*)_dra_buffer_state[j].buffer)[i]=0.;
-       */
-}
-
 
 /**
  * compute chunk parameters for layout of arrays on the disk
@@ -2434,7 +2436,6 @@ void ndai_get(section_t ds_a, void *buf, Integer ld[], io_request_t *id)
     Integer ndim = DRA[handle].ndim, i;
     Off_t   offset;
     Size_t  bytes;
-    void    dai_clear_buffer();
 #if WALLTIME
     double ss0,tt0,tt1;
 #endif

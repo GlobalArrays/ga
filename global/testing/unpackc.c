@@ -193,7 +193,7 @@ test_unpack(C_DCPL,DoubleComplex,cpl,C_DCPL,DoubleComplex,cpl)
 
 int main(int argc, char **argv)
 {
-    int i,lo,hi,q;
+    int i=0,lo=0,hi=0,q=0;
 
     MP_INIT(argc,argv);
     GA_Initialize();

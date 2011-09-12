@@ -88,7 +88,6 @@ int main(int argc, char **argv)
 {
     int i, j;
     int ch;
-    extern char *optarg;
     int MyNum=0;
     int proc_num;
     int edge;

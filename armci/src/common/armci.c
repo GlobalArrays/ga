@@ -170,6 +170,9 @@ static void armci_perror_msg()
 #if defined(IBM) || defined(IBM64)
 int AR_caught_sigint;
 int AR_caught_sigterm;
+#else
+extern int AR_caught_sigint;
+extern int AR_caught_sigterm;
 #endif
 
 void armci_abort(int code)
@@ -648,7 +651,6 @@ extern void cpu_yield();
 void armci_util_wait_int(volatile int *p, int val, int maxspin)
 {
 int count=0;
-extern void cpu_yield();
        while(*p != val)
             if((++count)<maxspin) armci_util_spin(count,(int *)p);
             else{
@@ -921,8 +923,6 @@ static int in_error_cleanup=0;
 
 void derr_printf(const char *format, ...) {
     
-  extern int AR_caught_sigint;
-  extern int AR_caught_sigterm;
   if(!in_error_cleanup) {
 #ifdef SYSV
     if((!AR_caught_sigterm && !AR_caught_sigint) || armci_me==0) 
@@ -939,8 +939,6 @@ void derr_printf(const char *format, ...) {
 
 int dassertp_fail(const char *cond_string, const char *file, 
 		  const char *func, unsigned int line, int code) {
-  extern int AR_caught_sigint;
-  extern int AR_caught_sigterm;
   if(!in_error_cleanup) {
     in_error_cleanup=1;
 #ifdef SYSV

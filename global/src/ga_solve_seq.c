@@ -291,7 +291,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
 /*     internal variables	*/
 
   REAL t;
-  int LP_idamax(),j,k,kp1,l,nm1;
+  int j,k,kp1,l,nm1;
 
 
 /*     gaussian elimination with partial pivoting	*/
@@ -411,7 +411,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
 {
 /*     internal variables	*/
 
-	REAL LP_ddot(),t;
+	REAL t;
 	int k,kb,l,nm1;
 
 	nm1 = n - 1;

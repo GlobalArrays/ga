@@ -1861,18 +1861,21 @@ void parmci_msg_group_barrier(ARMCI_Group *group)
 #endif
 }
 
+#ifdef ARMCI_GROUP
+extern void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Group *group);
+#else
+extern void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm);
+#endif
 void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
                            int grp_clus_nproc, ARMCI_Group *mastergroup) {
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)mastergroup;
     int i, *pid_list, root=0;
 #ifdef ARMCI_GROUP
     ARMCI_Group group;
-    void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Group *group);
 #else
     MPI_Group group_world;
     MPI_Group group;
     MPI_Comm comm;
-    void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm);
 #endif
  
     /* create a communicator for the processes with in a node */

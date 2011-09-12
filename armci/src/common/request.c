@@ -1466,7 +1466,10 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
          armci_process_extheader(msginfo, dscr_save, buf, buflen);
 }
 
-
+#if ARMCI_ENABLE_GPC_CALLS && (defined(LAPI) || defined(GM) || defined(VAPI) || defined(DOELAN4) || defined(SOCKETS))
+static int gpc_call_process( request_header_t *msginfo, int len,
+                          char *dscr, char* buf, int buflen, char *sbuf);
+#endif
 
 void armci_server_vector( request_header_t *msginfo, 
                           char *dscr, char* buf, int buflen)
@@ -1701,7 +1704,7 @@ int gpc_get_buf_handle() {
   return i;
 }
 
-int gpc_call_process( request_header_t *msginfo, int len,
+static int gpc_call_process( request_header_t *msginfo, int len,
                           char *dscr, char* buf, int buflen, char *sbuf) {
   int h, hlen, dlen, rhlen, rdlen;
   int parlen;

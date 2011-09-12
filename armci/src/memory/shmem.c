@@ -1225,7 +1225,6 @@ void Delete_All_Regions()
 {
 int reg;
 int code=0;
-extern int armci_me;
 
   for(reg = 0; reg < MAX_REGIONS; reg++){
     if(region_list[reg].addr != (char*)0){

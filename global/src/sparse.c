@@ -839,6 +839,9 @@ Integer tlo[2], thi[2];
 }
 
 
+extern void gai_hsort(Integer *list, int n);
+
+
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_bin_sorter = pnga_bin_sorter
 #endif

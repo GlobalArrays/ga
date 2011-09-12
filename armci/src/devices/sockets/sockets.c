@@ -801,6 +801,9 @@ againacc:
   return msgsock;
 }
 
+#if !defined(SGI) && !defined(WIN32)
+struct hostent *gethostbyname();
+#endif
 
 int armci_CreateSocketAndConnect(char *hostname, int port)
 /*
@@ -816,9 +819,6 @@ int armci_CreateSocketAndConnect(char *hostname, int port)
   struct hostent *hp;
   int on = 1;
   int trial;
-#if !defined(SGI) && !defined(WIN32)
-  struct hostent *gethostbyname();
-#endif
 
   /* Create socket */
 

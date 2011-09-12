@@ -174,6 +174,45 @@ static  long        *end_ptr        = (long*) &randtbl[ DEG_3 + 1 ];
 
 
 /*
+ * random:
+ * If we are using the trivial TYPE_0 R.N.G., just do the old linear
+ * congruential bit.  Otherwise, we do our fancy trinomial stuff, which is the
+ * same in all ther other cases due to all the global variables that have been
+ * set up.  The basic operation is to add the number at the rear pointer into
+ * the one at the front pointer.  Then both pointers are advanced to the next
+ * location cyclically in the table.  The value returned is the sum generated,
+ * reduced to 31 bits by throwing away the "least random" low bit.
+ * Note: the code takes advantage of the fact that both the front and
+ * rear pointers can't wrap on the same call by not testing the rear
+ * pointer if the front one has wrapped.
+ * Returns a 31-bit random number.
+ */
+
+long
+random()
+{
+    long        i;
+
+    if(  rand_type  ==  TYPE_0  )  {
+        i = state[0] = ( state[0]*1103515245 + 12345 )&0x7fffffff;
+    }
+    else  {
+        *fptr += *rptr;
+        i = (*fptr >> 1)&0x7fffffff;    /* chucking least random bit */
+        if(  ++fptr  >=  end_ptr  )  {
+        fptr = state;
+        ++rptr;
+        }
+        else  {
+        if(  ++rptr  >=  end_ptr  )  rptr = state;
+        }
+    }
+    return( i );
+}
+
+
+
+/*
  * srandom:
  * Initialize the random number generator based on the given seed.  If the
  * type is the trivial no-state-information type, just remember the seed.
@@ -191,7 +230,6 @@ void srandom( x )
     unsigned        x;
 {
         register  int        i;
-    long random();
 
     if(  rand_type  ==  TYPE_0  )  {
         state[ 0 ] = x;
@@ -326,43 +364,4 @@ setstate( arg_state )
     }
     end_ptr = &state[ rand_deg ];        /* set end_ptr too */
     return( ostate );
-}
-
-
-
-/*
- * random:
- * If we are using the trivial TYPE_0 R.N.G., just do the old linear
- * congruential bit.  Otherwise, we do our fancy trinomial stuff, which is the
- * same in all ther other cases due to all the global variables that have been
- * set up.  The basic operation is to add the number at the rear pointer into
- * the one at the front pointer.  Then both pointers are advanced to the next
- * location cyclically in the table.  The value returned is the sum generated,
- * reduced to 31 bits by throwing away the "least random" low bit.
- * Note: the code takes advantage of the fact that both the front and
- * rear pointers can't wrap on the same call by not testing the rear
- * pointer if the front one has wrapped.
- * Returns a 31-bit random number.
- */
-
-long
-random()
-{
-    long        i;
-
-    if(  rand_type  ==  TYPE_0  )  {
-        i = state[0] = ( state[0]*1103515245 + 12345 )&0x7fffffff;
-    }
-    else  {
-        *fptr += *rptr;
-        i = (*fptr >> 1)&0x7fffffff;    /* chucking least random bit */
-        if(  ++fptr  >=  end_ptr  )  {
-        fptr = state;
-        ++rptr;
-        }
-        else  {
-        if(  ++rptr  >=  end_ptr  )  rptr = state;
-        }
-    }
-    return( i );
 }
