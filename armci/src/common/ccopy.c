@@ -286,8 +286,15 @@ void c_dcopy2d_u_(const int* const rows,
 {
     int r, c;
     for ( c = 0 ; c < (*cols) ; c++ ){
-        for ( r = 0 ; r < (*rows) ; r++ ){
-            B[ c * (*bld) + r ] = A[ c * (*ald) + r ];
+        int m = (*rows) - ((*rows)%4);
+        for ( r = 0 ; r < m ; r+=4 ){
+            B[ c * (*bld) + r   ] = A[ c * (*ald) + r   ];
+            B[ c * (*bld) + r+1 ] = A[ c * (*ald) + r+1 ];
+            B[ c * (*bld) + r+2 ] = A[ c * (*ald) + r+2 ];
+            B[ c * (*bld) + r+3 ] = A[ c * (*ald) + r+3 ];
+        }
+        for ( r = m ; r < (*rows) ; r++ ){
+            B[ c * (*bld) + r   ] = A[ c * (*ald) + r   ];
         }
     }
     return;
