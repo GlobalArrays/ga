@@ -426,13 +426,23 @@ libarmci_la_SOURCES += src/devices/lapi/lapi.c
 libarmci_la_SOURCES += src/devices/lapi/lapidefs.h
 libarmci_la_SOURCES += src/memory/buffers.c
 endif
-if ARMCI_NETWORK_MPI_SPAWN
-AM_CPPFLAGS += -I$(top_srcdir)/src/devices/mpi
+if ARMCI_NETWORK_MPI_MT
+AM_CPPFLAGS += -I$(top_srcdir)/src/devices/mpi-mt
 libarmci_la_SOURCES += src/common/ds-shared.c
 libarmci_la_SOURCES += src/common/request.c
-libarmci_la_SOURCES += src/devices/mpi/mpi2_client.c
-libarmci_la_SOURCES += src/devices/mpi/mpi2.h
-libarmci_la_SOURCES += src/devices/mpi/mpi2_server.c
+libarmci_la_SOURCES += src/common/spawn.c
+libarmci_la_SOURCES += src/devices/mpi-mt/mpi2_client.c
+libarmci_la_SOURCES += src/devices/mpi-mt/mpi2.h
+libarmci_la_SOURCES += src/devices/mpi-mt/mpi2_server.c
+libarmci_la_SOURCES += src/memory/buffers.c
+endif
+if ARMCI_NETWORK_MPI_SPAWN
+AM_CPPFLAGS += -I$(top_srcdir)/src/devices/mpi-spawn
+libarmci_la_SOURCES += src/common/ds-shared.c
+libarmci_la_SOURCES += src/common/request.c
+libarmci_la_SOURCES += src/devices/mpi-spawn/mpi2_client.c
+libarmci_la_SOURCES += src/devices/mpi-spawn/mpi2.h
+libarmci_la_SOURCES += src/devices/mpi-spawn/mpi2_server.c
 libarmci_la_SOURCES += src/memory/buffers.c
 endif
 if ARMCI_NETWORK_OPENIB

@@ -289,7 +289,7 @@ extern void armci_init_fence();
 #endif
 #endif
 
-#ifdef MPI_SPAWN
+#if defined(MPI_SPAWN) || defined(MPI_MT)
   extern void armci_create_server_MPIprocess ();
 #endif
 

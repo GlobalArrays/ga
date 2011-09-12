@@ -958,7 +958,7 @@ void armci_data_server(void *mesg)
           }
           armci_server_ipc(msginfo, descr, buffer, buflen);
           break;
-#if defined(SOCKETS) || defined(HITACHI) || defined(MPI_SPAWN)
+#if defined(SOCKETS) || defined(HITACHI) || defined(MPI_SPAWN) || defined(MPI_MT)
       case QUIT:   
           if(DEBUG_){ 
              printf("%d(serv):got QUIT request from %d\n",armci_me, from);
@@ -1053,7 +1053,7 @@ void armci_start_server()
 {
     armci_init_connections();
 
-#ifdef MPI_SPAWN
+#if defined(MPI_SPAWN) || defined(MPI_MT)
     
     /* For MPI_SPAWN, this should be called by all processes */
     armci_create_server_MPIprocess( );

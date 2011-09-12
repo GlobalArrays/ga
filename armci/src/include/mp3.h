@@ -37,8 +37,8 @@
 #   include <mpi.h>
 #   define MP_BARRIER()         MPI_Barrier(MPI_COMM_WORLD)
 #   define MP_FINALIZE()        MPI_Finalize()
-#   ifdef DCMF
-    static inline int MP_INIT_THREAD(int *argc, char ***argv) {
+#   if defined(DCMF) || defined(MPI_MT)
+    static inline int MPI_INIT_THREAD(int *argc, char ***argv) {
         int status;
         int provided;
         status = MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &provided);

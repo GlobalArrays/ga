@@ -750,7 +750,7 @@ void armci_msg_bcast(void *buf, int len, int root)
 int Root = armci_master;
 int nslave = armci_clus_info[armci_clus_me].nslave;
 
-#ifdef MPI_SPAWN
+#if defined(MPI_SPAWN) || defined(MPI_MT)
     armci_msg_bcast_scope(SCOPE_ALL, (buf), (len), (root));
     return;
 #endif

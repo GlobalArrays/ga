@@ -64,7 +64,7 @@ extern INLINE void _armci_buf_set_cmpld_idx(int idx, int state);
    typedef char armcix_opaque_t [ARMCIX_OPAQUE_SIZE];
 #  define NB_CMPL_T armcix_opaque_t
    typedef long msg_tag_t;
-#elif defined(MPI_SPAWN)
+#elif defined(MPI_SPAWN) || defined(MPI_MT)
 #  include "mpi2.h"
    typedef long msg_tag_t;
 #else
@@ -347,7 +347,7 @@ extern int armci_send_req_msg_strided(int proc, request_header_t *msginfo,
                           char *ptr, int strides, int stride_arr[],int count[]);
 extern void armci_server_goodbye(request_header_t* msginfo);
 #endif
-#ifdef MPI_SPAWN
+#if defined(MPI_SPAWN) || defined(MPI_MT)
 extern void armci_serv_quit();
 extern void armci_server_goodbye(request_header_t* msginfo);
 #endif

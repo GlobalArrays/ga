@@ -781,7 +781,7 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
 
     if(nb_handle && op==GET)armci_save_vector_dscr(&buf0,darr,len,op,1);
     if(op == GET
-#   if !defined(SOCKETS) && !defined(MPI_SPAWN)
+#   if !defined(SOCKETS) && !defined(MPI_SPAWN) && !defined(MPI_MT)
        && !nb_handle
 #   endif
       ){
@@ -1009,7 +1009,7 @@ int armci_rem_strided(int op, void* scale, int proc,
        {
           armci_send_req(proc, msginfo, bufsize);
        }
-#if !defined(MPI_SPAWN)
+#if !defined(MPI_SPAWN) && !defined(MPI_MT)
 #ifdef ACC_SMP
        if(!ARMCI_ACC(op))
 #endif
@@ -1026,7 +1026,7 @@ int armci_rem_strided(int op, void* scale, int proc,
           FREE_SEND_BUFFER(msginfo);
        }
 #else
-#  ifndef MPI_SPAWN
+#  if !defined(MPI_SPAWN) && !defined(MPI_MT)
        if(!nb_handle)
 #  endif
        {

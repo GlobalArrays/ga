@@ -150,6 +150,21 @@ AS_IF([test "x$happy" = xyes],
     [$2])
 ])dnl
 
+# _GA_ARMCI_NETWORK_MPI_MT([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+# ---------------------------------------------------------------------
+AC_DEFUN([_GA_ARMCI_NETWORK_MPI_MT], [
+AC_MSG_NOTICE([searching for MPI_MT...])
+happy=yes
+AS_IF([test "x$happy" = xyes],
+    [AC_CHECK_HEADER([mpi.h], [], [happy=no])])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([MPI_Init_thread], [mpi mpich.cnk mpich.rts],
+        [], [happy=no])])
+AS_IF([test "x$happy" = xyes],
+    [ga_armci_network=MPI_MT; with_mpi_mt=yes; $1],
+    [$2])
+])dnl
+
 # _GA_ARMCI_NETWORK_MPI_SPAWN([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 # ---------------------------------------------------------------------
 AC_DEFUN([_GA_ARMCI_NETWORK_MPI_SPAWN], [
@@ -244,6 +259,7 @@ _GA_ARMCI_NETWORK_WITH([bgml],      [IBM BG/L])
 _GA_ARMCI_NETWORK_WITH([cray-shmem],[Cray XT shmem])
 _GA_ARMCI_NETWORK_WITH([dcmf],      [IBM BG/P Deep Computing Message Framework])
 _GA_ARMCI_NETWORK_WITH([lapi],      [IBM LAPI])
+_GA_ARMCI_NETWORK_WITH([mpi-mt],    [MPI-2 multi-threading])
 _GA_ARMCI_NETWORK_WITH([mpi-spawn], [MPI-2 dynamic process mgmt])
 _GA_ARMCI_NETWORK_WITH([openib],    [Infiniband OpenIB])
 _GA_ARMCI_NETWORK_WITH([portals],   [Cray XT portals])
@@ -265,6 +281,8 @@ AS_IF([test "x$enable_autodetect" = xyes],
         [_GA_ARMCI_NETWORK_DCMF()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_lapi" != xno],
         [_GA_ARMCI_NETWORK_LAPI()])
+dnl     AS_IF([test "x$ga_armci_network" = x && test "x$with_mpi_mt" != xno],
+dnl         [_GA_ARMCI_NETWORK_MPI_MT()])
 dnl     AS_IF([test "x$ga_armci_network" = x && test "x$with_mpi_spawn" != xno],
 dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_openib" != xno],
@@ -295,6 +313,9 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
               AS_IF([test "x$ga_armci_network" = xLAPI],
                  [_GA_ARMCI_NETWORK_LAPI([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=LAPI failed])])])
+              AS_IF([test "x$ga_armci_network" = xMPI_MT],
+                 [_GA_ARMCI_NETWORK_MPI_MT([],
+                    [AC_MSG_ERROR([test for ARMCI_NETWORK=MPI_MT failed])])])
               AS_IF([test "x$ga_armci_network" = xMPI_SPAWN],
                  [_GA_ARMCI_NETWORK_MPI_SPAWN([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=MPI_SPAWN failed])])])
@@ -314,6 +335,7 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
          _GA_ARMCI_NETWORK_WARN([cray-shmem])
          _GA_ARMCI_NETWORK_WARN([dcmf])
          _GA_ARMCI_NETWORK_WARN([lapi])
+         _GA_ARMCI_NETWORK_WARN([mpi-mt])
          _GA_ARMCI_NETWORK_WARN([mpi-spawn])
          _GA_ARMCI_NETWORK_WARN([openib])
          _GA_ARMCI_NETWORK_WARN([portals])
@@ -330,6 +352,7 @@ _GA_ARMCI_NETWORK_AM_CONDITIONAL([bgml])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([cray-shmem])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([dcmf])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([lapi])
+_GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-mt])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-spawn])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([openib])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([gemini])

@@ -56,6 +56,8 @@
     static const char *network_protocol="OpenIB Verbs API";
 #elif defined(PM)
     static const char *network_protocol="Score PM";
+#elif defined(MPI_MT)
+    static const char *network_protocol="MPI-MT";
 #elif defined(MPI_SPAWN)
     static const char *network_protocol="MPI-SPAWN";
 #else

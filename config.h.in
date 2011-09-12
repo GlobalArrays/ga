@@ -529,6 +529,9 @@
 #undef MELLANOX
 
 /* TODO */
+#undef MPI_MT
+
+/* TODO */
 #undef MPI_SPAWN
 
 /* Use MPI for messaging */

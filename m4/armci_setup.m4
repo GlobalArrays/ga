@@ -63,6 +63,12 @@ AS_CASE([$ga_armci_network],
     AC_DEFINE([ALLOW_PIN], [1], [TODO])
     AC_DEFINE([MELLANOX], [1], [TODO])
     ],
+[MPI_MT], [
+    AC_DEFINE([PTHREADS], [1], [TODO])
+    AC_DEFINE([DATA_SERVER], [1], [TODO])
+    AC_DEFINE([SERVER_THREAD], [1], [TODO])
+    AC_DEFINE([MPI_MT], [1], [TODO])
+    ],
 [MPI_SPAWN], [
     AC_DEFINE([DATA_SERVER], [1], [TODO])
     AC_DEFINE([MPI_SPAWN], [1], [TODO])

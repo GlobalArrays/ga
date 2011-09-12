@@ -745,6 +745,8 @@ ARMCI_NETWORK_OPENIB_FALSE
 ARMCI_NETWORK_OPENIB_TRUE
 ARMCI_NETWORK_MPI_SPAWN_FALSE
 ARMCI_NETWORK_MPI_SPAWN_TRUE
+ARMCI_NETWORK_MPI_MT_FALSE
+ARMCI_NETWORK_MPI_MT_TRUE
 ARMCI_NETWORK_LAPI_FALSE
 ARMCI_NETWORK_LAPI_TRUE
 ARMCI_NETWORK_DCMF_FALSE
@@ -952,6 +954,7 @@ with_bgml
 with_cray_shmem
 with_dcmf
 with_lapi
+with_mpi_mt
 with_mpi_spawn
 with_openib
 with_portals
@@ -1682,6 +1685,7 @@ Optional Packages:
   --with-dcmf[=ARG]       select armci network as IBM BG/P Deep Computing
                           Message Framework
   --with-lapi[=ARG]       select armci network as IBM LAPI
+  --with-mpi-mt[=ARG]     select armci network as MPI-2 multi-threading
   --with-mpi-spawn[=ARG]  select armci network as MPI-2 dynamic process mgmt
   --with-openib[=ARG]     select armci network as Infiniband OpenIB
   --with-portals[=ARG]    select armci network as Cray XT portals
@@ -6718,6 +6722,65 @@ fi
 
 
 
+# Check whether --with-mpi-mt was given.
+if test "${with_mpi_mt+set}" = set; then :
+  withval=$with_mpi_mt;
+fi
+
+
+
+if test "x$with_mpi_mt" != x; then :
+  for arg in $with_mpi_mt ; do
+    case $arg in #(
+  yes) :
+     ;; #(
+  no) :
+     ;; #(
+  -l*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  -L*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -WL*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -Wl*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -I*) :
+    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
+  -*lib*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *lib*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+fi ;; #(
+  -*include*) :
+    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
+  *include*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+fi ;; #(
+  *) :
+    if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+fi
+         if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi ;;
+esac
+done
+fi
+if test "x$with_mpi_mt" != xno && test "x$with_mpi_mt" != x; then :
+  ga_armci_network=MPI_MT
+     as_fn_arith $armci_network_count + 1 && armci_network_count=$as_val
+fi
+
+
+
+
+
 # Check whether --with-mpi-spawn was given.
 if test "${with_mpi_spawn+set}" = set; then :
   withval=$with_mpi_spawn;
@@ -8206,6 +8269,88 @@ else
 fi
 
 fi
+              if test "x$ga_armci_network" = xMPI_MT; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for MPI_MT..." >&5
+$as_echo "$as_me: searching for MPI_MT..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "mpi.h" "ac_cv_header_mpi_h" "$ac_includes_default"
+if test "x$ac_cv_header_mpi_h" = x""yes; then :
+
+else
+  happy=no
+fi
+
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing MPI_Init_thread" >&5
+$as_echo_n "checking for library containing MPI_Init_thread... " >&6; }
+if test "${ac_cv_search_MPI_Init_thread+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char MPI_Init_thread ();
+int
+main ()
+{
+return MPI_Init_thread ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' mpi mpich.cnk mpich.rts; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_MPI_Init_thread=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if test "${ac_cv_search_MPI_Init_thread+set}" = set; then :
+  break
+fi
+done
+if test "${ac_cv_search_MPI_Init_thread+set}" = set; then :
+
+else
+  ac_cv_search_MPI_Init_thread=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_MPI_Init_thread" >&5
+$as_echo "$ac_cv_search_MPI_Init_thread" >&6; }
+ac_res=$ac_cv_search_MPI_Init_thread
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  ga_armci_network=MPI_MT; with_mpi_mt=yes;
+else
+  as_fn_error $? "test for ARMCI_NETWORK=MPI_MT failed" "$LINENO" 5
+fi
+
+fi
               if test "x$ga_armci_network" = xMPI_SPAWN; then :
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: searching for MPI_SPAWN..." >&5
@@ -8678,6 +8823,14 @@ fi
 
 
 
+if test "x$with_mpi_mt" != x && test "x$with_mpi_mt" != xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-mpi-mt=$with_mpi_mt" >&5
+$as_echo "$as_me: WARNING: --with-mpi-mt=$with_mpi_mt" >&2;}
+fi
+
+
+
+
 if test "x$with_mpi_spawn" != x && test "x$with_mpi_spawn" != xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-mpi-spawn=$with_mpi_spawn" >&5
 $as_echo "$as_me: WARNING: --with-mpi-spawn=$with_mpi_spawn" >&2;}
@@ -8776,6 +8929,20 @@ fi
 else
   ARMCI_NETWORK_LAPI_TRUE='#'
   ARMCI_NETWORK_LAPI_FALSE=
+fi
+
+
+
+
+
+
+
+ if test "x$with_mpi_mt" != x && test "x$with_mpi_mt" != xno; then
+  ARMCI_NETWORK_MPI_MT_TRUE=
+  ARMCI_NETWORK_MPI_MT_FALSE='#'
+else
+  ARMCI_NETWORK_MPI_MT_TRUE='#'
+  ARMCI_NETWORK_MPI_MT_FALSE=
 fi
 
 
@@ -33407,6 +33574,21 @@ $as_echo "#define ALLOW_PIN 1" >>confdefs.h
 $as_echo "#define MELLANOX 1" >>confdefs.h
 
      ;; #(
+  MPI_MT) :
+
+
+$as_echo "#define PTHREADS 1" >>confdefs.h
+
+
+$as_echo "#define DATA_SERVER 1" >>confdefs.h
+
+
+$as_echo "#define SERVER_THREAD 1" >>confdefs.h
+
+
+$as_echo "#define MPI_MT 1" >>confdefs.h
+
+     ;; #(
   MPI_SPAWN) :
 
 
@@ -33997,6 +34179,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ARMCI_NETWORK_LAPI_TRUE}" && test -z "${ARMCI_NETWORK_LAPI_FALSE}"; then
   as_fn_error $? "conditional \"ARMCI_NETWORK_LAPI\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ARMCI_NETWORK_MPI_MT_TRUE}" && test -z "${ARMCI_NETWORK_MPI_MT_FALSE}"; then
+  as_fn_error $? "conditional \"ARMCI_NETWORK_MPI_MT\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ARMCI_NETWORK_MPI_SPAWN_TRUE}" && test -z "${ARMCI_NETWORK_MPI_SPAWN_FALSE}"; then
