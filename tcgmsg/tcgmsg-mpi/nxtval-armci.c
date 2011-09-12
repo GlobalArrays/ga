@@ -56,7 +56,14 @@ Integer NXTVAL_(Integer *mproc)
             }
         }
         if (*mproc > 0) {
-            rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD_LONG,(int*)&local,(int*)pnxtval_counter,1,server);
+#if   SIZEOF_F77_INTEGER == SIZEOF_INT
+            int op = ARMCI_FETCH_AND_ADD;
+#elif SIZEOF_F77_INTEGER == SIZEOF_LONG
+            int op = ARMCI_FETCH_AND_ADD_LONG;
+#else
+#   error
+#endif
+            rc = ARMCI_Rmw(op,(void*)&local,(void*)pnxtval_counter,1,server);
         }
     } else {
         /* Not running in parallel ... just do a simulation */
