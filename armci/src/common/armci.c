@@ -389,11 +389,6 @@ int PARMCI_Init()
     dassertp(1,sizeof(armci_ireq_t) <= sizeof(armci_hdl_t),
 	     ("nb handle sizes: internal(%d) should be <= external(%d)\n",
 	      sizeof(armci_ireq_t), sizeof(armci_hdl_t)));
-#if defined(MPI)
-    dassertp(1,sizeof(ARMCI_iGroup) <= sizeof(ARMCI_Group),
-	     ("Group handle sizes: internal(%d) should be <= external(%d)\n",
-	      sizeof(ARMCI_iGroup), sizeof(ARMCI_Group)));
-#endif
 
 #ifdef MPI
     /*SK: initialize duplicate communicator before anything else*/
@@ -616,6 +611,7 @@ void PARMCI_Finalize()
 #ifdef ALLOW_PIN
     free(armci_prot_switch_fence);
 #endif
+    armci_msg_gop_finalize();
     ARMCI_Cleanup();
     armci_msg_barrier();
 #ifdef MPI

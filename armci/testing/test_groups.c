@@ -198,6 +198,7 @@ void random_permute(int *arr, int n) {
     vtmp[j]=0;
     arr[i]=j;
   }
+  free(vtmp);
 }
 
 int int_compare(const void *v1, const void *v2) {

@@ -26,29 +26,133 @@
 
 #define DEBUG_ 0
 
-ARMCI_iGroup ARMCI_Default_Proc_Group;
-ARMCI_iGroup ARMCI_World_Proc_Group;
-
-#ifdef ARMCI_GROUP
-void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Group *group);
-#else
-void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm);
-#endif
-void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group);
-int  ARMCI_Group_rank(ARMCI_Group *group, int *rank);
-void ARMCI_Group_size(ARMCI_Group *group, int *size);
-
 MPI_Comm ARMCI_COMM_WORLD; /*dup of MPI_COMM_WORLD. Initialized first thing in ARMCI_Init*/
 
-static void get_group_clus_id(ARMCI_iGroup *igroup, int grp_nproc, 
-                              int *grp_clus_id) {
-    int i, *ranks1, *ranks2;
+ARMCI_Group ARMCI_Default_Proc_Group = 0;
+ARMCI_Group ARMCI_World_Proc_Group = 0;
+
+typedef struct group_list_struct {
+    ARMCI_Group group;
+    ARMCI_iGroup igroup;
+    struct group_list_struct *next;
+} group_list_t;
+
+group_list_t *group_list = NULL;
+
+ARMCI_iGroup* armci_get_igroup_from_group(ARMCI_Group *group)
+{
+    group_list_t *current_group_list_item = group_list;
+
+    assert(group_list != NULL);
+    while (current_group_list_item != NULL) {
+        if (current_group_list_item->group == *group) {
+            return &current_group_list_item->igroup;
+        }
+        current_group_list_item = current_group_list_item->next;
+    }
+    armci_die("ARMCI_Group lookup failed", -1);
+    return NULL;
+}
+
+static void armci_create_group_and_igroup(ARMCI_Group *group, ARMCI_iGroup **igroup)
+{
+    group_list_t *new_group_list_item = NULL;
+    group_list_t *last_group_list_item = NULL;
+
+    /* create the new group in the linked list */
+    last_group_list_item = group_list;
+    while (last_group_list_item->next != NULL) {
+        last_group_list_item = last_group_list_item->next;
+    }
+
+    new_group_list_item = malloc(sizeof(group_list_t));
+    new_group_list_item->group = last_group_list_item->group + 1;
+    new_group_list_item->next = NULL;
+    *igroup = &new_group_list_item->igroup;
+    *group = new_group_list_item->group;
+    last_group_list_item->next = new_group_list_item;
+}
+
 #ifdef ARMCI_GROUP
+void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Group *group)
+{
+  armci_msg_group_bcast_scope(SCOPE_ALL, buffer, len, 
+			      ARMCI_Absolute_id(group, root),
+			      group);
+}
+#else
+void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm)
+{
+    int result;
+    MPI_Comm_compare(comm, ARMCI_COMM_WORLD, &result);
+    if(result == MPI_IDENT)  armci_msg_brdcst(buffer, len, root); 
+    else MPI_Bcast(buffer, len, MPI_BYTE, root, (MPI_Comm)comm);
+}
+#endif
+
+int ARMCI_Group_rank(ARMCI_Group *group, int *rank)
+{
+    ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
+#ifdef ARMCI_GROUP
+    if(!igroup) return MPI_ERR_GROUP;
+    *rank = igroup->grp_attr.grp_me;
+    return MPI_SUCCESS;
+#else
+    return MPI_Group_rank((MPI_Group)(igroup->igroup), rank);
+#endif
+}
+
+void ARMCI_Group_size(ARMCI_Group *group, int *size)
+{
+    ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
+#ifdef ARMCI_GROUP
+    *size = igroup->grp_attr.nproc;
+#else
+    MPI_Group_size((MPI_Group)(igroup->igroup), size);
+#endif
+}
+
+int ARMCI_Absolute_id(ARMCI_Group *group,int group_rank)
+{
+    int abs_rank,status;
+    ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
+#ifdef ARMCI_GROUP
+    assert(group_rank < igroup->grp_attr.nproc);
+    return igroup->grp_attr.proc_list[group_rank];
+#else
+    MPI_Group grp;
+    status = MPI_Comm_group(ARMCI_COMM_WORLD,&grp);
+    MPI_Group_translate_ranks(igroup->igroup,1,&group_rank,grp,&abs_rank);
+    return(abs_rank);
+#endif
+}
+
+void ARMCI_Group_set_default(ARMCI_Group *group) 
+{
+    ARMCI_Default_Proc_Group = *group;
+}
+
+void ARMCI_Group_get_default(ARMCI_Group *group_out)
+{
+    *group_out = ARMCI_Default_Proc_Group;
+}
+
+void ARMCI_Group_get_world(ARMCI_Group *group_out)
+{
+    *group_out = ARMCI_World_Proc_Group;
+}
+
+static void get_group_clus_id(ARMCI_iGroup *igroup, int grp_nproc, 
+                              int *grp_clus_id)
+{
+#ifdef ARMCI_GROUP
+    int i;
     assert(grp_nproc<=igroup->grp_attr.nproc);
     for(i=0; i<grp_nproc; i++) {
       grp_clus_id[i] = armci_clus_id(igroup->grp_attr.proc_list[i]);
     }
 #else
+    int i, *ranks1, *ranks2;
     MPI_Group group2;
     
     /* Takes the list of processes from one group and attempts to determine
@@ -73,11 +177,12 @@ static void get_group_clus_id(ARMCI_iGroup *igroup, int grp_nproc,
  * @param igroup IN Group whose clus_info needs to be constructed
  * @return array of armci_clus_t objects
  */
-static armci_clus_t* group_construct_clusinfo(int *grp_nclus_nodes, ARMCI_iGroup *igroup) {
+static armci_clus_t* group_construct_clusinfo(int *grp_nclus_nodes, ARMCI_Group *group) {
   armci_clus_t *grp_clus_info=NULL;
   int i, *grp_clus_id, cluster, clus_id, grp_nproc, grp_nclus;
+  ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
 
-  ARMCI_Group_size((ARMCI_Group *)igroup, &grp_nproc);
+  ARMCI_Group_size(group, &grp_nproc);
 
   /* get the cluster_id of processes in the group */
   grp_clus_id = (int *)malloc(grp_nproc*sizeof(int));
@@ -134,7 +239,7 @@ static armci_clus_t* group_construct_clusinfo(int *grp_nclus_nodes, ARMCI_iGroup
  */
 static void group_process_list(ARMCI_Group *group, 
                                armci_grp_attr_t *grp_attr) {
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
+    ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
 #ifndef ARMCI_GROUP
     ARMCI_Comm comm = igroup->icomm;
 #endif
@@ -154,13 +259,13 @@ static void group_process_list(ARMCI_Group *group,
     ARMCI_Group_size(group, &grp_nproc);
     
 #ifdef CLUSTER
-#ifdef ARMCI_GROUP
+#   ifdef ARMCI_GROUP
     /*all processes construct the clus_info structure in parallel*/
-    grp_clus_info = group_construct_clusinfo(&grp_nclus, igroup);
-#else
+    grp_clus_info = group_construct_clusinfo(&grp_nclus, group);
+#   else
     /* process 0 gets group cluster information: grp_nclus, grp_clus_info */
     if(grp_me == 0) {
-      grp_clus_info = group_construct_clusinfo(&grp_nclus, igroup);
+      grp_clus_info = group_construct_clusinfo(&grp_nclus, group);
     }
 
     /* process 0 broadcasts group cluster information */
@@ -175,7 +280,7 @@ static void group_process_list(ARMCI_Group *group,
     
     len = sizeof(armci_clus_t)*grp_nclus;
     ARMCI_Bcast_(grp_clus_info, len, root, comm);
-#endif
+#   endif
     /* determine current group cluster node id by comparing me to master */
     grp_clus_me =  grp_nclus-1;
     for(i =0; i< grp_nclus-1; i++) {
@@ -184,8 +289,7 @@ static void group_process_list(ARMCI_Group *group,
           break;
        }
     }
-
-#else
+#else /* !CLUSTER */
     grp_clus_me = 0;
     grp_nclus = 1;
     grp_clus_info = (armci_clus_t*)malloc(grp_nclus*sizeof(armci_clus_t));
@@ -193,7 +297,7 @@ static void group_process_list(ARMCI_Group *group,
     strcpy(grp_clus_info[0].hostname, armci_clus_info[0].hostname);
     grp_clus_info[0].master=0;
     grp_clus_info[0].nslave=grp_nproc;
-#endif
+#endif /* CLUSTER */
 #ifdef ARMCI_GROUP
     /*Set in ARMCI_Group_create. ARMCI_Group_rank is used before
       setting this field. So moving it there in the generic
@@ -210,7 +314,7 @@ static void group_process_list(ARMCI_Group *group,
    be cached in group data structure */
 static void armci_cache_attr(ARMCI_Group *group) {
     armci_grp_attr_t *grp_attr;
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
+    ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
 
     /* allocate storage for the attribute content. Note: Attribute contents 
        should be stored in persistent memory */
@@ -222,36 +326,15 @@ static void armci_cache_attr(ARMCI_Group *group) {
 
 armci_grp_attr_t *ARMCI_Group_getattr(ARMCI_Group *group)
 {
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
+    ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
     return(&(igroup->grp_attr));
 
 }
 
+static void armci_igroup_finalize(ARMCI_iGroup *igroup) {
 #ifdef ARMCI_GROUP
-void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Group *group) {
-  armci_msg_group_bcast_scope(SCOPE_ALL, buffer, len, 
-			      ARMCI_Absolute_id(group, root),
-			      group);
-}
-#else
-void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm) {
-    int result;
-    MPI_Comm_compare(comm, ARMCI_COMM_WORLD, &result);
-    if(result == MPI_IDENT)  armci_msg_brdcst(buffer, len, root); 
-    else MPI_Bcast(buffer, len, MPI_BYTE, root, (MPI_Comm)comm);
-}
-#endif
+    int world_me, i;
 
-void ARMCI_Group_free(ARMCI_Group *group) {
-
-  int rv;
-#ifdef ARMCI_GROUP
-  int world_me, i;
-#endif
-    
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
-
-#ifdef ARMCI_GROUP
     world_me = armci_msg_me();
     for(i=0; i<igroup->grp_attr.nproc; i++) {
       if(igroup->grp_attr.proc_list[i] == world_me) {
@@ -261,17 +344,17 @@ void ARMCI_Group_free(ARMCI_Group *group) {
     if(i==igroup->grp_attr.nproc) {
       return; /*not in group to be freed*/
     }
-#endif
 
+    assert(igroup);
+    free(igroup->grp_attr.grp_clus_info);
+    free(igroup->grp_attr.proc_list);
+    igroup->grp_attr.nproc = 0;
+#else
+    int rv;
 
     assert(igroup);
     free(igroup->grp_attr.grp_clus_info);
     
-#ifdef ARMCI_GROUP
-    free(igroup->grp_attr.proc_list);
-    igroup->grp_attr.nproc = 0;
-#else
-
     rv=MPI_Group_free(&(igroup->igroup));
     if(rv != MPI_SUCCESS) armci_die("MPI_Group_free: Failed ",armci_me);
     
@@ -282,6 +365,29 @@ void ARMCI_Group_free(ARMCI_Group *group) {
 #endif
 }
 
+void ARMCI_Group_free(ARMCI_Group *group) {
+    group_list_t *current_group_list_item = group_list;
+    group_list_t *previous_group_list_item = NULL;
+
+    /* find the group to free */
+    while (current_group_list_item != NULL) {
+        if (current_group_list_item->group == *group) {
+            break;
+        }
+        previous_group_list_item = current_group_list_item;
+        current_group_list_item = current_group_list_item->next;
+    }
+    /* make sure we found a group */
+    assert(current_group_list_item != NULL);
+    /* remove the group from the linked list */
+    if (previous_group_list_item != NULL) {
+        previous_group_list_item->next = current_group_list_item->next;
+    }
+    /* free the group */
+    armci_igroup_finalize(&current_group_list_item->igroup);
+    free(current_group_list_item);
+}
+
 /*
   Create a child group for to the given group.
   @param n IN #procs in this group (<= that in group_parent)
@@ -290,25 +396,29 @@ void ARMCI_Group_free(ARMCI_Group *group) {
   @param group_parent IN Parent group 
  */
 void ARMCI_Group_create_child(int n, int *pid_list, ARMCI_Group *group_out,
-			      ARMCI_Group *grp_parent) {
+			      ARMCI_Group *grp_parent)
+{
     int i,grp_me;
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group_out;
+    ARMCI_iGroup *igroup = NULL;
+
 #ifdef ARMCI_GROUP
-    armci_grp_attr_t *grp_attr = &igroup->grp_attr;
     int world_me, parent_grp_me;
+    armci_grp_attr_t *grp_attr = NULL;
 #else
     int rv;
-    ARMCI_iGroup *igroup_parent = (ARMCI_iGroup *)grp_parent;
-    MPI_Group *group_parent;
-    MPI_Comm *comm_parent;
+    ARMCI_iGroup *igroup_parent = NULL;
+    MPI_Group *group_parent = NULL;
+    MPI_Comm *comm_parent = NULL;
 #endif
 
+    armci_create_group_and_igroup(group_out, &igroup);
 
 #ifdef ARMCI_GROUP
+    grp_attr = &igroup->grp_attr;
     ARMCI_Group_rank(grp_parent, &parent_grp_me);
     for(i=0; i<n; i++) {
       if(pid_list[i] == parent_grp_me) {
-	break;
+        break;
       }
     }
     if(i==n) {
@@ -317,16 +427,12 @@ void ARMCI_Group_create_child(int n, int *pid_list, ARMCI_Group *group_out,
       grp_attr->proc_list = NULL; 
       return; /*not in group to be created*/
     }
-#endif
-    
     for(i=0; i<n-1;i++) {
        if(pid_list[i] > pid_list[i+1]){
          armci_die("ARMCI_Group_create: Process ids are not sorted ",armci_me);
          break;
        }
     }
-    
-#ifdef ARMCI_GROUP
     grp_attr->grp_clus_info = NULL;
     grp_attr->nproc = n;
     grp_attr->proc_list = (int *)malloc(n*sizeof(int));
@@ -334,19 +440,18 @@ void ARMCI_Group_create_child(int n, int *pid_list, ARMCI_Group *group_out,
     for(i=0; i<n; i++)  {
       grp_attr->proc_list[i] = ARMCI_Absolute_id(grp_parent,pid_list[i]); 
     }
-    /*  MPI_Comm_rank(MPI_COMM_WORLD, &world_me); */
     world_me = armci_msg_me();
     grp_attr->grp_me = grp_me = MPI_UNDEFINED;
     for(i=0; i<n; i++) {
       if(igroup->grp_attr.proc_list[i] == world_me) {
-	grp_attr->grp_me = grp_me = i;
-	break;
+        grp_attr->grp_me = grp_me = i;
+        break;
       }
     }
     if(grp_me != MPI_UNDEFINED) armci_cache_attr(group_out);
-
     armci_msg_group_barrier(group_out);
 #else
+    igroup_parent = armci_get_igroup_from_group(grp_parent);
     /* NOTE: default group is the parent group */
     group_parent = &(igroup_parent->igroup);
     comm_parent  = &(igroup_parent->icomm);
@@ -396,85 +501,37 @@ void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group_out) {
   ARMCI_Group_create_child(n, pid_list, group_out, (ARMCI_Group *)&ARMCI_Default_Proc_Group);
 }
 
-int ARMCI_Group_rank(ARMCI_Group *group, int *rank) {
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
-#ifdef ARMCI_GROUP
-    if(!igroup) return MPI_ERR_GROUP;
-    *rank = igroup->grp_attr.grp_me;
-    return MPI_SUCCESS;
-#else
-    return MPI_Group_rank((MPI_Group)(igroup->igroup), rank);
-#endif
-}
-
-void ARMCI_Group_size(ARMCI_Group *group, int *size) {
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
-#ifdef ARMCI_GROUP
-    *size = igroup->grp_attr.nproc;
-#else
-    MPI_Group_size((MPI_Group)(igroup->igroup), size);
-#endif
-}
-
-int ARMCI_Absolute_id(ARMCI_Group *group,int group_rank)
-{
-    int abs_rank,status;
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
-#ifdef ARMCI_GROUP
-    assert(group_rank < igroup->grp_attr.nproc);
-    return igroup->grp_attr.proc_list[group_rank];
-#else
-    MPI_Group grp;
-    status = MPI_Comm_group(ARMCI_COMM_WORLD,&grp);
-    MPI_Group_translate_ranks(igroup->igroup,1,&group_rank,grp,&abs_rank);
-    return(abs_rank);
-#endif
-}
-
-void ARMCI_Group_set_default(ARMCI_Group *group) 
-{
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
-    ARMCI_Default_Proc_Group = *igroup;
-}
-
-void ARMCI_Group_get_default(ARMCI_Group *group_out)
-{
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group_out;
-    *igroup = ARMCI_Default_Proc_Group;
-}
-
-void ARMCI_Group_get_world(ARMCI_Group *group_out)
-{
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group_out;
-    *igroup = ARMCI_World_Proc_Group;
-}
-
 void armci_group_init() 
 {
-    int grp_me;
 #ifdef ARMCI_GROUP
     int i;
+#else
+    int grp_me;
 #endif
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)&ARMCI_World_Proc_Group;
+    ARMCI_iGroup *igroup;
+
+    /* Initially, World group is the default group */
+    ARMCI_World_Proc_Group = 0;
+    ARMCI_Default_Proc_Group = 0;
+
+    /* create the head of the group linked list */
+    assert(group_list == NULL);
+    group_list = malloc(sizeof(group_list_t));
+    group_list->group = ARMCI_World_Proc_Group;
+    group_list->next = NULL;
+    igroup = &group_list->igroup;
 
 #ifdef ARMCI_GROUP
     /*setup the world proc group*/
-
-    /*
-    MPI_Comm_size(MPI_COMM_WORLD, &igroup->grp_attr.nproc); 
-    MPI_Comm_rank(MPI_COMM_WORLD, &igroup->grp_attr.grp_me); 
-    */
-
     igroup->grp_attr.nproc = armci_msg_nproc();
     igroup->grp_attr.grp_me = armci_msg_me();
-
     igroup->grp_attr.proc_list = (int *)malloc(igroup->grp_attr.nproc*sizeof(int));
     assert(igroup->grp_attr.proc_list != NULL);
     for(i=0; i<igroup->grp_attr.nproc; i++) {
       igroup->grp_attr.proc_list[i] = i;
     } 
     igroup->grp_attr.grp_clus_info = NULL;
-    armci_cache_attr((ARMCI_Group*)&ARMCI_World_Proc_Group);
+    armci_cache_attr(&ARMCI_World_Proc_Group);
 #else
     /* save MPI world group and communicatior in ARMCI_World_Proc_Group */
     igroup->icomm = ARMCI_COMM_WORLD;
@@ -482,20 +539,25 @@ void armci_group_init()
 
     /* processes belong to this group should cache attributes */
     MPI_Group_rank((MPI_Group)(igroup->igroup), &grp_me);
-    if(grp_me != MPI_UNDEFINED) 
-    {
-       armci_cache_attr((ARMCI_Group*)&ARMCI_World_Proc_Group);
+    if(grp_me != MPI_UNDEFINED) {
+       armci_cache_attr(&ARMCI_World_Proc_Group);
     }
 #endif    
-
-    /* Initially, World group is the default group */
-    ARMCI_Default_Proc_Group = ARMCI_World_Proc_Group;
 }
 
 void armci_group_finalize() {
-#ifdef ARMCI_GROUP
-  ARMCI_Group_free((ARMCI_Group *)&ARMCI_World_Proc_Group);
-#endif
+    group_list_t *current_group_list_item = group_list;
+    group_list_t *previous_group_list_item = NULL;
+
+    /* don't free the world group (the list head) */
+    current_group_list_item = current_group_list_item->next;
+
+    while (current_group_list_item != NULL) {
+        previous_group_list_item = current_group_list_item;
+        current_group_list_item = current_group_list_item->next;
+        armci_igroup_finalize(&previous_group_list_item->igroup);
+        free(previous_group_list_item);
+    }
 }
 
 /*

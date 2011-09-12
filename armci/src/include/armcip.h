@@ -378,6 +378,7 @@ extern void armci_dispatch_strided(void *ptr, int stride_arr[], int count[],
                             int strides, int fit_level, int nb, int bufsize, 
                             void (*fun)(void*,int*,int*,int,void*), void *arg);
 extern void armci_msg_gop_init();
+extern void armci_msg_gop_finalize();
 extern void armci_util_spin(int n, void *notused);
 
 #if defined(SYSV) || defined(WIN32)
@@ -481,6 +482,7 @@ armci_grp_attr_t *ARMCI_Group_getattr(ARMCI_Group *grp);
  
 extern void armci_group_init();
 extern void armci_group_finalize();
+extern ARMCI_iGroup* armci_get_igroup_from_group(ARMCI_Group *group);
 
 #endif /* ifdef MPI */ 
 /* -------------------------------------------------------- */
