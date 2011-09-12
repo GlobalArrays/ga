@@ -7,12 +7,12 @@
 #define cgemm_  F77_FUNC(cgemm, CGEMM)
 #define dgetrf_ F77_FUNC(dgetrf,DGETRF)
 #define dtrsm_  F77_FUNC(dtrsm, DTRSM)
-#define gal_sgemm_  F77_FUNC(gal_sgemm, GAL_SGEMM)
-#define gal_dgemm_  F77_FUNC(gal_dgemm, GAL_DGEMM)
-#define gal_zgemm_  F77_FUNC(gal_zgemm, GAL_ZGEMM)
-#define gal_cgemm_  F77_FUNC(gal_cgemm, GAL_CGEMM)
-#define gal_dgetrf_ F77_FUNC(gal_dgetrf,GAL_DGETRF)
-#define gal_dtrsm_  F77_FUNC(gal_dtrsm, GAL_DTRSM)
+#define gal_sgemm_  F77_FUNC_(gal_sgemm, GAL_SGEMM)
+#define gal_dgemm_  F77_FUNC_(gal_dgemm, GAL_DGEMM)
+#define gal_zgemm_  F77_FUNC_(gal_zgemm, GAL_ZGEMM)
+#define gal_cgemm_  F77_FUNC_(gal_cgemm, GAL_CGEMM)
+#define gal_dgetrf_ F77_FUNC_(gal_dgetrf,GAL_DGETRF)
+#define gal_dtrsm_  F77_FUNC_(gal_dtrsm, GAL_DTRSM)
 
 #if NOFORT
 #   define BlasInt int
