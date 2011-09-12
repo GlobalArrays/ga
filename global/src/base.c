@@ -1164,6 +1164,7 @@ Integer pnga_pgroup_create(Integer *list, Integer count)
 logical pnga_pgroup_destroy(Integer grp_id)
 {
   logical ret = TRUE;
+  int i, ok;
 
    GA_PUSH_NAME("ga_pgroup_destroy_");
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
@@ -1171,6 +1172,14 @@ logical pnga_pgroup_destroy(Integer grp_id)
 #ifdef MPI
        ARMCI_Group_free(&PGRP_LIST[grp_id].group);
 #endif
+  /* check to make sure there are no GAs that depend on this process group */
+  i=0;
+  ok = 1;
+  do{
+      if(GA[i].p_handle == (int)grp_id && GA[i].actv) ok = 0;
+      i++;
+  }while(i<_max_global_array && ok);
+  if (!ok) pnga_error("Attempt to destroy process group with attached GAs",grp_id);
   
   if (PGRP_LIST[grp_id].actv == 0) {
     ret = FALSE;
@@ -2635,10 +2644,13 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
     GA[ga_handle].mapc[maplen] = -1;
   }
 
-  /*** copy info for restricted arrays, if relevant ***/
+  /*** initialize and copy info for restricted arrays, if relevant ***/
+  GA[ga_handle].rstrctd_list = NULL;
+  GA[ga_handle].rank_rstrctd = NULL;
+  GA[ga_handle].num_rstrctd = 0;
   if (GA[GA_OFFSET + g_a].num_rstrctd > 0) {
     GA[ga_handle].num_rstrctd = GA[GA_OFFSET + g_a].num_rstrctd;
-    pnga_set_restricted(g_a, GA[GA_OFFSET + g_a].rstrctd_list,
+    pnga_set_restricted(*g_b, GA[GA_OFFSET + g_a].rstrctd_list,
         GA[GA_OFFSET + g_a].num_rstrctd);
   }
 
