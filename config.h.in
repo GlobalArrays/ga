@@ -276,9 +276,6 @@
 /* Define to 1 if you have the `pow' function. */
 #undef HAVE_POW
 
-/* define if the C compiler understands the C99 _Pragma macro */
-#undef HAVE_PRAGMA_OPERATOR
-
 /* define to 1 if the C compiler has a program name global varaible */
 #undef HAVE_PROGNAME
 
@@ -818,7 +815,3 @@
 #       define MPI
 #   endif /* __cplusplus */
 #endif /* MSG_COMMS_MPI */
-
-#ifndef HAVE_PRAGMA_OPERATOR
-#   define _Pragma(_pragf)
-#endif

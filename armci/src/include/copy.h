@@ -550,7 +550,7 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
 #endif
 
 #ifndef MEM_FENCE
-#   define MEM_FENCE
+#   define MEM_FENCE {}
 #endif
 #ifndef armci_copy_fence
 #   define armci_copy_fence armci_copy

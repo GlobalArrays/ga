@@ -85,7 +85,8 @@ static void* agg_dst_ptr[_MAX_AGG_BUFFERS][_MAX_PTRS];
 
 /* get the index of the aggregation buffer to be used */
 static int _armci_agg_get_bufferid(armci_ihdl_t nb_handle) {
-    int i, index, tag = nb_handle->tag, proc = nb_handle->proc;
+    int i, index, proc = nb_handle->proc;
+    unsigned int tag = nb_handle->tag;
     
     /* check if there is an entry for this handle in the existing list*/
     for(i=ulist.size-1; i>=0; i--) {

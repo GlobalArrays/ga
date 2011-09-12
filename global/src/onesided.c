@@ -4422,7 +4422,7 @@ void gai_SetStrideWithSkip(Integer ndim, Integer size, Integer *ld,
                           int *stride_loc, Integer *skip)
 {
 #if 1
-  int i, istride, tmp_stride_rem, ioffset;
+  int i;
   stride_rem[0] = stride_loc[0] = (int)size;
   for (i=0; i<ndim; i++) {
     stride_rem[i+1] = stride_rem[i];

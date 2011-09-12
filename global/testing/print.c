@@ -12,10 +12,6 @@
 
 int main(int argc, char **argv)
 {
-    MP_INIT(argc,argv);
-
-    GA_Initialize();
-
     int size_dst = 15;
     int g_a = 0;
     int I_NEG_ONE = -1;
@@ -27,6 +23,10 @@ int main(int argc, char **argv)
     int hi;
     int *ptr;
     int i;
+
+    MP_INIT(argc,argv);
+
+    GA_Initialize();
 
     for (i=0; i<3; ++i) {
         if (0 == i) {

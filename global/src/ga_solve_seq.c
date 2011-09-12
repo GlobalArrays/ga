@@ -19,24 +19,11 @@
 #endif
 #include "papi.h"
 #include "wapi.h"
-
-#define DGETRF F77_FUNC(dgetrf,DGETRF)
-#define DGETRS F77_FUNC(dgetrs,DGETRS)
+#include "galinalg.h"
 
 #define REAL double
 #define ZERO 0.0e0
 #define ONE 1.0e0
-
-
-#define ROLL
-
-/** WHY ??? */
-#ifdef ROLL
-#define ROLLING "Rolled "
-#endif
-#ifdef UNROLL
-#define ROLLING "Unrolled "
-#endif
 
 /*----------------------*/ 
 void LP_daxpy(n,da,dx,incx,dy,incy)
@@ -531,13 +518,14 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
   oactive = (me == 0);
 
   if (oactive) {
-    DoublePrecision *adra, *adrb, *adri;
+    DoublePrecision *adra, *adrb;
+    Integer *adri;
     Integer one=1; 
 
     /** allocate a,b, and work and ipiv arrays */
     adra = (DoublePrecision*) ga_malloc(dimA1*dimA2, C_DBL, "a");
     adrb = (DoublePrecision*) ga_malloc(dimB1*dimB2, C_DBL, "b");
-    adri = (DoublePrecision*) ga_malloc(GA_MIN(dimA1,dimA2), C_DBL, "ipiv");
+    adri = (Integer*) ga_malloc(GA_MIN(dimA1,dimA2), F_INT, "ipiv");
 
     /** Fill local arrays from global arrays */   
     lo[0] = one;
@@ -553,7 +541,7 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
 
     /** LU factorization */
 #if ENABLE_F77
-    DGETRF(&dimA1, &dimA2, adra, &dimA1, adri, &info);
+    LAPACK_DGETRF(&dimA1, &dimA2, adra, &dimA1, adri, &info);
 #else
     {  int info_t;
       LP_dgefa(adra, (int)dimA1, (int)dimA2, (int*)adri, &info_t);

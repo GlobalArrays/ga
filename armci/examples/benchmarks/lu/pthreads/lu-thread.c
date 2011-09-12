@@ -284,6 +284,7 @@ void *SlaveStart()
    processors to avoid migration */
     
     OneSolve(n, block_size, a, MyNum, dostats);
+    return NULL;
 }
 
 

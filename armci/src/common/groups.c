@@ -244,7 +244,10 @@ void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm) {
 
 void ARMCI_Group_free(ARMCI_Group *group) {
 
-  int rv, world_me, i;
+  int rv;
+#ifdef ARMCI_GROUP
+  int world_me, i;
+#endif
     
     ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
 

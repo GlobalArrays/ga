@@ -122,6 +122,7 @@
       external ga_cluster_nprocs, ga_cluster_nodeid, ga_cluster_nnodes
       external ga_cluster_procid, ga_cluster_proc_nodeid
       external ga_is_mirrored
+      external nga_locate_num_blocks
       external ga_total_blocks
       external ga_uses_proc_grid, nga_uses_proc_grid
       external ga_get_debug, nga_get_debug

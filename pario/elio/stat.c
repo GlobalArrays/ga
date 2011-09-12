@@ -19,9 +19,9 @@
  */
 int elio_dirname(const char *fname, char *dirname, int len)
 {
-    size_t flen;
+    size_t flen = strlen(fname);
     
-    if(len<= (flen =strlen(fname))) 
+    if(len<=((int)flen)) 
     ELIO_ERROR(LONGFAIL,flen);
     
 #ifdef WIN32

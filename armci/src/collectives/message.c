@@ -1734,7 +1734,7 @@ int len, lenmes, min;
 
     if(!x)armci_die("armci_msg_gop_info: NULL pointer", n);
 
-    if(n>INFO_BUF_SIZE)armci_die("armci_msg_gop_info: info too large",n);
+    if(n>((int)INFO_BUF_SIZE))armci_die("armci_msg_gop_info: info too large",n);
 
     len = lenmes = n;
 

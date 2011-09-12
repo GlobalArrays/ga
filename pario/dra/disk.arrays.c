@@ -646,7 +646,7 @@ void dai_chunking(Integer elem_size, Integer block1, Integer block2,
     /* need to correct chunk size to fit chunk1 x chunk2 request in buffer*/
     patch_size = (*chunk1)* (*chunk2)*elem_size;
 
-    if (patch_size > DRA_BUF_SIZE){
+    if (patch_size > ((Integer)DRA_BUF_SIZE)){
 
         if( *chunk1 == 1) *chunk2  = DRA_BUF_SIZE/elem_size;
         else if( *chunk2 == 1) *chunk1  = DRA_BUF_SIZE/elem_size;
@@ -1851,7 +1851,8 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
         if (block[i] > 0) patch_size *= (long)block[i];
         else some_neg = TRUE;
     }
-    if (patch_size*((long)elem_size) > DRA_BUF_SIZE) overfull_buf = TRUE;
+    if (patch_size*((long)elem_size) > ((long)DRA_BUF_SIZE))
+        overfull_buf = TRUE;
 
     /* map dimension sizes from highest to lowest */
     block_sortM(ndim, dims, block_map);
@@ -1863,7 +1864,7 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
         for (i=ndim-1; i>=0; i--) {
             if (block[block_map[i]] < 0) {
                 tmp_patch = patch_size * ((long)dims[block_map[i]]);
-                if (tmp_patch*elem_size < DRA_BUF_SIZE) {
+                if (tmp_patch*elem_size < ((long)DRA_BUF_SIZE)) {
                     patch_size *= (long)dims[block_map[i]];
                     block[block_map[i]] = dims[block_map[i]];
                 } else {
@@ -1903,12 +1904,12 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
     }
     /* Patch size may be slightly larger than buffer. If so, nudge
        size down until patch is smaller than buffer. */
-    if (((long)elem_size)*patch_size > DRA_BUF_SIZE) {
+    if (((long)elem_size)*patch_size > ((long)DRA_BUF_SIZE)) {
         /* map chunks from highest to lowest */
         block_sortM(ndim, chunk, block_map);
         for (i=0; i < ndim; i++) {
             while (chunk[block_map[i]] > 1 &&
-                    ((long)elem_size)*patch_size > DRA_BUF_SIZE) {
+                    ((long)elem_size)*patch_size > ((long)DRA_BUF_SIZE)) {
                 patch_size /= ((long)chunk[block_map[i]]);
                 chunk[block_map[i]]--;
                 patch_size *= ((long)chunk[block_map[i]]);

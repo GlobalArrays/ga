@@ -501,7 +501,7 @@ char *buf;
     }
 
     if(datalen == 0) armci_die("armci_rcv_data: no data to receive",datalen);
-    if(datalen > (MSG_BUFLEN-sizeof(request_header_t)-sizeof(long)))
+    if(datalen > (((int)MSG_BUFLEN)-((int)sizeof(request_header_t))-((int)sizeof(long))))
         armci_die("armci_rcv_data:data overflowing rcv buffer",datalen);
 
     buf = armci_ReadFromDirect(proc, msginfo, datalen);

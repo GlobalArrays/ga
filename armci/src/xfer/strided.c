@@ -1145,7 +1145,7 @@ void armci_write_strided2(void *ptr, int stride_levels, int stride_arr[],
     ld   = stride_arr[0]/8;
     switch(stride_levels){
     case 1: 
-      DCOPY21(&rows, count+1, ptr, &ld, (double*)buf, &idx);
+      DCOPY21(&rows, count+1, ptr, &ld, (void*)buf, &idx);
       break;
     case 2: 
 #if 0
@@ -1156,7 +1156,7 @@ void armci_write_strided2(void *ptr, int stride_levels, int stride_arr[],
       }
 #endif
       ldd = stride_arr[1]/stride_arr[0];
-      DCOPY31(&rows, count+1, count+2, ptr, &ld, &ldd, (double*)buf, &idx);
+      DCOPY31(&rows, count+1, count+2, ptr, &ld, &ldd, (void*)buf, &idx);
 
       break;
     default: 
@@ -1172,7 +1172,7 @@ void armci_write_strided2(void *ptr, int stride_levels, int stride_arr[],
 	  if(((i+1) % unit[j]) == 0) index[j]++;
 	  if(index[j] >= count[j]) index[j] = 0;
 	}
-	DCOPY21(&rows, count+1, (double*)src, &ld, (double*)buf, &idx); 
+	DCOPY21(&rows, count+1, (void*)src, &ld, (void*)buf, &idx); 
 	buf = (char*) ((double*)buf + idx);
       }
     } /*switch */
@@ -1213,7 +1213,7 @@ void armci_read_strided2(void *ptr, int stride_levels, int stride_arr[],
     ld   = stride_arr[0]/8;
     switch(stride_levels){
     case 1: 
-      DCOPY12(&rows, count+1, ptr, &ld, (double*)buf, &idx);
+      DCOPY12(&rows, count+1, ptr, &ld, (void*)buf, &idx);
       break;
     case 2:
 #if 0
@@ -1224,7 +1224,7 @@ void armci_read_strided2(void *ptr, int stride_levels, int stride_arr[],
       }
 #endif
       ldd = stride_arr[1]/stride_arr[0];   
-      DCOPY13(&rows, count+1, count+2, ptr, &ld, &ldd, (double*)buf, &idx);
+      DCOPY13(&rows, count+1, count+2, ptr, &ld, &ldd, (void*)buf, &idx);
       break;
     default:
       index[2] = 0; unit[2] = 1; total = count[2];
@@ -1239,7 +1239,7 @@ void armci_read_strided2(void *ptr, int stride_levels, int stride_arr[],
 	  if(((i+1) % unit[j]) == 0) index[j]++;
 	  if(index[j] >= count[j]) index[j] = 0;
 	}
-	DCOPY12(&rows, count+1, (double*)src, &ld, (double*)buf, &idx);
+	DCOPY12(&rows, count+1, (void*)src, &ld, (void*)buf, &idx);
 	buf = (char*) ((double*)buf + idx);
       }
     } /*switch */

@@ -133,7 +133,7 @@ void start_logging(const char *fname)
 {
     char exe_name[255];
     char log_path[255];
-    size_t i;
+    int i;
     char k;
 
 #ifdef  LOG2FILE
@@ -142,7 +142,7 @@ void start_logging(const char *fname)
         exe_name[strlen(exe_name) - 2] = 0;
 
     if (exe_name[0] == '/') { /* full path given */
-        for (i = strlen(exe_name) - 1, k = -1; i >= 0; i--)
+        for (i = ((int)strlen(exe_name)) - 1, k = -1; i >= 0; i--)
             if (exe_name[i] == '/') {
                 if (k == -1) k = i + 1;
                 else {
@@ -176,10 +176,10 @@ void finish_logging()
 /* prints formatted message to ../data/<prog>.dat */
 int log_printf(const char *fmt, ...)
 {
+    int r;
     va_list ap;
     va_start(ap, fmt);
 
-    int r;
     if (log_file)
         r = vfprintf(log_file, fmt, ap);
     else {
@@ -436,6 +436,8 @@ int main (int argc, char *argv[])
         MP_ASSERT(MPI_Gather(st->nb_get_b + rank, 1, MPI_DOUBLE,
                     st->nb_get_b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD));
     if (!rank) {
+        double min_put, max_put, mean_put;
+        double min_get, max_get, mean_get;
         log_printf("msg_size = %d:\n", msg_sizes[i]);
         log_printf("Put = %.8f Get = %.8f\n", st->put, st->get);
 
@@ -447,9 +449,7 @@ int main (int argc, char *argv[])
                     j + 1, st->nb_get_a[j]);
 
         /* determine min, max and mean for phase B */
-        double min_put, max_put, mean_put;
         min_put = max_put = mean_put = st->nb_put_b[0];
-        double min_get, max_get, mean_get;
         min_get = max_get = mean_get = st->nb_get_b[0];
 
         for (j = 1; j < size; j++) {

@@ -132,6 +132,7 @@ static Integer GA_memory_limit=0;
 Integer GAme, GAnproc;
 static Integer MPme;
 Integer *mapALL;
+static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */ 
 
 #ifdef PERMUTE_PIDS
 char** ptr_array;

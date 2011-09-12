@@ -10001,43 +10001,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler understands the _Pragma operator" >&5
-$as_echo_n "checking whether the C compiler understands the _Pragma operator... " >&6; }
-if test "${ga_cv_c_pragma_operator+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-_Pragma("something")
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ga_cv_c_pragma_operator=yes
-else
-  ga_cv_c_pragma_operator=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-    ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_c_pragma_operator" >&5
-$as_echo "$ga_cv_c_pragma_operator" >&6; }
-if test x$ga_cv_c_pragma_operator = xyes; then :
-
-$as_echo "#define HAVE_PRAGMA_OPERATOR 1" >>confdefs.h
-
-fi
-
-
+#GA_PRAGMA_OPERATOR
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C global variable containing the name of the program" >&5
 $as_echo_n "checking for C global variable containing the name of the program... " >&6; }
 if test "${ga_cv_progname+set}" = set; then :

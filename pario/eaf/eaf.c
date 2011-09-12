@@ -190,7 +190,7 @@ int EAF_Write(int fd, eaf_off_t offset, const void *buf, size_t bytes)
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
     rc = elio_write(file[fd].elio_fd, (Off_t) offset, buf, (Size_t) bytes);
-    if (rc != bytes){
+    if (rc != ((Size_t)bytes)){
         if(rc < 0) return((int)rc); /* rc<0 means ELIO detected error */
         else return EAF_ERR_WRITE;
     }else {
@@ -242,7 +242,7 @@ int EAF_Read(int fd, eaf_off_t offset, void *buf, size_t bytes)
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
     rc = elio_read(file[fd].elio_fd, (Off_t) offset, buf, (Size_t) bytes);
-    if (rc != bytes){
+    if (rc != ((Size_t)bytes)){
         if(rc < 0) return((int)rc); /* rc<0 means ELIO detected error */
         else return EAF_ERR_READ;
     } else {

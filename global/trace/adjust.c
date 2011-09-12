@@ -46,8 +46,8 @@ int main(argc,argv)
 int argc;
 char **argv;
 {
-long int p,i,j,k,MR,events=0;
-unsigned long int  *clock_base, *times, base=0, *tbase, maxtime=0;
+long int p,i,j,MR,events=0;
+unsigned long int k, *clock_base, *times, base=0, *tbase, maxtime=0;
 int *record;
 int ga=-GA_OFFSET;
 

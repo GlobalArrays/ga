@@ -29,6 +29,9 @@
  * bytes pointed to).  <Global Comment 1> is concerned with Nstrings.
  */
 
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 #if HAVE_STRING_H
 #   include <string.h>
 #endif
@@ -82,8 +85,8 @@ int str_match(s, slist, n)
     char        *slist[];    /* list of strings to search */
     unsigned int    n;        /* # of strings in slist */
 {
-    int        i;        /* loop index */
-    int        length;        /* of s */
+    size_t     i;        /* loop index */
+    size_t     length;        /* of s */
     int        match;        /* index of string in slist matched by s */
 
     /* see <Global Comment 1> */

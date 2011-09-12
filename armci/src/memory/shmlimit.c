@@ -111,20 +111,20 @@ int armci_child_shmem_init()
        /* due to a bug in OSF1 V4.0/1229/alpha first item written gets hosed*/
        for(i=0;i<2;i++)
 #endif
-           if(write(fd[1],&x,sizeof(int)) <sizeof(int))
+           if(write(fd[1],&x,sizeof(int)) <((ssize_t)sizeof(int)))
                          armci_die("armci shmem_test: write failed",0);
        _exit(0);
 
     }else{
 
        pid_t rc;
-       int val;
+       ssize_t val;
 
 #ifdef PIPE_AFTER_FORK_BUG
        /* due to a bug in OSF1 V4.0/1229/alpha first item read is garbage */
        for(i=0;i<2;i++)
 #endif
-          if((val=read(fd[0],&y,sizeof(int)))<sizeof(int))
+          if((val=read(fd[0],&y,sizeof(int))) < ((ssize_t)sizeof(int)))
                          armci_die("armci shmem_test: read failed",val);
 
 #ifdef SOLARIS

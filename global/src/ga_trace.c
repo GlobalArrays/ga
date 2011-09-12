@@ -217,7 +217,7 @@ void trace_end_(long *proc)
 {
     FILE *fout;
     char fname[10];
-    int i,k;
+    unsigned long i,k;
     
     sprintf(fname,"%03d",(int)*proc);
     fout=fopen(fname,"w");

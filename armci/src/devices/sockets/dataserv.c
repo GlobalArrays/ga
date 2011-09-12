@@ -581,7 +581,7 @@ int bytes;
     
     if(msginfo->datalen>0 && msginfo->operation != GET){
 
-       if(msginfo->datalen > MSG_BUFLEN -hdrlen -msginfo->dscrlen)
+       if(msginfo->datalen > ((int)MSG_BUFLEN) -((int)hdrlen) -msginfo->dscrlen)
           armci_die2("armci_rcv_req:data overflowing buffer",
                       msginfo->dscrlen,msginfo->datalen);
        *buflen -= msginfo->datalen;

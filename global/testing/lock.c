@@ -13,15 +13,30 @@
 
 int main(int argc, char **argv)
 {
+    int me;
+    int nproc;
+    const int ndim=1;
+    int status;
+    int g_a;
+    int dims[ndim];
+    int chunk[ndim];
+    int pg_world;
+    size_t num = 10;
+    double *p1 = NULL;
+    double *p2 = NULL;
+    size_t i;
+    int num_mutex;
+    int lo[1];
+    int hi[1];
+    int ld[1]={1};
 #ifdef DCMF
+    int desired = MPI_THREAD_MULTIPLE;
     int provided;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+    MPI_Init_thread(&argc, &argv, desired, &provided);
 #else
     MPI_Init (&argc, &argv);	/* initialize MPI */
 #endif
 
-    int me;
-    int nproc;
     MPI_Comm_rank(MPI_COMM_WORLD,&me);
     MPI_Comm_size(MPI_COMM_WORLD,&nproc);
 
@@ -34,27 +49,24 @@ int main(int argc, char **argv)
     //if (me==0) printf("%d: MA_Init\n",me);
     //MA_init(MT_DBL, 8*1024*1024, 2*1024*1024);
 
-    const int ndim=1;
-    int status;
-
     if (me==0) printf("%d: GA_Create_handle\n",me);
-    int g_a = GA_Create_handle();
+    g_a = GA_Create_handle();
 
     if (me==0) printf("%d: GA_Set_array_name\n",me);
     GA_Set_array_name(g_a,"test array A");
 
-    int dims[ndim];
+    dims[ndim];
     dims[0] = 30;
     if (me==0) printf("%d: GA_Set_data\n",me);
     GA_Set_data(g_a,ndim,dims,MT_DBL);
 
-    int chunk[ndim];
+    chunk[ndim];
     chunk[0] = -1;
     if (me==0) printf("%d: GA_Set_chunk\n",me);
     GA_Set_chunk(g_a,chunk);
 
     if (me==0) printf("%d: GA_Pgroup_get_world\n",me);
-    int pg_world = GA_Pgroup_get_world();
+    pg_world = GA_Pgroup_get_world();
     if (me==0) printf("%d: GA_Set_pgroup\n",me);
     GA_Set_pgroup(g_a,pg_world);
 
@@ -68,25 +80,22 @@ int main(int argc, char **argv)
     if (me==0) printf("%d: GA_Sync\n",me);
     GA_Sync();
 
-    size_t num = 10;
-    double* p1 = malloc(num*sizeof(double));
+    num = 10;
+    p1 = malloc(num*sizeof(double));
     //double* p1 = ARMCI_Malloc_local(num*sizeof(double));
     if (p1==NULL) MPI_Abort(MPI_COMM_WORLD,1000);
-    double* p2 = malloc(num*sizeof(double));
+    p2 = malloc(num*sizeof(double));
     //double* p2 = ARMCI_Malloc_local(num*sizeof(double));
     if (p2==NULL) MPI_Abort(MPI_COMM_WORLD,2000);
 
-    size_t i;
+    i;
     for ( i=0 ; i<num ; i++ ) p1[i] = 7.0;
     for ( i=0 ; i<num ; i++ ) p2[i] = 3.0;
 
-    int num_mutex = 17;
+    num_mutex = 17;
     status = GA_Create_mutexes(num_mutex);
     if (me==0) printf("%d: GA_Create_mutexes = %d\n",me,status);
 
-    int lo[1];
-    int hi[1];
-    int ld[1]={1};
 /***************************************************************/
     if (me==0) {
         printf("%d: before GA_Lock\n",me);

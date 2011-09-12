@@ -278,7 +278,7 @@ int bytes=0, split=0;
         csize  = darr[s].ptr_array_len * (darr[s].bytes + sizeof(void*));
         csize += 2*sizeof(int); /* ptr_array_len + bytes */
 
-        if(csize + bytes >BUFSIZE1){
+        if(csize + bytes >((int)BUFSIZE1)){
 
           split =(BUFSIZE1 -bytes-2*sizeof(int))/(darr[s].bytes +sizeof(void*));
           if(split == 0) s--; /* no room available - do not split */

@@ -465,7 +465,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/armci_setup.m4 \
 	$(top_srcdir)/m4/ga_mpicxx_test.m4 \
 	$(top_srcdir)/m4/ga_mpif77.m4 \
 	$(top_srcdir)/m4/ga_mpif77_test.m4 \
-	$(top_srcdir)/m4/ga_msg_comms.m4 $(top_srcdir)/m4/ga_pragma.m4 \
+	$(top_srcdir)/m4/ga_msg_comms.m4 \
 	$(top_srcdir)/m4/ga_progname.m4 \
 	$(top_srcdir)/m4/ga_scalapack.m4 \
 	$(top_srcdir)/m4/ga_suppress_msg.m4 \

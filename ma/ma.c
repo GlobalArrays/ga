@@ -891,7 +891,7 @@ private AD *block_split(ad, bytes_needed, insert_free)
     /* caller ensures that ad->nbytes >= bytes_needed */
     bytes_extra = ad->nbytes - bytes_needed;
 
-    if (bytes_extra >= MINBLOCKSIZE)
+    if (bytes_extra >= ((ulongi)MINBLOCKSIZE))
     {
         /* create a new block */
         ad2 = (AD *)((Pointer)ad + bytes_needed);
@@ -3271,7 +3271,7 @@ public Boolean MA_push_stack(
 
     new_sp = ma_sp - nbytes;
     /* if (new_sp < ma_hp) */
-    if ((ma_sp - ma_hp) < nbytes)
+    if (((ulongi)(ma_sp - ma_hp)) < nbytes)
     {
         (void)sprintf(ma_ebuf,
             "block '%s', not enough space to allocate %lu bytes",

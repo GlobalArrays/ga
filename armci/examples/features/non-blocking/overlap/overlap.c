@@ -129,7 +129,7 @@ void start_logging(const char *fname)
 {
     char exe_name[255];
     char log_path[255];
-    size_t i;
+    int i;
     char k;
 
 #ifdef  LOG2FILE
@@ -138,7 +138,7 @@ void start_logging(const char *fname)
         exe_name[strlen(exe_name) - 2] = 0;
 
     if (exe_name[0] == '/') { /* full path given */
-        for (i = strlen(exe_name) - 1, k = -1; i >= 0; i--)
+        for (i = ((int)strlen(exe_name)) - 1, k = -1; i >= 0; i--)
             if (exe_name[i] == '/') {
                 if (k == -1) k = i + 1;
                 else {
@@ -259,7 +259,7 @@ double * benchmark(int op, int msg_size, int size2)
                         (size2 - 1) * stride_dist + msg_size));
 
             for (i = 0; i < size2; i++)
-                for (j = 0; j < (msg_size / SIZE_ELEM); j++) {
+                for (j = 0; j < (msg_size / ((int)SIZE_ELEM)); j++) {
                     l = stride_dist * i + SIZE_ELEM * i;
                     *(int *)((char *)array_ptrs[rank] + l) = rand();
                 }
@@ -446,6 +446,7 @@ double * benchmark(int op, int msg_size, int size2)
     /* only perform tests if wait time is not 0 */
     if (time2wait_nw > 0.0) {
     /* time2wait_nw is always 1.0 on seconds (receiving nodes) */
+        double overlaps[ITER_STEPS], totals[ITER_STEPS];
         if (second !=  -1) {
             /* compute approximate range of iterations */
             less = 0, more = iterations[ITERS - 1];
@@ -467,7 +468,6 @@ double * benchmark(int op, int msg_size, int size2)
         }
 
         /* benchmark ITER_STEPS steps within computed range */
-        double overlaps[ITER_STEPS], totals[ITER_STEPS];
         for (i = 0, j = less; i < ITER_STEPS;
              i++, j += (more - less) / (ITER_STEPS - 1)) {
             /* time noneblocking call with j interations of fake work */
@@ -636,6 +636,9 @@ int main (int argc, char *argv[])
 
     int msg_sizes[MSG_COUNT], dim1_sizes[MSG_COUNT], dim2[MSG_COUNT], mul_elem;
     double *stats=NULL, *stats_all=NULL;
+    double from_log = log2(MIN_MSG_SIZE);
+    double to_log   = log2(MAX_MSG_SIZE);
+    double step_log = (to_log - from_log) / (MSG_COUNT - 1);
 
     MP_ASSERT(MP_INIT(argc, argv));
     MP_ASSERT(MP_MYID(&rank));
@@ -649,13 +652,10 @@ int main (int argc, char *argv[])
     if (!rank) start_logging(argv[0]);
 
     /* generate MSG_COUNT message sizes MIN_MSG_SIZE thru MAX_MSG_SIZE */
-    double from_log = log2(MIN_MSG_SIZE);
-    double to_log   = log2(MAX_MSG_SIZE);
-    double step_log = (to_log - from_log) / (MSG_COUNT - 1);
     for (i = 0, u = from_log; i < MSG_COUNT; i++, u += step_log) {
         mul_elem = round(exp2(u));
-        msg_sizes[i] = mul_elem % SIZE_ELEM
-            ? (mul_elem / SIZE_ELEM + 1) * SIZE_ELEM
+        msg_sizes[i] = mul_elem % ((int)SIZE_ELEM)
+            ? (mul_elem / ((int)SIZE_ELEM) + 1) * ((int)SIZE_ELEM)
             : mul_elem; /* multiple of SIZE_ELEM */
     }
 
