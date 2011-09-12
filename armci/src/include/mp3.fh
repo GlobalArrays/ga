@@ -1,10 +1,10 @@
 #ifdef MPI
 #   include "mpif.h"
-#   define MP_TIMER() mpi_wtime()
+#   define MP_TIMER mpi_wtime
 #   define MP_FINALIZE() mpi_finalize(ierr)
 #else
 #   include "tcgmsg.fh"
-#   define MP_TIMER() tcgtime()
+#   define MP_TIMER tcgtime
 #   define MP_FINALIZE() pend()
 #endif
 #ifndef MP_DEFINES_ONLY
