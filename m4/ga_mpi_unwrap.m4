@@ -81,7 +81,7 @@ AS_VAR_PUSHDEF([ga_save_comp], [ga_save_[]_AC_CC[]])
 AS_VAR_PUSHDEF([ga_orig_comp], [ga_orig_[]_AC_CC[]])
 AS_VAR_PUSHDEF([ga_cv_mpi_naked], [ga_cv_mpi[]_AC_LANG_ABBREV[]_naked])
 AC_CACHE_CHECK([for base $wrapped compiler], [ga_cv_mpi_naked], [
-base="`$wrapped -show 2>/dev/null | sed 's/@<:@ \t@:>@.*@S|@//' | head -1`"
+base="`$wrapped -show 2>/dev/null | sed 's/@<:@ 	@:>@.*@S|@//' | head -1`"
 ga_save_comp="$_AC_CC"
 _AC_CC="$base"
 AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])], [ga_cv_mpi_naked="$base"])

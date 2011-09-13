@@ -5212,7 +5212,7 @@ if test "${ga_cv_mpic_naked+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
 
-base="`$wrapped -show 2>/dev/null | sed 's/[ \t].*$//' | head -1`"
+base="`$wrapped -show 2>/dev/null | sed 's/[ 	].*$//' | head -1`"
 ga_save_CC="$CC"
 CC="$base"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -6053,7 +6053,7 @@ if test "${ga_cv_mpicxx_naked+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
 
-base="`$wrapped -show 2>/dev/null | sed 's/[ \t].*$//' | head -1`"
+base="`$wrapped -show 2>/dev/null | sed 's/[ 	].*$//' | head -1`"
 ga_save_CXX="$CXX"
 CXX="$base"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -7737,7 +7737,7 @@ if test "${ga_cv_mpif77_naked+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
 
-base="`$wrapped -show 2>/dev/null | sed 's/[ \t].*$//' | head -1`"
+base="`$wrapped -show 2>/dev/null | sed 's/[ 	].*$//' | head -1`"
 ga_save_F77="$F77"
 F77="$base"
 cat > conftest.$ac_ext <<_ACEOF
