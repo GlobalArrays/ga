@@ -47,7 +47,11 @@ void GP_Assign_local_element(int g_p, int *subscript, void *ptr, int size)
   Integer _gp_idx[GP_MAX_DIM];
   Integer asize = (Integer)size;
   int ndim = wgp_get_dimension(ag_p);
+  printf("p[%d] (original): subscript[0]: %d subscript[1]: %d\n",pnga_nodeid(),
+      subscript[0],subscript[1]);
   COPYINDEX_C2F(subscript,_gp_idx,ndim);
+  printf("p[%d] (modified): subscript[0]: %d subscript[1]: %d\n",pnga_nodeid(),
+      _gp_idx[0],_gp_idx[1]);
   wgp_assign_local_element(ag_p, _gp_idx, ptr, asize);
 }
 

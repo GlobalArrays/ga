@@ -361,6 +361,9 @@ void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Intege
   /* check to make sure that element is located in local block of GP array */
   for (i=0; i<GP[handle].ndim; i++) {
     if (subscript[i]<GP[handle].lo[i] || subscript[i]>GP[handle].hi[i]) {
+      printf("p[%d] subscript[%d]: %d\n",pnga_nodeid(),i,subscript[i]);
+      printf("p[%d] lo[%d]: %d hi[%d]: %d\n",pnga_nodeid(),i,GP[handle].lo[i],i,
+             GP[handle].hi[i]);
       pnga_error("gp_assign_local_element: subscript out of bounds", i);
     }
   }
