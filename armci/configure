@@ -6117,27 +6117,71 @@ $as_echo "$ac_cv_safe_to_define___extensions__" >&6; }
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C compiler vendor" >&5
 $as_echo_n "checking for C compiler vendor... " >&6; }
-if test "${ax_cv_c_compiler_vendor+set}" = set; then :
+if test "${ga_cv_c_compiler_vendor+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  save_ac_ext="$ac_ext"
+
+ga_save_ac_ext="$ac_ext"
 
 
-  ax_cv_c_compiler_vendor=unknown
-  # note: don't check for gcc first since some other compilers define __GNUC__
-  for ventest in intel:__ICC,__ECC,__INTEL_COMPILER ibm:__xlc__,__xlC__,__IBMC__,__IBMCPP__ pathscale:__PATHCC__,__PATHSCALE__ amd:__OPEN64__ gnu:__GNUC__ sun:__SUNPRO_C,__SUNPRO_CC hp:__HP_cc,__HP_aCC dec:__DECC,__DECCXX,__DECC_VER,__DECCXX_VER borland:__BORLANDC__,__TURBOC__ comeau:__COMO__ cray:_CRAYC kai:__KCC lcc:__LCC__ metrowerks:__MWERKS__ sgi:__sgi,sgi microsoft:_MSC_VER watcom:__WATCOMC__ portland:__PGI fujitsu:__fcc__,__fcc_version__,_FCC_VER,__FCC_VER_; do
-    vencpp="defined("`echo $ventest | cut -d: -f2 | sed 's/,/) || defined(/g'`")"
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ga_cv_c_compiler_vendor=unknown
+ga_cpp_vendor_symbols=
+for vendor in intel ibm pathscale amd gnu sun hp dec borland comeau cray kai lcc metrowerks sgi microsoft watcom portland fujitsu
+do
+case $vendor in #(
+  amd) :
+    ga_cpp_vendor_symbols="defined(__OPEN64__)" ;; #(
+  borland) :
+    ga_cpp_vendor_symbols="defined(__BORLANDC__) || defined(__TURBOC__)" ;; #(
+  comeau) :
+    ga_cpp_vendor_symbols="defined(__COMO__)" ;; #(
+  cray) :
+    ga_cpp_vendor_symbols="defined(_CRAYC)" ;; #(
+  dec) :
+    ga_cpp_vendor_symbols="defined(__DECC) || defined(__DECCXX) || defined(__DECC_VER) || defined(__DECCXX_VER)" ;; #(
+  fujitsu) :
+    ga_cpp_vendor_symbols="defined(__fcc__) || defined(__fcc_version__) || defined(_FCC_VER) || defined(__FCC_VER_)" ;; #(
+  gnu) :
+    ga_cpp_vendor_symbols="defined(__GNUC__)" ;; #(
+  hp) :
+    ga_cpp_vendor_symbols="defined(__HP_cc) || defined(__HP_aCC)" ;; #(
+  ibm) :
+    ga_cpp_vendor_symbols="defined(__xlc__) || defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__)" ;; #(
+  intel) :
+    ga_cpp_vendor_symbols="defined(__ICC) || defined(__ECC) || defined(__INTEL_COMPILER)" ;; #(
+  kai) :
+    ga_cpp_vendor_symbols="defined(__KCC)" ;; #(
+  lcc) :
+    ga_cpp_vendor_symbols="defined(__LCC__)" ;; #(
+  metrowerks) :
+    ga_cpp_vendor_symbols="defined(__MWERKS__)" ;; #(
+  microsoft) :
+    ga_cpp_vendor_symbols="defined(_MSC_VER)" ;; #(
+  pathscale) :
+    ga_cpp_vendor_symbols="defined(__PATHCC__) || defined(__PATHSCALE__)" ;; #(
+  portland) :
+    ga_cpp_vendor_symbols="defined(__PGI)" ;; #(
+  sgi) :
+    ga_cpp_vendor_symbols="defined(__sgi) || defined(sgi)" ;; #(
+  sun) :
+    ga_cpp_vendor_symbols="defined(__SUNPRO_C) || defined(__SUNPRO_CC)" ;; #(
+  watcom) :
+    ga_cpp_vendor_symbols="defined(__WATCOMC__)" ;; #(
+  *) :
+     ;;
+esac
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
 main ()
 {
 
-#if !($vencpp)
-      thisisanerror;
+#if !($ga_cpp_vendor_symbols)
+    chokeonthis
 #endif
 
   ;
@@ -6145,15 +6189,17 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_c_compiler_vendor=`echo $ventest | cut -d: -f1`; break
+  ga_cv_c_compiler_vendor=$vendor; break
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  done
-  ac_ext="$save_ac_ext"
+done
+ga_cpp_vendor_symbols=
+ac_ext="$ga_save_ac_ext"
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_c_compiler_vendor" >&5
-$as_echo "$ax_cv_c_compiler_vendor" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_c_compiler_vendor" >&5
+$as_echo "$ga_cv_c_compiler_vendor" >&6; }
+
 
 # If F77 is enabled, only perform a simple compilation test.
 if test "x$with_mpi" != xno; then :
@@ -10668,7 +10714,7 @@ else
 fi
 if test "x$armci_cv_c_opt" = x && test "x$enable_opt" = xyes; then :
 
-case $ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu:$ga_armci_network in #(
+case $ga_cv_target:$ga_cv_c_compiler_vendor:$host_cpu:$ga_armci_network in #(
   BGL:*:*:*) :
     armci_cv_c_opt="-O0" ;; #(
   BGP:ibm:*:*) :
@@ -11527,27 +11573,71 @@ if test "x$enable_cxx" = xyes; then :
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C++ compiler vendor" >&5
 $as_echo_n "checking for C++ compiler vendor... " >&6; }
-if test "${ax_cv_cxx_compiler_vendor+set}" = set; then :
+if test "${ga_cv_cxx_compiler_vendor+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  save_ac_ext="$ac_ext"
+
+ga_save_ac_ext="$ac_ext"
 
 
-  ax_cv_cxx_compiler_vendor=unknown
-  # note: don't check for gcc first since some other compilers define __GNUC__
-  for ventest in intel:__ICC,__ECC,__INTEL_COMPILER ibm:__xlc__,__xlC__,__IBMC__,__IBMCPP__ pathscale:__PATHCC__,__PATHSCALE__ amd:__OPEN64__ gnu:__GNUC__ sun:__SUNPRO_C,__SUNPRO_CC hp:__HP_cc,__HP_aCC dec:__DECC,__DECCXX,__DECC_VER,__DECCXX_VER borland:__BORLANDC__,__TURBOC__ comeau:__COMO__ cray:_CRAYC kai:__KCC lcc:__LCC__ metrowerks:__MWERKS__ sgi:__sgi,sgi microsoft:_MSC_VER watcom:__WATCOMC__ portland:__PGI fujitsu:__fcc__,__fcc_version__,_FCC_VER,__FCC_VER_; do
-    vencpp="defined("`echo $ventest | cut -d: -f2 | sed 's/,/) || defined(/g'`")"
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ga_cv_cxx_compiler_vendor=unknown
+ga_cpp_vendor_symbols=
+for vendor in intel ibm pathscale amd gnu sun hp dec borland comeau cray kai lcc metrowerks sgi microsoft watcom portland fujitsu
+do
+case $vendor in #(
+  amd) :
+    ga_cpp_vendor_symbols="defined(__OPEN64__)" ;; #(
+  borland) :
+    ga_cpp_vendor_symbols="defined(__BORLANDC__) || defined(__TURBOC__)" ;; #(
+  comeau) :
+    ga_cpp_vendor_symbols="defined(__COMO__)" ;; #(
+  cray) :
+    ga_cpp_vendor_symbols="defined(_CRAYC)" ;; #(
+  dec) :
+    ga_cpp_vendor_symbols="defined(__DECC) || defined(__DECCXX) || defined(__DECC_VER) || defined(__DECCXX_VER)" ;; #(
+  fujitsu) :
+    ga_cpp_vendor_symbols="defined(__fcc__) || defined(__fcc_version__) || defined(_FCC_VER) || defined(__FCC_VER_)" ;; #(
+  gnu) :
+    ga_cpp_vendor_symbols="defined(__GNUC__)" ;; #(
+  hp) :
+    ga_cpp_vendor_symbols="defined(__HP_cc) || defined(__HP_aCC)" ;; #(
+  ibm) :
+    ga_cpp_vendor_symbols="defined(__xlc__) || defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__)" ;; #(
+  intel) :
+    ga_cpp_vendor_symbols="defined(__ICC) || defined(__ECC) || defined(__INTEL_COMPILER)" ;; #(
+  kai) :
+    ga_cpp_vendor_symbols="defined(__KCC)" ;; #(
+  lcc) :
+    ga_cpp_vendor_symbols="defined(__LCC__)" ;; #(
+  metrowerks) :
+    ga_cpp_vendor_symbols="defined(__MWERKS__)" ;; #(
+  microsoft) :
+    ga_cpp_vendor_symbols="defined(_MSC_VER)" ;; #(
+  pathscale) :
+    ga_cpp_vendor_symbols="defined(__PATHCC__) || defined(__PATHSCALE__)" ;; #(
+  portland) :
+    ga_cpp_vendor_symbols="defined(__PGI)" ;; #(
+  sgi) :
+    ga_cpp_vendor_symbols="defined(__sgi) || defined(sgi)" ;; #(
+  sun) :
+    ga_cpp_vendor_symbols="defined(__SUNPRO_C) || defined(__SUNPRO_CC)" ;; #(
+  watcom) :
+    ga_cpp_vendor_symbols="defined(__WATCOMC__)" ;; #(
+  *) :
+     ;;
+esac
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
 main ()
 {
 
-#if !($vencpp)
-      thisisanerror;
+#if !($ga_cpp_vendor_symbols)
+    chokeonthis
 #endif
 
   ;
@@ -11555,15 +11645,17 @@ main ()
 }
 _ACEOF
 if ac_fn_cxx_try_compile "$LINENO"; then :
-  ax_cv_cxx_compiler_vendor=`echo $ventest | cut -d: -f1`; break
+  ga_cv_cxx_compiler_vendor=$vendor; break
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  done
-  ac_ext="$save_ac_ext"
+done
+ga_cpp_vendor_symbols=
+ac_ext="$ga_save_ac_ext"
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_cxx_compiler_vendor" >&5
-$as_echo "$ax_cv_cxx_compiler_vendor" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_cxx_compiler_vendor" >&5
+$as_echo "$ga_cv_cxx_compiler_vendor" >&6; }
+
 
 if test "x$with_mpi" != xno; then :
 
@@ -11716,7 +11808,7 @@ else
 fi
 if test "x$armci_cv_cxx_opt" = x && test "x$enable_opt" = xyes; then :
 
-case $ga_cv_target:$ax_cv_cxx_compiler_vendor:$host_cpu:$ga_armci_network in #(
+case $ga_cv_target:$ga_cv_cxx_compiler_vendor:$host_cpu:$ga_armci_network in #(
   LINUX:*:*:*) :
     armci_cv_cxx_opt="-O0" ;; #(
   NEC64:*:*:*) :
@@ -12743,37 +12835,83 @@ rm -f inside.pl
 fi
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran 77 compiler vendor" >&5
 $as_echo_n "checking for Fortran 77 compiler vendor... " >&6; }
-if test "${ax_cv_f77_compiler_vendor+set}" = set; then :
+if test "${ga_cv_f77_compiler_vendor+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  save_ac_ext="$ac_ext"
 
-  ac_ext=F
-  ax_cv_f77_compiler_vendor=unknown
-  # note: don't check for gcc first since some other compilers define __GNUC__
-  for ventest in intel:__ICC,__ECC,__INTEL_COMPILER ibm:__xlc__,__xlC__,__IBMC__,__IBMCPP__ pathscale:__PATHCC__,__PATHSCALE__ amd:__OPEN64__ gnu:__GNUC__ sun:__SUNPRO_C,__SUNPRO_CC hp:__HP_cc,__HP_aCC dec:__DECC,__DECCXX,__DECC_VER,__DECCXX_VER borland:__BORLANDC__,__TURBOC__ comeau:__COMO__ cray:_CRAYC kai:__KCC lcc:__LCC__ metrowerks:__MWERKS__ sgi:__sgi,sgi microsoft:_MSC_VER watcom:__WATCOMC__ portland:__PGI fujitsu:__fcc__,__fcc_version__,_FCC_VER,__FCC_VER_; do
-    vencpp="defined("`echo $ventest | cut -d: -f2 | sed 's/,/) || defined(/g'`")"
-    cat > conftest.$ac_ext <<_ACEOF
+ga_save_ac_ext="$ac_ext"
+
+ac_ext=F
+ga_cv_f77_compiler_vendor=unknown
+ga_cpp_vendor_symbols=
+for vendor in intel ibm pathscale amd gnu sun hp dec borland comeau cray kai lcc metrowerks sgi microsoft watcom portland fujitsu
+do
+case $vendor in #(
+  amd) :
+    ga_cpp_vendor_symbols="defined(__OPEN64__)" ;; #(
+  borland) :
+    ga_cpp_vendor_symbols="defined(__BORLANDC__) || defined(__TURBOC__)" ;; #(
+  comeau) :
+    ga_cpp_vendor_symbols="defined(__COMO__)" ;; #(
+  cray) :
+    ga_cpp_vendor_symbols="defined(_CRAYC)" ;; #(
+  dec) :
+    ga_cpp_vendor_symbols="defined(__DECC) || defined(__DECCXX) || defined(__DECC_VER) || defined(__DECCXX_VER)" ;; #(
+  fujitsu) :
+    ga_cpp_vendor_symbols="defined(__fcc__) || defined(__fcc_version__) || defined(_FCC_VER) || defined(__FCC_VER_)" ;; #(
+  gnu) :
+    ga_cpp_vendor_symbols="defined(__GNUC__)" ;; #(
+  hp) :
+    ga_cpp_vendor_symbols="defined(__HP_cc) || defined(__HP_aCC)" ;; #(
+  ibm) :
+    ga_cpp_vendor_symbols="defined(__xlc__) || defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__)" ;; #(
+  intel) :
+    ga_cpp_vendor_symbols="defined(__ICC) || defined(__ECC) || defined(__INTEL_COMPILER)" ;; #(
+  kai) :
+    ga_cpp_vendor_symbols="defined(__KCC)" ;; #(
+  lcc) :
+    ga_cpp_vendor_symbols="defined(__LCC__)" ;; #(
+  metrowerks) :
+    ga_cpp_vendor_symbols="defined(__MWERKS__)" ;; #(
+  microsoft) :
+    ga_cpp_vendor_symbols="defined(_MSC_VER)" ;; #(
+  pathscale) :
+    ga_cpp_vendor_symbols="defined(__PATHCC__) || defined(__PATHSCALE__)" ;; #(
+  portland) :
+    ga_cpp_vendor_symbols="defined(__PGI)" ;; #(
+  sgi) :
+    ga_cpp_vendor_symbols="defined(__sgi) || defined(sgi)" ;; #(
+  sun) :
+    ga_cpp_vendor_symbols="defined(__SUNPRO_C) || defined(__SUNPRO_CC)" ;; #(
+  watcom) :
+    ga_cpp_vendor_symbols="defined(__WATCOMC__)" ;; #(
+  *) :
+     ;;
+esac
+cat > conftest.$ac_ext <<_ACEOF
       program main
 
-#if !($vencpp)
-      thisisanerror;
+#if !($ga_cpp_vendor_symbols)
+    chokeonthis
 #endif
 
       end
 _ACEOF
 if ac_fn_f77_try_compile "$LINENO"; then :
-  ax_cv_f77_compiler_vendor=`echo $ventest | cut -d: -f1`; break
+  ga_cv_f77_compiler_vendor=$vendor; break
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  done
-  ac_ext="$save_ac_ext"
+done
+ga_cpp_vendor_symbols=
+ac_ext="$ga_save_ac_ext"
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_f77_compiler_vendor" >&5
-$as_echo "$ax_cv_f77_compiler_vendor" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_compiler_vendor" >&5
+$as_echo "$ga_cv_f77_compiler_vendor" >&6; }
+
 
 # If F77 is enabled, perform a simple link test.
 if test "x$with_mpi" != xno; then :
@@ -14507,7 +14645,7 @@ else
 fi
 if test "x$armci_cv_f77_opt" = x && test "x$enable_opt" = xyes; then :
 
-case $ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu:$ga_armci_network in #(
+case $ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu:$ga_armci_network in #(
   BGL:*:*:*) :
     armci_cv_f77_opt="-O0" ;; #(
   BGP:ibm:*:*) :

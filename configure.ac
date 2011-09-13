@@ -84,7 +84,7 @@ GA_PROG_MPICC
 CFLAGS="$ga_save_CFLAGS"
 AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 AC_USE_SYSTEM_EXTENSIONS
-AX_COMPILER_VENDOR
+GA_COMPILER_VENDOR
 # If F77 is enabled, only perform a simple compilation test.
 AS_IF([test "x$with_mpi" != xno], [
     AS_CASE([$enable_f77:$enable_mpi_tests],
@@ -208,7 +208,7 @@ AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 
 AS_IF([test "x$enable_cxx" = xyes], [
 
-AX_COMPILER_VENDOR
+GA_COMPILER_VENDOR
 AS_IF([test "x$with_mpi" != xno], [GA_MPICXX_TEST])
 
 # Checks for C++ header files.
@@ -270,7 +270,7 @@ if test "x$enable_f77" = xyes; then :
 
 AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 
-AX_COMPILER_VENDOR
+GA_COMPILER_VENDOR
 # Perform a simple link test for MPI.
 AS_IF([test "x$with_mpi" != xno],
     [AS_IF([test "x$enable_mpi_tests" = xyes],

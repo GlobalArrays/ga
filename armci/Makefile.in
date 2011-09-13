@@ -451,7 +451,6 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/armci_setup.m4 \
 	$(top_srcdir)/../m4/armci_tas.m4 \
 	$(top_srcdir)/../m4/armci_x86copy.m4 \
-	$(top_srcdir)/../m4/ax_compiler_vendor.m4 \
 	$(top_srcdir)/../m4/ax_sys_weak_alias.m4 \
 	$(top_srcdir)/../m4/ga_ar.m4 \
 	$(top_srcdir)/../m4/ga_arg_parse.m4 \
@@ -459,6 +458,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/ga_as.m4 $(top_srcdir)/../m4/ga_blas.m4 \
 	$(top_srcdir)/../m4/ga_check_func.m4 \
 	$(top_srcdir)/../m4/ga_check_header.m4 \
+	$(top_srcdir)/../m4/ga_compiler_vendor.m4 \
 	$(top_srcdir)/../m4/ga_cross_compiling.m4 \
 	$(top_srcdir)/../m4/ga_enable_checkpoint.m4 \
 	$(top_srcdir)/../m4/ga_enable_opt.m4 \

@@ -8,7 +8,7 @@ AC_ARG_VAR([GA_FOPT], [GA Fortran 77 optimization flags])
 AC_CACHE_CHECK([for specific Fortran optimizations], [ga_cv_f77_opt], [
 AS_IF([test "x$GA_FOPT" != x], [ga_cv_f77_opt="$GA_FOPT"], [ga_cv_f77_opt=])
 AS_IF([test "x$ga_cv_f77_opt" = x && test "x$enable_opt" = xyes], [
-AS_CASE([$ga_cv_target:$ax_cv_f77_compiler_vendor:$host_cpu],
+AS_CASE([$ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu],
 [BGL:*:*],                  [ga_cv_f77_opt="-O0"],
 [BGP:ibm:*],                [ga_cv_f77_opt="-O3 -qstrict -qarch=450 -qtune=450"],
 [BGP:gnu:*],                [ga_cv_f77_opt="-O2"],

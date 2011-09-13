@@ -8,7 +8,7 @@ AC_ARG_VAR([GA_COPT], [GA C optimization flags])
 AC_CACHE_CHECK([for specific C optimizations], [ga_cv_c_opt], [
 AS_IF([test "x$GA_COPT" != x], [ga_cv_c_opt="$GA_COPT"], [ga_cv_c_opt=])
 AS_IF([test "x$ga_cv_c_opt" = x && test "x$enable_opt" = xyes], [
-AS_CASE([$ga_cv_target:$ax_cv_c_compiler_vendor:$host_cpu],
+AS_CASE([$ga_cv_target:$ga_cv_c_compiler_vendor:$host_cpu],
 [BGL:*:*],                  [ga_cv_c_opt="-O0"],
 [BGP:ibm:*],                [ga_cv_c_opt="-O3 -qstrict -qarch=450 -qtune=450"],
 [BGP:gnu:*],                [ga_cv_c_opt="-O2"],
