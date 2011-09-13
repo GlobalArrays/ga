@@ -94,9 +94,11 @@ AS_IF([test "x$enable_f77" = xno],
 
 # GA_BLAS([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 # -------------------------------------------------
-# Originally from http://www.nongnu.org/autoconf-archive/ga_blas.html
-# Modified to support many options to --with flag, updated to use AS_* macros,
-# and different defaults for ACTIONs.
+# Parse the --with-blas argument and test for all *gemm routines. We use
+# different tests depending on whether Fortran sources are enabled. There are
+# many flavors of BLAS that we test for explicitly, although the list could
+# probably be reduced based on currently available systems.
+#
 # Apparently certain compilers on BGP define sgemm and dgemm, so we must
 # test for a different BLAS routine. cgemm seems okay.
 AC_DEFUN([GA_BLAS],
@@ -151,7 +153,7 @@ AS_IF([test $ga_blas_ok = no],
                 [*_int64*], [blas_size=8])])]) # AMD ACML
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in AMD Core Math Library? (ACML)
+# AMD Core Math Library (ACML)
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in AMD Core Math Library])
      # add -lacml to BLAS_LIBS if missing from LIBS
@@ -165,7 +167,7 @@ AS_IF([test $ga_blas_ok = no],
                 [*_int64*], [blas_size=8])])])
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in Intel MKL library?
+# Intel MKL library
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in Intel Math Kernel Library])
      # add -lmkl to BLAS_LIBS if missing from LIBS
@@ -179,7 +181,7 @@ AS_IF([test $ga_blas_ok = no],
                 [*ilp64*], [blas_size=8])])])
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
+# ATLAS library (http://math-atlas.sourceforge.net/)
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in ATLAS])
      AS_IF([test "x$enable_f77" = xno],
@@ -194,7 +196,7 @@ AS_IF([test $ga_blas_ok = no],
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in PhiPACK libraries? (requires generic BLAS lib, too)
+# PhiPACK libraries (requires generic BLAS lib, too)
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in PhiPACK libraries])
      # add -lblas to BLAS_LIBS if missing from LIBS
@@ -208,7 +210,7 @@ AS_IF([test $ga_blas_ok = no],
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in Apple Accelerate.framework?
+# Apple Accelerate.framework
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in Apple Accelerate.framework])
      # add -framework Accelerate to BLAS_LIBS if missing from LIBS
@@ -218,7 +220,7 @@ AS_IF([test $ga_blas_ok = no],
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in Apple vecLib.framework?
+# Apple vecLib.framework
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in Apple vecLib.framework])
      # add -framework vecLib to BLAS_LIBS if missing from LIBS
@@ -228,7 +230,7 @@ AS_IF([test $ga_blas_ok = no],
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in Alpha CXML library? CXML=Compaq Extended Math Library
+# Alpha CXML library (CXML stands for Compaq Extended Math Library)
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in Alpha CXML library])
      # add -lcxml to BLAS_LIBS if missing from LIBS
@@ -246,9 +248,9 @@ AS_IF([test $ga_blas_ok = no],
          LIBS="$ga_save_LIBS"])
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in Alpha DXML library? (now called CXML, see above)
+# Alpha DXML library (now called CXML, see above)
 
-# BLAS in Sun Performance library?
+# Sun Performance library
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in Sun Performance Library])
      # add -xlic_lib=sunperf to BLAS_LIBS if missing from LIBS
@@ -266,7 +268,7 @@ AS_IF([test $ga_blas_ok = no],
          LIBS="$ga_save_LIBS"])
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in SCSL library?  (SGI/Cray Scientific Library)
+# SCSL library (SCSL stands for SGI/Cray Scientific Library)
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in SGI/Cray Scientific Library])
      # add -lscs to BLAS_LIBS if missing from LIBS
@@ -276,7 +278,7 @@ AS_IF([test $ga_blas_ok = no],
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in SGIMATH library?
+# SGIMATH library
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in SGIMATH library])
      # add -lcomplib.sgimath to BLAS_LIBS if missing from LIBS
@@ -286,7 +288,7 @@ AS_IF([test $ga_blas_ok = no],
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# BLAS in IBM ESSL library? (requires generic BLAS lib, too)
+# IBM ESSL library (requires generic BLAS lib, too)
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in IBM ESSL library])
      # add -lessl to BLAS_LIBS if missing from LIBS
@@ -298,7 +300,7 @@ AS_IF([test $ga_blas_ok = no],
      LIBS="$ga_save_LIBS"
      AC_MSG_RESULT([$ga_blas_ok])])
 
-# Generic BLAS library?
+# Generic BLAS library
 AS_IF([test $ga_blas_ok = no],
     [AC_MSG_CHECKING([for BLAS in generic library])
      BLAS_LIBS="-lblas"
@@ -314,7 +316,7 @@ AC_SUBST([BLAS_LIBS])
 AC_SUBST([BLAS_LDFLAGS])
 AC_SUBST([BLAS_CPPFLAGS])
 
-# Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
+# Tests are complete. Execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 AS_IF([test $ga_blas_ok = yes],
     [have_blas=1
      $1],

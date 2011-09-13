@@ -11801,7 +11801,7 @@ fi # AMD ACML
 $as_echo "$ga_blas_ok" >&6; }
 fi
 
-# BLAS in AMD Core Math Library? (ACML)
+# AMD Core Math Library (ACML)
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in AMD Core Math Library" >&5
 $as_echo_n "checking for BLAS in AMD Core Math Library... " >&6; }
@@ -11937,7 +11937,7 @@ fi
 $as_echo "$ga_blas_ok" >&6; }
 fi
 
-# BLAS in Intel MKL library?
+# Intel MKL library
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Intel Math Kernel Library" >&5
 $as_echo_n "checking for BLAS in Intel Math Kernel Library... " >&6; }
@@ -12073,7 +12073,7 @@ fi
 $as_echo "$ga_blas_ok" >&6; }
 fi
 
-# BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
+# ATLAS library (http://math-atlas.sourceforge.net/)
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in ATLAS" >&5
 $as_echo_n "checking for BLAS in ATLAS... " >&6; }
@@ -12216,7 +12216,7 @@ fi
 $as_echo "$ga_blas_ok" >&6; }
 fi
 
-# BLAS in PhiPACK libraries? (requires generic BLAS lib, too)
+# PhiPACK libraries (requires generic BLAS lib, too)
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in PhiPACK libraries" >&5
 $as_echo_n "checking for BLAS in PhiPACK libraries... " >&6; }
@@ -12356,7 +12356,7 @@ fi
 $as_echo "$ga_blas_ok" >&6; }
 fi
 
-# BLAS in Apple Accelerate.framework?
+# Apple Accelerate.framework
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Apple Accelerate.framework" >&5
 $as_echo_n "checking for BLAS in Apple Accelerate.framework... " >&6; }
@@ -12482,7 +12482,7 @@ fi
 $as_echo "$ga_blas_ok" >&6; }
 fi
 
-# BLAS in Apple vecLib.framework?
+# Apple vecLib.framework
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Apple vecLib.framework" >&5
 $as_echo_n "checking for BLAS in Apple vecLib.framework... " >&6; }
@@ -12608,7 +12608,7 @@ fi
 $as_echo "$ga_blas_ok" >&6; }
 fi
 
-# BLAS in Alpha CXML library? CXML=Compaq Extended Math Library
+# Alpha CXML library (CXML stands for Compaq Extended Math Library)
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Alpha CXML library" >&5
 $as_echo_n "checking for BLAS in Alpha CXML library... " >&6; }
@@ -12861,9 +12861,9 @@ fi
 $as_echo "$ga_blas_ok" >&6; }
 fi
 
-# BLAS in Alpha DXML library? (now called CXML, see above)
+# Alpha DXML library (now called CXML, see above)
 
-# BLAS in Sun Performance library?
+# Sun Performance library
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in Sun Performance Library" >&5
 $as_echo_n "checking for BLAS in Sun Performance Library... " >&6; }
@@ -13116,7 +13116,7 @@ fi
 $as_echo "$ga_blas_ok" >&6; }
 fi
 
-# BLAS in SCSL library?  (SGI/Cray Scientific Library)
+# SCSL library (SCSL stands for SGI/Cray Scientific Library)
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in SGI/Cray Scientific Library" >&5
 $as_echo_n "checking for BLAS in SGI/Cray Scientific Library... " >&6; }
@@ -13242,7 +13242,7 @@ fi
 $as_echo "$ga_blas_ok" >&6; }
 fi
 
-# BLAS in SGIMATH library?
+# SGIMATH library
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in SGIMATH library" >&5
 $as_echo_n "checking for BLAS in SGIMATH library... " >&6; }
@@ -13368,7 +13368,7 @@ fi
 $as_echo "$ga_blas_ok" >&6; }
 fi
 
-# BLAS in IBM ESSL library? (requires generic BLAS lib, too)
+# IBM ESSL library (requires generic BLAS lib, too)
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in IBM ESSL library" >&5
 $as_echo_n "checking for BLAS in IBM ESSL library... " >&6; }
@@ -13501,7 +13501,7 @@ fi
 $as_echo "$ga_blas_ok" >&6; }
 fi
 
-# Generic BLAS library?
+# Generic BLAS library
 if test $ga_blas_ok = no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for BLAS in generic library" >&5
 $as_echo_n "checking for BLAS in generic library... " >&6; }
@@ -13628,7 +13628,7 @@ LDFLAGS="$ga_save_LDFLAGS"
 
 
 
-# Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
+# Tests are complete. Execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test $ga_blas_ok = yes; then :
   have_blas=1
 

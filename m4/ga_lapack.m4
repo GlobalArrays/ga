@@ -27,9 +27,7 @@ char dgetrs ();
 
 # GA_LAPACK([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 # ---------------------------------------------------
-# Originally from http://www.nongnu.org/autoconf-archive/ga_lapack.html
-# Modified to support many options to --with flag, updated to use AS_* macros,
-# and different defaults for ACTIONs.
+# Test for LAPACK. Modelled after GA_BLAS macro.
 AC_DEFUN([GA_LAPACK],
 [AC_REQUIRE([GA_BLAS])
 AC_ARG_WITH([lapack],
