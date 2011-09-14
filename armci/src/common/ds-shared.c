@@ -1053,7 +1053,7 @@ void armci_start_server()
 {
     armci_init_connections();
 
-#if defined(MPI_SPAWN) || defined(MPI_MT)
+#if defined(MPI_SPAWN) 
     
     /* For MPI_SPAWN, this should be called by all processes */
     armci_create_server_MPIprocess( );
