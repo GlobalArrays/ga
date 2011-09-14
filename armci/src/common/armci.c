@@ -570,10 +570,15 @@ int PARMCI_Init()
     armci_init_checkpoint(armci_ft_spare_procs);
 #endif
 
+#ifdef MPI_MT
+
+    _armci_test_connections();
+#else
     uval = getenv("ARMCI_TEST_CONNECTIONS"); 
     if(uval!=NULL) {
       _armci_test_connections();
     }
+#endif
     return 0;
 }
 

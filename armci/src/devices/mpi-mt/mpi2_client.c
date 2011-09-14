@@ -3,7 +3,7 @@
 #endif
 
 /**
- * MPI_MT: ARMCI on top of MPI Multithreaded
+ * MPI_SPAWN: ARMCI on top of MPI Multithreaded
  * Abhinav Vishnu 
  */
 
@@ -310,13 +310,7 @@ void armci_create_server_MPIprocess ()
     MPI_Check(MPI_Comm_size(ARMCI_COMM_WORLD, &size));
 
     armci_nserver = armci_nclus;
-#if 0
-    /* initialize tags for flow control */
-    _armci_mpi_tag = (int*) malloc(armci_nserver * 
-            sizeof(int));
-    for(i=0; i<armci_nserver; i++)
-       _armci_mpi_tag[i]=ARMCI_MPI_SPAWN_TAG_BEGIN;
-#endif
+    
     /* makesure all processes sync here. CHECK: does it ensure global sync ? */
     MPI_Check(MPI_Barrier(ARMCI_COMM_WORLD));
  

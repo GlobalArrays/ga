@@ -4,8 +4,8 @@
 
 #include <assert.h>
 /**
- * mpi2_server.c: MPI_MT Server Code
- * Manojkumar Krishnan, modifed for MT by Abhinav Vishnu
+ * mpi2_server.c: MPI_SPAWN Server Code
+ * Manojkumar Krishnan
  */
 
 #if HAVE_STDARG_H
@@ -305,7 +305,7 @@ void armci_call_data_server()
     int flag = 0;
     for(;;)
     {       
-#if 0
+#if 1
        while (!flag) { 
             MPI_Check(
                     MPI_Iprobe(MPI_ANY_SOURCE, ARMCI_MPI_CLIENT2SERVER_TAG,
