@@ -2041,6 +2041,149 @@ void pnga_scale_patch(Integer g_a, Integer *lo, Integer *hi, void *alpha)
   if(local_sync_end)pnga_sync();   
 }
 
+/*\ Utility function to accumulate patch values C = C + alpha*A
+\*/
+static void snga_acc_patch_values(Integer type, void* alpha, Integer ndim,
+                                  Integer *loC, Integer *hiC, Integer *ldC,
+                                  void *A_ptr, void *C_ptr)
+{
+  Integer bvalue[MAXDIM], bunit[MAXDIM], baseldC[MAXDIM];
+  Integer idx, n1dim;
+  Integer i, j;
+  /* compute "local" add */
+
+  /* number of n-element of the first dimension */
+  n1dim = 1; for(i=1; i<ndim; i++) n1dim *= (hiC[i] - loC[i] + 1);
+
+  /* calculate the destination indices */
+  bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
+  /* baseld[0] = ld[0]
+   * baseld[1] = ld[0] * ld[1]
+   * baseld[2] = ld[0] * ld[1] * ld[2] .....
+   */
+  baseldC[0] = ldC[0]; baseldC[1] = baseldC[0] *ldC[1];
+  for(i=2; i<ndim; i++) {
+    bvalue[i] = 0;
+    bunit[i] = bunit[i-1] * (hiC[i-1] - loC[i-1] + 1);
+    baseldC[i] = baseldC[i-1] * ldC[i];
+  }
+
+  switch(type){
+    case C_DBL:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseldC[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiC[j]-loC[j])) bvalue[j] = 0;
+        }
+
+        for(j=0; j<(hiC[0]-loC[0]+1); j++)
+          ((double*)C_ptr)[idx+j] = ((double*)C_ptr)[idx+j]
+            + *(double*)alpha * ((double*)A_ptr)[idx+j];
+      }
+      break;
+    case C_DCPL:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseldC[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiC[j]-loC[j])) bvalue[j] = 0;
+        }
+
+        for(j=0; j<(hiC[0]-loC[0]+1); j++) {
+          DoubleComplex a = ((DoubleComplex *)A_ptr)[idx+j];
+          DoubleComplex x= *(DoubleComplex*)alpha;
+          ((DoubleComplex *)C_ptr)[idx+j].real =
+            ((DoubleComplex *)C_ptr)[idx+j].real
+            + x.real*a.real - x.imag*a.imag;
+          ((DoubleComplex *)C_ptr)[idx+j].imag =
+            ((DoubleComplex *)C_ptr)[idx+j].imag
+            + x.real*a.imag + x.imag*a.real;
+        }
+      }
+      break;
+    case C_SCPL:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseldC[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiC[j]-loC[j])) bvalue[j] = 0;
+        }
+
+        for(j=0; j<(hiC[0]-loC[0]+1); j++) {
+          SingleComplex a = ((SingleComplex *)A_ptr)[idx+j];
+          SingleComplex x= *(SingleComplex*)alpha;
+          ((SingleComplex *)C_ptr)[idx+j].real =
+            ((SingleComplex *)C_ptr)[idx+j].real
+            + x.real*a.real - x.imag*a.imag;
+          ((SingleComplex *)C_ptr)[idx+j].imag =
+            ((SingleComplex *)C_ptr)[idx+j].imag
+            + x.real*a.imag + x.imag*a.real;
+        }
+      }
+      break;
+    case C_INT:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseldC[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiC[j]-loC[j])) bvalue[j] = 0;
+        }
+
+        for(j=0; j<(hiC[0]-loC[0]+1); j++)
+          ((int*)C_ptr)[idx+j] = ((int*)C_ptr)[idx+j]
+            + *(int *)alpha * ((int*)A_ptr)[idx+j];
+      }
+      break;
+    case C_FLOAT:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseldC[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiC[j]-loC[j])) bvalue[j] = 0;
+        }
+
+        for(j=0; j<(hiC[0]-loC[0]+1); j++)
+          ((float *)C_ptr)[idx+j] = ((float *)C_ptr)[idx+j]
+            + *(float *)alpha * ((float *)A_ptr)[idx+j];
+      }
+      break;
+    case C_LONG:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseldC[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiC[j]-loC[j])) bvalue[j] = 0;
+        }
+
+        for(j=0; j<(hiC[0]-loC[0]+1); j++)
+          ((long *)C_ptr)[idx+j] = ((long *)C_ptr)[idx+j]
+            + *(long *)alpha * ((long *)A_ptr)[idx+j];
+      }
+      break;
+    case C_LONGLONG:
+      for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<ndim; j++) {
+          idx += bvalue[j] * baseldC[j-1];
+          if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+          if(bvalue[j] > (hiC[j]-loC[j])) bvalue[j] = 0;
+        }
+
+        for(j=0; j<(hiC[0]-loC[0]+1); j++)
+          ((long long*)C_ptr)[idx+j] = ((long long*)C_ptr)[idx+j]
+            + *(long long*)alpha * ((long long*)A_ptr)[idx+j];
+      }
+      break;
+    default: pnga_error(" wrong data type ",type);
+  }
+}
 
 /*\ Utility function to add patch values together
 \*/
@@ -2207,7 +2350,7 @@ Integer g_c, *clo, *chi;    /* patch of g_c */
 void *alpha, *beta;
 {
   Integer i, j;
-  Integer compatible;
+  Integer compatible_a, compatible_b;
   Integer atype, btype, ctype;
   Integer andim, adims[MAXDIM], bndim, bdims[MAXDIM], cndim, cdims[MAXDIM];
   Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
@@ -2262,14 +2405,41 @@ void *alpha, *beta;
     /* find out coordinates of patches of g_a, g_b and g_c that I own */
     pnga_distribution( g_A, me, loA, hiA);
     pnga_distribution( g_B, me, loB, hiB);
-    pnga_distribution(g_c, me, loC, hiC);
+    pnga_distribution( g_c, me, loC, hiC);
 
     /* test if the local portion of patches matches */
     if(pnga_comp_patch(andim, loA, hiA, cndim, loC, hiC) &&
-        pnga_comp_patch(andim, alo, ahi, cndim, clo, chi)) compatible = 1;
-    else compatible = 0;
-    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
-    if(!compatible) {
+       pnga_comp_patch(andim, alo, ahi, cndim, clo, chi)) compatible_a = 1;
+    else compatible_a = 0;
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible_a, 1, "*");
+    if(pnga_comp_patch(bndim, loB, hiB, cndim, loC, hiC) &&
+       pnga_comp_patch(bndim, blo, bhi, cndim, clo, chi)) compatible_b = 1;
+    else compatible_b = 0;
+    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible_b, 1, "*");
+    if (compatible_a && compatible_b) {
+      if(andim > bndim) cndim = bndim;
+      if(andim < bndim) cndim = andim;
+
+      if(!pnga_comp_patch(andim, loA, hiA, cndim, loC, hiC))
+        pnga_error(" A patch mismatch ", g_A); 
+      if(!pnga_comp_patch(bndim, loB, hiB, cndim, loC, hiC))
+        pnga_error(" B patch mismatch ", g_B);
+
+      /*  determine subsets of my patches to access  */
+      if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)){
+        pnga_access_ptr(g_A, loC, hiC, &A_ptr, ldA);
+        pnga_access_ptr(g_B, loC, hiC, &B_ptr, ldB);
+        pnga_access_ptr(g_c, loC, hiC, &C_ptr, ldC);
+
+        snga_add_patch_values(atype, alpha, beta, cndim,
+            loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
+
+        /* release access to the data */
+        pnga_release       (g_A, loC, hiC);
+        pnga_release       (g_B, loC, hiC); 
+        pnga_release_update(g_c, loC, hiC); 
+      }
+    } else if (!compatible_a && compatible_b) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_c
        *        - do C<= A
@@ -2279,8 +2449,7 @@ void *alpha, *beta;
         andim = cndim;
         g_A = g_c;
         pnga_distribution(g_A, me, loA, hiA);
-      }
-      else {
+      } else {
         if (!pnga_duplicate(g_c, &g_A, tempname))
           pnga_error("ga_dadd_patch: dup failed", 0L);
         pnga_copy_patch(&notrans, g_a, alo, ahi, g_A, clo, chi);
@@ -2288,14 +2457,29 @@ void *alpha, *beta;
         A_created = 1;
         pnga_distribution(g_A, me, loA, hiA);
       }
-    }
+      if(andim > bndim) cndim = bndim;
+      if(andim < bndim) cndim = andim;
 
-    /* test if the local portion of patches matches */
-    if(pnga_comp_patch(bndim, loB, hiB, cndim, loC, hiC) &&
-        pnga_comp_patch(bndim, blo, bhi, cndim, clo, chi)) compatible = 1;
-    else compatible = 0;
-    pnga_gop(pnga_type_f2c(MT_F_INT), &compatible, 1, "*");
-    if(!compatible) {
+      if(!pnga_comp_patch(andim, loA, hiA, cndim, loC, hiC))
+        pnga_error(" A patch mismatch ", g_A); 
+      if(!pnga_comp_patch(bndim, loB, hiB, cndim, loC, hiC))
+        pnga_error(" B patch mismatch ", g_B);
+
+      /*  determine subsets of my patches to access  */
+      if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)){
+        pnga_access_ptr(g_A, loC, hiC, &A_ptr, ldA);
+        pnga_access_ptr(g_B, loC, hiC, &B_ptr, ldB);
+        pnga_access_ptr(g_c, loC, hiC, &C_ptr, ldC);
+
+        snga_add_patch_values(atype, alpha, beta, cndim,
+            loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
+
+        /* release access to the data */
+        pnga_release       (g_A, loC, hiC);
+        pnga_release       (g_B, loC, hiC); 
+        pnga_release_update(g_c, loC, hiC); 
+      }
+    } else if (compatible_a && !compatible_b) {
       /* either patches or distributions do not match:
        *        - create a temp array that matches distribution of g_c
        *        - copy & reshape patch of g_b into g_B
@@ -2306,29 +2490,51 @@ void *alpha, *beta;
       bndim = cndim;
       B_created = 1;
       pnga_distribution(g_B, me, loB, hiB);
-    }        
 
-    if(andim > bndim) cndim = bndim;
-    if(andim < bndim) cndim = andim;
+      if(andim > bndim) cndim = bndim;
+      if(andim < bndim) cndim = andim;
 
-    if(!pnga_comp_patch(andim, loA, hiA, cndim, loC, hiC))
-      pnga_error(" A patch mismatch ", g_A); 
-    if(!pnga_comp_patch(bndim, loB, hiB, cndim, loC, hiC))
-      pnga_error(" B patch mismatch ", g_B);
+      if(!pnga_comp_patch(andim, loA, hiA, cndim, loC, hiC))
+        pnga_error(" A patch mismatch ", g_A); 
+      if(!pnga_comp_patch(bndim, loB, hiB, cndim, loC, hiC))
+        pnga_error(" B patch mismatch ", g_B);
 
-    /*  determine subsets of my patches to access  */
-    if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)){
-      pnga_access_ptr(g_A, loC, hiC, &A_ptr, ldA);
-      pnga_access_ptr(g_B, loC, hiC, &B_ptr, ldB);
-      pnga_access_ptr(g_c, loC, hiC, &C_ptr, ldC);
+      /*  determine subsets of my patches to access  */
+      if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)){
+        pnga_access_ptr(g_A, loC, hiC, &A_ptr, ldA);
+        pnga_access_ptr(g_B, loC, hiC, &B_ptr, ldB);
+        pnga_access_ptr(g_c, loC, hiC, &C_ptr, ldC);
 
-      snga_add_patch_values(atype, alpha, beta, cndim,
-          loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
+        snga_add_patch_values(atype, alpha, beta, cndim,
+            loC, hiC, ldC, A_ptr, B_ptr, C_ptr);
 
-      /* release access to the data */
-      pnga_release       (g_A, loC, hiC);
-      pnga_release       (g_B, loC, hiC); 
-      pnga_release_update(g_c, loC, hiC); 
+        /* release access to the data */
+        pnga_release       (g_A, loC, hiC);
+        pnga_release       (g_B, loC, hiC); 
+        pnga_release_update(g_c, loC, hiC); 
+      }
+    } else if (!compatible_a && !compatible_b) {
+      /* there is no match between any of the global arrays */
+      if (!pnga_duplicate(g_c, &g_B, tempname))
+        pnga_error("ga_dadd_patch: dup failed", 0L);
+      pnga_copy_patch(&notrans, g_b, blo, bhi, g_B, clo, chi);
+      bndim = cndim;
+      B_created = 1;
+      if(andim > bndim) cndim = bndim;
+      if(andim < bndim) cndim = andim;
+      pnga_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
+      pnga_scale_patch(g_c, clo, chi, alpha);
+      /*  determine subsets of my patches to access  */
+      if (pnga_patch_intersect(clo, chi, loC, hiC, cndim)){
+        pnga_access_ptr(g_B, loC, hiC, &B_ptr, ldB);
+        pnga_access_ptr(g_c, loC, hiC, &C_ptr, ldC);
+
+        snga_acc_patch_values(atype, beta, cndim, loC, hiC, ldC,
+                              B_ptr, C_ptr);
+        /* release access to the data */
+        pnga_release       (g_B, loC, hiC); 
+        pnga_release_update(g_c, loC, hiC); 
+      }
     }
   } else {
     /* create copies of arrays A and B that are identically distributed
