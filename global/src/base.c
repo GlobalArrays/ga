@@ -1466,6 +1466,8 @@ void pnga_set_array_name(Integer g_a, char *array_name)
   GA_PUSH_NAME("ga_set_array_name");
   if (GA[ga_handle].actv == 1)
     pnga_error("Cannot set array name on array that has been allocated",0);
+  if (strlen(array_name) > FNAM)
+    pnga_error("Array name exceeds maximum array name length",FNAM);
   strcpy(GA[ga_handle].name, array_name);
   GA_POP_NAME;
 }
