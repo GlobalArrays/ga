@@ -755,10 +755,10 @@ ARMCI_NETWORK_CRAY_SHMEM_FALSE
 ARMCI_NETWORK_CRAY_SHMEM_TRUE
 ARMCI_NETWORK_BGML_FALSE
 ARMCI_NETWORK_BGML_TRUE
+PERL
 EGREP
 GREP
 CPP
-PERL
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
@@ -1864,52 +1864,6 @@ fi
 
 } # ac_fn_c_try_compile
 
-# ac_fn_c_try_link LINENO
-# -----------------------
-# Try to link conftest.$ac_ext, and return whether this succeeded.
-ac_fn_c_try_link ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  rm -f conftest.$ac_objext conftest$ac_exeext
-  if { { ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
-$as_echo "$ac_try_echo"; } >&5
-  (eval "$ac_link") 2>conftest.err
-  ac_status=$?
-  if test -s conftest.err; then
-    grep -v '^ *+' conftest.err >conftest.er1
-    cat conftest.er1 >&5
-    mv -f conftest.er1 conftest.err
-  fi
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then :
-  ac_retval=0
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_retval=1
-fi
-  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
-  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
-  # interfere with the next link command; also delete a directory that is
-  # left behind by Apple's compiler.  We do this before executing the actions.
-  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
-  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
-  as_fn_set_status $ac_retval
-
-} # ac_fn_c_try_link
-
 # ac_fn_c_try_cpp LINENO
 # ----------------------
 # Try to preprocess conftest.$ac_ext, and return whether this succeeded.
@@ -2110,6 +2064,52 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
 
 } # ac_fn_c_check_header_compile
+
+# ac_fn_c_try_link LINENO
+# -----------------------
+# Try to link conftest.$ac_ext, and return whether this succeeded.
+ac_fn_c_try_link ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  rm -f conftest.$ac_objext conftest$ac_exeext
+  if { { ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_link") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    grep -v '^ *+' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+    mv -f conftest.er1 conftest.err
+  fi
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then :
+  ac_retval=0
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_retval=1
+fi
+  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
+  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
+  # interfere with the next link command; also delete a directory that is
+  # left behind by Apple's compiler.  We do this before executing the actions.
+  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
+  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
+  as_fn_set_status $ac_retval
+
+} # ac_fn_c_try_link
 
 # ac_fn_c_compute_int LINENO EXPR VAR INCLUDES
 # --------------------------------------------
@@ -4119,7 +4119,7 @@ else
 fi
 
 
-need_parse=no
+with_mpi_need_parse=no
 
 case $with_mpi:$with_tcgmsg in #(
   maybe:yes) :
@@ -4135,9 +4135,9 @@ case $with_mpi:$with_tcgmsg in #(
   no:no) :
     as_fn_error $? "select at least one messaging library" "$LINENO" 5 ;; #(
   *:yes) :
-    ga_msg_comms=TCGMSGMPI; need_parse=yes ;; #(
+    ga_msg_comms=TCGMSGMPI; with_mpi_need_parse=yes ;; #(
   *:no) :
-    ga_msg_comms=MPI; need_parse=yes ;; #(
+    ga_msg_comms=MPI; with_mpi_need_parse=yes ;; #(
   *:*) :
     as_fn_error $? "unknown messaging library settings" "$LINENO" 5 ;; #(
   *) :
@@ -4151,49 +4151,6 @@ case $ga_cv_target_base:$ga_msg_comms in #(
      ;;
 esac
 
-if test x$need_parse = xyes; then :
-  for arg in $with_mpi ; do
-    case $arg in #(
-  yes) :
-     ;; #(
-  no) :
-     ;; #(
-  -l*) :
-    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
-  -L*) :
-    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
-  -WL*) :
-    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
-  -Wl*) :
-    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
-  -I*) :
-    GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
-  *.a) :
-    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
-  *.so) :
-    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
-  *lib*) :
-    if test -d $arg; then :
-  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
-fi ;; #(
-  -*include*) :
-    GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
-  *include*) :
-    if test -d $arg; then :
-  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg"
-fi ;; #(
-  *) :
-    if test -d $arg/lib; then :
-  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"
-fi
-         if test -d $arg/include; then :
-  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"
-fi ;;
-esac
-done
-fi
 
 # TCGMSG is no longer supported for ARMCI development.
 if test "x$ARMCI_TOP_SRCDIR" != x; then :
@@ -5331,295 +5288,6 @@ fi
 
 CFLAGS="$ga_save_CFLAGS"
 
-if test x$with_mpi_wrappers = xyes; then :
-
-# Find perl.
-# Extract the first word of "perl", so it can be a program name with args.
-set dummy perl; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_PERL+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $PERL in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PERL="$PERL" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_PERL="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-PERL=$ac_cv_path_PERL
-if test -n "$PERL"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL" >&5
-$as_echo "$PERL" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-# Create inside.pl.
-rm -f inside.pl
-cat >inside.pl <<"EOF"
-#!/usr/bin/perl
-$numargs = $#ARGV + 1;
-if ($numargs != 2) {
-    print "Usage: wrapped.txt naked.txt\n";
-    exit 1;
-}
-# Read each input file as a string (rather than a list).
-local $/=undef;
-open WRAPPED, "$ARGV[0]" or die "Could not open wrapped text file: $!";
-$wrapped_lines = <WRAPPED>;
-close WRAPPED;
-open NAKED, "$ARGV[1]" or die "Could not open naked text file: $!";
-$naked_lines = <NAKED>;
-close NAKED;
-# Replace newlines, + from wrapped and naked lines.
-$wrapped_lines =~ tr/\n+/ /;
-$naked_lines =~ tr/\n+/ /;
-# Remove whitespace from beginning of wrapped and naked lines.
-$wrapped_lines =~ s/^\s+//;
-$naked_lines =~ s/^\s+//;
-# Remove whitespace from end of wrapped and naked lines.
-$wrapped_lines =~ s/\s+$//;
-$naked_lines =~ s/\s+$//;
-# If either wrapped_lines or naked_lines are empty, this is an error.
-# It is assumed that the particular version string which created the input
-# files should generate SOMETHING.
-unless ($wrapped_lines) {
-    exit 1;
-}
-unless ($naked_lines) {
-    exit 1;
-}
-# Can the naked lines be found within the wrapped lines?
-if ($wrapped_lines =~ /$naked_lines/) {
-    #print "Found as substring\n";
-    exit 0;
-}
-# Are the naked lines exactly the same as the wrapped lines?
-elsif ($wrapped_lines eq $naked_lines) {
-    #print "Found equal\n";
-    exit 0;
-}
-else {
-    #print "Not found\n";
-    exit 1;
-}
-EOF
-inside="$PERL inside.pl"
-wrapped="$CC"
-case $wrapped in #(
-  *_r) :
-    compilers="bgxlc_r xlc_r" ;; #(
-  *) :
-    compilers="bgxlc xlc pgcc pathcc icc sxcc fcc opencc suncc craycc gcc ecc cl ccc cc" ;; #(
-  *) :
-     ;;
-esac
-
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $wrapped compiler" >&5
-$as_echo_n "checking for base $wrapped compiler... " >&6; }
-if test "${ga_cv_mpic_naked+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-
-base="`$wrapped -show 2>/dev/null | sed 's/[ 	].*$//' | head -1`"
-ga_save_CC="$CC"
-CC="$base"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ga_cv_mpic_naked="$base"
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CC="$ga_save_CC"
-versions="--version -v -V -qversion"
-found_wrapped_version=0
-# Try separating stdout and stderr. Only compare stdout.
-if test "x$ga_cv_mpic_naked" = x; then :
-
-# prepend any CC/CXX/F77 the user may have specified
-compilers="$ga_orig_CC $compilers"
-echo "only comparing stdout" >&5
-for version in $versions
-do
-    echo "trying version=$version" >&5
-    rm -f mpi.txt mpi.err naked.txt naked.err
-    if $wrapped $version 1>mpi.txt 2>mpi.err; then :
-  found_wrapped_version=1
-         for naked_compiler in $compilers
-         do
-            if test "x$naked_compiler" != "x$wrapped"; then :
-  if $naked_compiler $version 1>naked.txt 2>naked.err; then :
-  if $inside mpi.txt naked.txt >/dev/null; then :
-  ga_cv_mpic_naked=$naked_compiler; break
-else
-  echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
-fi
-else
-  echo "$naked_compiler $version failed, skipping" >&5
-fi
-fi
-         done
-else
-  echo "$wrapped $version failed, skipping" >&5
-fi
-    if test "x$ga_cv_mpic_naked" != x; then :
-  break
-fi
-done
-
-fi
-# Perhaps none of the MPI compilers had a zero exit status (this is bad).
-# In this case we have to do a brute force match regardless of exit status.
-if test "x$found_wrapped_version" = x0; then :
-
-if test "x$ga_cv_mpic_naked" = x; then :
-
-echo "no zero exit status found for MPI compilers" >&5
-for version in $versions
-do
-    echo "trying version=$version" >&5
-    rm -f mpi.txt mpi.err
-    $wrapped $version 1>mpi.txt 2>mpi.err
-    for naked_compiler in $compilers
-    do
-        if test "x$naked_compiler" != "x$wrapped"; then :
-  rm -f naked.txt naked.err
-             if $naked_compiler $version 1>naked.txt 2>naked.err; then :
-  if $inside mpi.txt naked.txt >/dev/null; then :
-  ga_cv_mpic_naked=$naked_compiler; break
-else
-  echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
-fi
-else
-  echo "$naked_compiler $version failed, skipping" >&5
-fi
-fi
-    done
-    if test "x$ga_cv_mpic_naked" != x; then :
-  break
-fi
-done
-
-fi
-
-fi
-# Try by combining stdout/err into one file.
-if test "x$ga_cv_mpic_naked" = x; then :
-
-echo "try combining stdout and stderr into one file" >&5
-for version in $versions
-do
-    echo "trying version=$version" >&5
-    rm -f mpi.txt naked.txt
-    if $wrapped $version 1>mpi.txt 2>&1; then :
-  for naked_compiler in $compilers
-         do
-            if test "x$naked_compiler" != "x$wrapped"; then :
-  if $naked_compiler $version 1>naked.txt 2>&1; then :
-  if $inside mpi.txt naked.txt >/dev/null; then :
-  ga_cv_mpic_naked=$naked_compiler; break
-else
-  echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
-fi
-else
-  echo "$naked_compiler $version failed, skipping" >&5
-fi
-fi
-         done
-else
-  echo "$wrapped $version failed, skipping" >&5
-fi
-    if test "x$ga_cv_mpic_naked" != x; then :
-  break
-fi
-done
-
-fi
-# If we got this far, then it's likely that the MPI compiler had a zero exit
-# status when it shouldn't have for one version flag, but later had a non-zero
-# exit status for a flag it shouldn't have.  One false positive hid a false
-# negative.  In this case, brute force compare all MPI compiler output against
-# all compiler output.
-if test "x$ga_cv_mpic_naked" = x; then :
-
-echo "we have a very badly behaving MPI compiler" >&5
-for version in $versions
-do
-    echo "trying version=$version" >&5
-    rm -f mpi.txt mpi.err
-    $wrapped $version 1>mpi.txt 2>mpi.err
-    for naked_compiler in $compilers
-    do
-        if test "x$naked_compiler" != "x$wrapped"; then :
-  rm -f naked.txt naked.err
-             if $naked_compiler $version 1>naked.txt 2>naked.err; then :
-  if $inside mpi.txt naked.txt >/dev/null; then :
-  ga_cv_mpic_naked=$naked_compiler; break
-else
-  echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
-fi
-else
-  echo "$naked_compiler $version failed, skipping" >&5
-fi
-fi
-    done
-    if test "x$ga_cv_mpic_naked" != x; then :
-  break
-fi
-done
-
-fi
-rm -f mpi.txt mpi.err naked.txt naked.err
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpic_naked" >&5
-$as_echo "$ga_cv_mpic_naked" >&6; }
-if test "x$ga_cv_mpic_naked" = x; then :
-  as_fn_error $? "Could not determine the C compiler wrapped by MPI" "$LINENO" 5
-else
-  if test "x$ga_orig_CC" != x && test "x$ga_orig_CC" != "x$ga_cv_mpic_naked"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_CC" >&5
-$as_echo "$as_me: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_CC" >&2;}
-fi
-fi
-
-
-rm -f inside.pl
-
-fi
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -6163,6 +5831,354 @@ fi
 $as_echo "$ga_cv_c_compiler_vendor" >&6; }
 
 
+if test x$with_mpi_wrappers = xyes; then :
+
+# Find perl.
+# Extract the first word of "perl", so it can be a program name with args.
+set dummy perl; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_path_PERL+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PERL in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PERL="$PERL" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_PERL="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PERL=$ac_cv_path_PERL
+if test -n "$PERL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL" >&5
+$as_echo "$PERL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+# Create inside.pl.
+rm -f inside.pl
+cat >inside.pl <<"EOF"
+#!/usr/bin/perl
+$numargs = $#ARGV + 1;
+if ($numargs != 2) {
+    print "Usage: wrapped.txt naked.txt\n";
+    exit 1;
+}
+# Read each input file as a string (rather than a list).
+local $/=undef;
+open WRAPPED, "$ARGV[0]" or die "Could not open wrapped text file: $!";
+$wrapped_lines = <WRAPPED>;
+close WRAPPED;
+open NAKED, "$ARGV[1]" or die "Could not open naked text file: $!";
+$naked_lines = <NAKED>;
+close NAKED;
+# Replace newlines, + from wrapped and naked lines.
+$wrapped_lines =~ tr/\n+/ /;
+$naked_lines =~ tr/\n+/ /;
+# Remove whitespace from beginning of wrapped and naked lines.
+$wrapped_lines =~ s/^\s+//;
+$naked_lines =~ s/^\s+//;
+# Remove whitespace from end of wrapped and naked lines.
+$wrapped_lines =~ s/\s+$//;
+$naked_lines =~ s/\s+$//;
+# If either wrapped_lines or naked_lines are empty, this is an error.
+# It is assumed that the particular version string which created the input
+# files should generate SOMETHING.
+unless ($wrapped_lines) {
+    exit 1;
+}
+unless ($naked_lines) {
+    exit 1;
+}
+# Can the naked lines be found within the wrapped lines?
+if ($wrapped_lines =~ /$naked_lines/) {
+    #print "Found as substring\n";
+    exit 0;
+}
+# Are the naked lines exactly the same as the wrapped lines?
+elsif ($wrapped_lines eq $naked_lines) {
+    #print "Found equal\n";
+    exit 0;
+}
+else {
+    #print "Not found\n";
+    exit 1;
+}
+EOF
+inside="$PERL inside.pl"
+wrapped="$CC"
+case $wrapped in #(
+  *_r) :
+    compilers="bgxlc_r xlc_r" ;; #(
+  *) :
+    compilers="bgxlc xlc pgcc pathcc icc sxcc fcc opencc suncc craycc gcc ecc cl ccc cc" ;; #(
+  *) :
+     ;;
+esac
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for base $wrapped compiler" >&5
+$as_echo_n "checking for base $wrapped compiler... " >&6; }
+if test "${ga_cv_mpic_naked+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+base="`$wrapped -show 2>/dev/null | sed 's/[ 	].*$//' | head -1`"
+ga_save_CC="$CC"
+CC="$base"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ga_cv_mpic_naked="$base"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CC="$ga_save_CC"
+versions="--version -v -V -qversion"
+found_wrapped_version=0
+# Try separating stdout and stderr. Only compare stdout.
+if test "x$ga_cv_mpic_naked" = x; then :
+
+# prepend any CC/CXX/F77 the user may have specified
+compilers="$ga_orig_CC $compilers"
+echo "only comparing stdout" >&5
+for version in $versions
+do
+    echo "trying version=$version" >&5
+    rm -f mpi.txt mpi.err naked.txt naked.err
+    if $wrapped $version 1>mpi.txt 2>mpi.err; then :
+  found_wrapped_version=1
+         for naked_compiler in $compilers
+         do
+            if test "x$naked_compiler" != "x$wrapped"; then :
+  if $naked_compiler $version 1>naked.txt 2>naked.err; then :
+  if $inside mpi.txt naked.txt >/dev/null; then :
+  ga_cv_mpic_naked=$naked_compiler; break
+else
+  echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
+fi
+else
+  echo "$naked_compiler $version failed, skipping" >&5
+fi
+fi
+         done
+else
+  echo "$wrapped $version failed, skipping" >&5
+fi
+    if test "x$ga_cv_mpic_naked" != x; then :
+  break
+fi
+done
+
+fi
+# Perhaps none of the MPI compilers had a zero exit status (this is bad).
+# In this case we have to do a brute force match regardless of exit status.
+if test "x$found_wrapped_version" = x0; then :
+
+if test "x$ga_cv_mpic_naked" = x; then :
+
+echo "no zero exit status found for MPI compilers" >&5
+for version in $versions
+do
+    echo "trying version=$version" >&5
+    rm -f mpi.txt mpi.err
+    $wrapped $version 1>mpi.txt 2>mpi.err
+    for naked_compiler in $compilers
+    do
+        if test "x$naked_compiler" != "x$wrapped"; then :
+  rm -f naked.txt naked.err
+             if $naked_compiler $version 1>naked.txt 2>naked.err; then :
+  if $inside mpi.txt naked.txt >/dev/null; then :
+  ga_cv_mpic_naked=$naked_compiler; break
+else
+  echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
+fi
+else
+  echo "$naked_compiler $version failed, skipping" >&5
+fi
+fi
+    done
+    if test "x$ga_cv_mpic_naked" != x; then :
+  break
+fi
+done
+
+fi
+
+fi
+# Try by combining stdout/err into one file.
+if test "x$ga_cv_mpic_naked" = x; then :
+
+echo "try combining stdout and stderr into one file" >&5
+for version in $versions
+do
+    echo "trying version=$version" >&5
+    rm -f mpi.txt naked.txt
+    if $wrapped $version 1>mpi.txt 2>&1; then :
+  for naked_compiler in $compilers
+         do
+            if test "x$naked_compiler" != "x$wrapped"; then :
+  if $naked_compiler $version 1>naked.txt 2>&1; then :
+  if $inside mpi.txt naked.txt >/dev/null; then :
+  ga_cv_mpic_naked=$naked_compiler; break
+else
+  echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
+fi
+else
+  echo "$naked_compiler $version failed, skipping" >&5
+fi
+fi
+         done
+else
+  echo "$wrapped $version failed, skipping" >&5
+fi
+    if test "x$ga_cv_mpic_naked" != x; then :
+  break
+fi
+done
+
+fi
+# If we got this far, then it's likely that the MPI compiler had a zero exit
+# status when it shouldn't have for one version flag, but later had a non-zero
+# exit status for a flag it shouldn't have.  One false positive hid a false
+# negative.  In this case, brute force compare all MPI compiler output against
+# all compiler output.
+if test "x$ga_cv_mpic_naked" = x; then :
+
+echo "we have a very badly behaving MPI compiler" >&5
+for version in $versions
+do
+    echo "trying version=$version" >&5
+    rm -f mpi.txt mpi.err
+    $wrapped $version 1>mpi.txt 2>mpi.err
+    for naked_compiler in $compilers
+    do
+        if test "x$naked_compiler" != "x$wrapped"; then :
+  rm -f naked.txt naked.err
+             if $naked_compiler $version 1>naked.txt 2>naked.err; then :
+  if $inside mpi.txt naked.txt >/dev/null; then :
+  ga_cv_mpic_naked=$naked_compiler; break
+else
+  echo "inside.pl $wrapped $naked_compiler failed, skipping" >&5
+fi
+else
+  echo "$naked_compiler $version failed, skipping" >&5
+fi
+fi
+    done
+    if test "x$ga_cv_mpic_naked" != x; then :
+  break
+fi
+done
+
+fi
+rm -f mpi.txt mpi.err naked.txt naked.err
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_mpic_naked" >&5
+$as_echo "$ga_cv_mpic_naked" >&6; }
+if test "x$ga_cv_mpic_naked" = x; then :
+  as_fn_error $? "Could not determine the C compiler wrapped by MPI" "$LINENO" 5
+else
+  if test "x$ga_orig_CC" != x && test "x$ga_orig_CC" != "x$ga_cv_mpic_naked"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_CC" >&5
+$as_echo "$as_me: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_CC" >&2;}
+fi
+fi
+
+
+rm -f inside.pl
+
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_mpi ; do
+    case $arg in #(
+  yes) :
+     ;; #(
+  no) :
+     ;; #(
+  -l*) :
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
+  -L*) :
+    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
+  -WL*) :
+    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
+  -Wl*) :
+    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
+  -I*) :
+    GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
+  -*lib*) :
+    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
+  *.a) :
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
+  *.so) :
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
+  *lib*) :
+    if test -d $arg; then :
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
+fi ;; #(
+  -*include*) :
+    GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
+  *include*) :
+    if test -d $arg; then :
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg"
+fi ;; #(
+  *) :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include64; then :
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"
+fi
+fi ;;
+esac
+done
+fi
 # If F77 is enabled, only perform a simple compilation test.
 if test "x$with_mpi" != xno; then :
 
@@ -6540,7 +6556,11 @@ fi
 
 
 if test "x$with_bgml" != x; then :
-  for arg in $with_bgml ; do
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_bgml ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6573,11 +6593,24 @@ fi ;; #(
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -6599,7 +6632,11 @@ fi
 
 
 if test "x$with_cray_shmem" != x; then :
-  for arg in $with_cray_shmem ; do
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_cray_shmem ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6632,11 +6669,24 @@ fi ;; #(
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -6658,7 +6708,11 @@ fi
 
 
 if test "x$with_dcmf" != x; then :
-  for arg in $with_dcmf ; do
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_dcmf ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6691,11 +6745,24 @@ fi ;; #(
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -6717,7 +6784,11 @@ fi
 
 
 if test "x$with_lapi" != x; then :
-  for arg in $with_lapi ; do
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_lapi ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6750,11 +6821,24 @@ fi ;; #(
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -6776,7 +6860,11 @@ fi
 
 
 if test "x$with_mpi_mt" != x; then :
-  for arg in $with_mpi_mt ; do
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_mpi_mt ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6809,11 +6897,24 @@ fi ;; #(
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -6835,7 +6936,11 @@ fi
 
 
 if test "x$with_mpi_spawn" != x; then :
-  for arg in $with_mpi_spawn ; do
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_mpi_spawn ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6868,11 +6973,24 @@ fi ;; #(
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -6894,7 +7012,11 @@ fi
 
 
 if test "x$with_openib" != x; then :
-  for arg in $with_openib ; do
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_openib ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6927,11 +7049,24 @@ fi ;; #(
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -6953,7 +7088,11 @@ fi
 
 
 if test "x$with_portals" != x; then :
-  for arg in $with_portals ; do
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_portals ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -6986,11 +7125,24 @@ fi ;; #(
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -7012,7 +7164,11 @@ fi
 
 
 if test "x$with_gemini" != x; then :
-  for arg in $with_gemini ; do
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_gemini ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -7045,11 +7201,24 @@ fi ;; #(
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -7071,7 +7240,11 @@ fi
 
 
 if test "x$with_sockets" != x; then :
-  for arg in $with_sockets ; do
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_sockets ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -7104,11 +7277,24 @@ fi ;; #(
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -17074,6 +17260,10 @@ fi
 BLAS_LIBS=
 BLAS_LDFLAGS=
 BLAS_CPPFLAGS=
+if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
 for arg in $with_blas ; do
     case $arg in #(
   yes) :
@@ -17107,11 +17297,24 @@ fi ;; #(
   BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -19208,6 +19411,10 @@ fi
 LAPACK_LIBS=
 LAPACK_LDFLAGS=
 LAPACK_CPPFLAGS=
+if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
 for arg in $with_lapack ; do
     case $arg in #(
   yes) :
@@ -19241,11 +19448,24 @@ fi ;; #(
   LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -19488,6 +19708,10 @@ fi
 SCALAPACK_LIBS=
 SCALAPACK_LDFLAGS=
 SCALAPACK_CPPFLAGS=
+if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
 for arg in $with_scalapack ; do
     case $arg in #(
   yes) :
@@ -19521,11 +19745,24 @@ fi ;; #(
   SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done

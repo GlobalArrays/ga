@@ -30,7 +30,7 @@ AC_ARG_WITH([mpi],
     [],
     [with_mpi=yes])
 ])
-need_parse=no
+with_mpi_need_parse=no
 m4_ifblank([$1], [
 AS_CASE([$with_mpi:$with_tcgmsg],
 [maybe:yes],[ga_msg_comms=TCGMSG; with_mpi=no],
@@ -39,8 +39,8 @@ AS_CASE([$with_mpi:$with_tcgmsg],
 [yes:no],   [ga_msg_comms=MPI; with_mpi_wrappers=yes],
 [no:yes],   [ga_msg_comms=TCGMSG],
 [no:no],    [AC_MSG_ERROR([select at least one messaging library])],
-[*:yes],    [ga_msg_comms=TCGMSGMPI; need_parse=yes],
-[*:no],     [ga_msg_comms=MPI; need_parse=yes],
+[*:yes],    [ga_msg_comms=TCGMSGMPI; with_mpi_need_parse=yes],
+[*:no],     [ga_msg_comms=MPI; with_mpi_need_parse=yes],
 [*:*],      [AC_MSG_ERROR([unknown messaging library settings])])
 # Hack. If TARGET=MACX and MSG_COMMS=TCGMSG, we really want TCGMSG5.
 AS_CASE([$ga_cv_target_base:$ga_msg_comms],
@@ -49,10 +49,11 @@ AS_CASE([$ga_cv_target_base:$ga_msg_comms],
 AS_CASE([$with_mpi],
     [yes],  [with_mpi_wrappers=yes],
     [no],   [],
-    [*],    [need_parse=yes])
+    [*],    [with_mpi_need_parse=yes])
 ])
-AS_IF([test x$need_parse = xyes],
-    [GA_ARG_PARSE([with_mpi], [GA_MP_LIBS], [GA_MP_LDFLAGS], [GA_MP_CPPFLAGS])])
+dnl postpone parsing with_mpi until we know sizeof(void*)
+dnl AS_IF([test x$with_mpi_need_parse = xyes],
+dnl     [GA_ARG_PARSE([with_mpi], [GA_MP_LIBS], [GA_MP_LDFLAGS], [GA_MP_CPPFLAGS])])
 m4_ifblank([$1], [
 # TCGMSG is no longer supported for ARMCI development.
 AS_IF([test "x$ARMCI_TOP_SRCDIR" != x],

@@ -4173,7 +4173,7 @@ else
 fi
 
 
-need_parse=no
+with_mpi_need_parse=no
 
 case $with_mpi in #(
   yes) :
@@ -4181,54 +4181,11 @@ case $with_mpi in #(
   no) :
      ;; #(
   *) :
-    need_parse=yes ;; #(
+    with_mpi_need_parse=yes ;; #(
   *) :
      ;;
 esac
 
-if test x$need_parse = xyes; then :
-  for arg in $with_mpi ; do
-    case $arg in #(
-  yes) :
-     ;; #(
-  no) :
-     ;; #(
-  -l*) :
-    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
-  -L*) :
-    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
-  -WL*) :
-    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
-  -Wl*) :
-    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
-  -I*) :
-    GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
-  *.a) :
-    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
-  *.so) :
-    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
-  *lib*) :
-    if test -d $arg; then :
-  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
-fi ;; #(
-  -*include*) :
-    GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
-  *include*) :
-    if test -d $arg; then :
-  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg"
-fi ;; #(
-  *) :
-    if test -d $arg/lib; then :
-  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"
-fi
-         if test -d $arg/include; then :
-  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"
-fi ;;
-esac
-done
-fi
 
 
 
@@ -5387,6 +5344,65 @@ fi
 
 rm -f inside.pl
 
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_mpi ; do
+    case $arg in #(
+  yes) :
+     ;; #(
+  no) :
+     ;; #(
+  -l*) :
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
+  -L*) :
+    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
+  -WL*) :
+    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
+  -Wl*) :
+    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
+  -I*) :
+    GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
+  -*lib*) :
+    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
+  *.a) :
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
+  *.so) :
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
+  *lib*) :
+    if test -d $arg; then :
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
+fi ;; #(
+  -*include*) :
+    GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
+  *include*) :
+    if test -d $arg; then :
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg"
+fi ;; #(
+  *) :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include64; then :
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"
+fi
+fi ;;
+esac
+done
 fi
 
 
@@ -11031,7 +11047,11 @@ case $with_ga in #(
   no) :
      ;; #(
   *) :
-    for arg in $with_ga ; do
+    if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_ga ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -11064,11 +11084,24 @@ fi ;; #(
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done ;;
@@ -11102,7 +11135,11 @@ case $with_ga in #(
   no) :
      ;; #(
   *) :
-    for arg in $with_ga ; do
+    if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_ga ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -11135,11 +11172,24 @@ fi ;; #(
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done ;;
@@ -11345,7 +11395,11 @@ case $with_ga in #(
   no) :
      ;; #(
   *) :
-    for arg in $with_ga ; do
+    if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_ga ; do
     case $arg in #(
   yes) :
      ;; #(
@@ -11378,11 +11432,24 @@ fi ;; #(
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done ;;
@@ -11541,6 +11608,10 @@ fi
 BLAS_LIBS=
 BLAS_LDFLAGS=
 BLAS_CPPFLAGS=
+if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
 for arg in $with_blas ; do
     case $arg in #(
   yes) :
@@ -11574,11 +11645,24 @@ fi ;; #(
   BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -13675,6 +13759,10 @@ fi
 LAPACK_LIBS=
 LAPACK_LDFLAGS=
 LAPACK_CPPFLAGS=
+if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
 for arg in $with_lapack ; do
     case $arg in #(
   yes) :
@@ -13708,11 +13796,24 @@ fi ;; #(
   LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done
@@ -13955,6 +14056,10 @@ fi
 SCALAPACK_LIBS=
 SCALAPACK_LDFLAGS=
 SCALAPACK_CPPFLAGS=
+if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
 for arg in $with_scalapack ; do
     case $arg in #(
   yes) :
@@ -13988,11 +14093,24 @@ fi ;; #(
   SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg"
 fi ;; #(
   *) :
-    if test -d $arg/lib; then :
+    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib64"
+elif test -d $arg/lib; then :
   SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib"
 fi
-         if test -d $arg/include; then :
+             if test -d $arg/include64; then :
+  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include64"
+elif test -d $arg/include; then :
   SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"
+fi
+else
+  if test -d $arg/lib; then :
+  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib"
+fi
+             if test -d $arg/include; then :
+  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"
+fi
 fi ;;
 esac
 done

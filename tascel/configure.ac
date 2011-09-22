@@ -61,7 +61,9 @@ AC_MSG_NOTICE
 tascel_save_CFLAGS="$CFLAGS"
 GA_PROG_MPICC
 CFLAGS="$tascel_save_CFLAGS"
-AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
+AS_IF([test x$with_mpi_wrappers = xyes],
+    [GA_MPI_UNWRAP],
+    [GA_ARG_PARSE([with_mpi], [GA_MP_LIBS], [GA_MP_LDFLAGS], [GA_MP_CPPFLAGS])])
 
 GA_MPICC_TEST_COMPILE
 

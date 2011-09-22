@@ -4,7 +4,8 @@
 # CPPFLAGS variables.
 # TODO ADD test -d tests for *lib* and *include* cases??
 AC_DEFUN([GA_ARG_PARSE],
-[for arg in $$1 ; do
+[AC_COMPUTE_INT([ga_arg_parse_sizeof_voidp], [(long int) (sizeof (void*))])
+for arg in $$1 ; do
     AS_CASE([$arg],
         [yes],          [],
         [no],           [],
@@ -19,6 +20,11 @@ AC_DEFUN([GA_ARG_PARSE],
         [*lib*],        [AS_IF([test -d $arg], [$3="$$3 -L$arg"])],
         [-*include*],   [$4="$$4 $arg"],
         [*include*],    [AS_IF([test -d $arg], [$4="$$4 -I$arg"])],
-        [AS_IF([test -d $arg/lib], [$3="$$3 -L$arg/lib"])
-         AS_IF([test -d $arg/include], [$4="$$4 -I$arg/include"])])
+        [AS_IF([test "x$ga_arg_parse_sizeof_voidp" = x8],
+            [AS_IF([test -d $arg/lib64],    [$3="$$3 -L$arg/lib64"],
+                   [test -d $arg/lib],      [$3="$$3 -L$arg/lib"])
+             AS_IF([test -d $arg/include64],[$4="$$4 -I$arg/include64"],
+                   [test -d $arg/include],  [$4="$$4 -I$arg/include"])],
+            [AS_IF([test -d $arg/lib],      [$3="$$3 -L$arg/lib"])
+             AS_IF([test -d $arg/include],  [$4="$$4 -I$arg/include"])])])
 done])dnl
