@@ -250,8 +250,10 @@ void armci_msg_gop_init()
 void armci_msg_gop_finalize() 
 { 
 #if !defined(SGIALTIX) && defined(SYSV) || defined(MMAP) || defined(WIN32) 
-    PARMCI_Free(ptr_arr[armci_me]); 
-    free(ptr_arr); 
+    if(ARMCI_Uses_shm()){
+        PARMCI_Free(ptr_arr[armci_me]); 
+        free(ptr_arr); 
+    }
 #endif 
     _deallocate_mem_for_work(); 
 } 
