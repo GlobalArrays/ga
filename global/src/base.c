@@ -2889,6 +2889,7 @@ Integer i, handle;
           if(GA[i].actv) pnga_destroy(handle);
           if(GA[i].ptr) free(GA[i].ptr);
           if(GA[i].mapc) free(GA[i].mapc);
+          if(PGRP_LIST[i].actv) free(PGRP_LIST[i].map_proc_list);
     }
     pnga_sync();
 
@@ -2901,6 +2902,8 @@ Integer i, handle;
     free(ptr_array);
 #endif
     free(mapALL);
+    free(_ga_main_data_structure);
+    free(_proc_list_main_data_structure);
     ARMCI_Free_local(GA_Update_Signal);
 
     pnga_sync();
