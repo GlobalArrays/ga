@@ -141,6 +141,7 @@ void armci_server_initial_connection()
 /* close all open connections, called before terminating/aborting */
 void armci_transport_cleanup()
 {
+#if 0
     /* armci_transport_cleanup is called by all procs (clients and servers).
        Therefore, only in server case we need to finalize MPI before exit. */
     if(ARMCI_COMM_WORLD != MPI_COMM_NULL) 
@@ -149,6 +150,7 @@ void armci_transport_cleanup()
        MPI_Finalize();
        exit(EXIT_SUCCESS); /* server termination */
     }
+#endif
 }
 
 static void armci_mpi_rcv_strided_data(request_header_t *msginfo,
