@@ -5135,7 +5135,7 @@ unless ($naked_lines) {
     exit 1;
 }
 # Can the naked lines be found within the wrapped lines?
-if ($wrapped_lines =~ /$naked_lines/) {
+if ($wrapped_lines =~ /\Q$naked_lines\E/) {
     #print "Found as substring\n";
     exit 0;
 }
@@ -5336,8 +5336,8 @@ if test "x$ga_cv_mpic_naked" = x; then :
   as_fn_error $? "Could not determine the C compiler wrapped by MPI" "$LINENO" 5
 else
   if test "x$ga_orig_CC" != x && test "x$ga_orig_CC" != "x$ga_cv_mpic_naked"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_CC" >&5
-$as_echo "$as_me: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_CC" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unwrapped $wrapped ($ga_cv_mpic_naked) does not match user-specified $ga_orig_CC" >&5
+$as_echo "$as_me: WARNING: unwrapped $wrapped ($ga_cv_mpic_naked) does not match user-specified $ga_orig_CC" >&2;}
 fi
 fi
 
@@ -6035,7 +6035,7 @@ unless ($naked_lines) {
     exit 1;
 }
 # Can the naked lines be found within the wrapped lines?
-if ($wrapped_lines =~ /$naked_lines/) {
+if ($wrapped_lines =~ /\Q$naked_lines\E/) {
     #print "Found as substring\n";
     exit 0;
 }
@@ -6236,8 +6236,8 @@ if test "x$ga_cv_mpicxx_naked" = x; then :
   as_fn_error $? "Could not determine the C++ compiler wrapped by MPI" "$LINENO" 5
 else
   if test "x$ga_orig_CXX" != x && test "x$ga_orig_CXX" != "x$ga_cv_mpicxx_naked"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_CXX" >&5
-$as_echo "$as_me: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_CXX" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unwrapped $wrapped ($ga_cv_mpicxx_naked) does not match user-specified $ga_orig_CXX" >&5
+$as_echo "$as_me: WARNING: unwrapped $wrapped ($ga_cv_mpicxx_naked) does not match user-specified $ga_orig_CXX" >&2;}
 fi
 fi
 
@@ -7719,7 +7719,7 @@ unless ($naked_lines) {
     exit 1;
 }
 # Can the naked lines be found within the wrapped lines?
-if ($wrapped_lines =~ /$naked_lines/) {
+if ($wrapped_lines =~ /\Q$naked_lines\E/) {
     #print "Found as substring\n";
     exit 0;
 }
@@ -7914,8 +7914,8 @@ if test "x$ga_cv_mpif77_naked" = x; then :
   as_fn_error $? "Could not determine the Fortran 77 compiler wrapped by MPI" "$LINENO" 5
 else
   if test "x$ga_orig_F77" != x && test "x$ga_orig_F77" != "x$ga_cv_mpif77_naked"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_F77" >&5
-$as_echo "$as_me: WARNING: unwrapped $wrapped ($base) does not match user-specified $ga_orig_F77" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unwrapped $wrapped ($ga_cv_mpif77_naked) does not match user-specified $ga_orig_F77" >&5
+$as_echo "$as_me: WARNING: unwrapped $wrapped ($ga_cv_mpif77_naked) does not match user-specified $ga_orig_F77" >&2;}
 fi
 fi
 

@@ -46,7 +46,7 @@ unless ($naked_lines) {
     exit 1;
 }
 # Can the naked lines be found within the wrapped lines?
-if ($wrapped_lines =~ /$naked_lines/) {
+if ($wrapped_lines =~ /\Q$naked_lines\E/) {
     #print "Found as substring\n";
     exit 0;
 }
@@ -187,7 +187,7 @@ rm -f mpi.txt mpi.err naked.txt naked.err
 AS_IF([test "x$ga_cv_mpi_naked" = x],
     [AC_MSG_ERROR([Could not determine the ]_AC_LANG[ compiler wrapped by MPI])],
     [AS_IF([test "x$ga_orig_comp" != x && test "x$ga_orig_comp" != "x$ga_cv_mpi_naked"],
-        [AC_MSG_WARN([unwrapped $wrapped ($base) does not match user-specified $ga_orig_comp])])])
+        [AC_MSG_WARN([unwrapped $wrapped ($ga_cv_mpi_naked) does not match user-specified $ga_orig_comp])])])
 AS_VAR_POPDEF([ga_save_comp])
 AS_VAR_POPDEF([ga_cv_mpi_naked])
 rm -f inside.pl
