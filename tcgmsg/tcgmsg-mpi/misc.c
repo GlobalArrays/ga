@@ -8,6 +8,7 @@ extern void exit(int status);
 
 #include "tcgmsgP.h"
 #include "srftoc.h"
+#include "mp3.h"
 
 char     tcgmsg_err_string[ERR_STR_LEN];
 MPI_Comm TCGMSG_Comm;
@@ -111,26 +112,7 @@ void tcgi_alt_pbegin(int *argc, char **argv[])
 
     if(!init){ 
         /* nope */
-#if defined(DCMF) 
-        int desired = MPI_THREAD_MULTIPLE; 
-        int provided; 
-        MPI_Init_thread(argc, argv, desired, &provided); 
-        MPI_Comm_rank(MPI_COMM_WORLD,&myid);  
-        if ( myid == 0 ){ 
-            if ( provided == MPI_THREAD_MULTIPLE ){ 
-                printf("Using MPI_THREAD_MULTIPLE\n"); 
-            } else if ( provided == MPI_THREAD_FUNNELED ){ 
-                printf("Using MPI_THREAD_FUNNELED\n"); 
-            } else if ( provided == MPI_THREAD_SERIALIZED ){ 
-                printf("Using MPI_THREAD_SERIALIZED\n"); 
-            } else if ( provided == MPI_THREAD_SINGLE ){ 
-                printf("Using MPI_THREAD_SINGLE\n"); 
-            } 
-        } 
-#else 
-        MPI_Init(argc, argv);
-#endif
-
+        MP_INIT(argc, argv);
         MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
     }
 

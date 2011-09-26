@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include "armci.h"
 #include <mpi.h>
+#include "mp3.h"
 int me,nprocs;
 int LOOP=10;
 int main(int argc, char **argv)
@@ -17,13 +18,7 @@ double t0,t1,tget=0,tnbget=0,tput=0,tnbput=0,tnbwait=0,t2=0;
 #if PORTALS
     ARMCI_NetInit();
 #endif
-#ifdef DCMF
-      int provided;
-      MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-#else
-      MPI_Init (&argc, &argv);  /* initialize MPI */
-#endif
-
+    MP_INIT(argc,argv);
     MPI_Comm_rank(MPI_COMM_WORLD,&me);
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
     ARMCI_Init_args(&argc, &argv);

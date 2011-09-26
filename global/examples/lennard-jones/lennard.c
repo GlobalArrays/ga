@@ -15,15 +15,9 @@
 #   include <math.h>
 #endif
 
-#ifdef MPI
-#   include <mpi.h>
-#else
-#   include "tcgmsg.h"
-#endif
-
 #include "ga.h"
 #include "macdecls.h"
-
+#include "mp3.h"
 
 #define NATOMS            256
 #define BLOCK_SIZE        64
@@ -724,16 +718,7 @@ int main(int argc, char **argv) {
   int natoms=NATOMS;
   int dims[NDIM];
 
-#ifdef MPI
-#   ifdef DCMF
-    int provided;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-#   else
-    MPI_Init (&argc, &argv);	/* initialize MPI */
-#   endif
-#else
-    tcg_pbegin(argc, argv);                        /* initialize TCGMSG */
-#endif
+  MP_INIT(argc, argv);
 
   /**
    * Initialize Global Arrays.

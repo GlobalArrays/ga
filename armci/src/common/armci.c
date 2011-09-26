@@ -402,6 +402,29 @@ int PARMCI_Init()
                  "instead of PARMCI_Init(). Please replace PARMCI_Init() "
                  " with PARMCI_Init_args(&argc, &argv) as in the API docs", 0L);
 #endif
+#if defined(MPI_MT) || defined(DCMF)
+    {
+        int provided;
+        MPI_Query_thread(&provided);
+        if (provided == MPI_THREAD_SINGLE) {
+            armci_die("ARMCI is build w/ ARMCI_NETWORK=MPI_MT but the "
+                    "provided MPI threading level is MPI_THREAD_SINGLE "
+                    " not MPI_THREAD_MULTIPLE", 1);
+        }
+        else if (provided == MPI_THREAD_FUNNELED) {
+            armci_die("ARMCI is build w/ ARMCI_NETWORK=MPI_MT but the "
+                    "provided MPI threading level is MPI_THREAD_FUNNELED "
+                    " not MPI_THREAD_MULTIPLE", 1);
+        }
+        else if (provided == MPI_THREAD_SERIALIZED) {
+            armci_die("ARMCI is build w/ ARMCI_NETWORK=MPI_MT but the "
+                    "provided MPI threading level is MPI_THREAD_SERIALIZED "
+                    " not MPI_THREAD_MULTIPLE", 1);
+        }
+        else if (provided == MPI_THREAD_MULTIPLE) {
+        }
+    }
+#endif
     
 #ifdef BGML
     BGML_Messager_Init();
