@@ -186,7 +186,6 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/memlock.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/memory.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/message.c \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/mp3.fh \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/mp3.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/mutex.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/pack.c \
@@ -375,7 +374,7 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_56 = src/locks/tas_as.s
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_TRUE@am__append_57 = src/common/x86copy.c
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__append_58 = src/common/x86copy_as.s
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__append_59 = src/tas-sx.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__append_59 = src/locks/tas-sx.s
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_60 = src/include/armci.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/gpc.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/message.h
@@ -561,8 +560,8 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src-gemini/kr_malloc.c src-gemini/kr_malloc.h \
 	src-gemini/locks.c src-gemini/locks.h src-gemini/memlock.c \
 	src-gemini/memlock.h src-gemini/memory.c src-gemini/message.c \
-	src-gemini/mp3.fh src-gemini/mp3.h src-gemini/mutex.c \
-	src-gemini/pack.c src-gemini/pendbufs.h src-gemini/request.c \
+	src-gemini/mp3.h src-gemini/mutex.c src-gemini/pack.c \
+	src-gemini/pendbufs.h src-gemini/request.c \
 	src-gemini/request.h src-gemini/rmw.c src-gemini/rtinfo.c \
 	src-gemini/semaphores.c src-gemini/semaphores.h \
 	src-gemini/shmalloc.h src-gemini/shmem.c src-gemini/shmem.h \
@@ -638,7 +637,7 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src/common/signaltrap.c src/memory/winshmem.c \
 	src/memory/shmem.c src/memory/shmlimit.c src/common/noncont.c \
 	src/common/utils.c src/util/threads.c src/locks/tas.c \
-	src/common/x86copy.c src/tas-sx.s src/common/capi.c \
+	src/common/x86copy.c src/locks/tas-sx.s src/common/capi.c \
 	tools/armci_prof.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @ARMCI_NETWORK_PORTALS_TRUE@am__objects_1 = src-portals/aggregate.lo \
@@ -806,7 +805,7 @@ am__objects_18 =
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@	src/util/threads.lo
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__objects_33 = src/locks/tas.lo
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_TRUE@am__objects_34 = src/common/x86copy.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__objects_35 = src/tas-sx.lo
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__objects_35 = src/locks/tas-sx.lo
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__objects_36 = src/common/capi.lo
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__objects_37 = tools/armci_prof.lo
 @ENABLE_PROFILING_FALSE@am__objects_38 = src/common/capi.lo
@@ -877,8 +876,8 @@ am__libarmcii_la_SOURCES_DIST = src-portals/acc.h \
 	src-gemini/kr_malloc.c src-gemini/kr_malloc.h \
 	src-gemini/locks.c src-gemini/locks.h src-gemini/memlock.c \
 	src-gemini/memlock.h src-gemini/memory.c src-gemini/message.c \
-	src-gemini/mp3.fh src-gemini/mp3.h src-gemini/mutex.c \
-	src-gemini/pack.c src-gemini/pendbufs.h src-gemini/request.c \
+	src-gemini/mp3.h src-gemini/mutex.c src-gemini/pack.c \
+	src-gemini/pendbufs.h src-gemini/request.c \
 	src-gemini/request.h src-gemini/rmw.c src-gemini/rtinfo.c \
 	src-gemini/semaphores.c src-gemini/semaphores.h \
 	src-gemini/shmalloc.h src-gemini/shmem.c src-gemini/shmem.h \
@@ -954,7 +953,7 @@ am__libarmcii_la_SOURCES_DIST = src-portals/acc.h \
 	src/common/signaltrap.c src/memory/winshmem.c \
 	src/memory/shmem.c src/memory/shmlimit.c src/common/noncont.c \
 	src/common/utils.c src/util/threads.c src/locks/tas.c \
-	src/common/x86copy.c src/tas-sx.s src/common/capi.c \
+	src/common/x86copy.c src/locks/tas-sx.s src/common/capi.c \
 	tools/armci_prof.c
 am__objects_43 = $(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
@@ -1811,7 +1810,7 @@ nodist_libarmci_la_SOURCES = config.fh $(am__append_12) \
 libarmci_la_LIBADD = $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
 libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
 nodist_libarmcii_la_SOURCES = $(nodist_libarmci_la_SOURCES)
-EXTRA_DIST = README build-aux/inside.pl examples/benchmarks/lu/README \
+EXTRA_DIST = README examples/benchmarks/lu/README \
 	examples/features/aggregation/README \
 	examples/features/concurrency/README \
 	examples/features/gpc/hashtable/README \
@@ -2637,13 +2636,8 @@ src/locks/tas.lo: src/locks/$(am__dirstamp) \
 	src/locks/$(DEPDIR)/$(am__dirstamp)
 src/common/x86copy.lo: src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
-src/$(am__dirstamp):
-	@$(MKDIR_P) src
-	@: > src/$(am__dirstamp)
-src/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/$(DEPDIR)
-	@: > src/$(DEPDIR)/$(am__dirstamp)
-src/tas-sx.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/locks/tas-sx.lo: src/locks/$(am__dirstamp) \
+	src/locks/$(DEPDIR)/$(am__dirstamp)
 src/common/capi.lo: src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
 tools/$(am__dirstamp):
@@ -3447,6 +3441,8 @@ mostlyclean-compile:
 	-rm -f src/locks/mutex.lo
 	-rm -f src/locks/semaphores.$(OBJEXT)
 	-rm -f src/locks/semaphores.lo
+	-rm -f src/locks/tas-sx.$(OBJEXT)
+	-rm -f src/locks/tas-sx.lo
 	-rm -f src/locks/tas.$(OBJEXT)
 	-rm -f src/locks/tas.lo
 	-rm -f src/locks/tas_as.$(OBJEXT)
@@ -3469,8 +3465,6 @@ mostlyclean-compile:
 	-rm -f src/progress/fence.lo
 	-rm -f src/progress/wait.$(OBJEXT)
 	-rm -f src/progress/wait.lo
-	-rm -f src/tas-sx.$(OBJEXT)
-	-rm -f src/tas-sx.lo
 	-rm -f src/util/threads.$(OBJEXT)
 	-rm -f src/util/threads.lo
 	-rm -f src/xfer/caccumulate.$(OBJEXT)
@@ -3835,7 +3829,6 @@ clean-libtool:
 	-rm -rf examples/features/proc_affinity/simple/.libs examples/features/proc_affinity/simple/_libs
 	-rm -rf examples/features/symmetric_memory/simple/.libs examples/features/symmetric_memory/simple/_libs
 	-rm -rf examples/simpleApps/.libs examples/simpleApps/_libs
-	-rm -rf src/.libs src/_libs
 	-rm -rf src-gemini/.libs src-gemini/_libs
 	-rm -rf src-portals/.libs src-portals/_libs
 	-rm -rf src/collectives/.libs src/collectives/_libs
@@ -4399,8 +4392,6 @@ distclean-generic:
 	-rm -f src-gemini/$(am__dirstamp)
 	-rm -f src-portals/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src-portals/$(am__dirstamp)
-	-rm -f src/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/$(am__dirstamp)
 	-rm -f src/collectives/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/collectives/$(am__dirstamp)
 	-rm -f src/common/$(DEPDIR)/$(am__dirstamp)
@@ -4579,16 +4570,16 @@ config.fh: config.h
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	$(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	$(top_srcdir)/src-gemini/tas.c
 
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@src/tas-sx.o: src/tas-sx.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@src/locks/tas-sx.o: src/locks/tas-sx.s
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@	$(AM_V_CCAS) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@	$(CCAS) $(AM_CCASFLAGS) $(CCASFLAGS) \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@	-c -o src/tas-sx.o $(top_srcdir)/src/tas-sx.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@	-c -o src/locks/tas-sx.o $(top_srcdir)/src/locks/tas-sx.s
 
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@src/tas-sx.lo: src/tas-sx.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@src/locks/tas-sx.lo: src/locks/tas-sx.s
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@	$(AM_V_CCAS) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@	$(LIBTOOLFLAGS) --mode=compile $(CCAS) $(AM_CCASFLAGS) \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@	$(CCASFLAGS) -c -o src/tas-sx.lo $(top_srcdir)/src/tas-sx.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@	$(CCASFLAGS) -c -o src/locks/tas-sx.lo $(top_srcdir)/src/locks/tas-sx.s
 
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@src/locks/tas_as.s: src/locks/tas.c
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	$(ARMCI_TAS_AS_V) \

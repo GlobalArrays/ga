@@ -34,7 +34,7 @@ lib_LTLIBRARIES = libga.la
 libga_la_SOURCES =
 libga_la_LIBADD =
 nodist_libga_la_SOURCES =
-EXTRA_DIST = README build-aux/inside.pl
+EXTRA_DIST = README
 BUILT_SOURCES =
 MOSTLYCLEANFILES =
 CLEANFILES =
@@ -1485,9 +1485,11 @@ libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 
 ##############################################################################
 # tascel
-if ENABLE_TASCEL
-SUBDIRS += tascel
-endif
+# The tascel directory is not automatically configured nor added to SUBDIRS.
+# However, it is still distributed with GA.
+EXTRA_DIST += tascel
+dist-hook:
+	rm -rf $(distdir)/tascel/autom4te.cache
 
 ##############################################################################
 # the end

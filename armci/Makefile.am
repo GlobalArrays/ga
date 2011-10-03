@@ -34,7 +34,7 @@ nodist_libarmci_la_SOURCES =
 libarmci_la_LIBADD =
 libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
 nodist_libarmcii_la_SOURCES = $(nodist_libarmci_la_SOURCES)
-EXTRA_DIST = README build-aux/inside.pl
+EXTRA_DIST = README
 BUILT_SOURCES =
 MOSTLYCLEANFILES =
 CLEANFILES =
@@ -249,7 +249,6 @@ libarmci_la_SOURCES += src-gemini/memlock.c
 libarmci_la_SOURCES += src-gemini/memlock.h
 libarmci_la_SOURCES += src-gemini/memory.c
 libarmci_la_SOURCES += src-gemini/message.c
-libarmci_la_SOURCES += src-gemini/mp3.fh
 libarmci_la_SOURCES += src-gemini/mp3.h
 libarmci_la_SOURCES += src-gemini/mutex.c
 libarmci_la_SOURCES += src-gemini/pack.c
@@ -515,18 +514,18 @@ endif
 endif
 endif
 if NEC
-libarmci_la_SOURCES += src/tas-sx.s
+libarmci_la_SOURCES += src/locks/tas-sx.s
 
-src/tas-sx.o: src/tas-sx.s
+src/locks/tas-sx.o: src/locks/tas-sx.s
 	$(AM_V_CCAS) \
 	$(CCAS) $(AM_CCASFLAGS) $(CCASFLAGS) \
-	-c -o src/tas-sx.o $(top_srcdir)/src/tas-sx.s
+	-c -o src/locks/tas-sx.o $(top_srcdir)/src/locks/tas-sx.s
 
-src/tas-sx.lo: src/tas-sx.s
+src/locks/tas-sx.lo: src/locks/tas-sx.s
 	$(AM_V_CCAS) \
 	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=compile $(CCAS) $(AM_CCASFLAGS) \
-	$(CCASFLAGS) -c -o src/tas-sx.lo $(top_srcdir)/src/tas-sx.s
+	$(CCASFLAGS) -c -o src/locks/tas-sx.lo $(top_srcdir)/src/locks/tas-sx.s
 endif
 
 include_HEADERS += src/include/armci.h

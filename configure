@@ -776,8 +776,6 @@ LDFLAGS
 CFLAGS
 CC
 MPICC
-ENABLE_TASCEL_FALSE
-ENABLE_TASCEL_TRUE
 THREAD_LIBRARY
 THREAD_SAFE_FALSE
 THREAD_SAFE_TRUE
@@ -947,7 +945,6 @@ enable_peigs
 enable_profiling
 enable_trace
 enable_thread_safety
-enable_tascel
 enable_dependency_tracking
 enable_autodetect
 with_bgml
@@ -1013,7 +1010,7 @@ RANLIB
 CXXCPP
 NPROCS
 MPIEXEC'
-ac_subdirs_all='armci tascel'
+ac_subdirs_all='armci'
 
 # Initialize some variables set by options.
 ac_init_help=
@@ -1650,7 +1647,6 @@ Optional Features:
   --enable-profiling      enable profiling
   --enable-trace          enable tracing
   --enable-thread-safety  **unsupported** turn on thread safety
-  --enable-tascel         build tascel library and install alongside GA
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-autodetect     attempt to locate ARMCI_NETWORK besides SOCKETS
@@ -4416,21 +4412,6 @@ fi
 
 
 
-
-# Check whether --enable-tascel was given.
-if test "${enable_tascel+set}" = set; then :
-  enableval=$enable_tascel;
-else
-  enable_tascel=no
-fi
-
- if test "x$enable_tascel" = xyes; then
-  ENABLE_TASCEL_TRUE=
-  ENABLE_TASCEL_FALSE='#'
-else
-  ENABLE_TASCEL_TRUE='#'
-  ENABLE_TASCEL_FALSE=
-fi
 
 
 # Unless we rename all preprocessor symbols of MPI and MPIPP
@@ -34268,7 +34249,7 @@ ac_config_files="$ac_config_files tools/ga-config"
 
 
 
-subdirs="$subdirs armci tascel"
+subdirs="$subdirs armci"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -34526,10 +34507,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${THREAD_SAFE_TRUE}" && test -z "${THREAD_SAFE_FALSE}"; then
   as_fn_error $? "conditional \"THREAD_SAFE\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_TASCEL_TRUE}" && test -z "${ENABLE_TASCEL_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_TASCEL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${AMDEP_TRUE}" && test -z "${AMDEP_FALSE}"; then

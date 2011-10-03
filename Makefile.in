@@ -406,10 +406,6 @@ check_PROGRAMS = $(am__EXEEXT_3) ma/testc$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_FALSE@am__append_62 =  \
 @ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src \
 @ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/src/include
-
-##############################################################################
-# tascel
-@ENABLE_TASCEL_TRUE@am__append_63 = tascel
 XFAIL_TESTS = $(am__EXEEXT_21) $(am__EXEEXT_23)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
@@ -2707,7 +2703,7 @@ TEST_LOGS = $(am__test_logs2:.test.log=.log)
 TEST_LOG_COMPILE = $(TEST_LOG_COMPILER) $(AM_TEST_LOG_FLAGS) \
 	$(TEST_LOG_FLAGS)
 TEST_LOGS_TMP = $(TEST_LOGS:.log=.log-t)
-DIST_SUBDIRS = armci . tascel
+DIST_SUBDIRS = $(SUBDIRS)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -3027,31 +3023,36 @@ nodist_libga_la_SOURCES = config.fh $(am__append_32) \
 ##############################################################################
 # global/doc
 #
-EXTRA_DIST = README build-aux/inside.pl LinAlg/lapack+blas/README \
-	tcgmsg/README tcgmsg/examples/blkdat120lin.f \
-	tcgmsg/examples/blkdat15.f tcgmsg/examples/blkdat240lin.f \
-	tcgmsg/examples/blkdat30.f tcgmsg/examples/blkdat60.f \
-	tcgmsg/examples/blkdat60lin.f tcgmsg/examples/cscf120lin.h \
-	tcgmsg/examples/cscf15.h tcgmsg/examples/cscf240lin.h \
-	tcgmsg/examples/cscf30.h tcgmsg/examples/cscf60.h \
-	tcgmsg/examples/cscf60lin.h tcgmsg/examples/cscf.h \
-	tcgmsg/examples/daxpy1.s tcgmsg/examples/daxpy.f \
-	tcgmsg/examples/ddot.f tcgmsg/examples/demo.proto \
-	tcgmsg/examples/diagon.f tcgmsg/examples/dscal.f \
-	tcgmsg/examples/fexit.f.proto tcgmsg/examples/getmem.c \
-	tcgmsg/examples/grid.c tcgmsg/examples/ieeetrap.c \
-	tcgmsg/examples/integ.f tcgmsg/examples/jacobi.f \
-	tcgmsg/examples/Makefile.proto tcgmsg/examples/mc.f \
-	tcgmsg/examples/mc.input tcgmsg/examples/md.f \
-	tcgmsg/examples/mxv_daxpy1.f tcgmsg/examples/mxv_dgemv.f \
-	tcgmsg/examples/mxv_fortran.f tcgmsg/examples/output.f \
-	tcgmsg/examples/prtri.f tcgmsg/examples/random.c \
-	tcgmsg/examples/README tcgmsg/examples/runit \
-	tcgmsg/examples/runit.grid tcgmsg/examples/scfblas.f \
-	tcgmsg/examples/scf.f tcgmsg/examples/timer.f \
-	tcgmsg/examples/trace.out tcgmsg/examples/xpix.shar \
-	tcgmsg/ipcv4.0/README tcgmsg/tcgmsg-mpi/README global/README \
-	tools/gpwapigen.py tools/wapigen.py tools/wapigen_counts.py \
+
+##############################################################################
+# tascel
+# The tascel directory is not automatically configured nor added to SUBDIRS.
+# However, it is still distributed with GA.
+EXTRA_DIST = README LinAlg/lapack+blas/README tcgmsg/README \
+	tcgmsg/examples/blkdat120lin.f tcgmsg/examples/blkdat15.f \
+	tcgmsg/examples/blkdat240lin.f tcgmsg/examples/blkdat30.f \
+	tcgmsg/examples/blkdat60.f tcgmsg/examples/blkdat60lin.f \
+	tcgmsg/examples/cscf120lin.h tcgmsg/examples/cscf15.h \
+	tcgmsg/examples/cscf240lin.h tcgmsg/examples/cscf30.h \
+	tcgmsg/examples/cscf60.h tcgmsg/examples/cscf60lin.h \
+	tcgmsg/examples/cscf.h tcgmsg/examples/daxpy1.s \
+	tcgmsg/examples/daxpy.f tcgmsg/examples/ddot.f \
+	tcgmsg/examples/demo.proto tcgmsg/examples/diagon.f \
+	tcgmsg/examples/dscal.f tcgmsg/examples/fexit.f.proto \
+	tcgmsg/examples/getmem.c tcgmsg/examples/grid.c \
+	tcgmsg/examples/ieeetrap.c tcgmsg/examples/integ.f \
+	tcgmsg/examples/jacobi.f tcgmsg/examples/Makefile.proto \
+	tcgmsg/examples/mc.f tcgmsg/examples/mc.input \
+	tcgmsg/examples/md.f tcgmsg/examples/mxv_daxpy1.f \
+	tcgmsg/examples/mxv_dgemv.f tcgmsg/examples/mxv_fortran.f \
+	tcgmsg/examples/output.f tcgmsg/examples/prtri.f \
+	tcgmsg/examples/random.c tcgmsg/examples/README \
+	tcgmsg/examples/runit tcgmsg/examples/runit.grid \
+	tcgmsg/examples/scfblas.f tcgmsg/examples/scf.f \
+	tcgmsg/examples/timer.f tcgmsg/examples/trace.out \
+	tcgmsg/examples/xpix.shar tcgmsg/ipcv4.0/README \
+	tcgmsg/tcgmsg-mpi/README global/README tools/gpwapigen.py \
+	tools/wapigen.py tools/wapigen_counts.py \
 	tools/wapigen_trace.py $(F77FUNCGEN_PL) $(am__append_48) \
 	global/examples/boltzmann/README \
 	global/examples/lennard-jones/README \
@@ -3062,7 +3063,7 @@ EXTRA_DIST = README build-aux/inside.pl LinAlg/lapack+blas/README \
 	global/doc/README global/doc/Supercomputing94.pdf \
 	global/doc/user.pdf pario/dra/dbg_read.c pario/dra/dbg_write.c \
 	pario/dra/dra2arviz.c pario/dra/global.unsup.c \
-	pario/dra/README ga++/README
+	pario/dra/README ga++/README tascel
 
 ##############################################################################
 # config
@@ -3522,7 +3523,7 @@ gparrays_testing_test_LDFLAGS = $(FLDFLAGS)
 
 ##############################################################################
 # armci
-SUBDIRS = armci . $(am__append_63)
+SUBDIRS = armci .
 GA_RECURSIVE_TARGETS = checkprogs-recursive
 # END COPY
 
@@ -6597,6 +6598,9 @@ distdir: $(DISTFILES)
 	      || exit 1; \
 	  fi; \
 	done
+	$(MAKE) $(AM_MAKEFLAGS) \
+	  top_distdir="$(top_distdir)" distdir="$(distdir)" \
+	  dist-hook
 	-test -n "$(am__skip_mode_fix)" \
 	|| find "$(distdir)" -type d ! -perm -755 \
 		-exec chmod u+rwx,go+rx {} \; -o \
@@ -6903,8 +6907,8 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	clean clean-binPROGRAMS clean-checkLTLIBRARIES \
 	clean-checkPROGRAMS clean-generic clean-libLTLIBRARIES \
 	clean-libtool clean-local ctags ctags-recursive dist dist-all \
-	dist-bzip2 dist-gzip dist-lzma dist-shar dist-tarZ dist-xz \
-	dist-zip distcheck distclean distclean-compile \
+	dist-bzip2 dist-gzip dist-hook dist-lzma dist-shar dist-tarZ \
+	dist-xz dist-zip distcheck distclean distclean-compile \
 	distclean-generic distclean-hdr distclean-libtool \
 	distclean-tags distcleancheck distdir distuninstallcheck dvi \
 	dvi-am html html-am info info-am install install-am \
@@ -7020,6 +7024,8 @@ gparrays/src/gpwapidefs.h: $(GPPAPI_H)
 
 armci/libarmcii.la:
 	($(am__cd) armci && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
+dist-hook:
+	rm -rf $(distdir)/tascel/autom4te.cache
 
 ##############################################################################
 # the end

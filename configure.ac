@@ -54,12 +54,6 @@ GA_ENABLE_PEIGS
 GA_ENABLE_PROFILING
 GA_ENABLE_TRACE
 GA_THREAD_SAFE
-AC_ARG_ENABLE([tascel],
-    [AS_HELP_STRING([--enable-tascel],
-        [build tascel library and install alongside GA])],
-    [],
-    [enable_tascel=no])
-AM_CONDITIONAL([ENABLE_TASCEL], [test "x$enable_tascel" = xyes])
 
 # Unless we rename all preprocessor symbols of MPI and MPIPP
 # in the source code, this hack is necessary.
@@ -474,7 +468,7 @@ AC_CONFIG_FILES([Makefile
                  ma/mafdecls.fh
                  ma/matypes.h])
 AC_CONFIG_FILES([tools/ga-config], [chmod +x tools/ga-config])
-AC_CONFIG_SUBDIRS([armci tascel])
+AC_CONFIG_SUBDIRS([armci])
 AC_OUTPUT
 
 # Report on what we found.
