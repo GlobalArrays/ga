@@ -2593,7 +2593,10 @@ GLOBAL_PARALLEL_TESTS = global/testing/elempatch$(EXEEXT) \
 	global/testing/print$(EXEEXT) \
 	global/testing/scan_addc$(EXEEXT) \
 	global/testing/scan_copyc$(EXEEXT) \
-	global/testing/testc$(EXEEXT) global/testing/testmult$(EXEEXT) \
+	global/testing/testc$(EXEEXT) \
+	global/testing/testmatmultc$(EXEEXT) \
+	global/testing/testmult$(EXEEXT) \
+	global/testing/testmultrect$(EXEEXT) \
 	global/testing/unpackc$(EXEEXT) $(am__append_18) \
 	$(am__append_19) $(am__append_20) $(am__append_21) \
 	$(am__append_22) $(am__append_26) \
@@ -5263,8 +5266,12 @@ global/testing/scan_copyc.log: global/testing/scan_copyc$(EXEEXT)
 	@p='global/testing/scan_copyc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testc.log: global/testing/testc$(EXEEXT)
 	@p='global/testing/testc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/testmatmultc.log: global/testing/testmatmultc$(EXEEXT)
+	@p='global/testing/testmatmultc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/testmult.log: global/testing/testmult$(EXEEXT)
 	@p='global/testing/testmult$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/testmultrect.log: global/testing/testmultrect$(EXEEXT)
+	@p='global/testing/testmultrect$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/unpackc.log: global/testing/unpackc$(EXEEXT)
 	@p='global/testing/unpackc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/bin.log: global/testing/bin$(EXEEXT)

@@ -37,6 +37,9 @@
 #if HAVE_LINUX_LIMITS_H
 #   include <linux/limits.h>
 #endif
+#if HAVE_LIMITS_H
+#   include <limits.h>
+#endif
 
 #ifdef WIN32
 #   define PATH_MAX _MAX_PATH

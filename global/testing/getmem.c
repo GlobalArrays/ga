@@ -34,7 +34,7 @@ int main( int argc, char **argv ) {
   me=GA_Nodeid(); 
   nproc=GA_Nnodes();
   if(me==0) {
-    if(GA_Uses_fapi())GA_Error("Program runs with C array API only",0);
+    if(GA_Uses_fapi())GA_Error("Program runs with C array API only",1);
     printf("Using %ld processes\n",(long)nproc);
     fflush(stdout);
   }

@@ -101,7 +101,7 @@ int main(int argc, char **argv)
         num_k = nums_k[ii];
         a = 0.5/(num_m*num_n);
         if (num_m > nummax || num_n > nummax || num_k > nummax) {
-            GA_Error("Insufficient memory: check nummax", 0);
+            GA_Error("Insufficient memory: check nummax", 1);
         }
 
 #ifndef BLOCK_CYCLIC
@@ -303,7 +303,7 @@ void verify_ga_dgemm(char xt1, char xt2, int num_m, int num_n, int num_k,
                 printf("Values are = %f %f\n", 
                         fabs(tmpc[j+i*num_m]-tmpa[j*i*num_m]), abs_value);
                 fflush(stdout);
-                GA_Error("verify ga_dgemm failed", 0);
+                GA_Error("verify ga_dgemm failed", 1);
             }
         }
     }

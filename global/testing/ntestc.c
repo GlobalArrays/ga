@@ -77,7 +77,7 @@ double *buf;
 #else
      g_a = NGA_Create(MT_F_DBL, NDIM, dims, "array A", NULL);
 #endif
-     if(!g_a) GA_Error("create failed: A",0); 
+     if(!g_a) GA_Error("create failed: A",1); 
      if(me==0)printf("OK\n\n");
 
      /* print info about array we got */
@@ -93,11 +93,11 @@ double *buf;
 
      /* get memory for arrays describing distribution */
      proclist = (int*)malloc(nproc*sizeof(int));
-     if(!proclist)GA_Error("malloc failed for proclist",0);
+     if(!proclist)GA_Error("malloc failed for proclist",1);
      regions = (patch_t*)malloc(nproc*sizeof(patch_t));
-     if(!regions)GA_Error("malloc failed for regions",0);
+     if(!regions)GA_Error("malloc failed for regions",1);
      map = (int*)malloc((nproc+ndim)*sizeof(int)); /* ubound= nproc+mdim */
-     if(!map)GA_Error("malloc failed for map",0);
+     if(!map)GA_Error("malloc failed for map",1);
 
      /* first find out how array g_a is distributed */
      for(i=0;i<ndim;i++)lo[i]=BASE;
@@ -139,7 +139,7 @@ double *buf;
 #    else
        g_b = NGA_Create_irreg(MT_F_DBL, NDIM, dims, "array B", block,map);
 #    endif
-     if(!g_b) GA_Error("create failed: B",0); 
+     if(!g_b) GA_Error("create failed: B",1); 
      if(me==0)printf("OK\n\n");
      free(proclist); free(regions); free(map);
      
@@ -197,7 +197,7 @@ double *buf;
 
      /* get buffer memory */
      buf = (double*)malloc(adims[ndim-1]*sizeof(double));
-     if(!buf)GA_Error("malloc failed for buf",0);
+     if(!buf)GA_Error("malloc failed for buf",1);
 
      /* half of the processes check the result */
      if(me<=nproc/2) 
@@ -264,7 +264,7 @@ int me, nproc;
       }
 #endif
 
-    if(GA_Uses_fapi())GA_Error("Program runs with C API only",0);
+    if(GA_Uses_fapi())GA_Error("Program runs with C API only",1);
     
     do_work();
 

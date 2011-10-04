@@ -182,7 +182,7 @@ int main(int argc, char **argv)
             case 2: lo=0; hi=NELEM-2; break;
             case 3: lo=NELEM/4; hi=NELEM/2; break;
             case 4: lo=NELEM/3; hi=NELEM/3+10; break;
-            default: GA_Error("oops",0); break;
+            default: GA_Error("oops",1); break;
         }
 #define tests(MT,MT_MSK) \
         if (0 == me) { \

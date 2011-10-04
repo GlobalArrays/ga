@@ -84,7 +84,7 @@ test(int data_type, int ndim) {
   g_a = NGA_Create(data_type, ndim, dims, "array A", NULL);
   g_b = GA_Duplicate(g_a, "array B");  
   g_c = GA_Duplicate(g_a, "array C");
-  if(!g_a || !g_b || !g_c) GA_Error("Create failed: a, b or c",0);
+  if(!g_a || !g_b || !g_c) GA_Error("Create failed: a, b or c",1);
 
   GA_Fill(g_a, value1);
   GA_Fill(g_b, value2);
@@ -150,23 +150,35 @@ test(int data_type, int ndim) {
   switch (data_type) {
   case C_FLOAT:
     value1_flt = GA_Fdot(g_C, g_C);
-    if(value1_flt != 0.0)
-      GA_Error("GA_Sgemm, NGA_Matmul_patch Failed", 0);
+    if(fabsf(value1_flt) > TOLERANCE) {
+      printf("\nabs(result) = %f > %f\n", fabsf(value1_flt), TOLERANCE);
+      GA_Error("GA_Sgemm, NGA_Matmul_patch Failed", 1);
+    }
     break;
   case C_DBL:
     value1_dbl = GA_Ddot(g_C, g_C);
-    if(value1_dbl != 0.0)
-      GA_Error("GA_Dgemm, NGA_Matmul_patch Failed", 0);
+    if(fabs(value1_dbl) > TOLERANCE) {
+      printf("\nabs(result) = %f > %f\n", fabs(value1_dbl), TOLERANCE);
+      GA_Error("GA_Dgemm, NGA_Matmul_patch Failed", 1);
+    }
     break;
   case C_DCPL:
     value1_dcpl = GA_Zdot(g_C, g_C);
-    if(value1_dcpl.real != 0.0 || value1_dcpl.imag != 0.0)
-      GA_Error("GA_Zgemm, NGA_Matmul_patch Failed", 0);
+    if(fabs(value1_dcpl.real) > TOLERANCE
+            || fabs(value1_dcpl.imag) > TOLERANCE) {
+      printf("\nabs(result) = %f+%fi > %f\n",
+              fabs(value1_dcpl.real), fabs(value1_dcpl.imag), TOLERANCE);
+      GA_Error("GA_Zgemm, NGA_Matmul_patch Failed", 1);
+    }
     break;
   case C_SCPL:
     value1_scpl = GA_Cdot(g_C, g_C);
-    if(value1_scpl.real != 0.0 || value1_scpl.imag != 0.0)
-      GA_Error("GA_Sgemm, NGA_Matmul_patch Failed", 0);
+    if(fabsf(value1_scpl.real) > TOLERANCE
+            || fabsf(value1_scpl.imag) > TOLERANCE) {
+      printf("\nabs(result) = %f+%fi > %f\n",
+              fabsf(value1_scpl.real), fabsf(value1_scpl.imag), TOLERANCE);
+      GA_Error("GA_Sgemm, NGA_Matmul_patch Failed", 1);
+    }
     break;
   default:
     GA_Error("wrong data type", data_type);
@@ -226,7 +238,7 @@ DoublePrecision time;
       }
 #endif
 
-    if(GA_Uses_fapi())GA_Error("Program runs with C API only",0);
+    if(GA_Uses_fapi())GA_Error("Program runs with C API only",1);
 
     time = MP_TIMER();
     do_work();
