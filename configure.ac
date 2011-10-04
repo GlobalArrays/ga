@@ -4,7 +4,8 @@
 # Init autoconf
 ###############################################################################
 AC_PREREQ([2.67])
-AC_INIT([Global Arrays (GA)],[5.1],[hpctools@pnl.gov], [ga],
+AC_INIT([Global Arrays (GA)], [5.1],
+        [hpctools@pnl.gov], [ga],
         [http://www.emsl.pnl.gov/docs/global/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([config.h])
@@ -94,21 +95,16 @@ GA_TARGET64
 
 # Establish the underlying network infrastructure (SOCKETS, OPENIB, etc)
 GA_ARMCI_NETWORK
-# needed for MPI_SPAWN only -- other defines occur in ARMCI configure only
-AS_IF([test "x$ga_armci_network" = xMPI_SPAWN],
-    [AC_DEFINE([MPI_SPAWN], [1], [defined to 1 when ARMCI_NETWORK=MPI_SPAWN])])
 
 # Checks for C header files.
 AC_HEADER_ASSERT
 AC_HEADER_DIRENT
+AC_HEADER_STDBOOL
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-GA_CHECK_HEADERS([assert.h errno.h fcntl.h ffio.h float.h inttypes.h limits.h malloc.h math.h memory.h netdb.h netinet/in.h netinet/tcp.h nx.h pfs/pfs.h setjmp.h signal.h stdarg.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/cnx_types.h sys/errno.h sys/file.h sys/fsid.h sys/fstyp.h sys/ioctl.h sys/iosw.h sys/ipc.h sys/mman.h sys/mount.h sys/param.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/stat.h sys/statfs.h sys/statvfs.h sys/systemcfg.h sys/time.h sys/vfs.h sys/wait.h time.h unistd.h windows.h rpc/rpc.h rpc/types.h rpc/xdr.h],
+GA_CHECK_HEADERS([assert.h errno.h fcntl.h ffio.h linux/limits.h malloc.h math.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/file.h sys/fsid.h sys/fstyp.h sys/ioctl.h sys/iosw.h sys/ipc.h sys/mman.h sys/mount.h sys/param.h sys/sem.h sys/shm.h sys/stat.h sys/statfs.h sys/statvfs.h sys/time.h sys/vfs.h time.h unistd.h windows.h],
 [], [],
-[@%:@ifdef HAVE_RPC_TYPES_H
-@%:@include <rpc/types.h>
-@%:@endif
-@%:@ifdef HAVE_SYS_TYPES_H
+[@%:@ifdef HAVE_SYS_TYPES_H
 @%:@include <sys/types.h>
 @%:@endif
 @%:@ifdef HAVE_SYS_IPC_H
@@ -120,20 +116,13 @@ AC_C_CONST
 AC_C_INLINE
 AC_C_RESTRICT
 AC_C_VOLATILE
-AC_HEADER_STDBOOL
-AC_HEADER_TIME
 AC_TYPE_INT64_T
 AC_TYPE_LONG_DOUBLE
-AC_TYPE_LONG_LONG_INT
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIGNAL
 AC_TYPE_SIZE_T
-AC_TYPE_UNSIGNED_LONG_LONG_INT
-AC_CHECK_TYPES([ptrdiff_t])
-#AC_CHECK_MEMBERS([struct stat.st_vfstype, struct statfs.f_secnfree, struct statvfs.f_secnfree, struct statfs.f_frsize, struct statvfs.f_frsize])
 GA_FUNCTION
-#GA_PRAGMA_OPERATOR
 GA_PROGNAME
 GA_DISABLE_SYS_WEAK_ALIAS
 GA_SYS_WEAK_ALIAS
@@ -145,7 +134,7 @@ AC_CHECK_SIZEOF([char])
 AC_CHECK_SIZEOF([short])
 AC_CHECK_SIZEOF([int])
 AC_CHECK_SIZEOF([long])
-AS_IF([test x$ac_cv_type_long_long_int = xyes], [AC_CHECK_SIZEOF([long long])])
+AC_CHECK_SIZEOF([long long])
 AC_CHECK_SIZEOF([float])
 AC_CHECK_SIZEOF([double])
 AS_IF([test x$ac_cv_type_long_double = xyes], [AC_CHECK_SIZEOF([long double])])
@@ -155,7 +144,6 @@ GA_C_POINTER_AS_INTEGER
 AC_FUNC_FORK
 AC_FUNC_MMAP
 AC_FUNC_SELECT_ARGTYPES
-AC_FUNC_VPRINTF
 AS_IF([test "x$ga_msg_comms" = xTCGMSG],
     [AC_SEARCH_LIBS([xdr_array], [rpclib], [], [], [])])
 AC_SEARCH_LIBS([floor], [m],
@@ -178,7 +166,7 @@ AC_SEARCH_LIBS([sqrt], [m],
                [Define to 1 if you have the `sqrt' function.])],
     [AC_DEFINE([HAVE_SQRT], [0],
                [Define to 1 if you have the `sqrt' function.])])
-GA_CHECK_FUNCS([bcopy bzero create_shared_region ftruncate gethostbyname gethostname getpagesize gettimeofday memalign memcpy memset munmap pause posix_memalign putenv select setenv shared_malloc shmalloc socket srandom srand strchr strdup strerror strstr strtol xdr_char])
+GA_CHECK_FUNCS([bcopy bzero create_shared_region ftruncate gethostbyname gethostname getpagesize gettimeofday memalign memcpy memset munmap pause posix_memalign putenv select setenv shared_malloc shmalloc socket srandom srand strchr strdup strerror strstr strtol])
 
 # Checks for C libraries.
 GA_CHECK_LIBPLOT
@@ -267,7 +255,7 @@ if test "x$enable_f77" = xyes; then :
 AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 
 GA_COMPILER_VENDOR
-# Perform a simple link test for MPI.
+# If F77 is enabled, perform a simple link test for MPI.
 AS_IF([test "x$with_mpi" != xno],
     [AS_IF([test "x$enable_mpi_tests" = xyes],
         [GA_MPIF77_TEST_LINK],
@@ -416,10 +404,6 @@ AC_MSG_NOTICE
 # Establish some preprocessor symbols.
 ARMCI_SETUP
 
-# Set up TCGMSG.
-TCGMSG_REMOTE_SHELL
-TCGMSG_ENABLE_TIMINGS
-
 # Set up MA.
 MA_ENABLE_ARMCI_MEM_OPTION
 MA_LONG_DOUBLE_TYPEDEF
@@ -449,7 +433,7 @@ AC_SUBST([NPROCS])
 AC_ARG_VAR([MPIEXEC],
            [how to run parallel tests if built with MPI e.g. "mpiexec -np %NP%"])
 AS_CASE([$ga_msg_comms],
-    [TCGMSG],  [TCGEXEC="`pwd`/parallel.x"],
+    [TCGMSG],  [TCGEXEC="`pwd`/armci/parallel.x"],
     [TCGMSG5], [TCGEXEC=],
     [MPI|TCGMSGMPI],
         [AS_IF([test "x$MPIEXEC" = x],
@@ -462,8 +446,6 @@ AC_SUBST([TCGEXEC])
 # The End
 ###############################################################################
 AC_CONFIG_FILES([Makefile
-                 gaf2c/farg.h
-                 gaf2c/typesf2c.h
                  global/src/global.fh
                  ma/mafdecls.fh
                  ma/matypes.h])

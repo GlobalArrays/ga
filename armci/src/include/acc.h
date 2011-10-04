@@ -1,14 +1,6 @@
 #ifndef _ACC_H_
 #define _ACC_H_
 
-/* since all of this code replaces Fortran, it should never improperly alias
- * vectors */
-#if __STDC_VERSION__ >= 199901L
-    #define MAYBE_RESTRICT restrict
-#else
-    #define MAYBE_RESTRICT
-#endif
-
 typedef struct {
     float real;
     float imag;
@@ -20,80 +12,80 @@ typedef struct {
 } dcomplex_t;
 
 void c_d_accumulate_1d_(const double* const alpha,
-                        double* MAYBE_RESTRICT A,
+                        double* restrict A,
                         double* const B,
                         const int* const rows);
 void c_f_accumulate_1d_(const float* const alpha,
-                        float* MAYBE_RESTRICT A,
+                        float* restrict A,
                         float* const B,
                         const int* const rows);
 void c_c_accumulate_1d_(const complex_t* const alpha,
-                        complex_t* MAYBE_RESTRICT A,
+                        complex_t* restrict A,
                         complex_t* const B,
                         const int* const rows);
 void c_z_accumulate_1d_(const dcomplex_t* const alpha,
-                        dcomplex_t* MAYBE_RESTRICT A,
+                        dcomplex_t* restrict A,
                         dcomplex_t* const B,
                         const int* const rows);
 void c_i_accumulate_1d_(const int* const alpha,
-                        int* MAYBE_RESTRICT A,
+                        int* restrict A,
                         int* const B,
                         const int* const rows);
 void c_l_accumulate_1d_(const long* const alpha,
-                        long* MAYBE_RESTRICT A,
+                        long* restrict A,
                         long* const B,
                         const int* const rows);
 void c_ll_accumulate_1d_(const long long* const alpha,
-                        long long* MAYBE_RESTRICT A,
+                        long long* restrict A,
                         long long* const B,
                         const int* const rows);
 
 void c_d_accumulate_2d_(const double* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        double* MAYBE_RESTRICT A,
+                        double* restrict A,
                         const int* const ald,
                         const double* const B,
                         const int* const bld);
 void c_f_accumulate_2d_(const float* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        float* MAYBE_RESTRICT A,
+                        float* restrict A,
                         const int* const ald,
                         const float* const B,
                         const int* const bld);
 void c_c_accumulate_2d_(const complex_t* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        complex_t* MAYBE_RESTRICT A,
+                        complex_t* restrict A,
                         const int* const ald,
                         const complex_t* const B,
                         const int* const bld);
 void c_z_accumulate_2d_(const dcomplex_t* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        dcomplex_t* MAYBE_RESTRICT A,
+                        dcomplex_t* restrict A,
                         const int* const ald,
                         const dcomplex_t* const B,
                         const int* const bld);
 void c_i_accumulate_2d_(const int* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        int* MAYBE_RESTRICT A,
+                        int* restrict A,
                         const int* const ald,
                         const int* const B,
                         const int* const bld);
 void c_l_accumulate_2d_(const long* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        long* MAYBE_RESTRICT A,
+                        long* restrict A,
                         const int* const ald,
                         const long* const B,
                         const int* const bld);
 void c_ll_accumulate_2d_(const long long* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        long long* MAYBE_RESTRICT A,
+                        long long* restrict A,
                         const int* const ald,
                         const long long* const B,
                         const int* const bld);
@@ -101,69 +93,70 @@ void c_ll_accumulate_2d_(const long long* const alpha,
 void c_d_accumulate_2d_u_(const double* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        double* MAYBE_RESTRICT A,
+                        double* restrict A,
                         const int* const ald,
                         const double* const B,
                         const int* const bld);
 void c_f_accumulate_2d_u_(const float* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        float* MAYBE_RESTRICT A,
+                        float* restrict A,
                         const int* const ald,
                         const float* const B,
                         const int* const bld);
 void c_c_accumulate_2d_u_(const complex_t* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        complex_t* MAYBE_RESTRICT A,
+                        complex_t* restrict A,
                         const int* const ald,
                         const complex_t* const B,
                         const int* const bld);
 void c_z_accumulate_2d_u_(const dcomplex_t* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        dcomplex_t* MAYBE_RESTRICT A,
+                        dcomplex_t* restrict A,
                         const int* const ald,
                         const dcomplex_t* const B,
                         const int* const bld);
 void c_i_accumulate_2d_u_(const int* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        int* MAYBE_RESTRICT A,
+                        int* restrict A,
                         const int* const ald,
                         const int* const B,
                         const int* const bld);
 void c_l_accumulate_2d_u_(const long* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        long* MAYBE_RESTRICT A,
+                        long* restrict A,
                         const int* const ald,
                         const long* const B,
                         const int* const bld);
 void c_ll_accumulate_2d_u_(const long long* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        long long* MAYBE_RESTRICT A,
+                        long long* restrict A,
                         const int* const ald,
                         const long long* const B,
                         const int* const bld);
 
 void c_dadd_(const int* const n,
-            double* MAYBE_RESTRICT x,
+            double* restrict x,
             double* const work);
 void c_dadd2_(const int* const n,
-            double* MAYBE_RESTRICT x,
+            double* restrict x,
             double* const work,
             double* const work2);
 void c_dmult_(const int* const n,
-            double* MAYBE_RESTRICT x,
+            double* restrict x,
             double* const work);
 void c_dmult2_(const int* const n,
-            double* MAYBE_RESTRICT x,
+            double* restrict x,
             double* const work,
             double* const work2);
 
-#if NOFORT
+/* the C versions were faster than the Fortran versions, so always use them */
+#if NOFORT || 1
 #   define ATR
 #   define I_ACCUMULATE_1D c_i_accumulate_1d_
 #   define L_ACCUMULATE_1D c_l_accumulate_1d_

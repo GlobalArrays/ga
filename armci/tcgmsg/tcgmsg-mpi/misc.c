@@ -111,8 +111,10 @@ void tcgi_alt_pbegin(int *argc, char **argv[])
     MPI_Initialized(&init);
 
     if(!init){ 
-        /* nope */
-        MP_INIT(argc, argv);
+        int status;
+        int provided;
+
+        status = MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &provided);
         MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
     }
 

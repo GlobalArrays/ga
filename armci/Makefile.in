@@ -55,15 +55,17 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS =
-check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
-	testing/perf_aggr$(EXEEXT) testing/perf_nb$(EXEEXT) \
-	testing/shmclean$(EXEEXT) testing/shmtest$(EXEEXT) \
-	testing/simplelock$(EXEEXT) testing/test$(EXEEXT) \
-	testing/test2$(EXEEXT) testing/testnotify$(EXEEXT) \
-	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
-	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
-	$(am__EXEEXT_7) $(am__EXEEXT_8) \
+bin_PROGRAMS = $(am__EXEEXT_1)
+check_PROGRAMS = $(am__EXEEXT_2) $(am__EXEEXT_3) $(am__EXEEXT_4) \
+	$(am__EXEEXT_5) $(am__EXEEXT_6) $(am__EXEEXT_7) \
+	$(am__EXEEXT_8) $(am__EXEEXT_9) testing/msgcheck$(EXEEXT) \
+	testing/perf$(EXEEXT) testing/perf_aggr$(EXEEXT) \
+	testing/perf_nb$(EXEEXT) testing/shmclean$(EXEEXT) \
+	testing/shmtest$(EXEEXT) testing/simplelock$(EXEEXT) \
+	testing/test$(EXEEXT) testing/test2$(EXEEXT) \
+	testing/testnotify$(EXEEXT) $(am__EXEEXT_10) $(am__EXEEXT_11) \
+	$(am__EXEEXT_12) $(am__EXEEXT_13) $(am__EXEEXT_14) \
+	$(am__EXEEXT_15) $(am__EXEEXT_16) $(am__EXEEXT_17) \
 	examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
@@ -77,20 +79,175 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 	examples/features/non-blocking/simple/simple$(EXEEXT) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__EXEEXT_9) \
-	$(am__EXEEXT_10) $(am__EXEEXT_11) $(am__EXEEXT_12) \
-	$(am__EXEEXT_13) $(am__EXEEXT_14)
-@MSG_COMMS_TCGMSG_TRUE@am__append_1 = -I$(top_srcdir)/../tcgmsg
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__EXEEXT_18) \
+	$(am__EXEEXT_19) $(am__EXEEXT_20) $(am__EXEEXT_21) \
+	$(am__EXEEXT_22) $(am__EXEEXT_23)
+@MSG_COMMS_TCGMSG_TRUE@am__append_1 = -I$(top_srcdir)/tcgmsg
 @ENABLE_F77_TRUE@am__append_2 = $(FLD_NOMAIN)
-# You can only build armci with tcgmsg within the ga distribution.
-# armci's configure will bomb if if you try to use tcgmsg, so this is safe.
-@MSG_COMMS_TCGMSG_TRUE@am__append_3 = $(top_bld_prefix)../libga.la
-@MSG_COMMS_TCGMSG_FALSE@am__append_4 = libarmci.la
+@ENABLE_F77_TRUE@am__append_3 = gaf2c/farg.F
+@ENABLE_F77_TRUE@am__append_4 = gaf2c/testarg
+@ENABLE_F77_TRUE@am__append_5 = gaf2c/testarg$(EXEEXT)
+DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
+	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+	$(srcdir)/config.h.in $(top_srcdir)/configure \
+	$(top_srcdir)/gaf2c/farg.h.in \
+	$(top_srcdir)/gaf2c/typesf2c.h.in \
+	$(top_srcdir)/src-gemini/Makefile.inc \
+	$(top_srcdir)/src-portals/Makefile.inc \
+	$(top_srcdir)/tcgmsg/Makefile.inc INSTALL NEWS \
+	build-aux/compile build-aux/config.guess build-aux/config.sub \
+	build-aux/depcomp build-aux/install-sh build-aux/ltmain.sh \
+	build-aux/missing
 
 ##############################################################################
-# src-portals
+# tcgmsg
 #
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_5 = src-portals/acc.h \
+@MSG_COMMS_TCGMSG_TRUE@am__append_6 = tcgmsg/capi.c
+@MSG_COMMS_TCGMSG_TRUE@am__append_7 = tcgmsg/msgtypesc.h \
+@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/msgtypesf.h tcgmsg/tcgmsg.fh \
+@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg.h
+@MSG_COMMS_TCGMSG_TRUE@am__append_8 = -I$(top_srcdir)/tcgmsg
+
+##############################################################################
+# tcgmsg/ipcv4.0
+#
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_9 = tcgmsg/ipcv4.0/brdcst.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/checkbyte.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/cluster.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/cluster.h \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/defglobals.h \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/drand48.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/error.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/evlog.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/evlog.h \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/evon.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/globalop.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/llog.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/mdtob.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/mdtoi.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/mitob.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/mitod.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/mtime.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/niceftn.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/nnodes.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/nodeid.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/nxtval.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/pbegin.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/pbeginf.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/pfilecopy.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/sema.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/sema.h \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/setdbg.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/shmem.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/shmem.h \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/signals.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/signals.h \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/snd.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/sndrcv.h \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/sndrcvP.h \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/sockets.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/sockets.h \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/srftoc.h \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/srmover.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/stats.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/synch.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/usleep.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/waitall.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/waitcom.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/xdrstuff.c \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/xdrstuff.h
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_10 = -I$(top_srcdir)/tcgmsg/ipcv4.0
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_11 = tcgmsg/ipcv4.0/hello \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/test \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/testmap \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/toplot \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/xdrtest
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_12 = tcgmsg/ipcv4.0/testf \
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/testpf
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_13 = tcgmsg/ipcv4.0/hello$(EXEEXT)
+#TCGMSG_PARALLEL_TESTS += tcgmsg/ipcv4.0/test$(EXEEXT) # requires user input
+#TCGMSG_PARALLEL_TESTS += tcgmsg/ipcv4.0/testmap$(EXEEXT) # requires user input
+#TCGMSG_PARALLEL_TESTS += tcgmsg/ipcv4.0/toplot$(EXEEXT) # not a test
+#TCGMSG_PARALLEL_TESTS += tcgmsg/ipcv4.0/xdrtest$(EXEEXT) # requires user input
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_14 = tcgmsg/ipcv4.0/testf$(EXEEXT)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_15 = parallel
+
+##############################################################################
+# tcgmsg/ipcv5.0
+#
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_16 = tcgmsg/ipcv5.0/drand48.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/evlog.h \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/globalop.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/llog.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/mdtob.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/mdtoi.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/misc.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/mitob.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/mitod.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/mtime.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/niceftn.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/nnodes.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/nodeid.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/pbegin.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/pfilecopy.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/queues.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/shmem.h \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/signals.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/sndrcv.h \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/snd_rcv_probe.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/srftoc.h \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/tcgmsgP.h \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/usleep.c \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/waitall.c
+@ARMCI_NETWORK_LAPI_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_17 = tcgmsg/ipcv5.0/async_send_lapi.c \
+@ARMCI_NETWORK_LAPI_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/lapi_putget.c
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_18 = tcgmsg/ipcv5.0/async_send.c \
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/busy.c \
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/error.c \
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/nxtval.shm.c \
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/pbeginf.c \
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/shmem.c \
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/synch.c
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_19 = -I$(top_srcdir)/tcgmsg/ipcv5.0
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_20 = tcgmsg/ipcv5.0/hello \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/test
+@MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_21 = tcgmsg/ipcv5.0/pvm.ring
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_22 = tcgmsg/ipcv5.0/jacobi \
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/testf
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_23 = tcgmsg/ipcv5.0/hello$(EXEEXT)
+#TCGMSG_PARALLEL_TESTS += tcgmsg/ipcv5.0/test$(EXEEXT) # requires user input
+@MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_24 = tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
+
+##############################################################################
+# tcgmsg/tcgmsg-mpi
+#
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_25 = tcgmsg/tcgmsg-mpi/checkbyte.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/clustercheck.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/collect.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/drand48.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/evlog.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/evlog.h \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/evon.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/llog.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/misc.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/niceftn.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/nxtval-armci.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/p2p.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/pbeginf.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/pfilecopy.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/sizeof.c \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/sndrcv.h \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/srftoc.h \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/tcgmsgP.h
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_26 = -I$(top_srcdir)/tcgmsg/tcgmsg-mpi
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_27 = tcgmsg/tcgmsg-mpi/test_asyn \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/test
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_28 = tcgmsg/tcgmsg-mpi/testf
+
+#TCGMSG_PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT) # useless test
+#TCGMSG_PARALLEL_TESTS += tcgmsg/tcgmsg-mpi/test$(EXEEXT) # requires user input
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__append_29 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_30 = src-portals/acc.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/aggregate.c \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/armci.c \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/armcip.h \
@@ -143,27 +300,23 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/tas-ppc.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/utils.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/vector.c
-@ARMCI_NETWORK_PORTALS_TRUE@@PORTALS_ENABLE_NEW_MALLOC_TRUE@am__append_6 = src-portals/new_memory.c
-@ARMCI_NETWORK_PORTALS_TRUE@@ENABLE_F77_TRUE@am__append_7 = src-portals/faccumulate.f \
+@ARMCI_NETWORK_PORTALS_TRUE@@PORTALS_ENABLE_NEW_MALLOC_TRUE@am__append_31 = src-portals/new_memory.c
+@ARMCI_NETWORK_PORTALS_TRUE@@ENABLE_F77_TRUE@am__append_32 = src-portals/faccumulate.f \
 @ARMCI_NETWORK_PORTALS_TRUE@@ENABLE_F77_TRUE@	src-portals/fcopy.f
-@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_8 = src-portals/groups.c
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_9 = src-portals/gpc.c
-@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__append_10 = src-portals/threads.c \
+@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_33 = src-portals/groups.c
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_34 = src-portals/gpc.c
+@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__append_35 = src-portals/threads.c \
 @ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@	src-portals/utils.c
-@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_TRUE@am__append_11 = src-portals/tas.c
-@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_12 = src-portals/tas_as.s
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_13 = src-portals/armci.h \
+@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_TRUE@am__append_36 = src-portals/tas.c
+@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_37 = src-portals/tas_as.s
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_38 = src-portals/armci.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/gpc.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/message.h
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_14 =  \
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_39 =  \
 @ARMCI_NETWORK_PORTALS_TRUE@	-I$(top_srcdir)/src-portals \
 @ARMCI_NETWORK_PORTALS_TRUE@	-I$(top_srcdir)/src/include
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_15 = src-portals/tas_as.s
-
-##############################################################################
-# src-gemini
-#
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_16 = src-gemini/acc.h \
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_40 = src-portals/tas_as.s
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_41 = src-gemini/acc.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/aggregate.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/armci.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/armci-onesided.c \
@@ -213,26 +366,38 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/tas-ppc.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/utils.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/vector.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_17 = src-gemini/faccumulate.f \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_42 = src-gemini/faccumulate.f \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	src-gemini/fcopy.f
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_18 = src-gemini/gpc.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_19 = src-gemini/threads.c \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_43 = src-gemini/gpc.c
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_44 = src-gemini/threads.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@	src-gemini/utils.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__append_20 = src-gemini/tas.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_21 = src-gemini/tas_as.s
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_22 = src-gemini/armci.h \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__append_45 = src-gemini/tas.c
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_46 = src-gemini/tas_as.s
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_47 = src-gemini/armci.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/gpc.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/message.h
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_23 = -I$(top_srcdir)/src-gemini \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_48 = -I$(top_srcdir)/src-gemini \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/src/include
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_24 = -lnumatoolkit \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_49 = -lnumatoolkit \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	-lonesided
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_25 = src-gemini/tas_as.s
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_50 = src-gemini/tas_as.s
+
+##############################################################################
+# tcgmsg
+#
+
+##############################################################################
+# src-portals
+#
+
+##############################################################################
+# src-gemini
+#
 
 ##############################################################################
 # src
 #
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_26 = src/collectives/message.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_51 = src/collectives/message.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/aggregate.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/armci.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/ccopy.c \
@@ -276,20 +441,20 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/rmw.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/strided.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/vector.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_27 = src/common/fcopy.f \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	src/xfer/faccumulate.f
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_28 = src/common/groups.c
-@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_29 = -I$(top_srcdir)/src/devices/bgml
-@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_30 = src/devices/bgml/bgmlacc.h \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_52 = libfcopyfacc.la
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_53 = libfcopyfacc.la
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_54 = src/common/groups.c
+@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_55 = -I$(top_srcdir)/src/devices/bgml
+@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_56 = src/devices/bgml/bgmlacc.h \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgml.c \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgmldefs.h \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgml.h \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgmltas-ppc.h
-@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_31 = -I$(top_srcdir)/src/devices/cray-shmem
-@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_32 = src/memory/shmalloc.c
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_33 = -I$(top_srcdir)/src/devices/dcmf
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_34 = src/devices/dcmf/armcix.h
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@am__append_35 = src/devices/dcmf/dcmf2/armcix_acc.c \
+@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_57 = -I$(top_srcdir)/src/devices/cray-shmem
+@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_58 = src/memory/shmalloc.c
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_59 = -I$(top_srcdir)/src/devices/dcmf
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_60 = src/devices/dcmf/armcix.h
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@am__append_61 = src/devices/dcmf/dcmf2/armcix_acc.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_fence.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_get.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_impl.c \
@@ -297,7 +462,7 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_put.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_rmw.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_wait.c
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@am__append_36 = src/devices/dcmf/dcmf-0.2.0/armcix_acc.c \
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@am__append_62 = src/devices/dcmf/dcmf-0.2.0/armcix_acc.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_fence.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_get.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_impl.c \
@@ -305,7 +470,7 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_put.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_rmw.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_wait.c
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@am__append_37 = src/devices/dcmf/dcmf-0.3.0/armcix_acc.c \
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@am__append_63 = src/devices/dcmf/dcmf-0.3.0/armcix_acc.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_fence.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_get.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_impl.c \
@@ -313,29 +478,29 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_put.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_rmw.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_wait.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_38 = -I$(top_srcdir)/src/devices/lapi
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_39 = src/common/async.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_64 = -I$(top_srcdir)/src/devices/lapi
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_65 = src/common/async.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/lapi/lapi.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/lapi/lapidefs.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_40 = -I$(top_srcdir)/src/devices/mpi-mt
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_41 = src/common/ds-shared.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_66 = -I$(top_srcdir)/src/devices/mpi-mt
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_67 = src/common/ds-shared.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/spawn.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-mt/mpi2_client.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-mt/mpi2.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-mt/mpi2_server.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_42 = -I$(top_srcdir)/src/devices/mpi-spawn
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_43 = src/common/ds-shared.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_68 = -I$(top_srcdir)/src/devices/mpi-spawn
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_69 = src/common/ds-shared.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-spawn/mpi2_client.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-spawn/mpi2.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-spawn/mpi2_server.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_44 = -I$(top_srcdir)/src/devices/openib
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_45 = src/common/async.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_70 = -I$(top_srcdir)/src/devices/openib
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_71 = src/common/async.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/ds-shared.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/regions.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.c \
@@ -348,8 +513,8 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/openib/pendbufs.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/openib/rtinfo.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__append_46 = -I$(top_srcdir)/src/devices/sockets
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__append_47 = src/common/async.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__append_72 = -I$(top_srcdir)/src/devices/sockets
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__append_73 = src/common/async.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/common/ds-shared.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/common/request.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/common/spawn.c \
@@ -357,92 +522,86 @@ check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/devices/sockets/sockets.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/devices/sockets/sockets.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_48 = src/ft/armci_chkpt.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_74 = src/ft/armci_chkpt.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@	src/ft/armci_storage.c
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_49 = src/common/gpc.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__append_50 = src/common/signaltrap.c \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_75 = src/common/gpc.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__append_76 = src/common/signaltrap.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@	src/memory/shmalloc.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@	src/memory/winshmem.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__append_51 = -DSHMEM -DMMAP
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@am__append_52 = src/common/signaltrap.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__append_77 = -DSHMEM -DMMAP
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@am__append_78 = src/common/signaltrap.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@	src/memory/shmem.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@	src/memory/shmlimit.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NB_NONCONT_TRUE@am__append_53 = src/common/noncont.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_54 = src/common/utils.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NB_NONCONT_TRUE@am__append_79 = src/common/noncont.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_80 = src/common/utils.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@	src/util/threads.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__append_55 = src/locks/tas.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_56 = src/locks/tas_as.s
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_TRUE@am__append_57 = src/common/x86copy.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__append_58 = src/common/x86copy_as.s
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__append_59 = src/locks/tas-sx.s
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_60 = src/include/armci.h \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__append_81 = src/locks/tas.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_82 = src/locks/tas_as.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_TRUE@am__append_83 = src/common/x86copy.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__append_84 = src/common/x86copy_as.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__append_85 = src/locks/tas-sx.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_86 = src/include/armci.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/gpc.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/message.h
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_61 = -I$(top_srcdir)/src/include
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_62 = src/common/x86copy_as.s \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_87 = -I$(top_srcdir)/src/include
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_88 = src/common/x86copy_as.s \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/locks/tas_as.s
 
 ##############################################################################
 # profiling
 #
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_63 = libarmci_prof.la
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_64 = src/common/capi.c
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_65 = tools/armci_prof.c
-@ENABLE_PROFILING_FALSE@am__append_66 = src/common/capi.c
-@ENABLE_CHECKPOINT_TRUE@am__append_67 = testing/fttest
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_68 = testing/gpctest
-@MSG_COMMS_MPI_TRUE@am__append_69 = testing/simple testing/test_groups
-@MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__append_70 = testing/ipctest
-@THREAD_SAFE_TRUE@am__append_71 = testing/test_mt
-@ENABLE_F77_TRUE@am__append_72 = testing/acc_test testing/copy_test
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_73 = testing/clone testing/fork \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_89 = libarmci_prof.la
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_90 = src/common/capi.c
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_91 = tools/armci_prof.c
+@ENABLE_PROFILING_FALSE@am__append_92 = src/common/capi.c
+@ENABLE_CHECKPOINT_TRUE@am__append_93 = testing/fttest
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_94 = testing/gpctest
+@MSG_COMMS_MPI_TRUE@am__append_95 = testing/simple testing/test_groups
+@MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__append_96 = testing/ipctest
+@THREAD_SAFE_TRUE@am__append_97 = testing/test_mt
+@ENABLE_F77_TRUE@am__append_98 = testing/acc_test testing/copy_test
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_99 = testing/clone testing/fork \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/origptl testing/ptltest \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/te
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_74 = testing/testitr
-@ENABLE_CHECKPOINT_TRUE@am__append_75 = testing/fttest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_76 = testing/gpctest$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_77 = testing/simple$(EXEEXT) \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_100 = testing/testitr
+@ENABLE_CHECKPOINT_TRUE@am__append_101 = testing/fttest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_102 = testing/gpctest$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_103 = testing/simple$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	testing/test_groups$(EXEEXT)
-#PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
-@THREAD_SAFE_TRUE@am__append_78 = testing/test_mt$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_79 = testing/acc_test$(EXEEXT) \
+#ARMCI_PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
+@THREAD_SAFE_TRUE@am__append_104 = testing/test_mt$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_105 = testing/acc_test$(EXEEXT) \
 @ENABLE_F77_TRUE@	testing/copy_test$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_80 = testing/clone$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_106 = testing/clone$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/fork$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/origptl$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/ptltest$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/te$(EXEEXT)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_81 = testing/testitr$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_82 = examples/features/gpc/hashtable/test_hashtable
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_83 = examples/features/proc_affinity/computation_impact/computation_impact
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_84 = examples/features/proc_affinity/simple/simple
-@MSG_COMMS_MPI_TRUE@am__append_85 = examples/features/concurrency/multidma/multidma \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_107 = testing/testitr$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_108 = examples/features/gpc/hashtable/test_hashtable
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_109 = examples/features/proc_affinity/computation_impact/computation_impact
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_110 = examples/features/proc_affinity/simple/simple
+@MSG_COMMS_MPI_TRUE@am__append_111 = examples/features/concurrency/multidma/multidma \
 @MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap
-@RANDOM_ACCESS_TRUE@am__append_86 = examples/benchmarks/RandomAccess/simple/simple \
+@RANDOM_ACCESS_TRUE@am__append_112 = examples/benchmarks/RandomAccess/simple/simple \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket
-@THREAD_SAFE_TRUE@am__append_87 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_88 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_89 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_90 = examples/features/proc_affinity/simple/simple$(EXEEXT)
-#PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
-#PARALLEL_TESTS += examples/features/non-blocking/overlap/overlap$(EXEEXT) # needs bug fixes
-@RANDOM_ACCESS_TRUE@am__append_91 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@THREAD_SAFE_TRUE@am__append_113 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_114 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_115 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_116 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+#ARMCI_PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
+#ARMCI_PARALLEL_TESTS += examples/features/non-blocking/overlap/overlap$(EXEEXT) # needs bug fixes
+@RANDOM_ACCESS_TRUE@am__append_117 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__append_92 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
-XFAIL_TESTS = $(am__EXEEXT_15) $(am__EXEEXT_15)
+@THREAD_SAFE_TRUE@am__append_118 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+TESTS = $(am__EXEEXT_25) $(am__EXEEXT_26)
+XFAIL_TESTS = $(am__EXEEXT_27) $(am__EXEEXT_27)
 subdir = .
-DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
-	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(srcdir)/config.h.in $(top_srcdir)/configure INSTALL NEWS \
-	build-aux/compile build-aux/config.guess build-aux/config.sub \
-	build-aux/depcomp build-aux/install-sh build-aux/ltmain.sh \
-	build-aux/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/armci_cxx_opt.m4 \
 	$(top_srcdir)/../m4/armci_enable_gpc.m4 \
 	$(top_srcdir)/../m4/armci_enable_profile.m4 \
-	$(top_srcdir)/../m4/armci_f77_enable.m4 \
 	$(top_srcdir)/../m4/armci_f77_i4.m4 \
 	$(top_srcdir)/../m4/armci_f77_opt.m4 \
 	$(top_srcdir)/../m4/armci_group.m4 \
@@ -455,6 +614,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/ga_arg_parse.m4 \
 	$(top_srcdir)/../m4/ga_armci_network.m4 \
 	$(top_srcdir)/../m4/ga_as.m4 $(top_srcdir)/../m4/ga_blas.m4 \
+	$(top_srcdir)/../m4/ga_c_match_types.m4 \
 	$(top_srcdir)/../m4/ga_check_func.m4 \
 	$(top_srcdir)/../m4/ga_check_header.m4 \
 	$(top_srcdir)/../m4/ga_compiler_vendor.m4 \
@@ -462,14 +622,20 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/ga_enable_checkpoint.m4 \
 	$(top_srcdir)/../m4/ga_enable_opt.m4 \
 	$(top_srcdir)/../m4/ga_enable_trace.m4 \
+	$(top_srcdir)/../m4/ga_f2c_cmdargs.m4 \
+	$(top_srcdir)/../m4/ga_f2c_match_types.m4 \
 	$(top_srcdir)/../m4/ga_f2c_nomain.m4 \
+	$(top_srcdir)/../m4/ga_f2c_string.m4 \
 	$(top_srcdir)/../m4/ga_f77_check_sizeof.m4 \
 	$(top_srcdir)/../m4/ga_f77_cpp_symbols.m4 \
 	$(top_srcdir)/../m4/ga_f77_disable.m4 \
 	$(top_srcdir)/../m4/ga_f77_fixed.m4 \
+	$(top_srcdir)/../m4/ga_f77_flush.m4 \
 	$(top_srcdir)/../m4/ga_f77_integer_size.m4 \
 	$(top_srcdir)/../m4/ga_f77_ld_override.m4 \
 	$(top_srcdir)/../m4/ga_f77_library_ldflags.m4 \
+	$(top_srcdir)/../m4/ga_f77_mismatch_type.m4 \
+	$(top_srcdir)/../m4/ga_f77_underscore.m4 \
 	$(top_srcdir)/../m4/ga_function.m4 \
 	$(top_srcdir)/../m4/ga_lapack.m4 \
 	$(top_srcdir)/../m4/ga_mpi_test_disable.m4 \
@@ -486,6 +652,8 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/ga_target.m4 \
 	$(top_srcdir)/../m4/ga_thread_safe.m4 \
 	$(top_srcdir)/../m4/ga_with_help.m4 \
+	$(top_srcdir)/../m4/tcgmsg_rsh.m4 \
+	$(top_srcdir)/../m4/tcgmsg_timings.m4 \
 	$(top_srcdir)/m4/armci_as_no_i386asm.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/lt_obsolete.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
@@ -496,7 +664,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = gaf2c/farg.h gaf2c/typesf2c.h
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -523,8 +691,58 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libarmci_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
+libarmci_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__append_53)
+am__libarmci_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
+	gaf2c/farg.F tcgmsg/capi.c tcgmsg/ipcv4.0/brdcst.c \
+	tcgmsg/ipcv4.0/checkbyte.c tcgmsg/ipcv4.0/cluster.c \
+	tcgmsg/ipcv4.0/cluster.h tcgmsg/ipcv4.0/defglobals.h \
+	tcgmsg/ipcv4.0/drand48.c tcgmsg/ipcv4.0/error.c \
+	tcgmsg/ipcv4.0/evlog.c tcgmsg/ipcv4.0/evlog.h \
+	tcgmsg/ipcv4.0/evon.c tcgmsg/ipcv4.0/globalop.c \
+	tcgmsg/ipcv4.0/llog.c tcgmsg/ipcv4.0/mdtob.c \
+	tcgmsg/ipcv4.0/mdtoi.c tcgmsg/ipcv4.0/mitob.c \
+	tcgmsg/ipcv4.0/mitod.c tcgmsg/ipcv4.0/mtime.c \
+	tcgmsg/ipcv4.0/niceftn.c tcgmsg/ipcv4.0/nnodes.c \
+	tcgmsg/ipcv4.0/nodeid.c tcgmsg/ipcv4.0/nxtval.c \
+	tcgmsg/ipcv4.0/pbegin.c tcgmsg/ipcv4.0/pbeginf.c \
+	tcgmsg/ipcv4.0/pfilecopy.c tcgmsg/ipcv4.0/sema.c \
+	tcgmsg/ipcv4.0/sema.h tcgmsg/ipcv4.0/setdbg.c \
+	tcgmsg/ipcv4.0/shmem.c tcgmsg/ipcv4.0/shmem.h \
+	tcgmsg/ipcv4.0/signals.c tcgmsg/ipcv4.0/signals.h \
+	tcgmsg/ipcv4.0/snd.c tcgmsg/ipcv4.0/sndrcv.h \
+	tcgmsg/ipcv4.0/sndrcvP.h tcgmsg/ipcv4.0/sockets.c \
+	tcgmsg/ipcv4.0/sockets.h tcgmsg/ipcv4.0/srftoc.h \
+	tcgmsg/ipcv4.0/srmover.c tcgmsg/ipcv4.0/stats.c \
+	tcgmsg/ipcv4.0/synch.c tcgmsg/ipcv4.0/usleep.c \
+	tcgmsg/ipcv4.0/waitall.c tcgmsg/ipcv4.0/waitcom.c \
+	tcgmsg/ipcv4.0/xdrstuff.c tcgmsg/ipcv4.0/xdrstuff.h \
+	tcgmsg/ipcv5.0/drand48.c tcgmsg/ipcv5.0/evlog.h \
+	tcgmsg/ipcv5.0/globalop.c tcgmsg/ipcv5.0/llog.c \
+	tcgmsg/ipcv5.0/mdtob.c tcgmsg/ipcv5.0/mdtoi.c \
+	tcgmsg/ipcv5.0/misc.c tcgmsg/ipcv5.0/mitob.c \
+	tcgmsg/ipcv5.0/mitod.c tcgmsg/ipcv5.0/mtime.c \
+	tcgmsg/ipcv5.0/niceftn.c tcgmsg/ipcv5.0/nnodes.c \
+	tcgmsg/ipcv5.0/nodeid.c tcgmsg/ipcv5.0/pbegin.c \
+	tcgmsg/ipcv5.0/pfilecopy.c tcgmsg/ipcv5.0/queues.c \
+	tcgmsg/ipcv5.0/shmem.h tcgmsg/ipcv5.0/signals.c \
+	tcgmsg/ipcv5.0/sndrcv.h tcgmsg/ipcv5.0/snd_rcv_probe.c \
+	tcgmsg/ipcv5.0/srftoc.h tcgmsg/ipcv5.0/tcgmsgP.h \
+	tcgmsg/ipcv5.0/usleep.c tcgmsg/ipcv5.0/waitall.c \
+	tcgmsg/ipcv5.0/async_send_lapi.c tcgmsg/ipcv5.0/lapi_putget.c \
+	tcgmsg/ipcv5.0/async_send.c tcgmsg/ipcv5.0/busy.c \
+	tcgmsg/ipcv5.0/error.c tcgmsg/ipcv5.0/nxtval.shm.c \
+	tcgmsg/ipcv5.0/pbeginf.c tcgmsg/ipcv5.0/shmem.c \
+	tcgmsg/ipcv5.0/synch.c tcgmsg/tcgmsg-mpi/checkbyte.c \
+	tcgmsg/tcgmsg-mpi/clustercheck.c tcgmsg/tcgmsg-mpi/collect.c \
+	tcgmsg/tcgmsg-mpi/drand48.c tcgmsg/tcgmsg-mpi/evlog.c \
+	tcgmsg/tcgmsg-mpi/evlog.h tcgmsg/tcgmsg-mpi/evon.c \
+	tcgmsg/tcgmsg-mpi/llog.c tcgmsg/tcgmsg-mpi/misc.c \
+	tcgmsg/tcgmsg-mpi/niceftn.c tcgmsg/tcgmsg-mpi/nxtval-armci.c \
+	tcgmsg/tcgmsg-mpi/p2p.c tcgmsg/tcgmsg-mpi/pbeginf.c \
+	tcgmsg/tcgmsg-mpi/pfilecopy.c tcgmsg/tcgmsg-mpi/sizeof.c \
+	tcgmsg/tcgmsg-mpi/sndrcv.h tcgmsg/tcgmsg-mpi/srftoc.h \
+	tcgmsg/tcgmsg-mpi/tcgmsgP.h src-portals/acc.h \
 	src-portals/aggregate.c src-portals/armci.c \
 	src-portals/armcip.h src-portals/armci_portals.c \
 	src-portals/armci_portals.h src-portals/atomics-i386.h \
@@ -591,12 +809,11 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src/memory/kr_malloc.c src/memory/memory.c \
 	src/progress/fence.c src/progress/wait.c \
 	src/xfer/caccumulate.c src/xfer/rmw.c src/xfer/strided.c \
-	src/xfer/vector.c src/common/fcopy.f src/xfer/faccumulate.f \
-	src/common/groups.c src/devices/bgml/bgmlacc.h \
-	src/devices/bgml/bgml.c src/devices/bgml/bgmldefs.h \
-	src/devices/bgml/bgml.h src/devices/bgml/bgmltas-ppc.h \
-	src/memory/shmalloc.c src/devices/dcmf/armcix.h \
-	src/devices/dcmf/dcmf2/armcix_acc.c \
+	src/xfer/vector.c src/common/groups.c \
+	src/devices/bgml/bgmlacc.h src/devices/bgml/bgml.c \
+	src/devices/bgml/bgmldefs.h src/devices/bgml/bgml.h \
+	src/devices/bgml/bgmltas-ppc.h src/memory/shmalloc.c \
+	src/devices/dcmf/armcix.h src/devices/dcmf/dcmf2/armcix_acc.c \
 	src/devices/dcmf/dcmf2/armcix_fence.c \
 	src/devices/dcmf/dcmf2/armcix_get.c \
 	src/devices/dcmf/dcmf2/armcix_impl.c \
@@ -640,7 +857,85 @@ am__libarmci_la_SOURCES_DIST = src-portals/acc.h \
 	src/common/x86copy.c src/locks/tas-sx.s src/common/capi.c \
 	tools/armci_prof.c
 am__dirstamp = $(am__leading_dot)dirstamp
-@ARMCI_NETWORK_PORTALS_TRUE@am__objects_1 = src-portals/aggregate.lo \
+@ENABLE_F77_TRUE@am__objects_1 = gaf2c/farg.lo
+@MSG_COMMS_TCGMSG_TRUE@am__objects_2 = tcgmsg/capi.lo
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__objects_3 = tcgmsg/ipcv4.0/brdcst.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/checkbyte.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/cluster.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/drand48.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/error.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/evlog.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/evon.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/globalop.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/llog.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/mdtob.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/mdtoi.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/mitob.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/mitod.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/mtime.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/niceftn.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/nnodes.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/nodeid.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/nxtval.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/pbegin.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/pbeginf.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/pfilecopy.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/sema.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/setdbg.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/shmem.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/signals.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/snd.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/sockets.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/srmover.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/stats.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/synch.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/usleep.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/waitall.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/waitcom.lo \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/xdrstuff.lo
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__objects_4 = tcgmsg/ipcv5.0/drand48.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/globalop.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/llog.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/mdtob.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/mdtoi.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/misc.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/mitob.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/mitod.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/mtime.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/niceftn.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/nnodes.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/nodeid.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/pbegin.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/pfilecopy.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/queues.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/signals.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/snd_rcv_probe.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/usleep.lo \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/waitall.lo
+@ARMCI_NETWORK_LAPI_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__objects_5 = tcgmsg/ipcv5.0/async_send_lapi.lo \
+@ARMCI_NETWORK_LAPI_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/lapi_putget.lo
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__objects_6 = tcgmsg/ipcv5.0/async_send.lo \
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/busy.lo \
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/error.lo \
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/nxtval.shm.lo \
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/pbeginf.lo \
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/shmem.lo \
+@ARMCI_NETWORK_LAPI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/synch.lo
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__objects_7 = tcgmsg/tcgmsg-mpi/checkbyte.lo \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/clustercheck.lo \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/collect.lo \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/drand48.lo \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/evlog.lo \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/evon.lo \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/llog.lo \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/misc.lo \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/niceftn.lo \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/nxtval-armci.lo \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/p2p.lo \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/pbeginf.lo \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/pfilecopy.lo \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/sizeof.lo
+@ARMCI_NETWORK_PORTALS_TRUE@am__objects_8 = src-portals/aggregate.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/armci.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/armci_portals.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/buffers.lo \
@@ -669,15 +964,15 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/spawn.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/strided.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/vector.lo
-@ARMCI_NETWORK_PORTALS_TRUE@@PORTALS_ENABLE_NEW_MALLOC_TRUE@am__objects_2 = src-portals/new_memory.lo
-@ARMCI_NETWORK_PORTALS_TRUE@@ENABLE_F77_TRUE@am__objects_3 = src-portals/faccumulate.lo \
+@ARMCI_NETWORK_PORTALS_TRUE@@PORTALS_ENABLE_NEW_MALLOC_TRUE@am__objects_9 = src-portals/new_memory.lo
+@ARMCI_NETWORK_PORTALS_TRUE@@ENABLE_F77_TRUE@am__objects_10 = src-portals/faccumulate.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@@ENABLE_F77_TRUE@	src-portals/fcopy.lo
-@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__objects_4 = src-portals/groups.lo
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__objects_5 = src-portals/gpc.lo
-@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__objects_6 = src-portals/threads.lo \
+@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__objects_11 = src-portals/groups.lo
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__objects_12 = src-portals/gpc.lo
+@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__objects_13 = src-portals/threads.lo \
 @ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@	src-portals/utils.lo
-@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_TRUE@am__objects_7 = src-portals/tas.lo
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_8 = src-gemini/aggregate.lo \
+@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_TRUE@am__objects_14 = src-portals/tas.lo
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_15 = src-gemini/aggregate.lo \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/armci.lo \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/armci-onesided.lo \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/buffers.lo \
@@ -704,13 +999,13 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/spawn.lo \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/strided.lo \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/vector.lo
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__objects_9 = src-gemini/faccumulate.lo \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__objects_16 = src-gemini/faccumulate.lo \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	src-gemini/fcopy.lo
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_10 = src-gemini/gpc.lo
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__objects_11 = src-gemini/threads.lo \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_17 = src-gemini/gpc.lo
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__objects_18 = src-gemini/threads.lo \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@	src-gemini/utils.lo
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__objects_12 = src-gemini/tas.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_13 = src/collectives/message.lo \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__objects_19 = src-gemini/tas.lo
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_20 = src/collectives/message.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/aggregate.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/armci.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/ccopy.lo \
@@ -729,13 +1024,11 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/rmw.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/strided.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/vector.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__objects_14 = src/common/fcopy.lo \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	src/xfer/faccumulate.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__objects_15 = src/common/groups.lo
-@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_16 = src/devices/bgml/bgml.lo
-@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_17 = src/memory/shmalloc.lo
-am__objects_18 =
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@am__objects_19 = src/devices/dcmf/dcmf2/armcix_acc.lo \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__objects_21 = src/common/groups.lo
+@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_22 = src/devices/bgml/bgml.lo
+@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_23 = src/memory/shmalloc.lo
+am__objects_24 =
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@am__objects_25 = src/devices/dcmf/dcmf2/armcix_acc.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_fence.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_get.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_impl.lo \
@@ -743,7 +1036,7 @@ am__objects_18 =
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_put.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_rmw.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_wait.lo
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@am__objects_20 = src/devices/dcmf/dcmf-0.2.0/armcix_acc.lo \
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@am__objects_26 = src/devices/dcmf/dcmf-0.2.0/armcix_acc.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_fence.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_get.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_impl.lo \
@@ -751,7 +1044,7 @@ am__objects_18 =
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_put.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_rmw.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_wait.lo
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@am__objects_21 = src/devices/dcmf/dcmf-0.3.0/armcix_acc.lo \
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@am__objects_27 = src/devices/dcmf/dcmf-0.3.0/armcix_acc.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_fence.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_get.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_impl.lo \
@@ -759,22 +1052,22 @@ am__objects_18 =
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_put.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_rmw.lo \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_wait.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_22 = src/common/async.lo \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_28 = src/common/async.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/lapi/lapi.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_23 = src/common/ds-shared.lo \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_29 = src/common/ds-shared.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/spawn.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-mt/mpi2_client.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-mt/mpi2_server.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_24 = src/common/ds-shared.lo \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_30 = src/common/ds-shared.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-spawn/mpi2_client.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-spawn/mpi2_server.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_25 = src/common/async.lo \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_31 = src/common/async.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/ds-shared.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/regions.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.lo \
@@ -784,50 +1077,53 @@ am__objects_18 =
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/openib/pendbufs.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/openib/rtinfo.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__objects_26 = src/common/async.lo \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__objects_32 = src/common/async.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/common/ds-shared.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/common/request.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/common/spawn.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/devices/sockets/dataserv.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/devices/sockets/sockets.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/memory/buffers.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__objects_27 = src/ft/armci_chkpt.lo \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__objects_33 = src/ft/armci_chkpt.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@	src/ft/armci_storage.lo
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_28 = src/common/gpc.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__objects_29 = src/common/signaltrap.lo \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__objects_34 = src/common/gpc.lo
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__objects_35 = src/common/signaltrap.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@	src/memory/shmalloc.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@	src/memory/winshmem.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@am__objects_30 = src/common/signaltrap.lo \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@am__objects_36 = src/common/signaltrap.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@	src/memory/shmem.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@	src/memory/shmlimit.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NB_NONCONT_TRUE@am__objects_31 = src/common/noncont.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__objects_32 = src/common/utils.lo \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NB_NONCONT_TRUE@am__objects_37 = src/common/noncont.lo
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__objects_38 = src/common/utils.lo \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@	src/util/threads.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__objects_33 = src/locks/tas.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_TRUE@am__objects_34 = src/common/x86copy.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__objects_35 = src/locks/tas-sx.lo
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__objects_36 = src/common/capi.lo
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__objects_37 = tools/armci_prof.lo
-@ENABLE_PROFILING_FALSE@am__objects_38 = src/common/capi.lo
-am_libarmci_la_OBJECTS = $(am__objects_1) $(am__objects_2) \
-	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
-	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
-	$(am__objects_9) $(am__objects_10) $(am__objects_11) \
-	$(am__objects_12) $(am__objects_13) $(am__objects_14) \
-	$(am__objects_15) $(am__objects_16) $(am__objects_17) \
-	$(am__objects_18) $(am__objects_19) $(am__objects_20) \
-	$(am__objects_21) $(am__objects_22) $(am__objects_23) \
-	$(am__objects_24) $(am__objects_25) $(am__objects_26) \
-	$(am__objects_27) $(am__objects_28) $(am__objects_29) \
-	$(am__objects_30) $(am__objects_31) $(am__objects_32) \
-	$(am__objects_33) $(am__objects_34) $(am__objects_35) \
-	$(am__objects_36) $(am__objects_37) $(am__objects_38)
-@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__objects_39 = src-portals/tas_as.lo
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__objects_40 = src-gemini/tas_as.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__objects_41 = src/locks/tas_as.lo
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__objects_42 = src/common/x86copy_as.lo
-nodist_libarmci_la_OBJECTS = $(am__objects_39) $(am__objects_40) \
-	$(am__objects_41) $(am__objects_42)
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__objects_39 = src/locks/tas.lo
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_TRUE@am__objects_40 = src/common/x86copy.lo
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__objects_41 = src/locks/tas-sx.lo
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__objects_42 = src/common/capi.lo
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__objects_43 = tools/armci_prof.lo
+@ENABLE_PROFILING_FALSE@am__objects_44 = src/common/capi.lo
+am_libarmci_la_OBJECTS = gaf2c/gaf2c.lo gaf2c/drand.lo \
+	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
+	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
+	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
+	$(am__objects_10) $(am__objects_11) $(am__objects_12) \
+	$(am__objects_13) $(am__objects_14) $(am__objects_15) \
+	$(am__objects_16) $(am__objects_17) $(am__objects_18) \
+	$(am__objects_19) $(am__objects_20) $(am__objects_21) \
+	$(am__objects_22) $(am__objects_23) $(am__objects_24) \
+	$(am__objects_25) $(am__objects_26) $(am__objects_27) \
+	$(am__objects_28) $(am__objects_29) $(am__objects_30) \
+	$(am__objects_31) $(am__objects_32) $(am__objects_33) \
+	$(am__objects_34) $(am__objects_35) $(am__objects_36) \
+	$(am__objects_37) $(am__objects_38) $(am__objects_39) \
+	$(am__objects_40) $(am__objects_41) $(am__objects_42) \
+	$(am__objects_43) $(am__objects_44)
+@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__objects_45 = src-portals/tas_as.lo
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__objects_46 = src-gemini/tas_as.lo
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__objects_47 = src/locks/tas_as.lo
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__objects_48 = src/common/x86copy_as.lo
+nodist_libarmci_la_OBJECTS = $(am__objects_45) $(am__objects_46) \
+	$(am__objects_47) $(am__objects_48)
 libarmci_la_OBJECTS = $(am_libarmci_la_OBJECTS) \
 	$(nodist_libarmci_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
@@ -840,7 +1136,56 @@ libarmci_prof_la_OBJECTS = $(am_libarmci_prof_la_OBJECTS)
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libarmci_prof_la_rpath = -rpath \
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	$(libdir)
 libarmcii_la_LIBADD =
-am__libarmcii_la_SOURCES_DIST = src-portals/acc.h \
+am__libarmcii_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
+	gaf2c/farg.F tcgmsg/capi.c tcgmsg/ipcv4.0/brdcst.c \
+	tcgmsg/ipcv4.0/checkbyte.c tcgmsg/ipcv4.0/cluster.c \
+	tcgmsg/ipcv4.0/cluster.h tcgmsg/ipcv4.0/defglobals.h \
+	tcgmsg/ipcv4.0/drand48.c tcgmsg/ipcv4.0/error.c \
+	tcgmsg/ipcv4.0/evlog.c tcgmsg/ipcv4.0/evlog.h \
+	tcgmsg/ipcv4.0/evon.c tcgmsg/ipcv4.0/globalop.c \
+	tcgmsg/ipcv4.0/llog.c tcgmsg/ipcv4.0/mdtob.c \
+	tcgmsg/ipcv4.0/mdtoi.c tcgmsg/ipcv4.0/mitob.c \
+	tcgmsg/ipcv4.0/mitod.c tcgmsg/ipcv4.0/mtime.c \
+	tcgmsg/ipcv4.0/niceftn.c tcgmsg/ipcv4.0/nnodes.c \
+	tcgmsg/ipcv4.0/nodeid.c tcgmsg/ipcv4.0/nxtval.c \
+	tcgmsg/ipcv4.0/pbegin.c tcgmsg/ipcv4.0/pbeginf.c \
+	tcgmsg/ipcv4.0/pfilecopy.c tcgmsg/ipcv4.0/sema.c \
+	tcgmsg/ipcv4.0/sema.h tcgmsg/ipcv4.0/setdbg.c \
+	tcgmsg/ipcv4.0/shmem.c tcgmsg/ipcv4.0/shmem.h \
+	tcgmsg/ipcv4.0/signals.c tcgmsg/ipcv4.0/signals.h \
+	tcgmsg/ipcv4.0/snd.c tcgmsg/ipcv4.0/sndrcv.h \
+	tcgmsg/ipcv4.0/sndrcvP.h tcgmsg/ipcv4.0/sockets.c \
+	tcgmsg/ipcv4.0/sockets.h tcgmsg/ipcv4.0/srftoc.h \
+	tcgmsg/ipcv4.0/srmover.c tcgmsg/ipcv4.0/stats.c \
+	tcgmsg/ipcv4.0/synch.c tcgmsg/ipcv4.0/usleep.c \
+	tcgmsg/ipcv4.0/waitall.c tcgmsg/ipcv4.0/waitcom.c \
+	tcgmsg/ipcv4.0/xdrstuff.c tcgmsg/ipcv4.0/xdrstuff.h \
+	tcgmsg/ipcv5.0/drand48.c tcgmsg/ipcv5.0/evlog.h \
+	tcgmsg/ipcv5.0/globalop.c tcgmsg/ipcv5.0/llog.c \
+	tcgmsg/ipcv5.0/mdtob.c tcgmsg/ipcv5.0/mdtoi.c \
+	tcgmsg/ipcv5.0/misc.c tcgmsg/ipcv5.0/mitob.c \
+	tcgmsg/ipcv5.0/mitod.c tcgmsg/ipcv5.0/mtime.c \
+	tcgmsg/ipcv5.0/niceftn.c tcgmsg/ipcv5.0/nnodes.c \
+	tcgmsg/ipcv5.0/nodeid.c tcgmsg/ipcv5.0/pbegin.c \
+	tcgmsg/ipcv5.0/pfilecopy.c tcgmsg/ipcv5.0/queues.c \
+	tcgmsg/ipcv5.0/shmem.h tcgmsg/ipcv5.0/signals.c \
+	tcgmsg/ipcv5.0/sndrcv.h tcgmsg/ipcv5.0/snd_rcv_probe.c \
+	tcgmsg/ipcv5.0/srftoc.h tcgmsg/ipcv5.0/tcgmsgP.h \
+	tcgmsg/ipcv5.0/usleep.c tcgmsg/ipcv5.0/waitall.c \
+	tcgmsg/ipcv5.0/async_send_lapi.c tcgmsg/ipcv5.0/lapi_putget.c \
+	tcgmsg/ipcv5.0/async_send.c tcgmsg/ipcv5.0/busy.c \
+	tcgmsg/ipcv5.0/error.c tcgmsg/ipcv5.0/nxtval.shm.c \
+	tcgmsg/ipcv5.0/pbeginf.c tcgmsg/ipcv5.0/shmem.c \
+	tcgmsg/ipcv5.0/synch.c tcgmsg/tcgmsg-mpi/checkbyte.c \
+	tcgmsg/tcgmsg-mpi/clustercheck.c tcgmsg/tcgmsg-mpi/collect.c \
+	tcgmsg/tcgmsg-mpi/drand48.c tcgmsg/tcgmsg-mpi/evlog.c \
+	tcgmsg/tcgmsg-mpi/evlog.h tcgmsg/tcgmsg-mpi/evon.c \
+	tcgmsg/tcgmsg-mpi/llog.c tcgmsg/tcgmsg-mpi/misc.c \
+	tcgmsg/tcgmsg-mpi/niceftn.c tcgmsg/tcgmsg-mpi/nxtval-armci.c \
+	tcgmsg/tcgmsg-mpi/p2p.c tcgmsg/tcgmsg-mpi/pbeginf.c \
+	tcgmsg/tcgmsg-mpi/pfilecopy.c tcgmsg/tcgmsg-mpi/sizeof.c \
+	tcgmsg/tcgmsg-mpi/sndrcv.h tcgmsg/tcgmsg-mpi/srftoc.h \
+	tcgmsg/tcgmsg-mpi/tcgmsgP.h src-portals/acc.h \
 	src-portals/aggregate.c src-portals/armci.c \
 	src-portals/armcip.h src-portals/armci_portals.c \
 	src-portals/armci_portals.h src-portals/atomics-i386.h \
@@ -907,12 +1252,11 @@ am__libarmcii_la_SOURCES_DIST = src-portals/acc.h \
 	src/memory/kr_malloc.c src/memory/memory.c \
 	src/progress/fence.c src/progress/wait.c \
 	src/xfer/caccumulate.c src/xfer/rmw.c src/xfer/strided.c \
-	src/xfer/vector.c src/common/fcopy.f src/xfer/faccumulate.f \
-	src/common/groups.c src/devices/bgml/bgmlacc.h \
-	src/devices/bgml/bgml.c src/devices/bgml/bgmldefs.h \
-	src/devices/bgml/bgml.h src/devices/bgml/bgmltas-ppc.h \
-	src/memory/shmalloc.c src/devices/dcmf/armcix.h \
-	src/devices/dcmf/dcmf2/armcix_acc.c \
+	src/xfer/vector.c src/common/groups.c \
+	src/devices/bgml/bgmlacc.h src/devices/bgml/bgml.c \
+	src/devices/bgml/bgmldefs.h src/devices/bgml/bgml.h \
+	src/devices/bgml/bgmltas-ppc.h src/memory/shmalloc.c \
+	src/devices/dcmf/armcix.h src/devices/dcmf/dcmf2/armcix_acc.c \
 	src/devices/dcmf/dcmf2/armcix_fence.c \
 	src/devices/dcmf/dcmf2/armcix_get.c \
 	src/devices/dcmf/dcmf2/armcix_impl.c \
@@ -955,48 +1299,79 @@ am__libarmcii_la_SOURCES_DIST = src-portals/acc.h \
 	src/common/utils.c src/util/threads.c src/locks/tas.c \
 	src/common/x86copy.c src/locks/tas-sx.s src/common/capi.c \
 	tools/armci_prof.c
-am__objects_43 = $(am__objects_1) $(am__objects_2) $(am__objects_3) \
-	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
-	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
-	$(am__objects_10) $(am__objects_11) $(am__objects_12) \
-	$(am__objects_13) $(am__objects_14) $(am__objects_15) \
-	$(am__objects_16) $(am__objects_17) $(am__objects_18) \
-	$(am__objects_19) $(am__objects_20) $(am__objects_21) \
-	$(am__objects_22) $(am__objects_23) $(am__objects_24) \
-	$(am__objects_25) $(am__objects_26) $(am__objects_27) \
-	$(am__objects_28) $(am__objects_29) $(am__objects_30) \
-	$(am__objects_31) $(am__objects_32) $(am__objects_33) \
-	$(am__objects_34) $(am__objects_35) $(am__objects_36) \
-	$(am__objects_37) $(am__objects_38)
-am_libarmcii_la_OBJECTS = $(am__objects_43)
-am__objects_44 = $(am__objects_39) $(am__objects_40) $(am__objects_41) \
-	$(am__objects_42)
-nodist_libarmcii_la_OBJECTS = $(am__objects_44)
+am__objects_49 = gaf2c/gaf2c.lo gaf2c/drand.lo $(am__objects_1) \
+	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
+	$(am__objects_5) $(am__objects_6) $(am__objects_7) \
+	$(am__objects_8) $(am__objects_9) $(am__objects_10) \
+	$(am__objects_11) $(am__objects_12) $(am__objects_13) \
+	$(am__objects_14) $(am__objects_15) $(am__objects_16) \
+	$(am__objects_17) $(am__objects_18) $(am__objects_19) \
+	$(am__objects_20) $(am__objects_21) $(am__objects_22) \
+	$(am__objects_23) $(am__objects_24) $(am__objects_25) \
+	$(am__objects_26) $(am__objects_27) $(am__objects_28) \
+	$(am__objects_29) $(am__objects_30) $(am__objects_31) \
+	$(am__objects_32) $(am__objects_33) $(am__objects_34) \
+	$(am__objects_35) $(am__objects_36) $(am__objects_37) \
+	$(am__objects_38) $(am__objects_39) $(am__objects_40) \
+	$(am__objects_41) $(am__objects_42) $(am__objects_43) \
+	$(am__objects_44)
+am_libarmcii_la_OBJECTS = $(am__objects_49)
+am__objects_50 = $(am__objects_45) $(am__objects_46) $(am__objects_47) \
+	$(am__objects_48)
+nodist_libarmcii_la_OBJECTS = $(am__objects_50)
 libarmcii_la_OBJECTS = $(am_libarmcii_la_OBJECTS) \
 	$(nodist_libarmcii_la_OBJECTS)
-@ENABLE_CHECKPOINT_TRUE@am__EXEEXT_1 = testing/fttest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_2 = testing/gpctest$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__EXEEXT_3 = testing/simple$(EXEEXT) \
+libfcopyfacc_la_LIBADD =
+am__libfcopyfacc_la_SOURCES_DIST = src/common/fcopy.f \
+	src/xfer/faccumulate.f
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am_libfcopyfacc_la_OBJECTS = src/common/libfcopyfacc_la-fcopy.lo \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	src/xfer/libfcopyfacc_la-faccumulate.lo
+libfcopyfacc_la_OBJECTS = $(am_libfcopyfacc_la_OBJECTS)
+libfcopyfacc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(libfcopyfacc_la_FFLAGS) $(FFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+	-o $@
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am_libfcopyfacc_la_rpath =
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__EXEEXT_1 = parallel$(EXEEXT)
+@ENABLE_F77_TRUE@am__EXEEXT_2 = gaf2c/testarg$(EXEEXT)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__EXEEXT_3 = tcgmsg/ipcv4.0/hello$(EXEEXT) \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/test$(EXEEXT) \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/testmap$(EXEEXT) \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/toplot$(EXEEXT) \
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/xdrtest$(EXEEXT)
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__EXEEXT_4 = tcgmsg/ipcv4.0/testf$(EXEEXT) \
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/testpf$(EXEEXT)
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__EXEEXT_5 = tcgmsg/ipcv5.0/hello$(EXEEXT) \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/test$(EXEEXT)
+@MSG_COMMS_PVM_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__EXEEXT_6 = tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__EXEEXT_7 = tcgmsg/ipcv5.0/jacobi$(EXEEXT) \
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/testf$(EXEEXT)
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__EXEEXT_8 = tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT) \
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/tcgmsg-mpi/test$(EXEEXT)
+@ENABLE_F77_TRUE@@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am__EXEEXT_9 = tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
+@ENABLE_CHECKPOINT_TRUE@am__EXEEXT_10 = testing/fttest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_11 = testing/gpctest$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__EXEEXT_12 = testing/simple$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	testing/test_groups$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__EXEEXT_4 =  \
+@MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__EXEEXT_13 =  \
 @MSG_COMMS_MPI_TRUE@@SYSV_TRUE@	testing/ipctest$(EXEEXT)
-@THREAD_SAFE_TRUE@am__EXEEXT_5 = testing/test_mt$(EXEEXT)
-@ENABLE_F77_TRUE@am__EXEEXT_6 = testing/acc_test$(EXEEXT) \
+@THREAD_SAFE_TRUE@am__EXEEXT_14 = testing/test_mt$(EXEEXT)
+@ENABLE_F77_TRUE@am__EXEEXT_15 = testing/acc_test$(EXEEXT) \
 @ENABLE_F77_TRUE@	testing/copy_test$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am__EXEEXT_7 = testing/clone$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_TRUE@am__EXEEXT_16 = testing/clone$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/fork$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/origptl$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/ptltest$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/te$(EXEEXT)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__EXEEXT_8 = testing/testitr$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_9 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__EXEEXT_10 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_11 = examples/features/proc_affinity/simple/simple$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__EXEEXT_12 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__EXEEXT_17 = testing/testitr$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_18 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__EXEEXT_19 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__EXEEXT_20 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__EXEEXT_21 = examples/features/concurrency/multidma/multidma$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap$(EXEEXT)
-@RANDOM_ACCESS_TRUE@am__EXEEXT_13 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__EXEEXT_22 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__EXEEXT_14 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+@THREAD_SAFE_TRUE@am__EXEEXT_23 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 LIBOBJDIR = compat/
 am_examples_benchmarks_RandomAccess_simple_simple_OBJECTS =  \
@@ -1006,18 +1381,16 @@ examples_benchmarks_RandomAccess_simple_simple_OBJECTS =  \
 	$(am_examples_benchmarks_RandomAccess_simple_simple_OBJECTS)
 examples_benchmarks_RandomAccess_simple_simple_LDADD = $(LDADD)
 examples_benchmarks_RandomAccess_simple_simple_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_OBJECTS = examples/benchmarks/RandomAccess/smp_bucket/smp_bucket.$(OBJEXT) \
 	examples/benchmarks/RandomAccess/timing.$(OBJEXT)
 examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_OBJECTS = $(am_examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_OBJECTS)
 examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_LDADD =  \
 	$(LDADD)
 examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_benchmarks_cg_armci_sharedmemory_cg_OBJECTS =  \
 	examples/benchmarks/cg/armci_sharedmemory/cg.$(OBJEXT) \
 	examples/benchmarks/cg/armci_sharedmemory/compute.$(OBJEXT) \
@@ -1027,18 +1400,16 @@ examples_benchmarks_cg_armci_sharedmemory_cg_OBJECTS =  \
 	$(am_examples_benchmarks_cg_armci_sharedmemory_cg_OBJECTS)
 examples_benchmarks_cg_armci_sharedmemory_cg_LDADD = $(LDADD)
 examples_benchmarks_cg_armci_sharedmemory_cg_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_armci_blocking_lu_OBJECTS =  \
 	examples/benchmarks/lu/armci_blocking/lu.$(OBJEXT) \
 	examples/benchmarks/lu/armci_blocking/timing.$(OBJEXT)
 examples_benchmarks_lu_armci_blocking_lu_OBJECTS =  \
 	$(am_examples_benchmarks_lu_armci_blocking_lu_OBJECTS)
 examples_benchmarks_lu_armci_blocking_lu_LDADD = $(LDADD)
-examples_benchmarks_lu_armci_blocking_lu_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+examples_benchmarks_lu_armci_blocking_lu_DEPENDENCIES = libarmci.la \
+	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_armci_blocking_lu_b_bc_OBJECTS =  \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc.$(OBJEXT) \
@@ -1047,9 +1418,8 @@ examples_benchmarks_lu_armci_blocking_lu_b_bc_OBJECTS =  \
 	$(am_examples_benchmarks_lu_armci_blocking_lu_b_bc_OBJECTS)
 examples_benchmarks_lu_armci_blocking_lu_b_bc_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_blocking_lu_b_bc_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_armci_blocking_lu_block_OBJECTS =  \
 	examples/benchmarks/lu/armci_blocking/lu-block.$(OBJEXT) \
 	examples/benchmarks/lu/armci_blocking/timing.$(OBJEXT)
@@ -1057,36 +1427,32 @@ examples_benchmarks_lu_armci_blocking_lu_block_OBJECTS =  \
 	$(am_examples_benchmarks_lu_armci_blocking_lu_block_OBJECTS)
 examples_benchmarks_lu_armci_blocking_lu_block_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_blocking_lu_block_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_armci_multithreaded_lu_block_th_OBJECTS = examples/benchmarks/lu/armci_multithreaded/lu-block-th.$(OBJEXT) \
 	examples/benchmarks/lu/armci_multithreaded/timing.$(OBJEXT)
 examples_benchmarks_lu_armci_multithreaded_lu_block_th_OBJECTS = $(am_examples_benchmarks_lu_armci_multithreaded_lu_block_th_OBJECTS)
 examples_benchmarks_lu_armci_multithreaded_lu_block_th_LDADD =  \
 	$(LDADD)
 examples_benchmarks_lu_armci_multithreaded_lu_block_th_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_armci_nonblocking_lu_nb_get_OBJECTS =  \
 	examples/benchmarks/lu/armci_nonblocking/lu_nb_get.$(OBJEXT) \
 	examples/benchmarks/lu/armci_nonblocking/timing.$(OBJEXT)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_get_OBJECTS = $(am_examples_benchmarks_lu_armci_nonblocking_lu_nb_get_OBJECTS)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_get_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_get_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_armci_nonblocking_lu_nb_put_OBJECTS =  \
 	examples/benchmarks/lu/armci_nonblocking/lu_nb_put.$(OBJEXT) \
 	examples/benchmarks/lu/armci_nonblocking/timing.$(OBJEXT)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_put_OBJECTS = $(am_examples_benchmarks_lu_armci_nonblocking_lu_nb_put_OBJECTS)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_put_LDADD = $(LDADD)
 examples_benchmarks_lu_armci_nonblocking_lu_nb_put_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_benchmarks_lu_pthreads_lu_thread_OBJECTS =  \
 	examples/benchmarks/lu/pthreads/barrier.$(OBJEXT) \
 	examples/benchmarks/lu/pthreads/lu-thread.$(OBJEXT) \
@@ -1100,35 +1466,31 @@ examples_features_aggregation_simple_simple_OBJECTS =  \
 	$(am_examples_features_aggregation_simple_simple_OBJECTS)
 examples_features_aggregation_simple_simple_LDADD = $(LDADD)
 examples_features_aggregation_simple_simple_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_OBJECTS = examples/features/aggregation/sparse_matvecmul/sparse_matvecmul.$(OBJEXT)
 examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_OBJECTS = $(am_examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_OBJECTS)
 examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_LDADD =  \
 	$(LDADD)
 examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_features_concurrency_multidma_multidma_OBJECTS =  \
 	examples/features/concurrency/multidma/multidma.$(OBJEXT)
 examples_features_concurrency_multidma_multidma_OBJECTS =  \
 	$(am_examples_features_concurrency_multidma_multidma_OBJECTS)
 examples_features_concurrency_multidma_multidma_LDADD = $(LDADD)
 examples_features_concurrency_multidma_multidma_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_features_concurrency_simple_comdegree_OBJECTS =  \
 	examples/features/concurrency/simple/comdegree.$(OBJEXT)
 examples_features_concurrency_simple_comdegree_OBJECTS =  \
 	$(am_examples_features_concurrency_simple_comdegree_OBJECTS)
 examples_features_concurrency_simple_comdegree_LDADD = $(LDADD)
 examples_features_concurrency_simple_comdegree_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_features_gpc_hashtable_test_hashtable_OBJECTS =  \
 	examples/features/gpc/hashtable/DistHashmap.$(OBJEXT) \
 	examples/features/gpc/hashtable/GPCHashmap.$(OBJEXT) \
@@ -1138,9 +1500,8 @@ am_examples_features_gpc_hashtable_test_hashtable_OBJECTS =  \
 	examples/features/gpc/hashtable/test_hashtable.$(OBJEXT)
 examples_features_gpc_hashtable_test_hashtable_OBJECTS =  \
 	$(am_examples_features_gpc_hashtable_test_hashtable_OBJECTS)
-am__DEPENDENCIES_2 = $(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+am__DEPENDENCIES_2 = libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 @ENABLE_F77_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
 examples_features_gpc_hashtable_test_hashtable_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
@@ -1155,26 +1516,23 @@ examples_features_non_blocking_overlap_overlap_OBJECTS =  \
 	$(am_examples_features_non_blocking_overlap_overlap_OBJECTS)
 examples_features_non_blocking_overlap_overlap_LDADD = $(LDADD)
 examples_features_non_blocking_overlap_overlap_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_features_non_blocking_simple_simple_OBJECTS =  \
 	examples/features/non-blocking/simple/simple.$(OBJEXT)
 examples_features_non_blocking_simple_simple_OBJECTS =  \
 	$(am_examples_features_non_blocking_simple_simple_OBJECTS)
 examples_features_non_blocking_simple_simple_LDADD = $(LDADD)
 examples_features_non_blocking_simple_simple_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_features_notification_simple_testnotify_OBJECTS =  \
 	examples/features/notification/simple/testnotify.$(OBJEXT)
 examples_features_notification_simple_testnotify_OBJECTS = $(am_examples_features_notification_simple_testnotify_OBJECTS)
 examples_features_notification_simple_testnotify_LDADD = $(LDADD)
 examples_features_notification_simple_testnotify_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS = examples/features/proc_affinity/computation_impact/computation_impact.$(OBJEXT)
 examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS = $(am_examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS)
 examples_features_proc_affinity_computation_impact_computation_impact_DEPENDENCIES =  \
@@ -1191,174 +1549,343 @@ examples_features_proc_affinity_simple_simple_OBJECTS =  \
 	$(am_examples_features_proc_affinity_simple_simple_OBJECTS)
 examples_features_proc_affinity_simple_simple_LDADD = $(LDADD)
 examples_features_proc_affinity_simple_simple_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_features_symmetric_memory_simple_simple_OBJECTS =  \
 	examples/features/symmetric_memory/simple/simple.$(OBJEXT)
 examples_features_symmetric_memory_simple_simple_OBJECTS = $(am_examples_features_symmetric_memory_simple_simple_OBJECTS)
 examples_features_symmetric_memory_simple_simple_LDADD = $(LDADD)
 examples_features_symmetric_memory_simple_simple_DEPENDENCIES =  \
-	$(am__append_3) $(am__append_4) $(LTLIBOBJS) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_examples_simpleApps_transp1D_c_OBJECTS =  \
 	examples/simpleApps/transp1D-c.$(OBJEXT)
 examples_simpleApps_transp1D_c_OBJECTS =  \
 	$(am_examples_simpleApps_transp1D_c_OBJECTS)
 examples_simpleApps_transp1D_c_LDADD = $(LDADD)
-examples_simpleApps_transp1D_c_DEPENDENCIES = $(am__append_3) \
-	$(am__append_4) $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
+examples_simpleApps_transp1D_c_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_gaf2c_testarg_OBJECTS = gaf2c/testarg.$(OBJEXT) \
+	gaf2c/testargf.$(OBJEXT)
+gaf2c_testarg_OBJECTS = $(am_gaf2c_testarg_OBJECTS)
+gaf2c_testarg_LDADD = $(LDADD)
+gaf2c_testarg_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+gaf2c_testarg_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(gaf2c_testarg_LDFLAGS) $(LDFLAGS) -o \
+	$@
+am__parallel_SOURCES_DIST = tcgmsg/ipcv4.0/parallel.c
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_parallel_OBJECTS = tcgmsg/ipcv4.0/parallel.$(OBJEXT)
+parallel_OBJECTS = $(am_parallel_OBJECTS)
+parallel_LDADD = $(LDADD)
+parallel_DEPENDENCIES = libarmci.la $(LTLIBOBJS) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am__tcgmsg_ipcv4_0_hello_SOURCES_DIST = tcgmsg/ipcv4.0/hello.c
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_ipcv4_0_hello_OBJECTS = tcgmsg/ipcv4.0/hello.$(OBJEXT)
+tcgmsg_ipcv4_0_hello_OBJECTS = $(am_tcgmsg_ipcv4_0_hello_OBJECTS)
+tcgmsg_ipcv4_0_hello_LDADD = $(LDADD)
+tcgmsg_ipcv4_0_hello_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__tcgmsg_ipcv4_0_test_SOURCES_DIST = tcgmsg/ipcv4.0/test.c
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_ipcv4_0_test_OBJECTS = tcgmsg/ipcv4.0/test.$(OBJEXT)
+tcgmsg_ipcv4_0_test_OBJECTS = $(am_tcgmsg_ipcv4_0_test_OBJECTS)
+tcgmsg_ipcv4_0_test_LDADD = $(LDADD)
+tcgmsg_ipcv4_0_test_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__tcgmsg_ipcv4_0_testf_SOURCES_DIST = tcgmsg/ipcv4.0/testf.F
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_ipcv4_0_testf_OBJECTS = tcgmsg/ipcv4.0/testf.$(OBJEXT)
+tcgmsg_ipcv4_0_testf_OBJECTS = $(am_tcgmsg_ipcv4_0_testf_OBJECTS)
+tcgmsg_ipcv4_0_testf_LDADD = $(LDADD)
+tcgmsg_ipcv4_0_testf_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+tcgmsg_ipcv4_0_testf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(tcgmsg_ipcv4_0_testf_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am__tcgmsg_ipcv4_0_testmap_SOURCES_DIST = tcgmsg/ipcv4.0/testmap.c
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_ipcv4_0_testmap_OBJECTS = tcgmsg/ipcv4.0/testmap.$(OBJEXT)
+tcgmsg_ipcv4_0_testmap_OBJECTS = $(am_tcgmsg_ipcv4_0_testmap_OBJECTS)
+tcgmsg_ipcv4_0_testmap_LDADD = $(LDADD)
+tcgmsg_ipcv4_0_testmap_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__tcgmsg_ipcv4_0_testpf_SOURCES_DIST = tcgmsg/ipcv4.0/testpf.f
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_ipcv4_0_testpf_OBJECTS = tcgmsg/ipcv4.0/testpf.$(OBJEXT)
+tcgmsg_ipcv4_0_testpf_OBJECTS = $(am_tcgmsg_ipcv4_0_testpf_OBJECTS)
+tcgmsg_ipcv4_0_testpf_LDADD = $(LDADD)
+tcgmsg_ipcv4_0_testpf_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+tcgmsg_ipcv4_0_testpf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(tcgmsg_ipcv4_0_testpf_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am__tcgmsg_ipcv4_0_toplot_SOURCES_DIST = tcgmsg/ipcv4.0/toplot.c
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_ipcv4_0_toplot_OBJECTS = tcgmsg/ipcv4.0/toplot.$(OBJEXT)
+tcgmsg_ipcv4_0_toplot_OBJECTS = $(am_tcgmsg_ipcv4_0_toplot_OBJECTS)
+tcgmsg_ipcv4_0_toplot_LDADD = $(LDADD)
+tcgmsg_ipcv4_0_toplot_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__tcgmsg_ipcv4_0_xdrtest_SOURCES_DIST = tcgmsg/ipcv4.0/xdrtest.c
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_ipcv4_0_xdrtest_OBJECTS = tcgmsg/ipcv4.0/xdrtest.$(OBJEXT)
+tcgmsg_ipcv4_0_xdrtest_OBJECTS = $(am_tcgmsg_ipcv4_0_xdrtest_OBJECTS)
+tcgmsg_ipcv4_0_xdrtest_LDADD = $(LDADD)
+tcgmsg_ipcv4_0_xdrtest_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__tcgmsg_ipcv5_0_hello_SOURCES_DIST = tcgmsg/ipcv5.0/hello.c
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_ipcv5_0_hello_OBJECTS = tcgmsg/ipcv5.0/hello.$(OBJEXT)
+tcgmsg_ipcv5_0_hello_OBJECTS = $(am_tcgmsg_ipcv5_0_hello_OBJECTS)
+tcgmsg_ipcv5_0_hello_LDADD = $(LDADD)
+tcgmsg_ipcv5_0_hello_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__tcgmsg_ipcv5_0_jacobi_SOURCES_DIST = tcgmsg/ipcv5.0/fexit.f \
+	tcgmsg/ipcv5.0/getmem.c tcgmsg/ipcv5.0/jacobi.F \
+	tcgmsg/ipcv5.0/mxv_fortran.f tcgmsg/ipcv5.0/timer.f
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_ipcv5_0_jacobi_OBJECTS = tcgmsg/ipcv5.0/fexit.$(OBJEXT) \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/getmem.$(OBJEXT) \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/jacobi.$(OBJEXT) \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/mxv_fortran.$(OBJEXT) \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/timer.$(OBJEXT)
+tcgmsg_ipcv5_0_jacobi_OBJECTS = $(am_tcgmsg_ipcv5_0_jacobi_OBJECTS)
+tcgmsg_ipcv5_0_jacobi_LDADD = $(LDADD)
+tcgmsg_ipcv5_0_jacobi_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+tcgmsg_ipcv5_0_jacobi_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(tcgmsg_ipcv5_0_jacobi_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am__tcgmsg_ipcv5_0_pvm_ring_SOURCES_DIST = tcgmsg/ipcv5.0/checkbyte.c \
+	tcgmsg/ipcv5.0/pvm.c
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_ipcv5_0_pvm_ring_OBJECTS = tcgmsg/ipcv5.0/checkbyte.$(OBJEXT) \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/pvm.$(OBJEXT)
+tcgmsg_ipcv5_0_pvm_ring_OBJECTS =  \
+	$(am_tcgmsg_ipcv5_0_pvm_ring_OBJECTS)
+tcgmsg_ipcv5_0_pvm_ring_LDADD = $(LDADD)
+tcgmsg_ipcv5_0_pvm_ring_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__tcgmsg_ipcv5_0_test_SOURCES_DIST = tcgmsg/ipcv5.0/checkbyte.c \
+	tcgmsg/ipcv5.0/test.c
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_ipcv5_0_test_OBJECTS = tcgmsg/ipcv5.0/checkbyte.$(OBJEXT) \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/test.$(OBJEXT)
+tcgmsg_ipcv5_0_test_OBJECTS = $(am_tcgmsg_ipcv5_0_test_OBJECTS)
+tcgmsg_ipcv5_0_test_LDADD = $(LDADD)
+tcgmsg_ipcv5_0_test_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__tcgmsg_ipcv5_0_testf_SOURCES_DIST = tcgmsg/ipcv5.0/testf.F
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_ipcv5_0_testf_OBJECTS = tcgmsg/ipcv5.0/testf.$(OBJEXT)
+tcgmsg_ipcv5_0_testf_OBJECTS = $(am_tcgmsg_ipcv5_0_testf_OBJECTS)
+tcgmsg_ipcv5_0_testf_LDADD = $(LDADD)
+tcgmsg_ipcv5_0_testf_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+tcgmsg_ipcv5_0_testf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(tcgmsg_ipcv5_0_testf_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am__tcgmsg_tcgmsg_mpi_test_SOURCES_DIST = tcgmsg/tcgmsg-mpi/test.c
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_tcgmsg_mpi_test_OBJECTS = tcgmsg/tcgmsg-mpi/test.$(OBJEXT)
+tcgmsg_tcgmsg_mpi_test_OBJECTS = $(am_tcgmsg_tcgmsg_mpi_test_OBJECTS)
+tcgmsg_tcgmsg_mpi_test_LDADD = $(LDADD)
+tcgmsg_tcgmsg_mpi_test_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__tcgmsg_tcgmsg_mpi_test_asyn_SOURCES_DIST =  \
+	tcgmsg/tcgmsg-mpi/test_asyn.c
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_tcgmsg_mpi_test_asyn_OBJECTS = tcgmsg/tcgmsg-mpi/test_asyn.$(OBJEXT)
+tcgmsg_tcgmsg_mpi_test_asyn_OBJECTS =  \
+	$(am_tcgmsg_tcgmsg_mpi_test_asyn_OBJECTS)
+tcgmsg_tcgmsg_mpi_test_asyn_LDADD = $(LDADD)
+tcgmsg_tcgmsg_mpi_test_asyn_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__tcgmsg_tcgmsg_mpi_testf_SOURCES_DIST = tcgmsg/tcgmsg-mpi/testf.F
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@am_tcgmsg_tcgmsg_mpi_testf_OBJECTS = tcgmsg/tcgmsg-mpi/testf.$(OBJEXT)
+tcgmsg_tcgmsg_mpi_testf_OBJECTS =  \
+	$(am_tcgmsg_tcgmsg_mpi_testf_OBJECTS)
+tcgmsg_tcgmsg_mpi_testf_LDADD = $(LDADD)
+tcgmsg_tcgmsg_mpi_testf_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+tcgmsg_tcgmsg_mpi_testf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(tcgmsg_tcgmsg_mpi_testf_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_testing_acc_test_OBJECTS = testing/acc_test.$(OBJEXT)
 testing_acc_test_OBJECTS = $(am_testing_acc_test_OBJECTS)
 testing_acc_test_LDADD = $(LDADD)
-testing_acc_test_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_acc_test_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_clone_OBJECTS = testing/clone.$(OBJEXT)
 testing_clone_OBJECTS = $(am_testing_clone_OBJECTS)
 testing_clone_LDADD = $(LDADD)
-testing_clone_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_clone_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_copy_test_OBJECTS = testing/copy_test.$(OBJEXT)
 testing_copy_test_OBJECTS = $(am_testing_copy_test_OBJECTS)
 testing_copy_test_LDADD = $(LDADD)
-testing_copy_test_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_copy_test_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_fork_OBJECTS = testing/fork.$(OBJEXT)
 testing_fork_OBJECTS = $(am_testing_fork_OBJECTS)
 testing_fork_LDADD = $(LDADD)
-testing_fork_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_fork_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_fttest_OBJECTS = testing/fttest.$(OBJEXT)
 testing_fttest_OBJECTS = $(am_testing_fttest_OBJECTS)
 testing_fttest_LDADD = $(LDADD)
-testing_fttest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_fttest_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_gpctest_OBJECTS = testing/gpctest.$(OBJEXT)
 testing_gpctest_OBJECTS = $(am_testing_gpctest_OBJECTS)
 testing_gpctest_LDADD = $(LDADD)
-testing_gpctest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_gpctest_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_ipctest_OBJECTS = testing/ipctest.$(OBJEXT)
 testing_ipctest_OBJECTS = $(am_testing_ipctest_OBJECTS)
 testing_ipctest_LDADD = $(LDADD)
-testing_ipctest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_ipctest_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_msgcheck_OBJECTS = testing/msgcheck.$(OBJEXT)
 testing_msgcheck_OBJECTS = $(am_testing_msgcheck_OBJECTS)
 testing_msgcheck_LDADD = $(LDADD)
-testing_msgcheck_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_msgcheck_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_origptl_OBJECTS = testing/origptl.$(OBJEXT)
 testing_origptl_OBJECTS = $(am_testing_origptl_OBJECTS)
 testing_origptl_LDADD = $(LDADD)
-testing_origptl_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_origptl_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_perf_OBJECTS = testing/perf.$(OBJEXT)
 testing_perf_OBJECTS = $(am_testing_perf_OBJECTS)
 testing_perf_LDADD = $(LDADD)
-testing_perf_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_perf_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_perf_aggr_OBJECTS = testing/perf_aggr.$(OBJEXT)
 testing_perf_aggr_OBJECTS = $(am_testing_perf_aggr_OBJECTS)
 testing_perf_aggr_LDADD = $(LDADD)
-testing_perf_aggr_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_perf_aggr_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_perf_nb_OBJECTS = testing/perf_nb.$(OBJEXT)
 testing_perf_nb_OBJECTS = $(am_testing_perf_nb_OBJECTS)
 testing_perf_nb_LDADD = $(LDADD)
-testing_perf_nb_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_perf_nb_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_ptltest_OBJECTS = testing/ptltest.$(OBJEXT)
 testing_ptltest_OBJECTS = $(am_testing_ptltest_OBJECTS)
 testing_ptltest_LDADD = $(LDADD)
-testing_ptltest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_ptltest_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_shmclean_OBJECTS = testing/shmclean.$(OBJEXT)
 testing_shmclean_OBJECTS = $(am_testing_shmclean_OBJECTS)
 testing_shmclean_LDADD = $(LDADD)
-testing_shmclean_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_shmclean_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_shmtest_OBJECTS = testing/shmtest.$(OBJEXT)
 testing_shmtest_OBJECTS = $(am_testing_shmtest_OBJECTS)
 testing_shmtest_LDADD = $(LDADD)
-testing_shmtest_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_shmtest_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_simple_OBJECTS = testing/simple.$(OBJEXT)
 testing_simple_OBJECTS = $(am_testing_simple_OBJECTS)
 testing_simple_LDADD = $(LDADD)
-testing_simple_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_simple_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_simplelock_OBJECTS = testing/simplelock.$(OBJEXT)
 testing_simplelock_OBJECTS = $(am_testing_simplelock_OBJECTS)
 testing_simplelock_LDADD = $(LDADD)
-testing_simplelock_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_simplelock_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_te_OBJECTS = testing/te.$(OBJEXT)
 testing_te_OBJECTS = $(am_testing_te_OBJECTS)
 testing_te_LDADD = $(LDADD)
-testing_te_DEPENDENCIES = $(am__append_3) $(am__append_4) $(LTLIBOBJS) \
+testing_te_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_test_OBJECTS = testing/test.$(OBJEXT)
 testing_test_OBJECTS = $(am_testing_test_OBJECTS)
 testing_test_LDADD = $(LDADD)
-testing_test_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_test_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_test2_OBJECTS = testing/test2.$(OBJEXT)
 testing_test2_OBJECTS = $(am_testing_test2_OBJECTS)
 testing_test2_LDADD = $(LDADD)
-testing_test2_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_test2_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_test_groups_OBJECTS = testing/test_groups.$(OBJEXT)
 testing_test_groups_OBJECTS = $(am_testing_test_groups_OBJECTS)
 testing_test_groups_LDADD = $(LDADD)
-testing_test_groups_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_test_groups_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_test_mt_OBJECTS = testing/test_mt.$(OBJEXT)
 testing_test_mt_OBJECTS = $(am_testing_test_mt_OBJECTS)
 testing_test_mt_LDADD = $(LDADD)
-testing_test_mt_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_test_mt_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_testitr_OBJECTS =  \
 	testing/testing_testitr-testitr.$(OBJEXT)
 testing_testitr_OBJECTS = $(am_testing_testitr_OBJECTS)
 testing_testitr_LDADD = $(LDADD)
-testing_testitr_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_testitr_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_testing_testnotify_OBJECTS = testing/testnotify.$(OBJEXT)
 testing_testnotify_OBJECTS = $(am_testing_testnotify_OBJECTS)
 testing_testnotify_LDADD = $(LDADD)
-testing_testnotify_DEPENDENCIES = $(am__append_3) $(am__append_4) \
-	$(LTLIBOBJS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+testing_testnotify_DEPENDENCIES = libarmci.la $(LTLIBOBJS) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
+PPF77COMPILE = $(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS)
+LTPPF77COMPILE = $(LIBTOOL) $(AM_V_lt) --tag=F77 $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(F77) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_FFLAGS) $(FFLAGS)
+AM_V_PPF77 = $(am__v_PPF77_$(V))
+am__v_PPF77_ = $(am__v_PPF77_$(AM_DEFAULT_VERBOSITY))
+am__v_PPF77_0 = @echo "  PPF77 " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
+F77LD = $(F77)
+AM_V_F77LD = $(am__v_F77LD_$(V))
+am__v_F77LD_ = $(am__v_F77LD_$(AM_DEFAULT_VERBOSITY))
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -1368,9 +1895,6 @@ LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 AM_V_CC = $(am__v_CC_$(V))
 am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
 am__v_CC_0 = @echo "  CC    " $@;
-AM_V_at = $(am__v_at_$(V))
-am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
-am__v_at_0 = @
 CCLD = $(CC)
 LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -1400,9 +1924,6 @@ LTF77COMPILE = $(LIBTOOL) $(AM_V_lt) --tag=F77 $(AM_LIBTOOLFLAGS) \
 AM_V_F77 = $(am__v_F77_$(V))
 am__v_F77_ = $(am__v_F77_$(AM_DEFAULT_VERBOSITY))
 am__v_F77_0 = @echo "  F77   " $@;
-F77LD = $(F77)
-AM_V_F77LD = $(am__v_F77LD_$(V))
-am__v_F77LD_ = $(am__v_F77LD_$(AM_DEFAULT_VERBOSITY))
 CCASCOMPILE = $(CCAS) $(AM_CCASFLAGS) $(CCASFLAGS)
 LTCCASCOMPILE = $(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=compile $(CCAS) $(AM_CCASFLAGS) \
@@ -1415,7 +1936,7 @@ am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libarmci_la_SOURCES) $(nodist_libarmci_la_SOURCES) \
 	$(libarmci_prof_la_SOURCES) $(libarmcii_la_SOURCES) \
-	$(nodist_libarmcii_la_SOURCES) \
+	$(nodist_libarmcii_la_SOURCES) $(libfcopyfacc_la_SOURCES) \
 	$(examples_benchmarks_RandomAccess_simple_simple_SOURCES) \
 	$(nodist_EXTRA_examples_benchmarks_RandomAccess_simple_simple_SOURCES) \
 	$(examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_SOURCES) \
@@ -1460,7 +1981,33 @@ SOURCES = $(libarmci_la_SOURCES) $(nodist_libarmci_la_SOURCES) \
 	$(nodist_EXTRA_examples_features_symmetric_memory_simple_simple_SOURCES) \
 	$(examples_simpleApps_transp1D_c_SOURCES) \
 	$(nodist_EXTRA_examples_simpleApps_transp1D_c_SOURCES) \
-	$(testing_acc_test_SOURCES) \
+	$(gaf2c_testarg_SOURCES) $(parallel_SOURCES) \
+	$(nodist_EXTRA_parallel_SOURCES) \
+	$(tcgmsg_ipcv4_0_hello_SOURCES) \
+	$(nodist_EXTRA_tcgmsg_ipcv4_0_hello_SOURCES) \
+	$(tcgmsg_ipcv4_0_test_SOURCES) \
+	$(nodist_EXTRA_tcgmsg_ipcv4_0_test_SOURCES) \
+	$(tcgmsg_ipcv4_0_testf_SOURCES) \
+	$(tcgmsg_ipcv4_0_testmap_SOURCES) \
+	$(nodist_EXTRA_tcgmsg_ipcv4_0_testmap_SOURCES) \
+	$(tcgmsg_ipcv4_0_testpf_SOURCES) \
+	$(tcgmsg_ipcv4_0_toplot_SOURCES) \
+	$(nodist_EXTRA_tcgmsg_ipcv4_0_toplot_SOURCES) \
+	$(tcgmsg_ipcv4_0_xdrtest_SOURCES) \
+	$(nodist_EXTRA_tcgmsg_ipcv4_0_xdrtest_SOURCES) \
+	$(tcgmsg_ipcv5_0_hello_SOURCES) \
+	$(nodist_EXTRA_tcgmsg_ipcv5_0_hello_SOURCES) \
+	$(tcgmsg_ipcv5_0_jacobi_SOURCES) \
+	$(tcgmsg_ipcv5_0_pvm_ring_SOURCES) \
+	$(nodist_EXTRA_tcgmsg_ipcv5_0_pvm_ring_SOURCES) \
+	$(tcgmsg_ipcv5_0_test_SOURCES) \
+	$(nodist_EXTRA_tcgmsg_ipcv5_0_test_SOURCES) \
+	$(tcgmsg_ipcv5_0_testf_SOURCES) \
+	$(tcgmsg_tcgmsg_mpi_test_SOURCES) \
+	$(nodist_EXTRA_tcgmsg_tcgmsg_mpi_test_SOURCES) \
+	$(tcgmsg_tcgmsg_mpi_test_asyn_SOURCES) \
+	$(nodist_EXTRA_tcgmsg_tcgmsg_mpi_test_asyn_SOURCES) \
+	$(tcgmsg_tcgmsg_mpi_testf_SOURCES) $(testing_acc_test_SOURCES) \
 	$(nodist_EXTRA_testing_acc_test_SOURCES) \
 	$(testing_clone_SOURCES) $(nodist_EXTRA_testing_clone_SOURCES) \
 	$(testing_copy_test_SOURCES) \
@@ -1505,6 +2052,7 @@ SOURCES = $(libarmci_la_SOURCES) $(nodist_libarmci_la_SOURCES) \
 DIST_SOURCES = $(am__libarmci_la_SOURCES_DIST) \
 	$(am__libarmci_prof_la_SOURCES_DIST) \
 	$(am__libarmcii_la_SOURCES_DIST) \
+	$(am__libfcopyfacc_la_SOURCES_DIST) \
 	$(examples_benchmarks_RandomAccess_simple_simple_SOURCES) \
 	$(examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_SOURCES) \
 	$(examples_benchmarks_cg_armci_sharedmemory_cg_SOURCES) \
@@ -1527,6 +2075,22 @@ DIST_SOURCES = $(am__libarmci_la_SOURCES_DIST) \
 	$(examples_features_proc_affinity_simple_simple_SOURCES) \
 	$(examples_features_symmetric_memory_simple_simple_SOURCES) \
 	$(examples_simpleApps_transp1D_c_SOURCES) \
+	$(gaf2c_testarg_SOURCES) $(am__parallel_SOURCES_DIST) \
+	$(am__tcgmsg_ipcv4_0_hello_SOURCES_DIST) \
+	$(am__tcgmsg_ipcv4_0_test_SOURCES_DIST) \
+	$(am__tcgmsg_ipcv4_0_testf_SOURCES_DIST) \
+	$(am__tcgmsg_ipcv4_0_testmap_SOURCES_DIST) \
+	$(am__tcgmsg_ipcv4_0_testpf_SOURCES_DIST) \
+	$(am__tcgmsg_ipcv4_0_toplot_SOURCES_DIST) \
+	$(am__tcgmsg_ipcv4_0_xdrtest_SOURCES_DIST) \
+	$(am__tcgmsg_ipcv5_0_hello_SOURCES_DIST) \
+	$(am__tcgmsg_ipcv5_0_jacobi_SOURCES_DIST) \
+	$(am__tcgmsg_ipcv5_0_pvm_ring_SOURCES_DIST) \
+	$(am__tcgmsg_ipcv5_0_test_SOURCES_DIST) \
+	$(am__tcgmsg_ipcv5_0_testf_SOURCES_DIST) \
+	$(am__tcgmsg_tcgmsg_mpi_test_SOURCES_DIST) \
+	$(am__tcgmsg_tcgmsg_mpi_test_asyn_SOURCES_DIST) \
+	$(am__tcgmsg_tcgmsg_mpi_testf_SOURCES_DIST) \
 	$(testing_acc_test_SOURCES) $(testing_clone_SOURCES) \
 	$(testing_copy_test_SOURCES) $(testing_fork_SOURCES) \
 	$(testing_fttest_SOURCES) $(testing_gpctest_SOURCES) \
@@ -1539,7 +2103,9 @@ DIST_SOURCES = $(am__libarmci_la_SOURCES_DIST) \
 	$(testing_test_SOURCES) $(testing_test2_SOURCES) \
 	$(testing_test_groups_SOURCES) $(testing_test_mt_SOURCES) \
 	$(testing_testitr_SOURCES) $(testing_testnotify_SOURCES)
-am__include_HEADERS_DIST = src-portals/armci.h src-portals/gpc.h \
+am__include_HEADERS_DIST = gaf2c/typesf2c.h gaf2c/farg.h \
+	tcgmsg/msgtypesc.h tcgmsg/msgtypesf.h tcgmsg/tcgmsg.fh \
+	tcgmsg/tcgmsg.h src-portals/armci.h src-portals/gpc.h \
 	src-portals/message.h src-gemini/armci.h src-gemini/gpc.h \
 	src-gemini/message.h src/include/armci.h src/include/gpc.h \
 	src/include/message.h src/include/parmci.h
@@ -1600,7 +2166,12 @@ tst=$$dir$$f; log='$@'; __SAVED_TERM=$$TERM;		\
 $(TESTS_ENVIRONMENT)
 RECHECK_LOGS = $(TEST_LOGS)
 AM_RECURSIVE_TARGETS = check check-html recheck recheck-html
-am__EXEEXT_15 =
+am__EXEEXT_24 =
+am__EXEEXT_25 = $(GAF2C_SERIAL_TESTS) $(am__EXEEXT_24) \
+	$(ARMCI_SERIAL_TESTS)
+am__EXEEXT_26 = $(am__EXEEXT_24) $(TCGMSG_PARALLEL_TESTS) \
+	$(ARMCI_PARALLEL_TESTS)
+am__EXEEXT_27 = $(am__EXEEXT_24) $(am__EXEEXT_24) $(am__EXEEXT_24)
 TEST_SUITE_LOG = test-suite.log
 TEST_SUITE_HTML = $(TEST_SUITE_LOG:.log=.html)
 TEST_EXTENSIONS = @EXEEXT@ .test
@@ -1656,6 +2227,7 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
+C_POINTER_AS_INTEGER = @C_POINTER_AS_INTEGER@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
@@ -1666,9 +2238,16 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+F2C_DOUBLE_PRECISION_C_TYPE = @F2C_DOUBLE_PRECISION_C_TYPE@
+F2C_GETARG = @F2C_GETARG@
+F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS = @F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS@
+F2C_IARGC = @F2C_IARGC@
+F2C_INTEGER_C_TYPE = @F2C_INTEGER_C_TYPE@
+F2C_REAL_C_TYPE = @F2C_REAL_C_TYPE@
 F77 = @F77@
 F77LINK = @F77LINK@
 FFLAGS = @FFLAGS@
+FFLAG_INT = @FFLAG_INT@
 FFLAG_INT_4 = @FFLAG_INT_4@
 FGREP = @FGREP@
 FLD_NOMAIN = @FLD_NOMAIN@
@@ -1752,6 +2331,7 @@ datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
+ga_cv_path_rsh = @ga_cv_path_rsh@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
@@ -1787,30 +2367,69 @@ ACLOCAL_AMFLAGS = -I m4 -I ../m4
 # All public headers, installed programs, test programs, and example programs
 # are listed in these variables.  Appended to throughout.  These are the
 # automake variables used.
-include_HEADERS = $(am__append_13) $(am__append_22) $(am__append_60) \
+include_HEADERS = gaf2c/typesf2c.h gaf2c/farg.h $(am__append_7) \
+	$(am__append_38) $(am__append_47) $(am__append_86) \
 	src/include/parmci.h
 check_LTLIBRARIES = 
-lib_LTLIBRARIES = libarmci.la $(am__append_63)
-noinst_LTLIBRARIES = libarmcii.la
-libarmci_la_SOURCES = $(am__append_5) $(am__append_6) $(am__append_7) \
-	$(am__append_8) $(am__append_9) $(am__append_10) \
-	$(am__append_11) $(am__append_16) $(am__append_17) \
-	$(am__append_18) $(am__append_19) $(am__append_20) \
-	$(am__append_26) $(am__append_27) $(am__append_28) \
-	$(am__append_30) $(am__append_32) $(am__append_34) \
-	$(am__append_35) $(am__append_36) $(am__append_37) \
-	$(am__append_39) $(am__append_41) $(am__append_43) \
-	$(am__append_45) $(am__append_47) $(am__append_48) \
-	$(am__append_49) $(am__append_50) $(am__append_52) \
-	$(am__append_53) $(am__append_54) $(am__append_55) \
-	$(am__append_57) $(am__append_59) $(am__append_64) \
-	$(am__append_65) $(am__append_66)
-nodist_libarmci_la_SOURCES = config.fh $(am__append_12) \
-	$(am__append_21) $(am__append_56) $(am__append_58)
-libarmci_la_LIBADD = $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
+lib_LTLIBRARIES = libarmci.la $(am__append_89)
+noinst_LTLIBRARIES = libarmcii.la $(am__append_52)
+
+##############################################################################
+# gaf2c
+#
+libarmci_la_SOURCES = gaf2c/gaf2c.c gaf2c/drand.c $(am__append_3) \
+	$(am__append_6) $(am__append_9) $(am__append_16) \
+	$(am__append_17) $(am__append_18) $(am__append_25) \
+	$(am__append_30) $(am__append_31) $(am__append_32) \
+	$(am__append_33) $(am__append_34) $(am__append_35) \
+	$(am__append_36) $(am__append_41) $(am__append_42) \
+	$(am__append_43) $(am__append_44) $(am__append_45) \
+	$(am__append_51) $(am__append_54) $(am__append_56) \
+	$(am__append_58) $(am__append_60) $(am__append_61) \
+	$(am__append_62) $(am__append_63) $(am__append_65) \
+	$(am__append_67) $(am__append_69) $(am__append_71) \
+	$(am__append_73) $(am__append_74) $(am__append_75) \
+	$(am__append_76) $(am__append_78) $(am__append_79) \
+	$(am__append_80) $(am__append_81) $(am__append_83) \
+	$(am__append_85) $(am__append_90) $(am__append_91) \
+	$(am__append_92)
+nodist_libarmci_la_SOURCES = config.fh $(am__append_37) \
+	$(am__append_46) $(am__append_82) $(am__append_84)
+libarmci_la_LIBADD = $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) \
+	$(am__append_53)
 libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
 nodist_libarmcii_la_SOURCES = $(nodist_libarmci_la_SOURCES)
-EXTRA_DIST = README examples/benchmarks/lu/README \
+
+##############################################################################
+# tcgmsg/examples
+#
+# NOTE: While we don't build the tcgmsg examples, we include everything in the
+# distribution anyway.
+#
+EXTRA_DIST = README tcgmsg/README tcgmsg/examples/blkdat120lin.f \
+	tcgmsg/examples/blkdat15.f tcgmsg/examples/blkdat240lin.f \
+	tcgmsg/examples/blkdat30.f tcgmsg/examples/blkdat60.f \
+	tcgmsg/examples/blkdat60lin.f tcgmsg/examples/cscf120lin.h \
+	tcgmsg/examples/cscf15.h tcgmsg/examples/cscf240lin.h \
+	tcgmsg/examples/cscf30.h tcgmsg/examples/cscf60.h \
+	tcgmsg/examples/cscf60lin.h tcgmsg/examples/cscf.h \
+	tcgmsg/examples/daxpy1.s tcgmsg/examples/daxpy.f \
+	tcgmsg/examples/ddot.f tcgmsg/examples/demo.proto \
+	tcgmsg/examples/diagon.f tcgmsg/examples/dscal.f \
+	tcgmsg/examples/fexit.f.proto tcgmsg/examples/getmem.c \
+	tcgmsg/examples/grid.c tcgmsg/examples/ieeetrap.c \
+	tcgmsg/examples/integ.f tcgmsg/examples/jacobi.f \
+	tcgmsg/examples/Makefile.proto tcgmsg/examples/mc.f \
+	tcgmsg/examples/mc.input tcgmsg/examples/md.f \
+	tcgmsg/examples/mxv_daxpy1.f tcgmsg/examples/mxv_dgemv.f \
+	tcgmsg/examples/mxv_fortran.f tcgmsg/examples/output.f \
+	tcgmsg/examples/prtri.f tcgmsg/examples/random.c \
+	tcgmsg/examples/README tcgmsg/examples/runit \
+	tcgmsg/examples/runit.grid tcgmsg/examples/scfblas.f \
+	tcgmsg/examples/scf.f tcgmsg/examples/timer.f \
+	tcgmsg/examples/trace.out tcgmsg/examples/xpix.shar \
+	tcgmsg/ipcv4.0/README tcgmsg/tcgmsg-mpi/README \
+	examples/benchmarks/lu/README \
 	examples/features/aggregation/README \
 	examples/features/concurrency/README \
 	examples/features/gpc/hashtable/README \
@@ -1828,22 +2447,24 @@ EXTRA_DIST = README examples/benchmarks/lu/README \
 #
 BUILT_SOURCES = config.fh
 MOSTLYCLEANFILES = 
-CLEANFILES = config.fh $(am__append_15) $(am__append_25) \
-	$(am__append_62)
+CLEANFILES = config.fh $(am__append_40) $(am__append_50) \
+	$(am__append_88)
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
-AM_FFLAGS = $(ARMCI_FOPT) $(FFLAG_INT_4)
+AM_FFLAGS = $(ARMCI_FOPT) $(FFLAG_INT)
 AM_CFLAGS = $(ARMCI_COPT)
 AM_CXXFLAGS = $(ARMCI_CXXOPT)
 AM_CPPFLAGS = $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
-	$(am__append_1) $(am__append_14) $(am__append_23) \
-	$(am__append_29) $(am__append_31) $(am__append_33) \
-	$(am__append_38) $(am__append_40) $(am__append_42) \
-	$(am__append_44) $(am__append_46) $(am__append_51) \
-	$(am__append_61)
+	$(am__append_1) -I$(top_build_prefix)gaf2c \
+	-I$(top_srcdir)/gaf2c $(am__append_8) $(am__append_10) \
+	$(am__append_19) $(am__append_26) $(am__append_39) \
+	$(am__append_48) $(am__append_55) $(am__append_57) \
+	$(am__append_59) $(am__append_64) $(am__append_66) \
+	$(am__append_68) $(am__append_70) $(am__append_72) \
+	$(am__append_77) $(am__append_87)
 AM_LDFLAGS = $(LDFLAGS_BASE) $(am__append_2)
-LDADD = $(am__append_3) $(am__append_4) $(LTLIBOBJS) $(GA_MP_LIBS) \
-	$(ARMCI_NETWORK_LIBS) $(am__append_24)
+LDADD = libarmci.la $(LTLIBOBJS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) \
+	$(am__append_49)
 LDFLAGS_BASE = $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS)
 
 # Certain trickery when turning Fortran support on or off.
@@ -1855,23 +2476,88 @@ LDFLAGS_BASE = $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS)
 #
 # Important for external tools wanting to know how to link to ARMCI.
 SED_NORMALIZE_WHITESPACE = $(SED) 's/ [ ]*/ /g;s/" /"/g;s/ "/"/g'
+GAF2C_SERIAL_TESTS = $(am__append_5)
+GAF2C_SERIAL_TESTS_XFAIL = 
+GAF2C_PARALLEL_TESTS = 
+GAF2C_PARALLEL_TESTS_XFAIL = 
+GAF2C_TESTS = $(GAF2C_SERIAL_TESTS) $(GAF2C_PARALLEL_TESTS)
+GAF2C_TESTS_XFAIL = $(GAF2C_SERIAL_TESTS_XFAIL) $(GAF2C_PARALLEL_TESTS_XFAIL)
+gaf2c_testarg_SOURCES = gaf2c/testarg.c gaf2c/testargf.f
+gaf2c_testarg_LDFLAGS = $(FLDFLAGS)
+@MSG_COMMS_TCGMSG_TRUE@TCGMSG_SERIAL_TESTS = 
+@MSG_COMMS_TCGMSG_TRUE@TCGMSG_SERIAL_TESTS_XFAIL = 
+@MSG_COMMS_TCGMSG_TRUE@TCGMSG_PARALLEL_TESTS = $(am__append_13) \
+@MSG_COMMS_TCGMSG_TRUE@	$(am__append_14) $(am__append_23) \
+@MSG_COMMS_TCGMSG_TRUE@	$(am__append_24) $(am__append_29)
+@MSG_COMMS_TCGMSG_TRUE@TCGMSG_PARALLEL_TESTS_XFAIL = 
+@MSG_COMMS_TCGMSG_TRUE@TCGMSG_TESTS = $(TCGMSG_SERIAL_TESTS) $(TCGMSG_PARALLEL_TESTS)
+@MSG_COMMS_TCGMSG_TRUE@TCGMSG_TESTS_XFAIL = $(TCGMSG_SERIAL_TESTS_XFAIL) $(TCGMSG_PARALLEL_TESTS_XFAIL)
+#TCGMSG_PARALLEL_TESTS += tcgmsg/ipcv4.0/testpf$(EXEEXT) # requires input files
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv4_0_hello_SOURCES = tcgmsg/ipcv4.0/hello.c
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv4_0_test_SOURCES = tcgmsg/ipcv4.0/test.c
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv4_0_testf_SOURCES = tcgmsg/ipcv4.0/testf.F
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv4_0_testmap_SOURCES = tcgmsg/ipcv4.0/testmap.c
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv4_0_testpf_SOURCES = tcgmsg/ipcv4.0/testpf.f
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv4_0_toplot_SOURCES = tcgmsg/ipcv4.0/toplot.c
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv4_0_xdrtest_SOURCES = tcgmsg/ipcv4.0/xdrtest.c
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv4_0_testf_LDFLAGS = $(FLDFLAGS)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv4_0_testpf_LDFLAGS = $(FLDFLAGS)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_ipcv4_0_hello_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_ipcv4_0_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_ipcv4_0_testmap_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_ipcv4_0_toplot_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_ipcv4_0_xdrtest_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@parallel_SOURCES = tcgmsg/ipcv4.0/parallel.c
+@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_parallel_SOURCES = $(MAYBE_DUMMY_F_LINK)
+#TCGMSG_PARALLEL_TESTS += tcgmsg/ipcv5.0/jacobi$(EXEEXT) # requires user input
+#TCGMSG_PARALLEL_TESTS += tcgmsg/ipcv5.0/testf$(EXEEXT) # requires user input
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv5_0_hello_SOURCES = tcgmsg/ipcv5.0/hello.c
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv5_0_jacobi_SOURCES = tcgmsg/ipcv5.0/fexit.f       \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@                                  tcgmsg/ipcv5.0/getmem.c      \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@                                  tcgmsg/ipcv5.0/jacobi.F      \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@                                  tcgmsg/ipcv5.0/mxv_fortran.f \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@                                  tcgmsg/ipcv5.0/timer.f
+
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv5_0_pvm_ring_SOURCES = tcgmsg/ipcv5.0/checkbyte.c   \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@                                  tcgmsg/ipcv5.0/pvm.c
+
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv5_0_testf_SOURCES = tcgmsg/ipcv5.0/testf.F
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv5_0_test_SOURCES = tcgmsg/ipcv5.0/checkbyte.c   \
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@                                  tcgmsg/ipcv5.0/test.c
+
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv5_0_jacobi_LDFLAGS = $(FLDFLAGS)
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_ipcv5_0_testf_LDFLAGS = $(FLDFLAGS)
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_ipcv5_0_hello_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_ipcv5_0_pvm_ring_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_ipcv5_0_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_tcgmsg_mpi_test_asyn_SOURCES = tcgmsg/tcgmsg-mpi/test_asyn.c
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_tcgmsg_mpi_testf_SOURCES = tcgmsg/tcgmsg-mpi/testf.F
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_tcgmsg_mpi_test_SOURCES = tcgmsg/tcgmsg-mpi/test.c
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@tcgmsg_tcgmsg_mpi_testf_LDFLAGS = $(FLDFLAGS)
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_tcgmsg_mpi_test_asyn_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@MSG_COMMS_TCGMSGMPI_TRUE@@MSG_COMMS_TCGMSG_TRUE@nodist_EXTRA_tcgmsg_tcgmsg_mpi_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_SHARED_TRUE@MAYBE_PIC = -fPIC -DPIC
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_SHARED_TRUE@MAYBE_PIC = -fPIC -DPIC
 @ARMCI_NETWORK_PORTALS_TRUE@@ENABLE_SHARED_TRUE@MAYBE_PIC = -fPIC -DPIC
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@libfcopyfacc_la_SOURCES = src/common/fcopy.f \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	src/xfer/faccumulate.f
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@libfcopyfacc_la_FFLAGS = $(ARMCI_FOPT) \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@	$(FFLAG_INT_4)
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@libarmci_prof_la_SOURCES = tools/armci_prof.c
-SERIAL_TESTS = $(am__append_79) $(am__append_81)
-SERIAL_TESTS_XFAIL = 
-#PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
-#SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
-#SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
+ARMCI_SERIAL_TESTS = $(am__append_105) $(am__append_107)
+ARMCI_SERIAL_TESTS_XFAIL = 
+#ARMCI_PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
+#ARMCI_SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
+#ARMCI_SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
 
-#PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
-#PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
-PARALLEL_TESTS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
+#ARMCI_PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
+#ARMCI_PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
+ARMCI_PARALLEL_TESTS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 	testing/perf_aggr$(EXEEXT) testing/simplelock$(EXEEXT) \
 	testing/test$(EXEEXT) testing/test2$(EXEEXT) \
-	testing/testnotify$(EXEEXT) $(am__append_75) $(am__append_76) \
-	$(am__append_77) $(am__append_78) $(am__append_80) \
+	testing/testnotify$(EXEEXT) $(am__append_101) \
+	$(am__append_102) $(am__append_103) $(am__append_104) \
+	$(am__append_106) \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu$(EXEEXT) \
@@ -1883,10 +2569,12 @@ PARALLEL_TESTS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 	examples/features/non-blocking/simple/simple$(EXEEXT) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_88) \
-	$(am__append_89) $(am__append_90) $(am__append_91) \
-	$(am__append_92)
-PARALLEL_TESTS_XFAIL = 
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_114) \
+	$(am__append_115) $(am__append_116) $(am__append_117) \
+	$(am__append_118)
+ARMCI_PARALLEL_TESTS_XFAIL = 
+ARMCI_TESTS = $(ARMCI_SERIAL_TESTS) $(ARMCI_PARALLEL_TESTS)
+ARMCI_TESTS_XFAIL = $(ARMCI_SERIAL_TESTS_XFAIL) $(ARMCI_PARALLEL_TESTS_XFAIL)
 testing_acc_test_SOURCES = testing/acc_test.c
 testing_clone_SOURCES = testing/clone.c
 testing_copy_test_SOURCES = testing/copy_test.c
@@ -2082,29 +2770,31 @@ ARMCI_X86COPY_AS__v_0 = @echo "  GCC   " $@;
 #
 # Some tests were commented out either because they required an input file or
 # they were failing for unknown reasons and we didn't want to further debug.
-# Some tests were based on old versions of GA which no longer applied but we
-# kept anyway (see pario).
 #
-# We leave pario tests out of the main set of tests because not all systems
-# can handle the disk requirements.
-#
-TESTS = $(SERIAL_TESTS) $(PARALLEL_TESTS)
+SERIAL_TESTS = $(GAF2C_SERIAL_TESTS) $(TCGMSG_SERIAL_TESTS) \
+	$(ARMCI_SERIAL_TESTS)
+SERIAL_TESTS_XFAIL = $(GAF2C_SERIAL_TESTS_XFAIL) \
+	$(TCGMSG_SERIAL_TESTS_XFAIL) $(ARMCI_SERIAL_TESTS_XFAIL)
+PARALLEL_TESTS = $(GAF2C_PARALLEL_TESTS) $(TCGMSG_PARALLEL_TESTS) \
+	$(ARMCI_PARALLEL_TESTS)
+PARALLEL_TESTS_XFAIL = $(GAF2C_PARALLEL_TESTS_XFAIL) \
+	$(TCGMSG_PARALLEL_TESTS_XFAIL) $(ARMCI_PARALLEL_TESTS_XFAIL)
 @CROSS_COMPILING_FALSE@@MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_FALSE@LOG_COMPILER = \
-@CROSS_COMPILING_FALSE@@MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_FALSE@maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; $$maybe_mpiexec
+@CROSS_COMPILING_FALSE@@MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_FALSE@maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; eval $$maybe_mpiexec
 
 @MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_TRUE@LOG_COMPILER = tst="$$dir$$f -np $(NPROCS)"; eval
 @MSG_COMMS_TCGMSG4_TRUE@LOG_COMPILER = \
-@MSG_COMMS_TCGMSG4_TRUE@maybe_parexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(PAREXEC)"; fi`; $$maybe_parexec
+@MSG_COMMS_TCGMSG4_TRUE@maybe_parexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(PAREXEC)"; fi`; eval $$maybe_parexec
 
-@CROSS_COMPILING_TRUE@@MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_FALSE@maybe_mpiexec = `if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; $$maybe_mpiexec
+@CROSS_COMPILING_TRUE@@MSG_COMMS_TCGMSG4_FALSE@@MSG_COMMS_TCGMSG5_FALSE@maybe_mpiexec = `if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; eval $$maybe_mpiexec
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .cc .f .html .lo .log .o .obj .s .test .test$(EXEEXT)
+.SUFFIXES: .F .c .cc .f .html .lo .log .o .obj .s .test .test$(EXEEXT)
 am--refresh:
 	@:
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/tcgmsg/Makefile.inc $(top_srcdir)/src-portals/Makefile.inc $(top_srcdir)/src-gemini/Makefile.inc $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -2153,6 +2843,10 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
+gaf2c/farg.h: $(top_builddir)/config.status $(top_srcdir)/gaf2c/farg.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+gaf2c/typesf2c.h: $(top_builddir)/config.status $(top_srcdir)/gaf2c/typesf2c.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 clean-checkLTLIBRARIES:
 	-test -z "$(check_LTLIBRARIES)" || rm -f $(check_LTLIBRARIES)
@@ -2202,6 +2896,193 @@ clean-noinstLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
+gaf2c/$(am__dirstamp):
+	@$(MKDIR_P) gaf2c
+	@: > gaf2c/$(am__dirstamp)
+gaf2c/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) gaf2c/$(DEPDIR)
+	@: > gaf2c/$(DEPDIR)/$(am__dirstamp)
+gaf2c/gaf2c.lo: gaf2c/$(am__dirstamp) gaf2c/$(DEPDIR)/$(am__dirstamp)
+gaf2c/drand.lo: gaf2c/$(am__dirstamp) gaf2c/$(DEPDIR)/$(am__dirstamp)
+gaf2c/farg.lo: gaf2c/$(am__dirstamp) gaf2c/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg
+	@: > tcgmsg/$(am__dirstamp)
+tcgmsg/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg/$(DEPDIR)
+	@: > tcgmsg/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/capi.lo: tcgmsg/$(am__dirstamp) \
+	tcgmsg/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg/ipcv4.0
+	@: > tcgmsg/ipcv4.0/$(am__dirstamp)
+tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg/ipcv4.0/$(DEPDIR)
+	@: > tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/brdcst.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/checkbyte.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/cluster.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/drand48.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/error.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/evlog.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/evon.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/globalop.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/llog.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/mdtob.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/mdtoi.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/mitob.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/mitod.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/mtime.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/niceftn.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/nnodes.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/nodeid.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/nxtval.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/pbegin.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/pbeginf.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/pfilecopy.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/sema.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/setdbg.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/shmem.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/signals.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/snd.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/sockets.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/srmover.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/stats.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/synch.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/usleep.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/waitall.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/waitcom.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/xdrstuff.lo: tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg/ipcv5.0
+	@: > tcgmsg/ipcv5.0/$(am__dirstamp)
+tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg/ipcv5.0/$(DEPDIR)
+	@: > tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/drand48.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/globalop.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/llog.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/mdtob.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/mdtoi.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/misc.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/mitob.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/mitod.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/mtime.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/niceftn.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/nnodes.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/nodeid.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/pbegin.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/pfilecopy.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/queues.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/signals.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/snd_rcv_probe.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/usleep.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/waitall.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/async_send_lapi.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/lapi_putget.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/async_send.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/busy.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/error.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/nxtval.shm.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/pbeginf.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/shmem.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/synch.lo: tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg/tcgmsg-mpi
+	@: > tcgmsg/tcgmsg-mpi/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg/tcgmsg-mpi/$(DEPDIR)
+	@: > tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/checkbyte.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/clustercheck.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/collect.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/drand48.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/evlog.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/evon.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/llog.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/misc.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/niceftn.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/nxtval-armci.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/p2p.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/pbeginf.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/pfilecopy.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/sizeof.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
 src-portals/$(am__dirstamp):
 	@$(MKDIR_P) src-portals
 	@: > src-portals/$(am__dirstamp)
@@ -2427,10 +3308,6 @@ src/xfer/rmw.lo: src/xfer/$(am__dirstamp) \
 src/xfer/strided.lo: src/xfer/$(am__dirstamp) \
 	src/xfer/$(DEPDIR)/$(am__dirstamp)
 src/xfer/vector.lo: src/xfer/$(am__dirstamp) \
-	src/xfer/$(DEPDIR)/$(am__dirstamp)
-src/common/fcopy.lo: src/common/$(am__dirstamp) \
-	src/common/$(DEPDIR)/$(am__dirstamp)
-src/xfer/faccumulate.lo: src/xfer/$(am__dirstamp) \
 	src/xfer/$(DEPDIR)/$(am__dirstamp)
 src/common/groups.lo: src/common/$(am__dirstamp) \
 	src/common/$(DEPDIR)/$(am__dirstamp)
@@ -2662,6 +3539,12 @@ libarmci_prof.la: $(libarmci_prof_la_OBJECTS) $(libarmci_prof_la_DEPENDENCIES)
 	$(AM_V_CCLD)$(LINK) $(am_libarmci_prof_la_rpath) $(libarmci_prof_la_OBJECTS) $(libarmci_prof_la_LIBADD) $(LIBS)
 libarmcii.la: $(libarmcii_la_OBJECTS) $(libarmcii_la_DEPENDENCIES) 
 	$(AM_V_F77LD)$(F77LINK)  $(libarmcii_la_OBJECTS) $(libarmcii_la_LIBADD) $(LIBS)
+src/common/libfcopyfacc_la-fcopy.lo: src/common/$(am__dirstamp) \
+	src/common/$(DEPDIR)/$(am__dirstamp)
+src/xfer/libfcopyfacc_la-faccumulate.lo: src/xfer/$(am__dirstamp) \
+	src/xfer/$(DEPDIR)/$(am__dirstamp)
+libfcopyfacc.la: $(libfcopyfacc_la_OBJECTS) $(libfcopyfacc_la_DEPENDENCIES) 
+	$(AM_V_F77LD)$(libfcopyfacc_la_LINK) $(am_libfcopyfacc_la_rpath) $(libfcopyfacc_la_OBJECTS) $(libfcopyfacc_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
@@ -3006,6 +3889,104 @@ examples/simpleApps/transp1D-c.$(OBJEXT):  \
 examples/simpleApps/transp1D-c$(EXEEXT): $(examples_simpleApps_transp1D_c_OBJECTS) $(examples_simpleApps_transp1D_c_DEPENDENCIES) examples/simpleApps/$(am__dirstamp)
 	@rm -f examples/simpleApps/transp1D-c$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(examples_simpleApps_transp1D_c_OBJECTS) $(examples_simpleApps_transp1D_c_LDADD) $(LIBS)
+gaf2c/testarg.$(OBJEXT): gaf2c/$(am__dirstamp) \
+	gaf2c/$(DEPDIR)/$(am__dirstamp)
+gaf2c/testargf.$(OBJEXT): gaf2c/$(am__dirstamp) \
+	gaf2c/$(DEPDIR)/$(am__dirstamp)
+gaf2c/testarg$(EXEEXT): $(gaf2c_testarg_OBJECTS) $(gaf2c_testarg_DEPENDENCIES) gaf2c/$(am__dirstamp)
+	@rm -f gaf2c/testarg$(EXEEXT)
+	$(AM_V_F77LD)$(gaf2c_testarg_LINK) $(gaf2c_testarg_OBJECTS) $(gaf2c_testarg_LDADD) $(LIBS)
+tcgmsg/ipcv4.0/parallel.$(OBJEXT): tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+parallel$(EXEEXT): $(parallel_OBJECTS) $(parallel_DEPENDENCIES) 
+	@rm -f parallel$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(parallel_OBJECTS) $(parallel_LDADD) $(LIBS)
+tcgmsg/ipcv4.0/hello.$(OBJEXT): tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/hello$(EXEEXT): $(tcgmsg_ipcv4_0_hello_OBJECTS) $(tcgmsg_ipcv4_0_hello_DEPENDENCIES) tcgmsg/ipcv4.0/$(am__dirstamp)
+	@rm -f tcgmsg/ipcv4.0/hello$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(tcgmsg_ipcv4_0_hello_OBJECTS) $(tcgmsg_ipcv4_0_hello_LDADD) $(LIBS)
+tcgmsg/ipcv4.0/test.$(OBJEXT): tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/test$(EXEEXT): $(tcgmsg_ipcv4_0_test_OBJECTS) $(tcgmsg_ipcv4_0_test_DEPENDENCIES) tcgmsg/ipcv4.0/$(am__dirstamp)
+	@rm -f tcgmsg/ipcv4.0/test$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(tcgmsg_ipcv4_0_test_OBJECTS) $(tcgmsg_ipcv4_0_test_LDADD) $(LIBS)
+tcgmsg/ipcv4.0/testf.$(OBJEXT): tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/testf$(EXEEXT): $(tcgmsg_ipcv4_0_testf_OBJECTS) $(tcgmsg_ipcv4_0_testf_DEPENDENCIES) tcgmsg/ipcv4.0/$(am__dirstamp)
+	@rm -f tcgmsg/ipcv4.0/testf$(EXEEXT)
+	$(AM_V_F77LD)$(tcgmsg_ipcv4_0_testf_LINK) $(tcgmsg_ipcv4_0_testf_OBJECTS) $(tcgmsg_ipcv4_0_testf_LDADD) $(LIBS)
+tcgmsg/ipcv4.0/testmap.$(OBJEXT): tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/testmap$(EXEEXT): $(tcgmsg_ipcv4_0_testmap_OBJECTS) $(tcgmsg_ipcv4_0_testmap_DEPENDENCIES) tcgmsg/ipcv4.0/$(am__dirstamp)
+	@rm -f tcgmsg/ipcv4.0/testmap$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(tcgmsg_ipcv4_0_testmap_OBJECTS) $(tcgmsg_ipcv4_0_testmap_LDADD) $(LIBS)
+tcgmsg/ipcv4.0/testpf.$(OBJEXT): tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/testpf$(EXEEXT): $(tcgmsg_ipcv4_0_testpf_OBJECTS) $(tcgmsg_ipcv4_0_testpf_DEPENDENCIES) tcgmsg/ipcv4.0/$(am__dirstamp)
+	@rm -f tcgmsg/ipcv4.0/testpf$(EXEEXT)
+	$(AM_V_F77LD)$(tcgmsg_ipcv4_0_testpf_LINK) $(tcgmsg_ipcv4_0_testpf_OBJECTS) $(tcgmsg_ipcv4_0_testpf_LDADD) $(LIBS)
+tcgmsg/ipcv4.0/toplot.$(OBJEXT): tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/toplot$(EXEEXT): $(tcgmsg_ipcv4_0_toplot_OBJECTS) $(tcgmsg_ipcv4_0_toplot_DEPENDENCIES) tcgmsg/ipcv4.0/$(am__dirstamp)
+	@rm -f tcgmsg/ipcv4.0/toplot$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(tcgmsg_ipcv4_0_toplot_OBJECTS) $(tcgmsg_ipcv4_0_toplot_LDADD) $(LIBS)
+tcgmsg/ipcv4.0/xdrtest.$(OBJEXT): tcgmsg/ipcv4.0/$(am__dirstamp) \
+	tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv4.0/xdrtest$(EXEEXT): $(tcgmsg_ipcv4_0_xdrtest_OBJECTS) $(tcgmsg_ipcv4_0_xdrtest_DEPENDENCIES) tcgmsg/ipcv4.0/$(am__dirstamp)
+	@rm -f tcgmsg/ipcv4.0/xdrtest$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(tcgmsg_ipcv4_0_xdrtest_OBJECTS) $(tcgmsg_ipcv4_0_xdrtest_LDADD) $(LIBS)
+tcgmsg/ipcv5.0/hello.$(OBJEXT): tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/hello$(EXEEXT): $(tcgmsg_ipcv5_0_hello_OBJECTS) $(tcgmsg_ipcv5_0_hello_DEPENDENCIES) tcgmsg/ipcv5.0/$(am__dirstamp)
+	@rm -f tcgmsg/ipcv5.0/hello$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(tcgmsg_ipcv5_0_hello_OBJECTS) $(tcgmsg_ipcv5_0_hello_LDADD) $(LIBS)
+tcgmsg/ipcv5.0/fexit.$(OBJEXT): tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/getmem.$(OBJEXT): tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/jacobi.$(OBJEXT): tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/mxv_fortran.$(OBJEXT): tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/timer.$(OBJEXT): tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/jacobi$(EXEEXT): $(tcgmsg_ipcv5_0_jacobi_OBJECTS) $(tcgmsg_ipcv5_0_jacobi_DEPENDENCIES) tcgmsg/ipcv5.0/$(am__dirstamp)
+	@rm -f tcgmsg/ipcv5.0/jacobi$(EXEEXT)
+	$(AM_V_F77LD)$(tcgmsg_ipcv5_0_jacobi_LINK) $(tcgmsg_ipcv5_0_jacobi_OBJECTS) $(tcgmsg_ipcv5_0_jacobi_LDADD) $(LIBS)
+tcgmsg/ipcv5.0/checkbyte.$(OBJEXT): tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/pvm.$(OBJEXT): tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/pvm.ring$(EXEEXT): $(tcgmsg_ipcv5_0_pvm_ring_OBJECTS) $(tcgmsg_ipcv5_0_pvm_ring_DEPENDENCIES) tcgmsg/ipcv5.0/$(am__dirstamp)
+	@rm -f tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(tcgmsg_ipcv5_0_pvm_ring_OBJECTS) $(tcgmsg_ipcv5_0_pvm_ring_LDADD) $(LIBS)
+tcgmsg/ipcv5.0/test.$(OBJEXT): tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/test$(EXEEXT): $(tcgmsg_ipcv5_0_test_OBJECTS) $(tcgmsg_ipcv5_0_test_DEPENDENCIES) tcgmsg/ipcv5.0/$(am__dirstamp)
+	@rm -f tcgmsg/ipcv5.0/test$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(tcgmsg_ipcv5_0_test_OBJECTS) $(tcgmsg_ipcv5_0_test_LDADD) $(LIBS)
+tcgmsg/ipcv5.0/testf.$(OBJEXT): tcgmsg/ipcv5.0/$(am__dirstamp) \
+	tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/ipcv5.0/testf$(EXEEXT): $(tcgmsg_ipcv5_0_testf_OBJECTS) $(tcgmsg_ipcv5_0_testf_DEPENDENCIES) tcgmsg/ipcv5.0/$(am__dirstamp)
+	@rm -f tcgmsg/ipcv5.0/testf$(EXEEXT)
+	$(AM_V_F77LD)$(tcgmsg_ipcv5_0_testf_LINK) $(tcgmsg_ipcv5_0_testf_OBJECTS) $(tcgmsg_ipcv5_0_testf_LDADD) $(LIBS)
+tcgmsg/tcgmsg-mpi/test.$(OBJEXT): tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/test$(EXEEXT): $(tcgmsg_tcgmsg_mpi_test_OBJECTS) $(tcgmsg_tcgmsg_mpi_test_DEPENDENCIES) tcgmsg/tcgmsg-mpi/$(am__dirstamp)
+	@rm -f tcgmsg/tcgmsg-mpi/test$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(tcgmsg_tcgmsg_mpi_test_OBJECTS) $(tcgmsg_tcgmsg_mpi_test_LDADD) $(LIBS)
+tcgmsg/tcgmsg-mpi/test_asyn.$(OBJEXT):  \
+	tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT): $(tcgmsg_tcgmsg_mpi_test_asyn_OBJECTS) $(tcgmsg_tcgmsg_mpi_test_asyn_DEPENDENCIES) tcgmsg/tcgmsg-mpi/$(am__dirstamp)
+	@rm -f tcgmsg/tcgmsg-mpi/test_asyn$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(tcgmsg_tcgmsg_mpi_test_asyn_OBJECTS) $(tcgmsg_tcgmsg_mpi_test_asyn_LDADD) $(LIBS)
+tcgmsg/tcgmsg-mpi/testf.$(OBJEXT): tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/testf$(EXEEXT): $(tcgmsg_tcgmsg_mpi_testf_OBJECTS) $(tcgmsg_tcgmsg_mpi_testf_DEPENDENCIES) tcgmsg/tcgmsg-mpi/$(am__dirstamp)
+	@rm -f tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
+	$(AM_V_F77LD)$(tcgmsg_tcgmsg_mpi_testf_LINK) $(tcgmsg_tcgmsg_mpi_testf_OBJECTS) $(tcgmsg_tcgmsg_mpi_testf_LDADD) $(LIBS)
 testing/$(am__dirstamp):
 	@$(MKDIR_P) testing
 	@: > testing/$(am__dirstamp)
@@ -3171,6 +4152,14 @@ mostlyclean-compile:
 	-rm -f examples/features/proc_affinity/simple/simple.$(OBJEXT)
 	-rm -f examples/features/symmetric_memory/simple/simple.$(OBJEXT)
 	-rm -f examples/simpleApps/transp1D-c.$(OBJEXT)
+	-rm -f gaf2c/drand.$(OBJEXT)
+	-rm -f gaf2c/drand.lo
+	-rm -f gaf2c/farg.$(OBJEXT)
+	-rm -f gaf2c/farg.lo
+	-rm -f gaf2c/gaf2c.$(OBJEXT)
+	-rm -f gaf2c/gaf2c.lo
+	-rm -f gaf2c/testarg.$(OBJEXT)
+	-rm -f gaf2c/testargf.$(OBJEXT)
 	-rm -f src-gemini/aggregate.$(OBJEXT)
 	-rm -f src-gemini/aggregate.lo
 	-rm -f src-gemini/armci-onesided.$(OBJEXT)
@@ -3331,14 +4320,14 @@ mostlyclean-compile:
 	-rm -f src/common/clusterinfo.lo
 	-rm -f src/common/ds-shared.$(OBJEXT)
 	-rm -f src/common/ds-shared.lo
-	-rm -f src/common/fcopy.$(OBJEXT)
-	-rm -f src/common/fcopy.lo
 	-rm -f src/common/gpc.$(OBJEXT)
 	-rm -f src/common/gpc.lo
 	-rm -f src/common/groups.$(OBJEXT)
 	-rm -f src/common/groups.lo
 	-rm -f src/common/iterator.$(OBJEXT)
 	-rm -f src/common/iterator.lo
+	-rm -f src/common/libfcopyfacc_la-fcopy.$(OBJEXT)
+	-rm -f src/common/libfcopyfacc_la-fcopy.lo
 	-rm -f src/common/noncont.$(OBJEXT)
 	-rm -f src/common/noncont.lo
 	-rm -f src/common/pack.$(OBJEXT)
@@ -3469,14 +4458,189 @@ mostlyclean-compile:
 	-rm -f src/util/threads.lo
 	-rm -f src/xfer/caccumulate.$(OBJEXT)
 	-rm -f src/xfer/caccumulate.lo
-	-rm -f src/xfer/faccumulate.$(OBJEXT)
-	-rm -f src/xfer/faccumulate.lo
+	-rm -f src/xfer/libfcopyfacc_la-faccumulate.$(OBJEXT)
+	-rm -f src/xfer/libfcopyfacc_la-faccumulate.lo
 	-rm -f src/xfer/rmw.$(OBJEXT)
 	-rm -f src/xfer/rmw.lo
 	-rm -f src/xfer/strided.$(OBJEXT)
 	-rm -f src/xfer/strided.lo
 	-rm -f src/xfer/vector.$(OBJEXT)
 	-rm -f src/xfer/vector.lo
+	-rm -f tcgmsg/capi.$(OBJEXT)
+	-rm -f tcgmsg/capi.lo
+	-rm -f tcgmsg/ipcv4.0/brdcst.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/brdcst.lo
+	-rm -f tcgmsg/ipcv4.0/checkbyte.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/checkbyte.lo
+	-rm -f tcgmsg/ipcv4.0/cluster.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/cluster.lo
+	-rm -f tcgmsg/ipcv4.0/drand48.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/drand48.lo
+	-rm -f tcgmsg/ipcv4.0/error.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/error.lo
+	-rm -f tcgmsg/ipcv4.0/evlog.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/evlog.lo
+	-rm -f tcgmsg/ipcv4.0/evon.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/evon.lo
+	-rm -f tcgmsg/ipcv4.0/globalop.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/globalop.lo
+	-rm -f tcgmsg/ipcv4.0/hello.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/llog.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/llog.lo
+	-rm -f tcgmsg/ipcv4.0/mdtob.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/mdtob.lo
+	-rm -f tcgmsg/ipcv4.0/mdtoi.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/mdtoi.lo
+	-rm -f tcgmsg/ipcv4.0/mitob.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/mitob.lo
+	-rm -f tcgmsg/ipcv4.0/mitod.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/mitod.lo
+	-rm -f tcgmsg/ipcv4.0/mtime.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/mtime.lo
+	-rm -f tcgmsg/ipcv4.0/niceftn.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/niceftn.lo
+	-rm -f tcgmsg/ipcv4.0/nnodes.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/nnodes.lo
+	-rm -f tcgmsg/ipcv4.0/nodeid.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/nodeid.lo
+	-rm -f tcgmsg/ipcv4.0/nxtval.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/nxtval.lo
+	-rm -f tcgmsg/ipcv4.0/parallel.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/pbegin.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/pbegin.lo
+	-rm -f tcgmsg/ipcv4.0/pbeginf.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/pbeginf.lo
+	-rm -f tcgmsg/ipcv4.0/pfilecopy.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/pfilecopy.lo
+	-rm -f tcgmsg/ipcv4.0/sema.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/sema.lo
+	-rm -f tcgmsg/ipcv4.0/setdbg.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/setdbg.lo
+	-rm -f tcgmsg/ipcv4.0/shmem.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/shmem.lo
+	-rm -f tcgmsg/ipcv4.0/signals.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/signals.lo
+	-rm -f tcgmsg/ipcv4.0/snd.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/snd.lo
+	-rm -f tcgmsg/ipcv4.0/sockets.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/sockets.lo
+	-rm -f tcgmsg/ipcv4.0/srmover.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/srmover.lo
+	-rm -f tcgmsg/ipcv4.0/stats.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/stats.lo
+	-rm -f tcgmsg/ipcv4.0/synch.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/synch.lo
+	-rm -f tcgmsg/ipcv4.0/test.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/testf.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/testmap.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/testpf.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/toplot.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/usleep.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/usleep.lo
+	-rm -f tcgmsg/ipcv4.0/waitall.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/waitall.lo
+	-rm -f tcgmsg/ipcv4.0/waitcom.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/waitcom.lo
+	-rm -f tcgmsg/ipcv4.0/xdrstuff.$(OBJEXT)
+	-rm -f tcgmsg/ipcv4.0/xdrstuff.lo
+	-rm -f tcgmsg/ipcv4.0/xdrtest.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/async_send.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/async_send.lo
+	-rm -f tcgmsg/ipcv5.0/async_send_lapi.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/async_send_lapi.lo
+	-rm -f tcgmsg/ipcv5.0/busy.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/busy.lo
+	-rm -f tcgmsg/ipcv5.0/checkbyte.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/drand48.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/drand48.lo
+	-rm -f tcgmsg/ipcv5.0/error.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/error.lo
+	-rm -f tcgmsg/ipcv5.0/fexit.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/getmem.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/globalop.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/globalop.lo
+	-rm -f tcgmsg/ipcv5.0/hello.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/jacobi.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/lapi_putget.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/lapi_putget.lo
+	-rm -f tcgmsg/ipcv5.0/llog.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/llog.lo
+	-rm -f tcgmsg/ipcv5.0/mdtob.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/mdtob.lo
+	-rm -f tcgmsg/ipcv5.0/mdtoi.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/mdtoi.lo
+	-rm -f tcgmsg/ipcv5.0/misc.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/misc.lo
+	-rm -f tcgmsg/ipcv5.0/mitob.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/mitob.lo
+	-rm -f tcgmsg/ipcv5.0/mitod.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/mitod.lo
+	-rm -f tcgmsg/ipcv5.0/mtime.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/mtime.lo
+	-rm -f tcgmsg/ipcv5.0/mxv_fortran.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/niceftn.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/niceftn.lo
+	-rm -f tcgmsg/ipcv5.0/nnodes.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/nnodes.lo
+	-rm -f tcgmsg/ipcv5.0/nodeid.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/nodeid.lo
+	-rm -f tcgmsg/ipcv5.0/nxtval.shm.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/nxtval.shm.lo
+	-rm -f tcgmsg/ipcv5.0/pbegin.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/pbegin.lo
+	-rm -f tcgmsg/ipcv5.0/pbeginf.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/pbeginf.lo
+	-rm -f tcgmsg/ipcv5.0/pfilecopy.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/pfilecopy.lo
+	-rm -f tcgmsg/ipcv5.0/pvm.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/queues.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/queues.lo
+	-rm -f tcgmsg/ipcv5.0/shmem.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/shmem.lo
+	-rm -f tcgmsg/ipcv5.0/signals.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/signals.lo
+	-rm -f tcgmsg/ipcv5.0/snd_rcv_probe.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/snd_rcv_probe.lo
+	-rm -f tcgmsg/ipcv5.0/synch.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/synch.lo
+	-rm -f tcgmsg/ipcv5.0/test.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/testf.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/timer.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/usleep.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/usleep.lo
+	-rm -f tcgmsg/ipcv5.0/waitall.$(OBJEXT)
+	-rm -f tcgmsg/ipcv5.0/waitall.lo
+	-rm -f tcgmsg/tcgmsg-mpi/checkbyte.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/checkbyte.lo
+	-rm -f tcgmsg/tcgmsg-mpi/clustercheck.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/clustercheck.lo
+	-rm -f tcgmsg/tcgmsg-mpi/collect.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/collect.lo
+	-rm -f tcgmsg/tcgmsg-mpi/drand48.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/drand48.lo
+	-rm -f tcgmsg/tcgmsg-mpi/evlog.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/evlog.lo
+	-rm -f tcgmsg/tcgmsg-mpi/evon.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/evon.lo
+	-rm -f tcgmsg/tcgmsg-mpi/llog.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/llog.lo
+	-rm -f tcgmsg/tcgmsg-mpi/misc.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/misc.lo
+	-rm -f tcgmsg/tcgmsg-mpi/niceftn.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/niceftn.lo
+	-rm -f tcgmsg/tcgmsg-mpi/nxtval-armci.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/nxtval-armci.lo
+	-rm -f tcgmsg/tcgmsg-mpi/p2p.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/p2p.lo
+	-rm -f tcgmsg/tcgmsg-mpi/pbeginf.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/pbeginf.lo
+	-rm -f tcgmsg/tcgmsg-mpi/pfilecopy.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/pfilecopy.lo
+	-rm -f tcgmsg/tcgmsg-mpi/sizeof.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/sizeof.lo
+	-rm -f tcgmsg/tcgmsg-mpi/test.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/test_asyn.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/testf.$(OBJEXT)
 	-rm -f testing/acc_test.$(OBJEXT)
 	-rm -f testing/clone.$(OBJEXT)
 	-rm -f testing/copy_test.$(OBJEXT)
@@ -3543,6 +4707,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/proc_affinity/simple/$(DEPDIR)/simple.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/features/symmetric_memory/simple/$(DEPDIR)/simple.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/simpleApps/$(DEPDIR)/transp1D-c.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@gaf2c/$(DEPDIR)/drand.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@gaf2c/$(DEPDIR)/gaf2c.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@gaf2c/$(DEPDIR)/testarg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-gemini/$(DEPDIR)/aggregate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-gemini/$(DEPDIR)/armci-onesided.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src-gemini/$(DEPDIR)/armci.Plo@am__quote@
@@ -3685,6 +4852,96 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/xfer/$(DEPDIR)/rmw.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/xfer/$(DEPDIR)/strided.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/xfer/$(DEPDIR)/vector.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/$(DEPDIR)/capi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/brdcst.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/checkbyte.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/cluster.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/drand48.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/error.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/evlog.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/evon.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/globalop.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/hello.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/llog.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/mdtob.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/mdtoi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/mitob.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/mitod.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/mtime.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/niceftn.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/nnodes.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/nodeid.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/nxtval.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/parallel.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/pbegin.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/pbeginf.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/pfilecopy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/sema.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/setdbg.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/shmem.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/signals.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/snd.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/sockets.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/srmover.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/stats.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/synch.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/testmap.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/toplot.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/usleep.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/waitall.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/waitcom.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/xdrstuff.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv4.0/$(DEPDIR)/xdrtest.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/async_send.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/async_send_lapi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/busy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/checkbyte.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/drand48.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/error.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/getmem.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/globalop.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/hello.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/lapi_putget.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/llog.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/mdtob.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/mdtoi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/misc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/mitob.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/mitod.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/mtime.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/niceftn.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/nnodes.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/nodeid.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/nxtval.shm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/pbegin.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/pbeginf.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/pfilecopy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/pvm.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/queues.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/shmem.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/signals.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/snd_rcv_probe.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/synch.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/usleep.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/ipcv5.0/$(DEPDIR)/waitall.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/checkbyte.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/clustercheck.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/collect.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/drand48.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/evlog.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/evon.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/llog.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/misc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/niceftn.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/nxtval-armci.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/p2p.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/pbeginf.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/pfilecopy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/sizeof.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/test_asyn.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/acc_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/clone.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/copy_test.Po@am__quote@
@@ -3710,6 +4967,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/testing_testitr-testitr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/testnotify.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/armci_prof.Plo@am__quote@
+
+.F.o:
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(PPF77COMPILE) -c -o $@ $<
+
+.F.obj:
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(PPF77COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.F.lo:
+	$(AM_V_PPF77) @AM_BACKSLASH@
+	$(LTPPF77COMPILE) -c -o $@ $<
+.F.f:
+	$(F77COMPILE) -F $<
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -3793,6 +5064,14 @@ testing/testing_testitr-testitr.obj: testing/testitr.c
 	$(AM_V_F77) @AM_BACKSLASH@
 	$(LTF77COMPILE) -c -o $@ $<
 
+src/common/libfcopyfacc_la-fcopy.lo: src/common/fcopy.f
+	$(AM_V_F77) @AM_BACKSLASH@
+	$(LIBTOOL) $(AM_V_lt) --tag=F77 $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(F77) $(libfcopyfacc_la_FFLAGS) $(FFLAGS) -c -o src/common/libfcopyfacc_la-fcopy.lo `test -f 'src/common/fcopy.f' || echo '$(srcdir)/'`src/common/fcopy.f
+
+src/xfer/libfcopyfacc_la-faccumulate.lo: src/xfer/faccumulate.f
+	$(AM_V_F77) @AM_BACKSLASH@
+	$(LIBTOOL) $(AM_V_lt) --tag=F77 $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(F77) $(libfcopyfacc_la_FFLAGS) $(FFLAGS) -c -o src/xfer/libfcopyfacc_la-faccumulate.lo `test -f 'src/xfer/faccumulate.f' || echo '$(srcdir)/'`src/xfer/faccumulate.f
+
 .s.o:
 	$(AM_V_CCAS) @AM_BACKSLASH@
 	$(CCASCOMPILE) -c -o $@ $<
@@ -3829,6 +5108,7 @@ clean-libtool:
 	-rm -rf examples/features/proc_affinity/simple/.libs examples/features/proc_affinity/simple/_libs
 	-rm -rf examples/features/symmetric_memory/simple/.libs examples/features/symmetric_memory/simple/_libs
 	-rm -rf examples/simpleApps/.libs examples/simpleApps/_libs
+	-rm -rf gaf2c/.libs gaf2c/_libs
 	-rm -rf src-gemini/.libs src-gemini/_libs
 	-rm -rf src-portals/.libs src-portals/_libs
 	-rm -rf src/collectives/.libs src/collectives/_libs
@@ -3848,6 +5128,10 @@ clean-libtool:
 	-rm -rf src/progress/.libs src/progress/_libs
 	-rm -rf src/util/.libs src/util/_libs
 	-rm -rf src/xfer/.libs src/xfer/_libs
+	-rm -rf tcgmsg/.libs tcgmsg/_libs
+	-rm -rf tcgmsg/ipcv4.0/.libs tcgmsg/ipcv4.0/_libs
+	-rm -rf tcgmsg/ipcv5.0/.libs tcgmsg/ipcv5.0/_libs
+	-rm -rf tcgmsg/tcgmsg-mpi/.libs tcgmsg/tcgmsg-mpi/_libs
 	-rm -rf testing/.libs testing/_libs
 	-rm -rf tools/.libs tools/_libs
 
@@ -4078,12 +5362,24 @@ recheck recheck-html:
 	        else echo $$f; fi;					\
 	      done | tr '\012\015' '  '`;				\
 	$(MAKE) $(AM_MAKEFLAGS) $$target AM_MAKEFLAGS='$(AM_MAKEFLAGS) TEST_LOGS="'"$$list"'"'
+gaf2c/testarg.log: gaf2c/testarg$(EXEEXT)
+	@p='gaf2c/testarg$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/acc_test.log: testing/acc_test$(EXEEXT)
 	@p='testing/acc_test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/copy_test.log: testing/copy_test$(EXEEXT)
 	@p='testing/copy_test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/testitr.log: testing/testitr$(EXEEXT)
 	@p='testing/testitr$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+tcgmsg/ipcv4.0/hello.log: tcgmsg/ipcv4.0/hello$(EXEEXT)
+	@p='tcgmsg/ipcv4.0/hello$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+tcgmsg/ipcv4.0/testf.log: tcgmsg/ipcv4.0/testf$(EXEEXT)
+	@p='tcgmsg/ipcv4.0/testf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+tcgmsg/ipcv5.0/hello.log: tcgmsg/ipcv5.0/hello$(EXEEXT)
+	@p='tcgmsg/ipcv5.0/hello$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+tcgmsg/ipcv5.0/pvm.ring.log: tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)
+	@p='tcgmsg/ipcv5.0/pvm.ring$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+tcgmsg/tcgmsg-mpi/testf.log: tcgmsg/tcgmsg-mpi/testf$(EXEEXT)
+	@p='tcgmsg/tcgmsg-mpi/testf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/msgcheck.log: testing/msgcheck$(EXEEXT)
 	@p='testing/msgcheck$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 testing/perf.log: testing/perf$(EXEEXT)
@@ -4388,6 +5684,8 @@ distclean-generic:
 	-rm -f examples/features/symmetric_memory/simple/$(am__dirstamp)
 	-rm -f examples/simpleApps/$(DEPDIR)/$(am__dirstamp)
 	-rm -f examples/simpleApps/$(am__dirstamp)
+	-rm -f gaf2c/$(DEPDIR)/$(am__dirstamp)
+	-rm -f gaf2c/$(am__dirstamp)
 	-rm -f src-gemini/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src-gemini/$(am__dirstamp)
 	-rm -f src-portals/$(DEPDIR)/$(am__dirstamp)
@@ -4426,6 +5724,14 @@ distclean-generic:
 	-rm -f src/util/$(am__dirstamp)
 	-rm -f src/xfer/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/xfer/$(am__dirstamp)
+	-rm -f tcgmsg/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tcgmsg/$(am__dirstamp)
+	-rm -f tcgmsg/ipcv4.0/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tcgmsg/ipcv4.0/$(am__dirstamp)
+	-rm -f tcgmsg/ipcv5.0/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tcgmsg/ipcv5.0/$(am__dirstamp)
+	-rm -f tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tcgmsg/tcgmsg-mpi/$(am__dirstamp)
 	-rm -f testing/$(DEPDIR)/$(am__dirstamp)
 	-rm -f testing/$(am__dirstamp)
 	-rm -f tools/$(DEPDIR)/$(am__dirstamp)
@@ -4446,7 +5752,7 @@ clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-checkPROGRAMS \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf examples/benchmarks/RandomAccess/$(DEPDIR) examples/benchmarks/RandomAccess/simple/$(DEPDIR) examples/benchmarks/RandomAccess/smp_bucket/$(DEPDIR) examples/benchmarks/cg/armci_sharedmemory/$(DEPDIR) examples/benchmarks/lu/armci_blocking/$(DEPDIR) examples/benchmarks/lu/armci_multithreaded/$(DEPDIR) examples/benchmarks/lu/armci_nonblocking/$(DEPDIR) examples/benchmarks/lu/pthreads/$(DEPDIR) examples/features/aggregation/simple/$(DEPDIR) examples/features/aggregation/sparse_matvecmul/$(DEPDIR) examples/features/concurrency/multidma/$(DEPDIR) examples/features/concurrency/simple/$(DEPDIR) examples/features/gpc/hashtable/$(DEPDIR) examples/features/non-blocking/overlap/$(DEPDIR) examples/features/non-blocking/simple/$(DEPDIR) examples/features/notification/simple/$(DEPDIR) examples/features/proc_affinity/computation_impact/$(DEPDIR) examples/features/proc_affinity/simple/$(DEPDIR) examples/features/symmetric_memory/simple/$(DEPDIR) examples/simpleApps/$(DEPDIR) src-gemini/$(DEPDIR) src-portals/$(DEPDIR) src/collectives/$(DEPDIR) src/common/$(DEPDIR) src/devices/bgml/$(DEPDIR) src/devices/dcmf/dcmf-0.2.0/$(DEPDIR) src/devices/dcmf/dcmf-0.3.0/$(DEPDIR) src/devices/dcmf/dcmf2/$(DEPDIR) src/devices/lapi/$(DEPDIR) src/devices/mpi-mt/$(DEPDIR) src/devices/mpi-spawn/$(DEPDIR) src/devices/openib/$(DEPDIR) src/devices/sockets/$(DEPDIR) src/ft/$(DEPDIR) src/locks/$(DEPDIR) src/memory/$(DEPDIR) src/progress/$(DEPDIR) src/util/$(DEPDIR) src/xfer/$(DEPDIR) testing/$(DEPDIR) tools/$(DEPDIR)
+	-rm -rf examples/benchmarks/RandomAccess/$(DEPDIR) examples/benchmarks/RandomAccess/simple/$(DEPDIR) examples/benchmarks/RandomAccess/smp_bucket/$(DEPDIR) examples/benchmarks/cg/armci_sharedmemory/$(DEPDIR) examples/benchmarks/lu/armci_blocking/$(DEPDIR) examples/benchmarks/lu/armci_multithreaded/$(DEPDIR) examples/benchmarks/lu/armci_nonblocking/$(DEPDIR) examples/benchmarks/lu/pthreads/$(DEPDIR) examples/features/aggregation/simple/$(DEPDIR) examples/features/aggregation/sparse_matvecmul/$(DEPDIR) examples/features/concurrency/multidma/$(DEPDIR) examples/features/concurrency/simple/$(DEPDIR) examples/features/gpc/hashtable/$(DEPDIR) examples/features/non-blocking/overlap/$(DEPDIR) examples/features/non-blocking/simple/$(DEPDIR) examples/features/notification/simple/$(DEPDIR) examples/features/proc_affinity/computation_impact/$(DEPDIR) examples/features/proc_affinity/simple/$(DEPDIR) examples/features/symmetric_memory/simple/$(DEPDIR) examples/simpleApps/$(DEPDIR) gaf2c/$(DEPDIR) src-gemini/$(DEPDIR) src-portals/$(DEPDIR) src/collectives/$(DEPDIR) src/common/$(DEPDIR) src/devices/bgml/$(DEPDIR) src/devices/dcmf/dcmf-0.2.0/$(DEPDIR) src/devices/dcmf/dcmf-0.3.0/$(DEPDIR) src/devices/dcmf/dcmf2/$(DEPDIR) src/devices/lapi/$(DEPDIR) src/devices/mpi-mt/$(DEPDIR) src/devices/mpi-spawn/$(DEPDIR) src/devices/openib/$(DEPDIR) src/devices/sockets/$(DEPDIR) src/ft/$(DEPDIR) src/locks/$(DEPDIR) src/memory/$(DEPDIR) src/progress/$(DEPDIR) src/util/$(DEPDIR) src/xfer/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR) testing/$(DEPDIR) tools/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -4494,7 +5800,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf examples/benchmarks/RandomAccess/$(DEPDIR) examples/benchmarks/RandomAccess/simple/$(DEPDIR) examples/benchmarks/RandomAccess/smp_bucket/$(DEPDIR) examples/benchmarks/cg/armci_sharedmemory/$(DEPDIR) examples/benchmarks/lu/armci_blocking/$(DEPDIR) examples/benchmarks/lu/armci_multithreaded/$(DEPDIR) examples/benchmarks/lu/armci_nonblocking/$(DEPDIR) examples/benchmarks/lu/pthreads/$(DEPDIR) examples/features/aggregation/simple/$(DEPDIR) examples/features/aggregation/sparse_matvecmul/$(DEPDIR) examples/features/concurrency/multidma/$(DEPDIR) examples/features/concurrency/simple/$(DEPDIR) examples/features/gpc/hashtable/$(DEPDIR) examples/features/non-blocking/overlap/$(DEPDIR) examples/features/non-blocking/simple/$(DEPDIR) examples/features/notification/simple/$(DEPDIR) examples/features/proc_affinity/computation_impact/$(DEPDIR) examples/features/proc_affinity/simple/$(DEPDIR) examples/features/symmetric_memory/simple/$(DEPDIR) examples/simpleApps/$(DEPDIR) src-gemini/$(DEPDIR) src-portals/$(DEPDIR) src/collectives/$(DEPDIR) src/common/$(DEPDIR) src/devices/bgml/$(DEPDIR) src/devices/dcmf/dcmf-0.2.0/$(DEPDIR) src/devices/dcmf/dcmf-0.3.0/$(DEPDIR) src/devices/dcmf/dcmf2/$(DEPDIR) src/devices/lapi/$(DEPDIR) src/devices/mpi-mt/$(DEPDIR) src/devices/mpi-spawn/$(DEPDIR) src/devices/openib/$(DEPDIR) src/devices/sockets/$(DEPDIR) src/ft/$(DEPDIR) src/locks/$(DEPDIR) src/memory/$(DEPDIR) src/progress/$(DEPDIR) src/util/$(DEPDIR) src/xfer/$(DEPDIR) testing/$(DEPDIR) tools/$(DEPDIR)
+	-rm -rf examples/benchmarks/RandomAccess/$(DEPDIR) examples/benchmarks/RandomAccess/simple/$(DEPDIR) examples/benchmarks/RandomAccess/smp_bucket/$(DEPDIR) examples/benchmarks/cg/armci_sharedmemory/$(DEPDIR) examples/benchmarks/lu/armci_blocking/$(DEPDIR) examples/benchmarks/lu/armci_multithreaded/$(DEPDIR) examples/benchmarks/lu/armci_nonblocking/$(DEPDIR) examples/benchmarks/lu/pthreads/$(DEPDIR) examples/features/aggregation/simple/$(DEPDIR) examples/features/aggregation/sparse_matvecmul/$(DEPDIR) examples/features/concurrency/multidma/$(DEPDIR) examples/features/concurrency/simple/$(DEPDIR) examples/features/gpc/hashtable/$(DEPDIR) examples/features/non-blocking/overlap/$(DEPDIR) examples/features/non-blocking/simple/$(DEPDIR) examples/features/notification/simple/$(DEPDIR) examples/features/proc_affinity/computation_impact/$(DEPDIR) examples/features/proc_affinity/simple/$(DEPDIR) examples/features/symmetric_memory/simple/$(DEPDIR) examples/simpleApps/$(DEPDIR) gaf2c/$(DEPDIR) src-gemini/$(DEPDIR) src-portals/$(DEPDIR) src/collectives/$(DEPDIR) src/common/$(DEPDIR) src/devices/bgml/$(DEPDIR) src/devices/dcmf/dcmf-0.2.0/$(DEPDIR) src/devices/dcmf/dcmf-0.3.0/$(DEPDIR) src/devices/dcmf/dcmf2/$(DEPDIR) src/devices/lapi/$(DEPDIR) src/devices/mpi-mt/$(DEPDIR) src/devices/mpi-spawn/$(DEPDIR) src/devices/openib/$(DEPDIR) src/devices/sockets/$(DEPDIR) src/ft/$(DEPDIR) src/locks/$(DEPDIR) src/memory/$(DEPDIR) src/progress/$(DEPDIR) src/util/$(DEPDIR) src/xfer/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/ipcv4.0/$(DEPDIR) tcgmsg/ipcv5.0/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR) testing/$(DEPDIR) tools/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -4608,6 +5914,18 @@ checkprogs: $(check_PROGRAMS)
 @MSG_COMMS_TCGMSG4_TRUE@clean-pfiles:
 @MSG_COMMS_TCGMSG4_TRUE@	find . -name '*.p' -exec rm {} \; ;
 @MSG_COMMS_TCGMSG4_TRUE@clean-local: clean-pfiles
+
+.PHONY: check-gaf2c
+check-gaf2c: $(all-am) $(check_LTLIBRARIES) $(GAF2C_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(GAF2C_TESTS)" XFAIL_TESTS="$(GAF2C_TESTS_XFAIL)" check-TESTS
+
+.PHONY: check-tcgmsg
+check-tcgmsg: $(all-am) $(check_LTLIBRARIES) $(TCGMSG_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(TCGMSG_TESTS)" XFAIL_TESTS="$(TCGMSG_TESTS_XFAIL)" check-TESTS
+
+.PHONY: check-armci
+check-armci: $(all-am) $(check_LTLIBRARIES) $(ARMCI_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(ARMCI_TESTS)" XFAIL_TESTS="$(ARMCI_TESTS_XFAIL)" check-TESTS
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

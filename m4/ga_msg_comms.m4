@@ -55,16 +55,6 @@ dnl postpone parsing with_mpi until we know sizeof(void*)
 dnl AS_IF([test x$with_mpi_need_parse = xyes],
 dnl     [GA_ARG_PARSE([with_mpi], [GA_MP_LIBS], [GA_MP_LDFLAGS], [GA_MP_CPPFLAGS])])
 m4_ifblank([$1], [
-# TCGMSG is no longer supported for ARMCI development.
-AS_IF([test "x$ARMCI_TOP_SRCDIR" != x],
-    [AS_IF([test ! -d "$ARMCI_TOP_SRCDIR/../global"],
-        [err=no
-         AS_CASE([$ga_msg_comms],
-            [TCGMSG],   [err=yes],
-            [TCGMSG5],  [err=yes],
-            [TCGMSGMPI],[err=yes])
-         AS_IF([test "x$err" = xyes],
-            [AC_MSG_ERROR([ARMCI no longer supports TCGMSG outside of the Global Arrays distribution])])])])
 # PVM is no longer supported, but there is still some code around
 # referring to it.
 AM_CONDITIONAL([MSG_COMMS_MPI],

@@ -5,6 +5,9 @@
 #if HAVE_STRING_H
 #   include <string.h>
 #endif
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
 
 #include "farg.h"
 
@@ -85,9 +88,10 @@ void ga_f2cstring(char *fstring, int flength, char *cstring, int clength)
  */
 void F2C_GETARG(Integer *a, char *b, int c)
 {
-    GA_Error("GA was built without support for Fortran.  You have attempted "
+    printf("GA was built without support for Fortran.  You have attempted "
             "to retreive command line arguments from a Fortran program. "
-            "Please recompile GA and avoid using --disable-f77", 0L);
+            "Please recompile GA and avoid using --disable-f77");
+    armci_msg_abort(1);
 }
 
 
@@ -95,9 +99,10 @@ void F2C_GETARG(Integer *a, char *b, int c)
  */
 Integer F2C_IARGC()
 {
-    GA_Error("GA was built without support for Fortran.  You have attempted "
+    printf("GA was built without support for Fortran.  You have attempted "
             "to retreive command line arguments from a Fortran program. "
-            "Please recompile GA and avoid using --disable-f77", 0L);
+            "Please recompile GA and avoid using --disable-f77");
+    armci_msg_abort(1);
     return 0;
 }
 

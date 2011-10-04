@@ -41,10 +41,10 @@
 #include "sndrcv.h"
 #include "sndrcvP.h"
 #include "signals.h"
-#include "sockets.h"
+#include "tcgsockets.h"
 
 #if defined(SHMEM) || defined(SYSV)
-#include "shmem.h"
+#include "tcgshmem.h"
 #include "sema.h"
 #endif
 

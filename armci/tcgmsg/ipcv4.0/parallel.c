@@ -24,7 +24,7 @@
 #include "cluster.h"
 #include "sndrcv.h"
 #include "signals.h"
-#include "sockets.h"
+#include "tcgsockets.h"
 
 extern char *getenv();
 #if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX) || \

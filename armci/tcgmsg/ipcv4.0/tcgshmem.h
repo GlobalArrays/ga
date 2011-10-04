@@ -13,7 +13,7 @@
   the id associated with the region. The return vaue is a pointer to the
   the region. Any error is a hard fail.
 
-  (char *) CreateSharedRegion((long *) id, (long *) size)
+  (char *) CreateSharedRegion((Integer *) id, (Integer *) size)
 */
 extern char *CreateSharedRegion();
 
@@ -22,9 +22,9 @@ extern char *CreateSharedRegion();
   -1 for failure. id, size, and addr much match exactly those items returned
   from CreateSharedRegion
 
-  long DetachSharedRegion((long) id, (long) size, (char *) addr)
+  Integer DetachSharedRegion((Integer) id, (Integer) size, (char *) addr)
 */
-extern long DetachSharedRegion();
+extern Integer DetachSharedRegion();
 
 
 /*
@@ -32,9 +32,9 @@ extern long DetachSharedRegion();
   to remove it from the system. On the Alliant the shared region disappears
   when the last process dies or detaches. Returns 0 on success, -1 on error.
 
-  long DeleteSharedRegion( (long) id)
+  Integer DeleteSharedRegion( (Integer) id)
 */
-extern long DeleteSharedRegion();
+extern Integer DeleteSharedRegion();
 
 
 /*
@@ -43,6 +43,6 @@ extern long DeleteSharedRegion();
   from CreateSharedRegion (which in turn is the requested size rounded
   up to a multiple of 4096). Any error is a hard fail. 
 
-  (char *) AttachSharedRegion( (long) id, (long) size))
+  (char *) AttachSharedRegion( (Integer) id, (Integer) size))
 */
 extern char *AttachSharedRegion();

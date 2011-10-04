@@ -90,9 +90,15 @@
 /* Define if tracing is enabled */
 #undef ENABLE_TRACE
 
+/* whether the hidden string length comes after all other args */
+#undef F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
+
 /* Define to dummy `main' function (if any) required to link to the Fortran
    libraries. */
 #undef F77_DUMMY_MAIN
+
+/* Name of F77 flush routine */
+#undef F77_FLUSH
 
 /* Define to a macro mangling the given C identifier (in lower and upper
    case), which must not contain underscores, for linking with Fortran. */
@@ -100,6 +106,18 @@
 
 /* As F77_FUNC, but for C identifiers containing underscores. */
 #undef F77_FUNC_
+
+/* Name of routine e.g. getarg, pxfgetarg */
+#undef F77_GETARG
+
+/* Arguments to getarg e.g. i,s or i,s,l,ier */
+#undef F77_GETARG_ARGS
+
+/* Declaration of routine e.g. external GETARG */
+#undef F77_GETARG_DECL
+
+/* Name of routine e.g. iargc, ipxfargc */
+#undef F77_IARGC
 
 /* Define if F77 and FC dummy `main' functions are identical. */
 #undef FC_DUMMY_MAIN_EQ_F77
@@ -112,6 +130,9 @@
 
 /* CPP symbol for function name, if available */
 #undef FUNCTION_NAME
+
+/* Module command when using Fortran 90 compiler e.g. use f90_unix */
+#undef FXX_MODULE
 
 /* TODO */
 #undef GM
@@ -135,8 +156,20 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
+#undef HAVE_DOPRNT
+
+/* Define to 1 if you have the `dtime' function. */
+#undef HAVE_DTIME
+
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
+
+/* Define to 1 if you have the `etime' function. */
+#undef HAVE_ETIME
+
+/* whether F77 flush routine is available */
+#undef HAVE_F77_FLUSH
 
 /* Define to 1 if you have the `fastbcopy' function. */
 #undef HAVE_FASTBCOPY
@@ -173,9 +206,6 @@
 
 /* Define to 1 if using external LAPACK library */
 #undef HAVE_LAPACK
-
-/* Define to 1 if you have the <limits.h> header file. */
-#undef HAVE_LIMITS_H
 
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
@@ -224,6 +254,15 @@
 
 /* Define to 1 if the system has the type `ptrdiff_t'. */
 #undef HAVE_PTRDIFF_T
+
+/* Define to 1 if you have the <rpc/rpc.h> header file. */
+#undef HAVE_RPC_RPC_H
+
+/* Define to 1 if you have the <rpc/types.h> header file. */
+#undef HAVE_RPC_TYPES_H
+
+/* Define to 1 if you have the <rpc/xdr.h> header file. */
+#undef HAVE_RPC_XDR_H
 
 /* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT
@@ -283,6 +322,9 @@
    */
 #undef HAVE_SYS_DIR_H
 
+/* Define to 1 if you have the <sys/errno.h> header file. */
+#undef HAVE_SYS_ERRNO_H
+
 /* Define to 1 if you have the <sys/file.h> header file. */
 #undef HAVE_SYS_FILE_H
 
@@ -299,6 +341,9 @@
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
 
+/* Define to 1 if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
+
 /* Define to 1 if you have the <sys/sem.h> header file. */
 #undef HAVE_SYS_SEM_H
 
@@ -313,6 +358,9 @@
 
 /* Define to 1 if you have the <sys/syscall.h> header file. */
 #undef HAVE_SYS_SYSCALL_H
+
+/* Define to 1 if you have the <sys/systemcfg.h> header file. */
+#undef HAVE_SYS_SYSTEMCFG_H
 
 /* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H
@@ -341,6 +389,9 @@
 /* Define to 1 if you have the <vfork.h> header file. */
 #undef HAVE_VFORK_H
 
+/* Define to 1 if you have the `vprintf' function. */
+#undef HAVE_VPRINTF
+
 /* Define to 1 if you have the <windows.h> header file. */
 #undef HAVE_WINDOWS_H
 
@@ -352,6 +403,9 @@
 
 /* Define to 1 if `vfork' works. */
 #undef HAVE_WORKING_VFORK
+
+/* Define to 1 if you have the `xdr_char' function. */
+#undef HAVE_XDR_CHAR
 
 /* Define to 1 if you have the `_acquire_lock' function. */
 #undef HAVE__ACQUIRE_LOCK
@@ -510,6 +564,15 @@
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
 
+/* Define to the type of arg 1 for `select'. */
+#undef SELECT_TYPE_ARG1
+
+/* Define to the type of args 2, 3 and 4 for `select'. */
+#undef SELECT_TYPE_ARG234
+
+/* Define to the type of arg 5 for `select'. */
+#undef SELECT_TYPE_ARG5
+
 /* TODO */
 #undef SERVER_THREAD
 
@@ -522,11 +585,35 @@
 /* Define to 1 on ??? systems */
 #undef SGI_N32
 
+/* The size of `char', as computed by sizeof. */
+#undef SIZEOF_CHAR
+
+/* The size of `double', as computed by sizeof. */
+#undef SIZEOF_DOUBLE
+
+/* The size of 'DOUBLE PRECISION' as computed by C's sizeof. */
+#undef SIZEOF_F77_DOUBLE_PRECISION
+
+/* The size of 'INTEGER' as computed by C's sizeof. */
+#undef SIZEOF_F77_INTEGER
+
+/* The size of 'REAL' as computed by C's sizeof. */
+#undef SIZEOF_F77_REAL
+
+/* The size of `float', as computed by sizeof. */
+#undef SIZEOF_FLOAT
+
+/* The size of `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
 /* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
 /* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
+
+/* The size of `short', as computed by sizeof. */
+#undef SIZEOF_SHORT
 
 /* The size of `void*', as computed by sizeof. */
 #undef SIZEOF_VOIDP
@@ -551,6 +638,12 @@
 
 /* deprecated, use MSG_COMMS_TCGMSG */
 #undef TCGMSG
+
+/* remote shell for TCGMSG */
+#undef TCGMSG_RSH
+
+/* Gather timing information for TCGMSG */
+#undef TCGMSG_TIMINGS
 
 /* turn on thread safety */
 #undef THREAD_SAFE
@@ -617,6 +710,9 @@
    #define below would cause a syntax error. */
 #undef _UINT8_T
 
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus
@@ -630,6 +726,10 @@
 /* Define to the type of a signed integer type of width exactly 32 bits if
    such a type exists and the standard includes do not define it. */
 #undef int32_t
+
+/* Define to the type of a signed integer type of width exactly 64 bits if
+   such a type exists and the standard includes do not define it. */
+#undef int64_t
 
 /* Define to `long int' if <sys/types.h> does not define. */
 #undef off_t
@@ -676,6 +776,11 @@
 /* Define as `fork' if `vfork' does not work. */
 #undef vfork
 
+/* Define to empty if the keyword `volatile' does not work. Warning: valid
+   code using `volatile' can become incorrect without. Disable with care. */
+#undef volatile
+
+/* DO NOT MODIFY THE FOLLOWING PREPROCESSOR DIRECTIVES */
 #ifdef MSG_COMMS_MPI
 #   ifdef __cplusplus
 #       define MPIPP

@@ -1856,7 +1856,7 @@ void armci_exchange_address(void *ptr_ar[], int n)
  * ********************* Begin ARMCI Groups Code ****************************
  * NOTE: This part is MPI dependent (i.e. ifdef MPI)
  */
-#  ifdef MPI
+#ifdef MPI
 MPI_Comm armci_group_comm(ARMCI_Group *group)
 {
 #ifdef ARMCI_GROUP

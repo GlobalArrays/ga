@@ -156,9 +156,6 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
-#undef HAVE_DOPRNT
-
 /* Define to 1 if you have the `dtime' function. */
 #undef HAVE_DTIME
 
@@ -176,9 +173,6 @@
 
 /* Define to 1 if you have the <ffio.h> header file. */
 #undef HAVE_FFIO_H
-
-/* Define to 1 if you have the <float.h> header file. */
-#undef HAVE_FLOAT_H
 
 /* Define to 1 if you have the `floor' function. */
 #undef HAVE_FLOOR
@@ -210,14 +204,11 @@
 /* Defined if plot library is available */
 #undef HAVE_LIBPLOT
 
-/* Define to 1 if you have the <limits.h> header file. */
-#undef HAVE_LIMITS_H
+/* Define to 1 if you have the <linux/limits.h> header file. */
+#undef HAVE_LINUX_LIMITS_H
 
 /* Define to 1 if the system has the type `long double'. */
 #undef HAVE_LONG_DOUBLE
-
-/* Define to 1 if the system has the type `long long int'. */
-#undef HAVE_LONG_LONG_INT
 
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
@@ -252,23 +243,8 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
-/* Define to 1 if you have the <netdb.h> header file. */
-#undef HAVE_NETDB_H
-
-/* Define to 1 if you have the <netinet/in.h> header file. */
-#undef HAVE_NETINET_IN_H
-
-/* Define to 1 if you have the <netinet/tcp.h> header file. */
-#undef HAVE_NETINET_TCP_H
-
-/* Define to 1 if you have the <nx.h> header file. */
-#undef HAVE_NX_H
-
 /* Define to 1 if you have the `pause' function. */
 #undef HAVE_PAUSE
-
-/* Define to 1 if you have the <pfs/pfs.h> header file. */
-#undef HAVE_PFS_PFS_H
 
 /* Define to 1 if you have the `posix_memalign' function. */
 #undef HAVE_POSIX_MEMALIGN
@@ -279,20 +255,8 @@
 /* define to 1 if the C compiler has a program name global varaible */
 #undef HAVE_PROGNAME
 
-/* Define to 1 if the system has the type `ptrdiff_t'. */
-#undef HAVE_PTRDIFF_T
-
 /* Define to 1 if you have the `putenv' function. */
 #undef HAVE_PUTENV
-
-/* Define to 1 if you have the <rpc/rpc.h> header file. */
-#undef HAVE_RPC_RPC_H
-
-/* Define to 1 if you have the <rpc/types.h> header file. */
-#undef HAVE_RPC_TYPES_H
-
-/* Define to 1 if you have the <rpc/xdr.h> header file. */
-#undef HAVE_RPC_XDR_H
 
 /* Define to 1 if you have ScaLAPACK library. */
 #undef HAVE_SCALAPACK
@@ -303,17 +267,11 @@
 /* Define to 1 if you have the `setenv' function. */
 #undef HAVE_SETENV
 
-/* Define to 1 if you have the <setjmp.h> header file. */
-#undef HAVE_SETJMP_H
-
 /* Define to 1 if you have the `shared_malloc' function. */
 #undef HAVE_SHARED_MALLOC
 
 /* Define to 1 if you have the `shmalloc' function. */
 #undef HAVE_SHMALLOC
-
-/* Define to 1 if you have the <signal.h> header file. */
-#undef HAVE_SIGNAL_H
 
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
@@ -326,9 +284,6 @@
 
 /* Define to 1 if you have the `srandom' function. */
 #undef HAVE_SRANDOM
-
-/* Define to 1 if you have the <stdarg.h> header file. */
-#undef HAVE_STDARG_H
 
 /* Define to 1 if stdbool.h conforms to C99. */
 #undef HAVE_STDBOOL_H
@@ -363,15 +318,9 @@
 /* Define to 1 if you have the `strtol' function. */
 #undef HAVE_STRTOL
 
-/* Define to 1 if you have the <sys/cnx_types.h> header file. */
-#undef HAVE_SYS_CNX_TYPES_H
-
 /* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
    */
 #undef HAVE_SYS_DIR_H
-
-/* Define to 1 if you have the <sys/errno.h> header file. */
-#undef HAVE_SYS_ERRNO_H
 
 /* Define to 1 if you have the <sys/file.h> header file. */
 #undef HAVE_SYS_FILE_H
@@ -425,9 +374,6 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
-/* Define to 1 if you have the <sys/systemcfg.h> header file. */
-#undef HAVE_SYS_SYSTEMCFG_H
-
 /* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H
 
@@ -437,7 +383,7 @@
 /* Define to 1 if you have the <sys/vfs.h> header file. */
 #undef HAVE_SYS_VFS_H
 
-/* Define to 1 if you have the <sys/wait.h> header file. */
+/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
 /* Define this if weak aliases may be created with #pragma weak */
@@ -452,17 +398,11 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to 1 if the system has the type `unsigned long long int'. */
-#undef HAVE_UNSIGNED_LONG_LONG_INT
-
 /* Define to 1 if you have the `vfork' function. */
 #undef HAVE_VFORK
 
 /* Define to 1 if you have the <vfork.h> header file. */
 #undef HAVE_VFORK_H
-
-/* Define to 1 if you have the `vprintf' function. */
-#undef HAVE_VPRINTF
 
 /* Define to 1 if you have the <windows.h> header file. */
 #undef HAVE_WINDOWS_H
@@ -472,9 +412,6 @@
 
 /* Define to 1 if `vfork' works. */
 #undef HAVE_WORKING_VFORK
-
-/* Define to 1 if you have the `xdr_char' function. */
-#undef HAVE_XDR_CHAR
 
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
@@ -705,17 +642,8 @@
 /* deprecated, use MSG_COMMS_TCGMSG */
 #undef TCGMSG
 
-/* remote shell for TCGMSG */
-#undef TCGMSG_RSH
-
-/* Gather timing information for TCGMSG */
-#undef TCGMSG_TIMINGS
-
 /* turn on thread safety */
 #undef THREAD_SAFE
-
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#undef TIME_WITH_SYS_TIME
 
 /* TODO */
 #undef USE_MALLOC

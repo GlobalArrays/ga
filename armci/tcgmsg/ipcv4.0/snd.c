@@ -35,7 +35,7 @@ extern void Error();
 
 #include "sndrcv.h"
 #include "sndrcvP.h"
-#include "sockets.h"
+#include "tcgsockets.h"
 
 #ifdef GOTXDR
 #include "xdrstuff.h"
@@ -46,7 +46,7 @@ extern void Error();
 #include <memory.h>
 #endif
 #include "sema.h"
-#include "shmem.h"
+#include "tcgshmem.h"
 #if defined(USE_SRMOVER)
 extern void SRmover();
 #else

@@ -11,11 +11,11 @@
 #include "sndrcvP.h"
 #include "sndrcv.h"
 #include "signals.h"
-#include "sockets.h"
+#include "tcgsockets.h"
 
 #if defined(SHMEM) || defined(SYSV)
 #include "sema.h"
-#include "shmem.h"
+#include "tcgshmem.h"
 #endif
 
 extern jmp_buf SR_jmp_buf;   /* Jumped to on soft error */ 

@@ -48,13 +48,13 @@ AM_LDFLAGS =
 LDADD =
 
 AM_FFLAGS += $(ARMCI_FOPT)
-AM_FFLAGS += $(FFLAG_INT_4)
+AM_FFLAGS += $(FFLAG_INT)
 AM_CFLAGS += $(ARMCI_COPT)
 AM_CXXFLAGS += $(ARMCI_CXXOPT)
 AM_CPPFLAGS += $(GA_MP_CPPFLAGS)
 AM_CPPFLAGS += $(ARMCI_NETWORK_CPPFLAGS)
 if MSG_COMMS_TCGMSG
-AM_CPPFLAGS += -I$(top_srcdir)/../tcgmsg
+AM_CPPFLAGS += -I$(top_srcdir)/tcgmsg
 endif
 LDFLAGS_BASE =
 LDFLAGS_BASE += $(GA_MP_LDFLAGS)
@@ -63,13 +63,7 @@ AM_LDFLAGS += $(LDFLAGS_BASE)
 if ENABLE_F77
 AM_LDFLAGS += $(FLD_NOMAIN)
 endif
-# You can only build armci with tcgmsg within the ga distribution.
-# armci's configure will bomb if if you try to use tcgmsg, so this is safe.
-if MSG_COMMS_TCGMSG
-LDADD += $(top_bld_prefix)../libga.la
-else
 LDADD += libarmci.la
-endif
 LDADD += $(LTLIBOBJS)
 LDADD += $(GA_MP_LIBS)
 LDADD += $(ARMCI_NETWORK_LIBS)
@@ -121,200 +115,55 @@ config.fh: config.h
 	$(SED) "/^#/!d" config.h > config.fh
 
 ##############################################################################
+# gaf2c
+#
+libarmci_la_SOURCES += gaf2c/gaf2c.c
+libarmci_la_SOURCES += gaf2c/drand.c
+if ENABLE_F77
+libarmci_la_SOURCES += gaf2c/farg.F
+endif
+
+include_HEADERS += gaf2c/typesf2c.h
+include_HEADERS += gaf2c/farg.h
+
+AM_CPPFLAGS += -I$(top_build_prefix)gaf2c
+AM_CPPFLAGS += -I$(top_srcdir)/gaf2c
+
+if ENABLE_F77
+check_PROGRAMS += gaf2c/testarg
+endif
+
+GAF2C_SERIAL_TESTS =
+GAF2C_SERIAL_TESTS_XFAIL =
+GAF2C_PARALLEL_TESTS =
+GAF2C_PARALLEL_TESTS_XFAIL =
+GAF2C_TESTS = $(GAF2C_SERIAL_TESTS) $(GAF2C_PARALLEL_TESTS)
+GAF2C_TESTS_XFAIL = $(GAF2C_SERIAL_TESTS_XFAIL) $(GAF2C_PARALLEL_TESTS_XFAIL)
+
+if ENABLE_F77
+GAF2C_SERIAL_TESTS += gaf2c/testarg$(EXEEXT)
+endif
+
+gaf2c_testarg_SOURCES = gaf2c/testarg.c gaf2c/testargf.f
+gaf2c_testarg_LDFLAGS = $(FLDFLAGS)
+
+##############################################################################
+# tcgmsg
+#
+include $(top_srcdir)/tcgmsg/Makefile.inc
+
+##############################################################################
 # src-portals
 #
 if ARMCI_NETWORK_PORTALS
-libarmci_la_SOURCES += src-portals/acc.h
-libarmci_la_SOURCES += src-portals/aggregate.c
-libarmci_la_SOURCES += src-portals/armci.c
-libarmci_la_SOURCES += src-portals/armcip.h
-libarmci_la_SOURCES += src-portals/armci_portals.c
-libarmci_la_SOURCES += src-portals/armci_portals.h
-libarmci_la_SOURCES += src-portals/atomics-i386.h
-libarmci_la_SOURCES += src-portals/buffers.c
-libarmci_la_SOURCES += src-portals/caccumulate.c
-libarmci_la_SOURCES += src-portals/ccopy.c
-libarmci_la_SOURCES += src-portals/clusterinfo.c
-libarmci_la_SOURCES += src-portals/copy.h
-libarmci_la_SOURCES += src-portals/ds-shared.c
-libarmci_la_SOURCES += src-portals/fence.c
-libarmci_la_SOURCES += src-portals/kr_malloc.c
-libarmci_la_SOURCES += src-portals/kr_malloc.h
-libarmci_la_SOURCES += src-portals/locks.c
-libarmci_la_SOURCES += src-portals/locks.h
-libarmci_la_SOURCES += src-portals/memlock.c
-libarmci_la_SOURCES += src-portals/memlock.h
-libarmci_la_SOURCES += src-portals/memory.c
-libarmci_la_SOURCES += src-portals/message.c
-libarmci_la_SOURCES += src-portals/mp3.fh
-libarmci_la_SOURCES += src-portals/mp3.h
-libarmci_la_SOURCES += src-portals/mutex.c
-libarmci_la_SOURCES += src-portals/pack.c
-libarmci_la_SOURCES += src-portals/pendbufs.h
-libarmci_la_SOURCES += src-portals/portals_cp.c
-libarmci_la_SOURCES += src-portals/portals_ds.c
-libarmci_la_SOURCES += src-portals/portals.c
-libarmci_la_SOURCES += src-portals/request.c
-libarmci_la_SOURCES += src-portals/request.h
-libarmci_la_SOURCES += src-portals/rmw.c
-libarmci_la_SOURCES += src-portals/rtinfo.c
-libarmci_la_SOURCES += src-portals/semaphores.c
-libarmci_la_SOURCES += src-portals/semaphores.h
-libarmci_la_SOURCES += src-portals/shmalloc.h
-libarmci_la_SOURCES += src-portals/shmem.c
-libarmci_la_SOURCES += src-portals/shmem.h
-libarmci_la_SOURCES += src-portals/shmlimit.c
-libarmci_la_SOURCES += src-portals/shmlimit.h
-libarmci_la_SOURCES += src-portals/signaltrap.c
-libarmci_la_SOURCES += src-portals/signaltrap.h
-libarmci_la_SOURCES += src-portals/sockets.h
-libarmci_la_SOURCES += src-portals/spawn.c
-libarmci_la_SOURCES += src-portals/spinlock.h
-libarmci_la_SOURCES += src-portals/strided.c
-libarmci_la_SOURCES += src-portals/tas-alpha.h
-libarmci_la_SOURCES += src-portals/tas-i386.h
-libarmci_la_SOURCES += src-portals/tas-ia64.h
-libarmci_la_SOURCES += src-portals/tas-ppc.h
-libarmci_la_SOURCES += src-portals/utils.h
-libarmci_la_SOURCES += src-portals/vector.c
-if PORTALS_ENABLE_NEW_MALLOC
-libarmci_la_SOURCES += src-portals/new_memory.c
-endif
-if ENABLE_F77
-libarmci_la_SOURCES += src-portals/faccumulate.f
-libarmci_la_SOURCES += src-portals/fcopy.f
-endif
-if MSG_COMMS_MPI
-libarmci_la_SOURCES += src-portals/groups.c
-endif
-if ARMCI_ENABLE_GPC_CALLS
-libarmci_la_SOURCES += src-portals/gpc.c
-endif
-if THREAD_SAFE
-libarmci_la_SOURCES += src-portals/threads.c
-libarmci_la_SOURCES += src-portals/utils.c
-endif
-if INLINE_TAS_OKAY
-libarmci_la_SOURCES += src-portals/tas.c
-else
-if INLINE_TAS_WITH
-nodist_libarmci_la_SOURCES += src-portals/tas_as.s
-endif
-endif
-
-include_HEADERS += src-portals/armci.h
-include_HEADERS += src-portals/gpc.h
-include_HEADERS += src-portals/message.h
-
-AM_CPPFLAGS += -I$(top_srcdir)/src-portals
-AM_CPPFLAGS += -I$(top_srcdir)/src/include
-
-if ENABLE_SHARED
-MAYBE_PIC = -fPIC -DPIC
-endif
-
-src-portals/tas_as.s: src-portals/tas.c
-	$(ARMCI_TAS_AS_V) \
-	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ \
-	$(top_srcdir)/src-portals/tas.c
-
-CLEANFILES += src-portals/tas_as.s
+include $(top_srcdir)/src-portals/Makefile.inc
 
 ##############################################################################
 # src-gemini
 #
 else # !ARMCI_NETWORK_PORTALS
 if ARMCI_NETWORK_GEMINI
-libarmci_la_SOURCES += src-gemini/acc.h
-libarmci_la_SOURCES += src-gemini/aggregate.c
-libarmci_la_SOURCES += src-gemini/armci.c
-libarmci_la_SOURCES += src-gemini/armci-onesided.c
-libarmci_la_SOURCES += src-gemini/armci-onesided.h
-libarmci_la_SOURCES += src-gemini/armcip.h
-libarmci_la_SOURCES += src-gemini/atomics-i386.h
-libarmci_la_SOURCES += src-gemini/buffers.c
-libarmci_la_SOURCES += src-gemini/caccumulate.c
-libarmci_la_SOURCES += src-gemini/ccopy.c
-libarmci_la_SOURCES += src-gemini/clusterinfo.c
-libarmci_la_SOURCES += src-gemini/copy.h
-libarmci_la_SOURCES += src-gemini/ds-shared.c
-libarmci_la_SOURCES += src-gemini/fence.c
-libarmci_la_SOURCES += src-gemini/groups.c
-libarmci_la_SOURCES += src-gemini/kr_malloc.c
-libarmci_la_SOURCES += src-gemini/kr_malloc.h
-libarmci_la_SOURCES += src-gemini/locks.c
-libarmci_la_SOURCES += src-gemini/locks.h
-libarmci_la_SOURCES += src-gemini/memlock.c
-libarmci_la_SOURCES += src-gemini/memlock.h
-libarmci_la_SOURCES += src-gemini/memory.c
-libarmci_la_SOURCES += src-gemini/message.c
-libarmci_la_SOURCES += src-gemini/mp3.h
-libarmci_la_SOURCES += src-gemini/mutex.c
-libarmci_la_SOURCES += src-gemini/pack.c
-libarmci_la_SOURCES += src-gemini/pendbufs.h
-libarmci_la_SOURCES += src-gemini/request.c
-libarmci_la_SOURCES += src-gemini/request.h
-libarmci_la_SOURCES += src-gemini/rmw.c
-libarmci_la_SOURCES += src-gemini/rtinfo.c
-libarmci_la_SOURCES += src-gemini/semaphores.c
-libarmci_la_SOURCES += src-gemini/semaphores.h
-libarmci_la_SOURCES += src-gemini/shmalloc.h
-libarmci_la_SOURCES += src-gemini/shmem.c
-libarmci_la_SOURCES += src-gemini/shmem.h
-libarmci_la_SOURCES += src-gemini/shmlimit.c
-libarmci_la_SOURCES += src-gemini/shmlimit.h
-libarmci_la_SOURCES += src-gemini/signaltrap.c
-libarmci_la_SOURCES += src-gemini/signaltrap.h
-libarmci_la_SOURCES += src-gemini/sockets.h
-libarmci_la_SOURCES += src-gemini/spawn.c
-libarmci_la_SOURCES += src-gemini/spinlock.h
-libarmci_la_SOURCES += src-gemini/strided.c
-libarmci_la_SOURCES += src-gemini/tas-alpha.h
-libarmci_la_SOURCES += src-gemini/tas-i386.h
-libarmci_la_SOURCES += src-gemini/tas-ia64.h
-libarmci_la_SOURCES += src-gemini/tas-ppc.h
-libarmci_la_SOURCES += src-gemini/utils.h
-libarmci_la_SOURCES += src-gemini/vector.c
-if ENABLE_F77
-libarmci_la_SOURCES += src-gemini/faccumulate.f
-libarmci_la_SOURCES += src-gemini/fcopy.f
-endif
-if ARMCI_ENABLE_GPC_CALLS
-libarmci_la_SOURCES += src-gemini/gpc.c
-endif
-if THREAD_SAFE
-libarmci_la_SOURCES += src-gemini/threads.c
-libarmci_la_SOURCES += src-gemini/utils.c
-endif
-if INLINE_TAS_OKAY
-libarmci_la_SOURCES += src-gemini/tas.c
-else
-if INLINE_TAS_WITH
-nodist_libarmci_la_SOURCES += src-gemini/tas_as.s
-endif
-endif
-
-include_HEADERS += src-gemini/armci.h
-include_HEADERS += src-gemini/gpc.h
-include_HEADERS += src-gemini/message.h
-
-AM_CPPFLAGS += -I$(top_srcdir)/src-gemini
-AM_CPPFLAGS += -I$(top_srcdir)/src/include
-LDADD += -lnumatoolkit
-LDADD += -lonesided
-
-if ENABLE_SHARED
-MAYBE_PIC = -fPIC -DPIC
-endif
-
-src-gemini/tas_as.s: src-gemini/tas.c
-	$(ARMCI_TAS_AS_V) \
-	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ \
-	$(top_srcdir)/src-gemini/tas.c
-
-CLEANFILES += src-gemini/tas_as.s
+include $(top_srcdir)/src-gemini/Makefile.inc
 
 ##############################################################################
 # src
@@ -365,8 +214,14 @@ libarmci_la_SOURCES += src/xfer/rmw.c
 libarmci_la_SOURCES += src/xfer/strided.c
 libarmci_la_SOURCES += src/xfer/vector.c
 if ENABLE_F77
-libarmci_la_SOURCES += src/common/fcopy.f
-libarmci_la_SOURCES += src/xfer/faccumulate.f
+noinst_LTLIBRARIES += libfcopyfacc.la
+libfcopyfacc_la_SOURCES =
+libfcopyfacc_la_SOURCES += src/common/fcopy.f
+libfcopyfacc_la_SOURCES += src/xfer/faccumulate.f
+libfcopyfacc_la_FFLAGS =
+libfcopyfacc_la_FFLAGS += $(ARMCI_FOPT)
+libfcopyfacc_la_FFLAGS += $(FFLAG_INT_4)
+libarmci_la_LIBADD += libfcopyfacc.la
 endif # ENABLE_F77
 if MSG_COMMS_MPI
 libarmci_la_SOURCES += src/common/groups.c
@@ -620,51 +475,53 @@ check_PROGRAMS += testing/testitr
 endif
 endif
 
-SERIAL_TESTS =
-SERIAL_TESTS_XFAIL =
-PARALLEL_TESTS =
-PARALLEL_TESTS_XFAIL =
+ARMCI_SERIAL_TESTS =
+ARMCI_SERIAL_TESTS_XFAIL =
+ARMCI_PARALLEL_TESTS =
+ARMCI_PARALLEL_TESTS_XFAIL =
+ARMCI_TESTS = $(ARMCI_SERIAL_TESTS) $(ARMCI_PARALLEL_TESTS)
+ARMCI_TESTS_XFAIL = $(ARMCI_SERIAL_TESTS_XFAIL) $(ARMCI_PARALLEL_TESTS_XFAIL)
 
-PARALLEL_TESTS += testing/msgcheck$(EXEEXT)
-PARALLEL_TESTS += testing/perf$(EXEEXT)
-PARALLEL_TESTS += testing/perf_aggr$(EXEEXT)
-#PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
-#SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
-#SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
-PARALLEL_TESTS += testing/simplelock$(EXEEXT)
-PARALLEL_TESTS += testing/test$(EXEEXT)
-PARALLEL_TESTS += testing/test2$(EXEEXT)
-PARALLEL_TESTS += testing/testnotify$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/msgcheck$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/perf$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/perf_aggr$(EXEEXT)
+#ARMCI_PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
+#ARMCI_SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
+#ARMCI_SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
+ARMCI_PARALLEL_TESTS += testing/simplelock$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/test$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/test2$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/testnotify$(EXEEXT)
 if ENABLE_CHECKPOINT
-PARALLEL_TESTS += testing/fttest$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/fttest$(EXEEXT)
 endif
 if ARMCI_ENABLE_GPC_CALLS
-PARALLEL_TESTS += testing/gpctest$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/gpctest$(EXEEXT)
 endif
 if MSG_COMMS_MPI
-PARALLEL_TESTS += testing/simple$(EXEEXT)
-PARALLEL_TESTS += testing/test_groups$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/simple$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/test_groups$(EXEEXT)
 if SYSV
-#PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
+#ARMCI_PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
 endif
 endif
 if THREAD_SAFE
-PARALLEL_TESTS += testing/test_mt$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/test_mt$(EXEEXT)
 endif
 if ENABLE_F77
-SERIAL_TESTS += testing/acc_test$(EXEEXT)
-SERIAL_TESTS += testing/copy_test$(EXEEXT)
+ARMCI_SERIAL_TESTS += testing/acc_test$(EXEEXT)
+ARMCI_SERIAL_TESTS += testing/copy_test$(EXEEXT)
 endif
 if ARMCI_NETWORK_PORTALS
-PARALLEL_TESTS += testing/clone$(EXEEXT)
-PARALLEL_TESTS += testing/fork$(EXEEXT)
-PARALLEL_TESTS += testing/origptl$(EXEEXT)
-PARALLEL_TESTS += testing/ptltest$(EXEEXT)
-PARALLEL_TESTS += testing/te$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/clone$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/fork$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/origptl$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/ptltest$(EXEEXT)
+ARMCI_PARALLEL_TESTS += testing/te$(EXEEXT)
 else
 if ARMCI_NETWORK_GEMINI
 else
-SERIAL_TESTS += testing/testitr$(EXEEXT)
+ARMCI_SERIAL_TESTS += testing/testitr$(EXEEXT)
 endif
 endif
 
@@ -758,39 +615,39 @@ if THREAD_SAFE
 check_PROGRAMS += examples/benchmarks/lu/armci_multithreaded/lu-block-th
 endif
 
-#PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
-PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT)
-PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT)
-PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu$(EXEEXT)
-PARALLEL_TESTS += examples/benchmarks/lu/armci_nonblocking/lu_nb_get$(EXEEXT)
-PARALLEL_TESTS += examples/benchmarks/lu/armci_nonblocking/lu_nb_put$(EXEEXT)
-PARALLEL_TESTS += examples/benchmarks/lu/pthreads/lu-thread$(EXEEXT)
-PARALLEL_TESTS += examples/features/aggregation/simple/simple$(EXEEXT)
-#PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
-PARALLEL_TESTS += examples/features/concurrency/simple/comdegree$(EXEEXT)
-PARALLEL_TESTS += examples/features/non-blocking/simple/simple$(EXEEXT)
-PARALLEL_TESTS += examples/features/notification/simple/testnotify$(EXEEXT)
-PARALLEL_TESTS += examples/features/symmetric_memory/simple/simple$(EXEEXT)
-PARALLEL_TESTS += examples/simpleApps/transp1D-c$(EXEEXT)
+#ARMCI_PARALLEL_TESTS += examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) # needs input file
+ARMCI_PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/benchmarks/lu/armci_blocking/lu$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/benchmarks/lu/armci_nonblocking/lu_nb_get$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/benchmarks/lu/armci_nonblocking/lu_nb_put$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/benchmarks/lu/pthreads/lu-thread$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/features/aggregation/simple/simple$(EXEEXT)
+#ARMCI_PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
+ARMCI_PARALLEL_TESTS += examples/features/concurrency/simple/comdegree$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/features/non-blocking/simple/simple$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/features/notification/simple/testnotify$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/features/symmetric_memory/simple/simple$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/simpleApps/transp1D-c$(EXEEXT)
 if ARMCI_ENABLE_GPC_CALLS
-PARALLEL_TESTS += examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
 if HAVE_BLAS
 if HAVE_LAPACK
-PARALLEL_TESTS += examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
 endif # HAVE_LAPACK
 endif # HAVE_BLAS
-PARALLEL_TESTS += examples/features/proc_affinity/simple/simple$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/features/proc_affinity/simple/simple$(EXEEXT)
 endif # ARMCI_ENABLE_GPC_CALLS
 if MSG_COMMS_MPI
-#PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
-#PARALLEL_TESTS += examples/features/non-blocking/overlap/overlap$(EXEEXT) # needs bug fixes
+#ARMCI_PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
+#ARMCI_PARALLEL_TESTS += examples/features/non-blocking/overlap/overlap$(EXEEXT) # needs bug fixes
 endif
 if RANDOM_ACCESS
-PARALLEL_TESTS += examples/benchmarks/RandomAccess/simple/simple$(EXEEXT)
-PARALLEL_TESTS += examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/benchmarks/RandomAccess/simple/simple$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
 endif
 if THREAD_SAFE
-PARALLEL_TESTS += examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+ARMCI_PARALLEL_TESTS += examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 endif
 
 examples_benchmarks_cg_armci_sharedmemory_cg_SOURCES = \
@@ -964,12 +821,27 @@ endif # MSG_COMMS_TCGMSG4
 #
 # Some tests were commented out either because they required an input file or
 # they were failing for unknown reasons and we didn't want to further debug.
-# Some tests were based on old versions of GA which no longer applied but we
-# kept anyway (see pario).
 #
-# We leave pario tests out of the main set of tests because not all systems
-# can handle the disk requirements.
-#
+SERIAL_TESTS =
+SERIAL_TESTS += $(GAF2C_SERIAL_TESTS)
+SERIAL_TESTS += $(TCGMSG_SERIAL_TESTS)
+SERIAL_TESTS += $(ARMCI_SERIAL_TESTS)
+
+SERIAL_TESTS_XFAIL =
+SERIAL_TESTS_XFAIL += $(GAF2C_SERIAL_TESTS_XFAIL)
+SERIAL_TESTS_XFAIL += $(TCGMSG_SERIAL_TESTS_XFAIL)
+SERIAL_TESTS_XFAIL += $(ARMCI_SERIAL_TESTS_XFAIL)
+
+PARALLEL_TESTS =
+PARALLEL_TESTS += $(GAF2C_PARALLEL_TESTS)
+PARALLEL_TESTS += $(TCGMSG_PARALLEL_TESTS)
+PARALLEL_TESTS += $(ARMCI_PARALLEL_TESTS)
+
+PARALLEL_TESTS_XFAIL =
+PARALLEL_TESTS_XFAIL += $(GAF2C_PARALLEL_TESTS_XFAIL)
+PARALLEL_TESTS_XFAIL += $(TCGMSG_PARALLEL_TESTS_XFAIL)
+PARALLEL_TESTS_XFAIL += $(ARMCI_PARALLEL_TESTS_XFAIL)
+
 TESTS =
 TESTS += $(SERIAL_TESTS)
 TESTS += $(PARALLEL_TESTS)
@@ -980,16 +852,28 @@ XFAIL_TESTS += $(PARALLEL_TESTS_XFAIL)
 
 if MSG_COMMS_TCGMSG4
 LOG_COMPILER = \
-maybe_parexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(PAREXEC)"; fi`; $$maybe_parexec
+maybe_parexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(PAREXEC)"; fi`; eval $$maybe_parexec
 else
 if MSG_COMMS_TCGMSG5
 LOG_COMPILER = tst="$$dir$$f -np $(NPROCS)"; eval
 else
 if CROSS_COMPILING
-maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; $$maybe_mpiexec
+maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/1/'; else echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; fi`; eval $$maybe_mpiexec
 else
 LOG_COMPILER = \
-maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; $$maybe_mpiexec
+maybe_mpiexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else if echo "$(MPIEXEC)" | $(GREP) "%NP%" > /dev/null; then echo "$(MPIEXEC)" | $(SED) 's/%NP%/$(NPROCS)/'; else echo "$(MPIEXEC)"; fi; fi`; eval $$maybe_mpiexec
 endif # CROSS_COMPILING
 endif # MSG_COMMS_TCGMSG5
 endif # MSG_COMMS_TCGMSG4
+
+.PHONY: check-gaf2c
+check-gaf2c: $(all-am) $(check_LTLIBRARIES) $(GAF2C_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(GAF2C_TESTS)" XFAIL_TESTS="$(GAF2C_TESTS_XFAIL)" check-TESTS
+
+.PHONY: check-tcgmsg
+check-tcgmsg: $(all-am) $(check_LTLIBRARIES) $(TCGMSG_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(TCGMSG_TESTS)" XFAIL_TESTS="$(TCGMSG_TESTS_XFAIL)" check-TESTS
+
+.PHONY: check-armci
+check-armci: $(all-am) $(check_LTLIBRARIES) $(ARMCI_TESTS) $(MAYBE_PFILES)
+	$(MAKE) $(AM_MAKEFLAGS) TESTS="$(ARMCI_TESTS)" XFAIL_TESTS="$(ARMCI_TESTS_XFAIL)" check-TESTS

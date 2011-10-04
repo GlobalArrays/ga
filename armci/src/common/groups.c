@@ -353,7 +353,8 @@ static void armci_igroup_finalize(ARMCI_iGroup *igroup) {
     int rv;
 
     assert(igroup);
-    free(igroup->grp_attr.grp_clus_info);
+    /*the following was causing seg fault*/
+    /*free(igroup->grp_attr.grp_clus_info);*/
     
     rv=MPI_Group_free(&(igroup->igroup));
     if(rv != MPI_SUCCESS) armci_die("MPI_Group_free: Failed ",armci_me);

@@ -58,7 +58,7 @@ ccdir$ no_cache_alloc a,b
 #endif
 
 void c_dcopy1d_n_(double* const A,
-                  double* MAYBE_RESTRICT B,
+                  double* restrict B,
                   const int* const n)
 {
     int i;
@@ -91,7 +91,7 @@ void c_dcopy1d_n_(double* const A,
 #endif
 
 void c_dcopy1d_u_(double* const A,
-                  double* MAYBE_RESTRICT B,
+                  double* restrict B,
                   const int* const n)
 {
     int i;
@@ -129,7 +129,7 @@ void c_dcopy21_(const int* const rows,
                 const int* const cols,
                 double* const A,
                 const int* const ald,
-                double* MAYBE_RESTRICT buf,
+                double* restrict buf,
                 int* const cur) /* value changes, location does not */
 {
     int r, c, i=0;
@@ -147,7 +147,7 @@ void c_dcopy21_(const int* const rows,
                 const int* const cols,
                 double* const A,
                 const int* const ald,
-                double* MAYBE_RESTRICT buf,
+                double* restrict buf,
                 int* const cur) /* value changes, location does not */
 {
     int r, c;
@@ -180,9 +180,9 @@ void c_dcopy21_(const int* const rows,
 
 void c_dcopy12_(const int* const rows,
               const int* const cols,
-              double* MAYBE_RESTRICT A,
+              double* restrict A,
               const int* const ald,
-              double* MAYBE_RESTRICT buf,
+              double* restrict buf,
               int* const cur) /* value changes, location does not */
 {
     int r, c, i=0;
@@ -199,9 +199,9 @@ void c_dcopy12_(const int* const rows,
 #if 0
 void c_dcopy12_(const int* const rows,
                 const int* const cols,
-                double* MAYBE_RESTRICT A,
+                double* restrict A,
                 const int* const ald,
-                double* MAYBE_RESTRICT buf,
+                double* restrict buf,
                 int* const cur) /* value changes, location does not */
 {
     int r, c;
@@ -234,7 +234,7 @@ void c_dcopy2d_n_(const int* const rows,
                   const int* const cols,
                   const double* const A,
                   const int* const ald,
-                  double* MAYBE_RESTRICT B,
+                  double* restrict B,
                   const int* const bld)
 {
     int r, c;
@@ -279,9 +279,9 @@ c$$$         b(r+3,c) = a(r+3,c) + b(r+3,c) * 0
 
 void c_dcopy2d_u_(const int* const rows,
                   const int* const cols,
-                  double* MAYBE_RESTRICT A,
+                  double* restrict A,
                   const int* const ald,
-                  double* MAYBE_RESTRICT B,
+                  double* restrict B,
                   const int* const bld)
 {
     int r, c;
@@ -322,10 +322,10 @@ void c_dcopy2d_u_(const int* const rows,
 void c_dcopy31_(const int* const rows,
                 const int* const cols,
                 const int* const plns,
-                double* MAYBE_RESTRICT A,
+                double* restrict A,
                 const int* const aldr,
                 const int* const aldc,
-                double* MAYBE_RESTRICT buf,
+                double* restrict buf,
                 int* const cur) /* value changes, location does not */
 {
     int r, c, p, i=0;
@@ -361,10 +361,10 @@ void c_dcopy31_(const int* const rows,
 void c_dcopy13_(const int* const rows,
               const int* const cols,
               const int* const plns,
-              double* MAYBE_RESTRICT A,
+              double* restrict A,
               const int* const aldr,
               const int* const aldc,
-              double* MAYBE_RESTRICT buf,
+              double* restrict buf,
               int* const cur) /* value changes, location does not */
 {
     int p, r, c;
@@ -383,10 +383,10 @@ void c_dcopy13_(const int* const rows,
 void c_dcopy13_(const int* const rows,
                 const int* const cols,
                 const int* const plns,
-                double* MAYBE_RESTRICT A,
+                double* restrict A,
                 const int* const aldr,
                 const int* const aldc,
-                double* MAYBE_RESTRICT buf,
+                double* restrict buf,
                 int* const cur) /* value changes, location does not */
 {
     int r, c, p, i=0;

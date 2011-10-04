@@ -300,59 +300,54 @@
 
 /********* interface to fortran 1D and 2D memory copy functions ***********/
 /* dcopy2d_u_ uses explicit unrolled loops to depth 4 */
-/* since all of this code replaces Fortran, it should never improperly alias vectors */
-#if __STDC_VERSION__ >= 199901L
-#   define MAYBE_RESTRICT restrict
-#else
-#   define MAYBE_RESTRICT
-#endif
 void c_dcopy2d_n_(const int* const rows,
                   const int* const cols,
                   const double* const A,
                   const int* const ald,
-                  double* MAYBE_RESTRICT B,
+                  double* restrict B,
                   const int* const bld);
 void c_dcopy2d_u_(const int* const rows,
                   const int* const cols,
-                  double* MAYBE_RESTRICT A,
+                  double* restrict A,
                   const int* const ald,
-                  double* MAYBE_RESTRICT B,
+                  double* restrict B,
                   const int* const bld);
 void c_dcopy1d_n_(double* const A,
-                  double* MAYBE_RESTRICT B,
+                  double* restrict B,
                   const int* const n);
 void c_dcopy1d_u_(double* const A,
-                  double* MAYBE_RESTRICT B,
+                  double* restrict B,
                   const int* const n);
 void c_dcopy21_(const int* const rows,
                 const int* const cols,
                 double* const A,
                 const int* const ald,
-                double* MAYBE_RESTRICT buf,
+                double* restrict buf,
                 int* const cur); /* value changes, location does not */
 void c_dcopy12_(const int* const rows,
                 const int* const cols,
-                double* MAYBE_RESTRICT A,
+                double* restrict A,
                 const int* const ald,
-                double* MAYBE_RESTRICT buf,
+                double* restrict buf,
                 int* const cur); /* value changes, location does not */
 void c_dcopy31_(const int* const rows,
                 const int* const cols,
                 const int* const plns,
-                double* MAYBE_RESTRICT A,
+                double* restrict A,
                 const int* const aldr,
                 const int* const aldc,
-                double* MAYBE_RESTRICT buf,
+                double* restrict buf,
                 int* const cur); /* value changes, location does not */
 void c_dcopy13_(const int* const rows,
                 const int* const cols,
                 const int* const plns,
-                double* MAYBE_RESTRICT A,
+                double* restrict A,
                 const int* const aldr,
                 const int* const aldc,
-                double* MAYBE_RESTRICT buf,
+                double* restrict buf,
                 int* const cur); /* value changes, location does not */
-#if NOFORT
+/* always use the C versions of the copy routines */
+#if NOFORT || 1
 #   define ATR
 #   if defined(AIX) || defined(BGML)
 #       define DCOPY2D c_dcopy2d_u_

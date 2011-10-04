@@ -16,7 +16,7 @@
 #endif
 
 #include "typesf2c.h"
-#include "shmem.h"
+#include "tcgshmem.h"
 #include "sndrcv.h"
 #include "srftoc.h"
 
