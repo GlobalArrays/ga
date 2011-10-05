@@ -6,12 +6,14 @@
 #define zgemm_  F77_FUNC(zgemm, ZGEMM)
 #define cgemm_  F77_FUNC(cgemm, CGEMM)
 #define dgetrf_ F77_FUNC(dgetrf,DGETRF)
+#define dgetrs_ F77_FUNC(dgetrs,DGETRS)
 #define dtrsm_  F77_FUNC(dtrsm, DTRSM)
 #define gal_sgemm_  F77_FUNC_(gal_sgemm, GAL_SGEMM)
 #define gal_dgemm_  F77_FUNC_(gal_dgemm, GAL_DGEMM)
 #define gal_zgemm_  F77_FUNC_(gal_zgemm, GAL_ZGEMM)
 #define gal_cgemm_  F77_FUNC_(gal_cgemm, GAL_CGEMM)
 #define gal_dgetrf_ F77_FUNC_(gal_dgetrf,GAL_DGETRF)
+#define gal_dgetrs_ F77_FUNC_(gal_dgetrs,GAL_DGETRS)
 #define gal_dtrsm_  F77_FUNC_(gal_dtrsm, GAL_DTRSM)
 
 #if HAVE_BLAS || ENABLE_F77
@@ -58,18 +60,22 @@ extern void gal_cgemm_(char *TRANSA, int alen, char *TRANSB, int blen, BlasInt *
 
 #if HAVE_LAPACK
 #   if defined(F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS)
-extern void dtrsm_(char *side, char *uplo, char *transa, char *diag, BlasInt *m, BlasInt *n, double *alpha, double *a, BlasInt *lda, double *b, BlasInt *ldb, int, int, int, int );
+extern void dtrsm_(char *side, char *uplo, char *transa, char *diag, BlasInt *m, BlasInt *n, DoublePrecision *alpha, DoublePrecision *a, BlasInt *lda, DoublePrecision *b, BlasInt *ldb, int, int, int, int );
+extern void dgetrs_(char *trans, BlasInt *n, BlasInt *nrhs, DoublePrecision *a, Integer *lda, Integer *ipiv, DoublePrecision *b, Integer *ldb, Integer *info, int len );
 #   else
-extern void dtrsm_(char *side, int, char *uplo, int, char *transa, int, char *diag, int, BlasInt *m, BlasInt *n, double *alpha, double *a, BlasInt *lda, double *b, BlasInt *ldb );
+extern void dtrsm_(char *side, int, char *uplo, int, char *transa, int, char *diag, int, BlasInt *m, BlasInt *n, DoublePrecision *alpha, DoublePrecision *a, BlasInt *lda, DoublePrecision *b, BlasInt *ldb );
+extern void dgetrs_(char *trans, int len, BlasInt *n, BlasInt *nrhs, DoublePrecision *a, Integer *lda, Integer *ipiv, DoublePrecision *b, Integer *ldb, Integer *info );
 #   endif
-extern void dgetrf_( BlasInt *m, BlasInt *n, double *a, BlasInt *ld, BlasInt *ipiv, BlasInt *info );
+extern void dgetrf_( BlasInt *m, BlasInt *n, DoublePrecision *a, BlasInt *ld, BlasInt *ipiv, BlasInt *info );
 #elif ENABLE_F77
 #   if defined(F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS)
-extern void gal_dtrsm_(char *side, char *uplo, char *transa, char *diag, BlasInt *m, BlasInt *n, double *alpha, double *a, BlasInt *lda, double *b, BlasInt *ldb, int, int, int, int );
+extern void gal_dtrsm_(char *side, char *uplo, char *transa, char *diag, BlasInt *m, BlasInt *n, DoublePrecision *alpha, DoublePrecision *a, BlasInt *lda, DoublePrecision *b, BlasInt *ldb, int, int, int, int );
+extern void gal_dgetrs_(char *trans, BlasInt *n, BlasInt *nrhs, DoublePrecision *a, Integer *lda, Integer *ipiv, DoublePrecision *b, Integer *ldb, Integer *info, int len );
 #   else
-extern void gal_dtrsm_(char *side, int, char *uplo, int, char *transa, int, char *diag, int, BlasInt *m, BlasInt *n, double *alpha, double *a, BlasInt *lda, double *b, BlasInt *ldb );
+extern void gal_dtrsm_(char *side, int, char *uplo, int, char *transa, int, char *diag, int, BlasInt *m, BlasInt *n, DoublePrecision *alpha, DoublePrecision *a, BlasInt *lda, DoublePrecision *b, BlasInt *ldb );
+extern void gal_dgetrs_(char *trans, int len, BlasInt *n, BlasInt *nrhs, DoublePrecision *a, Integer *lda, Integer *ipiv, DoublePrecision *b, Integer *ldb, Integer *info );
 #   endif
-extern void gal_dgetrf_( BlasInt *m, BlasInt *n, double *a, BlasInt *ld, BlasInt *ipiv, BlasInt *info );
+extern void gal_dgetrf_( BlasInt *m, BlasInt *n, DoublePrecision *a, BlasInt *ld, BlasInt *ipiv, BlasInt *info );
 #else
 #endif /* HAVE_LAPACK */
 
@@ -126,20 +132,28 @@ extern void gal_dgetrf_( BlasInt *m, BlasInt *n, double *a, BlasInt *ld, BlasInt
 
 #if HAVE_LAPACK
 #   if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-        #define LAPACK_DTRSM(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb) \
+#       define LAPACK_DTRSM(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb) \
         dtrsm_(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb, 1, 1, 1, 1)
+#       define LAPACK_DGETRS(trans, n, nrhs, a, lda, ipiv, b, ldb, info) \
+        dgetrs_(trans, n, nrhs, a, lda, ipiv, b, ldb, info, 1)
 #   else
-        #define LAPACK_DTRSM(side, 1, uplo, 1, transa, 1, diag, 1, m, n, alpha, a, lda, b, ldb) \
+#       define LAPACK_DTRSM(side, 1, uplo, 1, transa, 1, diag, 1, m, n, alpha, a, lda, b, ldb) \
         dtrsm_(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb)
+#       define LAPACK_DGETRS(trans, n, nrhs, a, lda, ipiv, b, ldb, info) \
+        dgetrs_(trans, 1, n, nrhs, a, lda, ipiv, b, ldb, info)
 #   endif
 #   define LAPACK_DGETRF dgetrf_
 #elif ENABLE_F77
 #   if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-        #define LAPACK_DTRSM(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb) \
+#       define LAPACK_DTRSM(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb) \
         gal_dtrsm_(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb, 1, 1, 1, 1)
+#       define LAPACK_DGETRS(trans, n, nrhs, a, lda, ipiv, b, ldb, info) \
+        gal_dgetrs_(trans, n, nrhs, a, lda, ipiv, b, ldb, info, 1)
 #   else
-        #define LAPACK_DTRSM(side, 1, uplo, 1, transa, 1, diag, 1, m, n, alpha, a, lda, b, ldb) \
+#       define LAPACK_DTRSM(side, 1, uplo, 1, transa, 1, diag, 1, m, n, alpha, a, lda, b, ldb) \
         gal_dtrsm_(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb)
+#       define LAPACK_DGETRS(trans, n, nrhs, a, lda, ipiv, b, ldb, info) \
+        gal_dgetrs_(trans, 1, n, nrhs, a, lda, ipiv, b, ldb, info)
 #   endif
 #   define LAPACK_DGETRF gal_dgetrf_
 #elif NOFORT

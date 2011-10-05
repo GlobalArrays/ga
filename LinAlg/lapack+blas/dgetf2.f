@@ -124,8 +124,8 @@
 *
 *           Update trailing submatrix.
 *
-            CALL GAL_DGER( M-J, N-J, -ONE, A( J+1, J ), 1, A( J, J+1 ), LDA,
-     $                 A( J+1, J+1 ), LDA )
+            CALL GAL_DGER( M-J, N-J, -ONE, A( J+1, J ), 1, A( J, J+1 ),
+     $                 LDA, A( J+1, J+1 ), LDA )
          END IF
    10 CONTINUE
       RETURN

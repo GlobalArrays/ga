@@ -519,8 +519,9 @@ C     where  op( X ) is one of
 C
 C     op( X ) = X   or   op( X ) = X',
 C
-C     alpha and beta are scalars, and A, B and C are matrices, with op( A )
-C     an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
+C     alpha and beta are scalars, and A, B and C are matrices, with op(
+C     A ) an m by k matrix,  op( B )  a  k by n matrix and  C an m by n
+C     matrix.
 C
 C     Parameters
 C     ==========
@@ -570,12 +571,11 @@ C     ALPHA  - DOUBLE PRECISION.
 C     On entry, ALPHA specifies the scalar alpha.
 C     Unchanged on exit.
 C
-C     A      - DOUBLE PRECISION array of DIMENSION ( LDA, ka ), where ka is
-C     k  when  TRANSA = 'N' or 'n',  and is  m  otherwise.
-C     Before entry with  TRANSA = 'N' or 'n',  the leading  m by k
-C     part of the array  A  must contain the matrix  A,  otherwise
-C     the leading  k by m  part of the array  A  must contain  the
-C     matrix A.
+C     A      - DOUBLE PRECISION array of DIMENSION ( LDA, ka ), where ka
+C     is k  when  TRANSA = 'N' or 'n',  and is  m  otherwise.  Before
+C     entry with  TRANSA = 'N' or 'n',  the leading  m by k part of the
+C     array  A  must contain the matrix  A,  otherwise the leading  k by
+C     m  part of the array  A  must contain  the matrix A.
 C     Unchanged on exit.
 C
 C     LDA    - INTEGER.
@@ -585,12 +585,11 @@ C     LDA must be at least  max( 1, m ), otherwise  LDA must be at
 C     least  max( 1, k ).
 C     Unchanged on exit.
 C
-C     B      - DOUBLE PRECISION array of DIMENSION ( LDB, kb ), where kb is
-C     n  when  TRANSB = 'N' or 'n',  and is  k  otherwise.
-C     Before entry with  TRANSB = 'N' or 'n',  the leading  k by n
-C     part of the array  B  must contain the matrix  B,  otherwise
-C     the leading  n by k  part of the array  B  must contain  the
-C     matrix B.
+C     B      - DOUBLE PRECISION array of DIMENSION ( LDB, kb ), where kb
+C     is n  when  TRANSB = 'N' or 'n',  and is  k  otherwise.  Before
+C     entry with  TRANSB = 'N' or 'n',  the leading  k by n part of the
+C     array  B  must contain the matrix  B,  otherwise the leading  n by
+C     k  part of the array  B  must contain  the matrix B.
 C     Unchanged on exit.
 C
 C     LDB    - INTEGER.
@@ -630,7 +629,8 @@ C     Sven Hammarling, Numerical Algorithms Group Ltd.
 *     This code comes from a report entitled:
 *     The IBM RISC System/6000 and Linear Algebra Operations, by
 *     Jack J. Dongarra, Peter Mayes, and Giuseppe Radicati di Brozolo,
-*     University of Tennessee Computer Science Tech Report: CS - 90 - 122.
+*     University of Tennessee Computer Science Tech Report: CS - 90 -
+*     122.
 C
 C
       DOUBLE PRECISION A(LDA,*), B(LDB,*), C(LDC,*)

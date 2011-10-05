@@ -17,8 +17,8 @@ C$Id: gal_dlacpy.f,v 1.1.1.1 1999-05-28 00:46:53 d3h325 Exp $
 *  Purpose
 *  =======
 *
-*  GAL_DLACPY copies all or part of a two-dimensional matrix A to another
-*  matrix B.
+*  GAL_DLACPY copies all or part of a two-dimensional matrix A to
+*  another matrix B.
 *
 *  Arguments
 *  =========

@@ -118,8 +118,8 @@
 *
 *        Solve L*X = B, overwriting B with X.
 *
-         CALL GAL_DTRSM( 'Left', 'Lower', 'No transpose', 'Unit', N, NRHS,
-     $               ONE, A, LDA, B, LDB )
+         CALL GAL_DTRSM( 'Left', 'Lower', 'No transpose', 'Unit', N,
+     $               NRHS, ONE, A, LDA, B, LDB )
 *
 *        Solve U*X = B, overwriting B with X.
 *
@@ -131,13 +131,13 @@
 *
 *        Solve U'*X = B, overwriting B with X.
 *
-         CALL GAL_DTRSM( 'Left', 'Upper', 'Transpose', 'Non-unit', N, NRHS,
-     $               ONE, A, LDA, B, LDB )
+         CALL GAL_DTRSM( 'Left', 'Upper', 'Transpose', 'Non-unit', N,
+     $               NRHS, ONE, A, LDA, B, LDB )
 *
 *        Solve L'*X = B, overwriting B with X.
 *
-         CALL GAL_DTRSM( 'Left', 'Lower', 'Transpose', 'Unit', N, NRHS, ONE,
-     $               A, LDA, B, LDB )
+         CALL GAL_DTRSM( 'Left', 'Lower', 'Transpose', 'Unit', N, NRHS,
+     $               ONE, A, LDA, B, LDB )
 *
 *        Apply row interchanges to the solution vectors.
 *

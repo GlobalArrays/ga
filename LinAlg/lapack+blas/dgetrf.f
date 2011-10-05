@@ -66,7 +66,8 @@
       INTEGER            I, IINFO, J, JB, NB
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           GAL_DGEMM, GAL_DGETF2, GAL_DLASWP, GAL_DTRSM, GAL_XERBLA
+      EXTERNAL           GAL_DGEMM, GAL_DGETF2, GAL_DLASWP
+      EXTERNAL           GAL_DTRSM, GAL_XERBLA
 *     ..
 *     .. External Functions ..
       INTEGER            GAL_ILAENV
@@ -79,6 +80,7 @@
 *
 *     Test the input parameters.
 *
+      call flush()
       INFO = 0
       IF( M.LT.0 ) THEN
          INFO = -1

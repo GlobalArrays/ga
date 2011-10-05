@@ -1,22 +1,18 @@
-#if HAVE_CONFIG_H
-#   include "config.h"
-#endif
-
 /**
  * GA_Lu_solve_seq.c: Implemented with CLINPACK routines. Uses LINPACK
  * routines if ENABLE_F77 is not defined,
  * else uses internal or external lapack.
  */
-#ifdef ENABLE_F77
-#   undef ENABLE_F77
-#   define ENABLE_F77 0
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
+#if HAVE_MATH_H
+#   include <math.h>
 #endif
 
 #include "globalp.h"
 #include "macdecls.h"
-#if HAVE_MATH_H
-#   include <math.h>
-#endif
 #include "papi.h"
 #include "wapi.h"
 #include "galinalg.h"
@@ -485,10 +481,10 @@ function, references to a[i][j] are written a[lda*i+j].  */
 void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
 
   logical oactive;  /* true iff this process participates */
-  Integer dimA1, dimA2, typeA;
-  Integer dimB1, dimB2, typeB;
+  BlasInt dimA1, dimA2, typeA;
+  BlasInt dimB1, dimB2, typeB;
   Integer me;
-  Integer info;
+  BlasInt info=0;
   Integer dims[2], ndim;
   Integer lo[2], hi[2];
 
@@ -523,8 +519,8 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
     Integer one=1; 
 
     /** allocate a,b, and work and ipiv arrays */
-    adra = (DoublePrecision*) ga_malloc(dimA1*dimA2, C_DBL, "a");
-    adrb = (DoublePrecision*) ga_malloc(dimB1*dimB2, C_DBL, "b");
+    adra = (DoublePrecision*) ga_malloc(dimA1*dimA2, F_DBL, "a");
+    adrb = (DoublePrecision*) ga_malloc(dimB1*dimB2, F_DBL, "b");
     adri = (Integer*) ga_malloc(GA_MIN(dimA1,dimA2), F_INT, "ipiv");
 
     /** Fill local arrays from global arrays */   
@@ -540,7 +536,7 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
     pnga_get(g_b, lo, hi, adrb, &dimB1);
 
     /** LU factorization */
-#if ENABLE_F77
+#if HAVE_LAPACK || ENABLE_F77
     LAPACK_DGETRF(&dimA1, &dimA2, adra, &dimA1, adri, &info);
 #else
     {  int info_t;
@@ -551,14 +547,9 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
 
     /** SOLVE */
     if(info == 0) {
-#if ENABLE_F77
-#   if F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
-      DGETRS(trans, &dimA1, &dimB2, adra, &dimA1, 
-          adri, adrb, &dimB1, &info, (Integer)1);
-#   else
-      DGETRS(trans, (Integer)1, &dimA1, &dimB2, adra, &dimA1, 
+#if HAVE_LAPACK || ENABLE_F77
+      LAPACK_DGETRS(trans, &dimA1, &dimB2, adra, &dimA1, 
           adri, adrb, &dimB1, &info);
-#   endif
 #else
       DoublePrecision *p_b;
       Integer i;
