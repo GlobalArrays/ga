@@ -261,7 +261,7 @@ void tcg_synch(long type)
 }
 
 
-long tcg_tcgready()
+long tcg_ready()
 {
     return TCGREADY_();
 }

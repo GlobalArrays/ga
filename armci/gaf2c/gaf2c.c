@@ -80,6 +80,34 @@ void ga_f2cstring(char *fstring, int flength, char *cstring, int clength)
     }
 }
 
+void ga_f2c_get_cmd_args(int *argc, char ***argv)
+{
+    Integer i=0;
+    int iargc=F2C_IARGC();
+    char **iargv=NULL;
+
+    if (iargc > F2C_GETARG_ARGV_MAX) {
+        printf("ga_f2c_get_cmd_args: too many cmd line args");
+        armci_msg_abort(1);
+    }
+    iargv = malloc(sizeof(char*)*F2C_GETARG_ARGV_MAX);
+    if (!iargv) {
+        printf("ga_f2c_get_cmd_args: malloc iargv failed");
+        armci_msg_abort(1);
+    }
+    for (i=0; i<iargc; i++) {
+        char fstring[F2C_GETARG_ARGLEN_MAX];
+        char cstring[F2C_GETARG_ARGLEN_MAX];
+        F2C_GETARG(&i, fstring, F2C_GETARG_ARGLEN_MAX);
+        ga_f2cstring(fstring, F2C_GETARG_ARGLEN_MAX,
+                cstring, F2C_GETARG_ARGLEN_MAX);
+        iargv[i] = strdup(cstring);
+    }
+    *argc = iargc;
+    *argv = iargv;
+}
+
+
 #if NOFORT
 
 /* To avoid missing symbols even though these should never be called. */

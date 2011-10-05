@@ -25,6 +25,8 @@
 #   include <stdlib.h>
 #endif
 
+#include <mpi.h>
+
 #include "ga.h"
 #include "globalp.h"
 #include "macdecls.h"

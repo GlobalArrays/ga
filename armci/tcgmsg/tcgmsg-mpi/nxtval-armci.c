@@ -82,6 +82,9 @@ Integer NXTVAL_(Integer *mproc)
 }
 
 
+static int nxtval_installed=0;
+
+
 /**
  * initialization for nxtval -- called in PBEGIN
  */
@@ -89,14 +92,22 @@ void install_nxtval(int *argc, char **argv[])
 {
     int rc;
     int me = (int)NODEID_(), bytes, server;
-
     void **ptr_ar;
+
+    if (!ARMCI_Initialized()) {
+        return;
+    }
+
+    if (nxtval_installed) {
+        return;
+    }
+    nxtval_installed = 1;
+
     ptr_ar = (void **)malloc(sizeof(void *)*(int)NNODES_());
     if(!ptr_ar) {
         Error("malloc failed in install_nxtval", (Integer)NNODES_());  
     }
 
-    ARMCI_Init_args(argc, argv);
     server = NXTV_SERVER;
 
     if(me== server) {

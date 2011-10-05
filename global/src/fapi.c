@@ -19,6 +19,8 @@
 #include "macommon.h"
 #include "matmul.h"
 
+int _ga_initialize_f=0;
+
 /* cnames.h does not contain all of the fortran functions */
 /* usually the missing ones are either complex type or strangely named */
 
@@ -488,22 +490,36 @@ logical FATR nga_has_ghosts_(Integer *g_a)
 
 void FATR ga_initialize_()
 {
+  _ga_initialize_f=1;
   wnga_initialize();
 }
 
 void FATR nga_initialize_()
 {
+  _ga_initialize_f=1;
   wnga_initialize();
 }
 
 void FATR ga_initialize_ltd_(Integer *limit)
 {
+  _ga_initialize_f=1;
   wnga_initialize_ltd(*limit);
 }
 
 void FATR nga_initialize_ltd_(Integer *limit)
 {
+  _ga_initialize_f=1;
   wnga_initialize_ltd(*limit);
+}
+
+logical FATR ga_initialized_()
+{
+  return wnga_initialized();
+}
+
+logical FATR nga_initialized_()
+{
+  return wnga_initialized();
 }
 
 void FATR ga_inquire_(Integer *g_a, Integer *type, Integer *dim1, Integer *dim2)
@@ -1020,11 +1036,13 @@ void FATR nga_set_restricted_range_(Integer *g_a, Integer *lo_proc, Integer *hi_
 void FATR  ga_terminate_()
 {
   wnga_terminate();
+  _ga_initialize_f=0;
 }
 
 void FATR  nga_terminate_()
 {
   wnga_terminate();
+  _ga_initialize_f=0;
 }
 
 Integer FATR ga_total_blocks_(Integer *g_a)

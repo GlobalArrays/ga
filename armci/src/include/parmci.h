@@ -23,6 +23,7 @@ extern int    PARMCI_GetV(armci_giov_t * darr, int len, int proc);
 extern int    PARMCI_Get(void *src, void *dst, int bytes, int proc);
 extern int    PARMCI_Init();
 extern int    PARMCI_Init_args(int *argc, char ***argv);
+extern int    PARMCI_Initialized();
 extern void   PARMCI_Lock(int mutex, int proc);
 extern void*  PARMCI_Malloc_local(armci_size_t bytes);
 extern int    PARMCI_Malloc(void **ptr_arr, armci_size_t bytes);

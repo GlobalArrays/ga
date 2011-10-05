@@ -331,8 +331,33 @@ void armci_create_ft_group()
 }
 #endif
 
+static void MP_INIT(int *argc, char ***argv)
+{
+#if defined(TCGMSG)
+    if (!tcg_ready()) {
+        tcg_pbegin(argc,argv);
+    }
+#elif defined(BGML)
+    /* empty */
+#elif defined(MPI)
+    int flag=0;
+    MPI_Initialized(&flag);
+    if (!flag) {
+#   if defined(DCMF) || defined(MPI_MT)
+        int provided;
+        MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &provided);
+#   else
+        MPI_Init(argc, argv);
+#   endif
+    }
+#endif
+}
+
+
 int PARMCI_Init_args(int *argc, char ***argv) 
 {
+    MP_INIT(argc,argv);
+
 #ifdef MPI_SPAWN
     /* If this is data server process, then it should call
      * armci_mpi2_server_init() instead of PARMCI_Init(). PARMCI_Init() should
@@ -381,14 +406,19 @@ void _armci_test_connections()
 
 int PARMCI_Init()
 {
-  char *uval;
+    char *uval;
 #if defined(THREAD_SAFE)
     int th_idx;
 #endif
+
     if(_armci_initialized>0) return 0;
     dassertp(1,sizeof(armci_ireq_t) <= sizeof(armci_hdl_t),
 	     ("nb handle sizes: internal(%d) should be <= external(%d)\n",
 	      sizeof(armci_ireq_t), sizeof(armci_hdl_t)));
+
+    /* let's hope that the message passing environment was initialized outside
+     * of ARMCI such that passing NULL for argc/argv here is okay */
+    MP_INIT(NULL, NULL);
 
 #ifdef MPI
     /*SK: initialize duplicate communicator before anything else*/
@@ -473,7 +503,6 @@ int PARMCI_Init()
     armci_init_portals();
     shmem_init();
 #endif
-
 
 #ifdef CRAY_SHMEM
     shmem_init();
@@ -594,13 +623,16 @@ int PARMCI_Init()
 #endif
 
 #ifdef MPI_MT
-
     _armci_test_connections();
 #else
     uval = getenv("ARMCI_TEST_CONNECTIONS"); 
     if(uval!=NULL) {
       _armci_test_connections();
     }
+#endif
+
+#if MSG_COMMS_TCGMSGMPI
+    install_nxtval(NULL, NULL);
 #endif
     return 0;
 }
@@ -652,6 +684,13 @@ void PARMCI_Finalize()
 #ifdef MPI
     MPI_Comm_free(&ARMCI_COMM_WORLD); /*SK: free at last*/
 #endif
+}
+
+
+/* Indicates whether ARMCI_Init or ARMCI_Init_args has been called. */
+int PARMCI_Initialized()
+{
+    return (_armci_initialized > 0) ? 1 : 0;
 }
 
 

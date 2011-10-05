@@ -62,6 +62,8 @@
 #   include <assert.h>
 #endif
 
+#include <mpi.h>
+
 #include "mp3.h"
 #include "armci.h"
 

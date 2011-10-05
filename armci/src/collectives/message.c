@@ -457,8 +457,8 @@ int armci_msg_me()
     return DCMF_Messager_rank();
 #elif defined(MPI)
     static int counter = 0;
-    int me;
     if (counter == 0) {
+        int me;
         MPI_Comm_rank(ARMCI_COMM_WORLD, &me);
         armci_me = me;   
         counter = 1;
@@ -481,8 +481,8 @@ int armci_msg_nproc()
     return DCMF_Messager_size();
 #elif defined(MPI)
     static int counter = 0;
-    int nproc;
     if (counter == 0) {
+        int nproc;
         MPI_Comm_size(ARMCI_COMM_WORLD, &nproc);
         armci_nproc = nproc;
         counter = 1;

@@ -41,7 +41,7 @@ extern void tcg_snd(INT type, void *buf, INT lenbuf, INT node, INT sync);
 extern void tcg_srand48(INT seed);
 extern void tcg_stats();
 extern void tcg_synch(INT type);
-extern INT  tcg_tcgready();
+extern INT  tcg_ready();
 extern DBL  tcg_time();
 extern void tcg_waitcom(INT node);
 

@@ -190,6 +190,15 @@ int ARMCI_Init_args(int *argc, char ***argv)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak ARMCI_Initialized
+#endif
+int ARMCI_Initialized()
+{
+    return PARMCI_Initialized();
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak ARMCI_Lock
 #endif
 void ARMCI_Lock(int mutex, int proc)

@@ -21,19 +21,10 @@
  */
 void PBEGINF_()
 {
-    Integer argc = F2C_IARGC();
-    Integer i, len;
-    char *argv[LEN], arg[LEN];
+    Integer argc;
+    char **argv;
 
-    for (i=0; i<argc; i++) {
-        F2C_GETARG(&i, arg, LEN);
-        for(len = LEN-2; len && (arg[len] == ' '); len--);
-        len++;
-        arg[len] = '\0'; /* insert string terminator */
-        /*printf("%10s, len=%d\n", arg, len);  fflush(stdout);*/ 
-        argv[i] = strdup(arg);
-    }
-
+    ga_f2c_get_cmd_args(&argc, &argv);
     tcgi_pbegin(argc, argv);
 }
 

@@ -31,6 +31,7 @@
 int *_ga_argc=NULL;
 char ***_ga_argv=NULL;
 int _ga_initialize_args=0;
+int _ga_initialize_c=0;
 
 short int _ga_irreg_flag = 0;
 
@@ -82,12 +83,14 @@ return 0;
 void GA_Initialize_ltd(size_t limit)
 {
   Integer lim = (Integer)limit;
+  _ga_initialize_c = 1;
   wnga_initialize_ltd(lim);
 }
 
 void NGA_Initialize_ltd(size_t limit)
 {
   Integer lim = (Integer)limit;
+  _ga_initialize_c = 1;
   wnga_initialize_ltd(lim);
 }
 
@@ -95,7 +98,7 @@ void GA_Initialize_args(int *argc, char ***argv)
 {
   _ga_argc = argc;
   _ga_argv = argv;
-
+  _ga_initialize_c = 1;
   _ga_initialize_args = 1;
 
   wnga_initialize();
@@ -103,26 +106,24 @@ void GA_Initialize_args(int *argc, char ***argv)
 
 void GA_Initialize()
 {
-#ifdef MPI_SPAWN
-  GA_Error("GA was built with ARMCI_NETWORK=MPI-SPAWN. For this network "
-      "setting, GA must be initialized with GA_Initialize_args() "
-      "instead of GA_Initialize(). Please replace GA_Initialize() "
-      " with GA_Initialize_args(&argc, &argv) as in the API docs", 0L);
-#endif
-
+  _ga_initialize_c = 1;
   wnga_initialize();
 }
 
 void NGA_Initialize()
 {
-#ifdef MPI_SPAWN
-  GA_Error("GA was built with ARMCI_NETWORK=MPI-SPAWN. For this network "
-      "setting, GA must be initialized with GA_Initialize_args() "
-      "instead of GA_Initialize(). Please replace GA_Initialize() "
-      " with GA_Initialize_args(&argc, &argv) as in the API docs", 0L);
-#endif
-
+  _ga_initialize_c = 1;
   wnga_initialize();
+}
+
+int GA_Initialized()
+{
+    return wnga_initialized();
+}
+
+int NGA_Initialized()
+{
+    return wnga_initialized();
 }
 
 void GA_Terminate() 
@@ -132,6 +133,7 @@ void GA_Terminate()
     _ga_argc = NULL;
     _ga_argv = NULL;
     _ga_initialize_args = 0;
+    _ga_initialize_c = 0;
 }
 
 void NGA_Terminate() 
@@ -141,6 +143,7 @@ void NGA_Terminate()
     _ga_argc = NULL;
     _ga_argv = NULL;
     _ga_initialize_args = 0;
+    _ga_initialize_c = 0;
 }
 
 int NGA_Create(int type, int ndim, int dims[], char *name, int *chunk)

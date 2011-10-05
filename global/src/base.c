@@ -161,8 +161,6 @@ static int ga_group_is_for_ft=0;
 int ga_spare_procs;
 #endif
 
-extern int _ga_initialize_args;
-
 
 /*************************************************************************/
 
@@ -293,44 +291,6 @@ void pnga_check_handle(Integer g_a, char * string)
 }
 
 
-/*\ Get command line arguments if GA in initailzed thru' Fortran interface.
- *  Also, this args are required only for MPI-SPAWN networks
-\*/
-#ifdef MPI_SPAWN
-int    gai_argc;
-char **gai_argv;
-void gai_get_cmd_args() 
-{
-    /* GA initialized from C programs should skip this */
-    if(_ga_initialize_args) { 
-        return; 
-    } 
-    gai_argv = malloc(sizeof(char*)*F2C_GETARG_ARGV_MAX);
-    if (!gai_argv) {
-        pnga_error("gai_get_cmd_args:malloc gai_argv failed",0);
-    }
-
-    Integer argc = F2C_IARGC(); 
-    Integer i; 
-    Integer maxlen = F2C_GETARG_ARGLEN_MAX; 
-    for (i=0; i<argc; i++) { 
-        char arg[F2C_GETARG_ARGLEN_MAX]; 
-        int len; 
-        F2C_GETARG(&i, arg, len); 
-        for(len = maxlen-2; len && (arg[len] == ' '); len--); 
-        len++; 
-        arg[len] = '\0'; /* insert string terminator */ 
-        /*printf("%10s, len=%d\n", arg, len);  fflush(stdout);*/ 
-        gai_argv[i] = strdup(arg); 
-    } 
-
-    gai_argc = argc; 
-    _ga_argc = &gai_argc; 
-    _ga_argv = &gai_argv; 
-}
-#endif
-
-
 /*\ Initialize MA-like addressing:
  *  get addressees for the base arrays for double, complex and int types
 \*/
@@ -375,6 +335,12 @@ Integer  off_dbl, off_int, off_dcpl, off_flt,off_scpl;
 
 
 
+extern int *_ga_argc;
+extern char ***_ga_argv;
+extern int _ga_initialize_args;
+extern int _ga_initialize_c;
+extern int _ga_initialize_f;
+
 /**
  *  Initialize library structures in Global Arrays.
  *  either ga_initialize_ltd or ga_initialize must be the first 
@@ -391,12 +357,26 @@ int bytes;
 
     if(GAinitialized) return;
 
-#ifndef MPI_SPAWN
-    ARMCI_Init(); /* initialize GA run-time library */
-#else
-    gai_get_cmd_args();    
-    ARMCI_Init_args(_ga_argc, _ga_argv); /* initialize GA run-time library */
-#endif
+    if (!ARMCI_Initialized()) {
+        if (_ga_initialize_c) {
+            if (_ga_initialize_args) {
+                ARMCI_Init_args(_ga_argc, _ga_argv);
+            }
+            else {
+                ARMCI_Init();
+            }
+        }
+        else if (_ga_initialize_f) {
+            _ga_argc = malloc(sizeof(int));
+            _ga_argv = malloc(sizeof(char**));
+            if (!_ga_argc) pnga_error("malloc argc failed",1);
+            ga_f2c_get_cmd_args(_ga_argc, _ga_argv);
+            ARMCI_Init_args(_ga_argc, _ga_argv);
+        }
+        else {
+            pnga_error("pnga_initialize called outside of C or F APIs",1);
+        }
+    }
     
     GA_Default_Proc_Group = -1;
     /* zero in pointers in GA array */
@@ -519,6 +499,15 @@ int bytes;
                  
     }
 #endif
+}
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_initialized = pnga_initialized
+#endif
+int pnga_initialized()
+{
+    return GAinitialized;
 }
 
 #if ENABLE_CHECKPOINT
