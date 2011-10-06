@@ -432,6 +432,13 @@ void PARMCI_Finalize()
 }
 
 
+/* Indicates whether ARMCI_Init or ARMCI_Init_args has been called. */
+int PARMCI_Initialized()
+{
+    return (_armci_initialized > 0) ? 1 : 0;
+}
+
+
 #if !(defined(SYSV) || defined(WIN32))
 void ARMCI_Set_shmem_limit(unsigned long shmemlimit)
 {
