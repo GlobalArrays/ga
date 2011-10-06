@@ -15,13 +15,42 @@
 #   define gai_spd_invert_ F77_FUNC_(gai_spd_invert,GAI_SPD_INVERT)
 #endif
 
+#ifdef SCALAPACK_I8
+#   if   SIZEOF_SHORT == 8
+#       define SL_INT short
+#   elif SIZEOF_INT == 8
+#       define SL_INT int
+#   elif SIZEOF_LONG == 8
+#       define SL_INT long
+#   elif SIZEOF_LONG_LONG == 8
+#       define SL_INT long long
+#   else
+#       error
+#   endif
+#else
+#   if   SIZEOF_SHORT == 4
+#       define SL_INT short
+#   elif SIZEOF_INT == 4
+#       define SL_INT int
+#   elif SIZEOF_LONG == 4
+#       define SL_INT long
+#   elif SIZEOF_LONG_LONG == 4
+#       define SL_INT long long
+#   else
+#       error
+#   endif
+#endif
+
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_lu_solve_alt = pnga_lu_solve_alt
 #endif
 void pnga_lu_solve_alt(Integer tran, Integer g_a, Integer g_b) {
 #if HAVE_SCALAPACK
+    SL_INT atran = tran;
+    SL_INT ag_a = g_a;
+    SL_INT ag_b = g_b;
 #   if ENABLE_F77
-    gai_lu_solve_alt_(&tran, &g_a, &g_b);
+    gai_lu_solve_alt_(&atran, &ag_a, &ag_b);
 #   else
     pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
 #   endif
@@ -60,8 +89,10 @@ void pnga_lu_solve(char *tran, Integer g_a, Integer g_b) {
 #endif
 Integer pnga_llt_solve(Integer g_a, Integer g_b) {
 #if HAVE_SCALAPACK
+    SL_INT ag_a = g_a;
+    SL_INT ag_b = g_b;
 #   if ENABLE_F77
-    return gai_llt_solve_(&g_a, &g_b);
+    return gai_llt_solve_(&ag_a, &ag_b);
 #   else
     pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
     return FALSE;
@@ -77,8 +108,10 @@ Integer pnga_llt_solve(Integer g_a, Integer g_b) {
 #endif
 Integer pnga_solve(Integer g_a, Integer g_b) {
 #if HAVE_SCALAPACK
+    SL_INT ag_a = g_a;
+    SL_INT ag_b = g_b;
 #   if ENABLE_F77
-    return gai_solve_(&g_a, &g_b);
+    return gai_solve_(&ag_a, &ag_b);
 #   else
     pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
     return FALSE;
@@ -94,8 +127,9 @@ Integer pnga_solve(Integer g_a, Integer g_b) {
 #endif
 Integer pnga_spd_invert(Integer g_a) {
 #if HAVE_SCALAPACK
+    SL_INT ag_a = g_a;
 #   if ENABLE_F77
-    return gai_spd_invert_(&g_a);
+    return gai_spd_invert_(&ag_a);
 #   else
     pnga_error("ga_lu_solve:scalapack interfaced, need configure --enable-f77",0L);
     return FALSE;

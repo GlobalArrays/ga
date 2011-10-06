@@ -149,10 +149,10 @@ c
 #include "scalapack.fh"
 #include "global.fh"
 c
-      INTGR4 icontxt
+      INTGR4 icontxt, n
       INTGR4 slgetmxproc
       external slgetmxproc
-      integer g_a, nblocks(2), ndim, dims(2), type, n
+      integer g_a, nblocks(2), ndim, dims(2), type
 c
       if(init4)return
 c
@@ -683,7 +683,7 @@ c
 c     
 c***     fill SCALAPACK matrices descriptors
 c
-	 call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4, 
+         call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4, 
      &                 iSLctxt, lda, info)
          if(info.ne.0) call ga_error('gai_lu_solve: descinit A failed ',
      &                               -info)
@@ -695,7 +695,7 @@ c
 c***     LU factorization
 c
          call ga_sync()
-	 call pdgetrf(n, n, dbl_mb(adrA),one4,one4, descA, 
+         call pdgetrf(n, n, dbl_mb(adrA),one4,one4, descA, 
      &                int_mb(adrI), info)
          call ga_sync()
 c
@@ -744,8 +744,8 @@ c
 
 c     alt entry point for C that avoids char args
 c
-	subroutine gai_lu_solve_alt(tr, g_a, g_b)
-	implicit none
+      subroutine gai_lu_solve_alt(tr, g_a, g_b)
+      implicit none
         INTGR4 g_a, g_b, tr
         if(tr.eq.0) then
            call gai_lu_solve('n',g_a, g_b) 
