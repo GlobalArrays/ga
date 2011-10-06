@@ -27,8 +27,8 @@
 #   include <math.h>
 #endif
 
-#include "mp3.h"
 #include "armci.h"
+#include "message.h"
 
 #define SIZE 550
 #define MAXPROC 8
@@ -64,13 +64,13 @@ static double _tt0=0.0;
 double Timer()
 {
 #define DELTA 0.000001
-  double t=MP_TIMER();
+  double t=armci_timer();
   if(t<=_tt0 + DELTA) _tt0 += DELTA;
   else _tt0 = t;
   return _tt0;
 }
 
-#define TIMER MP_TIMER
+#define TIMER armci_timer
 
 
 double time_get(double *src_buf, double *dst_buf, int chunk, int loop,
@@ -307,7 +307,7 @@ void test_1D()
     /* ARMCI - initialize the data window */
     fill_array(ptr[me], SIZE*SIZE, me);
     fill_array(get_ptr[me], SIZE*SIZE, me);
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     /* only the proc 0 does the work */
     if(me == 0) {
@@ -371,7 +371,7 @@ void test_1D()
     else sleep(3);
     
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     /* cleanup */
     ARMCI_Free(get_ptr[me]);
@@ -413,7 +413,7 @@ void test_2D()
     fill_array(ptr[me], SIZE*SIZE, me);
     fill_array(get_ptr[me], SIZE*SIZE, me);
 
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     /* only the proc 0 doest the work */
     /* print the title */
@@ -477,7 +477,7 @@ void test_2D()
     else sleep(3);
     
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     /* cleanup */
     ARMCI_Free(get_ptr[me]);
@@ -495,24 +495,23 @@ void test_2D()
 int main(int argc, char **argv)
 {
 
-  MP_INIT(argc,argv);
-  MP_MYID(&me);
-  MP_PROCS(&nproc);
+    /* initialize ARMCI */
+    ARMCI_Init_args(&argc, &argv);
+
+    me = armci_msg_me();
+    nproc = armci_msg_nproc();
 
     if(nproc < 2 || nproc> MAXPROC) {
         if(me == 0)
             fprintf(stderr,
                     "USAGE: 2 <= processes < %d - got %d\n", MAXPROC, nproc);
-        MP_BARRIER();
-        MP_FINALIZE();
+        ARMCI_Barrier();
+        armci_msg_finalize();
         exit(0);
     }
     
-    /* initialize ARMCI */
-    ARMCI_Init_args(&argc, &argv);
-
     if(!me)printf("\n             Performance of Basic Blocking Communication Operations\n");
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     CHECK_RESULT=1; test_1D(); CHECK_RESULT=0; /* warmup run */
 
@@ -524,7 +523,7 @@ int main(int argc, char **argv)
     if(!me)printf("\n\t\t\tStrided Data Transfer\n");
     test_2D();
 
-    MP_BARRIER();
+    ARMCI_Barrier();
     if(me == 0){
        if(warn_accuracy) 
           printf("\nWARNING: Your timer does not have sufficient accuracy for this test (%d)\n",warn_accuracy);
@@ -532,20 +531,20 @@ int main(int argc, char **argv)
        fflush(stdout);
     }
 
-    MP_BARRIER();
+    ARMCI_Barrier();
     CHECK_RESULT=1;
     if(!me)printf("\n\t\t\tContiguous Data Transfer\n");
     test_1D();
     if(me == 0) printf("OK\n");
-    MP_BARRIER();
+    ARMCI_Barrier();
     if(!me)printf("\n\t\t\tStrided Data Transfer\n");
     test_2D();
     if(me == 0) printf("OK\n\n\nTests Completed.\n");
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     /* done */
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return(0);
 }    
 

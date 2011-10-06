@@ -49,6 +49,7 @@ extern void armci_msg_bintree(int scope, int* Root, int *Up, int *Left, int *Rig
 extern int  armci_msg_me();
 extern int  armci_msg_nproc();
 extern void armci_msg_abort(int code);
+extern void armci_msg_finalize();
 extern double armci_timer();
 
 extern void armci_msg_clus_brdcst(void *buf, int len);

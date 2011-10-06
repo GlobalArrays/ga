@@ -27,8 +27,8 @@
 #endif
 
 #include "armci.h"
+#include "message.h"
 #include "utils.h"
-#include "mp3.h"
 
 #define DEBUG /* note: a TBUFSIZE (per thread) buffer is used to print arrays */
 #define TBUFSIZE 65535
@@ -110,8 +110,8 @@ void usage()
         printf("Usage: test_mt, or \n");
         printf("       test_mt -tTHREADS_PER_PROC -sARRAY_SIZE -iITERATIONS_COUNT\n");
     }
-    MP_BARRIER();
-    MP_FINALIZE();
+    ARMCI_Barrier();
+    armci_msg_finalize();
     exit(0);
 }
 
@@ -130,10 +130,10 @@ int main(int argc, char *argv[])
     int i, j, r;
     thread_t threads[MAX_TPP];
 
-    /* init MP */
-    MP_INIT(argc,argv);
-    MP_PROCS(&size);
-    MP_MYID(&rank);
+    /* init ARMCI */
+    ARMCI_Init_args(&argc, &argv);
+    size = armci_msg_nproc();
+    rank = armci_msg_me();
 
     while ((ch = getopt(argc, argv, "t:s:i:d:h")) != -1) {
         switch(ch) {
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
         printf("%d: %d\n", rank, getpid());
         fflush(stdout);
         sleep(delay);
-        MP_BARRIER();
+        ARMCI_Barrier();
     }
     TH_INIT(size,tpp);
     for (i = 0; i < tpp; i++) th_rank[i] = rank * tpp + i;
@@ -194,9 +194,6 @@ int main(int argc, char *argv[])
 #endif
     for (i = 0; i < tpp; i++)
         prndbg(i, "proc %d, thread %d(%d):\n", rank, i, th_rank[i]);
-
-    /* init ARMCI */
-    ARMCI_Init_args(&argc, &argv);
 
     /* set global seed (to ensure same random sequence across procs) */
     time_seed = (unsigned)time(NULL);
@@ -237,7 +234,7 @@ int main(int argc, char *argv[])
     for (i = 0; i < tpp; i++) THREAD_JOIN(threads[i], NULL);
 #endif
 
-    MP_BARRIER();
+    ARMCI_Barrier();
     PRINTF0("Tests Completed\n");
 
     /* clean up */
@@ -246,7 +243,7 @@ int main(int argc, char *argv[])
 #endif
     ARMCI_Finalize();
     TH_FINALIZE();
-    MP_FINALIZE();
+    armci_msg_finalize();
 
 	return 0;
 }

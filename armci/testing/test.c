@@ -19,8 +19,8 @@
 #   define sleep(x) Sleep(1000*(x))
 #endif
 
-#include "mp3.h"
 #include "armci.h"
+#include "message.h"
 
 extern void armci_lockmem(void*, void*, int);
 extern void armci_unlockmem(void);
@@ -377,7 +377,7 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
 
 void destroy_array(void *ptr[])
 {
-    MP_BARRIER();
+    ARMCI_Barrier();
 #if 0
     assert(!ARMCI_Free(ptr[me]));
 #endif
@@ -432,7 +432,7 @@ void test_dim(int ndim)
         sleep(1);
 
         ARMCI_AllFence();
-        MP_BARRIER();
+        ARMCI_Barrier();
 	for(i=0;i<LOOP;i++){
 	    int idx1, idx2, idx3;
 	    get_range(ndim, dimsA, loA, hiA);
@@ -541,7 +541,7 @@ int idx1=0, idx2=0, idx3=0;
        ARMCI_INIT_HANDLE(hdl_get+ndim);
     }
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     (void)get_next_RRproc(1,0);
     for(ndim=1;ndim<=MAXDIMS;ndim++){
@@ -584,12 +584,12 @@ int idx1=0, idx2=0, idx3=0;
        }
     }
 sleep(5);
-    MP_BARRIER();
+    ARMCI_Barrier();
     /*before we do gets, we have to make sure puts are complete 
       on the remote processor*/
     for(ndim=1;ndim<=MAXDIMS;ndim++)
        ARMCI_Wait(hdl_put+ndim); 
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_AllFence();
 
     (void)get_next_RRproc(1,0);
@@ -623,7 +623,7 @@ sleep(5);
        }
     }
        
-    MP_BARRIER();
+    ARMCI_Barrier();
     if(me==0){
        printf("Now waiting for all non-blocking calls and verifying data...\n");
        fflush(stdout);
@@ -752,7 +752,7 @@ int lenpergiov;
     }
     for(i=0;i<nproc;i++)if(i!=me)ARMCI_Wait(hdl_put+i);
     sleep(1);
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_AllFence();/*every one syncs after put */
     verify_vector_data((double *)putdst[me],nproc,1,nproc*GIOV_ARR_LEN*lenpergiov);
     if(me==0){
@@ -788,7 +788,7 @@ int lenpergiov;
     }
     for(i=0;i<nproc;i++)if(i!=me)ARMCI_Wait(hdl_get+i);
     sleep(1);
-    MP_BARRIER();
+    ARMCI_Barrier();
     verify_vector_data((double *)getdst,nproc,0,nproc*GIOV_ARR_LEN*lenpergiov);
     if(me==0){
        printf("\n\tGets OK\n");
@@ -897,7 +897,7 @@ void test_acc(int ndim)
         }
 
         ARMCI_AllFence();
-        MP_BARRIER();
+        ARMCI_Barrier();
         for(i=0;i<TIMES*nproc;i++){ 
             proc=proclist[i%nproc];
             (void)ARMCI_AccS(ARMCI_ACC_DBL,&alpha,(double*)a + idx1, strideA, 
@@ -906,7 +906,7 @@ void test_acc(int ndim)
 
 /*	sleep(9);*/
         ARMCI_AllFence();
-        MP_BARRIER();
+        ARMCI_Barrier();
 
         /* copy my patch into local array c */
 	(void)ARMCI_GetS((double*)b[me] + idx2, strideB, (double*)c + idx1, strideA,  count, ndim-1, me);
@@ -916,7 +916,7 @@ void test_acc(int ndim)
         scale_patch(scale, ndim, (double*)a+idx1, loA, hiA, dimsA);
         
         compare_patches(.0001, ndim, (double*)a+idx1, loA, hiA, dimsA, (double*)c+idx1, loA, hiA, dimsA);
-        MP_BARRIER();
+        ARMCI_Barrier();
 
         if(0==me){
             printf(" OK\n\n");
@@ -1122,7 +1122,7 @@ void test_vector_acc()
         dsc.ptr_array_len = elems/2; 
 
 
-        MP_BARRIER();
+        ARMCI_Barrier();
         for(i=0;i<TIMES*nproc;i++){ 
 
 /*            proc=proclist[i%nproc];*/
@@ -1151,7 +1151,7 @@ void test_vector_acc()
         }
 
         ARMCI_AllFence();
-        MP_BARRIER();
+        ARMCI_Barrier();
 
         /* copy my patch into local array c */
 	assert(!ARMCI_Get((double*)b[proc], c, bytes, proc));
@@ -1161,7 +1161,7 @@ void test_vector_acc()
         scale_patch(scale, dim, a, &one, &elems, &elems);
         
         compare_patches(.0001, dim, a, &one, &elems, &elems, c, &one, &elems, &elems);
-        MP_BARRIER();
+        ARMCI_Barrier();
 
         if(0==me){
             printf(" OK\n\n");
@@ -1185,11 +1185,11 @@ void test_fetch_add()
 
     rc = ARMCI_Malloc((void**)arr,bytes);
     assert(rc==0);
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     if(me == 0) *arr[0] = 0;  /* initialization */
 
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     /* show what everybody gets */
     rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD, &val, arr[0], 1, 0);
@@ -1200,7 +1200,7 @@ void test_fetch_add()
             printf("process %d got value of %d\n",i,val);
             fflush(stdout);
         }
-        MP_BARRIER();
+        ARMCI_Barrier();
     }
 
     if(me == 0){
@@ -1208,7 +1208,7 @@ void test_fetch_add()
       fflush(stdout);
     }
     
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     /* now increment the counter value until reaches LOOP */
     while(val<LOOP){
@@ -1222,7 +1222,7 @@ void test_fetch_add()
             printf("process %d incremented the counter %d times value=%d\n",i,times,val);
             fflush(stdout);
         }
-        MP_BARRIER();
+        ARMCI_Barrier();
     }
 
 
@@ -1233,7 +1233,7 @@ void test_fetch_add()
     }
 
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     for(i = 0; i< LOOP; i++){
           rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD, &val, arr[0], 1, 0);
@@ -1241,7 +1241,7 @@ void test_fetch_add()
     }
 
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     if(me == 0){
        printf("The final value is %d, should be %d.\n\n",*arr[0],LOOP*nproc); 
@@ -1264,12 +1264,12 @@ void test_swap()
 
     rc = ARMCI_Malloc((void**)arr,bytes);
     assert(rc==0);
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     if(me == 0) *arr[0] = 0;  /* initialization */
 
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     for(i = 0; i< LOOP; i++){
           val = LOCKED;
           do{
@@ -1283,7 +1283,7 @@ void test_swap()
 
 
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     if(me == 0){
        printf("The final value is %d, should be %d.\n\n",*arr[0],LOOP*nproc); 
@@ -1327,7 +1327,7 @@ void test_memlock()
         proc=0;
                 for(i=0;i<ELEMS/5;i++)a[i]=me;
 
-        MP_BARRIER();
+        ARMCI_Barrier();
         for(j=0;j<10*TIMES;j++){ 
          for(i=0;i<TIMES*nproc;i++){ 
             first = rand()%(ELEMS/2);
@@ -1352,7 +1352,7 @@ void test_memlock()
           if(0==me)fprintf(stderr,"done %d\n",j);
                 }
 
-        MP_BARRIER();
+        ARMCI_Barrier();
 
 
         if(0==me){
@@ -1391,7 +1391,7 @@ void test_rput()
 
     
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     for(i=0; i<nproc; i++) {
       ARMCI_PutValueInt(10*(me+1), (void *)&idst[i][me], i);
       ARMCI_PutValueLong((long)10*(me+1), (void *)&ldst[i][me], i);
@@ -1407,7 +1407,7 @@ void test_rput()
     }
     
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     if(me==0)printf("int data type: ");
     for(i=0; i<elems; i++) {
@@ -1441,7 +1441,7 @@ void test_rput()
     if(me==0){printf("OK\n"); fflush(stdout);}
     
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     
     destroy_array((void **)idst);
@@ -1566,9 +1566,9 @@ void test_aggregate() {
     for(i=0; i<nproc; i++) ARMCI_Wait(&usr_hdl_get[i]);
         
     
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     for(i=0; i<nproc; i++) {
       for(j=0; j<elems[1]; j++) {
@@ -1577,7 +1577,7 @@ void test_aggregate() {
 	}
       }
     }
-    MP_BARRIER();
+    ARMCI_Barrier();
     if(me==0) printf("  aggregate put ..O.K.\n"); fflush(stdout);
 
     for(i=0; i<nproc; i++) {
@@ -1587,11 +1587,11 @@ void test_aggregate() {
 	}
       }
     }
-    MP_BARRIER();
+    ARMCI_Barrier();
     if(me==0) printf("  aggregate get ..O.K.\n"); fflush(stdout);
     
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     if(me==0){printf("O.K.\n"); fflush(stdout);}
     destroy_array((void **)ddst_put);
@@ -1620,7 +1620,7 @@ void test_implicit() {
       ddst_get[me][i]=0.0;
     }
     
-    MP_BARRIER();
+    ARMCI_Barrier();
     for(i=0; i<nproc; i++) ARMCI_INIT_HANDLE(&usr_hdl[i]);
 
     for(i=0; i<nproc; i++) {
@@ -1696,9 +1696,9 @@ void test_implicit() {
     ARMCI_WaitAll(); 
         
     
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     for(i=0; i<nproc; i++) {
       for(j=0; j<elems[1]; j++) {
@@ -1707,7 +1707,7 @@ void test_implicit() {
 	}
       }
     }
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     for(i=0; i<nproc; i++) {
       for(j=0; j<elems[1]; j++) {
@@ -1717,9 +1717,9 @@ void test_implicit() {
       }
     }
 
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     if(me==0){printf("O.K.\n\n"); fflush(stdout);}
     destroy_array((void **)ddst_put);
@@ -1732,9 +1732,9 @@ int main(int argc, char* argv[])
 {
     int ndim;
 
-    MP_INIT(argc, argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+    ARMCI_Init_args(&argc, &argv);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
 
 /*    printf("nproc = %d, me = %d\n", nproc, me);*/
     
@@ -1747,8 +1747,6 @@ int main(int argc, char* argv[])
        sleep(1);
     }
 
-    ARMCI_Init_args(&argc, &argv);
-
 /*
        if(me==1)armci_die("process 1 committing suicide",1);
 */
@@ -1760,7 +1758,7 @@ int main(int argc, char* argv[])
         }
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_dim(ndim);
         ARMCI_AllFence();
-        MP_BARRIER();
+        ARMCI_Barrier();
 
         if(me==0){
            printf("\nTesting non-blocking gets and puts\n");
@@ -1769,7 +1767,7 @@ int main(int argc, char* argv[])
         }
         test_nbdim(); 
         ARMCI_AllFence();
-        MP_BARRIER();
+        ARMCI_Barrier();
 
         if(me==0){
            printf("\nTesting non-blocking vector gets and puts\n");
@@ -1778,7 +1776,7 @@ int main(int argc, char* argv[])
         }
         test_vec_small();
         ARMCI_AllFence();
-        MP_BARRIER();
+        ARMCI_Barrier();
 
         if(me==0){
            printf("\nTesting atomic accumulate\n");
@@ -1787,7 +1785,7 @@ int main(int argc, char* argv[])
         }
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_acc(ndim); 
         ARMCI_AllFence();
-        MP_BARRIER();
+        ARMCI_Barrier();
 
         if(me==0){
            printf("\nTesting Vector Interface using triangular patches of a 2-D array\n\n");
@@ -1797,7 +1795,7 @@ int main(int argc, char* argv[])
 
         test_vector();
         ARMCI_AllFence();
-        MP_BARRIER();
+        ARMCI_Barrier();
 
         if(me==0){
            printf("\nTesting Accumulate with Vector Interface\n\n");
@@ -1807,7 +1805,7 @@ int main(int argc, char* argv[])
         test_vector_acc();
 
         ARMCI_AllFence();
-        MP_BARRIER();
+        ARMCI_Barrier();
 
         if(me==0){
            printf("\nTesting atomic fetch&add\n");
@@ -1815,12 +1813,12 @@ int main(int argc, char* argv[])
            fflush(stdout);
            sleep(1);
         }
-        MP_BARRIER();
+        ARMCI_Barrier();
 
         test_fetch_add();
 
         ARMCI_AllFence();
-        MP_BARRIER();
+        ARMCI_Barrier();
 
         if(me==0){
            printf("\nTesting atomic swap\n");
@@ -1828,7 +1826,7 @@ int main(int argc, char* argv[])
         }
         test_swap();
         ARMCI_AllFence();
-        MP_BARRIER();
+        ARMCI_Barrier();
 
         if(me==0){
            printf("\nTesting register-originated put and get\n");
@@ -1837,7 +1835,7 @@ int main(int argc, char* argv[])
         }
         test_rput(); 
         ARMCI_AllFence();
-        MP_BARRIER();
+        ARMCI_Barrier();
 
 	if(me==0){
 	  printf("\nTesting aggregate put/get requests\n");
@@ -1863,7 +1861,7 @@ int main(int argc, char* argv[])
 	  test_aggregate();
 	
 	ARMCI_AllFence();
-	MP_BARRIER();
+	ARMCI_Barrier();
 
 	if(me==0){
 	  printf("\nTesting implicit handles\n");
@@ -1872,13 +1870,13 @@ int main(int argc, char* argv[])
 	test_implicit();
 	
 	ARMCI_AllFence();
-	MP_BARRIER();
+	ARMCI_Barrier();
 
 
-        MP_BARRIER();
+        ARMCI_Barrier();
         /*test_memlock();*/
 
-        MP_BARRIER();
+        ARMCI_Barrier();
 	if(me==0){printf("All tests passed\n"); fflush(stdout);}
     sleep(2);
 
@@ -1893,8 +1891,8 @@ int main(int argc, char* argv[])
     }
 #endif
     
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return(0);
 }

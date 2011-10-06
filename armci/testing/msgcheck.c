@@ -11,7 +11,6 @@
 
 #include "armcip.h"
 #include "message.h"
-#include "mp3.h"
 
 #define armci_msg_brdcst__ armci_msg_bcast_lapi
 
@@ -24,11 +23,11 @@ void time_gop(double *test,int len)
 int i;
 double t;
 
-  t = MP_TIMER();
+  t = armci_timer();
   for(i=0; i<LOOP; i++){
     armci_msg_dgop(test, len, "+");
   }
-  t = MP_TIMER() -t;
+  t = armci_timer() -t;
 
   t /= LOOP;
 
@@ -44,11 +43,11 @@ void time_reduce(double *test,int len)
 int i;
 double t;
 
-  t = MP_TIMER();
+  t = armci_timer();
   for(i=0; i<LOOP; i++){
     armci_msg_reduce(test, len, "+",ARMCI_DOUBLE);
   }
-  t = MP_TIMER() -t;
+  t = armci_timer() -t;
 
   t /= LOOP;
 
@@ -166,16 +165,17 @@ void TestGlobals()
 int main( int argc, char **argv)
 {   
     
-  MP_INIT(argc,argv);
-  MP_MYID(&me);
-  MP_PROCS(&nproc);
+    /* initialize ARMCI */
+    ARMCI_Init_args(&argc, &argv);
+    me = armci_msg_me();
+    nproc = armci_msg_nproc();
     
     if(nproc < 2) {
         if(me == 0)
             fprintf(stderr,
                     "USAGE: 2 <= processes < %d\n", nproc);
-        MP_BARRIER();
-        MP_FINALIZE();
+        ARMCI_Barrier();
+        armci_msg_finalize();
         exit(0);
     }
 
@@ -184,16 +184,14 @@ int main( int argc, char **argv)
        fflush(stdout);
     }
    
-    /* initialize ARMCI */
-    ARMCI_Init_args(&argc, &argv);
 
-    MP_BARRIER();
+    ARMCI_Barrier();
    
     TestGlobals();
    
     /* done */
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return(0);
 }   
 

@@ -15,8 +15,8 @@
 #   include <assert.h>
 #endif
 
-#include "mp3.h"
 #include "armci.h"
+#include "message.h"
 
 #define MAXPROCS 128
 #define SIZE_    1024
@@ -39,9 +39,10 @@ int main(int argc, char* argv[])
     int rc,i,j=0,rid,ret;
     armci_ckpt_ds_t ckptds;
     ARMCI_Group grp;
-    MP_INIT(argc, argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+
+    ARMCI_Init_args(&argc, &argv);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
 
     if(me==0){
        if(nproc > MAXPROCS) ARMCI_Error("nproc > MAXPROCS", nproc);
@@ -53,7 +54,6 @@ int main(int argc, char* argv[])
        
     }
     armci_init_checkpoint2();
-    ARMCI_Init_args(&argc, &argv);
     ARMCI_Group_get_world(&grp);
     size = SIZE_;
     rc=ARMCI_Malloc((void **)ptr_arr,size*8);
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
          for(rc=0;rc<15;rc++)do_work(size);
        }
        time_array[j++]=MPI_Wtime()-t1;
-       MP_BARRIER();
+       ARMCI_Barrier();
        printf("%d:done for size %ld\n",me,size);fflush(stdout);
     }
     
@@ -113,8 +113,8 @@ int main(int argc, char* argv[])
     ARMCI_Ckpt_finalize(rid);
     
     printf("Before Finalize()\n");
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return(0);
 }

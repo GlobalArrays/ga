@@ -19,9 +19,9 @@
 #   define sleep(x) Sleep(1000*(x))
 #endif
 
-#include "mp3.h"
 #include "armci.h"
-#include "armcip.h"
+#include "message.h"
+/*#include "armcip.h"*/
 
 #define MAXDIMS 7
 #define MAXPROC 128
@@ -29,6 +29,8 @@
 
 /***************************** macros ************************/
 #define COPY(src, dst, bytes) memcpy((dst),(src),(bytes))
+#define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
+#define MIN(a,b) (((a)<(b)) ? (a) : (b))
 
 /***************************** global data *******************/
 int me, nproc;
@@ -85,7 +87,7 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
 
 void destroy_array(void *ptr[])
 {
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     assert(!ARMCI_Free(ptr[me]));
 }
@@ -110,7 +112,7 @@ void test_one_group(ARMCI_Group *group, int *pid_list) {
   double dsrc[ELEMS];
   int bytes, world_me;
   
-  MP_MYID(&world_me);
+  world_me = armci_msg_me();
   ARMCI_Group_rank(group, &grp_me);
   ARMCI_Group_size(group, &grp_size);
   if(grp_me==0) printf("GROUP SIZE = %d\n", grp_size);
@@ -141,7 +143,7 @@ void test_one_group(ARMCI_Group *group, int *pid_list) {
   /* Verify*/
   if(grp_me==dst_proc) {
     for(j=0; j<ELEMS; j++) {
-      if(ARMCI_ABS(ddst_put[grp_me][j]-j*1.001*(src_proc+1)) > 0.1) {
+      if(ABS(ddst_put[grp_me][j]-j*1.001*(src_proc+1)) > 0.1) {
 	printf("\t%d: ddst_put[%d][%d] = %f and expected value is %f\n",
 	       me, grp_me, j, ddst_put[grp_me][j], j*1.001*(src_proc+1));
 	ARMCI_Error("groups: armci put failed...1", 0);
@@ -160,7 +162,7 @@ void test_groups() {
     int pid_listB[MAXPROC] = {1,3};
     ARMCI_Group groupA, groupB;
 
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     ARMCI_Group_create(GNUM_A, pid_listA, &groupA); /* create group 1 */
     ARMCI_Group_create(GNUM_B, pid_listB, &groupB); /* create group 2 */
@@ -171,7 +173,7 @@ void test_groups() {
       test_one_group(&groupA, pid_listA);
     }
 
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     /* ------------------------ GROUP B ------------------------- */ 
     if(chk_grp_membership(me, &groupB, pid_listB)) { /* group B */
@@ -179,7 +181,7 @@ void test_groups() {
     }
 
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     if(me==0){printf("O.K.\n"); fflush(stdout);}
 }
@@ -222,9 +224,9 @@ void test_groups_noncollective() {
   int *my_pid_list=NULL, my_grp_size=0;
   int ngrps;
 
-  MP_BARRIER();
-  MP_PROCS(&nprocs);
-  MP_MYID(&world_me);
+  ARMCI_Barrier();
+  nprocs = armci_msg_nproc();
+  world_me = armci_msg_me();
 
   random_permute(pids, nproc);
 
@@ -236,7 +238,7 @@ void test_groups_noncollective() {
 
   for(i=0; i<nprocs; i++) {
     if(pids[i] == world_me) {
-      int grp_id = ARMCI_MIN(i/GROUP_SIZE, ngrps-1);
+      int grp_id = MIN(i/GROUP_SIZE, ngrps-1);
       my_pid_list = pid_lists[grp_id];
       if(grp_id == ngrps-1)
 	my_grp_size =  GROUP_SIZE + (nprocs%GROUP_SIZE);
@@ -247,7 +249,7 @@ void test_groups_noncollective() {
 
   qsort(my_pid_list, my_grp_size, sizeof(int), int_compare);
   
-  MP_BARRIER();
+  ARMCI_Barrier();
   /*now create all these disjoint groups and test them in parallel*/
   
   ARMCI_Group_create(my_grp_size, my_pid_list, &group);
@@ -257,7 +259,7 @@ void test_groups_noncollective() {
   ARMCI_Group_free(&group);
 
   ARMCI_AllFence();
-  MP_BARRIER();
+  ARMCI_Barrier();
   
   if(world_me==0){printf("O.K.\n"); fflush(stdout);}
 }
@@ -265,10 +267,9 @@ void test_groups_noncollective() {
 
 int main(int argc, char* argv[])
 {
-
-    MP_INIT(argc, argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+    ARMCI_Init_args(&argc, &argv);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
 
 /*    printf("nproc = %d, me = %d\n", nproc, me);*/
     
@@ -277,8 +278,8 @@ int main(int argc, char* argv[])
                 printf("Test needs at least %d processors (%d used)\n",
                         MINPROC, nproc);
             }
-            MP_BARRIER();
-            MP_FINALIZE();
+            ARMCI_Barrier();
+            armci_msg_finalize();
             exit(0);
         }
         if (nproc>MAXPROC) {
@@ -286,8 +287,8 @@ int main(int argc, char* argv[])
                 printf("Test works for up to %d processors (%d used)\n",
                         MAXPROC, nproc);
             }
-            MP_BARRIER();
-            MP_FINALIZE();
+            ARMCI_Barrier();
+            armci_msg_finalize();
             exit(0);
         }
 
@@ -297,9 +298,6 @@ int main(int argc, char* argv[])
        sleep(1);
     }
     
-    ARMCI_Init_args(&argc, &argv);
-    
-
     if(me==0){
       printf("\n Testing ARMCI Groups!\n\n");
       fflush(stdout);
@@ -308,7 +306,7 @@ int main(int argc, char* argv[])
     test_groups();
     
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     if(me==0){printf("\n Collective groups: Success!!\n"); fflush(stdout);}
     sleep(2);
 
@@ -316,13 +314,13 @@ int main(int argc, char* argv[])
     test_groups_noncollective();
 
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     if(me==0){printf("\n Non-collective groups: Success!!\n"); fflush(stdout);}
     sleep(2);
 #endif
 	
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return(0);
 }

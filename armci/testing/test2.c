@@ -33,7 +33,6 @@
 #define FLOAT_EPS  ((float) 1.0 / 4096)
 #define DOUBLE_EPS ((double) 1.0 / 16384)
 
-#include "mp3.h"
 #include "armci.h"
 #include "message.h"
 
@@ -154,7 +153,7 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
 
 void destroy_array(void *ptr[])
 {
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     assert(!ARMCI_Free(ptr[me]));
 }
@@ -728,9 +727,9 @@ void test_collective(const int datatype)
     for(i = 0; i < num_tests; i++)
        test_gop2_or_reduce(datatype, op[i], 1);
 
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     if(me==0){printf("O.K.\n\n"); fflush(stdout);}    
 }
@@ -838,13 +837,13 @@ void test_acc_type(const int datatype)
     strideB = elems * datatype_size;
 
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     for(i = 0; i < nproc; i++)
        ARMCI_AccS(datatype, scale, a, &strideA, b[(me + i) % nproc], &strideB, &count, 0, (me + i) % nproc);
 
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     switch(datatype)
     {
@@ -918,9 +917,9 @@ void test_acc_type(const int datatype)
           break;
     }
 
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     if(me==0){printf("O.K.\n\n"); fflush(stdout);}    
     destroy_array((void**)b);
@@ -953,10 +952,9 @@ int main(int argc, char* argv[])
 #define TEST_ACC_TYPE   0
 #define TEST_COLLECTIVE 1
 
-    MP_INIT(argc, argv);
     ARMCI_Init_args(&argc, &argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
 
     if(nproc > MAXPROC && me == 0)
        ARMCI_Error("Test works for up to %d processors\n",MAXPROC);
@@ -977,7 +975,7 @@ int main(int argc, char* argv[])
           fflush(stdout);
        }
        
-       MP_BARRIER();
+       ARMCI_Barrier();
        if(me == 0)
        {
           printf("Test Accumulate ARMCI_ACC_INT\n");
@@ -985,7 +983,7 @@ int main(int argc, char* argv[])
        }
        test_acc_type(ARMCI_ACC_INT);
        ARMCI_AllFence();
-       MP_BARRIER();
+       ARMCI_Barrier();
        if(me == 0)
        {
           printf("Test Accumulate ARMCI_ACC_LNG\n");
@@ -993,7 +991,7 @@ int main(int argc, char* argv[])
        }
        test_acc_type(ARMCI_ACC_LNG);
        ARMCI_AllFence();
-       MP_BARRIER();
+       ARMCI_Barrier();
        if(me == 0)
        {
           printf("Test Accumulate ARMCI_ACC_FLT\n");
@@ -1001,7 +999,7 @@ int main(int argc, char* argv[])
        }
        test_acc_type(ARMCI_ACC_FLT);
        ARMCI_AllFence();
-       MP_BARRIER();
+       ARMCI_Barrier();
        if(me == 0)
        {
           printf("Test Accumulate ARMCI_ACC_DBL\n");
@@ -1009,7 +1007,7 @@ int main(int argc, char* argv[])
        }
        test_acc_type(ARMCI_ACC_DBL);
        ARMCI_AllFence();
-       MP_BARRIER();
+       ARMCI_Barrier();
        if(me == 0)
        {
           printf("Test Accumulate ARMCI_ACC_CPL\n");
@@ -1017,7 +1015,7 @@ int main(int argc, char* argv[])
        }
        test_acc_type(ARMCI_ACC_CPL);
        ARMCI_AllFence();
-       MP_BARRIER();
+       ARMCI_Barrier();
        if(me == 0)
        {
           printf("Test Accumulate ARMCI_ACC_DCP\n");
@@ -1025,7 +1023,7 @@ int main(int argc, char* argv[])
        }
        test_acc_type(ARMCI_ACC_DCP);
        ARMCI_AllFence();
-       MP_BARRIER();
+       ARMCI_Barrier();
     }
     gettimeofday(&stop_time[TEST_ACC_TYPE],NULL);
 
@@ -1042,33 +1040,33 @@ int main(int argc, char* argv[])
           printf("Test Collective ARMCI_INT\n");
           fflush(stdout);
        }
-       MP_BARRIER();
+       ARMCI_Barrier();
        test_collective(ARMCI_INT);
-       MP_BARRIER();
+       ARMCI_Barrier();
        if(me == 0)
        {
           printf("Test Collective ARMCI_LONG\n");
           fflush(stdout);
        }
-       MP_BARRIER();
+       ARMCI_Barrier();
        test_collective(ARMCI_LONG);
-       MP_BARRIER();
+       ARMCI_Barrier();
        if(me == 0)
        {
           printf("Test Collective ARMCI_FLOAT\n");
           fflush(stdout);
        }
-       MP_BARRIER();
+       ARMCI_Barrier();
        test_collective(ARMCI_FLOAT);
-       MP_BARRIER();
+       ARMCI_Barrier();
        if(me == 0)
        {
           printf("Test Collective ARMCI_DOUBLE\n");
           fflush(stdout);
        }
-       MP_BARRIER();
+       ARMCI_Barrier();
        test_collective(ARMCI_DOUBLE);
-       MP_BARRIER();
+       ARMCI_Barrier();
     }
     gettimeofday(&stop_time[TEST_COLLECTIVE],NULL);
     
@@ -1090,8 +1088,8 @@ int main(int argc, char* argv[])
           }
     }
 
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return(0);
 }

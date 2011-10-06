@@ -538,6 +538,15 @@ void armci_msg_abort(int code)
     _exit(1);
 }
 
+void armci_msg_finalize()
+{
+#if defined(TCGMSG)
+    tcg_pend();
+#elif defined(MPI)
+    MPI_Finalize();
+#endif
+}
+
 void armci_msg_bintree(int scope, int* Root, int *Up, int *Left, int *Right)
 {
 int root, up, left, right, index, nproc;

@@ -15,8 +15,8 @@
 #   include <unistd.h>
 #endif
 
-#include "mp3.h"
 #include "armci.h"
+#include "message.h"
 
 int me, nproc;
 extern void armcill_lock(int,int);
@@ -33,18 +33,18 @@ int i,mut;
         armcill_lock(mut,i);
         armcill_unlock(mut,i);
 #endif
-        MP_BARRIER();
+        ARMCI_Barrier();
         if(me==0){printf(".");fflush(stdout);}
-        MP_BARRIER();
+        ARMCI_Barrier();
       }
 }
 
 
 int main(int argc, char* argv[])
 {
-    MP_INIT(argc, argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+    ARMCI_Init_args(&argc, &argv);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
 
     if(me==0){
        printf("ARMCI test program for lock(%d processes)\n",nproc); 
@@ -52,16 +52,14 @@ int main(int argc, char* argv[])
        sleep(1);
     }
     
-    ARMCI_Init_args(&argc, &argv);
-
     test_lock();
 
-    MP_BARRIER();
+    ARMCI_Barrier();
     if(me==0){printf("test passed\n"); fflush(stdout);}
     sleep(2);
 
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return(0);
 }

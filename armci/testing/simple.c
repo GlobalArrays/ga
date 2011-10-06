@@ -5,24 +5,24 @@
 /*$id$*/
 #include <stdio.h>
 #include <stdlib.h>
-#include "armci.h"
+
 #include <mpi.h>
-#include "mp3.h"
+
+#include "armci.h"
+#include "message.h"
+
 int me,nprocs;
 int LOOP=10;
+
 int main(int argc, char **argv)
 {
 int k,i;
 double **myptrs[10];
 double t0,t1,tget=0,tnbget=0,tput=0,tnbput=0,tnbwait=0,t2=0;
-#if PORTALS
-    ARMCI_NetInit();
-#endif
-    MP_INIT(argc,argv);
+    ARMCI_Init_args(&argc, &argv);
+    ARMCI_Init_args(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD,&me);
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
-    ARMCI_Init_args(&argc, &argv);
-    ARMCI_Init_args(&argc, &argv);
     for(k=0;k<10;k++){
       myptrs[k] = (double **)malloc(sizeof(double *)*nprocs);
       ARMCI_Malloc((void **)myptrs[k],400000*LOOP*sizeof(double)); 

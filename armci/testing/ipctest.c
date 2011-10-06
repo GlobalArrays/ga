@@ -13,7 +13,7 @@
 #include "armcip.h"
 #include "shmem.h"
 #include "locks.h"
-#include "mp3.h"
+#include "message.h"
 
 int me, nproc;
 
@@ -95,15 +95,13 @@ void test()
 
 int main(int argc, char** argv)
 {
-      MP_INIT(argc, argv);
+      ARMCI_Init_args(&argc, &argv);
       MPI_Comm_size(MPI_COMM_WORLD, &nproc);
       MPI_Comm_rank(MPI_COMM_WORLD, &me);
       if(me==0)printf("Testing IPCs (%d MPI processes)\n\n",nproc);
-      ARMCI_Init_args(&argc, &argv);
       test();
       ARMCI_Finalize();
       MPI_Finalize();
       return 0;
 
 }
-

@@ -22,8 +22,8 @@
 #   define sleep(x) Sleep(1000*(x))
 #endif
 
-#include "mp3.h"
 #include "armci.h"
+#include "message.h"
 
 #define DIM1 5
 #define DIM2 3
@@ -142,7 +142,7 @@ void create_array(double *a[], int ndim, int dims[])
 /*void destroy_array(void *ptr[])*/
 void destroy_array(double *ptr[])
 {
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     assert(!ARMCI_Free(ptr[me]));
 }
@@ -159,7 +159,7 @@ void verify_results(int op, int *elems) {
 	    ARMCI_Error("put failed...Invalid Value Obtained..1", 0);
 	  }
 	}
-      MP_BARRIER();
+      ARMCI_Barrier();
       if(DEBUG) if(me==0) printf("  verifying put ..O.K.\n");
       break;
       
@@ -172,7 +172,7 @@ void verify_results(int op, int *elems) {
 	  }
 	}
       }
-      MP_BARRIER();
+      ARMCI_Barrier();
       if(DEBUG) if(me==0) printf("  verifying get ..O.K.\n\n");
       break;
       
@@ -185,7 +185,7 @@ void verify_results(int op, int *elems) {
 	    ARMCI_Error("accumulate failed...Invalid Value Obtained..1", 0);
 	  }
 	}
-      MP_BARRIER();
+      ARMCI_Barrier();
       if(DEBUG)if(me==0) printf("  verifying accumulate ..O.K.\n"); 
       break;
       
@@ -230,116 +230,116 @@ void test_perf_nb(int dry_run) {
       t1 = t2 = t3 = t4 = t5 = t6 = t7 = t8 = t9 = 0.0;
       for(i=0; i<elems[1]; i++) dsrc[me][i]=i*1.001*(me+1);
       for(i=0; i<elems[0]*elems[1]; i++) ddst[me][i]=0.0;    
-      MP_BARRIER();
+      ARMCI_Barrier();
       
       /* bytes transfered */
       bytes = sizeof(double)*elems[1]; 
-      MP_BARRIER();
+      ARMCI_Barrier();
       
       /* -------------------------- PUT/GET -------------------------- */    
       if(me == 0) {
 	for(i=1; i<nproc; i++) {
-	  stime=MP_TIMER();
+	  stime=armci_timer();
 	  for(j=0; j<ntimes; j++)
 	    if((rc=ARMCI_Put(&dsrc[me][0], &ddst[i][me*elems[1]], bytes,i)))
 	      ARMCI_Error("armci_nbput failed\n",rc);
-	  t1 += MP_TIMER()-stime;
+	  t1 += armci_timer()-stime;
 	}
       }
-      MP_BARRIER(); ARMCI_AllFence(); MP_BARRIER();
+      ARMCI_Barrier(); ARMCI_AllFence(); ARMCI_Barrier();
       if(VERIFY) verify_results(PUT, elems);
       for(i=0; i<elems[0]*elems[1]; i++) ddst[me][i]=0.0;
-      MP_BARRIER();
+      ARMCI_Barrier();
       
       if(me == 0) { 
 	for(i=1; i<nproc; i++) {
-	  stime=MP_TIMER();    
+	  stime=armci_timer();    
 	  for(j=0; j<ntimes; j++)
 	    if((rc=ARMCI_Get(&dsrc[i][0], &ddst[me][i*elems[1]], bytes,i))) {
 	      printf("%d: armci_get. rc=%d\n",me,rc);
 	      fflush(stdout);
 	      ARMCI_Error("armci_nbget failed\n",rc);
 	    }
-	  t4 += MP_TIMER()-stime;	
+	  t4 += armci_timer()-stime;	
 	}
       }    
-      MP_BARRIER(); ARMCI_AllFence(); MP_BARRIER();
+      ARMCI_Barrier(); ARMCI_AllFence(); ARMCI_Barrier();
       if(VERIFY) verify_results(GET, elems);
       for(i=0; i<elems[0]*elems[1]; i++) ddst[me][i]=0.0;
-      MP_BARRIER();
+      ARMCI_Barrier();
 
       /* ------------------------ nb PUT/GET ------------------------- */    
       if(me == 0) {
 	for(i=1; i<nproc; i++) {
 	  for(j=0; j<ntimes; j++) {
-	    stime=MP_TIMER();    
+	    stime=armci_timer();    
 	    if((rc=ARMCI_NbPut(&dsrc[me][0], &ddst[i][me*elems[1]], bytes,
 			       i, &hdl_put)))
 	      ARMCI_Error("armci_nbput failed\n",rc);
-	    t2 += MP_TIMER()-stime;	stime=MP_TIMER();
+	    t2 += armci_timer()-stime;	stime=armci_timer();
 	    ARMCI_Wait(&hdl_put);
-	    t3 += MP_TIMER()-stime;
+	    t3 += armci_timer()-stime;
 	  } 
 	}
       }
-      MP_BARRIER(); ARMCI_AllFence(); MP_BARRIER();
+      ARMCI_Barrier(); ARMCI_AllFence(); ARMCI_Barrier();
       if(VERIFY) verify_results(PUT, elems);
       for(i=0; i<elems[0]*elems[1]; i++) ddst[me][i]=0.0;
-      MP_BARRIER();
+      ARMCI_Barrier();
 
       if(me == 0) {
 	for(i=1; i<nproc; i++) {
 	  for(j=0; j<ntimes; j++) {
-	    stime=MP_TIMER();    
+	    stime=armci_timer();    
 	    if((rc=ARMCI_NbGet(&dsrc[i][0], &ddst[me][i*elems[1]], bytes,
 			       i, &hdl_get)))
 	      ARMCI_Error("armci_nbget failed\n",rc);
-	    t5 += MP_TIMER()-stime;	stime=MP_TIMER();
+	    t5 += armci_timer()-stime;	stime=armci_timer();
 	    ARMCI_Wait(&hdl_get);
-	    t6 += MP_TIMER()-stime;
+	    t6 += armci_timer()-stime;
 	  }
 	}
       }
-      MP_BARRIER(); ARMCI_AllFence(); MP_BARRIER();
+      ARMCI_Barrier(); ARMCI_AllFence(); ARMCI_Barrier();
       if(VERIFY) verify_results(GET, elems);
       for(i=0; i<elems[0]*elems[1]; i++) ddst[me][i]=0.0; 
-      MP_BARRIER();
+      ARMCI_Barrier();
 
 
       /* ------------------------ Accumulate ------------------------- */    
-      for(i=0; i<elems[1]; i++) dsrc[me][i]=1.0;  MP_BARRIER();
+      for(i=0; i<elems[1]; i++) dsrc[me][i]=1.0;  ARMCI_Barrier();
       stride = elems[1]*sizeof(double); scale  = 1.0;
       for(j=0; j<ntimes; j++) {
-	stime=MP_TIMER();
+	stime=armci_timer();
 	if((rc=ARMCI_AccS(ARMCI_ACC_DBL, &scale, &dsrc[me][0], &stride, 
 			  &ddst[0][0], &stride, &bytes, 0, 0)))
 	  ARMCI_Error("armci_acc failed\n",rc);
-	t7 += MP_TIMER()-stime;
+	t7 += armci_timer()-stime;
 	
-	MP_BARRIER(); ARMCI_AllFence(); MP_BARRIER();
+	ARMCI_Barrier(); ARMCI_AllFence(); ARMCI_Barrier();
 	if(VERIFY) verify_results(ACC, elems);
 	for(i=0; i<elems[0]*elems[1]; i++) ddst[me][i]=0.0;
-	MP_BARRIER();
+	ARMCI_Barrier();
       }
 
 #if PORTALS
       /* See the note below why this part is disabled */
       /* ---------------------- nb-Accumulate ------------------------ */    
-      for(i=0; i<elems[1]; i++) dsrc[me][i]=1.0;  MP_BARRIER();
+      for(i=0; i<elems[1]; i++) dsrc[me][i]=1.0;  ARMCI_Barrier();
       stride = elems[1]*sizeof(double); scale  = 1.0;
       for(j=0; j<ntimes; j++) {
-	stime=MP_TIMER();    
+	stime=armci_timer();    
 	if((rc=ARMCI_NbAccS(ARMCI_ACC_DBL, &scale, &dsrc[me][0], &stride, 
 			    &ddst[0][0], &stride, &bytes, 0, 0, &hdl_acc)))
 	  ARMCI_Error("armci_nbacc failed\n",rc);
-	t8 += MP_TIMER()-stime; stime=MP_TIMER();
+	t8 += armci_timer()-stime; stime=armci_timer();
 	ARMCI_Wait(&hdl_acc);
-	t9 += MP_TIMER()-stime;
+	t9 += armci_timer()-stime;
       
-	MP_BARRIER(); ARMCI_AllFence(); MP_BARRIER();
+	ARMCI_Barrier(); ARMCI_AllFence(); ARMCI_Barrier();
 	if(VERIFY) verify_results(ACC, elems);
 	for(i=0; i<elems[0]*elems[1]; i++) ddst[me][i]=0.0;
-	MP_BARRIER();
+	ARMCI_Barrier();
       }
 #endif
 
@@ -350,7 +350,7 @@ void test_perf_nb(int dry_run) {
     }
 
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     if(!dry_run)if(me==0){printf("O.K.\n"); fflush(stdout);}
     destroy_array(ddst);
@@ -360,17 +360,16 @@ void test_perf_nb(int dry_run) {
 
 int main(int argc, char* argv[])
 {
-
-    MP_INIT(argc, argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+    ARMCI_Init_args(&argc, &argv);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
 
     if(nproc < 2 || nproc> MAXPROC) {
       if(me == 0)
 	fprintf(stderr,
 		"USAGE: 2 <= processes < %d - got %d\n", MAXPROC, nproc);
-      MP_BARRIER();
-      MP_FINALIZE();
+      ARMCI_Barrier();
+      armci_msg_finalize();
       exit(0);
     }
 
@@ -379,8 +378,6 @@ int main(int argc, char* argv[])
        fflush(stdout);
        sleep(1);
     }
-    
-    ARMCI_Init_args(&argc, &argv);
     
     if(me==0){
       printf("\n put/get/acc requests (Time in secs)\n\n");
@@ -391,13 +388,13 @@ int main(int argc, char* argv[])
     test_perf_nb(0);
     
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     if(me==0){printf("\nSuccess!!\n"); fflush(stdout);}
     sleep(2);
 	
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return(0);
 }
 

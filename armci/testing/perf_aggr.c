@@ -19,8 +19,8 @@
 #   define sleep(x) Sleep(1000*(x))
 #endif
 
-#include "mp3.h"
 #include "armci.h"
+#include "message.h"
 
 #define DIM1 5
 #define DIM2 3
@@ -132,7 +132,7 @@ void create_array(double *a[], int ndim, int dims[])
 /*void destroy_array(void *ptr[])*/
 void destroy_array(double *ptr[])
 {
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     assert(!ARMCI_Free(ptr[me]));
 }
@@ -165,7 +165,7 @@ void test_aggregate(int dryrun) {
       ddst_get[me][i]=0.0;
     }
     
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     /* only proc 0 does the work */
     if(me == 0) {
@@ -185,7 +185,7 @@ void test_aggregate(int dryrun) {
       
       /* **************** PUT **************** */    
       /* register put */
-      start_time=MP_TIMER();
+      start_time=armci_timer();
       start = 0; end = elems[1]; 
       for(i=1; i<nproc; i++) {
 	for(j=start; j<end; j++) {  
@@ -194,10 +194,10 @@ void test_aggregate(int dryrun) {
 	}
 	for(j=start; j<end; j++) ARMCI_Wait(&hdl_put[j]);
       }
-      if(!dryrun)printf("%d: Value Put time      = %.2es\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Value Put time      = %.2es\n", me, armci_timer()-start_time);
  
       /* vector put */
-      start_time=MP_TIMER();
+      start_time=armci_timer();
       for(i=1; i<nproc; i++) {
 	for(j=start; j<end; j++) {
 	  src_ptr[j] = (void *)&dsrc[me][j];
@@ -211,10 +211,10 @@ void test_aggregate(int dryrun) {
 	  ARMCI_Error("armci_nbputv failed\n",rc);
       }
       for(i=1; i<nproc; i++) ARMCI_Wait(&hdl_put[i]);
-      if(!dryrun)printf("%d: Vector Put time     = %.2es\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Vector Put time     = %.2es\n", me, armci_timer()-start_time);
       
       /* regular put */
-      start_time=MP_TIMER();    
+      start_time=armci_timer();    
       for(i=1; i<nproc; i++) {
 	for(j=start; j<end; j++) {  
 	  if((rc=ARMCI_NbPut(&dsrc[me][j], &ddst_put[i][me*elems[1]+j], bytes,
@@ -223,10 +223,10 @@ void test_aggregate(int dryrun) {
 	}
 	for(j=start; j<end; j++) ARMCI_Wait(&hdl_put[j]);
       }
-      if(!dryrun)printf("%d: Regular Put time    = %.2es\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Regular Put time    = %.2es\n", me, armci_timer()-start_time);
       
       /* aggregate put */
-      start_time=MP_TIMER();
+      start_time=armci_timer();
       for(i=1; i<nproc; i++) {
 	for(j=start; j<end; j++) {  
 	  if((rc=ARMCI_NbPut(&dsrc[me][j], &ddst_put[i][me*elems[1]+j], bytes,
@@ -235,13 +235,13 @@ void test_aggregate(int dryrun) {
 	}
       }
       for(i=1; i<nproc; i++) ARMCI_Wait(&aggr_hdl_put[i]);
-      if(!dryrun)printf("%d: Aggregate Put time  = %.2es\n\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Aggregate Put time  = %.2es\n\n", me, armci_timer()-start_time);
       
       
       /* **************** GET **************** */    
       
       /* vector get */
-      start_time=MP_TIMER();
+      start_time=armci_timer();
       for(i=1; i<nproc; i++) {
 	for(j=start; j<end; j++) {
 	  src_ptr[j] = (void *)&dsrc[i][j];
@@ -255,10 +255,10 @@ void test_aggregate(int dryrun) {
 	  ARMCI_Error("armci_nbgetv failed\n",rc);
 	ARMCI_Wait(&hdl_get[i]);
       }
-      if(!dryrun)printf("%d: Vector Get time     = %.2es\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Vector Get time     = %.2es\n", me, armci_timer()-start_time);
       
       /* regular get */
-      start_time=MP_TIMER();    
+      start_time=armci_timer();    
       for(i=1; i<nproc; i++) {
 	for(j=start; j<end; j++) {  
 	  if((rc=ARMCI_NbGet(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], bytes,
@@ -267,10 +267,10 @@ void test_aggregate(int dryrun) {
 	}
 	for(j=start; j<end; j++) ARMCI_Wait(&hdl_get[j]);
       }
-      if(!dryrun)printf("%d: Regular Get time    = %.2es\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Regular Get time    = %.2es\n", me, armci_timer()-start_time);
       
       /* aggregate get */
-      start_time=MP_TIMER();
+      start_time=armci_timer();
       for(i=1; i<nproc; i++) {
 	for(j=start; j<end; j++) {  
 	  ARMCI_NbGet(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], bytes,
@@ -278,12 +278,12 @@ void test_aggregate(int dryrun) {
 	}
       }
       for(i=1; i<nproc; i++) ARMCI_Wait(&aggr_hdl_get[i]);
-      if(!dryrun)printf("%d: Aggregate Get time  = %.2es\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Aggregate Get time  = %.2es\n", me, armci_timer()-start_time);
     }
 
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
 
     /* Verify */
     if(!(me==0))
@@ -292,7 +292,7 @@ void test_aggregate(int dryrun) {
 	  ARMCI_Error("aggregate put failed...1", 0);
 	}
       }
-    MP_BARRIER();
+    ARMCI_Barrier();
     if(!dryrun)if(me==0) printf("\n  aggregate put ..O.K.\n"); fflush(stdout);
 
     if(me==0) {
@@ -304,12 +304,12 @@ void test_aggregate(int dryrun) {
 	}
       }
     }
-    MP_BARRIER();
+    ARMCI_Barrier();
     if(!dryrun)if(me==0) printf("  aggregate get ..O.K.\n"); fflush(stdout);
 
 
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     
     if(!dryrun)if(me==0){printf("O.K.\n"); fflush(stdout);}
     destroy_array(ddst_put);
@@ -320,10 +320,9 @@ void test_aggregate(int dryrun) {
 
 int main(int argc, char* argv[])
 {
-
-    MP_INIT(argc, argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+    ARMCI_Init_args(&argc, &argv);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
 
 /*    printf("nproc = %d, me = %d\n", nproc, me);*/
     
@@ -336,8 +335,6 @@ int main(int argc, char* argv[])
        sleep(1);
     }
     
-    ARMCI_Init_args(&argc, &argv);
-    
     if(me==0){
       printf("\nAggregate put/get requests\n\n");
       fflush(stdout);
@@ -346,12 +343,12 @@ int main(int argc, char* argv[])
     test_aggregate(0); /* warm start */
     
     ARMCI_AllFence();
-    MP_BARRIER();
+    ARMCI_Barrier();
     if(me==0){printf("\nSuccess!!\n"); fflush(stdout);}
     sleep(2);
 	
-    MP_BARRIER();
+    ARMCI_Barrier();
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return(0);
 }
