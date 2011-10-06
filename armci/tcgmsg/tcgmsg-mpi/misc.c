@@ -16,6 +16,8 @@ int      _tcg_initialized=0;
 Integer  DEBUG_;
 int      SR_parallel; 
 int      SR_single_cluster =1;
+int      tcgi_argc=0;
+char   **tcgi_argv=NULL;
 
 static int SR_initialized=0;
 
@@ -128,7 +130,10 @@ void tcgi_alt_pbegin(int *argc, char **argv[])
     make_tcgmsg_comm();
     MPI_Barrier(MPI_COMM_WORLD);
     /* printf("%d:ready to go\n",NODEID_()); */
-    install_nxtval(argc, argv);
+    /* wait until the last possible moment to call install_nxtval
+     * it could be called by ARMCI_Init
+     * or is called the first time nxtval is invoked (yuck) */
+    /*install_nxtval(argc, argv);*/
 }
 
 
@@ -137,6 +142,8 @@ void tcgi_alt_pbegin(int *argc, char **argv[])
  */
 void tcgi_pbegin(int argc, char* argv[])
 {
+    tcgi_argc = argc;
+    tcgi_argv = argv;
     tcgi_alt_pbegin(&argc, &argv);
 }
 

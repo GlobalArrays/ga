@@ -14,6 +14,9 @@
 #define LEN 2
 static Integer pnxtval_counter_val;
 static Integer *pnxtval_counter=&pnxtval_counter_val;
+static int nxtval_installed=0;
+extern int     *tcgi_argc;
+extern char  ***tcgi_argv;
 #define INCR 1   /**< increment for NXTVAL */
 #define BUSY -1L /**< indicates somebody else updating counter*/
 #define NXTV_SERVER ((int)NNODES_() -1)
@@ -31,6 +34,8 @@ Integer NXTVAL_(Integer *mproc)
     Integer local;
     int rc;
     int server = NXTV_SERVER;         /* id of server process */
+
+    install_nxtval(tcgi_argc, tcgi_argv);
 
     if (SR_parallel) {
         if (DEBUG_) {
@@ -82,11 +87,8 @@ Integer NXTVAL_(Integer *mproc)
 }
 
 
-static int nxtval_installed=0;
-
-
 /**
- * initialization for nxtval -- called in PBEGIN
+ * initialization for nxtval
  */
 void install_nxtval(int *argc, char **argv[])
 {
@@ -94,14 +96,14 @@ void install_nxtval(int *argc, char **argv[])
     int me = (int)NODEID_(), bytes, server;
     void **ptr_ar;
 
-    if (!ARMCI_Initialized()) {
-        return;
-    }
-
     if (nxtval_installed) {
         return;
     }
     nxtval_installed = 1;
+
+    if (!ARMCI_Initialized()) {
+        ARMCI_Init_args(argc, argv);
+    }
 
     ptr_ar = (void **)malloc(sizeof(void *)*(int)NNODES_());
     if(!ptr_ar) {

@@ -15,17 +15,17 @@
 #include "srftoc.h"
 #define LEN 255
 
+extern int    tcgi_argc;
+extern char **tcgi_argv;
+
 /**
  * Hewlett Packard Risc box, SparcWorks F77 2.* and Paragon compilers.
  * Have to construct the argument list by calling FORTRAN.
  */
 void PBEGINF_()
 {
-    Integer argc;
-    char **argv;
-
-    ga_f2c_get_cmd_args(&argc, &argv);
-    tcgi_pbegin(argc, argv);
+    ga_f2c_get_cmd_args(&tcgi_argc, &tcgi_argv);
+    tcgi_pbegin(tcgi_argc, tcgi_argv);
 }
 
 
