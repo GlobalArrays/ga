@@ -16,27 +16,28 @@
 #endif
 #include "iterator.h"
 
-int main(int argc, char **argv) {
-  stride_itr_t sitr,ditr;
+int main(int argc, char **argv)
+{
+  stride_itr_t sitr, ditr;
   int a[10][10], b[11][11];
-  int asr[1] = {10*sizeof(int)};
-  int bsr[1]={11*sizeof(int)};
-  int count[2] = {5*sizeof(int),5};
+  int asr[1] = {10 * sizeof(int)};
+  int bsr[1] = {11 * sizeof(int)};
+  int count[2] = {5 * sizeof(int), 5};
   int i, j;
 
-  for(i=0; i<10; i++) {
-    for(j=0; j<10; j++) {
-      a[i][j] = i*10+j;
+  for (i = 0; i < 10; i++) {
+    for (j = 0; j < 10; j++) {
+      a[i][j] = i * 10 + j;
     }
   }
-  for(i=0; i<11; i++) {
-    for(j=0; j<11; j++) {
+  for (i = 0; i < 11; i++) {
+    for (j = 0; j < 11; j++) {
       b[i][j] = 0;
     }
   }
 
-  sitr = armci_stride_itr_init(&a[2][3],1,asr,count);
-  ditr = armci_stride_itr_init(&b[3][4],1,bsr,count);
+  sitr = armci_stride_itr_init(&a[2][3], 1, asr, count);
+  ditr = armci_stride_itr_init(&b[3][4], 1, bsr, count);
 
   assert(sitr != NULL);
   assert(ditr != NULL);
@@ -45,18 +46,18 @@ int main(int argc, char **argv) {
   assert(armci_stride_itr_pos(sitr) == 0);
   assert(armci_stride_itr_pos(ditr) == 0);
 
-  while(armci_stride_itr_has_more(sitr)) {
+  while (armci_stride_itr_has_more(sitr)) {
     int bytes;
     char *ap, *bp;
     assert(armci_stride_itr_has_more(ditr));
 
     bytes = armci_stride_itr_seg_size(sitr);
     assert(bytes == armci_stride_itr_seg_size(ditr));
-    
+
     ap = armci_stride_itr_seg_ptr(sitr);
     bp = armci_stride_itr_seg_ptr(ditr);
 
-    memcpy(bp,ap,bytes);
+    memcpy(bp, ap, bytes);
 
     armci_stride_itr_next(sitr);
     armci_stride_itr_next(ditr);
@@ -65,27 +66,27 @@ int main(int argc, char **argv) {
   armci_stride_itr_destroy(&ditr);
 
 #if 0
-  for(i=0; i<10; i++) {
-    for(j=0; j<10; j++) {
-      printf("%3d  ",a[i][j]);
+  for (i = 0; i < 10; i++) {
+    for (j = 0; j < 10; j++) {
+      printf("%3d  ", a[i][j]);
     }
     printf("\n");
   }
 
-  for(i=0; i<11; i++) {
-    for(j=0; j<11; j++) {
-      printf("%3d  ",b[i][j]);
+  for (i = 0; i < 11; i++) {
+    for (j = 0; j < 11; j++) {
+      printf("%3d  ", b[i][j]);
     }
     printf("\n");
   }
 #endif
-  
-  for(i=2; i<2+5; i++) {
-    for(j=3; j<3+5; j++) {
-      if(a[i][j] != b[i+1][j+1]) {
-	printf("a[%d][%d]=%d b[%d][%d]=%d\n",i,j,a[i][j],i,j,b[i][j]);
-	printf("Test Failed\n");
-	return 0;
+
+  for (i = 2; i < 2 + 5; i++) {
+    for (j = 3; j < 3 + 5; j++) {
+      if (a[i][j] != b[i+1][j+1]) {
+        printf("a[%d][%d]=%d b[%d][%d]=%d\n", i, j, a[i][j], i, j, b[i][j]);
+        printf("Test Failed\n");
+        return 0;
       }
     }
   }

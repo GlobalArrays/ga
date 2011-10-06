@@ -19,47 +19,55 @@
 #include "message.h"
 
 int me, nproc;
-extern void armcill_lock(int,int);
-extern void armcill_unlock(int,int);
+extern void armcill_lock(int, int);
+extern void armcill_unlock(int, int);
 
 
 void test_lock()
 {
-int i,mut;
-    if(me==0)printf("\n");
-    for(mut=0;mut<16;mut++)
-      for(i=0;i<nproc;i++){ 
+  int i, mut;
+  if (me == 0) {
+    printf("\n");
+  }
+  for (mut = 0; mut < 16; mut++)
+    for (i = 0; i < nproc; i++) {
 #if FIXME_THESE_ARE_NOT_DEFINED_FOR_PORTALS
-        armcill_lock(mut,i);
-        armcill_unlock(mut,i);
+      armcill_lock(mut, i);
+      armcill_unlock(mut, i);
 #endif
-        ARMCI_Barrier();
-        if(me==0){printf(".");fflush(stdout);}
-        ARMCI_Barrier();
+      ARMCI_Barrier();
+      if (me == 0) {
+        printf(".");
+        fflush(stdout);
       }
+      ARMCI_Barrier();
+    }
 }
 
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    ARMCI_Init_args(&argc, &argv);
-    nproc = armci_msg_nproc();
-    me = armci_msg_me();
+  ARMCI_Init_args(&argc, &argv);
+  nproc = armci_msg_nproc();
+  me = armci_msg_me();
 
-    if(me==0){
-       printf("ARMCI test program for lock(%d processes)\n",nproc); 
-       fflush(stdout);
-       sleep(1);
-    }
-    
-    test_lock();
+  if (me == 0) {
+    printf("ARMCI test program for lock(%d processes)\n", nproc);
+    fflush(stdout);
+    sleep(1);
+  }
 
-    ARMCI_Barrier();
-    if(me==0){printf("test passed\n"); fflush(stdout);}
-    sleep(2);
+  test_lock();
 
-    ARMCI_Barrier();
-    ARMCI_Finalize();
-    armci_msg_finalize();
-    return(0);
+  ARMCI_Barrier();
+  if (me == 0) {
+    printf("test passed\n");
+    fflush(stdout);
+  }
+  sleep(2);
+
+  ARMCI_Barrier();
+  ARMCI_Finalize();
+  armci_msg_finalize();
+  return(0);
 }

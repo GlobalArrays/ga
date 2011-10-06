@@ -32,22 +32,25 @@ char *shmat();
 #define MAXID 1000000
 int main(int argc, char **argv)
 {
-    int i;
-    for(i=0; i<MAXID; i++){
+  int i;
+  for (i = 0; i < MAXID; i++) {
 #if SIZEOF_VOIDP == SIZEOF_INT
-        int rc = (int) shmat(i,(char *) NULL, 0);
+    int rc = (int) shmat(i, (char *) NULL, 0);
 #elif SIZEOF_VOIDP == SIZEOF_LONG
-        long rc = (long) shmat(i,(char *) NULL, 0);
+    long rc = (long) shmat(i, (char *) NULL, 0);
 #elif SIZEOF_VOIDP == SIZEOF_LONGLONG
-        long long rc = (long long) shmat(i,(char *) NULL, 0);
+    long long rc = (long long) shmat(i, (char *) NULL, 0);
 #endif
-        if(rc<0) continue;
-        printf("found %d\n",i);
-        shmdt((void*)rc);
-        /* delete segment id */
-        if(shmctl(  i, IPC_RMID,(struct shmid_ds *)NULL))
-            printf("failed to remove shm id=%d\n",i);
+    if (rc < 0) {
+      continue;
     }
+    printf("found %d\n", i);
+    shmdt((void *)rc);
+    /* delete segment id */
+    if (shmctl(i, IPC_RMID, (struct shmid_ds *)NULL)) {
+      printf("failed to remove shm id=%d\n", i);
+    }
+  }
 
-    return 0;
+  return 0;
 }
