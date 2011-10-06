@@ -116,7 +116,6 @@ int incx,incy,n;
 #ifdef ROLL
 	for (i=0;i < n; i++)
 		dtemp = dtemp + dx[i]*dy[i];
-	return(dtemp);
 #endif
 #ifdef UNROLL
 
@@ -131,8 +130,8 @@ int incx,incy,n;
 		dx[i+1]*dy[i+1] + dx[i+2]*dy[i+2] +
 		dx[i+3]*dy[i+3] + dx[i+4]*dy[i+4];
 	}
-	return(dtemp);
 #endif
+	return(dtemp);
 }
 
 /*----------------------*/ 
@@ -481,10 +480,14 @@ function, references to a[i][j] are written a[lda*i+j].  */
 void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
 
   logical oactive;  /* true iff this process participates */
-  BlasInt dimA1, dimA2, typeA;
-  BlasInt dimB1, dimB2, typeB;
+  Integer dimA1, dimA2, typeA;
+  Integer dimB1, dimB2, typeB;
   Integer me;
-  BlasInt info=0;
+#if HAVE_LAPACK || ENABLE_F77
+  BlasInt blas_dimA1, blas_dimA2, blas_dimB1, blas_dimB2, info=0;
+#else
+  Integer info=0;
+#endif
   Integer dims[2], ndim;
   Integer lo[2], hi[2];
 
@@ -537,7 +540,11 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
 
     /** LU factorization */
 #if HAVE_LAPACK || ENABLE_F77
-    LAPACK_DGETRF(&dimA1, &dimA2, adra, &dimA1, adri, &info);
+    blas_dimA1 = dimA1;
+    blas_dimA2 = dimA2;
+    blas_dimB1 = dimB1;
+    blas_dimB2 = dimB2;
+    LAPACK_DGETRF(&blas_dimA1, &blas_dimA2, adra, &blas_dimA1, adri, &info);
 #else
     {  int info_t;
       LP_dgefa(adra, (int)dimA1, (int)dimA2, (int*)adri, &info_t);
@@ -548,8 +555,8 @@ void pnga_lu_solve_seq(char *trans, Integer g_a, Integer g_b) {
     /** SOLVE */
     if(info == 0) {
 #if HAVE_LAPACK || ENABLE_F77
-      LAPACK_DGETRS(trans, &dimA1, &dimB2, adra, &dimA1, 
-          adri, adrb, &dimB1, &info);
+      LAPACK_DGETRS(trans, &blas_dimA1, &blas_dimB2, adra, &blas_dimA1, 
+          adri, adrb, &blas_dimB1, &info);
 #else
       DoublePrecision *p_b;
       Integer i;
