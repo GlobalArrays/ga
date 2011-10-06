@@ -49,6 +49,7 @@ GA_F77_DISABLE
 GA_CXX_ENABLE
 
 GA_DISABLE_MPI_TESTS
+GA_ENABLE_WARNINGS
 GA_ENABLE_CHECKPOINT
 GA_ENABLE_OPT
 GA_ENABLE_PEIGS
@@ -79,6 +80,11 @@ GA_PROG_MPICC
 CFLAGS="$ga_save_CFLAGS"
 AC_USE_SYSTEM_EXTENSIONS
 GA_COMPILER_VENDOR
+GA_C_OPT
+GA_WARN_FLAGS
+ga_save_CFLAGS="$CFLAGS"
+CFLAGS="$ga_cv_c_warning_flags $CFLAGS"
+
 AS_IF([test x$with_mpi_wrappers = xyes],
     [GA_MPI_UNWRAP],
     [GA_ARG_PARSE([with_mpi], [GA_MP_LIBS], [GA_MP_LDFLAGS], [GA_MP_CPPFLAGS])])
@@ -171,7 +177,7 @@ GA_CHECK_FUNCS([bcopy bzero create_shared_region ftruncate gethostbyname gethost
 # Checks for C libraries.
 GA_CHECK_LIBPLOT
 
-GA_C_OPT
+CFLAGS="$ga_save_CFLAGS"
 
 #########################################
 # C++ compiler
@@ -193,6 +199,11 @@ AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 AS_IF([test "x$enable_cxx" = xyes], [
 
 GA_COMPILER_VENDOR
+GA_CXX_OPT
+GA_WARN_FLAGS
+ga_save_CXXFLAGS="$CXXFLAGS"
+CXXFLAGS="$ga_cv_cxx_warning_flags $CXXFLAGS"
+
 AS_IF([test "x$with_mpi" != xno], [GA_MPICXX_TEST])
 
 # Checks for C++ header files.
@@ -204,7 +215,7 @@ GA_CXX_NAMESPACES
 
 # Checks for C++ library functions.
 
-GA_CXX_OPT
+CXXFLAGS="$ga_save_CXXFLAGS"
 
 ])
 
@@ -255,6 +266,11 @@ if test "x$enable_f77" = xyes; then :
 AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 
 GA_COMPILER_VENDOR
+GA_F77_OPT
+GA_WARN_FLAGS
+ga_save_FFLAGS="$FFLAGS"
+FFLAGS="$ga_cv_f77_warning_flags $FFLAGS"
+
 # If F77 is enabled, perform a simple link test for MPI.
 AS_IF([test "x$with_mpi" != xno],
     [AS_IF([test "x$enable_mpi_tests" = xyes],
@@ -286,12 +302,13 @@ GA_F77_FLUSH
 
 # The rest of the Fortran 77 to C compatibility checks.
 GA_F2C_NOMAIN
-GA_F77_OPT
 GA_F2C_CMDARGS
 GA_F2C_HIDDEN_STRING_LENGTH_CONVENTION
 GA_F2C_MATCH_TYPES([INTEGER], [short, int, long, long long])
 GA_F2C_MATCH_TYPES([REAL], [float, double, long double])
 GA_F2C_MATCH_TYPES([DOUBLE PRECISION], [float, double, long double])
+
+FFLAGS="$ga_save_FFLAGS"
 
 else
 

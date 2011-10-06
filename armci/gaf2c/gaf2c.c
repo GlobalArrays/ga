@@ -10,6 +10,7 @@
 #endif
 
 #include "farg.h"
+#include "message.h"
 
 
 /**

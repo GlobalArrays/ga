@@ -651,6 +651,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/ga_sys_weak_alias.m4 \
 	$(top_srcdir)/../m4/ga_target.m4 \
 	$(top_srcdir)/../m4/ga_thread_safe.m4 \
+	$(top_srcdir)/../m4/ga_warn_flags.m4 \
 	$(top_srcdir)/../m4/ga_with_help.m4 \
 	$(top_srcdir)/../m4/tcgmsg_rsh.m4 \
 	$(top_srcdir)/../m4/tcgmsg_timings.m4 \
@@ -2252,6 +2253,9 @@ FFLAG_INT_4 = @FFLAG_INT_4@
 FGREP = @FGREP@
 FLD_NOMAIN = @FLD_NOMAIN@
 FLIBS = @FLIBS@
+GA_CXX_WARN = @GA_CXX_WARN@
+GA_C_WARN = @GA_C_WARN@
+GA_F_WARN = @GA_F_WARN@
 GA_MP_CPPFLAGS = @GA_MP_CPPFLAGS@
 GA_MP_LDFLAGS = @GA_MP_LDFLAGS@
 GA_MP_LIBS = @GA_MP_LIBS@
@@ -2451,9 +2455,9 @@ CLEANFILES = config.fh $(am__append_40) $(am__append_50) \
 	$(am__append_88)
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
-AM_FFLAGS = $(ARMCI_FOPT) $(FFLAG_INT)
-AM_CFLAGS = $(ARMCI_COPT)
-AM_CXXFLAGS = $(ARMCI_CXXOPT)
+AM_FFLAGS = $(ARMCI_FOPT) $(GA_F_WARN) $(FFLAG_INT)
+AM_CFLAGS = $(ARMCI_COPT) $(GA_C_WARN)
+AM_CXXFLAGS = $(ARMCI_CXXOPT) $(GA_CXX_WARN)
 AM_CPPFLAGS = $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
 	$(am__append_1) -I$(top_build_prefix)gaf2c \
 	-I$(top_srcdir)/gaf2c $(am__append_8) $(am__append_10) \

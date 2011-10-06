@@ -688,10 +688,11 @@ F2C_INTEGER_C_TYPE
 F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 F2C_IARGC
 F2C_GETARG
-GA_FOPT
 FLD_NOMAIN
 FFLAG_INT
 FLIBS
+GA_F_WARN
+GA_FOPT
 ENABLE_F77_FALSE
 ENABLE_F77_TRUE
 NOFORT_FALSE
@@ -707,6 +708,7 @@ CCASFLAGS
 CCAS
 CXX_NAMESPACES_FALSE
 CXX_NAMESPACES_TRUE
+GA_CXX_WARN
 GA_CXXOPT
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
@@ -715,7 +717,6 @@ ac_ct_CXX
 CXXFLAGS
 CXX
 MPICXX
-GA_COPT
 PLOTLIB
 C_POINTER_AS_INTEGER
 HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE
@@ -755,6 +756,8 @@ ARMCI_NETWORK_CRAY_SHMEM_TRUE
 ARMCI_NETWORK_BGML_FALSE
 ARMCI_NETWORK_BGML_TRUE
 PERL
+GA_C_WARN
+GA_COPT
 EGREP
 GREP
 CPP
@@ -938,6 +941,7 @@ with_tcgmsg
 enable_f77
 enable_cxx
 enable_mpi_tests
+enable_warnings
 enable_checkpoint
 enable_opt
 enable_peigs
@@ -999,8 +1003,8 @@ CCASFLAGS
 MPIF77
 F77
 FFLAGS
-FFLAG_INT
 GA_FOPT
+FFLAG_INT
 F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 XMKMF
 AR
@@ -1640,6 +1644,7 @@ Optional Features:
   --disable-f77           disable Fortran code
   --enable-cxx            build C++ interface
   --disable-mpi-tests     disable MPI linker tests
+  --enable-warnings       use compiler-specific warnings
   --enable-checkpoint     enable checkpointing
   --disable-opt           don't use hard-coded optimization flags
   --enable-peigs          enable Parallel Eigensystem Solver interface
@@ -1726,8 +1731,8 @@ Some influential environment variables:
   MPIF77      MPI Fortran 77 compiler
   F77         Fortran 77 compiler command
   FFLAGS      Fortran 77 compiler flags
-  FFLAG_INT   Fortran 77 compiler flag to set desired integer size
   GA_FOPT     GA Fortran 77 optimization flags
+  FFLAG_INT   Fortran 77 compiler flag to set desired integer size
   F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
               if cross compiling, set to either "yes" (default) or "no" (after
               string)
@@ -2060,52 +2065,6 @@ $as_echo "$ac_res" >&6; }
 
 } # ac_fn_c_check_header_compile
 
-# ac_fn_c_try_link LINENO
-# -----------------------
-# Try to link conftest.$ac_ext, and return whether this succeeded.
-ac_fn_c_try_link ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  rm -f conftest.$ac_objext conftest$ac_exeext
-  if { { ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
-$as_echo "$ac_try_echo"; } >&5
-  (eval "$ac_link") 2>conftest.err
-  ac_status=$?
-  if test -s conftest.err; then
-    grep -v '^ *+' conftest.err >conftest.er1
-    cat conftest.er1 >&5
-    mv -f conftest.er1 conftest.err
-  fi
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then :
-  ac_retval=0
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_retval=1
-fi
-  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
-  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
-  # interfere with the next link command; also delete a directory that is
-  # left behind by Apple's compiler.  We do this before executing the actions.
-  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
-  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
-  as_fn_set_status $ac_retval
-
-} # ac_fn_c_try_link
-
 # ac_fn_c_compute_int LINENO EXPR VAR INCLUDES
 # --------------------------------------------
 # Tries to find the compile-time value of EXPR in a program that includes
@@ -2283,6 +2242,52 @@ rm -f conftest.val
   as_fn_set_status $ac_retval
 
 } # ac_fn_c_compute_int
+
+# ac_fn_c_try_link LINENO
+# -----------------------
+# Try to link conftest.$ac_ext, and return whether this succeeded.
+ac_fn_c_try_link ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  rm -f conftest.$ac_objext conftest$ac_exeext
+  if { { ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_link") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    grep -v '^ *+' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+    mv -f conftest.er1 conftest.err
+  fi
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then :
+  ac_retval=0
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_retval=1
+fi
+  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
+  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
+  # interfere with the next link command; also delete a directory that is
+  # left behind by Apple's compiler.  We do this before executing the actions.
+  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
+  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
+  as_fn_set_status $ac_retval
+
+} # ac_fn_c_try_link
 
 # ac_fn_c_check_type LINENO TYPE VAR INCLUDES
 # -------------------------------------------
@@ -4275,6 +4280,15 @@ else
 fi
 
 
+
+# Check whether --enable-warnings was given.
+if test "${enable_warnings+set}" = set; then :
+  enableval=$enable_warnings; enable_warnings=yes
+else
+  enable_warnings=no
+fi
+
+
 # Check whether --enable-checkpoint was given.
 if test "${enable_checkpoint+set}" = set; then :
   enableval=$enable_checkpoint; enable_checkpoint=yes
@@ -5791,6 +5805,211 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_c_compiler_vendor" >&5
 $as_echo "$ga_cv_c_compiler_vendor" >&6; }
 
+
+
+if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_target64_sizeof_voidp"        ""; then :
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for TARGET 64bit-ness" >&5
+$as_echo_n "checking for TARGET 64bit-ness... " >&6; }
+if test "${ga_cv_target+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test x$ga_target64_sizeof_voidp = x8; then :
+  ga_cv_target=${ga_cv_target_base}64
+else
+  ga_cv_target=$ga_cv_target_base
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_target" >&5
+$as_echo "$ga_cv_target" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define $ga_cv_target 1
+_ACEOF
+
+
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for specific C optimizations" >&5
+$as_echo_n "checking for specific C optimizations... " >&6; }
+if test "${ga_cv_c_opt+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+if test "x$GA_COPT" != x; then :
+  ga_cv_c_opt="$GA_COPT"
+else
+  ga_cv_c_opt=
+fi
+if test "x$ga_cv_c_opt" = x && test "x$enable_opt" = xyes; then :
+
+case $ga_cv_target:$ga_cv_c_compiler_vendor:$host_cpu in #(
+  BGL:*:*) :
+    ga_cv_c_opt="-O0" ;; #(
+  BGP:ibm:*) :
+    ga_cv_c_opt="-O3 -qstrict -qarch=450 -qtune=450" ;; #(
+  BGP:gnu:*) :
+    ga_cv_c_opt="-O2" ;; #(
+  CATAMOUNT:*:*) :
+    ga_cv_c_opt= ;; #(
+  CRAY_XT:*:*) :
+    ga_cv_c_opt= ;; #(
+  CYGWIN:*:*) :
+    ga_cv_c_opt= ;; #(
+  FUJITSU_VPP64:*:*) :
+    ga_cv_c_opt= ;; #(
+  FUJITSU_VPP:*:*) :
+    ga_cv_c_opt="-KA32" ;; #(
+  HPUX64:*:*) :
+    ga_cv_c_opt="-Ae" ;; #(
+  HPUX64:*:ia64) :
+    ga_cv_c_opt="-Ae" ;; #(
+  HPUX:*:*) :
+    ga_cv_c_opt="-Ae" ;; #(
+  IBM64:*:*) :
+    ga_cv_c_opt= ;; #(
+  IBM:*:*) :
+    ga_cv_c_opt= ;; #(
+  LAPI64:*:*) :
+    ga_cv_c_opt= ;; #(
+  LAPI:*:*) :
+    ga_cv_c_opt= ;; #(
+  LINUX64:fujitsu:ia64) :
+    ga_cv_c_opt="-Kfast" ;; #(
+  LINUX64:fujitsu:x86_64) :
+    ga_cv_c_opt="-Kfast" ;; #(
+  LINUX64:gnu:ia64) :
+    ga_cv_c_opt="-O3 -funroll-loops" ;; #(
+  LINUX64:gnu:powerpc64) :
+    ga_cv_c_opt="-funroll-loops" ;; #(
+  LINUX64:gnu:ppc64) :
+    ga_cv_c_opt="-funroll-loops" ;; #(
+  LINUX64:gnu:x86_64) :
+    ga_cv_c_opt="-O2 -funroll-loops" ;; #(
+  LINUX64:ibm:powerpc64) :
+    ga_cv_c_opt="-qinline=100 -qstrict -qarch=auto -qtune=auto" ;; #(
+  LINUX64:ibm:ppc64) :
+    ga_cv_c_opt="-qinline=100 -qstrict -qarch=auto -qtune=auto" ;; #(
+  LINUX64:ibm:x86_64) :
+    ga_cv_c_opt= ;; #(
+  LINUX64:intel:ia64) :
+    ga_cv_c_opt="-fno-alias -ftz" ;; #(
+  LINUX:fujitsu:*) :
+    ga_cv_c_opt="-Kfast" ;; #(
+  LINUX:gnu:786) :
+    ga_cv_c_opt="-O2 -funroll-loops -malign-double" ;; #(
+  LINUX:gnu:*) :
+    ga_cv_c_opt="-O2 -funroll-loops" ;; #(
+  LINUX:gnu:x86) :
+    ga_cv_c_opt="-O2 -funroll-loops -malign-double" ;; #(
+  LINUX:ibm:*) :
+    ga_cv_c_opt="-q32" ;; #(
+  LINUX:intel:*) :
+    ga_cv_c_opt="-O3 -prefetch" ;; #(
+  MACX64:*:*) :
+    ga_cv_c_opt= ;; #(
+  MACX:*:*) :
+    ga_cv_c_opt= ;; #(
+  NEC64:*:*) :
+    ga_cv_c_opt="-Cvsafe -size_t64" ;; #(
+  NEC:*:*) :
+    ga_cv_c_opt="-Cvsafe" ;; #(
+  SOLARIS64:fujitsu:*) :
+    ga_cv_c_opt="-Kfast -KV9FMADD" ;; #(
+  SOLARIS64:gnu:*) :
+    ga_cv_c_opt="-dalign -xarch=v9" ;; #(
+  SOLARIS64:gnu:i386) :
+    ga_cv_c_opt="-dalign -xarch=amd64" ;; #(
+  SOLARIS:fujitsu:*) :
+    ga_cv_c_opt="-Kfast -KV8PFMADD" ;; #(
+  SOLARIS:gnu:*) :
+    ga_cv_c_opt="-dalign" ;; #(
+  SOLARIS:gnu:i386) :
+    ga_cv_c_opt="-dalign -xarch=sse2" ;; #(
+  *) :
+    ga_cv_c_opt= ;;
+esac
+
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_c_opt" >&5
+$as_echo "$ga_cv_c_opt" >&6; }
+GA_COPT=$ga_cv_c_opt
+
+
+
+if test "x$enable_warnings" = xyes; then :
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for C warning flags" >&5
+$as_echo_n "checking for C warning flags... " >&6; }
+if test "${ga_cv_c_warning_flags+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+
+case $ga_cv_c_compiler_vendor in #(
+  amd) :
+    ga_cv_c_warning_flags="-Wall -W -Wdeclaration-after-statement" ;; #(
+  borland) :
+    ga_cv_c_warning_flags= ;; #(
+  comeau) :
+    ga_cv_c_warning_flags= ;; #(
+  cray) :
+    ga_cv_c_warning_flags= ;; #(
+  dec) :
+    ga_cv_c_warning_flags= ;; #(
+  fujitsu) :
+    ga_cv_c_warning_flags="-Xc -pvctl,fullmsg" ;; #(
+  gnu) :
+    ga_cv_c_warning_flags="-Wall -Wextra -Wdeclaration-after-statement -Wno-unused-parameter -pedantic -Wno-long-long -Wnested-externs -ansi" ;; #(
+  hp) :
+    ga_cv_c_warning_flags= ;; #(
+  ibm) :
+    ga_cv_c_warning_flags= ;; #(
+  intel) :
+    ga_cv_c_warning_flags="-Wall" ;; #(
+  kai) :
+    ga_cv_c_warning_flags= ;; #(
+  lcc) :
+    ga_cv_c_warning_flags= ;; #(
+  metrowerks) :
+    ga_cv_c_warning_flags= ;; #(
+  microsoft) :
+    ga_cv_c_warning_flags= ;; #(
+  pathscale) :
+    ga_cv_c_warning_flags="-Wall -fullwarn -Wno-unused-parameter -pedantic -Wno-long-long -Wnested-externs" ;; #(
+  portland) :
+    ga_cv_c_warning_flags="-Xc" ;; #(
+  sgi) :
+    ga_cv_c_warning_flags= ;; #(
+  sun) :
+    ga_cv_c_warning_flags= ;; #(
+  watcom) :
+    ga_cv_c_warning_flags= ;; #(
+  *) :
+     ;;
+esac
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: ga_cv_c_warning_flags: $ga_cv_c_warning_flags" >&5
+$as_echo "$ga_cv_c_warning_flags" >&6; }
+GA_C_WARN=$ga_cv_c_warning_flags
+
+
+
+
+fi
+
+ga_save_CFLAGS="$CFLAGS"
+CFLAGS="$ga_cv_c_warning_flags $CFLAGS"
 
 if test x$with_mpi_wrappers = xyes; then :
 
@@ -11521,117 +11740,7 @@ fi
 
 
 
-
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for specific C optimizations" >&5
-$as_echo_n "checking for specific C optimizations... " >&6; }
-if test "${ga_cv_c_opt+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-
-if test "x$GA_COPT" != x; then :
-  ga_cv_c_opt="$GA_COPT"
-else
-  ga_cv_c_opt=
-fi
-if test "x$ga_cv_c_opt" = x && test "x$enable_opt" = xyes; then :
-
-case $ga_cv_target:$ga_cv_c_compiler_vendor:$host_cpu in #(
-  BGL:*:*) :
-    ga_cv_c_opt="-O0" ;; #(
-  BGP:ibm:*) :
-    ga_cv_c_opt="-O3 -qstrict -qarch=450 -qtune=450" ;; #(
-  BGP:gnu:*) :
-    ga_cv_c_opt="-O2" ;; #(
-  CATAMOUNT:*:*) :
-    ga_cv_c_opt= ;; #(
-  CRAY_XT:*:*) :
-    ga_cv_c_opt= ;; #(
-  CYGWIN:*:*) :
-    ga_cv_c_opt= ;; #(
-  FUJITSU_VPP64:*:*) :
-    ga_cv_c_opt= ;; #(
-  FUJITSU_VPP:*:*) :
-    ga_cv_c_opt="-KA32" ;; #(
-  HPUX64:*:*) :
-    ga_cv_c_opt="-Ae" ;; #(
-  HPUX64:*:ia64) :
-    ga_cv_c_opt="-Ae" ;; #(
-  HPUX:*:*) :
-    ga_cv_c_opt="-Ae" ;; #(
-  IBM64:*:*) :
-    ga_cv_c_opt= ;; #(
-  IBM:*:*) :
-    ga_cv_c_opt= ;; #(
-  LAPI64:*:*) :
-    ga_cv_c_opt= ;; #(
-  LAPI:*:*) :
-    ga_cv_c_opt= ;; #(
-  LINUX64:fujitsu:ia64) :
-    ga_cv_c_opt="-Kfast" ;; #(
-  LINUX64:fujitsu:x86_64) :
-    ga_cv_c_opt="-Kfast" ;; #(
-  LINUX64:gnu:ia64) :
-    ga_cv_c_opt="-O3 -funroll-loops" ;; #(
-  LINUX64:gnu:powerpc64) :
-    ga_cv_c_opt="-funroll-loops" ;; #(
-  LINUX64:gnu:ppc64) :
-    ga_cv_c_opt="-funroll-loops" ;; #(
-  LINUX64:gnu:x86_64) :
-    ga_cv_c_opt="-O2 -funroll-loops" ;; #(
-  LINUX64:ibm:powerpc64) :
-    ga_cv_c_opt="-qinline=100 -qstrict -qarch=auto -qtune=auto" ;; #(
-  LINUX64:ibm:ppc64) :
-    ga_cv_c_opt="-qinline=100 -qstrict -qarch=auto -qtune=auto" ;; #(
-  LINUX64:ibm:x86_64) :
-    ga_cv_c_opt= ;; #(
-  LINUX64:intel:ia64) :
-    ga_cv_c_opt="-fno-alias -ftz" ;; #(
-  LINUX:fujitsu:*) :
-    ga_cv_c_opt="-Kfast" ;; #(
-  LINUX:gnu:786) :
-    ga_cv_c_opt="-O2 -funroll-loops -malign-double" ;; #(
-  LINUX:gnu:*) :
-    ga_cv_c_opt="-O2 -funroll-loops" ;; #(
-  LINUX:gnu:x86) :
-    ga_cv_c_opt="-O2 -funroll-loops -malign-double" ;; #(
-  LINUX:ibm:*) :
-    ga_cv_c_opt="-q32" ;; #(
-  LINUX:intel:*) :
-    ga_cv_c_opt="-O3 -prefetch" ;; #(
-  MACX64:*:*) :
-    ga_cv_c_opt= ;; #(
-  MACX:*:*) :
-    ga_cv_c_opt= ;; #(
-  NEC64:*:*) :
-    ga_cv_c_opt="-Cvsafe -size_t64" ;; #(
-  NEC:*:*) :
-    ga_cv_c_opt="-Cvsafe" ;; #(
-  SOLARIS64:fujitsu:*) :
-    ga_cv_c_opt="-Kfast -KV9FMADD" ;; #(
-  SOLARIS64:gnu:*) :
-    ga_cv_c_opt="-dalign -xarch=v9" ;; #(
-  SOLARIS64:gnu:i386) :
-    ga_cv_c_opt="-dalign -xarch=amd64" ;; #(
-  SOLARIS:fujitsu:*) :
-    ga_cv_c_opt="-Kfast -KV8PFMADD" ;; #(
-  SOLARIS:gnu:*) :
-    ga_cv_c_opt="-dalign" ;; #(
-  SOLARIS:gnu:i386) :
-    ga_cv_c_opt="-dalign -xarch=sse2" ;; #(
-  *) :
-    ga_cv_c_opt= ;;
-esac
-
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_c_opt" >&5
-$as_echo "$ga_cv_c_opt" >&6; }
-GA_COPT=$ga_cv_c_opt
-
-
+CFLAGS="$ga_save_CFLAGS"
 
 #########################################
 # C++ compiler
@@ -12471,6 +12580,70 @@ fi
 $as_echo "$ga_cv_cxx_compiler_vendor" >&6; }
 
 
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for specific C++ optimizations" >&5
+$as_echo_n "checking for specific C++ optimizations... " >&6; }
+if test "${ga_cv_cxx_opt+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+if test "x$GA_CXXOPT" != x; then :
+  ga_cv_cxx_opt="$GA_CXXOPT"
+else
+  ga_cv_cxx_opt=
+fi
+if test "x$ga_cv_cxx_opt" = x && test "x$enable_opt" = xyes; then :
+
+case $ga_cv_target:$ga_cv_cxx_compiler_vendor:$host_cpu in #(
+  LINUX:*:*) :
+    ga_cv_cxx_opt="-O0" ;; #(
+  NEC64:*:*) :
+    ga_cv_cxx_opt="-Cvsafe -size_t64" ;; #(
+  NEC:*:*) :
+    ga_cv_cxx_opt="-Cvsafe" ;; #(
+  *) :
+    ga_cv_cxx_opt= ;;
+esac
+
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_cxx_opt" >&5
+$as_echo "$ga_cv_cxx_opt" >&6; }
+GA_CXXOPT=$ga_cv_cxx_opt
+
+
+
+if test "x$enable_warnings" = xyes; then :
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for C++ warning flags" >&5
+$as_echo_n "checking for C++ warning flags... " >&6; }
+if test "${ga_cv_cxx_warning_flags+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+
+ga_cv_cxx_warning_flags=
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: ga_cv_cxx_warning_flags: $ga_cv_cxx_warning_flags" >&5
+$as_echo "$ga_cv_cxx_warning_flags" >&6; }
+GA_CXX_WARN=$ga_cv_cxx_warning_flags
+
+
+
+
+fi
+
+ga_save_CXXFLAGS="$CXXFLAGS"
+CXXFLAGS="$ga_cv_cxx_warning_flags $CXXFLAGS"
+
 if test "x$with_mpi" != xno; then :
 
 if test "x$with_mpi" != xno; then :
@@ -12647,41 +12820,7 @@ fi
 
 # Checks for C++ library functions.
 
-
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for specific C++ optimizations" >&5
-$as_echo_n "checking for specific C++ optimizations... " >&6; }
-if test "${ga_cv_cxx_opt+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-
-if test "x$GA_CXXOPT" != x; then :
-  ga_cv_cxx_opt="$GA_CXXOPT"
-else
-  ga_cv_cxx_opt=
-fi
-if test "x$ga_cv_cxx_opt" = x && test "x$enable_opt" = xyes; then :
-
-case $ga_cv_target:$ga_cv_cxx_compiler_vendor:$host_cpu in #(
-  LINUX:*:*) :
-    ga_cv_cxx_opt="-O0" ;; #(
-  NEC64:*:*) :
-    ga_cv_cxx_opt="-Cvsafe -size_t64" ;; #(
-  NEC:*:*) :
-    ga_cv_cxx_opt="-Cvsafe" ;; #(
-  *) :
-    ga_cv_cxx_opt= ;;
-esac
-
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_cxx_opt" >&5
-$as_echo "$ga_cv_cxx_opt" >&6; }
-GA_CXXOPT=$ga_cv_cxx_opt
-
-
+CXXFLAGS="$ga_save_CXXFLAGS"
 
 
 fi
@@ -13588,6 +13727,152 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_compiler_vendor" >&5
 $as_echo "$ga_cv_f77_compiler_vendor" >&6; }
 
+
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for specific Fortran optimizations" >&5
+$as_echo_n "checking for specific Fortran optimizations... " >&6; }
+if test "${ga_cv_f77_opt+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+if test "x$GA_FOPT" != x; then :
+  ga_cv_f77_opt="$GA_FOPT"
+else
+  ga_cv_f77_opt=
+fi
+if test "x$ga_cv_f77_opt" = x && test "x$enable_opt" = xyes; then :
+
+case $ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu in #(
+  BGL:*:*) :
+    ga_cv_f77_opt="-O0" ;; #(
+  BGP:ibm:*) :
+    ga_cv_f77_opt="-O3 -qstrict -qarch=450 -qtune=450" ;; #(
+  BGP:gnu:*) :
+    ga_cv_f77_opt="-O2" ;; #(
+  CATAMOUNT:*:*) :
+    ga_cv_f77_opt="-O3" ;; #(
+  CRAY_XT:*:*) :
+    ga_cv_f77_opt= ;; #(
+  CYGWIN:*:*) :
+    ga_cv_f77_opt= ;; #(
+  FUJITSU_VPP64:*:*) :
+    ga_cv_f77_opt="-Sw" ;; #(
+  FUJITSU_VPP:*:*) :
+    ga_cv_f77_opt="-Sw -KA32" ;; #(
+  HPUX64:*:*) :
+    ga_cv_f77_opt="-O1" ;; #(
+  HPUX64:*:ia64) :
+    ga_cv_f77_opt="-O1" ;; #(
+  HPUX:*:*) :
+    ga_cv_f77_opt="-O1" ;; #(
+  IBM64:*:*) :
+    ga_cv_f77_opt="-qarch=auto" ;; #(
+  IBM:*:*) :
+    ga_cv_f77_opt="-qarch=auto" ;; #(
+  LAPI64:*:*) :
+    ga_cv_f77_opt="-qarch=auto" ;; #(
+  LAPI:*:*) :
+    ga_cv_f77_opt="-qarch=auto" ;; #(
+  LINUX64:*:alpha) :
+    ga_cv_f77_opt="-align_dcommons -fpe3 -check nooverflow -assume accuracy_sensitive -check nopower -check nounderflow" ;; #(
+  LINUX64:fujitsu:ia64) :
+    ga_cv_f77_opt="-Kfast -X9 -Am -fw" ;; #(
+  LINUX64:fujitsu:x86_64) :
+    ga_cv_f77_opt="-Kfast -X9 -Am -fw" ;; #(
+  LINUX64:gnu:x86_64) :
+    ga_cv_f77_opt="-O" ;; #(
+  LINUX64:ibm:x86_64) :
+    ga_cv_f77_opt= ;; #(
+  LINUX64:intel:ia64) :
+    ga_cv_f77_opt="-cm -w90 -w95 -align" ;; #(
+  LINUX64:intel:powerpc64) :
+    ga_cv_f77_opt= ;; #(
+  LINUX64:intel:ppc64) :
+    ga_cv_f77_opt= ;; #(
+  LINUX64:intel:x86_64) :
+    ga_cv_f77_opt="-O3 -w -cm -xW -tpp7" ;; #(
+  LINUX64:portland:x86_64) :
+    ga_cv_f77_opt="-Mdalign" ;; #(
+  LINUX:fujitsu:*) :
+    ga_cv_f77_opt="-Kfast -X9 -Am -fw" ;; #(
+  LINUX:gnu:786) :
+    ga_cv_f77_opt="-O2 -funroll-loops -malign-double" ;; #(
+  LINUX:gnu:*) :
+    ga_cv_f77_opt="-O2 -funroll-loops" ;; #(
+  LINUX:gnu:x86) :
+    ga_cv_f77_opt="-O2 -funroll-loops -malign-double" ;; #(
+  LINUX:ibm:*) :
+    ga_cv_f77_opt="-q32" ;; #(
+  LINUX:intel:*) :
+    ga_cv_f77_opt="-O3 -prefetch -w -cm" ;; #(
+  LINUX:portland:*) :
+    ga_cv_f77_opt="-Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical" ;; #(
+  MACX64:ibm:*) :
+    ga_cv_f77_opt= ;; #(
+  MACX64:intel:*) :
+    ga_cv_f77_opt="-O3 -prefetch -w -cm" ;; #(
+  MACX:gnu:*) :
+    ga_cv_f77_opt="-O3 -funroll-loops" ;; #(
+  MACX:intel:*) :
+    ga_cv_f77_opt="-O3 -prefetch -w -cm" ;; #(
+  NEC64:*:*) :
+    ga_cv_f77_opt="-Cvsafe -size_t64" ;; #(
+  NEC:*:*) :
+    ga_cv_f77_opt="-Cvsafe" ;; #(
+  SOLARIS64:fujitsu:*) :
+    ga_cv_f77_opt="-fw -Kfast -KV9FMADD" ;; #(
+  SOLARIS64:gnu:*) :
+    ga_cv_f77_opt="-xs -dalign -xarch=v9" ;; #(
+  SOLARIS64:gnu:i386) :
+    ga_cv_f77_opt="-xs -dalign -xarch=amd64" ;; #(
+  SOLARIS:fujitsu:*) :
+    ga_cv_f77_opt="-fw -Kfast -KV8PFMADD" ;; #(
+  SOLARIS:gnu:*) :
+    ga_cv_f77_opt="-xs -dalign" ;; #(
+  SOLARIS:gnu:i386) :
+    ga_cv_f77_opt="-xs -dalign -xarch=sse2" ;; #(
+  *) :
+    ga_cv_f77_opt= ;;
+esac
+
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_opt" >&5
+$as_echo "$ga_cv_f77_opt" >&6; }
+GA_FOPT=$ga_cv_f77_opt
+
+
+
+if test "x$enable_warnings" = xyes; then :
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran 77 warning flags" >&5
+$as_echo_n "checking for Fortran 77 warning flags... " >&6; }
+if test "${ga_cv_f77_warning_flags+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+
+ga_cv_f77_warning_flags=
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: ga_cv_f77_warning_flags: $ga_cv_f77_warning_flags" >&5
+$as_echo "$ga_cv_f77_warning_flags" >&6; }
+GA_F_WARN=$ga_cv_f77_warning_flags
+
+
+
+
+fi
+
+ga_save_FFLAGS="$FFLAGS"
+FFLAGS="$ga_cv_f77_warning_flags $FFLAGS"
 
 # If F77 is enabled, perform a simple link test for MPI.
 if test "x$with_mpi" != xno; then :
@@ -16118,123 +16403,6 @@ if test "x$ga_cv_fld_nomain" != xnone; then :
 fi
 
 
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for specific Fortran optimizations" >&5
-$as_echo_n "checking for specific Fortran optimizations... " >&6; }
-if test "${ga_cv_f77_opt+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-
-if test "x$GA_FOPT" != x; then :
-  ga_cv_f77_opt="$GA_FOPT"
-else
-  ga_cv_f77_opt=
-fi
-if test "x$ga_cv_f77_opt" = x && test "x$enable_opt" = xyes; then :
-
-case $ga_cv_target:$ga_cv_f77_compiler_vendor:$host_cpu in #(
-  BGL:*:*) :
-    ga_cv_f77_opt="-O0" ;; #(
-  BGP:ibm:*) :
-    ga_cv_f77_opt="-O3 -qstrict -qarch=450 -qtune=450" ;; #(
-  BGP:gnu:*) :
-    ga_cv_f77_opt="-O2" ;; #(
-  CATAMOUNT:*:*) :
-    ga_cv_f77_opt="-O3" ;; #(
-  CRAY_XT:*:*) :
-    ga_cv_f77_opt= ;; #(
-  CYGWIN:*:*) :
-    ga_cv_f77_opt= ;; #(
-  FUJITSU_VPP64:*:*) :
-    ga_cv_f77_opt="-Sw" ;; #(
-  FUJITSU_VPP:*:*) :
-    ga_cv_f77_opt="-Sw -KA32" ;; #(
-  HPUX64:*:*) :
-    ga_cv_f77_opt="-O1" ;; #(
-  HPUX64:*:ia64) :
-    ga_cv_f77_opt="-O1" ;; #(
-  HPUX:*:*) :
-    ga_cv_f77_opt="-O1" ;; #(
-  IBM64:*:*) :
-    ga_cv_f77_opt="-qarch=auto" ;; #(
-  IBM:*:*) :
-    ga_cv_f77_opt="-qarch=auto" ;; #(
-  LAPI64:*:*) :
-    ga_cv_f77_opt="-qarch=auto" ;; #(
-  LAPI:*:*) :
-    ga_cv_f77_opt="-qarch=auto" ;; #(
-  LINUX64:*:alpha) :
-    ga_cv_f77_opt="-align_dcommons -fpe3 -check nooverflow -assume accuracy_sensitive -check nopower -check nounderflow" ;; #(
-  LINUX64:fujitsu:ia64) :
-    ga_cv_f77_opt="-Kfast -X9 -Am -fw" ;; #(
-  LINUX64:fujitsu:x86_64) :
-    ga_cv_f77_opt="-Kfast -X9 -Am -fw" ;; #(
-  LINUX64:gnu:x86_64) :
-    ga_cv_f77_opt="-O" ;; #(
-  LINUX64:ibm:x86_64) :
-    ga_cv_f77_opt= ;; #(
-  LINUX64:intel:ia64) :
-    ga_cv_f77_opt="-cm -w90 -w95 -align" ;; #(
-  LINUX64:intel:powerpc64) :
-    ga_cv_f77_opt= ;; #(
-  LINUX64:intel:ppc64) :
-    ga_cv_f77_opt= ;; #(
-  LINUX64:intel:x86_64) :
-    ga_cv_f77_opt="-O3 -w -cm -xW -tpp7" ;; #(
-  LINUX64:portland:x86_64) :
-    ga_cv_f77_opt="-Mdalign" ;; #(
-  LINUX:fujitsu:*) :
-    ga_cv_f77_opt="-Kfast -X9 -Am -fw" ;; #(
-  LINUX:gnu:786) :
-    ga_cv_f77_opt="-O2 -funroll-loops -malign-double" ;; #(
-  LINUX:gnu:*) :
-    ga_cv_f77_opt="-O2 -funroll-loops" ;; #(
-  LINUX:gnu:x86) :
-    ga_cv_f77_opt="-O2 -funroll-loops -malign-double" ;; #(
-  LINUX:ibm:*) :
-    ga_cv_f77_opt="-q32" ;; #(
-  LINUX:intel:*) :
-    ga_cv_f77_opt="-O3 -prefetch -w -cm" ;; #(
-  LINUX:portland:*) :
-    ga_cv_f77_opt="-Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical" ;; #(
-  MACX64:ibm:*) :
-    ga_cv_f77_opt= ;; #(
-  MACX64:intel:*) :
-    ga_cv_f77_opt="-O3 -prefetch -w -cm" ;; #(
-  MACX:gnu:*) :
-    ga_cv_f77_opt="-O3 -funroll-loops" ;; #(
-  MACX:intel:*) :
-    ga_cv_f77_opt="-O3 -prefetch -w -cm" ;; #(
-  NEC64:*:*) :
-    ga_cv_f77_opt="-Cvsafe -size_t64" ;; #(
-  NEC:*:*) :
-    ga_cv_f77_opt="-Cvsafe" ;; #(
-  SOLARIS64:fujitsu:*) :
-    ga_cv_f77_opt="-fw -Kfast -KV9FMADD" ;; #(
-  SOLARIS64:gnu:*) :
-    ga_cv_f77_opt="-xs -dalign -xarch=v9" ;; #(
-  SOLARIS64:gnu:i386) :
-    ga_cv_f77_opt="-xs -dalign -xarch=amd64" ;; #(
-  SOLARIS:fujitsu:*) :
-    ga_cv_f77_opt="-fw -Kfast -KV8PFMADD" ;; #(
-  SOLARIS:gnu:*) :
-    ga_cv_f77_opt="-xs -dalign" ;; #(
-  SOLARIS:gnu:i386) :
-    ga_cv_f77_opt="-xs -dalign -xarch=sse2" ;; #(
-  *) :
-    ga_cv_f77_opt= ;;
-esac
-
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_f77_opt" >&5
-$as_echo "$ga_cv_f77_opt" >&6; }
-GA_FOPT=$ga_cv_f77_opt
-
-
-
 ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -16891,6 +17059,8 @@ F2C_DOUBLE_PRECISION_C_TYPE=$ga_cv_f2c_DOUBLE_PRECISION
 
 
 
+
+FFLAGS="$ga_save_FFLAGS"
 
 else
 

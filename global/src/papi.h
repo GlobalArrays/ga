@@ -371,7 +371,4 @@ extern void pnga_nbget_field(Integer g_a, Integer *lo, Integer *hi, Integer foff
 extern void pnga_nbput_field(Integer g_a, Integer *lo, Integer *hi, Integer foff, Integer fsize,void *buf, Integer *ld, Integer *nbhandle);
 extern void pnga_put_field(Integer g_a, Integer *lo, Integer *hi, Integer foff, Integer fsize,void *buf, Integer *ld);
 
-
-
 #endif /* PAPI_H_ */
-;

@@ -312,6 +312,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/armci_setup.m4 \
 	$(top_srcdir)/m4/ga_target.m4 \
 	$(top_srcdir)/m4/ga_thread_safe.m4 \
 	$(top_srcdir)/m4/ga_union_semun.m4 \
+	$(top_srcdir)/m4/ga_warn_flags.m4 \
 	$(top_srcdir)/m4/ga_with_help.m4 $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/lt_obsolete.m4 $(top_srcdir)/m4/ltoptions.m4 \
 	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
@@ -2280,7 +2281,10 @@ FLIBS = @FLIBS@
 GA_ACCESS_INDEX_TYPE = @GA_ACCESS_INDEX_TYPE@
 GA_COPT = @GA_COPT@
 GA_CXXOPT = @GA_CXXOPT@
+GA_CXX_WARN = @GA_CXX_WARN@
+GA_C_WARN = @GA_C_WARN@
 GA_FOPT = @GA_FOPT@
+GA_F_WARN = @GA_F_WARN@
 GA_MP_CPPFLAGS = @GA_MP_CPPFLAGS@
 GA_MP_LDFLAGS = @GA_MP_LDFLAGS@
 GA_MP_LIBS = @GA_MP_LIBS@
@@ -2527,9 +2531,9 @@ CLEANFILES = $(bin_SCRIPTS) config.fh global/src/wapi.h \
 	gparrays/src/gpwapi.h gparrays/src/gpwapidefs.h
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
-AM_FFLAGS = $(GA_FOPT) $(FFLAG_INT)
-AM_CFLAGS = $(GA_COPT)
-AM_CXXFLAGS = $(GA_CXXOPT)
+AM_FFLAGS = $(GA_FOPT) $(GA_F_WARN) $(FFLAG_INT)
+AM_CFLAGS = $(GA_COPT) $(GA_C_WARN)
+AM_CXXFLAGS = $(GA_CXXOPT) $(GA_CXX_WARN)
 AM_CPPFLAGS = $(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) \
 	$(BLAS_CPPFLAGS) $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
 	-I$(top_build_prefix)ma -I$(top_srcdir)/ma \

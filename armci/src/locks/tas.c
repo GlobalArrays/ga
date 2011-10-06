@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #ifdef __alpha
 #   include "tas-alpha.h"
 #elif defined(__i386__) || defined(__x86_64__)
