@@ -866,11 +866,11 @@ void PARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg) {
     }    
 }
 
-void* PARMCI_Memat(armci_meminfo_t *meminfo, int memflg) {
+void* PARMCI_Memat(armci_meminfo_t *meminfo, long offset) {
     void *ptr=NULL;
     
     if(meminfo==NULL) armci_die("ARMCI_Memget: Invalid arg #2 (NULL ptr)",0);
-    if(memflg!=0) armci_die("ARMCI_Memget: Invalid memflg", memflg);
+    if(offset!=0) armci_die("ARMCI_Memget: Invalid offset", offset);
 
     if(meminfo->cpid==armci_me) { ptr = meminfo->addr; return ptr; }
 
@@ -892,7 +892,7 @@ void* PARMCI_Memat(armci_meminfo_t *meminfo, int memflg) {
     return ptr;
 }
 
-void ARMCI_Memdt(armci_meminfo_t *meminfo, int memflg) {
+void ARMCI_Memdt(armci_meminfo_t *meminfo, long offset) {
   /**
    * Do nothing. May be we need to have reference counting in future. This
    * is to avoid the case of dangling pointers when the creator of shm

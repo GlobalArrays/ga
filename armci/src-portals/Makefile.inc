@@ -55,9 +55,15 @@ if PORTALS_ENABLE_NEW_MALLOC
 libarmci_la_SOURCES += src-portals/new_memory.c
 endif
 if ENABLE_F77
-libarmci_la_SOURCES += src-portals/faccumulate.f
-libarmci_la_SOURCES += src-portals/fcopy.f
-endif
+noinst_LTLIBRARIES += libfcopyfacc.la
+libfcopyfacc_la_SOURCES =
+libfcopyfacc_la_SOURCES += src-portals/fcopy.f
+libfcopyfacc_la_SOURCES += src-portals/faccumulate.f
+libfcopyfacc_la_FFLAGS =
+libfcopyfacc_la_FFLAGS += $(ARMCI_FOPT)
+libfcopyfacc_la_FFLAGS += $(FFLAG_INT_4)
+libarmci_la_LIBADD += libfcopyfacc.la
+endif # ENABLE_F77
 if MSG_COMMS_MPI
 libarmci_la_SOURCES += src-portals/groups.c
 endif

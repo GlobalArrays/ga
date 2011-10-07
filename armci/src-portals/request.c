@@ -540,7 +540,7 @@ extern int **_armci_int_mutexes;
 
 /*\ send RMW request to server
 \*/
-void armci_rem_rmw(int op, int *ploc, int *prem, int extra, int proc)
+void armci_rem_rmw(int op, void *ploc, void *prem, int extra, int proc)
 {
 request_header_t *msginfo;
 char *buf;
@@ -559,14 +559,14 @@ long offst;
     msginfo->datalen = sizeof(long);
   # ifdef PORTALS_UNRESOLVED
     offst=x_net_offset(prem,proc);
-    prem = (int *)((char *)prem+offst);
+    prem = ((char *)prem+offst);
   # endif
     buf = (char*)(msginfo+1);
     ADDBUF(buf, void*, prem); /* pointer is shipped as descriptor */
 
     /* data field: extra argument in fetch&add and local value in swap */
     if(op==ARMCI_SWAP){
-       ADDBUF(buf, int, *ploc);
+       ADDBUF(buf, int, *((int*)ploc));
     }else if(op==ARMCI_SWAP_LONG) {
        ADDBUF(buf, long, *((long*)ploc) );
        msginfo->datalen = sizeof(long);
@@ -584,7 +584,7 @@ long offst;
     buffer = armci_rcv_data(proc,msginfo,0);  /* receive response */
 
     if(op==ARMCI_FETCH_AND_ADD || op== ARMCI_SWAP)
-        *ploc = *(int*)buffer;
+        *(int*)ploc = *(int*)buffer;
     else
         *(long*)ploc = *(long*)buffer;
 

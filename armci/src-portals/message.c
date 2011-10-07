@@ -18,13 +18,18 @@
 #include "message.h"
 #include "armcip.h"
 #include "copy.h"
-#include <stdio.h>
-#include <assert.h>
+#if HAVE_STDIO_H
+#   include <stdio.h>
+#endif
+#if HAVE_ASSERT_H
+#   include <assert.h>
+#endif
 #ifdef _POSIX_PRIORITY_SCHEDULING
 #ifndef HITACHI
 #  include <sched.h>
 #endif
 #endif
+#include "armci.h"
 #include "acc.h"
 
 #define DEBUG_ 0
@@ -48,6 +53,9 @@ static int _armci_gop_init=0;   /* tells us if we have a buffers allocated  */
 static int _armci_gop_shmem =0; /* tells us to use shared memory for gops */
 extern void armci_util_wait_int(volatile int *, int , int );
 static int empty=EMPTY,full=FULL;
+#if !defined(SGIALTIX) && defined(SYSV) || defined(MMAP) || defined(WIN32)
+static void **ptr_arr=NULL;
+#endif
 
 typedef struct {
         union {
@@ -99,7 +107,9 @@ static bufstruct *_gop_buffer;
 /*\
  *  Variables/structures for use in Barrier and for Binomial tree
 \*/
-#include <math.h>
+#if HAVE_MATH_H
+#   include <math.h>
+#endif
 int barr_switch;
 static int LnB=0,powof2nodes,Lp2;
 typedef struct {
@@ -161,6 +171,12 @@ static void _allocate_mem_for_work(){
 }
 
 
+static void _deallocate_mem_for_work(){
+    if (work) free(work);
+    work = NULL; lwork = NULL; iwork = NULL; fwork = NULL; llwork = NULL;
+}
+
+
 /*\ allocate and initialize buffers used for collective communication
 \*/
 void armci_msg_gop_init()
@@ -172,7 +188,6 @@ void armci_msg_gop_init()
 #if !defined(SGIALTIX) && defined(SYSV) || defined(MMAP) || defined(WIN32)
     if(ARMCI_Uses_shm()){
        char *tmp;
-       void **ptr_arr;
        double *work;
        int size = sizeof(bufstruct);
        int bytes = size * armci_clus_info[armci_clus_me].nslave;
@@ -423,12 +438,12 @@ void parmci_msg_barrier()
      else
 #endif
      {
-       long tag=ARMCI_TAG;
-       tcg_synch(tag);
+       tcg_synch(ARMCI_TAG);
      }
 #  else
-     long tag=ARMCI_TAG;
-     tcg_synch(tag);
+     {
+        tcg_synch(ARMCI_TAG);
+     }
 #  endif
 }
 /***********************End Barrier Code*************************************/
@@ -453,6 +468,9 @@ void armci_msg_init(int *argc, char ***argv)
         MPI_Init(argc, argv);
 #   endif
     }
+    if (!PARMCI_Initialized()) {
+        MPI_Comm_dup(MPI_COMM_WORLD, &ARMCI_COMM_WORLD);
+    }
 #endif
 }
 
@@ -460,32 +478,47 @@ void armci_msg_init(int *argc, char ***argv)
 int armci_msg_me()
 {
 #ifdef BGML
-     return(BGML_Messager_rank());
-#  elif defined(MPI)
-     int me;
-     MPI_Comm_rank(ARMCI_COMM_WORLD, &me);
-     return(me);
-#  elif defined(PVM)
-       return(pvm_getinst(mp_group_name,pvm_mytid()));
-#  else
-     return (int)tcg_nodeid();
-#  endif
+    return BGML_Messager_rank();
+#elif defined(DCMF)
+    return DCMF_Messager_rank();
+#elif defined(MPI)
+    static int counter = 0;
+    if (counter == 0) {
+        int me;
+        MPI_Comm_rank(ARMCI_COMM_WORLD, &me);
+        armci_me = me;   
+        counter = 1;
+    }
+    return armci_me;
+
+#elif defined(PVM)
+    return(pvm_getinst(mp_group_name,pvm_mytid()));
+#else
+    return (int)tcg_nodeid();
+#endif
 }
 
 
 int armci_msg_nproc()
 {
 #ifdef BGML
-   return(BGML_Messager_size());
+    return BGML_Messager_size();
+#elif defined(DCMF)
+    return DCMF_Messager_size();
 #elif defined(MPI)
-     int nproc;
-     MPI_Comm_size(ARMCI_COMM_WORLD, &nproc);
-     return nproc;
-#  elif defined(PVM)
-     return(pvm_gsize(mp_group_name));
-#  else
-     return (int)NNODES_();
-#  endif
+    static int counter = 0;
+    if (counter == 0) {
+        int nproc;
+        MPI_Comm_size(ARMCI_COMM_WORLD, &nproc);
+        armci_nproc = nproc;
+        counter = 1;
+    }
+    return armci_nproc;
+#elif defined(PVM)
+    return(pvm_gsize(mp_group_name));
+#else
+    return (int)tcg_nnodes();
+#endif
 }
 
 #ifdef CRAY_YMP
@@ -496,13 +529,15 @@ int armci_msg_nproc()
 double armci_timer()
 {
 #ifdef BGML
-   return BGML_Timer();
-#  elif defined(MPI)
+    return BGML_Timer();
+#elif defined(DCMF)
+    return DCMF_Timer();
+#elif defined(MPI)
 
-     return MPI_Wtime();
-#  else
-     return TCGTIME_();
-#  endif
+    return MPI_Wtime();
+#else
+    return tcg_time();
+#endif
 }
 #endif
 
@@ -510,21 +545,32 @@ double armci_timer()
 void armci_msg_abort(int code)
 {
 #ifdef BGML
-   fprintf(stderr,"ARMCI aborting [%d]\n", code);
+    fprintf(stderr,"ARMCI aborting [%d]\n", code);
+#elif defined(DCMF)
+    fprintf(stderr,"ARMCI aborting [%d]\n", code);
 #elif defined(MPI)
 #    ifndef BROKEN_MPI_ABORT
-         MPI_Abort(ARMCI_COMM_WORLD,code);
+    MPI_Abort(ARMCI_COMM_WORLD,code);
 #    endif
-#  elif defined(PVM)
-     char error_msg[25];
-     sprintf(error_msg, "ARMCI aborting [%d]", code);
-     pvm_halt();
-#  else
-     Error("ARMCI aborting",(long)code);
-#  endif
+#elif defined(PVM)
+    char error_msg[25];
+    sprintf(error_msg, "ARMCI aborting [%d]", code);
+    pvm_halt();
+#else
+    tcg_error("ARMCI aborting",(long)code);
+#endif
     fprintf(stderr,"%d:aborting\n",armci_me);
-   /* trap for broken abort in message passing libs */
-   _exit(1);
+    /* trap for broken abort in message passing libs */
+    _exit(1);
+}
+
+void armci_msg_finalize()
+{
+#if defined(TCGMSG)
+    tcg_pend();
+#elif defined(MPI)
+    MPI_Finalize();
+#endif
 }
 
 void armci_msg_bintree(int scope, int* Root, int *Up, int *Left, int *Right)
@@ -740,6 +786,11 @@ void armci_msg_bcast(void *buf, int len, int root)
 {
 int Root = armci_master;
 int nslave = armci_clus_info[armci_clus_me].nslave;
+
+#if defined(MPI_SPAWN) || defined(MPI_MT)
+    armci_msg_bcast_scope(SCOPE_ALL, (buf), (len), (root));
+    return;
+#endif
 #ifdef LAPI
     if(_armci_gop_init){_armci_msg_binomial_bcast(buf,len,root);return;}
 #endif
@@ -772,7 +823,7 @@ void armci_msg_brdcst(void* buffer, int len, int root)
 #  else
    {
       long ttag=ARMCI_TAG, llen=len, rroot=root;
-      BRDCST_(&ttag, buffer, &llen, &rroot);
+      tcg_brdcst(ttag, buffer, llen, rroot);
    }
 #  endif
 }
@@ -794,7 +845,7 @@ void armci_msg_snd(int tag, void* buffer, int len, int to)
       armci_die("bgl shouldn't use armci_msg_snd", armci_me);
 #  else
       long ttag=tag, llen=len, tto=to, block=1;
-      SND_(&ttag, buffer, &llen, &tto, &block);
+      tcg_snd(ttag, buffer, llen, tto, block);
 #  endif
 }
 
@@ -816,7 +867,7 @@ void armci_msg_rcv(int tag, void* buffer, int buflen, int *msglen, int from)
             armci_die("bgl shouldn't use armci_msg_rcv", armci_me);
 #  else
       long ttag=tag, llen=buflen, mlen, ffrom=from, sender, block=1;
-      RCV_(&ttag, buffer, &llen, &mlen, &ffrom, &sender, &block);
+      tcg_rcv(ttag, buffer, llen, &mlen, ffrom, &sender, block);
       if(msglen)*msglen = (int)mlen;
 #  endif
 }
@@ -844,7 +895,7 @@ int armci_msg_rcvany(int tag, void* buffer, int buflen, int *msglen)
       armci_die("bgl shouldn't use armci_msg_rcvany", armci_me);
 #  else
       long ttag=tag, llen=buflen, mlen, ffrom=-1, sender, block=1;
-      RCV_(&ttag, buffer, &llen, &mlen, &ffrom, &sender, &block);
+      tcg_rcv(ttag, buffer, llen, &mlen, ffrom, &sender, block);
       if(msglen)*msglen = (int)mlen;
       return (int)sender;
 #  endif
@@ -1267,6 +1318,40 @@ int ndo, len, lenmes, orign =n, ratio;
 void *origx =x;
     if(!x)armci_die("armci_msg_gop: NULL pointer", n);
     if(work==NULL)_allocate_mem_for_work();
+#ifdef BGML
+   BGML_Dt dt;
+   BGML_Op theop;
+
+   if(n > 0 && (strncmp(op, "+", 1) == 0) && (type==ARMCI_INT || type==ARMCI_DOUBLE))
+   {
+      theop=BGML_SUM;
+      if(type==ARMCI_INT)
+         dt=BGML_SIGNED_INT;
+      else if(type==ARMCI_DOUBLE)
+         dt=BGML_DOUBLE;
+      BGTr_Allreduce(origx, x, n, dt, theop, -1, PCLASS);
+   }
+   else if(n > 0 && (strncmp(op, "max", 3) == 0) && (type==ARMCI_INT || type==ARMCI_DOUBLE))
+   {
+      theop=BGML_MAX;
+      if(type==ARMCI_INT)
+         dt=BGML_SIGNED_INT;
+      else if(type==ARMCI_DOUBLE)
+         dt=BGML_DOUBLE;
+      BGTr_Allreduce(origx, x, n, dt, theop, -1, PCLASS);
+   }
+   else if(n > 0 && (strncmp(op, "min", 3) == 0) && (type==ARMCI_INT || type==ARMCI_DOUBLE))
+   {
+      theop=BGML_MIN;
+      if(type==ARMCI_INT)
+         dt=BGML_SIGNED_INT;
+      else if(type==ARMCI_DOUBLE)
+         dt=BGML_DOUBLE;
+      BGTr_Allreduce(origx, x, n, dt, theop, -1, PCLASS);
+   }
+   else
+#endif
+  {
     armci_msg_bintree(scope, &root, &up, &left, &right);
 
     if(type==ARMCI_INT) size = sizeof(int);
@@ -1306,6 +1391,7 @@ void *origx =x;
      /* Now, root broadcasts the result down the binary tree */
      len = orign*size;
      armci_msg_bcast_scope(scope, origx, len, root);
+   }
 }
 
 
@@ -1703,7 +1789,7 @@ int len, lenmes, min;
 
     if(!x)armci_die("armci_msg_gop_info: NULL pointer", n);
 
-    if(n>INFO_BUF_SIZE)armci_die("armci_msg_gop_info: info too large",n);
+    if(n>((int)INFO_BUF_SIZE))armci_die("armci_msg_gop_info: info too large",n);
 
     len = lenmes = n;
 
@@ -1805,20 +1891,21 @@ void armci_exchange_address(void *ptr_ar[], int n)
  * ********************* Begin ARMCI Groups Code ****************************
  * NOTE: This part is MPI dependent (i.e. ifdef MPI)
  */
-#  ifdef MPI
+#ifdef MPI
 MPI_Comm armci_group_comm(ARMCI_Group *group)
 {
 #ifdef ARMCI_GROUP
     return MPI_COMM_NULL;
 #else
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
-    return (MPI_Comm)igroup->icomm;
+    ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
+    return (MPI_Comm)(igroup->icomm);
 #endif
 }
 
 void parmci_msg_group_barrier(ARMCI_Group *group)
 {
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
+    ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
+    
 #ifdef ARMCI_GROUP
  {
    int val=0;
@@ -1828,18 +1915,22 @@ void parmci_msg_group_barrier(ARMCI_Group *group)
     MPI_Barrier((MPI_Comm)(igroup->icomm));
 #endif
 }
+
+#ifdef ARMCI_GROUP
+extern void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Group *group);
+#else
+extern void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm);
+#endif
 void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
                            int grp_clus_nproc, ARMCI_Group *mastergroup) {
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)mastergroup;
+    ARMCI_iGroup *igroup = armci_get_igroup_from_group(mastergroup);
     int i, *pid_list, root=0;
 #ifdef ARMCI_GROUP
     ARMCI_Group group;
-    void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Group *group);
 #else
     MPI_Group group_world;
     MPI_Group group;
     MPI_Comm comm;
-    void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm);
 #endif
  
     /* create a communicator for the processes with in a node */
@@ -1852,6 +1943,7 @@ void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
     ARMCI_Bcast_(buf, len, root, &group);
     ARMCI_Group_free(&group);
 #else
+    /* why?*/
     MPI_Comm_group((MPI_Comm)(igroup->icomm), &group_world);
     MPI_Group_incl(group_world, grp_clus_nproc, pid_list, &group);
  
@@ -1920,10 +2012,12 @@ void armci_msg_group_bcast_scope(int scope, void *buf, int len, int root,
 {
     int up, left, right, Root;
     int grp_me;
+    ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
+
     if(!buf)armci_die("armci_msg_bcast: NULL pointer", len);
  
     if(!group)armci_msg_bcast_scope(scope,buf,len,root);
-    else grp_me = ((ARMCI_iGroup *)group)->grp_attr.grp_me;
+    else grp_me = igroup->grp_attr.grp_me;
     armci_msg_group_bintree(scope, &Root, &up, &left, &right,group);
  
     if(root !=Root){
@@ -1947,9 +2041,10 @@ armci_msg_group_gop_scope(int scope, void *x, int n, char* op, int type,
     int tag=ARMCI_TAG,grp_me;
     int ndo, len, lenmes, orign =n, ratio;
     void *origx =x;
+    ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
  
     if(!group)armci_msg_gop_scope(scope,x,n,op,type);
-    else grp_me = ((ARMCI_iGroup *)group)->grp_attr.grp_me;
+    else grp_me = igroup->grp_attr.grp_me;
     if(!x)armci_die("armci_msg_gop: NULL pointer", n);
     if(work==NULL)_allocate_mem_for_work();
  
@@ -1997,7 +2092,8 @@ armci_msg_group_gop_scope(int scope, void *x, int n, char* op, int type,
 void armci_exchange_address_grp(void *ptr_arr[], int n, ARMCI_Group *group)
 {
     int ratio = sizeof(void*)/sizeof(int);
-    int grp_me = ((ARMCI_iGroup *)group)->grp_attr.grp_me;
+    ARMCI_iGroup *igroup = armci_get_igroup_from_group(group);
+    int grp_me = igroup->grp_attr.grp_me;
     if(DEBUG_){
        printf("%d: exchanging %ld ratio=%d\n",armci_me,
 	      (long)ptr_arr[grp_me], ratio);
