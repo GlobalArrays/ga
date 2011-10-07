@@ -57,6 +57,7 @@ libfcopyfacc_la_FFLAGS =
 libfcopyfacc_la_FFLAGS += $(ARMCI_FOPT)
 libfcopyfacc_la_FFLAGS += $(FFLAG_INT_4)
 libarmci_la_LIBADD += libfcopyfacc.la
+libarmcii_la_LIBADD += libfcopyfacc.la
 endif # ENABLE_F77
 if ARMCI_ENABLE_GPC_CALLS
 libarmci_la_SOURCES += src-gemini/gpc.c

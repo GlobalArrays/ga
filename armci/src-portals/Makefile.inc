@@ -63,6 +63,7 @@ libfcopyfacc_la_FFLAGS =
 libfcopyfacc_la_FFLAGS += $(ARMCI_FOPT)
 libfcopyfacc_la_FFLAGS += $(FFLAG_INT_4)
 libarmci_la_LIBADD += libfcopyfacc.la
+libarmcii_la_LIBADD += libfcopyfacc.la
 endif # ENABLE_F77
 if MSG_COMMS_MPI
 libarmci_la_SOURCES += src-portals/groups.c

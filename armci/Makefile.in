@@ -303,20 +303,21 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_PORTALS_TRUE@@PORTALS_ENABLE_NEW_MALLOC_TRUE@am__append_31 = src-portals/new_memory.c
 @ARMCI_NETWORK_PORTALS_TRUE@@ENABLE_F77_TRUE@am__append_32 = libfcopyfacc.la
 @ARMCI_NETWORK_PORTALS_TRUE@@ENABLE_F77_TRUE@am__append_33 = libfcopyfacc.la
-@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_34 = src-portals/groups.c
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_35 = src-portals/gpc.c
-@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__append_36 = src-portals/threads.c \
+@ARMCI_NETWORK_PORTALS_TRUE@@ENABLE_F77_TRUE@am__append_34 = libfcopyfacc.la
+@ARMCI_NETWORK_PORTALS_TRUE@@MSG_COMMS_MPI_TRUE@am__append_35 = src-portals/groups.c
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_36 = src-portals/gpc.c
+@ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@am__append_37 = src-portals/threads.c \
 @ARMCI_NETWORK_PORTALS_TRUE@@THREAD_SAFE_TRUE@	src-portals/utils.c
-@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_TRUE@am__append_37 = src-portals/tas.c
-@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_38 = src-portals/tas_as.s
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_39 = src-portals/armci.h \
+@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_TRUE@am__append_38 = src-portals/tas.c
+@ARMCI_NETWORK_PORTALS_TRUE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_39 = src-portals/tas_as.s
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_40 = src-portals/armci.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/gpc.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/message.h
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_40 =  \
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_41 =  \
 @ARMCI_NETWORK_PORTALS_TRUE@	-I$(top_srcdir)/src-portals \
 @ARMCI_NETWORK_PORTALS_TRUE@	-I$(top_srcdir)/src/include
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_41 = src-portals/tas_as.s
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_42 = src-gemini/acc.h \
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_42 = src-portals/tas_as.s
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_43 = src-gemini/acc.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/aggregate.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/armci.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/armci-onesided.c \
@@ -366,21 +367,22 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/tas-ppc.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/utils.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/vector.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_43 = libfcopyfacc.la
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_44 = libfcopyfacc.la
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_45 = src-gemini/gpc.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_46 = src-gemini/threads.c \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_45 = libfcopyfacc.la
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_46 = libfcopyfacc.la
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_47 = src-gemini/gpc.c
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_48 = src-gemini/threads.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@	src-gemini/utils.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__append_47 = src-gemini/tas.c
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_48 = src-gemini/tas_as.s
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_49 = src-gemini/armci.h \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__append_49 = src-gemini/tas.c
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_50 = src-gemini/tas_as.s
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_51 = src-gemini/armci.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/gpc.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/message.h
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_50 = -I$(top_srcdir)/src-gemini \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_52 = -I$(top_srcdir)/src-gemini \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/src/include
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_51 = -lnumatoolkit \
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_53 = -lnumatoolkit \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	-lonesided
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_52 = src-gemini/tas_as.s
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_54 = src-gemini/tas_as.s
 
 ##############################################################################
 # tcgmsg
@@ -397,7 +399,7 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 ##############################################################################
 # src
 #
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_53 = src/collectives/message.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_55 = src/collectives/message.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/aggregate.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/armci.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/ccopy.c \
@@ -441,20 +443,21 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/rmw.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/strided.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/xfer/vector.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_54 = libfcopyfacc.la
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_55 = libfcopyfacc.la
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_56 = src/common/groups.c
-@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_57 = -I$(top_srcdir)/src/devices/bgml
-@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_58 = src/devices/bgml/bgmlacc.h \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_56 = libfcopyfacc.la
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_57 = libfcopyfacc.la
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_F77_TRUE@am__append_58 = libfcopyfacc.la
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MSG_COMMS_MPI_TRUE@am__append_59 = src/common/groups.c
+@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_60 = -I$(top_srcdir)/src/devices/bgml
+@ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_61 = src/devices/bgml/bgmlacc.h \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgml.c \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgmldefs.h \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgml.h \
 @ARMCI_NETWORK_BGML_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/bgml/bgmltas-ppc.h
-@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_59 = -I$(top_srcdir)/src/devices/cray-shmem
-@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_60 = src/memory/shmalloc.c
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_61 = -I$(top_srcdir)/src/devices/dcmf
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_62 = src/devices/dcmf/armcix.h
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@am__append_63 = src/devices/dcmf/dcmf2/armcix_acc.c \
+@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_62 = -I$(top_srcdir)/src/devices/cray-shmem
+@ARMCI_NETWORK_CRAY_SHMEM_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_63 = src/memory/shmalloc.c
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_64 = -I$(top_srcdir)/src/devices/dcmf
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_65 = src/devices/dcmf/armcix.h
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@am__append_66 = src/devices/dcmf/dcmf2/armcix_acc.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_fence.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_get.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_impl.c \
@@ -462,7 +465,7 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_put.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_rmw.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_2_TRUE@	src/devices/dcmf/dcmf2/armcix_wait.c
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@am__append_64 = src/devices/dcmf/dcmf-0.2.0/armcix_acc.c \
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@am__append_67 = src/devices/dcmf/dcmf-0.2.0/armcix_acc.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_fence.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_get.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_impl.c \
@@ -470,7 +473,7 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_put.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_rmw.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_2_TRUE@	src/devices/dcmf/dcmf-0.2.0/armcix_wait.c
-@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@am__append_65 = src/devices/dcmf/dcmf-0.3.0/armcix_acc.c \
+@ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@am__append_68 = src/devices/dcmf/dcmf-0.3.0/armcix_acc.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_fence.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_get.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_impl.c \
@@ -478,29 +481,29 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_put.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_rmw.c \
 @ARMCI_NETWORK_DCMF_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@DCMF_VER_0_3_TRUE@	src/devices/dcmf/dcmf-0.3.0/armcix_wait.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_66 = -I$(top_srcdir)/src/devices/lapi
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_67 = src/common/async.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_69 = -I$(top_srcdir)/src/devices/lapi
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_70 = src/common/async.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/lapi/lapi.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/lapi/lapidefs.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_LAPI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_68 = -I$(top_srcdir)/src/devices/mpi-mt
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_69 = src/common/ds-shared.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_71 = -I$(top_srcdir)/src/devices/mpi-mt
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_72 = src/common/ds-shared.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/spawn.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-mt/mpi2_client.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-mt/mpi2.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-mt/mpi2_server.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_MT_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_70 = -I$(top_srcdir)/src/devices/mpi-spawn
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_71 = src/common/ds-shared.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_73 = -I$(top_srcdir)/src/devices/mpi-spawn
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_74 = src/common/ds-shared.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-spawn/mpi2_client.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-spawn/mpi2.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/mpi-spawn/mpi2_server.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_MPI_SPAWN_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_72 = -I$(top_srcdir)/src/devices/openib
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_73 = src/common/async.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_75 = -I$(top_srcdir)/src/devices/openib
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_76 = src/common/async.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/ds-shared.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/regions.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/common/request.c \
@@ -513,8 +516,8 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/openib/pendbufs.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/devices/openib/rtinfo.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_OPENIB_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__append_74 = -I$(top_srcdir)/src/devices/sockets
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__append_75 = src/common/async.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__append_77 = -I$(top_srcdir)/src/devices/sockets
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@am__append_78 = src/common/async.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/common/ds-shared.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/common/request.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/common/spawn.c \
@@ -522,78 +525,79 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/devices/sockets/sockets.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/devices/sockets/sockets.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ARMCI_NETWORK_SOCKETS_TRUE@	src/memory/buffers.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_76 = src/ft/armci_chkpt.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@am__append_79 = src/ft/armci_chkpt.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_CHECKPOINT_TRUE@	src/ft/armci_storage.c
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_77 = src/common/gpc.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__append_78 = src/common/signaltrap.c \
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_80 = src/common/gpc.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__append_81 = src/common/signaltrap.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@	src/memory/shmalloc.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@	src/memory/winshmem.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__append_79 = -DSHMEM -DMMAP
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@am__append_80 = src/common/signaltrap.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_TRUE@am__append_82 = -DSHMEM -DMMAP
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@am__append_83 = src/common/signaltrap.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@	src/memory/shmem.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@MACX_FALSE@@SYSV_TRUE@	src/memory/shmlimit.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NB_NONCONT_TRUE@am__append_81 = src/common/noncont.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_82 = src/common/utils.c \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NB_NONCONT_TRUE@am__append_84 = src/common/noncont.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@am__append_85 = src/common/utils.c \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@THREAD_SAFE_TRUE@	src/util/threads.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__append_83 = src/locks/tas.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_84 = src/locks/tas_as.s
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_TRUE@am__append_85 = src/common/x86copy.c
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__append_86 = src/common/x86copy_as.s
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__append_87 = src/locks/tas-sx.s
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_88 = src/include/armci.h \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_TRUE@am__append_86 = src/locks/tas.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_TAS_OKAY_FALSE@@INLINE_TAS_WITH_TRUE@am__append_87 = src/locks/tas_as.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_TRUE@am__append_88 = src/common/x86copy.c
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@INLINE_X86COPY_NEEDED_TRUE@@INLINE_X86COPY_OKAY_FALSE@@INLINE_X86COPY_WITH_TRUE@am__append_89 = src/common/x86copy_as.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@@NEC_TRUE@am__append_90 = src/locks/tas-sx.s
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_91 = src/include/armci.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/gpc.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/message.h
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_89 = -I$(top_srcdir)/src/include
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_90 = src/common/x86copy_as.s \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_92 = -I$(top_srcdir)/src/include
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_93 = src/common/x86copy_as.s \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/locks/tas_as.s
 
 ##############################################################################
 # profiling
 #
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_91 = libarmci_prof.la
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_92 = src/common/capi.c
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_93 = tools/armci_prof.c
-@ENABLE_PROFILING_FALSE@am__append_94 = src/common/capi.c
-@ENABLE_CHECKPOINT_TRUE@am__append_95 = testing/fttest
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_96 = testing/gpctest
-@MSG_COMMS_MPI_TRUE@am__append_97 = testing/simple testing/test_groups
-@MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__append_98 = testing/ipctest
-@THREAD_SAFE_TRUE@am__append_99 = testing/test_mt
-@ENABLE_F77_TRUE@am__append_100 = testing/acc_test testing/copy_test
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_101 = testing/clone \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_94 = libarmci_prof.la
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_95 = src/common/capi.c
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_96 = tools/armci_prof.c
+@ENABLE_PROFILING_FALSE@am__append_97 = src/common/capi.c
+@ENABLE_CHECKPOINT_TRUE@am__append_98 = testing/fttest
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_99 = testing/gpctest
+@MSG_COMMS_MPI_TRUE@am__append_100 = testing/simple \
+@MSG_COMMS_MPI_TRUE@	testing/test_groups
+@MSG_COMMS_MPI_TRUE@@SYSV_TRUE@am__append_101 = testing/ipctest
+@THREAD_SAFE_TRUE@am__append_102 = testing/test_mt
+@ENABLE_F77_TRUE@am__append_103 = testing/acc_test testing/copy_test
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_104 = testing/clone \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/fork testing/origptl \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/ptltest testing/te
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_102 = testing/testitr
-@ENABLE_CHECKPOINT_TRUE@am__append_103 = testing/fttest$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_104 = testing/gpctest$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_105 = testing/simple$(EXEEXT) \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_105 = testing/testitr
+@ENABLE_CHECKPOINT_TRUE@am__append_106 = testing/fttest$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_107 = testing/gpctest$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_108 = testing/simple$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	testing/test_groups$(EXEEXT)
 #ARMCI_PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
-@THREAD_SAFE_TRUE@am__append_106 = testing/test_mt$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_107 = testing/acc_test$(EXEEXT) \
+@THREAD_SAFE_TRUE@am__append_109 = testing/test_mt$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_110 = testing/acc_test$(EXEEXT) \
 @ENABLE_F77_TRUE@	testing/copy_test$(EXEEXT)
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_108 = testing/clone$(EXEEXT) \
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_111 = testing/clone$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/fork$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/origptl$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/ptltest$(EXEEXT) \
 @ARMCI_NETWORK_PORTALS_TRUE@	testing/te$(EXEEXT)
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_109 = testing/testitr$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_110 = examples/features/gpc/hashtable/test_hashtable
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_111 = examples/features/proc_affinity/computation_impact/computation_impact
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_112 = examples/features/proc_affinity/simple/simple
-@MSG_COMMS_MPI_TRUE@am__append_113 = examples/features/concurrency/multidma/multidma \
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_112 = testing/testitr$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_113 = examples/features/gpc/hashtable/test_hashtable
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_114 = examples/features/proc_affinity/computation_impact/computation_impact
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_115 = examples/features/proc_affinity/simple/simple
+@MSG_COMMS_MPI_TRUE@am__append_116 = examples/features/concurrency/multidma/multidma \
 @MSG_COMMS_MPI_TRUE@	examples/features/non-blocking/overlap/overlap
-@RANDOM_ACCESS_TRUE@am__append_114 = examples/benchmarks/RandomAccess/simple/simple \
+@RANDOM_ACCESS_TRUE@am__append_117 = examples/benchmarks/RandomAccess/simple/simple \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket
-@THREAD_SAFE_TRUE@am__append_115 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_116 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_117 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
-@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_118 = examples/features/proc_affinity/simple/simple$(EXEEXT)
+@THREAD_SAFE_TRUE@am__append_118 = examples/benchmarks/lu/armci_multithreaded/lu-block-th
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_119 = examples/features/gpc/hashtable/test_hashtable$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@@HAVE_BLAS_TRUE@@HAVE_LAPACK_TRUE@am__append_120 = examples/features/proc_affinity/computation_impact/computation_impact$(EXEEXT)
+@ARMCI_ENABLE_GPC_CALLS_TRUE@am__append_121 = examples/features/proc_affinity/simple/simple$(EXEEXT)
 #ARMCI_PARALLEL_TESTS += examples/features/concurrency/multidma/multidma$(EXEEXT) # needs bug fixes
 #ARMCI_PARALLEL_TESTS += examples/features/non-blocking/overlap/overlap$(EXEEXT) # needs bug fixes
-@RANDOM_ACCESS_TRUE@am__append_119 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
+@RANDOM_ACCESS_TRUE@am__append_122 = examples/benchmarks/RandomAccess/simple/simple$(EXEEXT) \
 @RANDOM_ACCESS_TRUE@	examples/benchmarks/RandomAccess/smp_bucket/smp_bucket$(EXEEXT)
-@THREAD_SAFE_TRUE@am__append_120 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
+@THREAD_SAFE_TRUE@am__append_123 = examples/benchmarks/lu/armci_multithreaded/lu-block-th$(EXEEXT)
 TESTS = $(am__EXEEXT_25) $(am__EXEEXT_26)
 XFAIL_TESTS = $(am__EXEEXT_27) $(am__EXEEXT_27)
 subdir = .
@@ -693,7 +697,7 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libarmci_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__append_33) $(am__append_44) $(am__append_55)
+	$(am__append_33) $(am__append_45) $(am__append_57)
 am__libarmci_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
 	gaf2c/farg.F tcgmsg/capi.c tcgmsg/ipcv4.0/brdcst.c \
 	tcgmsg/ipcv4.0/checkbyte.c tcgmsg/ipcv4.0/cluster.c \
@@ -1131,7 +1135,8 @@ am__libarmci_prof_la_SOURCES_DIST = tools/armci_prof.c
 libarmci_prof_la_OBJECTS = $(am_libarmci_prof_la_OBJECTS)
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libarmci_prof_la_rpath = -rpath \
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	$(libdir)
-libarmcii_la_LIBADD =
+libarmcii_la_DEPENDENCIES = $(am__append_34) $(am__append_46) \
+	$(am__append_58)
 am__libarmcii_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
 	gaf2c/farg.F tcgmsg/capi.c tcgmsg/ipcv4.0/brdcst.c \
 	tcgmsg/ipcv4.0/checkbyte.c tcgmsg/ipcv4.0/cluster.c \
@@ -2373,12 +2378,12 @@ ACLOCAL_AMFLAGS = -I m4 -I ../m4
 # are listed in these variables.  Appended to throughout.  These are the
 # automake variables used.
 include_HEADERS = gaf2c/typesf2c.h gaf2c/farg.h $(am__append_7) \
-	$(am__append_39) $(am__append_49) $(am__append_88) \
+	$(am__append_40) $(am__append_51) $(am__append_91) \
 	src/include/parmci.h
 check_LTLIBRARIES = 
-lib_LTLIBRARIES = libarmci.la $(am__append_91)
-noinst_LTLIBRARIES = libarmcii.la $(am__append_32) $(am__append_43) \
-	$(am__append_54)
+lib_LTLIBRARIES = libarmci.la $(am__append_94)
+noinst_LTLIBRARIES = libarmcii.la $(am__append_32) $(am__append_44) \
+	$(am__append_56)
 
 ##############################################################################
 # gaf2c
@@ -2386,22 +2391,24 @@ noinst_LTLIBRARIES = libarmcii.la $(am__append_32) $(am__append_43) \
 libarmci_la_SOURCES = gaf2c/gaf2c.c gaf2c/drand.c $(am__append_3) \
 	$(am__append_6) $(am__append_9) $(am__append_16) \
 	$(am__append_17) $(am__append_18) $(am__append_25) \
-	$(am__append_30) $(am__append_31) $(am__append_34) \
-	$(am__append_35) $(am__append_36) $(am__append_37) \
-	$(am__append_42) $(am__append_45) $(am__append_46) \
-	$(am__append_47) $(am__append_53) $(am__append_56) \
-	$(am__append_58) $(am__append_60) $(am__append_62) \
-	$(am__append_63) $(am__append_64) $(am__append_65) \
-	$(am__append_67) $(am__append_69) $(am__append_71) \
-	$(am__append_73) $(am__append_75) $(am__append_76) \
-	$(am__append_77) $(am__append_78) $(am__append_80) \
-	$(am__append_81) $(am__append_82) $(am__append_83) \
-	$(am__append_85) $(am__append_87) $(am__append_92) \
-	$(am__append_93) $(am__append_94)
-nodist_libarmci_la_SOURCES = config.fh $(am__append_38) \
-	$(am__append_48) $(am__append_84) $(am__append_86)
+	$(am__append_30) $(am__append_31) $(am__append_35) \
+	$(am__append_36) $(am__append_37) $(am__append_38) \
+	$(am__append_43) $(am__append_47) $(am__append_48) \
+	$(am__append_49) $(am__append_55) $(am__append_59) \
+	$(am__append_61) $(am__append_63) $(am__append_65) \
+	$(am__append_66) $(am__append_67) $(am__append_68) \
+	$(am__append_70) $(am__append_72) $(am__append_74) \
+	$(am__append_76) $(am__append_78) $(am__append_79) \
+	$(am__append_80) $(am__append_81) $(am__append_83) \
+	$(am__append_84) $(am__append_85) $(am__append_86) \
+	$(am__append_88) $(am__append_90) $(am__append_95) \
+	$(am__append_96) $(am__append_97)
+nodist_libarmci_la_SOURCES = config.fh $(am__append_39) \
+	$(am__append_50) $(am__append_87) $(am__append_89)
 libarmci_la_LIBADD = $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) \
-	$(am__append_33) $(am__append_44) $(am__append_55)
+	$(am__append_33) $(am__append_45) $(am__append_57)
+libarmcii_la_LIBADD = $(am__append_34) $(am__append_46) \
+	$(am__append_58)
 libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
 nodist_libarmcii_la_SOURCES = $(nodist_libarmci_la_SOURCES)
 
@@ -2452,8 +2459,8 @@ EXTRA_DIST = README tcgmsg/README tcgmsg/examples/blkdat120lin.f \
 #
 BUILT_SOURCES = config.fh
 MOSTLYCLEANFILES = 
-CLEANFILES = config.fh $(am__append_41) $(am__append_52) \
-	$(am__append_90)
+CLEANFILES = config.fh $(am__append_42) $(am__append_54) \
+	$(am__append_93)
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
 AM_FFLAGS = $(ARMCI_FOPT) $(GA_F_WARN) $(FFLAG_INT)
@@ -2462,14 +2469,14 @@ AM_CXXFLAGS = $(ARMCI_CXXOPT) $(GA_CXX_WARN)
 AM_CPPFLAGS = $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
 	$(am__append_1) -I$(top_build_prefix)gaf2c \
 	-I$(top_srcdir)/gaf2c $(am__append_8) $(am__append_10) \
-	$(am__append_19) $(am__append_26) $(am__append_40) \
-	$(am__append_50) $(am__append_57) $(am__append_59) \
-	$(am__append_61) $(am__append_66) $(am__append_68) \
-	$(am__append_70) $(am__append_72) $(am__append_74) \
-	$(am__append_79) $(am__append_89)
+	$(am__append_19) $(am__append_26) $(am__append_41) \
+	$(am__append_52) $(am__append_60) $(am__append_62) \
+	$(am__append_64) $(am__append_69) $(am__append_71) \
+	$(am__append_73) $(am__append_75) $(am__append_77) \
+	$(am__append_82) $(am__append_92)
 AM_LDFLAGS = $(LDFLAGS_BASE) $(am__append_2)
 LDADD = libarmci.la $(LTLIBOBJS) $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) \
-	$(am__append_51)
+	$(am__append_53)
 LDFLAGS_BASE = $(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS)
 
 # Certain trickery when turning Fortran support on or off.
@@ -2558,7 +2565,7 @@ gaf2c_testarg_LDFLAGS = $(FLDFLAGS)
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@@ENABLE_SHARED_TRUE@MAYBE_PIC = -fPIC -DPIC
 @ARMCI_NETWORK_PORTALS_TRUE@@ENABLE_SHARED_TRUE@MAYBE_PIC = -fPIC -DPIC
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@libarmci_prof_la_SOURCES = tools/armci_prof.c
-ARMCI_SERIAL_TESTS = $(am__append_107) $(am__append_109)
+ARMCI_SERIAL_TESTS = $(am__append_110) $(am__append_112)
 ARMCI_SERIAL_TESTS_XFAIL = 
 #ARMCI_PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
 #ARMCI_SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
@@ -2569,9 +2576,9 @@ ARMCI_SERIAL_TESTS_XFAIL =
 ARMCI_PARALLEL_TESTS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 	testing/perf_aggr$(EXEEXT) testing/simplelock$(EXEEXT) \
 	testing/test$(EXEEXT) testing/test2$(EXEEXT) \
-	testing/testnotify$(EXEEXT) $(am__append_103) \
-	$(am__append_104) $(am__append_105) $(am__append_106) \
-	$(am__append_108) \
+	testing/testnotify$(EXEEXT) $(am__append_106) \
+	$(am__append_107) $(am__append_108) $(am__append_109) \
+	$(am__append_111) \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu$(EXEEXT) \
@@ -2583,9 +2590,9 @@ ARMCI_PARALLEL_TESTS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
 	examples/features/non-blocking/simple/simple$(EXEEXT) \
 	examples/features/notification/simple/testnotify$(EXEEXT) \
 	examples/features/symmetric_memory/simple/simple$(EXEEXT) \
-	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_116) \
-	$(am__append_117) $(am__append_118) $(am__append_119) \
-	$(am__append_120)
+	examples/simpleApps/transp1D-c$(EXEEXT) $(am__append_119) \
+	$(am__append_120) $(am__append_121) $(am__append_122) \
+	$(am__append_123)
 ARMCI_PARALLEL_TESTS_XFAIL = 
 ARMCI_TESTS = $(ARMCI_SERIAL_TESTS) $(ARMCI_PARALLEL_TESTS)
 ARMCI_TESTS_XFAIL = $(ARMCI_SERIAL_TESTS_XFAIL) $(ARMCI_PARALLEL_TESTS_XFAIL)
