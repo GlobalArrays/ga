@@ -481,19 +481,11 @@ typedef struct {
 }ARMCI_iGroup;
  
 armci_grp_attr_t *ARMCI_Group_getattr(ARMCI_Group *grp);
+
+extern void armci_group_init();
+extern void armci_group_finalize();
+extern ARMCI_iGroup* armci_get_igroup_from_group(ARMCI_Group *group);
  
-extern void armci_msg_group_igop(int *x, int n, char* op,ARMCI_Group *group);
-extern void armci_msg_group_lgop(long *x, int n, char* op,ARMCI_Group *group);
-extern void armci_msg_group_fgop(float *x, int n, char* op,ARMCI_Group *group);
-extern void armci_msg_group_dgop(double *x, int n,char* op,ARMCI_Group *group);
-extern void armci_msg_group_bcast_scope(int scope, void *buf, int len,
-                                        int root, ARMCI_Group *group);
-extern void armci_msg_group_barrier(ARMCI_Group *group);
-extern void armci_msg_group_gop_scope(int scope, void *x, int n, char* op,
-                                      int type, ARMCI_Group *group);
-extern void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
-                                  int grp_clus_nproc,ARMCI_Group *mastergroup);
-extern void armci_exchange_address_grp(void *ptr_arr[], int n, ARMCI_Group *group);
 #endif /* ifdef MPI */ 
 /* -------------------------------------------------------- */
 

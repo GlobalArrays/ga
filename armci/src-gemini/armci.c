@@ -346,6 +346,8 @@ void ARMCI_NetInit()
 
 int PARMCI_Init_args(int *argc, char ***argv)
 {
+    armci_msg_init(argc,argv);
+
     _armci_argc = argc;
     _armci_argv = argv;
     _armci_initialized_args=1;
@@ -353,21 +355,19 @@ int PARMCI_Init_args(int *argc, char ***argv)
 }
 
 
+extern void *sbrk(intptr_t);
 extern void code_summary();
+
 int PARMCI_Init()
 {
-extern void *sbrk(intptr_t);
-caddr_t atbeginbrval = (caddr_t)sbrk(0);
+    caddr_t atbeginbrval = (caddr_t)sbrk(0);
     if(_armci_initialized>0) return 0;
 #ifdef NEW_MALLOC
     mallopt(M_MMAP_MAX, 0);
     mallopt(M_TRIM_THRESHOLD, -1);
 #endif
 
-#ifdef MPI
-    /*JD: initialize duplicate communicator before anything else*/
-    MPI_Comm_dup(MPI_COMM_WORLD, &ARMCI_COMM_WORLD);
-#endif
+    armci_msg_init(NULL, NULL);
 
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();

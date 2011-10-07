@@ -291,7 +291,7 @@ extern int armci_rem_strided(int op, void* scale, int proc,
                        int count[], int stride_levels, 
                        ext_header_t *h, int lockit,armci_ihdl_t nb_handle);
 
-extern void armci_rem_rmw(int op, int *ploc, int *prem, int extra, int proc);
+extern void armci_rem_rmw(int op, void *ploc, void *prem, int extra, int proc);
 extern void armci_rem_ack(int clus);
 extern void armci_server(request_header_t *msginfo, char *dscr, char* buf, 
                          int buflen);

@@ -3,6 +3,9 @@
 #ifndef _ARMCI_H
 #define _ARMCI_H   
 
+/* for size_t */
+#include <stdlib.h>
+
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
@@ -21,8 +24,8 @@ typedef struct {
 typedef long armci_size_t;
 extern int armci_notify(int proc);
 extern int armci_notify_wait(int proc,int *pval);
-extern int ARMCI_Init_args(int *argc, char ***argv);
 extern int ARMCI_Init(void);    /* initialize ARMCI */
+extern int ARMCI_Init_args(int *argc, char ***argv);
 extern void ARMCI_Barrier(void);    /* ARMCI Barrier*/
 
 extern int ARMCI_Put(void *src, void* dst, int bytes, int proc);
@@ -68,6 +71,8 @@ extern int ARMCI_PutS_flag(
                 int proc              /* remote process(or) ID */
                 );
 
+extern int ARMCI_Acc(int optype, void *scale, void *src, void *dst, int bytes, int proc);
+
 extern int ARMCI_AccS(                /* strided accumulate */
                 int  optype,          /* operation */
                 void *scale,          /* scale factor x += scale*y */
@@ -81,11 +86,7 @@ extern int ARMCI_AccS(                /* strided accumulate */
                 );
 
 
-#ifdef __crayx1__
-#define ARMCI_Get(_s,_d,_b,_p) memcpy(_d,_s,_b), 0
-#else
 extern int ARMCI_Get(void *src, void* dst, int bytes, int proc);
-#endif
 
 extern int ARMCI_GetS(          /* strided get */
                 void *src_ptr,        /* pointer to 1st segment at source*/ 
@@ -151,7 +152,7 @@ extern void ARMCI_Error(char *msg, int code);
 extern void ARMCI_Fence(int proc);
 extern void ARMCI_DoFence(int proc);
 extern void ARMCI_AllFence(void);
-extern int  ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc);
+extern int  ARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc);
 extern void ARMCI_Cleanup(void);
 extern int ARMCI_Create_mutexes(int num);
 extern int ARMCI_Destroy_mutexes(void);
@@ -241,24 +242,20 @@ typedef struct{
 
 #define armci_req_t armci_hdl_t
 
-#ifdef MPI
-typedef struct {
-    double dummy[8];
-} ARMCI_Group;
+typedef int ARMCI_Group;
  
-void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group_out);
-void ARMCI_Group_create_child(int n, int *pid_list, ARMCI_Group *group_out, 
-			      ARMCI_Group *group_parent);
-void ARMCI_Group_free(ARMCI_Group *group);
-int  ARMCI_Group_rank(ARMCI_Group *group, int *rank);
-void ARMCI_Group_size(ARMCI_Group *group, int *size);
-void ARMCI_Group_set_default(ARMCI_Group *group);
-void ARMCI_Group_get_default(ARMCI_Group *group_out);
-void ARMCI_Group_get_world(ARMCI_Group *group_out);
+extern void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group_out);
+extern void ARMCI_Group_create_child(int n, int *pid_list,
+        ARMCI_Group *group_out, ARMCI_Group *group_parent);
+extern void ARMCI_Group_free(ARMCI_Group *group);
+extern int  ARMCI_Group_rank(ARMCI_Group *group, int *rank);
+extern void ARMCI_Group_size(ARMCI_Group *group, int *size);
+extern void ARMCI_Group_set_default(ARMCI_Group *group);
+extern void ARMCI_Group_get_default(ARMCI_Group *group_out);
+extern void ARMCI_Group_get_world(ARMCI_Group *group_out);
    
-int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,ARMCI_Group *group);
-int ARMCI_Free_group(void *ptr, ARMCI_Group *group);
-#endif
+extern int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,ARMCI_Group *group);
+extern int ARMCI_Free_group(void *ptr, ARMCI_Group *group);
 
 extern int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* nb_handle);
 
