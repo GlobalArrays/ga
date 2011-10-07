@@ -434,6 +434,29 @@ void parmci_msg_barrier()
 /***********************End Barrier Code*************************************/
 
 
+void armci_msg_init(int *argc, char ***argv)
+{
+#if defined(TCGMSG)
+    if (!tcg_ready()) {
+        tcg_pbegin(argc,argv);
+    }
+#elif defined(BGML)
+    /* empty */
+#elif defined(MPI)
+    int flag=0;
+    MPI_Initialized(&flag);
+    if (!flag) {
+#   if defined(DCMF) || defined(MPI_MT)
+        int provided;
+        MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &provided);
+#   else
+        MPI_Init(argc, argv);
+#   endif
+    }
+#endif
+}
+
+
 int armci_msg_me()
 {
 #ifdef BGML

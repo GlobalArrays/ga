@@ -12,7 +12,6 @@
 #   include <math.h>
 #endif
 
-#include "mp3.h"
 #include "armci.h"
 #include "message.h"
 
@@ -38,7 +37,7 @@ int i,j;
         }
       }
     }
-    /*MP_BARRIER();*/
+    /*armci_msg_barrier();*/
 }
 
 void computeminverser(double *minvptr,double *rvecptr,double *minvrptr)
@@ -46,7 +45,7 @@ void computeminverser(double *minvptr,double *rvecptr,double *minvrptr)
 int i;
     for(i=myfirstrow;i<=mylastrow;i++)
        minvrptr[i]=minvptr[i]*rvecptr[i];
-    /*MP_BARRIER();*/
+    /*armci_msg_barrier();*/
 }
 
 void acg_printvec2(char *v, double *vec, char *v1, double *vec1)
@@ -55,7 +54,7 @@ int i;
     for(i=myfirstrow;i<=mylastrow;i++)
       printf("\n%d:%s[%d]=%f %s[%d]=%f",me,v,i,vec[i],v1,i,vec1[i]);
     fflush(stdout);
-    MP_BARRIER();
+    armci_msg_barrier();
 }
 
 void acg_printvec(char *v, double *vec)
@@ -64,7 +63,7 @@ int i;
     for(i=myfirstrow;i<=mylastrow;i++)
       printf("\n%d:%s[%d]=%f",me,v,i,vec[i]);
     fflush(stdout);
-    MP_BARRIER();
+    armci_msg_barrier();
 }
 
 double acg_ddot(double *vec1,double *vec2)
@@ -74,7 +73,7 @@ double dt=0.0;
     for(i=myfirstrow;i<=mylastrow;i++)
       dt+=(vec1[i]*vec2[i]);
     armci_msg_dgop(&dt,1,"+");
-    /*MP_BARRIER();*/
+    /*armci_msg_barrier();*/
     return(dt);
 }
 
@@ -84,7 +83,7 @@ void acg_zero(double *vec1)
 int i;
     for(i=myfirstrow;i<=mylastrow;i++)
       vec1[i]=0.0;
-    MP_BARRIER();
+    armci_msg_barrier();
 }
 
 void acg_addvec(double *pscale1,double *vec1,double *pscale2,double *vec2, double *result)
@@ -93,7 +92,7 @@ int i;
 double scale1=*pscale1,scale2=*pscale2;
     for(i=myfirstrow;i<=mylastrow;i++)
       result[i]=(scale1*vec1[i]+scale2*vec2[i]);
-    /*MP_BARRIER();*/
+    /*armci_msg_barrier();*/
 }
 
 void acg_2addvec(double *pscale1a,double *vec1a, double *pscale2a,double *vec2a,
@@ -108,7 +107,7 @@ double scale1a=*pscale1a,scale2a=*pscale2a, scale1b=*pscale1b,scale2b=*pscale2b;
       resulta[i]=vec1a[i]*scale1a+vec2a[i]*scale2a;
       resultb[i]=vec1b[i]*scale1b+vec2b[i]*scale2b;
     }
-    /*MP_BARRIER();*/
+    /*armci_msg_barrier();*/
 }
 
 void acg_matvecmul(double *aptr,double *vec, double *result,int *rowptr, int *colptr)

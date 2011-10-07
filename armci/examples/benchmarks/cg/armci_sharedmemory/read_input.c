@@ -24,7 +24,6 @@
 #   include <string.h>
 #endif
 
-#include "mp3.h"
 #include "armci.h"
 #include "message.h"
 
@@ -61,7 +60,7 @@ void **amatptrs,**xvecptrs;
          printf("\nERROR:exiting-no input file given and na or nz is 0");
          fflush(stdout);
          ARMCI_Finalize();
-         MP_FINALIZE();
+         armci_msg_finalize();
          return;
        }
        if(me==0){
@@ -81,7 +80,7 @@ void **amatptrs,**xvecptrs;
 
     armci_msg_bcast(&nz,sizeof(int),0);
     armci_msg_bcast(&na,sizeof(int),0);
-    MP_BARRIER();
+    armci_msg_barrier();
 
     amatptrs = (void **)malloc(sizeof(void *)*nproc); 
     xvecptrs = (void **)malloc(sizeof(void *)*nproc);
@@ -124,7 +123,7 @@ void **amatptrs,**xvecptrs;
         cidx[i] -= 1;
     }
    
-    MP_BARRIER();
+    armci_msg_barrier();
     /*acg_matvecmul(amat,xvec,bvec,ridx,cidx);*/
     if(0){
     for(i=0;i<nz+1;i++)
@@ -137,7 +136,7 @@ void **amatptrs,**xvecptrs;
     columnmap = (int *)malloc(sizeof(int)*nproc);
     if(!allfirstrow || !alllastrow || !columnmap)
       ARMCI_Error("malloc failed allfirstrow ",0);
-    MP_BARRIER();
+    armci_msg_barrier();
     /* 
      * next decide who works on which rows, this will decide the
      * distribution of a,d,r,q,x,and ax

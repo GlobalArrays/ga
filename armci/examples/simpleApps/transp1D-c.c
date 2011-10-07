@@ -25,7 +25,6 @@
 #endif
 #include <stdlib.h>
 
-#include "mp3.h"
 #include "armci.h"
 #include "message.h"
 
@@ -139,7 +138,7 @@ void TRANSPOSE1D() {
 
     /* Synchronize all processors to guarantee that everyone has data
        before proceeding to the next step. */
-    MP_BARRIER();
+    armci_msg_barrier();
 
     /* Create local buffer for performing inversion */
     buf = (int*)malloc(nelem*sizeof(int));
@@ -209,14 +208,14 @@ void TRANSPOSE1D() {
       ARMCI_Put(src_ptr, dst_ptr, length, i);
     }
     ARMCI_AllFence();
-    MP_BARRIER();
+    armci_msg_barrier();
     
     free(buf);
 
     VERIFY(b_ptr, dims, map);
 
     free(map);
-    MP_BARRIER();
+    armci_msg_barrier();
     ARMCI_Free(a_ptr[me]);
     ARMCI_Free(b_ptr[me]);
     free(a_ptr);
@@ -228,7 +227,7 @@ int main(int argc, char **argv) {
     int me, nprocs;
     
     /* Step1: Initialize Message Passing library */
-    MP_INIT(argc, argv);
+    armci_msg_init(&argc, &argv);
 
     /* Step2: Initialize ARMCI */
     ARMCI_Init();
@@ -250,6 +249,6 @@ int main(int argc, char **argv) {
     if(me==0)printf("\nTerminating ..\n");
     ARMCI_Finalize();
     
-    MP_FINALIZE();    
+    armci_msg_finalize();    
     return(0);
 }

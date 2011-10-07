@@ -28,8 +28,8 @@
 #   include <string.h>
 #endif
 
-#include "mp3.h"
 #include "armci.h"
+#include "message.h"
 
 #define PRINT_VEC_
 
@@ -193,9 +193,9 @@ int main(int argc, char **argv)
     int dopreconditioning=1;
     double time0,time1;
 
-    MP_INIT(argc,argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+    armci_msg_init(&argc,&argv);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
     ARMCI_Init(); /* initialize ARMCI */
 
     if(me==0)printf("\n                          CONJUGATE GRADIENT EXAMPLE\n");
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
             fflush(stdout);
         }
         ARMCI_Finalize();
-        MP_FINALIZE();
+        armci_msg_finalize();
         return 0;
     }
 
@@ -233,9 +233,9 @@ int main(int argc, char **argv)
 #endif
     if(me==0)printf("\n\nStarting Conjugate Gradient ....");
     initialize_arrays(dopreconditioning);
-    time0=MP_TIMER();
+    time0=armci_timer();
     conjugate_gradient(30000/*2*/,dopreconditioning);
-    time1=MP_TIMER();
+    time1=armci_timer();
 
     acg_matvecmul(amat,xvec,axvec,ridx,cidx);
     if(me==0)printf("\n%d:in %d iterations time to solution=%f-%f ax and b in cg_output.out\n",me,niter,(time1-time0),time_get);
@@ -250,10 +250,10 @@ int main(int argc, char **argv)
     }
 
     finalize_arrays(dopreconditioning);
-    MP_BARRIER();
+    armci_msg_barrier();
 
     if(me==0)printf("Terminating ..\n");
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return 0;
 }

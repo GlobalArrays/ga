@@ -36,8 +36,6 @@ using std::string;
     typedef hash_map<string, int, hashStr> VocabIntMap;
 #endif /* USE_MAP */
 
-#include "mp3.h"
-
 extern unsigned long armci_djb2_hash(unsigned char *str, int total_procs);
 
 #endif /* HASH_COMMON_H */

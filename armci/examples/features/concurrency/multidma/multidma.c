@@ -67,8 +67,8 @@
 
 #include <mpi.h>
 
-#include "mp3.h"
 #include "armci.h"
+#include "message.h"
 
 #define NDEBUG
 /*#define LOG2FILE*/
@@ -217,7 +217,7 @@ void benchmark(int msg_size, struct stats *st)
     log_debug("testing message size %d bytes\n", msg_size);
 
     log_debug("barrier A\n");
-    MP_ASSERT(MP_BARRIER());
+    armci_msg_barrier();
 
     /* allocate buffers */
     ARMCI_ASSERT(ARMCI_Malloc(out_ptrs, msg_size));
@@ -239,12 +239,12 @@ void benchmark(int msg_size, struct stats *st)
     /* phase A */
     if (!rank) {
         /* measure blocking Put 0 -> 1 */
-        time_start = MP_TIMER();
-        time_after_start = MP_TIMER();
+        time_start = armci_timer();
+        time_after_start = armci_timer();
 
         ARMCI_ASSERT(ARMCI_Put(out_ptrs[0], in_ptrs[1], msg_size, 1));
 
-        time_after_call = MP_TIMER();
+        time_after_call = armci_timer();
 
         time2put =
             time_after_call - time_after_start + time_start - time_after_start;
@@ -257,12 +257,12 @@ void benchmark(int msg_size, struct stats *st)
 
     if (!rank) {
         /* measure blocking Get 0 <- 1 */
-        time_start = MP_TIMER();
-        time_after_start = MP_TIMER();
+        time_start = armci_timer();
+        time_after_start = armci_timer();
 
         ARMCI_ASSERT(ARMCI_Get(out_ptrs[1], in_ptrs[0], msg_size, 1));
 
-        time_after_call = MP_TIMER();
+        time_after_call = armci_timer();
 
         time2get =
             time_after_call - time_after_start + time_start - time_after_start;
@@ -276,15 +276,15 @@ void benchmark(int msg_size, struct stats *st)
 
         if (!rank) {
             /* put i messages to procs 0..i-1 */
-            time_start = MP_TIMER();
-            time_after_start = MP_TIMER();
+            time_start = armci_timer();
+            time_after_start = armci_timer();
 
             for (j = 1; j <= i; j++)
                 ARMCI_ASSERT(ARMCI_NbPut(out_ptrs[0], in_ptrs[j],
                             msg_size, j, NULL));
             ARMCI_WaitAll();
 
-            time_after_wait = MP_TIMER();
+            time_after_wait = armci_timer();
             time2put = time_after_wait - time_after_start + time_start -
                 time_after_start;
             log_debug("NbPutA(%d bytes) 0 -> 1..%d: %.8f\n",
@@ -299,15 +299,15 @@ void benchmark(int msg_size, struct stats *st)
 
         if (!rank) {
             /* get i messages from procs 0..i-1 */
-            time_start = MP_TIMER();
-            time_after_start = MP_TIMER();
+            time_start = armci_timer();
+            time_after_start = armci_timer();
 
             for (j = 1; j <= i; j++)
                 ARMCI_ASSERT(ARMCI_NbGet(out_ptrs[j], in_ptrs[0],
                             msg_size, j, NULL));
             ARMCI_WaitAll();
 
-            time_after_wait = MP_TIMER();
+            time_after_wait = armci_timer();
             time2get = time_after_wait - time_after_start + time_start -
                 time_after_start;
             log_debug("NbGetA(%d bytes) 0 <- 1..%d: %.8f\n",
@@ -321,14 +321,14 @@ void benchmark(int msg_size, struct stats *st)
     ARMCI_Barrier();
 
     ARMCI_INIT_HANDLE(&handle);
-    time_start = MP_TIMER();
-    time_after_start = MP_TIMER();
+    time_start = armci_timer();
+    time_after_start = armci_timer();
 
     ARMCI_ASSERT(ARMCI_NbPut(out_ptrs[rank], in_ptrs[second],
                 msg_size, second, &handle));
     ARMCI_ASSERT(ARMCI_Wait(&handle));
 
-    time_after_wait = MP_TIMER();
+    time_after_wait = armci_timer();
     time2put = time_after_wait - time_after_start + time_start -
         time_after_start;
 
@@ -340,14 +340,14 @@ void benchmark(int msg_size, struct stats *st)
     ARMCI_Barrier();
 
     ARMCI_INIT_HANDLE(&handle);
-    time_start = MP_TIMER();
-    time_after_start = MP_TIMER();
+    time_start = armci_timer();
+    time_after_start = armci_timer();
 
     ARMCI_ASSERT(ARMCI_NbGet(out_ptrs[second], in_ptrs[rank],
                 msg_size, second, &handle));
     ARMCI_ASSERT(ARMCI_Wait(&handle));
 
-    time_after_wait = MP_TIMER();
+    time_after_wait = armci_timer();
     time2get = time_after_wait - time_after_start + time_start -
         time_after_start;
 
@@ -383,9 +383,9 @@ int main (int argc, char *argv[])
         7344, 13652, 25384, 47196, 87748, 163144, 303332, 563972, 1048576};
 #endif
 
-    MP_ASSERT(MP_INIT(argc, argv));
-    MP_ASSERT(MP_MYID(&rank));
-    MP_ASSERT(MP_PROCS(&size));
+    armci_msg_init(&argc, &argv);
+    rank = armci_msg_me();
+    size = armci_msg_nproc();
     assert((size & 1) ^ 1); /* works with even number of processors only */
     log_debug("Message passing initialized\n");
 
@@ -396,7 +396,7 @@ int main (int argc, char *argv[])
 
     /* inialize PRNG, use seed generated on processor 0 for uniform sequence */
     time_seed = time(NULL);
-    MP_ASSERT(MPI_Bcast (&time_seed, 1, MPI_INT, 0, MPI_COMM_WORLD));
+    MPI_Bcast(&time_seed, 1, MPI_INT, 0, MPI_COMM_WORLD);
     srand(time_seed); rand();
     log_debug("seed: %d\n", time_seed);
 
@@ -439,10 +439,10 @@ int main (int argc, char *argv[])
     for (i = 0; i < MSG_COUNT; i++) {
         benchmark(msg_sizes[i], st);
         if (rank != 0) {
-            MP_ASSERT(MPI_Gather(st->nb_put_b + rank, 1, MPI_DOUBLE,
-                        st->nb_put_b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD));
-            MP_ASSERT(MPI_Gather(st->nb_get_b + rank, 1, MPI_DOUBLE,
-                        st->nb_get_b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD));
+            MPI_Gather(st->nb_put_b + rank, 1, MPI_DOUBLE,
+                        st->nb_put_b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+            MPI_Gather(st->nb_get_b + rank, 1, MPI_DOUBLE,
+                        st->nb_get_b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         }
     if (!rank) {
         double min_put, max_put, mean_put;
@@ -483,7 +483,7 @@ int main (int argc, char *argv[])
 
     /* clean up */
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
 
     free(st);
     free(p_srcs);

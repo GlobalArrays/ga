@@ -21,8 +21,8 @@
 #   include <unistd.h>
 #endif
 
-#include "mp3.h"
 #include "armci.h"
+#include "message.h"
 
 #define DEBUG_
 #define MAXRAND                         32767.0
@@ -72,9 +72,9 @@ int main(int argc, char *argv[])
     void **ptr;
     double **ptr_loc;
     
-    MP_INIT(argc,argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+    armci_msg_init(&argc,&argv);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
     
     while ((ch = getopt(argc, argv, "n:b:p:h")) != -1) {
         switch(ch) {
@@ -84,8 +84,8 @@ int main(int argc, char *argv[])
             case 'h': {
                 printf("Usage: LU, or \n");
         printf("       LU -nMATRIXSIZE -bBLOCKSIZE -pNPROC\n");
-                MP_BARRIER();
-                MP_FINALIZE();
+                armci_msg_barrier();
+                armci_msg_finalize();
                 exit(0);
             }            
         }
@@ -127,8 +127,8 @@ int main(int argc, char *argv[])
                 printf("%d ", block_owner(i, j));
             printf("\n");
         }
-    MP_BARRIER();
-    MP_FINALIZE();
+    armci_msg_barrier();
+    armci_msg_finalize();
     exit(0);
 #endif
     
@@ -179,18 +179,18 @@ int main(int argc, char *argv[])
     init_array();
     
     /* barrier to ensure all initialization is done */
-    MP_BARRIER();
+    armci_msg_barrier();
 
     /* to remove cold-start misses, all processors touch their own data */
     touch_array(block_size, me);
-    MP_BARRIER();
+    armci_msg_barrier();
 
     if(doprint) {
         if(me == 0) {
             printf("Matrix before LU decomposition\n");
             print_array(me); 
         }
-        MP_BARRIER();
+        armci_msg_barrier();
     }
     
 
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
 
     lu(n, block_size, me);
     
-    MP_BARRIER();
+    armci_msg_barrier();
 
     /* Timer Stops here */
     if(me == 0) 
@@ -210,13 +210,13 @@ int main(int argc, char *argv[])
             printf("after LU\n");
             print_array(me);
         }
-        MP_BARRIER();
+        armci_msg_barrier();
     }
     
     /* done */
     ARMCI_Free(ptr[me]);
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
 
     return 0;
 }
@@ -249,7 +249,7 @@ void lu(int n, int bs, int me)
             A = a[K+K*nblocks]; 
             lu0(A, strK, strK);
         }
-        MP_BARRIER();
+        armci_msg_barrier();
       
         /* divide column k by diagonal block */
         if(block_owner(K, K) == me)
@@ -287,7 +287,7 @@ void lu(int n, int bs, int me)
             }
         }
         
-        MP_BARRIER();
+        armci_msg_barrier();
 
         /* modify subsequent block columns */
         for (i=kl, I=K+1; i<n; i+=bs, I++) {

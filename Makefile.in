@@ -2534,17 +2534,22 @@ MAINTAINERCLEANFILES =
 AM_FFLAGS = $(GA_FOPT) $(GA_F_WARN) $(FFLAG_INT)
 AM_CFLAGS = $(GA_COPT) $(GA_C_WARN)
 AM_CXXFLAGS = $(GA_CXXOPT) $(GA_CXX_WARN)
+
+##############################################################################
+# global/testing
+#
 AM_CPPFLAGS = $(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) \
 	$(BLAS_CPPFLAGS) $(GA_MP_CPPFLAGS) $(ARMCI_NETWORK_CPPFLAGS) \
 	-I$(top_build_prefix)ma -I$(top_srcdir)/ma \
 	-I$(top_srcdir)/LinAlg/lapack+blas \
 	-I$(top_build_prefix)global/src -I$(top_srcdir)/global/src \
-	-I$(top_srcdir)/pario/dra -I$(top_srcdir)/pario/eaf \
-	-I$(top_srcdir)/pario/elio -I$(top_srcdir)/pario/sf \
-	$(am__append_33) -I$(top_build_prefix)gparrays/src \
-	-I$(top_srcdir)/gparrays/src $(am__append_36) $(am__append_37) \
-	$(am__append_38) -I$(top_build_prefix)armci/gaf2c \
-	-I$(top_srcdir)/armci/gaf2c -I$(top_srcdir)/armci/tcgmsg
+	-I$(top_srcdir)/global/testing -I$(top_srcdir)/pario/dra \
+	-I$(top_srcdir)/pario/eaf -I$(top_srcdir)/pario/elio \
+	-I$(top_srcdir)/pario/sf $(am__append_33) \
+	-I$(top_build_prefix)gparrays/src -I$(top_srcdir)/gparrays/src \
+	$(am__append_36) $(am__append_37) $(am__append_38) \
+	-I$(top_build_prefix)armci/gaf2c -I$(top_srcdir)/armci/gaf2c \
+	-I$(top_srcdir)/armci/tcgmsg
 AM_LDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
 	$(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) $(am__append_1)
 FLDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \

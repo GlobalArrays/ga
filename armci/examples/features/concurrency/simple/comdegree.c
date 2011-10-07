@@ -63,7 +63,6 @@
 
 #include "armci.h"
 #include "message.h"
-#include "mp3.h"
 
 /***************************** macros ************************/
 #define COPY(src, dst, bytes) memcpy((dst),(src),(bytes))
@@ -94,7 +93,7 @@ void create_array(void *a[], int size)
 
 void destroy_array(void *ptr[])
 {
-    MP_BARRIER();
+    armci_msg_barrier();
 
     assert(!ARMCI_Free(ptr[me]));
 }
@@ -150,41 +149,41 @@ armci_hdl_t hdl1,hdl2;
 
          armci_msg_barrier();
          /*first time a regular call*/
-         tt = MP_TIMER();
+         tt = armci_timer();
          ARMCI_NbGet((double*)b[left],(double*)a[me],bytes, left,&hdl1);
          ARMCI_Wait(&hdl1);
-         t1[i] += (MP_TIMER()-tt);
+         t1[i] += (armci_timer()-tt);
 
          
          armci_msg_barrier();
          /*now time 1 left + 1 right but realize there is one xtra issue*/
          ARMCI_INIT_HANDLE(&hdl1);
          ARMCI_INIT_HANDLE(&hdl2);
-         tt = MP_TIMER();
+         tt = armci_timer();
          ARMCI_NbGet((double*)b[left],(double*)a[me],bytes/2,left,&hdl1);
          ARMCI_NbGet((double*)b[right]+bytes/16,(double*)a[me]+bytes/16,bytes/2,
                          right,&hdl2);
          ARMCI_Wait(&hdl1);
          ARMCI_Wait(&hdl2);
-         t2[i] += (MP_TIMER()-tt);
+         t2[i] += (armci_timer()-tt);
 
          ARMCI_Barrier();
          armci_msg_barrier();
          /*now time both to the left*/
          ARMCI_INIT_HANDLE(&hdl1);
          ARMCI_INIT_HANDLE(&hdl2);
-         tt = MP_TIMER();
+         tt = armci_timer();
          ARMCI_NbGet((double*)b[left],(double*)a[me],bytes/2,left,&hdl1);
          ARMCI_NbGet((double*)b[left]+bytes/16,(double*)a[me]+bytes/16,bytes/2,
                          left,&hdl2);
          ARMCI_Wait(&hdl1);
          ARMCI_Wait(&hdl2);
-         t3[i] += ( MP_TIMER()-tt);
+         t3[i] += ( armci_timer()-tt);
 
          ARMCI_Barrier();
        }
     }
-    MP_BARRIER();
+    armci_msg_barrier();
     if(0==me){
        for(i=0;i<loopcnt;i++){
          fprintf(stderr,"\n%.0f\t%.2e\t%.2e\t%.2e",
@@ -193,8 +192,8 @@ armci_hdl_t hdl1,hdl2;
        }
     }
     fflush(stdout);
-    MP_BARRIER();
-    MP_BARRIER();
+    armci_msg_barrier();
+    armci_msg_barrier();
     if((nproc-3)==me){
        for(i=0;i<loopcnt;i++){
          fprintf(stderr,"\n%.0f\t%.2e\t%.2e\t%.2e",
@@ -203,7 +202,7 @@ armci_hdl_t hdl1,hdl2;
        }
     }
     fflush(stdout);
-    MP_BARRIER();
+    armci_msg_barrier();
 #if 0
     for(j=0;j<nproc;j++) {
        if(j==me){
@@ -212,10 +211,10 @@ armci_hdl_t hdl1,hdl2;
                            me,1024.0*pow(2,i),t1[i]/loopcnt,t3[i]/loopcnt,
                            t2[i]/loopcnt);
          }
-         MP_BARRIER();
+         armci_msg_barrier();
        }
        else
-         MP_BARRIER();
+         armci_msg_barrier();
     }
 #endif
 
@@ -270,31 +269,31 @@ armci_hdl_t hdl1,hdl2;
          ARMCI_INIT_HANDLE(&hdl1);
          armci_msg_barrier();
 
-         tt = MP_TIMER();
+         tt = armci_timer();
          ARMCI_NbPut((double*)a[me],(double*)b[left],bytes, left,&hdl1);
          ARMCI_Wait(&hdl1);
-         t1[i] += (MP_TIMER()-tt);
+         t1[i] += (armci_timer()-tt);
          /* (void)armci_notify(left); */
-         /* tt = MP_TIMER(); */
+         /* tt = armci_timer(); */
          /* (void)armci_notify_wait(right,&wc);  */
-         /* t1[i] += (MP_TIMER()-tt); */
+         /* t1[i] += (armci_timer()-tt); */
 
          ARMCI_INIT_HANDLE(&hdl1);
          ARMCI_INIT_HANDLE(&hdl2);
          armci_msg_barrier();
 
-         tt = MP_TIMER();
+         tt = armci_timer();
          ARMCI_NbPut((double*)a[me],(double*)b[left],bytes,left,&hdl1);
          ARMCI_NbPut((double*)a[me],(double*)b[right],bytes,
                          right,&hdl2);
          ARMCI_Wait(&hdl1);
-         t2[i] += (MP_TIMER()-tt);
+         t2[i] += (armci_timer()-tt);
          /* (void)armci_notify(left); */
          /* lc1=armci_notify(right); */
-         /* tt = MP_TIMER(); */
+         /* tt = armci_timer(); */
          /* rc1 = armci_notify_wait(left,&wc1);  */
          /* (void)armci_notify_wait(right,&wc);  */
-         /* t2[i] += (MP_TIMER()-tt); */
+         /* t2[i] += (armci_timer()-tt); */
          /* ARMCI_Wait(&hdl1); */
          ARMCI_Wait(&hdl2);
 
@@ -302,24 +301,24 @@ armci_hdl_t hdl1,hdl2;
          ARMCI_INIT_HANDLE(&hdl2);
          armci_msg_barrier();
 
-         tt = MP_TIMER();
+         tt = armci_timer();
          ARMCI_NbPut((double*)a[me],(double*)b[left],bytes/2,left,&hdl1);
          ARMCI_NbPut((double*)a[me]+bytes/16,(double*)b[left]+bytes/16,bytes/2,
                          left,&hdl2);
          /* ARMCI_Wait(&hdl1); */
          /* ARMCI_Wait(&hdl2); */
-         t3[i] += ( MP_TIMER()-tt);
+         t3[i] += ( armci_timer()-tt);
          (void)armci_notify(left);
-         tt = MP_TIMER();
+         tt = armci_timer();
          (void)armci_notify_wait(right,&wc); 
-         t3[i] += ( MP_TIMER()-tt);
+         t3[i] += ( armci_timer()-tt);
          ARMCI_Wait(&hdl1);
          ARMCI_Wait(&hdl2);
 
          ARMCI_Barrier();
        }
     }
-    MP_BARRIER();
+    armci_msg_barrier();
     if(0==me){
        for(i=0;i<loopcnt;i++){
          fprintf(stderr,"\n%.0f\t%.2e\t%.2e\t%.2e",
@@ -329,8 +328,8 @@ armci_hdl_t hdl1,hdl2;
     }
     fflush(stdout);
     fflush(stdout);
-    MP_BARRIER();
-    MP_BARRIER();
+    armci_msg_barrier();
+    armci_msg_barrier();
     if((nproc-1)==me){
        for(i=0;i<loopcnt;i++){
          fprintf(stderr,"\n%.0f\t%.2e\t%.2e\t%.2e",
@@ -339,7 +338,7 @@ armci_hdl_t hdl1,hdl2;
        }
     }
     fflush(stdout);
-    MP_BARRIER();
+    armci_msg_barrier();
 #if 0
     for(j=0;j<nproc;j++) {
        if(j==me){
@@ -348,10 +347,10 @@ armci_hdl_t hdl1,hdl2;
                            me,1024.0*pow(2,i),t1[i]/loopcnt,t3[i]/loopcnt,
                            t2[i]/loopcnt);
          }
-         MP_BARRIER();
+         armci_msg_barrier();
        }
        else
-         MP_BARRIER();
+         armci_msg_barrier();
     }
 #endif
 
@@ -365,34 +364,34 @@ armci_hdl_t hdl1,hdl2;
 
 int main(int argc, char* argv[])
 {
-    MP_INIT(argc, argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+    armci_msg_init(&argc, &argv);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
 
     
     ARMCI_Init();
 
-    MP_BARRIER();
+    armci_msg_barrier();
     if(me==0){
        printf("\nTesting transfer overlap with ARMCI put calls\n");
        printf("\nsize\tone-send\ttwo-sends\ttwo-sends-diff-dir\n");
        fflush(stdout);
        sleep(1);
     }
-    MP_BARRIER();
+    armci_msg_barrier();
     test_put_multidma();
-    MP_BARRIER();
+    armci_msg_barrier();
     if(me==0){
        printf("\nTesting transfer overlap with ARMCI get calls\n");
        printf("\nsize\tone-send\ttwo-sends\ttwo-sends-diff-dir\n");
        fflush(stdout);
        sleep(1);
     }
-    MP_BARRIER();
+    armci_msg_barrier();
     test_get_multidma();
     if(me==0)printf("\n");
 
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return(0);
 }

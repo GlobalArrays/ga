@@ -8,7 +8,6 @@ extern void exit(int status);
 
 #include "tcgmsgP.h"
 #include "srftoc.h"
-#include "mp3.h"
 
 char     tcgmsg_err_string[ERR_STR_LEN];
 MPI_Comm TCGMSG_Comm;

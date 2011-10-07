@@ -64,8 +64,8 @@
 
 #include <mpi.h>
 
-#include "mp3.h"
 #include "armci.h"
+#include "message.h"
 
 extern double exp2(double);
 extern double round(double);
@@ -198,12 +198,12 @@ void time_iterations()
         int i, j, k, l;
 
         for (i = 0, j = 1; i < ITERS; i++, j *= 2) {
-                time_start = MP_TIMER();
-                time_after_start = MP_TIMER();
+                time_start = armci_timer();
+                time_after_start = armci_timer();
 
                 for (l = 0, k = rand(); l < j; l++) k *= rand();
 
-                time_stop = MP_TIMER();
+                time_stop = armci_timer();
                 iterations_times[i] = time_stop - time_after_start +
                     time_start - time_after_start;
                 FIX_TIME(iterations_times[i]);
@@ -239,7 +239,7 @@ double * benchmark(int op, int msg_size, int size2)
     array_ptrs = malloc(sizeof(void*)*size);
 
     log_debug("barrier O\n");
-    MP_ASSERT(MP_BARRIER());
+    armci_msg_barrier();
     /* initialize: obtain remote address and generate random array */
     switch (op) {
         case CONT_PUT:
@@ -271,79 +271,79 @@ double * benchmark(int op, int msg_size, int size2)
 
     /* warm up call */
     log_debug("barrier A\n");
-    MP_ASSERT(MP_BARRIER());
+    armci_msg_barrier();
     if (second != -1) {
             log_debug("testing message size %d bytes\n", msg_size);
             switch (op) {
                 case CONT_PUT:
                     ARMCI_INIT_HANDLE(&handle);
-                    time_start = MP_TIMER();
-                    time_after_start = MP_TIMER();
+                    time_start = armci_timer();
+                    time_after_start = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_NbPut(array_ptrs[rank],
                                 array_ptrs[second], msg_size,
                                 second, &handle));
-                    time_after_call = MP_TIMER();
+                    time_after_call = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_Wait(&handle));
-                    time_after_wait = MP_TIMER();
+                    time_after_wait = armci_timer();
                     break;
 
                 case CONT_GET:
                     ARMCI_INIT_HANDLE(&handle);
-                    time_start = MP_TIMER();
-                    time_after_start = MP_TIMER();
+                    time_start = armci_timer();
+                    time_after_start = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_NbGet(array_ptrs[second],
                                 array_ptrs[rank], msg_size,
                                 second, &handle));
-                    time_after_call = MP_TIMER();
+                    time_after_call = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_Wait(&handle));
-                    time_after_wait = MP_TIMER();
+                    time_after_wait = armci_timer();
                     break;
 
                 case STRIDED_PUT:
                     ARMCI_INIT_HANDLE(&handle);
-                    time_start = MP_TIMER();
-                    time_after_start = MP_TIMER();
+                    time_start = armci_timer();
+                    time_after_start = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_NbPutS(array_ptrs[rank], &stride_dist,
                                 array_ptrs[second], &stride_dist,
                                 block_sizes, 1, second, &handle));
-                    time_after_call = MP_TIMER();
+                    time_after_call = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_Wait(&handle));
-                    time_after_wait = MP_TIMER();
+                    time_after_wait = armci_timer();
                     break;
 
                 case STRIDED_GET:
                     ARMCI_INIT_HANDLE(&handle);
-                    time_start = MP_TIMER();
-                    time_after_start = MP_TIMER();
+                    time_start = armci_timer();
+                    time_after_start = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_NbGetS(array_ptrs[second], &stride_dist,
                                 array_ptrs[second], &stride_dist,
                                 block_sizes, 1, second, &handle));
-                    time_after_call = MP_TIMER();
+                    time_after_call = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_Wait(&handle));
-                    time_after_wait = MP_TIMER();
+                    time_after_wait = armci_timer();
                     break;
 
                 case STRIDED_ACC:
                     ARMCI_INIT_HANDLE(&handle);
-                    time_start = MP_TIMER();
-                    time_after_start = MP_TIMER();
+                    time_start = armci_timer();
+                    time_after_start = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_NbAccS(ARMCI_ACC_INT, &scale,
                                 array_ptrs[rank], &stride_dist,
                                 array_ptrs[second], &stride_dist,
                                 block_sizes, 1, second, &handle));
-                    time_after_call = MP_TIMER();
+                    time_after_call = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_Wait(&handle));
-                    time_after_wait = MP_TIMER();
+                    time_after_wait = armci_timer();
 
                     break;
             }
@@ -360,75 +360,75 @@ double * benchmark(int op, int msg_size, int size2)
     }
 
     log_debug("barrier B\n");
-    MP_ASSERT(MP_BARRIER());
+    armci_msg_barrier();
     if (second != -1) {
             /* no work */
             ARMCI_INIT_HANDLE(&handle);
             switch (op) {
                 case CONT_PUT:
-                    time_start = MP_TIMER();
-                    time_after_start = MP_TIMER();
+                    time_start = armci_timer();
+                    time_after_start = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_NbPut(array_ptrs[rank],
                                 array_ptrs[second], msg_size,
                                 second, &handle));
-                    time_after_call = MP_TIMER();
+                    time_after_call = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_Wait(&handle));
-                    time_after_wait = MP_TIMER();
+                    time_after_wait = armci_timer();
                     break;
 
                 case CONT_GET:
-                    time_start = MP_TIMER();
-                    time_after_start = MP_TIMER();
+                    time_start = armci_timer();
+                    time_after_start = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_NbGet(array_ptrs[second],
                                 array_ptrs[rank], msg_size,
                                 second, &handle));
-                    time_after_call = MP_TIMER();
+                    time_after_call = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_Wait(&handle));
-                    time_after_wait = MP_TIMER();
+                    time_after_wait = armci_timer();
                     break;
 
                 case STRIDED_PUT:
-                    time_start = MP_TIMER();
-                    time_after_start = MP_TIMER();
+                    time_start = armci_timer();
+                    time_after_start = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_NbPutS(array_ptrs[rank], &stride_dist,
                                 array_ptrs[second], &stride_dist,
                                 block_sizes, 1, second, &handle));
-                    time_after_call = MP_TIMER();
+                    time_after_call = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_Wait(&handle));
-                    time_after_wait = MP_TIMER();
+                    time_after_wait = armci_timer();
                     break;
 
                 case STRIDED_GET:
-                    time_start = MP_TIMER();
-                    time_after_start = MP_TIMER();
+                    time_start = armci_timer();
+                    time_after_start = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_NbGetS(array_ptrs[second], &stride_dist,
                                 array_ptrs[rank], &stride_dist,
                                 block_sizes, 1, second, &handle));
-                    time_after_call = MP_TIMER();
+                    time_after_call = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_Wait(&handle));
-                    time_after_wait = MP_TIMER();
+                    time_after_wait = armci_timer();
                     break;
 
                 case STRIDED_ACC:
-                    time_start = MP_TIMER();
-                    time_after_start = MP_TIMER();
+                    time_start = armci_timer();
+                    time_after_start = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_NbAccS(ARMCI_ACC_INT, &scale,
                                 array_ptrs[rank], &stride_dist,
                                 array_ptrs[second], &stride_dist,
                                 block_sizes, 1, second, &handle));
-                    time_after_call = MP_TIMER();
+                    time_after_call = armci_timer();
 
                     ARMCI_ASSERT(ARMCI_Wait(&handle));
-                    time_after_wait = MP_TIMER();
+                    time_after_wait = armci_timer();
                     break;
             }
 
@@ -475,90 +475,90 @@ double * benchmark(int op, int msg_size, int size2)
              i++, j += (more - less) / (ITER_STEPS - 1)) {
             /* time noneblocking call with j interations of fake work */
             log_debug("barrier C\n");
-            MP_ASSERT(MP_BARRIER());
+            armci_msg_barrier();
             if (second != -1) {
                 ARMCI_INIT_HANDLE(&handle);
                 switch (op) {
                     case CONT_PUT:
-                        time_start = MP_TIMER();
-                        time_after_start = MP_TIMER();
+                        time_start = armci_timer();
+                        time_after_start = armci_timer();
 
                         ARMCI_ASSERT(ARMCI_NbPut(array_ptrs[rank],
                                     array_ptrs[second], msg_size,
                                     second, &handle));
-                        time_after_call = MP_TIMER();
+                        time_after_call = armci_timer();
 
                         for (l = 0, k = rand(); l < j; l++) k *= rand();
-                        time_after_work = MP_TIMER();
+                        time_after_work = armci_timer();
 
                         ARMCI_ASSERT(ARMCI_Wait(&handle));
-                        time_after_wait = MP_TIMER();
+                        time_after_wait = armci_timer();
                         break;
 
                     case CONT_GET:
-                        time_start = MP_TIMER();
-                        time_after_start = MP_TIMER();
+                        time_start = armci_timer();
+                        time_after_start = armci_timer();
 
                         ARMCI_ASSERT(ARMCI_NbGet(array_ptrs[second],
                                     array_ptrs[rank], msg_size,
                                     second, &handle));
-                        time_after_call = MP_TIMER();
+                        time_after_call = armci_timer();
 
                         for (l = 0, k = rand(); l < j; l++) k *= rand();
-                        time_after_work = MP_TIMER();
+                        time_after_work = armci_timer();
 
                         ARMCI_ASSERT(ARMCI_Wait(&handle));
-                        time_after_wait = MP_TIMER();
+                        time_after_wait = armci_timer();
                         break;
 
                 case STRIDED_PUT:
-                        time_start = MP_TIMER();
-                        time_after_start = MP_TIMER();
+                        time_start = armci_timer();
+                        time_after_start = armci_timer();
 
                        ARMCI_ASSERT(ARMCI_NbPutS(array_ptrs[rank], &stride_dist,
                                    array_ptrs[second], &stride_dist,
                                    block_sizes, 1, second, &handle));
-                        time_after_call = MP_TIMER();
+                        time_after_call = armci_timer();
 
                         for (l = 0, k = rand(); l < j; l++) k *= rand();
-                        time_after_work = MP_TIMER();
+                        time_after_work = armci_timer();
 
                         ARMCI_ASSERT(ARMCI_Wait(&handle));
-                        time_after_wait = MP_TIMER();
+                        time_after_wait = armci_timer();
                         break;
 
                 case STRIDED_GET:
-                        time_start = MP_TIMER();
-                        time_after_start = MP_TIMER();
+                        time_start = armci_timer();
+                        time_after_start = armci_timer();
 
                         ARMCI_ASSERT(ARMCI_NbGetS(array_ptrs[second],
                                    &stride_dist, array_ptrs[rank], &stride_dist,
                                    block_sizes, 1, second, &handle));
-                        time_after_call = MP_TIMER();
+                        time_after_call = armci_timer();
 
                         for (l = 0, k = rand(); l < j; l++) k *= rand();
-                        time_after_work = MP_TIMER();
+                        time_after_work = armci_timer();
 
                         ARMCI_ASSERT(ARMCI_Wait(&handle));
-                        time_after_wait = MP_TIMER();
+                        time_after_wait = armci_timer();
 
                         break;
 
                 case STRIDED_ACC:
-                        time_start = MP_TIMER();
-                        time_after_start = MP_TIMER();
+                        time_start = armci_timer();
+                        time_after_start = armci_timer();
 
                         ARMCI_ASSERT(ARMCI_NbAccS(ARMCI_ACC_INT, &scale,
                                     array_ptrs[rank], &stride_dist,
                                     array_ptrs[second], &stride_dist,
                                     block_sizes, 1, second, &handle));
-                        time_after_call = MP_TIMER();
+                        time_after_call = armci_timer();
 
                         for (l = 0, k = rand(); l < j; l++) k *= rand();
-                        time_after_work = MP_TIMER();
+                        time_after_work = armci_timer();
 
                         ARMCI_ASSERT(ARMCI_Wait(&handle));
-                        time_after_wait = MP_TIMER();
+                        time_after_wait = armci_timer();
                         break;
                 }
 
@@ -610,7 +610,7 @@ double * benchmark(int op, int msg_size, int size2)
         if (second != -1) {
             for (i = 0; i < ITER_STEPS; i++) {
                 log_debug("barrier C0\n");
-                MP_ASSERT(MP_BARRIER());
+                armci_msg_barrier();
             }
             stats[NOWORK]   = time_total_nw;
             stats[TOTAL]    = 0;
@@ -623,7 +623,7 @@ double * benchmark(int op, int msg_size, int size2)
     free(array_ptrs);
 
     log_debug("barrier D\n");
-    MP_ASSERT(MP_BARRIER());
+    armci_msg_barrier();
 
     return stats;
 }
@@ -644,9 +644,9 @@ int main (int argc, char *argv[])
     double to_log   = log2(MAX_MSG_SIZE);
     double step_log = (to_log - from_log) / (MSG_COUNT - 1);
 
-    MP_ASSERT(MP_INIT(argc, argv));
-    MP_ASSERT(MP_MYID(&rank));
-    MP_ASSERT(MP_PROCS(&size));
+    armci_msg_init(&argc, &argv);
+    rank = armci_msg_me();
+    size = armci_msg_nproc();
     assert((size & 1) ^ 1); /* works with even number of processors only */
     log_debug("Message passing initialized\n");
 
@@ -681,7 +681,7 @@ int main (int argc, char *argv[])
 
     /* inialize PRNG, use seed generated on processor 0 for uniform sequence */
     time_seed = time(NULL);
-    MP_ASSERT(MPI_Bcast (&time_seed, 1, MPI_INT, 0, MPI_COMM_WORLD));
+    MPI_Bcast(&time_seed, 1, MPI_INT, 0, MPI_COMM_WORLD);
     srand(time_seed); rand();
     log_debug("seed: %d\n", time_seed);
 
@@ -741,9 +741,9 @@ int main (int argc, char *argv[])
                             100.0 * stats[OVERLAP] / stats[TOTAL]);
                     break;
             }
-            MP_ASSERT(MPI_Gather(stats, STATS_COUNT, MPI_DOUBLE,
+            MPI_Gather(stats, STATS_COUNT, MPI_DOUBLE,
                         stats_all + i * OPS_OFF + j * MSG_OFF,
-                        STATS_COUNT, MPI_DOUBLE, 0, MPI_COMM_WORLD));
+                        STATS_COUNT, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         }
 
     if (!rank)
@@ -795,7 +795,7 @@ int main (int argc, char *argv[])
     if (!rank) finish_logging();
 
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
 
     free(p_srcs);
     free(stats_all);

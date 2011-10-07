@@ -385,6 +385,8 @@ AM_CPPFLAGS += -I$(top_srcdir)/global/src
 ##############################################################################
 # global/testing
 #
+AM_CPPFLAGS += -I$(top_srcdir)/global/testing
+
 check_PROGRAMS += global/testing/elempatch
 check_PROGRAMS += global/testing/getmem
 check_PROGRAMS += global/testing/mtest

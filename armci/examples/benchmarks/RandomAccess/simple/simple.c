@@ -24,7 +24,7 @@
 #endif
 
 #include "armci.h"
-#include "mp3.h"
+#include "message.h"
 #include "../ra_common.h"
 
 #define DEBUG 0
@@ -219,9 +219,9 @@ s64Int ProcNumUpdates; /* number of updates per processor */
 FILE *outFile = NULL;
 double *GUPs;
 double max_time,min_time,avg_time,time_start,time_stop,total_time;
-    MP_INIT(argc,argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+    armci_msg_init(&argc,&argv);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
     ARMCI_Init();      /* initialize ARMCI */
 
     if(me==0)printf("\n                          RANDOM ACCESS EXAMPLE\n");
@@ -232,7 +232,7 @@ double max_time,min_time,avg_time,time_start,time_stop,total_time;
          fflush(stdout);
        }
        ARMCI_Finalize();
-       MP_FINALIZE();
+       armci_msg_finalize();
        return 0;
     }
     globaltablelen = atoi(argv[1]);
@@ -252,16 +252,16 @@ double max_time,min_time,avg_time,time_start,time_stop,total_time;
 #if DEBUG
     printf("\n%d:%d is totaltable, mintablesize=%d rem=%d big=%d glosta=%d tablelen=%d numup=%d\n",me, globaltablelen, mintablesize,Remainder,bigtables,myglobalstart,mytablelen,procnumupdates);
 #endif
-    MP_BARRIER();
+    armci_msg_barrier();
 
     initialize_tables();
 
     if(me==0)printf("\n\nStarting Random Access....");
-    MP_BARRIER();
-    time_start=MP_TIMER();
+    armci_msg_barrier();
+    time_start=armci_timer();
     HPCCRandom_Access();
-    time_stop=MP_TIMER();
-    MP_BARRIER();
+    time_stop=armci_timer();
+    armci_msg_barrier();
     total_time=(time_stop-time_start);
     max_time=total_time;
     min_time=total_time;
@@ -275,6 +275,6 @@ double max_time,min_time,avg_time,time_start,time_stop,total_time;
     finalize_tables();
     if(me==0)printf("Terminating..\n");
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return 0;
 }

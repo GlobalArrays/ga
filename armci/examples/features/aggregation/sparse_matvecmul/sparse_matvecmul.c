@@ -21,7 +21,6 @@
 #endif
 
 #include "armci.h"
-#include "mp3.h"
 #include "message.h"
 
 #define DIM1 5
@@ -134,7 +133,7 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
 
 void destroy_array(void *ptr[])
 {
-    MP_BARRIER();
+    armci_msg_barrier();
 
     assert(!ARMCI_Free(ptr[me]));
 }
@@ -244,7 +243,7 @@ static int sparse_initialize(int *n, int *non_zero, int **row_ind,
   if(me==0) printf("  Creating Vectors ... \n\n");
   create_array((void**)vec,  sizeof(double),1, &max);
   create_array((void**)svec, sizeof(double),1, &max);
-  MP_BARRIER();
+  armci_msg_barrier();
 
   
   /* Process 0 distributes the column indices and non_zero values to 
@@ -268,7 +267,7 @@ static int sparse_initialize(int *n, int *non_zero, int **row_ind,
     ARMCI_Error("armci_nbput failed\n",rc);
     }
   }
-  ARMCI_AllFence(); MP_BARRIER();ARMCI_AllFence();
+  ARMCI_AllFence(); armci_msg_barrier();ARMCI_AllFence();
 
   /* initializing x-vector */
   if(me==0) for(i=0;i<proc_nz_list[me]; i++) vec[me][i] = (i+1);
@@ -375,7 +374,7 @@ static void sparse_multiply(int n, int non_zero, int *row_ind, int **col_ind,
   for(i=0; i<num_elements; i++) tmp_indices[i] = col_ind[me][i];
   qsort(tmp_indices, num_elements, sizeof(int), compare);
 
-  start_time = MP_TIMER();
+  start_time = armci_timer();
 
   /* get the required portion of vector you need to local array */
   start = prev = tmp_indices[0];
@@ -393,8 +392,8 @@ static void sparse_multiply(int n, int non_zero, int *row_ind, int **col_ind,
   if(count>=0) for(i=0; i<=count; i++) ARMCI_Wait(&gHandle[i]);
 #endif
 
-  comm_time = MP_TIMER() - start_time;
-  start_time = MP_TIMER();   
+  comm_time = armci_timer() - start_time;
+  start_time = armci_timer();   
 
   /* Perform Matrix-Vector multiply and store the result in
      solution vector - "svec[]" */
@@ -415,7 +414,7 @@ static void sparse_multiply(int n, int non_zero, int *row_ind, int **col_ind,
       svec[me][i] += v*vec_local[j];
     }
   }
-  comp_time = MP_TIMER()-start_time;
+  comp_time = armci_timer()-start_time;
   printf("%d: %f + %f = %f  (count = %d)\n", me, comm_time, comp_time, 
      comm_time+comp_time, count+1);
 #endif
@@ -437,12 +436,12 @@ static void test_sparse() {
     int n, non_zero, *row_ind;
 
     sparse_initialize(&n, &non_zero, &row_ind, col_ind, values, vec, svec);
-    MP_BARRIER();
+    armci_msg_barrier();
 
-    /*start_time = MP_TIMER();*/
+    /*start_time = armci_timer();*/
     sparse_multiply(n, non_zero, row_ind, col_ind, values, vec, svec);
-    /* printf("%d: Timetaken = %f\n", me, MP_TIMER()-start_time); */
-    MP_BARRIER();
+    /* printf("%d: Timetaken = %f\n", me, armci_timer()-start_time); */
+    armci_msg_barrier();
     
     if(me==0) gather_solution_vector(svec);
     
@@ -454,9 +453,9 @@ static void test_sparse() {
 int main(int argc, char* argv[])
 {
 
-    MP_INIT(argc, argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+    armci_msg_init(&argc, &argv);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
 
 /*    printf("nproc = %d, me = %d\n", nproc, me);*/
     
@@ -478,12 +477,12 @@ int main(int argc, char* argv[])
     test_sparse();
     
     ARMCI_AllFence();
-    MP_BARRIER();
+    armci_msg_barrier();
     if(me==0){printf("\nSuccess!!\n"); fflush(stdout);}
     sleep(2);
     
-    MP_BARRIER();
+    armci_msg_barrier();
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return(0);
 }

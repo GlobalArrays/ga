@@ -25,7 +25,7 @@
 
 #include "armci.h"
 #include "utils.h"
-#include "mp3.h"
+#include "message.h"
 
 #define MAXRAND   32767.0
 #define DEFAULT_N     8
@@ -83,9 +83,9 @@ main(int argc, char *argv[])
 
     THREAD_LOCK_INIT(mutex);
     
-    MP_INIT(argc,argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+    armci_msg_init(&argc,&argv);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
     
     while ((ch = getopt(argc, argv, "n:b:p:t:d:h")) != -1) {
         switch(ch) {
@@ -97,8 +97,8 @@ main(int argc, char *argv[])
             case 'h': {
                 printf("Usage: LU, or \n");
         printf("       LU -nMATRIXSIZE -bBLOCKSIZE -pNPROC -tTH_PER_P\n");
-                MP_BARRIER();
-                MP_FINALIZE();
+                armci_msg_barrier();
+                armci_msg_finalize();
                 exit(0);
             } 
         }
@@ -152,8 +152,8 @@ main(int argc, char *argv[])
                 printf("%d ", block_owner(i, j));
             printf("\n");
         }
-    MP_BARRIER();
-/*    MP_FINALIZE(); */
+    armci_msg_barrier();
+/*    armci_msg_finalize(); */
 /*    exit(0); */
 #endif
     
@@ -216,18 +216,18 @@ main(int argc, char *argv[])
     init_array();
     
     /* barrier to ensure all initialization is done */
-    MP_BARRIER();
+    armci_msg_barrier();
 
     /* to remove cold-start misses, all processors touch their own data */
 /*    for (l = 0; l < th_per_p; l++) touch_array(block_size, me_th[l]); */
-    MP_BARRIER();
+    armci_msg_barrier();
 
     if(doprint) {
         if(me == 0) {
             printf("Matrix before LU decomposition\n");
             print_array(me); 
         }
-        MP_BARRIER();
+        armci_msg_barrier();
     }
 
 #if 1
@@ -249,7 +249,7 @@ main(int argc, char *argv[])
     }
     
     for (l = 0; l < th_per_p; l++) THREAD_JOIN(threads[l], NULL);
-    MP_BARRIER();
+    armci_msg_barrier();
 
     /* Timer Stops here */
     if(me == 0) 
@@ -260,13 +260,13 @@ main(int argc, char *argv[])
             printf("after LU\n");
             print_array(me);
         }
-        MP_BARRIER();
+        armci_msg_barrier();
     }
     
     /* done */
     ARMCI_Free(ptr[me]);
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
 
     THREAD_LOCK_DESTROY(mutex);
 }

@@ -88,7 +88,7 @@
 #   define TH_INIT(p_,t_)   mt_size=p_;mt_tpp=t_;\
                             thread_barrier_init(&mt_barrier,mt_tpp)
 #   define TH_FINALIZE()    thread_barrier_destroy(&mt_barrier)
-#   define MT_BARRIER()     if (thread_barrier_wait(&mt_barrier)==-1) MP_BARRIER();\
+#   define MT_BARRIER()     if (thread_barrier_wait(&mt_barrier)==-1) armci_msg_barrier();\
                                 thread_barrier_wait(&mt_barrier)
 
     extern int mt_size;
@@ -101,7 +101,7 @@
 #   define THREAD_UNLOCK(x)
 #   define TH_INIT(p_,t_)
 #   define TH_FINALIZE()
-#   define MT_BARRIER MP_BARRIER
+#   define MT_BARRIER armci_msg_barrier
 #   define ARMCI_MALLOC_MT ARMCI_Malloc
 #   define ARMCI_FREE_MT(p_,th_) ARMCI_Free(p_)
 #endif

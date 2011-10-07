@@ -22,8 +22,8 @@
 
 #define DEBUG__ 
 
-#include "mp3.h"
 #include "armci.h"
+#include "message.h"
 
 #define DIM1 5
 #define DIM2 3
@@ -273,7 +273,7 @@ int i, rc;
 
 void destroy_array(void *ptr[])
 {
-    MP_BARRIER();
+    armci_msg_barrier();
     assert(!ARMCI_Free(ptr[me]));
 }
 
@@ -384,24 +384,24 @@ int main(int argc, char* argv[])
 {
 int ndim;
 
-    MP_INIT(argc, argv);
-    MP_PROCS(&nproc);
-    MP_MYID(&me);
+    armci_msg_init(&argc, &argv);
+    nproc = armci_msg_nproc();
+    me = armci_msg_me();
 
     ARMCI_Init();
 
-    MP_BARRIER();
+    armci_msg_barrier();
     if(me==0){
       printf("\nTesting armci_notify\n");
       fflush(stdout);
       sleep(1);
     }
-    MP_BARRIER();
+    armci_msg_barrier();
         
     for(ndim=1; ndim<=MAXDIMS; ndim++) test_notify(ndim);
-    MP_BARRIER();
+    armci_msg_barrier();
 
     ARMCI_Finalize();
-    MP_FINALIZE();
+    armci_msg_finalize();
     return(0);
 }

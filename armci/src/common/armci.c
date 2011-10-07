@@ -331,32 +331,9 @@ void armci_create_ft_group()
 }
 #endif
 
-static void MP_INIT(int *argc, char ***argv)
-{
-#if defined(TCGMSG)
-    if (!tcg_ready()) {
-        tcg_pbegin(argc,argv);
-    }
-#elif defined(BGML)
-    /* empty */
-#elif defined(MPI)
-    int flag=0;
-    MPI_Initialized(&flag);
-    if (!flag) {
-#   if defined(DCMF) || defined(MPI_MT)
-        int provided;
-        MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &provided);
-#   else
-        MPI_Init(argc, argv);
-#   endif
-    }
-#endif
-}
-
-
 int PARMCI_Init_args(int *argc, char ***argv) 
 {
-    MP_INIT(argc,argv);
+    armci_msg_init(argc,argv);
 
 #ifdef MPI_SPAWN
     /* If this is data server process, then it should call
@@ -418,12 +395,7 @@ int PARMCI_Init()
 
     /* let's hope that the message passing environment was initialized outside
      * of ARMCI such that passing NULL for argc/argv here is okay */
-    MP_INIT(NULL, NULL);
-
-#ifdef MPI
-    /*SK: initialize duplicate communicator before anything else*/
-    MPI_Comm_dup(MPI_COMM_WORLD, &ARMCI_COMM_WORLD);
-#endif
+    armci_msg_init(NULL, NULL);
 
 #ifdef MPI_SPAWN
     if(!_armci_initialized_args)
