@@ -1338,32 +1338,3 @@ pario/dra/perfn.log: pario/dra/perfn$(EXEEXT)
 	@p='pario/dra/perfn$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 pario/dra/rate.log: pario/dra/rate$(EXEEXT)
 	@p='pario/dra/rate$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-
-.F.o:
-@am__fastdepF77_TRUE@	$(AM_V_PPF77)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
-@am__fastdepF77_TRUE@	$(PPF77COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepF77_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@am__fastdepF77_FALSE@	$(AM_V_PPF77) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepF77_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepF77_FALSE@	DEPDIR=$(DEPDIR) $(F77DEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepF77_FALSE@	$(PPF77COMPILE) -c -o $@ $<
-
-.F.obj:
-@am__fastdepF77_TRUE@	$(AM_V_PPF77)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
-@am__fastdepF77_TRUE@	$(PPF77COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
-@am__fastdepF77_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@am__fastdepF77_FALSE@	$(AM_V_PPF77) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepF77_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepF77_FALSE@	DEPDIR=$(DEPDIR) $(F77DEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepF77_FALSE@	$(PPF77COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-
-.F.lo:
-@am__fastdepF77_TRUE@	$(AM_V_PPF77)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-@am__fastdepF77_TRUE@	$(LTPPF77COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepF77_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
-@am__fastdepF77_FALSE@	$(AM_V_PPF77) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepF77_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepF77_FALSE@	DEPDIR=$(DEPDIR) $(F77DEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepF77_FALSE@	$(LTPPF77COMPILE) -c -o $@ $<
-.F.f:
-	$(F77COMPILE) -F $<
