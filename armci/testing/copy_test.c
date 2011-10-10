@@ -49,18 +49,486 @@ privately owned rights.
 #include "copy.h"
 #include "timer.h"
 
-#define DCOPY2D_N_ F77_FUNC_(dcopy2d_n,DCOPY2D_N)
-#define DCOPY2D_U_ F77_FUNC_(dcopy2d_u,DCOPY2D_U)
-#define DCOPY1D_N_ F77_FUNC_(dcopy1d_n,DCOPY1D_N)
-#define DCOPY1D_U_ F77_FUNC_(dcopy1d_u,DCOPY1D_U)
+#define F_TESTS 1
+#define C_TESTS 1
+#define M_TESTS 1
+#define ALLOW_FREE 1
+
+typedef void (*func1d)(const double* const restrict,
+                             double* const restrict,
+                       const int*    const restrict);
+typedef void (*func2d)(const int*    const restrict,
+                       const int*    const restrict,
+                       const double* const restrict,
+                       const int*    const restrict,
+                             double* const restrict,
+                       const int*    const restrict);
+typedef void (*func21)(const int*    const restrict,
+                       const int*    const restrict,
+                       const double* const restrict,
+                       const int*    const restrict,
+                             double* const restrict,
+                             int*    const restrict);
+typedef void (*func12)(const int*    const restrict,
+                       const int*    const restrict,
+                             double* const restrict,
+                       const int*    const restrict,
+                       const double* const restrict,
+                             int*    const restrict);
+typedef void (*func31)(const int*    const restrict,
+                       const int*    const restrict,
+                       const int*    const restrict,
+                       const double* const restrict,
+                       const int*    const restrict,
+                       const int*    const restrict,
+                             double* const restrict,
+                             int*    const restrict);
+typedef void (*func13)(const int*    const restrict,
+                       const int*    const restrict,
+                       const int*    const restrict,
+                             double* const restrict,
+                       const int*    const restrict,
+                       const int*    const restrict,
+                       const double* const restrict,
+                             int*    const restrict);
+
+static void test_free(void *pointer)
+{
+#if ALLOW_FREE
+  free(pointer);
+#endif
+}
+
+
+static void timer_print(char *name, unsigned long long timer, char l)
+{
+  printf("%10s = %10llu %c\n", name, timer, l);
+}
+
+
+static void init_in(double *in, int n)
+{
+    int i=0;
+    for (i=0; i<n; ++i) {
+        in[i] = (double)i;
+    }
+}
+
+
+static void init_out(double *out, int n)
+{
+    int i=0;
+    for (i=0; i<n; ++i) {
+        out[i] = -1.0f;
+    }
+}
+
+
+static void test1d(
+    char *name, func1d f, func1d c, int dim1, int correctness)
+{
+  unsigned long long timer;
+  int i;
+#if F_TESTS
+  double *fin  = malloc(dim1 * sizeof(double));
+  double *fout = malloc(dim1 * sizeof(double));
+#endif
+#if C_TESTS
+  double *cin  = malloc(dim1 * sizeof(double));
+  double *cout = malloc(dim1 * sizeof(double));
+#endif
+#if M_TESTS
+  double *min  = malloc(dim1 * sizeof(double));
+  double *mout = malloc(dim1 * sizeof(double));
+#endif
+
+#if F_TESTS
+  if (correctness) {
+    init_in(fin, dim1);
+    init_out(fout, dim1);
+  }
+  timer = timer_start();
+  (*f)(fin, fout, &dim1);
+  timer = timer_end(timer);
+  if (!correctness) {
+    timer_print(name, timer, 'F');
+  }
+#endif
+
+#if C_TESTS
+  if (correctness) {
+    init_in(cin, dim1);
+    init_out(cout, dim1);
+  }
+  timer = timer_start();
+  (*c)(cin, cout, &dim1);
+  timer = timer_end(timer);
+  if (!correctness) {
+    timer_print(name, timer, 'C');
+  }
+#endif
+
+#if M_TESTS
+  if (correctness) {
+    init_in(min, dim1);
+    init_out(mout, dim1);
+  }
+  timer = timer_start();
+  memcpy(mout, min, dim1*sizeof(double));
+  timer = timer_end(timer);
+  if (!correctness) {
+    timer_print(name, timer, 'M');
+  }
+#endif
+
+#if F_TESTS && C_TESTS && M_TESTS
+  if (correctness) {
+    for (i = 0 ; i < dim1; i++) {
+      assert(cout[i] == fout[i]);
+    }
+    for (i = 0 ; i < dim1; i++) {
+      assert(mout[i] == fout[i]);
+    }
+  }
+#endif
+
+#if F_TESTS
+  test_free(fin);
+  test_free(fout);
+#endif
+#if C_TESTS
+  test_free(cin);
+  test_free(cout);
+#endif
+#if M_TESTS
+  test_free(min);
+  test_free(mout);
+#endif
+}
+
+
+static void test2d(
+    char *name, func2d f, func2d c, int dim1, int dim2, int correctness)
+{
+  unsigned long long timer;
+  int i;
+#if F_TESTS
+  double *fin  = malloc(dim1 * dim2 * sizeof(double));
+  double *fout = malloc(dim1 * dim2 * sizeof(double));
+#endif
+#if C_TESTS
+  double *cin  = malloc(dim1 * dim2 * sizeof(double));
+  double *cout = malloc(dim1 * dim2 * sizeof(double));
+#endif
+
+#if F_TESTS
+  if (correctness) {
+    init_in(fin, dim1 * dim2);
+    init_out(fout, dim1 * dim2);
+  }
+  timer = timer_start();
+  (*f)(&dim1, &dim2, fin, &dim1, fout, &dim1);
+  timer = timer_end(timer);
+  if (!correctness) {
+    timer_print(name, timer, 'F');
+  }
+#endif
+
+#if C_TESTS
+  if (correctness) {
+    init_in(cin, dim1 * dim2);
+    init_out(cout, dim1 * dim2);
+  }
+  timer = timer_start();
+  (*c)(&dim1, &dim2, cin, &dim1, cout, &dim1);
+  timer = timer_end(timer);
+  if (!correctness) {
+    timer_print(name, timer, 'C');
+  }
+#endif
+
+#if F_TESTS && C_TESTS
+  if (correctness) {
+    for (i = 0 ; i < dim1 * dim2; i++) {
+      assert(cout[i] == fout[i]);
+    }
+  }
+#endif
+
+#if F_TESTS
+  test_free(fin);
+  test_free(fout);
+#endif
+#if C_TESTS
+  test_free(cin);
+  test_free(cout);
+#endif
+}
+
+
+static void test21(
+    char *name, func21 f, func21 c, int dim1, int dim2, int correctness)
+{
+  unsigned long long timer;
+  int i;
+#if F_TESTS
+  int fcur;
+  double *fin  = malloc(dim1 * dim2 * sizeof(double));
+  double *fout = malloc(dim1 * dim2 * sizeof(double));
+#endif
+#if C_TESTS
+  int ccur;
+  double *cin  = malloc(dim1 * dim2 * sizeof(double));
+  double *cout = malloc(dim1 * dim2 * sizeof(double));
+#endif
+
+#if F_TESTS
+  if (correctness) {
+    init_in(fin, dim1 * dim2);
+    init_out(fout, dim1 * dim2);
+  }
+  timer = timer_start();
+  (*f)(&dim1, &dim2, fin, &dim1, fout, &fcur);
+  timer = timer_end(timer);
+  if (!correctness) {
+    timer_print(name, timer, 'F');
+  }
+#endif
+
+#if C_TESTS
+  if (correctness) {
+    init_in(cin, dim1 * dim2);
+    init_out(cout, dim1 * dim2);
+  }
+  timer = timer_start();
+  (*c)(&dim1, &dim2, cin, &dim1, cout, &ccur);
+  timer = timer_end(timer);
+  if (!correctness) {
+    timer_print(name, timer, 'C');
+  }
+#endif
+
+#if F_TESTS && C_TESTS
+  if (correctness) {
+    for (i = 0 ; i < dim1 * dim2; i++) {
+      assert(cout[i] == fout[i]);
+    }
+    assert(fcur == ccur);
+  }
+#endif
+
+#if F_TESTS
+  test_free(fin);
+  test_free(fout);
+#endif
+#if C_TESTS
+  test_free(cin);
+  test_free(cout);
+#endif
+}
+
+
+static void test12(
+    char *name, func12 f, func12 c, int dim1, int dim2, int correctness)
+{
+  unsigned long long timer;
+  int i;
+#if F_TESTS
+  int fcur;
+  double *fin  = malloc(dim1 * dim2 * sizeof(double));
+  double *fout = malloc(dim1 * dim2 * sizeof(double));
+#endif
+#if C_TESTS
+  int ccur;
+  double *cin  = malloc(dim1 * dim2 * sizeof(double));
+  double *cout = malloc(dim1 * dim2 * sizeof(double));
+#endif
+
+#if F_TESTS
+  if (correctness) {
+    init_in(fin, dim1 * dim2);
+    init_out(fout, dim1 * dim2);
+  }
+  timer = timer_start();
+  (*f)(&dim1, &dim2, fout, &dim1, fin, &fcur);
+  timer = timer_end(timer);
+  if (!correctness) {
+    timer_print(name, timer, 'F');
+  }
+#endif
+
+#if C_TESTS
+  if (correctness) {
+    init_in(cin, dim1 * dim2);
+    init_out(cout, dim1 * dim2);
+  }
+  timer = timer_start();
+  (*c)(&dim1, &dim2, cout, &dim1, cin, &ccur);
+  timer = timer_end(timer);
+  if (!correctness) {
+    timer_print(name, timer, 'C');
+  }
+#endif
+
+#if F_TESTS && C_TESTS
+  if (correctness) {
+    for (i = 0 ; i < dim1 * dim2; i++) {
+      assert(cout[i] == fout[i]);
+    }
+    assert(fcur == ccur);
+  }
+#endif
+
+#if F_TESTS
+  test_free(fin);
+  test_free(fout);
+#endif
+#if C_TESTS
+  test_free(cin);
+  test_free(cout);
+#endif
+}
+
+
+static void test31(
+    char *name, func31 f, func31 c, int dim1, int dim2, int dim3, int correctness)
+{
+  unsigned long long timer;
+  int i;
+#if F_TESTS
+  int fcur;
+  double *fin  = malloc(dim1 * dim2 * dim3 * sizeof(double));
+  double *fout = malloc(dim1 * dim2 * dim3 * sizeof(double));
+#endif
+#if C_TESTS
+  int ccur;
+  double *cin  = malloc(dim1 * dim2 * dim3 * sizeof(double));
+  double *cout = malloc(dim1 * dim2 * dim3 * sizeof(double));
+#endif
+
+#if F_TESTS
+  if (correctness) {
+    init_in(fin, dim1 * dim2 * dim3);
+    init_out(fout, dim1 * dim2 * dim3);
+  }
+  timer = timer_start();
+  (*f)(&dim1, &dim2, &dim3, fin, &dim1, &dim2, fout, &fcur);
+  timer = timer_end(timer);
+  if (!correctness) {
+    timer_print(name, timer, 'F');
+  }
+#endif
+
+#if C_TESTS
+  if (correctness) {
+    init_in(cin, dim1 * dim2 * dim3);
+    init_out(cout, dim1 * dim2 * dim3);
+  }
+  timer = timer_start();
+  (*c)(&dim1, &dim2, &dim3, cin, &dim1, &dim2, cout, &ccur);
+  timer = timer_end(timer);
+  if (!correctness) {
+    timer_print(name, timer, 'C');
+  }
+#endif
+
+#if F_TESTS && C_TESTS
+  if (correctness) {
+    for (i = 0 ; i < dim1 * dim2 * dim3; i++) {
+      assert(cout[i] == fout[i]);
+    }
+    assert(fcur == ccur);
+  }
+#endif
+
+#if F_TESTS
+  test_free(fin);
+  test_free(fout);
+#endif
+#if C_TESTS
+  test_free(cin);
+  test_free(cout);
+#endif
+}
+
+
+static void test13(
+    char *name, func13 f, func13 c, int dim1, int dim2, int dim3, int correctness)
+{
+  unsigned long long timer;
+  int i;
+#if F_TESTS
+  int fcur;
+  double *fin  = malloc(dim1 * dim2 * dim3 * sizeof(double));
+  double *fout = malloc(dim1 * dim2 * dim3 * sizeof(double));
+#endif
+#if C_TESTS
+  int ccur;
+  double *cin  = malloc(dim1 * dim2 * dim3 * sizeof(double));
+  double *cout = malloc(dim1 * dim2 * dim3 * sizeof(double));
+#endif
+
+#if F_TESTS
+  if (correctness) {
+    init_in(fin, dim1 * dim2 * dim3);
+    init_out(fout, dim1 * dim2 * dim3);
+  }
+  timer = timer_start();
+  (*f)(&dim1, &dim2, &dim3, fout, &dim1, &dim2, fin, &fcur);
+  timer = timer_end(timer);
+  if (!correctness) {
+    timer_print(name, timer, 'F');
+  }
+#endif
+
+#if C_TESTS
+  if (correctness) {
+    init_in(cin, dim1 * dim2 * dim3);
+    init_out(cout, dim1 * dim2 * dim3);
+  }
+  timer = timer_start();
+  (*c)(&dim1, &dim2, &dim3, cout, &dim1, &dim2, cin, &ccur);
+  timer = timer_end(timer);
+  if (!correctness) {
+    timer_print(name, timer, 'C');
+  }
+#endif
+
+#if F_TESTS && C_TESTS
+  if (correctness) {
+    for (i = 0 ; i < dim1 * dim2 * dim3; i++) {
+      assert(cout[i] == fout[i]);
+    }
+    assert(fcur == ccur);
+  }
+#endif
+
+#if F_TESTS
+  test_free(fin);
+  test_free(fout);
+#endif
+#if C_TESTS
+  test_free(cin);
+  test_free(cout);
+#endif
+}
 
 
 int main(int argc, char **argv)
 {
   unsigned long long timer;
+#if ALLOW_FREE
   int dim1  = (argc > 1 ? atoi(argv[1]) : 353);
   int dim2  = (argc > 2 ? atoi(argv[2]) : 419);
   int dim3  = (argc > 3 ? atoi(argv[3]) : 467);
+#else
+  int dim1  = (argc > 1 ? atoi(argv[1]) :  31);
+  int dim2  = (argc > 2 ? atoi(argv[2]) :  73);
+  int dim3  = (argc > 3 ? atoi(argv[3]) : 127);
+#endif
+
+  /*********************************************************/
+
   timer_init();
 
   printf("\ntesting ARMCI copy routines\n");
@@ -71,227 +539,33 @@ int main(int argc, char **argv)
 
   /*********************************************************/
 
-  double *in1 = malloc((dim1)                 * sizeof(double));
-  double *in2 = malloc((dim1 * dim2)          * sizeof(double));
-  double *in3 = malloc((dim1 * dim2 * dim3)   * sizeof(double));
-
-  double *cout1 = malloc((dim1)               * sizeof(double));
-  double *cout2 = malloc((dim1 * dim2)        * sizeof(double));
-  double *cout3 = malloc((dim1 * dim2 * dim3) * sizeof(double));
-
-  double *fout1 = malloc((dim1)               * sizeof(double));
-  double *fout2 = malloc((dim1 * dim2)        * sizeof(double));
-  double *fout3 = malloc((dim1 * dim2 * dim3) * sizeof(double));
-
-  int i;
-
-  for (i = 0 ; i < (dim1); i++) {
-    in1[i] = (double)i;
-  }
-  for (i = 0 ; i < (dim1 * dim2); i++) {
-    in2[i] = (double)i;
-  }
-  for (i = 0 ; i < (dim1 * dim2 * dim3) ; i++) {
-    in3[i] = (double)i;
-  }
-
-  int ccur, fcur;
+  test1d("dcopy1d_n", dcopy1d_n_, c_dcopy1d_n_, dim1, 0);
+  test1d("dcopy1d_n", dcopy1d_n_, c_dcopy1d_n_, dim1, 1);
+  test1d("dcopy1d_u", dcopy1d_u_, c_dcopy1d_u_, dim1, 0);
+  test1d("dcopy1d_u", dcopy1d_u_, c_dcopy1d_u_, dim1, 1);
 
   /*********************************************************/
 
-  printf("\n");
-
-  for (i = 0; i < dim1; i++) {
-    cout1[i] = -1.0f;
-  }
-  for (i = 0; i < dim1; i++) {
-    fout1[i] = -1.0f;
-  }
-
-  timer = timer_start();
-  DCOPY1D_N_(in1, fout1, &dim1);
-  timer = timer_end(timer);
-  printf("  DCOPY1D_N_ = %15llu\n", timer);
-  timer = timer_start();
-  c_dcopy1d_n_(in1, cout1, &dim1);
-  timer = timer_end(timer);
-  printf("c_dcopy1d_n_ = %15llu\n", timer);
-  for (i = 0 ; i < dim1; i++) {
-    assert(cout1[i] == fout1[i]);
-  }
-
-  printf("\n");
-
-  for (i = 0; i < dim1; i++) {
-    cout1[i] = -1.0f;
-  }
-  for (i = 0; i < dim1; i++) {
-    fout1[i] = -1.0f;
-  }
-
-  timer = timer_start();
-  DCOPY1D_U_(in1, fout1, &dim1);
-  timer = timer_end(timer);
-  printf("  DCOPY1D_U_ = %15llu\n", timer);
-  timer = timer_start();
-  c_dcopy1d_u_(in1, cout1, &dim1);
-  timer = timer_end(timer);
-  printf("c_dcopy1d_u_ = %15llu\n", timer);
-  for (i = 0 ; i < dim1; i++) {
-    assert(cout1[i] == fout1[i]);
-  }
-
-  /*printf("all 1d tests have passed!\n");*/
+  test2d("dcopy2d_n", dcopy2d_n_, c_dcopy2d_n_, dim1, dim2, 0);
+  test2d("dcopy2d_n", dcopy2d_n_, c_dcopy2d_n_, dim1, dim2, 1);
+  test2d("dcopy2d_u", dcopy2d_u_, c_dcopy2d_u_, dim1, dim2, 0);
+  test2d("dcopy2d_u", dcopy2d_u_, c_dcopy2d_u_, dim1, dim2, 1);
 
   /*********************************************************/
 
-  printf("\n");
-
-  for (i = 0; i < (dim1 * dim2); i++) {
-    cout2[i] = -1.0f;
-  }
-  for (i = 0; i < (dim1 * dim2); i++) {
-    fout2[i] = -1.0f;
-  }
-
-  timer = timer_start();
-  DCOPY2D_N_(&dim1, &dim2, in2, &dim1, fout2, &dim1);
-  timer = timer_end(timer);
-  printf("  DCOPY2D_N_ = %15llu\n", timer);
-  timer = timer_start();
-  c_dcopy2d_n_(&dim1, &dim2, in2, &dim1, cout2, &dim1);
-  timer = timer_end(timer);
-  printf("c_dcopy2d_n_ = %15llu\n", timer);
-  for (i = 0 ; i < (dim1 * dim2); i++) {
-    assert(cout2[i] == fout2[i]);
-  }
-
-  printf("\n");
-
-  for (i = 0; i < (dim1 * dim2); i++) {
-    cout2[i] = -1.0f;
-  }
-  for (i = 0; i < (dim1 * dim2); i++) {
-    fout2[i] = -1.0f;
-  }
-
-  timer = timer_start();
-  DCOPY2D_U_(&dim1, &dim2, in2, &dim1, fout2, &dim1);
-  timer = timer_end(timer);
-  printf("  DCOPY2D_U_ = %15llu\n", timer);
-  timer = timer_start();
-  c_dcopy2d_u_(&dim1, &dim2, in2, &dim1, cout2, &dim1);
-  timer = timer_end(timer);
-  printf("c_dcopy2d_u_ = %15llu\n", timer);
-  for (i = 0 ; i < (dim1 * dim2); i++) {
-    assert(cout2[i] == fout2[i]);
-  }
-
-  printf("\n");
-
-  for (i = 0; i < (dim1 * dim2); i++) {
-    cout2[i] = -1.0f;
-  }
-  for (i = 0; i < (dim1 * dim2); i++) {
-    fout2[i] = -1.0f;
-  }
-
-  timer = timer_start();
-  DCOPY21(&dim1, &dim2, in2, &dim1, fout2, &fcur);
-  timer = timer_end(timer);
-  printf("   DCOPY21   = %15llu\n", timer);
-  timer = timer_start();
-  c_dcopy21_(&dim1, &dim2, in2, &dim1, cout2, &ccur);
-  timer = timer_end(timer);
-  printf("c_dcopy21_   = %15llu\n", timer);
-  for (i = 0 ; i < (dim1 * dim2); i++) {
-    assert(cout2[i] == fout2[i]);
-  }
-  assert(ccur == fcur);
-
-  printf("\n");
-
-  for (i = 0; i < (dim1 * dim2); i++) {
-    cout2[i] = -1.0f;
-  }
-  for (i = 0; i < (dim1 * dim2); i++) {
-    fout2[i] = -1.0f;
-  }
-
-  timer = timer_start();
-  DCOPY12(&dim1, &dim2, fout2, &dim1, in2, &fcur);
-  timer = timer_end(timer);
-  printf("   DCOPY12   = %15llu\n", timer);
-  timer = timer_start();
-  c_dcopy12_(&dim1, &dim2, cout2, &dim1, in2, &ccur);
-  timer = timer_end(timer);
-  printf("c_dcopy12_   = %15llu\n", timer);
-  for (i = 0 ; i < (dim1 * dim2); i++) {
-    assert(cout2[i] == fout2[i]);
-  }
-  assert(ccur == fcur);
-
-  /*printf("all 2d tests have passed!\n");*/
+  test21("dcopy21", dcopy21_, c_dcopy21_, dim1, dim2, 0);
+  test21("dcopy21", dcopy21_, c_dcopy21_, dim1, dim2, 1);
+  test12("dcopy12", dcopy12_, c_dcopy12_, dim1, dim2, 0);
+  test12("dcopy12", dcopy12_, c_dcopy12_, dim1, dim2, 1);
 
   /*********************************************************/
 
-  printf("\n");
-
-  for (i = 0; i < (dim1 * dim2 * dim3); i++) {
-    cout3[i] = -1.0f;
-  }
-  for (i = 0; i < (dim1 * dim2 * dim3); i++) {
-    fout3[i] = -1.0f;
-  }
-
-  timer = timer_start();
-  DCOPY31(&dim1, &dim2, &dim3, in3, &dim1, &dim2, fout3, &fcur);
-  timer = timer_end(timer);
-  printf("   DCOPY31   = %15llu\n", timer);
-  timer = timer_start();
-  c_dcopy31_(&dim1, &dim2, &dim3, in3, &dim1, &dim2, cout3, &ccur);
-  timer = timer_end(timer);
-  printf("c_dcopy31_   = %15llu\n", timer);
-  for (i = 0 ; i < (dim1 * dim2 * dim3); i++) {
-    assert(cout3[i] == fout3[i]);
-  }
-  assert(ccur == fcur);
-
-  printf("\n");
-
-  for (i = 0; i < (dim1 * dim2 * dim3); i++) {
-    cout3[i] = -1.0f;
-  }
-  for (i = 0; i < (dim1 * dim2 * dim3); i++) {
-    fout3[i] = -1.0f;
-  }
-
-  timer = timer_start();
-  DCOPY13(&dim1, &dim2, &dim3, fout3, &dim1, &dim2, in3, &fcur);
-  timer = timer_end(timer);
-  printf("   DCOPY13   = %15llu\n", timer);
-  timer = timer_start();
-  c_dcopy13_(&dim1, &dim2, &dim3, cout3, &dim1, &dim2, in3, &ccur);
-  timer = timer_end(timer);
-  printf("c_dcopy13_   = %15llu\n", timer);
-  for (i = 0 ; i < (dim1 * dim2 * dim3); i++) {
-    assert(cout3[i] == fout3[i]);
-  }
-  assert(ccur == fcur);
-
-  /*printf("all 3d tests have passed!\n");*/
+  test31("dcopy31", dcopy31_, c_dcopy31_, dim1, dim2, dim3, 0);
+  test31("dcopy31", dcopy31_, c_dcopy31_, dim1, dim2, dim3, 1);
+  test13("dcopy13", dcopy13_, c_dcopy13_, dim1, dim2, dim3, 0);
+  test13("dcopy13", dcopy13_, c_dcopy13_, dim1, dim2, dim3, 1);
 
   /*********************************************************/
-
-  free(in1);
-  free(in2);
-  free(in3);
-  free(cout1);
-  free(cout2);
-  free(cout3);
-  free(fout1);
-  free(fout2);
-  free(fout3);
 
   return(0);
 }
