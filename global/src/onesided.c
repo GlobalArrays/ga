@@ -539,7 +539,7 @@ void ngai_put_common(Integer g_a,
 		     Integer *nbhandle) 
 {
   Integer  p, np, handle=GA_OFFSET + g_a;
-  Integer  idx, elems, size, p_handle, ga_nbhandle;
+  Integer  idx, elems, size, p_handle;
   int proc, ndim, loop, cond;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
   Integer use_blocks;
@@ -547,6 +547,7 @@ void ngai_put_common(Integer g_a,
   Integer *rank_rstrctd;
 #if defined(__crayx1) || defined(DISABLE_NBOPT)
 #else
+  Integer ga_nbhandle;
   int counter=0;
 #endif
 
@@ -1111,7 +1112,7 @@ void ngai_get_common(Integer g_a,
                       ld[]:  Array of physical ndim-1 dimensions of local buffer */
 
   Integer  p, np, handle=GA_OFFSET + g_a;
-  Integer  idx, elems, size, p_handle, ga_nbhandle;
+  Integer  idx, elems, size, p_handle;
   int proc, ndim, loop, cond;
   int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
   Integer use_blocks;
@@ -1119,6 +1120,7 @@ void ngai_get_common(Integer g_a,
   Integer *rank_rstrctd;
 #if defined(__crayx1) || defined(DISABLE_NBOPT)
 #else
+  Integer ga_nbhandle;
   int counter=0;
 #endif
 

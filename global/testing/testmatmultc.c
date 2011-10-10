@@ -24,6 +24,12 @@ void verify_ga_dgemm(char xt1, char xt2, int num_m, int num_n, int num_k,
         double *tmpa, double *tmpb, double *tmpc);
 
 
+#define dgemm_verify 1
+#define nummax 1024
+#define howmany 2
+#define ntrans 4
+
+
 /*
  * test ga_dgemm
  * Note: - change nummax for large arrays
@@ -33,10 +39,6 @@ void verify_ga_dgemm(char xt1, char xt2, int num_m, int num_n, int num_k,
  */
 int main(int argc, char **argv)
 {
-    const int dgemm_verify=1;
-    const int nummax=1024;
-    const int howmany=2;
-    const int ntrans=4;
     int num_m;
     int num_n;
     int num_k;

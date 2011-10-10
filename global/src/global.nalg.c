@@ -58,7 +58,7 @@ void pnga_zero(Integer g_a)
   Integer ndim, type, me, elems, p_handle;
   Integer num_blocks;
   void *ptr;
-  register Integer i;
+  /*register Integer i;*/
   int local_sync_begin,local_sync_end;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;

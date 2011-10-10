@@ -71,8 +71,6 @@ extern void armci_read_strided(void *ptr, int stride_levels, int stride_arr[], i
 #define BYTE_ADDRESSABLE_MEMORY
 #endif
 
-static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */ 
-
 /*uncomment line below to verify consistency of MA in every sync */
 /*#define CHECK_MA yes */
 

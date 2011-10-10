@@ -14,5 +14,6 @@ extern Integer F2C_IARGC();
 
 extern void ga_c2fstring(char *cstring, char *fstring, int flength);
 extern void ga_f2cstring(char *fstring, int flength, char *cstring, int clength);
+extern void ga_f2c_get_cmd_args(int *argc, char ***argv);
 
 #endif /* FARG_H_ */

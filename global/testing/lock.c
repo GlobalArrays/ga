@@ -83,7 +83,6 @@ int main(int argc, char **argv)
     /*double* p2 = ARMCI_Malloc_local(num*sizeof(double));*/
     if (p2==NULL) MPI_Abort(MPI_COMM_WORLD,2000);
 
-    i;
     for ( i=0 ; i<num ; i++ ) p1[i] = 7.0;
     for ( i=0 ; i<num ; i++ ) p2[i] = 3.0;
 

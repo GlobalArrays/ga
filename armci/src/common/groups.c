@@ -399,11 +399,11 @@ void ARMCI_Group_free(ARMCI_Group *group) {
 void ARMCI_Group_create_child(int n, int *pid_list, ARMCI_Group *group_out,
 			      ARMCI_Group *grp_parent)
 {
-    int i,grp_me;
+    int grp_me;
     ARMCI_iGroup *igroup = NULL;
 
 #ifdef ARMCI_GROUP
-    int world_me, parent_grp_me;
+    int i, world_me, parent_grp_me;
     armci_grp_attr_t *grp_attr = NULL;
 #else
     int rv;

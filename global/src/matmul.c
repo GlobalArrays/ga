@@ -363,10 +363,8 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
   Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim, adim, bdim=0, cdim;
   int istart, jstart, kstart, iend, jend, kend;
   short int do_put=UNSET, single_task_flag=UNSET;
-  DoubleComplex ONE;
-  SingleComplex ONE_CF;
-  ONE.real =1.; ONE.imag =0.; 
-  ONE_CF.real =1.; ONE_CF.imag =0.; 
+  DoubleComplex ONE = {1.,0.};
+  SingleComplex ONE_CF = {1.,0.};
   Integer clo[2], chi[2];
 
   GA_PUSH_NAME("ga_matmul_shmem");

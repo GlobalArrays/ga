@@ -516,7 +516,6 @@ static void test13(
 
 int main(int argc, char **argv)
 {
-  unsigned long long timer;
 #if ALLOW_FREE
   int dim1  = (argc > 1 ? atoi(argv[1]) : 353);
   int dim2  = (argc > 2 ? atoi(argv[2]) : 419);

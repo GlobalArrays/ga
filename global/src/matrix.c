@@ -1044,7 +1044,7 @@ static void sgai_norm1_block(Integer g_a, void *ptr,
                      Integer type,
                      Integer ndim, Integer *dims, void *buf)
 {
-  /*Integer size, nelem, dim2*/;
+  /*Integer size, nelem, dim2;*/
   Integer iloA=0, ihiA=0, jloA=0, jhiA=0;
   Integer i, j;
   int *isum = NULL;
