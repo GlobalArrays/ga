@@ -118,4 +118,5 @@ AS_IF([test x$with_mpi_wrappers = xyes],
     [F77_TO_TEST="$ga_mpif77_pref $ga_mpif95 $ga_mpif90 $ga_mpif77"],
     [F77_TO_TEST="$ga_f77_pref $ga_f95 $ga_f90 $ga_f77"])
 AC_PROG_F77([$F77_TO_TEST])
+_AM_DEPENDENCIES(F77)
 ])dnl
