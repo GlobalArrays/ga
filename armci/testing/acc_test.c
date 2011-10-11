@@ -49,33 +49,6 @@ privately owned rights.
 #include "acc.h"
 #include "timer.h"
 
-#undef C_ACCUMULATE_1D
-#undef C_ACCUMULATE_2D
-#undef D_ACCUMULATE_1D
-#undef D_ACCUMULATE_2D
-#undef F_ACCUMULATE_1D
-#undef F_ACCUMULATE_2D
-#undef I_ACCUMULATE_1D
-#undef I_ACCUMULATE_2D
-#undef Z_ACCUMULATE_1D
-#undef Z_ACCUMULATE_2D
-
-#define C_ACCUMULATE_1D   F77_FUNC_(c_accumulate_1d,C_ACCUMULATE_1D)
-#define C_ACCUMULATE_2D   F77_FUNC_(c_accumulate_2d,C_ACCUMULATE_2D)
-#define C_ACCUMULATE_2D_U F77_FUNC_(c_accumulate_2d_u,C_ACCUMULATE_2D_U)
-#define D_ACCUMULATE_1D   F77_FUNC_(d_accumulate_1d,D_ACCUMULATE_1D)
-#define D_ACCUMULATE_2D   F77_FUNC_(d_accumulate_2d,D_ACCUMULATE_2D)
-#define D_ACCUMULATE_2D_U F77_FUNC_(d_accumulate_2d_u,D_ACCUMULATE_2D_U)
-#define F_ACCUMULATE_1D   F77_FUNC_(f_accumulate_1d,F_ACCUMULATE_1D)
-#define F_ACCUMULATE_2D   F77_FUNC_(f_accumulate_2d,F_ACCUMULATE_2D)
-#define F_ACCUMULATE_2D_U F77_FUNC_(f_accumulate_2d_u,F_ACCUMULATE_2D_U)
-#define I_ACCUMULATE_1D   F77_FUNC_(i_accumulate_1d,I_ACCUMULATE_1D)
-#define I_ACCUMULATE_2D   F77_FUNC_(i_accumulate_2d,I_ACCUMULATE_2D)
-#define I_ACCUMULATE_2D_U F77_FUNC_(i_accumulate_2d_u,I_ACCUMULATE_2D_U)
-#define Z_ACCUMULATE_1D   F77_FUNC_(z_accumulate_1d,Z_ACCUMULATE_1D)
-#define Z_ACCUMULATE_2D   F77_FUNC_(z_accumulate_2d,Z_ACCUMULATE_2D)
-#define Z_ACCUMULATE_2D_U F77_FUNC_(z_accumulate_2d_u,Z_ACCUMULATE_2D_U)
-
 void d_assert(double *x, double *y, int n);
 void f_assert(float *x, float *y, int n);
 void i_assert(int *x, int *y, int n);
@@ -171,9 +144,9 @@ int main(int argc, char **argv)
   d_fill(c_d_out1, d_fill_value, dim1);
   d_fill(f_d_out1, d_fill_value, dim1);
   timer = timer_start();
-  D_ACCUMULATE_1D(&d_alpha, f_d_out1, d_in1, &dim1);
+  d_accumulate_1d_(&d_alpha, f_d_out1, d_in1, &dim1);
   timer = timer_end(timer);
-  printf("D_ACCUMULATE_1D      =%15llu\n", timer);
+  printf("  d_accumulate_1d_   =%15llu\n", timer);
   timer = timer_start();
   c_d_accumulate_1d_(&d_alpha, c_d_out1, d_in1, &dim1);
   timer = timer_end(timer);
@@ -184,9 +157,9 @@ int main(int argc, char **argv)
   f_fill(c_f_out1, f_fill_value, dim1);
   f_fill(f_f_out1, f_fill_value, dim1);
   timer = timer_start();
-  F_ACCUMULATE_1D(&f_alpha, f_f_out1, f_in1, &dim1);
+  f_accumulate_1d_(&f_alpha, f_f_out1, f_in1, &dim1);
   timer = timer_end(timer);
-  printf("F_ACCUMULATE_1D      =%15llu\n", timer);
+  printf("  f_accumulate_1d_   =%15llu\n", timer);
   timer = timer_start();
   c_f_accumulate_1d_(&f_alpha, c_f_out1, f_in1, &dim1);
   timer = timer_end(timer);
@@ -197,9 +170,9 @@ int main(int argc, char **argv)
   i_fill(c_i_out1, i_fill_value, dim1);
   i_fill(f_i_out1, i_fill_value, dim1);
   timer = timer_start();
-  I_ACCUMULATE_1D(&i_alpha, f_i_out1, i_in1, &dim1);
+  i_accumulate_1d_(&i_alpha, f_i_out1, i_in1, &dim1);
   timer = timer_end(timer);
-  printf("I_ACCUMULATE_1D      =%15llu\n", timer);
+  printf("  i_accumulate_1d_   =%15llu\n", timer);
   timer = timer_start();
   c_i_accumulate_1d_(&i_alpha, c_i_out1, i_in1, &dim1);
   timer = timer_end(timer);
@@ -210,9 +183,9 @@ int main(int argc, char **argv)
   z_fill(c_z_out1, z_fill_value, dim1);
   z_fill(f_z_out1, z_fill_value, dim1);
   timer = timer_start();
-  Z_ACCUMULATE_1D(&z_alpha, f_z_out1, z_in1, &dim1);
+  z_accumulate_1d_(&z_alpha, f_z_out1, z_in1, &dim1);
   timer = timer_end(timer);
-  printf("Z_ACCUMULATE_1D      =%15llu\n", timer);
+  printf("  z_accumulate_1d_   =%15llu\n", timer);
   timer = timer_start();
   c_z_accumulate_1d_(&z_alpha, c_z_out1, z_in1, &dim1);
   timer = timer_end(timer);
@@ -223,9 +196,9 @@ int main(int argc, char **argv)
   c_fill(c_c_out1, c_fill_value, dim1);
   c_fill(f_c_out1, c_fill_value, dim1);
   timer = timer_start();
-  C_ACCUMULATE_1D(&c_alpha, f_c_out1, c_in1, &dim1);
+  c_accumulate_1d_(&c_alpha, f_c_out1, c_in1, &dim1);
   timer = timer_end(timer);
-  printf("C_ACCUMULATE_1D      =%15llu\n", timer);
+  printf("  c_accumulate_1d_   =%15llu\n", timer);
   timer = timer_start();
   c_c_accumulate_1d_(&c_alpha, c_c_out1, c_in1, &dim1);
   timer = timer_end(timer);
@@ -236,52 +209,52 @@ int main(int argc, char **argv)
   d_fill(c_d_out1, d_fill_value, dim1);
   d_fill(f_d_out1, d_fill_value, dim1);
   timer = timer_start();
-  FORT_DADD(&dim1, f_d_out1, d_in1);
+  fort_dadd_(&dim1, f_d_out1, d_in1);
   timer = timer_end(timer);
-  printf("FORT_DADD            =%15llu\n", timer);
+  printf("fort_dadd_           =%15llu\n", timer);
   timer = timer_start();
   c_dadd_(&dim1, c_d_out1, d_in1);
   timer = timer_end(timer);
-  printf("c_dadd_              =%15llu\n", timer);
+  printf("   c_dadd_           =%15llu\n", timer);
   d_assert(c_d_out1, f_d_out1, dim1);
 
   printf("\n");
   d_fill(c_d_out1, d_fill_value, dim1);
   d_fill(f_d_out1, d_fill_value, dim1);
   timer = timer_start();
-  FORT_DADD2(&dim1, f_d_out1, d_in1, d_in1);
+  fort_dadd2_(&dim1, f_d_out1, d_in1, d_in1);
   timer = timer_end(timer);
-  printf("FORT_DADD2           =%15llu\n", timer);
+  printf("fort_dadd2_          =%15llu\n", timer);
   timer = timer_start();
   c_dadd2_(&dim1, c_d_out1, d_in1, d_in1);
   timer = timer_end(timer);
-  printf("c_dadd2_             =%15llu\n", timer);
+  printf("   c_dadd2_          =%15llu\n", timer);
   d_assert(c_d_out1, f_d_out1, dim1);
 
   printf("\n");
   d_fill(c_d_out1, d_fill_value, dim1);
   d_fill(f_d_out1, d_fill_value, dim1);
   timer = timer_start();
-  FORT_DMULT(&dim1, f_d_out1, d_in1);
+  fort_dmult_(&dim1, f_d_out1, d_in1);
   timer = timer_end(timer);
-  printf("FORT_DMULT           =%15llu\n", timer);
+  printf("fort_dmult_          =%15llu\n", timer);
   timer = timer_start();
   c_dmult_(&dim1, c_d_out1, d_in1);
   timer = timer_end(timer);
-  printf("c_dmult_             =%15llu\n", timer);
+  printf("   c_dmult_          =%15llu\n", timer);
   d_assert(c_d_out1, f_d_out1, dim1);
 
   printf("\n");
   d_fill(c_d_out1, d_fill_value, dim1);
   d_fill(f_d_out1, d_fill_value, dim1);
   timer = timer_start();
-  FORT_DMULT2(&dim1, f_d_out1, d_in1, d_in1);
+  fort_dmult2_(&dim1, f_d_out1, d_in1, d_in1);
   timer = timer_end(timer);
-  printf("FORT_DMULT2          =%15llu\n", timer);
+  printf("fort_dmult2_         =%15llu\n", timer);
   timer = timer_start();
   c_dmult2_(&dim1, c_d_out1, d_in1, d_in1);
   timer = timer_end(timer);
-  printf("c_dmult2_            =%15llu\n", timer);
+  printf("   c_dmult2_         =%15llu\n", timer);
   d_assert(c_d_out1, f_d_out1, dim1);
 
   /*printf("all 1d tests have passed!\n");*/
@@ -292,9 +265,9 @@ int main(int argc, char **argv)
   d_fill(c_d_out2, d_fill_value, dim1 * dim2);
   d_fill(f_d_out2, d_fill_value, dim1 * dim2);
   timer = timer_start();
-  D_ACCUMULATE_2D(&d_alpha, &dim1, &dim2, f_d_out2, &dim1, d_in2, &dim1);
+  d_accumulate_2d_(&d_alpha, &dim1, &dim2, f_d_out2, &dim1, d_in2, &dim1);
   timer = timer_end(timer);
-  printf("D_ACCUMULATE_2D      =%15llu\n", timer);
+  printf("  d_accumulate_2d_   =%15llu\n", timer);
   timer = timer_start();
   c_d_accumulate_2d_(&d_alpha, &dim1, &dim2, c_d_out2, &dim1, d_in2, &dim1);
   timer = timer_end(timer);
@@ -305,9 +278,9 @@ int main(int argc, char **argv)
   f_fill(c_f_out2, f_fill_value, dim1 * dim2);
   f_fill(f_f_out2, f_fill_value, dim1 * dim2);
   timer = timer_start();
-  F_ACCUMULATE_2D(&f_alpha, &dim1, &dim2, f_f_out2, &dim1, f_in2, &dim1);
+  f_accumulate_2d_(&f_alpha, &dim1, &dim2, f_f_out2, &dim1, f_in2, &dim1);
   timer = timer_end(timer);
-  printf("F_ACCUMULATE_2D      =%15llu\n", timer);
+  printf("  f_accumulate_2d_   =%15llu\n", timer);
   timer = timer_start();
   c_f_accumulate_2d_(&f_alpha, &dim1, &dim2, c_f_out2, &dim1, f_in2, &dim1);
   timer = timer_end(timer);
@@ -318,9 +291,9 @@ int main(int argc, char **argv)
   i_fill(c_i_out2, i_fill_value, dim1 * dim2);
   i_fill(f_i_out2, i_fill_value, dim1 * dim2);
   timer = timer_start();
-  I_ACCUMULATE_2D(&i_alpha, &dim1, &dim2, f_i_out2, &dim1, i_in2, &dim1);
+  i_accumulate_2d_(&i_alpha, &dim1, &dim2, f_i_out2, &dim1, i_in2, &dim1);
   timer = timer_end(timer);
-  printf("I_ACCUMULATE_2D      =%15llu\n", timer);
+  printf("  i_accumulate_2d_   =%15llu\n", timer);
   timer = timer_start();
   c_i_accumulate_2d_(&i_alpha, &dim1, &dim2, c_i_out2, &dim1, i_in2, &dim1);
   timer = timer_end(timer);
@@ -331,9 +304,9 @@ int main(int argc, char **argv)
   z_fill(c_z_out2, z_fill_value, dim1 * dim2);
   z_fill(f_z_out2, z_fill_value, dim1 * dim2);
   timer = timer_start();
-  Z_ACCUMULATE_2D(&z_alpha, &dim1, &dim2, f_z_out2, &dim1, z_in2, &dim1);
+  z_accumulate_2d_(&z_alpha, &dim1, &dim2, f_z_out2, &dim1, z_in2, &dim1);
   timer = timer_end(timer);
-  printf("Z_ACCUMULATE_2D      =%15llu\n", timer);
+  printf("  z_accumulate_2d_   =%15llu\n", timer);
   timer = timer_start();
   c_z_accumulate_2d_(&z_alpha, &dim1, &dim2, c_z_out2, &dim1, z_in2, &dim1);
   timer = timer_end(timer);
@@ -344,9 +317,9 @@ int main(int argc, char **argv)
   c_fill(c_c_out2, c_fill_value, dim1 * dim2);
   c_fill(f_c_out2, c_fill_value, dim1 * dim2);
   timer = timer_start();
-  C_ACCUMULATE_2D(&c_alpha, &dim1, &dim2, f_c_out2, &dim1, c_in2, &dim1);
+  c_accumulate_2d_(&c_alpha, &dim1, &dim2, f_c_out2, &dim1, c_in2, &dim1);
   timer = timer_end(timer);
-  printf("C_ACCUMULATE_2D      =%15llu\n", timer);
+  printf("  c_accumulate_2d_   =%15llu\n", timer);
   timer = timer_start();
   c_c_accumulate_2d_(&c_alpha, &dim1, &dim2, c_c_out2, &dim1, c_in2, &dim1);
   timer = timer_end(timer);
@@ -357,9 +330,9 @@ int main(int argc, char **argv)
   d_fill(c_d_out2, d_fill_value, dim1 * dim2);
   d_fill(f_d_out2, d_fill_value, dim1 * dim2);
   timer = timer_start();
-  D_ACCUMULATE_2D_U(&d_alpha, &dim1, &dim2, f_d_out2, &dim1, d_in2, &dim1);
+  d_accumulate_2d_u_(&d_alpha, &dim1, &dim2, f_d_out2, &dim1, d_in2, &dim1);
   timer = timer_end(timer);
-  printf("D_ACCUMULATE_2D_U    =%15llu\n", timer);
+  printf("  d_accumulate_2d_u_ =%15llu\n", timer);
   timer = timer_start();
   c_d_accumulate_2d_u_(&d_alpha, &dim1, &dim2, c_d_out2, &dim1, d_in2, &dim1);
   timer = timer_end(timer);
@@ -370,9 +343,9 @@ int main(int argc, char **argv)
   f_fill(c_f_out2, f_fill_value, dim1 * dim2);
   f_fill(f_f_out2, f_fill_value, dim1 * dim2);
   timer = timer_start();
-  F_ACCUMULATE_2D_U(&f_alpha, &dim1, &dim2, f_f_out2, &dim1, f_in2, &dim1);
+  f_accumulate_2d_u_(&f_alpha, &dim1, &dim2, f_f_out2, &dim1, f_in2, &dim1);
   timer = timer_end(timer);
-  printf("F_ACCUMULATE_2D_U    =%15llu\n", timer);
+  printf("  f_accumulate_2d_u_ =%15llu\n", timer);
   timer = timer_start();
   c_f_accumulate_2d_u_(&f_alpha, &dim1, &dim2, c_f_out2, &dim1, f_in2, &dim1);
   timer = timer_end(timer);
@@ -383,9 +356,9 @@ int main(int argc, char **argv)
   i_fill(c_i_out2, i_fill_value, dim1 * dim2);
   i_fill(f_i_out2, i_fill_value, dim1 * dim2);
   timer = timer_start();
-  I_ACCUMULATE_2D_U(&i_alpha, &dim1, &dim2, f_i_out2, &dim1, i_in2, &dim1);
+  i_accumulate_2d_u_(&i_alpha, &dim1, &dim2, f_i_out2, &dim1, i_in2, &dim1);
   timer = timer_end(timer);
-  printf("I_ACCUMULATE_2D_U    =%15llu\n", timer);
+  printf("  i_accumulate_2d_u_ =%15llu\n", timer);
   timer = timer_start();
   c_i_accumulate_2d_u_(&i_alpha, &dim1, &dim2, c_i_out2, &dim1, i_in2, &dim1);
   timer = timer_end(timer);
@@ -396,9 +369,9 @@ int main(int argc, char **argv)
   z_fill(c_z_out2, z_fill_value, dim1 * dim2);
   z_fill(f_z_out2, z_fill_value, dim1 * dim2);
   timer = timer_start();
-  Z_ACCUMULATE_2D_U(&z_alpha, &dim1, &dim2, f_z_out2, &dim1, z_in2, &dim1);
+  z_accumulate_2d_u_(&z_alpha, &dim1, &dim2, f_z_out2, &dim1, z_in2, &dim1);
   timer = timer_end(timer);
-  printf("Z_ACCUMULATE_2D_U    =%15llu\n", timer);
+  printf("  z_accumulate_2d_u_ =%15llu\n", timer);
   timer = timer_start();
   c_z_accumulate_2d_u_(&z_alpha, &dim1, &dim2, c_z_out2, &dim1, z_in2, &dim1);
   timer = timer_end(timer);
@@ -409,9 +382,9 @@ int main(int argc, char **argv)
   c_fill(c_c_out2, c_fill_value, dim1 * dim2);
   c_fill(f_c_out2, c_fill_value, dim1 * dim2);
   timer = timer_start();
-  C_ACCUMULATE_2D_U(&c_alpha, &dim1, &dim2, f_c_out2, &dim1, c_in2, &dim1);
+  c_accumulate_2d_u_(&c_alpha, &dim1, &dim2, f_c_out2, &dim1, c_in2, &dim1);
   timer = timer_end(timer);
-  printf("C_ACCUMULATE_2D_U    =%15llu\n", timer);
+  printf("  c_accumulate_2d_u_ =%15llu\n", timer);
   timer = timer_start();
   c_c_accumulate_2d_u_(&c_alpha, &dim1, &dim2, c_c_out2, &dim1, c_in2, &dim1);
   timer = timer_end(timer);

@@ -67,10 +67,10 @@ ccdir$ no_cache_alloc a,b
       end
 #endif
 
-void c_d_accumulate_1d_(const double* const alpha,
-                        double* restrict A,
-                        double* const B,
-                        const int* const rows)
+void c_d_accumulate_1d_(const double* const restrict alpha,
+                              double* restrict A,
+                        const double* const restrict B,
+                        const int*    const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -121,10 +121,10 @@ void c_d_accumulate_2d_(const double* const alpha,
       end
 #endif
 
-void c_f_accumulate_1d_(const float* const alpha,
-                        float* restrict A,
-                        float* const B,
-                        const int* const rows)
+void c_f_accumulate_1d_(const float* const restrict alpha,
+                              float* const restrict A,
+                        const float* const restrict B,
+                        const int*   const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -173,10 +173,10 @@ void c_f_accumulate_2d_(const float* const alpha,
       end
 #endif
 
-void c_c_accumulate_1d_(const complex_t* const alpha,
-                        complex_t* restrict A,
-                        complex_t* const B,
-                        const int* const rows)
+void c_c_accumulate_1d_(const complex_t* const restrict alpha,
+                              complex_t* const restrict A,
+                        const complex_t* const restrict B,
+                        const int*       const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -227,10 +227,10 @@ void c_c_accumulate_2d_(const complex_t* const alpha,
       end
 #endif
 
-void c_z_accumulate_1d_(const dcomplex_t* const alpha,
-                        dcomplex_t* restrict A,
-                        dcomplex_t* const B,
-                        const int* const rows)
+void c_z_accumulate_1d_(const dcomplex_t* const restrict alpha,
+                              dcomplex_t* const restrict A,
+                        const dcomplex_t* const restrict B,
+                        const int*        const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -284,10 +284,10 @@ void c_z_accumulate_2d_(const dcomplex_t* const alpha,
       end
 #endif
 
-void c_i_accumulate_1d_(const int* const alpha,
-                        int* restrict A,
-                        int* const B,
-                        const int* const rows)
+void c_i_accumulate_1d_(const int* const restrict alpha,
+                              int* const restrict A,
+                        const int* const restrict B,
+                        const int* const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -296,10 +296,10 @@ void c_i_accumulate_1d_(const int* const alpha,
     return;
 }
 
-void c_l_accumulate_1d_(const long* const alpha,
-                        long* restrict A,
-                        long* const B,
-                        const int* const rows)
+void c_l_accumulate_1d_(const long* const restrict alpha,
+                              long* const restrict A,
+                        const long* const restrict B,
+                        const int*  const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -308,10 +308,10 @@ void c_l_accumulate_1d_(const long* const alpha,
     return;
 }
 
-void c_ll_accumulate_1d_(const long long* const alpha,
-                        long long* restrict A,
-                        long long* const B,
-                        const int* const rows)
+void c_ll_accumulate_1d_(const long long* const restrict alpha,
+                               long long* const restrict A,
+                         const long long* const restrict B,
+                         const int*       const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -707,9 +707,9 @@ c
       end
 #endif
 
-void c_dadd_(const int* const n,
-             double* restrict x,
-             double* const work)
+void c_dadd_(const int*    const restrict n,
+                   double* const restrict x,
+             const double* const restrict work)
 {
     int i;
     for ( i = 0 ; i < (*n) ; i++ ){
@@ -728,10 +728,10 @@ void c_dadd_(const int* const n,
       end
 #endif
 
-void c_dadd2_(const int* const n,
-              double* restrict x,
-              double* const work,
-              double* const work2)
+void c_dadd2_(const int*    const restrict n,
+                    double* const restrict x,
+              const double* const restrict work,
+              const double* const restrict work2)
 {
     int i;
     for ( i = 0 ; i < (*n) ; i++ ){
@@ -750,9 +750,9 @@ void c_dadd2_(const int* const n,
       end
 #endif
 
-void c_dmult_(const int* const n,
-              double* restrict x,
-              double* const work)
+void c_dmult_(const int*    const restrict n,
+                    double* const restrict x,
+              const double* const restrict work)
 {
     int i;
     for ( i = 0 ; i < (*n) ; i++ ){
@@ -771,10 +771,10 @@ void c_dmult_(const int* const n,
       end
 #endif
 
-void c_dmult2_(const int* const n,
-               double* restrict x,
-               double* const work,
-               double* const work2)
+void c_dmult2_(const int*    const restrict n,
+                     double* const restrict x,
+               const double* const restrict work,
+               const double* const restrict work2)
 {
     int i;
     for ( i = 0 ; i < (*n) ; i++ ){
