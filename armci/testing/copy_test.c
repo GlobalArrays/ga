@@ -517,9 +517,9 @@ static void test13(
 int main(int argc, char **argv)
 {
 #if ALLOW_FREE
-  int dim1  = (argc > 1 ? atoi(argv[1]) : 353);
-  int dim2  = (argc > 2 ? atoi(argv[2]) : 419);
-  int dim3  = (argc > 3 ? atoi(argv[3]) : 467);
+  int dim1  = (argc > 1 ? atoi(argv[1]) : 179);
+  int dim2  = (argc > 2 ? atoi(argv[2]) : 233);
+  int dim3  = (argc > 3 ? atoi(argv[3]) : 283);
 #else
   int dim1  = (argc > 1 ? atoi(argv[1]) :  31);
   int dim2  = (argc > 2 ? atoi(argv[2]) :  73);
