@@ -33,6 +33,14 @@ void armci_init_fence()
 #endif
 }
 
+void armci_finalize_fence()
+{
+#if defined (DATA_SERVER) || defined(PORTALS)
+     free(_armci_fence_arr);
+     _armci_fence_arr = NULL;
+#endif
+}
+
 #ifdef PORTALS
 void armci_update_fence_array(int proc, int inc)
 {

@@ -136,6 +136,7 @@ void ARMCI_Cleanup()
         armci_transport_cleanup();
     }
 #endif
+    armci_finalize_fence();
 #ifndef WIN32
     ARMCI_RestoreSignals();
 #endif
@@ -648,7 +649,6 @@ void PARMCI_Finalize()
     armci_msg_barrier();
 #ifdef MPI
     armci_group_finalize();
-    
 #endif
 #ifdef ARMCIX
     ARMCIX_Finalize ();

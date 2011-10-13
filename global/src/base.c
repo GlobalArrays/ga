@@ -152,7 +152,6 @@ char *GA_name_stack[NAME_STACK_LEN];  /* stack for storing names of GA ops */
 int  GA_stack_size=0;
 
 /* Function prototypes */
-extern void gai_init_onesided();
 int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
                int grp_id);
 #ifdef ENABLE_CHECKPOINT
@@ -2822,6 +2821,11 @@ int local_sync_begin,local_sync_end;
       GA[ga_handle].rank_rstrctd = NULL;
     }
 
+    if(GA[ga_handle].mapc != NULL){
+       free(GA[ga_handle].mapc);
+       GA[ga_handle].mapc = NULL;
+    } 
+
     if(GA[ga_handle].ptr[grp_me]==NULL){
        return TRUE;
     } 
@@ -2883,7 +2887,7 @@ Integer i, handle;
 
     GA_total_memory = -1; /* restore "unlimited" memory usage status */
     GA_memory_limited = 0;
-    free(_ga_map);
+    gai_finalize_onesided();
     free(GA_proclist);
     free(ProcListPerm);
 #ifdef PERMUTE_PIDS

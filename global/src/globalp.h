@@ -148,6 +148,8 @@ extern char ***_ga_argv;
 
 extern void    ga_free(void *ptr);
 extern void*   ga_malloc(Integer nelem, int type, char *name);
+extern void    gai_init_onesided();
+extern void    gai_finalize_onesided();
 extern void    gai_print_subscript(char *pre,int ndim, Integer subscript[], char* post);
 extern Integer GAsizeof(Integer type);
 extern void    ga_sort_gath(Integer *pn, Integer *i, Integer *j, Integer *base);

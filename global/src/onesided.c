@@ -203,6 +203,15 @@ void gai_init_onesided()
 }
 
 
+void gai_finalize_onesided()
+{
+    free(_ga_map);
+    _ga_map = NULL;
+    free(fence_array);
+    fence_array = NULL;
+}
+
+
 /*\ prepare permuted list of processes for remote ops
 \*/
 #define gaPermuteProcList(nproc)\

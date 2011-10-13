@@ -1897,17 +1897,21 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
                                 Integer* ilo, Integer* ihi,
                                 Integer* jlo, Integer* jhi,
                                 Integer* dim1, Integer* dim2,
-                                int* ipos, int* jpos)
+                                int* ipos, int* jpos, int *vpos)
 {
     int d,e=0;
     char t='n';
     
     for(d=0; d<rank; d++)
        if( (hi[d]-lo[d])>0 && ++e>2 ) pnga_error("3-D Patch Detected", 0L);
-    *ipos = *jpos = -1;
+    *ipos = *jpos = *vpos = -1;
     for(d=0; d<rank; d++){
        if( (*ipos <0) && (hi[d]>lo[d]) ) { *ipos =d; continue; }
        if( (*ipos >=0) && (hi[d]>lo[d])) { *jpos =d; break; }
+    }
+    /* we have an ambiguous vector; mark its location */
+    if (1 == e && *ipos != 0 && *ipos != rank-1) {
+        *vpos = *ipos;
     }
 
     /*    if(*ipos >*jpos){Integer t=*ipos; *ipos=*jpos; *jpos=t;} 
@@ -1937,6 +1941,20 @@ void gai_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
     *jlo = lo[*jpos]; *jhi = hi[*jpos];
     *dim1 = dims[*ipos];
     *dim2 = dims[*jpos];
+#if 0
+    printf("lo/hi=[%ld:%ld", lo[0], hi[0]);
+    for (d=1; d<rank; ++d) {
+        printf(",%ld:%ld", lo[d], hi[d]);
+    }
+    printf("]\n");
+    printf("size=[%ld", hi[0]-lo[0]+1);
+    for (d=1; d<rank; ++d) {
+        printf(",%ld", hi[d]-lo[d]+1);
+    }
+    printf("]\n");
+    printf("gai_setup_2d_patch(%ld, T, X, X, X, %ld, %ld, %ld, %ld, %ld, %ld, %d, %d, %d)\n",
+            rank, *ilo, *ihi, *jlo, *jhi, *dim1, *dim2, *ipos, *jpos, *vpos);
+#endif
 }
 
 #define  SETINT(tmp,val,n) {int _i; for(_i=0;_i<n; _i++)tmp[_i]=val;}
@@ -1968,8 +1986,9 @@ Integer atype, btype, ctype, adim1, adim2, bdim1, bdim2, cdim1, cdim2;
 Integer me= pnga_nodeid(), nproc, inode, iproc;
 Integer i, ijk = 0, i0, i1, j0, j1;
 Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
-Integer n, m, k, adim, bdim, cdim, arank, brank, crank;
+Integer n, m, k, k2, cm, cn, adim, bdim, cdim, arank, brank, crank;
 int aipos, ajpos, bipos, bjpos,cipos, cjpos, need_scaling=1;
+int avpos, bvpos, cvpos;
 Integer Ichunk, Kchunk, Jchunk;
 Integer ailo, aihi, ajlo, ajhi;    /* 2d plane of g_a */
 Integer bilo, bihi, bjlo, bjhi;    /* 2d plane of g_b */
@@ -2021,11 +2040,11 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
      pnga_error(" type error",atype);
    
    gai_setup_2d_patch(arank, transa, adims, alo, ahi, &ailo, &aihi,
-                      &ajlo, &ajhi, &adim1, &adim2, &aipos, &ajpos);
+                      &ajlo, &ajhi, &adim1, &adim2, &aipos, &ajpos, &avpos);
    gai_setup_2d_patch(brank, transb, bdims, blo, bhi, &bilo, &bihi,
-                      &bjlo, &bjhi, &bdim1, &bdim2, &bipos, &bjpos);
+                      &bjlo, &bjhi, &bdim1, &bdim2, &bipos, &bjpos, &bvpos);
    gai_setup_2d_patch(crank, NULL, cdims, clo, chi, &cilo, &cihi,
-                      &cjlo, &cjhi, &cdim1, &cdim2, &cipos, &cjpos);
+                      &cjlo, &cjhi, &cdim1, &cdim2, &cipos, &cjpos, &cvpos);
 
    /* check if patch indices and dims match */
    if (*transa == 'n' || *transa == 'N'){
@@ -2045,14 +2064,77 @@ BlasInt idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    if (cilo <= 0 || cihi > cdim1 || cjlo <= 0 || cjhi > cdim2)
        pnga_error("  g_c indices out of range ", g_c);
 
-  /* verify if patch dimensions are consistent */
-   m = aihi - ailo +1;
-   n = bjhi - bjlo +1;
-   k = ajhi - ajlo +1;
+   /* verify if patch dimensions are consistent */
+#define RESET() do {   \
+   m = aihi - ailo +1; \
+   k = ajhi - ajlo +1; \
+   k2= bihi - bilo +1; \
+   n = bjhi - bjlo +1; \
+   cm= cihi - cilo +1; \
+   cn= cjhi - cjlo +1; \
+} while (0)
+   RESET();
+#define SHIFT(L,INC) do {      \
+   L##ipos+=INC;               \
+   L##jpos+=INC;               \
+   L##ilo = L##lo[L##ipos];    \
+   L##ihi = L##hi[L##ipos];    \
+   L##jlo = L##lo[L##jpos];    \
+   L##jhi = L##hi[L##jpos];    \
+   L##dim1 = L##dims[L##ipos]; \
+   L##dim2 = L##dims[L##jpos]; \
+   RESET();                    \
+} while (0)
+   /* gai_setup_2d_patch may produce ambiguous vectors */
+   if (!(m==cm && k==k2 && n==cn)) {
+       /* patches don't agree */
+       if (avpos>=0 && bvpos<0 && cvpos<0) {
+           /* only A is an ambiguous vector */
+           SHIFT(a,-1);
+       }
+       else if (avpos<0 && bvpos>=0 && cvpos<0) {
+           /* only B is an ambiguous vector */
+           SHIFT(b,-1);
+       }
+       else if (avpos<0 && bvpos<0 && cvpos>=0) {
+           /* only C is an ambiguous vector */
+           SHIFT(c,-1);
+       }
+       else if (avpos>=0 && bvpos>=0 && cvpos<0) {
+           /* A and B are ambiguous vectors */
+           if (m != cm) {
+               SHIFT(a,-1);
+           }
+           if (n != cn) {
+               SHIFT(b,-1);
+           }
+       }
+       else if (avpos>=0 && bvpos<0 && cvpos>=0) {
+           /* A and C are ambiguous vectors */
+           if (k != k2) {
+               SHIFT(a,-1);
+           }
+           if (n != cn) {
+               SHIFT(c,-1);
+           }
+       }
+       else if (avpos<0 && bvpos>=0 && cvpos>=0) {
+           /* B and C are ambiguous vectors */
+           if (k != k2) {
+               SHIFT(b,-1);
+           }
+           if (m != cm) {
+               SHIFT(c,-1);
+           }
+       }
+       else if (avpos>=0 && bvpos>=0 && cvpos>=0) {
+           /* A and B and C are ambiguous vectors */
+           pnga_error("a and b and c ambiguous", 1);
+       }
+   }
    if( (cihi - cilo +1) != m) pnga_error(" a & c dims error",m);
    if( (cjhi - cjlo +1) != n) pnga_error(" b & c dims error",n);
    if( (bihi - bilo +1) != k) pnga_error(" a & b dims error",k);
-
    
    chunk_cube = (k*(double)(m*n)) / (min_tasks * nproc);
    max_chunk = (Integer)pow(chunk_cube, (DoublePrecision)(1.0/3.0) );

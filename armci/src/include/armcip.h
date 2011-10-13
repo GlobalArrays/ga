@@ -277,6 +277,7 @@ extern int armci_acc_copy_strided(int optype, void* scale, int proc,
 extern void armci_vector_to_buf(armci_giov_t darr[], int len, void* buf);
 extern void armci_vector_from_buf(armci_giov_t darr[], int len, void* buf);
 extern void armci_init_fence();
+extern void armci_finalize_fence();
 
 #ifdef SOCKETS
 #ifdef SERVER_THREAD

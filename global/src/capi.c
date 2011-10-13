@@ -3380,9 +3380,9 @@ void NGA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
     
-    pnga_matmul_patch(&transa, &transb, alpha, beta,
-		     a, _ga_alo, _ga_ahi,
+    pnga_matmul_patch(&transb, &transa, alpha, beta,
 		     b, _ga_blo, _ga_bhi,
+		     a, _ga_alo, _ga_ahi,
 		     c, _ga_clo, _ga_chi);
 }
 
@@ -3413,9 +3413,9 @@ void NGA_Matmul_patch64(char transa, char transb, void* alpha, void *beta,
     COPYINDEX_C2F(clo,_ga_clo, cndim);
     COPYINDEX_C2F(chi,_ga_chi, cndim);
     
-    pnga_matmul_patch(&transa, &transb, alpha, beta,
-		     a, _ga_alo, _ga_ahi,
+    pnga_matmul_patch(&transb, &transa, alpha, beta,
 		     b, _ga_blo, _ga_bhi,
+		     a, _ga_alo, _ga_ahi,
 		     c, _ga_clo, _ga_chi);
 }
 
