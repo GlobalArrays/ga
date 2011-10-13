@@ -120,7 +120,8 @@ void test_io_int()
     }
     type = MT_INT;
     op = DRA_RW;
-    sprintf(fname,"%s%d",FNAME,me);
+    /*bjp sprintf(fname,"%s%d",FNAME,me); */
+    sprintf(fname,"%s%d",FNAME,0);
     if (NDRA_Create(type, ndim, dims, "array A", 
                 fname, op, reqdim, &d_a) != 0)
         GA_Error("NDRA_Create failed: ",0);
@@ -285,7 +286,8 @@ void test_io_dbl()
 
     type = MT_DBL;
     op = DRA_RW;
-    sprintf(fname,"%s%d",FNAME,me);
+    /*bjp sprintf(fname,"%s%d",FNAME,me);*/
+    sprintf(fname,"%s%d",FNAME,1);
     if (NDRA_Create(type, ndim, dims, "A", 
                 fname, op, reqdim, &d_a) != 0)
         GA_Error("NDRA_Create failed: ",0);
