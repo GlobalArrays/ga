@@ -90,7 +90,6 @@ GA_PROG_MPICC
 CFLAGS="$ga_save_CFLAGS"
 AC_USE_SYSTEM_EXTENSIONS
 GA_COMPILER_VENDOR
-ARMCI_C_OPT
 GA_WARN_FLAGS
 ga_save_CFLAGS="$CFLAGS"
 CFLAGS="$ga_cv_c_warning_flags $CFLAGS"
@@ -188,6 +187,8 @@ GA_CHECK_FUNCS([pthread_getconcurrency pthread_setconcurrency])
 
 # Checks for C libraries.
 
+ARMCI_C_OPT
+
 CFLAGS="$ga_save_CFLAGS"
 
 #########################################
@@ -210,7 +211,6 @@ AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 AS_IF([test "x$enable_cxx" = xyes], [
 
 GA_COMPILER_VENDOR
-ARMCI_CXX_OPT
 GA_WARN_FLAGS
 ga_save_CXXFLAGS="$CXXFLAGS"
 CXXFLAGS="$ga_cv_cxx_warning_flags $CXXFLAGS"
@@ -224,6 +224,8 @@ AS_IF([test "x$with_mpi" != xno], [GA_MPICXX_TEST])
 # Checks for C++ type sizes.
 
 # Checks for C++ library functions.
+
+ARMCI_CXX_OPT
 
 CXXFLAGS="$ga_save_CXXFLAGS"
 
@@ -277,7 +279,6 @@ if test "x$enable_f77" = xyes; then :
 AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 
 GA_COMPILER_VENDOR
-ARMCI_F77_OPT
 GA_WARN_FLAGS
 ga_save_FFLAGS="$FFLAGS"
 FFLAGS="$ga_cv_f77_warning_flags $FFLAGS"
@@ -319,6 +320,8 @@ GA_F2C_HIDDEN_STRING_LENGTH_CONVENTION
 GA_F2C_MATCH_TYPES([INTEGER], [short, int, long, long long])
 GA_F2C_MATCH_TYPES([REAL], [float, double, long double])
 GA_F2C_MATCH_TYPES([DOUBLE PRECISION], [float, double, long double])
+
+ARMCI_F77_OPT
 
 FFLAGS="$ga_save_FFLAGS"
 

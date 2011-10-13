@@ -155,6 +155,9 @@ AS_IF([test "x$happy" = xyes],
 AC_DEFUN([_GA_ARMCI_NETWORK_MPI_MT], [
 AC_MSG_NOTICE([searching for MPI_MT...])
 happy=yes
+CPPFLAGS="$CPPFLAGS $GA_MP_CPPFLAGS"
+LDFLAGS="$LDFLAGS $GA_MP_LDFLAGS"
+LIBS="$LIBS $GA_MP_LIBS"
 AS_IF([test "x$happy" = xyes],
     [AC_CHECK_HEADER([mpi.h], [], [happy=no])])
 AS_IF([test "x$happy" = xyes],
@@ -170,6 +173,9 @@ AS_IF([test "x$happy" = xyes],
 AC_DEFUN([_GA_ARMCI_NETWORK_MPI_SPAWN], [
 AC_MSG_NOTICE([searching for MPI_SPAWN...])
 happy=yes
+CPPFLAGS="$CPPFLAGS $GA_MP_CPPFLAGS"
+LDFLAGS="$LDFLAGS $GA_MP_LDFLAGS"
+LIBS="$LIBS $GA_MP_LIBS"
 AS_IF([test "x$happy" = xyes],
     [AC_CHECK_HEADER([mpi.h], [], [happy=no])])
 AS_IF([test "x$happy" = xyes],

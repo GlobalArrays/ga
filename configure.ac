@@ -80,7 +80,6 @@ GA_PROG_MPICC
 CFLAGS="$ga_save_CFLAGS"
 AC_USE_SYSTEM_EXTENSIONS
 GA_COMPILER_VENDOR
-GA_C_OPT
 GA_WARN_FLAGS
 ga_save_CFLAGS="$CFLAGS"
 CFLAGS="$ga_cv_c_warning_flags $CFLAGS"
@@ -177,6 +176,8 @@ GA_CHECK_FUNCS([bcopy bzero create_shared_region ftruncate gethostbyname gethost
 # Checks for C libraries.
 GA_CHECK_LIBPLOT
 
+GA_C_OPT
+
 CFLAGS="$ga_save_CFLAGS"
 
 #########################################
@@ -199,7 +200,6 @@ AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 AS_IF([test "x$enable_cxx" = xyes], [
 
 GA_COMPILER_VENDOR
-GA_CXX_OPT
 GA_WARN_FLAGS
 ga_save_CXXFLAGS="$CXXFLAGS"
 CXXFLAGS="$ga_cv_cxx_warning_flags $CXXFLAGS"
@@ -214,6 +214,8 @@ GA_CXX_NAMESPACES
 # Checks for C++ type sizes.
 
 # Checks for C++ library functions.
+
+GA_CXX_OPT
 
 CXXFLAGS="$ga_save_CXXFLAGS"
 
@@ -266,7 +268,6 @@ if test "x$enable_f77" = xyes; then :
 AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
 
 GA_COMPILER_VENDOR
-GA_F77_OPT
 GA_WARN_FLAGS
 ga_save_FFLAGS="$FFLAGS"
 FFLAGS="$ga_cv_f77_warning_flags $FFLAGS"
@@ -307,6 +308,8 @@ GA_F2C_HIDDEN_STRING_LENGTH_CONVENTION
 GA_F2C_MATCH_TYPES([INTEGER], [short, int, long, long long])
 GA_F2C_MATCH_TYPES([REAL], [float, double, long double])
 GA_F2C_MATCH_TYPES([DOUBLE PRECISION], [float, double, long double])
+
+GA_F77_OPT
 
 FFLAGS="$ga_save_FFLAGS"
 
