@@ -1,7 +1,3 @@
-#if HAVE_CONFIG_H
-#   include "config.h"
-#endif
-
 /***************************************************************************
 
                   COPYRIGHT
@@ -43,33 +39,38 @@ privately owned rights.
 
  ***************************************************************************/
 
-// ***********************************************************************
-// *     accumulate operation for the following datatypes:
-// *            real, double precision, complex, double complex, integer
-// *
-// *     WARNING: This file must be compiled WITH optimization under AIX.
-// *              IBM fortran compilers generate bad code with -g option. 
-// *
-// *     Two versions of each routine are provided: 
-// *         original and unrolled loops.
-// *
-// ***********************************************************************
+/***********************************************************************
+ *     accumulate operation for the following datatypes:
+ *            real, double precision, complex, double complex, integer
+ *
+ *     WARNING: This file must be compiled WITH optimization under AIX.
+ *              IBM fortran compilers generate bad code with -g option. 
+ *
+ *     Two versions of each routine are provided: 
+ *         original and unrolled loops.
+ *
+ ***********************************************************************/
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
 
 #include "acc.h"
 
-//       subroutine d_accumulate_1d(alpha,  A,  B, rows)
-//       integer rows, r
-//       double precision A(*), B(*), alpha
-// ccdir$ no_cache_alloc a,b
-//          do r = 1, rows
-//             A(r) = A(r)+ alpha*B(r)
-//          enddo
-//       end
+#if 0
+      subroutine d_accumulate_1d(alpha,  A,  B, rows)
+      integer rows, r
+      double precision A(*), B(*), alpha
+ccdir$ no_cache_alloc a,b
+         do r = 1, rows
+            A(r) = A(r)+ alpha*B(r)
+         enddo
+      end
+#endif
 
-void c_d_accumulate_1d_(const double* const alpha,
-                        double* MAYBE_RESTRICT A,
-                        double* const B,
-                        const int* const rows)
+void c_d_accumulate_1d_(const double* const restrict alpha,
+                              double* restrict A,
+                        const double* const restrict B,
+                        const int*    const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -79,22 +80,24 @@ void c_d_accumulate_1d_(const double* const alpha,
 }
 
 
-//       subroutine d_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
-//       integer rows, cols
-//       integer c, r, ald, bld
-//       double precision A(ald,*), B(bld,*), alpha
-// ccdir$ no_cache_alloc a,b
-//       do c = 1, cols
-//          do r = 1, rows
-//             A(r,c) = A(r,c)+ alpha*B(r,c)
-//          enddo
-//       enddo
-//       end
+#if 0
+      subroutine d_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
+      integer rows, cols
+      integer c, r, ald, bld
+      double precision A(ald,*), B(bld,*), alpha
+ccdir$ no_cache_alloc a,b
+      do c = 1, cols
+         do r = 1, rows
+            A(r,c) = A(r,c)+ alpha*B(r,c)
+         enddo
+      enddo
+      end
+#endif
 
 void c_d_accumulate_2d_(const double* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        double* MAYBE_RESTRICT A,
+                        double* restrict A,
                         const int* const ald,
                         const double* const B,
                         const int* const bld)
@@ -108,18 +111,20 @@ void c_d_accumulate_2d_(const double* const alpha,
     return;
 }
 
-//       subroutine f_accumulate_1d(alpha,  A,  B, rows)
-//       integer rows, r
-//       real A(*), B(*), alpha
-//          do r = 1, rows
-//             A(r) = A(r)+ alpha*B(r)
-//          enddo
-//       end
+#if 0
+      subroutine f_accumulate_1d(alpha,  A,  B, rows)
+      integer rows, r
+      real A(*), B(*), alpha
+         do r = 1, rows
+            A(r) = A(r)+ alpha*B(r)
+         enddo
+      end
+#endif
 
-void c_f_accumulate_1d_(const float* const alpha,
-                        float* MAYBE_RESTRICT A,
-                        float* const B,
-                        const int* const rows)
+void c_f_accumulate_1d_(const float* const restrict alpha,
+                              float* const restrict A,
+                        const float* const restrict B,
+                        const int*   const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -128,21 +133,23 @@ void c_f_accumulate_1d_(const float* const alpha,
     return;
 }
 
-//       subroutine f_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
-//       integer rows, cols
-//       integer c, r, ald, bld
-//       real A(ald,*), B(bld,*), alpha
-//       do c = 1, cols
-//          do r = 1, rows
-//             A(r,c) = A(r,c)+ alpha*B(r,c)
-//          enddo
-//       enddo
-//       end
+#if 0
+      subroutine f_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
+      integer rows, cols
+      integer c, r, ald, bld
+      real A(ald,*), B(bld,*), alpha
+      do c = 1, cols
+         do r = 1, rows
+            A(r,c) = A(r,c)+ alpha*B(r,c)
+         enddo
+      enddo
+      end
+#endif
 
 void c_f_accumulate_2d_(const float* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        float* MAYBE_RESTRICT A,
+                        float* restrict A,
                         const int* const ald,
                         const float* const B,
                         const int* const bld)
@@ -156,18 +163,20 @@ void c_f_accumulate_2d_(const float* const alpha,
     return;
 }
 
-//       subroutine z_accumulate_1d(alpha,  A,  B, rows)
-//       integer rows, r
-//       double complex  A(*), B(*), alpha
-//          do r = 1, rows
-//             A(r) = A(r)+ alpha*B(r)
-//          enddo
-//       end
+#if 0
+      subroutine z_accumulate_1d(alpha,  A,  B, rows)
+      integer rows, r
+      double complex  A(*), B(*), alpha
+         do r = 1, rows
+            A(r) = A(r)+ alpha*B(r)
+         enddo
+      end
+#endif
 
-void c_c_accumulate_1d_(const complex_t* const alpha,
-                        complex_t* MAYBE_RESTRICT A,
-                        complex_t* const B,
-                        const int* const rows)
+void c_c_accumulate_1d_(const complex_t* const restrict alpha,
+                              complex_t* const restrict A,
+                        const complex_t* const restrict B,
+                        const int*       const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -177,21 +186,23 @@ void c_c_accumulate_1d_(const complex_t* const alpha,
     return;
 }
 
-//       subroutine z_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
-//       integer rows, cols
-//       integer c, r, ald, bld
-//       double complex A(ald,*), B(bld,*), alpha
-//       do c = 1, cols
-//          do r = 1, rows
-//             A(r,c) = A(r,c)+ alpha*B(r,c)
-//          enddo
-//       enddo
-//       end
+#if 0
+      subroutine z_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
+      integer rows, cols
+      integer c, r, ald, bld
+      double complex A(ald,*), B(bld,*), alpha
+      do c = 1, cols
+         do r = 1, rows
+            A(r,c) = A(r,c)+ alpha*B(r,c)
+         enddo
+      enddo
+      end
+#endif
 
 void c_c_accumulate_2d_(const complex_t* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        complex_t* MAYBE_RESTRICT A,
+                        complex_t* restrict A,
                         const int* const ald,
                         const complex_t* const B,
                         const int* const bld)
@@ -206,18 +217,20 @@ void c_c_accumulate_2d_(const complex_t* const alpha,
     return;
 }
 
-//       subroutine c_accumulate_1d(alpha,  A,  B, rows)
-//       integer rows, r
-//       complex  A(*), B(*), alpha
-//          do r = 1, rows
-//             A(r) = A(r)+ alpha*B(r)
-//          enddo
-//       end
+#if 0
+      subroutine c_accumulate_1d(alpha,  A,  B, rows)
+      integer rows, r
+      complex  A(*), B(*), alpha
+         do r = 1, rows
+            A(r) = A(r)+ alpha*B(r)
+         enddo
+      end
+#endif
 
-void c_z_accumulate_1d_(const dcomplex_t* const alpha,
-                        dcomplex_t* MAYBE_RESTRICT A,
-                        dcomplex_t* const B,
-                        const int* const rows)
+void c_z_accumulate_1d_(const dcomplex_t* const restrict alpha,
+                              dcomplex_t* const restrict A,
+                        const dcomplex_t* const restrict B,
+                        const int*        const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -227,21 +240,23 @@ void c_z_accumulate_1d_(const dcomplex_t* const alpha,
     return;
 }
 
-//       subroutine c_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
-//       integer rows, cols
-//       integer c, r, ald, bld
-//       complex A(ald,*), B(bld,*), alpha
-//       do c = 1, cols
-//          do r = 1, rows
-//             A(r,c) = A(r,c)+ alpha*B(r,c)
-//          enddo
-//       enddo
-//       end
+#if 0
+      subroutine c_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
+      integer rows, cols
+      integer c, r, ald, bld
+      complex A(ald,*), B(bld,*), alpha
+      do c = 1, cols
+         do r = 1, rows
+            A(r,c) = A(r,c)+ alpha*B(r,c)
+         enddo
+      enddo
+      end
+#endif
 
 void c_z_accumulate_2d_(const dcomplex_t* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        dcomplex_t* MAYBE_RESTRICT A,
+                        dcomplex_t* restrict A,
                         const int* const ald,
                         const dcomplex_t* const B,
                         const int* const bld)
@@ -256,21 +271,23 @@ void c_z_accumulate_2d_(const dcomplex_t* const alpha,
     return;
 }
 
-//       subroutine i_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
-//       integer rows, cols
-//       integer c, r, ald, bld
-//       integer A(ald,*), B(bld,*), alpha
-//       do c = 1, cols
-//          do r = 1, rows
-//             A(r,c) = A(r,c)+ alpha*B(r,c)
-//          enddo
-//       enddo
-//       end
+#if 0
+      subroutine i_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
+      integer rows, cols
+      integer c, r, ald, bld
+      integer A(ald,*), B(bld,*), alpha
+      do c = 1, cols
+         do r = 1, rows
+            A(r,c) = A(r,c)+ alpha*B(r,c)
+         enddo
+      enddo
+      end
+#endif
 
-void c_i_accumulate_1d_(const int* const alpha,
-                        int* MAYBE_RESTRICT A,
-                        int* const B,
-                        const int* const rows)
+void c_i_accumulate_1d_(const int* const restrict alpha,
+                              int* const restrict A,
+                        const int* const restrict B,
+                        const int* const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -279,10 +296,10 @@ void c_i_accumulate_1d_(const int* const alpha,
     return;
 }
 
-void c_l_accumulate_1d_(const long* const alpha,
-                        long* MAYBE_RESTRICT A,
-                        long* const B,
-                        const int* const rows)
+void c_l_accumulate_1d_(const long* const restrict alpha,
+                              long* const restrict A,
+                        const long* const restrict B,
+                        const int*  const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -291,10 +308,10 @@ void c_l_accumulate_1d_(const long* const alpha,
     return;
 }
 
-void c_ll_accumulate_1d_(const long long* const alpha,
-                        long long* MAYBE_RESTRICT A,
-                        long long* const B,
-                        const int* const rows)
+void c_ll_accumulate_1d_(const long long* const restrict alpha,
+                               long long* const restrict A,
+                         const long long* const restrict B,
+                         const int*       const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -303,18 +320,20 @@ void c_ll_accumulate_1d_(const long long* const alpha,
     return;
 }
 
-//       subroutine i_accumulate_1d(alpha,  A,  B, rows)
-//       integer rows, r
-//       integer A(*), B(*), alpha
-//          do r = 1, rows
-//             A(r) = A(r)+ alpha*B(r)
-//          enddo
-//       end
+#if 0
+      subroutine i_accumulate_1d(alpha,  A,  B, rows)
+      integer rows, r
+      integer A(*), B(*), alpha
+         do r = 1, rows
+            A(r) = A(r)+ alpha*B(r)
+         enddo
+      end
+#endif
 
 void c_i_accumulate_2d_(const int* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        int* MAYBE_RESTRICT A,
+                        int* restrict A,
                         const int* const ald,
                         const int* const B,
                         const int* const bld)
@@ -331,7 +350,7 @@ void c_i_accumulate_2d_(const int* const alpha,
 void c_l_accumulate_2d_(const long* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        long* MAYBE_RESTRICT A,
+                        long* restrict A,
                         const int* const ald,
                         const long* const B,
                         const int* const bld)
@@ -348,7 +367,7 @@ void c_l_accumulate_2d_(const long* const alpha,
 void c_ll_accumulate_2d_(const long long* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        long long* MAYBE_RESTRICT A,
+                        long long* restrict A,
                         const int* const ald,
                         const long long* const B,
                         const int* const bld)
@@ -362,34 +381,36 @@ void c_ll_accumulate_2d_(const long long* const alpha,
     return;
 }
 
-//       subroutine d_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
-//       integer rows, cols
-//       integer c, r, ald, bld
-//       double precision A(ald,*), B(bld,*), alpha
-//       integer r1
-//       doubleprecision d1, d2, d3, d4
-//       do c = 1, cols
-//         r1 = iand(max0(rows,0),3)
-//         do r = 1, r1
-//             a(r,c) = a(r,c) + alpha*b(r,c)
-//         end do
-//         do r = r1 + 1, rows, 4
-//             d1 = a(r,c) + alpha*b(r,c)
-//             d2 = a(r+1,c) + alpha*b(r+1,c)
-//             d3 = a(r+2,c) + alpha*b(r+2,c)
-//             d4 = a(r+3,c) + alpha*b(r+3,c)
-//             a(r,c) = d1
-//             a(r+1,c) = d2
-//             a(r+2,c) = d3
-//             a(r+3,c) = d4
-//         enddo
-//       enddo
-//       end
+#if 0
+      subroutine d_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
+      integer rows, cols
+      integer c, r, ald, bld
+      double precision A(ald,*), B(bld,*), alpha
+      integer r1
+      doubleprecision d1, d2, d3, d4
+      do c = 1, cols
+        r1 = iand(max0(rows,0),3)
+        do r = 1, r1
+            a(r,c) = a(r,c) + alpha*b(r,c)
+        end do
+        do r = r1 + 1, rows, 4
+            d1 = a(r,c) + alpha*b(r,c)
+            d2 = a(r+1,c) + alpha*b(r+1,c)
+            d3 = a(r+2,c) + alpha*b(r+2,c)
+            d4 = a(r+3,c) + alpha*b(r+3,c)
+            a(r,c) = d1
+            a(r+1,c) = d2
+            a(r+2,c) = d3
+            a(r+3,c) = d4
+        enddo
+      enddo
+      end
+#endif
 
 void c_d_accumulate_2d_u_(const double* const alpha,
                           const int* const rows,
                           const int* const cols,
-                          double* MAYBE_RESTRICT A,
+                          double* restrict A,
                           const int* const ald,
                           const double* const B,
                           const int* const bld)
@@ -410,34 +431,36 @@ void c_d_accumulate_2d_u_(const double* const alpha,
     return;
 }
 
-//       subroutine f_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
-//       integer rows, cols
-//       integer c, r, ald, bld
-//       real A(ald,*), B(bld,*), alpha
-//       integer r1
-//       real d1, d2, d3, d4
-//       do c = 1, cols
-//       r1 = iand(max0(rows,0),3)
-//       do r = 1, r1
-//          a(r,c) = a(r,c) + alpha*b(r,c)
-//       end do
-//       do r = r1 + 1, rows, 4
-//          d1 = a(r,c) + alpha*b(r,c)
-//          d2 = a(r+1,c) + alpha*b(r+1,c)
-//          d3 = a(r+2,c) + alpha*b(r+2,c)
-//          d4 = a(r+3,c) + alpha*b(r+3,c)
-//          a(r,c) = d1
-//          a(r+1,c) = d2
-//          a(r+2,c) = d3
-//          a(r+3,c) = d4
-//       enddo
-//       enddo
-//       end
+#if 0
+      subroutine f_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
+      integer rows, cols
+      integer c, r, ald, bld
+      real A(ald,*), B(bld,*), alpha
+      integer r1
+      real d1, d2, d3, d4
+      do c = 1, cols
+      r1 = iand(max0(rows,0),3)
+      do r = 1, r1
+         a(r,c) = a(r,c) + alpha*b(r,c)
+      end do
+      do r = r1 + 1, rows, 4
+         d1 = a(r,c) + alpha*b(r,c)
+         d2 = a(r+1,c) + alpha*b(r+1,c)
+         d3 = a(r+2,c) + alpha*b(r+2,c)
+         d4 = a(r+3,c) + alpha*b(r+3,c)
+         a(r,c) = d1
+         a(r+1,c) = d2
+         a(r+2,c) = d3
+         a(r+3,c) = d4
+      enddo
+      enddo
+      end
+#endif
 
 void c_f_accumulate_2d_u_(const float* const alpha,
                           const int* const rows,
                           const int* const cols,
-                          float* MAYBE_RESTRICT A,
+                          float* restrict A,
                           const int* const ald,
                           const float* const B,
                           const int* const bld)
@@ -458,34 +481,36 @@ void c_f_accumulate_2d_u_(const float* const alpha,
     return;
 }
 
-//       subroutine z_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
-//       integer rows, cols
-//       integer c, r, ald, bld
-//       double complex A(ald,*), B(bld,*), alpha
-//       integer r1
-//       double complex x1, x2, x3, x4
-//       do c = 1, cols
-//       r1 = iand(max0(rows,0),3)
-//       do r = 1, r1
-//          a(r,c) = a(r,c) + alpha*b(r,c)
-//       end do
-//       do r = r1 + 1, rows, 4
-//          x1 = a(r,c) + alpha*b(r,c)
-//          x2 = a(r+1,c) + alpha*b(r+1,c)
-//          x3 = a(r+2,c) + alpha*b(r+2,c)
-//          x4 = a(r+3,c) + alpha*b(r+3,c)
-//          a(r,c) = x1
-//          a(r+1,c) = x2
-//          a(r+2,c) = x3
-//          a(r+3,c) = x4
-//       enddo
-//       enddo
-//       end
+#if 0
+      subroutine z_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
+      integer rows, cols
+      integer c, r, ald, bld
+      double complex A(ald,*), B(bld,*), alpha
+      integer r1
+      double complex x1, x2, x3, x4
+      do c = 1, cols
+      r1 = iand(max0(rows,0),3)
+      do r = 1, r1
+         a(r,c) = a(r,c) + alpha*b(r,c)
+      end do
+      do r = r1 + 1, rows, 4
+         x1 = a(r,c) + alpha*b(r,c)
+         x2 = a(r+1,c) + alpha*b(r+1,c)
+         x3 = a(r+2,c) + alpha*b(r+2,c)
+         x4 = a(r+3,c) + alpha*b(r+3,c)
+         a(r,c) = x1
+         a(r+1,c) = x2
+         a(r+2,c) = x3
+         a(r+3,c) = x4
+      enddo
+      enddo
+      end
+#endif
 
 void c_c_accumulate_2d_u_(const complex_t* const alpha,
                           const int* const rows,
                           const int* const cols,
-                          complex_t* MAYBE_RESTRICT A,
+                          complex_t* restrict A,
                           const int* const ald,
                           const complex_t* const B,
                           const int* const bld)
@@ -514,34 +539,36 @@ void c_c_accumulate_2d_u_(const complex_t* const alpha,
     return;
 }
 
-//       subroutine c_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
-//       integer rows, cols
-//       integer c, r, ald, bld
-//       complex A(ald,*), B(bld,*), alpha
-//       integer r1
-//       complex x1, x2, x3, x4
-//       do c = 1, cols
-//       r1 = iand(max0(rows,0),3)
-//       do r = 1, r1
-//          a(r,c) = a(r,c) + alpha*b(r,c)
-//       end do
-//       do r = r1 + 1, rows, 4
-//          x1 = a(r,c) + alpha*b(r,c)
-//          x2 = a(r+1,c) + alpha*b(r+1,c)
-//          x3 = a(r+2,c) + alpha*b(r+2,c)
-//          x4 = a(r+3,c) + alpha*b(r+3,c)
-//          a(r,c) = x1
-//          a(r+1,c) = x2
-//          a(r+2,c) = x3
-//          a(r+3,c) = x4
-//       enddo
-//       enddo
-//       end
+#if 0
+      subroutine c_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
+      integer rows, cols
+      integer c, r, ald, bld
+      complex A(ald,*), B(bld,*), alpha
+      integer r1
+      complex x1, x2, x3, x4
+      do c = 1, cols
+      r1 = iand(max0(rows,0),3)
+      do r = 1, r1
+         a(r,c) = a(r,c) + alpha*b(r,c)
+      end do
+      do r = r1 + 1, rows, 4
+         x1 = a(r,c) + alpha*b(r,c)
+         x2 = a(r+1,c) + alpha*b(r+1,c)
+         x3 = a(r+2,c) + alpha*b(r+2,c)
+         x4 = a(r+3,c) + alpha*b(r+3,c)
+         a(r,c) = x1
+         a(r+1,c) = x2
+         a(r+2,c) = x3
+         a(r+3,c) = x4
+      enddo
+      enddo
+      end
+#endif
 
 void c_z_accumulate_2d_u_(const dcomplex_t* const alpha,
                           const int* const rows,
                           const int* const cols,
-                          dcomplex_t* MAYBE_RESTRICT A,
+                          dcomplex_t* restrict A,
                           const int* const ald,
                           const dcomplex_t* const B,
                           const int* const bld)
@@ -570,34 +597,36 @@ void c_z_accumulate_2d_u_(const dcomplex_t* const alpha,
     return;
 }
 
-//       subroutine i_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
-//       integer rows, cols
-//       integer c, r, ald, bld
-//       integer A(ald,*), B(bld,*), alpha
-// 
-//       integer r1, j2, j3, j4, j5
-//       do c = 1, cols
-//       r1 = iand(max0(rows,0),3)
-//       do r = 1, r1
-//          a(r,c) = a(r,c) + alpha*b(r,c)
-//       end do
-//       do r = r1 + 1, rows, 4
-//          j2 = a(r,c) + alpha*b(r,c)
-//          j3 = a(r+1,c) + alpha*b(r+1,c)
-//          j4 = a(r+2,c) + alpha*b(r+2,c)
-//          j5 = a(r+3,c) + alpha*b(r+3,c)
-//          a(r,c) = j2
-//          a(r+1,c) = j3
-//          a(r+2,c) = j4
-//          a(r+3,c) = j5
-//       enddo
-//       enddo
-//       end
+#if 0
+      subroutine i_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
+      integer rows, cols
+      integer c, r, ald, bld
+      integer A(ald,*), B(bld,*), alpha
+
+      integer r1, j2, j3, j4, j5
+      do c = 1, cols
+      r1 = iand(max0(rows,0),3)
+      do r = 1, r1
+         a(r,c) = a(r,c) + alpha*b(r,c)
+      end do
+      do r = r1 + 1, rows, 4
+         j2 = a(r,c) + alpha*b(r,c)
+         j3 = a(r+1,c) + alpha*b(r+1,c)
+         j4 = a(r+2,c) + alpha*b(r+2,c)
+         j5 = a(r+3,c) + alpha*b(r+3,c)
+         a(r,c) = j2
+         a(r+1,c) = j3
+         a(r+2,c) = j4
+         a(r+3,c) = j5
+      enddo
+      enddo
+      end
+#endif
 
 void c_i_accumulate_2d_u_(const int* const alpha,
                           const int* const rows,
                           const int* const cols,
-                          int* MAYBE_RESTRICT A,
+                          int* restrict A,
                           const int* const ald,
                           const int* const B,
                           const int* const bld)
@@ -621,7 +650,7 @@ void c_i_accumulate_2d_u_(const int* const alpha,
 void c_l_accumulate_2d_u_(const long* const alpha,
                           const int* const rows,
                           const int* const cols,
-                          long* MAYBE_RESTRICT A,
+                          long* restrict A,
                           const int* const ald,
                           const long* const B,
                           const int* const bld)
@@ -645,7 +674,7 @@ void c_l_accumulate_2d_u_(const long* const alpha,
 void c_ll_accumulate_2d_u_(const long long* const alpha,
                            const int* const rows,
                            const int* const cols,
-                           long long* MAYBE_RESTRICT A,
+                           long long* restrict A,
                            const int* const ald,
                            const long long* const B,
                            const int* const bld)
@@ -666,19 +695,21 @@ void c_ll_accumulate_2d_u_(const long long* const alpha,
     return;
 }
 
-// c---------- operations used in armci gops --------------
-// c
-//       subroutine fort_dadd(n, x, work)
-//       integer n,i
-//       double precision x(n), work(n)
-//       do i= 1,n
-//          x(i) = x(i) + work(i)
-//       enddo
-//       end
+#if 0
+c---------- operations used in armci gops --------------
+c
+      subroutine fort_dadd(n, x, work)
+      integer n,i
+      double precision x(n), work(n)
+      do i= 1,n
+         x(i) = x(i) + work(i)
+      enddo
+      end
+#endif
 
-void c_dadd_(const int* const n,
-             double* MAYBE_RESTRICT x,
-             double* const work)
+void c_dadd_(const int*    const restrict n,
+                   double* const restrict x,
+             const double* const restrict work)
 {
     int i;
     for ( i = 0 ; i < (*n) ; i++ ){
@@ -687,18 +718,20 @@ void c_dadd_(const int* const n,
     return;
 }
 
-//       subroutine fort_dadd2(n, x, work, work2)
-//       integer n,i
-//       double precision x(n), work(n), work2(n)
-//       do i= 1,n
-//          x(i) = work(i) + work2(i)
-//       enddo
-//       end
+#if 0
+      subroutine fort_dadd2(n, x, work, work2)
+      integer n,i
+      double precision x(n), work(n), work2(n)
+      do i= 1,n
+         x(i) = work(i) + work2(i)
+      enddo
+      end
+#endif
 
-void c_dadd2_(const int* const n,
-              double* MAYBE_RESTRICT x,
-              double* const work,
-              double* const work2)
+void c_dadd2_(const int*    const restrict n,
+                    double* const restrict x,
+              const double* const restrict work,
+              const double* const restrict work2)
 {
     int i;
     for ( i = 0 ; i < (*n) ; i++ ){
@@ -707,17 +740,19 @@ void c_dadd2_(const int* const n,
     return;
 }
 
-//       subroutine fort_dmult(n, x, work)
-//       integer n,i
-//       double precision x(n), work(n)
-//       do i= 1,n
-//          x(i) = x(i) * work(i)
-//       enddo
-//       end
+#if 0
+      subroutine fort_dmult(n, x, work)
+      integer n,i
+      double precision x(n), work(n)
+      do i= 1,n
+         x(i) = x(i) * work(i)
+      enddo
+      end
+#endif
 
-void c_dmult_(const int* const n,
-              double* MAYBE_RESTRICT x,
-              double* const work)
+void c_dmult_(const int*    const restrict n,
+                    double* const restrict x,
+              const double* const restrict work)
 {
     int i;
     for ( i = 0 ; i < (*n) ; i++ ){
@@ -726,18 +761,20 @@ void c_dmult_(const int* const n,
     return;
 }
 
-//       subroutine fort_dmult2(n, x, work,work2)
-//       integer n,i
-//       double precision x(n), work(n)
-//       do i= 1,n
-//          x(i) = work(i)*work2(i)
-//       enddo
-//       end
+#if 0
+      subroutine fort_dmult2(n, x, work,work2)
+      integer n,i
+      double precision x(n), work(n)
+      do i= 1,n
+         x(i) = work(i)*work2(i)
+      enddo
+      end
+#endif
 
-void c_dmult2_(const int* const n,
-               double* MAYBE_RESTRICT x,
-               double* const work,
-               double* const work2)
+void c_dmult2_(const int*    const restrict n,
+                     double* const restrict x,
+               const double* const restrict work,
+               const double* const restrict work2)
 {
     int i;
     for ( i = 0 ; i < (*n) ; i++ ){
@@ -759,4 +796,3 @@ int i,j;
        aa[i] ^= bb[i];
    }
 }
-

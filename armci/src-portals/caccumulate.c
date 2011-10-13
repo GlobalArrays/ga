@@ -67,10 +67,10 @@ ccdir$ no_cache_alloc a,b
       end
 #endif
 
-void c_d_accumulate_1d_(const double* const alpha,
-                        double* MAYBE_RESTRICT A,
-                        double* const B,
-                        const int* const rows)
+void c_d_accumulate_1d_(const double* const restrict alpha,
+                              double* restrict A,
+                        const double* const restrict B,
+                        const int*    const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -97,7 +97,7 @@ ccdir$ no_cache_alloc a,b
 void c_d_accumulate_2d_(const double* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        double* MAYBE_RESTRICT A,
+                        double* restrict A,
                         const int* const ald,
                         const double* const B,
                         const int* const bld)
@@ -121,10 +121,10 @@ void c_d_accumulate_2d_(const double* const alpha,
       end
 #endif
 
-void c_f_accumulate_1d_(const float* const alpha,
-                        float* MAYBE_RESTRICT A,
-                        float* const B,
-                        const int* const rows)
+void c_f_accumulate_1d_(const float* const restrict alpha,
+                              float* const restrict A,
+                        const float* const restrict B,
+                        const int*   const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -149,7 +149,7 @@ void c_f_accumulate_1d_(const float* const alpha,
 void c_f_accumulate_2d_(const float* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        float* MAYBE_RESTRICT A,
+                        float* restrict A,
                         const int* const ald,
                         const float* const B,
                         const int* const bld)
@@ -173,10 +173,10 @@ void c_f_accumulate_2d_(const float* const alpha,
       end
 #endif
 
-void c_c_accumulate_1d_(const complex_t* const alpha,
-                        complex_t* MAYBE_RESTRICT A,
-                        complex_t* const B,
-                        const int* const rows)
+void c_c_accumulate_1d_(const complex_t* const restrict alpha,
+                              complex_t* const restrict A,
+                        const complex_t* const restrict B,
+                        const int*       const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -202,7 +202,7 @@ void c_c_accumulate_1d_(const complex_t* const alpha,
 void c_c_accumulate_2d_(const complex_t* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        complex_t* MAYBE_RESTRICT A,
+                        complex_t* restrict A,
                         const int* const ald,
                         const complex_t* const B,
                         const int* const bld)
@@ -227,10 +227,10 @@ void c_c_accumulate_2d_(const complex_t* const alpha,
       end
 #endif
 
-void c_z_accumulate_1d_(const dcomplex_t* const alpha,
-                        dcomplex_t* MAYBE_RESTRICT A,
-                        dcomplex_t* const B,
-                        const int* const rows)
+void c_z_accumulate_1d_(const dcomplex_t* const restrict alpha,
+                              dcomplex_t* const restrict A,
+                        const dcomplex_t* const restrict B,
+                        const int*        const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -256,7 +256,7 @@ void c_z_accumulate_1d_(const dcomplex_t* const alpha,
 void c_z_accumulate_2d_(const dcomplex_t* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        dcomplex_t* MAYBE_RESTRICT A,
+                        dcomplex_t* restrict A,
                         const int* const ald,
                         const dcomplex_t* const B,
                         const int* const bld)
@@ -284,10 +284,10 @@ void c_z_accumulate_2d_(const dcomplex_t* const alpha,
       end
 #endif
 
-void c_i_accumulate_1d_(const int* const alpha,
-                        int* MAYBE_RESTRICT A,
-                        int* const B,
-                        const int* const rows)
+void c_i_accumulate_1d_(const int* const restrict alpha,
+                              int* const restrict A,
+                        const int* const restrict B,
+                        const int* const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -296,10 +296,10 @@ void c_i_accumulate_1d_(const int* const alpha,
     return;
 }
 
-void c_l_accumulate_1d_(const long* const alpha,
-                        long* MAYBE_RESTRICT A,
-                        long* const B,
-                        const int* const rows)
+void c_l_accumulate_1d_(const long* const restrict alpha,
+                              long* const restrict A,
+                        const long* const restrict B,
+                        const int*  const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -308,10 +308,10 @@ void c_l_accumulate_1d_(const long* const alpha,
     return;
 }
 
-void c_ll_accumulate_1d_(const long long* const alpha,
-                        long long* MAYBE_RESTRICT A,
-                        long long* const B,
-                        const int* const rows)
+void c_ll_accumulate_1d_(const long long* const restrict alpha,
+                               long long* const restrict A,
+                         const long long* const restrict B,
+                         const int*       const restrict rows)
 {
     int i;
     for ( i = 0 ; i < (*rows) ; i++ ){
@@ -333,7 +333,7 @@ void c_ll_accumulate_1d_(const long long* const alpha,
 void c_i_accumulate_2d_(const int* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        int* MAYBE_RESTRICT A,
+                        int* restrict A,
                         const int* const ald,
                         const int* const B,
                         const int* const bld)
@@ -350,7 +350,7 @@ void c_i_accumulate_2d_(const int* const alpha,
 void c_l_accumulate_2d_(const long* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        long* MAYBE_RESTRICT A,
+                        long* restrict A,
                         const int* const ald,
                         const long* const B,
                         const int* const bld)
@@ -367,7 +367,7 @@ void c_l_accumulate_2d_(const long* const alpha,
 void c_ll_accumulate_2d_(const long long* const alpha,
                         const int* const rows,
                         const int* const cols,
-                        long long* MAYBE_RESTRICT A,
+                        long long* restrict A,
                         const int* const ald,
                         const long long* const B,
                         const int* const bld)
@@ -410,7 +410,7 @@ void c_ll_accumulate_2d_(const long long* const alpha,
 void c_d_accumulate_2d_u_(const double* const alpha,
                           const int* const rows,
                           const int* const cols,
-                          double* MAYBE_RESTRICT A,
+                          double* restrict A,
                           const int* const ald,
                           const double* const B,
                           const int* const bld)
@@ -460,7 +460,7 @@ void c_d_accumulate_2d_u_(const double* const alpha,
 void c_f_accumulate_2d_u_(const float* const alpha,
                           const int* const rows,
                           const int* const cols,
-                          float* MAYBE_RESTRICT A,
+                          float* restrict A,
                           const int* const ald,
                           const float* const B,
                           const int* const bld)
@@ -510,7 +510,7 @@ void c_f_accumulate_2d_u_(const float* const alpha,
 void c_c_accumulate_2d_u_(const complex_t* const alpha,
                           const int* const rows,
                           const int* const cols,
-                          complex_t* MAYBE_RESTRICT A,
+                          complex_t* restrict A,
                           const int* const ald,
                           const complex_t* const B,
                           const int* const bld)
@@ -568,7 +568,7 @@ void c_c_accumulate_2d_u_(const complex_t* const alpha,
 void c_z_accumulate_2d_u_(const dcomplex_t* const alpha,
                           const int* const rows,
                           const int* const cols,
-                          dcomplex_t* MAYBE_RESTRICT A,
+                          dcomplex_t* restrict A,
                           const int* const ald,
                           const dcomplex_t* const B,
                           const int* const bld)
@@ -626,7 +626,7 @@ void c_z_accumulate_2d_u_(const dcomplex_t* const alpha,
 void c_i_accumulate_2d_u_(const int* const alpha,
                           const int* const rows,
                           const int* const cols,
-                          int* MAYBE_RESTRICT A,
+                          int* restrict A,
                           const int* const ald,
                           const int* const B,
                           const int* const bld)
@@ -650,7 +650,7 @@ void c_i_accumulate_2d_u_(const int* const alpha,
 void c_l_accumulate_2d_u_(const long* const alpha,
                           const int* const rows,
                           const int* const cols,
-                          long* MAYBE_RESTRICT A,
+                          long* restrict A,
                           const int* const ald,
                           const long* const B,
                           const int* const bld)
@@ -674,7 +674,7 @@ void c_l_accumulate_2d_u_(const long* const alpha,
 void c_ll_accumulate_2d_u_(const long long* const alpha,
                            const int* const rows,
                            const int* const cols,
-                           long long* MAYBE_RESTRICT A,
+                           long long* restrict A,
                            const int* const ald,
                            const long long* const B,
                            const int* const bld)
@@ -707,9 +707,9 @@ c
       end
 #endif
 
-void c_dadd_(const int* const n,
-             double* MAYBE_RESTRICT x,
-             double* const work)
+void c_dadd_(const int*    const restrict n,
+                   double* const restrict x,
+             const double* const restrict work)
 {
     int i;
     for ( i = 0 ; i < (*n) ; i++ ){
@@ -728,10 +728,10 @@ void c_dadd_(const int* const n,
       end
 #endif
 
-void c_dadd2_(const int* const n,
-              double* MAYBE_RESTRICT x,
-              double* const work,
-              double* const work2)
+void c_dadd2_(const int*    const restrict n,
+                    double* const restrict x,
+              const double* const restrict work,
+              const double* const restrict work2)
 {
     int i;
     for ( i = 0 ; i < (*n) ; i++ ){
@@ -750,9 +750,9 @@ void c_dadd2_(const int* const n,
       end
 #endif
 
-void c_dmult_(const int* const n,
-              double* MAYBE_RESTRICT x,
-              double* const work)
+void c_dmult_(const int*    const restrict n,
+                    double* const restrict x,
+              const double* const restrict work)
 {
     int i;
     for ( i = 0 ; i < (*n) ; i++ ){
@@ -771,10 +771,10 @@ void c_dmult_(const int* const n,
       end
 #endif
 
-void c_dmult2_(const int* const n,
-               double* MAYBE_RESTRICT x,
-               double* const work,
-               double* const work2)
+void c_dmult2_(const int*    const restrict n,
+                     double* const restrict x,
+               const double* const restrict work,
+               const double* const restrict work2)
 {
     int i;
     for ( i = 0 ; i < (*n) ; i++ ){
@@ -784,7 +784,7 @@ void c_dmult2_(const int* const n,
 }
 
 
-// specific to src-portals
+// specific to src-portals && to src-gemini
 void  RA_ACCUMULATE_2D_(long* alpha, int* rows, int* cols, long* a,
                       int* lda, long* b, int* ldb)
 {
@@ -796,4 +796,3 @@ int i,j;
        aa[i] ^= bb[i];
    }
 }
-

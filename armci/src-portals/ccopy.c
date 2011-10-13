@@ -57,9 +57,9 @@ ccdir$ no_cache_alloc a,b
       end
 #endif
 
-void c_dcopy1d_n_(double* const A,
-                  double* MAYBE_RESTRICT B,
-                  const int* const n)
+void c_dcopy1d_n_(const double* const restrict A,
+                        double* const restrict B,
+                  const int*    const restrict n)
 {
     int i;
     for ( i = 0 ; i < (*n) ; i++ ){
@@ -90,9 +90,9 @@ void c_dcopy1d_n_(double* const A,
       end
 #endif
 
-void c_dcopy1d_u_(double* const A,
-                  double* MAYBE_RESTRICT B,
-                  const int* const n)
+void c_dcopy1d_u_(const double* const restrict A,
+                        double* const restrict B,
+                  const int*    const restrict n)
 {
     int i;
     int m = (*n) - ((*n)%4);
@@ -125,12 +125,12 @@ void c_dcopy1d_u_(double* const A,
       end
 #endif
 
-void c_dcopy21_(const int* const rows,
-                const int* const cols,
-                double* const A,
-                const int* const ald,
-                double* MAYBE_RESTRICT buf,
-                int* const cur) /* value changes, location does not */
+void c_dcopy21_(const int*    const restrict rows,
+                const int*    const restrict cols,
+                const double* const restrict A,
+                const int*    const restrict ald,
+                      double* const restrict buf,
+                      int*    const restrict cur)
 {
     int r, c, i=0;
     for ( c = 0 ; c < (*cols) ; c++ ){
@@ -141,27 +141,6 @@ void c_dcopy21_(const int* const rows,
     (*cur) = i;
     return;
 }
-
-#if 0
-void c_dcopy21_(const int* const rows,
-                const int* const cols,
-                double* const A,
-                const int* const ald,
-                double* MAYBE_RESTRICT buf,
-                int* const cur) /* value changes, location does not */
-{
-    int r, c;
-    double* pA;
-    for ( c = 0 ; c < (*cols) ; c++ ){
-        pA = &A[ c * (*ald)];
-        for ( r = 0 ; r < (*rows) ; r++ ){
-            buf[(*cur)++] = *pA++;
-        }
-    }
-    /*(*cur) = r*c;*/
-    return;
-}
-#endif
 
 #if 0
       subroutine dcopy12(rows, cols, A, ald, buf, cur)
@@ -178,12 +157,12 @@ void c_dcopy21_(const int* const rows,
       end
 #endif
 
-void c_dcopy12_(const int* const rows,
-              const int* const cols,
-              double* MAYBE_RESTRICT A,
-              const int* const ald,
-              double* MAYBE_RESTRICT buf,
-              int* const cur) /* value changes, location does not */
+void c_dcopy12_(const int*    const restrict rows,
+                const int*    const restrict cols,
+                      double* const restrict A,
+                const int*    const restrict ald,
+                const double* const restrict buf,
+                      int*    const restrict cur)
 {
     int r, c, i=0;
     i = 0;
@@ -195,27 +174,6 @@ void c_dcopy12_(const int* const rows,
     (*cur) = i;
     return;
 }
-
-#if 0
-void c_dcopy12_(const int* const rows,
-                const int* const cols,
-                double* MAYBE_RESTRICT A,
-                const int* const ald,
-                double* MAYBE_RESTRICT buf,
-                int* const cur) /* value changes, location does not */
-{
-    int r, c;
-    double* pA;
-    for ( c = 0 ; c < (*cols) ; c++ ){
-        pA = &A[ c * (*ald)];
-        for ( r = 0 ; r < (*rows) ; r++ ){
-            *pA++ = *buf++;
-        }
-    }
-    (*cur) = r*c;
-    return;
-}
-#endif
 
 #if 0
       subroutine dcopy2d_n(rows, cols, A, ald, B, bld)
@@ -230,12 +188,12 @@ void c_dcopy12_(const int* const rows,
       end
 #endif
 
-void c_dcopy2d_n_(const int* const rows,
-                  const int* const cols,
-                  const double* const A,
-                  const int* const ald,
-                  double* MAYBE_RESTRICT B,
-                  const int* const bld)
+void c_dcopy2d_n_(const int*    const restrict rows,
+                  const int*    const restrict cols,
+                  const double* const restrict A,
+                  const int*    const restrict ald,
+                        double* const restrict B,
+                  const int*    const restrict bld)
 {
     int r, c;
     for ( c = 0 ; c < (*cols) ; c++ ){
@@ -277,17 +235,24 @@ c$$$         b(r+3,c) = a(r+3,c) + b(r+3,c) * 0
       end
 #endif
 
-void c_dcopy2d_u_(const int* const rows,
-                  const int* const cols,
-                  double* MAYBE_RESTRICT A,
-                  const int* const ald,
-                  double* MAYBE_RESTRICT B,
-                  const int* const bld)
+void c_dcopy2d_u_(const int*    const restrict rows,
+                  const int*    const restrict cols,
+                  const double* const restrict A,
+                  const int*    const restrict ald,
+                        double* const restrict B,
+                  const int*    const restrict bld)
 {
     int r, c;
     for ( c = 0 ; c < (*cols) ; c++ ){
-        for ( r = 0 ; r < (*rows) ; r++ ){
-            B[ c * (*bld) + r ] = A[ c * (*ald) + r ];
+        int m = (*rows) - ((*rows)%4);
+        for ( r = 0 ; r < m ; r+=4 ){
+            B[ c * (*bld) + r   ] = A[ c * (*ald) + r   ];
+            B[ c * (*bld) + r+1 ] = A[ c * (*ald) + r+1 ];
+            B[ c * (*bld) + r+2 ] = A[ c * (*ald) + r+2 ];
+            B[ c * (*bld) + r+3 ] = A[ c * (*ald) + r+3 ];
+        }
+        for ( r = m ; r < (*rows) ; r++ ){
+            B[ c * (*bld) + r   ] = A[ c * (*ald) + r   ];
         }
     }
     return;
@@ -312,14 +277,14 @@ void c_dcopy2d_u_(const int* const rows,
       end
 #endif
 
-void c_dcopy31_(const int* const rows,
-                const int* const cols,
-                const int* const plns,
-                double* MAYBE_RESTRICT A,
-                const int* const aldr,
-                const int* const aldc,
-                double* MAYBE_RESTRICT buf,
-                int* const cur) /* value changes, location does not */
+void c_dcopy31_(const int*    const restrict rows,
+                const int*    const restrict cols,
+                const int*    const restrict plns,
+                const double* const restrict A,
+                const int*    const restrict aldr,
+                const int*    const restrict aldc,
+                      double* const restrict buf,
+                      int*    const restrict cur)
 {
     int r, c, p, i=0;
     for ( p = 0 ; p < (*plns) ; p++ ){
@@ -350,37 +315,14 @@ void c_dcopy31_(const int* const rows,
       end
 #endif
 
-#if 0
-void c_dcopy13_(const int* const rows,
-              const int* const cols,
-              const int* const plns,
-              double* MAYBE_RESTRICT A,
-              const int* const aldr,
-              const int* const aldc,
-              double* MAYBE_RESTRICT buf,
-              int* const cur) /* value changes, location does not */
-{
-    int p, r, c;
-    *cur = 0;
-    for ( p = 0 ; p < (*plns) ; p++ ){
-        for ( c = 0 ; c < (*cols) ; c++ ){
-            for ( r = 0 ; r < (*rows) ; r++ ){
-                A[ ( p * (*aldc) + c ) * (*aldr) + r ] = buf[ (*cur)++ ];
-            }
-        }
-    }
-    return;
-}
-#endif
-
-void c_dcopy13_(const int* const rows,
-                const int* const cols,
-                const int* const plns,
-                double* MAYBE_RESTRICT A,
-                const int* const aldr,
-                const int* const aldc,
-                double* MAYBE_RESTRICT buf,
-                int* const cur) /* value changes, location does not */
+void c_dcopy13_(const int*    const restrict rows,
+                const int*    const restrict cols,
+                const int*    const restrict plns,
+                      double* const restrict A,
+                const int*    const restrict aldr,
+                const int*    const restrict aldc,
+                const double* const restrict buf,
+                      int*    const restrict cur)
 {
     int r, c, p, i=0;
     for ( p = 0 ; p < (*plns) ; p++ ){
