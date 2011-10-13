@@ -3600,12 +3600,15 @@ Integer ndrai_inquire(Integer *d_a, Integer *type, Integer *ndim,
         Integer dims[], char *name, char *filename)
 {
     Integer handle=*d_a+DRA_OFFSET;
+    Integer i;
 
     dai_check_handleM(*d_a,"dra_inquire");
 
     *type = (Integer)DRA[handle].type;
     *ndim = DRA[handle].ndim;
-    dims = DRA[handle].dims;
+    for (i=0; i<*ndim; i++) {
+      dims[i] = DRA[handle].dims[i];
+    }
     strcpy(name, DRA[handle].name);
     strcpy(filename, DRA[handle].fname);
 
