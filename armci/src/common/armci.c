@@ -410,17 +410,17 @@ int PARMCI_Init()
         int provided;
         MPI_Query_thread(&provided);
         if (provided == MPI_THREAD_SINGLE) {
-            armci_die("ARMCI is build w/ ARMCI_NETWORK=MPI_MT but the "
+            armci_die("ARMCI is built w/ ARMCI_NETWORK=MPI_MT but the "
                     "provided MPI threading level is MPI_THREAD_SINGLE "
                     " not MPI_THREAD_MULTIPLE", 1);
         }
         else if (provided == MPI_THREAD_FUNNELED) {
-            armci_die("ARMCI is build w/ ARMCI_NETWORK=MPI_MT but the "
+            armci_die("ARMCI is built w/ ARMCI_NETWORK=MPI_MT but the "
                     "provided MPI threading level is MPI_THREAD_FUNNELED "
                     " not MPI_THREAD_MULTIPLE", 1);
         }
         else if (provided == MPI_THREAD_SERIALIZED) {
-            armci_die("ARMCI is build w/ ARMCI_NETWORK=MPI_MT but the "
+            armci_die("ARMCI is built w/ ARMCI_NETWORK=MPI_MT but the "
                     "provided MPI threading level is MPI_THREAD_SERIALIZED "
                     " not MPI_THREAD_MULTIPLE", 1);
         }

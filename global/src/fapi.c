@@ -1693,6 +1693,31 @@ void FATR nga_zgop_(Integer *type, DoubleComplex *x, Integer *n, char *op, int l
     wnga_gop(pnga_type_f2c(MT_F_DCPL), x, *n, op);
 }
 
+#ifdef MPI
+#   include "ga-mpi.h"
+#   define ga_mpi_comm_ F77_FUNC_(ga_mpi_comm,GA_MPI_COMM)
+void FATR ga_mpi_comm_(Integer *fcomm)
+{
+    MPI_Comm ccomm;
+    GA_MPI_Comm(&ccomm);
+    *fcomm = (Integer)(MPI_Comm_c2f(ccomm));
+}
+#define ga_mpi_comm_pgroup_ F77_FUNC_(ga_mpi_comm_pgroup,GA_MPI_COMM_PGROUP)
+void FATR ga_mpi_comm_pgroup_(Integer *fcomm, Integer *pgroup)
+{
+    MPI_Comm ccomm;
+    ccomm = GA_MPI_Comm_pgroup((int)(*pgroup));
+    *fcomm = (Integer)(MPI_Comm_c2f(ccomm));
+}
+#define ga_mpi_comm_pgroup_default_ F77_FUNC_(ga_mpi_comm_pgroup_default,GA_MPI_COMM_PGROUP_DEFAULT)
+void FATR ga_mpi_comm_pgroup_default_(Integer *fcomm)
+{
+    MPI_Comm ccomm;
+    ccomm = GA_MPI_Comm_pgroup_default();
+    *fcomm = (Integer)(MPI_Comm_c2f(ccomm));
+}
+#endif
+
 /* Routines from elem_alg.c */
 
 void FATR ga_abs_value_patch_(Integer *g_a, Integer *lo, Integer *hi)

@@ -3279,11 +3279,11 @@ def from_ga(g_a):
     shape = ga.inquire_dims(g_a)
     return ndarray(shape, dtype, base=g_a)
 
-cdef extern MPI_Comm ga_mpi_pgroup_default_communicator()
+cdef extern MPI_Comm GA_MPI_Comm_pgroup_default()
 def comm():
     """Returns the MPI_Comm instance associated with the process group."""
     cdef MPI.Comm communicator = MPI.Comm()
-    communicator.ob_mpi = ga_mpi_pgroup_default_communicator()
+    communicator.ob_mpi = GA_MPI_Comm_pgroup_default()
     return communicator
 
 #cdef bint DEBUG = False
