@@ -152,7 +152,9 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_14 = global/testing/testspd
 @ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_15 = global/testing/ga_lu
 @MSG_COMMS_MPI_TRUE@am__append_16 = global/testing/ga-mpi \
-@MSG_COMMS_MPI_TRUE@	global/testing/lock
+@MSG_COMMS_MPI_TRUE@	global/testing/lock \
+@MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_comm \
+@MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_commc
 @SYSV_TRUE@am__append_17 = global/testing/ipc_clean
 #GLOBAL_PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
 #GLOBAL_PARALLEL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
@@ -189,7 +191,9 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_19 = global/testing/testspd$(EXEEXT)
 @ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_20 = global/testing/ga_lu$(EXEEXT)
 @MSG_COMMS_MPI_TRUE@am__append_21 = global/testing/ga-mpi$(EXEEXT) \
-@MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_comm$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_commc$(EXEEXT)
 @SYSV_TRUE@am__append_22 = global/testing/ipc_clean$(EXEEXT)
 @HAVE_M4_TRUE@am__append_23 = $(GLOBAL_TESTING_M4_DEPS) \
 @HAVE_M4_TRUE@	global/testing/README
@@ -515,7 +519,9 @@ libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__EXEEXT_4 = global/testing/testspd$(EXEEXT)
 @ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__EXEEXT_5 = global/testing/ga_lu$(EXEEXT)
 @MSG_COMMS_MPI_TRUE@am__EXEEXT_6 = global/testing/ga-mpi$(EXEEXT) \
-@MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_comm$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_commc$(EXEEXT)
 @SYSV_TRUE@am__EXEEXT_7 = global/testing/ipc_clean$(EXEEXT)
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__EXEEXT_8 = global/testing/nga-onesided$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-patch$(EXEEXT) \
@@ -1395,6 +1401,37 @@ global_testing_simple_groups_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_simple_groups_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am__global_testing_simple_groups_comm_SOURCES_DIST =  \
+	global/testing/simple_groups_comm.F global/testing/testutil.fh \
+	global/testing/testutil.h global/testing/util.c \
+	global/testing/ffflush.F global/testing/testblas.F
+am_global_testing_simple_groups_comm_OBJECTS =  \
+	global/testing/simple_groups_comm.$(OBJEXT) $(am__objects_9)
+global_testing_simple_groups_comm_OBJECTS =  \
+	$(am_global_testing_simple_groups_comm_OBJECTS)
+global_testing_simple_groups_comm_LDADD = $(LDADD)
+global_testing_simple_groups_comm_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+global_testing_simple_groups_comm_LINK = $(LIBTOOL) $(AM_V_lt) \
+	--tag=F77 $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
+	$(F77LD) $(AM_FFLAGS) $(FFLAGS) \
+	$(global_testing_simple_groups_comm_LDFLAGS) $(LDFLAGS) -o $@
+am__global_testing_simple_groups_commc_SOURCES_DIST =  \
+	global/testing/simple_groups_commc.c \
+	global/testing/testutil.fh global/testing/testutil.h \
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.F
+am_global_testing_simple_groups_commc_OBJECTS =  \
+	global/testing/simple_groups_commc.$(OBJEXT) $(am__objects_9)
+global_testing_simple_groups_commc_OBJECTS =  \
+	$(am_global_testing_simple_groups_commc_OBJECTS)
+global_testing_simple_groups_commc_LDADD = $(LDADD)
+global_testing_simple_groups_commc_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__global_testing_sparse_SOURCES_DIST = global/testing/sparse.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1980,6 +2017,9 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(global_testing_scan_copyc_SOURCES) \
 	$(nodist_EXTRA_global_testing_scan_copyc_SOURCES) \
 	$(global_testing_simple_groups_SOURCES) \
+	$(global_testing_simple_groups_comm_SOURCES) \
+	$(global_testing_simple_groups_commc_SOURCES) \
+	$(nodist_EXTRA_global_testing_simple_groups_commc_SOURCES) \
 	$(global_testing_sparse_SOURCES) \
 	$(global_testing_sprsmatmult_SOURCES) \
 	$(global_testing_stride_SOURCES) \
@@ -2080,6 +2120,8 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_scan_addc_SOURCES_DIST) \
 	$(am__global_testing_scan_copyc_SOURCES_DIST) \
 	$(am__global_testing_simple_groups_SOURCES_DIST) \
+	$(am__global_testing_simple_groups_comm_SOURCES_DIST) \
+	$(am__global_testing_simple_groups_commc_SOURCES_DIST) \
 	$(am__global_testing_sparse_SOURCES_DIST) \
 	$(am__global_testing_sprsmatmult_SOURCES_DIST) \
 	$(am__global_testing_stride_SOURCES_DIST) \
@@ -2700,6 +2742,8 @@ global_testing_scan_SOURCES = global/testing/scan.F $(gtsrc)
 global_testing_scan_addc_SOURCES = global/testing/scan_addc.c $(gtsrc)
 global_testing_scan_copyc_SOURCES = global/testing/scan_copyc.c $(gtsrc)
 global_testing_simple_groups_SOURCES = global/testing/simple_groups.F $(gtsrc)
+global_testing_simple_groups_comm_SOURCES = global/testing/simple_groups_comm.F $(gtsrc)
+global_testing_simple_groups_commc_SOURCES = global/testing/simple_groups_commc.c $(gtsrc)
 global_testing_sparse_SOURCES = global/testing/sparse.F $(gtsrc)
 global_testing_sprsmatmult_SOURCES = global/testing/sprsmatmult.F $(gtsrc)
 global_testing_stride_SOURCES = global/testing/stride.F $(gtsrc)
@@ -2751,6 +2795,7 @@ global_testing_pgtestmatmult_LDFLAGS = $(FLDFLAGS)
 global_testing_random_LDFLAGS = $(FLDFLAGS)
 global_testing_scan_LDFLAGS = $(FLDFLAGS)
 global_testing_simple_groups_LDFLAGS = $(FLDFLAGS)
+global_testing_simple_groups_comm_LDFLAGS = $(FLDFLAGS)
 global_testing_sparse_LDFLAGS = $(FLDFLAGS)
 global_testing_sprsmatmult_LDFLAGS = $(FLDFLAGS)
 global_testing_stride_LDFLAGS = $(FLDFLAGS)
@@ -2775,6 +2820,7 @@ nodist_EXTRA_global_testing_patch_enumc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_print_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_scan_addc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_scan_copyc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_simple_groups_commc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmatmultc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmult_SOURCES = $(MAYBE_DUMMY_F_LINK)
@@ -3892,6 +3938,18 @@ global/testing/simple_groups.$(OBJEXT):  \
 global/testing/simple_groups$(EXEEXT): $(global_testing_simple_groups_OBJECTS) $(global_testing_simple_groups_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/simple_groups$(EXEEXT)
 	$(AM_V_F77LD)$(global_testing_simple_groups_LINK) $(global_testing_simple_groups_OBJECTS) $(global_testing_simple_groups_LDADD) $(LIBS)
+global/testing/simple_groups_comm.$(OBJEXT):  \
+	global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/simple_groups_comm$(EXEEXT): $(global_testing_simple_groups_comm_OBJECTS) $(global_testing_simple_groups_comm_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/simple_groups_comm$(EXEEXT)
+	$(AM_V_F77LD)$(global_testing_simple_groups_comm_LINK) $(global_testing_simple_groups_comm_OBJECTS) $(global_testing_simple_groups_comm_LDADD) $(LIBS)
+global/testing/simple_groups_commc.$(OBJEXT):  \
+	global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/simple_groups_commc$(EXEEXT): $(global_testing_simple_groups_commc_OBJECTS) $(global_testing_simple_groups_commc_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/simple_groups_commc$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_simple_groups_commc_OBJECTS) $(global_testing_simple_groups_commc_LDADD) $(LIBS)
 global/testing/sparse.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/sparse$(EXEEXT): $(global_testing_sparse_OBJECTS) $(global_testing_sparse_DEPENDENCIES) global/testing/$(am__dirstamp)
@@ -4363,6 +4421,8 @@ mostlyclean-compile:
 	-rm -f global/testing/scan_addc.$(OBJEXT)
 	-rm -f global/testing/scan_copyc.$(OBJEXT)
 	-rm -f global/testing/simple_groups.$(OBJEXT)
+	-rm -f global/testing/simple_groups_comm.$(OBJEXT)
+	-rm -f global/testing/simple_groups_commc.$(OBJEXT)
 	-rm -f global/testing/sparse.$(OBJEXT)
 	-rm -f global/testing/sprsmatmult.$(OBJEXT)
 	-rm -f global/testing/stride.$(OBJEXT)
@@ -4535,6 +4595,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/print.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/scan_addc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/scan_copyc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/simple_groups_commc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testmatmultc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testmult.Po@am__quote@
@@ -5374,6 +5435,10 @@ global/testing/ga-mpi.log: global/testing/ga-mpi$(EXEEXT)
 	@p='global/testing/ga-mpi$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/lock.log: global/testing/lock$(EXEEXT)
 	@p='global/testing/lock$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/simple_groups_comm.log: global/testing/simple_groups_comm$(EXEEXT)
+	@p='global/testing/simple_groups_comm$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/simple_groups_commc.log: global/testing/simple_groups_commc$(EXEEXT)
+	@p='global/testing/simple_groups_commc$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ipc_clean.log: global/testing/ipc_clean$(EXEEXT)
 	@p='global/testing/ipc_clean$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/nga-onesided.log: global/testing/nga-onesided$(EXEEXT)
