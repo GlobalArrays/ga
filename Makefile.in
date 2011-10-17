@@ -123,7 +123,9 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@@ENABLE_PEIGS_TRUE@am__append_10 = global/src/ga_diag.F
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_11 = global/src/scalapack.F
 @ENABLE_CHECKPOINT_TRUE@am__append_12 = global/src/ga_ckpt.c
-@ENABLE_F77_TRUE@am__append_13 = global/testing/bin \
+@MSG_COMMS_MPI_TRUE@am__append_13 = global/src/ga-mpi.h \
+@MSG_COMMS_MPI_TRUE@	global/src/ga-mpi.fh
+@ENABLE_F77_TRUE@am__append_14 = global/testing/bin \
 @ENABLE_F77_TRUE@	global/testing/blktest global/testing/d2test \
 @ENABLE_F77_TRUE@	global/testing/g2test global/testing/g3test \
 @ENABLE_F77_TRUE@	global/testing/ga_lu global/testing/ghosts \
@@ -149,18 +151,18 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testsolve global/testing/test \
 @ENABLE_F77_TRUE@	global/testing/types_test \
 @ENABLE_F77_TRUE@	global/testing/field_test
-@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_14 = global/testing/testspd
-@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_15 = global/testing/ga_lu
-@MSG_COMMS_MPI_TRUE@am__append_16 = global/testing/ga-mpi \
+@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_15 = global/testing/testspd
+@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_16 = global/testing/ga_lu
+@MSG_COMMS_MPI_TRUE@am__append_17 = global/testing/ga-mpi \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock \
 @MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_comm \
 @MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_commc
-@SYSV_TRUE@am__append_17 = global/testing/ipc_clean
+@SYSV_TRUE@am__append_18 = global/testing/ipc_clean
 #GLOBAL_PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
 #GLOBAL_PARALLEL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
 #GLOBAL_PARALLEL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
 #GLOBAL_PARALLEL_TESTS += global/testing/random$(EXEEXT) # takes too long
-@ENABLE_F77_TRUE@am__append_18 = global/testing/bin$(EXEEXT) \
+@ENABLE_F77_TRUE@am__append_19 = global/testing/bin$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/blktest$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g3test$(EXEEXT) \
@@ -188,38 +190,38 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testmatmult$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testsolve$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/test$(EXEEXT)
-@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_19 = global/testing/testspd$(EXEEXT)
-@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_20 = global/testing/ga_lu$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_21 = global/testing/ga-mpi$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_20 = global/testing/testspd$(EXEEXT)
+@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_21 = global/testing/ga_lu$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_22 = global/testing/ga-mpi$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_comm$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_commc$(EXEEXT)
-@SYSV_TRUE@am__append_22 = global/testing/ipc_clean$(EXEEXT)
-@HAVE_M4_TRUE@am__append_23 = $(GLOBAL_TESTING_M4_DEPS) \
+@SYSV_TRUE@am__append_23 = global/testing/ipc_clean$(EXEEXT)
+@HAVE_M4_TRUE@am__append_24 = $(GLOBAL_TESTING_M4_DEPS) \
 @HAVE_M4_TRUE@	global/testing/README
-@HAVE_M4_TRUE@am__append_24 = global/testing/nga-onesided.F \
+@HAVE_M4_TRUE@am__append_25 = global/testing/nga-onesided.F \
 @HAVE_M4_TRUE@	global/testing/nga-patch.F \
 @HAVE_M4_TRUE@	global/testing/nga-periodic.F \
 @HAVE_M4_TRUE@	global/testing/nga-scatter.F \
 @HAVE_M4_TRUE@	global/testing/nga-util.F \
 @HAVE_M4_TRUE@	global/testing/ngatest.F
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_25 =  \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_26 =  \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-onesided \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-patch \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-periodic \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-util \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/ngatest
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_26 = global/testing/nga-onesided$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_27 = global/testing/nga-onesided$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-patch$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-periodic$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-util$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/ngatest$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_27 = global/testing/ffflush.F \
+@ENABLE_F77_TRUE@am__append_28 = global/testing/ffflush.F \
 @ENABLE_F77_TRUE@	global/testing/testblas.F
-@ENABLE_F77_TRUE@am__append_28 = global/examples/boltzmann/boltz \
+@ENABLE_F77_TRUE@am__append_29 = global/examples/boltzmann/boltz \
 @ENABLE_F77_TRUE@	global/examples/conjugate_gradient/ga_cg \
 @ENABLE_F77_TRUE@	global/examples/md_cluster/grp_sim \
 @ENABLE_F77_TRUE@	global/examples/scf/scf pario/dra/big \
@@ -228,33 +230,33 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	pario/dra/perf3 pario/dra/test \
 @ENABLE_F77_TRUE@	pario/dra/test_mxm pario/dra/time_mxm \
 @ENABLE_F77_TRUE@	pario/eaf/test pario/sf/test
-@ENABLE_F77_TRUE@am__append_29 = global/examples/boltzmann/boltz$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_30 = global/examples/boltzmann/boltz$(EXEEXT)
 
 ##############################################################################
 # global/X
 #
-@ENABLE_XREGION_TRUE@@NO_X_FALSE@am__append_30 = global/X/xregion
+@ENABLE_XREGION_TRUE@@NO_X_FALSE@am__append_31 = global/X/xregion
 
 ##############################################################################
 # ga++/src
 #
-@CXX_BINDINGS_TRUE@am__append_31 = libga++.la
-@CXX_BINDINGS_TRUE@am__append_32 = ga++/src/ga++.h \
+@CXX_BINDINGS_TRUE@am__append_32 = libga++.la
+@CXX_BINDINGS_TRUE@am__append_33 = ga++/src/ga++.h \
 @CXX_BINDINGS_TRUE@	ga++/src/GAServices.h \
 @CXX_BINDINGS_TRUE@	ga++/src/GlobalArray.h ga++/src/init_term.h \
 @CXX_BINDINGS_TRUE@	ga++/src/PGroup.h ga++/src/services.h
-@CXX_BINDINGS_TRUE@am__append_33 = -I$(top_srcdir)/ga++/src
+@CXX_BINDINGS_TRUE@am__append_34 = -I$(top_srcdir)/ga++/src
 
 ##############################################################################
 # ga++/testing
 #
-@CXX_BINDINGS_TRUE@am__append_34 = ga++/testing/elempatch \
+@CXX_BINDINGS_TRUE@am__append_35 = ga++/testing/elempatch \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest ga++/testing/ntestc \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc ga++/testing/testmult
-@ENABLE_F77_TRUE@am__append_35 = gparrays/testing/test
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_36 = -I$(top_srcdir)/armci/src-portals
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_37 = -I$(top_srcdir)/armci/src-gemini
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_38 = -I$(top_srcdir)/armci/src/include
+@ENABLE_F77_TRUE@am__append_36 = gparrays/testing/test
+@ARMCI_NETWORK_PORTALS_TRUE@am__append_37 = -I$(top_srcdir)/armci/src-portals
+@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_38 = -I$(top_srcdir)/armci/src-gemini
+@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_39 = -I$(top_srcdir)/armci/src/include
 TESTS = $(am__EXEEXT_13) $(am__EXEEXT_14)
 XFAIL_TESTS = $(am__EXEEXT_15) $(am__EXEEXT_16)
 subdir = .
@@ -2162,9 +2164,10 @@ am__include_HEADERS_DIST = ma/error.h ma/macdecls.h ma/macommon.h \
 	ma/maf2c.fh ma/mafdecls.fh ma/matypes.h ma/scope.h \
 	ma/string-util.h ma/table.h global/src/gacommon.h \
 	global/src/ga.h global/src/global.fh global/src/ga-papi.h \
-	pario/dra/dra.fh pario/dra/dra.h pario/eaf/eaf.fh \
-	pario/eaf/eaf.h pario/elio/chemio.h pario/elio/elio.h \
-	pario/sf/coms.h pario/sf/sf.fh pario/sf/sf.h ga++/src/ga++.h \
+	global/src/ga-mpi.h global/src/ga-mpi.fh pario/dra/dra.fh \
+	pario/dra/dra.h pario/eaf/eaf.fh pario/eaf/eaf.h \
+	pario/elio/chemio.h pario/elio/elio.h pario/sf/coms.h \
+	pario/sf/sf.fh pario/sf/sf.h ga++/src/ga++.h \
 	ga++/src/GAServices.h ga++/src/GlobalArray.h \
 	ga++/src/init_term.h ga++/src/PGroup.h ga++/src/services.h \
 	gparrays/src/gp-papi.h
@@ -2482,15 +2485,15 @@ ACLOCAL_AMFLAGS = -I m4
 include_HEADERS = ma/error.h ma/macdecls.h ma/macommon.h ma/maf2c.fh \
 	ma/mafdecls.fh ma/matypes.h ma/scope.h ma/string-util.h \
 	ma/table.h global/src/gacommon.h global/src/ga.h \
-	global/src/global.fh global/src/ga-papi.h pario/dra/dra.fh \
-	pario/dra/dra.h pario/eaf/eaf.fh pario/eaf/eaf.h \
-	pario/elio/chemio.h pario/elio/elio.h pario/sf/coms.h \
-	pario/sf/sf.fh pario/sf/sf.h $(am__append_32) \
+	global/src/global.fh global/src/ga-papi.h $(am__append_13) \
+	pario/dra/dra.fh pario/dra/dra.h pario/eaf/eaf.fh \
+	pario/eaf/eaf.h pario/elio/chemio.h pario/elio/elio.h \
+	pario/sf/coms.h pario/sf/sf.fh pario/sf/sf.h $(am__append_33) \
 	gparrays/src/gp-papi.h
 nodist_include_HEADERS = global/src/ga-wapi.h gparrays/src/gp-wapi.h
 bin_SCRIPTS = tools/ga-config
 check_LTLIBRARIES = 
-lib_LTLIBRARIES = libga.la $(am__append_6) $(am__append_31)
+lib_LTLIBRARIES = libga.la $(am__append_6) $(am__append_32)
 
 ##############################################################################
 # compat
@@ -2561,7 +2564,7 @@ nodist_libga_la_SOURCES = config.fh $(am__append_7) \
 # However, it is still distributed with GA.
 EXTRA_DIST = README LinAlg/lapack+blas/README global/README \
 	tools/gpwapigen.py tools/wapigen.py tools/wapigen_counts.py \
-	tools/wapigen_trace.py $(F77FUNCGEN_PL) $(am__append_23) \
+	tools/wapigen_trace.py $(F77FUNCGEN_PL) $(am__append_24) \
 	global/examples/boltzmann/README \
 	global/examples/lennard-jones/README \
 	global/examples/md_cluster/atom.inp \
@@ -2586,7 +2589,7 @@ BUILT_SOURCES = config.fh global/src/ga-wapi.h \
 	gparrays/src/gp-wapi.h gparrays/src/gp-wapidefs.h
 MOSTLYCLEANFILES = 
 CLEANFILES = $(bin_SCRIPTS) config.fh global/src/ga-wapi.h \
-	global/src/ga-wapidefs.h global/src/cnames.h $(am__append_24) \
+	global/src/ga-wapidefs.h global/src/cnames.h $(am__append_25) \
 	gparrays/src/gp-wapi.h gparrays/src/gp-wapidefs.h
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
@@ -2604,9 +2607,9 @@ AM_CPPFLAGS = $(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) \
 	-I$(top_build_prefix)global/src -I$(top_srcdir)/global/src \
 	-I$(top_srcdir)/global/testing -I$(top_srcdir)/pario/dra \
 	-I$(top_srcdir)/pario/eaf -I$(top_srcdir)/pario/elio \
-	-I$(top_srcdir)/pario/sf $(am__append_33) \
+	-I$(top_srcdir)/pario/sf $(am__append_34) \
 	-I$(top_build_prefix)gparrays/src -I$(top_srcdir)/gparrays/src \
-	$(am__append_36) $(am__append_37) $(am__append_38) \
+	$(am__append_37) $(am__append_38) $(am__append_39) \
 	-I$(top_build_prefix)armci/gaf2c -I$(top_srcdir)/armci/gaf2c \
 	-I$(top_srcdir)/armci/tcgmsg
 AM_LDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
@@ -2666,11 +2669,11 @@ GLOBAL_PARALLEL_TESTS = global/testing/elempatch$(EXEEXT) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
 	global/testing/testmultrect$(EXEEXT) \
-	global/testing/unpackc$(EXEEXT) $(am__append_18) \
-	$(am__append_19) $(am__append_20) $(am__append_21) \
-	$(am__append_22) $(am__append_26) \
+	global/testing/unpackc$(EXEEXT) $(am__append_19) \
+	$(am__append_20) $(am__append_21) $(am__append_22) \
+	$(am__append_23) $(am__append_27) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_29)
+	$(am__append_30)
 GLOBAL_PARALLEL_TESTS_XFAIL = 
 GLOBAL_TESTS = $(GLOBAL_SERIAL_TESTS) $(GLOBAL_PARALLEL_TESTS)
 GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
@@ -2701,7 +2704,7 @@ GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
 @HAVE_M4_TRUE@	global/testing/ngatest.m4 \
 @HAVE_M4_TRUE@	global/testing/nga-util.m4
 gtsrc = global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c $(am__append_27)
+	global/testing/util.c $(am__append_28)
 global_testing_bin_SOURCES = global/testing/bin.F $(gtsrc)
 global_testing_blktest_SOURCES = global/testing/blktest.F $(gtsrc)
 global_testing_d2test_SOURCES = global/testing/d2test.F $(gtsrc)

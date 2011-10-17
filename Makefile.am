@@ -377,6 +377,10 @@ include_HEADERS += global/src/gacommon.h
 include_HEADERS += global/src/ga.h
 include_HEADERS += global/src/global.fh
 include_HEADERS += global/src/ga-papi.h
+if MSG_COMMS_MPI
+include_HEADERS += global/src/ga-mpi.h
+include_HEADERS += global/src/ga-mpi.fh
+endif
 nodist_include_HEADERS += global/src/ga-wapi.h
 
 AM_CPPFLAGS += -I$(top_build_prefix)global/src
