@@ -3,7 +3,7 @@ cimport mpi4py.MPI as MPI
 from mpi4py.mpi_c cimport *
 import mpi4py.MPI as MPI
 
-import ga
+from ga4py import ga
 import util
 
 import numpy as np

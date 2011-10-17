@@ -1,7 +1,7 @@
 # cython: profile=True
 import math 
 
-import ga
+from ga4py import ga
 from core import asarray
 from core import flatiter
 from core import get_dtype

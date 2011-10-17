@@ -1,6 +1,6 @@
 """reports how much of numpy as been overridden or imported by gain"""
 import numpy as np
-from ga import gain
+from ga4py import gain
 import inspect
 
 np_function_count = 0

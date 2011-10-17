@@ -96,61 +96,61 @@ include_dirs.extend(linalg_include)
 library_dirs.extend(linalg_library)
 libraries.extend(linalg_lib)
 
-ga_ga_sources                  = ["ga/core.c"]
-ga_gain_core_sources           = ["ga/gain/core.c"]
-ga_gain_misc_sources           = ["ga/gain/misc.c"]
-ga_gain_notimplemented_sources = ["ga/gain/notimplemented.c"]
-ga_gain_random_sources         = ["ga/gain/random.c"]
-ga_gain_util_sources           = ["ga/gain/util.c"]
+ga4py_ga_sources                  = ["ga4py/ga.c"]
+ga4py_gain_core_sources           = ["ga4py/gain/core.c"]
+ga4py_gain_misc_sources           = ["ga4py/gain/misc.c"]
+ga4py_gain_notimplemented_sources = ["ga4py/gain/notimplemented.c"]
+ga4py_gain_random_sources         = ["ga4py/gain/random.c"]
+ga4py_gain_util_sources           = ["ga4py/gain/util.c"]
 if use_cython:
-    ga_ga_sources                  = ["ga/core.pyx"]
-    ga_gain_core_sources           = ["ga/gain/core.pyx"]
-    ga_gain_misc_sources           = ["ga/gain/misc.pyx"]
-    ga_gain_notimplemented_sources = ["ga/gain/notimplemented.pyx"]
-    ga_gain_random_sources         = ["ga/gain/random.pyx"]
-    ga_gain_util_sources           = ["ga/gain/util.pyx"]
+    ga4py_ga_sources                  = ["ga4py/ga.pyx"]
+    ga4py_gain_core_sources           = ["ga4py/gain/core.pyx"]
+    ga4py_gain_misc_sources           = ["ga4py/gain/misc.pyx"]
+    ga4py_gain_notimplemented_sources = ["ga4py/gain/notimplemented.pyx"]
+    ga4py_gain_random_sources         = ["ga4py/gain/random.pyx"]
+    ga4py_gain_util_sources           = ["ga4py/gain/util.pyx"]
 
 include_dirs.append(".")
 
 ext_modules = [
     Extension(
-        name="ga.core",
-        sources=ga_ga_sources,
+        name="ga4py.ga",
+        sources=ga4py_ga_sources,
         include_dirs=include_dirs,
         library_dirs=library_dirs,
         libraries=libraries
     ),
     Extension(
-        name="ga.gain.core",
-        sources=ga_gain_core_sources,
+        name="ga4py.gain.core",
+        sources=ga4py_gain_core_sources,
         include_dirs=include_dirs,
         library_dirs=library_dirs,
         libraries=libraries
     ),
     Extension(
-        name="ga.gain.misc",
-        sources=ga_gain_misc_sources,
+        name="ga4py.gain.misc",
+        sources=ga4py_gain_misc_sources,
         include_dirs=include_dirs,
         library_dirs=library_dirs,
         libraries=libraries
     ),
     Extension(
-        name="ga.gain.notimplemented",
-        sources=ga_gain_notimplemented_sources,
+        name="ga4py.gain.notimplemented",
+        sources=ga4py_gain_notimplemented_sources,
         include_dirs=include_dirs,
         library_dirs=library_dirs,
         libraries=libraries
     ),
     Extension(
-        name="ga.gain.random",
-        sources=ga_gain_random_sources,
+        name="ga4py.gain.random",
+        sources=ga4py_gain_random_sources,
         include_dirs=include_dirs,
         library_dirs=library_dirs,
         libraries=libraries
     ),
     Extension(
-        name="ga.gain.util",
-        sources=ga_gain_util_sources,
+        name="ga4py.gain.util",
+        sources=ga4py_gain_util_sources,
         include_dirs=include_dirs,
         library_dirs=library_dirs,
         libraries=libraries
@@ -166,7 +166,7 @@ else:
 
 setup(
     name = "Global Arrays",
-    packages = ["ga","ga.gain"],
+    packages = ["ga4py","ga4py.gain"],
     ext_modules = ext_modules,
     cmdclass = cmdclass
 )

@@ -1,6 +1,6 @@
 import mpi4py.MPI as MPI
-import ga
-import ga.gain as gain
+from ga4py import ga
+from ga4py import gain
 import numpy as np
 from getopt import getopt
 import sys
