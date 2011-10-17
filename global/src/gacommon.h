@@ -6,7 +6,7 @@
 #define GA_MAX_DIM 7
 
 #define GA_VERSION_MAJOR 5
-#define GA_VERSION_MINOR 0
+#define GA_VERSION_MINOR 1
 #define GA_VERSION_REVISION 0
 
 #define C_CHAR     MT_C_CHAR
