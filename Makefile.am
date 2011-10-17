@@ -262,11 +262,11 @@ if ENABLE_PROFILING
 if HAVE_SYS_WEAK_ALIAS_PRAGMA
 lib_LTLIBRARIES += libwapi.la
 libwapi_la_SOURCES =
-libwapi_la_SOURCES += tools/wapi.c
-libwapi_la_SOURCES += tools/gpwapi.c
+libwapi_la_SOURCES += tools/ga-wapi.c
+libwapi_la_SOURCES += tools/gp-wapi.c
 else
-nodist_libga_la_SOURCES += tools/wapi.c
-nodist_libga_la_SOURCES += tools/gpwapi.c
+nodist_libga_la_SOURCES += tools/ga-wapi.c
+nodist_libga_la_SOURCES += tools/gp-wapi.c
 endif
 endif
 
@@ -278,10 +278,10 @@ EXTRA_DIST += tools/wapigen_trace.py
 ##############################################################################
 # global/src
 #
-PAPI_H        = $(top_srcdir)/global/src/papi.h
+PAPI_H        = $(top_srcdir)/global/src/ga-papi.h
 F77FUNCGEN_PL = $(top_srcdir)/build-aux/f77funcgen.pl
 
-global/src/wapi.h: $(PAPI_H)
+global/src/ga-wapi.h: $(PAPI_H)
 	@-rm -f $@
 	$(SED_V) \
 	$(SED) -e "s/PAPI/WAPI/g" \
@@ -289,7 +289,7 @@ global/src/wapi.h: $(PAPI_H)
 	       -e "/typedef/d" \
 		   $(PAPI_H) > $@
 
-global/src/wapidefs.h: $(PAPI_H)
+global/src/ga-wapidefs.h: $(PAPI_H)
 	@-rm -f $@
 	$(SED_V) \
 	$(SED) -e "s/PAPI/WAPIDEFS/g" \
@@ -306,12 +306,12 @@ global/src/cnames.h: $(PAPI_H) $(F77FUNCGEN_PL)
 	$(PERL) $(F77FUNCGEN_PL) $(PAPI_H) > $@
 
 EXTRA_DIST += $(F77FUNCGEN_PL)
-BUILT_SOURCES += global/src/wapi.h
-BUILT_SOURCES += global/src/wapidefs.h
+BUILT_SOURCES += global/src/ga-wapi.h
+BUILT_SOURCES += global/src/ga-wapidefs.h
 BUILT_SOURCES += global/src/cnames.h
 
-CLEANFILES += global/src/wapi.h
-CLEANFILES += global/src/wapidefs.h
+CLEANFILES += global/src/ga-wapi.h
+CLEANFILES += global/src/ga-wapidefs.h
 CLEANFILES += global/src/cnames.h
 
 libga_la_SOURCES += global/src/abstract_ops.h
@@ -353,7 +353,7 @@ libga_la_SOURCES += global/src/select.c
 libga_la_SOURCES += global/src/sparse.c
 libga_la_SOURCES += global/src/types.xh
 libga_la_SOURCES += global/src/types2.xh
-nodist_libga_la_SOURCES += global/src/wapidefs.h
+nodist_libga_la_SOURCES += global/src/ga-wapidefs.h
 nodist_libga_la_SOURCES += global/src/cnames.h
 if ENABLE_F77
 libga_la_SOURCES += global/src/complex.F
@@ -376,8 +376,8 @@ endif
 include_HEADERS += global/src/gacommon.h
 include_HEADERS += global/src/ga.h
 include_HEADERS += global/src/global.fh
-include_HEADERS += global/src/papi.h
-nodist_include_HEADERS += global/src/wapi.h
+include_HEADERS += global/src/ga-papi.h
+nodist_include_HEADERS += global/src/ga-wapi.h
 
 AM_CPPFLAGS += -I$(top_build_prefix)global/src
 AM_CPPFLAGS += -I$(top_srcdir)/global/src
@@ -1093,9 +1093,9 @@ endif
 ##############################################################################
 # gparrays
 #
-GPPAPI_H      = $(top_srcdir)/gparrays/src/gppapi.h
+GPPAPI_H      = $(top_srcdir)/gparrays/src/gp-papi.h
 
-gparrays/src/gpwapi.h: $(GPPAPI_H)
+gparrays/src/gp-wapi.h: $(GPPAPI_H)
 	@-rm -f $@
 	$(SED_V) \
 	$(SED) -e "s/GPPAPI/GPWAPI/g" \
@@ -1103,7 +1103,7 @@ gparrays/src/gpwapi.h: $(GPPAPI_H)
 	       -e "/typedef/d" \
 		   $(GPPAPI_H) > $@
 
-gparrays/src/gpwapidefs.h: $(GPPAPI_H)
+gparrays/src/gp-wapidefs.h: $(GPPAPI_H)
 	@-rm -f $@
 	$(SED_V) \
 	$(SED) -e "s/GPPAPI/GPWAPIDEFS/g" \
@@ -1115,22 +1115,22 @@ gparrays/src/gpwapidefs.h: $(GPPAPI_H)
 	       -e "/include/d" \
 		   $(GPPAPI_H) > $@
 
-BUILT_SOURCES += gparrays/src/gpwapi.h
-BUILT_SOURCES += gparrays/src/gpwapidefs.h
+BUILT_SOURCES += gparrays/src/gp-wapi.h
+BUILT_SOURCES += gparrays/src/gp-wapidefs.h
 
-CLEANFILES += gparrays/src/gpwapi.h
-CLEANFILES += gparrays/src/gpwapidefs.h
+CLEANFILES += gparrays/src/gp-wapi.h
+CLEANFILES += gparrays/src/gp-wapidefs.h
 
 libga_la_SOURCES += gparrays/src/gpbase.c
 libga_la_SOURCES += gparrays/src/gpbase.h
 libga_la_SOURCES += gparrays/src/gpcapi.c
 libga_la_SOURCES += gparrays/src/gpfapi.c
 libga_la_SOURCES += gparrays/src/gponesided.c
-libga_la_SOURCES += gparrays/src/gppapi.h
-nodist_libga_la_SOURCES += gparrays/src/gpwapidefs.h
+libga_la_SOURCES += gparrays/src/gp-papi.h
+nodist_libga_la_SOURCES += gparrays/src/gp-wapidefs.h
 
-include_HEADERS += gparrays/src/gppapi.h
-nodist_include_HEADERS += gparrays/src/gpwapi.h
+include_HEADERS += gparrays/src/gp-papi.h
+nodist_include_HEADERS += gparrays/src/gp-wapi.h
 
 if ENABLE_F77
 check_PROGRAMS += gparrays/testing/test

@@ -17,8 +17,8 @@
 #   include <string.h>
 #endif
 #include "matmul.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 #define DEBUG_ 0 /*set 1, to verify the correctness of parallel matrix mult.*/
 

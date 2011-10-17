@@ -3,8 +3,8 @@
 #endif
 
 #include "globalp.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 #if ENABLE_PEIGS
 #   if ENABLE_F77

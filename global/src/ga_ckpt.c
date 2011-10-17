@@ -8,8 +8,8 @@
 #include "base.h"
 #include "macdecls.h"
 #include "ga_ckpt.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 #define DEBUG 0
 

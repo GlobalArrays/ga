@@ -56,8 +56,8 @@
 #include "base.h"
 #include "armci.h"
 #include "macdecls.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 #define DEBUG 0
 #define USE_MALLOC 1

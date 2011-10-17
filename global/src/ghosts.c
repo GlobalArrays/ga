@@ -56,8 +56,8 @@
 #include "armci.h"
 #include "message.h"
 #include "macdecls.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 /* from armcip.h, but armcip.h is private so we should not include it */
 extern void armci_write_strided(void *ptr, int stride_levels, int stride_arr[], int count[], char *buf);

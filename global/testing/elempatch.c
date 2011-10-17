@@ -47,7 +47,7 @@ Revised on February 26, 2002.
 #include "macdecls.h"
 #include "mp3.h"
 #include "../src/globalp.h"
-#include "papi.h"
+#include "ga-papi.h"
 
 #define BLOCK_CYCLIC 0
 

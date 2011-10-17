@@ -115,8 +115,8 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 # The following to support tracing, profiling, etc.
 #
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_6 = libwapi.la
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_7 = tools/wapi.c \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@	tools/gpwapi.c
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_7 = tools/ga-wapi.c \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@	tools/gp-wapi.c
 @ENABLE_F77_TRUE@am__append_8 = global/src/complex.F \
 @ENABLE_F77_TRUE@	global/src/ga_diag_seq.F global/src/rsg.f
 @CRAY_XT_NETWORKS_TRUE@@ENABLE_F77_TRUE@am__append_9 = global/src/ga_dgemmf.F
@@ -419,7 +419,7 @@ am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 	pario/sf/shared.files.c gparrays/src/gpbase.c \
 	gparrays/src/gpbase.h gparrays/src/gpcapi.c \
 	gparrays/src/gpfapi.c gparrays/src/gponesided.c \
-	gparrays/src/gppapi.h
+	gparrays/src/gp-papi.h
 @ENABLE_F77_TRUE@am__objects_1 = ma/maf.lo \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/dgetf2.lo \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/dgetrf.lo \
@@ -468,14 +468,14 @@ am_libga_la_OBJECTS = compat/random.lo ma/error.lo ma/f2c.lo ma/ma.lo \
 	pario/sf/shared.files.lo gparrays/src/gpbase.lo \
 	gparrays/src/gpcapi.lo gparrays/src/gpfapi.lo \
 	gparrays/src/gponesided.lo
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__objects_7 = tools/wapi.lo \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@	tools/gpwapi.lo
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__objects_7 = tools/ga-wapi.lo \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@	tools/gp-wapi.lo
 nodist_libga_la_OBJECTS = $(am__objects_7)
 libga_la_OBJECTS = $(am_libga_la_OBJECTS) $(nodist_libga_la_OBJECTS)
 libwapi_la_LIBADD =
-am__libwapi_la_SOURCES_DIST = tools/wapi.c tools/gpwapi.c
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libwapi_la_OBJECTS = tools/wapi.lo \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/gpwapi.lo
+am__libwapi_la_SOURCES_DIST = tools/ga-wapi.c tools/gp-wapi.c
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libwapi_la_OBJECTS = tools/ga-wapi.lo \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/gp-wapi.lo
 libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libwapi_la_rpath = -rpath \
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	$(libdir)
@@ -2161,13 +2161,13 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 am__include_HEADERS_DIST = ma/error.h ma/macdecls.h ma/macommon.h \
 	ma/maf2c.fh ma/mafdecls.fh ma/matypes.h ma/scope.h \
 	ma/string-util.h ma/table.h global/src/gacommon.h \
-	global/src/ga.h global/src/global.fh global/src/papi.h \
+	global/src/ga.h global/src/global.fh global/src/ga-papi.h \
 	pario/dra/dra.fh pario/dra/dra.h pario/eaf/eaf.fh \
 	pario/eaf/eaf.h pario/elio/chemio.h pario/elio/elio.h \
 	pario/sf/coms.h pario/sf/sf.fh pario/sf/sf.h ga++/src/ga++.h \
 	ga++/src/GAServices.h ga++/src/GlobalArray.h \
 	ga++/src/init_term.h ga++/src/PGroup.h ga++/src/services.h \
-	gparrays/src/gppapi.h
+	gparrays/src/gp-papi.h
 HEADERS = $(include_HEADERS) $(nodist_include_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
@@ -2482,12 +2482,12 @@ ACLOCAL_AMFLAGS = -I m4
 include_HEADERS = ma/error.h ma/macdecls.h ma/macommon.h ma/maf2c.fh \
 	ma/mafdecls.fh ma/matypes.h ma/scope.h ma/string-util.h \
 	ma/table.h global/src/gacommon.h global/src/ga.h \
-	global/src/global.fh global/src/papi.h pario/dra/dra.fh \
+	global/src/global.fh global/src/ga-papi.h pario/dra/dra.fh \
 	pario/dra/dra.h pario/eaf/eaf.fh pario/eaf/eaf.h \
 	pario/elio/chemio.h pario/elio/elio.h pario/sf/coms.h \
 	pario/sf/sf.fh pario/sf/sf.h $(am__append_32) \
-	gparrays/src/gppapi.h
-nodist_include_HEADERS = global/src/wapi.h gparrays/src/gpwapi.h
+	gparrays/src/gp-papi.h
+nodist_include_HEADERS = global/src/ga-wapi.h gparrays/src/gp-wapi.h
 bin_SCRIPTS = tools/ga-config
 check_LTLIBRARIES = 
 lib_LTLIBRARIES = libga.la $(am__append_6) $(am__append_31)
@@ -2538,14 +2538,14 @@ libga_la_SOURCES = compat/random.c ma/error.c ma/f2c.c ma/ma.c ma/ma.h \
 	pario/sf/sf_fortran.c pario/sf/shared.files.c \
 	gparrays/src/gpbase.c gparrays/src/gpbase.h \
 	gparrays/src/gpcapi.c gparrays/src/gpfapi.c \
-	gparrays/src/gponesided.c gparrays/src/gppapi.h
+	gparrays/src/gponesided.c gparrays/src/gp-papi.h
 
 # This is the "noinst" libarmci so that libtool combines it with libga.
 libga_la_LIBADD = $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) \
 	armci/libarmcii.la $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
 nodist_libga_la_SOURCES = config.fh $(am__append_7) \
-	global/src/wapidefs.h global/src/cnames.h \
-	gparrays/src/gpwapidefs.h
+	global/src/ga-wapidefs.h global/src/cnames.h \
+	gparrays/src/gp-wapidefs.h
 
 ##############################################################################
 # global
@@ -2581,13 +2581,13 @@ EXTRA_DIST = README LinAlg/lapack+blas/README global/README \
 # understand.  Therefore, we create a config.fh file which is Fortran-specific
 # and works with all Fortran compilers.
 #
-BUILT_SOURCES = config.fh global/src/wapi.h global/src/wapidefs.h \
-	global/src/cnames.h gparrays/src/gpwapi.h \
-	gparrays/src/gpwapidefs.h
+BUILT_SOURCES = config.fh global/src/ga-wapi.h \
+	global/src/ga-wapidefs.h global/src/cnames.h \
+	gparrays/src/gp-wapi.h gparrays/src/gp-wapidefs.h
 MOSTLYCLEANFILES = 
-CLEANFILES = $(bin_SCRIPTS) config.fh global/src/wapi.h \
-	global/src/wapidefs.h global/src/cnames.h $(am__append_24) \
-	gparrays/src/gpwapi.h gparrays/src/gpwapidefs.h
+CLEANFILES = $(bin_SCRIPTS) config.fh global/src/ga-wapi.h \
+	global/src/ga-wapidefs.h global/src/cnames.h $(am__append_24) \
+	gparrays/src/gp-wapi.h gparrays/src/gp-wapidefs.h
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
 AM_FFLAGS = $(GA_FOPT) $(GA_F_WARN) $(FFLAG_INT)
@@ -2643,13 +2643,13 @@ ma_testf_LDFLAGS = $(FLDFLAGS)
 nodist_EXTRA_ma_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_ma_test_coalesce_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_ma_test_inquire_SOURCES = $(MAYBE_DUMMY_F_LINK)
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@libwapi_la_SOURCES = tools/wapi.c \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/gpwapi.c
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@libwapi_la_SOURCES = tools/ga-wapi.c \
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/gp-wapi.c
 
 ##############################################################################
 # global/src
 #
-PAPI_H = $(top_srcdir)/global/src/papi.h
+PAPI_H = $(top_srcdir)/global/src/ga-papi.h
 F77FUNCGEN_PL = $(top_srcdir)/build-aux/f77funcgen.pl
 GLOBAL_SERIAL_TESTS = 
 GLOBAL_SERIAL_TESTS_XFAIL = 
@@ -2998,7 +2998,7 @@ pario_sf_test_LDFLAGS = $(FLDFLAGS)
 ##############################################################################
 # gparrays
 #
-GPPAPI_H = $(top_srcdir)/gparrays/src/gppapi.h
+GPPAPI_H = $(top_srcdir)/gparrays/src/gp-papi.h
 gparrays_testing_test_SOURCES = gparrays/testing/test.F
 gparrays_testing_testc_SOURCES = gparrays/testing/testc.c
 nodist_EXTRA_gparrays_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
@@ -3394,8 +3394,10 @@ tools/$(am__dirstamp):
 tools/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) tools/$(DEPDIR)
 	@: > tools/$(DEPDIR)/$(am__dirstamp)
-tools/wapi.lo: tools/$(am__dirstamp) tools/$(DEPDIR)/$(am__dirstamp)
-tools/gpwapi.lo: tools/$(am__dirstamp) tools/$(DEPDIR)/$(am__dirstamp)
+tools/ga-wapi.lo: tools/$(am__dirstamp) \
+	tools/$(DEPDIR)/$(am__dirstamp)
+tools/gp-wapi.lo: tools/$(am__dirstamp) \
+	tools/$(DEPDIR)/$(am__dirstamp)
 libga.la: $(libga_la_OBJECTS) $(libga_la_DEPENDENCIES) 
 	$(AM_V_F77LD)$(F77LINK) -rpath $(libdir) $(libga_la_OBJECTS) $(libga_la_LIBADD) $(LIBS)
 libwapi.la: $(libwapi_la_OBJECTS) $(libwapi_la_DEPENDENCIES) 
@@ -4515,10 +4517,10 @@ mostlyclean-compile:
 	-rm -f pario/sf/shared.files.$(OBJEXT)
 	-rm -f pario/sf/shared.files.lo
 	-rm -f pario/sf/test.$(OBJEXT)
-	-rm -f tools/gpwapi.$(OBJEXT)
-	-rm -f tools/gpwapi.lo
-	-rm -f tools/wapi.$(OBJEXT)
-	-rm -f tools/wapi.lo
+	-rm -f tools/ga-wapi.$(OBJEXT)
+	-rm -f tools/ga-wapi.lo
+	-rm -f tools/gp-wapi.$(OBJEXT)
+	-rm -f tools/gp-wapi.lo
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -4639,8 +4641,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@pario/sf/$(DEPDIR)/sf_capi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/sf/$(DEPDIR)/sf_fortran.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/sf/$(DEPDIR)/shared.files.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/gpwapi.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/wapi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/ga-wapi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/gp-wapi.Plo@am__quote@
 
 .F.o:
 	$(AM_V_PPF77) @AM_BACKSLASH@
@@ -5883,7 +5885,7 @@ config.fh: config.h
 	$(SED_V) \
 	$(SED) "/^#/!d" config.h > $@
 
-global/src/wapi.h: $(PAPI_H)
+global/src/ga-wapi.h: $(PAPI_H)
 	@-rm -f $@
 	$(SED_V) \
 	$(SED) -e "s/PAPI/WAPI/g" \
@@ -5891,7 +5893,7 @@ global/src/wapi.h: $(PAPI_H)
 	       -e "/typedef/d" \
 		   $(PAPI_H) > $@
 
-global/src/wapidefs.h: $(PAPI_H)
+global/src/ga-wapidefs.h: $(PAPI_H)
 	@-rm -f $@
 	$(SED_V) \
 	$(SED) -e "s/PAPI/WAPIDEFS/g" \
@@ -5926,7 +5928,7 @@ global/src/cnames.h: $(PAPI_H) $(F77FUNCGEN_PL)
 @HAVE_PYTHON_TRUE@	(cd $(top_srcdir)/python && $(PYTHON) setup.py build_ext -L$(libdir) -I$(includedir)) || exit 1
 @HAVE_PYTHON_TRUE@	(cd $(top_srcdir)/python && $(PYTHON) setup.py install) || exit 1
 
-gparrays/src/gpwapi.h: $(GPPAPI_H)
+gparrays/src/gp-wapi.h: $(GPPAPI_H)
 	@-rm -f $@
 	$(SED_V) \
 	$(SED) -e "s/GPPAPI/GPWAPI/g" \
@@ -5934,7 +5936,7 @@ gparrays/src/gpwapi.h: $(GPPAPI_H)
 	       -e "/typedef/d" \
 		   $(GPPAPI_H) > $@
 
-gparrays/src/gpwapidefs.h: $(GPPAPI_H)
+gparrays/src/gp-wapidefs.h: $(GPPAPI_H)
 	@-rm -f $@
 	$(SED_V) \
 	$(SED) -e "s/GPPAPI/GPWAPIDEFS/g" \

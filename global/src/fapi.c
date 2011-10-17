@@ -73,11 +73,11 @@ int _ga_initialize_f=0;
 #define nga_pgroup_sgop_    F77_FUNC_(nga_pgroup_sgop,NGA_PGROUP_SGOP)
 #define nga_pgroup_zgop_    F77_FUNC_(nga_pgroup_zgop,NGA_PGROUP_ZGOP)
 
-#include "papi.h"
+#include "ga-papi.h"
 #if ENABLE_PROFILING
-#   include "wapi.h"
+#   include "ga-wapi.h"
 #else
-#   include "wapidefs.h"
+#   include "ga-wapidefs.h"
 #endif
 
 #define FNAM 31

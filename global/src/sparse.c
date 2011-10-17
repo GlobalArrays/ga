@@ -16,8 +16,8 @@
 #include "globalp.h"
 #include "macdecls.h"
 #include "message.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 /*\ sets values for specified array elements by enumerating with stride
 \*/

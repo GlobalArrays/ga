@@ -28,8 +28,8 @@
 #  include "mpi.h"
 #endif
 
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 static double tt0, tt1;
 static Integer *tlog, thandle;

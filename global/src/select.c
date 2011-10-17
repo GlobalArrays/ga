@@ -10,8 +10,8 @@
 #endif
 #include "globalp.h"
 #include "message.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
   
 #define GET_ELEMS(ndim,lo,hi,ld,pelems){\
 int _i;\

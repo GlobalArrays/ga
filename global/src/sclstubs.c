@@ -3,8 +3,8 @@
 #endif
 
 #include "globalp.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 #define _MAX_PROB_SIZE_ 10000 /* 100x100 */
 

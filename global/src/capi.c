@@ -19,13 +19,13 @@
 #include "armci.h"
 #include "ga.h"
 #include "globalp.h"
-#include "papi.h"
+#include "ga-papi.h"
 #include "matmul.h"
 
 #if ENABLE_PROFILING
-#   include "wapi.h"
+#   include "ga-wapi.h"
 #else
-#   include "wapidefs.h"
+#   include "ga-wapidefs.h"
 #endif
 
 int *_ga_argc=NULL;

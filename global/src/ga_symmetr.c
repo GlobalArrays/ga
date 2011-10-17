@@ -11,8 +11,8 @@
 
 #include "globalp.h"
 #include "macdecls.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 static void gai_add(
         Integer *lo, Integer *hi, void *a, void *b, DoublePrecision alpha,

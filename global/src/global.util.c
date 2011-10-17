@@ -46,8 +46,8 @@
 #include "farg.h"
 #include "globalp.h"
 #include <armci.h> 
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 #define ARMCI 1
 

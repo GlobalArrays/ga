@@ -33,8 +33,8 @@ Purpose:
 #   include <string.h>
 #endif
 #include "message.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 #define auxi_median(a,b,c,m)                         \
 {                                                    \

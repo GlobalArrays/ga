@@ -20,8 +20,8 @@
 #include "message.h"
 #include "globalp.h"
 #include "armci.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 #ifdef MPI
 extern ARMCI_Group* ga_get_armci_group_(int);

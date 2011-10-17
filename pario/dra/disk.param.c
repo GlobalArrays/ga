@@ -15,7 +15,7 @@
 #endif
 
 #include "drap.h"
-#include "papi.h"
+#include "ga-papi.h"
 
 #define MAX_HD_NAME_LEN 100
 #define HD_NAME_EXT_LEN 10

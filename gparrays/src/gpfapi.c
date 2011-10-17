@@ -2,9 +2,9 @@
 #   include "config.h"
 #endif
 
-#include "gppapi.h"
+#include "gp-papi.h"
 #if ENABLE_PROFILING
-#   include "gpwapi.h"
+#   include "gp-wapi.h"
 #else
-#   include "gpwapidefs.h"
+#   include "gp-wapidefs.h"
 #endif

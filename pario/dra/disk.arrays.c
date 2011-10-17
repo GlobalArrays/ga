@@ -47,10 +47,8 @@
 #include "dra.h"
 #include "draf2c.h"
 #include "drap.h"
-#include "papi.h"
-#include "ga.h"
 #include "global.h"
-#include "papi.h"
+#include "ga-papi.h"
 #include "macdecls.h"
 
 #define WALLTIME 0

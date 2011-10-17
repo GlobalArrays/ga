@@ -49,8 +49,8 @@
 #include "globalp.h"
 #include "base.h" 
 #include "ga_profile.h" 
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 #ifndef MPI
 #  include "tcgmsg.h"

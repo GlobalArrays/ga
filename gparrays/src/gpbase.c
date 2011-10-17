@@ -20,9 +20,9 @@
 
 #include "gacommon.h"
 #include "typesf2c.h"
-#include "papi.h"
-#include "gppapi.h"
-#include "gpwapi.h"
+#include "ga-papi.h"
+#include "gp-papi.h"
+#include "gp-wapi.h"
 #include "gpbase.h"
 #include "armci.h"
 

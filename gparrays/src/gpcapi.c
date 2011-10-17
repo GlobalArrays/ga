@@ -11,12 +11,12 @@
 
 #include "gp.h"
 #include "gpbase.h"
-#include "gppapi.h"
+#include "gp-papi.h"
 
 #if ENABLE_PROFILING
-#   include "gpwapi.h"
+#   include "gp-wapi.h"
 #else
-#   include "gpwapidefs.h"
+#   include "gp-wapidefs.h"
 #endif
 
 #ifdef USE_FAPI

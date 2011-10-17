@@ -32,8 +32,8 @@ Modified 3/2004 By Doug Baxter to increase robustness.
 #if HAVE_MATH_H
 #   include <math.h>
 #endif
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 #ifndef GA_HALF_MAX_INT 
 #define GA_HALF_MAX_INT ((((int)1) << ((int)(8*sizeof(int))-2)) - 1)

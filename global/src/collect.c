@@ -11,8 +11,8 @@
 #include "globalp.h"
 #include "message.h"
 #include "base.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 /* can handle ga_brdcst/igop/dgop via ARMCI or native message-passing library
  * uncomment line below to use the ARMCI version */

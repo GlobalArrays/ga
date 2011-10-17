@@ -7,8 +7,8 @@
 #include "globalp.h"
 #include "macommon.h"
 #include "typesf2c.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 /*\ check if I own the patch
 \*/

@@ -38,8 +38,8 @@
 #   include <stdlib.h>
 #endif
 #include "globalp.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 #define RANGE_NUM 3
 #define RANGE_BOUND 6

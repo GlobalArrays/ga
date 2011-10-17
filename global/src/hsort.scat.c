@@ -13,8 +13,8 @@
   
 #include "typesf2c.h"
 #include "macommon.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 
 #define GT(a,b) (*(a) > *(b))
 #define GE(a,b) (*(a) >= *(b))

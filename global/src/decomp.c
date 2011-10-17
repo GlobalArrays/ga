@@ -28,7 +28,7 @@
 #if HAVE_MATH_H
 #   include <math.h>
 #endif
-#include "papi.h"
+#include "ga-papi.h"
 #include "typesf2c.h"
 
  /*--

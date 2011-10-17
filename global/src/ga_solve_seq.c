@@ -13,8 +13,8 @@
 
 #include "globalp.h"
 #include "macdecls.h"
-#include "papi.h"
-#include "wapi.h"
+#include "ga-papi.h"
+#include "ga-wapi.h"
 #include "galinalg.h"
 
 #define REAL double

@@ -9,7 +9,7 @@
 
 #include "gacommon.h"
 #include "macommon.h"
-#include "papi.h"
+#include "ga-papi.h"
 
 Integer pnga_type_f2c(Integer type)
 {
