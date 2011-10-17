@@ -706,14 +706,15 @@ c
       double precision function ran1(idum)
 #if USE_RANDOM_SEED
       implicit none
+#include "testutil.fh"
       integer idum,iff
       data iff /1/
       save iff
       if (iff.eq.1) then
-        call random_seed(put=idum)
+        ran1 = drand(iabs(idum))
         iff = 0
       endif
-      call random_number(ran1)
+      ran1 = drand(0)
 #else
 c
 c         implicit real*4(m)
