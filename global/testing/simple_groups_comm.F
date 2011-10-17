@@ -5,19 +5,16 @@
       implicit none
 #include "mpif.h"
 #include "global.fh"
+#include "ga-mpi.fh"
 #include "mafdecls.fh"
-      integer nproc,me 
-      integer g_a,g_b,g_c
+      integer me 
+      integer g_a
       logical status 
       integer n,i,j
       parameter (n=4)
-      integer lo(2),hi(2)
-      integer dims(2)
-      double precision buf(n,n)
       integer proc_group(0:100),proclist(100),inode,nprocs
       integer ierr,comm,sbuf(1),rbuf(1)
       call ga_initialize()
-      nproc = ga_nnodes()
       me = ga_nodeid()
 
       status = ma_init(MT_DBL, 100000, 100000) 
