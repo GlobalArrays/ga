@@ -21,58 +21,6 @@
 
 int _ga_initialize_f=0;
 
-/* cnames.h does not contain all of the fortran functions */
-/* usually the missing ones are either complex type or strangely named */
-
-#define gai_cdot_patch_     F77_FUNC_(gai_cdot_patch,GAI_CDOT_PATCH)
-#define gai_zdot_patch_     F77_FUNC_(gai_zdot_patch,GAI_ZDOT_PATCH)
-#define ngai_cdot_patch_    F77_FUNC_(ngai_cdot_patch,NGAI_CDOT_PATCH)
-#define ngai_zdot_patch_    F77_FUNC_(ngai_zdot_patch,NGAI_ZDOT_PATCH)
-                         
-#define ga_cscal_patch_     F77_FUNC_(ga_cscal_patch,GA_CSCAL_PATCH)
-#define ga_dscal_patch_     F77_FUNC_(ga_dscal_patch,GA_DSCAL_PATCH)
-#define ga_iscal_patch_     F77_FUNC_(ga_iscal_patch,GA_ISCAL_PATCH)
-#define ga_sscal_patch_     F77_FUNC_(ga_sscal_patch,GA_SSCAL_PATCH)
-#define ga_zscal_patch_     F77_FUNC_(ga_zscal_patch,GA_ZSCAL_PATCH)
-                           
-#define ga_cscal_           F77_FUNC_(ga_cscal,GA_CSCAL)
-#define ga_dscal_           F77_FUNC_(ga_dscal,GA_DSCAL)
-#define ga_iscal_           F77_FUNC_(ga_iscal,GA_ISCAL)
-#define ga_sscal_           F77_FUNC_(ga_sscal,GA_SSCAL)
-#define ga_zscal_           F77_FUNC_(ga_zscal,GA_ZSCAL)
-                           
-#define gai_cdot_           F77_FUNC_(gai_cdot,GAI_CDOT)
-#define gai_zdot_           F77_FUNC_(gai_zdot,GAI_ZDOT)
-#define ngai_cdot_          F77_FUNC_(ngai_cdot,NGAI_CDOT)
-#define ngai_zdot_          F77_FUNC_(ngai_zdot,NGAI_ZDOT)
-                           
-#define ga_cgemm_           F77_FUNC_(ga_cgemm,GA_CGEMM)
-#define ga_dgemm_           F77_FUNC_(ga_dgemm,GA_DGEMM)
-#define ga_sgemm_           F77_FUNC_(ga_sgemm,GA_SGEMM)
-#define ga_zgemm_           F77_FUNC_(ga_zgemm,GA_ZGEMM)
-                           
-#define nga_periodic_get_   F77_FUNC_(nga_periodic_get,NGA_PERIODIC_GET)
-#define nga_periodic_put_   F77_FUNC_(nga_periodic_put,NGA_PERIODIC_PUT)
-#define nga_periodic_acc_   F77_FUNC_(nga_periodic_acc,NGA_PERIODIC_ACC)
-
-#define ga_access_          F77_FUNC_(ga_access,GA_ACCESS)
-#define nga_access_         F77_FUNC_(nga_access,NGA_ACCESS)
-#define nga_access_block_   F77_FUNC_(nga_access_block,NGA_ACCESS_BLOCK)
-#define nga_access_block_grid_      F77_FUNC_(nga_access_block_grid,NGA_ACCESS_BLOCK_GRID)
-#define nga_access_block_segment_   F77_FUNC_(nga_access_block_segment,NGA_ACCESS_BLOCK_SEGMENT)
-
-#define ga_pgroup_cgop_     F77_FUNC_(ga_pgroup_cgop,GA_PGROUP_CGOP)
-#define ga_pgroup_dgop_     F77_FUNC_(ga_pgroup_dgop,GA_PGROUP_DGOP)
-#define ga_pgroup_igop_     F77_FUNC_(ga_pgroup_igop,GA_PGROUP_IGOP)
-#define ga_pgroup_sgop_     F77_FUNC_(ga_pgroup_sgop,GA_PGROUP_SGOP)
-#define ga_pgroup_zgop_     F77_FUNC_(ga_pgroup_zgop,GA_PGROUP_ZGOP)
-
-#define nga_pgroup_cgop_    F77_FUNC_(nga_pgroup_cgop,NGA_PGROUP_CGOP)
-#define nga_pgroup_dgop_    F77_FUNC_(nga_pgroup_dgop,NGA_PGROUP_DGOP)
-#define nga_pgroup_igop_    F77_FUNC_(nga_pgroup_igop,NGA_PGROUP_IGOP)
-#define nga_pgroup_sgop_    F77_FUNC_(nga_pgroup_sgop,NGA_PGROUP_SGOP)
-#define nga_pgroup_zgop_    F77_FUNC_(nga_pgroup_zgop,NGA_PGROUP_ZGOP)
-
 #include "ga-papi.h"
 #if ENABLE_PROFILING
 #   include "ga-wapi.h"
