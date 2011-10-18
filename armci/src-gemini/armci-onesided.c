@@ -118,10 +118,12 @@ static void
 armci_onesided_recv(void* buffer, request_header_t *msginfo, int remote_node, cos_request_t *req)
 {
         size_t length = sizeof(request_header_t) + msginfo->dscrlen;
+        size_t reg_len = length + msginfo->datalen;
 
         cpReqInit(remote_node, req);
-        cpPrePostRecv(buffer, msginfo->datalen, req);
+        cpPrePostRecv(buffer, reg_len, req);
         cpCopyLocalDataMDesc(req, &msginfo->tag.response_mdesc);
+        if(length > ARMCI_MAX_REQUEST_SIZE) length = sizeof(request_header_t); 
         cpReqSend(msginfo, length, req);
 }
         
@@ -174,9 +176,10 @@ armci_send_req_msg(int proc, void *buf, int bytes, int tag)
         }
 
         else if(msginfo->operation == GET) {
-           buffer = (char *) buf; 
-           buffer += sizeof(request_header_t);
-           buffer += msginfo->dscrlen;
+        // move the buffer shift into the data server handler 
+        // buffer = (char *) buf; 
+        // buffer += sizeof(request_header_t);
+        // buffer += msginfo->dscrlen;
            armci_onesided_recv(buffer, msginfo, cluster, req);
         }
 
@@ -256,38 +259,64 @@ armci_WriteToDirect(int proc, request_header_t *msginfo, void *buf)
 
 int armci_onesided_ds_handler(void *buffer)
 {
+        size_t length = 0;
+        cos_desc_t get_desc;
+        cos_mdesc_t *mdesc = NULL;
+        void *buffer_to_data_server = buffer;
         request_header_t *request = (request_header_t *) buffer;
-        size_t length = sizeof(request_header_t) + request->dscrlen + request->datalen;
         if(request->operation == PUT || ARMCI_ACC(request->operation)) {
+           length = sizeof(request_header_t) + request->dscrlen + request->datalen;
            if(length > ARMCI_MAX_REQUEST_SIZE) {
               char *get_buffer = (char *) MessageRcvBuffer;
               if(recv_mdesc == NULL) {
                  recv_mdesc = &_recv_mdesc;
                  dsMemRegister(MessageRcvBuffer, sizeof(double)*MSG_BUFLEN_DBL, recv_mdesc);
               }
-              cos_desc_t get_desc;
-              cos_mdesc_t *mdesc = &request->tag.response_mdesc;
+              mdesc = &request->tag.response_mdesc;
               dsDescInit(mdesc, &get_desc);
-          //  printf("%d: get remote data not tested\n",armci_me);
-          //  abort();
               get_desc.event_type = EVENT_LOCAL;
               memcpy(&get_desc.local_mdesc, recv_mdesc, sizeof(cos_mdesc_t));
               get_desc.local_mdesc.length = length;
               assert(length <= sizeof(double)*MSG_BUFLEN_DBL);
               cosGetWithDesc(&get_desc);
-          //  cosGet(get_buffer, length, &get_desc);
-          //  dsGetRemoteData(get_buffer, length, &get_desc);
               dsDescWait(&get_desc);
-              buffer = (void *) get_buffer;
+              buffer_to_data_server = (void *) get_buffer;
            }
         }
+        else if(request->operation == GET) {
+           length = sizeof(request_header_t) + request->dscrlen;
+           if(length > ARMCI_MAX_REQUEST_SIZE) {
+              // printf("[ds %d]: boom - rz fetch of get dscr\n",armci_me);
+              char *get_buffer = (char *) MessageRcvBuffer;
+              if(recv_mdesc == NULL) {
+                 recv_mdesc = &_recv_mdesc;
+                 dsMemRegister(MessageRcvBuffer, sizeof(double)*MSG_BUFLEN_DBL, recv_mdesc);
+              }
+              mdesc = &request->tag.response_mdesc;
+              dsDescInit(mdesc, &get_desc);
+              get_desc.event_type = EVENT_LOCAL;
+              memcpy(&get_desc.local_mdesc, recv_mdesc, sizeof(cos_mdesc_t));
+              get_desc.local_mdesc.length = length;
+              assert(length <= sizeof(double)*MSG_BUFLEN_DBL);
+              cosGetWithDesc(&get_desc);
+              dsDescWait(&get_desc);
+              buffer_to_data_server = (void *) get_buffer;
+           }
+           // regardless of rendez-vous or eager protocols
+           // we have to shift the buffer and data lengths in the response_mdesc tag
+           request = (request_header_t *) buffer_to_data_server;
+           char *rbuf = (char *) request->tag.response_mdesc.addr;
+           rbuf += length;
+           request->tag.response_mdesc.addr = (uint64_t) rbuf;
+           request->tag.response_mdesc.length -= length;
+        } 
 
         if(request->operation == 0) {
            printf("%d [ds] possible zeroed buffer problem\n",armci_me);
            abort();
         }
 
-        armci_data_server(buffer);
+        armci_data_server(buffer_to_data_server);
 }
 
 
@@ -312,7 +341,13 @@ double *tmp;
     }
     /* we leave room for msginfo on the client side */
     *buflen = MSG_BUFLEN - sizeof(request_header_t);
-      
+     
+
+    if(send_mdesc == NULL) {
+       send_mdesc = &_send_mdesc;
+       dsMemRegister(MessageSndBuffer, sizeof(double)*MSG_BUFLEN_DBL, send_mdesc);
+    } 
+
     // printf("%d [ds] oper=%d; bytes=%d\n",armci_me,msginfo->operation,msginfo->bytes);
     if(msginfo->bytes) {
        *(void **) pdescr = msginfo+1;
