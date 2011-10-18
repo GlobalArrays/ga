@@ -20513,9 +20513,17 @@ else
 $as_echo "libraries $x_libraries, headers $x_includes" >&6; }
 fi
 
-     X_CPPFLAGS=-I$x_includes
+     if test "x$x_includes" != x; then :
+  X_CPPFLAGS="-I$x_includes"
+else
+  X_CPPFLAGS=
+fi
 
-     X_LDFLAGS=-L$x_libraries
+     if test "x$x_libraries" != x; then :
+  X_LDFLAGS="-L$x_libraries"
+else
+  X_LDFLAGS=
+fi
 
 fi
  if test "x$enable_xregion" = xyes; then

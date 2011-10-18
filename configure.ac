@@ -385,8 +385,14 @@ AC_ARG_ENABLE([xregion],
     [enable_xregion=no])
 AS_IF([test "x$enable_xregion" = xyes],
     [AC_PATH_X
-     AC_SUBST([X_CPPFLAGS], [-I$x_includes])
-     AC_SUBST([X_LDFLAGS], [-L$x_libraries])])
+     AS_IF([test "x$x_includes" != x],
+        [X_CPPFLAGS="-I$x_includes"],
+        [X_CPPFLAGS=])
+     AC_SUBST([X_CPPFLAGS])
+     AS_IF([test "x$x_libraries" != x],
+        [X_LDFLAGS="-L$x_libraries"],
+        [X_LDFLAGS=])
+     AC_SUBST([X_LDFLAGS])])
 AM_CONDITIONAL([ENABLE_XREGION], [test "x$enable_xregion" = xyes])
 AM_CONDITIONAL([NO_X], [test "$no_x" = xyes])
 
