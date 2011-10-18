@@ -328,7 +328,7 @@ c
                prow = mod(row,Trow)/nbr  ! processor row that holds "row"
                if(myrow.eq.prow) then
                   if(rbase.gt.np .or. cbase .gt. nq) then
-                     call ga_error(' ga_to_SL: rows/cols error ',0)
+                     call ga_error(' ga_to_SL: rows/cols error ',1)
                   endif
                   rowl=min(row+nbr-one4,dim1)
                   coll=min(col+nbc-one4,dim2)
@@ -380,7 +380,7 @@ c
                prow = mod(row,Trow)/nbr  ! processor row that holds "row"
                if(myrow.eq.prow) then
                   if(rbase.gt.np .or. cbase .gt. nq)
-     &               call ga_error(' ga_from_SL: rows/cols error ',0)
+     &               call ga_error(' ga_from_SL: rows/cols error ',1)
                   rowl=min(row+nbr-one4,dim1)
                   coll=min(col+nbc-one4,dim2)
                   call ga_put(g_a,row,rowl,col,
@@ -434,7 +434,7 @@ c
                prow = mod(row,Trow)/nbr  ! processor row that holds "row"
                if(myrow2.eq.prow) then
                   if(rbase.gt.np .or. cbase .gt. nq) then
-                     call ga_error(' ga_to_SL: rows/cols error ',0)
+                     call ga_error(' ga_to_SL: rows/cols error ',1)
                   endif
                   call ga_get(g_a,row,min(row+nbr -1,dim1),col,
      &                    min(col+nbc -1,dim2), s_a(rbase,cbase), lda) 
@@ -483,7 +483,7 @@ c
                prow = mod(row,Trow)/nbr  ! processor row that holds "row"
                if(myrow2.eq.prow) then
                   if(rbase.gt.np .or. cbase .gt. nq)
-     &               call ga_error(' ga_from_SL: rows/cols error ',0)
+     &               call ga_error(' ga_from_SL: rows/cols error ',1)
                   rowl=min(row+nbr-1,dim1)
                   coll=min(col+nbc-1,dim2)
                   call ga_put(g_a,row,rowl,col,
@@ -746,7 +746,7 @@ c     alt entry point for C that avoids char args
 c
       subroutine gai_lu_solve_alt(tr, g_a, g_b)
       implicit none
-        INTGR4 g_a, g_b, tr
+        integer g_a, g_b, tr
         if(tr.eq.0) then
            call gai_lu_solve('n',g_a, g_b) 
         else
@@ -1534,14 +1534,14 @@ c*                   > 0 : the leading minor of this order
 c*                         is not positive definite and the
 c*                         factorization could not be completed      
 c***********************************************************************      
-      INTGR4 function gai_llt_solve(g_A, g_B)
+      integer function gai_llt_solve(g_A, g_B)
       implicit none
       character*1 uplo         ! (internal parameter) 'U' or 'L'
-      INTGR4     g_A          ! (input)
-      INTGR4     g_B          ! (input/output)
-      INTGR4     hsA
-      INTGR4     irc
-      INTGR4     ga_llt_f
+      integer     g_A          ! (input)
+      integer     g_B          ! (input/output)
+      integer     hsA
+      integer     irc
+      integer     ga_llt_f
 c
 c**** call the Cholesky factorization routine
       hsA  = 0
@@ -1583,14 +1583,14 @@ c*                   < 0 : it returns the index i of the (i,i)
 c*                         element of the factor L/U that is zero and,
 c*                         so, the inverse could not be computed        
 c***********************************************************************
-      INTGR4 function gai_spd_invert(g_A)
+      integer function gai_spd_invert(g_A)
       implicit none
       character*1 uplo         ! (internal parameter) 'U' or 'L'
-      INTGR4     g_A          ! (input)
-      INTGR4     hsA
-      INTGR4     ircF, ircI
-      INTGR4     ga_llt_f
-      INTGR4     ga_llt_i
+      integer     g_A          ! (input)
+      integer     hsA
+      integer     ircF, ircI
+      integer     ga_llt_f
+      integer     ga_llt_i
 c
 c**** call the Cholesky factorization routine
       hsA  = 0
@@ -1644,12 +1644,12 @@ c*          format can be avoided if gai_llt_solve and gai_lu_solve
 c*          were not used as building blocks - possible optimization
 c*          for the future (JN) 
 c***********************************************************************
-      INTGR4 function gai_solve(g_A, g_B)
+      integer function gai_solve(g_A, g_B)
       implicit none
-      INTGR4     g_A          ! (input)
-      INTGR4     g_B          ! (input/output)
-      INTGR4     irc
-      INTGR4     gai_llt_solve
+      integer     g_A          ! (input)
+      integer     g_B          ! (input/output)
+      integer     irc
+      integer     gai_llt_solve
 c
 c**** Call Cholesky solver as the first try      
       gai_solve = gai_llt_solve(g_A, g_B)
