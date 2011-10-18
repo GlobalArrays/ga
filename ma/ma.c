@@ -148,40 +148,40 @@ typedef enum
  ** function types
  **/
 
-private Boolean ad_big_enough();
-private Boolean ad_eq();
-private Boolean ad_gt();
-private Boolean ad_le();
-private Boolean ad_lt();
-private void ad_print();
-private void balloc_after();
-private void balloc_before();
-private void block_free_heap();
-private AD *block_split();
-private ulongi checksum();
+private Boolean ad_big_enough(AD *ad, Pointer ar);
+private Boolean ad_eq(AD *ad, Pointer ad_target);
+private Boolean ad_gt(AD *ad, Pointer ad_target);
+private Boolean ad_le(AD *ad, Pointer ad_target);
+private Boolean ad_lt(AD *ad, Pointer ad_target);
+private void ad_print(AD *ad, char *block_type);
+private void balloc_after(AR *ar, Pointer address, Pointer *client_space, ulongi *nbytes);
+private void balloc_before(AR *ar, Pointer address, Pointer *client_space, ulongi *nbytes);
+private void block_free_heap(AD *ad);
+private AD *block_split(AD *ad, ulongi bytes_needed, Boolean insert_free);
+private ulongi checksum(AD *ad);
 
 #ifdef DEBUG
-private void debug_ad_print();
+private void debug_ad_print(AD *ad);
 #endif /* DEBUG */
 
-private Boolean guard_check();
-private void guard_set();
-private void list_coalesce();
-private AD *list_delete();
-private int list_delete_many();
-private AD *list_delete_one();
-private void list_insert();
-private void list_insert_ordered();
-private Boolean list_member();
-private int list_print();
-private void list_verify();
-private Integer ma_max_heap_frag_nelem();
-private Integer ma_nelem();
-private void ma_preinitialize();
-private Boolean mh2ad();
-private void mh_free();
-private long mai_round();
-private void str_ncopy();
+private Boolean guard_check(AD *ad);
+private void guard_set(AD *ad);
+private void list_coalesce(AD *list);
+private AD *list_delete(AD *ad, AD **list);
+private int list_delete_many(AD **list, Boolean (*pred)(), Pointer closure, void (*action)());
+private AD *list_delete_one(AD **list, Boolean (*pred)(), Pointer closure);
+private void list_insert(AD *ad, AD **list);
+private void list_insert_ordered(AD *ad, AD **list, Boolean (*pred)());
+private Boolean list_member(AD *ad, AD *list);
+private int list_print(AD *list, char *block_type, int index_base);
+private void list_verify(AD *list, char *block_type, char *preamble, int *blocks, int *bad_blocks, int *bad_checksums, int *bad_lguards, int *bad_rguards);
+private Integer ma_max_heap_frag_nelem(Integer datatype, Integer min_nelem);
+private Integer ma_nelem(Pointer address, ulongi length, Integer datatype);
+private void ma_preinitialize(char *caller);
+private Boolean mh2ad(Integer memhandle, AD **adout, BlockLocation location, char *caller);
+private void mh_free(AD *ad);
+private long mai_round(long value, ulongi unit);
+private void str_ncopy(char *to, char *from, int maxchars);
 
 /* foreign routines */
 

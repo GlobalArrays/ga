@@ -31,7 +31,7 @@ typedef enum
  ** function types
  **/
 
-extern void ma_error();
+extern void ma_error(ErrorLevel elevel, ErrorType etype, char *func, char *emsg);
 
 /**
  ** variables

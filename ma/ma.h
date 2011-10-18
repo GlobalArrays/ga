@@ -13,8 +13,8 @@
  ** function types
  **/
 
-extern Boolean MAi_inform_base();
-extern void MAi_summarize_allocated_blocks();
+extern Boolean MAi_inform_base(Integer datatype, Pointer address1, Pointer address2);
+extern void MAi_summarize_allocated_blocks(int index_base);
 
 #define f2c_alloc_get_                  F77_FUNC_(f2c_alloc_get,F2C_ALLOC_GET)
 #define f2c_allocate_heap_              F77_FUNC_(f2c_allocate_heap,F2C_ALLOCATE_HEAP)
