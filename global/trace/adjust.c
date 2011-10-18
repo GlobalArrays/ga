@@ -35,12 +35,13 @@
 #ifdef PRINT_STATS
    double stat[MAX_PROC][MAX_ARRAYS][MAX_EVENT_TYPES];
    unsigned int acc[MAX_PROC][MAX_ARRAYS][MAX_EVENT_TYPES];
-   void printstat(), update();
+   void printstat(int proc, unsigned tlast);
+   void update(long int proc, int *record, unsigned long t0, unsigned long t1);
 #endif
 
 int proc=0, arrays=0, event_types=0; 
 
-static int tcomp();
+static int tcomp(unsigned long int *t1, unsigned long int *t2);
 
 int main(argc,argv)
 int argc;
