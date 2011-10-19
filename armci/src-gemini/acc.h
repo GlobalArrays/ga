@@ -182,10 +182,10 @@ void c_dmult2_(const int*    const restrict n,
 #   define d_accumulate_2d_u_  F77_FUNC_(d_accumulate_2d_u,D_ACCUMULATE_2D_U)
 #   define c_accumulate_2d_u_  F77_FUNC_(c_accumulate_2d_u,C_ACCUMULATE_2D_U)
 #   define z_accumulate_2d_u_  F77_FUNC_(z_accumulate_2d_u,Z_ACCUMULATE_2D_U)
-#   define fort_dadd_          F77_FUNC(fort_dadd,FORT_DADD)
-#   define fort_dadd2_         F77_FUNC(fort_dadd2,FORT_DADD2)
-#   define fort_dmult_         F77_FUNC(fort_dmult,FORT_DMULT)
-#   define fort_dmult2_        F77_FUNC(fort_dmult2,FORT_DMULT2)
+#   define fort_dadd_          F77_FUNC_(fort_dadd,FORT_DADD)
+#   define fort_dadd2_         F77_FUNC_(fort_dadd2,FORT_DADD2)
+#   define fort_dmult_         F77_FUNC_(fort_dmult,FORT_DMULT)
+#   define fort_dmult2_        F77_FUNC_(fort_dmult2,FORT_DMULT2)
 void ATR d_accumulate_1d_(const double* const restrict alpha,
                                 double* const restrict A,
                           const double* const restrict B,
