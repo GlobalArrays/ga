@@ -9332,22 +9332,20 @@ fi
  # always true
 
 # permanent hack
-if test x$ga_armci_network = xPORTALS; then :
-  ARMCI_SRC_DIR=src-portals
-else
-  ARMCI_SRC_DIR=src
-fi
-if test x$ga_armci_network = xGEMINI; then :
-  ARMCI_SRC_DIR=src-gemini
+case $ga_armci_network in #(
+  PORTALS) :
+    ARMCI_SRC_DIR=src-portals ;; #(
+  GEMINI) :
+    ARMCI_SRC_DIR=src-gemini
 
 $as_echo "#define CRAY_UGNI 1" >>confdefs.h
 
 
 $as_echo "#define LIBONESIDED 1" >>confdefs.h
-
-else
-  ARMCI_SRC_DIR=src
-fi
+ ;; #(
+  *) :
+    ARMCI_SRC_DIR=src ;;
+esac
 
 
 # tcgmsg5 requires this

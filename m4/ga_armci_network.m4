@@ -374,14 +374,12 @@ AM_CONDITIONAL([DCMF_VER_0_2], [test x != x]) # always false
 AM_CONDITIONAL([DCMF_VER_0_3], [test x = x]) # always true
 
 # permanent hack
-AS_IF([test x$ga_armci_network = xPORTALS],
-    [ARMCI_SRC_DIR=src-portals],
-    [ARMCI_SRC_DIR=src])
-AS_IF([test x$ga_armci_network = xGEMINI],
-    [ARMCI_SRC_DIR=src-gemini
-     AC_DEFINE([CRAY_UGNI], [1], [for Gemini])
-     AC_DEFINE([LIBONESIDED], [1], [for Gemini])],
-    [ARMCI_SRC_DIR=src])
+AS_CASE([$ga_armci_network],
+[PORTALS],  [ARMCI_SRC_DIR=src-portals],
+[GEMINI],   [ARMCI_SRC_DIR=src-gemini
+             AC_DEFINE([CRAY_UGNI], [1], [for Gemini])
+             AC_DEFINE([LIBONESIDED], [1], [for Gemini])],
+            [ARMCI_SRC_DIR=src])
 AC_SUBST([ARMCI_SRC_DIR])
 
 # tcgmsg5 requires this
