@@ -531,7 +531,7 @@ GLOBAL_PARALLEL_TESTS += global/testing/simple_groups_comm$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/simple_groups_commc$(EXEEXT)
 endif
 if SYSV
-GLOBAL_PARALLEL_TESTS += global/testing/ipc_clean$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/ipc_clean$(EXEEXT)
 endif
 
 if HAVE_M4
