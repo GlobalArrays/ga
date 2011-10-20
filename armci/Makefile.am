@@ -518,11 +518,11 @@ ARMCI_SERIAL_TESTS += testing/acc_test$(EXEEXT)
 ARMCI_SERIAL_TESTS += testing/copy_test$(EXEEXT)
 endif
 if ARMCI_NETWORK_PORTALS
-ARMCI_PARALLEL_TESTS += testing/clone$(EXEEXT)
-ARMCI_PARALLEL_TESTS += testing/fork$(EXEEXT)
-ARMCI_PARALLEL_TESTS += testing/origptl$(EXEEXT)
-ARMCI_PARALLEL_TESTS += testing/ptltest$(EXEEXT)
-ARMCI_PARALLEL_TESTS += testing/te$(EXEEXT)
+#ARMCI_PARALLEL_TESTS += testing/clone$(EXEEXT)
+#ARMCI_PARALLEL_TESTS += testing/fork$(EXEEXT)
+#ARMCI_PARALLEL_TESTS += testing/origptl$(EXEEXT)
+#ARMCI_PARALLEL_TESTS += testing/ptltest$(EXEEXT)
+#ARMCI_PARALLEL_TESTS += testing/te$(EXEEXT)
 else
 if ARMCI_NETWORK_GEMINI
 else
