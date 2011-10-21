@@ -9,7 +9,8 @@ AC_DEFUN([GA_F2C_NOMAIN],
 [AC_CACHE_CHECK([for flag to disable $F77 main when linking with C main],
     [ga_cv_fld_nomain],
     [AC_LANG_PUSH([C])
-    AC_COMPILE_IFELSE([int main(int argc, char **argv) { return 0; }],
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([],[])],
         [mv conftest.$ac_objext cfortran_test.$ac_objext
         ga_save_LIBS=$LIBS
         LIBS="cfortran_test.$ac_objext $LIBS"
@@ -18,8 +19,9 @@ AC_DEFUN([GA_F2C_NOMAIN],
             ga_save_FFLAGS=$FFLAGS
             AS_IF([test "x$flag" != xnone], [FFLAGS="$FFLAGS $flag"])
             AC_LINK_IFELSE(
+                [AC_LANG_SOURCE(
 [[      subroutine donothing()
-      end]],
+      end]])],
                 [ga_cv_fld_nomain=$flag])
             FFLAGS=$ga_save_FFLAGS
             AS_IF([test "x$ga_cv_fld_nomain" != x], [break])

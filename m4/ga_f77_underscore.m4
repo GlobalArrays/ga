@@ -17,7 +17,7 @@ AC_DEFUN([GA_F77_UNDERSCORE],
 [ga_cv_f77_underscore_flag],
 [AC_LANG_PUSH([C])
 AC_COMPILE_IFELSE(
-    [[void my_sub_() {}]],
+    [AC_LANG_SOURCE([[void my_sub_() {}]])],
     [mv conftest.$ac_objext cfortran_test.$ac_objext
     ga_save_LIBS="$LIBS"
     LIBS="cfortran_test.$ac_objext $LIBS"
@@ -26,9 +26,7 @@ AC_COMPILE_IFELSE(
         ga_save_FFLAGS="$FFLAGS"
         AS_IF([test "x$ga_flag" != xnone], [FFLAGS="$FFLAGS $ga_flag"])
         AC_LINK_IFELSE(
-[[      program main
-      call my_sub
-      end program]],
+            [AC_LANG_CALL([], [my_sub])],
             [ga_cv_f77_underscore_flag="$ga_flag"])
         FFLAGS="$ga_save_FFLAGS"
         AS_IF([test "x$ga_cv_f77_underscore_flag" != x], [break])
