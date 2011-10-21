@@ -92,6 +92,12 @@ GA::PGroup::gop(long *buf, int n, char* op)
 }
 
 void
+GA::PGroup::gop(int *buf, int n, char* op)
+{
+    GA_Pgroup_igop(mPHandle, buf, n, op);
+}
+
+void
 GA::PGroup::gop(float *buf, int n, char* op)
 {
     GA_Pgroup_fgop(mPHandle, buf, n, op);

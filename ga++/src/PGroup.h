@@ -134,6 +134,23 @@ public:
    * The gop 'sums' all elements in buf[n] across all processors in the group
    * using the commutative operation specified by the character string op.
    *
+   * buf[n] is an integer(int) array present on each processor in the
+   * processor group.   The result is broadcast to all processor in this group.
+   * Allowed strings are "+", "*", "max", "min", "absmax", "absmin". The use of
+   * lowerecase for operators is necessary.
+   *
+   * This is a collective operation on the processor group.
+   *
+   * @param[in,out] buf buffer containing data
+   * @param[in]     n   number of elements in x
+   * @param[in]     op  operation to be performed
+   */
+  void gop(int *buf, int n, char* op);
+
+  /**
+   * The gop 'sums' all elements in buf[n] across all processors in the group
+   * using the commutative operation specified by the character string op.
+   *
    * buf[n] is an integer(long) array present on each processor in the
    * processor group.   The result is broadcast to all processor in this group.
    * Allowed strings are "+", "*", "max", "min", "absmax", "absmin". The use of

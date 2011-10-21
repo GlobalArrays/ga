@@ -911,6 +911,30 @@ class GlobalArray {
    long ldot(const GlobalArray * g_a) const; 
 
   /**
+   * Computes the element-wise dot product of the two (possibly transposed) 
+   * patches which must be of the same type and have the same number of 
+   * elements. 
+   *
+   * @param[in] ta  transpose flags
+   * @param[in] alo g_a patch coordinates
+   * @param[in] ahi g_a patch coordinates
+   * @param[in] g_a global array
+   * @param[in] tb  transpose flags
+   * @param[in] blo this GlobalArray's patch coordinates
+   * @param[in] bhi this GlobalArray's patch coordinates
+   */
+  long ldotPatch(
+          char ta, int alo[], int ahi[], const GlobalArray * g_a, 
+		  char tb, int blo[], int bhi[]) const;
+
+  /**
+   * @copydoc GlobalArray::ldotPatch(char,int[],int[],const GlobalArray*,char,int[],int[])const
+   */
+  long ldotPatch(
+          char ta, int64_t alo[], int64_t ahi[], const GlobalArray * g_a, 
+		    char tb, int64_t blo[], int64_t bhi[]) const;
+
+  /**
    * Solves a system of linear equations 
    * 
    *            A * X = B 
@@ -1105,6 +1129,11 @@ class GlobalArray {
    */
   void mergeDistrPatch(int64_t alo[], int64_t ahi[], GlobalArray *g_a,
                        int64_t blo[], int64_t bhi[]);
+
+  /**
+   * This function returns 0 if a global array is not mirrored and 1 if it is.
+   */
+  int isMirrored();
 
   /**
    * This function adds together all copies of a mirrored array so that all
@@ -1531,14 +1560,76 @@ class GlobalArray {
 
   /**
    * Releases access to the block of locally held data for a block-cyclic
-   * array, when data was accessed as read-only.
+   * array, when data was accessed in read-write mode.
    *
    * This is a local operation.
    *
    * @param[in] proc process ID/rank
    */
   void releaseUpdateBlockSegment(int proc) const;    
-      
+
+  /**
+   * Releases access to a global array containing ghost cells when the data was
+   * read only. 
+   * Your code should look like: 
+   * 
+   * @code
+   * g_a->accessGhosts(dims, &ptr, ld)
+   * // <operate on the data referenced by ptr> 
+   * g_a->releasGhosts();
+   * @endcode
+   * 
+   * This operation is local. 
+   *
+   */
+  void releaseGhosts() const;
+
+  /**
+   * Releases access to a global array containing ghost cells when the data was
+   * accessed in read-write mode. 
+   * 
+   * This operation is local. 
+   *
+   */
+  void releaseUpdateGhosts() const;
+
+  /**
+   * Releases access to a global array containing ghost cells when the data was
+   * read only. 
+   * Your code should look like: 
+   * 
+   * @code
+   * g_a->accessGhostElement(&ptr, subscript, ld)
+   * // <operate on the data referenced by ptr> 
+   * g_a->releaseGhostElement(subscript);
+   * @endcode
+   * 
+   * This operation is local. 
+   * @param[in]  indices of element
+   *
+   */
+  void releaseGhostElement(int subscript[]) const;
+
+  /**
+   * @copydoc GlobalArray::releaseGhostElement(int subscript[]) const
+   */
+  void releaseGhostElement(int64_t subscript[]) const;
+
+  /**
+   * Releases access to a global array containing ghost cells when the data was
+   * accessed in read-write mode. 
+   * 
+   * This operation is local. 
+   * @param[in]  indices of element
+   *
+   */
+  void releaseUpdateGhostElement(int subscript[]) const;
+
+  /**
+   * @copydoc GlobalArray::releaseUpdateGhostElement(int subscript[]) const
+   */
+  void releaseUpdateGhostElement(int64_t subscript[]) const;
+
   /** 
    * Scales an array by the constant s. Note that the library is unable 
    * to detect errors when the pointed value is of different type than 
@@ -1661,6 +1752,32 @@ class GlobalArray {
    * @copydoc GlobalArray::scatter(void*,int*[],int)const
    */
   void scatter(void *v, int64_t *subsarray[], int64_t n) const;
+
+  /** 
+   * Adds element a local array to array elements into a global array after
+   * multiplying by alpha.  The contents of the input arrays (v,subscrArray)
+   * are preserved, but their contents might be (consistently) shuffled on
+   * return.    
+   *
+   * @code
+   * for(k=0; k<= n; k++) {
+   *    a[subsArray[k][0]][subsArray[k][1]][subsArray[k][2]]... = v[k];    
+   * }
+   * @endcode
+   *
+   * This is a one-sided operation.  
+   *
+   * @param[in] n         number of elements
+   * @param[in] v         [n] array containing values
+   * @param[in] subsarray [n][ndim] array of subscripts for each element
+   * @param[in] alpha     scale factor
+   */
+  void scatterAcc(void *v, int *subsarray[], int n, void *alpha) const;
+
+  /**
+   * @copydoc GlobalArray::scatterAcc(void*,int*[],int,void*)const
+   */
+  void scatterAcc(void *v, int64_t *subsarray[], int64_t n, void *alpha) const;
 
   /**
    * Returns the value and index for an element that is selected by the 
@@ -1817,6 +1934,11 @@ class GlobalArray {
    *                   divided into
    */
   void setIrregDistr(int mapc[], int nblock[]) const;
+
+  /**
+   * @copydoc GlobalArray::setIrregDistr(int mapc[], int nblock[]) const
+   */
+  void setIrregDistr(int64_t mapc[], int64_t nblock[]) const;
 
   /**
    * This function can be used to set the processor configuration assigned to

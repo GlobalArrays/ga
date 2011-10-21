@@ -475,6 +475,20 @@ GA::GlobalArray::ldot(const GA::GlobalArray * g_a)  const {
   return GA_Ldot(mHandle, g_a->mHandle);
 }
 
+long 
+GA::GlobalArray::ldotPatch(char ta, int alo[], int ahi[],
+			   const GA::GlobalArray * g_a, char tb, 
+			   int blo[], int bhi[])  const {
+  return NGA_Ldot_patch(mHandle, ta, alo, ahi, g_a->mHandle, tb, blo, bhi);
+}
+
+long 
+GA::GlobalArray::ldotPatch(char ta, int64_t alo[], int64_t ahi[],
+			   const GA::GlobalArray * g_a, char tb, 
+			   int64_t blo[], int64_t bhi[])  const {
+  return NGA_Ldot_patch64(mHandle, ta, alo, ahi, g_a->mHandle, tb, blo, bhi);
+}
+
 int 
 GA::GlobalArray::lltSolve(const GA::GlobalArray * g_a)  const {
   return GA_Llt_solve(g_a->mHandle, mHandle);
@@ -559,6 +573,11 @@ void
 GA::GlobalArray::mergeDistrPatch(int64_t alo[], int64_t ahi[], GlobalArray *g_b,
                                  int64_t blo[], int64_t bhi[]) {
   NGA_Merge_distr_patch64(mHandle, alo, ahi, g_b->mHandle, blo, bhi);
+}
+
+int
+GA::GlobalArray::isMirrored() {
+  return GA_Is_mirrored(mHandle);
 }
 
 void
@@ -753,6 +772,21 @@ GA::GlobalArray::releaseBlockSegment(int proc) const {
   NGA_Release_block_segment(mHandle, proc);
 }
 
+void
+GA::GlobalArray::releaseGhosts() const {    
+  NGA_Release_ghosts(mHandle);
+}
+
+void
+GA::GlobalArray::releaseGhostElement(int subscript[]) const {    
+  NGA_Release_ghost_element(mHandle, subscript);
+}
+
+void
+GA::GlobalArray::releaseGhostElement(int64_t subscript[]) const {    
+  NGA_Release_ghost_element64(mHandle, subscript);
+}
+
 void 
 GA::GlobalArray::releaseUpdate(int lo[], int hi[])  const {
   NGA_Release_update(mHandle, lo, hi);
@@ -776,6 +810,21 @@ GA::GlobalArray::releaseUpdateBlockGrid(int index[])  const {
 void 
 GA::GlobalArray::releaseUpdateBlockSegment(int idx)  const {
   NGA_Release_update_block_segment(mHandle, idx);
+}
+
+void
+GA::GlobalArray::releaseUpdateGhosts() const {    
+  NGA_Release_update_ghosts(mHandle);
+}
+
+void
+GA::GlobalArray::releaseUpdateGhostElement(int subscript[]) const {    
+  NGA_Release_update_ghost_element(mHandle, subscript);
+}
+
+void
+GA::GlobalArray::releaseUpdateGhostElement(int64_t subscript[]) const {    
+  NGA_Release_update_ghost_element64(mHandle, subscript);
 }
 
 void 
@@ -829,6 +878,17 @@ GA::GlobalArray::scatter(void *v, int *subsarray[], int n)  const {
 void 
 GA::GlobalArray::scatter(void *v, int64_t *subsarray[], int64_t n)  const {
   NGA_Scatter64(mHandle, v, subsarray, n);
+}
+
+void 
+GA::GlobalArray::scatterAcc(void *v, int *subsarray[], int n, void *alpha)  const {
+  NGA_Scatter_acc(mHandle, v, subsarray, n, alpha);
+}
+
+void 
+GA::GlobalArray::scatterAcc(void *v, int64_t *subsarray[], int64_t n, void
+    *alpha)  const {
+  NGA_Scatter_acc64(mHandle, v, subsarray, n, alpha);
 }
 
 void 
@@ -889,6 +949,11 @@ GA::GlobalArray::setGhosts(int64_t width[]) const {
 void
 GA::GlobalArray::setIrregDistr(int mapc[], int nblock[]) const {
     GA_Set_irreg_distr(mHandle, mapc, nblock);
+}
+
+void
+GA::GlobalArray::setIrregDistr(int64_t mapc[], int64_t nblock[]) const {
+    GA_Set_irreg_distr64(mHandle, mapc, nblock);
 }
 
 void
