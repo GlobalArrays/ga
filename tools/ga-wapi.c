@@ -4,7 +4,7 @@
 #endif
 
 #include <mpi.h>
-#include "papi.h"
+#include "ga-papi.h"
 #include "typesf2c.h"
 
 static int me;

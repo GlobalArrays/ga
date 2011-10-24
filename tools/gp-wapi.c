@@ -3,7 +3,7 @@
 #   include "config.h"
 #endif
 
-#include "gppapi.h"
+#include "gp-papi.h"
 #include "typesf2c.h"
 
 

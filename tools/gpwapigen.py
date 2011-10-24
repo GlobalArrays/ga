@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-'''Generate the gpwapi.c source from the gppapi.h header.'''
+'''Generate the gp-wapi.c source from the gp-papi.h header.'''
 
 import sys
 
 def get_signatures(header):
-    # first, gather all function signatures from gppapi.h aka argv[1]
+    # first, gather all function signatures from gp-papi.h aka argv[1]
     accumulating = False
     signatures = []
     current_signature = ''
@@ -99,7 +99,7 @@ class Function(object):
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         print 'incorrect number of arguments'
-        print 'usage: gpwapigen.py <gppapi.h> > <gpwapi.c>'
+        print 'usage: gpwapigen.py <gp-papi.h> > <gp-wapi.c>'
         sys.exit(len(sys.argv))
 
     # print headers
@@ -108,7 +108,7 @@ if __name__ == '__main__':
 #   include "config.h"
 #endif
 
-#include "gppapi.h"
+#include "gp-papi.h"
 #include "typesf2c.h"
 '''
 

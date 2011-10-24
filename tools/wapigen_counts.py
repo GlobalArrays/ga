@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-'''Generate the wapi_counts.c source from the papi.h header.'''
+'''Generate the wapi_counts.c source from the ga-papi.h header.'''
 
 import sys
 
 def get_signatures(header):
-    # first, gather all function signatures from papi.h aka argv[1]
+    # first, gather all function signatures from ga-papi.h aka argv[1]
     accumulating = False
     signatures = []
     current_signature = ''
@@ -99,7 +99,7 @@ class Function(object):
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         print 'incorrect number of arguments'
-        print 'usage: wapigen_counts.py <papi.h> > <wapi_counts.c>'
+        print 'usage: wapigen_counts.py <ga-papi.h> > <wapi_counts.c>'
         sys.exit(len(sys.argv))
 
     # print headers
@@ -108,7 +108,7 @@ if __name__ == '__main__':
 #   include "config.h"
 #endif
 
-#include "papi.h"
+#include "ga-papi.h"
 #include "typesf2c.h"
 '''
 
