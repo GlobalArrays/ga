@@ -772,12 +772,12 @@ void armci_openib_env_init()
         armci_openib_sl = 0;
     }
         
-    /* Enable server polling by default */
+    /* Don't enable server polling by default */
     if ((value = getenv("ARMCI_OPENIB_SERVER_POLL")) != NULL){
         armci_openib_server_poll = atoi(value);
     } 
     else {
-        armci_openib_server_poll = 1;
+        armci_openib_server_poll = 0;
     }
 }
 
