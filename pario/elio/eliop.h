@@ -27,7 +27,7 @@ extern void GA_Error(char*, int);
 #if (defined(CRAY) && !defined(__crayx1)) || defined(NEC)
 #        include <sys/statfs.h>
 #        define  STATVFS statfs
-#elif defined(KSR) || defined(__FreeBSD__) || defined(MACX)
+#elif defined(__FreeBSD__) || defined(MACX)
 #        include <sys/param.h>
 #        include <sys/mount.h>
 #        define  STATVFS statfs
@@ -40,9 +40,6 @@ extern void GA_Error(char*, int);
 #        include <sys/vfs.h>
 #        define  STATVFS statfs
 #        define NO_F_FRSIZE 
-#elif !defined(PARAGON)
-#        include <sys/statvfs.h>
-#        define  STATVFS statvfs
 #endif
 
 #ifdef WIN32
@@ -52,10 +49,6 @@ extern void GA_Error(char*, int);
 #endif
 
 #include <fcntl.h>
-#if defined(PARAGON)
-#  include <sys/mount.h>
-#  include <nx.h>
-#endif
 
 #if (defined(CRAY) && defined(FFIO))
 #        include <ffio.h>

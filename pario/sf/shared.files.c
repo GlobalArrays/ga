@@ -104,13 +104,9 @@ Integer sfi_create(char *fname, SFsize_t *size_hard_limit,
     /*generate file name(s) */
     sprintf(SF[hndl].fname,"%s.%d",fname, (int)hndl);
 
-#ifdef  PARAGON
-    SF[hndl].fd = elio_gopen(SF[hndl].fname,ELIO_RW);
-#else
     if (ME() == 0) SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
     SYNC();
     if (ME() != 0) SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
-#endif
 
     if(SF[hndl].fd==NULL) ERROR("sf_create: could not open file",0);
     if(SF[hndl].fd->fd==-1) ERROR("sf_create: descriptor -1",0);
@@ -147,17 +143,9 @@ Integer sfi_create_suffix(char *fname, SFsize_t *size_hard_limit,
     /*generate file name(s) */
     sprintf(SF[hndl].fname,"%s.%d",fname, (int) *suffix);
 
-#ifdef  PARAGON
-    SF[hndl].fd = elio_gopen(SF[hndl].fname,ELIO_RW);
-#else
-    if (ME() == 0)
-        SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
-
+    if (ME() == 0) SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
     SYNC();
-
-    if (ME() != 0)
-        SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
-#endif
+    if (ME() != 0) SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
 
     if(SF[hndl].fd==NULL) ERROR("sf_create_suffix: could not open file",0);
     if(SF[hndl].fd->fd==-1) ERROR("sf_create_suffix: descriptor -1",0);
@@ -200,11 +188,7 @@ Integer FATR sf_rwtor_(Integer *s_a /**< [in] SF handle */)
     Integer handle = *s_a+SF_OFFSET;
 
     elio_close(SF[handle].fd);
-#ifdef  PARAGON
-    SF[handle].fd = elio_gopen(SF[handle].fname,ELIO_RW);
-#else
     SF[handle].fd = elio_open(SF[handle].fname,ELIO_R, ELIO_SHARED);
-#endif
 
     if(SF[handle].fd==NULL) ERROR("sf_open: could not open file",0);
     if(SF[handle].fd->fd==-1) ERROR("sf_open: descriptor -1",0);
@@ -220,11 +204,7 @@ Integer FATR sf_open_(Integer *s_a /**< [in] SF handle */)
 {
     Integer handle = *s_a+SF_OFFSET;
 
-#ifdef  PARAGON
-    SF[handle].fd = elio_gopen(SF[handle].fname,ELIO_RW);
-#else
     SF[handle].fd = elio_open(SF[handle].fname,ELIO_RW, ELIO_SHARED);
-#endif
 
     if(SF[handle].fd==NULL) ERROR("sf_open: could not open file",0);
     if(SF[handle].fd->fd==-1) ERROR("sf_open: descriptor -1",0);

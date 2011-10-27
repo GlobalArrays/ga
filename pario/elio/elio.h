@@ -52,7 +52,6 @@ extern int    elio_wait(io_request_t *id);
 extern int    elio_probe(io_request_t *id, int* status);
 extern int    elio_delete(const char *filename);
 extern Fd_t   elio_open(const char *fname, int type, int mode);
-extern Fd_t   elio_gopen(const char *fname, int type);
 extern int    elio_close(Fd_t fd);
 extern int    elio_stat(char *fname, stat_t *statinfo);
 extern int    elio_dirname(const char *fname, char *statinfo, int len);

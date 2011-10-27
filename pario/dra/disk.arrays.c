@@ -917,7 +917,6 @@ Integer drai_open(char *filename, Integer *mode, Integer *d_a)
 
         }else{
 
-            /* collective open supported only on Paragon */
             DRA[handle].fd = elio_open(DRA[handle].fname,emode, ELIO_SHARED);
         }
 
@@ -2223,12 +2222,7 @@ Integer ndrai_create_config(Integer *type, Integer *ndim, Integer dims[],
             DRA[handle].fd = elio_open(dummy_fname,emode, ELIO_PRIVATE);
         } else{
 
-            /* collective open supported only on Paragon */
-#           ifdef PARAGON
-            DRA[handle].fd = elio_gopen(DRA[handle].fname,emode); 
-#           else
             DRA[handle].fd = elio_open(DRA[handle].fname,emode, ELIO_SHARED); 
-#           endif
         }
 
         if(DRA[handle].fd==NULL)dai_error("ndra_create:failed to open file",0);
@@ -2355,12 +2349,7 @@ Integer drai_create(Integer *type, Integer *dim1, Integer *dim2, char *name,
             DRA[handle].fd = elio_open(dummy_fname,emode, ELIO_PRIVATE);
         } else {
 
-            /* collective open supported only on Paragon */
-#             ifdef PARAGON
-            DRA[handle].fd = elio_gopen(DRA[handle].fname,emode); 
-#             else
             DRA[handle].fd = elio_open(DRA[handle].fname,emode, ELIO_SHARED); 
-#             endif
         }
 
         if(DRA[handle].fd==NULL)dai_error("dra_create:failed to open file",0);

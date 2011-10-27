@@ -104,7 +104,7 @@
 
 #elif defined(AIO)
 #   include <aio.h>
-#   if defined(KSR)||defined(AIX)
+#   if defined(AIX)
 #      define INPROGRESS EINPROG
 #   else 
 #      define INPROGRESS EINPROGRESS
@@ -283,18 +283,13 @@ int elio_set_cb(Fd_t fd, Off_t doffset, int reqn, void *buf, Size_t bytes)
 {
 #if defined(AIO)
     off_t offset = (off_t) doffset;
-#   if defined(PARAGON) || defined(CRAY)
+#   if defined(CRAY)
        if(offset != SEEK(fd->fd, offset, SEEK_SET))return (SEEKFAIL);
-#      if  defined(CRAY)
-           cb_fout_arr[reqn] = cb_fout+reqn;
-           cb_fout[reqn].filedes    = fd->fd;
-#      endif
+       cb_fout_arr[reqn] = cb_fout+reqn;
+       cb_fout[reqn].filedes    = fd->fd;
 #   else
        cb_fout[reqn].aio_offset = offset;
        cb_fout_arr[reqn] = cb_fout+reqn;
-#      if defined(KSR)
-         cb_fout[reqn].aio_whence = SEEK_SET;
-#      else
          cb_fout[reqn].aio_buf    = buf;
          cb_fout[reqn].aio_nbytes = bytes;
 #        if defined(AIX)
@@ -303,7 +298,6 @@ int elio_set_cb(Fd_t fd, Off_t doffset, int reqn, void *buf, Size_t bytes)
            cb_fout[reqn].aio_sigevent.sigev_notify = SIGEV_NONE;
            cb_fout[reqn].aio_fildes    = fd->fd;
 #        endif
-#      endif
 #   endif
 #endif
     return ELIO_OK;
@@ -368,14 +362,9 @@ int elio_awrite(Fd_t fd, Off_t doffset, const void* buf, Size_t bytes, io_reques
       if((rc=elio_set_cb(fd, offset, aio_i, (void*) buf, bytes)))
                                                  ELIO_ERROR(rc,0);
 
-#    if defined(PARAGON)
-       *req_id = _iwrite(fd->fd, buf, bytes);
-       stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
-#    elif defined(CRAY)
+#    if defined(CRAY)
        rc = WRITEA(fd->fd, (char*)buf, bytes, &cb_fout[aio_i].stat, DEFARG);
        stat = (rc < 0)? -1 : 0; 
-#    elif defined(KSR)
-       stat = awrite(fd->fd, buf, bytes, cb_fout+aio_i);
 #    elif defined(AIX) 
 #       if !defined(AIX52) && !defined(_AIO_AIX_SOURCE)
        stat = aio_write(fd->fd, cb_fout + aio_i);
@@ -606,14 +595,9 @@ int elio_aread(Fd_t fd, Off_t doffset, void* buf, Size_t bytes, io_request_t * r
        *req_id = (io_request_t) aio_i;
         if((stat=elio_set_cb(fd, offset, aio_i, (void*) buf, bytes)))
                                                  ELIO_ERROR((int)stat,0);
-#       if defined(PARAGON)
-          *req_id = _iread(fd->fd, buf, bytes);
-          stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
-#       elif defined(CRAY)
+#       if defined(CRAY)
           rc = READA(fd->fd, buf, bytes, &cb_fout[aio_i].stat, DEFARG);
           stat = (rc < 0)? -1 : 0;
-#       elif defined(KSR)
-          stat = aread(fd->fd, buf, bytes, cb_fout+aio_i);
 #       elif defined(AIX)
 #if    !defined(AIX52) && !defined(_AIO_AIX_SOURCE)
           stat = aio_read(fd->fd, cb_fout+aio_i);
@@ -656,35 +640,29 @@ int elio_wait(io_request_t *req_id)
   if(*req_id != ELIO_DONE ) { 
 
 #    ifdef AIO
-#      if defined(PARAGON)
-          iowait(*req_id);
+#      if defined(CRAY)
 
-#    elif defined(CRAY)
+#        if defined(FFIO)
+         {
+            struct ffsw dumstat, *prdstat=&(cb_fout[*req_id].stat);
+            fffcntl(cb_fout[*req_id].filedes, FC_RECALL, prdstat, &dumstat);
+            if (FFSTAT(*prdstat) == FFERR) ELIO_ERROR(SUSPFAIL,0);
+         }
+#        else
+         {
+            struct iosw *statlist[1];
+            statlist[0] = &(cb_fout[*req_id].stat);
+            recall(cb_fout[*req_id].filedes, 1, statlist); 
+         }
+#        endif
 
-#      if defined(FFIO)
-       {
-          struct ffsw dumstat, *prdstat=&(cb_fout[*req_id].stat);
-          fffcntl(cb_fout[*req_id].filedes, FC_RECALL, prdstat, &dumstat);
-          if (FFSTAT(*prdstat) == FFERR) ELIO_ERROR(SUSPFAIL,0);
-       }
-#      else
-       {
-          struct iosw *statlist[1];
-          statlist[0] = &(cb_fout[*req_id].stat);
-          recall(cb_fout[*req_id].filedes, 1, statlist); 
-       }
-#      endif
+#      elif defined(AIX) 
+#         if    !defined(AIX52) && !defined(_AIO_AIX_SOURCE)
+              do {    /* I/O can be interrupted on SP through rcvncall ! */
+                   rc =(int)aio_suspend(1, cb_fout_arr+(int)*req_id);
+              } while(rc == -1 && errno == EINTR); 
+#         endif
 
-#  elif defined(AIX) 
-#if    !defined(AIX52) && !defined(_AIO_AIX_SOURCE)
-
-      do {    /* I/O can be interrupted on SP through rcvncall ! */
-           rc =(int)aio_suspend(1, cb_fout_arr+(int)*req_id);
-      } while(rc == -1 && errno == EINTR); 
-#endif
-
-#  elif defined(KSR)
-      rc = iosuspend(1, cb_fout_arr+(int)*req_id);
 #  else
       if((int)aio_suspend((const struct aiocb *const*)(cb_fout_arr+(int)*req_id), 1, NULL) != 0) rc =-1;
 #  endif
@@ -729,11 +707,7 @@ int elio_probe(io_request_t *req_id, int* status)
   } else {
       
 #ifdef AIO
-#    if defined(PARAGON)
-        if( iodone(*req_id)== (long) 0) errval = INPROGRESS;
-        else errval = 0;
-
-#    elif defined(CRAY)
+#    if defined(CRAY)
 
 #     if defined(FFIO)
       {
@@ -747,8 +721,6 @@ int elio_probe(io_request_t *req_id, int* status)
 
 #     endif
 
-#   elif defined(KSR)
-      errval = cb_fout[(int)*req_id].aio_errno;
 #   elif defined(AIX)
       errval = aio_error(cb_fout[(int)*req_id].aio_handle);
 #   else
@@ -919,9 +891,9 @@ Fd_t  elio_open(const char* fname, int type, int mode)
 /*     printf ("parts=%d cbits = %X\n",sparts,cbits);*/
 
      if(mode == ELIO_SHARED)
-      fd->fd = OPEN(fname, ptype, FOPEN_MODE, cbits, cblocks, &ffstat,NULL);
+      fd->fd = OPEN(fname, ptype, FOPEN_MODE, cbits, cblocks, &ffstat, NULL);
      else
-      fd->fd = OPEN(fname, ptype, FOPEN_MODE, 0L, 0,  &ffstat,ffio_str);
+      fd->fd = OPEN(fname, ptype, FOPEN_MODE, 0L   , 0      , &ffstat, ffio_str);
 
   }
 #else
@@ -959,76 +931,6 @@ Fd_t  elio_open(const char* fname, int type, int mode)
 
   return(fd);
 }
-
-
-
-/*\ Collective File Open
-\*/
-Fd_t  elio_gopen(const char* fname, int type)
-{
-  Fd_t fd=NULL;
-
-#ifdef PABLO
-  int pablo_code = PABLO_elio_gopen;
-  PABLO_start( pablo_code );
-#endif
-
-# if defined(PARAGON)
-  if(first_elio_init) elio_init();
-  
-   {
-      char dirname[ELIO_FILENAME_MAX];
-      stat_t statinfo;
-      int ptype, rc;
-
-      switch(type){
-        case ELIO_W:  ptype = O_CREAT | O_TRUNC | O_WRONLY;
-                      break;
-        case ELIO_R:  ptype = O_RDONLY;
-                      break;
-        case ELIO_RW: ptype = O_CREAT | O_RDWR;
-                      break;
-        default:      ELIO_ERROR_NULL(MODEFAIL, 0);
-      }
-
-      if((fd = (Fd_t ) malloc(sizeof(fd_struct)) ) == NULL)
-                   ELIO_ERROR_NULL(ALOCFAIL, 0);
-
-      if( (rc = elio_dirname(fname, dirname, ELIO_FILENAME_MAX)) != ELIO_OK) {
-                   free(fd);
-                   ELIO_ERROR_NULL(rc, 0);
-      }
-
-      if( (rc = elio_stat(dirname, &statinfo)) != ELIO_OK) {
-                   free(fd);
-                   ELIO_ERROR_NULL(rc, 0);
-      }
-
-
-      fd->fs = statinfo.fs;
-      fd->mode = ELIO_SHARED;
-      fd->type = type;
-      fd->extent = 0;
-      fd->next = NULL;
-      fd->fd = gopen(fname, ptype, M_ASYNC, FOPEN_MODE );
-   }
-
-   if((int)fd->fd == -1){
-                   free(fd);
-                   ELIO_ERROR_NULL(OPENFAIL, 0);
-   }
-   fd->name = strdup(fname);
-#  else
-      ELIO_ERROR_NULL(UNSUPFAIL,0);
-#  endif
-
-#ifdef PABLO
-   PABLO_end(pablo_code);
-#endif
-
-   return(fd);
-}
-
 
 /*\ Close File
 \*/

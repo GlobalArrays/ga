@@ -16,7 +16,6 @@
 #  define PABLO_elio_probe    710005
 #  define PABLO_elio_stat    710006
 #  define PABLO_elio_open    710007
-#  define PABLO_elio_gopen    710008
 #  define PABLO_elio_close    710009
 #  define PABLO_elio_set_cb    710010
 #  define PABLO_elio_delete    710011

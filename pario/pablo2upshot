@@ -40,7 +40,6 @@ cat > pab.upshot << END_HEADER
 -13 0 710005 711005 0 0 LightSalmon4: elio_wait
 -13 0 710006 711006 0 0 coral1: elio_stat
 -13 0 710007 711007 0 0 coral4: elio_open
--13 0 710008 711008 0 0 red4: elio_gopen
 -13 0 710009 711009 0 0 DeepPink1: elio_close
 -13 0 710010 711010 0 0 DeepPink4: elio_set_cb
 -13 0 710011 711011 0 0 HotPink1: elio_delete

@@ -77,43 +77,9 @@ int  elio_stat(char *fname, stat_t *statinfo)
     struct  stat      ufs_stat;
     int bsize;
     
-#if defined(PARAGON)
-    struct statpfs  *statpfsbuf;
-    struct estatfs   estatbuf;
-    int              bufsz;
-    char             str_avail[64];
-#else
     struct  STATVFS   ufs_statfs;
-#endif
     
     PABLO_start(PABLO_elio_stat); 
-    
-#if defined(PARAGON)
-    bufsz = sizeof(struct statpfs) + SDIRS_INIT_SIZE;
-    if( (statpfsbuf = (struct statpfs *) malloc(bufsz)) == NULL)
-        ELIO_ERROR(ALOCFAIL,1);
-    if(statpfs(fname, &estatbuf, statpfsbuf, bufsz) == 0)
-    {
-        if(estatbuf.f_type == MOUNT_PFS)
-        statinfo->fs = ELIO_PFS;
-        else if(estatbuf.f_type == MOUNT_UFS || estatbuf.f_type == MOUNT_NFS)
-        statinfo->fs = ELIO_UFS;
-        else
-        ELIO_ERROR(FTYPFAIL, 1);
-
-        /*blocks avail - block=1KB */ 
-        etos(estatbuf.f_bavail, str_avail);
-        if(strlen(str_avail)==10)
-        fprintf(stderr,"elio_stat: possible ext. type conversion problem\n");
-        if((bsize=strlen(str_avail))>10)
-        ELIO_ERROR(CONVFAIL,(long)bsize);
-        statinfo->avail = atoi(str_avail);
-    } 
-    else
-    ELIO_ERROR(STATFAIL,1);
-    free(statpfsbuf);
-
-#else
     
     if(stat(fname, &ufs_stat) != 0)
         ELIO_ERROR(STATFAIL, 1);
@@ -193,7 +159,6 @@ int  elio_stat(char *fname, stat_t *statinfo)
                }
     }
     
-#endif
     PABLO_end(PABLO_elio_stat);
     return(ELIO_OK);
 }
