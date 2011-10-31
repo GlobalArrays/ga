@@ -66,20 +66,31 @@ void do_work()
      Only these elements can be assigned to data using the
      GP_Assign_local_element routine. */
   GP_Distribution(g_p, me, lo, hi);
+  /*
+  printf("p[%d] lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",me,lo[0],hi[0],lo[1],hi[1]);
+  */
   idim = hi[0] - lo[0] + 1;
   jdim = hi[1] - lo[1] + 1;
   for (i=0; i<idim; i++) {
     ii = i + lo[0];
     for (j=0; j<jdim; j++) {
       jj = j + lo[1];
+      /*
+      printf("p[%d] jj: %d\n",me,jj);
+      */
       idx = jj*N_I + ii;
       m_k_ij = ii%Q_I + 1;
       m_l_ij = jj%Q_J + 1;
       /* Allocate local memory for object and assign it values */
       size = sizeof(int)*(m_k_ij*m_l_ij+2);
+      /*
       printf("p[%d] allocating data of size: %d (ptr=%p)\n",GA_Nodeid(),size,ptr);
+      */
       ptr = (int*)GP_Malloc(size);
+      printf("p[%d] src_ptr: %p\n",me,ptr);
+      /*
       printf("p[%d] finished allocating data of size: %d (ptr=%p)\n",GA_Nodeid(),size, ptr);
+      */
       ptr[0] = m_k_ij;
       ptr[1] = m_l_ij;
       for (k=0; k<m_k_ij; k++) {
@@ -88,10 +99,21 @@ void do_work()
         }
       }
       subscript[0] = ii;
+      /*
+      printf("p[%d] ii: %d jj: %d\n",me,ii,jj);
+      */
       subscript[1] = jj;
+      /*
+      printf("p[%d] subscript = [%d:%d]\n",me,subscript[0],subscript[1]);
+      */
+      /*
       printf("p[%d] size is: %d location is [%d:%d] ptr: %p\n",me,size,
           subscript[0],subscript[1], ptr);
+          */
       GP_Assign_local_element(g_p, subscript, (void*)ptr, size);
+      /*
+      printf("p[%d]  completed assignment of [%d:%d]\n",me, subscript[0],subscript[1]);
+      */
     }
   }
   
@@ -100,17 +122,31 @@ void do_work()
   GP_Debug(g_p);
 
   /* Generate bounding coordinates to an arbitrary patch in GP array */
+#if 0
   get_range(ndim, dims, lo, hi);
+#else
+  idx = (me+1)%NGA_Nnodes();
+/*  idx = me; */
+  jj = idx%N_J;
+  ii = (idx-jj)/N_J;
+  lo[0] = ii;
+  hi[0] = ii;
+  lo[1] = jj;
+  hi[1] = jj;
+#endif
+  /*
   printf("p[%d] Getting patch [%d:%d] [%d:%d]\n",me,lo[0],hi[0],lo[1],hi[1]);
+  */
 
   /* Find the total amount of data contained in the patch */
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
-  printf("p[%d] Total size of patch: %d\n",me,nsize);
+  printf("p[%d] Total size of patch[%d:%d][%d:%d]: %d\n",me,lo[0],hi[0],lo[1],hi[1],nsize);
   GP_Get_size(g_p, lo, hi, &size);
   printf("p[%d] Total size of patch data: %d\n",me,size);
 
-  /* Allocate buffers and retrieve data */
+  /* Allocate local buffers and retrieve data */
   buf = (void*)malloc(size);
+      printf("p[%d] dst_ptr: %p\n",me,buf);
   buf_ptr = (void**)malloc(nsize*sizeof(void*));
   buf_size = (int*) malloc(nsize*sizeof(int*));
   ld[0] = hi[0]-lo[0]+1;

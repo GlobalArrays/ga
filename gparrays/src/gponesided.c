@@ -124,9 +124,9 @@ void pgp_get_size(Integer g_p, Integer *lo, Integer *hi,
  * @param[in] hi[ndim]           upper corner of pointer array block
  * @param[out] buf               buffer that holds data
  * @param[out] buf_ptr           buffer that holds pointers to data
- * @param[in] ld[ndim-1]         physical dimensions of pointer buffer
+ * @param[in] ld[ndim-1]         physical dimensions of buf_ptr
  * @param[out] buf_size          buffer that holds size data
- * @param[in] ld_sz[ndim-1]      physical dimensions of size buffer
+ * @param[in] ld_sz[ndim-1]      physical dimensions of buf_size
  * @param[out] size              total size of requested data
  * @param[in] intsize            parameter to distinguish between 4 and 8
  *                               byte integers
@@ -157,6 +157,8 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
     if (GP[handle].lo[i] > GP[handle].hi[i])
       pnga_error("gp_get_size: illegal block size specified", g_p);
   }
+  printf("p[%d] (gp_get) lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
+         me,lo[0],hi[0],lo[1],hi[1]);
 
   pnga_get(GP[handle].g_size_array, lo, hi, buf_size, ld_sz);
   
@@ -173,7 +175,7 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
   idx = 0;
   offset_ptr = 0;
   while(idx<nelems) {
-    /* find corresponding index for idx */
+    /* find local index for idx in the requested block */
     itmp = idx;
     for (j=0; j<ndim-1; j++) {
       index[j] = itmp%block_ld[j];
@@ -241,14 +243,20 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
         offset_sz = offset_sz*ld_sz[d] + index[d] + plo[d] - lo[d];
         offset_d = offset_d*ld[d] + index[d] + plo[d] - lo[d];
       }
+      printf("p[%d] offset_rem: %d offset_sz: %d offset_d: %d\n",me,offset_rem,
+             offset_sz, offset_d);
       if (((int*)buf_size)[offset_sz] > 0) {
         if (rem_ptr[offset_rem].cpid == me) {
           desc[jcnt].src_ptr_array = ((void*)(rem_ptr[offset_rem].addr));
         } else { /* handle remote and SMP case */
+          /*
           desc[jcnt].src_ptr_array = ARMCI_Memat(&rem_ptr[offset_rem],
                                                  sizeof(armci_meminfo_t));
+                                                 */
+          desc[jcnt].src_ptr_array = (void*)rem_ptr[offset_rem].armci_addr;
         }
-        desc[jcnt].dst_ptr_array = buf_ptr[offset_d];
+        desc[jcnt].dst_ptr_array = (void*)buf_ptr[offset_d];
+        desc[jcnt].src_ptr_array = buf_ptr[offset_d];
         if (intsize == 4) {
           desc[jcnt].bytes = (int)((int*)buf_size)[offset_sz];
         } else {
@@ -266,7 +274,8 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
                 (long)(index[0]+plo[0]), (long)(index[1]+plo[1]));
       }
     }
-  printf("p[%ld] Got to 5\n",(long)pnga_nodeid());
+  printf("p[%ld] (gp_get) Got to 5 jcnt: %d p: %d\n",(long)pnga_nodeid(),jcnt,p);
+  pnga_sync();
   if (jcnt > 0) {
     rc = ARMCI_GetV(desc, (int)jcnt, (int)p);
 printf("p[%ld] Got to 6\n",(long)pnga_nodeid());
