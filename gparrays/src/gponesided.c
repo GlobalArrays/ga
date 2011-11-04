@@ -256,7 +256,6 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
           desc[jcnt].src_ptr_array = (void*)rem_ptr[offset_rem].armci_addr;
         }
         desc[jcnt].dst_ptr_array = (void*)buf_ptr[offset_d];
-        desc[jcnt].src_ptr_array = buf_ptr[offset_d];
         if (intsize == 4) {
           desc[jcnt].bytes = (int)((int*)buf_size)[offset_sz];
         } else {
