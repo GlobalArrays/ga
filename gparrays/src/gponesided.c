@@ -144,6 +144,7 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
   Integer nelems, index[GP_MAX_DIM];
   Integer block_ld[GP_MAX_DIM], block_ld_loc[GP_MAX_DIM];
   Integer me = (Integer)armci_msg_me();
+  void **src_array, **dst_array;
   int *int_ptr;
   armci_meminfo_t *rem_ptr;
   int rc;
@@ -197,6 +198,10 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
   }
   *size = offset_ptr;
 
+  /* allocate src and destination arrays */
+  src_array = (void**)malloc(sizeof(void*));
+  dst_array = (void**)malloc(sizeof(void*));
+
   /* locate the processors containing some portion of the patch represented by
    * lo and hi and return the results in _gp_map, gp_proclist, and np.
    * _gp_proclist contains a list of processors containing some portion of the
@@ -247,15 +252,17 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
              offset_sz, offset_d);
       if (((int*)buf_size)[offset_sz] > 0) {
         if (rem_ptr[offset_rem].cpid == me) {
-          desc[jcnt].src_ptr_array = ((void*)(rem_ptr[offset_rem].addr));
+          src_array[0] = ((void*)(rem_ptr[offset_rem].addr));
         } else { /* handle remote and SMP case */
-          /*
-          desc[jcnt].src_ptr_array = ARMCI_Memat(&rem_ptr[offset_rem],
+          src_array[0] = ARMCI_Memat(&rem_ptr[offset_rem],
                                                  sizeof(armci_meminfo_t));
-                                                 */
-          desc[jcnt].src_ptr_array = (void*)rem_ptr[offset_rem].armci_addr;
+          /*
+          src_array[0] = (void*)rem_ptr[offset_rem].armci_addr;
+          */
         }
-        desc[jcnt].dst_ptr_array = (void*)buf_ptr[offset_d];
+        dst_array[0] = (void*)buf_ptr[offset_d];
+        desc[jcnt].src_ptr_array = src_array;
+        desc[jcnt].dst_ptr_array = dst_array;
         if (intsize == 4) {
           desc[jcnt].bytes = (int)((int*)buf_size)[offset_sz];
         } else {
@@ -274,7 +281,6 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
       }
     }
   printf("p[%ld] (gp_get) Got to 5 jcnt: %d p: %d\n",(long)pnga_nodeid(),jcnt,p);
-  pnga_sync();
   if (jcnt > 0) {
     rc = ARMCI_GetV(desc, (int)jcnt, (int)p);
 printf("p[%ld] Got to 6\n",(long)pnga_nodeid());
@@ -286,5 +292,7 @@ printf("p[%ld] Got to 6\n",(long)pnga_nodeid());
     free(rem_ptr);
     free(desc);
   }
+  free(src_array);
+  free(dst_array);
   printf("p[%ld] Got to 7\n",(long)pnga_nodeid());
 }
