@@ -1104,22 +1104,21 @@ static int putn_find_empty_slot(void)
   return -1;
 } /* putn_find_empty_slot */
 
-static int putn_intersect_coords(Integer g_a, Integer *lo, Integer *hi, Integer *lon,
-				 Integer *hin)
+static int putn_intersect_coords(Integer g_a, Integer *lo, Integer *hi, Integer *ecoords)
 {
   int ndims, i;
 
   ndims = pnga_ndim(g_a);
 
   for (i = 0; i < ndims; i++)
-    if ((lon[i] < lo[i]) || (hin[i] > hi[i]))
+    if ((ecoords[i] < lo[i]) || (ecoords[i] > hi[i]))
       return 0;
 
   return 1;
 } /* putn_intersect_coords */
 
 static int putn_verify_element_in_buf(Integer g_a, Integer *lo, Integer *hi, void *buf,
-				      Integer *ld, Integer *lon, Integer *hin, void *bufn,
+				      Integer *ld, Integer *ecoords, void *bufn,
 				      Integer elemSize)
 {
   int i, ndims;
@@ -1129,11 +1128,11 @@ static int putn_verify_element_in_buf(Integer g_a, Integer *lo, Integer *hi, voi
   off /= elemSize; /* Offset in terms of elements */
 
   ndims = pnga_ndim(g_a);
-  eoff = lon[0] - lo[0];
+  eoff = ecoords[0] - lo[0];
 
   /* Check in Fortran ordering */
   for (i = 1; i < ndims; i++)
-    eoff += (lon[i] - lo[i]) * ld[i - 1];
+    eoff += (ecoords[i] - lo[i]) * ld[i - 1];
 
   return (eoff == (Integer)off); /* Must be the same for a correct notify buffer */
 } /* putn_verify_element_in_buf */
@@ -1142,13 +1141,10 @@ static int putn_verify_element_in_buf(Integer g_a, Integer *lo, Integer *hi, voi
 #   pragma weak wnga_nbput_notify = pnga_nbput_notify
 #endif
 
-void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer g_b, Integer *lon, Integer *hin, void *bufn, Integer *nbhandle)
+void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer g_b, Integer *ecoords, void *bufn, Integer *nbhandle)
 {
   Integer ldn[MAXDIM] = { 1 };
   int pos, intersect;
-
-  if (!putn_check_single_elem(g_b, lon, hin))
-    pnga_error("Notify buffer must be a single element!", 0);
 
   /* Make sure everything has been initialized */
   if (!putn_handles_initted) {
@@ -1163,13 +1159,13 @@ void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer
   putn_handles[pos].orighdl = nbhandle; /* Store original handle for nbwait_notify */
 
   if (g_a == g_b)
-    intersect = putn_intersect_coords(g_a, lo, hi, lon, hin);
+    intersect = putn_intersect_coords(g_a, lo, hi, ecoords);
   else
     intersect = 0;
 
   if (!intersect) { /* Simpler case */
     ngai_put_common(g_a, lo, hi, buf, ld, 0, -1, &putn_handles[pos].firsthdl);
-    ngai_put_common(g_b, lon, hin, bufn, ldn, 0, -1, &putn_handles[pos].elementhdl);
+    ngai_put_common(g_b, ecoords, ecoords, bufn, ldn, 0, -1, &putn_handles[pos].elementhdl);
 
     putn_handles[pos].elem_copy = NULL;
   }
@@ -1180,7 +1176,7 @@ void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer
     char *elem;
 
     size = GA[handle].elemsize;
-    ret = putn_verify_element_in_buf(g_a, lo, hi, buf, ld, lon, hin, bufn, size);
+    ret = putn_verify_element_in_buf(g_a, lo, hi, buf, ld, ecoords, bufn, size);
 
     if (!ret)
       pnga_error("Intersecting buffers, but notify element is not in buffer!", 0);
@@ -1195,7 +1191,8 @@ void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer
     putn_handles[pos].elem_copy = elem_copy;
 
     ngai_put_common(g_a, lo, hi, buf, ld, 0, -1, &putn_handles[pos].firsthdl);
-    ngai_put_common(g_a, lon, hin, elem_copy, ldn, 0, -1, &putn_handles[pos].elementhdl);
+    ngai_put_common(g_a, ecoords, ecoords, elem_copy, ldn, 0, -1,
+		    &putn_handles[pos].elementhdl);
   }
 } /* pnga_nbput_notify */
 

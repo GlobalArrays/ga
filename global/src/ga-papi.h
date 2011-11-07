@@ -153,7 +153,7 @@ extern void pnga_nbget(Integer g_a, Integer *lo, Integer *hi, void *buf,
                        Integer *ld, Integer *nbhandle);
 extern void pnga_nbput(Integer g_a, Integer *lo, Integer *hi, void *buf,
                        Integer *ld, Integer *nbhandle);
-extern void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer g_b, Integer *lon, Integer *hin, void *bufn, Integer *nbhandle);
+extern void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer g_b, Integer *ecoords, void *bufn, Integer *nbhandle);
 extern void pnga_nbwait_notify(Integer *nbhandle);
 extern Integer pnga_nbtest(Integer *nbhandle);
 extern void pnga_nbwait(Integer *nbhandle);
