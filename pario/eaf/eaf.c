@@ -56,6 +56,7 @@
 #include "elio.h"
 #include "eaf.h"
 #include "eafP.h"
+#include "macdecls.h"
 
 #ifdef OPEN_MAX
 #   define EAF_MAX_FILES OPEN_MAX
@@ -82,8 +83,13 @@ static struct {
     double t_awrite;  /**< Wall seconds asynchronous writing */
     double t_aread;   /**< Wall seconds asynchronous reading */
     double t_wait;    /**< Wall seconds waiting */
+    long size;        /**< size for MA hack */
+    long handle;      /**< handle for MA hack */
+    char *pointer;    /**< pointer for MA */
 } file[EAF_MAX_FILES];
 
+
+int eaf_flushbuf(int , eaf_off_t , const void *, size_t );
 
 static int valid_fd(int fd)
 {
@@ -128,7 +134,9 @@ static double wall_time(void)
  */
 int EAF_Open(const char *fname, int type, int *fd)
 {
-    int i=0;
+  int i=0, j=0, found=0;
+  char *ptr;
+  long handle, index;
 #ifdef CRAY_XT
     int myid;
 #   include <mpi.h>
@@ -136,11 +144,59 @@ int EAF_Open(const char *fname, int type, int *fd)
     while ((i<EAF_MAX_FILES) && file[i].fname) /* Find first empty slot */
         i++;
     if (i == EAF_MAX_FILES) return EAF_ERR_MAX_OPEN;
+	
+    file[i].size=0;
+    for (j=0; j< i; j++){
+      if(strcmp(file[j].fname,fname) == 0 && file[j].size >0) {
+	found=1;
+	break;
+      }
+    }
+      
+    if(type > 0) {
+      /* check if this file aka MA region labeled by fname is already open with size >=0*/
+#ifdef DEBUG
+      printf(" JJJ %d III %d fname %s filejfname %s found %d \n", j, i, fname, file[j].fname, found);
+#endif
+      if(found == 0 ) {
+/* if arg gt 1M then use remainder as size */
+	/* we grab 3/4 of avail mem */
+        if(type > 1000000) {
+	  file[i].size=type-1000000;
+	}else{
+	file[i].size=MA_inquire_avail(MT_CHAR)*8/10;
+	}
 
+	if (!MA_alloc_get(MT_CHAR, file[i].size, fname, &handle, &index))
+	  return EAF_ERR_OPEN;
+    /* MA hack: we pass   type = sizeof MA alloc in megabytes */
+	MA_get_pointer(handle, &ptr);
     if (!(file[i].fname = strdup(fname)))
-        return EAF_ERR_MEMORY;
+	return EAF_ERR_MEMORY;
+      file[i].pointer=ptr;
+      file[i].handle=handle;
+      }else{
+#ifdef DEBUG
+	  printf(" found old fileMA  %d size %ld \n", j, file[j].size);
+#endif
+	  /* need check if new size is <= old size*/
+	  i=j;
+	  
+      }
+	type=0;
+#ifdef DEBUG
+      printf(" size %ld ptr %p \n", file[i].size, file[i].pointer);
+#endif
+      }else{
+    if (!(file[i].fname = strdup(fname)))
+	return EAF_ERR_MEMORY;
 
-    if (!(file[i].elio_fd = elio_open(fname, type, ELIO_PRIVATE))) {
+      if(type > 0) type = EAF_RW;
+#ifdef DEBUG
+      printf(" opening regular %d eaf %s \n", i, fname);
+#endif
+
+      if (!(file[i].elio_fd = elio_open(fname, type, ELIO_PRIVATE))) {
 #ifdef CRAY_XT
         MPI_Comm_rank(MPI_COMM_WORLD,&myid);
         /* printf(" %d sleeping for %d usec \n", myid, (myid+1)/4); */
@@ -153,6 +209,7 @@ int EAF_Open(const char *fname, int type, int *fd)
 #ifdef CRAY_XT
         }
 #endif
+      }
     }
 
     file[i].nwait = file[i].nread = file[i].nwrite = 
@@ -173,11 +230,19 @@ int EAF_Open(const char *fname, int type, int *fd)
 int EAF_Close(int fd)
 {
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
-
+    
+    if (file[fd].size > 0) {
+#ifdef DEBUG
+      printf(" maclosing %d \n", fd);
+#endif
+      /*nothin to do here     MA_free_heap(file[fd].handle);*/
+      return 0;
+    }else{
     free(file[fd].fname);
     file[fd].fname = 0;
 
     return elio_close(file[fd].elio_fd);
+    }
 }
 
 
@@ -192,8 +257,26 @@ int EAF_Write(int fd, eaf_off_t offset, const void *buf, size_t bytes)
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
+    if (file[fd].size > 0) {
+      if((offset+bytes)>file[fd].size){
+#if 1
+	printf("eaf_write failure: increase MA stack memory \n ");
+ 	return EAF_ERR_WRITE;
+#else
+	rc=0;
+	printf("eaf_write: offset %ld larger than MA size %ld ptr %p \n", (long)(offset+bytes), file[fd].size, file[fd].pointer);
+	rc=eaf_flushbuf(fd, offset, buf, bytes);
+	printf("eaf_write: from flushbug rc %d bytes %d\n ", rc, bytes);
+#endif
+      }else{
+      memcpy(((char*)file[fd].pointer)+(long)offset, buf, bytes);
+      rc=bytes;
+      }
+    }else{
     rc = elio_write(file[fd].elio_fd, (Off_t) offset, buf, (Size_t) bytes);
+    }
     if (rc != ((Size_t)bytes)){
+	printf("eaf_write: rc ne bytes %d bytes %d\n ", rc, bytes);
         if(rc < 0) return((int)rc); /* rc<0 means ELIO detected error */
         else return EAF_ERR_WRITE;
     }else {
@@ -222,7 +305,18 @@ int EAF_Awrite(
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
+    if (file[fd].size > 0) {
+      if(offset>file[fd].size){
+	rc=0;
+	printf("eaf_awrite: offset %f larger than MA size %ld \n", offset, file[fd].size);
+	return EAF_ERR_WRITE;
+      }else{
+      memcpy(((char*)file[fd].pointer)+(long)offset, buf, bytes);
+      rc=bytes;
+      }
+    }else{
     rc = elio_awrite(file[fd].elio_fd, (Off_t)offset, buf, (Size_t)bytes, &req);
+    }
     if(!rc){
         *req_id = req;
         file[fd].nawrite++;
@@ -243,8 +337,18 @@ int EAF_Read(int fd, eaf_off_t offset, void *buf, size_t bytes)
     Size_t rc;
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
-
+    
+    if (file[fd].size > 0) {
+      if(offset>file[fd].size){
+	rc=0;
+	printf("eaf_read: offset %f larger than MA size %ld \n", offset, file[fd].size);
+      }else{
+      memcpy(buf, ((char*)file[fd].pointer)+(long)offset,  bytes);
+      rc=bytes;
+      }
+    }else{
     rc = elio_read(file[fd].elio_fd, (Off_t) offset, buf, (Size_t) bytes);
+    }
     if (rc != ((Size_t)bytes)){
         if(rc < 0) return((int)rc); /* rc<0 means ELIO detected error */
         else return EAF_ERR_READ;
@@ -272,7 +376,18 @@ int EAF_Aread(int fd, eaf_off_t offset, void *buf, size_t bytes, int *req_id)
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
+    if (file[fd].size > 0) {
+      if(offset>file[fd].size){
+	rc=0;
+	printf("eaf_aread: offset %f larger than MA size %ld \n", offset, file[fd].size);
+        return EAF_ERR_READ;
+      }else{
+      memcpy(file[fd].pointer, buf, bytes);
+      rc=0;
+      }
+    }else{
     rc = elio_aread(file[fd].elio_fd, (Off_t) offset, buf, (Size_t)bytes, &req);
+    }
 
     if(!rc){
         *req_id = req;
@@ -294,7 +409,11 @@ int EAF_Wait(int fd, int req_id)
     int code;
 
     io_request_t req = req_id;
+    if (file[fd].size > 0) {
+      /* got nothin' to do */
+    }else{
     code = elio_wait(&req);
+    }
     file[fd].t_wait += wall_time() - start;
     file[fd].nwait++;
 
@@ -311,8 +430,16 @@ int EAF_Probe(int req_id, int *status)
 {
     io_request_t req = req_id;
     int rc;
-
+#if 0
+    if (file[fd].size > 0) {
+      /* got nothin' to do */
+      rc=0;
+    }else{
     rc = elio_probe(&req, status);
+    }
+#else
+    rc=0;
+#endif
     if(!rc) *status = !(*status == ELIO_DONE);
     return rc;
 }
@@ -332,13 +459,35 @@ int EAF_Delete(const char *fname)
        return EAF_OK; 
        */
 
+  int  j, found=0;
+  /* get fd from fname */
+  for (j=0; (j< EAF_MAX_FILES) && file[j].fname; j++){
+      if(strcmp(file[j].fname,fname) == 0 && file[j].size >0) {
+	found=1;
+	break;
+      }
+    }
+#ifdef DEBUG
+  printf("eaf_delete: fname %s found %d \n", fname, found);
+  if (found ==1) printf("eaf_delete: j %d filej.fname %s \n", j, file[j].fname);
+#endif
+    if (found > 0) {
+       if(!MA_free_heap(file[j].handle)) {
+	 MA_summarize_allocated_blocks();
+	 return EAF_ERR_UNLINK;
+       }
+       else
+	 file[j].fname= NULL;
+           return EAF_OK;
+       }else{
     /* Now that ELIO files can have extents must call its
        routine to delete files */
 
-    if (elio_delete(fname) == ELIO_OK)
-        return EAF_OK;
-    else
-        return EAF_ERR_UNLINK;
+  if (elio_delete(fname) == ELIO_OK)
+    return EAF_OK;
+  else
+    return EAF_ERR_UNLINK;
+    }
 }
 
 
@@ -481,7 +630,13 @@ int EAF_Length(int fd, eaf_off_t *length)
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
+    if (file[fd].size > 0) {
+      // should be in MB???
+      len=file[fd].size;
+      rc=0;
+    }else{
     rc = elio_length(file[fd].elio_fd, &len);
+    }
     if(!rc) *length = (eaf_off_t) len;
     return rc;
 }
@@ -546,4 +701,51 @@ void EAF_Print_stats(int fd)
         printf("------------------------------------------------------------\n\n");
     }
     fflush(stdout);
+}
+
+int eaf_flushbuf(int fd, eaf_off_t offset, const void *buf, size_t bytes)
+     /* once we run out of MA memory, let's open a real eaf file,
+	flush the whole MA allocation to the file, plus the last bytes 
+      */
+{
+  int rc, fd_new;
+  long masize, mahandle;
+  char *mapointer, *oldfname;
+  double start = wall_time();
+  /* invalidate old FD but do not deallocate MA */
+  masize=file[fd].size;
+  mahandle=file[fd].handle;
+  mapointer=file[fd].pointer;
+  oldfname = malloc((unsigned) (strlen(file[fd].fname)));
+  strcpy(oldfname, file[fd].fname);
+  file[fd].fname= NULL;
+  rc=EAF_Open(oldfname, EAF_RW, &fd_new);
+  (void) free(oldfname);
+    if (rc !=0 ) {
+      printf(" flushbuf: open failure \n");
+      return rc;
+    }
+    /* flush MA */
+    rc = elio_write(file[fd_new].elio_fd, 0., (char*)mapointer, (Size_t) masize);
+    /* write last bytes */
+    rc = elio_write(file[fd_new].elio_fd, (Off_t) file[fd].size , buf, (Size_t) bytes);
+    if (rc != bytes){
+      printf(" flushbuf: write failure \n");
+        if(rc < 0) return((int)rc); /* rc<0 means ELIO detected error */
+ 	else return EAF_ERR_WRITE;
+    }else {
+	file[fd_new].nwrite++;
+	file[fd_new].nb_write += file[fd].size;
+	file[fd_new].nwrite++;
+	file[fd_new].nb_write += bytes;
+	file[fd_new].t_write += wall_time() - start;
+    }
+    if(!MA_free_heap(mahandle)) {
+      MA_summarize_allocated_blocks();
+      return EAF_ERR_UNLINK;
+    }
+  /* swap fd with fd_new, is this too little?? */
+  fd = fd_new;
+
+  return rc;
 }
