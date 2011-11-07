@@ -1230,6 +1230,18 @@ void FATR nga_nbput_(Integer *g_a, Integer *lo,
   wnga_nbput(*g_a, lo, hi, buf, ld, nbhandle);
 }
 
+void FATR nga_nbput_notify_(Integer *g_a, Integer *lo, Integer *hi, void *buf, Integer *ld,
+			    Integer *g_b, Integer *lon, Integer *hin, void *bufn,
+			    Integer *nbhandle)
+{
+  wnga_nbput_notify(*g_a, lo, hi, buf, ld, *g_b, lon, hin, bufn, nbhandle);
+} /* nga_nbput_notify_ */
+
+void FATR nga_nbwait_notify_(Integer *nbhandle)
+{
+  wnga_nbwait_notify(nbhandle);
+} /* nga_nbwait_notify_ */
+
 Integer FATR ga_nbtest_(Integer *nbhandle)
 {
   return wnga_nbtest(nbhandle);

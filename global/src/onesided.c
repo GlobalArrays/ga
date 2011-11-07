@@ -1063,6 +1063,170 @@ void pnga_nbput(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, I
   ngai_put_common(g_a,lo,hi,buf,ld,0,-1,nbhandle); 
 }
 
+/**
+ * (Non-blocking) Put an N-dimensional patch of data into a Global Array and notify the other
+                  side with information on another Global Array
+ */
+
+#define HANDLES_OUTSTANDING 10
+/* Maximum number of outstanding put/notify handles */
+
+typedef struct {
+  Integer *orighdl;
+  Integer firsthdl;
+  Integer elementhdl;
+  void *elem_copy;
+} gai_putn_hdl_t;
+
+static int putn_handles_initted = 0;
+static gai_putn_hdl_t putn_handles[HANDLES_OUTSTANDING];
+
+static int putn_check_single_elem(Integer g_a, Integer *lon, Integer *hin)
+{
+  int ndims, i;
+
+  ndims = pnga_ndim(g_a);
+  for (i = 0; i < ndims; i++)
+    if (lon[i] != hin[i])
+      return 0;
+
+  return 1;
+} /* putn_check_single_elem */
+
+static int putn_find_empty_slot(void)
+{
+  int i;
+
+  for (i = 0; i < HANDLES_OUTSTANDING; i++)
+    if (!putn_handles[i].orighdl)
+      return i;
+
+  return -1;
+} /* putn_find_empty_slot */
+
+static int putn_intersect_coords(Integer g_a, Integer *lo, Integer *hi, Integer *lon,
+				 Integer *hin)
+{
+  int ndims, i;
+
+  ndims = pnga_ndim(g_a);
+
+  for (i = 0; i < ndims; i++)
+    if ((lon[i] < lo[i]) || (hin[i] > hi[i]))
+      return 0;
+
+  return 1;
+} /* putn_intersect_coords */
+
+static int putn_verify_element_in_buf(Integer g_a, Integer *lo, Integer *hi, void *buf,
+				      Integer *ld, Integer *lon, Integer *hin, void *bufn,
+				      Integer elemSize)
+{
+  int i, ndims;
+  ptrdiff_t off = (char *)bufn - (char *)buf;
+  Integer eoff = 0;
+
+  off /= elemSize; /* Offset in terms of elements */
+
+  ndims = pnga_ndim(g_a);
+  eoff = lon[0] - lo[0];
+
+  /* Check in Fortran ordering */
+  for (i = 1; i < ndims; i++)
+    eoff += (lon[i] - lo[i]) * ld[i - 1];
+
+  return (eoff == (Integer)off); /* Must be the same for a correct notify buffer */
+} /* putn_verify_element_in_buf */
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_nbput_notify = pnga_nbput_notify
+#endif
+
+void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer g_b, Integer *lon, Integer *hin, void *bufn, Integer *nbhandle)
+{
+  Integer ldn[MAXDIM] = { 1 };
+  int pos, intersect;
+
+  if (!putn_check_single_elem(g_b, lon, hin))
+    pnga_error("Notify buffer must be a single element!", 0);
+
+  /* Make sure everything has been initialized */
+  if (!putn_handles_initted) {
+    memset(putn_handles, 0, sizeof(putn_handles));
+    putn_handles_initted = 1;
+  }
+
+  pos = putn_find_empty_slot();
+  if (pos == -1) /* no empty handles available */
+    pnga_error("Too many outstanding put/notify operations!", 0);
+
+  putn_handles[pos].orighdl = nbhandle; /* Store original handle for nbwait_notify */
+
+  if (g_a == g_b)
+    intersect = putn_intersect_coords(g_a, lo, hi, lon, hin);
+  else
+    intersect = 0;
+
+  if (!intersect) { /* Simpler case */
+    ngai_put_common(g_a, lo, hi, buf, ld, 0, -1, &putn_handles[pos].firsthdl);
+    ngai_put_common(g_b, lon, hin, bufn, ldn, 0, -1, &putn_handles[pos].elementhdl);
+
+    putn_handles[pos].elem_copy = NULL;
+  }
+  else {
+    int ret, i;
+    Integer handle = GA_OFFSET + g_a, size;
+    void *elem_copy;
+    char *elem;
+
+    size = GA[handle].elemsize;
+    ret = putn_verify_element_in_buf(g_a, lo, hi, buf, ld, lon, hin, bufn, size);
+
+    if (!ret)
+      pnga_error("Intersecting buffers, but notify element is not in buffer!", 0);
+
+    elem_copy = malloc(size);
+    memcpy(elem_copy, bufn, size);
+
+    elem = bufn;
+    for (i = 0; i < size; i++)
+      elem[i] += 1; /* Increment each byte by one, safe? */
+
+    putn_handles[pos].elem_copy = elem_copy;
+
+    ngai_put_common(g_a, lo, hi, buf, ld, 0, -1, &putn_handles[pos].firsthdl);
+    ngai_put_common(g_a, lon, hin, elem_copy, ldn, 0, -1, &putn_handles[pos].elementhdl);
+  }
+} /* pnga_nbput_notify */
+
+/**
+ *  Wait for a non-blocking put/notify to complete
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_nbwait_notify = pnga_nbwait_notify
+#endif
+
+void pnga_nbwait_notify(Integer *nbhandle)
+{
+  int i;
+
+  for (i = 0; i < HANDLES_OUTSTANDING; i++)
+    if (putn_handles[i].orighdl == nbhandle)
+      break;
+
+  if (i >= HANDLES_OUTSTANDING)
+    return; /* Incorrect handle used or maybe wait was called multiple times? */
+
+  nga_wait_internal(&putn_handles[i].firsthdl);
+  nga_wait_internal(&putn_handles[i].elementhdl);
+
+  if (putn_handles[i].elem_copy) {
+    free(putn_handles[i].elem_copy);
+    putn_handles[i].elem_copy = NULL;
+  }
+
+  putn_handles[i].orighdl = NULL;
+} /* pnga_nbwait_notify */
 
 /**
  * Put an N-dimensional patch of data into a Global Array
