@@ -394,9 +394,9 @@ void test_1D()
       if (!CHECK_RESULT) {
         printf("%d\t%d\t%.2e  %.2e  %.2e  %.2e  %.2e  %.2e\n",
                bytes, loop,
-               latency_get / 10e-6, bandwidth_get,
-               latency_put / 10e-6, bandwidth_put,
-               latency_acc / 10e-6, bandwidth_acc);
+               latency_get / 1e-6, bandwidth_get,
+               latency_put / 1e-6, bandwidth_put,
+               latency_acc / 1e-6, bandwidth_acc);
       }
     }
   }
@@ -510,9 +510,9 @@ void test_2D()
       if (!CHECK_RESULT) {
         printf("%d\t%d\t%.2e  %.2e  %.2e  %.2e  %.2e  %.2e\n",
                bytes, loop,
-               latency_get / 10e-6, bandwidth_get,
-               latency_put / 10e-6, bandwidth_put,
-               latency_acc / 10e-6, bandwidth_acc);
+               latency_get / 1e-6, bandwidth_get,
+               latency_put / 1e-6, bandwidth_put,
+               latency_acc / 1e-6, bandwidth_acc);
       }
     }
   }
