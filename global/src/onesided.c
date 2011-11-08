@@ -54,6 +54,10 @@
 #if HAVE_ASSERT_H
 #   include <assert.h>
 #endif
+#if HAVE_STDDEF_H
+#include <stddef.h>
+#endif
+
 #include "global.h"
 #include "globalp.h"
 #include "base.h"
@@ -1125,7 +1129,11 @@ static int putn_verify_element_in_buf(Integer g_a, Integer *lo, Integer *hi, voi
 				      Integer elemSize)
 {
   int i, ndims;
+#ifdef HAVE_STDDEF_H
   ptrdiff_t off = (char *)bufn - (char *)buf;
+#else
+  Integer off = (char *)bufn - (char *)buf;
+#endif
   Integer eoff = 0;
 
   off /= elemSize; /* Offset in terms of elements */
