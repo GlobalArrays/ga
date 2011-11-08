@@ -107,7 +107,7 @@ AC_HEADER_DIRENT
 AC_HEADER_STDBOOL
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-GA_CHECK_HEADERS([assert.h errno.h fcntl.h ffio.h limits.h linux/limits.h malloc.h math.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/file.h sys/fsid.h sys/fstyp.h sys/ioctl.h sys/iosw.h sys/ipc.h sys/mman.h sys/mount.h sys/param.h sys/sem.h sys/shm.h sys/stat.h sys/statfs.h sys/statvfs.h sys/time.h sys/vfs.h time.h unistd.h windows.h],
+GA_CHECK_HEADERS([assert.h errno.h fcntl.h ffio.h limits.h linux/limits.h malloc.h math.h stddef.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/file.h sys/fsid.h sys/fstyp.h sys/ioctl.h sys/iosw.h sys/ipc.h sys/mman.h sys/mount.h sys/param.h sys/sem.h sys/shm.h sys/stat.h sys/statfs.h sys/statvfs.h sys/time.h sys/vfs.h time.h unistd.h windows.h],
 [], [],
 [@%:@ifdef HAVE_SYS_TYPES_H
 @%:@include <sys/types.h>
