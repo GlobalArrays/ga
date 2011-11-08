@@ -87,7 +87,9 @@ void* pgp_malloc(size_t size)
     size_t meminfo_sz = sizeof(armci_meminfo_t);
     
     ARMCI_Memget(size+meminfo_sz, &meminfo, 0);
+    /*bjp
     printf("%d: GP_Malloc: ptr = %p\n", pnga_nodeid(), meminfo.addr);fflush(stdout);
+    */
 
     /* store the meminfo handle at the beginning of segment */
     memcpy( meminfo.addr, &meminfo, meminfo_sz);
@@ -97,7 +99,9 @@ void* pgp_malloc(size_t size)
     meminfo_ptr->armci_addr = ((char*)meminfo_ptr->armci_addr) + meminfo_sz;
     meminfo_ptr->addr       = ((char*)meminfo_ptr->addr) + meminfo_sz;
     meminfo_ptr->size      -= meminfo_sz;
+    /*bjp
     printf("%d: GP_Malloc: ptr = %p\n", pnga_nodeid(), meminfo_ptr->addr);fflush(stdout);
+    */
     
     return meminfo_ptr->addr;
 }
@@ -286,7 +290,6 @@ void pgp_debug(Integer g_p)
   Integer lo[2],hi[2],ld;
   Integer i, j, idim, jdim, size;
   handle = g_p + GP_OFFSET;
-    printf("Got to 1\n");
   lo[0] = 1;
   lo[1] = 1;
   idim = GP[handle].dims[0];
@@ -294,14 +297,10 @@ void pgp_debug(Integer g_p)
   hi[0] = idim;
   hi[1] = jdim;
   ld = idim;
-    printf("Got to 2\n");
   if (pnga_nodeid() == 0) {
     size = idim*jdim;
-    printf("p[%ld] Got to 3 size: %ld\n",(long)pnga_nodeid(),(long)size);
     ptr = (int*)malloc(size*sizeof(int));
-    printf("p[%ld] Got to 4\n",(long)pnga_nodeid());
     pnga_get(GP[handle].g_size_array, lo, hi, ptr, &ld);
-    printf("p[%ld] Got to 5\n",(long)pnga_nodeid());
     size = 0;
     for (i=0; i<idim; i++) {
       for (j=0; j<jdim; j++) {
@@ -361,17 +360,21 @@ void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Intege
   /* check to make sure that element is located in local block of GP array */
   for (i=0; i<GP[handle].ndim; i++) {
     if (subscript[i]<GP[handle].lo[i] || subscript[i]>GP[handle].hi[i]) {
+      /*bjp
       printf("p[%d] subscript[%d]: %d\n",pnga_nodeid(),i,subscript[i]);
       printf("p[%d] lo[%d]: %d hi[%d]: %d\n",pnga_nodeid(),i,GP[handle].lo[i],i,
              GP[handle].hi[i]);
+             */
       pnga_error("gp_assign_local_element: subscript out of bounds", i);
     }
   }
   pnga_access_ptr(GP[handle].g_size_array,subscript,subscript,&gp_ptr,ld);
   *((int*)gp_ptr) = size;
+  /*bjp
   printf("p[%ld] (internal) size %d at location [%ld:%ld]\n",
           (long)pnga_nodeid(), *((int*)gp_ptr),
           (long)subscript[0],(long)subscript[1]);
+          */
   pnga_release_update(GP[handle].g_size_array, subscript, subscript);
   pnga_access_ptr(GP[handle].g_ptr_array,subscript,subscript,&gp_ptr,ld);
   *((armci_meminfo_t*)gp_ptr) =

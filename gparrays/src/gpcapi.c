@@ -125,8 +125,8 @@ void GP_Get(int g_p, int *lo, int *hi, void *buf, void **buf_ptr, int *ld,
   Integer _gp_ld[GP_MAX_DIM], _gp_ld_sz[GP_MAX_DIM];
   COPYINDEX_C2F(lo, _gp_lo, ndim);
   COPYINDEX_C2F(hi, _gp_hi, ndim);
-  COPYC2F(ld, _gp_ld, ndim);
-  COPYC2F(ld_sz, _gp_ld_sz, ndim);
+  COPYC2F(ld, _gp_ld, ndim-1);
+  COPYC2F(ld_sz, _gp_ld_sz, ndim-1);
   wgp_get(ag_p, _gp_lo, _gp_hi, buf, buf_ptr, _gp_ld,
           buf_size, _gp_ld_sz, &asize, 4);
   *size = (int)asize;
