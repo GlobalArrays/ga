@@ -577,6 +577,24 @@ void *PARMCI_Malloc_local(armci_size_t bytes) {
     ARMCI_PR_DBG("enter",0);
     ARMCI_PR_DBG("exit",0);
     rptr = (void *)kr_malloc((size_t)bytes, &ctx_localmem, 0, NULL, NULL);
+
+  # ifdef CRAY_REGISTER_ARMCI_MALLOC
+    onesided_hnd_t cp_hnd;
+    cos_mdesc_t local_mdesc;
+
+ // get the onesided v2.0 api handle for the compute process
+    cpGetOnesidedHandle(&cp_hnd);
+
+ // register the memory
+    onesided_mem_register(cp_hnd, rptr, bytes, 0, &local_mdesc);
+
+ // for now; until we can search through the linked-list of registered memory
+ // to deregister it by pointer (ptr) value only [see ARMCI_Free_local], we'll
+ // take advanatage of lazy deregistration and assume that this segment will
+ // be kept around as long as it's active.
+    onesided_mem_deregister(cp_hnd, &local_mdesc);
+  # endif
+
     //printf("\n%d:%s:%d:%p\n",armci_me,__FUNCTION__,bytes,rptr);
     return rptr;
 }
@@ -611,6 +629,12 @@ int PARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 
 #  ifdef USE_MALLOC
     if(armci_nproc == 1) {
+
+    # ifdef CRAY_REGISTER_ARMCI_MALLOC
+      printf("%d: special case where ARMCI_Malloc uses malloc for nppn=1 - broken!\n",armci_me);
+      abort();
+    # endif
+
       ptr = kr_malloc((size_t) bytes, &ctx_localmem, 0, NULL, NULL);
       if(bytes) if(!ptr) armci_die("armci_malloc:malloc 1 failed",(int)bytes);
       ptr_arr[armci_me] = ptr;
@@ -631,16 +655,92 @@ int PARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 
       bzero((char*)ptr_arr,armci_nproc*sizeof(void*));
       ptr_arr[armci_me] = ptr;
-      
+
       /* now combine individual addresses into a single array */
       armci_exchange_address(ptr_arr, armci_nproc);
+      
     # ifdef ARMCI_REGISTER_SHMEM
       if(new_size)
         armci_register_shmem(new_base,new_size,NULL,0,new_base);
       else
         armci_register_shmem(ptr,bytes,NULL,0,ptr);
     # endif
+
     }
+
+    # ifdef CRAY_REGISTER_ARMCI_MALLOC
+      int i;
+      cos_comm_t info;
+      cos_mdesc_t mdesc, *mdhs;
+      onesided_hnd_t cp_hnd;
+      uint64_t options = 0;
+      uint64_t options = ONESIDED_MEM_NO_UDREG | ONESIDED_MEM_NO_RX_CQH;
+      remote_mdh_node_t *ll;
+      int node_master = armci_me;
+      long total_bytes, lbytes = (long) bytes;
+      NTK_MPI_GetComm(MPI_COMM_WORLD, &info);
+      long *bytes_per_rank = (long *) malloc(info.numa_np*sizeof(long));
+
+   // not a wonderfully scalable solution
+   // revisit this at a later time and make the storage node based
+      if(info.np > 80000 && armci_me == 0) {
+      // make it obvious!!!!
+         for(i=0; i<50; i++) printf("WARNING: Examine ARMCI_Malloc for memory scaling issues at large scale.\n");
+      }
+      mdhs = (cos_mdesc_t *) malloc(info.np*sizeof(cos_mdesc_t));
+
+      ptr = ptr_arr[armci_me];
+
+   // determine the total number of bytes on the node that were allocated
+   // also allgather the number of bytes per rank on the node so we can set the offsets
+      MPI_Allreduce(&lbytes, &total_bytes, 1, MPI_LONG, MPI_SUM, info.numa_comm);
+      MPI_Allgather(&lbytes, 1, MPI_LONG, bytes_per_rank, 1, MPI_LONG, info.numa_comm);
+
+   // get the onesided v2.0 api handle for the compute process
+      cpGetOnesidedHandle(&cp_hnd);
+
+      if(info.numa_me == 0 && total_bytes) {
+      // register the data for the entire node
+         onesided_mem_register(cp_hnd, ptr, total_bytes, options, &mdesc);
+      // cpMemRegister(ptr, total_bytes, &mdesc);
+      } else {
+         mdesc.addr = (uint64_t) NULL;
+         mdesc.length = 0;
+      }
+
+   // bcast rank of the node master and and the mdesc for the nodes shared-memory segment
+      MPI_Bcast(&node_master, 1, MPI_INT, 0, info.numa_comm);
+      MPI_Bcast(&mdesc, sizeof(cos_mdesc_t), MPI_BYTE, 0, info.numa_comm);
+
+   // each rank will update mdesc to point at the memory region it owns
+      uint64_t offset = 0;
+      for(i=0; i<(armci_me-node_master); i++) offset += bytes_per_rank[i];
+      mdesc.addr += offset;
+      mdesc.length = bytes_per_rank[armci_me-node_master];
+
+   // now we allgather over all np ranks - this used to be over the node master - much more scalable
+   // but i couldn't come up with a simple solution to look up remote mdhs
+      MPI_Allgather(&mdesc, sizeof(cos_mdesc_t), MPI_BYTE,
+                      mdhs, sizeof(cos_mdesc_t), MPI_BYTE, info.world_comm);
+      
+   // update the linked list
+      ll = remote_mdh_base_node;
+      if(ll == NULL) {
+        remote_mdh_base_node = ll = (remote_mdh_node_t *) malloc(sizeof(remote_mdh_node_t));
+        ll->ptrs = ptr_arr;
+        ll->mdhs = mdhs;
+        ll->next = NULL;
+      } else {
+        while(ll->next != NULL) { ll = ll->next; }
+        assert(ll->next == NULL);
+        ll->next = (remote_mdh_node_t *) malloc(sizeof(remote_mdh_node_t));
+        ll = ll->next;
+        ll->ptrs = ptr_arr;
+        ll->mdhs = mdhs;
+        ll->next = NULL;
+      }
+    # endif
+
     ARMCI_PR_DBG("exit",0);
     //printf("\n%d:%s:%d:%p\n",armci_me,__FUNCTION__,bytes,ptr_arr[armci_me]);
     return(0);
@@ -655,6 +755,10 @@ int PARMCI_Free(void *ptr)
 {
     ARMCI_PR_DBG("enter",0);
     if(!ptr)return 1;
+
+  # ifdef CRAY_REGISTER_ARMCI_MALLOC
+    armci_onesided_remove_from_remote_mdh_list(ptr);
+  # endif
 
 #    if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(NO_SHM)
 #       ifdef USE_MALLOC

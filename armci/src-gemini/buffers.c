@@ -156,6 +156,24 @@ int smallbuf_size = sizeof(buf_smext_t)*(MAX_SMALL_BUFS);
      extra= ALIGN64ADD(tmp);
 
   /* libonesided: register buffer memory */
+   # ifdef CRAY_REGISTER_ARMCI_MALLOC
+     onesided_hnd_t cp_hnd;
+     cos_mdesc_t local_mdesc;
+     uint64_t length = (MAX_BUFS*sizeof(buf_ext_t) + 64 + smallbuf_size + 64);
+ 
+  // get the onesided v2.0 api handle for the compute process
+     cpGetOnesidedHandle(&cp_hnd);
+
+  // register the memory
+     onesided_mem_register(cp_hnd, tmp, length, 0, &local_mdesc);
+
+  // for now; until we can search through the linked-list of registered memory
+  // to deregister it by pointer (ptr) value only [see ARMCI_Free_local], we'll
+  // take advanatage of lazy deregistration and assume that this segment will
+  // be kept around as long as it's active.
+     onesided_mem_deregister(cp_hnd, &local_mdesc);
+  # endif
+
 
      _armci_buffers = (buf_ext_t *) (tmp + extra); 
 

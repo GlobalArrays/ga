@@ -54,27 +54,36 @@ else\
 }
 #define POSTPROCESS_STRIDED(tmp_count) if(tmp_count)seg_count[1]=tmp_count
 
-#define SERVER_GET 1
-#define SERVER_NBGET 2
-#define DIRECT_GET 3
-#define DIRECT_NBGET 4
-#define SERVER_PUT 5
-#define SERVER_NBPUT 6
-#define DIRECT_PUT 7
-#define DIRECT_NBPUT 8
+#define SERVER_PUT   1
+#define SERVER_NBPUT 2
+#define DIRECT_PUT   3
+#define DIRECT_NBPUT 4
+#define SERVER_GET   5
+#define SERVER_NBGET 6
+#define DIRECT_GET   7
+#define DIRECT_NBGET 8
+#define ONESIDED_PUT 9
+#define ONESIDED_GET 10
 
 
-#  define DO_FENCE(__proc,__prot) if(__prot==SERVER_GET);\
-        else if(__prot==SERVER_PUT);\
-        else if(__prot==DIRECT_GET || __prot==DIRECT_NBGET){\
-          if(armci_prot_switch_fence[__proc]==SERVER_PUT)\
-            ARMCI_DoFence(__proc);\
-        }\
-        else if(__prot==DIRECT_PUT || __prot==DIRECT_NBPUT){\
-          if(armci_prot_switch_fence[__proc]==SERVER_PUT)\
-            ARMCI_DoFence(__proc);\
-        }\
-        else;\
+#  define DO_FENCE(__proc,__prot)                               \
+        if(__prot==SERVER_GET);                                 \
+        else if(__prot==SERVER_PUT);                            \
+        else if(__prot==DIRECT_GET || __prot==DIRECT_NBGET) {   \
+          if(armci_prot_switch_fence[__proc]==SERVER_PUT)       \
+            ARMCI_DoFence(__proc);                              \
+        }                                                       \
+        else if(__prot==DIRECT_PUT || __prot==DIRECT_NBPUT) {   \
+          if(armci_prot_switch_fence[__proc]==SERVER_PUT)       \
+            ARMCI_DoFence(__proc);                              \
+        }                                                       \
+        else if(__prot==ONESIDED_GET) {                         \
+          if(armci_prot_switch_fence[__proc]==SERVER_PUT) {     \
+            ARMCI_DoFence(__proc);                              \
+          }                                                     \
+        }                                                       \
+        else if(__prot==ONESIDED_PUT);                          \
+        else;                                                   \
         armci_prot_switch_fence[__proc]=__prot
 
 #ifndef REGIONS_REQUIRE_MEMHDL 
@@ -518,6 +527,7 @@ int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
     return 0;
 }
 
+long *rmo_armci_probe = NULL;
 
 int PARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/ 
 		int src_stride_arr[], /* array of strides at source */
@@ -549,10 +559,71 @@ int *count=seg_count, tmp_count=0;
     // printf("%s direct=%d, proc=%d\n",Portals_ID(),direct,proc);
 
     if(!direct){
-       DO_FENCE(proc,SERVER_PUT);
+
+     # ifdef CRAY_REGISTER_ARMCI_MALLOC
+       if (stride_levels == 0 && rmo_armci_probe == NULL) 
+       {
+       // maybe move this to just before the operation happen of even after it happens
+       // it's possible we may want to skip the ONESIDED_PUT and do a SERVER_PUT if we can't find the remote mdh
+          DO_FENCE(proc,SERVER_PUT);
+
+       // local variable within stride_level == 0 scope
+          cos_desc_t *comm_desc = &__global_1sided_direct_comm_desc;
+          onesided_hnd_t cp_hnd;
+          cos_mdesc_t local_mdh, remote_mdh;
+
+       // find remote mdh
+          armci_onesided_search_remote_mdh_list(dst_ptr, proc, &remote_mdh);
+
+       // register local memory -- this should use abhinav's dreg routines
+          cpMemRegister(src_ptr, seg_count[0], &local_mdh);
+       // onesided_mem_register(cp_hnd, src_ptr, seg_count[0], NULL, &local_mdh);
+
+       // get the onesided v2.0 api handle for the compute process
+          cpGetOnesidedHandle(&cp_hnd);
+
+        # ifdef SPECIAL_PUT_OPERATION_BROKEN_WHEN_INITIATED_FROM_USER_BUFFER
+       // before overwrite comm_desc wait for previous request
+          int state = comm_desc->state;
+          onesided_wait(comm_desc);
+          if(state) cpMemDeregister(&comm_desc->local_mdesc);
+        # endif
+
+       // initialize onesided communication descriptor
+          onesided_desc_init(cp_hnd, &local_mdh, &remote_mdh, NULL, comm_desc);
+
+       // initiate put
+          onesided_put_nb(comm_desc);
+
+       // complete put [locally]
+          onesided_wait(comm_desc);
+
+       // deregister memory -- if we were using the dreg routines, we would let the
+       // dreg memory do this for us "on demand" = lazy mem deregisteration
+          cpMemDeregister(&local_mdh);
+       // onesided_mem_deregister(cp_hnd, &local_mdh);
+
+       // issue a flushing get - does nothing to fix the fence problem
+       /*
+          static long flushaddr = 911;
+          cpMemRegister(&flushaddr, sizeof(long), &local_mdh);
+          onesided_desc_init(cp_hnd, &local_mdh, &remote_mdh, NULL, comm_desc);
+          onesided_get_nb(comm_desc);
+          onesided_wait(comm_desc);
+          cpMemDeregister(&local_mdh);
+        */
+
+       // done!
+          goto fn_exit;
+       } 
+       else
+     # endif
+       {
+          DO_FENCE(proc,SERVER_PUT);
 //     printf("%s calling pack_strided in PARMCI_PutS\n",Portals_ID());
-       rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,dst_ptr,
-                  dst_stride_arr, count, stride_levels, NULL, -1, -1, -1,NULL);
+          rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,dst_ptr,
+                      dst_stride_arr, count, stride_levels, NULL, -1, -1, -1,NULL);
+       }
     }
     else
     {
@@ -564,6 +635,11 @@ int *count=seg_count, tmp_count=0;
     }
     POSTPROCESS_STRIDED(tmp_count);
 
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided(ARMCI_PROF_PUTS);
+#endif
+
+fn_exit:
     ARMCI_PR_DBG("exit",proc);
     if(rc) return FAIL6;
     else return 0;
@@ -638,19 +714,82 @@ int *count=seg_count, tmp_count=0;
     if(stride_levels)direct=SAMECLUSNODE(proc);
     direct=SAMECLUSNODE(proc);
 #endif
-    if(!direct){
-       DO_FENCE(proc,SERVER_GET);
-       rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
-                                 dst_ptr,dst_stride_arr,count,stride_levels,
-                                 NULL,-1,-1,-1,NULL);
-               
-    }else{
+
+    if(!direct)
+    {
+
+     # ifdef CRAY_REGISTER_ARMCI_MALLOC
+       if(stride_levels == 0)
+       {
+
+       // if a strided put/acc is outstanding to proc, then we need to ensure that is completed
+       // we allow the maximum possible overlap for strided puts/acc.  that means they are not fully blocking
+       // calls.  they are however, guaranteed to be complete prior to another request being sent.
+          DO_FENCE(proc,ONESIDED_GET);
+
+       // local varaibles
+          cos_desc_t *comm_desc = &__global_1sided_direct_comm_desc;
+          onesided_hnd_t cp_hnd;
+          cos_mdesc_t local_mdh, remote_mdh, *mdh = NULL;
+          int node = armci_clus_id(proc);
+       // printf("[cp %d]: direct remote get - src=%p; dst=%p; tgt_rank=%d; tgt_node=%d\n",armci_me,src_ptr,dst_ptr,proc,node);
+
+       // find remote mdh
+          armci_onesided_search_remote_mdh_list(src_ptr, proc, &remote_mdh);
+
+       // register local memory -- this should use abhinav's dreg routines
+          cpMemRegister(dst_ptr, seg_count[0], &local_mdh);
+       // onesided_mem_register(cp_hnd, src_ptr, seg_count[0], NULL, &local_mdh);
+
+       // get the onesided v2.0 api handle for the compute process
+          cpGetOnesidedHandle(&cp_hnd);
+
+        # ifdef SPECIAL_PUT_OPERATION_BROKEN_WHEN_INITIATED_FROM_USER_BUFFER
+       // before overwritting make sure the previous is finished
+          int state = comm_desc->state;
+          onesided_wait(comm_desc);
+          if(state) cpMemDeregister(&comm_desc->local_mdesc);
+        # endif
+
+       // initialize onesided communication descriptor
+          onesided_desc_init(cp_hnd, &local_mdh, &remote_mdh, NULL, comm_desc);
+
+       // initiate put
+          onesided_get_nb(comm_desc);
+
+       // complete put [locally]
+          onesided_wait(comm_desc);
+
+       // deregister memory -- if we were using the dreg routines, we would let the
+       // dreg memory do this for us "on demand" = lazy mem deregisteration
+          cpMemDeregister(&local_mdh);
+       // onesided_mem_deregister(cp_hnd, &local_mdh);
+
+       // done! 
+          rc=0;
+          goto fn_exit;
+       }
+       else
+     # endif
+       {
+          DO_FENCE(proc,SERVER_GET);
+          rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
+                                  dst_ptr,dst_stride_arr,count,stride_levels,
+                                  NULL,-1,-1,-1,NULL);
+       }
+    } else {
        if(!SAMECLUSNODE(proc))DO_FENCE(proc,DIRECT_GET);
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
                              dst_stride_arr,count, stride_levels,0,NULL);
     }
 
     POSTPROCESS_STRIDED(tmp_count);
+
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided(ARMCI_PROF_GETS);
+#endif
+
+fn_exit:
     ARMCI_PR_DBG("exit",proc);
     if(rc) return FAIL6;
     else return 0;
