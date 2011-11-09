@@ -33,9 +33,6 @@
  
 /*#define PERMUTE_PIDS */
 
-#if HAVE_STDDEF_H
-#   include <stddef.h>
-#endif
 #if HAVE_STDIO_H
 #   include <stdio.h>
 #endif
@@ -1075,7 +1072,7 @@ void pnga_nbput(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, I
                   side with information on another Global Array
  */
 
-#define HANDLES_OUTSTANDING 10
+#define HANDLES_OUTSTANDING 100
 /* Maximum number of outstanding put/notify handles */
 
 typedef struct {
