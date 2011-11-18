@@ -47,7 +47,8 @@ DIST_COMMON = README $(am__configure_deps) $(include_HEADERS) \
 	build-aux/config.guess build-aux/config.sub build-aux/depcomp \
 	build-aux/install-sh build-aux/ltmain.sh build-aux/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/../m4/ga_ar.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/../m4/ga.m4 \
+	$(top_srcdir)/../m4/ga_ar.m4 \
 	$(top_srcdir)/../m4/ga_arg_parse.m4 \
 	$(top_srcdir)/../m4/ga_blas.m4 \
 	$(top_srcdir)/../m4/ga_check_package.m4 \
@@ -338,6 +339,7 @@ FFLAG_INT = @FFLAG_INT@
 FGREP = @FGREP@
 FLD_NOMAIN = @FLD_NOMAIN@
 FLIBS = @FLIBS@
+GA_CONFIG = @GA_CONFIG@
 GA_CPPFLAGS = @GA_CPPFLAGS@
 GA_LDFLAGS = @GA_LDFLAGS@
 GA_LIBS = @GA_LIBS@

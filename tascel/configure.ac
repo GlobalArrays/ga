@@ -207,19 +207,7 @@ AC_LANG_POP([Fortran 77])
 ###############################################################################
 # Look for Global Arrays
 ###############################################################################
-AS_IF([test "x$tascel_cv_standalone" = xno],
-    [GA_LIBS="../libga.la"
-     GA_CPPFLAGS="-I$srcdir/../global/src -I../global/src -I$srcdir/../ma -I../ma -I../gaf2c -I$srcdir/../armci/src/include"],
-    [GA_CHECK_PACKAGE([ga], [ga.h], [ga], [GA_Initialize], [$FLIBS],
-        [GA_LIBS="-lga"],
-        [AS_UNSET([ac_cv_search_GA_Initialize])
-         GA_CHECK_PACKAGE([ga], [ga.h], [global], [GA_Initialize],
-            [-lma -larmci -llinalg $FLIBS],
-            [GA_LIBS="-lglobal -lma -larmci -llinalg"],
-            [AC_MSG_FAILURE([Could not locate Global Arrays 5.x nor 4.x])])])])
-AC_SUBST([GA_CPPFLAGS])
-AC_SUBST([GA_LDFLAGS])
-AC_SUBST([GA_LIBS])
+GA_REQUIRE
 
 ###############################################################################
 # Checks for BLAS/LAPACK/SCALAPACK require both C and Fortran features to

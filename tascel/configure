@@ -655,6 +655,7 @@ GA_LIBS
 GA_LDFLAGS
 GA_CPPFLAGS
 CPP
+GA_CONFIG
 F2C_DOUBLE_PRECISION_C_TYPE
 F2C_REAL_C_TYPE
 F2C_INTEGER_C_TYPE
@@ -11048,9 +11049,76 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-if test "x$tascel_cv_standalone" = xno; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether this package is part of GA distribution" >&5
+$as_echo_n "checking whether this package is part of GA distribution... " >&6; }
+if ${ga_cv_libga_la_found+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -f "../libga.la"; then :
+  ga_cv_libga_la_found=yes
+else
+  ga_cv_libga_la_found=no
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_libga_la_found" >&5
+$as_echo "$ga_cv_libga_la_found" >&6; }
+if test "x$ga_cv_libga_la_found" = xyes; then :
   GA_LIBS="../libga.la"
-     GA_CPPFLAGS="-I$srcdir/../global/src -I../global/src -I$srcdir/../ma -I../ma -I../gaf2c -I$srcdir/../armci/src/include"
+     GA_CPPFLAGS="-I$srcdir/../global/src -I../global/src -I$srcdir/../ma -I../ma -I../gaf2c -I../armci/gaf2c -I$srcdir/../armci/src/include"
+else
+  ga_save_PATH="$PATH"
+     if test -d $with_ga; then :
+  PATH="$with_ga:$PATH"
+fi
+     if test -d $with_ga/bin; then :
+  PATH="$with_ga/bin:$PATH"
+fi
+     # Extract the first word of "ga-config", so it can be a program name with args.
+set dummy ga-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_GA_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $GA_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_GA_CONFIG="$GA_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_GA_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+GA_CONFIG=$ac_cv_path_GA_CONFIG
+if test -n "$GA_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GA_CONFIG" >&5
+$as_echo "$GA_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+     PATH="$ga_save_PATH"
+     if test "x$GA_CONFIG" != x; then :
+  GA_CPPFLAGS=`$GA_CONFIG --cppflags`
+         GA_LDFLAGS=`$GA_CONFIG --ldflags`
+         GA_LIBS=`$GA_CONFIG --libs`
 else
 
 
@@ -11587,6 +11655,8 @@ fi
 
 
 fi
+fi
+
 
 
 
