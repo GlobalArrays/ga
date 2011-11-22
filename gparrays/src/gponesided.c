@@ -180,6 +180,8 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
 
   /*bjp
     printf("p[%d] lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",me,lo[0],hi[0],lo[1],hi[1]);
+    */
+  /*bjp
     printf("p[%d] ld[0]: %d ld_sz[0]: %d\n",me,ld[0],ld_sz[0]);
    */
   while(idx<nelems) {
@@ -221,12 +223,12 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
    */
   pnga_locate_region(GP[handle].g_size_array, lo, hi, _gp_map, _gp_proclist,
       &np);
-  /*printf("\n");*/
   /* Loop over processors containing data */
   for (idx=0; idx<np; idx++) {
     Integer p = _gp_proclist[idx];
     Integer *plo, *phi;
     Integer jcnt;
+    int *test_ptr;
     gpm_GetRangeFromMap(idx, ndim, &plo, &phi);
     nelems = 1;
     /* Find out how big patch is */
@@ -245,7 +247,7 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
     /*bjp
       printf("p[%d] plo[0]: %d phi[0]: %d plo[1]: %d phi[1]: %d\n",
       me,plo[0],phi[0],plo[1],phi[1]);
-     */
+      */
     pnga_get(GP[handle].g_ptr_array, plo, phi, rem_ptr, block_ld_loc);
     /* Construct descriptors */
     jcnt = 0;
@@ -267,9 +269,9 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
         offset_d = offset_d*ld[d] + index[d] + plo[d] - lo[d];
       }
       /*bjp
-        printf("p[%d] offset_rem: %d offset_sz: %d offset_d: %d\n",me,offset_rem,
-        offset_sz, offset_d);
-       */
+        printf("p[%d] j: %d offset_rem: %d offset_sz: %d offset_d: %d\n",
+            me, j, offset_rem, offset_sz, offset_d);
+            */
       if (intsize == 4) {
         bytes = (int)((int*)buf_size)[offset_sz];
       } else {
@@ -290,17 +292,29 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
           src_array[0] = (void*)rem_ptr[offset_rem].armci_addr;
         }
         dst_array[0] = (void*)buf_ptr[offset_d];
+#define DBG
+#ifdef DBG
+        ARMCI_Get(src_array[0], dst_array[0], bytes, p);
+        test_ptr = (int*)dst_array[0];
+        /*bjp
+        if (4*(test_ptr[0]*test_ptr[1]+2) != bytes) {
+          printf("p[%d] size mismatch bytes: %d data: %d\n",pnga_nodeid(),
+              bytes,4*(test_ptr[0]*test_ptr[1]+2));
+        }
+        */
+#else
         desc[jcnt].src_ptr_array = src_array;
         desc[jcnt].dst_ptr_array = dst_array;
         desc[jcnt].bytes = bytes;
         desc[jcnt].ptr_array_len = 1;
         /*bjp
-          printf("p[%ld] nelems: %ld index[%ld,%ld] bytes: %d src_ptr: %p p: %d dst_ptr: %p\n",
-          (long)pnga_nodeid(), (long)nelems,
-          (long)(index[1]+plo[1]-1), (long)(index[0]+plo[0]-1),
-          desc[jcnt].bytes, desc[jcnt].src_ptr_array, (int)p,
-          desc[jcnt].dst_ptr_array);
-         */
+          printf("p[%ld] jcnt: %d nelems: %ld index[%ld,%ld] bytes: %d src_ptr: %ld p: %d dst_ptr: %ld\n",
+          (long)pnga_nodeid(), jcnt, (long)nelems,
+          (long)(index[0]+plo[0]), (long)(index[1]+plo[1]),
+          desc[jcnt].bytes, (long)desc[jcnt].src_ptr_array[0], (int)p,
+          (long)desc[jcnt].dst_ptr_array[0]);
+          */
+#endif
         jcnt++;
       } else {
         /*bjp
@@ -310,12 +324,14 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
       }
     }
     /*bjp
-    printf("p[%ld] (gp_get) Got to 5 jcnt: %d p: %d\n",(long)pnga_nodeid(),jcnt,p);
+    printf("p[%ld] (gp_get) jcnt: %d p: %d\n",(long)pnga_nodeid(),jcnt,p);
     */
+#ifndef DBG
     if (jcnt > 0) {
       rc = ARMCI_GetV(desc, (int)jcnt, (int)p);
       if (rc) pnga_error("ARMCI_GetV failure in gp_get",rc);
     }
+#endif
     /* Free temporary buffers */
     free(rem_ptr);
     free(desc);
