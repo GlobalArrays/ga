@@ -100,7 +100,7 @@ void* pgp_malloc(size_t size)
     meminfo_ptr->addr       = ((char*)meminfo_ptr->addr) + meminfo_sz;
     meminfo_ptr->size      -= meminfo_sz;
     /*bjp
-    printf("%d: GP_Malloc: ptr = %p\n", pnga_nodeid(), meminfo_ptr->addr);fflush(stdout);
+    printf("p[%d]: armci_addr = %ld\n", pnga_nodeid(), (long)meminfo_ptr->armci_addr);
     */
     
     return meminfo_ptr->addr;
@@ -365,11 +365,15 @@ void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Intege
       printf("p[%d] lo[%d]: %d hi[%d]: %d\n",pnga_nodeid(),i,GP[handle].lo[i],i,
              GP[handle].hi[i]);
              */
+      /*
+      printf("p[%d] subscript[%d]: %d lo[%d]: %d hi[%d]: %d\n",pnga_nodeid(),
+        i, subscript[i], i, GP[handle].lo[i], i, GP[handle].hi[i]);
+        */
       pnga_error("gp_assign_local_element: subscript out of bounds", i);
     }
   }
   pnga_access_ptr(GP[handle].g_size_array,subscript,subscript,&gp_ptr,ld);
-  *((int*)gp_ptr) = size;
+  *((int*)gp_ptr) = (int)size;
   /*bjp
   printf("p[%ld] (internal) size %d at location [%ld:%ld]\n",
           (long)pnga_nodeid(), *((int*)gp_ptr),
