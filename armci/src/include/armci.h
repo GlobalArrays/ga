@@ -385,7 +385,7 @@ typedef struct armci_meminfo_ds {
                                to set SMP memoffset, armci_set_mem_offset() */
   size_t    size;         /* size of remote pid's segment (bytes) */
   int       cpid;         /* armci pid of creator  */
-  long      idlist[64];
+  long      idlist[128];
 } armci_meminfo_t;
 
 extern void ARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg);
