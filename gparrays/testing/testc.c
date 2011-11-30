@@ -54,6 +54,7 @@ void do_work()
   int g_p, me, i, ii, j, jj, l, k;
   int m_k_ij, m_l_ij, idx;
   int dims[2], lo[2], hi[2], ndim;
+  int lo_t[2], hi_t[2];
   int nelems, nsize;
   int idim, jdim, subscript[2], size;
   int ld[2], ld_sz[2];
@@ -61,6 +62,7 @@ void do_work()
   void **buf_ptr;
   void *buf;
   int *buf_size;
+  void *elem_buf;
 
 
   /* Create Global Pointer array */
@@ -201,7 +203,6 @@ void do_work()
   printf("p[%d] Returned from GP_Get size: %d\n",me,size);
   */
   
-#if 1
   /* Check contents of buffers to see if data is as expected */
   /*bjp
   printf("p[%d] root pointer: %ld\n",me,(long)buf_ptr);
@@ -241,46 +242,54 @@ void do_work()
       /*bjp
       printf("p[%d] i: %d j: %d m_k_ij: %d m_l_ij: %d\n",me,i,j,m_k_ij,m_l_ij);
       */
-#if 1
       for (k=0; k<ptr[0]; k++) {
         for (l=0; l<ptr[1]; l++) {
           if (ptr[l*ptr[0]+k+2] != l*m_k_ij+k+idx) {
             printf("p[%d] Element i: %d j: %d l: %d k: %d m_k_ij: %d idx: %d does not match: %d %d\n",
                 me,i,j,l,k,m_k_ij,idx,ptr[l*ptr[0]+k+2],l*m_k_ij+k+idx);
-            /*bjp
-            printf("p[%d] Element l*m_k_ij: %d l*m_k_ij+k: %d l*m_k_ij+k+idx: %d\n",
-                me,l*m_k_ij, l*m_k_ij+k, l*m_k_ij+k+idx);
-                */
-            /*
-            NGA_Error("Element ij does not match",ptr[l*ptr[0]+k+2]); 
-            */
           }
         }
       }
-#else
-#if 0
-      for (k=0; k<m_k_ij; k++) {
-        for (l=0; l<m_l_ij; l++) {
-          if (ptr[l*m_k_ij+k+2] != l*m_k_ij+k+idx) {
-            NGA_Error("Element ij does not match",ptr[l*m_k_ij+k+2]); 
-          }
-        }
-      }
-#endif
-#endif
     }
   }
   NGA_Sync();
-  if (me==0) printf("\nCompleted check\n",me);
+  if (me==0) printf("\nCompleted check of GP_Get\n",me);
+
+  /* Clear all bits in GP_Array */
+  GP_Memzero(g_p);
+  /* Test to see if all bits actually are zero */
+  GP_Distribution(g_p, me, lo_t, hi_t);
+  for (i=lo_t[0]; i<=hi_t[0]; i++) {
+    ii = i - lo_t[0];
+    subscript[0] = i;
+    for (j=lo_t[1]; j<=hi_t[1]; j++) {
+      jj = j - lo_t[1];
+      subscript[1] = j;
+      GP_Access_element(g_p, subscript, &elem_buf, &size);
+      ptr = (int*)elem_buf;
+      m_k_ij = i%Q_I + 1;
+      m_l_ij = j%Q_J + 1;
+      if (size/4 != m_k_ij*m_l_ij+2) {
+        printf("p[%d] Mismatched sizes in memzero test\n",me);
+      }
+      for (k=0; k<m_k_ij*m_l_ij+2; k++) {
+        if (ptr[k] != 0) {
+          printf("p[%d] Nonzero element %d in memzero test ptr[%d]: %c\n",
+              me,idx,k,ptr[k]);
+        }
+      }
+    }
+  }
+  if (me==0) printf("\nZeroed all bits in GP array\n");
 
   /* Clean up buffers and Global Pointer array */
   free(buf);
   free(buf_ptr);
   free(buf_size);
   GP_Distribution(g_p, me, lo, hi);
-  for (i=lo[0]; i<hi[0]; i++) {
+  for (i=lo[0]; i<=hi[0]; i++) {
     subscript[0] = i;
-    for (j=lo[1]; j<hi[1]; j++) {
+    for (j=lo[1]; j<=hi[1]; j++) {
       subscript[1] = j;
       GP_Free(GP_Free_local_element(g_p, subscript));
     }
@@ -288,7 +297,6 @@ void do_work()
 
   /* destroy Global Pointer array */
   GP_Destroy(g_p);
-#endif
 }
 
 int main(int argc, char **argv)
