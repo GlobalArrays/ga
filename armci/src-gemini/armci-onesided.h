@@ -23,8 +23,9 @@
  during the transpose.  This may indicate a race condition in the 
  transpose code or a problem with the direct fencing.
 */
-#define CRAY_REGISTER_ARMCI_MALLOC_TURNED_OFF
+#define CRAY_REGISTER_ARMCI_MALLOC
 #define ARMCI_LIMIT_REMOTE_REQUESTS_BY_NODE_TURNED_OFF
+#define MAX_OUTSTANDING_ONESIDED_GETS 64
 
 /* typedefs */
 
@@ -60,6 +61,7 @@ void armci_onesided_remove_from_remote_mdh_list(void *tgt_ptr);
 
 
 extern cos_desc_t __global_1sided_direct_comm_desc;
+extern cos_desc_t __global_1sided_direct_get_comm_desc;
 
 
 /* set up internals */

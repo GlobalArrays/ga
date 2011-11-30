@@ -31,6 +31,7 @@ static cos_mdesc_t *send_mdesc = NULL;
 static cos_mdesc_t *recv_mdesc = NULL;
 
 cos_desc_t __global_1sided_direct_comm_desc;
+cos_desc_t __global_1sided_direct_get_comm_desc;
 
 // linked-list to hold mdh arrays for all ARMCI_Malloc calls
 remote_mdh_node_t *remote_mdh_base_node = NULL;
@@ -45,7 +46,7 @@ armci_onesided_init()
 
         cos_params.options        = ONESIDED_DS_PER_NUMA;
         cos_params.nDataServers   = 1;
-        cos_params.maxDescriptors = ARMCI_MAX_DESCRIPTORS;
+        cos_params.maxDescriptors = ARMCI_MAX_DESCRIPTORS*10;
         cos_params.maxRequestSize = ARMCI_MAX_REQUEST_SIZE;
         cos_params.dsHandlerFunc  = armci_onesided_ds_handler;
 

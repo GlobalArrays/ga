@@ -673,7 +673,7 @@ int PARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
       cos_comm_t info;
       cos_mdesc_t mdesc, *mdhs;
       onesided_hnd_t cp_hnd;
-      uint64_t options = 0;
+      //uint64_t options = 0;
       uint64_t options = ONESIDED_MEM_NO_UDREG | ONESIDED_MEM_NO_RX_CQH;
       remote_mdh_node_t *ll;
       int node_master = armci_me;
