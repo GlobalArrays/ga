@@ -5,9 +5,9 @@
 #include "typesf2c.h"
 
 #if SIZEOF_VOIDP == SIZEOF_INT
-#   define GP_INT int
+#   define GP_Int int
 #elif SIZEOF_VOIDP == SIZEOF_LONG
-#   define GP_INT long
+#   define GP_Int long
 #else
 #   error sizeof(void*) is not sizeof(int) nor sizeof(long)
 #endif

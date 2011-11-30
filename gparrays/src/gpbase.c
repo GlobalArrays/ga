@@ -161,7 +161,8 @@ Integer pgp_create_handle()
 #   pragma weak wgp_set_dimensions = pgp_set_dimensions
 #endif
 
-void pgp_set_dimensions(Integer g_p, Integer ndim, Integer *dims)
+void pgp_set_dimensions(Integer g_p, Integer ndim, Integer *dims,
+                        Integer intsize)
 {
   Integer handle, i, type;
   handle = g_p + GP_OFFSET;
@@ -179,7 +180,11 @@ void pgp_set_dimensions(Integer g_p, Integer ndim, Integer *dims)
     }
   }
 
-  type = C_INT;
+  if (intsize == 4) {
+    type = C_INT;
+  } else {
+    type = MT_F_INT;
+  }
   pnga_set_data(GP[handle].g_size_array, ndim, dims, type);
   type = GP_pointer_type;
   pnga_set_data(GP[handle].g_ptr_array, ndim, dims, type);
@@ -283,10 +288,10 @@ logical pgp_destroy(Integer g_p)
 #   pragma weak wgp_debug = pgp_debug
 #endif
 
-void pgp_debug(Integer g_p)
+void pgp_debug(Integer g_p, Integer intsize)
 {
   Integer handle;
-  int *ptr;
+  void *ptr;
   Integer lo[2],hi[2],ld;
   Integer i, j, idim, jdim, size;
   handle = g_p + GP_OFFSET;
@@ -299,13 +304,22 @@ void pgp_debug(Integer g_p)
   ld = idim;
   if (pnga_nodeid() == 0) {
     size = idim*jdim;
-    ptr = (int*)malloc(size*sizeof(int));
+    if (intsize == 4) {
+      ptr = (int*)malloc(size*sizeof(int));
+    } else {
+      ptr = (int*)malloc(size*sizeof(int64_t));
+    }
     pnga_get(GP[handle].g_size_array, lo, hi, ptr, &ld);
     size = 0;
     for (i=0; i<idim; i++) {
       for (j=0; j<jdim; j++) {
-        printf("  %5d",ptr[j*idim+i]);
-        size += ptr[j*idim+i];
+        if (intsize == 4) {
+          printf("  %5d",((int*)ptr)[j*idim+i]);
+          size += ((int*)ptr)[j*idim+i];
+        } else {
+          printf("  %5d",(int)((int64_t*)ptr)[j*idim+i]);
+          size += (Integer)((int64_t*)ptr)[j*idim+i];
+        }
       }
       printf("\n");
     }
@@ -352,7 +366,8 @@ void pgp_distribution(Integer g_p, Integer proc, Integer *lo, Integer *hi)
 #   pragma weak wgp_assign_local_element = pgp_assign_local_element
 #endif
 
-void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Integer size)
+void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr,
+                              Integer size, Integer intsize)
 {
   void *gp_ptr;
   Integer handle, ld[GP_MAX_DIM-1], i;
@@ -373,7 +388,11 @@ void pgp_assign_local_element(Integer g_p, Integer *subscript, void *ptr, Intege
     }
   }
   pnga_access_ptr(GP[handle].g_size_array,subscript,subscript,&gp_ptr,ld);
-  *((int*)gp_ptr) = (int)size;
+  if (intsize == 4) {
+    *((int*)gp_ptr) = (int)size;
+  } else {
+    *((int64_t*)gp_ptr) = (int64_t)size;
+  }
   /*bjp
   printf("p[%ld] (internal) size %d at location [%ld:%ld]\n",
           (long)pnga_nodeid(), *((int*)gp_ptr),
@@ -400,8 +419,7 @@ void* pgp_free_local_element(Integer g_p, Integer *subscript)
   armci_meminfo_t *gp_ptr;
   void *ptr;
   Integer handle, ld[GP_MAX_DIM-1], i;
-  Integer one;
-  GP_INT buf;
+  GP_Int buf;
   handle = g_p + GP_OFFSET;
   /* check to make sure that element is located in local block of GP array */
   for (i=0; i<GP[handle].ndim; i++) {
@@ -416,7 +434,73 @@ void* pgp_free_local_element(Integer g_p, Integer *subscript)
 
   /* set corresponding element of size array to zero */
   buf = 0;
-  one = 1;
-  pnga_put(GP[handle].g_size_array, subscript, subscript, &buf, &one);
+  for (i=0; i<GP[handle].ndim-1; i++) {
+    ld[i] = 1;
+  }
+  pnga_put(GP[handle].g_size_array, subscript, subscript, &buf, ld);
   return ptr;
+}
+
+/**
+ * Zero all allocated bits in a Global Pointer array.
+ *  @param[in] g_p             pointer array handle
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wgp_memzero = pgp_memzero
+#endif
+
+void pgp_memzero(Integer g_p, Integer intsize)
+{
+  void *gp_ptr, *size_array;
+  Integer handle, i, me, nelems, ndim;
+  Integer lo[GP_MAX_DIM], hi[GP_MAX_DIM], ld[GP_MAX_DIM-1];
+  Integer j;
+
+  pnga_sync();
+  handle = g_p + GP_OFFSET;
+  me = pnga_nodeid();
+  ndim = GP[handle].ndim;
+
+  /* Determine number of elements held locally */
+  pgp_distribution(g_p, me, lo, hi);
+  nelems = 1;
+  for (i=0; i<ndim; i++) {
+    nelems *= (hi[i]-lo[i]+1);
+  }
+
+  /* Get pointers to local data elements and their sizes */
+  pnga_access_ptr(GP[handle].g_ptr_array,lo,hi,&gp_ptr,ld);
+  pnga_access_ptr(GP[handle].g_size_array,lo,hi,&size_array,ld);
+
+  /* Zero bits in data elements */
+  /*bjp
+  printf("p[%d] nelems: %d ld[0]: %d\n",me,nelems,ld[0]);
+  */
+  for (i=0; i<nelems; i++) {
+    /*bjp
+    printf("p[%d] gp_ptr[%d].addr: %p size_array[%d]: %d\n",me,
+        i,(void*)((armci_meminfo_t*)gp_ptr)[i].addr,i,
+        (int)((int*)size_array)[i]);
+    */
+    if (intsize == 4) {
+      memset((void*)((armci_meminfo_t*)gp_ptr)[i].addr, 0,
+          (size_t)((int*)size_array)[i]);
+      for (j=0; j<((int*)size_array)[i]; j++) {
+        if (((char*)((armci_meminfo_t*)gp_ptr)[i].addr)[j] != 0) {
+          printf("p[%d] mismatch for i: %d j: %d\n",me,i,j);
+        }
+      }
+    } else {
+      memset((void*)((armci_meminfo_t*)gp_ptr)[i].addr, 0,
+          (size_t)((int64_t*)size_array)[i]);
+      for (j=0; j<((int64_t*)size_array)[i]; j++) {
+        if (((char*)((armci_meminfo_t*)gp_ptr)[i].addr)[j] != 0) {
+          printf("p[%d] mismatch for i: %d j: %d\n",me,i,j);
+        }
+      }
+    }
+  }
+  pnga_release_update(GP[handle].g_ptr_array,lo,hi);
+  pnga_release_update(GP[handle].g_size_array,lo,hi);
+  pnga_sync();
 }

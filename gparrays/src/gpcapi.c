@@ -37,6 +37,17 @@
    int i; for(i=0; i< (n); i++)(carr)[n-i-1]=(int)(farr)[i] -1;}
 #endif
 
+void GP_Access_element(int g_p, int *subscript, void *ptr, int *size)
+{
+  Integer ag_p = (Integer)g_p;
+  Integer _gp_idx[GP_MAX_DIM];
+  Integer asize;
+  int ndim = wgp_get_dimension(ag_p);
+  COPYINDEX_C2F(subscript,_gp_idx,ndim);
+  wgp_access_element(ag_p, _gp_idx, ptr, &asize);
+  *size = (int)asize;
+}
+
 int GP_Allocate(int g_p)
 {
   Integer ag_p;
@@ -51,7 +62,7 @@ void GP_Assign_local_element(int g_p, int *subscript, void *ptr, int size)
   Integer asize = (Integer)size;
   int ndim = wgp_get_dimension(ag_p);
   COPYINDEX_C2F(subscript,_gp_idx,ndim);
-  wgp_assign_local_element(ag_p, _gp_idx, ptr, asize);
+  wgp_assign_local_element(ag_p, _gp_idx, ptr, asize, 4);
 }
 
 int GP_Create_handle()
@@ -63,7 +74,7 @@ void GP_Debug(int g_p)
 {
   Integer ag_p;
   ag_p = (Integer)g_p;
-  wgp_debug(ag_p);
+  wgp_debug(ag_p, 4);
 }
 
 int GP_Destroy(int g_p)
@@ -132,7 +143,6 @@ void GP_Get(int g_p, int *lo, int *hi, void *buf, void **buf_ptr, int *ld,
   *size = (int)asize;
 }
 
-
 void GP_Initialize()
 {
   wgp_initialize();
@@ -141,6 +151,31 @@ void GP_Initialize()
 void* GP_Malloc(size_t size)
 {
   return wgp_malloc(size);
+}
+
+void GP_Memzero(int g_p)
+{
+  Integer ag_p;
+  ag_p = (Integer)g_p;
+  wgp_memzero(ag_p, 4);
+}
+
+void GP_Release_element(int g_p, int *subscript)
+{
+  Integer ag_p = (Integer)g_p;
+  Integer _gp_idx[GP_MAX_DIM];
+  int ndim = wgp_get_dimension(ag_p);
+  COPYINDEX_C2F(subscript,_gp_idx,ndim);
+  wgp_release_element(ag_p, _gp_idx);
+}
+
+void GP_Release_update_element(int g_p, int *subscript)
+{
+  Integer ag_p = (Integer)g_p;
+  Integer _gp_idx[GP_MAX_DIM];
+  int ndim = wgp_get_dimension(ag_p);
+  COPYINDEX_C2F(subscript,_gp_idx,ndim);
+  wgp_release_update_element(ag_p, _gp_idx);
 }
 
 void GP_Set_chunk(int g_p, int *chunk)
@@ -161,7 +196,7 @@ void GP_Set_dimensions(int g_p, int ndim, int *dims)
   COPYC2F(dims,_gp_dims,ndim);
   ag_p = (Integer)g_p;
   andim = (Integer)ndim;
-  wgp_set_dimensions(ag_p, andim, _gp_dims);
+  wgp_set_dimensions(ag_p, andim, _gp_dims, 4);
 }
 
 void GP_Terminate()
