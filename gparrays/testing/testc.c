@@ -52,6 +52,7 @@ void get_range( int ndim, int dims[], int lo[], int hi[], int g_p)
 void do_work()
 {
   int g_p, me, i, ii, j, jj, l, k;
+  int nproc, next;
   int m_k_ij, m_l_ij, idx;
   int dims[2], lo[2], hi[2], ndim;
   int lo_t[2], hi_t[2];
@@ -63,6 +64,7 @@ void do_work()
   void *buf;
   int *buf_size;
   void *elem_buf;
+  long iptr;
 
 
   /* Create Global Pointer array */
@@ -70,6 +72,7 @@ void do_work()
   dims[1] = N_J;
   ndim = 2;
   me = NGA_Nodeid();
+  nproc = NGA_Nnodes();
 
   g_p = GP_Create_handle();
   GP_Set_dimensions(g_p, ndim, dims);
@@ -131,7 +134,7 @@ void do_work()
       /*bjp
       printf("p[%d] size is: %d location is [%d:%d] ptr: %p\n",me,size,
           subscript[0],subscript[1], ptr);
-          */
+      */
       
       if (subscript[0]<lo[0] || subscript[0]>hi[0] || subscript[1]<lo[1] ||
           subscript[1]>hi[1]) {
@@ -280,9 +283,96 @@ void do_work()
       }
     }
   }
+  NGA_Sync();
   if (me==0) printf("\nZeroed all bits in GP array\n");
 
-  /* Clean up buffers and Global Pointer array */
+  /* dellocate buffers and resize them to test put capability */
+  free(buf);
+  free(buf_ptr);
+  free(buf_size);
+
+  next = (me+1)%nproc;
+  GP_Distribution(g_p, me, lo, hi);
+  GP_Get_size(g_p, lo, hi, &size);
+  /*
+  printf("p[%d] lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",me,lo[0],hi[0],lo[1],hi[1]);
+  */
+  NGA_Sync();
+
+  nelems = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
+  ld[0] = hi[1]-lo[1]+1;
+  ld_sz[0] = hi[1]-lo[1]+1;
+  buf = (void*)malloc(size);
+  iptr = (long)buf;
+  buf_ptr = (void**)malloc(nelems*sizeof(void*));
+  buf_size = (int*) malloc(nelems*sizeof(int));
+
+  /* Fill buffers with contents of GP array */
+  nsize = 0;
+  next = 0;
+  for (i=lo[0]; i<=hi[0]; i++) {
+    ii = i - lo[0];
+    for (j=lo[1]; j<=hi[1]; j++) {
+      jj = j - lo[1];
+      idx = j*N_I + i;
+      ptr = (int*)(((char*)buf)+next);
+      /*
+      printf("p[%d] (test_ptr) i: %d j: %d buf_ptr: %p\n",me,j+1,i+1,ptr);
+      */
+      m_k_ij = i%Q_I + 1;
+      m_l_ij = j%Q_J + 1;
+      nsize = sizeof(int)*(m_k_ij*m_l_ij+2);
+      next += nsize;
+      buf_size[ii*ld_sz[0] +jj] = nsize;
+      buf_ptr[ii*ld[0]+jj] = ptr;
+      ptr[0] = m_k_ij;
+      ptr[1] = m_l_ij;
+      for (k=0; k<m_k_ij; k++) {
+        for (l=0; l<m_l_ij; l++) {
+          ptr[l*m_k_ij + k + 2] = l*m_k_ij + k + idx;
+        }
+      }
+    }
+  }
+  GP_Put(g_p, lo, hi, buf, buf_ptr, ld, buf_size, ld_sz, &size);
+  NGA_Sync();
+
+  /* Check contents of GP array */
+  GP_Distribution(g_p, me, lo, hi);
+  for (i=lo[0]; i<=hi[0]; i++) {
+    ii = i - lo[0];
+    subscript[0] = i;
+    for (j=lo[1]; j<=hi[1]; j++) {
+      jj = j - lo[1];
+      subscript[1] = j;
+      idx = j*N_I + i;
+      GP_Access_element(g_p, subscript, &elem_buf, &size);
+      ptr = (int*)elem_buf;
+      /*
+      printf("p[%d] (test_ptr) i: %d j: %d elem_ptr: %p\n",me,j+1,i+1,ptr);
+      */
+      m_k_ij = i%Q_I + 1;
+      m_l_ij = j%Q_J + 1;
+      if (ptr[0] != m_k_ij) {
+        printf("p[%d] [%d,%d] Dimension i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
+      }
+      if (ptr[1] != m_l_ij) {
+        printf("p[%d] [%d,%d] Dimension j actual: %d expected: %d\n",me,i,j,ptr[1],m_l_ij);
+      }
+      for (k=0; k<ptr[0]; k++) {
+        for (l=0; l<ptr[1]; l++) {
+          if (ptr[l*m_k_ij+k+2] != l*m_k_ij+k+idx) {
+            printf("p[%d] Element i: %d j: %d l: %d k: %d m_k_ij: %d idx: %d does not match: %d %d\n",
+                me,i,j,l,k,m_k_ij,idx,ptr[l*ptr[0]+k+2],l*m_k_ij+k+idx);
+          }
+        }
+      }
+    }
+  }
+  NGA_Sync();
+  if (me==0) printf("\nCompleted check of GP_Put\n",me);
+
+  /* Clean up buffers and deallocate GP array */
   free(buf);
   free(buf_ptr);
   free(buf_size);
