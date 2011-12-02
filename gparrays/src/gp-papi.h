@@ -30,6 +30,10 @@ extern void    pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
                        void **buf_ptr, Integer *ld,
                        void *buf_size, Integer *ld_sz, 
                        Integer *size, Integer isize);
+extern void    pgp_put(Integer g_p, Integer *lo, Integer *hi, void *buf,
+                       void **buf_ptr, Integer *ld,
+                       void *buf_size, Integer *ld_sz, 
+                       Integer *size, Integer isize);
 extern void    pgp_get_size(Integer g_p, Integer *lo, Integer *hi,
                             Integer *size, Integer isize);
 extern void    pgp_access_element(Integer g_p, Integer *subscript,

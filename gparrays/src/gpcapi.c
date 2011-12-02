@@ -160,6 +160,23 @@ void GP_Memzero(int g_p)
   wgp_memzero(ag_p, 4);
 }
 
+void GP_Put(int g_p, int *lo, int *hi, void *buf, void **buf_ptr, int *ld,
+            void *buf_size, int *ld_sz, int *size)
+{
+  Integer ag_p = (Integer)g_p;
+  int ndim = wgp_get_dimension(ag_p);
+  Integer asize;
+  Integer _gp_lo[GP_MAX_DIM], _gp_hi[GP_MAX_DIM];
+  Integer _gp_ld[GP_MAX_DIM], _gp_ld_sz[GP_MAX_DIM];
+  COPYINDEX_C2F(lo, _gp_lo, ndim);
+  COPYINDEX_C2F(hi, _gp_hi, ndim);
+  COPYC2F(ld, _gp_ld, ndim-1);
+  COPYC2F(ld_sz, _gp_ld_sz, ndim-1);
+  wgp_put(ag_p, _gp_lo, _gp_hi, buf, buf_ptr, _gp_ld,
+          buf_size, _gp_ld_sz, &asize, 4);
+  *size = (int)asize;
+}
+
 void GP_Release_element(int g_p, int *subscript)
 {
   Integer ag_p = (Integer)g_p;
