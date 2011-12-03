@@ -19,6 +19,19 @@ DEF EXCLUSIVE = 0
 
 np.import_array()
 
+cdef extern from "numpy/arrayobject.h":
+    struct PyTypeObject:
+        pass
+    PyTypeObject PyArray_Type
+    object PyArray_NewFromDescr(PyTypeObject * subtype,
+                                np.dtype descr,
+                                int nd,
+                                np.npy_intp * dims,
+                                np.npy_intp * strides,
+                                void * data,
+                                int flags,
+                                object obj)
+
 cdef bint _initialized = False
 
 TYPE_BASE  = 1000
@@ -424,6 +437,7 @@ def access(int g_a, lo=None, hi=None, int proc=-1):
     cdef int dimlen=GA_Ndim(g_a), typenum=_to_dtype[gtype].num
     cdef void *ptr
     cdef np.npy_intp *dims = NULL
+    cdef np.npy_intp *strides = NULL
     if proc < 0:
         proc = GA_Nodeid()
     # first things first, if no data is owned, return None
@@ -431,7 +445,7 @@ def access(int g_a, lo=None, hi=None, int proc=-1):
     if lo_dst[0] < 0 or hi_dst[0] < 0:
         return None
     # always access the entire local data
-    ld_nd = np.zeros(dimlen-1, dtype=np.int64)
+    ld_nd = np.ones(dimlen, dtype=np.int64)
     # put hi_dst back to GA inclusive indexing convention
     hi_dst -= 1
     NGA_Access64(g_a, <int64_t*>lo_dst.data, <int64_t*>hi_dst.data, &ptr,
@@ -439,12 +453,23 @@ def access(int g_a, lo=None, hi=None, int proc=-1):
     # put hi_dst back to Python exclusive indexing convention
     hi_dst += 1
     dims_nd = hi_dst-lo_dst
+    # fix the strides, for example if ghost cells are in use
+    # or if memory is allocated in a non-contiguous way
+    if dimlen >= 3:
+        for i in range(-3, -dimlen-1, -1):
+            ld_nd[i] *= ld_nd[i+1]
+    ld_nd *= _to_dtype[gtype].itemsize
     # must convert int64_t ndarray shape to npy_intp array
     dims = <np.npy_intp*>malloc(dimlen*sizeof(np.npy_intp))
+    strides = <np.npy_intp*>malloc(dimlen*sizeof(np.npy_intp))
     for i in range(dimlen):
         dims[i] = dims_nd[i]
-    array = np.PyArray_SimpleNewFromData(dimlen, dims, typenum, ptr)
+        strides[i] = ld_nd[i]
+    array = PyArray_NewFromDescr(&PyArray_Type,
+            np.PyArray_DescrFromType(typenum), dimlen, dims, strides, ptr,
+            np.NPY_DEFAULT, None)
     free(dims)
+    free(strides)
     if lo is not None or hi is not None:
         if lo is not None:
             lo_nd = _inta64(lo)
@@ -618,7 +643,26 @@ def access_ghosts(int g_a):
     :returns: ndarray scalar representing local block with ghost cells
 
     """
-    raise NotImplementedError
+    cdef np.ndarray[np.int64_t, ndim=1] ld_nd, lo_dst, hi_dst, dims_nd
+    cdef int i, gtype=inquire_type(g_a)
+    cdef int dimlen=GA_Ndim(g_a), typenum=_to_dtype[gtype].num
+    cdef void *ptr
+    cdef np.npy_intp *dims = NULL
+    # first things first, if no data is owned, return None
+    lo_dst,hi_dst = distribution(g_a)
+    if lo_dst[0] < 0 or hi_dst[0] < 0:
+        return None
+    # always access the entire local data
+    dims_nd = np.zeros(dimlen, dtype=np.int64)
+    ld_nd = np.zeros(dimlen-1, dtype=np.int64)
+    NGA_Access_ghosts64(g_a, <int64_t*>dims_nd.data, &ptr, <int64_t*>ld_nd.data)
+    # must convert int64_t ndarray shape to npy_intp array
+    dims = <np.npy_intp*>malloc(dimlen*sizeof(np.npy_intp))
+    for i in range(dimlen):
+        dims[i] = dims_nd[i]
+    array = np.PyArray_SimpleNewFromData(dimlen, dims, typenum, ptr)
+    free(dims)
+    return array
 
 def add(int g_a, int g_b, int g_c, alpha=None, beta=None, alo=None, ahi=None,
         blo=None, bhi=None, clo=None, chi=None):
