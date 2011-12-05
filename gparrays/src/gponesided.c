@@ -154,7 +154,7 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
   Integer nelems, index[GP_MAX_DIM];
   Integer block_ld[GP_MAX_DIM], block_ld_loc[GP_MAX_DIM];
   Integer me = (Integer)armci_msg_me();
-  void **src_array, **dst_array;
+  void ***src_array, ***dst_array;
   armci_meminfo_t *rem_ptr;
   int rc, bytes;
   armci_giov_t *desc;
@@ -218,10 +218,6 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
   }
   *size = offset_ptr;
 
-  /* allocate src and destination arrays */
-  src_array = (void**)malloc(sizeof(void*));
-  dst_array = (void**)malloc(sizeof(void*));
-
   /* locate the processors containing some portion of the patch represented by
    * lo and hi and return the results in _gp_map, gp_proclist, and np.
    * _gp_proclist contains a list of processors containing some portion of the
@@ -231,6 +227,7 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
    */
   pnga_locate_region(GP[handle].g_size_array, lo, hi, _gp_map, _gp_proclist,
       &np);
+
   /* Loop over processors containing data */
   for (idx=0; idx<np; idx++) {
     Integer p = _gp_proclist[idx];
@@ -246,6 +243,11 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
         block_ld_loc[i] = phi[i]-plo[i] + 1;
       }
     }
+
+    /* allocate src and destination arrays */
+    src_array = (void***)malloc(sizeof(void*)*nelems);
+    dst_array = (void***)malloc(sizeof(void*)*nelems);
+
     /* Allocate a buffer to hold remote pointers for patch and and
        array of descriptors for GetV operation */
     rem_ptr = (armci_meminfo_t*)malloc((size_t)(nelems)*sizeof(armci_meminfo_t));
@@ -266,6 +268,8 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
         itmp = (itmp - index[d])/block_ld_loc[d];
       }
       index[ndim-1] = itmp;
+      src_array[j]=(void**)malloc(sizeof(void*));
+      dst_array[j]=(void**)malloc(sizeof(void*));
 
       /* evaluate local offsets */
       offset_rem = index[ndim-1];
@@ -290,29 +294,19 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
        */
       if (bytes > 0) {
         if (rem_ptr[offset_rem].cpid == me) {
-          src_array[0] = ((void*)(rem_ptr[offset_rem].addr));
+          (src_array[j])[0] = ((void*)(rem_ptr[offset_rem].addr));
           /* handle remote and SMP case */
         } else if (pnga_cluster_proc_nodeid(me) ==
             pnga_cluster_proc_nodeid(rem_ptr[offset_rem].cpid)) {
-          src_array[0] = ARMCI_Memat(&rem_ptr[offset_rem],
+          (src_array[j])[0] = ARMCI_Memat(&rem_ptr[offset_rem],
               sizeof(armci_meminfo_t));
         } else {
-          src_array[0] = (void*)rem_ptr[offset_rem].armci_addr;
+          (src_array[j])[0] = (void*)rem_ptr[offset_rem].armci_addr;
         }
-        dst_array[0] = (void*)buf_ptr[offset_d];
+        (dst_array[j])[0] = (void*)buf_ptr[offset_d];
 #define DBG
-#ifdef DBG
-        ARMCI_Get(src_array[0], dst_array[0], bytes, p);
-        test_ptr = (int*)dst_array[0];
-        /*bjp
-        if (4*(test_ptr[0]*test_ptr[1]+2) != bytes) {
-          printf("p[%d] size mismatch bytes: %d data: %d\n",pnga_nodeid(),
-              bytes,4*(test_ptr[0]*test_ptr[1]+2));
-        }
-        */
-#else
-        desc[jcnt].src_ptr_array = src_array;
-        desc[jcnt].dst_ptr_array = dst_array;
+        desc[jcnt].src_ptr_array = src_array[j];
+        desc[jcnt].dst_ptr_array = dst_array[j];
         desc[jcnt].bytes = bytes;
         desc[jcnt].ptr_array_len = 1;
         /*bjp
@@ -322,7 +316,6 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
           desc[jcnt].bytes, (long)desc[jcnt].src_ptr_array[0], (int)p,
           (long)desc[jcnt].dst_ptr_array[0]);
           */
-#endif
         jcnt++;
       } else {
         /*bjp
@@ -334,18 +327,27 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
     /*bjp
     printf("p[%ld] (gp_get) jcnt: %d p: %d\n",(long)pnga_nodeid(),jcnt,p);
     */
-#ifndef DBG
+#ifdef XDBG
+    for (j=0; j<jcnt; j++) {
+      ARMCI_Get(desc[j].src_ptr_array[0], desc[j].dst_ptr_array[0],
+          desc[j].bytes, p);
+    }
+#else
     if (jcnt > 0) {
       rc = ARMCI_GetV(desc, (int)jcnt, (int)p);
       if (rc) pnga_error("ARMCI_GetV failure in gp_get",rc);
     }
 #endif
+    for (j=0; j<jcnt; j++) {
+      free(src_array[j]);
+      free(dst_array[j]);
+    }
     /* Free temporary buffers */
     free(rem_ptr);
     free(desc);
+    free(src_array);
+    free(dst_array);
   }
-  free(src_array);
-  free(dst_array);
 }
 
 /**
@@ -375,7 +377,7 @@ void pgp_put(Integer g_p, Integer *lo, Integer *hi, void *buf,
   Integer nelems, index[GP_MAX_DIM];
   Integer block_ld[GP_MAX_DIM], block_ld_loc[GP_MAX_DIM];
   Integer me = (Integer)armci_msg_me();
-  void **src_array, **dst_array;
+  void ***src_array, ***dst_array;
   armci_meminfo_t *rem_ptr;
   int rc, bytes;
   armci_giov_t *desc;
@@ -407,10 +409,6 @@ void pgp_put(Integer g_p, Integer *lo, Integer *hi, void *buf,
   idx = 0;
   offset_ptr = 0;
 
-  /* allocate src and destination arrays */
-  src_array = (void**)malloc(sizeof(void*));
-  dst_array = (void**)malloc(sizeof(void*));
-
   /* locate the processors containing some portion of the patch represented by
    * lo and hi and return the results in _gp_map, gp_proclist, and np.
    * _gp_proclist contains a list of processors containing some portion of the
@@ -434,6 +432,11 @@ void pgp_put(Integer g_p, Integer *lo, Integer *hi, void *buf,
         block_ld_loc[i] = phi[i]-plo[i] + 1;
       }
     }
+
+    /* allocate src and destination arrays */
+    src_array = (void***)malloc(sizeof(void*)*nelems);
+    dst_array = (void***)malloc(sizeof(void*)*nelems);
+
     /* Allocate a buffer to hold remote pointers for patch and and
        array of descriptors for GetV operation */
     rem_ptr = (armci_meminfo_t*)malloc((size_t)(nelems)*sizeof(armci_meminfo_t));
@@ -450,6 +453,8 @@ void pgp_put(Integer g_p, Integer *lo, Integer *hi, void *buf,
         itmp = (itmp - index[d])/block_ld_loc[d];
       }
       index[ndim-1] = itmp;
+      src_array[j]=(void**)malloc(sizeof(void*));
+      dst_array[j]=(void**)malloc(sizeof(void*));
 
       /* evaluate local offsets */
       offset_rem = index[ndim-1];
@@ -467,25 +472,21 @@ void pgp_put(Integer g_p, Integer *lo, Integer *hi, void *buf,
       }
       if (bytes > 0) {
         if (rem_ptr[offset_rem].cpid == me) {
-          dst_array[0] = ((void*)(rem_ptr[offset_rem].addr));
+          (dst_array[j])[0] = ((void*)(rem_ptr[offset_rem].addr));
           /* handle remote and SMP case */
         } else if (pnga_cluster_proc_nodeid(me) ==
             pnga_cluster_proc_nodeid(rem_ptr[offset_rem].cpid)) {
-          dst_array[0] = ARMCI_Memat(&rem_ptr[offset_rem],
+          (dst_array[j])[0] = ARMCI_Memat(&rem_ptr[offset_rem],
               sizeof(armci_meminfo_t));
         } else {
-          dst_array[0] = (void*)rem_ptr[offset_rem].armci_addr;
+          (dst_array[j])[0] = (void*)rem_ptr[offset_rem].armci_addr;
         }
-        src_array[0] = (void*)buf_ptr[offset_d];
+        (src_array[j])[0] = (void*)buf_ptr[offset_d];
 #define DBG
-#ifdef DBG
-        ARMCI_Put(src_array[0], dst_array[0], bytes, p);
-#else
-        desc[jcnt].src_ptr_array = src_array;
-        desc[jcnt].dst_ptr_array = dst_array;
+        desc[jcnt].src_ptr_array = src_array[j];
+        desc[jcnt].dst_ptr_array = dst_array[j];
         desc[jcnt].bytes = bytes;
         desc[jcnt].ptr_array_len = 1;
-#endif
         jcnt++;
       } else {
         /*bjp
@@ -494,12 +495,21 @@ void pgp_put(Integer g_p, Integer *lo, Integer *hi, void *buf,
          */
       }
     }
-#ifndef DBG
+#ifdef XDBG
+    for (j=0; j<jcnt; j++) {
+      ARMCI_Put(desc[j].src_ptr_array[0], desc[j].dst_ptr_array[0],
+          desc[j].bytes, p);
+    }
+#else
     if (jcnt > 0) {
       rc = ARMCI_PutV(desc, (int)jcnt, (int)p);
       if (rc) pnga_error("ARMCI_PutV failure in gp_put",rc);
     }
 #endif
+    for (j=0; j<jcnt; j++) {
+      free(src_array[j]);
+      free(dst_array[j]);
+    }
     /* Free temporary buffers */
     free(rem_ptr);
     free(desc);
