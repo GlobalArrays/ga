@@ -13,6 +13,7 @@ from libc.stdlib cimport malloc,free
 from gah cimport *
 import numpy as np
 cimport numpy as np
+from python_ref cimport Py_INCREF
 import __builtin__
 
 DEF EXCLUSIVE = 0
@@ -20,10 +21,7 @@ DEF EXCLUSIVE = 0
 np.import_array()
 
 cdef extern from "numpy/arrayobject.h":
-    struct PyTypeObject:
-        pass
-    PyTypeObject PyArray_Type
-    object PyArray_NewFromDescr(PyTypeObject * subtype,
+    object PyArray_NewFromDescr(object subtype,
                                 np.dtype descr,
                                 int nd,
                                 np.npy_intp * dims,
@@ -434,7 +432,8 @@ def access(int g_a, lo=None, hi=None, int proc=-1):
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd, hi_nd
     cdef np.ndarray[np.int64_t, ndim=1] ld_nd, lo_dst, hi_dst, dims_nd
     cdef int i, gtype=inquire_type(g_a)
-    cdef int dimlen=GA_Ndim(g_a), typenum=_to_dtype[gtype].num
+    cdef int dimlen=GA_Ndim(g_a)
+    cdef np.dtype dtype = _to_dtype[gtype]
     cdef void *ptr
     cdef np.npy_intp *dims = NULL
     cdef np.npy_intp *strides = NULL
@@ -465,9 +464,9 @@ def access(int g_a, lo=None, hi=None, int proc=-1):
     for i in range(dimlen):
         dims[i] = dims_nd[i]
         strides[i] = ld_nd[i]
-    array = PyArray_NewFromDescr(&PyArray_Type,
-            np.PyArray_DescrFromType(typenum), dimlen, dims, strides, ptr,
-            np.NPY_DEFAULT, None)
+    Py_INCREF(dtype)
+    array = PyArray_NewFromDescr(np.ndarray,
+            dtype, dimlen, dims, strides, ptr, np.NPY_DEFAULT, None)
     free(dims)
     free(strides)
     if lo is not None or hi is not None:
