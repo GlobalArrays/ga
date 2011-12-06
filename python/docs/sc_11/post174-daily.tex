@@ -10,8 +10,9 @@
 \widowpenalty = 10000
 % --- End of Author Metadata ---
 
-\title{Automatic Parallelization of Numerical Python Applications Using the Global Arrays Toolkit}
+\title{Poster: Automatic Parallelization of Numerical Python Applications Using the Global Arrays Toolkit}
 
+\auwidth=1.12\textwidth
 \numberofauthors{2}
 \author{
 % 1st. author
@@ -54,8 +55,7 @@ run on more capable clusters or supercomputers.
 
 \category{D.1.3}{Programming Techniques}{Concurrent Programming}
 \category{D.2.2}{Software Engineering}{Design Tools and Techniques}[software libraries, user interfaces]
-\category{D.2.8}{Software Engineering}{Metrics}
-\category{D.2.13}{Software Engineering}{Reusable Software}
+%\category{D.2.8}{Software Engineering}{Metrics}
 \category{E.1}{Data Structures}{arrays, distributed data structures}
 
 \terms{Design, Performance}
@@ -70,13 +70,13 @@ NumPy is serial in nature.  This limits both the size of the arrays as well as
 the speed with which the arrays can be processed to the available resources on
 a single compute node.
 
-For the most part, NumPy programs are written, debugged, and run in
-singly-threaded environments. This may be sufficient for certain problem
-domains. However, NumPy may also be used to develop prototype software. Such
-software is usually ported to a different, compiled language and/or explicitly
-parallelized to take advantage of additional hardware.
+%For the most part, NumPy programs are written, debugged, and run in
+%singly-threaded environments. This may be sufficient for certain problem
+%domains. However, NumPy may also be used to develop prototype software. Such
+%software is usually ported to a different, compiled language and/or explicitly
+%parallelized to take advantage of additional hardware.
 
-The Global Arrays (GA) toolkit \cite{Nie06,Nie10,Pnl11} is a software system
+The Global Arrays (GA) toolkit \cite{Nie06,Pnl11} is a software system
 from Pacific Northwest National Laboratory (PNNL) that enables an efficient,
 portable, and parallel shared-memory programming interface to manipulate
 physically distributed dense multidimensional arrays, without the need for
@@ -105,18 +105,19 @@ benchmark by which any additional high performance numerical Python module
 should be measured. The original program \texttt{laplace.py} was modified by
 importing \texttt{ga.gain} in place of \texttt{numpy} and then stripping the
 additional test codes so that only the \texttt{gain} (\texttt{numpy}) test
-remained. The latter modification makes no impact on the timing results since
-all tests are run independently but was necessary because \texttt{gain} is run
-on multiple processes while the original test suite is serial.  The program was
-run on the chinook supercomputer at the Environmental Molecular Sciences
-Laboratory (EMSL), part of Pacific Northwest National Laboratory (PNNL).
-Chinook consists of 2310 HP DL185 nodes with dual socket, 64-bit, Quad-core AMD
-2.2 GHz Opteron processors. Each node has 32 Gbytes of memory for 4 Gbytes per
-core and a local scratch disk.  Fast communication between the nodes is
-obtained using a single rail Infiniband interconnect from Voltaire (switches)
-and Melanox (NICs). The system runs a version of Linux based on Red Hat Linux
-Advanced Server.  GAiN utilized up to 512 nodes of the cluster, using 4 cores
-per node.
+remained.
+%The latter modification makes no impact on the timing results since all tests
+%are run independently but was necessary because \texttt{gain} is run on
+%multiple processes while the original test suite is serial. 
+The program was run on the chinook supercomputer at the Environmental
+Molecular Sciences Laboratory (EMSL), part of Pacific Northwest National
+Laboratory (PNNL). Chinook consists of 2310 HP DL185 nodes with dual socket,
+64-bit, Quad-core AMD 2.2 GHz Opteron processors. Each node has 32 Gbytes of
+memory for 4 Gbytes per core and a local scratch disk.
+%Fast communication between the nodes is obtained using a single rail
+%Infiniband interconnect from Voltaire (switches) and Melanox (NICs). The
+%system runs a version of Linux based on Red Hat Linux Advanced Server.
+GAiN utilized up to 512 nodes of the cluster, using 4 cores per node.
 
 We noted during initial evaluations of \texttt{laplace.py} that the wall clock
 time did not compare favorably with the timer for the solver. Figure
@@ -167,8 +168,8 @@ without modification of the core implementation demonstrates its utility. Howeve
 A portion of the research was performed using the Molecular Science Computing
 (MSC) capability at EMSL, a national scientific user facility sponsored by the
 Department of Energy's Office of Biological and Environmental Research and
-located at Pacific Northwest National Laboratory (PNNL). PNNL is operated by
-Battelle for the U.S. Department of Energy under contract DE-AC05-76RL01830.
+located at Pacific Northwest National Laboratory (PNNL). %PNNL is operated by
+%Battelle for the U.S. Department of Energy under contract DE-AC05-76RL01830.
 
 %
 % The following two commands are all you need in the
