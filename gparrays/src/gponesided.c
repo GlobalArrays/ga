@@ -368,9 +368,9 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
 #   pragma weak wgp_put = pgp_put
 #endif
 
-void pgp_put(Integer g_p, Integer *lo, Integer *hi, void *buf,
-             void **buf_ptr, Integer *ld, void *buf_size, Integer *ld_sz,
-             Integer *size, Integer intsize)
+void pgp_put(Integer g_p, Integer *lo, Integer *hi, void **buf_ptr,
+             Integer *ld, void *buf_size, Integer *ld_sz, Integer *size,
+             Integer checksize, Integer intsize)
 {
   Integer handle, ndim, i, j, d, itmp, offset_sz, np;
   Integer idx, offset_d, offset_ptr, offset_rem;
