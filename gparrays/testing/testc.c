@@ -59,13 +59,12 @@ void do_work()
   int nelems, nsize;
   int idim, jdim, subscript[2], size;
   int ld[2], ld_sz[2];
+  int checksize;
   int *ptr;
   void **buf_ptr;
   void *buf;
   int *buf_size;
   void *elem_buf;
-  long iptr;
-
 
   /* Create Global Pointer array */
   dims[0] = N_I;
@@ -303,7 +302,6 @@ void do_work()
   ld[0] = hi[1]-lo[1]+1;
   ld_sz[0] = hi[1]-lo[1]+1;
   buf = (void*)malloc(size);
-  iptr = (long)buf;
   buf_ptr = (void**)malloc(nelems*sizeof(void*));
   buf_size = (int*) malloc(nelems*sizeof(int));
 
@@ -334,7 +332,8 @@ void do_work()
       }
     }
   }
-  GP_Put(g_p, lo, hi, buf, buf_ptr, ld, buf_size, ld_sz, &size);
+  checksize = 1;
+  GP_Put(g_p, lo, hi, buf_ptr, ld, buf_size, ld_sz, &size, checksize);
   NGA_Sync();
 
   /* Check contents of GP array */
