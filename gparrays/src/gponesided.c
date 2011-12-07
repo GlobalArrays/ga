@@ -123,7 +123,6 @@ void pgp_get_size(Integer g_p, Integer *lo, Integer *hi,
     free(long_ptr);
   }
 
-
 }
 
 /**
@@ -160,12 +159,12 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
   armci_giov_t *desc;
   handle = g_p + GP_OFFSET;
   if (!GP[handle].active) {
-    pnga_error("gp_get_size: inactive array handle specified", g_p);
+    pnga_error("gp_get: inactive array handle specified", g_p);
   }
   ndim = pnga_ndim(GP[handle].g_ptr_array);
   for (i=0; i<ndim; i++) {
     if (GP[handle].lo[i] > GP[handle].hi[i])
-      pnga_error("gp_get_size: illegal block size specified", g_p);
+      pnga_error("gp_get: illegal block size specified", g_p);
   }
   /*bjp
     printf("p[%d] (gp_get) lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
@@ -210,7 +209,11 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
     }
     /* evaluate offset in data buffer */
     buf_ptr[offset_d] = buf+offset_ptr;
-    offset_ptr += ((int*)buf_size)[offset_sz];
+    if (intsize == 4) {
+      offset_ptr += ((int*)buf_size)[offset_sz];
+    } else {
+      offset_ptr += ((int64_t*)buf_size)[offset_sz];
+    }
     /*bjp
       printf("p[%d] (gp_get) buf_size[%d]: %d\n",me,offset_sz,((int*)buf_size)[offset_sz]);
      */
@@ -355,12 +358,12 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
  * @param[in] g_p                pointer array handle
  * @param[in] lo[ndim]           lower corner of pointer array block
  * @param[in] hi[ndim]           upper corner of pointer array block
- * @param[in] buf                buffer that holds local data
  * @param[in] buf_ptr            buffer that holds pointers to local data
  * @param[in] ld[ndim-1]         physical dimensions of buf_ptr
  * @param[in] buf_size           buffer that holds size local data
  * @param[in] ld_sz[ndim-1]      physical dimensions of buf_size
  * @param[out] size              total size of transmitted data
+ * @param[in] checksize          check that sizes in buf_size are OK
  * @param[in] intsize            parameter to distinguish between 4 and 8
  *                               byte integers
  */
@@ -380,23 +383,17 @@ void pgp_put(Integer g_p, Integer *lo, Integer *hi, void **buf_ptr,
   void ***src_array, ***dst_array;
   armci_meminfo_t *rem_ptr;
   int rc, bytes;
+  Integer *tmpsize;
   armci_giov_t *desc;
   handle = g_p + GP_OFFSET;
   if (!GP[handle].active) {
-    pnga_error("gp_get_size: inactive array handle specified", g_p);
+    pnga_error("gp_put: inactive array handle specified", g_p);
   }
   ndim = pnga_ndim(GP[handle].g_ptr_array);
   for (i=0; i<ndim; i++) {
     if (GP[handle].lo[i] > GP[handle].hi[i])
-      pnga_error("gp_get_size: illegal block size specified", g_p);
+      pnga_error("gp_put: illegal block size specified", g_p);
   }
-
-  /* TODO: Decide whether to put sizes into size array or possible to get
-   * sizes from GP size array and check against values in local size array
-   */
-  /*
-  pnga_get(GP[handle].g_size_array, lo, hi, buf_size, ld_sz);
-  */
 
   /* Get strides of target block */
   ndim = GP[handle].ndim;
@@ -404,6 +401,29 @@ void pgp_put(Integer g_p, Integer *lo, Integer *hi, void **buf_ptr,
   for (i=0; i<ndim; i++) {
     block_ld[i] = (hi[i] - lo[i] + 1);
     nelems *= block_ld[i];
+  }
+
+  /* Check size of elements in buf_size against size of elements in GP size
+   * array. Throw an error if there is a mismatch */
+  if (checksize) {
+    if (intsize == 4) {
+      tmpsize = (Integer*)malloc(nelems*sizeof(int));
+    } else {
+      tmpsize = (Integer*)malloc(nelems*sizeof(int64_t));
+    }
+    pnga_get(GP[handle].g_size_array, lo, hi, tmpsize, block_ld);
+    if (intsize == 4) {
+      for (i=0; i<nelems; i++) {
+        if (tmpsize[i] != ((int*)buf_size)[i])
+          pnga_error("gp_put: mismatch in element sizes", i);
+      }
+    } else {
+      for (i=0; i<nelems; i++) {
+        if (tmpsize[i] != ((int64_t*)buf_size)[i])
+          pnga_error("gp_put: mismatch in element sizes", i);
+      }
+    }
+    free(tmpsize);
   }
 
   idx = 0;
