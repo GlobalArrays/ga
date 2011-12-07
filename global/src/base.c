@@ -2624,7 +2624,7 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
 
   /*** copy content of the data structure ***/
   save_ptr = GA[ga_handle].ptr;
-  GA[ga_handle] = GA[GA_OFFSET + g_a];
+  GA[ga_handle] = GA[GA_OFFSET + g_a]; /* <--- shallow copy */
   strcpy(GA[ga_handle].name, array_name);
   GA[ga_handle].ptr = save_ptr;
   if (maplen > 0) {
@@ -2632,6 +2632,10 @@ logical pnga_duplicate(Integer g_a, Integer *g_b, char* array_name)
     for(i=0;i<maplen; i++)GA[ga_handle].mapc[i] = GA[GA_OFFSET+ g_a].mapc[i];
     GA[ga_handle].mapc[maplen] = -1;
   }
+
+  /*** if ghost cells are used, initialize ghost cache data ***/
+  GA[ga_handle].cache = NULL;
+  pnga_set_ghost_info(*g_b);
 
   /*** initialize and copy info for restricted arrays, if relevant ***/
   GA[ga_handle].rstrctd_list = NULL;
