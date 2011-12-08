@@ -698,9 +698,7 @@ c
       return
       end
 c
-c
-c   Random number generator from Numerical Recipes
-c   This is really ran3
+c   Wrapper for random number generator
 c
       double precision function ran1(idum)
       implicit none
