@@ -251,13 +251,13 @@ c
       end
    
 
-      subroutine chunk_mxm(n, m, nb, d_a, d_b, d_c)
+      subroutine chunk_mxm(n, nb, d_a, d_b, d_c)
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
 #include "dra.fh"
 #include "mp3def.fh"
-      integer n, m, nb, d_a, d_b, d_c
+      integer n, nb, d_a, d_b, d_c
       integer i, j, chunks
       integer ilo, ihi, jlo, jhi, nr, nc
       integer g_a_chunk, g_b_chunk(2), g_c_chunk
