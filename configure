@@ -5742,7 +5742,7 @@ ga_save_ac_ext="$ac_ext"
 
 ga_cv_c_compiler_vendor=unknown
 ga_cpp_vendor_symbols=
-for vendor in intel ibm pathscale amd gnu sun hp dec borland comeau cray kai lcc metrowerks sgi microsoft watcom portland fujitsu
+for vendor in intel ibm pathscale amd cray gnu sun hp dec borland comeau kai lcc metrowerks sgi microsoft watcom portland fujitsu
 do
 case $vendor in #(
   amd) :
@@ -5752,7 +5752,7 @@ case $vendor in #(
   comeau) :
     ga_cpp_vendor_symbols="defined(__COMO__)" ;; #(
   cray) :
-    ga_cpp_vendor_symbols="defined(_CRAYC)" ;; #(
+    ga_cpp_vendor_symbols="defined(_CRAYC) || defined(_ADDR64)" ;; #(
   dec) :
     ga_cpp_vendor_symbols="defined(__DECC) || defined(__DECCXX) || defined(__DECC_VER) || defined(__DECCXX_VER)" ;; #(
   fujitsu) :
@@ -5931,7 +5931,9 @@ fi
 rm -f inside.pl
 cat >inside.pl <<"EOF"
 #!/usr/bin/perl
-$numargs = $#ARGV + 1;
+use strict;
+use warnings;
+my $numargs = $#ARGV + 1;
 if ($numargs != 2) {
     print "Usage: wrapped.txt naked.txt\n";
     exit 1;
@@ -5939,10 +5941,10 @@ if ($numargs != 2) {
 # Read each input file as a string (rather than a list).
 local $/=undef;
 open WRAPPED, "$ARGV[0]" or die "Could not open wrapped text file: $!";
-$wrapped_lines = <WRAPPED>;
+my $wrapped_lines = <WRAPPED>;
 close WRAPPED;
 open NAKED, "$ARGV[1]" or die "Could not open naked text file: $!";
-$naked_lines = <NAKED>;
+my $naked_lines = <NAKED>;
 close NAKED;
 # Replace newlines, + from wrapped and naked lines.
 $wrapped_lines =~ tr/\n+/ /;
@@ -5961,6 +5963,11 @@ unless ($wrapped_lines) {
 }
 unless ($naked_lines) {
     exit 1;
+}
+# Cray compilers append a timestamp into their version string. Remove it.
+if ($wrapped_lines =~ /\QCray\E/) {
+    $wrapped_lines = substr $wrapped_lines, 0, -28;
+    $naked_lines = substr $naked_lines, 0, -28;
 }
 # Can the naked lines be found within the wrapped lines?
 if ($wrapped_lines =~ /\Q$naked_lines\E/) {
@@ -11779,7 +11786,7 @@ fi
     as_fn_error $? "CXX/MPICXX case failure" "$LINENO" 5 ;;
 esac
 fi
-ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC crayCC g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
+ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC crayc++ g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
 ga_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ mpiFCC CC"
 if test x$with_mpi_wrappers = xyes; then :
   CXX_TO_TEST="$ga_mpicxx_pref $ga_mpicxx"
@@ -12220,7 +12227,9 @@ fi
 rm -f inside.pl
 cat >inside.pl <<"EOF"
 #!/usr/bin/perl
-$numargs = $#ARGV + 1;
+use strict;
+use warnings;
+my $numargs = $#ARGV + 1;
 if ($numargs != 2) {
     print "Usage: wrapped.txt naked.txt\n";
     exit 1;
@@ -12228,10 +12237,10 @@ if ($numargs != 2) {
 # Read each input file as a string (rather than a list).
 local $/=undef;
 open WRAPPED, "$ARGV[0]" or die "Could not open wrapped text file: $!";
-$wrapped_lines = <WRAPPED>;
+my $wrapped_lines = <WRAPPED>;
 close WRAPPED;
 open NAKED, "$ARGV[1]" or die "Could not open naked text file: $!";
-$naked_lines = <NAKED>;
+my $naked_lines = <NAKED>;
 close NAKED;
 # Replace newlines, + from wrapped and naked lines.
 $wrapped_lines =~ tr/\n+/ /;
@@ -12250,6 +12259,11 @@ unless ($wrapped_lines) {
 }
 unless ($naked_lines) {
     exit 1;
+}
+# Cray compilers append a timestamp into their version string. Remove it.
+if ($wrapped_lines =~ /\QCray\E/) {
+    $wrapped_lines = substr $wrapped_lines, 0, -28;
+    $naked_lines = substr $naked_lines, 0, -28;
 }
 # Can the naked lines be found within the wrapped lines?
 if ($wrapped_lines =~ /\Q$naked_lines\E/) {
@@ -12272,7 +12286,7 @@ case $wrapped in #(
   *_r) :
     compilers="bgxlC_r xlC_r" ;; #(
   *) :
-    compilers="icpc pgCC pathCC sxc++ xlC bgxlC openCC sunCC crayCC g++ c++ gpp aCC cxx cc++ cl.exe FCC KCC RCC CC" ;; #(
+    compilers="icpc pgCC pathCC sxc++ xlC bgxlC openCC sunCC crayc++ g++ c++ gpp aCC cxx cc++ cl.exe FCC KCC RCC CC" ;; #(
   *) :
      ;;
 esac
@@ -12479,7 +12493,7 @@ ga_save_ac_ext="$ac_ext"
 
 ga_cv_cxx_compiler_vendor=unknown
 ga_cpp_vendor_symbols=
-for vendor in intel ibm pathscale amd gnu sun hp dec borland comeau cray kai lcc metrowerks sgi microsoft watcom portland fujitsu
+for vendor in intel ibm pathscale amd cray gnu sun hp dec borland comeau kai lcc metrowerks sgi microsoft watcom portland fujitsu
 do
 case $vendor in #(
   amd) :
@@ -12489,7 +12503,7 @@ case $vendor in #(
   comeau) :
     ga_cpp_vendor_symbols="defined(__COMO__)" ;; #(
   cray) :
-    ga_cpp_vendor_symbols="defined(_CRAYC)" ;; #(
+    ga_cpp_vendor_symbols="defined(_CRAYC) || defined(_ADDR64)" ;; #(
   dec) :
     ga_cpp_vendor_symbols="defined(__DECC) || defined(__DECCXX) || defined(__DECC_VER) || defined(__DECCXX_VER)" ;; #(
   fujitsu) :
@@ -13384,7 +13398,9 @@ fi
 rm -f inside.pl
 cat >inside.pl <<"EOF"
 #!/usr/bin/perl
-$numargs = $#ARGV + 1;
+use strict;
+use warnings;
+my $numargs = $#ARGV + 1;
 if ($numargs != 2) {
     print "Usage: wrapped.txt naked.txt\n";
     exit 1;
@@ -13392,10 +13408,10 @@ if ($numargs != 2) {
 # Read each input file as a string (rather than a list).
 local $/=undef;
 open WRAPPED, "$ARGV[0]" or die "Could not open wrapped text file: $!";
-$wrapped_lines = <WRAPPED>;
+my $wrapped_lines = <WRAPPED>;
 close WRAPPED;
 open NAKED, "$ARGV[1]" or die "Could not open naked text file: $!";
-$naked_lines = <NAKED>;
+my $naked_lines = <NAKED>;
 close NAKED;
 # Replace newlines, + from wrapped and naked lines.
 $wrapped_lines =~ tr/\n+/ /;
@@ -13414,6 +13430,11 @@ unless ($wrapped_lines) {
 }
 unless ($naked_lines) {
     exit 1;
+}
+# Cray compilers append a timestamp into their version string. Remove it.
+if ($wrapped_lines =~ /\QCray\E/) {
+    $wrapped_lines = substr $wrapped_lines, 0, -28;
+    $naked_lines = substr $naked_lines, 0, -28;
 }
 # Can the naked lines be found within the wrapped lines?
 if ($wrapped_lines =~ /\Q$naked_lines\E/) {
@@ -13634,7 +13655,7 @@ ga_save_ac_ext="$ac_ext"
 ac_ext=F
 ga_cv_f77_compiler_vendor=unknown
 ga_cpp_vendor_symbols=
-for vendor in intel ibm pathscale amd gnu sun hp dec borland comeau cray kai lcc metrowerks sgi microsoft watcom portland fujitsu
+for vendor in intel ibm pathscale amd cray gnu sun hp dec borland comeau kai lcc metrowerks sgi microsoft watcom portland fujitsu
 do
 case $vendor in #(
   amd) :
@@ -13644,7 +13665,7 @@ case $vendor in #(
   comeau) :
     ga_cpp_vendor_symbols="defined(__COMO__)" ;; #(
   cray) :
-    ga_cpp_vendor_symbols="defined(_CRAYC)" ;; #(
+    ga_cpp_vendor_symbols="defined(_CRAYC) || defined(_ADDR64)" ;; #(
   dec) :
     ga_cpp_vendor_symbols="defined(__DECC) || defined(__DECCXX) || defined(__DECC_VER) || defined(__DECCXX_VER)" ;; #(
   fujitsu) :

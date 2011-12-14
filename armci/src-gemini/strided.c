@@ -821,9 +821,9 @@ int *count=seg_count, tmp_count=0;
           }
 
           // finish up any outstanding requests
-          int count = n1dim;
-          if(MAX_OUTSTANDING_ONESIDED_GETS < n1dim) count = MAX_OUTSTANDING_ONESIDED_GETS;
-          for(i=0; i<count; i++)
+          int _count = n1dim;
+          if(MAX_OUTSTANDING_ONESIDED_GETS < n1dim) _count = MAX_OUTSTANDING_ONESIDED_GETS;
+          for(i=0; i<_count; i++)
           {
              if(cds[i].state)
              {

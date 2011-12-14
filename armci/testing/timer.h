@@ -1,7 +1,7 @@
 #ifndef ARMCI_TESTING_TIMER_H_
 #define ARMCI_TESTING_TIMER_H_
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__)
+#if (defined(__i386__) || defined(__x86_64__) || defined(__powerpc__)) && !defined(_CRAYC)
 #   define HAVE_RDTSC 1
 #   if defined(__i386__)
 static __inline__ unsigned long long rdtsc(void)

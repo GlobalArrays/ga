@@ -80,7 +80,7 @@
 *
 *     Test the input parameters.
 *
-      call flush()
+*     call flush()
       INFO = 0
       IF( M.LT.0 ) THEN
          INFO = -1
