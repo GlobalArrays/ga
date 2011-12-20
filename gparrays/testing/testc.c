@@ -395,7 +395,19 @@ void do_work()
   GP_Gather_size(g_p, nv, subscript, &size);
   /* TODO: Should not need this sync */
   GA_Sync();
-  if (me == 0) printf("\nCompleted GP_Gather_size\n");
+  /* Check size for correct value */
+  idx = 0;
+  for (ii=0; ii<nv; ii++) {
+    i = subscript[ii*2];
+    j = subscript[ii*2+1];
+    m_k_ij = i%Q_I + 1;
+    m_l_ij = j%Q_J + 1;
+    idx += sizeof(int)*(m_k_ij*m_l_ij+2);
+  }
+  if (idx != size) {
+    printf("p[%d] Size actual: %d expected: %d\n",me,size,idx);
+  }
+  if (me == 0) printf("\nCompleted check of GP_Gather_size\n");
 
   buf = (void*)malloc(size);
   buf_ptr = (void**)malloc(nv*sizeof(void*));
