@@ -51,7 +51,7 @@ void get_range( int ndim, int dims[], int lo[], int hi[], int g_p)
 
 void do_work()
 {
-  int g_p, me, i, ii, j, jj, l, k;
+  int g_p, me, i, ii, j, jj, l, k, nv;
   int nproc, next;
   int m_k_ij, m_l_ij, idx;
   int dims[2], lo[2], hi[2], ndim;
@@ -65,6 +65,7 @@ void do_work()
   void *buf;
   int *buf_size;
   void *elem_buf;
+  int *subscripts;
 
   /* Create Global Pointer array */
   dims[0] = N_I;
@@ -236,10 +237,10 @@ void do_work()
       m_l_ij = 2;
       */
       if (ptr[0] != m_k_ij) {
-        printf("p[%d] [%d,%d] Dimension i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
+        printf("p[%d] [%d,%d] Dimension(1) i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
       }
       if (ptr[1] != m_l_ij) {
-        printf("p[%d] [%d,%d] Dimension j actual: %d expected: %d\n",me,i,j,ptr[1],m_l_ij);
+        printf("p[%d] [%d,%d] Dimension(1) j actual: %d expected: %d\n",me,i,j,ptr[1],m_l_ij);
       }
       /*bjp
       printf("p[%d] i: %d j: %d m_k_ij: %d m_l_ij: %d\n",me,i,j,m_k_ij,m_l_ij);
@@ -247,7 +248,7 @@ void do_work()
       for (k=0; k<ptr[0]; k++) {
         for (l=0; l<ptr[1]; l++) {
           if (ptr[l*ptr[0]+k+2] != l*m_k_ij+k+idx) {
-            printf("p[%d] Element i: %d j: %d l: %d k: %d m_k_ij: %d idx: %d does not match: %d %d\n",
+            printf("p[%d] Element(1) i: %d j: %d l: %d k: %d m_k_ij: %d idx: %d does not match: %d %d\n",
                 me,i,j,l,k,m_k_ij,idx,ptr[l*ptr[0]+k+2],l*m_k_ij+k+idx);
           }
         }
@@ -352,16 +353,20 @@ void do_work()
       */
       m_k_ij = i%Q_I + 1;
       m_l_ij = j%Q_J + 1;
+      if (size != sizeof(int)*(m_k_ij*m_l_ij+2)) {
+        printf("p[%d] [%d,%d] Size actual: %d expected: %d\n",
+               me,i,j,size,sizeof(int)*(m_k_ij*m_l_ij+2));
+      }
       if (ptr[0] != m_k_ij) {
-        printf("p[%d] [%d,%d] Dimension i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
+        printf("p[%d] [%d,%d] Dimension(2) i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
       }
       if (ptr[1] != m_l_ij) {
-        printf("p[%d] [%d,%d] Dimension j actual: %d expected: %d\n",me,i,j,ptr[1],m_l_ij);
+        printf("p[%d] [%d,%d] Dimension(2) j actual: %d expected: %d\n",me,i,j,ptr[1],m_l_ij);
       }
       for (k=0; k<ptr[0]; k++) {
         for (l=0; l<ptr[1]; l++) {
           if (ptr[l*m_k_ij+k+2] != l*m_k_ij+k+idx) {
-            printf("p[%d] Element i: %d j: %d l: %d k: %d m_k_ij: %d idx: %d does not match: %d %d\n",
+            printf("p[%d] Element(2) i: %d j: %d l: %d k: %d m_k_ij: %d idx: %d does not match: %d %d\n",
                 me,i,j,l,k,m_k_ij,idx,ptr[l*ptr[0]+k+2],l*m_k_ij+k+idx);
           }
         }
@@ -370,6 +375,63 @@ void do_work()
   }
   NGA_Sync();
   if (me==0) printf("\nCompleted check of GP_Put\n",me);
+
+  /* Test gather. Deallocate buffers first */
+  free(buf);
+  free(buf_ptr);
+  free(buf_size);
+
+  nv = 5;
+  subscripts = (int*)malloc(2*nv*sizeof(int));
+  for (ii=0; ii<nv; ii++) {
+    jj = me + ii*(N_I-1);
+    i = jj%N_I;
+    j = (jj-i)/N_I;
+    subscript[ii*2] = i;
+    subscript[ii*2+1] = j;
+  }
+
+  /* Get size of data to be gathered */
+  GP_Gather_size(g_p, nv, subscript, &size);
+  /* TODO: Should not need this sync */
+  GA_Sync();
+  if (me == 0) printf("\nCompleted GP_Gather_size\n");
+
+  buf = (void*)malloc(size);
+  buf_ptr = (void**)malloc(nv*sizeof(void*));
+  buf_size = (int*) malloc(nv*sizeof(int));
+
+  /* Gather data elements */
+  GP_Gather(g_p, nv, subscript, buf, buf_ptr, buf_size, &size);
+  /* TODO: Should not need this sync */
+  GA_Sync();
+
+  /* Check data in buffers to see if it is correct */
+  for (ii=0; ii<nv; ii++) {
+    i = subscript[ii*2];
+    j = subscript[ii*2+1];
+    idx = j*N_I + i;
+    m_k_ij = i%Q_I + 1;
+    m_l_ij = j%Q_J + 1;
+    ptr = buf_ptr[ii];
+    if (ptr[0] != m_k_ij) {
+      printf("p[%d] [%d,%d] Dimension(3) i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
+    }
+    if (ptr[1] != m_l_ij) {
+      printf("p[%d] [%d,%d] Dimension(3) j actual: %d expected: %d\n",me,i,j,ptr[1],m_l_ij);
+    }
+    for (k=0; k<ptr[0]; k++) {
+      for (l=0; l<ptr[1]; l++) {
+        if (ptr[l*m_k_ij+k+2] != l*m_k_ij+k+idx) {
+          printf("p[%d] Element(3) i: %d j: %d l: %d k: %d m_k_ij: %d idx: %d does not match: %d %d\n",
+              me,i,j,l,k,m_k_ij,idx,ptr[l*ptr[0]+k+2],l*m_k_ij+k+idx);
+        }
+      }
+    }
+  }
+  subscripts = (int*)malloc(nv*sizeof(int));
+  if (me==0) printf("\nCompleted check of GP_Gather\n",me);
+  
 
   /* Clean up buffers and deallocate GP array */
   free(buf);
