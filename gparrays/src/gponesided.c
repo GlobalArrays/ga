@@ -605,3 +605,228 @@ void pgp_release_update_element(Integer g_p, Integer *subscript)
   Integer handle = g_p + GP_OFFSET;
   pnga_release_update(GP[handle].g_ptr_array, subscript, subscript);
 }
+
+/**
+ * Determine the total size of a random set of elements from a GP array
+ * @param g_p[in]        pointer array handle
+ * @param nv[in]         number of elements being requested
+ * @param subscript[in]  array containing element indices
+ * @param size[out]      total size (in bytes) of requested data
+ * @param[in] intsize    parameter to distinguish between 4 and 8
+ *                       byte integers
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wgp_gather_size = pgp_gather_size
+#endif
+
+void pgp_gather_size(Integer g_p, Integer nv, Integer *subscript, Integer *size,
+                     Integer intsize)
+{
+  void *size_buf;
+  Integer i, asize, handle;
+
+  handle = g_p + GP_OFFSET;
+  if (intsize == 4) {
+    size_buf = (void*)malloc((int)nv*sizeof(int));
+    /* BJP initialize to value other than 0 
+    for (i=0; i<nv; i++) {
+      ((int*)size_buf)[i] = -1;
+    }
+    */
+  } else {
+    size_buf = (void*)malloc((int)nv*sizeof(int64_t));
+  }
+  pnga_gather(GP[handle].g_size_array, size_buf, subscript, nv);
+
+  /* sum up all sizes */
+  asize = 0;
+  if (intsize == 4) {
+    for (i=0; i<nv; i++) {
+      asize += (Integer)((int*)size_buf)[i];
+    /* BJP
+    printf("p[%d] Test1 size: %d\n",pnga_nodeid(),((int*)size_buf)[i]);
+    */
+    }
+  } else {
+    for (i=0; i<nv; i++) {
+      asize += (Integer)((int64_t*)size_buf)[i];
+    }
+  }
+  free(size_buf);
+  *size = asize;
+}
+
+/**
+ * Gather a list of random elements from a GP array and store them in local
+ * buffers
+ * @param g_p[in]        pointer array handle
+ * @param nv[in]         number of elements being requested
+ * @param subscript[in]  array containing element indices
+ * @param buf[in]        pointer to local buffer that will contain results
+ * @param buf_ptr[out]   pointers to local copies of elements
+ * @param buf_size[out]  array with element sizes
+ * @param size[out]      total size (in bytes) of requested data
+ * @param[in] intsize    parameter to distinguish between 4 and 8
+ *                       byte integers
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wgp_gather = pgp_gather
+#endif
+
+void pgp_gather(Integer g_p, Integer nv, Integer *subscript, void *buf,
+                void **buf_ptr, void *buf_size, Integer *size, Integer intsize)
+{
+  Integer handle;
+  Integer *header, *list, *nelems;
+  Integer me, iproc, nproc, i, j, idx;
+  void *l_ptr;
+  armci_meminfo_t *info_buf;
+  armci_giov_t *desc;
+  void ***src_array, ***dst_array;
+  int rc, bytes;
+
+  handle = g_p + GP_OFFSET;
+  nproc = pnga_nnodes();
+  me = pnga_nodeid();
+
+  /* BJP
+  if (intsize == 4) {
+    for (i=0; i<nv; i++) {
+      ((int*)buf_size)[i] = -1;
+    }
+  }
+  */
+  info_buf = (armci_meminfo_t*)malloc((int)nv*sizeof(armci_meminfo_t)); 
+  pnga_gather(GP[handle].g_ptr_array, info_buf, subscript, nv);
+  pnga_gather(GP[handle].g_size_array, buf_size, subscript, nv);
+  /* BJP
+  printf("p[%d] Completed gather of buffers\n",me);
+  */
+
+
+  /* create link list arrays and other utility arrays
+   * header[iproc]: first element in list for processor iproc
+   * list[i]: pointer to next element in list
+   * nelems[iproc]: total number of elements on processor iproc
+   */
+  header = (Integer*)malloc((int)nproc*sizeof(Integer));
+  list = (Integer*)malloc((int)nv*sizeof(Integer));
+  nelems = (Integer*)malloc((int)nproc*sizeof(Integer));
+
+  for (i=0; i<nproc; i++) {
+    nelems[i] = 0;
+    header[i] = -1;
+  }
+  for (i=0; i<nv; i++) {
+    list[i] = 0;
+    /* BJP
+    printf("p[%d] Test size: %d\n",me,((int*)buf_size)[i]);
+    */
+  }
+
+  l_ptr = buf;
+  /* BJP
+  printf("p[%d] Allocated and initialized buffers buf: %p\n",me,buf);
+  */
+  if (intsize == 4) {
+    for (i=0; i<nv; i++) {
+      idx = (Integer)info_buf[i].cpid;
+      buf_ptr[i] = l_ptr;
+      l_ptr = (void*)((char*)l_ptr+(int)((int*)buf_size)[i]);
+      nelems[idx]++;
+      j = header[idx];
+      header[idx] = i;
+      list[i] = j;
+  /* BJP
+  printf("p[%d] idx: %d nelems: %d size: %d l_ptr: %p\n",me,idx,nelems[idx],
+         ((int*)buf_size)[i],l_ptr);
+         */
+    }
+  } else {
+    for (i=0; i<nv; i++) {
+      idx = (Integer)info_buf[i].cpid;
+      buf_ptr[i] = l_ptr;
+      l_ptr = (void*)((char*)l_ptr+(int)((int64_t*)buf_size)[i]);
+      nelems[idx]++;
+      j = header[idx];
+      header[idx] = i;
+      list[i] = j;
+    }
+  }
+  /* BJP
+  printf("p[%d] Set up linked list\n",me);
+  */
+  
+  /* scan through linked list and get data from each processor */
+  for (iproc=0; iproc<nproc; iproc++) {
+    if (nelems[iproc] > 0) {
+      idx = header[iproc];
+      /* allocate descriptor array for this vector call */
+      desc = (armci_giov_t*)malloc((int)nelems[iproc]*sizeof(armci_giov_t));
+      src_array = (void***)malloc((int)nelems[iproc]*sizeof(void**));
+      dst_array = (void***)malloc((int)nelems[iproc]*sizeof(void**));
+      j = 0;
+      while (idx > -1) {
+        if (intsize == 4) {
+          bytes = (int)((int*)buf_size)[idx];
+        } else {
+          bytes = (int)((int64_t*)buf_size)[idx];
+        }
+        if (bytes>0) {
+          src_array[j] = (void**)malloc(sizeof(void*));
+          dst_array[j] = (void**)malloc(sizeof(void*));
+          if (iproc == me) {
+            (src_array[j])[0] = ((void*)(info_buf[idx].addr));
+          } else if (pnga_cluster_proc_nodeid(me) ==
+              pnga_cluster_proc_nodeid(iproc)) {
+            (src_array[j])[0] = ARMCI_Memat(&info_buf[idx],sizeof(armci_meminfo_t));
+          } else { 
+            (src_array[j])[0] = (void*)(info_buf[idx].armci_addr);
+          }
+          (dst_array[j])[0] = (void*)(buf_ptr[idx]);
+          if (intsize == 4) {
+            desc[j].bytes = (int)((int*)buf_size)[idx];
+          } else {
+            desc[j].bytes = (int)((int64_t*)buf_size)[idx];
+          }
+          desc[j].src_ptr_array = src_array[j];
+          desc[j].dst_ptr_array = dst_array[j];
+          desc[j].ptr_array_len = 1;
+
+          j++;
+        }
+        idx = list[idx];
+      }
+      /* BJP
+  printf("p[%d] Completed descriptor array\n",me);
+  */
+
+      /* gather data from remote locations */
+      if (j > 0) {
+        rc = ARMCI_GetV(desc, (int)j, (int)iproc);
+        if (rc) pnga_error("ARMCI_GetV failure in gp_gather",rc);
+      }
+      /* BJP
+  printf("p[%d] Completed call to ARMCI_GetV\n",me);
+  */
+
+      /* free arrays */
+      for (j=0; j<nelems[i]; j++) {
+        free(src_array[j]);
+        free(dst_array[j]);
+      }
+      free(src_array);
+      free(dst_array);
+      free(desc);
+      /* BJP
+  printf("p[%d] Freed arrays\n",me);
+  */
+    }
+  }
+
+  /* free remaining temporary arrays */
+  free(info_buf);
+  free(header);
+  free(list);
+  free(nelems);
+}
