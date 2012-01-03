@@ -298,7 +298,6 @@ GA_F77_CPP_SYMBOL
 GA_F77_FIXED
 GA_F77_MISMATCH_TYPE
 GA_F77_INTEGER_SIZE
-ARMCI_F77_I4
 
 # Checks for Fortran typedefs, structures, and compiler characteristics.
 
@@ -479,7 +478,6 @@ AC_MSG_NOTICE([         unwrapped F77=$ga_cv_mpif77_naked])
 ])
 AC_MSG_NOTICE([                FFLAGS=$FFLAGS])
 AC_MSG_NOTICE([             FFLAG_INT=$FFLAG_INT])
-AC_MSG_NOTICE([           FFLAG_INT_4=$FFLAG_INT_4])
 AC_MSG_NOTICE([            ARMCI_FOPT=$ARMCI_FOPT])
 ])
 AC_MSG_NOTICE([                    CC=$CC])

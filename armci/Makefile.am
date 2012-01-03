@@ -218,15 +218,8 @@ libarmci_la_SOURCES += src/xfer/rmw.c
 libarmci_la_SOURCES += src/xfer/strided.c
 libarmci_la_SOURCES += src/xfer/vector.c
 if ENABLE_F77
-noinst_LTLIBRARIES += libfcopyfacc.la
-libfcopyfacc_la_SOURCES =
-libfcopyfacc_la_SOURCES += src/common/fcopy.f
-libfcopyfacc_la_SOURCES += src/xfer/faccumulate.f
-libfcopyfacc_la_FFLAGS =
-libfcopyfacc_la_FFLAGS += $(ARMCI_FOPT)
-libfcopyfacc_la_FFLAGS += $(FFLAG_INT_4)
-libarmci_la_LIBADD += libfcopyfacc.la
-libarmcii_la_LIBADD += libfcopyfacc.la
+libarmci_la_SOURCES += src/common/fcopy.f
+libarmci_la_SOURCES += src/xfer/faccumulate.f
 endif # ENABLE_F77
 if MSG_COMMS_MPI
 libarmci_la_SOURCES += src/common/groups.c

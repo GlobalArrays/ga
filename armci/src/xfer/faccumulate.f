@@ -14,7 +14,7 @@
 *----------------------- original loop versions ----------------------
 
       subroutine d_accumulate_1d(alpha,  A,  B, rows)
-      integer rows, r
+      integer*4 rows, r
       double precision A(*), B(*), alpha
 ccdir$ no_cache_alloc a,b
       do r = 1, rows
@@ -23,8 +23,8 @@ ccdir$ no_cache_alloc a,b
       end
 
       subroutine d_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
-      integer rows, cols
-      integer c, r, ald, bld
+      integer*4 rows, cols
+      integer*4 c, r, ald, bld
       double precision A(ald,*), B(bld,*), alpha
 ccdir$ no_cache_alloc a,b
       do c = 1, cols
@@ -35,7 +35,7 @@ ccdir$ no_cache_alloc a,b
       end
 
       subroutine f_accumulate_1d(alpha,  A,  B, rows)
-      integer rows, r
+      integer*4 rows, r
       real A(*), B(*), alpha
       do r = 1, rows
          A(r) = A(r)+ alpha*B(r)
@@ -43,8 +43,8 @@ ccdir$ no_cache_alloc a,b
       end
 
       subroutine f_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
-      integer rows, cols
-      integer c, r, ald, bld
+      integer*4 rows, cols
+      integer*4 c, r, ald, bld
       real A(ald,*), B(bld,*), alpha
       do c = 1, cols
          do r = 1, rows
@@ -54,7 +54,7 @@ ccdir$ no_cache_alloc a,b
       end
 
       subroutine z_accumulate_1d(alpha,  A,  B, rows)
-      integer rows, r
+      integer*4 rows, r
       double complex  A(*), B(*), alpha
       do r = 1, rows
          A(r) = A(r)+ alpha*B(r)
@@ -62,8 +62,8 @@ ccdir$ no_cache_alloc a,b
       end
 
       subroutine z_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
-      integer rows, cols
-      integer c, r, ald, bld
+      integer*4 rows, cols
+      integer*4 c, r, ald, bld
       double complex A(ald,*), B(bld,*), alpha
       do c = 1, cols
          do r = 1, rows
@@ -73,7 +73,7 @@ ccdir$ no_cache_alloc a,b
       end
 
       subroutine c_accumulate_1d(alpha,  A,  B, rows)
-      integer rows, r
+      integer*4 rows, r
       complex  A(*), B(*), alpha
       do r = 1, rows
          A(r) = A(r)+ alpha*B(r)
@@ -81,8 +81,8 @@ ccdir$ no_cache_alloc a,b
       end
 
       subroutine c_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
-      integer rows, cols
-      integer c, r, ald, bld
+      integer*4 rows, cols
+      integer*4 c, r, ald, bld
       complex A(ald,*), B(bld,*), alpha
       do c = 1, cols
          do r = 1, rows
@@ -92,17 +92,17 @@ ccdir$ no_cache_alloc a,b
       end
 
       subroutine i_accumulate_1d(alpha,  A,  B, rows)
-      integer rows, r
-      integer A(*), B(*), alpha
+      integer*4 rows, r
+      integer*4 A(*), B(*), alpha
       do r = 1, rows
          A(r) = A(r)+ alpha*B(r)
       enddo
       end
 
       subroutine i_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
-      integer rows, cols
-      integer c, r, ald, bld
-      integer A(ald,*), B(bld,*), alpha
+      integer*4 rows, cols
+      integer*4 c, r, ald, bld
+      integer*4 A(ald,*), B(bld,*), alpha
       do c = 1, cols
          do r = 1, rows
             A(r,c) = A(r,c)+ alpha*B(r,c)
@@ -114,10 +114,10 @@ ccdir$ no_cache_alloc a,b
 *-----------------------------  loops unrolled ----------------------
 *
       subroutine d_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
-      integer rows, cols
-      integer c, r, ald, bld
+      integer*4 rows, cols
+      integer*4 c, r, ald, bld
       double precision A(ald,*), B(bld,*), alpha
-      integer r1
+      integer*4 r1
       doubleprecision d1, d2, d3, d4
       do c = 1, cols
       r1 = iand(max0(rows,0),3)
@@ -138,10 +138,10 @@ ccdir$ no_cache_alloc a,b
       end
 
       subroutine f_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
-      integer rows, cols
-      integer c, r, ald, bld
+      integer*4 rows, cols
+      integer*4 c, r, ald, bld
       real A(ald,*), B(bld,*), alpha
-      integer r1
+      integer*4 r1
       real d1, d2, d3, d4
       do c = 1, cols
       r1 = iand(max0(rows,0),3)
@@ -162,10 +162,10 @@ ccdir$ no_cache_alloc a,b
       end
 
       subroutine z_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
-      integer rows, cols
-      integer c, r, ald, bld
+      integer*4 rows, cols
+      integer*4 c, r, ald, bld
       double complex A(ald,*), B(bld,*), alpha
-      integer r1
+      integer*4 r1
       double complex x1, x2, x3, x4
       do c = 1, cols
       r1 = iand(max0(rows,0),3)
@@ -186,10 +186,10 @@ ccdir$ no_cache_alloc a,b
       end
 
       subroutine c_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
-      integer rows, cols
-      integer c, r, ald, bld
+      integer*4 rows, cols
+      integer*4 c, r, ald, bld
       complex A(ald,*), B(bld,*), alpha
-      integer r1
+      integer*4 r1
       complex x1, x2, x3, x4
       do c = 1, cols
       r1 = iand(max0(rows,0),3)
@@ -210,10 +210,10 @@ ccdir$ no_cache_alloc a,b
       end
 
       subroutine i_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
-      integer rows, cols
-      integer c, r, ald, bld
-      integer A(ald,*), B(bld,*), alpha
-      integer r1, j2, j3, j4, j5
+      integer*4 rows, cols
+      integer*4 c, r, ald, bld
+      integer*4 A(ald,*), B(bld,*), alpha
+      integer*4 r1, j2, j3, j4, j5
       do c = 1, cols
       r1 = iand(max0(rows,0),3)
       do r = 1, r1
@@ -235,7 +235,7 @@ ccdir$ no_cache_alloc a,b
 c---------- operations used in armci gops --------------
 c
       subroutine fort_dadd(n, x, work)
-      integer n,i
+      integer*4 n,i
       double precision x(n), work(n)
       do i= 1,n
          x(i) = x(i) + work(i)
@@ -243,7 +243,7 @@ c
       end
 
       subroutine fort_dadd2(n, x, work, work2)
-      integer n,i
+      integer*4 n,i
       double precision x(n), work(n), work2(n)
       do i= 1,n
          x(i) = work(i) + work2(i)
@@ -251,7 +251,7 @@ c
       end
 
       subroutine fort_dmult(n, x, work)
-      integer n,i
+      integer*4 n,i
       double precision x(n), work(n)
       do i= 1,n
          x(i) = x(i) * work(i)
@@ -259,7 +259,7 @@ c
       end
 
       subroutine fort_dmult2(n, x, work, work2)
-      integer n,i
+      integer*4 n,i
       double precision x(n), work(n), work2(n)
       do i= 1,n
          x(i) = work(i)*work2(i)

@@ -667,7 +667,6 @@ F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 F2C_IARGC
 F2C_GETARG
 FLD_NOMAIN
-FFLAG_INT_4
 FFLAG_INT
 FLIBS
 GA_F_WARN
@@ -993,7 +992,6 @@ MPIF77
 F77
 FFLAGS
 FFLAG_INT
-FFLAG_INT_4
 F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 ARMCI_FOPT
 AR
@@ -1715,7 +1713,6 @@ Some influential environment variables:
   F77         Fortran 77 compiler command
   FFLAGS      Fortran 77 compiler flags
   FFLAG_INT   Fortran 77 compiler flag to set desired integer size
-  FFLAG_INT_4 Fortran 77 compiler flag to set integer size to 4 bytes
   F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
               if cross compiling, set to either "yes" (default) or "no" (after
               string)
@@ -15775,194 +15772,6 @@ $as_echo "$as_me: WARNING: Unable to find a flag to promote Fortran integers" >&
 $as_echo "$as_me: WARNING: INTEGER*8 promotion is not supported" >&2;}
          { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&5
 $as_echo "$as_me: WARNING: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&2;}
-fi
-fi
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for INTEGER*4 size compile flag" >&5
-$as_echo_n "checking for INTEGER*4 size compile flag... " >&6; }
-if ${armci_cv_f77_integer_size_flag+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test x$cross_compiling = xyes; then :
-  ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
-ga_result=
-ga_save_FFLAGS="$FFLAGS"
-ga_save_suppress_FFLAGS="$FFLAGS"
-ga_save_werror_flag=$ac_f77_werror_flag
-ac_f77_werror_flag=yes
-if test "x$ga_cv_f77_suppress" != xnone; then :
-  ga_save_suppress_FFLAGS="$FFLAGS $ga_cv_f77_suppress"
-fi
-if test "x$FFLAG_INT" != x; then :
-  FFLAGS="$ga_save_suppress_FFLAGS $FFLAG_INT"
-     cat > conftest.$ac_ext <<_ACEOF
-      program main
-      integer i
-      end program
-_ACEOF
-if ac_fn_f77_try_link "$LINENO"; then :
-  ga_result=$flag
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-if test "x$ga_result" = x; then :
-  for flag in -fdefault-integer-4 -qintsize=4 "-integer-size 32" -CcdII4 "-s integer32" -xtypemap=integer:32 -i4 +i4
-     do
-        FFLAGS="$ga_save_suppress_FFLAGS $flag"
-        cat > conftest.$ac_ext <<_ACEOF
-      program main
-      integer i
-      end program
-_ACEOF
-if ac_fn_f77_try_link "$LINENO"; then :
-  ac_ext=F
-             cat > conftest.$ac_ext <<_ACEOF
-      program main
-      integer i
-      end program
-_ACEOF
-if ac_fn_f77_try_link "$LINENO"; then :
-  ga_result=$flag; break
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-             ac_ext=f
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-     done
-fi
-ac_f77_werror_flag=$ga_save_werror_flag
-FFLAGS="$ga_save_FFLAGS"
-armci_cv_f77_integer_size_flag="$ga_result"
-ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
-
-else
-  for flag in none $FFLAG_INT -fdefault-integer-4 -qintsize=4 "-integer-size 32" -CcdII4 "-s integer32" -xtypemap=integer:32 -i4 +i4
-do
-    ga_save_FFLAGS="$FFLAGS"
-    if test "x$flag" != xnone; then :
-  FFLAGS="$flag $FFLAGS"
-fi
-    sizeof_integer=0
-    ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-case $ac_cv_f77_mangling in
-  upper*) ac_val="SIZE" ;;
-  lower*) ac_val="size" ;;
-  *)      ac_val="unknown" ;;
-esac
-case $ac_cv_f77_mangling in *," underscore"*) ac_val="$ac_val"_ ;; esac
-
-size="$ac_val"
-
-ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
- ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
- cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdio.h>
-#include <stdlib.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
-void $size(char *a, char *b)
-{
-    long diff = (long) (b - a);
-    FILE *f=fopen("conftestval", "w");
-    if (!f) exit(1);
-    fprintf(f, "%ld\n", diff);
-    fclose(f);
-}
-#ifdef __cplusplus
-}
-#endif
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  mv conftest.$ac_objext cfortran_test.$ac_objext
-     ga_save_LIBS=$LIBS
-     LIBS="cfortran_test.$ac_objext $LIBS $CLIBS"
-     ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
-     if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat > conftest.$ac_ext <<_ACEOF
-      program main
-      external size
-      INTEGER x(2)
-      call size(x(1),x(2))
-      end
-_ACEOF
-if ac_fn_f77_try_run "$LINENO"; then :
-  sizeof_integer=`cat conftestval`
-else
-  sizeof_integer=no
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-     ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-     LIBS=$ga_save_LIBS
-     rm -f cfortran_test*
-else
-  sizeof_integer=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-
-rm -rf conftest*
-
-    FFLAGS="$ga_save_FFLAGS"
-    if test x$sizeof_integer = x4; then :
-  armci_cv_f77_integer_size_flag=$flag; break
-fi
-done
-
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $armci_cv_f77_integer_size_flag" >&5
-$as_echo "$armci_cv_f77_integer_size_flag" >&6; }
-if test "x$armci_cv_f77_integer_size_flag" != x; then :
-  if test "x$armci_cv_f77_integer_size_flag" != xnone; then :
-  FFLAG_INT_4=$armci_cv_f77_integer_size_flag
-
 fi
 fi
 
@@ -36836,8 +36645,6 @@ fi
 $as_echo "$as_me:                 FFLAGS=$FFLAGS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:              FFLAG_INT=$FFLAG_INT" >&5
 $as_echo "$as_me:              FFLAG_INT=$FFLAG_INT" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:            FFLAG_INT_4=$FFLAG_INT_4" >&5
-$as_echo "$as_me:            FFLAG_INT_4=$FFLAG_INT_4" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:             ARMCI_FOPT=$ARMCI_FOPT" >&5
 $as_echo "$as_me:             ARMCI_FOPT=$ARMCI_FOPT" >&6;}
 
