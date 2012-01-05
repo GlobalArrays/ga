@@ -201,6 +201,7 @@ armci_send_req_msg(int proc, void *buf, int bytes, int tag)
 
         else if(msginfo->operation == ACK) {
            armci_onesided_oper(buffer, msginfo, cluster, req);
+           onesided_mem_htflush(cluster);
         }
 
         else if(msginfo->operation == ARMCI_SWAP || msginfo->operation == ARMCI_SWAP_LONG ||
@@ -463,7 +464,8 @@ armci_onesided_search_remote_mdh_list(void* tgt_ptr, int proc, cos_mdesc_t *ret_
 
      // search the link-list for remote address and return the 
         while(ll) {
-           rem_addr = (uint64_t) ll->ptrs[proc];
+        // rem_addr = (uint64_t) ll->ptrs[proc];
+           rem_addr = (uint64_t) ll->mdhs[proc].addr;
            length   = ll->mdhs[proc].length;
            if(tgt_addr >= rem_addr && tgt_addr < (rem_addr+length) /* check length of msg */) {
              mdh = &ll->mdhs[proc];
@@ -492,7 +494,15 @@ armci_onesided_search_remote_mdh_list(void* tgt_ptr, int proc, cos_mdesc_t *ret_
      // is why we have to calculate the offset from the starting address on the node master based on the
      // actual virutal addresses on the remote rank.
         memcpy(ret_mdh, mdh, sizeof(cos_mdesc_t));
-        ret_mdh->addr += (tgt_addr-rem_addr);
+     // ret_mdh->addr += (tgt_addr-rem_addr);
+     // if(ret_mdh->addr != tgt_addr) {
+     //    printf("%d: ret_mdh->addr=%ld; tgt_addr=%ld\n",armci_me,ret_mdh->addr, tgt_addr);
+     //    fflush(stdout);
+     // }
+        ret_mdh->addr = tgt_addr;
+     // i'm not sure this is a fix - but it seems to fix the bug in armci/test.x
+     // we are working off proc addresses, we need to translate that into the address space of the node
+     // master (numa_me == 0) who was responsible for registering the memory
 }
 
 void
@@ -502,13 +512,14 @@ armci_onesided_remove_from_remote_mdh_list(void *tgt_ptr)
         cos_mdesc_t *mdh = NULL;
         onesided_hnd_t cp_hnd;
         int node = armci_clus_id(armci_me);
+        long total_bytes;
         remote_mdh_node_t *rm_ll, *ll = remote_mdh_base_node;
 
         NTK_MPI_GetComm(MPI_COMM_WORLD, &info);
 
      // get the onesided v2.0 api handle for the compute process
         cpGetOnesidedHandle(&cp_hnd);
-        
+
      // find mdh
         while(ll) {
            if(tgt_ptr == ll->ptrs[armci_me]) {
@@ -521,8 +532,11 @@ armci_onesided_remove_from_remote_mdh_list(void *tgt_ptr)
      // ensure we have a valid mdh
         if(mdh == NULL) abort();
 
+     // sum the total bytes allocated on the node
+        MPI_Allreduce(&mdh->length, &total_bytes, 1, MPI_LONG, MPI_SUM, info.numa_comm);
+
      // node master only  
-        if(info.numa_me == 0) {
+        if(info.numa_me == 0 && total_bytes) {
 
         // deregister memory
            onesided_mem_deregister(cp_hnd, mdh);
@@ -542,4 +556,5 @@ armci_onesided_remove_from_remote_mdh_list(void *tgt_ptr)
           assert(ll->next == rm_ll);
           ll->next = rm_ll->next;
         }
+        free(rm_ll);
 }

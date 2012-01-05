@@ -701,16 +701,18 @@ int PARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 
       if(info.numa_me == 0 && total_bytes) {
       // register the data for the entire node
+      // ABHINAV: ASSERT(armci_me == node master)
          onesided_mem_register(cp_hnd, ptr, total_bytes, options, &mdesc);
-      // cpMemRegister(ptr, total_bytes, &mdesc);
       } else {
-         mdesc.addr = (uint64_t) NULL;
-         mdesc.length = 0;
+         bzero(&mdesc, sizeof(cos_mdesc_t));
       }
 
    // bcast rank of the node master and and the mdesc for the nodes shared-memory segment
       MPI_Bcast(&node_master, 1, MPI_INT, 0, info.numa_comm);
       MPI_Bcast(&mdesc, sizeof(cos_mdesc_t), MPI_BYTE, 0, info.numa_comm);
+
+   // each rank need to compare is starting virtual address to the master's starting virtual
+   // address.  if it is differnet (ptr != mdesc.addr), then set the offset
 
    // each rank will update mdesc to point at the memory region it owns
       uint64_t offset = 0;

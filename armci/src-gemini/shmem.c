@@ -344,9 +344,9 @@ static int armci_shmalloc_try(long size)
 #define PAGE (16*65536L)
 #define LBOUND  1048576L
 #if defined(MULTI_CTX) && defined(QUADRICS)
-#define UBOUND 256*LBOUND
+#define UBOUND (256*LBOUND)
 #else
-#define UBOUND 512*LBOUND
+#define UBOUND (512*LBOUND)
 #endif
 
 static long get_user_shmmax()

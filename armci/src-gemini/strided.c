@@ -763,7 +763,191 @@ int *count=seg_count, tmp_count=0;
        }
        else 
        {
+       #if 1
           DO_FENCE(proc,ONESIDED_GET);
+
+//        printf("GetS stride_levels=%d\n", stride_levels);
+//        fflush(stdout);
+
+          int i,j,id;
+          long src_idx;   /* index offset of the current block position to src_ptr */
+          long dst_idx;   /* index offset of the current block position to dst_ptr */
+          int n1dim;      /* number of 1-dimensional blocks to xfer */
+          int bvalue[MAX_STRIDE_LEVEL];
+          int bunit[MAX_STRIDE_LEVEL];
+          cos_desc_t cds[MAX_OUTSTANDING_ONESIDED_GETS];
+          uint64_t src_addr, dst_addr;
+
+          n1dim = 1;
+          for(i=1; i<=stride_levels; i++) {
+             n1dim *= seg_count[i];
+          }
+
+          bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
+          for(i=2; i<=stride_levels; i++)
+          {
+              bvalue[i] = 0;
+              bunit[i] = bunit[i-1] * seg_count[i-1];
+          }
+
+          for(i=0,id=0; i<n1dim; i++)
+          {
+              src_idx = 0;
+              dst_idx = 0;
+              for(j=1; j<=stride_levels; j++)
+              {
+                  src_idx += bvalue[j] * src_stride_arr[j-1];
+                  dst_idx += bvalue[j] * dst_stride_arr[j-1];
+                  if((i+1) % bunit[j] == 0) bvalue[j]++;
+                  if(bvalue[j] > (seg_count[j]-1)) bvalue[j] = 0;
+              }
+
+              src_addr = (uint64_t) ((char *) src_ptr + src_idx);
+              dst_addr = (uint64_t) ((char *) dst_ptr + dst_idx);
+/*
+              if(armci_me == 0) {
+                 printf("1dpass=%d of %d; src_idx=%d; dst_idx=%d; seg_count[0]=%d\n",i,n1dim,src_idx, dst_idx,seg_count[0]);
+              }
+*/
+              if(i >= MAX_OUTSTANDING_ONESIDED_GETS)
+              {
+                 if(id == MAX_OUTSTANDING_ONESIDED_GETS) id=0;
+                 onesided_wait(&cds[id]);
+                 cpMemDeregister(&cds[id].local_mdesc);
+              }
+
+              armci_onesided_search_remote_mdh_list((void*)src_addr, proc, &remote_mdh);
+              cpMemRegister((void*)dst_addr, seg_count[0], &local_mdh);
+              onesided_desc_init(cp_hnd, &local_mdh, &remote_mdh, 0, &cds[id]);
+              onesided_get_nb(&cds[id]);
+              id++;
+          }
+
+          // finish up any outstanding requests
+          int count = n1dim;
+          if(MAX_OUTSTANDING_ONESIDED_GETS < n1dim) count = MAX_OUTSTANDING_ONESIDED_GETS;
+          for(i=0; i<count; i++)
+          {
+             if(cds[i].state)
+             {
+                onesided_wait(&cds[i]);
+                cpMemDeregister(&cds[i].local_mdesc);
+             }
+          }
+
+       // done
+          rc=0;
+          goto fn_exit;
+     # endif // if 0
+     # endif // CRAY_REGISTER_ARMCI_MALLOC
+
+          DO_FENCE(proc,SERVER_GET);
+          rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
+                                  dst_ptr,dst_stride_arr,count,stride_levels,
+                                  NULL,-1,-1,-1,NULL);
+
+     # ifdef CRAY_REGISTER_ARMCI_MALLOC
+       }
+     # endif
+    } else {
+       if(!SAMECLUSNODE(proc))DO_FENCE(proc,DIRECT_GET);
+       rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
+                             dst_stride_arr,count, stride_levels,0,NULL);
+    }
+
+    POSTPROCESS_STRIDED(tmp_count);
+
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided(ARMCI_PROF_GETS);
+#endif
+
+fn_exit:
+    ARMCI_PR_DBG("exit",proc);
+    if(rc) return FAIL6;
+    else return 0;
+}
+
+
+int ARMCI_GetT( void *src_ptr,  	/* pointer to 1st segment at source*/ 
+		int src_stride_arr[],   /* array of strides at source */
+		void* dst_ptr,          /* 1st segment at destination*/
+		int dst_stride_arr[],   /* array of strides at destination */
+		int seg_count[],       /* number of segments at each stride 
+					   levels: count[0]=bytes*/
+		int stride_levels,      /* number of stride levels */
+                int proc                /* remote process(or) ID */
+                )
+{
+int rc,direct=1;
+int *count=seg_count, tmp_count=0;
+    ARMCI_PR_DBG("enter",proc);
+
+    if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
+    if(seg_count[0]<0)return FAIL3;
+    if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
+    if(proc<0||proc>=armci_nproc){printf("\n%d:%s:proc=%d",armci_me,__FUNCTION__,proc);fflush(stdout);return FAIL5;}
+    
+    ORDER(GET,proc); /* ensure ordering */
+    PREPROCESS_STRIDED(tmp_count);
+
+#if DATA_SERVER_GET_
+    if(stride_levels)direct=SAMECLUSNODE(proc);
+    direct=SAMECLUSNODE(proc);
+#endif
+
+    if(!direct)
+    {
+
+     # ifdef CRAY_REGISTER_ARMCI_MALLOC
+       onesided_hnd_t cp_hnd;
+       cpGetOnesidedHandle(&cp_hnd);
+       cos_mdesc_t local_mdh, remote_mdh, *mdh = NULL;
+       int node = armci_clus_id(proc);
+
+       if(stride_levels == 0)
+       {
+
+       // if a strided put/acc is outstanding to proc, then we need to ensure that is completed
+       // we allow the maximum possible overlap for strided puts/acc.  that means they are not fully blocking
+       // calls.  they are however, guaranteed to be complete prior to another request being sent.
+          DO_FENCE(proc,ONESIDED_GET);
+
+       // local varaibles
+          cos_desc_t *comm_desc = &__global_1sided_direct_get_comm_desc;
+       // printf("[cp %d]: direct remote get - src=%p; dst=%p; tgt_rank=%d; tgt_node=%d\n",armci_me,src_ptr,dst_ptr,proc,node);
+
+       // find remote mdh
+          armci_onesided_search_remote_mdh_list(src_ptr, proc, &remote_mdh);
+
+       // register local memory -- will use UDREG if ONESIDED_USE_UDREG is active
+          cpMemRegister(dst_ptr, seg_count[0], &local_mdh);
+       // onesided_mem_register(cp_hnd, src_ptr, seg_count[0], NULL, &local_mdh);
+
+       // initialize onesided communication descriptor
+          onesided_desc_init(cp_hnd, &local_mdh, &remote_mdh, 0, comm_desc);
+
+       // initiate get
+          onesided_get_nb(comm_desc);
+
+       // complete put [locally]
+          onesided_wait(comm_desc);
+
+       // deregister memory -- if we were using the dreg routines, we would let the
+       // dreg memory do this for us "on demand" = lazy mem deregisteration
+          cpMemDeregister(&local_mdh);
+       // onesided_mem_deregister(cp_hnd, &local_mdh);
+
+       // done! 
+          rc=0;
+          goto fn_exit;
+       }
+       else 
+       {
+       #if 0
+          DO_FENCE(proc,ONESIDED_GET);
+
+          printf("GetS stride_levels=%d\n", stride_levels);
+          fflush(stdout);
 
           int i,j,id;
           long src_idx;   /* index offset of the current block position to src_ptr */
@@ -816,7 +1000,6 @@ int *count=seg_count, tmp_count=0;
               cpMemRegister((void*)dst_addr, seg_count[0], &local_mdh);
               onesided_desc_init(cp_hnd, &local_mdh, &remote_mdh, 0, &cds[id]);
               onesided_get_nb(&cds[id]);
-
               id++;
           }
 
@@ -835,7 +1018,7 @@ int *count=seg_count, tmp_count=0;
        // done
           rc=0;
           goto fn_exit;
-
+     # endif // if 0
      # endif // CRAY_REGISTER_ARMCI_MALLOC
 
           DO_FENCE(proc,SERVER_GET);
