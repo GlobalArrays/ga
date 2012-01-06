@@ -771,9 +771,10 @@ int PARMCI_Free(void *ptr)
 #               ifdef RMA_NEEDS_SHMEM
                    Free_Shmem_Ptr(0,0,ptr);
 #               else
-                   if(armci_clus_info[armci_clus_me].nslave>1)
-                      Free_Shmem_Ptr(0,0,ptr);
-                   else kr_free(ptr, &ctx_localmem);
+                   if(armci_clus_info[armci_clus_me].nslave>1) {
+                   kr_free(ptr, &ctx_localmem);
+                   }
+       //               Free_Shmem_Ptr(0,0,ptr);
 #               endif
                 }
                 ptr = NULL;
