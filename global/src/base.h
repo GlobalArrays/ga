@@ -299,8 +299,8 @@ extern proc_list_t *PGRP_LIST;
   _l = strlen(str);                                                  \
   sprintf(err_string+_l, "[%ld:%ld ",(long)lo[_d],(long)hi[_d]);     \
   _l=strlen(err_string);                                             \
-  __CRAYX1_PRAGMA("_CRI novector");                                         \
-  for(_d=0; _d< ndim-1; _d++){                                       \
+  __CRAYX1_PRAGMA("_CRI novector");                                  \
+  for(_d=1; _d< ndim; _d++){                                         \
     sprintf(err_string+_l, ",%ld:%ld ",(long)lo[_d],(long)hi[_d]);   \
     _l=strlen(err_string);                                           \
   }                                                                  \
