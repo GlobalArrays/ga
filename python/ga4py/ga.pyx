@@ -563,10 +563,8 @@ def access_block_grid(int g_a, subscript):
     raise NotImplementedError
 
 def access_block_segment(int g_a, int proc):
-    """Do not use.
-
-    This function can be used to gain access to the all the locally held data
-    on a particular processor that is associated with a block-cyclic
+    """This function can be used to gain access to the all the locally held
+    data on a particular processor that is associated with a block-cyclic
     distributed array.
 
     The data  inside this segment has a lot of additional structure so this
@@ -600,7 +598,7 @@ def access_block_segment(int g_a, int proc):
     free(dims)
     return array
 
-def access_ghost_element(int g_a, subscript, ld):
+def access_ghost_element(int g_a, subscript):
     """Returns a scalar ndarray representing the requested ghost element.
 
     This function can be used to return a pointer to any data element in the
@@ -620,7 +618,7 @@ def access_ghost_element(int g_a, subscript, ld):
     :returns: ndarray scalar representing local block
 
     """
-    raise NotImplementedError
+    raise NotImplementedError, "use access_ghosts(g_a) instead"
 
 def access_ghosts(int g_a):
     """Returns ndarray representing local patch with ghost cells.
@@ -3874,8 +3872,10 @@ def select_elem(int g_a, char *op):
     elif gtype == C_LDBL:
         return ldalpha,index
     elif gtype == C_SCPL:
+        # TODO explicitly convert GA complex to Python complex type
         return fcalpha,index
     elif gtype == C_DCPL:
+        # TODO explicitly convert GA complex to Python complex type
         return dcalpha,index
     else:
         raise TypeError, "type of g_a not recognized"
@@ -4070,6 +4070,40 @@ def set_pgroup(int g_a, int pgroup):
 
     """
     GA_Set_pgroup(g_a, pgroup)
+
+def set_restricted(int g_a, list):
+    """Restrict data in the global array g_a to only the processors listed in
+    the array list.
+    
+    len(list) must be less than or equal to the number of available processors.
+    If this call is used in conjunction with set_irreg_distr, then the
+    decomposition in the set_irreg_distr call must be done assuming that the
+    number of processors is nproc. The data that ordinarily would be mapped to
+    process 0 is mapped to the process in list[0], the data that would be
+    mapped to process 1 will be mapped to list[1], etc. This can be used to
+    remap the data distribution to different processors, even if nproc equals
+    the number of available processors.
+
+    This is a collective operation.
+
+    """
+    cdef np.ndarray[np.int32_t, ndim=1] list_nd
+    list_nd = _inta32(list)
+    GA_Set_restricted(g_a, <int*>list_nd.data, len(list_nd))
+
+def set_restricted_range(int g_a, int lo_proc, int hi_proc):
+    """Restrict data in the global array to the given range of processors.
+
+    Both lo_proc and hi_proc must be less than or equal to the total number of
+    processors minus one (e.g., in the range [0,N-1], where N is the total
+    number of processors) and lo_proc must be less than or equal to hi_proc. If
+    lo_proc = 0 and hi_proc = N-1 then this call has no effect on the data
+    distribution.
+
+    This is a collective operation.
+
+    """
+    GA_Set_restricted_range(g_a, lo_proc, hi_proc)
 
 def shift_diagoal(int g_a, value=None):
     """Adds this constant to the diagonal elements of the matrix.
