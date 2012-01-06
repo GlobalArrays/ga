@@ -114,6 +114,57 @@ int GP_Get_dimension(int g_p)
   return wgp_get_dimension(g_p);
 }
 
+void GP_Gather_size(int g_p, int nv, int *subscript, int *size)
+{
+  int idx, i;
+  Integer ag_p = (Integer)g_p;
+  Integer anv = (Integer)nv;
+  Integer asize;
+  Integer *asubscript;
+  int ndim = wgp_get_dimension(ag_p);
+  asubscript = (Integer*)malloc((int)ndim*nv*sizeof(Integer));
+  if (asubscript == NULL)
+    GA_Error("Memory allocation in GP_Gather_size failed",0);
+
+  /* adjust the indices for fortran interface */
+  for (idx=0; idx<nv; idx++) {
+    for (i=0; i<ndim; i++) {
+      asubscript[idx*ndim +(ndim-i-1)] = subscript[idx*ndim+i] + 1;
+    }
+  }
+
+  wgp_gather_size(ag_p, anv, asubscript, &asize, 4);
+  
+  *size = (int)asize;
+
+  free(asubscript);
+}
+
+void GP_Gather(int g_p, int nv, int *subscript, void *buf, void **buf_ptr,
+               int *buf_size, int *size)
+{
+  int idx, i;
+  Integer ag_p = (Integer)g_p;
+  Integer anv = (Integer)nv;
+  Integer asize;
+  Integer *asubscript;
+  int ndim = wgp_get_dimension(ag_p);
+  asubscript = (Integer*)malloc((int)ndim*nv*sizeof(Integer));
+  if (asubscript == NULL)
+    GA_Error("Memory allocation in GP_Gather_size failed",0);
+
+  /* adjust the indices for fortran interface */
+  for (idx=0; idx<nv; idx++) 
+    for (i=0; i<ndim; i++)
+      asubscript[idx*ndim +(ndim-i-1)] = subscript[idx*ndim+i] + 1;
+
+  wgp_gather(ag_p, anv, asubscript, buf, buf_ptr, buf_size, &asize, 4);
+  
+  *size = (int)asize;
+
+  free(asubscript);
+}
+
 void GP_Get_size(int g_p, int *lo, int *hi, int *size)
 {
   Integer ag_p = (Integer)g_p;

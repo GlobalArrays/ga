@@ -394,7 +394,9 @@ void do_work()
   /* Get size of data to be gathered */
   GP_Gather_size(g_p, nv, subscript, &size);
   /* TODO: Should not need this sync */
+  /*
   GA_Sync();
+  */
   /* Check size for correct value */
   idx = 0;
   for (ii=0; ii<nv; ii++) {
@@ -416,7 +418,9 @@ void do_work()
   /* Gather data elements */
   GP_Gather(g_p, nv, subscript, buf, buf_ptr, buf_size, &size);
   /* TODO: Should not need this sync */
+  /*
   GA_Sync();
+  */
 
   /* Check data in buffers to see if it is correct */
   for (ii=0; ii<nv; ii++) {
@@ -426,6 +430,10 @@ void do_work()
     m_k_ij = i%Q_I + 1;
     m_l_ij = j%Q_J + 1;
     ptr = buf_ptr[ii];
+    if ((int)buf_size[ii] != sizeof(int)*(m_k_ij*m_l_ij+2)) {
+      printf("p[%d] [%d,%d] Size(3) i actual: %d expected: %d\n",
+          me,i,j,buf_size[ii],sizeof(int)*(m_k_ij*m_l_ij+2));
+    }
     if (ptr[0] != m_k_ij) {
       printf("p[%d] [%d,%d] Dimension(3) i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
     }

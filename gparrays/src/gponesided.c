@@ -802,10 +802,17 @@ void pgp_gather(Integer g_p, Integer nv, Integer *subscript, void *buf,
   */
 
       /* gather data from remote locations */
+#ifdef XDBG
+    for (idx=0; idx<j; idx++) {
+      ARMCI_Get(desc[idx].src_ptr_array[0], desc[idx].dst_ptr_array[0],
+          desc[idx].bytes, iproc);
+    }
+#else
       if (j > 0) {
         rc = ARMCI_GetV(desc, (int)j, (int)iproc);
         if (rc) pnga_error("ARMCI_GetV failure in gp_gather",rc);
       }
+#endif
       /* BJP
   printf("p[%d] Completed call to ARMCI_GetV\n",me);
   */

@@ -39,4 +39,9 @@ extern void    pgp_access_element(Integer g_p, Integer *subscript,
                                   void *ptr, Integer *size);
 extern void    pgp_release_element(Integer g_p, Integer *subscript);
 extern void    pgp_release_update_element(Integer g_p, Integer *subscript);
+extern void    pgp_gather_size(Integer g_p, Integer nv, Integer *subscript,
+                               Integer *size, Integer intsize);
+extern void    pgp_gather(Integer g_p, Integer nv, Integer *subscript,
+                          void *buf, void **buf_ptr, void *buf_size,
+                          Integer *size, Integer intsize);
 #endif  /* GPPAPI_H */
