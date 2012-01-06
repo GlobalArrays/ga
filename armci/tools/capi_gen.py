@@ -138,12 +138,12 @@ if __name__ == '__main__':
             new_name = name.replace('parmci_','armci_')
         print '''
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak %s
+#   pragma weak %s = %s
 #endif
 %s
 {
     %s%s;
 }
-''' % (new_name,
+''' % (new_name, name,
         func.get_signature(new_name),
         maybe_return, func.get_call())

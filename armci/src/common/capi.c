@@ -10,7 +10,7 @@
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Acc
+#   pragma weak ARMCI_Acc = PARMCI_Acc
 #endif
 int ARMCI_Acc(int optype, void *scale, void *src, void *dst, int bytes, int proc)
 {
@@ -19,7 +19,7 @@ int ARMCI_Acc(int optype, void *scale, void *src, void *dst, int bytes, int proc
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_AccS
+#   pragma weak ARMCI_AccS = PARMCI_AccS
 #endif
 int ARMCI_AccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc)
 {
@@ -28,7 +28,7 @@ int ARMCI_AccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, void
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_AccV
+#   pragma weak ARMCI_AccV = PARMCI_AccV
 #endif
 int ARMCI_AccV(int op, void *scale, armci_giov_t *darr, int len, int proc)
 {
@@ -37,7 +37,7 @@ int ARMCI_AccV(int op, void *scale, armci_giov_t *darr, int len, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_AllFence
+#   pragma weak ARMCI_AllFence = PARMCI_AllFence
 #endif
 void ARMCI_AllFence()
 {
@@ -46,7 +46,7 @@ void ARMCI_AllFence()
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Barrier
+#   pragma weak ARMCI_Barrier = PARMCI_Barrier
 #endif
 void ARMCI_Barrier()
 {
@@ -55,7 +55,7 @@ void ARMCI_Barrier()
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Create_mutexes
+#   pragma weak ARMCI_Create_mutexes = PARMCI_Create_mutexes
 #endif
 int ARMCI_Create_mutexes(int num)
 {
@@ -64,7 +64,7 @@ int ARMCI_Create_mutexes(int num)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Destroy_mutexes
+#   pragma weak ARMCI_Destroy_mutexes = PARMCI_Destroy_mutexes
 #endif
 int ARMCI_Destroy_mutexes()
 {
@@ -73,7 +73,7 @@ int ARMCI_Destroy_mutexes()
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Fence
+#   pragma weak ARMCI_Fence = PARMCI_Fence
 #endif
 void ARMCI_Fence(int proc)
 {
@@ -82,7 +82,7 @@ void ARMCI_Fence(int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Finalize
+#   pragma weak ARMCI_Finalize = PARMCI_Finalize
 #endif
 void ARMCI_Finalize()
 {
@@ -91,7 +91,7 @@ void ARMCI_Finalize()
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Free
+#   pragma weak ARMCI_Free = PARMCI_Free
 #endif
 int ARMCI_Free(void *ptr)
 {
@@ -100,7 +100,7 @@ int ARMCI_Free(void *ptr)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Free_local
+#   pragma weak ARMCI_Free_local = PARMCI_Free_local
 #endif
 int ARMCI_Free_local(void *ptr)
 {
@@ -109,7 +109,7 @@ int ARMCI_Free_local(void *ptr)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Get
+#   pragma weak ARMCI_Get = PARMCI_Get
 #endif
 int ARMCI_Get(void *src, void *dst, int bytes, int proc)
 {
@@ -118,7 +118,7 @@ int ARMCI_Get(void *src, void *dst, int bytes, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_GetS
+#   pragma weak ARMCI_GetS = PARMCI_GetS
 #endif
 int ARMCI_GetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc)
 {
@@ -127,7 +127,7 @@ int ARMCI_GetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_strid
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_GetV
+#   pragma weak ARMCI_GetV = PARMCI_GetV
 #endif
 int ARMCI_GetV(armci_giov_t *darr, int len, int proc)
 {
@@ -136,7 +136,7 @@ int ARMCI_GetV(armci_giov_t *darr, int len, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_GetValueDouble
+#   pragma weak ARMCI_GetValueDouble = PARMCI_GetValueDouble
 #endif
 double ARMCI_GetValueDouble(void *src, int proc)
 {
@@ -145,7 +145,7 @@ double ARMCI_GetValueDouble(void *src, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_GetValueFloat
+#   pragma weak ARMCI_GetValueFloat = PARMCI_GetValueFloat
 #endif
 float ARMCI_GetValueFloat(void *src, int proc)
 {
@@ -154,7 +154,7 @@ float ARMCI_GetValueFloat(void *src, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_GetValueInt
+#   pragma weak ARMCI_GetValueInt = PARMCI_GetValueInt
 #endif
 int ARMCI_GetValueInt(void *src, int proc)
 {
@@ -163,7 +163,7 @@ int ARMCI_GetValueInt(void *src, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_GetValueLong
+#   pragma weak ARMCI_GetValueLong = PARMCI_GetValueLong
 #endif
 long ARMCI_GetValueLong(void *src, int proc)
 {
@@ -172,7 +172,7 @@ long ARMCI_GetValueLong(void *src, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Init
+#   pragma weak ARMCI_Init = PARMCI_Init
 #endif
 int ARMCI_Init()
 {
@@ -181,7 +181,7 @@ int ARMCI_Init()
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Init_args
+#   pragma weak ARMCI_Init_args = PARMCI_Init_args
 #endif
 int ARMCI_Init_args(int *argc, char ***argv)
 {
@@ -190,7 +190,7 @@ int ARMCI_Init_args(int *argc, char ***argv)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Initialized
+#   pragma weak ARMCI_Initialized = PARMCI_Initialized
 #endif
 int ARMCI_Initialized()
 {
@@ -199,7 +199,7 @@ int ARMCI_Initialized()
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Lock
+#   pragma weak ARMCI_Lock = PARMCI_Lock
 #endif
 void ARMCI_Lock(int mutex, int proc)
 {
@@ -208,7 +208,7 @@ void ARMCI_Lock(int mutex, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Malloc
+#   pragma weak ARMCI_Malloc = PARMCI_Malloc
 #endif
 int ARMCI_Malloc(void **ptr_arr, armci_size_t bytes)
 {
@@ -217,7 +217,7 @@ int ARMCI_Malloc(void **ptr_arr, armci_size_t bytes)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Malloc_local
+#   pragma weak ARMCI_Malloc_local = PARMCI_Malloc_local
 #endif
 void* ARMCI_Malloc_local(armci_size_t bytes)
 {
@@ -226,7 +226,7 @@ void* ARMCI_Malloc_local(armci_size_t bytes)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Memat
+#   pragma weak ARMCI_Memat = PARMCI_Memat
 #endif
 void* ARMCI_Memat(armci_meminfo_t *meminfo, long offset)
 {
@@ -235,7 +235,7 @@ void* ARMCI_Memat(armci_meminfo_t *meminfo, long offset)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Memget
+#   pragma weak ARMCI_Memget = PARMCI_Memget
 #endif
 void ARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg)
 {
@@ -244,7 +244,7 @@ void ARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_NbAccS
+#   pragma weak ARMCI_NbAccS = PARMCI_NbAccS
 #endif
 int ARMCI_NbAccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
 {
@@ -253,7 +253,7 @@ int ARMCI_NbAccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, vo
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_NbAccV
+#   pragma weak ARMCI_NbAccV = PARMCI_NbAccV
 #endif
 int ARMCI_NbAccV(int op, void *scale, armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
 {
@@ -262,7 +262,7 @@ int ARMCI_NbAccV(int op, void *scale, armci_giov_t *darr, int len, int proc, arm
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_NbGet
+#   pragma weak ARMCI_NbGet = PARMCI_NbGet
 #endif
 int ARMCI_NbGet(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_handle)
 {
@@ -271,7 +271,7 @@ int ARMCI_NbGet(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_handl
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_NbGetS
+#   pragma weak ARMCI_NbGetS = PARMCI_NbGetS
 #endif
 int ARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
 {
@@ -280,7 +280,7 @@ int ARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_str
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_NbGetV
+#   pragma weak ARMCI_NbGetV = PARMCI_NbGetV
 #endif
 int ARMCI_NbGetV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
 {
@@ -289,7 +289,7 @@ int ARMCI_NbGetV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_NbPut
+#   pragma weak ARMCI_NbPut = PARMCI_NbPut
 #endif
 int ARMCI_NbPut(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_handle)
 {
@@ -298,7 +298,7 @@ int ARMCI_NbPut(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_handl
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_NbPutS
+#   pragma weak ARMCI_NbPutS = PARMCI_NbPutS
 #endif
 int ARMCI_NbPutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
 {
@@ -307,7 +307,7 @@ int ARMCI_NbPutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_str
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_NbPutV
+#   pragma weak ARMCI_NbPutV = PARMCI_NbPutV
 #endif
 int ARMCI_NbPutV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
 {
@@ -316,7 +316,7 @@ int ARMCI_NbPutV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_NbPutValueDouble
+#   pragma weak ARMCI_NbPutValueDouble = PARMCI_NbPutValueDouble
 #endif
 int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t *nb_handle)
 {
@@ -325,7 +325,7 @@ int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t *nb_hand
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_NbPutValueFloat
+#   pragma weak ARMCI_NbPutValueFloat = PARMCI_NbPutValueFloat
 #endif
 int ARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t *nb_handle)
 {
@@ -334,7 +334,7 @@ int ARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t *nb_handle
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_NbPutValueInt
+#   pragma weak ARMCI_NbPutValueInt = PARMCI_NbPutValueInt
 #endif
 int ARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t *nb_handle)
 {
@@ -343,7 +343,7 @@ int ARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t *nb_handle)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_NbPutValueLong
+#   pragma weak ARMCI_NbPutValueLong = PARMCI_NbPutValueLong
 #endif
 int ARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t *nb_handle)
 {
@@ -352,7 +352,7 @@ int ARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t *nb_handle)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Put
+#   pragma weak ARMCI_Put = PARMCI_Put
 #endif
 int ARMCI_Put(void *src, void *dst, int bytes, int proc)
 {
@@ -361,7 +361,7 @@ int ARMCI_Put(void *src, void *dst, int bytes, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_PutS
+#   pragma weak ARMCI_PutS = PARMCI_PutS
 #endif
 int ARMCI_PutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc)
 {
@@ -370,7 +370,7 @@ int ARMCI_PutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_strid
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_PutS_flag
+#   pragma weak ARMCI_PutS_flag = PARMCI_PutS_flag
 #endif
 int ARMCI_PutS_flag(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int *flag, int val, int proc)
 {
@@ -379,7 +379,7 @@ int ARMCI_PutS_flag(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_PutS_flag_dir
+#   pragma weak ARMCI_PutS_flag_dir = PARMCI_PutS_flag_dir
 #endif
 int ARMCI_PutS_flag_dir(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int *flag, int val, int proc)
 {
@@ -388,7 +388,7 @@ int ARMCI_PutS_flag_dir(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_PutV
+#   pragma weak ARMCI_PutV = PARMCI_PutV
 #endif
 int ARMCI_PutV(armci_giov_t *darr, int len, int proc)
 {
@@ -397,7 +397,7 @@ int ARMCI_PutV(armci_giov_t *darr, int len, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_PutValueDouble
+#   pragma weak ARMCI_PutValueDouble = PARMCI_PutValueDouble
 #endif
 int ARMCI_PutValueDouble(double src, void *dst, int proc)
 {
@@ -406,7 +406,7 @@ int ARMCI_PutValueDouble(double src, void *dst, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_PutValueFloat
+#   pragma weak ARMCI_PutValueFloat = PARMCI_PutValueFloat
 #endif
 int ARMCI_PutValueFloat(float src, void *dst, int proc)
 {
@@ -415,7 +415,7 @@ int ARMCI_PutValueFloat(float src, void *dst, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_PutValueInt
+#   pragma weak ARMCI_PutValueInt = PARMCI_PutValueInt
 #endif
 int ARMCI_PutValueInt(int src, void *dst, int proc)
 {
@@ -424,7 +424,7 @@ int ARMCI_PutValueInt(int src, void *dst, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_PutValueLong
+#   pragma weak ARMCI_PutValueLong = PARMCI_PutValueLong
 #endif
 int ARMCI_PutValueLong(long src, void *dst, int proc)
 {
@@ -433,7 +433,7 @@ int ARMCI_PutValueLong(long src, void *dst, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Put_flag
+#   pragma weak ARMCI_Put_flag = PARMCI_Put_flag
 #endif
 int ARMCI_Put_flag(void *src, void *dst, int bytes, int *f, int v, int proc)
 {
@@ -442,7 +442,7 @@ int ARMCI_Put_flag(void *src, void *dst, int bytes, int *f, int v, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Rmw
+#   pragma weak ARMCI_Rmw = PARMCI_Rmw
 #endif
 int ARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
 {
@@ -451,7 +451,7 @@ int ARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Test
+#   pragma weak ARMCI_Test = PARMCI_Test
 #endif
 int ARMCI_Test(armci_hdl_t *nb_handle)
 {
@@ -460,7 +460,7 @@ int ARMCI_Test(armci_hdl_t *nb_handle)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Unlock
+#   pragma weak ARMCI_Unlock = PARMCI_Unlock
 #endif
 void ARMCI_Unlock(int mutex, int proc)
 {
@@ -469,7 +469,7 @@ void ARMCI_Unlock(int mutex, int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_Wait
+#   pragma weak ARMCI_Wait = PARMCI_Wait
 #endif
 int ARMCI_Wait(armci_hdl_t *nb_handle)
 {
@@ -478,7 +478,7 @@ int ARMCI_Wait(armci_hdl_t *nb_handle)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_WaitAll
+#   pragma weak ARMCI_WaitAll = PARMCI_WaitAll
 #endif
 int ARMCI_WaitAll()
 {
@@ -487,7 +487,7 @@ int ARMCI_WaitAll()
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak ARMCI_WaitProc
+#   pragma weak ARMCI_WaitProc = PARMCI_WaitProc
 #endif
 int ARMCI_WaitProc(int proc)
 {
@@ -496,7 +496,7 @@ int ARMCI_WaitProc(int proc)
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak armci_msg_barrier
+#   pragma weak armci_msg_barrier = parmci_msg_barrier
 #endif
 void armci_msg_barrier()
 {
@@ -504,19 +504,17 @@ void armci_msg_barrier()
 }
 
 
-#ifdef MPI
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak armci_msg_group_barrier
+#   pragma weak armci_msg_group_barrier = parmci_msg_group_barrier
 #endif
 void armci_msg_group_barrier(ARMCI_Group *group)
 {
     parmci_msg_group_barrier(group);
 }
-#endif
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak armci_notify_wait
+#   pragma weak armci_notify_wait = parmci_notify_wait
 #endif
 int armci_notify_wait(int proc, int *pval)
 {
