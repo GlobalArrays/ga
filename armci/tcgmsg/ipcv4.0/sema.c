@@ -80,22 +80,14 @@ extern void Error();
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
-#if defined(ARDENT) || defined(ENCORE) || defined(SEQUENT) || \
-    defined(ULTRIX) || defined(AIX)    || defined(HPUX) || defined(KSR) || \
-    defined(DECOSF) || defined(SOLARIS) || defined(LINUX) 
-#   if (defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)) || defined(__FreeBSD__)
-    /* union semun is defined by including <sys/sem.h> */
-#   else
-    /* according to X/OPEN we have to define it ourselves */
-    union semun {
-            int val;                    /* value for SETVAL */
-            struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
-            unsigned short int *array;  /* array for GETALL, SETALL */
-            struct seminfo *__buf;      /* buffer for IPC_INFO */
-    };
-#   endif
+#if !HAVE_UNION_SEMUN
+union semun {
+        int val;                    /* value for SETVAL */
+        struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
+        unsigned short int *array;  /* array for GETALL, SETALL */
+        struct seminfo *__buf;      /* buffer for IPC_INFO */
+};
 #endif
-
 
 /* this global structure maintains a list of allocated semaphore sets
    which is used for SemSetDestroyAll */

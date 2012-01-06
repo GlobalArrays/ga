@@ -10378,6 +10378,9 @@ else
   enable_weak=yes
 fi
 
+if test "x$ga_cv_target_base" = xCYGWIN; then :
+  enable_weak=no
+fi
 
 
 if test "x$enable_weak" = xyes; then :
@@ -10448,6 +10451,40 @@ if test "x$ax_cv_sys_weak_alias_pragma" = xyes; then :
   if test "x$enable_profiling" = xyes; then :
   enable_shared=yes
 fi
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for union semun in sys/sem.h" >&5
+$as_echo_n "checking for union semun in sys/sem.h... " >&6; }
+if ${ga_cv_union_semun+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+int
+main ()
+{
+union semun arg;
+semctl(0, 0, 0, arg);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ga_cv_union_semun=yes
+else
+  ga_cv_union_semun=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_cv_union_semun" >&5
+$as_echo "$ga_cv_union_semun" >&6; }
+if test x$ga_cv_union_semun = xyes; then :
+
+$as_echo "#define HAVE_UNION_SEMUN 1" >>confdefs.h
+
 fi
 
 

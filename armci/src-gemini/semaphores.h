@@ -1,6 +1,24 @@
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
+#ifndef _SEMAPHORES_H_
+#define _SEMAPHORES_H_
+
+#if HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+#if HAVE_SYS_IPC_H
+#   include <sys/ipc.h>
+#endif
+#if HAVE_SYS_SEM_H
+#   include <sys/sem.h>
+#endif
+
+#if !HAVE_UNION_SEMUN
+union semun {
+        int val;                    /* value for SETVAL */
+        struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
+        unsigned short int *array;  /* array for GETALL, SETALL */
+        struct seminfo *__buf;      /* buffer for IPC_INFO */
+};
+#endif
 
 /* how many semaphores are available ? */
 #ifndef SEMMSL
@@ -40,3 +58,5 @@ int semop();
 }
 
 typedef int lockset_t;
+
+#endif

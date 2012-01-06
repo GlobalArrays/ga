@@ -6,6 +6,7 @@ AC_ARG_ENABLE([weak],
     [AS_HELP_STRING([--disable-weak], [don't use weak symbols for profiling])],
     [],
     [enable_weak=yes])
+AS_IF([test "x$ga_cv_target_base" = xCYGWIN], [enable_weak=no])
 ])dnl
 
 # GA_SYS_WEAK_ALIAS

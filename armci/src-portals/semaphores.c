@@ -20,22 +20,6 @@ extern void armci_die(char*, int);
 struct sembuf sops;
 int semaphoreID;
 
-/* follows LINUX semctl manpage */
-#if (defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)) ||\
-    defined(SGI) || defined(SUN) || defined(__FreeBSD__) || defined(INTERIX) || defined(MACX)
-    /* union semun is defined by including <sys/sem.h> */
-#   else
-    /* according to X/OPEN we have to define it ourselves */
-    union semun {
-            int val;                    /* value for SETVAL */
-            struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
-            unsigned short int *array;  /* array for GETALL, SETALL */
-            struct seminfo *__buf;      /* buffer for IPC_INFO */
-    };
-#endif
-
-
-
 int SemGet(num_sem)
     int num_sem;
 {

@@ -21,6 +21,15 @@
 #   include <stdlib.h>
 #endif
 
+#if !HAVE_UNION_SEMUN
+union semun {
+        int val;                    /* value for SETVAL */
+        struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
+        unsigned short int *array;  /* array for GETALL, SETALL */
+        struct seminfo *__buf;      /* buffer for IPC_INFO */
+};
+#endif
+
 #define MAX_SEM  10 
  
 struct sembuf sops;
@@ -64,11 +73,7 @@ int SemGet(num_sem)
 void SemInit(id,value)
     int id,value;
 {
-union semun{
-    int             val;
-    struct semid_ds *buf;
-    ushort          *array;
-}semctl_arg;
+    union semun semctl_arg;
     fprintf(stderr,"SemInit %d %d\n",id,value);
    
     semctl_arg.val = value;

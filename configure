@@ -10313,6 +10313,9 @@ else
   enable_weak=yes
 fi
 
+if test "x$ga_cv_target_base" = xCYGWIN; then :
+  enable_weak=no
+fi
 
 
 if test "x$enable_weak" = xyes; then :

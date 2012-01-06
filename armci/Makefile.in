@@ -652,6 +652,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/ga_sys_weak_alias.m4 \
 	$(top_srcdir)/../m4/ga_target.m4 \
 	$(top_srcdir)/../m4/ga_thread_safe.m4 \
+	$(top_srcdir)/../m4/ga_union_semun.m4 \
 	$(top_srcdir)/../m4/ga_warn_flags.m4 \
 	$(top_srcdir)/../m4/ga_with_help.m4 \
 	$(top_srcdir)/../m4/tcgmsg_rsh.m4 \
