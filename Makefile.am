@@ -279,7 +279,6 @@ EXTRA_DIST += tools/wapigen_trace.py
 # global/src
 #
 PAPI_H        = $(top_srcdir)/global/src/ga-papi.h
-F77FUNCGEN_PL = $(top_srcdir)/build-aux/f77funcgen.pl
 
 global/src/ga-wapi.h: $(PAPI_H)
 	@-rm -f $@
@@ -300,7 +299,6 @@ global/src/ga-wapidefs.h: $(PAPI_H)
 	       -e "/typedef/d" \
 		   $(PAPI_H) > $@
 
-EXTRA_DIST += $(F77FUNCGEN_PL)
 BUILT_SOURCES += global/src/ga-wapi.h
 BUILT_SOURCES += global/src/ga-wapidefs.h
 

@@ -2564,7 +2564,7 @@ nodist_libga_la_SOURCES = config.fh $(am__append_7) \
 # However, it is still distributed with GA.
 EXTRA_DIST = README LinAlg/lapack+blas/README global/README \
 	tools/gpwapigen.py tools/wapigen.py tools/wapigen_counts.py \
-	tools/wapigen_trace.py $(F77FUNCGEN_PL) $(am__append_23) \
+	tools/wapigen_trace.py $(am__append_23) \
 	global/examples/boltzmann/README \
 	global/examples/lennard-jones/README \
 	global/examples/md_cluster/atom.inp \
@@ -2653,7 +2653,6 @@ nodist_EXTRA_ma_test_inquire_SOURCES = $(MAYBE_DUMMY_F_LINK)
 # global/src
 #
 PAPI_H = $(top_srcdir)/global/src/ga-papi.h
-F77FUNCGEN_PL = $(top_srcdir)/build-aux/f77funcgen.pl
 GLOBAL_SERIAL_TESTS = 
 GLOBAL_SERIAL_TESTS_XFAIL = 
 GLOBAL_PARALLEL_TESTS = global/testing/elempatch$(EXEEXT) \
