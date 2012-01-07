@@ -300,24 +300,18 @@ global/src/ga-wapidefs.h: $(PAPI_H)
 	       -e "/typedef/d" \
 		   $(PAPI_H) > $@
 
-global/src/cnames.h: $(PAPI_H) $(F77FUNCGEN_PL)
-	@-rm -f $@
-	$(PERL_V) \
-	$(PERL) $(F77FUNCGEN_PL) $(PAPI_H) > $@
-
 EXTRA_DIST += $(F77FUNCGEN_PL)
 BUILT_SOURCES += global/src/ga-wapi.h
 BUILT_SOURCES += global/src/ga-wapidefs.h
-BUILT_SOURCES += global/src/cnames.h
 
 CLEANFILES += global/src/ga-wapi.h
 CLEANFILES += global/src/ga-wapidefs.h
-CLEANFILES += global/src/cnames.h
 
 libga_la_SOURCES += global/src/abstract_ops.h
 libga_la_SOURCES += global/src/base.c
 libga_la_SOURCES += global/src/base.h
 libga_la_SOURCES += global/src/capi.c
+libga_la_SOURCES += global/src/cnames.h
 libga_la_SOURCES += global/src/collect.c
 libga_la_SOURCES += global/src/datatypes.c
 libga_la_SOURCES += global/src/decomp.c
@@ -354,7 +348,6 @@ libga_la_SOURCES += global/src/sparse.c
 libga_la_SOURCES += global/src/types.xh
 libga_la_SOURCES += global/src/types2.xh
 nodist_libga_la_SOURCES += global/src/ga-wapidefs.h
-nodist_libga_la_SOURCES += global/src/cnames.h
 if ENABLE_F77
 libga_la_SOURCES += global/src/complex.F
 libga_la_SOURCES += global/src/ga_diag_seq.F
@@ -1233,10 +1226,6 @@ M4__v_0 = @echo "  M4    " $@;
 SED_V = $(SED__v_$(V))
 SED__v_ = $(SED__v_$(AM_DEFAULT_VERBOSITY))
 SED__v_0 = @echo "  SED   " $@;
-# perl
-PERL_V = $(PERL__v_$(V))
-PERL__v_ = $(PERL__v_$(AM_DEFAULT_VERBOSITY))
-PERL__v_0 = @echo "  PERL  " $@;
 # python
 PYTHON_V = $(PYTHON__v_$(V))
 PYTHON__v_ = $(PYTHON__v_$(AM_DEFAULT_VERBOSITY))
@@ -1246,10 +1235,6 @@ CP = cp
 CP_V = $(CP__v_$(V))
 CP__v_ = $(CP__v_$(AM_DEFAULT_VERBOSITY))
 CP__v_0 = @echo "  CP    " $@;
-# cc w/o mpi
-CC_NOMPI_V = $(CC_NOMPI__v_$(V))
-CC_NOMPI__v_ = $(CC_NOMPI__v_$(AM_DEFAULT_VERBOSITY))
-CC_NOMPI__v_0 = @echo "  CC_NOMPI" $@;
 
 .PHONY: pfiles clean-pfiles
 if MSG_COMMS_TCGMSG4

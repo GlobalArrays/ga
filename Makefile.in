@@ -392,13 +392,14 @@ am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 	LinAlg/lapack+blas/xgemm.h LinAlg/lapack+blas/galinalg.h \
 	LinAlg/lapack+blas/galinalg.fh global/src/abstract_ops.h \
 	global/src/base.c global/src/base.h global/src/capi.c \
-	global/src/collect.c global/src/datatypes.c \
-	global/src/decomp.c global/src/diag.fh global/src/DP.c \
-	global/src/elem_alg.c global/src/fapi.c global/src/ga_ckpt.h \
-	global/src/gaconfig.h global/src/ga_diag_seqc.c \
-	global/src/ga_malloc.c global/src/ga_profile.h \
-	global/src/ga_solve_seq.c global/src/ga_symmetr.c \
-	global/src/ga_trace.c global/src/ghosts.c global/src/global.h \
+	global/src/cnames.h global/src/collect.c \
+	global/src/datatypes.c global/src/decomp.c global/src/diag.fh \
+	global/src/DP.c global/src/elem_alg.c global/src/fapi.c \
+	global/src/ga_ckpt.h global/src/gaconfig.h \
+	global/src/ga_diag_seqc.c global/src/ga_malloc.c \
+	global/src/ga_profile.h global/src/ga_solve_seq.c \
+	global/src/ga_symmetr.c global/src/ga_trace.c \
+	global/src/ghosts.c global/src/global.h \
 	global/src/global.nalg.c global/src/global.npatch.c \
 	global/src/global.periodic.c global/src/globalp.h \
 	global/src/global.util.c global/src/hsort.scat.c \
@@ -2514,13 +2515,14 @@ libga_la_SOURCES = compat/random.c ma/error.c ma/f2c.c ma/ma.c ma/ma.h \
 	LinAlg/lapack+blas/xgemm.c LinAlg/lapack+blas/xgemm.h \
 	LinAlg/lapack+blas/galinalg.h LinAlg/lapack+blas/galinalg.fh \
 	global/src/abstract_ops.h global/src/base.c global/src/base.h \
-	global/src/capi.c global/src/collect.c global/src/datatypes.c \
-	global/src/decomp.c global/src/diag.fh global/src/DP.c \
-	global/src/elem_alg.c global/src/fapi.c global/src/ga_ckpt.h \
-	global/src/gaconfig.h global/src/ga_diag_seqc.c \
-	global/src/ga_malloc.c global/src/ga_profile.h \
-	global/src/ga_solve_seq.c global/src/ga_symmetr.c \
-	global/src/ga_trace.c global/src/ghosts.c global/src/global.h \
+	global/src/capi.c global/src/cnames.h global/src/collect.c \
+	global/src/datatypes.c global/src/decomp.c global/src/diag.fh \
+	global/src/DP.c global/src/elem_alg.c global/src/fapi.c \
+	global/src/ga_ckpt.h global/src/gaconfig.h \
+	global/src/ga_diag_seqc.c global/src/ga_malloc.c \
+	global/src/ga_profile.h global/src/ga_solve_seq.c \
+	global/src/ga_symmetr.c global/src/ga_trace.c \
+	global/src/ghosts.c global/src/global.h \
 	global/src/global.nalg.c global/src/global.npatch.c \
 	global/src/global.periodic.c global/src/globalp.h \
 	global/src/global.util.c global/src/hsort.scat.c \
@@ -2546,8 +2548,7 @@ libga_la_SOURCES = compat/random.c ma/error.c ma/f2c.c ma/ma.c ma/ma.h \
 libga_la_LIBADD = $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) \
 	armci/libarmcii.la $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
 nodist_libga_la_SOURCES = config.fh $(am__append_7) \
-	global/src/ga-wapidefs.h global/src/cnames.h \
-	gparrays/src/gp-wapidefs.h
+	global/src/ga-wapidefs.h gparrays/src/gp-wapidefs.h
 
 ##############################################################################
 # global
@@ -2584,11 +2585,11 @@ EXTRA_DIST = README LinAlg/lapack+blas/README global/README \
 # and works with all Fortran compilers.
 #
 BUILT_SOURCES = config.fh global/src/ga-wapi.h \
-	global/src/ga-wapidefs.h global/src/cnames.h \
-	gparrays/src/gp-wapi.h gparrays/src/gp-wapidefs.h
+	global/src/ga-wapidefs.h gparrays/src/gp-wapi.h \
+	gparrays/src/gp-wapidefs.h
 MOSTLYCLEANFILES = 
 CLEANFILES = $(bin_SCRIPTS) config.fh global/src/ga-wapi.h \
-	global/src/ga-wapidefs.h global/src/cnames.h $(am__append_24) \
+	global/src/ga-wapidefs.h $(am__append_24) \
 	gparrays/src/gp-wapi.h gparrays/src/gp-wapidefs.h
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
@@ -3022,10 +3023,6 @@ M4__v_0 = @echo "  M4    " $@;
 SED_V = $(SED__v_$(V))
 SED__v_ = $(SED__v_$(AM_DEFAULT_VERBOSITY))
 SED__v_0 = @echo "  SED   " $@;
-# perl
-PERL_V = $(PERL__v_$(V))
-PERL__v_ = $(PERL__v_$(AM_DEFAULT_VERBOSITY))
-PERL__v_0 = @echo "  PERL  " $@;
 # python
 PYTHON_V = $(PYTHON__v_$(V))
 PYTHON__v_ = $(PYTHON__v_$(AM_DEFAULT_VERBOSITY))
@@ -3035,10 +3032,6 @@ CP = cp
 CP_V = $(CP__v_$(V))
 CP__v_ = $(CP__v_$(AM_DEFAULT_VERBOSITY))
 CP__v_0 = @echo "  CP    " $@;
-# cc w/o mpi
-CC_NOMPI_V = $(CC_NOMPI__v_$(V))
-CC_NOMPI__v_ = $(CC_NOMPI__v_$(AM_DEFAULT_VERBOSITY))
-CC_NOMPI__v_0 = @echo "  CC_NOMPI" $@;
 @MSG_COMMS_TCGMSG4_TRUE@MAYBE_PFILES = pfiles
 
 ##############################################################################
@@ -5904,11 +5897,6 @@ global/src/ga-wapidefs.h: $(PAPI_H)
 		   -e "/^ \*/d" \
 	       -e "/typedef/d" \
 		   $(PAPI_H) > $@
-
-global/src/cnames.h: $(PAPI_H) $(F77FUNCGEN_PL)
-	@-rm -f $@
-	$(PERL_V) \
-	$(PERL) $(F77FUNCGEN_PL) $(PAPI_H) > $@
 
 @HAVE_M4_TRUE@global/testing/nga-onesided.F: $(GLOBAL_TESTING_M4_DEPS)
 @HAVE_M4_TRUE@global/testing/nga-patch.F:    $(GLOBAL_TESTING_M4_DEPS)
