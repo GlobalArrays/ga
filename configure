@@ -4151,13 +4151,17 @@ case $with_mpi:$with_tcgmsg in #(
   *) :
      ;;
 esac
-# Hack. If TARGET=MACX and MSG_COMMS=TCGMSG, we really want TCGMSG5.
-case $ga_cv_target_base:$ga_msg_comms in #(
-  MACX:TCGMSG) :
+# Hack. Some TARGETs really want TCGMSG5 instead of TCGMSG.
+if test "x$ga_msg_comms" = xTCGMSG; then :
+
+case $ga_cv_target_base in #(
+  MACX|LAPI|CYGNUS|CYGWIN|INTERIX) :
     ga_msg_comms=TCGMSG5 ;; #(
   *) :
      ;;
 esac
+
+fi
 
 
 # PVM is no longer supported, but there is still some code around

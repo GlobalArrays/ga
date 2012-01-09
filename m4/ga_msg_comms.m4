@@ -42,9 +42,11 @@ AS_CASE([$with_mpi:$with_tcgmsg],
 [*:yes],    [ga_msg_comms=TCGMSGMPI; with_mpi_need_parse=yes],
 [*:no],     [ga_msg_comms=MPI; with_mpi_need_parse=yes],
 [*:*],      [AC_MSG_ERROR([unknown messaging library settings])])
-# Hack. If TARGET=MACX and MSG_COMMS=TCGMSG, we really want TCGMSG5.
-AS_CASE([$ga_cv_target_base:$ga_msg_comms],
-    [MACX:TCGMSG], [ga_msg_comms=TCGMSG5])
+# Hack. Some TARGETs really want TCGMSG5 instead of TCGMSG.
+AS_IF([test "x$ga_msg_comms" = xTCGMSG], [
+AS_CASE([$ga_cv_target_base],
+    [MACX|LAPI|CYGNUS|CYGWIN|INTERIX], [ga_msg_comms=TCGMSG5])
+])
 ],[
 AS_CASE([$with_mpi],
     [yes],  [with_mpi_wrappers=yes],

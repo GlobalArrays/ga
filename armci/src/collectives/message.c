@@ -453,7 +453,7 @@ void armci_msg_init(int *argc, char ***argv)
 {
 #if defined(TCGMSG)
     if (!tcg_ready()) {
-        tcg_pbegin(argc,argv);
+        tcg_pbegin(*argc,*argv);
     }
 #elif defined(BGML)
     /* empty */
