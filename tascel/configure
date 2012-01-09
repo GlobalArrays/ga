@@ -5112,7 +5112,9 @@ fi
 rm -f inside.pl
 cat >inside.pl <<"EOF"
 #!/usr/bin/perl
-$numargs = $#ARGV + 1;
+use strict;
+use warnings;
+my $numargs = $#ARGV + 1;
 if ($numargs != 2) {
     print "Usage: wrapped.txt naked.txt\n";
     exit 1;
@@ -5120,10 +5122,10 @@ if ($numargs != 2) {
 # Read each input file as a string (rather than a list).
 local $/=undef;
 open WRAPPED, "$ARGV[0]" or die "Could not open wrapped text file: $!";
-$wrapped_lines = <WRAPPED>;
+my $wrapped_lines = <WRAPPED>;
 close WRAPPED;
 open NAKED, "$ARGV[1]" or die "Could not open naked text file: $!";
-$naked_lines = <NAKED>;
+my $naked_lines = <NAKED>;
 close NAKED;
 # Replace newlines, + from wrapped and naked lines.
 $wrapped_lines =~ tr/\n+/ /;
@@ -5142,6 +5144,11 @@ unless ($wrapped_lines) {
 }
 unless ($naked_lines) {
     exit 1;
+}
+# Cray compilers append a timestamp into their version string. Remove it.
+if ($wrapped_lines =~ /\QCray\E/) {
+    $wrapped_lines = substr $wrapped_lines, 0, -28;
+    $naked_lines = substr $naked_lines, 0, -28;
 }
 # Can the naked lines be found within the wrapped lines?
 if ($wrapped_lines =~ /\Q$naked_lines\E/) {
@@ -5374,40 +5381,57 @@ for arg in $with_mpi ; do
     GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
   -I*) :
     GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
   *.a) :
     GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
   *.so) :
     GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib64"
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include64"
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -5571,7 +5595,7 @@ fi
     as_fn_error $? "CXX/MPICXX case failure" "$LINENO" 5 ;;
 esac
 fi
-ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC crayCC g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
+ga_cxx="icpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC crayc++ g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC"
 ga_mpicxx="mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ mpiFCC CC"
 if test x$with_mpi_wrappers = xyes; then :
   CXX_TO_TEST="$ga_mpicxx_pref $ga_mpicxx"
@@ -6012,7 +6036,9 @@ fi
 rm -f inside.pl
 cat >inside.pl <<"EOF"
 #!/usr/bin/perl
-$numargs = $#ARGV + 1;
+use strict;
+use warnings;
+my $numargs = $#ARGV + 1;
 if ($numargs != 2) {
     print "Usage: wrapped.txt naked.txt\n";
     exit 1;
@@ -6020,10 +6046,10 @@ if ($numargs != 2) {
 # Read each input file as a string (rather than a list).
 local $/=undef;
 open WRAPPED, "$ARGV[0]" or die "Could not open wrapped text file: $!";
-$wrapped_lines = <WRAPPED>;
+my $wrapped_lines = <WRAPPED>;
 close WRAPPED;
 open NAKED, "$ARGV[1]" or die "Could not open naked text file: $!";
-$naked_lines = <NAKED>;
+my $naked_lines = <NAKED>;
 close NAKED;
 # Replace newlines, + from wrapped and naked lines.
 $wrapped_lines =~ tr/\n+/ /;
@@ -6042,6 +6068,11 @@ unless ($wrapped_lines) {
 }
 unless ($naked_lines) {
     exit 1;
+}
+# Cray compilers append a timestamp into their version string. Remove it.
+if ($wrapped_lines =~ /\QCray\E/) {
+    $wrapped_lines = substr $wrapped_lines, 0, -28;
+    $naked_lines = substr $naked_lines, 0, -28;
 }
 # Can the naked lines be found within the wrapped lines?
 if ($wrapped_lines =~ /\Q$naked_lines\E/) {
@@ -6064,7 +6095,7 @@ case $wrapped in #(
   *_r) :
     compilers="bgxlC_r xlC_r" ;; #(
   *) :
-    compilers="icpc pgCC pathCC sxc++ xlC bgxlC openCC sunCC crayCC g++ c++ gpp aCC cxx cc++ cl.exe FCC KCC RCC CC" ;; #(
+    compilers="icpc pgCC pathCC sxc++ xlC bgxlC openCC sunCC crayc++ g++ c++ gpp aCC cxx cc++ cl.exe FCC KCC RCC CC" ;; #(
   *) :
      ;;
 esac
@@ -7696,7 +7727,9 @@ fi
 rm -f inside.pl
 cat >inside.pl <<"EOF"
 #!/usr/bin/perl
-$numargs = $#ARGV + 1;
+use strict;
+use warnings;
+my $numargs = $#ARGV + 1;
 if ($numargs != 2) {
     print "Usage: wrapped.txt naked.txt\n";
     exit 1;
@@ -7704,10 +7737,10 @@ if ($numargs != 2) {
 # Read each input file as a string (rather than a list).
 local $/=undef;
 open WRAPPED, "$ARGV[0]" or die "Could not open wrapped text file: $!";
-$wrapped_lines = <WRAPPED>;
+my $wrapped_lines = <WRAPPED>;
 close WRAPPED;
 open NAKED, "$ARGV[1]" or die "Could not open naked text file: $!";
-$naked_lines = <NAKED>;
+my $naked_lines = <NAKED>;
 close NAKED;
 # Replace newlines, + from wrapped and naked lines.
 $wrapped_lines =~ tr/\n+/ /;
@@ -7726,6 +7759,11 @@ unless ($wrapped_lines) {
 }
 unless ($naked_lines) {
     exit 1;
+}
+# Cray compilers append a timestamp into their version string. Remove it.
+if ($wrapped_lines =~ /\QCray\E/) {
+    $wrapped_lines = substr $wrapped_lines, 0, -28;
+    $naked_lines = substr $naked_lines, 0, -28;
 }
 # Can the naked lines be found within the wrapped lines?
 if ($wrapped_lines =~ /\Q$naked_lines\E/) {
@@ -11162,40 +11200,57 @@ for arg in $with_ga ; do
     GA_LDFLAGS="$GA_LDFLAGS $arg" ;; #(
   -I*) :
     GA_CPPFLAGS="$GA_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    GA_LDFLAGS="$GA_LDFLAGS $arg" ;; #(
   *.a) :
     GA_LIBS="$GA_LIBS $arg" ;; #(
   *.so) :
     GA_LIBS="$GA_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   GA_LDFLAGS="$GA_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    GA_CPPFLAGS="$GA_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib64"
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include64"
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -11250,40 +11305,57 @@ for arg in $with_ga ; do
     GA_LDFLAGS="$GA_LDFLAGS $arg" ;; #(
   -I*) :
     GA_CPPFLAGS="$GA_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    GA_LDFLAGS="$GA_LDFLAGS $arg" ;; #(
   *.a) :
     GA_LIBS="$GA_LIBS $arg" ;; #(
   *.so) :
     GA_LIBS="$GA_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   GA_LDFLAGS="$GA_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    GA_CPPFLAGS="$GA_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib64"
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include64"
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -11510,40 +11582,57 @@ for arg in $with_ga ; do
     GA_LDFLAGS="$GA_LDFLAGS $arg" ;; #(
   -I*) :
     GA_CPPFLAGS="$GA_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    GA_LDFLAGS="$GA_LDFLAGS $arg" ;; #(
   *.a) :
     GA_LIBS="$GA_LIBS $arg" ;; #(
   *.so) :
     GA_LIBS="$GA_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   GA_LDFLAGS="$GA_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    GA_CPPFLAGS="$GA_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib64"
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include64"
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -11725,40 +11814,57 @@ for arg in $with_blas ; do
     BLAS_LDFLAGS="$BLAS_LDFLAGS $arg" ;; #(
   -I*) :
     BLAS_CPPFLAGS="$BLAS_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    BLAS_LDFLAGS="$BLAS_LDFLAGS $arg" ;; #(
   *.a) :
     BLAS_LIBS="$BLAS_LIBS $arg" ;; #(
   *.so) :
     BLAS_LIBS="$BLAS_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_blas not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_blas not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    BLAS_CPPFLAGS="$BLAS_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_blas not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_blas not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_blas not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_blas not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_blas not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_blas not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib64"
+  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib"
+  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include64"
+  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"
+  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib"
+  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"
+  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -13876,40 +13982,57 @@ for arg in $with_lapack ; do
     LAPACK_LDFLAGS="$LAPACK_LDFLAGS $arg" ;; #(
   -I*) :
     LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    LAPACK_LDFLAGS="$LAPACK_LDFLAGS $arg" ;; #(
   *.a) :
     LAPACK_LIBS="$LAPACK_LIBS $arg" ;; #(
   *.so) :
     LAPACK_LIBS="$LAPACK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_lapack not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_lapack not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_lapack not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_lapack not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib64"
+  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib"
+  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include64"
+  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"
+  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib"
+  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"
+  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -14173,40 +14296,57 @@ for arg in $with_scalapack ; do
     SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS $arg" ;; #(
   -I*) :
     SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS $arg" ;; #(
   *.a) :
     SCALAPACK_LIBS="$SCALAPACK_LIBS $arg" ;; #(
   *.so) :
     SCALAPACK_LIBS="$SCALAPACK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_scalapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_scalapack not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_scalapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_scalapack not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_scalapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_scalapack not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_scalapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_scalapack not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib64"
+  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib"
+  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include64"
+  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"
+  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib"
+  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"
+  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac

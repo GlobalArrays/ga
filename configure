@@ -6200,40 +6200,57 @@ for arg in $with_mpi ; do
     GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
   -I*) :
     GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    GA_MP_LDFLAGS="$GA_MP_LDFLAGS $arg" ;; #(
   *.a) :
     GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
   *.so) :
     GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib64"
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include64"
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -6636,40 +6653,57 @@ for arg in $with_bgml ; do
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   -I*) :
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   *.a) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *.so) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_bgml not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_bgml not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_bgml not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_bgml not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_bgml not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_bgml not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_bgml not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_bgml not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -6712,40 +6746,57 @@ for arg in $with_cray_shmem ; do
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   -I*) :
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   *.a) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *.so) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_cray_shmem not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_cray_shmem not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_cray_shmem not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_cray_shmem not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_cray_shmem not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_cray_shmem not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_cray_shmem not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_cray_shmem not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -6788,40 +6839,57 @@ for arg in $with_dcmf ; do
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   -I*) :
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   *.a) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *.so) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dcmf not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_dcmf not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dcmf not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_dcmf not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dcmf not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_dcmf not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dcmf not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_dcmf not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -6864,40 +6932,57 @@ for arg in $with_lapi ; do
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   -I*) :
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   *.a) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *.so) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_lapi not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_lapi not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_lapi not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_lapi not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -6940,40 +7025,57 @@ for arg in $with_mpi_mt ; do
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   -I*) :
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   *.a) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *.so) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_mt not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_mt not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_mt not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_mt not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_mt not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_mt not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_mt not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_mt not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -7016,40 +7118,57 @@ for arg in $with_mpi_spawn ; do
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   -I*) :
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   *.a) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *.so) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_spawn not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_spawn not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_spawn not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_spawn not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_spawn not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_spawn not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_spawn not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_spawn not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -7092,40 +7211,57 @@ for arg in $with_openib ; do
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   -I*) :
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   *.a) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *.so) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_openib not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_openib not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_openib not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_openib not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_openib not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_openib not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_openib not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_openib not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -7168,40 +7304,57 @@ for arg in $with_portals ; do
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   -I*) :
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   *.a) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *.so) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -7244,40 +7397,57 @@ for arg in $with_gemini ; do
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   -I*) :
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   *.a) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *.so) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -7320,40 +7490,57 @@ for arg in $with_sockets ; do
     ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   -I*) :
     ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
   *.a) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *.so) :
     ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_sockets not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_sockets not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_sockets not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_sockets not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_sockets not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_sockets not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_sockets not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_sockets not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -17205,40 +17392,57 @@ for arg in $with_blas ; do
     BLAS_LDFLAGS="$BLAS_LDFLAGS $arg" ;; #(
   -I*) :
     BLAS_CPPFLAGS="$BLAS_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    BLAS_LDFLAGS="$BLAS_LDFLAGS $arg" ;; #(
   *.a) :
     BLAS_LIBS="$BLAS_LIBS $arg" ;; #(
   *.so) :
     BLAS_LIBS="$BLAS_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_blas not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_blas not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    BLAS_CPPFLAGS="$BLAS_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_blas not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_blas not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_blas not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_blas not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_blas not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_blas not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib64"
+  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib"
+  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include64"
+  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"
+  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib"
+  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"
+  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -19356,40 +19560,57 @@ for arg in $with_lapack ; do
     LAPACK_LDFLAGS="$LAPACK_LDFLAGS $arg" ;; #(
   -I*) :
     LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    LAPACK_LDFLAGS="$LAPACK_LDFLAGS $arg" ;; #(
   *.a) :
     LAPACK_LIBS="$LAPACK_LIBS $arg" ;; #(
   *.so) :
     LAPACK_LIBS="$LAPACK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_lapack not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_lapack not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_lapack not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_lapack not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib64"
+  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib"
+  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include64"
+  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"
+  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib"
+  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"
+  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
@@ -19653,40 +19874,57 @@ for arg in $with_scalapack ; do
     SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS $arg" ;; #(
   -I*) :
     SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS $arg" ;; #(
-  -*lib*) :
-    SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS $arg" ;; #(
   *.a) :
     SCALAPACK_LIBS="$SCALAPACK_LIBS $arg" ;; #(
   *.so) :
     SCALAPACK_LIBS="$SCALAPACK_LIBS $arg" ;; #(
-  *lib*) :
+  *lib) :
     if test -d $arg; then :
   SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_scalapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_scalapack not parsed" >&2;}
 fi ;; #(
-  -*include*) :
-    SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS $arg" ;; #(
-  *include*) :
+  *lib64) :
+    if test -d $arg; then :
+  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_scalapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_scalapack not parsed" >&2;}
+fi ;; #(
+  *include) :
     if test -d $arg; then :
   SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_scalapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_scalapack not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_scalapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_scalapack not parsed" >&2;}
 fi ;; #(
   *) :
-    if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no
+         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
-  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib64"
+  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
-  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib"
+  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include64; then :
-  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include64"
+  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
 elif test -d $arg/include; then :
-  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"
+  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 else
   if test -d $arg/lib; then :
-  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib"
+  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
 fi
              if test -d $arg/include; then :
-  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"
+  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
 fi ;;
 esac
