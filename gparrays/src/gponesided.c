@@ -636,7 +636,7 @@ void pgp_gather_size(Integer g_p, Integer nv, Integer *subscript, Integer *size,
   } else {
     size_buf = (void*)malloc((int)nv*sizeof(int64_t));
   }
-  pnga_gather(GP[handle].g_size_array, size_buf, subscript, nv);
+  pnga_gather(GP[handle].g_size_array, size_buf, subscript, 0, nv);
 
   /* sum up all sizes */
   asize = 0;
@@ -697,8 +697,8 @@ void pgp_gather(Integer g_p, Integer nv, Integer *subscript, void *buf,
   }
   */
   info_buf = (armci_meminfo_t*)malloc((int)nv*sizeof(armci_meminfo_t)); 
-  pnga_gather(GP[handle].g_ptr_array, info_buf, subscript, nv);
-  pnga_gather(GP[handle].g_size_array, buf_size, subscript, nv);
+  pnga_gather(GP[handle].g_ptr_array, info_buf, subscript, 0, nv);
+  pnga_gather(GP[handle].g_size_array, buf_size, subscript, 0, nv);
   /* BJP
   printf("p[%d] Completed gather of buffers\n",me);
   */
