@@ -337,10 +337,17 @@ libarmci_la_SOURCES += src/memory/shmalloc.c
 libarmci_la_SOURCES += src/memory/winshmem.c
 AM_CPPFLAGS += -DSHMEM -DMMAP
 else
+if CYGWIN
+libarmci_la_SOURCES += src/common/signaltrap.c
+libarmci_la_SOURCES += src/memory/shmalloc.c
+libarmci_la_SOURCES += src/memory/winshmem.c
+AM_CPPFLAGS += -DSHMEM -DMMAP
+else
 if SYSV
 libarmci_la_SOURCES += src/common/signaltrap.c
 libarmci_la_SOURCES += src/memory/shmem.c
 libarmci_la_SOURCES += src/memory/shmlimit.c
+endif
 endif
 endif
 if NB_NONCONT
