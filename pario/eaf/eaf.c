@@ -86,6 +86,7 @@ static struct {
     long size;        /**< size for MA hack */
     long handle;      /**< handle for MA hack */
     char *pointer;    /**< pointer for MA */
+    long openma;      /**< open yes or no for MA to simulate file behavoir */
 } file[EAF_MAX_FILES];
 
 
@@ -175,6 +176,7 @@ int EAF_Open(const char *fname, int type, int *fd)
 	return EAF_ERR_MEMORY;
       file[i].pointer=ptr;
       file[i].handle=handle;
+      file[i].openma=1;
       }else{
 #ifdef DEBUG
 	  printf(" found old fileMA  %d size %ld \n", j, file[j].size);
@@ -182,6 +184,7 @@ int EAF_Open(const char *fname, int type, int *fd)
 	  /* need check if new size is <= old size*/
 	  i=j;
 	  
+      file[i].openma=1;
       }
 	type=0;
 #ifdef DEBUG
@@ -233,11 +236,14 @@ int EAF_Close(int fd)
     
     if (file[fd].size > 0) {
 #ifdef DEBUG
-      printf(" maclosing %d \n", fd);
+      printf(" maclosing %d %s \n", fd, file[fd].fname);
 #endif
-      /*nothin to do here     MA_free_heap(file[fd].handle);*/
+      file[fd].openma=0;
       return 0;
     }else{
+#ifdef DEBUG
+      printf(" closing regular file %s fd %d \n", file[fd].fname, fd);
+#endif
     free(file[fd].fname);
     file[fd].fname = 0;
 
@@ -632,6 +638,7 @@ int EAF_Length(int fd, eaf_off_t *length)
 
     if (file[fd].size > 0) {
       // should be in MB???
+      if(file[fd].openma == 0)  return EAF_ERR_INVALID_FD;
       len=file[fd].size;
       rc=0;
     }else{
