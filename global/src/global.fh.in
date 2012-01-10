@@ -49,7 +49,7 @@
       integer ga_pgroup_get_world, nga_pgroup_get_world
       integer ga_ndim, nga_ndim
       real ga_sdot, ga_sdot_patch, nga_sdot_patch
-      integer ga_is_mirrored, nga_is_mirrored
+      logical ga_is_mirrored, nga_is_mirrored
       integer ga_nbtest, nga_nbtest
 !
       integer nga_read_inc
