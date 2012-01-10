@@ -413,7 +413,7 @@ void pnga_scan_add(Integer g_src, Integer g_dst, Integer g_msk,
                         for (i=0; i<np; i++) {                              \
                             subs[i] = map[i*2+1];                           \
                         }                                                   \
-                        pnga_gather(g_dst, v, subs, np);                    \
+                        pnga_gather(g_dst, v, subs, 0, np);                 \
                         pnga_sync();                                        \
                         assign_zero_##AT(sum);                              \
                         for (i=0; i<np; i++) {                              \

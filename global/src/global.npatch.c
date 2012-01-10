@@ -406,7 +406,7 @@ void pnga_copy_patch(char *trans,
             }
           }
           pnga_release(g_a, los, his);
-          pnga_scatter(g_b, tmp_ptr, dst_idx_ptr, nelem);
+          pnga_scatter(g_b, tmp_ptr, dst_idx_ptr, 0, nelem);
           ga_free(dst_idx_ptr);
           ga_free(src_idx_ptr);
           ga_free(tmp_ptr);
@@ -516,7 +516,7 @@ void pnga_copy_patch(char *trans,
             }
           }
           pnga_release(g_b, los, his);
-          pnga_gather(g_a, tmp_ptr, dst_idx_ptr, nelem);
+          pnga_gather(g_a, tmp_ptr, dst_idx_ptr, 0, nelem);
           ga_free(dst_idx_ptr);
           ga_free(src_idx_ptr);
           ga_free(tmp_ptr);

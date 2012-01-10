@@ -1143,7 +1143,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
 
 void FATR nga_gather_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 {
-  wnga_gather(*g_a, v, subscript, *nv);
+  wnga_gather(*g_a, v, subscript, 0, *nv);
 }
 
 void FATR ga_get_(Integer *g_a, Integer *ilo, Integer *ihi, Integer *jlo,
@@ -1377,7 +1377,7 @@ void FATR ga_scatter_(Integer *g_a, void *v, Integer *i, Integer *j, Integer *nv
 
 void FATR nga_scatter_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 {
-  wnga_scatter(*g_a, v, subscript, *nv);
+  wnga_scatter(*g_a, v, subscript, 0, *nv);
 }
 
 void FATR ga_scatter_acc_(Integer *g_a, void *v, Integer *i, Integer *j,
@@ -1389,7 +1389,7 @@ void FATR ga_scatter_acc_(Integer *g_a, void *v, Integer *i, Integer *j,
 void FATR nga_scatter_acc_(Integer *g_a, void* v, Integer subscript[],
                            Integer *nv, void *alpha)
 {
-  wnga_scatter_acc(*g_a, v, subscript, *nv, alpha);
+  wnga_scatter_acc(*g_a, v, subscript, 0, *nv, alpha);
 }
 
 void FATR nga_strided_acc_(Integer *g_a, Integer *lo, Integer *hi,

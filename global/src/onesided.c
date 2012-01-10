@@ -532,11 +532,39 @@ static void ngai_nbgets(char *loc_base_ptr, char *prem,int *stride_rem, char *pb
 static void ngai_gets(char *loc_base_ptr, char *prem,int *stride_rem, char *pbuf, int *stride_loc,
 		      int *count, int nstrides, int proc, int field_off, 
 		      int field_size, int type_size) {
+#if 0
   armci_hdl_t nbhandle;
   ARMCI_INIT_HANDLE(&nbhandle);
   ngai_nbgets(loc_base_ptr, prem, stride_rem, pbuf, stride_loc, count, nstrides, proc, 
 	      field_off, field_size, type_size, &nbhandle);
   ARMCI_Wait(&nbhandle);
+#else
+  if(field_size<0 || field_size == type_size) {
+    ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,nstrides,proc);
+  } else {
+    int i;
+    count -= 1;
+    stride_loc -= 1;
+    stride_rem -= 1;
+
+    pbuf = loc_base_ptr + (pbuf - loc_base_ptr)/type_size*field_size;
+    prem += field_off;
+
+    count[1] /= type_size; 
+    nstrides += 1;
+
+    for(i=1; i<nstrides; i++) {
+      stride_loc[i] /= type_size;
+      stride_loc[i] *= field_size;
+    }
+    ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,nstrides,proc);
+    count[1] *= type_size; /*restore*/
+    for(i=1; i<nstrides; i++) {
+      stride_loc[i] /= field_size;
+      stride_loc[i] *= type_size;
+    }
+  }
+#endif
 }
 
 /**
@@ -3546,7 +3574,7 @@ Integer subscrpt[2];
 
 /*\ GATHER OPERATION elements from the global array into v
 \*/
-void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[], 
+void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
                  Integer nv, double *locbytes, double* totbytes, void *alpha)
 {
     Integer k, handle=g_a+GA_OFFSET;
@@ -4061,10 +4089,19 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
     GA_POP_NAME;
 }
 
+#define gam_c2f_index(index_c, index_f, ndim)        \
+{                                                    \
+  Integer _i;                                        \
+  for (_i = 0; _i < (ndim); _i++) {                  \
+    index_f[_i] = (Integer)(index_c[(ndim)-1-_i]+1); \
+  }                                                  \
+}
+
 /*\ GATHER OPERATION elements from the global array into v
 \*/
-void gai_gatscat_new(int op, Integer g_a, void* v, Integer subscript[], 
-                 Integer nv, double *locbytes, double* totbytes, void *alpha)
+void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
+                     Integer c_flag, Integer nv, double *locbytes,
+                     double* totbytes, void *alpha)
 {
     Integer handle=g_a+GA_OFFSET;
     int  ndim, i, j, k, type, item_size;
@@ -4073,6 +4110,7 @@ void gai_gatscat_new(int op, Integer g_a, void* v, Integer subscript[],
     Integer nprocs, me, iproc, tproc, index[MAXDIM];
     Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM-1];
     Integer jtot, last, offset;
+    Integer *subscript_ptr;
 
     Integer *header, *list, *nelems;
     char *buf;
@@ -4121,7 +4159,13 @@ void gai_gatscat_new(int op, Integer g_a, void* v, Integer subscript[],
      */
     maxlen = 1;
     for (i=0; i<nv; i++) {
-      if(!pnga_locate(g_a, subscript+i*ndim, &idx)) {
+      if (c_flag) {
+        gam_c2f_index(((int**)subscript)[k], index, ndim);
+        subscript_ptr = index;
+      } else {
+        subscript_ptr = ((Integer*)subscript)+i*ndim;
+      }
+      if(!pnga_locate(g_a, subscript_ptr, &idx)) {
         gai_print_subscript("invalid subscript",ndim, subscript+i*ndim,"\n");
         pnga_error("failed -element:",i);
       }
@@ -4147,7 +4191,7 @@ void gai_gatscat_new(int op, Integer g_a, void* v, Integer subscript[],
     *locbytes = item_size * nelems[me];
 
     /* allocate buffers for individual vector calls */
-    buf = (char*)gai_malloc(2*nprocs*sizeof(void**)+2*maxlen*sizeof(void*));
+    buf = (char*)gai_malloc(2*maxlen*sizeof(void*));
     ptr_loc = (void**)buf;
     ptr_rem = (void**)(buf+maxlen*sizeof(void*));
 
@@ -4159,20 +4203,26 @@ void gai_gatscat_new(int op, Integer g_a, void* v, Integer subscript[],
         idx = header[iproc];
         j = 0;
         while (idx > -1) {
+          if (c_flag) {
+            gam_c2f_index(((int**)subscript)[k], index, ndim);
+            subscript_ptr = index;
+          } else {
+            subscript_ptr = ((Integer*)subscript)+idx*ndim;
+          }
           if (!use_blocks) {
           /* gam_Loc_ptr modifies the value of the processor variable for
            * restricted arrays or processor groups, so make a temporary copy
            */
             tproc = iproc;
-            gam_Loc_ptr(tproc, handle,  (subscript+idx*ndim),
+            gam_Loc_ptr(tproc, handle,  (subscript_ptr),
                 ptr_rem+j);
           } else {
             /* TODO: Figure out how to get correct pointers for block cyclic
              * distributions */
             /* find block index from subscript */
-            if(!pnga_locate(g_a, subscript+idx*ndim, &tproc)) {
+            if(!pnga_locate(g_a, subscript_ptr, &tproc)) {
               gai_print_subscript("invalid subscript for block-cyclic array",
-                                   ndim, subscript+idx*ndim,"\n");
+                                   ndim, subscript_ptr,"\n");
               pnga_error("failed -element:",idx);
             }
             pnga_distribution(g_a, tproc, lo, hi);
@@ -4182,10 +4232,10 @@ void gai_gatscat_new(int op, Integer g_a, void* v, Integer subscript[],
             last = ndim -1;
             jtot = 1;
             for (k=0; k<last; k++) {
-              offset += ((subscript + idx*ndim)[k]-lo[k])*jtot;
+              offset += ((subscript_ptr)[k]-lo[k])*jtot;
               jtot *= ld[k];
             }
-            offset += ((subscript+idx*ndim)[last]-lo[last])*jtot;
+            offset += ((subscript_ptr)[last]-lo[last])*jtot;
             ptr_rem[j] = (void*)(((char*)ptr_rem[j])+offset*item_size);
           }
           ptr_loc[j] = (void*)(((char*)v) + idx * item_size);
@@ -4259,7 +4309,7 @@ void gai_gatscat_new(int op, Integer g_a, void* v, Integer subscript[],
 #   pragma weak wnga_gather = pnga_gather
 #endif
 
-void pnga_gather(Integer g_a, void* v, Integer subscript[], Integer nv)
+void pnga_gather(Integer g_a, void* v, void *subscript, Integer c_flag, Integer nv)
 {
 
   if (nv < 1) return;
@@ -4267,7 +4317,7 @@ void pnga_gather(Integer g_a, void* v, Integer subscript[], Integer nv)
   GA_PUSH_NAME("nga_gather");
   GAstat.numgat++;
 
-  gai_gatscat_new(GATHER,g_a,v,subscript,nv,&GAbytes.gattot,&GAbytes.gatloc, NULL);
+  gai_gatscat_new(GATHER,g_a,v,subscript,c_flag,nv,&GAbytes.gattot,&GAbytes.gatloc, NULL);
 
   GA_POP_NAME;
 }
@@ -4280,7 +4330,7 @@ void pnga_gather(Integer g_a, void* v, Integer subscript[], Integer nv)
 #   pragma weak wnga_scatter = pnga_scatter
 #endif
 
-void pnga_scatter(Integer g_a, void* v, Integer subscript[], Integer nv)
+void pnga_scatter(Integer g_a, void* v, void *subscript, Integer c_flag, Integer nv)
 {
 
   if (nv < 1) return;
@@ -4288,7 +4338,7 @@ void pnga_scatter(Integer g_a, void* v, Integer subscript[], Integer nv)
   GA_PUSH_NAME("nga_scatter");
   GAstat.numsca++;
 
-  gai_gatscat_new(SCATTER,g_a,v,subscript,nv,&GAbytes.scatot,&GAbytes.scaloc, NULL);
+  gai_gatscat_new(SCATTER,g_a,v,subscript,c_flag,nv,&GAbytes.scatot,&GAbytes.scaloc, NULL);
 
   GA_POP_NAME;
 }
@@ -4301,8 +4351,8 @@ void pnga_scatter(Integer g_a, void* v, Integer subscript[], Integer nv)
 #   pragma weak wnga_scatter_acc = pnga_scatter_acc
 #endif
 
-void pnga_scatter_acc(Integer g_a, void* v, Integer subscript[],
-                           Integer nv, void *alpha)
+void pnga_scatter_acc(Integer g_a, void* v, void *subscript, Integer c_flag,
+                      Integer nv, void *alpha)
 {
 
   if (nv < 1) return;
@@ -4310,7 +4360,7 @@ void pnga_scatter_acc(Integer g_a, void* v, Integer subscript[],
   GA_PUSH_NAME("nga_scatter_acc");
   GAstat.numsca++;
 
-  gai_gatscat_new(SCATTER_ACC, g_a, v, subscript, nv, &GAbytes.scatot,
+  gai_gatscat_new(SCATTER_ACC, g_a, v, subscript, c_flag, nv, &GAbytes.scatot,
               &GAbytes.scaloc, alpha);
 
   GA_POP_NAME;
