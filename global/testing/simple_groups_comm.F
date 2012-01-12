@@ -13,7 +13,8 @@
       integer n,i,j
       parameter (n=4)
       integer proc_group(0:100),proclist(100),inode,nprocs
-      integer ierr,comm,sbuf(1),rbuf(1)
+      integer ierr,comm
+      double precision sbuf(1),rbuf(1)
       call ga_initialize()
       me = ga_nodeid()
 
@@ -49,9 +50,11 @@
           call ga_mpi_comm_pgroup_default(comm)
           if (comm.ne.mpi_comm_null) then
             sbuf(1) = ga_nodeid()
-            call mpi_allreduce(sbuf, rbuf, 1, mpi_integer,
+c     unless MPI was compiled with the same integer size, we can't
+c     use mpi_allreduce on integer types -- that's why we use double
+            call mpi_allreduce(sbuf, rbuf, 1, mpi_double_precision,
      ,                         mpi_max, comm, ierr)
-            write(0,'(I4,A,I4)') me, ' max nodeid is ', rbuf(1)
+            write(0,'(I4,A,F8.3)') me, ' max nodeid is ', rbuf(1)
             if ((rbuf(1)+1).ne.ga_cluster_nprocs(i)) then
               call ga_error('mpi_allreduce failed',1)
             endif
