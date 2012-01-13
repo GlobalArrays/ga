@@ -2562,6 +2562,11 @@ nodist_libga_la_SOURCES = config.fh $(am__append_7) \
 # tascel
 # The tascel directory is not automatically configured nor added to SUBDIRS.
 # However, it is still distributed with GA.
+
+##############################################################################
+# gfutex
+# The gfutex directory is not automatically configured nor added to SUBDIRS.
+# However, it is still distributed with GA.
 EXTRA_DIST = README LinAlg/lapack+blas/README global/README \
 	tools/gpwapigen.py tools/wapigen.py tools/wapigen_counts.py \
 	tools/wapigen_trace.py $(am__append_23) \
@@ -2574,7 +2579,7 @@ EXTRA_DIST = README LinAlg/lapack+blas/README global/README \
 	global/doc/README global/doc/Supercomputing94.pdf \
 	global/doc/user.pdf pario/dra/dbg_read.c pario/dra/dbg_write.c \
 	pario/dra/dra2arviz.c pario/dra/global.unsup.c \
-	pario/dra/README ga++/README tascel
+	pario/dra/README ga++/README tascel gfutex
 
 ##############################################################################
 # config
@@ -5940,6 +5945,8 @@ armci/libarmcii.la:
 	($(am__cd) armci && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
 dist-hook:
 	rm -rf $(distdir)/tascel/autom4te.cache
+dist-hook:
+	rm -rf $(distdir)/gfutex/autom4te.cache
 
 ##############################################################################
 # the end

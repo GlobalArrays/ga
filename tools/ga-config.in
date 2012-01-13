@@ -1,5 +1,5 @@
 #! /bin/sh
-# Generated from ga-config.in.m4 by GNU Autoconf 2.67.
+# Generated from ga-config.in.m4sh by GNU Autoconf 2.68.
 ## -------------------- ##
 ## M4sh Initialization. ##
 ## -------------------- ##
@@ -79,6 +79,7 @@ fi
 IFS=" ""	$as_nl"
 
 # Find who we are.  Look in the path if we contain no directory separator.
+as_myself=
 case $0 in #((
   *[\\/]* ) as_myself=$0 ;;
   *) as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
@@ -198,11 +199,18 @@ IFS=$as_save_IFS
   # We cannot yet assume a decent shell, so we have to provide a
 	# neutralization value for shells without unset; and this also
 	# works around shells that cannot unset nonexistent variables.
+	# Preserve -v and -x to the replacement shell.
 	BASH_ENV=/dev/null
 	ENV=/dev/null
 	(unset BASH_ENV) >/dev/null 2>&1 && unset BASH_ENV ENV
 	export CONFIG_SHELL
-	exec "$CONFIG_SHELL" "$as_myself" ${1+"$@"}
+	case $- in # ((((
+	  *v*x* | *x*v* ) as_opts=-vx ;;
+	  *v* ) as_opts=-v ;;
+	  *x* ) as_opts=-x ;;
+	  * ) as_opts= ;;
+	esac
+	exec "$CONFIG_SHELL" $as_opts "$as_myself" ${1+"$@"}
 fi
 
     if test x$as_have_required = xno; then :
@@ -248,6 +256,7 @@ cc="@CC@"
 cppflags="@SCALAPACK_CPPFLAGS@ @LAPACK_CPPFLAGS@ @BLAS_CPPFLAGS@ @GA_MP_CPPFLAGS@ @ARMCI_NETWORK_CPPFLAGS@ -I@prefix@/include"
 cflags="@GA_COPT@"
 fflags="@GA_FOPT@ @FFLAG_INT@"
+fint="@FFLAG_INT@"
 ldflags="@SCALAPACK_LDFLAGS@ @LAPACK_LDFLAGS@ @BLAS_LDFLAGS@ @GA_MP_LDFLAGS@ @ARMCI_NETWORK_LDFLAGS@ -L@prefix@/lib"
 libs="-lga @SCALAPACK_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ @GA_MP_LIBS@ @ARMCI_NETWORK_LIBS@"
 flibs="@FLIBS@"
@@ -255,9 +264,9 @@ enable_f77_true="@ENABLE_F77_TRUE@"
 version="@PACKAGE_VERSION@"
 
 if test "x$enable_f77_true" = x; then :
-  enable_f77=no
-else
   enable_f77=yes
+else
+  enable_f77=no
 fi
 
 usage="Usage: ga-config [OPTIONS]...
@@ -272,6 +281,7 @@ Options:
   --cppflags
   --cflags
   --fflags
+  --fint
   --ldflags
   --libs
   --flibs
@@ -324,6 +334,8 @@ do
     result="$result $libs" ;;
   -flibs | --flibs )
     result="$result $flibs" ;;
+  -fint | --fint )
+    result="$result $fint" ;;
   -enable-f77 | --enable-f77 )
     result="$result $enable_f77" ;;
   # This is an error.

@@ -11104,6 +11104,7 @@ $as_echo "$ga_cv_libga_la_found" >&6; }
 if test "x$ga_cv_libga_la_found" = xyes; then :
   GA_LIBS="../libga.la"
      GA_CPPFLAGS="-I$srcdir/../global/src -I../global/src -I$srcdir/../ma -I../ma -I../gaf2c -I../armci/gaf2c -I$srcdir/../armci/src/include"
+     GA_FLIBS=`echo '@FLIBS@' | ../config.status --file=-`
 else
   ga_save_PATH="$PATH"
      if test -d $with_ga; then :
@@ -11157,6 +11158,7 @@ fi
   GA_CPPFLAGS=`$GA_CONFIG --cppflags`
          GA_LDFLAGS=`$GA_CONFIG --ldflags`
          GA_LIBS=`$GA_CONFIG --libs`
+         GA_FLIBS=`$GA_CONFIG --flibs`
 else
 
 

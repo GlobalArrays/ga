@@ -605,7 +605,8 @@ TESTS = $(am__EXEEXT_25) $(am__EXEEXT_26)
 XFAIL_TESTS = $(am__EXEEXT_27) $(am__EXEEXT_27)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_as_no_i386asm.m4 \
+	$(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/armci_cxx_opt.m4 \
 	$(top_srcdir)/../m4/armci_enable_gpc.m4 \
 	$(top_srcdir)/../m4/armci_enable_profile.m4 \
@@ -662,7 +663,6 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_c_opt.m4 \
 	$(top_srcdir)/../m4/ga_with_help.m4 \
 	$(top_srcdir)/../m4/tcgmsg_rsh.m4 \
 	$(top_srcdir)/../m4/tcgmsg_timings.m4 \
-	$(top_srcdir)/m4/armci_as_no_i386asm.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/lt_obsolete.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
 	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/configure.ac

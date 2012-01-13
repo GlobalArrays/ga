@@ -55,28 +55,6 @@ m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
 _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
 
-# Figure out how to run the assembler.                      -*- Autoconf -*-
-
-# Copyright (C) 2001, 2003, 2004, 2005, 2006  Free Software Foundation, Inc.
-#
-# This file is free software; the Free Software Foundation
-# gives unlimited permission to copy and/or distribute it,
-# with or without modifications, as long as this notice is preserved.
-
-# serial 5
-
-# AM_PROG_AS
-# ----------
-AC_DEFUN([AM_PROG_AS],
-[# By default we simply use the C compiler to build assembly code.
-AC_REQUIRE([AC_PROG_CC])
-test "${CCAS+set}" = set || CCAS=$CC
-test "${CCASFLAGS+set}" = set || CCASFLAGS=$CFLAGS
-AC_ARG_VAR([CCAS],      [assembler compiler command (defaults to CC)])
-AC_ARG_VAR([CCASFLAGS], [assembler compiler flags (defaults to CFLAGS)])
-_AM_IF_OPTION([no-dependencies],, [_AM_DEPENDENCIES([CCAS])])dnl
-])
-
 # AM_AUX_DIR_EXPAND                                         -*- Autoconf -*-
 
 # Copyright (C) 2001, 2003, 2005  Free Software Foundation, Inc.
@@ -1038,67 +1016,26 @@ AC_SUBST([am__tar])
 AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
-m4_include([../m4/armci_as_no_i386asm.m4])
-m4_include([../m4/armci_c_opt.m4])
-m4_include([../m4/armci_cxx_opt.m4])
-m4_include([../m4/armci_enable_gpc.m4])
-m4_include([../m4/armci_enable_profile.m4])
-m4_include([../m4/armci_f77_opt.m4])
-m4_include([../m4/armci_group.m4])
-m4_include([../m4/armci_nb_noncont.m4])
-m4_include([../m4/armci_setup.m4])
-m4_include([../m4/armci_tas.m4])
-m4_include([../m4/armci_x86copy.m4])
-m4_include([../m4/ax_sys_weak_alias.m4])
+m4_include([../m4/ax_boost_base.m4])
+m4_include([../m4/ga.m4])
 m4_include([../m4/ga_ar.m4])
 m4_include([../m4/ga_arg_parse.m4])
-m4_include([../m4/ga_armci_network.m4])
-m4_include([../m4/ga_as.m4])
-m4_include([../m4/ga_blas.m4])
-m4_include([../m4/ga_c_match_types.m4])
-m4_include([../m4/ga_check_func.m4])
+m4_include([../m4/ga_boost.m4])
 m4_include([../m4/ga_check_header.m4])
-m4_include([../m4/ga_compiler_vendor.m4])
+m4_include([../m4/ga_check_package.m4])
 m4_include([../m4/ga_cross_compiling.m4])
-m4_include([../m4/ga_enable_checkpoint.m4])
-m4_include([../m4/ga_enable_opt.m4])
-m4_include([../m4/ga_enable_trace.m4])
-m4_include([../m4/ga_f2c_cmdargs.m4])
-m4_include([../m4/ga_f2c_match_types.m4])
-m4_include([../m4/ga_f2c_nomain.m4])
-m4_include([../m4/ga_f2c_string.m4])
-m4_include([../m4/ga_f77_check_sizeof.m4])
-m4_include([../m4/ga_f77_cpp_symbols.m4])
-m4_include([../m4/ga_f77_disable.m4])
-m4_include([../m4/ga_f77_fixed.m4])
-m4_include([../m4/ga_f77_flush.m4])
-m4_include([../m4/ga_f77_integer_size.m4])
-m4_include([../m4/ga_f77_ld_override.m4])
-m4_include([../m4/ga_f77_library_ldflags.m4])
-m4_include([../m4/ga_f77_mismatch_type.m4])
-m4_include([../m4/ga_f77_underscore.m4])
-m4_include([../m4/ga_function.m4])
-m4_include([../m4/ga_lapack.m4])
 m4_include([../m4/ga_mpi_test_disable.m4])
 m4_include([../m4/ga_mpi_unwrap.m4])
 m4_include([../m4/ga_mpicc.m4])
 m4_include([../m4/ga_mpicc_test.m4])
 m4_include([../m4/ga_mpicxx.m4])
 m4_include([../m4/ga_mpicxx_test.m4])
-m4_include([../m4/ga_mpif77.m4])
-m4_include([../m4/ga_mpif77_test.m4])
 m4_include([../m4/ga_msg_comms.m4])
-m4_include([../m4/ga_suppress_msg.m4])
-m4_include([../m4/ga_sys_weak_alias.m4])
 m4_include([../m4/ga_target.m4])
-m4_include([../m4/ga_thread_safe.m4])
-m4_include([../m4/ga_union_semun.m4])
-m4_include([../m4/ga_warn_flags.m4])
+m4_include([../m4/ga_tbb.m4])
 m4_include([../m4/ga_with_help.m4])
-m4_include([../m4/tcgmsg_rsh.m4])
-m4_include([../m4/tcgmsg_timings.m4])
 m4_include([m4/libtool.m4])
-m4_include([m4/lt_obsolete.m4])
 m4_include([m4/ltoptions.m4])
 m4_include([m4/ltsugar.m4])
 m4_include([m4/ltversion.m4])
+m4_include([m4/lt~obsolete.m4])

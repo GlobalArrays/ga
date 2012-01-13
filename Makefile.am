@@ -1180,6 +1180,14 @@ dist-hook:
 	rm -rf $(distdir)/tascel/autom4te.cache
 
 ##############################################################################
+# gfutex
+# The gfutex directory is not automatically configured nor added to SUBDIRS.
+# However, it is still distributed with GA.
+EXTRA_DIST += gfutex
+dist-hook:
+	rm -rf $(distdir)/gfutex/autom4te.cache
+
+##############################################################################
 # the end
 #
 .PHONY: checkprogs checkprogs-recursive checkprogs-am
