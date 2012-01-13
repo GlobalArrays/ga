@@ -26,7 +26,10 @@ AC_DEFUN([GA_TBB], [
 tbb_ok=no
 # has the user set TBBROOT or tbb_root?
 AS_IF([test "x$TBBROOT" != x || test "x$tbb_root" != x], [
-cat >GNUmakefile <<"EOF"
+rm -f the_makefile
+rm -f result.txt
+rm -f err.txt
+cat >the_makefile <<"EOF"
 ifdef TBBROOT
 tbb_root=$(TBBROOT)
 endif
@@ -34,7 +37,7 @@ include $(tbb_root)/build/common.inc
 all:
 	@echo "$(work_dir)"
 EOF
-    AS_IF([gmake 1>result.txt 2>err.txt],
+    AS_IF([gmake -f the_makefile 1>result.txt 2>err.txt],
         [tbb_work_dir=`echo result.txt`; tbb_ok=yes],
         [cat err.txt >&AS_MESSAGE_LOG_FD])
     AS_IF([test "x$tbb_work_dir" != x],
@@ -44,7 +47,7 @@ EOF
         [test "x$tbb_root" != x],
         [TBB_CPPFLAGS="-I$tbb_root/include"])
     TBB_LIBS="-ltbb"
-    rm -f GNUMakefile
+    rm -f the_makefile
     rm -f result.txt
     rm -f err.txt
 ])

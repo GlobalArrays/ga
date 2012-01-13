@@ -6858,7 +6858,10 @@ tbb_ok=no
 # has the user set TBBROOT or tbb_root?
 if test "x$TBBROOT" != x || test "x$tbb_root" != x; then :
 
-cat >GNUmakefile <<"EOF"
+rm -f the_makefile
+rm -f result.txt
+rm -f err.txt
+cat >the_makefile <<"EOF"
 ifdef TBBROOT
 tbb_root=$(TBBROOT)
 endif
@@ -6866,7 +6869,7 @@ include $(tbb_root)/build/common.inc
 all:
 	@echo "$(work_dir)"
 EOF
-    if gmake 1>result.txt 2>err.txt; then :
+    if gmake -f the_makefile 1>result.txt 2>err.txt; then :
   tbb_work_dir=`echo result.txt`; tbb_ok=yes
 else
   cat err.txt >&5
@@ -6880,7 +6883,7 @@ elif test "x$tbb_root" != x; then :
   TBB_CPPFLAGS="-I$tbb_root/include"
 fi
     TBB_LIBS="-ltbb"
-    rm -f GNUMakefile
+    rm -f the_makefile
     rm -f result.txt
     rm -f err.txt
 
@@ -7409,7 +7412,6 @@ fi
 
 fi
 
-#AX_BOOST_BASE
 
 # Checks for C++ header files.
 
