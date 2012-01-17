@@ -1176,7 +1176,9 @@ libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 # The tascel directory is not automatically configured nor added to SUBDIRS.
 # However, it is still distributed with GA.
 EXTRA_DIST += tascel
-dist-hook:
+dist-hook: tascel-dist-hook
+.PHONY: tascel-dist-hook
+tascel-dist-hook:
 	rm -rf $(distdir)/tascel/autom4te.cache
 
 ##############################################################################
@@ -1184,7 +1186,9 @@ dist-hook:
 # The gfutex directory is not automatically configured nor added to SUBDIRS.
 # However, it is still distributed with GA.
 EXTRA_DIST += gfutex
-dist-hook:
+dist-hook: gfutex-dist-hook
+.PHONY: gfutex-dist-hook
+gfutex-dist-hook:
 	rm -rf $(distdir)/gfutex/autom4te.cache
 
 ##############################################################################

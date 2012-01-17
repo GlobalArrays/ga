@@ -21,7 +21,6 @@ libarmci_la_SOURCES += src-gemini/memlock.c
 libarmci_la_SOURCES += src-gemini/memlock.h
 libarmci_la_SOURCES += src-gemini/memory.c
 libarmci_la_SOURCES += src-gemini/message.c
-libarmci_la_SOURCES += src-gemini/mp3.h
 libarmci_la_SOURCES += src-gemini/mutex.c
 libarmci_la_SOURCES += src-gemini/pack.c
 libarmci_la_SOURCES += src-gemini/pendbufs.h

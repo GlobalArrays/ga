@@ -5943,9 +5943,13 @@ gparrays/src/gp-wapidefs.h: $(GPPAPI_H)
 
 armci/libarmcii.la:
 	($(am__cd) armci && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
-dist-hook:
+dist-hook: tascel-dist-hook
+.PHONY: tascel-dist-hook
+tascel-dist-hook:
 	rm -rf $(distdir)/tascel/autom4te.cache
-dist-hook:
+dist-hook: gfutex-dist-hook
+.PHONY: gfutex-dist-hook
+gfutex-dist-hook:
 	rm -rf $(distdir)/gfutex/autom4te.cache
 
 ##############################################################################

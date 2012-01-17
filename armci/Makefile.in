@@ -139,14 +139,12 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/sema.h \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/setdbg.c \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/shmem.c \
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/shmem.h \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/signals.c \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/signals.h \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/snd.c \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/sndrcv.h \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/sndrcvP.h \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/sockets.c \
-@MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/sockets.h \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/srftoc.h \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/srmover.c \
 @MSG_COMMS_TCGMSG4_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv4.0/stats.c \
@@ -191,7 +189,6 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/pbegin.c \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/pfilecopy.c \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/queues.c \
-@MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/shmem.h \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/signals.c \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/sndrcv.h \
 @MSG_COMMS_TCGMSG5_TRUE@@MSG_COMMS_TCGMSG_TRUE@	tcgmsg/ipcv5.0/snd_rcv_probe.c \
@@ -269,8 +266,6 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/memlock.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/memory.c \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/message.c \
-@ARMCI_NETWORK_PORTALS_TRUE@	src-portals/mp3.fh \
-@ARMCI_NETWORK_PORTALS_TRUE@	src-portals/mp3.h \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/mutex.c \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/pack.c \
 @ARMCI_NETWORK_PORTALS_TRUE@	src-portals/pendbufs.h \
@@ -340,7 +335,6 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/memlock.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/memory.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/message.c \
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/mp3.h \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/mutex.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/pack.c \
 @ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	src-gemini/pendbufs.h \
@@ -417,8 +411,6 @@ DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/kr_malloc.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/locks.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/memlock.h \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/mp3.fh \
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/mp3.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/request.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/semaphores.h \
 @ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	src/include/shmalloc.h \
@@ -716,11 +708,10 @@ am__libarmci_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
 	tcgmsg/ipcv4.0/pbegin.c tcgmsg/ipcv4.0/pbeginf.c \
 	tcgmsg/ipcv4.0/pfilecopy.c tcgmsg/ipcv4.0/sema.c \
 	tcgmsg/ipcv4.0/sema.h tcgmsg/ipcv4.0/setdbg.c \
-	tcgmsg/ipcv4.0/shmem.c tcgmsg/ipcv4.0/shmem.h \
-	tcgmsg/ipcv4.0/signals.c tcgmsg/ipcv4.0/signals.h \
-	tcgmsg/ipcv4.0/snd.c tcgmsg/ipcv4.0/sndrcv.h \
-	tcgmsg/ipcv4.0/sndrcvP.h tcgmsg/ipcv4.0/sockets.c \
-	tcgmsg/ipcv4.0/sockets.h tcgmsg/ipcv4.0/srftoc.h \
+	tcgmsg/ipcv4.0/shmem.c tcgmsg/ipcv4.0/signals.c \
+	tcgmsg/ipcv4.0/signals.h tcgmsg/ipcv4.0/snd.c \
+	tcgmsg/ipcv4.0/sndrcv.h tcgmsg/ipcv4.0/sndrcvP.h \
+	tcgmsg/ipcv4.0/sockets.c tcgmsg/ipcv4.0/srftoc.h \
 	tcgmsg/ipcv4.0/srmover.c tcgmsg/ipcv4.0/stats.c \
 	tcgmsg/ipcv4.0/synch.c tcgmsg/ipcv4.0/usleep.c \
 	tcgmsg/ipcv4.0/waitall.c tcgmsg/ipcv4.0/waitcom.c \
@@ -733,25 +724,24 @@ am__libarmci_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
 	tcgmsg/ipcv5.0/niceftn.c tcgmsg/ipcv5.0/nnodes.c \
 	tcgmsg/ipcv5.0/nodeid.c tcgmsg/ipcv5.0/pbegin.c \
 	tcgmsg/ipcv5.0/pfilecopy.c tcgmsg/ipcv5.0/queues.c \
-	tcgmsg/ipcv5.0/shmem.h tcgmsg/ipcv5.0/signals.c \
-	tcgmsg/ipcv5.0/sndrcv.h tcgmsg/ipcv5.0/snd_rcv_probe.c \
-	tcgmsg/ipcv5.0/srftoc.h tcgmsg/ipcv5.0/tcgmsgP.h \
-	tcgmsg/ipcv5.0/usleep.c tcgmsg/ipcv5.0/waitall.c \
-	tcgmsg/ipcv5.0/async_send_lapi.c tcgmsg/ipcv5.0/lapi_putget.c \
-	tcgmsg/ipcv5.0/async_send.c tcgmsg/ipcv5.0/busy.c \
-	tcgmsg/ipcv5.0/error.c tcgmsg/ipcv5.0/nxtval.shm.c \
-	tcgmsg/ipcv5.0/pbeginf.c tcgmsg/ipcv5.0/shmem.c \
-	tcgmsg/ipcv5.0/synch.c tcgmsg/tcgmsg-mpi/checkbyte.c \
-	tcgmsg/tcgmsg-mpi/clustercheck.c tcgmsg/tcgmsg-mpi/collect.c \
-	tcgmsg/tcgmsg-mpi/drand48.c tcgmsg/tcgmsg-mpi/evlog.c \
-	tcgmsg/tcgmsg-mpi/evlog.h tcgmsg/tcgmsg-mpi/evon.c \
-	tcgmsg/tcgmsg-mpi/llog.c tcgmsg/tcgmsg-mpi/misc.c \
-	tcgmsg/tcgmsg-mpi/niceftn.c tcgmsg/tcgmsg-mpi/nxtval-armci.c \
-	tcgmsg/tcgmsg-mpi/p2p.c tcgmsg/tcgmsg-mpi/pbeginf.c \
-	tcgmsg/tcgmsg-mpi/pfilecopy.c tcgmsg/tcgmsg-mpi/sizeof.c \
-	tcgmsg/tcgmsg-mpi/sndrcv.h tcgmsg/tcgmsg-mpi/srftoc.h \
-	tcgmsg/tcgmsg-mpi/tcgmsgP.h src-portals/acc.h \
-	src-portals/aggregate.c src-portals/armci.c \
+	tcgmsg/ipcv5.0/signals.c tcgmsg/ipcv5.0/sndrcv.h \
+	tcgmsg/ipcv5.0/snd_rcv_probe.c tcgmsg/ipcv5.0/srftoc.h \
+	tcgmsg/ipcv5.0/tcgmsgP.h tcgmsg/ipcv5.0/usleep.c \
+	tcgmsg/ipcv5.0/waitall.c tcgmsg/ipcv5.0/async_send_lapi.c \
+	tcgmsg/ipcv5.0/lapi_putget.c tcgmsg/ipcv5.0/async_send.c \
+	tcgmsg/ipcv5.0/busy.c tcgmsg/ipcv5.0/error.c \
+	tcgmsg/ipcv5.0/nxtval.shm.c tcgmsg/ipcv5.0/pbeginf.c \
+	tcgmsg/ipcv5.0/shmem.c tcgmsg/ipcv5.0/synch.c \
+	tcgmsg/tcgmsg-mpi/checkbyte.c tcgmsg/tcgmsg-mpi/clustercheck.c \
+	tcgmsg/tcgmsg-mpi/collect.c tcgmsg/tcgmsg-mpi/drand48.c \
+	tcgmsg/tcgmsg-mpi/evlog.c tcgmsg/tcgmsg-mpi/evlog.h \
+	tcgmsg/tcgmsg-mpi/evon.c tcgmsg/tcgmsg-mpi/llog.c \
+	tcgmsg/tcgmsg-mpi/misc.c tcgmsg/tcgmsg-mpi/niceftn.c \
+	tcgmsg/tcgmsg-mpi/nxtval-armci.c tcgmsg/tcgmsg-mpi/p2p.c \
+	tcgmsg/tcgmsg-mpi/pbeginf.c tcgmsg/tcgmsg-mpi/pfilecopy.c \
+	tcgmsg/tcgmsg-mpi/sizeof.c tcgmsg/tcgmsg-mpi/sndrcv.h \
+	tcgmsg/tcgmsg-mpi/srftoc.h tcgmsg/tcgmsg-mpi/tcgmsgP.h \
+	src-portals/acc.h src-portals/aggregate.c src-portals/armci.c \
 	src-portals/armcip.h src-portals/armci_portals.c \
 	src-portals/armci_portals.h src-portals/atomics-i386.h \
 	src-portals/buffers.c src-portals/caccumulate.c \
@@ -760,20 +750,19 @@ am__libarmci_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
 	src-portals/kr_malloc.c src-portals/kr_malloc.h \
 	src-portals/locks.c src-portals/locks.h src-portals/memlock.c \
 	src-portals/memlock.h src-portals/memory.c \
-	src-portals/message.c src-portals/mp3.fh src-portals/mp3.h \
-	src-portals/mutex.c src-portals/pack.c src-portals/pendbufs.h \
-	src-portals/portals_cp.c src-portals/portals_ds.c \
-	src-portals/portals.c src-portals/request.c \
-	src-portals/request.h src-portals/rmw.c src-portals/rtinfo.c \
-	src-portals/semaphores.c src-portals/semaphores.h \
-	src-portals/shmalloc.h src-portals/shmem.c src-portals/shmem.h \
-	src-portals/shmlimit.c src-portals/shmlimit.h \
-	src-portals/signaltrap.c src-portals/signaltrap.h \
-	src-portals/sockets.h src-portals/spawn.c \
-	src-portals/spinlock.h src-portals/strided.c \
-	src-portals/tas-alpha.h src-portals/tas-i386.h \
-	src-portals/tas-ia64.h src-portals/tas-ppc.h \
-	src-portals/utils.h src-portals/vector.c \
+	src-portals/message.c src-portals/mutex.c src-portals/pack.c \
+	src-portals/pendbufs.h src-portals/portals_cp.c \
+	src-portals/portals_ds.c src-portals/portals.c \
+	src-portals/request.c src-portals/request.h src-portals/rmw.c \
+	src-portals/rtinfo.c src-portals/semaphores.c \
+	src-portals/semaphores.h src-portals/shmalloc.h \
+	src-portals/shmem.c src-portals/shmem.h src-portals/shmlimit.c \
+	src-portals/shmlimit.h src-portals/signaltrap.c \
+	src-portals/signaltrap.h src-portals/sockets.h \
+	src-portals/spawn.c src-portals/spinlock.h \
+	src-portals/strided.c src-portals/tas-alpha.h \
+	src-portals/tas-i386.h src-portals/tas-ia64.h \
+	src-portals/tas-ppc.h src-portals/utils.h src-portals/vector.c \
 	src-portals/new_memory.c src-portals/groups.c \
 	src-portals/gpc.c src-portals/threads.c src-portals/utils.c \
 	src-portals/tas.c src-gemini/acc.h src-gemini/aggregate.c \
@@ -786,19 +775,18 @@ am__libarmci_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
 	src-gemini/kr_malloc.c src-gemini/kr_malloc.h \
 	src-gemini/locks.c src-gemini/locks.h src-gemini/memlock.c \
 	src-gemini/memlock.h src-gemini/memory.c src-gemini/message.c \
-	src-gemini/mp3.h src-gemini/mutex.c src-gemini/pack.c \
-	src-gemini/pendbufs.h src-gemini/request.c \
-	src-gemini/request.h src-gemini/rmw.c src-gemini/rtinfo.c \
-	src-gemini/semaphores.c src-gemini/semaphores.h \
-	src-gemini/shmalloc.h src-gemini/shmem.c src-gemini/shmem.h \
-	src-gemini/shmlimit.c src-gemini/shmlimit.h \
-	src-gemini/signaltrap.c src-gemini/signaltrap.h \
-	src-gemini/sockets.h src-gemini/spawn.c src-gemini/spinlock.h \
-	src-gemini/strided.c src-gemini/tas-alpha.h \
-	src-gemini/tas-i386.h src-gemini/tas-ia64.h \
-	src-gemini/tas-ppc.h src-gemini/utils.h src-gemini/vector.c \
-	src-gemini/gpc.c src-gemini/threads.c src-gemini/utils.c \
-	src-gemini/tas.c src/collectives/message.c \
+	src-gemini/mutex.c src-gemini/pack.c src-gemini/pendbufs.h \
+	src-gemini/request.c src-gemini/request.h src-gemini/rmw.c \
+	src-gemini/rtinfo.c src-gemini/semaphores.c \
+	src-gemini/semaphores.h src-gemini/shmalloc.h \
+	src-gemini/shmem.c src-gemini/shmem.h src-gemini/shmlimit.c \
+	src-gemini/shmlimit.h src-gemini/signaltrap.c \
+	src-gemini/signaltrap.h src-gemini/sockets.h \
+	src-gemini/spawn.c src-gemini/spinlock.h src-gemini/strided.c \
+	src-gemini/tas-alpha.h src-gemini/tas-i386.h \
+	src-gemini/tas-ia64.h src-gemini/tas-ppc.h src-gemini/utils.h \
+	src-gemini/vector.c src-gemini/gpc.c src-gemini/threads.c \
+	src-gemini/utils.c src-gemini/tas.c src/collectives/message.c \
 	src/common/aggregate.c src/common/armci.c src/common/ccopy.c \
 	src/common/clusterinfo.c src/common/pack.c \
 	src/common/iterator.c src/include/iterator.h \
@@ -806,14 +794,14 @@ am__libarmci_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
 	src/include/armcip.h src/include/atomics-i386.h \
 	src/include/copy.h src/include/fujitsu-vpp.h \
 	src/include/kr_malloc.h src/include/locks.h \
-	src/include/memlock.h src/include/mp3.fh src/include/mp3.h \
-	src/include/request.h src/include/semaphores.h \
-	src/include/shmalloc.h src/include/shmem.h \
-	src/include/shmlimit.h src/include/signaltrap.h \
-	src/include/spinlock.h src/include/tas-alpha.h \
-	src/include/tas-i386.h src/include/tas-ia64.h \
-	src/include/tas-ppc.h src/include/utils.h src/locks/locks.c \
-	src/locks/memlock.c src/locks/mutex.c src/locks/semaphores.c \
+	src/include/memlock.h src/include/request.h \
+	src/include/semaphores.h src/include/shmalloc.h \
+	src/include/shmem.h src/include/shmlimit.h \
+	src/include/signaltrap.h src/include/spinlock.h \
+	src/include/tas-alpha.h src/include/tas-i386.h \
+	src/include/tas-ia64.h src/include/tas-ppc.h \
+	src/include/utils.h src/locks/locks.c src/locks/memlock.c \
+	src/locks/mutex.c src/locks/semaphores.c \
 	src/memory/kr_malloc.c src/memory/memory.c \
 	src/progress/fence.c src/progress/wait.c \
 	src/xfer/caccumulate.c src/xfer/rmw.c src/xfer/strided.c \
@@ -1161,11 +1149,10 @@ am__libarmcii_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
 	tcgmsg/ipcv4.0/pbegin.c tcgmsg/ipcv4.0/pbeginf.c \
 	tcgmsg/ipcv4.0/pfilecopy.c tcgmsg/ipcv4.0/sema.c \
 	tcgmsg/ipcv4.0/sema.h tcgmsg/ipcv4.0/setdbg.c \
-	tcgmsg/ipcv4.0/shmem.c tcgmsg/ipcv4.0/shmem.h \
-	tcgmsg/ipcv4.0/signals.c tcgmsg/ipcv4.0/signals.h \
-	tcgmsg/ipcv4.0/snd.c tcgmsg/ipcv4.0/sndrcv.h \
-	tcgmsg/ipcv4.0/sndrcvP.h tcgmsg/ipcv4.0/sockets.c \
-	tcgmsg/ipcv4.0/sockets.h tcgmsg/ipcv4.0/srftoc.h \
+	tcgmsg/ipcv4.0/shmem.c tcgmsg/ipcv4.0/signals.c \
+	tcgmsg/ipcv4.0/signals.h tcgmsg/ipcv4.0/snd.c \
+	tcgmsg/ipcv4.0/sndrcv.h tcgmsg/ipcv4.0/sndrcvP.h \
+	tcgmsg/ipcv4.0/sockets.c tcgmsg/ipcv4.0/srftoc.h \
 	tcgmsg/ipcv4.0/srmover.c tcgmsg/ipcv4.0/stats.c \
 	tcgmsg/ipcv4.0/synch.c tcgmsg/ipcv4.0/usleep.c \
 	tcgmsg/ipcv4.0/waitall.c tcgmsg/ipcv4.0/waitcom.c \
@@ -1178,25 +1165,24 @@ am__libarmcii_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
 	tcgmsg/ipcv5.0/niceftn.c tcgmsg/ipcv5.0/nnodes.c \
 	tcgmsg/ipcv5.0/nodeid.c tcgmsg/ipcv5.0/pbegin.c \
 	tcgmsg/ipcv5.0/pfilecopy.c tcgmsg/ipcv5.0/queues.c \
-	tcgmsg/ipcv5.0/shmem.h tcgmsg/ipcv5.0/signals.c \
-	tcgmsg/ipcv5.0/sndrcv.h tcgmsg/ipcv5.0/snd_rcv_probe.c \
-	tcgmsg/ipcv5.0/srftoc.h tcgmsg/ipcv5.0/tcgmsgP.h \
-	tcgmsg/ipcv5.0/usleep.c tcgmsg/ipcv5.0/waitall.c \
-	tcgmsg/ipcv5.0/async_send_lapi.c tcgmsg/ipcv5.0/lapi_putget.c \
-	tcgmsg/ipcv5.0/async_send.c tcgmsg/ipcv5.0/busy.c \
-	tcgmsg/ipcv5.0/error.c tcgmsg/ipcv5.0/nxtval.shm.c \
-	tcgmsg/ipcv5.0/pbeginf.c tcgmsg/ipcv5.0/shmem.c \
-	tcgmsg/ipcv5.0/synch.c tcgmsg/tcgmsg-mpi/checkbyte.c \
-	tcgmsg/tcgmsg-mpi/clustercheck.c tcgmsg/tcgmsg-mpi/collect.c \
-	tcgmsg/tcgmsg-mpi/drand48.c tcgmsg/tcgmsg-mpi/evlog.c \
-	tcgmsg/tcgmsg-mpi/evlog.h tcgmsg/tcgmsg-mpi/evon.c \
-	tcgmsg/tcgmsg-mpi/llog.c tcgmsg/tcgmsg-mpi/misc.c \
-	tcgmsg/tcgmsg-mpi/niceftn.c tcgmsg/tcgmsg-mpi/nxtval-armci.c \
-	tcgmsg/tcgmsg-mpi/p2p.c tcgmsg/tcgmsg-mpi/pbeginf.c \
-	tcgmsg/tcgmsg-mpi/pfilecopy.c tcgmsg/tcgmsg-mpi/sizeof.c \
-	tcgmsg/tcgmsg-mpi/sndrcv.h tcgmsg/tcgmsg-mpi/srftoc.h \
-	tcgmsg/tcgmsg-mpi/tcgmsgP.h src-portals/acc.h \
-	src-portals/aggregate.c src-portals/armci.c \
+	tcgmsg/ipcv5.0/signals.c tcgmsg/ipcv5.0/sndrcv.h \
+	tcgmsg/ipcv5.0/snd_rcv_probe.c tcgmsg/ipcv5.0/srftoc.h \
+	tcgmsg/ipcv5.0/tcgmsgP.h tcgmsg/ipcv5.0/usleep.c \
+	tcgmsg/ipcv5.0/waitall.c tcgmsg/ipcv5.0/async_send_lapi.c \
+	tcgmsg/ipcv5.0/lapi_putget.c tcgmsg/ipcv5.0/async_send.c \
+	tcgmsg/ipcv5.0/busy.c tcgmsg/ipcv5.0/error.c \
+	tcgmsg/ipcv5.0/nxtval.shm.c tcgmsg/ipcv5.0/pbeginf.c \
+	tcgmsg/ipcv5.0/shmem.c tcgmsg/ipcv5.0/synch.c \
+	tcgmsg/tcgmsg-mpi/checkbyte.c tcgmsg/tcgmsg-mpi/clustercheck.c \
+	tcgmsg/tcgmsg-mpi/collect.c tcgmsg/tcgmsg-mpi/drand48.c \
+	tcgmsg/tcgmsg-mpi/evlog.c tcgmsg/tcgmsg-mpi/evlog.h \
+	tcgmsg/tcgmsg-mpi/evon.c tcgmsg/tcgmsg-mpi/llog.c \
+	tcgmsg/tcgmsg-mpi/misc.c tcgmsg/tcgmsg-mpi/niceftn.c \
+	tcgmsg/tcgmsg-mpi/nxtval-armci.c tcgmsg/tcgmsg-mpi/p2p.c \
+	tcgmsg/tcgmsg-mpi/pbeginf.c tcgmsg/tcgmsg-mpi/pfilecopy.c \
+	tcgmsg/tcgmsg-mpi/sizeof.c tcgmsg/tcgmsg-mpi/sndrcv.h \
+	tcgmsg/tcgmsg-mpi/srftoc.h tcgmsg/tcgmsg-mpi/tcgmsgP.h \
+	src-portals/acc.h src-portals/aggregate.c src-portals/armci.c \
 	src-portals/armcip.h src-portals/armci_portals.c \
 	src-portals/armci_portals.h src-portals/atomics-i386.h \
 	src-portals/buffers.c src-portals/caccumulate.c \
@@ -1205,20 +1191,19 @@ am__libarmcii_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
 	src-portals/kr_malloc.c src-portals/kr_malloc.h \
 	src-portals/locks.c src-portals/locks.h src-portals/memlock.c \
 	src-portals/memlock.h src-portals/memory.c \
-	src-portals/message.c src-portals/mp3.fh src-portals/mp3.h \
-	src-portals/mutex.c src-portals/pack.c src-portals/pendbufs.h \
-	src-portals/portals_cp.c src-portals/portals_ds.c \
-	src-portals/portals.c src-portals/request.c \
-	src-portals/request.h src-portals/rmw.c src-portals/rtinfo.c \
-	src-portals/semaphores.c src-portals/semaphores.h \
-	src-portals/shmalloc.h src-portals/shmem.c src-portals/shmem.h \
-	src-portals/shmlimit.c src-portals/shmlimit.h \
-	src-portals/signaltrap.c src-portals/signaltrap.h \
-	src-portals/sockets.h src-portals/spawn.c \
-	src-portals/spinlock.h src-portals/strided.c \
-	src-portals/tas-alpha.h src-portals/tas-i386.h \
-	src-portals/tas-ia64.h src-portals/tas-ppc.h \
-	src-portals/utils.h src-portals/vector.c \
+	src-portals/message.c src-portals/mutex.c src-portals/pack.c \
+	src-portals/pendbufs.h src-portals/portals_cp.c \
+	src-portals/portals_ds.c src-portals/portals.c \
+	src-portals/request.c src-portals/request.h src-portals/rmw.c \
+	src-portals/rtinfo.c src-portals/semaphores.c \
+	src-portals/semaphores.h src-portals/shmalloc.h \
+	src-portals/shmem.c src-portals/shmem.h src-portals/shmlimit.c \
+	src-portals/shmlimit.h src-portals/signaltrap.c \
+	src-portals/signaltrap.h src-portals/sockets.h \
+	src-portals/spawn.c src-portals/spinlock.h \
+	src-portals/strided.c src-portals/tas-alpha.h \
+	src-portals/tas-i386.h src-portals/tas-ia64.h \
+	src-portals/tas-ppc.h src-portals/utils.h src-portals/vector.c \
 	src-portals/new_memory.c src-portals/groups.c \
 	src-portals/gpc.c src-portals/threads.c src-portals/utils.c \
 	src-portals/tas.c src-gemini/acc.h src-gemini/aggregate.c \
@@ -1231,19 +1216,18 @@ am__libarmcii_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
 	src-gemini/kr_malloc.c src-gemini/kr_malloc.h \
 	src-gemini/locks.c src-gemini/locks.h src-gemini/memlock.c \
 	src-gemini/memlock.h src-gemini/memory.c src-gemini/message.c \
-	src-gemini/mp3.h src-gemini/mutex.c src-gemini/pack.c \
-	src-gemini/pendbufs.h src-gemini/request.c \
-	src-gemini/request.h src-gemini/rmw.c src-gemini/rtinfo.c \
-	src-gemini/semaphores.c src-gemini/semaphores.h \
-	src-gemini/shmalloc.h src-gemini/shmem.c src-gemini/shmem.h \
-	src-gemini/shmlimit.c src-gemini/shmlimit.h \
-	src-gemini/signaltrap.c src-gemini/signaltrap.h \
-	src-gemini/sockets.h src-gemini/spawn.c src-gemini/spinlock.h \
-	src-gemini/strided.c src-gemini/tas-alpha.h \
-	src-gemini/tas-i386.h src-gemini/tas-ia64.h \
-	src-gemini/tas-ppc.h src-gemini/utils.h src-gemini/vector.c \
-	src-gemini/gpc.c src-gemini/threads.c src-gemini/utils.c \
-	src-gemini/tas.c src/collectives/message.c \
+	src-gemini/mutex.c src-gemini/pack.c src-gemini/pendbufs.h \
+	src-gemini/request.c src-gemini/request.h src-gemini/rmw.c \
+	src-gemini/rtinfo.c src-gemini/semaphores.c \
+	src-gemini/semaphores.h src-gemini/shmalloc.h \
+	src-gemini/shmem.c src-gemini/shmem.h src-gemini/shmlimit.c \
+	src-gemini/shmlimit.h src-gemini/signaltrap.c \
+	src-gemini/signaltrap.h src-gemini/sockets.h \
+	src-gemini/spawn.c src-gemini/spinlock.h src-gemini/strided.c \
+	src-gemini/tas-alpha.h src-gemini/tas-i386.h \
+	src-gemini/tas-ia64.h src-gemini/tas-ppc.h src-gemini/utils.h \
+	src-gemini/vector.c src-gemini/gpc.c src-gemini/threads.c \
+	src-gemini/utils.c src-gemini/tas.c src/collectives/message.c \
 	src/common/aggregate.c src/common/armci.c src/common/ccopy.c \
 	src/common/clusterinfo.c src/common/pack.c \
 	src/common/iterator.c src/include/iterator.h \
@@ -1251,14 +1235,14 @@ am__libarmcii_la_SOURCES_DIST = gaf2c/gaf2c.c gaf2c/drand.c \
 	src/include/armcip.h src/include/atomics-i386.h \
 	src/include/copy.h src/include/fujitsu-vpp.h \
 	src/include/kr_malloc.h src/include/locks.h \
-	src/include/memlock.h src/include/mp3.fh src/include/mp3.h \
-	src/include/request.h src/include/semaphores.h \
-	src/include/shmalloc.h src/include/shmem.h \
-	src/include/shmlimit.h src/include/signaltrap.h \
-	src/include/spinlock.h src/include/tas-alpha.h \
-	src/include/tas-i386.h src/include/tas-ia64.h \
-	src/include/tas-ppc.h src/include/utils.h src/locks/locks.c \
-	src/locks/memlock.c src/locks/mutex.c src/locks/semaphores.c \
+	src/include/memlock.h src/include/request.h \
+	src/include/semaphores.h src/include/shmalloc.h \
+	src/include/shmem.h src/include/shmlimit.h \
+	src/include/signaltrap.h src/include/spinlock.h \
+	src/include/tas-alpha.h src/include/tas-i386.h \
+	src/include/tas-ia64.h src/include/tas-ppc.h \
+	src/include/utils.h src/locks/locks.c src/locks/memlock.c \
+	src/locks/mutex.c src/locks/semaphores.c \
 	src/memory/kr_malloc.c src/memory/memory.c \
 	src/progress/fence.c src/progress/wait.c \
 	src/xfer/caccumulate.c src/xfer/rmw.c src/xfer/strided.c \
