@@ -26,7 +26,7 @@ AM_LDFLAGS += $(GA_LDFLAGS)
 AM_LDFLAGS += $(GA_MP_LDFLAGS)
 
 include_HEADERS =
-include_HEADERS += gfutex.h
+include_HEADERS += src/gfutex.h
 
 lib_LTLIBRARIES =
 lib_LTLIBRARIES += libgfutex.la
