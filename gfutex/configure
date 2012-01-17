@@ -6860,22 +6860,22 @@ if test "x$TBBROOT" != x || test "x$tbb_root" != x; then :
 
 rm -f the_makefile
 rm -f result.txt
-rm -f err.txt
+rm -f out.txt
 cat >the_makefile <<"EOF"
 ifdef TBBROOT
 tbb_root=$(TBBROOT)
 endif
 include $(tbb_root)/build/common.inc
-all:
-	@echo "$(work_dir)"
+result.txt:
+	@echo "$(work_dir)" > result.txt
 EOF
-    if gmake -f the_makefile 1>result.txt 2>err.txt; then :
-  tbb_work_dir=`echo result.txt`; tbb_ok=yes
+    if gmake -f the_makefile &> out.txt; then :
+  tbb_work_dir=`cat result.txt`; tbb_ok=yes
 else
-  cat err.txt >&5
+  cat out.txt >&5
 fi
     if test "x$tbb_work_dir" != x; then :
-  TBB_LDFLAGS="-L$tbb_work_dir_release"
+  TBB_LDFLAGS="-L${tbb_work_dir}_release"
 fi
     if test "x$TBBROOT" != x; then :
   TBB_CPPFLAGS="-I$TBBROOT/include"
@@ -6885,7 +6885,7 @@ fi
     TBB_LIBS="-ltbb"
     rm -f the_makefile
     rm -f result.txt
-    rm -f err.txt
+    rm -f out.txt
 
 fi
 if test "x$tbb_ok" = xno; then :

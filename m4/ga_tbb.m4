@@ -28,20 +28,20 @@ tbb_ok=no
 AS_IF([test "x$TBBROOT" != x || test "x$tbb_root" != x], [
 rm -f the_makefile
 rm -f result.txt
-rm -f err.txt
+rm -f out.txt
 cat >the_makefile <<"EOF"
 ifdef TBBROOT
 tbb_root=$(TBBROOT)
 endif
 include $(tbb_root)/build/common.inc
-all:
-	@echo "$(work_dir)"
+result.txt:
+	@echo "$(work_dir)" > result.txt
 EOF
-    AS_IF([gmake -f the_makefile 1>result.txt 2>err.txt],
-        [tbb_work_dir=`echo result.txt`; tbb_ok=yes],
-        [cat err.txt >&AS_MESSAGE_LOG_FD])
+    AS_IF([gmake -f the_makefile &> out.txt],
+        [tbb_work_dir=`cat result.txt`; tbb_ok=yes],
+        [cat out.txt >&AS_MESSAGE_LOG_FD])
     AS_IF([test "x$tbb_work_dir" != x],
-        [TBB_LDFLAGS="-L$tbb_work_dir_release"])
+        [TBB_LDFLAGS="-L${tbb_work_dir}_release"])
     AS_IF([test "x$TBBROOT" != x],
         [TBB_CPPFLAGS="-I$TBBROOT/include"],
         [test "x$tbb_root" != x],
@@ -49,7 +49,7 @@ EOF
     TBB_LIBS="-ltbb"
     rm -f the_makefile
     rm -f result.txt
-    rm -f err.txt
+    rm -f out.txt
 ])
 AS_IF([test "x$tbb_ok" = xno], [
 GA_CHECK_PACKAGE([tbb], [tbb/tbb.h],
