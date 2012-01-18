@@ -36,6 +36,9 @@ libgfutex_la_SOURCES =
 libgfutex_la_SOURCES += src/gf_cache.C
 libgfutex_la_SOURCES += src/gfutex.C
 
+.PHONY: checkprogs
+checkprogs: $(check_PROGRAMS)
+
 check_PROGRAMS =
 check_PROGRAMS += test/test_gfutex
 check_PROGRAMS += examples/scf/scf
