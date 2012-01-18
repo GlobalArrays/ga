@@ -31,4 +31,5 @@ AS_IF([test "x$ga_cv_libga_la_found" = xyes],
 AC_SUBST([GA_CPPFLAGS])
 AC_SUBST([GA_LDFLAGS])
 AC_SUBST([GA_LIBS])
+AC_SUBST([GA_FLIBS])
 ])dnl

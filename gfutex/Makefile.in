@@ -109,12 +109,14 @@ examples_scf_scf_OBJECTS = $(am_examples_scf_scf_OBJECTS)
 examples_scf_scf_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 examples_scf_scf_DEPENDENCIES = libgfutex.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_test_test_gfutex_OBJECTS = test/test_gfutex.$(OBJEXT)
 test_test_gfutex_OBJECTS = $(am_test_test_gfutex_OBJECTS)
 test_test_gfutex_LDADD = $(LDADD)
 test_test_gfutex_DEPENDENCIES = libgfutex.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles
@@ -209,6 +211,7 @@ EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GA_CONFIG = @GA_CONFIG@
 GA_CPPFLAGS = @GA_CPPFLAGS@
+GA_FLIBS = @GA_FLIBS@
 GA_LDFLAGS = @GA_LDFLAGS@
 GA_LIBS = @GA_LIBS@
 GA_MP_CPPFLAGS = @GA_MP_CPPFLAGS@
