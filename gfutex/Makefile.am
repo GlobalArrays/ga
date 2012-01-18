@@ -50,7 +50,6 @@ examples_scf_scf_SOURCES += examples/scf/input.c
 examples_scf_scf_SOURCES += examples/scf/input.h
 examples_scf_scf_SOURCES += examples/scf/integ.c
 examples_scf_scf_SOURCES += examples/scf/integ.h
-examples_scf_scf_SOURCES += examples/scf/omp.C
 examples_scf_scf_SOURCES += examples/scf/oneel.C
 examples_scf_scf_SOURCES += examples/scf/oneel.h
 examples_scf_scf_SOURCES += examples/scf/output.c

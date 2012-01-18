@@ -101,10 +101,10 @@ AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
 am_examples_scf_scf_OBJECTS = examples/scf/input.$(OBJEXT) \
-	examples/scf/integ.$(OBJEXT) examples/scf/omp.$(OBJEXT) \
-	examples/scf/oneel.$(OBJEXT) examples/scf/output.$(OBJEXT) \
-	examples/scf/scf.$(OBJEXT) examples/scf/sum.$(OBJEXT) \
-	examples/scf/timer.$(OBJEXT) examples/scf/twoel.$(OBJEXT)
+	examples/scf/integ.$(OBJEXT) examples/scf/oneel.$(OBJEXT) \
+	examples/scf/output.$(OBJEXT) examples/scf/scf.$(OBJEXT) \
+	examples/scf/sum.$(OBJEXT) examples/scf/timer.$(OBJEXT) \
+	examples/scf/twoel.$(OBJEXT)
 examples_scf_scf_OBJECTS = $(am_examples_scf_scf_OBJECTS)
 examples_scf_scf_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
@@ -329,7 +329,7 @@ libgfutex_la_SOURCES = src/gf_cache.C src/gfutex.C
 test_test_gfutex_SOURCES = test/test_gfutex.C
 examples_scf_scf_SOURCES = examples/scf/cscc.h examples/scf/input.c \
 	examples/scf/input.h examples/scf/integ.c examples/scf/integ.h \
-	examples/scf/omp.C examples/scf/oneel.C examples/scf/oneel.h \
+	examples/scf/oneel.C examples/scf/oneel.h \
 	examples/scf/output.c examples/scf/output.h examples/scf/scf.c \
 	examples/scf/scf.h examples/scf/sum.c examples/scf/sum.h \
 	examples/scf/timer.c examples/scf/timer.h examples/scf/twoel.C \
@@ -450,8 +450,6 @@ examples/scf/input.$(OBJEXT): examples/scf/$(am__dirstamp) \
 	examples/scf/$(DEPDIR)/$(am__dirstamp)
 examples/scf/integ.$(OBJEXT): examples/scf/$(am__dirstamp) \
 	examples/scf/$(DEPDIR)/$(am__dirstamp)
-examples/scf/omp.$(OBJEXT): examples/scf/$(am__dirstamp) \
-	examples/scf/$(DEPDIR)/$(am__dirstamp)
 examples/scf/oneel.$(OBJEXT): examples/scf/$(am__dirstamp) \
 	examples/scf/$(DEPDIR)/$(am__dirstamp)
 examples/scf/output.$(OBJEXT): examples/scf/$(am__dirstamp) \
@@ -483,7 +481,6 @@ mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f examples/scf/input.$(OBJEXT)
 	-rm -f examples/scf/integ.$(OBJEXT)
-	-rm -f examples/scf/omp.$(OBJEXT)
 	-rm -f examples/scf/oneel.$(OBJEXT)
 	-rm -f examples/scf/output.$(OBJEXT)
 	-rm -f examples/scf/scf.$(OBJEXT)
@@ -501,7 +498,6 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@examples/scf/$(DEPDIR)/input.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/scf/$(DEPDIR)/integ.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@examples/scf/$(DEPDIR)/omp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/scf/$(DEPDIR)/oneel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/scf/$(DEPDIR)/output.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/scf/$(DEPDIR)/scf.Po@am__quote@
