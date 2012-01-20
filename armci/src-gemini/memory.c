@@ -772,16 +772,16 @@ int PARMCI_Free(void *ptr)
                    Free_Shmem_Ptr(0,0,ptr);
 #               else
                    if(armci_clus_info[armci_clus_me].nslave>1) {
-                   kr_free(ptr, &ctx_localmem);
+                    kr_free(ptr, &ctx_localmem);
+                    //  Free_Shmem_Ptr(0,0,ptr);
                    }
-       //               Free_Shmem_Ptr(0,0,ptr);
 #               endif
                 }
                 ptr = NULL;
                 return 0;
              }
 #    endif
-	  kr_free(ptr, &ctx_localmem);
+	 // kr_free(ptr, &ctx_localmem);
     //armci_unregister_shmem(ptr,0);
     ptr = NULL;
     ARMCI_PR_DBG("exit",0);
