@@ -124,9 +124,6 @@ double time_op(int g_a, double *buf_, int chunk, int loop, int proc,
 
   /* get the location within the g_a for the given proc */
   NGA_Distribution(g_a, proc, lo, hi);
-  if (me ==0) {
-    printf("NGA_Distribution(%d, %d, %d, %d)\n", g_a, proc, lo[0], hi[0]);
-  }
   /* determine how much data to grab based on the chunk and dimensionality */
   if (ndim == 1) {
     hi[0] = lo[0] + chunk*chunk;
@@ -138,9 +135,6 @@ double time_op(int g_a, double *buf_, int chunk, int loop, int proc,
   }
   else {
     GA_Error("invalid ndim for time_op", ndim);
-  }
-  if (me ==0) {
-    printf("lo,hi = %d,%d\n", lo[0], hi[0]);
   }
 
   start_time = TIMER();
@@ -162,12 +156,16 @@ double time_op(int g_a, double *buf_, int chunk, int loop, int proc,
     if (bal == 0) {
       lo[0] += 128;
       lo[1] += 128;
+      hi[0] += 128;
+      hi[1] += 128;
       buf += 128;
       bal = 1;
     }
     else {
       lo[0] -= 128;
       lo[1] -= 128;
+      hi[0] -= 128;
+      hi[1] -= 128;
       buf -= 128;
       bal = 0;
     }
@@ -236,9 +234,9 @@ void test_1D()
         /* contiguous get */
         t_get += time_op(g_a, buf, chunk[i], loop, dst, 1, OP_GET);
         /* contiguous put */
-        t_get += time_op(g_a, buf, chunk[i], loop, dst, 1, OP_PUT);
+        t_put += time_op(g_a, buf, chunk[i], loop, dst, 1, OP_PUT);
         /* contiguous acc */
-        t_get += time_op(g_a, buf, chunk[i], loop, dst, 1, OP_ACC);
+        t_acc += time_op(g_a, buf, chunk[i], loop, dst, 1, OP_ACC);
       }
 
       latency_get = t_get / (nproc - 1);
