@@ -137,7 +137,7 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/patch \
 @ENABLE_F77_TRUE@	global/testing/patch_enumf \
 @ENABLE_F77_TRUE@	global/testing/perfmod global/testing/perform \
-@ENABLE_F77_TRUE@	global/testing/perf \
+@ENABLE_F77_TRUE@	global/testing/perf global/testing/perf2 \
 @ENABLE_F77_TRUE@	global/testing/pg2testmatmult \
 @ENABLE_F77_TRUE@	global/testing/pg2test \
 @ENABLE_F77_TRUE@	global/testing/pgtestmatmult \
@@ -179,6 +179,7 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perfmod$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perform$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perf$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/perf2$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/pg2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/pgtest$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/scan$(EXEEXT) \
@@ -502,6 +503,7 @@ libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_F77_TRUE@	global/testing/perfmod$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perform$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perf$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/perf2$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/pg2testmatmult$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/pg2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/pgtestmatmult$(EXEEXT) \
@@ -1218,6 +1220,18 @@ global_testing_perf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_perf_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am__global_testing_perf2_SOURCES_DIST = global/testing/perf2.c \
+	global/testing/testutil.fh global/testing/testutil.h \
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.F
+am_global_testing_perf2_OBJECTS = global/testing/perf2.$(OBJEXT) \
+	$(am__objects_9)
+global_testing_perf2_OBJECTS = $(am_global_testing_perf2_OBJECTS)
+global_testing_perf2_LDADD = $(LDADD)
+global_testing_perf2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__global_testing_perfmod_SOURCES_DIST = global/testing/perfmod.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -2003,7 +2017,8 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(global_testing_patch_enumc_SOURCES) \
 	$(nodist_EXTRA_global_testing_patch_enumc_SOURCES) \
 	$(global_testing_patch_enumf_SOURCES) \
-	$(global_testing_perf_SOURCES) \
+	$(global_testing_perf_SOURCES) $(global_testing_perf2_SOURCES) \
+	$(nodist_EXTRA_global_testing_perf2_SOURCES) \
 	$(global_testing_perfmod_SOURCES) \
 	$(global_testing_perform_SOURCES) \
 	$(global_testing_pg2test_SOURCES) \
@@ -2110,6 +2125,7 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_patch_enumc_SOURCES_DIST) \
 	$(am__global_testing_patch_enumf_SOURCES_DIST) \
 	$(am__global_testing_perf_SOURCES_DIST) \
+	$(am__global_testing_perf2_SOURCES_DIST) \
 	$(am__global_testing_perfmod_SOURCES_DIST) \
 	$(am__global_testing_perform_SOURCES_DIST) \
 	$(am__global_testing_pg2test_SOURCES_DIST) \
@@ -2738,6 +2754,7 @@ global_testing_patch_SOURCES = global/testing/patch.F $(gtsrc)
 global_testing_patch_enumc_SOURCES = global/testing/patch_enumc.c $(gtsrc)
 global_testing_patch_enumf_SOURCES = global/testing/patch_enumf.F $(gtsrc)
 global_testing_perf_SOURCES = global/testing/perf.F $(gtsrc)
+global_testing_perf2_SOURCES = global/testing/perf2.c $(gtsrc)
 global_testing_perfmod_SOURCES = global/testing/perfmod.F $(gtsrc)
 global_testing_perform_SOURCES = global/testing/perform.F $(gtsrc)
 global_testing_pg2test_SOURCES = global/testing/pg2test.F $(gtsrc)
@@ -2825,6 +2842,7 @@ nodist_EXTRA_global_testing_ntestc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ntestfc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_packc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_patch_enumc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_perf2_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_print_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_scan_addc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_scan_copyc_SOURCES = $(MAYBE_DUMMY_F_LINK)
@@ -3877,6 +3895,11 @@ global/testing/perf.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/perf$(EXEEXT): $(global_testing_perf_OBJECTS) $(global_testing_perf_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/perf$(EXEEXT)
 	$(AM_V_F77LD)$(global_testing_perf_LINK) $(global_testing_perf_OBJECTS) $(global_testing_perf_LDADD) $(LIBS)
+global/testing/perf2.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/perf2$(EXEEXT): $(global_testing_perf2_OBJECTS) $(global_testing_perf2_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/perf2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_perf2_OBJECTS) $(global_testing_perf2_LDADD) $(LIBS)
 global/testing/perfmod.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/perfmod$(EXEEXT): $(global_testing_perfmod_OBJECTS) $(global_testing_perfmod_DEPENDENCIES) global/testing/$(am__dirstamp)
@@ -4411,6 +4434,7 @@ mostlyclean-compile:
 	-rm -f global/testing/patch_enumc.$(OBJEXT)
 	-rm -f global/testing/patch_enumf.$(OBJEXT)
 	-rm -f global/testing/perf.$(OBJEXT)
+	-rm -f global/testing/perf2.$(OBJEXT)
 	-rm -f global/testing/perfmod.$(OBJEXT)
 	-rm -f global/testing/perform.$(OBJEXT)
 	-rm -f global/testing/pg2test.$(OBJEXT)
@@ -4594,6 +4618,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ntestfc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/packc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/patch_enumc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/perf2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/print.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/scan_addc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/scan_copyc.Po@am__quote@
@@ -5409,6 +5434,8 @@ global/testing/perform.log: global/testing/perform$(EXEEXT)
 	@p='global/testing/perform$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/perf.log: global/testing/perf$(EXEEXT)
 	@p='global/testing/perf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/perf2.log: global/testing/perf2$(EXEEXT)
+	@p='global/testing/perf2$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/pg2test.log: global/testing/pg2test$(EXEEXT)
 	@p='global/testing/pg2test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/pgtest.log: global/testing/pgtest$(EXEEXT)
