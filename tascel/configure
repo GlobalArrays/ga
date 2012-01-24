@@ -5415,8 +5415,12 @@ else
 $as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
 fi ;; #(
   *) :
-    ga_arg_parse_ok=no
-         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$ga_arg_parse_ok" = xno; then :
+  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
   GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
@@ -5434,8 +5438,28 @@ fi
              if test -d $arg/include; then :
   GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
-fi ;;
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$ga_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
 esac
+fi
+# warn user that $arg fell through
+     if test "x$ga_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
+fi
 done
 fi
 
@@ -11236,8 +11260,12 @@ else
 $as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
   *) :
-    ga_arg_parse_ok=no
-         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$ga_arg_parse_ok" = xno; then :
+  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
   GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
@@ -11255,8 +11283,28 @@ fi
              if test -d $arg/include; then :
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
-fi ;;
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$ga_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
 esac
+fi
+# warn user that $arg fell through
+     if test "x$ga_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi
 done ;;
 esac
 # Check for header.
@@ -11341,8 +11389,12 @@ else
 $as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
   *) :
-    ga_arg_parse_ok=no
-         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$ga_arg_parse_ok" = xno; then :
+  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
   GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
@@ -11360,8 +11412,28 @@ fi
              if test -d $arg/include; then :
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
-fi ;;
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$ga_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
 esac
+fi
+# warn user that $arg fell through
+     if test "x$ga_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi
 done ;;
 esac
 # Check for header.
@@ -11618,8 +11690,12 @@ else
 $as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
   *) :
-    ga_arg_parse_ok=no
-         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$ga_arg_parse_ok" = xno; then :
+  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
   GA_LDFLAGS="$GA_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
@@ -11637,8 +11713,28 @@ fi
              if test -d $arg/include; then :
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
-fi ;;
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$ga_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
 esac
+fi
+# warn user that $arg fell through
+     if test "x$ga_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi
 done ;;
 esac
 # Check for header.
@@ -11851,8 +11947,12 @@ else
 $as_echo "$as_me: WARNING: $arg of with_blas not parsed" >&2;}
 fi ;; #(
   *) :
-    ga_arg_parse_ok=no
-         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$ga_arg_parse_ok" = xno; then :
+  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
   BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
@@ -11870,8 +11970,28 @@ fi
              if test -d $arg/include; then :
   BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
-fi ;;
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$ga_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  BLAS_LDFLAGS="$BLAS_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  BLAS_CPPFLAGS="$BLAS_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
 esac
+fi
+# warn user that $arg fell through
+     if test "x$ga_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_blas not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_blas not parsed" >&2;}
+fi
 done
 
 # Get fortran linker names of BLAS functions to check for.
@@ -14019,8 +14139,12 @@ else
 $as_echo "$as_me: WARNING: $arg of with_lapack not parsed" >&2;}
 fi ;; #(
   *) :
-    ga_arg_parse_ok=no
-         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$ga_arg_parse_ok" = xno; then :
+  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
   LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
@@ -14038,8 +14162,28 @@ fi
              if test -d $arg/include; then :
   LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
-fi ;;
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$ga_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  LAPACK_LDFLAGS="$LAPACK_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  LAPACK_CPPFLAGS="$LAPACK_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
 esac
+fi
+# warn user that $arg fell through
+     if test "x$ga_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_lapack not parsed" >&2;}
+fi
 done
 
 # Get fortran linker name of LAPACK function to check for.
@@ -14333,8 +14477,12 @@ else
 $as_echo "$as_me: WARNING: $arg of with_scalapack not parsed" >&2;}
 fi ;; #(
   *) :
-    ga_arg_parse_ok=no
-         if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+    ga_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$ga_arg_parse_ok" = xno; then :
+  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
   if test -d $arg/lib64; then :
   SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
 elif test -d $arg/lib; then :
@@ -14352,8 +14500,28 @@ fi
              if test -d $arg/include; then :
   SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
 fi
-fi ;;
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$ga_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  SCALAPACK_LDFLAGS="$SCALAPACK_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  SCALAPACK_CPPFLAGS="$SCALAPACK_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
 esac
+fi
+# warn user that $arg fell through
+     if test "x$ga_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_scalapack not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_scalapack not parsed" >&2;}
+fi
 done
 
 # Get fortran linker name of ScaLAPACK function to check for.
