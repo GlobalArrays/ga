@@ -30,7 +30,7 @@
 #include "armci.h"
 #include "message.h"
 
-#define SIZE 550
+#define SIZE 640
 #define MAXPROC 8
 #define CHUNK_NUM 28
 #define FORCE_1D_
@@ -41,6 +41,7 @@
 
 /* tells to use ARMCI_Malloc_local instead of plain malloc */
 #define MALLOC_LOC
+#define ARMCI_Free(X)
 
 int CHECK_RESULT = 0;
 
@@ -563,9 +564,11 @@ int main(int argc, char **argv)
   }
   ARMCI_Barrier();
 
+#if 0
   CHECK_RESULT = 1;
   test_1D();
   CHECK_RESULT = 0; /* warmup run */
+#endif
 
   /* test 1 dimension array */
   if (!me) {

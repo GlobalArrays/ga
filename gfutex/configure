@@ -5262,7 +5262,21 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
 fi ;; #(
+  *lib/) :
+    if test -d $arg; then :
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
+fi ;; #(
   *lib64) :
+    if test -d $arg; then :
+  GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
+fi ;; #(
+  *lib64/) :
     if test -d $arg; then :
   GA_MP_LDFLAGS="$GA_MP_LDFLAGS -L$arg"
 else
@@ -5276,7 +5290,21 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
 fi ;; #(
+  *include/) :
+    if test -d $arg; then :
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
+fi ;; #(
   *include64) :
+    if test -d $arg; then :
+  GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
+fi ;; #(
+  *include64/) :
     if test -d $arg; then :
   GA_MP_CPPFLAGS="$GA_MP_CPPFLAGS -I$arg"
 else
@@ -6968,7 +6996,21 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_tbb not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_tbb not parsed" >&2;}
 fi ;; #(
+  *lib/) :
+    if test -d $arg; then :
+  TBB_LDFLAGS="$TBB_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_tbb not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_tbb not parsed" >&2;}
+fi ;; #(
   *lib64) :
+    if test -d $arg; then :
+  TBB_LDFLAGS="$TBB_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_tbb not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_tbb not parsed" >&2;}
+fi ;; #(
+  *lib64/) :
     if test -d $arg; then :
   TBB_LDFLAGS="$TBB_LDFLAGS -L$arg"
 else
@@ -6982,7 +7024,21 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_tbb not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_tbb not parsed" >&2;}
 fi ;; #(
+  *include/) :
+    if test -d $arg; then :
+  TBB_CPPFLAGS="$TBB_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_tbb not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_tbb not parsed" >&2;}
+fi ;; #(
   *include64) :
+    if test -d $arg; then :
+  TBB_CPPFLAGS="$TBB_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_tbb not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_tbb not parsed" >&2;}
+fi ;; #(
+  *include64/) :
     if test -d $arg; then :
   TBB_CPPFLAGS="$TBB_CPPFLAGS -I$arg"
 else
@@ -8131,7 +8187,21 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
+  *lib/) :
+    if test -d $arg; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
   *lib64) :
+    if test -d $arg; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
+  *lib64/) :
     if test -d $arg; then :
   GA_LDFLAGS="$GA_LDFLAGS -L$arg"
 else
@@ -8145,7 +8215,21 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
+  *include/) :
+    if test -d $arg; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
   *include64) :
+    if test -d $arg; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
+  *include64/) :
     if test -d $arg; then :
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
 else
@@ -8260,7 +8344,21 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
+  *lib/) :
+    if test -d $arg; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
   *lib64) :
+    if test -d $arg; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
+  *lib64/) :
     if test -d $arg; then :
   GA_LDFLAGS="$GA_LDFLAGS -L$arg"
 else
@@ -8274,7 +8372,21 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
+  *include/) :
+    if test -d $arg; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
   *include64) :
+    if test -d $arg; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
+  *include64/) :
     if test -d $arg; then :
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
 else
@@ -8545,7 +8657,21 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
+  *lib/) :
+    if test -d $arg; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
   *lib64) :
+    if test -d $arg; then :
+  GA_LDFLAGS="$GA_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
+  *lib64/) :
     if test -d $arg; then :
   GA_LDFLAGS="$GA_LDFLAGS -L$arg"
 else
@@ -8559,7 +8685,21 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
+  *include/) :
+    if test -d $arg; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
   *include64) :
+    if test -d $arg; then :
+  GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
+fi ;; #(
+  *include64/) :
     if test -d $arg; then :
   GA_CPPFLAGS="$GA_CPPFLAGS -I$arg"
 else
