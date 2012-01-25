@@ -508,7 +508,9 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
     Integer bufsize;
     int ibuf[BUFSIZE], ibuf_2d[BUFSIZE*BUFSIZE];
     DoublePrecision dbuf[BUFSIZE], dbuf_2d[BUFSIZE*BUFSIZE];
+    DoublePrecision dcbuf[2*BUFSIZE], dcbuf_2d[2*BUFSIZE*BUFSIZE];
     float fbuf[BUFSIZE], fbuf_2d[BUFSIZE*BUFSIZE];
+    float fcbuf[2*BUFSIZE], fcbuf_2d[3*BUFSIZE*BUFSIZE];
     Integer lop[MAXDIM], hip[MAXDIM];
     long lbuf[BUFSIZE], lbuf_2d[BUFSIZE*BUFSIZE];
     long long llbuf[BUFSIZE], llbuf_2d[BUFSIZE*BUFSIZE];
@@ -552,9 +554,9 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
                 switch(type) {
                     case C_INT:      pnga_get(g_a, lop, hip, ibuf, ld); break;
                     case C_DBL:      pnga_get(g_a, lop, hip, dbuf, ld); break;
-                    case C_DCPL:     pnga_get(g_a, lop, hip, dbuf, ld); break;
+                    case C_DCPL:     pnga_get(g_a, lop, hip, dcbuf, ld); break;
                     case C_FLOAT:    pnga_get(g_a, lop, hip, fbuf, ld); break; 
-                    case C_SCPL:     pnga_get(g_a, lop, hip, fbuf, ld); break;
+                    case C_SCPL:     pnga_get(g_a, lop, hip, fcbuf, ld); break;
                     case C_LONG:     pnga_get(g_a, lop, hip, lbuf, ld); break; 
                     case C_LONGLONG: pnga_get(g_a, lop, hip, llbuf,ld); break;
                     default: pnga_error("ga_print: wrong type",0);
@@ -584,22 +586,22 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
                             else fprintf(file,") = %e\n", dbuf[i]);
                             break;
                         case C_DCPL:
-                            if(((double)dbuf[i*2]<100000.0) &&
-                               ((double)dbuf[i*2+1]<100000.0))
+                            if(((double)dcbuf[i*2]<100000.0) &&
+                               ((double)dcbuf[i*2+1]<100000.0))
                                 fprintf(file,") = (%f,%f)\n",
-                                        dbuf[i*2],dbuf[i*2+1]);
+                                        dcbuf[i*2],dcbuf[i*2+1]);
                             else
                                 fprintf(file,") = (%e,%e)\n",
-                                        dbuf[i*2],dbuf[i*2+1]);
+                                        dcbuf[i*2],dcbuf[i*2+1]);
                             break;
                         case C_SCPL:
-                            if(((float)dbuf[i*2]<100000.0) &&
-                               ((float)dbuf[i*2+1]<100000.0))
+                            if(((float)fcbuf[i*2]<100000.0) &&
+                               ((float)fcbuf[i*2+1]<100000.0))
                                 fprintf(file,") = (%f,%f)\n",
-                                        fbuf[i*2],fbuf[i*2+1]);
+                                        fcbuf[i*2],fcbuf[i*2+1]);
                             else
                                 fprintf(file,") = (%e,%e)\n",
-                                        fbuf[i*2],fbuf[i*2+1]);
+                                        fcbuf[i*2],fcbuf[i*2+1]);
                             break;
                         case C_FLOAT: fprintf(file,") = %f\n", fbuf[i]);break; 
                     }
@@ -723,9 +725,9 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
                     case C_LONG: pnga_get(g_a, lop, hip,lbuf_2d, ld); break;
                     case C_LONGLONG: pnga_get(g_a, lop, hip,llbuf_2d,ld);break;
                     case C_DBL: pnga_get(g_a, lop, hip, dbuf_2d, ld); break;
-                    case C_DCPL: pnga_get(g_a, lop, hip, dbuf_2d, ld);break;
+                    case C_DCPL: pnga_get(g_a, lop, hip, dcbuf_2d, ld);break;
                     case C_FLOAT: pnga_get(g_a, lop, hip, fbuf_2d, ld);break;
-                    case C_SCPL: pnga_get(g_a, lop, hip, fbuf_2d, ld);break;  
+                    case C_SCPL: pnga_get(g_a, lop, hip, fcbuf_2d, ld);break;  
                    default: pnga_error("ga_print: wrong type",0);
                 }
                 
@@ -774,42 +776,42 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
                         case C_DCPL:
                             if(ndim > 1)
                                 for(j=0; j<(hip[1]-lop[1]+1); j++)
-                                    if(((double)dbuf_2d[(j*bufsize+i)*2]<100000.0)&&((double)dbuf_2d[(j*bufsize+i)*2+1]<100000.0))
+                                    if(((double)dcbuf_2d[(j*bufsize+i)*2]<100000.0)&&((double)dcbuf_2d[(j*bufsize+i)*2+1]<100000.0))
                                         fprintf(file," %11.5f,%11.5f",
-                                                dbuf_2d[(j*bufsize+i)*2],
-                                                dbuf_2d[(j*bufsize+i)*2+1]);
+                                                dcbuf_2d[(j*bufsize+i)*2],
+                                                dcbuf_2d[(j*bufsize+i)*2+1]);
                                     else
                                         fprintf(file," %.5e,%.5e",
-                                                dbuf_2d[(j*bufsize+i)*2],
-                                                dbuf_2d[(j*bufsize+i)*2+1]);
+                                                dcbuf_2d[(j*bufsize+i)*2],
+                                                dcbuf_2d[(j*bufsize+i)*2+1]);
                             else
-                                if(((double)dbuf_2d[i*2]<100000.0) &&
-                                   ((double)dbuf_2d[i*2+1]<100000.0))
+                                if(((double)dcbuf_2d[i*2]<100000.0) &&
+                                   ((double)dcbuf_2d[i*2+1]<100000.0))
                                     fprintf(file," %11.5f,%11.5f",
-                                            dbuf_2d[i*2], dbuf_2d[i*2+1]);
+                                            dcbuf_2d[i*2], dcbuf_2d[i*2+1]);
                                 else
                                     fprintf(file," %.5e,%.5e",
-                                            dbuf_2d[i*2], dbuf_2d[i*2+1]);
+                                            dcbuf_2d[i*2], dcbuf_2d[i*2+1]);
 			    break;
                         case C_SCPL:
                             if(ndim > 1)
                                 for(j=0; j<(hip[1]-lop[1]+1); j++)
-                                    if(((float)fbuf_2d[(j*bufsize+i)*2]<100000.0)&&((float)fbuf_2d[(j*bufsize+i)*2+1]<100000.0))
+                                    if(((float)fcbuf_2d[(j*bufsize+i)*2]<100000.0)&&((float)fcbuf_2d[(j*bufsize+i)*2+1]<100000.0))
                                         fprintf(file," %11.5f,%11.5f",
-                                                fbuf_2d[(j*bufsize+i)*2],
-                                                fbuf_2d[(j*bufsize+i)*2+1]);
+                                                fcbuf_2d[(j*bufsize+i)*2],
+                                                fcbuf_2d[(j*bufsize+i)*2+1]);
                                     else
                                         fprintf(file," %.5e,%.5e",
-                                                fbuf_2d[(j*bufsize+i)*2],
-                                                fbuf_2d[(j*bufsize+i)*2+1]);
+                                                fcbuf_2d[(j*bufsize+i)*2],
+                                                fcbuf_2d[(j*bufsize+i)*2+1]);
                             else
-                                if(((float)fbuf_2d[i*2]<100000.0) &&
-                                   ((float)fbuf_2d[i*2+1]<100000.0))
+                                if(((float)fcbuf_2d[i*2]<100000.0) &&
+                                   ((float)fcbuf_2d[i*2+1]<100000.0))
                                     fprintf(file," %11.5f,%11.5f",
-                                            fbuf_2d[i*2], fbuf_2d[i*2+1]);
+                                            fcbuf_2d[i*2], fcbuf_2d[i*2+1]);
                                 else
                                     fprintf(file," %.5e,%.5e",
-                                            fbuf_2d[i*2], fbuf_2d[i*2+1]);
+                                            fcbuf_2d[i*2], fcbuf_2d[i*2+1]);
                             break;
                        default:
                           pnga_error("ga_print: wrong data type", 0);
