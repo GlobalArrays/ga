@@ -67,7 +67,7 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
 	global/testing/packc$(EXEEXT) \
 	global/testing/patch_enumc$(EXEEXT) \
-	global/testing/print$(EXEEXT) \
+	global/testing/perf2$(EXEEXT) global/testing/print$(EXEEXT) \
 	global/testing/scan_addc$(EXEEXT) \
 	global/testing/scan_copyc$(EXEEXT) \
 	global/testing/testc$(EXEEXT) \
@@ -128,8 +128,8 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@am__append_14 = global/testing/bin \
 @ENABLE_F77_TRUE@	global/testing/blktest global/testing/d2test \
 @ENABLE_F77_TRUE@	global/testing/g2test global/testing/g3test \
-@ENABLE_F77_TRUE@	global/testing/ga_lu global/testing/ghosts \
-@ENABLE_F77_TRUE@	global/testing/jacobi \
+@ENABLE_F77_TRUE@	global/testing/ga_lu global/testing/ga_shift \
+@ENABLE_F77_TRUE@	global/testing/ghosts global/testing/jacobi \
 @ENABLE_F77_TRUE@	global/testing/mir_perf2 \
 @ENABLE_F77_TRUE@	global/testing/mmatrix \
 @ENABLE_F77_TRUE@	global/testing/mulmatpatch \
@@ -137,7 +137,7 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/patch \
 @ENABLE_F77_TRUE@	global/testing/patch_enumf \
 @ENABLE_F77_TRUE@	global/testing/perfmod global/testing/perform \
-@ENABLE_F77_TRUE@	global/testing/perf global/testing/perf2 \
+@ENABLE_F77_TRUE@	global/testing/perf \
 @ENABLE_F77_TRUE@	global/testing/pg2testmatmult \
 @ENABLE_F77_TRUE@	global/testing/pg2test \
 @ENABLE_F77_TRUE@	global/testing/pgtestmatmult \
@@ -167,6 +167,7 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g3test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ga_lu$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/ga_shift$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ghosts$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/jacobi$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mir_perf2$(EXEEXT) \
@@ -491,6 +492,7 @@ libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_F77_TRUE@	global/testing/g2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g3test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ga_lu$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/ga_shift$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ghosts$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/jacobi$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mir_perf2$(EXEEXT) \
@@ -503,7 +505,6 @@ libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_F77_TRUE@	global/testing/perfmod$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perform$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perf$(EXEEXT) \
-@ENABLE_F77_TRUE@	global/testing/perf2$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/pg2testmatmult$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/pg2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/pgtestmatmult$(EXEEXT) \
@@ -868,6 +869,23 @@ global_testing_ga_lu_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
+am__global_testing_ga_shift_SOURCES_DIST = global/testing/ga_shift.F \
+	global/testing/testutil.fh global/testing/testutil.h \
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.F
+am_global_testing_ga_shift_OBJECTS =  \
+	global/testing/ga_shift.$(OBJEXT) $(am__objects_9)
+global_testing_ga_shift_OBJECTS =  \
+	$(am_global_testing_ga_shift_OBJECTS)
+global_testing_ga_shift_LDADD = $(LDADD)
+global_testing_ga_shift_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+global_testing_ga_shift_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(global_testing_ga_shift_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__global_testing_getmem_SOURCES_DIST = global/testing/getmem.c \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -1984,6 +2002,7 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(nodist_EXTRA_global_testing_ga_mpi_SOURCES) \
 	$(global_testing_ga_lu_SOURCES) \
 	$(nodist_EXTRA_global_testing_ga_lu_SOURCES) \
+	$(global_testing_ga_shift_SOURCES) \
 	$(global_testing_getmem_SOURCES) \
 	$(nodist_EXTRA_global_testing_getmem_SOURCES) \
 	$(global_testing_ghosts_SOURCES) \
@@ -2106,6 +2125,7 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_g3test_SOURCES_DIST) \
 	$(am__global_testing_ga_mpi_SOURCES_DIST) \
 	$(am__global_testing_ga_lu_SOURCES_DIST) \
+	$(am__global_testing_ga_shift_SOURCES_DIST) \
 	$(am__global_testing_getmem_SOURCES_DIST) \
 	$(am__global_testing_ghosts_SOURCES_DIST) \
 	$(am__global_testing_ipc_clean_SOURCES_DIST) \
@@ -2735,6 +2755,7 @@ global_testing_g2test_SOURCES = global/testing/g2test.F $(gtsrc)
 global_testing_g3test_SOURCES = global/testing/g3test.F $(gtsrc)
 global_testing_ga_lu_SOURCES = global/testing/ga_lu.c $(gtsrc)
 global_testing_ga_mpi_SOURCES = global/testing/ga-mpi.c $(gtsrc)
+global_testing_ga_shift_SOURCES = global/testing/ga_shift.F $(gtsrc)
 global_testing_getmem_SOURCES = global/testing/getmem.c $(gtsrc)
 global_testing_ghosts_SOURCES = global/testing/ghosts.F $(gtsrc)
 global_testing_ipc_clean_SOURCES = global/testing/ipc.clean.c $(gtsrc)
@@ -2795,6 +2816,7 @@ global_testing_d2test_LDFLAGS = $(FLDFLAGS)
 global_testing_field_test_LDFLAGS = $(FLDFLAGS)
 global_testing_g2test_LDFLAGS = $(FLDFLAGS)
 global_testing_g3test_LDFLAGS = $(FLDFLAGS)
+global_testing_ga_shift_LDFLAGS = $(FLDFLAGS)
 global_testing_ghosts_LDFLAGS = $(FLDFLAGS)
 global_testing_jacobi_LDFLAGS = $(FLDFLAGS)
 global_testing_mir_perf2_LDFLAGS = $(FLDFLAGS)
@@ -3770,6 +3792,11 @@ global/testing/ga_lu.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/ga_lu$(EXEEXT): $(global_testing_ga_lu_OBJECTS) $(global_testing_ga_lu_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/ga_lu$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(global_testing_ga_lu_OBJECTS) $(global_testing_ga_lu_LDADD) $(LIBS)
+global/testing/ga_shift.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/ga_shift$(EXEEXT): $(global_testing_ga_shift_OBJECTS) $(global_testing_ga_shift_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/ga_shift$(EXEEXT)
+	$(AM_V_F77LD)$(global_testing_ga_shift_LINK) $(global_testing_ga_shift_OBJECTS) $(global_testing_ga_shift_LDADD) $(LIBS)
 global/testing/getmem.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/getmem$(EXEEXT): $(global_testing_getmem_OBJECTS) $(global_testing_getmem_DEPENDENCIES) global/testing/$(am__dirstamp)
@@ -4409,6 +4436,7 @@ mostlyclean-compile:
 	-rm -f global/testing/g3test.$(OBJEXT)
 	-rm -f global/testing/ga-mpi.$(OBJEXT)
 	-rm -f global/testing/ga_lu.$(OBJEXT)
+	-rm -f global/testing/ga_shift.$(OBJEXT)
 	-rm -f global/testing/getmem.$(OBJEXT)
 	-rm -f global/testing/ghosts.$(OBJEXT)
 	-rm -f global/testing/ipc.clean.$(OBJEXT)
@@ -5410,6 +5438,8 @@ global/testing/g3test.log: global/testing/g3test$(EXEEXT)
 	@p='global/testing/g3test$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ga_lu.log: global/testing/ga_lu$(EXEEXT)
 	@p='global/testing/ga_lu$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/ga_shift.log: global/testing/ga_shift$(EXEEXT)
+	@p='global/testing/ga_shift$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/ghosts.log: global/testing/ghosts$(EXEEXT)
 	@p='global/testing/ghosts$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/jacobi.log: global/testing/jacobi$(EXEEXT)
