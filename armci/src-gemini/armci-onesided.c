@@ -201,7 +201,7 @@ armci_send_req_msg(int proc, void *buf, int bytes, int tag)
 
         else if(msginfo->operation == ACK) {
            armci_onesided_oper(buffer, msginfo, cluster, req);
-           //onesided_mem_htflush(cluster);
+           onesided_mem_htflush(cluster);
         }
 
         else if(msginfo->operation == ARMCI_SWAP || msginfo->operation == ARMCI_SWAP_LONG ||
