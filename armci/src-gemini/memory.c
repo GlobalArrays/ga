@@ -756,11 +756,15 @@ int PARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 int PARMCI_Free(void *ptr)
 {
     ARMCI_PR_DBG("enter",0);
-    if(!ptr)return 1;
 
   # ifdef CRAY_REGISTER_ARMCI_MALLOC
+ // assumes that PARMCI_Free is a collective operation, the following function requires
+ // a collective operation for all ranks on the node
     armci_onesided_remove_from_remote_mdh_list(ptr);
   # endif
+
+ // if ptr is NULL, we can now return
+    if(!ptr)return 1;
 
 #    if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(NO_SHM)
 #       ifdef USE_MALLOC
