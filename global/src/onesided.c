@@ -532,7 +532,7 @@ static void ngai_nbgets(char *loc_base_ptr, char *prem,int *stride_rem, char *pb
 static void ngai_gets(char *loc_base_ptr, char *prem,int *stride_rem, char *pbuf, int *stride_loc,
 		      int *count, int nstrides, int proc, int field_off, 
 		      int field_size, int type_size) {
-#if 0
+#if 1
   armci_hdl_t nbhandle;
   ARMCI_INIT_HANDLE(&nbhandle);
   ngai_nbgets(loc_base_ptr, prem, stride_rem, pbuf, stride_loc, count, nstrides, proc, 
