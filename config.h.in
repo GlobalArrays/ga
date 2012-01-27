@@ -249,6 +249,9 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
+/* set to 1 if libonesided has onesided_mem_htflush (added in v1.5) */
+#undef HAVE_ONESIDED_MEM_HTFLUSH
+
 /* Define to 1 if you have the `pause' function. */
 #undef HAVE_PAUSE
 

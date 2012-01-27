@@ -244,6 +244,17 @@ AS_IF([test "x$happy" = xyes],
 AS_IF([test "x$happy" = xyes],
     [ga_armci_network=GEMINI; with_gemini=yes; $1],
     [$2])
+# check for a function introduced in libonesided/1.5
+# we purposefully abuse the ac_cv_search_onesided_mem_htflush value
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([onesided_mem_htflush], [onesided])
+     AS_IF([test "x$ac_cv_search_onesided_mem_htflush" != xno],
+        [ac_cv_search_onesided_mem_htflush=1],
+        [ac_cv_search_onesided_mem_htflush=0])
+     AC_DEFINE_UNQUOTED([HAVE_ONESIDED_MEM_HTFLUSH],
+        [$ac_cv_search_onesided_mem_htflush],
+        [set to 1 if libonesided has onesided_mem_htflush (added in v1.5)])
+    ])
 ])dnl
 
 # GA_ARMCI_NETWORK
