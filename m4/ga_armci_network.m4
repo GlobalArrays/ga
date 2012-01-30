@@ -255,6 +255,17 @@ AS_IF([test "x$happy" = xyes],
         [$ac_cv_search_onesided_mem_htflush],
         [set to 1 if libonesided has onesided_mem_htflush (added in v1.5)])
     ])
+# check for a function introduced in libonesided/1.6
+# we purposefully abuse the ac_cv_search_onesided_fadd value
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([onesided_fadd], [onesided])
+     AS_IF([test "x$ac_cv_search_onesided_fadd" != xno],
+        [ac_cv_search_onesided_fadd=1],
+        [ac_cv_search_onesided_fadd=0])
+     AC_DEFINE_UNQUOTED([HAVE_ONESIDED_FADD],
+        [$ac_cv_search_onesided_fadd],
+        [set to 1 if libonesided has onesided_fadd (added in v1.6)])
+    ])
 ])dnl
 
 # GA_ARMCI_NETWORK

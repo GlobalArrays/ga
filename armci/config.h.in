@@ -240,6 +240,9 @@
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #undef HAVE_NETINET_TCP_H
 
+/* set to 1 if libonesided has onesided_fadd (added in v1.6) */
+#undef HAVE_ONESIDED_FADD
+
 /* set to 1 if libonesided has onesided_mem_htflush (added in v1.5) */
 #undef HAVE_ONESIDED_MEM_HTFLUSH
 
