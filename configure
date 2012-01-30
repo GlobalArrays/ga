@@ -10400,13 +10400,7 @@ case $ga_armci_network in #(
   PORTALS) :
     ARMCI_SRC_DIR=src-portals ;; #(
   GEMINI) :
-    ARMCI_SRC_DIR=src-gemini
-
-$as_echo "#define CRAY_UGNI 1" >>confdefs.h
-
-
-$as_echo "#define LIBONESIDED 1" >>confdefs.h
- ;; #(
+    ARMCI_SRC_DIR=src-gemini ;; #(
   *) :
     ARMCI_SRC_DIR=src ;;
 esac
@@ -35401,6 +35395,18 @@ $as_echo "#define QUADRICS 1" >>confdefs.h
 
 
 $as_echo "#define DOELAN4 1" >>confdefs.h
+
+     ;; #(
+  GEMINI) :
+
+
+$as_echo "#define LIBONESIDED 1" >>confdefs.h
+
+
+$as_echo "#define CRAY_UGNI 1" >>confdefs.h
+
+
+$as_echo "#define GEMINI 1" >>confdefs.h
 
      ;; #(
   GM) :

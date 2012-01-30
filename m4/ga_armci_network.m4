@@ -398,9 +398,7 @@ AM_CONDITIONAL([DCMF_VER_0_3], [test x = x]) # always true
 # permanent hack
 AS_CASE([$ga_armci_network],
 [PORTALS],  [ARMCI_SRC_DIR=src-portals],
-[GEMINI],   [ARMCI_SRC_DIR=src-gemini
-             AC_DEFINE([CRAY_UGNI], [1], [for Gemini])
-             AC_DEFINE([LIBONESIDED], [1], [for Gemini])],
+[GEMINI],   [ARMCI_SRC_DIR=src-gemini],
             [ARMCI_SRC_DIR=src])
 AC_SUBST([ARMCI_SRC_DIR])
 

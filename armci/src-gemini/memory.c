@@ -27,7 +27,7 @@ static context_t ctx_mlocalmem;
 #endif
 
 #if !(defined(LAPI)||defined(QUADRICS)||defined(SERVER_THREAD)) ||\
-    defined(USE_SHMEM)
+    defined(USE_SHMEM)||defined(LIBONESIDED)
 #define RMA_NEEDS_SHMEM
 #endif
 

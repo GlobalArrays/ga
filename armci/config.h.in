@@ -134,6 +134,9 @@
 /* Module command when using Fortran 90 compiler e.g. use f90_unix */
 #undef FXX_MODULE
 
+/* for Gemini */
+#undef GEMINI
+
 /* TODO */
 #undef GM
 
