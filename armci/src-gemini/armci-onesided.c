@@ -30,6 +30,9 @@ static cos_mdesc_t _send_mdesc, _recv_mdesc;
 static cos_mdesc_t *send_mdesc = NULL;
 static cos_mdesc_t *recv_mdesc = NULL;
 
+int armci_onesided_direct_get_enabled = 1;
+int armci_onesided_direct_put_enabled = 1;
+
 cos_desc_t __global_1sided_direct_comm_desc;
 cos_desc_t __global_1sided_direct_get_comm_desc;
 
@@ -52,6 +55,18 @@ armci_onesided_init()
 
         bzero(&__global_1sided_direct_comm_desc,sizeof(cos_desc_t));
 
+     // check to make sure things are properly sized
+        if(armci_me == 0) {
+        // ARMCI_ONESIDED_SIZEOF_IREQ is defined in armci.h
+           if(sizeof(armci_ireq_t) != ARMCI_ONESIDED_SIZEOF_IREQ) {
+              printf("ARMCI_ONESIDED_SIZEOF_IREQ is not sized correctly.\n");
+              printf("ARMCI_ONESIDED_SIZEOF_IREQ = %d\nsizeof(armci_ireq_t) = %d\n",
+                      ARMCI_ONESIDED_SIZEOF_IREQ,sizeof(armci_ireq_t));
+              abort();
+           }
+        }
+
+     // initialize libonesided
         COS_Init( &cos_params );
 
      // initialize armci memory
@@ -163,6 +178,24 @@ armci_onesided_rmw(void *buffer, request_header_t *msginfo, int remote_node, cos
 }
 
 extern _buf_ackresp_t *_buf_ackresp_first,*_buf_ackresp_cur;
+
+
+#if defined CRAY_REGISTER_ARMCI_MALLOC && HAVE_ONESIDED_FADD
+void
+armci_onesided_fadd(void *ploc, void *prem, int extra, int proc)
+{
+        onesided_hnd_t cp_hnd;
+        cos_desc_t comm_desc;
+        cos_mdesc_t local_mdh, remote_mdh, *mdh = NULL;
+
+        cpGetOnesidedHandle(&cp_hnd);
+        armci_onesided_search_remote_mdh_list(prem, proc, &remote_mdh);
+        onesided_mem_register(cp_hnd, ploc, sizeof(long), NULL, &local_mdh);
+        onesided_desc_init(cp_hnd, &local_mdh, &remote_mdh, 0, &comm_desc);
+        onesided_fadd(extra, &comm_desc);
+        onesided_wait(&comm_desc);
+}
+#endif
 
 int
 armci_send_req_msg(int proc, void *buf, int bytes, int tag)
@@ -454,6 +487,17 @@ x_net_offset(char *buf, int proc)
 }
 
 
+// currently our list of remote mdhs appears that it can get several entries with various
+// lengths.  we should scan the mdh list first to see if an entry exists in the list
+// if so, that could be an indication that the remote list entry function is not working
+// properly, or that a different type of armci_free call is being used to by pass the
+// removal of the mdh entry.  either way, we need to examine these occurences.
+void
+armci_onesided_append_remote_mdh_list(void* tgt_ptr, int proc, cos_mdesc_t *ret_mdh)
+{
+
+}
+
 void
 armci_onesided_search_remote_mdh_list(void* tgt_ptr, int proc, cos_mdesc_t *ret_mdh) 
 {
@@ -466,8 +510,18 @@ armci_onesided_search_remote_mdh_list(void* tgt_ptr, int proc, cos_mdesc_t *ret_
 
      // search the link-list for remote address and return the 
         while(ll) {
-        // rem_addr = (uint64_t) ll->ptrs[proc];
-           rem_addr = (uint64_t) ll->mdhs[proc].addr;
+        // if we are in this routine, we are doing a direct onesided operations on a chuck of local
+        // memory that was registered by the master process on this node.  typically, an armci operation
+        // would work directly off the virtual address of that data as attached by the current process; 
+        // however, because we are going to do a UGNI operation targetted at the MDH registered by the
+        // armci_master rank on this node, we have to translate the virtual address on this rank to the
+        // virtual address on armci_master.  this means we have to find the mdh by searching the ptrs
+        // array and not the mdhs[*].addr values
+           if(SAMECLUSNODE(proc) && armci_me != armci_master) {
+              rem_addr = (uint64_t) ll->ptrs[proc];
+           } else {
+              rem_addr = (uint64_t) ll->mdhs[proc].addr;
+           }
            length   = ll->mdhs[proc].length;
            if(tgt_addr >= rem_addr && tgt_addr < (rem_addr+length) /* check length of msg */) {
              mdh = &ll->mdhs[proc];
@@ -501,10 +555,14 @@ armci_onesided_search_remote_mdh_list(void* tgt_ptr, int proc, cos_mdesc_t *ret_
      //    printf("%d: ret_mdh->addr=%ld; tgt_addr=%ld\n",armci_me,ret_mdh->addr, tgt_addr);
      //    fflush(stdout);
      // }
-        ret_mdh->addr = tgt_addr;
-     // i'm not sure this is a fix - but it seems to fix the bug in armci/test.x
-     // we are working off proc addresses, we need to translate that into the address space of the node
-     // master (numa_me == 0) who was responsible for registering the memory
+
+     // if we are targeting a rank on the node for a direct operation, we need to translate the address
+     // if not, then we can use the tgt_addr as passed in
+        if(SAMECLUSNODE(proc) && armci_me != armci_master) {
+           ret_mdh->addr += (tgt_addr-rem_addr);
+        } else {
+           ret_mdh->addr = tgt_addr;
+        }
 }
 
 void
@@ -560,3 +618,25 @@ armci_onesided_remove_from_remote_mdh_list(void *tgt_ptr)
         }
         free(rm_ll);
 }
+
+
+void ARMCI_INIT_HANDLE(void *hdl)
+{
+        bzero(hdl, ARMCI_ONESIDED_SIZEOF_IREQ);
+}
+
+
+void armci_direct_on()
+{
+        armci_onesided_direct_get_enabled = 1;
+        armci_onesided_direct_put_enabled = 1;
+}
+
+void armci_direct_off()
+{
+        armci_onesided_direct_get_enabled = 0;
+        armci_onesided_direct_put_enabled = 0;
+}
+
+void armci_direct_on_() { armci_direct_on(); }
+void armci_direct_off_() { armci_direct_off(); }

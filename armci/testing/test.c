@@ -1295,11 +1295,11 @@ void test_vector_acc()
 
 void test_fetch_add()
 {
-  int rc, bytes, i, val, times = 0;
-  int *arr[MAXPROC];
+  long rc, bytes, i, val, times = 0;
+  long *arr[MAXPROC];
 
   /* shared variable is located on processor 0 */
-  bytes = me == 0 ? sizeof(int) : 0;
+  bytes = me == 0 ? sizeof(long) : 0;
 
   rc = ARMCI_Malloc((void **)arr, bytes);
   assert(rc == 0);
@@ -1312,7 +1312,7 @@ void test_fetch_add()
   ARMCI_Barrier();
 
   /* show what everybody gets */
-  rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD, &val, arr[0], 1, 0);
+  rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD_LONG, &val, arr[0], 1, 0);
   assert(rc == 0);
 
   for (i = 0; i < nproc; i++) {
@@ -1332,7 +1332,7 @@ void test_fetch_add()
 
   /* now increment the counter value until reaches LOOP */
   while (val < LOOP) {
-    rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD, &val, arr[0], 1, 0);
+    rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD_LONG, &val, arr[0], 1, 0);
     assert(rc == 0);
     times++;
   }
@@ -1358,7 +1358,7 @@ void test_fetch_add()
   ARMCI_Barrier();
 
   for (i = 0; i < LOOP; i++) {
-    rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD, &val, arr[0], 1, 0);
+    rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD_LONG, &val, arr[0], 1, 0);
     assert(rc == 0);
   }
 

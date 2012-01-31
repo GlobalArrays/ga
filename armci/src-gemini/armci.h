@@ -219,27 +219,14 @@ extern char *mp_group_name;
 
 /*********************stuff for non-blocking API******************************/
 /*\ the request structure for non-blocking api. 
+    rmo: it appears that we need measure the size of armci_ireq_t and set the
+    size of armci_hdl_t accordingly.  this really needs to be re-designed.
 \*/
-typedef struct{
-#ifdef BGML 
-    int data[4]; /* tag, bufid, agg_flag, op, proc */
-    double dummy[72]; /* bg1s_t, count, extra */
-#else
-    int data[4];
-#if defined(_AIX) 
-#   if defined(__64BIT__)
-    double dummy[27]; /*lapi_cntr_t is 200 bytes, using 216 just to be safe*/ 
-#   else
-    double dummy[24]; /*lapi_cntr_t is 148 bytes, using 166 just to be safe*/ 
-#   endif
-#elif defined(ALLOW_PIN)
-    void *dummy[2];/*2 cause itshould be aligned after we cast hdl_t to ihdl_t*/
-#else
-    double dummy;
-#endif
-#endif
-} armci_hdl_t;
 
+#define ARMCI_ONESIDED_SIZEOF_IREQ 21016
+typedef struct {
+   char data[ARMCI_ONESIDED_SIZEOF_IREQ];
+} armci_hdl_t;
 #define armci_req_t armci_hdl_t
 
 typedef int ARMCI_Group;
@@ -356,8 +343,8 @@ extern void ARMCI_SET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle);
 
 extern void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle);
 
-#define ARMCI_INIT_HANDLE(hdl) do {((double *)((hdl)->data))[0]=0; \
-  ((double *)((hdl)->data))[1]=0; }while(0)
+extern void ARMCI_INIT_HANDLE(void *hdl);
+
 
 /* -------------- ARMCI Non-collective memory allocator ------------- */
 typedef struct armci_meminfo_ds {

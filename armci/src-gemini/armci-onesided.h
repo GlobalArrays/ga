@@ -27,6 +27,8 @@
 #define ARMCI_LIMIT_REMOTE_REQUESTS_BY_NODE_TURNED_OFF
 #define MAX_OUTSTANDING_ONESIDED_GETS 64
 
+#define ARMCI_ONESIDED_GETS_USES_NBGETS
+
 /* typedefs */
 
 typedef struct armci_onesided_msg_tag_s {
@@ -59,7 +61,12 @@ void print_data(void *);
 void armci_onesided_search_remote_mdh_list(void* tgt_ptr, int proc, cos_mdesc_t *mdh);
 void armci_onesided_remove_from_remote_mdh_list(void *tgt_ptr);
 
+#if defined CRAY_REGISTER_ARMCI_MALLOC && HAVE_ONESIDED_FADD
+void armci_onesided_fadd(void *ploc, void *prem, int extra, int proc);
+#endif
 
+extern int armci_onesided_direct_get_enabled;
+extern int armci_onesided_direct_put_enabled;
 extern cos_desc_t __global_1sided_direct_comm_desc;
 extern cos_desc_t __global_1sided_direct_get_comm_desc;
 

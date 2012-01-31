@@ -80,13 +80,17 @@ extern INLINE void _armci_buf_set_cmpld_idx(int idx, int state);
 \*/
 typedef struct{
    unsigned int tag;
-   short int bufid;
-   short int agg_flag;
+   int bufid;
+   int agg_flag;
    int op;
    int proc;
+
 #ifdef NB_CMPL_T
    NB_CMPL_T cmpl_info;
 #endif
+
+   int onesided_direct;
+   cos_desc_t comm_desc[MAX_OUTSTANDING_ONESIDED_GETS];
 } armci_ireq_t;
 /*\ the internal request structure for non-blocking api. 
 \*/

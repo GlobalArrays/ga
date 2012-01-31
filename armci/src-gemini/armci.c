@@ -511,33 +511,51 @@ int ARMCI_Same_node(int proc)
 /*\ blocks the calling process until a nonblocking operation represented
  *  by the user handle completes
 \*/
-int PARMCI_Wait(armci_hdl_t* usr_hdl){
-armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
-int success=0;
-int direct=SAMECLUSNODE(nb_handle->proc);
+int PARMCI_Wait(armci_hdl_t* usr_hdl)
+{
+        armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
+        int i,success=0;
+        int direct=SAMECLUSNODE(nb_handle->proc);
 
-    if(direct) {
-       return(success);
-    }
-    if(nb_handle) {
-      if(nb_handle->agg_flag) {
-        armci_agg_complete(nb_handle, UNSET);
-        return (success);
-      }
-      if(nb_handle->tag!=0 && nb_handle->bufid==NB_NONE){
-        ARMCI_NB_WAIT(nb_handle->cmpl_info);
-               __asm__ __volatile__ ("mfence" ::: "memory");
-               __asm__ __volatile__ ("sfence" ::: "memory");
+        if(direct) {
+           return(success);
+        }
+
+        if(nb_handle) {
+
+           if(nb_handle->onesided_direct) {
+              for(i=0; i<MAX_OUTSTANDING_ONESIDED_GETS; i++) {
+                 if(nb_handle->comm_desc[i].state) {
+                    onesided_wait(&nb_handle->comm_desc[i]);
+                    cpMemDeregister(&nb_handle->comm_desc[i].local_mdesc);
+                 }
+              }
+              __asm__ __volatile__ ("mfence" ::: "memory");
+              __asm__ __volatile__ ("sfence" ::: "memory");
+              ARMCI_INIT_HANDLE(nb_handle);
+              return(success);
+           }
+
+           if(nb_handle->agg_flag) {
+              armci_agg_complete(nb_handle, UNSET);
+              return (success);
+           }
+      
+           if(nb_handle->tag!=0 && nb_handle->bufid==NB_NONE) {
+              ARMCI_NB_WAIT(nb_handle->cmpl_info);
+              __asm__ __volatile__ ("mfence" ::: "memory");
+              __asm__ __volatile__ ("sfence" ::: "memory");
+              return(success);
+           }
+     
+         # ifdef COMPLETE_HANDLE
+           COMPLETE_HANDLE(nb_handle->bufid,nb_handle->tag,(&success));
+         # endif
+        }
+
+        __asm__ __volatile__ ("mfence" ::: "memory");
+        __asm__ __volatile__ ("sfence" ::: "memory");
         return(success);
-      }
-#     ifdef COMPLETE_HANDLE
-       COMPLETE_HANDLE(nb_handle->bufid,nb_handle->tag,(&success));
-#     endif
-    }
-
-               __asm__ __volatile__ ("mfence" ::: "memory");
-               __asm__ __volatile__ ("sfence" ::: "memory");
-    return(success);
 }
 
 /** 
