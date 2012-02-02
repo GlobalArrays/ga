@@ -62,8 +62,8 @@ ga_save_LIBS="$LIBS"
 ga_save_LDFLAGS="$LDFLAGS"
 ga_save_CPPFLAGS="$CPPFLAGS"
 
-LDFLAGS="$LAPACK_LDFLAGS $BLAS_LDFLAGS $GA_MP_LDFLAGS $LDFLAGS"
-CPPFLAGS="$LAPACK_CPPFLAGS $BLAS_CPPFLAGS $GA_MP_CPPFLAGS $CPPFLAGS"
+LDFLAGS="$SCALAPACK_LDFLAGS $LAPACK_LDFLAGS $BLAS_LDFLAGS $GA_MP_LDFLAGS $LDFLAGS"
+CPPFLAGS="$SCALAPACK_CPPFLAGS $LAPACK_CPPFLAGS $BLAS_CPPFLAGS $GA_MP_CPPFLAGS $CPPFLAGS"
 
 AC_MSG_NOTICE([Attempting to locate SCALAPACK library])
 
@@ -88,7 +88,7 @@ AS_IF([test $ga_scalapack_ok = no],
 
 # Generic ScaLAPACK library?
 AS_IF([test $ga_scalapack_ok = no],
-    [LIBS="$GA_MP_LIBS"
+    [LIBS="$LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
      AC_CHECK_LIB([scalapack], [$pdgetrs],
         [ga_scalapack_ok=yes; SCALAPACK_LIBS="-lscalapack"], [], [$FLIBS])
      LIBS="$ga_save_LIBS"])
