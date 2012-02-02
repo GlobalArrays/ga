@@ -836,7 +836,6 @@ c          v(loop) = DSIN(a(ilo,jlo)+b(ilo,jlo))
            v(loop) = 1d0 *(ilo+jlo)
          enddo 
          call ga_scatter(g_a, v, iv, jv, m)
-         call ga_sync() ! i think this needs to be here
          do loop = 1,m
            ilo= iv(loop)
            jlo= jv(loop) 
@@ -859,7 +858,6 @@ c          v(loop) = DSIN(a(ilo,jlo)+b(ilo,jlo))
            v(loop) = 1d0 *(ilo+jlo)
          enddo 
          call nga_scatter(g_a, v, ijv, m)
-         call ga_sync()  ! i think this needs to be here
          do loop = 1,m
            ilo= ijv(1,loop)
            jlo= ijv(2,loop) 
