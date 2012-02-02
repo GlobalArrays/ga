@@ -150,6 +150,10 @@ int                   _elio_Errors_Fatal=0; /* sets mode of handling errors */
  * The maximum no. of extents permitted for a file is MAX_EXTENT.
  */
 
+#if defined(_LARGE_FILES) || defined(_LARGEFILE_SOURCE) || defined(_LARGEFILE64_SOURCE) || _FILE_OFFSET_BITS+0 == 64 || SIZEOF_VOIDP == 8
+#   define LARGE_FILES
+#endif
+
 #define MAX_EXTENT 127
 #ifdef LARGE_FILES
 #define ABSURDLY_LARGE 1e14
