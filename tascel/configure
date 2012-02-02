@@ -14745,8 +14745,8 @@ ga_save_LIBS="$LIBS"
 ga_save_LDFLAGS="$LDFLAGS"
 ga_save_CPPFLAGS="$CPPFLAGS"
 
-LDFLAGS="$LAPACK_LDFLAGS $BLAS_LDFLAGS $LDFLAGS"
-CPPFLAGS="$LAPACK_CPPFLAGS $BLAS_CPPFLAGS $CPPFLAGS"
+LDFLAGS="$LAPACK_LDFLAGS $BLAS_LDFLAGS $GA_MP_LDFLAGS $LDFLAGS"
+CPPFLAGS="$LAPACK_CPPFLAGS $BLAS_CPPFLAGS $GA_MP_CPPFLAGS $CPPFLAGS"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: Attempting to locate SCALAPACK library" >&5
 $as_echo "$as_me: Attempting to locate SCALAPACK library" >&6;}
@@ -14755,7 +14755,7 @@ $as_echo "$as_me: Attempting to locate SCALAPACK library" >&6;}
 # If failed, erase SCALAPACK_LIBS but maintain SCALAPACK_LDFLAGS and
 # SCALAPACK_CPPFLAGS.
 if test $ga_scalapack_ok = no; then :
-  LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $LIBS"
+  LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
      if test "x$enable_f77" = xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C SCALAPACK with user-supplied flags" >&5
 $as_echo_n "checking for C SCALAPACK with user-supplied flags... " >&6; }
@@ -14843,7 +14843,8 @@ fi
 
 # Generic ScaLAPACK library?
 if test $ga_scalapack_ok = no; then :
-  as_ac_Lib=`$as_echo "ac_cv_lib_scalapack_$pdgetrs" | $as_tr_sh`
+  LIBS="$GA_MP_LIBS"
+     as_ac_Lib=`$as_echo "ac_cv_lib_scalapack_$pdgetrs" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $pdgetrs in -lscalapack" >&5
 $as_echo_n "checking for $pdgetrs in -lscalapack... " >&6; }
 if eval \${$as_ac_Lib+:} false; then :
@@ -14895,9 +14896,6 @@ fi
 
      LIBS="$ga_save_LIBS"
 fi
-
-# TODO tests for PBLAS and BLACS to enable ScaLAPACK just in case all
-# packages are separate...
 
 CPPFLAGS="$ga_save_CPPFLAGS"
 LDFLAGS="$ga_save_LDFLAGS"

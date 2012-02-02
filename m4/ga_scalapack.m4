@@ -62,8 +62,8 @@ ga_save_LIBS="$LIBS"
 ga_save_LDFLAGS="$LDFLAGS"
 ga_save_CPPFLAGS="$CPPFLAGS"
 
-LDFLAGS="$LAPACK_LDFLAGS $BLAS_LDFLAGS $LDFLAGS"
-CPPFLAGS="$LAPACK_CPPFLAGS $BLAS_CPPFLAGS $CPPFLAGS"
+LDFLAGS="$LAPACK_LDFLAGS $BLAS_LDFLAGS $GA_MP_LDFLAGS $LDFLAGS"
+CPPFLAGS="$LAPACK_CPPFLAGS $BLAS_CPPFLAGS $GA_MP_CPPFLAGS $CPPFLAGS"
 
 AC_MSG_NOTICE([Attempting to locate SCALAPACK library])
 
@@ -71,7 +71,7 @@ AC_MSG_NOTICE([Attempting to locate SCALAPACK library])
 # If failed, erase SCALAPACK_LIBS but maintain SCALAPACK_LDFLAGS and
 # SCALAPACK_CPPFLAGS.
 AS_IF([test $ga_scalapack_ok = no],
-    [LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $LIBS"
+    [LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
      AS_IF([test "x$enable_f77" = xno],
         [AC_MSG_CHECKING([for C SCALAPACK with user-supplied flags])
          AC_LANG_PUSH([C])
@@ -88,12 +88,10 @@ AS_IF([test $ga_scalapack_ok = no],
 
 # Generic ScaLAPACK library?
 AS_IF([test $ga_scalapack_ok = no],
-    [AC_CHECK_LIB([scalapack], [$pdgetrs],
+    [LIBS="$GA_MP_LIBS"
+     AC_CHECK_LIB([scalapack], [$pdgetrs],
         [ga_scalapack_ok=yes; SCALAPACK_LIBS="-lscalapack"], [], [$FLIBS])
      LIBS="$ga_save_LIBS"])
-
-# TODO tests for PBLAS and BLACS to enable ScaLAPACK just in case all
-# packages are separate...
 
 CPPFLAGS="$ga_save_CPPFLAGS"
 LDFLAGS="$ga_save_LDFLAGS"
