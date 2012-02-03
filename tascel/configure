@@ -14745,8 +14745,8 @@ ga_save_LIBS="$LIBS"
 ga_save_LDFLAGS="$LDFLAGS"
 ga_save_CPPFLAGS="$CPPFLAGS"
 
-LDFLAGS="$LAPACK_LDFLAGS $BLAS_LDFLAGS $GA_MP_LDFLAGS $LDFLAGS"
-CPPFLAGS="$LAPACK_CPPFLAGS $BLAS_CPPFLAGS $GA_MP_CPPFLAGS $CPPFLAGS"
+LDFLAGS="$SCALAPACK_LDFLAGS $LAPACK_LDFLAGS $BLAS_LDFLAGS $GA_MP_LDFLAGS $LDFLAGS"
+CPPFLAGS="$SCALAPACK_CPPFLAGS $LAPACK_CPPFLAGS $BLAS_CPPFLAGS $GA_MP_CPPFLAGS $CPPFLAGS"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: Attempting to locate SCALAPACK library" >&5
 $as_echo "$as_me: Attempting to locate SCALAPACK library" >&6;}
@@ -14843,7 +14843,7 @@ fi
 
 # Generic ScaLAPACK library?
 if test $ga_scalapack_ok = no; then :
-  LIBS="$GA_MP_LIBS"
+  LIBS="$LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
      as_ac_Lib=`$as_echo "ac_cv_lib_scalapack_$pdgetrs" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $pdgetrs in -lscalapack" >&5
 $as_echo_n "checking for $pdgetrs in -lscalapack... " >&6; }
