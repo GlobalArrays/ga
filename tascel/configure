@@ -14720,27 +14720,6 @@ $as_echo "$as_me: WARNING: $arg of with_scalapack not parsed" >&2;}
 fi
 done
 
-# Get fortran linker name of ScaLAPACK function to check for.
-ac_ext=f
-ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
-ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_f77_compiler_gnu
-case $ac_cv_f77_mangling in
-  upper*) ac_val="PDGETRS" ;;
-  lower*) ac_val="pdgetrs" ;;
-  *)      ac_val="unknown" ;;
-esac
-case $ac_cv_f77_mangling in *," underscore"*) ac_val="$ac_val"_ ;; esac
-
-pdgetrs="$ac_val"
-
-ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-
 ga_save_LIBS="$LIBS"
 ga_save_LDFLAGS="$LDFLAGS"
 ga_save_CPPFLAGS="$CPPFLAGS"
@@ -14755,17 +14734,18 @@ $as_echo "$as_me: Attempting to locate SCALAPACK library" >&6;}
 # If failed, erase SCALAPACK_LIBS but maintain SCALAPACK_LDFLAGS and
 # SCALAPACK_CPPFLAGS.
 if test $ga_scalapack_ok = no; then :
-  LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
-     if test "x$enable_f77" = xno; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C SCALAPACK with user-supplied flags" >&5
-$as_echo_n "checking for C SCALAPACK with user-supplied flags... " >&6; }
-         ac_ext=c
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SCALAPACK with user-supplied flags" >&5
+$as_echo_n "checking for SCALAPACK with user-supplied flags... " >&6; }
+     LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
+
+if test "x$enable_f77" = xno; then :
+  ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #ifdef __cplusplus
 extern "C" {
@@ -14793,28 +14773,26 @@ char result = pdgetrs ();
 }
 _ACEOF
 
-         if ac_fn_c_try_link "$LINENO"; then :
+    if ac_fn_c_try_link "$LINENO"; then :
   ga_scalapack_ok=yes
 else
   SCALAPACK_LIBS=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext
-         ac_ext=c
+    ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran 77 SCALAPACK with user-supplied flags" >&5
-$as_echo_n "checking for Fortran 77 SCALAPACK with user-supplied flags... " >&6; }
-         ac_ext=f
+  ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
-         cat > conftest.$ac_ext <<_ACEOF
+    cat > conftest.$ac_ext <<_ACEOF
       program main
       implicit none
       external PDGETRS
@@ -14822,46 +14800,50 @@ ac_compiler_gnu=$ac_cv_f77_compiler_gnu
       end
 _ACEOF
 
-         if ac_fn_f77_try_link "$LINENO"; then :
+    if ac_fn_f77_try_link "$LINENO"; then :
   ga_scalapack_ok=yes
 else
   SCALAPACK_LIBS=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext
-         ac_ext=c
+    ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
+
+     LIBS="$ga_save_LIBS"
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_scalapack_ok" >&5
 $as_echo "$ga_scalapack_ok" >&6; }
-     LIBS="$ga_save_LIBS"
 fi
 
 # Generic ScaLAPACK library?
 if test $ga_scalapack_ok = no; then :
-  LIBS="$LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
-     as_ac_Lib=`$as_echo "ac_cv_lib_scalapack_$pdgetrs" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $pdgetrs in -lscalapack" >&5
-$as_echo_n "checking for $pdgetrs in -lscalapack... " >&6; }
-if eval \${$as_ac_Lib+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lscalapack $FLIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SCALAPACK in generic library" >&5
+$as_echo_n "checking for SCALAPACK in generic library... " >&6; }
+     SCALAPACK_LIBS="-lscalapack"
+     LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
 
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
+if test "x$enable_f77" = xno; then :
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
 #ifdef __cplusplus
-extern "C"
+extern "C" {
 #endif
-char $pdgetrs ();
+char pdgetrs ();
+#ifdef __cplusplus
+}
+#endif
+
 #ifdef F77_DUMMY_MAIN
 
 #  ifdef __cplusplus
@@ -14873,28 +14855,58 @@ char $pdgetrs ();
 int
 main ()
 {
-return $pdgetrs ();
+char result = pdgetrs ();
+
   ;
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  eval "$as_ac_Lib=yes"
+
+    if ac_fn_c_try_link "$LINENO"; then :
+  ga_scalapack_ok=yes
 else
-  eval "$as_ac_Lib=no"
+  SCALAPACK_LIBS=
 fi
 rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+    conftest$ac_exeext
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+else
+  ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+    cat > conftest.$ac_ext <<_ACEOF
+      program main
+      implicit none
+      external PDGETRS
+      CALL PDGETRS ()
+      end
+_ACEOF
+
+    if ac_fn_f77_try_link "$LINENO"; then :
+  ga_scalapack_ok=yes
+else
+  SCALAPACK_LIBS=
 fi
-eval ac_res=\$$as_ac_Lib
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  ga_scalapack_ok=yes; SCALAPACK_LIBS="-lscalapack"
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
 fi
 
      LIBS="$ga_save_LIBS"
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ga_scalapack_ok" >&5
+$as_echo "$ga_scalapack_ok" >&6; }
 fi
 
 CPPFLAGS="$ga_save_CPPFLAGS"
@@ -14906,6 +14918,98 @@ LDFLAGS="$ga_save_LDFLAGS"
 if test "x$scalapack_size" = x8; then :
 
 $as_echo "#define SCALAPACK_I8 1" >>confdefs.h
+
+fi
+
+# test for pdsyevr which some implementations may not have
+if test $ga_scalapack_ok = yes; then :
+
+ga_save_LIBS="$LIBS"
+ga_save_LDFLAGS="$LDFLAGS"
+ga_save_CPPFLAGS="$CPPFLAGS"
+LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
+LDFLAGS="$SCALAPACK_LDFLAGS $LAPACK_LDFLAGS $BLAS_LDFLAGS $GA_MP_LDFLAGS $LDFLAGS"
+CPPFLAGS="$SCALAPACK_CPPFLAGS $LAPACK_CPPFLAGS $BLAS_CPPFLAGS $GA_MP_CPPFLAGS $CPPFLAGS"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether SCALAPACK implements pdsyevr" >&5
+$as_echo_n "checking whether SCALAPACK implements pdsyevr... " >&6; }
+if test "x$enable_f77" = xno; then :
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pdsyevr ();
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+return pdsyevr ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  have_pdsyevr=1; have_pdsyevr_msg=yes
+else
+  have_pdsyevr=0; have_pdsyevr_msg=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+else
+  ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+    cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call pdsyevr
+      end
+_ACEOF
+if ac_fn_f77_try_link "$LINENO"; then :
+  have_pdsyevr=1; have_pdsyevr_msg=yes
+else
+  have_pdsyevr=0; have_pdsyevr_msg=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_pdsyevr_msg" >&5
+$as_echo "$have_pdsyevr_msg" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PDSYEVR $have_pdsyevr
+_ACEOF
+
 
 fi
 

@@ -100,6 +100,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* whether the ScaLAPACK library implements pdsyevr */
+#undef HAVE_PDSYEVR
+
 /* Define to 1 if you have ScaLAPACK library. */
 #undef HAVE_SCALAPACK
 

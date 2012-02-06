@@ -1,7 +1,6 @@
 #if HAVE_CONFIG_H
 #   include "config.fh"
 #endif
-cedo#define USE_PDSYEVR 1
 #ifdef SCALAPACK_I8
 #define INTGR4 integer*8
 #else
@@ -2948,7 +2947,7 @@ c     broadcast evals
       endif
       return
       end
-#ifdef USE_PDSYEVR
+#if HAVE_PDSYEVR
 c
 c     interface to pdsyevr (Parlett-Dhillon)
 c
@@ -3149,7 +3148,7 @@ c
          orfac = 1.d-3
 c     
 c     
-#if 0
+#if 1
          lcwork4=-1
          liwork4=-1
          call pdsyevr(jobz, range, uplo,

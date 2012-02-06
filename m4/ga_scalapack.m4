@@ -24,6 +24,21 @@ char pdgetrs ();
 ]])])
 ])
 
+# GA_RUN_SCALAPACK_TEST
+# ---------------------
+# Test the linker.
+# Clears SCALAPACK_LIBS on failure.  Sets ga_scalapack_ok=yes on success.
+AC_DEFUN([GA_RUN_SCALAPACK_TEST], [
+AS_IF([test "x$enable_f77" = xno],
+   [AC_LANG_PUSH([C])
+    GA_C_SCALAPACK_TEST()
+    AC_LINK_IFELSE([], [ga_scalapack_ok=yes], [SCALAPACK_LIBS=])
+    AC_LANG_POP([C])],
+   [AC_LANG_PUSH([Fortran 77])
+    GA_F77_SCALAPACK_TEST()
+    AC_LINK_IFELSE([], [ga_scalapack_ok=yes], [SCALAPACK_LIBS=])
+    AC_LANG_POP([Fortran 77])])
+])dnl
 
 # GA_SCALAPACK([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 # ---------------------------------------------------
@@ -55,9 +70,6 @@ SCALAPACK_CPPFLAGS=
 GA_ARG_PARSE([with_scalapack],
     [SCALAPACK_LIBS], [SCALAPACK_LDFLAGS], [SCALAPACK_CPPFLAGS])
 
-# Get fortran linker name of ScaLAPACK function to check for.
-AC_F77_FUNC([pdgetrs])
-
 ga_save_LIBS="$LIBS"
 ga_save_LDFLAGS="$LDFLAGS"
 ga_save_CPPFLAGS="$CPPFLAGS"
@@ -71,27 +83,20 @@ AC_MSG_NOTICE([Attempting to locate SCALAPACK library])
 # If failed, erase SCALAPACK_LIBS but maintain SCALAPACK_LDFLAGS and
 # SCALAPACK_CPPFLAGS.
 AS_IF([test $ga_scalapack_ok = no],
-    [LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
-     AS_IF([test "x$enable_f77" = xno],
-        [AC_MSG_CHECKING([for C SCALAPACK with user-supplied flags])
-         AC_LANG_PUSH([C])
-         GA_C_SCALAPACK_TEST()
-         AC_LINK_IFELSE([], [ga_scalapack_ok=yes], [SCALAPACK_LIBS=])
-         AC_LANG_POP([C])],
-        [AC_MSG_CHECKING([for Fortran 77 SCALAPACK with user-supplied flags])
-         AC_LANG_PUSH([Fortran 77])
-         GA_F77_SCALAPACK_TEST()
-         AC_LINK_IFELSE([], [ga_scalapack_ok=yes], [SCALAPACK_LIBS=])
-         AC_LANG_POP([Fortran 77])])
-     AC_MSG_RESULT([$ga_scalapack_ok])
-     LIBS="$ga_save_LIBS"])
+    [AC_MSG_CHECKING([for SCALAPACK with user-supplied flags])
+     LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
+     GA_RUN_SCALAPACK_TEST()
+     LIBS="$ga_save_LIBS"
+     AC_MSG_RESULT([$ga_scalapack_ok])])
 
 # Generic ScaLAPACK library?
 AS_IF([test $ga_scalapack_ok = no],
-    [LIBS="$LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
-     AC_CHECK_LIB([scalapack], [$pdgetrs],
-        [ga_scalapack_ok=yes; SCALAPACK_LIBS="-lscalapack"], [], [$FLIBS])
-     LIBS="$ga_save_LIBS"])
+    [AC_MSG_CHECKING([for SCALAPACK in generic library])
+     SCALAPACK_LIBS="-lscalapack"
+     LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
+     GA_RUN_SCALAPACK_TEST()
+     LIBS="$ga_save_LIBS"
+     AC_MSG_RESULT([$ga_scalapack_ok])])
 
 CPPFLAGS="$ga_save_CPPFLAGS"
 LDFLAGS="$ga_save_LDFLAGS"
@@ -101,6 +106,31 @@ AC_SUBST([SCALAPACK_LDFLAGS])
 AC_SUBST([SCALAPACK_CPPFLAGS])
 AS_IF([test "x$scalapack_size" = x8],
     [AC_DEFINE([SCALAPACK_I8], [1], [ScaLAPACK is using 8-byte integers])])
+
+# test for pdsyevr which some implementations may not have
+AS_IF([test $ga_scalapack_ok = yes], [
+ga_save_LIBS="$LIBS"
+ga_save_LDFLAGS="$LDFLAGS"
+ga_save_CPPFLAGS="$CPPFLAGS"
+LIBS="$SCALAPACK_LIBS $LAPACK_LIBS $BLAS_LIBS $GA_MP_LIBS $LIBS"
+LDFLAGS="$SCALAPACK_LDFLAGS $LAPACK_LDFLAGS $BLAS_LDFLAGS $GA_MP_LDFLAGS $LDFLAGS"
+CPPFLAGS="$SCALAPACK_CPPFLAGS $LAPACK_CPPFLAGS $BLAS_CPPFLAGS $GA_MP_CPPFLAGS $CPPFLAGS"
+AC_MSG_CHECKING([whether SCALAPACK implements pdsyevr])
+AS_IF([test "x$enable_f77" = xno],
+   [AC_LANG_PUSH([C])
+    AC_LINK_IFELSE([AC_LANG_CALL([], [pdsyevr])],
+        [have_pdsyevr=1; have_pdsyevr_msg=yes],
+        [have_pdsyevr=0; have_pdsyevr_msg=no])
+    AC_LANG_POP([C])],
+   [AC_LANG_PUSH([Fortran 77])
+    AC_LINK_IFELSE([AC_LANG_CALL([], [pdsyevr])],
+        [have_pdsyevr=1; have_pdsyevr_msg=yes],
+        [have_pdsyevr=0; have_pdsyevr_msg=no])
+    AC_LANG_POP([Fortran 77])])
+AC_MSG_RESULT([$have_pdsyevr_msg])
+AC_DEFINE_UNQUOTED([HAVE_PDSYEVR], [$have_pdsyevr],
+    [whether the ScaLAPACK library implements pdsyevr])
+])
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 AS_IF([test $ga_scalapack_ok = yes],

@@ -261,6 +261,9 @@
 /* Define to 1 if you have the `pause' function. */
 #undef HAVE_PAUSE
 
+/* whether the ScaLAPACK library implements pdsyevr */
+#undef HAVE_PDSYEVR
+
 /* Define to 1 if you have the `posix_memalign' function. */
 #undef HAVE_POSIX_MEMALIGN
 
