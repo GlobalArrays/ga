@@ -15010,6 +15010,9 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_PDSYEVR $have_pdsyevr
 _ACEOF
 
+LIBS="$ga_save_LIBS"
+LDFLAGS="$ga_save_LDFLAGS"
+CPPFLAGS="$ga_save_CPPFLAGS"
 
 fi
 

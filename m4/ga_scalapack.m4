@@ -130,6 +130,9 @@ AS_IF([test "x$enable_f77" = xno],
 AC_MSG_RESULT([$have_pdsyevr_msg])
 AC_DEFINE_UNQUOTED([HAVE_PDSYEVR], [$have_pdsyevr],
     [whether the ScaLAPACK library implements pdsyevr])
+LIBS="$ga_save_LIBS"
+LDFLAGS="$ga_save_LDFLAGS"
+CPPFLAGS="$ga_save_CPPFLAGS"
 ])
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
