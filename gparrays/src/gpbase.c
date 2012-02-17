@@ -485,19 +485,23 @@ void pgp_memzero(Integer g_p, Integer intsize)
     if (intsize == 4) {
       memset((void*)((armci_meminfo_t*)gp_ptr)[i].addr, 0,
           (size_t)((int*)size_array)[i]);
+#if 0
       for (j=0; j<((int*)size_array)[i]; j++) {
         if (((char*)((armci_meminfo_t*)gp_ptr)[i].addr)[j] != 0) {
           printf("p[%d] mismatch for i: %d j: %d\n",me,i,j);
         }
       }
+#endif
     } else {
       memset((void*)((armci_meminfo_t*)gp_ptr)[i].addr, 0,
           (size_t)((int64_t*)size_array)[i]);
+#if 0
       for (j=0; j<((int64_t*)size_array)[i]; j++) {
         if (((char*)((armci_meminfo_t*)gp_ptr)[i].addr)[j] != 0) {
           printf("p[%d] mismatch for i: %d j: %d\n",me,i,j);
         }
       }
+#endif
     }
   }
   pnga_release_update(GP[handle].g_ptr_array,lo,hi);
