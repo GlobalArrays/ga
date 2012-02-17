@@ -153,7 +153,7 @@ void do_work()
   
   /* Guarantee data consistency */
   NGA_Sync();
-  GP_Debug(g_p);
+  /*GP_Debug(g_p);*/
 
   /* Generate bounding coordinates to an arbitrary patch in GP array */
 #if 1
