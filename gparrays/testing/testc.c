@@ -387,12 +387,12 @@ void do_work()
     jj = me + ii*(N_I-1);
     i = jj%N_I;
     j = (jj-i)/N_I;
-    subscript[ii*2] = i;
-    subscript[ii*2+1] = j;
+    subscripts[ii*2] = i;
+    subscripts[ii*2+1] = j;
   }
 
   /* Get size of data to be gathered */
-  GP_Gather_size(g_p, nv, subscript, &size);
+  GP_Gather_size(g_p, nv, subscripts, &size);
   /* TODO: Should not need this sync */
   /*
   GA_Sync();
@@ -400,8 +400,8 @@ void do_work()
   /* Check size for correct value */
   idx = 0;
   for (ii=0; ii<nv; ii++) {
-    i = subscript[ii*2];
-    j = subscript[ii*2+1];
+    i = subscripts[ii*2];
+    j = subscripts[ii*2+1];
     m_k_ij = i%Q_I + 1;
     m_l_ij = j%Q_J + 1;
     idx += sizeof(int)*(m_k_ij*m_l_ij+2);
@@ -416,7 +416,7 @@ void do_work()
   buf_size = (int*) malloc(nv*sizeof(int));
 
   /* Gather data elements */
-  GP_Gather(g_p, nv, subscript, buf, buf_ptr, buf_size, &size);
+  GP_Gather(g_p, nv, subscripts, buf, buf_ptr, buf_size, &size);
   /* TODO: Should not need this sync */
   /*
   GA_Sync();
@@ -424,8 +424,8 @@ void do_work()
 
   /* Check data in buffers to see if it is correct */
   for (ii=0; ii<nv; ii++) {
-    i = subscript[ii*2];
-    j = subscript[ii*2+1];
+    i = subscripts[ii*2];
+    j = subscripts[ii*2+1];
     idx = j*N_I + i;
     m_k_ij = i%Q_I + 1;
     m_l_ij = j%Q_J + 1;
@@ -449,14 +449,114 @@ void do_work()
       }
     }
   }
-  subscripts = (int*)malloc(nv*sizeof(int));
+  NGA_Sync();
+  free(subscripts);
   if (me==0) printf("\nCompleted check of GP_Gather\n",me);
   
+
+  /* Clean up buffers and clear all bits in GP_Array */
+  free(buf);
+  free(buf_ptr);
+  free(buf_size);
+  GP_Memzero(g_p);
+  NGA_Sync();
+
+  /* Test scatter capability. Start by figuring out how many elements processor
+   * will scatter and how large the total data size is
+   */
+  size = 0;
+  nsize = dims[0]*dims[1];
+  nelems = 0;
+  for (ii = me; ii < nsize; ii += nproc) {
+    nelems++;
+    i = ii%dims[0];
+    j = (ii-i)/dims[0];
+    idx = j*N_I + i;
+    m_k_ij = i%Q_I + 1;
+    m_l_ij = j%Q_J + 1;
+    size += sizeof(int)*(m_k_ij*m_l_ij+2);
+  }
+  buf = (void*)malloc(size);
+  buf_ptr = (void**)malloc(nelems*sizeof(void*));
+  buf_size = (int*)malloc(nelems*sizeof(int));
+  subscripts = (int*)malloc(2*nelems*sizeof(int));
+
+  /* Set up buf_ptr and buf_size arrays */
+  elem_buf = buf;
+  nv = 0;
+  for (ii = me; ii < nsize; ii += nproc) {
+    i = ii%dims[0];
+    j = (ii-i)/dims[0];
+    idx = j*N_I + i;
+    m_k_ij = i%Q_I + 1;
+    m_l_ij = j%Q_J + 1;
+    size = sizeof(int)*(m_k_ij*m_l_ij+2);
+    subscripts[nv*2] = i;
+    subscripts[nv*2+1] = j;
+    buf_ptr[nv] = elem_buf;
+    buf_size[nv] = size;
+    ptr = (int*)buf_ptr[nv];
+    ptr[0] = m_k_ij;
+    ptr[1] = m_l_ij;
+    for (k=0; k<ptr[0]; k++) {
+      for (l=0; l<ptr[1]; l++) {
+        ptr[l*m_k_ij+k+2] = l*m_k_ij+k+idx;
+      }
+    }
+    if (nv < nelems-1) {
+      elem_buf = (void*)(((char*)elem_buf)+size);
+    }
+    nv++;
+  }
+
+  GP_Scatter(g_p, nv, subscripts, buf_ptr, buf_size, &size, 1);
+  NGA_Sync();
+
+  /* Check contents of GP array */
+  GP_Distribution(g_p, me, lo, hi);
+  for (i=lo[0]; i<=hi[0]; i++) {
+    ii = i - lo[0];
+    subscript[0] = i;
+    for (j=lo[1]; j<=hi[1]; j++) {
+      jj = j - lo[1];
+      subscript[1] = j;
+      idx = j*N_I + i;
+      GP_Access_element(g_p, subscript, &elem_buf, &size);
+      ptr = (int*)elem_buf;
+      /*
+      printf("p[%d] (test_ptr) i: %d j: %d elem_ptr: %p\n",me,j+1,i+1,ptr);
+      */
+      m_k_ij = i%Q_I + 1;
+      m_l_ij = j%Q_J + 1;
+      if (size != sizeof(int)*(m_k_ij*m_l_ij+2)) {
+        printf("p[%d] [%d,%d] Size actual: %d expected: %d\n",
+               me,i,j,size,sizeof(int)*(m_k_ij*m_l_ij+2));
+      }
+      if (ptr[0] != m_k_ij) {
+        printf("p[%d] [%d,%d] Dimension(3) i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
+      }
+      if (ptr[1] != m_l_ij) {
+        printf("p[%d] [%d,%d] Dimension(3) j actual: %d expected: %d\n",me,i,j,ptr[1],m_l_ij);
+      }
+      for (k=0; k<ptr[0]; k++) {
+        for (l=0; l<ptr[1]; l++) {
+          if (ptr[l*m_k_ij+k+2] != l*m_k_ij+k+idx) {
+            printf("p[%d] Element(3) i: %d j: %d l: %d k: %d m_k_ij: %d idx: %d does not match: %d %d\n",
+                me,i,j,l,k,m_k_ij,idx,ptr[l*ptr[0]+k+2],l*m_k_ij+k+idx);
+          }
+        }
+      }
+    }
+  }
+  NGA_Sync();
+  if (me==0) printf("\nCompleted check of GP_Scatter\n",me);
+
 
   /* Clean up buffers and deallocate GP array */
   free(buf);
   free(buf_ptr);
   free(buf_size);
+  free(subscripts);
   GP_Distribution(g_p, me, lo, hi);
   for (i=lo[0]; i<=hi[0]; i++) {
     subscript[0] = i;
