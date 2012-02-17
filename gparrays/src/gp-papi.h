@@ -44,4 +44,7 @@ extern void    pgp_gather_size(Integer g_p, Integer nv, Integer *subscript,
 extern void    pgp_gather(Integer g_p, Integer nv, Integer *subscript,
                           void *buf, void **buf_ptr, void *buf_size,
                           Integer *size, Integer intsize);
+extern void    pgp_scatter(Integer g_p, Integer nv, Integer *subscript,
+                           void **buf_ptr, void *buf_size, Integer *size,
+                           Integer checksize, Integer intsize);
 #endif  /* GPPAPI_H */

@@ -247,6 +247,32 @@ void GP_Release_update_element(int g_p, int *subscript)
   wgp_release_update_element(ag_p, _gp_idx);
 }
 
+void GP_Scatter(int g_p, int nv, int *subscript, void **buf_ptr,
+               int *buf_size, int *size, int checksize)
+{
+  int idx, i;
+  Integer ag_p = (Integer)g_p;
+  Integer anv = (Integer)nv;
+  Integer asize;
+  Integer acheck = (Integer)checksize;
+  Integer *asubscript;
+  int ndim = wgp_get_dimension(ag_p);
+  asubscript = (Integer*)malloc((int)ndim*nv*sizeof(Integer));
+  if (asubscript == NULL)
+    GA_Error("Memory allocation in GP_Gather_size failed",0);
+
+  /* adjust the indices for fortran interface */
+  for (idx=0; idx<nv; idx++) 
+    for (i=0; i<ndim; i++)
+      asubscript[idx*ndim +(ndim-i-1)] = subscript[idx*ndim+i] + 1;
+
+  wgp_scatter(ag_p, anv, asubscript, buf_ptr, buf_size, &asize, acheck, 4);
+  
+  *size = (int)asize;
+
+  free(asubscript);
+}
+
 void GP_Set_chunk(int g_p, int *chunk)
 {
   Integer ag_p;

@@ -134,7 +134,7 @@ void pgp_get_size(Integer g_p, Integer *lo, Integer *hi,
  * @param[out] buf               buffer that holds data
  * @param[out] buf_ptr           buffer that holds pointers to data
  * @param[in] ld[ndim-1]         physical dimensions of buf_ptr
- * @param[out] buf_size          buffer that holds size data
+ * @param[out] buf_size          buffer that holds size of data
  * @param[in] ld_sz[ndim-1]      physical dimensions of buf_size
  * @param[out] size              total size of requested data
  * @param[in] intsize            parameter to distinguish between 4 and 8
@@ -360,7 +360,7 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
  * @param[in] hi[ndim]           upper corner of pointer array block
  * @param[in] buf_ptr            buffer that holds pointers to local data
  * @param[in] ld[ndim-1]         physical dimensions of buf_ptr
- * @param[in] buf_size           buffer that holds size local data
+ * @param[in] buf_size           buffer that holds size of local data
  * @param[in] ld_sz[ndim-1]      physical dimensions of buf_size
  * @param[out] size              total size of transmitted data
  * @param[in] checksize          check that sizes in buf_size are OK
@@ -383,7 +383,8 @@ void pgp_put(Integer g_p, Integer *lo, Integer *hi, void **buf_ptr,
   void ***src_array, ***dst_array;
   armci_meminfo_t *rem_ptr;
   int rc, bytes;
-  Integer *tmpsize;
+  int *tmpsize32;
+  int64_t *tmpsize64;
   armci_giov_t *desc;
   handle = g_p + GP_OFFSET;
   if (!GP[handle].active) {
@@ -407,23 +408,28 @@ void pgp_put(Integer g_p, Integer *lo, Integer *hi, void **buf_ptr,
    * array. Throw an error if there is a mismatch */
   if (checksize) {
     if (intsize == 4) {
-      tmpsize = (Integer*)malloc(nelems*sizeof(int));
+      tmpsize32 = (int*)malloc(nelems*sizeof(int));
+      pnga_get(GP[handle].g_size_array, lo, hi, tmpsize32, block_ld);
     } else {
-      tmpsize = (Integer*)malloc(nelems*sizeof(int64_t));
+      tmpsize64 = (int64_t*)malloc(nelems*sizeof(int64_t));
+      pnga_get(GP[handle].g_size_array, lo, hi, tmpsize64, block_ld);
     }
-    pnga_get(GP[handle].g_size_array, lo, hi, tmpsize, block_ld);
     if (intsize == 4) {
       for (i=0; i<nelems; i++) {
-        if (tmpsize[i] != ((int*)buf_size)[i])
+        if (tmpsize32[i] != (int)((int*)buf_size)[i])
           pnga_error("gp_put: mismatch in element sizes", i);
       }
     } else {
       for (i=0; i<nelems; i++) {
-        if (tmpsize[i] != ((int64_t*)buf_size)[i])
+        if (tmpsize64[i] != (int64_t)((int64_t*)buf_size)[i])
           pnga_error("gp_put: mismatch in element sizes", i);
       }
     }
-    free(tmpsize);
+    if (intsize == 4) {
+      free(tmpsize32);
+    } else {
+      free(tmpsize64);
+    }
   }
 
   idx = 0;
@@ -836,4 +842,180 @@ void pgp_gather(Integer g_p, Integer nv, Integer *subscript, void *buf,
   free(header);
   free(list);
   free(nelems);
+  
+  *size = 0;
+  for (i=0; i<nv; i++) {
+    *size += ((Integer*)buf_size)[i];
+  }
+}
+
+/**
+ * Scatter a list of random elements from local buffers and store them in
+ * a GP array
+ * @param g_p[in]        pointer array handle
+ * @param nv[in]         number of elements being requested
+ * @param subscript[in]  array containing element indices
+ * @param buf_ptr[out]   pointers to local copies of elements
+ * @param buf_size[out]  array with element sizes
+ * @param size[out]      total size (in bytes) of data to be moved
+ * @param checksize[in]  check size of data
+ * @param[in] intsize    parameter to distinguish between 4 and 8
+ *                       byte integers
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wgp_scatter = pgp_scatter
+#endif
+
+void pgp_scatter(Integer g_p, Integer nv, Integer *subscript, void **buf_ptr,
+                 void *buf_size, Integer *size, Integer checksize, Integer intsize)
+{
+  Integer handle;
+  Integer *header, *list, *nelems;
+  Integer me, iproc, nproc, i, j, idx;
+  void *l_ptr;
+  armci_meminfo_t *info_buf;
+  armci_giov_t *desc;
+  void ***src_array, ***dst_array;
+  int rc, bytes;
+  int *tmpsize32;
+  int64_t *tmpsize64;
+
+  handle = g_p + GP_OFFSET;
+  nproc = pnga_nnodes();
+  me = pnga_nodeid();
+
+  /* Check size of elements in buf_size against size of elements in GP size
+   * array. Throw an error if there is a mismatch */
+  if (checksize) {
+    if (intsize == 4) {
+      tmpsize32 = (int*)malloc(nv*sizeof(int));
+      pnga_gather(GP[handle].g_size_array, tmpsize32, subscript, 0, nv);
+    } else {
+      tmpsize64 = (int64_t*)malloc(nv*sizeof(int64_t));
+      pnga_gather(GP[handle].g_size_array, tmpsize64, subscript, 0, nv);
+    }
+    if (intsize == 4) {
+      for (i=0; i<nv; i++) {
+        if (tmpsize32[i] != (int)((int*)buf_size)[i]) {
+           printf("p[%d] tmpsize[%d]: %d buf_size[%d]: %d\n",me,i,tmpsize32[i],
+              i,(Integer)((int*)buf_size)[i]);
+       /*   pnga_error("gp_scatter: mismatch in element sizes", i); */
+        }
+      }
+    } else {
+      for (i=0; i<nv; i++) {
+        if (tmpsize64[i] != (int64_t)((int64_t*)buf_size)[i]) {
+        /*  pnga_error("gp_scatter: mismatch in element sizes", i); */
+        }
+      }
+    }
+    if (intsize == 4) {
+      free(tmpsize32);
+    } else {
+      free(tmpsize64);
+    }
+  }
+  info_buf = (armci_meminfo_t*)malloc((int)nv*sizeof(armci_meminfo_t)); 
+  pnga_gather(GP[handle].g_ptr_array, info_buf, subscript, 0, nv);
+
+  /* create link list arrays and other utility arrays
+   * header[iproc]: first element in list for processor iproc
+   * list[i]: pointer to next element in list
+   * nelems[iproc]: total number of elements on processor iproc
+   */
+  header = (Integer*)malloc((int)nproc*sizeof(Integer));
+  list = (Integer*)malloc((int)nv*sizeof(Integer));
+  nelems = (Integer*)malloc((int)nproc*sizeof(Integer));
+
+  for (i=0; i<nproc; i++) {
+    nelems[i] = 0;
+    header[i] = -1;
+  }
+  for (i=0; i<nv; i++) {
+    list[i] = 0;
+  }
+
+  for (i=0; i<nv; i++) {
+    idx = (Integer)info_buf[i].cpid;
+    nelems[idx]++;
+    j = header[idx];
+    header[idx] = i;
+    list[i] = j;
+  }
+  
+  /* scan through linked list and get data from each processor */
+  for (iproc=0; iproc<nproc; iproc++) {
+    if (nelems[iproc] > 0) {
+      idx = header[iproc];
+      /* allocate descriptor array for this vector call */
+      desc = (armci_giov_t*)malloc((int)nelems[iproc]*sizeof(armci_giov_t));
+      src_array = (void***)malloc((int)nelems[iproc]*sizeof(void**));
+      dst_array = (void***)malloc((int)nelems[iproc]*sizeof(void**));
+      j = 0;
+      while (idx > -1) {
+        if (intsize == 4) {
+          bytes = (int)((int*)buf_size)[idx];
+        } else {
+          bytes = (int)((int64_t*)buf_size)[idx];
+        }
+        if (bytes>0) {
+          src_array[j] = (void**)malloc(sizeof(void*));
+          dst_array[j] = (void**)malloc(sizeof(void*));
+          if (iproc == me) {
+            (dst_array[j])[0] = ((void*)(info_buf[idx].addr));
+          } else if (pnga_cluster_proc_nodeid(me) ==
+              pnga_cluster_proc_nodeid(iproc)) {
+            (dst_array[j])[0] = ARMCI_Memat(&info_buf[idx],sizeof(armci_meminfo_t));
+          } else { 
+            (dst_array[j])[0] = (void*)(info_buf[idx].armci_addr);
+          }
+          (src_array[j])[0] = (void*)(buf_ptr[idx]);
+          if (intsize == 4) {
+            desc[j].bytes = (int)((int*)buf_size)[idx];
+          } else {
+            desc[j].bytes = (int)((int64_t*)buf_size)[idx];
+          }
+          desc[j].src_ptr_array = src_array[j];
+          desc[j].dst_ptr_array = dst_array[j];
+          desc[j].ptr_array_len = 1;
+
+          j++;
+        }
+        idx = list[idx];
+      }
+
+      /* gather data from remote locations */
+#ifdef XDBG
+    for (idx=0; idx<j; idx++) {
+      ARMCI_Put(desc[idx].src_ptr_array[0], desc[idx].dst_ptr_array[0],
+          desc[idx].bytes, iproc);
+    }
+#else
+      if (j > 0) {
+        rc = ARMCI_PutV(desc, (int)j, (int)iproc);
+        if (rc) pnga_error("ARMCI_PutV failure in gp_gather",rc);
+      }
+#endif
+
+      /* free arrays */
+      for (j=0; j<nelems[i]; j++) {
+        free(src_array[j]);
+        free(dst_array[j]);
+      }
+      free(src_array);
+      free(dst_array);
+      free(desc);
+    }
+  }
+
+  /* free remaining temporary arrays */
+  free(info_buf);
+  free(header);
+  free(list);
+  free(nelems);
+  
+  *size = 0;
+  for (i=0; i<nv; i++) {
+    *size += (Integer)((Integer*)buf_size)[i];
+  }
 }
