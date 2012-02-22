@@ -33,22 +33,22 @@ main(int argc, char **argv)
   g_A = NGA_Create(C_INT, DIM, dims, "array_A", NULL);
 
   GA_Fill(g_A, &val1);
-  //  GA_Print(g_A);
+  GA_Print(g_A);
 
   GA_Add_constant_patch(g_A, alo, ahi, &alpha);
-  //GA_Print(g_A);
+  GA_Print(g_A);
  
   NGA_Get(g_A, alo, ahi, local_A, &ld);
 
   if(rank==1)
     {
-      /*  for(i=0; i<DIM; i++)
+      for(i=0; i<DIM; i++)
 	{
 	  for(j=0; j<DIM; j++)
 	    printf(" %d", local_A[i][j]);
 	  printf("\n");
 	}
-      */
+
       for(i=0; i<DIM; i++)
 	for(j=0; j<DIM; j++) if(local_A[i][j]!=val1+alpha)
 	  printf(" GA Error: \n");
