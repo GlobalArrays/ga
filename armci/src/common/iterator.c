@@ -16,16 +16,6 @@
 #   include <stdlib.h>
 #endif
 #include "iterator.h"
-#include "armci.h" /*for ARMCI_MAX_STRIDE_LEVEL and dassert*/
-
-typedef struct {
-  void *base_ptr;
-  int stride_levels;
-  int stride_arr[ARMCI_MAX_STRIDE_LEVEL];
-  int seg_count[ARMCI_MAX_STRIDE_LEVEL+1];  
-
-  int size, pos, itr[ARMCI_MAX_STRIDE_LEVEL];
-} stride_info_t;
 
 /**Create a stride iterator.
  * @param base_ptr IN Starting pointer for stride descriptor
@@ -35,12 +25,12 @@ typedef struct {
  * level([stride_levels+1])  
  * @return Handle to stride iterator created
  */
-stride_itr_t armci_stride_itr_init(void *base_ptr,
-				   int stride_levels,
-				   const int *stride_arr,
-				   const int *seg_count) {
+void armci_stride_info_init(stride_info_t *sinfo,
+			    void *base_ptr,
+			    int stride_levels,
+			    const int *stride_arr,
+			    const int *seg_count) {
   int i;
-  stride_info_t *sinfo = malloc(sizeof(stride_info_t));
   dassert(1,sinfo!=NULL);
   dassert(1,stride_levels>=0);
   dassert(1,stride_levels<=ARMCI_MAX_STRIDE_LEVEL);
@@ -68,16 +58,13 @@ stride_itr_t armci_stride_itr_init(void *base_ptr,
   for(i=0; i<stride_levels+1; i++) {
     sinfo->itr[i] = 0;
   }
-  return sinfo;
 }
 
 /**Destroy a stride iterator.
  * @param psitr IN/OUT Pointer to stride iterator
  * @return void
  */
-void armci_stride_itr_destroy(stride_itr_t *psitr) {
-  free(*psitr);
-  *psitr = NULL; /*for a safe crash*/
+void armci_stride_info_destroy(stride_info_t *sinfo) {
 }
 
 /**Size of the stride iterator. Defined as total #contiguous
@@ -85,8 +72,7 @@ void armci_stride_itr_destroy(stride_itr_t *psitr) {
  * @param sitr IN Handle to stride iterator
  * @return Size of the stride iterator
  */
-int armci_stride_itr_size(stride_itr_t sitr) {
-  stride_info_t *sinfo = (stride_info_t *)sitr;
+int armci_stride_info_size(stride_info_t *sinfo) {
   dassert(1,sinfo!=NULL);
   return sinfo->size;
 }
@@ -97,8 +83,7 @@ int armci_stride_itr_size(stride_itr_t sitr) {
  * @param sitr IN Handle to stride descriptor
  * @return Position of the iterator
  */
-int armci_stride_itr_pos(stride_itr_t sitr) {
-  stride_info_t *sinfo = (stride_info_t *)sitr;
+int armci_stride_info_pos(stride_info_t *sinfo) {
   dassert(1,sinfo!=NULL);
   return sinfo->pos;
 }
@@ -107,9 +92,8 @@ int armci_stride_itr_pos(stride_itr_t sitr) {
  * @param sitr IN Handle to stride descriptor
  * @return void
  */
-void armci_stride_itr_next(stride_itr_t sitr) {
+void armci_stride_info_next(stride_info_t *sinfo) {
   int i;
-  stride_info_t *sinfo = (stride_info_t *)sitr;
   dassert(1,sinfo!=NULL);
   dassert(1,sinfo->pos <sinfo->size);
   sinfo->pos += 1;
@@ -128,18 +112,16 @@ void armci_stride_itr_next(stride_itr_t sitr) {
  * @param sitr IN Handle to stride descriptor
  * @return pointer to current contiguous segment
  */
-void *armci_stride_itr_seg_ptr(stride_itr_t sitr) {
-  stride_info_t *sinfo = (stride_info_t *)sitr;
+void *armci_stride_info_seg_ptr(stride_info_t *sinfo) {
   dassert(1,sinfo!=NULL);
-  return sinfo->base_ptr + armci_stride_itr_seg_off(sitr);
+  return sinfo->base_ptr + armci_stride_info_seg_off(sinfo);
 }
 
 /**Get the size of the current segment.
  * @param sitr IN Handle to stride descriptor
  * @return Size of the current segment
  */
-int armci_stride_itr_seg_size(stride_itr_t sitr) {
-  stride_info_t *sinfo = (stride_info_t *)sitr;
+int armci_stride_info_seg_size(stride_info_t *sinfo) {
   dassert(1,sinfo!=NULL);
   return sinfo->seg_count[0];
 }
@@ -150,10 +132,9 @@ int armci_stride_itr_seg_size(stride_itr_t sitr) {
  * @param sitr IN Handle to stride descriptor
  * @return Offset of the current segment
  */
-int armci_stride_itr_seg_off(stride_itr_t sitr) {
+int armci_stride_info_seg_off(stride_info_t *sinfo) {
   int i;
   int off;
-  stride_info_t *sinfo = (stride_info_t *)sitr;
   dassert(1,sinfo!=NULL);
   
   off=0;
@@ -169,8 +150,7 @@ int armci_stride_itr_seg_off(stride_itr_t sitr) {
  * @return Zero if current position is past the size of the
  * iterator. Non-zero otherwise. 
  */
-int armci_stride_itr_has_more(stride_itr_t sitr) {
-  stride_info_t *sinfo = (stride_info_t *)sitr;
+int armci_stride_info_has_more(stride_info_t *sinfo) {
   dassert(1,sinfo!=NULL);
   return sinfo->pos<sinfo->size;
 }

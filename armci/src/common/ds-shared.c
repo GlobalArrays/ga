@@ -682,16 +682,17 @@ void armci_rcv_strided_data(int proc, request_header_t* msginfo, int datalen,
     {
       int bytes_buf = 0, bytes_usr = 0, seg_off=0;
       int ctr=0;
+      stride_info_t sinfo;
       char *armci_ReadFromDirectSegment(int proc,request_header_t *msginfo,
 					int datalen, int *bytes_buf);
 
-      stride_itr_t sitr = armci_stride_itr_init(ptr,strides,stride_arr,count);
+      armci_stride_info_init(&sinfo,ptr,strides,stride_arr,count);
       do {
 	databuf = armci_ReadFromDirectSegment(proc,msginfo,datalen,&bytes_buf);
-	bytes_usr += armci_read_strided_inc(sitr,&databuf[bytes_usr],bytes_buf-bytes_usr, &seg_off);
+	bytes_usr += armci_read_strided_inc(&sinfo,&databuf[bytes_usr],bytes_buf-bytes_usr, &seg_off);
       } while(bytes_buf<datalen);
       dassert(1,bytes_buf == bytes_usr);
-      armci_stride_itr_destroy(&sitr);
+      armci_stride_info_destroy(&sinfo);
     }
 #endif
 }

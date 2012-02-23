@@ -1116,14 +1116,15 @@ void armci_write_strided1(void *ptr, int stride_levels, int stride_arr[],
 			  int count[], char *buf) {
   const int seg_size = count[0];
   int off=0;
-  stride_itr_t sitr=armci_stride_itr_init(ptr,stride_levels,stride_arr,count);
-  while(armci_stride_itr_has_more(sitr)) {
-    char *sptr = armci_stride_itr_seg_ptr(sitr);
+  stride_info_t sinfo;
+  armci_stride_info_init(&sinfo, ptr,stride_levels,stride_arr,count);
+  while(armci_stride_info_has_more(&sinfo)) {
+    char *sptr = armci_stride_info_seg_ptr(&sinfo);
     armci_copy(sptr,&buf[off],seg_size);
     off += seg_size;
-    armci_stride_itr_next(sitr);
+    armci_stride_info_next(&sinfo);
   }
-  armci_stride_itr_destroy(&sitr);
+  armci_stride_info_destroy(&sinfo);
 }
 
 
@@ -1184,14 +1185,15 @@ void armci_read_strided1(void *ptr, int stride_levels, int stride_arr[],
 			 int count[], char *buf) {
   const int seg_size = count[0];
   int off=0;
-  stride_itr_t sitr=armci_stride_itr_init(ptr,stride_levels,stride_arr,count);
-  while(armci_stride_itr_has_more(sitr)) {
-    char *dptr = armci_stride_itr_seg_ptr(sitr);
+  stride_info_t sinfo;
+  armci_stride_info_init(&sinfo,ptr,stride_levels,stride_arr,count);
+  while(armci_stride_info_has_more(&sinfo)) {
+    char *dptr = armci_stride_info_seg_ptr(&sinfo);
     armci_copy(&buf[off],dptr,seg_size);
     off += seg_size;
-    armci_stride_itr_next(sitr);
+    armci_stride_info_next(&sinfo);
   }
-  armci_stride_itr_destroy(&sitr);
+  armci_stride_info_destroy(&sinfo);
 }
 
 
@@ -1251,7 +1253,7 @@ void armci_read_strided2(void *ptr, int stride_levels, int stride_arr[],
  * traversed to copy as much data as possible in the buffer. When all
  * the data in buf is consumed the function returns with the number of
  * bytes consumed from the buffer.
- * @param sitr Stride iterator
+ * @param sinfo Stride iterator
  * @param buf IN Pointer to data to be read into user memory
  * @param bytes IN #bytes available in buf for reading
  * @param seg_off INOUT Bytes of the current segment written in the
@@ -1259,29 +1261,29 @@ void armci_read_strided2(void *ptr, int stride_levels, int stride_arr[],
  * contains the bytes of the last segment written if it was partial. 
  * @return #bytes read from buf into user memory.
  */
-int armci_read_strided_inc(stride_itr_t sitr, const char *buf,int bytes, int *seg_off) {
+int armci_read_strided_inc(stride_info_t *sinfo, const char *buf,int bytes, int *seg_off) {
   int off=0;
-  const int seg_size = armci_stride_itr_seg_size(sitr);
+  const int seg_size = armci_stride_info_seg_size(sinfo);
 
   dassert1(1,bytes>0,bytes);
   off=0;
   if(*seg_off) {
     char *sptr = (char*) &buf[off];
-    char *dptr = ((char*)armci_stride_itr_seg_ptr(sitr))+*seg_off;
+    char *dptr = ((char*)armci_stride_info_seg_ptr(sinfo))+*seg_off;
     int size = ARMCI_MIN(seg_size-*seg_off,bytes);
     /*     printf("%d:%s(): seg_size=%d,seg_off=%d,bytes=%d\n",armci_me,FUNCTION_NAME,seg_size,*seg_off,bytes); */
-    dassert(1,armci_stride_itr_has_more(sitr));
+    dassert(1,armci_stride_info_has_more(sinfo));
     armci_copy(sptr,dptr,size);
     off += size;
     if(*seg_off+size == seg_size) {
-      armci_stride_itr_next(sitr);
+      armci_stride_info_next(sinfo);
     }
   }
   while(bytes>off) {
     int size = ARMCI_MIN(seg_size, bytes-off);
-    dassert(1,armci_stride_itr_has_more(sitr));
-    armci_copy(&buf[off],armci_stride_itr_seg_ptr(sitr),size);
-    if(size==seg_size) armci_stride_itr_next(sitr);
+    dassert(1,armci_stride_info_has_more(sinfo));
+    armci_copy(&buf[off],armci_stride_info_seg_ptr(sinfo),size);
+    if(size==seg_size) armci_stride_info_next(sinfo);
     off += size;
   }
   dassertp(1,off==bytes,("%d:off=%d bytes=%d",armci_me,off,bytes));
