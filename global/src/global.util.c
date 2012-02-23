@@ -344,6 +344,11 @@ extern void Error();
     int level;
     char error_buffer[ERR_LEN];
 
+    /* JAD 02/23/2012 for applications, an exit/error code of 0 indicates
+     * success, it is therefore wrong to call pnga_error with a zero value */
+    if (icode == 0) {
+        icode = -1;
+    }
 
     /* print GA names stack */
     sprintf(error_buffer,"%d:", (int)pnga_nodeid());

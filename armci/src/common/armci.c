@@ -975,6 +975,11 @@ void derr_printf(const char *format, ...) {
 int dassertp_fail(const char *cond_string, const char *file, 
 		  const char *func, unsigned int line, int code) {
   if(!in_error_cleanup) {
+    /* JAD 02/23/2012 for applications, an exit/error code of 0 indicates
+     * success, it is therefore wrong to call dassertp_fail with a zero value */
+    if (0 == code) {
+        code = -1;
+    }
     in_error_cleanup=1;
 #ifdef SYSV
     if((!AR_caught_sigterm && !AR_caught_sigint) || armci_me==0)
