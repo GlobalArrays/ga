@@ -4166,7 +4166,7 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
         subscript_ptr = ((Integer*)subscript)+i*ndim;
       }
       if(!pnga_locate(g_a, subscript_ptr, &idx)) {
-        gai_print_subscript("invalid subscript",ndim, subscript+i*ndim,"\n");
+        gai_print_subscript("invalid subscript",ndim, subscript_ptr,"\n");
         pnga_error("failed -element:",i);
       }
       if (num_rstrctd > 0) idx = GA[handle].rank_rstrctd[idx];
