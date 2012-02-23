@@ -30,13 +30,13 @@ c***  Intitialize a message passing library
 c
 #ifdef MPI
       integer ierr
-      tbeg = ga_wtime()
+c     tbeg = ga_wtime()
       call mpi_init(ierr)
 #else
-      tbeg = ga_wtime()
+c     tbeg = ga_wtime()
       call pbeginf
 #endif
-      t_msg_init = ga_wtime() - tbeg
+c     t_msg_init = ga_wtime() - tbeg
 c
 c***  Initialize GA
 c
@@ -52,12 +52,12 @@ c
       me = ga_nodeid()
       nshift = nproc/2
 c
-      call ga_dgop(1,t_msg_init,1,'+')
-      t_msg_init = t_msg_init/dble(nproc)
-      if (me.eq.0) then
-        write(6,'(a,f16.6)') 'Time spent in runtime initialization: ',
-     +                       t_msg_init
-      endif
+c     call ga_dgop(1,t_msg_init,1,'+')
+c     t_msg_init = t_msg_init/dble(nproc)
+c     if (me.eq.0) then
+c       write(6,'(a,f16.6)') 'Time spent in runtime initialization: ',
+c    +                       t_msg_init
+c     endif
       call ga_dgop(2,t_init,1,'+')
       t_init = t_init/dble(nproc)
       if (me.eq.0) then
