@@ -15,7 +15,7 @@
 
 #define NUM 10
 
-/* **********************************************************************************
+#if 0
 
 addition_operator(int rank, int nprocs, int n)
 {
@@ -170,8 +170,7 @@ absmin_operator(int rank, int nprocs, int n)
       */
     }
 }
-********************************************************************
- */ 
+#endif
 //-------------------------------------------------------------------------------
 
 checking_operator (int rank, int nprocs)
@@ -179,26 +178,26 @@ checking_operator (int rank, int nprocs)
   
   int x[NUM], i, temp[NUM];
       
-  for(i=0; i<n; i++) x[i]=rand()%5;
-  for(i=0; i<n; i++) temp[i]=x[i];
+  for(i=0; i<NUM; i++) x[i]=rand()%5;
+  for(i=0; i<NUM; i++) temp[i]=x[i];
   
   if(rank==0)
-    for(i=0; i<n; i++) printf("%d \n", x[i]);
+    for(i=0; i<NUM; i++) printf("%d \n", x[i]);
     
-  GA_Igop(x, n, "+");
+  GA_Igop(x, NUM, "+");
   printf("\n");
   
   if(rank==0)
     {
-      for(i=0; i<n; i++) printf("%d :: %d\n", x[i], temp[i]);
+      for(i=0; i<NUM; i++) printf("%d :: %d\n", x[i], temp[i]);
       
-      /*for(i=0; i<n; i++)
+      /*for(i=0; i<NUM; i++)
 	if(x[i]!=temp[i]*sizeof(int)) printf(" GA ERROR: \n");
       */
     }
 }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 
   int rank, nprocs, n=10;
@@ -228,4 +227,5 @@ main(int argc, char **argv)
 
   MPI_Finalize();
 
+  return 0;
 }

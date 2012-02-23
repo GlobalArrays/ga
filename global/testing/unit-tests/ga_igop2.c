@@ -21,7 +21,7 @@ addition_operator(int *x, int nprocs)
   char *op="min";
   for(i=0; i<NUM; i++) temp[i]=x[i];
 
-  GA_Igop(x, NUM, &op);
+  GA_Igop(x, NUM, op);
   for(i=0; i<NUM; i++) printf("%d :: %d\n", x[i], temp[i]);
   printf("\n");
 }

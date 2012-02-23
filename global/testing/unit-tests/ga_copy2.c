@@ -19,10 +19,11 @@
 
 main(int argc, char **argv)
 {
-  int rank, nprocs, i;
+  int rank, nprocs, i, j;
   double g_A, g_B; 
-  int dims[DIM]={SIZE,SIZE}, dims2[DIM], ndim2, type2, dims3[DIM], ndim3, type3, lo[DIM]={0,0}, hi[DIM]={4,4};
+  int dims[DIM]={SIZE,SIZE}, dims2[DIM], ndim2, type2, dims3[DIM], ndim3, type3, lo[DIM]={0,0}, hi[DIM]={4,4}, ld=SIZE;
   double value=5, val2=4;
+  double local_A[SIZE][SIZE], local_B[SIZE][SIZE];
 
   MPI_Init(&argc, &argv);
 
@@ -56,7 +57,7 @@ main(int argc, char **argv)
       for(i=1; i<3; i++)
         {
           for(j=1; j<3; j++)
-            printf("%d ", local_B[i][j]);
+            printf("%f ", local_B[i][j]);
           printf("\n");
         }
 
@@ -64,7 +65,7 @@ main(int argc, char **argv)
       for(i=1; i<3; i++)
         {
           for(j=1; j<3; j++)
-            printf("%d ", local_A[i][j]);
+            printf("%f ", local_A[i][j]);
           printf("\n");
         }
 

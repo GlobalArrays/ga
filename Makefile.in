@@ -76,7 +76,112 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 	global/testing/testmultrect$(EXEEXT) \
 	global/testing/unpackc$(EXEEXT) $(am__EXEEXT_3) \
 	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
-	$(am__EXEEXT_7) $(am__EXEEXT_8) \
+	$(am__EXEEXT_7) global/testing/unit-tests/3d_array$(EXEEXT) \
+	global/testing/unit-tests/3d_passvalue$(EXEEXT) \
+	global/testing/unit-tests/3d_transpose$(EXEEXT) \
+	global/testing/unit-tests/accumulate_data$(EXEEXT) \
+	global/testing/unit-tests/array$(EXEEXT) \
+	global/testing/unit-tests/diagonal_pass$(EXEEXT) \
+	global/testing/unit-tests/ga_acc$(EXEEXT) \
+	global/testing/unit-tests/ga_add$(EXEEXT) \
+	global/testing/unit-tests/ga_add_constant$(EXEEXT) \
+	global/testing/unit-tests/ga_add_constantpatch$(EXEEXT) \
+	global/testing/unit-tests/ga_add_diagonal$(EXEEXT) \
+	global/testing/unit-tests/ga_add_patch$(EXEEXT) \
+	global/testing/unit-tests/ga_copy2$(EXEEXT) \
+	global/testing/unit-tests/ga_copy3$(EXEEXT) \
+	global/testing/unit-tests/ga_copy$(EXEEXT) \
+	global/testing/unit-tests/ga_copypatch2$(EXEEXT) \
+	global/testing/unit-tests/ga_copypatch$(EXEEXT) \
+	global/testing/unit-tests/ga_create1$(EXEEXT) \
+	global/testing/unit-tests/ga_create2$(EXEEXT) \
+	global/testing/unit-tests/ga_create3$(EXEEXT) \
+	global/testing/unit-tests/ga_create$(EXEEXT) \
+	global/testing/unit-tests/ga_create_handle$(EXEEXT) \
+	global/testing/unit-tests/ga_create_irreg2$(EXEEXT) \
+	global/testing/unit-tests/ga_create_irreg3$(EXEEXT) \
+	global/testing/unit-tests/ga_create_irreg$(EXEEXT) \
+	global/testing/unit-tests/ga_destroy$(EXEEXT) \
+	global/testing/unit-tests/ga_dgop$(EXEEXT) \
+	global/testing/unit-tests/ga_dot$(EXEEXT) \
+	global/testing/unit-tests/ga_duplicate$(EXEEXT) \
+	global/testing/unit-tests/ga_elem_divide$(EXEEXT) \
+	global/testing/unit-tests/ga_elem_dividepatch$(EXEEXT) \
+	global/testing/unit-tests/ga_elem_maximum$(EXEEXT) \
+	global/testing/unit-tests/ga_elem_maximumpatch$(EXEEXT) \
+	global/testing/unit-tests/ga_elem_minimum$(EXEEXT) \
+	global/testing/unit-tests/ga_elem_minimumpatch$(EXEEXT) \
+	global/testing/unit-tests/ga_elem_multiply$(EXEEXT) \
+	global/testing/unit-tests/ga_elem_multiplypatch$(EXEEXT) \
+	global/testing/unit-tests/ga_fill$(EXEEXT) \
+	global/testing/unit-tests/ga_fillpatch1$(EXEEXT) \
+	global/testing/unit-tests/ga_fillpatch$(EXEEXT) \
+	global/testing/unit-tests/ga_gather2$(EXEEXT) \
+	global/testing/unit-tests/ga_gather3$(EXEEXT) \
+	global/testing/unit-tests/ga_gather$(EXEEXT) \
+	global/testing/unit-tests/ga_get_blockinfo$(EXEEXT) \
+	global/testing/unit-tests/ga_get$(EXEEXT) \
+	global/testing/unit-tests/ga_get_diagonal$(EXEEXT) \
+	global/testing/unit-tests/ga_igop2$(EXEEXT) \
+	global/testing/unit-tests/ga_igop$(EXEEXT) \
+	global/testing/unit-tests/ga_inquire$(EXEEXT) \
+	global/testing/unit-tests/ga_intialize$(EXEEXT) \
+	global/testing/unit-tests/ga_lgop$(EXEEXT) \
+	global/testing/unit-tests/ga_median$(EXEEXT) \
+	global/testing/unit-tests/ga_ndim2$(EXEEXT) \
+	global/testing/unit-tests/ga_ndim$(EXEEXT) \
+	global/testing/unit-tests/ga_nnodes$(EXEEXT) \
+	global/testing/unit-tests/ga_nodeid$(EXEEXT) \
+	global/testing/unit-tests/ga_pgroup_create2$(EXEEXT) \
+	global/testing/unit-tests/ga_pgroup_create3$(EXEEXT) \
+	global/testing/unit-tests/ga_pgroup_create4$(EXEEXT) \
+	global/testing/unit-tests/ga_pgroup_create5$(EXEEXT) \
+	global/testing/unit-tests/ga_pgroup_create$(EXEEXT) \
+	global/testing/unit-tests/ga_pgroup_destroy2$(EXEEXT) \
+	global/testing/unit-tests/ga_pgroup_destroy$(EXEEXT) \
+	global/testing/unit-tests/ga_pgroup_nnodes_nodeid$(EXEEXT) \
+	global/testing/unit-tests/ga_pgroup_setdefault$(EXEEXT) \
+	global/testing/unit-tests/ga_put2$(EXEEXT) \
+	global/testing/unit-tests/ga_put$(EXEEXT) \
+	global/testing/unit-tests/ga_scale2$(EXEEXT) \
+	global/testing/unit-tests/ga_scale$(EXEEXT) \
+	global/testing/unit-tests/ga_scale_cols$(EXEEXT) \
+	global/testing/unit-tests/ga_scale_patch$(EXEEXT) \
+	global/testing/unit-tests/ga_scale_rows$(EXEEXT) \
+	global/testing/unit-tests/ga_scatter$(EXEEXT) \
+	global/testing/unit-tests/ga_set_data$(EXEEXT) \
+	global/testing/unit-tests/ga_set_diagonal$(EXEEXT) \
+	global/testing/unit-tests/ga_set_restricted$(EXEEXT) \
+	global/testing/unit-tests/ga_solve$(EXEEXT) \
+	global/testing/unit-tests/ga_sync$(EXEEXT) \
+	global/testing/unit-tests/ga_transpose2$(EXEEXT) \
+	global/testing/unit-tests/ga_transpose3$(EXEEXT) \
+	global/testing/unit-tests/ga_transpose$(EXEEXT) \
+	global/testing/unit-tests/ga_zero$(EXEEXT) \
+	global/testing/unit-tests/ga_zerodiagonal$(EXEEXT) \
+	global/testing/unit-tests/ga_zeropatch2$(EXEEXT) \
+	global/testing/unit-tests/ga_zeropatch$(EXEEXT) \
+	global/testing/unit-tests/irregular_array$(EXEEXT) \
+	global/testing/unit-tests/ld$(EXEEXT) \
+	global/testing/unit-tests/multprocs_data$(EXEEXT) \
+	global/testing/unit-tests/nb_acc$(EXEEXT) \
+	global/testing/unit-tests/nb_put2$(EXEEXT) \
+	global/testing/unit-tests/nb_put$(EXEEXT) \
+	global/testing/unit-tests/overlap_comm$(EXEEXT) \
+	global/testing/unit-tests/overlap_data2$(EXEEXT) \
+	global/testing/unit-tests/overlap_data$(EXEEXT) \
+	global/testing/unit-tests/overlap_getdata$(EXEEXT) \
+	global/testing/unit-tests/overlap_init$(EXEEXT) \
+	global/testing/unit-tests/overlap_nbputget2$(EXEEXT) \
+	global/testing/unit-tests/overlap_nbputget$(EXEEXT) \
+	global/testing/unit-tests/overlap_putget$(EXEEXT) \
+	global/testing/unit-tests/passvalue_array$(EXEEXT) \
+	global/testing/unit-tests/passvalue_dbl$(EXEEXT) \
+	global/testing/unit-tests/print$(EXEEXT) \
+	global/testing/unit-tests/put-get$(EXEEXT) \
+	global/testing/unit-tests/scatter$(EXEEXT) \
+	global/testing/unit-tests/test$(EXEEXT) \
+	global/testing/unit-tests/testc$(EXEEXT) $(am__EXEEXT_8) \
 	global/examples/lennard-jones/lennard$(EXEEXT) $(am__EXEEXT_9) \
 	pario/dra/bign$(EXEEXT) pario/dra/dbg_read$(EXEEXT) \
 	pario/dra/dbg_write$(EXEEXT) pario/dra/dra2arviz$(EXEEXT) \
@@ -1665,6 +1770,959 @@ global_testing_types_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_types_test_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am_global_testing_unit_tests_3d_array_OBJECTS =  \
+	global/testing/unit-tests/3d_array.$(OBJEXT)
+global_testing_unit_tests_3d_array_OBJECTS =  \
+	$(am_global_testing_unit_tests_3d_array_OBJECTS)
+global_testing_unit_tests_3d_array_LDADD = $(LDADD)
+global_testing_unit_tests_3d_array_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_3d_passvalue_OBJECTS =  \
+	global/testing/unit-tests/3d_passvalue.$(OBJEXT)
+global_testing_unit_tests_3d_passvalue_OBJECTS =  \
+	$(am_global_testing_unit_tests_3d_passvalue_OBJECTS)
+global_testing_unit_tests_3d_passvalue_LDADD = $(LDADD)
+global_testing_unit_tests_3d_passvalue_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_3d_transpose_OBJECTS =  \
+	global/testing/unit-tests/3d_transpose.$(OBJEXT)
+global_testing_unit_tests_3d_transpose_OBJECTS =  \
+	$(am_global_testing_unit_tests_3d_transpose_OBJECTS)
+global_testing_unit_tests_3d_transpose_LDADD = $(LDADD)
+global_testing_unit_tests_3d_transpose_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_accumulate_data_OBJECTS =  \
+	global/testing/unit-tests/accumulate_data.$(OBJEXT)
+global_testing_unit_tests_accumulate_data_OBJECTS =  \
+	$(am_global_testing_unit_tests_accumulate_data_OBJECTS)
+global_testing_unit_tests_accumulate_data_LDADD = $(LDADD)
+global_testing_unit_tests_accumulate_data_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_array_OBJECTS =  \
+	global/testing/unit-tests/array.$(OBJEXT)
+global_testing_unit_tests_array_OBJECTS =  \
+	$(am_global_testing_unit_tests_array_OBJECTS)
+global_testing_unit_tests_array_LDADD = $(LDADD)
+global_testing_unit_tests_array_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_diagonal_pass_OBJECTS =  \
+	global/testing/unit-tests/diagonal_pass.$(OBJEXT)
+global_testing_unit_tests_diagonal_pass_OBJECTS =  \
+	$(am_global_testing_unit_tests_diagonal_pass_OBJECTS)
+global_testing_unit_tests_diagonal_pass_LDADD = $(LDADD)
+global_testing_unit_tests_diagonal_pass_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_acc_OBJECTS =  \
+	global/testing/unit-tests/ga_acc.$(OBJEXT)
+global_testing_unit_tests_ga_acc_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_acc_OBJECTS)
+global_testing_unit_tests_ga_acc_LDADD = $(LDADD)
+global_testing_unit_tests_ga_acc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_add_OBJECTS =  \
+	global/testing/unit-tests/ga_add.$(OBJEXT)
+global_testing_unit_tests_ga_add_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_add_OBJECTS)
+global_testing_unit_tests_ga_add_LDADD = $(LDADD)
+global_testing_unit_tests_ga_add_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_add_constant_OBJECTS =  \
+	global/testing/unit-tests/ga_add_constant.$(OBJEXT)
+global_testing_unit_tests_ga_add_constant_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_add_constant_OBJECTS)
+global_testing_unit_tests_ga_add_constant_LDADD = $(LDADD)
+global_testing_unit_tests_ga_add_constant_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_add_constantpatch_OBJECTS =  \
+	global/testing/unit-tests/ga_add_constantpatch.$(OBJEXT)
+global_testing_unit_tests_ga_add_constantpatch_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_add_constantpatch_OBJECTS)
+global_testing_unit_tests_ga_add_constantpatch_LDADD = $(LDADD)
+global_testing_unit_tests_ga_add_constantpatch_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_add_diagonal_OBJECTS =  \
+	global/testing/unit-tests/ga_add_diagonal.$(OBJEXT)
+global_testing_unit_tests_ga_add_diagonal_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_add_diagonal_OBJECTS)
+global_testing_unit_tests_ga_add_diagonal_LDADD = $(LDADD)
+global_testing_unit_tests_ga_add_diagonal_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_add_patch_OBJECTS =  \
+	global/testing/unit-tests/ga_add_patch.$(OBJEXT)
+global_testing_unit_tests_ga_add_patch_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_add_patch_OBJECTS)
+global_testing_unit_tests_ga_add_patch_LDADD = $(LDADD)
+global_testing_unit_tests_ga_add_patch_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_copy_OBJECTS =  \
+	global/testing/unit-tests/ga_copy.$(OBJEXT)
+global_testing_unit_tests_ga_copy_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_copy_OBJECTS)
+global_testing_unit_tests_ga_copy_LDADD = $(LDADD)
+global_testing_unit_tests_ga_copy_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_copy2_OBJECTS =  \
+	global/testing/unit-tests/ga_copy2.$(OBJEXT)
+global_testing_unit_tests_ga_copy2_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_copy2_OBJECTS)
+global_testing_unit_tests_ga_copy2_LDADD = $(LDADD)
+global_testing_unit_tests_ga_copy2_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_copy3_OBJECTS =  \
+	global/testing/unit-tests/ga_copy3.$(OBJEXT)
+global_testing_unit_tests_ga_copy3_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_copy3_OBJECTS)
+global_testing_unit_tests_ga_copy3_LDADD = $(LDADD)
+global_testing_unit_tests_ga_copy3_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_copypatch_OBJECTS =  \
+	global/testing/unit-tests/ga_copypatch.$(OBJEXT)
+global_testing_unit_tests_ga_copypatch_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_copypatch_OBJECTS)
+global_testing_unit_tests_ga_copypatch_LDADD = $(LDADD)
+global_testing_unit_tests_ga_copypatch_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_copypatch2_OBJECTS =  \
+	global/testing/unit-tests/ga_copypatch2.$(OBJEXT)
+global_testing_unit_tests_ga_copypatch2_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_copypatch2_OBJECTS)
+global_testing_unit_tests_ga_copypatch2_LDADD = $(LDADD)
+global_testing_unit_tests_ga_copypatch2_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_create_OBJECTS =  \
+	global/testing/unit-tests/ga_create.$(OBJEXT)
+global_testing_unit_tests_ga_create_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_create_OBJECTS)
+global_testing_unit_tests_ga_create_LDADD = $(LDADD)
+global_testing_unit_tests_ga_create_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_create1_OBJECTS =  \
+	global/testing/unit-tests/ga_create1.$(OBJEXT)
+global_testing_unit_tests_ga_create1_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_create1_OBJECTS)
+global_testing_unit_tests_ga_create1_LDADD = $(LDADD)
+global_testing_unit_tests_ga_create1_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_create2_OBJECTS =  \
+	global/testing/unit-tests/ga_create2.$(OBJEXT)
+global_testing_unit_tests_ga_create2_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_create2_OBJECTS)
+global_testing_unit_tests_ga_create2_LDADD = $(LDADD)
+global_testing_unit_tests_ga_create2_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_create3_OBJECTS =  \
+	global/testing/unit-tests/ga_create3.$(OBJEXT)
+global_testing_unit_tests_ga_create3_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_create3_OBJECTS)
+global_testing_unit_tests_ga_create3_LDADD = $(LDADD)
+global_testing_unit_tests_ga_create3_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_create_handle_OBJECTS =  \
+	global/testing/unit-tests/ga_create_handle.$(OBJEXT)
+global_testing_unit_tests_ga_create_handle_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_create_handle_OBJECTS)
+global_testing_unit_tests_ga_create_handle_LDADD = $(LDADD)
+global_testing_unit_tests_ga_create_handle_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_create_irreg_OBJECTS =  \
+	global/testing/unit-tests/ga_create_irreg.$(OBJEXT)
+global_testing_unit_tests_ga_create_irreg_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_create_irreg_OBJECTS)
+global_testing_unit_tests_ga_create_irreg_LDADD = $(LDADD)
+global_testing_unit_tests_ga_create_irreg_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_create_irreg2_OBJECTS =  \
+	global/testing/unit-tests/ga_create_irreg2.$(OBJEXT)
+global_testing_unit_tests_ga_create_irreg2_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_create_irreg2_OBJECTS)
+global_testing_unit_tests_ga_create_irreg2_LDADD = $(LDADD)
+global_testing_unit_tests_ga_create_irreg2_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_create_irreg3_OBJECTS =  \
+	global/testing/unit-tests/ga_create_irreg3.$(OBJEXT)
+global_testing_unit_tests_ga_create_irreg3_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_create_irreg3_OBJECTS)
+global_testing_unit_tests_ga_create_irreg3_LDADD = $(LDADD)
+global_testing_unit_tests_ga_create_irreg3_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_destroy_OBJECTS =  \
+	global/testing/unit-tests/ga_destroy.$(OBJEXT)
+global_testing_unit_tests_ga_destroy_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_destroy_OBJECTS)
+global_testing_unit_tests_ga_destroy_LDADD = $(LDADD)
+global_testing_unit_tests_ga_destroy_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_dgop_OBJECTS =  \
+	global/testing/unit-tests/ga_dgop.$(OBJEXT)
+global_testing_unit_tests_ga_dgop_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_dgop_OBJECTS)
+global_testing_unit_tests_ga_dgop_LDADD = $(LDADD)
+global_testing_unit_tests_ga_dgop_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_dot_OBJECTS =  \
+	global/testing/unit-tests/ga_dot.$(OBJEXT)
+global_testing_unit_tests_ga_dot_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_dot_OBJECTS)
+global_testing_unit_tests_ga_dot_LDADD = $(LDADD)
+global_testing_unit_tests_ga_dot_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_duplicate_OBJECTS =  \
+	global/testing/unit-tests/ga_duplicate.$(OBJEXT)
+global_testing_unit_tests_ga_duplicate_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_duplicate_OBJECTS)
+global_testing_unit_tests_ga_duplicate_LDADD = $(LDADD)
+global_testing_unit_tests_ga_duplicate_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_elem_divide_OBJECTS =  \
+	global/testing/unit-tests/ga_elem_divide.$(OBJEXT)
+global_testing_unit_tests_ga_elem_divide_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_elem_divide_OBJECTS)
+global_testing_unit_tests_ga_elem_divide_LDADD = $(LDADD)
+global_testing_unit_tests_ga_elem_divide_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_elem_dividepatch_OBJECTS =  \
+	global/testing/unit-tests/ga_elem_dividepatch.$(OBJEXT)
+global_testing_unit_tests_ga_elem_dividepatch_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_elem_dividepatch_OBJECTS)
+global_testing_unit_tests_ga_elem_dividepatch_LDADD = $(LDADD)
+global_testing_unit_tests_ga_elem_dividepatch_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_elem_maximum_OBJECTS =  \
+	global/testing/unit-tests/ga_elem_maximum.$(OBJEXT)
+global_testing_unit_tests_ga_elem_maximum_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_elem_maximum_OBJECTS)
+global_testing_unit_tests_ga_elem_maximum_LDADD = $(LDADD)
+global_testing_unit_tests_ga_elem_maximum_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_elem_maximumpatch_OBJECTS =  \
+	global/testing/unit-tests/ga_elem_maximumpatch.$(OBJEXT)
+global_testing_unit_tests_ga_elem_maximumpatch_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_elem_maximumpatch_OBJECTS)
+global_testing_unit_tests_ga_elem_maximumpatch_LDADD = $(LDADD)
+global_testing_unit_tests_ga_elem_maximumpatch_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_elem_minimum_OBJECTS =  \
+	global/testing/unit-tests/ga_elem_minimum.$(OBJEXT)
+global_testing_unit_tests_ga_elem_minimum_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_elem_minimum_OBJECTS)
+global_testing_unit_tests_ga_elem_minimum_LDADD = $(LDADD)
+global_testing_unit_tests_ga_elem_minimum_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_elem_minimumpatch_OBJECTS =  \
+	global/testing/unit-tests/ga_elem_minimumpatch.$(OBJEXT)
+global_testing_unit_tests_ga_elem_minimumpatch_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_elem_minimumpatch_OBJECTS)
+global_testing_unit_tests_ga_elem_minimumpatch_LDADD = $(LDADD)
+global_testing_unit_tests_ga_elem_minimumpatch_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_elem_multiply_OBJECTS =  \
+	global/testing/unit-tests/ga_elem_multiply.$(OBJEXT)
+global_testing_unit_tests_ga_elem_multiply_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_elem_multiply_OBJECTS)
+global_testing_unit_tests_ga_elem_multiply_LDADD = $(LDADD)
+global_testing_unit_tests_ga_elem_multiply_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_elem_multiplypatch_OBJECTS =  \
+	global/testing/unit-tests/ga_elem_multiplypatch.$(OBJEXT)
+global_testing_unit_tests_ga_elem_multiplypatch_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_elem_multiplypatch_OBJECTS)
+global_testing_unit_tests_ga_elem_multiplypatch_LDADD = $(LDADD)
+global_testing_unit_tests_ga_elem_multiplypatch_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_fill_OBJECTS =  \
+	global/testing/unit-tests/ga_fill.$(OBJEXT)
+global_testing_unit_tests_ga_fill_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_fill_OBJECTS)
+global_testing_unit_tests_ga_fill_LDADD = $(LDADD)
+global_testing_unit_tests_ga_fill_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_fillpatch_OBJECTS =  \
+	global/testing/unit-tests/ga_fillpatch.$(OBJEXT)
+global_testing_unit_tests_ga_fillpatch_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_fillpatch_OBJECTS)
+global_testing_unit_tests_ga_fillpatch_LDADD = $(LDADD)
+global_testing_unit_tests_ga_fillpatch_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_fillpatch1_OBJECTS =  \
+	global/testing/unit-tests/ga_fillpatch1.$(OBJEXT)
+global_testing_unit_tests_ga_fillpatch1_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_fillpatch1_OBJECTS)
+global_testing_unit_tests_ga_fillpatch1_LDADD = $(LDADD)
+global_testing_unit_tests_ga_fillpatch1_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_gather_OBJECTS =  \
+	global/testing/unit-tests/ga_gather.$(OBJEXT)
+global_testing_unit_tests_ga_gather_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_gather_OBJECTS)
+global_testing_unit_tests_ga_gather_LDADD = $(LDADD)
+global_testing_unit_tests_ga_gather_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_gather2_OBJECTS =  \
+	global/testing/unit-tests/ga_gather2.$(OBJEXT)
+global_testing_unit_tests_ga_gather2_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_gather2_OBJECTS)
+global_testing_unit_tests_ga_gather2_LDADD = $(LDADD)
+global_testing_unit_tests_ga_gather2_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_gather3_OBJECTS =  \
+	global/testing/unit-tests/ga_gather3.$(OBJEXT)
+global_testing_unit_tests_ga_gather3_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_gather3_OBJECTS)
+global_testing_unit_tests_ga_gather3_LDADD = $(LDADD)
+global_testing_unit_tests_ga_gather3_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_get_OBJECTS =  \
+	global/testing/unit-tests/ga_get.$(OBJEXT)
+global_testing_unit_tests_ga_get_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_get_OBJECTS)
+global_testing_unit_tests_ga_get_LDADD = $(LDADD)
+global_testing_unit_tests_ga_get_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_get_blockinfo_OBJECTS =  \
+	global/testing/unit-tests/ga_get_blockinfo.$(OBJEXT)
+global_testing_unit_tests_ga_get_blockinfo_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_get_blockinfo_OBJECTS)
+global_testing_unit_tests_ga_get_blockinfo_LDADD = $(LDADD)
+global_testing_unit_tests_ga_get_blockinfo_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_get_diagonal_OBJECTS =  \
+	global/testing/unit-tests/ga_get_diagonal.$(OBJEXT)
+global_testing_unit_tests_ga_get_diagonal_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_get_diagonal_OBJECTS)
+global_testing_unit_tests_ga_get_diagonal_LDADD = $(LDADD)
+global_testing_unit_tests_ga_get_diagonal_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_igop_OBJECTS =  \
+	global/testing/unit-tests/ga_igop.$(OBJEXT)
+global_testing_unit_tests_ga_igop_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_igop_OBJECTS)
+global_testing_unit_tests_ga_igop_LDADD = $(LDADD)
+global_testing_unit_tests_ga_igop_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_igop2_OBJECTS =  \
+	global/testing/unit-tests/ga_igop2.$(OBJEXT)
+global_testing_unit_tests_ga_igop2_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_igop2_OBJECTS)
+global_testing_unit_tests_ga_igop2_LDADD = $(LDADD)
+global_testing_unit_tests_ga_igop2_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_inquire_OBJECTS =  \
+	global/testing/unit-tests/ga_inquire.$(OBJEXT)
+global_testing_unit_tests_ga_inquire_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_inquire_OBJECTS)
+global_testing_unit_tests_ga_inquire_LDADD = $(LDADD)
+global_testing_unit_tests_ga_inquire_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_intialize_OBJECTS =  \
+	global/testing/unit-tests/ga_intialize.$(OBJEXT)
+global_testing_unit_tests_ga_intialize_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_intialize_OBJECTS)
+global_testing_unit_tests_ga_intialize_LDADD = $(LDADD)
+global_testing_unit_tests_ga_intialize_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_lgop_OBJECTS =  \
+	global/testing/unit-tests/ga_lgop.$(OBJEXT)
+global_testing_unit_tests_ga_lgop_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_lgop_OBJECTS)
+global_testing_unit_tests_ga_lgop_LDADD = $(LDADD)
+global_testing_unit_tests_ga_lgop_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_median_OBJECTS =  \
+	global/testing/unit-tests/ga_median.$(OBJEXT)
+global_testing_unit_tests_ga_median_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_median_OBJECTS)
+global_testing_unit_tests_ga_median_LDADD = $(LDADD)
+global_testing_unit_tests_ga_median_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_ndim_OBJECTS =  \
+	global/testing/unit-tests/ga_ndim.$(OBJEXT)
+global_testing_unit_tests_ga_ndim_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_ndim_OBJECTS)
+global_testing_unit_tests_ga_ndim_LDADD = $(LDADD)
+global_testing_unit_tests_ga_ndim_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_ndim2_OBJECTS =  \
+	global/testing/unit-tests/ga_ndim2.$(OBJEXT)
+global_testing_unit_tests_ga_ndim2_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_ndim2_OBJECTS)
+global_testing_unit_tests_ga_ndim2_LDADD = $(LDADD)
+global_testing_unit_tests_ga_ndim2_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_nnodes_OBJECTS =  \
+	global/testing/unit-tests/ga_nnodes.$(OBJEXT)
+global_testing_unit_tests_ga_nnodes_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_nnodes_OBJECTS)
+global_testing_unit_tests_ga_nnodes_LDADD = $(LDADD)
+global_testing_unit_tests_ga_nnodes_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_nodeid_OBJECTS =  \
+	global/testing/unit-tests/ga_nodeid.$(OBJEXT)
+global_testing_unit_tests_ga_nodeid_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_nodeid_OBJECTS)
+global_testing_unit_tests_ga_nodeid_LDADD = $(LDADD)
+global_testing_unit_tests_ga_nodeid_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_pgroup_create_OBJECTS =  \
+	global/testing/unit-tests/ga_pgroup_create.$(OBJEXT)
+global_testing_unit_tests_ga_pgroup_create_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_pgroup_create_OBJECTS)
+global_testing_unit_tests_ga_pgroup_create_LDADD = $(LDADD)
+global_testing_unit_tests_ga_pgroup_create_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_pgroup_create2_OBJECTS =  \
+	global/testing/unit-tests/ga_pgroup_create2.$(OBJEXT)
+global_testing_unit_tests_ga_pgroup_create2_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_pgroup_create2_OBJECTS)
+global_testing_unit_tests_ga_pgroup_create2_LDADD = $(LDADD)
+global_testing_unit_tests_ga_pgroup_create2_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_pgroup_create3_OBJECTS =  \
+	global/testing/unit-tests/ga_pgroup_create3.$(OBJEXT)
+global_testing_unit_tests_ga_pgroup_create3_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_pgroup_create3_OBJECTS)
+global_testing_unit_tests_ga_pgroup_create3_LDADD = $(LDADD)
+global_testing_unit_tests_ga_pgroup_create3_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_pgroup_create4_OBJECTS =  \
+	global/testing/unit-tests/ga_pgroup_create4.$(OBJEXT)
+global_testing_unit_tests_ga_pgroup_create4_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_pgroup_create4_OBJECTS)
+global_testing_unit_tests_ga_pgroup_create4_LDADD = $(LDADD)
+global_testing_unit_tests_ga_pgroup_create4_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_pgroup_create5_OBJECTS =  \
+	global/testing/unit-tests/ga_pgroup_create5.$(OBJEXT)
+global_testing_unit_tests_ga_pgroup_create5_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_pgroup_create5_OBJECTS)
+global_testing_unit_tests_ga_pgroup_create5_LDADD = $(LDADD)
+global_testing_unit_tests_ga_pgroup_create5_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_pgroup_destroy_OBJECTS =  \
+	global/testing/unit-tests/ga_pgroup_destroy.$(OBJEXT)
+global_testing_unit_tests_ga_pgroup_destroy_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_pgroup_destroy_OBJECTS)
+global_testing_unit_tests_ga_pgroup_destroy_LDADD = $(LDADD)
+global_testing_unit_tests_ga_pgroup_destroy_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_pgroup_destroy2_OBJECTS =  \
+	global/testing/unit-tests/ga_pgroup_destroy2.$(OBJEXT)
+global_testing_unit_tests_ga_pgroup_destroy2_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_pgroup_destroy2_OBJECTS)
+global_testing_unit_tests_ga_pgroup_destroy2_LDADD = $(LDADD)
+global_testing_unit_tests_ga_pgroup_destroy2_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_pgroup_nnodes_nodeid_OBJECTS =  \
+	global/testing/unit-tests/ga_pgroup_nnodes_nodeid.$(OBJEXT)
+global_testing_unit_tests_ga_pgroup_nnodes_nodeid_OBJECTS = $(am_global_testing_unit_tests_ga_pgroup_nnodes_nodeid_OBJECTS)
+global_testing_unit_tests_ga_pgroup_nnodes_nodeid_LDADD = $(LDADD)
+global_testing_unit_tests_ga_pgroup_nnodes_nodeid_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_pgroup_setdefault_OBJECTS =  \
+	global/testing/unit-tests/ga_pgroup_setdefault.$(OBJEXT)
+global_testing_unit_tests_ga_pgroup_setdefault_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_pgroup_setdefault_OBJECTS)
+global_testing_unit_tests_ga_pgroup_setdefault_LDADD = $(LDADD)
+global_testing_unit_tests_ga_pgroup_setdefault_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_put_OBJECTS =  \
+	global/testing/unit-tests/ga_put.$(OBJEXT)
+global_testing_unit_tests_ga_put_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_put_OBJECTS)
+global_testing_unit_tests_ga_put_LDADD = $(LDADD)
+global_testing_unit_tests_ga_put_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_put2_OBJECTS =  \
+	global/testing/unit-tests/ga_put2.$(OBJEXT)
+global_testing_unit_tests_ga_put2_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_put2_OBJECTS)
+global_testing_unit_tests_ga_put2_LDADD = $(LDADD)
+global_testing_unit_tests_ga_put2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_scale_OBJECTS =  \
+	global/testing/unit-tests/ga_scale.$(OBJEXT)
+global_testing_unit_tests_ga_scale_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_scale_OBJECTS)
+global_testing_unit_tests_ga_scale_LDADD = $(LDADD)
+global_testing_unit_tests_ga_scale_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_scale2_OBJECTS =  \
+	global/testing/unit-tests/ga_scale2.$(OBJEXT)
+global_testing_unit_tests_ga_scale2_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_scale2_OBJECTS)
+global_testing_unit_tests_ga_scale2_LDADD = $(LDADD)
+global_testing_unit_tests_ga_scale2_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_scale_cols_OBJECTS =  \
+	global/testing/unit-tests/ga_scale_cols.$(OBJEXT)
+global_testing_unit_tests_ga_scale_cols_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_scale_cols_OBJECTS)
+global_testing_unit_tests_ga_scale_cols_LDADD = $(LDADD)
+global_testing_unit_tests_ga_scale_cols_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_scale_patch_OBJECTS =  \
+	global/testing/unit-tests/ga_scale_patch.$(OBJEXT)
+global_testing_unit_tests_ga_scale_patch_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_scale_patch_OBJECTS)
+global_testing_unit_tests_ga_scale_patch_LDADD = $(LDADD)
+global_testing_unit_tests_ga_scale_patch_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_scale_rows_OBJECTS =  \
+	global/testing/unit-tests/ga_scale_rows.$(OBJEXT)
+global_testing_unit_tests_ga_scale_rows_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_scale_rows_OBJECTS)
+global_testing_unit_tests_ga_scale_rows_LDADD = $(LDADD)
+global_testing_unit_tests_ga_scale_rows_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_scatter_OBJECTS =  \
+	global/testing/unit-tests/ga_scatter.$(OBJEXT)
+global_testing_unit_tests_ga_scatter_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_scatter_OBJECTS)
+global_testing_unit_tests_ga_scatter_LDADD = $(LDADD)
+global_testing_unit_tests_ga_scatter_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_set_data_OBJECTS =  \
+	global/testing/unit-tests/ga_set_data.$(OBJEXT)
+global_testing_unit_tests_ga_set_data_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_set_data_OBJECTS)
+global_testing_unit_tests_ga_set_data_LDADD = $(LDADD)
+global_testing_unit_tests_ga_set_data_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_set_diagonal_OBJECTS =  \
+	global/testing/unit-tests/ga_set_diagonal.$(OBJEXT)
+global_testing_unit_tests_ga_set_diagonal_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_set_diagonal_OBJECTS)
+global_testing_unit_tests_ga_set_diagonal_LDADD = $(LDADD)
+global_testing_unit_tests_ga_set_diagonal_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_set_restricted_OBJECTS =  \
+	global/testing/unit-tests/ga_set_restricted.$(OBJEXT)
+global_testing_unit_tests_ga_set_restricted_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_set_restricted_OBJECTS)
+global_testing_unit_tests_ga_set_restricted_LDADD = $(LDADD)
+global_testing_unit_tests_ga_set_restricted_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_solve_OBJECTS =  \
+	global/testing/unit-tests/ga_solve.$(OBJEXT)
+global_testing_unit_tests_ga_solve_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_solve_OBJECTS)
+global_testing_unit_tests_ga_solve_LDADD = $(LDADD)
+global_testing_unit_tests_ga_solve_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_sync_OBJECTS =  \
+	global/testing/unit-tests/ga_sync.$(OBJEXT)
+global_testing_unit_tests_ga_sync_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_sync_OBJECTS)
+global_testing_unit_tests_ga_sync_LDADD = $(LDADD)
+global_testing_unit_tests_ga_sync_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_transpose_OBJECTS =  \
+	global/testing/unit-tests/ga_transpose.$(OBJEXT)
+global_testing_unit_tests_ga_transpose_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_transpose_OBJECTS)
+global_testing_unit_tests_ga_transpose_LDADD = $(LDADD)
+global_testing_unit_tests_ga_transpose_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_transpose2_OBJECTS =  \
+	global/testing/unit-tests/ga_transpose2.$(OBJEXT)
+global_testing_unit_tests_ga_transpose2_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_transpose2_OBJECTS)
+global_testing_unit_tests_ga_transpose2_LDADD = $(LDADD)
+global_testing_unit_tests_ga_transpose2_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_transpose3_OBJECTS =  \
+	global/testing/unit-tests/ga_transpose3.$(OBJEXT)
+global_testing_unit_tests_ga_transpose3_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_transpose3_OBJECTS)
+global_testing_unit_tests_ga_transpose3_LDADD = $(LDADD)
+global_testing_unit_tests_ga_transpose3_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_zero_OBJECTS =  \
+	global/testing/unit-tests/ga_zero.$(OBJEXT)
+global_testing_unit_tests_ga_zero_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_zero_OBJECTS)
+global_testing_unit_tests_ga_zero_LDADD = $(LDADD)
+global_testing_unit_tests_ga_zero_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_zerodiagonal_OBJECTS =  \
+	global/testing/unit-tests/ga_zerodiagonal.$(OBJEXT)
+global_testing_unit_tests_ga_zerodiagonal_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_zerodiagonal_OBJECTS)
+global_testing_unit_tests_ga_zerodiagonal_LDADD = $(LDADD)
+global_testing_unit_tests_ga_zerodiagonal_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_zeropatch_OBJECTS =  \
+	global/testing/unit-tests/ga_zeropatch.$(OBJEXT)
+global_testing_unit_tests_ga_zeropatch_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_zeropatch_OBJECTS)
+global_testing_unit_tests_ga_zeropatch_LDADD = $(LDADD)
+global_testing_unit_tests_ga_zeropatch_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ga_zeropatch2_OBJECTS =  \
+	global/testing/unit-tests/ga_zeropatch2.$(OBJEXT)
+global_testing_unit_tests_ga_zeropatch2_OBJECTS =  \
+	$(am_global_testing_unit_tests_ga_zeropatch2_OBJECTS)
+global_testing_unit_tests_ga_zeropatch2_LDADD = $(LDADD)
+global_testing_unit_tests_ga_zeropatch2_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_irregular_array_OBJECTS =  \
+	global/testing/unit-tests/irregular_array.$(OBJEXT)
+global_testing_unit_tests_irregular_array_OBJECTS =  \
+	$(am_global_testing_unit_tests_irregular_array_OBJECTS)
+global_testing_unit_tests_irregular_array_LDADD = $(LDADD)
+global_testing_unit_tests_irregular_array_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_ld_OBJECTS =  \
+	global/testing/unit-tests/ld.$(OBJEXT)
+global_testing_unit_tests_ld_OBJECTS =  \
+	$(am_global_testing_unit_tests_ld_OBJECTS)
+global_testing_unit_tests_ld_LDADD = $(LDADD)
+global_testing_unit_tests_ld_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_multprocs_data_OBJECTS =  \
+	global/testing/unit-tests/multprocs_data.$(OBJEXT)
+global_testing_unit_tests_multprocs_data_OBJECTS =  \
+	$(am_global_testing_unit_tests_multprocs_data_OBJECTS)
+global_testing_unit_tests_multprocs_data_LDADD = $(LDADD)
+global_testing_unit_tests_multprocs_data_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_nb_acc_OBJECTS =  \
+	global/testing/unit-tests/nb_acc.$(OBJEXT)
+global_testing_unit_tests_nb_acc_OBJECTS =  \
+	$(am_global_testing_unit_tests_nb_acc_OBJECTS)
+global_testing_unit_tests_nb_acc_LDADD = $(LDADD)
+global_testing_unit_tests_nb_acc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_nb_put_OBJECTS =  \
+	global/testing/unit-tests/nb_put.$(OBJEXT)
+global_testing_unit_tests_nb_put_OBJECTS =  \
+	$(am_global_testing_unit_tests_nb_put_OBJECTS)
+global_testing_unit_tests_nb_put_LDADD = $(LDADD)
+global_testing_unit_tests_nb_put_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_nb_put2_OBJECTS =  \
+	global/testing/unit-tests/nb_put2.$(OBJEXT)
+global_testing_unit_tests_nb_put2_OBJECTS =  \
+	$(am_global_testing_unit_tests_nb_put2_OBJECTS)
+global_testing_unit_tests_nb_put2_LDADD = $(LDADD)
+global_testing_unit_tests_nb_put2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_overlap_comm_OBJECTS =  \
+	global/testing/unit-tests/overlap_comm.$(OBJEXT)
+global_testing_unit_tests_overlap_comm_OBJECTS =  \
+	$(am_global_testing_unit_tests_overlap_comm_OBJECTS)
+global_testing_unit_tests_overlap_comm_LDADD = $(LDADD)
+global_testing_unit_tests_overlap_comm_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_overlap_data_OBJECTS =  \
+	global/testing/unit-tests/overlap_data.$(OBJEXT)
+global_testing_unit_tests_overlap_data_OBJECTS =  \
+	$(am_global_testing_unit_tests_overlap_data_OBJECTS)
+global_testing_unit_tests_overlap_data_LDADD = $(LDADD)
+global_testing_unit_tests_overlap_data_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_overlap_data2_OBJECTS =  \
+	global/testing/unit-tests/overlap_data2.$(OBJEXT)
+global_testing_unit_tests_overlap_data2_OBJECTS =  \
+	$(am_global_testing_unit_tests_overlap_data2_OBJECTS)
+global_testing_unit_tests_overlap_data2_LDADD = $(LDADD)
+global_testing_unit_tests_overlap_data2_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_overlap_getdata_OBJECTS =  \
+	global/testing/unit-tests/overlap_getdata.$(OBJEXT)
+global_testing_unit_tests_overlap_getdata_OBJECTS =  \
+	$(am_global_testing_unit_tests_overlap_getdata_OBJECTS)
+global_testing_unit_tests_overlap_getdata_LDADD = $(LDADD)
+global_testing_unit_tests_overlap_getdata_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_overlap_init_OBJECTS =  \
+	global/testing/unit-tests/overlap_init.$(OBJEXT)
+global_testing_unit_tests_overlap_init_OBJECTS =  \
+	$(am_global_testing_unit_tests_overlap_init_OBJECTS)
+global_testing_unit_tests_overlap_init_LDADD = $(LDADD)
+global_testing_unit_tests_overlap_init_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_overlap_nbputget_OBJECTS =  \
+	global/testing/unit-tests/overlap_nbputget.$(OBJEXT)
+global_testing_unit_tests_overlap_nbputget_OBJECTS =  \
+	$(am_global_testing_unit_tests_overlap_nbputget_OBJECTS)
+global_testing_unit_tests_overlap_nbputget_LDADD = $(LDADD)
+global_testing_unit_tests_overlap_nbputget_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_overlap_nbputget2_OBJECTS =  \
+	global/testing/unit-tests/overlap_nbputget2.$(OBJEXT)
+global_testing_unit_tests_overlap_nbputget2_OBJECTS =  \
+	$(am_global_testing_unit_tests_overlap_nbputget2_OBJECTS)
+global_testing_unit_tests_overlap_nbputget2_LDADD = $(LDADD)
+global_testing_unit_tests_overlap_nbputget2_DEPENDENCIES =  \
+	$(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_overlap_putget_OBJECTS =  \
+	global/testing/unit-tests/overlap_putget.$(OBJEXT)
+global_testing_unit_tests_overlap_putget_OBJECTS =  \
+	$(am_global_testing_unit_tests_overlap_putget_OBJECTS)
+global_testing_unit_tests_overlap_putget_LDADD = $(LDADD)
+global_testing_unit_tests_overlap_putget_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_passvalue_array_OBJECTS =  \
+	global/testing/unit-tests/passvalue_array.$(OBJEXT)
+global_testing_unit_tests_passvalue_array_OBJECTS =  \
+	$(am_global_testing_unit_tests_passvalue_array_OBJECTS)
+global_testing_unit_tests_passvalue_array_LDADD = $(LDADD)
+global_testing_unit_tests_passvalue_array_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_passvalue_dbl_OBJECTS =  \
+	global/testing/unit-tests/passvalue_dbl.$(OBJEXT)
+global_testing_unit_tests_passvalue_dbl_OBJECTS =  \
+	$(am_global_testing_unit_tests_passvalue_dbl_OBJECTS)
+global_testing_unit_tests_passvalue_dbl_LDADD = $(LDADD)
+global_testing_unit_tests_passvalue_dbl_DEPENDENCIES = $(LTLIBOBJS) \
+	libga.la $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_print_OBJECTS =  \
+	global/testing/unit-tests/print.$(OBJEXT)
+global_testing_unit_tests_print_OBJECTS =  \
+	$(am_global_testing_unit_tests_print_OBJECTS)
+global_testing_unit_tests_print_LDADD = $(LDADD)
+global_testing_unit_tests_print_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_put_get_OBJECTS =  \
+	global/testing/unit-tests/put-get.$(OBJEXT)
+global_testing_unit_tests_put_get_OBJECTS =  \
+	$(am_global_testing_unit_tests_put_get_OBJECTS)
+global_testing_unit_tests_put_get_LDADD = $(LDADD)
+global_testing_unit_tests_put_get_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_scatter_OBJECTS =  \
+	global/testing/unit-tests/scatter.$(OBJEXT)
+global_testing_unit_tests_scatter_OBJECTS =  \
+	$(am_global_testing_unit_tests_scatter_OBJECTS)
+global_testing_unit_tests_scatter_LDADD = $(LDADD)
+global_testing_unit_tests_scatter_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_test_OBJECTS =  \
+	global/testing/unit-tests/test.$(OBJEXT)
+global_testing_unit_tests_test_OBJECTS =  \
+	$(am_global_testing_unit_tests_test_OBJECTS)
+global_testing_unit_tests_test_LDADD = $(LDADD)
+global_testing_unit_tests_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_global_testing_unit_tests_testc_OBJECTS =  \
+	global/testing/unit-tests/testc.$(OBJEXT)
+global_testing_unit_tests_testc_OBJECTS =  \
+	$(am_global_testing_unit_tests_testc_OBJECTS)
+global_testing_unit_tests_testc_LDADD = $(LDADD)
+global_testing_unit_tests_testc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__global_testing_unpackc_SOURCES_DIST = global/testing/unpackc.c \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -2072,6 +3130,218 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(global_testing_testsolve_SOURCES) \
 	$(global_testing_testspd_SOURCES) \
 	$(global_testing_types_test_SOURCES) \
+	$(global_testing_unit_tests_3d_array_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_3d_array_SOURCES) \
+	$(global_testing_unit_tests_3d_passvalue_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_3d_passvalue_SOURCES) \
+	$(global_testing_unit_tests_3d_transpose_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_3d_transpose_SOURCES) \
+	$(global_testing_unit_tests_accumulate_data_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_accumulate_data_SOURCES) \
+	$(global_testing_unit_tests_array_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_array_SOURCES) \
+	$(global_testing_unit_tests_diagonal_pass_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_diagonal_pass_SOURCES) \
+	$(global_testing_unit_tests_ga_acc_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_acc_SOURCES) \
+	$(global_testing_unit_tests_ga_add_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_add_SOURCES) \
+	$(global_testing_unit_tests_ga_add_constant_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_add_constant_SOURCES) \
+	$(global_testing_unit_tests_ga_add_constantpatch_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_add_constantpatch_SOURCES) \
+	$(global_testing_unit_tests_ga_add_diagonal_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_add_diagonal_SOURCES) \
+	$(global_testing_unit_tests_ga_add_patch_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_add_patch_SOURCES) \
+	$(global_testing_unit_tests_ga_copy_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_copy_SOURCES) \
+	$(global_testing_unit_tests_ga_copy2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_copy2_SOURCES) \
+	$(global_testing_unit_tests_ga_copy3_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_copy3_SOURCES) \
+	$(global_testing_unit_tests_ga_copypatch_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_copypatch_SOURCES) \
+	$(global_testing_unit_tests_ga_copypatch2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_copypatch2_SOURCES) \
+	$(global_testing_unit_tests_ga_create_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_create_SOURCES) \
+	$(global_testing_unit_tests_ga_create1_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_create1_SOURCES) \
+	$(global_testing_unit_tests_ga_create2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_create2_SOURCES) \
+	$(global_testing_unit_tests_ga_create3_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_create3_SOURCES) \
+	$(global_testing_unit_tests_ga_create_handle_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_create_handle_SOURCES) \
+	$(global_testing_unit_tests_ga_create_irreg_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_create_irreg_SOURCES) \
+	$(global_testing_unit_tests_ga_create_irreg2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_create_irreg2_SOURCES) \
+	$(global_testing_unit_tests_ga_create_irreg3_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_create_irreg3_SOURCES) \
+	$(global_testing_unit_tests_ga_destroy_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_destroy_SOURCES) \
+	$(global_testing_unit_tests_ga_dgop_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_dgop_SOURCES) \
+	$(global_testing_unit_tests_ga_dot_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_dot_SOURCES) \
+	$(global_testing_unit_tests_ga_duplicate_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_duplicate_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_divide_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_elem_divide_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_dividepatch_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_elem_dividepatch_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_maximum_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_elem_maximum_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_maximumpatch_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_elem_maximumpatch_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_minimum_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_elem_minimum_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_minimumpatch_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_elem_minimumpatch_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_multiply_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_elem_multiply_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_multiplypatch_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_elem_multiplypatch_SOURCES) \
+	$(global_testing_unit_tests_ga_fill_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_fill_SOURCES) \
+	$(global_testing_unit_tests_ga_fillpatch_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_fillpatch_SOURCES) \
+	$(global_testing_unit_tests_ga_fillpatch1_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_fillpatch1_SOURCES) \
+	$(global_testing_unit_tests_ga_gather_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_gather_SOURCES) \
+	$(global_testing_unit_tests_ga_gather2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_gather2_SOURCES) \
+	$(global_testing_unit_tests_ga_gather3_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_gather3_SOURCES) \
+	$(global_testing_unit_tests_ga_get_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_get_SOURCES) \
+	$(global_testing_unit_tests_ga_get_blockinfo_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_get_blockinfo_SOURCES) \
+	$(global_testing_unit_tests_ga_get_diagonal_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_get_diagonal_SOURCES) \
+	$(global_testing_unit_tests_ga_igop_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_igop_SOURCES) \
+	$(global_testing_unit_tests_ga_igop2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_igop2_SOURCES) \
+	$(global_testing_unit_tests_ga_inquire_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_inquire_SOURCES) \
+	$(global_testing_unit_tests_ga_intialize_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_intialize_SOURCES) \
+	$(global_testing_unit_tests_ga_lgop_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_lgop_SOURCES) \
+	$(global_testing_unit_tests_ga_median_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_median_SOURCES) \
+	$(global_testing_unit_tests_ga_ndim_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_ndim_SOURCES) \
+	$(global_testing_unit_tests_ga_ndim2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_ndim2_SOURCES) \
+	$(global_testing_unit_tests_ga_nnodes_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_nnodes_SOURCES) \
+	$(global_testing_unit_tests_ga_nodeid_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_nodeid_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_create_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_create2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create2_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_create3_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create3_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_create4_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create4_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_create5_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create5_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_destroy_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_pgroup_destroy_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_destroy2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_pgroup_destroy2_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_nnodes_nodeid_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_pgroup_nnodes_nodeid_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_setdefault_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_pgroup_setdefault_SOURCES) \
+	$(global_testing_unit_tests_ga_put_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_put_SOURCES) \
+	$(global_testing_unit_tests_ga_put2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_put2_SOURCES) \
+	$(global_testing_unit_tests_ga_scale_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_scale_SOURCES) \
+	$(global_testing_unit_tests_ga_scale2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_scale2_SOURCES) \
+	$(global_testing_unit_tests_ga_scale_cols_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_scale_cols_SOURCES) \
+	$(global_testing_unit_tests_ga_scale_patch_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_scale_patch_SOURCES) \
+	$(global_testing_unit_tests_ga_scale_rows_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_scale_rows_SOURCES) \
+	$(global_testing_unit_tests_ga_scatter_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_scatter_SOURCES) \
+	$(global_testing_unit_tests_ga_set_data_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_set_data_SOURCES) \
+	$(global_testing_unit_tests_ga_set_diagonal_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_set_diagonal_SOURCES) \
+	$(global_testing_unit_tests_ga_set_restricted_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_set_restricted_SOURCES) \
+	$(global_testing_unit_tests_ga_solve_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_solve_SOURCES) \
+	$(global_testing_unit_tests_ga_sync_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_sync_SOURCES) \
+	$(global_testing_unit_tests_ga_transpose_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_transpose_SOURCES) \
+	$(global_testing_unit_tests_ga_transpose2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_transpose2_SOURCES) \
+	$(global_testing_unit_tests_ga_transpose3_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_transpose3_SOURCES) \
+	$(global_testing_unit_tests_ga_zero_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_zero_SOURCES) \
+	$(global_testing_unit_tests_ga_zerodiagonal_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_zerodiagonal_SOURCES) \
+	$(global_testing_unit_tests_ga_zeropatch_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_zeropatch_SOURCES) \
+	$(global_testing_unit_tests_ga_zeropatch2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ga_zeropatch2_SOURCES) \
+	$(global_testing_unit_tests_irregular_array_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_irregular_array_SOURCES) \
+	$(global_testing_unit_tests_ld_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_ld_SOURCES) \
+	$(global_testing_unit_tests_multprocs_data_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_multprocs_data_SOURCES) \
+	$(global_testing_unit_tests_nb_acc_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_nb_acc_SOURCES) \
+	$(global_testing_unit_tests_nb_put_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_nb_put_SOURCES) \
+	$(global_testing_unit_tests_nb_put2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_nb_put2_SOURCES) \
+	$(global_testing_unit_tests_overlap_comm_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_overlap_comm_SOURCES) \
+	$(global_testing_unit_tests_overlap_data_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_overlap_data_SOURCES) \
+	$(global_testing_unit_tests_overlap_data2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_overlap_data2_SOURCES) \
+	$(global_testing_unit_tests_overlap_getdata_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_overlap_getdata_SOURCES) \
+	$(global_testing_unit_tests_overlap_init_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_overlap_init_SOURCES) \
+	$(global_testing_unit_tests_overlap_nbputget_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_overlap_nbputget_SOURCES) \
+	$(global_testing_unit_tests_overlap_nbputget2_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_overlap_nbputget2_SOURCES) \
+	$(global_testing_unit_tests_overlap_putget_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_overlap_putget_SOURCES) \
+	$(global_testing_unit_tests_passvalue_array_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_passvalue_array_SOURCES) \
+	$(global_testing_unit_tests_passvalue_dbl_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_passvalue_dbl_SOURCES) \
+	$(global_testing_unit_tests_print_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_print_SOURCES) \
+	$(global_testing_unit_tests_put_get_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_put_get_SOURCES) \
+	$(global_testing_unit_tests_scatter_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_scatter_SOURCES) \
+	$(global_testing_unit_tests_test_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_test_SOURCES) \
+	$(global_testing_unit_tests_testc_SOURCES) \
+	$(nodist_EXTRA_global_testing_unit_tests_testc_SOURCES) \
 	$(global_testing_unpackc_SOURCES) \
 	$(nodist_EXTRA_global_testing_unpackc_SOURCES) \
 	$(global_trace_adjust_SOURCES) \
@@ -2173,6 +3443,112 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_testsolve_SOURCES_DIST) \
 	$(am__global_testing_testspd_SOURCES_DIST) \
 	$(am__global_testing_types_test_SOURCES_DIST) \
+	$(global_testing_unit_tests_3d_array_SOURCES) \
+	$(global_testing_unit_tests_3d_passvalue_SOURCES) \
+	$(global_testing_unit_tests_3d_transpose_SOURCES) \
+	$(global_testing_unit_tests_accumulate_data_SOURCES) \
+	$(global_testing_unit_tests_array_SOURCES) \
+	$(global_testing_unit_tests_diagonal_pass_SOURCES) \
+	$(global_testing_unit_tests_ga_acc_SOURCES) \
+	$(global_testing_unit_tests_ga_add_SOURCES) \
+	$(global_testing_unit_tests_ga_add_constant_SOURCES) \
+	$(global_testing_unit_tests_ga_add_constantpatch_SOURCES) \
+	$(global_testing_unit_tests_ga_add_diagonal_SOURCES) \
+	$(global_testing_unit_tests_ga_add_patch_SOURCES) \
+	$(global_testing_unit_tests_ga_copy_SOURCES) \
+	$(global_testing_unit_tests_ga_copy2_SOURCES) \
+	$(global_testing_unit_tests_ga_copy3_SOURCES) \
+	$(global_testing_unit_tests_ga_copypatch_SOURCES) \
+	$(global_testing_unit_tests_ga_copypatch2_SOURCES) \
+	$(global_testing_unit_tests_ga_create_SOURCES) \
+	$(global_testing_unit_tests_ga_create1_SOURCES) \
+	$(global_testing_unit_tests_ga_create2_SOURCES) \
+	$(global_testing_unit_tests_ga_create3_SOURCES) \
+	$(global_testing_unit_tests_ga_create_handle_SOURCES) \
+	$(global_testing_unit_tests_ga_create_irreg_SOURCES) \
+	$(global_testing_unit_tests_ga_create_irreg2_SOURCES) \
+	$(global_testing_unit_tests_ga_create_irreg3_SOURCES) \
+	$(global_testing_unit_tests_ga_destroy_SOURCES) \
+	$(global_testing_unit_tests_ga_dgop_SOURCES) \
+	$(global_testing_unit_tests_ga_dot_SOURCES) \
+	$(global_testing_unit_tests_ga_duplicate_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_divide_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_dividepatch_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_maximum_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_maximumpatch_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_minimum_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_minimumpatch_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_multiply_SOURCES) \
+	$(global_testing_unit_tests_ga_elem_multiplypatch_SOURCES) \
+	$(global_testing_unit_tests_ga_fill_SOURCES) \
+	$(global_testing_unit_tests_ga_fillpatch_SOURCES) \
+	$(global_testing_unit_tests_ga_fillpatch1_SOURCES) \
+	$(global_testing_unit_tests_ga_gather_SOURCES) \
+	$(global_testing_unit_tests_ga_gather2_SOURCES) \
+	$(global_testing_unit_tests_ga_gather3_SOURCES) \
+	$(global_testing_unit_tests_ga_get_SOURCES) \
+	$(global_testing_unit_tests_ga_get_blockinfo_SOURCES) \
+	$(global_testing_unit_tests_ga_get_diagonal_SOURCES) \
+	$(global_testing_unit_tests_ga_igop_SOURCES) \
+	$(global_testing_unit_tests_ga_igop2_SOURCES) \
+	$(global_testing_unit_tests_ga_inquire_SOURCES) \
+	$(global_testing_unit_tests_ga_intialize_SOURCES) \
+	$(global_testing_unit_tests_ga_lgop_SOURCES) \
+	$(global_testing_unit_tests_ga_median_SOURCES) \
+	$(global_testing_unit_tests_ga_ndim_SOURCES) \
+	$(global_testing_unit_tests_ga_ndim2_SOURCES) \
+	$(global_testing_unit_tests_ga_nnodes_SOURCES) \
+	$(global_testing_unit_tests_ga_nodeid_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_create_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_create2_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_create3_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_create4_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_create5_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_destroy_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_destroy2_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_nnodes_nodeid_SOURCES) \
+	$(global_testing_unit_tests_ga_pgroup_setdefault_SOURCES) \
+	$(global_testing_unit_tests_ga_put_SOURCES) \
+	$(global_testing_unit_tests_ga_put2_SOURCES) \
+	$(global_testing_unit_tests_ga_scale_SOURCES) \
+	$(global_testing_unit_tests_ga_scale2_SOURCES) \
+	$(global_testing_unit_tests_ga_scale_cols_SOURCES) \
+	$(global_testing_unit_tests_ga_scale_patch_SOURCES) \
+	$(global_testing_unit_tests_ga_scale_rows_SOURCES) \
+	$(global_testing_unit_tests_ga_scatter_SOURCES) \
+	$(global_testing_unit_tests_ga_set_data_SOURCES) \
+	$(global_testing_unit_tests_ga_set_diagonal_SOURCES) \
+	$(global_testing_unit_tests_ga_set_restricted_SOURCES) \
+	$(global_testing_unit_tests_ga_solve_SOURCES) \
+	$(global_testing_unit_tests_ga_sync_SOURCES) \
+	$(global_testing_unit_tests_ga_transpose_SOURCES) \
+	$(global_testing_unit_tests_ga_transpose2_SOURCES) \
+	$(global_testing_unit_tests_ga_transpose3_SOURCES) \
+	$(global_testing_unit_tests_ga_zero_SOURCES) \
+	$(global_testing_unit_tests_ga_zerodiagonal_SOURCES) \
+	$(global_testing_unit_tests_ga_zeropatch_SOURCES) \
+	$(global_testing_unit_tests_ga_zeropatch2_SOURCES) \
+	$(global_testing_unit_tests_irregular_array_SOURCES) \
+	$(global_testing_unit_tests_ld_SOURCES) \
+	$(global_testing_unit_tests_multprocs_data_SOURCES) \
+	$(global_testing_unit_tests_nb_acc_SOURCES) \
+	$(global_testing_unit_tests_nb_put_SOURCES) \
+	$(global_testing_unit_tests_nb_put2_SOURCES) \
+	$(global_testing_unit_tests_overlap_comm_SOURCES) \
+	$(global_testing_unit_tests_overlap_data_SOURCES) \
+	$(global_testing_unit_tests_overlap_data2_SOURCES) \
+	$(global_testing_unit_tests_overlap_getdata_SOURCES) \
+	$(global_testing_unit_tests_overlap_init_SOURCES) \
+	$(global_testing_unit_tests_overlap_nbputget_SOURCES) \
+	$(global_testing_unit_tests_overlap_nbputget2_SOURCES) \
+	$(global_testing_unit_tests_overlap_putget_SOURCES) \
+	$(global_testing_unit_tests_passvalue_array_SOURCES) \
+	$(global_testing_unit_tests_passvalue_dbl_SOURCES) \
+	$(global_testing_unit_tests_print_SOURCES) \
+	$(global_testing_unit_tests_put_get_SOURCES) \
+	$(global_testing_unit_tests_scatter_SOURCES) \
+	$(global_testing_unit_tests_test_SOURCES) \
+	$(global_testing_unit_tests_testc_SOURCES) \
 	$(am__global_testing_unpackc_SOURCES_DIST) \
 	$(global_trace_adjust_SOURCES) \
 	$(global_trace_collisions_SOURCES) \
@@ -2718,6 +4094,113 @@ GLOBAL_PARALLEL_TESTS_XFAIL =
 GLOBAL_TESTS = $(GLOBAL_SERIAL_TESTS) $(GLOBAL_PARALLEL_TESTS)
 GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
 #GLOBAL_PARALLEL_TESTS += global/testing/ipc_clean$(EXEEXT)
+
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/3d_array$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/3d_passvalue$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/3d_transpose$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/accumulate_data$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/array$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/diagonal_pass$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_acc$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_add$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_add_constant$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_add_constantpatch$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_add_diagonal$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_add_patch$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_copy2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_copy3$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_copy$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_copypatch2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_copypatch$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_create1$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_create2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_create3$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_create$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_create_handle$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_create_irreg2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_create_irreg3$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_create_irreg$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_destroy$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_dgop$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_dot$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_duplicate$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_elem_divide$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_elem_dividepatch$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_elem_maximum$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_elem_maximumpatch$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_elem_minimum$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_elem_minimumpatch$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_elem_multiply$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_elem_multiplypatch$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_fill$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_fillpatch1$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_fillpatch$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_gather2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_gather3$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_gather$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_get_blockinfo$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_get$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_get_diagonal$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_igop2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_igop$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_inquire$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_intialize$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_lgop$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_median$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_ndim2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_ndim$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_nnodes$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_nodeid$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_pgroup_create2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_pgroup_create3$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_pgroup_create4$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_pgroup_create5$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_pgroup_create$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_pgroup_destroy2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_pgroup_destroy$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_pgroup_nnodes_nodeid$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_pgroup_setdefault$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_put2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_put$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_scale2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_scale$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_scale_cols$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_scale_patch$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_scale_rows$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_scatter$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_set_data$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_set_diagonal$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_set_restricted$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_solve$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_sync$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_transpose2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_transpose3$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_transpose$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_zero$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_zerodiagonal$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_zeropatch2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ga_zeropatch$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/irregular_array$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/ld$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/multprocs_data$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/nb_acc$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/nb_put2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/nb_put$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/overlap_comm$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/overlap_data2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/overlap_data$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/overlap_getdata$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/overlap_init$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/overlap_nbputget2$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/overlap_nbputget$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/overlap_putget$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/passvalue_array$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/passvalue_dbl$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/print$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/put-get$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/scatter$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/test$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/unit-tests/testc$(EXEEXT)
 @HAVE_M4_TRUE@GLOBAL_TESTING_M4_DEPS =  \
 @HAVE_M4_TRUE@	global/testing/ngatest_src/ndim_GA_FILL.src \
 @HAVE_M4_TRUE@	global/testing/ngatest_src/ndim_main.src \
@@ -2810,6 +4293,112 @@ nodist_global_testing_nga_periodic_SOURCES = global/testing/nga-periodic.F $(gts
 nodist_global_testing_nga_scatter_SOURCES = global/testing/nga-scatter.F $(gtsrc)
 nodist_global_testing_nga_util_SOURCES = global/testing/nga-util.F $(gtsrc)
 nodist_global_testing_ngatest_SOURCES = global/testing/ngatest.F $(gtsrc)
+global_testing_unit_tests_3d_array_SOURCES = global/testing/unit-tests/3d_array.c
+global_testing_unit_tests_3d_passvalue_SOURCES = global/testing/unit-tests/3d_passvalue.c
+global_testing_unit_tests_3d_transpose_SOURCES = global/testing/unit-tests/3d_transpose.c
+global_testing_unit_tests_accumulate_data_SOURCES = global/testing/unit-tests/accumulate_data.c
+global_testing_unit_tests_array_SOURCES = global/testing/unit-tests/array.c
+global_testing_unit_tests_diagonal_pass_SOURCES = global/testing/unit-tests/diagonal_pass.c
+global_testing_unit_tests_ga_acc_SOURCES = global/testing/unit-tests/ga_acc.c
+global_testing_unit_tests_ga_add_SOURCES = global/testing/unit-tests/ga_add.c
+global_testing_unit_tests_ga_add_constant_SOURCES = global/testing/unit-tests/ga_add_constant.c
+global_testing_unit_tests_ga_add_constantpatch_SOURCES = global/testing/unit-tests/ga_add_constantpatch.c
+global_testing_unit_tests_ga_add_diagonal_SOURCES = global/testing/unit-tests/ga_add_diagonal.c
+global_testing_unit_tests_ga_add_patch_SOURCES = global/testing/unit-tests/ga_add_patch.c
+global_testing_unit_tests_ga_copy2_SOURCES = global/testing/unit-tests/ga_copy2.c
+global_testing_unit_tests_ga_copy3_SOURCES = global/testing/unit-tests/ga_copy3.c
+global_testing_unit_tests_ga_copy_SOURCES = global/testing/unit-tests/ga_copy.c
+global_testing_unit_tests_ga_copypatch2_SOURCES = global/testing/unit-tests/ga_copypatch2.c
+global_testing_unit_tests_ga_copypatch_SOURCES = global/testing/unit-tests/ga_copypatch.c
+global_testing_unit_tests_ga_create1_SOURCES = global/testing/unit-tests/ga_create1.c
+global_testing_unit_tests_ga_create2_SOURCES = global/testing/unit-tests/ga_create2.c
+global_testing_unit_tests_ga_create3_SOURCES = global/testing/unit-tests/ga_create3.c
+global_testing_unit_tests_ga_create_SOURCES = global/testing/unit-tests/ga_create.c
+global_testing_unit_tests_ga_create_handle_SOURCES = global/testing/unit-tests/ga_create_handle.c
+global_testing_unit_tests_ga_create_irreg2_SOURCES = global/testing/unit-tests/ga_create_irreg2.c
+global_testing_unit_tests_ga_create_irreg3_SOURCES = global/testing/unit-tests/ga_create_irreg3.c
+global_testing_unit_tests_ga_create_irreg_SOURCES = global/testing/unit-tests/ga_create_irreg.c
+global_testing_unit_tests_ga_destroy_SOURCES = global/testing/unit-tests/ga_destroy.c
+global_testing_unit_tests_ga_dgop_SOURCES = global/testing/unit-tests/ga_dgop.c
+global_testing_unit_tests_ga_dot_SOURCES = global/testing/unit-tests/ga_dot.c
+global_testing_unit_tests_ga_duplicate_SOURCES = global/testing/unit-tests/ga_duplicate.c
+global_testing_unit_tests_ga_elem_divide_SOURCES = global/testing/unit-tests/ga_elem_divide.c
+global_testing_unit_tests_ga_elem_dividepatch_SOURCES = global/testing/unit-tests/ga_elem_dividepatch.c
+global_testing_unit_tests_ga_elem_maximum_SOURCES = global/testing/unit-tests/ga_elem_maximum.c
+global_testing_unit_tests_ga_elem_maximumpatch_SOURCES = global/testing/unit-tests/ga_elem_maximumpatch.c
+global_testing_unit_tests_ga_elem_minimum_SOURCES = global/testing/unit-tests/ga_elem_minimum.c
+global_testing_unit_tests_ga_elem_minimumpatch_SOURCES = global/testing/unit-tests/ga_elem_minimumpatch.c
+global_testing_unit_tests_ga_elem_multiply_SOURCES = global/testing/unit-tests/ga_elem_multiply.c
+global_testing_unit_tests_ga_elem_multiplypatch_SOURCES = global/testing/unit-tests/ga_elem_multiplypatch.c
+global_testing_unit_tests_ga_fill_SOURCES = global/testing/unit-tests/ga_fill.c
+global_testing_unit_tests_ga_fillpatch1_SOURCES = global/testing/unit-tests/ga_fillpatch1.c
+global_testing_unit_tests_ga_fillpatch_SOURCES = global/testing/unit-tests/ga_fillpatch.c
+global_testing_unit_tests_ga_gather2_SOURCES = global/testing/unit-tests/ga_gather2.c
+global_testing_unit_tests_ga_gather3_SOURCES = global/testing/unit-tests/ga_gather3.c
+global_testing_unit_tests_ga_gather_SOURCES = global/testing/unit-tests/ga_gather.c
+global_testing_unit_tests_ga_get_blockinfo_SOURCES = global/testing/unit-tests/ga_get_blockinfo.c
+global_testing_unit_tests_ga_get_SOURCES = global/testing/unit-tests/ga_get.c
+global_testing_unit_tests_ga_get_diagonal_SOURCES = global/testing/unit-tests/ga_get_diagonal.c
+global_testing_unit_tests_ga_igop2_SOURCES = global/testing/unit-tests/ga_igop2.c
+global_testing_unit_tests_ga_igop_SOURCES = global/testing/unit-tests/ga_igop.c
+global_testing_unit_tests_ga_inquire_SOURCES = global/testing/unit-tests/ga_inquire.c
+global_testing_unit_tests_ga_intialize_SOURCES = global/testing/unit-tests/ga_intialize.c
+global_testing_unit_tests_ga_lgop_SOURCES = global/testing/unit-tests/ga_lgop.c
+global_testing_unit_tests_ga_median_SOURCES = global/testing/unit-tests/ga_median.c
+global_testing_unit_tests_ga_ndim2_SOURCES = global/testing/unit-tests/ga_ndim2.c
+global_testing_unit_tests_ga_ndim_SOURCES = global/testing/unit-tests/ga_ndim.c
+global_testing_unit_tests_ga_nnodes_SOURCES = global/testing/unit-tests/ga_nnodes.c
+global_testing_unit_tests_ga_nodeid_SOURCES = global/testing/unit-tests/ga_nodeid.c
+global_testing_unit_tests_ga_pgroup_create2_SOURCES = global/testing/unit-tests/ga_pgroup_create2.c
+global_testing_unit_tests_ga_pgroup_create3_SOURCES = global/testing/unit-tests/ga_pgroup_create3.c
+global_testing_unit_tests_ga_pgroup_create4_SOURCES = global/testing/unit-tests/ga_pgroup_create4.c
+global_testing_unit_tests_ga_pgroup_create5_SOURCES = global/testing/unit-tests/ga_pgroup_create5.c
+global_testing_unit_tests_ga_pgroup_create_SOURCES = global/testing/unit-tests/ga_pgroup_create.c
+global_testing_unit_tests_ga_pgroup_destroy2_SOURCES = global/testing/unit-tests/ga_pgroup_destroy2.c
+global_testing_unit_tests_ga_pgroup_destroy_SOURCES = global/testing/unit-tests/ga_pgroup_destroy.c
+global_testing_unit_tests_ga_pgroup_nnodes_nodeid_SOURCES = global/testing/unit-tests/ga_pgroup_nnodes_nodeid.c
+global_testing_unit_tests_ga_pgroup_setdefault_SOURCES = global/testing/unit-tests/ga_pgroup_setdefault.c
+global_testing_unit_tests_ga_put2_SOURCES = global/testing/unit-tests/ga_put2.c
+global_testing_unit_tests_ga_put_SOURCES = global/testing/unit-tests/ga_put.c
+global_testing_unit_tests_ga_scale2_SOURCES = global/testing/unit-tests/ga_scale2.c
+global_testing_unit_tests_ga_scale_SOURCES = global/testing/unit-tests/ga_scale.c
+global_testing_unit_tests_ga_scale_cols_SOURCES = global/testing/unit-tests/ga_scale_cols.c
+global_testing_unit_tests_ga_scale_patch_SOURCES = global/testing/unit-tests/ga_scale_patch.c
+global_testing_unit_tests_ga_scale_rows_SOURCES = global/testing/unit-tests/ga_scale_rows.c
+global_testing_unit_tests_ga_scatter_SOURCES = global/testing/unit-tests/ga_scatter.c
+global_testing_unit_tests_ga_set_data_SOURCES = global/testing/unit-tests/ga_set_data.c
+global_testing_unit_tests_ga_set_diagonal_SOURCES = global/testing/unit-tests/ga_set_diagonal.c
+global_testing_unit_tests_ga_set_restricted_SOURCES = global/testing/unit-tests/ga_set_restricted.c
+global_testing_unit_tests_ga_solve_SOURCES = global/testing/unit-tests/ga_solve.c
+global_testing_unit_tests_ga_sync_SOURCES = global/testing/unit-tests/ga_sync.c
+global_testing_unit_tests_ga_transpose2_SOURCES = global/testing/unit-tests/ga_transpose2.c
+global_testing_unit_tests_ga_transpose3_SOURCES = global/testing/unit-tests/ga_transpose3.c
+global_testing_unit_tests_ga_transpose_SOURCES = global/testing/unit-tests/ga_transpose.c
+global_testing_unit_tests_ga_zero_SOURCES = global/testing/unit-tests/ga_zero.c
+global_testing_unit_tests_ga_zerodiagonal_SOURCES = global/testing/unit-tests/ga_zerodiagonal.c
+global_testing_unit_tests_ga_zeropatch2_SOURCES = global/testing/unit-tests/ga_zeropatch2.c
+global_testing_unit_tests_ga_zeropatch_SOURCES = global/testing/unit-tests/ga_zeropatch.c
+global_testing_unit_tests_irregular_array_SOURCES = global/testing/unit-tests/irregular_array.c
+global_testing_unit_tests_ld_SOURCES = global/testing/unit-tests/ld.c
+global_testing_unit_tests_multprocs_data_SOURCES = global/testing/unit-tests/multprocs_data.c
+global_testing_unit_tests_nb_acc_SOURCES = global/testing/unit-tests/nb_acc.c
+global_testing_unit_tests_nb_put2_SOURCES = global/testing/unit-tests/nb_put2.c
+global_testing_unit_tests_nb_put_SOURCES = global/testing/unit-tests/nb_put.c
+global_testing_unit_tests_overlap_comm_SOURCES = global/testing/unit-tests/overlap_comm.c
+global_testing_unit_tests_overlap_data2_SOURCES = global/testing/unit-tests/overlap_data2.c
+global_testing_unit_tests_overlap_data_SOURCES = global/testing/unit-tests/overlap_data.c
+global_testing_unit_tests_overlap_getdata_SOURCES = global/testing/unit-tests/overlap_getdata.c
+global_testing_unit_tests_overlap_init_SOURCES = global/testing/unit-tests/overlap_init.c
+global_testing_unit_tests_overlap_nbputget2_SOURCES = global/testing/unit-tests/overlap_nbputget2.c
+global_testing_unit_tests_overlap_nbputget_SOURCES = global/testing/unit-tests/overlap_nbputget.c
+global_testing_unit_tests_overlap_putget_SOURCES = global/testing/unit-tests/overlap_putget.c
+global_testing_unit_tests_passvalue_array_SOURCES = global/testing/unit-tests/passvalue_array.c
+global_testing_unit_tests_passvalue_dbl_SOURCES = global/testing/unit-tests/passvalue_dbl.c
+global_testing_unit_tests_print_SOURCES = global/testing/unit-tests/print.c
+global_testing_unit_tests_put_get_SOURCES = global/testing/unit-tests/put-get.c
+global_testing_unit_tests_scatter_SOURCES = global/testing/unit-tests/scatter.c
+global_testing_unit_tests_test_SOURCES = global/testing/unit-tests/test.c
+global_testing_unit_tests_testc_SOURCES = global/testing/unit-tests/testc.c
 global_testing_bin_LDFLAGS = $(FLDFLAGS)
 global_testing_blktest_LDFLAGS = $(FLDFLAGS)
 global_testing_d2test_LDFLAGS = $(FLDFLAGS)
@@ -2874,6 +4463,112 @@ nodist_EXTRA_global_testing_testmatmultc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmult_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmultrect_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_unpackc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_3d_array_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_3d_passvalue_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_3d_transpose_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_accumulate_data_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_array_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_diagonal_pass_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_acc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_add_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_add_constant_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_add_constantpatch_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_add_diagonal_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_add_patch_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_copy2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_copy3_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_copy_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_copypatch2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_copypatch_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_create1_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_create2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_create3_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_create_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_create_handle_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_create_irreg2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_create_irreg3_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_create_irreg_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_destroy_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_dgop_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_dot_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_duplicate_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_elem_divide_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_elem_dividepatch_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_elem_maximum_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_elem_maximumpatch_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_elem_minimum_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_elem_minimumpatch_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_elem_multiply_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_elem_multiplypatch_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_fill_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_fillpatch1_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_fillpatch_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_gather2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_gather3_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_gather_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_get_blockinfo_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_get_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_get_diagonal_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_igop2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_igop_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_inquire_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_intialize_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_lgop_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_median_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_ndim2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_ndim_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_nnodes_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_nodeid_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create3_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create4_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create5_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_pgroup_create_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_pgroup_destroy2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_pgroup_destroy_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_pgroup_nnodes_nodeid_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_pgroup_setdefault_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_put2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_put_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_scale2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_scale_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_scale_cols_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_scale_patch_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_scale_rows_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_scatter_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_set_data_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_set_diagonal_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_set_restricted_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_solve_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_sync_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_transpose2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_transpose3_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_transpose_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_zero_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_zerodiagonal_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_zeropatch2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ga_zeropatch_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_irregular_array_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_ld_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_multprocs_data_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_nb_acc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_nb_put2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_nb_put_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_overlap_comm_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_overlap_data2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_overlap_data_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_overlap_getdata_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_overlap_init_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_overlap_nbputget2_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_overlap_nbputget_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_overlap_putget_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_passvalue_array_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_passvalue_dbl_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_print_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_put_get_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_scatter_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_unit_tests_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 #GLOBAL_PARALLEL_TESTS += global/examples/conjugate_gradient/ga_cg$(EXEEXT) # needs input
 #GLOBAL_PARALLEL_TESTS += global/examples/md_cluster/grp_sim$(EXEEXT) # needs input
 #GLOBAL_PARALLEL_TESTS += global/examples/scf/scf$(EXEEXT) # needs input
@@ -4067,6 +5762,648 @@ global/testing/types-test.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/types_test$(EXEEXT): $(global_testing_types_test_OBJECTS) $(global_testing_types_test_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/types_test$(EXEEXT)
 	$(AM_V_F77LD)$(global_testing_types_test_LINK) $(global_testing_types_test_OBJECTS) $(global_testing_types_test_LDADD) $(LIBS)
+global/testing/unit-tests/$(am__dirstamp):
+	@$(MKDIR_P) global/testing/unit-tests
+	@: > global/testing/unit-tests/$(am__dirstamp)
+global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) global/testing/unit-tests/$(DEPDIR)
+	@: > global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/3d_array.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/3d_array$(EXEEXT): $(global_testing_unit_tests_3d_array_OBJECTS) $(global_testing_unit_tests_3d_array_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/3d_array$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_3d_array_OBJECTS) $(global_testing_unit_tests_3d_array_LDADD) $(LIBS)
+global/testing/unit-tests/3d_passvalue.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/3d_passvalue$(EXEEXT): $(global_testing_unit_tests_3d_passvalue_OBJECTS) $(global_testing_unit_tests_3d_passvalue_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/3d_passvalue$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_3d_passvalue_OBJECTS) $(global_testing_unit_tests_3d_passvalue_LDADD) $(LIBS)
+global/testing/unit-tests/3d_transpose.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/3d_transpose$(EXEEXT): $(global_testing_unit_tests_3d_transpose_OBJECTS) $(global_testing_unit_tests_3d_transpose_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/3d_transpose$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_3d_transpose_OBJECTS) $(global_testing_unit_tests_3d_transpose_LDADD) $(LIBS)
+global/testing/unit-tests/accumulate_data.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/accumulate_data$(EXEEXT): $(global_testing_unit_tests_accumulate_data_OBJECTS) $(global_testing_unit_tests_accumulate_data_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/accumulate_data$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_accumulate_data_OBJECTS) $(global_testing_unit_tests_accumulate_data_LDADD) $(LIBS)
+global/testing/unit-tests/array.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/array$(EXEEXT): $(global_testing_unit_tests_array_OBJECTS) $(global_testing_unit_tests_array_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/array$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_array_OBJECTS) $(global_testing_unit_tests_array_LDADD) $(LIBS)
+global/testing/unit-tests/diagonal_pass.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/diagonal_pass$(EXEEXT): $(global_testing_unit_tests_diagonal_pass_OBJECTS) $(global_testing_unit_tests_diagonal_pass_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/diagonal_pass$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_diagonal_pass_OBJECTS) $(global_testing_unit_tests_diagonal_pass_LDADD) $(LIBS)
+global/testing/unit-tests/ga_acc.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_acc$(EXEEXT): $(global_testing_unit_tests_ga_acc_OBJECTS) $(global_testing_unit_tests_ga_acc_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_acc$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_acc_OBJECTS) $(global_testing_unit_tests_ga_acc_LDADD) $(LIBS)
+global/testing/unit-tests/ga_add.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_add$(EXEEXT): $(global_testing_unit_tests_ga_add_OBJECTS) $(global_testing_unit_tests_ga_add_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_add$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_add_OBJECTS) $(global_testing_unit_tests_ga_add_LDADD) $(LIBS)
+global/testing/unit-tests/ga_add_constant.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_add_constant$(EXEEXT): $(global_testing_unit_tests_ga_add_constant_OBJECTS) $(global_testing_unit_tests_ga_add_constant_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_add_constant$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_add_constant_OBJECTS) $(global_testing_unit_tests_ga_add_constant_LDADD) $(LIBS)
+global/testing/unit-tests/ga_add_constantpatch.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_add_constantpatch$(EXEEXT): $(global_testing_unit_tests_ga_add_constantpatch_OBJECTS) $(global_testing_unit_tests_ga_add_constantpatch_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_add_constantpatch$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_add_constantpatch_OBJECTS) $(global_testing_unit_tests_ga_add_constantpatch_LDADD) $(LIBS)
+global/testing/unit-tests/ga_add_diagonal.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_add_diagonal$(EXEEXT): $(global_testing_unit_tests_ga_add_diagonal_OBJECTS) $(global_testing_unit_tests_ga_add_diagonal_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_add_diagonal$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_add_diagonal_OBJECTS) $(global_testing_unit_tests_ga_add_diagonal_LDADD) $(LIBS)
+global/testing/unit-tests/ga_add_patch.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_add_patch$(EXEEXT): $(global_testing_unit_tests_ga_add_patch_OBJECTS) $(global_testing_unit_tests_ga_add_patch_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_add_patch$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_add_patch_OBJECTS) $(global_testing_unit_tests_ga_add_patch_LDADD) $(LIBS)
+global/testing/unit-tests/ga_copy.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_copy$(EXEEXT): $(global_testing_unit_tests_ga_copy_OBJECTS) $(global_testing_unit_tests_ga_copy_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_copy$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_copy_OBJECTS) $(global_testing_unit_tests_ga_copy_LDADD) $(LIBS)
+global/testing/unit-tests/ga_copy2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_copy2$(EXEEXT): $(global_testing_unit_tests_ga_copy2_OBJECTS) $(global_testing_unit_tests_ga_copy2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_copy2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_copy2_OBJECTS) $(global_testing_unit_tests_ga_copy2_LDADD) $(LIBS)
+global/testing/unit-tests/ga_copy3.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_copy3$(EXEEXT): $(global_testing_unit_tests_ga_copy3_OBJECTS) $(global_testing_unit_tests_ga_copy3_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_copy3$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_copy3_OBJECTS) $(global_testing_unit_tests_ga_copy3_LDADD) $(LIBS)
+global/testing/unit-tests/ga_copypatch.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_copypatch$(EXEEXT): $(global_testing_unit_tests_ga_copypatch_OBJECTS) $(global_testing_unit_tests_ga_copypatch_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_copypatch$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_copypatch_OBJECTS) $(global_testing_unit_tests_ga_copypatch_LDADD) $(LIBS)
+global/testing/unit-tests/ga_copypatch2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_copypatch2$(EXEEXT): $(global_testing_unit_tests_ga_copypatch2_OBJECTS) $(global_testing_unit_tests_ga_copypatch2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_copypatch2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_copypatch2_OBJECTS) $(global_testing_unit_tests_ga_copypatch2_LDADD) $(LIBS)
+global/testing/unit-tests/ga_create.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_create$(EXEEXT): $(global_testing_unit_tests_ga_create_OBJECTS) $(global_testing_unit_tests_ga_create_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_create$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_create_OBJECTS) $(global_testing_unit_tests_ga_create_LDADD) $(LIBS)
+global/testing/unit-tests/ga_create1.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_create1$(EXEEXT): $(global_testing_unit_tests_ga_create1_OBJECTS) $(global_testing_unit_tests_ga_create1_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_create1$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_create1_OBJECTS) $(global_testing_unit_tests_ga_create1_LDADD) $(LIBS)
+global/testing/unit-tests/ga_create2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_create2$(EXEEXT): $(global_testing_unit_tests_ga_create2_OBJECTS) $(global_testing_unit_tests_ga_create2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_create2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_create2_OBJECTS) $(global_testing_unit_tests_ga_create2_LDADD) $(LIBS)
+global/testing/unit-tests/ga_create3.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_create3$(EXEEXT): $(global_testing_unit_tests_ga_create3_OBJECTS) $(global_testing_unit_tests_ga_create3_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_create3$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_create3_OBJECTS) $(global_testing_unit_tests_ga_create3_LDADD) $(LIBS)
+global/testing/unit-tests/ga_create_handle.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_create_handle$(EXEEXT): $(global_testing_unit_tests_ga_create_handle_OBJECTS) $(global_testing_unit_tests_ga_create_handle_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_create_handle$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_create_handle_OBJECTS) $(global_testing_unit_tests_ga_create_handle_LDADD) $(LIBS)
+global/testing/unit-tests/ga_create_irreg.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_create_irreg$(EXEEXT): $(global_testing_unit_tests_ga_create_irreg_OBJECTS) $(global_testing_unit_tests_ga_create_irreg_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_create_irreg$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_create_irreg_OBJECTS) $(global_testing_unit_tests_ga_create_irreg_LDADD) $(LIBS)
+global/testing/unit-tests/ga_create_irreg2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_create_irreg2$(EXEEXT): $(global_testing_unit_tests_ga_create_irreg2_OBJECTS) $(global_testing_unit_tests_ga_create_irreg2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_create_irreg2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_create_irreg2_OBJECTS) $(global_testing_unit_tests_ga_create_irreg2_LDADD) $(LIBS)
+global/testing/unit-tests/ga_create_irreg3.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_create_irreg3$(EXEEXT): $(global_testing_unit_tests_ga_create_irreg3_OBJECTS) $(global_testing_unit_tests_ga_create_irreg3_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_create_irreg3$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_create_irreg3_OBJECTS) $(global_testing_unit_tests_ga_create_irreg3_LDADD) $(LIBS)
+global/testing/unit-tests/ga_destroy.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_destroy$(EXEEXT): $(global_testing_unit_tests_ga_destroy_OBJECTS) $(global_testing_unit_tests_ga_destroy_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_destroy$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_destroy_OBJECTS) $(global_testing_unit_tests_ga_destroy_LDADD) $(LIBS)
+global/testing/unit-tests/ga_dgop.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_dgop$(EXEEXT): $(global_testing_unit_tests_ga_dgop_OBJECTS) $(global_testing_unit_tests_ga_dgop_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_dgop$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_dgop_OBJECTS) $(global_testing_unit_tests_ga_dgop_LDADD) $(LIBS)
+global/testing/unit-tests/ga_dot.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_dot$(EXEEXT): $(global_testing_unit_tests_ga_dot_OBJECTS) $(global_testing_unit_tests_ga_dot_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_dot$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_dot_OBJECTS) $(global_testing_unit_tests_ga_dot_LDADD) $(LIBS)
+global/testing/unit-tests/ga_duplicate.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_duplicate$(EXEEXT): $(global_testing_unit_tests_ga_duplicate_OBJECTS) $(global_testing_unit_tests_ga_duplicate_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_duplicate$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_duplicate_OBJECTS) $(global_testing_unit_tests_ga_duplicate_LDADD) $(LIBS)
+global/testing/unit-tests/ga_elem_divide.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_elem_divide$(EXEEXT): $(global_testing_unit_tests_ga_elem_divide_OBJECTS) $(global_testing_unit_tests_ga_elem_divide_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_elem_divide$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_elem_divide_OBJECTS) $(global_testing_unit_tests_ga_elem_divide_LDADD) $(LIBS)
+global/testing/unit-tests/ga_elem_dividepatch.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_elem_dividepatch$(EXEEXT): $(global_testing_unit_tests_ga_elem_dividepatch_OBJECTS) $(global_testing_unit_tests_ga_elem_dividepatch_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_elem_dividepatch$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_elem_dividepatch_OBJECTS) $(global_testing_unit_tests_ga_elem_dividepatch_LDADD) $(LIBS)
+global/testing/unit-tests/ga_elem_maximum.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_elem_maximum$(EXEEXT): $(global_testing_unit_tests_ga_elem_maximum_OBJECTS) $(global_testing_unit_tests_ga_elem_maximum_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_elem_maximum$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_elem_maximum_OBJECTS) $(global_testing_unit_tests_ga_elem_maximum_LDADD) $(LIBS)
+global/testing/unit-tests/ga_elem_maximumpatch.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_elem_maximumpatch$(EXEEXT): $(global_testing_unit_tests_ga_elem_maximumpatch_OBJECTS) $(global_testing_unit_tests_ga_elem_maximumpatch_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_elem_maximumpatch$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_elem_maximumpatch_OBJECTS) $(global_testing_unit_tests_ga_elem_maximumpatch_LDADD) $(LIBS)
+global/testing/unit-tests/ga_elem_minimum.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_elem_minimum$(EXEEXT): $(global_testing_unit_tests_ga_elem_minimum_OBJECTS) $(global_testing_unit_tests_ga_elem_minimum_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_elem_minimum$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_elem_minimum_OBJECTS) $(global_testing_unit_tests_ga_elem_minimum_LDADD) $(LIBS)
+global/testing/unit-tests/ga_elem_minimumpatch.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_elem_minimumpatch$(EXEEXT): $(global_testing_unit_tests_ga_elem_minimumpatch_OBJECTS) $(global_testing_unit_tests_ga_elem_minimumpatch_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_elem_minimumpatch$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_elem_minimumpatch_OBJECTS) $(global_testing_unit_tests_ga_elem_minimumpatch_LDADD) $(LIBS)
+global/testing/unit-tests/ga_elem_multiply.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_elem_multiply$(EXEEXT): $(global_testing_unit_tests_ga_elem_multiply_OBJECTS) $(global_testing_unit_tests_ga_elem_multiply_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_elem_multiply$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_elem_multiply_OBJECTS) $(global_testing_unit_tests_ga_elem_multiply_LDADD) $(LIBS)
+global/testing/unit-tests/ga_elem_multiplypatch.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_elem_multiplypatch$(EXEEXT): $(global_testing_unit_tests_ga_elem_multiplypatch_OBJECTS) $(global_testing_unit_tests_ga_elem_multiplypatch_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_elem_multiplypatch$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_elem_multiplypatch_OBJECTS) $(global_testing_unit_tests_ga_elem_multiplypatch_LDADD) $(LIBS)
+global/testing/unit-tests/ga_fill.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_fill$(EXEEXT): $(global_testing_unit_tests_ga_fill_OBJECTS) $(global_testing_unit_tests_ga_fill_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_fill$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_fill_OBJECTS) $(global_testing_unit_tests_ga_fill_LDADD) $(LIBS)
+global/testing/unit-tests/ga_fillpatch.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_fillpatch$(EXEEXT): $(global_testing_unit_tests_ga_fillpatch_OBJECTS) $(global_testing_unit_tests_ga_fillpatch_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_fillpatch$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_fillpatch_OBJECTS) $(global_testing_unit_tests_ga_fillpatch_LDADD) $(LIBS)
+global/testing/unit-tests/ga_fillpatch1.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_fillpatch1$(EXEEXT): $(global_testing_unit_tests_ga_fillpatch1_OBJECTS) $(global_testing_unit_tests_ga_fillpatch1_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_fillpatch1$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_fillpatch1_OBJECTS) $(global_testing_unit_tests_ga_fillpatch1_LDADD) $(LIBS)
+global/testing/unit-tests/ga_gather.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_gather$(EXEEXT): $(global_testing_unit_tests_ga_gather_OBJECTS) $(global_testing_unit_tests_ga_gather_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_gather$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_gather_OBJECTS) $(global_testing_unit_tests_ga_gather_LDADD) $(LIBS)
+global/testing/unit-tests/ga_gather2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_gather2$(EXEEXT): $(global_testing_unit_tests_ga_gather2_OBJECTS) $(global_testing_unit_tests_ga_gather2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_gather2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_gather2_OBJECTS) $(global_testing_unit_tests_ga_gather2_LDADD) $(LIBS)
+global/testing/unit-tests/ga_gather3.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_gather3$(EXEEXT): $(global_testing_unit_tests_ga_gather3_OBJECTS) $(global_testing_unit_tests_ga_gather3_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_gather3$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_gather3_OBJECTS) $(global_testing_unit_tests_ga_gather3_LDADD) $(LIBS)
+global/testing/unit-tests/ga_get.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_get$(EXEEXT): $(global_testing_unit_tests_ga_get_OBJECTS) $(global_testing_unit_tests_ga_get_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_get$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_get_OBJECTS) $(global_testing_unit_tests_ga_get_LDADD) $(LIBS)
+global/testing/unit-tests/ga_get_blockinfo.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_get_blockinfo$(EXEEXT): $(global_testing_unit_tests_ga_get_blockinfo_OBJECTS) $(global_testing_unit_tests_ga_get_blockinfo_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_get_blockinfo$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_get_blockinfo_OBJECTS) $(global_testing_unit_tests_ga_get_blockinfo_LDADD) $(LIBS)
+global/testing/unit-tests/ga_get_diagonal.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_get_diagonal$(EXEEXT): $(global_testing_unit_tests_ga_get_diagonal_OBJECTS) $(global_testing_unit_tests_ga_get_diagonal_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_get_diagonal$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_get_diagonal_OBJECTS) $(global_testing_unit_tests_ga_get_diagonal_LDADD) $(LIBS)
+global/testing/unit-tests/ga_igop.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_igop$(EXEEXT): $(global_testing_unit_tests_ga_igop_OBJECTS) $(global_testing_unit_tests_ga_igop_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_igop$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_igop_OBJECTS) $(global_testing_unit_tests_ga_igop_LDADD) $(LIBS)
+global/testing/unit-tests/ga_igop2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_igop2$(EXEEXT): $(global_testing_unit_tests_ga_igop2_OBJECTS) $(global_testing_unit_tests_ga_igop2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_igop2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_igop2_OBJECTS) $(global_testing_unit_tests_ga_igop2_LDADD) $(LIBS)
+global/testing/unit-tests/ga_inquire.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_inquire$(EXEEXT): $(global_testing_unit_tests_ga_inquire_OBJECTS) $(global_testing_unit_tests_ga_inquire_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_inquire$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_inquire_OBJECTS) $(global_testing_unit_tests_ga_inquire_LDADD) $(LIBS)
+global/testing/unit-tests/ga_intialize.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_intialize$(EXEEXT): $(global_testing_unit_tests_ga_intialize_OBJECTS) $(global_testing_unit_tests_ga_intialize_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_intialize$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_intialize_OBJECTS) $(global_testing_unit_tests_ga_intialize_LDADD) $(LIBS)
+global/testing/unit-tests/ga_lgop.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_lgop$(EXEEXT): $(global_testing_unit_tests_ga_lgop_OBJECTS) $(global_testing_unit_tests_ga_lgop_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_lgop$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_lgop_OBJECTS) $(global_testing_unit_tests_ga_lgop_LDADD) $(LIBS)
+global/testing/unit-tests/ga_median.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_median$(EXEEXT): $(global_testing_unit_tests_ga_median_OBJECTS) $(global_testing_unit_tests_ga_median_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_median$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_median_OBJECTS) $(global_testing_unit_tests_ga_median_LDADD) $(LIBS)
+global/testing/unit-tests/ga_ndim.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_ndim$(EXEEXT): $(global_testing_unit_tests_ga_ndim_OBJECTS) $(global_testing_unit_tests_ga_ndim_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_ndim$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_ndim_OBJECTS) $(global_testing_unit_tests_ga_ndim_LDADD) $(LIBS)
+global/testing/unit-tests/ga_ndim2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_ndim2$(EXEEXT): $(global_testing_unit_tests_ga_ndim2_OBJECTS) $(global_testing_unit_tests_ga_ndim2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_ndim2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_ndim2_OBJECTS) $(global_testing_unit_tests_ga_ndim2_LDADD) $(LIBS)
+global/testing/unit-tests/ga_nnodes.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_nnodes$(EXEEXT): $(global_testing_unit_tests_ga_nnodes_OBJECTS) $(global_testing_unit_tests_ga_nnodes_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_nnodes$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_nnodes_OBJECTS) $(global_testing_unit_tests_ga_nnodes_LDADD) $(LIBS)
+global/testing/unit-tests/ga_nodeid.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_nodeid$(EXEEXT): $(global_testing_unit_tests_ga_nodeid_OBJECTS) $(global_testing_unit_tests_ga_nodeid_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_nodeid$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_nodeid_OBJECTS) $(global_testing_unit_tests_ga_nodeid_LDADD) $(LIBS)
+global/testing/unit-tests/ga_pgroup_create.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_pgroup_create$(EXEEXT): $(global_testing_unit_tests_ga_pgroup_create_OBJECTS) $(global_testing_unit_tests_ga_pgroup_create_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_pgroup_create$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_pgroup_create_OBJECTS) $(global_testing_unit_tests_ga_pgroup_create_LDADD) $(LIBS)
+global/testing/unit-tests/ga_pgroup_create2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_pgroup_create2$(EXEEXT): $(global_testing_unit_tests_ga_pgroup_create2_OBJECTS) $(global_testing_unit_tests_ga_pgroup_create2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_pgroup_create2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_pgroup_create2_OBJECTS) $(global_testing_unit_tests_ga_pgroup_create2_LDADD) $(LIBS)
+global/testing/unit-tests/ga_pgroup_create3.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_pgroup_create3$(EXEEXT): $(global_testing_unit_tests_ga_pgroup_create3_OBJECTS) $(global_testing_unit_tests_ga_pgroup_create3_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_pgroup_create3$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_pgroup_create3_OBJECTS) $(global_testing_unit_tests_ga_pgroup_create3_LDADD) $(LIBS)
+global/testing/unit-tests/ga_pgroup_create4.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_pgroup_create4$(EXEEXT): $(global_testing_unit_tests_ga_pgroup_create4_OBJECTS) $(global_testing_unit_tests_ga_pgroup_create4_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_pgroup_create4$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_pgroup_create4_OBJECTS) $(global_testing_unit_tests_ga_pgroup_create4_LDADD) $(LIBS)
+global/testing/unit-tests/ga_pgroup_create5.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_pgroup_create5$(EXEEXT): $(global_testing_unit_tests_ga_pgroup_create5_OBJECTS) $(global_testing_unit_tests_ga_pgroup_create5_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_pgroup_create5$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_pgroup_create5_OBJECTS) $(global_testing_unit_tests_ga_pgroup_create5_LDADD) $(LIBS)
+global/testing/unit-tests/ga_pgroup_destroy.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_pgroup_destroy$(EXEEXT): $(global_testing_unit_tests_ga_pgroup_destroy_OBJECTS) $(global_testing_unit_tests_ga_pgroup_destroy_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_pgroup_destroy$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_pgroup_destroy_OBJECTS) $(global_testing_unit_tests_ga_pgroup_destroy_LDADD) $(LIBS)
+global/testing/unit-tests/ga_pgroup_destroy2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_pgroup_destroy2$(EXEEXT): $(global_testing_unit_tests_ga_pgroup_destroy2_OBJECTS) $(global_testing_unit_tests_ga_pgroup_destroy2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_pgroup_destroy2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_pgroup_destroy2_OBJECTS) $(global_testing_unit_tests_ga_pgroup_destroy2_LDADD) $(LIBS)
+global/testing/unit-tests/ga_pgroup_nnodes_nodeid.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_pgroup_nnodes_nodeid$(EXEEXT): $(global_testing_unit_tests_ga_pgroup_nnodes_nodeid_OBJECTS) $(global_testing_unit_tests_ga_pgroup_nnodes_nodeid_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_pgroup_nnodes_nodeid$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_pgroup_nnodes_nodeid_OBJECTS) $(global_testing_unit_tests_ga_pgroup_nnodes_nodeid_LDADD) $(LIBS)
+global/testing/unit-tests/ga_pgroup_setdefault.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_pgroup_setdefault$(EXEEXT): $(global_testing_unit_tests_ga_pgroup_setdefault_OBJECTS) $(global_testing_unit_tests_ga_pgroup_setdefault_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_pgroup_setdefault$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_pgroup_setdefault_OBJECTS) $(global_testing_unit_tests_ga_pgroup_setdefault_LDADD) $(LIBS)
+global/testing/unit-tests/ga_put.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_put$(EXEEXT): $(global_testing_unit_tests_ga_put_OBJECTS) $(global_testing_unit_tests_ga_put_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_put$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_put_OBJECTS) $(global_testing_unit_tests_ga_put_LDADD) $(LIBS)
+global/testing/unit-tests/ga_put2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_put2$(EXEEXT): $(global_testing_unit_tests_ga_put2_OBJECTS) $(global_testing_unit_tests_ga_put2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_put2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_put2_OBJECTS) $(global_testing_unit_tests_ga_put2_LDADD) $(LIBS)
+global/testing/unit-tests/ga_scale.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_scale$(EXEEXT): $(global_testing_unit_tests_ga_scale_OBJECTS) $(global_testing_unit_tests_ga_scale_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_scale$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_scale_OBJECTS) $(global_testing_unit_tests_ga_scale_LDADD) $(LIBS)
+global/testing/unit-tests/ga_scale2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_scale2$(EXEEXT): $(global_testing_unit_tests_ga_scale2_OBJECTS) $(global_testing_unit_tests_ga_scale2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_scale2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_scale2_OBJECTS) $(global_testing_unit_tests_ga_scale2_LDADD) $(LIBS)
+global/testing/unit-tests/ga_scale_cols.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_scale_cols$(EXEEXT): $(global_testing_unit_tests_ga_scale_cols_OBJECTS) $(global_testing_unit_tests_ga_scale_cols_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_scale_cols$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_scale_cols_OBJECTS) $(global_testing_unit_tests_ga_scale_cols_LDADD) $(LIBS)
+global/testing/unit-tests/ga_scale_patch.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_scale_patch$(EXEEXT): $(global_testing_unit_tests_ga_scale_patch_OBJECTS) $(global_testing_unit_tests_ga_scale_patch_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_scale_patch$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_scale_patch_OBJECTS) $(global_testing_unit_tests_ga_scale_patch_LDADD) $(LIBS)
+global/testing/unit-tests/ga_scale_rows.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_scale_rows$(EXEEXT): $(global_testing_unit_tests_ga_scale_rows_OBJECTS) $(global_testing_unit_tests_ga_scale_rows_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_scale_rows$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_scale_rows_OBJECTS) $(global_testing_unit_tests_ga_scale_rows_LDADD) $(LIBS)
+global/testing/unit-tests/ga_scatter.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_scatter$(EXEEXT): $(global_testing_unit_tests_ga_scatter_OBJECTS) $(global_testing_unit_tests_ga_scatter_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_scatter$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_scatter_OBJECTS) $(global_testing_unit_tests_ga_scatter_LDADD) $(LIBS)
+global/testing/unit-tests/ga_set_data.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_set_data$(EXEEXT): $(global_testing_unit_tests_ga_set_data_OBJECTS) $(global_testing_unit_tests_ga_set_data_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_set_data$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_set_data_OBJECTS) $(global_testing_unit_tests_ga_set_data_LDADD) $(LIBS)
+global/testing/unit-tests/ga_set_diagonal.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_set_diagonal$(EXEEXT): $(global_testing_unit_tests_ga_set_diagonal_OBJECTS) $(global_testing_unit_tests_ga_set_diagonal_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_set_diagonal$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_set_diagonal_OBJECTS) $(global_testing_unit_tests_ga_set_diagonal_LDADD) $(LIBS)
+global/testing/unit-tests/ga_set_restricted.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_set_restricted$(EXEEXT): $(global_testing_unit_tests_ga_set_restricted_OBJECTS) $(global_testing_unit_tests_ga_set_restricted_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_set_restricted$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_set_restricted_OBJECTS) $(global_testing_unit_tests_ga_set_restricted_LDADD) $(LIBS)
+global/testing/unit-tests/ga_solve.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_solve$(EXEEXT): $(global_testing_unit_tests_ga_solve_OBJECTS) $(global_testing_unit_tests_ga_solve_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_solve$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_solve_OBJECTS) $(global_testing_unit_tests_ga_solve_LDADD) $(LIBS)
+global/testing/unit-tests/ga_sync.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_sync$(EXEEXT): $(global_testing_unit_tests_ga_sync_OBJECTS) $(global_testing_unit_tests_ga_sync_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_sync$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_sync_OBJECTS) $(global_testing_unit_tests_ga_sync_LDADD) $(LIBS)
+global/testing/unit-tests/ga_transpose.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_transpose$(EXEEXT): $(global_testing_unit_tests_ga_transpose_OBJECTS) $(global_testing_unit_tests_ga_transpose_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_transpose$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_transpose_OBJECTS) $(global_testing_unit_tests_ga_transpose_LDADD) $(LIBS)
+global/testing/unit-tests/ga_transpose2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_transpose2$(EXEEXT): $(global_testing_unit_tests_ga_transpose2_OBJECTS) $(global_testing_unit_tests_ga_transpose2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_transpose2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_transpose2_OBJECTS) $(global_testing_unit_tests_ga_transpose2_LDADD) $(LIBS)
+global/testing/unit-tests/ga_transpose3.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_transpose3$(EXEEXT): $(global_testing_unit_tests_ga_transpose3_OBJECTS) $(global_testing_unit_tests_ga_transpose3_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_transpose3$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_transpose3_OBJECTS) $(global_testing_unit_tests_ga_transpose3_LDADD) $(LIBS)
+global/testing/unit-tests/ga_zero.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_zero$(EXEEXT): $(global_testing_unit_tests_ga_zero_OBJECTS) $(global_testing_unit_tests_ga_zero_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_zero$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_zero_OBJECTS) $(global_testing_unit_tests_ga_zero_LDADD) $(LIBS)
+global/testing/unit-tests/ga_zerodiagonal.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_zerodiagonal$(EXEEXT): $(global_testing_unit_tests_ga_zerodiagonal_OBJECTS) $(global_testing_unit_tests_ga_zerodiagonal_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_zerodiagonal$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_zerodiagonal_OBJECTS) $(global_testing_unit_tests_ga_zerodiagonal_LDADD) $(LIBS)
+global/testing/unit-tests/ga_zeropatch.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_zeropatch$(EXEEXT): $(global_testing_unit_tests_ga_zeropatch_OBJECTS) $(global_testing_unit_tests_ga_zeropatch_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_zeropatch$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_zeropatch_OBJECTS) $(global_testing_unit_tests_ga_zeropatch_LDADD) $(LIBS)
+global/testing/unit-tests/ga_zeropatch2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ga_zeropatch2$(EXEEXT): $(global_testing_unit_tests_ga_zeropatch2_OBJECTS) $(global_testing_unit_tests_ga_zeropatch2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ga_zeropatch2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ga_zeropatch2_OBJECTS) $(global_testing_unit_tests_ga_zeropatch2_LDADD) $(LIBS)
+global/testing/unit-tests/irregular_array.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/irregular_array$(EXEEXT): $(global_testing_unit_tests_irregular_array_OBJECTS) $(global_testing_unit_tests_irregular_array_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/irregular_array$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_irregular_array_OBJECTS) $(global_testing_unit_tests_irregular_array_LDADD) $(LIBS)
+global/testing/unit-tests/ld.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/ld$(EXEEXT): $(global_testing_unit_tests_ld_OBJECTS) $(global_testing_unit_tests_ld_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/ld$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_ld_OBJECTS) $(global_testing_unit_tests_ld_LDADD) $(LIBS)
+global/testing/unit-tests/multprocs_data.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/multprocs_data$(EXEEXT): $(global_testing_unit_tests_multprocs_data_OBJECTS) $(global_testing_unit_tests_multprocs_data_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/multprocs_data$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_multprocs_data_OBJECTS) $(global_testing_unit_tests_multprocs_data_LDADD) $(LIBS)
+global/testing/unit-tests/nb_acc.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/nb_acc$(EXEEXT): $(global_testing_unit_tests_nb_acc_OBJECTS) $(global_testing_unit_tests_nb_acc_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/nb_acc$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_nb_acc_OBJECTS) $(global_testing_unit_tests_nb_acc_LDADD) $(LIBS)
+global/testing/unit-tests/nb_put.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/nb_put$(EXEEXT): $(global_testing_unit_tests_nb_put_OBJECTS) $(global_testing_unit_tests_nb_put_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/nb_put$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_nb_put_OBJECTS) $(global_testing_unit_tests_nb_put_LDADD) $(LIBS)
+global/testing/unit-tests/nb_put2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/nb_put2$(EXEEXT): $(global_testing_unit_tests_nb_put2_OBJECTS) $(global_testing_unit_tests_nb_put2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/nb_put2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_nb_put2_OBJECTS) $(global_testing_unit_tests_nb_put2_LDADD) $(LIBS)
+global/testing/unit-tests/overlap_comm.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/overlap_comm$(EXEEXT): $(global_testing_unit_tests_overlap_comm_OBJECTS) $(global_testing_unit_tests_overlap_comm_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/overlap_comm$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_overlap_comm_OBJECTS) $(global_testing_unit_tests_overlap_comm_LDADD) $(LIBS)
+global/testing/unit-tests/overlap_data.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/overlap_data$(EXEEXT): $(global_testing_unit_tests_overlap_data_OBJECTS) $(global_testing_unit_tests_overlap_data_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/overlap_data$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_overlap_data_OBJECTS) $(global_testing_unit_tests_overlap_data_LDADD) $(LIBS)
+global/testing/unit-tests/overlap_data2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/overlap_data2$(EXEEXT): $(global_testing_unit_tests_overlap_data2_OBJECTS) $(global_testing_unit_tests_overlap_data2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/overlap_data2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_overlap_data2_OBJECTS) $(global_testing_unit_tests_overlap_data2_LDADD) $(LIBS)
+global/testing/unit-tests/overlap_getdata.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/overlap_getdata$(EXEEXT): $(global_testing_unit_tests_overlap_getdata_OBJECTS) $(global_testing_unit_tests_overlap_getdata_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/overlap_getdata$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_overlap_getdata_OBJECTS) $(global_testing_unit_tests_overlap_getdata_LDADD) $(LIBS)
+global/testing/unit-tests/overlap_init.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/overlap_init$(EXEEXT): $(global_testing_unit_tests_overlap_init_OBJECTS) $(global_testing_unit_tests_overlap_init_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/overlap_init$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_overlap_init_OBJECTS) $(global_testing_unit_tests_overlap_init_LDADD) $(LIBS)
+global/testing/unit-tests/overlap_nbputget.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/overlap_nbputget$(EXEEXT): $(global_testing_unit_tests_overlap_nbputget_OBJECTS) $(global_testing_unit_tests_overlap_nbputget_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/overlap_nbputget$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_overlap_nbputget_OBJECTS) $(global_testing_unit_tests_overlap_nbputget_LDADD) $(LIBS)
+global/testing/unit-tests/overlap_nbputget2.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/overlap_nbputget2$(EXEEXT): $(global_testing_unit_tests_overlap_nbputget2_OBJECTS) $(global_testing_unit_tests_overlap_nbputget2_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/overlap_nbputget2$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_overlap_nbputget2_OBJECTS) $(global_testing_unit_tests_overlap_nbputget2_LDADD) $(LIBS)
+global/testing/unit-tests/overlap_putget.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/overlap_putget$(EXEEXT): $(global_testing_unit_tests_overlap_putget_OBJECTS) $(global_testing_unit_tests_overlap_putget_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/overlap_putget$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_overlap_putget_OBJECTS) $(global_testing_unit_tests_overlap_putget_LDADD) $(LIBS)
+global/testing/unit-tests/passvalue_array.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/passvalue_array$(EXEEXT): $(global_testing_unit_tests_passvalue_array_OBJECTS) $(global_testing_unit_tests_passvalue_array_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/passvalue_array$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_passvalue_array_OBJECTS) $(global_testing_unit_tests_passvalue_array_LDADD) $(LIBS)
+global/testing/unit-tests/passvalue_dbl.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/passvalue_dbl$(EXEEXT): $(global_testing_unit_tests_passvalue_dbl_OBJECTS) $(global_testing_unit_tests_passvalue_dbl_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/passvalue_dbl$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_passvalue_dbl_OBJECTS) $(global_testing_unit_tests_passvalue_dbl_LDADD) $(LIBS)
+global/testing/unit-tests/print.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/print$(EXEEXT): $(global_testing_unit_tests_print_OBJECTS) $(global_testing_unit_tests_print_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/print$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_print_OBJECTS) $(global_testing_unit_tests_print_LDADD) $(LIBS)
+global/testing/unit-tests/put-get.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/put-get$(EXEEXT): $(global_testing_unit_tests_put_get_OBJECTS) $(global_testing_unit_tests_put_get_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/put-get$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_put_get_OBJECTS) $(global_testing_unit_tests_put_get_LDADD) $(LIBS)
+global/testing/unit-tests/scatter.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/scatter$(EXEEXT): $(global_testing_unit_tests_scatter_OBJECTS) $(global_testing_unit_tests_scatter_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/scatter$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_scatter_OBJECTS) $(global_testing_unit_tests_scatter_LDADD) $(LIBS)
+global/testing/unit-tests/test.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/test$(EXEEXT): $(global_testing_unit_tests_test_OBJECTS) $(global_testing_unit_tests_test_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/test$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_test_OBJECTS) $(global_testing_unit_tests_test_LDADD) $(LIBS)
+global/testing/unit-tests/testc.$(OBJEXT):  \
+	global/testing/unit-tests/$(am__dirstamp) \
+	global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+global/testing/unit-tests/testc$(EXEEXT): $(global_testing_unit_tests_testc_OBJECTS) $(global_testing_unit_tests_testc_DEPENDENCIES) global/testing/unit-tests/$(am__dirstamp)
+	@rm -f global/testing/unit-tests/testc$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_unit_tests_testc_OBJECTS) $(global_testing_unit_tests_testc_LDADD) $(LIBS)
 global/testing/unpackc.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/unpackc$(EXEEXT): $(global_testing_unpackc_OBJECTS) $(global_testing_unpackc_DEPENDENCIES) global/testing/$(am__dirstamp)
@@ -4491,6 +6828,112 @@ mostlyclean-compile:
 	-rm -f global/testing/testsolve.$(OBJEXT)
 	-rm -f global/testing/testspd.$(OBJEXT)
 	-rm -f global/testing/types-test.$(OBJEXT)
+	-rm -f global/testing/unit-tests/3d_array.$(OBJEXT)
+	-rm -f global/testing/unit-tests/3d_passvalue.$(OBJEXT)
+	-rm -f global/testing/unit-tests/3d_transpose.$(OBJEXT)
+	-rm -f global/testing/unit-tests/accumulate_data.$(OBJEXT)
+	-rm -f global/testing/unit-tests/array.$(OBJEXT)
+	-rm -f global/testing/unit-tests/diagonal_pass.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_acc.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_add.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_add_constant.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_add_constantpatch.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_add_diagonal.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_add_patch.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_copy.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_copy2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_copy3.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_copypatch.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_copypatch2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_create.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_create1.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_create2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_create3.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_create_handle.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_create_irreg.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_create_irreg2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_create_irreg3.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_destroy.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_dgop.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_dot.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_duplicate.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_elem_divide.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_elem_dividepatch.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_elem_maximum.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_elem_maximumpatch.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_elem_minimum.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_elem_minimumpatch.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_elem_multiply.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_elem_multiplypatch.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_fill.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_fillpatch.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_fillpatch1.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_gather.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_gather2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_gather3.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_get.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_get_blockinfo.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_get_diagonal.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_igop.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_igop2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_inquire.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_intialize.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_lgop.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_median.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_ndim.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_ndim2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_nnodes.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_nodeid.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_pgroup_create.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_pgroup_create2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_pgroup_create3.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_pgroup_create4.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_pgroup_create5.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_pgroup_destroy.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_pgroup_destroy2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_pgroup_nnodes_nodeid.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_pgroup_setdefault.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_put.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_put2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_scale.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_scale2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_scale_cols.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_scale_patch.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_scale_rows.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_scatter.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_set_data.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_set_diagonal.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_set_restricted.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_solve.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_sync.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_transpose.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_transpose2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_transpose3.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_zero.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_zerodiagonal.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_zeropatch.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ga_zeropatch2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/irregular_array.$(OBJEXT)
+	-rm -f global/testing/unit-tests/ld.$(OBJEXT)
+	-rm -f global/testing/unit-tests/multprocs_data.$(OBJEXT)
+	-rm -f global/testing/unit-tests/nb_acc.$(OBJEXT)
+	-rm -f global/testing/unit-tests/nb_put.$(OBJEXT)
+	-rm -f global/testing/unit-tests/nb_put2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/overlap_comm.$(OBJEXT)
+	-rm -f global/testing/unit-tests/overlap_data.$(OBJEXT)
+	-rm -f global/testing/unit-tests/overlap_data2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/overlap_getdata.$(OBJEXT)
+	-rm -f global/testing/unit-tests/overlap_init.$(OBJEXT)
+	-rm -f global/testing/unit-tests/overlap_nbputget.$(OBJEXT)
+	-rm -f global/testing/unit-tests/overlap_nbputget2.$(OBJEXT)
+	-rm -f global/testing/unit-tests/overlap_putget.$(OBJEXT)
+	-rm -f global/testing/unit-tests/passvalue_array.$(OBJEXT)
+	-rm -f global/testing/unit-tests/passvalue_dbl.$(OBJEXT)
+	-rm -f global/testing/unit-tests/print.$(OBJEXT)
+	-rm -f global/testing/unit-tests/put-get.$(OBJEXT)
+	-rm -f global/testing/unit-tests/scatter.$(OBJEXT)
+	-rm -f global/testing/unit-tests/test.$(OBJEXT)
+	-rm -f global/testing/unit-tests/testc.$(OBJEXT)
 	-rm -f global/testing/unpackc.$(OBJEXT)
 	-rm -f global/testing/util.$(OBJEXT)
 	-rm -f global/trace/adjust.$(OBJEXT)
@@ -4657,6 +7100,112 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/testmultrect.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/unpackc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/util.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/3d_array.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/3d_passvalue.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/3d_transpose.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/accumulate_data.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/array.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/diagonal_pass.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_acc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_add.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_add_constant.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_add_constantpatch.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_add_diagonal.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_add_patch.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_copy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_copy2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_copy3.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_copypatch.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_copypatch2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_create.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_create1.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_create2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_create3.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_create_handle.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_create_irreg.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_create_irreg2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_create_irreg3.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_destroy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_dgop.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_dot.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_duplicate.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_elem_divide.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_elem_dividepatch.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_elem_maximum.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_elem_maximumpatch.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_elem_minimum.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_elem_minimumpatch.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_elem_multiply.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_elem_multiplypatch.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_fill.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_fillpatch.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_fillpatch1.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_gather.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_gather2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_gather3.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_get.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_get_blockinfo.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_get_diagonal.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_igop.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_igop2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_inquire.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_intialize.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_lgop.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_median.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_ndim.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_ndim2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_nnodes.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_nodeid.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_pgroup_create.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_pgroup_create2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_pgroup_create3.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_pgroup_create4.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_pgroup_create5.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_pgroup_destroy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_pgroup_destroy2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_pgroup_nnodes_nodeid.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_pgroup_setdefault.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_put.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_put2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_scale.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_scale2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_scale_cols.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_scale_patch.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_scale_rows.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_scatter.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_set_data.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_set_diagonal.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_set_restricted.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_solve.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_sync.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_transpose.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_transpose2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_transpose3.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_zero.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_zerodiagonal.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_zeropatch.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ga_zeropatch2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/irregular_array.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/ld.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/multprocs_data.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/nb_acc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/nb_put.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/nb_put2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/overlap_comm.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/overlap_data.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/overlap_data2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/overlap_getdata.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/overlap_init.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/overlap_nbputget.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/overlap_nbputget2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/overlap_putget.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/passvalue_array.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/passvalue_dbl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/print.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/put-get.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/scatter.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/unit-tests/$(DEPDIR)/testc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/trace/$(DEPDIR)/adjust.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/trace/$(DEPDIR)/collisions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@gparrays/src/$(DEPDIR)/gpbase.Plo@am__quote@
@@ -5050,6 +7599,7 @@ clean-libtool:
 	-rm -rf global/examples/scf/.libs global/examples/scf/_libs
 	-rm -rf global/src/.libs global/src/_libs
 	-rm -rf global/testing/.libs global/testing/_libs
+	-rm -rf global/testing/unit-tests/.libs global/testing/unit-tests/_libs
 	-rm -rf global/trace/.libs global/trace/_libs
 	-rm -rf gparrays/src/.libs gparrays/src/_libs
 	-rm -rf gparrays/testing/.libs gparrays/testing/_libs
@@ -5775,6 +8325,8 @@ distclean-generic:
 	-rm -f global/src/$(am__dirstamp)
 	-rm -f global/testing/$(DEPDIR)/$(am__dirstamp)
 	-rm -f global/testing/$(am__dirstamp)
+	-rm -f global/testing/unit-tests/$(DEPDIR)/$(am__dirstamp)
+	-rm -f global/testing/unit-tests/$(am__dirstamp)
 	-rm -f global/trace/$(DEPDIR)/$(am__dirstamp)
 	-rm -f global/trace/$(am__dirstamp)
 	-rm -f gparrays/src/$(DEPDIR)/$(am__dirstamp)
@@ -5809,7 +8361,7 @@ clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-checkPROGRAMS \
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf LinAlg/lapack+blas/$(DEPDIR) compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tools/$(DEPDIR)
+	-rm -rf LinAlg/lapack+blas/$(DEPDIR) compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/testing/unit-tests/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tools/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -5858,7 +8410,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf LinAlg/lapack+blas/$(DEPDIR) compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tools/$(DEPDIR)
+	-rm -rf LinAlg/lapack+blas/$(DEPDIR) compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/testing/unit-tests/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tools/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

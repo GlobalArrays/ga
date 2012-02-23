@@ -76,24 +76,8 @@ three_dimension(int rank, int nprocs)
 fourth_dimension(int rank, int nprocs)			
 {							
   int g_A;						
-  int ndim=4, ****dims=NULL;			
-  int dims2[ndim], ndim2, type, value=5, i, j, k, l;
-
-  dims=(int****)malloc(2*sizeof(int***));
-  for(i=0; i<2; i++)	
-    {
-      dims[i]=(int***)malloc(5*sizeof(int**));
-      for(j=0; j<5; j++)
-	{
-	  dims[i][j]=(int**)malloc(GSIZE*sizeof(int*));
-	  for(k=0; k<GSIZE; k++)
-	    {
-	      dims[i][j][k]=(int*)malloc(GSIZE*sizeof(int));
-	
-	    }
-	}
-    }
-	      
+  int ndim=4, dims[4]={GSIZE,GSIZE,GSIZE,GSIZE};			
+  int dims2[ndim], ndim2, type, value=5, i;	
 							
   g_A = NGA_Create(C_INT, ndim, dims, "array_A", NULL);	
 							
@@ -106,7 +90,7 @@ fourth_dimension(int rank, int nprocs)
 							
   for(i=0; i<ndim; i++)					
     printf("%d: %d[ %d] ...* \n", rank, i, dims2[i]);	
-							
+  GA_Destroy(g_A);							
 }							
 
 						

@@ -25,6 +25,7 @@ main(int argc, char **argv)
   GA_Initialize();
 
   g_A=GA_Create_handle();
+  g_B=GA_Create_handle();
 
   if(!g_A)\
     GA_ERROR_MSG();

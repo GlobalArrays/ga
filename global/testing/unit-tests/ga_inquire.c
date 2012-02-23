@@ -14,10 +14,10 @@
 
 #define DIM 2
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs, i;
-  double g_A, g_B; 
+  double g_A;
   int dims[DIM]={5,5}, dims2[DIM], ndim, type;
   double value=5;
 
@@ -36,7 +36,6 @@ main(int argc, char **argv)
   GA_Print(g_A);
 
   if(!g_A) printf("ERROR : \n");
-  if(!g_B) printf("ERROR : B \n");
 
   NGA_Inquire(g_A, &type, &ndim, dims2);
   printf(" %d -- %d,,\n", type, ndim);
@@ -51,4 +50,5 @@ main(int argc, char **argv)
   GA_Terminate();
   MPI_Finalize();
  
+  return 0;
 }

@@ -14,10 +14,10 @@
 #define SIZE 5
 #define DIM 2
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int rank, nprocs;
-  int g_A, g_B;
+  int g_A;
   int dims[DIM]={SIZE,SIZE}, ndim;
 
   MPI_Init(&argc, &argv);
@@ -45,11 +45,6 @@ main(int argc, char **argv)
     }
   */
 
-  if(!g_B)
-    {
-      printf("B\n");
-      GA_ERROR_MSG();
-    }
   GA_Sync();
   if(rank == 0)
     GA_PRINT_MSG();
@@ -57,4 +52,5 @@ main(int argc, char **argv)
   GA_Terminate();
   MPI_Finalize();
 
+  return 0;
 }

@@ -37,7 +37,7 @@ main(int argc, char **argv)
   int g_A, g_B, **local_value=NULL;
   //  int  **local_A=NULL, **local_B=NULL;    
   int local_A[SIZE][SIZE], local_B[SIZE][SIZE];
-  int dims[DIM]={SIZE,SIZE}, lo[DIM]={0,0}, hi[DIM]={4,4}, ld=5;
+  int dims[DIM]={SIZE,SIZE}, lo[DIM]={0,0}, hi[DIM]={4,4}, ld=SIZE;
 
   local_value=(int**)malloc(SIZE*sizeof(int*));
   for(i=0; i<SIZE; i++)

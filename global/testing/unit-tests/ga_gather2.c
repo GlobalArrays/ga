@@ -45,7 +45,7 @@ main(int argc, char **argv)
 
 
   for(i=0; i<N; i++)
-    local_A=(int*)malloc(N*sizeof(int));
+    //local_A=(int*)malloc(N*sizeof(int));
   
   /*
    * depends on the value of array ..we can generate the location values in randon 

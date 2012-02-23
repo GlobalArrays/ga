@@ -22,7 +22,7 @@ addition_operator(int rank, int nprocs, int n)
   for(i=0; i<n; i++) temp[i]=x[i];
   
   if(rank==1)
-    for(i=0; i<n; i++) printf("%d \n", x[i]);
+    for(i=0; i<n; i++) printf("%ld \n", x[i]);
   
   
   GA_Lgop(x, n, &op);
@@ -30,7 +30,7 @@ addition_operator(int rank, int nprocs, int n)
   
   if(rank==0)
     {
-      for(i=0; i<n; i++) printf("%d :: %d\n", x[i], temp[i]);
+      for(i=0; i<n; i++) printf("%ld :: %ld\n", x[i], temp[i]);
       
       for(i=0; i<n; i++)
 	if(x[i]!=temp[i]*sizeof(int)) printf(" GA ERROR: \n");
@@ -46,7 +46,7 @@ multiply_operator(int rank, int nprocs, int n)
   for(i=0; i<n; i++) temp[i]=x[i];
   
   if(rank==1)
-    for(i=0; i<n; i++) printf("%d \n", x[i]);
+    for(i=0; i<n; i++) printf("%ld \n", x[i]);
   
   
   GA_Lgop(x, n, "*");
@@ -55,7 +55,7 @@ multiply_operator(int rank, int nprocs, int n)
   if(rank==0)
     {
       //      for(i=0; i<n; i++) printf("%d :: %d\n", x[i], temp[i]);
-      for(i=0; i<n; i++) printf("%d :: %d \n", x[i], (int)pow((int)temp[i],(int)4));
+      for(i=0; i<n; i++) printf("%ld :: %d \n", x[i], (int)pow((int)temp[i],(int)4));
       
       for(i=0; i<n; i++)
 	if(x[i]!=(int)pow((int)temp[i],(int)4)) printf(" GA ERROR: \n");
@@ -71,7 +71,7 @@ max_operator(int rank, int nprocs, int n)
   for(i=0; i<n; i++) temp[i]=x[i];
   
   if(rank==0)
-    for(i=0; i<n; i++) printf("%d \n", x[i]);
+    for(i=0; i<n; i++) printf("%ld \n", x[i]);
   
   
   GA_Lgop(x, n,"max");
@@ -79,7 +79,7 @@ max_operator(int rank, int nprocs, int n)
   
   if(rank==1)
     {
-      for(i=0; i<n; i++) printf("%d :: %d\n", x[i], temp[i]);
+      for(i=0; i<n; i++) printf("%ld :: %ld\n", x[i], temp[i]);
       
       /*for(i=0; i<n; i++)
 	if(x[i]!=temp[i]*sizeof(int)) printf(" GA ERROR: \n");
@@ -96,7 +96,7 @@ min_operator(int rank, int nprocs, int n)
   for(i=0; i<n; i++) temp[i]=x[i];
   
   if(rank==1)
-    for(i=0; i<n; i++) printf("%d \n", x[i]);
+    for(i=0; i<n; i++) printf("%ld \n", x[i]);
   
   
   GA_Lgop(x, n, "min");
@@ -104,7 +104,7 @@ min_operator(int rank, int nprocs, int n)
   
   if(rank==0)
     {
-      for(i=0; i<n; i++) printf("%d :: %d\n", x[i], temp[i]);
+      for(i=0; i<n; i++) printf("%ld :: %ld\n", x[i], temp[i]);
       
       /*for(i=0; i<n; i++)
 	if(x[i]!=temp[i]*sizeof(int)) printf(" GA ERROR: \n");
@@ -121,7 +121,7 @@ absmax_operator(int rank, int nprocs, int n)
   for(i=0; i<n; i++) temp[i]=x[i];
   
   if(rank==1)
-    for(i=0; i<n; i++) printf("%d \n", x[i]);
+    for(i=0; i<n; i++) printf("%ld \n", x[i]);
   
   
   GA_Lgop(x, n, "absmax");
@@ -129,7 +129,7 @@ absmax_operator(int rank, int nprocs, int n)
   
   if(rank==0)
     {
-      for(i=0; i<n; i++) printf("%d :: %d\n", x[i], temp[i]);
+      for(i=0; i<n; i++) printf("%ld :: %ld\n", x[i], temp[i]);
       
       /*for(i=0; i<n; i++)
 	if(x[i]!=temp[i]*sizeof(int)) printf(" GA ERROR: \n");
@@ -146,7 +146,7 @@ absmin_operator(int rank, int nprocs, int n)
   for(i=0; i<n; i++) temp[i]=x[i];
   
   if(rank==1)
-    for(i=0; i<n; i++) printf("%d \n", x[i]);
+    for(i=0; i<n; i++) printf("%ld \n", x[i]);
   
   
   GA_Lgop(x, n, "absmin");
@@ -154,7 +154,7 @@ absmin_operator(int rank, int nprocs, int n)
   
   if(rank==0)
     {
-      for(i=0; i<n; i++) printf("%d :: %d\n", x[i], temp[i]);
+      for(i=0; i<n; i++) printf("%ld :: %ld\n", x[i], temp[i]);
       
       /*for(i=0; i<n; i++)
 	if(x[i]!=temp[i]*sizeof(int)) printf(" GA ERROR: \n");
