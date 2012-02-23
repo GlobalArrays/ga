@@ -7,6 +7,7 @@
 
 #include "globalp.h"
 #include "ga-papi.h"
+#include "ga-wapi.h"
 #define GA_MAXMEM_AVAIL ( ( (long)1 << (8*sizeof(Integer)-2) ) -1)
 #define CHECK           0
 #define ALIGNMENT       sizeof(DoubleComplex)

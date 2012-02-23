@@ -139,7 +139,7 @@ void do_work()
       if (subscript[0]<lo[0] || subscript[0]>hi[0] || subscript[1]<lo[1] ||
           subscript[1]>hi[1]) {
         printf("p[%d] assign i: %d j: %d lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",
-            subscript[0],subscript[1],lo[0],hi[0],lo[1],hi[1]);
+            me,subscript[0],subscript[1],lo[0],hi[0],lo[1],hi[1]);
       }
       GP_Assign_local_element(g_p, subscript, (void*)ptr, size);
       /*bjp
@@ -200,7 +200,7 @@ void do_work()
   GA_Set_debug(1);
   GP_Get(g_p, lo, hi, buf, buf_ptr, ld, buf_size, ld_sz, &size);
   NGA_Sync();
-  if (me==0) printf("\nCompleted GP_Get\n",me);
+  if (me==0) printf("\nCompleted GP_Get\n");
   GA_Set_debug(0);
   /*bjp
   printf("p[%d] Returned from GP_Get size: %d\n",me,size);
@@ -256,7 +256,7 @@ void do_work()
     }
   }
   NGA_Sync();
-  if (me==0) printf("\nCompleted check of GP_Get\n",me);
+  if (me==0) printf("\nCompleted check of GP_Get\n");
 
   /* Clear all bits in GP_Array */
   GP_Memzero(g_p);
@@ -354,8 +354,8 @@ void do_work()
       m_k_ij = i%Q_I + 1;
       m_l_ij = j%Q_J + 1;
       if (size != sizeof(int)*(m_k_ij*m_l_ij+2)) {
-        printf("p[%d] [%d,%d] Size actual: %d expected: %d\n",
-               me,i,j,size,sizeof(int)*(m_k_ij*m_l_ij+2));
+        printf("p[%d] [%d,%d] Size actual: %d expected: %ld\n",
+               me,i,j,size,(long)(sizeof(int)*(m_k_ij*m_l_ij+2)));
       }
       if (ptr[0] != m_k_ij) {
         printf("p[%d] [%d,%d] Dimension(2) i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
@@ -374,7 +374,7 @@ void do_work()
     }
   }
   NGA_Sync();
-  if (me==0) printf("\nCompleted check of GP_Put\n",me);
+  if (me==0) printf("\nCompleted check of GP_Put\n");
 
   /* Test gather. Deallocate buffers first */
   free(buf);
@@ -431,8 +431,8 @@ void do_work()
     m_l_ij = j%Q_J + 1;
     ptr = buf_ptr[ii];
     if ((int)buf_size[ii] != sizeof(int)*(m_k_ij*m_l_ij+2)) {
-      printf("p[%d] [%d,%d] Size(3) i actual: %d expected: %d\n",
-          me,i,j,buf_size[ii],sizeof(int)*(m_k_ij*m_l_ij+2));
+      printf("p[%d] [%d,%d] Size(3) i actual: %d expected: %ld\n",
+          me,i,j,buf_size[ii],(long)(sizeof(int)*(m_k_ij*m_l_ij+2)));
     }
     if (ptr[0] != m_k_ij) {
       printf("p[%d] [%d,%d] Dimension(3) i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
@@ -451,7 +451,7 @@ void do_work()
   }
   NGA_Sync();
   free(subscripts);
-  if (me==0) printf("\nCompleted check of GP_Gather\n",me);
+  if (me==0) printf("\nCompleted check of GP_Gather\n");
   
 
   /* Clean up buffers and clear all bits in GP_Array */
@@ -529,8 +529,8 @@ void do_work()
       m_k_ij = i%Q_I + 1;
       m_l_ij = j%Q_J + 1;
       if (size != sizeof(int)*(m_k_ij*m_l_ij+2)) {
-        printf("p[%d] [%d,%d] Size actual: %d expected: %d\n",
-               me,i,j,size,sizeof(int)*(m_k_ij*m_l_ij+2));
+        printf("p[%d] [%d,%d] Size actual: %d expected: %ld\n",
+               me,i,j,size,(long)(sizeof(int)*(m_k_ij*m_l_ij+2)));
       }
       if (ptr[0] != m_k_ij) {
         printf("p[%d] [%d,%d] Dimension(3) i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
@@ -549,7 +549,7 @@ void do_work()
     }
   }
   NGA_Sync();
-  if (me==0) printf("\nCompleted check of GP_Scatter\n",me);
+  if (me==0) printf("\nCompleted check of GP_Scatter\n");
 
 
   /* Clean up buffers and deallocate GP array */

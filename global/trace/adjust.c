@@ -41,7 +41,7 @@
 
 int proc=0, arrays=0, event_types=0; 
 
-static int tcomp(unsigned long int *t1, unsigned long int *t2);
+static int tcomp(const void *t1, const void *t2);
 
 int main(argc,argv)
 int argc;
@@ -201,10 +201,11 @@ char *foutname="adjust.ed", fdstrname[15], finname[8];
    
       
 static int tcomp(t1, t2)
-unsigned long int *t1, *t2;
+const void *t1, *t2;
 {
 int flag;
-    flag = (*t1 == *t2) ? 0 :(*t1 > *t2 ? 1 : -1);
+    flag = (*(unsigned long int*)t1 == *(unsigned long int*)t2) ? 0 :
+           (*(unsigned long int*)t1 >  *(unsigned long int*)t2  ? 1 : -1);
     return (flag);
 }
 

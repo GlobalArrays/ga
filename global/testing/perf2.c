@@ -333,13 +333,13 @@ void test_2D()
       }
 
       for (dst=1; dst<nproc; ++dst) {
-        /* contiguous get */
+        /* strided get */
         fill_array(buf, SIZE * SIZE, me * 10);
         t_get += time_op(g_a, buf, chunk[i], loop, dst, 2, OP_GET);
-        /* contiguous put */
+        /* strided put */
         fill_array(buf, SIZE * SIZE, me * 10);
         t_put += time_op(g_a, buf, chunk[i], loop, dst, 2, OP_PUT);
-        /* contiguous acc */
+        /* strided acc */
         fill_array(buf, SIZE * SIZE, me * 10);
         t_acc += time_op(g_a, buf, chunk[i], loop, dst, 2, OP_ACC);
       }

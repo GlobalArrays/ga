@@ -897,8 +897,9 @@ void pgp_scatter(Integer g_p, Integer nv, Integer *subscript, void **buf_ptr,
     if (intsize == 4) {
       for (i=0; i<nv; i++) {
         if (tmpsize32[i] != (int)((int*)buf_size)[i]) {
-           printf("p[%d] tmpsize[%d]: %d buf_size[%d]: %d\n",me,i,tmpsize32[i],
-              i,(Integer)((int*)buf_size)[i]);
+           printf("p[%ld] tmpsize[%ld]: %d buf_size[%ld]: %ld\n",
+                   (long)me,(long)i,tmpsize32[i],
+                   (long)i,(long)((int*)buf_size)[i]);
        /*   pnga_error("gp_scatter: mismatch in element sizes", i); */
         }
       }

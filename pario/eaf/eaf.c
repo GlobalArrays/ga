@@ -282,7 +282,7 @@ int EAF_Write(int fd, eaf_off_t offset, const void *buf, size_t bytes)
     rc = elio_write(file[fd].elio_fd, (Off_t) offset, buf, (Size_t) bytes);
     }
     if (rc != ((Size_t)bytes)){
-	printf("eaf_write: rc ne bytes %d bytes %d\n ", rc, bytes);
+	printf("eaf_write: rc ne bytes %ld bytes %ld\n ", rc, (long)bytes);
         if(rc < 0) return((int)rc); /* rc<0 means ELIO detected error */
         else return EAF_ERR_WRITE;
     }else {

@@ -1317,7 +1317,7 @@ void test_fetch_add()
 
   for (i = 0; i < nproc; i++) {
     if (i == me) {
-      printf("process %d got value of %d\n", i, val);
+      printf("process %ld got value of %ld\n", i, val);
       fflush(stdout);
     }
     ARMCI_Barrier();
@@ -1339,7 +1339,8 @@ void test_fetch_add()
 
   for (i = 0; i < nproc; i++) {
     if (i == me) {
-      printf("process %d incremented the counter %d times value=%d\n", i, times, val);
+      printf("process %ld incremented the counter %ld times value=%ld\n",
+              i, times, val);
       fflush(stdout);
     }
     ARMCI_Barrier();
@@ -1366,7 +1367,7 @@ void test_fetch_add()
   ARMCI_Barrier();
 
   if (me == 0) {
-    printf("The final value is %d, should be %d.\n\n", *arr[0], LOOP * nproc);
+    printf("The final value is %ld, should be %d.\n\n", *arr[0], LOOP * nproc);
     fflush(stdout);
     if (*arr[0] != LOOP * nproc) {
       ARMCI_Error("failed ...", *arr[0]);
