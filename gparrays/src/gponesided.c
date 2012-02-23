@@ -208,7 +208,7 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
       offset_d = offset_d*ld[d] + index[d];
     }
     /* evaluate offset in data buffer */
-    buf_ptr[offset_d] = buf+offset_ptr;
+    buf_ptr[offset_d] = (void*)(((char*)buf)+offset_ptr);
     if (intsize == 4) {
       offset_ptr += ((int*)buf_size)[offset_sz];
     } else {
