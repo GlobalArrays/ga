@@ -936,7 +936,7 @@ void GA_Set_irreg_distr(int g_a, int map[], int block[])
     aa = (Integer)g_a;
     ndim = wnga_get_dimension(aa);
     COPYC2F(block,_ga_work, ndim);
-    _ga_map_capi = copy_map(block, ndim, map);
+    _ga_map_capi = copy_map(block, (int)ndim, map);
 
     wnga_set_irreg_distr(aa, _ga_map_capi, _ga_work);
     free(_ga_map_capi);
@@ -951,7 +951,7 @@ void GA_Set_irreg_distr64(int g_a, int64_t map[], int64_t block[])
     aa = (Integer)g_a;
     ndim = wnga_get_dimension(aa);
     COPYC2F(block,_ga_work, ndim);
-    _ga_map_capi = copy_map64(block, ndim, map);
+    _ga_map_capi = copy_map64(block, (int)ndim, map);
 
     wnga_set_irreg_distr(aa, _ga_map_capi, _ga_work);
     free(_ga_map_capi);
@@ -966,7 +966,7 @@ void NGA_Set_irreg_distr(int g_a, int map[], int block[])
     aa = (Integer)g_a;
     ndim = wnga_get_dimension(aa);
     COPYC2F(block,_ga_work, ndim);
-    _ga_map_capi = copy_map(block, ndim, map);
+    _ga_map_capi = copy_map(block, (int)ndim, map);
 
     wnga_set_irreg_distr(aa, _ga_map_capi, _ga_work);
     free(_ga_map_capi);
@@ -981,7 +981,7 @@ void NGA_Set_irreg_distr64(int g_a, int64_t map[], int64_t block[])
     aa = (Integer)g_a;
     ndim = wnga_get_dimension(aa);
     COPYC2F(block,_ga_work, ndim);
-    _ga_map_capi = copy_map64(block, ndim, map);
+    _ga_map_capi = copy_map64(block, (int)ndim, map);
 
     wnga_set_irreg_distr(aa, _ga_map_capi, _ga_work);
     free(_ga_map_capi);

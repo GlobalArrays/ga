@@ -358,8 +358,8 @@ Integer _d;                                                                    \
    for(_d=0; _d<  ndim; _d++)                                                  \
       if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                        \
         char err_string[ERR_STR_LEN];                                          \
-        sprintf(err_string,"check subscript failed:%ld not in (%ld:%ld) dim=", \
-                  (long)subscr[_d],  (long)lo[_d],  (long)hi[_d]);             \
+        sprintf(err_string,"check subscript failed:%ld not in (%ld:%ld) dim=%d", \
+                  (long)subscr[_d],  (long)lo[_d],  (long)hi[_d], (int)_d);    \
           pnga_error(err_string, _d);                                          \
       }\
 }
