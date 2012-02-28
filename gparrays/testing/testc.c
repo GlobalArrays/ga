@@ -3,6 +3,7 @@
 #   include "config.h"
 #endif
 
+#include <math.h>
 #include "ga.h"
 #include "gp.h"
 #include "macdecls.h"
@@ -16,6 +17,7 @@
 */
 #define N_I  32
 #define N_J  32
+#define N_K  32
 /*
 #define Q_I 2
 #define Q_J 2
@@ -49,6 +51,76 @@ void get_range( int ndim, int dims[], int lo[], int hi[], int g_p)
   */
 }
 
+void factor(int p,int idim, int jdim, int kdim, int *pdi, int *pdj, int *pdk)
+{
+  int MAX_FACTOR = 10000;
+  int ii, i, j, k, ip, ifac, pmax, ichk;
+  int ti, tj, tk;
+  int *prime, *fac;
+
+  prime = malloc(MAX_FACTOR*sizeof(int));
+  fac = malloc(MAX_FACTOR*sizeof(int));
+  /**
+   * factor p completely.
+   * First find all prime numbers, besides 1, less than
+   * or equal to sqrt of p
+   */
+  ip = (int)sqrt((double)p) + 1;
+  pmax = 0;
+  for (i=2; i<=ip; i++) {
+    ichk = 1;
+    for (j=0; j<pmax; j++) {
+      if (i%prime[j] == 0) {
+        ichk = 0;
+        break;
+      }
+    }
+    if (ichk == 1) {
+      pmax++;
+      if (pmax > MAX_FACTOR) printf("Overflow in grid factor\n");
+      prime[pmax-1] = i;
+    }
+  }
+  
+  /**
+   *  find all prime factors of p
+   */
+  ip = p;
+  ifac = 0;
+  for (i=0; i<pmax; i++) {
+    while (ip%prime[i] == 0) {
+      fac[ifac] = prime[i];
+      ifac++;
+      ip = ip/prime[i];
+    }
+  }
+
+  ti = 1;
+  tj = 1;
+  tk = 1;
+  for (ii=ifac-1; ii>=0; ii--) {
+    i = idim/ti;
+    j = jdim/tj;
+    k = kdim/tk;
+    if (i >= j && i >= k && i > 1) {
+      ti = fac[ii]*ti;
+    } else if (j >= i && j >= k && j > 1) {
+      tj = fac[ii]*tj;
+    } else if (k >= i && k >= j && k > 1) {
+      tk = fac[ii]*tk;
+    } else {
+      printf("Too many processors in factoring routine\n");
+    }
+  }
+
+  free(prime);
+  free(fac);
+
+  *pdi = ti;
+  *pdj = tj;
+  *pdk = tk;
+}
+
 void do_work()
 {
   int g_p, me, i, ii, j, jj, l, k, nv;
@@ -56,11 +128,13 @@ void do_work()
   int m_k_ij, m_l_ij, idx;
   int dims[2], lo[2], hi[2], ndim;
   int lo_t[2], hi_t[2];
+  int dims3[3], lo3[3], hi3[3], blocks[3], chunk[3];
   int nelems, nsize;
-  int idim, jdim, subscript[2], size;
+  int idim, jdim, kdim, subscript[2], size;
+  int pdi, pdj, pdk;
   int ld[2], ld_sz[2];
   int checksize;
-  int *ptr;
+  int *ptr, *mapc;
   void **buf_ptr;
   void *buf;
   int *buf_size;
@@ -82,40 +156,18 @@ void do_work()
      Only these elements can be assigned to data using the
      GP_Assign_local_element routine. */
   GP_Distribution(g_p, me, lo, hi);
-  /*bjp
-  printf("p[%d] GP_Dist lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",me,lo[0],hi[0],lo[1],hi[1]);
-  */
   idim = hi[0] - lo[0] + 1;
   jdim = hi[1] - lo[1] + 1;
   for (ii=0; ii<idim; ii++) {
     i = ii + lo[0];
     for (jj=0; jj<jdim; jj++) {
       j = jj + lo[1];
-      /*bjp
-      printf("p[%d] jj: %d\n",me,jj);
-      */
       idx = j*N_I + i;
       m_k_ij = i%Q_I + 1;
       m_l_ij = j%Q_J + 1;
-      /*
-      m_k_ij = 2;
-      m_l_ij = 2;
-      */
       /* Allocate local memory for object and assign it values */
       size = sizeof(int)*(m_k_ij*m_l_ij+2);
-      /*bjp
-      printf("p[%d] allocating data of size: %d (ptr=%p)\n",GA_Nodeid(),size,ptr);
-      */
-      /*bjp
-      printf("p[%d] Original i: %d j: %d idx: %d\n",me,i,j,idx);
-      */
       ptr = (int*)GP_Malloc(size);
-      /*bjp
-      printf("p[%d] src_ptr: %p\n",me,ptr);
-      */
-      /*bjp
-      printf("p[%d] finished allocating data of size: %d (ptr=%p)\n",GA_Nodeid(),size, ptr);
-      */
       ptr[0] = m_k_ij;
       ptr[1] = m_l_ij;
       for (k=0; k<m_k_ij; k++) {
@@ -124,17 +176,7 @@ void do_work()
         }
       }
       subscript[0] = i;
-      /*bjp
-      printf("p[%d] ii: %d jj: %d\n",me,ii,jj);
-      */
       subscript[1] = j;
-      /*bjp
-      printf("p[%d] subscript = [%d:%d]\n",me,subscript[0],subscript[1]);
-      */
-      /*bjp
-      printf("p[%d] size is: %d location is [%d:%d] ptr: %p\n",me,size,
-          subscript[0],subscript[1], ptr);
-      */
       
       if (subscript[0]<lo[0] || subscript[0]>hi[0] || subscript[1]<lo[1] ||
           subscript[1]>hi[1]) {
@@ -142,55 +184,23 @@ void do_work()
             me,subscript[0],subscript[1],lo[0],hi[0],lo[1],hi[1]);
       }
       GP_Assign_local_element(g_p, subscript, (void*)ptr, size);
-      /*bjp
-      printf("p[%d] ptr_dim0: %ld ptr_dim[1]: %ld\n",me,ptr[0],ptr[1]);
-      */
-      /*bjp
-      printf("p[%d]  completed assignment of [%d:%d]\n",me, subscript[0],subscript[1]);
-      */
     }
   }
   
   /* Guarantee data consistency */
-  NGA_Sync();
+  GP_Sync();
   /*GP_Debug(g_p);*/
 
   /* Generate bounding coordinates to an arbitrary patch in GP array */
-#if 1
   get_range(ndim, dims, lo, hi, g_p);
-#else
-  idx = (me+4)%NGA_Nnodes();
-/*  idx = me; */
-  jj = idx%N_J;
-  ii = (idx-jj)/N_J;
-  lo[0] = ii;
-  hi[0] = ii;
-  lo[1] = jj;
-  hi[1] = jj;
-#endif
-  /*bjp
-  printf("p[%d] Getting patch [%d:%d] [%d:%d]\n",me,lo[0],hi[0],lo[1],hi[1]);
-  */
 
   /* Find the total amount of data contained in the patch */
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
-  /* bjp
-  printf("p[%d] Total size of patch[%d:%d][%d:%d]: %d\n",me,lo[0],hi[0],lo[1],hi[1],nsize);
-  */
   GP_Get_size(g_p, lo, hi, &size);
-  NGA_Sync();
-  /*bjp
-  printf("p[%d] Total size of patch data: %d\n",me,size);
-  */
+  GP_Sync();
 
   /* Allocate local buffers and retrieve data */
   buf = (void*)malloc(size);
-  /*bjp
-  printf("p[%d] buf_ptr: %ld\n",me,(long)buf);
-  */
-  /*bjp
-  printf("p[%d] dst_ptr: %p\n",me,buf);
-  */
   buf_ptr = (void**)malloc(nsize*sizeof(void*));
   buf_size = (int*) malloc(nsize*sizeof(int));
   ld[1] = hi[0]-lo[0]+1;
@@ -199,52 +209,29 @@ void do_work()
   ld_sz[0] = hi[1]-lo[1]+1;
   GA_Set_debug(1);
   GP_Get(g_p, lo, hi, buf, buf_ptr, ld, buf_size, ld_sz, &size);
-  NGA_Sync();
+  GP_Sync();
   if (me==0) printf("\nCompleted GP_Get\n");
   GA_Set_debug(0);
-  /*bjp
-  printf("p[%d] Returned from GP_Get size: %d\n",me,size);
-  */
   
   /* Check contents of buffers to see if data is as expected */
-  /*bjp
-  printf("p[%d] root pointer: %ld\n",me,(long)buf_ptr);
-  */
   for (i=lo[0]; i<=hi[0]; i++) {
     ii = i - lo[0];
     for (j=lo[1]; j<=hi[1]; j++) {
       jj = j - lo[1];
       idx = j*N_I + i;
-      /*bjp
-      printf("p[%d] size of element [%d,%d]: %d offset: %d\n",me,i,j,
-             buf_size[ii*ld_sz[0]+jj],ii*ld[0]+jj);
-             */
       ptr = (int*)buf_ptr[ii*ld[0]+jj];
-      /*bjp
-      printf("p[%d] read_ptr: %ld ptr[0]: %d ptr[1]: %d\n",me,(long)ptr,ptr[0],ptr[1]);
-      */
-      /*bjp
-      printf("p[%d] pointer[%d]: %ld\n",me,ii*ld[0]+jj,(long)ptr);
-      */
       m_k_ij = i%Q_I + 1;
       m_l_ij = j%Q_J + 1;
       if (buf_size[ii*ld_sz[0]+jj] != 4*(ptr[0]*ptr[1]+2)) {
         printf("p[%d] size expected: %d actual: %d\n",me,buf_size[ii*ld_sz[0]+jj],
             4*(ptr[0]*ptr[1]+2));
       }
-      /*
-      m_k_ij = 2;
-      m_l_ij = 2;
-      */
       if (ptr[0] != m_k_ij) {
         printf("p[%d] [%d,%d] Dimension(1) i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
       }
       if (ptr[1] != m_l_ij) {
         printf("p[%d] [%d,%d] Dimension(1) j actual: %d expected: %d\n",me,i,j,ptr[1],m_l_ij);
       }
-      /*bjp
-      printf("p[%d] i: %d j: %d m_k_ij: %d m_l_ij: %d\n",me,i,j,m_k_ij,m_l_ij);
-      */
       for (k=0; k<ptr[0]; k++) {
         for (l=0; l<ptr[1]; l++) {
           if (ptr[l*ptr[0]+k+2] != l*m_k_ij+k+idx) {
@@ -255,7 +242,7 @@ void do_work()
       }
     }
   }
-  NGA_Sync();
+  GP_Sync();
   if (me==0) printf("\nCompleted check of GP_Get\n");
 
   /* Clear all bits in GP_Array */
@@ -283,7 +270,7 @@ void do_work()
       }
     }
   }
-  NGA_Sync();
+  GP_Sync();
   if (me==0) printf("\nZeroed all bits in GP array\n");
 
   /* dellocate buffers and resize them to test put capability */
@@ -294,10 +281,7 @@ void do_work()
   next = (me+1)%nproc;
   GP_Distribution(g_p, me, lo, hi);
   GP_Get_size(g_p, lo, hi, &size);
-  /*
-  printf("p[%d] lo[0]: %d hi[0]: %d lo[1]: %d hi[1]: %d\n",me,lo[0],hi[0],lo[1],hi[1]);
-  */
-  NGA_Sync();
+  GP_Sync();
 
   nelems = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   ld[0] = hi[1]-lo[1]+1;
@@ -315,9 +299,6 @@ void do_work()
       jj = j - lo[1];
       idx = j*N_I + i;
       ptr = (int*)(((char*)buf)+next);
-      /*
-      printf("p[%d] (test_ptr) i: %d j: %d buf_ptr: %p\n",me,j+1,i+1,ptr);
-      */
       m_k_ij = i%Q_I + 1;
       m_l_ij = j%Q_J + 1;
       nsize = sizeof(int)*(m_k_ij*m_l_ij+2);
@@ -335,7 +316,7 @@ void do_work()
   }
   checksize = 1;
   GP_Put(g_p, lo, hi, buf_ptr, ld, buf_size, ld_sz, &size, checksize);
-  NGA_Sync();
+  GP_Sync();
 
   /* Check contents of GP array */
   GP_Distribution(g_p, me, lo, hi);
@@ -348,9 +329,6 @@ void do_work()
       idx = j*N_I + i;
       GP_Access_element(g_p, subscript, &elem_buf, &size);
       ptr = (int*)elem_buf;
-      /*
-      printf("p[%d] (test_ptr) i: %d j: %d elem_ptr: %p\n",me,j+1,i+1,ptr);
-      */
       m_k_ij = i%Q_I + 1;
       m_l_ij = j%Q_J + 1;
       if (size != sizeof(int)*(m_k_ij*m_l_ij+2)) {
@@ -373,7 +351,7 @@ void do_work()
       }
     }
   }
-  NGA_Sync();
+  GP_Sync();
   if (me==0) printf("\nCompleted check of GP_Put\n");
 
   /* Test gather. Deallocate buffers first */
@@ -393,10 +371,7 @@ void do_work()
 
   /* Get size of data to be gathered */
   GP_Gather_size(g_p, nv, subscripts, &size);
-  /* TODO: Should not need this sync */
-  /*
-  GA_Sync();
-  */
+
   /* Check size for correct value */
   idx = 0;
   for (ii=0; ii<nv; ii++) {
@@ -417,10 +392,6 @@ void do_work()
 
   /* Gather data elements */
   GP_Gather(g_p, nv, subscripts, buf, buf_ptr, buf_size, &size);
-  /* TODO: Should not need this sync */
-  /*
-  GA_Sync();
-  */
 
   /* Check data in buffers to see if it is correct */
   for (ii=0; ii<nv; ii++) {
@@ -449,7 +420,7 @@ void do_work()
       }
     }
   }
-  NGA_Sync();
+  GP_Sync();
   free(subscripts);
   if (me==0) printf("\nCompleted check of GP_Gather\n");
   
@@ -459,7 +430,7 @@ void do_work()
   free(buf_ptr);
   free(buf_size);
   GP_Memzero(g_p);
-  NGA_Sync();
+  GP_Sync();
 
   /* Test scatter capability. Start by figuring out how many elements processor
    * will scatter and how large the total data size is
@@ -510,7 +481,7 @@ void do_work()
   }
 
   GP_Scatter(g_p, nv, subscripts, buf_ptr, buf_size, &size, 1);
-  NGA_Sync();
+  GP_Sync();
 
   /* Check contents of GP array */
   GP_Distribution(g_p, me, lo, hi);
@@ -523,9 +494,6 @@ void do_work()
       idx = j*N_I + i;
       GP_Access_element(g_p, subscript, &elem_buf, &size);
       ptr = (int*)elem_buf;
-      /*
-      printf("p[%d] (test_ptr) i: %d j: %d elem_ptr: %p\n",me,j+1,i+1,ptr);
-      */
       m_k_ij = i%Q_I + 1;
       m_l_ij = j%Q_J + 1;
       if (size != sizeof(int)*(m_k_ij*m_l_ij+2)) {
@@ -548,7 +516,7 @@ void do_work()
       }
     }
   }
-  NGA_Sync();
+  GP_Sync();
   if (me==0) printf("\nCompleted check of GP_Scatter\n");
 
 
@@ -568,6 +536,125 @@ void do_work()
 
   /* destroy Global Pointer array */
   GP_Destroy(g_p);
+
+  /* Test set irregular distribution capability */
+  dims[0] = N_I;
+  dims[1] = N_J;
+  dims[2] = N_K;
+  ndim = 3;
+
+  g_p = GP_Create_handle();
+  GP_Set_dimensions(g_p, ndim, dims);
+
+  /* get processor grid */
+  idim = N_I;
+  jdim = N_J;
+  kdim = N_K;
+  factor(nproc, idim, jdim, kdim, &pdi, &pdj, &pdk);
+
+  /* construct map array */
+  k = 0;
+  mapc = (int*)malloc((pdi+pdj+pdk)*sizeof(int));
+  for (i=0; i<pdk; i++) {
+    mapc[k] = (i*kdim)/pdk;
+    k++;
+  }
+  for (i=0; i<pdj; i++) {
+    mapc[k] = (i*jdim)/pdj;
+    k++;
+  }
+  for (i=0; i<pdi; i++) {
+    mapc[k] = (i*idim)/pdi;
+    k++;
+  }
+  blocks[0] = pdi;
+  blocks[1] = pdj;
+  blocks[2] = pdk;
+
+  /* allocate array using an irregular distribution */
+  GP_Set_irreg_distr(g_p, mapc, blocks);
+  GP_Allocate(g_p);
+
+  /* check local distribution */
+  idx = me;
+  k = idx%pdk;
+  idx = (idx-k)/pdk;
+  j = idx%pdj;
+  i = (idx-j)/pdj;
+  GP_Distribution(g_p, me, lo3, hi3);
+  idx = 1;
+  if (lo3[0] != (i*idim)/pdi) {
+    printf("p[%d] Mismatch in irregular distribution array lo3[0]: %d expected: %d\n",
+           me, lo3[0], (i*idim)/pdi);
+    idx = 0;
+  }
+  if (hi3[0] != ((i+1)*idim)/pdi - 1) {
+    printf("p[%d] Mismatch in irregular distribution array hi3[0]: %d expected: %d\n",
+           me, hi3[0], ((i+1)*idim)/pdi-1);
+    idx = 0;
+  }
+  if (lo3[1] != (j*jdim)/pdj) {
+    printf("p[%d] Mismatch in irregular distribution array lo3[1]: %d expected: %d\n",
+           me, lo3[1], (j*jdim)/pdj);
+    idx = 0;
+  }
+  if (hi3[1] != ((j+1)*jdim)/pdj - 1) {
+    printf("p[%d] Mismatch in irregular distribution array hi3[1]: %d expected: %d\n",
+           me, hi3[1], ((j+1)*jdim)/pdj-1);
+    idx = 0;
+  }
+  if (lo3[2] != (k*kdim)/pdk) {
+    printf("p[%d] Mismatch in irregular distribution array lo3[2]: %d expected: %d\n",
+           me, lo3[2], (k*kdim)/pdk);
+    idx = 0;
+  }
+  if (hi3[2] != ((k+1)*kdim)/pdk - 1) {
+    printf("p[%d] Mismatch in irregular distribution array hi3[2]: %d expected: %d\n",
+           me, hi3[2], ((k+1)*kdim)/pdk-1);
+    idx = 0;
+  }
+
+  GA_Igop(&idx,1,"*");
+  if (idx == 1 && me == 0) {
+    printf("\nCompleted check of GP_Set_irreg_distr\n",me);
+  } else if (me == 0) {
+    printf("\nFailed check of GP_Set_irreg_distr\n",me);
+  }
+
+  /* destroy Global Pointer array */
+  GP_Destroy(g_p);
+
+  /* Check set chunk capability */
+  g_p = GP_Create_handle();
+  GP_Set_dimensions(g_p, ndim, dims);
+  chunk[0] = -1;
+  chunk[1] = -1;
+  chunk[2] = dims[2];
+  GP_Set_chunk(g_p, chunk);
+  GP_Allocate(g_p);
+
+  GP_Distribution(g_p, me, lo3, hi3);
+  idx = 1;
+  if (lo3[2] != 0) {
+    printf("p[%d] Mismatch in chunk distribution array lo3[2]: %d expected: %d\n",
+           me, lo3[2], 0);
+    idx = 0;
+  }
+  if (hi3[2] != dims[2] - 1) {
+    printf("p[%d] Mismatch in chunk distribution array hi3[2]: %d expected: %d\n",
+           me, hi3[2], dims[2]-1);
+    idx = 0;
+  }
+  GA_Igop(&idx,1,"*");
+  if (idx == 1 && me == 0) {
+    printf("\nCompleted check of GP_Set_chunk\n",me);
+  } else if (me == 0) {
+    printf("\nFailed check of GP_Set_chunk\n",me);
+  }
+
+  /* destroy Global Pointer array */
+  GP_Destroy(g_p);
+
 }
 
 int main(int argc, char **argv)
