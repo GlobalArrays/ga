@@ -37,6 +37,8 @@
    int i; for(i=0; i< (n); i++)(carr)[n-i-1]=(int)(farr)[i] -1;}
 #endif
 
+static Integer* gp_copy_map(int block[], int block_ndim, int map[]);
+
 void GP_Access_element(int g_p, int *subscript, void *ptr, int *size)
 {
   Integer ag_p = (Integer)g_p;
@@ -294,7 +296,51 @@ void GP_Set_dimensions(int g_p, int ndim, int *dims)
   wgp_set_dimensions(ag_p, andim, _gp_dims, 4);
 }
 
+void GP_Set_irreg_distr(int g_p, int *mapc, int *nblock)
+{
+  Integer ag_p, andim;
+  Integer ablock[GP_MAX_DIM];
+  Integer *amapc;
+  ag_p = (Integer)g_p;
+  andim = (int)wgp_get_dimension(ag_p);
+  COPYC2F(nblock,ablock,andim);
+  amapc = gp_copy_map(nblock, (int)andim, mapc);
+  wgp_set_irreg_distr(ag_p, amapc, ablock);
+  free(amapc);
+}
+
+void GP_Sync()
+{
+  wgp_sync();
+}
+
 void GP_Terminate()
 {
   wgp_terminate();
+}
+
+/* Internal utility functions */
+
+static Integer* gp_copy_map(int block[], int block_ndim, int map[])
+{
+  int d;
+  int i,sum=0,capi_offset=0,map_offset=0;
+  Integer *_ga_map_capi;
+
+  for (d=0; d<block_ndim; d++) {
+    sum += block[d];
+  }
+
+  _ga_map_capi = (Integer*)malloc(sum * sizeof(Integer));
+
+  capi_offset = sum;
+  for (d=0; d<block_ndim; d++) {
+    capi_offset -= block[d];
+    for (i=0; i<block[d]; i++) {
+      _ga_map_capi[capi_offset+i] = map[map_offset+i] + 1;
+    }
+    map_offset += block[d];
+  }
+
+  return _ga_map_capi;
 }

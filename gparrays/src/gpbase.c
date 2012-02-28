@@ -145,6 +145,7 @@ Integer pgp_create_handle()
       GP[i].g_size_array = pnga_create_handle();
       GP[i].g_ptr_array = pnga_create_handle();
       GP[i].active = 1;
+      GP[i].ndim = -1;
       break;
     }
   }
@@ -156,6 +157,7 @@ Integer pgp_create_handle()
  *  @param[in] g_p         pointer array handle
  *  @param[in] ndim        dimension of pointer array
  *  @param[in] dims[ndim]  dimension of array axes
+ *  @param[in] intsize     size of integers in calling program
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wgp_set_dimensions = pgp_set_dimensions
@@ -192,6 +194,37 @@ void pgp_set_dimensions(Integer g_p, Integer ndim, Integer *dims,
   for (i=0; i<ndim; i++) {
     GP[handle].dims[i] = dims[i];
   }
+}
+
+/**
+ *  Determine decomposition of array accross processors
+ *  @param[in] g_p          pointer array handle
+ *  @param[in] mapc         array giving first index of each
+ *                          block for each axis
+ *  @param[in] nblock[ndim] number of blocks along each dimension
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wgp_set_irreg_distr = pgp_set_irreg_distr
+#endif
+
+void pgp_set_irreg_distr(Integer g_p, Integer *mapc, Integer *nblock)
+{
+  Integer handle, i, ichk, ndim;
+  handle = g_p + GP_OFFSET;
+
+  /* Do some basic checks on parameters */
+  if (!GP[handle].active) {
+    pnga_error("gp_set_irreg_distr: Global Pointer handle is not active", 0);
+  }
+  ndim = GP[handle].ndim;
+  for (i=0; i<ndim; i++) {
+    if (GP[handle].dims[i]<(Integer)nblock[i]) {
+      pnga_error("gp_set_irreg_distr: number of blocks <= corresponding dimension", i);
+    }
+  }
+
+  pnga_set_irreg_distr(GP[handle].g_size_array, mapc, nblock);
+  pnga_set_irreg_distr(GP[handle].g_ptr_array, mapc, nblock);
 }
 
 /**
@@ -506,5 +539,17 @@ void pgp_memzero(Integer g_p, Integer intsize)
   }
   pnga_release_update(GP[handle].g_ptr_array,lo,hi);
   pnga_release_update(GP[handle].g_size_array,lo,hi);
+  pnga_sync();
+}
+
+/**
+ * Synchronize system and flush all outstanding communicaion.
+ */
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wgp_sync = pgp_sync
+#endif
+
+void pgp_sync()
+{
   pnga_sync();
 }
