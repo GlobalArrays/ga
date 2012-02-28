@@ -2522,6 +2522,7 @@ void *alpha, *beta;
       B_created = 1;
       if(andim > bndim) cndim = bndim;
       if(andim < bndim) cndim = andim;
+      cndim = bndim;
       pnga_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
       pnga_scale_patch(g_c, clo, chi, alpha);
       /*  determine subsets of my patches to access  */
