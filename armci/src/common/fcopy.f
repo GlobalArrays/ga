@@ -69,10 +69,12 @@
       integer*4 rows, cols
       integer*4 c, r, ald, bld
       double precision A(ald,*), B(bld,*)
-      integer*4 r1
+      integer*4 r1, ZERO, THREE
       double precision d1, d2, d3, d4
+      parameter (ZERO=0)
+      parameter (THREE=3)
       do c = 1, cols
-      r1 = iand(max0(rows,0),3)
+      r1 = iand(max0(rows,ZERO),THREE)
       do r = 1, r1
 c$$$         b(r,c) = a(r,c) + b(r,c) * 0
          b(r,c) = a(r,c)
@@ -104,10 +106,12 @@ ccdir$ no_cache_alloc a,b
       end
 
       subroutine dcopy1d_u(A, B, n)
-      integer*4 n,n1,i
+      integer*4 n,n1,i,ZERO,THREE
       double precision A(n), B(n)
       double precision d1, d2, d3, d4
-      n1 = iand(max0(n,0),3)
+      parameter (ZERO=0)
+      parameter (THREE=3)
+      n1 = iand(max0(n,ZERO),THREE)
       do i = 1, n1
             B(i) = A(i)
       end do
@@ -122,3 +126,4 @@ ccdir$ no_cache_alloc a,b
          b(i+3) = d4
       end do
       end
+

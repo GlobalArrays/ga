@@ -117,10 +117,12 @@ ccdir$ no_cache_alloc a,b
       integer*4 rows, cols
       integer*4 c, r, ald, bld
       double precision A(ald,*), B(bld,*), alpha
-      integer*4 r1
+      integer*4 r1, ZERO, THREE
+      parameter (ZERO=0)
+      parameter (THREE=3)
       doubleprecision d1, d2, d3, d4
       do c = 1, cols
-      r1 = iand(max0(rows,0),3)
+      r1 = iand(max0(rows,ZERO),THREE)
       do r = 1, r1
          a(r,c) = a(r,c) + alpha*b(r,c)
       end do
@@ -141,10 +143,12 @@ ccdir$ no_cache_alloc a,b
       integer*4 rows, cols
       integer*4 c, r, ald, bld
       real A(ald,*), B(bld,*), alpha
-      integer*4 r1
+      integer*4 r1, ZERO, THREE
       real d1, d2, d3, d4
+      parameter (ZERO=0)
+      parameter (THREE=3)
       do c = 1, cols
-      r1 = iand(max0(rows,0),3)
+      r1 = iand(max0(rows,ZERO),THREE)
       do r = 1, r1
          a(r,c) = a(r,c) + alpha*b(r,c)
       end do
@@ -165,10 +169,12 @@ ccdir$ no_cache_alloc a,b
       integer*4 rows, cols
       integer*4 c, r, ald, bld
       double complex A(ald,*), B(bld,*), alpha
-      integer*4 r1
+      integer*4 r1, ZERO, THREE
       double complex x1, x2, x3, x4
+      parameter (ZERO=0)
+      parameter (THREE=3)
       do c = 1, cols
-      r1 = iand(max0(rows,0),3)
+      r1 = iand(max0(rows,ZERO),THREE)
       do r = 1, r1
          a(r,c) = a(r,c) + alpha*b(r,c)
       end do
@@ -189,10 +195,12 @@ ccdir$ no_cache_alloc a,b
       integer*4 rows, cols
       integer*4 c, r, ald, bld
       complex A(ald,*), B(bld,*), alpha
-      integer*4 r1
+      integer*4 r1, ZERO, THREE
       complex x1, x2, x3, x4
+      parameter (ZERO=0)
+      parameter (THREE=3)
       do c = 1, cols
-      r1 = iand(max0(rows,0),3)
+      r1 = iand(max0(rows,ZERO),THREE)
       do r = 1, r1
          a(r,c) = a(r,c) + alpha*b(r,c)
       end do
@@ -213,9 +221,11 @@ ccdir$ no_cache_alloc a,b
       integer*4 rows, cols
       integer*4 c, r, ald, bld
       integer*4 A(ald,*), B(bld,*), alpha
-      integer*4 r1, j2, j3, j4, j5
+      integer*4 r1, j2, j3, j4, j5, ZERO, THREE
+      parameter (ZERO=0)
+      parameter (THREE=3)
       do c = 1, cols
-      r1 = iand(max0(rows,0),3)
+      r1 = iand(max0(rows,ZERO),THREE)
       do r = 1, r1
          a(r,c) = a(r,c) + alpha*b(r,c)
       end do
@@ -265,3 +275,4 @@ c
          x(i) = work(i)*work2(i)
       enddo
       end
+
