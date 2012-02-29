@@ -4141,7 +4141,7 @@ int loop=0;
 
 int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
 {
-    fprintf("stderr, [%d]:armci_pin_memory not implemented\n",armci_me);
+    fprintf(stderr, "[%d]:armci_pin_memory not implemented\n",armci_me);
     fflush(stderr);
     return 0;
 }
