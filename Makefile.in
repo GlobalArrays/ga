@@ -239,7 +239,7 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/mmatrix \
 @ENABLE_F77_TRUE@	global/testing/mulmatpatch \
 @ENABLE_F77_TRUE@	global/testing/nb2test global/testing/ndim \
-@ENABLE_F77_TRUE@	global/testing/patch \
+@ENABLE_F77_TRUE@	global/testing/patch global/testing/patch2 \
 @ENABLE_F77_TRUE@	global/testing/patch_enumf \
 @ENABLE_F77_TRUE@	global/testing/perfmod global/testing/perform \
 @ENABLE_F77_TRUE@	global/testing/perf \
@@ -281,6 +281,7 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/nb2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ndim$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/patch$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/patch2$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/patch_enumf$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perfmod$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perform$(EXEEXT) \
@@ -606,6 +607,7 @@ libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_F77_TRUE@	global/testing/nb2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/ndim$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/patch$(EXEEXT) \
+@ENABLE_F77_TRUE@	global/testing/patch2$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/patch_enumf$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perfmod$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/perform$(EXEEXT) \
@@ -1296,6 +1298,22 @@ global_testing_patch_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 global_testing_patch_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_patch_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am__global_testing_patch2_SOURCES_DIST = global/testing/patch2.F \
+	global/testing/testutil.fh global/testing/testutil.h \
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.F
+am_global_testing_patch2_OBJECTS = global/testing/patch2.$(OBJEXT) \
+	$(am__objects_9)
+global_testing_patch2_OBJECTS = $(am_global_testing_patch2_OBJECTS)
+global_testing_patch2_LDADD = $(LDADD)
+global_testing_patch2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+global_testing_patch2_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(global_testing_patch2_LDFLAGS) \
 	$(LDFLAGS) -o $@
 am__global_testing_patch_enumc_SOURCES_DIST =  \
 	global/testing/patch_enumc.c global/testing/testutil.fh \
@@ -3091,6 +3109,7 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(global_testing_packc_SOURCES) \
 	$(nodist_EXTRA_global_testing_packc_SOURCES) \
 	$(global_testing_patch_SOURCES) \
+	$(global_testing_patch2_SOURCES) \
 	$(global_testing_patch_enumc_SOURCES) \
 	$(nodist_EXTRA_global_testing_patch_enumc_SOURCES) \
 	$(global_testing_patch_enumf_SOURCES) \
@@ -3412,6 +3431,7 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_ntestfc_SOURCES_DIST) \
 	$(am__global_testing_packc_SOURCES_DIST) \
 	$(am__global_testing_patch_SOURCES_DIST) \
+	$(am__global_testing_patch2_SOURCES_DIST) \
 	$(am__global_testing_patch_enumc_SOURCES_DIST) \
 	$(am__global_testing_patch_enumf_SOURCES_DIST) \
 	$(am__global_testing_perf_SOURCES_DIST) \
@@ -4255,6 +4275,7 @@ global_testing_ntestc_SOURCES = global/testing/ntestc.c $(gtsrc)
 global_testing_ntestfc_SOURCES = global/testing/ntestfc.c $(gtsrc)
 global_testing_packc_SOURCES = global/testing/packc.c $(gtsrc)
 global_testing_patch_SOURCES = global/testing/patch.F $(gtsrc)
+global_testing_patch2_SOURCES = global/testing/patch2.F $(gtsrc)
 global_testing_patch_enumc_SOURCES = global/testing/patch_enumc.c $(gtsrc)
 global_testing_patch_enumf_SOURCES = global/testing/patch_enumf.F $(gtsrc)
 global_testing_perf_SOURCES = global/testing/perf.F $(gtsrc)
@@ -4421,6 +4442,7 @@ global_testing_ngatest_LDFLAGS = $(FLDFLAGS)
 global_testing_nga_util_LDFLAGS = $(FLDFLAGS)
 global_testing_patch_enumf_LDFLAGS = $(FLDFLAGS)
 global_testing_patch_LDFLAGS = $(FLDFLAGS)
+global_testing_patch2_LDFLAGS = $(FLDFLAGS)
 global_testing_perf_LDFLAGS = $(FLDFLAGS)
 global_testing_perfmod_LDFLAGS = $(FLDFLAGS)
 global_testing_perform_LDFLAGS = $(FLDFLAGS)
@@ -5602,6 +5624,11 @@ global/testing/patch.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/patch$(EXEEXT): $(global_testing_patch_OBJECTS) $(global_testing_patch_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/patch$(EXEEXT)
 	$(AM_V_F77LD)$(global_testing_patch_LINK) $(global_testing_patch_OBJECTS) $(global_testing_patch_LDADD) $(LIBS)
+global/testing/patch2.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/patch2$(EXEEXT): $(global_testing_patch2_OBJECTS) $(global_testing_patch2_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/patch2$(EXEEXT)
+	$(AM_V_F77LD)$(global_testing_patch2_LINK) $(global_testing_patch2_OBJECTS) $(global_testing_patch2_LDADD) $(LIBS)
 global/testing/patch_enumc.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/patch_enumc$(EXEEXT): $(global_testing_patch_enumc_OBJECTS) $(global_testing_patch_enumc_DEPENDENCIES) global/testing/$(am__dirstamp)
@@ -6796,6 +6823,7 @@ mostlyclean-compile:
 	-rm -f global/testing/ntestfc.$(OBJEXT)
 	-rm -f global/testing/packc.$(OBJEXT)
 	-rm -f global/testing/patch.$(OBJEXT)
+	-rm -f global/testing/patch2.$(OBJEXT)
 	-rm -f global/testing/patch_enumc.$(OBJEXT)
 	-rm -f global/testing/patch_enumf.$(OBJEXT)
 	-rm -f global/testing/perf.$(OBJEXT)
@@ -8006,6 +8034,8 @@ global/testing/ndim.log: global/testing/ndim$(EXEEXT)
 	@p='global/testing/ndim$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/patch.log: global/testing/patch$(EXEEXT)
 	@p='global/testing/patch$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/patch2.log: global/testing/patch2$(EXEEXT)
+	@p='global/testing/patch2$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/patch_enumf.log: global/testing/patch_enumf$(EXEEXT)
 	@p='global/testing/patch_enumf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/perfmod.log: global/testing/perfmod$(EXEEXT)
