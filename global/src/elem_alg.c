@@ -244,9 +244,7 @@ static void do_stepmax(void *ptr, int nelem, int type)
 static void do_abs(void *ptr, int nelem, int type)
 {
     int i;
-    /* double magi, magr; */
     double x2;
-    /* float smagi, smagr; */
     float sx2;
     switch (type){
          int *ia;
@@ -264,53 +262,55 @@ static void do_abs(void *ptr, int nelem, int type)
          case C_DCPL:
               ca = (DoubleComplex *) ptr;
               for(i=0;i<nelem;i++){
-		val = ca[i];
-                /* DJB: This algorithm can lead to overflows when
-		   and underflows when not necessary.
-		ca[i].real = sqrt(val.real * val.real + val.imag *val.imag);
-		ca[i].imag = 0.0;
-		   Better (but slower) is:
-		*/
-		/* magi = GA_ABS(val.imag); */
-		/* magr = GA_ABS(val.real); */
-		if (GA_ABS(val.real) >= GA_ABS(val.imag)) {
-		  if (val.real == (double)0.0) {
-		    ca[i].real = (double)0.0;
-		  } else {
-		    x2 = val.imag/val.real;
-		    ca[i].real = GA_ABS(val.real)*sqrt(((double)1.0)+(x2*x2));
-		  }
-		} else {
-		  x2 = val.real/val.imag;
-		  ca[i].real = GA_ABS(val.imag)*sqrt(((double)1.0)+(x2*x2));
-		}
-		ca[i].imag=(double)0.0;
+#if HAVE_HYPOT
+                  ca[i].real = hypot(ca[i].real, ca[i].imag);
+#else
+                  val = ca[i];
+                  /* DJB: This algorithm can lead to overflows when
+                     and underflows when not necessary.
+                  ca[i].real = sqrt(val.real * val.real + val.imag *val.imag);
+                  ca[i].imag = 0.0;
+                     Better (but slower) is: */
+                  if (GA_ABS(val.real) >= GA_ABS(val.imag)) {
+                      if (val.real == (double)0.0) {
+                          ca[i].real = (double)0.0;
+                      } else {
+                          x2 = val.imag/val.real;
+                          ca[i].real = GA_ABS(val.real)*sqrt(1.0+(x2*x2));
+                      }
+                  } else {
+                      x2 = val.real/val.imag;
+                      ca[i].real = GA_ABS(val.imag)*sqrt(1.0+(x2*x2));
+                  }
+#endif
+                  ca[i].imag=(double)0.0;
               }
               break;
          case C_SCPL:
               cfa = (SingleComplex *) ptr;
               for(i=0;i<nelem;i++){
-		cval = cfa[i];
-                /* DJB: This algorithm can lead to overflows when
-		   and underflows when not necessary.
-		cfa[i].real = sqrt(cval.real * cval.real + cval.imag *cval.imag);
-		cfa[i].imag = 0.0;
-		   Better (but slower) is:
-		*/
-		/* smagi = GA_ABS(cval.imag); */
-		/* smagr = GA_ABS(cval.real); */
-		if (GA_ABS(cval.real) >= GA_ABS(cval.imag)) {
-		  if (cval.real == (float)0.0) {
-		    cfa[i].real = (float)0.0;
-		  } else {
-		    sx2 = cval.imag/cval.real;
-		    cfa[i].real = GA_ABS(cval.real)*sqrt(((float)1.0)+(sx2*sx2));
-		  }
-		} else {
-		  sx2 = cval.real/cval.imag;
-		  cfa[i].real = GA_ABS(cval.imag)*sqrt(((float)1.0)+(sx2*sx2));
-		}
-		cfa[i].imag=(float)0.0;
+#if HAVE_HYPOT
+                  cfa[i].real = hypotf(cfa[i].real, cfa[i].imag);
+#else
+                  cval = cfa[i];
+                  /* DJB: This algorithm can lead to overflows when
+                     and underflows when not necessary.
+                  cfa[i].real = sqrt(cval.real * cval.real + cval.imag *cval.imag);
+                  cfa[i].imag = 0.0;
+                     Better (but slower) is: */
+                  if (GA_ABS(cval.real) >= GA_ABS(cval.imag)) {
+                      if (cval.real == 0.0f) {
+                          cfa[i].real = 0.0f;
+                      } else {
+                          sx2 = cval.imag/cval.real;
+                          cfa[i].real = GA_ABS(cval.real)*sqrt(1.0f+(sx2*sx2));
+                      }
+                  } else {
+                      sx2 = cval.real/cval.imag;
+                      cfa[i].real = GA_ABS(cval.imag)*sqrt(1.0f+(sx2*sx2));
+                  }
+#endif
+                  cfa[i].imag=0.0f;
               }
               break;
   	 case C_DBL:

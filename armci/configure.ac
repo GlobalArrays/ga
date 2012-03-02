@@ -168,21 +168,15 @@ AC_FUNC_FORK
 AC_FUNC_MMAP
 AC_FUNC_SELECT_ARGTYPES
 AC_FUNC_VPRINTF
-AC_SEARCH_LIBS([floor], [m],
-    [AC_DEFINE([HAVE_FLOOR], [1],
-               [Define to 1 if you have the `floor' function.])],
-    [AC_DEFINE([HAVE_FLOOR], [0],
-               [Define to 1 if you have the `floor' function.])])
-AC_SEARCH_LIBS([pow], [m],
-    [AC_DEFINE([HAVE_POW], [1],
-               [Define to 1 if you have the `pow' function.])],
-    [AC_DEFINE([HAVE_POW], [0],
-               [Define to 1 if you have the `pow' function.])])
-AC_SEARCH_LIBS([sqrt], [m],
-    [AC_DEFINE([HAVE_SQRT], [1],
-               [Define to 1 if you have the `sqrt' function.])],
-    [AC_DEFINE([HAVE_SQRT], [0],
-               [Define to 1 if you have the `sqrt' function.])])
+AC_SEARCH_LIBS([floor], [m], [have_floor=1], [have_floor=0])
+AC_DEFINE_UNQUOTED([HAVE_FLOOR], [$have_floor],
+    [Define to 1 if you have the 'floor' function.])
+AC_SEARCH_LIBS([pow], [m], [have_pow=1], [have_pow=0])
+AC_DEFINE_UNQUOTED([HAVE_POW], [$have_pow],
+    [Define to 1 if you have the 'pow' function.])
+AC_SEARCH_LIBS([sqrt], [m], [have_sqrt=1], [have_sqrt=0])
+AC_DEFINE_UNQUOTED([HAVE_SQRT], [$have_sqrt],
+    [Define to 1 if you have the 'sqrt' function.])
 GA_CHECK_FUNCS([bzero fastbcopy ftruncate gethostbyname getpagesize gettimeofday memset munmap select socket strchr strdup strerror strstr strtol _lock_try _acquire_lock xdr_char])
 GA_CHECK_FUNCS([pthread_getconcurrency pthread_setconcurrency])
 

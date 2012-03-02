@@ -12656,14 +12656,15 @@ $as_echo "$ac_cv_search_floor" >&6; }
 ac_res=$ac_cv_search_floor
 if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-$as_echo "#define HAVE_FLOOR 1" >>confdefs.h
-
+  have_floor=1
 else
-
-$as_echo "#define HAVE_FLOOR 0" >>confdefs.h
-
+  have_floor=0
 fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FLOOR $have_floor
+_ACEOF
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing modf" >&5
 $as_echo_n "checking for library containing modf... " >&6; }
@@ -12718,14 +12719,15 @@ $as_echo "$ac_cv_search_modf" >&6; }
 ac_res=$ac_cv_search_modf
 if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-$as_echo "#define HAVE_MODF 1" >>confdefs.h
-
+  have_modf=1
 else
-
-$as_echo "#define HAVE_MODF 0" >>confdefs.h
-
+  have_modf=0
 fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MODF $have_modf
+_ACEOF
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing pow" >&5
 $as_echo_n "checking for library containing pow... " >&6; }
@@ -12780,14 +12782,15 @@ $as_echo "$ac_cv_search_pow" >&6; }
 ac_res=$ac_cv_search_pow
 if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-$as_echo "#define HAVE_POW 1" >>confdefs.h
-
+  have_pow=1
 else
-
-$as_echo "#define HAVE_POW 0" >>confdefs.h
-
+  have_pow=0
 fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_POW $have_pow
+_ACEOF
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing sqrt" >&5
 $as_echo_n "checking for library containing sqrt... " >&6; }
@@ -12842,14 +12845,78 @@ $as_echo "$ac_cv_search_sqrt" >&6; }
 ac_res=$ac_cv_search_sqrt
 if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  have_sqrt=1
+else
+  have_sqrt=0
+fi
 
-$as_echo "#define HAVE_SQRT 1" >>confdefs.h
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SQRT $have_sqrt
+_ACEOF
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing hypot" >&5
+$as_echo_n "checking for library containing hypot... " >&6; }
+if ${ac_cv_search_hypot+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char hypot ();
+int
+main ()
+{
+return hypot ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' m; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_hypot=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_hypot+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_hypot+:} false; then :
 
 else
-
-$as_echo "#define HAVE_SQRT 0" >>confdefs.h
-
+  ac_cv_search_hypot=no
 fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_hypot" >&5
+$as_echo "$ac_cv_search_hypot" >&6; }
+ac_res=$ac_cv_search_hypot
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  have_hypot=1
+else
+  have_hypot=0
+fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_HYPOT $have_hypot
+_ACEOF
 
 for ac_func in bcopy bzero create_shared_region ftruncate gethostbyname gethostname getpagesize gettimeofday memalign memcpy memset munmap pause posix_memalign putenv select setenv shared_malloc shmalloc socket srandom srand strchr strdup strerror strstr strtol
 do :

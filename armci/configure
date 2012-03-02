@@ -12379,14 +12379,15 @@ $as_echo "$ac_cv_search_floor" >&6; }
 ac_res=$ac_cv_search_floor
 if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-$as_echo "#define HAVE_FLOOR 1" >>confdefs.h
-
+  have_floor=1
 else
-
-$as_echo "#define HAVE_FLOOR 0" >>confdefs.h
-
+  have_floor=0
 fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FLOOR $have_floor
+_ACEOF
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing pow" >&5
 $as_echo_n "checking for library containing pow... " >&6; }
@@ -12441,14 +12442,15 @@ $as_echo "$ac_cv_search_pow" >&6; }
 ac_res=$ac_cv_search_pow
 if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-$as_echo "#define HAVE_POW 1" >>confdefs.h
-
+  have_pow=1
 else
-
-$as_echo "#define HAVE_POW 0" >>confdefs.h
-
+  have_pow=0
 fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_POW $have_pow
+_ACEOF
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing sqrt" >&5
 $as_echo_n "checking for library containing sqrt... " >&6; }
@@ -12503,14 +12505,15 @@ $as_echo "$ac_cv_search_sqrt" >&6; }
 ac_res=$ac_cv_search_sqrt
 if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-$as_echo "#define HAVE_SQRT 1" >>confdefs.h
-
+  have_sqrt=1
 else
-
-$as_echo "#define HAVE_SQRT 0" >>confdefs.h
-
+  have_sqrt=0
 fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SQRT $have_sqrt
+_ACEOF
 
 for ac_func in bzero fastbcopy ftruncate gethostbyname getpagesize gettimeofday memset munmap select socket strchr strdup strerror strstr strtol _lock_try _acquire_lock xdr_char
 do :

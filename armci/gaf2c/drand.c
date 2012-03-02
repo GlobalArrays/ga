@@ -2,10 +2,11 @@
 #   include "config.h"
 #endif
 
-#include "typesf2c.h"
+#if HAVE_STDLIB_H
+#   include <stdlib.h>
+#endif
 
-extern long random();
-extern void srandom(unsigned);
+#include "typesf2c.h"
 
 #ifdef CRAY_YMP
 /** on YMP/J90 need to use thread safe version of rand */

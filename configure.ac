@@ -153,26 +153,21 @@ AC_FUNC_MMAP
 AC_FUNC_SELECT_ARGTYPES
 AS_IF([test "x$ga_msg_comms" = xTCGMSG],
     [AC_SEARCH_LIBS([xdr_array], [rpclib], [], [], [])])
-AC_SEARCH_LIBS([floor], [m],
-    [AC_DEFINE([HAVE_FLOOR], [1],
-               [Define to 1 if you have the `floor' function.])],
-    [AC_DEFINE([HAVE_FLOOR], [0],
-               [Define to 1 if you have the `floor' function.])])
-AC_SEARCH_LIBS([modf], [m],
-    [AC_DEFINE([HAVE_MODF], [1],
-               [Define to 1 if you have the `modf' function.])],
-    [AC_DEFINE([HAVE_MODF], [0],
-               [Define to 1 if you have the `modf' function.])])
-AC_SEARCH_LIBS([pow], [m],
-    [AC_DEFINE([HAVE_POW], [1],
-               [Define to 1 if you have the `pow' function.])],
-    [AC_DEFINE([HAVE_POW], [0],
-               [Define to 1 if you have the `pow' function.])])
-AC_SEARCH_LIBS([sqrt], [m],
-    [AC_DEFINE([HAVE_SQRT], [1],
-               [Define to 1 if you have the `sqrt' function.])],
-    [AC_DEFINE([HAVE_SQRT], [0],
-               [Define to 1 if you have the `sqrt' function.])])
+AC_SEARCH_LIBS([floor], [m], [have_floor=1], [have_floor=0])
+AC_DEFINE_UNQUOTED([HAVE_FLOOR], [$have_floor],
+    [Define to 1 if you have the 'floor' function.])
+AC_SEARCH_LIBS([modf], [m], [have_modf=1], [have_modf=0])
+AC_DEFINE_UNQUOTED([HAVE_MODF], [$have_modf],
+    [Define to 1 if you have the 'modf' function.])
+AC_SEARCH_LIBS([pow], [m], [have_pow=1], [have_pow=0])
+AC_DEFINE_UNQUOTED([HAVE_POW], [$have_pow],
+    [Define to 1 if you have the 'pow' function.])
+AC_SEARCH_LIBS([sqrt], [m], [have_sqrt=1], [have_sqrt=0])
+AC_DEFINE_UNQUOTED([HAVE_SQRT], [$have_sqrt],
+    [Define to 1 if you have the 'sqrt' function.])
+AC_SEARCH_LIBS([hypot], [m], [have_hypot=1], [have_hypot=0])
+AC_DEFINE_UNQUOTED([HAVE_HYPOT], [$have_hypot],
+    [Define to 1 if you have the 'hypot' function.])
 GA_CHECK_FUNCS([bcopy bzero create_shared_region ftruncate gethostbyname gethostname getpagesize gettimeofday memalign memcpy memset munmap pause posix_memalign putenv select setenv shared_malloc shmalloc socket srandom srand strchr strdup strerror strstr strtol])
 
 # Checks for C libraries.

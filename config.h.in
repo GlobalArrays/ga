@@ -177,7 +177,7 @@
 /* Define to 1 if you have the <ffio.h> header file. */
 #undef HAVE_FFIO_H
 
-/* Define to 1 if you have the `floor' function. */
+/* Define to 1 if you have the 'floor' function. */
 #undef HAVE_FLOOR
 
 /* Define to 1 if you have the `fork' function. */
@@ -200,6 +200,9 @@
 
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
+
+/* Define to 1 if you have the 'hypot' function. */
+#undef HAVE_HYPOT
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -240,7 +243,7 @@
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
 
-/* Define to 1 if you have the `modf' function. */
+/* Define to 1 if you have the 'modf' function. */
 #undef HAVE_MODF
 
 /* Define to 1 if you have the `munmap' function. */
@@ -267,7 +270,7 @@
 /* Define to 1 if you have the `posix_memalign' function. */
 #undef HAVE_POSIX_MEMALIGN
 
-/* Define to 1 if you have the `pow' function. */
+/* Define to 1 if you have the 'pow' function. */
 #undef HAVE_POW
 
 /* define to 1 if the C compiler has a program name global varaible */
@@ -294,7 +297,7 @@
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
 
-/* Define to 1 if you have the `sqrt' function. */
+/* Define to 1 if you have the 'sqrt' function. */
 #undef HAVE_SQRT
 
 /* Define to 1 if you have the `srand' function. */

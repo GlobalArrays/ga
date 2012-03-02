@@ -183,7 +183,7 @@
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
 
-/* Define to 1 if you have the `floor' function. */
+/* Define to 1 if you have the 'floor' function. */
 #undef HAVE_FLOOR
 
 /* Define to 1 if you have the `fork' function. */
@@ -249,7 +249,7 @@
 /* set to 1 if libonesided has onesided_mem_htflush (added in v1.5) */
 #undef HAVE_ONESIDED_MEM_HTFLUSH
 
-/* Define to 1 if you have the `pow' function. */
+/* Define to 1 if you have the 'pow' function. */
 #undef HAVE_POW
 
 /* Define to 1 if you have the <process.h> header file. */
@@ -285,7 +285,7 @@
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
 
-/* Define to 1 if you have the `sqrt' function. */
+/* Define to 1 if you have the 'sqrt' function. */
 #undef HAVE_SQRT
 
 /* Define to 1 if you have the <stdarg.h> header file. */
