@@ -13,7 +13,8 @@ from libc.stdlib cimport malloc,free
 from gah cimport *
 import numpy as np
 cimport numpy as np
-from python_ref cimport Py_INCREF
+from cpython.ref cimport Py_INCREF
+from cpython.ref cimport PyTypeObject
 import __builtin__
 
 DEF EXCLUSIVE = 0
@@ -21,7 +22,7 @@ DEF EXCLUSIVE = 0
 np.import_array()
 
 cdef extern from "numpy/arrayobject.h":
-    object PyArray_NewFromDescr(object subtype,
+    object PyArray_NewFromDescr(PyTypeObject* subtype,
                                 np.dtype descr,
                                 int nd,
                                 np.npy_intp * dims,
@@ -465,8 +466,8 @@ def access(int g_a, lo=None, hi=None, int proc=-1):
         dims[i] = dims_nd[i]
         strides[i] = ld_nd[i]
     Py_INCREF(dtype)
-    array = PyArray_NewFromDescr(np.ndarray,
-            dtype, dimlen, dims, strides, ptr, np.NPY_DEFAULT, None)
+    array = PyArray_NewFromDescr(<PyTypeObject*>np.ndarray,
+            dtype, dimlen, dims, strides, ptr, np.NPY_WRITEABLE, None)
     free(dims)
     free(strides)
     if lo is not None or hi is not None:
