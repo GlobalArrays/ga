@@ -16,14 +16,15 @@ void Mock_Abs_value(mock_ga_t *g_a)
     LOOP_VARS(g_a)
 
     switch (g_a->type) {
-#define TYPE_CASE(GA_TYPE,C_TYPE,AT)                    \
-        case GA_TYPE:                                   \
-            {                                           \
-                LOOP_BUFFER(g_a,C_TYPE)                 \
-                LOOP_SETUP(g_a,C_TYPE)                  \
-                    assign_abs_##AT(*g_a_buf,*g_a_buf); \
-                LOOP_NEXT(g_a)                          \
-                break;                                  \
+#define TYPE_CASE(GA_TYPE,C_TYPE,AT)                \
+        case GA_TYPE:                               \
+            {                                       \
+                LOOP_BUFFER(g_a,C_TYPE)             \
+                LOOP_BEGIN(g_a,C_TYPE)              \
+                assign_abs_##AT(*g_a_buf,*g_a_buf); \
+                LOOP_NEXT(g_a)                      \
+                LOOP_END                            \
+                break;                              \
             }
 #include "types.xh"
 #undef TYPE_CASE
@@ -36,14 +37,15 @@ void Mock_Abs_value_patch(mock_ga_t *g_a, int *lo, int *hi)
     LOOP_VARS_PATCH(g_a)
 
     switch (g_a->type) {
-#define TYPE_CASE(GA_TYPE,C_TYPE,AT)                    \
-        case GA_TYPE:                                   \
-            {                                           \
-                LOOP_BUFFER(g_a,C_TYPE)                 \
-                LOOP_SETUP_PATCH(g_a,C_TYPE,lo,hi)      \
-                    assign_abs_##AT(*g_a_buf,*g_a_buf); \
-                LOOP_NEXT_PATCH(g_a)                    \
-                break;                                  \
+#define TYPE_CASE(GA_TYPE,C_TYPE,AT)                \
+        case GA_TYPE:                               \
+            {                                       \
+                LOOP_BUFFER(g_a,C_TYPE)             \
+                LOOP_BEGIN_PATCH(g_a,C_TYPE,lo,hi)  \
+                assign_abs_##AT(*g_a_buf,*g_a_buf); \
+                LOOP_NEXT_PATCH(g_a)                \
+                LOOP_END                            \
+                break;                              \
             }
 #include "types.xh"
 #undef TYPE_CASE
@@ -1049,7 +1051,7 @@ void Mock_Print(mock_ga_t *g_a)
                     }                                       \
                     printf(") " AT "\n", ptr[i]);           \
                     for (j=g_a->nd_m1; j>=0; --j) {         \
-                        if (coords[j] <= g_a->dims_m1[j]) { \
+                        if (coords[j] < g_a->dims_m1[j]) {  \
                             ++coords[j];                    \
                             break;                          \
                         }                                   \
@@ -1066,19 +1068,29 @@ void Mock_Print(mock_ga_t *g_a)
         TYPE_CASE(C_FLOAT,float,"%f")
         TYPE_CASE(C_DBL,double,"%f")
 #undef TYPE_CASE
-#define TYPE_CASE(GA_TYPE,C_TYPE)                                 \
-        case GA_TYPE:                                             \
-            {                                                     \
-                int i;                                            \
-                C_TYPE *ptr = (C_TYPE*)(g_a->buf);                \
-                for (i=0; i<g_a->size; ++i) {                     \
-                    printf("%f+%fi, ", ptr[i].real, ptr[i].imag); \
-                    if (i != 0 && i%10 == 0) {                    \
-                        printf("\n");                             \
-                    }                                             \
-                }                                                 \
-                printf("\n");                                     \
-                break;                                            \
+#define TYPE_CASE(GA_TYPE,C_TYPE)                                   \
+        case GA_TYPE:                                               \
+            {                                                       \
+                int i,j;                                            \
+                int coords[GA_MAX_DIM] = {0};                       \
+                C_TYPE *ptr = (C_TYPE*)(g_a->buf);                  \
+                for (i=0; i<g_a->size; ++i) {                       \
+                    printf("%d (%d", i, coords[0]);                 \
+                    for (j=1; j<g_a->ndim; ++j) {                   \
+                        printf(",%d", coords[j]);                   \
+                    }                                               \
+                    printf(") %f+%fi\n", ptr[i].real, ptr[i].imag); \
+                    for (j=g_a->nd_m1; j>=0; --j) {                 \
+                        if (coords[j] <= g_a->dims_m1[j]) {         \
+                            ++coords[j];                            \
+                            break;                                  \
+                        }                                           \
+                        else {                                      \
+                            coords[j] = 0;                          \
+                        }                                           \
+                    }                                               \
+                }                                                   \
+                break;                                              \
             }
         TYPE_CASE(C_SCPL,SingleComplex)
         TYPE_CASE(C_DCPL,DoubleComplex)

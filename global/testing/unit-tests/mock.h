@@ -62,13 +62,13 @@ int the_ga##_j;
 
 /* setup the user-visible buffer and the iterator variables 
  * Note: use this when iterating over the entire array buffer i.e. no lo/hi */
-#define LOOP_SETUP(the_ga,TYPE)                                \
+#define LOOP_BEGIN(the_ga,TYPE)                                \
 the_ga##_buf = (TYPE*)the_ga##_bytebuf;                        \
 for (the_ga##_i = 0; the_ga##_i<the_ga##_size; ++the_ga##_i) {
 
 /* setup the user-visible buffer and the iterator variables 
  * Note: use this when iterating over a lo/hi patch */
-#define LOOP_SETUP_PATCH(the_ga,TYPE,lo,hi)                             \
+#define LOOP_BEGIN_PATCH(the_ga,TYPE,lo,hi)                             \
 for (the_ga##_i = 0; the_ga##_i < the_ga##_ndim; ++ the_ga##_i) {       \
     the_ga##_coords[the_ga##_i] = 0;                                    \
     the_ga##_lo[the_ga##_i] = (lo)[the_ga##_i];                         \
@@ -79,11 +79,10 @@ for (the_ga##_i = 0; the_ga##_i < the_ga##_ndim; ++ the_ga##_i) {       \
 the_ga##_buf = (TYPE*)the_ga##_bytebuf;                                 \
 for (the_ga##_i = 0; the_ga##_i<the_ga##_size; ++the_ga##_i) {
 
-/* iterate over the loop */
-#define LOOP_NEXT(the_ga) \
-}
+/* iterate over the buffer */
+#define LOOP_NEXT(the_ga) ++the_ga##_buf;
 
-/* iterate over the loop */
+/* iterate over the buffer */
 #define LOOP_NEXT_PATCH(the_ga)                                       \
     for (the_ga##_j=the_ga##_nd_m1; the_ga##_j>=0; --the_ga##_j) {    \
         if (the_ga##_coords[the_ga##_j] <= the_ga##_hi[the_ga##_j]) { \
@@ -95,17 +94,19 @@ for (the_ga##_i = 0; the_ga##_i<the_ga##_size; ++the_ga##_i) {
             the_ga##_coords[the_ga##_j] = the_ga##_lo[the_ga##_j];    \
             the_ga##_buf -= (the_ga)->backstrides[the_ga##_j];        \
         }                                                             \
-    }                                                                 \
-}
+    }
 
-static void aprint(char *name, int *array, int ndim)
+/* end of loop */
+#define LOOP_END }
+
+static void aprint(char *name, int *array, int size)
 {
     int i;
     printf("%s={", name);
-    if (ndim > 0) {
+    if (size > 0) {
         printf("%d", array[0]);
     }
-    for (i=1; i<ndim; ++i) {
+    for (i=1; i<size; ++i) {
         printf(",%d", array[i]);
     }
     printf("}\n");
@@ -120,14 +121,15 @@ static void mock_data(mock_ga_t *mock_a, int g_a)
         case GA_TYPE:                                   \
             {                                           \
                 LOOP_BUFFER(mock_a,C_TYPE)              \
-                LOOP_SETUP(mock_a,C_TYPE)               \
+                LOOP_BEGIN(mock_a,C_TYPE)               \
                 if (mock_a_i%2) {                       \
-                    assign_##AT(*mock_a_buf,mock_a_i);  \
+                    assign_##AT(*mock_a_buf, mock_a_i); \
                 }                                       \
                 else {                                  \
                     assign_##AT(*mock_a_buf,-mock_a_i); \
                 }                                       \
                 LOOP_NEXT(mock_a)                       \
+                LOOP_END                                \
                 break;                                  \
             }
         TYPE_CASE(C_INT,int,reg)
@@ -139,19 +141,20 @@ static void mock_data(mock_ga_t *mock_a, int g_a)
 #define TYPE_CASE(GA_TYPE,C_TYPE,AT)                    \
         case GA_TYPE:                                   \
             {                                           \
+                LOOP_BUFFER(mock_a,C_TYPE)              \
+                LOOP_BEGIN(mock_a,C_TYPE)               \
                 C_TYPE value;                           \
                 if (mock_a_i%2) {                       \
                     value.real =  mock_a_i;             \
-                    value.real = -mock_a_i;             \
+                    value.imag = -mock_a_i;             \
                 }                                       \
                 else {                                  \
                     value.real = -mock_a_i;             \
-                    value.real =  mock_a_i;             \
+                    value.imag =  mock_a_i;             \
                 }                                       \
-                LOOP_BUFFER(mock_a,C_TYPE)              \
-                LOOP_SETUP(mock_a,C_TYPE)               \
-                    assign_##AT(*mock_a_buf,value);     \
+                assign_##AT(*mock_a_buf,value);         \
                 LOOP_NEXT(mock_a)                       \
+                LOOP_END                                \
                 break;                                  \
             }
         TYPE_CASE(C_SCPL,SingleComplex,cpl)
@@ -166,12 +169,15 @@ static void mock_to_global(mock_ga_t *mock_a, int g_a)
         int i;
         int lo[GA_MAX_DIM];
         int hi[GA_MAX_DIM];
+        int ld[GA_MAX_DIM];
         for (i=0; i<mock_a->ndim; ++i) {
             lo[i] = 0;
             hi[i] = mock_a->dims[i]-1;
         }
-        /* TODO FIX LD */
-        NGA_Put(g_a, lo, hi, mock_a->buf, (mock_a->dims)+1);
+        for (i=0; i<mock_a->ndim-1; ++i) {
+            ld[i] = hi[i+1]-lo[i+1]+1;
+        }
+        NGA_Put(g_a, lo, hi, mock_a->buf, ld);
     }
     GA_Sync();
 }
@@ -181,19 +187,38 @@ static void global_to_mock(int g_a, mock_ga_t *mock_a)
     int i;
     int lo[GA_MAX_DIM];
     int hi[GA_MAX_DIM];
+    int ld[GA_MAX_DIM];
     for (i=0; i<mock_a->ndim; ++i) {
         lo[i] = 0;
         hi[i] = mock_a->dims[i]-1;
     }
-    /* TODO FIX LD */
-    NGA_Get(g_a, lo, hi, mock_a->buf, (mock_a->dims)+1);
+    for (i=0; i<mock_a->ndim-1; ++i) {
+        ld[i] = hi[i+1]-lo[i+1]+1;
+    }
+    GA_Sync();
+    NGA_Get(g_a, lo, hi, mock_a->buf, ld);
     GA_Sync();
 }
 
-static int neq_mock(mock_ga_t *mock_a, mock_ga_t *mock_b)
+static void print_val(void *val, int type)
+{
+    switch(type) {
+        case C_INT:      printf("%d",     *((int*)val)); break;
+        case C_LONG:     printf("%ld",    *((long*)val)); break;
+        case C_LONGLONG: printf("%lld",   *((long long*)val)); break;
+        case C_FLOAT:    printf("%f",     *((float*)val)); break;
+        case C_DBL:      printf("%f",     *((double*)val)); break;
+        case C_SCPL:     printf("%f+%fi", ((SingleComplex*)val)->real,((SingleComplex*)val)->imag); break;
+        case C_DCPL:     printf("%f+%fi", ((DoubleComplex*)val)->real,((DoubleComplex*)val)->imag); break;
+        default: assert(0);
+    }
+}
+
+static int neq_mock(mock_ga_t *mock_a, mock_ga_t *mock_b, int *idx)
 {
     LOOP_VARS(mock_a)
 
+    *idx=-1;
     switch(mock_a->type) {
 #define TYPE_CASE(GA_TYPE,C_TYPE,AT)                      \
         case GA_TYPE:                                     \
@@ -201,11 +226,14 @@ static int neq_mock(mock_ga_t *mock_a, mock_ga_t *mock_b)
                 LOOP_BUFFER(mock_a,C_TYPE)                \
                 LOOP_BUFFER(mock_b,C_TYPE)                \
                 mock_b_buf = (C_TYPE*)mock_b->buf;        \
-                LOOP_SETUP(mock_a,C_TYPE)                 \
+                LOOP_BEGIN(mock_a,C_TYPE)                 \
                 if (!eq_##AT(*mock_a_buf, *mock_b_buf)) { \
+                    *idx = mock_a_i;                      \
                     return 1;                             \
                 }                                         \
                 LOOP_NEXT(mock_a)                         \
+                LOOP_NEXT(mock_b)                         \
+                LOOP_END                                  \
                 break;                                    \
             }
 #include "types.xh"

@@ -42,7 +42,7 @@ main(int argc, char **argv)
   for(i=1; i<=MAX_DIM; i++)
     {
       for(j=0; j<NUM_TYPES; j++)
-	create_ga(i, datatypes[j]);
+	create_ga(i, TYPES[j]);
     }
   GA_Sync();
   if(rank == 0)
