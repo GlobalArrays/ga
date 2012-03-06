@@ -116,9 +116,14 @@ static int create_chunk(int type, int ndim, int *shape) {
 #if 1
     int i;
     int chunk[GA_MAX_DIM];
-    for (i=0; i<ndim; ++i) {
-        chunk[i] = rand() % shape[i];
+
+    /* the chunks must be the same on each process! */
+    if (0 == GA_Nodeid()) {
+        for (i=0; i<ndim; ++i) {
+            chunk[i] = rand() % shape[i];
+        }
     }
+    GA_Brdcst(chunk, ndim*sizeof(int), 0);
     if (0 == GA_Nodeid()) {
         printf("\tcreating chunked array\n");
         printf("\t");
