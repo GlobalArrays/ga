@@ -286,6 +286,17 @@ int clusterProcid(int inode, int iproc);
  */
 int createMutexes(int number);
 
+/**
+ * Remove a user defined data type from GA
+ *
+ * @param[in] type - user defined data type
+ *
+ * @return 0 is operation is successful
+ *         -2 if type not registered
+ *         -1 if type reserved
+ */
+int deregisterType(int type);
+
 /** 
  * Destroys the set of mutexes created with ga_create_mutexes.
  *
@@ -617,6 +628,15 @@ int nodes();
  * This operation is local. 
  */
 void printStats();
+
+/**
+ * Add a user defined data type to GA
+ *
+ * @param[in] size - size (in bytes) of user defined data type
+ *
+ * @return  handle for new data type
+ */
+int registerType(size_t size);
 
 /**
  * This function sets an internal flag in the GA library to either true or

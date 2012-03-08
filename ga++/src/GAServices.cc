@@ -110,6 +110,11 @@ GA::GAServices::createMutexes(int number) {
   return GA_Create_mutexes(number);
 }
 
+int
+GA::GAServices::deregisterType(int type) {
+  return NGA_Deregister_type(type);
+}
+
 int 
 GA::GAServices::destroyMutexes() {
   return GA_Destroy_mutexes(); 
@@ -212,6 +217,11 @@ GA::GAServices::nodes() {
 void 
 GA::GAServices::printStats() {
   GA_Print_stats();
+}
+
+int
+GA::GAServices::registerType(size_t size) {
+  return NGA_Register_type(size);
 }
 
 void

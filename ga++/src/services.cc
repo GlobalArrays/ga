@@ -84,6 +84,11 @@ GA::createMutexes(int number) {
   return GA_Create_mutexes(number);
 }
 
+int
+GA::deregisterType(int size) {
+  return NGA_Deregister_type(size);
+}
+
 int 
 GA::destroyMutexes() {
   return GA_Destroy_mutexes(); 
@@ -186,6 +191,11 @@ GA::nodes() {
 void 
 GA::printStats() {
   GA_Print_stats();
+}
+
+int
+GA::registerType(size_t size) {
+  return NGA_Register_type(size);
 }
 
 void
