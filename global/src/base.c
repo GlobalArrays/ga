@@ -2092,7 +2092,7 @@ logical pnga_create_ghosts_irreg_config(
   Integer g_A;
 
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
-  pnga_sync();
+  pnga_pgroup_sync(p_handle);
   GA_PUSH_NAME("pnga_create_ghosts_irreg_config");
 
   g_A = pnga_create_handle();
