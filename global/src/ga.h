@@ -193,8 +193,8 @@ extern void          NGA_Copy_patch(char trans, int g_a, int alo[], int ahi[], i
 extern int           NGA_Create_config(int type,int ndim,int dims[], char *name, int chunk[], int p_handle);
 extern int           NGA_Create_ghosts_config(int type,int ndim,int dims[], int width[], char *name, int chunk[], int p_handle);
 extern int           NGA_Create_ghosts(int type,int ndim,int dims[], int width[], char *name, int chunk[]);
-extern int           NGA_Create_ghosts_irreg_config(int type,int ndim,int dims[], int width[], char *name, int map[], int nblock[], int p_handle);
-extern int           NGA_Create_ghosts_irreg(int type,int ndim,int dims[], int width[], char *name, int map[], int nblock[]);
+extern int           NGA_Create_ghosts_irreg_config(int type,int ndim,int dims[], int width[], char *name, int nblock[], int map[], int p_handle);
+extern int           NGA_Create_ghosts_irreg(int type,int ndim,int dims[], int width[], char *name, int nblock[], int map[]);
 extern int           NGA_Create(int type,int ndim,int dims[], char *name, int chunk[]);
 extern int           NGA_Create(int type,int ndim,int dims[], char *name, int chunk[]);
 extern int           NGA_Create_irreg_config(int type,int ndim,int dims[],char *name, int block[], int map[], int p_handle);
@@ -369,8 +369,8 @@ extern int           NGA_Create64(int type,int ndim,int64_t dims[], char *name, 
 extern int           NGA_Create_config64(int type,int ndim,int64_t dims[], char *name, int64_t chunk[], int p_handle);
 extern int           NGA_Create_ghosts64(int type,int ndim,int64_t dims[], int64_t width[], char *name, int64_t chunk[]);
 extern int           NGA_Create_ghosts_config64(int type,int ndim,int64_t dims[], int64_t width[], char *name, int64_t chunk[], int p_handle);
-extern int           NGA_Create_ghosts_irreg64(int type,int ndim,int64_t dims[], int64_t width[], char *name, int64_t map[], int64_t nblock[]);
-extern int           NGA_Create_ghosts_irreg_config64(int type,int ndim,int64_t dims[], int64_t width[], char *name, int64_t map[], int64_t nblock[], int p_handle);
+extern int           NGA_Create_ghosts_irreg64(int type,int ndim,int64_t dims[], int64_t width[], char *name, int64_t nblock[], int64_t map[]);
+extern int           NGA_Create_ghosts_irreg_config64(int type,int ndim,int64_t dims[], int64_t width[], char *name, int64_t nblock[], int64_t map[], int p_handle);
 extern int           NGA_Create_irreg64(int type,int ndim,int64_t dims[],char *name, int64_t block[], int64_t map[]);
 extern int           NGA_Create_irreg_config64(int type,int ndim,int64_t dims[],char *name, int64_t block[], int64_t map[], int p_handle);
 extern double        NGA_Ddot_patch64(int g_a, char t_a, int64_t alo[], int64_t ahi[], int g_b, char t_b, int64_t blo[], int64_t bhi[]);
