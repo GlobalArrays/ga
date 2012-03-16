@@ -30,6 +30,14 @@
 #define assign_mul_constant_cpl(a,b,c) (a).real = ((b) * (c).real); \
                                        (a).imag = ((b) * (c).imag)
 
+/* assignment of a product of two valus e.g. a = b * c */
+#define assign_mul_reg(a,b,c) (a) = ((b) * (c))
+#define assign_mul_cpl(a,b,c) 
+
+/* assignment of a quotient of two valus e.g. a = b / c */
+#define assign_div_reg(a,b,c) (a) = ((b) / (c))
+#define assign_div_cpl(a,b,c)
+
 /* in-place assignment of a sum e.g. a = a + b written a += b */
 #define add_assign_reg(a,b) (a) += (b)
 #define add_assign_cpl(a,b) (a).real += (b).real; \

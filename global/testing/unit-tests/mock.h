@@ -42,7 +42,7 @@ static size_t type_to_size(int type)
 #define LOOP_VARS(the_ga)               \
 char *the_ga##_bytebuf = (the_ga)->buf; \
 int the_ga##_size = (the_ga)->size;     \
-int the_ga##_i;                         \
+int the_ga##_i;
 
 /* all the variables we need for the iterator, prefixed with the given name
  * Note: use this when iterating over a lo/hi patch */
