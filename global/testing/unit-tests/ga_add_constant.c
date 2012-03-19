@@ -8,10 +8,12 @@ static int test(int shape_idx, int type_idx, int dist_idx)
     int *dims = SHAPES[shape_idx];
     int ndim = SHAPES_NDIM[shape_idx];
     mock_ga_t *mock_a, *result_a;
-    int g_a;
+    int g_a, alpha=5;
     int buffer[100];
     int lo[GA_MAX_DIM], hi[GA_MAX_DIM], ld[GA_MAX_DIM], shape[GA_MAX_DIM];
     int result=0, error_index=-1, error_proc=-1;
+
+
 
     /* create the local array and result array */
     mock_a = Mock_Create(type, ndim, dims, "mock", NULL);
@@ -27,14 +29,14 @@ static int test(int shape_idx, int type_idx, int dist_idx)
     mock_to_global(mock_a, g_a);
 
     /* call the local routine */
-    Mock_Abs_value(mock_a);
+    Mock_Add_constant(mock_a, alpha);
 
     /* call the global routine */
-    GA_Abs_value(g_a);
-
+    GA_Add_constant(g_a, alpha);
+    
     /* get the results from the global array */
     global_to_mock(g_a, result_a);
-
+    
     /* compare the results */
     result = neq_mock(mock_a, result_a, &error_index);
     if (0 != result) {
