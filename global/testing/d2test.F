@@ -25,15 +25,16 @@ c vector boxes lack arithmetic precision
       parameter (nmax = 4, DIM = 2, nwidth = 2, MAXPROC = 2000)
       parameter (nloop = 1)
       integer ndim, nproc, pdims(7), type, dcnt, g_a, maxval
-      integer i, j, k, dims(7), width(7), map(2*nmax)
+      integer i, j, k, dims(7), width(7), map(MAXPROC+1)
       integer lo(7), hi(7), ld(7)
       integer lo2(7), hi2(7), ld2(7)
-      integer dims3(7), ld3(7), index3, chunk(7)
+      integer dims3(7), ld3(7), chunk(7)
       integer a(nmax, nmax), b(nmax+2*nwidth,nmax+2*nwidth)
       double precision start,finish,start1,finish1,t1,t2,t3,t4,t5,tmp
       double precision t6,t7
       logical status, safe_put, safe_get, has_data(0:MAXPROC-1)
       parameter (heap=60*60*4, fudge=100, stack=100*100)
+      GA_ACCESS_INDEX_TYPE index3
 c     
 c***  Intitialize a message passing library
 c
