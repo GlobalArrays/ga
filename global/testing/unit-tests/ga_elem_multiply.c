@@ -7,23 +7,23 @@ static int test(int shape_idx, int type_idx, int dist_idx)
     int type = TYPES[type_idx];
     int *dims = SHAPES[shape_idx];
     int ndim = SHAPES_NDIM[shape_idx];
-    mock_ga_t *mock_a, *result_a, *mock_b, *result_b, *mock_c, *result_b;
+    mock_ga_t *mock_a, *mock_b, *result_mock, *result_ga;
     int g_a, g_b, g_c;
     int buffer[100];
     int lo[GA_MAX_DIM], hi[GA_MAX_DIM], ld[GA_MAX_DIM], shape[GA_MAX_DIM];
     int result=0, error_index=-1, error_proc=-1;
 
-    /* create the local array and result array */
+
     mock_a = Mock_Create(type, ndim, dims, "mock", NULL);
-    result_a = Mock_Create(type, ndim, dims, "mock", NULL);
-
     mock_b = Mock_Create(type, ndim, dims, "mock", NULL);
-    result_b = Mock_Create(type, ndim, dims, "mock", NULL);
+    //mock_c = Mock_Create(type, ndim, dims, "mock", NULL);
+    //mock_ga = Mock_Create(type, ndim, dims, "mock", NULL);
 
-    mock_c = Mock_Create(type, ndim, dims, "mock", NULL);
-    result_c = Mock_Create(type, ndim, dims, "mock", NULL);
+    //result_a = Mock_Create(type, ndim, dims, "mock", NULL);
+    //result_b = Mock_Create(type, ndim, dims, "mock", NULL);
+    result_mock = Mock_Create(type, ndim, dims, "mock", NULL);
+    result_ga = Mock_Create(type, ndim, dims, "mock", NULL);
 
-    /* create the global array */
     g_a = create_function[dist_idx](type, ndim, dims);
     g_b = create_function[dist_idx](type, ndim, dims);
     g_c = create_function[dist_idx](type, ndim, dims);
@@ -31,25 +31,26 @@ static int test(int shape_idx, int type_idx, int dist_idx)
     /* create meaningful data for local array */
     mock_data(mock_a, g_a);
     mock_data(mock_b, g_b);
-    mock_data(mock_c, g_c);
+    //mock_data(mock_c, g_c);
 
     /* init global array with same data as local array */
     mock_to_global(mock_a, g_a);
     mock_to_global(mock_b, g_b);
-    mock_to_global(mock_c, g_c);
+    //mock_to_global(mock_c, g_c);
 
     /* call the local routine */
-    Mock_Elem_multiply(mock_a, mock_b, mock_c);
+    Mock_Elem_multiply(mock_a, mock_b, result_mock);
 
     /* call the global routine */
     GA_Elem_multiply(g_a, g_b, g_c)
 
     /* get the results from the global array */
-    global_to_mock(g_a, result_a);
-    global_to_mock(g_b, result_b);
+    //global_to_mock(g_a, result_a);
+    //global_to_mock(g_b, result_b);
+      global_to_mock(g_c, result_ga);
 
     /* compare the results */
-    result = neq_mock(result_a, result_b, &error_index);
+    result = neq_mock(result_mock, result_ga, &error_index);
     if (0 != result) {
         error_proc = GA_Nodeid();
     }
