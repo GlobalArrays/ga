@@ -59,15 +59,13 @@
 #define abs_reg(a) ((a) < 0 ? -(a) : (a))
 
 /* assignment of a maximum of two values e.g. if(b > c) a = b else a = c */
-#define assign_max_reg(a,b,c) 
-if (b > c) a = b;
- else a = c;
+#define assign_max_reg(a,b,c) (if (b > c) (a = b);	\
+			       else (a = c);)
 #define assign_max_cpl(a,b,c) 
 
 /* assignment of a miniimum of two values e.g. if(b > c) a = b else a = c */
-#define assign_min_reg(a,b,c) 
-if (b > c) a = b;
- else a = c;
+#define assign_min_reg(a,b,c)   (if (b > c) (a = b);	\
+				 else (a = c);
 #define assign_min_cpl(a,b,c) 
 
 /* assignment of an absolute value e.g. a = |b| */
