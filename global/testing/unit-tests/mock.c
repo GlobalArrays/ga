@@ -471,6 +471,28 @@ void Mock_Elem_divide_patch(mock_ga_t *g_a, int *alo, int *ahi, mock_ga_t *g_b, 
 
 void Mock_Elem_maximum(mock_ga_t *g_a, mock_ga_t *g_b, mock_ga_t *g_c)
 {
+  LOOP_VARS(g_a)
+  LOOP_VARS(g_b)
+  LOOP_VARS(g_c)
+    
+    switch (g_a->type) {
+#define TYPE_CASE(GA_TYPE,C_TYPE,AT)                         \
+      case GA_TYPE:					     \
+	{						     \
+	  LOOP_BUFFER(g_a,C_TYPE)			     \
+	  LOOP_BUFFER(g_b,C_TYPE)			     \
+	  LOOP_BUFFER(g_c,C_TYPE)			     \
+	  LOOP_BEGIN(g_a,C_TYPE)			     \
+	    assign_max_##AT(*g_c_buf,*g_a_buf,*g_b_buf);     \
+	  LOOP_NEXT(g_a)				     \
+	  LOOP_NEXT(g_b)				     \
+	  LOOP_NEXT(g_c)				     \
+	  LOOP_END					     \
+	    break;					     \
+	}
+#include "types.xh"
+#undef TYPE_CASE
+    }
 
 }
 
@@ -483,6 +505,28 @@ void Mock_Elem_maximum_patch(mock_ga_t *g_a, int *alo, int *ahi, mock_ga_t *g_b,
 
 void Mock_Elem_minimum(mock_ga_t *g_a, mock_ga_t *g_b, mock_ga_t *g_c)
 {
+  LOOP_VARS(g_a)
+    LOOP_VARS(g_b)
+    LOOP_VARS(g_c)
+
+    switch (g_a->type) {
+#define TYPE_CASE(GA_TYPE,C_TYPE,AT)                         \
+      case GA_TYPE:                                          \
+        {                                                    \
+          LOOP_BUFFER(g_a,C_TYPE)                            \
+	    LOOP_BUFFER(g_b,C_TYPE)                            \
+	    LOOP_BUFFER(g_c,C_TYPE)                            \
+	    LOOP_BEGIN(g_a,C_TYPE)                             \
+            assign_max_##AT(*g_c_buf,*g_a_buf,*g_b_buf);     \
+          LOOP_NEXT(g_a)                                     \
+	    LOOP_NEXT(g_b)                                     \
+	    LOOP_NEXT(g_c)                                     \
+          LOOP_END                                           \
+            break;                                           \
+        }
+#include "types.xh"
+#undef TYPE_CASE
+    }
 
 }
 
@@ -507,7 +551,7 @@ void Mock_Elem_multiply(mock_ga_t *g_a, mock_ga_t *g_b, mock_ga_t *g_c)
 	  LOOP_BUFFER(g_b,C_TYPE)			     \
 	  LOOP_BUFFER(g_c,C_TYPE)			     \
 	  LOOP_BEGIN(g_a,C_TYPE)			     \
-	    assign_mul_##AT(*g_c_buf,*g_a_buf,*g_b_buf);     \
+	    assign_min_##AT(*g_c_buf,*g_a_buf,*g_b_buf);     \
 	  LOOP_NEXT(g_a)				     \
 	  LOOP_NEXT(g_b)				     \
 	  LOOP_NEXT(g_c)				     \
