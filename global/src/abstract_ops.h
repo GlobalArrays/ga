@@ -58,6 +58,18 @@
 /* absoute value */
 #define abs_reg(a) ((a) < 0 ? -(a) : (a))
 
+/* assignment of a maximum of two values e.g. if(b > c) a = b else a = c */
+#define assign_max_reg(a,b,c) 
+if (b > c) a = b;
+ else a = c;
+#define assign_max_cpl(a,b,c) 
+
+/* assignment of a miniimum of two values e.g. if(b > c) a = b else a = c */
+#define assign_min_reg(a,b,c) 
+if (b > c) a = b;
+ else a = c;
+#define assign_min_cpl(a,b,c) 
+
 /* assignment of an absolute value e.g. a = |b| */
 #define assign_abs_reg(a,b) (a) = abs_reg(b)
 /* Note: absolute value of a complex number is usually sqrt(x*x + y*y) but this
