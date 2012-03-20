@@ -116,9 +116,10 @@ void Mock_Add_constant(mock_ga_t *g_a, void* alpha)
     }
 }
 
-
-void Mock_Add_constant_patch(int g, int *lo, int *hi,void *alpha)
+void Mock_Add_constant_patch(int *g_a, int *lo, int *hi,void *alpha)
 {
+/*
+
     LOOP_VARS_PATCH(g_a)
 
     switch (g_a->type) {
@@ -136,8 +137,8 @@ void Mock_Add_constant_patch(int g, int *lo, int *hi,void *alpha)
 #include "types.xh"
 #undef TYPE_CASE
     }
-}
-
+*/
+    }
 
 void Mock_Add_diagonal(mock_ga_t *g_a, int g_v)
 {
@@ -482,6 +483,9 @@ void Mock_Elem_maximum(mock_ga_t *g_a, mock_ga_t *g_b, mock_ga_t *g_c)
 	  LOOP_BUFFER(g_a,C_TYPE)			     \
 	  LOOP_BUFFER(g_b,C_TYPE)			     \
 	  LOOP_BUFFER(g_c,C_TYPE)			     \
+	  LOOP_BUFFER_CAST(g_a,C_TYPE)			     \
+	  LOOP_BUFFER_CAST(g_b,C_TYPE)			     \
+	  LOOP_BUFFER_CAST(g_c,C_TYPE)			     \
 	  LOOP_BEGIN(g_a,C_TYPE)			     \
 	    assign_max_##AT(*g_c_buf,*g_a_buf,*g_b_buf);     \
 	  LOOP_NEXT(g_a)				     \
@@ -533,7 +537,27 @@ void Mock_Elem_minimum(mock_ga_t *g_a, mock_ga_t *g_b, mock_ga_t *g_c)
 
 void Mock_Elem_minimum_patch(mock_ga_t *g_a, int *alo, int *ahi, mock_ga_t *g_b, int *blo, int *bhi,mock_ga_t *g_c, int *clo, int *chi)
 {
+  /*  LOOP_VARS_PATCH(g_a)
+  LOOP_VARS_PATCH(g_b)
+  LOOP_VARS_PATCH(g_c)
 
+    switch (g_a->type) {
+#define TYPE_CASE(GA_TYPE,C_TYPE,AT)                \
+      case GA_TYPE:                               \
+	{                                       \
+	  LOOP_BUFFER(g_a,C_TYPE)             \
+	  LOOP_BUFFER(g_b,C_TYPE)             \
+	  LOOP_BUFFER(g_c,C_TYPE)             \
+	    LOOP_BEGIN_PATCH(g_a,C_TYPE,lo,hi)  \
+	    assign_abs_##AT(*g_a_buf,*g_a_buf); \
+	  LOOP_NEXT_PATCH(g_a)                \
+                LOOP_END                            \
+	    break;                              \
+	}
+#include "types.xh"
+#undef TYPE_CASE
+    }
+  */
 }
 
 
@@ -603,6 +627,7 @@ void Mock_Fgop(float x[], int n, char *op)
 
 void Mock_Fill(mock_ga_t *g_a, void *value)
 {
+  /*
   LOOP_VARS(g_a)
 
     switch (g_a->type) {
@@ -610,15 +635,15 @@ void Mock_Fill(mock_ga_t *g_a, void *value)
       case GA_TYPE:                                 \
         {                                           \
           LOOP_BUFFER(g_a,C_TYPE)                   \
-            LOOP_BEGIN(g_a,C_TYPE)                  \
-            assign_##AT(*g_a_buf,*g_a_buf);     \
+	    LOOP_BEGIN(g_a,C_TYPE)                  \
+	    assign_##AT(*g_a_buf,*g_a_buf);	    \
           LOOP_NEXT(g_a)                            \
             LOOP_END                                \
             break;                                  \
         }
 #include "types.xh"
 #undef TYPE_CASE
-
+  */
 }
 
 
@@ -1400,6 +1425,7 @@ void Mock_Scale_cols(mock_ga_t *g_a, int g_v)
 
 void Mock_Scale(mock_ga_t *g_a, void *value)
 {
+  /*
   LOOP_VARS(g_a)
 
     switch (g_a->type) {
@@ -1417,7 +1443,7 @@ void Mock_Scale(mock_ga_t *g_a, void *value)
 #include "types.xh"
 #undef TYPE_CASE
     }
-
+  */
 }
 
 
@@ -1741,6 +1767,7 @@ void Mock_Zero_diagonal(mock_ga_t *g_a)
 
 void Mock_Zero(mock_ga_t *g_a)
 {
+  /*
   LOOP_VARS(g_a)
     
     switch (g_a->type) {
@@ -1756,7 +1783,7 @@ void Mock_Zero(mock_ga_t *g_a)
         }
 #include "types.xh"
 #undef TYPE_CASE
-
+  */
 }
 
 

@@ -62,8 +62,12 @@ int the_ga##_j;
 
 /* setup the user-visible buffer and the iterator variables 
  * Note: use this when iterating over the entire array buffer i.e. no lo/hi */
+#define LOOP_BUFFER_CAST(the_ga,TYPE)                          \
+the_ga##_buf = (TYPE*)the_ga##_bytebuf;
+
+/* setup the user-visible buffer and the iterator variables 
+ * Note: use this when iterating over the entire array buffer i.e. no lo/hi */
 #define LOOP_BEGIN(the_ga,TYPE)                                \
-the_ga##_buf = (TYPE*)the_ga##_bytebuf;                        \
 for (the_ga##_i = 0; the_ga##_i<the_ga##_size; ++the_ga##_i) {
 
 /* setup the user-visible buffer and the iterator variables 
@@ -121,6 +125,7 @@ static void mock_data(mock_ga_t *mock_a, int g_a)
         case GA_TYPE:                                   \
             {                                           \
                 LOOP_BUFFER(mock_a,C_TYPE)              \
+                LOOP_BUFFER_CAST(mock_a,C_TYPE)         \
                 LOOP_BEGIN(mock_a,C_TYPE)               \
                 if (mock_a_i%2) {                       \
                     assign_##AT(*mock_a_buf, mock_a_i); \
@@ -142,6 +147,7 @@ static void mock_data(mock_ga_t *mock_a, int g_a)
         case GA_TYPE:                                   \
             {                                           \
                 LOOP_BUFFER(mock_a,C_TYPE)              \
+                LOOP_BUFFER_CAST(mock_a,C_TYPE)         \
                 LOOP_BEGIN(mock_a,C_TYPE)               \
                 C_TYPE value;                           \
                 if (mock_a_i%2) {                       \
@@ -225,6 +231,8 @@ static int neq_mock(mock_ga_t *mock_a, mock_ga_t *mock_b, int *idx)
             {                                             \
                 LOOP_BUFFER(mock_a,C_TYPE)                \
                 LOOP_BUFFER(mock_b,C_TYPE)                \
+                LOOP_BUFFER_CAST(mock_a,C_TYPE)           \
+                LOOP_BUFFER_CAST(mock_b,C_TYPE)           \
                 mock_b_buf = (C_TYPE*)mock_b->buf;        \
                 LOOP_BEGIN(mock_a,C_TYPE)                 \
                 if (!eq_##AT(*mock_a_buf, *mock_b_buf)) { \
@@ -252,7 +260,7 @@ void          Mock_Access_ghosts(mock_ga_t *g_a, int dims[], void *ptr, int ld[]
 void          Mock_Access(mock_ga_t *g_a, int lo[], int hi[], void *ptr, int ld[]);
 void          Mock_Acc(mock_ga_t *g_a, int lo[], int hi[],void* buf,int ld[],void* alpha);
 void          Mock_Add_constant(mock_ga_t *g_a, void* alpha);
-void          Mock_Add_constant_patch(int g,int *lo,int *hi,void *alpha);
+void          Mock_Add_constant_patch(int *g_a,int *lo,int *hi,void *alpha);
 void          Mock_Add_diagonal(mock_ga_t *g_a, int g_v);
 void          Mock_Add_patch(void * alpha, mock_ga_t *g_a, int alo[], int ahi[], void * beta,  mock_ga_t *g_b, int blo[], int bhi[], mock_ga_t *g_c, int clo[], int chi[]);
 void          Mock_Add(void *alpha, mock_ga_t *g_a, void* beta, mock_ga_t *g_b, mock_ga_t *g_c); 
