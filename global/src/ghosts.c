@@ -779,7 +779,7 @@ void pnga_update1_ghosts(Integer g_a)
       }
     }
     /* synchronize all processors and update increment array */
-    if (idx < ndim-1) pnga_sync();
+    if (idx < ndim-1) pnga_pgroup_sync(p_handle);
     if (corner_flag)
       increment[idx] = 2*nwidth;
   }
@@ -1282,7 +1282,7 @@ logical pnga_update3_ghosts(Integer g_a)
           (int)(ndim - 1), (int)proc_rem);
     }
     /* synchronize all processors and update increment array */
-    if (idx < ndim-1) pnga_sync();
+    if (idx < ndim-1) pnga_pgroup_sync(p_handle);
     increment[idx] = 2*nwidth;
   }
 
@@ -2762,14 +2762,14 @@ logical pnga_update_ghost_dir(Integer g_a,    /* GA handle */
   if (!pnga_has_ghosts(g_a)) 
     return TRUE;
   
-  if(local_sync_begin)pnga_sync();
+  p_handle = GA[handle].p_handle;
+  if(local_sync_begin)pnga_pgroup_sync(p_handle);
   idim = pdim;
   idir = pdir;
   flag = pflag;
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
-  p_handle = GA[handle].p_handle;
   /* initialize ghost cell widths and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
     width[idx] = (Integer)GA[handle].width[idx];
@@ -2909,7 +2909,7 @@ logical pnga_update_ghost_dir(Integer g_a,    /* GA handle */
   }
 
   GA_POP_NAME;
-  if(local_sync_end)pnga_sync();
+  if(local_sync_end)pnga_pgroup_sync(p_handle);
   return TRUE;
 }
 
@@ -2967,7 +2967,8 @@ logical pnga_update5_ghosts(Integer g_a)
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-  if(local_sync_begin)pnga_sync();
+  p_handle = GA[handle].p_handle;
+  if(local_sync_begin)pnga_pgroup_sync(p_handle);
 
 #ifdef USE_MP_NORTHSOUTH
   strcpy(send_name,"send_buffer");
@@ -2983,7 +2984,6 @@ logical pnga_update5_ghosts(Integer g_a)
 
   /*size = GA[handle].elemsize;*/
   ndim = GA[handle].ndim;
-  p_handle = GA[handle].p_handle;
   for (i=0; i<ndim; i++) {
     width[i] = (Integer)GA[handle].width[i];
   }
@@ -3085,7 +3085,7 @@ logical pnga_update5_ghosts(Integer g_a)
   }
 #endif 
   GA_POP_NAME;
-  if(local_sync_end)pnga_sync();
+  if(local_sync_end)pnga_pgroup_sync(p_handle);
   return TRUE;
 }
 
@@ -3334,10 +3334,11 @@ void pnga_update_ghosts(Integer g_a)
      update operation fails then use slow but robust version of
      update operation */
    int local_sync_begin,local_sync_end;
+   Integer handle = GA_OFFSET + g_a;
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   if(local_sync_begin)pnga_sync();
+   if(local_sync_begin)pnga_pgroup_sync(GA[handle].p_handle);
 
 #ifdef CRAY_T3D
    if (!pnga_update5_ghosts(g_a))
@@ -3348,7 +3349,7 @@ void pnga_update_ghosts(Integer g_a)
      pnga_update1_ghosts(g_a);
    }
 
-   if(local_sync_end)pnga_sync();
+   if(local_sync_end)pnga_pgroup_sync(GA[handle].p_handle);
 }
 
 /* Utility function for ga_update6_ghosts routine */
