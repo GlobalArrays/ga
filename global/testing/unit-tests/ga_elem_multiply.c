@@ -42,7 +42,7 @@ static int test(int shape_idx, int type_idx, int dist_idx)
     Mock_Elem_multiply(mock_a, mock_b, result_mock);
 
     /* call the global routine */
-    GA_Elem_multiply(g_a, g_b, g_c)
+    GA_Elem_multiply(g_a, g_b, g_c);
 
     /* get the results from the global array */
     //global_to_mock(g_a, result_a);
