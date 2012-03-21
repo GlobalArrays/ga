@@ -36,7 +36,7 @@ static int test(int shape_idx, int type_idx, int dist_idx)
     Mock_Copy(mock_a, mock_b);
 
     /* call the global routine */
-    GA_Copy(g_a, g_b)
+    GA_Copy(g_a, g_b);
 
     /* get the results from the global array */
     global_to_mock(g_a, result_a);

@@ -7,22 +7,16 @@ static int test(int shape_idx, int type_idx, int dist_idx)
     int type = TYPES[type_idx];
     int *dims = SHAPES[shape_idx];
     int ndim = SHAPES_NDIM[shape_idx];
-    mock_ga_t *mock_a, *mock_b, *result_mock, *result_ga;
+    mock_ga_t *mock_a, *mock_b, *mock_c, *mock_r;
     int g_a, g_b, g_c;
     int buffer[100];
     int lo[GA_MAX_DIM], hi[GA_MAX_DIM], ld[GA_MAX_DIM], shape[GA_MAX_DIM];
     int result=0, error_index=-1, error_proc=-1;
 
-
     mock_a = Mock_Create(type, ndim, dims, "mock", NULL);
     mock_b = Mock_Create(type, ndim, dims, "mock", NULL);
-    //mock_c = Mock_Create(type, ndim, dims, "mock", NULL);
-    //mock_ga = Mock_Create(type, ndim, dims, "mock", NULL);
-
-    //result_a = Mock_Create(type, ndim, dims, "mock", NULL);
-    //result_b = Mock_Create(type, ndim, dims, "mock", NULL);
-    result_mock = Mock_Create(type, ndim, dims, "mock", NULL);
-    result_ga = Mock_Create(type, ndim, dims, "mock", NULL);
+    mock_c = Mock_Create(type, ndim, dims, "mock", NULL);
+    mock_r = Mock_Create(type, ndim, dims, "mock", NULL);
 
     g_a = create_function[dist_idx](type, ndim, dims);
     g_b = create_function[dist_idx](type, ndim, dims);
@@ -31,26 +25,22 @@ static int test(int shape_idx, int type_idx, int dist_idx)
     /* create meaningful data for local array */
     mock_data(mock_a, g_a);
     mock_data(mock_b, g_b);
-    //mock_data(mock_c, g_c);
 
     /* init global array with same data as local array */
     mock_to_global(mock_a, g_a);
     mock_to_global(mock_b, g_b);
-    //mock_to_global(mock_c, g_c);
 
     /* call the local routine */
-    Mock_Elem_multiply(mock_a, mock_b, result_mock);
+    Mock_Elem_multiply(mock_a, mock_b, mock_c);
 
     /* call the global routine */
     GA_Elem_multiply(g_a, g_b, g_c);
 
     /* get the results from the global array */
-    //global_to_mock(g_a, result_a);
-    //global_to_mock(g_b, result_b);
-      global_to_mock(g_c, result_ga);
+    global_to_mock(g_c, mock_r);
 
     /* compare the results */
-    result = neq_mock(result_mock, result_ga, &error_index);
+    result = neq_mock(mock_c, mock_r, &error_index);
     if (0 != result) {
         error_proc = GA_Nodeid();
     }
@@ -72,7 +62,7 @@ static int test(int shape_idx, int type_idx, int dist_idx)
             printf("***LOCAL RESULT***\n");
             Mock_Print(mock_a);
             printf("***GLOBAL RESULT***\n");
-            Mock_Print(result_a);
+            Mock_Print(mock_r);
             printf("\tprinting array distribution\n");
         }
         GA_Sync();
@@ -83,7 +73,7 @@ static int test(int shape_idx, int type_idx, int dist_idx)
 
     /* clean up */
     Mock_Destroy(mock_a);
-    Mock_Destroy(result_a);
+    Mock_Destroy(mock_r);
     GA_Destroy(g_a);
 
     return 0;

@@ -107,6 +107,19 @@ static int SHAPES_NDIM[] = {
 #define TEST_SETUP    GA_Initialize_args(&argc, &argv)
 #define TEST_TEARDOWN GA_Terminate(); armci_msg_finalize()
 
+static void aprint(char *name, int *array, int size)
+{
+    int i;
+    printf("%s={", name);
+    if (size > 0) {
+        printf("%d", array[0]);
+    }
+    for (i=1; i<size; ++i) {
+        printf(",%d", array[i]);
+    }
+    printf("}\n");
+}
+
 static int create_regular(int type, int ndim, int *shape) {
     return NGA_Create(type, ndim, shape, "name", NULL);
 }

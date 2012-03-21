@@ -58,7 +58,7 @@ static int test(int shape_idx, int type_idx, int dist_idx)
             printf("***LOCAL RESULT***\n");
             Mock_Print(mock_a);
             printf("***GLOBAL RESULT***\n");
-            Mock_Print(result_a);
+            Mock_Print(result_ga);
             printf("\tprinting array distribution\n");
         }
         GA_Sync();
@@ -69,8 +69,12 @@ static int test(int shape_idx, int type_idx, int dist_idx)
 
     /* clean up */
     Mock_Destroy(mock_a);
-    Mock_Destroy(result_a);
+    Mock_Destroy(mock_b);
+    Mock_Destroy(result_mock);
+    Mock_Destroy(result_ga);
     GA_Destroy(g_a);
+    GA_Destroy(g_b);
+    GA_Destroy(g_c);
 
     return 0;
 
