@@ -56,7 +56,7 @@ static int test(int shape_idx, int type_idx, int dist_idx)
             printf("\terror_proc=%d\n", error_proc);
             printf("\terror_index=%d\n", error_index);
             printf("***LOCAL RESULT***\n");
-            Mock_Print(mock_a);
+            Mock_Print(result_mock);
             printf("***GLOBAL RESULT***\n");
             Mock_Print(result_ga);
             printf("\tprinting array distribution\n");

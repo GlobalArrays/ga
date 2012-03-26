@@ -13,19 +13,20 @@
 
 void Mock_Abs_value(mock_ga_t *g_a)
 {
-    ITER_DECLARE_VARS(g_a)
-
+  ITER_DECLARE_VARS(g_a)
+    
     switch (g_a->type) {
-#define TYPE_CASE(GA_TYPE,C_TYPE,AT)                \
-        case GA_TYPE:                               \
-            {                                       \
-                ITER_DECLARE_BUFFER(g_a,C_TYPE)     \
-                ITER_BEGIN(g_a,C_TYPE)              \
-                assign_abs_##AT(*g_a_buf,*g_a_buf); \
-                ITER_NEXT(g_a)                      \
-                ITER_END                            \
-                break;                              \
-            }
+#define TYPE_CASE(GA_TYPE,C_TYPE,AT)			\
+      case GA_TYPE:					\
+	{						\
+	  ITER_DECLARE_BUFFER(g_a,C_TYPE)		\
+	    ITER_INIT(g_a,C_TYPE)			\
+	    ITER_BEGIN(g_a,C_TYPE)			\
+	    assign_abs_##AT(*g_a_buf,*g_a_buf);		\
+	  ITER_NEXT(g_a)				\
+	    ITER_END					\
+	    break;					\
+	}
 #include "types.xh"
 #undef TYPE_CASE
     }
@@ -34,19 +35,20 @@ void Mock_Abs_value(mock_ga_t *g_a)
 
 void Mock_Abs_value_patch(mock_ga_t *g_a, int *lo, int *hi)
 {
-    ITER_DECLARE_VARS_PATCH(g_a)
-
+  ITER_DECLARE_VARS_PATCH(g_a)
+    
     switch (g_a->type) {
-#define TYPE_CASE(GA_TYPE,C_TYPE,AT)                \
-        case GA_TYPE:                               \
-            {                                       \
-                ITER_DECLARE_BUFFER(g_a,C_TYPE)     \
-                ITER_BEGIN(g_a,C_TYPE)              \
-                assign_abs_##AT(*g_a_buf,*g_a_buf); \
-                ITER_NEXT_PATCH(g_a)                \
-                ITER_END                            \
-                break;                              \
-            }
+#define TYPE_CASE(GA_TYPE,C_TYPE,AT)			\
+      case GA_TYPE:					\
+	{						\
+	  ITER_DECLARE_BUFFER(g_a,C_TYPE)		\
+	    ITER_INIT(g_a,C_TYPE)			\
+	    ITER_BEGIN(g_a,C_TYPE)			\
+	    assign_abs_##AT(*g_a_buf,*g_a_buf);		\
+	  ITER_NEXT_PATCH(g_a)				\
+	    ITER_END					\
+	    break;					\
+	}
 #include "types.xh"
 #undef TYPE_CASE
     }
@@ -97,20 +99,21 @@ void Mock_Acc(mock_ga_t *g_a, int lo[], int hi[],void* buf, int ld[],void* alpha
 
 void Mock_Add_constant(mock_ga_t *g_a, void* alpha)
 {
-    ITER_DECLARE_VARS(g_a)
-
+  ITER_DECLARE_VARS(g_a)
+    
     switch (g_a->type) {
 #define TYPE_CASE(GA_TYPE,C_TYPE,AT)                \
-        case GA_TYPE:                               \
-            {                                       \
-                C_TYPE value = *((C_TYPE*)alpha);   \
-                ITER_DECLARE_BUFFER(g_a,C_TYPE)     \
-                ITER_BEGIN(g_a,C_TYPE)              \
-                add_assign_##AT(*g_a_buf,value);    \
-                ITER_NEXT(g_a)                      \
-                ITER_END                            \
-                break;                              \
-            }
+      case GA_TYPE:				    \
+	{					    \
+	  C_TYPE value = *((C_TYPE*)alpha);	    \
+	  ITER_DECLARE_BUFFER(g_a,C_TYPE)	    \
+	    ITER_INIT(g_a,C_TYPE)		    \
+	    ITER_BEGIN(g_a,C_TYPE)		    \
+	    add_assign_##AT(*g_a_buf,value);	    \
+	  ITER_NEXT(g_a)			    \
+	    ITER_END				    \
+	    break;				    \
+	}
 #include "types.xh"
 #undef TYPE_CASE
     }
@@ -118,23 +121,26 @@ void Mock_Add_constant(mock_ga_t *g_a, void* alpha)
 
 void Mock_Add_constant_patch(mock_ga_t *g_a, int *lo, int *hi,void *alpha)
 {
-    ITER_DECLARE_VARS_PATCH(g_a)
-
-    switch (g_a->type) {
-#define TYPE_CASE(GA_TYPE,C_TYPE,AT)                \
-        case GA_TYPE:                               \
-            {                                       \
-                C_TYPE value = *((C_TYPE*)alpha);   \
-                ITER_DECLARE_BUFFER(g_a,C_TYPE)     \
-                ITER_BEGIN(g_a,C_TYPE)              \
-                add_assign_##AT(*g_a_buf,value);    \
-                ITER_NEXT_PATCH(g_a)                \
-                ITER_END                            \
-                break;                              \
-            }
+  /*
+  ITER_DECLARE_VARS_PATCH(g_a)
+    
+    switch (g_a->type){
+#define TYPE_CASE(GA_TYPE,C_TYPE,AT)			\
+      case GA_TYPE:					\
+	{						\
+	  C_TYPE value = *((C_TYPE*)alpha);		\
+	  ITER_DECLARE_BUFFER(g_a,C_TYPE)		\
+	    ITER_INIT(g_a,C_TYPE)			\
+	    ITER_BEGIN(g_a,C_TYPE)			\
+	    add_assign_##AT(*g_a_buf,value);		\
+	  ITIR_NEXT_PATCH(g_a)				\
+	    ITER_END					\
+	    break;					\
+	}
 #include "types.xh"
 #undef TYPE_CASE
     }
+  */
 }
 
 void Mock_Add_diagonal(mock_ga_t *g_a, int g_v)
@@ -436,28 +442,31 @@ mock_ga_t* Mock_Duplicate(mock_ga_t *g_a, char* array_name)
 
 void Mock_Elem_divide(mock_ga_t *g_a, mock_ga_t *g_b, mock_ga_t *g_c)
 {
-    ITER_DECLARE_VARS(g_a)
+  ITER_DECLARE_VARS(g_a)
     ITER_DECLARE_VARS(g_b)
     ITER_DECLARE_VARS(g_c)
-
-    switch (g_a->type) {
+    
+      switch (g_a->type) {
 #define TYPE_CASE(GA_TYPE,C_TYPE,AT)                         \
         case GA_TYPE:                                        \
-            {                                                \
-                ITER_DECLARE_BUFFER(g_a,C_TYPE)                      \
-                ITER_DECLARE_BUFFER(g_b,C_TYPE)                      \
-                ITER_DECLARE_BUFFER(g_c,C_TYPE)                      \
-                ITER_BEGIN(g_a,C_TYPE)                       \
-                assign_div_##AT(*g_c_buf,*g_a_buf,*g_b_buf); \
-                ITER_NEXT(g_a)                               \
-                ITER_NEXT(g_b)                               \
-                ITER_NEXT(g_c)                               \
-                ITER_END                                     \
-                break;                                       \
-            }
+	  {							     \
+	    ITER_DECLARE_BUFFER(g_a,C_TYPE)			     \
+	      ITER_DECLARE_BUFFER(g_b,C_TYPE)			     \
+	      ITER_DECLARE_BUFFER(g_c,C_TYPE)			     \
+	      ITER_INIT(g_a,C_TYPE)				     \
+	      ITER_INIT(g_b,C_TYPE)				     \
+	      ITER_INIT(g_c,C_TYPE)				     \
+	      ITER_BEGIN(g_a,C_TYPE)				     \
+	      assign_div_##AT(*g_c_buf,*g_a_buf,*g_b_buf);	     \
+	    ITER_NEXT(g_a)					     \
+	      ITER_NEXT(g_b)					     \
+	      ITER_NEXT(g_c)					     \
+	      ITER_END						     \
+	      break;						     \
+	  }
 #include "types.xh"
 #undef TYPE_CASE
-    }
+      }
 }
 
 
@@ -470,27 +479,27 @@ void Mock_Elem_divide_patch(mock_ga_t *g_a, int *alo, int *ahi, mock_ga_t *g_b, 
 void Mock_Elem_maximum(mock_ga_t *g_a, mock_ga_t *g_b, mock_ga_t *g_c)
 {
   ITER_DECLARE_VARS(g_a)
-  ITER_DECLARE_VARS(g_b)
-  ITER_DECLARE_VARS(g_c)
+    ITER_DECLARE_VARS(g_b)
+    ITER_DECLARE_VARS(g_c)
     
     switch (g_a->type) {
 #define TYPE_CASE(GA_TYPE,C_TYPE,AT)                         \
-      case GA_TYPE:                         \
-    {                             \
-      ITER_DECLARE_BUFFER(g_a,C_TYPE)                 \
-      ITER_DECLARE_BUFFER(g_b,C_TYPE)                 \
-      ITER_DECLARE_BUFFER(g_c,C_TYPE)                 \
-      ITER_INIT(g_a,C_TYPE)                 \
-      ITER_INIT(g_b,C_TYPE)                 \
-      ITER_INIT(g_c,C_TYPE)                 \
-      ITER_BEGIN(g_a,C_TYPE)                 \
-        assign_max_##AT(*g_c_buf,*g_a_buf,*g_b_buf);     \
-      ITER_NEXT(g_a)                     \
-      ITER_NEXT(g_b)                     \
-      ITER_NEXT(g_c)                     \
-      ITER_END                         \
-        break;                         \
-    }
+      case GA_TYPE:					     \
+	{						     \
+	    ITER_DECLARE_BUFFER(g_a,C_TYPE)		     \
+	    ITER_DECLARE_BUFFER(g_b,C_TYPE)		     \
+	    ITER_DECLARE_BUFFER(g_c,C_TYPE)		     \
+	    ITER_INIT(g_a,C_TYPE)			     \
+	    ITER_INIT(g_b,C_TYPE)			     \
+	    ITER_INIT(g_c,C_TYPE)			     \
+	    ITER_BEGIN(g_a,C_TYPE)			     \
+	    assign_max_##AT(*g_c_buf,*g_a_buf,*g_b_buf);     \
+	    ITER_NEXT(g_a)				     \
+	    ITER_NEXT(g_b)				     \
+	    ITER_NEXT(g_c)				     \
+	    ITER_END					     \
+	    break;					     \
+	}
 #include "types.xh"
 #undef TYPE_CASE
     }
@@ -509,21 +518,24 @@ void Mock_Elem_minimum(mock_ga_t *g_a, mock_ga_t *g_b, mock_ga_t *g_c)
   ITER_DECLARE_VARS(g_a)
     ITER_DECLARE_VARS(g_b)
     ITER_DECLARE_VARS(g_c)
-
+    
     switch (g_a->type) {
-#define TYPE_CASE(GA_TYPE,C_TYPE,AT)                         \
-      case GA_TYPE:                                          \
-        {                                                    \
+#define TYPE_CASE(GA_TYPE,C_TYPE,AT)				     \
+      case GA_TYPE:						     \
+        {							     \
           ITER_DECLARE_BUFFER(g_a,C_TYPE)                            \
-        ITER_DECLARE_BUFFER(g_b,C_TYPE)                            \
-        ITER_DECLARE_BUFFER(g_c,C_TYPE)                            \
-        ITER_BEGIN(g_a,C_TYPE)                             \
-            assign_max_##AT(*g_c_buf,*g_a_buf,*g_b_buf);     \
-          ITER_NEXT(g_a)                                     \
-        ITER_NEXT(g_b)                                     \
-        ITER_NEXT(g_c)                                     \
-          ITER_END                                           \
-            break;                                           \
+	    ITER_DECLARE_BUFFER(g_b,C_TYPE)			     \
+	    ITER_DECLARE_BUFFER(g_c,C_TYPE)			     \
+	    ITER_INIT(g_a,C_TYPE)				     \
+	    ITER_INIT(g_b,C_TYPE)				     \
+	    ITER_INIT(g_c,C_TYPE)				     \
+	    ITER_BEGIN(g_a,C_TYPE)				     \
+            assign_max_##AT(*g_c_buf,*g_a_buf,*g_b_buf);	     \
+          ITER_NEXT(g_a)					     \
+	    ITER_NEXT(g_b)					     \
+	    ITER_NEXT(g_c)					     \
+	    ITER_END						     \
+            break;						     \
         }
 #include "types.xh"
 #undef TYPE_CASE
@@ -627,25 +639,26 @@ void Mock_Fgop(float x[], int n, char *op)
 
 void Mock_Fill(mock_ga_t *g_a, void *value)
 {
-  /*
+  
   ITER_DECLARE_VARS(g_a)
-
+    
     switch (g_a->type) {
 #define TYPE_CASE(GA_TYPE,C_TYPE,AT)                \
       case GA_TYPE:                                 \
         {                                           \
-          ITER_DECLARE_BUFFER(g_a,C_TYPE)                   \
-        ITER_BEGIN(g_a,C_TYPE)                  \
-        assign_##AT(*g_a_buf,*g_a_buf);        \
+          ITER_DECLARE_BUFFER(g_a,C_TYPE)	    \
+	    ITER_INIT(g_a,C_TYPE)		    \
+	    ITER_BEGIN(g_a,C_TYPE)                  \
+	    assign_##AT(*g_a_buf,*g_a_buf);	    \
           ITER_NEXT(g_a)                            \
             ITER_END                                \
             break;                                  \
         }
 #include "types.xh"
 #undef TYPE_CASE
-  */
+    }      
 }
-
+  
 
 void Mock_Fill_patch(mock_ga_t *g_a, int lo[], int hi[], void *val)
 {
@@ -1426,23 +1439,24 @@ void Mock_Scale_cols(mock_ga_t *g_a, int g_v)
 void Mock_Scale(mock_ga_t *g_a, void *value)
 {
   /*
-  ITER_DECLARE_VARS(g_a)
-
+    ITER_DECLARE_VARS(g_a)
+    
     switch (g_a->type) {
-#define TYPE_CASE(GA_TYPE,C_TYPE,AT)              \
-      case GA_TYPE:                      \
-        {                          \
-          C_TYPE value = *((C_TYPE*)alpha);          \
-          ITER_DECLARE_BUFFER(g_a,C_TYPE)              \
-        ITER_BEGIN(g_a,C_TYPE)                    \
-        add_assign_##AT(*g_a_buf,value);          \
-          ITER_NEXT(g_a)                  \
-        ITER_END                                  \
-        break;                                    \
+    #define TYPE_CASE(GA_TYPE,C_TYPE,AT)	       \
+    case GA_TYPE:				       \
+    {						       \
+    C_TYPE value = *((C_TYPE*)alpha);		       \
+    ITER_DECLARE_BUFFER(g_a,C_TYPE)		       \
+    ITER_INIT(g_a,C_TYPE)			       \
+    ITER_BEGIN(g_a,C_TYPE)			       \
+    add_assign_##AT(*g_a_buf,value);		       \
+    ITER_NEXT(g_a)				       \
+    ITER_END					       \
+    break;					       \
         }
-#include "types.xh"
-#undef TYPE_CASE
-    }
+	#include "types.xh"
+	#undef TYPE_CASE
+	}
   */
 }
 
@@ -1767,23 +1781,24 @@ void Mock_Zero_diagonal(mock_ga_t *g_a)
 
 void Mock_Zero(mock_ga_t *g_a)
 {
-  /*
+  
   ITER_DECLARE_VARS(g_a)
     
     switch (g_a->type) {
-#define TYPE_CASE(GA_TYPE,C_TYPE,AT)                \
-      case GA_TYPE:                                 \
-        {                                           \
-          ITER_DECLARE_BUFFER(_ga,C_TYPE)                   \
-        ITER_BEGIN(g_a,C_TYPE)                  \
-            assign_zero_##AT(*g_a_buf,*g_a_buf);    \
-          ITER_NEXT(g_a)                            \
-            ITER_END                                \
-            break;                                  \
+#define TYPE_CASE(GA_TYPE,C_TYPE,AT)			    \
+      case GA_TYPE:					    \
+        {						    \
+          ITER_DECLARE_BUFFER(g_a,C_TYPE)                   \
+	    ITER_INIT(g_a,C_TYPE)			    \
+	    ITER_BEGIN(g_a,C_TYPE)			    \
+            assign_zero_##AT(*g_a_buf);			    \
+          ITER_NEXT(g_a)				    \
+            ITER_END					    \
+            break;					    \
         }
 #include "types.xh"
 #undef TYPE_CASE
-  */
+    }     
 }
 
 

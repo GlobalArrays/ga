@@ -27,10 +27,10 @@ static int test(int shape_idx, int type_idx, int dist_idx)
     mock_to_global(mock_a, g_a);
 
     /* call the local routine */
-    Mock_Abs_value(mock_a);
+    Mock_Zero(mock_a);
 
     /* call the global routine */
-    GA_Abs_value(g_a);
+    GA_Zero(g_a);
 
     /* get the results from the global array */
     global_to_mock(g_a, result_a);
