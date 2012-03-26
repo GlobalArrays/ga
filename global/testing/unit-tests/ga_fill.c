@@ -21,17 +21,13 @@ static int test(int shape_idx, int type_idx, int dist_idx)
     SingleComplex cval = {11,12};
     DoubleComplex zval = {13,14};
 
-    /* create the local array and result array */
     mock_a = Mock_Create(type, ndim, dims, "mock", NULL);
     result_a = Mock_Create(type, ndim, dims, "mock", NULL);
 
-    /* create the global array */
     g_a = create_function[dist_idx](type, ndim, dims);
 
-    /* create meaningful data for local array */
     mock_data(mock_a, g_a);
 
-    /* init global array with same data as local array */
     mock_to_global(mock_a, g_a);
 
     switch (type) {
@@ -44,29 +40,24 @@ static int test(int shape_idx, int type_idx, int dist_idx)
         case C_DCPL:     alpha = &zval; break;
     }
 
-    /* call the local routine */
     Mock_Fill(mock_a, alpha);
 
-    /* call the global routine */
     GA_Fill(g_a, alpha);
-    
-    /* get the results from the global array */
+
     global_to_mock(g_a, result_a);
-    
-    /* compare the results */
+
     result = neq_mock(mock_a, result_a, &error_index);
     if (0 != result) {
         error_proc = GA_Nodeid();
     }
-    /* make sure all procs get same result so they can die gracefully */
+
     GA_Igop(&result, 1, "+");
-    /* if error occured, find the highest failing node ID */
     GA_Igop(&error_proc, 1, "max");
-    /* clear the error index for all but the highest failing node ID */
+
     if (error_proc != GA_Nodeid()) {
         error_index = 0;
     }
-    /* make sure all procs get the error index on the highest failing node ID */
+
     GA_Igop(&error_index, 1, "+");
     if (0 != result) {
         if (error_proc == GA_Nodeid()) {
@@ -85,7 +76,7 @@ static int test(int shape_idx, int type_idx, int dist_idx)
         return 1;
     }
 
-    /* clean up */
+
     Mock_Destroy(mock_a);
     Mock_Destroy(result_a);
     GA_Destroy(g_a);

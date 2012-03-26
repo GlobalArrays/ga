@@ -8,12 +8,18 @@ static int test(int shape_idx, int type_idx, int dist_idx)
     int *dims = SHAPES[shape_idx];
     int ndim = SHAPES_NDIM[shape_idx];
     mock_ga_t *mock_a, *result_a;
-    int g_a, alpha=5;
+    int g_a;
+    void *alpha;
     int buffer[100];
     int lo[GA_MAX_DIM], hi[GA_MAX_DIM], ld[GA_MAX_DIM], shape[GA_MAX_DIM];
     int result=0, error_index=-1, error_proc=-1;
-
-
+    int ival = 6;
+    long lval = 7;
+    long long llval = 8;
+    float fval = 9;
+    double dval = 10;
+    SingleComplex cval = {11,12};
+    DoubleComplex zval = {13,14};
 
     /* create the local array and result array */
     mock_a = Mock_Create(type, ndim, dims, "mock", NULL);
@@ -28,11 +34,21 @@ static int test(int shape_idx, int type_idx, int dist_idx)
     /* init global array with same data as local array */
     mock_to_global(mock_a, g_a);
 
+    switch (type) {
+        case C_INT:      alpha = &ival; break;
+        case C_LONG:     alpha = &lval; break;
+        case C_LONGLONG: alpha = &llval; break;
+        case C_FLOAT:    alpha = &fval; break;
+        case C_DBL:      alpha = &dval; break;
+        case C_SCPL:     alpha = &cval; break;
+        case C_DCPL:     alpha = &zval; break;
+    }
+
     /* call the local routine */
-    Mock_Add_constant(mock_a, alpha);
+    Mock_Fill(mock_a, alpha);
 
     /* call the global routine */
-    GA_Add_constant(g_a, alpha);
+    GA_Fill(g_a, alpha);
     
     /* get the results from the global array */
     global_to_mock(g_a, result_a);
