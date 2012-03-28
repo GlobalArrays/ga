@@ -50,7 +50,7 @@
 
 extern void Error(const char *, long);
 
-#ifndef MMAP
+#if !defined(MMAP) || defined(MACX)
 
 #if HAVE_STDIO_H
 #   include <stdio.h>
