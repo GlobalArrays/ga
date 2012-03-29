@@ -723,7 +723,7 @@ void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle) {
       ((armci_ihdl_t)(nb_handle))->proc = -1;
 }
 
-int armci_notify(int proc)
+int parmci_notify(int proc)
 {
    armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
    pnotify->sent++;

@@ -613,7 +613,7 @@ void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle) {
       ((armci_ihdl_t)(nb_handle))->proc = -1;
 }
 
-int armci_notify(int proc)
+int parmci_notify(int proc)
 {
 #ifdef DOELAN4
   if(proc==armci_me){
