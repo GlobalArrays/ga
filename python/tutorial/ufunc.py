@@ -1,5 +1,5 @@
 import mpi4py.MPI
-import ga
+from ga4py import ga
 import numpy as np
 
 ### I suggest creating a python "ufunc" class which implements __call__

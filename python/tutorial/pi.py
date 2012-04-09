@@ -12,7 +12,7 @@ usage::
 
 """
 from mpi4py import MPI
-import ga
+from ga4py import ga
 
 from math   import pi as PI
 from numpy  import ndarray

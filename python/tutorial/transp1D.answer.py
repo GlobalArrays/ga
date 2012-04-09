@@ -4,7 +4,7 @@ e.g. (1 2 3 4 5 6 7 8 9 10) => (10 9 8 7 6 5 4 3 2 1)
 
 """
 import mpi4py.MPI
-import ga
+from ga4py import ga
 import numpy as np
 
 # Find local processor ID and number of processors.

@@ -4,7 +4,7 @@ Assumes square matrices with the shape as a multiple of the block size.
 
 """
 import mpi4py.MPI
-import ga
+from ga4py import ga
 import numpy as np
 
 CHUNK_SIZE = 256

@@ -1,5 +1,5 @@
 import mpi4py.MPI # initialize Message Passing Interface
-import ga # initialize Global Arrays
+from ga4py import ga # initialize Global Arrays
 
 me = ga.nodeid()
 

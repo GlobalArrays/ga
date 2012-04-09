@@ -1,7 +1,7 @@
 """Use ga.access() to sum locally per SMP node."""
 
 import mpi4py.MPI
-import ga
+from ga4py import ga
 import numpy as np
 
 world_id = ga.nodeid()

@@ -5,7 +5,7 @@ This one utilizes ga.read_inc() for load balancing.
 
 """
 import mpi4py.MPI
-import ga
+from ga4py import ga
 import numpy as np
 
 CHUNK_SIZE = 256

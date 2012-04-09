@@ -3,7 +3,7 @@ Multiplication of two square matrices with randomly generated contents.
 
 """
 import mpi4py.MPI
-import ga
+from ga4py import ga
 
 import numpy as np
 
