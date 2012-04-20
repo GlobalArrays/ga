@@ -40,6 +40,9 @@ extern void GA_Error(char*, int);
 #        include <sys/vfs.h>
 #        define  STATVFS statfs
 #        define NO_F_FRSIZE 
+#else
+#        include <sys/statvfs.h>
+#        define  STATVFS statvfs
 #endif
 
 #ifdef WIN32
