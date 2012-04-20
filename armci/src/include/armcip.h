@@ -384,6 +384,8 @@ extern void armci_util_spin(int n, void *notused);
 
 #if defined(SYSV) || defined(WIN32)
 extern void armci_shmem_init();
+extern void armci_set_shmem_limit_per_core(unsigned long shmemlimit);
+extern void armci_set_shmem_limit_per_node(int nslaves);
 extern void armci_set_shmem_limit(unsigned long shmemlimit);
 #endif
 

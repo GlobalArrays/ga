@@ -390,6 +390,9 @@ void armci_init_clusinfo()
   process_hostlist(name);        /* compute cluster info */
 #endif
 
+#if (defined(SYSV) || defined(WIN32)  || defined(MMAP)) && !defined(HITACHI)
+  armci_set_shmem_limit_per_node(armci_clus_info[0].nslave);
+#endif
   armci_master = armci_clus_info[armci_clus_me].master;
 
 #ifdef NO_SHMEM

@@ -403,6 +403,9 @@ void armci_init_clusinfo()
   process_hostlist(name);        /* compute cluster info */
 #endif
 
+#ifndef NO_SHMEM
+  armci_set_shmem_limit_per_node(armci_clus_info[0].nslave);
+#endif
   armci_master = armci_clus_info[armci_clus_me].master;
 
 #ifdef NO_SHMEM

@@ -146,6 +146,8 @@ static  int alloc_regions=0;   /* counter to identify mapping handle */
 static  int last_allocated=0; /* counter trailing alloc_regions by 0/1 */
 
 /* Min and Max amount of aggregate memory that can be allocated */
+static  unsigned long MinShmem_per_core = 0;
+static  unsigned long MaxShmem_per_core = 0;
 static  unsigned long MinShmem = _SHMMAX;  
 static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
 static  context_t ctx_winshmem;    /* kr_malloc context */
@@ -213,6 +215,18 @@ void armci_shmem_init() {
 unsigned long armci_max_region()
 {
   return MinShmem;
+}
+
+void armci_set_shmem_limit_per_node(int nslaves)
+{
+     if (MaxShmem_per_core > 0) MaxShmem = nslaves*MaxShmem_per_core;
+     if (MinShmem_per_core > 0) MinShmem = nslaves*MinShmem_per_core;
+}
+
+void armci_set_shmem_limit_per_core(unsigned long shmemlimit)
+{
+     MaxShmem_per_core = (shmemlimit + SHM_UNIT - 1)/SHM_UNIT;
+     MinShmem_per_core = (shmemlimit + SHM_UNIT - 1)/SHM_UNIT;
 }
 
 /*\ application can reset the upper limit for memory allocation
