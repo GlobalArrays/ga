@@ -264,6 +264,7 @@ extern logical pnga_update_ghost_dir(Integer g_a, Integer pdim, Integer pdir, lo
 extern logical pnga_update5_ghosts(Integer g_a);
 extern logical pnga_set_update5_info(Integer g_a);
 extern void pnga_update_ghosts(Integer g_a);
+extern void pnga_update_ghosts_nb(Integer g_a, Integer *nbhandle);
 extern logical pnga_update6_ghosts(Integer g_a);
 extern logical pnga_update7_ghosts(Integer g_a);
 extern void pnga_ghost_barrier();

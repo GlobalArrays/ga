@@ -1155,6 +1155,12 @@ void NGA_Update_ghosts(int g_a)
     wnga_update_ghosts(a);
 }
 
+void NGA_Update_ghosts_nb(int g_a, ga_nbhdl_t *nbhandle)
+{
+    Integer a=(Integer)g_a;
+    wnga_update_ghosts_nb(a,nbhandle);
+}
+
 void GA_Merge_mirrored(int g_a)
 {
     Integer a=(Integer)g_a;

@@ -2068,6 +2068,11 @@ void FATR nga_update_ghosts_(Integer *g_a)
     wnga_update_ghosts(*g_a);
 }
 
+void FATR nga_update_ghosts_nb_(Integer *g_a, Integer *nb)
+{
+    wnga_update_ghosts_nb(*g_a, nb);
+}
+
 logical FATR ga_update6_ghosts_(Integer *g_a)
 {
     return wnga_update6_ghosts(*g_a);
