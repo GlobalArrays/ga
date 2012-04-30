@@ -2196,6 +2196,16 @@ class GlobalArray {
    * This is a collective operation. 
    */
   void updateGhosts() const;
+
+  /**
+   * This operation is similar to the standard updateGhosts operation except
+   * that it returns a non-blocking handle after initiating the call. Completion
+   * of the operation can be guaranteed by call call the NbWait function on the
+   * handle. Data in the local buffers is then ready for use.
+   *
+   * This is a collective operation. 
+   */
+  void updateGhostsNb(GANbhdl *nbhandle) const;
  
   /**
    * This function can be used to update the ghost cells along individual 

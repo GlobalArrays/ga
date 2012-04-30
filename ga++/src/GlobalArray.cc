@@ -1071,6 +1071,11 @@ GA::GlobalArray::updateGhosts()  const {
   GA_Update_ghosts(mHandle);
 }
 
+void
+GA::GlobalArray::updateGhostsNb(GANbhdl *nbhandle) const{
+  NGA_Update_ghosts_nb(mHandle, nbhandle);
+}
+
 int 
 GA::GlobalArray::updateGhostDir(int dimension, int idir, int cflag)  const {
   return NGA_Update_ghost_dir(mHandle, dimension, idir, cflag);
