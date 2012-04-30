@@ -28,6 +28,7 @@ c
 c#define TEST_5
 #define TEST_6
 #define TEST_7
+#define TEST_8
 
       program main
       implicit none
@@ -38,7 +39,7 @@ c#define TEST_5
       integer nmax, DIM, nwidth, MAXPROC, nloop
       parameter (nmax = 1000, DIM = 2, nwidth = 2, MAXPROC = 2000)
       parameter (nloop = 50)
-      integer ndim, nproc, pdims(7), type, dcnt, g_a, maxval
+      integer ndim, nproc, pdims(7), type, dcnt, g_a, maxval, nbhandle
       integer i, j, dims(7), width(7), map(2*nmax)
       integer lo(7), hi(7), ld(7)
       integer lo2(7), hi2(7), ld2(7)
@@ -47,7 +48,7 @@ c#define TEST_5
       integer a(nmax, nmax), b(nmax+2*nwidth,nmax+2*nwidth)
       double precision start,t1,t2,t3,t4,t5,tmp
       double precision t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,t17,t18
-      double precision t19,t20,t21,t22,t23,t24
+      double precision t19,t20,t21,t22,t23,t24,t25,t26,t27
       logical status, safe_put, safe_get, has_data(0:MAXPROC-1)
       parameter (heap=1000*1000*4, fudge=1000, stack=1000*1000)
       logical corner_flag
@@ -480,6 +481,41 @@ c     write(6,*) 'completed ga_update5_ghosts'
       call ga_sync
 #endif
 
+#ifdef TEST_8
+      if (me.eq.0) then
+        write(6,*)
+        write(6,*) 'Testing non-blocking update'
+        write(6,*)
+      endif
+      t25 = 0.0d00
+      t26 = 0.0d00
+      t27 = 0.0d00
+      call ga_sync
+      do i = 1, nloop
+        call zero_ghosts(int_mb(index3),ld3,a,hi(1)-lo(1)+1,width,dims3)
+        start = util_timer()
+        call ga_ghost_barrier
+        t25 = t25 + util_timer() - start
+        start = util_timer()
+        call nga_update_ghosts_nb(g_a,nbhandle)
+        call ga_nbwait(nbhandle)
+        t26 = t26 + util_timer() - start
+        start = util_timer()
+        call ga_ghost_barrier
+        t27 = t27 + util_timer() - start
+      end do
+      t25 = t25/dble(nloop)
+      t26 = t26/dble(nloop)
+      t27 = t27/dble(nloop)
+#ifdef PRINT_VAL
+      if (maxval.lt.10000)
+     +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
+#endif
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+     +           nmax+2*width(1),has_data,width,corner_flag,8)
+      call ga_sync
+#endif
+
       if (me.eq.0) then
         write(6,*) '*'
         write(6,*) '*   Completed updates successfully'
@@ -602,6 +638,23 @@ c
         write(6,400) tmp/dble(nproc)
       endif
       tmp = t24
+      call ga_dgop(3,tmp,1,'+')
+      if (me.eq.0) then
+        write(6,500) tmp/dble(nproc)
+      endif
+#endif
+#ifdef TEST_8
+      tmp = t26
+      call ga_dgop(3,tmp,1,'+')
+      if (me.eq.0) then
+        write(6,300) 8,tmp/dble(nproc)
+      endif
+      tmp = t25
+      call ga_dgop(3,tmp,1,'+')
+      if (me.eq.0) then
+        write(6,400) tmp/dble(nproc)
+      endif
+      tmp = t27
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
         write(6,500) tmp/dble(nproc)
