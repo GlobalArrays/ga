@@ -69,6 +69,7 @@ c     everybody writes chunk of data
          enddo
       endif
 c
+      call sf_fsync(handle)
       rc=sf_waitall(idlist,curid)
       if(rc.ne.0)call ga_error('waitall failed',rc)
       curid = 0

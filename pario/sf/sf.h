@@ -19,6 +19,8 @@ extern int SF_Open(int handle);
 
 extern int SF_Close(int handle);
 
+extern int SF_Fsync(int handle);
+
 extern int SF_Write(int handle, SFsize_t offset, SFsize_t bytes,
         char *buffer, int *req_id);
 

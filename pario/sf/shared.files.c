@@ -224,6 +224,17 @@ Integer FATR sf_close_(Integer *s_a)
     return(ELIO_OK);
 }
 
+/**
+ * fsync
+ */
+Integer FATR sf_fsync_(Integer *s_a)
+{
+    Integer handle = *s_a+SF_OFFSET;
+
+    elio_fsync(SF[handle].fd);
+    return(ELIO_OK);
+}
+
 
 /**
  * asynchronous write to shared file

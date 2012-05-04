@@ -63,6 +63,12 @@ int SF_Close(int handle)
     return sf_close_(&s_a);
 }
 
+int SF_Fsync(int handle)
+{
+    Integer s_a = handle;
+    return sf_fsync_(&s_a);
+}
+
 
 int SF_Write(int handle, SFsize_t offset, SFsize_t bytes,
         char *buffer, int *req_id)

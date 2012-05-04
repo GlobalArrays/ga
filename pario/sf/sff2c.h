@@ -12,6 +12,7 @@
 #define sf_waitall_        F77_FUNC_(sf_waitall,SF_WAITALL)
 #define sf_wait_           F77_FUNC_(sf_wait,SF_WAIT)
 #define sf_write_          F77_FUNC_(sf_write,SF_WRITE)
+#define sf_fsync_          F77_FUNC_(sf_fsync,SF_FSYNC)
 
 extern Integer sfi_create(char *fname, SFsize_t *size_hard_limit, SFsize_t *size_soft_limit, SFsize_t *req_size, Integer *handle);
 extern Integer sfi_create_suffix(char *fname, SFsize_t *size_hard_limit, SFsize_t *size_soft_limit, SFsize_t *req_size, Integer *handle, Integer *suffix);
@@ -25,6 +26,7 @@ extern Integer FATR sf_rwtor_(Integer *s_a);
 extern Integer FATR sf_waitall_(Integer *list, Integer *num);
 extern Integer FATR sf_wait_(Integer *req_id);
 extern Integer FATR sf_write_(Integer *s_a, SFsize_t *offset, SFsize_t *bytes, char *buffer, Integer *req_id);
+extern Integer FATR sf_fsync_(Integer *s_a);
 
 #ifdef F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 extern Integer sf_create(char *fname, SFsize_t *size_hard_limit, SFsize_t *size_soft_limit, SFsize_t *req_size, Integer *handle, int len);
