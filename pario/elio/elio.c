@@ -974,7 +974,7 @@ int elio_fsync(Fd_t fd)
     if (fd->next)
       status = elio_fsync((Fd_t) fd->next);
 
-    printf("syncing extent %d name %s\n", fd->extent, fd->name);
+    /* printf("syncing extent %d name %s\n", fd->extent, fd->name); */
     /*   if(ELIO_FSYNC(fd->fd)==-1 || (status != ELIO_OK)) */
 #ifndef WIN32
 #if !defined(__INTERIX) 
