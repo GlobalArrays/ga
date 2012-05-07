@@ -3236,7 +3236,7 @@ void GA_Zgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
                 DoubleComplex alpha, int g_a, int g_b, 
                 DoubleComplex beta, int g_c )
 {
-    GA_Zgemm64_c(ta, tb, n, m, k, alpha, g_b, g_a, beta, g_c);
+    GA_Zgemm64_c(tb, ta, n, m, k, alpha, g_b, g_a, beta, g_c);
 }
 
 void GA_Cgemm64(char ta, char tb, int64_t m, int64_t n, int64_t k,
