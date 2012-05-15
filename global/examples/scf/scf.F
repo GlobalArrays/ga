@@ -501,8 +501,8 @@ c
 #include "cscf.h"
       integer one
       parameter (one = 1)
-      integer*8 imax, itask                                     !cste
-      integer lo(4), hi(4), ilo, jlo, klo, llo, itmp            !cste
+      integer*8 imax, itask, itmp                               !cste
+      integer lo(4), hi(4), ilo, jlo, klo, llo                  !cste
 c
       itask = nga_read_inc(g_counter,one,one)
       imax = nbfn/ichunk
