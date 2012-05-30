@@ -42,7 +42,7 @@ void Mock_Abs_value_patch(mock_ga_t *g_a, int *lo, int *hi)
       case GA_TYPE:					\
 	{						\
 	  ITER_DECLARE_BUFFER(g_a,C_TYPE)		\
-	    ITER_INIT_PATCH(g_a,C_TYPE,lo.hi)		\
+	    ITER_INIT_PATCH(g_a,C_TYPE,lo,hi)		\
 	    ITER_BEGIN(g_a,C_TYPE)			\
 	    assign_abs_##AT(*g_a_buf,*g_a_buf);		\
 	  ITER_NEXT_PATCH(g_a)				\
