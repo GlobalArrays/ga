@@ -57,6 +57,7 @@ int the_ga##_size = 1;                  \
 int the_ga##_i;                         \
 int the_ga##_j;
 
+
 /* to define the user-visible buffer on which to perform the user-defined op */
 #define ITER_DECLARE_BUFFER(the_ga,TYPE) TYPE *the_ga##_buf = NULL;
 
