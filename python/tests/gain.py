@@ -101,6 +101,12 @@ tests = [
     "result = m.add.reduce(m.arange(100))",
     "result = m.add.reduce(m.ones((100,200)))",
     "result = m.add.reduce(m.ones((100,200,300)))",
+    "result = m.subtract.reduce([1,2,3,4])",
+    "result = m.subtract.reduce(m.arange(100))",
+    """i = m.arange(100*200).reshape((100,200))
+       result = m.subtract.reduce(i)""",
+    """i = m.arange(100*200*300).reshape((100,200,300))
+       result = m.subtract.reduce(i)""",
     "result = m.add.accumulate(m.ones(7))",
     "result = m.add.accumulate(m.ones((7,7)))",
     "result = m.add.accumulate(m.ones((7,7,7)), axis=0)",

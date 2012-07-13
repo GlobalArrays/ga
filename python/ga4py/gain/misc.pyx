@@ -60,7 +60,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
     array([ 0.,  0.,  0.])
 
     """
-    return a.copy().fill(0)
+    return zeros(a.shape, dtype=a.dtype)
 
 def ones(shape, dtype=np.float, order='C'):
     """Return a new array of given shape and type, filled with ones.
@@ -119,7 +119,7 @@ def ones_like(x):
            [1, 1, 1]])
 
     """
-    return x.copy().fill(1)
+    return ones(x.shape, dtype=x.dtype)
 
 def empty(shape, dtype=float, order='C'):
     """empty(shape, dtype=float, order='C')

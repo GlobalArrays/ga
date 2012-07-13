@@ -8,6 +8,7 @@ import util
 
 import numpy as np
 cimport numpy as np
+import os
 
 cpdef int me():
     return ga.pgroup_nodeid(ga.pgroup_get_default())
@@ -72,10 +73,16 @@ if float128_in_np:
 if complex256_in_np:
     gatypes[np.dtype(np.complex256)] = ga.C_LDCPL
 
+cdef bint _mask_sync = False
+cpdef inline mask_sync():
+    global _mask_sync
+    _mask_sync = True
+
 cpdef inline sync():
     #print "syncing over group %s" % ga.pgroup_get_default()
     #ga.pgroup_sync(ga.pgroup_get_default())
-    ga.sync() # internally it checks for the default group
+    if not _mask_sync:
+        ga.sync() # internally it checks for the default group
 
 class flagsobj(object):
     def __init__(self):
@@ -2786,7 +2793,7 @@ class ufunc(object):
                 value = self.func.reduce(nda)
             everything = comm().allgather(value)
             self.func.reduce(everything, out=out)
-        elif out.ndim == 1:
+        elif out.ndim == 1 and 'OLD_REDUCE' in os.environ:
             # optimize the 2d reduction
             ndout = out.access()
             if ndout is not None:
@@ -2797,6 +2804,73 @@ class ufunc(object):
                     my_range = my_range+[slice(None,None,None)]
                 piece = a.get(my_range)
                 self.func.reduce(piece, axis, dtype, ndout, *args, **kwargs)
+        elif out.ndim == 1:
+            # new algorithm using Isend/Irecv
+            send_requests = []
+            recv_requests = []
+            nda = a.access()
+            if nda is not None:
+                TAG = 733823
+                # we own part of the input
+                # reduce it, then find where to send it
+                local_out = self.func.reduce(nda, axis, dtype, *args, **kwargs)
+                lo,hi = a.distribution()
+                if axis == 0:
+                    lo,hi = lo[1],hi[1]
+                else:
+                    lo,hi = lo[0],hi[0]
+                m,p = ga.locate_region(out.handle, lo, hi)
+                #print_sync("nda m=%s" % str(m))
+                #print_sync("nda p=%s" % str(p))
+                for i in range(len(p)):
+                    rlo,rhi = m[i]
+                    #print_sync("rlo,rhi=%s,%s" % (rlo,rhi))
+                    rlo = rlo - lo
+                    rhi = rhi - lo
+                    #print_sync("again rlo,rhi=%s,%s" % (rlo,rhi))
+                    send_requests.append(
+                            comm().Isend(local_out[rlo:rhi], p[i], TAG))
+            ndout = out.access()
+            buf = None
+            if ndout is not None:
+                lo,hi = out.distribution()
+                lo,hi = lo[0],hi[0]
+                #print_sync("lo,hi=%s,%s" % (lo,hi))
+                shape = ga.inquire_dims(a.handle)
+                #print_sync("shape=%s" % shape)
+                olo = [lo,lo]
+                ohi = [hi,hi]
+                #print_sync("olo,ohi=%s,%s" % (olo,ohi))
+                olo[axis],ohi[axis] = 0,shape[axis]
+                #print_sync("again olo,ohi=%s,%s" % (olo,ohi))
+                m,p = ga.locate_region(a.handle, olo, ohi)
+                #print_sync("nda m=%s" % str(m))
+                #print_sync("nda p=%s" % str(p))
+                buf = np.ndarray((len(p),hi-lo), dtype=out.dtype)
+                buf[:] = self.func.identity
+                for i in range(len(p)):
+                    rlo,rhi = m[i]
+                    #print_sync("rlo,rhi=%s,%s" % (rlo,rhi))
+                    if axis == 0:
+                        rlo,rhi = rlo[1],rhi[1]
+                    else:
+                        rlo,rhi = rlo[0],rhi[0]
+                    #print_sync("again rlo,rhi=%s,%s" % (rlo,rhi))
+                    rlo = rlo - lo
+                    rhi = rhi - lo
+                    #print_sync("yet again rlo,rhi=%s,%s" % (rlo,rhi))
+                    recv_requests.append(
+                            comm().Irecv(buf[i][rlo:rhi], p[i], TAG))
+            while send_requests or recv_requests:
+                if MPI.Request.Testall(send_requests):
+                    send_requests = []
+                if MPI.Request.Testall(recv_requests):
+                    recv_requests = []
+            if ndout is not None:
+                self.func.reduce(buf, axis=0, out=ndout)
+                out.release_update()
+            if nda is not None:
+                a.release()
         else:
             slicer = [slice(0,None,None)]*a.ndim
             axis_iterator = iter(xrange(a.shape[axis]))

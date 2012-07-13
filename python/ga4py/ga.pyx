@@ -2285,6 +2285,7 @@ def locate_region(int g_a, lo, hi):
     cdef np.ndarray[np.int64_t, ndim=1] lo_nd
     cdef np.ndarray[np.int64_t, ndim=1] hi_nd
     cdef np.ndarray[np.int64_t, ndim=1] map
+    cdef np.ndarray[np.int64_t, ndim=3] map_reshape
     cdef np.ndarray[np.int32_t, ndim=1] procs
     cdef int np_result
     cdef int np_guess
@@ -2297,7 +2298,10 @@ def locate_region(int g_a, lo, hi):
             <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
             <int64_t*>map.data, <int*>procs.data)
     # TODO then slice it and reshape to something useful?
-    return map.reshape(np_result,2,ndim),procs
+    map_reshape = map.reshape(np_result,2,ndim)
+    # need to add 1 to every 'hi' value
+    map_reshape[:,1,:] += 1
+    return map_reshape,procs
 
 def lock(int mutex):
     """Locks a mutex object identified by the mutex number.
