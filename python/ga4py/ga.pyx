@@ -2257,7 +2257,7 @@ def locate(int g_a, subscript):
     subscript_nd = _inta64(subscript)
     return NGA_Locate64(g_a, <int64_t*>subscript_nd.data)
 
-cpdef int locate_nnodes(int g_a, lo, hi):
+def locate_nnodes(int g_a, lo, hi):
     """Return the number of process which own the specified patch.
 
     This operation is local.
@@ -2291,12 +2291,14 @@ def locate_region(int g_a, lo, hi):
     cdef int np_guess
     cdef int ndim = GA_Ndim(g_a)
     lo_nd,hi_nd = _lohi(g_a,lo,hi)
-    np_guess = locate_nnodes(g_a, lo_nd, hi_nd)
+    np_guess = NGA_Locate_nnodes64(
+            g_a, <int64_t*>lo_nd.data, <int64_t*>hi_nd.data)
     map = np.ndarray(np_guess*ndim*2, dtype=np.int64)
     procs = np.ndarray(np_guess, dtype=np.int32)
     np_result = NGA_Locate_region64(g_a,
             <int64_t*>lo_nd.data, <int64_t*>hi_nd.data,
             <int64_t*>map.data, <int*>procs.data)
+    assert(np_guess == np_result)
     # TODO then slice it and reshape to something useful?
     map_reshape = map.reshape(np_result,2,ndim)
     # need to add 1 to every 'hi' value
