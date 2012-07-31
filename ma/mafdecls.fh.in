@@ -166,3 +166,4 @@
       double complex    dcpl_mb
 
 #define MA_ACCESS_INDEX_TYPE @MA_ACCESS_INDEX_TYPE@
+#define MAPOINTER @MA_ACCESS_INDEX_TYPE@
