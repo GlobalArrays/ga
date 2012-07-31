@@ -61,6 +61,7 @@ c     --------------------------------------------------------------- c
      $    index)
 
       implicit none
+#include "mafdecls.fh"
 
       integer datatype
       integer nelem
@@ -69,7 +70,6 @@ c     --------------------------------------------------------------- c
       MA_ACCESS_INDEX_TYPE index
 
 #include "maf2c.fh"
-#include "mafdecls.fh"
 
       if (f2c_alloc_get(datatype, nelem, name, memhandle, index) .eq.
      $    MA_TRUE) then
@@ -173,12 +173,12 @@ c     --------------------------------------------------------------- c
       logical function MA_get_index (memhandle, index)
 
       implicit none
+#include "mafdecls.fh"
 
       integer memhandle
       MA_ACCESS_INDEX_TYPE index
 
 #include "maf2c.fh"
-#include "mafdecls.fh"
 
       if (f2c_get_index(memhandle, index) .eq. MA_TRUE) then
           MA_get_index = .true.
@@ -453,6 +453,7 @@ c     --------------------------------------------------------------- c
      $    index)
 
       implicit none
+#include "mafdecls.fh"
 
       integer datatype
       integer nelem
@@ -461,7 +462,6 @@ c     --------------------------------------------------------------- c
       MA_ACCESS_INDEX_TYPE index
 
 #include "maf2c.fh"
-#include "mafdecls.fh"
 
       if (f2c_push_get(datatype, nelem, name, memhandle, index) .eq.
      $    MA_TRUE) then
