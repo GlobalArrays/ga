@@ -2013,10 +2013,10 @@ def get_block_info(int g_a):
     :returns: The number of blocks along each of the array axes and the dimensions of thet individual blocks, in that order, as ndarrays.
 
     """
-    cdef np.ndarray[np.int_t, ndim=1] num_blocks, block_dims
+    cdef np.ndarray[np.int32_t, ndim=1] num_blocks, block_dims
     cdef int ndim = GA_Ndim(g_a)
-    num_blocks = np.zeros(ndim, dtype=np.intc)
-    block_dims = np.zeros(ndim, dtype=np.intc)
+    num_blocks = np.zeros(ndim, dtype=np.int32)
+    block_dims = np.zeros(ndim, dtype=np.int32)
     GA_Get_block_info(g_a, <int*>num_blocks.data, <int*>block_dims.data)
     return num_blocks,block_dims
 
