@@ -197,7 +197,6 @@ void do_work()
   /* Find the total amount of data contained in the patch */
   nsize = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   GP_Get_size(g_p, lo, hi, &size);
-  GP_Sync();
 
   /* Allocate local buffers and retrieve data */
   buf = (void*)malloc(size);
@@ -209,7 +208,6 @@ void do_work()
   ld_sz[0] = hi[1]-lo[1]+1;
   GA_Set_debug(1);
   GP_Get(g_p, lo, hi, buf, buf_ptr, ld, buf_size, ld_sz, &size, 0);
-  GP_Sync();
   if (me==0) printf("\nCompleted GP_Get\n");
   GA_Set_debug(0);
   
@@ -242,7 +240,6 @@ void do_work()
       }
     }
   }
-  GP_Sync();
   if (me==0) printf("\nCompleted check of GP_Get\n");
 
   /* Clear local buffers */
@@ -291,6 +288,7 @@ void do_work()
     }
   }
   if (me==0) printf("\nCompleted check of GP_Get using known buffer sizes\n");
+  GP_Sync();
 
   /* Clear all bits in GP_Array */
   GP_Memzero(g_p);
@@ -328,7 +326,6 @@ void do_work()
   next = (me+1)%nproc;
   GP_Distribution(g_p, me, lo, hi);
   GP_Get_size(g_p, lo, hi, &size);
-  GP_Sync();
 
   nelems = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1);
   ld[0] = hi[1]-lo[1]+1;
@@ -398,7 +395,6 @@ void do_work()
       }
     }
   }
-  GP_Sync();
   if (me==0) printf("\nCompleted check of GP_Put\n");
 
   /* Test gather. Deallocate buffers first */
@@ -467,12 +463,12 @@ void do_work()
       }
     }
   }
-  GP_Sync();
   free(subscripts);
   if (me==0) printf("\nCompleted check of GP_Gather\n");
   
 
   /* Clean up buffers and clear all bits in GP_Array */
+  GP_Sync();
   free(buf);
   free(buf_ptr);
   free(buf_size);
@@ -563,7 +559,6 @@ void do_work()
       }
     }
   }
-  GP_Sync();
   if (me==0) printf("\nCompleted check of GP_Scatter\n");
 
 
