@@ -538,13 +538,13 @@ void do_work()
   GP_Destroy(g_p);
 
   /* Test set irregular distribution capability */
-  dims[0] = N_I;
-  dims[1] = N_J;
-  dims[2] = N_K;
+  dims3[0] = N_I;
+  dims3[1] = N_J;
+  dims3[2] = N_K;
   ndim = 3;
 
   g_p = GP_Create_handle();
-  GP_Set_dimensions(g_p, ndim, dims);
+  GP_Set_dimensions(g_p, ndim, dims3);
 
   /* get processor grid */
   idim = N_I;
@@ -555,16 +555,16 @@ void do_work()
   /* construct map array */
   k = 0;
   mapc = (int*)malloc((pdi+pdj+pdk)*sizeof(int));
-  for (i=0; i<pdk; i++) {
-    mapc[k] = (i*kdim)/pdk;
+  for (i=0; i<pdi; i++) {
+    mapc[k] = (i*idim)/pdi;
     k++;
   }
   for (i=0; i<pdj; i++) {
     mapc[k] = (i*jdim)/pdj;
     k++;
   }
-  for (i=0; i<pdi; i++) {
-    mapc[k] = (i*idim)/pdi;
+  for (i=0; i<pdk; i++) {
+    mapc[k] = (i*kdim)/pdk;
     k++;
   }
   blocks[0] = pdi;
@@ -616,9 +616,9 @@ void do_work()
 
   GA_Igop(&idx,1,"*");
   if (idx == 1 && me == 0) {
-    printf("\nCompleted check of GP_Set_irreg_distr\n",me);
+    printf("\nCompleted check of GP_Set_irreg_distr\n");
   } else if (me == 0) {
-    printf("\nFailed check of GP_Set_irreg_distr\n",me);
+    printf("\nFailed check of GP_Set_irreg_distr\n");
   }
 
   /* destroy Global Pointer array */
@@ -626,10 +626,10 @@ void do_work()
 
   /* Check set chunk capability */
   g_p = GP_Create_handle();
-  GP_Set_dimensions(g_p, ndim, dims);
+  GP_Set_dimensions(g_p, ndim, dims3);
   chunk[0] = -1;
   chunk[1] = -1;
-  chunk[2] = dims[2];
+  chunk[2] = dims3[2];
   GP_Set_chunk(g_p, chunk);
   GP_Allocate(g_p);
 
@@ -640,16 +640,16 @@ void do_work()
            me, lo3[2], 0);
     idx = 0;
   }
-  if (hi3[2] != dims[2] - 1) {
+  if (hi3[2] != dims3[2] - 1) {
     printf("p[%d] Mismatch in chunk distribution array hi3[2]: %d expected: %d\n",
-           me, hi3[2], dims[2]-1);
+           me, hi3[2], dims3[2]-1);
     idx = 0;
   }
   GA_Igop(&idx,1,"*");
   if (idx == 1 && me == 0) {
-    printf("\nCompleted check of GP_Set_chunk\n",me);
+    printf("\nCompleted check of GP_Set_chunk\n");
   } else if (me == 0) {
-    printf("\nFailed check of GP_Set_chunk\n",me);
+    printf("\nFailed check of GP_Set_chunk\n");
   }
 
   /* destroy Global Pointer array */
