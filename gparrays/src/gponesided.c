@@ -835,7 +835,7 @@ void pgp_gather(Integer g_p, Integer nv, Integer *subscript, void *buf,
   */
 
       /* free arrays */
-      for (j=0; j<nelems[i]; j++) {
+      for (j=0; j<nelems[iproc]; j++) {
         free(src_array[j]);
         free(dst_array[j]);
       }
@@ -1010,7 +1010,7 @@ void pgp_scatter(Integer g_p, Integer nv, Integer *subscript, void **buf_ptr,
 #endif
 
       /* free arrays */
-      for (j=0; j<nelems[i]; j++) {
+      for (j=0; j<nelems[iproc]; j++) {
         free(src_array[j]);
         free(dst_array[j]);
       }
