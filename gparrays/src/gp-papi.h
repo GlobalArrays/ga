@@ -31,7 +31,7 @@ extern void    pgp_sync();
 extern void    pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
                        void **buf_ptr, Integer *ld,
                        void *buf_size, Integer *ld_sz, 
-                       Integer *size, Integer isize);
+                       Integer *size, Integer isize, Integer setbuf);
 extern void    pgp_put(Integer g_p, Integer *lo, Integer *hi, void **buf_ptr,
                        Integer *ld, void *buf_size, Integer *ld_sz, 
                        Integer *size, Integer checksize, Integer isize);

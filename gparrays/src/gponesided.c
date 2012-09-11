@@ -139,6 +139,15 @@ void pgp_get_size(Integer g_p, Integer *lo, Integer *hi,
  * @param[out] size              total size of requested data
  * @param[in] intsize            parameter to distinguish between 4 and 8
  *                               byte integers
+ * @param[in] setbuf             controls how information about local
+ *                               buffers and element sizes is used.
+ *                                  if setbuf = 0, buf is assumed to be
+ *                                  a valid pointer and buf_ptr and buf_size
+ *                                  are assigned on output. Otherwise,
+ *                                  buf is ignored and buf_ptr is assumed to
+ *                                  contain pointers to memory locations big
+ *                                  enough to hold incoming data. The size of
+ *                                  these locations are in buf_size
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wgp_get = pgp_get
@@ -146,7 +155,7 @@ void pgp_get_size(Integer g_p, Integer *lo, Integer *hi,
 
 void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
              void **buf_ptr, Integer *ld, void *buf_size, Integer *ld_sz,
-             Integer *size, Integer intsize)
+             Integer *size, Integer intsize, Integer setbuf)
 {
   Integer handle, ndim, i, j, d, itmp, offset_sz, np;
   Integer idx, offset_d, offset_ptr, offset_rem;
@@ -171,7 +180,9 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
     me,lo[0],hi[0],lo[1],hi[1]);
    */
 
-  pnga_get(GP[handle].g_size_array, lo, hi, buf_size, ld_sz);
+  if (!setbuf) {
+    pnga_get(GP[handle].g_size_array, lo, hi, buf_size, ld_sz);
+  }
 
   /* Get strides of requested block */
   ndim = GP[handle].ndim;
@@ -191,7 +202,7 @@ void pgp_get(Integer g_p, Integer *lo, Integer *hi, void *buf,
   /*bjp
     printf("p[%d] ld[0]: %d ld_sz[0]: %d\n",me,ld[0],ld_sz[0]);
    */
-  while(idx<nelems) {
+  while(idx<nelems && !setbuf) {
     /* find local index for idx in the requested block */
     itmp = idx;
     for (j=0; j<ndim-1; j++) {

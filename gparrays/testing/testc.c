@@ -208,7 +208,7 @@ void do_work()
   ld_sz[1] = hi[0]-lo[0]+1;
   ld_sz[0] = hi[1]-lo[1]+1;
   GA_Set_debug(1);
-  GP_Get(g_p, lo, hi, buf, buf_ptr, ld, buf_size, ld_sz, &size);
+  GP_Get(g_p, lo, hi, buf, buf_ptr, ld, buf_size, ld_sz, &size, 0);
   GP_Sync();
   if (me==0) printf("\nCompleted GP_Get\n");
   GA_Set_debug(0);

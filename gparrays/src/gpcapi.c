@@ -153,7 +153,7 @@ void GP_Gather(int g_p, int nv, int *subscript, void *buf, void **buf_ptr,
   int ndim = wgp_get_dimension(ag_p);
   asubscript = (Integer*)malloc((int)ndim*nv*sizeof(Integer));
   if (asubscript == NULL)
-    GA_Error("Memory allocation in GP_Gather_size failed",0);
+    GA_Error("Memory allocation in GP_Gather failed",0);
 
   /* adjust the indices for fortran interface */
   for (idx=0; idx<nv; idx++) 
@@ -180,11 +180,12 @@ void GP_Get_size(int g_p, int *lo, int *hi, int *size)
 }
 
 void GP_Get(int g_p, int *lo, int *hi, void *buf, void **buf_ptr, int *ld,
-            void *buf_size, int *ld_sz, int *size)
+            void *buf_size, int *ld_sz, int *size, int setbuf)
 {
   Integer ag_p = (Integer)g_p;
   int ndim = wgp_get_dimension(ag_p);
   Integer asize;
+  Integer asetbuf = (Integer)setbuf;
   Integer _gp_lo[GP_MAX_DIM], _gp_hi[GP_MAX_DIM];
   Integer _gp_ld[GP_MAX_DIM], _gp_ld_sz[GP_MAX_DIM];
   COPYINDEX_C2F(lo, _gp_lo, ndim);
@@ -192,7 +193,7 @@ void GP_Get(int g_p, int *lo, int *hi, void *buf, void **buf_ptr, int *ld,
   COPYC2F(ld, _gp_ld, ndim-1);
   COPYC2F(ld_sz, _gp_ld_sz, ndim-1);
   wgp_get(ag_p, _gp_lo, _gp_hi, buf, buf_ptr, _gp_ld,
-          buf_size, _gp_ld_sz, &asize, 4);
+          buf_size, _gp_ld_sz, &asize, 4, asetbuf);
   *size = (int)asize;
 }
 
@@ -261,7 +262,7 @@ void GP_Scatter(int g_p, int nv, int *subscript, void **buf_ptr,
   int ndim = wgp_get_dimension(ag_p);
   asubscript = (Integer*)malloc((int)ndim*nv*sizeof(Integer));
   if (asubscript == NULL)
-    GA_Error("Memory allocation in GP_Gather_size failed",0);
+    GA_Error("Memory allocation in GP_Scatter failed",0);
 
   /* adjust the indices for fortran interface */
   for (idx=0; idx<nv; idx++) 
