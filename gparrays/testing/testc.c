@@ -245,6 +245,53 @@ void do_work()
   GP_Sync();
   if (me==0) printf("\nCompleted check of GP_Get\n");
 
+  /* Clear local buffers */
+  for (i=lo[0]; i<=hi[0]; i++) {
+    ii = i - lo[0];
+    for (j=lo[1]; j<=hi[1]; j++) {
+      jj = j - lo[1];
+      ptr = (int*)buf_ptr[ii*ld[0]+jj];
+      size = ptr[0]*ptr[1]+2;
+      for (k=0; k<size; k++) {
+        ptr[k] = 0;
+      }
+    }
+  }
+
+  /* Get data using information on buffers */
+  GP_Get(g_p, lo, hi, buf, buf_ptr, ld, buf_size, ld_sz, &size, 1);
+
+  /* Recheck contents of buffers to see if data is as expected */
+  for (i=lo[0]; i<=hi[0]; i++) {
+    ii = i - lo[0];
+    for (j=lo[1]; j<=hi[1]; j++) {
+      jj = j - lo[1];
+      idx = j*N_I + i;
+      ptr = (int*)buf_ptr[ii*ld[0]+jj];
+      m_k_ij = i%Q_I + 1;
+      m_l_ij = j%Q_J + 1;
+      if (buf_size[ii*ld_sz[0]+jj] != 4*(ptr[0]*ptr[1]+2)) {
+        printf("p[%d] size expected: %d actual: %d\n",me,buf_size[ii*ld_sz[0]+jj],
+            4*(ptr[0]*ptr[1]+2));
+      }
+      if (ptr[0] != m_k_ij) {
+        printf("p[%d] [%d,%d] Dimension(1) i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
+      }
+      if (ptr[1] != m_l_ij) {
+        printf("p[%d] [%d,%d] Dimension(1) j actual: %d expected: %d\n",me,i,j,ptr[1],m_l_ij);
+      }
+      for (k=0; k<ptr[0]; k++) {
+        for (l=0; l<ptr[1]; l++) {
+          if (ptr[l*ptr[0]+k+2] != l*m_k_ij+k+idx) {
+            printf("p[%d] Element(1) i: %d j: %d l: %d k: %d m_k_ij: %d idx: %d does not match: %d %d\n",
+                me,i,j,l,k,m_k_ij,idx,ptr[l*ptr[0]+k+2],l*m_k_ij+k+idx);
+          }
+        }
+      }
+    }
+  }
+  if (me==0) printf("\nCompleted check of GP_Get using known buffer sizes\n");
+
   /* Clear all bits in GP_Array */
   GP_Memzero(g_p);
   /* Test to see if all bits actually are zero */
