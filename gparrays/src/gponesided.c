@@ -691,7 +691,8 @@ void pgp_gather_size(Integer g_p, Integer nv, Integer *subscript, Integer *size,
 #endif
 
 void pgp_gather(Integer g_p, Integer nv, Integer *subscript, void *buf,
-                void **buf_ptr, void *buf_size, Integer *size, Integer intsize)
+                void **buf_ptr, void *buf_size, Integer *size, Integer intsize,
+                Integer setbuf)
 {
   Integer handle;
   Integer *header, *list, *nelems;
@@ -706,20 +707,11 @@ void pgp_gather(Integer g_p, Integer nv, Integer *subscript, void *buf,
   nproc = pnga_nnodes();
   me = pnga_nodeid();
 
-  /* BJP
-  if (intsize == 4) {
-    for (i=0; i<nv; i++) {
-      ((int*)buf_size)[i] = -1;
-    }
-  }
-  */
   info_buf = (armci_meminfo_t*)malloc((int)nv*sizeof(armci_meminfo_t)); 
   pnga_gather(GP[handle].g_ptr_array, info_buf, subscript, 0, nv);
-  pnga_gather(GP[handle].g_size_array, buf_size, subscript, 0, nv);
-  /* BJP
-  printf("p[%d] Completed gather of buffers\n",me);
-  */
-
+  if (!setbuf) {
+    pnga_gather(GP[handle].g_size_array, buf_size, subscript, 0, nv);
+  }
 
   /* create link list arrays and other utility arrays
    * header[iproc]: first element in list for processor iproc
@@ -736,33 +728,27 @@ void pgp_gather(Integer g_p, Integer nv, Integer *subscript, void *buf,
   }
   for (i=0; i<nv; i++) {
     list[i] = 0;
-    /* BJP
-    printf("p[%d] Test size: %d\n",me,((int*)buf_size)[i]);
-    */
   }
 
   l_ptr = buf;
-  /* BJP
-  printf("p[%d] Allocated and initialized buffers buf: %p\n",me,buf);
-  */
   if (intsize == 4) {
     for (i=0; i<nv; i++) {
       idx = (Integer)info_buf[i].cpid;
-      buf_ptr[i] = l_ptr;
+      if (!setbuf) {
+        buf_ptr[i] = l_ptr;
+      }
       l_ptr = (void*)((char*)l_ptr+(int)((int*)buf_size)[i]);
       nelems[idx]++;
       j = header[idx];
       header[idx] = i;
       list[i] = j;
-  /* BJP
-  printf("p[%d] idx: %d nelems: %d size: %d l_ptr: %p\n",me,idx,nelems[idx],
-         ((int*)buf_size)[i],l_ptr);
-         */
     }
   } else {
     for (i=0; i<nv; i++) {
       idx = (Integer)info_buf[i].cpid;
-      buf_ptr[i] = l_ptr;
+      if (!setbuf) {
+        buf_ptr[i] = l_ptr;
+      }
       l_ptr = (void*)((char*)l_ptr+(int)((int64_t*)buf_size)[i]);
       nelems[idx]++;
       j = header[idx];
@@ -770,9 +756,6 @@ void pgp_gather(Integer g_p, Integer nv, Integer *subscript, void *buf,
       list[i] = j;
     }
   }
-  /* BJP
-  printf("p[%d] Set up linked list\n",me);
-  */
   
   /* scan through linked list and get data from each processor */
   for (iproc=0; iproc<nproc; iproc++) {
@@ -814,9 +797,6 @@ void pgp_gather(Integer g_p, Integer nv, Integer *subscript, void *buf,
         }
         idx = list[idx];
       }
-      /* BJP
-  printf("p[%d] Completed descriptor array\n",me);
-  */
 
       /* gather data from remote locations */
 #ifdef XDBG
@@ -830,9 +810,6 @@ void pgp_gather(Integer g_p, Integer nv, Integer *subscript, void *buf,
         if (rc) pnga_error("ARMCI_GetV failure in gp_gather",rc);
       }
 #endif
-      /* BJP
-  printf("p[%d] Completed call to ARMCI_GetV\n",me);
-  */
 
       /* free arrays */
       for (j=0; j<nelems[iproc]; j++) {
@@ -842,9 +819,6 @@ void pgp_gather(Integer g_p, Integer nv, Integer *subscript, void *buf,
       free(src_array);
       free(dst_array);
       free(desc);
-      /* BJP
-  printf("p[%d] Freed arrays\n",me);
-  */
     }
   }
 

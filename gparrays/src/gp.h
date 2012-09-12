@@ -11,7 +11,7 @@ extern void  GP_Free(void* ptr);
 extern void* GP_Free_local_element(int g_p, int *subscript);
 extern int   GP_Get_dimension(int g_p);
 extern void GP_Gather_size(int g_p, int nv, int *subscript, int *size);
-extern void GP_Gather(int g_p, int nv, int *subscript, void *buf, void **buf_ptr, int *buf_size, int *size);
+extern void GP_Gather(int g_p, int nv, int *subscript, void *buf, void **buf_ptr, int *buf_size, int *size, int setbuf);
 extern void  GP_Get_size(int g_p, int *lo, int *hi, int *size);
 extern void  GP_Get(int g_p, int *lo, int *hi, void *buf, void **buf_ptr, int *ld, void *buf_size, int *ld_sz, int *size, int setbuf);
 extern void  GP_Initialize();

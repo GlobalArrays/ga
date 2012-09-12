@@ -143,11 +143,12 @@ void GP_Gather_size(int g_p, int nv, int *subscript, int *size)
 }
 
 void GP_Gather(int g_p, int nv, int *subscript, void *buf, void **buf_ptr,
-               int *buf_size, int *size)
+               int *buf_size, int *size, int setbuf)
 {
   int idx, i;
   Integer ag_p = (Integer)g_p;
   Integer anv = (Integer)nv;
+  Integer aset = (Integer)setbuf;
   Integer asize;
   Integer *asubscript;
   int ndim = wgp_get_dimension(ag_p);
@@ -160,7 +161,7 @@ void GP_Gather(int g_p, int nv, int *subscript, void *buf, void **buf_ptr,
     for (i=0; i<ndim; i++)
       asubscript[idx*ndim +(ndim-i-1)] = subscript[idx*ndim+i] + 1;
 
-  wgp_gather(ag_p, anv, asubscript, buf, buf_ptr, buf_size, &asize, 4);
+  wgp_gather(ag_p, anv, asubscript, buf, buf_ptr, buf_size, &asize, 4, aset);
   
   *size = (int)asize;
 

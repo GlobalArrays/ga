@@ -434,7 +434,7 @@ void do_work()
   buf_size = (int*) malloc(nv*sizeof(int));
 
   /* Gather data elements */
-  GP_Gather(g_p, nv, subscripts, buf, buf_ptr, buf_size, &size);
+  GP_Gather(g_p, nv, subscripts, buf, buf_ptr, buf_size, &size, 0);
 
   /* Check data in buffers to see if it is correct */
   for (ii=0; ii<nv; ii++) {
@@ -443,7 +443,52 @@ void do_work()
     idx = j*N_I + i;
     m_k_ij = i%Q_I + 1;
     m_l_ij = j%Q_J + 1;
-    ptr = buf_ptr[ii];
+    ptr = (int*)buf_ptr[ii];
+    if ((int)buf_size[ii] != sizeof(int)*(m_k_ij*m_l_ij+2)) {
+      printf("p[%d] [%d,%d] Size(3) i actual: %d expected: %ld\n",
+          me,i,j,buf_size[ii],(long)(sizeof(int)*(m_k_ij*m_l_ij+2)));
+    }
+    if (ptr[0] != m_k_ij) {
+      printf("p[%d] [%d,%d] Dimension(3) i actual: %d expected: %d\n",me,i,j,ptr[0],m_k_ij);
+    }
+    if (ptr[1] != m_l_ij) {
+      printf("p[%d] [%d,%d] Dimension(3) j actual: %d expected: %d\n",me,i,j,ptr[1],m_l_ij);
+    }
+    for (k=0; k<ptr[0]; k++) {
+      for (l=0; l<ptr[1]; l++) {
+        if (ptr[l*m_k_ij+k+2] != l*m_k_ij+k+idx) {
+          printf("p[%d] Element(3) i: %d j: %d l: %d k: %d m_k_ij: %d idx: %d does not match: %d %d\n",
+              me,i,j,l,k,m_k_ij,idx,ptr[l*ptr[0]+k+2],l*m_k_ij+k+idx);
+        }
+      }
+    }
+  }
+  if (me==0) printf("\nCompleted check of GP_Gather\n");
+
+  /* clean contents of buffers */
+  for (ii=0; ii<nv; ii++) {
+    i = subscripts[ii*2];
+    j = subscripts[ii*2+1];
+    idx = j*N_I + i;
+    m_k_ij = i%Q_I + 1;
+    m_l_ij = j%Q_J + 1;
+    ptr = (int*)buf_ptr[ii];
+    size = ptr[0]*ptr[1]+2;
+    for (k=0; k<size; k++){
+      ptr[k] = 0;
+    }
+  }
+
+  GP_Gather(g_p, nv, subscripts, buf, buf_ptr, buf_size, &size, 1);
+
+  /* Check data in buffers to see if it is correct */
+  for (ii=0; ii<nv; ii++) {
+    i = subscripts[ii*2];
+    j = subscripts[ii*2+1];
+    idx = j*N_I + i;
+    m_k_ij = i%Q_I + 1;
+    m_l_ij = j%Q_J + 1;
+    ptr = (int*)buf_ptr[ii];
     if ((int)buf_size[ii] != sizeof(int)*(m_k_ij*m_l_ij+2)) {
       printf("p[%d] [%d,%d] Size(3) i actual: %d expected: %ld\n",
           me,i,j,buf_size[ii],(long)(sizeof(int)*(m_k_ij*m_l_ij+2)));
@@ -464,7 +509,7 @@ void do_work()
     }
   }
   free(subscripts);
-  if (me==0) printf("\nCompleted check of GP_Gather\n");
+  if (me==0) printf("\nCompleted check of GP_Gather using known buffer sizes\n");
   
 
   /* Clean up buffers and clear all bits in GP_Array */
