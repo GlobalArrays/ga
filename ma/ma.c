@@ -95,7 +95,7 @@ extern void* ARMCI_Malloc_local(long bytes);
  * problem is solved, but the sum of sizes of preceding fields can
  * still potentially cause difficulty.
  */
-#if defined(BGP)
+#if defined(BGP) || defined(BGQ)
 #define ALIGNMENT	32
 #else
 #define ALIGNMENT	sizeof(long)
