@@ -36,7 +36,7 @@ extern void GA_Error(char*, int);
 #        define  STATVFS _stat 
 #        define  S_ISDIR(mode) ((mode&S_IFMT) == S_IFDIR)
 #        define  S_ISREG(mode) ((mode&S_IFMT) == S_IFREG)
-#elif defined(CYGNUS) ||  defined(LINUX)  ||  defined(CYGWIN) || defined(BGL) || defined(BGP) || defined(HPUX)
+#elif defined(CYGNUS) ||  defined(LINUX)  ||  defined(CYGWIN) || defined(BGL) || defined(BGP) || defined(BGQ) || defined(HPUX)
 #        include <sys/vfs.h>
 #        define  STATVFS statfs
 #        define NO_F_FRSIZE 
