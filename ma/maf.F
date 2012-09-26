@@ -230,19 +230,17 @@ c     --------------------------------------------------------------- c
 c     --------------------------------------------------------------- c
 c     --------------------------------------------------------------- c
 
-      logical function MA_init (datatype, nominal_stack,
-     $    nominal_heap)
+      logical function MA_init (datatype, stack, heap)
 
       implicit none
 
       integer datatype
-      integer nominal_stack
-      integer nominal_heap
+      integer stack
+      integer heap
 
 #include "maf2c.fh"
 
-      if (f2c_init(datatype, nominal_stack, nominal_heap) .eq.
-     $    MA_TRUE) then
+      if (f2c_init(datatype, stack, heap) .eq. MA_TRUE) then
           MA_init = .true.
       else
           MA_init = .false.
