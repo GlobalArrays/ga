@@ -185,6 +185,8 @@ libarmci_la_SOURCES += src/ft/armci_chkpt.h
 libarmci_la_SOURCES += src/ft/armci_storage.h
 libarmci_la_SOURCES += src/include/acc.h
 libarmci_la_SOURCES += src/include/armcip.h
+libarmci_la_SOURCES += src/include/asm-ppc.h
+libarmci_la_SOURCES += src/include/atomic_ops_ia64.h
 libarmci_la_SOURCES += src/include/atomics-i386.h
 libarmci_la_SOURCES += src/include/copy.h
 libarmci_la_SOURCES += src/include/fujitsu-vpp.h
@@ -198,10 +200,6 @@ libarmci_la_SOURCES += src/include/shmem.h
 libarmci_la_SOURCES += src/include/shmlimit.h
 libarmci_la_SOURCES += src/include/signaltrap.h
 libarmci_la_SOURCES += src/include/spinlock.h
-libarmci_la_SOURCES += src/include/tas-alpha.h
-libarmci_la_SOURCES += src/include/tas-i386.h
-libarmci_la_SOURCES += src/include/tas-ia64.h
-libarmci_la_SOURCES += src/include/tas-ppc.h
 libarmci_la_SOURCES += src/include/utils.h
 libarmci_la_SOURCES += src/locks/locks.c
 libarmci_la_SOURCES += src/locks/memlock.c
@@ -228,7 +226,6 @@ libarmci_la_SOURCES += src/devices/bgml/bgmlacc.h
 libarmci_la_SOURCES += src/devices/bgml/bgml.c
 libarmci_la_SOURCES += src/devices/bgml/bgmldefs.h
 libarmci_la_SOURCES += src/devices/bgml/bgml.h
-libarmci_la_SOURCES += src/devices/bgml/bgmltas-ppc.h
 endif
 if ARMCI_NETWORK_CRAY_SHMEM
 AM_CPPFLAGS += -I$(top_srcdir)/src/devices/cray-shmem
@@ -355,22 +352,6 @@ if THREAD_SAFE
 libarmci_la_SOURCES += src/common/utils.c
 libarmci_la_SOURCES += src/util/threads.c
 endif
-if INLINE_TAS_OKAY
-libarmci_la_SOURCES += src/locks/tas.c
-else
-if INLINE_TAS_WITH
-nodist_libarmci_la_SOURCES += src/locks/tas_as.s
-endif
-endif
-if INLINE_X86COPY_NEEDED
-if INLINE_X86COPY_OKAY
-libarmci_la_SOURCES += src/common/x86copy.c
-else
-if INLINE_X86COPY_WITH
-nodist_libarmci_la_SOURCES += src/common/x86copy_as.s
-endif
-endif
-endif
 if NEC
 libarmci_la_SOURCES += src/locks/tas-sx.s
 
@@ -391,25 +372,6 @@ include_HEADERS += src/include/gpc.h
 include_HEADERS += src/include/message.h
 
 AM_CPPFLAGS += -I$(top_srcdir)/src/include
-
-if ENABLE_SHARED
-MAYBE_PIC = -fPIC -DPIC
-endif
-
-src/locks/tas_as.s: src/locks/tas.c
-	$(ARMCI_TAS_AS_V) \
-	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ \
-	$(top_srcdir)/src/locks/tas.c
-
-src/common/x86copy_as.s: src/common/x86copy.c
-	$(ARMCI_X86COPY_AS_V) \
-	$(ARMCI_X86COPY_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ \
-	$(top_srcdir)/src/common/x86copy.c
-
-CLEANFILES += src/common/x86copy_as.s
-CLEANFILES += src/locks/tas_as.s
 
 endif # ARMCI_NETWORK_GEMINI
 endif # ARMCI_NETWORK_PORTALS

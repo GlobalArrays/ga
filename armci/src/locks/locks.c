@@ -18,7 +18,7 @@
 extern void armci_die(char*,int);
 #endif
 
-#if defined(SPINLOCK) || defined(PMUTEXES)
+#if defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN)
 
 void **ptr_arr;
 
@@ -60,7 +60,7 @@ int locks_per_proc, size;
   
   if(!_armci_int_mutexes) armci_die("Failed to create spinlocks",size);
 
-#ifdef PMUTEXES
+#ifdef PMUTEX
   if(armci_me == armci_master) {
        int i;
        pthread_mutexattr_t pshared;
@@ -76,8 +76,14 @@ int locks_per_proc, size;
                 armci_die("armci_allocate_locks: could not init mutex",i);
        }
   }
+#elif defined(PSPIN)
+  if(armci_me == armci_master) {
+       for(i=0; i< locks_per_proc*armci_clus_info[armci_clus_me].nslave; i++){
+             if(pthread_spin_init(_armci_int_mutexes+i,PTHREAD_PROCESS_SHARED))
+                armci_die("armci_allocate_locks: could not init mutex",i);
+       }
+  }
 #else
-
   bzero((char*)ptr_arr[armci_me],size);
 #endif
 } 

@@ -45,24 +45,6 @@
 #error SHMEM_HANDLE_SUPPORTED should not be defined on a non CRAY_SHMEM network
 #endif
 
-/* 08/30/06 moved up here from lines 252-397, MEM_FENCE before FENCE_NODE */
-#ifdef COPY686 
-     extern void *armci_asm_memcpy(void *dst, const void *src, size_t n, int tid);
-     extern void *armci_asm_memcpy_nofence(void *d,const void *s,size_t n, int id);
-#    ifdef SERVER_CONTEXT
-#      define armci_copy(src,dst,n) {\
-        int _id= (SERVER_CONTEXT)?1:0; armci_asm_memcpy((dst), (src), (n), _id);}
-#    else
-#      define armci_copy(src,dst,n)  armci_asm_memcpy((dst), (src), (n), 0)
-#    endif
-#    define armci_copy_nofence(_s,_d,_n) armci_asm_memcpy_nofence((_d),(_s),(_n),0)
-#    ifndef MEMCPY
-#       define MEMCPY
-#    endif
-#    define MEM_FENCE armci_asm_mem_fence()
-     extern void armci_asm_mem_fence();
-#endif
-                                                 
 #if  defined(MEMCPY)  && !defined(armci_copy)
 #if defined(BGML)
 #define armci_copy(src, dst, n) BGLML_memcpy((dst), (src), (n))

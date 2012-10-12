@@ -17,6 +17,9 @@
 #ifdef AIX
 #include <sys/atomic_op.h>
 #endif
+#if (defined(PPC) || defined(__PPC__) || defined(__PPC))
+#   include "asm-ppc.h"
+#endif
 
 #define DEBUG_ 0
 #define ERROR(str,val) armci_die((str),(val))

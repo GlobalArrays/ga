@@ -41,10 +41,6 @@ libarmci_la_SOURCES += src-gemini/sockets.h
 libarmci_la_SOURCES += src-gemini/spawn.c
 libarmci_la_SOURCES += src-gemini/spinlock.h
 libarmci_la_SOURCES += src-gemini/strided.c
-libarmci_la_SOURCES += src-gemini/tas-alpha.h
-libarmci_la_SOURCES += src-gemini/tas-i386.h
-libarmci_la_SOURCES += src-gemini/tas-ia64.h
-libarmci_la_SOURCES += src-gemini/tas-ppc.h
 libarmci_la_SOURCES += src-gemini/utils.h
 libarmci_la_SOURCES += src-gemini/vector.c
 if ENABLE_F77
@@ -65,13 +61,6 @@ if THREAD_SAFE
 libarmci_la_SOURCES += src-gemini/threads.c
 libarmci_la_SOURCES += src-gemini/utils.c
 endif
-if INLINE_TAS_OKAY
-libarmci_la_SOURCES += src-gemini/tas.c
-else
-if INLINE_TAS_WITH
-nodist_libarmci_la_SOURCES += src-gemini/tas_as.s
-endif
-endif
 
 include_HEADERS += src-gemini/armci.h
 include_HEADERS += src-gemini/gpc.h
@@ -81,15 +70,3 @@ AM_CPPFLAGS += -I$(top_srcdir)/src-gemini
 AM_CPPFLAGS += -I$(top_srcdir)/src/include
 LDADD += -lnumatoolkit
 LDADD += -lonesided
-
-if ENABLE_SHARED
-MAYBE_PIC = -fPIC -DPIC
-endif
-
-src-gemini/tas_as.s: src-gemini/tas.c
-	$(ARMCI_TAS_AS_V) \
-	$(ARMCI_TAS_AS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) -S $(MAYBE_PIC) -o $@ \
-	$(top_srcdir)/src-gemini/tas.c
-
-CLEANFILES += src-gemini/tas_as.s

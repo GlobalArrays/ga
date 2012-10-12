@@ -243,7 +243,7 @@ void armci_allocate_locks()
        armcill_allocate_locks(NUM_LOCKS);
 #elif (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(HITACHI)
        if(armci_nproc == 1)return;
-#  if defined(SPINLOCK) || defined(PMUTEXES)
+#  if defined(SPINLOCK) || defined(PMUTEX) || defined(PSPIN)
        CreateInitLocks(NUM_LOCKS, &lockid);
 #  else
        if(armci_master==armci_me)CreateInitLocks(NUM_LOCKS, &lockid);

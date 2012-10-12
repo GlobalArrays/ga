@@ -238,8 +238,6 @@ AC_MSG_NOTICE
 GA_AS
 AM_PROG_AS
 
-ARMCI_TAS
-ARMCI_X86COPY
 ARMCI_AS_NO_I386ASM
 
 #########################################

@@ -39,9 +39,6 @@
 /* TODO */
 #undef CLUSTER
 
-/* Defined when TARGET=LINUX and cpu is x86 */
-#undef COPY686
-
 /* TODO */
 #undef CRAY_SHMEM
 
