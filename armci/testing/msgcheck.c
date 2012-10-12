@@ -9,7 +9,7 @@
 #   include <stdlib.h>
 #endif
 
-#include "armcip.h"
+#include "armci.h"
 #include "message.h"
 
 #define armci_msg_brdcst__ armci_msg_bcast_lapi

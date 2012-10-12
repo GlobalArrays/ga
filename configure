@@ -6013,6 +6013,23 @@ else
 base="`$wrapped -show 2>/dev/null | sed 's/[ 	].*$//' | head -1`"
 ga_save_CC="$CC"
 CC="$base"
+# if -m32 or -m64 is present in the -show params, or separately, add it
+unwrapped_args="`$wrapped -show 2>/dev/null`"
+extra_arg=""
+for arg in $unwrapped_args $wrapped
+do
+    case $arg in #(
+  *-m32*) :
+    extra_arg="-m32" ;; #(
+  *-m64*) :
+    extra_arg="-m64" ;; #(
+  *) :
+     ;;
+esac
+done
+if test "x$extra_arg" != x; then :
+  base="$base $extra_arg"
+fi
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -13682,6 +13699,23 @@ else
 base="`$wrapped -show 2>/dev/null | sed 's/[ 	].*$//' | head -1`"
 ga_save_CXX="$CXX"
 CXX="$base"
+# if -m32 or -m64 is present in the -show params, or separately, add it
+unwrapped_args="`$wrapped -show 2>/dev/null`"
+extra_arg=""
+for arg in $unwrapped_args $wrapped
+do
+    case $arg in #(
+  *-m32*) :
+    extra_arg="-m32" ;; #(
+  *-m64*) :
+    extra_arg="-m64" ;; #(
+  *) :
+     ;;
+esac
+done
+if test "x$extra_arg" != x; then :
+  base="$base $extra_arg"
+fi
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -14853,6 +14887,23 @@ else
 base="`$wrapped -show 2>/dev/null | sed 's/[ 	].*$//' | head -1`"
 ga_save_F77="$F77"
 F77="$base"
+# if -m32 or -m64 is present in the -show params, or separately, add it
+unwrapped_args="`$wrapped -show 2>/dev/null`"
+extra_arg=""
+for arg in $unwrapped_args $wrapped
+do
+    case $arg in #(
+  *-m32*) :
+    extra_arg="-m32" ;; #(
+  *-m64*) :
+    extra_arg="-m64" ;; #(
+  *) :
+     ;;
+esac
+done
+if test "x$extra_arg" != x; then :
+  base="$base $extra_arg"
+fi
 cat > conftest.$ac_ext <<_ACEOF
       program main
 

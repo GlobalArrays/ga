@@ -223,7 +223,7 @@ int dassertp_fail(const char *cond_string, const char *file,
 ("%d:%s: %d\n", armci_msg_me(),(_msg),(_code)),_code)
 
 #define armci_die2(_msg,_code1,_code2) dassertc(1,0,    \
-("%d:%s: (%d,%d)\n",armci_me,(_msg),(_code1),(_code2)),_code1)
+("%d:%s: (%d,%d)\n",armci_msg_me(),(_msg),(_code1),(_code2)),_code1)
 
 /************ locality information **********************************************/
 typedef int armci_domain_t;

@@ -15,6 +15,7 @@
 #if HAVE_STDLIB_H
 #   include <stdlib.h>
 #endif
+#include <assert.h>
 
 #include "armci.h"
 #include "ga.h"
@@ -2356,7 +2357,7 @@ int NGA_Locate_nnodes64(int g_a, int64_t lo[], int64_t hi[])
 int NGA_Locate_region(int g_a,int lo[],int hi[],int map[],int procs[])
 {
      logical st;
-     Integer a=(Integer)g_a, np;
+     Integer a=(Integer)g_a, np_guess, np_actual;
      Integer ndim = wnga_ndim(a);
      Integer *tmap;
      int i;
@@ -2364,36 +2365,37 @@ int NGA_Locate_region(int g_a,int lo[],int hi[],int map[],int procs[])
      Integer *_ga_map_capi;
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
-     st = wnga_locate_nnodes(a, _ga_lo, _ga_hi, &np);
-     tmap = (Integer *)malloc( (int)(np*2*ndim *sizeof(Integer)));
+     st = wnga_locate_nnodes(a, _ga_lo, _ga_hi, &np_guess);
+     tmap = (Integer *)malloc( (int)(np_guess*2*ndim *sizeof(Integer)));
      if(!map)GA_Error("NGA_Locate_region: unable to allocate memory",g_a);
-     _ga_map_capi = (Integer*)malloc(np*sizeof(Integer));
+     _ga_map_capi = (Integer*)malloc(np_guess*sizeof(Integer));
 
-     st = wnga_locate_region(a,_ga_lo, _ga_hi, tmap, _ga_map_capi, &np);
+     st = wnga_locate_region(a,_ga_lo, _ga_hi, tmap, _ga_map_capi, &np_actual);
+     assert(np_guess == np_actual);
      if(st==FALSE){
        free(tmap);
        free(_ga_map_capi);
        return 0;
      }
 
-     COPY(int,_ga_map_capi,procs, np);
+     COPY(int,_ga_map_capi,procs, np_actual);
 
         /* might have to swap lo/hi when copying */
 
-     for(i=0; i< np*2; i++){
+     for(i=0; i< np_actual*2; i++){
         Integer *ptmap = tmap+i*ndim;
         int *pmap = map +i*ndim;
         COPYINDEX_F2C(ptmap, pmap, ndim);  
      }
      free(tmap);
      free(_ga_map_capi);
-     return (int)np;
+     return (int)np_actual;
 }
 
 int NGA_Locate_region64(int g_a,int64_t lo[],int64_t hi[],int64_t map[],int procs[])
 {
      logical st;
-     Integer a=(Integer)g_a, np;
+     Integer a=(Integer)g_a, np_guess, np_actual;
      Integer ndim = wnga_ndim(a);
      Integer *tmap;
      int i;
@@ -2401,30 +2403,31 @@ int NGA_Locate_region64(int g_a,int64_t lo[],int64_t hi[],int64_t map[],int proc
      Integer *_ga_map_capi;
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
-     st = wnga_locate_nnodes(a, _ga_lo, _ga_hi, &np);
-     tmap = (Integer *)malloc( (int)(np*2*ndim *sizeof(Integer)));
+     st = wnga_locate_nnodes(a, _ga_lo, _ga_hi, &np_guess);
+     tmap = (Integer *)malloc( (int)(np_guess*2*ndim *sizeof(Integer)));
      if(!map)GA_Error("NGA_Locate_region: unable to allocate memory",g_a);
-     _ga_map_capi = (Integer*)malloc(np*sizeof(Integer));
+     _ga_map_capi = (Integer*)malloc(np_guess*sizeof(Integer));
 
-     st = wnga_locate_region(a,_ga_lo, _ga_hi, tmap, _ga_map_capi, &np);
+     st = wnga_locate_region(a,_ga_lo, _ga_hi, tmap, _ga_map_capi, &np_actual);
+     assert(np_guess == np_actual);
      if(st==FALSE){
        free(tmap);
        free(_ga_map_capi);
        return 0;
      }
 
-     COPY(int,_ga_map_capi,procs, np);
+     COPY(int,_ga_map_capi,procs, np_actual);
 
         /* might have to swap lo/hi when copying */
 
-     for(i=0; i< np*2; i++){
+     for(i=0; i< np_actual*2; i++){
         Integer *ptmap = tmap+i*ndim;
         int64_t *pmap = map +i*ndim;
         COPYINDEX_F2C_64(ptmap, pmap, ndim);  
      }
      free(tmap);
      free(_ga_map_capi);
-     return (int)np;
+     return (int)np_actual;
 }
 
 int NGA_Locate_num_blocks(int g_a, int *lo, int *hi)

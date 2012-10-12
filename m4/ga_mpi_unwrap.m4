@@ -91,6 +91,16 @@ AC_CACHE_CHECK([for base $wrapped compiler], [ga_cv_mpi_naked], [
 base="`$wrapped -show 2>/dev/null | sed 's/@<:@ 	@:>@.*@S|@//' | head -1`"
 ga_save_comp="$_AC_CC"
 _AC_CC="$base"
+# if -m32 or -m64 is present in the -show params, or separately, add it
+unwrapped_args="`$wrapped -show 2>/dev/null`"
+extra_arg=""
+for arg in $unwrapped_args $wrapped
+do
+    AS_CASE([$arg],
+        [*-m32*],   [extra_arg="-m32"],
+        [*-m64*],   [extra_arg="-m64"])
+done
+AS_IF([test "x$extra_arg" != x], [base="$base $extra_arg"])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])], [ga_cv_mpi_naked="$base"])
 _AC_CC="$ga_save_comp"
 versions="--version -v -V -qversion"
