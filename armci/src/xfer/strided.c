@@ -466,7 +466,8 @@ void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes
 		       armci_ihdl_t nb_handle)
 {
   char *src = (char*)src_ptr, *dst=(char*)dst_ptr;
-  int s2, s3, i,j, unlockit=0;
+  long s2, s3, i,j;
+  int unlockit=0;
   int total_of_2D;
   int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
 

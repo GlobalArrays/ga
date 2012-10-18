@@ -84,7 +84,8 @@ int armci_pack_strided(int op, void* scale, int proc,
                        int count[], int stride_levels, ext_header_t *h,
                        int fit_level, int nb, int last,armci_ihdl_t nb_handle)
 {
-    int rc=0, sn, bufsize=BUFSIZE,noswap=0;
+    int rc=0, bufsize=BUFSIZE,noswap=0;
+    long sn;
     void *src, *dst;
 #ifdef REMOTE_OP
     int flag=0;

@@ -382,6 +382,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/global/src
 #
 AM_CPPFLAGS += -I$(top_srcdir)/global/testing
 
+check_PROGRAMS += global/testing/big
 check_PROGRAMS += global/testing/elempatch
 check_PROGRAMS += global/testing/getmem
 check_PROGRAMS += global/testing/mtest
@@ -542,6 +543,7 @@ GLOBAL_PARALLEL_TESTS_XFAIL =
 GLOBAL_TESTS = $(GLOBAL_SERIAL_TESTS) $(GLOBAL_PARALLEL_TESTS)
 GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
 
+#GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
 GLOBAL_PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/getmem$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mtest$(EXEEXT)
@@ -771,6 +773,7 @@ gtsrc += global/testing/ffflush.F
 gtsrc += global/testing/testblas.F
 endif
 
+global_testing_big_SOURCES                 = global/testing/big.c $(gtsrc)
 global_testing_bin_SOURCES                 = global/testing/bin.F $(gtsrc)
 global_testing_blktest_SOURCES             = global/testing/blktest.F $(gtsrc)
 global_testing_d2test_SOURCES              = global/testing/d2test.F $(gtsrc)
@@ -966,6 +969,7 @@ global_testing_testsolve_LDFLAGS          = $(FLDFLAGS)
 global_testing_testspd_LDFLAGS            = $(FLDFLAGS)
 global_testing_types_test_LDFLAGS         = $(FLDFLAGS)
 
+nodist_EXTRA_global_testing_big_SOURCES                 = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_elempatch_SOURCES           = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ga_lu_SOURCES               = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ga_mpi_SOURCES              = $(MAYBE_DUMMY_F_LINK)

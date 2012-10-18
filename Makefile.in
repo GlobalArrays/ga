@@ -61,7 +61,7 @@ bin_PROGRAMS = $(am__EXEEXT_1) global/trace/adjust$(EXEEXT) \
 	global/trace/collisions$(EXEEXT)
 check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 	ma/test-inquire$(EXEEXT) $(am__EXEEXT_2) \
-	global/testing/elempatch$(EXEEXT) \
+	global/testing/big$(EXEEXT) global/testing/elempatch$(EXEEXT) \
 	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
 	global/testing/mulmatpatchc$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
@@ -815,13 +815,25 @@ global_examples_scf_scf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_examples_scf_scf_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__global_testing_bin_SOURCES_DIST = global/testing/bin.F \
+am__global_testing_big_SOURCES_DIST = global/testing/big.c \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 @ENABLE_F77_TRUE@am__objects_8 = global/testing/ffflush.$(OBJEXT) \
 @ENABLE_F77_TRUE@	global/testing/testblas.$(OBJEXT)
 am__objects_9 = global/testing/util.$(OBJEXT) $(am__objects_8)
+am_global_testing_big_OBJECTS = global/testing/big.$(OBJEXT) \
+	$(am__objects_9)
+global_testing_big_OBJECTS = $(am_global_testing_big_OBJECTS)
+global_testing_big_LDADD = $(LDADD)
+global_testing_big_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__global_testing_bin_SOURCES_DIST = global/testing/bin.F \
+	global/testing/testutil.fh global/testing/testutil.h \
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.F
 am_global_testing_bin_OBJECTS = global/testing/bin.$(OBJEXT) \
 	$(am__objects_9)
 global_testing_bin_OBJECTS = $(am_global_testing_bin_OBJECTS)
@@ -2869,6 +2881,8 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(nodist_EXTRA_global_examples_lennard_jones_lennard_SOURCES) \
 	$(global_examples_md_cluster_grp_sim_SOURCES) \
 	$(global_examples_scf_scf_SOURCES) \
+	$(global_testing_big_SOURCES) \
+	$(nodist_EXTRA_global_testing_big_SOURCES) \
 	$(global_testing_bin_SOURCES) \
 	$(global_testing_blktest_SOURCES) \
 	$(global_testing_d2test_SOURCES) \
@@ -3156,6 +3170,7 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(global_examples_lennard_jones_lennard_SOURCES) \
 	$(global_examples_md_cluster_grp_sim_SOURCES) \
 	$(global_examples_scf_scf_SOURCES) \
+	$(am__global_testing_big_SOURCES_DIST) \
 	$(am__global_testing_bin_SOURCES_DIST) \
 	$(am__global_testing_blktest_SOURCES_DIST) \
 	$(am__global_testing_d2test_SOURCES_DIST) \
@@ -3817,6 +3832,8 @@ nodist_EXTRA_ma_test_inquire_SOURCES = $(MAYBE_DUMMY_F_LINK)
 PAPI_H = $(top_srcdir)/global/src/ga-papi.h
 GLOBAL_SERIAL_TESTS = 
 GLOBAL_SERIAL_TESTS_XFAIL = 
+
+#GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
 GLOBAL_PARALLEL_TESTS = global/testing/elempatch$(EXEEXT) \
 	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
 	global/testing/mulmatpatchc$(EXEEXT) \
@@ -3948,6 +3965,7 @@ GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
 @HAVE_M4_TRUE@	global/testing/nga-util.m4
 gtsrc = global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c $(am__append_27)
+global_testing_big_SOURCES = global/testing/big.c $(gtsrc)
 global_testing_bin_SOURCES = global/testing/bin.F $(gtsrc)
 global_testing_blktest_SOURCES = global/testing/blktest.F $(gtsrc)
 global_testing_d2test_SOURCES = global/testing/d2test.F $(gtsrc)
@@ -4138,6 +4156,7 @@ global_testing_testmatmult_LDFLAGS = $(FLDFLAGS)
 global_testing_testsolve_LDFLAGS = $(FLDFLAGS)
 global_testing_testspd_LDFLAGS = $(FLDFLAGS)
 global_testing_types_test_LDFLAGS = $(FLDFLAGS)
+nodist_EXTRA_global_testing_big_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_elempatch_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ga_lu_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ga_mpi_SOURCES = $(MAYBE_DUMMY_F_LINK)
@@ -5107,13 +5126,18 @@ global/testing/$(am__dirstamp):
 global/testing/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) global/testing/$(DEPDIR)
 	@: > global/testing/$(DEPDIR)/$(am__dirstamp)
-global/testing/bin.$(OBJEXT): global/testing/$(am__dirstamp) \
+global/testing/big.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/util.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/ffflush.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/testblas.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/big$(EXEEXT): $(global_testing_big_OBJECTS) $(global_testing_big_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/big$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_big_OBJECTS) $(global_testing_big_LDADD) $(LIBS)
+global/testing/bin.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/bin$(EXEEXT): $(global_testing_bin_OBJECTS) $(global_testing_bin_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/bin$(EXEEXT)
@@ -6286,6 +6310,7 @@ mostlyclean-compile:
 	-rm -f global/src/select.lo
 	-rm -f global/src/sparse.$(OBJEXT)
 	-rm -f global/src/sparse.lo
+	-rm -f global/testing/big.$(OBJEXT)
 	-rm -f global/testing/bin.$(OBJEXT)
 	-rm -f global/testing/blktest.$(OBJEXT)
 	-rm -f global/testing/d2test.$(OBJEXT)
@@ -6576,6 +6601,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/sclstubs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/select.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/sparse.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/big.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/elempatch.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ga-mpi.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ga_lu.Po@am__quote@
