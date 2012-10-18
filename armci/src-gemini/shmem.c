@@ -652,7 +652,7 @@ long sz=(long)size;
     printf("the system has sufficient amount of swap space. ");
     printf("Most UNIX systems can be easily reconfigured ");
     printf("to allow larger shared memory segments,\n");
-    printf("see http://www.emsl.pnl.gov/docs/global/support.html\n");
+    printf("see http://www.emsl.pnl.gov/docs/global/support.shtml\n");
     printf("In some cases, the problem might be caused by insufficient swap space.\n");
     printf("*******************************************************\n");
 }
