@@ -104,10 +104,25 @@ int main( int argc, char **argv ) {
     for (j=lo[1]; j<hi[1]; j++) {
       jdx = j-lo[1];
       if (ptr[idx*ld+jdx] != j*N+i) {
-        printf("p[%d] expected: %d actual: %d\n",me,j*N+i,ptr[idx*ld+jdx]);
+        printf("p[%d] (Scatter) expected: %d actual: %d\n",me,j*N+i,ptr[idx*ld+jdx]);
       }
     }
   }
+  if (me==0) printf("\nCompleted test of NGA_Scatter\n");
+
+  for (i=0; i<size_me; i++) {
+    values[i] = 0;
+  }
+  GA_Sync();
+  NGA_Gather(g_a, values, indices, size_me);
+  icnt = me;
+  for (i=0; i<size_me; i++) {
+    if (icnt != values[i]) {
+      printf("p[%d] (Gather) expected: %d actual: %d\n",me,icnt,values[i]);
+    }
+    icnt += nproc;
+  }
+  if (me==0) printf("\nCompleted test of NGA_Gather\n");
 
   GA_Destroy(g_a);
   if(me==0)printf("\nSuccess\n");
