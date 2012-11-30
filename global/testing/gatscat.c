@@ -25,7 +25,7 @@ int main( int argc, char **argv ) {
   int dims[2]={N,N};
   int lo[2], hi[2];
 
-  int heap=30000, stack=20000;
+  int heap=3000000, stack=2000000;
   int me, nproc;
 
   int datatype, elements;
