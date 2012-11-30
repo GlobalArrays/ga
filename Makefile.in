@@ -62,7 +62,8 @@ bin_PROGRAMS = $(am__EXEEXT_1) global/trace/adjust$(EXEEXT) \
 check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 	ma/test-inquire$(EXEEXT) $(am__EXEEXT_2) \
 	global/testing/big$(EXEEXT) global/testing/elempatch$(EXEEXT) \
-	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
+	global/testing/gatscat$(EXEEXT) global/testing/getmem$(EXEEXT) \
+	global/testing/mtest$(EXEEXT) \
 	global/testing/mulmatpatchc$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
 	global/testing/packc$(EXEEXT) \
@@ -981,6 +982,18 @@ global_testing_ga_shift_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_ga_shift_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am__global_testing_gatscat_SOURCES_DIST = global/testing/gatscat.c \
+	global/testing/testutil.fh global/testing/testutil.h \
+	global/testing/util.c global/testing/ffflush.F \
+	global/testing/testblas.F
+am_global_testing_gatscat_OBJECTS = global/testing/gatscat.$(OBJEXT) \
+	$(am__objects_9)
+global_testing_gatscat_OBJECTS = $(am_global_testing_gatscat_OBJECTS)
+global_testing_gatscat_LDADD = $(LDADD)
+global_testing_gatscat_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__global_testing_getmem_SOURCES_DIST = global/testing/getmem.c \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
@@ -2896,6 +2909,8 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(global_testing_ga_lu_SOURCES) \
 	$(nodist_EXTRA_global_testing_ga_lu_SOURCES) \
 	$(global_testing_ga_shift_SOURCES) \
+	$(global_testing_gatscat_SOURCES) \
+	$(nodist_EXTRA_global_testing_gatscat_SOURCES) \
 	$(global_testing_getmem_SOURCES) \
 	$(nodist_EXTRA_global_testing_getmem_SOURCES) \
 	$(global_testing_ghosts_SOURCES) \
@@ -3181,6 +3196,7 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_ga_mpi_SOURCES_DIST) \
 	$(am__global_testing_ga_lu_SOURCES_DIST) \
 	$(am__global_testing_ga_shift_SOURCES_DIST) \
+	$(am__global_testing_gatscat_SOURCES_DIST) \
 	$(am__global_testing_getmem_SOURCES_DIST) \
 	$(am__global_testing_ghosts_SOURCES_DIST) \
 	$(am__global_testing_ipc_clean_SOURCES_DIST) \
@@ -3835,7 +3851,8 @@ GLOBAL_SERIAL_TESTS_XFAIL =
 
 #GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
 GLOBAL_PARALLEL_TESTS = global/testing/elempatch$(EXEEXT) \
-	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
+	global/testing/gatscat$(EXEEXT) global/testing/getmem$(EXEEXT) \
+	global/testing/mtest$(EXEEXT) \
 	global/testing/mulmatpatchc$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
 	global/testing/packc$(EXEEXT) \
@@ -3976,6 +3993,7 @@ global_testing_g3test_SOURCES = global/testing/g3test.F $(gtsrc)
 global_testing_ga_lu_SOURCES = global/testing/ga_lu.c $(gtsrc)
 global_testing_ga_mpi_SOURCES = global/testing/ga-mpi.c $(gtsrc)
 global_testing_ga_shift_SOURCES = global/testing/ga_shift.F $(gtsrc)
+global_testing_gatscat_SOURCES = global/testing/gatscat.c $(gtsrc)
 global_testing_getmem_SOURCES = global/testing/getmem.c $(gtsrc)
 global_testing_ghosts_SOURCES = global/testing/ghosts.F $(gtsrc)
 global_testing_ipc_clean_SOURCES = global/testing/ipc.clean.c $(gtsrc)
@@ -4160,6 +4178,7 @@ nodist_EXTRA_global_testing_big_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_elempatch_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ga_lu_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ga_mpi_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_global_testing_gatscat_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_getmem_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_ipc_clean_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_lock_SOURCES = $(MAYBE_DUMMY_F_LINK)
@@ -5187,6 +5206,11 @@ global/testing/ga_shift.$(OBJEXT): global/testing/$(am__dirstamp) \
 global/testing/ga_shift$(EXEEXT): $(global_testing_ga_shift_OBJECTS) $(global_testing_ga_shift_DEPENDENCIES) global/testing/$(am__dirstamp)
 	@rm -f global/testing/ga_shift$(EXEEXT)
 	$(AM_V_F77LD)$(global_testing_ga_shift_LINK) $(global_testing_ga_shift_OBJECTS) $(global_testing_ga_shift_LDADD) $(LIBS)
+global/testing/gatscat.$(OBJEXT): global/testing/$(am__dirstamp) \
+	global/testing/$(DEPDIR)/$(am__dirstamp)
+global/testing/gatscat$(EXEEXT): $(global_testing_gatscat_OBJECTS) $(global_testing_gatscat_DEPENDENCIES) global/testing/$(am__dirstamp)
+	@rm -f global/testing/gatscat$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(global_testing_gatscat_OBJECTS) $(global_testing_gatscat_LDADD) $(LIBS)
 global/testing/getmem.$(OBJEXT): global/testing/$(am__dirstamp) \
 	global/testing/$(DEPDIR)/$(am__dirstamp)
 global/testing/getmem$(EXEEXT): $(global_testing_getmem_OBJECTS) $(global_testing_getmem_DEPENDENCIES) global/testing/$(am__dirstamp)
@@ -6322,6 +6346,7 @@ mostlyclean-compile:
 	-rm -f global/testing/ga-mpi.$(OBJEXT)
 	-rm -f global/testing/ga_lu.$(OBJEXT)
 	-rm -f global/testing/ga_shift.$(OBJEXT)
+	-rm -f global/testing/gatscat.$(OBJEXT)
 	-rm -f global/testing/getmem.$(OBJEXT)
 	-rm -f global/testing/ghosts.$(OBJEXT)
 	-rm -f global/testing/ipc.clean.$(OBJEXT)
@@ -6605,6 +6630,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/elempatch.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ga-mpi.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ga_lu.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/gatscat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/getmem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/ipc.clean.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/testing/$(DEPDIR)/lock.Po@am__quote@
@@ -7448,6 +7474,8 @@ ma/testf.log: ma/testf$(EXEEXT)
 	@p='ma/testf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/elempatch.log: global/testing/elempatch$(EXEEXT)
 	@p='global/testing/elempatch$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+global/testing/gatscat.log: global/testing/gatscat$(EXEEXT)
+	@p='global/testing/gatscat$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/getmem.log: global/testing/getmem$(EXEEXT)
 	@p='global/testing/getmem$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/mtest.log: global/testing/mtest$(EXEEXT)
