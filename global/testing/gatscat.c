@@ -19,7 +19,7 @@
 int main( int argc, char **argv ) {
   int g_a, g_b, i, j, size, size_me;
   int icnt, idx, jdx, ld;
-  int n=N, type=MT_F_INT;
+  int n=N, type=MT_F_INT, one;
   int *values, *ptr;
   int **indices;
   int dims[2]={N,N};
@@ -38,7 +38,7 @@ int main( int argc, char **argv ) {
   nproc=GA_Nnodes();
   if(me==0) {
     if(GA_Uses_fapi())GA_Error("Program runs with C array API only",1);
-    printf("Using %ld processes\n",(long)nproc);
+    printf("\nUsing %ld processes\n",(long)nproc);
     fflush(stdout);
   }
 
@@ -48,10 +48,9 @@ int main( int argc, char **argv ) {
     GA_Error("MA_init failed",stack+heap);  /* initialize memory allocator*/ 
 
   /* Create a regular matrix. */
-  if(me==0)printf("Creating matrix A\n");
+  if(me==0)printf("\nCreating matrix A of size %d x %d\n",N,N);
   g_a = NGA_Create(type, 2, dims, "A", NULL);
   if(!g_a) GA_Error("create failed: A",n); 
-  if(me==0)printf("\nOK\n");
 
   /* Fill matrix using scatter routines */
   size = N*N;
@@ -123,6 +122,25 @@ int main( int argc, char **argv ) {
     icnt += nproc;
   }
   if (me==0) printf("\nCompleted test of NGA_Gather\n");
+  GA_Sync();
+
+  /* Scatter-accumulate values back into GA*/
+  one = 1;
+  NGA_Scatter_acc(g_a, values, indices, size_me, &one);
+  GA_Sync();
+
+  /* Check to see if contents of g_a are correct */
+  for (i=lo[0]; i<hi[0]; i++) {
+    idx = i-lo[0];
+    for (j=lo[1]; j<hi[1]; j++) {
+      jdx = j-lo[1];
+      if (ptr[idx*ld+jdx] != 2*(j*N+i)) {
+        printf("p[%d] (Scatter_acc) expected: %d actual: %d\n",me,2*(j*N+i),ptr[idx*ld+jdx]);
+      }
+    }
+  }
+  if (me==0) printf("\nCompleted test of NGA_Scatter_acc\n");
+  NGA_Release(g_a, lo, hi);
 
   GA_Destroy(g_a);
   if(me==0)printf("\nSuccess\n");
