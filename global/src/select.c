@@ -266,31 +266,31 @@ void pnga_select_elem(Integer g_a, char* op, void* val, Integer *subscript)
   /* calculate global result */
   if(type==C_INT){
     int size = sizeof(double) + sizeof(Integer)*(int)ndim;
-    armci_msg_sel(&info,size,op,ARMCI_INT,participate);
+    armci_msg_sel_scope(SCOPE_ALL,&info,size,op,ARMCI_INT,participate);
     *(int*)val = (int)info.v.ival;
   }else if(type==C_LONG){
     int size = sizeof(double) + sizeof(Integer)*(int)ndim;
-    armci_msg_sel(&info,size,op,ARMCI_LONG,participate);
+    armci_msg_sel_scope(SCOPE_ALL,&info,size,op,ARMCI_LONG,participate);
     *(long*)val = info.v.lval;
   }else if(type==C_LONGLONG){
     int size = sizeof(double) + sizeof(Integer)*(int)ndim;
-    armci_msg_sel(&info,size,op,ARMCI_LONG_LONG,participate);
+    armci_msg_sel_scope(SCOPE_ALL,&info,size,op,ARMCI_LONG_LONG,participate);
     *(long long*)val = info.v.llval;
   }else if(type==C_DBL){
     int size = sizeof(double) + sizeof(Integer)*(int)ndim;
-    armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);
+    armci_msg_sel_scope(SCOPE_ALL,&info,size,op,ARMCI_DOUBLE,participate);
     *(DoublePrecision*)val = info.v.dval;
   }else if(type==C_FLOAT){
     int size = sizeof(double) + sizeof(Integer)*ndim;
-    armci_msg_sel(&info,size,op,ARMCI_FLOAT,participate);
+    armci_msg_sel_scope(SCOPE_ALL,&info,size,op,ARMCI_FLOAT,participate);
     *(float*)val = info.v.fval;       
   }else if(type==C_SCPL){
     int size = sizeof(info); /* for simplicity we send entire info */
-    armci_msg_sel(&info,size,op,ARMCI_FLOAT,participate);
+    armci_msg_sel_scope(SCOPE_ALL,&info,size,op,ARMCI_FLOAT,participate);
     *(SingleComplex*)val = info.extra2;
   }else{
     int size = sizeof(info); /* for simplicity we send entire info */
-    armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);
+    armci_msg_sel_scope(SCOPE_ALL,&info,size,op,ARMCI_DOUBLE,participate);
     *(DoubleComplex*)val = info.extra;
   }
 
