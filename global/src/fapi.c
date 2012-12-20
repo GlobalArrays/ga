@@ -1493,6 +1493,11 @@ Integer FATR ga_cluster_nnodes_()
     return wnga_cluster_nnodes();
 }
 
+Integer FATR nga_cluster_nnodes_()
+{
+    return wnga_cluster_nnodes();
+}
+
 Integer FATR ga_cluster_proc_nodeid_(Integer *proc)
 {
     return wnga_cluster_proc_nodeid(*proc);
@@ -2135,7 +2140,17 @@ void FATR ga_zero_(Integer *g_a)
     wnga_zero(*g_a);
 }
 
+void FATR nga_zero_(Integer *g_a)
+{
+    wnga_zero(*g_a);
+}
+
 void FATR ga_copy_(Integer *g_a, Integer *g_b)
+{
+    wnga_copy(*g_a, *g_b);
+}
+
+void FATR nga_copy_(Integer *g_a, Integer *g_b)
 {
     wnga_copy(*g_a, *g_b);
 }
