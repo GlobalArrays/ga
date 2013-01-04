@@ -1949,6 +1949,7 @@ c
       dimb1=dimb18
       dimb2=dimb28
       n=dima1
+      nb=min(nb,n/2)
       if(dimA1.ne.dima2) call ga_error(
      %     'ga_pdsyev: matrix A not square ',0)
       if(dimb1.ne.dimb2) call ga_error(
@@ -2239,6 +2240,7 @@ c
       dimb1=dimb18
       dimb2=dimb28
       n=dima1
+      nb=min(nb,n/2)
       if(dimA1.ne.dima2) call ga_error(
      %     'ga_pdsyevx: matrix A not square ',0)
       if(dimb1.ne.dimb2) call ga_error(
@@ -2558,6 +2560,7 @@ c
       if(dimA1.ne.dima2) call ga_error(
      %     'ga_pdsygv: matrix A not square ',0)
       n=dima1
+      nb=min(nb,n/2)
       if(dimb1.ne.dimb2) call ga_error(
      %     'ga_pdsygv: matrix B not square ',0)
       if(dimb1.ne.n) call ga_error(
@@ -2922,6 +2925,7 @@ c
       dimb1=dimb18
       dimb2=dimb28
       n=dima1
+      nb=min(nb,n/2)
 
       if(dimA1.ne.dima2) call ga_error(
      %     'ga_pdsyevd: matrix A not square ',0)
@@ -3226,6 +3230,7 @@ c
       if(dimA1.ne.dima2) call ga_error(
      %     'ga_pdsyevr: matrix A not square ',0)
       n=dima1
+      nb=min(nb,n/2)
       if(dimb1.ne.dimb2) call ga_error(
      %     'ga_pdsyevr: matrix B not square ',0)
       if(dimb1.ne.n) call ga_error(
@@ -3499,6 +3504,7 @@ c
       if(dimA1.ne.dima2) call ga_error(
      %     'ga_pzheevd: matrix A not square ',0)
       n=dima1
+      nb=min(nb,n/2)
       if(dimb1.ne.dimb2) call ga_error(
      %     'ga_pzheevd: matrix B not square ',0)
       if(dimb1.ne.n) call ga_error(
@@ -3599,6 +3605,9 @@ c
      4        liwork4, info)
 
          lwork=dumm
+c         lwork=max(lwork,n)
+c         lwork=2*max(lwork,mpa*(nb+nqa))
+c         write(0,*) ga_nodeid(), ' lw orig new ',dumm,lwork
          lrwork=dumm1
          liwork=dumm2
 
@@ -3766,6 +3775,7 @@ c
       if(dimA1.ne.dima2) call ga_error(
      %     'ga_pzheevr: matrix A not square ',0)
       n=dima1
+      nb=min(nb,n/2)
       if(dimb1.ne.dimb2) call ga_error(
      %     'ga_pzheevr: matrix B not square ',0)
       if(dimb1.ne.n) call ga_error(
