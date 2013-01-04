@@ -1409,6 +1409,12 @@ void GA_Zero(int g_a)
     wnga_zero(a);
 }
 
+void NGA_Zero(int g_a)
+{
+    Integer a=(Integer)g_a;
+    wnga_zero(a);
+}
+
 int GA_Pgroup_get_default()
 {
     int value = (int)wnga_pgroup_get_default();

@@ -177,7 +177,7 @@ extern double        GA_Wtime(void);
 extern DoubleComplex GA_Zdot(int g_a, int g_b); 
 extern void          GA_Zgop(DoubleComplex x[], int n, char *op);
 extern void          GA_Zero_diagonal(int g_a);
-extern void          GA_Zero(int g_a); 
+extern void          GA_Zero(int g_a);
 extern void          GA_Zgemm(char ta, char tb, int m, int n, int k, DoubleComplex alpha, int g_a, int g_b, DoubleComplex beta, int g_c );
 extern void          NGA_Access_block_grid(int g_a, int index[], void *ptr, int ld[]);
 extern void          NGA_Access_block(int g_a, int idx, void *ptr, int ld[]);
@@ -326,6 +326,7 @@ extern int           NGA_Uses_proc_grid(int g_a);
 extern int           NGA_Valid_handle(int g_a);
 extern int           NGA_Verify_handle(int g_a);
 extern DoubleComplex NGA_Zdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
+extern void          NGA_Zero(int g_a); 
 extern void          NGA_Zero_patch(int g_a, int lo[], int hi[]);
 
 /* 64 bit APIs */
