@@ -10,6 +10,9 @@
 #   include <stdlib.h>
 #endif
 
+static double __elem_op_var;
+static double __elem_op_var2;
+
 /* assignment e.g. a = b */
 #define assign_reg(a,b) (a) = (b)
 #define assign_cpl(a,b) (a).real = (b).real; \
@@ -25,6 +28,11 @@
 #define assign_add_cpl(a,b,c) (a).real = ((b).real + (c).real); \
                               (a).imag = ((b).imag + (c).imag)
 
+/* assignment of a product of two values e.g. a = b * c */
+#define assign_mul_reg(a,b,c) (a) = ((b) * (c))
+#define assign_mul_cpl(a,b,c) (a).real = ((b).real*(c).real-(b).imag*(c).imag);\
+                              (a).imag = ((b).real*(c).imag+(b).imag*(c).real)
+
 /* assignment of a product of two valus e.g. a = b * c */
 #define assign_mul_constant_reg(a,b,c) (a) = ((b) * (c))
 #define assign_mul_constant_cpl(a,b,c) (a).real = ((b) * (c).real); \
@@ -32,11 +40,24 @@
 
 /* assignment of a product of two valus e.g. a = b * c */
 #define assign_mul_reg(a,b,c) (a) = ((b) * (c))
-#define assign_mul_cpl(a,b,c) 
+#define assign_mul_cpl(a,b,c) (a).real = ((b).real*(c).real-(b).imag*(c).imag); \
+                              (a).imag = ((b).real*(c).imag+(b).imag*(c).real)
 
 /* assignment of a quotient of two valus e.g. a = b / c */
+#if 0
 #define assign_div_reg(a,b,c) (a) = ((b) / (c))
-#define assign_div_cpl(a,b,c)
+#define assign_div_cpl(a,b,c) (a).real = (((b).real*(c).real+(b).imag*(c).imag) \
+                                         /((c).real*(c).real+(c).imag*(c).imag)); \
+                              (a).imag = (((b).imag*(c).real-(b).real*(c).imag) \
+                                         /((c).real*(c).real+(c).imag*(c).imag))
+#else
+#define assign_div_reg(a,b,c) (a) = ((b) / (c))
+#define assign_div_cpl(a,b,c) __elem_op_var = ((c).real*(c).real+(c).imag*(c).imag); \
+                              (a).real = (((b).real*(c).real+(b).imag*(c).imag) \
+                                         /__elem_op_var; \
+                              (a).imag = (((b).imag*(c).real-(b).real*(c).imag) \
+                                         /__elem_op_var
+#endif
 
 /* in-place assignment of a sum e.g. a = a + b written a += b */
 #define add_assign_reg(a,b) (a) += (b)
@@ -55,16 +76,27 @@
 #define eq_reg(a,b) ((a) == (b))
 #define eq_cpl(a,b) ((a).real == (b).real && (a).imag == (b).imag)
 
-/* absoute value */
+/* absolute value */
 #define abs_reg(a) ((a) < 0 ? -(a) : (a))
+#define abs_cpl(a) (a) = sqrt((a).real*(a).real+(a).imag*(a).imag)
 
 /* assignment of a maximum of two values e.g. if(b > c) a = b else a = c */
 #define assign_max_reg(a,b,c) (a) = (b) > (c) ? (b) : (c)
-#define assign_max_cpl(a,b,c) 
+#define assign_max_cpl(a,b,c) __elem_op_var = ((b).real*(b).real+(b).imag*(b).imag); \
+                              __elem_op_var2 = ((c).real*(c).real+(c).imag*(c).imag); \
+                              (a).real = __elem_op_var > __elem_op_var2 \
+                                       ? (b).real : (c).real; \
+                              (a).imag = __elem_op_var > __elem_op_var2 \
+                                       ? (b).imag : (c).imag
 
 /* assignment of a miniimum of two values e.g. if(b > c) a = b else a = c */
 #define assign_min_reg(a,b,c) (a) = (b) < (c) ? (b) : (c)
-#define assign_min_cpl(a,b,c) 
+#define assign_min_cpl(a,b,c)  __elem_op_var = ((b).real*(b).real+(b).imag*(b).imag); \
+                               __elem_op_var2 = ((c).real*(c).real+(c).imag*(c).imag); \
+                              (a).real = __elem_op_var < __elem_op_var2 \
+                                       ? (b).real : (c).real; \
+                              (a).imag = __elem_op_var < __elem_op_var2 \
+                                       ? (b).imag : (c).imag
 
 /* assignment of an absolute value e.g. a = |b| */
 #define assign_abs_reg(a,b) (a) = abs_reg(b)

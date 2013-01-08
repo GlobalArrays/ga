@@ -32,6 +32,7 @@ Modified 3/2004 By Doug Baxter to increase robustness.
 #if HAVE_MATH_H
 #   include <math.h>
 #endif
+#include "abstract_ops.h"
 #include "ga-papi.h"
 #include "ga-wapi.h"
 
@@ -1000,6 +1001,25 @@ void pnga_recip(Integer g_a)
 
 
 static void do_multiply(void *pA, void *pB, void *pC, Integer nelems, Integer type){
+#if 1
+    int i;
+    switch (type) {
+#define TYPE_CASE(MT,T,AT)                                                  \
+        case MT:                                                            \
+            {                                                               \
+                const T* const restrict aptr = (const T* const restrict)pA; \
+                const T* const restrict bptr = (const T* const restrict)pB; \
+                T* const restrict cptr = (T* const restrict)pC;             \
+                for (i=0; i<nelems; i++) {                                  \
+                    assign_mul_##AT(cptr[i],aptr[i],bptr[i]);               \
+                }                                                           \
+                break;                                                      \
+            }
+#include "types.xh"
+#undef TYPE_CASE
+        default: pnga_error("do_multiply:wrong data type ",type);
+    }
+#else
   Integer i;
   
   switch(type){
@@ -1044,6 +1064,7 @@ static void do_multiply(void *pA, void *pB, void *pC, Integer nelems, Integer ty
     
   default: pnga_error(" wrong data type ",type);
   }
+#endif
 }
 
 

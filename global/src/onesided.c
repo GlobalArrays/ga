@@ -4119,7 +4119,7 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
     int *nblock;
     armci_giov_t desc;
 
-    GA_PUSH_NAME("gai_gatscat");
+    GA_PUSH_NAME("gai_gatscat_new");
 
     me = pnga_nodeid();
     num_rstrctd = GA[handle].num_rstrctd;
