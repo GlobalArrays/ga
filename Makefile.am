@@ -436,6 +436,7 @@ check_PROGRAMS += global/testing/testeig
 check_PROGRAMS += global/testing/testmatmult
 check_PROGRAMS += global/testing/testsolve
 check_PROGRAMS += global/testing/test
+check_PROGRAMS += global/testing/test_mirrored
 check_PROGRAMS += global/testing/types_test
 check_PROGRAMS += global/testing/field_test
 if HAVE_SCALAPACK
@@ -826,6 +827,7 @@ global_testing_sparse_SOURCES              = global/testing/sparse.F $(gtsrc)
 global_testing_sprsmatmult_SOURCES         = global/testing/sprsmatmult.F $(gtsrc)
 global_testing_stride_SOURCES              = global/testing/stride.F $(gtsrc)
 global_testing_test_SOURCES                = global/testing/test.F $(gtsrc)
+global_testing_test_mirrored_SOURCES       = global/testing/test.F $(gtsrc)
 global_testing_testc_SOURCES               = global/testing/testc.c $(gtsrc)
 global_testing_testeig_SOURCES             = global/testing/testeig.F $(gtsrc)
 global_testing_testmatmult_SOURCES         = global/testing/testmatmult.F $(gtsrc)
@@ -967,6 +969,7 @@ global_testing_sprsmatmult_LDFLAGS        = $(FLDFLAGS)
 global_testing_stride_LDFLAGS             = $(FLDFLAGS)
 global_testing_testeig_LDFLAGS            = $(FLDFLAGS)
 global_testing_test_LDFLAGS               = $(FLDFLAGS)
+global_testing_test_mirrored_LDFLAGS      = $(FLDFLAGS)
 global_testing_testmatmult_LDFLAGS        = $(FLDFLAGS)
 global_testing_testsolve_LDFLAGS          = $(FLDFLAGS)
 global_testing_testspd_LDFLAGS            = $(FLDFLAGS)
@@ -996,6 +999,8 @@ nodist_EXTRA_global_testing_testmatmultc_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmult_SOURCES            = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_testmultrect_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_unpackc_SOURCES             = $(MAYBE_DUMMY_F_LINK)
+
+global_testing_test_mirrored_CPPFLAGS = $(AM_CPPFLAGS) -DMIRROR=1
 
 nodist_EXTRA_global_testing_unit_tests_ga_abs_value_SOURCES            = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_global_testing_unit_tests_ga_acc_SOURCES                  = $(MAYBE_DUMMY_F_LINK)
@@ -1480,11 +1485,14 @@ check_PROGRAMS += gparrays/testing/test
 endif
 
 check_PROGRAMS += gparrays/testing/testc
+check_PROGRAMS += gparrays/testing/transpose
 
-gparrays_testing_test_SOURCES  = gparrays/testing/test.F
-gparrays_testing_testc_SOURCES = gparrays/testing/testc.c
+gparrays_testing_test_SOURCES      = gparrays/testing/test.F
+gparrays_testing_testc_SOURCES     = gparrays/testing/testc.c
+gparrays_testing_transpose_SOURCES = gparrays/testing/traspose.c
 
-nodist_EXTRA_gparrays_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_gparrays_testing_testc_SOURCES     = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_gparrays_testing_transpose_SOURCES = $(MAYBE_DUMMY_F_LINK)
 
 gparrays_testing_test_LDFLAGS  = $(FLDFLAGS)
 

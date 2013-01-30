@@ -772,6 +772,7 @@ CPP
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
+am__nodep
 AMDEPBACKSLASH
 AMDEP_FALSE
 AMDEP_TRUE
@@ -819,6 +820,8 @@ MAINTAINER_MODE_FALSE
 MAINTAINER_MODE_TRUE
 AM_BACKSLASH
 AM_DEFAULT_VERBOSITY
+AM_DEFAULT_V
+AM_V
 am__untar
 am__tar
 AMTAR
@@ -1015,6 +1018,7 @@ FFLAGS
 FFLAG_INT
 F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 GA_FOPT
+PYTHON
 XMKMF
 AR
 AR_FLAGS
@@ -1746,6 +1750,7 @@ Some influential environment variables:
               if cross compiling, set to either "yes" (default) or "no" (after
               string)
   GA_FOPT     GA Fortran 77 optimization flags
+  PYTHON      the Python interpreter
   XMKMF       Path to xmkmf, Makefile generator for X Window System
   AR          archiver used by libtool (default: ar)
   AR_FLAGS    archiver flags used by libtool (default: cru)
@@ -3993,6 +3998,33 @@ yes) AM_DEFAULT_VERBOSITY=0;;
 no)  AM_DEFAULT_VERBOSITY=1;;
 *)   AM_DEFAULT_VERBOSITY=1;;
 esac
+am_make=${MAKE-make}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $am_make supports nested variables" >&5
+$as_echo_n "checking whether $am_make supports nested variables... " >&6; }
+if ${am_cv_make_support_nested_variables+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if $as_echo 'TRUE=$(BAR$(V))
+BAR0=false
+BAR1=true
+V=1
+am__doit:
+	@$(TRUE)
+.PHONY: am__doit' | $am_make -f - >/dev/null 2>&1; then
+  am_cv_make_support_nested_variables=yes
+else
+  am_cv_make_support_nested_variables=no
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_make_support_nested_variables" >&5
+$as_echo "$am_cv_make_support_nested_variables" >&6; }
+if test $am_cv_make_support_nested_variables = yes; then
+    AM_V='$(V)'
+  AM_DEFAULT_V='$(AM_DEFAULT_VERBOSITY)'
+else
+  AM_V=$AM_DEFAULT_VERBOSITY
+  AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY
+fi
 AM_BACKSLASH='\'
 
 if test "`cd $srcdir && pwd`" != "`pwd`"; then
@@ -4047,11 +4079,11 @@ MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
 
 # We need awk for the "check" target.  The system "awk" is bad on
 # some platforms.
-# Always define AMTAR for backward compatibility.
+# Always define AMTAR for backward compatibility.  Yes, it's still used
+# in the wild :-(  We should find a proper way to deprecate it ...
+AMTAR='$${TAR-tar}'
 
-AMTAR=${AMTAR-"${am_missing_run}tar"}
-
-am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
+am__tar='$${TAR-tar} chof - "$$tardir"' am__untar='$${TAR-tar} xf -'
 
 
 
@@ -4489,6 +4521,7 @@ fi
 if test "x$enable_dependency_tracking" != xno; then
   am_depcomp="$ac_aux_dir/depcomp"
   AMDEPBACKSLASH='\'
+  am__nodep='_no'
 fi
  if test "x$enable_dependency_tracking" != xno; then
   AMDEP_TRUE=
@@ -5160,6 +5193,7 @@ else
   # instance it was reported that on HP-UX the gcc test will end up
   # making a dummy file named `D' -- because `-MD' means `put the output
   # in D'.
+  rm -rf conftest.dir
   mkdir conftest.dir
   # Copy depcomp to subdir because otherwise we won't find it if we're
   # using a relative directory.
@@ -5219,7 +5253,7 @@ else
 	break
       fi
       ;;
-    msvisualcpp | msvcmsys)
+    msvc7 | msvc7msys | msvisualcpp | msvcmsys)
       # This compiler won't grok `-c -o', but also, the minuso test has
       # not run yet.  These depmodes are late enough in the game, and
       # so weak that their functioning should not be impacted.
@@ -13459,6 +13493,7 @@ else
   # instance it was reported that on HP-UX the gcc test will end up
   # making a dummy file named `D' -- because `-MD' means `put the output
   # in D'.
+  rm -rf conftest.dir
   mkdir conftest.dir
   # Copy depcomp to subdir because otherwise we won't find it if we're
   # using a relative directory.
@@ -13518,7 +13553,7 @@ else
 	break
       fi
       ;;
-    msvisualcpp | msvcmsys)
+    msvc7 | msvc7msys | msvisualcpp | msvcmsys)
       # This compiler won't grok `-c -o', but also, the minuso test has
       # not run yet.  These depmodes are late enough in the game, and
       # so weak that their functioning should not be impacted.
@@ -14291,6 +14326,7 @@ else
   # instance it was reported that on HP-UX the gcc test will end up
   # making a dummy file named `D' -- because `-MD' means `put the output
   # in D'.
+  rm -rf conftest.dir
   mkdir conftest.dir
   # Copy depcomp to subdir because otherwise we won't find it if we're
   # using a relative directory.
@@ -14348,7 +14384,7 @@ else
 	break
       fi
       ;;
-    msvisualcpp | msvcmsys)
+    msvc7 | msvc7msys | msvisualcpp | msvcmsys)
       # This compiler won't grok `-c -o', but also, the minuso test has
       # not run yet.  These depmodes are late enough in the game, and
       # so weak that their functioning should not be impacted.
@@ -21794,9 +21830,11 @@ $as_echo "$ac_cv_path_SED" >&6; }
 
 
 
+
+
         # Find any Python interpreter.
     if test -z "$PYTHON"; then
-      for ac_prog in python python2 python3 python3.0 python2.5 python2.4 python2.3 python2.2 python2.1 python2.0
+      for ac_prog in python python2 python3 python3.2 python3.1 python3.0 python2.7  python2.6 python2.5 python2.4 python2.3 python2.2 python2.1 python2.0
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -21884,7 +21922,7 @@ $as_echo "$am_cv_python_platform" >&6; }
 
 
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $am_display_PYTHON script directory" >&5
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $am_display_PYTHON script directory" >&5
 $as_echo_n "checking for $am_display_PYTHON script directory... " >&6; }
 if ${am_cv_python_pythondir+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -21895,8 +21933,7 @@ else
      else
        am_py_prefix=$prefix
      fi
-     am_cv_python_pythondir=`$PYTHON -c "import sys; from distutils import sysconfig; sys.stdout.write(sysconfig.get_python_lib(0,0,prefix='$am_py_prefix'))" 2>/dev/null ||
-     echo "$PYTHON_PREFIX/lib/python$PYTHON_VERSION/site-packages"`
+     am_cv_python_pythondir=`$PYTHON -c "import sys; from distutils import sysconfig; sys.stdout.write(sysconfig.get_python_lib(0,0,prefix='$am_py_prefix'))" 2>/dev/null`
      case $am_cv_python_pythondir in
      $am_py_prefix*)
        am__strip_prefix=`echo "$am_py_prefix" | sed 's|.|.|g'`
@@ -21922,7 +21959,7 @@ $as_echo "$am_cv_python_pythondir" >&6; }
   pkgpythondir=\${pythondir}/$PACKAGE
 
 
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $am_display_PYTHON extension module directory" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $am_display_PYTHON extension module directory" >&5
 $as_echo_n "checking for $am_display_PYTHON extension module directory... " >&6; }
 if ${am_cv_python_pyexecdir+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -21933,8 +21970,7 @@ else
      else
        am_py_exec_prefix=$exec_prefix
      fi
-     am_cv_python_pyexecdir=`$PYTHON -c "import sys; from distutils import sysconfig; sys.stdout.write(sysconfig.get_python_lib(1,0,prefix='$am_py_exec_prefix'))" 2>/dev/null ||
-     echo "$PYTHON_EXEC_PREFIX/lib/python$PYTHON_VERSION/site-packages"`
+     am_cv_python_pyexecdir=`$PYTHON -c "import sys; from distutils import sysconfig; sys.stdout.write(sysconfig.get_python_lib(1,0,prefix='$am_py_exec_prefix'))" 2>/dev/null`
      case $am_cv_python_pyexecdir in
      $am_py_exec_prefix*)
        am__strip_prefix=`echo "$am_py_exec_prefix" | sed 's|.|.|g'`
