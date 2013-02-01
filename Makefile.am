@@ -1489,7 +1489,7 @@ check_PROGRAMS += gparrays/testing/transpose
 
 gparrays_testing_test_SOURCES      = gparrays/testing/test.F
 gparrays_testing_testc_SOURCES     = gparrays/testing/testc.c
-gparrays_testing_transpose_SOURCES = gparrays/testing/traspose.c
+gparrays_testing_transpose_SOURCES = gparrays/testing/transpose.c
 
 nodist_EXTRA_gparrays_testing_testc_SOURCES     = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_gparrays_testing_transpose_SOURCES = $(MAYBE_DUMMY_F_LINK)

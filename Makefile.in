@@ -2665,7 +2665,7 @@ gparrays_testing_testc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_gparrays_testing_transpose_OBJECTS =  \
-	gparrays/testing/traspose.$(OBJEXT)
+	gparrays/testing/transpose.$(OBJEXT)
 gparrays_testing_transpose_OBJECTS =  \
 	$(am_gparrays_testing_transpose_OBJECTS)
 gparrays_testing_transpose_LDADD = $(LDADD)
@@ -4565,7 +4565,7 @@ pario_sf_test_LDFLAGS = $(FLDFLAGS)
 GPPAPI_H = $(top_srcdir)/gparrays/src/gp-papi.h
 gparrays_testing_test_SOURCES = gparrays/testing/test.F
 gparrays_testing_testc_SOURCES = gparrays/testing/testc.c
-gparrays_testing_transpose_SOURCES = gparrays/testing/traspose.c
+gparrays_testing_transpose_SOURCES = gparrays/testing/transpose.c
 nodist_EXTRA_gparrays_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_gparrays_testing_transpose_SOURCES = $(MAYBE_DUMMY_F_LINK)
 gparrays_testing_test_LDFLAGS = $(FLDFLAGS)
@@ -6143,7 +6143,8 @@ gparrays/testing/testc.$(OBJEXT): gparrays/testing/$(am__dirstamp) \
 gparrays/testing/testc$(EXEEXT): $(gparrays_testing_testc_OBJECTS) $(gparrays_testing_testc_DEPENDENCIES) $(EXTRA_gparrays_testing_testc_DEPENDENCIES) gparrays/testing/$(am__dirstamp)
 	@rm -f gparrays/testing/testc$(EXEEXT)
 	$(AM_V_F77LD)$(F77LINK) $(gparrays_testing_testc_OBJECTS) $(gparrays_testing_testc_LDADD) $(LIBS)
-gparrays/testing/traspose.$(OBJEXT): gparrays/testing/$(am__dirstamp) \
+gparrays/testing/transpose.$(OBJEXT):  \
+	gparrays/testing/$(am__dirstamp) \
 	gparrays/testing/$(DEPDIR)/$(am__dirstamp)
 gparrays/testing/transpose$(EXEEXT): $(gparrays_testing_transpose_OBJECTS) $(gparrays_testing_transpose_DEPENDENCIES) $(EXTRA_gparrays_testing_transpose_DEPENDENCIES) gparrays/testing/$(am__dirstamp)
 	@rm -f gparrays/testing/transpose$(EXEEXT)
@@ -6638,7 +6639,7 @@ mostlyclean-compile:
 	-rm -f gparrays/src/gponesided.lo
 	-rm -f gparrays/testing/test.$(OBJEXT)
 	-rm -f gparrays/testing/testc.$(OBJEXT)
-	-rm -f gparrays/testing/traspose.$(OBJEXT)
+	-rm -f gparrays/testing/transpose.$(OBJEXT)
 	-rm -f ma/error.$(OBJEXT)
 	-rm -f ma/error.lo
 	-rm -f ma/f2c.$(OBJEXT)
@@ -6882,7 +6883,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@gparrays/src/$(DEPDIR)/gpfapi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@gparrays/src/$(DEPDIR)/gponesided.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@gparrays/testing/$(DEPDIR)/testc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@gparrays/testing/$(DEPDIR)/traspose.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@gparrays/testing/$(DEPDIR)/transpose.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ma/$(DEPDIR)/error.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ma/$(DEPDIR)/f2c.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ma/$(DEPDIR)/ma.Plo@am__quote@
