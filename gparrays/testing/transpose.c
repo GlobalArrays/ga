@@ -4,10 +4,7 @@
 #include "macdecls.h"
 #include "ga.h"
 #define DEBUG 1
-#define USE_HYPRE 1
-#define USE_STRUCT 1
-#define USE_IJ 1
-#define USE_CSR
+#define USE_HYPRE 0
 #define IMAX 200
 #define JMAX 200
 #define KMAX 200
@@ -901,7 +898,6 @@ int main(int argc, char **argv) {
 /*
     fill g_b with random values
 */
-#if CHECK_BOUND
   NGA_Distribution(g_b,me,blo,bhi);
   NGA_Access(g_b,blo,bhi,&p_b,&ld);
   ld = bhi[0]-blo[0]+1;
@@ -913,7 +909,6 @@ int main(int argc, char **argv) {
     vector[i] = p_b[i];
   }
   NGA_Release(g_b,blo,bhi);
-#endif
   GA_Sync();
 
   g_c = GA_Create_handle();
@@ -1159,7 +1154,6 @@ int main(int argc, char **argv) {
    Multiply sparse matrix. Start by accessing pointers to local portions of
    g_a_data, g_a_j, g_a_i
 */
-#if CHECK_BOUND
   for (iloop=0; iloop<LOOPNUM; iloop++) {
     t_beg2 = GA_Wtime();
     NGA_Distribution(g_a_data,me,blo,bhi);
@@ -1189,11 +1183,7 @@ int main(int argc, char **argv) {
       NGA_Get(g_b,blo,bhi,bvec,&j);
       t_get = t_get + GA_Wtime() - t_beg;
       t_beg = GA_Wtime();
-#if 0
-      irows = nsize[me]
-        call loc_matmul(p_data,p_j,p_i+ioff,bvec,p_c,irows)
-#else
-        irows = nsize[me]-1;
+      irows = nsize[me]-1;
       for (i=0; i<=irows; i++) {
         jmin = p_i[ioff+i];
         jmax = p_i[ioff+i+1]-1;
@@ -1204,7 +1194,6 @@ int main(int argc, char **argv) {
         }
         p_c[i] = p_c[i] + tempc;
       }
-#endif
       ioff = ioff + nsize[me] + 1;
       t_mult = t_mult + GA_Wtime() - t_beg;
       free(bvec);
@@ -1219,12 +1208,10 @@ int main(int argc, char **argv) {
     NGA_Release(g_a_i,blo,bhi);
     NGA_Distribution(g_c,me,blo,bhi);
     NGA_Release(g_c,blo,bhi);
-#endif
 
 #if USE_HYPRE
     alpha = 1.0;
     beta = 0.0;
-#if USE_STRUCT
     t_beg = GA_Wtime();
     ierr = HYPRE_StructMatrixMatvec(alpha, matrix, vec_x, beta, vec_y);
     t_hypre_strct = GA_Wtime() - t_beg;
@@ -1253,7 +1240,9 @@ int main(int argc, char **argv) {
     hypretot += sqrt(dothypre);
     prtot += sqrt(prdot);
     free(cbuf);
+#endif
   }
+#if USE_HYPRE
   if (me == 0) {
     printf("Magnitude of GA solution:                         %e\n",
         gatot/((double)LOOPNUM));
@@ -1262,7 +1251,6 @@ int main(int argc, char **argv) {
     printf("Difference between GA and HYPRE (Struct) results: %e\n",
         prtot/((double)LOOPNUM));
   }
-#endif
 #endif
 
   free(vector);
