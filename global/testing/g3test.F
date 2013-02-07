@@ -60,7 +60,7 @@ c
       inode = ga_cluster_nodeid()
       lprocs = ga_cluster_nprocs(inode)
       iproc = mod(me,lprocs)
-      p_mirror = ga_mirror_config()
+      p_mirror = ga_pgroup_get_mirror()
 #endif
 c     we can also use GA_set_memory_limit BEFORE first ga_create call
 c

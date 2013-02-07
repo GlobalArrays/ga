@@ -57,7 +57,7 @@ c
 c     
       nproc = ga_nnodes()
       me = ga_nodeid()
-      p_handle = ga_mirror_config()
+      p_handle = ga_pgroup_get_mirror()
       ndim = 2
       dims(1) = n
       dims(2) = 1
