@@ -548,7 +548,7 @@ void test_2D()
 int main(int argc, char **argv)
 {
 
-  MPI_Init(&argc,&argv);
+  //MPI_Init(&argc,&argv);
   /* initialize ARMCI */
   ARMCI_Init_args(&argc, &argv);
 
@@ -560,8 +560,8 @@ int main(int argc, char **argv)
       fprintf(stderr,
               "USAGE: 2 <= processes < %d - got %d\n", MAXPROC, nproc);
     ARMCI_Barrier();
-    //armci_msg_finalize();
-    MPI_Finalize();
+    armci_msg_finalize();
+    //MPI_Finalize();
     exit(0);
   }
 
@@ -616,8 +616,8 @@ int main(int argc, char **argv)
 
   /* done */
   ARMCI_Finalize();
-  //armci_msg_finalize();
-  MPI_Finalize();
+  armci_msg_finalize();
+  //MPI_Finalize();
   return(0);
 }
 

@@ -20,12 +20,15 @@
  * This is related to my previous post regarding the kr_shmem_free error in
  * ga_matmul (also using ga_acc).
  */
+#if HAVE_CONFIG_H
+#   include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <mpi.h>
 
+#include "mp3.h"
 #include "ga.h"
-#include "globalp.h"
 #include "macdecls.h"
 
 /* create N1 x N2 matrix (double precision) */
@@ -43,7 +46,7 @@ int main(int argc, char **argv)
     int lo[2], hi[2], ld[1];
     double alpha = 1.0;
 
-    MPI_Init(&argc,&argv);
+    MP_INIT(argc,argv);
     GA_Initialize_ltd(-1);
 
     me=GA_Nodeid();
@@ -79,7 +82,7 @@ int main(int argc, char **argv)
     GA_Destroy(g_a);
 
     GA_Terminate();
-    MPI_Finalize();
+    MP_FINALIZE();
 
     return 0;
 }

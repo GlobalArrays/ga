@@ -2721,7 +2721,7 @@ void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
     int idx, i;
     Integer a = (Integer)g_a;
     Integer nv = (Integer)n;
-#if 0
+#ifndef USE_GATSCAT_NEW
     Integer ndim = wnga_ndim(a);
     Integer *_subs_array;
     _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
@@ -2733,7 +2733,7 @@ void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
     
     wnga_scatter(a, v, subsArray, 1, nv);
     
-#if 0
+#ifndef USE_GATSCAT_NEW
     free(_subs_array);
 #endif
 }
@@ -2765,6 +2765,7 @@ void NGA_Scatter64(int g_a, void *v, int64_t* subsArray[], int64_t n)
     int i;
     Integer a = (Integer)g_a;
     Integer nv = (Integer)n;
+#ifndef USE_GATSCAT_NEW
     Integer ndim = wnga_ndim(a);
     Integer *_subs_array;
     _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
@@ -2772,10 +2773,13 @@ void NGA_Scatter64(int g_a, void *v, int64_t* subsArray[], int64_t n)
     for(idx=0; idx<n; idx++)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
+#endif
     
     wnga_scatter(a, v, _subs_array, 0, nv);
     
+#ifndef USE_GATSCAT_NEW
     free(_subs_array);
+#endif
 }
 
 void NGA_Scatter_flat64(int g_a, void *v, int64_t subsArray[], int64_t n)
@@ -2804,7 +2808,7 @@ void NGA_Scatter_acc(int g_a, void *v, int* subsArray[], int n, void *alpha)
     int idx, i;
     Integer a = (Integer)g_a;
     Integer nv = (Integer)n;
-#if 0
+#ifndef USE_GATSCAT_NEW
     Integer ndim = wnga_ndim(a);
     Integer *_subs_array;
     _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
@@ -2816,7 +2820,7 @@ void NGA_Scatter_acc(int g_a, void *v, int* subsArray[], int n, void *alpha)
     
     wnga_scatter_acc(a, v, subsArray, 1, nv, alpha);
     
-#if 0
+#ifndef USE_GATSCAT_NEW
     free(_subs_array);
 #endif
 }
@@ -2847,6 +2851,7 @@ void NGA_Scatter_acc64(int g_a, void *v, int64_t* subsArray[], int64_t n, void *
     int i;
     Integer a = (Integer)g_a;
     Integer nv = (Integer)n;
+#ifndef USE_GATSCAT_NEW
     Integer ndim = wnga_ndim(a);
     Integer *_subs_array;
     _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
@@ -2854,10 +2859,13 @@ void NGA_Scatter_acc64(int g_a, void *v, int64_t* subsArray[], int64_t n, void *
     for(idx=0; idx<n; idx++)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
+#endif
     
     wnga_scatter_acc(a, v, _subs_array, 0, nv, alpha);
     
+#ifndef USE_GATSCAT_NEW
     free(_subs_array);
+#endif
 }
 
 void NGA_Scatter_acc_flat64(int g_a, void *v, int64_t subsArray[], int64_t n, void *alpha)
@@ -2885,7 +2893,7 @@ void NGA_Gather(int g_a, void *v, int* subsArray[], int n)
     int idx, i;
     Integer a = (Integer)g_a;
     Integer nv = (Integer)n;
-#if 0
+#ifndef USE_GATSCAT_NEW
     Integer ndim = wnga_ndim(a);
     Integer *_subs_array;
     _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
@@ -2899,7 +2907,7 @@ void NGA_Gather(int g_a, void *v, int* subsArray[], int n)
     
     wnga_gather(a, v, subsArray, 1, nv);
     
-#if 0
+#ifndef USE_GATSCAT_NEW
     free(_subs_array);
 #endif
 }
@@ -2932,6 +2940,7 @@ void NGA_Gather64(int g_a, void *v, int64_t* subsArray[], int64_t n)
     int i;
     Integer a = (Integer)g_a;
     Integer nv = (Integer)n;
+#ifndef USE_GATSCAT_NEW
     Integer ndim = wnga_ndim(a);
     Integer *_subs_array;
     _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
@@ -2941,10 +2950,13 @@ void NGA_Gather64(int g_a, void *v, int64_t* subsArray[], int64_t n)
     for(idx=0; idx<n; idx++)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
+#endif
     
     wnga_gather(a, v, _subs_array, 0, nv);
     
+#ifndef USE_GATSCAT_NEW
     free(_subs_array);
+#endif
 }
 
 

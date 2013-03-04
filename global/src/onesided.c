@@ -32,6 +32,7 @@
 #endif
  
 /*#define PERMUTE_PIDS */
+/*#define USE_GATSCAT_NEW 1 */
 
 #if HAVE_STDIO_H
 #   include <stdio.h>
@@ -4157,7 +4158,7 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
     maxlen = 1;
     for (i=0; i<nv; i++) {
       if (c_flag) {
-        gam_c2f_index(((int**)subscript)[k], index, ndim);
+        gam_c2f_index(((int**)subscript)[i], index, ndim);
         subscript_ptr = index;
       } else {
         subscript_ptr = ((Integer*)subscript)+i*ndim;
@@ -4314,7 +4315,11 @@ void pnga_gather(Integer g_a, void* v, void *subscript, Integer c_flag, Integer 
   GA_PUSH_NAME("nga_gather");
   GAstat.numgat++;
 
+#ifdef USE_GATSCAT_NEW
   gai_gatscat_new(GATHER,g_a,v,subscript,c_flag,nv,&GAbytes.gattot,&GAbytes.gatloc, NULL);
+#else
+  gai_gatscat(GATHER,g_a,v,subscript,nv,&GAbytes.gattot,&GAbytes.gatloc, NULL);
+#endif
 
   GA_POP_NAME;
 }
@@ -4335,7 +4340,11 @@ void pnga_scatter(Integer g_a, void* v, void *subscript, Integer c_flag, Integer
   GA_PUSH_NAME("nga_scatter");
   GAstat.numsca++;
 
+#ifdef USE_GATSCAT_NEW
   gai_gatscat_new(SCATTER,g_a,v,subscript,c_flag,nv,&GAbytes.scatot,&GAbytes.scaloc, NULL);
+#else
+  gai_gatscat(SCATTER,g_a,v,subscript,nv,&GAbytes.scatot,&GAbytes.scaloc, NULL);
+#endif
 
   GA_POP_NAME;
 }
@@ -4357,8 +4366,13 @@ void pnga_scatter_acc(Integer g_a, void* v, void *subscript, Integer c_flag,
   GA_PUSH_NAME("nga_scatter_acc");
   GAstat.numsca++;
 
+#ifdef USE_GATSCAT_NEW
   gai_gatscat_new(SCATTER_ACC, g_a, v, subscript, c_flag, nv, &GAbytes.scatot,
               &GAbytes.scaloc, alpha);
+#else
+  gai_gatscat(SCATTER_ACC, g_a, v, subscript, nv, &GAbytes.scatot,
+              &GAbytes.scaloc, alpha);
+#endif
 
   GA_POP_NAME;
 }

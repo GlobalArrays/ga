@@ -1958,7 +1958,7 @@ int main(int argc, char *argv[])
 {
   int ndim;
 
-  MPI_Init(&argc,&argv);
+  //MPI_Init(&argc,&argv);
   ARMCI_Init_args(&argc, &argv);
   nproc = armci_msg_nproc();
   me = armci_msg_me();
@@ -2133,7 +2133,7 @@ int main(int argc, char *argv[])
 
   ARMCI_Barrier();
   ARMCI_Finalize();
-  //armci_msg_finalize();
-  MPI_Finalize();
+  armci_msg_finalize();
+  //MPI_Finalize();
   return(0);
 }
