@@ -237,15 +237,13 @@ AM_PROG_AS
 ARMCI_AS_NO_I386ASM
 
 ###############################################################################
-# Checks for BLAS/LAPACK/SCALAPACK require both C and Fortran features to
-# have been detected. Further, they assume the current AC_LANG is C.
+# BLAS/LAPACK are used in one test program. We don't locate these libraries due
+# to many of them requiring Fortran. An enthusiastic user of the lone test
+# program can still build it if they are highly motivated -- but the build will
+# not be automated.
 ###############################################################################
-AC_MSG_NOTICE
-AC_MSG_NOTICE([Checks for BLAS,LAPACK])
-AC_MSG_NOTICE
-
-GA_BLAS
-GA_LAPACK
+AM_CONDITIONAL([HAVE_BLAS], [test 0 = 1])
+AM_CONDITIONAL([HAVE_LAPACK], [test 0 = 1])
 
 ###############################################################################
 # Checks for programs.
@@ -365,9 +363,6 @@ AC_MSG_NOTICE([              CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([               LDFLAGS=$LDFLAGS])
 AC_MSG_NOTICE([                  LIBS=$LIBS])
 AC_MSG_NOTICE([                 FLIBS=$FLIBS])
-AC_MSG_NOTICE([          BLAS_LDFLAGS=$BLAS_LDFLAGS])
-AC_MSG_NOTICE([             BLAS_LIBS=$BLAS_LIBS])
-AC_MSG_NOTICE([         BLAS_CPPFLAGS=$BLAS_CPPFLAGS])
 AC_MSG_NOTICE([                    AR=$AR])
 AC_MSG_NOTICE([              AR_FLAGS=$AR_FLAGS])
 AC_MSG_NOTICE([                  CCAS=$CCAS])

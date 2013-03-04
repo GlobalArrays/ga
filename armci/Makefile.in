@@ -525,7 +525,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_as_no_i386asm.m4 \
 	$(top_srcdir)/../m4/ga_ar.m4 \
 	$(top_srcdir)/../m4/ga_arg_parse.m4 \
 	$(top_srcdir)/../m4/ga_armci_network.m4 \
-	$(top_srcdir)/../m4/ga_as.m4 $(top_srcdir)/../m4/ga_blas.m4 \
+	$(top_srcdir)/../m4/ga_as.m4 \
 	$(top_srcdir)/../m4/ga_c_match_types.m4 \
 	$(top_srcdir)/../m4/ga_check_func.m4 \
 	$(top_srcdir)/../m4/ga_check_header.m4 \
@@ -535,7 +535,6 @@ am__aclocal_m4_deps = $(top_srcdir)/../m4/armci_as_no_i386asm.m4 \
 	$(top_srcdir)/../m4/ga_enable_opt.m4 \
 	$(top_srcdir)/../m4/ga_enable_trace.m4 \
 	$(top_srcdir)/../m4/ga_function.m4 \
-	$(top_srcdir)/../m4/ga_lapack.m4 \
 	$(top_srcdir)/../m4/ga_mpi_test_disable.m4 \
 	$(top_srcdir)/../m4/ga_mpi_unwrap.m4 \
 	$(top_srcdir)/../m4/ga_mpicc.m4 \
@@ -1179,8 +1178,7 @@ examples_features_notification_simple_testnotify_DEPENDENCIES =  \
 am_examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS = examples/features/proc_affinity/computation_impact/computation_impact.$(OBJEXT)
 examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS = $(am_examples_features_proc_affinity_computation_impact_computation_impact_OBJECTS)
 examples_features_proc_affinity_computation_impact_computation_impact_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_5)
 examples_features_proc_affinity_computation_impact_computation_impact_LINK =  \
 	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -1641,9 +1639,6 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BLAS_CPPFLAGS = @BLAS_CPPFLAGS@
-BLAS_LDFLAGS = @BLAS_LDFLAGS@
-BLAS_LIBS = @BLAS_LIBS@
 CC = @CC@
 CCAS = @CCAS@
 CCASDEPMODE = @CCASDEPMODE@
@@ -1668,10 +1663,7 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
-F77 = @F77@
-FFLAGS = @FFLAGS@
 FGREP = @FGREP@
-FLIBS = @FLIBS@
 GA_CXX_WARN = @GA_CXX_WARN@
 GA_C_WARN = @GA_C_WARN@
 GA_MP_CPPFLAGS = @GA_MP_CPPFLAGS@
@@ -1683,9 +1675,6 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-LAPACK_CPPFLAGS = @LAPACK_CPPFLAGS@
-LAPACK_LDFLAGS = @LAPACK_LDFLAGS@
-LAPACK_LIBS = @LAPACK_LIBS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
@@ -1733,7 +1722,6 @@ ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
-ac_ct_F77 = @ac_ct_F77@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@

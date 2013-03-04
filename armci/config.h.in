@@ -30,9 +30,6 @@
 /* Define to 1 on BlueGene/P systems */
 #undef BGP
 
-/* Define to sizeof(INTEGER) used to compile BLAS */
-#undef BLAS_SIZE
-
 /* Define to 1 on Cray XT systems using Catamount */
 #undef CATAMOUNT
 
@@ -84,13 +81,6 @@
 /* Define if tracing is enabled */
 #undef ENABLE_TRACE
 
-/* Define to dummy `main' function (if any) required to link to the Fortran
-   libraries. */
-#undef F77_DUMMY_MAIN
-
-/* Define if F77 and FC dummy `main' functions are identical. */
-#undef FC_DUMMY_MAIN_EQ_F77
-
 /* Define to 1 on fujitsu systems */
 #undef FUJITSU_VPP
 
@@ -117,9 +107,6 @@
 
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
-
-/* Define to 1 if using external BLAS library */
-#undef HAVE_BLAS
 
 /* Define to 1 if you have the `bzero' function. */
 #undef HAVE_BZERO
@@ -172,9 +159,6 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
-
-/* Define to 1 if using external LAPACK library */
-#undef HAVE_LAPACK
 
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
