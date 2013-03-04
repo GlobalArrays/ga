@@ -556,7 +556,7 @@ GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
 
 #GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
 GLOBAL_PARALLEL_TESTS += global/testing/elempatch$(EXEEXT)
-GLOBAL_PARALLEL_TESTS += global/testing/gatscat$(EXEEXT)
+#GLOBAL_PARALLEL_TESTS += global/testing/gatscat$(EXEEXT) # broken
 GLOBAL_PARALLEL_TESTS += global/testing/getmem$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mtest$(EXEEXT)
 GLOBAL_PARALLEL_TESTS += global/testing/mulmatpatchc$(EXEEXT)

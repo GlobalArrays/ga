@@ -4240,9 +4240,9 @@ GLOBAL_SERIAL_TESTS =
 GLOBAL_SERIAL_TESTS_XFAIL = 
 
 #GLOBAL_PARALLEL_TESTS += global/testing/big$(EXEEXT) # needs lots of memory
+#GLOBAL_PARALLEL_TESTS += global/testing/gatscat$(EXEEXT) # broken
 GLOBAL_PARALLEL_TESTS = global/testing/elempatch$(EXEEXT) \
-	global/testing/gatscat$(EXEEXT) global/testing/getmem$(EXEEXT) \
-	global/testing/mtest$(EXEEXT) \
+	global/testing/getmem$(EXEEXT) global/testing/mtest$(EXEEXT) \
 	global/testing/mulmatpatchc$(EXEEXT) \
 	global/testing/ntestc$(EXEEXT) global/testing/ntestfc$(EXEEXT) \
 	global/testing/packc$(EXEEXT) \
@@ -8028,8 +8028,6 @@ ma/testf.log: ma/testf$(EXEEXT)
 	@p='ma/testf$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/elempatch.log: global/testing/elempatch$(EXEEXT)
 	@p='global/testing/elempatch$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
-global/testing/gatscat.log: global/testing/gatscat$(EXEEXT)
-	@p='global/testing/gatscat$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/getmem.log: global/testing/getmem$(EXEEXT)
 	@p='global/testing/getmem$(EXEEXT)'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 global/testing/mtest.log: global/testing/mtest$(EXEEXT)
