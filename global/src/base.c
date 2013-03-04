@@ -2035,20 +2035,16 @@ logical pnga_allocate(Integer g_a)
   /* check if everybody has enough memory left */
   if(GA_memory_limited){
      status = (GA_total_memory >= 0) ? 1 : 0;
-     printf("GA_memory_limited status=%d GA_total_memory=%ld\n",
-             status, GA_total_memory);
      if (p_handle > 0) {
         pnga_pgroup_gop(p_handle,pnga_type_f2c(MT_F_INT), &status, 1, "*");
      } else {
         pnga_gop(pnga_type_f2c(MT_F_INT), &status, 1, "*");
      }
-     printf("GA_memory_limited gop status=%d\n", status);
   }else status = 1;
 
   if (status) {
     status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
                              GA[ga_handle].type, &GA[ga_handle].id, p_handle);
-    printf("gai_getmem status=%d\n", status);
   } else {
      GA[ga_handle].ptr[grp_me]=NULL;
   }
