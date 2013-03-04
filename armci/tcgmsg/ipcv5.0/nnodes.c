@@ -2,10 +2,9 @@
 #   include "config.h"
 #endif
 
-#include "typesf2c.h"
 #include "tcgmsgP.h"
 
-Integer NNODES_(void)
+long NNODES_(void)
 {
-    return (Integer) TCGMSG_nnodes;
+    return (long) TCGMSG_nnodes;
 }

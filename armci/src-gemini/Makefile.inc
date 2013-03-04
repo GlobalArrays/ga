@@ -43,17 +43,6 @@ libarmci_la_SOURCES += src-gemini/spinlock.h
 libarmci_la_SOURCES += src-gemini/strided.c
 libarmci_la_SOURCES += src-gemini/utils.h
 libarmci_la_SOURCES += src-gemini/vector.c
-if ENABLE_F77
-noinst_LTLIBRARIES += libfcopyfacc.la
-libfcopyfacc_la_SOURCES =
-libfcopyfacc_la_SOURCES += src/common/fcopy.f
-libfcopyfacc_la_SOURCES += src/xfer/faccumulate.f
-libfcopyfacc_la_FFLAGS =
-libfcopyfacc_la_FFLAGS += $(ARMCI_FOPT)
-libfcopyfacc_la_FFLAGS += $(FFLAG_INT_4)
-libarmci_la_LIBADD += libfcopyfacc.la
-libarmcii_la_LIBADD += libfcopyfacc.la
-endif # ENABLE_F77
 if ARMCI_ENABLE_GPC_CALLS
 libarmci_la_SOURCES += src-gemini/gpc.c
 endif

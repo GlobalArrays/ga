@@ -12,7 +12,7 @@
 #   include <malloc.h>
 #endif
 
-char *CreateSharedRegion(Integer *id, Integer *size)
+char *CreateSharedRegion(long *id, long *size)
 {
     struct timeval tp;
     struct timezone tzp;
@@ -25,13 +25,13 @@ char *CreateSharedRegion(Integer *id, Integer *size)
     *size = ( (*size + 4095) / 4096 ) * 4096;
 
     if ( (temp = valloc((unsigned) *size)) == (char *) NULL) {
-        Error("CreateSharedRegion: failed in valloc", (Integer) 0);
+        Error("CreateSharedRegion: failed in valloc", (long) 0);
     }
 
     /* Now have to get a unique id ... try using time of day in centi-sec */
 
     if ( (status = gettimeofday(&tp, &tzp)) != 0) {
-        Error("CreateSharedRegion: error from gettimeofday", (Integer) status);
+        Error("CreateSharedRegion: error from gettimeofday", (long) status);
     }
 
     *id = (tp.tv_sec + 10000*tp.tv_usec) & 0xffffff;
@@ -40,44 +40,44 @@ char *CreateSharedRegion(Integer *id, Integer *size)
 
     if ( (status = create_shared_region(*id, temp, *size, 0)) != 0) {
         Error("CreateSharedRegion: error from create_shared_region",
-                (Integer) status);
+                (long) status);
     }
 
     return temp;
 }
 
 
-Integer DetachSharedRegion(Integer id, Integer size, char *addr)
+long DetachSharedRegion(long id, long size, char *addr)
 {
     return detach_shared_region( id, addr, size);
 }
 
 
-Integer DeleteSharedRegion(Integer id)
+long DeleteSharedRegion(long id)
 {
     return delete_shared_region(id);
 }
 
 
-char *AttachSharedRegion(Integer id, Integer size)
+char *AttachSharedRegion(long id, long size)
 {
     char *temp;
     int status;
 
     if (size !=  (((size + 4095) / 4096) * 4096)) {
         Error("AttachSharedRegion: input size is not multiple of 4096",
-                (Integer) size);
+                (long) size);
     }
 
     if ( (temp = valloc((unsigned) size)) == (char *) NULL) {
-        Error("AttachSharedRegion: failed in valloc", (Integer) 0);
+        Error("AttachSharedRegion: failed in valloc", (long) 0);
     }
 
     /* Now try to attach */
 
     if ( (status = attach_shared_region(id, temp, size)) != 0) {
         Error("AttachSharedRegion: error from attach_shared_region",
-                (Integer) status);
+                (long) status);
     }
 
     return temp;

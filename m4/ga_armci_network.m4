@@ -43,6 +43,57 @@ AS_VAR_POPDEF([KEY])
 AS_VAR_POPDEF([with_key])
 ])dnl
 
+# _GA_ARMCI_NETWORK_ARMCI([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+# ----------------------------------------------------------------
+AC_DEFUN([_GA_ARMCI_NETWORK_ARMCI], [
+AC_MSG_NOTICE([searching for external ARMCI...])
+happy=yes
+CPPFLAGS="$CPPFLAGS $GA_MP_CPPFLAGS"
+LDFLAGS="$LDFLAGS $GA_MP_LDFLAGS"
+LIBS="$LIBS $GA_MP_LIBS"
+AS_IF([test "x$happy" = xyes],
+    [AC_CHECK_HEADER([armci.h], [], [happy=no])])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([ARMCI_Init], [armci], [], [happy=no])
+     AS_CASE([$ac_cv_search_ARMCI_Init],
+            ["none required"], [],
+            [no], [],
+            [# add missing lib to ARMCI_NETWORK_LIBS if not there
+             AS_CASE([$ARMCI_NETWORK_LIBS],
+                     [*$ac_cv_search_ARMCI_Init*], [],
+                     [ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_ARMCI_Init"])])])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([armci_group_comm], [armci])
+     AS_IF([test "x$ac_cv_search_armci_group_comm" != xno],
+        [ac_cv_search_armci_group_comm=1],
+        [ac_cv_search_armci_group_comm=0])
+     AC_DEFINE_UNQUOTED([HAVE_ARMCI_GROUP_COMM_FUNCTION],
+        [$ac_cv_search_armci_group_comm],
+        [set to 1 if ARMCI has armci_group_comm function])
+    ])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([ARMCI_Initialized], [armci])
+     AS_IF([test "x$ac_cv_search_ARMCI_Initialized" != xno],
+        [ac_cv_search_ARMCI_Initialized=1],
+        [ac_cv_search_ARMCI_Initialized=0])
+     AC_DEFINE_UNQUOTED([HAVE_ARMCI_INITIALIZED_FUNCTION],
+        [$ac_cv_search_ARMCI_Initialized],
+        [set to 1 if ARMCI has ARMCI_Initialized function])
+    ])
+AS_IF([test "x$happy" = xyes],
+    [AC_CHECK_MEMBER([ARMCI_Group.comm], [], [], [[#include <armci.h>]])
+     AS_IF([test "x$ac_cv_member_ARMCI_Group_comm" != xno],
+        [ac_cv_member_ARMCI_Group_comm=1],
+        [ac_cv_member_ARMCI_Group_comm=0])
+     AC_DEFINE_UNQUOTED([HAVE_ARMCI_GROUP_COMM_MEMBER],
+        [$ac_cv_member_ARMCI_Group_comm],
+        [set to 1 if ARMCI has ARMCI_Group.comm member])
+    ])
+AS_IF([test "x$happy" = xyes],
+    [ga_armci_network=ARMCI; with_armci=yes; $1],
+    [$2])
+])dnl
+
 # _GA_ARMCI_NETWORK_BGML([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 # ----------------------------------------------------------------
 AC_DEFUN([_GA_ARMCI_NETWORK_BGML], [
@@ -283,6 +334,7 @@ AC_ARG_ENABLE([autodetect],
         [attempt to locate ARMCI_NETWORK besides SOCKETS])])
 # First, all of the "--with" stuff is taken care of.
 armci_network_count=0
+_GA_ARMCI_NETWORK_WITH([armci],     [external; path to external ARMCI library])
 _GA_ARMCI_NETWORK_WITH([bgml],      [IBM BG/L])
 _GA_ARMCI_NETWORK_WITH([cray-shmem],[Cray XT shmem])
 _GA_ARMCI_NETWORK_WITH([dcmf],      [IBM BG/P Deep Computing Message Framework])
@@ -319,6 +371,8 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
         [_GA_ARMCI_NETWORK_PORTALS()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_gemini" != xno],
         [_GA_ARMCI_NETWORK_GEMINI()])
+     AS_IF([test "x$ga_armci_network" = x && test "x$with_armci" != xno],
+        [_GA_ARMCI_NETWORK_ARMCI()])
      AS_IF([test "x$ga_armci_network" = x],
         [AC_MSG_WARN([!!!])
          AC_MSG_WARN([No ARMCI_NETWORK detected, defaulting to SOCKETS])
@@ -329,7 +383,10 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
      AS_CASE([$armci_network_count],
         [0], [AC_MSG_WARN([No ARMCI_NETWORK specified, defaulting to SOCKETS])
               ga_armci_network=SOCKETS; with_sockets=yes],
-        [1], [AS_IF([test "x$ga_armci_network" = xBGML],
+        [1], [AS_IF([test "x$ga_armci_network" = xARMCI],
+                 [_GA_ARMCI_NETWORK_ARMCI([],
+                    [AC_MSG_ERROR([test for ARMCI_NETWORK=ARMCI failed])])])
+              AS_IF([test "x$ga_armci_network" = xBGML],
                  [_GA_ARMCI_NETWORK_BGML([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=BGML failed])])])
               AS_IF([test "x$ga_armci_network" = xCRAY_SHMEM],
@@ -359,6 +416,7 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
              ],
         [AC_MSG_WARN([too many armci networks specified: $armci_network_count])
          AC_MSG_WARN([the following were specified:])
+         _GA_ARMCI_NETWORK_WARN([armci])
          _GA_ARMCI_NETWORK_WARN([bgml])
          _GA_ARMCI_NETWORK_WARN([cray-shmem])
          _GA_ARMCI_NETWORK_WARN([dcmf])
@@ -376,6 +434,7 @@ CPPFLAGS="$ga_save_CPPFLAGS"
 LDFLAGS="$ga_save_LDFLAGS"
 # Remove ARMCI_NETWORK_LIBS from LIBS.
 LIBS="$ga_save_LIBS"
+_GA_ARMCI_NETWORK_AM_CONDITIONAL([armci])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([bgml])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([cray-shmem])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([dcmf])
@@ -402,13 +461,6 @@ AS_CASE([$ga_armci_network],
             [ARMCI_SRC_DIR=src])
 AC_SUBST([ARMCI_SRC_DIR])
 
-# tcgmsg5 requires this
-AS_IF([test x$ga_armci_network = xLAPI],
-[AC_DEFINE([NOTIFY_SENDER], [1],
-    [this was defined unconditionally when using LAPI for tcgmsg 5])
-AC_DEFINE([LAPI], [1], [tcgmsg 5 requires this when using LAPI])
-])
-
 ga_cray_xt_networks=no
 AS_IF([test x$ga_armci_network = xPORTALS], [ga_cray_xt_networks=yes])
 AS_IF([test x$ga_armci_network = xCRAY_SHMEM], [ga_cray_xt_networks=yes])
@@ -427,4 +479,9 @@ AS_IF([test x$ga_cv_sysv_hack = xyes],
         [Defined if we want this system to use SYSV shared memory])])
 ])
 AM_CONDITIONAL([SYSV], [test x$ga_cv_sysv_hack = xyes])
+
+# if not using external armci library, the following functions are available
+AS_IF([test "x$ga_armci_network" != xARMCI],
+    [AC_DEFINE([HAVE_ARMCI_GROUP_COMM_FUNCTION], [1], [])
+     AC_DEFINE([HAVE_ARMCI_INITIALIZED_FUNCTION] [1], [])])
 ])dnl

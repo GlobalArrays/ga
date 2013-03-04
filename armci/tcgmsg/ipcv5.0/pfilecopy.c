@@ -19,7 +19,6 @@
 
 /* extern void free(void *ptr); */
 
-#include "typesf2c.h"
 #include "msgtypesc.h"
 #include "sndrcv.h"
 #include "tcgmsgP.h"
@@ -37,13 +36,13 @@
  *    on node 1    pfilecopy(99, 0, 'argosin_001')
  *    on node 2    pfilecopy(99, 0, 'argosin_002')
  */
-void tcgi_pfilecopy(Integer *type, Integer *node0, char *filename)
+void tcgi_pfilecopy(long *type, long *node0, char *filename)
 {
     char *buffer;
     FILE *file;
-    Integer length, nread=32768, len_nread=sizeof(Integer);
-    Integer typenr = (*type & 32767) | MSGINT;   /* Force user type integer */
-    Integer typebuf =(*type & 32767) | MSGCHR;
+    long length, nread=32768, len_nread=sizeof(long);
+    long typenr = (*type & 32767) | MSGINT;   /* Force user type integer */
+    long typebuf =(*type & 32767) | MSGCHR;
 
     if (!(buffer = malloc((unsigned) nread)))
         Error("pfilecopy: failed to allocate the I/O buffer",nread);
@@ -110,12 +109,12 @@ void tcgi_pfilecopy(Integer *type, Integer *node0, char *filename)
 }
 
 /** The original C interface to PFCOPY_. */
-void PFILECOPY_(Integer *type, Integer *node0, char *filename)
+void PFILECOPY_(long *type, long *node0, char *filename)
 {
     tcgi_pfilecopy(type, node0, filename);
 }
 
-void PFCOPY_(Integer *type, Integer *node0, char *fname, int len)
+void PFCOPY_(long *type, long *node0, char *fname, int len)
 {
     /* Fortran wrapper around pfilecopy */
 
@@ -131,7 +130,7 @@ void PFCOPY_(Integer *type, Integer *node0, char *fname, int len)
     while ((len > 0) && (fname[len-1] == ' '))
         len--;
     if (len <= 0)
-        Error("pfcopy_: file name length is toast", (Integer) len);
+        Error("pfcopy_: file name length is toast", (long) len);
 
     /* Generate a NULL terminated string */
 
@@ -141,7 +140,7 @@ void PFCOPY_(Integer *type, Integer *node0, char *fname, int len)
         filename[len] = '\0';
     }
     else
-        Error("PFCOPY_: failed to malloc space for filename", (Integer) len);
+        Error("PFCOPY_: failed to malloc space for filename", (long) len);
 
     /* Now call the C routine to do the work */
 

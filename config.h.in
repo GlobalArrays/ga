@@ -137,6 +137,15 @@
 /* TODO */
 #undef GM
 
+/* set to 1 if ARMCI has armci_group_comm function */
+#undef HAVE_ARMCI_GROUP_COMM_FUNCTION
+
+/* set to 1 if ARMCI has ARMCI_Group.comm member */
+#undef HAVE_ARMCI_GROUP_COMM_MEMBER
+
+/* set to 1 if ARMCI has ARMCI_Initialized function */
+#undef HAVE_ARMCI_INITIALIZED_FUNCTION
+
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
 
@@ -507,9 +516,6 @@
 /* Use TCGMSG (ipcv5.0) for messaing */
 #undef MSG_COMMS_TCGMSG5
 
-/* Use TCGMSG over MPI for messaging */
-#undef MSG_COMMS_TCGMSGMPI
-
 /* TODO */
 #undef MULTI_CTX
 
@@ -524,9 +530,6 @@
 
 /* Define to 1 if not using Fortran */
 #undef NOFORT
-
-/* this was defined unconditionally when using LAPI for tcgmsg 5 */
-#undef NOTIFY_SENDER
 
 /* Set some mallopt options */
 #undef NOUSE_MMAP
@@ -705,6 +708,11 @@
 
 /* TODO */
 #undef VIA
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS

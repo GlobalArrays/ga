@@ -442,6 +442,8 @@ mock_ga_t* Mock_Duplicate(mock_ga_t *g_a, char* array_name)
 
 void Mock_Elem_divide(mock_ga_t *g_a, mock_ga_t *g_b, mock_ga_t *g_c)
 {
+    /* TODO FIXME: wasn't compiling */
+#if 0
   ITER_DECLARE_VARS(g_a)
     ITER_DECLARE_VARS(g_b)
     ITER_DECLARE_VARS(g_c)
@@ -467,6 +469,7 @@ void Mock_Elem_divide(mock_ga_t *g_a, mock_ga_t *g_b, mock_ga_t *g_c)
 #include "types.xh"
 #undef TYPE_CASE
       }
+#endif
 }
 
 

@@ -15,7 +15,6 @@
 #   include <lapi.h>
 #endif
 
-#include "typesf2c.h"
 #include "tcgshmem.h"
 #include "sndrcv.h"
 #include "srftoc.h"
@@ -29,7 +28,7 @@
 #define INTERNAL_SYNC_TYPE 33333
 #define MAX_N_OUTSTANDING_MSG 64
 
-extern void USleep(Integer);
+extern void USleep(long);
 #ifndef LAPI
 extern long *nxtval_shmem;
 #endif
@@ -51,12 +50,12 @@ extern long TCGMSG_caught_sigint; /**> True if SIGINT was trapped */
 
 #ifdef NOTIFY_SENDER
 #  ifdef LAPI
-#    define RESERVED (6*sizeof(Integer) + sizeof(lapi_cntr_t))
+#    define RESERVED (6*sizeof(long) + sizeof(lapi_cntr_t))
 #  else
-#    define RESERVED 6*sizeof(Integer)
+#    define RESERVED 6*sizeof(long)
 #  endif
 #else
-#  define RESERVED 4*sizeof(Integer)
+#  define RESERVED 4*sizeof(long)
 #endif
 
 #if defined(MACX)
@@ -70,45 +69,45 @@ extern long TCGMSG_caught_sigint; /**> True if SIGINT was trapped */
 #define SHMEM_BUF_SIZE (WHOLE_BUF_SIZE - RESERVED)
 
 #ifdef  LAPI
-#   define SND_RESERVED (4*sizeof(Integer) + sizeof(lapi_cntr_t) + sizeof(void*))
+#   define SND_RESERVED (4*sizeof(long) + sizeof(lapi_cntr_t) + sizeof(void*))
 #   define SEND_BUF_SIZE (WHOLE_BUF_SIZE - SND_RESERVED) 
 #   define SENDBUF_NUM 2
 typedef struct {
     lapi_cntr_t cntr;
     void *next;
-    Integer info[4];
+    long info[4];
     char buf[SEND_BUF_SIZE];
 } sendbuf_t;
 sendbuf_t *sendbuf_arr, *localbuf;
 #endif
 
 typedef struct {
-    Integer info[4];          /**< 0=type, 1=length, 2=tag, 3=full */
+    long info[4];          /**< 0=type, 1=length, 2=tag, 3=full */
     char buf[SHMEM_BUF_SIZE]; /**< Message buffer */
 #ifdef NOTIFY_SENDER
-    Integer stamp;
+    long stamp;
 #   ifdef LAPI
     lapi_cntr_t cntr;
 #   endif
-    Integer flag;             /**< JN: used by receiver to signal sender */
+    long flag;             /**< JN: used by receiver to signal sender */
 #endif
 } ShmemBuf;
 
 /* Structure defines an entry in the send q */
 
 typedef struct {
-    Integer msgid;         /**< Message id for msg_status */
-    Integer type;          /**< Message type */
-    Integer node;          /**< Destination node */
-    Integer tag;           /**< Message tag */
+    long msgid;         /**< Message id for msg_status */
+    long type;          /**< Message type */
+    long node;          /**< Destination node */
+    long tag;           /**< Message tag */
     char *buf;             /**< User or internally malloc'd buffer */
-    Integer lenbuf;        /**< Length of user buffer in bytes */
-    Integer written;       /**< Amount already sent */
-    Integer buffer_number; /**< No. of buffers alread sent */
-    Integer free_buf_on_completion; /* Boolean true if free buffer using free */
+    long lenbuf;        /**< Length of user buffer in bytes */
+    long written;       /**< Amount already sent */
+    long buffer_number; /**< No. of buffers alread sent */
+    long free_buf_on_completion; /* Boolean true if free buffer using free */
     void *next;            /**< Pointer to next entry in linked list */
     void *next_in_ring;    /**< Pointer to next entry in ring of free entries */
-    Integer active;        /**< 0/1 if free/allocated */
+    long active;        /**< 0/1 if free/allocated */
 } SendQEntry;
 
 /* This structure holds basically all process specific information */
@@ -123,9 +122,9 @@ typedef struct {
     int sock;          /**< Socket for send/receive */
     int comm_mode;     /**< Defines communication info */
     pid_t pid;         /**< Unix process id (or 0 if unknown) */
-    Integer tag_rcv;   /**< Expected tag from next rcv() */
-    Integer n_snd;     /**< No. of messages sent from this process */
-    Integer n_rcv;     /**< No. of messages recv from this process */
+    long tag_rcv;   /**< Expected tag from next rcv() */
+    long n_snd;     /**< No. of messages sent from this process */
+    long n_rcv;     /**< No. of messages recv from this process */
     SendQEntry *sendq; /**< Queue of messages to be sent */
 } ProcInfo;
 

@@ -435,7 +435,7 @@ static void snd_remote(type, buf, lenbuf, node)
     memcpy(fudge,(char *) &header, sizeof(header));
     memcpy(fudge+sizeof(header), buf, *lenbuf);
     if ( (len = WriteToSocket(sock, fudge, sizeof(header)+*lenbuf)) != 
-	                                  (sizeof(header)+*lenbuf))
+	                                  ((long)sizeof(header)+*lenbuf))
       Error("snd_remote: writing message to socket",
             (long) (len+100000*(sock + 1000* *node)));
     return;
@@ -484,7 +484,7 @@ static void snd_remote(type, buf, lenbuf, node)
 /*ARGSUSED*/
 void SND_(type, buf, lenbuf, node, sync)
      long *type;
-     char *buf;
+     void *buf;
      long *lenbuf;
      long *node;
      long *sync;
@@ -492,7 +492,7 @@ void SND_(type, buf, lenbuf, node, sync)
   mostly syncrhonous send
 
   long *type     = user defined integer message type (input)
-  char *buf     = data buffer (input)
+  void *buf     = data buffer (input)
   long *lenbuf   = length of buffer in bytes (input)
   long *node     = node to send to (input)
   long *sync    = flag for sync/async ... IGNORED
@@ -514,7 +514,7 @@ void SND_(type, buf, lenbuf, node, sync)
   if ( (*node < 0) || (*node > nproc) )
     Error("SND_: out of range node requested", (long) *node);
 
-  if ( (*lenbuf < 0) || (*lenbuf > BIG_MESSAGE) )
+  if ( (*lenbuf < 0) || (*lenbuf > (long)BIG_MESSAGE) )
     Error("SND_: message length out of range", (long) *lenbuf);
 
 #ifdef EVENTLOG
@@ -862,7 +862,7 @@ static void rcv_remote(type, buf, lenbuf, lenmes, nodeselect, nodefrom)
   *lenmes = header.length; 
 #endif
   
-  if ( (*lenmes < 0) || (*lenmes > BIG_MESSAGE) || (*lenmes > *lenbuf) ) {
+  if ( (*lenmes < 0) || (*lenmes > (long)BIG_MESSAGE) || (*lenmes > *lenbuf) ) {
     PrintMessageHeader("rcv_remote",&header);
     (void) fprintf(stderr, "rcv_remote err: lenbuf=%ld\n",*lenbuf);
     Error("rcv_remote: message length out of range",(long) *lenmes);
@@ -898,7 +898,7 @@ static void rcv_remote(type, buf, lenbuf, lenmes, nodeselect, nodefrom)
 /*ARGSUSED*/
 void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
      long *type;
-     char *buf;
+     void *buf;
      long *lenbuf;
      long *lenmes;
      long *nodeselect;
@@ -906,7 +906,7 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
      long *sync;
 /*
   long *type        = user defined type of received message (input)
-  char *buf        = data buffer (output)
+  void *buf        = data buffer (output)
   long *lenbuf      = length of buffer in bytes (input)
   long *lenmes      = length of received message in bytes (output)
                      (exceeding receive buffer is hard error)
@@ -1039,7 +1039,7 @@ void RemoteConnect(a, b, c)
     port = lport;
     (void) sprintf(cport,"%d",port);
     lenbuf = strlen(cport) + 1;
-    if (lenbuf > sizeof cport)
+    if (lenbuf > (long)sizeof(cport))
       Error("RemoteConnect: cport too small", (long) lenbuf);
     SR_proc_info[a].sock = 
       CreateSocketAndConnect(SR_clus_info[clusid].hostname, cport); 

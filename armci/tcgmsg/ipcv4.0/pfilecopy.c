@@ -95,7 +95,7 @@ void tcgi_pfilecopy(type, node0, filename)
       if (nread) {
 	BRDCST_(&typebuf, buffer, &nread, node0);
 	typebuf++;
-	if (nread != fwrite(buffer, 1, (int) nread, file))
+	if (nread != (long)fwrite(buffer, 1, (int) nread, file))
 	  Error("pfilecopy: error data to duplicate file", nread);
       }
     }

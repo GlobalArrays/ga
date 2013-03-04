@@ -63,9 +63,6 @@
 #include "ga-papi.h"
 #include "ga-wapi.h"
 
-/* From ARMCI */
-#include "copy.h"
-
 #define DEBUG 0
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 

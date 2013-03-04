@@ -34,11 +34,11 @@ void LLOG_()
     (void) fflush(stderr);
 
     if (freopen(name, "a", stdout) == (FILE *) NULL) {
-        Error("LLOG_: error re-opening stdout", (Integer) -1);
+        Error("LLOG_: error re-opening stdout", (long) -1);
     }
 
     if (freopen(name, "a", stderr) == (FILE *) NULL) {
-        Error("LLOG_: error re-opening stderr", (Integer) -1);
+        Error("LLOG_: error re-opening stderr", (long) -1);
     }
 
     (void) time(&t);

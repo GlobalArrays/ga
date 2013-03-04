@@ -326,7 +326,7 @@ void igop_(ptype, x, pn, arg)
 #endif
 #if defined(CRAY)
 void igop_(wrap_ptype, x, wrap_pn, arg)
-     Integer *wrap_ptype, *wrap_pn;
+     long *wrap_ptype, *wrap_pn;
      long *x;
      _fcd arg;
 {

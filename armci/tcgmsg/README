@@ -1,3 +1,12 @@
+TCGMSG migration path (January 2013)
+------------------------------------
+
+TCGMSG (ipcv4.0 and ipcv5.0) have become the MPI-free runtime for ARMCI. It is
+now C-only i.e. no fortran code. The TCGMSG fortran interface is preserved for
+backwards compatibility within the Global Arrays distribution.
+
+This was a minimal effort migration. MPI is the preferred runtime.
+
 TCGMSG Send/receive subroutines ... version 4.04 (January 1994)
 ---------------------------------------------------------------
 

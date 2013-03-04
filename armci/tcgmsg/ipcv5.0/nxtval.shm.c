@@ -92,13 +92,13 @@ static void release_spinlock(int *mutex)
  *               and returns junk
  * mproc = 0 ... indicates to server that I am about to terminate
  */
-Integer NXTVAL_(Integer *mproc)
+long NXTVAL_(long *mproc)
 {
-    Integer shmem_swap();
-    Integer local=0;
-    Integer sync_type= INTERNAL_SYNC_TYPE;
-    Integer nproc=  NNODES_(); 
-    Integer server=nproc-1; 
+    long shmem_swap();
+    long local=0;
+    long sync_type= INTERNAL_SYNC_TYPE;
+    long nproc=  NNODES_(); 
+    long server=nproc-1; 
 
     if (DEBUG_) {
         (void) printf("%2ld: nxtval: mproc=%ld\n",(long)NODEID_(),(long)*mproc);

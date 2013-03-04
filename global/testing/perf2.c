@@ -30,6 +30,7 @@
 #include "ga.h"
 #include "armci.h"
 #include "message.h"
+#include "mp3.h"
 
 #define SIZE 640 /**< must be >= biggest chunk + 128 */
 #define CHUNK_NUM 28
@@ -62,6 +63,7 @@ static void test_2D();
 int main(int argc, char **argv)
 {
   /* initialize GA */
+  MP_INIT(argc,argv);
   GA_Initialize_args(&argc, &argv);
 
   me = GA_Nodeid();
@@ -72,7 +74,7 @@ int main(int argc, char **argv)
       fprintf(stderr, "USAGE: 2 <= processes - got %d\n", nproc);
     }
     GA_Terminate();
-    armci_msg_finalize();
+    MP_FINALIZE();
     exit(0);
   }
 
@@ -104,7 +106,7 @@ int main(int argc, char **argv)
 #endif
 
   GA_Terminate();
-  armci_msg_finalize();
+  MP_FINALIZE();
   return(0);
 }
 

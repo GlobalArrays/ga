@@ -263,14 +263,20 @@ if HAVE_SYS_WEAK_ALIAS_PRAGMA
 lib_LTLIBRARIES += libwapi.la
 libwapi_la_SOURCES =
 libwapi_la_SOURCES += tools/ga-wapi.c
+if ENABLE_GPARRAYS
 libwapi_la_SOURCES += tools/gp-wapi.c
+endif
 else
 nodist_libga_la_SOURCES += tools/ga-wapi.c
+if ENABLE_GPARRAYS
 nodist_libga_la_SOURCES += tools/gp-wapi.c
 endif
 endif
+endif
 
+if ENABLE_GPARRAYS
 EXTRA_DIST += tools/gpwapigen.py
+endif
 EXTRA_DIST += tools/wapigen.py
 EXTRA_DIST += tools/wapigen_counts.py
 EXTRA_DIST += tools/wapigen_trace.py
@@ -457,6 +463,8 @@ if SYSV
 check_PROGRAMS += global/testing/ipc_clean
 endif
 
+# TODO somehow unit tests depend on MPI -- need to fix
+if MSG_COMMS_MPI
 check_PROGRAMS += global/testing/unit-tests/ga_abs_value
 check_PROGRAMS += global/testing/unit-tests/ga_acc
 check_PROGRAMS += global/testing/unit-tests/ga_add
@@ -537,6 +545,7 @@ check_PROGRAMS += global/testing/unit-tests/ga_zero
 check_PROGRAMS += global/testing/unit-tests/ga_zerodiagonal
 check_PROGRAMS += global/testing/unit-tests/ga_zeropatch2
 check_PROGRAMS += global/testing/unit-tests/ga_zeropatch
+endif
 
 GLOBAL_SERIAL_TESTS =
 GLOBAL_SERIAL_TESTS_XFAIL =
@@ -1441,6 +1450,7 @@ endif
 ##############################################################################
 # gparrays
 #
+if ENABLE_GPARRAYS
 GPPAPI_H      = $(top_srcdir)/gparrays/src/gp-papi.h
 
 gparrays/src/gp-wapi.h: $(GPPAPI_H)
@@ -1499,33 +1509,207 @@ gparrays_testing_test_LDFLAGS  = $(FLDFLAGS)
 AM_CPPFLAGS += -I$(top_build_prefix)gparrays/src
 AM_CPPFLAGS += -I$(top_srcdir)/gparrays/src
 
+endif # ENABLE_GPARRAYS
+
+##############################################################################
+# gaf2c
+#
+libga_la_SOURCES += gaf2c/gaf2c.c
+libga_la_SOURCES += gaf2c/drand.c
+if ENABLE_F77
+libga_la_SOURCES += gaf2c/farg.F
+endif
+
+include_HEADERS += gaf2c/typesf2c.h
+include_HEADERS += gaf2c/farg.h
+
+AM_CPPFLAGS += -I$(top_build_prefix)gaf2c
+AM_CPPFLAGS += -I$(top_srcdir)/gaf2c
+
+if ENABLE_F77
+check_PROGRAMS += gaf2c/testarg
+endif
+
+GAF2C_SERIAL_TESTS =
+GAF2C_SERIAL_TESTS_XFAIL =
+GAF2C_PARALLEL_TESTS =
+GAF2C_PARALLEL_TESTS_XFAIL =
+GAF2C_TESTS = $(GAF2C_SERIAL_TESTS) $(GAF2C_PARALLEL_TESTS)
+GAF2C_TESTS_XFAIL = $(GAF2C_SERIAL_TESTS_XFAIL) $(GAF2C_PARALLEL_TESTS_XFAIL)
+
+if ENABLE_F77
+GAF2C_SERIAL_TESTS += gaf2c/testarg$(EXEEXT)
+endif
+
+gaf2c_testarg_SOURCES = gaf2c/testarg.c gaf2c/testargf.f
+gaf2c_testarg_LDFLAGS = $(FLDFLAGS)
+
+##############################################################################
+# tcgmsg
+#
+libga_la_SOURCES += tcgmsg/capi.c
+libga_la_SOURCES += tcgmsg/fapi.c
+
+include_HEADERS += tcgmsg/tcgmsg.fh
+include_HEADERS += tcgmsg/tcgmsg.h
+
+AM_CPPFLAGS += -I$(top_srcdir)/tcgmsg
+
+##############################################################################
+# tcgmsg/examples
+#
+# NOTE: While we don't build the tcgmsg examples, we include everything in the
+# distribution anyway.
+#
+EXTRA_DIST += tcgmsg/examples/blkdat120lin.f
+EXTRA_DIST += tcgmsg/examples/blkdat15.f
+EXTRA_DIST += tcgmsg/examples/blkdat240lin.f
+EXTRA_DIST += tcgmsg/examples/blkdat30.f
+EXTRA_DIST += tcgmsg/examples/blkdat60.f
+EXTRA_DIST += tcgmsg/examples/blkdat60lin.f
+EXTRA_DIST += tcgmsg/examples/cscf120lin.h
+EXTRA_DIST += tcgmsg/examples/cscf15.h
+EXTRA_DIST += tcgmsg/examples/cscf240lin.h
+EXTRA_DIST += tcgmsg/examples/cscf30.h
+EXTRA_DIST += tcgmsg/examples/cscf60.h
+EXTRA_DIST += tcgmsg/examples/cscf60lin.h
+EXTRA_DIST += tcgmsg/examples/cscf.h
+EXTRA_DIST += tcgmsg/examples/daxpy1.s
+EXTRA_DIST += tcgmsg/examples/daxpy.f
+EXTRA_DIST += tcgmsg/examples/ddot.f
+EXTRA_DIST += tcgmsg/examples/demo.proto
+EXTRA_DIST += tcgmsg/examples/diagon.f
+EXTRA_DIST += tcgmsg/examples/dscal.f
+EXTRA_DIST += tcgmsg/examples/fexit.f.proto
+EXTRA_DIST += tcgmsg/examples/getmem.c
+EXTRA_DIST += tcgmsg/examples/grid.c
+EXTRA_DIST += tcgmsg/examples/ieeetrap.c
+EXTRA_DIST += tcgmsg/examples/integ.f
+EXTRA_DIST += tcgmsg/examples/jacobi.f
+EXTRA_DIST += tcgmsg/examples/Makefile.proto
+EXTRA_DIST += tcgmsg/examples/mc.f
+EXTRA_DIST += tcgmsg/examples/mc.input
+EXTRA_DIST += tcgmsg/examples/md.f
+EXTRA_DIST += tcgmsg/examples/mxv_daxpy1.f
+EXTRA_DIST += tcgmsg/examples/mxv_dgemv.f
+EXTRA_DIST += tcgmsg/examples/mxv_fortran.f
+EXTRA_DIST += tcgmsg/examples/output.f
+EXTRA_DIST += tcgmsg/examples/prtri.f
+EXTRA_DIST += tcgmsg/examples/random.c
+EXTRA_DIST += tcgmsg/examples/README
+EXTRA_DIST += tcgmsg/examples/runit
+EXTRA_DIST += tcgmsg/examples/runit.grid
+EXTRA_DIST += tcgmsg/examples/scfblas.f
+EXTRA_DIST += tcgmsg/examples/scf.f
+EXTRA_DIST += tcgmsg/examples/timer.f
+EXTRA_DIST += tcgmsg/examples/trace.out
+EXTRA_DIST += tcgmsg/examples/xpix.shar
+
+##############################################################################
+# tcgmsg/tcgmsg-mpi
+#
+if MSG_COMMS_MPI
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/checkbyte.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/clustercheck.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/collect.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/drand48.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/evlog.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/evlog.h
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/evon.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/llog.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/misc.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/niceftn.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/nxtval-armci.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/p2p.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/pbeginf.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/pfilecopy.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/sizeof.c
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/sndrcv.h
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/srftoc.h
+libga_la_SOURCES += tcgmsg/tcgmsg-mpi/tcgmsgP.h
+
+AM_CPPFLAGS += -I$(top_srcdir)/tcgmsg/tcgmsg-mpi
+
+check_PROGRAMS += tcgmsg/tests/test_asyn
+check_PROGRAMS += tcgmsg/tests/test
+if ENABLE_F77
+check_PROGRAMS += tcgmsg/tests/testf
+endif
+
+#TCGMSG_PARALLEL_TESTS += tcgmsg/tests/test_asyn$(EXEEXT) # useless test
+#TCGMSG_PARALLEL_TESTS += tcgmsg/tests/test$(EXEEXT) # requires user input
+#if ENABLE_F77
+#TCGMSG_PARALLEL_TESTS += tcgmsg/tests/testf$(EXEEXT)
+#endif
+
+tcgmsg_tests_test_asyn_SOURCES = tcgmsg/tests/test_asyn.c
+tcgmsg_tests_testf_SOURCES     = tcgmsg/tests/testf.F
+tcgmsg_tests_test_SOURCES      = tcgmsg/tests/test.c
+
+tcgmsg_tests_testf_LDFLAGS     = $(FLDFLAGS)
+
+nodist_EXTRA_tcgmsg_tests_test_asyn_SOURCES = $(MAYBE_DUMMY_F_LINK)
+nodist_EXTRA_tcgmsg_tests_test_SOURCES      = $(MAYBE_DUMMY_F_LINK)
+
+endif # MSG_COMMS_MPI
+
+EXTRA_DIST += tcgmsg/tcgmsg-mpi/README
+
 ##############################################################################
 # armci
-SUBDIRS = armci .
+# if TCGMSG is coming from ARMCI
+if ARMCI_NETWORK_ARMCI
+else
+if MSG_COMMS_TCGMSG4
+AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
+endif
+if MSG_COMMS_TCGMSG5
+AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
+endif
+endif
 
-armci/libarmcii.la:
+##############################################################################
+# armci
+if ARMCI_NETWORK_ARMCI
+else
+MAYBE_ARMCI = armci
+endif
+SUBDIRS = $(MAYBE_ARMCI) .
+
+if ARMCI_NETWORK_ARMCI
+else
+armci/libarmci.la:
 	($(am__cd) armci && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
+endif
 
+if ARMCI_NETWORK_ARMCI
+else
 if ARMCI_NETWORK_PORTALS
 AM_CPPFLAGS += -I$(top_srcdir)/armci/src-portals
+AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
 else
 if ARMCI_NETWORK_GEMINI
 AM_CPPFLAGS += -I$(top_srcdir)/armci/src-gemini
+AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
 else
 AM_CPPFLAGS += -I$(top_srcdir)/armci/src/include
-endif
-endif
-AM_CPPFLAGS += -I$(top_build_prefix)armci/gaf2c
-AM_CPPFLAGS += -I$(top_srcdir)/armci/gaf2c
 AM_CPPFLAGS += -I$(top_srcdir)/armci/tcgmsg
+endif
+endif
+endif
 
-# This is the "noinst" libarmci so that libtool combines it with libga.
 libga_la_LIBADD += $(SCALAPACK_LIBS)
 libga_la_LIBADD += $(LAPACK_LIBS)
 libga_la_LIBADD += $(BLAS_LIBS)
-libga_la_LIBADD += armci/libarmcii.la
+if ARMCI_NETWORK_ARMCI
+libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
+libga_la_LIBADD += $(GA_MP_LIBS)
+else
+# As of ga-5-2 libarmci is no longer rolled up into libga.
+libga_la_LIBADD += armci/libarmci.la
 libga_la_LIBADD += $(GA_MP_LIBS)
 libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
+endif
 
 ##############################################################################
 # tascel

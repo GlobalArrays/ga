@@ -10,16 +10,15 @@
  * between bytes, integers and doubles. Note that we assume that
  * FORTRAN integers are the same size as C longs.
  */
-#include "typesf2c.h"
 #include "sndrcv.h"
 
 /**
  * Return the no. of bytes that n doubles occupy
  */
-Integer MDTOB_(Integer *n)
+long MDTOB_(long *n)
 {
     if (*n < 0)
         Error("MDTOB_: negative argument",*n);
 
-    return (Integer) (*n * sizeof(double));
+    return (long) (*n * sizeof(double));
 }

@@ -43,10 +43,6 @@ AS_IF([test "$ARMCI_TOP_BUILDDIR" != "$ARMCI_TOP_SRCDIR"],
 # MPI compiler wrappers instead of the standard compilers.
 GA_MSG_COMMS
 
-# Whether to enable F77 source dependency.
-# Note that compiling the Fortran 77 source is enabled by default.
-GA_F77_DISABLE
-
 # Hack to enable NEW_MALLOC feature
 AC_ARG_ENABLE([portals-new-malloc],
     [AS_HELP_STRING([--enable-portals-new-malloc],
@@ -97,12 +93,10 @@ CFLAGS="$ga_cv_c_warning_flags $CFLAGS"
 AS_IF([test x$with_mpi_wrappers = xyes],
     [GA_MPI_UNWRAP],
     [GA_ARG_PARSE([with_mpi], [GA_MP_LIBS], [GA_MP_LDFLAGS], [GA_MP_CPPFLAGS])])
-# If F77 is enabled, only perform a simple compilation test.
 AS_IF([test "x$with_mpi" != xno], [
-    AS_CASE([$enable_f77:$enable_mpi_tests],
-        [yes:*], [GA_MPICC_TEST_COMPILE],
-        [no:yes],[GA_MPICC_TEST_LINK],
-        [no:no], [GA_MPICC_TEST_COMPILE])])
+    AS_CASE([$enable_mpi_tests],
+        [yes],[GA_MPICC_TEST_LINK],
+        [no], [GA_MPICC_TEST_COMPILE])])
 # Hack to append .x to executables.
 AC_SUBST([EXEEXT], [.x$EXEEXT])
 
@@ -168,6 +162,8 @@ AC_FUNC_FORK
 AC_FUNC_MMAP
 AC_FUNC_SELECT_ARGTYPES
 AC_FUNC_VPRINTF
+AS_IF([test "x$ga_msg_comms" = xTCGMSG],
+    [AC_SEARCH_LIBS([xdr_array], [rpclib], [], [], [])])
 AC_SEARCH_LIBS([floor], [m], [have_floor=1], [have_floor=0])
 AC_DEFINE_UNQUOTED([HAVE_FLOOR], [$have_floor],
     [Define to 1 if you have the 'floor' function.])
@@ -239,117 +235,6 @@ GA_AS
 AM_PROG_AS
 
 ARMCI_AS_NO_I386ASM
-
-#########################################
-# Fortran compiler
-#########################################
-AC_MSG_NOTICE
-AS_IF([test "x$enable_f77" = xyes],
-    [AC_MSG_NOTICE([Fortran compiler])],
-    [AC_MSG_NOTICE([Fortran compiler (disabled, but some tests still required)])])
-AC_MSG_NOTICE
-AC_LANG_PUSH([Fortran 77])
-
-ga_save_FFLAGS="$FFLAGS"
-GA_PROG_MPIF77
-FFLAGS="$ga_save_FFLAGS"
-
-# If Fortran 77 compiler was not found, we disable support for it.
-AS_IF([test "x$F77" = x], [enable_f77=no])
-
-# If Fortran 77 compiler does not work, we disable support for it.
-AC_LINK_IFELSE(
-    [AC_LANG_PROGRAM([],[])], [],
-    [AC_MSG_WARN([Fortran compiler does not work, disabling])
-     enable_f77=no
-     F77=])
-
-GA_F77_DISABLE_RESULTS
-
-# Perform Fortran 77 tests only if enabled.
-if test "x$enable_f77" = xyes; then :
-
-AS_IF([test x$with_mpi_wrappers = xyes], [GA_MPI_UNWRAP])
-
-GA_COMPILER_VENDOR
-GA_WARN_FLAGS
-ga_save_FFLAGS="$FFLAGS"
-FFLAGS="$ga_cv_f77_warning_flags $FFLAGS"
-
-# If F77 is enabled, perform a simple link test for MPI.
-AS_IF([test "x$with_mpi" != xno],
-    [AS_IF([test "x$enable_mpi_tests" = xyes],
-        [GA_MPIF77_TEST_LINK],
-        [GA_MPIF77_TEST_COMPILE])])
-
-GA_SUPPRESS_MESSAGE
-GA_F77_LIBRARY_LDFLAGS
-GA_F77_MAYBE_UNDERSCORING
-AC_F77_DUMMY_MAIN
-AC_F77_WRAPPERS
-GA_F77_CPP_SYMBOL
-GA_F77_FIXED
-GA_F77_MISMATCH_TYPE
-GA_F77_INTEGER_SIZE
-
-# Checks for Fortran typedefs, structures, and compiler characteristics.
-
-# Checks for Fortran type sizes.
-ga_save_FFLAGS="$FFLAGS"; FFLAGS="$FFLAGS $FFLAG_INT"
-GA_F77_CHECK_SIZEOF([INTEGER], [$ga_cv_f77_integer_size])
-FFLAGS="$ga_save_FFLAGS"
-GA_F77_CHECK_SIZEOF([REAL], [4])
-GA_F77_CHECK_SIZEOF([DOUBLE PRECISION], [8])
-
-# Checks for Fortran library functions.
-GA_CHECK_FUNCS([dtime etime])
-GA_F77_FLUSH
-
-# The rest of the Fortran 77 to C compatibility checks.
-GA_F2C_NOMAIN
-GA_F2C_CMDARGS
-GA_F2C_HIDDEN_STRING_LENGTH_CONVENTION
-GA_F2C_MATCH_TYPES([INTEGER], [short, int, long, long long])
-GA_F2C_MATCH_TYPES([REAL], [float, double, long double])
-GA_F2C_MATCH_TYPES([DOUBLE PRECISION], [float, double, long double])
-
-ARMCI_F77_OPT
-
-FFLAGS="$ga_save_FFLAGS"
-
-else
-
-# enable_f77=no version of AC_F77_WRAPPERS
-AC_DEFINE([F77_FUNC(name,NAME)], [name @%:@@%:@ _])
-AC_DEFINE([F77_FUNC_(name,NAME)],[name @%:@@%:@ _])
-# enable_f77=no version of GA_F77_CHECK_SIZEOF
-AC_DEFINE_UNQUOTED(AS_TR_CPP(sizeof_f77_INTEGER), [$ac_cv_sizeof_voidp],
-    [The size of 'INTEGER' as computed by C's sizeof.])
-AC_DEFINE_UNQUOTED(AS_TR_CPP(sizeof_f77_REAL), [4],
-    [The size of 'REAL' as computed by C's sizeof.])
-AC_DEFINE_UNQUOTED(AS_TR_CPP(sizeof_f77_DOUBLE PRECISION), [8],
-    [The size of 'DOUBLE PRECISION' as computed by C's sizeof.])
-# enable_f77=no version of GA_F2C_NOMAIN
-AC_SUBST([FLD_NOMAIN], [])
-# enable_f77=no version of GA_F2C_CMDARGS
-F2C_GETARG="F2C_GETARG"
-F2C_IARGC="F2C_IARGC"
-AC_SUBST([F2C_GETARG])
-AC_SUBST([F2C_IARGC])
-# enable_f77=no version of GA_F2C_HIDDEN_STRING_LENGTH_CONVENTION
-AC_DEFINE([F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS], [1],
-    [whether the hidden string length comes after all other args])
-# enable_f77=no version of GA_F2C_MATCH_TYPES
-AC_SUBST([F2C_INTEGER_C_TYPE], [long])
-AC_SUBST([F2C_REAL_C_TYPE], [float])
-AC_SUBST([F2C_DOUBLE_PRECISION_C_TYPE], [double])
-
-fi
-
-# This is required to override what automake does, if needed.
-GA_F77_LD_OVERRIDE
-
-AC_LANG_POP([Fortran 77])
 
 ###############################################################################
 # Checks for BLAS/LAPACK/SCALAPACK require both C and Fortran features to
@@ -432,21 +317,18 @@ AC_SUBST([NPROCS])
 AC_ARG_VAR([MPIEXEC],
            [how to run parallel tests if built with MPI e.g. "mpiexec -np %NP%"])
 AS_CASE([$ga_msg_comms],
-    [TCGMSG],  [TCGEXEC="`pwd`/parallel.x"],
-    [TCGMSG5], [TCGEXEC=],
-    [MPI|TCGMSGMPI],
-        [AS_IF([test "x$MPIEXEC" = x],
-            [AC_PATH_PROGS([MPIEXEC], [mpirun mpiexec])
-             MPIEXEC="$MPIEXEC -n %NP%"])])
+    [TCGMSG],   [TCGEXEC="`pwd`/parallel.x"],
+    [TCGMSG5],  [TCGEXEC=],
+    [MPI],      [AS_IF([test "x$MPIEXEC" = x],
+                    [AC_PATH_PROGS([MPIEXEC], [mpirun mpiexec])
+                     MPIEXEC="$MPIEXEC -n %NP%"])])
 AC_SUBST([MPIEXEC])
 AC_SUBST([TCGEXEC])
 
 ###############################################################################
 # The End
 ###############################################################################
-AC_CONFIG_FILES([Makefile
-                 gaf2c/farg.h
-                 gaf2c/typesf2c.h])
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 
 # Report on what we found.
@@ -464,15 +346,6 @@ AC_MSG_NOTICE([         ARMCI_NETWORK=$ga_armci_network])
 AC_MSG_NOTICE([ ARMCI_NETWORK_LDFLAGS=$ARMCI_NETWORK_LDFLAGS])
 AC_MSG_NOTICE([    ARMCI_NETWORK_LIBS=$ARMCI_NETWORK_LIBS])
 AC_MSG_NOTICE([ARMCI_NETWORK_CPPFLAGS=$ARMCI_NETWORK_CPPFLAGS])
-AS_IF([test "x$enable_f77" = xyes], [
-AC_MSG_NOTICE([                   F77=$F77])
-AS_IF([test "x$with_mpi_wrappers" = xyes], [
-AC_MSG_NOTICE([         unwrapped F77=$ga_cv_mpif77_naked])
-])
-AC_MSG_NOTICE([                FFLAGS=$FFLAGS])
-AC_MSG_NOTICE([             FFLAG_INT=$FFLAG_INT])
-AC_MSG_NOTICE([            ARMCI_FOPT=$ARMCI_FOPT])
-])
 AC_MSG_NOTICE([                    CC=$CC])
 AS_IF([test "x$with_mpi_wrappers" = xyes], [
 AC_MSG_NOTICE([          unwrapped CC=$ga_cv_mpic_naked])
@@ -501,7 +374,7 @@ AC_MSG_NOTICE([                  CCAS=$CCAS])
 AC_MSG_NOTICE([            CCAS_FLAGS=$CCAS_FLAGS])
 AC_MSG_NOTICE([                  DEFS=$DEFS])
 AC_MSG_NOTICE([                 SHELL=$SHELL])
-AS_CASE([$ga_msg_comms], [MPI|TCGMSGMPI], [
+AS_CASE([$ga_msg_comms], [MPI], [
 AC_MSG_NOTICE([               MPIEXEC=$MPIEXEC])
 ])
 AC_MSG_NOTICE([                NPROCS=$NPROCS])

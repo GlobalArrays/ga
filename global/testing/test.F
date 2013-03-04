@@ -65,6 +65,7 @@ c
 #ifdef USE_RESTRICTED
       ma_heap = 2*ma_heap
 #endif
+      print *, 'util_mdtob(', ma_heap, ')=', util_mdtob(ma_heap)
       call GA_set_memory_limit(util_mdtob(ma_heap))
 c
       if(ga_nodeid().eq.0)then

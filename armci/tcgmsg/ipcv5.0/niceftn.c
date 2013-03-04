@@ -6,14 +6,13 @@
 #   include <unistd.h>
 #endif
 
-#include "typesf2c.h"
 #include "tcgmsgP.h"
 
 /**
  * Wrapper around nice for FORTRAN users courtesy of Rick Kendall
  * ... C has the system interface.
  */
-Integer NICEFTN_(Integer *ival)
+long NICEFTN_(long *ival)
 {
     int val = (int)(*ival);
     return nice(val);

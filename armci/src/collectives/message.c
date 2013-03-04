@@ -8,7 +8,43 @@
 #elif defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
-#   include <tcgmsg.h>
+#   include <sndrcv.h>
+static void tcg_brdcst(long type, void *buf, long lenbuf, long originator)
+{
+    long atype = type;
+    long alenbuf = lenbuf;
+    long aoriginator = originator;
+
+    BRDCST_(&atype, buf, &alenbuf, &aoriginator);
+}
+
+static void tcg_synch(long type)
+{
+    long atype = type;
+
+    SYNCH_(&atype);
+}
+
+static void tcg_snd(long type, void *buf, long lenbuf, long node, long sync)
+{
+    long atype = type;
+    long alenbuf = lenbuf;
+    long anode = node;
+    long async = sync;
+
+    SND_(&atype, buf, &alenbuf, &anode, &async);
+}
+
+static void tcg_rcv(long type, void *buf, long lenbuf, long *lenmes,
+                long nodeselect, long *nodefrom, long sync)
+{
+    long atype = type;
+    long alenbuf = lenbuf;
+    long anodeselect = nodeselect;
+    long async = sync;
+
+    RCV_(&atype, buf, &alenbuf, lenmes, &anodeselect, nodefrom, &async);
+}
 #else
 #   ifndef MPI
 #      define MPI
@@ -452,8 +488,8 @@ void parmci_msg_barrier()
 void armci_msg_init(int *argc, char ***argv)
 {
 #if defined(TCGMSG)
-    if (!tcg_ready()) {
-        tcg_pbegin(*argc,*argv);
+    if (!TCGREADY_()) {
+        tcgi_pbegin(*argc,*argv);
     }
 #elif defined(BGML)
     /* empty */
@@ -494,7 +530,7 @@ int armci_msg_me()
 #elif defined(PVM)
     return(pvm_getinst(mp_group_name,pvm_mytid()));
 #else
-    return (int)tcg_nodeid();
+    return (int)NODEID_();
 #endif
 }
 
@@ -517,7 +553,7 @@ int armci_msg_nproc()
 #elif defined(PVM)
     return(pvm_gsize(mp_group_name));
 #else
-    return (int)tcg_nnodes();
+    return (int)NNODES_();
 #endif
 }
 
@@ -536,7 +572,7 @@ double armci_timer()
 
     return MPI_Wtime();
 #else
-    return tcg_time();
+    return TCGTIME_();
 #endif
 }
 #endif
@@ -557,7 +593,7 @@ void armci_msg_abort(int code)
     sprintf(error_msg, "ARMCI aborting [%d]", code);
     pvm_halt();
 #else
-    tcg_error("ARMCI aborting",(long)code);
+    Error("ARMCI aborting",(long)code);
 #endif
     fprintf(stderr,"%d:aborting\n",armci_me);
     /* trap for broken abort in message passing libs */
@@ -567,7 +603,7 @@ void armci_msg_abort(int code)
 void armci_msg_finalize()
 {
 #if defined(TCGMSG)
-    tcg_pend();
+    PEND_();
 #elif defined(MPI)
     MPI_Finalize();
 #endif

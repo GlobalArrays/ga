@@ -504,6 +504,7 @@ void armci_msg_barrier()
 }
 
 
+#if MSG_COMMS_MPI
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak armci_msg_group_barrier
 #endif
@@ -511,6 +512,7 @@ void armci_msg_group_barrier(ARMCI_Group *group)
 {
     parmci_msg_group_barrier(group);
 }
+#endif
 
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA

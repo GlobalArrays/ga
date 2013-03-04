@@ -86,24 +86,32 @@ void pnga_pgroup_brdcst(Integer grp_id, Integer type, void *buf,
 
 
 #ifdef MPI
-#include "ga-mpi.h"
+#   include "ga-mpi.h"
+#   if HAVE_ARMCI_GROUP_COMM_FUNCTION
 extern MPI_Comm armci_group_comm(ARMCI_Group *group);
+#   endif
 MPI_Comm GA_MPI_Comm()
 {
-    return ARMCI_COMM_WORLD;
-}
-MPI_Comm GA_MPI_Comm_pgroup(int p_grp)
-{
-    if (p_grp > 0) {
-        ARMCI_Group *group = &(PGRP_LIST[p_grp].group);
-        return armci_group_comm(group);
-    }
-    return GA_MPI_Comm();
+    return GA_MPI_Comm_pgroup(-1);
 }
 MPI_Comm GA_MPI_Comm_pgroup_default()
 {
-    int p_grp = (int)pnga_pgroup_get_default();
-    return GA_MPI_Comm_pgroup(p_grp);
+    return GA_MPI_Comm_pgroup(pnga_pgroup_get_default());
+}
+MPI_Comm GA_MPI_Comm_pgroup(int p_grp)
+{
+    ARMCI_Group *group;
+    if (p_grp > 0) {
+        group = &(PGRP_LIST[p_grp].group);
+    }
+    else {
+        ARMCI_Group_get_world(group);
+    }
+#   if HAVE_ARMCI_GROUP_COMM_MEMBER
+    return group->comm;
+#   else
+    return armci_group_comm(group);
+#   endif
 }
 #endif
 

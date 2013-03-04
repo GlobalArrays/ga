@@ -47,8 +47,8 @@ void lapi_initialize()
     rc=LAPI_Qenv(lapi_handle, NUM_TASKS, &numtasks);
     if(rc) Error("lapi_qenv failed 2",rc);
 
-    TCGMSG_nodeid = (Integer)myid;
-    TCGMSG_nnodes = (Integer)numtasks;
+    TCGMSG_nodeid = (long)myid;
+    TCGMSG_nnodes = (long)numtasks;
 
     /* disable LAPI internal error checking */
     LAPI_Senv(lapi_handle, ERROR_CHK, 0);
@@ -166,11 +166,11 @@ void Error(char *string, long code)
  *               and returns junk
  * mproc = 0 ... indicates to server that I am about to terminate
  */
-Integer NXTVAL_(Integer *mproc)
+long NXTVAL_(long *mproc)
 {
 #define INC 1
     int local;
-    Integer stype = INTERNAL_SYNC_TYPE;
+    long stype = INTERNAL_SYNC_TYPE;
     lapi_cntr_t req_id;
     int rc, inc = INC;
 
@@ -211,10 +211,10 @@ Integer NXTVAL_(Integer *mproc)
             local = 0;
         }
         else
-            Error("nxtval: sequential version with silly mproc ", (Integer) *mproc);
+            Error("nxtval: sequential version with silly mproc ", (long) *mproc);
     }
 
-    return (Integer)local;
+    return (long)local;
 }
 
 
@@ -291,7 +291,7 @@ void Busy(int n)
 }
 
 
-void SYNCH_(Integer* type)
+void SYNCH_(long* type)
 {
     int rc;
 

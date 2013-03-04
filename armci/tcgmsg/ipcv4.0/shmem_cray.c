@@ -22,16 +22,16 @@ static int next_id = 0;              /* Keep track of id */
 static char *shaddr[MAX_ADDR];       /* Keep track of addresses */
 
 
-char *CreateSharedRegion(Integer *id, Integer *size)
+char *CreateSharedRegion(long *id, long *size)
 {
     char *temp;
 
     if (next_id >= MAX_ADDR) {
-        Error("CreateSharedRegion: too many shared regions", (Integer) next_id);
+        Error("CreateSharedRegion: too many shared regions", (long) next_id);
     }
 
     if ( (temp = SHMALLOC((unsigned) *size)) == (char *) NULL) {
-        Error("CreateSharedRegion: failed in SHMALLOC", (Integer) *size);
+        Error("CreateSharedRegion: failed in SHMALLOC", (long) *size);
     }
 
     *id = next_id++;
@@ -41,22 +41,22 @@ char *CreateSharedRegion(Integer *id, Integer *size)
 }
 
 
-Integer DetachSharedRegion(Integer id, Integer size, char *addr)
+long DetachSharedRegion(long id, long size, char *addr)
 {
     /* This needs improving to make more robust */
     return SHFREE(addr);
 }
 
 
-Integer DeleteSharedRegion(Integer id)
+long DeleteSharedRegion(long id)
 {
     /* This needs improving to make more robust */
     return SHFREE(shaddr[id]);
 }
 
 
-char *AttachSharedRegion(Integer id, Integer size)
+char *AttachSharedRegion(long id, long size)
 {
     Error("AttachSharedRegion: cannot do this on SEQUENT or BALANCE",
-            (Integer) -1);
+            (long) -1);
 }

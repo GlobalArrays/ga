@@ -11,16 +11,15 @@
  * between bytes, integers and doubles. Note that we assume that
  * FORTRAN integers are the same size as C longs.
  */
-#include "typesf2c.h"
 #include "sndrcv.h"
 
 /**
  * Return the minimum no. of integers which will hold n doubles.
  */
-Integer MDTOI_(Integer *n)
+long MDTOI_(long *n)
 {
     if (*n < 0)
         Error("MDTOI_: negative argument",*n);
 
-    return (Integer) ( (MDTOB_(n) + sizeof(long) - 1) / sizeof(long) );
+    return (long) ( (MDTOB_(n) + sizeof(long) - 1) / sizeof(long) );
 }

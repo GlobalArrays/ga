@@ -2,25 +2,24 @@
 #   include "config.h"
 #endif
 
-#include "typesf2c.h"
 #include "srftoc.h"
 #include "tcgmsgP.h"
 
 #define BUF_SIZE  10000
-#define IBUF_SIZE (BUF_SIZE * sizeof(DoublePrecision)/sizeof(Integer)) 
-DoublePrecision _gops_work[BUF_SIZE];
+#define IBUF_SIZE (BUF_SIZE * sizeof(double)/sizeof(long)) 
+double _gops_work[BUF_SIZE];
 
-Integer one=1;
+long one=1;
 
 #define TCG_MAX(a,b) (((a) >= (b)) ? (a) : (b))
 #define TCG_MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define TCG_ABS(a)   (((a) >= 0) ? (a) : (-(a)))
 
 
-void BRDCST_(Integer *type, void *buf, Integer *len, Integer *originator)
+void BRDCST_(long *type, void *buf, long *len, long *originator)
 {
-    Integer me=NODEID_(), nproc=NNODES_(), lenmes, from, root=0;
-    Integer up, left, right;
+    long me=NODEID_(), nproc=NNODES_(), lenmes, from, root=0;
+    long up, left, right;
 
     /* determine location in the binary tree */
     up    = (me-1)/2;    if(up >= nproc)       up = -1;
@@ -43,7 +42,7 @@ void BRDCST_(Integer *type, void *buf, Integer *len, Integer *originator)
  * implements x = op(x,work) for integer datatype
  *  x[n], work[n] -  arrays of n integers
  */ 
-static void idoop(Integer n, char *op, Integer *x, Integer *work)
+static void idoop(long n, char *op, long *x, long *work)
 {
     if (strncmp(op,"+",1) == 0)
         while(n--)
@@ -63,13 +62,13 @@ static void idoop(Integer n, char *op, Integer *x, Integer *work)
         }
     else if (strncmp(op,"absmax",6) == 0)
         while(n--) {
-            register Integer x1 = TCG_ABS(*x), x2 = TCG_ABS(*work);
+            register long x1 = TCG_ABS(*x), x2 = TCG_ABS(*work);
             *x = TCG_MAX(x1, x2);
             x++; work++;
         }
     else if (strncmp(op,"absmin",6) == 0)
         while(n--) {
-            register Integer x1 = TCG_ABS(*x), x2 = TCG_ABS(*work);
+            register long x1 = TCG_ABS(*x), x2 = TCG_ABS(*work);
             *x = TCG_MIN(x1, x2);
             x++; work++;
         }
@@ -87,7 +86,7 @@ static void idoop(Integer n, char *op, Integer *x, Integer *work)
  * implements x = op(x,work) for double datatype
  *  x[n], work[n] -  arrays of n doubles
  */ 
-static void ddoop(Integer n, char *op, double *x, double *work)
+static void ddoop(long n, char *op, double *x, double *work)
 {
     if (strncmp(op,"+",1) == 0)
         while(n--)
@@ -123,11 +122,11 @@ static void ddoop(Integer n, char *op, double *x, double *work)
 
 
 void DGOP_(
-        Integer *type, DoublePrecision *x, Integer *n, char *op, Integer oplen)
+        long *type, double *x, long *n, char *op, int oplen)
 {
-    Integer me=NODEID_(), nproc=NNODES_(), len, lenmes, from, root=0;
-    DoublePrecision *work = _gops_work, *origx = x;
-    Integer ndo, up, left, right, np=*n, orign = *n;
+    long me=NODEID_(), nproc=NNODES_(), len, lenmes, from, root=0;
+    double *work = _gops_work, *origx = x;
+    long ndo, up, left, right, np=*n, orign = *n;
 
     /* determine location in the binary tree */
     up    = (me-1)/2;    if(up >= nproc)       up = -1;
@@ -135,7 +134,7 @@ void DGOP_(
     right =  2* me + 2;  if(right >= nproc) right = -1;
 
     while ((ndo = (np <= BUF_SIZE) ? np : BUF_SIZE)) {
-        len = lenmes = ndo*sizeof(DoublePrecision);
+        len = lenmes = ndo*sizeof(double);
 
         if (left > -1) {
             RCV_(type, (char *) work, &len, &lenmes, &left, &from, &one);
@@ -152,17 +151,17 @@ void DGOP_(
     }
 
     /* Now, root broadcasts the result down the binary tree */
-    len = orign*sizeof(DoublePrecision);
+    len = orign*sizeof(double);
     BRDCST_(type, (char *) origx, &len, &root);
 }
 
 
-void IGOP_(Integer *type, Integer *x, Integer *n, char *op, Integer oplen)
+void IGOP_(long *type, long *x, long *n, char *op, int oplen)
 {
-    Integer me=NODEID_(), nproc=NNODES_(), len, lenmes, from, root=0;
-    Integer *work = (Integer*)_gops_work;
-    Integer *origx = x;
-    Integer ndo, up, left, right, np=*n, orign =*n;
+    long me=NODEID_(), nproc=NNODES_(), len, lenmes, from, root=0;
+    long *work = (long*)_gops_work;
+    long *origx = x;
+    long ndo, up, left, right, np=*n, orign =*n;
 
     /* determine location in the binary tree */
     up    = (me-1)/2;    if(up >= nproc)       up = -1;
@@ -170,7 +169,7 @@ void IGOP_(Integer *type, Integer *x, Integer *n, char *op, Integer oplen)
     right =  2* me + 2;  if(right >= nproc) right = -1;
 
     while ((ndo = (np<=IBUF_SIZE) ? np : IBUF_SIZE)) {
-        len = lenmes = ndo*sizeof(Integer);
+        len = lenmes = ndo*sizeof(long);
 
         if (left > -1) {
             RCV_(type, (char *) work, &len, &lenmes, &left, &from, &one);
@@ -187,6 +186,6 @@ void IGOP_(Integer *type, Integer *x, Integer *n, char *op, Integer oplen)
     }
 
     /* Now, root broadcasts the result down the binary tree */
-    len = orign*sizeof(Integer);
+    len = orign*sizeof(long);
     BRDCST_(type, (char *) origx, &len, &root);
 }

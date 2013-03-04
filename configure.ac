@@ -151,8 +151,6 @@ GA_C_POINTER_AS_INTEGER
 AC_FUNC_FORK
 AC_FUNC_MMAP
 AC_FUNC_SELECT_ARGTYPES
-AS_IF([test "x$ga_msg_comms" = xTCGMSG],
-    [AC_SEARCH_LIBS([xdr_array], [rpclib], [], [], [])])
 AC_SEARCH_LIBS([floor], [m], [have_floor=1], [have_floor=0])
 AC_DEFINE_UNQUOTED([HAVE_FLOOR], [$have_floor],
     [Define to 1 if you have the 'floor' function.])
@@ -447,6 +445,13 @@ AC_SUBST([GA_ACCESS_INDEX_TYPE], [$ga_access_index_type])
 AC_SUBST([MA_ACCESS_INDEX_TYPE], [$ga_access_index_type])
 AC_SUBST([MA_ACCESS_INDEX_TYPE_C], [$ga_access_index_type_c])
 
+# Make GP arrays optional.
+AC_ARG_ENABLE([gparrays],
+    [AS_HELP_STRING([--enable-gparrays], [enable Global Pointer Arrays])],
+    [],
+    [enable_gparrays=no])
+AM_CONDITIONAL([ENABLE_GPARRAYS], [test "x$enable_gparrays" = xyes])
+
 ###############################################################################
 # Test suite setup
 ###############################################################################
@@ -469,9 +474,12 @@ AC_SUBST([TCGEXEC])
 # The End
 ###############################################################################
 AC_CONFIG_FILES([Makefile
+                 gaf2c/farg.h
+                 gaf2c/typesf2c.h
                  global/src/global.fh
                  ma/mafdecls.fh
                  ma/matypes.h])
+
 AC_CONFIG_FILES([tools/ga-config], [chmod +x tools/ga-config])
 AC_CONFIG_SUBDIRS([armci])
 AC_OUTPUT

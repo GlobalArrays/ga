@@ -1,6 +1,8 @@
 #ifndef GA_UNIT_H
 #define GA_UNIT_H
 
+#include "mp3.h"
+
 #define GA_PRINT_MSG() printf("Test Completed\n")
 
 #define GA_COMPLETE_MSG() printf("Test Completed\n")
@@ -105,7 +107,7 @@ static int SHAPES_NDIM[] = {
 //char operators[OP_TYPES] = {'+', '*', 'max', 'min', 'absmax', 'absmin'};
 
 #define TEST_SETUP    GA_Initialize_args(&argc, &argv)
-#define TEST_TEARDOWN GA_Terminate(); armci_msg_finalize()
+#define TEST_TEARDOWN GA_Terminate(); MP_FINALIZE()
 
 static void aprint(char *name, int *array, int size)
 {

@@ -22,7 +22,7 @@ extern void ZapChildren(void);
 #define DEV stderr
 
 
-void Error(const char *string, Integer integer)
+void Error(char *string, long integer)
 {
     (void) signal(SIGINT, SIG_IGN);
     (void) signal(SIGCHLD, SIG_DFL); /* Death of children to be expected */
@@ -56,7 +56,7 @@ void Error(const char *string, Integer integer)
 /**
  * Interface from fortran to c error routine
  */
-void PARERR_(Integer *code)
+void PARERR_(long *code)
 {
     long lcode = (long)(*code);
     Error("User detected error in FORTRAN", lcode);

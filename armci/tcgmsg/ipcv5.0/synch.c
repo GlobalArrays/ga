@@ -5,9 +5,9 @@
 #include "tcgmsgP.h"
 #include "sndrcv.h"
 
-void SYNCH_(Integer *ptype)
+void SYNCH_(long *ptype)
 {
-    Integer junk = 0, n = 1;
+    long junk = 0, n = 1;
 
     IGOP_(ptype, &junk, &n, "+", 1);
 }

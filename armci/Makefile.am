@@ -27,14 +27,7 @@ include_HEADERS =
 bin_PROGRAMS =
 check_PROGRAMS =
 check_LTLIBRARIES =
-lib_LTLIBRARIES = libarmci.la
-noinst_LTLIBRARIES = libarmcii.la
-libarmci_la_SOURCES =
-nodist_libarmci_la_SOURCES =
-libarmci_la_LIBADD =
-libarmcii_la_LIBADD =
-libarmcii_la_SOURCES = $(libarmci_la_SOURCES)
-nodist_libarmcii_la_SOURCES = $(nodist_libarmci_la_SOURCES)
+lib_LTLIBRARIES =
 EXTRA_DIST = README
 BUILT_SOURCES =
 MOSTLYCLEANFILES =
@@ -48,6 +41,14 @@ AM_CPPFLAGS =
 AM_LDFLAGS =
 LDADD =
 
+if ARMCI_NETWORK_ARMCI
+else
+lib_LTLIBRARIES += libarmci.la
+endif
+libarmci_la_SOURCES =
+nodist_libarmci_la_SOURCES =
+libarmci_la_LIBADD =
+
 AM_FFLAGS += $(ARMCI_FOPT)
 AM_FFLAGS += $(GA_F_WARN)
 AM_FFLAGS += $(FFLAG_INT)
@@ -57,28 +58,29 @@ AM_CXXFLAGS += $(ARMCI_CXXOPT)
 AM_CXXFLAGS += $(GA_CXX_WARN)
 AM_CPPFLAGS += $(GA_MP_CPPFLAGS)
 AM_CPPFLAGS += $(ARMCI_NETWORK_CPPFLAGS)
-if MSG_COMMS_TCGMSG
+if MSG_COMMS_MPI
+else
 AM_CPPFLAGS += -I$(top_srcdir)/tcgmsg
 endif
 LDFLAGS_BASE =
 LDFLAGS_BASE += $(GA_MP_LDFLAGS)
 LDFLAGS_BASE += $(ARMCI_NETWORK_LDFLAGS)
 AM_LDFLAGS += $(LDFLAGS_BASE)
-if ENABLE_F77
-AM_LDFLAGS += $(FLD_NOMAIN)
-endif
+
+if ARMCI_NETWORK_ARMCI
+LDADD += $(ARMCI_NETWORK_LIBS)
+LDADD += $(GA_MP_LIBS)
+else
 LDADD += libarmci.la
 LDADD += $(LTLIBOBJS)
 LDADD += $(GA_MP_LIBS)
 LDADD += $(ARMCI_NETWORK_LIBS)
+endif
 
+if ARMCI_NETWORK_ARMCI
+else
 libarmci_la_LIBADD += $(GA_MP_LIBS)
 libarmci_la_LIBADD += $(ARMCI_NETWORK_LIBS)
-
-# Certain trickery when turning Fortran support on or off.
-if ENABLE_F77
-MAYBE_DUMMY_F_LINK = dummy.f
-MAYBE_FLIBS = $(FLIBS)
 endif
 
 ##############################################################################
@@ -100,61 +102,6 @@ flags:
 	@echo ' For C/C++ Programs: '
 	@echo ' LIBS="-larmci $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS) $(MAYBE_FLIBS)"' | $(SED_NORMALIZE_WHITESPACE)
 	@echo ' =========================================================================== '
-
-##############################################################################
-# config
-#
-# The config.h file is automatically generated from config.h.in at configure
-# time.  However, it contains symbols which certain Fortran compilers do not
-# understand.  Therefore, we create a config.fh file which is Fortran-specific
-# and works with all Fortran compilers.
-#
-BUILT_SOURCES += config.fh
-CLEANFILES += config.fh
-nodist_libarmci_la_SOURCES += config.fh
-
-config.fh: config.h
-	@-rm -f config.fh
-	$(SED_V) \
-	$(SED) "/^#/!d" config.h > config.fh
-
-##############################################################################
-# gaf2c
-#
-libarmci_la_SOURCES += gaf2c/gaf2c.c
-libarmci_la_SOURCES += gaf2c/drand.c
-if ENABLE_F77
-libarmci_la_SOURCES += gaf2c/farg.F
-endif
-
-include_HEADERS += gaf2c/typesf2c.h
-include_HEADERS += gaf2c/farg.h
-
-AM_CPPFLAGS += -I$(top_build_prefix)gaf2c
-AM_CPPFLAGS += -I$(top_srcdir)/gaf2c
-
-if ENABLE_F77
-check_PROGRAMS += gaf2c/testarg
-endif
-
-GAF2C_SERIAL_TESTS =
-GAF2C_SERIAL_TESTS_XFAIL =
-GAF2C_PARALLEL_TESTS =
-GAF2C_PARALLEL_TESTS_XFAIL =
-GAF2C_TESTS = $(GAF2C_SERIAL_TESTS) $(GAF2C_PARALLEL_TESTS)
-GAF2C_TESTS_XFAIL = $(GAF2C_SERIAL_TESTS_XFAIL) $(GAF2C_PARALLEL_TESTS_XFAIL)
-
-if ENABLE_F77
-GAF2C_SERIAL_TESTS += gaf2c/testarg$(EXEEXT)
-endif
-
-gaf2c_testarg_SOURCES = gaf2c/testarg.c gaf2c/testargf.f
-gaf2c_testarg_LDFLAGS = $(FLDFLAGS)
-
-##############################################################################
-# tcgmsg
-#
-include $(top_srcdir)/tcgmsg/Makefile.inc
 
 ##############################################################################
 # src-portals
@@ -213,10 +160,6 @@ libarmci_la_SOURCES += src/xfer/caccumulate.c
 libarmci_la_SOURCES += src/xfer/rmw.c
 libarmci_la_SOURCES += src/xfer/strided.c
 libarmci_la_SOURCES += src/xfer/vector.c
-if ENABLE_F77
-libarmci_la_SOURCES += src/common/fcopy.f
-libarmci_la_SOURCES += src/xfer/faccumulate.f
-endif # ENABLE_F77
 if MSG_COMMS_MPI
 libarmci_la_SOURCES += src/common/groups.c
 endif
@@ -395,6 +338,111 @@ endif
 include_HEADERS += src/include/parmci.h
 
 ##############################################################################
+# tcgmsg
+#
+EXTRA_DIST += tcgmsg/README
+
+##############################################################################
+# tcgmsg/ipcv4.0
+#
+if MSG_COMMS_TCGMSG4
+AM_CPPFLAGS += -I$(top_srcdir)/tcgmsg/ipcv4.0
+
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/brdcst.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/checkbyte.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/cluster.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/cluster.h
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/defglobals.h
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/drand48.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/error.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/evlog.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/evlog.h
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/evon.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/globalop.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/llog.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/mdtob.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/mdtoi.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/mitob.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/mitod.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/mtime.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/niceftn.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/nnodes.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/nodeid.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/nxtval.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/pbegin.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/pbeginf.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/pfilecopy.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/sema.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/sema.h
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/setdbg.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/shmem.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/signals.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/signals.h
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/snd.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/sndrcv.h
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/sndrcvP.h
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/sockets.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/srftoc.h
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/srmover.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/stats.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/synch.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/usleep.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/waitall.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/waitcom.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/xdrstuff.c
+libarmci_la_SOURCES += tcgmsg/ipcv4.0/xdrstuff.h
+
+bin_PROGRAMS += parallel
+
+parallel_SOURCES = tcgmsg/ipcv4.0/parallel.c
+
+endif # MSG_COMMS_TCGMSG4
+
+##############################################################################
+# tcgmsg/ipcv5.0
+#
+if MSG_COMMS_TCGMSG5
+AM_CPPFLAGS += -I$(top_srcdir)/tcgmsg/ipcv5.0
+
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/drand48.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/evlog.h
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/globalop.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/llog.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/mdtob.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/mdtoi.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/misc.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/mitob.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/mitod.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/mtime.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/niceftn.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/nnodes.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/nodeid.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/pbegin.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/pfilecopy.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/queues.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/signals.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/sndrcv.h
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/snd_rcv_probe.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/srftoc.h
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/tcgmsgP.h
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/usleep.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/waitall.c
+if ARMCI_NETWORK_LAPI
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/async_send_lapi.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/lapi_putget.c
+else
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/async_send.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/busy.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/error.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/nxtval.shm.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/pbeginf.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/shmem.c
+libarmci_la_SOURCES += tcgmsg/ipcv5.0/synch.c
+endif # ARMCI_NETWORK_LAPI
+
+endif # MSG_COMMS_TCGMSG5
+
+##############################################################################
 # testing
 #
 check_PROGRAMS += testing/msgcheck
@@ -422,10 +470,6 @@ endif
 endif
 if THREAD_SAFE
 check_PROGRAMS += testing/test_mt
-endif
-if ENABLE_F77
-check_PROGRAMS += testing/acc_test
-check_PROGRAMS += testing/copy_test
 endif
 if ARMCI_NETWORK_PORTALS
 check_PROGRAMS += testing/clone
@@ -473,10 +517,6 @@ endif
 if THREAD_SAFE
 ARMCI_PARALLEL_TESTS += testing/test_mt$(EXEEXT)
 endif
-if ENABLE_F77
-ARMCI_SERIAL_TESTS += testing/acc_test$(EXEEXT)
-ARMCI_SERIAL_TESTS += testing/copy_test$(EXEEXT)
-endif
 if ARMCI_NETWORK_PORTALS
 #ARMCI_PARALLEL_TESTS += testing/clone$(EXEEXT)
 #ARMCI_PARALLEL_TESTS += testing/fork$(EXEEXT)
@@ -490,9 +530,7 @@ ARMCI_SERIAL_TESTS += testing/testitr$(EXEEXT)
 endif
 endif
 
-testing_acc_test_SOURCES    = testing/acc_test.c
 testing_clone_SOURCES       = testing/clone.c
-testing_copy_test_SOURCES   = testing/copy_test.c
 testing_fork_SOURCES        = testing/fork.c
 testing_fttest_SOURCES      = testing/fttest.c
 testing_gpctest_SOURCES     = testing/gpctest.c
@@ -517,9 +555,7 @@ testing_test_SOURCES        = testing/test.c
 
 testing_testitr_CPPFLAGS    = $(AM_CPPFLAGS) -I$(top_srcdir)/src/include
 
-nodist_EXTRA_testing_acc_test_SOURCES    = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_clone_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_copy_test_SOURCES   = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_fork_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_fttest_SOURCES      = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_testing_gpctest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
@@ -817,7 +853,7 @@ XFAIL_TESTS += $(PARALLEL_TESTS_XFAIL)
 
 if MSG_COMMS_TCGMSG4
 LOG_COMPILER = \
-maybe_parexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(PAREXEC)"; fi`; eval $$maybe_parexec
+maybe_parexec=`if echo "$(SERIAL_TESTS)" | $(GREP) "$$p" > /dev/null; then echo ""; else echo "$(TCGEXEC)"; fi`; eval $$maybe_parexec
 else
 if MSG_COMMS_TCGMSG5
 LOG_COMPILER = tst="$$dir$$f -np $(NPROCS)"; eval

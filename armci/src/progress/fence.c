@@ -11,7 +11,13 @@
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
-#   include <tcgmsg.h>
+#   include <sndrcv.h>
+static void tcg_synch(long type)
+{
+    long atype = type;
+
+    SYNCH_(&atype);
+}
 #elif defined(BGML)
 #   include "bgml.h"
 #else

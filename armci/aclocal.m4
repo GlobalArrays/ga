@@ -14,8 +14,8 @@
 
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
-m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.68],,
-[m4_warning([this file was generated for autoconf 2.68.
+m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.69],,
+[m4_warning([this file was generated for autoconf 2.69.
 You have another version of autoconf.  It may work, but is not guaranteed to.
 If you have problems, you may need to regenerate the build system entirely.
 To do so, use the procedure documented by the package, typically `autoreconf'.])])
@@ -1093,7 +1093,6 @@ m4_include([../m4/armci_c_opt.m4])
 m4_include([../m4/armci_cxx_opt.m4])
 m4_include([../m4/armci_enable_gpc.m4])
 m4_include([../m4/armci_enable_profile.m4])
-m4_include([../m4/armci_f77_opt.m4])
 m4_include([../m4/armci_group.m4])
 m4_include([../m4/armci_nb_noncont.m4])
 m4_include([../m4/armci_setup.m4])
@@ -1111,20 +1110,6 @@ m4_include([../m4/ga_cross_compiling.m4])
 m4_include([../m4/ga_enable_checkpoint.m4])
 m4_include([../m4/ga_enable_opt.m4])
 m4_include([../m4/ga_enable_trace.m4])
-m4_include([../m4/ga_f2c_cmdargs.m4])
-m4_include([../m4/ga_f2c_match_types.m4])
-m4_include([../m4/ga_f2c_nomain.m4])
-m4_include([../m4/ga_f2c_string.m4])
-m4_include([../m4/ga_f77_check_sizeof.m4])
-m4_include([../m4/ga_f77_cpp_symbols.m4])
-m4_include([../m4/ga_f77_disable.m4])
-m4_include([../m4/ga_f77_fixed.m4])
-m4_include([../m4/ga_f77_flush.m4])
-m4_include([../m4/ga_f77_integer_size.m4])
-m4_include([../m4/ga_f77_ld_override.m4])
-m4_include([../m4/ga_f77_library_ldflags.m4])
-m4_include([../m4/ga_f77_mismatch_type.m4])
-m4_include([../m4/ga_f77_underscore.m4])
 m4_include([../m4/ga_function.m4])
 m4_include([../m4/ga_lapack.m4])
 m4_include([../m4/ga_mpi_test_disable.m4])
@@ -1133,10 +1118,7 @@ m4_include([../m4/ga_mpicc.m4])
 m4_include([../m4/ga_mpicc_test.m4])
 m4_include([../m4/ga_mpicxx.m4])
 m4_include([../m4/ga_mpicxx_test.m4])
-m4_include([../m4/ga_mpif77.m4])
-m4_include([../m4/ga_mpif77_test.m4])
 m4_include([../m4/ga_msg_comms.m4])
-m4_include([../m4/ga_suppress_msg.m4])
 m4_include([../m4/ga_sys_weak_alias.m4])
 m4_include([../m4/ga_target.m4])
 m4_include([../m4/ga_thread_safe.m4])

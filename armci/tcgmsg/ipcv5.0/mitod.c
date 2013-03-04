@@ -11,17 +11,16 @@
  * between bytes, integers and doubles. Note that we assume that
  * FORTRAN integers are the same size as C longs.
  */
-#include "typesf2c.h"
 #include "sndrcv.h"
 
 
 /**
  * Return the minimum no. of doubles in which we can store n longs
  */
-Integer MITOD_(Integer *n)
+long MITOD_(long *n)
 {
     if (*n < 0)
         Error("MITOD_: negative argument",*n);
 
-    return (Integer) ( (MITOB_(n) + sizeof(double) - 1) / sizeof(double) );
+    return (long) ( (MITOB_(n) + sizeof(double) - 1) / sizeof(double) );
 }

@@ -10,8 +10,8 @@ extern void exit(int status);
 
 #include "tcgmsgP.h"
 
-static const Integer false = 0;
-static const Integer true  = 1;
+static const long false = 0;
+static const long true  = 1;
 
 extern void Busy(int);
 extern void flush_send_q(void);
@@ -36,9 +36,9 @@ extern void flush_send_q(void);
  * Return the value of a volatile variable in shared memory
  * that is REMOTE to this processor
  */
-static Integer remote_flag(Integer *p, Integer node)
+static long remote_flag(long *p, long node)
 {
-    Integer tmp;
+    long tmp;
 
     /*  FLUSH_CACHE;*/ /* no need to flush for one word only*/
     COPY_FROM_REMOTE(p, &tmp, sizeof(tmp), node);
@@ -50,7 +50,7 @@ static Integer remote_flag(Integer *p, Integer node)
  * Return the value of a volatile variable in shared memory
  * that is LOCAL to this processor
  */
-static Integer local_flag(Integer *p)
+static long local_flag(long *p)
 {
     FLUSH_CACHE_LINE(p);  
     return(*p);
@@ -60,11 +60,11 @@ static Integer local_flag(Integer *p)
 /**
  * Wait for (*p == value)
  */
-static void local_await(Integer *p, Integer value)
+static void local_await(long *p, long value)
 {
-    Integer pval;
-    Integer nspin = 0;
-    Integer spinlim = 100000000;
+    long pval;
+    long nspin = 0;
+    long spinlim = 100000000;
 
     while ((pval = local_flag(p)) != value) {
 
@@ -99,13 +99,13 @@ static void local_await(Integer *p, Integer value)
  * 
  * Return 0 if more data is to be sent, 1 if the send is complete.
  */
-Integer async_send(SendQEntry *entry)
+long async_send(SendQEntry *entry)
 {
-    Integer node = entry->node;
+    long node = entry->node;
     ShmemBuf *sendbuf= TCGMSG_proc_info[node].sendbuf;
-    Integer nleft, ncopy;
-    Integer pval;
-    Integer info[4];
+    long nleft, ncopy;
+    long pval;
+    long info[4];
 
 #ifdef DEBUG
     (void) fprintf(stdout,"%2ld: sending to %ld buf=%lx len=%ld\n",
@@ -117,7 +117,7 @@ Integer async_send(SendQEntry *entry)
     if ((pval = remote_flag(&sendbuf->info[3], node))) {
 #ifdef DEBUG
         {
-            Integer info[4];
+            long info[4];
             FLUSH_CACHE;
             COPY_FROM_REMOTE(sendbuf->info, info, sizeof(info), node);
             fprintf(stdout,"%2ld: snd info after full = %ld %ld %ld\n",
@@ -135,7 +135,7 @@ Integer async_send(SendQEntry *entry)
     /* Copy over the first buffer load of the message */
 
     nleft = entry->lenbuf - entry->written;
-    ncopy = (Integer) ((nleft <= SHMEM_BUF_SIZE) ? nleft : SHMEM_BUF_SIZE);
+    ncopy = (long) ((nleft <= SHMEM_BUF_SIZE) ? nleft : SHMEM_BUF_SIZE);
 
     if (ncopy&7) {
 #ifdef DEBUG
@@ -154,7 +154,7 @@ Integer async_send(SendQEntry *entry)
     /* NOTE that SHMEM_BUF_SIZE is a multiple of 8 by construction so that
        this ncopy is only rounded up on the last write */
 
-    ncopy = (Integer) ((nleft <= SHMEM_BUF_SIZE) ? nleft : SHMEM_BUF_SIZE);
+    ncopy = (long) ((nleft <= SHMEM_BUF_SIZE) ? nleft : SHMEM_BUF_SIZE);
     entry->written += ncopy;
     entry->buffer_number++;
 
@@ -163,7 +163,7 @@ Integer async_send(SendQEntry *entry)
     info[3] = entry->buffer_number;
     COPY_TO_REMOTE(info, sendbuf->info, sizeof(info), node);
 
-    return (Integer) (entry->written == entry->lenbuf);
+    return (long) (entry->written == entry->lenbuf);
 }
 
 
@@ -181,14 +181,14 @@ Integer async_send(SendQEntry *entry)
  *
  * Return 0 if more data is to be sent, 1 if the send is complete.
  */
-void msg_rcv(Integer type, char *buf, Integer lenbuf, Integer *lenmes, Integer node)
+void msg_rcv(long type, char *buf, long lenbuf, long *lenmes, long node)
 {
-    Integer me = TCGMSG_nodeid;
+    long me = TCGMSG_nodeid;
     ShmemBuf *recvbuf;        /* Points to receving buffer */
-    Integer nleft;
-    Integer msg_type, msg_tag, msg_len;
-    Integer buffer_number = 1;
-    Integer expected_tag = TCGMSG_proc_info[node].tag_rcv++;
+    long nleft;
+    long msg_type, msg_tag, msg_len;
+    long buffer_number = 1;
+    long expected_tag = TCGMSG_proc_info[node].tag_rcv++;
 
     if (node<0 || node>=TCGMSG_nnodes)
         Error("msg_rcv: node is out of range", node);
@@ -236,7 +236,7 @@ void msg_rcv(Integer type, char *buf, Integer lenbuf, Integer *lenmes, Integer n
         (void) fprintf(stderr,
                        "rcv: me=%ld from=%ld type=%ld tag=%ld len=(%ld > %ld)\n",
                        (long)me, (long)node, (long)type, (long)msg_tag, (long)msg_len, (long)lenbuf);
-        Error("msg_rcv: message too Integer for buffer\n", 0L);
+        Error("msg_rcv: message too long for buffer\n", 0L);
     }
 
     nleft = *lenmes = msg_len;
@@ -245,9 +245,9 @@ void msg_rcv(Integer type, char *buf, Integer lenbuf, Integer *lenmes, Integer n
     }
 
     while (nleft) {
-        Integer ncopy = (Integer) ((nleft <= SHMEM_BUF_SIZE) ? nleft : SHMEM_BUF_SIZE);
+        long ncopy = (long) ((nleft <= SHMEM_BUF_SIZE) ? nleft : SHMEM_BUF_SIZE);
         { 
-            Integer line;
+            long line;
             if(ncopy < 321) 
                 for(line = 0; line < ncopy; line+=32) 
                     FLUSH_CACHE_LINE(recvbuf->buf+line);
@@ -271,10 +271,10 @@ void msg_rcv(Integer type, char *buf, Integer lenbuf, Integer *lenmes, Integer n
 }
 
 
-Integer MatchShmMessage(Integer node, Integer type)
+long MatchShmMessage(long node, long type)
 {
     ShmemBuf *recvbuf;
-    Integer  msg_type;
+    long  msg_type;
 
     recvbuf = TCGMSG_proc_info[node].recvbuf;
 
@@ -283,7 +283,7 @@ Integer MatchShmMessage(Integer node, Integer type)
     /* we have a message but let's see if want it */
 
     FLUSH_CACHE_LINE(recvbuf->info);
-    COPY_FROM_LOCAL(recvbuf->info, &msg_type, sizeof(Integer));
+    COPY_FROM_LOCAL(recvbuf->info, &msg_type, sizeof(long));
     if(type == msg_type) return (1);
     return (0);
 }

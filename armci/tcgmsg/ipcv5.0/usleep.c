@@ -20,7 +20,7 @@
 #include "tcgmsgP.h"
 
 #ifdef STUPIDUSLEEP
-void USleep(Integer us)
+void USleep(long us)
 {
     int s = us/1000000;
     if (s == 0)
@@ -33,7 +33,7 @@ void USleep(Integer us)
  * on select ... it seems to be accurate to about a few centiseconds
  * on a sun.  I don't know how much system resources it eats.
  */
-void USleep(Integer us)
+void USleep(long us)
 {
     int width=0;
     struct timeval timelimit;

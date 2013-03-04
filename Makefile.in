@@ -94,95 +94,14 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 	global/testing/testmultrect$(EXEEXT) \
 	global/testing/unpackc$(EXEEXT) $(am__EXEEXT_3) \
 	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
-	$(am__EXEEXT_7) \
-	global/testing/unit-tests/ga_abs_value$(EXEEXT) \
-	global/testing/unit-tests/ga_acc$(EXEEXT) \
-	global/testing/unit-tests/ga_add$(EXEEXT) \
-	global/testing/unit-tests/ga_add_constant$(EXEEXT) \
-	global/testing/unit-tests/ga_add_constantpatch$(EXEEXT) \
-	global/testing/unit-tests/ga_add_diagonal$(EXEEXT) \
-	global/testing/unit-tests/ga_add_patch$(EXEEXT) \
-	global/testing/unit-tests/ga_copy2$(EXEEXT) \
-	global/testing/unit-tests/ga_copy3$(EXEEXT) \
-	global/testing/unit-tests/ga_copy$(EXEEXT) \
-	global/testing/unit-tests/ga_copypatch2$(EXEEXT) \
-	global/testing/unit-tests/ga_copypatch$(EXEEXT) \
-	global/testing/unit-tests/ga_create1$(EXEEXT) \
-	global/testing/unit-tests/ga_create2$(EXEEXT) \
-	global/testing/unit-tests/ga_create3$(EXEEXT) \
-	global/testing/unit-tests/ga_create$(EXEEXT) \
-	global/testing/unit-tests/ga_create_handle$(EXEEXT) \
-	global/testing/unit-tests/ga_create_irreg2$(EXEEXT) \
-	global/testing/unit-tests/ga_create_irreg3$(EXEEXT) \
-	global/testing/unit-tests/ga_create_irreg$(EXEEXT) \
-	global/testing/unit-tests/ga_destroy$(EXEEXT) \
-	global/testing/unit-tests/ga_dgop$(EXEEXT) \
-	global/testing/unit-tests/ga_dot$(EXEEXT) \
-	global/testing/unit-tests/ga_duplicate$(EXEEXT) \
-	global/testing/unit-tests/ga_elem_divide$(EXEEXT) \
-	global/testing/unit-tests/ga_elem_dividepatch$(EXEEXT) \
-	global/testing/unit-tests/ga_elem_maximum$(EXEEXT) \
-	global/testing/unit-tests/ga_elem_maximumpatch$(EXEEXT) \
-	global/testing/unit-tests/ga_elem_minimum$(EXEEXT) \
-	global/testing/unit-tests/ga_elem_minimumpatch$(EXEEXT) \
-	global/testing/unit-tests/ga_elem_multiply$(EXEEXT) \
-	global/testing/unit-tests/ga_elem_multiplypatch$(EXEEXT) \
-	global/testing/unit-tests/ga_fill$(EXEEXT) \
-	global/testing/unit-tests/ga_fillpatch1$(EXEEXT) \
-	global/testing/unit-tests/ga_fillpatch$(EXEEXT) \
-	global/testing/unit-tests/ga_gather2$(EXEEXT) \
-	global/testing/unit-tests/ga_gather3$(EXEEXT) \
-	global/testing/unit-tests/ga_gather$(EXEEXT) \
-	global/testing/unit-tests/ga_get_blockinfo$(EXEEXT) \
-	global/testing/unit-tests/ga_get$(EXEEXT) \
-	global/testing/unit-tests/ga_get_diagonal$(EXEEXT) \
-	global/testing/unit-tests/ga_igop2$(EXEEXT) \
-	global/testing/unit-tests/ga_igop$(EXEEXT) \
-	global/testing/unit-tests/ga_inquire$(EXEEXT) \
-	global/testing/unit-tests/ga_intialize$(EXEEXT) \
-	global/testing/unit-tests/ga_lgop$(EXEEXT) \
-	global/testing/unit-tests/ga_median$(EXEEXT) \
-	global/testing/unit-tests/ga_ndim2$(EXEEXT) \
-	global/testing/unit-tests/ga_ndim$(EXEEXT) \
-	global/testing/unit-tests/ga_nnodes$(EXEEXT) \
-	global/testing/unit-tests/ga_nodeid$(EXEEXT) \
-	global/testing/unit-tests/ga_pgroup_create2$(EXEEXT) \
-	global/testing/unit-tests/ga_pgroup_create3$(EXEEXT) \
-	global/testing/unit-tests/ga_pgroup_create4$(EXEEXT) \
-	global/testing/unit-tests/ga_pgroup_create5$(EXEEXT) \
-	global/testing/unit-tests/ga_pgroup_create$(EXEEXT) \
-	global/testing/unit-tests/ga_pgroup_destroy2$(EXEEXT) \
-	global/testing/unit-tests/ga_pgroup_destroy$(EXEEXT) \
-	global/testing/unit-tests/ga_pgroup_nnodes_nodeid$(EXEEXT) \
-	global/testing/unit-tests/ga_pgroup_setdefault$(EXEEXT) \
-	global/testing/unit-tests/ga_put2$(EXEEXT) \
-	global/testing/unit-tests/ga_put$(EXEEXT) \
-	global/testing/unit-tests/ga_scale2$(EXEEXT) \
-	global/testing/unit-tests/ga_scale$(EXEEXT) \
-	global/testing/unit-tests/ga_scale_cols$(EXEEXT) \
-	global/testing/unit-tests/ga_scale_patch$(EXEEXT) \
-	global/testing/unit-tests/ga_scale_rows$(EXEEXT) \
-	global/testing/unit-tests/ga_scatter$(EXEEXT) \
-	global/testing/unit-tests/ga_set_data$(EXEEXT) \
-	global/testing/unit-tests/ga_set_diagonal$(EXEEXT) \
-	global/testing/unit-tests/ga_set_restricted$(EXEEXT) \
-	global/testing/unit-tests/ga_solve$(EXEEXT) \
-	global/testing/unit-tests/ga_sync$(EXEEXT) \
-	global/testing/unit-tests/ga_transpose2$(EXEEXT) \
-	global/testing/unit-tests/ga_transpose3$(EXEEXT) \
-	global/testing/unit-tests/ga_transpose$(EXEEXT) \
-	global/testing/unit-tests/ga_zero$(EXEEXT) \
-	global/testing/unit-tests/ga_zerodiagonal$(EXEEXT) \
-	global/testing/unit-tests/ga_zeropatch2$(EXEEXT) \
-	global/testing/unit-tests/ga_zeropatch$(EXEEXT) \
-	$(am__EXEEXT_8) global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__EXEEXT_9) pario/dra/bign$(EXEEXT) \
+	$(am__EXEEXT_7) $(am__EXEEXT_8) $(am__EXEEXT_9) \
+	global/examples/lennard-jones/lennard$(EXEEXT) \
+	$(am__EXEEXT_10) pario/dra/bign$(EXEEXT) \
 	pario/dra/dbg_read$(EXEEXT) pario/dra/dbg_write$(EXEEXT) \
 	pario/dra/dra2arviz$(EXEEXT) pario/dra/ntestc$(EXEEXT) \
 	pario/dra/perfn$(EXEEXT) pario/dra/rate$(EXEEXT) \
-	$(am__EXEEXT_10) $(am__EXEEXT_11) \
-	gparrays/testing/testc$(EXEEXT) \
-	gparrays/testing/transpose$(EXEEXT)
+	$(am__EXEEXT_11) $(am__EXEEXT_12) $(am__EXEEXT_13) \
+	$(am__EXEEXT_14) $(am__EXEEXT_15) $(am__EXEEXT_16)
 @ENABLE_F77_TRUE@am__append_1 = $(FLD_NOMAIN)
 
 ##############################################################################
@@ -215,17 +134,19 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 # The following to support tracing, profiling, etc.
 #
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_6 = libwapi.la
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_7 = tools/ga-wapi.c \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@	tools/gp-wapi.c
-@ENABLE_F77_TRUE@am__append_8 = global/src/complex.F \
+@ENABLE_GPARRAYS_TRUE@@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__append_7 = tools/gp-wapi.c
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_8 = tools/ga-wapi.c
+@ENABLE_GPARRAYS_TRUE@@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__append_9 = tools/gp-wapi.c
+@ENABLE_GPARRAYS_TRUE@am__append_10 = tools/gpwapigen.py
+@ENABLE_F77_TRUE@am__append_11 = global/src/complex.F \
 @ENABLE_F77_TRUE@	global/src/ga_diag_seq.F global/src/rsg.f
-@CRAY_XT_NETWORKS_TRUE@@ENABLE_F77_TRUE@am__append_9 = global/src/ga_dgemmf.F
-@ENABLE_F77_TRUE@@ENABLE_PEIGS_TRUE@am__append_10 = global/src/ga_diag.F
-@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_11 = global/src/scalapack.F
-@ENABLE_CHECKPOINT_TRUE@am__append_12 = global/src/ga_ckpt.c
-@MSG_COMMS_MPI_TRUE@am__append_13 = global/src/ga-mpi.h \
+@CRAY_XT_NETWORKS_TRUE@@ENABLE_F77_TRUE@am__append_12 = global/src/ga_dgemmf.F
+@ENABLE_F77_TRUE@@ENABLE_PEIGS_TRUE@am__append_13 = global/src/ga_diag.F
+@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_14 = global/src/scalapack.F
+@ENABLE_CHECKPOINT_TRUE@am__append_15 = global/src/ga_ckpt.c
+@MSG_COMMS_MPI_TRUE@am__append_16 = global/src/ga-mpi.h \
 @MSG_COMMS_MPI_TRUE@	global/src/ga-mpi.fh
-@ENABLE_F77_TRUE@am__append_14 = global/testing/bin \
+@ENABLE_F77_TRUE@am__append_17 = global/testing/bin \
 @ENABLE_F77_TRUE@	global/testing/blktest global/testing/d2test \
 @ENABLE_F77_TRUE@	global/testing/g2test global/testing/g3test \
 @ENABLE_F77_TRUE@	global/testing/ga_lu global/testing/ga_shift \
@@ -252,18 +173,101 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/test_mirrored \
 @ENABLE_F77_TRUE@	global/testing/types_test \
 @ENABLE_F77_TRUE@	global/testing/field_test
-@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_15 = global/testing/testspd
-@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_16 = global/testing/ga_lu
-@MSG_COMMS_MPI_TRUE@am__append_17 = global/testing/ga-mpi \
+@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_18 = global/testing/testspd
+@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_19 = global/testing/ga_lu
+@MSG_COMMS_MPI_TRUE@am__append_20 = global/testing/ga-mpi \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock \
 @MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_comm \
 @MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_commc
-@SYSV_TRUE@am__append_18 = global/testing/ipc_clean
+@SYSV_TRUE@am__append_21 = global/testing/ipc_clean
+
+# TODO somehow unit tests depend on MPI -- need to fix
+@MSG_COMMS_MPI_TRUE@am__append_22 =  \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_abs_value \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_acc \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add_constant \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add_constantpatch \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add_diagonal \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add_patch \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_copy2 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_copy3 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_copy \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_copypatch2 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_copypatch \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create1 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create2 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create3 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create_handle \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create_irreg2 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create_irreg3 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create_irreg \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_destroy \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_dgop \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_dot \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_duplicate \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_divide \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_dividepatch \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_maximum \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_maximumpatch \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_minimum \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_minimumpatch \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_multiply \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_multiplypatch \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_fill \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_fillpatch1 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_fillpatch \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_gather2 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_gather3 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_gather \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_get_blockinfo \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_get \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_get_diagonal \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_igop2 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_igop \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_inquire \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_intialize \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_lgop \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_median \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_ndim2 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_ndim \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_nnodes \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_nodeid \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_create2 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_create3 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_create4 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_create5 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_create \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_destroy2 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_destroy \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_nnodes_nodeid \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_setdefault \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_put2 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_put \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_scale2 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_scale \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_scale_cols \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_scale_patch \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_scale_rows \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_scatter \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_set_data \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_set_diagonal \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_set_restricted \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_solve \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_sync \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_transpose2 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_transpose3 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_transpose \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_zero \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_zerodiagonal \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_zeropatch2 \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_zeropatch
 #GLOBAL_PARALLEL_TESTS += global/testing/d2test$(EXEEXT) # needs input file
 #GLOBAL_PARALLEL_TESTS += global/testing/pg2testmatmult$(EXEEXT) # needs 8 procs exactly
 #GLOBAL_PARALLEL_TESTS += global/testing/pgtestmatmult$(EXEEXT) # needs 8 procs exactly
 #GLOBAL_PARALLEL_TESTS += global/testing/random$(EXEEXT) # takes too long
-@ENABLE_F77_TRUE@am__append_19 = global/testing/bin$(EXEEXT) \
+@ENABLE_F77_TRUE@am__append_23 = global/testing/bin$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/blktest$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g2test$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/g3test$(EXEEXT) \
@@ -294,37 +298,37 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testmatmult$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/testsolve$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/testing/test$(EXEEXT)
-@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_20 = global/testing/testspd$(EXEEXT)
-@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_21 = global/testing/ga_lu$(EXEEXT)
-@MSG_COMMS_MPI_TRUE@am__append_22 = global/testing/ga-mpi$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__append_24 = global/testing/testspd$(EXEEXT)
+@ENABLE_F77_FALSE@@HAVE_LAPACK_TRUE@am__append_25 = global/testing/ga_lu$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__append_26 = global/testing/ga-mpi$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/lock$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_comm$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_commc$(EXEEXT)
-@HAVE_M4_TRUE@am__append_23 = $(GLOBAL_TESTING_M4_DEPS) \
+@HAVE_M4_TRUE@am__append_27 = $(GLOBAL_TESTING_M4_DEPS) \
 @HAVE_M4_TRUE@	global/testing/README
-@HAVE_M4_TRUE@am__append_24 = global/testing/nga-onesided.F \
+@HAVE_M4_TRUE@am__append_28 = global/testing/nga-onesided.F \
 @HAVE_M4_TRUE@	global/testing/nga-patch.F \
 @HAVE_M4_TRUE@	global/testing/nga-periodic.F \
 @HAVE_M4_TRUE@	global/testing/nga-scatter.F \
 @HAVE_M4_TRUE@	global/testing/nga-util.F \
 @HAVE_M4_TRUE@	global/testing/ngatest.F
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_25 =  \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_29 =  \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-onesided \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-patch \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-periodic \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-util \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/ngatest
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_26 = global/testing/nga-onesided$(EXEEXT) \
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__append_30 = global/testing/nga-onesided$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-patch$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-periodic$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-util$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/ngatest$(EXEEXT)
-@ENABLE_F77_TRUE@am__append_27 = global/testing/ffflush.F \
+@ENABLE_F77_TRUE@am__append_31 = global/testing/ffflush.F \
 @ENABLE_F77_TRUE@	global/testing/testblas.F
-@ENABLE_F77_TRUE@am__append_28 = global/examples/boltzmann/boltz \
+@ENABLE_F77_TRUE@am__append_32 = global/examples/boltzmann/boltz \
 @ENABLE_F77_TRUE@	global/examples/conjugate_gradient/ga_cg \
 @ENABLE_F77_TRUE@	global/examples/md_cluster/grp_sim \
 @ENABLE_F77_TRUE@	global/examples/scf/scf pario/dra/big \
@@ -333,39 +337,102 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_F77_TRUE@	pario/dra/perf3 pario/dra/test \
 @ENABLE_F77_TRUE@	pario/dra/test_mxm pario/dra/time_mxm \
 @ENABLE_F77_TRUE@	pario/eaf/test pario/sf/test
-@ENABLE_F77_TRUE@am__append_29 = global/examples/boltzmann/boltz$(EXEEXT)
+@ENABLE_F77_TRUE@am__append_33 = global/examples/boltzmann/boltz$(EXEEXT)
 
 ##############################################################################
 # global/X
 #
-@ENABLE_XREGION_TRUE@@NO_X_FALSE@am__append_30 = global/X/xregion
+@ENABLE_XREGION_TRUE@@NO_X_FALSE@am__append_34 = global/X/xregion
 
 ##############################################################################
 # ga++/src
 #
-@CXX_BINDINGS_TRUE@am__append_31 = libga++.la
-@CXX_BINDINGS_TRUE@am__append_32 = ga++/src/ga++.h \
+@CXX_BINDINGS_TRUE@am__append_35 = libga++.la
+@CXX_BINDINGS_TRUE@am__append_36 = ga++/src/ga++.h \
 @CXX_BINDINGS_TRUE@	ga++/src/GAServices.h \
 @CXX_BINDINGS_TRUE@	ga++/src/GlobalArray.h ga++/src/init_term.h \
 @CXX_BINDINGS_TRUE@	ga++/src/PGroup.h ga++/src/services.h
-@CXX_BINDINGS_TRUE@am__append_33 = -I$(top_srcdir)/ga++/src
+@CXX_BINDINGS_TRUE@am__append_37 = -I$(top_srcdir)/ga++/src
 
 ##############################################################################
 # ga++/testing
 #
-@CXX_BINDINGS_TRUE@am__append_34 = ga++/testing/elempatch \
+@CXX_BINDINGS_TRUE@am__append_38 = ga++/testing/elempatch \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest ga++/testing/ntestc \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc ga++/testing/testmult
-@ENABLE_F77_TRUE@am__append_35 = gparrays/testing/test
-@ARMCI_NETWORK_PORTALS_TRUE@am__append_36 = -I$(top_srcdir)/armci/src-portals
-@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_37 = -I$(top_srcdir)/armci/src-gemini
-@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_38 = -I$(top_srcdir)/armci/src/include
-TESTS = $(am__EXEEXT_13) $(am__EXEEXT_14)
-XFAIL_TESTS = $(am__EXEEXT_15) $(am__EXEEXT_16)
+@ENABLE_GPARRAYS_TRUE@am__append_39 = gparrays/src/gp-wapi.h \
+@ENABLE_GPARRAYS_TRUE@	gparrays/src/gp-wapidefs.h
+@ENABLE_GPARRAYS_TRUE@am__append_40 = gparrays/src/gp-wapi.h \
+@ENABLE_GPARRAYS_TRUE@	gparrays/src/gp-wapidefs.h
+@ENABLE_GPARRAYS_TRUE@am__append_41 = gparrays/src/gpbase.c \
+@ENABLE_GPARRAYS_TRUE@	gparrays/src/gpbase.h \
+@ENABLE_GPARRAYS_TRUE@	gparrays/src/gpcapi.c \
+@ENABLE_GPARRAYS_TRUE@	gparrays/src/gpfapi.c \
+@ENABLE_GPARRAYS_TRUE@	gparrays/src/gponesided.c \
+@ENABLE_GPARRAYS_TRUE@	gparrays/src/gp-papi.h
+@ENABLE_GPARRAYS_TRUE@am__append_42 = gparrays/src/gp-wapidefs.h
+@ENABLE_GPARRAYS_TRUE@am__append_43 = gparrays/src/gp-papi.h
+@ENABLE_GPARRAYS_TRUE@am__append_44 = gparrays/src/gp-wapi.h
+@ENABLE_F77_TRUE@@ENABLE_GPARRAYS_TRUE@am__append_45 = gparrays/testing/test
+@ENABLE_GPARRAYS_TRUE@am__append_46 = gparrays/testing/testc \
+@ENABLE_GPARRAYS_TRUE@	gparrays/testing/transpose
+@ENABLE_GPARRAYS_TRUE@am__append_47 =  \
+@ENABLE_GPARRAYS_TRUE@	-I$(top_build_prefix)gparrays/src \
+@ENABLE_GPARRAYS_TRUE@	-I$(top_srcdir)/gparrays/src
+@ENABLE_F77_TRUE@am__append_48 = gaf2c/farg.F
+@ENABLE_F77_TRUE@am__append_49 = gaf2c/testarg
+@ENABLE_F77_TRUE@am__append_50 = gaf2c/testarg$(EXEEXT)
+
+##############################################################################
+# tcgmsg/tcgmsg-mpi
+#
+@MSG_COMMS_MPI_TRUE@am__append_51 = tcgmsg/tcgmsg-mpi/checkbyte.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/clustercheck.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/collect.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/drand48.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/evlog.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/evlog.h \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/evon.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/llog.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/misc.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/niceftn.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/nxtval-armci.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/p2p.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/pbeginf.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/pfilecopy.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/sizeof.c \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/sndrcv.h \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/srftoc.h \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/tcgmsgP.h
+@MSG_COMMS_MPI_TRUE@am__append_52 = -I$(top_srcdir)/tcgmsg/tcgmsg-mpi
+@MSG_COMMS_MPI_TRUE@am__append_53 = tcgmsg/tests/test_asyn \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tests/test
+@ENABLE_F77_TRUE@@MSG_COMMS_MPI_TRUE@am__append_54 = tcgmsg/tests/testf
+
+##############################################################################
+# armci
+# if TCGMSG is coming from ARMCI
+@ARMCI_NETWORK_ARMCI_FALSE@@MSG_COMMS_TCGMSG4_TRUE@am__append_55 = -I$(top_srcdir)/armci/tcgmsg
+@ARMCI_NETWORK_ARMCI_FALSE@@MSG_COMMS_TCGMSG5_TRUE@am__append_56 = -I$(top_srcdir)/armci/tcgmsg
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_PORTALS_TRUE@am__append_57 = -I$(top_srcdir)/armci/src-portals \
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_PORTALS_TRUE@	-I$(top_srcdir)/armci/tcgmsg
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_58 = -I$(top_srcdir)/armci/src-gemini \
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_GEMINI_TRUE@@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/tcgmsg
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@am__append_59 = -I$(top_srcdir)/armci/src/include \
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/tcgmsg
+@ARMCI_NETWORK_ARMCI_TRUE@am__append_60 = $(ARMCI_NETWORK_LIBS) \
+@ARMCI_NETWORK_ARMCI_TRUE@	$(GA_MP_LIBS)
+# As of ga-5-2 libarmci is no longer rolled up into libga.
+@ARMCI_NETWORK_ARMCI_FALSE@am__append_61 = armci/libarmci.la \
+@ARMCI_NETWORK_ARMCI_FALSE@	$(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
+TESTS = $(am__EXEEXT_18) $(am__EXEEXT_19)
+XFAIL_TESTS = $(am__EXEEXT_20) $(am__EXEEXT_21)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(am__include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in $(top_srcdir)/configure \
+	$(top_srcdir)/gaf2c/farg.h.in \
+	$(top_srcdir)/gaf2c/typesf2c.h.in \
 	$(top_srcdir)/global/src/global.fh.in \
 	$(top_srcdir)/ma/mafdecls.fh.in $(top_srcdir)/ma/matypes.h.in \
 	$(top_srcdir)/tools/ga-config.in INSTALL NEWS \
@@ -436,7 +503,8 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES = global/src/global.fh ma/mafdecls.fh ma/matypes.h \
+CONFIG_CLEAN_FILES = gaf2c/farg.h gaf2c/typesf2c.h \
+	global/src/global.fh ma/mafdecls.fh ma/matypes.h \
 	tools/ga-config
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
@@ -486,9 +554,14 @@ am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 @CXX_BINDINGS_TRUE@am_libga___la_rpath = -rpath $(libdir)
 am__DEPENDENCIES_1 =
+@ARMCI_NETWORK_ARMCI_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
+@ARMCI_NETWORK_ARMCI_TRUE@	$(am__DEPENDENCIES_1)
+@ARMCI_NETWORK_ARMCI_FALSE@am__DEPENDENCIES_3 = armci/libarmci.la \
+@ARMCI_NETWORK_ARMCI_FALSE@	$(am__DEPENDENCIES_1) \
+@ARMCI_NETWORK_ARMCI_FALSE@	$(am__DEPENDENCIES_1)
 libga_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) armci/libarmcii.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 	ma/ma.c ma/ma.h ma/memcpy.h ma/string-util.c ma/table.c \
 	ma/maf.F LinAlg/lapack+blas/dgetf2.f \
@@ -531,7 +604,17 @@ am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 	pario/sf/shared.files.c gparrays/src/gpbase.c \
 	gparrays/src/gpbase.h gparrays/src/gpcapi.c \
 	gparrays/src/gpfapi.c gparrays/src/gponesided.c \
-	gparrays/src/gp-papi.h
+	gparrays/src/gp-papi.h gaf2c/gaf2c.c gaf2c/drand.c \
+	gaf2c/farg.F tcgmsg/capi.c tcgmsg/fapi.c \
+	tcgmsg/tcgmsg-mpi/checkbyte.c tcgmsg/tcgmsg-mpi/clustercheck.c \
+	tcgmsg/tcgmsg-mpi/collect.c tcgmsg/tcgmsg-mpi/drand48.c \
+	tcgmsg/tcgmsg-mpi/evlog.c tcgmsg/tcgmsg-mpi/evlog.h \
+	tcgmsg/tcgmsg-mpi/evon.c tcgmsg/tcgmsg-mpi/llog.c \
+	tcgmsg/tcgmsg-mpi/misc.c tcgmsg/tcgmsg-mpi/niceftn.c \
+	tcgmsg/tcgmsg-mpi/nxtval-armci.c tcgmsg/tcgmsg-mpi/p2p.c \
+	tcgmsg/tcgmsg-mpi/pbeginf.c tcgmsg/tcgmsg-mpi/pfilecopy.c \
+	tcgmsg/tcgmsg-mpi/sizeof.c tcgmsg/tcgmsg-mpi/sndrcv.h \
+	tcgmsg/tcgmsg-mpi/srftoc.h tcgmsg/tcgmsg-mpi/tcgmsgP.h
 @ENABLE_F77_TRUE@am__objects_1 = ma/maf.lo \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/dgetf2.lo \
 @ENABLE_F77_TRUE@	LinAlg/lapack+blas/dgetrf.lo \
@@ -555,6 +638,25 @@ am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@am__objects_5 =  \
 @ENABLE_F77_TRUE@@HAVE_SCALAPACK_TRUE@	global/src/scalapack.lo
 @ENABLE_CHECKPOINT_TRUE@am__objects_6 = global/src/ga_ckpt.lo
+@ENABLE_GPARRAYS_TRUE@am__objects_7 = gparrays/src/gpbase.lo \
+@ENABLE_GPARRAYS_TRUE@	gparrays/src/gpcapi.lo \
+@ENABLE_GPARRAYS_TRUE@	gparrays/src/gpfapi.lo \
+@ENABLE_GPARRAYS_TRUE@	gparrays/src/gponesided.lo
+@ENABLE_F77_TRUE@am__objects_8 = gaf2c/farg.lo
+@MSG_COMMS_MPI_TRUE@am__objects_9 = tcgmsg/tcgmsg-mpi/checkbyte.lo \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/clustercheck.lo \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/collect.lo \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/drand48.lo \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/evlog.lo \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/evon.lo \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/llog.lo \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/misc.lo \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/niceftn.lo \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/nxtval-armci.lo \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/p2p.lo \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/pbeginf.lo \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/pfilecopy.lo \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tcgmsg-mpi/sizeof.lo
 am_libga_la_OBJECTS = compat/random.lo ma/error.lo ma/f2c.lo ma/ma.lo \
 	ma/string-util.lo ma/table.lo $(am__objects_1) \
 	LinAlg/lapack+blas/xgemm.lo global/src/base.lo \
@@ -577,17 +679,20 @@ am_libga_la_OBJECTS = compat/random.lo ma/error.lo ma/f2c.lo ma/ma.lo \
 	pario/dra/env.lo pario/dra/fortran.lo pario/dra/patch.util.lo \
 	pario/eaf/eaf.lo pario/eaf/eaf_f2c.lo pario/elio/elio.lo \
 	pario/elio/stat.lo pario/sf/sf_capi.lo pario/sf/sf_fortran.lo \
-	pario/sf/shared.files.lo gparrays/src/gpbase.lo \
-	gparrays/src/gpcapi.lo gparrays/src/gpfapi.lo \
-	gparrays/src/gponesided.lo
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__objects_7 = tools/ga-wapi.lo \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@	tools/gp-wapi.lo
-nodist_libga_la_OBJECTS = $(am__objects_7)
+	pario/sf/shared.files.lo $(am__objects_7) gaf2c/gaf2c.lo \
+	gaf2c/drand.lo $(am__objects_8) tcgmsg/capi.lo tcgmsg/fapi.lo \
+	$(am__objects_9)
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__objects_10 = tools/ga-wapi.lo
+@ENABLE_GPARRAYS_TRUE@@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE@am__objects_11 = tools/gp-wapi.lo
+am__objects_12 =
+nodist_libga_la_OBJECTS = $(am__objects_10) $(am__objects_11) \
+	$(am__objects_12)
 libga_la_OBJECTS = $(am_libga_la_OBJECTS) $(nodist_libga_la_OBJECTS)
 libwapi_la_LIBADD =
 am__libwapi_la_SOURCES_DIST = tools/ga-wapi.c tools/gp-wapi.c
+@ENABLE_GPARRAYS_TRUE@@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am__objects_13 = tools/gp-wapi.lo
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libwapi_la_OBJECTS = tools/ga-wapi.lo \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/gp-wapi.lo
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	$(am__objects_13)
 libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@am_libwapi_la_rpath = -rpath \
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	$(libdir)
@@ -638,13 +743,93 @@ libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_comm$(EXEEXT) \
 @MSG_COMMS_MPI_TRUE@	global/testing/simple_groups_commc$(EXEEXT)
 @SYSV_TRUE@am__EXEEXT_7 = global/testing/ipc_clean$(EXEEXT)
-@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__EXEEXT_8 = global/testing/nga-onesided$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@am__EXEEXT_8 = global/testing/unit-tests/ga_abs_value$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_acc$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add_constant$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add_constantpatch$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add_diagonal$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_add_patch$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_copy2$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_copy3$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_copy$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_copypatch2$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_copypatch$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create1$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create2$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create3$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create_handle$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create_irreg2$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create_irreg3$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_create_irreg$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_destroy$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_dgop$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_dot$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_duplicate$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_divide$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_dividepatch$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_maximum$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_maximumpatch$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_minimum$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_minimumpatch$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_multiply$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_elem_multiplypatch$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_fill$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_fillpatch1$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_fillpatch$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_gather2$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_gather3$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_gather$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_get_blockinfo$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_get$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_get_diagonal$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_igop2$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_igop$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_inquire$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_intialize$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_lgop$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_median$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_ndim2$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_ndim$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_nnodes$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_nodeid$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_create2$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_create3$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_create4$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_create5$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_create$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_destroy2$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_destroy$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_nnodes_nodeid$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_pgroup_setdefault$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_put2$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_put$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_scale2$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_scale$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_scale_cols$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_scale_patch$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_scale_rows$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_scatter$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_set_data$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_set_diagonal$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_set_restricted$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_solve$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_sync$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_transpose2$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_transpose3$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_transpose$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_zero$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_zerodiagonal$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_zeropatch2$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	global/testing/unit-tests/ga_zeropatch$(EXEEXT)
+@ENABLE_F77_TRUE@@HAVE_M4_TRUE@am__EXEEXT_9 = global/testing/nga-onesided$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-patch$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-periodic$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-scatter$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/nga-util$(EXEEXT) \
 @ENABLE_F77_TRUE@@HAVE_M4_TRUE@	global/testing/ngatest$(EXEEXT)
-@ENABLE_F77_TRUE@am__EXEEXT_9 =  \
+@ENABLE_F77_TRUE@am__EXEEXT_10 =  \
 @ENABLE_F77_TRUE@	global/examples/boltzmann/boltz$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/examples/conjugate_gradient/ga_cg$(EXEEXT) \
 @ENABLE_F77_TRUE@	global/examples/md_cluster/grp_sim$(EXEEXT) \
@@ -660,24 +845,30 @@ libwapi_la_OBJECTS = $(am_libwapi_la_OBJECTS)
 @ENABLE_F77_TRUE@	pario/dra/time_mxm$(EXEEXT) \
 @ENABLE_F77_TRUE@	pario/eaf/test$(EXEEXT) \
 @ENABLE_F77_TRUE@	pario/sf/test$(EXEEXT)
-@CXX_BINDINGS_TRUE@am__EXEEXT_10 = ga++/testing/elempatch$(EXEEXT) \
+@CXX_BINDINGS_TRUE@am__EXEEXT_11 = ga++/testing/elempatch$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/ntestc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/testc$(EXEEXT) \
 @CXX_BINDINGS_TRUE@	ga++/testing/testmult$(EXEEXT)
-@ENABLE_F77_TRUE@am__EXEEXT_11 = gparrays/testing/test$(EXEEXT)
+@ENABLE_F77_TRUE@@ENABLE_GPARRAYS_TRUE@am__EXEEXT_12 = gparrays/testing/test$(EXEEXT)
+@ENABLE_GPARRAYS_TRUE@am__EXEEXT_13 = gparrays/testing/testc$(EXEEXT) \
+@ENABLE_GPARRAYS_TRUE@	gparrays/testing/transpose$(EXEEXT)
+@ENABLE_F77_TRUE@am__EXEEXT_14 = gaf2c/testarg$(EXEEXT)
+@MSG_COMMS_MPI_TRUE@am__EXEEXT_15 = tcgmsg/tests/test_asyn$(EXEEXT) \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tests/test$(EXEEXT)
+@ENABLE_F77_TRUE@@MSG_COMMS_MPI_TRUE@am__EXEEXT_16 = tcgmsg/tests/testf$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 LIBOBJDIR = compat/
 am__ga___testing_elempatch_SOURCES_DIST = ga++/testing/elempatch.cc
 @CXX_BINDINGS_TRUE@am_ga___testing_elempatch_OBJECTS =  \
 @CXX_BINDINGS_TRUE@	ga++/testing/elempatch.$(OBJEXT)
 ga___testing_elempatch_OBJECTS = $(am_ga___testing_elempatch_OBJECTS)
-am__DEPENDENCIES_2 = $(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
+am__DEPENDENCIES_4 = $(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-@ENABLE_F77_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
+@ENABLE_F77_TRUE@am__DEPENDENCIES_5 = $(am__DEPENDENCIES_1)
 @CXX_BINDINGS_TRUE@ga___testing_elempatch_DEPENDENCIES = libga++.la \
-@CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+@CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5)
 ga___testing_elempatch_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(ga___testing_elempatch_LDFLAGS) \
@@ -687,7 +878,7 @@ am__ga___testing_mtest_SOURCES_DIST = ga++/testing/mtest.cc
 @CXX_BINDINGS_TRUE@	ga++/testing/mtest.$(OBJEXT)
 ga___testing_mtest_OBJECTS = $(am_ga___testing_mtest_OBJECTS)
 @CXX_BINDINGS_TRUE@ga___testing_mtest_DEPENDENCIES = libga++.la \
-@CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+@CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5)
 ga___testing_mtest_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(ga___testing_mtest_LDFLAGS) \
@@ -699,7 +890,7 @@ am__ga___testing_ntestc_SOURCES_DIST = ga++/testing/ntestc.cc \
 @CXX_BINDINGS_TRUE@	ga++/testing/util.$(OBJEXT)
 ga___testing_ntestc_OBJECTS = $(am_ga___testing_ntestc_OBJECTS)
 @CXX_BINDINGS_TRUE@ga___testing_ntestc_DEPENDENCIES = libga++.la \
-@CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+@CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5)
 ga___testing_ntestc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(ga___testing_ntestc_LDFLAGS) \
@@ -709,7 +900,7 @@ am__ga___testing_testc_SOURCES_DIST = ga++/testing/testc.cc
 @CXX_BINDINGS_TRUE@	ga++/testing/testc.$(OBJEXT)
 ga___testing_testc_OBJECTS = $(am_ga___testing_testc_OBJECTS)
 @CXX_BINDINGS_TRUE@ga___testing_testc_DEPENDENCIES = libga++.la \
-@CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+@CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5)
 ga___testing_testc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(ga___testing_testc_LDFLAGS) \
@@ -719,11 +910,23 @@ am__ga___testing_testmult_SOURCES_DIST = ga++/testing/testmult.cc
 @CXX_BINDINGS_TRUE@	ga++/testing/testmult.$(OBJEXT)
 ga___testing_testmult_OBJECTS = $(am_ga___testing_testmult_OBJECTS)
 @CXX_BINDINGS_TRUE@ga___testing_testmult_DEPENDENCIES = libga++.la \
-@CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+@CXX_BINDINGS_TRUE@	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5)
 ga___testing_testmult_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(ga___testing_testmult_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am_gaf2c_testarg_OBJECTS = gaf2c/testarg.$(OBJEXT) \
+	gaf2c/testargf.$(OBJEXT)
+gaf2c_testarg_OBJECTS = $(am_gaf2c_testarg_OBJECTS)
+gaf2c_testarg_LDADD = $(LDADD)
+gaf2c_testarg_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+gaf2c_testarg_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(gaf2c_testarg_LDFLAGS) $(LDFLAGS) -o \
+	$@
 am__global_X_xregion_SOURCES_DIST = global/X/xregion_colormap.c \
 	global/X/xregion_dialog.c global/X/xregion_display.c \
 	global/X/xregion_fileio.c global/X/xregion_main.c \
@@ -846,11 +1049,11 @@ am__global_testing_big_SOURCES_DIST = global/testing/big.c \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
-@ENABLE_F77_TRUE@am__objects_8 = global/testing/ffflush.$(OBJEXT) \
+@ENABLE_F77_TRUE@am__objects_14 = global/testing/ffflush.$(OBJEXT) \
 @ENABLE_F77_TRUE@	global/testing/testblas.$(OBJEXT)
-am__objects_9 = global/testing/util.$(OBJEXT) $(am__objects_8)
+am__objects_15 = global/testing/util.$(OBJEXT) $(am__objects_14)
 am_global_testing_big_OBJECTS = global/testing/big.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_big_OBJECTS = $(am_global_testing_big_OBJECTS)
 global_testing_big_LDADD = $(LDADD)
 global_testing_big_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -862,7 +1065,7 @@ am__global_testing_bin_SOURCES_DIST = global/testing/bin.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_bin_OBJECTS = global/testing/bin.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_bin_OBJECTS = $(am_global_testing_bin_OBJECTS)
 global_testing_bin_LDADD = $(LDADD)
 global_testing_bin_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -878,7 +1081,7 @@ am__global_testing_blktest_SOURCES_DIST = global/testing/blktest.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_blktest_OBJECTS = global/testing/blktest.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_blktest_OBJECTS = $(am_global_testing_blktest_OBJECTS)
 global_testing_blktest_LDADD = $(LDADD)
 global_testing_blktest_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -894,7 +1097,7 @@ am__global_testing_d2test_SOURCES_DIST = global/testing/d2test.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_d2test_OBJECTS = global/testing/d2test.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_d2test_OBJECTS = $(am_global_testing_d2test_OBJECTS)
 global_testing_d2test_LDADD = $(LDADD)
 global_testing_d2test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -910,7 +1113,7 @@ am__global_testing_elempatch_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_elempatch_OBJECTS =  \
-	global/testing/elempatch.$(OBJEXT) $(am__objects_9)
+	global/testing/elempatch.$(OBJEXT) $(am__objects_15)
 global_testing_elempatch_OBJECTS =  \
 	$(am_global_testing_elempatch_OBJECTS)
 global_testing_elempatch_LDADD = $(LDADD)
@@ -923,7 +1126,7 @@ am__global_testing_field_test_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_field_test_OBJECTS =  \
-	global/testing/field-test.$(OBJEXT) $(am__objects_9)
+	global/testing/field-test.$(OBJEXT) $(am__objects_15)
 global_testing_field_test_OBJECTS =  \
 	$(am_global_testing_field_test_OBJECTS)
 global_testing_field_test_LDADD = $(LDADD)
@@ -940,7 +1143,7 @@ am__global_testing_g2test_SOURCES_DIST = global/testing/g2test.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_g2test_OBJECTS = global/testing/g2test.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_g2test_OBJECTS = $(am_global_testing_g2test_OBJECTS)
 global_testing_g2test_LDADD = $(LDADD)
 global_testing_g2test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -956,7 +1159,7 @@ am__global_testing_g3test_SOURCES_DIST = global/testing/g3test.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_g3test_OBJECTS = global/testing/g3test.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_g3test_OBJECTS = $(am_global_testing_g3test_OBJECTS)
 global_testing_g3test_LDADD = $(LDADD)
 global_testing_g3test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -972,7 +1175,7 @@ am__global_testing_ga_mpi_SOURCES_DIST = global/testing/ga-mpi.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_ga_mpi_OBJECTS = global/testing/ga-mpi.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_ga_mpi_OBJECTS = $(am_global_testing_ga_mpi_OBJECTS)
 global_testing_ga_mpi_LDADD = $(LDADD)
 global_testing_ga_mpi_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -984,7 +1187,7 @@ am__global_testing_ga_lu_SOURCES_DIST = global/testing/ga_lu.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_ga_lu_OBJECTS = global/testing/ga_lu.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_ga_lu_OBJECTS = $(am_global_testing_ga_lu_OBJECTS)
 global_testing_ga_lu_LDADD = $(LDADD)
 global_testing_ga_lu_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -996,7 +1199,7 @@ am__global_testing_ga_shift_SOURCES_DIST = global/testing/ga_shift.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_ga_shift_OBJECTS =  \
-	global/testing/ga_shift.$(OBJEXT) $(am__objects_9)
+	global/testing/ga_shift.$(OBJEXT) $(am__objects_15)
 global_testing_ga_shift_OBJECTS =  \
 	$(am_global_testing_ga_shift_OBJECTS)
 global_testing_ga_shift_LDADD = $(LDADD)
@@ -1013,7 +1216,7 @@ am__global_testing_gatscat_SOURCES_DIST = global/testing/gatscat.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_gatscat_OBJECTS = global/testing/gatscat.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_gatscat_OBJECTS = $(am_global_testing_gatscat_OBJECTS)
 global_testing_gatscat_LDADD = $(LDADD)
 global_testing_gatscat_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1025,7 +1228,7 @@ am__global_testing_getmem_SOURCES_DIST = global/testing/getmem.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_getmem_OBJECTS = global/testing/getmem.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_getmem_OBJECTS = $(am_global_testing_getmem_OBJECTS)
 global_testing_getmem_LDADD = $(LDADD)
 global_testing_getmem_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1037,7 +1240,7 @@ am__global_testing_ghosts_SOURCES_DIST = global/testing/ghosts.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_ghosts_OBJECTS = global/testing/ghosts.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_ghosts_OBJECTS = $(am_global_testing_ghosts_OBJECTS)
 global_testing_ghosts_LDADD = $(LDADD)
 global_testing_ghosts_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1053,7 +1256,7 @@ am__global_testing_ipc_clean_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_ipc_clean_OBJECTS =  \
-	global/testing/ipc.clean.$(OBJEXT) $(am__objects_9)
+	global/testing/ipc.clean.$(OBJEXT) $(am__objects_15)
 global_testing_ipc_clean_OBJECTS =  \
 	$(am_global_testing_ipc_clean_OBJECTS)
 global_testing_ipc_clean_LDADD = $(LDADD)
@@ -1066,7 +1269,7 @@ am__global_testing_jacobi_SOURCES_DIST = global/testing/jacobi.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_jacobi_OBJECTS = global/testing/jacobi.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_jacobi_OBJECTS = $(am_global_testing_jacobi_OBJECTS)
 global_testing_jacobi_LDADD = $(LDADD)
 global_testing_jacobi_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1082,7 +1285,7 @@ am__global_testing_lock_SOURCES_DIST = global/testing/lock.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_lock_OBJECTS = global/testing/lock.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_lock_OBJECTS = $(am_global_testing_lock_OBJECTS)
 global_testing_lock_LDADD = $(LDADD)
 global_testing_lock_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1094,7 +1297,7 @@ am__global_testing_mir_perf2_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_mir_perf2_OBJECTS =  \
-	global/testing/mir_perf2.$(OBJEXT) $(am__objects_9)
+	global/testing/mir_perf2.$(OBJEXT) $(am__objects_15)
 global_testing_mir_perf2_OBJECTS =  \
 	$(am_global_testing_mir_perf2_OBJECTS)
 global_testing_mir_perf2_LDADD = $(LDADD)
@@ -1111,7 +1314,7 @@ am__global_testing_mmatrix_SOURCES_DIST = global/testing/mmatrix.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_mmatrix_OBJECTS = global/testing/mmatrix.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_mmatrix_OBJECTS = $(am_global_testing_mmatrix_OBJECTS)
 global_testing_mmatrix_LDADD = $(LDADD)
 global_testing_mmatrix_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1127,7 +1330,7 @@ am__global_testing_mtest_SOURCES_DIST = global/testing/mtest.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_mtest_OBJECTS = global/testing/mtest.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_mtest_OBJECTS = $(am_global_testing_mtest_OBJECTS)
 global_testing_mtest_LDADD = $(LDADD)
 global_testing_mtest_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1139,7 +1342,7 @@ am__global_testing_mulmatpatch_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_mulmatpatch_OBJECTS =  \
-	global/testing/mulmatpatch.$(OBJEXT) $(am__objects_9)
+	global/testing/mulmatpatch.$(OBJEXT) $(am__objects_15)
 global_testing_mulmatpatch_OBJECTS =  \
 	$(am_global_testing_mulmatpatch_OBJECTS)
 global_testing_mulmatpatch_LDADD = $(LDADD)
@@ -1156,7 +1359,7 @@ am__global_testing_mulmatpatchc_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_mulmatpatchc_OBJECTS =  \
-	global/testing/mulmatpatchc.$(OBJEXT) $(am__objects_9)
+	global/testing/mulmatpatchc.$(OBJEXT) $(am__objects_15)
 global_testing_mulmatpatchc_OBJECTS =  \
 	$(am_global_testing_mulmatpatchc_OBJECTS)
 global_testing_mulmatpatchc_LDADD = $(LDADD)
@@ -1169,7 +1372,7 @@ am__global_testing_nb2test_SOURCES_DIST = global/testing/nb2test.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_nb2test_OBJECTS = global/testing/nb2test.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_nb2test_OBJECTS = $(am_global_testing_nb2test_OBJECTS)
 global_testing_nb2test_LDADD = $(LDADD)
 global_testing_nb2test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1185,7 +1388,7 @@ am__global_testing_ndim_SOURCES_DIST = global/testing/ndim.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_ndim_OBJECTS = global/testing/ndim.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_ndim_OBJECTS = $(am_global_testing_ndim_OBJECTS)
 global_testing_ndim_LDADD = $(LDADD)
 global_testing_ndim_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1197,7 +1400,7 @@ global_testing_ndim_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_ndim_LDFLAGS) \
 	$(LDFLAGS) -o $@
 nodist_global_testing_nga_onesided_OBJECTS =  \
-	global/testing/nga-onesided.$(OBJEXT) $(am__objects_9)
+	global/testing/nga-onesided.$(OBJEXT) $(am__objects_15)
 global_testing_nga_onesided_OBJECTS =  \
 	$(nodist_global_testing_nga_onesided_OBJECTS)
 global_testing_nga_onesided_LDADD = $(LDADD)
@@ -1210,7 +1413,7 @@ global_testing_nga_onesided_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_nga_onesided_LDFLAGS) \
 	$(LDFLAGS) -o $@
 nodist_global_testing_nga_patch_OBJECTS =  \
-	global/testing/nga-patch.$(OBJEXT) $(am__objects_9)
+	global/testing/nga-patch.$(OBJEXT) $(am__objects_15)
 global_testing_nga_patch_OBJECTS =  \
 	$(nodist_global_testing_nga_patch_OBJECTS)
 global_testing_nga_patch_LDADD = $(LDADD)
@@ -1223,7 +1426,7 @@ global_testing_nga_patch_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_nga_patch_LDFLAGS) \
 	$(LDFLAGS) -o $@
 nodist_global_testing_nga_periodic_OBJECTS =  \
-	global/testing/nga-periodic.$(OBJEXT) $(am__objects_9)
+	global/testing/nga-periodic.$(OBJEXT) $(am__objects_15)
 global_testing_nga_periodic_OBJECTS =  \
 	$(nodist_global_testing_nga_periodic_OBJECTS)
 global_testing_nga_periodic_LDADD = $(LDADD)
@@ -1236,7 +1439,7 @@ global_testing_nga_periodic_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_nga_periodic_LDFLAGS) \
 	$(LDFLAGS) -o $@
 nodist_global_testing_nga_scatter_OBJECTS =  \
-	global/testing/nga-scatter.$(OBJEXT) $(am__objects_9)
+	global/testing/nga-scatter.$(OBJEXT) $(am__objects_15)
 global_testing_nga_scatter_OBJECTS =  \
 	$(nodist_global_testing_nga_scatter_OBJECTS)
 global_testing_nga_scatter_LDADD = $(LDADD)
@@ -1249,7 +1452,7 @@ global_testing_nga_scatter_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_nga_scatter_LDFLAGS) \
 	$(LDFLAGS) -o $@
 nodist_global_testing_nga_util_OBJECTS =  \
-	global/testing/nga-util.$(OBJEXT) $(am__objects_9)
+	global/testing/nga-util.$(OBJEXT) $(am__objects_15)
 global_testing_nga_util_OBJECTS =  \
 	$(nodist_global_testing_nga_util_OBJECTS)
 global_testing_nga_util_LDADD = $(LDADD)
@@ -1262,7 +1465,7 @@ global_testing_nga_util_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_nga_util_LDFLAGS) \
 	$(LDFLAGS) -o $@
 nodist_global_testing_ngatest_OBJECTS =  \
-	global/testing/ngatest.$(OBJEXT) $(am__objects_9)
+	global/testing/ngatest.$(OBJEXT) $(am__objects_15)
 global_testing_ngatest_OBJECTS =  \
 	$(nodist_global_testing_ngatest_OBJECTS)
 global_testing_ngatest_LDADD = $(LDADD)
@@ -1279,7 +1482,7 @@ am__global_testing_ntestc_SOURCES_DIST = global/testing/ntestc.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_ntestc_OBJECTS = global/testing/ntestc.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_ntestc_OBJECTS = $(am_global_testing_ntestc_OBJECTS)
 global_testing_ntestc_LDADD = $(LDADD)
 global_testing_ntestc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1291,7 +1494,7 @@ am__global_testing_ntestfc_SOURCES_DIST = global/testing/ntestfc.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_ntestfc_OBJECTS = global/testing/ntestfc.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_ntestfc_OBJECTS = $(am_global_testing_ntestfc_OBJECTS)
 global_testing_ntestfc_LDADD = $(LDADD)
 global_testing_ntestfc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1303,7 +1506,7 @@ am__global_testing_packc_SOURCES_DIST = global/testing/packc.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_packc_OBJECTS = global/testing/packc.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_packc_OBJECTS = $(am_global_testing_packc_OBJECTS)
 global_testing_packc_LDADD = $(LDADD)
 global_testing_packc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1315,7 +1518,7 @@ am__global_testing_patch_SOURCES_DIST = global/testing/patch.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_patch_OBJECTS = global/testing/patch.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_patch_OBJECTS = $(am_global_testing_patch_OBJECTS)
 global_testing_patch_LDADD = $(LDADD)
 global_testing_patch_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1331,7 +1534,7 @@ am__global_testing_patch2_SOURCES_DIST = global/testing/patch2.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_patch2_OBJECTS = global/testing/patch2.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_patch2_OBJECTS = $(am_global_testing_patch2_OBJECTS)
 global_testing_patch2_LDADD = $(LDADD)
 global_testing_patch2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1347,7 +1550,7 @@ am__global_testing_patch_enumc_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_patch_enumc_OBJECTS =  \
-	global/testing/patch_enumc.$(OBJEXT) $(am__objects_9)
+	global/testing/patch_enumc.$(OBJEXT) $(am__objects_15)
 global_testing_patch_enumc_OBJECTS =  \
 	$(am_global_testing_patch_enumc_OBJECTS)
 global_testing_patch_enumc_LDADD = $(LDADD)
@@ -1360,7 +1563,7 @@ am__global_testing_patch_enumf_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_patch_enumf_OBJECTS =  \
-	global/testing/patch_enumf.$(OBJEXT) $(am__objects_9)
+	global/testing/patch_enumf.$(OBJEXT) $(am__objects_15)
 global_testing_patch_enumf_OBJECTS =  \
 	$(am_global_testing_patch_enumf_OBJECTS)
 global_testing_patch_enumf_LDADD = $(LDADD)
@@ -1377,7 +1580,7 @@ am__global_testing_perf_SOURCES_DIST = global/testing/perf.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_perf_OBJECTS = global/testing/perf.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_perf_OBJECTS = $(am_global_testing_perf_OBJECTS)
 global_testing_perf_LDADD = $(LDADD)
 global_testing_perf_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1393,7 +1596,7 @@ am__global_testing_perf2_SOURCES_DIST = global/testing/perf2.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_perf2_OBJECTS = global/testing/perf2.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_perf2_OBJECTS = $(am_global_testing_perf2_OBJECTS)
 global_testing_perf2_LDADD = $(LDADD)
 global_testing_perf2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1405,7 +1608,7 @@ am__global_testing_perfmod_SOURCES_DIST = global/testing/perfmod.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_perfmod_OBJECTS = global/testing/perfmod.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_perfmod_OBJECTS = $(am_global_testing_perfmod_OBJECTS)
 global_testing_perfmod_LDADD = $(LDADD)
 global_testing_perfmod_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1421,7 +1624,7 @@ am__global_testing_perform_SOURCES_DIST = global/testing/perform.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_perform_OBJECTS = global/testing/perform.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_perform_OBJECTS = $(am_global_testing_perform_OBJECTS)
 global_testing_perform_LDADD = $(LDADD)
 global_testing_perform_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1437,7 +1640,7 @@ am__global_testing_pg2test_SOURCES_DIST = global/testing/pg2test.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_pg2test_OBJECTS = global/testing/pg2test.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_pg2test_OBJECTS = $(am_global_testing_pg2test_OBJECTS)
 global_testing_pg2test_LDADD = $(LDADD)
 global_testing_pg2test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1453,7 +1656,7 @@ am__global_testing_pg2testmatmult_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_pg2testmatmult_OBJECTS =  \
-	global/testing/pg2testmatmult.$(OBJEXT) $(am__objects_9)
+	global/testing/pg2testmatmult.$(OBJEXT) $(am__objects_15)
 global_testing_pg2testmatmult_OBJECTS =  \
 	$(am_global_testing_pg2testmatmult_OBJECTS)
 global_testing_pg2testmatmult_LDADD = $(LDADD)
@@ -1470,7 +1673,7 @@ am__global_testing_pgtest_SOURCES_DIST = global/testing/pgtest.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_pgtest_OBJECTS = global/testing/pgtest.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_pgtest_OBJECTS = $(am_global_testing_pgtest_OBJECTS)
 global_testing_pgtest_LDADD = $(LDADD)
 global_testing_pgtest_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1486,7 +1689,7 @@ am__global_testing_pgtestmatmult_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_pgtestmatmult_OBJECTS =  \
-	global/testing/pgtestmatmult.$(OBJEXT) $(am__objects_9)
+	global/testing/pgtestmatmult.$(OBJEXT) $(am__objects_15)
 global_testing_pgtestmatmult_OBJECTS =  \
 	$(am_global_testing_pgtestmatmult_OBJECTS)
 global_testing_pgtestmatmult_LDADD = $(LDADD)
@@ -1503,7 +1706,7 @@ am__global_testing_print_SOURCES_DIST = global/testing/print.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_print_OBJECTS = global/testing/print.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_print_OBJECTS = $(am_global_testing_print_OBJECTS)
 global_testing_print_LDADD = $(LDADD)
 global_testing_print_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1515,7 +1718,7 @@ am__global_testing_random_SOURCES_DIST = global/testing/random.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_random_OBJECTS = global/testing/random.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_random_OBJECTS = $(am_global_testing_random_OBJECTS)
 global_testing_random_LDADD = $(LDADD)
 global_testing_random_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1531,7 +1734,7 @@ am__global_testing_scan_SOURCES_DIST = global/testing/scan.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_scan_OBJECTS = global/testing/scan.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_scan_OBJECTS = $(am_global_testing_scan_OBJECTS)
 global_testing_scan_LDADD = $(LDADD)
 global_testing_scan_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1547,7 +1750,7 @@ am__global_testing_scan_addc_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_scan_addc_OBJECTS =  \
-	global/testing/scan_addc.$(OBJEXT) $(am__objects_9)
+	global/testing/scan_addc.$(OBJEXT) $(am__objects_15)
 global_testing_scan_addc_OBJECTS =  \
 	$(am_global_testing_scan_addc_OBJECTS)
 global_testing_scan_addc_LDADD = $(LDADD)
@@ -1560,7 +1763,7 @@ am__global_testing_scan_copyc_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_scan_copyc_OBJECTS =  \
-	global/testing/scan_copyc.$(OBJEXT) $(am__objects_9)
+	global/testing/scan_copyc.$(OBJEXT) $(am__objects_15)
 global_testing_scan_copyc_OBJECTS =  \
 	$(am_global_testing_scan_copyc_OBJECTS)
 global_testing_scan_copyc_LDADD = $(LDADD)
@@ -1573,7 +1776,7 @@ am__global_testing_simple_groups_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_simple_groups_OBJECTS =  \
-	global/testing/simple_groups.$(OBJEXT) $(am__objects_9)
+	global/testing/simple_groups.$(OBJEXT) $(am__objects_15)
 global_testing_simple_groups_OBJECTS =  \
 	$(am_global_testing_simple_groups_OBJECTS)
 global_testing_simple_groups_LDADD = $(LDADD)
@@ -1590,7 +1793,7 @@ am__global_testing_simple_groups_comm_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_simple_groups_comm_OBJECTS =  \
-	global/testing/simple_groups_comm.$(OBJEXT) $(am__objects_9)
+	global/testing/simple_groups_comm.$(OBJEXT) $(am__objects_15)
 global_testing_simple_groups_comm_OBJECTS =  \
 	$(am_global_testing_simple_groups_comm_OBJECTS)
 global_testing_simple_groups_comm_LDADD = $(LDADD)
@@ -1608,7 +1811,7 @@ am__global_testing_simple_groups_commc_SOURCES_DIST =  \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_simple_groups_commc_OBJECTS =  \
-	global/testing/simple_groups_commc.$(OBJEXT) $(am__objects_9)
+	global/testing/simple_groups_commc.$(OBJEXT) $(am__objects_15)
 global_testing_simple_groups_commc_OBJECTS =  \
 	$(am_global_testing_simple_groups_commc_OBJECTS)
 global_testing_simple_groups_commc_LDADD = $(LDADD)
@@ -1621,7 +1824,7 @@ am__global_testing_sparse_SOURCES_DIST = global/testing/sparse.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_sparse_OBJECTS = global/testing/sparse.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_sparse_OBJECTS = $(am_global_testing_sparse_OBJECTS)
 global_testing_sparse_LDADD = $(LDADD)
 global_testing_sparse_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1637,7 +1840,7 @@ am__global_testing_sprsmatmult_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_sprsmatmult_OBJECTS =  \
-	global/testing/sprsmatmult.$(OBJEXT) $(am__objects_9)
+	global/testing/sprsmatmult.$(OBJEXT) $(am__objects_15)
 global_testing_sprsmatmult_OBJECTS =  \
 	$(am_global_testing_sprsmatmult_OBJECTS)
 global_testing_sprsmatmult_LDADD = $(LDADD)
@@ -1654,7 +1857,7 @@ am__global_testing_stride_SOURCES_DIST = global/testing/stride.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_stride_OBJECTS = global/testing/stride.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_stride_OBJECTS = $(am_global_testing_stride_OBJECTS)
 global_testing_stride_LDADD = $(LDADD)
 global_testing_stride_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1670,7 +1873,7 @@ am__global_testing_test_SOURCES_DIST = global/testing/test.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_test_OBJECTS = global/testing/test.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_test_OBJECTS = $(am_global_testing_test_OBJECTS)
 global_testing_test_LDADD = $(LDADD)
 global_testing_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1685,14 +1888,14 @@ am__global_testing_test_mirrored_SOURCES_DIST = global/testing/test.F \
 	global/testing/testutil.fh global/testing/testutil.h \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
-@ENABLE_F77_TRUE@am__objects_10 = global/testing/global_testing_test_mirrored-ffflush.$(OBJEXT) \
+@ENABLE_F77_TRUE@am__objects_16 = global/testing/global_testing_test_mirrored-ffflush.$(OBJEXT) \
 @ENABLE_F77_TRUE@	global/testing/global_testing_test_mirrored-testblas.$(OBJEXT)
-am__objects_11 =  \
+am__objects_17 =  \
 	global/testing/global_testing_test_mirrored-util.$(OBJEXT) \
-	$(am__objects_10)
+	$(am__objects_16)
 am_global_testing_test_mirrored_OBJECTS =  \
 	global/testing/global_testing_test_mirrored-test.$(OBJEXT) \
-	$(am__objects_11)
+	$(am__objects_17)
 global_testing_test_mirrored_OBJECTS =  \
 	$(am_global_testing_test_mirrored_OBJECTS)
 global_testing_test_mirrored_LDADD = $(LDADD)
@@ -1709,7 +1912,7 @@ am__global_testing_testc_SOURCES_DIST = global/testing/testc.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_testc_OBJECTS = global/testing/testc.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_testc_OBJECTS = $(am_global_testing_testc_OBJECTS)
 global_testing_testc_LDADD = $(LDADD)
 global_testing_testc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1721,7 +1924,7 @@ am__global_testing_testeig_SOURCES_DIST = global/testing/testeig.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_testeig_OBJECTS = global/testing/testeig.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_testeig_OBJECTS = $(am_global_testing_testeig_OBJECTS)
 global_testing_testeig_LDADD = $(LDADD)
 global_testing_testeig_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1737,7 +1940,7 @@ am__global_testing_testmatmult_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_testmatmult_OBJECTS =  \
-	global/testing/testmatmult.$(OBJEXT) $(am__objects_9)
+	global/testing/testmatmult.$(OBJEXT) $(am__objects_15)
 global_testing_testmatmult_OBJECTS =  \
 	$(am_global_testing_testmatmult_OBJECTS)
 global_testing_testmatmult_LDADD = $(LDADD)
@@ -1754,7 +1957,7 @@ am__global_testing_testmatmultc_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_testmatmultc_OBJECTS =  \
-	global/testing/testmatmultc.$(OBJEXT) $(am__objects_9)
+	global/testing/testmatmultc.$(OBJEXT) $(am__objects_15)
 global_testing_testmatmultc_OBJECTS =  \
 	$(am_global_testing_testmatmultc_OBJECTS)
 global_testing_testmatmultc_LDADD = $(LDADD)
@@ -1767,7 +1970,7 @@ am__global_testing_testmult_SOURCES_DIST = global/testing/testmult.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_testmult_OBJECTS =  \
-	global/testing/testmult.$(OBJEXT) $(am__objects_9)
+	global/testing/testmult.$(OBJEXT) $(am__objects_15)
 global_testing_testmult_OBJECTS =  \
 	$(am_global_testing_testmult_OBJECTS)
 global_testing_testmult_LDADD = $(LDADD)
@@ -1780,7 +1983,7 @@ am__global_testing_testmultrect_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_testmultrect_OBJECTS =  \
-	global/testing/testmultrect.$(OBJEXT) $(am__objects_9)
+	global/testing/testmultrect.$(OBJEXT) $(am__objects_15)
 global_testing_testmultrect_OBJECTS =  \
 	$(am_global_testing_testmultrect_OBJECTS)
 global_testing_testmultrect_LDADD = $(LDADD)
@@ -1793,7 +1996,7 @@ am__global_testing_testsolve_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_testsolve_OBJECTS =  \
-	global/testing/testsolve.$(OBJEXT) $(am__objects_9)
+	global/testing/testsolve.$(OBJEXT) $(am__objects_15)
 global_testing_testsolve_OBJECTS =  \
 	$(am_global_testing_testsolve_OBJECTS)
 global_testing_testsolve_LDADD = $(LDADD)
@@ -1810,7 +2013,7 @@ am__global_testing_testspd_SOURCES_DIST = global/testing/testspd.F \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_testspd_OBJECTS = global/testing/testspd.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_testspd_OBJECTS = $(am_global_testing_testspd_OBJECTS)
 global_testing_testspd_LDADD = $(LDADD)
 global_testing_testspd_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -1826,7 +2029,7 @@ am__global_testing_types_test_SOURCES_DIST =  \
 	global/testing/testutil.h global/testing/util.c \
 	global/testing/ffflush.F global/testing/testblas.F
 am_global_testing_types_test_OBJECTS =  \
-	global/testing/types-test.$(OBJEXT) $(am__objects_9)
+	global/testing/types-test.$(OBJEXT) $(am__objects_15)
 global_testing_types_test_OBJECTS =  \
 	$(am_global_testing_types_test_OBJECTS)
 global_testing_types_test_LDADD = $(LDADD)
@@ -1838,10 +2041,10 @@ global_testing_types_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(global_testing_types_test_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_12 = global/testing/unit-tests/mock.$(OBJEXT)
+am__objects_18 = global/testing/unit-tests/mock.$(OBJEXT)
 am_global_testing_unit_tests_ga_abs_value_OBJECTS =  \
 	global/testing/unit-tests/ga_abs_value.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_abs_value_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_abs_value_OBJECTS)
 global_testing_unit_tests_ga_abs_value_LDADD = $(LDADD)
@@ -1850,7 +2053,7 @@ global_testing_unit_tests_ga_abs_value_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_acc_OBJECTS =  \
-	global/testing/unit-tests/ga_acc.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_acc.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_acc_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_acc_OBJECTS)
 global_testing_unit_tests_ga_acc_LDADD = $(LDADD)
@@ -1859,7 +2062,7 @@ global_testing_unit_tests_ga_acc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_add_OBJECTS =  \
-	global/testing/unit-tests/ga_add.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_add.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_add_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_add_OBJECTS)
 global_testing_unit_tests_ga_add_LDADD = $(LDADD)
@@ -1869,7 +2072,7 @@ global_testing_unit_tests_ga_add_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_add_constant_OBJECTS =  \
 	global/testing/unit-tests/ga_add_constant.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_add_constant_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_add_constant_OBJECTS)
 global_testing_unit_tests_ga_add_constant_LDADD = $(LDADD)
@@ -1879,7 +2082,7 @@ global_testing_unit_tests_ga_add_constant_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_add_constantpatch_OBJECTS =  \
 	global/testing/unit-tests/ga_add_constantpatch.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_add_constantpatch_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_add_constantpatch_OBJECTS)
 global_testing_unit_tests_ga_add_constantpatch_LDADD = $(LDADD)
@@ -1889,7 +2092,7 @@ global_testing_unit_tests_ga_add_constantpatch_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_add_diagonal_OBJECTS =  \
 	global/testing/unit-tests/ga_add_diagonal.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_add_diagonal_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_add_diagonal_OBJECTS)
 global_testing_unit_tests_ga_add_diagonal_LDADD = $(LDADD)
@@ -1899,7 +2102,7 @@ global_testing_unit_tests_ga_add_diagonal_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_add_patch_OBJECTS =  \
 	global/testing/unit-tests/ga_add_patch.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_add_patch_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_add_patch_OBJECTS)
 global_testing_unit_tests_ga_add_patch_LDADD = $(LDADD)
@@ -1908,7 +2111,7 @@ global_testing_unit_tests_ga_add_patch_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_copy_OBJECTS =  \
-	global/testing/unit-tests/ga_copy.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_copy.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_copy_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_copy_OBJECTS)
 global_testing_unit_tests_ga_copy_LDADD = $(LDADD)
@@ -1917,7 +2120,7 @@ global_testing_unit_tests_ga_copy_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_copy2_OBJECTS =  \
-	global/testing/unit-tests/ga_copy2.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_copy2.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_copy2_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_copy2_OBJECTS)
 global_testing_unit_tests_ga_copy2_LDADD = $(LDADD)
@@ -1926,7 +2129,7 @@ global_testing_unit_tests_ga_copy2_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_copy3_OBJECTS =  \
-	global/testing/unit-tests/ga_copy3.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_copy3.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_copy3_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_copy3_OBJECTS)
 global_testing_unit_tests_ga_copy3_LDADD = $(LDADD)
@@ -1936,7 +2139,7 @@ global_testing_unit_tests_ga_copy3_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_copypatch_OBJECTS =  \
 	global/testing/unit-tests/ga_copypatch.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_copypatch_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_copypatch_OBJECTS)
 global_testing_unit_tests_ga_copypatch_LDADD = $(LDADD)
@@ -1946,7 +2149,7 @@ global_testing_unit_tests_ga_copypatch_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_copypatch2_OBJECTS =  \
 	global/testing/unit-tests/ga_copypatch2.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_copypatch2_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_copypatch2_OBJECTS)
 global_testing_unit_tests_ga_copypatch2_LDADD = $(LDADD)
@@ -1956,7 +2159,7 @@ global_testing_unit_tests_ga_copypatch2_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create_OBJECTS =  \
 	global/testing/unit-tests/ga_create.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_create_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_create_OBJECTS)
 global_testing_unit_tests_ga_create_LDADD = $(LDADD)
@@ -1966,7 +2169,7 @@ global_testing_unit_tests_ga_create_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create1_OBJECTS =  \
 	global/testing/unit-tests/ga_create1.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_create1_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_create1_OBJECTS)
 global_testing_unit_tests_ga_create1_LDADD = $(LDADD)
@@ -1976,7 +2179,7 @@ global_testing_unit_tests_ga_create1_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create2_OBJECTS =  \
 	global/testing/unit-tests/ga_create2.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_create2_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_create2_OBJECTS)
 global_testing_unit_tests_ga_create2_LDADD = $(LDADD)
@@ -1986,7 +2189,7 @@ global_testing_unit_tests_ga_create2_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create3_OBJECTS =  \
 	global/testing/unit-tests/ga_create3.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_create3_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_create3_OBJECTS)
 global_testing_unit_tests_ga_create3_LDADD = $(LDADD)
@@ -1996,7 +2199,7 @@ global_testing_unit_tests_ga_create3_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create_handle_OBJECTS =  \
 	global/testing/unit-tests/ga_create_handle.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_create_handle_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_create_handle_OBJECTS)
 global_testing_unit_tests_ga_create_handle_LDADD = $(LDADD)
@@ -2006,7 +2209,7 @@ global_testing_unit_tests_ga_create_handle_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create_irreg_OBJECTS =  \
 	global/testing/unit-tests/ga_create_irreg.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_create_irreg_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_create_irreg_OBJECTS)
 global_testing_unit_tests_ga_create_irreg_LDADD = $(LDADD)
@@ -2016,7 +2219,7 @@ global_testing_unit_tests_ga_create_irreg_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create_irreg2_OBJECTS =  \
 	global/testing/unit-tests/ga_create_irreg2.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_create_irreg2_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_create_irreg2_OBJECTS)
 global_testing_unit_tests_ga_create_irreg2_LDADD = $(LDADD)
@@ -2026,7 +2229,7 @@ global_testing_unit_tests_ga_create_irreg2_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_create_irreg3_OBJECTS =  \
 	global/testing/unit-tests/ga_create_irreg3.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_create_irreg3_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_create_irreg3_OBJECTS)
 global_testing_unit_tests_ga_create_irreg3_LDADD = $(LDADD)
@@ -2036,7 +2239,7 @@ global_testing_unit_tests_ga_create_irreg3_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_destroy_OBJECTS =  \
 	global/testing/unit-tests/ga_destroy.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_destroy_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_destroy_OBJECTS)
 global_testing_unit_tests_ga_destroy_LDADD = $(LDADD)
@@ -2045,7 +2248,7 @@ global_testing_unit_tests_ga_destroy_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_dgop_OBJECTS =  \
-	global/testing/unit-tests/ga_dgop.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_dgop.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_dgop_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_dgop_OBJECTS)
 global_testing_unit_tests_ga_dgop_LDADD = $(LDADD)
@@ -2054,7 +2257,7 @@ global_testing_unit_tests_ga_dgop_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_dot_OBJECTS =  \
-	global/testing/unit-tests/ga_dot.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_dot.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_dot_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_dot_OBJECTS)
 global_testing_unit_tests_ga_dot_LDADD = $(LDADD)
@@ -2064,7 +2267,7 @@ global_testing_unit_tests_ga_dot_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_duplicate_OBJECTS =  \
 	global/testing/unit-tests/ga_duplicate.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_duplicate_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_duplicate_OBJECTS)
 global_testing_unit_tests_ga_duplicate_LDADD = $(LDADD)
@@ -2074,7 +2277,7 @@ global_testing_unit_tests_ga_duplicate_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_divide_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_divide.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_elem_divide_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_elem_divide_OBJECTS)
 global_testing_unit_tests_ga_elem_divide_LDADD = $(LDADD)
@@ -2084,7 +2287,7 @@ global_testing_unit_tests_ga_elem_divide_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_dividepatch_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_dividepatch.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_elem_dividepatch_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_elem_dividepatch_OBJECTS)
 global_testing_unit_tests_ga_elem_dividepatch_LDADD = $(LDADD)
@@ -2094,7 +2297,7 @@ global_testing_unit_tests_ga_elem_dividepatch_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_maximum_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_maximum.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_elem_maximum_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_elem_maximum_OBJECTS)
 global_testing_unit_tests_ga_elem_maximum_LDADD = $(LDADD)
@@ -2104,7 +2307,7 @@ global_testing_unit_tests_ga_elem_maximum_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_maximumpatch_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_maximumpatch.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_elem_maximumpatch_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_elem_maximumpatch_OBJECTS)
 global_testing_unit_tests_ga_elem_maximumpatch_LDADD = $(LDADD)
@@ -2114,7 +2317,7 @@ global_testing_unit_tests_ga_elem_maximumpatch_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_minimum_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_minimum.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_elem_minimum_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_elem_minimum_OBJECTS)
 global_testing_unit_tests_ga_elem_minimum_LDADD = $(LDADD)
@@ -2124,7 +2327,7 @@ global_testing_unit_tests_ga_elem_minimum_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_minimumpatch_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_minimumpatch.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_elem_minimumpatch_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_elem_minimumpatch_OBJECTS)
 global_testing_unit_tests_ga_elem_minimumpatch_LDADD = $(LDADD)
@@ -2134,7 +2337,7 @@ global_testing_unit_tests_ga_elem_minimumpatch_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_multiply_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_multiply.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_elem_multiply_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_elem_multiply_OBJECTS)
 global_testing_unit_tests_ga_elem_multiply_LDADD = $(LDADD)
@@ -2144,7 +2347,7 @@ global_testing_unit_tests_ga_elem_multiply_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_elem_multiplypatch_OBJECTS =  \
 	global/testing/unit-tests/ga_elem_multiplypatch.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_elem_multiplypatch_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_elem_multiplypatch_OBJECTS)
 global_testing_unit_tests_ga_elem_multiplypatch_LDADD = $(LDADD)
@@ -2153,7 +2356,7 @@ global_testing_unit_tests_ga_elem_multiplypatch_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_fill_OBJECTS =  \
-	global/testing/unit-tests/ga_fill.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_fill.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_fill_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_fill_OBJECTS)
 global_testing_unit_tests_ga_fill_LDADD = $(LDADD)
@@ -2163,7 +2366,7 @@ global_testing_unit_tests_ga_fill_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_fillpatch_OBJECTS =  \
 	global/testing/unit-tests/ga_fillpatch.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_fillpatch_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_fillpatch_OBJECTS)
 global_testing_unit_tests_ga_fillpatch_LDADD = $(LDADD)
@@ -2173,7 +2376,7 @@ global_testing_unit_tests_ga_fillpatch_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_fillpatch1_OBJECTS =  \
 	global/testing/unit-tests/ga_fillpatch1.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_fillpatch1_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_fillpatch1_OBJECTS)
 global_testing_unit_tests_ga_fillpatch1_LDADD = $(LDADD)
@@ -2183,7 +2386,7 @@ global_testing_unit_tests_ga_fillpatch1_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_gather_OBJECTS =  \
 	global/testing/unit-tests/ga_gather.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_gather_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_gather_OBJECTS)
 global_testing_unit_tests_ga_gather_LDADD = $(LDADD)
@@ -2193,7 +2396,7 @@ global_testing_unit_tests_ga_gather_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_gather2_OBJECTS =  \
 	global/testing/unit-tests/ga_gather2.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_gather2_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_gather2_OBJECTS)
 global_testing_unit_tests_ga_gather2_LDADD = $(LDADD)
@@ -2203,7 +2406,7 @@ global_testing_unit_tests_ga_gather2_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_gather3_OBJECTS =  \
 	global/testing/unit-tests/ga_gather3.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_gather3_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_gather3_OBJECTS)
 global_testing_unit_tests_ga_gather3_LDADD = $(LDADD)
@@ -2212,7 +2415,7 @@ global_testing_unit_tests_ga_gather3_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_get_OBJECTS =  \
-	global/testing/unit-tests/ga_get.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_get.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_get_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_get_OBJECTS)
 global_testing_unit_tests_ga_get_LDADD = $(LDADD)
@@ -2222,7 +2425,7 @@ global_testing_unit_tests_ga_get_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_get_blockinfo_OBJECTS =  \
 	global/testing/unit-tests/ga_get_blockinfo.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_get_blockinfo_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_get_blockinfo_OBJECTS)
 global_testing_unit_tests_ga_get_blockinfo_LDADD = $(LDADD)
@@ -2232,7 +2435,7 @@ global_testing_unit_tests_ga_get_blockinfo_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_get_diagonal_OBJECTS =  \
 	global/testing/unit-tests/ga_get_diagonal.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_get_diagonal_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_get_diagonal_OBJECTS)
 global_testing_unit_tests_ga_get_diagonal_LDADD = $(LDADD)
@@ -2241,7 +2444,7 @@ global_testing_unit_tests_ga_get_diagonal_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_igop_OBJECTS =  \
-	global/testing/unit-tests/ga_igop.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_igop.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_igop_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_igop_OBJECTS)
 global_testing_unit_tests_ga_igop_LDADD = $(LDADD)
@@ -2250,7 +2453,7 @@ global_testing_unit_tests_ga_igop_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_igop2_OBJECTS =  \
-	global/testing/unit-tests/ga_igop2.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_igop2.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_igop2_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_igop2_OBJECTS)
 global_testing_unit_tests_ga_igop2_LDADD = $(LDADD)
@@ -2260,7 +2463,7 @@ global_testing_unit_tests_ga_igop2_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_inquire_OBJECTS =  \
 	global/testing/unit-tests/ga_inquire.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_inquire_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_inquire_OBJECTS)
 global_testing_unit_tests_ga_inquire_LDADD = $(LDADD)
@@ -2270,7 +2473,7 @@ global_testing_unit_tests_ga_inquire_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_intialize_OBJECTS =  \
 	global/testing/unit-tests/ga_intialize.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_intialize_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_intialize_OBJECTS)
 global_testing_unit_tests_ga_intialize_LDADD = $(LDADD)
@@ -2279,7 +2482,7 @@ global_testing_unit_tests_ga_intialize_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_lgop_OBJECTS =  \
-	global/testing/unit-tests/ga_lgop.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_lgop.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_lgop_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_lgop_OBJECTS)
 global_testing_unit_tests_ga_lgop_LDADD = $(LDADD)
@@ -2289,7 +2492,7 @@ global_testing_unit_tests_ga_lgop_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_median_OBJECTS =  \
 	global/testing/unit-tests/ga_median.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_median_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_median_OBJECTS)
 global_testing_unit_tests_ga_median_LDADD = $(LDADD)
@@ -2298,7 +2501,7 @@ global_testing_unit_tests_ga_median_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_ndim_OBJECTS =  \
-	global/testing/unit-tests/ga_ndim.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_ndim.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_ndim_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_ndim_OBJECTS)
 global_testing_unit_tests_ga_ndim_LDADD = $(LDADD)
@@ -2307,7 +2510,7 @@ global_testing_unit_tests_ga_ndim_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_ndim2_OBJECTS =  \
-	global/testing/unit-tests/ga_ndim2.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_ndim2.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_ndim2_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_ndim2_OBJECTS)
 global_testing_unit_tests_ga_ndim2_LDADD = $(LDADD)
@@ -2317,7 +2520,7 @@ global_testing_unit_tests_ga_ndim2_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_nnodes_OBJECTS =  \
 	global/testing/unit-tests/ga_nnodes.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_nnodes_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_nnodes_OBJECTS)
 global_testing_unit_tests_ga_nnodes_LDADD = $(LDADD)
@@ -2327,7 +2530,7 @@ global_testing_unit_tests_ga_nnodes_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_nodeid_OBJECTS =  \
 	global/testing/unit-tests/ga_nodeid.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_nodeid_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_nodeid_OBJECTS)
 global_testing_unit_tests_ga_nodeid_LDADD = $(LDADD)
@@ -2337,7 +2540,7 @@ global_testing_unit_tests_ga_nodeid_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_create_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_create.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_pgroup_create_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_pgroup_create_OBJECTS)
 global_testing_unit_tests_ga_pgroup_create_LDADD = $(LDADD)
@@ -2347,7 +2550,7 @@ global_testing_unit_tests_ga_pgroup_create_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_create2_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_create2.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_pgroup_create2_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_pgroup_create2_OBJECTS)
 global_testing_unit_tests_ga_pgroup_create2_LDADD = $(LDADD)
@@ -2357,7 +2560,7 @@ global_testing_unit_tests_ga_pgroup_create2_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_create3_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_create3.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_pgroup_create3_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_pgroup_create3_OBJECTS)
 global_testing_unit_tests_ga_pgroup_create3_LDADD = $(LDADD)
@@ -2367,7 +2570,7 @@ global_testing_unit_tests_ga_pgroup_create3_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_create4_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_create4.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_pgroup_create4_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_pgroup_create4_OBJECTS)
 global_testing_unit_tests_ga_pgroup_create4_LDADD = $(LDADD)
@@ -2377,7 +2580,7 @@ global_testing_unit_tests_ga_pgroup_create4_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_create5_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_create5.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_pgroup_create5_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_pgroup_create5_OBJECTS)
 global_testing_unit_tests_ga_pgroup_create5_LDADD = $(LDADD)
@@ -2387,7 +2590,7 @@ global_testing_unit_tests_ga_pgroup_create5_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_destroy_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_destroy.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_pgroup_destroy_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_pgroup_destroy_OBJECTS)
 global_testing_unit_tests_ga_pgroup_destroy_LDADD = $(LDADD)
@@ -2397,7 +2600,7 @@ global_testing_unit_tests_ga_pgroup_destroy_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_destroy2_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_destroy2.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_pgroup_destroy2_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_pgroup_destroy2_OBJECTS)
 global_testing_unit_tests_ga_pgroup_destroy2_LDADD = $(LDADD)
@@ -2407,7 +2610,7 @@ global_testing_unit_tests_ga_pgroup_destroy2_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_nnodes_nodeid_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_nnodes_nodeid.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_pgroup_nnodes_nodeid_OBJECTS = $(am_global_testing_unit_tests_ga_pgroup_nnodes_nodeid_OBJECTS)
 global_testing_unit_tests_ga_pgroup_nnodes_nodeid_LDADD = $(LDADD)
 global_testing_unit_tests_ga_pgroup_nnodes_nodeid_DEPENDENCIES =  \
@@ -2416,7 +2619,7 @@ global_testing_unit_tests_ga_pgroup_nnodes_nodeid_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_pgroup_setdefault_OBJECTS =  \
 	global/testing/unit-tests/ga_pgroup_setdefault.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_pgroup_setdefault_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_pgroup_setdefault_OBJECTS)
 global_testing_unit_tests_ga_pgroup_setdefault_LDADD = $(LDADD)
@@ -2425,7 +2628,7 @@ global_testing_unit_tests_ga_pgroup_setdefault_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_put_OBJECTS =  \
-	global/testing/unit-tests/ga_put.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_put.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_put_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_put_OBJECTS)
 global_testing_unit_tests_ga_put_LDADD = $(LDADD)
@@ -2434,7 +2637,7 @@ global_testing_unit_tests_ga_put_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_put2_OBJECTS =  \
-	global/testing/unit-tests/ga_put2.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_put2.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_put2_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_put2_OBJECTS)
 global_testing_unit_tests_ga_put2_LDADD = $(LDADD)
@@ -2443,7 +2646,7 @@ global_testing_unit_tests_ga_put2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_scale_OBJECTS =  \
-	global/testing/unit-tests/ga_scale.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_scale.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_scale_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_scale_OBJECTS)
 global_testing_unit_tests_ga_scale_LDADD = $(LDADD)
@@ -2453,7 +2656,7 @@ global_testing_unit_tests_ga_scale_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_scale2_OBJECTS =  \
 	global/testing/unit-tests/ga_scale2.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_scale2_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_scale2_OBJECTS)
 global_testing_unit_tests_ga_scale2_LDADD = $(LDADD)
@@ -2463,7 +2666,7 @@ global_testing_unit_tests_ga_scale2_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_scale_cols_OBJECTS =  \
 	global/testing/unit-tests/ga_scale_cols.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_scale_cols_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_scale_cols_OBJECTS)
 global_testing_unit_tests_ga_scale_cols_LDADD = $(LDADD)
@@ -2473,7 +2676,7 @@ global_testing_unit_tests_ga_scale_cols_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_scale_patch_OBJECTS =  \
 	global/testing/unit-tests/ga_scale_patch.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_scale_patch_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_scale_patch_OBJECTS)
 global_testing_unit_tests_ga_scale_patch_LDADD = $(LDADD)
@@ -2483,7 +2686,7 @@ global_testing_unit_tests_ga_scale_patch_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_scale_rows_OBJECTS =  \
 	global/testing/unit-tests/ga_scale_rows.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_scale_rows_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_scale_rows_OBJECTS)
 global_testing_unit_tests_ga_scale_rows_LDADD = $(LDADD)
@@ -2493,7 +2696,7 @@ global_testing_unit_tests_ga_scale_rows_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_scatter_OBJECTS =  \
 	global/testing/unit-tests/ga_scatter.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_scatter_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_scatter_OBJECTS)
 global_testing_unit_tests_ga_scatter_LDADD = $(LDADD)
@@ -2503,7 +2706,7 @@ global_testing_unit_tests_ga_scatter_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_set_data_OBJECTS =  \
 	global/testing/unit-tests/ga_set_data.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_set_data_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_set_data_OBJECTS)
 global_testing_unit_tests_ga_set_data_LDADD = $(LDADD)
@@ -2513,7 +2716,7 @@ global_testing_unit_tests_ga_set_data_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_set_diagonal_OBJECTS =  \
 	global/testing/unit-tests/ga_set_diagonal.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_set_diagonal_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_set_diagonal_OBJECTS)
 global_testing_unit_tests_ga_set_diagonal_LDADD = $(LDADD)
@@ -2523,7 +2726,7 @@ global_testing_unit_tests_ga_set_diagonal_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_set_restricted_OBJECTS =  \
 	global/testing/unit-tests/ga_set_restricted.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_set_restricted_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_set_restricted_OBJECTS)
 global_testing_unit_tests_ga_set_restricted_LDADD = $(LDADD)
@@ -2532,7 +2735,7 @@ global_testing_unit_tests_ga_set_restricted_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_solve_OBJECTS =  \
-	global/testing/unit-tests/ga_solve.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_solve.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_solve_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_solve_OBJECTS)
 global_testing_unit_tests_ga_solve_LDADD = $(LDADD)
@@ -2541,7 +2744,7 @@ global_testing_unit_tests_ga_solve_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_sync_OBJECTS =  \
-	global/testing/unit-tests/ga_sync.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_sync.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_sync_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_sync_OBJECTS)
 global_testing_unit_tests_ga_sync_LDADD = $(LDADD)
@@ -2551,7 +2754,7 @@ global_testing_unit_tests_ga_sync_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_transpose_OBJECTS =  \
 	global/testing/unit-tests/ga_transpose.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_transpose_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_transpose_OBJECTS)
 global_testing_unit_tests_ga_transpose_LDADD = $(LDADD)
@@ -2561,7 +2764,7 @@ global_testing_unit_tests_ga_transpose_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_transpose2_OBJECTS =  \
 	global/testing/unit-tests/ga_transpose2.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_transpose2_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_transpose2_OBJECTS)
 global_testing_unit_tests_ga_transpose2_LDADD = $(LDADD)
@@ -2571,7 +2774,7 @@ global_testing_unit_tests_ga_transpose2_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_transpose3_OBJECTS =  \
 	global/testing/unit-tests/ga_transpose3.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_transpose3_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_transpose3_OBJECTS)
 global_testing_unit_tests_ga_transpose3_LDADD = $(LDADD)
@@ -2580,7 +2783,7 @@ global_testing_unit_tests_ga_transpose3_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_zero_OBJECTS =  \
-	global/testing/unit-tests/ga_zero.$(OBJEXT) $(am__objects_12)
+	global/testing/unit-tests/ga_zero.$(OBJEXT) $(am__objects_18)
 global_testing_unit_tests_ga_zero_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_zero_OBJECTS)
 global_testing_unit_tests_ga_zero_LDADD = $(LDADD)
@@ -2590,7 +2793,7 @@ global_testing_unit_tests_ga_zero_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_zerodiagonal_OBJECTS =  \
 	global/testing/unit-tests/ga_zerodiagonal.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_zerodiagonal_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_zerodiagonal_OBJECTS)
 global_testing_unit_tests_ga_zerodiagonal_LDADD = $(LDADD)
@@ -2600,7 +2803,7 @@ global_testing_unit_tests_ga_zerodiagonal_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_zeropatch_OBJECTS =  \
 	global/testing/unit-tests/ga_zeropatch.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_zeropatch_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_zeropatch_OBJECTS)
 global_testing_unit_tests_ga_zeropatch_LDADD = $(LDADD)
@@ -2610,7 +2813,7 @@ global_testing_unit_tests_ga_zeropatch_DEPENDENCIES = $(LTLIBOBJS) \
 	$(am__DEPENDENCIES_1)
 am_global_testing_unit_tests_ga_zeropatch2_OBJECTS =  \
 	global/testing/unit-tests/ga_zeropatch2.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_18)
 global_testing_unit_tests_ga_zeropatch2_OBJECTS =  \
 	$(am_global_testing_unit_tests_ga_zeropatch2_OBJECTS)
 global_testing_unit_tests_ga_zeropatch2_LDADD = $(LDADD)
@@ -2623,7 +2826,7 @@ am__global_testing_unpackc_SOURCES_DIST = global/testing/unpackc.c \
 	global/testing/util.c global/testing/ffflush.F \
 	global/testing/testblas.F
 am_global_testing_unpackc_OBJECTS = global/testing/unpackc.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_15)
 global_testing_unpackc_OBJECTS = $(am_global_testing_unpackc_OBJECTS)
 global_testing_unpackc_LDADD = $(LDADD)
 global_testing_unpackc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -2646,7 +2849,9 @@ global_trace_collisions_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(AM_CFLAGS) $(CFLAGS) $(global_trace_collisions_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am_gparrays_testing_test_OBJECTS = gparrays/testing/test.$(OBJEXT)
+am__gparrays_testing_test_SOURCES_DIST = gparrays/testing/test.F
+@ENABLE_GPARRAYS_TRUE@am_gparrays_testing_test_OBJECTS =  \
+@ENABLE_GPARRAYS_TRUE@	gparrays/testing/test.$(OBJEXT)
 gparrays_testing_test_OBJECTS = $(am_gparrays_testing_test_OBJECTS)
 gparrays_testing_test_LDADD = $(LDADD)
 gparrays_testing_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -2657,15 +2862,19 @@ gparrays_testing_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(gparrays_testing_test_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am_gparrays_testing_testc_OBJECTS = gparrays/testing/testc.$(OBJEXT)
+am__gparrays_testing_testc_SOURCES_DIST = gparrays/testing/testc.c
+@ENABLE_GPARRAYS_TRUE@am_gparrays_testing_testc_OBJECTS =  \
+@ENABLE_GPARRAYS_TRUE@	gparrays/testing/testc.$(OBJEXT)
 gparrays_testing_testc_OBJECTS = $(am_gparrays_testing_testc_OBJECTS)
 gparrays_testing_testc_LDADD = $(LDADD)
 gparrays_testing_testc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
-am_gparrays_testing_transpose_OBJECTS =  \
-	gparrays/testing/transpose.$(OBJEXT)
+am__gparrays_testing_transpose_SOURCES_DIST =  \
+	gparrays/testing/transpose.c
+@ENABLE_GPARRAYS_TRUE@am_gparrays_testing_transpose_OBJECTS =  \
+@ENABLE_GPARRAYS_TRUE@	gparrays/testing/transpose.$(OBJEXT)
 gparrays_testing_transpose_OBJECTS =  \
 	$(am_gparrays_testing_transpose_OBJECTS)
 gparrays_testing_transpose_LDADD = $(LDADD)
@@ -2702,8 +2911,8 @@ ma_testf_DEPENDENCIES = $(LTLIBOBJS) libga.la $(am__DEPENDENCIES_1) \
 ma_testf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(F77LD) $(AM_FFLAGS) $(FFLAGS) \
 	$(ma_testf_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_13 = pario/dra/ffflush.$(OBJEXT) pario/dra/util.$(OBJEXT)
-am_pario_dra_big_OBJECTS = pario/dra/big.$(OBJEXT) $(am__objects_13)
+am__objects_19 = pario/dra/ffflush.$(OBJEXT) pario/dra/util.$(OBJEXT)
+am_pario_dra_big_OBJECTS = pario/dra/big.$(OBJEXT) $(am__objects_19)
 pario_dra_big_OBJECTS = $(am_pario_dra_big_OBJECTS)
 pario_dra_big_LDADD = $(LDADD)
 pario_dra_big_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -2743,7 +2952,7 @@ pario_dra_dra2arviz_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_pario_dra_dra_mxm_OBJECTS = pario/dra/dra_mxm.$(OBJEXT) \
-	$(am__objects_13)
+	$(am__objects_19)
 pario_dra_dra_mxm_OBJECTS = $(am_pario_dra_dra_mxm_OBJECTS)
 pario_dra_dra_mxm_LDADD = $(LDADD)
 pario_dra_dra_mxm_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -2755,7 +2964,7 @@ pario_dra_dra_mxm_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_dra_mxm_LDFLAGS) $(LDFLAGS) \
 	-o $@
 am_pario_dra_ntest_OBJECTS = pario/dra/ntest.$(OBJEXT) \
-	$(am__objects_13)
+	$(am__objects_19)
 pario_dra_ntest_OBJECTS = $(am_pario_dra_ntest_OBJECTS)
 pario_dra_ntest_LDADD = $(LDADD)
 pario_dra_ntest_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -2773,7 +2982,7 @@ pario_dra_ntestc_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
-am_pario_dra_perf_OBJECTS = pario/dra/perf.$(OBJEXT) $(am__objects_13)
+am_pario_dra_perf_OBJECTS = pario/dra/perf.$(OBJEXT) $(am__objects_19)
 pario_dra_perf_OBJECTS = $(am_pario_dra_perf_OBJECTS)
 pario_dra_perf_LDADD = $(LDADD)
 pario_dra_perf_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -2785,7 +2994,7 @@ pario_dra_perf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_perf_LDFLAGS) $(LDFLAGS) -o \
 	$@
 am_pario_dra_perf2_OBJECTS = pario/dra/perf2.$(OBJEXT) \
-	$(am__objects_13)
+	$(am__objects_19)
 pario_dra_perf2_OBJECTS = $(am_pario_dra_perf2_OBJECTS)
 pario_dra_perf2_LDADD = $(LDADD)
 pario_dra_perf2_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -2797,7 +3006,7 @@ pario_dra_perf2_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_perf2_LDFLAGS) $(LDFLAGS) \
 	-o $@
 am_pario_dra_perf3_OBJECTS = pario/dra/perf3.$(OBJEXT) \
-	$(am__objects_13)
+	$(am__objects_19)
 pario_dra_perf3_OBJECTS = $(am_pario_dra_perf3_OBJECTS)
 pario_dra_perf3_LDADD = $(LDADD)
 pario_dra_perf3_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -2822,7 +3031,7 @@ pario_dra_rate_DEPENDENCIES = $(LTLIBOBJS) libga.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
-am_pario_dra_test_OBJECTS = pario/dra/test.$(OBJEXT) $(am__objects_13)
+am_pario_dra_test_OBJECTS = pario/dra/test.$(OBJEXT) $(am__objects_19)
 pario_dra_test_OBJECTS = $(am_pario_dra_test_OBJECTS)
 pario_dra_test_LDADD = $(LDADD)
 pario_dra_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -2834,7 +3043,7 @@ pario_dra_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_test_LDFLAGS) $(LDFLAGS) -o \
 	$@
 am_pario_dra_test_mxm_OBJECTS = pario/dra/test_mxm.$(OBJEXT) \
-	$(am__objects_13)
+	$(am__objects_19)
 pario_dra_test_mxm_OBJECTS = $(am_pario_dra_test_mxm_OBJECTS)
 pario_dra_test_mxm_LDADD = $(LDADD)
 pario_dra_test_mxm_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -2846,7 +3055,7 @@ pario_dra_test_mxm_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_test_mxm_LDFLAGS) \
 	$(LDFLAGS) -o $@
 am_pario_dra_time_mxm_OBJECTS = pario/dra/time_mxm.$(OBJEXT) \
-	$(am__objects_13)
+	$(am__objects_19)
 pario_dra_time_mxm_OBJECTS = $(am_pario_dra_time_mxm_OBJECTS)
 pario_dra_time_mxm_LDADD = $(LDADD)
 pario_dra_time_mxm_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -2857,7 +3066,7 @@ pario_dra_time_mxm_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_dra_time_mxm_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am_pario_eaf_test_OBJECTS = pario/eaf/test.$(OBJEXT) $(am__objects_13)
+am_pario_eaf_test_OBJECTS = pario/eaf/test.$(OBJEXT) $(am__objects_19)
 pario_eaf_test_OBJECTS = $(am_pario_eaf_test_OBJECTS)
 pario_eaf_test_LDADD = $(LDADD)
 pario_eaf_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -2868,7 +3077,7 @@ pario_eaf_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_eaf_test_LDFLAGS) $(LDFLAGS) -o \
 	$@
-am_pario_sf_test_OBJECTS = pario/sf/test.$(OBJEXT) $(am__objects_13)
+am_pario_sf_test_OBJECTS = pario/sf/test.$(OBJEXT) $(am__objects_19)
 pario_sf_test_OBJECTS = $(am_pario_sf_test_OBJECTS)
 pario_sf_test_LDADD = $(LDADD)
 pario_sf_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
@@ -2879,6 +3088,37 @@ pario_sf_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
 	$(AM_FFLAGS) $(FFLAGS) $(pario_sf_test_LDFLAGS) $(LDFLAGS) -o \
 	$@
+am__tcgmsg_tests_test_SOURCES_DIST = tcgmsg/tests/test.c
+@MSG_COMMS_MPI_TRUE@am_tcgmsg_tests_test_OBJECTS =  \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tests/test.$(OBJEXT)
+tcgmsg_tests_test_OBJECTS = $(am_tcgmsg_tests_test_OBJECTS)
+tcgmsg_tests_test_LDADD = $(LDADD)
+tcgmsg_tests_test_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__tcgmsg_tests_test_asyn_SOURCES_DIST = tcgmsg/tests/test_asyn.c
+@MSG_COMMS_MPI_TRUE@am_tcgmsg_tests_test_asyn_OBJECTS =  \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tests/test_asyn.$(OBJEXT)
+tcgmsg_tests_test_asyn_OBJECTS = $(am_tcgmsg_tests_test_asyn_OBJECTS)
+tcgmsg_tests_test_asyn_LDADD = $(LDADD)
+tcgmsg_tests_test_asyn_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__tcgmsg_tests_testf_SOURCES_DIST = tcgmsg/tests/testf.F
+@MSG_COMMS_MPI_TRUE@am_tcgmsg_tests_testf_OBJECTS =  \
+@MSG_COMMS_MPI_TRUE@	tcgmsg/tests/testf.$(OBJEXT)
+tcgmsg_tests_testf_OBJECTS = $(am_tcgmsg_tests_testf_OBJECTS)
+tcgmsg_tests_testf_LDADD = $(LDADD)
+tcgmsg_tests_testf_DEPENDENCIES = $(LTLIBOBJS) libga.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+tcgmsg_tests_testf_LINK = $(LIBTOOL) $(AM_V_lt) --tag=F77 \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(F77LD) \
+	$(AM_FFLAGS) $(FFLAGS) $(tcgmsg_tests_testf_LDFLAGS) \
+	$(LDFLAGS) -o $@
 SCRIPTS = $(bin_SCRIPTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
@@ -2945,7 +3185,7 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(ga___testing_elempatch_SOURCES) \
 	$(ga___testing_mtest_SOURCES) $(ga___testing_ntestc_SOURCES) \
 	$(ga___testing_testc_SOURCES) $(ga___testing_testmult_SOURCES) \
-	$(global_X_xregion_SOURCES) \
+	$(gaf2c_testarg_SOURCES) $(global_X_xregion_SOURCES) \
 	$(global_examples_boltzmann_boltz_SOURCES) \
 	$(global_examples_conjugate_gradient_ga_cg_SOURCES) \
 	$(global_examples_lennard_jones_lennard_SOURCES) \
@@ -3233,7 +3473,11 @@ SOURCES = $(libga___la_SOURCES) $(libga_la_SOURCES) \
 	$(nodist_EXTRA_pario_dra_rate_SOURCES) \
 	$(pario_dra_test_SOURCES) $(pario_dra_test_mxm_SOURCES) \
 	$(pario_dra_time_mxm_SOURCES) $(pario_eaf_test_SOURCES) \
-	$(pario_sf_test_SOURCES)
+	$(pario_sf_test_SOURCES) $(tcgmsg_tests_test_SOURCES) \
+	$(nodist_EXTRA_tcgmsg_tests_test_SOURCES) \
+	$(tcgmsg_tests_test_asyn_SOURCES) \
+	$(nodist_EXTRA_tcgmsg_tests_test_asyn_SOURCES) \
+	$(tcgmsg_tests_testf_SOURCES)
 DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__libga_la_SOURCES_DIST) $(am__libwapi_la_SOURCES_DIST) \
 	$(am__ga___testing_elempatch_SOURCES_DIST) \
@@ -3241,7 +3485,7 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__ga___testing_ntestc_SOURCES_DIST) \
 	$(am__ga___testing_testc_SOURCES_DIST) \
 	$(am__ga___testing_testmult_SOURCES_DIST) \
-	$(am__global_X_xregion_SOURCES_DIST) \
+	$(gaf2c_testarg_SOURCES) $(am__global_X_xregion_SOURCES_DIST) \
 	$(global_examples_boltzmann_boltz_SOURCES) \
 	$(global_examples_conjugate_gradient_ga_cg_SOURCES) \
 	$(global_examples_lennard_jones_lennard_SOURCES) \
@@ -3391,9 +3635,9 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(am__global_testing_unpackc_SOURCES_DIST) \
 	$(global_trace_adjust_SOURCES) \
 	$(global_trace_collisions_SOURCES) \
-	$(gparrays_testing_test_SOURCES) \
-	$(gparrays_testing_testc_SOURCES) \
-	$(gparrays_testing_transpose_SOURCES) \
+	$(am__gparrays_testing_test_SOURCES_DIST) \
+	$(am__gparrays_testing_testc_SOURCES_DIST) \
+	$(am__gparrays_testing_transpose_SOURCES_DIST) \
 	$(ma_test_coalesce_SOURCES) $(ma_test_inquire_SOURCES) \
 	$(ma_testc_SOURCES) $(ma_testf_SOURCES) \
 	$(pario_dra_big_SOURCES) $(pario_dra_bign_SOURCES) \
@@ -3404,7 +3648,10 @@ DIST_SOURCES = $(am__libga___la_SOURCES_DIST) \
 	$(pario_dra_perf3_SOURCES) $(pario_dra_perfn_SOURCES) \
 	$(pario_dra_rate_SOURCES) $(pario_dra_test_SOURCES) \
 	$(pario_dra_test_mxm_SOURCES) $(pario_dra_time_mxm_SOURCES) \
-	$(pario_eaf_test_SOURCES) $(pario_sf_test_SOURCES)
+	$(pario_eaf_test_SOURCES) $(pario_sf_test_SOURCES) \
+	$(am__tcgmsg_tests_test_SOURCES_DIST) \
+	$(am__tcgmsg_tests_test_asyn_SOURCES_DIST) \
+	$(am__tcgmsg_tests_testf_SOURCES_DIST)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-dvi-recursive install-exec-recursive \
@@ -3427,7 +3674,8 @@ am__include_HEADERS_DIST = ma/error.h ma/macdecls.h ma/macommon.h \
 	pario/sf/sf.fh pario/sf/sf.h ga++/src/ga++.h \
 	ga++/src/GAServices.h ga++/src/GlobalArray.h \
 	ga++/src/init_term.h ga++/src/PGroup.h ga++/src/services.h \
-	gparrays/src/gp-papi.h
+	gparrays/src/gp-papi.h gaf2c/typesf2c.h gaf2c/farg.h \
+	tcgmsg/tcgmsg.fh tcgmsg/tcgmsg.h
 HEADERS = $(include_HEADERS) $(nodist_include_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
@@ -3527,13 +3775,13 @@ cat $@-t >>$@;						\
 rm -f $@-t
 RECHECK_LOGS = $(TEST_LOGS)
 TEST_SUITE_HTML = $(TEST_SUITE_LOG:.log=.html)
-am__EXEEXT_12 =
-am__EXEEXT_13 = $(MA_SERIAL_TESTS) $(am__EXEEXT_12) $(am__EXEEXT_12)
-am__EXEEXT_14 = $(am__EXEEXT_12) $(GLOBAL_PARALLEL_TESTS) \
+am__EXEEXT_17 =
+am__EXEEXT_18 = $(MA_SERIAL_TESTS) $(am__EXEEXT_17) $(am__EXEEXT_17)
+am__EXEEXT_19 = $(am__EXEEXT_17) $(GLOBAL_PARALLEL_TESTS) \
 	$(CXX_PARALLEL_TESTS)
-am__EXEEXT_15 = $(MA_SERIAL_TESTS_XFAIL) $(am__EXEEXT_12) \
-	$(am__EXEEXT_12)
-am__EXEEXT_16 = $(am__EXEEXT_12) $(am__EXEEXT_12) $(am__EXEEXT_12)
+am__EXEEXT_20 = $(MA_SERIAL_TESTS_XFAIL) $(am__EXEEXT_17) \
+	$(am__EXEEXT_17)
+am__EXEEXT_21 = $(am__EXEEXT_17) $(am__EXEEXT_17) $(am__EXEEXT_17)
 TEST_SUITE_LOG = test-suite.log
 TEST_EXTENSIONS = @EXEEXT@ .test
 LOG_COMPILE = $(LOG_COMPILER) $(AM_LOG_FLAGS) $(LOG_FLAGS)
@@ -3543,7 +3791,7 @@ TEST_LOGS = $(am__test_logs2:.test.log=.log)
 TEST_LOG_COMPILE = $(TEST_LOG_COMPILER) $(AM_TEST_LOG_FLAGS) \
 	$(TEST_LOG_FLAGS)
 TEST_LOGS_TMP = $(TEST_LOGS:.log=.log-t)
-DIST_SUBDIRS = $(SUBDIRS)
+DIST_SUBDIRS = armci .
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -3782,15 +4030,16 @@ ACLOCAL_AMFLAGS = -I m4
 include_HEADERS = ma/error.h ma/macdecls.h ma/macommon.h ma/maf2c.fh \
 	ma/mafdecls.fh ma/matypes.h ma/scope.h ma/string-util.h \
 	ma/table.h global/src/gacommon.h global/src/ga.h \
-	global/src/global.fh global/src/ga-papi.h $(am__append_13) \
+	global/src/global.fh global/src/ga-papi.h $(am__append_16) \
 	pario/dra/dra.fh pario/dra/dra.h pario/eaf/eaf.fh \
 	pario/eaf/eaf.h pario/elio/chemio.h pario/elio/elio.h \
-	pario/sf/coms.h pario/sf/sf.fh pario/sf/sf.h $(am__append_32) \
-	gparrays/src/gp-papi.h
-nodist_include_HEADERS = global/src/ga-wapi.h gparrays/src/gp-wapi.h
+	pario/sf/coms.h pario/sf/sf.fh pario/sf/sf.h $(am__append_36) \
+	$(am__append_43) gaf2c/typesf2c.h gaf2c/farg.h \
+	tcgmsg/tcgmsg.fh tcgmsg/tcgmsg.h
+nodist_include_HEADERS = global/src/ga-wapi.h $(am__append_44)
 bin_SCRIPTS = tools/ga-config
 check_LTLIBRARIES = 
-lib_LTLIBRARIES = libga.la $(am__append_6) $(am__append_31)
+lib_LTLIBRARIES = libga.la $(am__append_6) $(am__append_35)
 
 ##############################################################################
 # compat
@@ -3806,6 +4055,14 @@ lib_LTLIBRARIES = libga.la $(am__append_6) $(am__append_31)
 
 ##############################################################################
 # pario
+#
+
+##############################################################################
+# gaf2c
+#
+
+##############################################################################
+# tcgmsg
 #
 libga_la_SOURCES = compat/random.c ma/error.c ma/f2c.c ma/ma.c ma/ma.h \
 	ma/memcpy.h ma/string-util.c ma/table.c $(am__append_2) \
@@ -3827,25 +4084,22 @@ libga_la_SOURCES = compat/random.c ma/error.c ma/f2c.c ma/ma.c ma/ma.h \
 	global/src/nbutil.c global/src/onesided.c \
 	global/src/peigstubs.c global/src/scalapack.fh \
 	global/src/sclstubs.c global/src/select.c global/src/sparse.c \
-	global/src/types.xh global/src/types2.xh $(am__append_8) \
-	$(am__append_9) $(am__append_10) $(am__append_11) \
-	$(am__append_12) pario/dra/buffers.c pario/dra/buffers.h \
+	global/src/types.xh global/src/types2.xh $(am__append_11) \
+	$(am__append_12) $(am__append_13) $(am__append_14) \
+	$(am__append_15) pario/dra/buffers.c pario/dra/buffers.h \
 	pario/dra/capi.c pario/dra/disk.arrays.c \
 	pario/dra/disk.param.c pario/dra/draf2c.h pario/dra/drap.h \
 	pario/dra/env.c pario/dra/fortran.c pario/dra/patch.util.c \
 	pario/eaf/eaf.c pario/eaf/eaf_f2c.c pario/eaf/eafP.h \
 	pario/elio/elio.c pario/elio/eliop.h pario/elio/pablo.h \
 	pario/elio/stat.c pario/sf/sf_capi.c pario/sf/sff2c.h \
-	pario/sf/sf_fortran.c pario/sf/shared.files.c \
-	gparrays/src/gpbase.c gparrays/src/gpbase.h \
-	gparrays/src/gpcapi.c gparrays/src/gpfapi.c \
-	gparrays/src/gponesided.c gparrays/src/gp-papi.h
-
-# This is the "noinst" libarmci so that libtool combines it with libga.
+	pario/sf/sf_fortran.c pario/sf/shared.files.c $(am__append_41) \
+	gaf2c/gaf2c.c gaf2c/drand.c $(am__append_48) tcgmsg/capi.c \
+	tcgmsg/fapi.c $(am__append_51)
 libga_la_LIBADD = $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) \
-	armci/libarmcii.la $(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
-nodist_libga_la_SOURCES = config.fh $(am__append_7) \
-	global/src/ga-wapidefs.h gparrays/src/gp-wapidefs.h
+	$(am__append_60) $(am__append_61)
+nodist_libga_la_SOURCES = config.fh $(am__append_8) $(am__append_9) \
+	global/src/ga-wapidefs.h $(am__append_42)
 
 ##############################################################################
 # global
@@ -3853,6 +4107,13 @@ nodist_libga_la_SOURCES = config.fh $(am__append_7) \
 
 ##############################################################################
 # global/doc
+#
+
+##############################################################################
+# tcgmsg/examples
+#
+# NOTE: While we don't build the tcgmsg examples, we include everything in the
+# distribution anyway.
 #
 
 ##############################################################################
@@ -3865,8 +4126,8 @@ nodist_libga_la_SOURCES = config.fh $(am__append_7) \
 # The gfutex directory is not automatically configured nor added to SUBDIRS.
 # However, it is still distributed with GA.
 EXTRA_DIST = README LinAlg/lapack+blas/README global/README \
-	tools/gpwapigen.py tools/wapigen.py tools/wapigen_counts.py \
-	tools/wapigen_trace.py $(am__append_23) \
+	$(am__append_10) tools/wapigen.py tools/wapigen_counts.py \
+	tools/wapigen_trace.py $(am__append_27) \
 	global/examples/boltzmann/README \
 	global/examples/lennard-jones/README \
 	global/examples/md_cluster/atom.inp \
@@ -3876,7 +4137,29 @@ EXTRA_DIST = README LinAlg/lapack+blas/README global/README \
 	global/doc/README global/doc/Supercomputing94.pdf \
 	global/doc/user.pdf pario/dra/dbg_read.c pario/dra/dbg_write.c \
 	pario/dra/dra2arviz.c pario/dra/global.unsup.c \
-	pario/dra/README ga++/README tascel gfutex
+	pario/dra/README ga++/README tcgmsg/examples/blkdat120lin.f \
+	tcgmsg/examples/blkdat15.f tcgmsg/examples/blkdat240lin.f \
+	tcgmsg/examples/blkdat30.f tcgmsg/examples/blkdat60.f \
+	tcgmsg/examples/blkdat60lin.f tcgmsg/examples/cscf120lin.h \
+	tcgmsg/examples/cscf15.h tcgmsg/examples/cscf240lin.h \
+	tcgmsg/examples/cscf30.h tcgmsg/examples/cscf60.h \
+	tcgmsg/examples/cscf60lin.h tcgmsg/examples/cscf.h \
+	tcgmsg/examples/daxpy1.s tcgmsg/examples/daxpy.f \
+	tcgmsg/examples/ddot.f tcgmsg/examples/demo.proto \
+	tcgmsg/examples/diagon.f tcgmsg/examples/dscal.f \
+	tcgmsg/examples/fexit.f.proto tcgmsg/examples/getmem.c \
+	tcgmsg/examples/grid.c tcgmsg/examples/ieeetrap.c \
+	tcgmsg/examples/integ.f tcgmsg/examples/jacobi.f \
+	tcgmsg/examples/Makefile.proto tcgmsg/examples/mc.f \
+	tcgmsg/examples/mc.input tcgmsg/examples/md.f \
+	tcgmsg/examples/mxv_daxpy1.f tcgmsg/examples/mxv_dgemv.f \
+	tcgmsg/examples/mxv_fortran.f tcgmsg/examples/output.f \
+	tcgmsg/examples/prtri.f tcgmsg/examples/random.c \
+	tcgmsg/examples/README tcgmsg/examples/runit \
+	tcgmsg/examples/runit.grid tcgmsg/examples/scfblas.f \
+	tcgmsg/examples/scf.f tcgmsg/examples/timer.f \
+	tcgmsg/examples/trace.out tcgmsg/examples/xpix.shar \
+	tcgmsg/tcgmsg-mpi/README tascel gfutex
 
 ##############################################################################
 # config
@@ -3887,12 +4170,10 @@ EXTRA_DIST = README LinAlg/lapack+blas/README global/README \
 # and works with all Fortran compilers.
 #
 BUILT_SOURCES = config.fh global/src/ga-wapi.h \
-	global/src/ga-wapidefs.h gparrays/src/gp-wapi.h \
-	gparrays/src/gp-wapidefs.h
+	global/src/ga-wapidefs.h $(am__append_39)
 MOSTLYCLEANFILES = 
 CLEANFILES = $(bin_SCRIPTS) config.fh global/src/ga-wapi.h \
-	global/src/ga-wapidefs.h $(am__append_24) \
-	gparrays/src/gp-wapi.h gparrays/src/gp-wapidefs.h
+	global/src/ga-wapidefs.h $(am__append_28) $(am__append_40)
 DISTCLEANFILES = 
 MAINTAINERCLEANFILES = 
 AM_FFLAGS = $(GA_FOPT) $(GA_F_WARN) $(FFLAG_INT)
@@ -3909,11 +4190,11 @@ AM_CPPFLAGS = $(SCALAPACK_CPPFLAGS) $(LAPACK_CPPFLAGS) \
 	-I$(top_build_prefix)global/src -I$(top_srcdir)/global/src \
 	-I$(top_srcdir)/global/testing -I$(top_srcdir)/pario/dra \
 	-I$(top_srcdir)/pario/eaf -I$(top_srcdir)/pario/elio \
-	-I$(top_srcdir)/pario/sf $(am__append_33) \
-	-I$(top_build_prefix)gparrays/src -I$(top_srcdir)/gparrays/src \
-	$(am__append_36) $(am__append_37) $(am__append_38) \
-	-I$(top_build_prefix)armci/gaf2c -I$(top_srcdir)/armci/gaf2c \
-	-I$(top_srcdir)/armci/tcgmsg
+	-I$(top_srcdir)/pario/sf $(am__append_37) $(am__append_47) \
+	-I$(top_build_prefix)gaf2c -I$(top_srcdir)/gaf2c \
+	-I$(top_srcdir)/tcgmsg $(am__append_52) $(am__append_55) \
+	$(am__append_56) $(am__append_57) $(am__append_58) \
+	$(am__append_59)
 AM_LDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
 	$(GA_MP_LDFLAGS) $(ARMCI_NETWORK_LDFLAGS) $(am__append_1)
 FLDFLAGS = $(SCALAPACK_LDFLAGS) $(LAPACK_LDFLAGS) $(BLAS_LDFLAGS) \
@@ -3949,7 +4230,7 @@ nodist_EXTRA_ma_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_ma_test_coalesce_SOURCES = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_ma_test_inquire_SOURCES = $(MAYBE_DUMMY_F_LINK)
 @ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@libwapi_la_SOURCES = tools/ga-wapi.c \
-@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	tools/gp-wapi.c
+@ENABLE_PROFILING_TRUE@@HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE@	$(am__append_7)
 
 ##############################################################################
 # global/src
@@ -3973,11 +4254,11 @@ GLOBAL_PARALLEL_TESTS = global/testing/elempatch$(EXEEXT) \
 	global/testing/testmatmultc$(EXEEXT) \
 	global/testing/testmult$(EXEEXT) \
 	global/testing/testmultrect$(EXEEXT) \
-	global/testing/unpackc$(EXEEXT) $(am__append_19) \
-	$(am__append_20) $(am__append_21) $(am__append_22) \
-	$(am__append_26) \
+	global/testing/unpackc$(EXEEXT) $(am__append_23) \
+	$(am__append_24) $(am__append_25) $(am__append_26) \
+	$(am__append_30) \
 	global/examples/lennard-jones/lennard$(EXEEXT) \
-	$(am__append_29)
+	$(am__append_33)
 GLOBAL_PARALLEL_TESTS_XFAIL = 
 GLOBAL_TESTS = $(GLOBAL_SERIAL_TESTS) $(GLOBAL_PARALLEL_TESTS)
 GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
@@ -4090,7 +4371,7 @@ GLOBAL_TESTS_XFAIL = $(GLOBAL_SERIAL_TESTS_XFAIL) $(GLOBAL_PARALLEL_TESTS_XFAIL)
 @HAVE_M4_TRUE@	global/testing/ngatest.m4 \
 @HAVE_M4_TRUE@	global/testing/nga-util.m4
 gtsrc = global/testing/testutil.fh global/testing/testutil.h \
-	global/testing/util.c $(am__append_27)
+	global/testing/util.c $(am__append_31)
 global_testing_big_SOURCES = global/testing/big.c $(gtsrc)
 global_testing_bin_SOURCES = global/testing/bin.F $(gtsrc)
 global_testing_blktest_SOURCES = global/testing/blktest.F $(gtsrc)
@@ -4562,17 +4843,38 @@ pario_sf_test_LDFLAGS = $(FLDFLAGS)
 ##############################################################################
 # gparrays
 #
-GPPAPI_H = $(top_srcdir)/gparrays/src/gp-papi.h
-gparrays_testing_test_SOURCES = gparrays/testing/test.F
-gparrays_testing_testc_SOURCES = gparrays/testing/testc.c
-gparrays_testing_transpose_SOURCES = gparrays/testing/transpose.c
-nodist_EXTRA_gparrays_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_gparrays_testing_transpose_SOURCES = $(MAYBE_DUMMY_F_LINK)
-gparrays_testing_test_LDFLAGS = $(FLDFLAGS)
+@ENABLE_GPARRAYS_TRUE@GPPAPI_H = $(top_srcdir)/gparrays/src/gp-papi.h
+@ENABLE_GPARRAYS_TRUE@gparrays_testing_test_SOURCES = gparrays/testing/test.F
+@ENABLE_GPARRAYS_TRUE@gparrays_testing_testc_SOURCES = gparrays/testing/testc.c
+@ENABLE_GPARRAYS_TRUE@gparrays_testing_transpose_SOURCES = gparrays/testing/transpose.c
+@ENABLE_GPARRAYS_TRUE@nodist_EXTRA_gparrays_testing_testc_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@ENABLE_GPARRAYS_TRUE@nodist_EXTRA_gparrays_testing_transpose_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@ENABLE_GPARRAYS_TRUE@gparrays_testing_test_LDFLAGS = $(FLDFLAGS)
+GAF2C_SERIAL_TESTS = $(am__append_50)
+GAF2C_SERIAL_TESTS_XFAIL = 
+GAF2C_PARALLEL_TESTS = 
+GAF2C_PARALLEL_TESTS_XFAIL = 
+GAF2C_TESTS = $(GAF2C_SERIAL_TESTS) $(GAF2C_PARALLEL_TESTS)
+GAF2C_TESTS_XFAIL = $(GAF2C_SERIAL_TESTS_XFAIL) $(GAF2C_PARALLEL_TESTS_XFAIL)
+gaf2c_testarg_SOURCES = gaf2c/testarg.c gaf2c/testargf.f
+gaf2c_testarg_LDFLAGS = $(FLDFLAGS)
+
+#TCGMSG_PARALLEL_TESTS += tcgmsg/tests/test_asyn$(EXEEXT) # useless test
+#TCGMSG_PARALLEL_TESTS += tcgmsg/tests/test$(EXEEXT) # requires user input
+#if ENABLE_F77
+#TCGMSG_PARALLEL_TESTS += tcgmsg/tests/testf$(EXEEXT)
+#endif
+@MSG_COMMS_MPI_TRUE@tcgmsg_tests_test_asyn_SOURCES = tcgmsg/tests/test_asyn.c
+@MSG_COMMS_MPI_TRUE@tcgmsg_tests_testf_SOURCES = tcgmsg/tests/testf.F
+@MSG_COMMS_MPI_TRUE@tcgmsg_tests_test_SOURCES = tcgmsg/tests/test.c
+@MSG_COMMS_MPI_TRUE@tcgmsg_tests_testf_LDFLAGS = $(FLDFLAGS)
+@MSG_COMMS_MPI_TRUE@nodist_EXTRA_tcgmsg_tests_test_asyn_SOURCES = $(MAYBE_DUMMY_F_LINK)
+@MSG_COMMS_MPI_TRUE@nodist_EXTRA_tcgmsg_tests_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
 
 ##############################################################################
 # armci
-SUBDIRS = armci .
+@ARMCI_NETWORK_ARMCI_FALSE@MAYBE_ARMCI = armci
+SUBDIRS = $(MAYBE_ARMCI) .
 GA_RECURSIVE_TARGETS = checkprogs-recursive
 # END COPY
 
@@ -4680,6 +4982,10 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
+gaf2c/farg.h: $(top_builddir)/config.status $(top_srcdir)/gaf2c/farg.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+gaf2c/typesf2c.h: $(top_builddir)/config.status $(top_srcdir)/gaf2c/typesf2c.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 global/src/global.fh: $(top_builddir)/config.status $(top_srcdir)/global/src/global.fh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 ma/mafdecls.fh: $(top_builddir)/config.status $(top_srcdir)/ma/mafdecls.fh.in
@@ -4945,6 +5251,59 @@ gparrays/src/gpfapi.lo: gparrays/src/$(am__dirstamp) \
 	gparrays/src/$(DEPDIR)/$(am__dirstamp)
 gparrays/src/gponesided.lo: gparrays/src/$(am__dirstamp) \
 	gparrays/src/$(DEPDIR)/$(am__dirstamp)
+gaf2c/$(am__dirstamp):
+	@$(MKDIR_P) gaf2c
+	@: > gaf2c/$(am__dirstamp)
+gaf2c/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) gaf2c/$(DEPDIR)
+	@: > gaf2c/$(DEPDIR)/$(am__dirstamp)
+gaf2c/gaf2c.lo: gaf2c/$(am__dirstamp) gaf2c/$(DEPDIR)/$(am__dirstamp)
+gaf2c/drand.lo: gaf2c/$(am__dirstamp) gaf2c/$(DEPDIR)/$(am__dirstamp)
+gaf2c/farg.lo: gaf2c/$(am__dirstamp) gaf2c/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg
+	@: > tcgmsg/$(am__dirstamp)
+tcgmsg/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg/$(DEPDIR)
+	@: > tcgmsg/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/capi.lo: tcgmsg/$(am__dirstamp) \
+	tcgmsg/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/fapi.lo: tcgmsg/$(am__dirstamp) \
+	tcgmsg/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg/tcgmsg-mpi
+	@: > tcgmsg/tcgmsg-mpi/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg/tcgmsg-mpi/$(DEPDIR)
+	@: > tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/checkbyte.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/clustercheck.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/collect.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/drand48.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/evlog.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/evon.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/llog.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/misc.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/niceftn.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/nxtval-armci.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/p2p.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/pbeginf.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/pfilecopy.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tcgmsg-mpi/sizeof.lo: tcgmsg/tcgmsg-mpi/$(am__dirstamp) \
+	tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
 tools/$(am__dirstamp):
 	@$(MKDIR_P) tools
 	@: > tools/$(am__dirstamp)
@@ -5047,6 +5406,13 @@ ga++/testing/testmult.$(OBJEXT): ga++/testing/$(am__dirstamp) \
 ga++/testing/testmult$(EXEEXT): $(ga___testing_testmult_OBJECTS) $(ga___testing_testmult_DEPENDENCIES) $(EXTRA_ga___testing_testmult_DEPENDENCIES) ga++/testing/$(am__dirstamp)
 	@rm -f ga++/testing/testmult$(EXEEXT)
 	$(AM_V_CXXLD)$(ga___testing_testmult_LINK) $(ga___testing_testmult_OBJECTS) $(ga___testing_testmult_LDADD) $(LIBS)
+gaf2c/testarg.$(OBJEXT): gaf2c/$(am__dirstamp) \
+	gaf2c/$(DEPDIR)/$(am__dirstamp)
+gaf2c/testargf.$(OBJEXT): gaf2c/$(am__dirstamp) \
+	gaf2c/$(DEPDIR)/$(am__dirstamp)
+gaf2c/testarg$(EXEEXT): $(gaf2c_testarg_OBJECTS) $(gaf2c_testarg_DEPENDENCIES) $(EXTRA_gaf2c_testarg_DEPENDENCIES) gaf2c/$(am__dirstamp)
+	@rm -f gaf2c/testarg$(EXEEXT)
+	$(AM_V_F77LD)$(gaf2c_testarg_LINK) $(gaf2c_testarg_OBJECTS) $(gaf2c_testarg_LDADD) $(LIBS)
 global/X/$(am__dirstamp):
 	@$(MKDIR_P) global/X
 	@: > global/X/$(am__dirstamp)
@@ -6261,6 +6627,27 @@ pario/sf/test.$(OBJEXT): pario/sf/$(am__dirstamp) \
 pario/sf/test$(EXEEXT): $(pario_sf_test_OBJECTS) $(pario_sf_test_DEPENDENCIES) $(EXTRA_pario_sf_test_DEPENDENCIES) pario/sf/$(am__dirstamp)
 	@rm -f pario/sf/test$(EXEEXT)
 	$(AM_V_F77LD)$(pario_sf_test_LINK) $(pario_sf_test_OBJECTS) $(pario_sf_test_LDADD) $(LIBS)
+tcgmsg/tests/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg/tests
+	@: > tcgmsg/tests/$(am__dirstamp)
+tcgmsg/tests/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tcgmsg/tests/$(DEPDIR)
+	@: > tcgmsg/tests/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tests/test.$(OBJEXT): tcgmsg/tests/$(am__dirstamp) \
+	tcgmsg/tests/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tests/test$(EXEEXT): $(tcgmsg_tests_test_OBJECTS) $(tcgmsg_tests_test_DEPENDENCIES) $(EXTRA_tcgmsg_tests_test_DEPENDENCIES) tcgmsg/tests/$(am__dirstamp)
+	@rm -f tcgmsg/tests/test$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(tcgmsg_tests_test_OBJECTS) $(tcgmsg_tests_test_LDADD) $(LIBS)
+tcgmsg/tests/test_asyn.$(OBJEXT): tcgmsg/tests/$(am__dirstamp) \
+	tcgmsg/tests/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tests/test_asyn$(EXEEXT): $(tcgmsg_tests_test_asyn_OBJECTS) $(tcgmsg_tests_test_asyn_DEPENDENCIES) $(EXTRA_tcgmsg_tests_test_asyn_DEPENDENCIES) tcgmsg/tests/$(am__dirstamp)
+	@rm -f tcgmsg/tests/test_asyn$(EXEEXT)
+	$(AM_V_F77LD)$(F77LINK) $(tcgmsg_tests_test_asyn_OBJECTS) $(tcgmsg_tests_test_asyn_LDADD) $(LIBS)
+tcgmsg/tests/testf.$(OBJEXT): tcgmsg/tests/$(am__dirstamp) \
+	tcgmsg/tests/$(DEPDIR)/$(am__dirstamp)
+tcgmsg/tests/testf$(EXEEXT): $(tcgmsg_tests_testf_OBJECTS) $(tcgmsg_tests_testf_DEPENDENCIES) $(EXTRA_tcgmsg_tests_testf_DEPENDENCIES) tcgmsg/tests/$(am__dirstamp)
+	@rm -f tcgmsg/tests/testf$(EXEEXT)
+	$(AM_V_F77LD)$(tcgmsg_tests_testf_LINK) $(tcgmsg_tests_testf_OBJECTS) $(tcgmsg_tests_testf_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
@@ -6349,6 +6736,14 @@ mostlyclean-compile:
 	-rm -f ga++/testing/testc.$(OBJEXT)
 	-rm -f ga++/testing/testmult.$(OBJEXT)
 	-rm -f ga++/testing/util.$(OBJEXT)
+	-rm -f gaf2c/drand.$(OBJEXT)
+	-rm -f gaf2c/drand.lo
+	-rm -f gaf2c/farg.$(OBJEXT)
+	-rm -f gaf2c/farg.lo
+	-rm -f gaf2c/gaf2c.$(OBJEXT)
+	-rm -f gaf2c/gaf2c.lo
+	-rm -f gaf2c/testarg.$(OBJEXT)
+	-rm -f gaf2c/testargf.$(OBJEXT)
 	-rm -f global/X/global_X_xregion-xregion_colormap.$(OBJEXT)
 	-rm -f global/X/global_X_xregion-xregion_dialog.$(OBJEXT)
 	-rm -f global/X/global_X_xregion-xregion_display.$(OBJEXT)
@@ -6704,6 +7099,41 @@ mostlyclean-compile:
 	-rm -f pario/sf/shared.files.$(OBJEXT)
 	-rm -f pario/sf/shared.files.lo
 	-rm -f pario/sf/test.$(OBJEXT)
+	-rm -f tcgmsg/capi.$(OBJEXT)
+	-rm -f tcgmsg/capi.lo
+	-rm -f tcgmsg/fapi.$(OBJEXT)
+	-rm -f tcgmsg/fapi.lo
+	-rm -f tcgmsg/tcgmsg-mpi/checkbyte.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/checkbyte.lo
+	-rm -f tcgmsg/tcgmsg-mpi/clustercheck.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/clustercheck.lo
+	-rm -f tcgmsg/tcgmsg-mpi/collect.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/collect.lo
+	-rm -f tcgmsg/tcgmsg-mpi/drand48.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/drand48.lo
+	-rm -f tcgmsg/tcgmsg-mpi/evlog.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/evlog.lo
+	-rm -f tcgmsg/tcgmsg-mpi/evon.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/evon.lo
+	-rm -f tcgmsg/tcgmsg-mpi/llog.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/llog.lo
+	-rm -f tcgmsg/tcgmsg-mpi/misc.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/misc.lo
+	-rm -f tcgmsg/tcgmsg-mpi/niceftn.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/niceftn.lo
+	-rm -f tcgmsg/tcgmsg-mpi/nxtval-armci.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/nxtval-armci.lo
+	-rm -f tcgmsg/tcgmsg-mpi/p2p.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/p2p.lo
+	-rm -f tcgmsg/tcgmsg-mpi/pbeginf.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/pbeginf.lo
+	-rm -f tcgmsg/tcgmsg-mpi/pfilecopy.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/pfilecopy.lo
+	-rm -f tcgmsg/tcgmsg-mpi/sizeof.$(OBJEXT)
+	-rm -f tcgmsg/tcgmsg-mpi/sizeof.lo
+	-rm -f tcgmsg/tests/test.$(OBJEXT)
+	-rm -f tcgmsg/tests/test_asyn.$(OBJEXT)
+	-rm -f tcgmsg/tests/testf.$(OBJEXT)
 	-rm -f tools/ga-wapi.$(OBJEXT)
 	-rm -f tools/ga-wapi.lo
 	-rm -f tools/gp-wapi.$(OBJEXT)
@@ -6726,6 +7156,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@ga++/testing/$(DEPDIR)/testc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ga++/testing/$(DEPDIR)/testmult.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ga++/testing/$(DEPDIR)/util.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@gaf2c/$(DEPDIR)/drand.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@gaf2c/$(DEPDIR)/gaf2c.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@gaf2c/$(DEPDIR)/testarg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/X/$(DEPDIR)/global_X_xregion-xregion_colormap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/X/$(DEPDIR)/global_X_xregion-xregion_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/X/$(DEPDIR)/global_X_xregion-xregion_display.Po@am__quote@
@@ -6914,6 +7347,24 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@pario/sf/$(DEPDIR)/sf_capi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/sf/$(DEPDIR)/sf_fortran.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pario/sf/$(DEPDIR)/shared.files.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/$(DEPDIR)/capi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/$(DEPDIR)/fapi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/checkbyte.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/clustercheck.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/collect.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/drand48.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/evlog.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/evon.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/llog.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/misc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/niceftn.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/nxtval-armci.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/p2p.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/pbeginf.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/pfilecopy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tcgmsg-mpi/$(DEPDIR)/sizeof.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tests/$(DEPDIR)/test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tcgmsg/tests/$(DEPDIR)/test_asyn.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/ga-wapi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/gp-wapi.Plo@am__quote@
 
@@ -7240,6 +7691,7 @@ clean-libtool:
 	-rm -rf compat/.libs compat/_libs
 	-rm -rf ga++/src/.libs ga++/src/_libs
 	-rm -rf ga++/testing/.libs ga++/testing/_libs
+	-rm -rf gaf2c/.libs gaf2c/_libs
 	-rm -rf global/X/.libs global/X/_libs
 	-rm -rf global/examples/boltzmann/.libs global/examples/boltzmann/_libs
 	-rm -rf global/examples/conjugate_gradient/.libs global/examples/conjugate_gradient/_libs
@@ -7257,6 +7709,9 @@ clean-libtool:
 	-rm -rf pario/eaf/.libs pario/eaf/_libs
 	-rm -rf pario/elio/.libs pario/elio/_libs
 	-rm -rf pario/sf/.libs pario/sf/_libs
+	-rm -rf tcgmsg/.libs tcgmsg/_libs
+	-rm -rf tcgmsg/tcgmsg-mpi/.libs tcgmsg/tcgmsg-mpi/_libs
+	-rm -rf tcgmsg/tests/.libs tcgmsg/tests/_libs
 	-rm -rf tools/.libs tools/_libs
 
 distclean-libtool:
@@ -7954,6 +8409,8 @@ distclean-generic:
 	-rm -f ga++/src/$(am__dirstamp)
 	-rm -f ga++/testing/$(DEPDIR)/$(am__dirstamp)
 	-rm -f ga++/testing/$(am__dirstamp)
+	-rm -f gaf2c/$(DEPDIR)/$(am__dirstamp)
+	-rm -f gaf2c/$(am__dirstamp)
 	-rm -f global/X/$(DEPDIR)/$(am__dirstamp)
 	-rm -f global/X/$(am__dirstamp)
 	-rm -f global/examples/boltzmann/$(DEPDIR)/$(am__dirstamp)
@@ -7988,6 +8445,12 @@ distclean-generic:
 	-rm -f pario/elio/$(am__dirstamp)
 	-rm -f pario/sf/$(DEPDIR)/$(am__dirstamp)
 	-rm -f pario/sf/$(am__dirstamp)
+	-rm -f tcgmsg/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tcgmsg/$(am__dirstamp)
+	-rm -f tcgmsg/tcgmsg-mpi/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tcgmsg/tcgmsg-mpi/$(am__dirstamp)
+	-rm -f tcgmsg/tests/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tcgmsg/tests/$(am__dirstamp)
 	-rm -f tools/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tools/$(am__dirstamp)
 	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
@@ -8006,7 +8469,7 @@ clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-checkPROGRAMS \
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf LinAlg/lapack+blas/$(DEPDIR) compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/testing/unit-tests/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tools/$(DEPDIR)
+	-rm -rf LinAlg/lapack+blas/$(DEPDIR) compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/testing/unit-tests/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR) tcgmsg/tests/$(DEPDIR) tools/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -8055,7 +8518,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf LinAlg/lapack+blas/$(DEPDIR) compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/testing/unit-tests/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tools/$(DEPDIR)
+	-rm -rf LinAlg/lapack+blas/$(DEPDIR) compat/$(DEPDIR) ga++/src/$(DEPDIR) ga++/testing/$(DEPDIR) gaf2c/$(DEPDIR) global/X/$(DEPDIR) global/examples/conjugate_gradient/$(DEPDIR) global/examples/lennard-jones/$(DEPDIR) global/src/$(DEPDIR) global/testing/$(DEPDIR) global/testing/unit-tests/$(DEPDIR) global/trace/$(DEPDIR) gparrays/src/$(DEPDIR) gparrays/testing/$(DEPDIR) ma/$(DEPDIR) pario/dra/$(DEPDIR) pario/eaf/$(DEPDIR) pario/elio/$(DEPDIR) pario/sf/$(DEPDIR) tcgmsg/$(DEPDIR) tcgmsg/tcgmsg-mpi/$(DEPDIR) tcgmsg/tests/$(DEPDIR) tools/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -8175,28 +8638,28 @@ global/src/ga-wapidefs.h: $(PAPI_H)
 @HAVE_PYTHON_TRUE@	(cd $(top_srcdir)/python && $(PYTHON) setup.py build_ext -L$(libdir) -I$(includedir)) || exit 1
 @HAVE_PYTHON_TRUE@	(cd $(top_srcdir)/python && $(PYTHON) setup.py install) || exit 1
 
-gparrays/src/gp-wapi.h: $(GPPAPI_H)
-	@-rm -f $@
-	$(SED_V) \
-	$(SED) -e "s/GPPAPI/GPWAPI/g" \
-	       -e "s/pgp_/wgp_/g" \
-	       -e "/typedef/d" \
-		   $(GPPAPI_H) > $@
+@ENABLE_GPARRAYS_TRUE@gparrays/src/gp-wapi.h: $(GPPAPI_H)
+@ENABLE_GPARRAYS_TRUE@	@-rm -f $@
+@ENABLE_GPARRAYS_TRUE@	$(SED_V) \
+@ENABLE_GPARRAYS_TRUE@	$(SED) -e "s/GPPAPI/GPWAPI/g" \
+@ENABLE_GPARRAYS_TRUE@	       -e "s/pgp_/wgp_/g" \
+@ENABLE_GPARRAYS_TRUE@	       -e "/typedef/d" \
+@ENABLE_GPARRAYS_TRUE@		   $(GPPAPI_H) > $@
 
-gparrays/src/gp-wapidefs.h: $(GPPAPI_H)
-	@-rm -f $@
-	$(SED_V) \
-	$(SED) -e "s/GPPAPI/GPWAPIDEFS/g" \
-		   -e "s/^.*p\(gp_.*\)(.*$$/#define w\1 p\1/g" \
-		   -e "/^ /d" \
-		   -e "/^\/\*/d" \
-		   -e "/^ \*/d" \
-	       -e "/typedef/d" \
-	       -e "/include/d" \
-		   $(GPPAPI_H) > $@
+@ENABLE_GPARRAYS_TRUE@gparrays/src/gp-wapidefs.h: $(GPPAPI_H)
+@ENABLE_GPARRAYS_TRUE@	@-rm -f $@
+@ENABLE_GPARRAYS_TRUE@	$(SED_V) \
+@ENABLE_GPARRAYS_TRUE@	$(SED) -e "s/GPPAPI/GPWAPIDEFS/g" \
+@ENABLE_GPARRAYS_TRUE@		   -e "s/^.*p\(gp_.*\)(.*$$/#define w\1 p\1/g" \
+@ENABLE_GPARRAYS_TRUE@		   -e "/^ /d" \
+@ENABLE_GPARRAYS_TRUE@		   -e "/^\/\*/d" \
+@ENABLE_GPARRAYS_TRUE@		   -e "/^ \*/d" \
+@ENABLE_GPARRAYS_TRUE@	       -e "/typedef/d" \
+@ENABLE_GPARRAYS_TRUE@	       -e "/include/d" \
+@ENABLE_GPARRAYS_TRUE@		   $(GPPAPI_H) > $@
 
-armci/libarmcii.la:
-	($(am__cd) armci && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
+@ARMCI_NETWORK_ARMCI_FALSE@armci/libarmci.la:
+@ARMCI_NETWORK_ARMCI_FALSE@	($(am__cd) armci && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
 dist-hook: tascel-dist-hook
 .PHONY: tascel-dist-hook
 tascel-dist-hook:

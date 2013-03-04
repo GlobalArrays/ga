@@ -11,7 +11,7 @@
 
 void BRDCST_(type, buf, lenbuf, originator)
      long *type;
-     char *buf;
+     void *buf;
      long *lenbuf;
      long *originator;
 /*

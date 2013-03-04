@@ -23,7 +23,7 @@ static struct id_list_struct {
 static int next_id = 0;
 static char template[] = "/tmp/SHMEM.XXXXXX";
 
-char *CreateSharedRegion(Integer *id, Integer *size)
+char *CreateSharedRegion(long *id, long *size)
 {
     char *temp;
 
@@ -70,29 +70,29 @@ char *CreateSharedRegion(Integer *id, Integer *size)
     return id_list[*id].addr;
 }
 
-Integer DetachSharedRegion(Integer id, Integer size, char *addr)
+long DetachSharedRegion(long id, long size, char *addr)
 {
     if ( (id < 0) || (id > next_id)) {
-        return (Integer) -1;
+        return (long) -1;
     }
 
     if (id_list[id].status != 1) {
-        return (Integer) -1;
+        return (long) -1;
     }
 
     id_list[id].status = 0;
 
-    return (Integer) munmap(id_list[id].addr, 0);
+    return (long) munmap(id_list[id].addr, 0);
 }
 
-Integer DeleteSharedRegion(Integer id)
+long DeleteSharedRegion(long id)
 {
     if ( (id < 0) || (id > next_id) ) {
-        return (Integer) -1;
+        return (long) -1;
     }
 
     if (id_list[id].status != 1) {
-        return (Integer) -1;
+        return (long) -1;
     }
 
     (void) DetachSharedRegion(id, 0, (char *) 0);
@@ -102,19 +102,19 @@ Integer DeleteSharedRegion(Integer id)
         (void) unlink(id_list[id].filename);
     }
 
-    return (Integer) 0;
+    return (long) 0;
 }
 
-char *AttachSharedRegion(Integer id, Integer size)
+char *AttachSharedRegion(long id, long size)
 {
     Error("AttachSharedRegion: need mods for this to work on CONVEX",
-            (Integer) -1);
+            (long) -1);
 }
 
-Integer DeleteSharedAll()
+long DeleteSharedAll()
 {
-    Integer id;
-    Integer status = 0;
+    long id;
+    long status = 0;
 
     for (id=0; id<next_id; id++) {
         if (id_list[id].status == 1) {
@@ -123,8 +123,8 @@ Integer DeleteSharedAll()
     }
 
     if (status) {
-        return (Integer) -1;
+        return (long) -1;
     } else {
-        return (Integer) 0;
+        return (long) 0;
     }
 }

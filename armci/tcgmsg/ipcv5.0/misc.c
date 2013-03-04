@@ -13,7 +13,7 @@
 /**
  * Define value of debug flag
  */
-void SETDBG_(Integer *onoff)
+void SETDBG_(long *onoff)
 {
     DEBUG_ = *onoff;
 }

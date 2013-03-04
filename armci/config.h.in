@@ -81,40 +81,12 @@
 /* Define if checkpointing is enabled */
 #undef ENABLE_CHECKPOINT
 
-/* Define to 1 if using Fortran */
-#undef ENABLE_F77
-
 /* Define if tracing is enabled */
 #undef ENABLE_TRACE
-
-/* whether the hidden string length comes after all other args */
-#undef F2C_HIDDEN_STRING_LENGTH_AFTER_ARGS
 
 /* Define to dummy `main' function (if any) required to link to the Fortran
    libraries. */
 #undef F77_DUMMY_MAIN
-
-/* Name of F77 flush routine */
-#undef F77_FLUSH
-
-/* Define to a macro mangling the given C identifier (in lower and upper
-   case), which must not contain underscores, for linking with Fortran. */
-#undef F77_FUNC
-
-/* As F77_FUNC, but for C identifiers containing underscores. */
-#undef F77_FUNC_
-
-/* Name of routine e.g. getarg, pxfgetarg */
-#undef F77_GETARG
-
-/* Arguments to getarg e.g. i,s or i,s,l,ier */
-#undef F77_GETARG_ARGS
-
-/* Declaration of routine e.g. external GETARG */
-#undef F77_GETARG_DECL
-
-/* Name of routine e.g. iargc, ipxfargc */
-#undef F77_IARGC
 
 /* Define if F77 and FC dummy `main' functions are identical. */
 #undef FC_DUMMY_MAIN_EQ_F77
@@ -128,14 +100,20 @@
 /* CPP symbol for function name, if available */
 #undef FUNCTION_NAME
 
-/* Module command when using Fortran 90 compiler e.g. use f90_unix */
-#undef FXX_MODULE
-
 /* for Gemini */
 #undef GEMINI
 
 /* TODO */
 #undef GM
+
+/* set to 1 if ARMCI has armci_group_comm function */
+#undef HAVE_ARMCI_GROUP_COMM_FUNCTION
+
+/* set to 1 if ARMCI has ARMCI_Group.comm member */
+#undef HAVE_ARMCI_GROUP_COMM_MEMBER
+
+/* set to 1 if ARMCI has ARMCI_Initialized function */
+#undef HAVE_ARMCI_INITIALIZED_FUNCTION
 
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
@@ -159,17 +137,8 @@
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 #undef HAVE_DOPRNT
 
-/* Define to 1 if you have the `dtime' function. */
-#undef HAVE_DTIME
-
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
-
-/* Define to 1 if you have the `etime' function. */
-#undef HAVE_ETIME
-
-/* whether F77 flush routine is available */
-#undef HAVE_F77_FLUSH
 
 /* Define to 1 if you have the `fastbcopy' function. */
 #undef HAVE_FASTBCOPY
@@ -492,9 +461,6 @@
 /* Use TCGMSG (ipcv5.0) for messaing */
 #undef MSG_COMMS_TCGMSG5
 
-/* Use TCGMSG over MPI for messaging */
-#undef MSG_COMMS_TCGMSGMPI
-
 /* TODO */
 #undef MULTI_CTX
 
@@ -515,12 +481,6 @@
 
 /* for portals, enable new malloc */
 #undef NEW_MALLOC
-
-/* Define to 1 if not using Fortran */
-#undef NOFORT
-
-/* this was defined unconditionally when using LAPI for tcgmsg 5 */
-#undef NOTIFY_SENDER
 
 /* define when inline asm is not supported */
 #undef NO_I386ASM
@@ -599,15 +559,6 @@
 
 /* The size of `double', as computed by sizeof. */
 #undef SIZEOF_DOUBLE
-
-/* The size of 'DOUBLE PRECISION' as computed by C's sizeof. */
-#undef SIZEOF_F77_DOUBLE_PRECISION
-
-/* The size of 'INTEGER' as computed by C's sizeof. */
-#undef SIZEOF_F77_INTEGER
-
-/* The size of 'REAL' as computed by C's sizeof. */
-#undef SIZEOF_F77_REAL
 
 /* The size of `float', as computed by sizeof. */
 #undef SIZEOF_FLOAT

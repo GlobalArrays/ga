@@ -22,8 +22,11 @@
 #include "armci.h"
 #include "message.h"
 
+#define MEMLOCK_TEST 0
+#if MEMLOCK_TEST
 extern void armci_lockmem(void *, void *, int);
 extern void armci_unlockmem(void);
+#endif
 
 #define DIM1 5
 #define DIM2 3
@@ -1425,6 +1428,7 @@ void test_swap()
 }
 
 
+#if MEMLOCK_TEST
 void test_memlock()
 {
   int dim, elems, bytes;
@@ -1500,6 +1504,7 @@ void test_memlock()
   destroy_array((void **)b);
   free(a);
 }
+#endif
 
 void test_rput()
 {
@@ -1953,6 +1958,7 @@ int main(int argc, char *argv[])
 {
   int ndim;
 
+  MPI_Init(&argc,&argv);
   ARMCI_Init_args(&argc, &argv);
   nproc = armci_msg_nproc();
   me = armci_msg_me();
@@ -2101,7 +2107,9 @@ int main(int argc, char *argv[])
 
 
   ARMCI_Barrier();
-  /*test_memlock();*/
+#if MEMLOCK_TEST
+  test_memlock();
+#endif
 
   ARMCI_Barrier();
   if (me == 0) {
@@ -2125,6 +2133,7 @@ int main(int argc, char *argv[])
 
   ARMCI_Barrier();
   ARMCI_Finalize();
-  armci_msg_finalize();
+  //armci_msg_finalize();
+  MPI_Finalize();
   return(0);
 }

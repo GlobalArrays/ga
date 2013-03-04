@@ -12,17 +12,17 @@ extern void qsort(void *base, size_t nmemb, size_t size, int(*compar)(const void
 #include "sndrcv.h"
 #include "tcgmsgP.h"
 
-extern Integer MatchShmMessage();
+extern long MatchShmMessage();
 extern void msg_wait();
 extern long DEBUG_;
 
 #define INVALID_NODE -3333      /* used to stamp completed msg in the queue */
 #define MAX_Q_LEN MAX_PROC           /* Maximum no. of outstanding messages */
-static  volatile Integer n_in_msg_q = 0;   /* actual no. in the message q */
+static  volatile long n_in_msg_q = 0;   /* actual no. in the message q */
 static  struct msg_q_struct{
-    Integer   msg_id;
-    Integer   node;
-    Integer   type;
+    long   msg_id;
+    long   node;
+    long   type;
 } msg_q[MAX_Q_LEN];
 
 
@@ -34,14 +34,14 @@ static  struct msg_q_struct{
  * If node is specified as -1 then this value is overwritten with the
  * node that we got the message from.
  */
-Integer ProbeNode(Integer *type, Integer *node)
+long ProbeNode(long *type, long *node)
 {
-    static Integer  next_node = 0;
+    static long  next_node = 0;
 
-    Integer  nproc = NNODES_();
-    Integer  me = NODEID_();
-    Integer  found = 0;
-    Integer  cur_node;
+    long  nproc = NNODES_();
+    long  me = NODEID_();
+    long  found = 0;
+    long  cur_node;
     int   i, proclo, prochi;
 
     if (*node == me)
@@ -79,10 +79,10 @@ Integer ProbeNode(Integer *type, Integer *node)
  * from the given node.  If the node is specified as -1, then all nodes
  * will be examined.  Some attempt is made at ensuring fairness.
  */
-Integer PROBE_(Integer *type, Integer *node)
+long PROBE_(long *type, long *node)
 {
-    Integer nnode = *node;
-    Integer result;
+    long nnode = *node;
+    long result;
 
     result = ProbeNode(type, &nnode);
 
@@ -91,22 +91,22 @@ Integer PROBE_(Integer *type, Integer *node)
 
 
 /**
- * Integer *type        = user defined type of received message (input)
+ * long *type        = user defined type of received message (input)
  * char *buf         = data buffer (output)
- * Integer *lenbuf      = length of buffer in bytes (input)
- * Integer *lenmes      = length of received message in bytes (output)
+ * long *lenbuf      = length of buffer in bytes (input)
+ * long *lenmes      = length of received message in bytes (output)
  *                     (exceeding receive buffer is hard error)
- * Integer *nodeselect  = node to receive from (input)
+ * long *nodeselect  = node to receive from (input)
  *                     -1 implies that any pending message of the specified
  *                     type may be received
- * Integer *nodefrom    = node message is received from (output)
- * Integer *sync        = flag for sync(1) or async(0) receipt (input)
+ * long *nodefrom    = node message is received from (output)
+ * long *sync        = flag for sync(1) or async(0) receipt (input)
  */
-void RCV_(Integer *type, void *buf, Integer *lenbuf, Integer *lenmes, Integer *nodeselect, Integer *nodefrom, Integer *sync)
+void RCV_(long *type, void *buf, long *lenbuf, long *lenmes, long *nodeselect, long *nodefrom, long *sync)
 {
-    static Integer ttype;
-    static Integer node;
-    Integer   me = NODEID_();
+    static long ttype;
+    static long node;
+    long   me = NODEID_();
     void msg_rcv();
 
     node = *nodeselect;
@@ -133,22 +133,22 @@ void RCV_(Integer *type, void *buf, Integer *lenbuf, Integer *lenmes, Integer *n
 
 
 /**
- * Integer *type     = user defined integer message type (input)
+ * long *type     = user defined integer message type (input)
  * char *buf      = data buffer (input)
- * Integer *lenbuf   = length of buffer in bytes (input)
- * Integer *node     = node to send to (input)
- * Integer *sync     = flag for sync(1) or async(0) communication (input)
+ * long *lenbuf   = length of buffer in bytes (input)
+ * long *node     = node to send to (input)
+ * long *sync     = flag for sync(1) or async(0) communication (input)
  */
-void SND_(Integer *type, void *buf, Integer *lenbuf, Integer *node, Integer *sync)
+void SND_(long *type, void *buf, long *lenbuf, long *node, long *sync)
 {
-    Integer me = NODEID_();
-    Integer msg_async_snd();
+    long me = NODEID_();
+    long msg_async_snd();
 
     /*asynchronous communication not supported under LAPI */
 #ifdef LAPI
-    Integer block = 1;
+    long block = 1;
 #else
-    Integer block = *sync;
+    long block = *sync;
 #endif
 
     if (DEBUG_) {
@@ -194,9 +194,9 @@ int compare_msg_q_entries(const void* entry1, const void* entry2)
  * Wait for all messages (send/receive) to complete between
  * this node and node *nodesel or everyone if *nodesel == -1.
  */
-void WAITCOM_(Integer *nodesel)
+void WAITCOM_(long *nodesel)
 {
-    Integer i, found = 0;
+    long i, found = 0;
 
     for (i=0; i<n_in_msg_q; i++) if(*nodesel==msg_q[i].node || *nodesel ==-1){
 

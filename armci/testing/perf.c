@@ -30,6 +30,11 @@
 #include "armci.h"
 #include "message.h"
 
+
+#ifndef ARMCI_MAX_STRIDE_LEVEL
+#define ARMCI_MAX_STRIDE_LEVEL 7
+#endif
+
 #define SIZE 550
 #define MAXPROC 8
 #define CHUNK_NUM 28
@@ -543,6 +548,7 @@ void test_2D()
 int main(int argc, char **argv)
 {
 
+  MPI_Init(&argc,&argv);
   /* initialize ARMCI */
   ARMCI_Init_args(&argc, &argv);
 
@@ -554,7 +560,8 @@ int main(int argc, char **argv)
       fprintf(stderr,
               "USAGE: 2 <= processes < %d - got %d\n", MAXPROC, nproc);
     ARMCI_Barrier();
-    armci_msg_finalize();
+    //armci_msg_finalize();
+    MPI_Finalize();
     exit(0);
   }
 
@@ -609,7 +616,8 @@ int main(int argc, char **argv)
 
   /* done */
   ARMCI_Finalize();
-  armci_msg_finalize();
+  //armci_msg_finalize();
+  MPI_Finalize();
   return(0);
 }
 

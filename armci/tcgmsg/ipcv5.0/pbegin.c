@@ -25,7 +25,6 @@
    and declared extern everywhere else ... SGI linker is a whiner */
 #define PBEGIN_C
 
-#include "typesf2c.h"
 #include "tcgmsgP.h"
 
 #ifdef LAPI
@@ -40,7 +39,7 @@ extern int WaitAll(long);
 static int SR_initialized=0;
 
 
-Integer TCGREADY_()
+long TCGREADY_()
 {
     return (long)SR_initialized;
 }
@@ -193,7 +192,7 @@ void tcgi_pbegin(int argc, char **argv)
        Synchronize and continue. */
 
     {
-        Integer type = 1;
+        long type = 1;
 
         SYNCH_(&type);
     }
@@ -208,7 +207,7 @@ void tcgi_alt_pbegin(int *argc, char **argv[])
 
 void PEND_(void)
 {
-    Integer type = 999;
+    long type = 999;
 #ifndef LAPI
     (void) signal(SIGCHLD, SIG_DFL); /* Death of children now OK */
 #endif
