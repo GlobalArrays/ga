@@ -447,6 +447,7 @@ endif # MSG_COMMS_TCGMSG5
 #
 check_PROGRAMS += testing/msgcheck
 check_PROGRAMS += testing/perf
+check_PROGRAMS += testing/perf2
 check_PROGRAMS += testing/perf_aggr
 check_PROGRAMS += testing/perf_nb
 check_PROGRAMS += testing/shmclean
@@ -506,6 +507,7 @@ ARMCI_TESTS_XFAIL = $(ARMCI_SERIAL_TESTS_XFAIL) $(ARMCI_PARALLEL_TESTS_XFAIL)
 
 ARMCI_PARALLEL_TESTS += testing/msgcheck$(EXEEXT)
 ARMCI_PARALLEL_TESTS += testing/perf$(EXEEXT)
+#ARMCI_PARALLEL_TESTS += testing/perf2(EXEEXT) # only a benchmark
 ARMCI_PARALLEL_TESTS += testing/perf_aggr$(EXEEXT)
 #ARMCI_PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
 #ARMCI_SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
@@ -556,6 +558,7 @@ testing_origptl_SOURCES     = testing/origptl.c $(atsrc)
 testing_perf_aggr_SOURCES   = testing/perf_aggr.c $(atsrc)
 testing_perf_nb_SOURCES     = testing/perf_nb.c $(atsrc)
 testing_perf_SOURCES        = testing/perf.c $(atsrc)
+testing_perf2_SOURCES       = testing/perf2.c $(atsrc)
 testing_ptltest_SOURCES     = testing/ptltest.c $(atsrc)
 testing_shmclean_SOURCES    = testing/shmclean.c $(atsrc)
 testing_shmtest_SOURCES     = testing/shmtest.c $(atsrc)
@@ -570,29 +573,6 @@ testing_testnotify_SOURCES  = testing/testnotify.c $(atsrc)
 testing_test_SOURCES        = testing/test.c $(atsrc)
 
 testing_testitr_CPPFLAGS    = $(AM_CPPFLAGS) -I$(top_srcdir)/src/include
-
-nodist_EXTRA_testing_clone_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_fork_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_fttest_SOURCES      = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_gpctest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_ipctest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_msgcheck_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_origptl_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_perf_aggr_SOURCES   = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_perf_nb_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_perf_SOURCES        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_ptltest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_shmclean_SOURCES    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_shmtest_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_simple_SOURCES      = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_simplelock_SOURCES  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_te_SOURCES          = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_test2_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_test_groups_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_testitr_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_test_mt_SOURCES     = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_testnotify_SOURCES  = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_test_SOURCES        = $(MAYBE_DUMMY_F_LINK)
 
 ##############################################################################
 # examples
@@ -772,29 +752,6 @@ examples/features/symmetric_memory/simple/simple.c $(atsrc)
 
 examples_simpleApps_transp1D_c_SOURCES = \
 examples/simpleApps/transp1D-c.c $(atsrc)
-
-nodist_EXTRA_examples_benchmarks_cg_armci_sharedmemory_cg_SOURCES                          = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_armci_blocking_lu_SOURCES                              = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_armci_blocking_lu_block_SOURCES                        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_armci_blocking_lu_b_bc_SOURCES                         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_armci_multithreaded_lu_block_th_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_armci_nonblocking_lu_nb_put_SOURCES                    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_armci_nonblocking_lu_nb_get_SOURCES                    = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_pthreads_lu_thread_SOURCES                             = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_RandomAccess_simple_simple_SOURCES                        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_SOURCES                = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_aggregation_simple_simple_SOURCES                           = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_SOURCES       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_concurrency_multidma_multidma_SOURCES                       = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_concurrency_simple_comdegree_SOURCES                        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_gpc_hashtable_test_hashtable_SOURCES                        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_non_blocking_overlap_overlap_SOURCES                        = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_non_blocking_simple_simple_SOURCES                          = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_notification_simple_testnotify_SOURCES                      = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_proc_affinity_computation_impact_computation_impact_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_proc_affinity_simple_simple_SOURCES                         = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_symmetric_memory_simple_simple_SOURCES                      = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_simpleApps_transp1D_c_SOURCES                                        = $(MAYBE_DUMMY_F_LINK)
 
 EXTRA_DIST += examples/benchmarks/lu/README
 EXTRA_DIST += examples/features/aggregation/README

@@ -15,6 +15,7 @@
       integer proc_group(0:100),proclist(100),inode,nprocs
       integer ierr,comm
       double precision sbuf(1),rbuf(1)
+      call mpi_init(ierr)
       call ga_initialize()
       me = ga_nodeid()
 

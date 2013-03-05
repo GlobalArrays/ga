@@ -74,12 +74,13 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = $(am__EXEEXT_1)
 check_PROGRAMS = testing/msgcheck$(EXEEXT) testing/perf$(EXEEXT) \
-	testing/perf_aggr$(EXEEXT) testing/perf_nb$(EXEEXT) \
-	testing/shmclean$(EXEEXT) testing/shmtest$(EXEEXT) \
-	testing/simplelock$(EXEEXT) testing/test$(EXEEXT) \
-	testing/test2$(EXEEXT) $(am__EXEEXT_2) $(am__EXEEXT_3) \
-	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
-	$(am__EXEEXT_7) $(am__EXEEXT_8) $(am__EXEEXT_9) \
+	testing/perf2$(EXEEXT) testing/perf_aggr$(EXEEXT) \
+	testing/perf_nb$(EXEEXT) testing/shmclean$(EXEEXT) \
+	testing/shmtest$(EXEEXT) testing/simplelock$(EXEEXT) \
+	testing/test$(EXEEXT) testing/test2$(EXEEXT) $(am__EXEEXT_2) \
+	$(am__EXEEXT_3) $(am__EXEEXT_4) $(am__EXEEXT_5) \
+	$(am__EXEEXT_6) $(am__EXEEXT_7) $(am__EXEEXT_8) \
+	$(am__EXEEXT_9) \
 	examples/benchmarks/cg/armci_sharedmemory/cg$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-b-bc$(EXEEXT) \
 	examples/benchmarks/lu/armci_blocking/lu-block$(EXEEXT) \
@@ -1394,6 +1395,13 @@ testing_perf_OBJECTS = $(am_testing_perf_OBJECTS)
 testing_perf_LDADD = $(LDADD)
 testing_perf_DEPENDENCIES = $(am__DEPENDENCIES_3) \
 	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
+am__testing_perf2_SOURCES_DIST = testing/perf2.c \
+	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
+am_testing_perf2_OBJECTS = testing/perf2.$(OBJEXT) $(am__objects_39)
+testing_perf2_OBJECTS = $(am_testing_perf2_OBJECTS)
+testing_perf2_LDADD = $(LDADD)
+testing_perf2_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
 am__testing_perf_aggr_SOURCES_DIST = testing/perf_aggr.c \
 	testing/rpl_armci_msg_init.c testing/rpl_armci_msg_finalize.c
 am_testing_perf_aggr_OBJECTS = testing/perf_aggr.$(OBJEXT) \
@@ -1557,87 +1565,39 @@ am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libarmci_la_SOURCES) $(nodist_libarmci_la_SOURCES) \
 	$(libarmci_prof_la_SOURCES) \
 	$(examples_benchmarks_RandomAccess_simple_simple_SOURCES) \
-	$(nodist_EXTRA_examples_benchmarks_RandomAccess_simple_simple_SOURCES) \
 	$(examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_SOURCES) \
-	$(nodist_EXTRA_examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_SOURCES) \
 	$(examples_benchmarks_cg_armci_sharedmemory_cg_SOURCES) \
-	$(nodist_EXTRA_examples_benchmarks_cg_armci_sharedmemory_cg_SOURCES) \
 	$(examples_benchmarks_lu_armci_blocking_lu_SOURCES) \
-	$(nodist_EXTRA_examples_benchmarks_lu_armci_blocking_lu_SOURCES) \
 	$(examples_benchmarks_lu_armci_blocking_lu_b_bc_SOURCES) \
-	$(nodist_EXTRA_examples_benchmarks_lu_armci_blocking_lu_b_bc_SOURCES) \
 	$(examples_benchmarks_lu_armci_blocking_lu_block_SOURCES) \
-	$(nodist_EXTRA_examples_benchmarks_lu_armci_blocking_lu_block_SOURCES) \
 	$(examples_benchmarks_lu_armci_multithreaded_lu_block_th_SOURCES) \
-	$(nodist_EXTRA_examples_benchmarks_lu_armci_multithreaded_lu_block_th_SOURCES) \
 	$(examples_benchmarks_lu_armci_nonblocking_lu_nb_get_SOURCES) \
-	$(nodist_EXTRA_examples_benchmarks_lu_armci_nonblocking_lu_nb_get_SOURCES) \
 	$(examples_benchmarks_lu_armci_nonblocking_lu_nb_put_SOURCES) \
-	$(nodist_EXTRA_examples_benchmarks_lu_armci_nonblocking_lu_nb_put_SOURCES) \
 	$(examples_benchmarks_lu_pthreads_lu_thread_SOURCES) \
-	$(nodist_EXTRA_examples_benchmarks_lu_pthreads_lu_thread_SOURCES) \
 	$(examples_features_aggregation_simple_simple_SOURCES) \
-	$(nodist_EXTRA_examples_features_aggregation_simple_simple_SOURCES) \
 	$(examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_SOURCES) \
-	$(nodist_EXTRA_examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_SOURCES) \
 	$(examples_features_concurrency_multidma_multidma_SOURCES) \
-	$(nodist_EXTRA_examples_features_concurrency_multidma_multidma_SOURCES) \
 	$(examples_features_concurrency_simple_comdegree_SOURCES) \
-	$(nodist_EXTRA_examples_features_concurrency_simple_comdegree_SOURCES) \
 	$(examples_features_gpc_hashtable_test_hashtable_SOURCES) \
-	$(nodist_EXTRA_examples_features_gpc_hashtable_test_hashtable_SOURCES) \
 	$(examples_features_non_blocking_overlap_overlap_SOURCES) \
-	$(nodist_EXTRA_examples_features_non_blocking_overlap_overlap_SOURCES) \
 	$(examples_features_non_blocking_simple_simple_SOURCES) \
-	$(nodist_EXTRA_examples_features_non_blocking_simple_simple_SOURCES) \
 	$(examples_features_notification_simple_testnotify_SOURCES) \
-	$(nodist_EXTRA_examples_features_notification_simple_testnotify_SOURCES) \
 	$(examples_features_proc_affinity_computation_impact_computation_impact_SOURCES) \
-	$(nodist_EXTRA_examples_features_proc_affinity_computation_impact_computation_impact_SOURCES) \
 	$(examples_features_proc_affinity_simple_simple_SOURCES) \
-	$(nodist_EXTRA_examples_features_proc_affinity_simple_simple_SOURCES) \
 	$(examples_features_symmetric_memory_simple_simple_SOURCES) \
-	$(nodist_EXTRA_examples_features_symmetric_memory_simple_simple_SOURCES) \
-	$(examples_simpleApps_transp1D_c_SOURCES) \
-	$(nodist_EXTRA_examples_simpleApps_transp1D_c_SOURCES) \
-	$(parallel_SOURCES) $(testing_clone_SOURCES) \
-	$(nodist_EXTRA_testing_clone_SOURCES) $(testing_fork_SOURCES) \
-	$(nodist_EXTRA_testing_fork_SOURCES) $(testing_fttest_SOURCES) \
-	$(nodist_EXTRA_testing_fttest_SOURCES) \
-	$(testing_gpctest_SOURCES) \
-	$(nodist_EXTRA_testing_gpctest_SOURCES) \
-	$(testing_ipctest_SOURCES) \
-	$(nodist_EXTRA_testing_ipctest_SOURCES) \
-	$(testing_msgcheck_SOURCES) \
-	$(nodist_EXTRA_testing_msgcheck_SOURCES) \
-	$(testing_origptl_SOURCES) \
-	$(nodist_EXTRA_testing_origptl_SOURCES) \
-	$(testing_perf_SOURCES) $(nodist_EXTRA_testing_perf_SOURCES) \
-	$(testing_perf_aggr_SOURCES) \
-	$(nodist_EXTRA_testing_perf_aggr_SOURCES) \
-	$(testing_perf_nb_SOURCES) \
-	$(nodist_EXTRA_testing_perf_nb_SOURCES) \
-	$(testing_ptltest_SOURCES) \
-	$(nodist_EXTRA_testing_ptltest_SOURCES) \
-	$(testing_shmclean_SOURCES) \
-	$(nodist_EXTRA_testing_shmclean_SOURCES) \
-	$(testing_shmtest_SOURCES) \
-	$(nodist_EXTRA_testing_shmtest_SOURCES) \
-	$(testing_simple_SOURCES) \
-	$(nodist_EXTRA_testing_simple_SOURCES) \
-	$(testing_simplelock_SOURCES) \
-	$(nodist_EXTRA_testing_simplelock_SOURCES) \
-	$(testing_te_SOURCES) $(nodist_EXTRA_testing_te_SOURCES) \
-	$(testing_test_SOURCES) $(nodist_EXTRA_testing_test_SOURCES) \
-	$(testing_test2_SOURCES) $(nodist_EXTRA_testing_test2_SOURCES) \
-	$(testing_test_groups_SOURCES) \
-	$(nodist_EXTRA_testing_test_groups_SOURCES) \
-	$(testing_test_mt_SOURCES) \
-	$(nodist_EXTRA_testing_test_mt_SOURCES) \
-	$(testing_testitr_SOURCES) \
-	$(nodist_EXTRA_testing_testitr_SOURCES) \
-	$(testing_testnotify_SOURCES) \
-	$(nodist_EXTRA_testing_testnotify_SOURCES)
+	$(examples_simpleApps_transp1D_c_SOURCES) $(parallel_SOURCES) \
+	$(testing_clone_SOURCES) $(testing_fork_SOURCES) \
+	$(testing_fttest_SOURCES) $(testing_gpctest_SOURCES) \
+	$(testing_ipctest_SOURCES) $(testing_msgcheck_SOURCES) \
+	$(testing_origptl_SOURCES) $(testing_perf_SOURCES) \
+	$(testing_perf2_SOURCES) $(testing_perf_aggr_SOURCES) \
+	$(testing_perf_nb_SOURCES) $(testing_ptltest_SOURCES) \
+	$(testing_shmclean_SOURCES) $(testing_shmtest_SOURCES) \
+	$(testing_simple_SOURCES) $(testing_simplelock_SOURCES) \
+	$(testing_te_SOURCES) $(testing_test_SOURCES) \
+	$(testing_test2_SOURCES) $(testing_test_groups_SOURCES) \
+	$(testing_test_mt_SOURCES) $(testing_testitr_SOURCES) \
+	$(testing_testnotify_SOURCES)
 DIST_SOURCES = $(am__libarmci_la_SOURCES_DIST) \
 	$(am__libarmci_prof_la_SOURCES_DIST) \
 	$(am__examples_benchmarks_RandomAccess_simple_simple_SOURCES_DIST) \
@@ -1670,6 +1630,7 @@ DIST_SOURCES = $(am__libarmci_la_SOURCES_DIST) \
 	$(am__testing_msgcheck_SOURCES_DIST) \
 	$(am__testing_origptl_SOURCES_DIST) \
 	$(am__testing_perf_SOURCES_DIST) \
+	$(am__testing_perf2_SOURCES_DIST) \
 	$(am__testing_perf_aggr_SOURCES_DIST) \
 	$(am__testing_perf_nb_SOURCES_DIST) \
 	$(am__testing_ptltest_SOURCES_DIST) \
@@ -2024,6 +1985,7 @@ SED_NORMALIZE_WHITESPACE = $(SED) 's/ [ ]*/ /g;s/" /"/g;s/ "/"/g'
 atsrc = $(am__append_71) $(am__append_72)
 ARMCI_SERIAL_TESTS = $(am__append_78)
 ARMCI_SERIAL_TESTS_XFAIL = 
+#ARMCI_PARALLEL_TESTS += testing/perf2(EXEEXT) # only a benchmark
 #ARMCI_PARALLEL_TESTS += testing/perf_nb$(EXEEXT) # needs bug fixes
 #ARMCI_SERIAL_TESTS += testing/shmclean$(EXEEXT) # not sure we need this
 #ARMCI_SERIAL_TESTS += testing/shmtest$(EXEEXT) # not sure we need this
@@ -2061,6 +2023,7 @@ testing_origptl_SOURCES = testing/origptl.c $(atsrc)
 testing_perf_aggr_SOURCES = testing/perf_aggr.c $(atsrc)
 testing_perf_nb_SOURCES = testing/perf_nb.c $(atsrc)
 testing_perf_SOURCES = testing/perf.c $(atsrc)
+testing_perf2_SOURCES = testing/perf2.c $(atsrc)
 testing_ptltest_SOURCES = testing/ptltest.c $(atsrc)
 testing_shmclean_SOURCES = testing/shmclean.c $(atsrc)
 testing_shmtest_SOURCES = testing/shmtest.c $(atsrc)
@@ -2074,28 +2037,6 @@ testing_test_mt_SOURCES = testing/test_mt.c $(atsrc)
 testing_testnotify_SOURCES = testing/testnotify.c $(atsrc)
 testing_test_SOURCES = testing/test.c $(atsrc)
 testing_testitr_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/include
-nodist_EXTRA_testing_clone_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_fork_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_fttest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_gpctest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_ipctest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_msgcheck_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_origptl_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_perf_aggr_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_perf_nb_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_perf_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_ptltest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_shmclean_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_shmtest_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_simple_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_simplelock_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_te_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_test2_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_test_groups_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_testitr_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_test_mt_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_testnotify_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_testing_test_SOURCES = $(MAYBE_DUMMY_F_LINK)
 examples_benchmarks_cg_armci_sharedmemory_cg_SOURCES = \
 examples/benchmarks/cg/armci_sharedmemory/cg.c         \
 examples/benchmarks/cg/armci_sharedmemory/compute.c    \
@@ -2200,28 +2141,6 @@ examples/features/symmetric_memory/simple/simple.c $(atsrc)
 examples_simpleApps_transp1D_c_SOURCES = \
 examples/simpleApps/transp1D-c.c $(atsrc)
 
-nodist_EXTRA_examples_benchmarks_cg_armci_sharedmemory_cg_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_armci_blocking_lu_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_armci_blocking_lu_block_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_armci_blocking_lu_b_bc_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_armci_multithreaded_lu_block_th_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_armci_nonblocking_lu_nb_put_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_armci_nonblocking_lu_nb_get_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_lu_pthreads_lu_thread_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_RandomAccess_simple_simple_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_aggregation_simple_simple_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_concurrency_multidma_multidma_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_concurrency_simple_comdegree_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_gpc_hashtable_test_hashtable_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_non_blocking_overlap_overlap_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_non_blocking_simple_simple_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_notification_simple_testnotify_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_proc_affinity_computation_impact_computation_impact_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_proc_affinity_simple_simple_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_features_symmetric_memory_simple_simple_SOURCES = $(MAYBE_DUMMY_F_LINK)
-nodist_EXTRA_examples_simpleApps_transp1D_c_SOURCES = $(MAYBE_DUMMY_F_LINK)
 
 # support verbose/silent make rules for additional programs
 # sed
@@ -3323,6 +3242,11 @@ testing/perf.$(OBJEXT): testing/$(am__dirstamp) \
 testing/perf$(EXEEXT): $(testing_perf_OBJECTS) $(testing_perf_DEPENDENCIES) $(EXTRA_testing_perf_DEPENDENCIES) testing/$(am__dirstamp)
 	@rm -f testing/perf$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(testing_perf_OBJECTS) $(testing_perf_LDADD) $(LIBS)
+testing/perf2.$(OBJEXT): testing/$(am__dirstamp) \
+	testing/$(DEPDIR)/$(am__dirstamp)
+testing/perf2$(EXEEXT): $(testing_perf2_OBJECTS) $(testing_perf2_DEPENDENCIES) $(EXTRA_testing_perf2_DEPENDENCIES) testing/$(am__dirstamp)
+	@rm -f testing/perf2$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(testing_perf2_OBJECTS) $(testing_perf2_LDADD) $(LIBS)
 testing/perf_aggr.$(OBJEXT): testing/$(am__dirstamp) \
 	testing/$(DEPDIR)/$(am__dirstamp)
 testing/perf_aggr$(EXEEXT): $(testing_perf_aggr_OBJECTS) $(testing_perf_aggr_DEPENDENCIES) $(EXTRA_testing_perf_aggr_DEPENDENCIES) testing/$(am__dirstamp)
@@ -3847,6 +3771,7 @@ mostlyclean-compile:
 	-rm -f testing/msgcheck.$(OBJEXT)
 	-rm -f testing/origptl.$(OBJEXT)
 	-rm -f testing/perf.$(OBJEXT)
+	-rm -f testing/perf2.$(OBJEXT)
 	-rm -f testing/perf_aggr.$(OBJEXT)
 	-rm -f testing/perf_nb.$(OBJEXT)
 	-rm -f testing/ptltest.$(OBJEXT)
@@ -4116,6 +4041,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/msgcheck.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/origptl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/perf.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/perf2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/perf_aggr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/perf_nb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testing/$(DEPDIR)/ptltest.Po@am__quote@
