@@ -67,18 +67,9 @@ AS_IF([test "x$happy" = xyes],
      AS_IF([test "x$ac_cv_search_armci_group_comm" != xno],
         [ac_cv_search_armci_group_comm=1],
         [ac_cv_search_armci_group_comm=0])
-     AC_DEFINE_UNQUOTED([HAVE_ARMCI_GROUP_COMM_FUNCTION],
+     AC_DEFINE_UNQUOTED([HAVE_ARMCI_GROUP_COMM],
         [$ac_cv_search_armci_group_comm],
         [set to 1 if ARMCI has armci_group_comm function])
-    ])
-AS_IF([test "x$happy" = xyes],
-    [AC_SEARCH_LIBS([ARMCI_Initialized], [armci])
-     AS_IF([test "x$ac_cv_search_ARMCI_Initialized" != xno],
-        [ac_cv_search_ARMCI_Initialized=1],
-        [ac_cv_search_ARMCI_Initialized=0])
-     AC_DEFINE_UNQUOTED([HAVE_ARMCI_INITIALIZED_FUNCTION],
-        [$ac_cv_search_ARMCI_Initialized],
-        [set to 1 if ARMCI has ARMCI_Initialized function])
     ])
 AS_IF([test "x$happy" = xyes],
     [AC_CHECK_MEMBER([ARMCI_Group.comm], [], [], [[#include <armci.h>]])
@@ -89,6 +80,65 @@ AS_IF([test "x$happy" = xyes],
         [$ac_cv_member_ARMCI_Group_comm],
         [set to 1 if ARMCI has ARMCI_Group.comm member])
     ])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([ARMCI_Initialized], [armci])
+     AS_IF([test "x$ac_cv_search_ARMCI_Initialized" != xno],
+        [ac_cv_search_ARMCI_Initialized=1],
+        [ac_cv_search_ARMCI_Initialized=0])
+     AC_DEFINE_UNQUOTED([HAVE_ARMCI_INITIALIZED],
+        [$ac_cv_search_ARMCI_Initialized],
+        [set to 1 if ARMCI has ARMCI_Initialized function])
+    ])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([armci_stride_info_init], [armci])
+     AS_IF([test "x$ac_cv_search_armci_stride_info_init" != xno],
+        [ac_cv_search_armci_stride_info_init=1],
+        [ac_cv_search_armci_stride_info_init=0])
+     AC_DEFINE_UNQUOTED([HAVE_ARMCI_STRIDE_INFO_INIT],
+        [$ac_cv_search_armci_stride_info_init],
+        [set to 1 if ARMCI has armci_stride_info_init function])
+    ])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([armci_notify], [armci])
+     AS_IF([test "x$ac_cv_search_armci_notify" != xno],
+        [ac_cv_search_armci_notify=1],
+        [ac_cv_search_armci_notify=0])
+     AC_DEFINE_UNQUOTED([HAVE_ARMCI_NOTIFY],
+        [$ac_cv_search_armci_notify],
+        [set to 1 if ARMCI has armci_notify function])
+    ])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([armci_msg_init], [armci])
+     AS_IF([test "x$ac_cv_search_armci_msg_init" != xno],
+        [ac_cv_search_armci_msg_init=1],
+        [ac_cv_search_armci_msg_init=0])
+     AC_DEFINE_UNQUOTED([HAVE_ARMCI_MSG_INIT],
+        [$ac_cv_search_armci_msg_init],
+        [set to 1 if ARMCI has armci_msg_init function])
+    ])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([armci_msg_finalize], [armci])
+     AS_IF([test "x$ac_cv_search_armci_msg_finalize" != xno],
+        [ac_cv_search_armci_msg_finalize=1],
+        [ac_cv_search_armci_msg_finalize=0])
+     AC_DEFINE_UNQUOTED([HAVE_ARMCI_MSG_FINALIZE],
+        [$ac_cv_search_armci_msg_finalize],
+        [set to 1 if ARMCI has armci_msg_finalize function])
+    ])
+AM_CONDITIONAL([HAVE_ARMCI_GROUP_COMM],
+   [test "x$ac_cv_search_armci_group_comm" = x1])
+AM_CONDITIONAL([HAVE_ARMCI_GROUP_COMM_MEMBER],
+   [test "x$ac_cv_member_ARMCI_Group_comm" = x1])
+AM_CONDITIONAL([HAVE_ARMCI_INITIALIZED],
+   [test "x$ac_cv_search_ARMCI_Initialized" = x1])
+AM_CONDITIONAL([HAVE_ARMCI_STRIDE_INFO_INIT],
+   [test "x$ac_cv_search_armci_stride_info_init" = x1])
+AM_CONDITIONAL([HAVE_ARMCI_NOTIFY],
+   [test "x$ac_cv_search_armci_notify" = x1])
+AM_CONDITIONAL([HAVE_ARMCI_MSG_INIT],
+   [test "x$ac_cv_search_armci_msg_init" = x1])
+AM_CONDITIONAL([HAVE_ARMCI_MSG_FINALIZE],
+   [test "x$ac_cv_search_armci_msg_finalize" = x1])
 AS_IF([test "x$happy" = xyes],
     [ga_armci_network=ARMCI; with_armci=yes; $1],
     [$2])
@@ -480,8 +530,24 @@ AS_IF([test x$ga_cv_sysv_hack = xyes],
 ])
 AM_CONDITIONAL([SYSV], [test x$ga_cv_sysv_hack = xyes])
 
-# if not using external armci library, the following functions are available
+# if not using external armci library, the following functions are always available
 AS_IF([test "x$ga_armci_network" != xARMCI],
-    [AC_DEFINE([HAVE_ARMCI_GROUP_COMM_FUNCTION], [1], [])
-     AC_DEFINE([HAVE_ARMCI_INITIALIZED_FUNCTION] [1], [])])
+    [AC_DEFINE([HAVE_ARMCI_GROUP_COMM], [1], [])
+     AC_DEFINE([HAVE_ARMCI_INITIALIZED], [1], [])
+     AC_DEFINE([HAVE_ARMCI_NOTIFY], [1], [])
+     AC_DEFINE([HAVE_ARMCI_MSG_INIT], [1], [])
+     AC_DEFINE([HAVE_ARMCI_MSG_FINALIZE], [1], [])])
+AM_CONDITIONAL([HAVE_ARMCI_GROUP_COMM_MEMBER],
+   [test "x$ac_cv_member_ARMCI_Group_comm" = x1])
+AM_CONDITIONAL([HAVE_ARMCI_GROUP_COMM],  [test "x$ga_armci_network" != xARMCI])
+AM_CONDITIONAL([HAVE_ARMCI_INITIALIZED], [test "x$ga_armci_network" != xARMCI])
+AM_CONDITIONAL([HAVE_ARMCI_NOTIFY],      [test "x$ga_armci_network" != xARMCI])
+AM_CONDITIONAL([HAVE_ARMCI_MSG_INIT],    [test "x$ga_armci_network" != xARMCI])
+AM_CONDITIONAL([HAVE_ARMCI_MSG_FINALIZE],[test "x$ga_armci_network" != xARMCI])
+# the armci iterators only available in the conglomerate sources
+AS_CASE([$ga_armci_network],
+    [ARMCI|GEMINI|PORTALS], [],
+    [AC_DEFINE([HAVE_ARMCI_STRIDE_INFO_INIT], [1], [])])
+AM_CONDITIONAL([HAVE_ARMCI_STRIDE_INFO_INIT],
+    [test "x$ga_armci_network" != xARMCI && test "x$ga_armci_network" != xGEMINI && test "x$ga_armci_network" != xPORTALS])
 ])dnl

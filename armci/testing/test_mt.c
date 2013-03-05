@@ -132,6 +132,7 @@ int main(int argc, char *argv[])
   thread_t threads[MAX_TPP];
 
   /* init ARMCI */
+  armci_msg_init(&argc, &argv);
   ARMCI_Init_args(&argc, &argv);
   size = armci_msg_nproc();
   rank = armci_msg_me();

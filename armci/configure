@@ -725,6 +725,20 @@ ARMCI_NETWORK_BGML_FALSE
 ARMCI_NETWORK_BGML_TRUE
 ARMCI_NETWORK_ARMCI_FALSE
 ARMCI_NETWORK_ARMCI_TRUE
+HAVE_ARMCI_MSG_FINALIZE_FALSE
+HAVE_ARMCI_MSG_FINALIZE_TRUE
+HAVE_ARMCI_MSG_INIT_FALSE
+HAVE_ARMCI_MSG_INIT_TRUE
+HAVE_ARMCI_NOTIFY_FALSE
+HAVE_ARMCI_NOTIFY_TRUE
+HAVE_ARMCI_STRIDE_INFO_INIT_FALSE
+HAVE_ARMCI_STRIDE_INFO_INIT_TRUE
+HAVE_ARMCI_INITIALIZED_FALSE
+HAVE_ARMCI_INITIALIZED_TRUE
+HAVE_ARMCI_GROUP_COMM_MEMBER_FALSE
+HAVE_ARMCI_GROUP_COMM_MEMBER_TRUE
+HAVE_ARMCI_GROUP_COMM_FALSE
+HAVE_ARMCI_GROUP_COMM_TRUE
 PERL
 GA_C_WARN
 EGREP
@@ -9150,7 +9164,26 @@ else
 fi
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE_ARMCI_GROUP_COMM_FUNCTION $ac_cv_search_armci_group_comm
+#define HAVE_ARMCI_GROUP_COMM $ac_cv_search_armci_group_comm
+_ACEOF
+
+
+fi
+if test "x$happy" = xyes; then :
+  ac_fn_c_check_member "$LINENO" "ARMCI_Group" "comm" "ac_cv_member_ARMCI_Group_comm" "#include <armci.h>
+"
+if test "x$ac_cv_member_ARMCI_Group_comm" = xyes; then :
+
+fi
+
+     if test "x$ac_cv_member_ARMCI_Group_comm" != xno; then :
+  ac_cv_member_ARMCI_Group_comm=1
+else
+  ac_cv_member_ARMCI_Group_comm=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_ARMCI_GROUP_COMM_MEMBER $ac_cv_member_ARMCI_Group_comm
 _ACEOF
 
 
@@ -9219,30 +9252,343 @@ else
 fi
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE_ARMCI_INITIALIZED_FUNCTION $ac_cv_search_ARMCI_Initialized
+#define HAVE_ARMCI_INITIALIZED $ac_cv_search_ARMCI_Initialized
 _ACEOF
 
 
 fi
 if test "x$happy" = xyes; then :
-  ac_fn_c_check_member "$LINENO" "ARMCI_Group" "comm" "ac_cv_member_ARMCI_Group_comm" "#include <armci.h>
-"
-if test "x$ac_cv_member_ARMCI_Group_comm" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing armci_stride_info_init" >&5
+$as_echo_n "checking for library containing armci_stride_info_init... " >&6; }
+if ${ac_cv_search_armci_stride_info_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char armci_stride_info_init ();
+int
+main ()
+{
+return armci_stride_info_init ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' armci; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_armci_stride_info_init=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_armci_stride_info_init+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_armci_stride_info_init+:} false; then :
+
+else
+  ac_cv_search_armci_stride_info_init=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_armci_stride_info_init" >&5
+$as_echo "$ac_cv_search_armci_stride_info_init" >&6; }
+ac_res=$ac_cv_search_armci_stride_info_init
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 fi
 
-     if test "x$ac_cv_member_ARMCI_Group_comm" != xno; then :
-  ac_cv_member_ARMCI_Group_comm=1
+     if test "x$ac_cv_search_armci_stride_info_init" != xno; then :
+  ac_cv_search_armci_stride_info_init=1
 else
-  ac_cv_member_ARMCI_Group_comm=0
+  ac_cv_search_armci_stride_info_init=0
 fi
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE_ARMCI_GROUP_COMM_MEMBER $ac_cv_member_ARMCI_Group_comm
+#define HAVE_ARMCI_STRIDE_INFO_INIT $ac_cv_search_armci_stride_info_init
 _ACEOF
 
 
 fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing armci_notify" >&5
+$as_echo_n "checking for library containing armci_notify... " >&6; }
+if ${ac_cv_search_armci_notify+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char armci_notify ();
+int
+main ()
+{
+return armci_notify ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' armci; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_armci_notify=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_armci_notify+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_armci_notify+:} false; then :
+
+else
+  ac_cv_search_armci_notify=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_armci_notify" >&5
+$as_echo "$ac_cv_search_armci_notify" >&6; }
+ac_res=$ac_cv_search_armci_notify
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+     if test "x$ac_cv_search_armci_notify" != xno; then :
+  ac_cv_search_armci_notify=1
+else
+  ac_cv_search_armci_notify=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_ARMCI_NOTIFY $ac_cv_search_armci_notify
+_ACEOF
+
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing armci_msg_init" >&5
+$as_echo_n "checking for library containing armci_msg_init... " >&6; }
+if ${ac_cv_search_armci_msg_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char armci_msg_init ();
+int
+main ()
+{
+return armci_msg_init ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' armci; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_armci_msg_init=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_armci_msg_init+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_armci_msg_init+:} false; then :
+
+else
+  ac_cv_search_armci_msg_init=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_armci_msg_init" >&5
+$as_echo "$ac_cv_search_armci_msg_init" >&6; }
+ac_res=$ac_cv_search_armci_msg_init
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+     if test "x$ac_cv_search_armci_msg_init" != xno; then :
+  ac_cv_search_armci_msg_init=1
+else
+  ac_cv_search_armci_msg_init=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_ARMCI_MSG_INIT $ac_cv_search_armci_msg_init
+_ACEOF
+
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing armci_msg_finalize" >&5
+$as_echo_n "checking for library containing armci_msg_finalize... " >&6; }
+if ${ac_cv_search_armci_msg_finalize+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char armci_msg_finalize ();
+int
+main ()
+{
+return armci_msg_finalize ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' armci; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_armci_msg_finalize=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_armci_msg_finalize+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_armci_msg_finalize+:} false; then :
+
+else
+  ac_cv_search_armci_msg_finalize=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_armci_msg_finalize" >&5
+$as_echo "$ac_cv_search_armci_msg_finalize" >&6; }
+ac_res=$ac_cv_search_armci_msg_finalize
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+     if test "x$ac_cv_search_armci_msg_finalize" != xno; then :
+  ac_cv_search_armci_msg_finalize=1
+else
+  ac_cv_search_armci_msg_finalize=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_ARMCI_MSG_FINALIZE $ac_cv_search_armci_msg_finalize
+_ACEOF
+
+
+fi
+ if test "x$ac_cv_search_armci_group_comm" = x1; then
+  HAVE_ARMCI_GROUP_COMM_TRUE=
+  HAVE_ARMCI_GROUP_COMM_FALSE='#'
+else
+  HAVE_ARMCI_GROUP_COMM_TRUE='#'
+  HAVE_ARMCI_GROUP_COMM_FALSE=
+fi
+
+ if test "x$ac_cv_member_ARMCI_Group_comm" = x1; then
+  HAVE_ARMCI_GROUP_COMM_MEMBER_TRUE=
+  HAVE_ARMCI_GROUP_COMM_MEMBER_FALSE='#'
+else
+  HAVE_ARMCI_GROUP_COMM_MEMBER_TRUE='#'
+  HAVE_ARMCI_GROUP_COMM_MEMBER_FALSE=
+fi
+
+ if test "x$ac_cv_search_ARMCI_Initialized" = x1; then
+  HAVE_ARMCI_INITIALIZED_TRUE=
+  HAVE_ARMCI_INITIALIZED_FALSE='#'
+else
+  HAVE_ARMCI_INITIALIZED_TRUE='#'
+  HAVE_ARMCI_INITIALIZED_FALSE=
+fi
+
+ if test "x$ac_cv_search_armci_stride_info_init" = x1; then
+  HAVE_ARMCI_STRIDE_INFO_INIT_TRUE=
+  HAVE_ARMCI_STRIDE_INFO_INIT_FALSE='#'
+else
+  HAVE_ARMCI_STRIDE_INFO_INIT_TRUE='#'
+  HAVE_ARMCI_STRIDE_INFO_INIT_FALSE=
+fi
+
+ if test "x$ac_cv_search_armci_notify" = x1; then
+  HAVE_ARMCI_NOTIFY_TRUE=
+  HAVE_ARMCI_NOTIFY_FALSE='#'
+else
+  HAVE_ARMCI_NOTIFY_TRUE='#'
+  HAVE_ARMCI_NOTIFY_FALSE=
+fi
+
+ if test "x$ac_cv_search_armci_msg_init" = x1; then
+  HAVE_ARMCI_MSG_INIT_TRUE=
+  HAVE_ARMCI_MSG_INIT_FALSE='#'
+else
+  HAVE_ARMCI_MSG_INIT_TRUE='#'
+  HAVE_ARMCI_MSG_INIT_FALSE=
+fi
+
+ if test "x$ac_cv_search_armci_msg_finalize" = x1; then
+  HAVE_ARMCI_MSG_FINALIZE_TRUE=
+  HAVE_ARMCI_MSG_FINALIZE_FALSE='#'
+else
+  HAVE_ARMCI_MSG_FINALIZE_TRUE='#'
+  HAVE_ARMCI_MSG_FINALIZE_FALSE=
+fi
+
 if test "x$happy" = xyes; then :
   ga_armci_network=ARMCI; with_armci=yes;
 fi
@@ -9422,7 +9768,26 @@ else
 fi
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE_ARMCI_GROUP_COMM_FUNCTION $ac_cv_search_armci_group_comm
+#define HAVE_ARMCI_GROUP_COMM $ac_cv_search_armci_group_comm
+_ACEOF
+
+
+fi
+if test "x$happy" = xyes; then :
+  ac_fn_c_check_member "$LINENO" "ARMCI_Group" "comm" "ac_cv_member_ARMCI_Group_comm" "#include <armci.h>
+"
+if test "x$ac_cv_member_ARMCI_Group_comm" = xyes; then :
+
+fi
+
+     if test "x$ac_cv_member_ARMCI_Group_comm" != xno; then :
+  ac_cv_member_ARMCI_Group_comm=1
+else
+  ac_cv_member_ARMCI_Group_comm=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_ARMCI_GROUP_COMM_MEMBER $ac_cv_member_ARMCI_Group_comm
 _ACEOF
 
 
@@ -9491,30 +9856,343 @@ else
 fi
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE_ARMCI_INITIALIZED_FUNCTION $ac_cv_search_ARMCI_Initialized
+#define HAVE_ARMCI_INITIALIZED $ac_cv_search_ARMCI_Initialized
 _ACEOF
 
 
 fi
 if test "x$happy" = xyes; then :
-  ac_fn_c_check_member "$LINENO" "ARMCI_Group" "comm" "ac_cv_member_ARMCI_Group_comm" "#include <armci.h>
-"
-if test "x$ac_cv_member_ARMCI_Group_comm" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing armci_stride_info_init" >&5
+$as_echo_n "checking for library containing armci_stride_info_init... " >&6; }
+if ${ac_cv_search_armci_stride_info_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char armci_stride_info_init ();
+int
+main ()
+{
+return armci_stride_info_init ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' armci; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_armci_stride_info_init=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_armci_stride_info_init+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_armci_stride_info_init+:} false; then :
+
+else
+  ac_cv_search_armci_stride_info_init=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_armci_stride_info_init" >&5
+$as_echo "$ac_cv_search_armci_stride_info_init" >&6; }
+ac_res=$ac_cv_search_armci_stride_info_init
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 fi
 
-     if test "x$ac_cv_member_ARMCI_Group_comm" != xno; then :
-  ac_cv_member_ARMCI_Group_comm=1
+     if test "x$ac_cv_search_armci_stride_info_init" != xno; then :
+  ac_cv_search_armci_stride_info_init=1
 else
-  ac_cv_member_ARMCI_Group_comm=0
+  ac_cv_search_armci_stride_info_init=0
 fi
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE_ARMCI_GROUP_COMM_MEMBER $ac_cv_member_ARMCI_Group_comm
+#define HAVE_ARMCI_STRIDE_INFO_INIT $ac_cv_search_armci_stride_info_init
 _ACEOF
 
 
 fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing armci_notify" >&5
+$as_echo_n "checking for library containing armci_notify... " >&6; }
+if ${ac_cv_search_armci_notify+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char armci_notify ();
+int
+main ()
+{
+return armci_notify ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' armci; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_armci_notify=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_armci_notify+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_armci_notify+:} false; then :
+
+else
+  ac_cv_search_armci_notify=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_armci_notify" >&5
+$as_echo "$ac_cv_search_armci_notify" >&6; }
+ac_res=$ac_cv_search_armci_notify
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+     if test "x$ac_cv_search_armci_notify" != xno; then :
+  ac_cv_search_armci_notify=1
+else
+  ac_cv_search_armci_notify=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_ARMCI_NOTIFY $ac_cv_search_armci_notify
+_ACEOF
+
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing armci_msg_init" >&5
+$as_echo_n "checking for library containing armci_msg_init... " >&6; }
+if ${ac_cv_search_armci_msg_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char armci_msg_init ();
+int
+main ()
+{
+return armci_msg_init ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' armci; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_armci_msg_init=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_armci_msg_init+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_armci_msg_init+:} false; then :
+
+else
+  ac_cv_search_armci_msg_init=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_armci_msg_init" >&5
+$as_echo "$ac_cv_search_armci_msg_init" >&6; }
+ac_res=$ac_cv_search_armci_msg_init
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+     if test "x$ac_cv_search_armci_msg_init" != xno; then :
+  ac_cv_search_armci_msg_init=1
+else
+  ac_cv_search_armci_msg_init=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_ARMCI_MSG_INIT $ac_cv_search_armci_msg_init
+_ACEOF
+
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing armci_msg_finalize" >&5
+$as_echo_n "checking for library containing armci_msg_finalize... " >&6; }
+if ${ac_cv_search_armci_msg_finalize+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char armci_msg_finalize ();
+int
+main ()
+{
+return armci_msg_finalize ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' armci; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_armci_msg_finalize=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_armci_msg_finalize+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_armci_msg_finalize+:} false; then :
+
+else
+  ac_cv_search_armci_msg_finalize=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_armci_msg_finalize" >&5
+$as_echo "$ac_cv_search_armci_msg_finalize" >&6; }
+ac_res=$ac_cv_search_armci_msg_finalize
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+     if test "x$ac_cv_search_armci_msg_finalize" != xno; then :
+  ac_cv_search_armci_msg_finalize=1
+else
+  ac_cv_search_armci_msg_finalize=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_ARMCI_MSG_FINALIZE $ac_cv_search_armci_msg_finalize
+_ACEOF
+
+
+fi
+ if test "x$ac_cv_search_armci_group_comm" = x1; then
+  HAVE_ARMCI_GROUP_COMM_TRUE=
+  HAVE_ARMCI_GROUP_COMM_FALSE='#'
+else
+  HAVE_ARMCI_GROUP_COMM_TRUE='#'
+  HAVE_ARMCI_GROUP_COMM_FALSE=
+fi
+
+ if test "x$ac_cv_member_ARMCI_Group_comm" = x1; then
+  HAVE_ARMCI_GROUP_COMM_MEMBER_TRUE=
+  HAVE_ARMCI_GROUP_COMM_MEMBER_FALSE='#'
+else
+  HAVE_ARMCI_GROUP_COMM_MEMBER_TRUE='#'
+  HAVE_ARMCI_GROUP_COMM_MEMBER_FALSE=
+fi
+
+ if test "x$ac_cv_search_ARMCI_Initialized" = x1; then
+  HAVE_ARMCI_INITIALIZED_TRUE=
+  HAVE_ARMCI_INITIALIZED_FALSE='#'
+else
+  HAVE_ARMCI_INITIALIZED_TRUE='#'
+  HAVE_ARMCI_INITIALIZED_FALSE=
+fi
+
+ if test "x$ac_cv_search_armci_stride_info_init" = x1; then
+  HAVE_ARMCI_STRIDE_INFO_INIT_TRUE=
+  HAVE_ARMCI_STRIDE_INFO_INIT_FALSE='#'
+else
+  HAVE_ARMCI_STRIDE_INFO_INIT_TRUE='#'
+  HAVE_ARMCI_STRIDE_INFO_INIT_FALSE=
+fi
+
+ if test "x$ac_cv_search_armci_notify" = x1; then
+  HAVE_ARMCI_NOTIFY_TRUE=
+  HAVE_ARMCI_NOTIFY_FALSE='#'
+else
+  HAVE_ARMCI_NOTIFY_TRUE='#'
+  HAVE_ARMCI_NOTIFY_FALSE=
+fi
+
+ if test "x$ac_cv_search_armci_msg_init" = x1; then
+  HAVE_ARMCI_MSG_INIT_TRUE=
+  HAVE_ARMCI_MSG_INIT_FALSE='#'
+else
+  HAVE_ARMCI_MSG_INIT_TRUE='#'
+  HAVE_ARMCI_MSG_INIT_FALSE=
+fi
+
+ if test "x$ac_cv_search_armci_msg_finalize" = x1; then
+  HAVE_ARMCI_MSG_FINALIZE_TRUE=
+  HAVE_ARMCI_MSG_FINALIZE_FALSE='#'
+else
+  HAVE_ARMCI_MSG_FINALIZE_TRUE='#'
+  HAVE_ARMCI_MSG_FINALIZE_FALSE=
+fi
+
 if test "x$happy" = xyes; then :
   ga_armci_network=ARMCI; with_armci=yes;
 else
@@ -10944,13 +11622,83 @@ else
 fi
 
 
-# if not using external armci library, the following functions are available
+# if not using external armci library, the following functions are always available
 if test "x$ga_armci_network" != xARMCI; then :
-  $as_echo "#define HAVE_ARMCI_GROUP_COMM_FUNCTION 1" >>confdefs.h
+  $as_echo "#define HAVE_ARMCI_GROUP_COMM 1" >>confdefs.h
 
-     $as_echo "#define HAVE_ARMCI_INITIALIZED_FUNCTION 1 /**/" >>confdefs.h
+     $as_echo "#define HAVE_ARMCI_INITIALIZED 1" >>confdefs.h
+
+     $as_echo "#define HAVE_ARMCI_NOTIFY 1" >>confdefs.h
+
+     $as_echo "#define HAVE_ARMCI_MSG_INIT 1" >>confdefs.h
+
+     $as_echo "#define HAVE_ARMCI_MSG_FINALIZE 1" >>confdefs.h
 
 fi
+ if test "x$ac_cv_member_ARMCI_Group_comm" = x1; then
+  HAVE_ARMCI_GROUP_COMM_MEMBER_TRUE=
+  HAVE_ARMCI_GROUP_COMM_MEMBER_FALSE='#'
+else
+  HAVE_ARMCI_GROUP_COMM_MEMBER_TRUE='#'
+  HAVE_ARMCI_GROUP_COMM_MEMBER_FALSE=
+fi
+
+ if test "x$ga_armci_network" != xARMCI; then
+  HAVE_ARMCI_GROUP_COMM_TRUE=
+  HAVE_ARMCI_GROUP_COMM_FALSE='#'
+else
+  HAVE_ARMCI_GROUP_COMM_TRUE='#'
+  HAVE_ARMCI_GROUP_COMM_FALSE=
+fi
+
+ if test "x$ga_armci_network" != xARMCI; then
+  HAVE_ARMCI_INITIALIZED_TRUE=
+  HAVE_ARMCI_INITIALIZED_FALSE='#'
+else
+  HAVE_ARMCI_INITIALIZED_TRUE='#'
+  HAVE_ARMCI_INITIALIZED_FALSE=
+fi
+
+ if test "x$ga_armci_network" != xARMCI; then
+  HAVE_ARMCI_NOTIFY_TRUE=
+  HAVE_ARMCI_NOTIFY_FALSE='#'
+else
+  HAVE_ARMCI_NOTIFY_TRUE='#'
+  HAVE_ARMCI_NOTIFY_FALSE=
+fi
+
+ if test "x$ga_armci_network" != xARMCI; then
+  HAVE_ARMCI_MSG_INIT_TRUE=
+  HAVE_ARMCI_MSG_INIT_FALSE='#'
+else
+  HAVE_ARMCI_MSG_INIT_TRUE='#'
+  HAVE_ARMCI_MSG_INIT_FALSE=
+fi
+
+ if test "x$ga_armci_network" != xARMCI; then
+  HAVE_ARMCI_MSG_FINALIZE_TRUE=
+  HAVE_ARMCI_MSG_FINALIZE_FALSE='#'
+else
+  HAVE_ARMCI_MSG_FINALIZE_TRUE='#'
+  HAVE_ARMCI_MSG_FINALIZE_FALSE=
+fi
+
+# the armci iterators only available in the conglomerate sources
+case $ga_armci_network in #(
+  ARMCI|GEMINI|PORTALS) :
+     ;; #(
+  *) :
+    $as_echo "#define HAVE_ARMCI_STRIDE_INFO_INIT 1" >>confdefs.h
+ ;;
+esac
+ if test "x$ga_armci_network" != xARMCI && test "x$ga_armci_network" != xGEMINI && test "x$ga_armci_network" != xPORTALS; then
+  HAVE_ARMCI_STRIDE_INFO_INIT_TRUE=
+  HAVE_ARMCI_STRIDE_INFO_INIT_FALSE='#'
+else
+  HAVE_ARMCI_STRIDE_INFO_INIT_TRUE='#'
+  HAVE_ARMCI_STRIDE_INFO_INIT_FALSE=
+fi
+
 
 
 # Checks for C header files.
@@ -25707,6 +26455,62 @@ if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${HAVE_ARMCI_GROUP_COMM_TRUE}" && test -z "${HAVE_ARMCI_GROUP_COMM_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_GROUP_COMM\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_GROUP_COMM_MEMBER_TRUE}" && test -z "${HAVE_ARMCI_GROUP_COMM_MEMBER_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_GROUP_COMM_MEMBER\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_INITIALIZED_TRUE}" && test -z "${HAVE_ARMCI_INITIALIZED_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_INITIALIZED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_STRIDE_INFO_INIT_TRUE}" && test -z "${HAVE_ARMCI_STRIDE_INFO_INIT_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_STRIDE_INFO_INIT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_NOTIFY_TRUE}" && test -z "${HAVE_ARMCI_NOTIFY_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_NOTIFY\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_MSG_INIT_TRUE}" && test -z "${HAVE_ARMCI_MSG_INIT_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_MSG_INIT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_MSG_FINALIZE_TRUE}" && test -z "${HAVE_ARMCI_MSG_FINALIZE_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_MSG_FINALIZE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_GROUP_COMM_TRUE}" && test -z "${HAVE_ARMCI_GROUP_COMM_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_GROUP_COMM\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_GROUP_COMM_MEMBER_TRUE}" && test -z "${HAVE_ARMCI_GROUP_COMM_MEMBER_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_GROUP_COMM_MEMBER\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_INITIALIZED_TRUE}" && test -z "${HAVE_ARMCI_INITIALIZED_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_INITIALIZED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_STRIDE_INFO_INIT_TRUE}" && test -z "${HAVE_ARMCI_STRIDE_INFO_INIT_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_STRIDE_INFO_INIT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_NOTIFY_TRUE}" && test -z "${HAVE_ARMCI_NOTIFY_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_NOTIFY\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_MSG_INIT_TRUE}" && test -z "${HAVE_ARMCI_MSG_INIT_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_MSG_INIT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_MSG_FINALIZE_TRUE}" && test -z "${HAVE_ARMCI_MSG_FINALIZE_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_MSG_FINALIZE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${ARMCI_NETWORK_ARMCI_TRUE}" && test -z "${ARMCI_NETWORK_ARMCI_FALSE}"; then
   as_fn_error $? "conditional \"ARMCI_NETWORK_ARMCI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -25769,6 +26573,34 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SYSV_TRUE}" && test -z "${SYSV_FALSE}"; then
   as_fn_error $? "conditional \"SYSV\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_GROUP_COMM_MEMBER_TRUE}" && test -z "${HAVE_ARMCI_GROUP_COMM_MEMBER_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_GROUP_COMM_MEMBER\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_GROUP_COMM_TRUE}" && test -z "${HAVE_ARMCI_GROUP_COMM_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_GROUP_COMM\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_INITIALIZED_TRUE}" && test -z "${HAVE_ARMCI_INITIALIZED_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_INITIALIZED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_NOTIFY_TRUE}" && test -z "${HAVE_ARMCI_NOTIFY_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_NOTIFY\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_MSG_INIT_TRUE}" && test -z "${HAVE_ARMCI_MSG_INIT_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_MSG_INIT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_MSG_FINALIZE_TRUE}" && test -z "${HAVE_ARMCI_MSG_FINALIZE_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_MSG_FINALIZE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMCI_STRIDE_INFO_INIT_TRUE}" && test -z "${HAVE_ARMCI_STRIDE_INFO_INIT_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMCI_STRIDE_INFO_INIT\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE}" && test -z "${HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE}"; then

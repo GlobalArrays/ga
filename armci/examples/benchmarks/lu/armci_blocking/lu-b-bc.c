@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
     }
     
     /* initialize ARMCI */
-    ARMCI_Init();
+    ARMCI_Init_args(&argc, &argv);
     ptr = (void **)malloc(nproc * sizeof(void *));
     ARMCI_Malloc(ptr, proc_bytes);
     

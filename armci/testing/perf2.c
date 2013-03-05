@@ -33,10 +33,10 @@ double dclock()
 
 int main(int argc, char **argv)
 {
-    MPI_Init(&argc,&argv);
+    armci_msg_init(&argc,&argv);
     ARMCI_Init_args(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &me);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    me = armci_msg_me();
+    nproc = armci_msg_nproc();
 
     /* This test only works for two processes */
 
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     contig_test(MAX_MESSAGE_SIZE, ACC);
     
     ARMCI_Finalize();
-    MPI_Finalize();
+    armci_msg_finalize();
 
     return 0;
 }

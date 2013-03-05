@@ -25,10 +25,10 @@
 #   define sleep(x) Sleep(1000*(x))
 #endif
 
-#define ARMCI_INT     -99
-#define ARMCI_LONG    -101
-#define ARMCI_FLOAT   -306
-#define ARMCI_DOUBLE  -307
+//#define ARMCI_INT     -99
+//#define ARMCI_LONG    -101
+//#define ARMCI_FLOAT   -306
+//#define ARMCI_DOUBLE  -307
 
 #define FLOAT_EPS  ((float) 1.0 / 4096)
 #define DOUBLE_EPS ((double) 1.0 / 16384)
@@ -953,6 +953,7 @@ int main(int argc, char *argv[])
 #define TEST_ACC_TYPE   0
 #define TEST_COLLECTIVE 1
 
+  armci_msg_init(&argc, &argv);
   ARMCI_Init_args(&argc, &argv);
   nproc = armci_msg_nproc();
   me = armci_msg_me();

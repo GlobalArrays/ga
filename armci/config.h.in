@@ -97,13 +97,25 @@
 #undef GM
 
 /* set to 1 if ARMCI has armci_group_comm function */
-#undef HAVE_ARMCI_GROUP_COMM_FUNCTION
+#undef HAVE_ARMCI_GROUP_COMM
 
 /* set to 1 if ARMCI has ARMCI_Group.comm member */
 #undef HAVE_ARMCI_GROUP_COMM_MEMBER
 
 /* set to 1 if ARMCI has ARMCI_Initialized function */
-#undef HAVE_ARMCI_INITIALIZED_FUNCTION
+#undef HAVE_ARMCI_INITIALIZED
+
+/* set to 1 if ARMCI has armci_msg_finalize function */
+#undef HAVE_ARMCI_MSG_FINALIZE
+
+/* set to 1 if ARMCI has armci_msg_init function */
+#undef HAVE_ARMCI_MSG_INIT
+
+/* set to 1 if ARMCI has armci_notify function */
+#undef HAVE_ARMCI_NOTIFY
+
+/* set to 1 if ARMCI has armci_stride_info_init function */
+#undef HAVE_ARMCI_STRIDE_INFO_INIT
 
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H

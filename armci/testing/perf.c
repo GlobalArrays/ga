@@ -548,7 +548,7 @@ void test_2D()
 int main(int argc, char **argv)
 {
 
-  //MPI_Init(&argc,&argv);
+  armci_msg_init(&argc, &argv);
   /* initialize ARMCI */
   ARMCI_Init_args(&argc, &argv);
 

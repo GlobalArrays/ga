@@ -19,6 +19,7 @@ int main(int argc, char **argv)
   int k, i;
   double **myptrs[10];
   double t0, t1, tget = 0, tnbget = 0, tput = 0, tnbput = 0, tnbwait = 0, t2 = 0;
+  armci_msg_init(&argc, &argv);
   ARMCI_Init_args(&argc, &argv);
   ARMCI_Init_args(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &me);
@@ -64,6 +65,6 @@ int main(int argc, char **argv)
   MPI_Barrier(MPI_COMM_WORLD);
   ARMCI_Finalize();
   ARMCI_Finalize();
-  MPI_Finalize();
+  armci_msg_finalize();
   return 0;
 }

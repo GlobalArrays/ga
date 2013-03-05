@@ -454,7 +454,9 @@ check_PROGRAMS += testing/shmtest
 check_PROGRAMS += testing/simplelock
 check_PROGRAMS += testing/test
 check_PROGRAMS += testing/test2
+if HAVE_ARMCI_NOTIFY
 check_PROGRAMS += testing/testnotify
+endif
 if ENABLE_CHECKPOINT
 check_PROGRAMS += testing/fttest
 endif
@@ -465,7 +467,10 @@ if MSG_COMMS_MPI
 check_PROGRAMS += testing/simple
 check_PROGRAMS += testing/test_groups
 if SYSV
+if ARMCI_NETWORK_ARMCI
+else
 check_PROGRAMS += testing/ipctest
+endif
 endif
 endif
 if THREAD_SAFE
@@ -477,11 +482,19 @@ check_PROGRAMS += testing/fork
 check_PROGRAMS += testing/origptl
 check_PROGRAMS += testing/ptltest
 check_PROGRAMS += testing/te
-else
-if ARMCI_NETWORK_GEMINI
-else
+endif
+if HAVE_ARMCI_STRIDE_INFO_INIT
 check_PROGRAMS += testing/testitr
 endif
+
+atsrc =
+if HAVE_ARMCI_MSG_INIT
+else
+atsrc += testing/rpl_armci_msg_init.c
+endif
+if HAVE_ARMCI_MSG_FINALIZE
+else
+atsrc += testing/rpl_armci_msg_finalize.c
 endif
 
 ARMCI_SERIAL_TESTS =
@@ -500,7 +513,9 @@ ARMCI_PARALLEL_TESTS += testing/perf_aggr$(EXEEXT)
 ARMCI_PARALLEL_TESTS += testing/simplelock$(EXEEXT)
 ARMCI_PARALLEL_TESTS += testing/test$(EXEEXT)
 ARMCI_PARALLEL_TESTS += testing/test2$(EXEEXT)
+if HAVE_ARMCI_NOTIFY
 ARMCI_PARALLEL_TESTS += testing/testnotify$(EXEEXT)
+endif
 if ENABLE_CHECKPOINT
 ARMCI_PARALLEL_TESTS += testing/fttest$(EXEEXT)
 endif
@@ -511,7 +526,10 @@ if MSG_COMMS_MPI
 ARMCI_PARALLEL_TESTS += testing/simple$(EXEEXT)
 ARMCI_PARALLEL_TESTS += testing/test_groups$(EXEEXT)
 if SYSV
+if ARMCI_NETWORK_ARMCI
+else
 #ARMCI_PARALLEL_TESTS += testing/ipctest$(EXEEXT) # needs bug fixes
+endif
 endif
 endif
 if THREAD_SAFE
@@ -523,35 +541,33 @@ if ARMCI_NETWORK_PORTALS
 #ARMCI_PARALLEL_TESTS += testing/origptl$(EXEEXT)
 #ARMCI_PARALLEL_TESTS += testing/ptltest$(EXEEXT)
 #ARMCI_PARALLEL_TESTS += testing/te$(EXEEXT)
-else
-if ARMCI_NETWORK_GEMINI
-else
+endif
+if HAVE_ARMCI_STRIDE_INFO_INIT
 ARMCI_SERIAL_TESTS += testing/testitr$(EXEEXT)
 endif
-endif
 
-testing_clone_SOURCES       = testing/clone.c
-testing_fork_SOURCES        = testing/fork.c
-testing_fttest_SOURCES      = testing/fttest.c
-testing_gpctest_SOURCES     = testing/gpctest.c
-testing_ipctest_SOURCES     = testing/ipctest.c
-testing_msgcheck_SOURCES    = testing/msgcheck.c
-testing_origptl_SOURCES     = testing/origptl.c
-testing_perf_aggr_SOURCES   = testing/perf_aggr.c
-testing_perf_nb_SOURCES     = testing/perf_nb.c
-testing_perf_SOURCES        = testing/perf.c
-testing_ptltest_SOURCES     = testing/ptltest.c
-testing_shmclean_SOURCES    = testing/shmclean.c
-testing_shmtest_SOURCES     = testing/shmtest.c
-testing_simple_SOURCES      = testing/simple.c
-testing_simplelock_SOURCES  = testing/simplelock.c
-testing_te_SOURCES          = testing/te.c
-testing_test2_SOURCES       = testing/test2.c
-testing_test_groups_SOURCES = testing/test_groups.c
-testing_testitr_SOURCES     = testing/testitr.c
-testing_test_mt_SOURCES     = testing/test_mt.c
-testing_testnotify_SOURCES  = testing/testnotify.c
-testing_test_SOURCES        = testing/test.c
+testing_clone_SOURCES       = testing/clone.c $(atsrc)
+testing_fork_SOURCES        = testing/fork.c $(atsrc)
+testing_fttest_SOURCES      = testing/fttest.c $(atsrc)
+testing_gpctest_SOURCES     = testing/gpctest.c $(atsrc)
+testing_ipctest_SOURCES     = testing/ipctest.c $(atsrc)
+testing_msgcheck_SOURCES    = testing/msgcheck.c $(atsrc)
+testing_origptl_SOURCES     = testing/origptl.c $(atsrc)
+testing_perf_aggr_SOURCES   = testing/perf_aggr.c $(atsrc)
+testing_perf_nb_SOURCES     = testing/perf_nb.c $(atsrc)
+testing_perf_SOURCES        = testing/perf.c $(atsrc)
+testing_ptltest_SOURCES     = testing/ptltest.c $(atsrc)
+testing_shmclean_SOURCES    = testing/shmclean.c $(atsrc)
+testing_shmtest_SOURCES     = testing/shmtest.c $(atsrc)
+testing_simple_SOURCES      = testing/simple.c $(atsrc)
+testing_simplelock_SOURCES  = testing/simplelock.c $(atsrc)
+testing_te_SOURCES          = testing/te.c $(atsrc)
+testing_test2_SOURCES       = testing/test2.c $(atsrc)
+testing_test_groups_SOURCES = testing/test_groups.c $(atsrc)
+testing_testitr_SOURCES     = testing/testitr.c $(atsrc)
+testing_test_mt_SOURCES     = testing/test_mt.c $(atsrc)
+testing_testnotify_SOURCES  = testing/testnotify.c $(atsrc)
+testing_test_SOURCES        = testing/test.c $(atsrc)
 
 testing_testitr_CPPFLAGS    = $(AM_CPPFLAGS) -I$(top_srcdir)/src/include
 
@@ -590,11 +606,13 @@ check_PROGRAMS += examples/benchmarks/lu/armci_nonblocking/lu_nb_put
 check_PROGRAMS += examples/benchmarks/lu/pthreads/lu-thread
 check_PROGRAMS += examples/features/aggregation/simple/simple
 check_PROGRAMS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul
-check_PROGRAMS += examples/features/concurrency/simple/comdegree
 check_PROGRAMS += examples/features/non-blocking/simple/simple
-check_PROGRAMS += examples/features/notification/simple/testnotify
 check_PROGRAMS += examples/features/symmetric_memory/simple/simple
 check_PROGRAMS += examples/simpleApps/transp1D-c
+if HAVE_ARMCI_NOTIFY
+check_PROGRAMS += examples/features/concurrency/simple/comdegree
+check_PROGRAMS += examples/features/notification/simple/testnotify
+endif
 if ARMCI_ENABLE_GPC_CALLS
 check_PROGRAMS += examples/features/gpc/hashtable/test_hashtable
 if HAVE_BLAS
@@ -625,9 +643,11 @@ ARMCI_PARALLEL_TESTS += examples/benchmarks/lu/armci_nonblocking/lu_nb_put$(EXEE
 ARMCI_PARALLEL_TESTS += examples/benchmarks/lu/pthreads/lu-thread$(EXEEXT)
 ARMCI_PARALLEL_TESTS += examples/features/aggregation/simple/simple$(EXEEXT)
 #ARMCI_PARALLEL_TESTS += examples/features/aggregation/sparse_matvecmul/sparse_matvecmul$(EXEEXT) # needs input file
-ARMCI_PARALLEL_TESTS += examples/features/concurrency/simple/comdegree$(EXEEXT)
 ARMCI_PARALLEL_TESTS += examples/features/non-blocking/simple/simple$(EXEEXT)
+if HAVE_ARMCI_NOTIFY
+ARMCI_PARALLEL_TESTS += examples/features/concurrency/simple/comdegree$(EXEEXT)
 ARMCI_PARALLEL_TESTS += examples/features/notification/simple/testnotify$(EXEEXT)
+endif
 ARMCI_PARALLEL_TESTS += examples/features/symmetric_memory/simple/simple$(EXEEXT)
 ARMCI_PARALLEL_TESTS += examples/simpleApps/transp1D-c$(EXEEXT)
 if ARMCI_ENABLE_GPC_CALLS
@@ -655,59 +675,59 @@ examples_benchmarks_cg_armci_sharedmemory_cg_SOURCES = \
 examples/benchmarks/cg/armci_sharedmemory/cg.c         \
 examples/benchmarks/cg/armci_sharedmemory/compute.c    \
 examples/benchmarks/cg/armci_sharedmemory/read_input.c \
-examples/benchmarks/cg/armci_sharedmemory/timing.c
+examples/benchmarks/cg/armci_sharedmemory/timing.c $(atsrc)
 
 examples_benchmarks_lu_armci_blocking_lu_SOURCES = \
 examples/benchmarks/lu/armci_blocking/lu.c         \
-examples/benchmarks/lu/armci_blocking/timing.c
+examples/benchmarks/lu/armci_blocking/timing.c $(atsrc)
 
 examples_benchmarks_lu_armci_blocking_lu_block_SOURCES = \
 examples/benchmarks/lu/armci_blocking/lu-block.c         \
-examples/benchmarks/lu/armci_blocking/timing.c
+examples/benchmarks/lu/armci_blocking/timing.c $(atsrc)
 
 examples_benchmarks_lu_armci_blocking_lu_b_bc_SOURCES =  \
 examples/benchmarks/lu/armci_blocking/lu-b-bc.c          \
-examples/benchmarks/lu/armci_blocking/timing.c
+examples/benchmarks/lu/armci_blocking/timing.c $(atsrc)
 
 examples_benchmarks_lu_armci_multithreaded_lu_block_th_SOURCES = \
 examples/benchmarks/lu/armci_multithreaded/lu-block-th.c         \
-examples/benchmarks/lu/armci_multithreaded/timing.c
+examples/benchmarks/lu/armci_multithreaded/timing.c $(atsrc)
 
 examples_benchmarks_lu_armci_nonblocking_lu_nb_put_SOURCES = \
 examples/benchmarks/lu/armci_nonblocking/lu_nb_put.c         \
-examples/benchmarks/lu/armci_nonblocking/timing.c
+examples/benchmarks/lu/armci_nonblocking/timing.c $(atsrc)
 
 examples_benchmarks_lu_armci_nonblocking_lu_nb_get_SOURCES = \
 examples/benchmarks/lu/armci_nonblocking/lu_nb_get.c         \
-examples/benchmarks/lu/armci_nonblocking/timing.c
+examples/benchmarks/lu/armci_nonblocking/timing.c $(atsrc)
 
 examples_benchmarks_lu_pthreads_lu_thread_SOURCES = \
 examples/benchmarks/lu/pthreads/barrier.c           \
 examples/benchmarks/lu/pthreads/barrier.h           \
 examples/benchmarks/lu/pthreads/errors.h            \
 examples/benchmarks/lu/pthreads/lu-thread.c         \
-examples/benchmarks/lu/pthreads/timing.c
+examples/benchmarks/lu/pthreads/timing.c $(atsrc)
 examples_benchmarks_lu_pthreads_lu_thread_LDADD = -lpthread
 
 examples_benchmarks_RandomAccess_simple_simple_SOURCES = \
 examples/benchmarks/RandomAccess/simple/simple.c         \
-examples/benchmarks/RandomAccess/timing.c
+examples/benchmarks/RandomAccess/timing.c $(atsrc)
 
 examples_benchmarks_RandomAccess_smp_bucket_smp_bucket_SOURCES = \
 examples/benchmarks/RandomAccess/smp_bucket/smp_bucket.c         \
-examples/benchmarks/RandomAccess/timing.c
+examples/benchmarks/RandomAccess/timing.c $(atsrc)
 
 examples_features_aggregation_simple_simple_SOURCES = \
-examples/features/aggregation/simple/simple.c
+examples/features/aggregation/simple/simple.c $(atsrc)
 
 examples_features_aggregation_sparse_matvecmul_sparse_matvecmul_SOURCES = \
-examples/features/aggregation/sparse_matvecmul/sparse_matvecmul.c
+examples/features/aggregation/sparse_matvecmul/sparse_matvecmul.c $(atsrc)
 
 examples_features_concurrency_multidma_multidma_SOURCES = \
-examples/features/concurrency/multidma/multidma.c
+examples/features/concurrency/multidma/multidma.c $(atsrc)
 
 examples_features_concurrency_simple_comdegree_SOURCES = \
-examples/features/concurrency/simple/comdegree.c
+examples/features/concurrency/simple/comdegree.c $(atsrc)
 
 examples_features_gpc_hashtable_test_hashtable_SOURCES = \
 examples/features/gpc/hashtable/DistHashmap.cc           \
@@ -720,21 +740,21 @@ examples/features/gpc/hashtable/HashFunctions.cc         \
 examples/features/gpc/hashtable/hash_map.h               \
 examples/features/gpc/hashtable/HashUtil.cc              \
 examples/features/gpc/hashtable/test_hashtable.cc        \
-examples/features/gpc/hashtable/Util.h
+examples/features/gpc/hashtable/Util.h $(atsrc)
 examples_features_gpc_hashtable_test_hashtable_LDFLAGS = $(LDFLAGS_BASE)
 examples_features_gpc_hashtable_test_hashtable_LDADD = $(LDADD) $(MAYBE_FLIBS)
 
 examples_features_non_blocking_overlap_overlap_SOURCES = \
-examples/features/non-blocking/overlap/overlap.c
+examples/features/non-blocking/overlap/overlap.c $(atsrc)
 
 examples_features_non_blocking_simple_simple_SOURCES = \
-examples/features/non-blocking/simple/simple.c
+examples/features/non-blocking/simple/simple.c $(atsrc)
 
 examples_features_notification_simple_testnotify_SOURCES = \
-examples/features/notification/simple/testnotify.c
+examples/features/notification/simple/testnotify.c $(atsrc)
 
 examples_features_proc_affinity_computation_impact_computation_impact_SOURCES = \
-examples/features/proc_affinity/computation_impact/computation_impact.c
+examples/features/proc_affinity/computation_impact/computation_impact.c $(atsrc)
 examples_features_proc_affinity_computation_impact_computation_impact_LDFLAGS = \
 $(AM_LDFLAGS) \
 $(LAPACK_LDFLAGS) \
@@ -745,13 +765,13 @@ $(LAPACK_LIBS) \
 $(BLAS_LIBS)
 
 examples_features_proc_affinity_simple_simple_SOURCES = \
-examples/features/proc_affinity/simple/simple.c
+examples/features/proc_affinity/simple/simple.c $(atsrc)
 
 examples_features_symmetric_memory_simple_simple_SOURCES = \
-examples/features/symmetric_memory/simple/simple.c
+examples/features/symmetric_memory/simple/simple.c $(atsrc)
 
 examples_simpleApps_transp1D_c_SOURCES = \
-examples/simpleApps/transp1D-c.c
+examples/simpleApps/transp1D-c.c $(atsrc)
 
 nodist_EXTRA_examples_benchmarks_cg_armci_sharedmemory_cg_SOURCES                          = $(MAYBE_DUMMY_F_LINK)
 nodist_EXTRA_examples_benchmarks_lu_armci_blocking_lu_SOURCES                              = $(MAYBE_DUMMY_F_LINK)

@@ -523,6 +523,7 @@ int main(int argc, char *argv[])
 {
   int ndim;
 
+  armci_msg_init(&argc, &argv);
   ARMCI_Init_args(&argc, &argv);
   nproc = armci_msg_nproc();
   me = armci_msg_me();

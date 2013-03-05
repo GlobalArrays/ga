@@ -129,13 +129,16 @@ void TestGlobals()
 
     for (i = 0; i < len; i++) {
       if (itest[i] != i) {
-        armci_die2("int broadcast failed", i, itest[i]);
+        printf("int broadcast failed %d", itest[i]);
+        ARMCI_Error("int broadcast failed %d", itest[i]);
       }
       if (ltest[i] != (long)i) {
-        armci_die2("long broadcast failed", i, (int)ltest[i]);
+        printf("long broadcast failed %ld", ltest[i]);
+        ARMCI_Error("long broadcast failed %ld", ltest[i]);
       }
       if (dtest[i] != (double)i) {
-        armci_die2("double broadcast failed", i, (int)dtest[i]);
+        printf("double broadcast failed %f", dtest[i]);
+        ARMCI_Error("double broadcast failed %f", dtest[i]);
       }
     }
 
@@ -186,6 +189,7 @@ void TestGlobals()
 int main(int argc, char **argv)
 {
 
+  armci_msg_init(&argc, &argv);
   /* initialize ARMCI */
   ARMCI_Init_args(&argc, &argv);
   me = armci_msg_me();

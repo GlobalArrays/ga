@@ -47,6 +47,7 @@ void test_lock()
 
 int main(int argc, char *argv[])
 {
+  armci_msg_init(&argc, &argv);
   ARMCI_Init_args(&argc, &argv);
   nproc = armci_msg_nproc();
   me = armci_msg_me();
