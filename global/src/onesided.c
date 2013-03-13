@@ -4202,7 +4202,7 @@ void gai_gatscat_new(int op, Integer g_a, void* v, void *subscript,
         j = 0;
         while (idx > -1) {
           if (c_flag) {
-            gam_c2f_index(((int**)subscript)[k], index, ndim);
+            gam_c2f_index(((int**)subscript)[idx], index, ndim);
             subscript_ptr = index;
           } else {
             subscript_ptr = ((Integer*)subscript)+idx*ndim;
