@@ -2729,12 +2729,10 @@ void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
     for(idx=0; idx<n; idx++)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
-#endif
-    
-    wnga_scatter(a, v, subsArray, 1, nv);
-    
-#ifndef USE_GATSCAT_NEW
+    wnga_scatter(a, v, _subs_array, 0, nv);
     free(_subs_array);
+#else
+    wnga_scatter(a, v, subsArray, 1, nv);
 #endif
 }
 
@@ -2773,12 +2771,10 @@ void NGA_Scatter64(int g_a, void *v, int64_t* subsArray[], int64_t n)
     for(idx=0; idx<n; idx++)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
-#endif
-    
     wnga_scatter(a, v, _subs_array, 0, nv);
-    
-#ifndef USE_GATSCAT_NEW
     free(_subs_array);
+#else
+    wnga_scatter(a, v, subsArray, 1, nv);
 #endif
 }
 
@@ -2816,12 +2812,10 @@ void NGA_Scatter_acc(int g_a, void *v, int* subsArray[], int n, void *alpha)
     for(idx=0; idx<n; idx++)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
-#endif
-    
-    wnga_scatter_acc(a, v, subsArray, 1, nv, alpha);
-    
-#ifndef USE_GATSCAT_NEW
+    wnga_scatter_acc(a, v, _subs_array, 0, nv, alpha);
     free(_subs_array);
+#else
+    wnga_scatter_acc(a, v, subsArray, 1, nv, alpha);
 #endif
 }
 
@@ -2859,12 +2853,10 @@ void NGA_Scatter_acc64(int g_a, void *v, int64_t* subsArray[], int64_t n, void *
     for(idx=0; idx<n; idx++)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
-#endif
-    
     wnga_scatter_acc(a, v, _subs_array, 0, nv, alpha);
-    
-#ifndef USE_GATSCAT_NEW
     free(_subs_array);
+#else
+    wnga_scatter_acc(a, v, subsArray, 1, nv, alpha);
 #endif
 }
 
@@ -2903,12 +2895,10 @@ void NGA_Gather(int g_a, void *v, int* subsArray[], int n)
     for(idx=0; idx<n; idx++)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
-#endif
-    
-    wnga_gather(a, v, subsArray, 1, nv);
-    
-#ifndef USE_GATSCAT_NEW
+    wnga_gather(a, v, _subs_array, 0, nv);
     free(_subs_array);
+#else
+    wnga_gather(a, v, subsArray, 1, nv);
 #endif
 }
 
@@ -2950,12 +2940,10 @@ void NGA_Gather64(int g_a, void *v, int64_t* subsArray[], int64_t n)
     for(idx=0; idx<n; idx++)
         for(i=0; i<ndim; i++)
             _subs_array[idx*ndim+(ndim-i-1)] = subsArray[idx][i] + 1;
-#endif
-    
     wnga_gather(a, v, _subs_array, 0, nv);
-    
-#ifndef USE_GATSCAT_NEW
     free(_subs_array);
+#else
+    wnga_gather(a, v, subsArray, 1, nv);
 #endif
 }
 
