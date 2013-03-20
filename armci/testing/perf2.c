@@ -4,8 +4,6 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include <mpi.h>
-
 #include "armci.h"
 
 static int me;
