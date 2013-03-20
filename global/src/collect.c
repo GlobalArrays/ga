@@ -23,6 +23,7 @@
 #ifdef MPI
 #  include <mpi.h>
 extern MPI_Comm ARMCI_COMM_WORLD;
+extern MPI_Comm armci_group_comm(ARMCI_Group *group);
 #else
 #  include <tcgmsg.h>
 #endif

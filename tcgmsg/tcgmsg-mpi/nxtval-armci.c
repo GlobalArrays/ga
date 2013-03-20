@@ -9,12 +9,13 @@
 #endif
 
 #include "armci.h"
+#include "message.h"
 #include "tcgmsgP.h"
 
 #define LEN 2
 static long pnxtval_counter_val;
 static long *pnxtval_counter=&pnxtval_counter_val;
-static int nxtval_installed=0;
+int nxtval_installed=0;
 extern int     *tcgi_argc;
 extern char  ***tcgi_argv;
 #define INCR 1   /**< increment for NXTVAL */
@@ -22,6 +23,7 @@ extern char  ***tcgi_argv;
 #define NXTV_SERVER ((int)NNODES_() -1)
 static int ARMCIinitialized = 0;
 
+extern void make_tcgmsg_comm(void);
 
 /**
  *  Get next value of shared counter.
@@ -46,7 +48,7 @@ long NXTVAL_(long *mproc)
         }
 
         if (*mproc < 0) {
-            rc=MPI_Barrier(MPI_COMM_WORLD); 
+            rc=MPI_Barrier(TCGMSG_Comm); 
             if(rc!=MPI_SUCCESS) {
                 Error("nxtval: barrier failed",0);
             }
@@ -56,7 +58,7 @@ long NXTVAL_(long *mproc)
                 *pnxtval_counter = 0;
             }
 
-            rc=MPI_Barrier(MPI_COMM_WORLD); 
+            rc=MPI_Barrier(TCGMSG_Comm); 
             if(rc!=MPI_SUCCESS) {
                 Error("nxtval: barrier failed",0);
             }
@@ -110,6 +112,7 @@ void install_nxtval(int *argc, char **argv[])
     {
         ARMCI_Init_args(argc, argv);
         ARMCIinitialized = 1;
+        make_tcgmsg_comm();
     }
 
     ptr_ar = (void **)malloc(sizeof(void *)*(int)NNODES_());
@@ -137,7 +140,7 @@ void install_nxtval(int *argc, char **argv[])
     }
 
     free(ptr_ar);
-    rc=MPI_Barrier(MPI_COMM_WORLD); 
+    rc=MPI_Barrier(TCGMSG_Comm); 
     if(rc!=MPI_SUCCESS) {
         Error("init_nxtval: barrier failed",0);
     }

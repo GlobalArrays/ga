@@ -8,9 +8,10 @@ extern void exit(int status);
 
 #include "tcgmsgP.h"
 #include "srftoc.h"
+#include "armci.h"
 
 char     tcgmsg_err_string[ERR_STR_LEN];
-MPI_Comm TCGMSG_Comm;
+MPI_Comm TCGMSG_Comm=MPI_COMM_WORLD;
 int      _tcg_initialized=0;
 long  DEBUG_;
 int      SR_parallel; 
@@ -19,7 +20,9 @@ int      tcgi_argc=0;
 char   **tcgi_argv=NULL;
 
 static int SR_initialized=0;
+extern int nxtval_installed;
 
+extern MPI_Comm armci_group_comm(ARMCI_Group *group);
 
 long TCGREADY_()
 {
@@ -34,7 +37,7 @@ long NNODES_()
 {
     int numprocs;
 
-    MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+    MPI_Comm_size(TCGMSG_Comm, &numprocs);
 #ifdef NXTVAL_SERVER
     if(SR_parallel) {
         return((long)numprocs-1);
@@ -51,7 +54,7 @@ long NODEID_()
 {
     int myid;
 
-    MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+    MPI_Comm_rank(TCGMSG_Comm,&myid);
     return((long)myid);
 }
 
@@ -65,7 +68,7 @@ void Error(char *string, long code)
             NODEID_(), string, code, (long unsigned int)code);
 
     finalize_nxtval(); /* clean nxtval resources */
-    MPI_Abort(MPI_COMM_WORLD,(int)code);
+    MPI_Abort(TCGMSG_Comm,(int)code);
 }
 
 
@@ -89,7 +92,26 @@ void make_tcgmsg_comm()
         MPI_Comm_create(MPI_COMM_WORLD, tcgmsg_grp, &TCGMSG_Comm); 
     }else
 #endif
-        TCGMSG_Comm = MPI_COMM_WORLD; 
+    {
+#if HAVE_ARMCI_INITIALIZED
+        if (ARMCI_Initialized())
+#else
+        if (nxtval_installed)
+#endif
+        {
+            ARMCI_Group group;
+            ARMCI_Group_get_world(&group);
+#   if HAVE_ARMCI_GROUP_COMM_MEMBER
+            TCGMSG_Comm = group.comm;
+#   else
+            TCGMSG_Comm = armci_group_comm(&group);
+#   endif
+        }
+        else
+        {
+            TCGMSG_Comm = MPI_COMM_WORLD;
+        }
+    }
 }
 
 
@@ -106,6 +128,7 @@ void tcgi_alt_pbegin(int *argc, char **argv[])
         Error("TCGMSG initialized already???",-1);
     } else {
         SR_initialized=1;
+        _tcg_initialized=1;
     }
 
     /* check if another library initialized MPI already */
@@ -119,20 +142,25 @@ void tcgi_alt_pbegin(int *argc, char **argv[])
 #else
         MPI_Init(argc, argv);
 #endif
-        MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+        MPI_Errhandler_set(TCGMSG_Comm, MPI_ERRORS_RETURN);
     }
 
-    MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+    MPI_Comm_size(TCGMSG_Comm, &numprocs);
+    MPI_Comm_rank(TCGMSG_Comm, &myid);
     SR_parallel = numprocs > 1 ? 1 : 0;
 
-    make_tcgmsg_comm();
-    MPI_Barrier(MPI_COMM_WORLD);
+#if NEED_DELAY_TCGMSG_MPI_STARTUP
     /* printf("%d:ready to go\n",NODEID_()); */
     /* wait until the last possible moment to call install_nxtval
      * it could be called by ARMCI_Init
      * or is called the first time nxtval is invoked (yuck) */
     /*install_nxtval(argc, argv);*/
+#else
+    install_nxtval(argc, argv); /* which calls ARMCI_Init(), if needed  */
+#endif
+
+    make_tcgmsg_comm();
+    MPI_Barrier(TCGMSG_Comm);
 }
 
 
@@ -157,7 +185,7 @@ void PEND_()
     if( SR_parallel ) {
         (void) NXTVAL_(&zero);
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(TCGMSG_Comm);
 #endif
     finalize_nxtval();
     MPI_Finalize();

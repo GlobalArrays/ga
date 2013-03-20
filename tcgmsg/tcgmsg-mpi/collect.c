@@ -27,8 +27,7 @@ void IGOP_(long *ptype, long *x, long *pn, char *op, int oplen)
 
 /* #ifdef ARMCI */
     if(!_tcg_initialized){
-        TCGMSG_Comm = MPI_COMM_WORLD;
-        _tcg_initialized = 1;
+        PBEGINF_();
     }
 /* #endif */
 
@@ -135,8 +134,7 @@ void SYNCH_(long *type)
 {
 /* #ifdef ARMCI */
     if(!_tcg_initialized){
-        TCGMSG_Comm = MPI_COMM_WORLD;
-        _tcg_initialized = 1;
+        PBEGINF_();
     }
 /* #endif */
     MPI_Barrier(TCGMSG_Comm);
