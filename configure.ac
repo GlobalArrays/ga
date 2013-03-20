@@ -107,14 +107,40 @@ AC_HEADER_DIRENT
 AC_HEADER_STDBOOL
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-GA_CHECK_HEADERS([assert.h errno.h fcntl.h ffio.h limits.h linux/limits.h malloc.h math.h stddef.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/file.h sys/fsid.h sys/fstyp.h sys/ioctl.h sys/iosw.h sys/ipc.h sys/mman.h sys/mount.h sys/param.h sys/sem.h sys/shm.h sys/stat.h sys/statfs.h sys/statvfs.h sys/time.h sys/vfs.h time.h unistd.h windows.h],
-[], [],
-[@%:@ifdef HAVE_SYS_TYPES_H
-@%:@include <sys/types.h>
-@%:@endif
-@%:@ifdef HAVE_SYS_IPC_H
-@%:@include <sys/ipc.h>
-@%:@endif])
+GA_CHECK_HEADERS([assert.h])
+GA_CHECK_HEADERS([errno.h])
+GA_CHECK_HEADERS([fcntl.h])
+GA_CHECK_HEADERS([ffio.h])
+GA_CHECK_HEADERS([limits.h])
+GA_CHECK_HEADERS([linux/limits.h])
+GA_CHECK_HEADERS([malloc.h])
+GA_CHECK_HEADERS([math.h])
+GA_CHECK_HEADERS([stddef.h])
+GA_CHECK_HEADERS([stdint.h])
+GA_CHECK_HEADERS([stdio.h])
+GA_CHECK_HEADERS([stdlib.h])
+GA_CHECK_HEADERS([string.h])
+GA_CHECK_HEADERS([strings.h])
+GA_CHECK_HEADERS([sys/file.h])
+GA_CHECK_HEADERS([sys/fsid.h])
+GA_CHECK_HEADERS([sys/fstyp.h])
+GA_CHECK_HEADERS([sys/ioctl.h])
+GA_CHECK_HEADERS([sys/iosw.h])
+GA_CHECK_HEADERS([sys/ipc.h])
+GA_CHECK_HEADERS([sys/mman.h])
+GA_CHECK_HEADERS([sys/mount.h])
+GA_CHECK_HEADERS([sys/param.h])
+GA_CHECK_HEADERS([sys/sem.h])
+GA_CHECK_HEADERS([sys/shm.h])
+GA_CHECK_HEADERS([sys/statfs.h])
+GA_CHECK_HEADERS([sys/stat.h])
+GA_CHECK_HEADERS([sys/statvfs.h])
+GA_CHECK_HEADERS([sys/time.h])
+GA_CHECK_HEADERS([sys/types.h])
+GA_CHECK_HEADERS([sys/vfs.h])
+GA_CHECK_HEADERS([time.h])
+GA_CHECK_HEADERS([unistd.h])
+GA_CHECK_HEADERS([windows.h])
 
 # Checks for C typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -166,7 +192,33 @@ AC_DEFINE_UNQUOTED([HAVE_SQRT], [$have_sqrt],
 AC_SEARCH_LIBS([hypot], [m], [have_hypot=1], [have_hypot=0])
 AC_DEFINE_UNQUOTED([HAVE_HYPOT], [$have_hypot],
     [Define to 1 if you have the 'hypot' function.])
-GA_CHECK_FUNCS([bcopy bzero create_shared_region ftruncate gethostbyname gethostname getpagesize gettimeofday memalign memcpy memset munmap pause posix_memalign putenv select setenv shared_malloc shmalloc socket srandom srand strchr strdup strerror strstr strtol])
+GA_CHECK_FUNCS([bcopy])
+GA_CHECK_FUNCS([bzero])
+GA_CHECK_FUNCS([create_shared_region])
+GA_CHECK_FUNCS([ftruncate])
+GA_CHECK_FUNCS([gethostbyname])
+GA_CHECK_FUNCS([gethostname])
+GA_CHECK_FUNCS([getpagesize])
+GA_CHECK_FUNCS([gettimeofday])
+GA_CHECK_FUNCS([memalign])
+GA_CHECK_FUNCS([memcpy])
+GA_CHECK_FUNCS([memset])
+GA_CHECK_FUNCS([munmap])
+GA_CHECK_FUNCS([pause])
+GA_CHECK_FUNCS([posix_memalign])
+GA_CHECK_FUNCS([putenv])
+GA_CHECK_FUNCS([select])
+GA_CHECK_FUNCS([setenv])
+GA_CHECK_FUNCS([shared_malloc])
+GA_CHECK_FUNCS([shmalloc])
+GA_CHECK_FUNCS([socket])
+GA_CHECK_FUNCS([srand])
+GA_CHECK_FUNCS([srandom])
+GA_CHECK_FUNCS([strchr])
+GA_CHECK_FUNCS([strdup])
+GA_CHECK_FUNCS([strerror])
+GA_CHECK_FUNCS([strstr])
+GA_CHECK_FUNCS([strtol])
 
 # Checks for C libraries.
 GA_CHECK_LIBPLOT
@@ -482,6 +534,7 @@ AC_CONFIG_FILES([Makefile
 
 AC_CONFIG_FILES([tools/ga-config], [chmod +x tools/ga-config])
 AC_CONFIG_SUBDIRS([armci])
+AC_CONFIG_SUBDIRS([comex])
 AC_OUTPUT
 
 # Report on what we found.

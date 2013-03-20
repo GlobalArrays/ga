@@ -756,6 +756,14 @@ SYSV_FALSE
 SYSV_TRUE
 CRAY_XT_NETWORKS_FALSE
 CRAY_XT_NETWORKS_TRUE
+ARMCI_SRC_DIR_SRC_FALSE
+ARMCI_SRC_DIR_SRC_TRUE
+ARMCI_SRC_DIR_COMEX_FALSE
+ARMCI_SRC_DIR_COMEX_TRUE
+ARMCI_SRC_DIR_GEMINI_FALSE
+ARMCI_SRC_DIR_GEMINI_TRUE
+ARMCI_SRC_DIR_PORTALS_FALSE
+ARMCI_SRC_DIR_PORTALS_TRUE
 ARMCI_SRC_DIR
 DCMF_VER_0_3_FALSE
 DCMF_VER_0_3_TRUE
@@ -774,12 +782,18 @@ ARMCI_NETWORK_GEMINI_FALSE
 ARMCI_NETWORK_GEMINI_TRUE
 ARMCI_NETWORK_OPENIB_FALSE
 ARMCI_NETWORK_OPENIB_TRUE
+ARMCI_NETWORK_OFA_FALSE
+ARMCI_NETWORK_OFA_TRUE
 ARMCI_NETWORK_MPI_SPAWN_FALSE
 ARMCI_NETWORK_MPI_SPAWN_TRUE
 ARMCI_NETWORK_MPI_MT_FALSE
 ARMCI_NETWORK_MPI_MT_TRUE
+ARMCI_NETWORK_MPI_TS_FALSE
+ARMCI_NETWORK_MPI_TS_TRUE
 ARMCI_NETWORK_LAPI_FALSE
 ARMCI_NETWORK_LAPI_TRUE
+ARMCI_NETWORK_DMAPP_FALSE
+ARMCI_NETWORK_DMAPP_TRUE
 ARMCI_NETWORK_DCMF_FALSE
 ARMCI_NETWORK_DCMF_TRUE
 ARMCI_NETWORK_CRAY_SHMEM_FALSE
@@ -996,12 +1010,15 @@ with_armci
 with_bgml
 with_cray_shmem
 with_dcmf
+with_dmapp
+with_gemini
 with_lapi
 with_mpi_mt
 with_mpi_spawn
+with_mpi_ts
+with_ofa
 with_openib
 with_portals
-with_gemini
 with_sockets
 enable_assert
 enable_largefile
@@ -1059,7 +1076,8 @@ RANLIB
 CXXCPP
 NPROCS
 MPIEXEC'
-ac_subdirs_all='armci'
+ac_subdirs_all='armci
+comex'
 
 # Initialize some variables set by options.
 ac_init_help=
@@ -1729,12 +1747,16 @@ Optional Packages:
   --with-cray-shmem[=ARG] select armci network as Cray XT shmem
   --with-dcmf[=ARG]       select armci network as IBM BG/P Deep Computing
                           Message Framework
+  --with-dmapp[=ARG]      select armci network as (Comex) Cray DMAPP
+  --with-gemini[=ARG]     select armci network as Cray XE Gemini using
+                          libonesided
   --with-lapi[=ARG]       select armci network as IBM LAPI
   --with-mpi-mt[=ARG]     select armci network as MPI-2 multi-threading
   --with-mpi-spawn[=ARG]  select armci network as MPI-2 dynamic process mgmt
+  --with-mpi-ts[=ARG]     select armci network as (Comex) MPI-1 two-sided
+  --with-ofa[=ARG]        select armci network as (Comex) Infiniband OpenIB
   --with-openib[=ARG]     select armci network as Infiniband OpenIB
   --with-portals[=ARG]    select armci network as Cray XT portals
-  --with-gemini[=ARG]     select armci network as Cray XE Gemini
   --with-sockets[=ARG]    select armci network as Ethernet TCP/IP
   --with-blas[=ARG]       use external BLAS library; attempt to detect
                           sizeof(INTEGER)
@@ -7340,6 +7362,296 @@ fi
 
 
 
+# Check whether --with-dmapp was given.
+if test "${with_dmapp+set}" = set; then :
+  withval=$with_dmapp;
+fi
+
+
+
+if test "x$with_dmapp" != x; then :
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_dmapp ; do
+    case $arg in #(
+  yes) :
+     ;; #(
+  no) :
+     ;; #(
+  -l*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  -L*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -WL*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -Wl*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -I*) :
+    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *lib) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dmapp not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_dmapp not parsed" >&2;}
+fi ;; #(
+  *lib/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dmapp not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_dmapp not parsed" >&2;}
+fi ;; #(
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dmapp not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_dmapp not parsed" >&2;}
+fi ;; #(
+  *lib64/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dmapp not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_dmapp not parsed" >&2;}
+fi ;; #(
+  *include) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dmapp not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_dmapp not parsed" >&2;}
+fi ;; #(
+  *include/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dmapp not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_dmapp not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dmapp not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_dmapp not parsed" >&2;}
+fi ;; #(
+  *include64/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dmapp not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_dmapp not parsed" >&2;}
+fi ;; #(
+  *) :
+    ga_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$ga_arg_parse_ok" = xno; then :
+  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
+elif test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
+fi
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
+elif test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
+fi
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$ga_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
+esac
+fi
+# warn user that $arg fell through
+     if test "x$ga_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dmapp not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_dmapp not parsed" >&2;}
+fi
+done
+fi
+if test "x$with_dmapp" != xno && test "x$with_dmapp" != x; then :
+  ga_armci_network=DMAPP
+     as_fn_arith $armci_network_count + 1 && armci_network_count=$as_val
+fi
+
+
+
+
+
+# Check whether --with-gemini was given.
+if test "${with_gemini+set}" = set; then :
+  withval=$with_gemini;
+fi
+
+
+
+if test "x$with_gemini" != x; then :
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_gemini ; do
+    case $arg in #(
+  yes) :
+     ;; #(
+  no) :
+     ;; #(
+  -l*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  -L*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -WL*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -Wl*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -I*) :
+    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *lib) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
+fi ;; #(
+  *lib/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
+fi ;; #(
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
+fi ;; #(
+  *lib64/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
+fi ;; #(
+  *include) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
+fi ;; #(
+  *include/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
+fi ;; #(
+  *include64/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
+fi ;; #(
+  *) :
+    ga_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$ga_arg_parse_ok" = xno; then :
+  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
+elif test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
+fi
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
+elif test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
+fi
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$ga_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
+esac
+fi
+# warn user that $arg fell through
+     if test "x$ga_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
+fi
+done
+fi
+if test "x$with_gemini" != xno && test "x$with_gemini" != x; then :
+  ga_armci_network=GEMINI
+     as_fn_arith $armci_network_count + 1 && armci_network_count=$as_val
+fi
+
+
+
+
+
 # Check whether --with-lapi was given.
 if test "${with_lapi+set}" = set; then :
   withval=$with_lapi;
@@ -7775,6 +8087,296 @@ fi
 
 
 
+# Check whether --with-mpi-ts was given.
+if test "${with_mpi_ts+set}" = set; then :
+  withval=$with_mpi_ts;
+fi
+
+
+
+if test "x$with_mpi_ts" != x; then :
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_mpi_ts ; do
+    case $arg in #(
+  yes) :
+     ;; #(
+  no) :
+     ;; #(
+  -l*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  -L*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -WL*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -Wl*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -I*) :
+    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *lib) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_ts not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_ts not parsed" >&2;}
+fi ;; #(
+  *lib/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_ts not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_ts not parsed" >&2;}
+fi ;; #(
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_ts not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_ts not parsed" >&2;}
+fi ;; #(
+  *lib64/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_ts not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_ts not parsed" >&2;}
+fi ;; #(
+  *include) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_ts not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_ts not parsed" >&2;}
+fi ;; #(
+  *include/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_ts not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_ts not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_ts not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_ts not parsed" >&2;}
+fi ;; #(
+  *include64/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_ts not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_ts not parsed" >&2;}
+fi ;; #(
+  *) :
+    ga_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$ga_arg_parse_ok" = xno; then :
+  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
+elif test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
+fi
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
+elif test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
+fi
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$ga_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
+esac
+fi
+# warn user that $arg fell through
+     if test "x$ga_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_ts not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_mpi_ts not parsed" >&2;}
+fi
+done
+fi
+if test "x$with_mpi_ts" != xno && test "x$with_mpi_ts" != x; then :
+  ga_armci_network=MPI_TS
+     as_fn_arith $armci_network_count + 1 && armci_network_count=$as_val
+fi
+
+
+
+
+
+# Check whether --with-ofa was given.
+if test "${with_ofa+set}" = set; then :
+  withval=$with_ofa;
+fi
+
+
+
+if test "x$with_ofa" != x; then :
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_ofa ; do
+    case $arg in #(
+  yes) :
+     ;; #(
+  no) :
+     ;; #(
+  -l*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  -L*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -WL*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -Wl*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -I*) :
+    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *lib) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofa not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofa not parsed" >&2;}
+fi ;; #(
+  *lib/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofa not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofa not parsed" >&2;}
+fi ;; #(
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofa not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofa not parsed" >&2;}
+fi ;; #(
+  *lib64/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofa not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofa not parsed" >&2;}
+fi ;; #(
+  *include) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofa not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofa not parsed" >&2;}
+fi ;; #(
+  *include/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofa not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofa not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofa not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofa not parsed" >&2;}
+fi ;; #(
+  *include64/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofa not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofa not parsed" >&2;}
+fi ;; #(
+  *) :
+    ga_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$ga_arg_parse_ok" = xno; then :
+  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
+elif test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
+fi
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
+elif test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
+fi
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$ga_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
+esac
+fi
+# warn user that $arg fell through
+     if test "x$ga_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofa not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_ofa not parsed" >&2;}
+fi
+done
+fi
+if test "x$with_ofa" != xno && test "x$with_ofa" != x; then :
+  ga_armci_network=OFA
+     as_fn_arith $armci_network_count + 1 && armci_network_count=$as_val
+fi
+
+
+
+
+
 # Check whether --with-openib was given.
 if test "${with_openib+set}" = set; then :
   withval=$with_openib;
@@ -8058,151 +8660,6 @@ done
 fi
 if test "x$with_portals" != xno && test "x$with_portals" != x; then :
   ga_armci_network=PORTALS
-     as_fn_arith $armci_network_count + 1 && armci_network_count=$as_val
-fi
-
-
-
-
-
-# Check whether --with-gemini was given.
-if test "${with_gemini+set}" = set; then :
-  withval=$with_gemini;
-fi
-
-
-
-if test "x$with_gemini" != x; then :
-  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
-
-fi
-
-for arg in $with_gemini ; do
-    case $arg in #(
-  yes) :
-     ;; #(
-  no) :
-     ;; #(
-  -l*) :
-    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
-  -L*) :
-    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
-  -WL*) :
-    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
-  -Wl*) :
-    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
-  -I*) :
-    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
-  *.a) :
-    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
-  *.so) :
-    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
-  *lib) :
-    if test -d $arg; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
-$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
-fi ;; #(
-  *lib/) :
-    if test -d $arg; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
-$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
-fi ;; #(
-  *lib64) :
-    if test -d $arg; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
-$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
-fi ;; #(
-  *lib64/) :
-    if test -d $arg; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
-$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
-fi ;; #(
-  *include) :
-    if test -d $arg; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
-$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
-fi ;; #(
-  *include/) :
-    if test -d $arg; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
-$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
-fi ;; #(
-  *include64) :
-    if test -d $arg; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
-$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
-fi ;; #(
-  *include64/) :
-    if test -d $arg; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
-$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
-fi ;; #(
-  *) :
-    ga_arg_parse_ok=no ;;
-esac
-# $arg didn't fit the most common cases
-# check for subdirectories e.g. lib,include
-    if test "x$ga_arg_parse_ok" = xno; then :
-  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
-  if test -d $arg/lib64; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
-elif test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
-fi
-             if test -d $arg/include64; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
-elif test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
-fi
-else
-  if test -d $arg/lib; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
-fi
-             if test -d $arg/include; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
-fi
-fi
-fi
-# $arg still unknown, look for "lib" and "include" anywhere...
-    if test "x$ga_arg_parse_ok" = xno; then :
-  case $arg in #(
-  *lib*) :
-    if test -d $arg; then :
-  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
-fi ;; #(
-  *include*) :
-    if test -d $arg; then :
-  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
-fi ;; #(
-  *) :
-     ;;
-esac
-fi
-# warn user that $arg fell through
-     if test "x$ga_arg_parse_ok" = xno; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
-$as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
-fi
-done
-fi
-if test "x$with_gemini" != xno && test "x$with_gemini" != x; then :
-  ga_armci_network=GEMINI
      as_fn_arith $armci_network_count + 1 && armci_network_count=$as_val
 fi
 
@@ -8770,6 +9227,94 @@ if test "x$happy" = xyes; then :
 fi
 
 fi
+     if test "x$ga_armci_network" = x && test "x$with_ofa" != xno; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for OFA..." >&5
+$as_echo "$as_me: searching for OFA..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "infiniband/verbs.h" "ac_cv_header_infiniband_verbs_h" "$ac_includes_default"
+if test "x$ac_cv_header_infiniband_verbs_h" = xyes; then :
+
+else
+  happy=no
+fi
+
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing ibv_open_device" >&5
+$as_echo_n "checking for library containing ibv_open_device... " >&6; }
+if ${ac_cv_search_ibv_open_device+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ibv_open_device ();
+int
+main ()
+{
+return ibv_open_device ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' ibverbs; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_ibv_open_device=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_ibv_open_device+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_ibv_open_device+:} false; then :
+
+else
+  ac_cv_search_ibv_open_device=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_ibv_open_device" >&5
+$as_echo "$ac_cv_search_ibv_open_device" >&6; }
+ac_res=$ac_cv_search_ibv_open_device
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+     case $ac_cv_search_ibv_open_device in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_ibv_open_device" ;;
+esac
+fi
+if test "x$happy" = xyes; then :
+  ga_armci_network=OFA; with_ofa=yes;
+fi
+
+fi
      if test "x$ga_armci_network" = x && test "x$with_openib" != xno; then :
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: searching for OPENIB..." >&5
@@ -8945,6 +9490,88 @@ fi
 fi
 if test "x$happy" = xyes; then :
   ga_armci_network=PORTALS; with_portals=yes;
+fi
+
+fi
+     if test "x$ga_armci_network" = x && test "x$with_dmapp" != xno; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for DMAPP..." >&5
+$as_echo "$as_me: searching for DMAPP..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  ga_armci_network=DMAPP; with_dmapp=yes;
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing gethugepagesize" >&5
+$as_echo_n "checking for library containing gethugepagesize... " >&6; }
+if ${ac_cv_search_gethugepagesize+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gethugepagesize ();
+int
+main ()
+{
+return gethugepagesize ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' hugetlbfs; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_gethugepagesize=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_gethugepagesize+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_gethugepagesize+:} false; then :
+
+else
+  ac_cv_search_gethugepagesize=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_gethugepagesize" >&5
+$as_echo "$ac_cv_search_gethugepagesize" >&6; }
+ac_res=$ac_cv_search_gethugepagesize
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+     case $ac_cv_search_gethugepagesize in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    # add missing lib to ARMCI_NETWORK_LIBS if not there
+             case $ARMCI_NETWORK_LIBS in #(
+  *$ac_cv_search_gethugepagesize*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_gethugepagesize" ;;
+esac ;;
+esac
 fi
 
 fi
@@ -10768,6 +11395,90 @@ else
 fi
 
 fi
+              if test "x$ga_armci_network" = xDMAPP; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for DMAPP..." >&5
+$as_echo "$as_me: searching for DMAPP..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  ga_armci_network=DMAPP; with_dmapp=yes;
+else
+  as_fn_error $? "test for ARMCI_NETWORK=DMAPP failed" "$LINENO" 5
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing gethugepagesize" >&5
+$as_echo_n "checking for library containing gethugepagesize... " >&6; }
+if ${ac_cv_search_gethugepagesize+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gethugepagesize ();
+int
+main ()
+{
+return gethugepagesize ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' hugetlbfs; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_gethugepagesize=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_gethugepagesize+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_gethugepagesize+:} false; then :
+
+else
+  ac_cv_search_gethugepagesize=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_gethugepagesize" >&5
+$as_echo "$ac_cv_search_gethugepagesize" >&6; }
+ac_res=$ac_cv_search_gethugepagesize
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+     case $ac_cv_search_gethugepagesize in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    # add missing lib to ARMCI_NETWORK_LIBS if not there
+             case $ARMCI_NETWORK_LIBS in #(
+  *$ac_cv_search_gethugepagesize*) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_gethugepagesize" ;;
+esac ;;
+esac
+fi
+
+fi
               if test "x$ga_armci_network" = xLAPI; then :
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: searching for LAPI..." >&5
@@ -10861,6 +11572,18 @@ if test "x$happy" = xyes; then :
   ga_armci_network=LAPI; with_lapi=yes;
 else
   as_fn_error $? "test for ARMCI_NETWORK=LAPI failed" "$LINENO" 5
+fi
+
+fi
+              if test "x$ga_armci_network" = xMPI_TS; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for MPI_TS..." >&5
+$as_echo "$as_me: searching for MPI_TS..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  ga_armci_network=MPI_TS; with_mpi_ts=yes;
+else
+  as_fn_error $? "test for ARMCI_NETWORK=MPI_TS failed" "$LINENO" 5
 fi
 
 fi
@@ -11031,6 +11754,96 @@ if test "x$happy" = xyes; then :
   ga_armci_network=MPI_SPAWN; with_mpi_spawn=yes;
 else
   as_fn_error $? "test for ARMCI_NETWORK=MPI_SPAWN failed" "$LINENO" 5
+fi
+
+fi
+              if test "x$ga_armci_network" = xOFA; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for OFA..." >&5
+$as_echo "$as_me: searching for OFA..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "infiniband/verbs.h" "ac_cv_header_infiniband_verbs_h" "$ac_includes_default"
+if test "x$ac_cv_header_infiniband_verbs_h" = xyes; then :
+
+else
+  happy=no
+fi
+
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing ibv_open_device" >&5
+$as_echo_n "checking for library containing ibv_open_device... " >&6; }
+if ${ac_cv_search_ibv_open_device+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ibv_open_device ();
+int
+main ()
+{
+return ibv_open_device ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' ibverbs; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_ibv_open_device=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_ibv_open_device+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_ibv_open_device+:} false; then :
+
+else
+  ac_cv_search_ibv_open_device=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_ibv_open_device" >&5
+$as_echo "$ac_cv_search_ibv_open_device" >&6; }
+ac_res=$ac_cv_search_ibv_open_device
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+     case $ac_cv_search_ibv_open_device in #(
+  "none required") :
+     ;; #(
+  no) :
+     ;; #(
+  *) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $ac_cv_search_ibv_open_device" ;;
+esac
+fi
+if test "x$happy" = xyes; then :
+  ga_armci_network=OFA; with_ofa=yes;
+else
+  as_fn_error $? "test for ARMCI_NETWORK=OFA failed" "$LINENO" 5
 fi
 
 fi
@@ -11566,9 +12379,25 @@ fi
 
 
 
+if test "x$with_dmapp" != x && test "x$with_dmapp" != xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-dmapp=$with_dmapp" >&5
+$as_echo "$as_me: WARNING: --with-dmapp=$with_dmapp" >&2;}
+fi
+
+
+
+
 if test "x$with_lapi" != x && test "x$with_lapi" != xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-lapi=$with_lapi" >&5
 $as_echo "$as_me: WARNING: --with-lapi=$with_lapi" >&2;}
+fi
+
+
+
+
+if test "x$with_mpi_ts" != x && test "x$with_mpi_ts" != xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-mpi-ts=$with_mpi_ts" >&5
+$as_echo "$as_me: WARNING: --with-mpi-ts=$with_mpi_ts" >&2;}
 fi
 
 
@@ -11585,6 +12414,14 @@ fi
 if test "x$with_mpi_spawn" != x && test "x$with_mpi_spawn" != xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-mpi-spawn=$with_mpi_spawn" >&5
 $as_echo "$as_me: WARNING: --with-mpi-spawn=$with_mpi_spawn" >&2;}
+fi
+
+
+
+
+if test "x$with_ofa" != x && test "x$with_ofa" != xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-ofa=$with_ofa" >&5
+$as_echo "$as_me: WARNING: --with-ofa=$with_ofa" >&2;}
 fi
 
 
@@ -11688,12 +12525,40 @@ fi
 
 
 
+ if test "x$with_dmapp" != x && test "x$with_dmapp" != xno; then
+  ARMCI_NETWORK_DMAPP_TRUE=
+  ARMCI_NETWORK_DMAPP_FALSE='#'
+else
+  ARMCI_NETWORK_DMAPP_TRUE='#'
+  ARMCI_NETWORK_DMAPP_FALSE=
+fi
+
+
+
+
+
+
+
  if test "x$with_lapi" != x && test "x$with_lapi" != xno; then
   ARMCI_NETWORK_LAPI_TRUE=
   ARMCI_NETWORK_LAPI_FALSE='#'
 else
   ARMCI_NETWORK_LAPI_TRUE='#'
   ARMCI_NETWORK_LAPI_FALSE=
+fi
+
+
+
+
+
+
+
+ if test "x$with_mpi_ts" != x && test "x$with_mpi_ts" != xno; then
+  ARMCI_NETWORK_MPI_TS_TRUE=
+  ARMCI_NETWORK_MPI_TS_FALSE='#'
+else
+  ARMCI_NETWORK_MPI_TS_TRUE='#'
+  ARMCI_NETWORK_MPI_TS_FALSE=
 fi
 
 
@@ -11722,6 +12587,20 @@ fi
 else
   ARMCI_NETWORK_MPI_SPAWN_TRUE='#'
   ARMCI_NETWORK_MPI_SPAWN_FALSE=
+fi
+
+
+
+
+
+
+
+ if test "x$with_ofa" != x && test "x$with_ofa" != xno; then
+  ARMCI_NETWORK_OFA_TRUE=
+  ARMCI_NETWORK_OFA_FALSE='#'
+else
+  ARMCI_NETWORK_OFA_TRUE='#'
+  ARMCI_NETWORK_OFA_FALSE=
 fi
 
 
@@ -11815,6 +12694,18 @@ fi
 
 # permanent hack
 case $ga_armci_network in #(
+  DMAPP) :
+    ARMCI_SRC_DIR=comex ;; #(
+  GEMINI) :
+    ARMCI_SRC_DIR=src-gemini ;; #(
+  MPI_MT) :
+    ARMCI_SRC_DIR=src ;; #(
+  MPI_TS) :
+    ARMCI_SRC_DIR=comex ;; #(
+  OFA) :
+    ARMCI_SRC_DIR=comex ;; #(
+  OPENIB) :
+    ARMCI_SRC_DIR=src ;; #(
   PORTALS) :
     ARMCI_SRC_DIR=src-portals ;; #(
   GEMINI) :
@@ -11823,6 +12714,49 @@ case $ga_armci_network in #(
     ARMCI_SRC_DIR=src ;;
 esac
 
+ if test "x$ARMCI_SRC_DIR" = "xsrc-portals"; then
+  ARMCI_SRC_DIR_PORTALS_TRUE=
+  ARMCI_SRC_DIR_PORTALS_FALSE='#'
+else
+  ARMCI_SRC_DIR_PORTALS_TRUE='#'
+  ARMCI_SRC_DIR_PORTALS_FALSE=
+fi
+
+ if test "x$ARMCI_SRC_DIR" = "xsrc-gemini"; then
+  ARMCI_SRC_DIR_GEMINI_TRUE=
+  ARMCI_SRC_DIR_GEMINI_FALSE='#'
+else
+  ARMCI_SRC_DIR_GEMINI_TRUE='#'
+  ARMCI_SRC_DIR_GEMINI_FALSE=
+fi
+
+ if test "x$ARMCI_SRC_DIR" = "xcomex"; then
+  ARMCI_SRC_DIR_COMEX_TRUE=
+  ARMCI_SRC_DIR_COMEX_FALSE='#'
+else
+  ARMCI_SRC_DIR_COMEX_TRUE='#'
+  ARMCI_SRC_DIR_COMEX_FALSE=
+fi
+
+ if test "x$ARMCI_SRC_DIR" = "xsrc"; then
+  ARMCI_SRC_DIR_SRC_TRUE=
+  ARMCI_SRC_DIR_SRC_FALSE='#'
+else
+  ARMCI_SRC_DIR_SRC_TRUE='#'
+  ARMCI_SRC_DIR_SRC_FALSE=
+fi
+
+
+# tcgmsg5 requires this
+if test x$ga_armci_network = xLAPI; then :
+
+$as_echo "#define NOTIFY_SENDER 1" >>confdefs.h
+
+
+$as_echo "#define LAPI 1" >>confdefs.h
+
+
+fi
 
 ga_cray_xt_networks=no
 if test x$ga_armci_network = xPORTALS; then :
@@ -11946,6 +12880,45 @@ else
   HAVE_ARMCI_STRIDE_INFO_INIT_TRUE='#'
   HAVE_ARMCI_STRIDE_INFO_INIT_FALSE=
 fi
+
+
+# ugly hack for working around NWChem memory requirements
+# and MPI startup verus the 'classic' ARMCI startup
+delay_tcgmsg_mpi_startup=1
+case $ga_armci_network in #(
+  ARMCI) :
+    delay_tcgmsg_mpi_startup=0 ;; #(
+  BGML) :
+    delay_tcgmsg_mpi_startup=1 ;; #(
+  CRAY_SHMEM) :
+    delay_tcgmsg_mpi_startup=1 ;; #(
+  DCMF) :
+    delay_tcgmsg_mpi_startup=1 ;; #(
+  DMAPP) :
+    delay_tcgmsg_mpi_startup=0 ;; #(
+  LAPI) :
+    delay_tcgmsg_mpi_startup=1 ;; #(
+  MPI_TS) :
+    delay_tcgmsg_mpi_startup=0 ;; #(
+  MPI_SPAWN) :
+    delay_tcgmsg_mpi_startup=1 ;; #(
+  OFA) :
+    delay_tcgmsg_mpi_startup=0 ;; #(
+  OPENIB) :
+    delay_tcgmsg_mpi_startup=1 ;; #(
+  GEMINI) :
+    delay_tcgmsg_mpi_startup=1 ;; #(
+  PORTALS) :
+    delay_tcgmsg_mpi_startup=1 ;; #(
+  SOCKETS) :
+    delay_tcgmsg_mpi_startup=1 ;; #(
+  *) :
+     ;;
+esac
+
+cat >>confdefs.h <<_ACEOF
+#define NEED_DELAY_TCGMSG_MPI_STARTUP $delay_tcgmsg_mpi_startup
+_ACEOF
 
 
 
@@ -12376,26 +13349,646 @@ $as_echo "#define HAVE_SYS_WAIT_H 1" >>confdefs.h
 
 fi
 
-for ac_header in assert.h errno.h fcntl.h ffio.h limits.h linux/limits.h malloc.h math.h stddef.h stdint.h stdio.h stdlib.h string.h strings.h sys/types.h sys/file.h sys/fsid.h sys/fstyp.h sys/ioctl.h sys/iosw.h sys/ipc.h sys/mman.h sys/mount.h sys/param.h sys/sem.h sys/shm.h sys/stat.h sys/statfs.h sys/statvfs.h sys/time.h sys/vfs.h time.h unistd.h windows.h
+for ac_header in assert.h
 do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_IPC_H
-#include <sys/ipc.h>
-#endif
-"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "assert.h" "ac_cv_header_assert_h" "$ac_includes_default"
+if test "x$ac_cv_header_assert_h" = xyes; then :
 
 cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+#define HAVE_ASSERT_H 1
 _ACEOF
 
 else
 
 cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 0
+#define HAVE_ASSERT_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in errno.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "errno.h" "ac_cv_header_errno_h" "$ac_includes_default"
+if test "x$ac_cv_header_errno_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_ERRNO_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_ERRNO_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in fcntl.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "fcntl.h" "ac_cv_header_fcntl_h" "$ac_includes_default"
+if test "x$ac_cv_header_fcntl_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FCNTL_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FCNTL_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in ffio.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "ffio.h" "ac_cv_header_ffio_h" "$ac_includes_default"
+if test "x$ac_cv_header_ffio_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FFIO_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FFIO_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in limits.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "limits.h" "ac_cv_header_limits_h" "$ac_includes_default"
+if test "x$ac_cv_header_limits_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_LIMITS_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_LIMITS_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in linux/limits.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "linux/limits.h" "ac_cv_header_linux_limits_h" "$ac_includes_default"
+if test "x$ac_cv_header_linux_limits_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_LINUX_LIMITS_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_LINUX_LIMITS_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in malloc.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "malloc.h" "ac_cv_header_malloc_h" "$ac_includes_default"
+if test "x$ac_cv_header_malloc_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MALLOC_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MALLOC_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in math.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "math.h" "ac_cv_header_math_h" "$ac_includes_default"
+if test "x$ac_cv_header_math_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MATH_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MATH_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in stddef.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "stddef.h" "ac_cv_header_stddef_h" "$ac_includes_default"
+if test "x$ac_cv_header_stddef_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STDDEF_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STDDEF_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in stdint.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "stdint.h" "ac_cv_header_stdint_h" "$ac_includes_default"
+if test "x$ac_cv_header_stdint_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STDINT_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STDINT_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in stdio.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "stdio.h" "ac_cv_header_stdio_h" "$ac_includes_default"
+if test "x$ac_cv_header_stdio_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STDIO_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STDIO_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in stdlib.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "stdlib.h" "ac_cv_header_stdlib_h" "$ac_includes_default"
+if test "x$ac_cv_header_stdlib_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STDLIB_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STDLIB_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in string.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "string.h" "ac_cv_header_string_h" "$ac_includes_default"
+if test "x$ac_cv_header_string_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRING_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRING_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in strings.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "strings.h" "ac_cv_header_strings_h" "$ac_includes_default"
+if test "x$ac_cv_header_strings_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRINGS_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRINGS_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/file.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/file.h" "ac_cv_header_sys_file_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_file_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_FILE_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_FILE_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/fsid.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/fsid.h" "ac_cv_header_sys_fsid_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_fsid_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_FSID_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_FSID_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/fstyp.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/fstyp.h" "ac_cv_header_sys_fstyp_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_fstyp_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_FSTYP_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_FSTYP_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/ioctl.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/ioctl.h" "ac_cv_header_sys_ioctl_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_ioctl_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_IOCTL_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_IOCTL_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/iosw.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/iosw.h" "ac_cv_header_sys_iosw_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_iosw_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_IOSW_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_IOSW_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/ipc.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/ipc.h" "ac_cv_header_sys_ipc_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_ipc_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_IPC_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_IPC_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/mman.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/mman.h" "ac_cv_header_sys_mman_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_mman_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_MMAN_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_MMAN_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/mount.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/mount.h" "ac_cv_header_sys_mount_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_mount_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_MOUNT_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_MOUNT_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/param.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/param.h" "ac_cv_header_sys_param_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_param_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_PARAM_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_PARAM_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/sem.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/sem.h" "ac_cv_header_sys_sem_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_sem_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_SEM_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_SEM_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/shm.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/shm.h" "ac_cv_header_sys_shm_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_shm_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_SHM_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_SHM_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/statfs.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/statfs.h" "ac_cv_header_sys_statfs_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_statfs_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_STATFS_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_STATFS_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/stat.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/stat.h" "ac_cv_header_sys_stat_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_stat_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_STAT_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_STAT_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/statvfs.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/statvfs.h" "ac_cv_header_sys_statvfs_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_statvfs_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_STATVFS_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_STATVFS_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/time.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/time.h" "ac_cv_header_sys_time_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_time_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_TIME_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_TIME_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/types.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/types.h" "ac_cv_header_sys_types_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_types_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_TYPES_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_TYPES_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/vfs.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/vfs.h" "ac_cv_header_sys_vfs_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_vfs_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_VFS_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_VFS_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in time.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "time.h" "ac_cv_header_time_h" "$ac_includes_default"
+if test "x$ac_cv_header_time_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_TIME_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_TIME_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in unistd.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "unistd.h" "ac_cv_header_unistd_h" "$ac_includes_default"
+if test "x$ac_cv_header_unistd_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_UNISTD_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_UNISTD_H 0
+_ACEOF
+
+fi
+
+done
+
+for ac_header in windows.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "windows.h" "ac_cv_header_windows_h" "$ac_includes_default"
+if test "x$ac_cv_header_windows_h" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_WINDOWS_H 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_WINDOWS_H 0
 _ACEOF
 
 fi
@@ -14350,20 +15943,487 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_HYPOT $have_hypot
 _ACEOF
 
-for ac_func in bcopy bzero create_shared_region ftruncate gethostbyname gethostname getpagesize gettimeofday memalign memcpy memset munmap pause posix_memalign putenv select setenv shared_malloc shmalloc socket srandom srand strchr strdup strerror strstr strtol
+for ac_func in bcopy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "bcopy" "ac_cv_func_bcopy"
+if test "x$ac_cv_func_bcopy" = xyes; then :
 
 cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_BCOPY 1
 _ACEOF
 
 else
 
 cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 0
+#define HAVE_BCOPY 0
+_ACEOF
+
+fi
+done
+
+for ac_func in bzero
+do :
+  ac_fn_c_check_func "$LINENO" "bzero" "ac_cv_func_bzero"
+if test "x$ac_cv_func_bzero" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_BZERO 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_BZERO 0
+_ACEOF
+
+fi
+done
+
+for ac_func in create_shared_region
+do :
+  ac_fn_c_check_func "$LINENO" "create_shared_region" "ac_cv_func_create_shared_region"
+if test "x$ac_cv_func_create_shared_region" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_CREATE_SHARED_REGION 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_CREATE_SHARED_REGION 0
+_ACEOF
+
+fi
+done
+
+for ac_func in ftruncate
+do :
+  ac_fn_c_check_func "$LINENO" "ftruncate" "ac_cv_func_ftruncate"
+if test "x$ac_cv_func_ftruncate" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FTRUNCATE 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FTRUNCATE 0
+_ACEOF
+
+fi
+done
+
+for ac_func in gethostbyname
+do :
+  ac_fn_c_check_func "$LINENO" "gethostbyname" "ac_cv_func_gethostbyname"
+if test "x$ac_cv_func_gethostbyname" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GETHOSTBYNAME 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GETHOSTBYNAME 0
+_ACEOF
+
+fi
+done
+
+for ac_func in gethostname
+do :
+  ac_fn_c_check_func "$LINENO" "gethostname" "ac_cv_func_gethostname"
+if test "x$ac_cv_func_gethostname" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GETHOSTNAME 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GETHOSTNAME 0
+_ACEOF
+
+fi
+done
+
+for ac_func in getpagesize
+do :
+  ac_fn_c_check_func "$LINENO" "getpagesize" "ac_cv_func_getpagesize"
+if test "x$ac_cv_func_getpagesize" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GETPAGESIZE 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GETPAGESIZE 0
+_ACEOF
+
+fi
+done
+
+for ac_func in gettimeofday
+do :
+  ac_fn_c_check_func "$LINENO" "gettimeofday" "ac_cv_func_gettimeofday"
+if test "x$ac_cv_func_gettimeofday" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GETTIMEOFDAY 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GETTIMEOFDAY 0
+_ACEOF
+
+fi
+done
+
+for ac_func in memalign
+do :
+  ac_fn_c_check_func "$LINENO" "memalign" "ac_cv_func_memalign"
+if test "x$ac_cv_func_memalign" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MEMALIGN 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MEMALIGN 0
+_ACEOF
+
+fi
+done
+
+for ac_func in memcpy
+do :
+  ac_fn_c_check_func "$LINENO" "memcpy" "ac_cv_func_memcpy"
+if test "x$ac_cv_func_memcpy" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MEMCPY 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MEMCPY 0
+_ACEOF
+
+fi
+done
+
+for ac_func in memset
+do :
+  ac_fn_c_check_func "$LINENO" "memset" "ac_cv_func_memset"
+if test "x$ac_cv_func_memset" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MEMSET 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MEMSET 0
+_ACEOF
+
+fi
+done
+
+for ac_func in munmap
+do :
+  ac_fn_c_check_func "$LINENO" "munmap" "ac_cv_func_munmap"
+if test "x$ac_cv_func_munmap" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MUNMAP 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MUNMAP 0
+_ACEOF
+
+fi
+done
+
+for ac_func in pause
+do :
+  ac_fn_c_check_func "$LINENO" "pause" "ac_cv_func_pause"
+if test "x$ac_cv_func_pause" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PAUSE 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PAUSE 0
+_ACEOF
+
+fi
+done
+
+for ac_func in posix_memalign
+do :
+  ac_fn_c_check_func "$LINENO" "posix_memalign" "ac_cv_func_posix_memalign"
+if test "x$ac_cv_func_posix_memalign" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_POSIX_MEMALIGN 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_POSIX_MEMALIGN 0
+_ACEOF
+
+fi
+done
+
+for ac_func in putenv
+do :
+  ac_fn_c_check_func "$LINENO" "putenv" "ac_cv_func_putenv"
+if test "x$ac_cv_func_putenv" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PUTENV 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PUTENV 0
+_ACEOF
+
+fi
+done
+
+for ac_func in select
+do :
+  ac_fn_c_check_func "$LINENO" "select" "ac_cv_func_select"
+if test "x$ac_cv_func_select" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SELECT 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SELECT 0
+_ACEOF
+
+fi
+done
+
+for ac_func in setenv
+do :
+  ac_fn_c_check_func "$LINENO" "setenv" "ac_cv_func_setenv"
+if test "x$ac_cv_func_setenv" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SETENV 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SETENV 0
+_ACEOF
+
+fi
+done
+
+for ac_func in shared_malloc
+do :
+  ac_fn_c_check_func "$LINENO" "shared_malloc" "ac_cv_func_shared_malloc"
+if test "x$ac_cv_func_shared_malloc" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SHARED_MALLOC 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SHARED_MALLOC 0
+_ACEOF
+
+fi
+done
+
+for ac_func in shmalloc
+do :
+  ac_fn_c_check_func "$LINENO" "shmalloc" "ac_cv_func_shmalloc"
+if test "x$ac_cv_func_shmalloc" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SHMALLOC 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SHMALLOC 0
+_ACEOF
+
+fi
+done
+
+for ac_func in socket
+do :
+  ac_fn_c_check_func "$LINENO" "socket" "ac_cv_func_socket"
+if test "x$ac_cv_func_socket" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SOCKET 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SOCKET 0
+_ACEOF
+
+fi
+done
+
+for ac_func in srand
+do :
+  ac_fn_c_check_func "$LINENO" "srand" "ac_cv_func_srand"
+if test "x$ac_cv_func_srand" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SRAND 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SRAND 0
+_ACEOF
+
+fi
+done
+
+for ac_func in srandom
+do :
+  ac_fn_c_check_func "$LINENO" "srandom" "ac_cv_func_srandom"
+if test "x$ac_cv_func_srandom" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SRANDOM 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SRANDOM 0
+_ACEOF
+
+fi
+done
+
+for ac_func in strchr
+do :
+  ac_fn_c_check_func "$LINENO" "strchr" "ac_cv_func_strchr"
+if test "x$ac_cv_func_strchr" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRCHR 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRCHR 0
+_ACEOF
+
+fi
+done
+
+for ac_func in strdup
+do :
+  ac_fn_c_check_func "$LINENO" "strdup" "ac_cv_func_strdup"
+if test "x$ac_cv_func_strdup" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRDUP 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRDUP 0
+_ACEOF
+
+fi
+done
+
+for ac_func in strerror
+do :
+  ac_fn_c_check_func "$LINENO" "strerror" "ac_cv_func_strerror"
+if test "x$ac_cv_func_strerror" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRERROR 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRERROR 0
+_ACEOF
+
+fi
+done
+
+for ac_func in strstr
+do :
+  ac_fn_c_check_func "$LINENO" "strstr" "ac_cv_func_strstr"
+if test "x$ac_cv_func_strstr" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRSTR 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRSTR 0
+_ACEOF
+
+fi
+done
+
+for ac_func in strtol
+do :
+  ac_fn_c_check_func "$LINENO" "strtol" "ac_cv_func_strtol"
+if test "x$ac_cv_func_strtol" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRTOL 1
+_ACEOF
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRTOL 0
 _ACEOF
 
 fi
@@ -37456,6 +39516,8 @@ ac_config_files="$ac_config_files tools/ga-config"
 
 subdirs="$subdirs armci"
 
+subdirs="$subdirs comex"
+
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -37793,8 +39855,16 @@ if test -z "${ARMCI_NETWORK_DCMF_TRUE}" && test -z "${ARMCI_NETWORK_DCMF_FALSE}"
   as_fn_error $? "conditional \"ARMCI_NETWORK_DCMF\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${ARMCI_NETWORK_DMAPP_TRUE}" && test -z "${ARMCI_NETWORK_DMAPP_FALSE}"; then
+  as_fn_error $? "conditional \"ARMCI_NETWORK_DMAPP\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${ARMCI_NETWORK_LAPI_TRUE}" && test -z "${ARMCI_NETWORK_LAPI_FALSE}"; then
   as_fn_error $? "conditional \"ARMCI_NETWORK_LAPI\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ARMCI_NETWORK_MPI_TS_TRUE}" && test -z "${ARMCI_NETWORK_MPI_TS_FALSE}"; then
+  as_fn_error $? "conditional \"ARMCI_NETWORK_MPI_TS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ARMCI_NETWORK_MPI_MT_TRUE}" && test -z "${ARMCI_NETWORK_MPI_MT_FALSE}"; then
@@ -37803,6 +39873,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ARMCI_NETWORK_MPI_SPAWN_TRUE}" && test -z "${ARMCI_NETWORK_MPI_SPAWN_FALSE}"; then
   as_fn_error $? "conditional \"ARMCI_NETWORK_MPI_SPAWN\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ARMCI_NETWORK_OFA_TRUE}" && test -z "${ARMCI_NETWORK_OFA_FALSE}"; then
+  as_fn_error $? "conditional \"ARMCI_NETWORK_OFA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ARMCI_NETWORK_OPENIB_TRUE}" && test -z "${ARMCI_NETWORK_OPENIB_FALSE}"; then
@@ -37831,6 +39905,22 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${DCMF_VER_0_3_TRUE}" && test -z "${DCMF_VER_0_3_FALSE}"; then
   as_fn_error $? "conditional \"DCMF_VER_0_3\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ARMCI_SRC_DIR_PORTALS_TRUE}" && test -z "${ARMCI_SRC_DIR_PORTALS_FALSE}"; then
+  as_fn_error $? "conditional \"ARMCI_SRC_DIR_PORTALS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ARMCI_SRC_DIR_GEMINI_TRUE}" && test -z "${ARMCI_SRC_DIR_GEMINI_FALSE}"; then
+  as_fn_error $? "conditional \"ARMCI_SRC_DIR_GEMINI\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ARMCI_SRC_DIR_COMEX_TRUE}" && test -z "${ARMCI_SRC_DIR_COMEX_FALSE}"; then
+  as_fn_error $? "conditional \"ARMCI_SRC_DIR_COMEX\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ARMCI_SRC_DIR_SRC_TRUE}" && test -z "${ARMCI_SRC_DIR_SRC_FALSE}"; then
+  as_fn_error $? "conditional \"ARMCI_SRC_DIR_SRC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${CRAY_XT_NETWORKS_TRUE}" && test -z "${CRAY_XT_NETWORKS_FALSE}"; then

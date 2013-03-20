@@ -1552,6 +1552,8 @@ libga_la_SOURCES += tcgmsg/fapi.c
 
 include_HEADERS += tcgmsg/tcgmsg.fh
 include_HEADERS += tcgmsg/tcgmsg.h
+include_HEADERS += tcgmsg/tcgmsg-mpi/msgtypesc.h
+include_HEADERS += tcgmsg/tcgmsg-mpi/msgtypesf.h
 
 AM_CPPFLAGS += -I$(top_srcdir)/tcgmsg
 
@@ -1672,14 +1674,28 @@ endif
 # armci
 if ARMCI_NETWORK_ARMCI
 else
+if ARMCI_SRC_DIR_COMEX
+MAYBE_COMEX = comex
+else
 MAYBE_ARMCI = armci
 endif
-SUBDIRS = $(MAYBE_ARMCI) .
+endif
+
+SUBDIRS = $(MAYBE_COMEX) $(MAYBE_ARMCI) .
 
 if ARMCI_NETWORK_ARMCI
 else
+if ARMCI_SRC_DIR_COMEX
+comex/libarmci.la:
+	($(am__cd) comex && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
+else
 armci/libarmci.la:
 	($(am__cd) armci && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
+endif
+endif
+
+if ARMCI_SRC_DIR_COMEX
+else
 endif
 
 if ARMCI_NETWORK_ARMCI
@@ -1698,6 +1714,7 @@ endif
 endif
 endif
 
+# As of ga-5-2 libarmci is no longer rolled up into libga.
 libga_la_LIBADD += $(SCALAPACK_LIBS)
 libga_la_LIBADD += $(LAPACK_LIBS)
 libga_la_LIBADD += $(BLAS_LIBS)
@@ -1705,8 +1722,11 @@ if ARMCI_NETWORK_ARMCI
 libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 libga_la_LIBADD += $(GA_MP_LIBS)
 else
-# As of ga-5-2 libarmci is no longer rolled up into libga.
+if ARMCI_SRC_DIR_COMEX
+libga_la_LIBADD += comex/libarmci.la
+else
 libga_la_LIBADD += armci/libarmci.la
+endif
 libga_la_LIBADD += $(GA_MP_LIBS)
 libga_la_LIBADD += $(ARMCI_NETWORK_LIBS)
 endif

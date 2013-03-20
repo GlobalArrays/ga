@@ -472,11 +472,17 @@
 /* Define to 1 on 64bit NEC systems */
 #undef NEC64
 
+/* whether to wait until the last moment to call ARMCI_Init() in TCGMSG-MPI */
+#undef NEED_DELAY_TCGMSG_MPI_STARTUP
+
 /* Creates memfenc macro */
 #undef NEED_MEM_SYNC
 
 /* for portals, enable new malloc */
 #undef NEW_MALLOC
+
+/* this was defined unconditionally when using LAPI for tcgmsg 5 */
+#undef NOTIFY_SENDER
 
 /* define when inline asm is not supported */
 #undef NO_I386ASM

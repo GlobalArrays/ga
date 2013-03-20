@@ -8,7 +8,7 @@ AC_DEFUN([GA_CHECK_FUNCS],
 [AS_FOR([AC_func], [ac_func], [$1],
 [AC_CHECK_FUNC(AC_func,
     [AC_DEFINE_UNQUOTED(AS_TR_CPP([HAVE_]AC_func), 1,
-        [Define to 1 if you have AC_func, 0 if you don't]) $2],
+        [Define to 1 if you have the `]AC_func[' function, 0 if you don't]) $2],
     [AC_DEFINE_UNQUOTED(AS_TR_CPP([HAVE_]AC_func), 0,
-        [Define to 1 if you have AC_func, 0 if you don't]) $3], [$4])dnl])
+        [Define to 1 if you have the `]AC_func[' function, 0 if you don't]) $3], [$4])dnl])
 ])# GA_CHECK_FUNCS

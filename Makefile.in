@@ -422,9 +422,10 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_NETWORK_GEMINI_FALSE@@ARMCI_NETWORK_PORTALS_FALSE@	-I$(top_srcdir)/armci/tcgmsg
 @ARMCI_NETWORK_ARMCI_TRUE@am__append_60 = $(ARMCI_NETWORK_LIBS) \
 @ARMCI_NETWORK_ARMCI_TRUE@	$(GA_MP_LIBS)
-# As of ga-5-2 libarmci is no longer rolled up into libga.
-@ARMCI_NETWORK_ARMCI_FALSE@am__append_61 = armci/libarmci.la \
-@ARMCI_NETWORK_ARMCI_FALSE@	$(GA_MP_LIBS) $(ARMCI_NETWORK_LIBS)
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_TRUE@am__append_61 = comex/libarmci.la
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_FALSE@am__append_62 = armci/libarmci.la
+@ARMCI_NETWORK_ARMCI_FALSE@am__append_63 = $(GA_MP_LIBS) \
+@ARMCI_NETWORK_ARMCI_FALSE@	$(ARMCI_NETWORK_LIBS)
 TESTS = $(am__EXEEXT_18) $(am__EXEEXT_19)
 XFAIL_TESTS = $(am__EXEEXT_20) $(am__EXEEXT_21)
 subdir = .
@@ -556,12 +557,11 @@ am__v_lt_0 = --silent
 am__DEPENDENCIES_1 =
 @ARMCI_NETWORK_ARMCI_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
 @ARMCI_NETWORK_ARMCI_TRUE@	$(am__DEPENDENCIES_1)
-@ARMCI_NETWORK_ARMCI_FALSE@am__DEPENDENCIES_3 = armci/libarmci.la \
-@ARMCI_NETWORK_ARMCI_FALSE@	$(am__DEPENDENCIES_1) \
+@ARMCI_NETWORK_ARMCI_FALSE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1) \
 @ARMCI_NETWORK_ARMCI_FALSE@	$(am__DEPENDENCIES_1)
 libga_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) $(am__append_61) \
+	$(am__append_62) $(am__DEPENDENCIES_3)
 am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 	ma/ma.c ma/ma.h ma/memcpy.h ma/string-util.c ma/table.c \
 	ma/maf.F LinAlg/lapack+blas/dgetf2.f \
@@ -3675,7 +3675,8 @@ am__include_HEADERS_DIST = ma/error.h ma/macdecls.h ma/macommon.h \
 	ga++/src/GAServices.h ga++/src/GlobalArray.h \
 	ga++/src/init_term.h ga++/src/PGroup.h ga++/src/services.h \
 	gparrays/src/gp-papi.h gaf2c/typesf2c.h gaf2c/farg.h \
-	tcgmsg/tcgmsg.fh tcgmsg/tcgmsg.h
+	tcgmsg/tcgmsg.fh tcgmsg/tcgmsg.h tcgmsg/tcgmsg-mpi/msgtypesc.h \
+	tcgmsg/tcgmsg-mpi/msgtypesf.h
 HEADERS = $(include_HEADERS) $(nodist_include_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
@@ -3791,7 +3792,7 @@ TEST_LOGS = $(am__test_logs2:.test.log=.log)
 TEST_LOG_COMPILE = $(TEST_LOG_COMPILER) $(AM_TEST_LOG_FLAGS) \
 	$(TEST_LOG_FLAGS)
 TEST_LOGS_TMP = $(TEST_LOGS:.log=.log-t)
-DIST_SUBDIRS = armci .
+DIST_SUBDIRS = comex armci .
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -4035,7 +4036,8 @@ include_HEADERS = ma/error.h ma/macdecls.h ma/macommon.h ma/maf2c.fh \
 	pario/eaf/eaf.h pario/elio/chemio.h pario/elio/elio.h \
 	pario/sf/coms.h pario/sf/sf.fh pario/sf/sf.h $(am__append_36) \
 	$(am__append_43) gaf2c/typesf2c.h gaf2c/farg.h \
-	tcgmsg/tcgmsg.fh tcgmsg/tcgmsg.h
+	tcgmsg/tcgmsg.fh tcgmsg/tcgmsg.h tcgmsg/tcgmsg-mpi/msgtypesc.h \
+	tcgmsg/tcgmsg-mpi/msgtypesf.h
 nodist_include_HEADERS = global/src/ga-wapi.h $(am__append_44)
 bin_SCRIPTS = tools/ga-config
 check_LTLIBRARIES = 
@@ -4096,8 +4098,11 @@ libga_la_SOURCES = compat/random.c ma/error.c ma/f2c.c ma/ma.c ma/ma.h \
 	pario/sf/sf_fortran.c pario/sf/shared.files.c $(am__append_41) \
 	gaf2c/gaf2c.c gaf2c/drand.c $(am__append_48) tcgmsg/capi.c \
 	tcgmsg/fapi.c $(am__append_51)
+
+# As of ga-5-2 libarmci is no longer rolled up into libga.
 libga_la_LIBADD = $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) \
-	$(am__append_60) $(am__append_61)
+	$(am__append_60) $(am__append_61) $(am__append_62) \
+	$(am__append_63)
 nodist_libga_la_SOURCES = config.fh $(am__append_8) $(am__append_9) \
 	global/src/ga-wapidefs.h $(am__append_42)
 
@@ -4873,8 +4878,9 @@ gaf2c_testarg_LDFLAGS = $(FLDFLAGS)
 
 ##############################################################################
 # armci
-@ARMCI_NETWORK_ARMCI_FALSE@MAYBE_ARMCI = armci
-SUBDIRS = $(MAYBE_ARMCI) .
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_TRUE@MAYBE_COMEX = comex
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_FALSE@MAYBE_ARMCI = armci
+SUBDIRS = $(MAYBE_COMEX) $(MAYBE_ARMCI) .
 GA_RECURSIVE_TARGETS = checkprogs-recursive
 # END COPY
 
@@ -8656,8 +8662,10 @@ global/src/ga-wapidefs.h: $(PAPI_H)
 @ENABLE_GPARRAYS_TRUE@	       -e "/include/d" \
 @ENABLE_GPARRAYS_TRUE@		   $(GPPAPI_H) > $@
 
-@ARMCI_NETWORK_ARMCI_FALSE@armci/libarmci.la:
-@ARMCI_NETWORK_ARMCI_FALSE@	($(am__cd) armci && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_TRUE@comex/libarmci.la:
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_TRUE@	($(am__cd) comex && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_FALSE@armci/libarmci.la:
+@ARMCI_NETWORK_ARMCI_FALSE@@ARMCI_SRC_DIR_COMEX_FALSE@	($(am__cd) armci && $(MAKE) $(AM_MAKEFLAGS) all) || exit 1;
 dist-hook: tascel-dist-hook
 .PHONY: tascel-dist-hook
 tascel-dist-hook:
