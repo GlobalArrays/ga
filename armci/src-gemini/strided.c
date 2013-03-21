@@ -232,7 +232,7 @@ static void daxpy_2d_(void* alpha, int *rows, int *cols, void *a, int *ald,
 void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes, int lockit)
 {
 int rows;
-void (ATR *func)(void*, void*, void*, int*);
+void (*func)(void*, void*, void*, int*);
     ARMCI_PR_DBG("enter",0);
       switch (op){
       case ARMCI_ACC_INT:
@@ -278,7 +278,7 @@ void armci_acc_2D(int op, void* scale, int proc, void *src_ptr, void *dst_ptr,
                   int bytes, int cols, int src_stride, int dst_stride, int lockit)
 {
 int   rows, lds, ldd, span;
-void (ATR *func)(void*, int*, int*, void*, int*, void*, int*);
+void (*func)(void*, int*, int*, void*, int*, void*, int*);
 
     ARMCI_PR_DBG("enter",0);
 
@@ -328,7 +328,7 @@ void (ATR *func)(void*, int*, int*, void*, int*, void*, int*);
           rows = bytes/sizeof(long);
           ldd  = dst_stride/sizeof(long);
           lds  = src_stride/sizeof(long);
-          func = RA_ACCUMULATE_2D;
+          func = RA_ACCUMULATE_2D_;
           break;
       default: armci_die("ARMCI accumulate: operation not supported",op);
           func = F_ACCUMULATE_2D; /*avoid compiler whining */

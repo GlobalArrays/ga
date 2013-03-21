@@ -274,99 +274,20 @@ void c_dcopy13_(const int*    const restrict rows,
                       int*    const restrict cur);
 
 /********* interface to fortran 1D and 2D memory copy functions ***********/
-#if ENABLE_F77
-#   ifdef WIN32
-#       define ATR __stdcall
-#   else
-#       define ATR
-#   endif
-#   define dcopy2d_n_ F77_FUNC_(dcopy2d_n,DCOPY2D_N)
-#   define dcopy2d_u_ F77_FUNC_(dcopy2d_u,DCOPY2D_U)
-#   define dcopy1d_n_ F77_FUNC_(dcopy1d_n,DCOPY1D_N)
-#   define dcopy1d_u_ F77_FUNC_(dcopy1d_u,DCOPY1D_U)
-#   define dcopy21_   F77_FUNC(dcopy21,DCOPY21)
-#   define dcopy12_   F77_FUNC(dcopy12,DCOPY12)
-#   define dcopy31_   F77_FUNC(dcopy31,DCOPY31)
-#   define dcopy13_   F77_FUNC(dcopy13,DCOPY13)
-void ATR dcopy2d_n_(const int*    const restrict rows,
-                    const int*    const restrict cols,
-                    const double* const restrict A,
-                    const int*    const restrict ald,
-                          double* const restrict B,
-                    const int*    const restrict bld);
-void ATR dcopy2d_u_(const int*    const restrict rows,
-                    const int*    const restrict cols,
-                    const double* const restrict A,
-                    const int*    const restrict ald,
-                          double* const restrict B,
-                    const int*    const restrict bld);
-void ATR dcopy1d_n_(const double* const restrict A,
-                          double* const restrict B,
-                    const int*    const restrict n);
-void ATR dcopy1d_u_(const double* const restrict A,
-                          double* const restrict B,
-                    const int*    const restrict n);
-void ATR dcopy21_(const int*    const restrict rows,
-                  const int*    const restrict cols,
-                  const double* const restrict A,
-                  const int*    const restrict ald,
-                        double* const restrict buf,
-                        int*    const restrict cur);
-void ATR dcopy12_(const int*    const restrict rows,
-                  const int*    const restrict cols,
-                        double* const restrict A,
-                  const int*    const restrict ald,
-                  const double* const restrict buf,
-                        int*    const restrict cur);
-void ATR dcopy31_(const int*    const restrict rows,
-                  const int*    const restrict cols,
-                  const int*    const restrict plns,
-                  const double* const restrict A,
-                  const int*    const restrict aldr,
-                  const int*    const restrict aldc,
-                        double* const restrict buf,
-                        int*    const restrict cur);
-void ATR dcopy13_(const int*    const restrict rows,
-                  const int*    const restrict cols,
-                  const int*    const restrict plns,
-                        double* const restrict A,
-                  const int*    const restrict aldr,
-                  const int*    const restrict aldc,
-                  const double* const restrict buf,
-                        int*    const restrict cur);
-#endif
-
-#if NOFORT
-#   if defined(AIX) || defined(BGML)
-#       define DCOPY2D c_dcopy2d_u_
-#       define DCOPY1D c_dcopy1d_u_
-#   elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(DECOSF) || defined(CRAY) || defined(WIN32) || defined(HITACHI)
-#       define DCOPY2D c_dcopy2d_n_
-#       define DCOPY1D c_dcopy1d_n_
-#   else
-#       define DCOPY2D c_dcopy2d_u_
-#       define DCOPY1D c_dcopy1d_u_
-#   endif
-#   define DCOPY21 c_dcopy21_
-#   define DCOPY12 c_dcopy12_
-#   define DCOPY31 c_dcopy31_
-#   define DCOPY13 c_dcopy13_
+#if defined(AIX) || defined(BGML)
+#    define DCOPY2D c_dcopy2d_u_
+#    define DCOPY1D c_dcopy1d_u_
+#elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(DECOSF) || defined(CRAY) || defined(WIN32) || defined(HITACHI)
+#    define DCOPY2D c_dcopy2d_n_
+#    define DCOPY1D c_dcopy1d_n_
 #else
-#   if defined(AIX) || defined(BGML)
-#       define DCOPY2D dcopy2d_u_
-#       define DCOPY1D dcopy1d_u_
-#   elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(DECOSF) || defined(CRAY) || defined(WIN32) || defined(HITACHI)
-#       define DCOPY2D dcopy2d_n_
-#       define DCOPY1D dcopy1d_n_
-#   else
-#       define DCOPY2D dcopy2d_u_
-#       define DCOPY1D dcopy1d_u_
-#   endif
-#   define DCOPY21 dcopy21_
-#   define DCOPY12 dcopy12_
-#   define DCOPY31 dcopy31_
-#   define DCOPY13 dcopy13_
+#    define DCOPY2D c_dcopy2d_u_
+#    define DCOPY1D c_dcopy1d_u_
 #endif
+#define DCOPY21 c_dcopy21_
+#define DCOPY12 c_dcopy12_
+#define DCOPY31 c_dcopy31_
+#define DCOPY13 c_dcopy13_
 
 
 /***************************** 1-Dimensional copy ************************/
