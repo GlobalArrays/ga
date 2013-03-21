@@ -21,9 +21,12 @@
 #endif
 
 #ifdef MPI
-#  include <mpi.h>
+#   include <mpi.h>
 extern MPI_Comm ARMCI_COMM_WORLD;
+#   include "ga-mpi.h"
+#   if HAVE_ARMCI_GROUP_COMM_FUNCTION
 extern MPI_Comm armci_group_comm(ARMCI_Group *group);
+#   endif
 #else
 #  include <tcgmsg.h>
 #endif
@@ -87,10 +90,6 @@ void pnga_pgroup_brdcst(Integer grp_id, Integer type, void *buf,
 
 
 #ifdef MPI
-#   include "ga-mpi.h"
-#   if HAVE_ARMCI_GROUP_COMM_FUNCTION
-extern MPI_Comm armci_group_comm(ARMCI_Group *group);
-#   endif
 MPI_Comm GA_MPI_Comm()
 {
     return GA_MPI_Comm_pgroup(-1);
@@ -101,17 +100,17 @@ MPI_Comm GA_MPI_Comm_pgroup_default()
 }
 MPI_Comm GA_MPI_Comm_pgroup(int p_grp)
 {
-    ARMCI_Group *group;
+    ARMCI_Group group;
     if (p_grp > 0) {
-        group = &(PGRP_LIST[p_grp].group);
+        group = PGRP_LIST[p_grp].group;
     }
     else {
-        ARMCI_Group_get_world(group);
+        ARMCI_Group_get_world(&group);
     }
 #   if HAVE_ARMCI_GROUP_COMM_MEMBER
-    return group->comm;
+    return group.comm;
 #   else
-    return armci_group_comm(group);
+    return armci_group_comm(&group);
 #   endif
 }
 #endif
