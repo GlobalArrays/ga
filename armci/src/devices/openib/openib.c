@@ -1448,7 +1448,7 @@ static void vapi_connect_client()
         qp_attr.qp_state            = IBV_QPS_RTS;
         qp_attr.sq_psn              = 0;
         qp_attr.timeout             = 18;
-        qp_attr.retry_cnt           = 20;
+        qp_attr.retry_cnt           = 7;
         qp_attr.rnr_retry           = 7;
         qp_attr.max_rd_atomic  = 4;
 
@@ -1579,6 +1579,14 @@ void armci_server_initial_connection()
     armci_pbuf_init_buffer_env();
 #endif
     armci_init_nic(CLN_nic,1,1);
+    if (!armci_openib_server_poll) {
+	/*
+	 * Start a notify event request immediately after creation so
+	 * nothing is missed.
+	 */
+	rc = ibv_req_notify_cq(CLN_nic->rcq, 0);
+	dassert1(1,rc==0,rc);
+    }
 
     _gtmparr[armci_me] = CLN_nic->lid_arr[armci_me];
     armci_vapi_server_stage1 = 1;
@@ -1663,7 +1671,7 @@ void armci_server_initial_connection()
     qp_attr.qp_state            = IBV_QPS_RTS;
     qp_attr.sq_psn              = 0;
     qp_attr.timeout             = 18;
-    qp_attr.retry_cnt           = 20;
+    qp_attr.retry_cnt           = 7;
     qp_attr.rnr_retry           = 7;
     qp_attr.max_rd_atomic  = 4;
 
@@ -2097,7 +2105,6 @@ vapibuf_t *cbuf,*cbufs;
 request_header_t *msginfo,*msg;
 int c,i,need_ack,pollcount;
 static int mytag=1;
-static int doineednotify=1;
 int rrr,serverwcount=0;
 
 #ifdef CHANGE_SERVER_AFFINITY
@@ -2150,37 +2157,26 @@ int nslave=armci_clus_info[armci_clus_me].nslave;
       block_thread_signal(GPC_COMPLETION_SIGNAL);
 #endif
       bzero(pdscr, sizeof(*pdscr));
-      if (armci_openib_server_poll) {
+      do {
         rc = ibv_poll_cq(CLN_nic->rcq, 1, pdscr);
-        while (rc == 0) {
-          rc = ibv_poll_cq(CLN_nic->rcq, 1, pdscr);
-          if (armci_server_terminating) {
-            /* server got interrupted when clients terminate connections */
-            armci_server_transport_cleanup();
-            sleep(1);
-            _exit(0);
-          }
-        }
-      } else {
-          rc = ibv_poll_cq(CLN_nic->rcq, 1, pdscr);
-          if(rc==0){doineednotify=1;/*continue;*/}
-          if(doineednotify){
-            rc1 = ibv_req_notify_cq(CLN_nic->rcq, 0);
-	    dassert1(1,rc1==0,rc1);
-            rc1=ibv_get_cq_event(CLN_nic->rch,&CLN_nic->rcq,&CLN_nic->rcq_cntx);
-	    dassert1(1,rc1==0,rc1);
-            doineednotify=0;
-	    ibv_ack_cq_events(CLN_nic->rcq, 1);
-            rc = ibv_poll_cq(CLN_nic->rcq, 1, pdscr);
-          }
-
-	  if (armci_server_terminating) {
-	    /* server got interrupted when clients terminate connections */
-	    armci_server_transport_cleanup();
-	    sleep(1);
-	    _exit(0);
-	  }
-      }
+	if (armci_server_terminating) {
+	  /* server is interrupted when clients terminate connections */
+	  armci_server_transport_cleanup();
+	  sleep(1);
+	  _exit(0);
+	}
+	if (rc == 0 && !armci_openib_server_poll) {
+	  /* wait for a notify event */
+          rc1 = ibv_get_cq_event(CLN_nic->rch,&CLN_nic->rcq,&CLN_nic->rcq_cntx);
+          dassert1(1,rc1==0,rc1);
+          ibv_ack_cq_events(CLN_nic->rcq, 1);
+	  /* re-arm notify event */
+          rc1 = ibv_req_notify_cq(CLN_nic->rcq, 0);
+          dassert1(1,rc1==0,rc1);
+	  /* note: an event receive does not guarantee an actual completion */
+	  continue;
+	}
+      } while (rc == 0);
 
       if(DEBUG_SERVER) {
         printf("\n%d:pdscr=%p %p %d %d %d %d\n",armci_me,pdscr,&pdscr1,
@@ -4431,7 +4427,7 @@ void process_recv_completion_from_client(armci_ud_rank *h, cbuf *v)
     qp_attr.qp_state            = IBV_QPS_RTS;
     qp_attr.sq_psn              = 0;
     qp_attr.timeout             = 18;
-    qp_attr.retry_cnt           = 20;
+    qp_attr.retry_cnt           = 7;
     qp_attr.rnr_retry           = 7;
     qp_attr.max_rd_atomic  = 4;
     rc = ibv_modify_qp(con->qp, &qp_attr,qp_attr_mask);
@@ -4982,7 +4978,7 @@ void process_recv_completion_from_server(armci_ud_rank *h, cbuf *v)
     qp_attr.qp_state            = IBV_QPS_RTS;
     qp_attr.sq_psn              = 0;
     qp_attr.timeout             = 18;
-    qp_attr.retry_cnt           = 20;
+    qp_attr.retry_cnt           = 7;
     qp_attr.rnr_retry           = 7;
     qp_attr.max_rd_atomic  = 4;
 
