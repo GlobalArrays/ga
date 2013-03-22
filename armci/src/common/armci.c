@@ -730,8 +730,28 @@ int parmci_notify(int proc)
 # ifdef MEM_FENCE
    if(SAMECLUSNODE(proc)) MEM_FENCE;
 # endif
+#ifdef OPENIB
+   /* IB will optimze a simple Put by using RDMA.  This can bypass non-RDMA
+    * Puts and lead to incorrect behavour.  Avoid that by using PutV, which
+    * presently does not optimize to RDMA.
+    * This workaround is sub-optimal for two reasons:
+    * 1. This adds more overhead when there is may be no need.
+    * 2. There is no guarantee that PutV will always be un-optimized.
+    */
+   void *sp = &pnotify->sent;
+   void *dp = &(_armci_notify_arr[proc]+armci_me)->received;
+   armci_giov_t gv;
+
+   gv.src_ptr_array = &sp;
+   gv.dst_ptr_array = &dp;
+   gv.ptr_array_len = 1;
+   gv.bytes = sizeof(pnotify->sent);
+
+   PARMCI_PutV(&gv, 1, proc);
+#else
    PARMCI_Put(&pnotify->sent,&(_armci_notify_arr[proc]+armci_me)->received, 
              sizeof(pnotify->sent),proc);
+#endif /* OPENIB */
    return(pnotify->sent);
 }
 
