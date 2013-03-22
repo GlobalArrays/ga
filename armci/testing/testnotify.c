@@ -290,6 +290,7 @@ void compare_patches(double eps, int ndim, double *patch1, int lo1[], int hi1[],
   int i, j, elems = 1;
   int subscr1[MAXDIMS], subscr2[MAXDIMS];
   double diff, max;
+  int idx1, idx2, offset1, offset2;
 
   for (i = 0; i < ndim; i++) { /* count # of elements & verify consistency of both patches */
     int diff = hi1[i] - lo1[i];
@@ -304,8 +305,6 @@ void compare_patches(double eps, int ndim, double *patch1, int lo1[], int hi1[],
 
   /* compare element values in both patches */
   for (j = 0; j < elems; j++) {
-    int idx1, idx2, offset1, offset2;
-
     idx1 = Index(ndim, subscr1, dims1);  /* calculate element Index from a subscript */
     idx2 = Index(ndim, subscr2, dims2);
 
@@ -354,6 +353,7 @@ void scale_patch(double alpha, int ndim, double *patch1, int lo1[], int hi1[], i
 {
   int i, j, elems = 1;
   int subscr1[MAXDIMS];
+  int idx1, offset1;
 
   for (i = 0; i < ndim; i++) { /* count # of elements in patch */
     int diff = hi1[i] - lo1[i];
@@ -364,8 +364,6 @@ void scale_patch(double alpha, int ndim, double *patch1, int lo1[], int hi1[], i
 
   /* scale element values in both patches */
   for (j = 0; j < elems; j++) {
-    int idx1, offset1;
-
     idx1 = Index(ndim, subscr1, dims1);  /* calculate element Index from a subscript */
 
     if (j == 0) {
