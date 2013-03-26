@@ -35,7 +35,7 @@ typedef int lockset_t;
 #   define NAT_UNLOCK(x,p) pthread_mutex_unlock(_armci_int_mutexes +x)
 #   define LOCK_T pthread_mutex_t
 #   define PAD_LOCK_T LOCK_T
-PAD_LOCK_T *_armci_int_mutexes;
+extern PAD_LOCK_T *_armci_int_mutexes;
 
 #elif defined(PSPIN)
 #   warning SPINLOCK: pthread_spin_lock
@@ -45,17 +45,17 @@ PAD_LOCK_T *_armci_int_mutexes;
 #   define NAT_UNLOCK(x,p) pthread_spin_unlock(_armci_int_mutexes +x)
 #   define LOCK_T pthread_spinlock_t
 #   define PAD_LOCK_T LOCK_T
-PAD_LOCK_T *_armci_int_mutexes;
+extern PAD_LOCK_T *_armci_int_mutexes;
 
 #elif defined(SPINLOCK) && defined(SGIALTIX)
 #   define NAT_LOCK(x,p) armci_acquire_spinlock((LOCK_T*)( ((PAD_LOCK_T*)(((void**)_armci_int_mutexes)[p]))+x ))
 #   define NAT_UNLOCK(x,p) armci_release_spinlock((LOCK_T*)( ((PAD_LOCK_T*)(((void**)_armci_int_mutexes)[p]))+x ))
-PAD_LOCK_T *_armci_int_mutexes;
+extern PAD_LOCK_T *_armci_int_mutexes;
 
 #elif defined(SPINLOCK)
 #   define NAT_LOCK(x,p) armci_acquire_spinlock((LOCK_T*)(_armci_int_mutexes+(x)))
 #   define NAT_UNLOCK(x,p) armci_release_spinlock((LOCK_T*)(_armci_int_mutexes+(x)))
-PAD_LOCK_T *_armci_int_mutexes;
+extern PAD_LOCK_T *_armci_int_mutexes;
 
 #elif defined(HITACHI)
 extern void armcill_lock(int mutex, int proc);
@@ -64,7 +64,7 @@ extern void armcill_unlock(int mutex, int proc);
 #   define PAD_LOCK_T LOCK_T
 #   define NAT_LOCK(x,p) armcill_lock((x),(p))
 #   define NAT_UNLOCK(x,p) armcill_unlock((x),(p))
-PAD_LOCK_T *_armci_int_mutexes;
+extern PAD_LOCK_T *_armci_int_mutexes;
 
 #elif defined(SGI)
 #   define SGI_SPINS 100

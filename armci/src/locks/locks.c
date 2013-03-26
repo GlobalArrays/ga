@@ -13,6 +13,7 @@
 #   include <stdio.h>
 #endif
 
+PAD_LOCK_T *_armci_int_mutexes;
 
 #if !defined(armci_die)
 extern void armci_die(char*,int);
