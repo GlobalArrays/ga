@@ -30,7 +30,6 @@ int main( int argc, char **argv ) {
 
   int datatype, elements;
   double *prealloc_mem;
-
   MP_INIT(argc,argv);
 
   GA_INIT(argc,argv);                            /* initialize GA */
@@ -141,6 +140,28 @@ int main( int argc, char **argv ) {
   }
   if (me==0) printf("\nCompleted test of NGA_Scatter_acc\n");
   NGA_Release(g_a, lo, hi);
+
+  /* Test fixed buffer size */
+  NGA_Alloc_gatscat_buf(size_me);
+
+  /* Scatter-accumulate values back into GA*/
+  GA_Sync();
+  NGA_Scatter_acc(g_a, values, indices, size_me, &one);
+  GA_Sync();
+
+  /* Check to see if contents of g_a are correct */
+  for (i=lo[0]; i<hi[0]; i++) {
+    idx = i-lo[0];
+    for (j=lo[1]; j<hi[1]; j++) {
+      jdx = j-lo[1];
+      if (ptr[idx*ld+jdx] != 3*(j*N+i)) {
+        printf("p[%d] (Scatter_acc) expected: %d actual: %d\n",me,3*(j*N+i),ptr[idx*ld+jdx]);
+      }
+    }
+  }
+  if (me==0) printf("\nCompleted test of NGA_Scatter_acc using fixed buffers\n");
+  NGA_Release(g_a, lo, hi);
+  NGA_Free_gatscat_buf();
 
   GA_Destroy(g_a);
   if(me==0)printf("\nSuccess\n");
