@@ -187,6 +187,7 @@ extern void          NGA_Access_ghosts(int g_a, int dims[], void *ptr, int ld[])
 extern void          NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[]);
 extern void          NGA_Acc(int g_a, int lo[], int hi[],void* buf,int ld[],void* alpha);
 extern void          NGA_Add_patch(void * alpha, int g_a, int alo[], int ahi[], void * beta,  int g_b, int blo[], int bhi[], int g_c, int clo[], int chi[]);
+extern void          NGA_Alloc_gatscat_buf(int nelems);
 extern SingleComplex NGA_Cdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
 extern int           NGA_Compare_distr(int g_a, int g_b); 
 extern void          NGA_Copy_patch(char trans, int g_a, int alo[], int ahi[], int g_b, int blo[], int bhi[]);
@@ -209,6 +210,7 @@ extern int           NGA_Duplicate(int g_a, char* array_name);
 extern void          NGA_Error(char *str, int code);
 extern float         NGA_Fdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
 extern void          NGA_Fence(void);
+extern void          NGA_Free_gatscat_buf();
 extern void          NGA_Fill(int g_a, void *value);
 extern void          NGA_Fill_patch(int g_a, int lo[], int hi[], void *val);
 extern void          NGA_Gather(int g_a, void *v, int* subsArray[], int n);

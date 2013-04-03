@@ -2716,6 +2716,17 @@ void NGA_Pgroup_cgop(int grp_id, SingleComplex x[], int n, char *op)
 void NGA_Pgroup_zgop(int grp_id, DoubleComplex x[], int n, char *op)
 { wnga_pgroup_gop(grp_id, C_DCPL, x, n, op); }
  
+void NGA_Alloc_gatscat_buf(int nelems)
+{
+  Integer elems = (Integer)nelems;
+  wnga_alloc_gatscat_buf(elems);
+}
+
+void NGA_Free_gatscat_buf()
+{
+  wnga_free_gatscat_buf();
+}
+
 void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
 {
     int idx, i;

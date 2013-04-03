@@ -140,7 +140,9 @@ extern void pnga_access_block_segment_idx(Integer g_a, Integer proc,
                                           AccessIndex* index, Integer *len);
 extern void pnga_access_block_segment_ptr(Integer g_a, Integer proc,
                                           void* ptr, Integer *len);
+extern void pnga_alloc_gatscat_buf(Integer nelems);
 extern void pnga_fence();
+extern void pnga_free_gatscat_buf();
 extern void pnga_gather2d(Integer g_a, void *v, Integer *i, Integer *j,
                           Integer nv);
 extern void pnga_gather(Integer g_a, void* v, void *subscript,
