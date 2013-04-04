@@ -264,6 +264,11 @@ GA::GlobalArray::allocate() const {
 }
 
 void  
+GA::GlobalArray::allocGatscatBuf(int nelems) const {
+  NGA_Alloc_gatscat_buf(nelems);
+}
+
+void  
 GA::GlobalArray::checkHandle(char* string) const {
   GA_Check_handle(mHandle, string);
 }
@@ -403,6 +408,11 @@ GA::GlobalArray::fillPatch (int lo[], int hi[], void *val) const {
 void 
 GA::GlobalArray::fillPatch (int64_t lo[], int64_t hi[], void *val) const {
   NGA_Fill_patch64(mHandle, lo, hi, val);
+}
+
+void  
+GA::GlobalArray::freeGatscatBuf() {
+  NGA_Free_gatscat_buf();
 }
 
 void 

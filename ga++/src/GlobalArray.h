@@ -504,6 +504,20 @@ class GlobalArray {
   int allocate() const;
 
   /**
+   * This function can be used to preallocate internal buffers that are used by
+   * the gather, scatter and scatter accumulate calls. This avoids repeated
+   * memory allocations in these calls that can reduce performance. The value of
+   * nelems should be set to the maximum number of elements that will be moved
+   * in any single call.
+   *
+   * This is a  local operation. 
+   *
+   * @param[in]  nelems    The maximum number of elements that will be moved in
+   *                       any gather, scatter, scatter-accumulate call
+   */
+  void allocGatscatBuf(int nelems) const;
+
+  /**
    * Check that the global array handle g_a is valid ... if not call 
    * ga_error with the string provided and some more info. 
    *
@@ -763,6 +777,14 @@ class GlobalArray {
    */
   void fillPatch (int64_t lo[], int64_t hi[], void *val) const;
   
+  /**
+   * This function can be used to free preallocate internal buffers that were
+   * set using the allocGatscatBuf call.
+   *
+   * This is a  local operation. 
+   */
+  void freeGatscatBuf();
+
   /** 
    * Gathers array elements from a global array into a local array. 
    * The contents of the input arrays (v, subscrArray) are preserved, 
