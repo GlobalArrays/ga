@@ -371,7 +371,8 @@ check_PROGRAMS = ma/testc$(EXEEXT) ma/test-coalesce$(EXEEXT) \
 @ENABLE_GPARRAYS_TRUE@	gparrays/src/gponesided.c \
 @ENABLE_GPARRAYS_TRUE@	gparrays/src/gp-papi.h
 @ENABLE_GPARRAYS_TRUE@am__append_42 = gparrays/src/gp-wapidefs.h
-@ENABLE_GPARRAYS_TRUE@am__append_43 = gparrays/src/gp-papi.h
+@ENABLE_GPARRAYS_TRUE@am__append_43 = gparrays/src/gp.h \
+@ENABLE_GPARRAYS_TRUE@	gparrays/src/gp-papi.h
 @ENABLE_GPARRAYS_TRUE@am__append_44 = gparrays/src/gp-wapi.h
 @ENABLE_F77_TRUE@@ENABLE_GPARRAYS_TRUE@am__append_45 = gparrays/testing/test
 @ENABLE_GPARRAYS_TRUE@am__append_46 = gparrays/testing/testc \
@@ -3674,9 +3675,9 @@ am__include_HEADERS_DIST = ma/error.h ma/macdecls.h ma/macommon.h \
 	pario/sf/sf.fh pario/sf/sf.h ga++/src/ga++.h \
 	ga++/src/GAServices.h ga++/src/GlobalArray.h \
 	ga++/src/init_term.h ga++/src/PGroup.h ga++/src/services.h \
-	gparrays/src/gp-papi.h gaf2c/typesf2c.h gaf2c/farg.h \
-	tcgmsg/tcgmsg.fh tcgmsg/tcgmsg.h tcgmsg/tcgmsg-mpi/msgtypesc.h \
-	tcgmsg/tcgmsg-mpi/msgtypesf.h
+	gparrays/src/gp.h gparrays/src/gp-papi.h gaf2c/typesf2c.h \
+	gaf2c/farg.h tcgmsg/tcgmsg.fh tcgmsg/tcgmsg.h \
+	tcgmsg/tcgmsg-mpi/msgtypesc.h tcgmsg/tcgmsg-mpi/msgtypesf.h
 HEADERS = $(include_HEADERS) $(nodist_include_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive

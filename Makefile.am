@@ -1487,6 +1487,7 @@ libga_la_SOURCES += gparrays/src/gponesided.c
 libga_la_SOURCES += gparrays/src/gp-papi.h
 nodist_libga_la_SOURCES += gparrays/src/gp-wapidefs.h
 
+include_HEADERS += gparrays/src/gp.h
 include_HEADERS += gparrays/src/gp-papi.h
 nodist_include_HEADERS += gparrays/src/gp-wapi.h
 
