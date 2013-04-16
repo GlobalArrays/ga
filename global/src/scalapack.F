@@ -191,6 +191,7 @@ c
       double precision nprocs0
       double precision otto
       parameter(nmax=11,fact=((7108d0*7108d0)/1024d0),otto=8d0)
+cnew      parameter(nmax=11,fact=((7108d0*7108d0)/512d0),otto=8d0)
 c     lower bound of 8 procs
       nprocs0=max((n*n)/fact,otto)
 c
@@ -309,6 +310,7 @@ c   nq          - number of columns held by processor
       INTGR4 pcol, prow,one4
       parameter(one4=1)
       integer lda,rowl,coll
+      integer marg1,marg2
 
 c***  Synchronize at the beginning
 c    
@@ -328,8 +330,12 @@ c
                   if(rbase.gt.np .or. cbase .gt. nq) then
                      call ga_error(' ga_to_SL: rows/cols error ',1)
                   endif
-                  rowl=min(row+nbr-one4,dim1)
-                  coll=min(col+nbc-one4,dim2)
+                  marg1=row+nbr-one4
+                  marg2=dim1
+                  rowl=min(marg1,marg2)
+                  marg1=col+nbc-one4
+                  marg2=dim2
+                  coll=min(marg1,marg2)
                   call ga_get(g_a,row,rowl,col,coll,
      &                 s_a(rbase,cbase), lda) 
                   rbase = rbase + nbr
@@ -360,6 +366,7 @@ c
       INTGR4 pcol, prow,one4
       parameter(one4=1)
       integer row,col,rowl,coll
+      integer marg1,marg2
 c
       lda=lda4
 c
@@ -379,8 +386,12 @@ c
                if(myrow.eq.prow) then
                   if(rbase.gt.np .or. cbase .gt. nq)
      &               call ga_error(' ga_from_SL: rows/cols error ',1)
-                  rowl=min(row+nbr-one4,dim1)
-                  coll=min(col+nbc-one4,dim2)
+                  marg1=row+nbr-one4
+                  marg2=dim1
+                  rowl=min(marg1,marg2)
+                  marg1=col+nbc-one4
+                  marg2=dim2
+                  coll=min(marg1,marg2)
                   call ga_put(g_a,row,rowl,col,
      &                    coll, s_a(rbase,cbase), lda) 
                   rbase = rbase + nbr
@@ -409,6 +420,7 @@ c   np          - number of rows held by processor
 c   nq          - number of columns held by processor
       implicit none
 #include "scalapack.fh"
+#include "global.fh"
       INTGR4  nbr, nbc, lda4, np, nq, dim1, dim2
       integer g_a
       double  precision  s_a(lda4,nq)
@@ -416,6 +428,7 @@ c   nq          - number of columns held by processor
       INTGR4 pcol, prow
       integer lda
       integer r0i,r1i,r0im1,r1im1,rowl,coll
+      integer marg1,marg2
       logical putpending
 
 c***  Synchronize at the beginning
@@ -426,24 +439,29 @@ c
 c
       Trow = nbr * nprow2
       Tcol = nbc * npcol2
-c     
       do col  = 1, dim2, nbc
          pcol = mod(col,Tcol)/nbc        ! processor column that holds "col"
          if(mycol2.eq.pcol) then
             r0im1=-9999
             r1im1=0
             putpending=.false.
-            coll=min(col+nbc-1,dim2)
+            marg1=col+nbc-1
+            marg2=dim2
+            coll=min(marg1,marg2)
 
             do row  = 1, dim1, nbr
                prow = mod(row,Trow)/nbr  ! processor row that holds "row"
                if(myrow2.eq.prow) then
                   if(.not.putpending) then
                      r0im1=row
-                     r1im1=min(row+nbr-1,dim1)
+                     marg1=row+nbr-1
+                     marg2=dim1
+                     r1im1=min(marg1,marg2)
                   endif
                   r0i=row
-                  r1i=min(row+nbr-1,dim1)
+                  marg1=row+nbr-1
+                  marg2=dim1
+                  r1i=min(marg1,marg2)
                   
                   if(r0i.eq.(r1im1+1).and.r1i.ne.dim1) then
                      r1im1=r1i
@@ -485,6 +503,7 @@ c
       INTGR4 pcol, prow
       integer row,col,rowl,coll
       integer r0i,r1i,r0im1,r1im1
+      integer marg1,marg2
       logical putpending
 c
       lda=lda4
@@ -503,16 +522,22 @@ c
             r0im1=-9999
             r1im1=0
             putpending=.false.
-            coll=min(col+nbc-1,dim2)
+            marg1=col+nbc-1
+            marg2=dim2
+            coll=min(marg1,marg2)
             do row  = 1, dim1, nbr
                prow = mod(row,Trow)/nbr  ! processor row that holds "row"
                if(myrow2.eq.prow) then
                   if(.not.putpending) then
                      r0im1=row
-                     r1im1=min(row+nbr-1,dim1)
+                     marg1=row+nbr-1
+                     marg2=dim1
+                     r1im1=min(marg1,marg2)
                   endif
                   r0i=row
-                  r1i=min(row+nbr-1,dim1)
+                  marg1=row+nbr-1
+                  marg2=dim1
+                  r1i=min(marg1,marg2)
                   
                   if(r0i.eq.(r1im1+1).and.r1i.ne.dim1) then
 !                  if(.false.) then
@@ -563,6 +588,7 @@ c   nq          - number of columns held by processor
       integer rowl,coll
       integer ha1,adra1,ha2,adra2
       integer nbr8,nbc8
+      integer marg1,marg2
 
 c***  Synchronize at the beginning
 c    
@@ -588,8 +614,12 @@ c
                   if(rbase.gt.np .or. cbase .gt. nq) then
                      call ga_error(' gatoSLcpl: rows/cols error ',1)
                   endif
-                  rowl=min(row+nbr -1,dim1)
-                  coll=min(col+nbc -1,dim2)
+                  marg1=row+nbr -1
+                  marg2=dim1
+                  rowl=min(marg1,marg2)
+                  marg1=col+nbc -1
+                  marg2=dim2
+                  coll=min(marg1,marg2)
                   call ga_get(g_a(1),row,rowl,col,
      &                    coll, dbl_mb(adra1), nbr8) 
                   call ga_get(g_a(2),row,rowl,col,
@@ -647,6 +677,7 @@ c
       integer row,col,rowl,coll
       integer ha1,adra1,ha2,adra2
       integer nbr8,nbc8
+      integer marg1,marg2
 c
       lda=lda4
       nbr8=nbr
@@ -672,8 +703,12 @@ c
                if(myrow2.eq.prow) then
                   if(rbase.gt.np .or. cbase .gt. nq)
      &               call ga_error(' ga_from_SL: rows/cols error ',1)
-                  rowl=min(row+nbr-1,dim1)
-                  coll=min(col+nbc-1,dim2)
+                  marg1=row+nbr-1
+                  marg2=dim1
+                  rowl=min(marg1,marg2)
+                  marg1=col+nbc-1
+                  marg2=dim2
+                  coll=min(marg1,marg2)
 c                  call ga_cpycpl2dbl(s_a,lda4,rbase,cbase,
 c     I                 dbl_mb(adra1),dbl_mb(adra2),nbr8,
 c     L                 rowl,coll)
@@ -1278,6 +1313,9 @@ c**** Copy ga to A using SBS ScaLAPACK format
          if (.not.use_direct) then
            call ga_to_SL(g_a, n, n, nb, nb, dbl_mb(adrA), ldA, mpA, nqA)
          endif
+         endif
+         call ga_sync()
+         if(oactive) then
          
 c**** Fill ScaLAPACK matrix descriptor
          call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4,
@@ -1686,6 +1724,9 @@ c****         if hsA was given the SBS SL conversion is avoided
                 endif
              endif
            endif
+        endif
+        call ga_sync()
+        if(oactive) then
 
 
 c**** Fill ScaLAPACK matrix descriptor for A
@@ -1985,8 +2026,7 @@ c
       dimb1=dimb18
       dimb2=dimb28
       n=dima1
-c      nb=min(nb,n/2)
-      nb=max(1,nb)
+      if(nb.lt.1) nb=1
       if(dimA1.ne.dima2) call ga_error(
      %     'ga_pdsyev: matrix A not square ',0)
       if(dimb1.ne.dimb2) call ga_error(
@@ -2037,21 +2077,20 @@ c
         call SLinit2(n)
       endif
       oactive=iam.lt.maxproc
-      call ga_sync
       if (oactive) then
 c     
 c***  find SBS format parameters
 c     
 c     
-        mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
-        nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
+         mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
+         nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
 c     
-        mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
-        nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
+         mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
+         nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
 c     
 c     
-        lda = max(one4,mpA)
-        ldb = max(one4,mpB)
+         lda = max(one4,mpA)
+         ldb = max(one4,mpB)
 c     
 c     
 c     let scalapack check for errors
@@ -2061,31 +2100,32 @@ c     check to see how this works in the new data server model
 c     
 c     
          if (use_direct) then
-           call nga_access_block_segment(g_a,me,adra,alen)
-           call nga_access_block_segment(g_b,me,adrb,blen)
+            call nga_access_block_segment(g_a,me,adra,alen)
+            call nga_access_block_segment(g_b,me,adrb,blen)
          else
-           elemA= mpA*nqA
-           status = .true.
-           if (elemA.ne.0)status =
-     $        ma_push_get(MT_DBL,elemA,'a',ha,adra)
-           if (.not.status) 
-     &        call ga_error('ga_pdsyev: mem alloc failed A ', -1)
+            elemA= mpA*nqA
+            status = .true.
+            if (elemA.ne.0)status =
+     $           ma_push_get(MT_DBL,elemA,'a',ha,adra)
+            if (.not.status) 
+     &           call ga_error('ga_pdsyev: mem alloc failed A ', -1)
 c     
-           elemB= mpB*nqB
+            elemB= mpB*nqB
 c     
-           if (elemB.ne.0)status =
-     $        ma_push_get(MT_DBL,elemB,'b',hb,adrb)
-           if (.not.status) 
-     &        call ga_error('ga_pdsyev: mem alloc failed B ', -1)
-         endif
+            if (elemB.ne.0)status =
+     $           ma_push_get(MT_DBL,elemB,'b',hb,adrb)
+            if (.not.status) 
+     &           call ga_error('ga_pdsyev: mem alloc failed B ', -1)
 c     
 c     
 c***  copy g_a to A using the block cyclic scalapack format 
 c     
-         if (.not.use_direct) then 
-           call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
-     $        dbl_mb(adrA), lda, mpA, nqA)
+            call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
+     $           dbl_mb(adrA), lda, mpA, nqA)
          endif
+      endif
+      call ga_sync()
+      if(oactive) then
 c     
 c***  fill SCALAPACK matrix descriptors
 c
@@ -2093,13 +2133,13 @@ c
      $        islctxt2, lda, info)
          info8=info
          if (info8.ne.0)
-     $      call ga_error(' ga_pdsyev: descinit A failed ',-info8)
+     $        call ga_error(' ga_pdsyev: descinit A failed ',-info8)
 c     
          call descinit(descB, dimB1, dimB2, nb, nb, zero4, zero4,
      .        islctxt2, ldb, info)
          info8=info
          if (info8.ne.0)
-     $      call ga_error(' ga_pdsyev: descinit B failed ',-info8)
+     $        call ga_error(' ga_pdsyev: descinit B failed ',-info8)
 c     
          jobz = 'V'
          uplo = 'L'
@@ -2164,7 +2204,7 @@ c
          if (.not.use_direct) then
            if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
            if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
-         endif
+        endif
       endif
 c     
       call ga_sync()
@@ -2277,8 +2317,7 @@ c
       dimb1=dimb18
       dimb2=dimb28
       n=dima1
-c      nb=min(nb,n/2)
-      nb=max(1,nb)
+      if(nb.lt.1) nb=1
       if(dimA1.ne.dima2) call ga_error(
      %     'ga_pdsyevx: matrix A not square ',0)
       if(dimb1.ne.dimb2) call ga_error(
@@ -2299,15 +2338,15 @@ c
 c***  find SBS format parameters
 c     
 c     
-      mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
-      nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
+         mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
+         nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
 c     
-      mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
-      nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
+         mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
+         nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
 c     
 c     
-      lda = max(one4,mpA)
-      ldb = max(one4,mpB)
+         lda = max(one4,mpA)
+         ldb = max(one4,mpB)
 c     
 c     
 c     let scalapack check for errors
@@ -2322,6 +2361,12 @@ c
      $        ma_push_get(MT_DBL,elemA,'a',ha,adra)
          if(.not.status) 
      &        call ga_error('ga_pdsyevx: mem alloc failed A ', -1)
+c     
+c***  copy g_a to A using the block cyclic scalapack format 
+c     
+         
+         call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
+     $        dbl_mb(adrA), lda, mpA, nqA)
 c     
          elemB= mpB*nqB
 c     
@@ -2351,13 +2396,10 @@ c
          endif
          if(.not.status)
      &        call ga_error('ga_pdsyevx: mem alloc failed ifail  ', -1)
+      endif
+      call ga_sync()
+      if(oactive) then
          
-c     
-c***  copy g_a to A using the block cyclic scalapack format 
-c     
-         
-         call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
-     $        dbl_mb(adrA), lda, mpA, nqA)
 c     
 c***  fill SCALAPACK matrix descriptors
 c     
@@ -2598,8 +2640,7 @@ c
       if(dimA1.ne.dima2) call ga_error(
      %     'ga_pdsygv: matrix A not square ',0)
       n=dima1
-c      nb=min(nb,n/2)
-      nb=max(1,nb)
+      if(nb.lt.1) nb=1
       if(dimb1.ne.dimb2) call ga_error(
      %     'ga_pdsygv: matrix B not square ',0)
       if(dimb1.ne.n) call ga_error(
@@ -2964,8 +3005,7 @@ c
       dimb1=dimb18
       dimb2=dimb28
       n=dima1
-c      nb=min(nb,n/2)
-      nb=max(1,nb)
+      if(nb.lt.1) nb=1
 
       if(dimA1.ne.dima2) call ga_error(
      %     'ga_pdsyevd: matrix A not square ',0)
@@ -3027,12 +3067,12 @@ c
          mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
          nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
 c     
-      mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
-      nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
+         mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
+         nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
 c     
 c     
-      lda = max(one4,mpA)
-      ldb = max(one4,mpB)
+         lda = max(one4,mpA)
+         ldb = max(one4,mpB)
 c     
 c     
 c     let scalapack check for errors
@@ -3042,33 +3082,34 @@ c     check to see how this works in the new data server model
 c     
 c     
 c     
-      if (use_direct) then
-        call nga_access_block_segment(g_a,me,adra,alen)
-        call nga_access_block_segment(g_b,me,adrb,blen)
-      else
-        elemA= mpA*nqA
-        status = .true.
-        if(elemA.ne.0)status =
-     $     ma_push_get(MT_DBL,elemA,'a',ha,adra)
-        if(.not.status) 
-     &     call ga_error('ga_pdsyevd: mem alloc failed A ', -1)
-c     
-        elemB= mpB*nqB
-c     
-        if(elemB.ne.0)status =
-     $     ma_push_get(MT_DBL,elemB,'b',hb,adrb)
-        if(.not.status) 
-     &     call ga_error('ga_pdsyevd: mem alloc failed B ', -1)
-      endif
-c     
+         if (use_direct) then
+            call nga_access_block_segment(g_a,me,adra,alen)
+            call nga_access_block_segment(g_b,me,adrb,blen)
+         else
+            elemA= mpA*nqA
+            status = .true.
+            if(elemA.ne.0)status =
+     $           ma_push_get(MT_DBL,elemA,'a',ha,adra)
+            if(.not.status) 
+     &           call ga_error('ga_pdsyevd: mem alloc failed A ', -1)
 c     
 c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
 c     
          
-      if (.not.use_direct) then
-        call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
-     $     dbl_mb(adrA), lda, mpA, nqA)
+            call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
+     $           dbl_mb(adrA), lda, mpA, nqA)
+c     
+            elemB= mpB*nqB
+c     
+            if(elemB.ne.0)status =
+     $           ma_push_get(MT_DBL,elemB,'b',hb,adrb)
+            if(.not.status) 
+     &           call ga_error('ga_pdsyevd: mem alloc failed B ', -1)
+         endif
       endif
+      call ga_sync()
+      if(oactive) then
+c     
 c     
 c     
 c***  fill SCALAPACK matrix descriptors
@@ -3204,7 +3245,7 @@ c
       integer hb, adrb          !B
 c
 c
-      logical oactive           ! true iff this process participates
+      logical oactive           ! true if this process participates
       integer dimA18, dimA28, typeA
       integer dimB18, dimB28, typeB
       INTGR4 dimA1, dimA2,mout4
@@ -3312,6 +3353,15 @@ c
          if(.not.status) 
      &        call ga_error('ga_pdsyevr: mem alloc failed A ', -1)
 c     
+c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
+c     
+         
+         call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
+     $        dbl_mb(adrA), lda, mpA, nqA)
+         endif
+         call ga_sync()
+         if(oactive) then
+c     
          elemB= mpB*nqB
 c     
          if(elemB.ne.0)status =
@@ -3327,12 +3377,6 @@ c
          if(.not.status)
      &        call ga_error('ga_pdsyevr: mem alloc failed ifail  ', n)
          
-c     
-c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
-c     
-         
-         call ga_to_SL2(g_a, dimA1, dimA2, nb, nb,
-     $        dbl_mb(adrA), lda, mpA, nqA)
 c     
 c***  fill SCALAPACK matrix descriptors
 c     
