@@ -3,11 +3,12 @@
 
 #include "macdecls.h"
 #include "ga.h"
+#include "gp.h"
 #define DEBUG 1
 #define USE_HYPRE 0
-#define IMAX 200
-#define JMAX 200
-#define KMAX 200
+#define IMAX 100
+#define JMAX 100
+#define KMAX 100
 #define LMAX IMAX*JMAX*KMAX
 #define MAXVEC 5000000
 #define EPSLN 1.0d-10
@@ -160,9 +161,7 @@ double ran3(int *idum) {
     points
 */
 void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
-                        int *g_data, int *g_i, int *g_j, int *total_procs, int **proclist,
-                        int **proc_inv, int **icnt, int **voffset, int **nsize, int **offset,
-                        int *tsize, int **imapc) {
+                        int *gp_block, int *g_j, int *g_i, int **imapc) {
 /*
     idim: i-dimension of grid
     jdim: j-dimension of grid
@@ -170,28 +169,28 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
     pdi: i-dimension of processor grid
     pdj: j-dimension of processor grid
     pdk: k-dimension of processor grid
-    g_data: global array of values
-    g_j: global array containing j indices (using local indices)
+!    g_data: global array of values
+!    g_j: global array containing j indices (using local indices)
+!    g_i: global array containing starting location of each row in g_j
+!         (using local indices)
+    gp_block: global pointer array containing non-zero sparse sub-blocks of
+              matrix
+    g_j: global array containing j indices of sub-blocks
     g_i: global array containing starting location of each row in g_j
-         (using local indices)
-    total_procs: number of processors this proc interacts with
-    proclist: list of processors that this process interacts with
-    proc_inv: given a processor, map it to position in proclist
-    icnt: number of elements in submatrix
-    voffset: offset for each submatrix block
-    nsize: number of elements in right hand side vector on each processor
-    offset: starting index of right hand side vector on each processor
     tsize: total number of non-zero elements in matrix
     imapc: map array for vectors
 */
   int ltotal_procs, ltsize;
   int *lproclist, *lproc_inv,  *lvoffset, *lnsize, *loffset, *licnt, *limapc;
-  int nprocs, me, imin, imax, jcnt, jmin, jmax;
+  int *nnz_list;
+  int nnz, offset, b_nnz;
+  int nprocs, me, imin, imax, jcnt;
+  int *jmin, *jmax;
   int ix, iy, iz, idx;
   double x, dr;
-  double *rval;
+  double *rval, *gp_rval;
   int isize, idbg;
-  int *jval,  *ival,  *ivalt;
+  int *jval, *gp_jval, *ival, *gp_ival, *ivalt;
   int i, j, k, itmp, one, tlo, thi, ld;
   int idum, ntot, indx, nghbrs[7], ncnt;
   int ixn[7],iyn[7],izn[7], procid[7];
@@ -200,7 +199,8 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
   int il, jl, kl, ldmi, ldpi, ldmj, ldpj;
   int *xld, *yld, *zld, *tmapc;
   int *ecnt, *total_distr;
-  int total_max;
+  int total_max, toffset;
+  int *iparams, *blk_ptr;
   FILE *fp, *fopen();
 
   me = GA_Nodeid();
@@ -249,6 +249,8 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
   ldi = hi[0]-lo[0]+1;
   ldj = hi[1]-lo[1]+1;
  
+  /* Evaluate xld, yld, zld. These contain the number of elements in each
+     division along the x, y, z axes */
   xld = (int*)malloc(pdi*sizeof(int));
   for (i=0; i<pdi; i++) {
     if (i<pdi-1) {
@@ -279,20 +281,19 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
     zld[i] = zld[i] - (int)((((double)kdim)*((double)(i)))/((double)pdk));
   }
 
-/*
-    Determine number of rows per processor
-*/
+/* Determine number of rows per processor
+   lnsize[i]: number of rows associated with process i
+   loffset[i]: global offset to location of first row associated
+               with process i */
 
   lnsize = (int*)malloc(nprocs*sizeof(int));
-  *nsize = lnsize;
   loffset = (int*)malloc(nprocs*sizeof(int));
-  *offset = loffset;
   for (i=0; i<nprocs; i++) {
     lnsize[i] = 0;
     loffset[i] = 0;
   }
   lnsize[me] = (hi[0]-lo[0]+1)*(hi[1]-lo[1]+1)*(hi[2]-lo[2]+1);
-  GA_Igop(lnsize,nprocs,"+");
+  NGA_Igop(lnsize,nprocs,"+");
   loffset[0] = 0;
   for (i=1; i<nprocs; i++) {
     loffset[i] = loffset[i-1] + lnsize[i-1];
@@ -302,11 +303,16 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
   NGA_Sync();
 /*
     scan over rows of lattice
+    imin: minimum global index of rows associated with this process (me)
+    imax: maximum global index of rows associated with this process (me)
 */
   imin = loffset[me];
   imax = loffset[me]+lnsize[me]-1;
+  free(loffset);
 /*
     find out how many other processors couple to this row of blocks
+    ecnt[i]: the number of columns on processor i that are coupled to this
+    process
 */
   ecnt = (int*)malloc(nprocs*sizeof(int));
   for (i=0; i<nprocs; i++) {
@@ -377,9 +383,17 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
     }
   }
 
-/*
-   Create list of processors that this processor is coupled to
-*/
+/* Create list of processors that this processor is coupled to.
+   If ecnt[i] is greater than zero then process i is coupled to this process.
+   ltotal_procs: the total number of other processor that this process is coupled
+                 to. This includes this process (the diagonal term).
+   lproclist[i]: the IDs of the processor that this processor is coupled to
+   lproc_inv[i]: the location in lproclist of processor i. If processor i is not
+                 coupled to this process, the lproc_inv[i] = -1
+   ncnt: total number of non-zero elements held by this process
+   nnz_list[i]: number of processes coupled to process i by sparse blocks
+   nnz: total number of sparse blocks */
+
   ltotal_procs = 0;
   ncnt = 0;
   for (i=0; i<nprocs; i++) {
@@ -388,13 +402,13 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
       ncnt += ecnt[i];
     }
   }
-  *total_procs = ltotal_procs;
+
   lproclist = (int*)malloc(ltotal_procs*sizeof(int));
-  *proclist = lproclist;
   lproc_inv = (int*)malloc(nprocs*sizeof(int));
-  *proc_inv = lproc_inv;
   licnt = (int*)malloc(ltotal_procs*sizeof(int));
-  *icnt = licnt;
+  for (i=0; i<ltotal_procs; i++) {
+    licnt[i] = 0;
+  }
 
   rval = (double*)malloc(ncnt*sizeof(double));
   idbg = ncnt;
@@ -406,20 +420,34 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
     rval[i] = 0.0;
     jval[i] = 0;
   }
-  
+
   j = (imax-imin+2)*ltotal_procs;
   for (i=0; i<j; i++) {
     ival[i] = 0;
     ivalt[i] = 0;
   }
 
-  j = 0;
+  nnz_list = (int*)malloc(nprocs*sizeof(int));
+  for (i=0; i<nprocs; i++) {
+    nnz_list[i] = 0;
+  }
+  nnz_list[me] = ltotal_procs;
+  NGA_Igop(nnz_list, nprocs, "+");
+  nnz = 0;
+  for (i=0; i<nprocs; i++) {
+    nnz += nnz_list[i];
+  }
+
+/*  lvoffset[i]: local offset into array ival[i] to get to elements associated
+    with block i (i runs from 0 to ltotal_procs-1)
+    isize: number of rows (plus 1) that reside on this processor */
+  isize = (imax-imin+2);
   for (i=0; i<nprocs; i++) {
     lproc_inv[i] = -1;
   }
   lvoffset = (int*)malloc(ltotal_procs*sizeof(int));
-  *voffset = lvoffset;
   lvoffset[0] = 0;
+  j = 0;
   for (i=0; i<nprocs; i++) {
     if (ecnt[i] > 0) {
       lproclist[j] = i;
@@ -431,15 +459,60 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
     }
   }
 
-  isize = imax-imin+2;
-  for (i=0; i<ltotal_procs; i++) {
-    licnt[i] = 0;
+/* Create arrays the hold the sparse block representation of the sparse matrix
+   gp_block[nnz]: Global Pointer array holding the sparse sub-matrices
+   g_j[nnz]: column block indices for the element in gp_block
+   g_i[nprocs]: row block indices for the elements in g_j */
+
+  tmapc = (int*)malloc((nprocs+1)*sizeof(int));
+  tmapc[0] = 0;
+  for (i=1; i<=nprocs; i++) {
+    tmapc[i] = tmapc[i-1]+nnz_list[i-1];
   }
-  ltsize = 0;
-  for (i=imin; i<=imax; i++) {
+  *gp_block = GP_Create_handle();
+  GP_Set_dimensions(*gp_block,one,&nnz);
+  GP_Set_irreg_distr(*gp_block, tmapc, &nprocs);
+  GP_Allocate(*gp_block);
+
+  *g_j = NGA_Create_handle();
+  NGA_Set_data(*g_j,one,&nnz,C_INT);
+  NGA_Set_irreg_distr(*g_j, tmapc, &nprocs);
+  NGA_Allocate(*g_j);
+
+  for (i=0; i<nprocs; i++) {
+    tmapc[i] = i;
+  }
+  *g_i = NGA_Create_handle();
+  i = nprocs+1;
+  NGA_Set_data(*g_i,one,&i,C_INT);
+  NGA_Set_irreg_distr(*g_i, tmapc, &nprocs);
+  NGA_Allocate(*g_i);
+  free(tmapc);
+
+  jmin = (int*)malloc(nprocs*sizeof(int));
+  jmax = (int*)malloc(nprocs*sizeof(int));
+  for (i=0; i<nprocs; i++) {
+    jmin[i] = 0;
+    jmax[i] = 0;
+  }
+  jmin[me] = imin;
+  jmax[me] = imax;
+  NGA_Igop(jmin, nprocs, "+");
+  NGA_Igop(jmax, nprocs, "+");
+
 /*
-    compute local indices of grid point corresponding to row i
+   Create the sparse blocks holding actual data. All the elements within each block
+   couple this processor to one other processor
+   rval[i]: values of matrix elements
+   jval[i]: column indices of matrix elements
+   ival[i]: index of first elements in rval and jval for the row represented by
+            the index i.
+   ivalt[i]: temporary array used in the construction of ival[i]
 */
+  for (i=imin; i<=imax; i++) {
+    /*
+    compute local indices of grid point corresponding to row i
+     */
     indx = i - imin;
     ix = indx%ldi;
     indx = (indx - ix)/ldi;
@@ -448,9 +521,9 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
     ix = ix + lo[0];
     iy = iy + lo[1];
     iz = iz + lo[2];
-/*
+    /*
     find locations of neighbors in 7-point stencil (if they are on the grid)
-*/
+     */
     ncnt = 0;
     ixn[ncnt] = ix;
     iyn[ncnt] = iy;
@@ -589,9 +662,10 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
       nghbrs[ncnt] = idx;
       procid[ncnt] = jdx;
     }
-/*
-   sort j indices
-*/
+    /*
+    sort indices so that neighbors run from lowest to highest local index. This sort
+    is not particularly efficient but ncnt is generally small
+     */
     ncnt++;
     for (j=0; j<ncnt; j++) {
       for (k=j+1; k<ncnt; k++) {
@@ -619,12 +693,10 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
         printf("p[%d] Invalid neighbor %d\n",me,nghbrs[k]);
       }
     }
-/*
-   create array elements
-    for (j=0; j<ltotal_procs; j++) {
-      printf("p[%d] lvoffset[%d]: %d\n",me,j,lvoffset[j]);
-    }
-*/
+
+/* set weights corresponding to a finite difference Laplacian on a 7-point
+   stencil */
+
     for (j=0; j<ncnt; j++) {
       jdx = procid[j];
       idx = lproc_inv[jdx];
@@ -641,6 +713,9 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
       licnt[idx]++;
     }
   }
+
+/* finish evaluating ival array */
+
   for (i=0; i<ltotal_procs; i++) {
     ival[i*isize] = lvoffset[i];
     for (j=1; j<isize; j++) {
@@ -654,120 +729,142 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
   ltsize = isize;
   GA_Igop(&ltsize,one,"+");
   if (isize > MAXVEC)
-     GA_Error("ISIZE exceeds MAXVEC in local arrays ",isize);
-/*
-    Local portion of sparse matrix has been evaluated and decomposed into blocks
-    that match partitioning of right hand side across processors. The following
-    data is available at this point:
-       1) total_procs: the number of processors that are coupled to this one via
-          the sparse matrix
-       2) proc_list(total_procs): a list of processor IDs that are coupled to
-          this processor
-       3) proc_inv(nprocs): The entry in proc_list that corresponds to a given
-          processor. If the entry is zero then that processor does not couple to
-          this processor.
-       4) icnt(total_procs): The number of non-zero entries in the sparse matrix
-          that couple the process represented by proc_list(j) to this process
-       5) voffset(total_procs): The offsets for the non-zero data in the arrays
-          rval and jval for the blocks that couple this processor to other
-          processes in proc_list
-       6) offset(nprocs): the offset array for the distributed right hand side
-          vector
-       7) nsize(nprocs): number of vector elements per processor for right hand
-          side vector (equivalent to the number of rows per processor)
-  
-     These arrays describe how the sparse matrix is layed out both locally and
-     across processors. In addition, the actual data for the distributed sparse
-     matrix is found in the following arrays:
-       1) rval: values of matrix for all blocks on this processor
-       2) jval: j-indices of matrix for all blocks on this processor
-       3) ival(total_procs*(nsize(me)+1)): starting index in rval and jval for
-          each row in each block
+    GA_Error("ISIZE exceeds MAXVEC in local arrays ",isize);
+
+/* Local portion of sparse matrix has been evaluated and decomposed into blocks
+   that match partitioning of right hand side across processors. The following
+   data is available at this point:
+      1) ltotal_procs: the number of processors that are coupled to this one via
+         the sparse matrix
+      2) lproclist(ltotal_procs): a list of processor IDs that are coupled to
+         this processor
+      3) lproc_inv(nprocs): The entry in proc_list that corresponds to a given
+         processor. If the entry is -1 then that processor does not couple to
+         this processor.
+      4) licnt(ltotal_procs): The number of non-zero entries in the sparse matrix
+         that couple the process represented by proc_list(j) to this process
+      5) lvoffset(ltotal_procs): The offsets for the non-zero data in the arrays
+         rval and jval for the blocks that couple this processor to other
+         processes in proc_list
+      6) offset(nprocs): the offset array for the distributed right hand side
+         vector
+    These arrays describe how the sparse matrix is layed out both locally and
+    across processors. In addition, the actual data for the distributed sparse
+    matrix is found in the following arrays:
+      1) rval: values of matrix for all blocks on this processor
+      2) jval: j-indices of matrix for all blocks on this processor
+      3) ival(ltotal_procs*(lnsize(me)+1)): starting index in rval and
+         jval for each row in each block */
  
-   create global arrays to hold sparse matrix
-*/
+  GA_Sync();
+
+/* Create a sparse array of sparse blocks.
+   Each block element is divided into for sections.
+   The first section consists of 7 ints and contains the parameters
+     imin: minimum i index represented by block
+     imin: maximum i index represented by block
+     jmin: minimum j index represented by block
+     jmin: maximum j index represented by block
+     iblock: row index of block
+     jblock: column index of block
+     nnz: number of non-zero elements in block
+   The next section consists of nnz doubles that represent the non-zero values
+   in the block. The third section consists of nnz ints and contains the local
+   j indices of all values. The final section consists of (imax-imin+2) ints
+   and contains the starting index in jval and rval for the each row between
+   imin and imax. An extra value is included at the end and is set equal to
+   nnz+1. This is included to simplify some coding.
+ */
+
+  offset = 0;
+  for (i=0; i<me; i++) {
+    offset += nnz_list[i];
+  }
+  NGA_Put(*g_i, &me, &me, &offset, &one);
+  if (me==nprocs-1) {
+    NGA_Put(*g_i, &nprocs, &nprocs, &nnz, &one);
+  }
+  for (i = 0; i<ltotal_procs; i++) {
+    /* evaluate total size of block */
+    b_nnz = ecnt[lproclist[i]];
+    isize = 7*sizeof(int) + b_nnz*(sizeof(double)+sizeof(int))
+          + (imax-imin+2)*sizeof(int);
+    blk_ptr = (int*)GP_Malloc(isize);
+
+    iparams = blk_ptr;
+    gp_rval = (double*)(iparams+7);
+    gp_jval = (int*)(gp_rval+b_nnz);
+    gp_ival = (gp_jval+b_nnz);
+
+    iparams[0] = imin;
+    iparams[1] = imax;
+    iparams[2] = jmin[lproclist[i]];
+    iparams[3] = jmax[lproclist[i]];
+    iparams[4] = me;
+    iparams[5] = lproclist[i];
+    iparams[6] = b_nnz;
+
+    for (j=0; j<b_nnz; j++) {
+      toffset = lvoffset[i];
+      gp_rval[j] = rval[toffset+j];
+      gp_jval[j] = jval[toffset+j];
+      /*
+      printf("p[%d] block: %d rval[%d]: %f jval[%d]: %d\n",me,i,j,gp_rval[j],j,gp_jval[j]);
+      */
+    }
+
+    j = (imax-imin+2);
+    /*
+    printf("p[%d] block: %d imin: %d imax: %d jmin: %d jmax: %d\n",me,i,imin,imax,
+          iparams[2],iparams[3]);
+    printf("p[%d] ip: %d jp: %d b_nnz: %d nrows: %d\n",me,me,lproclist[i],b_nnz,j);
+    */
+    toffset = ival[i*j];
+    for (k=0; k<j; k++) {
+      gp_ival[k] = ival[i*j+k]-toffset;
+      /*
+      printf("p[%d] block: %d gp_ival[%d]: %d ival[%d]: %d\n",me,i,k,gp_ival[k],
+             i*j+k,ival[i*j+k]);
+             */
+    }
+
+    /* Assign blk_ptr to GP array element */
+    /*
+    printf("p[%d] offset: %d\n",me,offset);
+    */
+    GP_Assign_local_element(*gp_block, &offset, (void*)blk_ptr, isize);
+    offset++;
+  }
+
   tmapc = (int*)malloc(nprocs*sizeof(int));
-  limapc = (int*)malloc(nprocs*sizeof(int));
-  for (i=0; i<nprocs; i++) {
-    tmapc[i] = 0;
-  }
-  for (i=0; i<ltotal_procs; i++) {
-    tmapc[me] = tmapc[me] + licnt[i];
-  }
-  GA_Igop(tmapc,nprocs,"+");
-  isize = 0;
-  for (i=0; i<nprocs; i++) {
-    isize += tmapc[i];
-  }
-  limapc[0] = 0;
+  tmapc[0] = 0;
   for (i=1; i<nprocs; i++) {
-    limapc[i] = limapc[i-1] + tmapc[i-1];
+    tmapc[i] = tmapc[i-1] + lnsize[i-1];
   }
-
-  *g_data = NGA_Create_handle();
-  NGA_Set_data(*g_data,one,&isize,C_DBL);
-  NGA_Set_irreg_distr(*g_data,limapc,&nprocs);
-  status = NGA_Allocate(*g_data);
- 
-  *g_j = NGA_Create_handle();
-  NGA_Set_data(*g_j,one,&isize,MT_INT);
-  NGA_Set_irreg_distr(*g_j,limapc,&nprocs);
-  status = NGA_Allocate(*g_j);
-
-  for (i=0; i<nprocs; i++) {
-    tmapc[i] = 0;
-  }
-  tmapc[me] = tmapc[me] + (lnsize[me]+1)*ltotal_procs;
-  GA_Igop(tmapc,nprocs,"+");
-  ntot = 0;
-  for (i=0; i<nprocs; i++) {
-    ntot += tmapc[i];
-  }
-  limapc[0] = 0; 
-  for (i=1; i<nprocs; i++) {
-    limapc[i] = limapc[i-1] + tmapc[i-1];
-  }
-
-  *g_i = NGA_Create_handle();;
-  NGA_Set_data(*g_i,one,&ntot,C_INT);
-  NGA_Set_irreg_distr(*g_i,limapc,&nprocs);
-  status = NGA_Allocate(*g_i);
-
-  free(tmapc);
-
-  GA_Sync();
-/*
-   fill global arrays with local data
-*/
-  NGA_Distribution(*g_data,me,&tlo,&thi);
-  ld = thi-tlo+1;
-  NGA_Put(*g_data, &tlo, &thi, rval, &ld);
-  NGA_Put(*g_j, &tlo, &thi, jval, &ld);
-
-  NGA_Distribution(*g_i,me,&tlo,&thi);
-  ld = thi-tlo+1;
-  NGA_Put(*g_i, &tlo, &thi, ival, &ld);
-
-  GA_Sync();
+    i = nprocs-1;
+  *imapc = tmapc;
 
   free(rval);
   free(jval);
   free(ival);
+  free(ivalt);
   free(xld);
   free(yld);
   free(zld);
-
-  limapc[0] = 0;
-  for (i=1; i<nprocs; i++) {
-    limapc[i] = limapc[i-1] + lnsize[i-1];
-  }
-  *imapc = limapc;
-  *tsize = isize;
+  free(lnsize);
+  free(lvoffset);
+  free(ecnt);
+  free(licnt);
+  free(lproclist);
+  free(lproc_inv);
+  free(jmin);
+  free(jmax);
+  free(nnz_list);
   return;
 }
 
 int main(int argc, char **argv) {
-  int nmax, nprocs, me;
+  int nmax, nprocs, me, me_plus;
   int g_a_data, g_a_i, g_a_j, isize;
   int g_b, g_c;
   int i, j, jj, k, one, jcnt;
@@ -780,7 +877,7 @@ int main(int argc, char **argv) {
   double prtot, gatot, hypretot;
   int status;
   int idim, jdim, kdim, idum, memsize;
-  int jmin, jmax, lsize, ntot;
+  int lsize, ntot;
   int heap=200000, fudge=100, stack=200000, ma_heap;
   double *cbuf, *vector;
   int pdi, pdj, pdk, ip, jp, kp, ncells;
@@ -791,9 +888,17 @@ int main(int argc, char **argv) {
   double *amat, *bvec;
   int *ivec, *jvec;
   int *proclist, *proc_inv, *icnt;
-  int *voffset, *nsize, *offset, *mapc;
-  int iloop;
+  int *voffset, *offset, *mapc;
+  int iloop, lo_bl, hi_bl;
+  char *buf, **buf_ptr;
+  int *iparams, *jval, *ival;
+  double *rval;
+  int imin, imax, jmin, jmax, irow, icol, nnz;
+  int nrows, kmin, kmax, lmin, lmax, jdx;
   int LOOPNUM = 100;
+  void **blk_ptr;
+  void *blk;
+  int blk_size, tsize;
 /*
    Hypre declarations
 */
@@ -824,14 +929,9 @@ int main(int argc, char **argv) {
 */
   t_beg = GA_Wtime();
   GA_Initialize();
+  GP_Initialize();
   t_ga_in = GA_Wtime() - t_beg;
   GA_Dgop(&t_ga_in,one,"+");
-#if 0
-  memsize = 500000000
-  call ga_initialize_ltd(memsize)
-  memsize = 500000
-  status = ma_init(MT_DBL,memsize,memsize)
-#endif
 
   t_ga_tot = 0.0;
   t_mult = 0.0;
@@ -842,6 +942,7 @@ int main(int argc, char **argv) {
   hypretot = 0.0;
 
   me = GA_Nodeid();
+  me_plus = me + 1;
   nprocs = GA_Nnodes();
   if (me == 0) {
    printf("Time to initialize GA:                                 %12.4f\n",
@@ -883,13 +984,8 @@ int main(int argc, char **argv) {
     printf("  PDZ: %d\n\n",pdk);
   }
 
-  create_laplace_mat(idim,jdim,kdim,pdi,pdj,pdk,
-                     &g_a_data,&g_a_i,&g_a_j,&total_procs,&proclist,&proc_inv,
-                     &icnt,&voffset,&nsize,&offset,&isize,&mapc);
+  create_laplace_mat(idim,jdim,kdim,pdi,pdj,pdk,&g_a_data,&g_a_j,&g_a_i,&mapc);
   t_cnstrct = GA_Wtime() - t_beg;
-  if (me == 0) {
-    printf("\nNumber of non-zero elements in compressed matrix: %d\n",isize);
-  }
 
   g_b = GA_Create_handle();
   GA_Set_data(g_b,one,&ntot,MT_DBL);
@@ -907,6 +1003,9 @@ int main(int argc, char **argv) {
     idum  = 0;
     p_b[i] = ran3(&idum);
     vector[i] = p_b[i];
+    /*
+    printf("p[%d] p_b[%d]: %f\n",me,blo[0]+i,p_b[i]);
+    */
   }
   NGA_Release(g_b,blo,bhi);
   GA_Sync();
@@ -1150,62 +1249,86 @@ int main(int argc, char **argv) {
   ierr = HYPRE_StructVectorSetBoxValues(vec_y, hlo, hhi, vector);
   ierr = HYPRE_StructVectorAssemble(vec_y);
 #endif
-/*
-   Multiply sparse matrix. Start by accessing pointers to local portions of
-   g_a_data, g_a_j, g_a_i
-*/
+/* Multiply sparse matrix. Start by accessing pointers to local portions of
+   g_a_data, g_a_j, g_a_i */
+
   for (iloop=0; iloop<LOOPNUM; iloop++) {
     t_beg2 = GA_Wtime();
-    NGA_Distribution(g_a_data,me,blo,bhi);
-    NGA_Access(g_a_data,blo,bhi,&p_data,&ld_a);
-
-    NGA_Distribution(g_a_j,me,blo,bhi);
-    NGA_Access(g_a_j,blo,bhi,&p_j,&ld_j);
-
-    NGA_Distribution(g_a_i,me,blo,bhi);
-    NGA_Access(g_a_i,blo,bhi,&p_i,&ld_i);
 
     NGA_Distribution(g_c,me,blo,bhi);
     NGA_Access(g_c,blo,bhi,&p_c,&ld_c);
     for (i = 0; i<bhi[0]-blo[0]+1; i++) {
       p_c[i] = 0.0;
     }
+
+/* get number of matrix blocks coupled to this process */
+    NGA_Get(g_a_i,&me,&me,&lo_bl,&one);
+    NGA_Get(g_a_i,&me_plus,&me_plus,&hi_bl,&one);
+    hi_bl--;
+    total_procs = hi_bl - lo_bl + 1;
     /*
-    Loop through matrix blocks
-     */
+    printf("p[%d] total_procs: %d\n",me,total_procs);
+    */
+    blk_ptr = (void**)malloc(sizeof(void*));
+/* Loop through matrix blocks */
     ioff = 0;
     for (iblock = 0; iblock<total_procs; iblock++) {
-      iproc = proclist[iblock];
-      NGA_Distribution(g_b,iproc,blo,bhi);
-      bvec = (double*)malloc((bhi[0]-blo[0]+1)*sizeof(double));
+      jdx = lo_bl+iblock;
+      GP_Get_size(g_a_data, &jdx, &jdx, &isize);
+      blk = (void*)malloc(isize);
+      GP_Get(g_a_data, &jdx, &jdx, blk, blk_ptr, &one, &blk_size, &one, &tsize, 0); 
+      iparams = (int*)blk_ptr[0];
+      rval = (double*)(iparams+7);
+      imin = iparams[0];
+      imax = iparams[1];
+      jmin = iparams[2];
+      jmax = iparams[3];
+      irow = iparams[4];
+      icol = iparams[5];
+      nnz = iparams[6];
+      jval = (int*)(rval+nnz);
+      ival = (int*)(jval+nnz);
+      nrows = imax - imin + 1;
+      bvec = (double*)malloc((jmax-jmin+1)*sizeof(double));
       j = 0;
       t_beg = GA_Wtime();
-      NGA_Get(g_b,blo,bhi,bvec,&j);
+      NGA_Get(g_b,&jmin,&jmax,bvec,&j);
       t_get = t_get + GA_Wtime() - t_beg;
       t_beg = GA_Wtime();
-      irows = nsize[me]-1;
-      for (i=0; i<=irows; i++) {
-        jmin = p_i[ioff+i];
-        jmax = p_i[ioff+i+1]-1;
+      /*
+    printf("p[%d] imin: %d imax: %d jmin: %d jmax: %d rval[0]: %f nrows: %d\n",
+           me,imin,imax,jmin,jmax,rval[0],nrows);
+           */
+      for (i=0; i<nrows; i++) {
+        kmin = ival[i];
+        kmax = ival[i+1]-1;
         tempc = 0.0;
-        for (j = jmin; j<=jmax; j++) {
-          jj = p_j[j];
-          tempc = tempc + p_data[j]*bvec[jj];
+        for (j = kmin; j<=kmax; j++) {
+          jj = jval[j];
+          /*
+          if (jj<0 || jj>=nrows) {
+            printf("p[%d]: iblock: %d jj: %d nrows: %d\n",me,iblock,jj,nrows);
+          }
+          if (j<0 || j>=nnz) {
+            printf("p[%d]: iblock: %d jj: %d nnz: %d\n",me,iblock,j,nnz);
+          }
+          */
+          tempc = tempc + rval[j]*bvec[jj];
+          /*
+          printf("p[%d] kmin: %d kmax: %d rval[%d]: %f bvec[%d]: %f\n",me,kmin,kmax,j,rval[j],jj,bvec[jj]);
+          */
         }
         p_c[i] = p_c[i] + tempc;
+        /*
+          printf("p[%d] p_c[%d]: %f\n",me,i,p_c[i]);
+          */
       }
-      ioff = ioff + nsize[me] + 1;
       t_mult = t_mult + GA_Wtime() - t_beg;
       free(bvec);
+      free(blk);
     }
     t_ga_tot = t_ga_tot + GA_Wtime() - t_beg2;
 
-    NGA_Distribution(g_a_data,me,blo,bhi);
-    NGA_Release(g_a_data,blo,bhi);
-    NGA_Distribution(g_a_j,me,blo,bhi);
-    NGA_Release(g_a_j,blo,bhi);
-    NGA_Distribution(g_a_i,me,blo,bhi);
-    NGA_Release(g_a_i,blo,bhi);
     NGA_Distribution(g_c,me,blo,bhi);
     NGA_Release(g_c,blo,bhi);
 
@@ -1229,6 +1352,10 @@ int main(int argc, char **argv) {
     dotga = 0.0;
     dothypre = 0.0;
     for (i=0; i<(hi[0]-lo[0]+1); i++) {
+      /*
+      printf("p[%d] ga[%d]: %f hypre[%d]: %f\n",me,lo[0]+i,cbuf[i],
+             lo[i]+i,vector[i]);
+             */
       dothypre = dothypre + vector[i]*vector[i];
       dotga = dotga + cbuf[i]*cbuf[i];
       prdot = prdot + (vector[i]-cbuf[i])*(vector[i]-cbuf[i]);
@@ -1247,7 +1374,7 @@ int main(int argc, char **argv) {
     printf("Magnitude of GA solution:                         %e\n",
         gatot/((double)LOOPNUM));
     printf("Magnitude of HYPRE solution:                      %e\n",
-        hyprtot/((double)LOOPNUM));
+        hypretot/((double)LOOPNUM));
     printf("Difference between GA and HYPRE (Struct) results: %e\n",
         prtot/((double)LOOPNUM));
   }
@@ -1259,7 +1386,7 @@ int main(int argc, char **argv) {
 */
   NGA_Destroy(g_b);
   NGA_Destroy(g_c);
-  NGA_Destroy(g_a_data);
+  GP_Destroy(g_a_data);
   NGA_Destroy(g_a_i);
   NGA_Destroy(g_a_j);
 #if USE_HYPRE
@@ -1296,6 +1423,9 @@ int main(int argc, char **argv) {
       t_hypre_strct/((double)nprocs));
 #endif
 #endif
+  }
+  if (me==0) {
+    printf("Terminating GA library\n");
   }
   NGA_Terminate();
 /*
