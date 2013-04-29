@@ -1345,13 +1345,13 @@ int main(int argc, char **argv) {
     hhi[1] = hi[1];
     hhi[2] = hi[2];
     ierr = HYPRE_StructVectorGetBoxValues(vec_y, hlo, hhi, vector);
-    NGA_Distribution(g_c,me,lo,hi);
-    cbuf = (double*)malloc((hi[0]-lo[0]+1)*sizeof(double));
-    NGA_Get(g_c,lo,hi,cbuf,&one);
+    NGA_Distribution(g_c,me,hlo,hhi);
+    cbuf = (double*)malloc((hhi[0]-hlo[0]+1)*sizeof(double));
+    NGA_Get(g_c,hlo,hhi,cbuf,&one);
     prdot = 0.0;
     dotga = 0.0;
     dothypre = 0.0;
-    for (i=0; i<(hi[0]-lo[0]+1); i++) {
+    for (i=0; i<(hhi[0]-hlo[0]+1); i++) {
       /*
       printf("p[%d] ga[%d]: %f hypre[%d]: %f\n",me,lo[0]+i,cbuf[i],
              lo[i]+i,vector[i]);
