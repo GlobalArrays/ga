@@ -36,7 +36,7 @@ static inline void acquire_spinlock(void *lock) {
     int held = 1;
 
     asm volatile(
-        "0: lwarx  %0,0,%3,1 \n" /*load-reserve lock into temp*/
+        "0: lwarx  %0,0,%3   \n" /*load-reserve lock into temp*/
         "   cmpw   %1,%0     \n" /*lock is free?*/
         "   bne-   0b        \n" /*loop if lock not free*/
         "   stwcx. %2,0,%3   \n" /*store if still reserved*/
