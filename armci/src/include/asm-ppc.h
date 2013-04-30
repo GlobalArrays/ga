@@ -70,7 +70,7 @@ static inline int fetch_and_add(void *addr, int inc) {
     int tmp;
 
     asm volatile(
-        "0: lwarx  %0,0,%2,1 \n" /*load-reserve addr into tmp*/
+        "0: lwarx  %0,0,%2   \n" /*load-reserve addr into tmp*/
         "   mr     %1,%0     \n" /*copy tmp into ret*/
         "   add    %0,%3,%0  \n" /*add inc to addr, store in addr*/
         "   stwcx. %0,0,%2   \n" /*store if still reserved*/
