@@ -1396,13 +1396,13 @@ static void vapi_connect_client()
         memset(&qp_attr, 0, sizeof qp_attr);
 
         qp_attr.qp_state        = IBV_QPS_RTR;
-        qp_attr.max_dest_rd_atomic   = 4;
+        qp_attr.max_dest_rd_atomic   = 1;
         qp_attr.path_mtu        = IBV_MTU_1024;
         qp_attr.rq_psn          = 0;
-        qp_attr.min_rnr_timer   = RNR_TIMER;
+        qp_attr.min_rnr_timer   = 7;
 
         /* AV: Adding the service level parameter */
-        qp_attr.ah_attr.sl      = armci_openib_sl;
+        qp_attr.ah_attr.sl      = 0;
 
         start = (armci_clus_me == 0) ? armci_nclus - 1 : armci_clus_me - 1;
         for (i = 0; i < armci_nclus; i++) {
@@ -1421,7 +1421,7 @@ static void vapi_connect_client()
             qp_attr.ah_attr.dlid = SRV_nic->lid_arr[armci_clus_info[i].master];
             qp_attr.ah_attr.port_num = SRV_nic->active_port;
 
-            qp_attr.ah_attr.sl = armci_openib_sl;
+            qp_attr.ah_attr.sl = 0;
 
             rc = ibv_modify_qp(con->qp, &qp_attr, qp_attr_mask);
             dassertp(1,!rc,("%d: INIT->RTR client i=%d rc=%d\n",armci_me,i,rc));
@@ -1447,10 +1447,10 @@ static void vapi_connect_client()
 
         qp_attr.qp_state            = IBV_QPS_RTS;
         qp_attr.sq_psn              = 0;
-        qp_attr.timeout             = 18;
+        qp_attr.timeout             = 20;
         qp_attr.retry_cnt           = 7;
         qp_attr.rnr_retry           = 7;
-        qp_attr.max_rd_atomic  = 4;
+        qp_attr.max_rd_atomic  = 1;
 
         start = (armci_clus_me == 0) ? armci_nclus - 1 : armci_clus_me - 1;
         for (i = 0; i < armci_nclus; i++){
