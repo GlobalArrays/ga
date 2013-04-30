@@ -20272,7 +20272,7 @@ ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 
-for testflag in none -mismatch_all
+for testflag in none "-mismatch_all -dusty"
 do
     ga_save_FFLAGS="$FFLAGS"
     if test "x$testflag" != xnone; then :

@@ -5,12 +5,13 @@
 # of our Fortran routines are written in C and some are not type safe.
 # The known flags are:
 #   -mismatch_all: nagfor
+#   -dusty: nagfor
 #
 AC_DEFUN([GA_F77_MISMATCH_TYPE], [
 AC_CACHE_CHECK([whether $F77 needs a flag to compile inconsistent types],
 [ga_cv_f77_mismatch_type_flag],
 [AC_LANG_PUSH([Fortran 77])
-for testflag in none -mismatch_all
+for testflag in none "-mismatch_all -dusty"
 do
     ga_save_FFLAGS="$FFLAGS"
     AS_IF([test "x$testflag" != xnone], [FFLAGS="$FFLAGS $testflag"])
