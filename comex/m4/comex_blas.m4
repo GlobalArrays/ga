@@ -25,16 +25,12 @@ char zresult =  $zaxpy ();
 # -------------------
 # Test the linker.
 # Clears BLAS_LIBS on failure.  Sets comex_blas_ok=yes on success.
+# Tests the common case first of using lowercase+underscore. Some libraries,
+# such as ACML, have a C interface which uses lowercase+nounderscore. ComEx
+# assumes it is calling using the Fortran interface.
 AC_DEFUN([COMEX_RUN_BLAS_TEST], [
     AC_LANG_PUSH([C])
     comex_blas_ok=no
-    AS_IF([test "x$comex_blas_ok" = xno],
-        [caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-         COMEX_C_BLAS_TEST()
-         AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
     AS_IF([test "x$comex_blas_ok" = xno],
         [caxpy=caxpy_
          daxpy=daxpy_
@@ -68,6 +64,13 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         COMEX_C_BLAS_TEST()
+         AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
+    AS_IF([test "x$comex_blas_ok" = xno],
+        [caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
          COMEX_C_BLAS_TEST()
          AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
     AS_IF([test "x$comex_blas_ok" = xno],

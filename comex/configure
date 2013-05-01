@@ -8417,46 +8417,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -8621,6 +8581,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8708,46 +8708,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -8912,6 +8872,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8996,46 +8996,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -9200,6 +9160,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9301,46 +9301,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -9505,6 +9465,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9593,46 +9593,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -9797,6 +9757,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9871,46 +9871,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -10075,6 +10035,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10149,46 +10149,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -10353,6 +10313,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10427,46 +10427,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -10631,6 +10591,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10705,46 +10705,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -10909,6 +10869,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10986,46 +10986,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -11190,6 +11150,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11264,46 +11264,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -11468,6 +11428,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11543,46 +11543,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -11747,6 +11707,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11821,46 +11821,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -12025,6 +11985,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12106,46 +12106,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -12310,6 +12270,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12378,46 +12378,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
   caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
@@ -12582,6 +12542,46 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char cresult =  $caxpy ();
+char dresult =  $daxpy ();
+char sresult =  $saxpy ();
+char zresult =  $zaxpy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
