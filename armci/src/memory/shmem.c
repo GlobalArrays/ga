@@ -316,19 +316,27 @@ static int armci_shmalloc_try(long size)
 #define UBOUND 512*LBOUND
 #endif
 
+#define ARMCI_STRINGIFY(str) #str
+#define ARMCI_CONCAT(str) strL
+#ifndef ARMCI_DEFAULT_SHMMAX_UBOUND
+#define ARMCI_DEFAULT_SHMMAX_UBOUND 8192
+#endif
 static long get_user_shmmax()
 {
 char *uval;
-long x=0;
+int x=0;
      uval = getenv("ARMCI_DEFAULT_SHMMAX"); 
      if(uval != NULL){
-       sscanf(uval,"%ld",&x);
-       if(x<1L || x> 8192L){ 
-          fprintf(stderr,"incorrect ARMCI_DEFAULT_SHMMAX should be <1,8192>mb and 2^N Found=%ld\n",x);
+       sscanf(uval,"%d",&x);
+       if(x<1 || x> ARMCI_DEFAULT_SHMMAX_UBOUND){ 
+          fprintf(stderr,
+                  "incorrect ARMCI_DEFAULT_SHMMAX should be <1,"
+                  ARMCI_STRINGIFY(ARMCI_DEFAULT_SHMMAX)
+                  ">mb and 2^N Found=%ld\n",x);
           x=0;
        }
      }
-     return x*1048576; /* return value in bytes */
+     return ((long)x)*1048576L; /* return value in bytes */
 }
 
 /*\ determine the max shmem segment size using bisection
