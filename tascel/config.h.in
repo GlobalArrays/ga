@@ -170,6 +170,18 @@
 /* Define to 1 on 64bit OSX systems */
 #undef MACX64
 
+/* Use MPI for messaging */
+#undef MSG_COMMS_MPI
+
+/* Use TCGMSG for messaging */
+#undef MSG_COMMS_TCGMSG
+
+/* Use TCGMSG (ipcv4.0) for messaging */
+#undef MSG_COMMS_TCGMSG4
+
+/* Use TCGMSG (ipcv5.0) for messaing */
+#undef MSG_COMMS_TCGMSG5
+
 /* Define to 1 on NEC systems */
 #undef NEC
 
@@ -259,6 +271,9 @@
 
 /* Define if we want this system to use SYSV shared memory */
 #undef SYSV
+
+/* deprecated, use MSG_COMMS_TCGMSG */
+#undef TCGMSG
 
 /* Version number of package */
 #undef VERSION
