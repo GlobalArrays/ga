@@ -115,7 +115,6 @@ void loc_matmul(double *a_mat, int *jvec, int *ivec,
 #define  MZ 0
 #define  FAC 1.e-9
 double ran3(int *idum) {
-#if 1
   static int iff = 0;
   if (*idum < 0 || iff == 0) {
     iff = 1;
@@ -123,45 +122,6 @@ double ran3(int *idum) {
     *idum = 1;
   }
   return ((double)rand())/((double)RAND_MAX);
-#else
-  static int inext, inextp;
-  static long ma[56];
-  static int iff = 0;
-  long mj, mk;
-  int i, ii, k;
-
-  if (*idum < 0 || iff == 0) {
-    iff = 1;
-    mj = MSEED - abs(*idum);
-    mj = mj%MBIG;
-    ma[55] = mj;
-    mk = 1;
-    for (i=1; i<=54; i++) {
-      ii = (21*i)%55;
-      ma[ii] = mk;
-      mk = mj - mk;
-      if (mk < MZ) mk = mk + MBIG;
-      mj = ma[ii];
-    }
-    for (k=1; k<=4; k++) {
-      for (i=1; i<=55; i++) {
-        ma[i] = ma[i] - ma[1+(i+31)%55];
-        if (ma[i] < MZ) ma[i] = ma[i] + MBIG;
-      }
-    }
-    inext = 0;
-    inextp = 31;
-    *idum = 1;
-  }
-  inext=inext+1;
-  if (inext == 56) inext=1;
-  inextp=inextp+1;
-  if(inextp == 56) inextp=1;
-  mj = ma[inext]-ma[inextp];
-  if(mj < MZ) mj=mj+MBIG;
-  ma[inext] = mj;
-  return mj*FAC;
-#endif
 }
 
 /*
