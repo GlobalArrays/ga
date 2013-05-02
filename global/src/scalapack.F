@@ -3841,6 +3841,16 @@ c
      $        ma_push_get(MT_dcpL,elemA,'a',ha,adra)
          if(.not.status) 
      &        call ga_error('ga_pzheevd: mem alloc failed A ', -1)
+         
+c     
+c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
+c     
+         
+         call ga_to_SL2cpl(g_a, dimA1, dimA2, nb, nb,
+     $        dcpl_mb(adrA), lda, mpA, nqA)
+         endif
+         call ga_sync()
+         if(oactive) then
 c     
          elemB= mpB*nqB
 c     
@@ -3856,13 +3866,6 @@ c
          endif
          if(.not.status)
      &        call ga_error('ga_pzheevd: mem alloc failed ifail  ', n)
-         
-c     
-c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
-c     
-         
-         call ga_to_SL2cpl(g_a, dimA1, dimA2, nb, nb,
-     $        dcpl_mb(adrA), lda, mpA, nqA)
 c     
 c***  fill SCALAPACK matrix descriptors
 c     
@@ -4103,6 +4106,15 @@ c
          if(.not.status) 
      &        call ga_error('ga_pzheevr: mem alloc failed A ', -1)
 c     
+c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
+c     
+         
+         call ga_to_SL2cpl(g_a, dimA1, dimA2, nb, nb,
+     $        dcpl_mb(adrA), lda, mpA, nqA)
+         endif
+         call ga_sync()
+         if(oactive) then
+c     
          elemB= mpB*nqB
 c     
          if(elemB.ne.0)status =
@@ -4118,12 +4130,6 @@ c
          if(.not.status)
      &        call ga_error('ga_pzheevr: mem alloc failed ifail  ', n)
          
-c     
-c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
-c     
-         
-         call ga_to_SL2cpl(g_a, dimA1, dimA2, nb, nb,
-     $        dcpl_mb(adrA), lda, mpA, nqA)
 c     
 c***  fill SCALAPACK matrix descriptors
 c     
