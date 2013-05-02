@@ -971,7 +971,6 @@ int main(int argc, char **argv) {
   for (i=0; i<ld; i++) {
     idum  = 0;
     p_b[i] = ran3(&idum);
-    if (i<5) printf("p[%d] ran(%d): %f\n",me,i,p_b[i]);
     vector[i] = p_b[i];
     /*
     printf("p[%d] p_b[%d]: %f\n",me,blo[0]+i,p_b[i]);
