@@ -5,7 +5,7 @@
 #include "ga.h"
 #include "gp.h"
 #define DEBUG 1
-#define USE_HYPRE 0
+#define USE_HYPRE 1
 #define IMAX 100
 #define JMAX 100
 #define KMAX 100
@@ -115,14 +115,22 @@ void loc_matmul(double *a_mat, int *jvec, int *ivec,
 #define  MZ 0
 #define  FAC 1.e-9
 double ran3(int *idum) {
-
+#if 1
+  static int iff = 0;
+  if (*idum < 0 || iff == 0) {
+    iff = 1;
+    srand(abs(*idum));
+    *idum = 1;
+  }
+  return ((double)rand())/((double)RAND_MAX);
+#else
   static int inext, inextp;
   static long ma[56];
   static int iff = 0;
   long mj, mk;
   int i, ii, k;
 
-  if (idum < 0 || iff == 0) {
+  if (*idum < 0 || iff == 0) {
     iff = 1;
     mj = MSEED - abs(*idum);
     mj = mj%MBIG;
@@ -153,6 +161,7 @@ double ran3(int *idum) {
   if(mj < MZ) mj=mj+MBIG;
   ma[inext] = mj;
   return mj*FAC;
+#endif
 }
 
 /*
@@ -1002,6 +1011,7 @@ int main(int argc, char **argv) {
   for (i=0; i<ld; i++) {
     idum  = 0;
     p_b[i] = ran3(&idum);
+    if (i<5) printf("p[%d] ran(%d): %f\n",me,i,p_b[i]);
     vector[i] = p_b[i];
     /*
     printf("p[%d] p_b[%d]: %f\n",me,blo[0]+i,p_b[i]);
