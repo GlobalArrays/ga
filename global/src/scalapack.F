@@ -305,7 +305,7 @@ c   nq          - number of columns held by processor
 #include "scalapack.fh"
       INTGR4  nbr, nbc, lda4, np, nq, dim1, dim2
       integer g_a
-      double  precision  s_a(lda4,nq)
+      double  precision  s_a(lda4,*)
       integer row, col, tcol, trow, rbase, cbase
       INTGR4 pcol, prow,one4
       parameter(one4=1)
@@ -360,7 +360,7 @@ c
 #include "scalapack.fh"
       integer g_a,lda
       INTGR4  nbr, nbc, lda4, np, nq, dim1, dim2
-      double  precision s_a(lda4,nq)
+      double  precision s_a(lda4,*)
       integer  tcol, trow
       integer rbase, cbase
       INTGR4 pcol, prow,one4
@@ -423,7 +423,7 @@ c   nq          - number of columns held by processor
 #include "global.fh"
       INTGR4  nbr, nbc, lda4, np, nq, dim1, dim2
       integer g_a
-      double  precision  s_a(lda4,nq)
+      double  precision  s_a(lda4,*)
       integer row, col, tcol, trow, rbase, cbase
       INTGR4 pcol, prow
       integer lda
@@ -497,7 +497,7 @@ c
 #include "global.fh"
       integer g_a,lda
       INTGR4  nbr, nbc, lda4, np, nq, dim1, dim2
-      double  precision s_a(lda4,nq)
+      double  precision s_a(lda4,*)
       integer  tcol, trow
       integer rbase, cbase
       INTGR4 pcol, prow
@@ -1069,14 +1069,10 @@ c**** Allocate BUF
          call ga_get(g_A, 1, n, i, i, dbl_mb(adrBUF), n)
          if (uplo.eq.'L') then
 c****       case L: make zero the upper triangle            
-            do j = 1,i-1
-               dbl_mb(adrBUF + j - 1) = 0.d0
-            end do !j
+            call dcopy(i-1,0.0d0,0, dbl_mb(adrBUF),1)
          elseif (uplo.eq.'U') then
 c****       case U: make zero the lower triangle            
-            do j = i+1, n
-               dbl_mb(adrBUF + j - 1) = 0.d0
-            end do !j
+            call dcopy(n-i,0.0d0,0, dbl_mb(adrBUF+i),1)
          else
             call ga_error('ga_symUL: uplo must be L or U ', 1)
          endif
