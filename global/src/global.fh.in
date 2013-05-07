@@ -74,7 +74,6 @@
       logical ga_pgroup_destroy, nga_pgroup_destroy
       integer ga_pgroup_absolute_id, nga_pgroup_absolute_id
       integer nga_register_type, nga_deregister_type
-      logical nga_check_notify
 !
       external ga_create, ga_destroy, ga_ddot, ga_locate
       external nga_ddot
@@ -149,6 +148,5 @@
       external nga_register_type, nga_deregister_type
       external nga_get_field, nga_nbget_field
       external nga_put_field, nga_nbput_field
-      external nga_check_notify
 !
 #define GA_ACCESS_INDEX_TYPE @GA_ACCESS_INDEX_TYPE@

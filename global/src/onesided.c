@@ -1268,29 +1268,6 @@ void pnga_nbwait_notify(Integer *nbhandle)
 } /* pnga_nbwait_notify */
 
 /**
- *  Check for notify flag set on the receiver side, must be done in C
- */
-#if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak wnga_check_notify  = pnga_check_notify
-#endif
-logical pnga_check_notify(Integer g_a, void *bufn, void *expected)
-{
-  Integer handle = GA_OFFSET + g_a, size;
-  int ret;
-
-  size = GA[handle].elemsize;
-
-#ifdef MEM_FENCE
-  MEM_FENCE;
-#else
-  asm volatile("" ::: "memory");
-#endif
-  ret = memcmp(bufn, expected, size);
-
-  return (logical)(ret == 0);
-} /* wnga_check_notify */
-
-/**
  * Put an N-dimensional patch of data into a Global Array
  */
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA

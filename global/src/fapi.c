@@ -1251,11 +1251,6 @@ void FATR nga_nbwait_notify_(Integer *nbhandle)
   wnga_nbwait_notify(nbhandle);
 } /* nga_nbwait_notify_ */
 
-logical FATR nga_check_notify_(Integer *g_a, void *bufn, void *expected)
-{
-  return wnga_check_notify(*g_a, bufn, expected);
-} /* nga_check_notify_ */
-
 Integer FATR ga_nbtest_(Integer *nbhandle)
 {
   return wnga_nbtest(nbhandle);
