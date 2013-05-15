@@ -62,6 +62,7 @@
 /* from armcip.h, but armcip.h is private so we should not include it */
 extern void armci_write_strided(void *ptr, int stride_levels, int stride_arr[], int count[], char *buf);
 extern void armci_read_strided(void *ptr, int stride_levels, int stride_arr[], int count[], char *buf);
+extern armci_hdl_t* get_armci_nbhandle(Integer *);
 
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
