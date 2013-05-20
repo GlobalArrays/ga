@@ -268,8 +268,8 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
   double *rvalt;
   FILE *fp, *fopen();
 
-  me = GA_Nodeid();
-  nprocs = GA_Nnodes();
+  me = NGA_Nodeid();
+  nprocs = NGA_Nnodes();
   idum = -(12345+me);
   x = ran3(&idum);
   one = 1;
@@ -792,9 +792,9 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
     isize = isize + licnt[i];
   }
   ltsize = isize;
-  GA_Igop(&ltsize,one,"+");
+  NGA_Igop(&ltsize,one,"+");
   if (isize > MAXVEC)
-    GA_Error("ISIZE exceeds MAXVEC in local arrays ",isize);
+    NGA_Error("ISIZE exceeds MAXVEC in local arrays ",isize);
 
 /* Local portion of sparse matrix has been evaluated and decomposed into blocks
    that match partitioning of right hand side across processors. The following
@@ -821,7 +821,7 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
       3) ival(ltotal_procs*(lnsize(me)+1)): starting index in rval and
          jval for each row in each block */
  
-  GA_Sync();
+  NGA_Sync();
 
 /* Create a sparse array of sparse blocks.
    Each block element is divided into for sections.
@@ -940,7 +940,7 @@ int main(int argc, char **argv) {
   int *p_i, *p_j;
   double *p_data, *p_b, *p_c;
   double t_beg, t_beg2, t_ga_tot, t_get, t_mult, t_cnstrct, t_mpi_in, t_ga_in;
-  double t_hypre_strct, t_ga_trans;
+  double t_hypre_strct, t_ga_trans, t_gp_get;
   double prdot, dotga, dothypre, tempc;
   double prtot, gatot, hypretot;
   double prdot2, prtot2;
@@ -964,7 +964,7 @@ int main(int argc, char **argv) {
   double *rval, *rvalt;
   int imin, imax, jmin, jmax, irow, icol, nnz;
   int nrows, kmin, kmax, lmin, lmax, jdx;
-  int LOOPNUM = 2;
+  int LOOPNUM = 100;
   void **blk_ptr;
   void *blk;
   int blk_size, tsize, zero;
@@ -1002,24 +1002,25 @@ int main(int argc, char **argv) {
       In the second, user can set limit (per processor) in bytes.
 */
   t_beg = GA_Wtime();
-  GA_Initialize();
+  NGA_Initialize();
   GP_Initialize();
   t_ga_in = GA_Wtime() - t_beg;
-  GA_Dgop(&t_ga_in,one,"+");
+  NGA_Dgop(&t_ga_in,one,"+");
 
   t_ga_tot = 0.0;
   t_ga_trans = 0.0;
   t_mult = 0.0;
   t_get = 0.0;
+  t_gp_get = 0.0;
   t_hypre_strct = 0.0;
   prtot = 0.0;
   prtot2 = 0.0;
   gatot = 0.0;
   hypretot = 0.0;
 
-  me = GA_Nodeid();
+  me = NGA_Nodeid();
   me_plus = me + 1;
-  nprocs = GA_Nnodes();
+  nprocs = NGA_Nnodes();
   if (me == 0) {
    printf("Time to initialize GA:                                 %12.4f\n",
           t_ga_in/((double)nprocs));
@@ -1037,7 +1038,7 @@ int main(int argc, char **argv) {
  ***  Initialize the MA package
       MA must be initialized before any global array is allocated
 */
-  if (!MA_init(MT_DBL, stack, ma_heap)) GA_Error("ma_init failed",-1);
+  if (!MA_init(MT_DBL, stack, ma_heap)) NGA_Error("ma_init failed",-1);
 /*
      create a sparse LMAX x LMAX matrix and two vectors of length
      LMAX. The matrix is stored in compressed row format.
@@ -1063,10 +1064,10 @@ int main(int argc, char **argv) {
   create_laplace_mat(idim,jdim,kdim,pdi,pdj,pdk,&g_a_data,&g_a_j,&g_a_i,&mapc);
   t_cnstrct = GA_Wtime() - t_beg;
 
-  g_b = GA_Create_handle();
-  GA_Set_data(g_b,one,&ntot,MT_DBL);
-  GA_Set_irreg_distr(g_b,mapc,&nprocs);
-  status = GA_Allocate(g_b);
+  g_b = NGA_Create_handle();
+  NGA_Set_data(g_b,one,&ntot,MT_DBL);
+  NGA_Set_irreg_distr(g_b,mapc,&nprocs);
+  status = NGA_Allocate(g_b);
 /*
     fill g_b with random values
 */
@@ -1084,12 +1085,12 @@ int main(int argc, char **argv) {
     */
   }
   NGA_Release(g_b,blo,bhi);
-  GA_Sync();
+  NGA_Sync();
 
-  g_c = GA_Create_handle();
+  g_c = NGA_Create_handle();
   NGA_Set_data(g_c,one,&ntot,MT_DBL);
   NGA_Set_irreg_distr(g_c,mapc,&nprocs);
-  status = GA_Allocate(g_c);
+  status = NGA_Allocate(g_c);
   NGA_Zero(g_c);
 #if USE_HYPRE
 /*
@@ -1349,10 +1350,12 @@ int main(int argc, char **argv) {
 /* Loop through matrix blocks */
     ioff = 0;
     for (iblock = 0; iblock<total_procs; iblock++) {
+      t_beg = GA_Wtime();
       jdx = lo_bl+iblock;
       GP_Get_size(g_a_data, &jdx, &jdx, &isize);
       blk = (void*)malloc(isize);
       GP_Get(g_a_data, &jdx, &jdx, blk, blk_ptr, &one, &blk_size, &one, &tsize, 0); 
+      t_gp_get = t_gp_get + GA_Wtime() - t_beg;
       iparams = (int*)blk_ptr[0];
       rval = (double*)(iparams+7);
       imin = iparams[0];
@@ -1413,7 +1416,7 @@ int main(int argc, char **argv) {
     beta = 0.0;
     t_beg = GA_Wtime();
     ierr = HYPRE_StructMatrixMatvec(alpha, matrix, vec_x, beta, vec_y);
-    t_hypre_strct = GA_Wtime() - t_beg;
+    t_hypre_strct = t_hypre_strct + GA_Wtime() - t_beg;
     hlo[0] = lo[0];
     hlo[1] = lo[1];
     hlo[2] = lo[2];
@@ -1629,6 +1632,7 @@ int main(int argc, char **argv) {
 
   NGA_Dgop(&t_cnstrct,1,"+");
   NGA_Dgop(&t_get,1,"+");
+  NGA_Dgop(&t_gp_get,1,"+");
   NGA_Dgop(&t_mult,1,"+");
   NGA_Dgop(&t_ga_tot,1,"+");
   NGA_Dgop(&t_ga_trans,1,"+");
@@ -1639,19 +1643,21 @@ int main(int argc, char **argv) {
 
   if (me == 0) {
     printf("Time to create sparse matrix:                         %12.4f\n",
-      t_cnstrct/((double)nprocs));
+      t_cnstrct/((double)(nprocs*LOOPNUM)));
     printf("Time to get right hand side vector:                   %12.4f\n",
-      t_get/((double)nprocs));
+      t_get/((double)(nprocs*LOOPNUM)));
+    printf("Time to get right GP blocks:                          %12.4f\n",
+      t_gp_get/((double)(nprocs*LOOPNUM)));
     printf("Time for sparse matrix block multiplication:          %12.4f\n",
-      t_mult/((double)nprocs));
+      t_mult/((double)(nprocs*LOOPNUM)));
     printf("Time for total sparse matrix multiplication:          %12.4f\n",
-      t_ga_tot/((double)nprocs));
+      t_ga_tot/((double)(nprocs*LOOPNUM)));
 #if USE_HYPRE
     printf("Total time for HYPRE (Struct)  matrix-vector multiply:%12.4f\n",
-      t_hypre_strct/((double)nprocs));
+      t_hypre_strct/((double)(nprocs*LOOPNUM)));
 #endif
     printf("Time for total sparse matrix transpose:               %12.4f\n",
-      t_ga_tot/((double)nprocs));
+      t_ga_trans/((double)(nprocs*LOOPNUM)));
   }
   if (me==0) {
     printf("Terminating GA library\n");
