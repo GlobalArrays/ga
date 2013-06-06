@@ -158,7 +158,6 @@ extern void pnga_nbput(Integer g_a, Integer *lo, Integer *hi, void *buf,
                        Integer *ld, Integer *nbhandle);
 extern void pnga_nbput_notify(Integer g_a, Integer *lo, Integer *hi, void *buf, Integer *ld, Integer g_b, Integer *ecoords, void *bufn, Integer *nbhandle);
 extern void pnga_nbwait_notify(Integer *nbhandle);
-extern logical pnga_check_notify(Integer g_a, void *bufn, void *expected);
 extern Integer pnga_nbtest(Integer *nbhandle);
 extern void pnga_nbwait(Integer *nbhandle);
 extern void pnga_put(Integer g_a, Integer *lo, Integer *hi, void *buf,
