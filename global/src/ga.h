@@ -327,6 +327,7 @@ extern int           NGA_Uses_ma(void);
 extern int           NGA_Uses_proc_grid(int g_a);
 extern int           NGA_Valid_handle(int g_a);
 extern int           NGA_Verify_handle(int g_a);
+extern double        NGA_Wtime(void);
 extern DoubleComplex NGA_Zdot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
 extern void          NGA_Zero(int g_a); 
 extern void          NGA_Zero_patch(int g_a, int lo[], int hi[]);

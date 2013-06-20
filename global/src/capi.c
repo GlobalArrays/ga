@@ -4722,7 +4722,13 @@ int GA_Cluster_procid(int node, int loc_proc)
     return wnga_cluster_procid(anode, aloc_proc);
 }
 
+/* wrapper for timer routines */
 double GA_Wtime()
+{
+    return (double)wnga_wtime();
+}
+
+double NGA_Wtime()
 {
     return (double)wnga_wtime();
 }
