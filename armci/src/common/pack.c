@@ -265,6 +265,12 @@ int i, bytes=0;
 #define BUFSIZE10 26000 
 #define BUFSIZE1  BUFSIZE
 
+/* darr: array of descriptors of length len
+ * len: length of descriptor array
+ * extra: pointer to descriptor if a split occurs
+ * nlen: length of chunk that is split
+ * save: pointer to original descriptor?
+ */
 void armci_split_dscr_array( armci_giov_t darr[], int len,
                              armci_giov_t* extra, int *nlen, armci_giov_t* save)
 {
@@ -335,7 +341,22 @@ int rc=0, nlen, count=0;
 
        armci_split_dscr_array(ndarr, len, &extra, &nlen, &save); 
 #  if defined(REMOTE_OP) 
-       rc = armci_rem_vector(op, scale, ndarr,nlen,proc,0,nb_handle);
+       /* A problem will occur if len is 1 and nlen is 0. This corresponds to a
+        * situation where the size of an individual element is found to exceed
+        * BUFSIZE1. Treat this as a single transfer of contiguous data using
+        * the standard PARMCI_Get/Put/Acc call */
+       if (len == 1 && nlen == 0) {
+         if(ARMCI_ACC(op))rc=PARMCI_Acc(op, scale, ndarr[0].src_ptr_array[0],
+            ndarr[0].dst_ptr_array[0],ndarr[0].bytes, proc);
+         else if(op == GET)rc=PARMCI_Get(ndarr[0].src_ptr_array[0],
+            ndarr[0].dst_ptr_array[0],ndarr[0].bytes, proc);
+         else if(op == PUT)rc=PARMCI_Get(ndarr[0].src_ptr_array[0],
+            ndarr[0].dst_ptr_array[0],ndarr[0].bytes, proc);
+         else armci_die("Unknown op in armci_pack_vector",op);
+         nlen = 1;
+       } else {
+         rc = armci_rem_vector(op, scale, ndarr,nlen,proc,0,nb_handle);
+       }
 #  else
        if(ARMCI_ACC(op))rc=armci_acc_vector(op,scale,ndarr,nlen,proc);
        else rc = armci_copy_vector(op,ndarr,nlen,proc);
@@ -359,7 +380,7 @@ int rc=0, nlen, count=0;
              save.src_ptr_array=NULL; /* indicates that save slot is empty */
           }
 
-          if(nlen==0)
+          if(nlen == 0)
             armci_die("vector packetization problem:buffer too small",BUFSIZE1);
        }
 
