@@ -350,7 +350,7 @@ int rc=0, nlen, count=0;
             ndarr[0].dst_ptr_array[0],ndarr[0].bytes, proc);
          else if(op == GET)rc=PARMCI_Get(ndarr[0].src_ptr_array[0],
             ndarr[0].dst_ptr_array[0],ndarr[0].bytes, proc);
-         else if(op == PUT)rc=PARMCI_Get(ndarr[0].src_ptr_array[0],
+         else if(op == PUT)rc=PARMCI_Put(ndarr[0].src_ptr_array[0],
             ndarr[0].dst_ptr_array[0],ndarr[0].bytes, proc);
          else armci_die("Unknown op in armci_pack_vector",op);
          nlen = 1;
