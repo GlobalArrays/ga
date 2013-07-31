@@ -35,7 +35,7 @@
 #include "armci.h"
 #include "armcip.h"
 
-#define PAUSE_ON_ERROR__
+#define PAUSE_ON_ERROR
 
 #define  Error armci_die 
 #if !defined(armci_die)
