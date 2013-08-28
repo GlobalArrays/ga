@@ -1528,6 +1528,11 @@ DoublePrecision FATR ga_wtime_()
     return wnga_wtime();
 }
 
+DoublePrecision FATR nga_wtime_()
+{
+    return wnga_wtime();
+}
+
 /* Routines from collect.c */
 
 void FATR ga_brdcst_(
@@ -3479,12 +3484,27 @@ Integer FATR ga_llt_solve_(Integer * g_a, Integer * g_b)
     return wnga_llt_solve(*g_a, *g_b);
 }
 
+Integer FATR nga_llt_solve_(Integer * g_a, Integer * g_b)
+{
+    return wnga_llt_solve(*g_a, *g_b);
+}
+
 Integer FATR ga_solve_(Integer * g_a, Integer * g_b)
 {
     return wnga_solve(*g_a, *g_b);
 }
 
+Integer FATR nga_solve_(Integer * g_a, Integer * g_b)
+{
+    return wnga_solve(*g_a, *g_b);
+}
+
 Integer FATR ga_spd_invert_(Integer * g_a)
+{
+    return wnga_spd_invert(*g_a);
+}
+
+Integer FATR nga_spd_invert_(Integer * g_a)
 {
     return wnga_spd_invert(*g_a);
 }
