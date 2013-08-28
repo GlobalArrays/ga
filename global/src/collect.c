@@ -24,7 +24,7 @@
 #   include <mpi.h>
 extern MPI_Comm ARMCI_COMM_WORLD;
 #   include "ga-mpi.h"
-#   if HAVE_ARMCI_GROUP_COMM_FUNCTION
+#   if HAVE_ARMCI_GROUP_COMM
 extern MPI_Comm armci_group_comm(ARMCI_Group *group);
 #   endif
 #else
