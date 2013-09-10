@@ -1,10 +1,9 @@
-#include <math.h>
+
 #include <stdio.h>
 
 #include "macdecls.h"
 #include "ga.h"
 #include "gp.h"
-#define DEBUG 1
 #define USE_HYPRE 0
 #define IMAX 100
 #define JMAX 100
@@ -66,6 +65,14 @@ void grid_factor(int p, int xdim, int ydim, int zdim, int *idx, int *idy, int *i
       ip = ip/prime[i];
     }
   }
+/*
+  p is prime
+ */
+  if (ifac==0) {
+    ifac++;
+    fac[0] = p;
+  }
+
 /*
      determine three factors of p of approximately the
      same size
@@ -243,7 +250,7 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
     tsize: total number of non-zero elements in matrix
     imapc: map array for vectors
 */
-  int ltotal_procs, ltsize;
+  int ltotal_procs;
   int *lproclist, *lproc_inv,  *lvoffset, *lnsize, *loffset, *licnt, *limapc;
   int *nnz_list;
   int nnz, offset, b_nnz;
@@ -255,7 +262,7 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
   int isize, idbg;
   int *jval, *gp_jval, *ival, *gp_ival, *ivalt;
   int i, j, k, itmp, one, tlo, thi, ld;
-  int idum, ntot, indx, nghbrs[7], ncnt;
+  int idum, ntot, indx, nghbrs[7], ncnt, nsave;
   int ixn[7],iyn[7],izn[7], procid[7];
   int status;
   int lo[3], hi[3], ip, jp, kp, ldi, ldj, jdx, joff;
@@ -463,10 +470,11 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
   ncnt = 0;
   for (i=0; i<nprocs; i++) {
     if (ecnt[i] > 0) {
-      ltotal_procs += 1;
+      ltotal_procs++;
       ncnt += ecnt[i];
     }
   }
+  nsave = ncnt;
 
   lproclist = (int*)malloc(ltotal_procs*sizeof(int));
   lproc_inv = (int*)malloc(nprocs*sizeof(int));
@@ -496,6 +504,8 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
   for (i=0; i<nprocs; i++) {
     nnz_list[i] = 0;
   }
+
+  /* nnz is total number of non-zero sparse blocks */
   nnz_list[me] = ltotal_procs;
   NGA_Igop(nnz_list, nprocs, "+");
   nnz = 0;
@@ -628,7 +638,7 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
       izn[ncnt] = iz;
       if (ix-1 < lo[0]) {
         jdx = kp*pdi*pdj + jp*pdi + ip - 1;
-        il = xld[ip] - 1;
+        il = xld[ip-1] - 1;
         jl = iy - lo[1];
         kl = iz - lo[2];
         ldmi = xld[ip-1];
@@ -673,7 +683,7 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
       if (iy-1 < lo[1]) {
         jdx = kp*pdi*pdj + (jp-1)*pdi + ip;
         il = ix - lo[0];
-        jl = yld[jp] - 1;
+        jl = yld[jp-1] - 1;
         kl = iz - lo[2];
         ldmj = yld[jp-1];
       } else {
@@ -716,7 +726,7 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
         jdx = (kp-1)*pdi*pdj + jp*pdi + ip;
         il = ix - lo[0];
         jl = iy - lo[1];
-        kl = zld[kp] - 1;
+        kl = zld[kp-1] - 1;
       } else {
         jdx = me;
         il = ix - lo[0];
@@ -770,6 +780,9 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
       } else {
         rval[lvoffset[idx]+licnt[idx]] = -1.0;
       }
+      if (lvoffset[idx]+licnt[idx] < 0 || lvoffset[idx]+licnt[idx] >= nsave) {
+        printf("p[%d] Out of bounds (lvoffset+licnt)[%d]: %d\n",me,idx,lvoffset[idx]+licnt[idx]);
+      }
       if (lvoffset[idx]+licnt[idx]>=idbg) {
       }
       /* TODO: Check this carefully */
@@ -791,8 +804,6 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
   for (i=0; i<ltotal_procs; i++) {
     isize = isize + licnt[i];
   }
-  ltsize = isize;
-  NGA_Igop(&ltsize,one,"+");
   if (isize > MAXVEC)
     NGA_Error("ISIZE exceeds MAXVEC in local arrays ",isize);
 
@@ -849,6 +860,7 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
   if (me==nprocs-1) {
     NGA_Put(*g_i, &nprocs, &nprocs, &nnz, &one);
   }
+  NGA_Sync();
   for (i = 0; i<ltotal_procs; i++) {
     /* evaluate total size of block */
     b_nnz = ecnt[lproclist[i]];
@@ -869,39 +881,26 @@ void create_laplace_mat(int idim, int jdim, int kdim, int pdi, int pdj, int pdk,
     iparams[5] = lproclist[i];
     iparams[6] = b_nnz;
 
+    ldj = (imax-imin+2);
+    k = 0;
+    toffset = lvoffset[i];
     for (j=0; j<b_nnz; j++) {
-      toffset = lvoffset[i];
-      gp_rval[j] = rval[toffset+j];
       gp_jval[j] = jval[toffset+j];
-      /*
-      printf("p[%d] block: %d rval[%d]: %f jval[%d]: %d\n",me,i,j,gp_rval[j],j,gp_jval[j]);
-      */
+      gp_rval[j] = rval[toffset+j];
     }
 
-    j = (imax-imin+2);
-    /*
-    printf("p[%d] block: %d imin: %d imax: %d jmin: %d jmax: %d\n",me,i,imin,imax,
-          iparams[2],iparams[3]);
-    printf("p[%d] ip: %d jp: %d b_nnz: %d nrows: %d\n",me,me,lproclist[i],b_nnz,j);
-    */
-    toffset = ival[i*j];
-    for (k=0; k<j; k++) {
-      gp_ival[k] = ival[i*j+k]-toffset;
-      /*
-      printf("p[%d] block: %d gp_ival[%d]: %d ival[%d]: %d\n",me,i,k,gp_ival[k],
-             i*j+k,ival[i*j+k]);
-             */
+    toffset = ival[i*ldj];
+    for (k=0; k<ldj; k++) {
+      gp_ival[k] = ival[i*ldj+k]-toffset;
     }
 
     /* Assign blk_ptr to GP array element */
-    /*
-    printf("p[%d] offset: %d\n",me,offset);
-    */
     GP_Assign_local_element(*gp_block, &offset, (void*)blk_ptr, isize);
     j = 1;
     NGA_Put(*g_j,&offset,&offset,&lproclist[i],&j);
     offset++;
   }
+  NGA_Sync();
 
   tmapc = (int*)malloc(nprocs*sizeof(int));
   tmapc[0] = 0;
@@ -941,8 +940,10 @@ int main(int argc, char **argv) {
   double *p_data, *p_b, *p_c;
   double t_beg, t_beg2, t_ga_tot, t_get, t_mult, t_cnstrct, t_mpi_in, t_ga_in;
   double t_hypre_strct, t_ga_trans, t_gp_get;
+  double t_get_blk_csr, t_trans_blk_csr, t_trans_blk, t_create_csr_ga, t_beg3;
+  double t_gp_tget, t_gp_malloc, t_gp_assign, t_beg4;
   double prdot, dotga, dothypre, tempc;
-  double prtot, gatot, hypretot;
+  double prtot, gatot, hypretot, gatot2, hypretot2;
   double prdot2, prtot2;
   int status;
   int idim, jdim, kdim, idum, memsize;
@@ -1009,9 +1010,16 @@ int main(int argc, char **argv) {
 
   t_ga_tot = 0.0;
   t_ga_trans = 0.0;
+  t_get_blk_csr = 0.0;
+  t_create_csr_ga = 0.0;
+  t_trans_blk_csr = 0.0;
+  t_trans_blk = 0.0;
+  t_gp_get = 0.0;
+  t_gp_malloc = 0.0;
+  t_gp_assign = 0.0;
   t_mult = 0.0;
   t_get = 0.0;
-  t_gp_get = 0.0;
+  t_gp_tget = 0.0;
   t_hypre_strct = 0.0;
   prtot = 0.0;
   prtot2 = 0.0;
@@ -1059,6 +1067,7 @@ int main(int argc, char **argv) {
     printf("  PDX: %d\n",pdi);
     printf("  PDY: %d\n",pdj);
     printf("  PDZ: %d\n\n",pdk);
+    printf(" Number of Loops: %d\n",LOOPNUM);
   }
 
   create_laplace_mat(idim,jdim,kdim,pdi,pdj,pdk,&g_a_data,&g_a_j,&g_a_i,&mapc);
@@ -1080,9 +1089,6 @@ int main(int argc, char **argv) {
     idum  = 0;
     p_b[i] = ran3(&idum);
     vector[i] = p_b[i];
-    /*
-    printf("p[%d] p_b[%d]: %f\n",me,blo[0]+i,p_b[i]);
-    */
   }
   NGA_Release(g_b,blo,bhi);
   NGA_Sync();
@@ -1329,6 +1335,7 @@ int main(int argc, char **argv) {
 /* Multiply sparse matrix. Start by accessing pointers to local portions of
    g_a_data, g_a_j, g_a_i */
 
+  NGA_Sync();
   for (iloop=0; iloop<LOOPNUM; iloop++) {
     t_beg2 = GA_Wtime();
 
@@ -1340,21 +1347,26 @@ int main(int argc, char **argv) {
 
 /* get number of matrix blocks coupled to this process */
     NGA_Get(g_a_i,&me,&me,&lo_bl,&one);
+#if 1
     NGA_Get(g_a_i,&me_plus,&me_plus,&hi_bl,&one);
     hi_bl--;
     total_procs = hi_bl - lo_bl + 1;
-    /*
-    printf("p[%d] total_procs: %d\n",me,total_procs);
-    */
     blk_ptr = (void**)malloc(sizeof(void*));
 /* Loop through matrix blocks */
     ioff = 0;
     for (iblock = 0; iblock<total_procs; iblock++) {
       t_beg = GA_Wtime();
       jdx = lo_bl+iblock;
+#if 0
+      GP_Access_element(g_a_data, &jdx, &blk_ptr[0], &isize);
+#endif
+#if 1
       GP_Get_size(g_a_data, &jdx, &jdx, &isize);
+#endif
       blk = (void*)malloc(isize);
+#if 1
       GP_Get(g_a_data, &jdx, &jdx, blk, blk_ptr, &one, &blk_size, &one, &tsize, 0); 
+#endif
       t_gp_get = t_gp_get + GA_Wtime() - t_beg;
       iparams = (int*)blk_ptr[0];
       rval = (double*)(iparams+7);
@@ -1374,38 +1386,21 @@ int main(int argc, char **argv) {
       NGA_Get(g_b,&jmin,&jmax,bvec,&j);
       t_get = t_get + GA_Wtime() - t_beg;
       t_beg = GA_Wtime();
-      /*
-    printf("p[%d] imin: %d imax: %d jmin: %d jmax: %d rval[0]: %f nrows: %d\n",
-           me,imin,imax,jmin,jmax,rval[0],nrows);
-           */
       for (i=0; i<nrows; i++) {
         kmin = ival[i];
         kmax = ival[i+1]-1;
         tempc = 0.0;
         for (j = kmin; j<=kmax; j++) {
           jj = jval[j];
-          /*
-          if (jj<0 || jj>=nrows) {
-            printf("p[%d]: iblock: %d jj: %d nrows: %d\n",me,iblock,jj,nrows);
-          }
-          if (j<0 || j>=nnz) {
-            printf("p[%d]: iblock: %d jj: %d nnz: %d\n",me,iblock,j,nnz);
-          }
-          */
           tempc = tempc + rval[j]*bvec[jj];
-          /*
-          printf("p[%d] kmin: %d kmax: %d rval[%d]: %f bvec[%d]: %f\n",me,kmin,kmax,j,rval[j],jj,bvec[jj]);
-          */
         }
         p_c[i] = p_c[i] + tempc;
-        /*
-          printf("p[%d] p_c[%d]: %f\n",me,i,p_c[i]);
-          */
       }
       t_mult = t_mult + GA_Wtime() - t_beg;
       free(bvec);
       free(blk);
     }
+    NGA_Sync();
     t_ga_tot = t_ga_tot + GA_Wtime() - t_beg2;
 
     NGA_Distribution(g_c,me,blo,bhi);
@@ -1431,10 +1426,6 @@ int main(int argc, char **argv) {
     dotga = 0.0;
     dothypre = 0.0;
     for (i=0; i<(hhi[0]-hlo[0]+1); i++) {
-      /*
-      printf("p[%d] ga[%d]: %f hypre[%d]: %f\n",me,lo[0]+i,cbuf[i],
-             lo[i]+i,vector[i]);
-             */
       dothypre = dothypre + vector[i]*vector[i];
       dotga = dotga + cbuf[i]*cbuf[i];
       prdot = prdot + (vector[i]-cbuf[i])*(vector[i]-cbuf[i]);
@@ -1450,14 +1441,38 @@ int main(int argc, char **argv) {
 
 /* Transpose matrix. Start by making local copies of ival and jval arrays for
    the sparse matrix of blocks stored in the GP array */
+#if 1
     t_beg2 = GA_Wtime();
+    t_beg3 = GA_Wtime();
     iblk = (int*)malloc((nprocs+1)*sizeof(int));
     iblk_t = (int*)malloc((nprocs+1)*sizeof(int));
+#if 0
     NGA_Get(g_a_i,&zero,&nprocs,iblk,&one);
+#else
+    if (me == 0) {
+      NGA_Get(g_a_i,&zero,&nprocs,iblk,&one);
+    } else {
+      for (i=0; i<nprocs+1; i++) {
+        iblk[i] = 0;
+      }
+    }
+    GA_Igop(iblk,nprocs+1,"+");
+#endif
     jblk = (int*)malloc(iblk[nprocs]*sizeof(int));
     jblk_t = (int*)malloc(iblk[nprocs]*sizeof(int));
     iblock = iblk[nprocs]-1;
+#if 0
     NGA_Get(g_a_j,&zero,&iblock,jblk,&one);
+#else
+    if (me == 0) {
+      NGA_Get(g_a_j,&zero,&iblock,jblk,&one);
+    } else {
+      for (i=0; i<iblock+1; i++) {
+        jblk[i] = 0;
+      }
+    }
+    GA_Igop(jblk,iblock+1,"+");
+#endif
     iblock++;
     blkidx = (int*)malloc(iblk[nprocs]*sizeof(int));
     blkidx_t = (int*)malloc(iblk[nprocs]*sizeof(int));
@@ -1465,19 +1480,11 @@ int main(int argc, char **argv) {
       blkidx[i] = i;
     }
     iblock = nprocs;
+    t_get_blk_csr = t_get_blk_csr + GA_Wtime() - t_beg3;
+    t_beg3 = GA_Wtime();
     stran(iblock, iblock, iblk, jblk, blkidx, iblk_t, jblk_t, blkidx_t);
-/*
-    printf("p[%d]",me);
-    for (i=0; i<=nprocs; i++) {
-      printf(" iblk[%d]: %d",i,iblk[i]);
-    }
-    printf("\n");
-    printf("p[%d]",me);
-    for (i=0; i<=nprocs; i++) {
-      printf(" iblk_t[%d]: %d",i,iblk_t[i]);
-    }
-    printf("\n");
-    */
+    t_trans_blk_csr = t_trans_blk_csr + GA_Wtime() - t_beg3;
+    t_beg3 = GA_Wtime();
     gt_a_data = GP_Create_handle();
     i = iblk_t[nprocs];
     GP_Set_dimensions(gt_a_data, one, &i);
@@ -1510,7 +1517,10 @@ int main(int argc, char **argv) {
     lo_bl = iblk[me];
     hi_bl = iblk[me+1];
     total_procs = hi_bl - lo_bl + 1;
+    total_procs = hi_bl - lo_bl;
+    t_create_csr_ga = t_create_csr_ga + GA_Wtime() - t_beg3;
     for (iblock = lo_bl; iblock < hi_bl; iblock++) {
+      t_beg4 = GA_Wtime();
       jdx = blkidx_t[iblock];
       GP_Get_size(g_a_data, &jdx, &jdx, &isize);
       blk = (void*)malloc(isize);
@@ -1531,7 +1541,11 @@ int main(int argc, char **argv) {
       /* Create transposed block */
       isize = 7*sizeof(int) + nnz*(sizeof(double)+sizeof(int))
             + (jmax-jmin+2)*sizeof(int);
+      t_gp_tget = t_gp_tget + GA_Wtime() - t_beg4;
+      t_beg4 = GA_Wtime();
       tblk_ptr = (int*)GP_Malloc(isize);
+      t_gp_malloc = t_gp_malloc + GA_Wtime() - t_beg4;
+      t_beg3 = GA_Wtime();
       iparamst = (int*)tblk_ptr;
       rvalt = (double*)(iparamst+7);
       jvalt = (int*)(rvalt+nnz);
@@ -1543,27 +1557,28 @@ int main(int argc, char **argv) {
       iparamst[4] = icol;
       iparamst[5] = irow;
       iparamst[6] = nnz;
-      /*
-    printf("p[%d]",me);
-    for (i=0; i<=imax-imin+1; i++) {
-      printf(" ival[%d]: %d",i,ival[i]);
-    }
-    printf("\n");
-    */
       i = imax-imin+1;
       j = jmax-jmin+1;
       stranr(i, j, ival, jval, rval, ivalt, jvalt, rvalt);
+      t_trans_blk = t_trans_blk + GA_Wtime() - t_beg3;
+      t_beg4 = GA_Wtime();
       GP_Assign_local_element(gt_a_data, &iblock, (void*)tblk_ptr, isize);
+      t_gp_assign = t_gp_assign + GA_Wtime() - t_beg4;
+#if 1
       free(blk);
+#endif
     }
 
     /* Clean up after transpose */
+#if 1
     free(iblk);
     free(iblk_t);
     free(jblk);
     free(jblk_t);
     free(blkidx);
     free(blkidx_t);
+#endif
+    NGA_Sync();
     t_ga_trans = t_ga_trans + GA_Wtime() - t_beg2;
 #if USE_HYPRE
     alpha = 1.0;
@@ -1579,13 +1594,25 @@ int main(int argc, char **argv) {
     NGA_Distribution(g_c,me,hlo,hhi);
     cbuf = (double*)malloc((hhi[0]-hlo[0]+1)*sizeof(double));
     NGA_Get(g_c,hlo,hhi,cbuf,&one);
+    dothypre = 0.0;
+    dotga = 0.0;
     prdot2 = 0.0;
     for (i=0; i<(hhi[0]-hlo[0]+1); i++) {
-      prdot2 = prdot + (vector[i]-cbuf[i])*(vector[i]-cbuf[i]);
+      dothypre = dothypre + vector[i]*vector[i];
+      dotga = dotga + cbuf[i]*cbuf[i];
+      if (fabs(vector[i]-cbuf[i]) > 1.0e-10) {
+        printf("p[%d] i: %d vector: %f cbuf: %f\n",me,i,vector[i],cbuf[i]);
+      }
+      prdot2 = prdot2 + (vector[i]-cbuf[i])*(vector[i]-cbuf[i]);
     }
+    NGA_Dgop(&dotga,1,"+");
+    NGA_Dgop(&dothypre,1,"+");
     NGA_Dgop(&prdot2,1,"+");
     prtot2 += sqrt(prdot2);
+    gatot2 += sqrt(dotga);
+    hypretot2 += sqrt(dothypre);
     free(cbuf);
+    free(blk_ptr);
 #endif
     /* Clean up transposed matrix */
     GP_Distribution(gt_a_data,me,blo,bhi);
@@ -1595,6 +1622,8 @@ int main(int argc, char **argv) {
     GP_Destroy(gt_a_data);
     NGA_Destroy(gt_a_i);
     NGA_Destroy(gt_a_j);
+#endif
+#endif
   }
   free(vector);
 #if USE_HYPRE
@@ -1603,6 +1632,10 @@ int main(int argc, char **argv) {
         gatot/((double)LOOPNUM));
     printf("Magnitude of HYPRE solution:                      %e\n",
         hypretot/((double)LOOPNUM));
+    printf("Magnitude of GA solution(2):                      %e\n",
+        gatot2/((double)LOOPNUM));
+    printf("Magnitude of HYPRE solution(2):                   %e\n",
+        hypretot2/((double)LOOPNUM));
     printf("Difference between GA and HYPRE (Struct) results: %e\n",
         prtot/((double)LOOPNUM));
     printf("Difference between transpose and HYPRE results:   %e\n",
@@ -1636,6 +1669,13 @@ int main(int argc, char **argv) {
   NGA_Dgop(&t_mult,1,"+");
   NGA_Dgop(&t_ga_tot,1,"+");
   NGA_Dgop(&t_ga_trans,1,"+");
+  NGA_Dgop(&t_get_blk_csr,1,"+");
+  NGA_Dgop(&t_trans_blk_csr,1,"+");
+  NGA_Dgop(&t_trans_blk,1,"+");
+  NGA_Dgop(&t_create_csr_ga,1,"+");
+  NGA_Dgop(&t_gp_tget,1,"+");
+  NGA_Dgop(&t_gp_malloc,1,"+");
+  NGA_Dgop(&t_gp_assign,1,"+");
 #if USE_HYPRE
   NGA_Dgop(&t_hypre_strct,1,"+");
 #endif
@@ -1646,7 +1686,7 @@ int main(int argc, char **argv) {
       t_cnstrct/((double)(nprocs*LOOPNUM)));
     printf("Time to get right hand side vector:                   %12.4f\n",
       t_get/((double)(nprocs*LOOPNUM)));
-    printf("Time to get right GP blocks:                          %12.4f\n",
+    printf("Time to get GP blocks:                                %12.4f\n",
       t_gp_get/((double)(nprocs*LOOPNUM)));
     printf("Time for sparse matrix block multiplication:          %12.4f\n",
       t_mult/((double)(nprocs*LOOPNUM)));
@@ -1656,6 +1696,20 @@ int main(int argc, char **argv) {
     printf("Total time for HYPRE (Struct)  matrix-vector multiply:%12.4f\n",
       t_hypre_strct/((double)(nprocs*LOOPNUM)));
 #endif
+    printf("Time to get block CSR distribution:                   %12.4f\n",
+      t_get_blk_csr/((double)(nprocs*LOOPNUM)));
+    printf("Time for transposing block CSR distribution:          %12.4f\n",
+      t_trans_blk_csr/((double)(nprocs*LOOPNUM)));
+    printf("Time for creating transposed block CSR GA:            %12.4f\n",
+      t_create_csr_ga/((double)(nprocs*LOOPNUM)));
+    printf("Time for transposing blocks:                          %12.4f\n",
+      t_trans_blk/((double)(nprocs*LOOPNUM)));
+    printf("Time to get GP blocks for transpose:                  %12.4f\n",
+      t_gp_tget/((double)(nprocs*LOOPNUM)));
+    printf("Time to malloc GP blocks for transpose:               %12.4f\n",
+      t_gp_malloc/((double)(nprocs*LOOPNUM)));
+    printf("Time to assign GP blocks for transpose:               %12.4f\n",
+      t_gp_assign/((double)(nprocs*LOOPNUM)));
     printf("Time for total sparse matrix transpose:               %12.4f\n",
       t_ga_trans/((double)(nprocs*LOOPNUM)));
   }
