@@ -23,5 +23,6 @@ extern void GP_Release_update_element(int g_p, int *subscript);
 extern void GP_Scatter(int g_p, int nv, int *subscript, void **buf_ptr, int *buf_size, int *size, int checksize);
 extern void GP_Set_chunk(int g_p, int *chunk);
 extern void GP_Set_dimensions(int g_p, int ndim, int *dims);
+extern void GP_Set_irreg_distr(int g_p, int *mapc, int *blocks);
 extern void GP_Sync();
 extern void GP_Terminate();
