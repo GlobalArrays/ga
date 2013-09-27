@@ -206,6 +206,7 @@ extern int           NGA_Deregister_type(int type);
 extern void          NGA_Destroy(int g_a);
 extern int           NGA_Destroy_mutexes(void);
 extern double        NGA_Ddot_patch(int g_a, char t_a, int alo[], int ahi[], int g_b, char t_b, int blo[], int bhi[]);
+extern void          NGA_Dgop(double x[], int n, char *op);
 extern void          NGA_Distribution(int g_a, int iproc, int lo[], int hi[]); 
 extern int           NGA_Duplicate(int g_a, char* array_name);
 extern void          NGA_Error(char *str, int code);
