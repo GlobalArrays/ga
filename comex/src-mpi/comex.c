@@ -479,7 +479,7 @@ static void _get_response_handler(header_t *header, char *payload)
 
 static void _acc_handler(header_t *header, char *payload)
 {
-    op_t op;
+    int op;
     int sizeof_scale;
 
 #if DEBUG
