@@ -19,6 +19,13 @@ static inline void _acc(
         const void * restrict src,
         void *scale)
 {
+#if SIZEOF_INT == BLAS_SIZE
+#define BLAS_INT int
+#elif SIZEOF_LONG == BLAS_SIZE
+#define BLAS_INT long
+#elif SIZEOF_LONG_LONG == BLAS_SIZE
+#define BLAS_INT long long
+#endif
 #define EQ_ONE_REG(A) ((A) == 1.0)
 #define EQ_ONE_CPL(A) ((A).real == 1.0 && (A).imag == 0.0)
 #define IADD_REG(A,B) (A) += (B)
@@ -29,8 +36,8 @@ static inline void _acc(
     (A).imag += ((B).real*(C).imag) + ((B).imag*(C).real);
 #define ACC_BLAS(COMEX_TYPE, C_TYPE, FUNC)                              \
     if (op == COMEX_TYPE) {                                             \
-        int ONE = 1;                                                    \
-        int N = bytes/sizeof(C_TYPE);                                   \
+        BLAS_INT ONE = 1;                                               \
+        BLAS_INT N = bytes/sizeof(C_TYPE);                              \
         FUNC(&N, scale, src, &ONE, dst, &ONE);                          \
     } else
 #define ACC(WHICH, COMEX_TYPE, C_TYPE)                                  \

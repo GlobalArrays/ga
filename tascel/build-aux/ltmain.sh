@@ -5655,7 +5655,7 @@ func_mode_link ()
 	continue
 	;;
 
-      -mt|-mthreads|-kthread|-Kthread|-pthread|-pthreads|--thread-safe \
+      -mkl*|-mt|-mthreads|-kthread|-Kthread|-pthread|-pthreads|--thread-safe \
       |-threads|-fopenmp|-openmp|-mp|-xopenmp|-omp|-qsmp=*)
 	func_append compiler_flags " $arg"
 	func_append compile_command " $arg"
@@ -5851,7 +5851,7 @@ func_mode_link ()
       # -tp=*                Portland pgcc target processor selection
       # --sysroot=*          for sysroot support
       # -O*, -flto*, -fwhopr*, -fuse-linker-plugin GCC link-time optimization
-      -64|-mips[0-9]|-r[0-9][0-9]*|-xarch=*|-xtarget=*|+DA*|+DD*|-q*|-m*| \
+      -mkl*|-64|-mips[0-9]|-r[0-9][0-9]*|-xarch=*|-xtarget=*|+DA*|+DD*|-q*|-m*| \
       -t[45]*|-txscale*|-p|-pg|--coverage|-fprofile-*|-F*|@*|-tp=*|--sysroot=*| \
       -O*|-flto*|-fwhopr*|-fuse-linker-plugin)
         func_quote_for_eval "$arg"
@@ -6160,7 +6160,7 @@ func_mode_link ()
 	lib=
 	found=no
 	case $deplib in
-	-mt|-mthreads|-kthread|-Kthread|-pthread|-pthreads|--thread-safe \
+	-mkl*|-mt|-mthreads|-kthread|-Kthread|-pthread|-pthreads|--thread-safe \
         |-threads|-fopenmp|-openmp|-mp|-xopenmp|-omp|-qsmp=*)
 	  if test "$linkmode,$pass" = "prog,link"; then
 	    compile_deplibs="$deplib $compile_deplibs"

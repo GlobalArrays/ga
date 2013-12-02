@@ -5444,6 +5444,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -7196,6 +7198,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_tbb not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_tbb not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    TBB_LIBS="$TBB_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -8388,6 +8392,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    GA_LIBS="$GA_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -8545,6 +8551,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    GA_LIBS="$GA_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -8858,6 +8866,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ga not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_ga not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    GA_LIBS="$GA_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac

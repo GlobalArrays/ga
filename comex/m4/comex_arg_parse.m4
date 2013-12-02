@@ -9,6 +9,9 @@
 # $arg="/usr/lib/mpich-shmem -lfmpich-shmem -lmpich-shmem -lpmpich-shmem"
 # $arg="/usr/lib/mpich-shmem/include /usr/lib/mpich-shmem/lib -lfmpich-shmem -lmpich-shmem -lpmpich-shmem"
 # $arg="/usr/local/lib64 /usr/local/include64"
+#
+# Special Cases:
+# -mkl[=arg]    Intel compiler with special -mkl flag for headers and linking
 AC_DEFUN([COMEX_ARG_PARSE],
 [AC_COMPUTE_INT([comex_arg_parse_sizeof_voidp], [(long int) (sizeof (void*))])
 for arg in $$1 ; do
@@ -38,6 +41,7 @@ for arg in $$1 ; do
                             [AC_MSG_WARN([$arg of $1 not parsed])])],
         [*include64/],  [AS_IF([test -d $arg], [$4="$$4 -I$arg"],
                             [AC_MSG_WARN([$arg of $1 not parsed])])],
+        [-mkl*],        [$2="$$2 $arg"],
         [comex_arg_parse_ok=no])
 # $arg didn't fit the most common cases
 # check for subdirectories e.g. lib,include

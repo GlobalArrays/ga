@@ -4966,6 +4966,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    MPI_LIBS="$MPI_LIBS $arg" ;; #(
   *) :
     comex_arg_parse_ok=no ;;
 esac
@@ -5385,6 +5387,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_ts not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_mpi_ts not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $arg" ;; #(
   *) :
     comex_arg_parse_ok=no ;;
 esac
@@ -5530,6 +5534,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofa not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_ofa not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $arg" ;; #(
   *) :
     comex_arg_parse_ok=no ;;
 esac
@@ -5675,6 +5681,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dmapp not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_dmapp not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $arg" ;; #(
   *) :
     comex_arg_parse_ok=no ;;
 esac
@@ -8347,6 +8355,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_blas not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_blas not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    BLAS_LIBS="$BLAS_LIBS $arg" ;; #(
   *) :
     comex_arg_parse_ok=no ;;
 esac

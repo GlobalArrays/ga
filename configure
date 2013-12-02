@@ -6365,6 +6365,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_mpi not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    GA_MP_LIBS="$GA_MP_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -6870,6 +6872,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_armci not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_armci not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -7015,6 +7019,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_bgml not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_bgml not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -7160,6 +7166,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_cray_shmem not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_cray_shmem not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -7305,6 +7313,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dcmf not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_dcmf not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -7450,6 +7460,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_dmapp not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_dmapp not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -7595,6 +7607,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_gemini not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_gemini not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -7740,6 +7754,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapi not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_lapi not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -7885,6 +7901,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_mt not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_mpi_mt not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -8030,6 +8048,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_spawn not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_mpi_spawn not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -8175,6 +8195,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_mpi_ts not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_mpi_ts not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -8320,6 +8342,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_ofa not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_ofa not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -8465,6 +8489,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_openib not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_openib not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -8610,6 +8636,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_portals not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -8755,6 +8783,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_sockets not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_sockets not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -22241,6 +22271,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_blas not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_blas not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    BLAS_LIBS="$BLAS_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -24461,6 +24493,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_lapack not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_lapack not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    LAPACK_LIBS="$LAPACK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
@@ -24827,6 +24861,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_scalapack not parsed" >&5
 $as_echo "$as_me: WARNING: $arg of with_scalapack not parsed" >&2;}
 fi ;; #(
+  -mkl*) :
+    SCALAPACK_LIBS="$SCALAPACK_LIBS $arg" ;; #(
   *) :
     ga_arg_parse_ok=no ;;
 esac
