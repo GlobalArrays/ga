@@ -91,6 +91,22 @@ AS_IF([test "x$happy" = xyes],
     [$2])
 ])dnl
 
+# _COMEX_NETWORK_PORTALS4([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+# -------------------------------------------------------------------
+AC_DEFUN([_COMEX_NETWORK_PORTALS4], [
+AC_MSG_NOTICE([searching for PORTALS4...])
+happy=yes
+AS_IF([test "x$happy" = xyes],
+    [AC_CHECK_HEADER([portals4.h], [], [happy=no])])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([PtlInit], [portals4], [], [happy=no])])
+AS_IF([test "x$happy" = xyes],
+    [AC_SEARCH_LIBS([PtlFini], [portals4], [], [happy=no])])
+AS_IF([test "x$happy" = xyes],
+    [comex_network=PORTALS4; with_portals4=yes; $1],
+    [$2])
+])dnl
+
 # _COMEX_NETWORK_DMAPP([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 # ------------------------------------------------------------------
 # TODO when dmapp headers and libraries become available, fix this
@@ -137,6 +153,7 @@ AC_ARG_ENABLE([autodetect],
 comex_network_count=0
 _COMEX_NETWORK_WITH([mpi-ts],    [MPI-1 two-sided])
 _COMEX_NETWORK_WITH([ofa],       [Infiniband OpenIB])
+_COMEX_NETWORK_WITH([portals4],  [Portals4])
 _COMEX_NETWORK_WITH([dmapp],     [Cray DMAPP])
 # Temporarily add COMEX_NETWORK_CPPFLAGS to CPPFLAGS.
 comex_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $COMEX_NETWORK_CPPFLAGS"
@@ -148,6 +165,8 @@ AS_IF([test "x$enable_autodetect" = xyes],
     [AC_MSG_NOTICE([searching for COMEX_NETWORK...])
      AS_IF([test "x$comex_network" = x && test "x$with_ofa" != xno],
         [_COMEX_NETWORK_OFA()])
+     AS_IF([test "x$comex_network" = x && test "x$with_portals4" != xno],
+        [_COMEX_NETWORK_PORTALS4()])
      AS_IF([test "x$comex_network" = x && test "x$with_dmapp" != xno],
         [_COMEX_NETWORK_DMAPP()])
      AS_IF([test "x$comex_network" = x],
@@ -166,6 +185,9 @@ AS_IF([test "x$enable_autodetect" = xyes],
               AS_IF([test "x$comex_network" = xOFA],
                  [_COMEX_NETWORK_OFA([],
                     [AC_MSG_ERROR([test for COMEX_NETWORK=OFA failed])])])
+              AS_IF([test "x$comex_network" = xPORTALS4],
+                 [_COMEX_NETWORK_PORTALS4([],
+                    [AC_MSG_ERROR([test for COMEX_NETWORK=PORTALS4 failed])])])
               AS_IF([test "x$comex_network" = xDMAPP],
                  [_COMEX_NETWORK_DMAPP([],
                     [AC_MSG_ERROR([test for COMEX_NETWORK=DMAPP failed])])])
@@ -174,6 +196,7 @@ AS_IF([test "x$enable_autodetect" = xyes],
          AC_MSG_WARN([the following were specified:])
          _COMEX_NETWORK_WARN([mpi-ts])
          _COMEX_NETWORK_WARN([ofa])
+         _COMEX_NETWORK_WARN([portals4])
          _COMEX_NETWORK_WARN([dmapp])
          AC_MSG_ERROR([please select only one comex network])])])
 # Remove COMEX_NETWORK_CPPFLAGS from CPPFLAGS.
@@ -184,9 +207,11 @@ LDFLAGS="$comex_save_LDFLAGS"
 LIBS="$comex_save_LIBS"
 _COMEX_NETWORK_AM_CONDITIONAL([mpi-ts])
 _COMEX_NETWORK_AM_CONDITIONAL([ofa])
+_COMEX_NETWORK_AM_CONDITIONAL([portals4])
 _COMEX_NETWORK_AM_CONDITIONAL([dmapp])
 _COMEX_NETWORK_AC_DEFINE([mpi-ts])
 _COMEX_NETWORK_AC_DEFINE([ofa])
+_COMEX_NETWORK_AC_DEFINE([portals4])
 _COMEX_NETWORK_AC_DEFINE([dmapp])
 AC_SUBST([COMEX_NETWORK_LDFLAGS])
 AC_SUBST([COMEX_NETWORK_LIBS])

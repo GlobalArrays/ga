@@ -715,6 +715,8 @@ ARMCI_NETWORK_SOCKETS_FALSE
 ARMCI_NETWORK_SOCKETS_TRUE
 ARMCI_NETWORK_PORTALS_FALSE
 ARMCI_NETWORK_PORTALS_TRUE
+ARMCI_NETWORK_PORTALS4_FALSE
+ARMCI_NETWORK_PORTALS4_TRUE
 ARMCI_NETWORK_GEMINI_FALSE
 ARMCI_NETWORK_GEMINI_TRUE
 ARMCI_NETWORK_OPENIB_FALSE
@@ -960,6 +962,7 @@ with_mpi_spawn
 with_mpi_ts
 with_ofa
 with_openib
+with_portals4
 with_portals
 with_sockets
 enable_assert
@@ -1666,6 +1669,7 @@ Optional Packages:
   --with-mpi-ts[=ARG]     select armci network as (Comex) MPI-1 two-sided
   --with-ofa[=ARG]        select armci network as (Comex) Infiniband OpenIB
   --with-openib[=ARG]     select armci network as Infiniband OpenIB
+  --with-portals4[=ARG]   select armci network as (Comex) Portals4
   --with-portals[=ARG]    select armci network as Cray XT portals
   --with-sockets[=ARG]    select armci network as Ethernet TCP/IP
   --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
@@ -8300,6 +8304,153 @@ fi
 
 
 
+# Check whether --with-portals4 was given.
+if test "${with_portals4+set}" = set; then :
+  withval=$with_portals4;
+fi
+
+
+
+if test "x$with_portals4" != x; then :
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "ga_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_portals4 ; do
+    case $arg in #(
+  yes) :
+     ;; #(
+  no) :
+     ;; #(
+  -l*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  -L*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -WL*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -Wl*) :
+    ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS $arg" ;; #(
+  -I*) :
+    ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS $arg" ;; #(
+  *.a) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *lib) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *lib/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *lib64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *lib64/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *include) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *include/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *include64/) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  -mkl*) :
+    ARMCI_NETWORK_LIBS="$ARMCI_NETWORK_LIBS $arg" ;; #(
+  *) :
+    ga_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$ga_arg_parse_ok" = xno; then :
+  if test "x$ga_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib64"; ga_arg_parse_ok=yes
+elif test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
+fi
+             if test -d $arg/include64; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include64"; ga_arg_parse_ok=yes
+elif test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
+fi
+else
+  if test -d $arg/lib; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg/lib"; ga_arg_parse_ok=yes
+fi
+             if test -d $arg/include; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg/include"; ga_arg_parse_ok=yes
+fi
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$ga_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_LDFLAGS="$ARMCI_NETWORK_LDFLAGS -L$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  ARMCI_NETWORK_CPPFLAGS="$ARMCI_NETWORK_CPPFLAGS -I$arg"; ga_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
+esac
+fi
+# warn user that $arg fell through
+     if test "x$ga_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi
+done
+fi
+if test "x$with_portals4" != xno && test "x$with_portals4" != x; then :
+  ga_armci_network=PORTALS4
+     as_fn_arith $armci_network_count + 1 && armci_network_count=$as_val
+fi
+
+
+
+
+
 # Check whether --with-portals was given.
 if test "${with_portals+set}" = set; then :
   withval=$with_portals;
@@ -9182,6 +9333,16 @@ esac
 fi
 if test "x$happy" = xyes; then :
   ga_armci_network=OPENIB; with_openib=yes;
+fi
+
+fi
+     if test "x$ga_armci_network" = x && test "x$with_portals4" != xno; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for PORTALS4..." >&5
+$as_echo "$as_me: searching for PORTALS4..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  ga_armci_network=PORTALS4; with_portals4=yes;
 fi
 
 fi
@@ -11719,6 +11880,18 @@ else
 fi
 
 fi
+              if test "x$ga_armci_network" = xPORTALS4; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for PORTALS4..." >&5
+$as_echo "$as_me: searching for PORTALS4..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  ga_armci_network=PORTALS4; with_portals4=yes;
+else
+  as_fn_error $? "test for ARMCI_NETWORK=PORTALS4 failed" "$LINENO" 5
+fi
+
+fi
               if test "x$ga_armci_network" = xPORTALS; then :
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: searching for PORTALS..." >&5
@@ -12217,6 +12390,14 @@ fi
 
 
 
+if test "x$with_portals4" != x && test "x$with_portals4" != xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-portals4=$with_portals4" >&5
+$as_echo "$as_me: WARNING: --with-portals4=$with_portals4" >&2;}
+fi
+
+
+
+
 if test "x$with_portals" != x && test "x$with_portals" != xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-portals=$with_portals" >&5
 $as_echo "$as_me: WARNING: --with-portals=$with_portals" >&2;}
@@ -12419,6 +12600,20 @@ fi
 
 
 
+ if test "x$with_portals4" != x && test "x$with_portals4" != xno; then
+  ARMCI_NETWORK_PORTALS4_TRUE=
+  ARMCI_NETWORK_PORTALS4_FALSE='#'
+else
+  ARMCI_NETWORK_PORTALS4_TRUE='#'
+  ARMCI_NETWORK_PORTALS4_FALSE=
+fi
+
+
+
+
+
+
+
  if test "x$with_portals" != x && test "x$with_portals" != xno; then
   ARMCI_NETWORK_PORTALS_TRUE=
   ARMCI_NETWORK_PORTALS_FALSE='#'
@@ -12488,6 +12683,8 @@ case $ga_armci_network in #(
     ARMCI_SRC_DIR=comex ;; #(
   OPENIB) :
     ARMCI_SRC_DIR=src ;; #(
+  PORTALS4) :
+    ARMCI_SRC_DIR=comex ;; #(
   PORTALS) :
     ARMCI_SRC_DIR=src-portals ;; #(
   GEMINI) :
@@ -12690,6 +12887,8 @@ case $ga_armci_network in #(
     delay_tcgmsg_mpi_startup=1 ;; #(
   GEMINI) :
     delay_tcgmsg_mpi_startup=1 ;; #(
+  PORTALS4) :
+    delay_tcgmsg_mpi_startup=0 ;; #(
   PORTALS) :
     delay_tcgmsg_mpi_startup=1 ;; #(
   SOCKETS) :
@@ -27560,6 +27759,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ARMCI_NETWORK_GEMINI_TRUE}" && test -z "${ARMCI_NETWORK_GEMINI_FALSE}"; then
   as_fn_error $? "conditional \"ARMCI_NETWORK_GEMINI\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ARMCI_NETWORK_PORTALS4_TRUE}" && test -z "${ARMCI_NETWORK_PORTALS4_FALSE}"; then
+  as_fn_error $? "conditional \"ARMCI_NETWORK_PORTALS4\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ARMCI_NETWORK_PORTALS_TRUE}" && test -z "${ARMCI_NETWORK_PORTALS_FALSE}"; then

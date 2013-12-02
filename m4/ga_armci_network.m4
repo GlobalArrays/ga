@@ -333,6 +333,16 @@ AS_IF([test "x$happy" = xyes],
     [$2])
 ])dnl
 
+# _GA_ARMCI_NETWORK_PORTALS4([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+# -------------------------------------------------------------------
+AC_DEFUN([_GA_ARMCI_NETWORK_PORTALS4], [
+AC_MSG_NOTICE([searching for PORTALS4...])
+happy=yes
+AS_IF([test "x$happy" = xyes],
+    [ga_armci_network=PORTALS4; with_portals4=yes; $1],
+    [$2])
+])dnl
+
 # _GA_ARMCI_NETWORK_PORTALS([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 # -------------------------------------------------------------------
 AC_DEFUN([_GA_ARMCI_NETWORK_PORTALS], [
@@ -443,6 +453,7 @@ _GA_ARMCI_NETWORK_WITH([mpi-spawn], [MPI-2 dynamic process mgmt])
 _GA_ARMCI_NETWORK_WITH([mpi-ts],    [(Comex) MPI-1 two-sided])
 _GA_ARMCI_NETWORK_WITH([ofa],       [(Comex) Infiniband OpenIB])
 _GA_ARMCI_NETWORK_WITH([openib],    [Infiniband OpenIB])
+_GA_ARMCI_NETWORK_WITH([portals4],  [(Comex) Portals4])
 _GA_ARMCI_NETWORK_WITH([portals],   [Cray XT portals])
 _GA_ARMCI_NETWORK_WITH([sockets],   [Ethernet TCP/IP])
 # Temporarily add ARMCI_NETWORK_CPPFLAGS to CPPFLAGS.
@@ -471,6 +482,8 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
         [_GA_ARMCI_NETWORK_OFA()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_openib" != xno],
         [_GA_ARMCI_NETWORK_OPENIB()])
+     AS_IF([test "x$ga_armci_network" = x && test "x$with_portals4" != xno],
+        [_GA_ARMCI_NETWORK_PORTALS4()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_portals" != xno],
         [_GA_ARMCI_NETWORK_PORTALS()])
      AS_IF([test "x$ga_armci_network" = x && test "x$with_dmapp" != xno],
@@ -522,6 +535,9 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
               AS_IF([test "x$ga_armci_network" = xOPENIB],
                  [_GA_ARMCI_NETWORK_OPENIB([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=OPENIB failed])])])
+              AS_IF([test "x$ga_armci_network" = xPORTALS4],
+                 [_GA_ARMCI_NETWORK_PORTALS4([],
+                    [AC_MSG_ERROR([test for ARMCI_NETWORK=PORTALS4 failed])])])
               AS_IF([test "x$ga_armci_network" = xPORTALS],
                  [_GA_ARMCI_NETWORK_PORTALS([],
                     [AC_MSG_ERROR([test for ARMCI_NETWORK=PORTALS failed])])])
@@ -542,6 +558,7 @@ dnl         [_GA_ARMCI_NETWORK_MPI_SPAWN()])
          _GA_ARMCI_NETWORK_WARN([mpi-spawn])
          _GA_ARMCI_NETWORK_WARN([ofa])
          _GA_ARMCI_NETWORK_WARN([openib])
+         _GA_ARMCI_NETWORK_WARN([portals4])
          _GA_ARMCI_NETWORK_WARN([portals])
          _GA_ARMCI_NETWORK_WARN([gemini])
          _GA_ARMCI_NETWORK_WARN([sockets])
@@ -564,6 +581,7 @@ _GA_ARMCI_NETWORK_AM_CONDITIONAL([mpi-spawn])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([ofa])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([openib])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([gemini])
+_GA_ARMCI_NETWORK_AM_CONDITIONAL([portals4])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([portals])
 _GA_ARMCI_NETWORK_AM_CONDITIONAL([sockets])
 AC_SUBST([ARMCI_NETWORK_LDFLAGS])
@@ -583,6 +601,7 @@ AS_CASE([$ga_armci_network],
 [MPI_TS],   [ARMCI_SRC_DIR=comex],
 [OFA],      [ARMCI_SRC_DIR=comex],
 [OPENIB],   [ARMCI_SRC_DIR=src],
+[PORTALS4], [ARMCI_SRC_DIR=comex],
 [PORTALS],  [ARMCI_SRC_DIR=src-portals],
 [GEMINI],   [ARMCI_SRC_DIR=src-gemini],
             [ARMCI_SRC_DIR=src])
@@ -654,6 +673,7 @@ AS_CASE([$ga_armci_network],
 [OFA],          [delay_tcgmsg_mpi_startup=0],
 [OPENIB],       [delay_tcgmsg_mpi_startup=1],
 [GEMINI],       [delay_tcgmsg_mpi_startup=1],
+[PORTALS4],     [delay_tcgmsg_mpi_startup=0],
 [PORTALS],      [delay_tcgmsg_mpi_startup=1],
 [SOCKETS],      [delay_tcgmsg_mpi_startup=1])
 AC_DEFINE_UNQUOTED([NEED_DELAY_TCGMSG_MPI_STARTUP],

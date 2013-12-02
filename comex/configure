@@ -680,6 +680,8 @@ COMEX_NETWORK_LIBS
 COMEX_NETWORK_LDFLAGS
 COMEX_NETWORK_DMAPP_FALSE
 COMEX_NETWORK_DMAPP_TRUE
+COMEX_NETWORK_PORTALS4_FALSE
+COMEX_NETWORK_PORTALS4_TRUE
 COMEX_NETWORK_OFA_FALSE
 COMEX_NETWORK_OFA_TRUE
 COMEX_NETWORK_MPI_TS_FALSE
@@ -794,6 +796,7 @@ enable_dependency_tracking
 enable_autodetect
 with_mpi_ts
 with_ofa
+with_portals4
 with_dmapp
 enable_assert
 enable_weak
@@ -1471,6 +1474,7 @@ Optional Packages:
                           wrappers in PATH
   --with-mpi-ts[=ARG]     select comex network as MPI-1 two-sided
   --with-ofa[=ARG]        select comex network as Infiniband OpenIB
+  --with-portals4[=ARG]   select comex network as Portals4
   --with-dmapp[=ARG]      select comex network as Cray DMAPP
   --with-blas[=ARG]       use external BLAS library; attempt to detect
                           sizeof(INTEGER)
@@ -5626,6 +5630,153 @@ fi
 
 
 
+# Check whether --with-portals4 was given.
+if test "${with_portals4+set}" = set; then :
+  withval=$with_portals4;
+fi
+
+
+
+if test "x$with_portals4" != x; then :
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void*))" "comex_arg_parse_sizeof_voidp"        ""; then :
+
+fi
+
+for arg in $with_portals4 ; do
+    case $arg in #(
+  yes) :
+     ;; #(
+  no) :
+     ;; #(
+  -l*) :
+    COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $arg" ;; #(
+  -L*) :
+    COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS $arg" ;; #(
+  -WL*) :
+    COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS $arg" ;; #(
+  -Wl*) :
+    COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS $arg" ;; #(
+  -I*) :
+    COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS $arg" ;; #(
+  *.a) :
+    COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $arg" ;; #(
+  *.so) :
+    COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $arg" ;; #(
+  *lib) :
+    if test -d $arg; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *lib/) :
+    if test -d $arg; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *lib64) :
+    if test -d $arg; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *lib64/) :
+    if test -d $arg; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *include) :
+    if test -d $arg; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *include/) :
+    if test -d $arg; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *include64) :
+    if test -d $arg; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  *include64/) :
+    if test -d $arg; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi ;; #(
+  -mkl*) :
+    COMEX_NETWORK_LIBS="$COMEX_NETWORK_LIBS $arg" ;; #(
+  *) :
+    comex_arg_parse_ok=no ;;
+esac
+# $arg didn't fit the most common cases
+# check for subdirectories e.g. lib,include
+    if test "x$comex_arg_parse_ok" = xno; then :
+  if test "x$comex_arg_parse_sizeof_voidp" = x8; then :
+  if test -d $arg/lib64; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg/lib64"; comex_arg_parse_ok=yes
+elif test -d $arg/lib; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg/lib"; comex_arg_parse_ok=yes
+fi
+             if test -d $arg/include64; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg/include64"; comex_arg_parse_ok=yes
+elif test -d $arg/include; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg/include"; comex_arg_parse_ok=yes
+fi
+else
+  if test -d $arg/lib; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg/lib"; comex_arg_parse_ok=yes
+fi
+             if test -d $arg/include; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg/include"; comex_arg_parse_ok=yes
+fi
+fi
+fi
+# $arg still unknown, look for "lib" and "include" anywhere...
+    if test "x$comex_arg_parse_ok" = xno; then :
+  case $arg in #(
+  *lib*) :
+    if test -d $arg; then :
+  COMEX_NETWORK_LDFLAGS="$COMEX_NETWORK_LDFLAGS -L$arg"; comex_arg_parse_ok=yes
+fi ;; #(
+  *include*) :
+    if test -d $arg; then :
+  COMEX_NETWORK_CPPFLAGS="$COMEX_NETWORK_CPPFLAGS -I$arg"; comex_arg_parse_ok=yes
+fi ;; #(
+  *) :
+     ;;
+esac
+fi
+# warn user that $arg fell through
+     if test "x$comex_arg_parse_ok" = xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $arg of with_portals4 not parsed" >&5
+$as_echo "$as_me: WARNING: $arg of with_portals4 not parsed" >&2;}
+fi
+done
+fi
+if test "x$with_portals4" != xno && test "x$with_portals4" != x; then :
+  comex_network=PORTALS4
+     as_fn_arith $comex_network_count + 1 && comex_network_count=$as_val
+fi
+
+
+
+
+
 # Check whether --with-dmapp was given.
 if test "${with_dmapp+set}" = set; then :
   withval=$with_dmapp;
@@ -5865,6 +6016,146 @@ esac
 fi
 if test "x$happy" = xyes; then :
   comex_network=OFA; with_ofa=yes;
+fi
+
+fi
+     if test "x$comex_network" = x && test "x$with_portals4" != xno; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for PORTALS4..." >&5
+$as_echo "$as_me: searching for PORTALS4..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "portals4.h" "ac_cv_header_portals4_h" "$ac_includes_default"
+if test "x$ac_cv_header_portals4_h" = xyes; then :
+
+else
+  happy=no
+fi
+
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing PtlInit" >&5
+$as_echo_n "checking for library containing PtlInit... " >&6; }
+if ${ac_cv_search_PtlInit+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char PtlInit ();
+int
+main ()
+{
+return PtlInit ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' portals4; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_PtlInit=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_PtlInit+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_PtlInit+:} false; then :
+
+else
+  ac_cv_search_PtlInit=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_PtlInit" >&5
+$as_echo "$ac_cv_search_PtlInit" >&6; }
+ac_res=$ac_cv_search_PtlInit
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing PtlFini" >&5
+$as_echo_n "checking for library containing PtlFini... " >&6; }
+if ${ac_cv_search_PtlFini+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char PtlFini ();
+int
+main ()
+{
+return PtlFini ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' portals4; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_PtlFini=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_PtlFini+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_PtlFini+:} false; then :
+
+else
+  ac_cv_search_PtlFini=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_PtlFini" >&5
+$as_echo "$ac_cv_search_PtlFini" >&6; }
+ac_res=$ac_cv_search_PtlFini
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  comex_network=PORTALS4; with_portals4=yes;
 fi
 
 fi
@@ -6182,6 +6473,148 @@ else
 fi
 
 fi
+              if test "x$comex_network" = xPORTALS4; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: searching for PORTALS4..." >&5
+$as_echo "$as_me: searching for PORTALS4..." >&6;}
+happy=yes
+if test "x$happy" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "portals4.h" "ac_cv_header_portals4_h" "$ac_includes_default"
+if test "x$ac_cv_header_portals4_h" = xyes; then :
+
+else
+  happy=no
+fi
+
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing PtlInit" >&5
+$as_echo_n "checking for library containing PtlInit... " >&6; }
+if ${ac_cv_search_PtlInit+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char PtlInit ();
+int
+main ()
+{
+return PtlInit ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' portals4; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_PtlInit=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_PtlInit+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_PtlInit+:} false; then :
+
+else
+  ac_cv_search_PtlInit=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_PtlInit" >&5
+$as_echo "$ac_cv_search_PtlInit" >&6; }
+ac_res=$ac_cv_search_PtlInit
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing PtlFini" >&5
+$as_echo_n "checking for library containing PtlFini... " >&6; }
+if ${ac_cv_search_PtlFini+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char PtlFini ();
+int
+main ()
+{
+return PtlFini ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' portals4; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_PtlFini=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_PtlFini+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_PtlFini+:} false; then :
+
+else
+  ac_cv_search_PtlFini=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_PtlFini" >&5
+$as_echo "$ac_cv_search_PtlFini" >&6; }
+ac_res=$ac_cv_search_PtlFini
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  happy=no
+fi
+
+fi
+if test "x$happy" = xyes; then :
+  comex_network=PORTALS4; with_portals4=yes;
+else
+  as_fn_error $? "test for COMEX_NETWORK=PORTALS4 failed" "$LINENO" 5
+fi
+
+fi
               if test "x$comex_network" = xDMAPP; then :
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: searching for DMAPP..." >&5
@@ -6329,6 +6762,14 @@ fi
 
 
 
+if test "x$with_portals4" != x && test "x$with_portals4" != xno; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-portals4=$with_portals4" >&5
+$as_echo "$as_me: WARNING: --with-portals4=$with_portals4" >&2;}
+fi
+
+
+
+
 if test "x$with_dmapp" != x && test "x$with_dmapp" != xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-dmapp=$with_dmapp" >&5
 $as_echo "$as_me: WARNING: --with-dmapp=$with_dmapp" >&2;}
@@ -6375,6 +6816,20 @@ fi
 
 
 
+ if test "x$with_portals4" != x && test "x$with_portals4" != xno; then
+  COMEX_NETWORK_PORTALS4_TRUE=
+  COMEX_NETWORK_PORTALS4_FALSE='#'
+else
+  COMEX_NETWORK_PORTALS4_TRUE='#'
+  COMEX_NETWORK_PORTALS4_FALSE=
+fi
+
+
+
+
+
+
+
  if test "x$with_dmapp" != x && test "x$with_dmapp" != xno; then
   COMEX_NETWORK_DMAPP_TRUE=
   COMEX_NETWORK_DMAPP_FALSE='#'
@@ -6411,6 +6866,21 @@ $as_echo "#define COMEX_NETWORK_OFA 1" >>confdefs.h
 else
 
 $as_echo "#define COMEX_NETWORK_OFA 0" >>confdefs.h
+
+fi
+
+
+
+
+
+
+if test "x$with_portals4" != x && test "x$with_portals4" != xno; then :
+
+$as_echo "#define COMEX_NETWORK_PORTALS4 1" >>confdefs.h
+
+else
+
+$as_echo "#define COMEX_NETWORK_PORTALS4 0" >>confdefs.h
 
 fi
 
@@ -21621,6 +22091,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COMEX_NETWORK_OFA_TRUE}" && test -z "${COMEX_NETWORK_OFA_FALSE}"; then
   as_fn_error $? "conditional \"COMEX_NETWORK_OFA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COMEX_NETWORK_PORTALS4_TRUE}" && test -z "${COMEX_NETWORK_PORTALS4_FALSE}"; then
+  as_fn_error $? "conditional \"COMEX_NETWORK_PORTALS4\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COMEX_NETWORK_DMAPP_TRUE}" && test -z "${COMEX_NETWORK_DMAPP_FALSE}"; then

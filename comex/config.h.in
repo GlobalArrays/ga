@@ -36,6 +36,9 @@
 /* Define to 1 if the network is OFA */
 #undef COMEX_NETWORK_OFA
 
+/* Define to 1 if the network is PORTALS4 */
+#undef COMEX_NETWORK_PORTALS4
+
 /* Define if ARMCI profiling is enabled */
 #undef COMEX_PROFILING_ARMCI
 
