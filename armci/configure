@@ -4232,29 +4232,7 @@ else
 fi
 
 
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ARMCI_DEFAULT_SHMMAX upper bound" >&5
-$as_echo_n "checking for ARMCI_DEFAULT_SHMMAX upper bound... " >&6; }
-if ${armci_cv_shmmax+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "x$ARMCI_DEFAULT_SHMMAX_UBOUND" != x; then :
-  armci_cv_shmmax=$ARMCI_DEFAULT_SHMMAX_UBOUND
-else
-  armci_cv_shmmax=8192
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $armci_cv_shmmax" >&5
-$as_echo "$armci_cv_shmmax" >&6; }
-if test $armci_cv_shmmax -le 1; then :
-  as_fn_error $? "invalid ARMCI_DEFAULT_SHMMAX upper bound; <= 1" "$LINENO" 5
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define ARMCI_DEFAULT_SHMMAX_UBOUND $armci_cv_shmmax
-_ACEOF
-
-
+ARMCI_SHMMAX
 # Check whether --enable-mpi-tests was given.
 if test "${enable_mpi_tests+set}" = set; then :
   enableval=$enable_mpi_tests;
