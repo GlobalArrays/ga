@@ -107,6 +107,24 @@ endif
 include $(top_srcdir)/src-armci/Makefile.inc
 
 ##############################################################################
+# profiling
+#
+if ENABLE_PROFILING_ARMCI
+AM_CPPFLAGS += -I$(top_srcdir)/src-armci
+if HAVE_SYS_WEAK_ALIAS_PRAGMA
+lib_LTLIBRARIES += libarmci_prof.la
+libarmci_prof_la_SOURCES =
+libarmci_prof_la_SOURCES += tools/armci_prof.c
+libarmci_la_SOURCES += src-armci/capi.c
+else # HAVE_SYS_WEAK_ALIAS_PRAGMA
+libarmci_la_SOURCES += tools/armci_prof.c
+endif # HAVE_SYS_WEAK_ALIAS_PRAGMA
+else # ENABLE_PROFILING_ARMCI
+libarmci_la_SOURCES += src-armci/capi.c
+include_HEADERS += src-armci/parmci.h
+endif
+
+##############################################################################
 # testing
 #
 check_PROGRAMS += testing/perf

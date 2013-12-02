@@ -673,6 +673,8 @@ HAVE_BLAS_TRUE
 BLAS_CPPFLAGS
 BLAS_LDFLAGS
 BLAS_LIBS
+HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE
+HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE
 COMEX_NETWORK_CPPFLAGS
 COMEX_NETWORK_LIBS
 COMEX_NETWORK_LDFLAGS
@@ -706,6 +708,8 @@ LDFLAGS
 CFLAGS
 CC
 MPICC
+ENABLE_PROFILING_ARMCI_FALSE
+ENABLE_PROFILING_ARMCI_TRUE
 MPI_CPPFLAGS
 MPI_LDFLAGS
 MPI_LIBS
@@ -785,12 +789,14 @@ enable_maintainer_mode
 with_PACKAGE
 with_mpi
 enable_mpi_tests
+enable_profiling_armci
 enable_dependency_tracking
 enable_autodetect
 with_mpi_ts
 with_ofa
 with_dmapp
 enable_assert
+enable_weak
 with_blas
 with_blas4
 with_blas8
@@ -1440,11 +1446,14 @@ Optional Features:
   --enable-maintainer-mode  enable make rules and dependencies not useful
 			  (and sometimes confusing) to the casual installer
   --disable-mpi-tests     disable MPI linker tests
+  --enable-profiling-armci
+                          enable profiling for ARMCI
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-autodetect     attempt to locate COMEX_NETWORK besides MPI
                           two-sided
   --disable-assert        turn off assertions
+  --disable-weak          don't use weak symbols for profiling
   --enable-shared[=PKGS]  build shared libraries [default=no]
   --enable-static[=PKGS]  build static libraries [default=yes]
   --enable-fast-install[=PKGS]
@@ -3277,6 +3286,30 @@ if test "${enable_mpi_tests+set}" = set; then :
   enableval=$enable_mpi_tests;
 else
   enable_mpi_tests=yes
+fi
+
+
+
+# ARMCI profiling layer
+
+# Check whether --enable-profiling-armci was given.
+if test "${enable_profiling_armci+set}" = set; then :
+  enableval=$enable_profiling_armci;
+else
+  enable_profiling_armci=no
+fi
+
+if test "x$enable_profiling_armci" = xyes; then :
+
+$as_echo "#define COMEX_PROFILING_ARMCI 1" >>confdefs.h
+
+fi
+ if test "x$enable_profiling_armci" = xyes; then
+  ENABLE_PROFILING_ARMCI_TRUE=
+  ENABLE_PROFILING_ARMCI_FALSE='#'
+else
+  ENABLE_PROFILING_ARMCI_TRUE='#'
+  ENABLE_PROFILING_ARMCI_FALSE=
 fi
 
 
@@ -7494,7 +7527,130 @@ _ACEOF
 
 
 
+# Check whether --enable-weak was given.
+if test "${enable_weak+set}" = set; then :
+  enableval=$enable_weak;
+else
+  enable_weak=yes
+fi
+
+if test "x$comex_cv_target_base" = xCYGWIN; then :
+  enable_weak=no
+fi
+
+
+if test "x$enable_weak" = xyes; then :
+  ax_sys_weak_alias=no
+      # Test whether compiler accepts #pragma form of weak aliasing
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports #pragma weak" >&5
+$as_echo_n "checking whether $CC supports #pragma weak... " >&6; }
+if ${ax_cv_sys_weak_alias_pragma+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+
+    # Try linking with a weak alias...
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+extern void weakf(int c);
+#pragma weak weakf = __weakf
+void __weakf(int c) {}
+int
+main ()
+{
+weakf(0)
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_sys_weak_alias_pragma=yes
+else
+  ax_cv_sys_weak_alias_pragma=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_sys_weak_alias_pragma" >&5
+$as_echo "$ax_cv_sys_weak_alias_pragma" >&6; }
+
+  # What was the result of the test?
+  if test $ax_sys_weak_alias = no &&
+         test $ax_cv_sys_weak_alias_pragma = yes; then :
+
+    ax_sys_weak_alias=pragma
+
+$as_echo "#define HAVE_SYS_WEAK_ALIAS_PRAGMA 1" >>confdefs.h
+
+
+fi
+
+else
+  ax_cv_sys_weak_alias_pragma=no
+
+$as_echo "#define HAVE_SYS_WEAK_ALIAS_PRAGMA 0" >>confdefs.h
+
+fi
+ if test "x$ax_cv_sys_weak_alias_pragma" = xyes; then
+  HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE=
+  HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE='#'
+else
+  HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE='#'
+  HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE=
+fi
+
+# enable shared libs automatically if profiling using weak symbols
+if test "x$ax_cv_sys_weak_alias_pragma" = xyes; then :
+  if test "x$enable_profiling" = xyes; then :
+  enable_shared=yes
+fi
+fi
+
+
 # Checks for C type sizes.
+comex_save_LIBS="$LIBS"; LIBS="$LIBS $MPI_LIBS"
+comex_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $MPI_LDFLAGS"
+comex_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $MPI_CPPFLAGS"
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of MPI_Aint" >&5
+$as_echo_n "checking size of MPI_Aint... " >&6; }
+if ${ac_cv_sizeof_MPI_Aint+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (MPI_Aint))" "ac_cv_sizeof_MPI_Aint"        "#include <mpi.h>
+"; then :
+
+else
+  if test "$ac_cv_type_MPI_Aint" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (MPI_Aint)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_MPI_Aint=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_MPI_Aint" >&5
+$as_echo "$ac_cv_sizeof_MPI_Aint" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_MPI_AINT $ac_cv_sizeof_MPI_Aint
+_ACEOF
+
+
+LIBS="$comex_save_LIBS"
+LDFLAGS="$comex_save_LDFLAGS"
+CPPFLAGS="$comex_save_CPPFLAGS"
 # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
@@ -8427,10 +8583,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8441,6 +8601,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -8448,10 +8612,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -8471,6 +8691,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8481,6 +8705,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -8488,10 +8716,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -8511,6 +8743,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8521,6 +8757,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -8528,10 +8768,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -8551,6 +8795,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8561,6 +8809,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -8568,10 +8820,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -8591,6 +8847,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8601,6 +8861,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -8608,50 +8872,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -8671,6 +8899,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -8718,10 +8950,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8732,6 +8968,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -8739,10 +8979,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -8762,6 +9058,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8772,6 +9072,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -8779,10 +9083,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -8802,6 +9110,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8812,6 +9124,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -8819,10 +9135,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -8842,6 +9162,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8852,6 +9176,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -8859,10 +9187,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -8882,6 +9214,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -8892,6 +9228,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -8899,50 +9239,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -8962,6 +9266,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -9006,10 +9314,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9020,6 +9332,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9027,10 +9343,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9050,6 +9422,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9060,6 +9436,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9067,10 +9447,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9090,6 +9474,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9100,6 +9488,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9107,10 +9499,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9130,6 +9526,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9140,6 +9540,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9147,10 +9551,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9170,6 +9578,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9180,6 +9592,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9187,50 +9603,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9250,6 +9630,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -9311,10 +9695,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9325,6 +9713,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9332,10 +9724,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9355,6 +9803,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9365,6 +9817,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9372,10 +9828,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9395,6 +9855,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9405,6 +9869,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9412,10 +9880,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9435,6 +9907,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9445,6 +9921,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9452,10 +9932,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9475,6 +9959,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9485,6 +9973,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9492,50 +9984,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9555,6 +10011,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -9603,10 +10063,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9617,6 +10081,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9624,10 +10092,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9647,6 +10171,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9657,6 +10185,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9664,10 +10196,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9687,6 +10223,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9697,6 +10237,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9704,10 +10248,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9727,6 +10275,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9737,6 +10289,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9744,10 +10300,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9767,6 +10327,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9777,6 +10341,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9784,50 +10352,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9847,6 +10379,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -9881,10 +10417,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9895,6 +10435,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9902,10 +10446,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9925,6 +10525,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9935,6 +10539,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9942,10 +10550,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -9965,6 +10577,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9975,6 +10591,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -9982,10 +10602,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10005,6 +10629,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10015,6 +10643,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10022,10 +10654,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10045,6 +10681,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10055,6 +10695,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10062,50 +10706,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10125,6 +10733,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -10159,10 +10771,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10173,6 +10789,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10180,10 +10800,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10203,6 +10879,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10213,6 +10893,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10220,10 +10904,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10243,6 +10931,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10253,6 +10945,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10260,10 +10956,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10283,6 +10983,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10293,6 +10997,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10300,10 +11008,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10323,6 +11035,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10333,6 +11049,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10340,50 +11060,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10403,6 +11087,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -10437,10 +11125,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10451,6 +11143,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10458,10 +11154,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10481,6 +11233,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10491,6 +11247,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10498,10 +11258,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10521,6 +11285,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10531,6 +11299,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10538,10 +11310,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10561,6 +11337,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10571,6 +11351,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10578,10 +11362,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10601,6 +11389,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10611,6 +11403,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10618,50 +11414,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10681,6 +11441,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -10715,10 +11479,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10729,6 +11497,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10736,10 +11508,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10759,6 +11587,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10769,6 +11601,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10776,10 +11612,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10799,6 +11639,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10809,6 +11653,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10816,10 +11664,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10839,6 +11691,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10849,6 +11705,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10856,10 +11716,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10879,6 +11743,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10889,6 +11757,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -10896,50 +11768,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -10959,6 +11795,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -10996,10 +11836,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11010,6 +11854,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11017,10 +11865,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11040,6 +11944,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11050,6 +11958,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11057,10 +11969,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11080,6 +11996,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11090,6 +12010,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11097,10 +12021,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11120,6 +12048,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11130,6 +12062,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11137,10 +12073,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11160,6 +12100,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11170,6 +12114,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11177,50 +12125,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11240,6 +12152,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -11274,10 +12190,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11288,6 +12208,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11295,10 +12219,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11318,6 +12298,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11328,6 +12312,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11335,10 +12323,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11358,6 +12350,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11368,6 +12364,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11375,10 +12375,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11398,6 +12402,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11408,6 +12416,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11415,10 +12427,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11438,6 +12454,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11448,6 +12468,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11455,50 +12479,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11518,6 +12506,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -11553,10 +12545,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11567,6 +12563,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11574,10 +12574,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11597,6 +12653,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11607,6 +12667,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11614,10 +12678,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11637,6 +12705,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11647,6 +12719,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11654,10 +12730,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11677,6 +12757,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11687,6 +12771,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11694,10 +12782,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11717,6 +12809,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11727,6 +12823,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11734,50 +12834,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11797,6 +12861,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -11831,10 +12899,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11845,6 +12917,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11852,10 +12928,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11875,6 +13007,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11885,6 +13021,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11892,10 +13032,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11915,6 +13059,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11925,6 +13073,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11932,10 +13084,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11955,6 +13111,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11965,6 +13125,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -11972,10 +13136,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -11995,6 +13163,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12005,6 +13177,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -12012,50 +13188,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -12075,6 +13215,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -12116,10 +13260,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12130,6 +13278,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -12137,10 +13289,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -12160,6 +13368,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12170,6 +13382,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -12177,10 +13393,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -12200,6 +13420,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12210,6 +13434,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -12217,10 +13445,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -12240,6 +13472,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12250,6 +13486,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -12257,10 +13497,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -12280,6 +13524,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12290,6 +13538,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -12297,50 +13549,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -12360,6 +13576,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -12388,10 +13608,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     comex_blas_ok=no
     if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy_
-         daxpy=daxpy_
-         saxpy=saxpy_
-         zaxpy=zaxpy_
+  caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12402,6 +13626,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -12409,10 +13637,66 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
+
+  ;
+  return 0;
+}
+_ACEOF
+
+         if ac_fn_c_try_link "$LINENO"; then :
+  comex_blas_ok=yes
+else
+  BLAS_LIBS=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+fi
+    if test "x$comex_blas_ok" = xno; then :
+  caxpy=caxpy_
+         daxpy=daxpy_
+         saxpy=saxpy_
+         zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char $caxpy ();
+char $daxpy ();
+char $saxpy ();
+char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -12432,6 +13716,10 @@ fi
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12442,6 +13730,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -12449,10 +13741,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -12472,6 +13768,10 @@ fi
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12482,6 +13782,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -12489,10 +13793,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -12512,6 +13820,10 @@ fi
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12522,6 +13834,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -12529,10 +13845,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -12552,6 +13872,10 @@ fi
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12562,6 +13886,10 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
@@ -12569,50 +13897,14 @@ char $zaxpy ();
 int
 main ()
 {
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
-
-  ;
-  return 0;
-}
-_ACEOF
-
-         if ac_fn_c_try_link "$LINENO"; then :
-  comex_blas_ok=yes
-else
-  BLAS_LIBS=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-fi
-    if test "x$comex_blas_ok" = xno; then :
-  caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __cplusplus
-extern "C" {
-#endif
-char $caxpy ();
-char $daxpy ();
-char $saxpy ();
-char $zaxpy ();
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 
   ;
   return 0;
@@ -12632,6 +13924,10 @@ fi
          daxpy=NOTFOUND
          saxpy=NOTFOUND
          zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND
 fi
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -12691,6 +13987,26 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define BLAS_ZAXPY $zaxpy
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define BLAS_CCOPY $ccopy
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define BLAS_DCOPY $dcopy
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define BLAS_SCOPY $scopy
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define BLAS_ZCOPY $zcopy
 _ACEOF
 
  if test $comex_blas_ok = yes; then
@@ -20283,6 +21599,10 @@ if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then
   as_fn_error $? "conditional \"MAINTAINER_MODE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${ENABLE_PROFILING_ARMCI_TRUE}" && test -z "${ENABLE_PROFILING_ARMCI_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_PROFILING_ARMCI\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${AMDEP_TRUE}" && test -z "${AMDEP_FALSE}"; then
   as_fn_error $? "conditional \"AMDEP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -20305,6 +21625,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COMEX_NETWORK_DMAPP_TRUE}" && test -z "${COMEX_NETWORK_DMAPP_FALSE}"; then
   as_fn_error $? "conditional \"COMEX_NETWORK_DMAPP\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_SYS_WEAK_ALIAS_PRAGMA_TRUE}" && test -z "${HAVE_SYS_WEAK_ALIAS_PRAGMA_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_SYS_WEAK_ALIAS_PRAGMA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HAVE_BLAS_TRUE}" && test -z "${HAVE_BLAS_FALSE}"; then

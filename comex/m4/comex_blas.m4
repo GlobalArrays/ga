@@ -10,14 +10,22 @@ char $caxpy ();
 char $daxpy ();
 char $saxpy ();
 char $zaxpy ();
+char $ccopy ();
+char $dcopy ();
+char $scopy ();
+char $zcopy ();
 #ifdef __cplusplus
 }
 #endif
 ],
-[[char cresult =  $caxpy ();
-char dresult =  $daxpy ();
-char sresult =  $saxpy ();
-char zresult =  $zaxpy ();
+[[char caxpy_result = $caxpy ();
+char daxpy_result = $daxpy ();
+char saxpy_result = $saxpy ();
+char zaxpy_result = $zaxpy ();
+char ccopy_result = $ccopy ();
+char dcopy_result = $dcopy ();
+char scopy_result = $scopy ();
+char zcopy_result = $zcopy ();
 ]])])
 ])
 
@@ -25,17 +33,29 @@ char zresult =  $zaxpy ();
 # -------------------
 # Test the linker.
 # Clears BLAS_LIBS on failure.  Sets comex_blas_ok=yes on success.
-# Tests the common case first of using lowercase+underscore. Some libraries,
-# such as ACML, have a C interface which uses lowercase+nounderscore. ComEx
-# assumes it is calling using the Fortran interface.
 AC_DEFUN([COMEX_RUN_BLAS_TEST], [
     AC_LANG_PUSH([C])
     comex_blas_ok=no
+    AS_IF([test "x$comex_blas_ok" = xno],
+        [caxpy=caxpy
+         daxpy=daxpy
+         saxpy=saxpy
+         zaxpy=zaxpy
+         ccopy=ccopy
+         dcopy=dcopy
+         scopy=scopy
+         zcopy=zcopy
+         COMEX_C_BLAS_TEST()
+         AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
     AS_IF([test "x$comex_blas_ok" = xno],
         [caxpy=caxpy_
          daxpy=daxpy_
          saxpy=saxpy_
          zaxpy=zaxpy_
+         ccopy=ccopy_
+         dcopy=dcopy_
+         scopy=scopy_
+         zcopy=zcopy_
          COMEX_C_BLAS_TEST()
          AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
     AS_IF([test "x$comex_blas_ok" = xno],
@@ -43,6 +63,10 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          daxpy=daxpy__
          saxpy=saxpy__
          zaxpy=zaxpy__
+         ccopy=ccopy__
+         dcopy=dcopy__
+         scopy=scopy__
+         zcopy=zcopy__
          COMEX_C_BLAS_TEST()
          AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
     AS_IF([test "x$comex_blas_ok" = xno],
@@ -50,6 +74,10 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          daxpy=DGEMM
          saxpy=SGEMM
          zaxpy=ZGEMM
+         ccopy=CCOPY
+         dcopy=DCOPY
+         scopy=SCOPY
+         zcopy=ZCOPY
          COMEX_C_BLAS_TEST()
          AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
     AS_IF([test "x$comex_blas_ok" = xno],
@@ -57,6 +85,10 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          daxpy=DGEMM_
          saxpy=SGEMM_
          zaxpy=ZGEMM_
+         ccopy=CCOPY_
+         dcopy=DCOPY_
+         scopy=SCOPY_
+         zcopy=ZCOPY_
          COMEX_C_BLAS_TEST()
          AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
     AS_IF([test "x$comex_blas_ok" = xno],
@@ -64,20 +96,21 @@ AC_DEFUN([COMEX_RUN_BLAS_TEST], [
          daxpy=DGEMM__
          saxpy=SGEMM__
          zaxpy=ZGEMM__
-         COMEX_C_BLAS_TEST()
-         AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
-    AS_IF([test "x$comex_blas_ok" = xno],
-        [caxpy=caxpy
-         daxpy=daxpy
-         saxpy=saxpy
-         zaxpy=zaxpy
+         ccopy=CCOPY__
+         dcopy=DCOPY__
+         scopy=SCOPY__
+         zcopy=ZCOPY__
          COMEX_C_BLAS_TEST()
          AC_LINK_IFELSE([], [comex_blas_ok=yes], [BLAS_LIBS=])])
     AS_IF([test "x$comex_blas_ok" = xno],
         [caxpy=NOTFOUND
          daxpy=NOTFOUND
          saxpy=NOTFOUND
-         zaxpy=NOTFOUND])
+         zaxpy=NOTFOUND
+         ccopy=NOTFOUND
+         dcopy=NOTFOUND
+         scopy=NOTFOUND
+         zcopy=NOTFOUND])
     AC_LANG_POP([C])
 ])dnl
 
@@ -315,5 +348,13 @@ AC_DEFINE_UNQUOTED([BLAS_SAXPY], [$saxpy],
     [Define to name of saxpy routine to call from C])
 AC_DEFINE_UNQUOTED([BLAS_ZAXPY], [$zaxpy],
     [Define to name of zaxpy routine to call from C])
+AC_DEFINE_UNQUOTED([BLAS_CCOPY], [$ccopy],
+    [Define to name of ccopy routine to call from C])
+AC_DEFINE_UNQUOTED([BLAS_DCOPY], [$dcopy],
+    [Define to name of dcopy routine to call from C])
+AC_DEFINE_UNQUOTED([BLAS_SCOPY], [$scopy],
+    [Define to name of scopy routine to call from C])
+AC_DEFINE_UNQUOTED([BLAS_ZCOPY], [$zcopy],
+    [Define to name of zcopy routine to call from C])
 AM_CONDITIONAL([HAVE_BLAS], [test $comex_blas_ok = yes])
 ])dnl COMEX_BLAS

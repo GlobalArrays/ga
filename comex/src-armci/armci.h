@@ -21,10 +21,10 @@ typedef struct {
 typedef long armci_size_t;
 extern int armci_notify(int proc);
 extern int armci_notify_wait(int proc,int *pval);
-extern int ARMCI_Init(void);    /* initialize ARMCI */
+extern int ARMCI_Init();    /* initialize ARMCI */
 extern int ARMCI_Init_args(int *argc, char ***argv); /* initialize ARMCI */
 extern int ARMCI_Initialized();
-extern void ARMCI_Barrier(void);    /* ARMCI Barrier*/
+extern void ARMCI_Barrier();    /* ARMCI Barrier*/
 
 extern int ARMCI_Put(void *src, void* dst, int bytes, int proc);
 extern int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc);
@@ -149,11 +149,11 @@ extern int ARMCI_Same_node(int proc);
 extern void ARMCI_Finalize();    /* terminate ARMCI */
 extern void ARMCI_Error(char *msg, int code);
 extern void ARMCI_Fence(int proc);
-extern void ARMCI_AllFence(void);
+extern void ARMCI_AllFence();
 extern int  ARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc);
-extern void ARMCI_Cleanup(void);
+extern void ARMCI_Cleanup();
 extern int ARMCI_Create_mutexes(int num);
-extern int ARMCI_Destroy_mutexes(void);
+extern int ARMCI_Destroy_mutexes();
 extern void ARMCI_Lock(int mutex, int proc);
 extern void ARMCI_Unlock(int mutex, int proc);
 extern void ARMCI_Set_shm_limit(unsigned long shmemlimit);
@@ -361,7 +361,7 @@ extern int ARMCI_Wait(armci_hdl_t* nb_handle); /*non-blocking request handle*/
 
 extern int ARMCI_Test(armci_hdl_t* nb_handle); /*non-blocking request handle*/
 
-extern int ARMCI_WaitAll (void);
+extern int ARMCI_WaitAll ();
 
 extern int ARMCI_WaitProc (int proc);
 

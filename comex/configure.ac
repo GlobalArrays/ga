@@ -41,6 +41,9 @@ COMEX_WITH_MPI
 # In case users don't care whether MPI actually works during configure.
 COMEX_DISABLE_MPI_TESTS
 
+# ARMCI profiling layer
+COMEX_ENABLE_PROFILING_ARMCI
+
 #########################################
 # C compiler
 ########################################
@@ -102,8 +105,17 @@ AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 AC_CHECK_TYPES([ptrdiff_t])
 COMEX_FUNCTION
+COMEX_DISABLE_SYS_WEAK_ALIAS
+COMEX_SYS_WEAK_ALIAS
 
 # Checks for C type sizes.
+comex_save_LIBS="$LIBS"; LIBS="$LIBS $MPI_LIBS"
+comex_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $MPI_LDFLAGS"
+comex_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $MPI_CPPFLAGS"
+AC_CHECK_SIZEOF([MPI_Aint], [], [[#include <mpi.h>]])
+LIBS="$comex_save_LIBS"
+LDFLAGS="$comex_save_LDFLAGS"
+CPPFLAGS="$comex_save_CPPFLAGS"
 AC_CHECK_SIZEOF([void*])
 AC_CHECK_SIZEOF([char])
 AC_CHECK_SIZEOF([short])

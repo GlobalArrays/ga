@@ -3,17 +3,29 @@
 /* Define to name of caxpy routine to call from C */
 #undef BLAS_CAXPY
 
+/* Define to name of ccopy routine to call from C */
+#undef BLAS_CCOPY
+
 /* Define to name of daxpy routine to call from C */
 #undef BLAS_DAXPY
 
+/* Define to name of dcopy routine to call from C */
+#undef BLAS_DCOPY
+
 /* Define to name of saxpy routine to call from C */
 #undef BLAS_SAXPY
+
+/* Define to name of scopy routine to call from C */
+#undef BLAS_SCOPY
 
 /* Define to sizeof(INTEGER) used to compile BLAS */
 #undef BLAS_SIZE
 
 /* Define to name of zaxpy routine to call from C */
 #undef BLAS_ZAXPY
+
+/* Define to name of zcopy routine to call from C */
+#undef BLAS_ZCOPY
 
 /* Define to 1 if the network is DMAPP */
 #undef COMEX_NETWORK_DMAPP
@@ -23,6 +35,9 @@
 
 /* Define to 1 if the network is OFA */
 #undef COMEX_NETWORK_OFA
+
+/* Define if ARMCI profiling is enabled */
+#undef COMEX_PROFILING_ARMCI
 
 /* CPP symbol for function name, if available */
 #undef FUNCTION_NAME
@@ -147,6 +162,9 @@
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
+/* Define this if weak aliases may be created with #pragma weak */
+#undef HAVE_SYS_WEAK_ALIAS_PRAGMA
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
@@ -201,6 +219,9 @@
 
 /* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
+
+/* The size of `MPI_Aint', as computed by sizeof. */
+#undef SIZEOF_MPI_AINT
 
 /* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT

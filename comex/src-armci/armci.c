@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "armci.h"
+#include "parmci.h"
 #include "comex.h"
 
 
@@ -26,19 +27,19 @@ static void convert_giov(armci_giov_t *a, comex_giov_t *b, int len)
 }
 
 
-int ARMCI_Acc(int optype, void *scale, void *src, void *dst, int bytes, int proc)
+int PARMCI_Acc(int optype, void *scale, void *src, void *dst, int bytes, int proc)
 {
     return comex_acc(optype, scale, src, dst, bytes, proc, COMEX_GROUP_WORLD);
 }
 
 
-int ARMCI_AccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc)
+int PARMCI_AccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc)
 {
     return comex_accs(optype, scale, src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD);
 }
 
 
-int ARMCI_AccV(int op, void *scale, armci_giov_t *darr, int len, int proc)
+int PARMCI_AccV(int op, void *scale, armci_giov_t *darr, int len, int proc)
 {
     int rc;
     comex_giov_t *adarr = malloc(sizeof(comex_giov_t) * len);
@@ -50,44 +51,44 @@ int ARMCI_AccV(int op, void *scale, armci_giov_t *darr, int len, int proc)
 
 
 /* fence is always on the world group */
-void ARMCI_AllFence()
+void PARMCI_AllFence()
 {
     assert(COMEX_SUCCESS == comex_fence_all(COMEX_GROUP_WORLD));
 }
 
 
-void ARMCI_Barrier()
+void PARMCI_Barrier()
 {
     assert(COMEX_SUCCESS == comex_barrier(ARMCI_Default_Proc_Group));
 }
 
 
-int ARMCI_Create_mutexes(int num)
+int PARMCI_Create_mutexes(int num)
 {
     return comex_create_mutexes(num);
 }
 
 
-int ARMCI_Destroy_mutexes()
+int PARMCI_Destroy_mutexes()
 {
     return comex_destroy_mutexes();
 }
 
 
 /* fence is always on the world group */
-void ARMCI_Fence(int proc)
+void PARMCI_Fence(int proc)
 {
     comex_fence_proc(proc, COMEX_GROUP_WORLD);
 }
 
 
-void ARMCI_Finalize()
+void PARMCI_Finalize()
 {
     comex_finalize();
 }
 
 
-int ARMCI_Free(void *ptr)
+int PARMCI_Free(void *ptr)
 {
     return comex_free(ptr, ARMCI_Default_Proc_Group);
 }
@@ -99,25 +100,25 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
 }
 
 
-int ARMCI_Free_local(void *ptr)
+int PARMCI_Free_local(void *ptr)
 {
     return comex_free_local(ptr);
 }
 
 
-int ARMCI_Get(void *src, void *dst, int bytes, int proc)
+int PARMCI_Get(void *src, void *dst, int bytes, int proc)
 {
     return comex_get(src, dst, bytes, proc, COMEX_GROUP_WORLD);
 }
 
 
-int ARMCI_GetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc)
+int PARMCI_GetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc)
 {
     return comex_gets(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD);
 }
 
 
-int ARMCI_GetV(armci_giov_t *darr, int len, int proc)
+int PARMCI_GetV(armci_giov_t *darr, int len, int proc)
 {
     int rc;
     comex_giov_t *adarr = malloc(sizeof(comex_giov_t) * len);
@@ -128,7 +129,7 @@ int ARMCI_GetV(armci_giov_t *darr, int len, int proc)
 }
 
 
-double ARMCI_GetValueDouble(void *src, int proc)
+double PARMCI_GetValueDouble(void *src, int proc)
 {
     double val;
     assert(COMEX_SUCCESS == 
@@ -137,7 +138,7 @@ double ARMCI_GetValueDouble(void *src, int proc)
 }
 
 
-float ARMCI_GetValueFloat(void *src, int proc)
+float PARMCI_GetValueFloat(void *src, int proc)
 {
     float val;
     assert(COMEX_SUCCESS == 
@@ -146,7 +147,7 @@ float ARMCI_GetValueFloat(void *src, int proc)
 }
 
 
-int ARMCI_GetValueInt(void *src, int proc)
+int PARMCI_GetValueInt(void *src, int proc)
 {
     int val;
     assert(COMEX_SUCCESS == 
@@ -155,7 +156,7 @@ int ARMCI_GetValueInt(void *src, int proc)
 }
 
 
-long ARMCI_GetValueLong(void *src, int proc)
+long PARMCI_GetValueLong(void *src, int proc)
 {
     long val;
     assert(COMEX_SUCCESS == 
@@ -164,7 +165,7 @@ long ARMCI_GetValueLong(void *src, int proc)
 }
 
 
-int ARMCI_Init()
+int PARMCI_Init()
 {
     int rc = comex_init();
     assert(COMEX_SUCCESS == comex_group_comm(COMEX_GROUP_WORLD, &ARMCI_COMM_WORLD));
@@ -172,7 +173,7 @@ int ARMCI_Init()
 }
 
 
-int ARMCI_Init_args(int *argc, char ***argv)
+int PARMCI_Init_args(int *argc, char ***argv)
 {
     int rc = comex_init_args(argc, argv);
     assert(COMEX_SUCCESS == comex_group_comm(COMEX_GROUP_WORLD, &ARMCI_COMM_WORLD));
@@ -180,19 +181,19 @@ int ARMCI_Init_args(int *argc, char ***argv)
 }
 
 
-int ARMCI_Initialized()
+int PARMCI_Initialized()
 {
     return comex_initialized();
 }
 
 
-void ARMCI_Lock(int mutex, int proc)
+void PARMCI_Lock(int mutex, int proc)
 {
     comex_lock(mutex, proc);
 }
 
 
-int ARMCI_Malloc(void **ptr_arr, armci_size_t bytes)
+int PARMCI_Malloc(void **ptr_arr, armci_size_t bytes)
 {
     return comex_malloc(ptr_arr, bytes, ARMCI_Default_Proc_Group);
 }
@@ -204,45 +205,45 @@ int ARMCI_Malloc_group(void **ptr_arr, armci_size_t bytes, ARMCI_Group *group)
 }
 
 
-void* ARMCI_Malloc_local(armci_size_t bytes)
+void* PARMCI_Malloc_local(armci_size_t bytes)
 {
     return comex_malloc_local(bytes);
 }
 
 
-void* ARMCI_Memat(armci_meminfo_t *meminfo, long offset)
+void* PARMCI_Memat(armci_meminfo_t *meminfo, long offset)
 {
     assert(0);
     return NULL;
 }
 
 
-void ARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg)
+void PARMCI_Memget(size_t bytes, armci_meminfo_t *meminfo, int memflg)
 {
     assert(0);
 }
 
 
-void ARMCI_Memdt(armci_meminfo_t *meminfo, long offset)
+void PARMCI_Memdt(armci_meminfo_t *meminfo, long offset)
 {
     assert(0);
 }
 
 
-void ARMCI_Memctl(armci_meminfo_t *meminfo)
+void PARMCI_Memctl(armci_meminfo_t *meminfo)
 {
     assert(0);
 }
 
 
 
-int ARMCI_NbAccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
+int PARMCI_NbAccS(int optype, void *scale, void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
 {
     return comex_nbaccs(optype, scale, src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD, nb_handle);
 }
 
 
-int ARMCI_NbAccV(int op, void *scale, armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
+int PARMCI_NbAccV(int op, void *scale, armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
 {
     int rc;
     comex_giov_t *adarr = malloc(sizeof(comex_giov_t) * len);
@@ -253,19 +254,19 @@ int ARMCI_NbAccV(int op, void *scale, armci_giov_t *darr, int len, int proc, arm
 }
 
 
-int ARMCI_NbGet(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_handle)
+int PARMCI_NbGet(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_handle)
 {
     return comex_nbget(src, dst, bytes, proc, COMEX_GROUP_WORLD, nb_handle);
 }
 
 
-int ARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
+int PARMCI_NbGetS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
 {
     return comex_nbgets(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD, nb_handle);
 }
 
 
-int ARMCI_NbGetV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
+int PARMCI_NbGetV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
 {
     int rc;
     comex_giov_t *adarr = malloc(sizeof(comex_giov_t) * len);
@@ -276,19 +277,19 @@ int ARMCI_NbGetV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
 }
 
 
-int ARMCI_NbPut(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_handle)
+int PARMCI_NbPut(void *src, void *dst, int bytes, int proc, armci_hdl_t *nb_handle)
 {
     return comex_nbput(src, dst, bytes, proc, COMEX_GROUP_WORLD, nb_handle);
 }
 
 
-int ARMCI_NbPutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
+int PARMCI_NbPutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc, armci_hdl_t *nb_handle)
 {
     return comex_nbputs(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD, nb_handle);
 }
 
 
-int ARMCI_NbPutV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
+int PARMCI_NbPutV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
 {
     int rc;
     comex_giov_t *adarr = malloc(sizeof(comex_giov_t) * len);
@@ -299,57 +300,57 @@ int ARMCI_NbPutV(armci_giov_t *darr, int len, int proc, armci_hdl_t *nb_handle)
 }
 
 
-int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t *nb_handle)
+int PARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t *nb_handle)
 {
     return comex_nbput(&src, dst, sizeof(double), proc, COMEX_GROUP_WORLD, nb_handle);
 }
 
 
-int ARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t *nb_handle)
+int PARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t *nb_handle)
 {
     return comex_nbput(&src, dst, sizeof(float), proc, COMEX_GROUP_WORLD, nb_handle);
 }
 
 
-int ARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t *nb_handle)
+int PARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t *nb_handle)
 {
     return comex_nbput(&src, dst, sizeof(int), proc, COMEX_GROUP_WORLD, nb_handle);
 }
 
 
-int ARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t *nb_handle)
+int PARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t *nb_handle)
 {
     return comex_nbput(&src, dst, sizeof(long), proc, COMEX_GROUP_WORLD, nb_handle);
 }
 
 
-int ARMCI_Put(void *src, void *dst, int bytes, int proc)
+int PARMCI_Put(void *src, void *dst, int bytes, int proc)
 {
     return comex_put(src, dst, bytes, proc, COMEX_GROUP_WORLD);
 }
 
 
-int ARMCI_PutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc)
+int PARMCI_PutS(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int proc)
 {
     return comex_puts(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr, count, stride_levels, proc, COMEX_GROUP_WORLD);
 }
 
 
-int ARMCI_PutS_flag(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int *flag, int val, int proc)
+int PARMCI_PutS_flag(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int *flag, int val, int proc)
 {
     assert(0);
     return 0;
 }
 
 
-int ARMCI_PutS_flag_dir(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int *flag, int val, int proc)
+int PARMCI_PutS_flag_dir(void *src_ptr, int *src_stride_arr, void *dst_ptr, int *dst_stride_arr, int *count, int stride_levels, int *flag, int val, int proc)
 {
     assert(0);
     return 0;
 }
 
 
-int ARMCI_PutV(armci_giov_t *darr, int len, int proc)
+int PARMCI_PutV(armci_giov_t *darr, int len, int proc)
 {
     int rc;
     comex_giov_t *adarr = malloc(sizeof(comex_giov_t) * len);
@@ -360,44 +361,44 @@ int ARMCI_PutV(armci_giov_t *darr, int len, int proc)
 }
 
 
-int ARMCI_PutValueDouble(double src, void *dst, int proc)
+int PARMCI_PutValueDouble(double src, void *dst, int proc)
 {
     return comex_put(&src, dst, sizeof(double), proc, COMEX_GROUP_WORLD);
 }
 
 
-int ARMCI_PutValueFloat(float src, void *dst, int proc)
+int PARMCI_PutValueFloat(float src, void *dst, int proc)
 {
     return comex_put(&src, dst, sizeof(float), proc, COMEX_GROUP_WORLD);
 }
 
 
-int ARMCI_PutValueInt(int src, void *dst, int proc)
+int PARMCI_PutValueInt(int src, void *dst, int proc)
 {
     return comex_put(&src, dst, sizeof(int), proc, COMEX_GROUP_WORLD);
 }
 
 
-int ARMCI_PutValueLong(long src, void *dst, int proc)
+int PARMCI_PutValueLong(long src, void *dst, int proc)
 {
     return comex_put(&src, dst, sizeof(long), proc, COMEX_GROUP_WORLD);
 }
 
 
-int ARMCI_Put_flag(void *src, void *dst, int bytes, int *f, int v, int proc)
+int PARMCI_Put_flag(void *src, void *dst, int bytes, int *f, int v, int proc)
 {
     assert(0);
     return 0;
 }
 
 
-int ARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
+int PARMCI_Rmw(int op, void *ploc, void *prem, int extra, int proc)
 {
     return comex_rmw(op, ploc, prem, extra, proc, COMEX_GROUP_WORLD);
 }
 
 
-int ARMCI_Test(armci_hdl_t *nb_handle)
+int PARMCI_Test(armci_hdl_t *nb_handle)
 {
     int status;
     assert(COMEX_SUCCESS == comex_test(nb_handle, &status));
@@ -405,50 +406,38 @@ int ARMCI_Test(armci_hdl_t *nb_handle)
 }
 
 
-void ARMCI_Unlock(int mutex, int proc)
+void PARMCI_Unlock(int mutex, int proc)
 {
     comex_unlock(mutex, proc);
 }
 
 
-int ARMCI_Wait(armci_hdl_t *nb_handle)
+int PARMCI_Wait(armci_hdl_t *nb_handle)
 {
     return comex_wait(nb_handle);
 }
 
 
-int ARMCI_WaitAll()
+int PARMCI_WaitAll()
 {
     return comex_wait_all(COMEX_GROUP_WORLD);
 }
 
 
-int ARMCI_WaitProc(int proc)
+int PARMCI_WaitProc(int proc)
 {
     return comex_wait_proc(proc, COMEX_GROUP_WORLD);
 }
 
 
-void armci_msg_barrier()
-{
-    comex_barrier(ARMCI_Default_Proc_Group);
-}
-
-
-void armci_msg_group_barrier(ARMCI_Group *group)
-{
-    comex_barrier(*group);
-}
-
-
-int armci_notify(int proc)
+int parmci_notify(int proc)
 {
     assert(0);
     return 0;
 }
 
 
-int armci_notify_wait(int proc, int *pval)
+int parmci_notify_wait(int proc, int *pval)
 {
     assert(0);
     return 0;
@@ -545,7 +534,7 @@ int ARMCI_Uses_shm_grp(ARMCI_Group *group)
 }
 
 
-void ARMCI_Cleanup(void)
+void ARMCI_Cleanup()
 {
     comex_finalize();
 }

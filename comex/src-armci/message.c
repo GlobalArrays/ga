@@ -497,8 +497,22 @@ void parmci_msg_barrier()
 
 void armci_msg_bintree(int scope, int* Root, int *Up, int *Left, int *Right)
 {
-    //assert(SCOPE_ALL == scope);
-    assert(0);
+    int root, up, left, right, index, nproc;
+
+    assert(SCOPE_NODE != scope);
+    assert(SCOPE_MASTERS != scope);
+
+    root  = 0;
+    nproc = armci_msg_nproc();
+    index = armci_msg_me() - root;
+    up    = (index-1)/2 + root; if( up < root) up = -1;
+    left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
+    right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
+
+    *Up = up;
+    *Left = left;
+    *Right = right;
+    *Root = root;
 }
 
 
@@ -668,8 +682,23 @@ void armci_msg_group_bcast_scope(int scope, void *buf, int len, int root, ARMCI_
         MPI_Bcast(buf, len, MPI_BYTE, root, MPI_COMM_SELF);
     }
     else {
+        int root_sub;
+        int err;
+        /* NOTE: this function is passed a root which has been translated back
+         * to the world group while the group passed in is the sub
+         * communicator group... what a mess */
+        MPI_Group group_world;
+        MPI_Group group_sub;
+        
+        err = MPI_Comm_group(wc(), &group_world);
+        assert(MPI_SUCCESS == err);
+        err = MPI_Comm_group(get_comm(group), &group_sub);
+        assert(MPI_SUCCESS == err);
+        err = MPI_Group_translate_ranks(group_world, 1, &root,
+                group_sub, &root_sub);
         comex_barrier(*group);
-        MPI_Bcast(buf, len, MPI_BYTE, root, get_comm(group));
+        err = MPI_Bcast(buf, len, MPI_BYTE, root_sub, get_comm(group));
+        assert(MPI_SUCCESS == err);
     }
 }
 
