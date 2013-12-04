@@ -1712,6 +1712,9 @@ static void dmapp_initialize(void)
     memset(&requested_attrs, 0, sizeof(requested_attrs));
     memset(&actual_attrs, 0, sizeof(actual_attrs));
 
+    status = dmapp_get_rma_attrs_ext(&requested_attrs);
+    assert(status == DMAPP_RC_SUCCESS);
+
     // Check envs
     check_envs();
 
