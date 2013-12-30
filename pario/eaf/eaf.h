@@ -1,5 +1,5 @@
 #ifndef EAF_H 
-#define EAH_H
+#define EAF_H
 
 #if 0
 /* This section used by both C and Fortran */
