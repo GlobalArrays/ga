@@ -131,7 +131,7 @@ if (abs_reg((b).real) >= abs_reg((b).imag)) {                       \
 
 
 /* assignment of a random value */
-#define sign (1.0 * rand() / RAND_MAX > 1.0 ? 1.0 : -1.0)
+#define sign() (1.0 * rand() / RAND_MAX > 1.0 ? 1.0 : -1.0)
 #define assign_rand_reg(a,val) (a) = 1.0 * (val) * rand() / RAND_MAX * sign()
 #define assign_rand_cpl(a,val) assign_rand_reg((a).real, (val).real); \
                                assign_rand_reg((a).imag, (val).imag)
