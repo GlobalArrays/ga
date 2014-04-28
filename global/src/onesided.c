@@ -2016,7 +2016,7 @@ void ngai_acc_common(Integer g_a,
                 stride_rem, count, ndim-1, proc,
                 (armci_hdl_t*)get_armci_nbhandle(nbhandle));
           else {
-#  if 0 /* disabled, as nbacc fails in quadrics */
+#  if !defined(DISABLE_NBOPT)
             if((loop==0 && counter==(int)np-1) || loop==1)
               ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, 
                   count, ndim-1, proc);
@@ -2034,7 +2034,7 @@ void ngai_acc_common(Integer g_a,
         } /* end if(cond) */
       }
     }
-#if 0
+#if !defined(DISABLE_NBOPT)
   if(!nbhandle) nga_wait_internal(&ga_nbhandle);
 #endif
   } else {
@@ -2132,7 +2132,7 @@ void ngai_acc_common(Integer g_a,
                       stride_rem, count, ndim-1, proc,
                       (armci_hdl_t*)get_armci_nbhandle(nbhandle));
                 else {
-#  if 0 /* disabled, as nbacc fails in quadrics */
+#  if !defined(DISABLE_NBOPT)
                   if((loop==0 && counter==(int)np-1) || loop==1)
                     ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, 
                         count, ndim-1, proc);
@@ -2302,7 +2302,7 @@ void ngai_acc_common(Integer g_a,
                       stride_rem, count, ndim-1, proc,
                       (armci_hdl_t*)get_armci_nbhandle(nbhandle));
                 else {
-#  if 0 /* disabled, as nbacc fails in quadrics */
+#  if !defined(DISABLE_NBOPT)
                   if((loop==0 && counter==(int)np-1) || loop==1)
                     ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, 
                         count, ndim-1, proc);
@@ -2343,7 +2343,7 @@ void ngai_acc_common(Integer g_a,
         }
       }
     }
-#if 0
+#if !defined(DISABLE_NBOPT)
   if(!nbhandle) nga_wait_internal(&ga_nbhandle);
 #endif
   }
