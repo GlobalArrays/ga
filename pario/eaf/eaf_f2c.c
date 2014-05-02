@@ -200,7 +200,8 @@ Integer FATR eaf_stat_(
     char pbuf[1024];
     char fbuf[32];
 
-    int code, kb;
+    int  code;
+    long kb;
 
     ga_f2cstring(path, pathlen, pbuf, sizeof(pbuf));
     /* return (Integer) EAF_ERR_TOO_LONG; TODO errcheck? */

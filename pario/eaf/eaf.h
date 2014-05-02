@@ -31,7 +31,7 @@ int  EAF_Open(const char *fname, int type, int *fd);
 void EAF_Print_stats(int fd);
 int  EAF_Probe(int id, int *status);
 int  EAF_Read(int fd, eaf_off_t offset, void *buf, size_t bytes);
-int  EAF_Stat(const char *path, int *avail_kb, char *fstype, int fslen);
+int  EAF_Stat(const char *path, long *avail_kb, char *fstype, int fslen);
 int  EAF_Truncate(int fd, eaf_off_t length);
 int  EAF_Wait(int fd, int id);
 int  EAF_Write(int fd, eaf_off_t offset, const void *buf, size_t bytes);

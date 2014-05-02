@@ -506,7 +506,7 @@ int EAF_Delete(const char *fname)
  *
  * Return 0 on success, non-zero on failure.
  */
-int EAF_Stat(const char *path, int *avail_mb, char *fstype, int fslen)
+int EAF_Stat(const char *path, long *avail_mb, char *fstype, int fslen)
 {
     char dirname[PATH_MAX];
     stat_t statinfo;
@@ -516,7 +516,7 @@ int EAF_Stat(const char *path, int *avail_mb, char *fstype, int fslen)
     if ((rc = elio_stat(dirname, &statinfo))) return rc;
     if (fslen < 8) return EAF_ERR_TOO_SHORT;
 
-    *avail_mb = (int)(statinfo.avail>>10);
+    *avail_mb = (long)(statinfo.avail>>10);
     if (statinfo.fs == ELIO_UFS)
         strcpy(fstype, "UFS");
     else if (statinfo.fs == ELIO_PFS)
