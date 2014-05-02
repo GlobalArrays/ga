@@ -121,7 +121,7 @@ extern proc_list_t *PGRP_LIST;
     }                                                                  \
 }
 
-/* this macro finds cordinates of the chunk of array owned by processor proc */
+/* this macro finds coordinates of the chunk of array owned by processor proc */
 #define ga_ownsM_no_handle(ndim, dims, nblock, mapc, proc, lo, hi)             \
 {                                                                              \
    Integer _loc, _nb, _d, _index, _dim=ndim,_dimstart=0, _dimpos;              \
@@ -297,7 +297,9 @@ extern proc_list_t *PGRP_LIST;
   sprintf(err_string, str);                                          \
   _d=0;                                                              \
   _l = strlen(str);                                                  \
-  sprintf(err_string+_l, "[%ld:%ld ",(long)lo[_d],(long)hi[_d]);     \
+  sprintf(err_string+_l, GA[val+GA_OFFSET].name);                    \
+  _l = strlen(err_string);                                           \
+  sprintf(err_string+_l, " [%ld:%ld ",(long)lo[_d],(long)hi[_d]);    \
   _l=strlen(err_string);                                             \
   __CRAYX1_PRAGMA("_CRI novector");                                  \
   for(_d=1; _d< ndim; _d++){                                         \
