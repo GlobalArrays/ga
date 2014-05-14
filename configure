@@ -25429,6 +25429,12 @@ else
   HAVE_SCALAPACK_FALSE=
 fi
 
+#########################################################
+# introduce 64-byte Intel alignment in MA common blocks #
+#########################################################
+if test x$INTEL_64ALIGN != x; then :
+$as_echo "#define INTEL_64ALIGN 1" >>confdefs.h
+fi
 
 
 ###############################################################################
