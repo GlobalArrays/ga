@@ -799,11 +799,31 @@ static void armci_init_nic(vapi_nic_t *nic, int scq_entries, int
 
     devs = ibv_get_device_list(&ndevs);
 
-    nic->handle = ibv_open_device(*devs); 
+    char *runtime_devname;
+    int device_found = 0, device_id = 0;
+
+    runtime_devname = getenv("ARMCI_OPENIB_DEVICE");
+
+    if (runtime_devname) {
+        for (i = 0; i < ndevs; i++) {
+            if (!strncmp(ibv_get_device_name(devs[i]), runtime_devname, 32)) {
+                device_found = 1;
+                device_id = i;
+                break;
+            }
+        }
+    }
+    else {
+        device_id = 0;
+        device_found = 1;
+    }
+
+    assert(device_found);
+    nic->handle = ibv_open_device(devs[device_id]); 
 
     nic->maxtransfersize = MAX_RDMA_SIZE;
 
-    nic->vendor = ibv_get_device_name(*devs);
+    nic->vendor = ibv_get_device_name(devs[device_id]);
 
     rc = ibv_query_device(nic->handle, &nic->attr);
 
