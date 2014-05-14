@@ -127,13 +127,20 @@
 #ifdef HPUX
 #  define HP_SHARED_COMMON_
 #endif
+#define INTEL_64ALIGN 1
 
 !     common blocks
+#ifdef INTEL_64ALIGN
+!DIR$ ATTRIBUTES ALIGN : 64 :: mbc_byte
+#endif
 #ifdef HP_SHARED_COMMON
 *$HP$ shared_common /mbc_byte/
 #endif
       common /mbc_byte/ byte_mb(2)
       character*1       byte_mb
+#ifdef INTEL_64ALIGN
+!DIR$ ATTRIBUTES ALIGN : 64 :: mbc_int
+#endif
 #ifdef HP_SHARED_COMMON
 *$HP$ shared_common /mbc_int/
 #endif
@@ -144,21 +151,33 @@
 #endif
       common /mbc_log/  log_mb(2)
       logical           log_mb
+#ifdef INTEL_64ALIGN
+!DIR$ ATTRIBUTES ALIGN : 64 :: mbc_real
+#endif
 #ifdef HP_SHARED_COMMON
 *$HP$ shared_common /mbc_real/
 #endif
       common /mbc_real/ real_mb(2)
       real              real_mb
+#ifdef INTEL_64ALIGN
+!DIR$ ATTRIBUTES ALIGN : 64 :: mbc_dbl
+#endif
 #ifdef HP_SHARED_COMMON
 *$HP$ shared_common /mbc_dbl/
 #endif
       common /mbc_dbl/  dbl_mb(2)
       double precision  dbl_mb
+#ifdef INTEL_64ALIGN
+!DIR$ ATTRIBUTES ALIGN : 64 :: mbc_scpl
+#endif
 #ifdef HP_SHARED_COMMON
 *$HP$ shared_common /mbc_scpl/
 #endif
       common /mbc_scpl/ scpl_mb(2)
       complex           scpl_mb
+#ifdef INTEL_64ALIGN
+!DIR$ ATTRIBUTES ALIGN : 64 :: mbc_dcpl
+#endif
 #ifdef HP_SHARED_COMMON
 *$HP$ shared_common /mbc_dcpl/
 #endif
