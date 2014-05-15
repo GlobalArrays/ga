@@ -35,7 +35,7 @@
 #include "armci.h"
 #include "armcip.h"
 
-#define PAUSE_ON_ERROR__
+#define PAUSE_ON_ERROR
 
 #define  Error armci_die 
 #if !defined(armci_die)
@@ -246,6 +246,11 @@ SigType SigFpeHandler(sig)
      int sig;
 {
   AR_caught_sig= sig;
+#ifdef PAUSE_ON_ERROR
+  fprintf(stderr,"%d(%s:%d): Sig FPE ... pausing\n",
+          armci_me, armci_clus_info[armci_clus_me].hostname,
+	  getpid() );pause(); 
+#endif
   Error("Floating Point Exception error, status=",(int) sig);
 }
 
