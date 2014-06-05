@@ -29,7 +29,7 @@ static void kr_free_shmem(char *ap, context_t *ctx);
  */
 #define DEFAULT_NALLOC       (4*128*1024)  
 #define DEFAULT_NALLOC_ALIGN 1024  
-#define DEFAULT_MAX_NALLOC   (4*1024*1024*16) 
+#define DEFAULT_MAX_NALLOC   (64*1024*1024*16) 
 
 /* mutual exclusion defs go here */
 #define LOCKED   100
